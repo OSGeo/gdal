@@ -317,24 +317,45 @@ static int GET_DEBUG_VSIPRELOAD_COND(VSILFILE* fpVSIL)
 }
 
 /************************************************************************/
-/*                         copyBuf64ToBuf()                             */
+/*                     copyVSIStatBufLToBuf()                           */
 /************************************************************************/
 
-static void copyBuf64ToBuf(struct stat64 *buf64, struct stat *buf)
+static void copyVSIStatBufLToBuf(VSIStatBufL* bufSrc, struct stat *buf)
 {
-    buf->st_dev = buf64->st_dev;
-    buf->st_ino = buf64->st_ino;
-    buf->st_mode = buf64->st_mode;
-    buf->st_nlink = buf64->st_nlink;
-    buf->st_uid = buf64->st_uid;
-    buf->st_gid = buf64->st_gid;
-    buf->st_rdev = buf64->st_rdev;
-    buf->st_size = buf64->st_size;
-    buf->st_blksize = buf64->st_blksize;
-    buf->st_blocks = buf64->st_blocks;
-    buf->st_atime = buf64->st_atime;
-    buf->st_mtime = buf64->st_mtime;
-    buf->st_ctime = buf64->st_ctime;
+    buf->st_dev = bufSrc->st_dev;
+    buf->st_ino = bufSrc->st_ino;
+    buf->st_mode = bufSrc->st_mode;
+    buf->st_nlink = bufSrc->st_nlink;
+    buf->st_uid = bufSrc->st_uid;
+    buf->st_gid = bufSrc->st_gid;
+    buf->st_rdev = bufSrc->st_rdev;
+    buf->st_size = bufSrc->st_size;
+    buf->st_blksize = bufSrc->st_blksize;
+    buf->st_blocks = bufSrc->st_blocks;
+    buf->st_atime = bufSrc->st_atime;
+    buf->st_mtime = bufSrc->st_mtime;
+    buf->st_ctime = bufSrc->st_ctime;
+}
+
+/************************************************************************/
+/*                     copyVSIStatBufLToBuf64()                         */
+/************************************************************************/
+
+static void copyVSIStatBufLToBuf64(VSIStatBufL *bufSrc, struct stat64 *buf)
+{
+    buf->st_dev = bufSrc->st_dev;
+    buf->st_ino = bufSrc->st_ino;
+    buf->st_mode = bufSrc->st_mode;
+    buf->st_nlink = bufSrc->st_nlink;
+    buf->st_uid = bufSrc->st_uid;
+    buf->st_gid = bufSrc->st_gid;
+    buf->st_rdev = bufSrc->st_rdev;
+    buf->st_size = bufSrc->st_size;
+    buf->st_blksize = bufSrc->st_blksize;
+    buf->st_blocks = bufSrc->st_blocks;
+    buf->st_atime = bufSrc->st_atime;
+    buf->st_mtime = bufSrc->st_mtime;
+    buf->st_ctime = bufSrc->st_ctime;
 }
 
 /************************************************************************/
@@ -466,7 +487,7 @@ int __xstat(int ver, const char *path, struct stat *buf)
             if (DEBUG_VSIPRELOAD_COND) fprintf(stderr,
                 "__xstat(%s) ret = 0, mode = %d, size=%d\n",
                 path, sStatBufL.st_mode, (int)sStatBufL.st_size);
-            copyBuf64ToBuf(&sStatBufL, buf);
+            copyVSIStatBufLToBuf(&sStatBufL, buf);
         }
         return ret;
     }
@@ -493,12 +514,14 @@ int __xstat64(int ver, const char *path, struct stat64 *buf)
     if (DEBUG_VSIPRELOAD_COND) fprintf(stderr, "__xstat64(%s)\n", path);
     if( strncmp(path, "/vsi", 4) == 0 )
     {
-        int ret = VSIStatL(path, buf);
+        VSIStatBufL sStatBufL;
+        int ret = VSIStatL(path, &sStatBufL);
         if( ret == 0 )
         {
             if (DEBUG_VSIPRELOAD_COND) fprintf(stderr,
                 "__xstat64(%s) ret = 0, mode = %d, size = %d\n",
                 path, buf->st_mode, (int)buf->st_size);
+            copyVSIStatBufLToBuf64(&sStatBufL, buf);
         }
         return ret;
     }
@@ -943,7 +966,7 @@ int __fxstat (int ver, int fd, struct stat *buf)
             if (DEBUG_VSIPRELOAD_COND) fprintf(stderr,
                 "__fxstat ret = 0, mode = %d, size = %d\n",
                 sStatBufL.st_mode, (int)sStatBufL.st_size);
-            copyBuf64ToBuf(&sStatBufL, buf);
+            copyVSIStatBufLToBuf(&sStatBufL, buf);
         }
         return ret;
     }
@@ -963,17 +986,19 @@ int __fxstat64 (int ver, int fd, struct stat64 *buf)
     if (DEBUG_VSIPRELOAD_COND) fprintf(stderr, "__fxstat64(fd=%d)\n", fd);
     if( fpVSIL != NULL )
     {
+        VSIStatBufL sStatBufL;
         std::string name;
         {
             CPLMutexHolderD(&hMutex);
             name = oMapVSIToString[fpVSIL];
         }
-        int ret = VSIStatL(name.c_str(), buf);
+        int ret = VSIStatL(name.c_str(), &sStatBufL);
         if( ret == 0 )
         {
             if (DEBUG_VSIPRELOAD_COND) fprintf(stderr,
                 "__fxstat64 ret = 0, mode = %d, size = %d\n",
                 buf->st_mode, (int)buf->st_size);
+            copyVSIStatBufLToBuf64(&sStatBufL, buf);
         }
         return ret;
     }
