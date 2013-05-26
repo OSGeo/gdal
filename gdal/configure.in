@@ -3250,8 +3250,18 @@ if test "$with_poppler" != "no" -a "$with_poppler" != ""; then
     echo '#include <poppler/Page.h>' >> testpoppler.cpp
     echo '#include <poppler/splash/SplashBitmap.h>' >> testpoppler.cpp
     echo 'int main(int argc, char** argv) { return &(((Page*)0x8000)->pageObj) == 0; } ' >> testpoppler.cpp
+
     if test -z "`${CXX} testpoppler.cpp -o testpoppler ${TEST_POPPLER_INC} ${TEST_POPPLER_LIB} 2>&1`" ; then
         HAVE_POPPLER=yes
+    else
+        # poppler 0.23.0 needs to be linked against pthread
+        TEST_POPPLER_LIB="${TEST_POPPLER_LIB} -lpthread"
+        if test -z "`${CXX} testpoppler.cpp -o testpoppler ${TEST_POPPLER_INC} ${TEST_POPPLER_LIB} 2>&1`" ; then
+            HAVE_POPPLER=yes
+        fi
+    fi
+
+    if test "$HAVE_POPPLER" = "yes"; then
         LIBS="${TEST_POPPLER_LIB} ${LIBS}"
         AC_MSG_RESULT([yes])
         POPPLER_INC=$TEST_POPPLER_INC
