@@ -42,3 +42,8 @@ gdaldrivermanager.$(OBJ_EXT):	gdaldrivermanager.cpp ../GDALmake.opt
 
 install:
 	for f in *.h ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_INCLUDE) ; done
+
+# Small test tool using gdaljp2box.cpp to read jpeg2000 boxes.  Not normally
+# built or installed.
+jp2dump:	jp2dump.o
+	$(CXX) $(CXXFLAGS) jp2dump.o $(CONFIG_LIBS) -o jp2dump
