@@ -461,24 +461,10 @@ int OGROSMLayer::AddInOtherTag(const char* pszK)
 static int OGROSMFormatForHSTORE(const char* pszV, char* pszAllTags)
 {
     int k;
-    int bMustAddDoubleQuotes = FALSE;
-    
+
     int nAllTagsOff = 0;
 
-    /* Follow the quoting rules of http://www.postgresql.org/docs/9.0/static/hstore.html */
-    for(k=0;pszV[k] != '\0'; k++)
-    {
-        if( pszV[k] == ' ' || pszV[k] == ','||
-            pszV[k] == '=' || pszV[k] == '>' )
-        {
-            bMustAddDoubleQuotes = TRUE;
-            break;
-        }
-    }
-    if( bMustAddDoubleQuotes )
-    {
-        pszAllTags[nAllTagsOff++] = '"';
-    }
+    pszAllTags[nAllTagsOff++] = '"';
 
     for(k=0;pszV[k] != '\0'; k++)
     {
@@ -487,10 +473,7 @@ static int OGROSMFormatForHSTORE(const char* pszV, char* pszAllTags)
         pszAllTags[nAllTagsOff++] = pszV[k];
     }
 
-    if( bMustAddDoubleQuotes )
-    {
-        pszAllTags[nAllTagsOff++] = '"';
-    }
+    pszAllTags[nAllTagsOff++] = '"';
 
     return nAllTagsOff;
 }
