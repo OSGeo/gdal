@@ -74,6 +74,10 @@ static int DEBUG_VSIPRELOAD = 0;
 static int DEBUG_VSIPRELOAD_ONLY_VSIL = 1;
 #define DEBUG_OUTPUT_READ 0
 
+#ifndef NO_FSTATAT
+#define HAVE_FSTATAT
+#endif
+
 #define DECLARE_SYMBOL(x, retType, args) \
     typedef retType (*fn ## x ## Type)args;\
     static fn ## x ## Type pfn ## x = NULL
@@ -110,7 +114,9 @@ DECLARE_SYMBOL(fsync, int, (int fd));
 DECLARE_SYMBOL(fdatasync, int, (int fd));
 DECLARE_SYMBOL(__fxstat, int, (int ver, int fd, struct stat *__stat_buf));
 DECLARE_SYMBOL(__fxstat64, int, (int ver, int fd, struct stat64 *__stat_buf));
+#ifdef HAVE_FSTATAT
 DECLARE_SYMBOL(__fxstatat, int, (int ver, int dirfd, const char *pathname, struct stat *buf, int flags));
+#endif
 
 DECLARE_SYMBOL(lseek, off_t, (int fd, off_t off, int whence));
 DECLARE_SYMBOL(lseek64, off64_t , (int fd, off64_t off, int whence));
@@ -190,7 +196,9 @@ static void myinit(void)
     LOAD_SYMBOL(fdatasync);
     LOAD_SYMBOL(__fxstat);
     LOAD_SYMBOL(__fxstat64);
+#ifdef HAVE_FSTATAT
     LOAD_SYMBOL(__fxstatat);
+#endif
     LOAD_SYMBOL(lseek);
     LOAD_SYMBOL(lseek64);
 
@@ -699,7 +707,7 @@ off64_t ftello64(FILE *stream)
 /*                            ftello()                                  */
 /************************************************************************/
 
-off64_t ftello(FILE *stream)
+off_t ftello(FILE *stream)
 {
     myinit();
     VSILFILE* fpVSIL = getVSILFILE(stream);
@@ -1190,6 +1198,7 @@ int __fxstat64 (int ver, int fd, struct stat64 *buf)
 /*                           __fxstatat()                               */
 /************************************************************************/
 
+#ifdef HAVE_FSTATAT
 int __fxstatat (int ver, int dirfd, const char *pathname, struct stat *buf,
                 int flags)
 {
@@ -1219,6 +1228,7 @@ int __fxstatat (int ver, int dirfd, const char *pathname, struct stat *buf,
     else
         return pfn__fxstatat(ver, dirfd, pathname, buf, flags);
 }
+#endif
 
 /************************************************************************/
 /*                              lseek()                                 */
