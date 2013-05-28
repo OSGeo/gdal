@@ -44,6 +44,7 @@ using kmldom::GeometryPtr;
 using kmldom::ElementPtr;
 using kmldom::GeometryPtr;
 using kmldom::GxLatLonQuadPtr;
+using kmldom::GxTrackPtr;
 
 using kmlbase::Vec3;
 
@@ -366,6 +367,7 @@ OGRGeometry *kml2geom_rec (
     InnerBoundaryIsPtr poKmlInnerRing;
     PolygonPtr poKmlPolygon;
     MultiGeometryPtr poKmlMultiGeometry;
+    GxTrackPtr poKmlGxTrack;
     GeometryPtr poKmlTmpGeometry;
 
     Vec3 oKmlVec;
@@ -521,6 +523,26 @@ OGRGeometry *kml2geom_rec (
         poOgrGeometry = poOgrMultiGeometry;
         break;
     }
+    
+    case kmldom::Type_GxTrack:
+        poKmlGxTrack = AsGxTrack ( poKmlGeometry );
+        nCoords = poKmlGxTrack->get_gx_coord_array_size();
+        poOgrLineString = new OGRLineString (  );
+        for ( i = 0; i < nCoords; i++ ) {
+            oKmlVec = poKmlGxTrack->get_gx_coord_array_at ( i );
+            if ( oKmlVec.has_altitude (  ) )
+                poOgrLineString->
+                    addPoint ( oKmlVec.get_longitude (  ),
+                                oKmlVec.get_latitude (  ),
+                                oKmlVec.get_altitude (  ) );
+            else
+                poOgrLineString->
+                    addPoint ( oKmlVec.get_longitude (  ),
+                                oKmlVec.get_latitude (  ) );
+        }
+        poOgrGeometry = poOgrLineString;
+        break;
+
     default:
         break;
     }

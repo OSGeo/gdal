@@ -795,6 +795,26 @@ def ogr_libkml_extended_data_without_schema_data():
     return 'success'
 
 ###############################################################################
+# Test reading KML with <gx:Track> element (#5095)
+
+def ogr_libkml_gxtrack():
+
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+
+    ds = ogr.Open('data/gxtrack.kml')
+    lyr = ds.GetLayer(0)
+
+    feat = lyr.GetNextFeature()
+    if feat.GetGeometryRef().ExportToWkt() != 'LINESTRING (2 49,3 50)':
+        print(feat.GetGeometryRef().ExportToWkt())
+        gdaltest.post_reason('Unexpected geometry.')
+        return 'fail'
+    ds = None
+
+    return 'success'
+    
+###############################################################################
 #  Cleanup
 
 def ogr_libkml_cleanup():
@@ -840,6 +860,7 @@ gdaltest_list = [
     ogr_libkml_read_emptylayers,
     ogr_libkml_read_schema,
     ogr_libkml_extended_data_without_schema_data,
+    ogr_libkml_gxtrack,
     ogr_libkml_cleanup ]
 
 if __name__ == '__main__':
