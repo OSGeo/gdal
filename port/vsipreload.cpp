@@ -36,16 +36,16 @@
 // g++ -Wall -fPIC port/vsipreload.cpp -shared -o vsipreload.so -Iport -L. -L.libs -lgdal
 
 // Run:
-// LD_PRELOAD=vsipreload.so ....
+// LD_PRELOAD=./vsipreload.so ....
 // e.g: 
-// LD_PRELOAD=vsipreload.so gdalinfo /vsicurl/http://download.osgeo.org/gdal/data/ecw/spif83.ecw
-// LD_PRELOAD=vsipreload.so gdalinfo 'HDF4_EOS:EOS_GRID:"/vsicurl/http://download.osgeo.org/gdal/data/hdf4/MOD09Q1G_EVI.A2006233.h07v03.005.2008338190308.hdf":MODIS_NACP_EVI:MODIS_EVI'
-// LD_PRELOAD=vsipreload.so ogrinfo /vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/testavc -ro
+// LD_PRELOAD=./vsipreload.so gdalinfo /vsicurl/http://download.osgeo.org/gdal/data/ecw/spif83.ecw
+// LD_PRELOAD=./vsipreload.so gdalinfo 'HDF4_EOS:EOS_GRID:"/vsicurl/http://download.osgeo.org/gdal/data/hdf4/MOD09Q1G_EVI.A2006233.h07v03.005.2008338190308.hdf":MODIS_NACP_EVI:MODIS_EVI'
+// LD_PRELOAD=./vsipreload.so ogrinfo /vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/testavc -ro
 // even non GDAL binaries :
-// LD_PRELOAD=vsipreload.so h5dump -d /x /vsicurl/http://download.osgeo.org/gdal/data/netcdf/utm-big-chunks.nc
-// LD_PRELOAD=vsipreload.so sqlite3 /vsicurl/http://download.osgeo.org/gdal/data/sqlite3/polygon.db "select * from polygon limit 10"
-// LD_PRELOAD=vsipreload.so ls -al /vsicurl/http://download.osgeo.org/gdal/data/sqlite3
-// LD_PRELOAD=vsipreload.so find /vsicurl/http://download.osgeo.org/gdal/data/sqlite3
+// LD_PRELOAD=./vsipreload.so h5dump -d /x /vsicurl/http://download.osgeo.org/gdal/data/netcdf/utm-big-chunks.nc
+// LD_PRELOAD=./vsipreload.so sqlite3 /vsicurl/http://download.osgeo.org/gdal/data/sqlite3/polygon.db "select * from polygon limit 10"
+// LD_PRELOAD=./vsipreload.so ls -al /vsicurl/http://download.osgeo.org/gdal/data/sqlite3
+// LD_PRELOAD=./vsipreload.so find /vsicurl/http://download.osgeo.org/gdal/data/sqlite3
 
 #define _GNU_SOURCE 1
 #define _LARGEFILE64_SOURCE 1
@@ -954,9 +954,15 @@ int open64(const char *path, int flags, ...)
 {
     myinit();
     int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND(path);
-    if( DEBUG_VSIPRELOAD && osCurDir.size() != 0 )
+    if( DEBUG_VSIPRELOAD && osCurDir.size() != 0 && path[0] != '/' )
         DEBUG_VSIPRELOAD_COND = 1;
-    if (DEBUG_VSIPRELOAD_COND) fprintf(stderr, "open64(%s)\n", path);
+    if (DEBUG_VSIPRELOAD_COND)
+    {
+        if( osCurDir.size() != 0 && path[0] != '/' )
+            fprintf(stderr, "open64(%s)\n", CPLFormFilename(osCurDir.c_str(), path, NULL));
+        else
+            fprintf(stderr, "open64(%s)\n", path);
+    }
 
     va_list args;
     va_start(args, flags);
@@ -965,9 +971,25 @@ int open64(const char *path, int flags, ...)
     if( osCurDir.size() != 0 && path[0] != '/' && (flags & 3) == O_RDONLY && (flags & O_DIRECTORY) != 0 )
     {
         VSIStatBufL sStatBufL;
-        if( VSIStatL(CPLFormFilename(osCurDir.c_str(), path, NULL), &sStatBufL) == 0 &&
+        char* newname = (char*)CPLFormFilename(osCurDir.c_str(), path, NULL);
+        if( strchr(osCurDir.c_str(), '/') != NULL && strcmp(path, "..") == 0 )
+        {
+            char* lastslash = strrchr(newname, '/');
+            if( lastslash != NULL )
+            {
+                *lastslash = 0;
+                lastslash = strrchr(newname, '/');
+                if( lastslash != NULL )
+                    *lastslash = 0;
+            }
+        }
+        if( VSIStatL(newname, &sStatBufL) == 0 &&
             S_ISDIR(sStatBufL.st_mode) )
+        {
             fd = open("/dev/zero", O_RDONLY);
+            CPLMutexHolderD(&hMutex)
+            oMapDirFdToName[fd] = newname;
+        }
         else
             fd = -1;
     }
