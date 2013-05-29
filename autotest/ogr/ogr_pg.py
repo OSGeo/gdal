@@ -3067,6 +3067,48 @@ def ogr_pg_63():
     return 'success' 
 
 ###############################################################################
+# Test OGR_TRUNCATE config. option (#5091)
+
+def ogr_pg_64():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    # No need to test it in the non PostGIS case
+    if not gdaltest.pg_has_postgis:
+        return 'skip'
+
+    ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update = 1)
+    lyr = ds.GetLayerByName('ogr_pg_63')
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField('foo', '124')
+    lyr.CreateFeature(feat)
+
+    if lyr.GetFeatureCount() != 2:
+        gdaltest.post_reason('fail')
+        print(lyr.GetFeatureCount())
+        return 'fail'
+
+    ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update = 1)
+    lyr = ds.GetLayerByName('ogr_pg_63')
+
+    gdal.SetConfigOption('OGR_TRUNCATE', 'YES')
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField('foo', '125')
+    lyr.CreateFeature(feat)
+
+    gdal.SetConfigOption('OGR_TRUNCATE', None)
+
+    # Just one feature because of truncation
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        print(lyr.GetFeatureCount())
+        return 'fail'
+
+    return 'success' 
+
+###############################################################################
 # 
 
 def ogr_pg_table_cleanup():
@@ -3201,6 +3243,7 @@ gdaltest_list_internal = [
     ogr_pg_61,
     ogr_pg_62,
     ogr_pg_63,
+    ogr_pg_64,
     ogr_pg_cleanup ]
 
 ###############################################################################
