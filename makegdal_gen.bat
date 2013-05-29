@@ -35,7 +35,7 @@
 ::  *********************
 
 if "%1"=="" (
-    echo Usage: makegdal_gen "MS Visual C++ version" "plataform{32,64}" ^> makegdalNN.vcproj
+    echo Usage: makegdal_gen "MS Visual C++ version" "platform{32,64}" ^> makegdalNN.vcproj
     echo Examples:
     echo    makegdal_gen  7.10 32 ^> makegdal71.vcproj
     echo    makegdal_gen  8.00 64 ^> makegdal80.vcproj
