@@ -73,6 +73,7 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
     bCopyActive = FALSE;
     bUseCopy = USE_COPY_UNSET;  // unknown
     bFIDColumnInCopyFields = FALSE;
+    bFirstInsertion = TRUE;
 
     pszTableName = CPLStrdup( pszTableNameIn );
     if (pszGeomColumnIn)
@@ -1294,6 +1295,21 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
         CPLError( CE_Failure, CPLE_AppDefined,
                   "NULL pointer to OGRFeature passed to CreateFeature()." );
         return OGRERR_FAILURE;
+    }
+
+    if( bFirstInsertion )
+    {
+        bFirstInsertion = FALSE;
+        if( CSLTestBoolean(CPLGetConfigOption("OGR_TRUNCATE", "NO")) )
+        {
+            PGconn              *hPGConn = poDS->GetPGConn();
+            PGresult            *hResult;
+            CPLString            osCommand;
+
+            osCommand.Printf("TRUNCATE TABLE %s", pszSqlTableName );
+            hResult = OGRPG_PQexec( hPGConn, osCommand.c_str() );
+            OGRPGClearResult( hResult );
+        }
     }
 
     // We avoid testing the config option too often. 
