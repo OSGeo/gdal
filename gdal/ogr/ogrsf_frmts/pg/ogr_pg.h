@@ -207,6 +207,7 @@ class OGRPGTableLayer : public OGRPGLayer
     int                 bUseCopy;
     int                 bCopyActive;
     int                 bFIDColumnInCopyFields;
+    int                 bFirstInsertion;
 
     OGRErr		CreateFeatureViaCopy( OGRFeature *poFeature );
     OGRErr		CreateFeatureViaInsert( OGRFeature *poFeature );
