@@ -40,7 +40,7 @@ import sys
 def Usage():
     print('ogr_dispatch.py [-f format] -src name -dst name [-field field]+')
     print('                [-25D_as_2D] [-multi_as_single]')
-    print('                [-remove_dispatch_fields] [-prefix_with_out_lyr_name]')
+    print('                [-remove_dispatch_fields] [-prefix_with_layer_name]')
     print('                [-dsco KEY=VALUE]* [-lco KEY=VALUE]* [-a_srs srs_def]')
     print('                [-style_as_field] [-where restricted_where] [-gt n] [-quiet]')
     print('')
@@ -58,7 +58,7 @@ def Usage():
     print(' -multi_as_single: for dispatching, consider MULTIPOLYGON as POLYGON and')
     print('                   MULTILINESTRING as LINESTRING.')
     print(' -remove_dispatch_fields: remove the dispatch fields from the target layer definitions.')
-    print(' -prefix_with_out_lyr_name: prefix the target layer name with the source layer name.')
+    print(' -prefix_with_layer_name: prefix the target layer name with the source layer name.')
     print(' -dsco KEY=VALUE: dataset creation option. May be repeated.')
     print(' -lco KEY=VALUE: layer creation option. May be repeated.')
     print(' -a_srs srs_def: assign a SRS to the target layers. Source layer SRS is otherwise used.')
@@ -333,7 +333,7 @@ def ogr_dispatch(argv, progress = None, progress_arg = None):
             options.bMultiAsSingle = True
         elif EQUAL(arg, '-remove_dispatch_fields'):
             options.bRemoveDispatchFields = True
-        elif EQUAL(arg, '-prefix_with_out_lyr_name'):
+        elif EQUAL(arg, '-prefix_with_layer_name'):
             options.bPrefixWithLayerName = True
         elif EQUAL(arg, '-style_as_field'):
             options.bStyleAsField = True
