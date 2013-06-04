@@ -78,6 +78,12 @@ def hdf5_2():
         gdaltest.post_reason( 'did not get expected subdatasets.' )
         return 'fail'
 
+    ds = None
+
+    if gdaltest.is_file_open('data/groups.h5'):
+        gdaltest.post_reason( 'file still opened.' )
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
@@ -94,6 +100,12 @@ def hdf5_3():
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 135:
         gdaltest.post_reason( 'did not get expected checksum' )
+        return 'fail'
+
+    ds = None
+
+    if gdaltest.is_file_open('data/u8be.h5'):
+        gdaltest.post_reason( 'file still opened.' )
         return 'fail'
 
     return 'success'
@@ -146,6 +158,10 @@ def hdf5_6():
     ds.BuildOverviews( overviewlist = [2] )
     ds = None
 
+    if gdaltest.is_file_open('tmp/groups.h5'):
+        gdaltest.post_reason( 'file still opened.' )
+        return 'fail'
+
     ds = gdal.Open( 'HDF5:"tmp/groups.h5"://MyGroup/dset1' )
     if ds.GetRasterBand(1).GetOverviewCount() != 1:
         gdaltest.post_reason( 'failed to find overview' )
@@ -182,6 +198,10 @@ def hdf5_7():
     metadata = ds.GetMetadata()
     metadataList = ds.GetMetadata_List()
     ds = None
+
+    if gdaltest.is_file_open('data/metadata.h5'):
+        gdaltest.post_reason( 'file still opened.' )
+        return 'fail'
 
     if len(metadata) != len(metadataList):
         gdaltest.post_reason( 'error in metadata dictionary setup' )
@@ -278,6 +298,9 @@ def hdf5_9():
     ds = gdal.Open( 'data/vlstr_metadata.h5' )
     metadata = ds.GetRasterBand(1).GetMetadata()
     ds = None
+    if gdaltest.is_file_open('data/vlstr_metadata.h5'):
+        gdaltest.post_reason( 'file still opened.' )
+        return 'fail'
 
     ref_metadata = {
         'TEST_BANDNAMES': 'SAA',
@@ -341,6 +364,11 @@ def hdf5_10():
            gdaltest.post_reason('fail')
            return 'fail'
 
+    ds = None
+    if gdaltest.is_file_open('data/CSK_DGM.h5'):
+        gdaltest.post_reason( 'file still opened.' )
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
@@ -374,6 +402,12 @@ def hdf5_11():
             print(got_gt)
             gdaltest.post_reason('fail')
             return 'fail'
+            
+    ds = None
+
+    if gdaltest.is_file_open('data/CSK_GEC.h5'):
+        gdaltest.post_reason( 'file still opened.' )
+        return 'fail'
 
     return 'success'
 

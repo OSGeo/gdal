@@ -86,7 +86,6 @@ HDF5Dataset::HDF5Dataset()
     poH5RootGroup       = NULL;
     nSubDataCount       = 0;
     hHDF5               = -1;
-    hDatasetID          = -1;
     hGroupID            = -1;
     bIsHDFEOS           = FALSE;
     nDatasetType        = -1;
@@ -336,6 +335,11 @@ void HDF5Dataset::DestroyH5Objects( HDF5GroupObjects *poH5Object )
 
     CPLFree( poH5Object->pszUnderscorePath );
     poH5Object->pszUnderscorePath = NULL;
+    
+    if( poH5Object->native > 0 )
+        H5Tclose( poH5Object->native );
+    poH5Object->native = 0;
+
 /* -------------------------------------------------------------------- */
 /*      All Children are visited and can be deleted.                    */
 /* -------------------------------------------------------------------- */
@@ -573,6 +577,8 @@ herr_t HDF5CreateGroupObjs(hid_t hHDF5, const char *pszObjName,
             poHchild->nbObjs    = 0;
             poHchild->poHchild  = NULL;
             poHchild->native    = native;
+            H5Tclose( datatype );
+            H5Sclose( dataspace );
             H5Dclose( hDatasetID );
             break;
 
@@ -833,8 +839,8 @@ CPLErr HDF5Dataset::CreateMetadata( HDF5GroupObjects *poH5Object, int nType)
 
     case H5G_GROUP:
 
-        hGroupID = H5Gopen( hHDF5, poH5Object->pszPath );
         if( nbAttrs > 0 ) {
+            hGroupID = H5Gopen( hHDF5, poH5Object->pszPath );
             H5Aiterate( hGroupID, NULL, HDF5AttrIterate, (void *)poDS  );
             H5Gclose( hGroupID );
         }
@@ -843,9 +849,8 @@ CPLErr HDF5Dataset::CreateMetadata( HDF5GroupObjects *poH5Object, int nType)
 
     case H5G_DATASET:
 
-        hDatasetID =  H5Dopen(hHDF5, poH5Object->pszPath );
-
         if( nbAttrs > 0 ) {
+            hDatasetID =  H5Dopen(hHDF5, poH5Object->pszPath );
             H5Aiterate( hDatasetID, NULL, HDF5AttrIterate, (void *)poDS );
             H5Dclose( hDatasetID );
         }
@@ -1044,6 +1049,8 @@ CPLErr HDF5Dataset::ReadGlobalAttributes(int bSUBDATASET)
     poRootGroup->objno[0] = oStatbuf.objno[0];
     poRootGroup->objno[1] = oStatbuf.objno[1];
 
+    if( hGroupID > 0 )
+        H5Gclose( hGroupID );
     hGroupID = H5Gopen( hHDF5, "/" );
     if( hGroupID < 0 ){
         printf( "hGroupID <0!!\n" );

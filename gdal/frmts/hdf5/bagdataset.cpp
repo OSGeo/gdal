@@ -152,7 +152,7 @@ bool BAGRasterBand::Initialize( hid_t hDatasetID, const char *pszName )
 
     hid_t datatype     = H5Dget_type( hDatasetID );
     dataspace          = H5Dget_space( hDatasetID );
-    hid_t n_dims       = H5Sget_simple_extent_ndims( dataspace );
+    int n_dims         = H5Sget_simple_extent_ndims( dataspace );
     native             = H5Tget_native_type( datatype, H5T_DIR_ASCEND );
     hsize_t dims[3], maxdims[3];
 
@@ -495,6 +495,8 @@ GDALDataset *BAGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( hVersion < 0 )
     {
+        if( hBagRoot >= 0 )
+            H5Gclose( hBagRoot );
         H5Fclose( hHDF5 );
         return NULL;
     }
