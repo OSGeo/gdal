@@ -64,7 +64,6 @@ class HDF5Dataset : public GDALPamDataset
   protected:
 
   hid_t            hHDF5;
-  hid_t            hDatasetID;
   hid_t            hGroupID; /* H handler interface */
   char             **papszSubDatasets;
   int              bIsHDFEOS;
