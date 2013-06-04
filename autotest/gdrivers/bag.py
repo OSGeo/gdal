@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -112,6 +113,11 @@ def bag_2():
         print(xmlBag)
         return 'fail'
 
+    ds = None
+
+    if gdaltest.is_file_open('data/true_n_nominal.bag'):
+        gdaltest.post_reason( 'file still opened.' )
+        return 'fail'
 
     return 'success'
 

@@ -422,6 +422,12 @@ class GDALTest:
                     post_reason( 'Statistics differs.' )
                     return 'fail'
 
+        ds = None
+
+        if is_file_open(wrk_filename):
+            post_reason('file still open after dataset closing')
+            return 'fail'
+
         if skip_checksum is not None:
             return 'success'
         elif self.chksum is None or chksum == self.chksum:
@@ -1544,3 +1550,30 @@ def find_lib(mylib):
         # sorry mac users or other BSDs
         # should be doable, but not in a blindless way
         return None
+
+###############################################################################
+# get_opened_files()
+
+def get_opened_files():
+    if not sys.platform.startswith('linux'):
+        return []
+    fdpath = '/proc/%d/fd' % os.getpid()
+    file_numbers = os.listdir(fdpath)
+    filenames = []
+    for fd in file_numbers:
+        try:
+            filename = os.readlink('%s/%s' % (fdpath, fd))
+            if not filename.startswith('/dev/') and not filename.startswith('pipe:'):
+                filenames.append(filename)
+        except:
+            pass
+    return filenames
+
+###############################################################################
+# is_file_open()
+
+def is_file_open(filename):
+    for got_filename in get_opened_files():
+        if got_filename.find(filename) >= 0:
+            return True
+    return False

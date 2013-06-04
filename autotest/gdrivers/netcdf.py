@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -276,6 +277,7 @@ def netcdf_2():
     src_ds = gdal.Open( 'data/byte.tif' )
     
     base_ds = gdaltest.netcdf_drv.CreateCopy( 'tmp/netcdf2.nc', src_ds)
+    base_ds = None
 
     tst = gdaltest.GDALTest( 'NetCDF', 'tmp/netcdf2.nc',
                              1, 4672,
@@ -305,7 +307,6 @@ def netcdf_2():
     if result != 'success':
         return result
 
-    base_ds = None
     gdaltest.clean_tmp()
 
     return 'success'
