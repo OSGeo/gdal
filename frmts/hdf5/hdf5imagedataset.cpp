@@ -168,6 +168,10 @@ HDF5ImageDataset::HDF5ImageDataset()
     adfGeoTransform[5] = 1.0;
     iSubdatasetType    = UNKNOWN_PRODUCT;
     bHasGeoTransform   = false;
+    dataset_id         = -1;
+    dataspace_id       = -1;
+    datatype           = -1;
+    native             = -1;
 }
 
 /************************************************************************/
@@ -176,6 +180,15 @@ HDF5ImageDataset::HDF5ImageDataset()
 HDF5ImageDataset::~HDF5ImageDataset( )
 {
     FlushCache();
+    
+    if( dataset_id > 0 )
+        H5Dclose(dataset_id);
+    if( dataspace_id > 0 )
+        H5Sclose(dataspace_id);
+    if( datatype > 0 )
+        H5Tclose(datatype);
+    if( native > 0 )
+        H5Tclose(native);
 
     CPLFree(pszProjection);
     CPLFree(pszGCPProjection);
@@ -819,6 +832,12 @@ CPLErr HDF5ImageDataset::CreateProjections()
         CPLFree( Latitude );
         CPLFree( Longitude );
     }
+    
+    if( LatitudeDatasetID > 0 )
+        H5Dclose(LatitudeDatasetID);
+    if( LongitudeDatasetID > 0 )
+        H5Dclose(LongitudeDatasetID);
+
         break;
     }
     }
