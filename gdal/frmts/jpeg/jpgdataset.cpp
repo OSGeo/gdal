@@ -187,6 +187,7 @@ protected:
     int    bHasCheckedForMask;
     JPGMaskBand *poMaskBand;
     GByte  *pabyBitMask;
+    int     bMaskLSBOrder;
 
     GByte  *pabyCMask;
     int    nCMaskSize;
@@ -591,13 +592,27 @@ CPLErr JPGMaskBand::IReadBlock( int nBlockX, int nBlockY, void *pImage )
     int iX;
     GUInt32 iBit = (GUInt32)nBlockY * (GUInt32)nBlockXSize;
 
-    for( iX = 0; iX < nBlockXSize; iX++ )
+    if( poJDS->bMaskLSBOrder )
     {
-        if( poJDS->pabyBitMask[iBit>>3] & (0x1 << (iBit&7)) )
-            ((GByte *) pImage)[iX] = 255;
-        else
-            ((GByte *) pImage)[iX] = 0;
-        iBit++;
+        for( iX = 0; iX < nBlockXSize; iX++ )
+        {
+            if( poJDS->pabyBitMask[iBit>>3] & (0x1 << (iBit&7)) )
+                ((GByte *) pImage)[iX] = 255;
+            else
+                ((GByte *) pImage)[iX] = 0;
+            iBit++;
+        }
+    }
+    else
+    {
+        for( iX = 0; iX < nBlockXSize; iX++ )
+        {
+            if( poJDS->pabyBitMask[iBit>>3] & (0x1 << (7 - (iBit&7))) )
+                ((GByte *) pImage)[iX] = 255;
+            else
+                ((GByte *) pImage)[iX] = 0;
+            iBit++;
+        }
     }
 
     return CE_None;
@@ -817,7 +832,8 @@ GDALRasterBand *JPGRasterBand::GetMaskBand()
 
     if( !poGDS->bHasCheckedForMask)
     {
-        poGDS->CheckForMask();
+        if( CSLTestBoolean(CPLGetConfigOption("JPEG_READ_MASK", "YES")))
+            poGDS->CheckForMask();
         poGDS->bHasCheckedForMask = TRUE;
     }
     if( poGDS->pabyCMask )
@@ -928,6 +944,7 @@ JPGDatasetCommon::JPGDatasetCommon()
     bHasCheckedForMask = FALSE;
     poMaskBand = NULL;
     pabyBitMask = NULL;
+    bMaskLSBOrder = TRUE;
     pabyCMask = NULL;
     nCMaskSize = 0;
 
@@ -2064,6 +2081,63 @@ void JPGDatasetCommon::DecompressMask()
         CPLFree( pabyBitMask );
         pabyBitMask = NULL;
     }
+    else
+    {
+        const char* pszJPEGMaskBitOrder = CPLGetConfigOption("JPEG_MASK_BIT_ORDER", "AUTO");
+        if( EQUAL(pszJPEGMaskBitOrder, "LSB") )
+            bMaskLSBOrder = TRUE;
+        else if( EQUAL(pszJPEGMaskBitOrder, "MSB") )
+            bMaskLSBOrder = FALSE;
+        else if( nRasterXSize > 8 && nRasterYSize > 1 )
+        {
+            /* Test MSB ordering hypothesis in a very restrictive case where it is */
+            /* *obviously* ordered as MSB ! (unless someone coded something */
+            /* specifically to defeat the below logic) */
+            /* The case considered here is dop_465_6100.jpg from #5102 */
+            /* The mask is identical for each line, starting with 1's and ending with 0's */
+            /* (or starting with 0's and ending with 1's), and no other intermediate change. */
+            /* We can detect the MSB ordering since the lsb bits at the end of the first */
+            /* line will be set with the 1's of the beginning of the second line. */
+            /* We can only be sure of this heuristics if the change of value occurs in the */
+            /* middle of a byte, or if the raster width is not a multiple of 8. */
+            int iX;
+            int nPrevValBit = 0;
+            int nChangedValBit = 0;
+            for( iX = 0; iX < nRasterXSize; iX++ )
+            {
+                int nValBit = (pabyBitMask[iX>>3] & (0x1 << (7 - (iX&7)))) != 0;
+                if( iX == 0 )
+                    nPrevValBit = nValBit;
+                else if( nValBit != nPrevValBit )
+                {
+                    nPrevValBit = nValBit;
+                    nChangedValBit ++;
+                    if( nChangedValBit == 1 )
+                    {
+                        int bValChangedOnByteBoundary = ((iX % 8) == 0);
+                        if( bValChangedOnByteBoundary && ((nRasterXSize % 8) == 0 ) )
+                            break;
+                    }
+                    else
+                        break;
+                }
+                int iNextLineX = iX + nRasterXSize;
+                int nNextLineValBit = (pabyBitMask[iNextLineX>>3] & (0x1 << (7 - (iNextLineX&7)))) != 0;
+                if( nValBit != nNextLineValBit )
+                    break;
+            }
+
+            if( iX == nRasterXSize )
+            {
+                CPLDebug("JPEG", "Bit ordering in mask is guessed to be msb (unusual)");
+                bMaskLSBOrder = FALSE;
+            }
+            else
+                bMaskLSBOrder = TRUE;
+        }
+        else
+            bMaskLSBOrder = TRUE;
+    }
 }
 
 #endif // !defined(JPGDataset)
@@ -2130,6 +2204,11 @@ CPLErr JPGAppendMask( const char *pszJPGFilename, GDALRasterBand *poMask,
         eErr = CE_Failure;
     }
 
+    /* No reason to set it to MSB, unless for debugging purposes */
+    /* to be able to generate a unusual LSB ordered mask (#5102) */
+    const char* pszJPEGMaskBitOrder = CPLGetConfigOption("JPEG_WRITE_MASK_BIT_ORDER", "LSB");
+    int bMaskLSBOrder = EQUAL(pszJPEGMaskBitOrder, "LSB");
+
 /* -------------------------------------------------------------------- */
 /*      Set bit buffer from mask band, scanline by scanline.            */
 /* -------------------------------------------------------------------- */
@@ -2141,12 +2220,25 @@ CPLErr JPGAppendMask( const char *pszJPGFilename, GDALRasterBand *poMask,
         if( eErr != CE_None )
             break;
 
-        for( iX = 0; iX < nXSize; iX++ )
+        if( bMaskLSBOrder )
         {
-            if( pabyMaskLine[iX] != 0 )
-                pabyBitBuf[iBit>>3] |= (0x1 << (iBit&7));
+            for( iX = 0; iX < nXSize; iX++ )
+            {
+                if( pabyMaskLine[iX] != 0 )
+                    pabyBitBuf[iBit>>3] |= (0x1 << (iBit&7));
 
-            iBit++;
+                iBit++;
+            }
+        }
+        else
+        {
+            for( iX = 0; iX < nXSize; iX++ )
+            {
+                if( pabyMaskLine[iX] != 0 )
+                    pabyBitBuf[iBit>>3] |= (0x1 << (7 - (iBit&7)));
+
+                iBit++;
+            }
         }
 
         if( eErr == CE_None
