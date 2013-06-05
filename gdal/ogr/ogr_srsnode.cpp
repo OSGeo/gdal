@@ -843,8 +843,11 @@ static const char * const apszGEOGCSRule[] =
 static const char * const apszGEOCCSRule[] = 
 { "GEOCCS", "DATUM", "PRIMEM", "UNIT", "AXIS", "AUTHORITY", NULL };
 
+static const char * const apszVERTCSRule[] = 
+{ "VERT_CS", "VERT_DATUM", "UNIT", "AXIS", "AUTHORITY", NULL };
+
 static const char * const *apszOrderingRules[] = {
-    apszPROJCSRule, apszGEOGCSRule, apszDATUMRule, apszGEOCCSRule, NULL };
+    apszPROJCSRule, apszGEOGCSRule, apszDATUMRule, apszGEOCCSRule, apszVERTCSRule, NULL };
 
 /**
  * Correct parameter ordering to match CT Specification.
