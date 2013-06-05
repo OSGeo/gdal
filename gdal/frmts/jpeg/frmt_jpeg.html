@@ -28,6 +28,12 @@ approach used by a few data providers to add a bitmask to identify pixels that
 are not valid data.
 See <a href="http://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask">RFC 15</a> for further details.<p>
 
+Starting with GDAL 1.10.1, the driver can deal with bitmask where the bits are
+ordered with most significant bit first (whereas the usual convention is least significant
+bit first). The driver will try to autodetect that situation, but the heuristics
+may fail. In that circumstance, you can set the JPEG_MASK_BIT_ORDER configuration option to
+MSB. Bitmask can also be completely ignored by specifying JPEG_READ_MASK to NO.<p>
+
 The GDAL JPEG Driver is built using the Independent JPEG Group's jpeg
 library.  Also note that the GeoTIFF driver supports tiled TIFF with JPEG
 compressed tiles.<p>
