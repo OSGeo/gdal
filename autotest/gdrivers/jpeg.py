@@ -665,8 +665,8 @@ def jpeg_18():
     data = struct.unpack('B' * width, line1023)
     if abs(data[0] - 255) > 10:
         return 'fail'
-    line0_ovr1 = ds.GetRasterBand(1).GetOverview(1).ReadRaster(0,0,width / 4,1)
-    data = struct.unpack('B' * (width / 4), line0_ovr1)
+    line0_ovr1 = ds.GetRasterBand(1).GetOverview(1).ReadRaster(0,0,int(width / 4),1)
+    data = struct.unpack('B' * (int(width / 4)), line0_ovr1)
     if abs(data[0] - 0) > 10:
         return 'fail'
     line1023_bis = ds.GetRasterBand(1).ReadRaster(0,height-1,width,1)
@@ -677,19 +677,19 @@ def jpeg_18():
     if line0 != line0_bis:
         gdaltest.post_reason('fail')
         return 'fail'
-    line255_ovr1 = ds.GetRasterBand(1).GetOverview(1).ReadRaster(0,height/4 - 1,width / 4,1)
-    data = struct.unpack('B' * (width / 4), line255_ovr1)
+    line255_ovr1 = ds.GetRasterBand(1).GetOverview(1).ReadRaster(0,int(height / 4) - 1,int(width / 4),1)
+    data = struct.unpack('B' * (int(width / 4)), line255_ovr1)
     if abs(data[0] - 255) > 10:
         return 'fail'
     line0_bis = ds.GetRasterBand(1).ReadRaster(0,0,width,1)
     if line0 != line0_bis:
         gdaltest.post_reason('fail')
         return 'fail'
-    line0_ovr1_bis = ds.GetRasterBand(1).GetOverview(1).ReadRaster(0,0,width/4,1)
+    line0_ovr1_bis = ds.GetRasterBand(1).GetOverview(1).ReadRaster(0,0,int(width / 4),1)
     if line0_ovr1 != line0_ovr1_bis:
         gdaltest.post_reason('fail')
         return 'fail'
-    line255_ovr1_bis = ds.GetRasterBand(1).GetOverview(1).ReadRaster(0,height/4 - 1,width / 4,1)
+    line255_ovr1_bis = ds.GetRasterBand(1).GetOverview(1).ReadRaster(0,int(height / 4) - 1,int(width / 4),1)
     if line255_ovr1 != line255_ovr1_bis:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -698,6 +698,74 @@ def jpeg_18():
 
     ds = None
     gdal.Unlink('/vsimem/jpeg_18.jpg')
+
+    return 'success'
+
+###############################################################################
+# Test MSB ordering of bits in mask (#5102)
+
+def jpeg_19():
+
+    import struct
+
+    for (width, height, iX) in [ (32, 32, 12), (25, 25, 8), (24, 25, 8) ]:
+        src_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/jpeg_19.tif', width, height, 1)
+        src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+        src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(0,0,iX,height,struct.pack('B' * 1, 255),1,1)
+        src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(iX,0,width-iX,height,struct.pack('B' * 1, 0),1,1)
+        tiff_mask_data = src_ds.GetRasterBand(1).GetMaskBand().ReadRaster(0, 0, width, height)
+
+        # Generate a JPEG file with a (default) LSB bit mask order
+        out_ds = gdal.GetDriverByName('JPEG').CreateCopy('/vsimem/jpeg_19.jpg', src_ds)
+        out_ds = None
+
+        # Generate a JPEG file with a MSB bit mask order
+        gdal.SetConfigOption('JPEG_WRITE_MASK_BIT_ORDER', 'MSB')
+        out_ds = gdal.GetDriverByName('JPEG').CreateCopy('/vsimem/jpeg_19_msb.jpg', src_ds)
+        out_ds = None
+        gdal.SetConfigOption('JPEG_WRITE_MASK_BIT_ORDER', None)
+
+        src_ds = None
+
+        # Check that the file are indeed different
+        statBuf = gdal.VSIStatL('/vsimem/jpeg_19.jpg')
+        f = gdal.VSIFOpenL('/vsimem/jpeg_19.jpg', 'rb')
+        data1 = gdal.VSIFReadL(1, statBuf.size, f)
+        gdal.VSIFCloseL(f)
+
+        statBuf = gdal.VSIStatL('/vsimem/jpeg_19_msb.jpg')
+        f = gdal.VSIFOpenL('/vsimem/jpeg_19_msb.jpg', 'rb')
+        data2 = gdal.VSIFReadL(1, statBuf.size, f)
+        gdal.VSIFCloseL(f)
+
+        if (width, height, iX) == (24, 25, 8):
+            if data1 != data2:
+                gdaltest.post_reason('fail')
+                return 'fail'
+        else:
+            if data1 == data2:
+                gdaltest.post_reason('fail')
+                return 'fail'
+
+        # Check the file with the LSB bit mask order
+        ds = gdal.Open('/vsimem/jpeg_19.jpg')
+        jpg_mask_data = ds.GetRasterBand(1).GetMaskBand().ReadRaster(0, 0, width, height)
+        ds = None
+        if tiff_mask_data != jpg_mask_data:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        # Check the file with the MSB bit mask order
+        ds = gdal.Open('/vsimem/jpeg_19_msb.jpg')
+        jpg_mask_data = ds.GetRasterBand(1).GetMaskBand().ReadRaster(0, 0, width, height)
+        ds = None
+        if tiff_mask_data != jpg_mask_data:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        gdal.GetDriverByName('GTiff').Delete('/vsimem/jpeg_19.tif')
+        gdal.GetDriverByName('JPEG').Delete('/vsimem/jpeg_19.jpg')
+        gdal.GetDriverByName('JPEG').Delete('/vsimem/jpeg_19_msb.jpg')
 
     return 'success'
 
@@ -736,6 +804,7 @@ gdaltest_list = [
     jpeg_16,
     jpeg_17,
     jpeg_18,
+    jpeg_19,
     jpeg_cleanup ]
 
 if __name__ == '__main__':
