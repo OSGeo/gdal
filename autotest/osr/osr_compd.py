@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -120,17 +121,17 @@ def osr_compd_3():
             UNIT["grad",0.01570796326794897,
                 AUTHORITY["EPSG","9105"]],
             AUTHORITY["EPSG","4807"]],
-        UNIT["metre",1,
-            AUTHORITY["EPSG","9001"]],
         PROJECTION["Lambert_Conformal_Conic_1SP"],
         PARAMETER["latitude_of_origin",52],
         PARAMETER["central_meridian",0],
         PARAMETER["scale_factor",0.99987742],
         PARAMETER["false_easting",600000],
         PARAMETER["false_northing",2200000],
-        AUTHORITY["EPSG","27582"],
+        UNIT["metre",1,
+            AUTHORITY["EPSG","9001"]],
         AXIS["X",EAST],
-        AXIS["Y",NORTH]],
+        AXIS["Y",NORTH],
+        AUTHORITY["EPSG","27582"]],
     VERT_CS["NGF Lallemand height",
         VERT_DATUM["Nivellement General de la France - Lallemand",2005,
             AUTHORITY["EPSG","5118"]],
@@ -143,7 +144,10 @@ def osr_compd_3():
     if gdaltest.equal_srs_from_wkt( exp_wkt, wkt ) == 0:
         gdaltest.post_reason( 'did not get expected compound cs for EPSG:7401')
         return 'fail'
-    
+    elif exp_wkt != wkt:
+        print('warning they are equivalent, but not completely the same')
+        print(wkt)
+
     return 'success'
 
 ###############################################################################
@@ -166,7 +170,7 @@ def osr_compd_4():
         UNIT["grad",0.01570796326794897,
             AUTHORITY["EPSG","9105"]],
         AUTHORITY["EPSG","4807"]],
-    VERT_CS["NGF IGN69 height",
+    VERT_CS["NGF-IGN69 height",
         VERT_DATUM["Nivellement General de la France - IGN69",2005,
             AUTHORITY["EPSG","5119"]],
         UNIT["metre",1,
@@ -179,7 +183,10 @@ def osr_compd_4():
     if gdaltest.equal_srs_from_wkt( exp_wkt, wkt ) == 0:
         gdaltest.post_reason( 'did not get expected compound cs for EPSG:7400')
         return 'fail'
-    
+    elif exp_wkt != wkt:
+        print('warning they are equivalent, but not completely the same')
+        print(wkt)
+
     return 'success'
 
 ###############################################################################
@@ -204,21 +211,21 @@ def osr_compd_5():
             UNIT["degree",0.0174532925199433,
                 AUTHORITY["EPSG","9122"]],
             AUTHORITY["EPSG","4269"]],
-        UNIT["metre",1,
-            AUTHORITY["EPSG","9001"]],
         PROJECTION["Transverse_Mercator"],
         PARAMETER["latitude_of_origin",0],
         PARAMETER["central_meridian",-117],
         PARAMETER["scale_factor",0.9996],
         PARAMETER["false_easting",500000],
         PARAMETER["false_northing",0],
-        AUTHORITY["EPSG","26911"],
+        UNIT["metre",1,
+            AUTHORITY["EPSG","9001"]],
         AXIS["Easting",EAST],
-        AXIS["Northing",NORTH]],
+        AXIS["Northing",NORTH],
+        AUTHORITY["EPSG","26911"]],
     VERT_CS["NAVD88 height",
         VERT_DATUM["North American Vertical Datum 1988",2005,
             AUTHORITY["EPSG","5103"],
-            EXTENSION["PROJ4_GRIDS","g2003conus.gtx,g2003alaska.gtx,g2003h01.gtx,g2003p01.gtx"]],
+            EXTENSION["PROJ4_GRIDS","g2012a_conus.gtx,g2012a_alaska.gtx,g2012a_guam.gtx,g2012a_hawaii.gtx,g2012a_puertorico.gtx,g2012a_samoa.gtx"]],
         UNIT["metre",1,
             AUTHORITY["EPSG","9001"]],
         AXIS["Up",UP],
@@ -227,6 +234,9 @@ def osr_compd_5():
 
     if gdaltest.equal_srs_from_wkt( exp_wkt, wkt ) == 0:
         return 'fail'
+    elif exp_wkt != wkt:
+        print('warning they are equivalent, but not completely the same')
+        print(wkt)
 
     if wkt.find('g2012a_conus.gtx') == -1:
         gdaltest.post_reason( 'Did not get PROJ4_GRIDS EXTENSION node' )
@@ -276,6 +286,9 @@ def osr_compd_6():
 
     if gdaltest.equal_srs_from_wkt( exp_wkt, wkt ) == 0:
         return 'fail'
+    elif exp_wkt != wkt:
+        print('warning they are equivalent, but not completely the same')
+        print(wkt)
 
     if wkt.find('g2003conus.gtx') == -1:
         gdaltest.post_reason( 'Did not get PROJ4_GRIDS EXTENSION node' )
@@ -318,15 +331,18 @@ def osr_compd_7():
     VERT_CS["NAVD88 height",
         VERT_DATUM["North American Vertical Datum 1988",2005,
             AUTHORITY["EPSG","5103"],
-            EXTENSION["PROJ4_GRIDS","g2003conus.gtx,g2003alaska.gtx,g2003h01.gtx,g2003p01.gtx"]],
-        AXIS["Up",UP],
+            EXTENSION["PROJ4_GRIDS","g2012a_conus.gtx,g2012a_alaska.gtx,g2012a_guam.gtx,g2012a_hawaii.gtx,g2012a_puertorico.gtx,g2012a_samoa.gtx"]],
         UNIT["foot",0.304800609601219],
+        AXIS["Up",UP],
         AUTHORITY["EPSG","5703"]]]"""
         
     wkt = srs.ExportToPrettyWkt() 
 
     if gdaltest.equal_srs_from_wkt( exp_wkt, wkt ) == 0:
         return 'fail'
+    elif exp_wkt != wkt:
+        print('warning they are equivalent, but not completely the same')
+        print(wkt)
 
     return 'success'
 
