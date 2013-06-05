@@ -194,7 +194,6 @@ CPLErr IRISRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 {
     IRISDataset *poGDS = (IRISDataset *) poDS;
 
-    //printf("hola %d %s\n",poGDS->dataTypeCode,poGDS->aszDataTypeCodes[poGDS->dataTypeCode]);
     //Every product type has it's own size. TODO: Move it like dataType
     int nDataLength = 1;
     if(poGDS->nDataTypeCode == 2){nDataLength=1;}
@@ -695,13 +694,7 @@ GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Create band information objects.                                */
-/* -------------------------------------------------------------------- */
-    for (int iBandNum = 1; iBandNum <= nNumBands; iBandNum++) {
-        poDS->SetBand( iBandNum, new IRISRasterBand( poDS, iBandNum ));
-        poDS->GetRasterBand(iBandNum)->SetNoDataValue(-9999);
-    }
+    
     
 /* -------------------------------------------------------------------- */
 /*      Setting the Metadata                                            */
@@ -853,7 +846,7 @@ GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
         //See point 3.2.2 at page 3.2 of the manual
     } else if (EQUAL(poDS->aszProductNames[poDS->nProductCode],"CAPPI")){
         float fElevation = ((float) CPL_LSBSINT32PTR(poDS->abyHeader+4+164+12))/100;
-        poDS->SetMetadataItem( "CAPPI_HEIGHT",CPLString().Printf("%.1f m",fElevation));
+        poDS->SetMetadataItem( "CAPPI_BOTTOM_HEIGHT",CPLString().Printf("%.1f m",fElevation));
         float fAzimuthSmoothingForShear = 360 * float((CPL_LSBUINT16PTR (poDS->abyHeader+10+164+12))) / 65536;
         poDS->SetMetadataItem( "AZIMUTH_SMOOTHING_FOR_SHEAR" ,CPLString().Printf("%.1f", fAzimuthSmoothingForShear));
         unsigned int  nMaxAgeVVPCorrection = CPL_LSBUINT32PTR (poDS->abyHeader+24+164+12);
@@ -913,6 +906,21 @@ GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetMetadataItem( "VERTICAL_SMOOTHER_SIDE_PANELS",CPLString().Printf("%d",nVerticalSmootherSidePanels));
     }
 
+/* -------------------------------------------------------------------- */
+/*      Create band information objects.                                */
+/* -------------------------------------------------------------------- */
+    for (int iBandNum = 1; iBandNum <= nNumBands; iBandNum++) {
+        poDS->SetBand( iBandNum, new IRISRasterBand( poDS, iBandNum ));
+
+        poDS->GetRasterBand(iBandNum)->SetNoDataValue(-9999);
+        //Calculating the band height to include it in the band metadata. Only for the CAPPI product
+        if (EQUAL(poDS->aszProductNames[poDS->nProductCode],"CAPPI")){
+            float fScaleZ = float (CPL_LSBSINT32PTR (poDS->abyHeader + 96 + 12 )) / 100;
+            float fOffset = ((float) CPL_LSBSINT32PTR(poDS->abyHeader+4+164+12))/100;
+
+            poDS->GetRasterBand(iBandNum)->SetMetadataItem("height",CPLString().Printf("%.0f m",fOffset + fScaleZ*(iBandNum-1)));
+        }
+    }
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
