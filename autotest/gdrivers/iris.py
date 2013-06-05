@@ -82,7 +82,7 @@ def iris_2():
 
     expected_metadata = [
   "AZIMUTH_SMOOTHING_FOR_SHEAR=0.0",
-  "CAPPI_HEIGHT=1000.0 m",
+  "CAPPI_BOTTOM_HEIGHT=1000.0 m",
   "COMPOSITED_PRODUCT=YES",
   "COMPOSITED_PRODUCT_MASK=0x0000080c",
   "DATA_TYPE=Clutter Corrected H reflectivity (1 byte)",
