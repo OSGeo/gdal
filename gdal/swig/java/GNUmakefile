@@ -11,6 +11,11 @@ include ../SWIGmake.base
 SHORT_NAME = $(subst _wrap,,$*)
 SWIGARGS += -outdir "org/gdal/$(SHORT_NAME)" -package "org.gdal.$(SHORT_NAME)"
 
+# Run "make ANDROID=yes" for Android JNI
+ifeq ($(ANDROID),yes)
+SWIGARGS += -DSWIGANDROID
+endif
+
 EXTRA_DIST = org
 
 LINK = $(LD_SHARED)
