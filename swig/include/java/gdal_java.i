@@ -654,6 +654,24 @@ CPLErr ReadRaster( int xoff, int yoff, int xsize, int ysize,
 
 } /* extend */
 
+#ifdef SWIGANDROID
+
+%typemap(javacode) GDALColorTableShadow %{
+  private Object parentReference;
+
+  /* Ensure that the GC doesn't collect any parent instance set from Java */
+  protected void addReference(Object reference) {
+    parentReference = reference;
+  }
+
+  public Object clone()
+  {
+      return Clone();
+  }
+
+%}
+
+#else
 
 %typemap(javaimports) GDALColorTableShadow %{
 /* imports for getIndexColorModel */
@@ -713,6 +731,7 @@ import java.awt.Color;
  }
 %}
 
+#endif
 
 %typemap(javaimports) GDALRasterBandShadow %{
 import org.gdal.gdalconst.gdalconstConstants;
