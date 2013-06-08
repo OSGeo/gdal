@@ -1337,6 +1337,11 @@ int main( int nArgc, char ** papszArgv )
         Usage("if -fieldmap is specified, -append must also be specified");
     }
 
+    if( pszSourceSRSDef != NULL && pszOutputSRSDef == NULL )
+    {
+        Usage("if -s_srs is specified, -t_srs must also be specified");
+    }
+
     if( bClipSrc && pszClipSrcDS != NULL)
     {
         poClipSrc = LoadGeometry(pszClipSrcDS, pszClipSrcSQL, pszClipSrcLayer, pszClipSrcWhere);
