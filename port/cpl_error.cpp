@@ -39,6 +39,7 @@
 #endif
  
 #define TIMESTAMP_DEBUG
+//#define MEMORY_DEBUG
 
 CPL_CVSID("$Id$");
 
@@ -314,6 +315,40 @@ void CPLEmergencyError( const char *pszMessage )
 }
 
 /************************************************************************/
+/*                    CPLGetProcessMemorySize()                         */
+/************************************************************************/
+
+#ifdef MEMORY_DEBUG
+
+#ifdef __linux
+static int CPLGetProcessMemorySize()
+{
+    FILE* fp = fopen("/proc/self/status", "r");
+    if( fp == NULL )
+        return -1;
+    int nRet = -1;
+    char szLine[128];
+    while (fgets(szLine, sizeof(szLine), fp) != NULL)
+    {
+        if (strncmp(szLine, "VmSize:", 7) == 0)
+        {
+            const char* pszPtr = szLine;
+            while( !(*pszPtr == '\0' || (*pszPtr >= '0' && *pszPtr <= '9')) )
+                 pszPtr ++;
+            nRet = atoi(pszPtr);
+            break;
+        }
+    }
+    fclose(fp);
+    return nRet;
+}
+#else
+#error CPLGetProcessMemorySize() unimplemented for this OS
+#endif
+
+#endif // def MEMORY_DEBUG
+
+/************************************************************************/
 /*                              CPLDebug()                              */
 /************************************************************************/
 
@@ -397,6 +432,16 @@ void CPLDebug( const char * pszCategory, const char * pszFormat, ... )
         strcat( pszMessage, ": " );
     }
 #endif
+
+/* -------------------------------------------------------------------- */
+/*      Add the process memory size.                                    */
+/* -------------------------------------------------------------------- */
+#ifdef MEMORY_DEBUG
+    char szVmSize[32];
+    sprintf( szVmSize, "[VmSize: %d] ", CPLGetProcessMemorySize());
+    strcat( pszMessage, szVmSize );
+#endif
+
     //sprintf(pszMessage,"[%d] ", (int)getpid());
 
 /* -------------------------------------------------------------------- */
