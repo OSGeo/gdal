@@ -195,6 +195,10 @@ CNCSError GDALECWCompressor::WriteReadLine( UINT32 nNextLine,
     GByte *pabyLineBuf;
     int nWordSize = GDALGetDataTypeSize( eWorkDT ) / 8;
 
+#ifdef DEBUG_VERBOSE
+    CPLDebug("ECW", "nNextLine = %d", nNextLine);
+#endif
+
     panBandMap = (int *) CPLMalloc(sizeof(int) * sFileInfo.nBands);
     for( iBand = 0; iBand < sFileInfo.nBands; iBand++ )
         panBandMap[iBand] = iBand+1;
