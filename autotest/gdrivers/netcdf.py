@@ -1223,6 +1223,40 @@ def netcdf_34():
     return 'success'
 
 ###############################################################################
+# test writing a long metadata > 8196 chars (bug #5113)
+def netcdf_35():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ifile = 'data/netcdf_fixes.nc'
+    ofile = 'tmp/netcdf_35.nc'
+
+    # copy file
+    result = netcdf_test_copy( ifile, 0, None, ofile )
+    if result != 'success':
+        return 'fail'
+
+    # test long metadata is copied correctly
+    ds = gdal.Open( ofile )
+    if ds is None:
+        gdaltest.post_reason( 'open of copy failed' )
+        return 'fail'
+    md = ds.GetMetadata( '' )
+    if not 'U#bla' in md:
+        gdaltest.post_reason( 'U#bla metadata absent' )
+        return 'fail'
+    bla = md['U#bla']
+    if not len(bla) == 9591:
+        gdaltest.post_reason( 'U#bla metadata is of length %d, expecting %d' % (len(bla),9591) )
+        return 'fail'
+    if not bla[-4:] == '_bla':
+        gdaltest.post_reason( 'U#bla metadata ends with [%s], expecting [%s]' % (bla[-4:], '_bla') )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 ###############################################################################
 # main tests list
@@ -1261,7 +1295,8 @@ gdaltest_list = [
     netcdf_31,
     netcdf_32,
     netcdf_33,
-    netcdf_34
+    netcdf_34,
+    netcdf_35
  ]
 
 ###############################################################################
