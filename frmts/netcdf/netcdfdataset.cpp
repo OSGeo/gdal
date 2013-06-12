@@ -2600,18 +2600,24 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
         }
         else
         {
-            nSpacingBegin   = (int) poDS->rint((pdfXCoord[1] - pdfXCoord[0]) * 1000);
+            nSpacingBegin   = (int) poDS->rint((pdfXCoord[1] - pdfXCoord[0]) * 10000);
             
             nSpacingMiddle  = (int) poDS->rint((pdfXCoord[xdim / 2] - 
-                                                pdfXCoord[(xdim / 2) + 1]) * 1000);
+                                                pdfXCoord[(xdim / 2) + 1]) * 10000);
             
             nSpacingLast    = (int) poDS->rint((pdfXCoord[xdim - 2] - 
-                                                pdfXCoord[xdim-1]) * 1000);       
+                                                pdfXCoord[xdim-1]) * 10000);       
             
             CPLDebug("GDAL_netCDF", 
                      "xdim: %ld nSpacingBegin: %d nSpacingMiddle: %d nSpacingLast: %d",
                      (long)xdim, nSpacingBegin, nSpacingMiddle, nSpacingLast );
-            
+#ifdef NCDF_DEBUG
+            CPLDebug("GDAL_netCDF", 
+                     "xcoords: %f %f %f %f %f %f",
+                     pdfXCoord[0], pdfXCoord[1], pdfXCoord[xdim / 2], pdfXCoord[(xdim / 2) + 1],
+                     pdfXCoord[xdim - 2], pdfXCoord[xdim-1]);
+#endif
+           
             if( ( abs( nSpacingBegin )  ==  abs( nSpacingLast )   ) &&
                 ( abs( nSpacingBegin )  ==  abs( nSpacingMiddle ) ) &&
                 ( abs( nSpacingMiddle ) ==  abs( nSpacingLast )   ) ) {
@@ -2633,28 +2639,34 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
         else
         {
             nSpacingBegin   = (int) poDS->rint((pdfYCoord[1] - pdfYCoord[0]) * 
-                                               1000); 	    
+                                               10000); 	    
 
             nSpacingMiddle  = (int) poDS->rint((pdfYCoord[ydim / 2] - 
                                                 pdfYCoord[(ydim / 2) + 1]) * 
-                                               1000);
+                                               10000);
 
             nSpacingLast    = (int) poDS->rint((pdfYCoord[ydim - 2] - 
                                                 pdfYCoord[ydim-1]) * 
-                                               1000);
+                                               10000);
 
             CPLDebug("GDAL_netCDF", 
                      "ydim: %ld nSpacingBegin: %d nSpacingMiddle: %d nSpacingLast: %d",
                      (long)ydim, nSpacingBegin, nSpacingMiddle, nSpacingLast );
+#ifdef NCDF_DEBUG
+            CPLDebug("GDAL_netCDF", 
+                     "ycoords: %f %f %f %f %f %f",
+                     pdfYCoord[0], pdfYCoord[1], pdfYCoord[ydim / 2], pdfYCoord[(ydim / 2) + 1],
+                     pdfYCoord[ydim - 2], pdfYCoord[ydim-1]);
+#endif
 
 /* -------------------------------------------------------------------- */
 /*   For Latitude we allow an error of 0.1 degrees for gaussian         */
 /*   gridding                                                           */
 /* -------------------------------------------------------------------- */
 
-            if( (( abs( abs(nSpacingBegin)  - abs(nSpacingLast) ) )   < 100 ) &&
-                (( abs( abs(nSpacingBegin)  - abs(nSpacingMiddle) ) ) < 100 ) &&
-                (( abs( abs(nSpacingMiddle) - abs(nSpacingLast) ) )   < 100 ) ) {
+            if( (( abs( abs(nSpacingBegin)  - abs(nSpacingLast) ) )   < 1000 ) &&
+                (( abs( abs(nSpacingBegin)  - abs(nSpacingMiddle) ) ) < 1000 ) &&
+                (( abs( abs(nSpacingMiddle) - abs(nSpacingLast) ) )   < 1000 ) ) {
 
                 bLatSpacingOK = TRUE;
 
