@@ -498,7 +498,10 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
 /*      Do some rudimentary arg checking.                               */
 /* -------------------------------------------------------------------- */
     if( nBandCount == 0 || nGeomCount == 0 )
+    {
+        pfnProgress(1.0, "", pProgressArg );
         return CE_None;
+    }
 
     // prototype band.
     GDALRasterBand *poBand = poDS->GetRasterBand( panBandList[0] );
