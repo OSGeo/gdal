@@ -1257,6 +1257,31 @@ def netcdf_35():
     return 'success'
 
 ###############################################################################
+# test for correct geotransform (bug #5114)
+def netcdf_36():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ifile = 'data/netcdf_fixes.nc'
+
+    ds = gdal.Open( ifile )
+    if ds is None:
+        gdaltest.post_reason( 'open failed' )
+        return 'fail'
+
+    gt = ds.GetGeoTransform( )
+    if gt is None:
+        gdaltest.post_reason( 'got no GeoTransform' )
+        return 'fail'
+    gt_expected = (-3.498749944898817, 0.0025000042385525173, 0.0, 46.61749818589952, 0.0, -0.001666598849826389)
+    if gt != gt_expected:
+        gdaltest.post_reason( 'got GeoTransform %s, expected %s' % (str(gt), str(gt_expected)) )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 ###############################################################################
 # main tests list
@@ -1296,7 +1321,8 @@ gdaltest_list = [
     netcdf_32,
     netcdf_33,
     netcdf_34,
-    netcdf_35
+    netcdf_35,
+    netcdf_36
  ]
 
 ###############################################################################
