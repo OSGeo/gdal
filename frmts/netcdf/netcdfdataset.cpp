@@ -52,6 +52,7 @@ void NCDFWriteProjAttribs(const OGR_SRSNode *poPROJCS,
                             const int fpImage, const int NCDFVarID);
 
 CPLErr NCDFSafeStrcat(char** ppszDest, char* pszSrc, size_t* nDestSize);
+CPLErr NCDFSafeStrcpy(char** ppszDest, char* pszSrc, size_t* nDestSize);
 
 /* var / attribute helper functions */
 CPLErr NCDFGetAttr( int nCdfId, int nVarId, const char *pszAttrName, 
@@ -4907,7 +4908,8 @@ void CopyMetadata( void  *poDS, int fpImage, int CDFVarID,
     char       **papszFieldData=NULL;
     const char *pszField;
     char       szMetaName[ NCDF_MAX_STR_LEN ];
-    char       szMetaValue[ NCDF_MAX_STR_LEN ];
+    size_t     nAttrValueSize =  NCDF_MAX_STR_LEN;
+    char       *pszMetaValue = (char *) CPLMalloc(sizeof(char) * nAttrValueSize);
     char       szTemp[ NCDF_MAX_STR_LEN ];
     int        nItems;
 
@@ -4932,8 +4934,14 @@ void CopyMetadata( void  *poDS, int fpImage, int CDFVarID,
         papszFieldData = CSLTokenizeString2 (pszField, "=", 
                                              CSLT_HONOURSTRINGS );
         if( papszFieldData[1] != NULL ) {
+
+#ifdef NCDF_DEBUG
+            CPLDebug( "GDAL_netCDF", "copy metadata [%s]=[%s]", 
+                      papszFieldData[ 0 ], papszFieldData[ 1 ] );
+#endif
+
             strcpy( szMetaName,  papszFieldData[ 0 ] );
-            strcpy( szMetaValue, papszFieldData[ 1 ] );
+            NCDFSafeStrcpy(&pszMetaValue, papszFieldData[ 1 ], &nAttrValueSize);
 
             /* check for items that match pszPrefix if applicable */
             if ( ( pszPrefix != NULL ) && ( !EQUAL( pszPrefix, "" ) ) ) {
@@ -5000,12 +5008,12 @@ void CopyMetadata( void  *poDS, int fpImage, int CDFVarID,
 
 #ifdef NCDF_DEBUG
             CPLDebug( "GDAL_netCDF", "copy name=[%s] value=[%s]",
-                      szMetaName, szMetaValue );
+                      szMetaName, pszMetaValue );
 #endif
             if ( NCDFPutAttr( fpImage, CDFVarID,szMetaName, 
-                              szMetaValue ) != CE_None )
+                              pszMetaValue ) != CE_None )
                 CPLDebug( "GDAL_netCDF", "NCDFPutAttr(%d, %d, %s, %s) failed", 
-                          fpImage, CDFVarID,szMetaName, szMetaValue );
+                          fpImage, CDFVarID,szMetaName, pszMetaValue );
         }
     }
     if ( papszFieldData ) CSLDestroy( papszFieldData );
@@ -6218,8 +6226,26 @@ CPLErr NCDFSafeStrcat(char** ppszDest, char* pszSrc, size_t* nDestSize)
     while(*nDestSize < (strlen(*ppszDest) + strlen(pszSrc) + 1)) {
         (*nDestSize) *= 2;
         *ppszDest = (char*) CPLRealloc((void*) *ppszDest, *nDestSize);
+#ifdef NCDF_DEBUG
+        CPLDebug( "GDAL_netCDF", "NCDFSafeStrcat() resized str from %ld to %ld", (*nDestSize)/2, *nDestSize );
+#endif
     }
     strcat(*ppszDest, pszSrc);
+    
+    return CE_None;
+}
+
+CPLErr NCDFSafeStrcpy(char** ppszDest, char* pszSrc, size_t* nDestSize)
+{
+    /* Reallocate the data string until the content fits */
+    while(*nDestSize < (strlen(*ppszDest) + strlen(pszSrc) + 1)) {
+        (*nDestSize) *= 2;
+        *ppszDest = (char*) CPLRealloc((void*) *ppszDest, *nDestSize);
+#ifdef NCDF_DEBUG
+        CPLDebug( "GDAL_netCDF", "NCDFSafeStrcpy() resized str from %ld to %ld", (*nDestSize)/2, *nDestSize );
+#endif
+    }
+    strcpy(*ppszDest, pszSrc);
     
     return CE_None;
 }
@@ -6244,8 +6270,16 @@ CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
     if ( status != NC_NOERR )
         return CE_Failure;
 
-    /* Allocate guaranteed minimum size */
+#ifdef NCDF_DEBUG
+    CPLDebug( "GDAL_netCDF", "NCDFGetAttr1(%s) len=%ld type=%d", pszAttrName, nAttrLen, nAttrType );
+#endif
+
+    /* Allocate guaranteed minimum size (use 10 or 20 if not a string) */
     nAttrValueSize = nAttrLen + 1;
+    if ( nAttrType != NC_CHAR && nAttrValueSize < 10 )
+        nAttrValueSize = 10;
+    if ( nAttrType == NC_DOUBLE && nAttrValueSize < 20 )
+        nAttrValueSize = 20;
     pszAttrValue = (char *) CPLCalloc( nAttrValueSize, sizeof( char ));
     *pszAttrValue = '\0';
 
