@@ -747,8 +747,9 @@ void  CPLCondWait( void *hCond, void* hClientMutex )
     /* Release the client mutex before waiting for the event being signaled */
     CPLReleaseMutex(hClientMutex);
 
-    DWORD nRet = WaitForSingleObject(hEvent, INFINITE);
-    CPLAssert (nRet != WAIT_FAILED);
+    // Ideally we would check that we do not get WAIT_FAILED but it is hard 
+    // to report a failure.
+    WaitForSingleObject(hEvent, INFINITE);
 
     /* Reacquire the client mutex */
     CPLAcquireMutex(hClientMutex, 1000.0);
