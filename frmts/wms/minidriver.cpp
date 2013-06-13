@@ -2,8 +2,7 @@
  * $Id$
  *
  * Project:  WMS Client Driver
- * Purpose:  Implementation of Dataset and RasterBand classes for WMS
- *           and other similar services.
+ * Purpose:  GDALWMSMiniDriver base class implementation.
  * Author:   Adam Nowacki, nowak@xpam.de
  *
  ******************************************************************************
@@ -28,7 +27,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "stdinc.h"
+#include "wmsdriver.h"
 
 static volatile GDALWMSMiniDriverManager *g_mini_driver_manager = NULL;
 static void *g_mini_driver_manager_mutex = NULL;

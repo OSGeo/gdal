@@ -1,8 +1,9 @@
 
 include ../../GDALmake.opt
 
-OBJ =	cache.o dataset.o gdalhttp.o md5.o minidriver.o \
-	rasterband.o stuff.o wmsdriver.o minidriver_wms.o \
+OBJ =	gdalwmscache.o gdalwmsdataset.o gdalwmsrasterband.o \
+	gdalhttp.o md5.o minidriver.o \
+	wmsutils.o wmsdriver.o minidriver_wms.o \
 	minidriver_tileservice.o minidriver_worldwind.o \
 	minidriver_tms.o minidriver_tiled_wms.o wmsmetadataset.o \
 	minidriver_virtualearth.o

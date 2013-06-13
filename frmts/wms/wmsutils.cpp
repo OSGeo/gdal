@@ -2,8 +2,7 @@
  * $Id$
  *
  * Project:  WMS Client Driver
- * Purpose:  Implementation of Dataset and RasterBand classes for WMS
- *           and other similar services.
+ * Purpose:  Supporting utility functions for GDAL WMS driver.
  * Author:   Adam Nowacki, nowak@xpam.de
  *
  ******************************************************************************
@@ -28,7 +27,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "stdinc.h"
+#include "wmsdriver.h"
 
 CPLString MD5String(const char *s) {
     unsigned char hash[16];

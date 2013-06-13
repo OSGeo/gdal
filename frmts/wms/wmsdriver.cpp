@@ -28,8 +28,15 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "stdinc.h"
+#include "wmsdriver.h"
 #include "wmsmetadataset.h"
+
+#include "minidriver_wms.h"
+#include "minidriver_tileservice.h"
+#include "minidriver_worldwind.h"
+#include "minidriver_tms.h"
+#include "minidriver_tiled_wms.h"
+#include "minidriver_virtualearth.h"
 
 /************************************************************************/
 /*              GDALWMSDatasetGetConfigFromURL()                        */
