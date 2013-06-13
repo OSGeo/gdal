@@ -37,6 +37,9 @@
 
 #include "stdinc.h"
 
+/************************************************************************/
+/*                           GDALWMSDataset()                           */
+/************************************************************************/
 GDALWMSDataset::GDALWMSDataset() {
     m_mini_driver = 0;
     m_cache = 0;
@@ -56,12 +59,18 @@ GDALWMSDataset::GDALWMSDataset() {
     m_poColorTable = NULL;
 }
 
+/************************************************************************/
+/*                          ~GDALWMSDataset()                           */
+/************************************************************************/
 GDALWMSDataset::~GDALWMSDataset() {
     if (m_mini_driver) delete m_mini_driver;
     if (m_cache) delete m_cache;
     if (m_poColorTable) delete m_poColorTable;
 }
 
+/************************************************************************/
+/*                             Initialize()                             */
+/************************************************************************/
 CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
     CPLErr ret = CE_None;
 
@@ -107,7 +116,7 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
             else
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                                "GDALWMS: No mini-driver registered for '%s'.", service_name.c_str());
+                         "GDALWMS: No mini-driver registered for '%s'.", service_name.c_str());
                 ret = CE_Failure;
             }
         }
@@ -125,15 +134,15 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
 
 
     /*
-    Parameters that could be set by minidriver already, based on server side information.
-    If the size is set, minidriver has done this already
-    A "server" side minidriver needs to set at least:
+      Parameters that could be set by minidriver already, based on server side information.
+      If the size is set, minidriver has done this already
+      A "server" side minidriver needs to set at least:
       - Blocksize (x and y)
       - Clamp flag (defaults to true)
       - DataWindow
       - Band Count
       - Data Type
-    It should also initialize and register the bands and overviews.
+      It should also initialize and register the bands and overviews.
     */
 
     if (m_data_window.m_sx<1)
@@ -282,7 +291,7 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
                         m_data_window.m_y_origin = GDALWMSDataWindow::DEFAULT;
                     } else {
                         CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: DataWindow YOrigin must be set to "
-                            "one of 'default', 'top', or 'bottom', not '%s'.", y_origin_str.c_str());
+                                 "one of 'default', 'top', or 'bottom', not '%s'.", y_origin_str.c_str());
                         ret = CE_Failure;
                     }
                 }
@@ -372,7 +381,7 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
                 int code = atoi(kv[i]);
                 if(code <= 0) {
                     CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Invalid value of ZeroBlockHttpCodes \"%s\", comma separated HTTP response codes expected.",
-                            kv[i]);
+                             kv[i]);
                     ret = CE_Failure;
                     break;
                 }
@@ -388,7 +397,7 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
             m_zeroblock_on_serverexceptions = StrToBool(pszZeroExceptions);
             if (m_zeroblock_on_serverexceptions == -1) {
                 CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Invalid value of ZeroBlockOnServerException \"%s\", true/false expected.",
-                     pszZeroExceptions);
+                         pszZeroExceptions);
                 ret = CE_Failure;
             }
         }
@@ -473,16 +482,16 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
     // Same for Min, Max and NoData, defined per band or per dataset
     // If they are set as null strings, they clear the server declared values
     if (ret == CE_None) {
-       // Data values are attributes, they include NoData Min and Max
-       // TODO: document those options
-       if (0!=CPLGetXMLNode(config,"DataValues")) {
-           const char *nodata=CPLGetXMLValue(config,"DataValues.NoData",NULL);
-           if (nodata!=NULL) WMSSetNoDataValue(nodata);
-           const char *min=CPLGetXMLValue(config,"DataValues.min",NULL);
-           if (min!=NULL) WMSSetMinValue(min);
-           const char *max=CPLGetXMLValue(config,"DataValues.max",NULL);
-           if (max!=NULL) WMSSetMaxValue(max);
-       }
+        // Data values are attributes, they include NoData Min and Max
+        // TODO: document those options
+        if (0!=CPLGetXMLNode(config,"DataValues")) {
+            const char *nodata=CPLGetXMLValue(config,"DataValues.NoData",NULL);
+            if (nodata!=NULL) WMSSetNoDataValue(nodata);
+            const char *min=CPLGetXMLValue(config,"DataValues.min",NULL);
+            if (min!=NULL) WMSSetMinValue(min);
+            const char *max=CPLGetXMLValue(config,"DataValues.max",NULL);
+            if (max!=NULL) WMSSetMaxValue(max);
+        }
     }
 
     if (ret == CE_None) {
@@ -521,6 +530,9 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
     return ret;
 }
 
+/************************************************************************/
+/*                             IRasterIO()                              */
+/************************************************************************/
 CPLErr GDALWMSDataset::IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy, void *buffer, int bsx, int bsy, GDALDataType bdt, int band_count, int *band_map, int pixel_space, int line_space, int band_space) {
     CPLErr ret;
 
@@ -541,14 +553,23 @@ CPLErr GDALWMSDataset::IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy, 
     return ret;
 }
 
+/************************************************************************/
+/*                          GetProjectionRef()                          */
+/************************************************************************/
 const char *GDALWMSDataset::GetProjectionRef() {
     return m_projection.c_str();
 }
 
+/************************************************************************/
+/*                           SetProjection()                            */
+/************************************************************************/
 CPLErr GDALWMSDataset::SetProjection(const char *proj) {
     return CE_Failure;
 }
 
+/************************************************************************/
+/*                          GetGeoTransform()                           */
+/************************************************************************/
 CPLErr GDALWMSDataset::GetGeoTransform(double *gt) {
     gt[0] = m_data_window.m_x0;
     gt[1] = (m_data_window.m_x1 - m_data_window.m_x0) / static_cast<double>(m_data_window.m_sx);
@@ -559,100 +580,16 @@ CPLErr GDALWMSDataset::GetGeoTransform(double *gt) {
     return CE_None;
 }
 
+/************************************************************************/
+/*                          SetGeoTransform()                           */
+/************************************************************************/
 CPLErr GDALWMSDataset::SetGeoTransform(double *gt) {
     return CE_Failure;
 }
 
-const GDALWMSDataWindow *GDALWMSDataset::WMSGetDataWindow() const {
-    return &m_data_window;
-}
-
-void GDALWMSDataset::WMSSetBlockSize(int x, int y) {
-    m_block_size_x=x;
-    m_block_size_y=y;
-}
-
-void GDALWMSDataset::WMSSetRasterSize(int x, int y) {
-    nRasterXSize=x;
-    nRasterYSize=y;
-}
-
-void GDALWMSDataset::WMSSetBandsCount(int count) {
-    nBands=count;
-}
-
-void GDALWMSDataset::WMSSetClamp(bool flag=true) {
-    m_clamp_requests=flag;
-}
-
-void GDALWMSDataset::WMSSetDataType(GDALDataType type) {
-    m_data_type=type;
-}
-
-void GDALWMSDataset::WMSSetDataWindow(GDALWMSDataWindow &window) {
-    m_data_window=window;
-}
-
-void GDALWMSDataset::WMSSetDefaultBlockSize(int x, int y) {
-    m_default_block_size_x=x;
-    m_default_block_size_y=y;
-}
-
-void GDALWMSDataset::WMSSetDefaultDataWindowCoordinates(double x0, double y0, double x1, double y1)
-{
-    m_default_data_window.m_x0 = x0;
-    m_default_data_window.m_y0 = y0;
-    m_default_data_window.m_x1 = x1;
-    m_default_data_window.m_y1 = y1;
-}
-
-void GDALWMSDataset::WMSSetDefaultTileCount(int tilecountx, int tilecounty)
-{
-    m_default_tile_count_x = tilecountx;
-    m_default_tile_count_y = tilecounty;
-}
-
-void GDALWMSDataset::WMSSetDefaultTileLevel(int tlevel)
-{
-    m_default_data_window.m_tlevel = tlevel;
-}
-
-void GDALWMSDataset::WMSSetDefaultOverviewCount(int overview_count)
-{
-    m_default_overview_count = overview_count;
-}
-
-void GDALWMSDataset::WMSSetNeedsDataWindow(int flag)
-{
-    m_bNeedsDataWindow = flag;
-}
-
-static void list2vec(std::vector<double> &v,const char *pszList)
-{
-    if ((pszList==NULL)||(pszList[0]==0)) return;
-    char **papszTokens=CSLTokenizeString2(pszList," \t\n\r",
-        CSLT_STRIPLEADSPACES|CSLT_STRIPENDSPACES);
-    v.clear();
-    for (int i=0;i<CSLCount(papszTokens);i++)
-        v.push_back(CPLStrtod(papszTokens[i],NULL));
-    CSLDestroy(papszTokens);
-}
-
-void GDALWMSDataset::WMSSetNoDataValue(const char * pszNoData)
-{
-    list2vec(vNoData,pszNoData);
-}
-
-void GDALWMSDataset::WMSSetMinValue(const char * pszMin)
-{
-    list2vec(vMin,pszMin);
-}
-
-void GDALWMSDataset::WMSSetMaxValue(const char * pszMax)
-{
-    list2vec(vMax,pszMax);
-}
-
+/************************************************************************/
+/*                             AdviseRead()                             */
+/************************************************************************/
 CPLErr GDALWMSDataset::AdviseRead(int x0, int y0, int sx, int sy, int bsx, int bsy, GDALDataType bdt, int band_count, int *band_map, char **options) {
 //    printf("AdviseRead(%d, %d, %d, %d)\n", x0, y0, sx, sy);
     if (m_offline_mode || !m_use_advise_read) return CE_None;
@@ -663,6 +600,9 @@ CPLErr GDALWMSDataset::AdviseRead(int x0, int y0, int sx, int sy, int bsx, int b
     return band->AdviseRead(x0, y0, sx, sy, bsx, bsy, bdt, options);
 }
 
+/************************************************************************/
+/*                          GetMetadataItem()                           */
+/************************************************************************/
 const char *GDALWMSDataset::GetMetadataItem( const char * pszName,
                                              const char * pszDomain )
 {
