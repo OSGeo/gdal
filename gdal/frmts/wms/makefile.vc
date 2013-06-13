@@ -1,7 +1,10 @@
 
-OBJ	=	cache.obj dataset.obj gdalhttp.obj md5.obj minidriver.obj rasterband.obj stuff.obj wmsdriver.obj \
-		minidriver_wms.obj minidriver_tileservice.obj minidriver_worldwind.obj minidriver_tms.obj minidriver_tiled_wms.obj \
-		wmsmetadataset.obj minidriver_virtualearth.obj
+OBJ	= \
+	gdalwmscache.obj gdalwmsdataset.obj gdalwmsrasterband.obj wmsutils.obj \
+	gdalhttp.obj md5.obj minidriver.obj  wmsdriver.obj \
+	minidriver_wms.obj minidriver_tileservice.obj \
+	minidriver_worldwind.obj minidriver_tms.obj minidriver_tiled_wms.obj \
+	wmsmetadataset.obj minidriver_virtualearth.obj
 
 EXTRAFLAGS = -DHAVE_CURL $(CURL_CFLAGS) $(CURL_INC)
 

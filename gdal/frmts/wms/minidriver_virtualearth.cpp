@@ -28,7 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "stdinc.h"
+#include "wmsdriver.h"
+#include "minidriver_virtualearth.h"
+
 
 CPP_GDALWMSMiniDriverFactory(VirtualEarth)
 

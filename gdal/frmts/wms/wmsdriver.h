@@ -28,6 +28,26 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef WMSDRIVER_H_INCLUDED
+#define WMSDRIVER_H_INCLUDED
+
+#include <math.h>
+#include <vector>
+#include <list>
+#include <algorithm>
+#include <curl/curl.h>
+
+#include "cpl_conv.h"
+#include "cpl_http.h"
+#include "cpl_multiproc.h"
+#include "gdal_pam.h"
+#include "ogr_spatialref.h"
+#include "gdalwarper.h"
+#include "gdal_alg.h"
+
+#include "md5.h"
+#include "gdalhttp.h"
+
 class GDALWMSDataset;
 class GDALWMSRasterBand;
 
@@ -413,3 +433,5 @@ protected:
 
 GDALWMSMiniDriverManager *GetGDALWMSMiniDriverManager();
 void DestroyWMSMiniDriverManager(void);
+
+#endif /* notdef WMSDRIVER_H_INCLUDED */
