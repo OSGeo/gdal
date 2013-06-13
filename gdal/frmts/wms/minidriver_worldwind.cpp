@@ -28,7 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "stdinc.h"
+#include "wmsdriver.h"
+#include "minidriver_worldwind.h"
 
 CPP_GDALWMSMiniDriverFactory(WorldWind)
 

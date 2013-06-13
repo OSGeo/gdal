@@ -28,7 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "stdinc.h"
+#include "wmsdriver.h"
+#include "minidriver_tms.h"
+
 
 CPP_GDALWMSMiniDriverFactory(TMS)
 

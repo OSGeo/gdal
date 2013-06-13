@@ -28,7 +28,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "stdinc.h"
+#include "wmsdriver.h"
 
 GDALWMSCache::GDALWMSCache() {
     m_cache_path = "./gdalwmscache";
