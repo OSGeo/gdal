@@ -31,6 +31,9 @@
 class GDALWMSDataset;
 class GDALWMSRasterBand;
 
+/* -------------------------------------------------------------------- */
+/*      Helper functions.                                               */
+/* -------------------------------------------------------------------- */
 CPLString MD5String(const char *s);
 CPLString ProjToWKT(const CPLString &proj);
 void URLAppend(CPLString *url, const char *s);
@@ -71,6 +74,10 @@ public:
     int m_x, m_y;
     int m_level;
 };
+
+/************************************************************************/
+/*                         Mini Driver Related                          */
+/************************************************************************/
 
 class GDALWMSRasterIOHint {
 public:
@@ -179,6 +186,10 @@ public: \
     delete instance; \
 }
 
+/************************************************************************/
+/*                            GDALWMSCache                              */
+/************************************************************************/
+
 class GDALWMSCache {
 public:
     GDALWMSCache();
@@ -198,6 +209,10 @@ protected:
     int m_cache_depth;
 };
 
+/************************************************************************/
+/*                            GDALWMSDataset                            */
+/************************************************************************/
+
 class GDALWMSDataset : public GDALPamDataset {
     friend class GDALWMSRasterBand;
 
@@ -213,29 +228,91 @@ public:
     virtual const char *GetMetadataItem( const char * pszName,
                                          const char * pszDomain = "" );
 
-    const GDALWMSDataWindow *WMSGetDataWindow() const;
-    void WMSSetClamp(bool flag);
-    void WMSSetBlockSize(int x, int y);
-    void WMSSetRasterSize(int x, int y);
-    void WMSSetDataType(GDALDataType type);
-    void WMSSetDataWindow(GDALWMSDataWindow &window);
-    void WMSSetBandsCount(int count);
     void SetColorTable(GDALColorTable *pct) { m_poColorTable=pct; }
-
-    void WMSSetNoDataValue(const char * pszNoData);
-    void WMSSetMinValue(const char* pszMin);
-    void WMSSetMaxValue(const char* pszMax);
 
     void mSetBand(int i, GDALRasterBand *band) { SetBand(i,band); };
     GDALWMSRasterBand *mGetBand(int i) { return reinterpret_cast<GDALWMSRasterBand *>(GetRasterBand(i)); };
 
+    const GDALWMSDataWindow *WMSGetDataWindow() const {
+        return &m_data_window;
+    }
 
-    void WMSSetDefaultDataWindowCoordinates(double x0, double y0, double x1, double y1);
-    void WMSSetDefaultTileLevel(int tlevel);
-    void WMSSetDefaultTileCount(int tilecountx, int tilecounty);
-    void WMSSetDefaultBlockSize(int x, int y);
-    void WMSSetDefaultOverviewCount(int overview_count);
-    void WMSSetNeedsDataWindow(int flag);
+    void WMSSetBlockSize(int x, int y) {
+        m_block_size_x=x;
+        m_block_size_y=y;
+    }
+
+    void WMSSetRasterSize(int x, int y) {
+        nRasterXSize=x;
+        nRasterYSize=y;
+    }
+
+    void WMSSetBandsCount(int count) {
+        nBands=count;
+    }
+
+    void WMSSetClamp(bool flag=true) {
+        m_clamp_requests=flag;
+    }
+
+    void WMSSetDataType(GDALDataType type) {
+        m_data_type=type;
+    }
+
+    void WMSSetDataWindow(GDALWMSDataWindow &window) {
+        m_data_window=window;
+    }
+
+    void WMSSetDefaultBlockSize(int x, int y) {
+        m_default_block_size_x=x;
+        m_default_block_size_y=y;
+    }
+
+    void WMSSetDefaultDataWindowCoordinates(double x0, double y0, double x1, double y1) {
+        m_default_data_window.m_x0 = x0;
+        m_default_data_window.m_y0 = y0;
+        m_default_data_window.m_x1 = x1;
+        m_default_data_window.m_y1 = y1;
+    }
+
+    void WMSSetDefaultTileCount(int tilecountx, int tilecounty) {
+        m_default_tile_count_x = tilecountx;
+        m_default_tile_count_y = tilecounty;
+    }
+
+    void WMSSetDefaultTileLevel(int tlevel) {
+        m_default_data_window.m_tlevel = tlevel;
+    }
+
+    void WMSSetDefaultOverviewCount(int overview_count) {
+        m_default_overview_count = overview_count;
+    }
+
+    void WMSSetNeedsDataWindow(int flag) {
+        m_bNeedsDataWindow = flag;
+    }
+    
+    static void list2vec(std::vector<double> &v,const char *pszList) {
+        if ((pszList==NULL)||(pszList[0]==0)) return;
+        char **papszTokens=CSLTokenizeString2(pszList," \t\n\r",
+                                              CSLT_STRIPLEADSPACES|CSLT_STRIPENDSPACES);
+        v.clear();
+        for (int i=0;i<CSLCount(papszTokens);i++)
+            v.push_back(CPLStrtod(papszTokens[i],NULL));
+        CSLDestroy(papszTokens);
+    }
+
+    void WMSSetNoDataValue(const char * pszNoData) {
+        list2vec(vNoData,pszNoData);
+    }
+
+    void WMSSetMinValue(const char * pszMin) {
+        list2vec(vMin,pszMin);
+    }
+
+    void WMSSetMaxValue(const char * pszMax) {
+        list2vec(vMax,pszMax);
+    }
 
     static GDALDataset* Open(GDALOpenInfo *poOpenInfo);
     static int Identify(GDALOpenInfo *poOpenInfo);
@@ -281,6 +358,10 @@ protected:
 
     CPLString m_osXML;
 };
+
+/************************************************************************/
+/*                            GDALWMSRasterBand                         */
+/************************************************************************/
 
 class GDALWMSRasterBand : public GDALPamRasterBand {
     friend class GDALWMSDataset;
