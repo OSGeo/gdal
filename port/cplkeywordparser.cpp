@@ -252,7 +252,7 @@ int CPLKeywordParser::ReadWord( CPLString &osWord )
 
     SkipWhite();
 
-    if( pszHeaderNext == '\0' )
+    if( *pszHeaderNext == '\0' )
         return FALSE;
 
     while( *pszHeaderNext != '\0' 
@@ -365,4 +365,3 @@ const char *CPLKeywordParser::GetKeyword( const char *pszPath,
     else
         return pszResult;
 }
-
