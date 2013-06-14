@@ -294,6 +294,12 @@ class CPL_DLL GDALDataset : public GDALMajorObject
                                int, int *, int, int, int );
     void   BlockBasedFlushCache();
 
+    CPLErr ValidateRasterIOOrAdviseReadParameters(
+                               const char* pszCallingFunc,
+                               int nXOff, int nYOff, int nXSize, int nYSize,
+                               int nBufXSize, int nBufYSize, 
+                               int nBandCount, int *panBandMap);
+
     virtual int         CloseDependentDatasets();
 
     friend class GDALRasterBand;

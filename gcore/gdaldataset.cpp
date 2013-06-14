@@ -1498,6 +1498,77 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
     return eErr;
 }
 
+/************************************************************************/
+/*               ValidateRasterIOOrAdviseReadParameters()               */
+/************************************************************************/
+
+CPLErr GDALDataset::ValidateRasterIOOrAdviseReadParameters(
+                               const char* pszCallingFunc,
+                               int nXOff, int nYOff, int nXSize, int nYSize,
+                               int nBufXSize, int nBufYSize, 
+                               int nBandCount, int *panBandMap)
+{
+
+/* -------------------------------------------------------------------- */
+/*      Some size values are "noop".  Lets just return to avoid         */
+/*      stressing lower level functions.                                */
+/* -------------------------------------------------------------------- */
+    if( nXSize < 1 || nYSize < 1 || nBufXSize < 1 || nBufYSize < 1 )
+    {
+        CPLDebug( "GDAL", 
+                  "%s skipped for odd window or buffer size.\n"
+                  "  Window = (%d,%d)x%dx%d\n"
+                  "  Buffer = %dx%d\n",
+                  pszCallingFunc,
+                  nXOff, nYOff, nXSize, nYSize, 
+                  nBufXSize, nBufYSize );
+
+        return CE_None;
+    }
+
+    CPLErr eErr = CE_None;
+
+    if( nXOff < 0 || nXOff > INT_MAX - nXSize || nXOff + nXSize > nRasterXSize
+        || nYOff < 0 || nYOff > INT_MAX - nYSize || nYOff + nYSize > nRasterYSize )
+    {
+        ReportError( CE_Failure, CPLE_IllegalArg,
+                  "Access window out of range in %s.  Requested\n"
+                  "(%d,%d) of size %dx%d on raster of %dx%d.",
+                  pszCallingFunc, nXOff, nYOff, nXSize, nYSize, nRasterXSize, nRasterYSize );
+        eErr = CE_Failure;
+    }
+
+    if( panBandMap == NULL && nBandCount > GetRasterCount() )
+    {
+        ReportError( CE_Failure, CPLE_IllegalArg,
+                    "%s: nBandCount cannot be greater than %d",
+                    pszCallingFunc, GetRasterCount() );
+        eErr = CE_Failure;
+    }
+
+    for( int i = 0; i < nBandCount && eErr == CE_None; i++ )
+    {
+        int iBand = (panBandMap != NULL) ? panBandMap[i] : i + 1;
+        if( iBand < 1 || iBand > GetRasterCount() )
+        {
+            ReportError( CE_Failure, CPLE_IllegalArg,
+                      "%s: panBandMap[%d] = %d, this band does not exist on dataset.",
+                      pszCallingFunc, i, iBand );
+            eErr = CE_Failure;
+        }
+
+        if( eErr == CE_None && GetRasterBand( iBand ) == NULL )
+        {
+            ReportError( CE_Failure, CPLE_IllegalArg,
+                      "%s: panBandMap[%d]=%d, this band should exist but is NULL!",
+                      pszCallingFunc, i, iBand );
+            eErr = CE_Failure;
+        }
+    }
+
+    return eErr;
+}
+
 
 /************************************************************************/
 /*                              RasterIO()                              */
@@ -1512,7 +1583,7 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
  * translation if the data type (eBufType) of the buffer is different than
  * that of the GDALRasterBand.
  * The method also takes care of image decimation / replication if the
- * buffer size (nBufXSize x nBufYSize) is different than the size of the
+ * buffer size (nBufXSize x n    CPLErr eErr = CE_None;BufYSize) is different than the size of the
  * region being accessed (nXSize x nYSize).
  *
  * The nPixelSpace, nLineSpace and nBandSpace parameters allow reading into or
@@ -1591,24 +1662,27 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
     {
         ReportError( CE_Failure, CPLE_AppDefined,
                   "The buffer into which the data should be read is null" );
-            return CE_Failure;
+        return CE_Failure;
     }
+    
+/* -------------------------------------------------------------------- */
+/*      Do some validation of parameters.                               */
+/* -------------------------------------------------------------------- */
 
-/* -------------------------------------------------------------------- */
-/*      Some size values are "noop".  Lets just return to avoid         */
-/*      stressing lower level functions.                                */
-/* -------------------------------------------------------------------- */
-    if( nXSize < 1 || nYSize < 1 || nBufXSize < 1 || nBufYSize < 1 )
+    if( eRWFlag != GF_Read && eRWFlag != GF_Write )
     {
-        CPLDebug( "GDAL", 
-                  "RasterIO() skipped for odd window or buffer size.\n"
-                  "  Window = (%d,%d)x%dx%d\n"
-                  "  Buffer = %dx%d\n",
-                  nXOff, nYOff, nXSize, nYSize, 
-                  nBufXSize, nBufYSize );
-
-        return CE_None;
+        ReportError( CE_Failure, CPLE_IllegalArg,
+                  "eRWFlag = %d, only GF_Read (0) and GF_Write (1) are legal.",
+                  eRWFlag );
+        return CE_Failure;
     }
+
+    eErr = ValidateRasterIOOrAdviseReadParameters( "RasterIO()",
+                                                    nXOff, nYOff, nXSize, nYSize,
+                                                    nBufXSize, nBufYSize, 
+                                                    nBandCount, panBandMap);
+    if( eErr != CE_None )
+        return eErr;
 
 /* -------------------------------------------------------------------- */
 /*      If pixel and line spacing are defaulted assign reasonable      */
@@ -1644,13 +1718,6 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
 
     if( panBandMap == NULL )
     {
-        if (nBandCount > GetRasterCount())
-        {
-            ReportError( CE_Failure, CPLE_IllegalArg,
-                      "nBandCount cannot be greater than %d",
-                      GetRasterCount() );
-            return CE_Failure;
-        }
         panBandMap = (int *) VSIMalloc2(sizeof(int), nBandCount);
         if (panBandMap == NULL)
         {
@@ -1663,46 +1730,7 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
 
         bNeedToFreeBandMap = TRUE;
     }
-    
-/* -------------------------------------------------------------------- */
-/*      Do some validation of parameters.                               */
-/* -------------------------------------------------------------------- */
-    if( nXOff < 0 || nXOff > INT_MAX - nXSize || nXOff + nXSize > nRasterXSize
-        || nYOff < 0 || nYOff > INT_MAX - nYSize || nYOff + nYSize > nRasterYSize )
-    {
-        ReportError( CE_Failure, CPLE_IllegalArg,
-                  "Access window out of range in RasterIO().  Requested\n"
-                  "(%d,%d) of size %dx%d on raster of %dx%d.",
-                  nXOff, nYOff, nXSize, nYSize, nRasterXSize, nRasterYSize );
-        eErr = CE_Failure;
-    }
 
-    if( eRWFlag != GF_Read && eRWFlag != GF_Write )
-    {
-        ReportError( CE_Failure, CPLE_IllegalArg,
-                  "eRWFlag = %d, only GF_Read (0) and GF_Write (1) are legal.",
-                  eRWFlag );
-        eErr = CE_Failure;
-    }
-
-    for( i = 0; i < nBandCount && eErr == CE_None; i++ )
-    {
-        if( panBandMap[i] < 1 || panBandMap[i] > GetRasterCount() )
-        {
-            ReportError( CE_Failure, CPLE_IllegalArg,
-                      "panBandMap[%d] = %d, this band does not exist on dataset.",
-                      i, panBandMap[i] );
-            eErr = CE_Failure;
-        }
-
-        if( eErr == CE_None && GetRasterBand( panBandMap[i] ) == NULL )
-        {
-            ReportError( CE_Failure, CPLE_IllegalArg,
-                      "panBandMap[%d]=%d, this band should exist but is NULL!",
-                      i, panBandMap[i] );
-            eErr = CE_Failure;
-        }
-    }
 
 /* -------------------------------------------------------------------- */
 /*      We are being forced to use cached IO instead of a driver        */
@@ -1924,6 +1952,17 @@ CPLErr GDALDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
 
 {
     int iBand;
+
+/* -------------------------------------------------------------------- */
+/*      Do some validation of parameters.                               */
+/* -------------------------------------------------------------------- */
+
+    CPLErr eErr = ValidateRasterIOOrAdviseReadParameters( "AdviseRead()",
+                                                    nXOff, nYOff, nXSize, nYSize,
+                                                    nBufXSize, nBufYSize, 
+                                                    nBandCount, panBandMap);
+    if( eErr != CE_None )
+        return eErr;
 
     for( iBand = 0; iBand < nBandCount; iBand++ )
     {
