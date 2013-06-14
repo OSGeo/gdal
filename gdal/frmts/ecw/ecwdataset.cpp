@@ -1477,6 +1477,25 @@ CPLErr ECWDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
 #endif
 
 /* -------------------------------------------------------------------- */
+/*      Do some validation of parameters.                               */
+/* -------------------------------------------------------------------- */
+
+    CPLErr eErr;
+    eErr = ValidateRasterIOOrAdviseReadParameters( "AdviseRead()",
+                                                    nXOff, nYOff, nXSize, nYSize,
+                                                    nBufXSize, nBufYSize, 
+                                                    nBandCount, panBandList);
+    if( eErr != CE_None )
+        return eErr;
+    
+    if( nBandCount > 100 )
+    {
+        ReportError( CE_Failure, CPLE_IllegalArg,
+                     "AdviseRead(): Too many bands : %d", nBandCount);
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Adjust band numbers to be zero based.                           */
 /* -------------------------------------------------------------------- */
     panAdjustedBandList = (int *) 
@@ -1484,10 +1503,9 @@ CPLErr ECWDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
     nBandIndexToPromoteTo8Bit = -1;
     for( int ii= 0; ii < nBandCount; ii++ )
     {
-        if( ((ECWRasterBand*)GetRasterBand(panBandList[ii]))->bPromoteTo8Bit )
+        panAdjustedBandList[ii] = (panBandList != NULL) ? panBandList[ii] - 1 : ii;
+        if( ((ECWRasterBand*)GetRasterBand(panAdjustedBandList[ii] + 1))->bPromoteTo8Bit )
             nBandIndexToPromoteTo8Bit = ii;
-
-        panAdjustedBandList[ii] = panBandList[ii] - 1;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1527,7 +1545,15 @@ CPLErr ECWDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
     nWinBufYSize = nBufYSize;
 
     panWinBandList = (int *) CPLMalloc(sizeof(int)*nBandCount);
-    memcpy( panWinBandList, panBandList, sizeof(int)* nBandCount);
+    if( panBandList != NULL )
+        memcpy( panWinBandList, panBandList, sizeof(int)* nBandCount);
+    else
+    {
+        for( int ii= 0; ii < nBandCount; ii++ )
+        {
+            panWinBandList[ii] = ii + 1;
+        }
+    }
     nWinBandCount = nBandCount;
 
     nWinBufLoaded = -1;
