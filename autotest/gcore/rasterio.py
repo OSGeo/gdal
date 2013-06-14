@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -193,6 +194,25 @@ def rasterio_5():
 
     ds = gdal.Open('data/byte.tif')
 
+    for band_number in [-1,0,2]:
+        gdal.ErrorReset()
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
+        res = ds.ReadRaster(0,0,1,1,band_list=[band_number])
+        gdal.PopErrorHandler()
+        error_msg = gdal.GetLastErrorMsg()
+        if res is not None:
+            gdaltest.post_reason('expected None')
+            return 'fail'
+        if error_msg.find('this band does not exist on dataset') == -1:
+            gdaltest.post_reason('did not get expected error msg')
+            print(error_msg)
+            return 'fail'
+
+    res = ds.ReadRaster(0,0,1,1,band_list=[1,1])
+    if res is None:
+        gdaltest.post_reason('expected non None')
+        return 'fail'
+
     for obj in [ds, ds.GetRasterBand(1)]:
         gdal.ErrorReset()
         gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -221,7 +241,7 @@ def rasterio_5():
         if maxsize == 2147483647 and sys.platform != 'win32':
             gdal.ErrorReset()
             gdal.PushErrorHandler('CPLQuietErrorHandler')
-            res = obj.ReadRaster(0,0,1000000,1000000)
+            res = obj.ReadRaster(0,0,1,1,1000000,1000000)
             gdal.PopErrorHandler()
             error_msg = gdal.GetLastErrorMsg()
             if res is not None:
