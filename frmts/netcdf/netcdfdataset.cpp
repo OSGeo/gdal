@@ -4347,7 +4347,9 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     char         szExtraDimDef[NC_MAX_NAME];
     nc_type      nType=NC_NAT;
 
+#ifdef NCDF_DEBUG
     CPLDebug( "GDAL_netCDF", "\n=====\nOpen(), filename=[%s]", poOpenInfo->pszFilename );
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Does this appear to be a netcdf file?                           */
