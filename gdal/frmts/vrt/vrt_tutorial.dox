@@ -293,6 +293,14 @@ DestRect elements), but it provides support to rescale and offset
 the range of the source values. Certain regions of the source
 can be masked by specifying the NODATA value.
 
+Starting with GDAL 2.0, alternatively to linear scaling, non-linear
+scaling using a power function can be used by specifying the Exponent,
+SrcMin, SrcMax, DstMin and DstMax elements. If SrcMin and SrcMax are
+not specified, they are computed from the source minimum and maximum
+value (which might require analyzing the whole source dataset). Exponent
+must be positive. (Those 5 values can be set with the -exponent and -scale
+options of gdal_translate.)
+
 The ComplexSource supports adding a custom lookup table to transform 
 the source values to the destination. The LUT can be specified using
 the following form:
@@ -315,8 +323,8 @@ in the following order:
 <ol>
 <li>Nodata masking</li>
 <li>Color table expansion</li>
-<li>Applying the scale ratio</li>
-<li>Applying the scale offset</li>
+<li>For linear scaling, applying the scale ratio, then scale offset</li>
+<li>For non-linear scaling, apply (DstMax-DstMin) * pow( (SrcValue-SrcMin) / (SrcMax-SrcMin), Exponent) + DstMin</li>
 <li>Table lookup</li>
 </ol>
 
@@ -333,6 +341,23 @@ in the following order:
       <DstRect xOff="0" yOff="0" xSize="512" ySize="512"/>
     </ComplexSource>
 \endcode
+
+Non-linear scaling:
+
+\code
+    <ComplexSource>
+      <SourceFilename relativeToVRT="1">16bit.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <Exponent>0.75</Exponent>
+      <SrcMin>0</SrcMin>
+      <SrcMax>65535</SrcMax>
+      <DstMin>0</DstMin>
+      <DstMax>255</DstMax>
+      <SrcRect xOff="0" yOff="0" xSize="512" ySize="512"/>
+      <DstRect xOff="0" yOff="0" xSize="512" ySize="512"/>
+    </ComplexSource>
+\endcode
+
 </li>
 
 <li> <b>KernelFilteredSource</b>: This is a pixel source derived from the
