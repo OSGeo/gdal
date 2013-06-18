@@ -802,8 +802,8 @@ CPLErr VRTSourcedRasterBand::AddMaskBandSource( GDALRasterBand *poSrcBand,
 /* -------------------------------------------------------------------- */
     VRTSimpleSource* poSimpleSource = new VRTSimpleSource();
     poSimpleSource->SetSrcMaskBand( poSrcBand );
-    poSimpleSource->SetSrcWindow( 0, 0, poSrcBand->GetXSize(), poSrcBand->GetYSize() );
-    poSimpleSource->SetDstWindow( 0, 0, nRasterXSize, nRasterYSize );
+    poSimpleSource->SetSrcWindow( nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize );
+    poSimpleSource->SetDstWindow( nDstXOff, nDstYOff, nDstXSize, nDstYSize );
 
 /* -------------------------------------------------------------------- */
 /*      Default source and dest rectangles.                             */
