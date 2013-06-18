@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -372,6 +373,37 @@ def vrtmask_9():
         return 'fail'
         
     return 'success'
+    
+###############################################################################
+# Test fix for #5120 (VRTSourcedRasterBand::AddMaskBandSource() ignores specified window)
+
+def vrtmask_10():
+    import test_cli_utilities
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/stefan_full_rgba.tif tmp/vrtmask_10_ref.tif -srcwin 40 40 100 100')
+    gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/stefan_full_rgba.tif tmp/vrtmask_10.vrt -of vrt -b 1 -b 2 -b 3 -mask 4 -srcwin 30 30 120 120')
+    gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' tmp/vrtmask_10.vrt tmp/vrtmask_10_2.vrt  -of vrt -srcwin 5 5 110 110')
+    gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' tmp/vrtmask_10_2.vrt tmp/vrtmask_10_3.tif -b 1 -b 2 -b 3 -b mask -srcwin 5 5 100 100')
+
+    ds = gdal.Open('tmp/vrtmask_10_ref.tif')
+    cs_ref = ds.GetRasterBand(4).Checksum()
+    ds = None
+    ds = gdal.Open('tmp/vrtmask_10_3.tif')
+    cs_got = ds.GetRasterBand(4).Checksum()
+    ds = None
+
+    os.remove('tmp/vrtmask_10_ref.tif')
+    os.remove('tmp/vrtmask_10.vrt')
+    os.remove('tmp/vrtmask_10_2.vrt')
+    os.remove('tmp/vrtmask_10_3.tif')
+
+    if cs_ref != cs_got:
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # Cleanup.
 
@@ -388,6 +420,7 @@ gdaltest_list = [
     vrtmask_7,
     vrtmask_8,
     vrtmask_9,
+    vrtmask_10,
     vrtmask_cleanup ]
 
 if __name__ == '__main__':
