@@ -294,7 +294,7 @@ gdal_translate [--help-general]
              CInt16/CInt32/CFloat32/CFloat64}] [-strict]
        [-of format] [-b band] [-mask band] [-expand {gray|rgb|rgba}]
        [-outsize xsize[%] ysize[%]]
-       [-unscale] [-scale [src_min src_max [dst_min dst_max]]]
+       [-unscale] [-scale [src_min src_max [dst_min dst_max]]] [-exponent exp_val]
        [-srcwin xoff yoff xsize ysize] [-projwin ulx uly lrx lry] [-epo] [-eco]
        [-a_srs srs_def] [-a_ullr ulx uly lrx lry] [-a_nodata value]
        [-gcp pixel line easting northing [elevation]]*
@@ -342,6 +342,9 @@ input pixels values from the range <i>src_min</i> to <i>src_max</i> to
 the range <i>dst_min</i> to <i>dst_max</i>.  If omitted the output range is
 0 to 255.  If omitted the input range is automatically computed from the
 source data.</dd>
+<dt> <b>-exponent</b> <i> exp_val</i>:</dt><dd> (From GDAL 2.0) To apply non-linear scaling
+with a power function. exp_val is the exponent of the power function (must be postive). This option
+must be used with the -scale option.</dd>
 <dt> <b>-unscale</b>:</dt><dd> Apply the scale/offset metadata for the bands
 to convert scaled values to unscaled values.  It is also often necessary to 
 reset the output datatype with the <b>-ot</b> switch.</dd>

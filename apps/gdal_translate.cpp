@@ -57,7 +57,7 @@ static void Usage(const char* pszErrorMsg = NULL, int bShort = TRUE)
             "             CInt16/CInt32/CFloat32/CFloat64}] [-strict]\n"
             "       [-of format] [-b band] [-mask band] [-expand {gray|rgb|rgba}]\n"
             "       [-outsize xsize[%%] ysize[%%]]\n"
-            "       [-unscale] [-scale [src_min src_max [dst_min dst_max]]]\n"
+            "       [-unscale] [-scale [src_min src_max [dst_min dst_max]]] [-exponent exp_val]\n"
             "       [-srcwin xoff yoff xsize ysize] [-projwin ulx uly lrx lry] [-epo] [-eco]\n"
             "       [-a_srs srs_def] [-a_ullr ulx uly lrx lry] [-a_nodata value]\n"
             "       [-gcp pixel line easting northing [elevation]]*\n" 
@@ -280,6 +280,8 @@ static int ProxyMain( int argc, char ** argv )
     int                 anSrcWin[4], bStrict = FALSE;
     const char          *pszProjection;
     int                 bScale = FALSE, bHaveScaleSrc = FALSE, bUnscale=FALSE;
+    int                 bExponentScaling = FALSE;
+    double              dfExponent=0.0;
     double	        dfScaleSrcMin=0.0, dfScaleSrcMax=255.0;
     double              dfScaleDstMin=0.0, dfScaleDstMax=255.0;
     double              dfULX, dfULY, dfLRX, dfLRY;
@@ -536,7 +538,14 @@ static int ProxyMain( int argc, char ** argv )
                 dfScaleDstMin = 0.0;
                 dfScaleDstMax = 255.999;
             }
-        }   
+        }
+
+        else if( EQUAL(argv[i],"-exponent") )
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            bExponentScaling = TRUE;
+            dfExponent = CPLAtofM(argv[++i]);
+        }
 
         else if( EQUAL(argv[i], "-unscale") )
         {
@@ -663,6 +672,11 @@ static int ProxyMain( int argc, char ** argv )
     if ( strcmp(pszSource, pszDest) == 0)
     {
         Usage("Source and destination datasets must be different.");
+    }
+    
+    if( bExponentScaling && !bScale )
+    {
+        Usage("-scale should be specified when -exponent is specified.");
     }
 
     if( strcmp(pszDest, "/vsistdout/") == 0)
@@ -1243,9 +1257,12 @@ static int ProxyMain( int argc, char ** argv )
             if( dfScaleDstMax == dfScaleDstMin )
                 dfScaleDstMax += 0.1;
 
-            dfScale = (dfScaleDstMax - dfScaleDstMin) 
-                / (dfScaleSrcMax - dfScaleSrcMin);
-            dfOffset = -1 * dfScaleSrcMin * dfScale + dfScaleDstMin;
+            if( !bExponentScaling )
+            {
+                dfScale = (dfScaleDstMax - dfScaleDstMin) 
+                    / (dfScaleSrcMax - dfScaleSrcMin);
+                dfOffset = -1 * dfScaleSrcMin * dfScale + dfScaleDstMin;
+            }
         }
 
         if( bUnscale )
@@ -1260,14 +1277,35 @@ static int ProxyMain( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
         if( bUnscale || bScale || (nRGBExpand != 0 && i < nRGBExpand) )
         {
-            poVRTBand->AddComplexSource( poSrcBand,
-                                         anSrcWin[0], anSrcWin[1],
-                                         anSrcWin[2], anSrcWin[3],
-                                         anDstWin[0], anDstWin[1],
-                                         anDstWin[2], anDstWin[3],
-                                         dfOffset, dfScale,
-                                         VRT_NODATA_UNSET,
-                                         nComponent );
+            VRTComplexSource* poSource = new VRTComplexSource();
+            poVRTBand->ConfigureSource( poSource,
+                                        poSrcBand,
+                                        FALSE,
+                                        anSrcWin[0], anSrcWin[1],
+                                        anSrcWin[2], anSrcWin[3],
+                                        anDstWin[0], anDstWin[1],
+                                        anDstWin[2], anDstWin[3] );
+
+        /* -------------------------------------------------------------------- */
+        /*      Set complex parameters.                                         */
+        /* -------------------------------------------------------------------- */
+
+            if( dfOffset != 0.0 || dfScale != 1.0 )
+            {
+                poSource->SetLinearScaling(dfOffset, dfScale);
+            }
+            else if( bExponentScaling )
+            {
+                poSource->SetPowerScaling(dfExponent,
+                                          dfScaleSrcMin,
+                                          dfScaleSrcMax,
+                                          dfScaleDstMin,
+                                          dfScaleDstMax);
+            }
+
+            poSource->SetColorTableComponent(nComponent);
+
+            poVRTBand->AddSource( poSource );
         }
         else
             poVRTBand->AddSimpleSource( poSrcBand,

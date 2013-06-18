@@ -1255,7 +1255,7 @@ CPLErr VRTAveragedSource::GetHistogram( int nXSize, int nYSize,
 VRTComplexSource::VRTComplexSource()
 
 {
-    bDoScaling = FALSE;
+    eScalingType = VRT_SCALING_NONE;
     dfScaleOff = 0.0;
     dfScaleRatio = 1.0;
     
@@ -1266,6 +1266,13 @@ VRTComplexSource::VRTComplexSource()
     padfLUTOutputs = NULL;
     nLUTItemCount = 0;
     nColorTableComponent = 0;
+
+    bSrcMinMaxDefined = FALSE;
+    dfSrcMin = 0.0;
+    dfSrcMax = 0.0;
+    dfDstMin = 0.0;
+    dfDstMax = 0.0;
+    dfExponent = 1.0;
 }
 
 VRTComplexSource::~VRTComplexSource()
@@ -1300,12 +1307,34 @@ CPLXMLNode *VRTComplexSource::SerializeToXML( const char *pszVRTPath )
                             CPLSPrintf("%g", dfNoDataValue) );
     }
         
-    if( bDoScaling )
+    switch( eScalingType )
     {
-        CPLSetXMLValue( psSrc, "ScaleOffset", 
-                        CPLSPrintf("%g", dfScaleOff) );
-        CPLSetXMLValue( psSrc, "ScaleRatio", 
-                        CPLSPrintf("%g", dfScaleRatio) );
+        case VRT_SCALING_NONE:
+            break;
+
+        case VRT_SCALING_LINEAR:
+        {
+            CPLSetXMLValue( psSrc, "ScaleOffset", 
+                            CPLSPrintf("%g", dfScaleOff) );
+            CPLSetXMLValue( psSrc, "ScaleRatio", 
+                            CPLSPrintf("%g", dfScaleRatio) );
+            break;
+        }
+
+        case VRT_SCALING_EXPONENTIAL:
+        {
+            CPLSetXMLValue( psSrc, "Exponent", 
+                            CPLSPrintf("%g", dfExponent) );
+            CPLSetXMLValue( psSrc, "SrcMin", 
+                            CPLSPrintf("%g", dfSrcMin) );
+            CPLSetXMLValue( psSrc, "SrcMax", 
+                            CPLSPrintf("%g", dfSrcMax) );
+            CPLSetXMLValue( psSrc, "DstMin", 
+                            CPLSPrintf("%g", dfDstMin) );
+            CPLSetXMLValue( psSrc, "DstMax", 
+                            CPLSPrintf("%g", dfDstMax) );
+            break;
+        }
     }
 
     if ( nLUTItemCount )
@@ -1348,9 +1377,27 @@ CPLErr VRTComplexSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
     if( CPLGetXMLValue(psSrc, "ScaleOffset", NULL) != NULL 
         || CPLGetXMLValue(psSrc, "ScaleRatio", NULL) != NULL )
     {
-        bDoScaling = TRUE;
+        eScalingType = VRT_SCALING_LINEAR;
         dfScaleOff = atof(CPLGetXMLValue(psSrc, "ScaleOffset", "0") );
         dfScaleRatio = atof(CPLGetXMLValue(psSrc, "ScaleRatio", "1") );
+    }
+    else if( CPLGetXMLValue(psSrc, "Exponent", NULL) != NULL &&
+             CPLGetXMLValue(psSrc, "DstMin", NULL) != NULL && 
+             CPLGetXMLValue(psSrc, "DstMax", NULL) != NULL )
+    {
+        eScalingType = VRT_SCALING_EXPONENTIAL;
+        dfExponent = atof(CPLGetXMLValue(psSrc, "Exponent", "1.0") );
+
+        if( CPLGetXMLValue(psSrc, "SrcMin", NULL) != NULL 
+         && CPLGetXMLValue(psSrc, "SrcMax", NULL) != NULL )
+        {
+            dfSrcMin = atof(CPLGetXMLValue(psSrc, "SrcMin", "0.0") );
+            dfSrcMax = atof(CPLGetXMLValue(psSrc, "SrcMax", "0.0") );
+            bSrcMinMaxDefined = TRUE;
+        }
+
+        dfDstMin = atof(CPLGetXMLValue(psSrc, "DstMin", "0.0") );
+        dfDstMax = atof(CPLGetXMLValue(psSrc, "DstMax", "0.0") );
     }
 
     if( CPLGetXMLValue(psSrc, "NODATA", NULL) != NULL )
@@ -1456,6 +1503,45 @@ VRTComplexSource::LookupValue( double dfInput )
 }
 
 /************************************************************************/
+/*                         SetLinearScaling()                           */
+/************************************************************************/
+
+void VRTComplexSource::SetLinearScaling(double dfOffset, double dfScale)
+{
+    eScalingType = VRT_SCALING_LINEAR;
+    dfScaleOff = dfOffset;
+    dfScaleRatio = dfScale;
+}
+
+/************************************************************************/
+/*                         SetPowerScaling()                           */
+/************************************************************************/
+
+void VRTComplexSource::SetPowerScaling(double dfExponent,
+                                       double dfSrcMin,
+                                       double dfSrcMax,
+                                       double dfDstMin,
+                                       double dfDstMax)
+{
+    eScalingType = VRT_SCALING_EXPONENTIAL;
+    this->dfExponent = dfExponent;
+    this->dfSrcMin = dfSrcMin;
+    this->dfSrcMax = dfSrcMax;
+    this->dfDstMin = dfDstMin;
+    this->dfDstMax = dfDstMax;
+    bSrcMinMaxDefined = TRUE;
+}
+
+/************************************************************************/
+/*                    SetColorTableComponent()                          */
+/************************************************************************/
+
+void VRTComplexSource::SetColorTableComponent(int nComponent)
+{
+    nColorTableComponent = nComponent;
+}
+
+/************************************************************************/
 /*                              RasterIO()                              */
 /************************************************************************/
 
@@ -1509,7 +1595,7 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
     int nWordSize = GDALGetDataTypeSize(eWrkDataType) / 8;
     int bNoDataSetAndNotNan = bNoDataSet && !CPLIsNan(dfNoDataValue);
 
-    if( bDoScaling && bNoDataSet == FALSE && dfScaleRatio == 0)
+    if( eScalingType == VRT_SCALING_LINEAR && bNoDataSet == FALSE && dfScaleRatio == 0)
     {
 /* -------------------------------------------------------------------- */
 /*      Optimization when outputing a constant value                    */
@@ -1599,8 +1685,39 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
                     }
                 }
 
-                if( bDoScaling )
+                if( eScalingType == VRT_SCALING_LINEAR )
                     fResult = (float) (fResult * dfScaleRatio + dfScaleOff);
+                else if( eScalingType == VRT_SCALING_EXPONENTIAL )
+                {
+                    if( !bSrcMinMaxDefined )
+                    {
+                        int bSuccessMin = FALSE, bSuccessMax = FALSE;
+                        double adfMinMax[2];
+                        adfMinMax[0] = poRasterBand->GetMinimum(&bSuccessMin);
+                        adfMinMax[1] = poRasterBand->GetMaximum(&bSuccessMax);
+                        if( (bSuccessMin && bSuccessMax) ||
+                            poRasterBand->ComputeRasterMinMax( TRUE, adfMinMax ) == CE_None )
+                        {
+                            dfSrcMin = adfMinMax[0];
+                            dfSrcMax = adfMinMax[1];
+                            bSrcMinMaxDefined = TRUE;
+                        }
+                        else
+                        {
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                    "Cannot determine source min/max value");
+                            return CE_Failure;
+                        }
+                    }
+
+                    double dfPowVal =
+                        (fResult - dfSrcMin) / (dfSrcMax - dfSrcMin);
+                    if( dfPowVal < 0.0 )
+                        dfPowVal = 0.0;
+                    else if( dfPowVal > 1.0 )
+                        dfPowVal = 1.0;
+                    fResult = (float) (dfDstMax - dfDstMin) * pow( dfPowVal, dfExponent ) + dfDstMin;
+                }
 
                 if (nLUTItemCount)
                     fResult = (float) LookupValue( fResult );
@@ -1619,7 +1736,7 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
 
                 /* Do not use color table */
 
-                if( bDoScaling )
+                if( eScalingType == VRT_SCALING_LINEAR )
                 {
                     afResult[0] = (float) (afResult[0] * dfScaleRatio + dfScaleOff);
                     afResult[1] = (float) (afResult[1] * dfScaleRatio + dfScaleOff);
