@@ -71,7 +71,7 @@ public:
 /*                              VRTSource                               */
 /************************************************************************/
 
-class VRTSource 
+class CPL_DLL VRTSource 
 {
 public:
     virtual ~VRTSource();
@@ -566,7 +566,7 @@ class VRTDriver : public GDALDriver
 /*                           VRTSimpleSource                            */
 /************************************************************************/
 
-class VRTSimpleSource : public VRTSource
+class CPL_DLL VRTSimpleSource : public VRTSource
 {
 protected:
     GDALRasterBand      *poRasterBand;
@@ -687,7 +687,7 @@ typedef enum
     VRT_SCALING_EXPONENTIAL,
 } VRTComplexSourceScaling;
 
-class VRTComplexSource : public VRTSimpleSource
+class CPL_DLL VRTComplexSource : public VRTSimpleSource
 {
 protected:
     VRTComplexSourceScaling eScalingType;
