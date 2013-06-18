@@ -1215,7 +1215,11 @@ static int ProxyMain( int argc, char ** argv )
         poVRTBand = (VRTSourcedRasterBand *) poVDS->GetRasterBand( i+1 );
         if (nSrcBand < 0)
         {
-            poVRTBand->AddMaskBandSource(poSrcBand);
+            poVRTBand->AddMaskBandSource(poSrcBand,
+                                         anSrcWin[0], anSrcWin[1],
+                                         anSrcWin[2], anSrcWin[3],
+                                         anDstWin[0], anDstWin[1],
+                                         anDstWin[2], anDstWin[3]);
             continue;
         }
 
