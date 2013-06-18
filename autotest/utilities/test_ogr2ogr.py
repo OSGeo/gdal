@@ -56,7 +56,11 @@ def test_ogr2ogr_1():
     except:
         pass
 
-    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/poly.shp ../ogr/data/poly.shp')
+    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogr2ogr_path() + ' tmp/poly.shp ../ogr/data/poly.shp')
+    if not (err is None or err == '') :
+        gdaltest.post_reason('got error/warning')
+        print(err)
+        return 'fail'
 
     ds = ogr.Open('tmp/poly.shp')
     if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:

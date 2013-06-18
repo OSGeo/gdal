@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -82,7 +83,11 @@ def test_ogrtindex_1(srs = None):
 
     shape_ds.Destroy()
 
-    gdaltest.runexternal(test_cli_utilities.get_ogrtindex_path() + ' -skip_different_projection tmp/tileindex.shp tmp/point1.shp tmp/point2.shp tmp/point3.shp tmp/point4.shp')
+    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrtindex_path() + ' -skip_different_projection tmp/tileindex.shp tmp/point1.shp tmp/point2.shp tmp/point3.shp tmp/point4.shp')
+    if not (err is None or err == '') :
+        gdaltest.post_reason('got error/warning')
+        print(err)
+        return 'fail'
 
     ds = ogr.Open('tmp/tileindex.shp')
     if ds.GetLayer(0).GetFeatureCount() != 4:

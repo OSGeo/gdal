@@ -107,7 +107,11 @@ def test_gdal_grid_1():
     shape_ds.Destroy()
 
     # Create a GDAL dataset from the previous generated OGR grid
-    gdaltest.runexternal(gdal_grid + ' -txe -80.0041667 -78.9958333 -tye 42.9958333 44.0041667 -outsize 121 121 -ot Int16 -l n43 -a nearest:radius1=0.0:radius2=0.0:angle=0.0:nodata=0.0 -co TILED=YES -co BLOCKXSIZE=256 -co BLOCKYSIZE=256 tmp/n43.shp ' + outfiles[-1])
+    (out, err) = gdaltest.runexternal_out_and_err(gdal_grid + ' -txe -80.0041667 -78.9958333 -tye 42.9958333 44.0041667 -outsize 121 121 -ot Int16 -l n43 -a nearest:radius1=0.0:radius2=0.0:angle=0.0:nodata=0.0 -co TILED=YES -co BLOCKXSIZE=256 -co BLOCKYSIZE=256 tmp/n43.shp ' + outfiles[-1])
+    if not (err is None or err == '') :
+        gdaltest.post_reason('got error/warning')
+        print(err)
+        return 'fail'
 
     # We should get the same values as in n43.td0
     ds2 = gdal.Open(outfiles[-1])

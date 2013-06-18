@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -45,7 +46,11 @@ def test_gdaldem_hillshade():
     if test_cli_utilities.get_gdaldem_path() is None:
         return 'skip'
 
-    gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' hillshade -s 111120 -z 30 ../gdrivers/data/n43.dt0 tmp/n43_hillshade.tif')
+    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaldem_path() + ' hillshade -s 111120 -z 30 ../gdrivers/data/n43.dt0 tmp/n43_hillshade.tif')
+    if not (err is None or err == '') :
+        gdaltest.post_reason('got error/warning')
+        print(err)
+        return 'fail'
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
     ds = gdal.Open('tmp/n43_hillshade.tif')

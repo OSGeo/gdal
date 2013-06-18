@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -50,7 +51,11 @@ def test_gdaladdo_1():
     shutil.copy('../gcore/data/mfloat32.vrt', 'tmp/mfloat32.vrt')
     shutil.copy('../gcore/data/float32.tif', 'tmp/float32.tif')
 
-    gdaltest.runexternal(test_cli_utilities.get_gdaladdo_path() + ' tmp/mfloat32.vrt 2 4')
+    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaladdo_path() + ' tmp/mfloat32.vrt 2 4')
+    if not (err is None or err == '') :
+        gdaltest.post_reason('got error/warning')
+        print(err)
+        return 'fail'
 
     ds = gdal.Open('tmp/mfloat32.vrt')
     ret = tiff_ovr.tiff_ovr_check(ds)
