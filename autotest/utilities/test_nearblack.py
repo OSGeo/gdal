@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -45,7 +46,11 @@ def test_nearblack_1():
     if test_cli_utilities.get_nearblack_path() is None:
         return 'skip'
     
-    gdaltest.runexternal(test_cli_utilities.get_nearblack_path() + ' ../gdrivers/data/rgbsmall.tif -nb 0 -of GTiff -o tmp/nearblack1.tif')
+    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_nearblack_path() + ' ../gdrivers/data/rgbsmall.tif -nb 0 -of GTiff -o tmp/nearblack1.tif')
+    if not (err is None or err == '') :
+        gdaltest.post_reason('got error/warning')
+        print(err)
+        return 'fail'
 
     src_ds = gdal.Open('../gdrivers/data/rgbsmall.tif')
     ds = gdal.Open('tmp/nearblack1.tif')

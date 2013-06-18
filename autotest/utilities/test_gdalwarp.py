@@ -46,7 +46,11 @@ def test_gdalwarp_1():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' ../gcore/data/byte.tif tmp/testgdalwarp1.tif')
+    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalwarp_path() + ' ../gcore/data/byte.tif tmp/testgdalwarp1.tif')
+    if not (err is None or err == '') :
+        gdaltest.post_reason('got error/warning')
+        print(err)
+        return 'fail'
 
     ds = gdal.Open('tmp/testgdalwarp1.tif')
     if ds is None:

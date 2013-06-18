@@ -45,7 +45,12 @@ def test_gdallocationinfo_1():
     if test_cli_utilities.get_gdallocationinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdallocationinfo_path() + ' ../gcore/data/byte.tif 0 0')
+    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdallocationinfo_path() + ' ../gcore/data/byte.tif 0 0')
+    if not (err is None or err == '') :
+        gdaltest.post_reason('got error/warning')
+        print(err)
+        return 'fail'
+
     ret = ret.replace('\r\n', '\n')
     expected_ret = """Report:
   Location: (0P,0L)

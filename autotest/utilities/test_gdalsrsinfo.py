@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -43,7 +44,11 @@ def test_gdalsrsinfo_1():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() + ' ../gcore/data/byte.tif')
+    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalsrsinfo_path() + ' ../gcore/data/byte.tif')
+    if not (err is None or err == '') :
+        gdaltest.post_reason('got error/warning')
+        print(err)
+        return 'fail'
 
     if ret.find('PROJ.4 :') == -1:
         return 'fail'

@@ -46,7 +46,11 @@ def test_ogrinfo_1():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' ../ogr/data/poly.shp')
+    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' ../ogr/data/poly.shp')
+    if not (err is None or err == '') :
+        gdaltest.post_reason('got error/warning')
+        print(err)
+        return 'fail'
     if ret.find('ESRI Shapefile') == -1:
         return 'fail'
 
