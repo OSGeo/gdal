@@ -255,7 +255,7 @@ int main(int argc, char *argv[])
             if (hLayer)
             {
                 OGRFieldDefnH hFieldDefn = OGR_Fld_Create( tile_index, OFTString );
-                OGR_Fld_SetWidth( hFieldDefn, 255);
+                OGR_Fld_SetWidth( hFieldDefn, 254);
                 OGR_L_CreateField( hLayer, hFieldDefn, TRUE );
                 OGR_Fld_Destroy(hFieldDefn);
             }
