@@ -113,6 +113,180 @@ def vrtmisc_3():
     return 'success'
 
 ###############################################################################
+# Test multi-band linear scaling with a single -scale occurence
+
+def vrtmisc_4():
+    import test_cli_utilities
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    # -scale specified once applies to all bands
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -of VRT data/byte.tif tmp/vrtmisc_4.vrt -scale 74 255 0 255 -b 1 -b 1')
+
+    ds = gdal.Open('tmp/vrtmisc_4.vrt')
+    cs1 = ds.GetRasterBand(1).Checksum()
+    cs2 = ds.GetRasterBand(2).Checksum()
+    ds = None
+
+    os.remove('tmp/vrtmisc_4.vrt')
+
+    if cs1 != 4323:
+        gdaltest.post_reason('did not get expected checksum')
+        print(cs1)
+        return 'fail'
+    if cs2 != 4323:
+        gdaltest.post_reason('did not get expected checksum')
+        print(cs2)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test multi-band linear scaling with -scale_XX syntax
+
+def vrtmisc_5():
+    import test_cli_utilities
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    # -scale_2 applies to band 2 only
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -of VRT data/byte.tif tmp/vrtmisc_5.vrt -scale_2 74 255 0 255 -b 1 -b 1')
+
+    ds = gdal.Open('tmp/vrtmisc_5.vrt')
+    cs1 = ds.GetRasterBand(1).Checksum()
+    cs2 = ds.GetRasterBand(2).Checksum()
+    ds = None
+
+    os.remove('tmp/vrtmisc_5.vrt')
+
+    if cs1 != 4672:
+        gdaltest.post_reason('did not get expected checksum')
+        print(cs1)
+        return 'fail'
+    if cs2 != 4323:
+        gdaltest.post_reason('did not get expected checksum')
+        print(cs2)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test multi-band linear scaling with repeated -scale syntax
+
+def vrtmisc_6():
+    import test_cli_utilities
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    # -scale repeated as many times as output band number
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -of VRT data/byte.tif tmp/vrtmisc_6.vrt -scale 0 255 0 255 -scale 74 255 0 255 -b 1 -b 1')
+
+    ds = gdal.Open('tmp/vrtmisc_6.vrt')
+    cs1 = ds.GetRasterBand(1).Checksum()
+    cs2 = ds.GetRasterBand(2).Checksum()
+    ds = None
+
+    os.remove('tmp/vrtmisc_6.vrt')
+
+    if cs1 != 4672:
+        gdaltest.post_reason('did not get expected checksum')
+        print(cs1)
+        return 'fail'
+    if cs2 != 4323:
+        gdaltest.post_reason('did not get expected checksum')
+        print(cs2)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test multi-band power scaling with a single -scale occurence and -exponent occurence
+
+def vrtmisc_7():
+    import test_cli_utilities
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    # -scale and -exponent, specified once, apply to all bands
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -of VRT data/byte.tif tmp/vrtmisc_7.vrt -scale 74 255 0 255 -exponent 2.2 -b 1 -b 1')
+
+    ds = gdal.Open('tmp/vrtmisc_7.vrt')
+    cs1 = ds.GetRasterBand(1).Checksum()
+    cs2 = ds.GetRasterBand(2).Checksum()
+    ds = None
+
+    os.remove('tmp/vrtmisc_7.vrt')
+
+    if cs1 != 4159:
+        gdaltest.post_reason('did not get expected checksum')
+        print(cs1)
+        return 'fail'
+    if cs2 != 4159:
+        gdaltest.post_reason('did not get expected checksum')
+        print(cs2)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test multi-band power scaling with -scale_XX and -exponent_XX syntax
+
+def vrtmisc_8():
+    import test_cli_utilities
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    # -scale_2 and -exponent_2 apply to band 2 only
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -of VRT data/byte.tif tmp/vrtmisc_8.vrt -scale_2 74 255 0 255 -exponent_2 2.2 -b 1 -b 1')
+
+    ds = gdal.Open('tmp/vrtmisc_8.vrt')
+    cs1 = ds.GetRasterBand(1).Checksum()
+    cs2 = ds.GetRasterBand(2).Checksum()
+    ds = None
+
+    os.remove('tmp/vrtmisc_8.vrt')
+
+    if cs1 != 4672:
+        gdaltest.post_reason('did not get expected checksum')
+        print(cs1)
+        return 'fail'
+    if cs2 != 4159:
+        gdaltest.post_reason('did not get expected checksum')
+        print(cs2)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test multi-band linear scaling with repeated -scale and -exponent syntax
+
+def vrtmisc_9():
+    import test_cli_utilities
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+   
+    # -scale and -exponent repeated as many times as output band number
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -of VRT data/byte.tif tmp/vrtmisc_9.vrt -scale 0 255 0 255 -scale 74 255 0 255 -exponent 1 -exponent 2.2 -b 1 -b 1')
+
+    ds = gdal.Open('tmp/vrtmisc_9.vrt')
+    cs1 = ds.GetRasterBand(1).Checksum()
+    cs2 = ds.GetRasterBand(2).Checksum()
+    ds = None
+
+    os.remove('tmp/vrtmisc_9.vrt')
+
+    if cs1 != 4672:
+        gdaltest.post_reason('did not get expected checksum')
+        print(cs1)
+        return 'fail'
+    if cs2 != 4159:
+        gdaltest.post_reason('did not get expected checksum')
+        print(cs2)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup.
 
 def vrtmisc_cleanup():
@@ -122,6 +296,12 @@ gdaltest_list = [
     vrtmisc_1,
     vrtmisc_2,
     vrtmisc_3,
+    vrtmisc_4,
+    vrtmisc_5,
+    vrtmisc_6,
+    vrtmisc_7,
+    vrtmisc_8,
+    vrtmisc_9,
     vrtmisc_cleanup ]
 
 if __name__ == '__main__':
