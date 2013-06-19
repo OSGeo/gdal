@@ -294,7 +294,7 @@ gdal_translate [--help-general]
              CInt16/CInt32/CFloat32/CFloat64}] [-strict]
        [-of format] [-b band] [-mask band] [-expand {gray|rgb|rgba}]
        [-outsize xsize[%] ysize[%]]
-       [-unscale] [-scale [src_min src_max [dst_min dst_max]]] [-exponent exp_val]
+       [-unscale] [-scale[_bn] [src_min src_max [dst_min dst_max]]]* [-exponent[_bn] exp_val]*
        [-srcwin xoff yoff xsize ysize] [-projwin ulx uly lrx lry] [-epo] [-eco]
        [-a_srs srs_def] [-a_ullr ulx uly lrx lry] [-a_nodata value]
        [-gcp pixel line easting northing [elevation]]*
@@ -341,10 +341,24 @@ is as a fraction of the input image size.</dd>
 input pixels values from the range <i>src_min</i> to <i>src_max</i> to
 the range <i>dst_min</i> to <i>dst_max</i>.  If omitted the output range is
 0 to 255.  If omitted the input range is automatically computed from the
-source data.</dd>
+source data.
+Before GDAL 2.0, it can be specified only once, and in that case, it applies to
+all bands of the output dataset.
+Starting with GDAL 2.0, -scale can be repeated several times (if specified only once,
+it also applies to all bands of the output dataset), so as to specify per band parameters.
+It is also possible to use the "-scale_bn" syntax where bn is a band number
+(e.g. "-scale_2" for the 2nd band of the output dataset) to specify the parameters of
+one or several specific bands.
+</dd>
 <dt> <b>-exponent</b> <i> exp_val</i>:</dt><dd> (From GDAL 2.0) To apply non-linear scaling
 with a power function. exp_val is the exponent of the power function (must be postive). This option
-must be used with the -scale option.</dd>
+must be used with the -scale option.
+If specified only once, -exponent applies to all bands of the output image.
+It can be repeated several times so as to specify per band parameters.
+It is also possible to use the "-exponent_bn" syntax where bn is a band number
+(e.g. "-exponent_2" for the 2nd band of the output dataset) to specify the parameters of
+one or several specific bands.
+</dd>
 <dt> <b>-unscale</b>:</dt><dd> Apply the scale/offset metadata for the bands
 to convert scaled values to unscaled values.  It is also often necessary to 
 reset the output datatype with the <b>-ot</b> switch.</dd>
