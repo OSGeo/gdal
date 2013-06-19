@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -100,6 +101,53 @@ def xyz_3():
     gdal.Unlink('/vsimem/grid.xyz')
     return 'success'
 
+
+###############################################################################
+# Test regularly spaced XYZ but with missing values at beginning and/or end of lines
+
+def xyz_4_checkline(ds, i, expected_bytes):
+    buf = ds.ReadRaster(0,i,ds.RasterXSize,1)
+    bytes = struct.unpack('B' * ds.RasterXSize, buf)
+    if bytes != expected_bytes:
+        return False
+    return True
+
+def xyz_4():
+
+    content = """
+440750 3751290 1
+440810 3751290 2
+
+440690 3751230 3
+440750 3751230 4
+440810 3751230 5
+440870 3751230 6
+
+440810 3751170 7"""
+    gdal.FileFromMemBuffer('/vsimem/grid.xyz', content)
+    expected = [ ( 0, 1, 2, 0 ), ( 3, 4, 5, 6 ), (0, 0, 7, 0) ]
+
+    ds = gdal.Open('/vsimem/grid.xyz')
+    if ds.GetRasterBand(1).GetMinimum() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetMaximum() != 7:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetNoDataValue() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    for i in [0,1,2,1,0,2,0,2,0,1,2]:
+        if not xyz_4_checkline(ds, i, expected[i]):
+            gdaltest.post_reason('fail')
+            return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/grid.xyz')
+    return 'success'
+
+
+
+
 ###############################################################################
 # Cleanup
 
@@ -112,6 +160,7 @@ gdaltest_list = [
     xyz_1,
     xyz_2,
     xyz_3,
+    xyz_4,
     xyz_cleanup ]
 
 if __name__ == '__main__':
