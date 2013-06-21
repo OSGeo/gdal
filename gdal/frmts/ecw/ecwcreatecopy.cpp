@@ -945,7 +945,8 @@ CPLErr GDALECWCompressor::Initialize(
             return CE_Failure;
         }
 
-        m_OStream.Access( fpVSIL, TRUE, bSeekable, pszFilename, 0, -1 );
+        m_OStream.Access( fpVSIL, TRUE, (BOOLEAN) bSeekable, pszFilename, 
+			  0, -1 );
     }    
 
 /* -------------------------------------------------------------------- */

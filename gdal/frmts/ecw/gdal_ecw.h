@@ -367,7 +367,8 @@ class VSIIOStream : public CNCSJPCIOStream
             }
             else
             {
-                GByte prevBuffer[] = { nCOMLength >> 8, nCOMLength & 0xff };
+                GByte prevBuffer[] = 
+		  { (GByte)(nCOMLength >> 8), (GByte) (nCOMLength & 0xff) };
                 VSIFWriteL(prevBuffer, 2, 1, fpVSIL);
                 nCOMState = 0;
             }
