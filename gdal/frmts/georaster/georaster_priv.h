@@ -403,6 +403,7 @@ public:
     int                 nSRID;
     int                 nExtentSRID;
     bool                bGenSpatialIndex;
+    bool                bCreateObjectTable;
     CPLXMLNode*         phMetadata;
     CPLString           sCellDepth;
     CPLString           sCompressionType;
