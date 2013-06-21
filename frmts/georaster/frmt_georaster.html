@@ -135,6 +135,8 @@ the same SRID as the GeoGeoraster object.</li>
   <li><strong>EXTENTSRID</strong>: SRID code to be used on the Spatial Extent geometry. 
 If the table/column has already a spatial extent, the value informed should be the same as the 
 SRID on the Spatial Extent of the other existing GeoRaster.</li>
+  <li><strong>OBJECTTABLE</strong>: To create RDT as SDO_RASTER object inform TRUE otherwise, the default 
+  is FALSE and the RDT will be created as regular relational tables. That does not apply for Oracle version older than 11.</li>
 </ul>
 <strong></strong>
 <h3>Importing GeoRaster</h3>

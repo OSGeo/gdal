@@ -676,6 +676,9 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
         }
     }
 
+    poGRD->poGeoRaster->bCreateObjectTable = (bool)
+        CSLFetchBoolean( papszOptions, "OBJECTTABLE", FALSE );
+
     //  -------------------------------------------------------------------
     //  Create a SDO_GEORASTER object on the server
     //  -------------------------------------------------------------------
@@ -725,7 +728,7 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
         poGRD->poGeoRaster->SetGeoReference( atoi( pszFetched ) );
     }
 
-    poGRD->poGeoRaster->bGenSpatialIndex = 
+    poGRD->poGeoRaster->bGenSpatialIndex = (bool)
         CSLFetchBoolean( papszOptions, "SPATIALEXTENT", TRUE );
 
     pszFetched = CSLFetchNameValue( papszOptions, "EXTENTSRID" );
@@ -1934,6 +1937,9 @@ void CPL_DLL GDALRegister_GEOR()
                                            "default='1'/>"
 "  <Option name='SRID'        type='int'    description='Overwrite EPSG code' "
                                            "default='0'/>"
+"  <Option name='OBJECTTABLE' type='boolean' "
+                                           "description='Create RDT as object table' "
+                                           "default='FALSE'/>"
 "  <Option name='SPATIALEXTENT' type='boolean' "
                                            "description='Generate Spatial Extent' "
                                            "default='TRUE'/>"
