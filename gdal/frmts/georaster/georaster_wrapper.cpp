@@ -78,6 +78,7 @@ GeoRasterWrapper::GeoRasterWrapper()
     nSRID               = 0;
     nExtentSRID         = 0;
     bGenSpatialIndex    = false;
+    bCreateObjectTable  = false;
     nPyramidMaxLevel    = 0;
     nBlockCount         = 0L;
     nGDALBlockBytes     = 0L;
@@ -922,6 +923,40 @@ bool GeoRasterWrapper::Create( char* pszDescription,
     int  nBindRID = 0;
     szBindRDT[0] = '\0';
 
+    CPLString sObjectTable;
+    CPLString sSecureFile;
+
+    // For version > 10 create RDT as relational table by default,
+    // if it is not specified by create-option OBJECTTABLE=TRUE
+
+    if( poConnection->GetVersion() < 11 || bCreateObjectTable )
+    {
+        sObjectTable = "OF MDSYS.SDO_RASTER\n      (";
+    }
+    else
+    {
+        sObjectTable = "(\n"
+                       "      RASTERID           NUMBER,\n"
+                       "      PYRAMIDLEVEL       NUMBER,\n"
+                       "      BANDBLOCKNUMBER    NUMBER,\n"
+                       "      ROWBLOCKNUMBER     NUMBER,\n"
+                       "      COLUMNBLOCKNUMBER  NUMBER,\n"
+                       "      BLOCKMBR           SDO_GEOMETRY,\n"
+                       "      RASTERBLOCK        BLOB,\n"
+                       "      CONSTRAINT PKEY ";
+    }
+
+    // For version > 11 create RDT rasterBlock as securefile
+
+    if( poConnection->GetVersion() > 11 )
+    {
+        sSecureFile = "SECUREFILE(CACHE)";
+    }
+    else
+    {
+        sSecureFile = "(NOCACHE NOLOGGING)";
+    }
+
     if( poConnection->GetVersion() > 10 )
     {
         poStmt = poConnection->CreateStatement( CPLSPrintf(
@@ -951,10 +986,10 @@ bool GeoRasterWrapper::Create( char* pszDescription,
             "  END IF;\n"
             "\n"
             "  IF CNT = 0 THEN\n"
-            "    EXECUTE IMMEDIATE 'CREATE TABLE %s'||:rdt||' OF MDSYS.SDO_RASTER\n"
-            "      (PRIMARY KEY (RASTERID, PYRAMIDLEVEL, BANDBLOCKNUMBER,\n"
+            "    EXECUTE IMMEDIATE 'CREATE TABLE %s'||:rdt||' %s"
+            "PRIMARY KEY (RASTERID, PYRAMIDLEVEL, BANDBLOCKNUMBER,\n"
             "      ROWBLOCKNUMBER, COLUMNBLOCKNUMBER))\n"
-            "      LOB(RASTERBLOCK) STORE AS (NOCACHE NOLOGGING)';\n"
+            "      LOB(RASTERBLOCK) STORE AS %s';\n"
             "  END IF;\n"
             "\n"
             "  SDO_GEOR.createTemplate(GR1, %s, null, 'TRUE');\n"
@@ -979,6 +1014,8 @@ bool GeoRasterWrapper::Create( char* pszDescription,
                 sOwner.c_str(),
                 sCommand.c_str(),
                 sSchema.c_str(),
+                sObjectTable.c_str(),
+                sSecureFile.c_str(),
                 sFormat.c_str(),
                 sSchema.c_str(),
                 sTable.c_str(),
@@ -1183,6 +1220,7 @@ void GeoRasterWrapper::PrepareToOverwrite( void )
     nSRID               = 0;
     nExtentSRID         = 0;
     bGenSpatialIndex    = false;
+    bCreateObjectTable  = false;
     nPyramidMaxLevel    = 0;
     nBlockCount         = 0L;
     sDInfo.global_state = 0;
@@ -3832,12 +3870,12 @@ unsigned long GeoRasterWrapper::CompressJpeg( void )
     VSIFCloseL( fpImage );
 
     fpImage = VSIFOpenL( pszMemFile, "rb" );
-    unsigned long nSize = VSIFReadL( pabyCompressBuf, 1, nBlockBytes, fpImage );
+    size_t nSize = VSIFReadL( pabyCompressBuf, 1, nBlockBytes, fpImage );
     VSIFCloseL( fpImage );
 
     VSIUnlink( pszMemFile );
 
-    return nSize;
+    return (unsigned long) nSize;
 }
 
 //  ---------------------------------------------------------------------------
