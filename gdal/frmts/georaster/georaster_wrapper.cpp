@@ -926,16 +926,16 @@ bool GeoRasterWrapper::Create( char* pszDescription,
     CPLString sObjectTable;
     CPLString sSecureFile;
 
-    // For version > 10 create RDT as relational table by default,
+    // For version > 11 create RDT as relational table by default,
     // if it is not specified by create-option OBJECTTABLE=TRUE
 
-    if( poConnection->GetVersion() < 11 || bCreateObjectTable )
+    if( poConnection->GetVersion() <= 11 || bCreateObjectTable )
     {
         sObjectTable = "OF MDSYS.SDO_RASTER\n      (";
     }
     else
     {
-        sObjectTable = "(\n"
+        sObjectTable = CPLSPrintf("(\n"
                        "      RASTERID           NUMBER,\n"
                        "      PYRAMIDLEVEL       NUMBER,\n"
                        "      BANDBLOCKNUMBER    NUMBER,\n"
@@ -943,12 +943,12 @@ bool GeoRasterWrapper::Create( char* pszDescription,
                        "      COLUMNBLOCKNUMBER  NUMBER,\n"
                        "      BLOCKMBR           SDO_GEOMETRY,\n"
                        "      RASTERBLOCK        BLOB,\n"
-                       "      CONSTRAINT PKEY ";
+                       "      CONSTRAINT '||:rdt||'_RDT_PK ");
     }
 
-    // For version > 11 create RDT rasterBlock as securefile
+    // For version >= 11 create RDT rasterBlock as securefile
 
-    if( poConnection->GetVersion() > 11 )
+    if( poConnection->GetVersion() >= 11 )
     {
         sSecureFile = "SECUREFILE(CACHE)";
     }
@@ -987,8 +987,8 @@ bool GeoRasterWrapper::Create( char* pszDescription,
             "\n"
             "  IF CNT = 0 THEN\n"
             "    EXECUTE IMMEDIATE 'CREATE TABLE %s'||:rdt||' %s"
-            "PRIMARY KEY (RASTERID, PYRAMIDLEVEL, BANDBLOCKNUMBER,\n"
-            "      ROWBLOCKNUMBER, COLUMNBLOCKNUMBER))\n"
+            "PRIMARY KEY (RASTERID, PYRAMIDLEVEL,\n"
+            "      BANDBLOCKNUMBER, ROWBLOCKNUMBER, COLUMNBLOCKNUMBER))\n"
             "      LOB(RASTERBLOCK) STORE AS %s';\n"
             "  END IF;\n"
             "\n"
