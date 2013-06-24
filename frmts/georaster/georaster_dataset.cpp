@@ -676,6 +676,21 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
         }
     }
 
+    pszFetched = CSLFetchNameValue( papszOptions, "OBJECTTABLE" );
+
+    if( pszFetched )
+    {
+        int nVersion = poGRW->poConnection->GetVersion();
+        if( nVersion <= 11 )
+        {
+            CPLError( CE_Failure, CPLE_IllegalArg, 
+                "Driver create-option OBJECTTABLE not "
+                "supported on Oracle %d", nVersion );
+            delete poGRD;
+            return NULL;
+        }
+    }
+
     poGRD->poGeoRaster->bCreateObjectTable = (bool)
         CSLFetchBoolean( papszOptions, "OBJECTTABLE", FALSE );
 
