@@ -4924,6 +4924,7 @@ void CopyMetadata( void  *poDS, int fpImage, int CDFVarID,
     char       szMetaName[ NCDF_MAX_STR_LEN ];
     size_t     nAttrValueSize =  NCDF_MAX_STR_LEN;
     char       *pszMetaValue = (char *) CPLMalloc(sizeof(char) * nAttrValueSize);
+    *pszMetaValue = '\0';
     char       szTemp[ NCDF_MAX_STR_LEN ];
     int        nItems;
 
@@ -5030,7 +5031,9 @@ void CopyMetadata( void  *poDS, int fpImage, int CDFVarID,
                           fpImage, CDFVarID,szMetaName, pszMetaValue );
         }
     }
+
     if ( papszFieldData ) CSLDestroy( papszFieldData );
+    CPLFree( pszMetaValue );
 
     /* Set add_offset and scale_factor here if present */
     if( ( CDFVarID != NC_GLOBAL ) && ( bIsBand ) ) {
