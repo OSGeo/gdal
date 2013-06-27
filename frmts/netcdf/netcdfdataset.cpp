@@ -3099,7 +3099,7 @@ CPLErr netCDFDataset::Set1DGeolocation( int nVarId, const char *szDimName )
     
     /* write metadata */
     sprintf( szTemp, "%s_VALUES", szDimName );
-    SetMetadataItem( szTemp, pszVarValues, "GEOLOCATION" );
+    SetMetadataItem( szTemp, pszVarValues, "GEOLOCATION2" );
 
     CPLFree( pszVarValues );
     
@@ -3116,7 +3116,7 @@ double *netCDFDataset::Get1DGeolocation( const char *szDimName, int &nVarLen )
     nVarLen = 0;
 
     /* get Y_VALUES as tokens */
-    papszValues = NCDFTokenizeArray( GetMetadataItem( "Y_VALUES", "GEOLOCATION" ) );
+    papszValues = NCDFTokenizeArray( GetMetadataItem( "Y_VALUES", "GEOLOCATION2" ) );
     if ( papszValues == NULL )
         return NULL;
 
