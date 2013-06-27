@@ -1282,6 +1282,70 @@ def netcdf_36():
     return 'success'
 
 ###############################################################################
+# test for reading gaussian grid (bugs #4513 and #5118)
+def netcdf_37():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ifile = 'data/reduce-cgcms.nc'
+
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    ds = gdal.Open( ifile )
+    gdal.PopErrorHandler()
+    if ds is None:
+        gdaltest.post_reason( 'open failed' )
+        return 'fail'
+
+    gt = ds.GetGeoTransform( )
+    if gt is None:
+        gdaltest.post_reason( 'got no GeoTransform' )
+        return 'fail'
+    gt_expected = (-1.875, 3.75, 0.0, 89.01354337620016, 0.0, -3.7088976406750063)
+    if gt != gt_expected:
+        gdaltest.post_reason( 'got GeoTransform %s, expected %s' % (str(gt), str(gt_expected)) )
+        return 'fail'
+
+    md = ds.GetMetadata( 'GEOLOCATION2' )
+    if not md or not 'Y_VALUES' in md:
+        gdaltest.post_reason( 'did not get 1D geolocation' )
+        return 'fail'
+    y_vals = md['Y_VALUES']
+    if not y_vals.startswith('{-87.15909455586265,-83.47893666931698,') \
+            or not  y_vals.endswith(',83.47893666931698,87.15909455586265}'):
+        gdaltest.post_reason( 'got incorrect values in 1D geolocation' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# test for correct geotransform of projected data in km units (bug #5118)
+def netcdf_38():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ifile = 'data/bug5118.nc'
+
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    ds = gdal.Open( ifile )
+    gdal.PopErrorHandler()
+    if ds is None:
+        gdaltest.post_reason( 'open failed' )
+        return 'fail'
+
+    gt = ds.GetGeoTransform( )
+    if gt is None:
+        gdaltest.post_reason( 'got no GeoTransform' )
+        return 'fail'
+    gt_expected = (-1659.3478178136488, 13.545000861672793, 0.0, 2330.054725283668, 0.0, -13.54499744233631)
+    if gt != gt_expected:
+        gdaltest.post_reason( 'got GeoTransform %s, expected %s' % (str(gt), str(gt_expected)) )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 ###############################################################################
 # main tests list
@@ -1322,7 +1386,9 @@ gdaltest_list = [
     netcdf_33,
     netcdf_34,
     netcdf_35,
-    netcdf_36
+    netcdf_36,
+    netcdf_37,
+    netcdf_38
  ]
 
 ###############################################################################
