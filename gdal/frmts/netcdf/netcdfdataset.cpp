@@ -2588,6 +2588,68 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
         }
 
 /* -------------------------------------------------------------------- */
+/*     Set Projection from CF                                           */
+/* -------------------------------------------------------------------- */
+    if ( bGotGeogCS || bGotCfSRS ) {
+        /* Set SRS Units */
+
+        /* check units for x and y */
+        if( oSRS.IsProjected( ) ) {
+            const char *pszUnitsX = NULL;
+            const char *pszUnitsY = NULL;
+
+            strcpy( szTemp, poDS->papszDimName[nXDimID] );
+            strcat( szTemp, "#units" );
+            pszValue = CSLFetchNameValue( poDS->papszMetadata, 
+                                          szTemp );
+            if( pszValue != NULL ) 
+                pszUnitsX = pszValue;
+
+            strcpy( szTemp, poDS->papszDimName[nYDimID] );
+            strcat( szTemp, "#units" );
+            pszValue = CSLFetchNameValue( poDS->papszMetadata, 
+                                          szTemp );
+            if( pszValue != NULL )
+                pszUnitsY = pszValue;
+
+            /* TODO: what to do if units are not equal in X and Y */
+            if ( (pszUnitsX != NULL) && (pszUnitsY != NULL) && 
+                 EQUAL(pszUnitsX,pszUnitsY) )
+                pszUnits = pszUnitsX;
+
+            /* add units to PROJCS */
+            if ( pszUnits != NULL && ! EQUAL(pszUnits,"") ) {
+                CPLDebug( "GDAL_netCDF", 
+                          "units=%s", pszUnits );
+                if ( EQUAL(pszUnits,"m") ) {
+                    oSRS.SetLinearUnits( "metre", 1.0 );
+                    oSRS.SetAuthority( "PROJCS|UNIT", "EPSG", 9001 );
+                }
+                else if ( EQUAL(pszUnits,"km") ) {
+                    oSRS.SetLinearUnits( "kilometre", 1000.0 );
+                    oSRS.SetAuthority( "PROJCS|UNIT", "EPSG", 9036 );
+                }
+                /* TODO check for other values */
+                // else 
+                //     oSRS.SetLinearUnits(pszUnits, 1.0);
+            }
+        }
+        else if ( oSRS.IsGeographic() ) {
+            oSRS.SetAngularUnits( CF_UNITS_D, CPLAtof(SRS_UA_DEGREE_CONV) );
+            oSRS.SetAuthority( "GEOGCS|UNIT", "EPSG", 9122 );
+        }
+        
+        /* Set Projection */
+        oSRS.exportToWkt( &(pszTempProjection) );
+        CPLDebug( "GDAL_netCDF", "setting WKT from CF" );
+        SetProjection( pszTempProjection );
+        CPLFree( pszTempProjection );
+
+        if ( !bGotCfGT )
+            CPLDebug( "GDAL_netCDF", "got SRS but no geotransform from CF!");
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Is pixel spacing uniform accross the map?                       */
 /* -------------------------------------------------------------------- */
 
@@ -2600,13 +2662,13 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
         }
         else
         {
-            nSpacingBegin   = (int) poDS->rint((pdfXCoord[1] - pdfXCoord[0]) * 10000);
+            nSpacingBegin   = (int) poDS->rint((pdfXCoord[1] - pdfXCoord[0]) * 1000);
             
-            nSpacingMiddle  = (int) poDS->rint((pdfXCoord[xdim / 2] - 
-                                                pdfXCoord[(xdim / 2) + 1]) * 10000);
+            nSpacingMiddle  = (int) poDS->rint((pdfXCoord[xdim/2+1] - 
+                                                pdfXCoord[xdim/2]) * 1000);
             
-            nSpacingLast    = (int) poDS->rint((pdfXCoord[xdim - 2] - 
-                                                pdfXCoord[xdim-1]) * 10000);       
+            nSpacingLast    = (int) poDS->rint((pdfXCoord[xdim-1] - 
+                                                pdfXCoord[xdim-2]) * 1000);       
             
             CPLDebug("GDAL_netCDF", 
                      "xdim: %ld nSpacingBegin: %d nSpacingMiddle: %d nSpacingLast: %d",
@@ -2618,9 +2680,9 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
                      pdfXCoord[xdim - 2], pdfXCoord[xdim-1]);
 #endif
            
-            if( ( abs( nSpacingBegin )  ==  abs( nSpacingLast )   ) &&
-                ( abs( nSpacingBegin )  ==  abs( nSpacingMiddle ) ) &&
-                ( abs( nSpacingMiddle ) ==  abs( nSpacingLast )   ) ) {
+            if( ( abs( abs( nSpacingBegin ) - abs( nSpacingLast ) )  <= 1   ) &&
+                ( abs( abs( nSpacingBegin ) - abs( nSpacingMiddle ) ) <= 1 ) &&
+                ( abs( abs( nSpacingMiddle ) - abs( nSpacingLast ) ) <= 1   ) ) {
                 bLonSpacingOK = TRUE;
             }
         }
@@ -2639,15 +2701,15 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
         else
         {
             nSpacingBegin   = (int) poDS->rint((pdfYCoord[1] - pdfYCoord[0]) * 
-                                               10000); 	    
+                                               1000); 	    
 
-            nSpacingMiddle  = (int) poDS->rint((pdfYCoord[ydim / 2] - 
-                                                pdfYCoord[(ydim / 2) + 1]) * 
-                                               10000);
+            nSpacingMiddle  = (int) poDS->rint((pdfYCoord[ydim/2+1] - 
+                                                pdfYCoord[ydim/2]) * 
+                                               1000);
 
-            nSpacingLast    = (int) poDS->rint((pdfYCoord[ydim - 2] - 
-                                                pdfYCoord[ydim-1]) * 
-                                               10000);
+            nSpacingLast    = (int) poDS->rint((pdfYCoord[ydim-1] - 
+                                                pdfYCoord[ydim-2]) * 
+                                               1000);
 
             CPLDebug("GDAL_netCDF", 
                      "ydim: %ld nSpacingBegin: %d nSpacingMiddle: %d nSpacingLast: %d",
@@ -2661,35 +2723,32 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
 
 /* -------------------------------------------------------------------- */
 /*   For Latitude we allow an error of 0.1 degrees for gaussian         */
-/*   gridding                                                           */
+/*   gridding (only if this is not a projected SRS)                     */
 /* -------------------------------------------------------------------- */
 
-            if( (( abs( abs(nSpacingBegin)  - abs(nSpacingLast) ) )   < 1000 ) &&
-                (( abs( abs(nSpacingBegin)  - abs(nSpacingMiddle) ) ) < 1000 ) &&
-                (( abs( abs(nSpacingMiddle) - abs(nSpacingLast) ) )   < 1000 ) ) {
-
+            if( ( abs( abs( nSpacingBegin )  - abs( nSpacingLast ) )  <= 1   ) &&
+                ( abs( abs( nSpacingBegin )  - abs( nSpacingMiddle ) ) <= 1 ) &&
+                ( abs( abs( nSpacingMiddle ) - abs( nSpacingLast ) ) <= 1   ) ) {
                 bLatSpacingOK = TRUE;
-
-                if( ( abs( nSpacingBegin )  !=  abs( nSpacingLast )   ) ||
-                    ( abs( nSpacingBegin )  !=  abs( nSpacingMiddle ) ) ||
-                    ( abs( nSpacingMiddle ) !=  abs( nSpacingLast )   ) ) {
+            }
+            else if( !oSRS.IsProjected() &&
+                     ( (( abs( abs(nSpacingBegin)  - abs(nSpacingLast) ) )   <= 100 ) &&
+                       (( abs( abs(nSpacingBegin)  - abs(nSpacingMiddle) ) ) <= 100 ) &&
+                       (( abs( abs(nSpacingMiddle) - abs(nSpacingLast) ) )   <= 100 ) ) ) {
+                bLatSpacingOK = TRUE;
+                CPLError(CE_Warning, 1,"Latitude grid not spaced evenly.\nSeting projection for grid spacing is within 0.1 degrees threshold.\n");
                 
-                    CPLError(CE_Warning, 1,"Latitude grid not spaced evenly.\nSeting projection for grid spacing is within 0.1 degrees threshold.\n");
-
-                    CPLDebug("GDAL_netCDF", 
-                             "Latitude grid not spaced evenly, but within 0.1 degree threshold (probably a Gaussian grid).\n"
-                             "Saving original latitude values in Y_VALUES geolocation metadata" );
-                    Set1DGeolocation( nVarDimYID, "Y" );
-
-                }
+                CPLDebug("GDAL_netCDF", 
+                         "Latitude grid not spaced evenly, but within 0.1 degree threshold (probably a Gaussian grid).\n"
+                         "Saving original latitude values in Y_VALUES geolocation metadata" );
+                Set1DGeolocation( nVarDimYID, "Y" );
+            }
+            
+            if ( bLatSpacingOK == FALSE ) {
+                CPLDebug( "GDAL_netCDF", 
+                          "Latitude is not equally spaced." );
             }
         }
-        
-        if ( bLatSpacingOK == FALSE ) {
-            CPLDebug( "GDAL_netCDF", 
-                      "Latitude is not equally spaced." );
-        }
-
         if ( ( bLonSpacingOK == TRUE ) && ( bLatSpacingOK == TRUE ) ) {      
 
 /* -------------------------------------------------------------------- */
@@ -2762,68 +2821,6 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
         CPLFree( pdfXCoord );
         CPLFree( pdfYCoord );
     }// end if (has dims)
-
-/* -------------------------------------------------------------------- */
-/*     Set Projection from CF                                           */
-/* -------------------------------------------------------------------- */
-    if ( bGotGeogCS || bGotCfSRS ) {
-        /* Set SRS Units */
-
-        /* check units for x and y */
-        if( oSRS.IsProjected( ) ) {
-            const char *pszUnitsX = NULL;
-            const char *pszUnitsY = NULL;
-
-            strcpy( szTemp, poDS->papszDimName[nXDimID] );
-            strcat( szTemp, "#units" );
-            pszValue = CSLFetchNameValue( poDS->papszMetadata, 
-                                          szTemp );
-            if( pszValue != NULL ) 
-                pszUnitsX = pszValue;
-
-            strcpy( szTemp, poDS->papszDimName[nYDimID] );
-            strcat( szTemp, "#units" );
-            pszValue = CSLFetchNameValue( poDS->papszMetadata, 
-                                          szTemp );
-            if( pszValue != NULL )
-                pszUnitsY = pszValue;
-
-            /* TODO: what to do if units are not equal in X and Y */
-            if ( (pszUnitsX != NULL) && (pszUnitsY != NULL) && 
-                 EQUAL(pszUnitsX,pszUnitsY) )
-                pszUnits = pszUnitsX;
-
-            /* add units to PROJCS */
-            if ( pszUnits != NULL && ! EQUAL(pszUnits,"") ) {
-                CPLDebug( "GDAL_netCDF", 
-                          "units=%s", pszUnits );
-                if ( EQUAL(pszUnits,"m") ) {
-                    oSRS.SetLinearUnits( "metre", 1.0 );
-                    oSRS.SetAuthority( "PROJCS|UNIT", "EPSG", 9001 );
-                }
-                else if ( EQUAL(pszUnits,"km") ) {
-                    oSRS.SetLinearUnits( "kilometre", 1000.0 );
-                    oSRS.SetAuthority( "PROJCS|UNIT", "EPSG", 9036 );
-                }
-                /* TODO check for other values */
-                // else 
-                //     oSRS.SetLinearUnits(pszUnits, 1.0);
-            }
-        }
-        else if ( oSRS.IsGeographic() ) {
-            oSRS.SetAngularUnits( CF_UNITS_D, CPLAtof(SRS_UA_DEGREE_CONV) );
-            oSRS.SetAuthority( "GEOGCS|UNIT", "EPSG", 9122 );
-        }
-        
-        /* Set Projection */
-        oSRS.exportToWkt( &(pszTempProjection) );
-        CPLDebug( "GDAL_netCDF", "setting WKT from CF" );
-        SetProjection( pszTempProjection );
-        CPLFree( pszTempProjection );
-
-        if ( !bGotCfGT )
-            CPLDebug( "GDAL_netCDF", "got SRS but no geotransform from CF!");
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Process custom GDAL values (spatial_ref, GeoTransform)          */
