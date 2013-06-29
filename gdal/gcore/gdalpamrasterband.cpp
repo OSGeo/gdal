@@ -458,7 +458,7 @@ CPLErr GDALPamRasterBand::XMLInit( CPLXMLNode *psTree, const char *pszUnused )
             delete psPam->poDefaultRAT;
             psPam->poDefaultRAT = NULL;
         }
-        psPam->poDefaultRAT = new GDALRasterAttributeTable();
+        psPam->poDefaultRAT = new GDALDefaultRasterAttributeTable();
         psPam->poDefaultRAT->XMLInit( psRAT, "" );
     }
 
@@ -1290,7 +1290,7 @@ GDALPamRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
 /*                           GetDefaultRAT()                            */
 /************************************************************************/
 
-const GDALRasterAttributeTable *GDALPamRasterBand::GetDefaultRAT()
+GDALRasterAttributeTable *GDALPamRasterBand::GetDefaultRAT()
 
 {
     PamInitialize();

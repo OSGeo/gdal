@@ -4612,6 +4612,9 @@ SWIGINTERN int GDALRasterAttributeTableShadow_SetLinearBinning(GDALRasterAttribu
 SWIGINTERN int GDALRasterAttributeTableShadow_GetRowOfValue(GDALRasterAttributeTableShadow *self,double dfValue){
         return GDALRATGetRowOfValue( self, dfValue );
     }
+SWIGINTERN int GDALRasterAttributeTableShadow_ChangesAreWrittenToFile(GDALRasterAttributeTableShadow *self){
+        return GDALRATChangesAreWrittenToFile( self );
+    }
 
 #include "gdalgrid.h"
 
@@ -17596,6 +17599,39 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_RasterAttributeTable_ChangesAreWrittenToFile(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  int result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:RasterAttributeTable_ChangesAreWrittenToFile",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterAttributeTableShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "RasterAttributeTable_ChangesAreWrittenToFile" "', argument " "1"" of type '" "GDALRasterAttributeTableShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRasterAttributeTableShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (int)GDALRasterAttributeTableShadow_ChangesAreWrittenToFile(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *RasterAttributeTable_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *obj;
   if (!PyArg_ParseTuple(args,(char*)"O:swigregister", &obj)) return NULL;
@@ -21816,6 +21852,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"RasterAttributeTable_GetLinearBinning", _wrap_RasterAttributeTable_GetLinearBinning, METH_VARARGS, (char *)"RasterAttributeTable_GetLinearBinning(RasterAttributeTable self) -> bool"},
 	 { (char *)"RasterAttributeTable_SetLinearBinning", _wrap_RasterAttributeTable_SetLinearBinning, METH_VARARGS, (char *)"RasterAttributeTable_SetLinearBinning(RasterAttributeTable self, double dfRow0Min, double dfBinSize) -> int"},
 	 { (char *)"RasterAttributeTable_GetRowOfValue", _wrap_RasterAttributeTable_GetRowOfValue, METH_VARARGS, (char *)"RasterAttributeTable_GetRowOfValue(RasterAttributeTable self, double dfValue) -> int"},
+	 { (char *)"RasterAttributeTable_ChangesAreWrittenToFile", _wrap_RasterAttributeTable_ChangesAreWrittenToFile, METH_VARARGS, (char *)"RasterAttributeTable_ChangesAreWrittenToFile(RasterAttributeTable self) -> int"},
 	 { (char *)"RasterAttributeTable_swigregister", RasterAttributeTable_swigregister, METH_VARARGS, NULL},
 	 { (char *)"TermProgress_nocb", (PyCFunction) _wrap_TermProgress_nocb, METH_VARARGS | METH_KEYWORDS, (char *)"TermProgress_nocb(double dfProgress, char pszMessage = None, void pData = None) -> int"},
 	 { (char *)"ComputeMedianCutPCT", (PyCFunction) _wrap_ComputeMedianCutPCT, METH_VARARGS | METH_KEYWORDS, (char *)"\n"

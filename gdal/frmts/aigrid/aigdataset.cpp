@@ -102,7 +102,7 @@ class AIGRasterBand : public GDALPamRasterBand
 
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
-    virtual const GDALRasterAttributeTable *GetDefaultRAT();
+    virtual GDALRasterAttributeTable *GetDefaultRAT();
 };
 
 /************************************************************************/
@@ -202,7 +202,7 @@ CPLErr AIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*                           GetDefaultRAT()                            */
 /************************************************************************/
 
-const GDALRasterAttributeTable *AIGRasterBand::GetDefaultRAT()
+GDALRasterAttributeTable *AIGRasterBand::GetDefaultRAT()
 
 {
     AIGDataset	*poODS = (AIGDataset *) poDS;
@@ -423,7 +423,7 @@ void AIGDataset::ReadRAT()
 /* -------------------------------------------------------------------- */
     int iField;
 
-    poRAT = new GDALRasterAttributeTable();
+    poRAT = new GDALDefaultRasterAttributeTable();
 
     for( iField = 0; iField < psTableDef->numFields; iField++ )
     {
