@@ -171,7 +171,7 @@ class CPL_DLL GDALProxyRasterBand : public GDALRasterBand
         virtual CPLErr SetDefaultHistogram( double dfMin, double dfMax,
                                             int nBuckets, int *panHistogram );
 
-        virtual const GDALRasterAttributeTable *GetDefaultRAT();
+        virtual GDALRasterAttributeTable *GetDefaultRAT();
         virtual CPLErr SetDefaultRAT( const GDALRasterAttributeTable * );
 
         virtual GDALRasterBand *GetMaskBand();

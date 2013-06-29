@@ -1243,6 +1243,20 @@ class RasterAttributeTable(_object):
         """GetRowOfValue(self, double dfValue) -> int"""
         return _gdal.RasterAttributeTable_GetRowOfValue(self, *args)
 
+    def ChangesAreWrittenToFile(self, *args):
+        """ChangesAreWrittenToFile(self) -> int"""
+        return _gdal.RasterAttributeTable_ChangesAreWrittenToFile(self, *args)
+
+    def WriteArray(self, array, field, start=0):
+        import gdalnumeric
+
+        return gdalnumeric.RATWriteArray(self, array, field, start)
+
+    def ReadAsArray(self, field, start=0, length=None):
+        import gdalnumeric
+
+        return gdalnumeric.RATReadArray(self, field, start, length)
+
 RasterAttributeTable_swigregister = _gdal.RasterAttributeTable_swigregister
 RasterAttributeTable_swigregister(RasterAttributeTable)
 

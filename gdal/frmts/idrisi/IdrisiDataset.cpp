@@ -516,7 +516,7 @@ public:
     virtual CPLErr SetStatistics( double dfMin, double dfMax,
                                   double dfMean, double dfStdDev ); 
     CPLErr SetMinMax( double dfMin, double dfMax );
-    virtual const GDALRasterAttributeTable *GetDefaultRAT();
+    virtual GDALRasterAttributeTable *GetDefaultRAT();
     virtual CPLErr SetDefaultRAT( const GDALRasterAttributeTable * );
 
     float  fMaximum;
@@ -2274,7 +2274,7 @@ CPLErr IdrisiRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT )
 /*                           GetDefaultRAT()                            */
 /************************************************************************/
 
-const GDALRasterAttributeTable *IdrisiRasterBand::GetDefaultRAT()
+GDALRasterAttributeTable *IdrisiRasterBand::GetDefaultRAT()
 {        
     IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
 
@@ -2294,7 +2294,7 @@ const GDALRasterAttributeTable *IdrisiRasterBand::GetDefaultRAT()
         delete poDefaultRAT;
     }
 
-    poDefaultRAT = new GDALRasterAttributeTable();
+    poDefaultRAT = new GDALDefaultRasterAttributeTable();
 
     // ----------------------------------------------------------
     // Create (Value, Red, Green, Blue, Alpha, Class_Name) fields

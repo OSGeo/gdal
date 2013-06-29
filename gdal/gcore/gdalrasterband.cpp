@@ -4300,12 +4300,12 @@ CPLErr CPL_STDCALL GDALSetDefaultHistogram( GDALRasterBandH hBand,
  *
  * A RAT will be returned if there is a default one associated with the
  * band, otherwise NULL is returned.  The returned RAT is owned by the
- * band and should not be deleted, or altered by the application. 
+ * band and should not be deleted by the application. 
  * 
  * @return NULL, or a pointer to an internal RAT owned by the band.
  */
 
-const GDALRasterAttributeTable *GDALRasterBand::GetDefaultRAT()
+GDALRasterAttributeTable *GDALRasterBand::GetDefaultRAT()
 
 {
     return NULL;
