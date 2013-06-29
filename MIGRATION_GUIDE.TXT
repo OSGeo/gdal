@@ -1,0 +1,11 @@
+MIGRATION GUIDE FROM GDAL 1.X to GDAL 2.0
+-----------------------------------------
+
+This file documents backwards incompatible changes.
+
+C++ API:
+
+  * GDALRasterAttributeTable is now an abstract class.
+    See http://trac.osgeo.org/gdal/wiki/rfc40_enhanced_rat_support
+    The functionnality of GDAL 1.X GDALRasterAttributeTable is now in
+    GDALDefaultRasterAttributeTable.
