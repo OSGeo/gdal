@@ -465,4 +465,18 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
 }
 }
 
+%extend GDALRasterAttributeTableShadow {
+%pythoncode {
+  def WriteArray(self, array, field, start=0):
+      import gdalnumeric
+
+      return gdalnumeric.RATWriteArray(self, array, field, start)
+
+  def ReadAsArray(self, field, start=0, length=None):
+      import gdalnumeric
+
+      return gdalnumeric.RATReadArray(self, field, start, length)
+}
+}
+
 %include "callback.i"

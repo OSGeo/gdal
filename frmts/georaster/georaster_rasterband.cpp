@@ -713,7 +713,7 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
 //                                                              GetDefaultRAT()
 //  ---------------------------------------------------------------------------
 
-const GDALRasterAttributeTable *GeoRasterRasterBand::GetDefaultRAT()
+GDALRasterAttributeTable *GeoRasterRasterBand::GetDefaultRAT()
 {
     if( poDefaultRAT )
     {

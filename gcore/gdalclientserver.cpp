@@ -628,7 +628,7 @@ class GDALClientRasterBand : public GDALPamRasterBand
         virtual CPLErr BuildOverviews( const char *, int, int *,
                                        GDALProgressFunc, void * );
 
-        virtual const GDALRasterAttributeTable *GetDefaultRAT();
+        virtual GDALRasterAttributeTable *GetDefaultRAT();
         virtual CPLErr SetDefaultRAT( const GDALRasterAttributeTable * );
 
         virtual CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
@@ -984,7 +984,7 @@ static int GDALPipeRead(GDALPipe* p, GDALRasterAttributeTable** ppoRAT)
     if( poNode == NULL )
         return FALSE;
 
-    *ppoRAT = new GDALRasterAttributeTable();
+    *ppoRAT = new GDALDefaultRasterAttributeTable();
     if( (*ppoRAT)->XMLInit(poNode, NULL) != CE_None )
     {
         CPLDestroyXMLNode(poNode);
@@ -5332,7 +5332,7 @@ CPLErr GDALClientRasterBand::BuildOverviews( const char * pszResampling,
 /*                           GetDefaultRAT()                            */
 /************************************************************************/
 
-const GDALRasterAttributeTable *GDALClientRasterBand::GetDefaultRAT()
+GDALRasterAttributeTable *GDALClientRasterBand::GetDefaultRAT()
 {
     if( !SupportsInstr(INSTR_Band_GetDefaultRAT) )
         return GDALPamRasterBand::GetDefaultRAT();

@@ -116,7 +116,7 @@ class IDARasterBand : public RawRasterBand
     		IDARasterBand( IDADataset *poDSIn, FILE *fpRaw, int nXSize );
     virtual     ~IDARasterBand();
 
-    virtual const GDALRasterAttributeTable *GetDefaultRAT();
+    virtual GDALRasterAttributeTable *GetDefaultRAT();
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
     virtual double GetOffset( int *pbSuccess = NULL );
@@ -269,7 +269,7 @@ GDALColorInterp IDARasterBand::GetColorInterpretation()
 /*                           GetDefaultRAT()                            */
 /************************************************************************/
 
-const GDALRasterAttributeTable *IDARasterBand::GetDefaultRAT() 
+GDALRasterAttributeTable *IDARasterBand::GetDefaultRAT() 
 
 {
     if( poRAT )
@@ -586,7 +586,7 @@ void IDADataset::ReadColorTable()
 /* -------------------------------------------------------------------- */
 /*      Create a RAT to populate.                                       */
 /* -------------------------------------------------------------------- */
-    GDALRasterAttributeTable *poRAT = new GDALRasterAttributeTable();
+    GDALRasterAttributeTable *poRAT = new GDALDefaultRasterAttributeTable();
 
     poRAT->CreateColumn( "FROM", GFT_Integer, GFU_Min );
     poRAT->CreateColumn( "TO", GFT_Integer, GFU_Max );

@@ -247,7 +247,7 @@ public:
     virtual CPLErr      GetStatistics( int bApproxOK, int bForce,
                             double* pdfMin, double* pdfMax, 
                             double* pdfMean, double* pdfStdDev );
-    virtual const       GDALRasterAttributeTable *GetDefaultRAT();
+    virtual             GDALRasterAttributeTable *GetDefaultRAT();
     virtual CPLErr      SetDefaultRAT( const GDALRasterAttributeTable * );
     virtual int         GetOverviewCount();
     virtual GDALRasterBand*

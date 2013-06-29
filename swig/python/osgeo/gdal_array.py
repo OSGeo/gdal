@@ -77,6 +77,20 @@ def BandRasterIONumPy(*args, **kwargs):
         int ysize, PyArrayObject psArray, int buf_type) -> CPLErr
     """
   return _gdal_array.BandRasterIONumPy(*args, **kwargs)
+
+def RATValuesIONumPyWrite(*args, **kwargs):
+  """
+    RATValuesIONumPyWrite(RasterAttributeTable poRAT, int nField, int nStart, 
+        PyArrayObject psArray) -> CPLErr
+    """
+  return _gdal_array.RATValuesIONumPyWrite(*args, **kwargs)
+
+def RATValuesIONumPyRead(*args, **kwargs):
+  """
+    RATValuesIONumPyRead(RasterAttributeTable poRAT, int nField, int nStart, 
+        int nLength) -> PyObject
+    """
+  return _gdal_array.RATValuesIONumPyRead(*args, **kwargs)
 import numpy
 import _gdal_array
 
@@ -270,6 +284,50 @@ def BandWriteArray( band, array, xoff=0, yoff=0 ):
     return BandRasterIONumPy( band, 1, xoff, yoff, xsize, ysize,
                                 array, datatype )
 
+def RATWriteArray(rat, array, field, start=0):
+    """
+    Pure Python implementation of writing a chunk of the RAT
+    from a numpy array. Type of array is coerced to one of the types
+    (int, double, string) supported. Called from RasterAttributeTable.WriteArray
+    """
+    if array is None:
+        raise ValueError("Expected array of dim 1")
+
+    # if not the array type convert it to handle lists etc
+    if not isinstance(array, numpy.ndarray):
+        array = numpy.array(array)
+
+    if array.ndim != 1:
+        raise ValueError("Expected array of dim 1")
+
+    if (start + array.size) > rat.GetRowCount():
+        raise ValueError("Array too big to fit into RAT from start position")
+
+    if numpy.issubdtype(array.dtype, numpy.integer):
+        # is some type of integer - coerce to standard int
+        # TODO: must check this is fine on all platforms
+        # confusingly numpy.int 64 bit even if native type 32 bit
+        array = array.astype(numpy.int32)
+    elif numpy.issubdtype(array.dtype, numpy.floating):
+        # is some type of floating point - coerce to double
+        array = array.astype(numpy.double)
+    elif numpy.issubdtype(array.dtype, numpy.character):
+        # cast away any kind of Unicode etc
+        array = array.astype(numpy.character)
+    else:
+        raise ValueError("Array not of a supported type (integer, double or string)")
+
+    return RATValuesIONumPyWrite(rat, field, start, array)
+
+def RATReadArray(rat, field, start=0, length=None):
+    """
+    Pure Python implementation of reading a chunk of the RAT
+    into a numpy array. Called from RasterAttributeTable.ReadAsArray
+    """
+    if length is None:
+        length = rat.GetRowCount() - start
+
+    return RATValuesIONumPyRead(rat, field, start, length)
     
 def CopyDatasetInfo( src, dst, xoff=0, yoff=0 ):
     """

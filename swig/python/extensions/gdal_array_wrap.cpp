@@ -2719,12 +2719,13 @@ SWIG_Python_MustGetPtr(PyObject *obj, swig_type_info *ty, int argnum, int flags)
 
 /* -------- TYPES TABLE (BEGIN) -------- */
 
-#define SWIGTYPE_p_GDALRasterBandShadow swig_types[0]
-#define SWIGTYPE_p_PyArrayObject swig_types[1]
-#define SWIGTYPE_p_char swig_types[2]
-#define SWIGTYPE_p_int swig_types[3]
-static swig_type_info *swig_types[5];
-static swig_module_info swig_module = {swig_types, 4, 0, 0, 0, 0};
+#define SWIGTYPE_p_GDALRasterAttributeTableShadow swig_types[0]
+#define SWIGTYPE_p_GDALRasterBandShadow swig_types[1]
+#define SWIGTYPE_p_PyArrayObject swig_types[2]
+#define SWIGTYPE_p_char swig_types[3]
+#define SWIGTYPE_p_int swig_types[4]
+static swig_type_info *swig_types[6];
+static swig_module_info swig_module = {swig_types, 5, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -2900,8 +2901,10 @@ static void GDALPythonFreeCStr(void* ptr, int bToFree)
 
 #ifdef DEBUG 
 typedef struct GDALRasterBandHS GDALRasterBandShadow;
+typedef struct RasterAttributeTableHS GDALRasterAttributeTableShadow;
 #else
 typedef void GDALRasterBandShadow;
+typedef void GDALRasterAttributeTableShadow;
 #endif
 
 CPL_C_START
@@ -3467,6 +3470,174 @@ SWIG_From_int  (int value)
   return SWIG_From_long  (value);
 }
 
+
+  // need different functions for read and write
+  // since reading strings requires us to know the 
+  // length of the longest string before creating array
+  CPLErr RATValuesIONumPyWrite( GDALRasterAttributeTableShadow* poRAT, int nField, int nStart, 
+                       PyArrayObject *psArray) {
+
+    if( PyArray_NDIM(psArray) != 1 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Illegal numpy array rank %d.\n", 
+                  PyArray_NDIM(psArray) );
+        return CE_Failure;
+    }
+
+    int nLength = PyArray_DIM(psArray, 0);
+    int nType = PyArray_TYPE(psArray);
+    CPLErr retval = CE_None;
+
+    if( nType == NPY_INT32 )
+    {
+        retval = GDALRATValuesIOAsInteger(poRAT, GF_Write, nField, nStart, nLength, 
+                        (int*)PyArray_DATA(psArray) );
+    }
+    else if( nType == NPY_DOUBLE )
+    {
+        retval = GDALRATValuesIOAsDouble(poRAT, GF_Write, nField, nStart, nLength,
+                        (double*)PyArray_DATA(psArray) );
+    }
+    else if( nType == NPY_STRING )
+    {
+        // have to convert array of strings to a char **
+        char **papszStringData = (char**)CPLCalloc(sizeof(char*), nLength);
+
+        // max size of string
+        int nMaxLen = PyArray_ITEMSIZE(psArray);
+        char *pszBuffer = (char*)CPLMalloc((nMaxLen+1) * sizeof(char));
+        // make sure there is a null char on the end
+        // as there won't be if this string is the maximum size
+        pszBuffer[nMaxLen] = '\0';
+
+        // we can't just use the memory location in the array 
+        // since long strings won't be null terminated
+        for( int i = 0; i < nLength; i++ )
+        {
+            strncpy(pszBuffer, (char*)PyArray_GETPTR1(psArray, i), nMaxLen);
+            papszStringData[i] = CPLStrdup(pszBuffer);
+        }
+        CPLFree(pszBuffer);
+
+        retval = GDALRATValuesIOAsString(poRAT, GF_Write, nField, nStart, nLength,
+                                            papszStringData);
+
+        for( int i = 0; i < nLength; i++ )
+        {
+            CPLFree(papszStringData[i]);
+        }
+        CPLFree(papszStringData);
+    }
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Illegal numpy array type %d.\n", 
+                  nType );
+        return CE_Failure;
+    }
+    return retval;
+  }
+
+
+  // need different functions for read and write
+  // since reading strings requires us to know the 
+  // length of the longest string before creating array
+  PyObject *RATValuesIONumPyRead( GDALRasterAttributeTableShadow* poRAT, int nField, int nStart, 
+                       int nLength) {
+
+    GDALRATFieldType colType = GDALRATGetTypeOfCol(poRAT, nField);
+    npy_intp dims = nLength;
+    PyObject *pOutArray = NULL;
+    if( colType == GFT_Integer )
+    {
+        pOutArray = PyArray_SimpleNew(1, &dims, NPY_INT32);
+        if( GDALRATValuesIOAsInteger(poRAT, GF_Read, nField, nStart, nLength, 
+                        (int*)PyArray_DATA(pOutArray)) != CE_None)
+        {
+            Py_DECREF(pOutArray);
+            Py_RETURN_NONE;
+        }
+    }
+    else if( colType == GFT_Real )
+    {
+        pOutArray = PyArray_SimpleNew(1, &dims, NPY_DOUBLE);
+        if( GDALRATValuesIOAsDouble(poRAT, GF_Read, nField, nStart, nLength,
+                        (double*)PyArray_DATA(pOutArray)) != CE_None)
+        {
+            Py_DECREF(pOutArray);
+            Py_RETURN_NONE;
+        }
+    }
+    else if( colType == GFT_String )
+    {
+        // must read the data first to work out max size
+        // of strings to create array
+        int n;
+        char **papszStringList = (char**)CPLCalloc(sizeof(char*), nLength);
+        if( GDALRATValuesIOAsString(poRAT, GF_Read, nField, nStart, nLength, papszStringList) != CE_None )
+        {
+            CPLFree(papszStringList);
+            Py_RETURN_NONE;
+        }
+        int nMaxLen = 0, nLen;
+        for( n = 0; n < nLength; n++ )
+        {
+            // note strlen doesn't include null char
+            // but that is what numpy expects so all good
+            nLen = strlen(papszStringList[n]);
+            if( nLen > nMaxLen )
+                nMaxLen = nLen;
+        }
+        int bZeroLength = FALSE;
+        // numpy can't deal with zero length strings
+        if( nMaxLen == 0 )
+        {
+            nMaxLen = 1;
+            bZeroLength = TRUE;
+        }
+
+        // create the dtype string
+#if PY_VERSION_HEX >= 0x03000000
+        PyObject *pDTypeString = PyUnicode_FromFormat("S%d", nMaxLen);
+#else
+        PyObject *pDTypeString = PyString_FromFormat("S%d", nMaxLen);
+#endif
+        // out type description object
+        PyArray_Descr *pDescr;
+        PyArray_DescrConverter(pDTypeString, &pDescr);
+        Py_DECREF(pDTypeString);
+
+        // create array
+        pOutArray = PyArray_SimpleNewFromDescr(1, &dims, pDescr);
+
+        // copy data in
+        if( !bZeroLength )
+        {
+            for( n = 0; n < nLength; n++ )
+            {
+                // we use strncpy so that we don't go over nMaxLen
+                // which we would if the null char is copied
+                // (which we don't want as numpy 'knows' to interpret the string as nMaxLen long)
+                strncpy((char*)PyArray_GETPTR1(pOutArray, n), papszStringList[n], nMaxLen);
+            }
+        }
+        else
+        {
+            // so there isn't rubbush in the 1 char strings
+            PyArray_FILLWBYTE(pOutArray, 0);
+        }
+
+        // free strings
+        for( n = 0; n < nLength; n++ )
+        {
+            CPLFree(papszStringList[n]);
+        }
+        CPLFree(papszStringList);
+    }
+    return pOutArray;
+  }
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -3597,6 +3768,115 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_RATValuesIONumPyWrite(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0;
+  GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
+  int arg2 ;
+  int arg3 ;
+  PyArrayObject *arg4 = (PyArrayObject *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  int val3 ;
+  int ecode3 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  char *  kwnames[] = {
+    (char *) "poRAT",(char *) "nField",(char *) "nStart",(char *) "psArray", NULL 
+  };
+  CPLErr result;
+  
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOO:RATValuesIONumPyWrite",kwnames,&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterAttributeTableShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "RATValuesIONumPyWrite" "', argument " "1"" of type '" "GDALRasterAttributeTableShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRasterAttributeTableShadow * >(argp1);
+  ecode2 = SWIG_AsVal_int(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "RATValuesIONumPyWrite" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
+  ecode3 = SWIG_AsVal_int(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "RATValuesIONumPyWrite" "', argument " "3"" of type '" "int""'");
+  } 
+  arg3 = static_cast< int >(val3);
+  {
+    /* %typemap(in,numinputs=1) (PyArrayObject  *psArray) */
+    if (obj3 != NULL && PyArray_Check(obj3))
+    {
+      arg4 = (PyArrayObject*)(obj3);
+    }
+    else
+    {
+      PyErr_SetString(PyExc_TypeError, "not a numpy array");
+      SWIG_fail;
+    }
+  }
+  result = (CPLErr)RATValuesIONumPyWrite(arg1,arg2,arg3,arg4);
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_RATValuesIONumPyRead(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0;
+  GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
+  int arg2 ;
+  int arg3 ;
+  int arg4 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  int val3 ;
+  int ecode3 = 0 ;
+  int val4 ;
+  int ecode4 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  char *  kwnames[] = {
+    (char *) "poRAT",(char *) "nField",(char *) "nStart",(char *) "nLength", NULL 
+  };
+  PyObject *result = 0 ;
+  
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOO:RATValuesIONumPyRead",kwnames,&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterAttributeTableShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "RATValuesIONumPyRead" "', argument " "1"" of type '" "GDALRasterAttributeTableShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRasterAttributeTableShadow * >(argp1);
+  ecode2 = SWIG_AsVal_int(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "RATValuesIONumPyRead" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
+  ecode3 = SWIG_AsVal_int(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "RATValuesIONumPyRead" "', argument " "3"" of type '" "int""'");
+  } 
+  arg3 = static_cast< int >(val3);
+  ecode4 = SWIG_AsVal_int(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "RATValuesIONumPyRead" "', argument " "4"" of type '" "int""'");
+  } 
+  arg4 = static_cast< int >(val4);
+  result = (PyObject *)RATValuesIONumPyRead(arg1,arg2,arg3,arg4);
+  resultobj = result;
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 static PyMethodDef SwigMethods[] = {
 	 { (char *)"SWIG_PyInstanceMethod_New", (PyCFunction)SWIG_PyInstanceMethod_New, METH_O, NULL},
 	 { (char *)"GetArrayFilename", _wrap_GetArrayFilename, METH_VARARGS, (char *)"GetArrayFilename(PyArrayObject psArray) -> retStringAndCPLFree"},
@@ -3604,30 +3884,42 @@ static PyMethodDef SwigMethods[] = {
 		"BandRasterIONumPy(Band band, int bWrite, int xoff, int yoff, int xsize, \n"
 		"    int ysize, PyArrayObject psArray, int buf_type) -> CPLErr\n"
 		""},
+	 { (char *)"RATValuesIONumPyWrite", (PyCFunction) _wrap_RATValuesIONumPyWrite, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
+		"RATValuesIONumPyWrite(RasterAttributeTable poRAT, int nField, int nStart, \n"
+		"    PyArrayObject psArray) -> CPLErr\n"
+		""},
+	 { (char *)"RATValuesIONumPyRead", (PyCFunction) _wrap_RATValuesIONumPyRead, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
+		"RATValuesIONumPyRead(RasterAttributeTable poRAT, int nField, int nStart, \n"
+		"    int nLength) -> PyObject\n"
+		""},
 	 { NULL, NULL, 0, NULL }
 };
 
 
 /* -------- TYPE CONVERSION AND EQUIVALENCE RULES (BEGIN) -------- */
 
+static swig_type_info _swigt__p_GDALRasterAttributeTableShadow = {"_p_GDALRasterAttributeTableShadow", "GDALRasterAttributeTableShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALRasterBandShadow = {"_p_GDALRasterBandShadow", "GDALRasterBandShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_PyArrayObject = {"_p_PyArrayObject", "PyArrayObject *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_char = {"_p_char", "char *", 0, 0, (void*)0, 0};
-static swig_type_info _swigt__p_int = {"_p_int", "CPLErr *|int *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_int = {"_p_int", "GDALRATFieldType *|CPLErr *|int *|GDALRATFieldUsage *", 0, 0, (void*)0, 0};
 
 static swig_type_info *swig_type_initial[] = {
+  &_swigt__p_GDALRasterAttributeTableShadow,
   &_swigt__p_GDALRasterBandShadow,
   &_swigt__p_PyArrayObject,
   &_swigt__p_char,
   &_swigt__p_int,
 };
 
+static swig_cast_info _swigc__p_GDALRasterAttributeTableShadow[] = {  {&_swigt__p_GDALRasterAttributeTableShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALRasterBandShadow[] = {  {&_swigt__p_GDALRasterBandShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_PyArrayObject[] = {  {&_swigt__p_PyArrayObject, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_char[] = {  {&_swigt__p_char, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_int[] = {  {&_swigt__p_int, 0, 0, 0},{0, 0, 0, 0}};
 
 static swig_cast_info *swig_cast_initial[] = {
+  _swigc__p_GDALRasterAttributeTableShadow,
   _swigc__p_GDALRasterBandShadow,
   _swigc__p_PyArrayObject,
   _swigc__p_char,

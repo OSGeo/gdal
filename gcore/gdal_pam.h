@@ -281,7 +281,7 @@ class CPL_DLL GDALPamRasterBand : public GDALRasterBand
                                          const char * pszValue,
                                          const char * pszDomain = "" );
 
-    virtual const GDALRasterAttributeTable *GetDefaultRAT();
+    virtual GDALRasterAttributeTable *GetDefaultRAT();
     virtual CPLErr SetDefaultRAT( const GDALRasterAttributeTable * );
 
     // new in GDALPamRasterBand. 
