@@ -165,6 +165,7 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
     papszSelFields = None
     pszSQLStatement = None
     eGType = -2
+    bPromoteToMulti = False
     eGeomOp = GeomOperation.NONE
     dfGeomOpParam = 0
     papszFieldTypesToString = []
@@ -253,6 +254,8 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
                 eGType = ogr.wkbNone
             elif EQUAL(args[iArg+1],"GEOMETRY"):
                 eGType = ogr.wkbUnknown
+            elif EQUAL(args[iArg+1],"PROMOTE_TO_MULTI"):
+                bPromoteToMulti = True
             elif EQUAL(args[iArg+1],"POINT"):
                 eGType = ogr.wkbPoint
             elif EQUAL(args[iArg+1],"LINESTRING"):
@@ -710,7 +713,7 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
                                         bNullifyOutputSRS, \
                                         poSourceSRS, \
                                         papszSelFields, \
-                                        bAppend, eGType, nCoordDim, bOverwrite, \
+                                        bAppend, eGType, bPromoteToMulti, nCoordDim, bOverwrite, \
                                         papszFieldTypesToString, \
                                         bWrapDateline, \
                                         bExplodeCollections, \
@@ -721,7 +724,7 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
 
             if psInfo is None or not TranslateLayer( psInfo, poDS, poResultSet, poODS, \
                                 poOutputSRS, bNullifyOutputSRS, \
-                                eGType, nCoordDim, \
+                                eGType, bPromoteToMulti, nCoordDim, \
                                 eGeomOp, dfGeomOpParam, \
                                 nCountLayerFeatures, \
                                 poClipSrc, poClipDst, \
@@ -825,7 +828,7 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
                                            bNullifyOutputSRS, \
                                            poSourceSRS, \
                                            papszSelFields, \
-                                           bAppend, eGType, nCoordDim, bOverwrite, \
+                                           bAppend, eGType, bPromoteToMulti, nCoordDim, bOverwrite, \
                                            papszFieldTypesToString, \
                                            bWrapDateline, \
                                            bExplodeCollections, \
@@ -854,7 +857,7 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
                 if psInfo is not None:
                     if not TranslateLayer(psInfo, poDS, poLayer, poODS, \
                                         poOutputSRS, bNullifyOutputSRS,  \
-                                        eGType, nCoordDim, \
+                                        eGType, bPromoteToMulti, nCoordDim, \
                                         eGeomOp, dfGeomOpParam,  \
                                         0,  \
                                         poClipSrc, poClipDst,  \
@@ -987,7 +990,7 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
                                        bNullifyOutputSRS, \
                                        poSourceSRS, \
                                        papszSelFields, \
-                                       bAppend, eGType, nCoordDim, bOverwrite, \
+                                       bAppend, eGType, bPromoteToMulti, nCoordDim, bOverwrite, \
                                        papszFieldTypesToString, \
                                        bWrapDateline, \
                                        bExplodeCollections, \
@@ -999,7 +1002,7 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
             if (psInfo is None or \
                 not TranslateLayer( psInfo, poDS, poLayer, poODS, \
                                     poOutputSRS, bNullifyOutputSRS, \
-                                    eGType, nCoordDim, \
+                                    eGType, bPromoteToMulti, nCoordDim, \
                                     eGeomOp, dfGeomOpParam, \
                                     panLayerCountFeatures[iLayer], \
                                     poClipSrc, poClipDst, \
@@ -1189,7 +1192,7 @@ def SetZ (poGeom, dfZ ):
 
 def SetupTargetLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
                     bTransform,  poOutputSRS, bNullifyOutputSRS, poSourceSRS, papszSelFields, \
-                    bAppend, eGType, nCoordDim, bOverwrite, \
+                    bAppend, eGType, bPromoteToMulti, nCoordDim, bOverwrite, \
                     papszFieldTypesToString, bWrapDateline, \
                     bExplodeCollections, pszZField, pszWHERE) :
 
@@ -1284,8 +1287,14 @@ def SetupTargetLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
         if eGType == -2:
             eGType = poSrcFDefn.GetGeomType()
 
+            n25DBit = eGType & ogr.wkb25DBit
+            if bPromoteToMulti:
+                if wkbFlatten(eGType) == ogr.wkbLineString:
+                    eGType = ogr.wkbMultiLineString | n25DBit
+                elif wkbFlatten(eGType) == ogr.wkbPolygon:
+                    eGType = ogr.wkbMultiPolygon | n25DBit
+
             if bExplodeCollections:
-                n25DBit = eGType & ogr.wkb25DBit
                 if wkbFlatten(eGType) == ogr.wkbMultiPoint:
                     eGType = ogr.wkbPoint | n25DBit
                 elif wkbFlatten(eGType) == ogr.wkbMultiLineString:
@@ -1487,7 +1496,7 @@ def SetupTargetLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
 
 def TranslateLayer( psInfo, poSrcDS, poSrcLayer, poDstDS,  \
                     poOutputSRS, bNullifyOutputSRS, \
-                    eGType, nCoordDim, eGeomOp, dfGeomOpParam, \
+                    eGType, bPromoteToMulti, nCoordDim, eGeomOp, dfGeomOpParam, \
                     nCountLayerFeatures, \
                     poClipSrc, poClipDst, bExplodeCollections, nSrcFileSize, \
                     pnReadFeatureCount, pfnProgress, pProgressArg) :
@@ -1641,10 +1650,12 @@ def TranslateLayer( psInfo, poSrcDS, poSrcLayer, poDstDS,  \
                 if bForceToPolygon:
                     poDstFeature.SetGeometryDirectly(ogr.ForceToPolygon(poDstGeometry))
 
-                elif bForceToMultiPolygon:
+                elif bForceToMultiPolygon or \
+                        (bPromoteToMulti and wkbFlatten(poDstGeometry.GetGeometryType()) == ogr.wkbPolygon):
                     poDstFeature.SetGeometryDirectly(ogr.ForceToMultiPolygon(poDstGeometry))
 
-                elif bForceToMultiLineString:
+                elif bForceToMultiLineString or \
+                        (bPromoteToMulti and wkbFlatten(poDstGeometry.GetGeometryType()) == ogr.wkbLineString):
                     poDstFeature.SetGeometryDirectly(ogr.ForceToMultiLineString(poDstGeometry))
 
             gdal.ErrorReset()
