@@ -279,7 +279,7 @@ RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetDefaultHistogram,
                         int nBuckets, int * panHistogram ),
                         (dfMin, dfMax, nBuckets, panHistogram))
 
-RB_PROXY_METHOD_WITH_RET(const GDALRasterAttributeTable *, NULL,
+RB_PROXY_METHOD_WITH_RET(GDALRasterAttributeTable *, NULL,
                         GetDefaultRAT, (), ())
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetDefaultRAT,
                         ( const GDALRasterAttributeTable * arg1), (arg1))

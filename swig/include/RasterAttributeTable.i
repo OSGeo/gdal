@@ -169,6 +169,10 @@ public:
     int GetRowOfValue( double dfValue ) {
         return GDALRATGetRowOfValue( self, dfValue );
     }
+
+    int ChangesAreWrittenToFile() {
+        return GDALRATChangesAreWrittenToFile( self );
+    }
 }
 
 };
