@@ -3341,7 +3341,36 @@ def ogr_shape_68():
                 return 'fail'
 
     return 'success'
-    
+
+###############################################################################
+# Test fix for #5135 (creating a field of type Integer with a big width)
+
+def ogr_shape_69():
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_69.shp')
+    lyr = ds.CreateLayer('ogr_shape_69')
+    field_defn = ogr.FieldDefn('intfield', ogr.OFTInteger)
+    field_defn.SetWidth(64)
+    lyr.CreateField(field_defn)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0,123456)
+    lyr.CreateFeature(feat)
+    feat = None
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_shape_69.shp')
+    lyr = ds.GetLayer(0)
+    if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTReal:
+        return 'fail'
+    feat = lyr.GetNextFeature()
+    if feat.GetField(0) != 123456:
+        return 'fail'
+    ds = None
+
+    ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_69.shp')
+
+    return 'success'
+
 ###############################################################################
 # 
 
@@ -3444,6 +3473,7 @@ gdaltest_list = [
     ogr_shape_66,
     ogr_shape_67,
     ogr_shape_68,
+    ogr_shape_69,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':
