@@ -1306,7 +1306,7 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
               char szFormat[20];
               char szValue[32];
               int nFieldWidth = poFieldDefn->GetWidth();
-              sprintf(szFormat, "%%%dd", MIN(nFieldWidth, sizeof(szValue)-1));
+              sprintf(szFormat, "%%%dd", MIN(nFieldWidth, (int)sizeof(szValue)-1));
               sprintf(szValue, szFormat, poFeature->GetFieldAsInteger(iField) );
               int nStrLen = strlen(szValue);
               if( nStrLen > nFieldWidth )
