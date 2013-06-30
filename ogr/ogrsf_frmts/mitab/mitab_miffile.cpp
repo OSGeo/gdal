@@ -270,7 +270,7 @@ int MIFFile::Open(const char *pszFname, const char *pszAccess,
     
     CPLErrorReset();
 
-    if (m_poMIDFile)
+    if (m_poMIFFile)
     {
         CPLError(CE_Failure, CPLE_FileIO,
                      "Open() failed: object already contains an open file");
@@ -361,38 +361,6 @@ int MIFFile::Open(const char *pszFname, const char *pszAccess,
     }
 
     /*-----------------------------------------------------------------
-     * Open .MID file
-     *----------------------------------------------------------------*/
-    if (nFnameLen > 4 && strcmp(pszTmpFname+nFnameLen-4, ".MIF")==0)
-        strcpy(pszTmpFname+nFnameLen-4, ".MID");
-    else 
-        strcpy(pszTmpFname+nFnameLen-4, ".mid");
-
-#ifndef _WIN32
-    TABAdjustFilenameExtension(pszTmpFname);
-#endif
-
-    m_poMIDFile = new MIDDATAFile;
-
-    if (m_poMIDFile->Open(pszTmpFname, pszAccess) !=0)
-    {
-        if (!bTestOpenNoError)
-            CPLError(CE_Failure, CPLE_NotSupported,
-                     "Unable to open %s.", pszTmpFname);
-        else
-            CPLErrorReset();
-
-        CPLFree(pszTmpFname);
-        Close();
-
-        return -1;
-    }
-
-
-    CPLFree(pszTmpFname);
-    pszTmpFname = NULL;
-
-    /*-----------------------------------------------------------------
      * Read MIF File Header
      *----------------------------------------------------------------*/
     if (m_eAccessMode == TABRead && ParseMIFHeader() != 0)
@@ -405,8 +373,44 @@ int MIFFile::Open(const char *pszFname, const char *pszAccess,
         else
             CPLErrorReset();
 
+        CPLFree(pszTmpFname);
+
         return -1;
     }
+
+    if ( m_nAttribut > 0 || m_eAccessMode == TABWrite )
+    {
+        /*-----------------------------------------------------------------
+        * Open .MID file
+        *----------------------------------------------------------------*/
+        if (nFnameLen > 4 && strcmp(pszTmpFname+nFnameLen-4, ".MIF")==0)
+            strcpy(pszTmpFname+nFnameLen-4, ".MID");
+        else 
+            strcpy(pszTmpFname+nFnameLen-4, ".mid");
+
+#ifndef _WIN32
+        TABAdjustFilenameExtension(pszTmpFname);
+#endif
+
+        m_poMIDFile = new MIDDATAFile;
+
+        if (m_poMIDFile->Open(pszTmpFname, pszAccess) !=0)
+        {
+            if (!bTestOpenNoError)
+                CPLError(CE_Failure, CPLE_NotSupported,
+                        "Unable to open %s.", pszTmpFname);
+            else
+                CPLErrorReset();
+
+            CPLFree(pszTmpFname);
+            Close();
+
+            return -1;
+        }
+    }
+
+    CPLFree(pszTmpFname);
+    pszTmpFname = NULL;
 
     /*-----------------------------------------------------------------
      * In write access, set some defaults
@@ -418,7 +422,7 @@ int MIFFile::Open(const char *pszFname, const char *pszAccess,
     }
 
     /* Put the MID file at the correct location, on the first feature */
-    if (m_eAccessMode == TABRead && (m_poMIDFile->GetLine() == NULL))
+    if (m_eAccessMode == TABRead && (m_poMIDFile != NULL && m_poMIDFile->GetLine() == NULL))
     {
         Close();
 
@@ -430,10 +434,12 @@ int MIFFile::Open(const char *pszFname, const char *pszAccess,
 
     m_poMIFFile->SetTranslation(m_dfXMultiplier,m_dfYMultiplier,
                                 m_dfXDisplacement, m_dfYDisplacement);
-    m_poMIDFile->SetTranslation(m_dfXMultiplier,m_dfYMultiplier,
-                                m_dfXDisplacement, m_dfYDisplacement);
+    if( m_poMIDFile != NULL )
+        m_poMIDFile->SetTranslation(m_dfXMultiplier,m_dfYMultiplier,
+                                    m_dfXDisplacement, m_dfYDisplacement);
     m_poMIFFile->SetDelimiter(m_pszDelimiter);
-    m_poMIDFile->SetDelimiter(m_pszDelimiter);
+    if( m_poMIDFile != NULL )
+        m_poMIDFile->SetDelimiter(m_pszDelimiter);
 
     /*-------------------------------------------------------------
      * Set geometry type if the geometry objects are uniform.
@@ -858,8 +864,11 @@ void MIFFile::ResetReading()
           break;
     }
 
-    m_poMIDFile->Rewind();
-    m_poMIDFile->GetLine();
+    if( m_poMIDFile != NULL )
+    {
+        m_poMIDFile->Rewind();
+        m_poMIDFile->GetLine();
+    }
     
     // We're positioned on first feature.  Feature Ids start at 1.
     if (m_poCurFeature)
@@ -984,8 +993,11 @@ void MIFFile::PreParseFile()
           break;
     }
 
-    m_poMIDFile->Rewind();
-    m_poMIDFile->GetLine();
+    if( m_poMIDFile != NULL )
+    {
+        m_poMIDFile->Rewind();
+        m_poMIDFile->GetLine();
+    }
  
     m_bPreParsed = TRUE;
 
@@ -1291,7 +1303,8 @@ GBool MIFFile::NextFeature()
     {
         if (m_poMIFFile->IsValidFeature(pszLine))
         {
-            m_poMIDFile->GetLine();
+            if( m_poMIDFile != NULL )
+                m_poMIDFile->GetLine();
             m_nPreloadedId++;
             return TRUE;
         }
@@ -1328,7 +1341,7 @@ TABFeature *MIFFile::GetFeatureRef(int nFeatureId)
      * Make sure file is opened and Validate feature id by positioning
      * the read pointers for the .MAP and .DAT files to this feature id.
      *----------------------------------------------------------------*/
-    if (m_poMIDFile == NULL)
+    if (m_poMIFFile == NULL)
     {
         CPLError(CE_Failure, CPLE_IllegalArg,
                  "GetFeatureRef() failed: file is not opened!");
@@ -1468,7 +1481,7 @@ TABFeature *MIFFile::GetFeatureRef(int nFeatureId)
      * Read fields from the .DAT file
      * GetRecordBlock() has already been called above...
      *----------------------------------------------------------------*/
-    if (m_poCurFeature->ReadRecordFromMIDFile(m_poMIDFile) != 0)
+    if (m_poMIDFile != NULL && m_poCurFeature->ReadRecordFromMIDFile(m_poMIDFile) != 0)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Error during reading Record.");
