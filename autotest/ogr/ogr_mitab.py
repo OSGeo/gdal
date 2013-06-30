@@ -504,6 +504,42 @@ def ogr_mitab_14():
     return 'success'
 
 ###############################################################################
+# Test .mif without .mid (#5141)
+
+def ogr_mitab_15():
+
+    if gdaltest.mapinfo_drv is None:
+        return 'skip'
+
+    ds = ogr.Open('data/nomid.mif')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    if feat is None:
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Run test_ogrsf
+
+def ogr_mitab_16():
+
+    if gdaltest.mapinfo_drv is None:
+        return 'skip'
+
+    import test_cli_utilities
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        return 'skip'
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp')
+    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+        print(ret)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_mitab_cleanup():
@@ -532,6 +568,8 @@ gdaltest_list = [
     ogr_mitab_12,
     ogr_mitab_13,
     ogr_mitab_14,
+    ogr_mitab_15,
+    ogr_mitab_16,
     ogr_mitab_cleanup
     ]
 
