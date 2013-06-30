@@ -717,11 +717,11 @@ GDALRasterAttributeTable *GeoRasterRasterBand::GetDefaultRAT()
 {
     if( poDefaultRAT )
     {
-        return poDefaultRAT->Clone();
+        return poDefaultRAT;
     }
     else
     {
-        poDefaultRAT = new GDALRasterAttributeTable();
+        poDefaultRAT = new GDALDefaultRasterAttributeTable();
     }
 
     GeoRasterDataset* poGDS = (GeoRasterDataset*) poDS;
