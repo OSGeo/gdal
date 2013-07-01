@@ -854,6 +854,7 @@ GDALWarpOptions * CPL_STDCALL GDALCreateWarpOptions()
 
     psOptions = (GDALWarpOptions *) CPLCalloc(sizeof(GDALWarpOptions),1);
 
+    psOptions->nBandCount = 0;
     psOptions->eResampleAlg = GRA_NearestNeighbour;
     psOptions->pfnProgress = GDALDummyProgress;
     psOptions->eWorkingDataType = GDT_Unknown;
