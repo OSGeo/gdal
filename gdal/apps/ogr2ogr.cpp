@@ -3239,9 +3239,18 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
                 if( nGroupTransactions )
                     poDstLayer->RollbackTransaction();
 
+                CPLError( CE_Failure, CPLE_AppDefined,
+                        "Unable to write feature %ld from layer %s.\n",
+                        poFeature->GetFID(), poSrcLayer->GetName() );
+
                 OGRFeature::DestroyFeature( poFeature );
                 OGRFeature::DestroyFeature( poDstFeature );
                 return FALSE;
+            }
+            else
+            {
+                CPLDebug( "OGR2OGR", "Unable to write feature %ld into layer %s.\n",
+                           poFeature->GetFID(), poSrcLayer->GetName() );
             }
 
 end_loop:
