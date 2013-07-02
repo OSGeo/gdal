@@ -83,6 +83,7 @@ class GDALWMSMetaDataset : public GDALPamDataset
     void                ExploreLayer(CPLXMLNode* psXML,
                                      CPLString osFormat,
                                      CPLString osTransparent,
+                                     CPLString osPreferredSRS,
                                      const char* pszSRS = NULL,
                                      const char* pszMinX = NULL,
                                      const char* pszMinY = NULL,
@@ -108,7 +109,8 @@ class GDALWMSMetaDataset : public GDALPamDataset
 
     static GDALDataset* AnalyzeGetCapabilities(CPLXMLNode* psXML,
                                                CPLString osFormat = "",
-                                               CPLString osTransparent = "");
+                                               CPLString osTransparent = "",
+                                               CPLString osPreferredSRS = "");
     static GDALDataset* AnalyzeGetTileService(CPLXMLNode* psXML);
     static GDALDataset* AnalyzeTileMapService(CPLXMLNode* psXML);
 

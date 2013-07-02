@@ -80,6 +80,9 @@ GDALDataset *GDALWMSMetaDataset::DownloadGetCapabilities(GDALOpenInfo *poOpenInf
     CPLString osFormat = CPLURLGetValue(pszURL, "FORMAT");
     CPLString osTransparent = CPLURLGetValue(pszURL, "TRANSPARENT");
     CPLString osVersion = CPLURLGetValue(pszURL, "VERSION");
+    CPLString osPreferredSRS = CPLURLGetValue(pszURL, "SRS");
+    if( osPreferredSRS.size() == 0 )
+        osPreferredSRS = CPLURLGetValue(pszURL, "CRS");
 
     if (osVersion.size() == 0)
         osVersion = "1.1.1";
@@ -130,7 +133,7 @@ GDALDataset *GDALWMSMetaDataset::DownloadGetCapabilities(GDALOpenInfo *poOpenInf
         return NULL;
     }
 
-    GDALDataset* poRet = AnalyzeGetCapabilities(psXML, osFormat, osTransparent);
+    GDALDataset* poRet = AnalyzeGetCapabilities(psXML, osFormat, osTransparent, osPreferredSRS);
 
     CPLHTTPDestroyResult(psResult);
     CPLDestroyXMLNode( psXML );
@@ -352,6 +355,7 @@ void GDALWMSMetaDataset::AddWMSCSubDataset(WMSCTileSetDesc& oWMSCTileSetDesc,
 void GDALWMSMetaDataset::ExploreLayer(CPLXMLNode* psXML,
                                       CPLString osFormat,
                                       CPLString osTransparent,
+                                      CPLString osPreferredSRS,
                                       const char* pszSRS,
                                       const char* pszMinX,
                                       const char* pszMinY,
@@ -362,6 +366,7 @@ void GDALWMSMetaDataset::ExploreLayer(CPLXMLNode* psXML,
     const char* pszTitle = CPLGetXMLValue(psXML, "Title", NULL);
     const char* pszAbstract = CPLGetXMLValue(psXML, "Abstract", NULL);
 
+    CPLXMLNode* psSRS = NULL;
     const char* pszSRSLocal = NULL;
     const char* pszMinXLocal = NULL;
     const char* pszMinYLocal = NULL;
@@ -374,7 +379,24 @@ void GDALWMSMetaDataset::ExploreLayer(CPLXMLNode* psXML,
     /* Use local bounding box if available, otherwise use the one */
     /* that comes from an upper layer */
     /* such as in http://neowms.sci.gsfc.nasa.gov/wms/wms */
-    CPLXMLNode* psSRS = CPLGetXMLNode( psXML, "BoundingBox" );
+    CPLXMLNode* psIter = psXML->psChild;
+    while( psIter != NULL )
+    {
+        if( psIter->eType == CXT_Element &&
+            strcmp(psIter->pszValue, "BoundingBox") == 0 )
+        {
+            psSRS = psIter;
+            pszSRSLocal = CPLGetXMLValue(psSRS, pszSRSTagName, NULL);
+            if( osPreferredSRS.size() == 0 || pszSRSLocal == NULL )
+                break;
+            if( EQUAL(osPreferredSRS, pszSRSLocal) )
+                break;
+            psSRS = NULL;
+            pszSRSLocal = NULL;
+        }
+        psIter = psIter->psNext;
+    }
+
     if (psSRS == NULL)
     {
         psSRS = CPLGetXMLNode( psXML, "LatLonBoundingBox" );
@@ -382,8 +404,7 @@ void GDALWMSMetaDataset::ExploreLayer(CPLXMLNode* psXML,
         if (pszSRSLocal == NULL)
             pszSRSLocal = "EPSG:4326";
     }
-    else
-        pszSRSLocal = CPLGetXMLValue(psSRS, pszSRSTagName, NULL);
+
 
     if (pszSRSLocal != NULL && psSRS != NULL)
     {
@@ -426,13 +447,13 @@ void GDALWMSMetaDataset::ExploreLayer(CPLXMLNode* psXML,
         }
     }
 
-    CPLXMLNode* psIter = psXML->psChild;
+    psIter = psXML->psChild;
     for(; psIter != NULL; psIter = psIter->psNext)
     {
         if (psIter->eType == CXT_Element)
         {
             if (EQUAL(psIter->pszValue, "Layer"))
-                ExploreLayer(psIter, osFormat, osTransparent,
+                ExploreLayer(psIter, osFormat, osTransparent, osPreferredSRS,
                              pszSRS, pszMinX, pszMinY, pszMaxX, pszMaxY);
         }
     }
@@ -547,7 +568,8 @@ void GDALWMSMetaDataset::ParseWMSCTileSets(CPLXMLNode* psXML)
 
 GDALDataset* GDALWMSMetaDataset::AnalyzeGetCapabilities(CPLXMLNode* psXML,
                                                           CPLString osFormat,
-                                                          CPLString osTransparent)
+                                                          CPLString osTransparent,
+                                                          CPLString osPreferredSRS)
 {
     const char* pszEncoding = NULL;
     if (psXML->eType == CXT_Element && strcmp(psXML->pszValue, "?xml") == 0)
@@ -588,7 +610,7 @@ GDALDataset* GDALWMSMetaDataset::AnalyzeGetCapabilities(CPLXMLNode* psXML,
     poDS->osXMLEncoding = pszEncoding ? pszEncoding : "";
     if (psVendorSpecificCapabilities)
         poDS->ParseWMSCTileSets(psVendorSpecificCapabilities);
-    poDS->ExploreLayer(psLayer, osFormat, osTransparent);
+    poDS->ExploreLayer(psLayer, osFormat, osTransparent, osPreferredSRS);
 
     return poDS;
 }
