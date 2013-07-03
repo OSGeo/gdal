@@ -2017,6 +2017,52 @@ def ogr_gml_49():
     return 'success'
 
 ###############################################################################
+# Test support for StringList, IntegerList, RealList
+
+def ogr_gml_50():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    drv = ogr.GetDriverByName('GML')
+    ds = drv.CreateDataSource('/vsimem/ogr_gml_50.gml')
+    lyr = ds.CreateLayer( 'listlayer' )
+    field_defn = ogr.FieldDefn( 'stringlist', ogr.OFTStringList )
+    lyr.CreateField( field_defn )
+    field_defn = ogr.FieldDefn( 'intlist', ogr.OFTIntegerList )
+    lyr.CreateField( field_defn )
+    field_defn = ogr.FieldDefn( 'reallist', ogr.OFTRealList )
+    lyr.CreateField( field_defn )
+    feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
+    feat.SetFieldStringList(0, ['a', 'b'])
+    feat.SetFieldIntegerList(1, [2, 3])
+    feat.SetFieldDoubleList(2, [4.56, 5.67])
+    lyr.CreateFeature(feat)
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_gml_50.gml')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    if feat.GetFieldAsStringList(lyr.GetLayerDefn().GetFieldIndex('stringlist')) != ['a', 'b']:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    if feat.GetFieldAsIntegerList(lyr.GetLayerDefn().GetFieldIndex('intlist')) != [2, 3]:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    if feat.GetFieldAsDoubleList(lyr.GetLayerDefn().GetFieldIndex('reallist')) != [4.56, 5.67]:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_gml_50.gml')
+    gdal.Unlink('/vsimem/ogr_gml_50.xsd')
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -2188,6 +2234,7 @@ gdaltest_list = [
     ogr_gml_47,
     ogr_gml_48,
     ogr_gml_49,
+    ogr_gml_50,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':

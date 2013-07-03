@@ -190,6 +190,20 @@ static int CheckMinMaxOccursCardinality(CPLXMLNode* psNode)
            (pszMaxOccurs == NULL || EQUAL(pszMaxOccurs, "1"));
 }
 
+/************************************************************************/
+/*                     GetListTypeFromSingleType()                      */
+/************************************************************************/
+
+static GMLPropertyType GetListTypeFromSingleType(GMLPropertyType eType)
+{
+    if( eType == GMLPT_String )
+        return GMLPT_StringList;
+    if( eType == GMLPT_Integer )
+        return GMLPT_IntegerList;
+    if( eType == GMLPT_Real )
+        return GMLPT_RealList;
+    return eType;
+}
 
 /************************************************************************/
 /*                      ParseFeatureType()                              */
@@ -310,6 +324,7 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
         /* not as a simpleType definition */
         const char* pszType = CPLGetXMLValue( psAttrDef, "type", NULL );
         const char* pszElementName = CPLGetXMLValue( psAttrDef, "name", NULL );
+        const char* pszMaxOccurs = CPLGetXMLValue( psAttrDef, "maxOccurs", NULL );
         if (pszType != NULL)
         {
             const char* pszStrippedNSType = StripNS(pszType);
@@ -434,6 +449,9 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
             GMLPropertyDefn *poProp = new GMLPropertyDefn(
                 pszElementName, pszElementName );
 
+            if( pszMaxOccurs != NULL && strcmp(pszMaxOccurs, "unbounded") == 0 )
+                gmlType = GetListTypeFromSingleType(gmlType);
+
             poProp->SetType( gmlType );
             poProp->SetAttributeIndex( nAttributeIndex );
             poProp->SetWidth( nWidth );
@@ -548,6 +566,10 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
         GMLPropertyType eType = GMLPT_Untyped;
         int nWidth = 0, nPrecision = 0;
         GetSimpleTypeProperties(psSimpleType, &eType, &nWidth, &nPrecision);
+
+        if( pszMaxOccurs != NULL && strcmp(pszMaxOccurs, "unbounded") == 0 )
+            eType = GetListTypeFromSingleType(eType);
+
         poProp->SetType( eType );
         poProp->SetWidth( nWidth );
         poProp->SetPrecision( nPrecision );
