@@ -128,6 +128,9 @@ class OGRGMLDataSource : public OGRDataSource
     int                 bIsLongSRSRequired;
     int                 bWriteSpaceIndentation;
 
+    OGRSpatialReference* poWriteGlobalSRS;
+    int                 bWriteGlobalSRS;
+
     // input related parameters.
     CPLString           osFilename;
     CPLString           osXSDFilename;
@@ -140,9 +143,6 @@ class OGRGMLDataSource : public OGRDataSource
     int                 bExposeGMLId;
     int                 bExposeFid;
     int                 bIsWFS;
-
-    OGRSpatialReference* poWriteGlobalSRS;
-    int                 bWriteGlobalSRS;
 
     int                 m_bInvertAxisOrderIfLatLong;
     int                 m_bConsiderEPSGAsURN;
