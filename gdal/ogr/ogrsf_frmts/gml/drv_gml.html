@@ -340,6 +340,9 @@ OFF disables schema generation (and is implicit if XSISCHEMAURI is used).<p>
 
 <li> <b>PREFIX</b> (OGR &gt;= 1.10) Defaults to 'ogr'. This is the prefix for the application target namespace.</p>
 
+<li> <b>STRIP_PREFIX</b> (OGR &gt;= 2.0) Defaults to FALSE. Can be set to TRUE to avoid writing
+the prefix of the application target namespace in the GML file.</p>
+
 <li> <b>TARGET_NAMESPACE</b> (OGR &gt;= 1.10) Defaults to 'http://ogr.maptools.org/'. This is the application target namespace.</p>
 
 <li> <b>FORMAT</b>: (OGR &gt;= 1.8.0) This can be set to :
@@ -361,6 +364,9 @@ be written with the "urn:ogc:def:crs:EPSG::" prefix.
 In the case, if the SRS is a geographic SRS without explicit AXIS order, but that the same SRS authority code
 imported with ImportFromEPSGA() should be treated as lat/long, then the function will take care of coordinate order swapping.
 If set to NO, SRS with EPSG authority will be written with the "EPSG:" prefix, even if they are in lat/long order.<p>
+
+<li> <b>WRITE_FEATURE_BOUNDED_BY</b>=YES/NO. (OGR &gt;= 2.0, only valid when FORMAT=GML3/GML3Degree/GML3.2) Default to YES.
+If set to NO, the &lt;gml:boundedBy&gt; element will not be written for each feature.<p>
 
 <li> <b>SPACE_INDENTATION</b>=YES/NO. (OGR &gt;= 1.8.0) Default to YES. If YES, the output will be indented with spaces
 for more readability, but at the expense of file size.<p>
