@@ -98,7 +98,8 @@ OGRGMLDataSource::OGRGMLDataSource()
     nBoundedByLocation = -1;
     bBBOX3D = FALSE;
 
-    poGlobalSRS = NULL;
+    poWriteGlobalSRS = NULL;
+    bWriteGlobalSRS = FALSE;
     bIsWFS = FALSE;
 
     eReadMode = STANDARD;
@@ -138,12 +139,12 @@ OGRGMLDataSource::~OGRGMLDataSource()
             && nBoundedByLocation != -1
             && VSIFSeekL( fpOutput, nBoundedByLocation, SEEK_SET ) == 0 )
         {
-            if (sBoundingRect.IsInit()  && IsGML3Output())
+            if (bWriteGlobalSRS && sBoundingRect.IsInit()  && IsGML3Output())
             {
                 int bCoordSwap = FALSE;
                 char* pszSRSName;
-                if (poGlobalSRS)
-                    pszSRSName = GML_GetSRSName(poGlobalSRS, IsLongSRSRequired(), &bCoordSwap);
+                if (poWriteGlobalSRS)
+                    pszSRSName = GML_GetSRSName(poWriteGlobalSRS, IsLongSRSRequired(), &bCoordSwap);
                 else
                     pszSRSName = CPLStrdup("");
                 char szLowerCorner[75], szUpperCorner[75];
@@ -163,7 +164,7 @@ OGRGMLDataSource::~OGRGMLDataSource()
                            (bBBOX3D) ? " srsDimension=\"3\"" : "", pszSRSName, szLowerCorner, szUpperCorner);
                 CPLFree(pszSRSName);
             }
-            else if (sBoundingRect.IsInit())
+            else if (bWriteGlobalSRS && sBoundingRect.IsInit())
             {
                 if (bWriteSpaceIndentation)
                     VSIFPrintfL( fpOutput, "  ");
@@ -228,7 +229,7 @@ OGRGMLDataSource::~OGRGMLDataSource()
         delete poReader;
     }
 
-    delete poGlobalSRS;
+    delete poWriteGlobalSRS;
 
     delete poStoredGMLFeature;
 
@@ -1286,15 +1287,24 @@ OGRGMLDataSource::CreateLayer( const char * pszLayerName,
     if (nLayers == 0)
     {
         if (poSRS)
-            poGlobalSRS = poSRS->Clone();
+            poWriteGlobalSRS = poSRS->Clone();
+        bWriteGlobalSRS = TRUE;
     }
-    else
+    else if( bWriteGlobalSRS )
     {
-        if (poSRS == NULL ||
-            (poGlobalSRS != NULL && !poSRS->IsSame(poGlobalSRS)))
+        if( poWriteGlobalSRS != NULL )
         {
-            delete poGlobalSRS;
-            poGlobalSRS = NULL;
+            if (poSRS == NULL || !poSRS->IsSame(poWriteGlobalSRS))
+            {
+                delete poWriteGlobalSRS;
+                poWriteGlobalSRS = NULL;
+                bWriteGlobalSRS = FALSE;
+            }
+        }
+        else
+        {
+            if( poSRS != NULL )
+                bWriteGlobalSRS = FALSE;
         }
     }
 
@@ -2124,7 +2134,8 @@ const char* OGRGMLDataSource::GetAppPrefix()
 
 int OGRGMLDataSource::RemoveAppPrefix()
 {
-    if( CSLTestBoolean(CSLFetchNameValueDef(papszCreateOptions, "STRIP_PREFIX", "FALSE")) )
+    if( CSLTestBoolean(CSLFetchNameValueDef(
+            papszCreateOptions, "STRIP_PREFIX", "FALSE")) )
         return TRUE;
     const char* pszPrefix = GetAppPrefix();
     return( pszPrefix[0] == '\0' );
@@ -2136,5 +2147,6 @@ int OGRGMLDataSource::RemoveAppPrefix()
 
 int OGRGMLDataSource::WriteFeatureBoundedBy()
 {
-    return CSLTestBoolean(CSLFetchNameValueDef(papszCreateOptions, "WRITE_FEATURE_BOUNDED_BY", "TRUE"));
+    return CSLTestBoolean(CSLFetchNameValueDef(
+                    papszCreateOptions, "WRITE_FEATURE_BOUNDED_BY", "TRUE"));
 }
