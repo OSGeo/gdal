@@ -1281,7 +1281,7 @@ OGRGMLDataSource::CreateLayer( const char * pszLayerName,
     else
     {
         if (poSRS == NULL ||
-            (poGlobalSRS != NULL && poSRS->IsSame(poGlobalSRS)))
+            (poGlobalSRS != NULL && !poSRS->IsSame(poGlobalSRS)))
         {
             delete poGlobalSRS;
             poGlobalSRS = NULL;
