@@ -2063,6 +2063,57 @@ def ogr_gml_50():
     return 'success'
 
 ###############################################################################
+# Test -dsco WRITE_FEATURE_BOUNDED_BY=no -dsco STRIP_PREFIX=YES
+
+def ogr_gml_51():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    import test_cli_utilities
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    for format in ['GML2', 'GML3']:
+
+        gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GML tmp/ogr_gml_51.gml data/poly.shp -dsco FORMAT=%s -dsco WRITE_FEATURE_BOUNDED_BY=no -dsco STRIP_PREFIX=YES' % format)
+
+        f = open('tmp/ogr_gml_51.gml', 'rt')
+        content = f.read()
+        f.close()
+        if content.find("<FeatureCollection") == -1:
+            gdaltest.post_reason('fail')
+            print(content)
+            return 'fail'
+        if format == 'GML3':
+            if content.find("<featureMember>") == -1:
+                gdaltest.post_reason('fail')
+                print(content)
+                return 'fail'
+        if content.find("""<poly""") == -1:
+            gdaltest.post_reason('fail')
+            print(content)
+            return 'fail'
+        if content.find("""<AREA>215229.266</AREA>""") == -1:
+            gdaltest.post_reason('fail')
+            print(content)
+            return 'fail'
+
+        if content.find("""<gml:boundedBy><gml:Envelope><gml:lowerCorner>479647""") != -1:
+            gdaltest.post_reason('fail')
+            print(content)
+            return 'fail'
+
+        ds = ogr.Open('tmp/ogr_gml_51.gml')
+        lyr = ds.GetLayer(0)
+        feat = lyr.GetNextFeature()
+        if feat is None:
+            return 'fail'
+        ds = None
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -2173,7 +2224,11 @@ def ogr_gml_clean_files():
         os.remove( 'data/wfs_typefeature.gfs' )
     except:
         pass
-
+    try:
+        os.remove( 'tmp/ogr_gml_51.gml' )
+        os.remove( 'tmp/ogr_gml_51.xsd' )
+    except:
+        pass
     files = os.listdir('data')
     for filename in files:
         if len(filename) > 13 and filename[-13:] == '.resolved.gml':
@@ -2235,6 +2290,7 @@ gdaltest_list = [
     ogr_gml_48,
     ogr_gml_49,
     ogr_gml_50,
+    ogr_gml_51,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':
