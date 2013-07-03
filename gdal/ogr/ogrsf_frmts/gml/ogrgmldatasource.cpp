@@ -1405,6 +1405,28 @@ void OGRGMLDataSource::InsertHeader()
 /*      file "down" enough to insert the schema at the beginning.       */
 /* ==================================================================== */
 
+/* ==================================================================== */
+/*      Detect if there are fields of List types.                       */
+/* ==================================================================== */
+    int iLayer;
+    int bHasListFields = FALSE;
+
+    for( iLayer = 0; !bHasListFields && iLayer < GetLayerCount(); iLayer++ )
+    {
+        OGRFeatureDefn *poFDefn = GetLayer(iLayer)->GetLayerDefn();
+        for( int iField = 0; !bHasListFields && iField < poFDefn->GetFieldCount(); iField++ )
+        {
+            OGRFieldDefn *poFieldDefn = poFDefn->GetFieldDefn(iField);
+
+            if( poFieldDefn->GetType() == OFTIntegerList ||
+                poFieldDefn->GetType() == OFTRealList ||
+                poFieldDefn->GetType() == OFTStringList )
+            {
+                bHasListFields = TRUE;
+            }
+        } /* next field */
+    } /* next layer */
+
 /* -------------------------------------------------------------------- */
 /*      Emit the start of the schema section.                           */
 /* -------------------------------------------------------------------- */
@@ -1451,7 +1473,7 @@ void OGRGMLDataSource::InsertHeader()
             PrintLine( fpSchema,
                     "  <xs:appinfo source=\"http://schemas.opengis.net/gmlsfProfile/2.0/gmlsfLevels.xsd\">");
             PrintLine( fpSchema,
-                    "    <gmlsf:ComplianceLevel>0</gmlsf:ComplianceLevel>");
+                    "    <gmlsf:ComplianceLevel>%d</gmlsf:ComplianceLevel>", (bHasListFields) ? 1 : 0);
             PrintLine( fpSchema,
                     "  </xs:appinfo>");
             PrintLine( fpSchema,
@@ -1471,7 +1493,7 @@ void OGRGMLDataSource::InsertHeader()
                 PrintLine( fpSchema,
                         "  <xs:appinfo source=\"http://schemas.opengis.net/gml/3.1.1/profiles/gmlsfProfile/1.0.0/gmlsfLevels.xsd\">");
                 PrintLine( fpSchema,
-                        "    <gmlsf:ComplianceLevel>0</gmlsf:ComplianceLevel>");
+                        "    <gmlsf:ComplianceLevel>%d</gmlsf:ComplianceLevel>", (bHasListFields) ? 1 : 0);
                 PrintLine( fpSchema,
                         "    <gmlsf:GMLProfileSchema>http://schemas.opengis.net/gml/3.1.1/profiles/gmlsfProfile/1.0.0/gmlsf.xsd</gmlsf:GMLProfileSchema>");
                 PrintLine( fpSchema,
@@ -1580,7 +1602,6 @@ void OGRGMLDataSource::InsertHeader()
 /* ==================================================================== */
 /*      Define the schema for each layer.                               */
 /* ==================================================================== */
-    int iLayer;
 
     for( iLayer = 0; iLayer < GetLayerCount(); iLayer++ )
     {
