@@ -121,8 +121,10 @@ OGRGMLDataSource::~OGRGMLDataSource()
     if( fpOutput != NULL )
     {
         const char* pszPrefix = GetAppPrefix();
-
-        PrintLine( fpOutput, "</%s:FeatureCollection>", pszPrefix );
+        if( RemoveAppPrefix() )
+            PrintLine( fpOutput, "</FeatureCollection>" );
+        else
+            PrintLine( fpOutput, "</%s:FeatureCollection>", pszPrefix );
 
         if( bFpOutputIsNonSeekable)
         {
@@ -1163,7 +1165,10 @@ int OGRGMLDataSource::Create( const char *pszFilename,
     const char* pszPrefix = GetAppPrefix();
     const char* pszTargetNameSpace = CSLFetchNameValueDef(papszOptions,"TARGET_NAMESPACE", "http://ogr.maptools.org/");
 
-    PrintLine( fpOutput, "<%s:FeatureCollection", pszPrefix );
+    if( RemoveAppPrefix() )
+        PrintLine( fpOutput, "<FeatureCollection" );
+    else
+        PrintLine( fpOutput, "<%s:FeatureCollection", pszPrefix );
 
     if (IsGML32Output())
         PrintLine( fpOutput, "%s",
@@ -1196,8 +1201,13 @@ int OGRGMLDataSource::Create( const char *pszFilename,
         CPLFree( pszBasename );
     }
 
-    PrintLine( fpOutput,
+    if( RemoveAppPrefix() )
+        PrintLine( fpOutput,
+                "     xmlns=\"%s\"", pszTargetNameSpace );
+    else
+        PrintLine( fpOutput,
                 "     xmlns:%s=\"%s\"", pszPrefix, pszTargetNameSpace );
+
     if (IsGML32Output())
         PrintLine( fpOutput, "%s",
                 "     xmlns:gml=\"http://www.opengis.net/gml/3.2\">" );
@@ -1431,6 +1441,8 @@ void OGRGMLDataSource::InsertHeader()
 /*      Emit the start of the schema section.                           */
 /* -------------------------------------------------------------------- */
     const char* pszPrefix = GetAppPrefix();
+    if( pszPrefix[0] == '\0' )
+        pszPrefix = "ogr";
     const char* pszTargetNameSpace = CSLFetchNameValueDef(papszCreateOptions,"TARGET_NAMESPACE", "http://ogr.maptools.org/");
 
     if (IsGML3Output())
@@ -2104,4 +2116,25 @@ void OGRGMLDataSource::SetExtents(double dfMinX, double dfMinY, double dfMaxX, d
 const char* OGRGMLDataSource::GetAppPrefix()
 {
     return CSLFetchNameValueDef(papszCreateOptions, "PREFIX", "ogr");
+}
+
+/************************************************************************/
+/*                            RemoveAppPrefix()                         */
+/************************************************************************/
+
+int OGRGMLDataSource::RemoveAppPrefix()
+{
+    if( CSLTestBoolean(CSLFetchNameValueDef(papszCreateOptions, "STRIP_PREFIX", "FALSE")) )
+        return TRUE;
+    const char* pszPrefix = GetAppPrefix();
+    return( pszPrefix[0] == '\0' );
+}
+
+/************************************************************************/
+/*                        WriteFeatureBoundedBy()                       */
+/************************************************************************/
+
+int OGRGMLDataSource::WriteFeatureBoundedBy()
+{
+    return CSLTestBoolean(CSLFetchNameValueDef(papszCreateOptions, "WRITE_FEATURE_BOUNDED_BY", "TRUE"));
 }
