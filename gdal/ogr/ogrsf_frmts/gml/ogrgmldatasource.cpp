@@ -1665,6 +1665,11 @@ void OGRGMLDataSource::InsertHeader()
         {
             OGRFieldDefn *poFieldDefn = poFDefn->GetFieldDefn(iField);
 
+            if( IsGML3Output() && strcmp(poFieldDefn->GetNameRef(), "gml_id") == 0 )
+                continue;
+            else if( !IsGML3Output() && strcmp(poFieldDefn->GetNameRef(), "fid") == 0 )
+                continue;
+
             if( poFieldDefn->GetType() == OFTInteger )
             {
                 int nWidth;
