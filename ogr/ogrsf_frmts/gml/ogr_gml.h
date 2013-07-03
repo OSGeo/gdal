@@ -141,7 +141,8 @@ class OGRGMLDataSource : public OGRDataSource
     int                 bExposeFid;
     int                 bIsWFS;
 
-    OGRSpatialReference* poGlobalSRS;
+    OGRSpatialReference* poWriteGlobalSRS;
+    int                 bWriteGlobalSRS;
 
     int                 m_bInvertAxisOrderIfLatLong;
     int                 m_bConsiderEPSGAsURN;
