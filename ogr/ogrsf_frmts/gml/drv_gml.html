@@ -350,7 +350,11 @@ with a few variations with respect to what is recommanded by GML3 SF-0 profile,
 but that will be better accepted by some software (such as Deegree 3).</li>
 <li><i>GML3.2</i>(OGR &gt;= 1.9.0) in order to write GML files that follow GML 3.2.1 SF-0 profile.</li>
 </ul><br>
-If not specified, GML2 will be used.<p>
+If not specified, GML2 will be used.<br><br>
+Note: starting with OGR 2.0, fields of type StringList, RealList or IntegerList can be written. This
+will cause to advertize the SF-1 profile in the .XSD schema (such types are not supported by SF-0).<br>
+
+<p>
 
 <li> <b>GML3_LONGSRS</b>=YES/NO. (OGR &gt;= 1.8.0, only valid when FORMAT=GML3/GML3Degree/GML3.2) Default to YES. If YES, SRS with EPSG authority will
 be written with the "urn:ogc:def:crs:EPSG::" prefix.
