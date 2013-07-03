@@ -611,29 +611,88 @@ OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
 
         if( poFeature->IsFieldSet( iField ) && iField != nGMLIdIndex )
         {
-            const char *pszRaw = poFeature->GetFieldAsString( iField );
-
-            while( *pszRaw == ' ' )
-                pszRaw++;
-
-            char *pszEscaped = OGRGetXML_UTF8_EscapedString( pszRaw );
-
-            if (poFieldDefn->GetType() == OFTReal)
+            if (poFieldDefn->GetType() == OFTStringList )
             {
-                /* Use point as decimal separator */
-                char* pszComma = strchr(pszEscaped, ',');
-                if (pszComma)
-                    *pszComma = '.';
-            }
+                char ** papszIter =  poFeature->GetFieldAsStringList( iField );
+                while( papszIter != NULL && *papszIter != NULL )
+                {
+                    char *pszEscaped = OGRGetXML_UTF8_EscapedString( *papszIter );
+                    if (bWriteSpaceIndentation)
+                        VSIFPrintfL(fp, "      ");
+                    poDS->PrintLine( fp, "<%s:%s>%s</%s:%s>",
+                                    pszPrefix,
+                                    poFieldDefn->GetNameRef(), pszEscaped,
+                                    pszPrefix,
+                                    poFieldDefn->GetNameRef());
+                    CPLFree( pszEscaped );
 
-            if (bWriteSpaceIndentation)
-                VSIFPrintfL(fp, "      ");
-            poDS->PrintLine( fp, "<%s:%s>%s</%s:%s>",
-                             pszPrefix,
-                             poFieldDefn->GetNameRef(), pszEscaped,
-                             pszPrefix,
-                             poFieldDefn->GetNameRef());
-            CPLFree( pszEscaped );
+                    papszIter ++;
+                }
+            }
+            else if (poFieldDefn->GetType() == OFTIntegerList )
+            {
+                int nCount = 0;
+                const int* panVals = poFeature->GetFieldAsIntegerList( iField, &nCount );
+                for(int i = 0; i < nCount; i++)
+                {
+                    if (bWriteSpaceIndentation)
+                        VSIFPrintfL(fp, "      ");
+                    poDS->PrintLine( fp, "<%s:%s>%d</%s:%s>",
+                                    pszPrefix,
+                                    poFieldDefn->GetNameRef(),
+                                    panVals[i],
+                                    pszPrefix,
+                                    poFieldDefn->GetNameRef());
+                }
+            }
+            else if (poFieldDefn->GetType() == OFTRealList )
+            {
+                int nCount = 0;
+                const double* padfVals = poFeature->GetFieldAsDoubleList( iField, &nCount );
+                for(int i = 0; i < nCount; i++)
+                {
+                    char szBuffer[80];
+                    if (bWriteSpaceIndentation)
+                        VSIFPrintfL(fp, "      ");
+                    snprintf( szBuffer, sizeof(szBuffer), "%.15g", padfVals[i]);
+                    /* Use point as decimal separator */
+                    char* pszComma = strchr(szBuffer, ',');
+                    if (pszComma)
+                        *pszComma = '.';
+                    poDS->PrintLine( fp, "<%s:%s>%s</%s:%s>",
+                                    pszPrefix,
+                                    poFieldDefn->GetNameRef(),
+                                    szBuffer,
+                                    pszPrefix,
+                                    poFieldDefn->GetNameRef());
+                }
+            }
+            else
+            {
+                const char *pszRaw = poFeature->GetFieldAsString( iField );
+
+                while( *pszRaw == ' ' )
+                    pszRaw++;
+
+                char *pszEscaped = OGRGetXML_UTF8_EscapedString( pszRaw );
+
+                if (poFieldDefn->GetType() == OFTReal)
+                {
+                    /* Use point as decimal separator */
+                    char* pszComma = strchr(pszEscaped, ',');
+                    if (pszComma)
+                        *pszComma = '.';
+                }
+
+                if (bWriteSpaceIndentation)
+                    VSIFPrintfL(fp, "      ");
+                poDS->PrintLine( fp, "<%s:%s>%s</%s:%s>",
+                                pszPrefix,
+                                poFieldDefn->GetNameRef(), pszEscaped,
+                                pszPrefix,
+                                poFieldDefn->GetNameRef());
+                CPLFree( pszEscaped );
+            }
         }
     }
 
