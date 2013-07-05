@@ -93,6 +93,15 @@ typedef struct
     CPLXMLNode* psLastChild;
 } NodeLastChild;
 
+
+typedef enum
+{
+    APPSCHEMA_GENERIC,
+    APPSCHEMA_CITYGML,
+    APPSCHEMA_AIXM,
+    APPSCHEMA_MTKGML /* format of National Land Survey Finnish */
+} GMLAppSchemaType;
+
 class GMLHandler
 {
     char      *m_pszCurField;
@@ -116,13 +125,12 @@ class GMLHandler
 
     char      *m_pszCityGMLGenericAttrName;
     int        m_inCityGMLGenericAttrDepth;
-    int        m_bIsCityGML;
 
     int        m_bReportHref;
-    int        m_bIsAIXM;
     char      *m_pszHref;
     char      *m_pszUom;
     char      *m_pszValue;
+    char      *m_pszKieli;
 
     GeometryNamesStruct* pasGeometryNames;
 
@@ -154,6 +162,7 @@ class GMLHandler
 
 protected:
     GMLReader  *m_poReader;
+    GMLAppSchemaType eAppSchemaType;
 
     int              nStackDepth;
     HandlerState     stateStack[STACK_SIZE];
@@ -427,6 +436,8 @@ private:
     std::string   osElemPath;
 
     int           m_bFaceHoleNegative;
+    
+    int           m_bSetWidthFlag;
 
     int           ParseXMLHugeFile( const char *pszOutputFilename, 
                                     const int bSqliteIsTempFile,
@@ -467,7 +478,7 @@ public:
                                        int pbSqliteIsTempFile,
                                        int iSqliteCacheMB );
 
-    int              PrescanForSchema(int bGetExtents = TRUE );
+    int              PrescanForSchema(int bGetExtents = TRUE, int bAnalyzeSRSPerFeature = TRUE );
     int              PrescanForTemplate( void );
     int              ReArrangeTemplateClasses( GFSTemplateList *pCC );
     void             ResetReading();
@@ -478,7 +489,7 @@ public:
     void             PopState();
     void             PushState( GMLReadState * );
 
-    int         GetFeatureElementIndex( const char *pszElement, int nLen );
+    int         GetFeatureElementIndex( const char *pszElement, int nLen, GMLAppSchemaType eAppSchemaType );
     int         GetAttributeElementIndex( const char *pszElement, int nLen );
     int         IsCityGMLGenericAttributeElement( const char *pszElement, void* attr );
 
@@ -487,8 +498,11 @@ public:
                              int nClassIndex );
 
     void        SetFeaturePropertyDirectly( const char *pszElement,
-                                    char *pszValue,
-                                    int iPropertyIn );
+                                            char *pszValue,
+                                            int iPropertyIn,
+                                            GMLPropertyType eType = GMLPT_Untyped );
+
+    void        SetWidthFlag(int bFlag) { m_bSetWidthFlag = bFlag; }
 
     int         HasStoppedParsing() { return m_bStopParsing; }
 

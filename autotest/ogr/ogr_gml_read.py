@@ -2114,6 +2114,78 @@ def ogr_gml_51():
     return 'success'
 
 ###############################################################################
+# Test reading MTKGML files
+
+def ogr_gml_52():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    try:
+        os.remove( 'data/fake_mtkgml.gfs' )
+    except:
+        pass
+
+    for i in range(2):
+
+        ds = ogr.Open('data/fake_mtkgml.xml')
+
+        lyr = ds.GetLayerByName('A')
+        if lyr.GetGeomType() != ogr.wkbPoint25D:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        srs = lyr.GetSpatialRef()
+        if srs is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        wkt = srs.ExportToWkt()
+        if wkt.find('3067') < 0:
+            gdaltest.post_reason('fail')
+            print(wkt)
+            return 'fail'
+
+        feat = lyr.GetNextFeature()
+        if feat.GetField('gid') != '1' or \
+        feat.GetField('regular_attribute') != 5 or \
+        feat.GetField('foo_href') != 'some_ref' or \
+        feat.GetField('teksti') != 'En francais !' or \
+        feat.GetField('teksti_kieli') != 'fr' or \
+        ogrtest.check_feature_geometry( feat, 'POINT (280000 7000000 0)') != 0:
+            gdaltest.post_reason('fail')
+            feat.DumpReadable()
+            return 'fail'
+
+        lyr = ds.GetLayerByName('B')
+        if lyr.GetGeomType() != ogr.wkbPolygon25D:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        srs = lyr.GetSpatialRef()
+        if srs is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        feat = lyr.GetNextFeature()
+        if ogrtest.check_feature_geometry( feat, 'POLYGON ((280000 7000000 0,281000 7000000 0,281000 7001000 0,280000 7001000 0,280000 7000000 0))') != 0:
+            gdaltest.post_reason('fail')
+            feat.DumpReadable()
+            return 'fail'
+
+        lyr = ds.GetLayerByName('C')
+        if lyr.GetGeomType() != ogr.wkbLineString25D:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        feat = lyr.GetNextFeature()
+        if ogrtest.check_feature_geometry( feat, 'LINESTRING (280000 7000000 0,281000 7000000 0,281000 7001000 0,280000 7001000 0,280000 7000000 0)') != 0:
+            gdaltest.post_reason('fail')
+            feat.DumpReadable()
+            return 'fail'
+
+        ds = None
+
+    os.remove( 'data/fake_mtkgml.gfs' )
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -2291,6 +2363,7 @@ gdaltest_list = [
     ogr_gml_49,
     ogr_gml_50,
     ogr_gml_51,
+    ogr_gml_52,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':

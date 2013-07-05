@@ -844,7 +844,7 @@ int NASReader::SaveClasses( const char *pszFile )
 /*      looking for schema information.                                 */
 /************************************************************************/
 
-int NASReader::PrescanForSchema( int bGetExtents )
+int NASReader::PrescanForSchema( int bGetExtents, int bAnalyzeSRSPerFeature )
 
 {
     GMLFeature  *poFeature;

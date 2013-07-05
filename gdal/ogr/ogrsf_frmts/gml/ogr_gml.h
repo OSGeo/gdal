@@ -144,6 +144,8 @@ class OGRGMLDataSource : public OGRDataSource
     int                 bExposeFid;
     int                 bIsWFS;
 
+    int                 bUseGlobalSRSName;
+
     int                 m_bInvertAxisOrderIfLatLong;
     int                 m_bConsiderEPSGAsURN;
     int                 m_bGetSecondaryGeometryOption;

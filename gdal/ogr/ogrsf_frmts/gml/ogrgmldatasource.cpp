@@ -46,6 +46,9 @@
 
 CPL_CVSID("$Id$");
 
+static int ExtractSRSName(const char* pszXML, char* szSRSName,
+                          size_t sizeof_szSRSName);
+
 /************************************************************************/
 /*                   ReplaceSpaceByPct20IfNeeded()                      */
 /************************************************************************/
@@ -100,6 +103,7 @@ OGRGMLDataSource::OGRGMLDataSource()
 
     poWriteGlobalSRS = NULL;
     bWriteGlobalSRS = FALSE;
+    bUseGlobalSRSName = FALSE;
     bIsWFS = FALSE;
 
     eReadMode = STANDARD;
@@ -282,6 +286,10 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
     int bExpatCompatibleEncoding = FALSE;
     int bHas3D = FALSE;
     int bHintConsiderEPSGAsURN = FALSE;
+    int bAnalyzeSRSPerFeature = TRUE;
+
+    char szSRSName[128];
+    szSRSName[0] = '\0';
 
 /* -------------------------------------------------------------------- */
 /*      If we aren't sure it is GML, load a header chunk and check      */
@@ -433,6 +441,17 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
 
         bHintConsiderEPSGAsURN = strstr(szPtr, "xmlns:fme=\"http://www.safe.com/gml/fme\"") != NULL;
 
+        /* MTKGML */
+        if( strstr(szPtr, "<Maastotiedot") != NULL )
+        {
+            if( strstr(szPtr, "http://xml.nls.fi/XML/Namespace/Maastotietojarjestelma/SiirtotiedostonMalli/2011-02") == NULL )
+                CPLDebug("GML", "Warning: a MTKGML file was detected, but its namespace is unknown");
+            bAnalyzeSRSPerFeature = FALSE;
+            bUseGlobalSRSName = TRUE;
+            if( !ExtractSRSName(szPtr, szSRSName, sizeof(szSRSName)) )
+                strcpy(szSRSName, "EPSG:3067");
+        }
+
         pszSchemaLocation = strstr(szPtr, "schemaLocation=");
         if (pszSchemaLocation)
             pszSchemaLocation += strlen("schemaLocation=");
@@ -512,6 +531,9 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
 /* -------------------------------------------------------------------- */
 
     FindAndParseBoundedBy(fp);
+
+    if( szSRSName[0] != '\0' )
+        poReader->SetGlobalSRSName(szSRSName);
 
 /* -------------------------------------------------------------------- */
 /*      Resolve the xlinks in the source file and save it with the      */
@@ -863,7 +885,7 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
 /* -------------------------------------------------------------------- */
     if( !bHaveSchema )
     {
-        if( !poReader->PrescanForSchema( TRUE ) )
+        if( !poReader->PrescanForSchema( TRUE, bAnalyzeSRSPerFeature ) )
         {
             // we assume an errors have been reported.
             return FALSE;
@@ -933,6 +955,9 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
         }
     }
 
+    if (bIsWFS && poReader->GetClassCount() == 1)
+        bUseGlobalSRSName = TRUE;
+
     while( nLayers < poReader->GetClassCount() )
     {
         papoLayers[nLayers] = TranslateGMLSchema(poReader->GetClass(nLayers));
@@ -973,7 +998,7 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
             poSRS = NULL;
         }
     }
-    else if (bIsWFS && poReader->GetClassCount() == 1)
+    else
     {
         pszSRSName = GetGlobalSRSName();
         if (pszSRSName)
@@ -1016,6 +1041,24 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
                                 sBoundingRect.MaxY);
         }
     }
+
+    /* Report a COMPD_CS only if GML_REPORT_COMPD_CS is explicitely set to TRUE */
+    if( poSRS != NULL &&
+        !CSLTestBoolean(CPLGetConfigOption("GML_REPORT_COMPD_CS", "FALSE")) )
+    {
+        OGR_SRSNode *poCOMPD_CS = poSRS->GetAttrNode( "COMPD_CS" );
+        if( poCOMPD_CS != NULL )
+        {
+            OGR_SRSNode* poCandidateRoot = poCOMPD_CS->GetNode( "PROJCS" );
+            if( poCandidateRoot == NULL )
+                poCandidateRoot = poCOMPD_CS->GetNode( "GEOGCS" );
+            if( poCandidateRoot != NULL )
+            {
+                poSRS->SetRoot(poCandidateRoot->Clone());
+            }
+        }
+    }
+
 
     poLayer = new OGRGMLLayer( poClass->GetName(), poSRS, FALSE,
                                eGType, this );
@@ -1077,7 +1120,7 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
 
 const char *OGRGMLDataSource::GetGlobalSRSName()
 {
-    if (poReader->CanUseGlobalSRSName() || bIsWFS)
+    if (poReader->CanUseGlobalSRSName() || bUseGlobalSRSName)
         return poReader->GetGlobalSRSName();
     else
         return NULL;
@@ -1962,6 +2005,31 @@ void OGRGMLDataSource::ReleaseResultSet( OGRLayer * poResultsSet )
 }
 
 /************************************************************************/
+/*                          ExtractSRSName()                            */
+/************************************************************************/
+
+static int ExtractSRSName(const char* pszXML, char* szSRSName,
+                          size_t sizeof_szSRSName)
+{
+    szSRSName[0] = '\0';
+
+    const char* pszSRSName = strstr(pszXML, "srsName=\"");
+    if( pszSRSName != NULL )
+    {
+        pszSRSName += 9;
+        const char* pszEndQuote = strchr(pszSRSName, '"');
+        if (pszEndQuote != NULL &&
+            (size_t)(pszEndQuote - pszSRSName) < sizeof_szSRSName)
+        {
+            memcpy(szSRSName, pszSRSName, pszEndQuote - pszSRSName);
+            szSRSName[pszEndQuote - pszSRSName] = '\0';
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+/************************************************************************/
 /*                         FindAndParseBoundedBy()                      */
 /************************************************************************/
 
@@ -2014,19 +2082,7 @@ void OGRGMLDataSource::FindAndParseBoundedBy(VSILFILE* fp)
         /* e.g. http://geoserv.weichand.de:8080/geoserver/wfs?SERVICE=WFS&REQUEST=GetFeature&VERSION=2.0.0&TYPENAME=bvv:gmd_ex */
         if( bIsWFS )
         {
-            pszSRSName = strstr(pszXML, "srsName=\"");
-            if( pszSRSName != NULL )
-            {
-                pszSRSName += 9;
-                const char* pszEndQuote = strchr(pszSRSName, '"');
-                if (pszEndQuote != NULL &&
-                    (size_t)(pszEndQuote - pszSRSName) < sizeof(szSRSName))
-                {
-                    memcpy(szSRSName, pszSRSName, pszEndQuote - pszSRSName);
-                    szSRSName[pszEndQuote - pszSRSName] = '\0';
-                }
-                pszSRSName = NULL;
-            }
+            ExtractSRSName(pszXML, szSRSName, sizeof(szSRSName));
         }
 
         pszEndBoundedBy[strlen("</gml:boundedBy>")] = '\0';
