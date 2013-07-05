@@ -380,6 +380,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     int  i;
     char *pszCleanCopy;
     int   bAddProj4Extension = FALSE;
+    CPLLocaleC  oLocaleEnforcer;
 
 /* -------------------------------------------------------------------- */
 /*      Clear any existing definition.                                  */
