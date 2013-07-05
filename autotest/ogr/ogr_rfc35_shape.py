@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -38,6 +39,26 @@ import gdaltest
 import ogrtest
 import ogr
 import gdal
+
+###############################################################################
+#
+def CheckFileSize(src_filename):
+
+    import test_py_scripts
+    script_path = test_py_scripts.get_py_script('ogr2ogr')
+    if script_path is None:
+        return 'skip'
+
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', '/vsimem/CheckFileSize.dbf ' + src_filename)
+    statBufSrc = gdal.VSIStatL(src_filename, gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
+    statBufDst = gdal.VSIStatL('/vsimem/CheckFileSize.dbf', gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/CheckFileSize.dbf')
+
+    if statBufSrc.size != statBufDst.size:
+        print('src_size = %d, dst_size = %d', statBufSrc.size, statBufDst.size)
+        return 'fail'
+
+    return 'success'
 
 ###############################################################################
 # Initiate the test file
@@ -342,6 +363,12 @@ def ogr_rfc35_shape_4():
     if ret != 'success':
         return ret
 
+    ds = None
+
+    ds = ogr.Open('/vsimem/rfc35_test.dbf', update = 1)
+    lyr = ds.GetLayer(0)
+    lyr_defn = lyr.GetLayerDefn()
+
     fd.SetWidth(4)
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("intfield"), fd, ogr.ALTER_ALL_FLAG)
 
@@ -354,6 +381,17 @@ def ogr_rfc35_shape_4():
     ret = CheckFeatures(lyr, baz = 'baz5')
     if ret != 'success':
         return ret
+
+    ds = None
+
+    # Check that the file size has decreased after column shrinking
+    ret = CheckFileSize('/vsimem/rfc35_test.dbf')
+    if ret == 'fail':
+        return ret
+
+    ds = ogr.Open('/vsimem/rfc35_test.dbf', update = 1)
+    lyr = ds.GetLayer(0)
+    lyr_defn = lyr.GetLayerDefn()
 
     fd = ogr.FieldDefn("oldintfld", ogr.OFTString)
     fd.SetWidth(15)
@@ -469,6 +507,11 @@ def ogr_rfc35_shape_5():
         return 'fail'
 
     ds = None
+
+    # Check that the file size has decreased after column removing
+    ret = CheckFileSize('/vsimem/rfc35_test.dbf')
+    if ret == 'fail':
+        return ret
 
     ds = ogr.Open('/vsimem/rfc35_test.dbf', update = 1)
     lyr = ds.GetLayer(0)
