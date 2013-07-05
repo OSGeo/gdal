@@ -94,7 +94,8 @@ void GMLPropertyDefn::SetSrcElement( const char *pszSrcElement )
 /*      make the field type more specific, or more general.             */
 /************************************************************************/
 
-void GMLPropertyDefn::AnalysePropertyValue( const GMLProperty* psGMLProperty )
+void GMLPropertyDefn::AnalysePropertyValue( const GMLProperty* psGMLProperty,
+                                            int bSetWidth )
 
 {
 /* -------------------------------------------------------------------- */
@@ -157,11 +158,14 @@ void GMLPropertyDefn::AnalysePropertyValue( const GMLProperty* psGMLProperty )
     
         if( m_eType == GMLPT_String )
         {
-            /* grow the Width to the length of the string passed in */
-            int nWidth;
-            nWidth = strlen(pszValue);
-            if ( m_nWidth < nWidth ) 
-                SetWidth( nWidth );
+            if( bSetWidth )
+            {
+                /* grow the Width to the length of the string passed in */
+                int nWidth;
+                nWidth = strlen(pszValue);
+                if ( m_nWidth < nWidth ) 
+                    SetWidth( nWidth );
+            }
         }
         else if( m_eType == GMLPT_Untyped || m_eType == GMLPT_Integer )
         {

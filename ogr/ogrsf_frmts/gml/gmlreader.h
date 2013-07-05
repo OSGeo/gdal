@@ -87,7 +87,8 @@ public:
     void        SetAttributeIndex( int nIndex ) { m_nIndex = nIndex; }
     int         GetAttributeIndex() const { return m_nIndex; }
 
-    void        AnalysePropertyValue( const GMLProperty* psGMLProperty );
+    void        AnalysePropertyValue( const GMLProperty* psGMLProperty,
+                                      int bSetWidth = TRUE );
 
     static bool IsSimpleType( GMLPropertyType eType )
     { return eType == GMLPT_String || eType == GMLPT_Integer || eType == GMLPT_Real; }
@@ -255,7 +256,7 @@ public:
                                    int pbSqlitIsTempFile,
                                    int iSqliteCacheMB ) = 0;
 
-    virtual int PrescanForSchema( int bGetExtents = TRUE ) = 0;
+    virtual int PrescanForSchema( int bGetExtents = TRUE, int bAnalyzeSRSPerFeature = TRUE ) = 0;
     virtual int PrescanForTemplate( void ) = 0;
 
     virtual int HasStoppedParsing() = 0;
