@@ -99,6 +99,8 @@ class OGRShapeLayer : public OGRLayer
     int                 TouchLayer();
     int                 ReopenFileDescriptors();
 
+    void                TruncateDBF();
+
 /* WARNING: each of the below public methods should start with a call to */
 /* TouchLayer() and test its return value, so as to make sure that */
 /* the layer is properly re-opened if necessary */
