@@ -1424,6 +1424,8 @@ OGRErr OGRShapeLayer::DeleteField( int iField )
 
     if ( DBFDeleteField( hDBF, iField ) )
     {
+        TruncateDBF();
+
         return poFeatureDefn->DeleteFieldDefn( iField );
     }
     else
@@ -1534,6 +1536,8 @@ OGRErr OGRShapeLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, 
         {
             poFieldDefn->SetWidth(nWidth);
             poFieldDefn->SetPrecision(nPrecision);
+
+            TruncateDBF();
         }
         return OGRERR_NONE;
     }
@@ -2091,6 +2095,30 @@ OGRErr OGRShapeLayer::Repack()
     nTotalShapeCount = hDBF->nRecords;
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                          TruncateDBF()                               */
+/************************************************************************/
+
+void OGRShapeLayer::TruncateDBF()
+{
+    if (hDBF == NULL)
+        return;
+
+    VSILFILE* fp = (VSILFILE*)(hDBF->fp);
+    VSIFSeekL(fp, 0, SEEK_END);
+    vsi_l_offset nOldSize = VSIFTellL(fp);
+    vsi_l_offset nNewSize = hDBF->nRecordLength * (SAOffset) hDBF->nRecords
+                            + hDBF->nHeaderLength;
+    if (nNewSize < nOldSize)
+    {
+        CPLDebug("SHAPE",
+                 "Truncating DBF file from " CPL_FRMT_GUIB " to " CPL_FRMT_GUIB " bytes",
+                 nOldSize, nNewSize);
+        VSIFTruncateL(fp, nNewSize);
+    }
+    VSIFSeekL(fp, 0, SEEK_SET);
 }
 
 /************************************************************************/
