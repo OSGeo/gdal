@@ -1912,6 +1912,46 @@ def test_ogr2ogr_49():
 
     return 'success'
 
+###############################################################################
+# Test -addfields
+
+def test_ogr2ogr_50():
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    f = open('tmp/test_ogr2ogr_50_1.csv', 'wt')
+    f.write('id,field1\n')
+    f.write('1,foo\n')
+    f.close()
+
+    f = open('tmp/test_ogr2ogr_50_2.csv', 'wt')
+    f.write('id,field1,field2\n')
+    f.write('2,bar,baz\n')
+    f.close()
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/test_ogr2ogr_50.dbf tmp/test_ogr2ogr_50_1.csv -nln test_ogr2ogr_50')
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -addfields tmp/test_ogr2ogr_50.dbf tmp/test_ogr2ogr_50_2.csv -nln test_ogr2ogr_50')
+
+    ds = ogr.Open('tmp/test_ogr2ogr_50.dbf')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    if feat.GetField('field1') != 'foo' or feat.IsFieldSet('field2'):
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+    if feat.GetField('field1') != 'bar' or feat.GetField('field2') != 'baz':
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    os.unlink('tmp/test_ogr2ogr_50.dbf')
+    os.unlink('tmp/test_ogr2ogr_50_1.csv')
+    os.unlink('tmp/test_ogr2ogr_50_2.csv')
+
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_1,
     test_ogr2ogr_2,
@@ -1962,6 +2002,7 @@ gdaltest_list = [
     test_ogr2ogr_47,
     test_ogr2ogr_48,
     test_ogr2ogr_49,
+    test_ogr2ogr_50,
     ]
 
 if __name__ == '__main__':

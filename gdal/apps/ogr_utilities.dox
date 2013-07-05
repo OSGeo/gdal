@@ -175,7 +175,7 @@ Usage: ogr2ogr [--help-general] [-skipfailures] [-append] [-update]
                [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]
                [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]
                dst_datasource_name src_datasource_name
-               [-lco NAME=VALUE] [-nln name] [-nlt type] [-dim 2|3] [layer [layer ...]]
+               [-lco NAME=VALUE] [-nln name] [-nlt type] [-dim 2|3|layer_dim] [layer [layer ...]]
 
 Advanced options :
                [-gt n]
@@ -187,7 +187,8 @@ Advanced options :
                [-clipdstwhere expression]
                [-wrapdateline] [-datelineoffset val]
                [[-simplify tolerance] | [-segmentize max_dist]]
-               [-fieldTypeToString All|(type1[,type2]*)]
+               [-addfields]
+               [-fieldTypeToString All|(type1[,type2]*)] [-unsetFieldWidth]
                [-fieldmap identity | index1[,index2]*]
                [-splitlistfields] [-maxsubfields val]
                [-explodecollections] [-zfield field_name]
@@ -242,7 +243,10 @@ that mix polygon or multipolygons to multipolygons, and layers that mix linestri
 multilinestrings to multilinestrings. Can be usefull when converting shapefiles to PostGIS
 (and other target drivers) that implements strict checks for geometry type.</dd>
 <dt> <b>-dim</b><em> val</em>:</dt><dd>(starting with GDAL 1.10) Force the coordinate dimension to val (valid values are 2 or 3).
-This affects both the layer geometry type, and feature geometries.</dd>
+This affects both the layer geometry type, and feature geometries.
+Starting with GDAL 2.0, the value can be set to "layer_dim" to instruct feature geometries to be promoted
+to the coordinate dimension declared by the layer.
+</dd>
 <dt> <b>-a_srs</b><em> srs_def</em>:</dt><dd> Assign an output SRS</dd>
 <dt> <b>-t_srs</b><em> srs_def</em>:</dt><dd> Reproject/transform to this SRS on output</dd>
 <dt> <b>-s_srs</b><em> srs_def</em>:</dt><dd> Override source SRS</dd>
@@ -288,6 +292,7 @@ Used to create intermediate points</dd>
 specified type to a field of type string in the destination layer. Valid types are : Integer, Real, String, Date, Time,
 DateTime, Binary, IntegerList, RealList, StringList. Special value <b>All</b> can be used to convert all fields to strings.
 This is an alternate way to using the CAST operator of OGR SQL, that may avoid typing a long SQL query.</dd>
+<dt> <b>-unsetFieldWidth</b>:</dt><dd> (starting with GDAL 2.0) set field width and precision to 0.</dd>
 <dt> <b>-splitlistfields</b>:</dt><dd>(starting with GDAL 1.8.0) split fields of type StringList, RealList or IntegerList into as many fields of type String, Real or Integer as necessary.</dd>
 <dt> <b>-maxsubfields</b> <em>val</em>:</dt><dd>To be combined with -splitlistfields to limit the number of subfields created for each split field.</dd>
 <dt> <b>-explodecollections</b>:</dt><dd>(starting with GDAL 1.8.0) produce one feature for each geometry in any kind of geometry collection in the source file</dd>
@@ -306,6 +311,11 @@ target layer definition in which the n(th) field of the source layer must be cop
 zero. There must be exactly as many values in the list as the count of the fields in the source layer. 
 We can use the 'identity' setting to specify that the fields should be transferred by using the same order. 
 This setting should be used along with the -append setting.</dd>
+<dt> <b>-addfields</b>:</dt><dd>(starting with GDAL 2.0) This is a specialized version of
+-append. Contrary to -append, -addfields has the effect of adding, to existing target layers,
+the new fields found in source layers. This option is usefull when merging files that have non-strictly
+identical structures.
+This might not work for output formats that don't support adding fields to existing non-empty layers.</dd>
 </dl>
 
 \section ogr2ogr_performance PERFORMANCE HINTS
