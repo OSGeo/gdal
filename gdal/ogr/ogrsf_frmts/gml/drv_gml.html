@@ -88,6 +88,11 @@ field.  In some applications it is easier if all fields are just treated as
 string fields.  This can be accomplished by setting the configuration option
 <b>GML_FIELDTYPES</b> to the value <b>ALWAYS_STRING</b>.<p>
 
+Configuration options can be set via the CPLSetConfigOption() function or as
+environment variables.<p>
+
+<h2>Particular GML application schemas</h2>
+
 OGR 1.8.0 adds support for detecting feature attributes in nested GML elements
 (non-flat attribute hierarchy) that can be found in some GML profiles
 such as UK Ordnance Survey MasterMap. OGR 1.8.0 also brings support for reading
@@ -96,8 +101,10 @@ IntegerList, RealList and StringList field types when a GML element has several 
 Since OGR 1.8.0, a specialized GML driver - the <a href="drv_nas.html">NAS</a> driver - is available to read
 German AAA GML Exchange Format (NAS/ALKIS).<p>
 
-Configuration options can be set via the CPLSetConfigOption() function or as
-environment variables.<p>
+Since OGR 1.8.0, the GML driver has partial support for reading AIXM or CityGML files.<p>
+
+Since OGR 2.0, the GML driver supports reading Finnish National Land Survey GML files (a.k.a MTK GML)
+for topographic data.<p>
 
 <h2>Geometry reading</h2>
 
@@ -480,6 +487,7 @@ ogr2ogr -f GML output.gml PG:'host=myserver dbname=warmerda' -sql "SELECT pop_19
 <ul>
 <li> <a href="http://www.opengeospatial.org/standards/gml">GML Specifications</a><p>
 <li> <a href="http://portal.opengeospatial.org/files/?artifact_id=15201">GML 3.1.1 simple features profile - OGC(R) 06-049r1</a><p>
+<li> <a href="https://portal.opengeospatial.org/files/?artifact_id=42729">Geography Markup Language (GML) simple features profile (with Corrigendum) (GML 3.2.1) - OGC(R) 10-100r3</a><p>
 <li> <a href="http://xml.apache.org/xerces2-j/index.html">Xerces</a><p>
 <li> <a href="drv_nas.html">NAS/ALKIS : specialized GML driver for cadastral data in Germany</a><p>
 </ul>

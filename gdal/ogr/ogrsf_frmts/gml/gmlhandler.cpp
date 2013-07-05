@@ -480,14 +480,17 @@ GMLHandler::GMLHandler( GMLReader *poReader )
 
     m_nDepthFeature = m_nDepth = 0;
     m_inBoundedByDepth = 0;
+
+    eAppSchemaType = APPSCHEMA_GENERIC;
+
     m_pszCityGMLGenericAttrName = NULL;
     m_inCityGMLGenericAttrDepth = 0;
-    m_bIsCityGML = FALSE;
-    m_bIsAIXM = FALSE;
+
     m_bReportHref = FALSE;
     m_pszHref = NULL;
     m_pszUom = NULL;
     m_pszValue = NULL;
+    m_pszKieli = NULL;
 
     pasGeometryNames = (GeometryNamesStruct*)CPLMalloc(
         GML_GEOMETRY_TYPE_COUNT * sizeof(GeometryNamesStruct));
@@ -521,6 +524,7 @@ GMLHandler::~GMLHandler()
     CPLFree( m_pszHref );
     CPLFree( m_pszUom );
     CPLFree( m_pszValue );
+    CPLFree( m_pszKieli );
     CPLFree( pasGeometryNames );
 }
 
@@ -651,7 +655,7 @@ OGRErr GMLHandler::startElementGeometry(const char *pszName, int nLenName, void*
     /* Some CityGML lack a srsDimension="3" in posList, such as in */
     /* http://www.citygml.org/fileadmin/count.php?f=fileadmin%2Fcitygml%2Fdocs%2FFrankfurt_Street_Setting_LOD3.zip */
     /* So we have to add it manually */
-    if (m_bIsCityGML && nLenName == 7 &&
+    if (eAppSchemaType == APPSCHEMA_CITYGML && nLenName == 7 &&
         strcmp(pszName, "posList") == 0 &&
         CPLGetXMLValue(psCurNode, "srsDimension", NULL) == NULL)
     {
@@ -733,7 +737,7 @@ OGRErr GMLHandler::startElementFeatureAttribute(const char *pszName, int nLenNam
         {
             /* AIXM special case: for RouteSegment, we only want to read Curve geometries */
             /* not 'start' and 'end' geometries */
-            if (m_bIsAIXM &&
+            if (eAppSchemaType == APPSCHEMA_AIXM &&
                 strcmp(poState->m_poFeature->GetClass()->GetName(), "RouteSegment") == 0)
                 bReadGeometry = strcmp( pszName, "Curve") == 0;
 
@@ -779,7 +783,7 @@ OGRErr GMLHandler::startElementFeatureAttribute(const char *pszName, int nLenNam
 /* -------------------------------------------------------------------- */
 /*      Is it a CityGML generic attribute ?                             */
 /* -------------------------------------------------------------------- */
-    else if( m_bIsCityGML &&
+    else if( eAppSchemaType == APPSCHEMA_CITYGML &&
              m_poReader->IsCityGMLGenericAttributeElement( pszName, attr ) )
     {
         CPLFree(m_pszCityGMLGenericAttrName);
@@ -814,6 +818,14 @@ OGRErr GMLHandler::startElementFeatureAttribute(const char *pszName, int nLenNam
         m_pszUom = GetAttributeValue(attr, "uom");
         CPLFree(m_pszValue);
         m_pszValue = GetAttributeValue(attr, "value");
+
+        /* Get language in 'kieli' attribute of 'teksti' element */
+        if( eAppSchemaType == APPSCHEMA_MTKGML &&
+            nLenName == 6 && strcmp(pszName, "teksti") == 0 )
+        {
+            CPLFree(m_pszKieli);
+            m_pszKieli = GetAttributeValue(attr, "kieli");
+        }
 
         if (stateStack[nStackDepth] != STATE_PROPERTY)
         {
@@ -857,11 +869,25 @@ OGRErr GMLHandler::startElementTop(const char *pszName, int nLenName, void* attr
 {
     if (strcmp(pszName, "CityModel") == 0 )
     {
-        m_bIsCityGML = TRUE;
+        eAppSchemaType = APPSCHEMA_CITYGML;
     }
     else if (strcmp(pszName, "AIXMBasicMessage") == 0)
     {
-        m_bIsAIXM = m_bReportHref = TRUE;
+        eAppSchemaType = APPSCHEMA_AIXM;
+        m_bReportHref = TRUE;
+    }
+    else if (strcmp(pszName, "Maastotiedot") == 0)
+    {
+        eAppSchemaType = APPSCHEMA_MTKGML;
+
+        char *pszSRSName = GetAttributeValue(attr, "srsName");
+        m_poReader->SetGlobalSRSName(pszSRSName);
+        CPLFree(pszSRSName);
+
+        m_bReportHref = TRUE;
+
+        /* the schemas of MTKGML don't have (string) width, so don't set it */
+        m_poReader->SetWidthFlag(FALSE);
     }
 
     stateStack[0] = STATE_DEFAULT;
@@ -880,7 +906,7 @@ OGRErr GMLHandler::startElementDefault(const char *pszName, int nLenName, void* 
 /*      Is it a feature?  If so push a whole new state, and return.     */
 /* -------------------------------------------------------------------- */
     int nClassIndex;
-    if( (nClassIndex = m_poReader->GetFeatureElementIndex( pszName, nLenName )) != -1 )
+    if( (nClassIndex = m_poReader->GetFeatureElementIndex( pszName, nLenName, eAppSchemaType )) != -1 )
     {
         m_bAlreadyFoundGeometry = FALSE;
 
@@ -896,7 +922,16 @@ OGRErr GMLHandler::startElementDefault(const char *pszName, int nLenName, void* 
         }
         else
         {
-            m_poReader->PushFeature( pszName, GetFID(attr), nClassIndex );
+            if( eAppSchemaType == APPSCHEMA_MTKGML )
+            {
+                m_poReader->PushFeature( pszName, NULL, nClassIndex );
+
+                char* pszGID = GetAttributeValue(attr, "gid");
+                if( pszGID )
+                    m_poReader->SetFeaturePropertyDirectly( "gid", pszGID, -1, GMLPT_String );
+            }
+            else
+                m_poReader->PushFeature( pszName, GetFID(attr), nClassIndex );
 
             m_nDepthFeature = m_nDepth;
 
@@ -1061,10 +1096,28 @@ OGRErr GMLHandler::endElementGeometry()
         /* a bit specially because ElevatedPoint is aixm: stuff and */
         /* the srsDimension of the <gml:pos> can be set to TRUE although */
         /* they are only 2 coordinates in practice */
-        if ( m_bIsAIXM && psInterestNode != NULL &&
+        if ( eAppSchemaType == APPSCHEMA_AIXM && psInterestNode != NULL &&
             strcmp(psInterestNode->pszValue, "ElevatedPoint") == 0 )
         {
             psInterestNode = ParseAIXMElevationPoint(psInterestNode);
+        }
+        else if ( eAppSchemaType == APPSCHEMA_MTKGML && psInterestNode != NULL )
+        {
+            if( strcmp(psInterestNode->pszValue, "Murtoviiva") == 0 )
+            {
+                CPLFree(psInterestNode->pszValue);
+                psInterestNode->pszValue = CPLStrdup("gml:LineString");
+            }
+            else if( strcmp(psInterestNode->pszValue, "Alue") == 0 )
+            {
+                CPLFree(psInterestNode->pszValue);
+                psInterestNode->pszValue = CPLStrdup("gml:Polygon");
+            }
+            else if( strcmp(psInterestNode->pszValue, "Piste") == 0 )
+            {
+                CPLFree(psInterestNode->pszValue);
+                psInterestNode->pszValue = CPLStrdup("gml:Point");
+            }
         }
 
         if (m_poReader->FetchAllGeometries())
@@ -1147,6 +1200,13 @@ OGRErr GMLHandler::endElementAttribute()
             CPLString osPropNameUom = poState->osPath + "_uom";
             m_poReader->SetFeaturePropertyDirectly( osPropNameUom, m_pszUom, -1 );
             m_pszUom = NULL;
+        }
+
+        if (m_pszKieli != NULL)
+        {
+            CPLString osPropName = poState->osPath + "_kieli";
+            m_poReader->SetFeaturePropertyDirectly( osPropName, m_pszKieli, -1 );
+            m_pszKieli = NULL;
         }
 
         m_nCurFieldLen = m_nCurFieldAlloc = 0;
@@ -1318,7 +1378,13 @@ int GMLHandler::IsGeometryElement( const char *pszElement )
             nFirst = nMiddle + 1;
     } while(nFirst <= nLast);
 
-    if (m_bIsAIXM && strcmp( pszElement, "ElevatedPoint") == 0)
+    if (eAppSchemaType == APPSCHEMA_AIXM && strcmp( pszElement, "ElevatedPoint") == 0)
+        return TRUE;
+
+    if( eAppSchemaType == APPSCHEMA_MTKGML &&
+        ( strcmp( pszElement, "Piste") == 0 ||
+          strcmp( pszElement, "Alue") == 0  ||
+          strcmp( pszElement, "Murtoviiva") == 0 ) )
         return TRUE;
 
     return FALSE;
