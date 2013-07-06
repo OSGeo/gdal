@@ -2186,6 +2186,22 @@ def ogr_gml_52():
     return 'success'
 
 ###############################################################################
+# Test that we don't recognize .xsd files themselves
+
+def ogr_gml_53():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    ds = ogr.Open('data/archsites.xsd')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds =  None
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -2364,6 +2380,7 @@ gdaltest_list = [
     ogr_gml_50,
     ogr_gml_51,
     ogr_gml_52,
+    ogr_gml_53,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':
