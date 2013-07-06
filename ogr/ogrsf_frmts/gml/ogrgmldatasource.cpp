@@ -369,6 +369,15 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
             return FALSE;
         }
 
+        /* Ignore .xsd schemas */
+        if( strstr(szPtr, "<schema") != NULL
+            || strstr(szPtr, "<xs:schema") != NULL
+            || strstr(szPtr, "<xsd:schema") != NULL )
+        {
+            VSIFCloseL( fp );
+            return FALSE;
+        }
+
         /* Ignore GeoRSS documents. They will be recognized by the GeoRSS driver */
         if( strstr(szPtr, "<rss") != NULL && strstr(szPtr, "xmlns:georss") != NULL )
         {
