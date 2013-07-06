@@ -1,5 +1,5 @@
 
-OBJ	=	postgisrasterdataset.obj postgisrasterrasterband.obj postgisrasterdriver.obj
+OBJ	=	postgisrasterdataset.obj postgisrasterrasterband.obj postgisrasterdriver.obj postgisrastertiledataset.obj postgisrastertilerasterband.obj postgisrastertools.obj
 
 EXTRAFLAGS = -I ../mem -I ../vrt -I$(PG_INC_DIR)
 
