@@ -1945,6 +1945,7 @@ def test_ogr2ogr_50():
         gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
+    ds = None
 
     os.unlink('tmp/test_ogr2ogr_50.dbf')
     os.unlink('tmp/test_ogr2ogr_50_1.csv')
