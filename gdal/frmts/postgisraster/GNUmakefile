@@ -4,7 +4,7 @@
 
 include ../../GDALmake.opt
 
-OBJ	=	postgisrasterdriver.o postgisrasterdataset.o postgisrasterrasterband.o
+OBJ	=	postgisrasterdriver.o postgisrasterdataset.o postgisrasterrasterband.o postgisrastertiledataset.o postgisrastertilerasterband.o postgisrastertools.o
 
 
 CPPFLAGS	:= -I ../mem -I ../vrt $(XTRA_OPT) $(PG_INC) $(GDAL_INCLUDE) $(CPPFLAGS)
