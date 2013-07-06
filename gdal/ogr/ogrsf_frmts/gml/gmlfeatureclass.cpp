@@ -526,20 +526,24 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
             CPLCreateXMLElementAndValue( psDSI, "FeatureCount", szValue );
         }
 
-        if( m_bHaveExtents )
+        if( m_bHaveExtents &&
+            fabs(m_dfXMin) < 1e100 &&
+            fabs(m_dfXMax) < 1e100 &&
+            fabs(m_dfYMin) < 1e100 &&
+            fabs(m_dfYMax) < 1e100 )
         {
             char szValue[128];
 
-            sprintf( szValue, "%.5f", m_dfXMin );
+            snprintf( szValue, sizeof(szValue), "%.5f", m_dfXMin );
             CPLCreateXMLElementAndValue( psDSI, "ExtentXMin", szValue );
 
-            sprintf( szValue, "%.5f", m_dfXMax );
+            snprintf( szValue, sizeof(szValue), "%.5f", m_dfXMax );
             CPLCreateXMLElementAndValue( psDSI, "ExtentXMax", szValue );
 
-            sprintf( szValue, "%.5f", m_dfYMin );
+            snprintf( szValue, sizeof(szValue), "%.5f", m_dfYMin );
             CPLCreateXMLElementAndValue( psDSI, "ExtentYMin", szValue );
 
-            sprintf( szValue, "%.5f", m_dfYMax );
+            snprintf( szValue, sizeof(szValue), "%.5f", m_dfYMax );
             CPLCreateXMLElementAndValue( psDSI, "ExtentYMax", szValue );
         }
 
