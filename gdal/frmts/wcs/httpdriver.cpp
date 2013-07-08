@@ -139,8 +139,11 @@ static GDALDataset *HTTPOpen( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Try opening this result as a gdaldataset.                       */
 /* -------------------------------------------------------------------- */
+    /* suppress errors as not all drivers support /vsimem */
+    CPLPushErrorHandler( CPLQuietErrorHandler );
     GDALDataset *poDS = (GDALDataset *) 
         GDALOpen( osResultFilename, GA_ReadOnly );
+    CPLPopErrorHandler();
 
 /* -------------------------------------------------------------------- */
 /*      If opening it in memory didn't work, perhaps we need to         */
