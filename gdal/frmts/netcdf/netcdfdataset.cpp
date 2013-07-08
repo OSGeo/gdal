@@ -1541,7 +1541,7 @@ netCDFDataset::~netCDFDataset()
     if( pszCFCoordinates )
         CPLFree( pszCFCoordinates );
 
-    if( cdfid ) {
+    if( cdfid > 0 ) {
 #ifdef NCDF_DEBUG
         CPLDebug( "GDAL_netCDF", "calling nc_close( %d )", cdfid );
 #endif
@@ -4353,6 +4353,9 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( ! EQUALN(poOpenInfo->pszFilename,"NETCDF:",7) ) {
         nTmpFormat = IdentifyFormat( poOpenInfo );
+#ifdef NCDF_DEBUG
+    CPLDebug( "GDAL_netCDF", "identified format %d", nTmpFormat );
+#endif
         /* Note: not calling Identify() directly, because we want the file type */
         /* Only support NCDF_FORMAT* formats */
         if( ! ( NCDF_FORMAT_NC  == nTmpFormat ||
@@ -4440,14 +4443,21 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
+#ifdef NCDF_DEBUG
     CPLDebug( "GDAL_netCDF", "calling nc_open( %s )", poDS->osFilename.c_str() );
+#endif
     if( nc_open( poDS->osFilename, NC_NOWRITE, &cdfid ) != NC_NOERR ) {
+#ifdef NCDF_DEBUG
+        CPLDebug( "GDAL_netCDF", "error opening" );
+#endif
         CPLReleaseMutex(hNCMutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
         delete poDS;
         CPLAcquireMutex(hNCMutex, 1000.0);
         return NULL;
     }
+#ifdef NCDF_DEBUG
     CPLDebug( "GDAL_netCDF", "got cdfid=%d\n", cdfid );
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Is this a real netCDF file?                                     */
