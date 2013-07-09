@@ -833,7 +833,14 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
             GetLayerByName( pszStatement + 7 );
 
         if( poLayer != NULL )
-            poLayer->Repack();
+        {
+            if( poLayer->Repack() != OGRERR_NONE )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "REPACK of layer '%s' failed.",
+                          pszStatement + 7 );
+            }
+        }
         else
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
