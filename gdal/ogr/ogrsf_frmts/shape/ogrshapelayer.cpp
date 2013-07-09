@@ -2222,6 +2222,18 @@ OGRErr OGRShapeLayer::Repack()
         return OGRERR_FAILURE;
     }
 
+    /* Delete temporary .cpg file if existing */
+    if( osCPGName.size() )
+    {
+        CPLString oCPGTempFile = CPLFormFilename(osDirname, osBasename, NULL);
+        oCPGTempFile += "_packed.cpg";
+        if( VSIUnlink( oCPGTempFile ) != 0 )
+        {
+            CPLDebug( "Shape", "Did not manage to remove temporary .cpg file: %s",
+                      VSIStrerror( errno ) );
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Copy over all records that are not deleted.                     */
 /* -------------------------------------------------------------------- */
@@ -2257,7 +2269,7 @@ OGRErr OGRShapeLayer::Repack()
     DBFClose( hDBF );
     DBFClose( hNewDBF );
     hDBF = hNewDBF = NULL;
-    
+
     if( VSIUnlink( osDBFName ) != 0 )
     {
         CPLDebug( "Shape", "Failed to delete DBF file: %s", VSIStrerror( errno ) );
@@ -2267,9 +2279,6 @@ OGRErr OGRShapeLayer::Repack()
 
         VSIUnlink( oTempFile );
 
-        if( osCPGName.size() )
-            VSIUnlink( osCPGName );
-
         return OGRERR_FAILURE;
     }
         
@@ -2278,18 +2287,6 @@ OGRErr OGRShapeLayer::Repack()
         CPLDebug( "Shape", "Can not rename DBF file: %s", VSIStrerror( errno ) );
         CPLFree( panRecordsToDelete );
         return OGRERR_FAILURE;
-    }
-
-    /* Delete temporary .cpg file if existing */
-    if( osCPGName.size() )
-    {
-        oTempFile = CPLFormFilename(osDirname, osBasename, NULL);
-        oTempFile += "_packed.cpg";
-        if( VSIUnlink( oTempFile ) != 0 )
-        {
-            CPLDebug( "Shape", "Did not manage to remove temporary .cpg file: %s",
-                      VSIStrerror( errno ) );
-        }
     }
 
 /* -------------------------------------------------------------------- */
