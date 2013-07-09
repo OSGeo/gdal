@@ -2258,7 +2258,20 @@ OGRErr OGRShapeLayer::Repack()
     DBFClose( hNewDBF );
     hDBF = hNewDBF = NULL;
     
-    VSIUnlink( osDBFName );
+    if( VSIUnlink( osDBFName ) != 0 )
+    {
+        CPLDebug( "Shape", "Failed to delete DBF file: %s", VSIStrerror( errno ) );
+        CPLFree( panRecordsToDelete );
+
+        hDBF = DBFOpen ( osDBFName, bUpdateAccess ? "r+" : "r" );
+
+        VSIUnlink( oTempFile );
+
+        if( osCPGName.size() )
+            VSIUnlink( osCPGName );
+
+        return OGRERR_FAILURE;
+    }
         
     if( VSIRename( oTempFile, osDBFName ) != 0 )
     {
