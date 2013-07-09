@@ -3367,7 +3367,45 @@ def ogr_shape_69():
         return 'fail'
     ds = None
 
-    ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_69.shp')
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/ogr_shape_69.shp')
+
+    return 'success'
+
+###############################################################################
+# Test fix for https://github.com/OSGeo/gdal/pull/17
+# (shapefile opened twice on Windows)
+
+def ogr_shape_70():
+
+    if sys.platform != 'win32':
+        return 'skip'
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/ogr_shape_70.shp')
+    lyr = ds.CreateLayer('ogr_shape_70')
+    field_defn = ogr.FieldDefn('intfield', ogr.OFTInteger)
+    lyr.CreateField(field_defn)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(feat)
+    fid = feat.GetFID()
+    feat = None
+    lyr.DeleteFeature(fid)
+
+    # Locks the file. No way to do this on Unix easily
+    f = open('tmp/ogr_shape_70.dbf', 'r+')
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    ds.ExecuteSQL('REPACK ogr_shape_70')
+    gdal.PopErrorHandler()
+    errmsg = gdal.GetLastErrorMsg()
+    ds = None
+
+    f.close()
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/ogr_shape_70.shp')
+
+    if errmsg == '':
+        return 'fail'
 
     return 'success'
 
@@ -3474,6 +3512,7 @@ gdaltest_list = [
     ogr_shape_67,
     ogr_shape_68,
     ogr_shape_69,
+    ogr_shape_70,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':
