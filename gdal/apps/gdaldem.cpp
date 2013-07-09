@@ -2184,6 +2184,15 @@ double GDALGeneric3x3RasterBand::GetNoDataValue( int* pbHasNoData )
 }
 
 /************************************************************************/
+/*                            ArgIsNumeric()                            */
+/************************************************************************/
+
+static int ArgIsNumeric( const char *pszArg )
+
+{
+    return CPLGetValueType(pszArg) != CPL_VALUE_STRING;
+}
+/************************************************************************/
 /*                                main()                                */
 /************************************************************************/
 
@@ -2303,7 +2312,10 @@ int main( int argc, char ** argv )
             (EQUAL(argv[i], "--z") || EQUAL(argv[i], "-z")))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            z = atof(argv[++i]);
+            ++i;
+            if( !ArgIsNumeric(argv[i]) )
+                Usage();
+            z = atof(argv[i]);
         }
         else if ( eUtilityMode == SLOPE && EQUAL(argv[i], "-p"))
         {
@@ -2345,7 +2357,10 @@ int main( int argc, char ** argv )
           )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            scale = atof(argv[++i]);
+            ++i;
+            if( !ArgIsNumeric(argv[i]) )
+                Usage();
+            scale = atof(argv[i]);
         }
         else if( eUtilityMode == HILL_SHADE &&
             (EQUAL(argv[i], "--az") || 
@@ -2355,7 +2370,10 @@ int main( int argc, char ** argv )
           )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            az = atof(argv[++i]);
+            ++i;
+            if( !ArgIsNumeric(argv[i]) )
+                Usage();
+            az = atof(argv[i]);
         }
         else if( eUtilityMode == HILL_SHADE &&
             (EQUAL(argv[i], "--alt") || 
@@ -2365,7 +2383,10 @@ int main( int argc, char ** argv )
           )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            alt = atof(argv[++i]);
+            ++i;
+            if( !ArgIsNumeric(argv[i]) )
+                Usage();
+            alt = atof(argv[i]);
         }
         else if( eUtilityMode == HILL_SHADE &&
             (EQUAL(argv[i], "-combined") || 
