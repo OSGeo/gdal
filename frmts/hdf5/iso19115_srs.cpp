@@ -93,7 +93,29 @@ OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis,
     {
         int nZone = atoi(CPLGetXMLValue( psRSI, "MD_CRS.projectionParameters.MD_ProjectionParameters.zone", "0" ));
 
-        poThis->SetUTM( ABS(nZone), nZone > 0 );
+        /*
+        ** We have encountered files (#5152) that identify the southern
+        ** hemisphere with a false northing of 10000000 value.  The existing
+        ** code checked for negative zones but it isn't clear if any actual
+        ** files use that. 
+        */
+        int bNorth =  nZone > 0;
+        if( bNorth )
+        {
+            const char *pszFalseNorthing = CPLGetXMLValue( psRSI, "MD_CRS.projectionParameters.MD_ProjectionParameters.falseNorthing", "" );
+            if ( strlen(pszFalseNorthing) > 0 )
+            {
+                if( EQUAL(pszFalseNorthing, "10000000"))
+                {
+                    bNorth = FALSE;
+                }
+                else
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined, "falseNorthing value not recognized: %s", pszFalseNorthing);
+                }
+            }
+        }
+        poThis->SetUTM( ABS(nZone), bNorth );
     }
     else if( EQUAL(pszProjection,"Geodetic") )
     {
