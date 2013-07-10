@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #******************************************************************************
 #  $Id$
 # 
@@ -2079,7 +2080,7 @@ gdal2tiles temp.vrt""" % self.input )
                   map = new OpenLayers.Map(options);
 
                   var wms = new OpenLayers.Layer.WMS("VMap0",
-                      "http://labs.metacarta.com/wms-c/Basic.py?",
+                      "http://tilecache.osgeo.org/wms-c/Basic.py?",
                       {
                           layers: 'basic',
                           format: 'image/png'

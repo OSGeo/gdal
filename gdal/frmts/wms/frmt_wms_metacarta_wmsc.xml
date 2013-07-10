@@ -1,7 +1,7 @@
 <GDAL_WMS>
     <Service name="WMS">
         <Version>1</Version>
-        <ServerUrl>http://labs.metacarta.com/wms-c/Basic.py?</ServerUrl>
+        <ServerUrl>http://tilecache.osgeo.org/wms-c/Basic.py?</ServerUrl>
         <Layers>basic</Layers>
     </Service>
     <DataWindow>

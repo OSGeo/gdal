@@ -222,7 +222,7 @@ def wms_7():
     if gdaltest.wms_drv is None:
         return 'skip'
 
-    srv = 'http://labs.metacarta.com/wms-c/Basic.py'
+    srv = 'http://tilecache.osgeo.org/wms-c/Basic.py'
     gdaltest.metacarta_tms = False
     if gdaltest.gdalurlopen(srv) is None:
         return 'skip'
@@ -230,7 +230,7 @@ def wms_7():
 
     tms = """<GDAL_WMS>
     <Service name="TMS">
-        <ServerUrl>http://labs.metacarta.com/wms-c/Basic.py</ServerUrl>
+        <ServerUrl>http://tilecache.osgeo.org/wms-c/Basic.py</ServerUrl>
         <Layer>basic</Layer>
         <Format>png</Format>
     </Service>
@@ -289,7 +289,7 @@ def wms_8():
 
     tms = """<GDAL_WMS>
     <Service name="TMS">
-        <ServerUrl>http://labs.metacarta.com/wms-c/Basic.py</ServerUrl>
+        <ServerUrl>http://tilecache.osgeo.org/wms-c/Basic.py</ServerUrl>
         <Layer>basic</Layer>
         <Format>png</Format>
     </Service>
