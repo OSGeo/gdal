@@ -2027,7 +2027,8 @@ bool FGdbBaseLayer::OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature)
     ShapeBuffer gdbGeometry;
     // Row::GetGeometry() will fail with -2147467259 for NULL geometries
     // Row::GetGeometry() will fail with -2147219885 for tables without a geometry field
-    if (!FAILED(hr = pRow->GetGeometry(gdbGeometry)))
+    if (!m_pFeatureDefn->IsGeometryIgnored() &&
+        !FAILED(hr = pRow->GetGeometry(gdbGeometry)))
     {
         OGRGeometry* pOGRGeo = NULL;
 
@@ -2052,6 +2053,12 @@ bool FGdbBaseLayer::OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature)
 
     for (size_t i = 0; i < mappedFieldCount; ++i)
     {
+        OGRFieldDefn* poFieldDefn = m_pFeatureDefn->GetFieldDefn(i);
+        // The IsNull() and GetXXX() API are very slow when there are a 
+        // big number of fields, for example with Tiger database.
+        if (poFieldDefn->IsIgnored() )
+            continue;
+
         const wstring & wstrFieldName = m_vOGRFieldToESRIField[i];
         const std::string & strFieldType = m_vOGRFieldToESRIFieldType[i];
 
@@ -2074,7 +2081,7 @@ bool FGdbBaseLayer::OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature)
         // NOTE: This switch statement needs to be kept in sync with GDBToOGRFieldType utility function
         //       since we are only checking for types we mapped in that utility function
 
-        switch (m_pFeatureDefn->GetFieldDefn(i)->GetType())
+        switch (poFieldDefn->GetType())
         {
 
             case OFTInteger:
@@ -2512,7 +2519,10 @@ int FGdbLayer::TestCapability( const char* pszCap )
 
     else if (EQUAL(pszCap,OLCTransactions)) /* TBD Start/End Transactions() */
         return FALSE;
-        
+
+    else if( EQUAL(pszCap,OLCIgnoreFields) )
+        return TRUE;
+
     else 
         return FALSE;
 }
