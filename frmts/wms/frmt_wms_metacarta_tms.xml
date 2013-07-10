@@ -1,6 +1,6 @@
 <GDAL_WMS>
     <Service name="TMS">
-        <ServerUrl>http://labs.metacarta.com/wms-c/Basic.py</ServerUrl>
+        <ServerUrl>http://tilecache.osgeo.org/wms-c/Basic.py</ServerUrl>
         <Layer>basic</Layer>
         <Format>png</Format>
     </Service>
