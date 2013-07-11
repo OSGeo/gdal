@@ -202,9 +202,12 @@ CPLErr CPLHTTPFetchMulti(CPLHTTPRequest *pasRequest, int nRequestCount, const ch
         FD_ZERO(&fdwrite);
         FD_ZERO(&fdexcep);
         curl_multi_fdset(curl_multi, &fdread, &fdwrite, &fdexcep, &maxfd);
-        timeout.tv_sec = 0;
-        timeout.tv_usec = 100000;
-        select(maxfd + 1, &fdread, &fdwrite, &fdexcep, &timeout);
+        if( maxfd >= 0 )
+        {
+            timeout.tv_sec = 0;
+            timeout.tv_usec = 100000;
+            select(maxfd + 1, &fdread, &fdwrite, &fdexcep, &timeout);
+        }
         while (curl_multi_perform(curl_multi, &still_running) == CURLM_CALL_MULTI_PERFORM);
     }
 
