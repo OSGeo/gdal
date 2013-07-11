@@ -121,8 +121,44 @@ def bag_2():
 
     return 'success'
 
+###############################################################################
+# Test a southern hemisphere falseNorthing sample file.
+
+def bag_3():
+
+    if gdaltest.bag_drv is None:
+        return 'skip'
+
+    ds = gdal.Open( 'data/southern_hemi_false_northing.bag' )
+
+    nr = ds.RasterCount
+    if nr != 2:
+        gdaltest.post_reason( 'Expected 2 bands, got %d.' % nr )
+        return 'fail'
+    
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 21402:
+        gdaltest.post_reason( 'Wrong checksum on band 1, got %d.' % cs )
+        return 'fail'
+
+    cs = ds.GetRasterBand(2).Checksum()
+    if cs != 33216:
+        gdaltest.post_reason( 'Wrong checksum on band 2, got %d.' % cs )
+        return 'fail'
+
+    pj = ds.GetProjection()
+    if 'Southern Hemisphere' not in pj:
+        gdaltest.post_reason( 'Southern Hemisphere not in projection')
+        return 'fail'
+    if 'PARAMETER["false_northing",10000000]' not in pj:
+        gdaltest.post_reason( 'Did not find false_northing of 10000000')
+        return 'fail'
+    
+    return 'success'
+
 gdaltest_list = [ bag_1,
-                  bag_2 ]
+                  bag_2,
+                  bag_3 ]
 
 if __name__ == '__main__':
 
