@@ -2173,7 +2173,7 @@ gdal2tiles temp.vrt""" % self.input )
                   var res = this.getServerResolution();
                   var x = Math.round((bounds.left - this.tileOrigin.lon) / (res * this.tileSize.w));
                   var y = Math.round((bounds.bottom - this.tileOrigin.lat) / (res * this.tileSize.h));
-                  var z = this.getServerZoom()-1;
+                  var z = this.getServerZoom();
                   var path = this.serviceVersion + "/" + this.layername + "/" + z + "/" + x + "/" + y + "." + this.type; 
                   var url = this.url;
                   if (OpenLayers.Util.isArray(url)) {
