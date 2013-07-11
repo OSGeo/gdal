@@ -357,12 +357,12 @@ class GlobalGeodetic(object):
         self.tileSize = tileSize
         self.resFact = 360.0 / self.tileSize
 
-    def LatLonToPixels(self, lat, lon, zoom):
-        "Converts lat/lon to pixel coordinates in given zoom of the EPSG:4326 pyramid"
+    def LonLatToPixels(self, lon, lat, zoom):
+        "Converts lon/lat to pixel coordinates in given zoom of the EPSG:4326 pyramid"
 
         res = self.resFact / 2**zoom
-        px = (180 + lat) / res
-        py = (90 + lon) / res
+        px = (180 + lon) / res
+        py = (90 + lat) / res
         return px, py
 
     def PixelsToTile(self, px, py):
@@ -372,10 +372,10 @@ class GlobalGeodetic(object):
         ty = int( math.ceil( py / float(self.tileSize) ) - 1 )
         return tx, ty
 
-    def LatLonToTile(self, lat, lon, zoom):
-        "Returns the tile for zoom which covers given lat/lon coordinates"
+    def LonLatToTile(self, lon, lat, zoom):
+        "Returns the tile for zoom which covers given lon/lat coordinates"
 
-        px, py = self.LatLonToPixels( lat, lon, zoom)
+        px, py = self.LonLatToPixels( lon, lat, zoom)
         return self.PixelsToTile(px,py)
 
     def Resolution(self, zoom ):
@@ -990,8 +990,8 @@ gdal2tiles temp.vrt""" % self.input )
             # Generate table with min max tile coordinates for all zoomlevels
             self.tminmax = list(range(0,32))
             for tz in range(0, 32):
-                tminx, tminy = self.geodetic.LatLonToTile( self.ominx, self.ominy, tz )
-                tmaxx, tmaxy = self.geodetic.LatLonToTile( self.omaxx, self.omaxy, tz )
+                tminx, tminy = self.geodetic.LonLatToTile( self.ominx, self.ominy, tz )
+                tmaxx, tmaxy = self.geodetic.LonLatToTile( self.omaxx, self.omaxy, tz )
                 # crop tiles extending world limits (+-180,+-90)
                 tminx, tminy = max(0, tminx), max(0, tminy)
                 tmaxx, tmaxy = min(2**(tz+1)-1, tmaxx), min(2**tz-1, tmaxy)
