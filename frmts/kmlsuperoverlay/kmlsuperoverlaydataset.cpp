@@ -971,9 +971,12 @@ int KmlSuperOverlayReadDataset::CloseDependentDatasets()
     while( psCur != NULL )
     {
         LinkedDataset* psNext = psCur->psNext;
-        if( psCur->poDS->nRefCount == 1 )
-            bRet = TRUE;
-        GDALClose(psCur->poDS);
+        if( psCur->poDS != NULL )
+        {
+            if( psCur->poDS->nRefCount == 1 )
+                bRet = TRUE;
+            GDALClose(psCur->poDS);
+        }
         delete psCur;
         psCur = psNext;
     }
@@ -1254,6 +1257,8 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO( GDALRWFlag eRWFlag,
                                 KmlSuperOverlayReadDataset::Open(osSubFilename, poRoot);
                             if( poSubImageDS )
                                 poSubImageDS->MarkAsShared();
+                            else
+                                CPLDebug("KMLSuperOverlay", "Cannt open %s", osSubFilename.c_str());
                             psLink->osSubFilename = osSubFilename;
                             psLink->poDS = poSubImageDS;
                             psLink->psPrev = NULL;
@@ -1566,7 +1571,7 @@ GDALDataset *KmlSuperOverlayReadDataset::Open(GDALOpenInfo * poOpenInfo)
 /*                         KmlSuperOverlayLoadIcon()                    */
 /************************************************************************/
 
-#define BUFFER_SIZE 100000
+#define BUFFER_SIZE 1000000
 
 static
 GDALDataset* KmlSuperOverlayLoadIcon(const char* pszBaseFilename, const char* pszIcon)
