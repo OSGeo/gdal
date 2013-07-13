@@ -547,7 +547,22 @@ void OGRGeoJSONDataSource::LoadLayers()
         }
         return;
     }
-    
+
+/* -------------------------------------------------------------------- */
+/*      Is it TopoJSON data ?                                           */
+/* -------------------------------------------------------------------- */
+    if ( strstr(pszGeoData_, "\"type\"") &&
+         strstr(pszGeoData_, "\"Topology\"")  )
+    {
+        OGRTopoJSONReader reader;
+        err = reader.Parse( pszGeoData_ );
+        if( OGRERR_NONE == err )
+        {
+            reader.ReadLayers( this );
+        }
+        return;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Configure GeoJSON format translator.                            */
 /* -------------------------------------------------------------------- */
