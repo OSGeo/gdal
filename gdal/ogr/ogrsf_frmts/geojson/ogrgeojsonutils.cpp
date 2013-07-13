@@ -60,7 +60,8 @@ int GeoJSONIsObject( const char* pszText )
     if( *pszText != '{' )
         return FALSE;
 
-    return ((strstr(pszText, "\"type\"") != NULL && strstr(pszText, "\"coordinates\"") != NULL) 
+    return ((strstr(pszText, "\"type\"") != NULL && strstr(pszText, "\"coordinates\"") != NULL)
+        || (strstr(pszText, "\"type\"") != NULL && strstr(pszText, "\"Topology\"") != NULL) 
         || strstr(pszText, "\"FeatureCollection\"") != NULL
         || strstr(pszText, "\"Feature\"") != NULL
         || (strstr(pszText, "\"geometryType\"") != NULL && strstr(pszText, "\"esriGeometry") != NULL));
@@ -137,6 +138,7 @@ GeoJSONSourceType GeoJSONGetSourceType( const char* pszSource, VSILFILE** pfp )
     }
     else if( EQUAL( CPLGetExtension( pszSource ), "geojson" )
              || EQUAL( CPLGetExtension( pszSource ), "json" )
+             || EQUAL( CPLGetExtension( pszSource ), "topojson" )
              || ((EQUALN( pszSource, "/vsigzip/", 9) || EQUALN( pszSource, "/vsizip/", 8)) &&
                  (strstr( pszSource, ".json") || strstr( pszSource, ".JSON") ||
                   strstr( pszSource, ".geojson") || strstr( pszSource, ".GEOJSON")) ))

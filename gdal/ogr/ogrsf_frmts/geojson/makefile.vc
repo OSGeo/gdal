@@ -12,7 +12,8 @@ GEOJSON_OBJ = \
 	ogrgeojsonutils.obj \
 	ogrgeojsonreader.obj \
 	ogrgeojsonwriter.obj \
-	ogresrijsonreader.obj
+	ogresrijsonreader.obj \
+	ogrtopojsonreader.obj
 
 EXTRAFLAGS = -I. -I.. -I..\..
 

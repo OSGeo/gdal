@@ -197,4 +197,29 @@ OGRLineString* OGRESRIJSONReadLineString( json_object* poObj);
 OGRPolygon* OGRESRIJSONReadPolygon( json_object* poObj);
 OGRMultiPoint* OGRESRIJSONReadMultiPoint( json_object* poObj);
 
+/************************************************************************/
+/*                          OGRTopoJSONReader                           */
+/************************************************************************/
+
+class OGRTopoJSONReader
+{
+public:
+
+    OGRTopoJSONReader();
+    ~OGRTopoJSONReader();
+
+    OGRErr Parse( const char* pszText );
+    void ReadLayers( OGRGeoJSONDataSource* poDS );
+
+private:
+
+    json_object* poGJObject_;
+
+    //
+    // Copy operations not supported.
+    //
+    OGRTopoJSONReader( OGRTopoJSONReader const& );
+    OGRTopoJSONReader& operator=( OGRTopoJSONReader const& );
+};
+
 #endif /* OGR_GEOJSONUTILS_H_INCLUDED */
