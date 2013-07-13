@@ -1109,6 +1109,90 @@ def ogr_geojson_24():
     return 'success'
 
 ###############################################################################
+# Test TopoJSON
+
+def ogr_geojson_25():
+
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    ds = ogr.Open('data/topojson1.topojson')
+    lyr = ds.GetLayer(0)
+    if lyr.GetName() != 'a_layer':
+        gdaltest.post_reason('failure')
+        return 'fail'
+    feat = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(feat, 'LINESTRING (100 1000,110 1000,110 1100)') != 0:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    lyr = ds.GetLayer(1)
+    if lyr.GetName() != 'TopoJSON':
+        gdaltest.post_reason('failure')
+        return 'fail'
+    expected_results = [
+        ( None, None, 'LINESTRING EMPTY'),
+        ( None, None, 'LINESTRING EMPTY'),
+        ( None, None, 'LINESTRING EMPTY'),
+        ( None, None, 'LINESTRING EMPTY'),
+        ( None, None, 'LINESTRING EMPTY'),
+        ( None, None, 'LINESTRING EMPTY'),
+        ( None, None, 'LINESTRING EMPTY'),
+        ( None, None, 'LINESTRING EMPTY'),
+        ( None, None, 'LINESTRING EMPTY'),
+        ( None, 'foo', 'LINESTRING EMPTY'),
+        ( '1', None, 'LINESTRING (100 1000,110 1000,110 1100)'),
+        ( '2', None, 'LINESTRING (110 1100,110 1000,100 1000)'),
+        ( None, None, 'POLYGON EMPTY'),
+        ( None, None, 'POLYGON EMPTY'),
+        ( None, None, 'POLYGON EMPTY'),
+        ( None, None, 'POLYGON ((100 1000,110 1000,110 1100,100 1100,100 1000),(101 1010,101 1090,109 1090,109 1010,101 1010))'),
+        ( None, None, 'POLYGON ((110 1100,110 1000,100 1000,100 1100,110 1100),(101 1010,109 1010,109 1090,101 1090,101 1010))'),
+        ( None, None, 'MULTIPOLYGON EMPTY'),
+        ( None, None, 'MULTIPOLYGON EMPTY'),
+        ( None, None, 'MULTIPOLYGON EMPTY'),
+        ( None, None, 'MULTIPOLYGON (((110 1100,110 1000,100 1000,100 1100,110 1100)),((101 1010,109 1010,109 1090,101 1090,101 1010)))'),
+        ( None, None, 'MULTILINESTRING EMPTY'),
+        ( None, None, 'MULTILINESTRING EMPTY'),
+        ( None, None, 'MULTILINESTRING ((100 1000,110 1000,110 1100))'),
+        ( None, None, 'MULTILINESTRING ((100 1000,110 1000,110 1100,100 1100,100 1000))'),
+        ( None, None, 'MULTILINESTRING ((100 1000,110 1000,110 1100,100 1100,100 1000),(101 1010,101 1090,109 1090,109 1010,101 1010))'),
+    ]
+    if lyr.GetFeatureCount() != len(expected_results):
+        gdaltest.post_reason('failure')
+        return 'fail'
+    for i in range(len(expected_results)):
+        feat = lyr.GetNextFeature()
+        if feat.GetField('id') != expected_results[i][0] or \
+           feat.GetField('name') != expected_results[i][1] or \
+           feat.GetGeometryRef().ExportToWkt() != expected_results[i][2]:
+            gdaltest.post_reason('failure at feat index %d' % i)
+            feat.DumpReadable()
+            print(expected_results[i])
+            return 'fail'
+    ds = None
+
+    ds = ogr.Open('data/topojson2.topojson')
+    lyr = ds.GetLayer(0)
+    if lyr.GetName() != 'a_layer':
+        gdaltest.post_reason('failure')
+        return 'fail'
+    feat = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(feat, 'LINESTRING (100 1000,110 1000,110 1100)') != 0:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    lyr = ds.GetLayer(1)
+    if lyr.GetName() != 'TopoJSON':
+        gdaltest.post_reason('failure')
+        return 'fail'
+    feat = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(feat, 'LINESTRING (100 1000,110 1000,110 1100)') != 0:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
 
 def ogr_geojson_cleanup():
 
@@ -1164,6 +1248,7 @@ gdaltest_list = [
     ogr_geojson_22,
     ogr_geojson_23,
     ogr_geojson_24,
+    ogr_geojson_25,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':

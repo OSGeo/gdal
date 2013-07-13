@@ -14,7 +14,8 @@ OBJ = \
 	ogrgeojsonutils.o \
 	ogrgeojsonreader.o \
 	ogrgeojsonwriter.o \
-	ogresrijsonreader.o
+	ogresrijsonreader.o \
+	ogrtopojsonreader.o
 
 CPPFLAGS	:= -I. -Ijsonc -I.. -I../.. $(GDAL_INCLUDE) $(CPPFLAGS)
 
