@@ -312,7 +312,7 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nYOff,
     std::vector<int> aPartSize;
 
     GDALCollectRingsFromGeometry( poShape, aPointX, aPointY, aPointVariant,
-                                    aPartSize, eBurnValueSrc );
+                                  aPartSize, eBurnValueSrc );
 
 /* -------------------------------------------------------------------- */
 /*      Transform points if needed.                                     */
@@ -349,76 +349,76 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nYOff,
     //    /* How to report this problem? */
     switch ( wkbFlatten(poShape->getGeometryType()) )
     {
-        case wkbPoint:
-        case wkbMultiPoint:
-            GDALdllImagePoint( sInfo.nXSize, nYSize, 
-                               aPartSize.size(), &(aPartSize[0]), 
-                               &(aPointX[0]), &(aPointY[0]), 
-                               (eBurnValueSrc == GBV_UserBurnValue)?
-                                   NULL : &(aPointVariant[0]),
-                               gvBurnPoint, &sInfo );
-            break;
-        case wkbLineString:
-        case wkbMultiLineString:
-        {
-            if( bAllTouched )
-                GDALdllImageLineAllTouched( sInfo.nXSize, nYSize, 
-                                            aPartSize.size(), &(aPartSize[0]), 
-                                            &(aPointX[0]), &(aPointY[0]), 
-                                            (eBurnValueSrc == GBV_UserBurnValue)?
-                                                NULL : &(aPointVariant[0]),
-                                            gvBurnPoint, &sInfo );
-            else
-                GDALdllImageLine( sInfo.nXSize, nYSize, 
-                                  aPartSize.size(), &(aPartSize[0]), 
-                                  &(aPointX[0]), &(aPointY[0]), 
-                                  (eBurnValueSrc == GBV_UserBurnValue)?
-                                      NULL : &(aPointVariant[0]),
-                                  gvBurnPoint, &sInfo );
-        }
+      case wkbPoint:
+      case wkbMultiPoint:
+        GDALdllImagePoint( sInfo.nXSize, nYSize, 
+                           aPartSize.size(), &(aPartSize[0]), 
+                           &(aPointX[0]), &(aPointY[0]), 
+                           (eBurnValueSrc == GBV_UserBurnValue)?
+                           NULL : &(aPointVariant[0]),
+                           gvBurnPoint, &sInfo );
         break;
+      case wkbLineString:
+      case wkbMultiLineString:
+      {
+          if( bAllTouched )
+              GDALdllImageLineAllTouched( sInfo.nXSize, nYSize, 
+                                          aPartSize.size(), &(aPartSize[0]), 
+                                          &(aPointX[0]), &(aPointY[0]), 
+                                          (eBurnValueSrc == GBV_UserBurnValue)?
+                                          NULL : &(aPointVariant[0]),
+                                          gvBurnPoint, &sInfo );
+          else
+              GDALdllImageLine( sInfo.nXSize, nYSize, 
+                                aPartSize.size(), &(aPartSize[0]), 
+                                &(aPointX[0]), &(aPointY[0]), 
+                                (eBurnValueSrc == GBV_UserBurnValue)?
+                                NULL : &(aPointVariant[0]),
+                                gvBurnPoint, &sInfo );
+      }
+      break;
 
-        default:
-        {
-            GDALdllImageFilledPolygon( sInfo.nXSize, nYSize, 
-                                       aPartSize.size(), &(aPartSize[0]), 
-                                       &(aPointX[0]), &(aPointY[0]), 
-                                       (eBurnValueSrc == GBV_UserBurnValue)?
-                                           NULL : &(aPointVariant[0]),
-                                       gvBurnScanline, &sInfo );
-            if( bAllTouched )
-            {
-                /* Reverting the variants to the first value because the
-                   polygon is filled using the variant from the first point of
-                   the first segment. Should be removed when the code to full
-                   polygons more appropriately is added. */
-                if(eBurnValueSrc == GBV_UserBurnValue)
-                {
-                GDALdllImageLineAllTouched( sInfo.nXSize, nYSize, 
-                                            aPartSize.size(), &(aPartSize[0]), 
-                                            &(aPointX[0]), &(aPointY[0]), 
-                                            NULL,
-                                            gvBurnPoint, &sInfo );
-                }
-                else
-                {
-                    unsigned int n;
-                    for ( i = 0, n = 0; i < aPartSize.size(); i++ )
-                    {
-                        int j;
-                        for ( j = 0; j < aPartSize[i]; j++ )
-                            aPointVariant[n++] = aPointVariant[0];
-                    }
+      default:
+      {
+          GDALdllImageFilledPolygon( sInfo.nXSize, nYSize, 
+                                     aPartSize.size(), &(aPartSize[0]), 
+                                     &(aPointX[0]), &(aPointY[0]), 
+                                     (eBurnValueSrc == GBV_UserBurnValue)?
+                                     NULL : &(aPointVariant[0]),
+                                     gvBurnScanline, &sInfo );
+          if( bAllTouched )
+          {
+              /* Reverting the variants to the first value because the
+                 polygon is filled using the variant from the first point of
+                 the first segment. Should be removed when the code to full
+                 polygons more appropriately is added. */
+              if(eBurnValueSrc == GBV_UserBurnValue)
+              {
+                  GDALdllImageLineAllTouched( sInfo.nXSize, nYSize, 
+                                              aPartSize.size(), &(aPartSize[0]), 
+                                              &(aPointX[0]), &(aPointY[0]), 
+                                              NULL,
+                                              gvBurnPoint, &sInfo );
+              }
+              else
+              {
+                  unsigned int n;
+                  for ( i = 0, n = 0; i < aPartSize.size(); i++ )
+                  {
+                      int j;
+                      for ( j = 0; j < aPartSize[i]; j++ )
+                          aPointVariant[n++] = aPointVariant[0];
+                  }
 
-                    GDALdllImageLineAllTouched( sInfo.nXSize, nYSize, 
-                                                aPartSize.size(), &(aPartSize[0]), 
-                                                &(aPointX[0]), &(aPointY[0]), 
-                                                &(aPointVariant[0]),
-                                                gvBurnPoint, &sInfo );
-                }
-            }
-        }
-        break;
+                  GDALdllImageLineAllTouched( sInfo.nXSize, nYSize, 
+                                              aPartSize.size(), &(aPartSize[0]), 
+                                              &(aPointX[0]), &(aPointY[0]), 
+                                              &(aPointVariant[0]),
+                                              gvBurnPoint, &sInfo );
+              }
+          }
+      }
+      break;
     }
 }
 
