@@ -100,6 +100,8 @@ gdalpythonserver.py     A Python script that can be used as the value of GDAL_AP
 ogr_dispatch.py         Dispatch features into layers according to the value of
                         some fields or the geometry type.
 
+wcs_virtds_params.py    Generates MapServer WCS layer definition from a tileindex with mixed SRS
+
 ------------------------------------------------------------------------------
 Ports of .c/.cpp utilities
 ------------------------------------------------------------------------------
