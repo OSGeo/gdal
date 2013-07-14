@@ -36,6 +36,7 @@ sys.path.append( '../pymod' )
 
 import gdal
 import ogr
+import osr
 import gdaltest
 import test_cli_utilities
 
@@ -199,11 +200,83 @@ def test_gdaltindex_4():
     return 'success'
 
 ###############################################################################
+# Test -src_srs_name, -src_srs_format options
+
+def test_gdaltindex_5():
+    if test_cli_utilities.get_gdaltindex_path() is None:
+        return 'skip'
+
+    drv = gdal.GetDriverByName('GTiff')
+    wkt = 'GEOGCS[\"WGS 72\",DATUM[\"WGS_1972\"]]'
+
+    ds = drv.Create('tmp/gdaltindex6.tif', 10, 10, 1)
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4322)
+    ds.SetProjection( sr.ExportToWkt() )
+    ds.SetGeoTransform( [ 47, 0.1, 0, 2, 0, -0.1 ] )
+    ds = None
+
+    for src_srs_format in [ '', '-src_srs_format AUTO', '-src_srs_format EPSG', '-src_srs_format PROJ', '-src_srs_format WKT']:
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_gdaltindex_5.shp')
+        gdal.PopErrorHandler()
+        (ret_stdout, ret_stderr) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaltindex_path() + ' -src_srs_name src_srs %s -t_srs EPSG:4326 tmp/test_gdaltindex_5.shp tmp/gdaltindex1.tif tmp/gdaltindex6.tif' % src_srs_format)
+
+        ds = ogr.Open('tmp/test_gdaltindex_5.shp')
+        lyr = ds.GetLayer(0)
+        if lyr.GetFeatureCount() != 2:
+            gdaltest.post_reason( 'got %d features, expecting 2' %  ds.GetLayer(0).GetFeatureCount() )
+            return 'fail'
+        feat = lyr.GetNextFeature()
+        feat = lyr.GetNextFeature()
+        if src_srs_format == '-src_srs_format PROJ':
+            if feat.GetField('src_srs').find('+proj=longlat +ellps=WGS72') != 0:
+                gdaltest.post_reason('fail')
+                feat.DumpReadable()
+                return 'fail'
+        elif src_srs_format == '-src_srs_format WKT':
+            if feat.GetField('src_srs').find('GEOGCS["WGS 72"') != 0:
+                gdaltest.post_reason('fail')
+                feat.DumpReadable()
+                return 'fail'
+        else:
+            if feat.GetField('src_srs') != 'EPSG:4322':
+                gdaltest.post_reason('fail')
+                feat.DumpReadable()
+                return 'fail'
+        ds = None
+
+    return 'success'
+
+###############################################################################
+# Test -f, -lyr_name
+
+def test_gdaltindex_6():
+    if test_cli_utilities.get_gdaltindex_path() is None:
+        return 'skip'
+
+    for option in [ '', '-lyr_name tileindex']:
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_gdaltindex_6.mif')
+        gdal.PopErrorHandler()
+        (ret_stdout, ret_stderr) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaltindex_path() + ' -f "MapInfo File" %s tmp/test_gdaltindex_6.mif tmp/gdaltindex1.tif' % option)
+        ds = ogr.Open('tmp/test_gdaltindex_6.mif')
+        lyr = ds.GetLayer(0)
+        if lyr.GetFeatureCount() != 1:
+            gdaltest.post_reason( 'got %d features, expecting 1' %  lyr.GetFeatureCount() )
+            return 'fail'
+        ds = None
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdaltindex_cleanup():
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/tileindex.shp')
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_gdaltindex_5.shp')
+    ogr.GetDriverByName('MapInfo File').DeleteDataSource('tmp/test_gdaltindex_6.mif')
 
     drv = gdal.GetDriverByName('GTiff')
 
@@ -212,6 +285,7 @@ def test_gdaltindex_cleanup():
     drv.Delete('tmp/gdaltindex3.tif')
     drv.Delete('tmp/gdaltindex4.tif')
     drv.Delete('tmp/gdaltindex5.tif')
+    drv.Delete('tmp/gdaltindex6.tif')
 
     return 'success'
 
@@ -221,6 +295,8 @@ gdaltest_list = [
     test_gdaltindex_2,
     test_gdaltindex_3,
     test_gdaltindex_4,
+    test_gdaltindex_5,
+    test_gdaltindex_6,
     test_gdaltindex_cleanup
     ]
 
