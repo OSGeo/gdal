@@ -98,6 +98,32 @@ typedef struct
 } ScalingParams;
 
 /************************************************************************/
+/*                            ParsePoint()                              */
+/************************************************************************/
+
+static int ParsePoint(json_object* poPoint, double* pdfX, double* pdfY)
+{
+    if( poPoint != NULL && json_type_array == json_object_get_type(poPoint) &&
+        json_object_array_length(poPoint) == 2 )
+    {
+        json_object* poX = json_object_array_get_idx(poPoint, 0);
+        json_object* poY = json_object_array_get_idx(poPoint, 1);
+        if( poX != NULL &&
+            (json_type_int == json_object_get_type(poX) ||
+                json_type_double == json_object_get_type(poX)) &&
+            poY != NULL &&
+            (json_type_int == json_object_get_type(poY) ||
+                json_type_double == json_object_get_type(poY)) )
+        {
+            *pdfX = json_object_get_double(poX);
+            *pdfY = json_object_get_double(poY);
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+/************************************************************************/
 /*                             ParseArc()                               */
 /************************************************************************/
 
@@ -113,46 +139,36 @@ static void ParseArc(OGRLineString* poLS, json_object* poArcsDB, int nArcID,
     for(int i=0; i<nPoints; i++)
     {
         json_object* poPoint = json_object_array_get_idx(poArcDB, i);
-        if( poPoint != NULL && json_type_array == json_object_get_type(poPoint) &&
-            json_object_array_length(poPoint) == 2 )
+        double dfX = 0.0, dfY = 0.0;
+        if( ParsePoint( poPoint, &dfX, &dfY ) )
         {
-            json_object* poX = json_object_array_get_idx(poPoint, 0);
-            json_object* poY = json_object_array_get_idx(poPoint, 1);
-            if( poX != NULL &&
-                (json_type_int == json_object_get_type(poX) ||
-                 json_type_double == json_object_get_type(poX)) &&
-                poY != NULL &&
-                (json_type_int == json_object_get_type(poY) ||
-                 json_type_double == json_object_get_type(poY)) )
+            dfAccX += dfX;
+            dfAccY += dfY;
+            double dfX = dfAccX * psParams->dfScale0 + psParams->dfTranslate0;
+            double dfY = dfAccY * psParams->dfScale1 + psParams->dfTranslate1;
+            if( i == 0 )
             {
-                dfAccX += json_object_get_double(poX);
-                dfAccY += json_object_get_double(poY);
-                double dfX = dfAccX * psParams->dfScale0 + psParams->dfTranslate0;
-                double dfY = dfAccY * psParams->dfScale1 + psParams->dfTranslate1;
-                if( i == 0 )
+                if( !bReverse && poLS->getNumPoints() > 0 )
                 {
-                    if( !bReverse && poLS->getNumPoints() > 0 )
-                    {
-                        poLS->setNumPoints( nBaseIndice + nPoints - 1 );
-                        nBaseIndice --;
-                        continue;
-                    }
-                    else if( bReverse && poLS->getNumPoints() > 0 )
-                    {
-                        poLS->setNumPoints( nBaseIndice + nPoints - 1 );
-                        nPoints --;
-                        if( nPoints == 0 )
-                            break;
-                    }
-                    else
-                        poLS->setNumPoints( nBaseIndice + nPoints );
+                    poLS->setNumPoints( nBaseIndice + nPoints - 1 );
+                    nBaseIndice --;
+                    continue;
                 }
-
-                if( !bReverse )
-                    poLS->setPoint(nBaseIndice + i, dfX, dfY);
+                else if( bReverse && poLS->getNumPoints() > 0 )
+                {
+                    poLS->setNumPoints( nBaseIndice + nPoints - 1 );
+                    nPoints --;
+                    if( nPoints == 0 )
+                        break;
+                }
                 else
-                    poLS->setPoint(nBaseIndice + nPoints - 1 - i, dfX, dfY);
+                    poLS->setNumPoints( nBaseIndice + nPoints );
             }
+
+            if( !bReverse )
+                poLS->setPoint(nBaseIndice + i, dfX, dfY);
+            else
+                poLS->setPoint(nBaseIndice + nPoints - 1 - i, dfX, dfY);
         }
     }
 }
@@ -262,8 +278,17 @@ static void ParseObject(const char* pszId,
     const char* pszType = json_object_get_string(poType);
 
     json_object* poArcsObj = OGRGeoJSONFindMemberByName(poObj, "arcs");
-    if( poArcsObj == NULL || json_type_array != json_object_get_type(poArcsObj) )
-        return;
+    json_object* poCoordinatesObj = OGRGeoJSONFindMemberByName(poObj, "coordinates");
+    if( strcmp(pszType, "Point") == 0 || strcmp(pszType, "MultiPoint") == 0 )
+    {
+        if( poCoordinatesObj == NULL || json_type_array != json_object_get_type(poCoordinatesObj) )
+            return;
+    }
+    else
+    {
+        if( poArcsObj == NULL || json_type_array != json_object_get_type(poArcsObj) )
+            return;
+    }
 
     if( pszId == NULL )
     {
@@ -292,7 +317,36 @@ static void ParseObject(const char* pszId,
     }
 
     OGRGeometry* poGeom = NULL;
-    if( strcmp(pszType, "LineString") == 0 )
+    if( strcmp(pszType, "Point") == 0 )
+    {
+        double dfX = 0.0, dfY = 0.0;
+        if( ParsePoint( poCoordinatesObj, &dfX, &dfY ) )
+        {
+            dfX = dfX * psParams->dfScale0 + psParams->dfTranslate0;
+            dfY = dfY * psParams->dfScale1 + psParams->dfTranslate1;
+            poGeom = new OGRPoint(dfX, dfY);
+        }
+        else
+            poGeom = new OGRPoint();
+    }
+    else if( strcmp(pszType, "MultiPoint") == 0 )
+    {
+        OGRMultiPoint* poMP = new OGRMultiPoint();
+        poGeom = poMP;
+        int nTuples = json_object_array_length(poCoordinatesObj);
+        for(int i=0; i<nTuples; i++)
+        {
+            json_object* poPair = json_object_array_get_idx(poCoordinatesObj, i);
+            double dfX = 0.0, dfY = 0.0;
+            if( ParsePoint( poPair, &dfX, &dfY ) )
+            {
+                dfX = dfX * psParams->dfScale0 + psParams->dfTranslate0;
+                dfY = dfY * psParams->dfScale1 + psParams->dfTranslate1;
+                poMP->addGeometryDirectly(new OGRPoint(dfX, dfY));
+            }
+        }
+    }
+    else if( strcmp(pszType, "LineString") == 0 )
     {
         OGRLineString* poLS = new OGRLineString();
         poGeom = poLS;
@@ -383,7 +437,9 @@ static void ParseObjectMain(const char* pszId, json_object* poObj,
                     poDS->AddLayer(poLayer);
                 }
             }
-            else if( strcmp(pszType, "LineString") == 0 ||
+            else if( strcmp(pszType, "Point") == 0 ||
+                     strcmp(pszType, "MultiPoint") == 0 ||
+                     strcmp(pszType, "LineString") == 0 ||
                      strcmp(pszType, "MultiLineString") == 0 ||
                      strcmp(pszType, "Polygon") == 0 ||
                      strcmp(pszType, "MultiPolygon") == 0 )
