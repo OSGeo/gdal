@@ -1130,6 +1130,10 @@ def ogr_geojson_25():
         gdaltest.post_reason('failure')
         return 'fail'
     expected_results = [
+        ( None, None, 'POINT EMPTY'),
+        ( None, None, 'POINT EMPTY'),
+        ( None, None, 'POINT EMPTY'),
+        ( None, None, 'POINT (100 1010)'),
         ( None, None, 'LINESTRING EMPTY'),
         ( None, None, 'LINESTRING EMPTY'),
         ( None, None, 'LINESTRING EMPTY'),
@@ -1147,6 +1151,11 @@ def ogr_geojson_25():
         ( None, None, 'POLYGON EMPTY'),
         ( None, None, 'POLYGON ((100 1000,110 1000,110 1100,100 1100,100 1000),(101 1010,101 1090,109 1090,109 1010,101 1010))'),
         ( None, None, 'POLYGON ((110 1100,110 1000,100 1000,100 1100,110 1100),(101 1010,109 1010,109 1090,101 1090,101 1010))'),
+        ( None, None, 'MULTIPOINT EMPTY'),
+        ( None, None, 'MULTIPOINT EMPTY'),
+        ( None, None, 'MULTIPOINT EMPTY'),
+        ( None, None, 'MULTIPOINT EMPTY'),
+        ( None, None, 'MULTIPOINT (100 1010,101 1020)'),
         ( None, None, 'MULTIPOLYGON EMPTY'),
         ( None, None, 'MULTIPOLYGON EMPTY'),
         ( None, None, 'MULTIPOLYGON EMPTY'),
