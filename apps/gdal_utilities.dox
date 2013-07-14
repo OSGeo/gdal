@@ -575,7 +575,10 @@ builds a shapefile as a raster tileindex
 \section gdaltindex_synopsis SYNOPSIS
 
 \verbatim
-gdaltindex [-tileindex field_name] [-write_absolute_path] [-skip_different_projection] [-t_srs target_srs] index_file [gdal_file]*
+gdaltindex [-f format] [-tileindex field_name] [-write_absolute_path]
+           [-skip_different_projection] [-t_srs target_srs]
+           [-src_srs_name field_name] [-src_srs_format [AUTO|WKT|EPSG|PROJ]
+           [-lyr_name name] index_file [gdal_file]*
 \endverbatim
 
 \section gdaltindex_description DESCRIPTION
@@ -595,19 +598,27 @@ on the commandline unless the option -write_absolute_path is used.
 as files already inserted in the tileindex will be inserted (unless t_srs is specified).
 <li> If -t_srs is specified, geometries of input files will be transformed to the desired
 target coordinate reference system. 
-Note that using this option generates files that are NOT compatible with MapServer.
+Note that using this option generates files that are NOT compatible with MapServer < 6.4
+<li> (GDAL >= 2.0) If -src_srs_name is specified, a field will be created with the SRS of each tile.
+     This field name can be used as the value of the TILESRS keyword in MapServer >= 6.4.
+<li> (GDAL >= 2.0) -src_srs_format can be used to specify the format in which the SRS of each tile must
+     be written.
+<li> (GDAL >= 2.0) -f can be specified to the name of a OGR driver, to output the tile index as any supported
+     OGR format.
 <li> Simple rectangular polygons are generated in the same coordinate reference system
 as the rasters, or in target reference system if the -t_srs option is used.
 </ul>
 
-\section gdaltindex_example EXAMPLE
+\section gdaltindex_example EXAMPLES
 
 \htmlonly
-Example:
+Examples:
 \endhtmlonly
 
 \verbatim
 gdaltindex doq_index.shp doq/*.tif
+
+gdaltindex -t_srs EPSG:4326 -src_srs_name src_srs tile_index_mixed_srs.shp *.tif
 \endverbatim
 
 \if man
