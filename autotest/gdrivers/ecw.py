@@ -120,10 +120,11 @@ def ecw_3():
 
     ds = gdal.Open( 'data/jrc.ecw' )
     out_ds = gdaltest.ecw_drv.CreateCopy( 'tmp/jrc_out.ecw', ds, options = ['TARGET=75'] )
-    version = out_ds.GetMetadataItem('VERSION')
-    if version != '2':
-        gdaltest.post_reason('bad VERSION')
-        return 'fail'
+    if out_ds is not None:
+        version = out_ds.GetMetadataItem('VERSION')
+        if version != '2':
+            gdaltest.post_reason('bad VERSION')
+            return 'fail'
 
     ds = None
     
