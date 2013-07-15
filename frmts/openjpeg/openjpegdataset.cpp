@@ -56,6 +56,13 @@ static void JP2OpenJPEGDataset_ErrorCallback(const char *pszMsg, void *unused)
 
 static void JP2OpenJPEGDataset_WarningCallback(const char *pszMsg, void *unused)
 {
+    if( strcmp(pszMsg, "Empty SOT marker detected: Psot=12.\n") == 0 )
+    {
+        static int bWarningEmitted = FALSE;
+        if( bWarningEmitted )
+            return;
+        bWarningEmitted = TRUE;
+    }
     if( strcmp(pszMsg, "JP2 box which are after the codestream will not be read by this function.\n") != 0 )
         CPLError(CE_Warning, CPLE_AppDefined, "%s", pszMsg);
 }
