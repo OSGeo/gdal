@@ -38,10 +38,17 @@ import os
 import time
 import webbrowser
 
+SCOPES = {
+    'ft' : 'https://www.googleapis.com/auth/fusiontables',
+    'gme' : 'https://www.googleapis.com/auth/mapsengine',
+    'gme.ro' : 'https://www.googleapis.com/auth/mapsengine.readonly',
+    }
+
 # =============================================================================
 # 	Usage()
 # =============================================================================
 def Usage():
+    print('')
     print('Usage: gdal_auth_py [-s scope]' )
     print('       - interactive use.')
     print('')
@@ -49,13 +56,16 @@ def Usage():
     print('Usage: gdal_auth.py login [-s scope] ')
     print('Usage: gdal_auth.py auth2refresh [-s scope] auth_token')
     print('Usage: gdal_auth.py refresh2access [-s scope] refresh_token')
+    print('')
+    print('scopes: ft/gme/gme.ro/full_url')
+    print('')
     sys.exit(1)
 
 # =============================================================================
 # 	Mainline
 # =============================================================================
 
-scope = 'https://www.googleapis.com/auth/fusiontables'
+scope = SCOPES['ft']
 token_in = None
 command = None
 
@@ -69,7 +79,14 @@ while i < len(argv):
     arg = argv[i]
 
     if arg == '-s' and i < len(argv)-1:
-        scope = argv[i+1]
+        if argv[i+1] in SCOPES:
+            scope = SCOPES[argv[i+1]]
+        elif argv[i+1].startswith('http'):
+            scope = argv[i+1]
+        else:
+            print('Scope %s not recognised.' % argv[i+1])
+            Usage()
+            sys.exit(1)
         i = i + 1
 
     elif arg[0] == '-':
