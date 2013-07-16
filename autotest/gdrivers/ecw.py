@@ -1010,7 +1010,39 @@ def ecw_29():
     ds2 = gdal.GetDriverByName('GTiff').Create('/vsimem/ecw_29_2.tif', 800 ,800, 1)
     ds2.WriteRaster(0, 0, 800, 800, data_tiff_supersampled_b1)
 
-    maxdiff = gdaltest.compare_ds(ds1, ds2)
+    ret = 'success'
+    if gdaltest.ecw_drv.major_version < 5:
+        maxdiff = gdaltest.compare_ds(ds1, ds2)
+        if maxdiff != 0:
+            print(maxdiff)
+            ret = 'fail'
+    else:
+        # Compare the images by comparing their statistics on subwindows
+        nvals = 0
+        sum_abs_diff_mean = 0
+        sum_abs_diff_stddev = 0
+        tile = 32
+        for j in range(2 * int((ds1.RasterYSize - tile/2) / tile)):
+            for i in range(2 * int((ds1.RasterXSize - tile/2) / tile)):
+                tmp_ds1 = gdal.GetDriverByName('MEM').Create('', tile ,tile, 1)
+                tmp_ds2 = gdal.GetDriverByName('MEM').Create('', tile ,tile, 1)
+                data1 = ds1.ReadRaster(i * (tile/2), j * (tile/2), tile, tile)
+                data2 = ds2.ReadRaster(i * (tile/2), j * (tile/2), tile, tile)
+                tmp_ds1.WriteRaster(0,0,tile,tile,data1)
+                tmp_ds2.WriteRaster(0,0,tile,tile,data2)
+                (ignored, ignored, mean1, stddev1) = tmp_ds1.GetRasterBand(1).GetStatistics(1,1)
+                (ignored, ignored, mean2, stddev2) = tmp_ds2.GetRasterBand(1).GetStatistics(1,1)
+                nvals = nvals + 1
+                sum_abs_diff_mean = sum_abs_diff_mean + abs(mean1-mean2)
+                sum_abs_diff_stddev = sum_abs_diff_stddev + abs(stddev1 - stddev2)
+                if abs(mean1-mean2) > (stddev1 + stddev2) / 2 or abs(stddev1 - stddev2) > 30:
+                    print("%d, %d, %f, %f" % (j, i ,abs(mean1-mean2), abs(stddev1 - stddev2)))
+                    ret = 'fail'
+
+        if sum_abs_diff_mean / nvals > 4 or sum_abs_diff_stddev / nvals > 3:
+            print(sum_abs_diff_mean / nvals)
+            print(sum_abs_diff_stddev / nvals)
+            ret = 'fail'
 
     ds1 = None
     ds2 = None
@@ -1019,11 +1051,7 @@ def ecw_29():
     gdal.Unlink('/vsimem/ecw_29_1.tif')
     gdal.Unlink('/vsimem/ecw_29_2.tif')
 
-    if maxdiff != 0:
-        print(maxdiff)
-        return 'fail'
-
-    return 'success'
+    return ret
 
 ###############################################################################
 # Test IReadBlock()
@@ -1505,13 +1533,13 @@ def ecw_41():
         return 'fail'
 
     # Now compute the stats
-    stats = ds.GetRasterBand(1).GetStatistics(1,1)
-    expected_stats = [0.0, 255.0, 21.675653457641602, 52.047836303710938]
+    stats = ds.GetRasterBand(1).GetStatistics(0,1)
+    expected_stats = [0.0, 255.0, 21.662427983539093, 51.789457392268119]
     for i in range(4):
-        if abs(stats[i]-expected_stats[i]) > 1e-5:
+        if abs(stats[i]-expected_stats[i]) > 1:
             gdaltest.post_reason('fail')
-            print(stats[i])
-            print(expected_stats[i])
+            print(stats)
+            print(expected_stats)
             return 'fail'
 
     ds = None
@@ -1534,9 +1562,9 @@ def ecw_41():
         print(ds.GetRasterBand(1).GetMaximum())
         return 'fail'
     stats = ds.GetRasterBand(1).GetStatistics(0,0)
-    expected_stats = [0.0, 255.0, 21.675653457641602, 52.047836303710938]
+    expected_stats = [0.0, 255.0, 21.662427983539093, 51.789457392268119]
     for i in range(4):
-        if abs(stats[i]-expected_stats[i]) > 1e-5:
+        if abs(stats[i]-expected_stats[i]) > 1:
             gdaltest.post_reason('fail')
             print(stats[i])
             print(expected_stats[i])
