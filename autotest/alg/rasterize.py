@@ -260,11 +260,82 @@ def rasterize_4():
     
     return 'success'
 
+###############################################################################
+# Rasterization with MERGE_ALG=ADD.
+
+def rasterize_5():
+
+    # Setup working spatial reference
+    sr_wkt = 'LOCAL_CS["arbitrary"]'
+    sr = osr.SpatialReference( sr_wkt )
+    
+    # Create a memory raster to rasterize into.
+
+    target_ds = gdal.GetDriverByName('MEM').Create( '', 100, 100, 3,
+                                                    gdal.GDT_Byte )
+    target_ds.SetGeoTransform( (1000,1,0,1100,0,-1) )
+    target_ds.SetProjection( sr_wkt )
+    
+    # Create a memory layer to rasterize from.
+
+    rast_ogr_ds = \
+              ogr.GetDriverByName('Memory').CreateDataSource( 'wrk' )
+    rast_mem_lyr = rast_ogr_ds.CreateLayer( 'poly', srs=sr )
+
+    # Add polygons.
+    
+    wkt_geom = 'POLYGON((1020 1030,1020 1045,1050 1045,1050 1030,1020 1030))'
+    feat = ogr.Feature( rast_mem_lyr.GetLayerDefn() )
+    feat.SetGeometryDirectly( ogr.Geometry(wkt = wkt_geom) )
+    rast_mem_lyr.CreateFeature( feat )
+
+    wkt_geom = 'POLYGON((1045 1050,1055 1050,1055 1020,1045 1020,1045 1050))'
+    feat = ogr.Feature( rast_mem_lyr.GetLayerDefn() )
+    feat.SetGeometryDirectly( ogr.Geometry(wkt = wkt_geom) )
+    rast_mem_lyr.CreateFeature( feat )
+
+    # Add linestrings.
+    
+    wkt_geom = 'LINESTRING(1000 1000, 1100 1050)'
+    feat = ogr.Feature( rast_mem_lyr.GetLayerDefn() )
+    feat.SetGeometryDirectly( ogr.Geometry(wkt = wkt_geom) )
+    rast_mem_lyr.CreateFeature( feat )
+
+    wkt_geom = 'LINESTRING(1005 1000, 1000 1050)'
+    feat = ogr.Feature( rast_mem_lyr.GetLayerDefn() )
+    feat.SetGeometryDirectly( ogr.Geometry(wkt = wkt_geom) )
+    rast_mem_lyr.CreateFeature( feat )
+
+    # Run the algorithm.
+
+    err = gdal.RasterizeLayer( target_ds, [1, 2, 3], rast_mem_lyr,
+                               burn_values = [100,110,120],
+                               options = ["MERGE_ALG=ADD"])
+
+    if err != 0:
+        print(err)
+        gdaltest.post_reason( 'got non-zero result code from RasterizeLayer' )
+        return 'fail'
+
+    # Check results.
+
+    expected = 13022
+    checksum = target_ds.GetRasterBand(2).Checksum()
+    if checksum != expected:
+        print(checksum)
+        gdaltest.post_reason( 'Did not get expected image checksum' )
+
+        gdal.GetDriverByName('GTiff').CreateCopy('tmp/rasterize_5.tif',target_ds)
+        return 'fail'
+    
+    return 'success'
+
 gdaltest_list = [
     rasterize_1,
     rasterize_2,
     rasterize_3,
     rasterize_4,
+    rasterize_5,
     ]
 
 if __name__ == '__main__':
