@@ -42,6 +42,11 @@ typedef enum {
     /*! Use value form the M value */    GBV_M = 2
 } GDALBurnValueSrc;
 
+typedef enum {
+    GRMA_Replace = 0,
+    GRMA_Add = 1,
+} GDALRasterMergeAlg;
+
 typedef struct {
     unsigned char * pabyChunkBuf;
     int nXSize;
@@ -50,6 +55,7 @@ typedef struct {
     GDALDataType eType;
     double *padfBurnValue;
     GDALBurnValueSrc eBurnValueSource;
+    GDALRasterMergeAlg eMergeAlg;
 } GDALRasterizeInfo;
 
 /************************************************************************/
