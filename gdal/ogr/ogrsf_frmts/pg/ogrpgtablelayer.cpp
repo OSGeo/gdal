@@ -399,23 +399,28 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition()
         else if( EQUAL(pszType,"numeric") )
         {
             const char *pszFormatName = PQgetvalue(hResult,iRecord,3);
-            const char *pszPrecision = strstr(pszFormatName,",");
-            int    nWidth, nPrecision = 0;
-
-            nWidth = atoi(pszFormatName + 8);
-            if( pszPrecision != NULL )
-                nPrecision = atoi(pszPrecision+1);
-
-            if( nPrecision == 0 )
-            {
-                // FIXME : If nWidth > 10, OFTInteger may not be large enough */
-                oField.SetType( OFTInteger );
-            }
-            else
+            if( EQUAL(pszFormatName, "numeric") )
                 oField.SetType( OFTReal );
+            else
+            {
+                const char *pszPrecision = strstr(pszFormatName,",");
+                int    nWidth, nPrecision = 0;
 
-            oField.SetWidth( nWidth );
-            oField.SetPrecision( nPrecision );
+                nWidth = atoi(pszFormatName + 8);
+                if( pszPrecision != NULL )
+                    nPrecision = atoi(pszPrecision+1);
+
+                if( nPrecision == 0 )
+                {
+                    // FIXME : If nWidth > 10, OFTInteger may not be large enough */
+                    oField.SetType( OFTInteger );
+                }
+                else
+                    oField.SetType( OFTReal );
+
+                oField.SetWidth( nWidth );
+                oField.SetPrecision( nPrecision );
+            }
         }
         else if( EQUAL(pszFormatType,"integer[]") )
         {
