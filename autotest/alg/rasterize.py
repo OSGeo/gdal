@@ -36,25 +36,12 @@ sys.path.append( '../pymod' )
 import gdaltest
 import ogrtest
 
-try:
-    from osgeo import gdal, gdalconst, ogr, osr
-except:
-    import gdal
-    import gdalconst
-    import ogr
-    import osr
+from osgeo import gdal, gdalconst, ogr, osr
 
 ###############################################################################
 # Simple polygon rasterization.
 
 def rasterize_1():
-
-    try:
-        x = gdal.RasterizeLayer
-        gdaltest.have_ng = 1
-    except:
-        gdaltest.have_ng = 0
-        return 'skip'
 
     # Setup working spatial reference
     sr_wkt = 'LOCAL_CS["arbitrary"]'
@@ -119,13 +106,6 @@ def rasterize_1():
 
 def rasterize_2():
 
-    try:
-        x = gdal.RasterizeLayer
-        gdaltest.have_ng = 1
-    except:
-        gdaltest.have_ng = 0
-        return 'skip'
-
     # Setup working spatial reference
     sr_wkt = 'LOCAL_CS["arbitrary"]'
     sr = osr.SpatialReference( sr_wkt )
@@ -171,13 +151,6 @@ def rasterize_2():
 # Rasterization with BURN_VALUE_FROM.
 
 def rasterize_3():
-
-    try:
-        x = gdal.RasterizeLayer
-        gdaltest.have_ng = 1
-    except:
-        gdaltest.have_ng = 0
-        return 'skip'
 
     # Setup working spatial reference
     sr_wkt = 'LOCAL_CS["arbitrary"]'
@@ -233,13 +206,6 @@ def rasterize_3():
 # Rasterization with ATTRIBUTE.
 
 def rasterize_4():
-
-    try:
-        x = gdal.RasterizeLayer
-        gdaltest.have_ng = 1
-    except:
-        gdaltest.have_ng = 0
-        return 'skip'
 
     # Setup working spatial reference
     sr_wkt = 'LOCAL_CS["arbitrary"]'
@@ -298,7 +264,7 @@ gdaltest_list = [
     rasterize_1,
     rasterize_2,
     rasterize_3,
-    rasterize_4
+    rasterize_4,
     ]
 
 if __name__ == '__main__':
