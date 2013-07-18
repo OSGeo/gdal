@@ -1106,6 +1106,42 @@ def warp_36():
     return 'success'
 
 ###############################################################################
+# Test a few error cases
+
+def warp_37():
+
+    # Open source dataset
+    src_ds = gdal.Open('../gcore/data/byte.tif')
+
+    # Dummy proj.4 method
+    sr = osr.SpatialReference()
+    sr.ImportFromProj4('+proj=dummy_method +wktext')
+    dst_wkt = sr.ExportToWkt()
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    tmp_ds = gdal.AutoCreateWarpedVRT( src_ds, None, dst_wkt )
+    gdal.PopErrorHandler()
+    gdal.ErrorReset()
+    if tmp_ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Incompatible projection (UTM 40 is on the other side of the earth w.r.t UTM 11)
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(32640)
+    dst_wkt = sr.ExportToWkt()
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    tmp_ds = gdal.AutoCreateWarpedVRT( src_ds, None, dst_wkt )
+    gdal.PopErrorHandler()
+    gdal.ErrorReset()
+    if tmp_ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 gdaltest_list = [
     warp_1,
@@ -1149,7 +1185,10 @@ gdaltest_list = [
     warp_34,
     warp_35,
     warp_36,
+    warp_37,
     ]
+
+gdaltest_list = [ warp_37 ]
 
 if __name__ == '__main__':
 
