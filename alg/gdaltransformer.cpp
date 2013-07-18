@@ -1276,6 +1276,11 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
         
         psInfo->pReprojectArg = 
             GDALCreateReprojectionTransformer( osSrcWKT.c_str(), pszDstWKT );
+        if( psInfo->pReprojectArg == NULL )
+        {
+            GDALDestroyGenImgProjTransformer( psInfo );
+            return NULL;
+        }
     }
         
 /* -------------------------------------------------------------------- */
@@ -1414,6 +1419,11 @@ GDALCreateGenImgProjTransformer3( const char *pszSrcWKT,
     {
         psInfo->pReprojectArg = 
             GDALCreateReprojectionTransformer( pszSrcWKT, pszDstWKT );
+        if( psInfo->pReprojectArg == NULL )
+        {
+            GDALDestroyGenImgProjTransformer( psInfo );
+            return NULL;
+        }
     }
         
 /* -------------------------------------------------------------------- */
