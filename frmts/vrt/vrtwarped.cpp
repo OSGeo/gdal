@@ -155,6 +155,12 @@ GDALAutoCreateWarpedVRT( GDALDatasetH hSrcDS,
         GDALSuggestedWarpOutput( hSrcDS, psWO->pfnTransformer, 
                                  psWO->pTransformerArg, 
                                  adfDstGeoTransform, &nDstPixels, &nDstLines );
+    if( eErr != CE_None )
+    {
+        GDALDestroyTransformer( psWO->pTransformerArg );
+        GDALDestroyWarpOptions( psWO );
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Update the transformer to include an output geotransform        */
