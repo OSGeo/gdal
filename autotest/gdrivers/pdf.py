@@ -367,8 +367,10 @@ def pdf_get_J2KDriver(drv_name):
     drv = gdal.GetDriverByName(drv_name)
     if drv is None:
         return None
-    if drv_name == 'JP2ECW' and drv.GetMetadataItem('DMD_CREATIONDATATYPES') is None:
-        return None
+    if drv_name == 'JP2ECW':
+        import ecw
+        if not ecw.has_write_support():
+            return None
     return drv
 
 def pdf_jpx_compression(filename, drv_name = None):

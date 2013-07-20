@@ -541,15 +541,8 @@ def nitf_27():
 
 def nitf_28_jp2ecw():
     gdaltest.nitf_28_jp2ecw_is_ok = False
-    try:
-        jp2ecw_drv = gdal.GetDriverByName( 'JP2ECW' )
-        if jp2ecw_drv is not None:
-            if 'DMD_CREATIONOPTIONLIST' not in jp2ecw_drv.GetMetadata():
-                jp2ecw_drv = None
-    except:
-        jp2ecw_drv = None
-
-    if jp2ecw_drv is None:
+    import ecw
+    if not ecw.has_write_support():
         return 'skip'
 
     # Deregister other potential conflicting JPEG2000 drivers
@@ -1126,6 +1119,9 @@ def nitf_43_jasper():
     return nitf_43('JPEG2000', ['IC=C8'])
 
 def nitf_43_jp2ecw():
+    import ecw
+    if not ecw.has_write_support():
+        return 'skip'
     return nitf_43('JP2ECW', ['IC=C8', 'TARGET=0'])
 
 ###############################################################################
