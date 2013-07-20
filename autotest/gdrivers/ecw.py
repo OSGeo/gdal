@@ -44,6 +44,21 @@ sys.path.append( '../pymod' )
 import gdaltest
 
 ###############################################################################
+def has_write_support():
+    if hasattr(gdaltest, 'b_ecw_has_write_support'):
+        return gdaltest.b_ecw_has_write_support
+    gdaltest.b_ecw_has_write_support = False
+    if ecw_1() != 'success':
+        return False
+    if ecw_3() == 'success':
+        gdaltest.b_ecw_has_write_support = True
+    try:
+        os.remove('tmp/jrc_out.ecw')
+    except:
+        pass
+    return gdaltest.b_ecw_has_write_support
+
+###############################################################################
 # Verify we have the driver.
 
 def ecw_1():
@@ -132,6 +147,8 @@ def ecw_3():
         if gdal.GetLastErrorMsg().find('ECW_ENCODE_KEY') >= 0:
             gdaltest.ecw_write = 0
             return 'skip'
+
+    gdaltest.b_ecw_has_write_support = True
 
     return 'success' 
 
