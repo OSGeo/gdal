@@ -2059,12 +2059,29 @@ int HFABand::CreateOverview( int nOverviewLevel, const char *pszResampling )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Are we compressed? If so, overview should be too (unless        */
+/*      HFA_COMPRESS_OVR is defined).                                   */
+/*      Check RasterDMS like HFAGetBandInfo                             */
+/* -------------------------------------------------------------------- */
+    int bCompressionType = FALSE;
+    const char* pszCompressOvr = CPLGetConfigOption("HFA_COMPRESS_OVR", NULL);
+    if( pszCompressOvr != NULL )
+        bCompressionType = CSLTestBoolean(pszCompressOvr);
+    else
+    {
+        HFAEntry *poDMS = poNode->GetNamedChild( "RasterDMS" );
+
+        if( poDMS != NULL )
+            bCompressionType = poDMS->GetIntField( "compressionType" ) != 0;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Create the layer.                                               */
 /* -------------------------------------------------------------------- */
     osLayerName.Printf( "_ss_%d_", nOverviewLevel );
 
     if( !HFACreateLayer( psRRDInfo, poParent, osLayerName, 
-                         TRUE, 64, FALSE, bCreateLargeRaster, FALSE,
+                         TRUE, 64, bCompressionType, bCreateLargeRaster, FALSE,
                          nOXSize, nOYSize, nOverviewDataType, NULL,
                          nValidFlagsOffset, nDataOffset, 1, 0 ) )
         return -1;
