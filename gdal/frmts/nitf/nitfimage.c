@@ -567,8 +567,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
             atoi(NITFGetField(szTemp, pachHeader, nOffset+14, 4));
             
         /* See MIL-STD-2500-C, paragraph 5.4.2.2-d (#3263) */
-        if (EQUAL(psImage->szIC, "NC") &&
-            (psImage->nCols > 8192 || psImage->nRows > 8192))
+        if (EQUAL(psImage->szIC, "NC"))
         {
             if (psImage->nBlocksPerRow == 1 &&
                 psImage->nBlockWidth == 0)
