@@ -574,7 +574,7 @@ int main(int argc, char* argv[])
         else if( EQUAL(argv[i], "-daemonize") )
             ;
         else if( argv[i][0] == '-' )
-            Usage(CPLSPrintf("Unkown option name '%s'", argv[i]));
+            Usage(CPLSPrintf("Unknown option name '%s'", argv[i]));
         else
             Usage("Too many command options.");
     }
