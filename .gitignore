@@ -10,6 +10,9 @@ cpl_config.h
 *.exe
 *.exe.manifest
 *.dll
+*.pdb
+*.idb
+*.ilk
 *.dll.manifest
 *.exp
 *.lo

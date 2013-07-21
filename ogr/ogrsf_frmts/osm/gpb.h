@@ -223,7 +223,7 @@ static void SkipVarInt(GByte** ppabyData)
         pabyData += nDataLength;
 
 /************************************************************************/
-/*                         SkipUnkownField()                            */
+/*                         SkipUnknownField()                           */
 /************************************************************************/
 
 #define SKIP_UNKNOWN_FIELD_INLINE(pabyData, pabyDataLimit, verbose) \
@@ -264,10 +264,10 @@ static void SkipVarInt(GByte** ppabyData)
         }
 
 static
-int SkipUnkownField(int nKey, GByte* pabyData, GByte* pabyDataLimit, int verbose) CPL_NO_INLINE;
+int SkipUnknownField(int nKey, GByte* pabyData, GByte* pabyDataLimit, int verbose) CPL_NO_INLINE;
 
 static
-int SkipUnkownField(int nKey, GByte* pabyData, GByte* pabyDataLimit, int verbose)
+int SkipUnknownField(int nKey, GByte* pabyData, GByte* pabyDataLimit, int verbose)
 {
     GByte* pabyDataBefore = pabyData;
     SKIP_UNKNOWN_FIELD_INLINE(pabyData, pabyDataLimit, verbose);
@@ -278,7 +278,7 @@ end_error:
 
 #define SKIP_UNKNOWN_FIELD(pabyData, pabyDataLimit, verbose) \
     { \
-        int _nOffset = SkipUnkownField(nKey, pabyData, pabyDataLimit, verbose); \
+        int _nOffset = SkipUnknownField(nKey, pabyData, pabyDataLimit, verbose); \
         if (_nOffset < 0) \
             GOTO_END_ERROR; \
         pabyData += _nOffset; \
