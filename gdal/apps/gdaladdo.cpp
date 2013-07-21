@@ -153,7 +153,7 @@ int main( int nArgc, char ** papszArgv )
             panBandList[nBandCount-1] = nBand;
         }
         else if( papszArgv[iArg][0] == '-' )
-            Usage(CPLSPrintf("Unkown option name '%s'", papszArgv[iArg]));
+            Usage(CPLSPrintf("Unknown option name '%s'", papszArgv[iArg]));
         else if( pszFilename == NULL )
             pszFilename = papszArgv[iArg];
         else if( atoi(papszArgv[iArg]) > 0 )

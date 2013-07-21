@@ -222,7 +222,7 @@ int main( int argc, char ** argv )
             papszCreationOptions = CSLAddString(papszCreationOptions, argv[++i]);
         }
         else if( argv[i][0] == '-' )
-            Usage(CPLSPrintf("Unkown option name '%s'", argv[i]));
+            Usage(CPLSPrintf("Unknown option name '%s'", argv[i]));
         else if( pszInFile == NULL )
             pszInFile = argv[i];
         else
