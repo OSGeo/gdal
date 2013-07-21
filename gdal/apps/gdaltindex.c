@@ -196,7 +196,7 @@ int main(int argc, char *argv[])
                 eSrcSRSFormat = FORMAT_PROJ;
         }
         else if( argv[i_arg][0] == '-' )
-            Usage(CPLSPrintf("Unkown option name '%s'", argv[i_arg]));
+            Usage(CPLSPrintf("Unknown option name '%s'", argv[i_arg]));
         else if( index_filename == NULL )
         {
             index_filename = argv[i_arg];
