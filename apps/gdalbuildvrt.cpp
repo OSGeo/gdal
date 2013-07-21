@@ -1427,7 +1427,7 @@ int main( int nArgc, char ** papszArgv )
         }
         else if ( papszArgv[iArg][0] == '-' )
         {
-            Usage(CPLSPrintf("Unkown option name '%s'", papszArgv[iArg]));
+            Usage(CPLSPrintf("Unknown option name '%s'", papszArgv[iArg]));
         }
         else if( pszOutputFilename == NULL )
         {
