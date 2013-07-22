@@ -2736,6 +2736,15 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
     dfScale = nBuckets / (dfMax - dfMin);
     memset( panHistogram, 0, sizeof(int) * nBuckets );
 
+    double dfNoDataValue;
+    int bGotNoDataValue;
+    dfNoDataValue = GetNoDataValue( &bGotNoDataValue );
+    bGotNoDataValue = bGotNoDataValue && !CPLIsNan(dfNoDataValue);
+    /* Not advertized. May be removed at any time. Just as a provision if the */
+    /* old behaviour made sense somethimes... */
+    bGotNoDataValue = bGotNoDataValue &&
+        !CSLTestBoolean(CPLGetConfigOption("GDAL_NODATA_IN_HISTOGRAM", "NO"));
+
     const char* pszPixelType = GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
     int bSignedByte = (pszPixelType != NULL && EQUAL(pszPixelType, "SIGNEDBYTE"));
 
@@ -2858,6 +2867,9 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
                   default:
                     CPLAssert( FALSE );
                 }
+
+                if( bGotNoDataValue && ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
+                    continue;
 
                 nIndex = (int) floor((dfValue - dfMin) * dfScale);
                 
@@ -3043,6 +3055,9 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
                         return CE_Failure;
                     }
                     
+                    if( bGotNoDataValue && ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
+                        continue;
+
                     nIndex = (int) floor((dfValue - dfMin) * dfScale);
 
                     if( nIndex < 0 )
