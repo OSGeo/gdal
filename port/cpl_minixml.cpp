@@ -1887,46 +1887,16 @@ void CPLStripXMLNamespace( CPLXMLNode *psRoot,
 CPLXMLNode *CPLParseXMLFile( const char *pszFilename )
 
 {
-    VSILFILE       *fp;
-    vsi_l_offset    nLen;
+    GByte           *pabyOut = NULL;
     char            *pszDoc;
     CPLXMLNode      *psTree;
 
 /* -------------------------------------------------------------------- */
-/*      Read the file.                                                  */
+/*      Ingest the file.                                                */
 /* -------------------------------------------------------------------- */
-    fp = VSIFOpenL( pszFilename, "rb" );
-    if( fp == NULL )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Failed to open %.500s to read.", pszFilename );
+    if( !VSIIngestFile( NULL, pszFilename, &pabyOut, NULL, -1 ) )
         return NULL;
-    }
-
-    VSIFSeekL( fp, 0, SEEK_END );
-    nLen = VSIFTellL( fp );
-    VSIFSeekL( fp, 0, SEEK_SET );
-    
-    pszDoc = (char *) VSIMalloc((size_t)nLen + 1);
-    if( pszDoc == NULL )
-    {
-        CPLError( CE_Failure, CPLE_OutOfMemory, 
-                  "Out of memory allocating space for %d byte buffer in\n"
-                  "CPLParseXMLFile(%.500s).", 
-                  (int)nLen+1, pszFilename );
-        VSIFCloseL( fp );
-        return NULL;
-    }
-    if( VSIFReadL( pszDoc, 1, (size_t)nLen, fp ) < nLen )
-    {
-        CPLError( CE_Failure, CPLE_FileIO, 
-                  "VSIFRead() result short of expected %d bytes from %.500s.", 
-                  (int)nLen, pszFilename );
-        pszDoc[0] = '\0';
-    }
-    VSIFCloseL( fp );
-
-    pszDoc[nLen] = '\0';
+    pszDoc = (char*) pabyOut;
 
 /* -------------------------------------------------------------------- */
 /*      Parse it.                                                       */
