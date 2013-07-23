@@ -841,6 +841,175 @@ int VSIFPutcL( int nChar, VSILFILE * fp )
 }
 
 /************************************************************************/
+/*                           VSIIngestFile()                            */
+/************************************************************************/
+
+/**
+ * \brief Ingest a file into memory.
+ *
+ * Read the whole content of a file into a memory buffer.
+ *
+ * Either fp or pszFilename can be NULL, but not both at the same time.
+ *
+ * If fp is passed non-NULL, it is the responsibility of the caller to
+ * close it.
+ *
+ * If non-NULL, the returned buffer is guaranteed to be NUL-terminated.
+ *
+ * @param fp file handle opened with VSIFOpenL().
+ * @param pszFilename filename.
+ * @param ppabyRet pointer to the target buffer. *ppabyRet must be freed with
+ *                 VSIFree()
+ * @param pnSize pointer to variable to store the file size. May be NULL.
+ * @param nMaxSize maximum size of file allowed. If no limit, set to a negative
+ *                 value.
+ * 
+ * @return TRUE in case of success.
+ *
+ * @since GDAL 2.0
+ */
+
+int VSIIngestFile( VSILFILE* fp,
+                   const char* pszFilename,
+                   GByte** ppabyRet,
+                   vsi_l_offset* pnSize,
+                   GIntBig nMaxSize)
+{
+    vsi_l_offset nDataLen = 0;
+    int bFreeFP = FALSE;
+
+    if( fp == NULL && pszFilename == NULL )
+        return FALSE;
+    if( ppabyRet == NULL )
+        return FALSE;
+
+    *ppabyRet = NULL;
+    if( pnSize != NULL )
+        *pnSize = 0;
+
+    if( NULL == fp )
+    {
+        fp = VSIFOpenL( pszFilename, "rb" );
+        if( NULL == fp )
+        {
+            CPLError( CE_Failure, CPLE_FileIO,
+                      "Cannot open file '%s'", pszFilename );
+            return FALSE;
+        }
+        bFreeFP = TRUE;
+    }
+    else
+        VSIFSeekL(fp, 0, SEEK_SET);
+
+    if( pszFilename == NULL ||
+        strcmp(pszFilename, "/vsistdin/") == 0 )
+    {
+        vsi_l_offset nDataAlloc = 0;
+        VSIFSeekL( fp, 0, SEEK_SET );
+        while(TRUE)
+        {
+            if( nDataLen + 8192 + 1 > nDataAlloc )
+            {
+                nDataAlloc = (nDataAlloc * 4) / 3 + 8192 + 1;
+                if( nDataAlloc > (vsi_l_offset)(size_t)nDataAlloc )
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined,
+                              "Input file too large to be opened" );
+                    VSIFree( *ppabyRet );
+                    *ppabyRet = NULL;
+                    if( bFreeFP )
+                        VSIFCloseL( fp );
+                    return FALSE;
+                }
+                GByte* pabyNew = (GByte*)VSIRealloc(*ppabyRet, nDataAlloc);
+                if( pabyNew == NULL )
+                {
+                    CPLError( CE_Failure, CPLE_OutOfMemory,
+                              "Cannot allocated " CPL_FRMT_GIB " bytes",
+                              nDataAlloc );
+                    VSIFree( *ppabyRet );
+                    *ppabyRet = NULL;
+                    if( bFreeFP )
+                        VSIFCloseL( fp );
+                    return FALSE;
+                }
+                *ppabyRet = pabyNew;
+            }
+            int nRead = (int)VSIFReadL( *ppabyRet + nDataLen, 1, 8192, fp );
+            nDataLen += nRead;
+
+            if ( nMaxSize >= 0 && nDataLen > (vsi_l_offset)nMaxSize )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                              "Input file too large to be opened" );
+                VSIFree( *ppabyRet );
+                *ppabyRet = NULL;
+                if( pnSize != NULL )
+                    *pnSize = 0;
+                if( bFreeFP )
+                    VSIFCloseL( fp );
+                return FALSE;
+            }
+
+            if( pnSize != NULL )
+                *pnSize += nRead;
+            (*ppabyRet)[nDataLen] = '\0';
+            if( nRead == 0 )
+                break;
+        }
+    }
+    else
+    {
+        VSIFSeekL( fp, 0, SEEK_END );
+        nDataLen = VSIFTellL( fp );
+
+        // With "large" VSI I/O API we can read data chunks larger than VSIMalloc
+        // could allocate. Catch it here.
+        if ( nDataLen > (vsi_l_offset)(size_t)nDataLen ||
+             (nMaxSize >= 0 && nDataLen > (vsi_l_offset)nMaxSize) )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Input file too large to be opened" );
+            if( bFreeFP )
+                VSIFCloseL( fp );
+            return FALSE;
+        }
+
+        VSIFSeekL( fp, 0, SEEK_SET );
+
+        *ppabyRet = (GByte*)VSIMalloc((size_t)(nDataLen + 1));
+        if( NULL == *ppabyRet )
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory,
+                      "Cannot allocated " CPL_FRMT_GIB " bytes",
+                      nDataLen + 1 );
+            if( bFreeFP )
+                VSIFCloseL( fp );
+            return FALSE;
+        }
+
+        (*ppabyRet)[nDataLen] = '\0';
+        if( ( nDataLen != VSIFReadL( *ppabyRet, 1, (size_t)nDataLen, fp ) ) )
+        {
+            CPLError( CE_Failure, CPLE_FileIO,
+                      "Cannot read " CPL_FRMT_GIB " bytes",
+                      nDataLen );
+            VSIFree( *ppabyRet );
+            *ppabyRet = NULL;
+            if( bFreeFP )
+                VSIFCloseL( fp );
+            return FALSE;
+        }
+        if( pnSize != NULL )
+            *pnSize = nDataLen;
+    }
+    if( bFreeFP )
+        VSIFCloseL( fp );
+    return TRUE;
+}
+
+
+/************************************************************************/
 /* ==================================================================== */
 /*                           VSIFileManager()                           */
 /* ==================================================================== */
