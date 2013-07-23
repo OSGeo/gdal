@@ -167,6 +167,9 @@ OGRPGDumpDataSource::CreateLayer( const char * pszLayerName,
     char                *pszSchemaName = NULL;
     int                  nDimension = 3;
     int                  bHavePostGIS = TRUE;
+    
+    if( nLayers == 0 )
+         Log("SET standard_conforming_strings = OFF");
 
     const char* pszFIDColumnName = CSLFetchNameValue(papszOptions, "FID");
     CPLString osFIDColumnName;
