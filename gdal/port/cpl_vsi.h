@@ -149,6 +149,12 @@ int CPL_DLL     VSIFFlushL( VSILFILE * );
 int CPL_DLL     VSIFPrintfL( VSILFILE *, const char *, ... ) CPL_PRINT_FUNC_FORMAT(2, 3);
 int CPL_DLL     VSIFPutcL( int, VSILFILE * );
 
+int CPL_DLL     VSIIngestFile( VSILFILE* fp,
+                               const char* pszFilename,
+                               GByte** ppabyRet,
+                               vsi_l_offset* pnSize,
+                               GIntBig nMaxSize );
+
 #if defined(VSI_STAT64_T)
 typedef struct VSI_STAT64_T VSIStatBufL;
 #else
