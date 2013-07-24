@@ -695,7 +695,7 @@ int OGR_Fld_IsIgnored( OGRFieldDefnH hDefn )
 /**
  * \brief Set whether this field should be omitted when fetching features
  *
- * This method is the same as the C function OGRFieldDefn::SetIgnored().
+ * This method is the same as the C++ method OGRFieldDefn::SetIgnored().
  *
  * @param hDefn handle to the field definition
  * @param ignore ignore state
