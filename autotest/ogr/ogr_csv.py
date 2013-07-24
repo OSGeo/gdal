@@ -1128,6 +1128,31 @@ def ogr_csv_27():
     return 'success'
 
 ###############################################################################
+# Check that we don't rewrite errouneously a file that has no header (#5161)
+
+def ogr_csv_28():
+
+    f = open('tmp/ogr_csv_28.csv', 'wb')
+    f.write('1,2\n')
+    f.close()
+
+    ds = ogr.Open('tmp/ogr_csv_28.csv', update = 1)
+    ds = None
+
+    f = open('tmp/ogr_csv_28.csv', 'rb')
+    data = f.read()
+    f.close()
+
+    os.unlink('tmp/ogr_csv_28.csv')
+
+    if data != '1,2\n':
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_csv_cleanup():
@@ -1184,6 +1209,7 @@ gdaltest_list = [
     ogr_csv_25,
     ogr_csv_26,
     ogr_csv_27,
+    ogr_csv_28,
     ogr_csv_cleanup ]
 
 if __name__ == '__main__':
