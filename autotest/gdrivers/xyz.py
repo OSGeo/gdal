@@ -146,7 +146,70 @@ def xyz_4():
     return 'success'
 
 
+###############################################################################
+# Test XYZ with only integral values and comma field separator
 
+def xyz_5():
+
+    content = """0,1,100
+0.5,1,100
+1,1,100
+0,2,100
+0.5,2,100
+1,2,100
+"""
+    gdal.FileFromMemBuffer('/vsimem/grid.xyz', content)
+
+    ds = gdal.Open('/vsimem/grid.xyz')
+    if ds.RasterXSize != 3 or ds.RasterYSize != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    got_gt = ds.GetGeoTransform()
+    expected_gt = (-0.25, 0.5, 0.0, 0.5, 0.0, 1.0)
+    ds = None
+    gdal.Unlink('/vsimem/grid.xyz')
+    
+    for i in range(6):
+        if abs(got_gt[i]-expected_gt[i]) > 1e-5:
+            gdaltest.post_reason('fail')
+            print(got_gt)
+            print(expected_gt)
+            return 'fail'
+    
+    return 'success'
+
+
+###############################################################################
+# Test XYZ with comma decimal separator and semi-colon field separator
+
+def xyz_6():
+
+    content = """0;1;100
+0,5;1;100
+1;1;100
+0;2;100
+0,5;2;100
+1;2;100
+"""
+    gdal.FileFromMemBuffer('/vsimem/grid.xyz', content)
+
+    ds = gdal.Open('/vsimem/grid.xyz')
+    if ds.RasterXSize != 3 or ds.RasterYSize != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    got_gt = ds.GetGeoTransform()
+    expected_gt = (-0.25, 0.5, 0.0, 0.5, 0.0, 1.0)
+    ds = None
+    gdal.Unlink('/vsimem/grid.xyz')
+    
+    for i in range(6):
+        if abs(got_gt[i]-expected_gt[i]) > 1e-5:
+            gdaltest.post_reason('fail')
+            print(got_gt)
+            print(expected_gt)
+            return 'fail'
+    
+    return 'success'
 
 ###############################################################################
 # Cleanup
@@ -161,6 +224,8 @@ gdaltest_list = [
     xyz_2,
     xyz_3,
     xyz_4,
+    xyz_5,
+    xyz_6,
     xyz_cleanup ]
 
 if __name__ == '__main__':
