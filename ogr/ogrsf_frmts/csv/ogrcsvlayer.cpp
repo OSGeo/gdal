@@ -593,7 +593,7 @@ OGRCSVLayer::~OGRCSVLayer()
     }
 
     // Make sure the header file is written even if no features are written.
-    if (bInWriteMode)
+    if (bNew && bInWriteMode)
         WriteHeader();
 
     poFeatureDefn->Release();
@@ -921,13 +921,14 @@ OGRErr OGRCSVLayer::CreateField( OGRFieldDefn *poNewField, int bApproxOK )
 
 OGRErr OGRCSVLayer::WriteHeader()
 {
-    if( bHasFieldNames )
+    if( !bNew )
         return OGRERR_NONE;
 
 /* -------------------------------------------------------------------- */
 /*      Write field names if we haven't written them yet.               */
 /*      Write .csvt file if needed                                      */
 /* -------------------------------------------------------------------- */
+    bNew = FALSE;
     bHasFieldNames = TRUE;
 
     for(int iFile=0;iFile<((bCreateCSVT) ? 2 : 1);iFile++)
@@ -1095,7 +1096,7 @@ OGRErr OGRCSVLayer::CreateFeature( OGRFeature *poNewFeature )
 /*      Write field names if we haven't written them yet.               */
 /*      Write .csvt file if needed                                      */
 /* -------------------------------------------------------------------- */
-    if( !bHasFieldNames )
+    if( bNew )
     {
         OGRErr eErr = WriteHeader();
         if (eErr != OGRERR_NONE)
