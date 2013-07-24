@@ -71,7 +71,6 @@ OGRFieldDefn::OGRFieldDefn( OGRFieldDefn *poPrototype )
     SetWidth( poPrototype->GetWidth() );
     SetPrecision( poPrototype->GetPrecision() );
 //    SetDefault( poPrototype->GetDefaultRef() );
-    bIgnore = FALSE;
 }
 
 /************************************************************************/
@@ -108,6 +107,7 @@ void OGRFieldDefn::Initialize( const char * pszNameIn, OGRFieldType eTypeIn )
     nPrecision = 0;     // for numbers?
 
     memset( &uDefault, 0, sizeof(OGRField) );
+    bIgnore = FALSE;
 }
 
 /************************************************************************/
