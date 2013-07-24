@@ -52,6 +52,7 @@ class XYZDataset : public GDALPamDataset
     VSILFILE   *fp;
     int         bHasHeaderLine;
     int         nCommentLineCount;
+    char        chDecimalSep;
     int         nXIndex;
     int         nYIndex;
     int         nZIndex;
@@ -198,10 +199,15 @@ CPLErr XYZRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             int bLastWasSep = TRUE;
             while((ch = *pszPtr) != '\0')
             {
-                if (ch == ' ' || ch == ',' || ch == '\t' || ch == ';')
+                if (ch == ' ')
                 {
                     if (!bLastWasSep)
                         nCol ++;
+                    bLastWasSep = TRUE;
+                }
+                else if ((ch == ',' && poGDS->chDecimalSep != ',') || ch == '\t' || ch == ';')
+                {
+                    nCol ++;
                     bLastWasSep = TRUE;
                 }
                 else
@@ -252,10 +258,15 @@ CPLErr XYZRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             int bUsefulColsFound = 0;
             while((ch = *pszPtr) != '\0')
             {
-                if (ch == ' ' || ch == ',' || ch == '\t' || ch == ';')
+                if (ch == ' ')
                 {
                     if (!bLastWasSep)
                         nCol ++;
+                    bLastWasSep = TRUE;
+                }
+                else if ((ch == ',' && poGDS->chDecimalSep != ',') || ch == '\t' || ch == ';')
+                {
+                    nCol ++;
                     bLastWasSep = TRUE;
                 }
                 else
@@ -266,18 +277,18 @@ CPLErr XYZRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                         {
                             bUsefulColsFound ++;
                             if( !poGDS->bSameNumberOfValuesPerLine )
-                                dfX = CPLAtofM(pszPtr);
+                                dfX = CPLAtofDelim(pszPtr, poGDS->chDecimalSep);
                         }
                         else if (nCol == poGDS->nYIndex)
                         {
                             bUsefulColsFound ++;
                             if( !poGDS->bSameNumberOfValuesPerLine )
-                                dfY = CPLAtofM(pszPtr);
+                                dfY = CPLAtofDelim(pszPtr, poGDS->chDecimalSep);
                         }
                         else if( nCol == poGDS->nZIndex)
                         {
                             bUsefulColsFound ++;
-                            dfZ = CPLAtofM(pszPtr);
+                            dfZ = CPLAtofDelim(pszPtr, poGDS->chDecimalSep);
                         }
                     }
                     bLastWasSep = FALSE;
@@ -406,6 +417,7 @@ XYZDataset::XYZDataset()
     nDataLineNum = INT_MAX;
     nLineNum = 0;
     nCommentLineCount = 0;
+    chDecimalSep = 0;
     bHasHeaderLine = FALSE;
     nXIndex = -1;
     nYIndex = -1;
@@ -620,7 +632,6 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
     int nXIndex = -1, nYIndex = -1, nZIndex = -1;
     int nMinTokens = 0;
 
-
     for(i=0;i<nCommentLineCount;i++)
         CPLReadLine2L(fp, 100, NULL);
 
@@ -697,6 +708,7 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
     double dfStepX = 0, dfStepY = 0;
     GDALDataType eDT = GDT_Byte;
     int bSameNumberOfValuesPerLine = TRUE;
+    char chDecimalSep = '\0';
     while((pszLine = CPLReadLine2L(fp, 100, NULL)) != NULL)
     {
         nLineNum ++;
@@ -705,12 +717,62 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
         char ch;
         int nCol = 0;
         int bLastWasSep = TRUE;
+        if( chDecimalSep == '\0' )
+        {
+            int nCountComma = 0;
+            int nCountFieldSep = 0;
+            while((ch = *pszPtr) != '\0')
+            {
+                if( ch == '.' )
+                {
+                    chDecimalSep = '.';
+                    break;
+                }
+                else if( ch == ',' )
+                {
+                    nCountComma ++;
+                    bLastWasSep = FALSE;
+                }
+                else if( ch == ' ' )
+                {
+                    if (!bLastWasSep)
+                        nCountFieldSep ++;
+                    bLastWasSep = TRUE;
+                }
+                else if( ch == '\t' || ch == ';' )
+                {
+                    nCountFieldSep ++;
+                    bLastWasSep = TRUE;
+                }
+                else
+                    bLastWasSep = FALSE;
+                pszPtr ++;
+            }
+            if( chDecimalSep == '\0' )
+            {
+                /* 1,2,3 */
+                if( nCountComma >= 2 && nCountFieldSep == 0 )
+                    chDecimalSep = '.';
+                /* 23,5;33;45 */
+                else if ( nCountComma > 0 && nCountFieldSep > 0 )
+                    chDecimalSep = ',';
+            }
+            pszPtr = pszLine;
+            bLastWasSep = TRUE;
+        }
+
+        char chLocalDecimalSep = chDecimalSep ? chDecimalSep : '.';
         while((ch = *pszPtr) != '\0')
         {
-            if (ch == ' ' || ch == ',' || ch == '\t' || ch == ';')
+            if (ch == ' ')
             {
                 if (!bLastWasSep)
                     nCol ++;
+                bLastWasSep = TRUE;
+            }
+            else if ((ch == ',' && chLocalDecimalSep != ',') || ch == '\t' || ch == ';')
+            {
+                nCol ++;
                 bLastWasSep = TRUE;
             }
             else
@@ -718,12 +780,12 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
                 if (bLastWasSep)
                 {
                     if (nCol == nXIndex)
-                        dfX = CPLAtofM(pszPtr);
+                        dfX = CPLAtofDelim(pszPtr, chLocalDecimalSep);
                     else if (nCol == nYIndex)
-                        dfY = CPLAtofM(pszPtr);
+                        dfY = CPLAtofDelim(pszPtr, chLocalDecimalSep);
                     else if (nCol == nZIndex && eDT != GDT_Float32)
                     {
-                        dfZ = CPLAtofM(pszPtr);
+                        dfZ = CPLAtofDelim(pszPtr, chLocalDecimalSep);
                         if( nDataLineNum == 0 )
                             dfMinZ = dfMaxZ = dfZ;
                         else if( dfZ < dfMinZ )
@@ -920,6 +982,7 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->fp = fp;
     poDS->bHasHeaderLine = bHasHeaderLine;
     poDS->nCommentLineCount = nCommentLineCount;
+    poDS->chDecimalSep = chDecimalSep ? chDecimalSep : '.';
     poDS->nXIndex = nXIndex;
     poDS->nYIndex = nYIndex;
     poDS->nZIndex = nZIndex;
