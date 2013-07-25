@@ -353,9 +353,16 @@ class GlobalGeodetic(object):
        WMS, KML    Web Clients, Google Earth  TileMapService
     """
 
-    def __init__(self, tileSize = 256):
+    def __init__(self, tmscompatible, tileSize = 256):
         self.tileSize = tileSize
-        self.resFact = 360.0 / self.tileSize
+        if tmscompatible is not None:
+            # Defaults the resolution factor to 1.40625 (1 tile @ level 0)
+            # Adheres OpenLayers, MapProxy, etc default resolution for TMS
+            self.resFact = 180.0 / self.tileSize
+        else:
+            # Defaults the resolution factor to 0.703125 (2 tiles @ level 0)
+            # Adhers to OSGeo TMS spec http://wiki.osgeo.org/wiki/Tile_Map_Service_Specification#global-geodetic
+            self.resFact = 360.0 / self.tileSize
 
     def LonLatToPixels(self, lon, lat, zoom):
         "Converts lon/lat to pixel coordinates in given zoom of the EPSG:4326 pyramid"
@@ -657,6 +664,8 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
                           help="Resume mode. Generate only missing files.")
         p.add_option('-a', '--srcnodata', dest="srcnodata", metavar="NODATA",
                           help="NODATA transparency value to assign to the input data")
+        p.add_option('-d', '--tmscompatible', dest="tmscompatible", action="store_true",
+                          help="When using the geodetic profile, specifies the base resolution as 0.703125 or 2 tiles at zoom level 0.")
         p.add_option("-v", "--verbose",
                           action="store_true", dest="verbose",
                           help="Print status messages to stdout")
@@ -982,7 +991,7 @@ gdal2tiles temp.vrt""" % self.input )
 
         if self.options.profile == 'geodetic':
 
-            self.geodetic = GlobalGeodetic() # from globalmaptiles.py
+            self.geodetic = GlobalGeodetic(self.options.tmscompatible) # from globalmaptiles.py
 
             # Function which generates SWNE in LatLong for given tile
             self.tileswne = self.geodetic.TileLatLonBounds
@@ -1954,6 +1963,10 @@ gdal2tiles temp.vrt""" % self.input )
         args['tileformat'] = self.tileext
         args['publishurl'] = self.options.url
         args['copyright'] = self.options.copyright
+        if self.options.tmscompatible:
+            args['tmsoffset'] = "-1"
+        else:
+            args['tmsoffset'] = ""
         if self.options.profile == 'raster':
             args['rasterzoomlevels'] = self.tmaxz+1
             args['rastermaxresolution'] = 2**(self.nativezoom) * self.out_gt[1]
@@ -2174,7 +2187,7 @@ gdal2tiles temp.vrt""" % self.input )
                   var res = this.getServerResolution();
                   var x = Math.round((bounds.left - this.tileOrigin.lon) / (res * this.tileSize.w));
                   var y = Math.round((bounds.bottom - this.tileOrigin.lat) / (res * this.tileSize.h));
-                  var z = this.getServerZoom();
+                  var z = this.getServerZoom()%(tmsoffset)s;
                   var path = this.serviceVersion + "/" + this.layername + "/" + z + "/" + x + "/" + y + "." + this.type; 
                   var url = this.url;
                   if (OpenLayers.Util.isArray(url)) {
