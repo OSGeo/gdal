@@ -663,7 +663,7 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
                           help="Resume mode. Generate only missing files.")
         p.add_option('-a', '--srcnodata', dest="srcnodata", metavar="NODATA",
                           help="NODATA transparency value to assign to the input data")
-        p.add_option('-g', '--tmscompatible', dest="tmscompatible", action="store_true",
+        p.add_option('-d', '--tmscompatible', dest="tmscompatible", action="store_true",
                           help="When using the geodetic profile, specifies the base resolution as 0.703125 or 2 tiles at zoom level 0.")
         p.add_option("-v", "--verbose",
                           action="store_true", dest="verbose",
