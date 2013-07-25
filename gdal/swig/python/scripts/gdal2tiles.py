@@ -352,16 +352,16 @@ class GlobalGeodetic(object):
        WMS, KML    Web Clients, Google Earth  TileMapService
     """
 
-    def __init__(self, tileSize = 256):
+    def __init__(self, tmscompatible, tileSize = 256):
         self.tileSize = tileSize
-        if self.options.tmscompatible:
-            # Defaults the resolution factor to 0.703125 (2 tiles @ level 0)
-            # Adhers to OSGeo TMS spec http://wiki.osgeo.org/wiki/Tile_Map_Service_Specification#global-geodetic
-            self.resFact = 360.0 / self.tileSize
-        else:
+        if tmscompatible is not None:
             # Defaults the resolution factor to 1.40625 (1 tile @ level 0)
             # Adheres OpenLayers, MapProxy, etc default resolution for TMS
             self.resFact = 180.0 / self.tileSize
+        else:
+            # Defaults the resolution factor to 0.703125 (2 tiles @ level 0)
+            # Adhers to OSGeo TMS spec http://wiki.osgeo.org/wiki/Tile_Map_Service_Specification#global-geodetic
+            self.resFact = 360.0 / self.tileSize
 
     def LatLonToPixels(self, lat, lon, zoom):
         "Converts lat/lon to pixel coordinates in given zoom of the EPSG:4326 pyramid"
@@ -990,7 +990,7 @@ gdal2tiles temp.vrt""" % self.input )
 
         if self.options.profile == 'geodetic':
 
-            self.geodetic = GlobalGeodetic() # from globalmaptiles.py
+            self.geodetic = GlobalGeodetic(self.options.tmscompatible) # from globalmaptiles.py
 
             # Function which generates SWNE in LatLong for given tile
             self.tileswne = self.geodetic.TileLatLonBounds
