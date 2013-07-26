@@ -32,15 +32,20 @@
 #define _OGR_GME_H_INCLUDED
 
 #include "ogrsf_frmts.h"
+#include "ogrgeojsonreader.h"
 #include "cpl_http.h"
 
 #include <vector>
+
+#include <jsonc/json.h>
+#include <jsonc/json_object_private.h>
 
 /************************************************************************/
 /*                             OGRGMELayer                              */
 /************************************************************************/
 class OGRGMEDataSource;
 
+#ifdef notdef
 class OGRGMELayer : public OGRLayer
 {
 protected:
@@ -49,25 +54,9 @@ protected:
     OGRFeatureDefn*    poFeatureDefn;
     OGRSpatialReference *poSRS;
 
-    int                nNextInSeq;
-
     int                iGeometryField;
-    int                iLatitudeField;
-    int                iLongitudeField;
-    int                bHiddenGeometryField;
 
     OGRFeature *       GetNextRawFeature();
-
-    int                nOffset;
-    int                bEOF;
-    virtual int                FetchNextRows() = 0;
-
-    std::vector<CPLString> aosRows;
-
-    int                 bFirstTokenIsFID;
-    OGRFeature*         BuildFeatureFromSQL(const char* pszLine);
-
-    static CPLString    LaunderColName(const char* pszColName);
 
   public:
                          OGRGMELayer(OGRGMEDataSource* poDS);
@@ -85,70 +74,57 @@ protected:
     virtual const char *        GetGeometryColumn();
 
     virtual OGRErr              SetNextByIndex( long nIndex );
-
-    const char *        GetDefaultGeometryColumnName() { return "geometry"; }
-
-    static CPLString            PatchSQL(const char* pszSQL);
-
-    int                         GetGeometryFieldIndex() { return iGeometryField; }
-    int                         GetLatitudeFieldIndex() { return iLatitudeField; }
-    int                         GetLongitudeFieldIndex() { return iLongitudeField; }
-
-    int                         GetFeaturesToFetch() { return atoi(CPLGetConfigOption("GME_PAGE_SIZE", "500")); }
 };
+#endif
 
 /************************************************************************/
-/*                         OGRGMETableLayer                             */
+/*                             OGRGMELayer                              */
 /************************************************************************/
 
-class OGRGMETableLayer : public OGRGMELayer
+class OGRGMELayer : public OGRLayer
 {
-    CPLString         osTableName;
-    CPLString         osTableId;
-    CPLString         osGeomColumnName;
+    OGRGMEDataSource* poDS;
 
-    int                bHasTriedCreateTable;
-    void               CreateTableIfNecessary();
+    OGRFeatureDefn*    poFeatureDefn;
+    OGRSpatialReference *poSRS;
 
-    CPLString           osWHERE;
-    CPLString           osQuery;
+    int                iGeometryField;
 
-    void                BuildWhere(void);
+    CPLString          osTableName;
+    CPLString          osTableId;
+    CPLString          osGeomColumnName;
 
-    CPLString          osTransaction;
-    int                bInTransaction;
-    int                nFeaturesInTransaction;
+    CPLString          osWHERE;
+    CPLString          osQuery;
+
+    json_object*       current_feature_page;
+    array_list*        current_feature_array;
+    int                index_in_page;
+
+    void               GetPageOfFeatures();
+
+    void               BuildWhere(void);
 
     int                FetchDescribe();
-    virtual int                FetchNextRows();
 
-    OGRwkbGeometryType eGTypeForCreation;
+    OGRFeature        *GetNextRawFeature();
+    void               GetPageOfFEatures();
 
-    std::vector<CPLString>  aosColumnInternalName;
-
-    public:
-            OGRGMETableLayer(OGRGMEDataSource* poDS,
-                             const char* pszTableName,
-                             const char* pszTableId = "");
-            ~OGRGMETableLayer();
+  public:
+    OGRGMELayer(OGRGMEDataSource* poDS, const char* pszTableId);
+    ~OGRGMELayer();
 
     virtual void                ResetReading();
 
     virtual OGRFeatureDefn *    GetLayerDefn();
 
-    virtual const char *        GetName() { return osTableName.c_str(); }
-    virtual int         GetFeatureCount( int bForce = TRUE );
+    virtual const char *GetName() { return osTableName.c_str(); }
 
-    virtual OGRFeature *        GetFeature( long nFID );
+    virtual OGRFeature *GetNextFeature();
 
-    virtual void        SetSpatialFilter( OGRGeometry * );
-    virtual OGRErr      SetAttributeFilter( const char * );
+    virtual const char *GetGeometryColumn() { return osGeomColumnName; }
 
-    const CPLString&            GetTableId() const { return osTableId; }
-
-    virtual int                 TestCapability( const char * );
-
-    void                SetGeometryType(OGRwkbGeometryType eGType);
+    virtual int         TestCapability( const char * );
 };
 
 /************************************************************************/
@@ -175,8 +151,6 @@ class OGRGMEDataSource : public OGRDataSource
 
     int                 bMustCleanPersistant;
 
-    static CPLStringList ParseSimpleJson(const char *pszJSon);
-
   public:
                         OGRGMEDataSource();
                         ~OGRGMEDataSource();
@@ -196,6 +170,11 @@ class OGRGMEDataSource : public OGRDataSource
     const char*         GetAPIURL() const;
     int                 IsReadWrite() const { return bReadWrite; }
     void                AddHTTPOptions(CPLStringList &oOptions);
+    json_object*        Parse( const char* pszText );
+    const char*         GetJSONString(json_object *parent, 
+                                      const char *field_name,
+                                      const char *default_value = NULL);
+
 };
 
 /************************************************************************/
