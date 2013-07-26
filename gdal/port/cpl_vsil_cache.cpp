@@ -49,7 +49,7 @@ public:
     }
 
     int            bDirty;
-    size_t         iBlock;
+    vsi_l_offset   iBlock;
 
     VSICacheChunk *poLRUPrev;
     VSICacheChunk *poLRUNext;
@@ -71,7 +71,7 @@ class VSICachedFile : public VSIVirtualHandle
     ~VSICachedFile() { Close(); }
 
     void          FlushLRU();
-    int           LoadBlocks( size_t nStartBlock, size_t nBlockCount, 
+    int           LoadBlocks( vsi_l_offset nStartBlock, size_t nBlockCount, 
                               void *pBuffer, size_t nBufferSize );
     void          Demote( VSICacheChunk * );
 
@@ -260,7 +260,7 @@ void VSICachedFile::Demote( VSICacheChunk *poBlock )
 /*      buffer if it would be helpful.                                  */
 /************************************************************************/
 
-int VSICachedFile::LoadBlocks( size_t nStartBlock, size_t nBlockCount,
+int VSICachedFile::LoadBlocks( vsi_l_offset nStartBlock, size_t nBlockCount,
                                void *pBuffer, size_t nBufferSize )
 
 {
@@ -372,10 +372,10 @@ size_t VSICachedFile::Read( void * pBuffer, size_t nSize, size_t nCount )
 /* ==================================================================== */
 /*      Make sure the cache is loaded for the whole request region.     */
 /* ==================================================================== */
-    size_t nStartBlock = (size_t) (nOffset / CHUNK_SIZE);
-    size_t nEndBlock = (size_t) ((nOffset + nSize * nCount - 1) / CHUNK_SIZE);
-    
-    for( size_t iBlock = nStartBlock; iBlock <= nEndBlock; iBlock++ )
+    vsi_l_offset nStartBlock = nOffset / CHUNK_SIZE;
+    vsi_l_offset nEndBlock = (nOffset + nSize * nCount - 1) / CHUNK_SIZE;
+
+    for( vsi_l_offset iBlock = nStartBlock; iBlock <= nEndBlock; iBlock++ )
     {
         if( apoCache.size() <= iBlock || apoCache[iBlock] == NULL )
         {
@@ -396,7 +396,7 @@ size_t VSICachedFile::Read( void * pBuffer, size_t nSize, size_t nCount )
 
     while( nAmountCopied < nSize * nCount )
     {
-        size_t iBlock = (size_t) ((nOffset + nAmountCopied) / CHUNK_SIZE);
+        vsi_l_offset iBlock = (nOffset + nAmountCopied) / CHUNK_SIZE;
         size_t nThisCopy;
         VSICacheChunk *poBlock = apoCache[iBlock];
         if( poBlock == NULL )
