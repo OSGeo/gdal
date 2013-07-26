@@ -191,6 +191,10 @@ ifneq ($(LIBZ_SETTING),no)
 CXXFLAGS :=	$(CXXFLAGS) -DPDF_ENABLED
 endif
 
+ifeq ($(ODBC_SETTING),yes)
+CXXFLAGS :=	$(CXXFLAGS) -DWALK_ENABLED
+endif
+
 CPPFLAGS	:=	-I.. -I../.. $(GDAL_INCLUDE) $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
