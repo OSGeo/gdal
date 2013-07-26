@@ -232,9 +232,69 @@ def lcp_2():
 
     return 'success'
 
+###############################################################################
+#  Test for empty prj
+
+def lcp_3():
+
+    ds = gdal.Open('data/test_USGS_LFNM_Alb83.lcp')
+    if ds == None:
+        return 'fail'
+    wkt = ds.GetProjection()
+    if wkt is None:
+        gdaltest.post_reason('Got None from GetProjection()')
+        return 'fail'
+    return 'success'
+
+###############################################################################
+#  Test that the prj file isn't added to the sibling list if it isn't there.
+
+def lcp_4():
+
+    ds = gdal.Open('data/test_USGS_LFNM_Alb83.lcp')
+    if ds == None:
+        return 'fail'
+    fl = ds.GetFileList()
+    if len(fl) != 1:
+        gdaltest.post_reason('Invalid file list')
+        return 'fail'
+    return 'success'
+
+###############################################################################
+#  Test for valid prj
+
+def lcp_5():
+
+    ds = gdal.Open('data/test_FARSITE_UTM12.LCP')
+    if ds == None:
+        return 'fail'
+    wkt = ds.GetProjection()
+    if wkt is None or wkt == '':
+        gdaltest.post_reason('Got invalid wkt from GetProjection()')
+        return 'fail'
+    return 'success'
+
+###############################################################################
+#  Test for valid sibling list
+
+def lcp_6():
+
+    ds = gdal.Open('data/test_FARSITE_UTM12.LCP')
+    if ds == None:
+        return 'fail'
+    fl = ds.GetFileList()
+    if len(fl) != 2:
+        gdaltest.post_reason('Invalid file list')
+        return 'fail'
+    return 'success'
+
 gdaltest_list = [
     lcp_1,
-    lcp_2 ]
+    lcp_2,
+    lcp_3,
+    lcp_4,
+    lcp_5,
+    lcp_6 ]
 
 if __name__ == '__main__':
 
