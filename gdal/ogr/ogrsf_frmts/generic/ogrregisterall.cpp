@@ -256,4 +256,7 @@ void OGRRegisterAll()
 #ifdef PDF_ENABLED
     RegisterOGRPDF();
 #endif
+#ifdef WALK_ENABLED
+    RegisterOGRWalk();
+#endif
 } /* OGRRegisterAll */
