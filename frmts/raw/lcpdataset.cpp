@@ -718,6 +718,7 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
 
         if( oSRS.importFromESRI( papszPrj ) == OGRERR_NONE )
         {
+            CPLFree( poDS->pszProjection );
             oSRS.exportToWkt( &(poDS->pszProjection) );
             poDS->bHaveProjection = TRUE;
         }
