@@ -63,8 +63,10 @@ class LCPDataset : public RawDataset
 
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
-    
+
     virtual const char *GetProjectionRef(void);
+
+    int bHaveProjection;
 };
 
 /************************************************************************/
@@ -74,7 +76,8 @@ class LCPDataset : public RawDataset
 LCPDataset::LCPDataset()
 {
     fpImage = NULL;
-    pszProjection = NULL;
+    pszProjection = CPLStrdup( "" );
+    bHaveProjection = FALSE;
 }
 
 /************************************************************************/
@@ -158,8 +161,10 @@ char **LCPDataset::GetFileList()
 {
     char **papszFileList = GDALPamDataset::GetFileList();
 
-    if( pszProjection != NULL )
+    if( bHaveProjection )
+    {
         papszFileList = CSLAddString( papszFileList, osPrjFilename );
+    }
 
     return papszFileList;
 }
@@ -714,8 +719,9 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
         if( oSRS.importFromESRI( papszPrj ) == OGRERR_NONE )
         {
             oSRS.exportToWkt( &(poDS->pszProjection) );
+            poDS->bHaveProjection = TRUE;
         }
-        
+
         CSLDestroy(papszPrj);
     }
 
