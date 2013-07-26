@@ -232,12 +232,58 @@ def vsifile_5():
     gdal.Unlink('tmp/vsifile_5.bin')
 
     return 'success'
-    
+
+###############################################################################
+# Test vsicache above 2 GB
+
+def vsifile_6():
+
+    if (gdaltest.filesystem_supports_sparse_files('tmp') == False):
+        return 'skip'
+
+    offset = 4 * 1024 * 1024 * 1024
+
+    ref_data = 'abcd'
+    fp = gdal.VSIFOpenL('tmp/vsifile_6.bin', 'wb')
+    gdal.VSIFSeekL(fp, offset, 0)
+    gdal.VSIFWriteL(ref_data, 1, len(ref_data), fp)
+    gdal.VSIFCloseL(fp)
+
+    # Sanity check without VSI_CACHE
+    fp = gdal.VSIFOpenL('tmp/vsifile_6.bin', 'rb')
+    gdal.VSIFSeekL(fp, offset, 0)
+    got_data = gdal.VSIFReadL(1, len(ref_data), fp)
+    gdal.VSIFCloseL(fp)
+
+    if ref_data != got_data:
+        print(got_data)
+        return 'fail'
+
+    # Real test now
+    gdal.SetConfigOption('VSI_CACHE', 'YES')
+    fp = gdal.VSIFOpenL('tmp/vsifile_6.bin', 'rb')
+    gdal.SetConfigOption('VSI_CACHE', None)
+    gdal.VSIFSeekL(fp, offset, 0)
+    got_data = gdal.VSIFReadL(1, len(ref_data), fp)
+    gdal.VSIFCloseL(fp)
+
+    if ref_data != got_data:
+        print(got_data)
+        return 'fail'
+
+    gdal.Unlink('tmp/vsifile_6.bin')
+
+    return 'success'
+
+###############################################################################
+# Test vsicache above 2 GB
+
 gdaltest_list = [ vsifile_1,
                   vsifile_2,
                   vsifile_3,
                   vsifile_4,
-                  vsifile_5 ]
+                  vsifile_5,
+                  vsifile_6 ]
 
 if __name__ == '__main__':
 
