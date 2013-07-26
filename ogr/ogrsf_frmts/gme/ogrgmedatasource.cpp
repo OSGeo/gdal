@@ -29,6 +29,7 @@
  ****************************************************************************/
 
 #include "ogr_gme.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -284,13 +285,13 @@ CPLHTTPResult * OGRGMEDataSource::MakeRequest(const char *pszRequest)
     int bUsePost = 
         CSLTestBoolean(
             CPLGetConfigOption("GME_USE_POST", "FALSE"));
-    CPLString osQueryFields = "version=published";
-
 /* -------------------------------------------------------------------- */
 /*      Provide the API Key - used to rate limit access (see            */
 /*      GFT_APIKEY config)                                              */
 /* -------------------------------------------------------------------- */
-    osQueryFields += "&key=";
+    CPLString osQueryFields;
+
+    osQueryFields += "key=";
     osQueryFields += osAPIKey;
 
 /* -------------------------------------------------------------------- */
@@ -319,7 +320,10 @@ CPLHTTPResult * OGRGMEDataSource::MakeRequest(const char *pszRequest)
         }
         osURL += osQueryFields;
     }
-    
+
+    CPLDebug( "GME", "Sleep for 2s to try and avoid qps limiting errors.");
+    CPLSleep( 2.0 );
+
     CPLHTTPResult * psResult = CPLHTTPFetch(osURL, oOptions);
 
 /* -------------------------------------------------------------------- */
