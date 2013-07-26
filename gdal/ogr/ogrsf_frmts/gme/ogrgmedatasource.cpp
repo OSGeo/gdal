@@ -185,7 +185,7 @@ int OGRGMEDataSource::Open( const char * pszFilename, int bUpdateIn)
         for(int i=0;papszTables && papszTables[i];i++)
         {
             papoLayers = (OGRLayer**) CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
-            papoLayers[nLayers ++] = new OGRGMETableLayer(this, papszTables[i], papszTables[i]);
+            papoLayers[nLayers ++] = new OGRGMELayer(this, papszTables[i]);
         }
         CSLDestroy(papszTables);
         return TRUE;
@@ -281,20 +281,27 @@ void OGRGMEDataSource::AddHTTPOptions(CPLStringList &oOptions)
 
 CPLHTTPResult * OGRGMEDataSource::MakeRequest(const char *pszRequest)
 {
-    CPLString osPostFields = "POSTFIELDS=version=published";
+    int bUsePost = 
+        CSLTestBoolean(
+            CPLGetConfigOption("GME_USE_POST", "FALSE"));
+    CPLString osQueryFields = "version=published";
 
 /* -------------------------------------------------------------------- */
 /*      Provide the API Key - used to rate limit access (see            */
 /*      GFT_APIKEY config)                                              */
 /* -------------------------------------------------------------------- */
-    osPostFields += "&key=";
-    osPostFields += osAPIKey;
+    osQueryFields += "&key=";
+    osQueryFields += osAPIKey;
 
 /* -------------------------------------------------------------------- */
 /*      Collect the header options.                                     */
 /* -------------------------------------------------------------------- */
     CPLStringList oOptions;
-    oOptions.AddString(osPostFields);
+    if (bUsePost) {
+        CPLString osPostFields = "POSTFIELDS=";
+        osPostFields += osQueryFields;
+        oOptions.AddString(osPostFields);
+    }
     AddHTTPOptions(oOptions);
 
 /* -------------------------------------------------------------------- */
@@ -303,6 +310,15 @@ CPLHTTPResult * OGRGMEDataSource::MakeRequest(const char *pszRequest)
     CPLString osURL = GetAPIURL();
     osURL += "/";
     osURL += pszRequest;
+
+    if (!bUsePost) {
+        if (osURL.find("?") == std::string::npos) {
+            osURL += "?";
+        } else {
+            osURL += "?";
+        }
+        osURL += osQueryFields;
+    }
     
     CPLHTTPResult * psResult = CPLHTTPFetch(osURL, oOptions);
 
@@ -331,3 +347,53 @@ CPLHTTPResult * OGRGMEDataSource::MakeRequest(const char *pszRequest)
     return psResult;
 }
 
+/************************************************************************/
+/*                           Parse()                                    */
+/************************************************************************/
+
+json_object *OGRGMEDataSource::Parse( const char* pszText )
+{
+    if( NULL != pszText )
+    {
+        json_tokener* jstok = NULL;
+        json_object* jsobj = NULL;
+
+        jstok = json_tokener_new();
+        jsobj = json_tokener_parse_ex(jstok, pszText, -1);
+        if( jstok->err != json_tokener_success)
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "ESRIJSON parsing error: %s (at offset %d)",
+            	      json_tokener_errors[jstok->err], jstok->char_offset);
+            
+            json_tokener_free(jstok);
+            return NULL;
+        }
+        json_tokener_free(jstok);
+
+        /* JSON tree is shared for while lifetime of the reader object
+         * and will be released in the destructor.
+         */
+        return jsobj;
+    }
+
+    return NULL;
+}
+
+/************************************************************************/
+/*                           GetJSONString()                            */
+/*                                                                      */
+/*      Fetch a string field from a json_object (only an immediate      */
+/*      child).                                                         */
+/************************************************************************/
+
+const char *OGRGMEDataSource::GetJSONString(json_object *parent,
+                                            const char *field,
+                                            const char *default_value)
+{
+    json_object *child = json_object_object_get(parent, field);
+    if (child == NULL )
+        return default_value;
+
+    return json_object_get_string(child);
+}
