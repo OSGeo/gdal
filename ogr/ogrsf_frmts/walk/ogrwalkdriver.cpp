@@ -1,12 +1,12 @@
 /******************************************************************************
- * $Id$
+ * $Id: ogrwalkdriver.cpp
  *
  * Project:  OpenGIS Simple Features Reference Implementation
- * Purpose:  Implements Personal Geodatabase driver.
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Purpose:  Implements OGRWalkDriver class.
+ * Author:   Xian Chen, chenxian at walkinfo.com.cn
  *
  ******************************************************************************
- * Copyright (c) 2011, Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Copyright (c) 2013,  ZJU Walkinfo Technology Corp., Ltd.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,20 +27,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_mdb.h"
-#include "cpl_conv.h"
-
-CPL_CVSID("$Id$");
-
-// g++ -fPIC -g -Wall ogr/ogrsf_frmts/mdb/*.cpp -shared -o ogr_MDB.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/mdb -L. -lgdal -I/usr/lib/jvm/java-6-openjdk/include -I/usr/lib/jvm/java-6-openjdk/include/linux  -L/usr/lib/jvm/java-6-openjdk/jre/lib/amd64/server -ljvm
-
-extern "C" void RegisterOGRMDB();
+#include "ogrwalk.h"
 
 /************************************************************************/
-/*                            ~OGRODBCDriver()                            */
+/*                          ~OGRWalkDriver()                            */
 /************************************************************************/
 
-OGRMDBDriver::~OGRMDBDriver()
+OGRWalkDriver::~OGRWalkDriver()
 
 {
 }
@@ -49,21 +42,18 @@ OGRMDBDriver::~OGRMDBDriver()
 /*                              GetName()                               */
 /************************************************************************/
 
-const char *OGRMDBDriver::GetName()
+const char *OGRWalkDriver::GetName()
 
 {
-    return "MDB";
+    return "Walk";
 }
 
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-OGRDataSource *OGRMDBDriver::Open( const char * pszFilename,
-                                    int bUpdate )
-
+OGRDataSource *OGRWalkDriver::Open( const char * pszFilename, int bUpdate )
 {
-    OGRMDBDataSource     *poDS;
 
     if( EQUALN(pszFilename, "PGEO:", strlen("PGEO:")) )
         return NULL;
@@ -71,22 +61,39 @@ OGRDataSource *OGRMDBDriver::Open( const char * pszFilename,
     if( EQUALN(pszFilename, "GEOMEDIA:", strlen("GEOMEDIA:")) )
         return NULL;
 
-    if( EQUALN(pszFilename, "WALK:", strlen("WALK:")) )
+    if( !EQUAL(CPLGetExtension(pszFilename), "MDB") )
         return NULL;
 
-    if( !EQUAL(CPLGetExtension(pszFilename),"mdb") )
-        return NULL;
+    OGRWalkDataSource  *poDS = new OGRWalkDataSource();
 
-    VSIStatBuf sStat;
-    if (VSIStat(pszFilename, &sStat) != 0)
-        return NULL;
-
-    // Open data source
-    poDS = new OGRMDBDataSource();
-
-    if( !poDS->Open( pszFilename, bUpdate, TRUE ) )
+    if( !poDS->Open( pszFilename, bUpdate ) )
     {
         delete poDS;
+        return NULL;
+    }
+    else
+        return poDS;
+}
+
+/************************************************************************/
+/*                          CreateDataSource()                          */
+/************************************************************************/
+
+OGRDataSource *OGRWalkDriver::CreateDataSource( const char * pszName,
+                                                 char **papszOptions )
+
+{
+    //if( !EQUAL(CPLGetExtension(pszName), "MDB") )
+    //    return NULL;
+
+    OGRWalkDataSource  *poDS = new OGRWalkDataSource();
+    
+    if( !poDS->Open( pszName, TRUE ) )
+    {
+        delete poDS;
+        CPLError( CE_Failure, CPLE_AppDefined, 
+         "Walk driver doesn't currently support database creation.\n"
+                  "Please create database with the `createdb' command." );
         return NULL;
     }
     else
@@ -97,20 +104,24 @@ OGRDataSource *OGRMDBDriver::Open( const char * pszFilename,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRMDBDriver::TestCapability( const char * pszCap )
+int OGRWalkDriver::TestCapability( const char * pszCap )
 
 {
-    return FALSE;
+    if( EQUAL(pszCap,ODrCCreateDataSource) )
+        return TRUE;
+    else if( EQUAL(pszCap,ODrCDeleteDataSource) )
+        return FALSE;
+    else
+        return FALSE;
 }
 
-
 /************************************************************************/
-/*                           RegisterOGRMDB()                           */
+/*                          RegisterOGRWalk()                           */
 /************************************************************************/
 
-void RegisterOGRMDB()
+void RegisterOGRWalk()
 
 {
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRMDBDriver );
+    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRWalkDriver );
 }
 
