@@ -383,7 +383,7 @@ void OGRWalkLayer::LookupSpatialRef( const char * pszMemo )
 const char *OGRWalkLayer::GetFIDColumn()
 
 {
-    return pszFIDColumn;
+    return pszFIDColumn ? pszFIDColumn : "";
 }
 
 /************************************************************************/
@@ -393,5 +393,5 @@ const char *OGRWalkLayer::GetFIDColumn()
 const char *OGRWalkLayer::GetGeometryColumn()
 
 {
-    return pszGeomColumn;
+    return pszGeomColumn ? pszGeomColumn : "";
 }
