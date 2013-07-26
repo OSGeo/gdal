@@ -276,7 +276,7 @@ static int TestBasic( OGRLayer *poLayer )
     const char* pszLayerName = poLayer->GetName();
     OGRwkbGeometryType eGeomType = poLayer->GetGeomType();
 
-    if( strcmp(poLayer->GetName(), poLayer->GetLayerDefn()->GetName()) != 0 )
+    if( strcmp(pszLayerName, poLayer->GetLayerDefn()->GetName()) != 0 )
     {
         bRet = FALSE;
         printf( "ERROR: poLayer->GetName() and poLayer->GetLayerDefn()->GetName() differ.\n"
@@ -292,6 +292,18 @@ static int TestBasic( OGRLayer *poLayer )
                 "poLayer->GetGeomType() = %d\n"
                 "poLayer->GetLayerDefn()->GetGeomType() = %d\n",
                     eGeomType, poLayer->GetLayerDefn()->GetGeomType());
+    }
+
+    if( poLayer->GetFIDColumn() == NULL )
+    {
+        bRet = FALSE;
+        printf( "ERROR: poLayer->GetFIDColumn() returned NULL.\n" );
+    }
+
+    if( poLayer->GetGeometryColumn() == NULL )
+    {
+        bRet = FALSE;
+        printf( "ERROR: poLayer->GetGeometryColumn() returned NULL.\n" );
     }
 
     return bRet;
