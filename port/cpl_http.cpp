@@ -494,7 +494,7 @@ void CPLHTTPSetOptions(CURL *http_handle, char** papszOptions)
     const char* pszPost = CSLFetchNameValue( papszOptions, "POSTFIELDS" );
     if( pszPost != NULL )
     {
-        CPLDebug("HTTP", "These POSTFIELDS were sent:%4000.4000s", pszPost);
+        CPLDebug("HTTP", "These POSTFIELDS were sent:%.4000s", pszPost);
         curl_easy_setopt(http_handle, CURLOPT_POST, 1 );
         curl_easy_setopt(http_handle, CURLOPT_POSTFIELDS, pszPost );
     }
