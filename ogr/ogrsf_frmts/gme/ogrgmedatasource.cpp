@@ -280,7 +280,8 @@ void OGRGMEDataSource::AddHTTPOptions(CPLStringList &oOptions)
 /*                            MakeRequest()                             */
 /************************************************************************/
 
-CPLHTTPResult * OGRGMEDataSource::MakeRequest(const char *pszRequest)
+CPLHTTPResult * OGRGMEDataSource::MakeRequest(const char *pszRequest,
+                                              const char *pszMoreOptions)
 {
     int bUsePost = 
         CSLTestBoolean(
@@ -293,6 +294,9 @@ CPLHTTPResult * OGRGMEDataSource::MakeRequest(const char *pszRequest)
 
     osQueryFields += "key=";
     osQueryFields += osAPIKey;
+
+    if (pszMoreOptions)
+        osQueryFields += pszMoreOptions;
 
 /* -------------------------------------------------------------------- */
 /*      Collect the header options.                                     */
@@ -321,8 +325,8 @@ CPLHTTPResult * OGRGMEDataSource::MakeRequest(const char *pszRequest)
         osURL += osQueryFields;
     }
 
-    CPLDebug( "GME", "Sleep for 2s to try and avoid qps limiting errors.");
-    CPLSleep( 2.0 );
+    CPLDebug( "GME", "Sleep for 1.1s to try and avoid qps limiting errors.");
+    CPLSleep( 1.1 );
 
     CPLHTTPResult * psResult = CPLHTTPFetch(osURL, oOptions);
 
