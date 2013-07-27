@@ -167,15 +167,19 @@ int OGRGMELayer::FetchDescribe()
 /************************************************************************/
 
 void OGRGMELayer::GetPageOfFeatures()
-
 {
-    // TODO use last pages next page token?
+    CPLString osNextPageToken;
 
     if (current_feature_page != NULL) 
     {
+        osNextPageToken = poDS->GetJSONString(current_feature_page, 
+                                              "nextPageToken", "");
         json_object_put(current_feature_page);
         current_feature_page = NULL;
-        return;
+
+        // End of query results?
+        if (EQUAL(osNextPageToken,""))
+            return;
     }
 
     index_in_page = 0;
@@ -185,9 +189,17 @@ void OGRGMELayer::GetPageOfFeatures()
 /*      Fetch features.                                                 */
 /* -------------------------------------------------------------------- */
     CPLString osRequest = "tables/" + osTableId + "/features";
+    CPLString osMoreOptions = "&maxResults=2";
 
-    CPLHTTPResult *psFeaturesResult = poDS->MakeRequest(osRequest,
-                                                        "&limit=2");
+    if (!EQUAL(osNextPageToken,"")) 
+    {
+        osMoreOptions += "&pageToken=";
+        osMoreOptions += osNextPageToken;
+    }
+
+    CPLHTTPResult *psFeaturesResult = 
+        poDS->MakeRequest(osRequest, osMoreOptions);
+
     if (psFeaturesResult == NULL)
         return;
     
@@ -214,6 +226,9 @@ void OGRGMELayer::GetPageOfFeatures()
 OGRFeature *OGRGMELayer::GetNextRawFeature()
 
 {
+/* -------------------------------------------------------------------- */
+/*      Fetch a new page of features if needed.                         */
+/* -------------------------------------------------------------------- */
     if (current_feature_page == NULL
         || index_in_page >= json_object_array_length(current_features_array)) 
     {
@@ -225,6 +240,9 @@ OGRFeature *OGRGMELayer::GetNextRawFeature()
         return NULL;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Identify our json feature.                                      */
+/* -------------------------------------------------------------------- */
     json_object *feature_obj =
         json_object_array_get_idx(current_features_array, index_in_page++);
     if (feature_obj == NULL) 
@@ -232,6 +250,9 @@ OGRFeature *OGRGMELayer::GetNextRawFeature()
 
     OGRFeature *poFeature = new OGRFeature(poFeatureDefn);
 
+/* -------------------------------------------------------------------- */
+/*      Handle properties.                                              */
+/* -------------------------------------------------------------------- */
     json_object *properties_obj =
         json_object_object_get(feature_obj, "properties");
     for (int iOGRField = 0;
@@ -239,11 +260,29 @@ OGRFeature *OGRGMELayer::GetNextRawFeature()
          iOGRField++ ) 
     {
         const char *pszValue = 
-            poDS->GetJSONString(properties_obj, 
-                                poFeatureDefn->GetFieldDefn(iOGRField)->GetNameRef(),
-                                NULL);
+            poDS->GetJSONString(
+                properties_obj, 
+                poFeatureDefn->GetFieldDefn(iOGRField)->GetNameRef(),
+                NULL);
         if (pszValue != NULL)
             poFeature->SetField(iOGRField, pszValue);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Handle geometry.                                                */
+/* -------------------------------------------------------------------- */
+    json_object *geometry_obj =
+        json_object_object_get(feature_obj, "geometry");
+    OGRGeometry *poGeometry = NULL;
+
+    if (geometry_obj != NULL) 
+    {
+        poGeometry = OGRGeoJSONReadGeometry(geometry_obj);
+    }
+
+    if (poGeometry != NULL) 
+    {
+        poFeature->SetGeometryDirectly(poGeometry);
     }
 
     return poFeature;
