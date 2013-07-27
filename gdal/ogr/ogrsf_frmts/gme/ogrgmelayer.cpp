@@ -175,22 +175,36 @@ void OGRGMELayer::GetPageOfFeatures()
     {
         json_object_put(current_feature_page);
         current_feature_page = NULL;
+        return;
     }
 
     index_in_page = 0;
-    current_feature_array = NULL;
+    current_features_array = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Fetch features.                                                 */
 /* -------------------------------------------------------------------- */
     CPLString osRequest = "tables/" + osTableId + "/features";
 
-    CPLHTTPResult *psFeaturesResult = poDS->MakeRequest(osRequest);
+    CPLHTTPResult *psFeaturesResult = poDS->MakeRequest(osRequest,
+                                                        "&limit=2");
     if (psFeaturesResult == NULL)
         return;
     
-    CPLDebug("GME", "features doc = %s\n", psFeaturesResult->pabyData);
+    CPLDebug("GME", 
+             "features doc = %s...", 
+             psFeaturesResult->pabyData);
     
+/* -------------------------------------------------------------------- */
+/*      Parse result.                                                   */
+/* -------------------------------------------------------------------- */
+    
+    current_feature_page = 
+        poDS->Parse((const char *) psFeaturesResult->pabyData);
+    CPLHTTPDestroyResult(psFeaturesResult);
+
+    current_features_array = 
+        json_object_object_get(current_feature_page, "features");
 }
 
 /************************************************************************/
@@ -201,7 +215,7 @@ OGRFeature *OGRGMELayer::GetNextRawFeature()
 
 {
     if (current_feature_page == NULL
-        || index_in_page >= array_list_length(current_feature_array)) 
+        || index_in_page >= json_object_array_length(current_features_array)) 
     {
         GetPageOfFeatures();
     }
@@ -210,8 +224,29 @@ OGRFeature *OGRGMELayer::GetNextRawFeature()
     {
         return NULL;
     }
-    
-    return NULL;
+
+    json_object *feature_obj =
+        json_object_array_get_idx(current_features_array, index_in_page++);
+    if (feature_obj == NULL) 
+        return NULL;
+
+    OGRFeature *poFeature = new OGRFeature(poFeatureDefn);
+
+    json_object *properties_obj =
+        json_object_object_get(feature_obj, "properties");
+    for (int iOGRField = 0;
+         iOGRField < poFeatureDefn->GetFieldCount(); 
+         iOGRField++ ) 
+    {
+        const char *pszValue = 
+            poDS->GetJSONString(properties_obj, 
+                                poFeatureDefn->GetFieldDefn(iOGRField)->GetNameRef(),
+                                NULL);
+        if (pszValue != NULL)
+            poFeature->SetField(iOGRField, pszValue);
+    }
+
+    return poFeature;
 }
 
 /************************************************************************/

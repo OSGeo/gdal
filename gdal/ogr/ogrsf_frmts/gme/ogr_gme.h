@@ -98,7 +98,7 @@ class OGRGMELayer : public OGRLayer
     CPLString          osQuery;
 
     json_object*       current_feature_page;
-    array_list*        current_feature_array;
+    json_object*       current_features_array;
     int                index_in_page;
 
     void               GetPageOfFeatures();
@@ -165,7 +165,8 @@ class OGRGMEDataSource : public OGRDataSource
 
     virtual int         TestCapability( const char * );
 
-    CPLHTTPResult*      MakeRequest(const char *pszRequest);
+    CPLHTTPResult*      MakeRequest(const char *pszRequest,
+                                    const char *pszMoreOptions = NULL);
     const CPLString&    GetAccessToken() const { return osAccessToken;}
     const char*         GetAPIURL() const;
     int                 IsReadWrite() const { return bReadWrite; }
