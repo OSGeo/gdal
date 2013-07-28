@@ -901,6 +901,7 @@ bool VFKDataBlockSQLite::LoadGeometryFromDB()
 	    if (!poFeature->SetGeometry(poGeometry)) {
 		nInvalid++;
 	    }
+	    delete poGeometry;
 	}
 	else {
 	    nInvalid++;
