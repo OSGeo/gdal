@@ -372,7 +372,13 @@ int OGRGeoJSONDataSource::ReadFromFile( const char* pszSource, VSILFILE* fpIn )
 {
     GByte* pabyOut = NULL;
     if( !VSIIngestFile( fpIn, pszSource, &pabyOut, NULL, -1) )
+    {
+        if( fpIn != NULL )
+            VSIFCloseL(fpIn);
         return FALSE;
+    }
+    if( fpIn != NULL )
+        VSIFCloseL(fpIn);
     pszGeoData_ = (char*) pabyOut;
 
     pszName_ = CPLStrdup( pszSource );
