@@ -1934,6 +1934,11 @@ int main( int nArgc, char ** papszArgv )
         }
         while( bHasLayersNonEmpty );
 
+        if (pfnProgress)
+        {
+            pfnProgress(1.0, "", pProgressArg);
+        }
+
 /* -------------------------------------------------------------------- */
 /*      Cleanup.                                                        */
 /* -------------------------------------------------------------------- */
