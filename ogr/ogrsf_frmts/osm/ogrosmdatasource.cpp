@@ -101,6 +101,16 @@
 /* Max number of features that are accumulated in panUnsortedReqIds */
 #define MAX_ACCUMULATED_NODES       1000000
 
+#ifdef ENABLE_NODE_LOOKUP_BY_HASHING
+/* Size of panHashedIndexes array. Must be in the list at */
+/* http://planetmath.org/goodhashtableprimes , and greater than MAX_ACCUMULATED_NODES */
+#define HASHED_INDEXES_ARRAY_SIZE   3145739
+//#define HASHED_INDEXES_ARRAY_SIZE   1572869
+#define COLLISION_BUCKET_ARRAY_SIZE ((MAX_ACCUMULATED_NODES / 100) * 40)
+/* hash function = identity ! */
+#define HASH_ID_FUNC(x)             ((GUIntBig)(x))
+#endif // ENABLE_NODE_LOOKUP_BY_HASHING
+
 //#define FAKE_LOOKUP_NODES
 
 //#define DEBUG_MEM_USAGE
@@ -234,6 +244,12 @@ OGROSMDataSource::OGROSMDataSource()
 
     nReqIds = 0;
     panReqIds = NULL;
+#ifdef ENABLE_NODE_LOOKUP_BY_HASHING
+    bEnableHashedIndex = TRUE;
+    panHashedIndexes = NULL;
+    psCollisionBuckets = NULL;
+    bHashedIndexValid = FALSE;
+#endif
     pasLonLatArray = NULL;
     nUnsortedReqIds = 0;
     panUnsortedReqIds = NULL;
@@ -289,6 +305,10 @@ OGROSMDataSource::~OGROSMDataSource()
     }
 
     CPLFree(panReqIds);
+#ifdef ENABLE_NODE_LOOKUP_BY_HASHING
+    CPLFree(panHashedIndexes);
+    CPLFree(psCollisionBuckets);
+#endif
     CPLFree(pasLonLatArray);
     CPLFree(panUnsortedReqIds);
 
@@ -836,12 +856,88 @@ static void OGROSMNotifyNodes (unsigned int nNodes, OSMNode* pasNodes,
 /*                            LookupNodes()                             */
 /************************************************************************/
 
+//#define DEBUG_COLLISIONS 1
+
 void OGROSMDataSource::LookupNodes( )
 {
     if( bCustomIndexing )
         LookupNodesCustom();
     else
         LookupNodesSQLite();
+
+#ifdef ENABLE_NODE_LOOKUP_BY_HASHING
+    if( nReqIds > 1 && bEnableHashedIndex )
+    {
+        memset(panHashedIndexes, 0xFF, HASHED_INDEXES_ARRAY_SIZE * sizeof(int));
+        bHashedIndexValid = TRUE;
+#ifdef DEBUG_COLLISIONS
+        int nCollisions = 0;
+#endif
+        int iNextFreeBucket = 0;
+        for(unsigned int i = 0; i < nReqIds; i++)
+        {
+            int nIndInHashArray = HASH_ID_FUNC(panReqIds[i]) % HASHED_INDEXES_ARRAY_SIZE;
+            int nIdx = panHashedIndexes[nIndInHashArray];
+            if( nIdx == -1 )
+            {
+                panHashedIndexes[nIndInHashArray] = i;
+            }
+            else
+            {
+#ifdef DEBUG_COLLISIONS
+                nCollisions ++;
+#endif
+                int iBucket;
+                if( nIdx >= 0 )
+                {
+                    if(iNextFreeBucket == COLLISION_BUCKET_ARRAY_SIZE)
+                    {
+                        CPLDebug("OSM", "Too many collisions. Disabling hashed indexing");
+                        bHashedIndexValid = FALSE;
+                        bEnableHashedIndex = FALSE;
+                        break;
+                    }
+                    iBucket = iNextFreeBucket;
+                    psCollisionBuckets[iNextFreeBucket].nInd = nIdx;
+                    psCollisionBuckets[iNextFreeBucket].nNext = -1;
+                    panHashedIndexes[nIndInHashArray] = -iNextFreeBucket - 2;
+                    iNextFreeBucket ++;
+                }
+                else
+                    iBucket = -nIdx - 2;
+                if(iNextFreeBucket == COLLISION_BUCKET_ARRAY_SIZE)
+                {
+                    CPLDebug("OSM", "Too many collisions. Disabling hashed indexing");
+                    bHashedIndexValid = FALSE;
+                    bEnableHashedIndex = FALSE;
+                    break;
+                }
+                while( TRUE )
+                {
+                    int iNext = psCollisionBuckets[iBucket].nNext;
+                    if( iNext < 0 )
+                    {
+                        psCollisionBuckets[iBucket].nNext = iNextFreeBucket;
+                        psCollisionBuckets[iNextFreeBucket].nInd = i;
+                        psCollisionBuckets[iNextFreeBucket].nNext = -1;
+                        iNextFreeBucket ++;
+                        break;
+                    }
+                    iBucket = iNext;
+                }
+            }
+        }
+#ifdef DEBUG_COLLISIONS
+        /* Collision rate in practice is around 12% on France, Germany, ... */
+        /* Maximum seen ~ 15.9% on a planet file but often much smaller. */
+        CPLDebug("OSM", "nCollisions = %d/%d (%.1f %%), iNextFreeBucket = %d/%d",
+                 nCollisions, nReqIds, nCollisions * 100.0 / nReqIds,
+                 iNextFreeBucket, COLLISION_BUCKET_ARRAY_SIZE);
+#endif
+    }
+    else
+        bHashedIndexValid = FALSE;
+#endif // ENABLE_NODE_LOOKUP_BY_HASHING
 }
 
 /************************************************************************/
@@ -1483,16 +1579,16 @@ int OGROSMDataSource::FindNode(GIntBig nID)
 {
     int iFirst = 0;
     int iLast = nReqIds - 1;
-    while(iFirst <= iLast)
+    while(iFirst < iLast)
     {
         int iMid = (iFirst + iLast) / 2;
-        if( nID < panReqIds[iMid])
-            iLast = iMid - 1;
-        else if( nID > panReqIds[iMid])
+        if( nID > panReqIds[iMid])
             iFirst = iMid + 1;
         else
-            return iMid;
+            iLast = iMid;
     }
+    if( iFirst == iLast && nID == panReqIds[iFirst] )
+        return iFirst;
     return -1;
 }
 
@@ -1516,23 +1612,66 @@ void OGROSMDataSource::ProcessWaysBatch()
 
         unsigned int nFound = 0;
         unsigned int i;
-        int nIdx = -1;
-        for(i=0;i<psWayFeaturePairs->nRefs;i++)
+
+#ifdef ENABLE_NODE_LOOKUP_BY_HASHING
+        if( bHashedIndexValid )
         {
-            if( nIdx >= 0 && psWayFeaturePairs->panNodeRefs[i] == psWayFeaturePairs->panNodeRefs[i-1] + 1 )
+            for(i=0;i<psWayFeaturePairs->nRefs;i++)
             {
-                if( nIdx+1 < (int)nReqIds && panReqIds[nIdx+1] == psWayFeaturePairs->panNodeRefs[i] )
-                    nIdx ++;
-                else
+                int nIndInHashArray =
+                    HASH_ID_FUNC(psWayFeaturePairs->panNodeRefs[i]) %
+                        HASHED_INDEXES_ARRAY_SIZE;
+                int nIdx = panHashedIndexes[nIndInHashArray];
+                if( nIdx < -1 )
+                {
+                    int iBucket = -nIdx - 2;
+                    while( TRUE )
+                    {
+                        nIdx = psCollisionBuckets[iBucket].nInd;
+                        if( panReqIds[nIdx] == psWayFeaturePairs->panNodeRefs[i] )
+                            break;
+                        iBucket = psCollisionBuckets[iBucket].nNext;
+                        if( iBucket < 0 )
+                        {
+                            nIdx = -1;
+                            break;
+                        }
+                    }
+                }
+                else if( panReqIds[nIdx] != psWayFeaturePairs->panNodeRefs[i] )
                     nIdx = -1;
+
+                if (nIdx >= 0)
+                {
+                    pasLonLatCache[nFound].nLon = pasLonLatArray[nIdx].nLon;
+                    pasLonLatCache[nFound].nLat = pasLonLatArray[nIdx].nLat;
+                    nFound ++;
+                }
             }
-            else
-                nIdx = FindNode( psWayFeaturePairs->panNodeRefs[i] );
-            if (nIdx >= 0)
+        }
+        else
+#endif // ENABLE_NODE_LOOKUP_BY_HASHING
+        {
+            int nIdx = -1;
+            for(i=0;i<psWayFeaturePairs->nRefs;i++)
             {
-                pasLonLatCache[nFound].nLon = pasLonLatArray[nIdx].nLon;
-                pasLonLatCache[nFound].nLat = pasLonLatArray[nIdx].nLat;
-                nFound ++;
+                if( nIdx >= 0 && psWayFeaturePairs->panNodeRefs[i] ==
+                                 psWayFeaturePairs->panNodeRefs[i-1] + 1 )
+                {
+                    if( nIdx+1 < (int)nReqIds && panReqIds[nIdx+1] ==
+                                        psWayFeaturePairs->panNodeRefs[i] )
+                        nIdx ++;
+                    else
+                        nIdx = -1;
+                }
+                else
+                    nIdx = FindNode( psWayFeaturePairs->panNodeRefs[i] );
+                if (nIdx >= 0)
+                {
+                    pasLonLatCache[nFound].nLon = pasLonLatArray[nIdx].nLon;
+                    pasLonLatCache[nFound].nLat = pasLonLatArray[nIdx].nLat;
+                    nFound ++;
+                }
             }
         }
 
@@ -2570,6 +2709,10 @@ int OGROSMDataSource::Open( const char * pszFilename, int bUpdateIn)
     pabyWayBuffer = (GByte*)VSIMalloc(WAY_BUFFER_SIZE);
 
     panReqIds = (GIntBig*)VSIMalloc(MAX_ACCUMULATED_NODES * sizeof(GIntBig));
+#ifdef ENABLE_NODE_LOOKUP_BY_HASHING
+    panHashedIndexes = (int*)VSIMalloc(HASHED_INDEXES_ARRAY_SIZE * sizeof(int));
+    psCollisionBuckets = (CollisionBucket*)VSIMalloc(COLLISION_BUCKET_ARRAY_SIZE * sizeof(CollisionBucket));
+#endif
     pasLonLatArray = (LonLat*)VSIMalloc(MAX_ACCUMULATED_NODES * sizeof(LonLat));
     panUnsortedReqIds = (GIntBig*)VSIMalloc(MAX_ACCUMULATED_NODES * sizeof(GIntBig));
     pasWayFeaturePairs = (WayFeaturePair*)VSIMalloc(MAX_DELAYED_FEATURES * sizeof(WayFeaturePair));
