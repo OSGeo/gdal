@@ -30,6 +30,9 @@
 #ifndef _OGR_OSM_H_INCLUDED
 #define _OGR_OSM_H_INCLUDED
 
+// replace O(log2(N)) complexity of FindNode() by O(1)
+#define ENABLE_NODE_LOOKUP_BY_HASHING 1
+
 #include "ogrsf_frmts.h"
 #include "cpl_string.h"
 
@@ -227,6 +230,14 @@ typedef struct
     int                 bAttrFilterAlreadyEvaluated : 1;
 } WayFeaturePair;
 
+#ifdef ENABLE_NODE_LOOKUP_BY_HASHING
+typedef struct
+{
+    int nInd;           /* values are indexes of panReqIds */
+    int nNext;          /* values are indexes of psCollisionBuckets, or -1 to stop the chain */
+} CollisionBucket;
+#endif
+
 class OGROSMDataSource : public OGRDataSource
 {
     friend class OGROSMLayer;
@@ -307,6 +318,17 @@ class OGROSMDataSource : public OGRDataSource
 
     unsigned int        nReqIds;
     GIntBig            *panReqIds;
+
+#ifdef ENABLE_NODE_LOOKUP_BY_HASHING
+    int                 bEnableHashedIndex;
+    /* values >= 0 are indexes of panReqIds. */
+    /*        == -1 for unoccupied */
+    /*        < -1 are expressed as -nIndexToCollisonBuckets-2 where nIndexToCollisonBuckets point to psCollisionBuckets */
+    int                *panHashedIndexes; 
+    CollisionBucket    *psCollisionBuckets;
+    int                 bHashedIndexValid;
+#endif
+
     LonLat             *pasLonLatArray;
 
     IndexedKVP         *pasAccumulatedTags; /* points to content of pabyNonRedundantValues or aoMapIndexedKeys */
