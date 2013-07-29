@@ -166,7 +166,7 @@ const struct sqlite3_api_routines OGRSQLITE_static_routines =
   NULL, /*sqlite3_set_auxdata,*/
   sqlite3_snprintf,
   sqlite3_step, /* YES */
-  sqlite3_table_column_metadata,
+  NULL, /*sqlite3_table_column_metadata,*/
   NULL, /*sqlite3_thread_cleanup,*/
   sqlite3_total_changes,
   NULL, /*sqlite3_trace,*/
