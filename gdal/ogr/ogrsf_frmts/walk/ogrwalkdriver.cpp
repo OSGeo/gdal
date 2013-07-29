@@ -61,7 +61,8 @@ OGRDataSource *OGRWalkDriver::Open( const char * pszFilename, int bUpdate )
     if( EQUALN(pszFilename, "GEOMEDIA:", strlen("GEOMEDIA:")) )
         return NULL;
 
-    if( !EQUAL(CPLGetExtension(pszFilename), "MDB") )
+    if( !EQUALN(pszFilename,"WALK:", strlen("WALK:"))
+        && !EQUAL(CPLGetExtension(pszFilename), "MDB") )
         return NULL;
 
     OGRWalkDataSource  *poDS = new OGRWalkDataSource();

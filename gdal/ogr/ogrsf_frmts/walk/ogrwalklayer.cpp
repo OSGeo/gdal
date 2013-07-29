@@ -261,7 +261,7 @@ OGRFeature *OGRWalkLayer::GetNextRawFeature()
         int iField = poStmt->GetColId( pszGeomColumn );
         const char *pszGeomBin = poStmt->GetColData( iField );
         int nGeomLength = poStmt->GetColDataLength( iField );
-        OGRGeometry* poGeom = NULL;
+        OGRGeometry *poGeom = NULL;
         OGRErr eErr = OGRERR_NONE;
 
         if( pszGeomBin != NULL && bGeomColumnWKB )
