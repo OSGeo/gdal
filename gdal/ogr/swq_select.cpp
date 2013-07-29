@@ -777,7 +777,7 @@ CPLErr swq_select::parse( swq_field_list *field_list,
             def->field_index = -1;
             def->table_index = -1;
 
-            if( def->expr->Check( field_list ) == SWQ_ERROR )
+            if( def->expr->Check( field_list, TRUE ) == SWQ_ERROR )
                 return CE_Failure;
                 
             def->field_type = def->expr->field_type;
@@ -940,13 +940,22 @@ CPLErr swq_select::parse( swq_field_list *field_list,
         swq_order_def *def = order_defs + i;
 
         /* identify field */
+        swq_field_type field_type;
         def->field_index = swq_identify_field( def->field_name, field_list,
-                                               NULL, &(def->table_index) );
+                                               &field_type, &(def->table_index) );
         if( def->field_index == -1 )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "Unrecognised field name %s in ORDER BY.", 
                      def->field_name );
+            return CE_Failure;
+        }
+
+        if( def->table_index != 0 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Cannot use field '%s' of a secondary table in a ORDER BY clause",
+                      def->field_name );
             return CE_Failure;
         }
     }
@@ -956,7 +965,7 @@ CPLErr swq_select::parse( swq_field_list *field_list,
 /*      doing final validation.                                         */
 /* -------------------------------------------------------------------- */
     if( where_expr != NULL 
-        && where_expr->Check( field_list ) == SWQ_ERROR )
+        && where_expr->Check( field_list, FALSE ) == SWQ_ERROR )
     {
         return CE_Failure;
     }
