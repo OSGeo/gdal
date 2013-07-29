@@ -168,7 +168,7 @@
 #  include <direct.h>
 #endif
 
-#ifdef _AIX
+#if !(defined(WIN32) || defined(WIN32CE))
 #  include <strings.h>
 #endif
 
