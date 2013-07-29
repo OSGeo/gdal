@@ -105,7 +105,7 @@ ElementPtr geom2kml (
 
     int numpoints = 0;
     int nGeom;
-    int type = poOgrGeom->getGeometryType (  );
+    OGRwkbGeometryType type = poOgrGeom->getGeometryType (  );
 
     wkb25D = type & wkb25DBit;
 
