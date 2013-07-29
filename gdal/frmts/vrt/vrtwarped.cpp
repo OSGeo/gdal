@@ -109,7 +109,7 @@ GDALAutoCreateWarpedVRT( GDALDatasetH hSrcDS,
     psWO->hSrcDS = hSrcDS;
 
 /* -------------------------------------------------------------------- */
-/*      Define band mapping if necessary.
+/*      Define band mapping if necessary.                               */
 /* -------------------------------------------------------------------- */
     if( psWO->nBandCount == GDALGetRasterCount( hSrcDS ) ||
         psWO->nBandCount == 0 )
