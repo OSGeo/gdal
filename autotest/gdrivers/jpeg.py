@@ -74,7 +74,7 @@ def jpeg_2():
         if md['EXIF_GPSLatitudeRef'] != 'N' \
            or md['EXIF_GPSLatitude'] != '(41) (1) (22.91)' \
            or md['EXIF_PixelXDimension'] != '361' \
-           or md['EXIF_GPSVersionID'] != '0x2 00 00 00' \
+           or (md['EXIF_GPSVersionID'] != '0x2 00 00 00' and  md['EXIF_GPSVersionID'] != '0x2 0x0 0x0 0x0') \
            or md['EXIF_ExifVersion'] != '0210' \
            or md['EXIF_XResolution'] != '(96)':
             print(md)
