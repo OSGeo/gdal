@@ -10,6 +10,9 @@
  * NOTES
  *****************************************************************************
  */
+
+/* For S_IFDIR */
+#define _XOPEN_SOURCE 500
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
