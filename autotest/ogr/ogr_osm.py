@@ -492,6 +492,8 @@ def ogr_osm_7():
         return 'fail'
 
     sql_lyr = ds.ExecuteSQL('SELECT * FROM points LIMIT 10', dialect = 'SQLite')
+    if sql_lyr is None and gdal.GetLastErrorMsg().find('automatic extension loading failed') != 0:
+        return 'skip'
     count = sql_lyr.GetFeatureCount()
     ds.ReleaseResultSet(sql_lyr)
 

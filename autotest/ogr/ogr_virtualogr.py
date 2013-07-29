@@ -37,6 +37,7 @@ sys.path.append( '../pymod' )
 from osgeo import ogr
 from osgeo import gdal
 import gdaltest
+import ogrtest
 
 ###############################################################################
 def ogr_virtualogr_run_sql(sql_statement):
@@ -69,8 +70,16 @@ def ogr_virtualogr_run_sql(sql_statement):
 
 def ogr_virtualogr_1():
 
+    ogrtest.has_sqlite_dialect = False
     if ogr.GetDriverByName('SQLite') is None:
         return 'skip'
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
+    sql_lyr = ds.ExecuteSQL( "SELECT * FROM sqlite_master", dialect = 'SQLite' )
+    ds.ReleaseResultSet( sql_lyr )
+    if sql_lyr is None:
+        return 'skip'
+    ogrtest.has_sqlite_dialect = True
 
     # Invalid syntax
     if ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR()"):
@@ -138,7 +147,7 @@ def ogr_virtualogr_1():
 
 def ogr_virtualogr_2():
 
-    if ogr.GetDriverByName('SQLite') is None:
+    if not ogrtest.has_sqlite_dialect:
         return 'skip'
 
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_virtualogr_2.db')
@@ -220,7 +229,7 @@ def ogr_virtualogr_2():
 
 def ogr_virtualogr_3():
 
-    if ogr.GetDriverByName('SQLite') is None:
+    if not ogrtest.has_sqlite_dialect:
         return 'skip'
 
     # Find path of libgdal
@@ -258,7 +267,7 @@ def ogr_virtualogr_3():
 
 def ogr_virtualogr_4():
 
-    if ogr.GetDriverByName('SQLite') is None:
+    if not ogrtest.has_sqlite_dialect:
         return 'skip'
 
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_virtualogr_4.db')
@@ -326,7 +335,7 @@ def ogr_virtualogr_4():
 
 def ogr_virtualogr_5():
 
-    if ogr.GetDriverByName('SQLite') is None:
+    if not ogrtest.has_sqlite_dialect:
         return 'skip'
 
     # Create a CSV with duplicate column name
