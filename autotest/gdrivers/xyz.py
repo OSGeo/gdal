@@ -53,8 +53,16 @@ def xyz_1():
 
 def xyz_2():
 
-    tst = gdaltest.GDALTest( 'XYZ', 'float.img', 1, 23529, options = ['COLUMN_SEPARATOR=,', 'ADD_HEADER_LINE=YES'] )
-    return tst.testCreateCopy()
+    src_ds = gdal.Open('data/float.img')
+    ds = gdal.GetDriverByName('XYZ').CreateCopy('tmp/float.xyz', src_ds, options = ['COLUMN_SEPARATOR=,', 'ADD_HEADER_LINE=YES'] )
+    got_cs = ds.GetRasterBand(1).Checksum()
+    expected_cs = src_ds.GetRasterBand(1).Checksum()
+    ds = None
+    gdal.GetDriverByName('XYZ').Delete('tmp/float.xyz')
+    if got_cs != expected_cs and got_cs != 24387:
+        print(got_cs)
+        return 'fail'
+    return 'success'
 
 ###############################################################################
 # Test random access to lines of imagery

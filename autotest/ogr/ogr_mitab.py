@@ -528,6 +528,10 @@ def ogr_mitab_16():
     if gdaltest.mapinfo_drv is None:
         return 'skip'
 
+    import ogr_gml_read
+    if ogr_gml_read.ogr_gml_1() != 'success':
+        return 'skip'
+
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
         return 'skip'

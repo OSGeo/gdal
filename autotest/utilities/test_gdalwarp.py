@@ -975,10 +975,12 @@ def test_gdalwarp_34():
         print(cs)
         return 'fail'
 
-    if gt != (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0):
-        gdaltest.post_reason('bad gt')
-        print(gt)
-        return 'fail'
+    expected_gt = (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
+    for i in range(6):
+        if abs(gt[i] - expected_gt[i]) > 1e-5:
+            gdaltest.post_reason('bad gt')
+            print(gt)
+            return 'fail'
 
     return 'success'
 
