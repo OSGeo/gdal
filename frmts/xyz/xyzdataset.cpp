@@ -1175,7 +1175,7 @@ GDALDataset* XYZDataset::CreateCopy( const char * pszFilename,
     poXYZ_DS->SetBand( 1, new XYZRasterBand( poXYZ_DS, 1, eReqDT ) );
     /* If outputing to stdout, we can't reopen it --> silence warning */
     CPLPushErrorHandler(CPLQuietErrorHandler);
-    poXYZ_DS->fp = VSIFOpenL( pszFilename, "r" );
+    poXYZ_DS->fp = VSIFOpenL( pszFilename, "rb" );
     CPLPopErrorHandler();
     memcpy( &(poXYZ_DS->adfGeoTransform), adfGeoTransform, sizeof(double)*6 );
     poXYZ_DS->nXIndex = 0;
