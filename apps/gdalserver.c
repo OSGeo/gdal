@@ -27,6 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#define _POSIX_C_SOURCE 1
+
 #include "cpl_port.h"
 
 #ifdef WIN32
