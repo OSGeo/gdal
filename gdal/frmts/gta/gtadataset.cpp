@@ -853,7 +853,7 @@ CPLErr GTADataset::ReadBlock( int nBlockXOff, int nBlockYOff )
 
         try
         {
-            uintmax_t lo[2] = { nBlockXOff * nBlockXSize, nBlockYOff * nBlockYSize};
+            uintmax_t lo[2] = { (uintmax_t)nBlockXOff * nBlockXSize, (uintmax_t)nBlockYOff * nBlockYSize};
             uintmax_t hi[2] = { lo[0] + nBlockXSize - 1, lo[1] + nBlockYSize - 1 };
             oHeader.read_block( oGTAIO, DataOffset, lo, hi, pBlock );
         }
@@ -883,7 +883,7 @@ CPLErr GTADataset::WriteBlock( )
     // Write the block (nLastBlockXOff, nLastBlockYOff) stored in pBlock.
     try
     {
-        uintmax_t lo[2] = { nLastBlockXOff * nBlockXSize, nLastBlockYOff * nBlockYSize};
+        uintmax_t lo[2] = { (uintmax_t)nLastBlockXOff * nBlockXSize, (uintmax_t)nLastBlockYOff * nBlockYSize};
         uintmax_t hi[2] = { lo[0] + nBlockXSize - 1, lo[1] + nBlockYSize - 1 };
         oHeader.write_block( oGTAIO, DataOffset, lo, hi, pBlock );
     }
