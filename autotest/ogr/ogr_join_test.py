@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -31,7 +32,8 @@ import sys
 sys.path.append( '../pymod' )
 
 import gdaltest
-import ogr
+from osgeo import gdal
+from osgeo import ogr
 import ogrtest
 
 ###############################################################################
@@ -363,6 +365,125 @@ def ogr_join_15():
     return 'success'
 
 ###############################################################################
+# Test non-support of a secondarytable.fieldname in a where clause
+
+def ogr_join_16():
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    sql_lyr = gdaltest.ds.ExecuteSQL(   \
+        'SELECT * FROM poly ' \
+        + 'LEFT JOIN idlink ON poly.eas_id = idlink.eas_id ' \
+        + 'WHERE idlink.name = \'_165\'' )
+    gdal.PopErrorHandler()
+
+    if gdal.GetLastErrorMsg().find('Cannot use field') != 0:
+        return 'fail'
+
+    if sql_lyr is None:
+        return 'success'
+    else:
+        return 'fail'
+
+###############################################################################
+# Test non-support of a secondarytable.fieldname in a order by clause
+
+def ogr_join_17():
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    sql_lyr = gdaltest.ds.ExecuteSQL(   \
+        'SELECT * FROM poly ' \
+        + 'LEFT JOIN idlink ON poly.eas_id = idlink.eas_id ' \
+        + 'ORDER BY name' )
+    gdal.PopErrorHandler()
+
+    if gdal.GetLastErrorMsg().find('Cannot use field') != 0:
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    if sql_lyr is None:
+        return 'success'
+    else:
+        return 'fail'
+
+###############################################################################
+# Test wrong order of fiels in ON
+
+def ogr_join_18():
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    sql_lyr = gdaltest.ds.ExecuteSQL(   \
+        'SELECT * FROM poly LEFT JOIN idlink ON idlink.eas_id = poly.eas_id'  )
+    gdal.PopErrorHandler()
+
+    if gdal.GetLastErrorMsg().find('Currently the primary key must come from the primary table in') != 0:
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    if sql_lyr is None:
+        return 'success'
+    else:
+        return 'fail'
+
+###############################################################################
+# Test unrecognized primary field
+
+def ogr_join_19():
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    sql_lyr = gdaltest.ds.ExecuteSQL(   \
+        'SELECT * FROM poly LEFT JOIN idlink ON poly.foo = idlink.eas_id'  )
+    gdal.PopErrorHandler()
+
+    if gdal.GetLastErrorMsg().find('Unrecognised primary field poly.foo in JOIN clause') != 0:
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    if sql_lyr is None:
+        return 'success'
+    else:
+        return 'fail'
+
+###############################################################################
+# Test unrecognized secondary field
+
+def ogr_join_20():
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    sql_lyr = gdaltest.ds.ExecuteSQL(   \
+        'SELECT * FROM poly LEFT JOIN idlink ON poly.eas_id = idlink.foo'  )
+    gdal.PopErrorHandler()
+
+    if gdal.GetLastErrorMsg().find('Unrecognised secondary field idlink.foo in JOIN clause') != 0:
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    if sql_lyr is None:
+        return 'success'
+    else:
+        return 'fail'
+
+###############################################################################
+# Test unexpected secondary table
+
+def ogr_join_21():
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    sql_lyr = gdaltest.ds.ExecuteSQL(   \
+        'SELECT p.*, il.name, il2.eas_id FROM poly p ' \
+        + 'LEFT JOIN "data/idlink.dbf".idlink il ON p.eas_id = il2.eas_id ' \
+        + 'LEFT JOIN idlink il2 ON p.eas_id = il2.eas_id' )
+    gdal.PopErrorHandler()
+
+    if gdal.GetLastErrorMsg().find('Currently the secondary key must come from the secondary table') != 0:
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    if sql_lyr is None:
+        return 'success'
+    else:
+        return 'fail'
+
+###############################################################################
 
 def ogr_join_cleanup():
     gdaltest.lyr = None
@@ -387,6 +508,12 @@ gdaltest_list = [
     ogr_join_13,
     ogr_join_14,
     ogr_join_15,
+    ogr_join_16,
+    ogr_join_17,
+    ogr_join_18,
+    ogr_join_19,
+    ogr_join_20,
+    ogr_join_21,
     ogr_join_cleanup ]
 
 if __name__ == '__main__':

@@ -744,6 +744,101 @@ def ogr_rfc28_33():
         return 'fail'
 
 ###############################################################################
+# Test wildchar expension of an unknown table
+
+def ogr_rfc28_34():
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    lyr = gdaltest.ds.ExecuteSQL( "select foo.* from idlink" )
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg().find('Table foo not recognised from foo.* definition') != 0:
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    if lyr is None:
+        return 'success'
+    else:
+        return 'fail'
+
+###############################################################################
+# Test selecting more than one distinct
+
+def ogr_rfc28_35():
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    lyr = gdaltest.ds.ExecuteSQL( "select distinct eas_id, distinct name from idlink" )
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg().find('SELECTing more than one DISTINCT') != 0:
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    if lyr is None:
+        return 'success'
+    else:
+        return 'fail'
+
+###############################################################################
+# Test ORDER BY a DISTINCT list by more than one key
+
+def ogr_rfc28_36():
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    lyr = gdaltest.ds.ExecuteSQL( "select distinct eas_id from idlink order by eas_id, name" )
+    if lyr is not None:
+        lyr.GetNextFeature()
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg().find("Can't ORDER BY a DISTINCT list by more than one key") != 0:
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+    gdaltest.ds.ReleaseResultSet( lyr )
+    return 'success'
+
+###############################################################################
+# Test different fields for ORDER BY and DISTINCT
+
+def ogr_rfc28_37():
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    lyr = gdaltest.ds.ExecuteSQL( "select distinct eas_id from idlink order by name" )
+    if lyr is not None:
+        lyr.GetNextFeature()
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg().find("Only selected DISTINCT field can be used for ORDER BY") != 0:
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+    gdaltest.ds.ReleaseResultSet( lyr )
+    return 'success'
+
+###############################################################################
+# Test invalid SUBSTR 
+
+def ogr_rfc28_38():
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    lyr = gdaltest.ds.ExecuteSQL( "SELECT SUBSTR(PRFEDEA) from poly" )
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg().find("Expected 2 or 3 arguments to SUBSTR(), but got 1") != 0:
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+    if lyr is not None:
+        return 'fail'
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    lyr = gdaltest.ds.ExecuteSQL( "SELECT SUBSTR(1,2) from poly" )
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg().find("Wrong argument type for SUBSTR()") != 0:
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+    if lyr is not None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 def ogr_rfc28_cleanup():
     gdaltest.lyr = None
     gdaltest.ds.Destroy()
@@ -786,6 +881,11 @@ gdaltest_list = [
     ogr_rfc28_31,
     ogr_rfc28_32,
     ogr_rfc28_33,
+    ogr_rfc28_34,
+    ogr_rfc28_35,
+    ogr_rfc28_36,
+    ogr_rfc28_37,
+    ogr_rfc28_38,
     ogr_rfc28_cleanup ]
 
 if __name__ == '__main__':

@@ -1006,11 +1006,17 @@ def ogr_sql_34():
 
     gdaltest.ds.ReleaseResultSet( sql_lyr )
 
-    if val == 1:
-        return 'success'
-    else:
+    if val != 1:
         print(val)
         return 'fail'
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    sql_lyr = gdaltest.ds.ExecuteSQL( "select count(*) from poly where eas_id in ('a165')" )
+    gdal.PopErrorHandler()
+    if sql_lyr is not None:
+        return 'fail'
+
+    return 'success'
 
 ###############################################################################
 # Test huge SQL queries (#4262)
@@ -1181,6 +1187,55 @@ def ogr_sql_38():
         print(val)
         return 'fail'
 
+###############################################################################
+# Test ORDER BY on a float special field
+
+def ogr_sql_39():
+
+    sql_lyr = gdaltest.ds.ExecuteSQL( "SELECT * FROM poly ORDER BY OGR_GEOM_AREA" )
+
+    feat = sql_lyr.GetNextFeature()
+    val = feat.GetFieldAsDouble(0)
+
+    gdaltest.ds.ReleaseResultSet( sql_lyr )
+
+    if abs(val - 5268.813) < 1e-5:
+        return 'success'
+    else:
+        print(val)
+        return 'fail'
+
+###############################################################################
+# Test ORDER BY on a int special field
+
+def ogr_sql_40():
+
+    sql_lyr = gdaltest.ds.ExecuteSQL( "SELECT * FROM poly ORDER BY FID DESC" )
+
+    feat = sql_lyr.GetNextFeature()
+
+    gdaltest.ds.ReleaseResultSet( sql_lyr )
+
+    if feat.GetFID() == 9:
+        return 'success'
+    else:
+        return 'fail'
+
+###############################################################################
+# Test ORDER BY on a string special field
+
+def ogr_sql_41():
+
+    sql_lyr = gdaltest.ds.ExecuteSQL( "SELECT * FROM poly ORDER BY OGR_GEOMETRY" )
+
+    feat = sql_lyr.GetNextFeature()
+
+    gdaltest.ds.ReleaseResultSet( sql_lyr )
+
+    if feat.GetFID() == 0:
+        return 'success'
+    else:
+        return 'fail'
 
 def ogr_sql_cleanup():
     gdaltest.lyr = None
@@ -1229,6 +1284,9 @@ gdaltest_list = [
     ogr_sql_36,
     ogr_sql_37,
     ogr_sql_38,
+    ogr_sql_39,
+    ogr_sql_40,
+    ogr_sql_41,
     ogr_sql_cleanup ]
 
 if __name__ == '__main__':
