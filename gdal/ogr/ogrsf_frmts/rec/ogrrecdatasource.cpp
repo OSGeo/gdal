@@ -103,7 +103,7 @@ int OGRRECDataSource::Open( const char * pszFilename )
     const char * pszLine;
     FILE       * fp;
 
-    fp = VSIFOpen( pszFilename, "r" );
+    fp = VSIFOpen( pszFilename, "rb" );
     if( fp == NULL )
         return FALSE;
     
