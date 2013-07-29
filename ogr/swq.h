@@ -105,7 +105,7 @@ public:
     void           Initialize();
     char          *Unparse( swq_field_list *, char chColumnQuote );
     void           Dump( FILE *fp, int depth );
-    swq_field_type Check( swq_field_list * );
+    swq_field_type Check( swq_field_list *, int bAllowFieldsInSecondaryTables );
     swq_expr_node* Evaluate( swq_field_fetcher pfnFetcher, 
                              void *record );
 
