@@ -56,9 +56,13 @@ def osr_ct_1():
     ll_srs = osr.SpatialReference()
     ll_srs.SetWellKnownGeogCS( 'WGS84' )
 
-    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     try:
+        gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
         ct = osr.CoordinateTransformation( ll_srs, utm_srs )
+        gdal.PopErrorHandler()
+        if gdal.GetLastErrorMsg().find('Unable to load PROJ.4') != -1:
+            gdaltest.post_reason( 'PROJ.4 missing, transforms not available.' )
+            return 'skip'
     except ValueError:
         gdal.PopErrorHandler()
         if gdal.GetLastErrorMsg().find('Unable to load PROJ.4') != -1:
@@ -68,7 +72,6 @@ def osr_ct_1():
             gdaltest.post_reason( gdal.GetLastErrorMsg() )
             return 'fail'
 
-    gdal.PopErrorHandler()
     if ct is None or ct.this is None:
         gdaltest.post_reason( 'Unable to create simple CoordinateTransformat.')
         return 'fail'
