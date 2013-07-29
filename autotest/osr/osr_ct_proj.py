@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -56,6 +57,11 @@ class ProjTest:
 
     def testProj(self):
 
+        import osr_ct
+        osr_ct.osr_ct_1()
+        if gdaltest.have_proj4 == 0:
+            return 'skip'
+
         if self.requirements is not None and self.requirements[:5] == 'GRID:':
             try:
                 proj_lib = os.environ['PROJ_LIB']
@@ -88,6 +94,9 @@ class ProjTest:
             gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
             ct = osr.CoordinateTransformation( src, dst )
             gdal.PopErrorHandler()
+            if gdal.GetLastErrorMsg().find('Unable to load PROJ.4') != -1:
+                gdaltest.post_reason( 'PROJ.4 missing, transforms not available.' )
+                return 'skip'
         except ValueError:
             gdal.PopErrorHandler()
             if gdal.GetLastErrorMsg().find('Unable to load PROJ.4') != -1:

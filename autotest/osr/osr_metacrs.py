@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -112,6 +113,9 @@ class MetaCRSTest:
             gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
             ct = osr.CoordinateTransformation( self.src_srs, self.dst_srs )
             gdal.PopErrorHandler()
+            if gdal.GetLastErrorMsg().find('Unable to load PROJ.4') != -1:
+                gdaltest.post_reason( 'PROJ.4 missing, transforms not available.' )
+                return 'skip'
         except ValueError:
             gdal.PopErrorHandler()
             if gdal.GetLastErrorMsg().find('Unable to load PROJ.4') != -1:
