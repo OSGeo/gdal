@@ -2733,6 +2733,20 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     sqlite3_finalize( hSelectStmt );
 
 /* -------------------------------------------------------------------- */
+/*      Translate SRS to PROJ.4 string (if not already done)            */
+/* -------------------------------------------------------------------- */
+    if( osProj4.size() == 0 )
+    {
+        char* pszProj4 = NULL;
+        if( oSRS.exportToProj4( &pszProj4 ) == OGRERR_NONE )
+        {
+            osProj4 = pszProj4;
+            CPLFree( pszProj4 );
+            pszProj4 = NULL;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      If we have an authority code try to assign SRS ID the same      */
 /*      as that code.                                                   */
 /* -------------------------------------------------------------------- */
