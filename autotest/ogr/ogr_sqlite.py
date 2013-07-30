@@ -947,6 +947,15 @@ def ogr_sqlite_18():
         print(wkt)
         return 'fail'
 
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM spatial_ref_sys ORDER BY srid DESC LIMIT 1");
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetField('auth_name') != 'OGR' or \
+       feat.GetField('proj4text').find('+proj=vandg') != 0:
+        feat.DumpReadable()
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
+
     ds.Destroy()
 
     return 'success'
