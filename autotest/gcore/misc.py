@@ -121,7 +121,7 @@ def misc_4():
 def misc_5_internal(drv, datatype, nBands):
 
     dirname = 'tmp/tmp/tmp_%s_%d_%s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
-    print('drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype)))
+    #print('drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype)))
     try:
         os.mkdir(dirname)
     except:
@@ -253,18 +253,17 @@ def misc_6_internal(datatype, nBands):
     if nBands == 0:
         ds = gdal.GetDriverByName('ILWIS').Create('tmp/tmp.mpl', 100, 100, nBands, datatype)
     else:
-        ds = gdal.GetDriverByName('GTiff').Create('tmp/tmp.tif', 10, 10, nBands, datatype)
+        ds = gdal.GetDriverByName('MEM').Create('', 10, 10, nBands, datatype)
         ds.GetRasterBand(1).Fill(255)
         ds.SetGeoTransform([2,1.0/10,0,49,0,-1.0/10])
         ds.SetProjection('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.01745329251994328]]')
-        ds = None
-        ds = gdal.Open('tmp/tmp.tif')
+        ds.SetMetadata(['a'])
     if ds is not None:
         for i in range(gdal.GetDriverCount()):
             drv = gdal.GetDriver(i)
             md = drv.GetMetadata()
             if 'DCAP_CREATECOPY' in md or 'DCAP_CREATE' in md:
-                print ('drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype)))
+                #print ('drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype)))
 
                 skip = False
                 # FIXME: A few cases that crashes and should be investigated
@@ -343,8 +342,6 @@ def misc_6_internal(datatype, nBands):
         ds = None
         if nBands == 0:
             gdal.GetDriverByName('ILWIS').Delete('tmp/tmp.mpl')
-        else:
-            gdal.GetDriverByName('GTiff').Delete('tmp/tmp.tif')
     return 'success'
 
 def misc_6():
