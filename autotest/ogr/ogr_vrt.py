@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -1434,6 +1435,7 @@ def ogr_vrt_26():
 
     lyr = vrt_ds.GetLayer(0)
     if lyr.TestCapability(ogr.OLCTransactions) == 0:
+        gdaltest.post_reason('failed')
         return 'fail'
 
     lyr.StartTransaction()
@@ -1443,11 +1445,13 @@ def ogr_vrt_26():
     feat = None
 
     if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('failed')
         return 'fail'
 
     lyr.RollbackTransaction()
 
     if lyr.GetFeatureCount() != 0:
+        gdaltest.post_reason('failed')
         return 'fail'
 
     lyr.StartTransaction()
@@ -1458,6 +1462,7 @@ def ogr_vrt_26():
     lyr.CommitTransaction()
 
     if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('failed')
         return 'fail'
 
     vrt_ds = None
@@ -1622,8 +1627,15 @@ def ogr_vrt_29():
 
     feat = lyr.GetNextFeature()
 
+    feat.SetGeometry(None)
+    if lyr.SetFeature(feat) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(500000 0)'))
-    lyr.SetFeature(feat)
+    if lyr.SetFeature(feat) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
     feat = None
 
     lyr.SetSpatialFilterRect(499999,-1,500001,1)
@@ -1634,6 +1646,55 @@ def ogr_vrt_29():
         gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
+    feat = None
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField('id', -99)
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(500000 0)'))
+    if lyr.CreateFeature(feat) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = None
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField('id', -100)
+    if lyr.CreateFeature(feat) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = None
+
+    ds = None
+
+    # Check failed operations in read-only
+    ds = ogr.Open('tmp/ogr_vrt_29.vrt')
+    lyr = ds.GetLayer(0)
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = lyr.DeleteFeature(1)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(500000 0)'))
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = lyr.SetFeature(feat)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = None
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(500000 0)'))
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = lyr.CreateFeature(feat)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = None
 
     ds = None
 
@@ -1648,6 +1709,98 @@ def ogr_vrt_29():
         feat.DumpReadable()
         return 'fail'
 
+    lyr.SetAttributeFilter('id = -99')
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(feat, 'POINT(3.0 0.0)') != 0:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    lyr.SetAttributeFilter('id = -100')
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+    if feat.GetGeometryRef() is not None:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, 1000)
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(-180 0)'))
+    lyr.CreateFeature(feat)
+    feat = None
+
+    ds = None
+
+    # Check failed reprojection when reading through VRT
+    ds = ogr.Open('tmp/ogr_vrt_29.vrt', update = 1)
+    lyr = ds.GetLayer(0)
+    lyr.SetAttributeFilter('id = 1000')
+
+    # Reprojection will fail
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    feat = lyr.GetNextFeature()
+    gdal.PopErrorHandler()
+    fid = feat.GetFID()
+    if feat.GetGeometryRef() is not None:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    feat = lyr.GetFeature(fid)
+    gdal.PopErrorHandler()
+    if feat.GetGeometryRef() is not None:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    feat = None
+
+    lyr.DeleteFeature(fid)
+    ds = None
+
+    f = open('tmp/ogr_vrt_29_2.vrt', 'wt')
+    f.write("""<OGRVRTDataSource>
+    <OGRVRTWarpedLayer>
+        <OGRVRTLayer name="ogr_vrt_29">
+            <SrcDataSource relativetoVRT="1">ogr_vrt_29.vrt</SrcDataSource>
+        </OGRVRTLayer>
+        <TargetSRS>EPSG:4326</TargetSRS>
+    </OGRVRTWarpedLayer>
+</OGRVRTDataSource>\n""")
+    f.close()
+
+    # Check failed reprojection when writing through VRT
+    ds = ogr.Open('tmp/ogr_vrt_29_2.vrt', update = 1)
+    lyr = ds.GetLayer(0)
+
+    feat = lyr.GetNextFeature()
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(-180 0)'))
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = lyr.SetFeature(feat)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = None
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(-180 0)'))
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = lyr.CreateFeature(feat)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = None
+
+    ds = None
+
+    # Some sanity operations before running test_ogrsf
+    ds = ogr.Open('tmp/ogr_vrt_29.shp', update = 1)
+    ds.ExecuteSQL('REPACK ogr_vrt_29')
+    ds.ExecuteSQL('RECOMPUTE EXTENT ON ogr_vrt_29')
     ds = None
 
     # Check with test_ogrsf
@@ -1669,6 +1822,7 @@ def ogr_vrt_29():
     except:
         pass
     os.unlink('tmp/ogr_vrt_29.vrt')
+    os.unlink('tmp/ogr_vrt_29_2.vrt')
 
     return 'success'
 
