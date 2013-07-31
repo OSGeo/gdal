@@ -69,17 +69,10 @@ def ogr_virtualogr_run_sql(sql_statement):
 # Basic tests
 
 def ogr_virtualogr_1():
-
-    ogrtest.has_sqlite_dialect = False
-    if ogr.GetDriverByName('SQLite') is None:
+    
+    import ogr_sql_sqlite
+    if not ogr_sql_sqlite.ogr_sql_sqlite_available():
         return 'skip'
-
-    ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
-    sql_lyr = ds.ExecuteSQL( "SELECT * FROM sqlite_master", dialect = 'SQLite' )
-    ds.ReleaseResultSet( sql_lyr )
-    if sql_lyr is None:
-        return 'skip'
-    ogrtest.has_sqlite_dialect = True
 
     # Invalid syntax
     if ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR()"):

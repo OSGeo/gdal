@@ -42,21 +42,31 @@ import ogrtest
 import webserver
 
 ###############################################################################
-# Tests that don't involve geometry
+# Detect OGR SQLite dialect availability
 
-def ogr_sql_sqlite_1():
+def ogr_sql_sqlite_available():
 
     ogrtest.has_sqlite_dialect = False
     if ogr.GetDriverByName('SQLite') is None:
-        return 'skip'
+        return False
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
     sql_lyr = ds.ExecuteSQL( "SELECT * FROM sqlite_master", dialect = 'SQLite' )
     ds.ReleaseResultSet( sql_lyr )
     if sql_lyr is None:
-        return 'skip'
+        return False
     ogrtest.has_sqlite_dialect = True
+    return True
 
+###############################################################################
+# Tests that don't involve geometry
+
+def ogr_sql_sqlite_1():
+    
+    if not ogr_sql_sqlite_available():
+        return 'skip'
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
     for geom in [ ogr.wkbNone, ogr.wkbUnknown ]:
         lyr = ds.CreateLayer( "my_layer", geom_type = geom)
         field_defn = ogr.FieldDefn('intfield', ogr.OFTInteger)
