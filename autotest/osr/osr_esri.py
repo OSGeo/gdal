@@ -1120,6 +1120,34 @@ def osr_esri_23():
     return result
 
 ###############################################################################
+# Test LCC_2 Central_Parallel <--> latitude_of_origin issue (#3191)
+#
+
+def osr_esri_24():
+
+    srs = osr.SpatialReference()
+    srs.ImportFromWkt('''PROJCS["Custom",
+                             GEOGCS["GCS_WGS_1984",
+                                 DATUM["WGS_1984",
+                                     SPHEROID["WGS_1984",6378137.0,298.257223563]],
+                                 PRIMEM["Greenwich",0.0],
+                                 UNIT["Degree",0.017453292519943295]],
+                             PROJECTION["Lambert_Conformal_Conic_2SP"],
+                             PARAMETER["False_Easting",0.0],
+                             PARAMETER["False_Northing",0.0],
+                             PARAMETER["Central_Meridian",10.5],
+                             PARAMETER["Standard_Parallel_1",48.66666666666666],
+                             PARAMETER["Standard_Parallel_2",53.66666666666666],
+                             PARAMETER["Central_Parallel",51.0],
+                             UNIT["Meter",1.0]]''')
+    srs.MorphFromESRI()
+    if srs.GetProjParm(osr.SRS_PP_LATITUDE_OF_ORIGIN, 1000.0) == 1000.0:
+        gdaltest.post_reason('Failed to set latitude_of_origin')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 
 gdaltest_list = [ 
@@ -1146,6 +1174,7 @@ gdaltest_list = [
     osr_esri_21,
     osr_esri_22,
     osr_esri_23,
+    osr_esri_24,
    None ]
 
 if __name__ == '__main__':
