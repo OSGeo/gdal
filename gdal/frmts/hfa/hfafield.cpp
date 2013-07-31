@@ -722,6 +722,11 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
                 HFAStandard( 8, &dfNumber ); 
                 memcpy( pabyData + 12 + nIndexValue * 8, &dfNumber, 8 ); 
             }
+            else if (nBaseItemType == EPT_u8)
+            {
+                unsigned char nNumber = (unsigned char)dfDoubleValue;
+                memcpy( pabyData + 12 + nIndexValue, &nNumber, 1);
+            }
             else
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
