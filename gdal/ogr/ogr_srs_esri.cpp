@@ -97,6 +97,10 @@ static const char *apszOrthographicMapping[] = {
     "Latitude_Of_Center", SRS_PP_LATITUDE_OF_ORIGIN,
     NULL, NULL };
 
+static const char *apszLambertConformalConicMapping[] = {
+    "Central_Parallel", SRS_PP_LATITUDE_OF_ORIGIN,
+    NULL, NULL };
+
 static char **papszDatumMapping = NULL;
 static void* hDatumMappingMutex = NULL;
  
@@ -1299,7 +1303,7 @@ OGRErr OGRSpatialReference::morphToESRI()
                     FindProjParm( SRS_PP_LATITUDE_OF_ORIGIN ) );
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Convert SPHEROID name to use underscores instead of spaces.     */
 /* -------------------------------------------------------------------- */
@@ -1654,6 +1658,19 @@ OGRErr OGRSpatialReference::morphFromESRI()
             (char **)apszPolarStereographicMapping + 0, 
             (char **)apszPolarStereographicMapping + 1, 2 );
 #endif
+
+    /*
+    ** Handle the value of Central_Parallel -> latitude_of_center.
+    ** See ticket #3191.  Other mappings probably need to be added.
+    */
+    if( pszProjection != NULL &&
+        ( EQUAL( pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP ) ||
+          EQUAL( pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP ) ) )
+    {
+        GetRoot()->applyRemapper( 
+            "PARAMETER", (char **)apszLambertConformalConicMapping + 0,
+            (char **)apszLambertConformalConicMapping + 1, 2 );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Translate PROJECTION keywords that are misnamed.                */
