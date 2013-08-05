@@ -638,6 +638,9 @@ void GDALDriverManager::AutoSkipDrivers()
  * the /usr/local/lib/gdalplugins directory, and (if known) the
  * lib/gdalplugins subdirectory of the gdal home directory are searched on
  * UNIX and $(BINDIR)\gdalplugins on Windows.
+ *
+ * Auto loading can be completely disabled by setting the GDAL_DRIVER_PATH
+ * config option to "disable".
  */
 
 void GDALDriverManager::AutoLoadDrivers()
@@ -646,6 +649,16 @@ void GDALDriverManager::AutoLoadDrivers()
     char     **papszSearchPath = NULL;
     const char *pszGDAL_DRIVER_PATH = 
         CPLGetConfigOption( "GDAL_DRIVER_PATH", NULL );
+
+/* -------------------------------------------------------------------- */
+/*      Allow applications to completely disable this search by         */
+/*      setting the driver path to the special string "disable".        */
+/* -------------------------------------------------------------------- */
+    if( pszGDAL_DRIVER_PATH != NULL && EQUAL(pszGDAL_DRIVER_PATH,"disable")) 
+    {
+        CPLDebug( "GDAL", "GDALDriverManager::AutoLoadDrivers() disabled." );
+        return;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Where should we look for stuff?                                 */
