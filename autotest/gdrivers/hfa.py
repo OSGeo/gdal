@@ -91,7 +91,8 @@ def hfa_histwrite():
     ds_src = None
     
     # Remove .aux.xml file as histogram can be written in it
-    os.remove('tmp/work.img.aux.xml')
+    tmpAuxXml = 'tmp/work.img.aux.xml'
+    if os.path.exists(tmpAuxXml): os.remove(tmpAuxXml)
 
     ds = gdal.Open('tmp/work.img')
     md = ds.GetRasterBand(1).GetMetadata()
@@ -114,6 +115,46 @@ def hfa_histwrite():
 
     if md['STATISTICS_HISTOBINVALUES'] != '0|0|0|0|0|0|0|0|8|0|0|0|0|0|0|0|23|0|0|0|0|0|0|0|0|29|0|0|0|0|0|0|0|46|0|0|0|0|0|0|0|69|0|0|0|0|0|0|0|99|0|0|0|0|0|0|0|0|120|0|0|0|0|0|0|0|178|0|0|0|0|0|0|0|193|0|0|0|0|0|0|0|212|0|0|0|0|0|0|0|281|0|0|0|0|0|0|0|0|365|0|0|0|0|0|0|0|460|0|0|0|0|0|0|0|533|0|0|0|0|0|0|0|544|0|0|0|0|0|0|0|0|626|0|0|0|0|0|0|0|653|0|0|0|0|0|0|0|673|0|0|0|0|0|0|0|629|0|0|0|0|0|0|0|0|586|0|0|0|0|0|0|0|541|0|0|0|0|0|0|0|435|0|0|0|0|0|0|0|348|0|0|0|0|0|0|0|341|0|0|0|0|0|0|0|0|284|0|0|0|0|0|0|0|225|0|0|0|0|0|0|0|237|0|0|0|0|0|0|0|172|0|0|0|0|0|0|0|0|159|0|0|0|0|0|0|0|105|0|0|0|0|0|0|0|824|':
         gdaltest.post_reason( 'STATISTICS_HISTOBINVALUES is wrong.' )
+        return 'fail'
+
+    return 'success'
+    
+###############################################################################
+# Verify that if we copy this test image to a new Imagine file and then re-write the
+# histogram information, the new histogram can then be read back in.
+def hfa_histrewrite():
+
+    drv = gdal.GetDriverByName('HFA')
+    ds_src = gdal.Open('../gcore/data/utmsmall.img')
+    out_ds = drv.CreateCopy( 'tmp/work.img', ds_src )
+    out_ds = None
+    ds_src = None
+    
+    # Remove .aux.xml file as histogram can be written in it
+    tmpAuxXml = 'tmp/work.img.aux.xml'
+    if os.path.exists(tmpAuxXml):
+        os.remove(tmpAuxXml)
+    
+    # A new histogram which is different to what is in the file. It won't match the data,
+    # but we are just testing the re-writing of the histogram, so we don't mind. 
+    newHist = '8|23|29|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|46|0|0|0|0|0|0|0|69|0|0|0|0|0|0|0|99|0|0|0|0|0|0|0|0|120|0|0|0|0|0|0|0|178|0|0|0|0|0|0|0|193|0|0|0|0|0|0|0|212|0|0|0|0|0|0|0|281|0|0|0|0|0|0|0|0|365|0|0|0|0|0|0|0|460|0|0|0|0|0|0|0|533|0|0|0|0|0|0|0|544|0|0|0|0|0|0|0|0|626|0|0|0|0|0|0|0|653|0|0|0|0|0|0|0|673|0|0|0|0|0|0|0|629|0|0|0|0|0|0|0|0|586|0|0|0|0|0|0|0|541|0|0|0|0|0|0|0|435|0|0|0|0|0|0|0|348|0|0|0|0|0|0|0|341|0|0|0|0|0|0|0|0|284|0|0|0|0|0|0|0|225|0|0|0|0|0|0|0|237|0|0|0|0|0|0|0|172|0|0|0|0|0|0|0|0|159|0|0|0|0|0|0|0|105|0|0|0|0|0|0|0|824|'
+
+    ds = gdal.Open('tmp/work.img', gdal.GA_Update)
+    band = ds.GetRasterBand(1)
+    band.SetMetadataItem('STATISTICS_HISTOBINVALUES', newHist)
+    ds = None
+    
+    if os.path.exists(tmpAuxXml):
+        os.remove(tmpAuxXml)
+    
+    ds = gdal.Open('tmp/work.img')
+    histStr = ds.GetRasterBand(1).GetMetadataItem('STATISTICS_HISTOBINVALUES')
+    ds = None
+    
+    drv.Delete( 'tmp/work.img' )
+
+    if histStr != newHist:
+        gdaltest.post_reason( 'Rewritten STATISTICS_HISTOBINVALUES is wrong.' )
         return 'fail'
 
     return 'success'
@@ -1266,15 +1307,16 @@ def hfa_write_rat():
 
 def hfa_createcopy_statistics():
 
+    tmpAuxXml = '../gcore/data/byte.tif.aux.xml'
     try:
-        os.remove('../gcore/data/byte.tif.aux.xml')
+        os.remove(tmpAuxXml)
     except:
         pass
     ds_src = gdal.Open('../gcore/data/byte.tif')
     out_ds = gdal.GetDriverByName('HFA').CreateCopy( '/vsimem/byte.img', ds_src, options = ['STATISTICS=YES'] )
     out_ds = None
     ds_src = None
-    os.remove('../gcore/data/byte.tif.aux.xml')
+    if os.path.exists(tmpAuxXml): os.remove(tmpAuxXml)
 
     gdal.Unlink( '/vsimem/byte.img.aux.xml' )
 
@@ -1298,6 +1340,7 @@ def hfa_createcopy_statistics():
 gdaltest_list = [
     hfa_histread,
     hfa_histwrite,
+    hfa_histrewrite,
     hfa_int_stats_1,
     hfa_int_stats_2,
     hfa_float_stats_1,
