@@ -2854,6 +2854,58 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
                 }
             }
         }
+        else if ( poEntry != NULL )
+        {
+            // In this case, there are HistogramParameters present, but we did not
+            // create them. However, we might be modifying them, in the case where 
+            // the data has changed and the histogram counts need to be updated. It could 
+            // be worse than that, but that is all we are going to cope with for now. 
+            // We are assuming that we did not change any of the other stuff, like 
+            // skip factors and so forth. The main need for this case is for programs
+            // (such as Imagine itself) which will happily modify the pixel values
+            // without re-calculating the histogram counts. 
+            int nNumBins = poEntry->GetIntField( "BinFunction.numBins" );
+            HFAEntry *poEntryDescrTbl = poNode->GetNamedChild( "Descriptor_Table" );
+            HFAEntry *poHisto = NULL;
+            if ( poEntryDescrTbl != NULL) {
+                poHisto = poEntryDescrTbl->GetNamedChild( "Histogram" );
+            }
+            if ( poHisto != NULL ) {
+                int nOffset = poHisto->GetIntField( "columnDataPtr" );
+                // write out histogram data
+                char * pszWork = pszBinValues;
+                
+                // Check whether histogram counts were written as int or double
+                bool bCountIsInt = TRUE;
+                const char *pszDataType = poHisto->GetStringField("dataType");
+                if ( EQUALN(pszDataType, "real", strlen(pszDataType)) )
+                {
+                    bCountIsInt = FALSE;
+                }
+                for ( int nBin = 0; nBin < nNumBins; ++nBin )
+                {
+                    char * pszEnd = strchr( pszWork, '|' );
+                    if ( pszEnd != NULL )
+                    {
+                        *pszEnd = 0;
+                        if ( bCountIsInt ) {
+                            // Histogram counts were written as ints, so re-write them the same way
+                            VSIFSeekL( hHFA->fp, nOffset + 4*nBin, SEEK_SET );
+                            int nValue = atoi( pszWork );
+                            HFAStandard( 4, &nValue );
+                            VSIFWriteL( (void *)&nValue, 1, 4, hHFA->fp );
+                        } else {
+                            // Histogram were written as doubles, as is now the default behaviour
+                            VSIFSeekL( hHFA->fp, nOffset + 8*nBin, SEEK_SET );
+                            double nValue = atof( pszWork );
+                            HFAStandard( 8, &nValue );
+                            VSIFWriteL( (void *)&nValue, 1, 8, hHFA->fp );
+                        }
+                        pszWork = pszEnd + 1;
+                    }
+                }
+            }
+        }
         free( pszBinValues );
     }
 
