@@ -259,7 +259,7 @@ void OGRPDFDataSource::CleanupIntermediateResources()
 typedef struct
 {
     char        szOpName[4];
-    char        nArgs;
+    int         nArgs;
 } PDFOperator;
 
 static const PDFOperator asPDFOperators [] =
