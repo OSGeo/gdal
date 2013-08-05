@@ -761,6 +761,9 @@ OGRSFDriverH OGRGetDriverByName( const char *pszName )
  * There are a few rules for the driver path.  If the GDAL_DRIVER_PATH 
  * environment variable it set, it is taken to be a list of directories to 
  * search separated by colons on unix, or semi-colons on Windows.  
+ * 
+ * Auto loading can be completely disabled by setting the GDAL_DRIVER_PATH
+ * config option to "disable".
  *
  * If that is not set the following defaults are used:
  *
@@ -786,6 +789,16 @@ void OGRSFDriverRegistrar::AutoLoadDrivers()
     if( pszGDAL_DRIVER_PATH == NULL )
         pszGDAL_DRIVER_PATH = 
             CPLGetConfigOption( "GDAL_DRIVER_PATH", NULL );
+
+/* -------------------------------------------------------------------- */
+/*      Allow applications to completely disable this search by         */
+/*      setting the driver path to the special string "disable".        */
+/* -------------------------------------------------------------------- */
+    if( pszGDAL_DRIVER_PATH != NULL && EQUAL(pszGDAL_DRIVER_PATH,"disable")) 
+    {
+        CPLDebug( "GDAL", "OGRSFDriverRegistrar::AutoLoadDrivers() disabled." );
+        return;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Where should we look for stuff?                                 */
