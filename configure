@@ -772,6 +772,8 @@ LIBZ_SETTING
 RENAME_INTERNAL_LIBGEOTIFF_SYMBOLS
 RENAME_INTERNAL_LIBTIFF_SYMBOLS
 HAVE_HIDE_INTERNAL_SYMBOLS
+HAVE_AVX_AT_COMPILE_TIME
+AVXFLAGS
 HAVE_GCC_ATOMIC_BUILTINS
 HAVE_LIBTOOL
 SO_EXT
@@ -875,6 +877,7 @@ with_ld_shared
 with_unix_stdio_64
 enable_debug
 with_sse
+with_avx
 with_hide_internal_symbols
 with_rename_internal_libtiff_symbols
 with_rename_internal_libgeotiff_symbols
@@ -1613,6 +1616,7 @@ Optional Packages:
   --without-ld-shared   Disable shared library support
   --with-unix-stdio-64=ARG Utilize 64 stdio api (yes/no)
   --with-sse=ARG        Detect SSE availability for some optimized routines (ARG=yes(default), no)
+  --with-avx=ARG        Detect AVX availability for some optimized routines (ARG=yes(default), no)
   --with-hide-internal-symbols=ARG Try to hide internal symbols (ARG=yes/no)
   --with-rename-internal-libtiff-symbols=ARG Prefix internal libtiff symbols with gdal_ (ARG=yes/no)
   --with-rename-internal-libgeotiff-symbols=ARG Prefix internal libgeotiff symbols with gdal_ (ARG=yes/no)
@@ -17383,13 +17387,13 @@ if test "$with_sse" = "yes" -o "$with_sse" = ""; then
     echo '#else' >> detectsse.cpp
     echo 'some_error' >> detectsse.cpp
     echo '#endif' >> detectsse.cpp
-    if test -z "`${CXX} -c detectsse.cpp 2>&1`" ; then
+    if test -z "`${CXX} ${CXXFLAGS} -c detectsse.cpp 2>&1`" ; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
         CFLAGS="$CFLAGS -DHAVE_SSE_AT_COMPILE_TIME"
         CXXFLAGS="$CXXFLAGS -DHAVE_SSE_AT_COMPILE_TIME"
     else
-        if test -z "`${CXX} -msse -c detectsse.cpp 2>&1`" ; then
+        if test -z "`${CXX} ${CXXFLAGS} -msse -c detectsse.cpp 2>&1`" ; then
             { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
             CFLAGS="$CFLAGS -msse -DHAVE_SSE_AT_COMPILE_TIME"
@@ -17407,6 +17411,56 @@ else
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 fi
+
+
+
+# Check whether --with-avx was given.
+if test "${with_avx+set}" = set; then :
+  withval=$with_avx;
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether AVX is available" >&5
+$as_echo_n "checking whether AVX is available... " >&6; }
+
+if test "$with_avx" = "yes" -o "$with_avx" = ""; then
+
+    rm -f detectavx.cpp
+    echo '#ifdef __AVX__' > detectavx.cpp
+    echo '#include <immintrin.h>' >> detectavx.cpp
+    echo 'void foo() { float fEpsilon = 0.0000000000001f; __m256 ymm_small = _mm256_set_ps(fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon); } ' >> detectavx.cpp
+    echo '#else' >> detectavx.cpp
+    echo 'some_error' >> detectavx.cpp
+    echo '#endif' >> detectavx.cpp
+    if test -z "`${CXX} ${CXXFLAGS} -c detectavx.cpp 2>&1`" ; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+        AVXFLAGS=""
+        HAVE_AVX_AT_COMPILE_TIME=yes
+    else
+        if test -z "`${CXX} ${CXXFLAGS} -mavx -c detectavx.cpp 2>&1`" ; then
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+            AVXFLAGS="-mavx"
+            HAVE_AVX_AT_COMPILE_TIME=yes
+        else
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+            if test "$with_avx" = "yes"; then
+                as_fn_error $? "--with-avx was requested, but AVX is not available" "$LINENO" 5
+            fi
+        fi
+    fi
+    rm -f detectavx.*
+else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+AVXFLAGS=$AVXFLAGS
+
+HAVE_AVX_AT_COMPILE_TIME=$HAVE_AVX_AT_COMPILE_TIME
+
 
 
 echo "#include <winsock2.h>" > test_ws2_32.c

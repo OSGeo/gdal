@@ -238,12 +238,12 @@ if test "$with_sse" = "yes" -o "$with_sse" = ""; then
     echo '#else' >> detectsse.cpp
     echo 'some_error' >> detectsse.cpp
     echo '#endif' >> detectsse.cpp
-    if test -z "`${CXX} -c detectsse.cpp 2>&1`" ; then
+    if test -z "`${CXX} ${CXXFLAGS} -c detectsse.cpp 2>&1`" ; then
         AC_MSG_RESULT([yes])
         CFLAGS="$CFLAGS -DHAVE_SSE_AT_COMPILE_TIME"
         CXXFLAGS="$CXXFLAGS -DHAVE_SSE_AT_COMPILE_TIME"
     else
-        if test -z "`${CXX} -msse -c detectsse.cpp 2>&1`" ; then
+        if test -z "`${CXX} ${CXXFLAGS} -msse -c detectsse.cpp 2>&1`" ; then
             AC_MSG_RESULT([yes])
             CFLAGS="$CFLAGS -msse -DHAVE_SSE_AT_COMPILE_TIME"
             CXXFLAGS="$CXXFLAGS -msse -DHAVE_SSE_AT_COMPILE_TIME"
@@ -258,6 +258,48 @@ if test "$with_sse" = "yes" -o "$with_sse" = ""; then
 else
     AC_MSG_RESULT([no])
 fi
+
+dnl ---------------------------------------------------------------------------
+dnl Check AVX availability
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(avx,
+[  --with-avx[=ARG]        Detect AVX availability for some optimized routines (ARG=yes(default), no)],,)
+
+AC_MSG_CHECKING([whether AVX is available])
+
+if test "$with_avx" = "yes" -o "$with_avx" = ""; then
+
+    rm -f detectavx.cpp
+    echo '#ifdef __AVX__' > detectavx.cpp
+    echo '#include <immintrin.h>' >> detectavx.cpp
+    echo 'void foo() { float fEpsilon = 0.0000000000001f; __m256 ymm_small = _mm256_set_ps(fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon); } ' >> detectavx.cpp
+    echo '#else' >> detectavx.cpp
+    echo 'some_error' >> detectavx.cpp
+    echo '#endif' >> detectavx.cpp
+    if test -z "`${CXX} ${CXXFLAGS} -c detectavx.cpp 2>&1`" ; then
+        AC_MSG_RESULT([yes])
+        AVXFLAGS=""
+        HAVE_AVX_AT_COMPILE_TIME=yes
+    else
+        if test -z "`${CXX} ${CXXFLAGS} -mavx -c detectavx.cpp 2>&1`" ; then
+            AC_MSG_RESULT([yes])
+            AVXFLAGS="-mavx"
+            HAVE_AVX_AT_COMPILE_TIME=yes
+        else
+            AC_MSG_RESULT([no])
+            if test "$with_avx" = "yes"; then
+                AC_MSG_ERROR([--with-avx was requested, but AVX is not available])
+            fi
+        fi
+    fi
+    rm -f detectavx.*
+else
+    AC_MSG_RESULT([no])
+fi
+
+AC_SUBST(AVXFLAGS,$AVXFLAGS)
+AC_SUBST(HAVE_AVX_AT_COMPILE_TIME,$HAVE_AVX_AT_COMPILE_TIME)
 
 dnl ---------------------------------------------------------------------------
 dnl Check if we need -lws2_32
