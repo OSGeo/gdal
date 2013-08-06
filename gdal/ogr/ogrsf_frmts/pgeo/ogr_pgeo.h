@@ -194,18 +194,30 @@ class OGRPGeoDataSource : public OGRDataSource
 };
 
 /************************************************************************/
-/*                             OGRPGeoDriver                            */
+/*                           OGRODBCMDBDriver                           */
 /************************************************************************/
 
-class OGRPGeoDriver : public OGRSFDriver
+class OGRODBCMDBDriver : public OGRSFDriver
 {
+#ifndef WIN32
     CPLString   osDriverFile;
-
-    bool        InstallMdbDriver();
     bool        LibraryExists( const char* pszLibPath );
     bool        FindDriverLib();
     CPLString   FindDefaultLib(const char* pszLibName);
+#endif
 
+protected:
+#ifndef WIN32
+    bool        InstallMdbDriver();
+#endif
+};
+
+/************************************************************************/
+/*                             OGRPGeoDriver                            */
+/************************************************************************/
+
+class OGRPGeoDriver : public OGRODBCMDBDriver
+{
   public:
                 ~OGRPGeoDriver();
                 

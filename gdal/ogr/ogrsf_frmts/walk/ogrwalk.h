@@ -34,6 +34,7 @@
 #include "cpl_odbc.h"
 #include "cpl_error.h"
 #include "ogis_geometry_wkb_struct.h"
+#include "ogr_pgeo.h"
 
 /************************************************************************/
 /*             Functions for WalkBinary Translation                     */
@@ -195,7 +196,7 @@ public:
 /*                            OGRWalkDriver                             */
 /************************************************************************/
 
-class OGRWalkDriver : public OGRSFDriver
+class OGRWalkDriver : public OGRODBCMDBDriver
 {
 public:
                 ~OGRWalkDriver();
