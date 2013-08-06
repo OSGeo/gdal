@@ -17428,7 +17428,7 @@ if test "$with_avx" = "yes" -o "$with_avx" = ""; then
     rm -f detectavx.cpp
     echo '#ifdef __AVX__' > detectavx.cpp
     echo '#include <immintrin.h>' >> detectavx.cpp
-    echo 'void foo() { float fEpsilon = 0.0000000000001f; __m256 ymm_small = _mm256_set_ps(fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon); } ' >> detectavx.cpp
+    echo 'void foo() { unsigned int nXCRLow, nXCRHigh; __asm__ ("xgetbv" : "=a" (nXCRLow), "=d" (nXCRHigh) : "c" (0)); float fEpsilon = 0.0000000000001f; __m256 ymm_small = _mm256_set_ps(fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon); } ' >> detectavx.cpp
     echo '#else' >> detectavx.cpp
     echo 'some_error' >> detectavx.cpp
     echo '#endif' >> detectavx.cpp
