@@ -65,6 +65,29 @@ OGRDataSource *OGRWalkDriver::Open( const char * pszFilename, int bUpdate )
         && !EQUAL(CPLGetExtension(pszFilename), "MDB") )
         return NULL;
 
+#ifndef WIN32
+    // Try to register MDB Tools driver
+    //
+    // ODBCINST.INI NOTE:
+    // This operation requires write access to odbcinst.ini file
+    // located in directory pointed by ODBCINISYS variable.
+    // Usually, it points to /etc, so non-root users can overwrite this
+    // setting ODBCINISYS with location they have write access to, e.g.:
+    // $ export ODBCINISYS=$HOME/etc
+    // $ touch $ODBCINISYS/odbcinst.ini
+    //
+    // See: http://www.unixodbc.org/internals.html
+    //
+    if ( !InstallMdbDriver() )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined, 
+                  "Unable to install MDB driver for ODBC, MDB access may not supported.\n" );
+    }
+    else
+        CPLDebug( "Walk", "MDB Tools driver installed successfully!");
+
+#endif /* ndef WIN32 */
+
     OGRWalkDataSource  *poDS = new OGRWalkDataSource();
 
     if( !poDS->Open( pszFilename, bUpdate ) )
@@ -108,12 +131,7 @@ OGRDataSource *OGRWalkDriver::CreateDataSource( const char * pszName,
 int OGRWalkDriver::TestCapability( const char * pszCap )
 
 {
-    if( EQUAL(pszCap,ODrCCreateDataSource) )
-        return TRUE;
-    else if( EQUAL(pszCap,ODrCDeleteDataSource) )
-        return FALSE;
-    else
-        return FALSE;
+    return FALSE;
 }
 
 /************************************************************************/
