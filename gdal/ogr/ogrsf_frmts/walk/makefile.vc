@@ -5,7 +5,7 @@ GDAL_ROOT	=	..\..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
-EXTRAFLAGS = -I.. -I..\.. -I..\generic
+EXTRAFLAGS = -I.. -I..\.. -I..\generic -I..\pgeo
 
 default:	$(OBJ)
 

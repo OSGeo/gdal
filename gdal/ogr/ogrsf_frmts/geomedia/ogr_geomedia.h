@@ -34,6 +34,7 @@
 #include "ogrsf_frmts.h"
 #include "cpl_odbc.h"
 #include "cpl_error.h"
+#include "ogr_pgeo.h"
 
 /************************************************************************/
 /*                          OGRGeomediaLayer                            */
@@ -196,15 +197,8 @@ class OGRGeomediaDataSource : public OGRDataSource
 /*                          OGRGeomediaDriver                           */
 /************************************************************************/
 
-class OGRGeomediaDriver : public OGRSFDriver
+class OGRGeomediaDriver : public OGRODBCMDBDriver
 {
-    CPLString   osDriverFile;
-
-    bool        InstallMdbDriver();
-    bool        LibraryExists( const char* pszLibPath );
-    bool        FindDriverLib();
-    CPLString   FindDefaultLib(const char* pszLibName);
-
   public:
                 ~OGRGeomediaDriver();
                 
