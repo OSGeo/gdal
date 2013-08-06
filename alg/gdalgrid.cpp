@@ -32,8 +32,8 @@
 #include "gdalgrid.h"
 #include <float.h>
 #include <limits.h>
-#include "cpl_quad_tree.h"
 #include "cpl_multiproc.h"
+#include "gdalgrid_priv.h"
 
 #ifdef HAVE_SSE_AT_COMPILE_TIME
 #include <xmmintrin.h>
@@ -51,34 +51,13 @@ CPL_CVSID("$Id$");
 # endif /* __DBL_MAX__ */
 #endif /* DBL_MAX */
 
-typedef struct
-{
-    const double* padfX;
-    const double* padfY;
-} GDALGridXYArrays;
-
-typedef struct
-{
-    GDALGridXYArrays* psXYArrays;
-    int               i;
-} GDALGridPoint;
-
-typedef struct
-{
-    CPLQuadTree* hQuadTree;
-    double       dfInitialSearchRadius;
-    const float *pafX;
-    const float *pafY;
-    const float *pafZ;
-} GDALGridExtraParameters;
-
 /************************************************************************/
 /*                          CPLHaveRuntimeSSE()                         */
 /************************************************************************/
 
 #ifdef HAVE_SSE_AT_COMPILE_TIME
 
-#define CPUID_SSE_BIT     25
+#define CPUID_SSE_EDX_BIT     25
 
 #if (defined(_M_X64) || defined(__x86_64))
 
@@ -89,18 +68,11 @@ static int CPLHaveRuntimeSSE()
 
 #elif defined(__GNUC__) && defined(__i386__)
 
-#define GCC_CPUID(level, a, b, c, d)            \
-  __asm__ ("xchgl %%ebx, %1\n"                  \
-           "cpuid\n"                            \
-           "xchgl %%ebx, %1"                    \
-       : "=a" (a), "=r" (b), "=c" (c), "=d" (d) \
-       : "0" (level))
-
 static int CPLHaveRuntimeSSE()
 {
     int cpuinfo[4] = {0,0,0,0};
     GCC_CPUID(1, cpuinfo[0], cpuinfo[1], cpuinfo[2], cpuinfo[3]);
-    return (cpuinfo[3] & (1 << CPUID_SSE_BIT)) != 0;
+    return (cpuinfo[3] & (1 << CPUID_SSE_EDX_BIT)) != 0;
 }
 
 #elif defined(_MSC_VER) && defined(_M_IX86)
@@ -133,7 +105,7 @@ static int CPLHaveRuntimeSSE()
 {
     int cpuinfo[4] = {0,0,0,0};
     __cpuid(cpuinfo, 1);
-    return (cpuinfo[3] & (1 << CPUID_SSE_BIT)) != 0;
+    return (cpuinfo[3] & (1 << CPUID_SSE_EDX_BIT)) != 0;
 }
 
 #else
@@ -1756,6 +1728,42 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
                 pfnGDALGridMethod = GDALGridInverseDistanceToAPowerNoSearch;
                 if( dfPower == 2.0 && dfSmoothing == 0.0 )
                 {
+#ifdef HAVE_AVX_AT_COMPILE_TIME
+
+#define ALIGN32(x)  (((char*)(x)) + ((32 - (((size_t)(x)) % 32)) % 32))
+
+                    if( CSLTestBoolean(CPLGetConfigOption("GDAL_USE_AVX", "YES")) &&
+                        CPLHaveRuntimeAVX() )
+                    {
+                        pabyX = (float*)VSIMalloc(sizeof(float) * nPoints + 31);
+                        pabyY = (float*)VSIMalloc(sizeof(float) * nPoints + 31);
+                        pabyZ = (float*)VSIMalloc(sizeof(float) * nPoints + 31);
+                        if( pabyX != NULL && pabyY != NULL && pabyZ != NULL)
+                        {
+                            CPLDebug("GDAL_GRID", "Using AVX optimized version");
+                            pafXAligned = (float*) ALIGN32(pabyX);
+                            pafYAligned = (float*) ALIGN32(pabyY);
+                            pafZAligned = (float*) ALIGN32(pabyZ);
+                            pfnGDALGridMethod = GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX;
+                            GUInt32 i;
+                            for(i=0;i<nPoints;i++)
+                            {
+                                pafXAligned[i] = (float) padfX[i];
+                                pafYAligned[i] = (float) padfY[i];
+                                pafZAligned[i] = (float) padfZ[i];
+                            }
+                        }
+                        else
+                        {
+                            VSIFree(pabyX);
+                            VSIFree(pabyY);
+                            VSIFree(pabyZ);
+                            pabyX = pabyY = pabyZ = NULL;
+                        }
+                    }
+                    else
+#endif
+
 #ifdef HAVE_SSE_AT_COMPILE_TIME
 
 #define ALIGN16(x)  (((char*)(x)) + ((16 - (((size_t)(x)) % 16)) % 16))
