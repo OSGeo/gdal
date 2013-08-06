@@ -33,45 +33,46 @@
 #ifdef HAVE_AVX_AT_COMPILE_TIME
 #include <immintrin.h>
 
-#ifdef __linux
-#include <sys/utsname.h>
-#endif
-
 CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                          CPLHaveRuntimeAVX()                         */
 /************************************************************************/
 
-#define CPUID_AVX_ECX_BIT   28
+#define CPUID_OSXSAVE_ECX_BIT   27
+#define CPUID_AVX_ECX_BIT       28
+
+#define BIT_XMM_STATE           (1 << 1)
+#define BIT_YMM_STATE           (2 << 1)
 
 int CPLHaveRuntimeAVX()
 {
     int cpuinfo[4] = {0,0,0,0};
     GCC_CPUID(1, cpuinfo[0], cpuinfo[1], cpuinfo[2], cpuinfo[3]);
-    if( (cpuinfo[2] & (1 << CPUID_AVX_ECX_BIT)) != 0 )
+
+    /* Check OSXSAVE feature */
+    if( (cpuinfo[2] & (1 << CPUID_OSXSAVE_ECX_BIT)) == 0 )
     {
-#ifdef __linux
-        /* Linux OS support available since 2.6.30 */
-        struct utsname buf;
-        if( uname(&buf) == 0 )
-        {
-            int major, minor, micro;
-            if( sscanf(buf.release, "%d.%d.%d", &major, &minor, &micro) == 3 )
-            {
-                if( major >= 3 ||
-                    (major == 2 && minor == 6 && micro >= 30) )
-                {
-                    return TRUE;
-                }
-            }
-        }
         return FALSE;
-#else
-        return TRUE;
-#endif
     }
-    return FALSE;
+
+    /* Check AVX feature */
+    if( (cpuinfo[2] & (1 << CPUID_AVX_ECX_BIT)) == 0 )
+    {
+        return FALSE;
+    }
+
+    /* Issue XGETBV and check the XMM and YMM state bit */
+    unsigned int nXCRLow;
+    unsigned int nXCRHigh;
+    __asm__ ("xgetbv" : "=a" (nXCRLow), "=d" (nXCRHigh) : "c" (0));
+    if( (nXCRLow & ( BIT_XMM_STATE | BIT_YMM_STATE )) !=
+                   ( BIT_XMM_STATE | BIT_YMM_STATE ) )
+    {
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
 /************************************************************************/
