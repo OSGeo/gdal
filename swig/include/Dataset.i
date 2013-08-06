@@ -195,11 +195,13 @@ static GDALAsyncReaderH AsyncReaderWrapperGetReader(GDALAsyncReaderWrapperH hWra
     return psWrapper->hAsyncReader;
 }
 
+#if defined(SWIGPYTHON)
 static void* AsyncReaderWrapperGetPyObject(GDALAsyncReaderWrapperH hWrapper)
 {
     GDALAsyncReaderWrapper* psWrapper = (GDALAsyncReaderWrapper*)hWrapper;
     return psWrapper->pyObject;
 }
+#endif
 
 static void DeleteAsyncReaderWrapper(GDALAsyncReaderWrapperH hWrapper)
 {
