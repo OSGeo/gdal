@@ -12,6 +12,10 @@ OBJ	=	gdalmediancut.o gdaldither.o gdal_crs.o gdaltransformer.o \
 		contour.o gdaltransformgeolocs.o \
 		gdal_octave.o gdal_simplesurf.o gdalmatching.o
 
+ifeq ($(HAVE_AVX_AT_COMPILE_TIME),yes)
+CPPFLAGS 	:=	-DHAVE_AVX_AT_COMPILE_TIME $(CPPFLAGS)
+endif
+
 ifeq ($(HAVE_GEOS),yes)
 CPPFLAGS 	:=	-DHAVE_GEOS=1 $(GEOS_CFLAGS) $(CPPFLAGS)
 endif
@@ -22,7 +26,10 @@ endif
 
 CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) $(OPENCL_FLAGS)
 
-default:	$(OBJ:.o=.$(OBJ_EXT))
+default:	$(OBJ:.o=.$(OBJ_EXT)) gdalgridavx.o
+
+gdalgridavx.o:   gdalgridavx.cpp
+	$(CXX) $(CXXFLAGS) $(AVXFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 clean:
 	$(RM) *.o $(O_OBJ)
