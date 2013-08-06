@@ -98,7 +98,7 @@ The OGRSpatialReference class is intended to store an OpenGIS Spatial
 Reference System definition.  Currently local, geographic and projected
 coordinate systems are supported.  Vertical coordinate systems, geocentric 
 coordinate systems, and compound (horizontal + vertical) coordinate systems
-are not supported.<p>
+are as well supported in recent GDAL versions.<p>
 
 The spatial coordinate system data model is inherited from the OpenGIS
 <b>Well Known Text</b> format.  A simple form of this is defined in the
