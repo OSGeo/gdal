@@ -2543,6 +2543,11 @@ OGR_G_ApproximateArcAngles(
  * consumed and a new one returned (or potentially the same one).
  *
  * @param poGeom the input geometry - ownership is passed to the method.
+ * @param bOnlyInOrder flag that, if set to FALSE, indicate that the order of
+ *                     points in a linestring might be reversed if it enables
+ *                     to match the extremity of another linestring. If set
+ *                     to TRUE, the start of a linestring must match the end
+ *                     of another linestring.
  * @return new geometry.
  */
 
