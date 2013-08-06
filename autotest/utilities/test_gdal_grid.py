@@ -292,7 +292,7 @@ def test_gdal_grid_3():
         pass
 
     # Create a GDAL dataset from the values of "grid.csv".
-    gdaltest.runexternal(gdal_grid + ' --config GDAL_USE_SSE NO -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Float64 -l grid -a invdist:power=2.0:smoothing=0.0:radius1=0.0:radius2=0.0:angle=0.0:max_points=0:min_points=0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+    gdaltest.runexternal(gdal_grid + ' --config GDAL_USE_AVX NO --config GDAL_USE_SSE NO -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Float64 -l grid -a invdist:power=2.0:smoothing=0.0:radius1=0.0:radius2=0.0:angle=0.0:max_points=0:min_points=0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
 
     # We should get the same values as in "ref_data/gdal_invdist.tif"
     ds = gdal.Open(outfiles[-1])
