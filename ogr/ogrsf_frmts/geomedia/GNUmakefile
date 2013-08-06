@@ -5,7 +5,7 @@ include ../../../GDALmake.opt
 OBJ	=	ogrgeomediadatasource.o ogrgeomedialayer.o ogrgeomediadriver.o \
 		ogrgeomediatablelayer.o ogrgeomediaselectlayer.o
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) -I.. -I../.. $(CPPFLAGS)
+CPPFLAGS	:=	$(GDAL_INCLUDE) -I.. -I../.. -I../pgeo $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 

@@ -4,7 +4,7 @@ include ../../../GDALmake.opt
 
 OBJ	=	ogrwalkdriver.o ogrwalkdatasource.o ogrwalklayer.o ogrwalktablelayer.o ogrwalkselectlayer.o ogrwalktool.o
 
-CPPFLAGS	:=	-I.. -I../.. -I../generic $(GDAL_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:=	-I.. -I../.. -I../generic -I../pgeo $(GDAL_INCLUDE) $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 
