@@ -133,6 +133,20 @@ int OGRODBCDataSource::OpenMDB( const char * pszNewName, int bUpdate )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Check if it is a Walk MDB.                                      */
+/* -------------------------------------------------------------------- */
+    {
+        CPLODBCStatement oStmt( &oSession );
+
+        oStmt.Append( "SELECT LayerID, LayerName, minE, maxE, minN, maxN, Memo FROM WalkLayers" );
+
+        if( oStmt.ExecuteSQL() )
+        {
+            return FALSE;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Return all tables as  non-spatial tables.                       */
 /* -------------------------------------------------------------------- */
     CPLODBCStatement oTableList( &oSession );
