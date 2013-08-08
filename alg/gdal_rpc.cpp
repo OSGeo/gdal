@@ -468,7 +468,12 @@ void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed,
     adfGTFromLL[3] = dfRefLine 
         - adfGTFromLL[4] * dfRefLong - adfGTFromLL[5] * dfRefLat;
 
-    GDALInvGeoTransform( adfGTFromLL, psTransform->adfPLToLatLongGeoTransform);
+    if( !GDALInvGeoTransform( adfGTFromLL, psTransform->adfPLToLatLongGeoTransform) )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot invert geotransform");
+        GDALDestroyRPCTransformer(psTransform);
+        return NULL;
+    }
     
     return psTransform;
 }

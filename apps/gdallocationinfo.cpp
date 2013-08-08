@@ -364,9 +364,16 @@ int main( int argc, char ** argv )
             double adfGeoTransform[6], adfInvGeoTransform[6];
     
             if( GDALGetGeoTransform( hSrcDS, adfGeoTransform ) != CE_None )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Cannot get geotransform");
                 exit( 1 );
+            }
     
-            GDALInvGeoTransform( adfGeoTransform, adfInvGeoTransform );
+            if( !GDALInvGeoTransform( adfGeoTransform, adfInvGeoTransform ) )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Cannot invert geotransform");
+                exit( 1 );
+            }
     
             iPixel = (int) floor(
                 adfInvGeoTransform[0] 
