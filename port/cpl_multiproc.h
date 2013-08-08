@@ -58,28 +58,28 @@ typedef void (*CPLThreadFunc)(void *);
 void CPL_DLL *CPLLockFile( const char *pszPath, double dfWaitInSeconds );
 void  CPL_DLL CPLUnlockFile( void *hLock );
 
-void CPL_DLL *CPLCreateMutex();
+void CPL_DLL *CPLCreateMutex( void );
 int   CPL_DLL CPLCreateOrAcquireMutex( void **, double dfWaitInSeconds );
 int   CPL_DLL CPLAcquireMutex( void *hMutex, double dfWaitInSeconds );
 void  CPL_DLL CPLReleaseMutex( void *hMutex );
 void  CPL_DLL CPLDestroyMutex( void *hMutex );
-void  CPL_DLL CPLCleanupMasterMutex();
+void  CPL_DLL CPLCleanupMasterMutex( void );
 
-void  CPL_DLL *CPLCreateCond();
+void  CPL_DLL *CPLCreateCond( void );
 void  CPL_DLL  CPLCondWait( void *hCond, void* hMutex );
 void  CPL_DLL  CPLCondSignal( void *hCond );
 void  CPL_DLL  CPLCondBroadcast( void *hCond );
 void  CPL_DLL  CPLDestroyCond( void *hCond );
 
-GIntBig CPL_DLL CPLGetPID();
+GIntBig CPL_DLL CPLGetPID( void );
 int   CPL_DLL CPLCreateThread( CPLThreadFunc pfnMain, void *pArg );
 void  CPL_DLL* CPLCreateJoinableThread( CPLThreadFunc pfnMain, void *pArg );
 void  CPL_DLL CPLJoinThread(void* hJoinableThread); 
 void  CPL_DLL CPLSleep( double dfWaitInSeconds );
 
-const char CPL_DLL *CPLGetThreadingModel();
+const char CPL_DLL *CPLGetThreadingModel( void );
 
-int CPL_DLL CPLGetNumCPUs();
+int CPL_DLL CPLGetNumCPUs( void );
 
 CPL_C_END
 
@@ -134,7 +134,7 @@ void CPL_DLL CPLSetTLS( int nIndex, void *pData, int bFreeOnExit );
 typedef void (*CPLTLSFreeFunc)( void* pData );
 void CPL_DLL CPLSetTLSWithFreeFunc( int nIndex, void *pData, CPLTLSFreeFunc pfnFree );
 
-void CPL_DLL CPLCleanupTLS();
+void CPL_DLL CPLCleanupTLS( void );
 CPL_C_END
 
 #endif /* _CPL_MULTIPROC_H_INCLUDED_ */
