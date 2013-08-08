@@ -3389,6 +3389,15 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
   }
 
 
+  void PopErrorHandler()
+  {
+     void* user_data = CPLGetErrorHandlerUserData();
+     if( user_data != NULL )
+       Py_XDECREF((PyObject*)user_data);
+     CPLPopErrorHandler();
+  }
+
+
   void Error( CPLErr msg_class = CE_Failure, int err_code = 0, const char* msg = "error" ) {
     CPLError( msg_class, err_code, "%s", msg );
   }
@@ -5405,6 +5414,7 @@ SWIGINTERN PyObject *_wrap_PushErrorHandler(PyObject *SWIGUNUSEDPARM(self), PyOb
       }
       else
       {
+        Py_INCREF(obj0);
         arg1 = PyCPLErrorHandler;
         arg2 = obj0;
       }
@@ -5433,6 +5443,29 @@ SWIGINTERN PyObject *_wrap_PushErrorHandler(PyObject *SWIGUNUSEDPARM(self), PyOb
       }
     }
   }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_PopErrorHandler(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  
+  if (!PyArg_ParseTuple(args,(char *)":PopErrorHandler")) SWIG_fail;
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    PopErrorHandler();
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
   return NULL;
@@ -5647,29 +5680,6 @@ SWIGINTERN PyObject *_wrap_GOA2GetAccessToken(PyObject *SWIGUNUSEDPARM(self), Py
 fail:
   if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_PopErrorHandler(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  
-  if (!PyArg_ParseTuple(args,(char *)":PopErrorHandler")) SWIG_fail;
-  {
-    if ( bUseExceptions ) {
-      CPLErrorReset();
-    }
-    CPLPopErrorHandler();
-    if ( bUseExceptions ) {
-      CPLErr eclass = CPLGetLastErrorType();
-      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-      }
-    }
-  }
-  resultobj = SWIG_Py_Void();
-  return resultobj;
-fail:
   return NULL;
 }
 
@@ -21520,11 +21530,11 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Debug", _wrap_Debug, METH_VARARGS, (char *)"Debug(char msg_class, char message)"},
 	 { (char *)"SetErrorHandler", _wrap_SetErrorHandler, METH_VARARGS, (char *)"SetErrorHandler(char pszCallbackName = None) -> CPLErr"},
 	 { (char *)"PushErrorHandler", _wrap_PushErrorHandler, METH_VARARGS, (char *)"PushErrorHandler(CPLErrorHandler pfnErrorHandler = None) -> CPLErr"},
+	 { (char *)"PopErrorHandler", _wrap_PopErrorHandler, METH_VARARGS, (char *)"PopErrorHandler()"},
 	 { (char *)"Error", _wrap_Error, METH_VARARGS, (char *)"Error(CPLErr msg_class = CE_Failure, int err_code = 0, char msg = \"error\")"},
 	 { (char *)"GOA2GetAuthorizationURL", _wrap_GOA2GetAuthorizationURL, METH_VARARGS, (char *)"GOA2GetAuthorizationURL(char pszScope) -> retStringAndCPLFree"},
 	 { (char *)"GOA2GetRefreshToken", _wrap_GOA2GetRefreshToken, METH_VARARGS, (char *)"GOA2GetRefreshToken(char pszAuthToken, char pszScope) -> retStringAndCPLFree"},
 	 { (char *)"GOA2GetAccessToken", _wrap_GOA2GetAccessToken, METH_VARARGS, (char *)"GOA2GetAccessToken(char pszRefreshToken, char pszScope) -> retStringAndCPLFree"},
-	 { (char *)"PopErrorHandler", _wrap_PopErrorHandler, METH_VARARGS, (char *)"PopErrorHandler()"},
 	 { (char *)"ErrorReset", _wrap_ErrorReset, METH_VARARGS, (char *)"ErrorReset()"},
 	 { (char *)"EscapeString", (PyCFunction) _wrap_EscapeString, METH_VARARGS | METH_KEYWORDS, (char *)"EscapeString(int len, int scheme = CPLES_SQL) -> retStringAndCPLFree"},
 	 { (char *)"GetLastErrorNo", _wrap_GetLastErrorNo, METH_VARARGS, (char *)"GetLastErrorNo() -> int"},
