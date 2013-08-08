@@ -211,7 +211,17 @@ transform_list = [ \
     # Test Vertical Datum Shift with a change of horizontal and vert units.
     ('+proj=utm +zone=11 +datum=WGS84', (100000.0,3500000.0,0.0), 0.1,
      '+proj=utm +zone=11 +datum=WGS84 +geoidgrids=egm96_15.gtx +units=us-ft', (328083.333225467,11482916.6665952,135.881817690812), 0.01,
-     'EGM 96 Conversion', None, "GRID:egm96_15.gtx" )
+     'EGM 96 Conversion', None, "GRID:egm96_15.gtx" ),
+
+    # Test optimization in case of identical projections (projected)
+    ('+proj=utm +zone=11 +datum=NAD27 +units=m', (440720.0,3751260.0,0.0), 0,
+     '+proj=utm +zone=11 +datum=NAD27 +units=m', (440720.0,3751260.0,0.0), 0,
+     'No-op Optimization (projected)', None, None),
+
+    # Test optimization in case of identical projections (geodetic)
+    ('+proj=longlat +datum=WGS84', (2,49,0.0), 0,
+     '+proj=longlat +datum=WGS84', (2,49,0.0), 0,
+     'No-op Optimization (geodetic)', None, None)
 
     ]
     
