@@ -117,7 +117,6 @@ class OGRProj4CT : public OGRCoordinateTransformation
     void        *psPJSource;
     int         bSourceLatLong;
     double      dfSourceToRadians;
-    double      dfSourceFromRadians;
     int         bSourceWrap;
     double      dfSourceWrapLong;
     
@@ -125,10 +124,11 @@ class OGRProj4CT : public OGRCoordinateTransformation
     OGRSpatialReference *poSRSTarget;
     void        *psPJTarget;
     int         bTargetLatLong;
-    double      dfTargetToRadians;
     double      dfTargetFromRadians;
     int         bTargetWrap;
     double      dfTargetWrapLong;
+
+    int         bIdentityTransform;
 
     int         nErrorCount;
     
@@ -463,6 +463,7 @@ OGRProj4CT::OGRProj4CT()
     psPJSource = NULL;
     psPJTarget = NULL;
     
+    bIdentityTransform = FALSE;
     nErrorCount = 0;
     
     bCheckWithInvertProj = FALSE;
@@ -569,7 +570,6 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
 /*      systems.                                                        */
 /* -------------------------------------------------------------------- */
     dfSourceToRadians = DEG_TO_RAD;
-    dfSourceFromRadians = RAD_TO_DEG;
     bSourceWrap = FALSE;
     dfSourceWrapLong = 0.0;
 
@@ -581,12 +581,9 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
             dfSourceToRadians = atof(poUNITS->GetChild(1)->GetValue());
             if( dfSourceToRadians == 0.0 )
                 dfSourceToRadians = DEG_TO_RAD;
-            else
-                dfSourceFromRadians = 1 / dfSourceToRadians;
         }
     }
 
-    dfTargetToRadians = DEG_TO_RAD;
     dfTargetFromRadians = RAD_TO_DEG;
     bTargetWrap = FALSE;
     dfTargetWrapLong = 0.0;
@@ -596,10 +593,8 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
         OGR_SRSNode *poUNITS = poSRSTarget->GetAttrNode( "GEOGCS|UNIT" );
         if( poUNITS && poUNITS->GetChildCount() >= 2 )
         {
-            dfTargetToRadians = atof(poUNITS->GetChild(1)->GetValue());
-            if( dfTargetToRadians == 0.0 )
-                dfTargetToRadians = DEG_TO_RAD;
-            else
+            double dfTargetToRadians = atof(poUNITS->GetChild(1)->GetValue());
+            if( dfTargetToRadians != 0.0 )
                 dfTargetFromRadians = 1 / dfTargetToRadians;
         }
     }
@@ -651,17 +646,17 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
     // means debug output could be one "increment" late. 
     static int   nDebugReportCount = 0;
 
-    char        *pszProj4Defn = NULL;
+    char        *pszSrcProj4Defn = NULL;
 
-    if( poSRSSource->exportToProj4( &pszProj4Defn ) != OGRERR_NONE )
+    if( poSRSSource->exportToProj4( &pszSrcProj4Defn ) != OGRERR_NONE )
     {
-        CPLFree( pszProj4Defn );
+        CPLFree( pszSrcProj4Defn );
         return FALSE;
     }
 
-    if( strlen(pszProj4Defn) == 0 )
+    if( strlen(pszSrcProj4Defn) == 0 )
     {
-        CPLFree( pszProj4Defn );
+        CPLFree( pszSrcProj4Defn );
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "No PROJ.4 translation for source SRS, coordinate\n"
                   "transformation initialization has failed." );
@@ -669,9 +664,9 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
     }
 
     if (pjctx)
-        psPJSource = pfn_pj_init_plus_ctx( pjctx, pszProj4Defn );
+        psPJSource = pfn_pj_init_plus_ctx( pjctx, pszSrcProj4Defn );
     else
-        psPJSource = pfn_pj_init_plus( pszProj4Defn );
+        psPJSource = pfn_pj_init_plus( pszSrcProj4Defn );
     
     if( psPJSource == NULL )
     {
@@ -683,7 +678,7 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
             CPLMutexHolderD(&hPROJMutex);
             CPLError( CE_Failure, CPLE_NotSupported, 
                       "Failed to initialize PROJ.4 with `%s'.\n%s", 
-                      pszProj4Defn, pfn_pj_strerrno(pj_errno) );
+                      pszSrcProj4Defn, pfn_pj_strerrno(pj_errno) );
         }
         else if( pfn_pj_get_errno_ref != NULL
             && pfn_pj_strerrno != NULL )
@@ -692,38 +687,42 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
 
             CPLError( CE_Failure, CPLE_NotSupported, 
                       "Failed to initialize PROJ.4 with `%s'.\n%s", 
-                      pszProj4Defn, pfn_pj_strerrno(*p_pj_errno) );
+                      pszSrcProj4Defn, pfn_pj_strerrno(*p_pj_errno) );
         }
         else
         {
             CPLError( CE_Failure, CPLE_NotSupported, 
                       "Failed to initialize PROJ.4 with `%s'.\n", 
-                      pszProj4Defn );
+                      pszSrcProj4Defn );
         }
     }
     
     if( nDebugReportCount < 10 )
-        CPLDebug( "OGRCT", "Source: %s", pszProj4Defn );
-    
-    CPLFree( pszProj4Defn );
+        CPLDebug( "OGRCT", "Source: %s", pszSrcProj4Defn );
 
     if( psPJSource == NULL )
+    {
+        CPLFree( pszSrcProj4Defn );
         return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Establish PROJ.4 handle for target if projection.               */
 /* -------------------------------------------------------------------- */
-    pszProj4Defn = NULL;
 
-    if( poSRSTarget->exportToProj4( &pszProj4Defn ) != OGRERR_NONE )
+    char        *pszDstProj4Defn = NULL;
+
+    if( poSRSTarget->exportToProj4( &pszDstProj4Defn ) != OGRERR_NONE )
     {
-        CPLFree( pszProj4Defn );
+        CPLFree( pszSrcProj4Defn );
+        CPLFree( pszDstProj4Defn );
         return FALSE;
     }
 
-    if( strlen(pszProj4Defn) == 0 )
+    if( strlen(pszDstProj4Defn) == 0 )
     {
-        CPLFree( pszProj4Defn );
+        CPLFree( pszSrcProj4Defn );
+        CPLFree( pszDstProj4Defn );
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "No PROJ.4 translation for destination SRS, coordinate\n"
                   "transformation initialization has failed." );
@@ -731,25 +730,43 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
     }
 
     if (pjctx)
-        psPJTarget = pfn_pj_init_plus_ctx( pjctx, pszProj4Defn );
+        psPJTarget = pfn_pj_init_plus_ctx( pjctx, pszDstProj4Defn );
     else
-        psPJTarget = pfn_pj_init_plus( pszProj4Defn );
+        psPJTarget = pfn_pj_init_plus( pszDstProj4Defn );
     
     if( psPJTarget == NULL )
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "Failed to initialize PROJ.4 with `%s'.", 
-                  pszProj4Defn );
+                  pszDstProj4Defn );
     
     if( nDebugReportCount < 10 )
     {
-        CPLDebug( "OGRCT", "Target: %s", pszProj4Defn );
+        CPLDebug( "OGRCT", "Target: %s", pszDstProj4Defn );
         nDebugReportCount++;
     }
 
-    CPLFree( pszProj4Defn );
-    
     if( psPJTarget == NULL )
+    {
+        CPLFree( pszSrcProj4Defn );
+        CPLFree( pszDstProj4Defn );
         return FALSE;
+    }
+
+    /* Determine if we really have a transformation to do */
+    bIdentityTransform = (strcmp(pszSrcProj4Defn, pszDstProj4Defn) == 0);
+
+    /* In case of identity transform, under the following conditions, */
+    /* we can also avoid transforming from deegrees <--> radians. */
+    if( bIdentityTransform && bSourceLatLong && !bSourceWrap &&
+        bTargetLatLong && !bTargetWrap &&
+        abs(dfSourceToRadians * dfTargetFromRadians - 1.0) < 1e-10 )
+    {
+        /*bSourceLatLong = FALSE;
+        bTargetLatLong = FALSE;*/
+    }
+
+    CPLFree( pszSrcProj4Defn );
+    CPLFree( pszDstProj4Defn );
 
     return TRUE;
 }
@@ -858,14 +875,16 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
 /* -------------------------------------------------------------------- */
 /*      Do the transformation using PROJ.4.                             */
 /* -------------------------------------------------------------------- */
-    if (pjctx == NULL)
+    if( !bIdentityTransform && pjctx == NULL )
     {
         /* The mutex has already been created */
         CPLAssert(hPROJMutex != NULL);
         CPLAcquireMutex(hPROJMutex, 1000.0);
     }
-        
-    if (bCheckWithInvertProj)
+
+    if( bIdentityTransform )
+        err = 0;
+    else if (bCheckWithInvertProj)
     {
         /* For some projections, we cannot detect if we are trying to reproject */
         /* coordinates outside the validity area of the projection. So let's do */
@@ -962,7 +981,7 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
         return FALSE;
     }
 
-    if (pjctx == NULL)
+    if( !bIdentityTransform && pjctx == NULL )
         CPLReleaseMutex(hPROJMutex);
 
 /* -------------------------------------------------------------------- */
