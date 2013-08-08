@@ -1153,8 +1153,13 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                  || psInfo->adfSrcGeoTransform[4] != 0.0
                  || ABS(psInfo->adfSrcGeoTransform[5]) != 1.0) )
     {
-        GDALInvGeoTransform( psInfo->adfSrcGeoTransform, 
-                             psInfo->adfSrcInvGeoTransform );
+        if( !GDALInvGeoTransform( psInfo->adfSrcGeoTransform, 
+                                  psInfo->adfSrcInvGeoTransform ) )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot invert geotransform");
+            GDALDestroyGenImgProjTransformer( psInfo );
+            return NULL;
+        }
         if( pszSrcWKT == NULL )
             pszSrcWKT = GDALGetProjectionRef( hSrcDS );
     }
@@ -1290,8 +1295,13 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
     if( hDstDS )
     {
         GDALGetGeoTransform( hDstDS, psInfo->adfDstGeoTransform );
-        GDALInvGeoTransform( psInfo->adfDstGeoTransform, 
-                             psInfo->adfDstInvGeoTransform );
+        if( !GDALInvGeoTransform( psInfo->adfDstGeoTransform, 
+                                  psInfo->adfDstInvGeoTransform ) )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot invert geotransform");
+            GDALDestroyGenImgProjTransformer( psInfo );
+            return NULL;
+        }
     }
     else
     {
@@ -1395,8 +1405,13 @@ GDALCreateGenImgProjTransformer3( const char *pszSrcWKT,
     {
         memcpy( psInfo->adfSrcGeoTransform, padfSrcGeoTransform,
                 sizeof(psInfo->adfSrcGeoTransform) );
-        GDALInvGeoTransform( psInfo->adfSrcGeoTransform, 
-                             psInfo->adfSrcInvGeoTransform );
+        if( !GDALInvGeoTransform( psInfo->adfSrcGeoTransform, 
+                                  psInfo->adfSrcInvGeoTransform ) )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot invert geotransform");
+            GDALDestroyGenImgProjTransformer( psInfo );
+            return NULL;
+        }
     }
     else
     {
@@ -1434,8 +1449,13 @@ GDALCreateGenImgProjTransformer3( const char *pszSrcWKT,
     {
         memcpy( psInfo->adfDstGeoTransform, padfDstGeoTransform,
                 sizeof(psInfo->adfDstGeoTransform) );
-        GDALInvGeoTransform( psInfo->adfDstGeoTransform, 
-                             psInfo->adfDstInvGeoTransform );
+        if( !GDALInvGeoTransform( psInfo->adfDstGeoTransform, 
+                                  psInfo->adfDstInvGeoTransform ) )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot invert geotransform");
+            GDALDestroyGenImgProjTransformer( psInfo );
+            return NULL;
+        }
     }
     else
     {
@@ -1482,8 +1502,11 @@ void GDALSetGenImgProjTransformerDstGeoTransform(
         static_cast<GDALGenImgProjTransformInfo *>( hTransformArg );
 
     memcpy( psInfo->adfDstGeoTransform, padfGeoTransform, sizeof(double) * 6 );
-    GDALInvGeoTransform( psInfo->adfDstGeoTransform, 
-                         psInfo->adfDstInvGeoTransform );
+    if( !GDALInvGeoTransform( psInfo->adfDstGeoTransform, 
+                              psInfo->adfDstInvGeoTransform ) )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot invert geotransform");
+    }
 }
 
 /************************************************************************/
@@ -1913,8 +1936,13 @@ void *GDALDeserializeGenImgProjTransformer( CPLXMLNode *psTree )
             
         }
         else
-            GDALInvGeoTransform( psInfo->adfSrcGeoTransform,
-                                 psInfo->adfSrcInvGeoTransform );
+        {
+            if( !GDALInvGeoTransform( psInfo->adfSrcGeoTransform,
+                                      psInfo->adfSrcInvGeoTransform ) )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Cannot invert geotransform");
+            }
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -1984,8 +2012,13 @@ void *GDALDeserializeGenImgProjTransformer( CPLXMLNode *psTree )
             
         }
         else
-            GDALInvGeoTransform( psInfo->adfDstGeoTransform,
-                                 psInfo->adfDstInvGeoTransform );
+        {
+            if( !GDALInvGeoTransform( psInfo->adfDstGeoTransform,
+                                      psInfo->adfDstInvGeoTransform ) )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Cannot invert geotransform");
+            }
+        }
     }
     
 /* -------------------------------------------------------------------- */
@@ -2624,6 +2657,26 @@ int CPL_STDCALL GDALInvGeoTransform( double *gt_in, double *gt_out )
 
 {
     double	det, inv_det;
+
+    /* Special case - no rotation - to avoid computing determinate */
+    /* and potential precision issues. */
+    if( gt_in[2] == 0.0 && gt_in[4] == 0.0 &&
+        gt_in[1] != 0.0 && gt_in[5] != 0.0 )
+    {
+        /*X = gt_in[0] + x * gt_in[1]
+          Y = gt_in[3] + y * gt_in[5] 
+          -->
+          x = -gt_in[0] / gt_in[1] + (1 / gt_in[1]) * X
+          y = -gt_in[3] / gt_in[5] + (1 / gt_in[5]) * Y
+        */
+        gt_out[0] = -gt_in[0] / gt_in[1];
+        gt_out[1] = 1.0 / gt_in[1];
+        gt_out[2] = 0.0;
+        gt_out[3] = -gt_in[3] / gt_in[5];
+        gt_out[4] = 0.0;
+        gt_out[5] = 1.0 / gt_in[5];
+        return 1;
+    }
 
     /* we assume a 3rd row that is [1 0 0] */
 
