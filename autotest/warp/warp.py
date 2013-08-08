@@ -1188,8 +1188,6 @@ gdaltest_list = [
     warp_37,
     ]
 
-gdaltest_list = [ warp_37 ]
-
 if __name__ == '__main__':
 
     gdaltest.setup_run( 'warp' )
