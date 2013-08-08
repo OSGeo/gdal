@@ -158,6 +158,10 @@ def PushErrorHandler(*args):
   """PushErrorHandler(CPLErrorHandler pfnErrorHandler = None) -> CPLErr"""
   return _gdal.PushErrorHandler(*args)
 
+def PopErrorHandler(*args):
+  """PopErrorHandler()"""
+  return _gdal.PopErrorHandler(*args)
+
 def Error(*args):
   """Error(CPLErr msg_class = CE_Failure, int err_code = 0, char msg = "error")"""
   return _gdal.Error(*args)
@@ -173,10 +177,6 @@ def GOA2GetRefreshToken(*args):
 def GOA2GetAccessToken(*args):
   """GOA2GetAccessToken(char pszRefreshToken, char pszScope) -> retStringAndCPLFree"""
   return _gdal.GOA2GetAccessToken(*args)
-
-def PopErrorHandler(*args):
-  """PopErrorHandler()"""
-  return _gdal.PopErrorHandler(*args)
 
 def ErrorReset(*args):
   """ErrorReset()"""

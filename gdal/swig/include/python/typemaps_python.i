@@ -1206,6 +1206,7 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
     }
     else
     {
+        Py_INCREF($input);
         $1 = PyCPLErrorHandler;
         $2 = $input;
     }
