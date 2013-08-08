@@ -685,13 +685,13 @@ OCTTransformEx( OGRCoordinateTransformationH hCT,
 /* this is really private to OGR. */
 char *OCTProj4Normalize( const char *pszProj4Src );
 
-void OCTCleanupProjMutex();
+void OCTCleanupProjMutex( void );
 
 /* -------------------------------------------------------------------- */
 /*      Projection transform dictionary query.                          */
 /* -------------------------------------------------------------------- */
 
-char CPL_DLL ** OPTGetProjectionMethods();
+char CPL_DLL ** OPTGetProjectionMethods( void );
 char CPL_DLL ** OPTGetParameterList( const char * pszProjectionMethod,
                              char ** ppszUserName );
 int CPL_DLL OPTGetParameterInfo( const char * pszProjectionMethod,

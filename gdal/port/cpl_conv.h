@@ -190,7 +190,7 @@ FILE CPL_DLL    *CPLOpenShared( const char *, const char *, int );
 void CPL_DLL     CPLCloseShared( FILE * );
 CPLSharedFileInfo CPL_DLL *CPLGetSharedList( int * );
 void CPL_DLL     CPLDumpSharedList( FILE * );
-void CPL_DLL     CPLCleanupSharedFileMutex();
+void CPL_DLL     CPLCleanupSharedFileMutex( void );
 
 /* -------------------------------------------------------------------- */
 /*      DMS to Dec to DMS conversion.                                   */
