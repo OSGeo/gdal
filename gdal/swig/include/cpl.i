@@ -93,6 +93,17 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
     return CE_None;
   }
 %}
+
+%inline %{
+  void PopErrorHandler()
+  {
+     void* user_data = CPLGetErrorHandlerUserData();
+     if( user_data != NULL )
+       Py_XDECREF((PyObject*)user_data);
+     CPLPopErrorHandler();
+  }
+%}
+
 #else
 %inline %{
   CPLErr PushErrorHandler( char const * pszCallbackName = NULL ) {
@@ -189,7 +200,9 @@ GOA2GetAccessToken( const char *pszRefreshToken, const char *pszScope );
 void CPLPushErrorHandler( CPLErrorHandler );
 #endif
 
+#if !defined(SWIGPYTHON)
 void CPLPopErrorHandler();
+#endif
 
 void CPLErrorReset();
 
