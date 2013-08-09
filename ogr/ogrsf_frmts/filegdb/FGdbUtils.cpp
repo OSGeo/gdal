@@ -370,23 +370,25 @@ bool GDBFieldTypeToWidthPrecision(std::string &gdbType, int *width, int *precisi
 {
     *precision = 0;
 
+    /* Width (Length in FileGDB terms) based on FileGDB_API/samples/XMLsamples/OneOfEachFieldType.xml */
+    /* Length is in bytes per doc of FileGDB_API/xmlResources/FileGDBAPI.xsd */
     if(gdbType == "esriFieldTypeSmallInteger" )
     {
         *width = 2;
     }
     else if(gdbType == "esriFieldTypeInteger" )
     {
-        *width = 12;
+        *width = 4;
     }
     else if(gdbType == "esriFieldTypeSingle" )
     {
-        *width = 12;
-        *precision = 5;
+        *width = 4;
+        *precision = 5; // FIXME ?
     }
     else if(gdbType == "esriFieldTypeDouble" )
     {
-        *width = 24;
-        *precision = 15;
+        *width = 8;
+        *precision = 15; // FIXME ?
     }
     else if(gdbType == "esriFieldTypeString" )
     {
@@ -394,11 +396,11 @@ bool GDBFieldTypeToWidthPrecision(std::string &gdbType, int *width, int *precisi
     }
     else if(gdbType == "esriFieldTypeDate" )
     {
-        *width = 32;
+        *width = 8;
     }
     else if(gdbType == "esriFieldTypeOID" )
     {
-        *width = 15;
+        *width = 4;
     }
     else
     {
