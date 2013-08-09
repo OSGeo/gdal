@@ -45,6 +45,46 @@ projections are possible.</p>
 </blockquote>
 <p><b>Note:</b> The LCP driver derives from the RawDataset helper class declared 
 in gdal/frmts/raw. It should be implemented as gdal/frmts/raw/lcpdataset.cpp.</p>
+<h3>Creation Options</h3>
+The LCP driver supports CreateCopy() and metadata values can be set via
+creation options.  Below is a list of options with default values listed first.
+<li><p><b>ELEVATION_UNIT=[METERS/FEET]</b>: Vertical unit for elevation
+band.</p></li>
+
+<li><p><b>SLOPE_UNIT=[DEGREES/PERCENT]</b></p></li>
+<li><p><b>ASPECT_UNIT=[AZIMUTH_DEGREES/GRASS_CATEGORIES/GRASS_DEGRESS]</b></p></li>
+<li><p><b>FUEL_MODEL_OPTION=[NO_CUSTOM_AND_NO_FILE/CUSTOM_AND_NO_FILE/
+    NO_CUSTOM_AND_FILE/CUSTOM_AND_FILE]</b>: Specify whether or not custom
+    fuel models are used, and if a custom fuel model file is present.</p></li>
+<li><p><b>CANOPY_COV_UNIT=[PERCENT/CATEGORIES]</b></p></li>
+<li><p><b>CANOPY_HT_UNIT=[METERS_X_10/FEET/METERS/FEET_X_10]</b></p></li>
+<li><p><b>CBH_UNIT=[METERS_X_10/METERS/FEET/FEET_X_10]</b></p></li>
+<li><p><b>CBD_UNIT=[KG_PER_CUBIC_METER_X_100/POUND_PER_CUBIC_FOOT/
+    KG_PER_CUBIC_METER/POUND_PER_CUBIC_FOOT_X_1000/TONS_PER_ACRE_X_100]</b></p></li>
+<li><p><b>DUFF_UNIT=[MG_PER_HECTARE_X_10/TONS_PER_ACRE_X_10]</b></p></li>
+<li><p><b>CALCULATE_STATS=[YES/NO]</b>: Calculate and write the min/max for
+    each band and write the appropriate flags and values in the header.  This is
+    mostly a legacy feature used for creating legends.</p></li>
+<li><p><b>CLASSIFY_DATA=[YES/NO]</b>: Classify the data into 100 unique values
+    or less and write and write the appropriate flags and values in the header.
+    This is mostly a legacy feature used for creating legends.</p></li>
+<li><p><b>LINEAR_UNIT=[SET_FROM_SRS/METER/FOOT/KILOMETER]</b>: Set the
+    linear unit, overriding (if it can be calculated) the value in the
+    associated spatial reference.  If no spatial reference is available, it
+    defaults to METER.</p></li>
+<li><p><b>LATITUDE=[-90-90]</b>: Override the latitude from the spatial
+    reference.  If no spatial reference is available, this should be set,
+    otherwise creation will fail.</p></li>
+<li><p><b>DESCRIPTION=[...]</b>: A short description(less than 512 characters)
+    of the dataset</p></li>
+
+Creation options that are units of linear measure are fairly lenient.
+METERS=METER and FOOT=FEET for the most part.
+
+<p><b>Note:</b> CreateCopy does not scale or change any data.  By setting the
+units for various bands, it is assumed that the values are in the specified
+units.</p>
+
 <p><b>LCP header format:</b></p>
 <table border="1" cellspacing="1" width="885">
   <tr>
