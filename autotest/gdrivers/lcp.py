@@ -33,8 +33,6 @@ import sys
 import gdal
 import array
 import string
-import struct
-import random
 
 sys.path.append( '../pymod' )
 
@@ -260,7 +258,7 @@ def lcp_4():
     fl = ds.GetFileList()
     if len(fl) != 1:
         gdaltest.post_reason('Invalid file list')
-        retval = 'fail'
+        return 'fail'
     return 'success'
 
 ###############################################################################
@@ -290,6 +288,7 @@ def lcp_6():
     if len(fl) != 2:
         gdaltest.post_reason('Invalid file list')
         retval = 'fail'
+    ds = None
     try:
         os.remove('data/test_FARSITE_UTM12.LCP.aux.xml')
     except:
@@ -350,17 +349,20 @@ def lcp_8():
             retval = 'fail'
             break
         dst_ds = lcp_drv.CreateCopy('tmp/lcp_8.lcp', src_ds)
+        src_ds = None
         if dst_ds != None:
             gdaltest.post_reason('Created invalid lcp')
             retval = 'fail'
+            dst_ds = None
             break
+        dst_ds = None
     gdal.PopErrorHandler()
     for ext in ['lcp', 'lcp.aux.xml']:
         try:
             os.remove('tmp/lcp_8.' + ext)
         except:
             pass
-    return 'success'
+    return retval
 
 ###############################################################################
 #  Test create copy
@@ -379,7 +381,8 @@ def lcp_9():
     retval = 'success'
     lcp_ds = lcp_drv.CreateCopy('tmp/lcp_9.lcp', src_ds, False)
     if lcp_ds == None:
-        retval = 'fail'
+        return 'fail'
+    lcp_ds = None
     for ext in ['lcp', 'lcp.aux.xml']:
         try:
             os.remove('tmp/lcp_9.' + ext)
@@ -406,11 +409,17 @@ def lcp_10():
     for option in ['METERS', 'FEET']:
         co = ['ELEVATION_UNIT=%s' % option]
         lcp_ds = drv.CreateCopy('tmp/lcp_10.lcp', src_ds, False, co)
+        if lcp_ds == None:
+            retval = 'fail'
+            break
         units = lcp_ds.GetRasterBand(1).GetMetadataItem("ELEVATION_UNIT_NAME")
         if units.lower() != option.lower():
             gdaltest.post_reason('Could not set ELEVATION_UNIT')
             retval = 'fail'
+            lcp_ds = None
             break
+        lcp_ds = None
+    src_ds = None
 
     for ext in ['lcp', 'lcp.aux.xml']:
         try:
@@ -439,11 +448,17 @@ def lcp_11():
     for option in ['DEGREES', 'PERCENT']:
         co = ['SLOPE_UNIT=%s' % option]
         lcp_ds = drv.CreateCopy('tmp/lcp_11.lcp', src_ds, False, co)
+        if lcp_ds == None:
+            retval = 'fail'
+            break
         units = lcp_ds.GetRasterBand(2).GetMetadataItem("SLOPE_UNIT_NAME")
         if units.lower() != option.lower():
             gdaltest.post_reason('Could not set SLOPE_UNIT')
             retval = 'fail'
+            lcp_ds = None
             break
+        lcp_ds = None
+    src_ds = None
 
     for ext in ['lcp', 'lcp.aux.xml']:
         try:
@@ -472,12 +487,17 @@ def lcp_12():
     for option in ['GRASS_CATEGORIES', 'AZIMUTH_DEGREES', 'GRASS_DEGREES']:
         co = ['ASPECT_UNIT=%s' % option]
         lcp_ds = drv.CreateCopy('tmp/lcp_12.lcp', src_ds, False, co)
+        if lcp_ds == None:
+            retval = 'fail'
+            break
         units = lcp_ds.GetRasterBand(3).GetMetadataItem("ASPECT_UNIT_NAME")
         if units.lower() != option.replace('_', ' ').lower():
             gdaltest.post_reason('Could not set ASPECT_UNIT')
             retval = 'fail'
+            lcp_ds = None
             break
-
+        lcp_ds = None
+    src_ds = None
     for ext in ['lcp', 'lcp.aux.xml']:
         try:
             os.remove('tmp/lcp_12.' + ext)
@@ -505,11 +525,17 @@ def lcp_13():
     for option in ['PERCENT', 'CATEGORIES']:
         co = ['CANOPY_COV_UNIT=%s' % option]
         lcp_ds = drv.CreateCopy('tmp/lcp_13.lcp', src_ds, False, co)
+        if lcp_ds == None:
+            retval = 'fail'
+            break
         units = lcp_ds.GetRasterBand(5).GetMetadataItem("CANOPY_COV_UNIT_NAME")
         if units.lower()[:10] != option.lower()[:10]:
             gdaltest.post_reason('Could not set CANOPY_COV_UNIT')
             retval = 'fail'
+            lcp_ds = None
             break
+        lcp_ds = None
+    src_ds = None
 
     for ext in ['lcp', 'lcp.aux.xml']:
         try:
@@ -538,11 +564,17 @@ def lcp_14():
     for option in ['METERS', 'FEET', 'METERS_X_10', 'FEET_X_10']:
         co = ['CANOPY_HT_UNIT=%s' % option]
         lcp_ds = drv.CreateCopy('tmp/lcp_14.lcp', src_ds, False, co)
+        if lcp_ds == None:
+            retval = 'fail'
+            break
         units = lcp_ds.GetRasterBand(6).GetMetadataItem("CANOPY_HT_UNIT_NAME")
         if units.lower() != option.replace('_', ' ').lower():
             gdaltest.post_reason('Could not set CANOPY_HT_UNIT')
             retval = 'fail'
+            lcp_ds = None
             break
+        lcp_ds = None
+    src_ds = None
 
     for ext in ['lcp', 'lcp.aux.xml']:
         try:
@@ -571,11 +603,17 @@ def lcp_15():
     for option in ['METERS', 'FEET', 'METERS_X_10', 'FEET_X_10']:
         co = ['CBH_UNIT=%s' % option]
         lcp_ds = drv.CreateCopy('tmp/lcp_15.lcp', src_ds, False, co)
+        if lcp_ds == None:
+            retval = 'fail'
+            break
         units = lcp_ds.GetRasterBand(7).GetMetadataItem("CBH_UNIT_NAME")
         if units.lower() != option.replace('_', ' ').lower():
             gdaltest.post_reason('Could not set CBH_UNIT')
             retval = 'fail'
+            lcp_ds = None
             break
+        lcp_ds = None
+    src_ds = None
 
     for ext in ['lcp', 'prj', 'lcp.aux.xml']:
         try:
@@ -608,11 +646,17 @@ def lcp_16():
                                 'POUND_PER_CUBIC_FOOT_X_1000']):
         co = ['CBD_UNIT=%s' % option]
         lcp_ds = drv.CreateCopy('tmp/lcp_16.lcp', src_ds, False, co)
+        if lcp_ds == None:
+            retval = 'fail'
+            break
         units = lcp_ds.GetRasterBand(8).GetMetadataItem("CBD_UNIT_NAME")
         if units.lower() != answers[i].lower():
             gdaltest.post_reason('Could not set CBD_UNIT')
             retval = 'fail'
+            lcp_ds = None
             break
+        lcp_ds = None
+    src_ds = None
 
     for ext in ['lcp', 'lcp.aux.xml']:
         try:
@@ -644,11 +688,17 @@ def lcp_17():
     for i, option in enumerate(['MG_PER_HECTARE_X_10', 'TONS_PER_ACRE_X_10']):
         co = ['DUFF_UNIT=%s' % option]
         lcp_ds = drv.CreateCopy('tmp/lcp_17.lcp', src_ds, False, co)
+        if lcp_ds == None:
+            retval = 'fail'
+            break
         units = lcp_ds.GetRasterBand(9).GetMetadataItem("DUFF_UNIT_NAME")
         if units.lower() != answers[i].lower():
             #gdaltest.post_reason('Could not set DUFF_UNIT')
             retval = 'expected_fail'
+            lcp_ds = None
             break
+        lcp_ds = None
+    src_ds = None
 
     for ext in ['lcp', 'lcp.aux.xml']:
         try:
@@ -673,18 +723,22 @@ def lcp_18():
     if src_ds == None:
         return 'fail'
 
+    retval = 'success'
     lcp_ds = drv.CreateCopy('tmp/lcp_18.lcp', src_ds, False, ['LATITUDE=45',])
     if lcp_ds == None:
         return 'fail'
     if lcp_ds.GetMetadataItem('LATITUDE') != '45':
         gdaltest.post_reason('Failed to set LATITUDE creation option')
         retval = 'fail'
+
+    src_ds = None
+    lcp_ds = None
     for ext in ['lcp', 'lcp.aux.xml']:
         try:
             os.remove('tmp/lcp_18.' + ext)
         except:
             pass
-    return 'success'
+    return retval
 
 ###############################################################################
 #  Test create copy and make sure creation options work.
@@ -701,19 +755,23 @@ def lcp_19():
     if src_ds == None:
         return 'fail'
 
+    retval = 'success'
     lcp_ds = drv.CreateCopy('tmp/lcp_19.lcp', src_ds, False, ['LINEAR_UNIT=FOOT'])
     if lcp_ds == None:
         return 'fail'
     if lcp_ds.GetMetadataItem('LINEAR_UNIT') != 'Feet':
         gdaltest.post_reason('Failed to set LINEAR_UNIT creation option')
         retval = 'fail'
+
+    src_ds = None
+    lcp_ds = None
     for ext in ['lcp', 'lcp.aux.xml']:
         try:
             os.remove('tmp/lcp_19.' + ext)
         except:
             pass
 
-    return 'success'
+    return retval
 
 ###############################################################################
 #  Test create copy and make sure DESCRIPTION co works
@@ -738,6 +796,8 @@ def lcp_20():
     if lcp_ds.GetMetadataItem('DESCRIPTION') != desc:
         gdaltest.post_reason('Failed to set DESCRIPTION creation option')
         retval = 'fail'
+    src_ds = None
+    lcp_ds = None
     for ext in ['lcp', 'lcp.aux.xml']:
         try:
             os.remove('tmp/lcp_20.' + ext)
@@ -752,6 +812,7 @@ def lcp_20():
 def lcp_21():
     try:
         import random
+        import struct
     except ImportError:
         return 'skip'
     mem_drv = gdal.GetDriverByName('MEM')
@@ -777,6 +838,8 @@ def lcp_21():
             gdaltest.post_reason('Did not get expected checksum')
             retval = 'fail'
 
+    src_ds = None
+    lcp_ds = None
     for ext in ['lcp', 'lcp.aux.xml']:
         try:
             os.remove('tmp/lcp_21.' + ext)
@@ -791,6 +854,7 @@ def lcp_21():
 def lcp_22():
     try:
         import random
+        import struct
         import numpy
     except ImportError:
         return 'skip'
@@ -818,6 +882,8 @@ def lcp_22():
         if not numpy.array_equal(src_data, dst_data):
             gdaltest.post_reason('Did not copy data correctly')
             retval = 'fail'
+    src_ds = None
+    lcp_ds = None
     for ext in ['lcp', 'lcp.aux.xml']:
         try:
             os.remove('tmp/lcp_22.' + ext)
@@ -853,6 +919,9 @@ def lcp_23():
         if lcp_ds != None:
             retval = 'fail'
     gdal.PopErrorHandler()
+
+    src_ds = None
+    lcp_ds = None
     for ext in ['lcp', 'lcp.aux.xml']:
         try:
             os.remove('tmp/lcp_23.' + ext)
