@@ -33,6 +33,8 @@ import sys
 import gdal
 import array
 import string
+import struct
+import random
 
 sys.path.append( '../pymod' )
 
@@ -251,13 +253,14 @@ def lcp_3():
 
 def lcp_4():
 
+    retval = 'success'
     ds = gdal.Open('data/test_USGS_LFNM_Alb83.lcp')
     if ds == None:
         return 'fail'
     fl = ds.GetFileList()
     if len(fl) != 1:
         gdaltest.post_reason('Invalid file list')
-        return 'fail'
+        retval = 'fail'
     return 'success'
 
 ###############################################################################
@@ -279,14 +282,584 @@ def lcp_5():
 
 def lcp_6():
 
+    retval = 'success'
     ds = gdal.Open('data/test_FARSITE_UTM12.LCP')
     if ds == None:
         return 'fail'
     fl = ds.GetFileList()
     if len(fl) != 2:
         gdaltest.post_reason('Invalid file list')
+        retval = 'fail'
+    try:
+        os.remove('data/test_FARSITE_UTM12.LCP.aux.xml')
+    except:
+        pass
+
+    return retval
+
+###############################################################################
+#  Test create copy that copies data over
+
+def lcp_7():
+
+    mem_drv = gdal.GetDriverByName('MEM')
+    if mem_drv == None:
         return 'fail'
+    lcp_drv = gdal.GetDriverByName('LCP')
+    if lcp_drv == None:
+        return 'fail'
+    # Make sure all avaible band counts work
+    retval = 'success'
+    for i in [5, 7, 8, 10]:
+        src_ds = mem_drv.Create('/vsimem/lcptest', 10, 20, i, gdal.GDT_Int16)
+        if src_ds == None:
+            return 'fail'
+        dst_ds = lcp_drv.CreateCopy('tmp/lcp_7.lcp', src_ds)
+        if dst_ds == None:
+            gdaltest.post_reason('Failed to create lcp with %d bands' % i)
+            retval = 'fail'
+            break
+        dst_ds = None
+    src_ds = None
+    dst_ds = None
+
+    for ext in ['lcp', 'lcp.aux.xml']:
+        try:
+            os.remove('tmp/lcp_7.' + ext)
+        except:
+            pass
+
+    return retval
+
+###############################################################################
+#  Test create copy with invalid bands
+
+def lcp_8():
+
+    mem_drv = gdal.GetDriverByName('MEM')
+    if mem_drv == None:
+        return 'fail'
+    lcp_drv = gdal.GetDriverByName('LCP')
+    if lcp_drv == None:
+        return 'fail'
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    retval = 'success'
+    for i in [0,1,2,3,4,6,9,11]:
+        src_ds = mem_drv.Create('', 10, 10, i, gdal.GDT_Int16)
+        if src_ds == None:
+            retval = 'fail'
+            break
+        dst_ds = lcp_drv.CreateCopy('tmp/lcp_8.lcp', src_ds)
+        if dst_ds != None:
+            gdaltest.post_reason('Created invalid lcp')
+            retval = 'fail'
+            break
+    gdal.PopErrorHandler()
+    for ext in ['lcp', 'lcp.aux.xml']:
+        try:
+            os.remove('tmp/lcp_8.' + ext)
+        except:
+            pass
     return 'success'
+
+###############################################################################
+#  Test create copy
+
+def lcp_9():
+
+    mem_drv = gdal.GetDriverByName('MEM')
+    if mem_drv == None:
+        return 'fail'
+    lcp_drv = gdal.GetDriverByName('LCP')
+    if lcp_drv == None:
+        return 'fail'
+    src_ds = mem_drv.Create('', 10, 20, 10, gdal.GDT_Int16)
+    if src_ds == None:
+        return 'fail'
+    retval = 'success'
+    lcp_ds = lcp_drv.CreateCopy('tmp/lcp_9.lcp', src_ds, False)
+    if lcp_ds == None:
+        retval = 'fail'
+    for ext in ['lcp', 'lcp.aux.xml']:
+        try:
+            os.remove('tmp/lcp_9.' + ext)
+        except:
+            pass
+    return retval
+
+###############################################################################
+#  Test create copy and make sure all unit metadata co work
+
+def lcp_10():
+
+    mem_drv = gdal.GetDriverByName('MEM')
+    if mem_drv == None:
+        return 'fail'
+    drv = gdal.GetDriverByName('LCP')
+    if drv == None:
+        return 'fail'
+    src_ds = mem_drv.Create('/vsimem/', 10, 10, 10, gdal.GDT_Int16)
+    if src_ds == None:
+        return 'fail'
+
+    retval = 'success'
+    for option in ['METERS', 'FEET']:
+        co = ['ELEVATION_UNIT=%s' % option]
+        lcp_ds = drv.CreateCopy('tmp/lcp_10.lcp', src_ds, False, co)
+        units = lcp_ds.GetRasterBand(1).GetMetadataItem("ELEVATION_UNIT_NAME")
+        if units.lower() != option.lower():
+            gdaltest.post_reason('Could not set ELEVATION_UNIT')
+            retval = 'fail'
+            break
+
+    for ext in ['lcp', 'lcp.aux.xml']:
+        try:
+            os.remove('tmp/lcp_10.' + ext)
+        except:
+            pass
+
+    return retval
+
+###############################################################################
+#  Test create copy and make sure all unit metadata co work
+
+def lcp_11():
+
+    mem_drv = gdal.GetDriverByName('MEM')
+    if mem_drv == None:
+        return 'fail'
+    drv = gdal.GetDriverByName('LCP')
+    if drv == None:
+        return 'fail'
+    src_ds = mem_drv.Create('/vsimem/', 10, 10, 10, gdal.GDT_Int16)
+    if src_ds == None:
+        return 'fail'
+
+    retval = 'success'
+    for option in ['DEGREES', 'PERCENT']:
+        co = ['SLOPE_UNIT=%s' % option]
+        lcp_ds = drv.CreateCopy('tmp/lcp_11.lcp', src_ds, False, co)
+        units = lcp_ds.GetRasterBand(2).GetMetadataItem("SLOPE_UNIT_NAME")
+        if units.lower() != option.lower():
+            gdaltest.post_reason('Could not set SLOPE_UNIT')
+            retval = 'fail'
+            break
+
+    for ext in ['lcp', 'lcp.aux.xml']:
+        try:
+            os.remove('tmp/lcp_11.' + ext)
+        except:
+            pass
+
+    return retval
+
+###############################################################################
+#  Test create copy and make sure all unit metadata co work
+
+def lcp_12():
+
+    mem_drv = gdal.GetDriverByName('MEM')
+    if mem_drv == None:
+        return 'fail'
+    drv = gdal.GetDriverByName('LCP')
+    if drv == None:
+        return 'fail'
+    src_ds = mem_drv.Create('/vsimem/', 10, 10, 10, gdal.GDT_Int16)
+    if src_ds == None:
+        return 'fail'
+
+    retval = 'success'
+    for option in ['GRASS_CATEGORIES', 'AZIMUTH_DEGREES', 'GRASS_DEGREES']:
+        co = ['ASPECT_UNIT=%s' % option]
+        lcp_ds = drv.CreateCopy('tmp/lcp_12.lcp', src_ds, False, co)
+        units = lcp_ds.GetRasterBand(3).GetMetadataItem("ASPECT_UNIT_NAME")
+        if units.lower() != option.replace('_', ' ').lower():
+            gdaltest.post_reason('Could not set ASPECT_UNIT')
+            retval = 'fail'
+            break
+
+    for ext in ['lcp', 'lcp.aux.xml']:
+        try:
+            os.remove('tmp/lcp_12.' + ext)
+        except:
+            pass
+
+    return retval
+
+###############################################################################
+#  Test create copy and make sure all unit metadata co work
+
+def lcp_13():
+
+    mem_drv = gdal.GetDriverByName('MEM')
+    if mem_drv == None:
+        return 'fail'
+    drv = gdal.GetDriverByName('LCP')
+    if drv == None:
+        return 'fail'
+    src_ds = mem_drv.Create('/vsimem/', 10, 10, 10, gdal.GDT_Int16)
+    if src_ds == None:
+        return 'fail'
+
+    retval = 'success'
+    for option in ['PERCENT', 'CATEGORIES']:
+        co = ['CANOPY_COV_UNIT=%s' % option]
+        lcp_ds = drv.CreateCopy('tmp/lcp_13.lcp', src_ds, False, co)
+        units = lcp_ds.GetRasterBand(5).GetMetadataItem("CANOPY_COV_UNIT_NAME")
+        if units.lower()[:10] != option.lower()[:10]:
+            gdaltest.post_reason('Could not set CANOPY_COV_UNIT')
+            retval = 'fail'
+            break
+
+    for ext in ['lcp', 'lcp.aux.xml']:
+        try:
+            os.remove('tmp/lcp_13.' + ext)
+        except:
+            pass
+
+    return retval
+
+###############################################################################
+#  Test create copy and make sure all unit metadata co work
+
+def lcp_14():
+
+    mem_drv = gdal.GetDriverByName('MEM')
+    if mem_drv == None:
+        return 'fail'
+    drv = gdal.GetDriverByName('LCP')
+    if drv == None:
+        return 'fail'
+    src_ds = mem_drv.Create('/vsimem/', 10, 10, 10, gdal.GDT_Int16)
+    if src_ds == None:
+        return 'fail'
+
+    retval = 'success'
+    for option in ['METERS', 'FEET', 'METERS_X_10', 'FEET_X_10']:
+        co = ['CANOPY_HT_UNIT=%s' % option]
+        lcp_ds = drv.CreateCopy('tmp/lcp_14.lcp', src_ds, False, co)
+        units = lcp_ds.GetRasterBand(6).GetMetadataItem("CANOPY_HT_UNIT_NAME")
+        if units.lower() != option.replace('_', ' ').lower():
+            gdaltest.post_reason('Could not set CANOPY_HT_UNIT')
+            retval = 'fail'
+            break
+
+    for ext in ['lcp', 'lcp.aux.xml']:
+        try:
+            os.remove('tmp/lcp_14.' + ext)
+        except:
+            pass
+
+    return retval
+
+###############################################################################
+#  Test create copy and make sure all unit metadata co work
+
+def lcp_15():
+
+    mem_drv = gdal.GetDriverByName('MEM')
+    if mem_drv == None:
+        return 'fail'
+    drv = gdal.GetDriverByName('LCP')
+    if drv == None:
+        return 'fail'
+    src_ds = mem_drv.Create('/vsimem/', 10, 10, 10, gdal.GDT_Int16)
+    if src_ds == None:
+        return 'fail'
+
+    retval = 'success'
+    for option in ['METERS', 'FEET', 'METERS_X_10', 'FEET_X_10']:
+        co = ['CBH_UNIT=%s' % option]
+        lcp_ds = drv.CreateCopy('tmp/lcp_15.lcp', src_ds, False, co)
+        units = lcp_ds.GetRasterBand(7).GetMetadataItem("CBH_UNIT_NAME")
+        if units.lower() != option.replace('_', ' ').lower():
+            gdaltest.post_reason('Could not set CBH_UNIT')
+            retval = 'fail'
+            break
+
+    for ext in ['lcp', 'prj', 'lcp.aux.xml']:
+        try:
+            os.remove('tmp/lcp_15.' + ext)
+        except:
+            pass
+
+    return retval
+
+###############################################################################
+#  Test create copy and make sure all unit metadata co work
+
+def lcp_16():
+
+    mem_drv = gdal.GetDriverByName('MEM')
+    if mem_drv == None:
+        return 'fail'
+    drv = gdal.GetDriverByName('LCP')
+    if drv == None:
+        return 'fail'
+    src_ds = mem_drv.Create('/vsimem/', 10, 10, 10, gdal.GDT_Int16)
+    if src_ds == None:
+        return 'fail'
+
+    retval = 'success'
+    answers = ['kg/m^3', 'lb/ft^3', 'kg/m^3 x 100', 'lb/ft^3 x 1000',
+               'tons/acre x 100']
+    for i, option in enumerate(['KG_PER_CUBIC_METER', 'POUND_PER_CUBIC_FOOT',
+                                'KG_PER_CUBIC_METER_X_100',
+                                'POUND_PER_CUBIC_FOOT_X_1000']):
+        co = ['CBD_UNIT=%s' % option]
+        lcp_ds = drv.CreateCopy('tmp/lcp_16.lcp', src_ds, False, co)
+        units = lcp_ds.GetRasterBand(8).GetMetadataItem("CBD_UNIT_NAME")
+        if units.lower() != answers[i].lower():
+            gdaltest.post_reason('Could not set CBD_UNIT')
+            retval = 'fail'
+            break
+
+    for ext in ['lcp', 'lcp.aux.xml']:
+        try:
+            os.remove('tmp/lcp_16.' + ext)
+        except:
+            pass
+
+    return retval
+
+###############################################################################
+#  Test create copy and make sure all unit metadata co work
+#  It is unclear whether the metadata generated is correct, or the
+#  documentation.  Docs say mg/ha * 10 and tn/ac * 10, metadata is not * 10.
+
+def lcp_17():
+
+    mem_drv = gdal.GetDriverByName('MEM')
+    if mem_drv == None:
+        return 'fail'
+    drv = gdal.GetDriverByName('LCP')
+    if drv == None:
+        return 'fail'
+    src_ds = mem_drv.Create('/vsimem/', 10, 10, 10, gdal.GDT_Int16)
+    if src_ds == None:
+        return 'fail'
+
+    retval = 'success'
+    answers = ['mg/ha', 't/ac x 10']
+    for i, option in enumerate(['MG_PER_HECTARE_X_10', 'TONS_PER_ACRE_X_10']):
+        co = ['DUFF_UNIT=%s' % option]
+        lcp_ds = drv.CreateCopy('tmp/lcp_17.lcp', src_ds, False, co)
+        units = lcp_ds.GetRasterBand(9).GetMetadataItem("DUFF_UNIT_NAME")
+        if units.lower() != answers[i].lower():
+            #gdaltest.post_reason('Could not set DUFF_UNIT')
+            retval = 'expected_fail'
+            break
+
+    for ext in ['lcp', 'lcp.aux.xml']:
+        try:
+            os.remove('tmp/lcp_17.' + ext)
+        except:
+            pass
+
+    return retval
+
+###############################################################################
+#  Test create copy and make sure creation options work.
+
+def lcp_18():
+
+    mem_drv = gdal.GetDriverByName('MEM')
+    if mem_drv == None:
+        return 'fail'
+    drv = gdal.GetDriverByName('LCP')
+    if drv == None:
+        return 'fail'
+    src_ds = mem_drv.Create('/vsimem/', 10, 10, 10, gdal.GDT_Int16)
+    if src_ds == None:
+        return 'fail'
+
+    lcp_ds = drv.CreateCopy('tmp/lcp_18.lcp', src_ds, False, ['LATITUDE=45',])
+    if lcp_ds == None:
+        return 'fail'
+    if lcp_ds.GetMetadataItem('LATITUDE') != '45':
+        gdaltest.post_reason('Failed to set LATITUDE creation option')
+        retval = 'fail'
+    for ext in ['lcp', 'lcp.aux.xml']:
+        try:
+            os.remove('tmp/lcp_18.' + ext)
+        except:
+            pass
+    return 'success'
+
+###############################################################################
+#  Test create copy and make sure creation options work.
+
+def lcp_19():
+
+    mem_drv = gdal.GetDriverByName('MEM')
+    if mem_drv == None:
+        return 'fail'
+    drv = gdal.GetDriverByName('LCP')
+    if drv == None:
+        return 'fail'
+    src_ds = mem_drv.Create('/vsimem/', 10, 10, 10, gdal.GDT_Int16)
+    if src_ds == None:
+        return 'fail'
+
+    lcp_ds = drv.CreateCopy('tmp/lcp_19.lcp', src_ds, False, ['LINEAR_UNIT=FOOT'])
+    if lcp_ds == None:
+        return 'fail'
+    if lcp_ds.GetMetadataItem('LINEAR_UNIT') != 'Feet':
+        gdaltest.post_reason('Failed to set LINEAR_UNIT creation option')
+        retval = 'fail'
+    for ext in ['lcp', 'lcp.aux.xml']:
+        try:
+            os.remove('tmp/lcp_19.' + ext)
+        except:
+            pass
+
+    return 'success'
+
+###############################################################################
+#  Test create copy and make sure DESCRIPTION co works
+
+def lcp_20():
+
+    mem_drv = gdal.GetDriverByName('MEM')
+    if mem_drv == None:
+        return 'fail'
+    drv = gdal.GetDriverByName('LCP')
+    if drv == None:
+        return 'fail'
+    src_ds = mem_drv.Create('/vsimem/', 10, 10, 10, gdal.GDT_Int16)
+    if src_ds == None:
+        return 'fail'
+
+    retval = 'success'
+    desc = "test description"
+    lcp_ds = drv.CreateCopy('tmp/lcp_20.lcp', src_ds, False, ['DESCRIPTION=%s' % desc])
+    if lcp_ds == None:
+        return 'fail'
+    if lcp_ds.GetMetadataItem('DESCRIPTION') != desc:
+        gdaltest.post_reason('Failed to set DESCRIPTION creation option')
+        retval = 'fail'
+    for ext in ['lcp', 'lcp.aux.xml']:
+        try:
+            os.remove('tmp/lcp_20.' + ext)
+        except:
+            pass
+
+    return retval
+
+###############################################################################
+#  Test create copy and make data is copied over via checksums
+
+def lcp_21():
+    try:
+        import random
+    except ImportError:
+        return 'skip'
+    mem_drv = gdal.GetDriverByName('MEM')
+    if mem_drv == None:
+        return 'fail'
+    drv = gdal.GetDriverByName('LCP')
+    if drv == None:
+        return 'fail'
+    src_ds = mem_drv.Create('/vsimem/', 3, 3, 10, gdal.GDT_Int16)
+    if src_ds == None:
+        return 'fail'
+
+    for i in range(10):
+        data = [random.randint(0, 100) for i in range(9)]
+        src_ds.GetRasterBand(i+1).WriteRaster(0, 0, 3, 3, struct.pack('h'*9, *data))
+
+    lcp_ds = drv.CreateCopy('tmp/lcp_21.lcp', src_ds, False)
+    if lcp_ds == None:
+        return 'fail'
+    retval = 'success'
+    for i in range(10):
+        if src_ds.GetRasterBand(i+1).Checksum() != lcp_ds.GetRasterBand(i+1).Checksum():
+            gdaltest.post_reason('Did not get expected checksum')
+            retval = 'fail'
+
+    for ext in ['lcp', 'lcp.aux.xml']:
+        try:
+            os.remove('tmp/lcp_21.' + ext)
+        except:
+            pass
+
+    return retval
+
+###############################################################################
+#  Test create copy and make data is copied over via numpy comparison.
+
+def lcp_22():
+    try:
+        import random
+        import numpy
+    except ImportError:
+        return 'skip'
+    mem_drv = gdal.GetDriverByName('MEM')
+    if mem_drv == None:
+        return 'fail'
+    drv = gdal.GetDriverByName('LCP')
+    if drv == None:
+        return 'fail'
+    src_ds = mem_drv.Create('/vsimem/', 3, 3, 10, gdal.GDT_Int16)
+    if src_ds == None:
+        return 'fail'
+
+    for i in range(10):
+        data = [random.randint(0, 100) for i in range(9)]
+        src_ds.GetRasterBand(i+1).WriteRaster(0, 0, 3, 3, struct.pack('h'*9, *data))
+
+    lcp_ds = drv.CreateCopy('tmp/lcp_22.lcp', src_ds, False)
+    if lcp_ds == None:
+        return 'fail'
+    retval = 'success'
+    for i in range(10):
+        src_data = src_ds.GetRasterBand(i+1).ReadAsArray()
+        dst_data = lcp_ds.GetRasterBand(i+1).ReadAsArray()
+        if not numpy.array_equal(src_data, dst_data):
+            gdaltest.post_reason('Did not copy data correctly')
+            retval = 'fail'
+    for ext in ['lcp', 'lcp.aux.xml']:
+        try:
+            os.remove('tmp/lcp_22.' + ext)
+        except:
+            pass
+
+    return retval
+
+
+###############################################################################
+#  Test create copy and make sure invalid creation options are caught.
+
+def lcp_23():
+
+    mem_drv = gdal.GetDriverByName('MEM')
+    if mem_drv == None:
+        return 'fail'
+    drv = gdal.GetDriverByName('LCP')
+    if drv == None:
+        return 'fail'
+    src_ds = mem_drv.Create('/vsimem/', 10, 10, 10, gdal.GDT_Int16)
+    if src_ds == None:
+        return 'fail'
+
+    retval = 'success'
+    bad = 'NOT_A_REAL_OPTION'
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    for option in ['ELEVATION_UNIT', 'SLOPE_UNIT', 'ASPECT_UNIT',
+                   'FUEL_MODEL_OPTION', 'CANOPY_COV_UNIT', 'CANOPY_HT_UNIT',
+                   'CBH_UNIT', 'CBD_UNIT', 'DUFF_UNIT']:
+        co = ['%s=%s' % (option, bad),]
+        lcp_ds = drv.CreateCopy('tmp/lcp_23.lcp', src_ds, False, co)
+        if lcp_ds != None:
+            retval = 'fail'
+    gdal.PopErrorHandler()
+    for ext in ['lcp', 'lcp.aux.xml']:
+        try:
+            os.remove('tmp/lcp_23.' + ext)
+        except:
+            pass
+
+    return retval
 
 gdaltest_list = [
     lcp_1,
@@ -294,7 +867,24 @@ gdaltest_list = [
     lcp_3,
     lcp_4,
     lcp_5,
-    lcp_6 ]
+    lcp_6,
+    lcp_7,
+    lcp_8,
+    lcp_9,
+    lcp_10,
+    lcp_11,
+    lcp_12,
+    lcp_13,
+    lcp_14,
+    lcp_15,
+    lcp_16,
+    lcp_17,
+    lcp_18,
+    lcp_19,
+    lcp_20,
+    lcp_21,
+    lcp_22,
+    lcp_23]
 
 if __name__ == '__main__':
 

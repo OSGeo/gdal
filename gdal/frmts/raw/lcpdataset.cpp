@@ -7,6 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2008, Chris Toney
+ * Copyright (c) 2013, Kyle Shannon
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +29,7 @@
  ****************************************************************************/
 
 #include "rawdataset.h"
+#include "cpl_port.h"
 #include "cpl_string.h"
 #include "ogr_spatialref.h"
 
@@ -38,6 +40,10 @@ void    GDALRegister_LCP(void);
 CPL_C_END
 
 #define LCP_HEADER_SIZE 7316
+#define LCP_MAX_BANDS   10
+#define LCP_MAX_PATH    256
+#define LCP_MAX_DESC    512
+#define LCP_MAX_CLASSES 100
 
 /************************************************************************/
 /* ==================================================================== */
@@ -53,6 +59,10 @@ class LCPDataset : public RawDataset
     CPLString   osPrjFilename;
     char        *pszProjection;
 
+    static CPLErr ClassifyBandData( GDALRasterBand *poBand,
+                                    GInt32 *pnNumClasses,
+                                    GInt32 *panClasses );
+
   public:
                 LCPDataset();
                 ~LCPDataset();
@@ -63,7 +73,11 @@ class LCPDataset : public RawDataset
 
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
-
+    static GDALDataset *CreateCopy( const char * pszFilename,
+                                    GDALDataset *poSrcDS,
+                                    int bStrict, char ** papszOptions,
+                                    GDALProgressFunc pfnProgress,
+                                    void * pProgressData );
     virtual const char *GetProjectionRef(void);
 
     int bHaveProjection;
@@ -189,10 +203,9 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "The LCP driver does not support update access to existing"
-                  " datasets.\n" );
+                  " datasets." );
         return NULL;
     }
-    
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
@@ -295,6 +308,7 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
 #endif
 
    pszList = (char*)CPLMalloc(2048);
+   pszList[0] = '\0';
 
    for( int iBand = 1; iBand <= nBands; iBand++ )
    {
@@ -744,7 +758,868 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
 
     return( poDS );
 }
- 
+
+/************************************************************************/
+/*                          ClassifyBandData()                          */
+/*  Classify a band and store 99 or fewer unique values.  If there are  */
+/*  more than 99 unique values, then set pnNumClasses to -1 as a flag   */
+/*  that represents this.  These are legacy values in the header, and   */
+/*  while we should never deprecate them, we could possibly not         */
+/*  calculate them by default.                                          */
+/************************************************************************/
+
+CPLErr LCPDataset::ClassifyBandData( GDALRasterBand *poBand,
+                                     GInt32 *pnNumClasses,
+                                     GInt32 *panClasses )
+{
+    if( pnNumClasses == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Invalid pointer for panClasses" );
+        return CE_Failure;
+    }
+
+    if( panClasses == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Invalid pointer for panClasses" );
+        *pnNumClasses = -1;
+        return CE_Failure;
+    }
+
+    if( poBand == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Invalid band passed to ClassifyBandData()" );
+        *pnNumClasses = -1;
+        memset( panClasses, 0, 400 );
+        return CE_Failure;
+    }
+
+    int nXSize = poBand->GetXSize();
+    int nYSize = poBand->GetYSize();
+    double dfMax, dfDummy;
+    poBand->GetStatistics( FALSE, TRUE, &dfDummy, &dfMax, &dfDummy, &dfDummy );
+
+    int nSpan = (int)dfMax;
+    GInt16 *panValues = (GInt16*)CPLMalloc( sizeof( GInt16 ) * nXSize );
+    GByte *pabyFlags = (GByte*)CPLMalloc( sizeof( GByte ) * nSpan + 1 );
+    memset( pabyFlags, 0, nSpan + 1 );
+
+    int nFound = 0;
+    int bTooMany = FALSE;
+    CPLErr eErr = CE_None;
+    for( int iLine = 0; iLine < nYSize; iLine++ )
+    {
+        eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1,
+                                 panValues, nXSize, 1, 
+                                 GDT_Int16, 0, 0 );
+        for( int iPixel = 0; iPixel < nXSize; iPixel++ )
+        {
+            if( panValues[iPixel] == -9999 )
+            {
+                continue;
+            }
+            if( nFound > 99 )
+            {
+                CPLDebug( "LCP", "Found more that 100 unique values in " \
+                                 "band %d.  Not 'classifying' the data.",
+                                 poBand->GetBand() );
+                nFound = -1;
+                bTooMany = TRUE;
+                break;
+            }
+            if( bTooMany )
+            {
+                break;
+            }
+            if( pabyFlags[panValues[iPixel]] == 0 )
+            {
+                pabyFlags[panValues[iPixel]] = 1;
+                nFound++;
+            }
+        }
+    }
+    CPLAssert( nFound <= 100 );
+    /*
+    ** The classes are always padded with a leading 0.  This was for aligning
+    ** offsets, or making it a 1-based array instead of 0-based.
+    */
+    panClasses[0] = 0;
+    int nIndex = 1;
+    for( int j = 0; j < nSpan + 1; j++ )
+    {
+        if( pabyFlags[j] == 1 )
+        {
+            panClasses[nIndex++] = j;
+        }
+    }
+    *pnNumClasses = nFound;
+    CPLFree( (void*)pabyFlags );
+    CPLFree( (void*)panValues );
+
+    return eErr;
+}
+
+/************************************************************************/
+/*                          CreateCopy()                                */
+/************************************************************************/
+
+GDALDataset *LCPDataset::CreateCopy( const char * pszFilename, 
+                                     GDALDataset * poSrcDS, 
+                                     int bStrict, char ** papszOptions,
+                                     GDALProgressFunc pfnProgress,
+                                     void * pProgressData )
+
+{
+
+    int  nBands = poSrcDS->GetRasterCount();
+    int  nXSize = poSrcDS->GetRasterXSize();
+    int  nYSize = poSrcDS->GetRasterYSize();
+
+/* -------------------------------------------------------------------- */
+/*      Verify input options.                                           */
+/* -------------------------------------------------------------------- */
+    if( nBands != 5 && nBands != 7 && nBands != 8 && nBands != 10 )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "LCP driver doesn't support %d bands.  Must be 5, 7, 8 "
+                  "or 10 bands.", nBands );
+        return NULL;
+    }
+
+    GDALDataType eType = poSrcDS->GetRasterBand( 1 )->GetRasterDataType();
+    if( eType != GDT_Int16 && bStrict )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "LCP only supports 16-bit signed integer data types." );
+        return NULL;
+    }
+    else if( eType != GDT_Int16 )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Setting data type to 16-bit integer." );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      What schema do we have (ground/crown fuels)                     */
+/* -------------------------------------------------------------------- */
+    int bHaveCrownFuels = FALSE;
+    int bHaveGroundFuels = FALSE;
+
+    if( nBands == 10 || nBands == 8 )
+    {
+        bHaveCrownFuels = TRUE;
+    }
+    if( nBands == 7 || nBands == 10 )
+    {
+        bHaveGroundFuels = TRUE;
+    }
+
+    /*
+    ** Since units are 'configurable', we should check for user
+    ** defined units.  This is a bit cumbersome, but the user should
+    ** be allowed to specify none to get default units/options.  Use 
+    ** default units every chance we get.
+    */
+    GInt16 panMetadata[LCP_MAX_BANDS];
+    int i;
+    GInt32 nTemp;
+    double dfTemp;
+    const char *pszTemp;
+
+    panMetadata[0] = 0; /* ELEVATION_UNIT */
+    panMetadata[1] = 0; /* SLOPE_UNIT */
+    panMetadata[2] = 2; /* ASPECT_UNIT */
+    panMetadata[3] = 0; /* FUEL_MODEL_OPTION */
+    panMetadata[4] = 1; /* CANOPY_COV_UNIT */
+    panMetadata[5] = 3; /* CANOPY_HT_UNIT */
+    panMetadata[6] = 3; /* CBH_UNIT */
+    panMetadata[7] = 3; /* CBD_UNIT */
+    panMetadata[8] = 1; /* DUFF_UNIT */
+    panMetadata[9] = 0; /* CWD_OPTION */
+    /* Check the units/options for user overrides */
+    pszTemp = CSLFetchNameValueDef( papszOptions, "ELEVATION_UNIT", "METERS" );
+    if( EQUALN( pszTemp, "METER", 5 ) )
+    {
+        panMetadata[0] = 0;
+    }
+    else if( EQUAL( pszTemp, "FEET" ) || EQUAL( pszTemp, "FOOT" ) )
+    {
+        panMetadata[0] = 1;
+    }
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Invalid value (%s) for ELEVATION_UNIT.",
+                  pszTemp );
+        return NULL;
+    }
+
+    pszTemp = CSLFetchNameValueDef( papszOptions, "SLOPE_UNIT", "DEGREES" );
+    if( EQUAL( pszTemp, "DEGREES" ) )
+    {
+        panMetadata[1] = 0;
+    }
+    else if( EQUAL( pszTemp, "PERCENT" ) )
+    {
+        panMetadata[1] = 1;
+    }
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Invalid value (%s) for SLOPE_UNIT.",
+                  pszTemp );
+        return NULL;
+    }
+
+    pszTemp = CSLFetchNameValueDef( papszOptions, "ASPECT_UNIT",
+                                    "AZIMUTH_DEGREES" );
+    if( EQUAL( pszTemp, "GRASS_CATEGORIES" ) )
+    {
+        panMetadata[2] = 0;
+    }
+    else if( EQUAL( pszTemp, "GRASS_DEGREES" ) )
+    {
+        panMetadata[2] = 1;
+    }
+    else if( EQUAL( pszTemp, "AZIMUTH_DEGREES" ) )
+    {
+        panMetadata[2] = 2;
+    }
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Invalid value (%s) for ASPECT_UNIT.",
+                  pszTemp );
+        return NULL;
+    }
+
+    pszTemp = CSLFetchNameValueDef( papszOptions, "FUEL_MODEL_OPTION",
+                                    "NO_CUSTOM_AND_NO_FILE" );
+    if( EQUAL( pszTemp, "NO_CUSTOM_AND_NO_FILE" ) )
+    {
+        panMetadata[3] = 0;
+    }
+    else if( EQUAL( pszTemp, "CUSTOM_AND_NO_FILE" ) )
+    {
+        panMetadata[3] = 1;
+    }
+    else if( EQUAL( pszTemp, "NO_CUSTOM_AND_FILE" ) )
+    {
+        panMetadata[3] = 2;
+    }
+    else if( EQUAL( pszTemp, "CUSTOM_AND_FILE" ) )
+    {
+        panMetadata[3] = 3;
+    }
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Invalid value (%s) for FUEL_MODEL_OPTION.",
+                  pszTemp );
+        return NULL;
+    }
+
+    pszTemp = CSLFetchNameValueDef( papszOptions, "CANOPY_COV_UNIT",
+                                    "PERCENT" );
+    if( EQUAL( pszTemp, "CATEGORIES" ) )
+    {
+        panMetadata[4] = 0;
+    }
+    else if( EQUAL( pszTemp, "PERCENT" ) )
+    {
+        panMetadata[4] = 1;
+    }
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Invalid value (%s) for CANOPY_COV_UNIT.",
+                  pszTemp );
+        return NULL;
+    }
+
+    if( bHaveCrownFuels )
+    {
+        pszTemp = CSLFetchNameValueDef( papszOptions, "CANOPY_HT_UNIT",
+                                        "METERS_X_10" );
+        if( EQUAL( pszTemp, "METERS" ) || EQUAL( pszTemp, "METER" ) )
+        {
+            panMetadata[5] = 1;
+        }
+        else if( EQUAL( pszTemp, "FEET" ) || EQUAL( pszTemp, "FOOT" ) )
+        {
+            panMetadata[5] = 2;
+        }
+        else if( EQUAL( pszTemp, "METERS_X_10" )  ||
+                 EQUAL( pszTemp, "METER_X_10" ) )
+        {
+            panMetadata[5] = 3;
+        }
+        else if( EQUAL( pszTemp, "FEET_X_10" ) || EQUAL( pszTemp, "FOOT_X_10" ) )
+        {
+            panMetadata[5] = 4;
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Invalid value (%s) for CANOPY_HT_UNIT.",
+                      pszTemp );
+            return NULL;
+        }
+
+        pszTemp = CSLFetchNameValueDef( papszOptions, "CBH_UNIT",
+                                        "METERS_X_10" );
+        if( EQUAL( pszTemp, "METERS" ) || EQUAL( pszTemp, "METER" ) )
+        {
+            panMetadata[6] = 1;
+        }
+        else if( EQUAL( pszTemp, "FEET" ) || EQUAL( pszTemp, "FOOT" ) )
+        {
+            panMetadata[6] = 2;
+        }
+        else if( EQUAL( pszTemp, "METERS_X_10" ) ||
+                 EQUAL( pszTemp, "METER_X_10" ) )
+        {
+            panMetadata[6] = 3;
+        }
+        else if( EQUAL( pszTemp, "FEET_X_10" ) || EQUAL( pszTemp, "FOOT_X_10" ) )
+        {
+            panMetadata[6] = 4;
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Invalid value (%s) for CBH_UNIT.",
+                      pszTemp );
+            return NULL;
+        }
+
+        pszTemp = CSLFetchNameValueDef( papszOptions, "CBD_UNIT",
+                                        "KG_PER_CUBIC_METER_X_100" );
+        if( EQUAL( pszTemp, "KG_PER_CUBIC_METER" ) )
+        {
+            panMetadata[7] = 1;
+        }
+        else if( EQUAL( pszTemp, "POUND_PER_CUBIC_FOOT" ) )
+        {
+            panMetadata[7] = 2;
+        }
+        else if( EQUAL( pszTemp, "KG_PER_CUBIC_METER_X_100" ) )
+        {
+            panMetadata[7] = 3;
+        }
+        else if( EQUAL( pszTemp, "POUND_PER_CUBIC_FOOT_X_1000" ) )
+        {
+            panMetadata[7] = 4;
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Invalid value (%s) for CBD_UNIT.",
+                      pszTemp );
+            return NULL;
+        }
+    }
+
+    if( bHaveGroundFuels )
+    {
+        pszTemp = CSLFetchNameValueDef( papszOptions, "DUFF_UNIT",
+                                        "MG_PER_HECTARE_X_10" );
+        if( EQUAL( pszTemp, "MG_PER_HECTARE_X_10" ) )
+        {
+            panMetadata[8] = 1;
+        }
+        else if ( EQUAL( pszTemp, "TONS_PER_ACRE_X_10" ) )
+        {
+            panMetadata[8] = 2;
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Invalid value (%s) for DUFF_UNIT.",
+                      pszTemp );
+            return NULL;
+        }
+
+        if( bHaveGroundFuels )
+        {
+            panMetadata[9] = 1;
+        }
+        else
+        {
+            panMetadata[9] = 0;
+        }
+    }
+
+    /*
+    ** Calculate the stats for each band.  The binary file carries along
+    ** these metadata for display purposes(?).
+    */
+    int bCalculateStats = CSLFetchBoolean( papszOptions, "CALCULATE_STATS",
+                                           TRUE );
+    int bClassifyData = CSLFetchBoolean( papszOptions, "CLASSIFY_DATA",
+                                         TRUE );
+    /*
+    ** We should have stats if we classify, we'll get them anyway.
+    */
+    if( bClassifyData && !bCalculateStats )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Ignoring request to not calculate statistics, " \
+                  "because CLASSIFY_DATA was set to ON" );
+        bCalculateStats = TRUE;
+    }
+
+    pszTemp = CSLFetchNameValueDef( papszOptions, "LINEAR_UNIT",
+                                    "SET_FROM_SRS" );
+    int nLinearUnits;
+    int bSetLinearUnits = FALSE;
+    if( EQUAL( pszTemp, "SET_FROM_SRS" ) )
+    {
+        bSetLinearUnits = TRUE;
+    }
+    else if( EQUALN( pszTemp, "METER", 5 ) )
+    {
+        nLinearUnits = 0;
+    }
+    else if( EQUAL( pszTemp, "FOOT" ) || EQUAL( pszTemp, "FEET" ) )
+    {
+        nLinearUnits = 1;
+    }
+    else if( EQUALN( pszTemp, "KILOMETER", 9 ) )
+    {
+        nLinearUnits = 2;
+    }
+    int bCalculateLatitude = TRUE;
+    int nLatitude;
+    if( CSLFetchNameValue( papszOptions, "LATITUDE" ) != NULL )
+    {
+        bCalculateLatitude = FALSE;
+        nLatitude = atoi( CSLFetchNameValue( papszOptions, "LATITUDE" ) );
+        if( nLatitude > 90 || nLatitude < -90 )
+        {
+            CPLError( CE_Failure, CPLE_OpenFailed, 
+                      "Invalid value (%d) for LATITUDE.", nLatitude );
+            return NULL;
+        }
+    }
+    double adfSrcGeoTransform[6];
+    poSrcDS->GetGeoTransform( adfSrcGeoTransform );
+    OGRSpatialReference oSrcSRS, oDstSRS;
+    const char *pszWkt = poSrcDS->GetProjectionRef();
+    double dfLongitude = 0.0;
+    double dfLatitude = 0.0;
+    if( !bCalculateLatitude )
+    {
+        dfLatitude = nLatitude;
+    }
+    else if( !EQUAL( pszWkt, "" ) )
+    {
+        oSrcSRS.importFromWkt( (char**)&pszWkt );
+        oDstSRS.importFromEPSG( 4269 );
+        if( bSetLinearUnits )
+        {
+            const char *pszUnit;
+            pszUnit = oSrcSRS.GetAttrValue( "UNIT", 0 );
+            if( pszUnit == NULL )
+            {
+                CPLError( CE_Warning, CPLE_AppDefined, 
+                          "Could not parse linear unit, using meters" );
+                nLinearUnits = 0;
+            }
+            else
+            {
+                CPLDebug( "LCP", "Setting linear unit to %s", pszUnit );
+                if( EQUAL( pszUnit, "meter" ) || EQUAL( pszUnit, "metre" ) )
+                {
+                    nLinearUnits = 0;
+                }
+                else if( EQUAL( pszUnit, "feet" ) || EQUAL( pszUnit, "foot" ) )
+                {
+                    nLinearUnits = 1;
+                }
+                else if( EQUAL( pszUnit, "kilometer" ) ||
+                         EQUAL( pszUnit, "kilometre" ) )
+                {
+                    nLinearUnits = 2;
+                }
+                else
+                {
+                    CPLError( CE_Warning, CPLE_AppDefined,
+                              "Could not parse linear unit, using meters" );
+                    nLinearUnits = 0;
+                }
+                pszUnit = oSrcSRS.GetAttrValue( "UNIT", 1 );
+                if( pszUnit != NULL )
+                {
+                    double dfScale = atof( pszUnit );
+                    if( dfScale != 1.0 )
+                    {
+                        CPLError( CE_Warning, CPLE_AppDefined,
+                                  "Unit scale is %lf (!=1.0). It is not " \
+                                  "supported.",
+                                  dfScale );
+                    }
+                }
+            }
+        }
+        OGRCoordinateTransformation *poCT;
+        poCT = (OGRCoordinateTransformation*)
+            OGRCreateCoordinateTransformation( &oSrcSRS, &oDstSRS );
+        int nErr;
+        if( poCT != NULL )
+        {
+            dfLatitude = adfSrcGeoTransform[3] + adfSrcGeoTransform[5] * nYSize / 2;
+            nErr = (int)poCT->Transform( 1, &dfLongitude, &dfLatitude );
+            if( !nErr )
+            {
+                dfLatitude = 0.0;
+            }
+        }
+        OGRCoordinateTransformation::DestroyCT( poCT );
+    }
+    else
+    {
+        //Need to find out if we *really* need this item.
+        //CPLError( CE_Failure, CPLE_AppDefined,
+        //          "Could not calculate latitude from spatial reference " \
+        //          "and LATITUDE was not set.  Failed to create valid LCP. " \
+        //          "Please set LATITUDE in the creation options." );
+        //return NULL;
+    }
+
+    const char *pszDescription =
+        CSLFetchNameValueDef( papszOptions, "DESCRIPTION",
+                              "LCP file created by GDAL." );
+
+    /*
+    ** Loop through and get the stats for the bands if we need to calculate
+    ** them.  This probably should be done when we copy the data over to the
+    ** destination dataset, since we load the values into memory, but this is
+    ** much simpler code using GDALRasterBand->GetStatistics().  We also may
+    ** need to classify the data (number of unique values and a list of those
+    ** values if the number of unique values is > 100.  It is currently unclear
+    ** how these data are used though, so we will implement that at some point
+    ** if need be.
+    */
+    GDALRasterBand *poBand;
+    double *padfMin = (double*)CPLMalloc( sizeof( double ) * nBands );
+    double *padfMax = (double*)CPLMalloc( sizeof( double ) * nBands );
+    double dfDummy;
+    GInt32 *panFound = (GInt32*)VSIMalloc2( sizeof( GInt32 ), nBands );
+    GInt32 *panClasses = (GInt32*)VSIMalloc3( sizeof( GInt32 ), nBands, LCP_MAX_CLASSES );
+    /*
+    ** Initialize these arrays to zeros
+    */
+    memset( panFound, 0, sizeof( GInt32 ) * nBands );
+    memset( panClasses, 0, sizeof( GInt32 ) * nBands * LCP_MAX_CLASSES );
+
+    CPLErr eErr;
+    if( bCalculateStats )
+    {
+        for( i = 0; i < nBands; i++ )
+        {
+            poBand = poSrcDS->GetRasterBand( i + 1 );
+            eErr = poBand->GetStatistics( FALSE, TRUE, &padfMin[i],
+                                          &padfMax[i], &dfDummy, &dfDummy );
+            if( eErr != CE_None )
+            {
+                CPLError( CE_Warning, CPLE_AppDefined, "Failed to properly " \
+                                                       "calculate statistics "
+                                                       "on band %d", i );
+                padfMin[i] = 0.0;
+                padfMax[i] = 0.0;
+            }
+            /*
+            ** See comment above.
+            */
+            if( bClassifyData )
+            {
+                eErr = ClassifyBandData( poBand, panFound+ i,
+                                         panClasses + ( i * LCP_MAX_CLASSES ) );
+            }
+        }
+    }
+
+    VSILFILE *fp;
+
+    fp = VSIFOpenL( pszFilename, "wb" );
+    if( fp == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "Unable to create lcp file %s.", pszFilename );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write the header                                                */
+/* -------------------------------------------------------------------- */
+
+    nTemp = bHaveCrownFuels ? 21 : 20;
+    CPL_LSBINT32PTR( &nTemp );
+    VSIFWriteL( &nTemp, 4, 1, fp );
+    nTemp = bHaveGroundFuels ? 21 : 20;
+    CPL_LSBINT32PTR( &nTemp );
+    VSIFWriteL( &nTemp, 4, 1, fp );
+
+    nTemp = (GInt32)( dfLatitude + 0.5 );
+    CPL_LSBINT32PTR( &nTemp );
+    VSIFWriteL( &nTemp, 4, 1, fp );
+    dfLongitude = adfSrcGeoTransform[0] + adfSrcGeoTransform[1] * nXSize;
+    CPL_LSBPTR64( &dfLongitude );
+    VSIFWriteL( &dfLongitude, 8, 1, fp );
+    dfLongitude = adfSrcGeoTransform[0];
+    CPL_LSBPTR64( &dfLongitude );
+    VSIFWriteL( &dfLongitude, 8, 1, fp );
+    dfLatitude = adfSrcGeoTransform[3];
+    CPL_LSBPTR64( &dfLatitude );
+    VSIFWriteL( &dfLatitude, 8, 1, fp );
+    dfLatitude = adfSrcGeoTransform[3] + adfSrcGeoTransform[5] * nYSize;
+    CPL_LSBPTR64( &dfLatitude );
+    VSIFWriteL( &dfLatitude, 8, 1, fp );
+
+    /*
+    ** Swap the two classification arrays if we are writing them, and they need
+    ** to be swapped.
+    */
+#ifdef CPL_MSB
+    if( bClassifyData )
+    {
+        GDALSwapWords( panFound, 2, nBands, 2 );
+        GDALSwapWords( panClasses, 2, LCP_MAX_CLASSES, 2 );
+    }
+#endif
+
+    if( bCalculateStats )
+    {
+        for( i = 0; i < nBands; i++ )
+        {
+            /*
+            ** If we don't have Crown fuels, but do have Ground fuels, we
+            ** have to 'fast forward'.
+            */
+            if( i == 5 && !bHaveCrownFuels && bHaveGroundFuels )
+            {
+                VSIFSeekL( fp, 3340, SEEK_SET );
+            }
+            nTemp = (GInt32)padfMin[i];
+            CPL_LSBINT32PTR( &nTemp );
+            VSIFWriteL( &nTemp, 4, 1, fp );
+            nTemp = (GInt32)padfMax[i];
+            CPL_LSBINT32PTR( &nTemp );
+            VSIFWriteL( &nTemp, 4, 1, fp );
+            if( bClassifyData )
+            {
+                /*
+                ** These two arrays were swapped in their entirety above.
+                */
+                VSIFWriteL( panFound + i, 4, 1, fp );
+                VSIFWriteL( panClasses + ( i * LCP_MAX_CLASSES ), 4, 100, fp );
+            }
+            else
+            {
+                nTemp = -1;
+                CPL_LSBINT32PTR( &nTemp );
+                VSIFWriteL( &nTemp, 4, 1, fp );
+                VSIFSeekL( fp, 400, SEEK_CUR );
+            }
+        }
+    }
+    else
+    {
+        VSIFSeekL( fp, 4164, SEEK_SET );
+    }
+    CPLFree( (void*)padfMin );
+    CPLFree( (void*)padfMax );
+    CPLFree( (void*)panFound );
+    CPLFree( (void*)panClasses );
+
+    /*
+    ** Should be at one of 3 locations, 2104, 3340, or 4164.
+    */
+    CPLAssert( VSIFTellL( fp ) == 2104  ||
+               VSIFTellL( fp ) == 3340  ||
+               VSIFTellL( fp ) == 4164 );
+    VSIFSeekL( fp, 4164, SEEK_SET );
+
+    /* Image size */
+    nTemp = (GInt32)nXSize;
+    CPL_LSBINT32PTR( &nTemp );
+    VSIFWriteL( &nTemp, 4, 1, fp );
+    nTemp = (GInt32)nYSize;
+    CPL_LSBINT32PTR( &nTemp );
+    VSIFWriteL( &nTemp, 4, 1, fp );
+
+    /* X and Y boundaries */
+    /* max x */
+    dfTemp = adfSrcGeoTransform[0] + adfSrcGeoTransform[1] * nXSize;
+    CPL_LSBPTR64( &dfTemp );
+    VSIFWriteL( &dfTemp, 8, 1, fp );
+    /* min x */
+    dfTemp = adfSrcGeoTransform[0];
+    CPL_LSBPTR64( &dfTemp );
+    VSIFWriteL( &dfTemp, 8, 1, fp );
+    /* max y */
+    dfTemp = adfSrcGeoTransform[3];
+    CPL_LSBPTR64( &dfTemp );
+    VSIFWriteL( &dfTemp, 8, 1, fp );
+    /* min y */
+    dfTemp = adfSrcGeoTransform[3] + adfSrcGeoTransform[5] * nYSize;
+    CPL_LSBPTR64( &dfTemp );
+    VSIFWriteL( &dfTemp, 8, 1, fp );
+
+    nTemp = nLinearUnits;
+    CPL_LSBINT32PTR( &nTemp );
+    VSIFWriteL( &nTemp, 4, 1, fp );
+
+    /* Resolution */
+    /* x resolution */
+    dfTemp = adfSrcGeoTransform[1];
+    CPL_LSBPTR64( &dfTemp );
+    VSIFWriteL( &dfTemp, 8, 1, fp );
+    /* y resolution */
+    dfTemp = fabs( adfSrcGeoTransform[5] );
+    CPL_LSBPTR64( &dfTemp );
+    VSIFWriteL( &dfTemp, 8, 1, fp );
+
+#ifdef CPL_MSB
+    GDALSwapWords( panMetadata, 2, LCP_MAX_BANDS, 2 );
+#endif
+    VSIFWriteL( panMetadata, 2, LCP_MAX_BANDS, fp );
+
+    /* Write the source filenames */
+    char **papszFileList = poSrcDS->GetFileList();
+    if( papszFileList != NULL )
+    {
+        for( i = 0; i < nBands; i++ )
+        {
+            if( i == 5 && !bHaveCrownFuels && bHaveGroundFuels )
+            {
+                VSIFSeekL( fp, 6292, SEEK_SET );
+            }
+            VSIFWriteL( papszFileList[0], 1,
+                        CPLStrnlen( papszFileList[0], LCP_MAX_PATH ), fp );
+            VSIFSeekL( fp, 4244 + ( 256 * ( i+1 ) ), SEEK_SET );
+        }
+    }
+    /*
+    ** No file list, mem driver, etc.
+    */
+    else
+    {
+        VSIFSeekL( fp, 6804, SEEK_SET );
+    }
+    CSLDestroy( papszFileList );
+    /*
+    ** Should be at location 5524, 6292 or 6804.
+    */
+    CPLAssert( VSIFTellL( fp ) == 5524 ||
+               VSIFTellL( fp ) == 6292 ||
+               VSIFTellL( fp ) == 6804 );
+    VSIFSeekL( fp, 6804, SEEK_SET );
+
+    /* Description */
+    VSIFWriteL( pszDescription, 1, CPLStrnlen( pszDescription, LCP_MAX_DESC ),
+                fp );
+    /*
+    ** Should be at or below location 7316, all done with the header.
+    */
+    CPLAssert( VSIFTellL( fp ) <= 7316 );
+    VSIFSeekL( fp, 7316, SEEK_SET );
+
+/* -------------------------------------------------------------------- */
+/*      Loop over image, copying image data.                            */
+/* -------------------------------------------------------------------- */
+
+    GInt16 *panScanline = (GInt16 *)VSIMalloc3( 2, nBands, nXSize );
+
+    if( !pfnProgress( 0.0, NULL, pProgressData ) )
+    {
+        VSIFCloseL( fp );
+        VSIFree( (void*)panScanline );
+        return NULL;
+    }
+    for( int iLine = 0; iLine < nYSize; iLine++ )
+    {
+        for( int iBand = 0; iBand < nBands; iBand++ )
+        {
+            GDALRasterBand * poBand = poSrcDS->GetRasterBand( iBand+1 );
+            eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1,
+                                     panScanline + iBand, nXSize, 1, GDT_Int16,
+                                     nBands * 2, nBands * nXSize * 2 );
+            /* Not sure what to do here */
+            if( eErr != CE_None )
+            {
+                CPLError( CE_Warning, CPLE_AppDefined, "Error reported in " \
+                                                       "RasterIO" );
+                /*
+                ** CPLError( eErr, CPLE_AppDefined, 
+                **           "Error reported in RasterIO" );
+                */
+            }
+        }
+#ifdef CPL_MSB
+        GDALSwapWords( panScanline, 2, nBands * nXSize, 2 );
+#endif
+        VSIFWriteL( panScanline, 2, nBands * nXSize, fp );
+
+        if( !pfnProgress( iLine / (double)nYSize, NULL, pProgressData ) )
+        {
+            VSIFree( (void*)panScanline );
+            VSIFCloseL( fp );
+            return NULL;
+        }
+    }
+    VSIFree( panScanline );
+    VSIFCloseL( fp );
+    if( !pfnProgress( 1.0, NULL, pProgressData ) )
+    {
+        return NULL;
+    }
+
+    /*
+    ** Try to write projection file.  *Most* landfire data follows ESRI
+    **style projection files, so we use the same code as the AAIGrid driver.
+    */
+    const char  *pszOriginalProjection;
+
+    pszOriginalProjection = (char *)poSrcDS->GetProjectionRef();
+    if( !EQUAL( pszOriginalProjection, "" ) )
+    {
+        char                    *pszDirname, *pszBasename;
+        char                    *pszPrjFilename;
+        char                    *pszESRIProjection = NULL;
+        VSILFILE                *fp;
+        OGRSpatialReference     oSRS;
+
+        pszDirname = CPLStrdup( CPLGetPath(pszFilename) );
+        pszBasename = CPLStrdup( CPLGetBasename(pszFilename) );
+
+        pszPrjFilename = CPLStrdup( CPLFormFilename( pszDirname, pszBasename, "prj" ) );
+        fp = VSIFOpenL( pszPrjFilename, "wt" );
+        if (fp != NULL)
+        {
+            oSRS.importFromWkt( (char **) &pszOriginalProjection );
+            oSRS.morphToESRI();
+            oSRS.exportToWkt( &pszESRIProjection );
+            VSIFWriteL( pszESRIProjection, 1, strlen(pszESRIProjection), fp );
+
+            VSIFCloseL( fp );
+            CPLFree( pszESRIProjection );
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_FileIO,
+                      "Unable to create file %s.", pszPrjFilename );
+        }
+        CPLFree( pszDirname );
+        CPLFree( pszBasename );
+        CPLFree( pszPrjFilename );
+    }
+    return (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
+}
+
 /************************************************************************/
 /*                          GetProjectionRef()                          */
 /************************************************************************/
@@ -777,9 +1652,72 @@ void GDALRegister_LCP()
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Int16" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+"<CreationOptionList>"
+"   <Option name='ELEVATION_UNIT' type='string-select' default='METERS' description='Elevation units'>"
+"       <Value>METERS</Value>"
+"       <Value>FEET</Value>"
+"   </Option>"
+"   <Option name='SLOPE_UNIT' type='string-select' default='DEGREES' description='Slope units'>"
+"       <Value>DEGREES</Value>"
+"       <Value>PERCENT</Value>"
+"   </Option>"
+"   <Option name='ASPECT_UNIT' type='string-select' default='AZIMUTH_DEGREES'>"
+"       <Value>GRASS_CATEGORIES</Value>"
+"       <Value>AZIMUTH_DEGREES</Value>"
+"       <Value>GRASS_DEGREES</Value>"
+"   </Option>"
+"   <Option name='FUEL_MODEL_OPTION' type='string-select' default='NO_CUSTOM_AND_NO_FILE'>"
+"       <Value>NO_CUSTOM_AND_NO_FILE</Value>"
+"       <Value>CUSTOM_AND_NO_FILE</Value>"
+"       <Value>NO_CUSTOM_AND_FILE</Value>"
+"       <Value>CUSTOM_AND_FILE</Value>"
+"   </Option>"
+"   <Option name='CANOPY_COV_UNIT' type='string-select' default='PERCENT'>"
+"       <Value>CATEGORIES</Value>"
+"       <Value>PERCENT</Value>"
+"   </Option>"
+"   <Option name='CANOPY_HT_UNIT' type='string-select' default='METERS_X_10'>"
+"       <Value>METERS</Value>"
+"       <Value>FEET</Value>"
+"       <Value>METERS_X_10</Value>"
+"       <Value>FEET_X_10</Value>"
+"   </Option>"
+"   <Option name='CBH_UNIT' type='string-select' default='METERS_X_10'>"
+"       <Value>METERS</Value>"
+"       <Value>FEET</Value>"
+"       <Value>METERS_X_10</Value>"
+"       <Value>FEET_X_10</Value>"
+"   </Option>"
+"   <Option name='CBD_UNIT' type='string-select' default='KG_PER_CUBIC_METER_X_100'>"
+"       <Value>KG_PER_CUBIC_METER</Value>"
+"       <Value>POUND_PER_CUBIC_FOOT</Value>"
+"       <Value>KG_PER_CUBIC_METER_X_100</Value>"
+"       <Value>POUND_PER_CUBIC_FOOT_X_1000</Value>"
+"   </Option>"
+"   <Option name='DUFF_UNIT' type='string-select' default='MG_PER_HECTARE_X_10'>"
+"       <Value>MG_PER_HECTARE_X_10</Value>"
+"       <Value>TONS_PER_ACRE_X_10</Value>"
+"   </Option>"
+/* I don't think we need to override this, but maybe? */
+/*"   <Option name='CWD_OPTION' type='boolean' default='FALSE' description='Override logic for setting the coarse woody presence'/>" */
+"   <Option name='CALCULATE_STATS' type='boolean' default='YES' description='Write the stats to the lcp'/>"
+"   <Option name='CLASSIFY_DATA' type='boolean' default='YES' description='Write the stats to the lcp'/>"
+"   <Option name='LINEAR_UNIT' type='string-select' default='SET_FROM_SRS' description='Set the linear units in the lcp'>"
+"       <Value>SET_FROM_SRS</Value>"
+"       <Value>METER</Value>"
+"       <Value>FOOT</Value>"
+"       <Value>KILOMETER</Value>"
+"   </Option>"
+"   <Option name='LATITUDE' type='int' default='' description='Set the latitude for the dataset, this overrides the driver trying to set it programmatically in EPSG:4269'/>"
+"   <Option name='DESCRIPTION' type='string' default='LCP file created by GDAL' description='A short description of the lcp file'/>"
+"</CreationOptionList>" );
         poDriver->pfnOpen = LCPDataset::Open;
+        poDriver->pfnCreateCopy = LCPDataset::CreateCopy;
         poDriver->pfnIdentify = LCPDataset::Identify;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+   }
 }
+
