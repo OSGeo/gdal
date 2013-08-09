@@ -1281,12 +1281,13 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
     }
     else
     {
-        //Need to find out if we *really* need this item.
-        //CPLError( CE_Failure, CPLE_AppDefined,
-        //          "Could not calculate latitude from spatial reference " \
-        //          "and LATITUDE was not set.  Failed to create valid LCP. " \
-        //          "Please set LATITUDE in the creation options." );
-        //return NULL;
+        /*
+        ** This may have to be a warning or failure.  For now emit a
+        ** debugging message.
+        */
+        CPLDebug( "LCP", "Could not calculate latitude from spatial " \
+                         "reference and LATITUDE was not set.  LCP may " \
+                         "be invalid. Set LATITUDE in the creation options." );
     }
 
     const char *pszDescription =
