@@ -29,6 +29,29 @@
 
 /************************************************************************/
 /*                               swqlex()                               */
+/************************************************************************/
+
+void swqerror( swq_parse_context *context, const char *msg )
+{
+    CPLString osMsg;
+    osMsg.Printf( "SQL Expression Parsing Error: %s. Occured around :\n", msg );
+
+    int i;
+    int n = context->pszLastValid - context->pszInput;
+
+    for( i = MAX(0,n-40); i < n + 40 && context->pszInput[i] != '\0'; i ++ )
+        osMsg += context->pszInput[i];
+    osMsg += "\n";
+    for(i=0;i<MIN(n, 40);i++)
+        osMsg += " ";
+    osMsg += "^";
+
+    CPLError( CE_Failure, CPLE_AppDefined, osMsg.c_str() );
+}
+
+
+/************************************************************************/
+/*                               swqlex()                               */
 /*                                                                      */
 /*      Read back a token from the input.                               */
 /************************************************************************/
@@ -55,6 +78,8 @@ int swqlex( YYSTYPE *ppNode, swq_parse_context *context )
     while( *pszInput == ' ' || *pszInput == '\t'
            || *pszInput == 10 || *pszInput == 13 )
         pszInput++;
+
+    context->pszLastValid = pszInput;
 
     if( *pszInput == '\0' )
     {
@@ -228,6 +253,13 @@ int swqlex( YYSTYPE *ppNode, swq_parse_context *context )
             nReturn = SWQT_UNION;
         else if( EQUAL(osToken,"ALL") )
             nReturn = SWQT_ALL;
+
+        /* Unhandled by OGR SQL */
+        else if( EQUAL(osToken,"LIMIT") ||
+                 EQUAL(osToken,"OUTER") ||
+                 EQUAL(osToken,"INNER") )
+            nReturn = SWQT_RESERVED_KEYWORD;
+
         else
         {
             *ppNode = new swq_expr_node( osToken );
@@ -691,6 +723,7 @@ CPLErr swq_expr_compile2( const char *where_clause,
 
     context.pszInput = where_clause;
     context.pszNext = where_clause;
+    context.pszLastValid = where_clause;
     context.nStartToken = SWQT_LOGICAL_START;
     
     if( swqparse( &context ) == 0 
