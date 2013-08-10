@@ -1972,7 +1972,7 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
 
                 CPLString osName = poHorizSRS->GetChild(0)->GetValue();
                 osName += " + ";
-                osName += oVertSRS.GetRoot()->GetValue();
+                osName += oVertSRS.GetRoot()->GetChild(0)->GetValue();
 
                 SetNode( "COMPD_CS", osName );
                 GetRoot()->AddChild( poHorizSRS );
@@ -2452,7 +2452,7 @@ OGRErr OGRSpatialReference::importFromURN( const char *pszURN )
 
             CPLString osName = poHorizSRS->GetChild(0)->GetValue();
             osName += " + ";
-            osName += oVertSRS.GetRoot()->GetValue();
+            osName += oVertSRS.GetRoot()->GetChild(0)->GetValue();
 
             SetNode( "COMPD_CS", osName );
             GetRoot()->AddChild( poHorizSRS );

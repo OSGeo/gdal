@@ -94,6 +94,10 @@ def osr_compd_2():
     srs = osr.SpatialReference()
     srs.SetFromUserInput( example_compd_wkt )
 
+    if srs.Validate() != 0:
+        gdaltest.post_reason( 'Does not validate' )
+        return 'fail'
+
     if not srs.IsProjected():
         gdaltest.post_reason( 'Projected COMPD_CS not recognised as projected.')
         return 'fail'
@@ -107,6 +111,10 @@ def osr_compd_3():
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG( 7401 )
+
+    if srs.Validate() != 0:
+        gdaltest.post_reason( 'Does not validate' )
+        return 'fail'
 
     exp_wkt = """COMPD_CS["NTF (Paris) / France II + NGF Lallemand",
     PROJCS["NTF (Paris) / France II (deprecated)",
@@ -158,6 +166,10 @@ def osr_compd_4():
     srs = osr.SpatialReference()
     srs.ImportFromEPSG( 7400 )
 
+    if srs.Validate() != 0:
+        gdaltest.post_reason( 'Does not validate' )
+        return 'fail'
+
     exp_wkt = """COMPD_CS["NTF (Paris) + NGF IGN69 height",
     GEOGCS["NTF (Paris)",
         DATUM["Nouvelle_Triangulation_Francaise_Paris",
@@ -198,7 +210,11 @@ def osr_compd_5():
     srs = osr.SpatialReference()
     srs.SetFromUserInput( 'EPSG:26911+5703' )
 
-    exp_wkt = """COMPD_CS["NAD83 / UTM zone 11N + VERT_CS",
+    if srs.Validate() != 0:
+        gdaltest.post_reason( 'Does not validate' )
+        return 'fail'
+
+    exp_wkt = """COMPD_CS["NAD83 / UTM zone 11N + NAVD88 height",
     PROJCS["NAD83 / UTM zone 11N",
         GEOGCS["NAD83",
             DATUM["North_American_Datum_1983",
@@ -261,6 +277,10 @@ def osr_compd_6():
     srs = osr.SpatialReference()
     srs.SetFromUserInput( '+proj=utm +zone=11 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +geoidgrids=g2003conus.gtx,g2003alaska.gtx,g2003h01.gtx,g2003p01.gtx +vunits=us-ft +no_defs ' )
 
+    if srs.Validate() != 0:
+        gdaltest.post_reason( 'Does not validate' )
+        return 'fail'
+
     exp_wkt = """COMPD_CS["UTM Zone 11, Northern Hemisphere + Unnamed Vertical Datum",
     PROJCS["UTM Zone 11, Northern Hemisphere",
         GEOGCS["GRS 1980(IUGG, 1980)",
@@ -279,8 +299,8 @@ def osr_compd_6():
     VERT_CS["Unnamed",
         VERT_DATUM["Unnamed",2005,
             EXTENSION["PROJ4_GRIDS","g2003conus.gtx,g2003alaska.gtx,g2003h01.gtx,g2003p01.gtx"]],
-        AXIS["Up",UP],
-        UNIT["Foot_US",0.3048006096012192]]]"""
+        UNIT["Foot_US",0.3048006096012192],
+        AXIS["Up",UP]]]"""
             
     wkt = srs.ExportToPrettyWkt() 
 
@@ -317,6 +337,10 @@ def osr_compd_7():
     srs = osr.SpatialReference()
     srs.SetCompoundCS( 'My Compound SRS', srs_horiz, srs_vert )
 
+    if srs.Validate() != 0:
+        gdaltest.post_reason( 'Does not validate' )
+        return 'fail'
+
     exp_wkt = """COMPD_CS["My Compound SRS",
     GEOGCS["WGS 84",
         DATUM["WGS_1984",
@@ -352,7 +376,11 @@ def osr_compd_7():
 def osr_compd_8():
 
     srs = osr.SpatialReference()
-    srs.SetFromUserInput( 'urn:ogc:def:crs,crs:EPSG::27700,crs:EPSG::7405' )
+    srs.SetFromUserInput( 'urn:ogc:def:crs,crs:EPSG::27700,crs:EPSG::5701' )
+
+    if srs.Validate() != 0:
+        gdaltest.post_reason( 'Does not validate' )
+        return 'fail'
 
     wkt = srs.ExportToWkt()
     if wkt.find('COMPD_CS') != 0:
