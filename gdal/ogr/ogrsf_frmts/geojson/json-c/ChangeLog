@@ -1,6 +1,74 @@
-GDAL modified version:
-  * See svn log -r18532:HEAD http://svn.osgeo.org/gdal/trunk/gdal/ogr/ogrsf_frmts/geojson/jsonc
 
+0.11
+
+  * IMPORTANT: the name of the library has changed to libjson-c.so and
+     the header files are now in include/json-c.
+     The pkgconfig name has also changed from json to json-c.
+     You should change your build to use appropriate -I and -l options.
+     A compatibility shim is in place so builds using the old name will
+     continue to work, but that will be removed in the next release.
+  * Maximum recursion depth is now a runtime option.
+     json_tokener_new() is provided for compatibility.
+     json_tokener_new_ex(depth)
+  * Include json_object_iterator.h in the installed headers.
+  * Add support for building on Android.
+  * Rewrite json_object_object_add to replace just the value if the key already exists so keys remain valid.
+  * Make it safe to delete keys while iterating with the json_object_object_foreach macro.
+  * Add a json_set_serializer() function to allow the string output of a json_object to be customized.
+  * Make float parsing locale independent.
+  * Add a json_tokener_set_flags() function and a JSON_TOKENER_STRICT flag.
+  * Enable -Werror when building.
+  * speed improvements to parsing 64-bit integers on systems with working sscanf
+  * Add a json_object_object_length function.
+  * Fix a bug (buffer overrun) when expanding arrays to more than 64 entries.
+
+0.10
+
+  * Add a json_object_to_json_string_ext() function to allow output to be
+     formatted in a more human readable form.
+  * Add json_object_object_get_ex(), a NULL-safe get object method, to be able
+     to distinguish between a key not present and the value being NULL.
+  * Add an alternative iterator implementation, see json_object_iterator.h
+  * Make json_object_iter public to enable external use of the
+     json_object_object_foreachC macro.
+  * Add a printbuf_memset() function to provide an effecient way to set and
+     append things like whitespace indentation.
+  * Adjust json_object_is_type and json_object_get_type so they return
+      json_type_null for NULL objects and handle NULL passed to
+      json_objct_object_get().
+  * Rename boolean type to json_bool.
+  * Fix various compile issues for Visual Studio and MinGW.
+  * Allow json_tokener_parse_ex() to be re-used to parse multiple object.
+     Also, fix some parsing issues with capitalized hexadecimal numbers and
+     number in E notation.
+  * Add json_tokener_get_error() and json_tokener_error_desc() to better 
+     encapsulate the process of retrieving errors while parsing.
+  * Various improvements to the documentation of many functions.
+  * Add new json_object_array_sort() function.
+  * Fix a bug in json_object_get_int(), which would incorrectly return 0
+    when called on a string type object.
+    Eric Haszlakiewicz
+  * Add a json_type_to_name() function.
+    Eric Haszlakiewicz
+  * Add a json_tokener_parse_verbose() function.
+    Jehiah Czebotar
+  * Improve support for null bytes within JSON strings.
+    Jehiah Czebotar
+  * Fix file descriptor leak if memory allocation fails in json_util
+    Zachary Blair, zack_blair at hotmail dot com
+  * Add int64 support. Two new functions json_object_net_int64 and
+    json_object_get_int64. Binary compatibility preserved.
+    Eric Haszlakiewicz, EHASZLA at transunion com
+    Rui Miguel Silva Seabra, rms at 1407 dot org
+  * Fix subtle bug in linkhash where lookup could hang after all slots
+    were filled then successively freed.
+    Spotted by Jean-Marc Naud, j dash m at newtraxtech dot com
+  * Make json_object_from_file take const char *filename
+    Spotted by Vikram Raj V, vsagar at attinteractive dot com
+  * Add handling of surrogate pairs (json_tokener.c, test4.c, Makefile.am)
+    Brent Miller, bdmiller at yahoo dash inc dot com
+  * Correction to comment describing printbuf_memappend in printbuf.h
+    Brent Miller, bdmiller at yahoo dash inc dot com
 
 0.9
   * Add README.html README-WIN32.html config.h.win32 to Makefile.am

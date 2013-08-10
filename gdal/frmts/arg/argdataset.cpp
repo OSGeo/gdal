@@ -30,8 +30,8 @@
 
 #include "rawdataset.h"
 #include "cpl_string.h"
-#include "jsonc/json.h"
-#include "jsonc/json_util.h"
+#include <json-c/json.h>
+#include <json-c/json_util.h>
 #include <ogr_spatialref.h>
 
 CPL_CVSID("$Id$");

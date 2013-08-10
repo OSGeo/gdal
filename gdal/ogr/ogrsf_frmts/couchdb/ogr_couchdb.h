@@ -32,7 +32,7 @@
 
 #include "ogrsf_frmts.h"
 #include "cpl_http.h"
-#include "json.h"
+#include <json-c/json.h>
 
 #include <vector>
 #include <map>

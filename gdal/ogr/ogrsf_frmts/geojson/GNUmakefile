@@ -2,7 +2,7 @@
 #
 # Makefile to build OGR GeoJSON driver
 #
-SUBDIRS-yes	:= jsonc
+SUBDIRS-yes	:= json-c
 
 include ../../../GDALmake.opt
 
@@ -17,7 +17,7 @@ OBJ = \
 	ogresrijsonreader.o \
 	ogrtopojsonreader.o
 
-CPPFLAGS	:= -I. -Ijsonc -I.. -I../.. $(GDAL_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:= -I. -Ijson-c -I.. -I../.. $(GDAL_INCLUDE) $(CPPFLAGS)
 
 default:        $(foreach d,$(SUBDIRS-yes),$(d)-target) $(O_OBJ:.o=.$(OBJ_EXT))
 

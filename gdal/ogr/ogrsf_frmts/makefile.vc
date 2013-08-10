@@ -211,7 +211,7 @@ default:
 				 mitab\*.obj dgn\*.obj avc\*.obj mem\*.obj \
 				 vrt\*.obj csv\*.obj rec\*.obj kml\*.obj \
 				 gmt\*.obj bna\*.obj geoconcept\*.obj \
-				 geojson\*.obj geojson\jsonc\*.obj \
+				 geojson\*.obj geojson\json-c\*.obj \
 				 gpx\*.obj xplane\*.obj georss\*.obj gtm\*.obj \
 				 dxf\*.obj pgdump\*.obj gpsbabel\*.obj \
 				 sua\*.obj openair\*.obj pds\*.obj htf\*.obj \

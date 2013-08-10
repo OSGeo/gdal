@@ -10,7 +10,9 @@ OBJ = \
 	json_tokener.obj \
 	json_util.obj \
 	linkhash.obj \
-	printbuf.obj
+	printbuf.obj \
+	json_object_iterator.obj \
+	json_c_version.obj
 
 GDAL_ROOT	=	..\..\..\..
 

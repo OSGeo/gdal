@@ -3,6 +3,7 @@
  *
  * Copyright (c) 2004, 2005 Metaparadigm Pte. Ltd.
  * Michael Clark <michael@metaparadigm.com>
+ * Copyright (c) 2009 Hewlett-Packard Development Company, L.P.
  *
  * This library is free software; you can redistribute it and/or modify
  * it under the terms of the MIT license. See COPYING for details.
@@ -11,6 +12,8 @@
 
 #ifndef _DEBUG_H_
 #define _DEBUG_H_
+
+#include <stdlib.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -24,6 +27,26 @@ extern void mc_abort(const char *msg, ...);
 extern void mc_debug(const char *msg, ...);
 extern void mc_error(const char *msg, ...);
 extern void mc_info(const char *msg, ...);
+
+#ifndef __STRING
+#define __STRING(x) #x
+#endif
+
+#ifndef PARSER_BROKEN_FIXED
+
+#define JASSERT(cond) do {} while(0)
+
+#else
+
+#define JASSERT(cond) do { \
+		if (!(cond)) { \
+			mc_error("cjson assert failure %s:%d : cond \"" __STRING(cond) "failed\n", __FILE__, __LINE__); \
+			*(int *)0 = 1;\
+			abort(); \
+		}\
+	} while(0)
+
+#endif
 
 #ifdef MC_MAINTAINER_MODE
 #define MC_SET_DEBUG(x) mc_set_debug(x)
