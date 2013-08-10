@@ -177,6 +177,7 @@ public:
     int        nStartToken;
     const char *pszInput;
     const char *pszNext;
+    const char *pszLastValid;
 
     swq_expr_node *poRoot;
 
@@ -189,6 +190,7 @@ public:
 */
 int swqparse( swq_parse_context *context );
 int swqlex( swq_expr_node **ppNode, swq_parse_context *context );
+void swqerror( swq_parse_context *context, const char *msg );
 
 int swq_identify_field( const char *token, swq_field_list *field_list,
                         swq_field_type *this_type, int *table_id );
