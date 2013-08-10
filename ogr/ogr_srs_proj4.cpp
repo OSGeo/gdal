@@ -1169,6 +1169,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 /*      Handle geoidgrids via an extension node and COMPD_CS.           */
 /* -------------------------------------------------------------------- */
     pszValue = CSLFetchNameValue(papszNV, "geoidgrids");
+    OGR_SRSNode *poVERT_CS = NULL;
     if( pszValue != NULL )
     {
         OGR_SRSNode *poHorizSRS = GetRoot()->Clone();
@@ -1182,32 +1183,23 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
         SetNode( "COMPD_CS", osName );
         GetRoot()->AddChild( poHorizSRS );
 
-        OGR_SRSNode *poVertSRS;
-        
-        poVertSRS = new OGR_SRSNode( "VERT_CS" );
-        GetRoot()->AddChild( poVertSRS );
-        poVertSRS->AddChild( new OGR_SRSNode( "Unnamed" ) );
+        poVERT_CS = new OGR_SRSNode( "VERT_CS" );
+        GetRoot()->AddChild( poVERT_CS );
+        poVERT_CS->AddChild( new OGR_SRSNode( "Unnamed" ) );
 
         CPLString osTarget = GetRoot()->GetValue();
         osTarget += "|VERT_CS|VERT_DATUM";
 
         SetNode( osTarget, "Unnamed" );
         
-        poVertSRS->GetChild(1)->AddChild( new OGR_SRSNode( "2005" ) );
+        poVERT_CS->GetChild(1)->AddChild( new OGR_SRSNode( "2005" ) );
         SetExtension( osTarget, "PROJ4_GRIDS", pszValue );
-
-        OGR_SRSNode *poAxis = new OGR_SRSNode( "AXIS" );
-
-        poAxis->AddChild( new OGR_SRSNode( "Up" ) );
-        poAxis->AddChild( new OGR_SRSNode( "UP" ) );
-        
-        poVertSRS->AddChild( poAxis );
     }
 
 /* -------------------------------------------------------------------- */
 /*      Handle vertical units.                                          */
 /* -------------------------------------------------------------------- */
-    if( GetRoot()->GetNode( "VERT_CS" ) != NULL )
+    if( poVERT_CS != NULL )
     {
         const char *pszUnitName = NULL;
         const char *pszUnitConv = NULL;
@@ -1270,15 +1262,25 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 
         if( pszUnitName != NULL )
         {
-            OGR_SRSNode *poVERT_CS = GetRoot()->GetNode( "VERT_CS" );
             OGR_SRSNode *poUnits; 
 
             poUnits = new OGR_SRSNode( "UNIT" );
             poUnits->AddChild( new OGR_SRSNode( pszUnitName ) );
             poUnits->AddChild( new OGR_SRSNode( pszUnitConv ) );
-            
+
             poVERT_CS->AddChild( poUnits );
         }
+    }
+
+    /* Add AXIS to VERT_CS node */
+    if( poVERT_CS != NULL )
+    {
+        OGR_SRSNode *poAxis = new OGR_SRSNode( "AXIS" );
+
+        poAxis->AddChild( new OGR_SRSNode( "Up" ) );
+        poAxis->AddChild( new OGR_SRSNode( "UP" ) );
+
+        poVERT_CS->AddChild( poAxis );
     }
 
 /* -------------------------------------------------------------------- */
