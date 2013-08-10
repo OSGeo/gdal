@@ -96,3 +96,5 @@ parser:
 	sed "s/yytype_int16 yyssa\[YYINITDEPTH\];/yytype_int16 yyssa[YYINITDEPTH]; \/\* workaround bug with gcc 4.1 -O2 \*\/ memset(yyssa, 0, sizeof(yyssa));/" < swq_parser.cpp > swq_parser.cpp.tmp
 	mv swq_parser.cpp.tmp swq_parser.cpp
 
+osr_cs_wkt_parser:
+	bison --no-lines -p osr_cs_wkt_ -d -oosr_cs_wkt_parser.c osr_cs_wkt_grammar.y

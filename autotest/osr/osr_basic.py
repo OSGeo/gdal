@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -342,17 +343,17 @@ def osr_basic_10():
         UNIT["degree",0.0174532925199433,
             AUTHORITY["EPSG","9108"]],
         AUTHORITY["EPSG","4140"]],
-    UNIT["metre",1,
-        AUTHORITY["EPSG","9001"]],
     PROJECTION["Transverse_Mercator"],
     PARAMETER["latitude_of_origin",0],
     PARAMETER["central_meridian",-63],
     PARAMETER["scale_factor",0.9996],
     PARAMETER["false_easting",500000],
     PARAMETER["false_northing",0],
-    AUTHORITY["EPSG","2038"],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]],
     AXIS["Easting",EAST],
-    AXIS["Northing",NORTH]]""")
+    AXIS["Northing",NORTH],
+    AUTHORITY["EPSG","2038"]]""")
 
     if srs.Validate() != 0:
         return 'fail'
