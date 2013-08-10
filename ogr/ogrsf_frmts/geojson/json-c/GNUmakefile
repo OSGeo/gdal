@@ -11,7 +11,9 @@ OBJ = \
 	json_tokener.o \
 	json_util.o \
 	linkhash.o \
-	printbuf.o
+	printbuf.o \
+	json_object_iterator.o \
+	json_c_version.o
 
 O_OBJ = $(foreach file,$(OBJ),../../o/$(file))
 

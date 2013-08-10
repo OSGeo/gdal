@@ -25,12 +25,12 @@ EXTRAFLAGS = -I. -I.. -I..\..
 OBJ	=	$(GEOJSON_OBJ)
 
 default:	$(OBJ)
-	cd jsonc
+	cd json-c
 	$(MAKE) /f makefile.vc
 	cd ..
 	
 clean:
-	cd jsonc
+	cd json-c
 	$(MAKE) /f makefile.vc clean
 	cd ..
 	-del *.lib

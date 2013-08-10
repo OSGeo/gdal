@@ -30,24 +30,10 @@
 #define OGR_GEOJSONUTILS_H_INCLUDED
 
 #include <ogr_core.h>
-#include <jsonc/json.h> // JSON-C
+#include <json-c/json.h> // JSON-C
 #include "cpl_vsi.h"
 
 class OGRGeometry;
-
-/************************************************************************/
-/*                           mloskot_deleter functor                    */
-/************************************************************************/
-
-template <typename T>
-struct mloskot_deleter
-{
-    void operator()(T*& ptr)
-    {
-        delete ptr;
-        ptr = 0;
-    }
-};
 
 /************************************************************************/
 /*                           GeoJSONSourceType                          */
