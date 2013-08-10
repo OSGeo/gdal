@@ -61,6 +61,7 @@
 #else
 #undef HAVE_STRNDUP
 #endif
+#define HAVE_STRDUP 1
 
 /* Define to 1 if you have the <stdarg.h> header file. */
 #define HAVE_STDARG_H 1

@@ -3,6 +3,7 @@
  *
  * Copyright (c) 2004, 2005 Metaparadigm Pte. Ltd.
  * Michael Clark <michael@metaparadigm.com>
+ * Copyright (c) 2009 Hewlett-Packard Development Company, L.P.
  *
  * This library is free software; you can redistribute it and/or modify
  * it under the terms of the MIT license. See COPYING for details.
@@ -125,7 +126,7 @@ int lh_table_insert(struct lh_table *t, void *k, const void *v)
 	unsigned long h, n;
 
 	t->inserts++;
-	if(t->count > t->size * 0.66) lh_table_resize(t, t->size * 2);
+	if(t->count >= t->size * LH_LOAD_FACTOR) lh_table_resize(t, t->size * 2);
 
 	h = t->hash_fn(k);
 	n = h % t->size;
@@ -133,7 +134,7 @@ int lh_table_insert(struct lh_table *t, void *k, const void *v)
 	while( 1 ) {
 		if(t->table[n].k == LH_EMPTY || t->table[n].k == LH_FREED) break;
 		t->collisions++;
-		if(++n == t->size) n = 0;
+		if ((int)++n == t->size) n = 0;
 	}
 
 	t->table[n].k = k;
@@ -158,13 +159,15 @@ struct lh_entry* lh_table_lookup_entry(struct lh_table *t, const void *k)
 {
 	unsigned long h = t->hash_fn(k);
 	unsigned long n = h % t->size;
+	int count = 0;
 
 	t->lookups++;
-	while( 1 ) {
+	while( count < t->size ) {
 		if(t->table[n].k == LH_EMPTY) return NULL;
 		if(t->table[n].k != LH_FREED &&
 		   t->equal_fn(t->table[n].k, k)) return &t->table[n];
-		if(++n == t->size) n = 0;
+		if ((int)++n == t->size) n = 0;
+		count++;
 	}
 	return NULL;
 }
@@ -172,11 +175,21 @@ struct lh_entry* lh_table_lookup_entry(struct lh_table *t, const void *k)
 
 const void* lh_table_lookup(struct lh_table *t, const void *k)
 {
-	struct lh_entry *e = lh_table_lookup_entry(t, k);
-	if(e) return e->v;
-	return NULL;
+	void *result;
+	lh_table_lookup_ex(t, k, &result);
+	return result;
 }
 
+json_bool lh_table_lookup_ex(struct lh_table* t, const void* k, void **v)
+{
+	struct lh_entry *e = lh_table_lookup_entry(t, k);
+	if (e != NULL) {
+		if (v != NULL) *v = (void *)e->v;
+		return TRUE; /* key found */
+	}
+	if (v != NULL) *v = NULL;
+	return FALSE; /* key not found */
+}
 
 int lh_table_delete_entry(struct lh_table *t, struct lh_entry *e)
 {
@@ -214,3 +227,7 @@ int lh_table_delete(struct lh_table *t, const void *k)
 	return lh_table_delete_entry(t, e);
 }
 
+int lh_table_length(struct lh_table *t)
+{
+	return t->count;
+}
