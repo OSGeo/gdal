@@ -66,6 +66,7 @@ class CPL_DLL OGR_SRSNode
     int         nChildren;
 
     int         NeedsQuoting() const;
+    OGRErr      importFromWkt( char **, int nRecLevel, int* pnNodes );
     
   public:
                 OGR_SRSNode(const char * = NULL);

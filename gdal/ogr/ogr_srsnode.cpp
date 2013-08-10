@@ -577,8 +577,25 @@ OGRErr OGR_SRSNode::exportToPrettyWkt( char ** ppszResult, int nDepth ) const
 OGRErr OGR_SRSNode::importFromWkt( char ** ppszInput )
 
 {
+    int nNodes = 0;
+    return importFromWkt( ppszInput, 0, &nNodes );
+}
+
+OGRErr OGR_SRSNode::importFromWkt( char ** ppszInput, int nRecLevel, int* pnNodes )
+
+{
     const char  *pszInput = *ppszInput;
     int         bInQuotedString = FALSE;
+
+    /* Sanity checks */
+    if( nRecLevel == 10 )
+    {
+        return OGRERR_CORRUPT_DATA;
+    }
+    if( *pnNodes == 1000 )
+    {
+        return OGRERR_CORRUPT_DATA;
+    }
     
 /* -------------------------------------------------------------------- */
 /*      Clear any existing children of this node.                       */
@@ -637,7 +654,8 @@ OGRErr OGR_SRSNode::importFromWkt( char ** ppszInput )
 
             poNewChild = new OGR_SRSNode();
 
-            eErr = poNewChild->importFromWkt( (char **) &pszInput );
+            (*pnNodes) ++;
+            eErr = poNewChild->importFromWkt( (char **) &pszInput, nRecLevel + 1, pnNodes );
             if( eErr != OGRERR_NONE )
             {
                 delete poNewChild;
