@@ -29,7 +29,9 @@
 #include "ogrgeojsonwriter.h"
 #include "ogrgeojsonutils.h"
 #include "ogr_geojson.h"
-#include <jsonc/json.h> // JSON-C
+#include <json-c/json.h> // JSON-C
+#include <json-c/json_object_private.h>
+#include <json-c/printbuf.h>
 #include <ogr_api.h>
 
 /************************************************************************/
@@ -544,4 +546,151 @@ char* OGR_G_ExportToJsonEx( OGRGeometryH hGeometry, char** papszOptions )
 
     /* Translation failed */
     return NULL;
+}
+
+/************************************************************************/
+/*                        json_OGRFormatDouble()                        */
+/* Copied & slightly adapted from ogrutils.cpp                          */
+/************************************************************************/
+
+static int json_OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal,
+                                 char chDecimalSep, int nPrecision )
+{
+    int i;
+    int bHasTruncated = FALSE;
+    char szFormat[16];
+    int ret;
+    
+    sprintf(szFormat, "%%.%df", nPrecision);
+
+    ret = snprintf(pszBuffer, nBufferLen, szFormat, dfVal);
+    /* Windows CRT doesn't conform with C99 and return -1 when buffer is truncated */
+    if (ret >= nBufferLen || ret == -1)
+        return -1;
+
+    while(TRUE)
+    {
+        int nCountBeforeDot = 0;
+        int iDotPos = -1;
+        i = 0;
+        while( pszBuffer[i] != '\0' )
+        {
+            if ((pszBuffer[i] == '.' || pszBuffer[i] == ',') && chDecimalSep != '\0')
+            {
+                iDotPos = i;
+                pszBuffer[i] = chDecimalSep;
+            }
+            else if (iDotPos < 0 && pszBuffer[i] != '-')
+                nCountBeforeDot ++;
+            i++;
+        }
+
+    /* -------------------------------------------------------------------- */
+    /*      Trim trailing 00000x's as they are likely roundoff error.       */
+    /* -------------------------------------------------------------------- */
+        if( i > 10 && iDotPos >=0 )
+        {
+            if (/* && pszBuffer[i-1] == '1' &&*/
+                pszBuffer[i-2] == '0'
+                && pszBuffer[i-3] == '0'
+                && pszBuffer[i-4] == '0'
+                && pszBuffer[i-5] == '0'
+                && pszBuffer[i-6] == '0' )
+            {
+                pszBuffer[--i] = '\0';
+            }
+            else if( i - 8 > iDotPos && /* pszBuffer[i-1] == '1' */
+                  /* && pszBuffer[i-2] == '0' && */
+                    (nCountBeforeDot >= 4 || pszBuffer[i-3] == '0')
+                    && (nCountBeforeDot >= 5 || pszBuffer[i-4] == '0')
+                    && (nCountBeforeDot >= 6 || pszBuffer[i-5] == '0')
+                    && (nCountBeforeDot >= 7 || pszBuffer[i-6] == '0')
+                    && (nCountBeforeDot >= 8 || pszBuffer[i-7] == '0')
+                    && pszBuffer[i-8] == '0'
+                    && pszBuffer[i-9] == '0')
+            {
+                i -= 8;
+                pszBuffer[i] = '\0';
+            }
+        }
+
+    /* -------------------------------------------------------------------- */
+    /*      Trim trailing zeros.                                            */
+    /* -------------------------------------------------------------------- */
+        while( i > 2 && pszBuffer[i-1] == '0' && pszBuffer[i-2] != '.' )
+        {
+            pszBuffer[--i] = '\0';
+        }
+
+    /* -------------------------------------------------------------------- */
+    /*      Detect trailing 99999X's as they are likely roundoff error.     */
+    /* -------------------------------------------------------------------- */
+        if( !bHasTruncated &&
+            i > 10 &&
+            iDotPos >= 0 &&
+            nPrecision >= 15)
+        {
+            if (/*pszBuffer[i-1] == '9' && */
+                 pszBuffer[i-2] == '9'
+                && pszBuffer[i-3] == '9'
+                && pszBuffer[i-4] == '9'
+                && pszBuffer[i-5] == '9'
+                && pszBuffer[i-6] == '9' )
+            {
+                snprintf(pszBuffer, nBufferLen, "%.9f", dfVal);
+                bHasTruncated = TRUE;
+                continue;
+            }
+            else if (i - 9 > iDotPos && /*pszBuffer[i-1] == '9' && */
+                     /*pszBuffer[i-2] == '9' && */
+                    (nCountBeforeDot >= 4 || pszBuffer[i-3] == '9')
+                    && (nCountBeforeDot >= 5 || pszBuffer[i-4] == '9')
+                    && (nCountBeforeDot >= 6 || pszBuffer[i-5] == '9')
+                    && (nCountBeforeDot >= 7 || pszBuffer[i-6] == '9')
+                    && (nCountBeforeDot >= 8 || pszBuffer[i-7] == '9')
+                    && pszBuffer[i-8] == '9'
+                    && pszBuffer[i-9] == '9')
+            {
+                sprintf(szFormat, "%%.%df", MIN(5,12 - nCountBeforeDot));
+                snprintf(pszBuffer, nBufferLen, szFormat, dfVal);
+                bHasTruncated = TRUE;
+                continue;
+            }
+        }
+
+        break;
+    }
+
+    return strlen(pszBuffer);
+}
+
+/************************************************************************/
+/*               OGR_json_double_with_precision_to_string()             */
+/************************************************************************/
+
+static int OGR_json_double_with_precision_to_string(struct json_object *jso,
+                                                    struct printbuf *pb,
+                                                    int level,
+                                                    int flags)
+{
+    char szBuffer[75]; 
+    int nPrecision = (int) (size_t) jso->_userdata;
+    int ret = json_OGRFormatDouble( szBuffer, sizeof(szBuffer), jso->o.c_double, '.', 
+                                   (nPrecision < 0) ? 15 : nPrecision ); 
+    if (ret < 0) 
+        return ret; 
+    return printbuf_memappend(pb, szBuffer, ret); 
+}
+
+/************************************************************************/
+/*                   json_object_new_double_with_precision()            */
+/************************************************************************/
+
+json_object* json_object_new_double_with_precision(double dfVal,
+                                                   int nCoordPrecision)
+{
+    json_object* jso = json_object_new_double(dfVal);
+    json_object_set_serializer(jso, OGR_json_double_with_precision_to_string,
+                               (void*)nCoordPrecision, NULL );
+    return jso;
 }

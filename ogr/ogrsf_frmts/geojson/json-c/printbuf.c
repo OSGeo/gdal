@@ -15,9 +15,6 @@
 
 #include "config.h"
 
-#if defined(__GNUC__) && !defined(_GNU_SOURCE)
-#define _GNU_SOURCE 1 /* seems to be required to bring in vasprintf */
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -34,6 +31,8 @@
 #include "debug.h"
 #include "printbuf.h"
 
+static int printbuf_extend(struct printbuf *p, int min_size);
+
 struct printbuf* printbuf_new(void)
 {
   struct printbuf *p;
@@ -42,7 +41,7 @@ struct printbuf* printbuf_new(void)
   if(!p) return NULL;
   p->size = 32;
   p->bpos = 0;
-  if((p->buf = (char*)malloc(p->size)) == NULL) {
+  if(!(p->buf = (char*)malloc(p->size))) {
     free(p);
     return NULL;
   }
@@ -50,19 +49,40 @@ struct printbuf* printbuf_new(void)
 }
 
 
+/**
+ * Extend the buffer p so it has a size of at least min_size.
+ *
+ * If the current size is large enough, nothing is changed.
+ *
+ * Note: this does not check the available space!  The caller
+ *  is responsible for performing those calculations.
+ */
+static int printbuf_extend(struct printbuf *p, int min_size)
+{
+	char *t;
+	int new_size;
+
+	if (p->size >= min_size)
+		return 0;
+
+	new_size = json_max(p->size * 2, min_size + 8);
+#ifdef PRINTBUF_DEBUG
+	MC_DEBUG("printbuf_memappend: realloc "
+	  "bpos=%d min_size=%d old_size=%d new_size=%d\n",
+	  p->bpos, min_size, p->size, new_size);
+#endif /* PRINTBUF_DEBUG */
+	if(!(t = (char*)realloc(p->buf, new_size)))
+		return -1;
+	p->size = new_size;
+	p->buf = t;
+	return 0;
+}
+
 int printbuf_memappend(struct printbuf *p, const char *buf, int size)
 {
-  char *t;
-  if(p->size - p->bpos <= size) {
-    int new_size = json_max(p->size * 2, p->bpos + size + 8);
-#ifdef PRINTBUF_DEBUG
-    MC_DEBUG("printbuf_memappend: realloc "
-	     "bpos=%d wrsize=%d old_size=%d new_size=%d\n",
-	     p->bpos, size, p->size, new_size);
-#endif /* PRINTBUF_DEBUG */
-    if((t = (char*)realloc(p->buf, new_size)) == NULL) return -1;
-    p->size = new_size;
-    p->buf = t;
+  if (p->size <= p->bpos + size + 1) {
+    if (printbuf_extend(p, p->bpos + size + 1) < 0)
+      return -1;
   }
   memcpy(p->buf + p->bpos, buf, size);
   p->bpos += size;
@@ -70,6 +90,25 @@ int printbuf_memappend(struct printbuf *p, const char *buf, int size)
   return size;
 }
 
+int printbuf_memset(struct printbuf *pb, int offset, int charvalue, int len)
+{
+	int size_needed;
+
+	if (offset == -1)
+		offset = pb->bpos;
+	size_needed = offset + len;
+	if (pb->size < size_needed)
+	{
+		if (printbuf_extend(pb, size_needed) < 0)
+			return -1;
+	}
+
+	memset(pb->buf + offset, charvalue, len);
+	if (pb->bpos < size_needed)
+		pb->bpos = size_needed;
+
+	return 0;
+}
 /* Use CPLVASPrintf for portability issues */
 int sprintbuf(struct printbuf *p, const char *msg, ...)
 {

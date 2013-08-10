@@ -37,8 +37,8 @@
 
 #include <vector>
 
-#include <jsonc/json.h>
-#include <jsonc/json_object_private.h>
+#include <json-c/json.h>
+#include <json-c/json_object_private.h>
 
 /************************************************************************/
 /*                             OGRGMELayer                              */

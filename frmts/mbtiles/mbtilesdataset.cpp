@@ -33,7 +33,7 @@
 #include "cpl_vsil_curl_priv.h"
 
 #include "zlib.h"
-#include "jsonc/json.h"
+#include <json-c/json.h>
 
 #include <math.h>
 
