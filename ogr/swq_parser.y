@@ -42,12 +42,6 @@
 /* it appears to be a non documented feature of Bison */ 
 #define YYSTYPE_IS_TRIVIAL 1
 
-static void swqerror( swq_parse_context *context, const char *msg )
-{
-    CPLError( CE_Failure, CPLE_AppDefined, 
-              "SQL Expression Parsing Error: %s", msg );
-}
-
 %}
 
 %define api.pure
@@ -92,6 +86,8 @@ static void swqerror( swq_parse_context *context, const char *msg )
 %left '+' '-'
 %left '*' '/' '%'
 %left SWQT_UMINUS
+
+%token SWQT_RESERVED_KEYWORD
 
 /* Any grammar rule that does $$ =  must be listed afterwards */
 /* as well as SWQT_NUMBER SWQT_STRING SWQT_IDENTIFIER that are allocated by swqlex() */

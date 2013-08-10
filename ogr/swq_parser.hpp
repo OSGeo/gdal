@@ -69,7 +69,8 @@
      SWQT_NOT = 285,
      SWQT_OR = 286,
      SWQT_AND = 287,
-     SWQT_UMINUS = 288
+     SWQT_UMINUS = 288,
+     SWQT_RESERVED_KEYWORD = 289
    };
 #endif
 
