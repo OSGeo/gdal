@@ -3242,6 +3242,35 @@ fi
 AC_SUBST(HAVE_FREEXL,  $HAVE_FREEXL)
 AC_SUBST(FREEXL_INCLUDE,  $FREEXL_INCLUDE)
 
+
+dnl ---------------------------------------------------------------------------
+dnl Check if libjson-c is available.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(libjson-c,[  --with-libjson-c[=ARG]       Include libjson-c support (ARG=internal or libjson-c directory)],,)
+
+if test "$with_libjson_c" = "external" -o "$with_libjson_c" = "" -o "$with_libjson_c" = "yes" ; then
+  AC_CHECK_LIB(json-c,json_object_set_serializer,LIBJSONC_SETTING=external,LIBJSONC_SETTING=internal,)
+elif test "$with_libjson_c" != "no" -a "$with_libjson_c" != "internal" ; then
+  LIBS="-L$with_libjson_c/lib $LIBS"
+  AC_CHECK_LIB(json-c,json_object_set_serializer,LIBJSONC_SETTING=external,LIBJSONC_SETTING=internal,-L$with_libjson_c/lib)
+else
+  AC_MSG_ERROR([libjson-c (internal or external) is required])
+fi
+
+if test "$LIBJSONC_SETTING" = "external" ; then
+  AC_MSG_RESULT([using pre-installed libjson-c])
+  LIBS="-ljson-c $LIBS"
+  if test "$with_libjson_c" != "" -a "$with_libjson_c" != "yes" -a "$with_libjson_c" != "external" ; then
+    EXTRA_INCLUDES="-I$with_libjson_c/include $EXTRA_INCLUDES"
+  fi
+else
+    AC_MSG_RESULT([using internal libjson-c code])
+fi
+
+AC_SUBST(LIBJSONC_SETTING,$LIBJSONC_SETTING)
+
+
 dnl ---------------------------------------------------------------------------
 dnl Check if we must enable PAM
 dnl ---------------------------------------------------------------------------
