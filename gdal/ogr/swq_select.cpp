@@ -137,6 +137,7 @@ CPLErr swq_select::preparse( const char *select_statement )
 
     context.pszInput = select_statement;
     context.pszNext = select_statement;
+    context.pszLastValid = select_statement;
     context.nStartToken = SWQT_SELECT_START;
     context.poCurSelect = this;
 
