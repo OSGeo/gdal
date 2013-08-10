@@ -280,6 +280,11 @@ CURL_SETTING 	=	@CURL_SETTING@
 CURL_LIB	=	@CURL_LIB@
 CURL_INC	=	@CURL_INC@
 
+#
+# libjson-c
+#
+LIBJSONC_SETTING = @LIBJSONC_SETTING@
+
 # 
 # OpenCL support
 #
