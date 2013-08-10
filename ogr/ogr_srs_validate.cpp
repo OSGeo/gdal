@@ -30,6 +30,7 @@
 
 #include "ogr_spatialref.h"
 #include "ogr_p.h"
+#include "osr_cs_wkt.h"
 
 CPL_CVSID("$Id$");
 
@@ -567,7 +568,36 @@ OGRErr OGRSpatialReference::Validate()
         return OGRERR_CORRUPT_DATA;
     }
 
-    return Validate(poRoot);
+    OGRErr eErr = Validate(poRoot);
+
+    /* Even if hand-validation has succeeded, try a more formal validation */
+    /* using the CT spec grammar */
+    static int bUseCTGrammar = -1;
+    if( bUseCTGrammar < 0 )
+        bUseCTGrammar = CSLTestBoolean(CPLGetConfigOption("OSR_USE_CT_GRAMMAR", "TRUE"));
+
+    if( eErr == OGRERR_NONE && bUseCTGrammar )
+    {
+        osr_cs_wkt_parse_context sContext;
+        char* pszWKT = NULL;
+
+        exportToWkt(&pszWKT);
+
+        sContext.pszInput = pszWKT;
+        sContext.pszLastSuccess = pszWKT;
+        sContext.pszNext = pszWKT;
+        sContext.szErrorMsg[0] = '\0';
+
+        if( osr_cs_wkt_parse(&sContext) != 0 )
+        {
+            CPLDebug( "OGRSpatialReference::Validate", "%s",
+                      sContext.szErrorMsg );
+            eErr = OGRERR_CORRUPT_DATA;
+        }
+
+        CPLFree(pszWKT);
+    }
+    return eErr;
 }
 
 
@@ -614,6 +644,11 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
                 OGRErr eErr = ValidateAuthority(poNode);
                 if (eErr != OGRERR_NONE)
                     return eErr;
+            }
+            else if( EQUAL(poNode->GetValue(),"EXTENSION") )
+            {
+                // We do not try to control the sub-organization of 
+                // EXTENSION nodes.
             }
             else
             {
