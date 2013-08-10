@@ -641,6 +641,7 @@ POPPLER_BASE_STREAM_HAS_TWO_ARGS
 POPPLER_HAS_OPTCONTENT
 HAVE_POPPLER
 PAM_SETTING
+LIBJSONC_SETTING
 FREEXL_INCLUDE
 HAVE_FREEXL
 OPENCL_LIB
@@ -951,6 +952,7 @@ with_opencl
 with_opencl_include
 with_opencl_lib
 with_freexl
+with_libjson_c
 with_pam
 with_poppler
 with_podofo
@@ -1701,6 +1703,7 @@ Optional Packages:
   --with-opencl-include=ARG OpenCL Include directory (with a CL subdirectory)
   --with-opencl-lib=ARG   OpenCL Link Flags (ie. -L/xxx -lOpenCL)
   --with-freexl=ARG    Include freexl support (ARG=no, yes (default) or libfreexl install path)
+  --with-libjson-c=ARG       Include libjson-c support (ARG=internal or libjson-c directory)
   --without-pam         Disable PAM (.aux.xml) support
   --with-poppler=ARG    Include poppler(for PDF) support (ARG=no(default), yes or poppler install path)
   --with-podofo=ARG    Include podofo(for PDF) support (ARG=no(default), yes or podofo install path)
@@ -27258,6 +27261,122 @@ fi
 HAVE_FREEXL=$HAVE_FREEXL
 
 FREEXL_INCLUDE=$FREEXL_INCLUDE
+
+
+
+
+
+# Check whether --with-libjson-c was given.
+if test "${with_libjson_c+set}" = set; then :
+  withval=$with_libjson_c;
+fi
+
+
+if test "$with_libjson_c" = "external" -o "$with_libjson_c" = "" -o "$with_libjson_c" = "yes" ; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for json_object_set_serializer in -ljson-c" >&5
+$as_echo_n "checking for json_object_set_serializer in -ljson-c... " >&6; }
+if ${ac_cv_lib_json_c_json_object_set_serializer+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-ljson-c  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char json_object_set_serializer ();
+int
+main ()
+{
+return json_object_set_serializer ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_json_c_json_object_set_serializer=yes
+else
+  ac_cv_lib_json_c_json_object_set_serializer=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_json_c_json_object_set_serializer" >&5
+$as_echo "$ac_cv_lib_json_c_json_object_set_serializer" >&6; }
+if test "x$ac_cv_lib_json_c_json_object_set_serializer" = xyes; then :
+  LIBJSONC_SETTING=external
+else
+  LIBJSONC_SETTING=internal
+fi
+
+elif test "$with_libjson_c" != "no" -a "$with_libjson_c" != "internal" ; then
+  LIBS="-L$with_libjson_c/lib $LIBS"
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for json_object_set_serializer in -ljson-c" >&5
+$as_echo_n "checking for json_object_set_serializer in -ljson-c... " >&6; }
+if ${ac_cv_lib_json_c_json_object_set_serializer+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-ljson-c -L$with_libjson_c/lib $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char json_object_set_serializer ();
+int
+main ()
+{
+return json_object_set_serializer ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_json_c_json_object_set_serializer=yes
+else
+  ac_cv_lib_json_c_json_object_set_serializer=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_json_c_json_object_set_serializer" >&5
+$as_echo "$ac_cv_lib_json_c_json_object_set_serializer" >&6; }
+if test "x$ac_cv_lib_json_c_json_object_set_serializer" = xyes; then :
+  LIBJSONC_SETTING=external
+else
+  LIBJSONC_SETTING=internal
+fi
+
+else
+  as_fn_error $? "libjson-c (internal or external) is required" "$LINENO" 5
+fi
+
+if test "$LIBJSONC_SETTING" = "external" ; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: using pre-installed libjson-c" >&5
+$as_echo "using pre-installed libjson-c" >&6; }
+  LIBS="-ljson-c $LIBS"
+  if test "$with_libjson_c" != "" -a "$with_libjson_c" != "yes" -a "$with_libjson_c" != "external" ; then
+    EXTRA_INCLUDES="-I$with_libjson_c/include $EXTRA_INCLUDES"
+  fi
+else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: using internal libjson-c code" >&5
+$as_echo "using internal libjson-c code" >&6; }
+fi
+
+LIBJSONC_SETTING=$LIBJSONC_SETTING
+
 
 
 
