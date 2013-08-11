@@ -5,7 +5,7 @@ include ../../../GDALmake.opt
 OBJ	=	\
 	ogrgmedriver.o ogrgmedatasource.o ogrgmelayer.o
 
-CPPFLAGS	:=	-I.. -I../.. -I../geojson \
+CPPFLAGS	:=	$(JSON_INCLUDE) -I../geojson -I.. -I../.. \
 	$(GDAL_INCLUDE) $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
