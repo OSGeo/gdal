@@ -516,7 +516,7 @@ bool OGRGeoJSONReader::GenerateFeatureDefn( OGRGeoJSONLayer* poLayer, json_objec
                 if( eType == OFTInteger )
                 {
                     OGRFieldType eNewType = GeoJSONPropertyToFieldType( it.val );
-                    if( eNewType == OFTReal )
+                    if( eNewType == OFTReal || eNewType == OFTString )
                         poFDefn->SetType(eNewType);
                 }
             }
