@@ -46,4 +46,5 @@ OBJ =	ogrgeometryfactory.o \
 	ogrgeomediageometry.o \
 	ogr_geocoding.o \
     osr_cs_wkt.o \
-	osr_cs_wkt_parser.o
+	osr_cs_wkt_parser.o \
+    ogrgeomfielddefn.o

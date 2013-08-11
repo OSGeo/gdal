@@ -70,6 +70,9 @@ import org.gdal.osr.SpatialReference;
 %typemap(javaimports) OGRDataSourceShadow %{
 import org.gdal.osr.SpatialReference;
 %}
+%typemap(javaimports) OGRGeomFieldDefnShadow %{
+import org.gdal.osr.SpatialReference;
+%}
 
 %typemap(javacode) OGRDataSourceShadow %{
 
@@ -270,7 +273,10 @@ import org.gdal.osr.CoordinateTransformation;
                   OGRFeatureDefnShadow* GetDefnRef,
                   OGRFieldDefnShadow* GetFieldDefnRef,
                   OGRFieldDefnShadow* GetFieldDefn,
-                  OGRGeometryShadow* GetGeometryRef {
+                  OGRGeometryDefnShadow* GetGeomFieldDefnRef,
+                  OGRGeometryDefnShadow* GetGeomFieldDefn,
+                  OGRGeometryShadow* GetGeometryRef,
+                  OGRGeometryShadow* GetGeomFieldRef {
     long cPtr = $jnicall;
     $javaclassname ret = null;
     if (cPtr != 0) {
@@ -450,6 +456,7 @@ import org.gdal.ogr.FeatureNative;
 %}
 
 SMART_FINALIZER(Geometry)
+
 
 /* ----------------------------------------------------------------- */
 /* End of smart finalizer mechanism                                  */

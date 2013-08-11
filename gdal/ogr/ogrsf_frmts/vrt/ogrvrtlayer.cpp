@@ -429,7 +429,6 @@ try_again:
      {
          eGeomType = poSrcLayer->GetGeomType();
      }
-     poFeatureDefn->SetGeomType(eGeomType);
 
 /* -------------------------------------------------------------------- */
 /*      Copy spatial reference system from source if not provided       */
@@ -455,11 +454,23 @@ try_again:
      else if( EQUAL(pszEncoding,"None") )
          eGeometryStyle = VGS_None;
      else if( EQUAL(pszEncoding,"WKT") )
+     {
+         if( pszGType == NULL && eGeomType == wkbNone )
+             eGeomType = wkbUnknown;
          eGeometryStyle = VGS_WKT;
+     }
      else if( EQUAL(pszEncoding,"WKB") )
+     {
+         if( pszGType == NULL && eGeomType == wkbNone )
+             eGeomType = wkbUnknown;
          eGeometryStyle = VGS_WKB;
+     }
      else if( EQUAL(pszEncoding,"Shape") )
+     {
+         if( pszGType == NULL && eGeomType == wkbNone )
+             eGeomType = wkbUnknown;
          eGeometryStyle = VGS_Shape;
+     }
      else if( EQUAL(pszEncoding,"PointFromColumns") )
      {
          eGeometryStyle = VGS_PointFromColumns;
@@ -482,6 +493,14 @@ try_again:
                        "Unable to identify source X or Y field for PointFromColumns encoding." );
              goto error;
          }
+
+         if( pszGType == NULL )
+         {
+             if( iGeomZField != -1 )
+                 eGeomType = wkbPoint25D;
+             else
+                 eGeomType = wkbPoint;
+         }
      }
      else
      {
@@ -489,6 +508,8 @@ try_again:
                    "encoding=\"%s\" not recognised.", pszEncoding );
          goto error;
      }
+
+     poFeatureDefn->SetGeomType(eGeomType);
 
      if( eGeometryStyle == VGS_WKT
          || eGeometryStyle == VGS_WKB

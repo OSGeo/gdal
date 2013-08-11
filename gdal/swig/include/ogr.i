@@ -149,6 +149,7 @@ typedef void OGRGeometryShadow;
 typedef void OSRCoordinateTransformationShadow;
 typedef void OGRFieldDefnShadow;
 #endif
+typedef struct OGRGeomFieldDefnHS OGRGeomFieldDefnShadow;
 %}
 
 #ifdef SWIGJAVA
@@ -228,9 +229,11 @@ typedef void retGetPoints;
 %constant char *OLCFastSetNextByIndex  = "FastSetNextByIndex";
 %constant char *OLCStringsAsUTF8       = "StringsAsUTF8";
 %constant char *OLCIgnoreFields        = "IgnoreFields";
+%constant char *OLCCreateGeomField     = "CreateGeomField";
 
 %constant char *ODsCCreateLayer        = "CreateLayer";
 %constant char *ODsCDeleteLayer        = "DeleteLayer";
+%constant char *ODsCCreateGeomFieldAfterCreateLayer  = "CreateGeomFieldAfterCreateLayer";
 
 %constant char *ODrCCreateDataSource   = "CreateDataSource";
 %constant char *ODrCDeleteDataSource   = "DeleteDataSource";
@@ -257,9 +260,11 @@ typedef int OGRErr;
 #define OLCDeleteFeature       "DeleteFeature"
 #define OLCFastSetNextByIndex  "FastSetNextByIndex"
 #define OLCStringsAsUTF8       "StringsAsUTF8"
+#define OLCCreateGeomField     "CreateGeomField"
 
 #define ODsCCreateLayer        "CreateLayer"
 #define ODsCDeleteLayer        "DeleteLayer"
+#define ODsCCreateGeomFieldAfterCreateLayer   "CreateGeomFieldAfterCreateLayer"
 
 #define ODrCCreateDataSource   "CreateDataSource"
 #define ODrCDeleteDataSource   "DeleteDataSource"
@@ -563,9 +568,18 @@ public:
   
   void SetSpatialFilterRect( double minx, double miny,
                              double maxx, double maxy) {
-    OGR_L_SetSpatialFilterRect(self, minx, miny, maxx, maxy);                          
+    OGR_L_SetSpatialFilterRect(self, minx, miny, maxx, maxy);
+  }
+
+  void SetSpatialFilter(int iGeomField, OGRGeometryShadow* filter) {
+    OGR_L_SetSpatialFilterEx (self, iGeomField, filter);
   }
   
+  void SetSpatialFilterRect( int iGeomField, double minx, double miny,
+                             double maxx, double maxy) {
+    OGR_L_SetSpatialFilterRectEx(self, iGeomField, minx, miny, maxx, maxy);
+  }
+
   OGRGeometryShadow *GetSpatialFilter() {
     return (OGRGeometryShadow *) OGR_L_GetSpatialFilter(self);
   }
@@ -651,8 +665,8 @@ public:
   }
 #elif defined(SWIGPYTHON)
   %feature( "kwargs" ) GetExtent;
-  void GetExtent(double argout[4], int* isvalid = NULL, int force = 1, int can_return_null = 0 ) {
-    OGRErr eErr = OGR_L_GetExtent(self, (OGREnvelope*)argout, force);
+  void GetExtent(double argout[4], int* isvalid = NULL, int force = 1, int can_return_null = 0, int geom_field = 0 ) {
+    OGRErr eErr = OGR_L_GetExtentEx(self, geom_field, (OGREnvelope*)argout, force);
     if (can_return_null)
         *isvalid = (eErr == OGRERR_NONE);
     else
@@ -711,6 +725,15 @@ public:
     return OGR_L_AlterFieldDefn(self, iField, field_def, nFlags);
   }
 %clear OGRFieldDefnShadow *field_def;
+
+#ifndef SWIGJAVA
+  %feature( "kwargs" ) CreateGeomField;
+#endif
+%apply Pointer NONNULL {OGRGeomFieldDefnShadow *field_def};
+  OGRErr CreateGeomField(OGRGeomFieldDefnShadow* field_def, int approx_ok = 1) {
+    return OGR_L_CreateGeomField(self, field_def, approx_ok);
+  }
+%clear OGRGeomFieldDefnShadow *field_def;
 
   OGRErr StartTransaction() {
     return OGR_L_StartTransaction(self);
@@ -874,6 +897,58 @@ public:
   OGRGeometryShadow *GetGeometryRef() {
     return (OGRGeometryShadow*) OGR_F_GetGeometryRef(self);
   }
+
+
+  OGRErr SetGeomField(int iField, OGRGeometryShadow* geom) {
+    return OGR_F_SetGeomField(self, iField, geom);
+  }
+
+  OGRErr SetGeomField(const char* name, OGRGeometryShadow* geom) {
+      int iField = OGR_F_GetGeomFieldIndex(self, name);
+      if (iField == -1)
+      {
+        CPLError(CE_Failure, 1, "No such field: '%s'", name);
+        return OGRERR_FAILURE;
+      }
+      else
+        return OGR_F_SetGeomField(self, iField, geom);
+  }
+
+/* The feature takes over owernship of the geometry. */
+/* Don't change the 'geom' name as Java bindings depends on it */
+%apply SWIGTYPE *DISOWN {OGRGeometryShadow *geom};
+  OGRErr SetGeomFieldDirectly(int iField, OGRGeometryShadow* geom) {
+    return OGR_F_SetGeomFieldDirectly(self, iField, geom);
+  }
+
+  OGRErr SetGeomFieldDirectly(const char* name, OGRGeometryShadow* geom) {
+      int iField = OGR_F_GetGeomFieldIndex(self, name);
+      if (iField == -1)
+      {
+        CPLError(CE_Failure, 1, "No such field: '%s'", name);
+        return OGRERR_FAILURE;
+      }
+      else
+        return OGR_F_SetGeomFieldDirectly(self, iField, geom);
+  }
+%clear OGRGeometryShadow *geom;
+  
+  /* Feature owns its geometry */
+  OGRGeometryShadow *GetGeomFieldRef(int iField) {
+    return (OGRGeometryShadow*) OGR_F_GetGeomFieldRef(self, iField);
+  }
+
+  /* Feature owns its geometry */
+  OGRGeometryShadow *GetGeomFieldRef(const char* name) {
+    int i = OGR_F_GetGeomFieldIndex(self, name);
+    if (i == -1)
+    {
+      CPLError(CE_Failure, 1, "No such field: '%s'", name);
+      return NULL;
+    }
+    else
+      return (OGRGeometryShadow*) OGR_F_GetGeomFieldRef(self, i);
+  }
   
   %newobject Clone;
   OGRFeatureShadow *Clone() {
@@ -901,6 +976,25 @@ public:
 	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
       else
 	  return (OGRFieldDefnShadow *) OGR_F_GetFieldDefnRef(self, i);
+      return NULL;
+  }
+  /* ------------------------------------------- */
+
+  int GetGeomFieldCount() {
+    return OGR_F_GetGeomFieldCount(self);
+  }
+
+  /* ---- GetGeomFieldDefnRef --------------------- */
+  OGRGeomFieldDefnShadow *GetGeomFieldDefnRef(int id) {
+    return (OGRGeomFieldDefnShadow *) OGR_F_GetGeomFieldDefnRef(self, id);
+  }
+
+  OGRGeomFieldDefnShadow *GetGeomFieldDefnRef(const char* name) {
+      int i = OGR_F_GetGeomFieldIndex(self, name);
+      if (i == -1)
+      CPLError(CE_Failure, 1, "No such field: '%s'", name);
+      else
+      return (OGRGeomFieldDefnShadow *) OGR_F_GetGeomFieldDefnRef(self, i);
       return NULL;
   }
   /* ------------------------------------------- */
@@ -1042,6 +1136,10 @@ public:
       
   int GetFieldIndex(const char* name) {
       return OGR_F_GetFieldIndex(self, name);
+  }
+
+  int GetGeomFieldIndex(const char* name) {
+      return OGR_F_GetGeomFieldIndex(self, name);
   }
 
   int GetFID() {
@@ -1213,6 +1311,38 @@ public:
 /************************************************************************/
 
 %rename (FeatureDefn) OGRFeatureDefnShadow;
+
+
+%{
+    static int ValidateOGRGeometryType(OGRwkbGeometryType field_type)
+    {
+        switch(field_type)
+        {
+            case wkbUnknown:
+            case wkbPoint:
+            case wkbLineString:
+            case wkbPolygon:
+            case wkbMultiPoint:
+            case wkbMultiLineString:
+            case wkbMultiPolygon:
+            case wkbGeometryCollection:
+            case wkbNone:
+            /*case wkbLinearRing:*/
+            case wkbPoint25D:
+            case wkbLineString25D:
+            case wkbPolygon25D:
+            case wkbMultiPoint25D:
+            case wkbMultiLineString25D:
+            case wkbMultiPolygon25D:
+            case wkbGeometryCollection25D:
+                return TRUE;
+            default:
+                CPLError(CE_Failure, CPLE_IllegalArg, "Illegal geometry type value");
+                return FALSE;
+        }
+    }
+%}
+
 class OGRFeatureDefnShadow {
   OGRFeatureDefnShadow();
 public:
@@ -1255,12 +1385,38 @@ public:
   }
 %clear OGRFieldDefnShadow* defn;
   
+  
+  int GetGeomFieldCount(){
+    return OGR_FD_GetGeomFieldCount(self);
+  }
+  
+  /* FeatureDefns own their GeomFieldDefns */
+  OGRGeomFieldDefnShadow* GetGeomFieldDefn(int i){
+    return (OGRGeomFieldDefnShadow*) OGR_FD_GetGeomFieldDefn(self, i);
+  }
+
+  int GetGeomFieldIndex(const char* name) {
+      return OGR_FD_GetGeomFieldIndex(self, name);
+  }
+  
+%apply Pointer NONNULL {OGRGeomFieldDefnShadow* defn};
+  void AddGeomFieldDefn(OGRGeomFieldDefnShadow* defn) {
+    OGR_FD_AddGeomFieldDefn(self, defn);
+  }
+%clear OGRGeomFieldDefnShadow* defn;
+
+  OGRErr DeleteGeomFieldDefn(int idx)
+  {
+    return OGR_FD_DeleteGeomFieldDefn(self, idx);
+  }
+
   OGRwkbGeometryType GetGeomType() {
     return (OGRwkbGeometryType) OGR_FD_GetGeomType(self);
   }
   
   void SetGeomType(OGRwkbGeometryType geom_type) {
-    OGR_FD_SetGeomType(self, geom_type);
+    if( ValidateOGRGeometryType(geom_type) )
+        OGR_FD_SetGeomType(self, geom_type);
   }
   
   int GetReferenceCount(){
@@ -1282,7 +1438,12 @@ public:
   void SetStyleIgnored( int bIgnored ) {
     return OGR_FD_SetStyleIgnored(self,bIgnored);
   }
-  
+
+%apply Pointer NONNULL {OGRFeatureDefnShadow* other_defn};
+  int IsSame(OGRFeatureDefnShadow* other_defn) {
+    return OGR_FD_IsSame(self, other_defn);
+  }
+%clear OGRFeatureDefnShadow* other_defn;
 } /* %extend */
 
 
@@ -1407,6 +1568,78 @@ public:
 
 }; /* class OGRFieldDefnShadow */
 
+/************************************************************************/
+/*                          OGRGeomFieldDefn                            */
+/************************************************************************/
+
+%rename (GeomFieldDefn) OGRGeomFieldDefnShadow;
+
+class OGRGeomFieldDefnShadow {
+  OGRGeomFieldDefnShadow();
+public:
+%extend {
+
+  ~OGRGeomFieldDefnShadow() {
+    OGR_GFld_Destroy(self);
+  }
+
+#ifndef SWIGJAVA
+  %feature("kwargs") OGRGeomFieldDefnShadow;
+#endif
+  OGRGeomFieldDefnShadow( const char* name_null_ok="", 
+                          OGRwkbGeometryType field_type = wkbUnknown) {
+    if( ValidateOGRGeometryType(field_type) )
+        return (OGRGeomFieldDefnShadow*) OGR_GFld_Create(name_null_ok, field_type);
+    else
+        return NULL;
+  }
+
+  const char * GetName() {
+    return (const char *) OGR_GFld_GetNameRef(self);
+  }
+  
+  const char * GetNameRef() {
+    return (const char *) OGR_GFld_GetNameRef(self);
+  }
+  
+  void SetName( const char* name) {
+    OGR_GFld_SetName(self, name);
+  }
+  
+  OGRwkbGeometryType GetType() {
+    return OGR_GFld_GetType(self);
+  }
+
+  void SetType(OGRwkbGeometryType type) {
+    if( ValidateOGRGeometryType(type) )
+        OGR_GFld_SetType(self, type);
+  }
+
+  %newobject GetSpatialRef;
+  OSRSpatialReferenceShadow *GetSpatialRef() {
+    OGRSpatialReferenceH ref =  OGR_GFld_GetSpatialRef(self);
+    if( ref )
+        OSRReference(ref);
+    return (OSRSpatialReferenceShadow*) ref;
+  }
+
+  void SetSpatialRef(OSRSpatialReferenceShadow* srs)
+  {
+     OGR_GFld_SetSpatialRef( self, (OGRSpatialReferenceH)srs );
+  }
+
+  int IsIgnored() {
+    return OGR_GFld_IsIgnored( self );
+  }
+
+  void SetIgnored(int bIgnored ) {
+    OGR_GFld_SetIgnored( self, bIgnored );
+  }
+
+} /* %extend */
+
+
+}; /* class OGRGeomFieldDefnShadow */
 
 /* -------------------------------------------------------------------- */
 /*      Geometry factory methods.                                       */
