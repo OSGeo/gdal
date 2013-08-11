@@ -17,6 +17,8 @@
 #define PACKAGE_TARNAME "json-c"
 #define PACKAGE_VERSION "0.2"
 
+#include "symbol_renames.h"
+
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
 #ifndef __GNUC__

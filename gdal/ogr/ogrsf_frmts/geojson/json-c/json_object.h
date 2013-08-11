@@ -13,6 +13,8 @@
 #ifndef _json_object_h_
 #define _json_object_h_
 
+#include "symbol_renames.h"
+
 #include "json_inttypes.h"
 
 #ifdef __cplusplus
