@@ -30,7 +30,7 @@
 #include <cpl_port.h>
 #include <cpl_conv.h>
 #include <ogr_geometry.h>
-#include <json-c/json.h> // JSON-C
+#include <json.h> // JSON-C
 
 /************************************************************************/
 /*                           GeoJSONIsObject()                          */

@@ -37,7 +37,7 @@
 
 #include <vector>
 
-#include <json-c/json.h>
+#include <json.h>
 
 /************************************************************************/
 /*                             OGRGMELayer                              */

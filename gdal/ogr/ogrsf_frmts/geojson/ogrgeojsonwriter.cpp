@@ -29,9 +29,9 @@
 #include "ogrgeojsonwriter.h"
 #include "ogrgeojsonutils.h"
 #include "ogr_geojson.h"
-#include <json-c/json.h> // JSON-C
-#include <json-c/json_object_private.h>
-#include <json-c/printbuf.h>
+#include <json.h> // JSON-C
+#include <json_object_private.h>
+#include <printbuf.h>
 #include <ogr_api.h>
 
 /************************************************************************/

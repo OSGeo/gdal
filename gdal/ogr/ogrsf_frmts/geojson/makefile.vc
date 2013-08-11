@@ -15,7 +15,7 @@ GEOJSON_OBJ = \
 	ogresrijsonreader.obj \
 	ogrtopojsonreader.obj
 
-EXTRAFLAGS = -I. -I.. -I..\..
+EXTRAFLAGS = -I. -I.. -I..\.. -Ilibjson
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
@@ -25,12 +25,12 @@ EXTRAFLAGS = -I. -I.. -I..\..
 OBJ	=	$(GEOJSON_OBJ)
 
 default:	$(OBJ)
-	cd json-c
+	cd libjson
 	$(MAKE) /f makefile.vc
 	cd ..
 	
 clean:
-	cd json-c
+	cd libjson
 	$(MAKE) /f makefile.vc clean
 	cd ..
 	-del *.lib
