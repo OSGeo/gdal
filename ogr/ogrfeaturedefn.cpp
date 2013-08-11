@@ -57,8 +57,9 @@ OGRFeatureDefn::OGRFeatureDefn( const char * pszName )
     nRefCount = 0;
     nFieldCount = 0;
     papoFieldDefn = NULL;
-    eGeomType = wkbUnknown;
-    bIgnoreGeometry = FALSE;
+    nGeomFieldCount = 1;
+    papoGeomFieldDefn = (OGRGeomFieldDefn**) CPLMalloc(sizeof(OGRGeomFieldDefn*));
+    papoGeomFieldDefn[0] = new OGRGeomFieldDefn("", wkbUnknown);
     bIgnoreStyle = FALSE;
 }
 
@@ -108,6 +109,13 @@ OGRFeatureDefn::~OGRFeatureDefn()
     }
 
     CPLFree( papoFieldDefn );
+
+    for( int i = 0; i < nGeomFieldCount; i++ )
+    {
+        delete papoGeomFieldDefn[i];
+    }
+
+    CPLFree( papoGeomFieldDefn );
 }
 
 /************************************************************************/
@@ -182,14 +190,20 @@ void OGR_FD_Release( OGRFeatureDefnH hDefn )
 OGRFeatureDefn *OGRFeatureDefn::Clone()
 
 {
+    int i;
     OGRFeatureDefn *poCopy;
 
     poCopy = new OGRFeatureDefn( GetName() );
 
-    poCopy->SetGeomType( GetGeomType() );
-
-    for( int i = 0; i < GetFieldCount(); i++ )
+    GetFieldCount();
+    for( i = 0; i < nFieldCount; i++ )
         poCopy->AddFieldDefn( GetFieldDefn( i ) );
+
+    /* There is a default geometry field created at OGRFeatureDefn instanciation */
+    poCopy->DeleteGeomFieldDefn(0);
+    GetGeomFieldCount();
+    for( i = 0; i < nGeomFieldCount; i++ )
+        poCopy->AddGeomFieldDefn( GetGeomFieldDefn( i ) );
 
     return poCopy;
 }
@@ -208,6 +222,10 @@ OGRFeatureDefn *OGRFeatureDefn::Clone()
  * @return the name.  This name is internal and should not be modified, or
  * freed.
  */
+const char * OGRFeatureDefn::GetName()
+{
+    return pszFeatureClassName;
+}
 
 /************************************************************************/
 /*                           OGR_FD_GetName()                           */
@@ -240,6 +258,11 @@ const char *OGR_FD_GetName( OGRFeatureDefnH hDefn )
  * This method is the same as the C function OGR_FD_GetFieldCount().
  * @return count of fields.
  */
+
+int OGRFeatureDefn::GetFieldCount()
+{
+    return nFieldCount;
+}
 
 /************************************************************************/
 /*                        OGR_FD_GetFieldCount()                        */
@@ -281,7 +304,7 @@ int OGR_FD_GetFieldCount( OGRFeatureDefnH hDefn )
 OGRFieldDefn *OGRFeatureDefn::GetFieldDefn( int iField )
 
 {
-    if( iField < 0 || iField >= nFieldCount )
+    if( iField < 0 || iField >= GetFieldCount() )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid index : %d", iField);
         return NULL;
@@ -339,6 +362,7 @@ OGRFieldDefnH OGR_FD_GetFieldDefn( OGRFeatureDefnH hDefn, int iField )
 void OGRFeatureDefn::AddFieldDefn( OGRFieldDefn * poNewDefn )
 
 {
+    GetFieldCount();
     papoFieldDefn = (OGRFieldDefn **)
         CPLRealloc( papoFieldDefn, sizeof(void*)*(nFieldCount+1) );
 
@@ -396,7 +420,7 @@ void OGR_FD_AddFieldDefn( OGRFeatureDefnH hDefn, OGRFieldDefnH hNewField )
 OGRErr OGRFeatureDefn::DeleteFieldDefn( int iField )
 
 {
-    if (iField < 0 || iField >= nFieldCount)
+    if (iField < 0 || iField >= GetFieldCount())
         return OGRERR_FAILURE;
 
     delete papoFieldDefn[iField];
@@ -467,7 +491,7 @@ OGRErr OGR_FD_DeleteFieldDefn( OGRFeatureDefnH hDefn, int iField )
 OGRErr OGRFeatureDefn::ReorderFieldDefns( int* panMap )
 
 {
-    if (nFieldCount == 0)
+    if (GetFieldCount() == 0)
         return OGRERR_NONE;
 
     OGRErr eErr = OGRCheckPermutation(panMap, nFieldCount);
@@ -518,6 +542,296 @@ OGRErr OGR_FD_ReorderFieldDefn( OGRFeatureDefnH hDefn, int* panMap )
     return ((OGRFeatureDefn *) hDefn)->ReorderFieldDefns( panMap );
 }
 
+
+/************************************************************************/
+/*                         GetGeomFieldCount()                          */
+/************************************************************************/
+
+/**
+ * \fn int OGRFeatureDefn::GetGeomFieldCount();
+ *
+ * \brief Fetch number of geometry fields on this feature.
+ *
+ * This method is the same as the C function OGR_FD_GetGeomFieldCount().
+ * @return count of geometry fields.
+ *
+ * @since GDAL 2.0
+ */
+int OGRFeatureDefn::GetGeomFieldCount()
+{
+    return nGeomFieldCount;
+}
+
+/************************************************************************/
+/*                      OGR_FD_GetGeomFieldCount()                      */
+/************************************************************************/
+
+/**
+ * \brief Fetch number of geometry fields on the passed feature definition.
+ *
+ * This function is the same as the C++ OGRFeatureDefn::GetGeomFieldCount().
+ *
+ * @param hDefn handle to the feature definition to get the fields count from.
+ * @return count of geometry fields.
+ *
+ * @since GDAL 2.0
+ */
+
+int OGR_FD_GetGeomFieldCount( OGRFeatureDefnH hDefn )
+
+{
+    return ((OGRFeatureDefn *) hDefn)->GetGeomFieldCount();
+}
+
+/************************************************************************/
+/*                           GetGeomFieldDefn()                         */
+/************************************************************************/
+
+/**
+ * \brief Fetch geometry field definition.
+ *
+ * This method is the same as the C function OGR_FD_GetGeomFieldDefn().
+ *
+ * @param iGeomField the geometry field to fetch, between 0 and GetGeomFieldCount()-1.
+ *
+ * @return a pointer to an internal field definition object or NULL if invalid index.
+ * This object should not be modified or freed by the application.
+ *
+ * @since GDAL 2.0
+ */
+
+OGRGeomFieldDefn *OGRFeatureDefn::GetGeomFieldDefn( int iGeomField )
+
+{
+    if( iGeomField < 0 || iGeomField >= GetGeomFieldCount() )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid index : %d", iGeomField);
+        return NULL;
+    }
+
+    return papoGeomFieldDefn[iGeomField];
+}
+
+/************************************************************************/
+/*                      OGR_FD_GetGeomFieldDefn()                       */
+/************************************************************************/
+
+/**
+ * \brief Fetch geometry field definition of the passed feature definition.
+ *
+ * This function is the same as the C++ method 
+ * OGRFeatureDefn::GetGeomFieldDefn().
+ *
+ * @param hDefn handle to the feature definition to get the field definition
+ * from.
+ * @param iGeomField the geometry field to fetch, between 0 and GetGeomFieldCount()-1.
+ *
+ * @return an handle to an internal field definition object or NULL if invalid index.
+ * This object should not be modified or freed by the application.
+ *
+ * @since GDAL 2.0
+ */
+
+OGRGeomFieldDefnH OGR_FD_GetGeomFieldDefn( OGRFeatureDefnH hDefn, int iGeomField )
+
+{
+    return (OGRGeomFieldDefnH) ((OGRFeatureDefn *) hDefn)->GetGeomFieldDefn( iGeomField );
+}
+
+/************************************************************************/
+/*                          AddGeomFieldDefn()                          */
+/************************************************************************/
+
+/**
+ * \brief Add a new geometry field definition.
+ *
+ * To add a new geometry field definition to a layer definition, do not use this
+ * function directly, but use OGRLayer::CreateGeomField() instead.
+ * 
+ * This method does an internal copy of the passed geometry field definition,
+ * unless bCopy is set to FALSE (in which case it takes ownership of the
+ * field definition.
+ *
+ * This method should only be called while there are no OGRFeature
+ * objects in existance based on this OGRFeatureDefn.  The OGRGeomFieldDefn
+ * passed in is copied, and remains the responsibility of the caller.
+ *
+ * This method is the same as the C function OGR_FD_AddGeomFieldDefn().
+ *
+ * @param poNewDefn the definition of the new geometry field.
+ * @param bCopy whether poNewDefn should be copied.
+ *
+ * @since GDAL 2.0
+ */
+
+void OGRFeatureDefn::AddGeomFieldDefn( OGRGeomFieldDefn * poNewDefn,
+                                       int bCopy )
+{
+    GetGeomFieldCount();
+    papoGeomFieldDefn = (OGRGeomFieldDefn **)
+        CPLRealloc( papoGeomFieldDefn, sizeof(void*)*(nGeomFieldCount+1) );
+
+    papoGeomFieldDefn[nGeomFieldCount] = (bCopy) ?
+        new OGRGeomFieldDefn( poNewDefn ) : poNewDefn;
+    nGeomFieldCount++;
+}
+
+/************************************************************************/
+/*                      OGR_FD_AddGeomFieldDefn()                       */
+/************************************************************************/
+
+/**
+ * \brief Add a new field definition to the passed feature definition.
+ *
+ * To add a new field definition to a layer definition, do not use this
+ * function directly, but use OGR_L_CreateGeomField() instead.
+ *
+ * This function  should only be called while there are no OGRFeature
+ * objects in existance based on this OGRFeatureDefn.  The OGRGeomFieldDefn
+ * passed in is copied, and remains the responsibility of the caller.
+ *
+ * This function is the same as the C++ method OGRFeatureDefn::AddGeomFieldDefn().
+ *
+ * @param hDefn handle to the feature definition to add the geometry field definition
+ * to.
+ * @param hNewGeomField handle to the new field definition.
+ *
+ * @since GDAL 2.0
+ */
+
+void OGR_FD_AddGeomFieldDefn( OGRFeatureDefnH hDefn, OGRGeomFieldDefnH hNewGeomField )
+
+{
+    ((OGRFeatureDefn *) hDefn)->AddGeomFieldDefn( (OGRGeomFieldDefn *) hNewGeomField );
+}
+
+/************************************************************************/
+/*                         DeleteGeomFieldDefn()                        */
+/************************************************************************/
+
+/**
+ * \brief Delete an existing geometry field definition.
+ *
+ * To delete an existing field definition from a layer definition, do not use this
+ * function directly, but use OGRLayer::DeleteGeomField() instead.
+ *
+ * This method should only be called while there are no OGRFeature
+ * objects in existance based on this OGRFeatureDefn.
+ *
+ * This method is the same as the C function OGR_FD_DeleteGeomFieldDefn().
+ *
+ * @param iGeomField the index of the geometry field defintion.
+ * @return OGRERR_NONE in case of success.
+ *
+ * @since GDAL 2.0
+ */
+
+OGRErr OGRFeatureDefn::DeleteGeomFieldDefn( int iGeomField )
+
+{
+    if (iGeomField < 0 || iGeomField >= GetGeomFieldCount())
+        return OGRERR_FAILURE;
+
+    delete papoGeomFieldDefn[iGeomField];
+    papoGeomFieldDefn[iGeomField] = NULL;
+
+    if (iGeomField < nGeomFieldCount - 1)
+    {
+        memmove(papoGeomFieldDefn + iGeomField,
+                papoGeomFieldDefn + iGeomField + 1,
+                (nGeomFieldCount - 1 - iGeomField) * sizeof(void*));
+    }
+
+    nGeomFieldCount--;
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                     OGR_FD_DeleteGeomFieldDefn()                     */
+/************************************************************************/
+
+/**
+ * \brief Delete an existing geometry field definition.
+ *
+ * To delete an existing geometry field definition from a layer definition, do not use this
+ * function directly, but use OGR_L_DeleteGeomField() instead (*not implemented yet*)
+ *
+ * This method should only be called while there are no OGRFeature
+ * objects in existance based on this OGRFeatureDefn.
+ *
+ * This method is the same as the C++ method OGRFeatureDefn::DeleteGeomFieldDefn().
+ *
+ * @param hDefn handle to the feature definition.
+ * @param iGeomField the index of the geometry field defintion.
+ * @return OGRERR_NONE in case of success.
+ *
+ * @since GDAL 2.0
+ */
+
+OGRErr OGR_FD_DeleteGeomFieldDefn( OGRFeatureDefnH hDefn, int iGeomField )
+
+{
+    return ((OGRFeatureDefn *) hDefn)->DeleteGeomFieldDefn( iGeomField );
+}
+
+
+/************************************************************************/
+/*                         GetGeomFieldIndex()                          */
+/************************************************************************/
+
+/**
+ * \brief Find geometry field by name.
+ *
+ * The geometry field index of the first geometry field matching the passed
+ * field name (case insensitively) is returned.
+ *
+ * This method is the same as the C function OGR_FD_GetGeomFieldIndex().
+ *
+ * @param pszGeomFieldName the geometry field name to search for.
+ *
+ * @return the geometry field index, or -1 if no match found.
+ */
+ 
+
+int OGRFeatureDefn::GetGeomFieldIndex( const char * pszGeomFieldName )
+
+{
+    GetGeomFieldCount();
+    for( int i = 0; i < nGeomFieldCount; i++ )
+    {
+        if( EQUAL(pszGeomFieldName, GetGeomFieldDefn(i)->GetNameRef() ) )
+            return i;
+    }
+
+    return -1;
+}
+
+/************************************************************************/
+/*                      OGR_FD_GetGeomFieldIndex()                      */
+/************************************************************************/
+/**
+ * \brief Find geometry field by name.
+ *
+ * The geometry field index of the first geometry field matching the passed
+ * field name (case insensitively) is returned.
+ *
+ * This function is the same as the C++ method OGRFeatureDefn::GetGeomFieldIndex.
+ *
+ * @param hDefn handle to the feature definition to get field index from. 
+ * @param pszGeomFieldName the geometry field name to search for.
+ *
+ * @return the geometry field index, or -1 if no match found.
+ */
+
+int OGR_FD_GetGeomFieldIndex( OGRFeatureDefnH hDefn,
+                              const char *pszGeomFieldName )
+
+{
+    return ((OGRFeatureDefn *)hDefn)->GetGeomFieldIndex( pszGeomFieldName );
+}
+
+
 /************************************************************************/
 /*                            GetGeomType()                             */
 /************************************************************************/
@@ -534,10 +848,18 @@ OGRErr OGR_FD_ReorderFieldDefn( OGRFeatureDefnH hDefn, int* panMap )
  * type as 25D even if some or all geometries are in fact 25D.  A few (broken)
  * drivers return wkbPolygon for layers that also include wkbMultiPolygon.  
  *
+ * Starting with GDAL 2.0, this method returns GetGeomFieldDefn(0)->GetType().
+ *
  * This method is the same as the C function OGR_FD_GetGeomType().
  *
  * @return the base type for all geometry related to this definition.
  */
+OGRwkbGeometryType OGRFeatureDefn::GetGeomType()
+{
+    if( GetGeomFieldCount() == 0 )
+        return wkbNone;
+    return GetGeomFieldDefn(0)->GetType();
+}
 
 /************************************************************************/
 /*                         OGR_FD_GetGeomType()                         */
@@ -546,6 +868,8 @@ OGRErr OGR_FD_ReorderFieldDefn( OGRFeatureDefnH hDefn, int* panMap )
  * \brief Fetch the geometry base type of the passed feature definition.
  *
  * This function is the same as the C++ method OGRFeatureDefn::GetGeomType().
+ *
+ * Starting with GDAL 2.0, this method returns GetGeomFieldDefn(0)->GetType().
  *
  * @param hDefn handle to the feature definition to get the geometry type from.
  * @return the base type for all geometry related to this definition.
@@ -571,13 +895,26 @@ OGRwkbGeometryType OGR_FD_GetGeomType( OGRFeatureDefnH hDefn )
  *
  * This method is the same as the C function OGR_FD_SetGeomType().
  *
+ * Starting with GDAL 2.0, this method calls GetGeomFieldDefn(0)->SetType().
+ *
  * @param eNewType the new type to assign.
  */
 
 void OGRFeatureDefn::SetGeomType( OGRwkbGeometryType eNewType )
 
 {
-    eGeomType = eNewType;
+    if( GetGeomFieldCount() > 0 )
+    {
+        if( GetGeomFieldCount() == 1 && eNewType == wkbNone )
+            DeleteGeomFieldDefn(0);
+        else
+            GetGeomFieldDefn(0)->SetType(eNewType);
+    }
+    else if( eNewType != wkbNone )
+    {
+        OGRGeomFieldDefn oGeomFieldDefn( "", eNewType );
+        AddGeomFieldDefn(&oGeomFieldDefn);
+    }
 }
 
 /************************************************************************/
@@ -594,6 +931,8 @@ void OGRFeatureDefn::SetGeomType( OGRwkbGeometryType eNewType )
  *
  * This function is the same as the C++ method OGRFeatureDefn::SetGeomType().
  *
+ * Starting with GDAL 2.0, this method calls GetGeomFieldDefn(0)->SetType().
+ *
  * @param hDefn handle to the layer or feature definition to set the geometry
  * type to.
  * @param eType the new type to assign.
@@ -604,7 +943,6 @@ void OGR_FD_SetGeomType( OGRFeatureDefnH hDefn, OGRwkbGeometryType eType )
 {
     ((OGRFeatureDefn *) hDefn)->SetGeomType( eType );
 }
-
 
 /************************************************************************/
 /*                             Reference()                              */
@@ -703,7 +1041,7 @@ int OGR_FD_Dereference( OGRFeatureDefnH hDefn )
  * This function is the same as the C++ method 
  * OGRFeatureDefn::GetReferenceCount().
  *
- * @param hDefn hanlde to the feature definition on witch OGRFeature are
+ * @param hDefn handle to the feature definition on witch OGRFeature are
  * based on. 
  * @return the current reference count.
  */
@@ -735,9 +1073,10 @@ int OGR_FD_GetReferenceCount( OGRFeatureDefnH hDefn )
 int OGRFeatureDefn::GetFieldIndex( const char * pszFieldName )
 
 {
+    GetFieldCount();
     for( int i = 0; i < nFieldCount; i++ )
     {
-        if( EQUAL(pszFieldName, papoFieldDefn[i]->GetNameRef() ) )
+        if( EQUAL(pszFieldName, GetFieldDefn(i)->GetNameRef() ) )
             return i;
     }
 
@@ -778,8 +1117,17 @@ int OGR_FD_GetFieldIndex( OGRFeatureDefnH hDefn, const char *pszFieldName )
  *
  * This method is the same as the C function OGR_FD_IsGeometryIgnored().
  *
+ * Starting with GDAL 2.0, this method returns GetGeomFieldDefn(0)->IsIgnored().
+ *
  * @return ignore state
  */
+
+int OGRFeatureDefn::IsGeometryIgnored()
+{
+    if( GetGeomFieldCount() == 0 )
+        return FALSE;
+    return GetGeomFieldDefn(0)->IsIgnored();
+}
 
 /************************************************************************/
 /*                      OGR_FD_IsGeometryIgnored()                      */
@@ -791,7 +1139,9 @@ int OGR_FD_GetFieldIndex( OGRFeatureDefnH hDefn, const char *pszFieldName )
  * This function is the same as the C++ method 
  * OGRFeatureDefn::IsGeometryIgnored().
  *
- * @param hDefn hanlde to the feature definition on witch OGRFeature are
+ * Starting with GDAL 2.0, this method returns GetGeomFieldDefn(0)->IsIgnored().
+ *
+ * @param hDefn handle to the feature definition on witch OGRFeature are
  * based on. 
  * @return ignore state
  */
@@ -812,8 +1162,16 @@ int OGR_FD_IsGeometryIgnored( OGRFeatureDefnH hDefn )
  *
  * This method is the same as the C function OGR_FD_SetGeometryIgnored().
  *
+ * Starting with GDAL 2.0, this method calls GetGeomFieldDefn(0)->SetIgnored().
+ *
  * @param bIgnore ignore state
  */
+
+void OGRFeatureDefn::SetGeometryIgnored( int bIgnore )
+{
+    if( GetGeomFieldCount() > 0 )
+        GetGeomFieldDefn(0)->SetIgnored(bIgnore);
+}
 
 /************************************************************************/
 /*                      OGR_FD_SetGeometryIgnored()                     */
@@ -825,7 +1183,9 @@ int OGR_FD_IsGeometryIgnored( OGRFeatureDefnH hDefn )
  * This function is the same as the C++ method 
  * OGRFeatureDefn::SetGeometryIgnored().
  *
- * @param hDefn hanlde to the feature definition on witch OGRFeature are
+ * Starting with GDAL 2.0, this method calls GetGeomFieldDefn(0)->SetIgnored().
+ *
+ * @param hDefn handle to the feature definition on witch OGRFeature are
  * based on. 
  * @param bIgnore ignore state
  */
@@ -893,7 +1253,7 @@ int OGR_FD_IsStyleIgnored( OGRFeatureDefnH hDefn )
  * This function is the same as the C++ method 
  * OGRFeatureDefn::SetStyleIgnored().
  *
- * @param hDefn hanlde to the feature definition on witch OGRFeature are
+ * @param hDefn handle to the feature definition on witch OGRFeature are
  * based on. 
  * @param bIgnore ignore state
  */
@@ -934,17 +1294,28 @@ void OGRFeatureDefn::DestroyFeatureDefn( OGRFeatureDefn *poDefn )
  * @return TRUE if the feature definition is identical to the other one.
  */
 
-int OGRFeatureDefn::IsSame( const OGRFeatureDefn * poOtherFeatureDefn ) const
+int OGRFeatureDefn::IsSame( OGRFeatureDefn * poOtherFeatureDefn )
 {
-    if (strcmp(pszFeatureClassName, poOtherFeatureDefn->pszFeatureClassName) == 0 &&
-        eGeomType == poOtherFeatureDefn->eGeomType &&
-        nFieldCount == poOtherFeatureDefn->nFieldCount)
+    if (strcmp(GetName(), poOtherFeatureDefn->GetName()) == 0 &&
+        GetFieldCount() == poOtherFeatureDefn->GetFieldCount() &&
+        GetGeomFieldCount() == poOtherFeatureDefn->GetGeomFieldCount())
     {
-        for(int i=0;i<nFieldCount;i++)
+        int i;
+        for(i=0;i<nFieldCount;i++)
         {
-            const OGRFieldDefn* poFldDefn = papoFieldDefn[i];
-            const OGRFieldDefn* poOtherFldDefn = poOtherFeatureDefn->papoFieldDefn[i];
+            const OGRFieldDefn* poFldDefn = GetFieldDefn(i);
+            const OGRFieldDefn* poOtherFldDefn = poOtherFeatureDefn->GetFieldDefn(i);
             if (!poFldDefn->IsSame(poOtherFldDefn))
+            {
+                return FALSE;
+            }
+        }
+        for(i=0;i<nGeomFieldCount;i++)
+        {
+            OGRGeomFieldDefn* poGFldDefn = GetGeomFieldDefn(i);
+            OGRGeomFieldDefn* poOtherGFldDefn =
+                poOtherFeatureDefn->GetGeomFieldDefn(i);
+            if (!poGFldDefn->IsSame(poOtherGFldDefn))
             {
                 return FALSE;
             }
@@ -952,4 +1323,26 @@ int OGRFeatureDefn::IsSame( const OGRFeatureDefn * poOtherFeatureDefn ) const
         return TRUE;
     }
     return FALSE;
+}
+
+/************************************************************************/
+/*                           OGR_FD_IsSame()                            */
+/************************************************************************/
+
+/**
+ * \brief Test if the feature definition is identical to the other one.
+ *
+ * @param hFDefn handle to the feature definition on witch OGRFeature are
+ * based on. 
+ * @param hOtherFDefn handle to the other feature definition to compare to.
+ * @return TRUE if the feature definition is identical to the other one.
+ *
+ * @since OGR 2.0
+ */
+
+int OGR_FD_IsSame( OGRFeatureDefnH hFDefn, OGRFeatureDefnH hOtherFDefn )
+{
+    VALIDATE_POINTER1( hFDefn, "OGR_FD_IsSame", FALSE );
+    VALIDATE_POINTER1( hOtherFDefn, "OGR_FD_IsSame", FALSE );
+    return ((OGRFeatureDefn*)hFDefn)->IsSame((OGRFeatureDefn*)hOtherFDefn);
 }

@@ -265,8 +265,16 @@ OGRLayer *OGRDataSource::CopyLayer( OGRLayer *poSrcLayer,
     }
 
     CPLErrorReset();
-    poDstLayer = CreateLayer( pszNewName, poSrcLayer->GetSpatialRef(),
-                              poSrcDefn->GetGeomType(), papszOptions );
+    if( poSrcDefn->GetGeomFieldCount() > 1 &&
+        TestCapability(ODsCCreateGeomFieldAfterCreateLayer) )
+    {
+        poDstLayer = CreateLayer( pszNewName, NULL, wkbNone, papszOptions );
+    }
+    else
+    {
+        poDstLayer = CreateLayer( pszNewName, poSrcLayer->GetSpatialRef(),
+                                  poSrcDefn->GetGeomType(), papszOptions );
+    }
     
     if( poDstLayer == NULL )
         return NULL;
@@ -323,6 +331,19 @@ OGRLayer *OGRDataSource::CopyLayer( OGRLayer *poSrcLayer,
                 panMap[iField] = nDstFieldCount;
                 nDstFieldCount ++;
             }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create geometry fields.                                         */
+/* -------------------------------------------------------------------- */
+    if( poSrcDefn->GetGeomFieldCount() > 1 &&
+        TestCapability(ODsCCreateGeomFieldAfterCreateLayer) )
+    {
+        int nSrcGeomFieldCount = poSrcDefn->GetGeomFieldCount();
+        for( iField = 0; iField < nSrcGeomFieldCount; iField++ )
+        {
+            poDstLayer->CreateGeomField( poSrcDefn->GetGeomFieldDefn(iField) );
         }
     }
 
