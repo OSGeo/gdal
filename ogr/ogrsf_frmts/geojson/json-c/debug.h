@@ -19,6 +19,9 @@
 extern "C" {
 #endif
 
+
+#include "symbol_renames.h"
+
 extern void mc_set_debug(int debug);
 extern int mc_get_debug(void);
 
