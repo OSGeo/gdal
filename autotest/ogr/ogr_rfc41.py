@@ -424,6 +424,9 @@ def ogr_rfc41_3():
 def ogr_rfc41_4():
 
     ds = ogr.GetDriverByName('memory').CreateDataSource('')
+    if ds.TestCapability(ogr.ODsCCreateGeomFieldAfterCreateLayer) == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
     sr = osr.SpatialReference()
     lyr = ds.CreateLayer('test', geom_type = ogr.wkbPoint, srs = sr)
     if lyr.TestCapability(ogr.OLCCreateGeomField) == 0:
