@@ -208,7 +208,7 @@ OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject )
             return OFTString;
         }
         // FIXME when we have 64bit integer
-        if( nVal != (int) nVal || nVal == MY_INT64_MIN || nVal == MY_INT64_MAX )
+        if( nVal != (int) nVal )
         {
             static int bWarned = FALSE;
             if( !bWarned )
