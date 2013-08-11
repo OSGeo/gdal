@@ -38,7 +38,6 @@
 
 class OGRMemLayer : public OGRLayer
 {
-    OGRSpatialReference *poSRS;
     OGRFeatureDefn     *poFeatureDefn;
     
     int                 nFeatureCount;
@@ -77,9 +76,9 @@ class OGRMemLayer : public OGRLayer
     virtual OGRErr      DeleteField( int iField );
     virtual OGRErr      ReorderFields( int* panMap );
     virtual OGRErr      AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags );
+    virtual OGRErr      CreateGeomField( OGRGeomFieldDefn *poGeomField,
+                                         int bApproxOK = TRUE );
 
-    virtual OGRSpatialReference *GetSpatialRef();
-    
     int                 TestCapability( const char * );
 
     void                SetUpdatable(int bUpdatableIn) { bUpdatable = bUpdatableIn; }

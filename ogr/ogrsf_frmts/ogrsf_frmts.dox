@@ -1005,6 +1005,8 @@ can also be used.
  <ul>
   <li> <b>ODsCCreateLayer</b>: True if this datasource can create new layers.<p>
   <li> <b>ODsCDeleteLayer</b>: True if this datasource can delete existing layers.<p>
+  <li> <b>ODsCCreateGeomFieldAfterCreateLayer</b>: True if the layers of this
+        datasource support CreateGeomField() just after layer creation.<p>
  </ul>
 
  The \#define macro forms of the capability names should be used in preference
@@ -1031,6 +1033,8 @@ can also be used.
  <ul>
   <li> <b>ODsCCreateLayer</b>: True if this datasource can create new layers.
   <li> <b>ODsCDeleteLayer</b>: True if this datasource can delete existing layers.<p>
+  <li> <b>ODsCCreateGeomFieldAfterCreateLayer</b>: True if the layers of this
+        datasource support CreateGeomField() just after layer creation.<p>
   <p>
  </ul>
 
@@ -1593,6 +1597,78 @@ by the OGRSFDriverManager.
 
 */
 
+/**
+
+ \fn OGRErr OGRLayer::GetExtent( int iGeomField,OGREnvelope *psExtent, int bForce = TRUE );
+
+ \brief Fetch the extent of this layer, on the specified geometry field.
+
+ Returns the extent (MBR) of the data in the layer.  If bForce is FALSE,
+ and it would be expensive to establish the extent then OGRERR_FAILURE
+ will be returned indicating that the extent isn't know.  If bForce is 
+ TRUE then some implementations will actually scan the entire layer once
+ to compute the MBR of all the features in the layer.
+
+ Depending on the drivers, the returned extent may or may not take the
+ spatial filter into account.  So it is safer to call GetExtent() without
+ setting a spatial filter.
+
+ Layers without any geometry may return OGRERR_FAILURE just indicating that
+ no meaningful extents could be collected.
+
+ Note that some implementations of this method may alter the read cursor
+ of the layer.
+
+ Note to driver implementators: if you implement GetExtent(int,OGREnvelope*,int),
+ you must also implement GetExtent(OGREnvelope*, int) to make it call
+ GetExtent(0,OGREnvelope*,int).
+
+ This method is the same as the C function OGR_L_GetExtentEx().
+
+ @param iGeomField the index of the geometry field on which to compute the extent.
+ @param psExtent the structure in which the extent value will be returned.
+ @param bForce Flag indicating whether the extent should be computed even
+ if it is expensive.
+
+ @return OGRERR_NONE on success, OGRERR_FAILURE if extent not known. 
+
+*/
+
+
+/**
+
+ \fn OGRErr OGR_L_GetExtentEx( OGRLayerH hLayer, int iGeomField, OGREnvelope *psExtent, int bForce);
+
+ \brief Fetch the extent of this layer, on the specified geometry field.
+
+ Returns the extent (MBR) of the data in the layer.  If bForce is FALSE,
+ and it would be expensive to establish the extent then OGRERR_FAILURE
+ will be returned indicating that the extent isn't know.  If bForce is 
+ TRUE then some implementations will actually scan the entire layer once
+ to compute the MBR of all the features in the layer.
+
+ Depending on the drivers, the returned extent may or may not take the
+ spatial filter into account.  So it is safer to call OGR_L_GetExtent() without
+ setting a spatial filter.
+
+ Layers without any geometry may return OGRERR_FAILURE just indicating that
+ no meaningful extents could be collected.
+
+ Note that some implementations of this method may alter the read cursor
+ of the layer.
+
+ This function is the same as the C++ method OGRLayer::GetExtent().
+
+ @param hLayer handle to the layer from which to get extent.
+ @param iGeomField the index of the geometry field on which to compute the extent.
+ @param psExtent the structure in which the extent value will be returned.
+ @param bForce Flag indicating whether the extent should be computed even
+ if it is expensive.
+
+ @return OGRERR_NONE on success, OGRERR_FAILURE if extent not known. 
+
+*/
+
 /** 
  \fn void OGRLayer::SetSpatialFilter( OGRGeometry * poFilter );
 
@@ -1714,6 +1790,160 @@ by the OGRSFDriverManager.
  @param dfMaxY the maximum Y coordinate for the rectangular region.
  
  */
+
+
+/** 
+ \fn void OGRLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poFilter );
+
+ \brief Set a new spatial filter. 
+
+ This method set the geometry to be used as a spatial filter when 
+ fetching features via the GetNextFeature() method.  Only features that
+ geometrically intersect the filter geometry will be returned.  
+
+ Currently this test is may be inaccurately implemented, but it is
+ guaranteed that all features who's envelope (as returned by
+ OGRGeometry::getEnvelope()) overlaps the envelope of the spatial filter
+ will be returned.  This can result in more shapes being returned that 
+ should strictly be the case. 
+
+ This method makes an internal copy of the passed geometry.  The 
+ passed geometry remains the responsibility of the caller, and may 
+ be safely destroyed. 
+
+ For the time being the passed filter geometry should be in the same
+ SRS as the geometry field definition it corresponds to (as returned by
+ GetLayerDefn()->GetGeomFieldDefn(iGeomField)->GetSpatialRef()).  In the
+ future this may be generalized.
+
+ Note that only the last spatial filter set is applied, even if several
+ successive calls are done with different iGeomField values.
+
+ Note to driver implementators: if you implement SetSpatialFilter(int,OGRGeometry*),
+ you must also implement SetSpatialFilter(OGRGeometry*) to make it call
+ SetSpatialFilter(0,OGRGeometry*).
+
+ This method is the same as the C function OGR_L_SetSpatialFilterEx().
+
+ @param iGeomField index of the geometry field on which the spatial filter
+ operates.
+ @param poFilter the geometry to use as a filtering region.  NULL may
+ be passed indicating that the current spatial filter should be cleared,
+ but no new one instituted.
+
+ @since GDAL 2.0
+ 
+ */
+
+/** 
+ \fn void OGR_L_SetSpatialFilterEx( OGRLayerH hLayer, int iGeomField, OGRGeometryH hGeom );
+
+ \brief Set a new spatial filter. 
+
+ This function set the geometry to be used as a spatial filter when 
+ fetching features via the OGR_L_GetNextFeature() function.  Only 
+ features that geometrically intersect the filter geometry will be 
+ returned.  
+
+ Currently this test is may be inaccurately implemented, but it is
+ guaranteed that all features who's envelope (as returned by
+ OGR_G_GetEnvelope()) overlaps the envelope of the spatial filter
+ will be returned.  This can result in more shapes being returned that 
+ should strictly be the case. 
+
+ This function makes an internal copy of the passed geometry.  The 
+ passed geometry remains the responsibility of the caller, and may 
+ be safely destroyed. 
+
+ For the time being the passed filter geometry should be in the same
+ SRS as the geometry field definition it corresponds to (as returned by
+ GetLayerDefn()->GetGeomFieldDefn(iGeomField)->GetSpatialRef()).  In the
+ future this may be generalized.
+
+ Note that only the last spatial filter set is applied, even if several
+ successive calls are done with different iGeomField values.
+
+ This function is the same as the C++ method OGRLayer::SetSpatialFilter.
+
+ @param hLayer handle to the layer on which to set the spatial filter.
+ @param iGeomField index of the geometry field on which the spatial filter
+ operates.
+ @param hGeom handle to the geometry to use as a filtering region.  NULL may
+ be passed indicating that the current spatial filter should be cleared,
+ but no new one instituted.
+
+ @since GDAL 2.0
+ 
+ */
+
+/** 
+ \fn void OGRLayer::SetSpatialFilterRect( int iGeomField, 
+                                          double dfMinX, double dfMinY, 
+                                          double dfMaxX, double dfMaxY );
+
+ \brief Set a new rectangular spatial filter. 
+
+ This method set rectangle to be used as a spatial filter when 
+ fetching features via the GetNextFeature() method.  Only features that
+ geometrically intersect the given rectangle will be returned.  
+
+ The x/y values should be in the same coordinate system as as the geometry
+ field definition it corresponds to (as returned by
+ GetLayerDefn()->GetGeomFieldDefn(iGeomField)->GetSpatialRef()). Internally this 
+ method is normally implemented as creating a 5 vertex closed rectangular
+ polygon and passing it to OGRLayer::SetSpatialFilter().  It exists as
+ a convenience. 
+
+ The only way to clear a spatial filter set with this method is to 
+ call OGRLayer::SetSpatialFilter(NULL). 
+
+ This method is the same as the C function OGR_L_SetSpatialFilterRectEx().
+
+ @param iGeomField index of the geometry field on which the spatial filter
+ operates.
+ @param dfMinX the minimum X coordinate for the rectangular region.
+ @param dfMinY the minimum Y coordinate for the rectangular region.
+ @param dfMaxX the maximum X coordinate for the rectangular region.
+ @param dfMaxY the maximum Y coordinate for the rectangular region.
+ 
+ @since GDAL 2.0
+ */
+
+/** 
+ \fn void OGR_L_SetSpatialFilterRectEx( OGRLayerH hLayer,
+                                        int iGeomField, 
+                                        double dfMinX, double dfMinY, 
+                                        double dfMaxX, double dfMaxY );
+
+ \brief Set a new rectangular spatial filter. 
+
+ This method set rectangle to be used as a spatial filter when 
+ fetching features via the OGR_L_GetNextFeature() method.  Only features that
+ geometrically intersect the given rectangle will be returned.  
+
+ The x/y values should be in the same coordinate system as as the geometry
+ field definition it corresponds to (as returned by
+ GetLayerDefn()->GetGeomFieldDefn(iGeomField)->GetSpatialRef()). Internally this 
+ method is normally implemented as creating a 5 vertex closed rectangular
+ polygon and passing it to OGRLayer::SetSpatialFilter().  It exists as
+ a convenience. 
+
+ The only way to clear a spatial filter set with this method is to 
+ call OGRLayer::SetSpatialFilter(NULL). 
+
+ This method is the same as the C++ method OGRLayer::SetSpatialFilterRect().
+
+ @param hLayer handle to the layer on which to set the spatial filter.
+ @param iGeomField index of the geometry field on which the spatial filter
+ operates.
+ @param dfMinX the minimum X coordinate for the rectangular region.
+ @param dfMinY the minimum Y coordinate for the rectangular region.
+ @param dfMaxX the maximum X coordinate for the rectangular region.
+ @param dfMaxY the maximum Y coordinate for the rectangular region.
+ 
+ @since GDAL 2.0
+ */
+
 
 /**
  \fn OGRGeometry *OGRLayer::GetSpatialFilter();
@@ -1845,7 +2075,13 @@ by the OGRSFDriverManager.
  \brief Fetch the spatial reference system for this layer. 
 
  The returned object is owned by the OGRLayer and should not be modified
- or freed by the application.  
+ or freed by the application.
+ 
+ Starting with OGR 2.0, several geometry fields can be associated to a
+ feature definition. Each geometry field can have its own spatial reference
+ system, which is returned by OGRGeomFieldDefn::GetSpatialRef().
+ OGRLayer::GetSpatialRef() is equivalent to
+ GetLayerDefn()->GetGeomFieldDefn(0)->GetSpatialRef()
 
  This method is the same as the C function OGR_L_GetSpatialRef().
 
@@ -2114,6 +2350,9 @@ FALSE.<p>
  <li> <b>OLCCreateField</b> / "CreateField": TRUE if this layer can create 
 new fields on the current layer using CreateField(), otherwise FALSE.<p>
 
+ <li> <b>OLCCreateGeomField</b> / "CreateGeomField": (GDAL >= 2.0) TRUE if this layer can create 
+new geometry fields on the current layer using CreateGeomField(), otherwise FALSE.<p>
+
  <li> <b>OLCDeleteField</b> / "DeleteField": TRUE if this layer can delete
 existing fields on the current layer using DeleteField(), otherwise FALSE.<p>
 
@@ -2204,6 +2443,9 @@ FALSE.<p>
 
  <li> <b>OLCCreateField</b> / "CreateField": TRUE if this layer can create 
 new fields on the current layer using CreateField(), otherwise FALSE.<p>
+
+ <li> <b>OLCCreateGeomField</b> / "CreateGeomField": (GDAL >= 2.0) TRUE if this layer can create 
+new geometry fields on the current layer using CreateGeomField(), otherwise FALSE.<p>
 
  <li> <b>OLCDeleteField</b> / "DeleteField": TRUE if this layer can delete
 existing fields on the current layer using DeleteField(), otherwise FALSE.<p>
@@ -2717,6 +2959,69 @@ definition must be taken into account.
 @return OGRERR_NONE on success.
 
 @since OGR 1.9.0
+*/
+
+
+/**
+\fn OGRErr OGRLayer::CreateGeomField( OGRGeomFieldDefn *poField, 
+                  int bApproxOK = TRUE );
+
+\brief Create a new geometry field on a layer.
+
+You must use this to create new geometry fields
+on a real layer. Internally the OGRFeatureDefn for the layer will be updated
+to reflect the new field.  Applications should never modify the OGRFeatureDefn
+used by a layer directly.
+
+This method should not be called while there are feature objects in existance that
+were obtained or created with the previous layer definition.
+
+Not all drivers support this method. You can query a layer to check if it supports it
+with the OLCCreateGeomField capability. Some drivers may only support this method while
+there are still no features in the layer. When it is supported, the existings features of the
+backing file/database should be updated accordingly.
+
+This function is the same as the C function OGR_L_CreateGeomField().
+
+@param poField geometry field definition to write to disk. 
+@param bApproxOK If TRUE, the field may be created in a slightly different
+form depending on the limitations of the format driver.
+
+@return OGRERR_NONE on success.
+
+@since OGR 2.0
+*/
+ 
+/**
+
+ \fn OGRErr OGR_L_CreateGeomField( OGRLayerH hLayer, OGRGeomFieldDefnH hField, 
+                          int bApproxOK );
+
+\brief Create a new geometry field on a layer.
+
+You must use this to create new geometry fields
+on a real layer. Internally the OGRFeatureDefn for the layer will be updated
+to reflect the new field.  Applications should never modify the OGRFeatureDefn
+used by a layer directly.
+
+This function should not be called while there are feature objects in existance that
+were obtained or created with the previous layer definition.
+
+Not all drivers support this function. You can query a layer to check if it supports it
+with the OLCCreateField capability. Some drivers may only support this method while
+there are still no features in the layer. When it is supported, the existings features of the
+backing file/database should be updated accordingly.
+
+ This function is the same as the C++ method OGRLayer::CreateField().
+
+ @param hLayer handle to the layer to write the field definition.
+ @param hField handle of the geometry field definition to write to disk. 
+ @param bApproxOK If TRUE, the field may be created in a slightly different
+form depending on the limitations of the format driver.
+
+ @return OGRERR_NONE on success.
+
+ @since OGR 2.0
 */
 
 /**

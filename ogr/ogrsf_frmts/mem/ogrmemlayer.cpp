@@ -41,11 +41,6 @@ OGRMemLayer::OGRMemLayer( const char * pszName, OGRSpatialReference *poSRSIn,
                           OGRwkbGeometryType eReqType )
 
 {
-    if( poSRSIn == NULL )
-        poSRS = NULL;
-    else
-        poSRS = poSRSIn->Clone();
-    
     iNextReadFID = 0;
     iNextCreateFID = 0;
 
@@ -55,6 +50,12 @@ OGRMemLayer::OGRMemLayer( const char * pszName, OGRSpatialReference *poSRSIn,
 
     poFeatureDefn = new OGRFeatureDefn( pszName );
     poFeatureDefn->SetGeomType( eReqType );
+    if( eReqType != wkbNone && poSRSIn != NULL )
+    {
+        OGRSpatialReference* poSRS = poSRSIn->Clone();
+        poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
+        poSRS->Release();
+    }
     poFeatureDefn->Reference();
 
     bUpdatable = TRUE;
@@ -85,9 +86,6 @@ OGRMemLayer::~OGRMemLayer()
 
     if( poFeatureDefn )
         poFeatureDefn->Release();
-
-    if( poSRS )
-        poSRS->Release();
 }
 
 /************************************************************************/
@@ -115,7 +113,7 @@ OGRFeature *OGRMemLayer::GetNextFeature()
             continue;
 
         if( (m_poFilterGeom == NULL
-             || FilterGeometry( poFeature->GetGeometryRef() ) )
+             || FilterGeometry( poFeature->GetGeomFieldRef(m_iGeomFieldFilter) ) )
             && (m_poAttrQuery == NULL
                 || m_poAttrQuery->Evaluate( poFeature ) ) )
         {
@@ -213,9 +211,16 @@ OGRErr OGRMemLayer::SetFeature( OGRFeature *poFeature )
     }
 
     papoFeatures[poFeature->GetFID()] = poFeature->Clone();
-    OGRGeometry* poGeom = papoFeatures[poFeature->GetFID()]->GetGeometryRef();
-    if( poGeom != NULL && poGeom->getSpatialReference() == NULL )
-        poGeom->assignSpatialReference(GetSpatialRef());
+    int i;
+    for(i = 0; i < poFeatureDefn->GetGeomFieldCount(); i ++)
+    {
+        OGRGeometry* poGeom = papoFeatures[poFeature->GetFID()]->GetGeomFieldRef(i);
+        if( poGeom != NULL && poGeom->getSpatialReference() == NULL )
+        {
+            poGeom->assignSpatialReference(
+                poFeatureDefn->GetGeomFieldDefn(i)->GetSpatialRef());
+        }
+    }
     nFeatureCount++;
 
     return OGRERR_NONE;
@@ -317,6 +322,7 @@ int OGRMemLayer::TestCapability( const char * pszCap )
         return bUpdatable;
 
     else if( EQUAL(pszCap,OLCCreateField) ||
+             EQUAL(pszCap,OLCCreateGeomField) ||
              EQUAL(pszCap,OLCDeleteField) ||
              EQUAL(pszCap,OLCReorderFields) ||
              EQUAL(pszCap,OLCAlterFieldDefn) )
@@ -554,12 +560,55 @@ OGRErr OGRMemLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, in
     return OGRERR_NONE;
 }
 
+
 /************************************************************************/
-/*                           GetSpatialRef()                            */
+/*                          CreateGeomField()                           */
 /************************************************************************/
 
-OGRSpatialReference *OGRMemLayer::GetSpatialRef()
+OGRErr OGRMemLayer::CreateGeomField( OGRGeomFieldDefn *poGeomField,
+                                     int bApproxOK )
 
 {
-    return poSRS;
+    if (!bUpdatable)
+        return OGRERR_FAILURE;
+
+/* -------------------------------------------------------------------- */
+/*      simple case, no features exist yet.                             */
+/* -------------------------------------------------------------------- */
+    if( nFeatureCount == 0 )
+    {
+        poFeatureDefn->AddGeomFieldDefn( poGeomField );
+        return OGRERR_NONE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Add field definition and setup remap definition.                */
+/* -------------------------------------------------------------------- */
+    int  *panRemap;
+    int   i;
+
+    poFeatureDefn->AddGeomFieldDefn( poGeomField );
+
+    panRemap = (int *) CPLMalloc(sizeof(int) * poFeatureDefn->GetGeomFieldCount());
+    for( i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++ )
+    {
+        if( i < poFeatureDefn->GetGeomFieldCount() - 1 )
+            panRemap[i] = i;
+        else
+            panRemap[i] = -1;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Remap all the internal features.  Hopefully there aren't any    */
+/*      external features referring to our OGRFeatureDefn!              */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < nMaxFeatureCount; i++ )
+    {
+        if( papoFeatures[i] != NULL )
+            papoFeatures[i]->RemapGeomFields( NULL, panRemap );
+    }
+
+    CPLFree( panRemap );
+
+    return OGRERR_NONE;
 }
