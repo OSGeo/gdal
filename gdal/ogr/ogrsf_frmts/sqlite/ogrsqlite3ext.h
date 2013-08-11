@@ -223,6 +223,8 @@
 #undef sqlite3_vtab_config
 #undef sqlite3_vtab_on_conflict
 
+/* To make compilation work on systems with older sqlite3 */
+typedef struct sqlite3_backup sqlite3_backup;
 
 /*
 ** 2006 June 7
