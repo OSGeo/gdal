@@ -179,6 +179,9 @@ GeoJSONProtocolType GeoJSONGetProtocolType( const char* pszSource )
 /*                           GeoJSONPropertyToFieldType()               */
 /************************************************************************/
 
+#define MY_INT64_MAX ((((GIntBig)0x7FFFFFFF) << 32) | 0xFFFFFFFF)
+#define MY_INT64_MIN ((((GIntBig)0x80000000) << 32))
+
 OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject )
 {
     if (poObject == NULL) { return OFTString; }
@@ -190,7 +193,38 @@ OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject )
     else if( json_type_double == type )
         return OFTReal;
     else if( json_type_int == type )
-        return OFTInteger;
+    {
+        GIntBig nVal = json_object_get_int64(poObject);
+        if( nVal == MY_INT64_MIN || nVal == MY_INT64_MAX )
+        {
+            static int bWarned = FALSE;
+            if( !bWarned )
+            {
+                bWarned = TRUE;
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Integer values ranging out of 64bit integer range "
+                         "have been found. Will be clamped to INT64_MIN/INT64_MAX");
+            }
+            return OFTString;
+        }
+        // FIXME when we have 64bit integer
+        if( nVal != (int) nVal || nVal == MY_INT64_MIN || nVal == MY_INT64_MAX )
+        {
+            static int bWarned = FALSE;
+            if( !bWarned )
+            {
+                bWarned = TRUE;
+                CPLDebug("GeoJSON",
+                         "64b-bit integer have been found. Will be reported as "
+                         "strings");
+            }
+            return OFTString;
+        }
+        else
+        {
+            return OFTInteger;
+        }
+    }
     else if( json_type_string == type )
         return OFTString;
     else if( json_type_array == type )
