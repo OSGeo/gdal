@@ -17379,29 +17379,29 @@ if test "${with_sse+set}" = set; then :
 fi
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether SSE is available" >&5
-$as_echo_n "checking whether SSE is available... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether SSE is available at compile time" >&5
+$as_echo_n "checking whether SSE is available at compile time... " >&6; }
 
 if test "$with_sse" = "yes" -o "$with_sse" = ""; then
 
     rm -f detectsse.cpp
     echo '#ifdef __SSE__' > detectsse.cpp
     echo '#include <xmmintrin.h>' >> detectsse.cpp
-    echo 'void foo() { float fEpsilon = 0.0000000000001f; __m128 xmm_small = _mm_load1_ps(&fEpsilon); } ' >> detectsse.cpp
+    echo 'void foo() { float fEpsilon = 0.0000000000001f; __m128 xmm_small = _mm_load1_ps(&fEpsilon); }  int main() { return 0; }' >> detectsse.cpp
     echo '#else' >> detectsse.cpp
     echo 'some_error' >> detectsse.cpp
     echo '#endif' >> detectsse.cpp
-    if test -z "`${CXX} ${CXXFLAGS} -c detectsse.cpp 2>&1`" ; then
+    if test -z "`${CXX} ${CXXFLAGS} -o detectsse detectsse.cpp 2>&1`" ; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-        CFLAGS="$CFLAGS -DHAVE_SSE_AT_COMPILE_TIME"
-        CXXFLAGS="$CXXFLAGS -DHAVE_SSE_AT_COMPILE_TIME"
+        SSEFLAGS="-DHAVE_SSE_AT_COMPILE_TIME"
+        HAVE_SSE_AT_COMPILE_TIME=yes
     else
-        if test -z "`${CXX} ${CXXFLAGS} -msse -c detectsse.cpp 2>&1`" ; then
+        if test -z "`${CXX} ${CXXFLAGS} -msse -o detectsse detectsse.cpp 2>&1`" ; then
             { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-            CFLAGS="$CFLAGS -msse -DHAVE_SSE_AT_COMPILE_TIME"
-            CXXFLAGS="$CXXFLAGS -msse -DHAVE_SSE_AT_COMPILE_TIME"
+            SSEFLAGS="-msse -DHAVE_SSE_AT_COMPILE_TIME"
+            HAVE_SSE_AT_COMPILE_TIME=yes
         else
             { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
@@ -17410,7 +17410,36 @@ $as_echo "no" >&6; }
             fi
         fi
     fi
-    rm -f detectsse.*
+
+                    if test "$HAVE_SSE_AT_COMPILE_TIME" = "yes"; then
+       case $host_os in
+         solaris*)
+           { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether SSE is available and needed at runtime" >&5
+$as_echo_n "checking whether SSE is available and needed at runtime... " >&6; }
+           if ./detectsse; then
+             { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+           else
+             { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+             if test "$with_sse" = "yes"; then
+               echo "Caution: the generated binaries will not run on this system."
+             else
+               echo "Disabling SSE as it is not explicitely required"
+               HAVE_SSE_AT_COMPILE_TIME=""
+               SSEFLAGS=""
+             fi
+           fi
+           ;;
+       esac
+    fi
+
+    if test "$HAVE_SSE_AT_COMPILE_TIME" = "yes"; then
+      CFLAGS="$CFLAGS $SSEFLAGS"
+      CXXFLAGS="$CXXFLAGS $SSEFLAGS"
+    fi
+
+    rm -f detectsse*
 else
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
@@ -17424,25 +17453,25 @@ if test "${with_avx+set}" = set; then :
 fi
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether AVX is available" >&5
-$as_echo_n "checking whether AVX is available... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether AVX is available at compile time" >&5
+$as_echo_n "checking whether AVX is available at compile time... " >&6; }
 
 if test "$with_avx" = "yes" -o "$with_avx" = ""; then
 
     rm -f detectavx.cpp
     echo '#ifdef __AVX__' > detectavx.cpp
     echo '#include <immintrin.h>' >> detectavx.cpp
-    echo 'void foo() { unsigned int nXCRLow, nXCRHigh; __asm__ ("xgetbv" : "=a" (nXCRLow), "=d" (nXCRHigh) : "c" (0)); float fEpsilon = 0.0000000000001f; __m256 ymm_small = _mm256_set_ps(fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon); } ' >> detectavx.cpp
+    echo 'void foo() { unsigned int nXCRLow, nXCRHigh; __asm__ ("xgetbv" : "=a" (nXCRLow), "=d" (nXCRHigh) : "c" (0)); float fEpsilon = 0.0000000000001f; __m256 ymm_small = _mm256_set_ps(fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon); } int main() { return 0; }' >> detectavx.cpp
     echo '#else' >> detectavx.cpp
     echo 'some_error' >> detectavx.cpp
     echo '#endif' >> detectavx.cpp
-    if test -z "`${CXX} ${CXXFLAGS} -c detectavx.cpp 2>&1`" ; then
+    if test -z "`${CXX} ${CXXFLAGS} -o detectavx detectavx.cpp 2>&1`" ; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
         AVXFLAGS=""
         HAVE_AVX_AT_COMPILE_TIME=yes
     else
-        if test -z "`${CXX} ${CXXFLAGS} -mavx -c detectavx.cpp 2>&1`" ; then
+        if test -z "`${CXX} ${CXXFLAGS} -mavx -o detectavx detectavx.cpp 2>&1`" ; then
             { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
             AVXFLAGS="-mavx"
@@ -17455,7 +17484,31 @@ $as_echo "no" >&6; }
             fi
         fi
     fi
-    rm -f detectavx.*
+
+                    if test "$HAVE_AVX_AT_COMPILE_TIME" = "yes"; then
+       case $host_os in
+         solaris*)
+           { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether AVX is available and needed at runtime" >&5
+$as_echo_n "checking whether AVX is available and needed at runtime... " >&6; }
+           if ./detectavx; then
+             { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+           else
+             { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+             if test "$with_avx" = "yes"; then
+               echo "Caution: the generated binaries will not run on this system."
+             else
+               echo "Disabling AVX as it is not explicitely required"
+               AVXFLAGS=""
+               HAVE_AVX_AT_COMPILE_TIME=""
+             fi
+           fi
+           ;;
+       esac
+    fi
+
+    rm -f detectavx*
 else
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
