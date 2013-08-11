@@ -27,7 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#define _POSIX_C_SOURCE 1
+#if defined(__STDC_VERSION__)
+#define _XOPEN_SOURCE
+#endif
 
 #include "cpl_port.h"
 
