@@ -30,7 +30,6 @@
 #include "ogr_couchdb.h"
 #include "ogrgeojsonreader.h"
 #include "ogrgeojsonwriter.h"
-#include <json-c/json_object_private.h> // json_object_iter, complete type required
 #include "swq.h"
 
 #include <algorithm>
