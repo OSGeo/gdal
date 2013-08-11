@@ -1246,6 +1246,7 @@ void OGRCSVLayer::SetCRLF( int bNewValue )
 void OGRCSVLayer::SetWriteGeometry(OGRCSVGeometryFormat eGeometryFormat)
 {
     this->eGeometryFormat = eGeometryFormat;
+    poFeatureDefn->SetGeomType( wkbUnknown );
 }
 
 /************************************************************************/

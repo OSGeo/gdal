@@ -122,8 +122,10 @@ OLCDeleteFeature = _ogr.OLCDeleteFeature
 OLCFastSetNextByIndex = _ogr.OLCFastSetNextByIndex
 OLCStringsAsUTF8 = _ogr.OLCStringsAsUTF8
 OLCIgnoreFields = _ogr.OLCIgnoreFields
+OLCCreateGeomField = _ogr.OLCCreateGeomField
 ODsCCreateLayer = _ogr.ODsCCreateLayer
 ODsCDeleteLayer = _ogr.ODsCDeleteLayer
+ODsCCreateGeomFieldAfterCreateLayer = _ogr.ODsCCreateGeomFieldAfterCreateLayer
 ODrCCreateDataSource = _ogr.ODrCCreateDataSource
 ODrCDeleteDataSource = _ogr.ODrCDeleteDataSource
 
@@ -814,6 +816,7 @@ class Layer(_object):
     def SetSpatialFilter(self, *args):
         """
         SetSpatialFilter(self, Geometry filter)
+        SetSpatialFilter(self, int iGeomField, Geometry filter)
 
         void
         OGR_L_SetSpatialFilter(OGRLayerH hLayer, OGRGeometryH hGeom)
@@ -856,6 +859,8 @@ class Layer(_object):
     def SetSpatialFilterRect(self, *args):
         """
         SetSpatialFilterRect(self, double minx, double miny, double maxx, double maxy)
+        SetSpatialFilterRect(self, int iGeomField, double minx, double miny, double maxx, 
+            double maxy)
 
         void
         OGR_L_SetSpatialFilterRect(OGRLayerH hLayer, double dfMinX, double
@@ -1366,7 +1371,7 @@ class Layer(_object):
 
     def GetExtent(self, *args, **kwargs):
         """
-        GetExtent(self, int force = 1, int can_return_null = 0)
+        GetExtent(self, int force = 1, int can_return_null = 0, int geom_field = 0)
 
         OGRErr OGR_L_GetExtent(OGRLayerH
         hLayer, OGREnvelope *psExtent, int bForce)
@@ -1725,6 +1730,10 @@ class Layer(_object):
         OGR 1.9.0 
         """
         return _ogr.Layer_AlterFieldDefn(self, *args)
+
+    def CreateGeomField(self, *args, **kwargs):
+        """CreateGeomField(self, GeomFieldDefn field_def, int approx_ok = 1) -> OGRErr"""
+        return _ogr.Layer_CreateGeomField(self, *args, **kwargs)
 
     def StartTransaction(self, *args):
         """
@@ -2107,6 +2116,27 @@ class Feature(_object):
         """
         return _ogr.Feature_GetGeometryRef(self, *args)
 
+    def SetGeomField(self, *args):
+        """
+        SetGeomField(self, int iField, Geometry geom) -> OGRErr
+        SetGeomField(self, char name, Geometry geom) -> OGRErr
+        """
+        return _ogr.Feature_SetGeomField(self, *args)
+
+    def SetGeomFieldDirectly(self, *args):
+        """
+        SetGeomFieldDirectly(self, int iField, Geometry geom) -> OGRErr
+        SetGeomFieldDirectly(self, char name, Geometry geom) -> OGRErr
+        """
+        return _ogr.Feature_SetGeomFieldDirectly(self, *args)
+
+    def GetGeomFieldRef(self, *args):
+        """
+        GetGeomFieldRef(self, int iField) -> Geometry
+        GetGeomFieldRef(self, char name) -> Geometry
+        """
+        return _ogr.Feature_GetGeomFieldRef(self, *args)
+
     def Clone(self, *args):
         """
         Clone(self) -> Feature
@@ -2202,6 +2232,17 @@ class Feature(_object):
         an internal reference, and should not be deleted or modified. 
         """
         return _ogr.Feature_GetFieldDefnRef(self, *args)
+
+    def GetGeomFieldCount(self, *args):
+        """GetGeomFieldCount(self) -> int"""
+        return _ogr.Feature_GetGeomFieldCount(self, *args)
+
+    def GetGeomFieldDefnRef(self, *args):
+        """
+        GetGeomFieldDefnRef(self, int id) -> GeomFieldDefn
+        GetGeomFieldDefnRef(self, char name) -> GeomFieldDefn
+        """
+        return _ogr.Feature_GetGeomFieldDefnRef(self, *args)
 
     def GetFieldAsString(self, *args):
         """
@@ -2467,6 +2508,10 @@ class Feature(_object):
         the field index, or -1 if no matching field is found. 
         """
         return _ogr.Feature_GetFieldIndex(self, *args)
+
+    def GetGeomFieldIndex(self, *args):
+        """GetGeomFieldIndex(self, char name) -> int"""
+        return _ogr.Feature_GetGeomFieldIndex(self, *args)
 
     def GetFID(self, *args):
         """
@@ -2812,29 +2857,63 @@ class Feature(_object):
         """Returns the values of fields by the given name"""
         if key == 'this':
             return self.__dict__[key]
-        try:
-            return self.GetField(key)
-        except:
-            raise AttributeError(key)
+
+        idx = self.GetFieldIndex(key)
+        if idx < 0:
+            idx = self.GetGeomFieldIndex(key)
+            if idx < 0:
+                raise AttributeError(key)
+            else:
+                return self.GetGeomFieldRef(idx)
+        else:
+            return self.GetField(idx)
 
 
 
     def __setattr__(self, key, value):
         """Set the values of fields by the given name"""
-        if key != 'this' and key != 'thisown' and self.GetFieldIndex(key) != -1:
-            return self.SetField2(key,value)
-        else:
+        if key == 'this' or key == 'thisown':
             self.__dict__[key] = value
+        else:
+            idx = self.GetFieldIndex(key)
+            if idx != -1:
+                self.SetField2(idx,value)
+            else:
+                idx = self.GetGeomFieldIndex(key)
+                if idx != -1:
+                    self.SetGeomField(idx, value)
+                else:
+                    self.__dict__[key] = value
 
 
     def __getitem__(self, key):
         """Returns the values of fields by the given name / field_index"""
-        return self.GetField(key)
+        if isinstance(key, str):
+            fld_index = self.GetFieldIndex(key)
+        if fld_index < 0:
+            if isinstance(key, str):
+                fld_index = self.GetGeomFieldIndex(key)
+            if fld_index < 0:
+                raise ValueError("Illegal field requested in GetField()")
+            else:
+                return self.GetGeomFieldRef(fld_index)
+        else:
+            return self.GetField(fld_index)
 
 
     def __setitem__(self, key, value):
         """Returns the value of a field by field name / index"""
-        self.SetField2( key, value )    
+        if isinstance(key, str):
+            fld_index = self.GetFieldIndex(key)
+        if fld_index < 0:
+            if isinstance(key, str):
+                fld_index = self.GetGeomFieldIndex(key)
+            if fld_index < 0:
+                raise ValueError("Illegal field requested in SetField()")
+            else:
+                return self.SetGeomField( fld_index, value )
+        else:
+            return self.SetField2( fld_index, value )
 
     def GetField(self, fld_index):
         if isinstance(fld_index, str):
@@ -2862,6 +2941,8 @@ class Feature(_object):
     def SetField2(self, fld_index, value):
         if isinstance(fld_index, str):
             fld_index = self.GetFieldIndex(fld_index)
+        if (fld_index < 0) or (fld_index > self.GetFieldCount()):
+            raise ValueError("Illegal field requested in SetField2()")
 
         if value is None:
             self.UnsetField( fld_index )
@@ -3089,6 +3170,26 @@ class FeatureDefn(_object):
         """
         return _ogr.FeatureDefn_AddFieldDefn(self, *args)
 
+    def GetGeomFieldCount(self, *args):
+        """GetGeomFieldCount(self) -> int"""
+        return _ogr.FeatureDefn_GetGeomFieldCount(self, *args)
+
+    def GetGeomFieldDefn(self, *args):
+        """GetGeomFieldDefn(self, int i) -> GeomFieldDefn"""
+        return _ogr.FeatureDefn_GetGeomFieldDefn(self, *args)
+
+    def GetGeomFieldIndex(self, *args):
+        """GetGeomFieldIndex(self, char name) -> int"""
+        return _ogr.FeatureDefn_GetGeomFieldIndex(self, *args)
+
+    def AddGeomFieldDefn(self, *args):
+        """AddGeomFieldDefn(self, GeomFieldDefn defn)"""
+        return _ogr.FeatureDefn_AddGeomFieldDefn(self, *args)
+
+    def DeleteGeomFieldDefn(self, *args):
+        """DeleteGeomFieldDefn(self, int idx) -> OGRErr"""
+        return _ogr.FeatureDefn_DeleteGeomFieldDefn(self, *args)
+
     def GetGeomType(self, *args):
         """
         GetGeomType(self) -> OGRwkbGeometryType
@@ -3248,6 +3349,10 @@ class FeatureDefn(_object):
         bIgnore:  ignore state 
         """
         return _ogr.FeatureDefn_SetStyleIgnored(self, *args)
+
+    def IsSame(self, *args):
+        """IsSame(self, FeatureDefn other_defn) -> int"""
+        return _ogr.FeatureDefn_IsSame(self, *args)
 
     def Destroy(self):
       "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
@@ -3546,6 +3651,63 @@ class FieldDefn(_object):
 
 FieldDefn_swigregister = _ogr.FieldDefn_swigregister
 FieldDefn_swigregister(FieldDefn)
+
+class GeomFieldDefn(_object):
+    """Proxy of C++ OGRGeomFieldDefnShadow class"""
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, GeomFieldDefn, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, GeomFieldDefn, name)
+    __repr__ = _swig_repr
+    __swig_destroy__ = _ogr.delete_GeomFieldDefn
+    __del__ = lambda self : None;
+    def __init__(self, *args, **kwargs): 
+        """__init__(self, char name_null_ok = "", OGRwkbGeometryType field_type = wkbUnknown) -> GeomFieldDefn"""
+        this = _ogr.new_GeomFieldDefn(*args, **kwargs)
+        try: self.this.append(this)
+        except: self.this = this
+    def GetName(self, *args):
+        """GetName(self) -> char"""
+        return _ogr.GeomFieldDefn_GetName(self, *args)
+
+    def GetNameRef(self, *args):
+        """GetNameRef(self) -> char"""
+        return _ogr.GeomFieldDefn_GetNameRef(self, *args)
+
+    def SetName(self, *args):
+        """SetName(self, char name)"""
+        return _ogr.GeomFieldDefn_SetName(self, *args)
+
+    def GetType(self, *args):
+        """GetType(self) -> OGRwkbGeometryType"""
+        return _ogr.GeomFieldDefn_GetType(self, *args)
+
+    def SetType(self, *args):
+        """SetType(self, OGRwkbGeometryType type)"""
+        return _ogr.GeomFieldDefn_SetType(self, *args)
+
+    def GetSpatialRef(self, *args):
+        """GetSpatialRef(self) -> SpatialReference"""
+        return _ogr.GeomFieldDefn_GetSpatialRef(self, *args)
+
+    def SetSpatialRef(self, *args):
+        """SetSpatialRef(self, SpatialReference srs)"""
+        return _ogr.GeomFieldDefn_SetSpatialRef(self, *args)
+
+    def IsIgnored(self, *args):
+        """IsIgnored(self) -> int"""
+        return _ogr.GeomFieldDefn_IsIgnored(self, *args)
+
+    def SetIgnored(self, *args):
+        """SetIgnored(self, int bIgnored)"""
+        return _ogr.GeomFieldDefn_SetIgnored(self, *args)
+
+    type = property(GetType, SetType)
+    name = property(GetName, SetName)
+    srs = property(GetSpatialRef, SetSpatialRef)
+
+GeomFieldDefn_swigregister = _ogr.GeomFieldDefn_swigregister
+GeomFieldDefn_swigregister(GeomFieldDefn)
 
 
 def CreateGeometryFromWkb(*args, **kwargs):

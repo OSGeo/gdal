@@ -123,6 +123,8 @@ int OGRMemDataSource::TestCapability( const char * pszCap )
         return TRUE;
     else if( EQUAL(pszCap,ODsCDeleteLayer) )
         return TRUE;
+    else if( EQUAL(pszCap,ODsCCreateGeomFieldAfterCreateLayer) )
+        return TRUE;
     else
         return FALSE;
 }

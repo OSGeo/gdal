@@ -62,10 +62,14 @@ class CPL_DLL OGRLayer
     OGRGeometry *m_poFilterGeom;
     OGRPreparedGeometry *m_pPreparedFilterGeom; /* m_poFilterGeom compiled as a prepared geometry */
     OGREnvelope  m_sFilterEnvelope;
+    int          m_iGeomFieldFilter; // specify the index on which the spatial
+                                     // filter is active.
     
     int          FilterGeometry( OGRGeometry * );
     //int          FilterGeometry( OGRGeometry *, OGREnvelope* psGeometryEnvelope);
     int          InstallFilter( OGRGeometry * );
+    
+    OGRErr       GetExtentInternal(int iGeomField, OGREnvelope *psExtent, int bForce );
 
   public:
     OGRLayer();
@@ -75,6 +79,11 @@ class CPL_DLL OGRLayer
     virtual void        SetSpatialFilter( OGRGeometry * );
     virtual void        SetSpatialFilterRect( double dfMinX, double dfMinY,
                                               double dfMaxX, double dfMaxY );
+
+    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry * );
+    virtual void        SetSpatialFilterRect( int iGeomField,
+                                            double dfMinX, double dfMinY,
+                                            double dfMaxX, double dfMaxY );
 
     virtual OGRErr      SetAttributeFilter( const char * );
 
@@ -90,10 +99,12 @@ class CPL_DLL OGRLayer
     virtual OGRwkbGeometryType GetGeomType();
     virtual OGRFeatureDefn *GetLayerDefn() = 0;
 
-    virtual OGRSpatialReference *GetSpatialRef() { return NULL; }
+    virtual OGRSpatialReference *GetSpatialRef();
 
     virtual int         GetFeatureCount( int bForce = TRUE );
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent,
+                                  int bForce = TRUE);
 
     virtual int         TestCapability( const char * ) = 0;
 
@@ -104,6 +115,9 @@ class CPL_DLL OGRLayer
     virtual OGRErr      DeleteField( int iField );
     virtual OGRErr      ReorderFields( int* panMap );
     virtual OGRErr      AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags );
+
+    virtual OGRErr      CreateGeomField( OGRGeomFieldDefn *poField,
+                                     int bApproxOK = TRUE );
 
     virtual OGRErr      SyncToDisk();
 
