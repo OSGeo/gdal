@@ -27316,7 +27316,9 @@ else
   LIBJSONC_SETTING=internal
 fi
 
-elif test "$with_libjson_c" != "no" -a "$with_libjson_c" != "internal" ; then
+elif test "$with_libjson_c" = "internal" ; then
+  LIBJSONC_SETTING=internal
+elif test "$with_libjson_c" != "no"; then
   LIBS="-L$with_libjson_c/lib $LIBS"
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for json_object_set_serializer in -ljson-c" >&5
 $as_echo_n "checking for json_object_set_serializer in -ljson-c... " >&6; }
@@ -27360,7 +27362,7 @@ else
   LIBJSONC_SETTING=internal
 fi
 
-elif test "$with_libjson_c" = "no" ; then
+else
   as_fn_error $? "libjson-c (internal or external) is required" "$LINENO" 5
 fi
 
