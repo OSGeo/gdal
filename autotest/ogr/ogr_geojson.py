@@ -1202,6 +1202,80 @@ def ogr_geojson_25():
     return 'success'
 
 ###############################################################################
+# Test workaround for 64bit values (returned as strings)
+
+def ogr_geojson_26():
+
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    ds = ogr.Open("""{"type": "FeatureCollection", "features":[
+{"type": "Feature",
+ "geometry": {"type":"Point","coordinates":[1,2]},
+ "properties": { "intvalue" : 1 }},
+{"type": "Feature",
+ "geometry": {"type":"Point","coordinates":[3,4]},
+ "properties": { "intvalue" : 1234567890123 }},
+ ]}""")
+    if ds is None:
+        gdaltest.post_reason('Failed to open datasource')
+        return 'fail'
+
+    lyr = ds.GetLayerByName('OGRGeoJSON')
+
+    feature = lyr.GetNextFeature()
+    if feature.GetFieldAsString("intvalue") != '1':
+        feature.DumpReadable()
+        return 'fail'
+
+    feature = lyr.GetNextFeature()
+    if feature.GetFieldAsString("intvalue") != '1234567890123':
+        feature.DumpReadable()
+        return 'fail'
+
+    lyr = None
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test workaround for 64bit values (returned as strings)
+
+def ogr_geojson_27():
+
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    ds = ogr.Open("""{"type": "FeatureCollection", "features":[
+{"type": "Feature",
+ "geometry": {"type":"Point","coordinates":[1,2]},
+ "properties": { "intvalue" : 1 }},
+{"type": "Feature",
+ "geometry": {"type":"Point","coordinates":[3,4]},
+ "properties": { "intvalue" : 12345678901231234567890123 }},
+ ]}""")
+    if ds is None:
+        gdaltest.post_reason('Failed to open datasource')
+        return 'fail'
+
+    lyr = ds.GetLayerByName('OGRGeoJSON')
+
+    feature = lyr.GetNextFeature()
+    if feature.GetFieldAsString("intvalue") != '1':
+        feature.DumpReadable()
+        return 'fail'
+
+    feature = lyr.GetNextFeature()
+    if feature.GetFieldAsString("intvalue") != '9223372036854775807':
+        feature.DumpReadable()
+        return 'fail'
+
+    lyr = None
+    ds = None
+
+    return 'success'
+
+###############################################################################
 
 def ogr_geojson_cleanup():
 
@@ -1258,6 +1332,8 @@ gdaltest_list = [
     ogr_geojson_23,
     ogr_geojson_24,
     ogr_geojson_25,
+    ogr_geojson_26,
+    ogr_geojson_27,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':
