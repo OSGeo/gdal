@@ -641,6 +641,7 @@ POPPLER_BASE_STREAM_HAS_TWO_ARGS
 POPPLER_HAS_OPTCONTENT
 HAVE_POPPLER
 PAM_SETTING
+JSON_INCLUDE
 LIBJSONC_SETTING
 FREEXL_INCLUDE
 HAVE_FREEXL
@@ -27359,7 +27360,7 @@ else
   LIBJSONC_SETTING=internal
 fi
 
-else
+elif test "$with_libjson_c" = "no" ; then
   as_fn_error $? "libjson-c (internal or external) is required" "$LINENO" 5
 fi
 
@@ -27368,14 +27369,23 @@ if test "$LIBJSONC_SETTING" = "external" ; then
 $as_echo "using pre-installed libjson-c" >&6; }
   LIBS="-ljson-c $LIBS"
   if test "$with_libjson_c" != "" -a "$with_libjson_c" != "yes" -a "$with_libjson_c" != "external" ; then
-    EXTRA_INCLUDES="-I$with_libjson_c/include $EXTRA_INCLUDES"
+    JSON_INCLUDE="-I$with_libjson_c/include/json-c"
+  elif test -f "/usr/include/json-c/json.h"; then
+    JSON_INCLUDE="-I/usr/include/json-c"
+  elif test -f "/usr/local/include/json-c/json.h"; then
+    JSON_INCLUDE="-I/usr/local/include/json-c"
+  else
+    as_fn_error $? "could not find json-c/json.h" "$LINENO" 5
   fi
 else
+    JSON_INCLUDE="-I\$(GDAL_ROOT)/ogr/ogrsf_frmts/geojson/libjson"
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: using internal libjson-c code" >&5
 $as_echo "using internal libjson-c code" >&6; }
 fi
 
 LIBJSONC_SETTING=$LIBJSONC_SETTING
+
+JSON_INCLUDE=$JSON_INCLUDE
 
 
 

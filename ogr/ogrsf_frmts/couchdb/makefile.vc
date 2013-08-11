@@ -1,6 +1,6 @@
 
 OBJ	=	ogrcouchdbdriver.obj ogrcouchdbdatasource.obj ogrcouchdblayer.obj ogrcouchdbtablelayer.obj ogrcouchdbrowslayer.obj
-EXTRAFLAGS =	-I.. -I..\..  -I..\geojson
+EXTRAFLAGS =	-I.. -I..\..  -I..\geojson -I..\geojson\libjson
 
 GDAL_ROOT	=	..\..\..
 
