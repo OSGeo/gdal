@@ -30,7 +30,7 @@
 #define OGR_GEOJSONWRITER_H_INCLUDED
 
 #include <ogr_core.h>
-#include <json-c/json.h> // JSON-C
+#include <json.h> // JSON-C
 
 /************************************************************************/
 /*                         FORWARD DECLARATIONS                         */

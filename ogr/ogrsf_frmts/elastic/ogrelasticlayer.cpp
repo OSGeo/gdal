@@ -32,7 +32,7 @@
 #include "cpl_minixml.h"
 #include "ogr_api.h"
 #include "ogr_p.h"
-#include <json-c/json.h> // JSON-C
+#include <json.h> // JSON-C
 
 CPL_CVSID("$Id$");
 

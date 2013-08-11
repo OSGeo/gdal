@@ -27,7 +27,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 #include <algorithm> // for_each, find_if
-#include <json-c/json.h> // JSON-C
+#include <json.h> // JSON-C
 #include "ogr_geojson.h"
 
 /* Remove annoying warnings Microsoft Visual C++ */
