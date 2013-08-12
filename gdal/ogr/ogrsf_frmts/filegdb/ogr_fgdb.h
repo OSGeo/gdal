@@ -226,11 +226,13 @@ protected:
 /************************************************************************/
 /*                           FGdbDataSource                            */
 /************************************************************************/
+class FGdbDriver;
+
 class FGdbDataSource : public OGRDataSource
 {
 
 public:
-  FGdbDataSource();
+  FGdbDataSource(FGdbDriver* poDriver);
   virtual ~FGdbDataSource();
 
   int         Open(Geodatabase* pGeodatabase, const char *, int );
@@ -264,6 +266,7 @@ protected:
   bool OpenFGDBTables(const std::wstring &type,
                       const std::vector<std::wstring> &layers);
 
+  FGdbDriver* m_poDriver;
   char* m_pszName;
   std::vector <FGdbLayer*> m_layers;
   Geodatabase* m_pGeodatabase;
@@ -274,8 +277,19 @@ protected:
 /*                              FGdbDriver                                */
 /************************************************************************/
 
+class FGdbDatabaseConnection
+{
+public:
+    FGdbDatabaseConnection(Geodatabase* pGeodatabase) :
+        m_pGeodatabase(pGeodatabase), m_nRefCount(1) {}
+
+    Geodatabase* m_pGeodatabase;
+    int          m_nRefCount;
+};
+
 class FGdbDriver : public OGRSFDriver
 {
+  std::map<CPLString, FGdbDatabaseConnection*> oMapConnections;
 
 public:
   FGdbDriver();
@@ -287,7 +301,7 @@ public:
   virtual OGRDataSource *CreateDataSource( const char *pszName, char ** = NULL);
   virtual OGRErr DeleteDataSource( const char *pszDataSource );
 
-  void OpenGeodatabase(std::string, Geodatabase** ppGeodatabase);
+  void Release(const char* pszName);
 
 private:
 
