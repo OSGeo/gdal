@@ -1,5 +1,10 @@
 #!/bin/sh
-symbol_list="$(objdump -t ../../o/arraylist.o | grep text | awk '{print $6}' | grep -v .text) $(objdump -t ../../o/debug.o | grep text | awk '{print $6}' | grep -v .text) $(objdump -t ../../o/json_c_version.o | grep text | awk '{print $6}' | grep -v .text) $(objdump -t ../../o/json_object.o | grep text | awk '{print $6}' | grep -v .text) $(objdump -t ../../o/json_object_iterator.o | grep text | awk '{print $6}' | grep -v .text) $(objdump -t ../../o/json_tokener.o | grep text | awk '{print $6}' | grep -v .text | grep -v strndup) $(objdump -t ../../o/json_util.o | grep text | awk '{print $6}' | grep -v .text) $(objdump -t ../../o/linkhash.o | grep text | awk '{print $6}' | grep -v .text) $(objdump -t ../../o/printbuf.o | grep text | awk '{print $6}' | grep -v .text)"
+
+symbol_list=""
+for filename in arraylist.o debug.o json_c_version.o json_object.o json_tokener.o json_object_iterator.o json_util.o linkhash.o printbuf.o ; do
+symbol_list="$symbol_list $(objdump -t ../../o/$filename | grep text | awk '{print $6}' | grep -v .text)"
+symbol_list="$symbol_list $(objdump -t ../../o/$filename | grep .data.rel.local | awk '{print $6}' | grep -v .data.rel.local)"
+done
 
 echo "/* This is a generated file by dump_symbols.h. *DO NOT EDIT MANUALLY !* */"
 echo "#ifndef symbol_renames"
