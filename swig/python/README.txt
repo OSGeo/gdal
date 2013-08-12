@@ -8,7 +8,7 @@ two libraries -- GDAL for manipulating geospatial raster data and OGR for
 manipulating geospatial vector data -- but we'll refer to the entire package 
 as the GDAL library for the purposes of this document.
 
-The GDAL project (primarily Howard Butler) maintains SWIG generated Python 
+The GDAL project (primarily Even Rouault) maintains SWIG generated Python 
 bindings for GDAL and OGR. Generally speaking the classes and methods mostly 
 match those of the GDAL and OGR C++ classes. There is no Python specific 
 reference documentation, but the `GDAL API Tutorial`_ includes Python examples.
@@ -16,7 +16,7 @@ reference documentation, but the `GDAL API Tutorial`_ includes Python examples.
 Dependencies
 ------------
  
- * libgdal (1.7.0 or greater) and header files (gdal-devel)
+ * libgdal (1.10.0 or greater) and header files (gdal-devel)
  * numpy (1.0.0 or greater) and header files (numpy-devel) (not explicitly 
    required, but many examples and utilities will not work without it)
 
@@ -92,13 +92,7 @@ Windows
 You will need the following items to complete an install of the GDAL Python
 bindings on Windows:
 
-* `GDAL Windows Binaries`_ The basic install requires the gdalwin32exe###.zip 
-  (### is the version number).  Other files you see in the directory are 
-  for various optional plugins and development headers/include files. After 
-  downloading the zip file, extract it to the directory of your choosing.
-
-* GDAL Python Bindings available at the `Python Cheeseshop`_.  An executable 
-  installer is available for both Python 2.4 or 2.5 or as a Python egg.
+* `GDAL Windows Binaries`_ Download the package that best matches your environment. 
 
 As explained in the README_EXE.txt file, after unzipping the GDAL binaries you 
 will need to modify your system path and variables. If you're not sure how to 
@@ -126,8 +120,8 @@ SWIG
 ----
 
 The GDAL Python package is built using SWIG_. The earliest version of SWIG_ 
-that is supported to generate the wrapper code is 1.3.39.  It is possible 
-that usable bindings will build with a version earlier than 1.3.39, but no 
+that is supported to generate the wrapper code is 1.3.40.  It is possible 
+that usable bindings will build with a version earlier than 1.3.40, but no 
 development efforts are targeted at versions below it.  You should not have 
 to run SWIG in your development tree to generate the binding code, as it 
 is usually included with the source.  However, if you do need to regenerate, 
@@ -184,21 +178,6 @@ match up exactly with what you are seeing from Python, but they should be
 enough to get you going.  Docstrings for GDAL and OSR are planned for a future 
 release.
 
-The History of Using GDAL/OGR in Python
----------------------------------------
-
-Python was the first set of bindings supported by GDAL/OGR and though the 
-bindings were generated with SWIG (1.1 series), the process was very Python 
-specific and contained a significant amount of hand written wrapper code. In 
-2005, Kevin Ruland launched an effort for a set of next generation bindings 
-generated with SWIG (1.3 series) and supported by a variety of languages. 
-With GDAL 1.4.0 the various bindings became fairly mature, and for GDAL 1.5.0, 
-the "next-generation" bindings become the default bindings.  The previous, 
-"old-generation," bindings will continue to be available, but they will not 
-be widely supported and no new development will be targeted at them.  From 
-the viewpoint of a user, with GDAL 1.7.0 and above, you should not have to 
-worry very much about the distinction between these two development efforts.
-
 Numpy/Numeric
 -------------
 
@@ -229,7 +208,7 @@ the data are explicitly subsetted as part of the function call. For large
 data, this approach is expected to be prohibitively memory intensive.
 
 .. _GDAL API Tutorial: http://www.gdal.org/gdal_tutorial.html
-.. _GDAL Windows Binaries: http://download.osgeo.org/gdal/win32/1.5/
+.. _GDAL Windows Binaries: http://vbkto.dyndns.org/sdk/
 .. _Microsoft KnowledgeBase doc: http://support.microsoft.com/kb/310519
 .. _Python Cheeseshop: http://pypi.python.org/pypi/GDAL/
 .. _val_repl.py: http://trac.osgeo.org/gdal/browser/trunk/gdal/swig/python/samples/val_repl.py
