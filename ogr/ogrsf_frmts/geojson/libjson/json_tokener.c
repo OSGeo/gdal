@@ -172,29 +172,6 @@ struct json_object* json_tokener_parse_verbose(const char *str, enum json_tokene
     return obj;
 }
 
-
-#if !HAVE_STRNDUP
-/* CAW: compliant version of strndup() */
-char* strndup(const char* str, size_t n)
-{
-  if(str) {
-    size_t len = strlen(str);
-    size_t nn = json_min(len,n);
-    char* s = (char*)malloc(sizeof(char) * (nn + 1));
-
-    if(s) {
-      memcpy(s, str, nn);
-      s[nn] = '\0';
-    }
-
-    return s;
-  }
-
-  return NULL;
-}
-#endif
-
-
 #define state  tok->stack[tok->depth].state
 #define saved_state  tok->stack[tok->depth].saved_state
 #define current tok->stack[tok->depth].current
