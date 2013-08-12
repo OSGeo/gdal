@@ -35,10 +35,6 @@
 # error You do not have strdup on your system.
 #endif /* HAVE_STRDUP */
 
-#if !defined(HAVE_STRNDUP)
-  char* strndup(const char* str, size_t n);
-#endif /* !HAVE_STRNDUP */
-
 // Don't define this.  It's not thread-safe.
 /* #define REFCOUNT_DEBUG 1 */
 
