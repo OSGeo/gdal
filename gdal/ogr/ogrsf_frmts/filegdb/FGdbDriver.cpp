@@ -89,21 +89,36 @@ OGRDataSource *FGdbDriver::Open( const char* pszFilename, int bUpdate )
         return NULL;
     }
 
-    Geodatabase* pGeoDatabase = new Geodatabase;
+    Geodatabase* pGeoDatabase = NULL;
 
-    hr = ::OpenGeodatabase(StringToWString(pszFilename), *pGeoDatabase);
-
-    if (FAILED(hr) || pGeoDatabase == NULL)
+    FGdbDatabaseConnection* pConnection = oMapConnections[pszFilename];
+    if( pConnection != NULL )
     {
-        delete pGeoDatabase;
+        pGeoDatabase = pConnection->m_pGeodatabase;
+        pConnection->m_nRefCount ++;
+        CPLDebug("FileGDB", "ref_count of %s = %d now", pszFilename,
+                 pConnection->m_nRefCount);
+    }
+    else
+    {
+        pGeoDatabase = new Geodatabase;
+        hr = ::OpenGeodatabase(StringToWString(pszFilename), *pGeoDatabase);
 
-        GDBErr(hr, "Failed to open Geodatabase");
-        return NULL;
+        if (FAILED(hr) || pGeoDatabase == NULL)
+        {
+            delete pGeoDatabase;
+
+            GDBErr(hr, "Failed to open Geodatabase");
+            return NULL;
+        }
+
+        CPLDebug("FileGDB", "Really opening %s", pszFilename);
+        oMapConnections[pszFilename] = new FGdbDatabaseConnection(pGeoDatabase);
     }
 
     FGdbDataSource* pDS;
 
-    pDS = new FGdbDataSource();
+    pDS = new FGdbDataSource(this);
 
     if(!pDS->Open( pGeoDatabase, pszFilename, bUpdate ) )
     {
@@ -166,8 +181,10 @@ OGRDataSource* FGdbDriver::CreateDataSource( const char * conn,
         return NULL;
     }
 
+    oMapConnections[conn] = new FGdbDatabaseConnection(pGeodatabase);
+
     /* Ready to embed the Geodatabase in an OGR Datasource */
-    FGdbDataSource* pDS = new FGdbDataSource();
+    FGdbDataSource* pDS = new FGdbDataSource(this);
     if ( ! pDS->Open(pGeodatabase, conn, bUpdate) )
     {
         delete pDS;
@@ -178,27 +195,27 @@ OGRDataSource* FGdbDriver::CreateDataSource( const char * conn,
 }
 
 /***********************************************************************/
-/*                        OpenGeodatabase()                            */
+/*                            Release()                                */
 /***********************************************************************/
 
-void FGdbDriver::OpenGeodatabase(std::string conn, Geodatabase** ppGeodatabase)
+void FGdbDriver::Release(const char* pszName)
 {
-    *ppGeodatabase = NULL;
-
-    std::wstring wconn = StringToWString(conn);
-
-    long hr;
-
-    Geodatabase* pGeoDatabase = new Geodatabase;
-
-    if (S_OK != (hr = ::OpenGeodatabase(wconn, *pGeoDatabase)))
+    FGdbDatabaseConnection* pConnection = oMapConnections[pszName];
+    if( pConnection != NULL )
     {
-        delete pGeoDatabase;
-
-        return;
+        pConnection->m_nRefCount --;
+        CPLDebug("FileGDB", "ref_count of %s = %d now", pszName,
+                 pConnection->m_nRefCount);
+        if( pConnection->m_nRefCount == 0 )
+        {
+            CPLDebug("FileGDB", "Really closing %s now", pszName);
+            ::CloseGeodatabase(*(pConnection->m_pGeodatabase));
+            delete pConnection->m_pGeodatabase;
+            pConnection->m_pGeodatabase = NULL;
+            delete pConnection;
+            oMapConnections.erase(pszName);
+        }
     }
-
-    *ppGeodatabase = pGeoDatabase;
 }
 
 /***********************************************************************/
