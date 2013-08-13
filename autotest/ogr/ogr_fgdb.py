@@ -737,6 +737,27 @@ def ogr_fgdb_13():
     return 'success'
 
 ###############################################################################
+# Test interleaved opening and closing of databases (#4270)
+
+def ogr_fgdb_14():
+    if ogrtest.fgdb_drv is None:
+        return 'skip'
+
+    for i in range(3):
+        ds1 = ogr.Open("tmp/test.gdb")
+        if ds1 is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        ds2 = ogr.Open("tmp/test.gdb")
+        if ds2 is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        ds2 = None
+        ds1 = None
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def ogr_fgdb_cleanup():
@@ -772,6 +793,7 @@ gdaltest_list = [
     ogr_fgdb_11,
     ogr_fgdb_12,
     ogr_fgdb_13,
+    ogr_fgdb_14,
     ogr_fgdb_cleanup,
     ]
 

@@ -44,9 +44,9 @@ using std::wstring;
 /*                          FGdbDataSource()                           */
 /************************************************************************/
 
-FGdbDataSource::FGdbDataSource():
+FGdbDataSource::FGdbDataSource(FGdbDriver* poDriver):
 OGRDataSource(),
-m_pszName(0), m_pGeodatabase(NULL)
+m_poDriver(poDriver), m_pszName(0), m_pGeodatabase(NULL)
 {
 }
 
@@ -55,18 +55,13 @@ m_pszName(0), m_pGeodatabase(NULL)
 /************************************************************************/
 
 FGdbDataSource::~FGdbDataSource()
-{   
-    CPLFree( m_pszName );
-
+{
     size_t count = m_layers.size();
     for(size_t i = 0; i < count; ++i )
         delete m_layers[i];
 
-    if (m_pGeodatabase)
-    {
-        ::CloseGeodatabase(*m_pGeodatabase);
-        delete m_pGeodatabase;
-    }
+    m_poDriver->Release( m_pszName );
+    CPLFree( m_pszName );
 }
 
 
