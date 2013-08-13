@@ -46,7 +46,7 @@ using std::wstring;
 
 FGdbDataSource::FGdbDataSource(FGdbDriver* poDriver):
 OGRDataSource(),
-m_poDriver(poDriver), m_pszName(0), m_pGeodatabase(NULL)
+m_poDriver(poDriver), m_pszName(0), m_pGeodatabase(NULL), m_bUpdate(false)
 {
 }
 
@@ -73,6 +73,7 @@ int FGdbDataSource::Open(Geodatabase* pGeodatabase, const char * pszNewName, int
 {
     m_pszName = CPLStrdup( pszNewName );
     m_pGeodatabase = pGeodatabase;
+    m_bUpdate = bUpdate;
 
     std::vector<std::wstring> typesRequested;
 
@@ -248,6 +249,9 @@ bool FGdbDataSource::LoadLayersOld(const std::vector<wstring> & datasetTypes,
 
 OGRErr FGdbDataSource::DeleteLayer( int iLayer )
 {
+    if( !m_bUpdate )
+        return OGRERR_FAILURE;
+
     if( iLayer < 0 || iLayer >= static_cast<int>(m_layers.size()) )
         return OGRERR_FAILURE;
 
@@ -286,10 +290,10 @@ OGRErr FGdbDataSource::DeleteLayer( int iLayer )
 int FGdbDataSource::TestCapability( const char * pszCap )
 {
     if( EQUAL(pszCap,ODsCCreateLayer) )
-        return TRUE;
+        return m_bUpdate;
 
     else if( EQUAL(pszCap,ODsCDeleteLayer) )
-        return TRUE;
+        return m_bUpdate;
 
     return FALSE;
 }
@@ -321,6 +325,9 @@ FGdbDataSource::CreateLayer( const char * pszLayerName,
                               OGRwkbGeometryType eType,
                               char ** papszOptions )
 {
+    if( !m_bUpdate )
+        return NULL;
+
     FGdbLayer* pLayer = new FGdbLayer;
     if (!pLayer->Create(this, pszLayerName, poSRS, eType, papszOptions))
     {

@@ -254,6 +254,7 @@ public:
   int TestCapability( const char * );
 
   Geodatabase* GetGDB() { return m_pGeodatabase; }
+  bool         GetUpdate() { return m_bUpdate; }
 
   /*
   protected:
@@ -270,6 +271,7 @@ protected:
   char* m_pszName;
   std::vector <FGdbLayer*> m_layers;
   Geodatabase* m_pGeodatabase;
+  bool m_bUpdate;
 
 };
 
