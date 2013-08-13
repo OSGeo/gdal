@@ -44,8 +44,7 @@ const swq_operation *swq_op_registrar::GetOperator( const char *pszName )
 {
     unsigned int i;
 
-    if( !papoOperations )
-        Initialize();
+    Initialize();
 
     for( i = 0; i < papoOperations->size(); i++ )
     {
@@ -65,8 +64,7 @@ const swq_operation *swq_op_registrar::GetOperator( swq_op eOperator )
 {
     unsigned int i;
 
-    if( !papoOperations )
-        Initialize();
+    Initialize();
 
     for( i = 0; i < papoOperations->size(); i++ )
     {
