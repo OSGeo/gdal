@@ -29,6 +29,7 @@
 
 #include "ogrsf_frmts.h"
 #include "cpl_conv.h"
+#include "cpl_multiproc.h"
 #include "ogr_api.h"
 #include "ogr_p.h"
 #include "commonutils.h"
@@ -37,11 +38,25 @@ CPL_CVSID("$Id$");
 
 int     bReadOnly = FALSE;
 int     bVerbose = TRUE;
+const char  *pszDataSource = NULL;
+char** papszLayers = NULL;
+const char  *pszSQLStatement = NULL;
+const char  *pszDialect = NULL;
+int nLoops = 1;
+
+typedef struct
+{
+    void* hThread;
+    int bRet;
+} ThreadContext;
 
 static void Usage();
+static void ThreadFunction( void* user_data );
+static void ThreadFunctionInternal( ThreadContext* psContext );
 static int TestOGRLayer( OGRDataSource * poDS, OGRLayer * poLayer, int bIsSQLLayer );
 static int TestInterleavedReading( const char* pszDataSource, char** papszLayers );
 static int TestDSErrorConditions( OGRDataSource * poDS );
+
 
 /************************************************************************/
 /*                                main()                                */
@@ -50,11 +65,8 @@ static int TestDSErrorConditions( OGRDataSource * poDS );
 int main( int nArgc, char ** papszArgv )
 
 {
-    const char  *pszDataSource = NULL;
-    char** papszLayers = NULL;
-    const char  *pszSQLStatement = NULL;
-    const char  *pszDialect = NULL;
     int bRet = TRUE;
+    int nThreads = 1;
 
     EarlySetConfigOptions(nArgc, papszArgv);
 
@@ -92,6 +104,14 @@ int main( int nArgc, char ** papszArgv )
         {
             pszDialect = papszArgv[++iArg];
         }
+        else if( EQUAL(papszArgv[iArg],"-threads") && iArg + 1 < nArgc)
+        {
+            nThreads = atoi(papszArgv[++iArg]);
+        }
+        else if( EQUAL(papszArgv[iArg],"-loops") && iArg + 1 < nArgc)
+        {
+            nLoops = atoi(papszArgv[++iArg]);
+        }
         else if( papszArgv[iArg][0] == '-' )
         {
             Usage();
@@ -104,6 +124,70 @@ int main( int nArgc, char ** papszArgv )
 
     if( pszDataSource == NULL )
         Usage();
+    if( nThreads > 1 && !bReadOnly )
+    {
+        fprintf(stderr, "-theads must be used with -ro option.\n");
+        exit(1);
+    }
+
+    if( nThreads == 1 )
+    {
+        ThreadContext sContext;
+        ThreadFunction(&sContext);
+        bRet = sContext.bRet;
+    }
+    else if( nThreads > 1 )
+    {
+        int i;
+        ThreadContext* pasContext = new ThreadContext[nThreads];
+        for(i = 0; i < nThreads; i ++ )
+        {
+            pasContext[i].hThread = CPLCreateJoinableThread(
+                ThreadFunction, &(pasContext[i]));
+        }
+        for(i = 0; i < nThreads; i ++ )
+        {
+            CPLJoinThread(pasContext[i].hThread);
+            bRet &= pasContext[i].bRet;
+        }
+        delete[] pasContext;
+    }
+
+    OGRCleanupAll();
+
+    CSLDestroy(papszLayers);
+    CSLDestroy(papszArgv);
+    
+#ifdef DBMALLOC
+    malloc_dump(1);
+#endif
+    
+    return (bRet) ? 0 : 1;
+}
+
+/************************************************************************/
+/*                        ThreadFunction()                              */
+/************************************************************************/
+
+static void ThreadFunction( void* user_data )
+
+{
+    ThreadContext* psContext = (ThreadContext* )user_data;
+    psContext->bRet = TRUE;
+    for( int iLoop = 0; psContext->bRet && iLoop < nLoops; iLoop ++ )
+    {
+        ThreadFunctionInternal(psContext);
+    }
+}
+
+/************************************************************************/
+/*                     ThreadFunctionInternal()                         */
+/************************************************************************/
+
+static void ThreadFunctionInternal( ThreadContext* psContext )
+
+{
+    int bRet = TRUE;
 
 /* -------------------------------------------------------------------- */
 /*      Open data source.                                               */
@@ -163,9 +247,12 @@ int main( int nArgc, char ** papszArgv )
         OGRLayer  *poResultSet = poDS->ExecuteSQL(pszSQLStatement, NULL, pszDialect);
         if (poResultSet == NULL)
             exit(1);
-            
-        printf( "INFO: Testing layer %s.\n",
-                    poResultSet->GetName() );
+
+        if( bVerbose )
+        {
+            printf( "INFO: Testing layer %s.\n",
+                        poResultSet->GetName() );
+        }
         bRet = TestOGRLayer( poDS, poResultSet, TRUE );
         
         poDS->ReleaseResultSet(poResultSet);
@@ -188,8 +275,11 @@ int main( int nArgc, char ** papszArgv )
                 exit( 1 );
             }
 
-            printf( "INFO: Testing layer %s.\n",
-                    poLayer->GetName() );
+            if( bVerbose )
+            {
+                printf( "INFO: Testing layer %s.\n",
+                        poLayer->GetName() );
+            }
             bRet &= TestOGRLayer( poDS, poLayer, FALSE );
         }
 
@@ -241,16 +331,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     OGRDataSource::DestroyDataSource(poDS);
 
-    OGRCleanupAll();
-
-    CSLDestroy(papszLayers);
-    CSLDestroy(papszArgv);
-    
-#ifdef DBMALLOC
-    malloc_dump(1);
-#endif
-    
-    return (bRet) ? 0 : 1;
+    psContext->bRet = bRet;
 }
 
 /************************************************************************/
@@ -260,7 +341,7 @@ int main( int nArgc, char ** papszArgv )
 static void Usage()
 
 {
-    printf( "Usage: test_ogrsf [-ro] [-q] datasource_name \n"
+    printf( "Usage: test_ogrsf [-ro] [-q] [-threads N] [-loops M] datasource_name \n"
             "                  [[layer1_name, layer2_name, ...] | [-sql statement] [-dialect dialect]]\n" );
     exit( 1 );
 }
@@ -878,7 +959,7 @@ static int TestOGRLayerRandomWrite( OGRLayer *poLayer )
         bRet = FALSE;
         printf( "ERROR: Written feature didn't seem to retain value.\n" );
     }
-    else
+    else if( bVerbose )
     {
         printf( "INFO: Random write test passed.\n" );
     }
@@ -941,17 +1022,23 @@ static int TestSpatialFilter( OGRLayer *poLayer )
 
     if( poTargetFeature == NULL )
     {
-        printf( "INFO: Skipping Spatial Filter test for %s.\n"
-                "      No features in layer.\n",
-                poLayer->GetName() );
+        if( bVerbose )
+        {
+            printf( "INFO: Skipping Spatial Filter test for %s.\n"
+                    "      No features in layer.\n",
+                    poLayer->GetName() );
+        }
         return bRet;
     }
 
     if( poTargetFeature->GetGeometryRef() == NULL )
     {
-        printf( "INFO: Skipping Spatial Filter test for %s,\n"
-                "      target feature has no geometry.\n",
-                poTargetFeature->GetDefnRef()->GetName() );
+        if( bVerbose )
+        {
+            printf( "INFO: Skipping Spatial Filter test for %s,\n"
+                    "      target feature has no geometry.\n",
+                    poTargetFeature->GetDefnRef()->GetName() );
+        }
         OGRFeature::DestroyFeature(poTargetFeature);
         return bRet;
     }
@@ -1080,9 +1167,12 @@ static int TestAttributeFilter( OGRDataSource* poDS, OGRLayer *poLayer )
 
     if( poTargetFeature == NULL )
     {
-        printf( "INFO: Skipping Attribute Filter test for %s.\n"
-                "      No features in layer.\n",
-                poLayer->GetName() );
+        if( bVerbose )
+        {
+            printf( "INFO: Skipping Attribute Filter test for %s.\n"
+                    "      No features in layer.\n",
+                    poLayer->GetName() );
+        }
         return bRet;
     }
 
@@ -1099,9 +1189,12 @@ static int TestAttributeFilter( OGRDataSource* poDS, OGRLayer *poLayer )
     }
     if( i == poTargetFeature->GetFieldCount() )
     {
-        printf( "INFO: Skipping Attribute Filter test for %s.\n"
-                "      Could not find non NULL field.\n",
-                poLayer->GetName() );
+        if( bVerbose )
+        {
+            printf( "INFO: Skipping Attribute Filter test for %s.\n"
+                    "      Could not find non NULL field.\n",
+                    poLayer->GetName() );
+        }
         OGRFeature::DestroyFeature(poTargetFeature);
         return bRet;
     }
@@ -1319,7 +1412,7 @@ static int TestOGRLayerUTF8 ( OGRLayer *poLayer )
     if (!bFoundString)
     {
     }
-    else if (bCanAdvertizeUTF8)
+    else if (bCanAdvertizeUTF8 && bVerbose)
     {
         if (bIsAdvertizedAsUTF8)
         {
@@ -1344,7 +1437,7 @@ static int TestOGRLayerUTF8 ( OGRLayer *poLayer )
             }
         }
     }
-    else
+    else if( bVerbose )
     {
         printf( "INFO: Layer has non UTF-8 content (and is consistently declared as not being UTF-8 compatible).\n" );
     }
@@ -1375,15 +1468,21 @@ static int TestGetExtent ( OGRLayer *poLayer )
         if (eErr == OGRERR_NONE && eErr2 != OGRERR_NONE)
         {
             /* with the LIBKML driver and test_ogrsf ../autotest/ogr/data/samples.kml "Styles and Markup" */
-            printf("INFO: GetExtent() succeeded but OGRLayer::GetExtent() failed.\n");
+            if( bVerbose )
+            {
+                printf("INFO: GetExtent() succeeded but OGRLayer::GetExtent() failed.\n");
+            }
         }
         else
         {
             bRet = FALSE;
-            printf("ERROR: GetExtent() failed but OGRLayer::GetExtent() succeeded.\n");
+            if( bVerbose )
+            {
+                printf("ERROR: GetExtent() failed but OGRLayer::GetExtent() succeeded.\n");
+            }
         }
     }
-    else if (eErr == OGRERR_NONE)
+    else if (eErr == OGRERR_NONE && bVerbose)
     {
         if (fabs(sExtentSlow.MinX - sExtent.MinX) < 1e-10 &&
             fabs(sExtentSlow.MinY - sExtent.MinY) < 1e-10 &&
@@ -1494,7 +1593,7 @@ static int TestOGRLayerDeleteAndCreateFeature( OGRLayer *poLayer )
         bRet = FALSE;
         printf( "ERROR: The feature was not deleted.\n" );
     }
-    else
+    else if( bVerbose )
     {
         printf( "INFO: Delete Feature test passed.\n" );
     }
@@ -1513,7 +1612,10 @@ static int TestOGRLayerDeleteAndCreateFeature( OGRLayer *poLayer )
     {
         /* Case of shapefile driver for example that will not try to */
         /* reuse the existing FID, but will assign a new one */
-        printf( "INFO: Feature was created, but with not its original FID.\n" );
+        if( bVerbose )
+        {
+            printf( "INFO: Feature was created, but with not its original FID.\n" );
+        }
         nFID = poFeature->GetFID();
     }
 
@@ -1526,7 +1628,7 @@ static int TestOGRLayerDeleteAndCreateFeature( OGRLayer *poLayer )
         bRet = FALSE;
         printf( "ERROR: The feature was not created.\n" );
     }
-    else
+    else if( bVerbose )
     {
         printf( "INFO: Create Feature test passed.\n" );
     }
@@ -1562,7 +1664,10 @@ static int TestTransactions( OGRLayer *poLayer )
             {
                 /* The default implementation has a dummy StartTransaction(), but RollbackTransaction() returns */
                 /* OGRERR_UNSUPPORTED_OPERATION */
-                printf( "INFO: Transactions test skipped due to lack of transaction support.\n" );
+                if( bVerbose )
+                {
+                    printf( "INFO: Transactions test skipped due to lack of transaction support.\n" );
+                }
                 return FALSE;
             }
             else
@@ -1625,7 +1730,10 @@ static int TestTransactions( OGRLayer *poLayer )
 
     if (eErr == OGRERR_FAILURE)
     {
-        printf("INFO: CreateFeature() failed. Exiting this test now.\n");
+        if( bVerbose )
+        {
+            printf("INFO: CreateFeature() failed. Exiting this test now.\n");
+        }
         poLayer->RollbackTransaction();
         return FALSE;
     }
@@ -1639,7 +1747,10 @@ static int TestTransactions( OGRLayer *poLayer )
 
     if (poLayer->GetFeatureCount() != nInitialFeatureCount)
     {
-        printf("INFO: GetFeatureCount() should have returned its initial value after RollbackTransaction().\n");
+        if( bVerbose )
+        {
+            printf("INFO: GetFeatureCount() should have returned its initial value after RollbackTransaction().\n");
+        }
         poLayer->RollbackTransaction();
         return FALSE;
     }
@@ -1665,7 +1776,10 @@ static int TestTransactions( OGRLayer *poLayer )
 
         if (eErr == OGRERR_FAILURE)
         {
-            printf("INFO: CreateFeature() failed. Exiting this test now.\n");
+            if( bVerbose )
+            {
+                printf("INFO: CreateFeature() failed. Exiting this test now.\n");
+            }
             poLayer->RollbackTransaction();
             return FALSE;
         }
@@ -1679,7 +1793,10 @@ static int TestTransactions( OGRLayer *poLayer )
 
         if (poLayer->GetFeatureCount() != nInitialFeatureCount + 1)
         {
-            printf("INFO: GetFeatureCount() should have returned its initial value + 1 after CommitTransaction().\n");
+            if( bVerbose )
+            {
+                printf("INFO: GetFeatureCount() should have returned its initial value + 1 after CommitTransaction().\n");
+            }
             poLayer->RollbackTransaction();
             return FALSE;
         }
@@ -1693,7 +1810,10 @@ static int TestTransactions( OGRLayer *poLayer )
 
         if (poLayer->GetFeatureCount() != nInitialFeatureCount)
         {
-            printf("INFO: GetFeatureCount() should have returned its initial value after DeleteFeature().\n");
+            if( bVerbose )
+            {
+                printf("INFO: GetFeatureCount() should have returned its initial value after DeleteFeature().\n");
+            }
             poLayer->RollbackTransaction();
             return FALSE;
         }
@@ -1701,7 +1821,10 @@ static int TestTransactions( OGRLayer *poLayer )
 
     /* ---------------- */
 
-    printf( "INFO: Transactions test passed.\n" );
+    if( bVerbose )
+    {
+        printf( "INFO: Transactions test passed.\n" );
+    }
 
     return TRUE;
 }
@@ -1751,7 +1874,10 @@ static int TestOGRLayerIgnoreFields( OGRLayer* poLayer )
 
     if( iFieldNonEmpty < 0 && bGeomNonEmpty == FALSE )
     {
-        printf( "INFO: IgnoreFields test skipped.\n" );
+        if( bVerbose )
+        {
+            printf( "INFO: IgnoreFields test skipped.\n" );
+        }
         return TRUE;
     }
 
@@ -1809,7 +1935,10 @@ static int TestOGRLayerIgnoreFields( OGRLayer* poLayer )
 
     poLayer->SetIgnoredFields(NULL);
 
-    printf( "INFO: IgnoreFields test passed.\n" );
+    if( bVerbose )
+    {
+        printf( "INFO: IgnoreFields test passed.\n" );
+    }
 
     return TRUE;
 }
@@ -1923,7 +2052,7 @@ static int TestLayerSQL( OGRDataSource* poDS, OGRLayer * poLayer )
         bRet = FALSE;
     }
     
-    if( bRet )
+    if( bRet && bVerbose )
         printf("INFO: TestLayerSQL passed.\n");
 
     return bRet;
@@ -2065,7 +2194,10 @@ static int TestInterleavedReading( const char* pszDataSource, char** papszLayers
     poDS = OGRSFDriverRegistrar::Open( pszDataSource, FALSE, NULL );
     if (poDS == NULL)
     {
-        printf( "INFO: Skipping TestInterleavedReading(). Cannot reopen datasource\n" );
+        if( bVerbose )
+        {
+            printf( "INFO: Skipping TestInterleavedReading(). Cannot reopen datasource\n" );
+        }
         goto bye;
     }
 
@@ -2074,7 +2206,10 @@ static int TestInterleavedReading( const char* pszDataSource, char** papszLayers
     if (poLayer1 == NULL || poLayer2 == NULL ||
         poLayer1->GetFeatureCount() < 2 || poLayer2->GetFeatureCount() < 2)
     {
-        printf( "INFO: Skipping TestInterleavedReading(). Test conditions are not met\n" );
+        if( bVerbose )
+        {
+            printf( "INFO: Skipping TestInterleavedReading(). Test conditions are not met\n" );
+        }
         goto bye;
     }
 
@@ -2084,7 +2219,10 @@ static int TestInterleavedReading( const char* pszDataSource, char** papszLayers
     poDS2 = OGRSFDriverRegistrar::Open( pszDataSource, FALSE, NULL );
     if (poDS == NULL || poDS2 == NULL)
     {
-        printf( "INFO: Skipping TestInterleavedReading(). Cannot reopen datasource\n" );
+        if( bVerbose )
+        {
+            printf( "INFO: Skipping TestInterleavedReading(). Cannot reopen datasource\n" );
+        }
         goto bye;
     }
 
