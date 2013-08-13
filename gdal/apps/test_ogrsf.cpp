@@ -1668,7 +1668,7 @@ static int TestTransactions( OGRLayer *poLayer )
                 {
                     printf( "INFO: Transactions test skipped due to lack of transaction support.\n" );
                 }
-                return FALSE;
+                return TRUE;
             }
             else
             {
@@ -1735,7 +1735,7 @@ static int TestTransactions( OGRLayer *poLayer )
             printf("INFO: CreateFeature() failed. Exiting this test now.\n");
         }
         poLayer->RollbackTransaction();
-        return FALSE;
+        return TRUE;
     }
 
     eErr = poLayer->RollbackTransaction();
@@ -1747,10 +1747,7 @@ static int TestTransactions( OGRLayer *poLayer )
 
     if (poLayer->GetFeatureCount() != nInitialFeatureCount)
     {
-        if( bVerbose )
-        {
-            printf("INFO: GetFeatureCount() should have returned its initial value after RollbackTransaction().\n");
-        }
+        printf("ERROR: GetFeatureCount() should have returned its initial value after RollbackTransaction().\n");
         poLayer->RollbackTransaction();
         return FALSE;
     }
@@ -1776,10 +1773,7 @@ static int TestTransactions( OGRLayer *poLayer )
 
         if (eErr == OGRERR_FAILURE)
         {
-            if( bVerbose )
-            {
-                printf("INFO: CreateFeature() failed. Exiting this test now.\n");
-            }
+            printf("ERROR: CreateFeature() failed. Exiting this test now.\n");
             poLayer->RollbackTransaction();
             return FALSE;
         }
@@ -1793,10 +1787,7 @@ static int TestTransactions( OGRLayer *poLayer )
 
         if (poLayer->GetFeatureCount() != nInitialFeatureCount + 1)
         {
-            if( bVerbose )
-            {
-                printf("INFO: GetFeatureCount() should have returned its initial value + 1 after CommitTransaction().\n");
-            }
+            printf("ERROR: GetFeatureCount() should have returned its initial value + 1 after CommitTransaction().\n");
             poLayer->RollbackTransaction();
             return FALSE;
         }
@@ -1810,10 +1801,7 @@ static int TestTransactions( OGRLayer *poLayer )
 
         if (poLayer->GetFeatureCount() != nInitialFeatureCount)
         {
-            if( bVerbose )
-            {
-                printf("INFO: GetFeatureCount() should have returned its initial value after DeleteFeature().\n");
-            }
+            printf("ERROR: GetFeatureCount() should have returned its initial value after DeleteFeature().\n");
             poLayer->RollbackTransaction();
             return FALSE;
         }
