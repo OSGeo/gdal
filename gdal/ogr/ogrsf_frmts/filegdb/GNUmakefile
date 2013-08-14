@@ -4,7 +4,7 @@ include ../../../GDALmake.opt
 
 OBJ	=	FGdbDatasource.o FGdbDriver.o FGdbLayer.o FGdbUtils.o FGdbResultLayer.o 
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(FGDB_INC) $(CPPFLAGS)
+CPPFLAGS	:=	-I../generic $(GDAL_INCLUDE) $(FGDB_INC) $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 
