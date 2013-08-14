@@ -2,11 +2,11 @@
  * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
- * Purpose:  Defines OGRLayerDecorator class
+ * Purpose:  Defines OGRLMutexedLayer class
  * Author:   Even Rouault, even dot rouault at mines dash paris dot org
  *
  ******************************************************************************
- * Copyright (c) 2012, Even Rouault <even dot rouault at mines dash paris dot org>
+ * Copyright (c) 2013, Even Rouault <even dot rouault at mines dash paris dot org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,22 +27,32 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGRLAYERDECORATOR_H_INCLUDED
-#define _OGRLAYERDECORATOR_H_INCLUDED
+#ifndef _OGRMUTEXEDLAYER_H_INCLUDED
+#define _OGRMUTEXEDLAYER_H_INCLUDED
 
-#include "ogrsf_frmts.h"
+#include "ogrlayerdecorator.h"
 
-class OGRLayerDecorator : public OGRLayer
+/** OGRMutexedLayer class protects all virtual methods of OGRLayer with a mutex.
+ *
+ *  If the passed mutex is NULL, then no locking will be done.
+ *
+ *  Note that the constructors and destructors are not explictely protected
+ *  by the mutex.
+ */
+class CPL_DLL OGRMutexedLayer : public OGRLayerDecorator
 {
   protected:
-    OGRLayer *m_poDecoratedLayer;
-    int       m_bHasOwnership;
+        void          *m_hMutex;
 
   public:
 
-                       OGRLayerDecorator(OGRLayer* poDecoratedLayer,
-                                         int bTakeOwnership);
-    virtual           ~OGRLayerDecorator();
+    /* The construction of the object isn't protected by the mutex */
+                       OGRMutexedLayer(OGRLayer* poDecoratedLayer,
+                                       int bTakeOwnership,
+                                       void* hMutex);
+
+    /* The destruction of the object isn't protected by the mutex */
+    virtual           ~OGRMutexedLayer();
 
     virtual OGRGeometry *GetSpatialFilter();
     virtual void        SetSpatialFilter( OGRGeometry * );
@@ -94,8 +104,6 @@ class OGRLayerDecorator : public OGRLayer
     virtual const char *GetGeometryColumn();
 
     virtual OGRErr      SetIgnoredFields( const char **papszFields );
-
-    OGRLayer* GetBaseLayer()    { return m_poDecoratedLayer; }
 };
 
-#endif // _OGRLAYERDECORATOR_H_INCLUDED
+#endif // _OGRMUTEXEDLAYER_H_INCLUDED

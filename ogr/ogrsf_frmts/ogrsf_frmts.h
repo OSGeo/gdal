@@ -53,7 +53,7 @@ class OGRSFDriver;
  */
 
 /* Note: any virtual method added to this class must also be added in the */
-/* OGRLayerDecorator class. */
+/* OGRLayerDecorator and OGRMutexedLayer classes. */
 
 class CPL_DLL OGRLayer
 {
