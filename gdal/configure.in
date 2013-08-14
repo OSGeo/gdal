@@ -720,12 +720,21 @@ fi
 # TODO: separate libs for rasters and vectors
 if test "$with_grass" != "yes" -a "$with_grass" != "no" ; then
 
-  AC_CHECK_LIB(grass_gis,G_asprintf,GRASS_SETTING=grass57+,GRASS_SETTING=no,-L$with_grass/lib -lgrass_datetime)
+  AC_CHECK_LIB(grass_gis,G_is_initialized,GRASS_SETTING=grass70+,GRASS_SETTING=no,-L$with_grass/lib -lgrass_datetime)
+  if test "$GRASS_SETTING" = "no" ; then
+    AC_CHECK_LIB(grass_gis,G_asprintf,GRASS_SETTING=grass57+,GRASS_SETTING=no,-L$with_grass/lib -lgrass_datetime)
+  fi
    
-  if test "$GRASS_SETTING" = "grass57+" ; then   
-    G_RASTLIBS="-lgrass_I"
-    G_VECTLIBS="-lgrass_vect -lgrass_dig2 -lgrass_dgl -lgrass_rtree -lgrass_linkm -lgrass_dbmiclient -lgrass_dbmibase"
-    LIBS="-L$with_grass/lib $G_VECTLIBS $G_RASTLIBS -lgrass_gproj -lgrass_vask -lgrass_gmath -lgrass_gis -lgrass_datetime $LIBS"
+  if test "$GRASS_SETTING" != "no" ; then   
+    if test "$GRASS_SETTING" = "grass70+" ; then   
+      G_RASTLIBS="-lgrass_raster -lgrass_imagery"
+      G_VECTLIBS="-lgrass_vector -lgrass_dig2 -lgrass_dgl -lgrass_rtree -lgrass_linkm -lgrass_dbmiclient -lgrass_dbmibase"
+      LIBS="-L$with_grass/lib $G_VECTLIBS $G_RASTLIBS -lgrass_gproj -lgrass_gmath -lgrass_gis -lgrass_datetime $LIBS"
+    else
+      G_RASTLIBS="-lgrass_I"
+      G_VECTLIBS="-lgrass_vect -lgrass_dig2 -lgrass_dgl -lgrass_rtree -lgrass_linkm -lgrass_dbmiclient -lgrass_dbmibase"
+      LIBS="-L$with_grass/lib $G_VECTLIBS $G_RASTLIBS -lgrass_gproj -lgrass_vask -lgrass_gmath -lgrass_gis -lgrass_datetime $LIBS"
+    fi
     GRASS_INCLUDE="-I$with_grass/include"
     GRASS_GISBASE="$with_grass"
     HAVE_GRASS=yes

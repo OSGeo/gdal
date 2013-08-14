@@ -19312,7 +19312,50 @@ fi
 # TODO: separate libs for rasters and vectors
 if test "$with_grass" != "yes" -a "$with_grass" != "no" ; then
 
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for G_asprintf in -lgrass_gis" >&5
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for G_is_initialized in -lgrass_gis" >&5
+$as_echo_n "checking for G_is_initialized in -lgrass_gis... " >&6; }
+if ${ac_cv_lib_grass_gis_G_is_initialized+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lgrass_gis -L$with_grass/lib -lgrass_datetime $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char G_is_initialized ();
+int
+main ()
+{
+return G_is_initialized ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_grass_gis_G_is_initialized=yes
+else
+  ac_cv_lib_grass_gis_G_is_initialized=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_grass_gis_G_is_initialized" >&5
+$as_echo "$ac_cv_lib_grass_gis_G_is_initialized" >&6; }
+if test "x$ac_cv_lib_grass_gis_G_is_initialized" = xyes; then :
+  GRASS_SETTING=grass70+
+else
+  GRASS_SETTING=no
+fi
+
+  if test "$GRASS_SETTING" = "no" ; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for G_asprintf in -lgrass_gis" >&5
 $as_echo_n "checking for G_asprintf in -lgrass_gis... " >&6; }
 if ${ac_cv_lib_grass_gis_G_asprintf+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -19354,11 +19397,18 @@ else
   GRASS_SETTING=no
 fi
 
+  fi
 
-  if test "$GRASS_SETTING" = "grass57+" ; then
-    G_RASTLIBS="-lgrass_I"
-    G_VECTLIBS="-lgrass_vect -lgrass_dig2 -lgrass_dgl -lgrass_rtree -lgrass_linkm -lgrass_dbmiclient -lgrass_dbmibase"
-    LIBS="-L$with_grass/lib $G_VECTLIBS $G_RASTLIBS -lgrass_gproj -lgrass_vask -lgrass_gmath -lgrass_gis -lgrass_datetime $LIBS"
+  if test "$GRASS_SETTING" != "no" ; then
+    if test "$GRASS_SETTING" = "grass70+" ; then
+      G_RASTLIBS="-lgrass_raster -lgrass_imagery"
+      G_VECTLIBS="-lgrass_vector -lgrass_dig2 -lgrass_dgl -lgrass_rtree -lgrass_linkm -lgrass_dbmiclient -lgrass_dbmibase"
+      LIBS="-L$with_grass/lib $G_VECTLIBS $G_RASTLIBS -lgrass_gproj -lgrass_gmath -lgrass_gis -lgrass_datetime $LIBS"
+    else
+      G_RASTLIBS="-lgrass_I"
+      G_VECTLIBS="-lgrass_vect -lgrass_dig2 -lgrass_dgl -lgrass_rtree -lgrass_linkm -lgrass_dbmiclient -lgrass_dbmibase"
+      LIBS="-L$with_grass/lib $G_VECTLIBS $G_RASTLIBS -lgrass_gproj -lgrass_vask -lgrass_gmath -lgrass_gis -lgrass_datetime $LIBS"
+    fi
     GRASS_INCLUDE="-I$with_grass/include"
     GRASS_GISBASE="$with_grass"
     HAVE_GRASS=yes
