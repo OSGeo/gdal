@@ -188,7 +188,9 @@ int OGRGRASSDataSource::Open( const char * pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
 /*      Open GRASS vector map                                           */
 /* -------------------------------------------------------------------- */
+#if GRASS_VERSION_MAJOR  < 7
     Vect_set_fatal_error ( GV_FATAL_PRINT ); // Print error and continue
+#endif
     Vect_set_open_level (2);
     int level = Vect_open_old ( &map, pszMap, pszMapset);
 
