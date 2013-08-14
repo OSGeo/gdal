@@ -1808,8 +1808,8 @@ bool GeoRasterWrapper::InitializeIO( void )
         pahLevels[iLevel].nTotalColumnBlocks = nTCB;
         pahLevels[iLevel].nTotalRowBlocks    = nTRB;
         pahLevels[iLevel].nBlockCount        = (unsigned long ) ( nTCB * nTRB * nTotalBandBlocks );
-        pahLevels[iLevel].nBlockBytes        = (unsigned long ) ( nCBS * nRBS * nBandBlockSize ) *
-                                               (unsigned long ) ( nCellSizeBits / 8L );
+        pahLevels[iLevel].nBlockBytes        = (unsigned long ) ( nCBS * nRBS * nBandBlockSize *
+                                                                  nCellSizeBits / 8L );
         pahLevels[iLevel].nGDALBlockBytes    = (unsigned long ) ( nCBS * nRBS * nGDALCellBytes );
         pahLevels[iLevel].nOffset            = 0L;
     }
