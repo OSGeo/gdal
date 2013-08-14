@@ -45,9 +45,15 @@ extern "C" {
 #include <grass/gprojects.h>
 #include <grass/gis.h>
 
-char *GPJ_grass_to_wkt(struct Key_Value *proj_info,
-		       struct Key_Value *proj_units,
-		       int esri_style, int prettify);
+#if GRASS_VERSION_MAJOR  >= 7
+char *GPJ_grass_to_wkt(const struct Key_Value *,
+		       const struct Key_Value *,
+		       int, int);
+#else
+char *GPJ_grass_to_wkt(struct Key_Value *,
+		       struct Key_Value *,
+		       int, int);
+#endif
 }
 
 #include "gdal_priv.h"
