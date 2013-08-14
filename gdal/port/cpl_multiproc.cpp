@@ -89,6 +89,29 @@ CPLMutexHolder::CPLMutexHolder( void **phMutex, double dfWaitInSeconds,
 }
 
 /************************************************************************/
+/*                           CPLMutexHolder()                           */
+/************************************************************************/
+
+CPLMutexHolder::CPLMutexHolder( void *hMutexIn, double dfWaitInSeconds,
+                                const char *pszFileIn, 
+                                int nLineIn )
+
+{
+#ifndef MUTEX_NONE
+    pszFile = pszFileIn;
+    nLine = nLineIn;
+    hMutex = hMutexIn;
+
+    if( hMutex != NULL &&
+        !CPLAcquireMutex( hMutex, dfWaitInSeconds ) )
+    {
+        fprintf( stderr, "CPLMutexHolder: Failed to acquire mutex!\n" );
+        hMutex = NULL;
+    }
+#endif /* ndef MUTEX_NONE */
+}
+
+/************************************************************************/
 /*                          ~CPLMutexHolder()                           */
 /************************************************************************/
 

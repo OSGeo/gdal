@@ -5,7 +5,8 @@ include ../../../GDALmake.opt
 OBJ	=	ogrsfdriverregistrar.o ogrlayer.o ogrdatasource.o \
 		ogrsfdriver.o ogrregisterall.o ogr_gensql.o \
 		ogr_attrind.o ogr_miattrind.o ogrlayerdecorator.o \
-		ogrwarpedlayer.o ogrunionlayer.o ogrlayerpool.o
+		ogrwarpedlayer.o ogrunionlayer.o ogrlayerpool.o \
+		ogrmutexedlayer.o ogrmutexeddatasource.o
 
 BASEFORMATS = \
 	-DAVCBIN_ENABLED \

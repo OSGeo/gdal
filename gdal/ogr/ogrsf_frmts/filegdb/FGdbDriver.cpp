@@ -32,6 +32,8 @@
 #include "ogr_fgdb.h"
 #include "cpl_conv.h"
 #include "FGdbUtils.h"
+#include "cpl_multiproc.h"
+#include "ogrmutexeddatasource.h"
 
 CPL_CVSID("$Id$");
 
@@ -40,8 +42,7 @@ extern "C" void RegisterOGRFileGDB();
 /************************************************************************/
 /*                            FGdbDriver()                              */
 /************************************************************************/
-FGdbDriver::FGdbDriver():
-OGRSFDriver()
+FGdbDriver::FGdbDriver(): OGRSFDriver(), hMutex(NULL)
 {
 }
 
@@ -51,6 +52,9 @@ OGRSFDriver()
 FGdbDriver::~FGdbDriver()
 
 {
+    if( hMutex != NULL )
+        CPLDestroyMutex(hMutex);
+    hMutex = NULL;
 }
 
 
@@ -89,6 +93,7 @@ OGRDataSource *FGdbDriver::Open( const char* pszFilename, int bUpdate )
         return NULL;
     }
 
+    CPLMutexHolderD(&hMutex);
     Geodatabase* pGeoDatabase = NULL;
 
     FGdbDatabaseConnection* pConnection = oMapConnections[pszFilename];
@@ -126,7 +131,7 @@ OGRDataSource *FGdbDriver::Open( const char* pszFilename, int bUpdate )
         return NULL;
     }
     else
-        return pDS;
+        return new OGRMutexedDataSource(pDS, TRUE, hMutex);
 }
 
 /***********************************************************************/
@@ -141,6 +146,8 @@ OGRDataSource* FGdbDriver::CreateDataSource( const char * conn,
     std::wstring wconn = StringToWString(conn);
     int bUpdate = TRUE; // If we're creating, we must be writing.
     VSIStatBuf stat;
+
+    CPLMutexHolderD(&hMutex);
 
     /* We don't support options yet, so warn if they send us some */
     if ( papszOptions )
@@ -191,7 +198,7 @@ OGRDataSource* FGdbDriver::CreateDataSource( const char * conn,
         return NULL;
     }
     else
-        return pDS;
+        return new OGRMutexedDataSource(pDS, TRUE, hMutex);
 }
 
 /***********************************************************************/
@@ -200,6 +207,8 @@ OGRDataSource* FGdbDriver::CreateDataSource( const char * conn,
 
 void FGdbDriver::Release(const char* pszName)
 {
+    CPLMutexHolderOptionalLockD(hMutex);
+
     FGdbDatabaseConnection* pConnection = oMapConnections[pszName];
     if( pConnection != NULL )
     {
@@ -238,6 +247,7 @@ int FGdbDriver::TestCapability( const char * pszCap )
 
 OGRErr FGdbDriver::DeleteDataSource( const char *pszDataSource )
 {
+    CPLMutexHolderD(&hMutex);
 
     std::wstring wstr = StringToWString(pszDataSource);
 

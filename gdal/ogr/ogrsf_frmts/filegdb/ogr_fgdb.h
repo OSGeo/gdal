@@ -32,6 +32,7 @@
 
 #include <vector>
 #include "ogrsf_frmts.h"
+#include "ogrmutexedlayer.h"
 
 /* GDAL string utilities */
 #include "cpl_string.h"
@@ -58,6 +59,8 @@
 
 /* The ESRI FGDB API namespace */
 using namespace FileGDBAPI;
+
+class FGdbDriver;
 
 /************************************************************************/
 /*                           FGdbBaseLayer                              */
@@ -226,7 +229,6 @@ protected:
 /************************************************************************/
 /*                           FGdbDataSource                            */
 /************************************************************************/
-class FGdbDriver;
 
 class FGdbDataSource : public OGRDataSource
 {
@@ -269,7 +271,7 @@ protected:
 
   FGdbDriver* m_poDriver;
   char* m_pszName;
-  std::vector <FGdbLayer*> m_layers;
+  std::vector <OGRMutexedLayer*> m_layers;
   Geodatabase* m_pGeodatabase;
   bool m_bUpdate;
 
@@ -292,6 +294,7 @@ public:
 class FGdbDriver : public OGRSFDriver
 {
   std::map<CPLString, FGdbDatabaseConnection*> oMapConnections;
+  void* hMutex;
 
 public:
   FGdbDriver();
@@ -304,6 +307,7 @@ public:
   virtual OGRErr DeleteDataSource( const char *pszDataSource );
 
   void Release(const char* pszName);
+  void* GetMutex() { return hMutex; }
 
 private:
 
