@@ -1,76 +1,91 @@
 <html>
 <head>
-<title>GRASS -- GRASS Rasters</title>
+<title>GRASS Raster Format</title>
 </head>
 
 <body bgcolor="#ffffff">
 
-<h1>GRASS -- GRASS Rasters</h1>
+<h1>GRASS Raster Format</h1>
 
-GDAL optionally supports reading of existing GRASS raster layers (cells, and
-image groups), but not writing or export.  The support for GRASS raster 
-layers is determined when the library is configured, and requires libgrass
-to be pre-installed (see Notes below). <p>
+GDAL optionally supports reading of existing GRASS raster maps or
+imagery groups, but not writing or export. The support for GRASS
+raster format is determined when the library is configured, and
+requires libgrass to be pre-installed (see Notes below).
 
-GRASS rasters can be selected in several ways.<p>
+<p>
+GRASS raster maps/imagery groups can be selected in several ways.
 
 <ol>
-<li> The full path to the cellhd file for the cell can be specified.  This
-is not a relative path, or at least it must contain all the path components
-within the database including the database root itself.  The following
-example opens the cell "proj_tm" within the mapset "PERMANENT" of the
-location "proj_tm" in the grass database located at /u/data/grassdb.<p>
-eg.<br>
+<li> The full path to the <tt>cellhd</tt> file can be specified. This
+is not a relative path, or at least it must contain all the path
+components within the GRASS database including the database root
+itself. The following example opens the raster map &quot;proj_tm&quot;
+within the GRASS mapset &quot;PERMANENT&quot; of the GRASS location
+&quot;proj_tm&quot; in the GRASS database located at
+<tt>/u/data/grassdb</tt>.
+
+<p>
+For example:
+
 <pre>
-  % gdalinfo /u/data/grassdb/proj_tm/PERMANENT/cellhd/proj_tm
+gdalinfo /u/data/grassdb/proj_tm/PERMANENT/cellhd/proj_tm
 </pre>
-<li> The full path to the directory containing information about an imagery
-group (or the REF file within it) can be specified to refer to the whole
-group as a single dataset.  The following examples do the same thing.<p>
-eg.<br>
+
+<li> The full path to the directory containing information about an
+imagery group (or the REF file within it) can be specified to refer to
+the whole group as a single dataset.  The following examples do the
+same thing.
+
+<p>
+For example:
+
 <pre>
-  % gdalinfo /usr2/data/grassdb/imagery/raw/group/testmff/REF
-  % gdalinfo /usr2/data/grassdb/imagery/raw/group/testmff
+gdalinfo /usr2/data/grassdb/imagery/raw/group/testmff/REF
+gdalinfo /usr2/data/grassdb/imagery/raw/group/testmff
 </pre>
-<li>  If there is a correct .grassrc5
-setup in the users home directory then cells or imagery groups may be opened 
-just by the cell name.  This only works for cells or images in the current 
-location and mapset as defined in the .grassrc5 file. <p>
+
+<li> If there is a correct <tt>.grassrc5</tt> (GRASS
+5), <tt>.grassrc6</tt> (GRASS 6) <tt>.grass7/rc</tt> (GRASS 7) setup
+file in the users home directory then raster maps or imagery groups
+may be opened just by the cell name. This only works for raster maps
+or imagery groups in the current GRASS location and mapset as defined
+in the GRASS setup file.
 </ol>
 
-
-
-
-The following features are supported by the GDAL/GRASS link.<p>
+<p>
+The following features are supported by the GDAL/GRASS link.
 
 <ul>
-<li> Up to 256 entries from cell colormaps are read (0-255).  
-<li> Compressed and uncompressed integer, floating point and double precision
-cells are all supported.  Integer cells are classified with a band type of
-"Byte" if the 1-byte per pixel format is used, or UInt16 if the two byte
-per pixel format is used.  Otherwise integer cells are treated as UInt32.
-<li> Georeferencing information is properly read from GRASS.
-<li> An attempt is made to translate coordinate systems, but some conversions
-may be flawed, in particular in handling of datums and units.
+<li> Up to 256 entries from raster colormaps are read (0-255).  
+<li> Compressed and uncompressed integer (CELL), floating point
+(FCELL) and double precision (DCELL) raster maps are all
+supported. Integer raster maps are classified with a band type of
+&quot;Byte&quot; if the 1-byte per pixel format is used, or
+&quot;UInt16&quot; if the two byte per pixel format is used. Otherwise
+integer raster maps are treated as &quot;UInt32&quot;.
+<li> Georeferencing information is properly read from GRASS format.
+<li> An attempt is made to translate coordinate systems, but some
+conversions may be flawed, in particular in handling of datums and
+units.
 </ul>
 
-See Also:<p>
-
-<ul>
-<li> <a href="http://grass.itc.it/">GRASS GIS Home Page</a>
-<li> <a href="http://home.gdal.org/projects/grass/">libgrass page</a>
-</ul>
-
-<hr>
-<h2>NOTES on driver variations</h2>
+<h2>Notes on driver variations</h2>
 
 For GRASS 5.7 Radim Blazek has moved the driver to using the GRASS
-shared libraries directly instead of using libgrass.  Currently (GDAL 1.2.2 and later)
-both version of the driver are available and can be configured using
-"--with-libgrass" for the libgrass variant or "--with-grass=&lt;dir&gt;" for the 
-new GRASS 5.7 library based version.  The GRASS 5.7 driver version is currently
-not supporting coordinate system access, though it is hoped that will be
-corrected at some point.<p>
+shared libraries directly instead of using libgrass.  Currently (GDAL
+1.2.2 and later) both version of the driver are available and can be
+configured using &quot;--with-libgrass&quot; for the libgrass variant
+or &quot;--with-grass=&lt;dir&gt;&quot; for the new GRASS 5.7+ library
+based version. The GRASS 5.7+ driver version is currently not
+supporting coordinate system access, though it is hoped that will be
+corrected at some point.
+
+<h2>See Also</h2>
+
+<ul>
+<li> <a href="http://grass.osgeo.org">GRASS GIS home page</a>
+<li> <a href="http://home.gdal.org/projects/grass/">libgrass page</a>
+</ul>
 
 </body>
 </html>
