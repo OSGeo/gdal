@@ -419,14 +419,18 @@ IVFKFeature *IVFKDataBlock::GetFeature(long nFID)
 int IVFKDataBlock::LoadGeometry()
 {
     int           nInvalid;
+#ifdef DEBUG_TIMING
     clock_t       start, end;
-    
+#endif
+
     if (m_bGeometry)
         return 0;
 
     nInvalid    = 0;
     m_bGeometry = TRUE;
+#ifdef DEBUG_TIMING
     start       = clock();
+#endif
 
     if (m_nFeatureCount < 0) {
         m_poReader->ReadDataRecords(this);
@@ -455,15 +459,20 @@ int IVFKDataBlock::LoadGeometry()
         /* -> wkbPolygon */
         nInvalid = LoadGeometryPolygon();
     }
-    
+
+#ifdef DEBUG_TIMING
     end = clock();
-    
+#endif
+
     if (nInvalid > 0) {
         CPLError(CE_Warning, CPLE_AppDefined, 
                  "%s: %d invalid features found", m_pszName, nInvalid);
     }
+
+#ifdef DEBUG_TIMING
     CPLDebug("OGR_VFK", "VFKDataBlock::LoadGeometry(): name=%s time=%ld sec",
              m_pszName, (long)((end - start) / CLOCKS_PER_SEC));
+#endif
 
     return nInvalid;
 }
