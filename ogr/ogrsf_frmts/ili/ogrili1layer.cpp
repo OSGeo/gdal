@@ -458,34 +458,37 @@ OGRMultiPolygon* OGRILI1Layer::Polygonize( OGRGeometryCollection* poLines, bool 
 
     if (fix_crossing_lines && poLines->getNumGeometries() > 0)
     {
-#if (GEOS_VERSION_MAJOR >= 3)
         CPLDebug( "OGR_ILI", "Fixing crossing lines");
         //A union of the geometry collection with one line fixes invalid geometries
         poNoncrossingLines = (OGRGeometryCollection*)poLines->Union(poLines->getGeometryRef(0));
         CPLDebug( "OGR_ILI", "Fixed lines: %d", poNoncrossingLines->getNumGeometries()-poLines->getNumGeometries());
-#else
-        #warning Interlis 1 AREA cleanup disabled. Needs GEOS >= 3.0
-#endif
     }
+    
+    GEOSContextHandle_t hGEOSCtxt = OGRGeometry::createGEOSContext();
 
     ahInGeoms = (GEOSGeom *) CPLCalloc(sizeof(void*),poNoncrossingLines->getNumGeometries());
     for( i = 0; i < poNoncrossingLines->getNumGeometries(); i++ )
-          ahInGeoms[i] = poNoncrossingLines->getGeometryRef(i)->exportToGEOS();
+          ahInGeoms[i] = poNoncrossingLines->getGeometryRef(i)->exportToGEOS(hGEOSCtxt);
 
-    hResultGeom = GEOSPolygonize( ahInGeoms,
-                                  poNoncrossingLines->getNumGeometries() );
+    hResultGeom = GEOSPolygonize_r( hGEOSCtxt,
+                                    ahInGeoms,
+                                   poNoncrossingLines->getNumGeometries() );
 
     for( i = 0; i < poNoncrossingLines->getNumGeometries(); i++ )
-        GEOSGeom_destroy( ahInGeoms[i] );
+        GEOSGeom_destroy_r( hGEOSCtxt, ahInGeoms[i] );
     CPLFree( ahInGeoms );
     if (poNoncrossingLines != poLines) delete poNoncrossingLines;
 
     if( hResultGeom == NULL )
+    {
+        OGRGeometry::freeGEOSContext( hGEOSCtxt );
         return NULL;
+    }
 
-    poMP = OGRGeometryFactory::createFromGEOS( hResultGeom );
+    poMP = OGRGeometryFactory::createFromGEOS( hGEOSCtxt, hResultGeom );
 
-    GEOSGeom_destroy( hResultGeom );
+    GEOSGeom_destroy_r( hGEOSCtxt, hResultGeom );
+    OGRGeometry::freeGEOSContext( hGEOSCtxt );
 
     return (OGRMultiPolygon *) poMP;
 
@@ -527,10 +530,11 @@ void OGRILI1Layer::PolygonizeAreaLayer()
 
     CPLDebug( "OGR_ILI", "Associating layer %s with area polygons", GetLayerDefn()->GetName());
     ahInGeoms = (GEOSGeom *) CPLCalloc(sizeof(void*),polys->getNumGeometries());
+    GEOSContextHandle_t hGEOSCtxt = OGRGeometry::createGEOSContext();
     for( i = 0; i < polys->getNumGeometries(); i++ )
     {
-        ahInGeoms[i] = polys->getGeometryRef(i)->exportToGEOS();
-        if (!GEOSisValid(ahInGeoms[i])) ahInGeoms[i] = NULL;
+        ahInGeoms[i] = polys->getGeometryRef(i)->exportToGEOS(hGEOSCtxt);
+        if (!GEOSisValid_r(hGEOSCtxt, ahInGeoms[i])) ahInGeoms[i] = NULL;
     }
     poAreaReferenceLayer->ResetReading();
     while (OGRFeature *feature = poAreaReferenceLayer->GetNextFeatureRef())
@@ -540,10 +544,10 @@ void OGRILI1Layer::PolygonizeAreaLayer()
         {
             continue;
         }
-        GEOSGeom point = (GEOSGeom)(geomRef->exportToGEOS());
+        GEOSGeom point = (GEOSGeom)(geomRef->exportToGEOS(hGEOSCtxt));
         for (i = 0; i < polys->getNumGeometries(); i++ )
         {
-            if (ahInGeoms[i] && GEOSWithin(point, ahInGeoms[i]))
+            if (ahInGeoms[i] && GEOSWithin_r(hGEOSCtxt, point, ahInGeoms[i]))
             {
                 OGRFeature* areaFeature = new OGRFeature(poFeatureDefn);
                 areaFeature->SetFrom(feature);
@@ -557,11 +561,12 @@ void OGRILI1Layer::PolygonizeAreaLayer()
             CPLDebug( "OGR_ILI", "Association between area and point failed.");
             feature->SetGeometry( &emptyPoly );
         }
-        GEOSGeom_destroy( point );
+        GEOSGeom_destroy_r( hGEOSCtxt, point );
     }
     for( i = 0; i < polys->getNumGeometries(); i++ )
-        GEOSGeom_destroy( ahInGeoms[i] );
+        GEOSGeom_destroy_r( hGEOSCtxt, ahInGeoms[i] );
     CPLFree( ahInGeoms );
+    OGRGeometry::freeGEOSContext( hGEOSCtxt );
 #endif
     poAreaLineLayer = 0;
     delete polys;

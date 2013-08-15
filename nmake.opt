@@ -488,7 +488,7 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 # Uncomment for libdap >= 3.9
 #DODS_FLAGS = -DLIBDAP_39
 
-# Uncomment for GEOS support
+# Uncomment for GEOS support (GEOS >= 3.1.0 required)
 #GEOS_DIR=C:/warmerda/geos
 #GEOS_CFLAGS = -I$(GEOS_DIR)/capi -I$(GEOS_DIR)/source/headers -DHAVE_GEOS
 #GEOS_LIB     = $(GEOS_DIR)/source/geos_c_i.lib
