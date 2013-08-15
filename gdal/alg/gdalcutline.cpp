@@ -101,9 +101,10 @@ BlendMaskGenerator( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
     OGREnvelope sEnvelope;
     int iXMin, iYMin, iXMax, iYMax;
+    GEOSContextHandle_t hGEOSCtxt = OGRGeometry::createGEOSContext();
     GEOSGeom poGEOSPoly;
 
-    poGEOSPoly = poLines->exportToGEOS();
+    poGEOSPoly = poLines->exportToGEOS(hGEOSCtxt);
     OGR_G_GetEnvelope( hPolygon, &sEnvelope );
 
     delete poLines;
@@ -148,10 +149,10 @@ BlendMaskGenerator( int nXOff, int nYOff, int nXSize, int nYSize,
             GEOSGeom poGEOSPoint;
 
             osPointWKT.Printf( "POINT(%d.5 %d.5)", iX + nXOff, iY + nYOff );
-            poGEOSPoint = GEOSGeomFromWKT( osPointWKT );
+            poGEOSPoint = GEOSGeomFromWKT_r( hGEOSCtxt, osPointWKT );
 
-            GEOSDistance( poGEOSPoly, poGEOSPoint, &dfDist );
-            GEOSGeom_destroy( poGEOSPoint );
+            GEOSDistance_r( hGEOSCtxt, poGEOSPoly, poGEOSPoint, &dfDist );
+            GEOSGeom_destroy_r( hGEOSCtxt, poGEOSPoint );
 
             dfLastDist = dfDist;
 
@@ -181,7 +182,8 @@ BlendMaskGenerator( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
-    GEOSGeom_destroy( poGEOSPoly );
+    GEOSGeom_destroy_r( hGEOSCtxt, poGEOSPoly );
+    OGRGeometry::freeGEOSContext( hGEOSCtxt );
 
     return CE_None;
 

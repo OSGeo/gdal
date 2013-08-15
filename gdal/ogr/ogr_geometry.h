@@ -55,6 +55,7 @@ class OGRRawPoint
 };
 
 typedef struct GEOSGeom_t *GEOSGeom;
+typedef struct GEOSContextHandle_HS *GEOSContextHandle_t;
 
 /************************************************************************/
 /*                             OGRGeometry                              */
@@ -113,7 +114,11 @@ class CPL_DLL OGRGeometry
     virtual char * exportToGML( const char* const * papszOptions = NULL ) const;
 	virtual char * exportToKML() const;
     virtual char * exportToJson() const;
-    virtual GEOSGeom exportToGEOS() const;
+
+    static GEOSContextHandle_t createGEOSContext();
+    static void freeGEOSContext(GEOSContextHandle_t hGEOSCtxt);
+    virtual GEOSGeom exportToGEOS(GEOSContextHandle_t hGEOSCtxt) const;
+
     virtual void closeRings();
 
     virtual void setCoordinateDimension( int nDimension ); 
@@ -652,7 +657,7 @@ class CPL_DLL OGRGeometryFactory
     static OGRErr createFromFgf( unsigned char *, OGRSpatialReference *,
                                  OGRGeometry **, int = -1, int * = NULL );
     static OGRGeometry *createFromGML( const char * );
-    static OGRGeometry *createFromGEOS( GEOSGeom );
+    static OGRGeometry *createFromGEOS( GEOSContextHandle_t hGEOSCtxt, GEOSGeom );
 
     static void   destroyGeometry( OGRGeometry * );
     static OGRGeometry *createGeometry( OGRwkbGeometryType );
