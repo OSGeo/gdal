@@ -3136,7 +3136,7 @@ dnl ---------------------------------------------------------------------------
 dnl Check if geos library is available.
 dnl ---------------------------------------------------------------------------
 
-GEOS_INIT(2.2.0)
+GEOS_INIT(3.1.0)
 HAVE_GEOS_RESULT="no"
 if test "${HAVE_GEOS}" = "yes" ; then
 

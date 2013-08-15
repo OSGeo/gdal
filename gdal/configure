@@ -26615,7 +26615,7 @@ fi
 
   if test x"$GEOS_CONFIG" != x"no" ; then
 
-    min_geos_version=2.2.0
+    min_geos_version=3.1.0
 
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GEOS version >= $min_geos_version" >&5
 $as_echo_n "checking for GEOS version >= $min_geos_version... " >&6; }
