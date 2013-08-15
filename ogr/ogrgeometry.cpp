@@ -2628,12 +2628,12 @@ OGRGeometryH OGR_G_Union( OGRGeometryH hThis, OGRGeometryH hOther )
 OGRGeometry *OGRGeometry::UnionCascaded() const
 
 {
-#ifdef HAVE_GEOS
+#ifndef HAVE_GEOS
 
     CPLError( CE_Failure, CPLE_NotSupported, 
               "GEOS support not enabled." );
     return NULL;
-
+#else
     GEOSGeom hThisGeosGeom = NULL;
     GEOSGeom hGeosProduct = NULL;
     OGRGeometry *poOGRProduct = NULL;
@@ -2657,10 +2657,6 @@ OGRGeometry *OGRGeometry::UnionCascaded() const
 
     return poOGRProduct;
 
-#else
-    CPLError( CE_Failure, CPLE_NotSupported,
-              "GEOS support not enabled." );
-    return NULL;
 #endif /* HAVE_GEOS */
 }
 
