@@ -828,7 +828,7 @@ CPLErr swq_select::parse( swq_field_list *field_list,
             
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "Use of field function %s() on string field %s illegal.", 
-                          op->osName.c_str(), def->field_name );
+                          op->pszName, def->field_name );
             return CE_Failure;
         }
     }
