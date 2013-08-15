@@ -157,6 +157,7 @@ S57Reader::S57Reader( const char * pszFilename )
     nSOMF = 10;
 
     poRegistrar = NULL;
+    poClassContentExplorer = NULL;
     bFileIngested = FALSE;
 
     nNextFEIndex = 0;
@@ -422,10 +423,12 @@ void S57Reader::SetOptions( char ** papszOptionsIn )
 /*                           SetClassBased()                            */
 /************************************************************************/
 
-void S57Reader::SetClassBased( S57ClassRegistrar * poReg )
+void S57Reader::SetClassBased( S57ClassRegistrar * poReg,
+                               S57ClassContentExplorer* poClassContentExplorerIn )
 
 {
     poRegistrar = poReg;
+    poClassContentExplorer = poClassContentExplorerIn;
 }
 
 /************************************************************************/
@@ -2422,7 +2425,7 @@ OGRFeatureDefn * S57Reader::FindFDefn( DDFRecord * poRecord )
         if( apoFDefnByOBJL[nOBJL] != NULL )
             return apoFDefnByOBJL[nOBJL];
 
-        if( !poRegistrar->SelectClass( nOBJL ) )
+        if( !poClassContentExplorer->SelectClass( nOBJL ) )
         {
             for( int i = 0; i < nFDefnCount; i++ )
             {
@@ -2435,7 +2438,7 @@ OGRFeatureDefn * S57Reader::FindFDefn( DDFRecord * poRecord )
         for( int i = 0; i < nFDefnCount; i++ )
         {
             if( EQUAL(papoFDefnList[i]->GetName(),
-                      poRegistrar->GetAcronym()) )
+                      poClassContentExplorer->GetAcronym()) )
                 return papoFDefnList[i];
         }
 
@@ -2519,8 +2522,8 @@ void S57Reader::AddFeatureDefn( OGRFeatureDefn * poFDefn )
 
     if( poRegistrar != NULL )
     {
-        if( poRegistrar->SelectClass( poFDefn->GetName() ) )
-            apoFDefnByOBJL[poRegistrar->GetOBJL()] = poFDefn;
+        if( poClassContentExplorer->SelectClass( poFDefn->GetName() ) )
+            apoFDefnByOBJL[poClassContentExplorer->GetOBJL()] = poFDefn;
     }
 }
 
