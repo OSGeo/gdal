@@ -46,7 +46,7 @@ void swqerror( swq_parse_context *context, const char *msg )
         osMsg += " ";
     osMsg += "^";
 
-    CPLError( CE_Failure, CPLE_AppDefined, osMsg.c_str() );
+    CPLError( CE_Failure, CPLE_AppDefined, "%s", osMsg.c_str() );
 }
 
 
