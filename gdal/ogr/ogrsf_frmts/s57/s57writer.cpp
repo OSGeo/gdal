@@ -57,7 +57,6 @@ S57Writer::~S57Writer()
 
 {
     Close();
-    delete poClassContentExplorer;
 }
 
 /************************************************************************/
@@ -965,11 +964,12 @@ int S57Writer::WriteCompleteFeature( OGRFeature *poFeature )
 /*                           SetClassBased()                            */
 /************************************************************************/
 
-void S57Writer::SetClassBased( S57ClassRegistrar * poReg )
+void S57Writer::SetClassBased( S57ClassRegistrar * poReg,
+                               S57ClassContentExplorer* poClassContentExplorerIn )
 
 {
     poRegistrar = poReg;
-    poClassContentExplorer = new S57ClassContentExplorer(poRegistrar);
+    poClassContentExplorer = poClassContentExplorerIn;
 }
 
 /************************************************************************/
