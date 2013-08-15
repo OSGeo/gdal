@@ -29,8 +29,11 @@
 
 #include "ogr_nas.h"
 #include "cpl_conv.h"
+#include "nasreaderp.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
+
 
 /************************************************************************/
 /*                          ~OGRNASDriver()                           */
@@ -39,6 +42,9 @@ CPL_CVSID("$Id$");
 OGRNASDriver::~OGRNASDriver()
 
 {
+    if( NASReader::hMutex != NULL )
+        CPLDestroyMutex( NASReader::hMutex );
+    NASReader::hMutex = NULL;
 }
 
 /************************************************************************/

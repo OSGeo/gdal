@@ -34,6 +34,7 @@
 #include "gmlreaderp.h"
 #include "cpl_conv.h"
 #include <map>
+#include "cpl_multiproc.h"
 
 #define SUPPORT_GEOMETRY
 
@@ -98,8 +99,9 @@ IGMLReader *CreateGMLReader(int bUseExpatParserPreferably,
 
 #endif
 
-int GMLReader::m_bXercesInitialized = FALSE;
+int GMLReader::m_bXercesInitialized = -1;
 int GMLReader::m_nInstanceCount = 0;
+void *GMLReader::hMutex = NULL;
 
 /************************************************************************/
 /*                             GMLReader()                              */
@@ -128,7 +130,6 @@ GMLReader::GMLReader(int bUseExpatParserPreferably,
         CPLDebug("GML", "Using Xerces reader");
 #endif
 
-    m_nInstanceCount++;
     m_nClassCount = 0;
     m_papoClass = NULL;
 
@@ -194,12 +195,15 @@ GMLReader::~GMLReader()
 
     delete m_poRecycledState;
 
-    --m_nInstanceCount;
 #ifdef HAVE_XERCES
-    if( m_nInstanceCount == 0 && m_bXercesInitialized )
+    {
+    CPLMutexHolderD(&hMutex);
+    --m_nInstanceCount;
+    if( m_nInstanceCount == 0 && m_bXercesInitialized > 0 )
     {
         XMLPlatformUtils::Terminate();
         m_bXercesInitialized = FALSE;
+    }
     }
 #endif
 #ifdef HAVE_EXPAT
@@ -292,7 +296,10 @@ int GMLReader::SetupParser()
 
 int GMLReader::SetupParserXerces()
 {
-    if( !m_bXercesInitialized )
+    {
+    CPLMutexHolderD(&hMutex);
+    m_nInstanceCount++;
+    if( m_bXercesInitialized < 0 )
     {
         try
         {
@@ -304,9 +311,13 @@ int GMLReader::SetupParserXerces()
             CPLError( CE_Warning, CPLE_AppDefined,
                       "Exception initializing Xerces based GML reader.\n%s", 
                       tr_strdup(toCatch.getMessage()) );
+            m_bXercesInitialized = FALSE;
             return FALSE;
         }
         m_bXercesInitialized = TRUE;
+    }
+    if( !m_bXercesInitialized )
+        return FALSE;
     }
 
     // Cleanup any old parser.
