@@ -495,11 +495,6 @@ def ogr_geos_simplify_linestring():
 
     g1.Destroy()
 
-    if simplify is None:
-        msg = gdal.GetLastErrorMsg()
-        if msg.find('GEOS >=') != -1:
-            return 'skip'
-
     if simplify.ExportToWkt() != 'LINESTRING (0 0,10 0)':
         print('Got: ', simplify.ExportToWkt())
         return 'fail'
@@ -522,11 +517,6 @@ def ogr_geos_simplifypreservetopology_linestring():
 
     g1.Destroy()
 
-    if simplify is None:
-        msg = gdal.GetLastErrorMsg()
-        if msg.find('GEOS >=') != -1:
-            return 'skip'
-
     if simplify.ExportToWkt() != 'LINESTRING (0 0,10 0)':
         print('Got: ', simplify.ExportToWkt())
         return 'fail'
@@ -548,11 +538,6 @@ def ogr_geos_unioncascaded():
     cascadedunion = g1.UnionCascaded()
 
     g1.Destroy()
-
-    if cascadedunion is None:
-        msg = gdal.GetLastErrorMsg()
-        if msg.find('GEOS >=') != -1:
-            return 'skip'
 
     if cascadedunion.ExportToWkt() != 'POLYGON ((0 0,0 1,0.5 1.0,0.5 1.5,1.5 1.5,1.5 0.5,1.0 0.5,1 0,0 0))':
         print('Got: ', cascadedunion.ExportToWkt())
