@@ -222,7 +222,8 @@ static void ThreadFunctionInternal( ThreadContext* psContext )
             printf( "  -> %s\n", poR->GetDriver(iDriver)->GetName() );
         }
 
-        exit( 1 );
+        psContext->bRet = FALSE;
+        return;
     }
 
 /* -------------------------------------------------------------------- */
@@ -246,7 +247,11 @@ static void ThreadFunctionInternal( ThreadContext* psContext )
     {
         OGRLayer  *poResultSet = poDS->ExecuteSQL(pszSQLStatement, NULL, pszDialect);
         if (poResultSet == NULL)
-            exit(1);
+        {
+            OGRDataSource::DestroyDataSource(poDS);
+            psContext->bRet = FALSE;
+            return;
+        }
 
         if( bVerbose )
         {
@@ -272,7 +277,9 @@ static void ThreadFunctionInternal( ThreadContext* psContext )
             {
                 printf( "FAILURE: Couldn't fetch advertised layer %d!\n",
                         iLayer );
-                exit( 1 );
+                OGRDataSource::DestroyDataSource(poDS);
+                psContext->bRet = FALSE;
+                return;
             }
 
             if( bVerbose )
@@ -306,7 +313,9 @@ static void ThreadFunctionInternal( ThreadContext* psContext )
             {
                 printf( "FAILURE: Couldn't fetch requested layer %s!\n",
                         *papszLayerIter );
-                exit( 1 );
+                OGRDataSource::DestroyDataSource(poDS);
+                psContext->bRet = FALSE;
+                return;
             }
             
             printf( "INFO: Testing layer %s.\n",
