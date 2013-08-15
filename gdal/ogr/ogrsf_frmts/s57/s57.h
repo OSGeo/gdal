@@ -97,18 +97,14 @@ char **S57FileCollector( const char * pszDataset );
 #define MAX_CLASSES 23000
 #define MAX_ATTRIBUTES 65535
 
+class S57ClassContentExplorer;
+
 class CPL_DLL S57ClassRegistrar
 {
+    friend class S57ClassContentExplorer;
     // Class information:
     int         nClasses;
     char      **papszClassesInfo;
-    char     ***papapszClassesFields;
-
-    int         iCurrentClass;
-
-    char      **papszCurrentFields;
-
-    char      **papszTempResult;
 
     // Attribute Information:
     int         nAttrMax;
@@ -132,23 +128,6 @@ public:
 
     int         LoadInfo( const char *, const char *, int );
 
-    // class table methods.
-    int         SelectClassByIndex( int );
-    int         SelectClass( int );
-    int         SelectClass( const char * );
-
-    int         Rewind() { return SelectClassByIndex(0); }
-    int         NextClass() { return SelectClassByIndex(iCurrentClass+1); }
-
-    int         GetOBJL();
-    const char *GetDescription();
-    const char *GetAcronym();
-
-    char      **GetAttributeList( const char * = NULL );
-
-    char        GetClassCode();
-    char      **GetPrimitives();
-
     // attribute table methods.
     int         GetMaxAttrIndex() { return nAttrMax; }
     const char *GetAttrName( int i ) { return papszAttrNames[i]; }
@@ -165,6 +144,43 @@ public:
     char        GetAttrClass( int i ) { return pachAttrClass[i]; }
     int         FindAttrByAcronym( const char * );
 
+};
+
+/************************************************************************/
+/*                       S57ClassContentExplorer                        */
+/************************************************************************/
+
+class S57ClassContentExplorer
+{
+    S57ClassRegistrar* poRegistrar;
+
+    char     ***papapszClassesFields;
+
+    int         iCurrentClass;
+
+    char      **papszCurrentFields;
+
+    char      **papszTempResult;
+
+    public:
+        S57ClassContentExplorer(S57ClassRegistrar* poRegistrar);
+       ~S57ClassContentExplorer();
+
+    int         SelectClassByIndex( int );
+    int         SelectClass( int );
+    int         SelectClass( const char * );
+
+    int         Rewind() { return SelectClassByIndex(0); }
+    int         NextClass() { return SelectClassByIndex(iCurrentClass+1); }
+
+    int         GetOBJL();
+    const char *GetDescription();
+    const char *GetAcronym();
+
+    char      **GetAttributeList( const char * = NULL );
+
+    char        GetClassCode();
+    char      **GetPrimitives();
 };
 
 /************************************************************************/
@@ -221,6 +237,7 @@ public:
 class CPL_DLL S57Reader
 {
     S57ClassRegistrar  *poRegistrar;
+    S57ClassContentExplorer* poClassContentExplorer;
 
     int                 nFDefnCount;
     OGRFeatureDefn      **papoFDefnList;
@@ -295,7 +312,7 @@ class CPL_DLL S57Reader
                         S57Reader( const char * );
                        ~S57Reader();
 
-    void                SetClassBased( S57ClassRegistrar * );
+    void                SetClassBased( S57ClassRegistrar *, S57ClassContentExplorer* );
     void                SetOptions( char ** );
     int                 GetOptionFlags() { return nOptionFlags; }
 
@@ -360,6 +377,7 @@ public:
 private:
     int                 nNext0001Index;
     S57ClassRegistrar   *poRegistrar;
+    S57ClassContentExplorer* poClassContentExplorer;
 
     int                 nCOMF;  /* Coordinate multiplier */
     int                 nSOMF;  /* Vertical (sounding) multiplier */
@@ -371,6 +389,7 @@ private:
 void           CPL_DLL  S57GenerateStandardAttributes( OGRFeatureDefn *, int );
 OGRFeatureDefn CPL_DLL *S57GenerateGeomFeatureDefn( OGRwkbGeometryType, int );
 OGRFeatureDefn CPL_DLL *S57GenerateObjectClassDefn( S57ClassRegistrar *, 
+                                                    S57ClassContentExplorer* poClassContentExplorer,
                                                     int, int );
 OGRFeatureDefn CPL_DLL  *S57GenerateVectorPrimitiveFeatureDefn( int, int );
 OGRFeatureDefn CPL_DLL  *S57GenerateDSIDFeatureDefn( void );

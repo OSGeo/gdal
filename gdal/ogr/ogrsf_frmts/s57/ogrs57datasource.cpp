@@ -45,6 +45,7 @@ OGRS57DataSource::OGRS57DataSource()
 
     nModules = 0;
     papoModules = NULL;
+    poClassContentExplorer = NULL;
     poWriter = NULL;
 
     pszName = NULL;
@@ -107,6 +108,7 @@ OGRS57DataSource::~OGRS57DataSource()
         poWriter->Close();
         delete poWriter;
     }
+    delete poClassContentExplorer;
 }
 
 /************************************************************************/
@@ -320,9 +322,13 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
         OGRFeatureDefn  *poDefn;
         int             *panClassCount;
         int             iClass, bGeneric = FALSE;
+        
+        poClassContentExplorer =
+            new S57ClassContentExplorer( OGRS57Driver::GetS57Registrar() );
 
         for( iModule = 0; iModule < nModules; iModule++ )
-            papoModules[iModule]->SetClassBased( OGRS57Driver::GetS57Registrar() );
+            papoModules[iModule]->SetClassBased( OGRS57Driver::GetS57Registrar(),
+                                                 poClassContentExplorer );
         
         panClassCount = (int *) CPLCalloc(sizeof(int),MAX_CLASSES);
 
@@ -338,7 +344,8 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
             if( panClassCount[iClass] > 0 )
             {
                 poDefn = 
-                    S57GenerateObjectClassDefn( OGRS57Driver::GetS57Registrar(), 
+                    S57GenerateObjectClassDefn( OGRS57Driver::GetS57Registrar(),
+                                                poClassContentExplorer,
                                                 iClass, 
                                                 poModule->GetOptionFlags() );
 
@@ -497,6 +504,9 @@ int OGRS57DataSource::Create( const char *pszFilename, char **papszOptions )
     poWriter->SetClassBased( OGRS57Driver::GetS57Registrar() );
     pszName = CPLStrdup( pszFilename );
 
+    poClassContentExplorer =
+        new S57ClassContentExplorer( OGRS57Driver::GetS57Registrar() );
+
 /* -------------------------------------------------------------------- */
 /*      Add the primitive layers if they are called for.                */
 /* -------------------------------------------------------------------- */
@@ -522,6 +532,7 @@ int OGRS57DataSource::Create( const char *pszFilename, char **papszOptions )
     {
         poDefn = 
             S57GenerateObjectClassDefn( OGRS57Driver::GetS57Registrar(), 
+                                        poClassContentExplorer,
                                         iClass, nOptionFlags );
         
         if( poDefn == NULL )
