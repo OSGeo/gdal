@@ -354,7 +354,7 @@ public:
                         S57Writer();
                         ~S57Writer();
 
-    void                SetClassBased( S57ClassRegistrar * );
+    void                SetClassBased( S57ClassRegistrar *, S57ClassContentExplorer* );
     int                 CreateS57File( const char *pszFilename );
     int                 Close();
 
