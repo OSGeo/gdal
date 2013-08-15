@@ -667,9 +667,6 @@ class CPL_DLL OGRGeometryFactory
                                            int nPolygonCount,
                                            int *pbResultValidGeometry,
                                            const char **papszOptions = NULL);
-
-    static void *getGEOSGeometryFactory();
-
     static int haveGEOS();
 
     static OGRGeometry* transformWithOptions( const OGRGeometry* poSrcGeom,
