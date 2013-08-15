@@ -1546,18 +1546,6 @@ OGRGeometryFactory::createFromGEOS( GEOSGeom geosGeom )
 }
 
 /************************************************************************/
-/*                       getGEOSGeometryFactory()                       */
-/************************************************************************/
-
-void *OGRGeometryFactory::getGEOSGeometryFactory() 
-
-{
-    // XXX - mloskot - What to do with this call
-    // after GEOS C++ API has been stripped?
-    return NULL;
-}
-
-/************************************************************************/
 /*                              haveGEOS()                              */
 /************************************************************************/
 

@@ -9,3 +9,10 @@ C++ API:
     See http://trac.osgeo.org/gdal/wiki/rfc40_enhanced_rat_support
     The functionnality of GDAL 1.X GDALRasterAttributeTable is now in
     GDALDefaultRasterAttributeTable.
+
+
+Changes that should not impact anybody :
+
+   * OGRGeometryFactory::getGEOSGeometryFactory() has been removed.
+     This method returned NULL since 2006
+     ( http://trac.osgeo.org/gdal/changeset/9899/trunk/ogr/ogrgeometryfactory.cpp )
