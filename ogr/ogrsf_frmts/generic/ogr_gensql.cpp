@@ -206,7 +206,7 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
                 (swq_op) psColDef->col_func );
 
             oFDefn.SetName( CPLSPrintf( "%s_%s",
-                                        op->osName.c_str(),
+                                        op->pszName,
                                         psColDef->field_name ) );
         }
         else

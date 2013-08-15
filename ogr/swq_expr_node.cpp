@@ -302,7 +302,7 @@ void swq_expr_node::Dump( FILE * fp, int depth )
     const swq_operation *op_def = 
         swq_op_registrar::GetOperator( (swq_op) nOperation );
 
-    fprintf( fp, "%s%s\n", spaces, op_def->osName.c_str() );
+    fprintf( fp, "%s%s\n", spaces, op_def->pszName );
 
     for( i = 0; i < nSubExprCount; i++ )
         papoSubExpr[i]->Dump( fp, depth+1 );
@@ -480,7 +480,7 @@ char *swq_expr_node::Unparse( swq_field_list *field_list, char chColumnQuote )
             osExpr += ")";
         }
         osExpr += " ";
-        osExpr += poOp->osName;
+        osExpr += poOp->pszName;
         osExpr += " ";
         if (papoSubExpr[1]->eNodeType == SNT_COLUMN ||
             papoSubExpr[1]->eNodeType == SNT_CONSTANT)
@@ -524,7 +524,7 @@ char *swq_expr_node::Unparse( swq_field_list *field_list, char chColumnQuote )
         CPLAssert( nSubExprCount == 3 );
         osExpr.Printf( "%s %s (%s) AND (%s)",
                        apszSubExpr[0],
-                       poOp->osName.c_str(),
+                       poOp->pszName,
                        apszSubExpr[1],
                        apszSubExpr[2] );
         break;
@@ -557,7 +557,7 @@ char *swq_expr_node::Unparse( swq_field_list *field_list, char chColumnQuote )
         break;
 
       default: // function style.
-        osExpr.Printf( "%s(", poOp->osName.c_str() );
+        osExpr.Printf( "%s(", poOp->pszName );
         for( i = 0; i < nSubExprCount; i++ )
         {
             if( i > 0 )

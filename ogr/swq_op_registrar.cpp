@@ -28,12 +28,43 @@
  ****************************************************************************/
 
 #include "cpl_conv.h"
-#include "cpl_multiproc.h"
 #include "swq.h"
-#include <vector>
 
-static void *hOperationsMutex = NULL;
-static std::vector<swq_operation*>* papoOperations = NULL;
+static swq_field_type SWQColumnFuncChecker( swq_expr_node *poNode );
+
+static const swq_operation swq_apsOperations[] =
+{
+    { "OR", SWQ_OR, SWQGeneralEvaluator, SWQGeneralChecker },
+    { "AND", SWQ_AND, SWQGeneralEvaluator, SWQGeneralChecker },
+    { "NOT", SWQ_NOT , SWQGeneralEvaluator, SWQGeneralChecker },
+    { "=", SWQ_EQ , SWQGeneralEvaluator, SWQGeneralChecker },
+    { "<>", SWQ_NE , SWQGeneralEvaluator, SWQGeneralChecker },
+    { ">=", SWQ_GE , SWQGeneralEvaluator, SWQGeneralChecker },
+    { "<=", SWQ_LE , SWQGeneralEvaluator, SWQGeneralChecker },
+    { "<", SWQ_LT , SWQGeneralEvaluator, SWQGeneralChecker },
+    { ">", SWQ_GT , SWQGeneralEvaluator, SWQGeneralChecker },
+    { "LIKE", SWQ_LIKE , SWQGeneralEvaluator, SWQGeneralChecker },
+    { "IS NULL", SWQ_ISNULL , SWQGeneralEvaluator, SWQGeneralChecker },
+    { "IN", SWQ_IN , SWQGeneralEvaluator, SWQGeneralChecker },
+    { "BETWEEN", SWQ_BETWEEN , SWQGeneralEvaluator, SWQGeneralChecker },
+    { "+", SWQ_ADD , SWQGeneralEvaluator, SWQGeneralChecker },
+    { "-", SWQ_SUBTRACT , SWQGeneralEvaluator, SWQGeneralChecker },
+    { "*", SWQ_MULTIPLY , SWQGeneralEvaluator, SWQGeneralChecker },
+    { "/", SWQ_DIVIDE , SWQGeneralEvaluator, SWQGeneralChecker },
+    { "%", SWQ_MODULUS , SWQGeneralEvaluator, SWQGeneralChecker },
+    { "CONCAT", SWQ_CONCAT , SWQGeneralEvaluator, SWQGeneralChecker },
+    { "SUBSTR", SWQ_SUBSTR , SWQGeneralEvaluator, SWQGeneralChecker },
+
+    { "AVG", SWQ_AVG, SWQGeneralEvaluator, SWQColumnFuncChecker },
+    { "MIN", SWQ_MIN, SWQGeneralEvaluator, SWQColumnFuncChecker },
+    { "MAX", SWQ_MAX, SWQGeneralEvaluator, SWQColumnFuncChecker },
+    { "COUNT", SWQ_COUNT, SWQGeneralEvaluator, SWQColumnFuncChecker },
+    { "SUM", SWQ_SUM, SWQGeneralEvaluator, SWQColumnFuncChecker },
+
+    { "CAST", SWQ_CAST, SWQCastEvaluator, SWQCastChecker }
+};
+
+#define N_OPERATIONS (sizeof(swq_apsOperations) / sizeof(swq_apsOperations[0]))
 
 /************************************************************************/
 /*                            GetOperator()                             */
@@ -43,13 +74,10 @@ const swq_operation *swq_op_registrar::GetOperator( const char *pszName )
 
 {
     unsigned int i;
-
-    Initialize();
-
-    for( i = 0; i < papoOperations->size(); i++ )
+    for( i = 0; i < N_OPERATIONS; i++ )
     {
-        if( EQUAL(pszName,(*papoOperations)[i]->osName.c_str()) )
-            return (*papoOperations)[i];
+        if( EQUAL(pszName,swq_apsOperations[i].pszName) )
+            return &(swq_apsOperations[i]);
     }
 
     return NULL;
@@ -64,46 +92,14 @@ const swq_operation *swq_op_registrar::GetOperator( swq_op eOperator )
 {
     unsigned int i;
 
-    Initialize();
-
-    for( i = 0; i < papoOperations->size(); i++ )
+    for( i = 0; i < N_OPERATIONS; i++ )
     {
-        if( eOperator == (*papoOperations)[i]->eOperation )
-            return (*papoOperations)[i];
+        if( eOperator == swq_apsOperations[i].eOperation )
+            return &(swq_apsOperations[i]);
     }
 
     return NULL;
 }
-
-
-/************************************************************************/
-/*                            AddOperator()                             */
-/************************************************************************/
-
-void swq_op_registrar::AddOperator( const char *pszName, swq_op eOpCode,
-                                    swq_op_evaluator pfnEvaluator,
-                                    swq_op_checker pfnChecker )
-
-{
-    if( GetOperator( pszName ) != NULL )
-        return;
-
-    if( pfnEvaluator == NULL )
-        pfnEvaluator = SWQGeneralEvaluator;
-    if( pfnChecker == NULL )
-        pfnChecker = SWQGeneralChecker;
-
-    swq_operation *poOp = new swq_operation();
-
-    poOp->eOperation = eOpCode;
-    poOp->osName = pszName;
-    poOp->pfnEvaluator = pfnEvaluator;
-    poOp->pfnChecker = pfnChecker;
-
-    papoOperations->push_back( poOp );
-}
-
-
 
 /************************************************************************/
 /*                        SWQColumnFuncChecker()                        */
@@ -120,75 +116,6 @@ static swq_field_type SWQColumnFuncChecker( swq_expr_node *poNode )
             swq_op_registrar::GetOperator((swq_op)poNode->nOperation);
     CPLError( CE_Failure, CPLE_AppDefined,
               "Column Summary Function '%s' found in an inappropriate context.",
-              (poOp) ? poOp->osName.c_str() : "" );
+              (poOp) ? poOp->pszName : "" );
     return SWQ_ERROR;
-}
-
-
-/************************************************************************/
-/*                             Initialize()                             */
-/************************************************************************/
-
-void swq_op_registrar::Initialize()
-
-{
-    CPLMutexHolderD( &hOperationsMutex );
-
-    if( papoOperations )
-        return;
-
-    papoOperations = new std::vector<swq_operation*>;
-
-    AddOperator( "OR", SWQ_OR );
-    AddOperator( "AND", SWQ_AND );
-    AddOperator( "NOT", SWQ_NOT );
-    AddOperator( "=", SWQ_EQ );
-    AddOperator( "<>", SWQ_NE );
-    AddOperator( ">=", SWQ_GE );
-    AddOperator( "<=", SWQ_LE );
-    AddOperator( "<", SWQ_LT );
-    AddOperator( ">", SWQ_GT );
-    AddOperator( "LIKE", SWQ_LIKE );
-    AddOperator( "IS NULL", SWQ_ISNULL );
-    AddOperator( "IN", SWQ_IN );
-    AddOperator( "BETWEEN", SWQ_BETWEEN );
-    AddOperator( "+", SWQ_ADD );
-    AddOperator( "-", SWQ_SUBTRACT );
-    AddOperator( "*", SWQ_MULTIPLY );
-    AddOperator( "/", SWQ_DIVIDE );
-    AddOperator( "%", SWQ_MODULUS );
-    AddOperator( "CONCAT", SWQ_CONCAT );
-    AddOperator( "SUBSTR", SWQ_SUBSTR );
-
-    AddOperator( "AVG", SWQ_AVG, NULL, SWQColumnFuncChecker );
-    AddOperator( "MIN", SWQ_MIN, NULL, SWQColumnFuncChecker );
-    AddOperator( "MAX", SWQ_MAX, NULL, SWQColumnFuncChecker );
-    AddOperator( "COUNT", SWQ_COUNT, NULL, SWQColumnFuncChecker );
-    AddOperator( "SUM", SWQ_SUM, NULL, SWQColumnFuncChecker );
-
-    AddOperator( "CAST", SWQ_CAST, SWQCastEvaluator, SWQCastChecker );
-}
-
-/************************************************************************/
-/*                            DeInitialize()                            */
-/************************************************************************/
-
-void swq_op_registrar::DeInitialize()
-
-{
-    {
-        CPLMutexHolderD( &hOperationsMutex );
-        
-        if( papoOperations != NULL)
-        {
-            for( unsigned int i=0; i < papoOperations->size(); i++ )
-                delete (*papoOperations)[i];
-            
-            delete papoOperations;
-            papoOperations = NULL;
-        }
-    }
-
-    CPLDestroyMutex( hOperationsMutex );
-    hOperationsMutex = NULL;
 }

@@ -147,7 +147,6 @@ void OGRCleanupAll()
         if( poRegistrar != NULL )
             delete poRegistrar;
         OSRCleanup();
-        swq_op_registrar::DeInitialize();
     }
 
     CPLDestroyMutex( hDRMutex );

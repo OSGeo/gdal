@@ -948,7 +948,7 @@ OGRLayer * OGRCouchDBDataSource::ExecuteSQLStats( const char *pszSQLCommand )
                 const swq_operation *op = swq_op_registrar::GetOperator(
                     (swq_op) psColDef->col_func );
                 oFDefn.SetName( CPLSPrintf( "%s_%s",
-                                            op->osName.c_str(),
+                                            op->pszName,
                                             psColDef->field_name ) );
             }
 
