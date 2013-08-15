@@ -222,6 +222,8 @@ public:
 
     int         SetFilteredClassName(const char* pszClassName);
     const char* GetFilteredClassName() { return m_pszFilteredClassName; }
+
+    static void* hMutex;
 };
 
 #endif /* _CPL_NASREADERP_H_INCLUDED */

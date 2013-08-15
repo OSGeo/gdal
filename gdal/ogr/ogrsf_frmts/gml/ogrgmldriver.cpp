@@ -29,6 +29,8 @@
 
 #include "ogr_gml.h"
 #include "cpl_conv.h"
+#include "cpl_multiproc.h"
+#include "gmlreaderp.h"
 
 CPL_CVSID("$Id$");
 
@@ -39,6 +41,9 @@ CPL_CVSID("$Id$");
 OGRGMLDriver::~OGRGMLDriver()
 
 {
+    if( GMLReader::hMutex != NULL )
+        CPLDestroyMutex( GMLReader::hMutex );
+    GMLReader::hMutex = NULL;
 }
 
 /************************************************************************/

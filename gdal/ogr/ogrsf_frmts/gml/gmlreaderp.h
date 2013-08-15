@@ -517,6 +517,8 @@ public:
     const char* GetFilteredClassName() { return m_pszFilteredClassName; }
 
     int         IsSequentialLayers() const { return m_bSequentialLayers == TRUE; }
+
+    static void* hMutex;
 };
 
 #endif /* _CPL_GMLREADERP_H_INCLUDED */
