@@ -48,13 +48,8 @@ S57ClassRegistrar::S57ClassRegistrar()
 {
     nClasses = 0;
     papszClassesInfo = NULL;
-    
-    iCurrentClass = -1;
 
-    papszCurrentFields = NULL;
-    papszTempResult = NULL;
     papszNextLine = NULL;
-    papapszClassesFields = NULL;
     pachAttrClass = NULL;
     pachAttrType = NULL;
     panAttrIndex = NULL;
@@ -73,14 +68,7 @@ S57ClassRegistrar::~S57ClassRegistrar()
     int i;
 
     CSLDestroy( papszClassesInfo );
-    CSLDestroy( papszTempResult );
-    
-    if( papapszClassesFields != NULL )
-    {
-        for( i = 0; i < nClasses; i++ )
-            CSLDestroy( papapszClassesFields[i] );
-        CPLFree( papapszClassesFields );
-    }
+
     if( papszAttrNames )
     {
         for( i = 0; i < MAX_ATTRIBUTES; i++ )
@@ -94,6 +82,37 @@ S57ClassRegistrar::~S57ClassRegistrar()
     CPLFree( pachAttrType );
     CPLFree( pachAttrClass );
     CPLFree( panAttrIndex );
+}
+
+/************************************************************************/
+/*                        S57ClassContentExplorer()                     */
+/************************************************************************/
+
+S57ClassContentExplorer::S57ClassContentExplorer(S57ClassRegistrar* poRegistrar):
+    poRegistrar(poRegistrar)
+{
+    
+    iCurrentClass = -1;
+
+    papszCurrentFields = NULL;
+    papapszClassesFields = NULL;
+    papszTempResult = NULL;
+}
+
+/************************************************************************/
+/*                        ~S57ClassContentExplorer()                    */
+/************************************************************************/
+
+S57ClassContentExplorer::~S57ClassContentExplorer()
+{
+    CSLDestroy( papszTempResult );
+    
+    if( papapszClassesFields != NULL )
+    {
+        for( int i = 0; i < poRegistrar->nClasses; i++ )
+            CSLDestroy( papapszClassesFields[i] );
+        CPLFree( papapszClassesFields );
+    }
 }
 
 /************************************************************************/
@@ -253,7 +272,6 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
 /* -------------------------------------------------------------------- */
     if( fp != NULL )
         VSIFCloseL( fp );
-    iCurrentClass = -1;
 
     if( nClasses == 0 )
         return FALSE;
@@ -385,10 +403,10 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
 /*                         SelectClassByIndex()                         */
 /************************************************************************/
 
-int S57ClassRegistrar::SelectClassByIndex( int nNewIndex )
+int S57ClassContentExplorer::SelectClassByIndex( int nNewIndex )
 
 {
-    if( nNewIndex < 0 || nNewIndex >= nClasses )
+    if( nNewIndex < 0 || nNewIndex >= poRegistrar->nClasses )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -396,7 +414,7 @@ int S57ClassRegistrar::SelectClassByIndex( int nNewIndex )
 /* -------------------------------------------------------------------- */
     if( papapszClassesFields == NULL )
     {
-        papapszClassesFields = (char ***) CPLCalloc(sizeof(void*),nClasses);
+        papapszClassesFields = (char ***) CPLCalloc(sizeof(void*),poRegistrar->nClasses);
     }
 
 /* -------------------------------------------------------------------- */
@@ -404,7 +422,7 @@ int S57ClassRegistrar::SelectClassByIndex( int nNewIndex )
 /* -------------------------------------------------------------------- */
     if( papapszClassesFields[nNewIndex] == NULL )
         papapszClassesFields[nNewIndex] = 
-            CSLTokenizeStringComplex( papszClassesInfo[nNewIndex],
+            CSLTokenizeStringComplex( poRegistrar->papszClassesInfo[nNewIndex],
                                       ",", TRUE, TRUE );
 
     papszCurrentFields = papapszClassesFields[nNewIndex];
@@ -418,12 +436,12 @@ int S57ClassRegistrar::SelectClassByIndex( int nNewIndex )
 /*                             SelectClass()                            */
 /************************************************************************/
 
-int S57ClassRegistrar::SelectClass( int nOBJL )
+int S57ClassContentExplorer::SelectClass( int nOBJL )
 
 {
-    for( int i = 0; i < nClasses; i++ )
+    for( int i = 0; i < poRegistrar->nClasses; i++ )
     {
-        if( atoi(papszClassesInfo[i]) == nOBJL )
+        if( atoi(poRegistrar->papszClassesInfo[i]) == nOBJL )
             return SelectClassByIndex( i );
     }
 
@@ -434,10 +452,10 @@ int S57ClassRegistrar::SelectClass( int nOBJL )
 /*                            SelectClass()                             */
 /************************************************************************/
 
-int S57ClassRegistrar::SelectClass( const char *pszAcronym )
+int S57ClassContentExplorer::SelectClass( const char *pszAcronym )
 
 {
-    for( int i = 0; i < nClasses; i++ )
+    for( int i = 0; i < poRegistrar->nClasses; i++ )
     {
         if( !SelectClassByIndex( i ) )
             continue;
@@ -453,11 +471,11 @@ int S57ClassRegistrar::SelectClass( const char *pszAcronym )
 /*                              GetOBJL()                               */
 /************************************************************************/
 
-int S57ClassRegistrar::GetOBJL()
+int S57ClassContentExplorer::GetOBJL()
 
 {
     if( iCurrentClass >= 0 )
-        return atoi(papszClassesInfo[iCurrentClass]);
+        return atoi(poRegistrar->papszClassesInfo[iCurrentClass]);
     else
         return -1;
 }
@@ -466,7 +484,7 @@ int S57ClassRegistrar::GetOBJL()
 /*                           GetDescription()                           */
 /************************************************************************/
 
-const char * S57ClassRegistrar::GetDescription()
+const char * S57ClassContentExplorer::GetDescription()
 
 {
     if( iCurrentClass >= 0 && papszCurrentFields[0] != NULL )
@@ -479,7 +497,7 @@ const char * S57ClassRegistrar::GetDescription()
 /*                             GetAcronym()                             */
 /************************************************************************/
 
-const char * S57ClassRegistrar::GetAcronym()
+const char * S57ClassContentExplorer::GetAcronym()
 
 {
     if( iCurrentClass >= 0 
@@ -497,7 +515,7 @@ const char * S57ClassRegistrar::GetAcronym()
 /*      returned list remained owned by this object, not the caller.    */
 /************************************************************************/
 
-char **S57ClassRegistrar::GetAttributeList( const char * pszType )
+char **S57ClassContentExplorer::GetAttributeList( const char * pszType )
 
 {
     if( iCurrentClass < 0 )
@@ -536,7 +554,7 @@ char **S57ClassRegistrar::GetAttributeList( const char * pszType )
 /*                            GetClassCode()                            */
 /************************************************************************/
 
-char S57ClassRegistrar::GetClassCode()
+char S57ClassContentExplorer::GetClassCode()
 
 {
     if( iCurrentClass >= 0
@@ -556,7 +574,7 @@ char S57ClassRegistrar::GetClassCode()
 /*                           GetPrimitives()                            */
 /************************************************************************/
 
-char **S57ClassRegistrar::GetPrimitives()
+char **S57ClassContentExplorer::GetPrimitives()
 
 {
     if( iCurrentClass >= 0
