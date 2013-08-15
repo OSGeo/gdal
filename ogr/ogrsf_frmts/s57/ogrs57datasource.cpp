@@ -501,11 +501,12 @@ int OGRS57DataSource::Create( const char *pszFilename, char **papszOptions )
     if( !poWriter->CreateS57File( pszFilename ) )
         return FALSE;
 
-    poWriter->SetClassBased( OGRS57Driver::GetS57Registrar() );
-    pszName = CPLStrdup( pszFilename );
-
     poClassContentExplorer =
         new S57ClassContentExplorer( OGRS57Driver::GetS57Registrar() );
+
+    poWriter->SetClassBased( OGRS57Driver::GetS57Registrar(),
+                             poClassContentExplorer );
+    pszName = CPLStrdup( pszFilename );
 
 /* -------------------------------------------------------------------- */
 /*      Add the primitive layers if they are called for.                */
