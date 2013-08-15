@@ -834,7 +834,7 @@ swq_field_type SWQGeneralChecker( swq_expr_node *poNode )
           
           CPLError( CE_Failure, CPLE_AppDefined,
                     "SWQGeneralChecker() called on unsupported operation %s.",
-                    poOp->osName.c_str());
+                    poOp->pszName);
           return SWQ_ERROR;
       }
     }
@@ -861,7 +861,7 @@ swq_field_type SWQGeneralChecker( swq_expr_node *poNode )
                 
                 CPLError( CE_Failure, CPLE_AppDefined, 
                           "Type mismatch or improper type of arguments to %s operator.",
-                          poOp->osName.c_str() );
+                          poOp->pszName );
                 return SWQ_ERROR;
             }
         }
@@ -879,7 +879,7 @@ swq_field_type SWQGeneralChecker( swq_expr_node *poNode )
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Expected %d arguments to %s, but got %d arguments.",
                   nArgCount,
-                  poOp->osName.c_str(),
+                  poOp->pszName,
                   poNode->nSubExprCount );
         return SWQ_ERROR;
     }

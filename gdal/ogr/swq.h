@@ -130,26 +130,17 @@ public:
     double      float_value;
 };
 
-class swq_operation {
-public:
-    swq_operation() {}
-    ~swq_operation() {}
-
+typedef struct {
+    const char*      pszName;
     swq_op           eOperation;
-    CPLString        osName;
     swq_op_evaluator pfnEvaluator;
     swq_op_checker   pfnChecker;
-};
+} swq_operation;
 
 class swq_op_registrar {
 public:
     static const swq_operation *GetOperator( const char * );
     static const swq_operation *GetOperator( swq_op eOperation );
-    static void  Initialize();
-    static void  DeInitialize();
-    static void  AddOperator( const char *pszName, swq_op eOpCode,
-                              swq_op_evaluator pfnEvaluator = NULL,
-                              swq_op_checker pfnChecker = NULL );
 };
 
 typedef struct {
