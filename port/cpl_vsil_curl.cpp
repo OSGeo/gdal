@@ -638,7 +638,8 @@ vsi_l_offset VSICurlHandle::GetFileSize()
     /* HACK for mbtiles driver: proper fix would be to auto-detect servers that don't accept HEAD */
     /* http://a.tiles.mapbox.com/v3/ doesn't accept HEAD, so let's start a GET */
     /* and interrupt is as soon as the header is found */
-    if (strstr(pszURL, ".tiles.mapbox.com/") != NULL)
+    if (strstr(pszURL, ".tiles.mapbox.com/") != NULL
+	|| !CSLTestBoolean(CPLGetConfigOption("CPL_VSIL_CURL_USE_HEAD", "YES")))
     {
         curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
         curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, VSICurlHandleWriteFunc);
