@@ -2202,6 +2202,38 @@ def ogr_gml_53():
     return 'success'
 
 ###############################################################################
+# Test that we can open an empty GML datasource (#249, #5205)
+
+def ogr_gml_54():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    try:
+        os.unlink('data/empty.gfs')
+    except:
+        pass
+
+    ds = ogr.Open('data/empty.gml')
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds =  None
+
+    # with .gfs now
+    ds = ogr.Open('data/empty.gml')
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds =  None
+
+    try:
+        os.unlink('data/empty.gfs')
+    except:
+        pass
+
+    return 'success'
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -2381,6 +2413,7 @@ gdaltest_list = [
     ogr_gml_51,
     ogr_gml_52,
     ogr_gml_53,
+    ogr_gml_54,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':
