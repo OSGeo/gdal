@@ -1128,7 +1128,7 @@ int GMLReader::LoadClasses( const char *pszFile )
 
     VSIFCloseL( fp );
 
-    if( strstr( pszWholeText, "<GMLFeatureClassList>" ) == NULL )
+    if( strstr( pszWholeText, "<GMLFeatureClassList" ) == NULL )
     {
         VSIFree( pszWholeText );
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -1431,7 +1431,7 @@ int GMLReader::PrescanForSchema( int bGetExtents, int bAnalyzeSRSPerFeature )
 
     CleanupParser();
 
-    return m_nClassCount > 0;
+    return TRUE;
 }
 
 /************************************************************************/
