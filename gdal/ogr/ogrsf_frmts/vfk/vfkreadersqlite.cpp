@@ -72,16 +72,20 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFilename) : VFKReader(pszFilenam
     if (VSIStatL(pszDbName, &sStatBuf ) == 0) {
 	if (CSLTestBoolean(CPLGetConfigOption("OGR_VFK_DB_OVERWRITE", "NO"))) {
 	    bNewDb = TRUE;     /* overwrite existing DB */
+            CPLDebug("OGR-VFK", "Internal DB (%s) already exists and will be overwritten",
+                     pszDbName.c_str());
 	    VSIUnlink(pszDbName);
 	}
 	else {
 	    bNewDb = FALSE;    /* re-use exising DB */
 	}
     }
+    /*
     else {
       	CPLError(CE_Warning, CPLE_AppDefined, 
-                 "SQLite DB not found. Reading VFK data may take some time...");
+                 "Creating internal SQLite DB. Reading VFK data may take some time...");
     }
+    */
     CPLDebug("OGR-VFK", "New DB: %s Spatial: %s",
 	     bNewDb ? "yes" : "no", m_bSpatial ? "yes" : "no");
 
@@ -369,7 +373,7 @@ sqlite3_stmt *VFKReaderSQLite::PrepareStatement(const char *pszSQLCommand)
     int rc;
     sqlite3_stmt *hStmt = NULL;
     
-    /* CPLDebug("OGR-VFK", "PrepareStatement(): %s", pszSQLCommand); */
+    CPLDebug("OGR-VFK", "VFKReaderSQLite::PrepareStatement(): %s", pszSQLCommand);
 
     rc = sqlite3_prepare(m_poDB, pszSQLCommand, strlen(pszSQLCommand),
                          &hStmt, NULL);
@@ -424,22 +428,25 @@ OGRErr VFKReaderSQLite::ExecuteSQL(sqlite3_stmt *hStmt)
 /*!
   \brief Execute SQL statement (SQLITE only)
 
+  \param pszSQLCommand SQL command to execute
+  \param bQuiet TRUE to print debug message on failure instead of error message
+
   \return OGRERR_NONE on success or OGRERR_FAILURE on failure
 */
 OGRErr VFKReaderSQLite::ExecuteSQL(const char *pszSQLCommand, bool bQuiet)
 {
     char *pszErrMsg = NULL;
     
-    /*
-    CPLDebug("OGR-VFK", 
-	     "ExecuteSQL(): %s", pszSQLCommand);
-    */
-
     if (SQLITE_OK != sqlite3_exec(m_poDB, pszSQLCommand, NULL, NULL, &pszErrMsg)) {
         if (!bQuiet)
             CPLError(CE_Failure, CPLE_AppDefined, 
                      "In ExecuteSQL(%s): %s",
                      pszSQLCommand, pszErrMsg);
+        else
+            CPLDebug("OGR-VFK", 
+                     "In ExecuteSQL(%s): %s",
+                     pszSQLCommand, pszErrMsg);
+        
         return  OGRERR_FAILURE;
     }
 

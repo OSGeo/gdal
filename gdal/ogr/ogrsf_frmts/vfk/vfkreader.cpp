@@ -297,7 +297,7 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
 		 "%s: %d duplicated VFK data records skipped",
                  poDataBlock->GetName(), nDupl);
 
-    CPLDebug("OGR_VFK", "VFKReader::ReadDataRecords(): name=%s n=%d",
+    CPLDebug("OGR-VFK", "VFKReader::ReadDataRecords(): name=%s n=%d",
              poDataBlock->GetName(), nRecords);
 
     return nRecords;

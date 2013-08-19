@@ -330,6 +330,9 @@ int VFKDataBlockSQLite::LoadGeometryLineStringHP()
 	    poOgrGeometry = poLine->GetGeometry();
 	}
 	if (!poOgrGeometry || !poFeature->SetGeometry(poOgrGeometry)) {
+            CPLDebug("OGR-VFK", "VFKDataBlockSQLite::LoadGeometryLineStringHP(): name=%s fid=%ld "
+                     "id=" CPL_FRMT_GUIB " -> %s geometry", m_pszName, iFID, vrValue[0],
+                     poOgrGeometry ? "invalid" : "empty");
 	    nInvalid++;
             continue;
         }
@@ -919,7 +922,7 @@ bool VFKDataBlockSQLite::LoadGeometryFromDB()
 
     if (nInvalid > 0 && !bSkipInvalid) {
 	CPLError(CE_Warning, CPLE_AppDefined, 
-                 "%s: %d invalid features found",
+                 "%s: %d features with invalid or empty geometry found",
 		 m_pszName, nInvalid);
     }
 
@@ -940,7 +943,8 @@ void VFKDataBlockSQLite::UpdateVfkBlocks(int nGeometries) {
 
     if (nGeometries > 0) {
         CPLDebug("OGR-VFK", 
-                 "%d geometries in '%s' saved", nGeometries, m_pszName);
+                 "VFKDataBlockSQLite::UpdateVfkBlocks(): name=%s -> "
+                 "%d geometries saved to internal DB", m_pszName, nGeometries);
         
 	/* update number of geometries in 'vfk_blocks' table */
 	osSQL.Printf("UPDATE vfk_blocks SET num_geometries = %d WHERE table_name = '%s'",
