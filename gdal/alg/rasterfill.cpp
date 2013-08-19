@@ -335,8 +335,9 @@ target_x, target_y, origin_x, origin_y, target_value )			\
 									\
 if( quad_value != nNoDataVal ) 						\
 {									\
-    double dfDistSq = ((target_x-origin_x) * (target_x-origin_x))       \
-                    + ((target_y-origin_y) * (target_y-origin_y));      \
+    double dfDx = (double)target_x - (double)origin_x;			\
+    double dfDy = (double)target_y - (double)origin_y;			\
+    double dfDistSq = dfDx * dfDx + dfDy * dfDy;			\
     									\
     if( dfDistSq < quad_dist*quad_dist )				\
     {									\
@@ -568,7 +569,7 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
                 pafThisValue[iX] = pafScanline[iX];
                 panThisY[iX] = iY;
             }
-            else if( iY - panLastY[iX] <= dfMaxSearchDist )
+            else if( iY <= dfMaxSearchDist + panLastY[iX] )
             {
                 pafThisValue[iX] = pafLastValue[iX];
                 panThisY[iX] = panLastY[iX];
@@ -695,7 +696,10 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
             double adfQuadValue[4];
 
             for( iQuad = 0; iQuad < 4; iQuad++ )
+            {
                 adfQuadDist[iQuad] = dfMaxSearchDist + 1.0;
+                adfQuadValue[iQuad] = 0.0;
+            }
             
             // Step left and right by one pixel searching for the closest 
             // target value for each quadrant. 
