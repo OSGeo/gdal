@@ -897,7 +897,7 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
                                          NULL, NULL );
     if (poDS->hPNG == NULL)
     {
-#if LIBPNG_VER_MINOR >= 2 || LIBPNG_VER_MAJOR > 1
+#if (PNG_LIBPNG_VER_MAJOR == 1 && PNG_LIBPNG_VER_MINOR >= 2) || PNG_LIBPNG_VER_MAJOR > 1
         int version = png_access_version_number();
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "The PNG driver failed to access libpng with version '%s',"
