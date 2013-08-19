@@ -173,7 +173,8 @@ int OGRVFKLayer::GetFeatureCount(int bForce)
     else
         nfeatures = poDataBlock->GetFeatureCount();
     
-    CPLDebug("OGR_VFK", "OGRVFKLayer::GetFeatureCount(): n=%d", nfeatures);
+    CPLDebug("OGR-VFK", "OGRVFKLayer::GetFeatureCount(): name=%s -> n=%d",
+             GetName(), nfeatures);
     
     return nfeatures;
 }
@@ -234,7 +235,7 @@ OGRFeature *OGRVFKLayer::GetFeature(long nFID)
         return NULL;
 
     CPLAssert(nFID == poVFKFeature->GetFID());
-    CPLDebug("OGR_VFK", "OGRVFKLayer::GetFeature(): fid=%ld", nFID);
+    CPLDebug("OGR-VFK", "OGRVFKLayer::GetFeature(): name=%s fid=%ld", GetName(), nFID);
     
     return GetFeature(poVFKFeature);
 }

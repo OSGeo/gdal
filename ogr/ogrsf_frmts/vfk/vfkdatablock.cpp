@@ -466,11 +466,11 @@ int IVFKDataBlock::LoadGeometry()
 
     if (nInvalid > 0) {
         CPLError(CE_Warning, CPLE_AppDefined, 
-                 "%s: %d invalid features found", m_pszName, nInvalid);
+                 "%s: %d features with invalid or empty geometry found", m_pszName, nInvalid);
     }
 
 #ifdef DEBUG_TIMING
-    CPLDebug("OGR_VFK", "VFKDataBlock::LoadGeometry(): name=%s time=%ld sec",
+    CPLDebug("OGR-VFK", "VFKDataBlock::LoadGeometry(): name=%s time=%ld sec",
              m_pszName, (long)((end - start) / CLOCKS_PER_SEC));
 #endif
 
