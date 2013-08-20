@@ -1913,6 +1913,40 @@ def test_ogr2ogr_49():
     return 'success'
 
 ###############################################################################
+# Test detection of duplicated field names is case insensitive (#5208)
+
+def test_ogr2ogr_49_bis():
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f KML tmp/test_ogr2ogr_49_bis.kml data/grid.csv -sql "SELECT field_1 AS name FROM grid WHERE fid = 1"')
+    f = open('tmp/test_ogr2ogr_49_bis.kml')
+    lines = f.readlines()
+    f.close()
+
+    os.unlink('tmp/test_ogr2ogr_49_bis.kml')
+
+    expected_lines = [
+"""<?xml version="1.0" encoding="utf-8" ?>""",
+"""<kml xmlns="http://www.opengis.net/kml/2.2">""",
+"""<Document><Folder><name>grid</name>""",
+"""  <Placemark>""",
+"""        <name>440750.000</name>""",
+"""  </Placemark>""",
+"""</Folder>""",
+"""</Document></kml>""" ]
+
+    if len(lines) != len(expected_lines):
+        print(lines)
+        return 'fail'
+    for i in range(len(lines)):
+        if lines[i].strip() != expected_lines[i].strip():
+            print(lines)
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test -addfields
 
 def test_ogr2ogr_50():
@@ -2003,6 +2037,7 @@ gdaltest_list = [
     test_ogr2ogr_47,
     test_ogr2ogr_48,
     test_ogr2ogr_49,
+    test_ogr2ogr_49_bis,
     test_ogr2ogr_50,
     ]
 
