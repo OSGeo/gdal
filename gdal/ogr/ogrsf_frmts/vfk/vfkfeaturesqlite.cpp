@@ -113,7 +113,7 @@ OGRErr VFKFeatureSQLite::ExecuteSQL(const char *pszSQLCommand)
                          &m_hStmt, NULL);
     if (rc != SQLITE_OK) {
         CPLError(CE_Failure, CPLE_AppDefined, 
-                 "In LoadProperties(): sqlite3_prepare(%s):\n  %s",
+                 "In ExecuteSQL(): sqlite3_prepare(%s):\n  %s",
                  pszSQLCommand, sqlite3_errmsg(poDB));
         
         if(m_hStmt != NULL) {

@@ -6,7 +6,7 @@
  * Author:   Martin Landa, landa.martin gmail.com
  *
  ******************************************************************************
- * Copyright (c) 2009-2010, 2012, Martin Landa <landa.martin gmail.com>
+ * Copyright (c) 2009-2010, 2012-2013, Martin Landa <landa.martin gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -91,6 +91,7 @@ public:
 class VFKReaderSQLite : public VFKReader 
 {
 private:
+    char          *m_pszDBname;
     sqlite3       *m_poDB;
     bool           m_bSpatial;
 
