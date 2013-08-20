@@ -705,6 +705,62 @@ def ogr_kml_read_emptylayers():
     return 'success'
 
 ###############################################################################
+# Test that we can write a schema
+
+def ogr_kml_write_schema():
+
+    ds = ogr.GetDriverByName('KML').CreateDataSource('/vsimem/ogr_kml_write_schema.kml')
+    lyr = ds.CreateLayer("lyr")
+    lyr.CreateField(ogr.FieldDefn('strfield', ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn('intfield', ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn('realfield', ogr.OFTReal))
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField('strfield', 'strfield_val')
+    feat.SetField('intfield', '1')
+    feat.SetField('realfield', '2.34')
+    lyr.CreateFeature(feat)
+    ds = None
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_kml_write_schema.kml', 'rb')
+    content = gdal.VSIFReadL(1,1000,f)
+    gdal.VSIFCloseL(f)
+
+    gdal.Unlink('/vsimem/ogr_kml_write_schema.kml')
+
+    expected_content="""<?xml version="1.0" encoding="utf-8" ?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Document><Folder><name>lyr</name>
+  <Placemark>
+    <ExtendedData><SchemaData schemaUrl="#lyr">
+        <SimpleData name="strfield">strfield_val</SimpleData>
+        <SimpleData name="intfield">1</SimpleData>
+        <SimpleData name="realfield">2.34</SimpleData>
+    </SchemaData></ExtendedData>
+  </Placemark>
+</Folder>
+<Schema name="lyr" id="lyr">
+    <SimpleField name="strfield" type="string"></SimpleField>
+    <SimpleField name="intfield" type="int"></SimpleField>
+    <SimpleField name="realfield" type="float"></SimpleField>
+</Schema>
+</Document></kml>"""
+
+    content_lines = content.strip().split('\n')
+    expected_lines = expected_content.strip().split('\n')
+
+    if len(content_lines) != len(expected_lines):
+        gdaltest.post_reason('fail')
+        print(content)
+        return 'fail'
+    for i in range(len(content_lines)):
+        if content_lines[i].strip() != expected_lines[i].strip():
+            gdaltest.post_reason('fail')
+            print(content)
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_kml_cleanup():
@@ -743,6 +799,7 @@ gdaltest_list = [
     ogr_kml_read_placemark,
     ogr_kml_read_empty,
     ogr_kml_read_emptylayers,
+    ogr_kml_write_schema,
     ogr_kml_cleanup ]
 
 if __name__ == '__main__':
