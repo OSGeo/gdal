@@ -29,6 +29,8 @@
  * SOFTWARE.
  ****************************************************************************/
 
+#include <cstring>
+
 #include "cpl_vsi.h"
 
 #include "vfkreader.h"
@@ -62,6 +64,10 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFilename) : VFKReader(pszFilenam
     else {
 	pszDbName.Printf("%s.db", m_pszFilename);
     }
+    m_pszDBname = new char [pszDbName.length()+1];
+    std::strcpy(m_pszDBname, pszDbName.c_str());
+    CPLDebug("OGR-VFK", "Using internal DB: %s",
+             m_pszDBname);
     
     if (CSLTestBoolean(CPLGetConfigOption("OGR_VFK_DB_SPATIAL", "YES")))
 	m_bSpatial = TRUE;    /* build geometry from DB */
@@ -73,7 +79,7 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFilename) : VFKReader(pszFilenam
 	if (CSLTestBoolean(CPLGetConfigOption("OGR_VFK_DB_OVERWRITE", "NO"))) {
 	    bNewDb = TRUE;     /* overwrite existing DB */
             CPLDebug("OGR-VFK", "Internal DB (%s) already exists and will be overwritten",
-                     pszDbName.c_str());
+                     m_pszDBname);
 	    VSIUnlink(pszDbName);
 	}
 	else {
@@ -113,15 +119,18 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFilename) : VFKReader(pszFilenam
 */
 VFKReaderSQLite::~VFKReaderSQLite()
 {
-    CPLString pszDbName(m_pszFilename);
-
-    pszDbName += ".db";
-    
     /* close tmp SQLite DB */
     if (SQLITE_OK != sqlite3_close(m_poDB)) {
         CPLError(CE_Failure, CPLE_AppDefined, 
                  "Closing SQLite DB failed\n  %s",
                  sqlite3_errmsg(m_poDB));
+    }
+
+    /* delete tmp SQLite DB if requested */
+    if (CSLTestBoolean(CPLGetConfigOption("OGR_VFK_DB_DELETE", "NO"))) {
+        CPLDebug("OGR-VFK", "Internal DB (%s) deleted",
+                 m_pszDBname);
+        VSIUnlink(m_pszDBname);
     }
 }
 
