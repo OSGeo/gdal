@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -473,6 +474,13 @@ def ogr_kml_check_write_1():
 
     if not ogrtest.have_read_kml:
         return 'skip'
+
+    f = open('tmp/kml.kml')
+    content = f.read()
+    f.close()
+    if content.find('Schema') >= 0:
+        gdaltest.post_reason('Did not expect Schema tags.')
+        return 'fail' 
 
     ds = ogr.Open('tmp/kml.kml')
     lyr = ds.GetLayerByName('test_wgs84')
