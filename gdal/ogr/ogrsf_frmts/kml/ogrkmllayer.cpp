@@ -241,11 +241,26 @@ void OGRKMLLayer::WriteSchema()
     if (0 != nWroteFeatureCount_)
     {
         VSILFILE *fp = poDS_->GetOutputFP();
-        VSIFPrintfL( fp, "<Schema name=\"%s\" id=\"%s\">\n", pszName_, pszName_ );
+        int nFieldsWritten = 0;
         OGRFeatureDefn *featureDefinition = GetLayerDefn();
         for (int j=0; j < featureDefinition->GetFieldCount(); j++)
         {
-            OGRFieldDefn *fieldDefinition = featureDefinition->GetFieldDefn(j);         
+            OGRFieldDefn *fieldDefinition = featureDefinition->GetFieldDefn(j);
+
+            if (NULL != poDS_->GetNameField() &&
+                EQUAL(fieldDefinition->GetNameRef(), poDS_->GetNameField()) )
+                continue;
+
+            if (NULL != poDS_->GetDescriptionField() &&
+                EQUAL(fieldDefinition->GetNameRef(), poDS_->GetDescriptionField()) )
+                continue;
+
+            if( nFieldsWritten == 0 )
+            {
+                VSIFPrintfL( fp, "<Schema name=\"%s\" id=\"%s\">\n", pszName_, pszName_ );
+            }
+            nFieldsWritten ++;
+
             const char* pszKMLType = NULL;
             const char* pszKMLEltName = NULL;
             // Match the OGR type to the GDAL type
@@ -295,7 +310,8 @@ void OGRKMLLayer::WriteSchema()
             VSIFPrintfL( fp, "\t<%s name=\"%s\" type=\"%s\"></%s>\n", 
                         pszKMLEltName, fieldDefinition->GetNameRef() ,pszKMLType, pszKMLEltName );
         }
-        VSIFPrintfL( fp, "</Schema>\n" );
+        if( nFieldsWritten > 0 )
+            VSIFPrintfL( fp, "</Schema>\n" );
     }
 }
 
@@ -456,6 +472,14 @@ OGRErr OGRKMLLayer::CreateFeature( OGRFeature* poFeature )
 
         if( poFeature->IsFieldSet( iField ))
         {
+            if (NULL != poDS_->GetNameField() &&
+                EQUAL(poField->GetNameRef(), poDS_->GetNameField()) )
+                continue;
+
+            if (NULL != poDS_->GetDescriptionField() &&
+                EQUAL(poField->GetNameRef(), poDS_->GetDescriptionField()) )
+                continue;
+
             if (!bHasFoundOtherField)
             {                
                 VSIFPrintfL( fp, "\t<ExtendedData><SchemaData schemaUrl=\"#%s\">\n", pszName_ );
