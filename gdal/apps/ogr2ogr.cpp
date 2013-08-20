@@ -2689,8 +2689,9 @@ static TargetLayerInfo* SetupTargetLayer( OGRDataSource *poSrcDS,
         for( iField = 0; iField < nDstFieldCount; iField++ )
         {
             const char* pszFieldName = poDstFDefn->GetFieldDefn(iField)->GetNameRef();
-            if( oMapExistingFields.find(pszFieldName) == oMapExistingFields.end() )
-                oMapExistingFields[pszFieldName] = iField;
+            CPLString osUpperFieldName(CPLString(pszFieldName).toupper());
+            if( oMapExistingFields.find(osUpperFieldName) == oMapExistingFields.end() )
+                oMapExistingFields[osUpperFieldName] = iField;
             /*else
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "The target layer has already a duplicated field name '%s' before "
@@ -2712,7 +2713,7 @@ static TargetLayerInfo* SetupTargetLayer( OGRDataSource *poSrcDS,
 
             /* The field may have been already created at layer creation */
             std::map<CPLString, int>::iterator oIter =
-                oMapExistingFields.find(oFieldDefn.GetNameRef());
+                oMapExistingFields.find(CPLString(oFieldDefn.GetNameRef()).toupper());
             if( oIter != oMapExistingFields.end() )
             {
                 panMap[iField] = oIter->second;
