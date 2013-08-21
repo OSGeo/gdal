@@ -148,7 +148,6 @@ protected:
     GDAL_GCP *pasGCPList;
 
     VSILFILE   *fpImage;
-    int         bOwnFPImage;
     GUIntBig nSubfileOffset;
 
     int    nLoadedScanline;
@@ -254,8 +253,7 @@ class JPGDataset : public JPGDatasetCommon
 
     static GDALDataset *Open( const char* pszFilename,
                               char** papszSiblingFiles = NULL,
-                              int nScaleFactor = 1,
-                              VSILFILE* fpIn = NULL);
+                              int nScaleFactor = 1 );
     static GDALDataset* CreateCopy( const char * pszFilename,
                                     GDALDataset *poSrcDS,
                                     int bStrict, char ** papszOptions,
@@ -908,7 +906,6 @@ JPGDatasetCommon::JPGDatasetCommon()
 
 {
     fpImage = NULL;
-    bOwnFPImage = FALSE;
 
     nScaleFactor = 1;
     bHasInitInternalOverviews = FALSE;
@@ -961,7 +958,7 @@ JPGDatasetCommon::JPGDatasetCommon()
 JPGDatasetCommon::~JPGDatasetCommon()
 
 {
-    if( bOwnFPImage && fpImage != NULL )
+    if( fpImage != NULL )
         VSIFCloseL( fpImage );
 
     if( pabyScanline != NULL )
@@ -997,10 +994,11 @@ int JPGDatasetCommon::CloseDependentDatasets()
         bRet = TRUE;
         for(int i = 0; i < nInternalOverviewsToFree; i++)
             delete papoInternalOverviews[i];
-        CPLFree(papoInternalOverviews);
-        papoInternalOverviews = NULL;
         nInternalOverviewsToFree = 0;
     }
+    CPLFree(papoInternalOverviews);
+    papoInternalOverviews = NULL;
+
     return bRet;
 }
 
@@ -1627,7 +1625,7 @@ GDALDataset *JPGDatasetCommon::Open( GDALOpenInfo * poOpenInfo )
 /************************************************************************/
 
 GDALDataset *JPGDataset::Open( const char* pszFilename, char** papszSiblingFiles,
-                               int nScaleFactor, VSILFILE* fpIn )
+                               int nScaleFactor )
 
 {
 /* -------------------------------------------------------------------- */
@@ -1702,20 +1700,15 @@ GDALDataset *JPGDataset::Open( const char* pszFilename, char** papszSiblingFiles
 /* -------------------------------------------------------------------- */
     VSILFILE* fpImage;
 
-    if( fpIn == NULL )
-    {
-        fpImage = VSIFOpenL( real_filename, "rb" );
+    fpImage = VSIFOpenL( real_filename, "rb" );
 
-        if( fpImage == NULL )
-        {
-            CPLError( CE_Failure, CPLE_OpenFailed,
-                    "VSIFOpenL(%s) failed unexpectedly in jpgdataset.cpp",
-                    real_filename );
-            return NULL;
-        }
+    if( fpImage == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                "VSIFOpenL(%s) failed unexpectedly in jpgdataset.cpp",
+                real_filename );
+        return NULL;
     }
-    else
-        fpImage = fpIn;
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
@@ -1725,7 +1718,6 @@ GDALDataset *JPGDataset::Open( const char* pszFilename, char** papszSiblingFiles
     poDS = new JPGDataset();
     poDS->nQLevel = nQLevel;
     poDS->fpImage = fpImage;
-    poDS->bOwnFPImage = (fpIn == NULL);
 
 /* -------------------------------------------------------------------- */
 /*      Move to the start of jpeg data.                                 */
@@ -1900,6 +1892,15 @@ GDALDataset *JPGDataset::Open( const char* pszFilename, char** papszSiblingFiles
 /*      Open (external) overviews.                                      */
 /* -------------------------------------------------------------------- */
         poDS->oOvManager.Initialize( poDS, real_filename, papszSiblingFiles );
+
+        /* In the case of a file downloaded through the HTTP driver, this one */
+        /* will unlink the temporary /vsimem file just after GDALOpen(), so */
+        /* later VSIFOpenL() when reading internal overviews would fail. */
+        /* Initialize them now */
+        if( strncmp(real_filename, "/vsimem/http_", strlen("/vsimem/http_")) == 0 )
+        {
+            poDS->InitInternalOverviews();
+        }
     }
     else
         poDS->nPamFlags |= GPF_NOSAVE;
