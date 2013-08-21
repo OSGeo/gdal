@@ -652,9 +652,24 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
     OGRLineString *poLS = (OGRLineString *) poGeom;
 
 /* -------------------------------------------------------------------- */
-/*      Write as a lightweight polygon.                                 */
+/*      Write as a lightweight polygon,                                 */
+/*       or as POLYLINE if the line contains different heights          */
 /* -------------------------------------------------------------------- */
-    WriteValue( 0, "LWPOLYLINE" );
+    int bHasDifferentZ = FALSE;
+    if( poLS->getGeometryType() == wkbLineString25D )
+    {
+        double z0 = poLS->getZ(0);
+        for( int iVert = 0; iVert < poLS->getNumPoints(); iVert++ )
+        {
+            if (z0 != poLS->getZ(iVert))
+            {
+                bHasDifferentZ = TRUE;
+                break;
+            }
+        }
+    }
+
+    WriteValue( 0, bHasDifferentZ ? "POLYLINE" : "LWPOLYLINE" );
     WriteCore( poFeature );
     WriteValue( 100, "AcDbEntity" );
     WriteValue( 100, "AcDbPolyline" );
@@ -662,7 +677,10 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
         WriteValue( 70, 1 );
     else
         WriteValue( 70, 0 );
-    WriteValue( 90, poLS->getNumPoints() );
+    if( !bHasDifferentZ )
+        WriteValue( 90, poLS->getNumPoints() );
+    else
+        WriteValue( 66, "1" );  // Vertex Flag
 
 /* -------------------------------------------------------------------- */
 /*      Do we have styling information?                                 */
@@ -753,19 +771,38 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
 /* -------------------------------------------------------------------- */
 /*      Write the vertices                                              */
 /* -------------------------------------------------------------------- */
+
+    if( !bHasDifferentZ && poLS->getGeometryType() == wkbLineString25D )
+    {
+     // if LWPOLYLINE with Z write it only once
+        if( !WriteValue( 38, poLS->getZ(0) ) )
+            return OGRERR_FAILURE;
+    }
+
     int iVert;
 
     for( iVert = 0; iVert < poLS->getNumPoints(); iVert++ )
     {
+        if( bHasDifferentZ ) 
+        {
+            WriteValue( 0, "VERTEX" );
+            WriteCore( poFeature );
+        }
         WriteValue( 10, poLS->getX(iVert) );
         if( !WriteValue( 20, poLS->getY(iVert) ) ) 
             return OGRERR_FAILURE;
 
-        if( poLS->getGeometryType() == wkbLineString25D )
+        if( bHasDifferentZ )
         {
-            if( !WriteValue( 38, poLS->getZ(iVert) ) )
+            if( !WriteValue( 30 , poLS->getZ(iVert) ) )
                 return OGRERR_FAILURE;
         }
+    }
+
+    if( bHasDifferentZ )
+    {
+        WriteValue( 0, "SEQEND" );
+        WriteCore( poFeature );
     }
     
     delete poTool;
