@@ -419,12 +419,24 @@ def ogr_dxf_12():
     dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
     dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt( 'LINESTRING(10 12, 60 65)' ) )
     lyr.CreateFeature( dst_feat )
-    dst_feat.Destroy()
-                                  
+    dst_feat = None
+
     dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
     dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt( 'POLYGON((0 0,100 0,100 100,0 0))' ) )
     lyr.CreateFeature( dst_feat )
-    dst_feat.Destroy()
+    dst_feat = None
+
+    # Test 25D linestring with constant Z (#5210)
+    dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
+    dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt( 'LINESTRING(1 2 10,3 4 10)' ) )
+    lyr.CreateFeature( dst_feat )
+    dst_feat = None
+
+    # Test 25D linestring with different Z (#5210)
+    dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
+    dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt( 'LINESTRING(1 2 -10,3 4 10)' ) )
+    lyr.CreateFeature( dst_feat )
+    dst_feat = None
 
     lyr = None
     ds = None
@@ -432,7 +444,7 @@ def ogr_dxf_12():
     # Read back.
     ds = ogr.Open('tmp/dxf_11.dxf')
     lyr = ds.GetLayer(0)
-    
+
     # Check first feature
     feat = lyr.GetNextFeature()
 
@@ -441,13 +453,12 @@ def ogr_dxf_12():
         print(feat.GetGeometryRef().ExportToWkt())
         return 'fail'
 
-    if feat.GetGeometryRef().GetGeometryType() == ogr.wkbLineString25D:
+    if feat.GetGeometryRef().GetGeometryType() != ogr.wkbLineString:
         gdaltest.post_reason( 'not linestring 2D' )
         return 'fail'
-        
-    feat.Destroy()
+    feat = None
 
-    # Check second point.
+    # Check second feature
     feat = lyr.GetNextFeature()
 
     if ogrtest.check_feature_geometry( feat,
@@ -455,14 +466,31 @@ def ogr_dxf_12():
         print(feat.GetGeometryRef().ExportToWkt())
         return 'fail'
 
-    if feat.GetGeometryRef().GetGeometryType() == ogr.wkbPolygon25D:
+    if feat.GetGeometryRef().GetGeometryType() != ogr.wkbPolygon:
         gdaltest.post_reason( 'not keeping polygon 2D' )
         return 'fail'
-        
-    feat.Destroy()
+    feat = None
+
+    # Check third feature
+    feat = lyr.GetNextFeature()
+
+    if ogrtest.check_feature_geometry( feat,
+                                       'LINESTRING(1 2 10,3 4 10)' ):
+        print(feat.GetGeometryRef().ExportToWkt())
+        return 'fail'
+    feat = None
+
+    # Check fourth feature
+    feat = lyr.GetNextFeature()
+
+    if ogrtest.check_feature_geometry( feat,
+                                       'LINESTRING(1 2 -10,3 4 10)' ):
+        print(feat.GetGeometryRef().ExportToWkt())
+        return 'fail'
+    feat = None
 
     lyr = None
-    ds.Destroy()
+    ds = None
     ds = None
     
     os.unlink( 'tmp/dxf_11.dxf' )
