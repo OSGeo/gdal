@@ -29,8 +29,6 @@
  * SOFTWARE.
  ****************************************************************************/
 
-#include <cstring>
-
 #include "cpl_vsi.h"
 
 #include "vfkreader.h"
@@ -38,6 +36,8 @@
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
+
+#include <cstring>
 
 #define SUPPORT_GEOMETRY
 
