@@ -1,3 +1,172 @@
+= GDAL/OGR 1.10.1 Release Notes = 
+
+The 1.10.1 release is a bug fix release.
+
+== Build ==
+
+ * Compilation fixes for iOS (#5197, #5198)
+
+== GDAL Core ==
+
+ * Fix VSISubFileHandle::Eof() behaviour to be POSIX compliant, so that the
+   shapefile reader can read the last feature when using /vsitar (#5093)
+ * vsicache: fix for 32bit binaries when file size is over 2GB (#5170)
+ * warper: Fix warping when input pixel size is too close to 0 (#5190)
+ * GDALFillNodata(): Fix use of uninitialized memory and integer overflows (#4010, #5203)
+
+== Utilities ==
+
+gdalwarp:
+  * Fix segfault where metadata values weren't being nullchecked properly
+    during conflict resolution. (#5069)
+  * make gdalwarp honor -s_srs when using cutline (#5081)
+
+gdaltindex:
+  * remove annoying warning 'Warning 1: Field location of width 255 truncated to 254' (#5121)
+
+rgb2pct.py:
+  * Use python tempfile logic to avoid permissions issues with cwd (#5079)
+
+ogr2ogr:
+  * make detection of duplicated field names case insensitive (#5208)
+
+== Bindings ==
+
+Python bindings:
+  * Fix ref-counting of callable passed to gdal.PushErrorHandler() (#5186)
+
+== GDAL drivers ==
+
+BAG driver:
+  * Recognise falseNorthing=10000000 as UTM South (#5152)
+
+ERS driver:
+  * Fix wrong interpretation of RegistrationCellX/RegistrationCellY (#2612, #3056, #5075)
+
+HDF5 driver:
+  * Set SRS GEOGCS for all CSK products (reverts r25801, #4160)
+  * Support HDF5 NATIVE_SCHAR type, subdatsets without PAM (#5088)
+  * Release all opened handles so the file is closed at dataset closing (#5103)
+
+GTiff driver:
+  * Convert invalid TIFFTAG_RESOLUTIONUNIT=0 to 1(Unknown). This commonly comes
+    about when gdalwarp attempts to resolve metadata conflicts. (#5069)
+
+HFA driver:
+  * fix rewriting of statics in existing HFA file where base data value is 8-bit
+    (#5175)
+
+JPEG driver:
+  * Add autodetection of bitmasks that are msb ordered. The JPEG_MASK_BIT_ORDER
+    config option can also be set to MSB if the heuristics fails. (#5102)
+
+KMLSuperOverlay driver:
+  * fix horrible speed performance in Open() (#5094)
+  * fix crash at dataset closing and inability to read some big PNG tiles (#5154)
+
+LCP driver:
+  * Update to handle projections better (#3255)
+
+NetCDF driver:
+  * fix for netcdf driver cannot read netcdf-4 files with UBYTE data (#5053)
+  * fix reading large netcdf-4 files with chunking and DEFLATE compression (#4484)
+  * fix netcdf chunking when creating file with > 2 dims ;
+    add CHUNKING creation option (#5082)
+  * fix duplicate nodata metadata when using CreateCopy() (#5084)
+  * fix copying large metadata in netcdf driver (#5113)
+  * fix netcdf geotransform detection (#5114, #5118)
+  * fix netcdf driver irregular grids management (#5118 and #4513)
+
+NITF driver:
+  * Support reading horizontal and/or vertical mono-block uncompressed images,
+    even when the number of columns is <= 8192 (#3263)
+
+PDF driver:
+  * Avoid reporting a Poppler error as a GDAL error on some newer USGS GeoPDF files (#5201)
+
+PDS driver:
+  * Parse correctly MISSING_CONSTANT = 16#FF7FFFFB# ; add support for
+    ENCODING_TYPE = ZIP (data file compressed in a ZIP);
+    recognize IMAGE_MAP_PROJECTION as an object included in UNCOMPRESSED_FILE
+    object (#3939)
+
+PostgisRaster driver:
+  * Dataset open is now much faster because properties are fetched from
+    raster_columns view, if available. In case of not, the drive warns the user
+    and scans the whole table. (#5046)
+
+VRT driver:
+  * Make sure that VRTSourcedRasterBand::AddMaskBandSource() takes into account
+    specified window (#5120)
+
+== OGR core ==
+
+ * fix handling of method field mapping to output fields when output fields are
+   precreated (#5089)
+ * Initialize bIgnore flag in OGRFieldDefn constructor (#5164)
+ * OGR SQL: Fix thread-safety of swq_op_registrar::GetOperator() (#5196)
+ * OSR: fix order of AXIS and UNIT nodes in a VERT_CS node (#5105)
+ * OSR: Fix OGRSpatialReference::importFromProj4() to work with non-C locale (#5147)
+ * OSR: Add sanity checks in OGR_SRSNode::importFromWkt() (#5193)
+ * OSR_ESRI: Fix crash in CleanupESRIDatumMappingTable() if it is called twice (#5090)
+ * OSR_ESRI: morph central_latitude to latitude_of_origin in morphFromESRI() (#3191)
+
+== OGR drivers ==
+
+CSV driver:
+  * Avoid erroneously reset of file content when opening in update mode a file
+    without header (#5161)
+
+DXF:
+  * fix writing of 25D linestring where z is not constant (#5210)
+
+FileGDB driver:
+  * implement ref counting of the FileGDB SDK API' Geodatabase* object to avoid
+    issues on Linux 64bit with interleaved opening and closing of databases (#4270)
+
+GeoRaster driver:
+  * Fix RPC support (#4038)
+
+GML driver:
+  * Fix writing of .xsd file to avoid fid/gml_id being written as regular fields (#5142)
+  * Fix writing of global srsName attribue on the global boundedBy.Envelope when
+    all layers have same SRS (#5143)
+  * Fix segfault when reading a GML file with huge coordinates (#5148)
+  * Avoid opening our own .xsd files as valid datasources (#5149)
+
+KML driver:
+  * Output KML that validates the ogckml22.xsd schema by placing <Schema>
+    elements under the <Document> level (#5068)
+  * In writing mode, avoid defining an extending schema for the name and
+    description fields (related to #5208)
+
+MSSQLSpatial driver:
+  * Fix MSSQL to be aware of removed tables (#5071)
+  * Eliminate the per table server access when identifying the spatial
+    reference (#5072)
+
+OSM driver:
+  * Always use quoting of key/values in other_tags field so as to produce
+    a valid value for PostgreSQL hstore column (#5096)
+
+PG driver:
+  * let PostgreSQL name the constraints to avoid long name truncation resulting
+    in conflicts (#5125)
+
+OCI driver:
+  * fix make plugin option (Unix build)
+
+PGDUMP driver:
+  * fix error when inserting a string that has backslash in it with
+    PostgreSQL >= 9.1 (#5160)
+
+Shapefile driver:
+ * Fix buffer overflow when creating a field of type Integer with a big width (#5135)
+
+SQLite driver:
+  * Spatialite: correctly set proj4text field of spatial_ref_sys when inserting
+    a new SRS in the spatial_ref_sys table (#5174)
+
 = GDAL/OGR 1.10.0 Release Notes (r23656 to r25905) =
 
 == In a nutshell... ==
