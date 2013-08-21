@@ -140,13 +140,21 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 {
     void        *pLibrary;
     void        *pSymbol;
+    UINT        uOldErrorMode;
+
+    /* Avoid error boxes to pop up (#5122) */
+    uOldErrorMode = SetErrorMode(SEM_NOOPENFILEERRORBOX);
 
     pLibrary = LoadLibrary(pszLibrary);
-    if( pLibrary == NULL )
+
+    if( pLibrary <= (void*)HINSTANCE_ERROR )
     {
         LPVOID      lpMsgBuf = NULL;
         int         nLastError = GetLastError();
-        
+
+        /* Restore old error mode */
+        SetErrorMode(uOldErrorMode);
+
         FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER 
                        | FORMAT_MESSAGE_FROM_SYSTEM
                        | FORMAT_MESSAGE_IGNORE_INSERTS,
@@ -159,6 +167,9 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
                   pszLibrary, nLastError, (const char *) lpMsgBuf );
         return NULL;
     }
+
+    /* Restore old error mode */
+    SetErrorMode(uOldErrorMode);
 
     pSymbol = (void *) GetProcAddress( (HINSTANCE) pLibrary, pszSymbolName );
 
