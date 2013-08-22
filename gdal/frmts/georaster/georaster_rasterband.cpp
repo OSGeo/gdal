@@ -402,11 +402,11 @@ CPLErr GeoRasterRasterBand::GetStatistics( int bApproxOK, int bForce,
 CPLErr GeoRasterRasterBand::SetStatistics( double dfMin, double dfMax,
                                            double dfMean, double dfStdDev )
 {
-    dfMin       = dfMin;
-    dfMax       = dfMax;
-    dfMean      = dfMax;
-    dfStdDev    = dfStdDev;
-    bValidStats = true;
+    this->dfMin       = dfMin;
+    this->dfMax       = dfMax;
+    this->dfMean      = dfMean;
+    this->dfStdDev    = dfStdDev;
+    this->bValidStats = true;
 
     poGeoRaster->SetStatistics( dfMin, dfMax, dfMean, dfStdDev, nBand );
 
@@ -519,7 +519,7 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
         }
         if( poRAT->GetTypeOfCol( iCol ) == GFT_Real )
         {
-            strcpy( szDescription, CPLSPrintf( "%s FLOAT",
+            strcpy( szDescription, CPLSPrintf( "%s NUMBER",
                 szDescription ) );
         }
         if( poRAT->GetTypeOfCol( iCol ) == GFT_String )
@@ -533,6 +533,11 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
     // ----------------------------------------------------------
     // Create VAT named based on RDT and RID and Layer (nBand)
     // ----------------------------------------------------------
+
+    if ( poGeoRaster->sValueAttributeTab.length() > 0 )
+    {
+        pszVATName = CPLStrdup( poGeoRaster->sValueAttributeTab.c_str() );
+    }
 
     if( ! pszVATName )
     {
@@ -638,7 +643,7 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
             }
             if( poRAT->GetTypeOfCol( iCol ) == GFT_Real )
             {
-                ((double *)(papWriteFields[iCol]))[iEntry + 1] =
+                ((double *)(papWriteFields[iCol + 1]))[iEntry] =
                     poRAT->GetValueAsDouble(iEntry, iCol);
             }
         }
