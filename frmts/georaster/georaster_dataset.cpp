@@ -735,6 +735,13 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
     //  Load aditional options
     //  -------------------------------------------------------------------
 
+    pszFetched = CSLFetchNameValue( papszOptions, "VATNAME" );
+
+    if( pszFetched )
+    {
+        poGRW->sValueAttributeTab = pszFetched;
+    }
+
     pszFetched = CSLFetchNameValue( papszOptions, "SRID" );
 
     if( pszFetched )
@@ -858,7 +865,7 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
 
     int    bHasNoDataValue = FALSE;
     double dfNoDataValue = 0.0;
-    double dfMin, dfMax, dfStdDev, dfMean;
+    double dfMin = 0.0, dfMax = 0.0, dfStdDev = 0.0, dfMean = 0.0;
     int    iBand = 0;
 
     for( iBand = 1; iBand <= poSrcDS->GetRasterCount(); iBand++ )
@@ -874,9 +881,9 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
         }
 
         if( poSrcBand->GetStatistics( false, false, &dfMin, &dfMax,
-            &dfStdDev, &dfMean ) == CE_None )
+            &dfMean, &dfStdDev ) == CE_None )
         {
-            poDstBand->SetStatistics( dfMin, dfMax, dfStdDev, dfMean );
+            poDstBand->SetStatistics( dfMin, dfMax, dfMean, dfStdDev );
         }
 
         const GDALRasterAttributeTable *poRAT = poSrcBand->GetDefaultRAT();
@@ -1960,6 +1967,7 @@ void CPL_DLL GDALRegister_GEOR()
                                            "default='TRUE'/>"
 "  <Option name='EXTENTSRID'  type='int'    description='Spatial ExtentSRID code' "
                                            "default='0'/>"
+"  <Option name='VATNAME'     type='string' description='Value Attribute Table Name'/>"
 "  <Option name='NBITS'       type='int'    description='BITS for sub-byte "
                                            "data types (1,2,4) bits'/>"
 "  <Option name='INTERLEAVE'  type='string-select' default='BAND'>"
