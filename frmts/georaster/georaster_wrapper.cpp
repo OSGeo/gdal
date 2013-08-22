@@ -4,7 +4,7 @@
  * Name:     georaster_wrapper.cpp
  * Project:  Oracle Spatial GeoRaster Driver
  * Purpose:  Implement GeoRasterWrapper methods
- * Author:   Ivan Lucena [ivan.lucena@pmldnet.com]
+ * Author:   Ivan Lucena [ivan.lucena at oracle.com]
  *
  ******************************************************************************
  * Copyright (c) 2008, Ivan Lucena
@@ -1490,7 +1490,6 @@ bool GeoRasterWrapper::GetStatistics( int nBand,
                                 "statisticDataset.MEAN", "0.0" ) );
             dfStdDev = atoi( CPLGetXMLValue( phSubLayer,
                                 "statisticDataset.STD",  "0.0" ) );
-            CPLDestroyXMLNode( phSubLayer );
             return true;
         }
     }
@@ -1595,8 +1594,7 @@ void GeoRasterWrapper::InitializeLayersNode()
             CPLCreateXMLElementAndValue( psSLayer, "layerDimensionOrdinate",
                 CPLSPrintf( "%d", n ) );
 
-            CPLCreateXMLElementAndValue( psSLayer, "layerID",
-                CPLSPrintf( "subLayer%d", n + 1 ) );
+            CPLCreateXMLElementAndValue( psSLayer, "layerID", "" );
         }
     }
 }
