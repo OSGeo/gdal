@@ -30,7 +30,9 @@
 #ifndef _OSR_CS_WKT_H_INCLUDED_
 #define _OSR_CS_WKT_H_INCLUDED_
 
-#include "osr_cs_wkt_parser.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct
 {
@@ -40,9 +42,7 @@ typedef struct
     char        szErrorMsg[512];
 } osr_cs_wkt_parse_context;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "osr_cs_wkt_parser.h"
 
 void osr_cs_wkt_error( osr_cs_wkt_parse_context *context, const char *msg );
 int osr_cs_wkt_lex(YYSTYPE* pNode, osr_cs_wkt_parse_context *context);
