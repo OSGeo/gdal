@@ -42,8 +42,7 @@ Both must be positive values.</dd>
 Remove the georeference information.</dd>
 
 <dt> <b>-a_nodata</b> <i>value</i>:</dt><dd>
-Assign a specified nodata value to output bands. Can be set to <i>none</i>
-to remove a nodata value if one exists for the dataset.</dd>
+Assign a specified nodata value to output bands.</dd>
 
 <dt> <b>-gcp</b> <i>pixel line easting northing [elevation]</i>:</dt><dd>
 Add the indicated ground control point to the dataset.  This option 
