@@ -45,39 +45,48 @@
 %}
 
 %define api.pure
-%require "2.4.0"
+/* if the next %define is commented out, Bison 2.4 should be sufficient */
+/* but will produce less prettier error messages */
+%define parse.error verbose
+%require "3.0"
 
 %parse-param {swq_parse_context *context}
 %lex-param {swq_parse_context *context}
 
-%token SWQT_NUMBER
-%token SWQT_STRING
-%token SWQT_IDENTIFIER
-%token SWQT_IN
-%token SWQT_LIKE
-%token SWQT_ESCAPE
-%token SWQT_BETWEEN
-%token SWQT_NULL
-%token SWQT_IS
-%token SWQT_SELECT
-%token SWQT_LEFT
-%token SWQT_JOIN
-%token SWQT_WHERE
-%token SWQT_ON
-%token SWQT_ORDER
-%token SWQT_BY
-%token SWQT_FROM
-%token SWQT_AS
-%token SWQT_ASC
-%token SWQT_DESC
-%token SWQT_DISTINCT
-%token SWQT_CAST
-%token SWQT_UNION
-%token SWQT_ALL
+%token SWQT_NUMBER              "number"
+%token SWQT_STRING              "string"
+%token SWQT_IDENTIFIER          "identifier"
+%token SWQT_IN                  "IN"
+%token SWQT_LIKE                "LIKE"
+%token SWQT_ESCAPE              "ESCAPE"
+%token SWQT_BETWEEN             "BETWEEN"
+%token SWQT_NULL                "NULL"
+%token SWQT_IS                  "IS"
+%token SWQT_SELECT              "SELECT"
+%token SWQT_LEFT                "LEFT"
+%token SWQT_JOIN                "JOIN"
+%token SWQT_WHERE               "WHERE"
+%token SWQT_ON                  "ON"
+%token SWQT_ORDER               "ORDER"
+%token SWQT_BY                  "BY"
+%token SWQT_FROM                "FROM"
+%token SWQT_AS                  "AS"
+%token SWQT_ASC                 "ASC"
+%token SWQT_DESC                "DESC"
+%token SWQT_DISTINCT            "DISTINCT"
+%token SWQT_CAST                "CAST"
+%token SWQT_UNION               "UNION"
+%token SWQT_ALL                 "ALL"
 
 %token SWQT_LOGICAL_START
 %token SWQT_VALUE_START
 %token SWQT_SELECT_START
+
+%token END 0                    "end of string"
+
+%token SWQT_NOT                 "NOT"
+%token SWQT_OR                  "OR"
+%token SWQT_AND                 "AND"
 
 %left SWQT_NOT
 %left SWQT_OR
@@ -87,7 +96,7 @@
 %left '*' '/' '%'
 %left SWQT_UMINUS
 
-%token SWQT_RESERVED_KEYWORD
+%token SWQT_RESERVED_KEYWORD    "reserved keyword"
 
 /* Any grammar rule that does $$ =  must be listed afterwards */
 /* as well as SWQT_NUMBER SWQT_STRING SWQT_IDENTIFIER that are allocated by swqlex() */

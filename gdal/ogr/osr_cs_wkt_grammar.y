@@ -33,39 +33,44 @@
 %}
 
 %define api.pure
-%require "2.4.0"
+/* if the next %define is commented out, Bison 2.4 should be sufficient */
+/* but will produce less prettier error messages */
+%define parse.error verbose
+%require "3.0"
 
 %parse-param {osr_cs_wkt_parse_context *context}
 %lex-param {osr_cs_wkt_parse_context *context}
 
-%token T_PARAM_MT
-%token T_CONCAT_MT
-%token T_INVERSE_MT
-%token T_PASSTHROUGH_MT
-%token T_PROJCS
-%token T_PROJECTION
-%token T_GEOGCS
-%token T_DATUM
-%token T_SPHEROID
-%token T_PRIMEM
-%token T_UNIT
-%token T_GEOCCS
-%token T_AUTHORITY
-%token T_VERT_CS
-%token T_VERT_DATUM
-%token T_COMPD_CS
-%token T_AXIS
-%token T_TOWGS84
-%token T_FITTED_CS
-%token T_LOCAL_CS
-%token T_LOCAL_DATUM
-%token T_PARAMETER
+%token T_PARAM_MT               "PARAM_MT"
+%token T_CONCAT_MT              "CONCAT_MT"
+%token T_INVERSE_MT             "INVERSE_MT"
+%token T_PASSTHROUGH_MT         "PASSTHROUGH_MT"
+%token T_PROJCS                 "PROJCS"
+%token T_PROJECTION             "PROJECTION"
+%token T_GEOGCS                 "GEOGCS"
+%token T_DATUM                  "DATUM"
+%token T_SPHEROID               "SPHEROID"
+%token T_PRIMEM                 "PRIMEM"
+%token T_UNIT                   "UNIT"
+%token T_GEOCCS                 "GEOCCS"
+%token T_AUTHORITY              "AUTHORITY"
+%token T_VERT_CS                "VERT_CS"
+%token T_VERT_DATUM             "VERT_DATUM"
+%token T_COMPD_CS               "COMPD_CS"
+%token T_AXIS                   "AXIS"
+%token T_TOWGS84                "TOWGS84"
+%token T_FITTED_CS              "FITTED_CS"
+%token T_LOCAL_CS               "LOCAL_CS"
+%token T_LOCAL_DATUM            "LOCAL_DATUM"
+%token T_PARAMETER              "PARAMETER"
 
-%token T_EXTENSION
+%token T_EXTENSION              "EXTENSION"
 
-%token T_STRING
-%token T_NUMBER
-%token T_IDENTIFIER
+%token T_STRING                 "string"
+%token T_NUMBER                 "number"
+%token T_IDENTIFIER             "identifier"
+
+%token END 0                    "end of string"
 
 %%
 
