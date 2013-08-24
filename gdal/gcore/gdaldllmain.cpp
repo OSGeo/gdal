@@ -33,6 +33,9 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+extern "C" int bInGDALGlobalDestructor;
+int bInGDALGlobalDestructor = FALSE;
+
 /************************************************************************/
 /*  The library set-up/clean-up routines implemented with               */
 /*  GNU C/C++ extensions.                                               */
@@ -68,13 +71,13 @@ static void GDALDestroy(void)
         return;
 
     CPLDebug("GDAL", "In GDALDestroy - unloading GDAL shared library.");
-    CPLSetConfigOption("GDAL_CLOSE_JP2ECW_RESOURCE", "NO");
+    bInGDALGlobalDestructor = TRUE;
     GDALDestroyDriverManager();
-    CPLSetConfigOption("GDAL_CLOSE_JP2ECW_RESOURCE", NULL);
 
 #ifdef OGR_ENABLED
     OGRCleanupAll();
 #endif
+    bInGDALGlobalDestructor = FALSE;
 }
 
 #endif // __GNUC__
@@ -107,11 +110,13 @@ extern "C" int WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpRese
     }
     else if (dwReason == DLL_PROCESS_DETACH)
     {
+        bInGDALGlobalDestructor = TRUE;
         ::GDALDestroyDriverManager();
 
 #ifdef OGR_ENABLED
         ::OGRCleanupAll();
 #endif
+        bInGDALGlobalDestructor = FALSE;
     }
 
 	return 1; // ignroed for all reasons but DLL_PROCESS_ATTACH
