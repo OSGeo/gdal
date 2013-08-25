@@ -33,7 +33,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-extern "C" int bInGDALGlobalDestructor;
+extern "C" int CPL_DLL bInGDALGlobalDestructor;
 int bInGDALGlobalDestructor = FALSE;
 
 /************************************************************************/
