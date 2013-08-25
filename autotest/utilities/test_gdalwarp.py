@@ -912,7 +912,7 @@ def test_gdalwarp_33():
     # There are expected diffs because of the artifacts due to JPEG compression in 8x8 blocks
     # that are partially masked. gdalwarp will remove those artifacts
     max_diff = gdaltest.compare_ds(src_ds, ds)
-    if max_diff > 37:
+    if max_diff > 40:
         return 'fail'
 
     src_ds = None
