@@ -30,10 +30,10 @@
 
 import os
 import sys
-import gdal
+from osgeo import gdal
 import array
 import string
-import osr
+from osgeo import osr
 
 sys.path.append( '../pymod' )
 

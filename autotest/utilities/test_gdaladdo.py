@@ -36,7 +36,7 @@ import shutil
 sys.path.append( '../pymod' )
 sys.path.append( '../gcore' )
 
-import gdal
+from osgeo import gdal
 import gdaltest
 import test_cli_utilities
 import tiff_ovr

@@ -30,14 +30,14 @@
 
 import os
 import sys
-import gdal
+from osgeo import gdal
 import array
 import string
 
 sys.path.append( '../pymod' )
 
 import gdaltest
-import osr
+from osgeo import osr
 
 ###############################################################################
 # Read a truncated and modified version of C3607614.NWS

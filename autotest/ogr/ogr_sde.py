@@ -37,14 +37,9 @@ sys.path.append( '../pymod' )
 import gdaltest
 import ogrtest
 
-try:
-    from osgeo import ogr
-    from osgeo import osr
-    from osgeo import gdal
-except ImportError:
-    import ogr
-    import osr
-    import gdal
+from osgeo import ogr
+from osgeo import osr
+from osgeo import gdal
 
 ###############################################################################
 # Open ArcSDE datasource.

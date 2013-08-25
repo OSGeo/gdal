@@ -31,10 +31,7 @@ import sys
 sys.path.append( '../pymod' )
 
 import gdaltest
-try:
-    from osgeo import osr
-except:
-    import osr
+from osgeo import osr
 
 ###############################################################################
 # Test for the http://trac.osgeo.org/gdal/ticket/3787 problem.

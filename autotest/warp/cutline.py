@@ -35,10 +35,7 @@ import sys
 
 sys.path.append( '../pymod' )
 
-try:
-    from osgeo import gdal
-except ImportError:
-    import gdal
+from osgeo import gdal
 
 import ogrtest
 import gdaltest

@@ -36,9 +36,9 @@ import shutil
 sys.path.append( '../pymod' )
 sys.path.append( '../ogr' )
 
-import gdal
-import ogr
-import osr
+from osgeo import gdal
+from osgeo import ogr
+from osgeo import osr
 import gdaltest
 import ogrtest
 import test_cli_utilities
@@ -208,7 +208,6 @@ def test_ogr2ogr_py_6():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
 
-    import gdal
     ogr_pg.ogr_pg_1()
     if gdaltest.pg_ds is None:
         return 'skip'
@@ -241,7 +240,6 @@ def test_ogr2ogr_py_7():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
 
-    import gdal
     ogr_pg.ogr_pg_1()
     if gdaltest.pg_ds is None:
         return 'skip'

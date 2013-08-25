@@ -32,7 +32,7 @@ import shutil
 sys.path.append( '../pymod' )
 
 import gdaltest
-import gdal
+from osgeo import gdal
 
 ###############################################################################
 # Test handling NaN with GDT_Float32 data

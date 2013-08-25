@@ -28,11 +28,11 @@
 
 import os
 import sys
-import gdal
+from osgeo import gdal
 import string
 import array
 import shutil
-import osr
+from osgeo import osr
 import sys
 
 sys.path.append( '../pymod' )
@@ -125,7 +125,7 @@ def tiff_write_3():
 def tiff_write_4():
 
     try:
-        import gdalnumeric
+        from osgeo import gdalnumeric
     except:
         return 'skip'
 

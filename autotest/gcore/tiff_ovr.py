@@ -31,8 +31,8 @@
 
 import os
 import sys
-import osr
-import gdal
+from osgeo import osr
+from osgeo import gdal
 import shutil
 import string
 import array

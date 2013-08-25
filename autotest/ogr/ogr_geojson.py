@@ -32,16 +32,9 @@ import string
 
 sys.path.append( '../pymod' )
 
-
-try:
-    from osgeo import osr
-    from osgeo import ogr
-    from osgeo import gdal
-except ImportError:
-    
-    import ogr
-    import osr
-    import gdal
+from osgeo import osr
+from osgeo import ogr
+from osgeo import gdal
 
 import gdaltest
 import ogrtest

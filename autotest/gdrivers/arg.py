@@ -32,10 +32,7 @@ import os
 import sys
 import struct
 from copy import copy
-try:
-    from osgeo import gdal
-except ImportError:
-    import gdal
+from osgeo import gdal
 
 sys.path.append( '../pymod' )
 

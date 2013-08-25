@@ -33,8 +33,8 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 import ogrtest
-import ogr
-import gdal
+from osgeo import ogr
+from osgeo import gdal
 
 ###############################################################################
 # Establish whether we have GEOS support integrated, testing simple Union.

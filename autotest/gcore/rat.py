@@ -36,7 +36,7 @@ import string
 sys.path.append( '../pymod' )
 
 import gdaltest
-import gdal
+from osgeo import gdal
 
 ###############################################################################
 # Create a raster attribute table.

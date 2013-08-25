@@ -37,7 +37,7 @@ sys.path.append( '../pymod' )
  	
 import ogrtest
 import gdaltest
-import ogr
+from osgeo import ogr
 
 ###############################################################################
 # Open file, check number of layers, get first layer,

@@ -34,8 +34,8 @@ import os
 
 sys.path.append( '../pymod' )
 
-import gdal
-import osr
+from osgeo import gdal
+from osgeo import osr
 import gdaltest
 import test_py_scripts
 
@@ -65,8 +65,6 @@ def test_gdal_merge_2():
     script_path = test_py_scripts.get_py_script('gdal_merge')
     if script_path is None:
         return 'skip'
-
-    import osr
 
     drv = gdal.GetDriverByName('GTiff')
     srs = osr.SpatialReference()

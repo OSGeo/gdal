@@ -34,8 +34,8 @@ import sys
 sys.path.append( '../pymod' )
 
 import gdaltest
-import gdal
-import osr
+from osgeo import gdal
+from osgeo import osr
 
 ###############################################################################
 # Test the osr.SpatialReference.ImportFromUSGS() function.

@@ -36,7 +36,7 @@ sys.path.append( '../pymod' )
 
 import ogrtest
 import gdaltest
-import ogr
+from osgeo import ogr
 
 def save_as_csv( geom, filename ):
     csv = 'ID,WKT\n0,"%s"\n' % geom.ExportToWkt()

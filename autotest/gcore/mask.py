@@ -34,8 +34,8 @@ import sys
 sys.path.append( '../pymod' )
 
 import gdaltest
-import gdal
-import gdalconst
+from osgeo import gdal
+from osgeo import gdalconst
 
 ###############################################################################
 # Verify the checksum and flags for "all valid" case.

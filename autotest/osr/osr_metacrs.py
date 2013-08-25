@@ -38,10 +38,7 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 
-try:
-    from osgeo import osr, gdal
-except:
-    import osr, gdal
+from osgeo import osr, gdal
 
 ###############################################################################
 # Class to perform the tests.

@@ -36,7 +36,7 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 import ogrtest
-import ogr
+from osgeo import ogr
 
 ###############################################################################
 # Read points

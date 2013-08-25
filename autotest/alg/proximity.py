@@ -35,11 +35,7 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 
-try:
-    from osgeo import gdal, gdalconst
-except:
-    import gdal
-    import gdalconst
+from osgeo import gdal, gdalconst
 
 ###############################################################################
 # Test a fairly default case.

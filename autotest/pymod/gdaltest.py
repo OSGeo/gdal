@@ -33,11 +33,8 @@ import string
 import os
 import time
 
-try:
-    from osgeo import gdal
-    from osgeo import osr
-except ImportError:
-    import gdal, osr
+from osgeo import gdal
+from osgeo import osr
 
 cur_name = 'default'
 

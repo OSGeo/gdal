@@ -36,9 +36,9 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 import ogrtest
-import ogr
-import osr
-import gdal
+from osgeo import ogr
+from osgeo import osr
+from osgeo import gdal
 
 def ogr_svg_init():
     gdaltest.svg_ds = None

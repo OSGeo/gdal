@@ -31,7 +31,7 @@
 import os
 import sys
 import gzip
-import gdal
+from osgeo import gdal
 
 sys.path.append( '../pymod' )
 
