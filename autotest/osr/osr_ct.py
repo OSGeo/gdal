@@ -35,10 +35,10 @@ import string
 
 sys.path.append( '../pymod' )
 
-import gdal
+from osgeo import gdal
 import gdaltest
-import osr
-import ogr
+from osgeo import osr
+from osgeo import ogr
 
 
 ###############################################################################

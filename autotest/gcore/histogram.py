@@ -34,10 +34,7 @@ import shutil
 
 sys.path.append( '../pymod' )
 
-try:
-    from osgeo import gdal
-except:
-    import gdal
+from osgeo import gdal
 
 import gdaltest
 

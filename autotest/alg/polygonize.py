@@ -36,12 +36,7 @@ sys.path.append( '../pymod' )
 import gdaltest
 import ogrtest
 
-try:
-    from osgeo import gdal, gdalconst, ogr
-except:
-    import gdal
-    import gdalconst
-    import ogr
+from osgeo import gdal, gdalconst, ogr
 
 ###############################################################################
 # Test a fairly simple case, with nodata masking.

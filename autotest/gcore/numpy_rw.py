@@ -34,7 +34,7 @@ import sys
 sys.path.append( '../pymod' )
 
 import gdaltest
-import gdal
+from osgeo import gdal
 
 ###############################################################################
 # verify that we can load Numeric python, and find the Numpy driver.
@@ -43,7 +43,7 @@ def numpy_rw_1():
 	
     gdaltest.numpy_drv = None
     try:
-        import gdalnumeric
+        from osgeo import gdalnumeric
         gdalnumeric.zeros
     except:
         try:
@@ -73,7 +73,7 @@ def numpy_rw_2():
     if gdaltest.numpy_drv is None:
         return 'skip'
 
-    import gdalnumeric
+    from osgeo import gdalnumeric
 
     array = gdalnumeric.LoadFile( 'data/utmsmall.tif' )
     if array is None:
@@ -101,7 +101,7 @@ def numpy_rw_3():
     if gdaltest.numpy_drv is None:
         return 'skip'
 
-    import gdalnumeric
+    from osgeo import gdalnumeric
 
     ds = gdal.Open( 'data/cint_sar.tif' )
     array = ds.ReadAsArray()
@@ -139,7 +139,7 @@ def numpy_rw_5():
     if gdaltest.numpy_drv is None:
         return 'skip'
 
-    import gdalnumeric
+    from osgeo import gdalnumeric
 
     array = gdalnumeric.LoadFile('data/rgbsmall.tif',35,21,1,1)
 
@@ -169,7 +169,7 @@ def numpy_rw_6():
         return 'skip'
 
     import numpy
-    import gdalnumeric
+    from osgeo import gdalnumeric
         
     ds = gdal.Open( 'data/byte.tif' )
     array = numpy.zeros( [ds.RasterYSize, ds.RasterXSize], numpy.uint8 )
@@ -193,7 +193,7 @@ def numpy_rw_7():
         return 'skip'
 
     import numpy
-    import gdalnumeric
+    from osgeo import gdalnumeric
         
     ds = gdal.Open( 'data/byte.tif' )
     array = numpy.zeros( [1, ds.RasterYSize, ds.RasterXSize], numpy.uint8 )
@@ -228,7 +228,7 @@ def numpy_rw_8():
         return 'skip'
 
     import numpy
-    import gdalnumeric
+    from osgeo import gdalnumeric
         
     ds = gdal.Open( 'data/rgbsmall.tif' )
     array = numpy.zeros( [ds.RasterCount,ds.RasterYSize, ds.RasterXSize], numpy.uint8 )

@@ -31,14 +31,14 @@
 
 import os
 import sys
-import gdal
+from osgeo import gdal
 import string
 import shutil
 
 sys.path.append( '../pymod' )
 
 import gdaltest
-import gdalconst
+from osgeo import gdalconst
 
 ###############################################################################
 # Perform simple read test.

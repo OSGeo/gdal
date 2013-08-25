@@ -35,9 +35,9 @@ import sys
 sys.path.append( '../pymod' )
 
 import gdaltest
-import gdal
-import gdalconst
-import osr
+from osgeo import gdal
+from osgeo import gdalconst
+from osgeo import osr
 
 ###############################################################################
 # Test simple Geotransform based transformer.

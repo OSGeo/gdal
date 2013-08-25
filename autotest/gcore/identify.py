@@ -34,7 +34,7 @@ import sys
 sys.path.append( '../pymod' )
 
 import gdaltest
-import gdal
+from osgeo import gdal
 
 ###############################################################################
 # Simple try of identify driver on a tiff file.

@@ -35,7 +35,7 @@ import sys
 sys.path.append( '../pymod' )
 
 import gdaltest
-import gdal
+from osgeo import gdal
 
 # Nothing exciting here. Just trying to open non existing files,
 # or empty names, or files that are not valid datasets...

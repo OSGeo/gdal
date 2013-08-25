@@ -35,8 +35,8 @@ import sys
 sys.path.append( '../pymod' )
 
 import gdaltest
-import gdal
-import gdalconst
+from osgeo import gdal
+from osgeo import gdalconst
 
 ###############################################################################
 # Test writing a 1x1 buffer to a 10x6 raster and read it back

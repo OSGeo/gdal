@@ -32,7 +32,7 @@
 
 import os
 import sys
-import gdal
+from osgeo import gdal
 import array
 import string
 import shutil

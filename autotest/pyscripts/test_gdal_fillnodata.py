@@ -34,8 +34,8 @@ import os
 
 sys.path.append( '../pymod' )
 
-import gdal
-import osr
+from osgeo import gdal
+from osgeo import osr
 import gdaltest
 import test_py_scripts
 

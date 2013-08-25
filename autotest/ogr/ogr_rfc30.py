@@ -28,7 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import ogr
+from osgeo import ogr
 import sys
 import os
 import shutil

@@ -37,12 +37,8 @@ import shutil
 
 sys.path.append( '../pymod' )
 
-try:
-    from osgeo import gdal
-    from osgeo import osr
-except ImportError:
-    import gdal
-    import osr
+from osgeo import gdal
+from osgeo import osr
 
 import gdaltest
 import test_cli_utilities

@@ -36,7 +36,7 @@ import stat
 sys.path.append( '../pymod' )
 
 import gdaltest
-import gdal
+from osgeo import gdal
 
 ###############################################################################
 # Check that we can read PAM metadata for existing PNM file.

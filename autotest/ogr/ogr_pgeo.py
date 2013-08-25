@@ -31,8 +31,8 @@
 
 import os
 import sys
-import ogr
-import osr
+from osgeo import ogr
+from osgeo import osr
 
 sys.path.append( '../pymod' )
 

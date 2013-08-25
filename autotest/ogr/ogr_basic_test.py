@@ -32,7 +32,7 @@ import sys
 sys.path.append( '../pymod' )
 
 import gdaltest
-import ogr
+from osgeo import ogr
 
 ###############################################################################
 

@@ -37,12 +37,8 @@ import struct
 sys.path.append( '../pymod' )
 sys.path.append( '../gcore' )
 
-try:
-    from osgeo import gdal
-    from osgeo import ogr
-except ImportError:
-    import gdal
-    import ogr
+from osgeo import gdal
+from osgeo import ogr
 
 import gdaltest
 import test_cli_utilities

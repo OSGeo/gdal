@@ -31,7 +31,7 @@ import sys
 sys.path.append( '../pymod' )
 
 import gdaltest
-import ogr
+from osgeo import ogr
 import ogrtest
 
 ###############################################################################
@@ -39,7 +39,7 @@ import ogrtest
 
 def ogr_index_1():
 
-    import gdal
+    from osgeo import gdal
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     try:
         ogr.GetDriverByName( 'MapInfo File' ).DeleteDataSource( 'index_p.mif' )

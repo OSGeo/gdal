@@ -33,8 +33,8 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 import ogrtest
-import ogr
-import gdal
+from osgeo import ogr
+from osgeo import gdal
 
 class TestWktEmpty:
     def __init__( self, inString, expectedOutString ):

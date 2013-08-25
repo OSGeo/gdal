@@ -36,9 +36,9 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 import ogrtest
-import ogr
-import gdal
-import osr;
+from osgeo import ogr
+from osgeo import gdal
+from osgeo import osr
 
 ###############################################################################
 # Simple read test of known file.

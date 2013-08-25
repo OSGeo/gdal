@@ -34,7 +34,7 @@ import sys
 sys.path.append( '../pymod' )
 
 import gdaltest
-import osr
+from osgeo import osr
 import socket
 
 expected_wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]'
@@ -48,7 +48,7 @@ def osr_url_test(url, expected_wkt):
 
     """Depend on the Accepts headers that ImportFromUrl sets to request SRS from sr.org"""
     srs = osr.SpatialReference()
-    import gdal
+    from osgeo import gdal
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' ) 
     try:
         srs.ImportFromUrl( url )

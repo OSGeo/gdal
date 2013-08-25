@@ -28,7 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import gdal
+from osgeo import gdal
 import sys
 import os
 import shutil

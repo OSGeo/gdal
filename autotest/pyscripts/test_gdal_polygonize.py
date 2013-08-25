@@ -37,9 +37,9 @@ import gdaltest
 import ogrtest
 import test_py_scripts
 
-import gdal
-import gdalconst
-import ogr
+from osgeo import gdal
+from osgeo import gdalconst
+from osgeo import ogr
 
 ###############################################################################
 # Test a fairly simple case, with nodata masking.

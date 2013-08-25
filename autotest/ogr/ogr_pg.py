@@ -35,9 +35,9 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 import ogrtest
-import ogr
-import osr
-import gdal
+from osgeo import ogr
+from osgeo import osr
+from osgeo import gdal
 
 ###############################################################################
 # Return true if 'layer_name' is one of the reported layers of pg_ds

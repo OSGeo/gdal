@@ -35,7 +35,7 @@ import string
 sys.path.append( '../pymod' )
 
 import gdaltest
-import gdal
+from osgeo import gdal
 
 ###############################################################################
 # Test reading a MG4Lidar file

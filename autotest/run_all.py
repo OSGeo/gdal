@@ -28,10 +28,7 @@
 import sys
 sys.path.append( 'pymod' )
 import gdaltest
-try:
-   from osgeo import gdal
-except:
-   import gdal
+from osgeo import gdal
 
 all_test_list = [ 'ogr', 'gcore', 'gdrivers', 'osr' , 'warp', 'alg', 'utilities', 'pyscripts' ]
 

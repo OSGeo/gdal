@@ -34,7 +34,7 @@ import sys
 sys.path.append( '../pymod' )
 
 import gdaltest
-import osr
+from osgeo import osr
 
 ###############################################################################
 # Test the osr.SpatialReference.ImportFromMICoordSys() function.
