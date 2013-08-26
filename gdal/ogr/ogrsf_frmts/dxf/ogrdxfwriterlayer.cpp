@@ -672,11 +672,19 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
     WriteValue( 0, bHasDifferentZ ? "POLYLINE" : "LWPOLYLINE" );
     WriteCore( poFeature );
     WriteValue( 100, "AcDbEntity" );
-    WriteValue( 100, "AcDbPolyline" );
-    if( EQUAL( poGeom->getGeometryName(), "LINEARRING" ) )
-        WriteValue( 70, 1 );
+    if( bHasDifferentZ )
+    {
+        WriteValue( 100, "AcDb3dPolyline" );
+        WriteValue( 10, 0.0 );
+        WriteValue( 20, 0.0 );
+        WriteValue( 30, 0.0 );
+    }
     else
-        WriteValue( 70, 0 );
+        WriteValue( 100, "AcDbPolyline" );
+    if( EQUAL( poGeom->getGeometryName(), "LINEARRING" ) )
+        WriteValue( 70, 1 + (bHasDifferentZ ? 8 : 0) );
+    else
+        WriteValue( 70, 0 + (bHasDifferentZ ? 8 : 0) );
     if( !bHasDifferentZ )
         WriteValue( 90, poLS->getNumPoints() );
     else
@@ -786,6 +794,9 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
         if( bHasDifferentZ ) 
         {
             WriteValue( 0, "VERTEX" );
+            WriteValue( 100, "AcDbEntity" );
+            WriteValue( 100, "AcDbVertex" );
+            WriteValue( 100, "AcDb3dPolylineVertex" );
             WriteCore( poFeature );
         }
         WriteValue( 10, poLS->getX(iVert) );
@@ -796,6 +807,7 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
         {
             if( !WriteValue( 30 , poLS->getZ(iVert) ) )
                 return OGRERR_FAILURE;
+            WriteValue( 70, 32 );
         }
     }
 
@@ -803,6 +815,7 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
     {
         WriteValue( 0, "SEQEND" );
         WriteCore( poFeature );
+        WriteValue( 100, "AcDbEntity" );
     }
     
     delete poTool;
