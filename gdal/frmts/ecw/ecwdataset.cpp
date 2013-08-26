@@ -48,7 +48,7 @@ static int    bNCSInitialized = FALSE;
 
 void ECWInitialize( void );
 
-extern "C" int bInGDALGlobalDestructor;
+extern "C" int CPL_DLL GDALIsInGlobalDestructor(void);
 
 #define BLOCK_SIZE 256
 
@@ -995,7 +995,7 @@ ECWDataset::~ECWDataset()
     // static ressource allocated in NCJP2File.cpp can be called before GDALDestroy(), causing
     // ECW SDK resources ( CNCSJP2File files ) to be closed before we get here.
     if( poFileView != NULL &&
-        (!bIsJPEG2000 || !bInGDALGlobalDestructor) )
+        (!bIsJPEG2000 || !GDALIsInGlobalDestructor()) )
     {
         VSIIOStream *poUnderlyingIOStream = (VSIIOStream *)NULL;
 
@@ -3179,7 +3179,7 @@ void GDALDeregister_ECW( GDALDriver * )
     if( bNCSInitialized )
     {
         bNCSInitialized = FALSE;
-        if( !bInGDALGlobalDestructor )
+        if( !GDALIsInGlobalDestructor() )
         {
             NCSecwShutdown();
         }
