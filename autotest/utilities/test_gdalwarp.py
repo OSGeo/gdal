@@ -908,7 +908,7 @@ def test_gdalwarp_33():
     # There are expected diffs because of the artifacts due to JPEG compression in 8x8 blocks
     # that are partially masked. gdalwarp will remove those artifacts
     max_diff = gdaltest.compare_ds(src_ds, ds)
-    if max_diff > 37:
+    if max_diff > 40:
         return 'fail'
 
     src_ds = None
@@ -971,10 +971,12 @@ def test_gdalwarp_34():
         print(cs)
         return 'fail'
 
-    if gt != (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0):
-        gdaltest.post_reason('bad gt')
-        print(gt)
-        return 'fail'
+    expected_gt = (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
+    for i in range(6):
+        if abs(gt[i] - expected_gt[i]) > 1e-5:
+            gdaltest.post_reason('bad gt')
+            print(gt)
+            return 'fail'
 
     return 'success'
 
