@@ -33,8 +33,13 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-extern "C" int CPL_DLL bInGDALGlobalDestructor;
-int bInGDALGlobalDestructor = FALSE;
+static int bInGDALGlobalDestructor = FALSE;
+extern "C" int CPL_DLL GDALIsInGlobalDestructor(void);
+
+int GDALIsInGlobalDestructor(void)
+{
+    return bInGDALGlobalDestructor;
+}
 
 /************************************************************************/
 /*  The library set-up/clean-up routines implemented with               */
