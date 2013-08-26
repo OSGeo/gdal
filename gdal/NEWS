@@ -40,6 +40,9 @@ Python bindings:
 BAG driver:
   * Recognise falseNorthing=10000000 as UTM South (#5152)
 
+ECW driver:
+  * fix crash in GDALDeregister_ECW() with ECW SDK 5 called from GDALDestroy() (#5214)
+
 ERS driver:
   * Fix wrong interpretation of RegistrationCellX/RegistrationCellY (#2612, #3056, #5075)
 
@@ -118,7 +121,7 @@ CSV driver:
     without header (#5161)
 
 DXF:
-  * fix writing of 25D linestring where z is not constant (#5210)
+  * fix writing of 25D linestring where z is not constant (#5210, #5217)
 
 FileGDB driver:
   * implement ref counting of the FileGDB SDK API' Geodatabase* object to avoid
