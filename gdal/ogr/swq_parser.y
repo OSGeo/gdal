@@ -550,27 +550,27 @@ column_spec:
             }
         }
 
-    | SWQT_DISTINCT field_value SWQT_AS string_or_identifier
+    | SWQT_DISTINCT field_value as_clause
         {
-            if( !context->poCurSelect->PushField( $2, $4->string_value, TRUE ))
+            if( !context->poCurSelect->PushField( $2, $3->string_value, TRUE ))
             {
                 delete $2;
-                delete $4;
-                YYERROR;
-            }
-
-            delete $4;
-        }
-
-    | value_expr SWQT_AS string_or_identifier
-        {
-            if( !context->poCurSelect->PushField( $1, $3->string_value ) )
-            {
-                delete $1;
                 delete $3;
                 YYERROR;
             }
+
             delete $3;
+        }
+
+    | value_expr as_clause
+        {
+            if( !context->poCurSelect->PushField( $1, $2->string_value ) )
+            {
+                delete $1;
+                delete $2;
+                YYERROR;
+            }
+            delete $2;
         }
 
     | '*'
@@ -639,7 +639,7 @@ column_spec:
             }
         }
 
-    | SWQT_IDENTIFIER '(' '*' ')' SWQT_AS string_or_identifier
+    | SWQT_IDENTIFIER '(' '*' ')' as_clause
         {
                 // special case for COUNT(*), confirm it.
             if( !EQUAL($1->string_value,"COUNT") )
@@ -648,7 +648,7 @@ column_spec:
                         "Syntax Error with %s(*).", 
                         $1->string_value );
                 delete $1;
-                delete $6;
+                delete $5;
                 YYERROR;
             }
 
@@ -663,14 +663,14 @@ column_spec:
             swq_expr_node *count = new swq_expr_node( (swq_op)SWQ_COUNT );
             count->PushSubExpression( poNode );
 
-            if( !context->poCurSelect->PushField( count, $6->string_value ) )
+            if( !context->poCurSelect->PushField( count, $5->string_value ) )
             {
                 delete count;
-                delete $6;
+                delete $5;
                 YYERROR;
             }
 
-            delete $6;
+            delete $5;
         }
 
     | SWQT_IDENTIFIER '(' SWQT_DISTINCT field_value ')'
@@ -697,7 +697,7 @@ column_spec:
             }
         }
 
-    | SWQT_IDENTIFIER '(' SWQT_DISTINCT field_value ')' SWQT_AS string_or_identifier
+    | SWQT_IDENTIFIER '(' SWQT_DISTINCT field_value ')' as_clause
         {
             // special case for COUNT(DISTINCT x), confirm it.
             if( !EQUAL($1->string_value,"COUNT") )
@@ -706,24 +706,34 @@ column_spec:
                         "DISTINCT keyword can only be used in COUNT() operator." );
                 delete $1;
                 delete $4;
-                delete $7;
-                    YYERROR;
+                delete $6;
+                YYERROR;
             }
 
             swq_expr_node *count = new swq_expr_node( SWQ_COUNT );
             count->PushSubExpression( $4 );
 
-            if( !context->poCurSelect->PushField( count, $7->string_value, TRUE ) )
+            if( !context->poCurSelect->PushField( count, $6->string_value, TRUE ) )
             {
                 delete $1;
                 delete count;
-                delete $7;
+                delete $6;
                 YYERROR;
             }
 
             delete $1;
-            delete $7;
+            delete $6;
         }
+
+as_clause:
+    SWQT_AS string_or_identifier
+        {
+            delete $1;
+            $$ = $2;
+        }
+
+    | string_or_identifier
+
 
 opt_where:  
     | SWQT_WHERE logical_expr
