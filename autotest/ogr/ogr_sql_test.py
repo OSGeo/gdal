@@ -625,11 +625,13 @@ def ogr_sql_26():
     feat = ogr.Feature(mem_lyr.GetLayerDefn() )
     mem_lyr.CreateFeature( feat )
 
-    sql_lyr = mem_ds.ExecuteSQL("SELECT 'literal_value' AS my_column FROM my_layer")
+    sql_lyr = mem_ds.ExecuteSQL("SELECT 'literal_value' AS my_column, 'literal_value2' my_column2 FROM my_layer")
     if sql_lyr.GetFeatureCount() != 1:
         return 'fail'
     feat = sql_lyr.GetNextFeature()
     if feat.GetFieldAsString('my_column') != 'literal_value':
+        return 'fail'
+    if feat.GetFieldAsString('my_column2') != 'literal_value2':
         return 'fail'
     mem_ds.ReleaseResultSet(sql_lyr)
 
