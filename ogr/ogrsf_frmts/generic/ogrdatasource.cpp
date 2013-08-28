@@ -1536,6 +1536,8 @@ OGRLayer* OGRDataSource::BuildLayerFromSelectInfo(void* psSelectInfoIn,
         }
 
         nFieldCount += poSrcLayer->GetLayerDefn()->GetFieldCount();
+        if( iTable == 0 )
+            nFieldCount += poSrcLayer->GetLayerDefn()->GetGeomFieldCount();
     }
     
 /* -------------------------------------------------------------------- */
@@ -1591,7 +1593,23 @@ OGRLayer* OGRDataSource::BuildLayerFromSelectInfo(void* psSelectInfoIn,
         }
 
         if( iTable == 0 )
-            nFIDIndex = poSrcLayer->GetLayerDefn()->GetFieldCount();
+        {
+            nFIDIndex = sFieldList.count;
+
+            for( iField = 0; 
+                 iField < poSrcLayer->GetLayerDefn()->GetGeomFieldCount();
+                 iField++ )
+            {
+                OGRGeomFieldDefn *poFDefn=poSrcLayer->GetLayerDefn()->GetGeomFieldDefn(iField);
+                int iOutField = sFieldList.count++;
+                sFieldList.names[iOutField] = (char *) poFDefn->GetNameRef();
+                sFieldList.types[iOutField] = SWQ_GEOMETRY;
+
+                sFieldList.table_ids[iOutField] = iTable;
+                sFieldList.ids[iOutField] =
+                    GEOM_FIELD_INDEX_TO_ALL_FIELD_INDEX(poSrcLayer->GetLayerDefn(), iField);
+            }
+        }
     }
 
 /* -------------------------------------------------------------------- */

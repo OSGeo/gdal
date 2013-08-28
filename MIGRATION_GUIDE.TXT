@@ -10,6 +10,13 @@ C++ API:
     The functionnality of GDAL 1.X GDALRasterAttributeTable is now in
     GDALDefaultRasterAttributeTable.
 
+OGR drivers :
+
+  * Due to RFC 41, if a OGR driver calls SetGeomType(wkbNone) on a layer,
+    it will be impossible to affect geometries to features of that layer.
+    This worked before, although it was inconsistant, but it does no longer now.
+    In the developmenet of RFC 41, the CSV and VRT drivers have been upgraded
+    to fix such errors.
 
 Changes that should likely not impact anybody :
 
@@ -19,3 +26,4 @@ Changes that should likely not impact anybody :
    * OGRGeometryFactory::getGEOSGeometryFactory() has been removed.
      This method returned NULL since 2006
      ( http://trac.osgeo.org/gdal/changeset/9899/trunk/ogr/ogrgeometryfactory.cpp )
+

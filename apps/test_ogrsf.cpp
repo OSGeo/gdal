@@ -318,8 +318,11 @@ static void ThreadFunctionInternal( ThreadContext* psContext )
                 return;
             }
             
-            printf( "INFO: Testing layer %s.\n",
-                    poLayer->GetName() );
+            if( bVerbose )
+            {
+                printf( "INFO: Testing layer %s.\n",
+                        poLayer->GetName() );
+            }
             bRet &= TestOGRLayer( poDS, poLayer, FALSE );
             
             papszLayerIter ++;
@@ -365,23 +368,24 @@ static int TestBasic( OGRLayer *poLayer )
 
     const char* pszLayerName = poLayer->GetName();
     OGRwkbGeometryType eGeomType = poLayer->GetGeomType();
+    OGRFeatureDefn* poFDefn = poLayer->GetLayerDefn();
 
-    if( strcmp(pszLayerName, poLayer->GetLayerDefn()->GetName()) != 0 )
+    if( strcmp(pszLayerName, poFDefn->GetName()) != 0 )
     {
         bRet = FALSE;
-        printf( "ERROR: poLayer->GetName() and poLayer->GetLayerDefn()->GetName() differ.\n"
+        printf( "ERROR: poLayer->GetName() and poFDefn>GetName() differ.\n"
                 "poLayer->GetName() = %s\n"
-                "poLayer->GetLayerDefn()->GetName() = %s\n",
-                    pszLayerName, poLayer->GetLayerDefn()->GetName());
+                "poFDefn->GetName() = %s\n",
+                    pszLayerName, poFDefn->GetName());
     }
 
-    if( eGeomType != poLayer->GetLayerDefn()->GetGeomType() )
+    if( eGeomType != poFDefn->GetGeomType() )
     {
         bRet = FALSE;
-        printf( "ERROR: poLayer->GetGeomType() and poLayer->GetLayerDefn()->GetGeomType() differ.\n"
+        printf( "ERROR: poLayer->GetGeomType() and poFDefn->GetGeomType() differ.\n"
                 "poLayer->GetGeomType() = %d\n"
-                "poLayer->GetLayerDefn()->GetGeomType() = %d\n",
-                    eGeomType, poLayer->GetLayerDefn()->GetGeomType());
+                "poFDefn->GetGeomType() = %d\n",
+                    eGeomType, poFDefn->GetGeomType());
     }
 
     if( poLayer->GetFIDColumn() == NULL )
@@ -394,6 +398,44 @@ static int TestBasic( OGRLayer *poLayer )
     {
         bRet = FALSE;
         printf( "ERROR: poLayer->GetGeometryColumn() returned NULL.\n" );
+    }
+
+    if( poFDefn->GetGeomFieldCount() > 0 )
+    {
+        if( eGeomType != poFDefn->GetGeomFieldDefn(0)->GetType() )
+        {
+            bRet = FALSE;
+            printf( "ERROR: poLayer->GetGeomType() and poFDefn->GetGeomFieldDefn(0)->GetType() differ.\n"
+                    "poLayer->GetGeomType() = %d\n"
+                    "poFDefn->GetGeomFieldDefn(0)->GetType() = %d\n",
+                        eGeomType, poFDefn->GetGeomFieldDefn(0)->GetType());
+        }
+
+        if( !EQUAL(poLayer->GetGeometryColumn(),
+                   poFDefn->GetGeomFieldDefn(0)->GetNameRef()) )
+        {
+            if( poFDefn->GetGeomFieldCount() > 1 )
+                bRet = FALSE;
+            printf( "%s: poLayer->GetGeometryColumn() and poFDefn->GetGeomFieldDefn(0)->GetNameRef() differ.\n"
+                    "poLayer->GetGeometryColumn() = %s\n"
+                    "poFDefn->GetGeomFieldDefn(0)->GetNameRef() = %s\n",
+                     ( poFDefn->GetGeomFieldCount() == 1 ) ? "WARNING" : "ERROR",
+                    poLayer->GetGeometryColumn(),
+                     poFDefn->GetGeomFieldDefn(0)->GetNameRef());
+        }
+
+        if( poLayer->GetSpatialRef() !=
+                   poFDefn->GetGeomFieldDefn(0)->GetSpatialRef() )
+        {
+            if( poFDefn->GetGeomFieldCount() > 1 )
+                bRet = FALSE;
+            printf( "%s: poLayer->GetSpatialRef() and poFDefn->GetGeomFieldDefn(0)->GetSpatialRef() differ.\n"
+                    "poLayer->GetSpatialRef() = %p\n"
+                    "poFDefn->GetGeomFieldDefn(0)->GetSpatialRef() = %p\n",
+                     ( poFDefn->GetGeomFieldCount() == 1 ) ? "WARNING" : "ERROR",
+                     poLayer->GetSpatialRef(),
+                     poFDefn->GetGeomFieldDefn(0)->GetSpatialRef());
+        }
     }
 
     return bRet;
@@ -526,9 +568,9 @@ static int TestOGRLayerFeatureCount( OGRDataSource* poDS, OGRLayer *poLayer, int
     int bRet = TRUE;
     int         nFC = 0, nClaimedFC = poLayer->GetFeatureCount();
     OGRFeature  *poFeature;
-    OGRSpatialReference * poSRS = poLayer->GetSpatialRef();
     int         bWarnAboutSRS = FALSE;
     OGRFeatureDefn* poLayerDefn = poLayer->GetLayerDefn();
+    int nGeomFieldCount = poLayerDefn->GetGeomFieldCount();
 
     poLayer->ResetReading();
     CPLErrorReset();
@@ -546,33 +588,44 @@ static int TestOGRLayerFeatureCount( OGRDataSource* poDS, OGRLayer *poLayer, int
                      poFeature->GetDefnRef(), poLayerDefn);
         }
 
-        if( poFeature->GetGeometryRef() != NULL
-            && poFeature->GetGeometryRef()->getSpatialReference() != poSRS
-            && !bWarnAboutSRS )
+        for( int iGeom = 0; iGeom < nGeomFieldCount; iGeom ++ )
         {
-            char        *pszLayerSRSWKT, *pszFeatureSRSWKT;
-            
-            bWarnAboutSRS = TRUE;
+            OGRGeometry* poGeom = poFeature->GetGeomFieldRef(iGeom);
+            OGRSpatialReference * poGFldSRS =
+                poLayerDefn->GetGeomFieldDefn(iGeom)->GetSpatialRef();
 
-            if( poSRS != NULL )
-                poSRS->exportToWkt( &pszLayerSRSWKT );
-            else
-                pszLayerSRSWKT = CPLStrdup("(NULL)");
+            // Compatibility with old drivers anterior to RFC 41
+            if( iGeom == 0 && nGeomFieldCount == 1 && poGFldSRS == NULL )
+                poGFldSRS = poLayer->GetSpatialRef();
 
-            if( poFeature->GetGeometryRef()->getSpatialReference() != NULL )
-                poFeature->GetGeometryRef()->
-                    getSpatialReference()->exportToWkt( &pszFeatureSRSWKT );
-            else
-                pszFeatureSRSWKT = CPLStrdup("(NULL)");
+            if( poGeom != NULL
+                && poGeom->getSpatialReference() != poGFldSRS
+                && !bWarnAboutSRS )
+            {
+                char        *pszLayerSRSWKT, *pszFeatureSRSWKT;
+                
+                bWarnAboutSRS = TRUE;
 
-            bRet = FALSE;
-            printf( "ERROR: Feature SRS differs from layer SRS.\n"
-                    "Feature SRS = %s (%p)\n"
-                    "Layer SRS = %s (%p)\n",
-                    pszFeatureSRSWKT, poFeature->GetGeometryRef()->getSpatialReference(),
-                    pszLayerSRSWKT, poSRS );
-            CPLFree( pszLayerSRSWKT );
-            CPLFree( pszFeatureSRSWKT );
+                if( poGFldSRS != NULL )
+                    poGFldSRS->exportToWkt( &pszLayerSRSWKT );
+                else
+                    pszLayerSRSWKT = CPLStrdup("(NULL)");
+
+                if( poGeom->getSpatialReference() != NULL )
+                    poGeom->
+                        getSpatialReference()->exportToWkt( &pszFeatureSRSWKT );
+                else
+                    pszFeatureSRSWKT = CPLStrdup("(NULL)");
+
+                bRet = FALSE;
+                printf( "ERROR: Feature SRS differs from layer SRS.\n"
+                        "Feature SRS = %s (%p)\n"
+                        "Layer SRS = %s (%p)\n",
+                        pszFeatureSRSWKT, poGeom->getSpatialReference(),
+                        pszLayerSRSWKT, poGFldSRS );
+                CPLFree( pszLayerSRSWKT );
+                CPLFree( pszFeatureSRSWKT );
+            }
         }
         
         OGRFeature::DestroyFeature(poFeature);
@@ -1013,7 +1066,7 @@ end:
 /*      filter that doesn't include this feature, and test again.       */
 /************************************************************************/
 
-static int TestSpatialFilter( OGRLayer *poLayer )
+static int TestSpatialFilter( OGRLayer *poLayer, int iGeomField )
 
 {
     int bRet = TRUE;
@@ -1040,7 +1093,8 @@ static int TestSpatialFilter( OGRLayer *poLayer )
         return bRet;
     }
 
-    if( poTargetFeature->GetGeometryRef() == NULL )
+    OGRGeometry* poGeom = poTargetFeature->GetGeomFieldRef(iGeomField);
+    if( poGeom == NULL || poGeom->IsEmpty() )
     {
         if( bVerbose )
         {
@@ -1052,7 +1106,7 @@ static int TestSpatialFilter( OGRLayer *poLayer )
         return bRet;
     }
 
-    poTargetFeature->GetGeometryRef()->getEnvelope( &sEnvelope );
+    poGeom->getEnvelope( &sEnvelope );
 
 /* -------------------------------------------------------------------- */
 /*      Construct inclusive filter.                                     */
@@ -1066,7 +1120,7 @@ static int TestSpatialFilter( OGRLayer *poLayer )
     
     oInclusiveFilter.addRing( &oRing );
 
-    poLayer->SetSpatialFilter( &oInclusiveFilter );
+    poLayer->SetSpatialFilter( iGeomField, &oInclusiveFilter );
 
 /* -------------------------------------------------------------------- */
 /*      Verify that we can find the target feature.                     */
@@ -1087,7 +1141,8 @@ static int TestSpatialFilter( OGRLayer *poLayer )
     if( poFeature == NULL )
     {
         bRet = FALSE;
-        printf( "ERROR: Spatial filter eliminated a feature unexpectedly!\n");
+        printf( "ERROR: Spatial filter (%d) eliminated a feature unexpectedly!\n",
+                iGeomField);
     }
     else if( bVerbose )
     {
@@ -1107,7 +1162,7 @@ static int TestSpatialFilter( OGRLayer *poLayer )
     
     oExclusiveFilter.addRing( &oRing );
 
-    poLayer->SetSpatialFilter( &oExclusiveFilter );
+    poLayer->SetSpatialFilter( iGeomField, &oExclusiveFilter );
 
 /* -------------------------------------------------------------------- */
 /*      Verify that we can find the target feature.                     */
@@ -1128,14 +1183,16 @@ static int TestSpatialFilter( OGRLayer *poLayer )
     if( poFeature != NULL )
     {
         bRet = FALSE;
-        printf( "ERROR: Spatial filter failed to eliminate"
-                "a feature unexpectedly!\n");
+        printf( "ERROR: Spatial filter (%d) failed to eliminate"
+                "a feature unexpectedly!\n",
+                iGeomField);
     }
     else if( poLayer->GetFeatureCount() >= nInclusiveCount )
     {
         bRet = FALSE;
         printf( "ERROR: GetFeatureCount() may not be taking spatial "
-                "filter into account.\n" );
+                "filter (%d) into account.\n" ,
+                iGeomField);
     }
     else if( bVerbose )
     {
@@ -1146,6 +1203,44 @@ static int TestSpatialFilter( OGRLayer *poLayer )
 
     poLayer->SetSpatialFilter( NULL );
 
+    return bRet;
+}
+
+static int TestSpatialFilter( OGRLayer *poLayer )
+{
+/* -------------------------------------------------------------------- */
+/*      Read the target feature.                                        */
+/* -------------------------------------------------------------------- */
+    poLayer->ResetReading();
+    OGRFeature* poTargetFeature = poLayer->GetNextFeature();
+
+    if( poTargetFeature == NULL )
+    {
+        if( bVerbose )
+        {
+            printf( "INFO: Skipping Spatial Filter test for %s.\n"
+                    "      No features in layer.\n",
+                    poLayer->GetName() );
+        }
+        return TRUE;
+    }
+    OGRFeature::DestroyFeature(poTargetFeature);
+
+    if( poLayer->GetLayerDefn()->GetGeomFieldCount() == 0 )
+    {
+        if( bVerbose )
+        {
+            printf( "INFO: Skipping Spatial Filter test for %s,\n"
+                    "      target feature has no geometry.\n",
+                    poLayer->GetName() );
+        }
+        return TRUE;
+    }
+
+    int bRet = TRUE;
+    int nGeomFieldCount = poLayer->GetLayerDefn()->GetGeomFieldCount();
+    for( int iGeom = 0; iGeom < nGeomFieldCount; iGeom ++ )
+        bRet &= TestSpatialFilter(poLayer, iGeom);
     return bRet;
 }
 
@@ -1458,7 +1553,7 @@ static int TestOGRLayerUTF8 ( OGRLayer *poLayer )
 /*                         TestGetExtent()                              */
 /************************************************************************/
 
-static int TestGetExtent ( OGRLayer *poLayer )
+static int TestGetExtent ( OGRLayer *poLayer, int iGeomField )
 {
     int bRet = TRUE;
 
@@ -1469,8 +1564,8 @@ static int TestGetExtent ( OGRLayer *poLayer )
     OGREnvelope sExtent;
     OGREnvelope sExtentSlow;
 
-    OGRErr eErr = poLayer->GetExtent(&sExtent, TRUE);
-    OGRErr eErr2 = poLayer->OGRLayer::GetExtent(&sExtentSlow, TRUE);
+    OGRErr eErr = poLayer->GetExtent(iGeomField, &sExtent, TRUE);
+    OGRErr eErr2 = poLayer->OGRLayer::GetExtent(iGeomField, &sExtentSlow, TRUE);
 
     if (eErr != eErr2)
     {
@@ -1525,6 +1620,15 @@ static int TestGetExtent ( OGRLayer *poLayer )
         }
     }
 
+    return bRet;
+}
+
+static int TestGetExtent ( OGRLayer *poLayer )
+{
+    int bRet = TRUE;
+    int nGeomFieldCount = poLayer->GetLayerDefn()->GetGeomFieldCount();
+    for( int iGeom = 0; iGeom < nGeomFieldCount; iGeom ++ )
+        bRet &= TestGetExtent(poLayer, iGeom);
     return bRet;
 }
 
@@ -1980,38 +2084,69 @@ static int TestLayerSQL( OGRDataSource* poDS, OGRLayer * poLayer )
         }
         else if( poLayerFeat != NULL && poSQLFeat != NULL )
         {
-            OGRGeometry* poLayerFeatGeom = poLayerFeat->GetGeometryRef();
-            OGRGeometry* poSQLFeatGeom = poSQLFeat->GetGeometryRef();
-            if( poLayerFeatGeom == NULL && poSQLFeatGeom != NULL )
+            if( poLayer->GetLayerDefn()->GetGeomFieldCount() !=
+                poSQLLyr->GetLayerDefn()->GetGeomFieldCount() )
             {
-                printf( "ERROR: poLayerFeatGeom == NULL && poSQLFeatGeom != NULL.\n" );
+                printf( "ERROR: poLayer->GetLayerDefn()->GetGeomFieldCount() != poSQLLyr->GetLayerDefn()->GetGeomFieldCount().\n" );
                 bRet = FALSE;
             }
-            else if( poLayerFeatGeom != NULL && poSQLFeatGeom == NULL )
+            else
             {
-                printf( "ERROR: poLayerFeatGeom != NULL && poSQLFeatGeom == NULL.\n" );
-                bRet = FALSE;
-            }
-            else if( poLayerFeatGeom != NULL && poSQLFeatGeom != NULL )
-            {
-                OGRSpatialReference* poLayerFeatSRS = poLayerFeatGeom->getSpatialReference();
-                OGRSpatialReference* poSQLFeatSRS = poSQLFeatGeom->getSpatialReference();
-                if( poLayerFeatSRS == NULL && poSQLFeatSRS != NULL )
+                int nGeomFieldCount = poLayer->GetLayerDefn()->GetGeomFieldCount();
+                for(int i = 0; i < nGeomFieldCount; i++ )
                 {
-                    printf( "ERROR: poLayerFeatSRS == NULL && poSQLFeatSRS != NULL.\n" );
-                    bRet = FALSE;
-                }
-                else if( poLayerFeatSRS != NULL && poSQLFeatSRS == NULL )
-                {
-                    printf( "ERROR: poLayerFeatSRS != NULL && poSQLFeatSRS == NULL.\n" );
-                    bRet = FALSE;
-                }
-                else if( poLayerFeatSRS != NULL && poSQLFeatSRS != NULL )
-                {
-                    if( !(poLayerFeatSRS->IsSame(poSQLFeatSRS)) )
+                    int iOtherI;
+                    if( nGeomFieldCount != 1 )
                     {
-                        printf( "ERROR: !(poLayerFeatSRS->IsSame(poSQLFeatSRS)).\n" );
+                        OGRGeomFieldDefn* poGFldDefn =
+                            poLayer->GetLayerDefn()->GetGeomFieldDefn(i);
+                        iOtherI = poSQLLyr->GetLayerDefn()->
+                            GetGeomFieldIndex(poGFldDefn->GetNameRef());
+                        if( iOtherI == -1 )
+                        {
+                            printf( "ERROR: Cannot find geom field in SQL matching %s.\n",
+                                    poGFldDefn->GetNameRef() );
+                            break;
+                        }
+                    }
+                    else
+                        iOtherI = 0;
+                    OGRGeometry* poLayerFeatGeom = poLayerFeat->GetGeomFieldRef(i);
+                    OGRGeometry* poSQLFeatGeom = poSQLFeat->GetGeomFieldRef(iOtherI);
+                    if( poLayerFeatGeom == NULL && poSQLFeatGeom != NULL )
+                    {
+                        printf( "ERROR: poLayerFeatGeom[%d] == NULL && poSQLFeatGeom[%d] != NULL.\n",
+                                i, iOtherI );
                         bRet = FALSE;
+                    }
+                    else if( poLayerFeatGeom != NULL && poSQLFeatGeom == NULL )
+                    {
+                        printf( "ERROR: poLayerFeatGeom[%d] != NULL && poSQLFeatGeom[%d] == NULL.\n",
+                                i, iOtherI );
+                        bRet = FALSE;
+                    }
+                    else if( poLayerFeatGeom != NULL && poSQLFeatGeom != NULL )
+                    {
+                        OGRSpatialReference* poLayerFeatSRS = poLayerFeatGeom->getSpatialReference();
+                        OGRSpatialReference* poSQLFeatSRS = poSQLFeatGeom->getSpatialReference();
+                        if( poLayerFeatSRS == NULL && poSQLFeatSRS != NULL )
+                        {
+                            printf( "ERROR: poLayerFeatSRS == NULL && poSQLFeatSRS != NULL.\n" );
+                            bRet = FALSE;
+                        }
+                        else if( poLayerFeatSRS != NULL && poSQLFeatSRS == NULL )
+                        {
+                            printf( "ERROR: poLayerFeatSRS != NULL && poSQLFeatSRS == NULL.\n" );
+                            bRet = FALSE;
+                        }
+                        else if( poLayerFeatSRS != NULL && poSQLFeatSRS != NULL )
+                        {
+                            if( !(poLayerFeatSRS->IsSame(poSQLFeatSRS)) )
+                            {
+                                printf( "ERROR: !(poLayerFeatSRS->IsSame(poSQLFeatSRS)).\n" );
+                                bRet = FALSE;
+                            }
+                        }
                     }
                 }
             }

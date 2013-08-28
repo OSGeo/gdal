@@ -22,6 +22,7 @@
 
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "ogr_core.h"
 
 #if defined(_WIN32) && !defined(_WIN32_WCE)
 #  define strcasecmp stricmp
@@ -68,6 +69,7 @@ typedef enum {
     SWQ_DATE,     // string
     SWQ_TIME,     // string
     SWQ_TIMESTAMP,// string
+    SWQ_GEOMETRY,
     SWQ_NULL,
     SWQ_OTHER,
     SWQ_ERROR
@@ -83,6 +85,7 @@ typedef enum {
 class swq_field_list;
 class swq_expr_node;
 class swq_select;
+class OGRGeometry;
 
 typedef swq_expr_node *(*swq_field_fetcher)( swq_expr_node *op,
                                              void *record_handle );
@@ -98,6 +101,7 @@ public:
     swq_expr_node( const char * );
     swq_expr_node( int );
     swq_expr_node( double );
+    swq_expr_node( OGRGeometry* );
     swq_expr_node( swq_op );
 
     ~swq_expr_node();
@@ -128,6 +132,7 @@ public:
     char        *string_value;
     int         int_value;
     double      float_value;
+    OGRGeometry *geometry_value;
 };
 
 typedef struct {
@@ -205,6 +210,7 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *, swq_expr_node **);
 swq_field_type SWQGeneralChecker( swq_expr_node *node );
 swq_expr_node *SWQCastEvaluator( swq_expr_node *, swq_expr_node **);
 swq_field_type SWQCastChecker( swq_expr_node *node );
+const char*    SWQFieldTypeToString( swq_field_type field_type );
 
 /****************************************************************************/
 
@@ -235,6 +241,8 @@ typedef struct {
     int          field_length;
     int          field_precision;
     int          distinct_flag;
+    OGRwkbGeometryType eGeomType;
+    int          nSRID;
     swq_expr_node *expr;
 } swq_col_def;
 

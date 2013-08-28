@@ -36,6 +36,7 @@
 #include "gdal_alg.h"
 #include "commonutils.h"
 #include <map>
+#include <vector>
 
 CPL_CVSID("$Id$");
 
@@ -61,10 +62,11 @@ typedef struct
     GIntBig      nFeaturesRead;
     int          bPerFeatureCT;
     OGRLayer    *poDstLayer;
-    OGRCoordinateTransformation *poCT;
-    char       **papszTransformOptions;
+    OGRCoordinateTransformation **papoCT; // size: poDstLayer->GetLayerDefn()->GetFieldCount();
+    char       ***papapszTransformOptions; // size: poDstLayer->GetLayerDefn()->GetFieldCount();
     int         *panMap;
     int          iSrcZField;
+    int          iRequestedSrcGeomField;
 } TargetLayerInfo;
 
 typedef struct
@@ -352,10 +354,22 @@ class OGRSplitListFieldLayer : public OGRLayer
         poSrcLayer->SetSpatialFilter(poGeom);
     }
 
+    virtual void                 SetSpatialFilter( int iGeom, OGRGeometry *poGeom )
+    {
+        poSrcLayer->SetSpatialFilter(iGeom, poGeom);
+    }
+
     virtual void                 SetSpatialFilterRect( double dfMinX, double dfMinY,
                                                        double dfMaxX, double dfMaxY )
     {
         poSrcLayer->SetSpatialFilterRect(dfMinX, dfMinY, dfMaxX, dfMaxY);
+    }
+
+    virtual void                 SetSpatialFilterRect( int iGeom,
+                                                       double dfMinX, double dfMinY,
+                                                       double dfMaxX, double dfMaxY )
+    {
+        poSrcLayer->SetSpatialFilterRect(iGeom, dfMinX, dfMinY, dfMaxX, dfMaxY);
     }
 
     virtual OGRErr               SetAttributeFilter( const char *pszFilter )
@@ -494,7 +508,12 @@ int  OGRSplitListFieldLayer::BuildLayerDefn(GDALProgressFunc pfnProgress,
     poFeatureDefn =
             OGRFeatureDefn::CreateFeatureDefn( poSrcFieldDefn->GetName() );
     poFeatureDefn->Reference();
-    poFeatureDefn->SetGeomType( poSrcFieldDefn->GetGeomType() );
+    poFeatureDefn->SetGeomType( wkbNone );
+    
+    for(i=0;i<poSrcFieldDefn->GetGeomFieldCount();i++)
+    {
+        poFeatureDefn->AddGeomFieldDefn(poSrcFieldDefn->GetGeomFieldDefn(i));
+    }
 
     int iListField = 0;
     for(i=0;i<nSrcFields;i++)
@@ -555,7 +574,10 @@ OGRFeature *OGRSplitListFieldLayer::TranslateFeature(OGRFeature* poSrcFeature)
 
     OGRFeature* poFeature = OGRFeature::CreateFeature(poFeatureDefn);
     poFeature->SetFID(poSrcFeature->GetFID());
-    poFeature->SetGeometryDirectly(poSrcFeature->StealGeometry());
+    for(int i=0;i<poFeature->GetGeomFieldCount();i++)
+    {
+        poFeature->SetGeomFieldDirectly(i, poSrcFeature->StealGeometry(i));
+    }
     poFeature->SetStyleString(poFeature->GetStyleString());
 
     OGRFeatureDefn* poSrcFieldDefn = poSrcLayer->GetLayerDefn();
@@ -796,6 +818,29 @@ public:
 };
 
 /************************************************************************/
+/*                        ApplySpatialFilter()                          */
+/************************************************************************/
+
+void ApplySpatialFilter(OGRLayer* poLayer, OGRGeometry* poSpatialFilter,
+                        const char* pszGeomField)
+{
+    if( poSpatialFilter != NULL )
+    {
+        if( pszGeomField != NULL )
+        {
+            int iGeomField = poLayer->GetLayerDefn()->GetGeomFieldIndex(pszGeomField);
+            if( iGeomField >= 0 )
+                poLayer->SetSpatialFilter( iGeomField, poSpatialFilter );
+            else
+                printf("WARNING: Cannot find geometry field %s.\n",
+                    pszGeomField);
+        }
+        else
+            poLayer->SetSpatialFilter( poSpatialFilter );
+    }
+}
+
+/************************************************************************/
 /*                                main()                                */
 /************************************************************************/
 
@@ -825,6 +870,7 @@ int main( int nArgc, char ** papszArgv )
     char        *pszNewLayerName = NULL;
     const char  *pszWHERE = NULL;
     OGRGeometry *poSpatialFilter = NULL;
+    const char  *pszGeomField = NULL;
     const char  *pszSelect;
     char        **papszSelFields = NULL;
     const char  *pszSQLStatement = NULL;
@@ -1057,6 +1103,11 @@ int main( int nArgc, char ** papszArgv )
             poSpatialFilter = OGRGeometryFactory::createGeometry(wkbPolygon);
             ((OGRPolygon *) poSpatialFilter)->addRing( &oRing );
             iArg += 4;
+        }
+        else if( EQUAL(papszArgv[iArg],"-geomfield") )
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            pszGeomField = papszArgv[++iArg];
         }
         else if( EQUAL(papszArgv[iArg],"-where") )
         {
@@ -1643,11 +1694,22 @@ int main( int nArgc, char ** papszArgv )
         if( CSLCount(papszLayers) > 0 )
             fprintf( stderr,  "layer names ignored in combination with -sql.\n" );
         
-        poResultSet = poDS->ExecuteSQL( pszSQLStatement, poSpatialFilter, 
+        poResultSet = poDS->ExecuteSQL( pszSQLStatement,
+                                        (pszGeomField == NULL) ? poSpatialFilter : NULL, 
                                         pszDialect );
 
         if( poResultSet != NULL )
         {
+            if( poSpatialFilter != NULL && pszGeomField != NULL )
+            {
+                int iGeomField = poResultSet->GetLayerDefn()->GetGeomFieldIndex(pszGeomField);
+                if( iGeomField >= 0 )
+                    poResultSet->SetSpatialFilter( iGeomField, poSpatialFilter );
+                else
+                    printf("WARNING: Cannot find geometry field %s.\n",
+                           pszGeomField);
+            }
+
             long nCountLayerFeatures = 0;
             if (bDisplayProgress)
             {
@@ -1845,8 +1907,7 @@ int main( int nArgc, char ** papszArgv )
                     }
                 }
 
-                if( poSpatialFilter != NULL )
-                    poLayer->SetSpatialFilter( poSpatialFilter );
+                ApplySpatialFilter(poLayer, poSpatialFilter, pszGeomField);
 
                 TargetLayerInfo* psInfo = SetupTargetLayer( poDS,
                                                     poLayer,
@@ -2043,8 +2104,7 @@ int main( int nArgc, char ** papszArgv )
                 }
             }
 
-            if( poSpatialFilter != NULL )
-                poLayer->SetSpatialFilter( poSpatialFilter );
+            ApplySpatialFilter(poLayer, poSpatialFilter, pszGeomField);
 
             if (bDisplayProgress && !bSrcIsOSM)
             {
@@ -2242,7 +2302,7 @@ static void Usage(const char* pszAdditionalMsg, int bShort)
             "               [-select field_list] [-where restricted_where]\n"
             "               [-progress] [-sql <sql statement>] [-dialect dialect]\n"
             "               [-preserve_fid] [-fid FID]\n"
-            "               [-spat xmin ymin xmax ymax]\n"
+            "               [-spat xmin ymin xmax ymax] [-geomfield field]\n"
             "               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]\n"
             "               [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]\n"
             "               dst_datasource_name src_datasource_name\n"
@@ -2390,6 +2450,20 @@ static void SetZ (OGRGeometry* poGeom, double dfZ )
 }
 
 /************************************************************************/
+/*                       ForceCoordDimension()                          */
+/************************************************************************/
+
+static int ForceCoordDimension(int eGType, int nCoordDim)
+{
+    if( nCoordDim == 2 && eGType != wkbNone )
+        return eGType & ~wkb25DBit;
+    else if( nCoordDim == 3 && eGType != wkbNone )
+        return eGType | wkb25DBit;
+    else
+        return eGType;
+}
+
+/************************************************************************/
 /*                         SetupTargetLayer()                           */
 /************************************************************************/
 
@@ -2423,8 +2497,61 @@ static TargetLayerInfo* SetupTargetLayer( OGRDataSource *poSrcDS,
 /* -------------------------------------------------------------------- */
     poSrcFDefn = poSrcLayer->GetLayerDefn();
 
+/* -------------------------------------------------------------------- */
+/*      Find requested geometry fields.                                 */
+/* -------------------------------------------------------------------- */
+    std::vector<int> anRequestedGeomFields;
+    int nSrcGeomFieldCount = poSrcFDefn->GetGeomFieldCount();
+    if (papszSelFields && !bAppend )
+    {
+        for( int iField=0; papszSelFields[iField] != NULL; iField++)
+        {
+            int iSrcField = poSrcFDefn->GetFieldIndex(papszSelFields[iField]);
+            if (iSrcField >= 0)
+            {
+                /* do nothing */
+            }
+            else
+            {
+                iSrcField = poSrcFDefn->GetGeomFieldIndex(papszSelFields[iField]);
+                if( iSrcField >= 0)
+                {
+                    anRequestedGeomFields.push_back(iSrcField);
+                }
+                else
+                {
+                    fprintf( stderr, "Field '%s' not found in source layer.\n",
+                            papszSelFields[iField] );
+                    if( !bSkipFailures )
+                        return NULL;
+                }
+            }
+        }
+
+        if( anRequestedGeomFields.size() > 1 &&
+            !poDstDS->TestCapability(ODsCCreateGeomFieldAfterCreateLayer) )
+        {
+            fprintf( stderr, "Several geometry fields requested, but output "
+                                "datasource does not support multiple geometry "
+                                "fields.\n" );
+            if( !bSkipFailures )
+                return NULL;
+            else
+                anRequestedGeomFields.resize(0);
+        }
+    }
+
     if( poOutputSRS == NULL && !bNullifyOutputSRS )
-        poOutputSRS = poSrcLayer->GetSpatialRef();
+    {
+        if( nSrcGeomFieldCount == 1 )
+            poOutputSRS = poSrcLayer->GetSpatialRef();
+        else if( anRequestedGeomFields.size() == 1 )
+        {
+            int iSrcGeomField = anRequestedGeomFields[0];
+            poOutputSRS = poSrcFDefn->GetGeomFieldDefn(iSrcGeomField)->
+                GetSpatialRef();
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Find the layer.                                                 */
@@ -2476,9 +2603,28 @@ static TargetLayerInfo* SetupTargetLayer( OGRDataSource *poSrcDS,
 /* -------------------------------------------------------------------- */
     if( poDstLayer == NULL )
     {
+        if( !poDstDS->TestCapability( ODsCCreateLayer ) )
+        {
+            fprintf( stderr,
+              "Layer %s not found, and CreateLayer not supported by driver.\n",
+                     pszNewLayerName );
+            return NULL;
+        }
+
+        int bForceGType = ( eGType != -2 );
         if( eGType == -2 )
         {
-            eGType = poSrcFDefn->GetGeomType();
+            if( anRequestedGeomFields.size() == 0 )
+            {
+                eGType = poSrcFDefn->GetGeomType();
+            }
+            else if( anRequestedGeomFields.size() == 1  )
+            {
+                int iSrcGeomField = anRequestedGeomFields[0];
+                eGType = poSrcFDefn->GetGeomFieldDefn(iSrcGeomField)->GetType();
+            }
+            else
+                eGType = wkbNone;
 
             int n25DBit = eGType & wkb25DBit;
             if ( bPromoteToMulti )
@@ -2509,31 +2655,74 @@ static TargetLayerInfo* SetupTargetLayer( OGRDataSource *poSrcDS,
                 }
             }
 
-            if ( pszZField )
+            if ( pszZField && eGType != wkbNone )
                 eGType |= wkb25DBit;
         }
 
-        if( nCoordDim == 2 )
-            eGType &= ~wkb25DBit;
-        else if( nCoordDim == 3 )
-            eGType |= wkb25DBit;
-
-        if( !poDstDS->TestCapability( ODsCCreateLayer ) )
-        {
-            fprintf( stderr,
-              "Layer %s not found, and CreateLayer not supported by driver.\n",
-                     pszNewLayerName );
-            return NULL;
-        }
+        eGType = ForceCoordDimension(eGType, nCoordDim);
 
         CPLErrorReset();
 
+        int eGCreateLayerType = eGType;
+        if( anRequestedGeomFields.size() == 0 &&
+            nSrcGeomFieldCount > 1 &&
+            poDstDS->TestCapability(ODsCCreateGeomFieldAfterCreateLayer) )
+        {
+            eGCreateLayerType = wkbNone;
+        }
+        else if( anRequestedGeomFields.size() == 1 &&
+                 poDstDS->TestCapability(ODsCCreateGeomFieldAfterCreateLayer) )
+        {
+            eGCreateLayerType = wkbNone;
+        }
+
         poDstLayer = poDstDS->CreateLayer( pszNewLayerName, poOutputSRS,
-                                           (OGRwkbGeometryType) eGType,
+                                           (OGRwkbGeometryType) eGCreateLayerType,
                                            papszLCO );
 
         if( poDstLayer == NULL )
             return NULL;
+
+        if( anRequestedGeomFields.size() == 0 &&
+            nSrcGeomFieldCount > 1 &&
+            poDstDS->TestCapability(ODsCCreateGeomFieldAfterCreateLayer) )
+        {
+            for(int i = 0; i < nSrcGeomFieldCount; i ++)
+            {
+                anRequestedGeomFields.push_back(i);
+            }
+        }
+
+        if( anRequestedGeomFields.size() > 1 ||
+            (anRequestedGeomFields.size() == 1 &&
+                 poDstDS->TestCapability(ODsCCreateGeomFieldAfterCreateLayer)) )
+        {
+            for(int i = 0; i < (int)anRequestedGeomFields.size(); i ++)
+            {
+                int iSrcGeomField = anRequestedGeomFields[i];
+                OGRGeomFieldDefn oGFldDefn
+                    (poSrcFDefn->GetGeomFieldDefn(iSrcGeomField));
+                if( poOutputSRS != NULL )
+                    oGFldDefn.SetSpatialRef(poOutputSRS);
+                if( bForceGType )
+                    oGFldDefn.SetType((OGRwkbGeometryType) eGType);
+                else
+                {
+                    eGType = oGFldDefn.GetType();
+                    int n25DBit = eGType & wkb25DBit;
+                    if ( bPromoteToMulti )
+                    {
+                        if (wkbFlatten(eGType) == wkbLineString)
+                            eGType = wkbMultiLineString | n25DBit;
+                        else if (wkbFlatten(eGType) == wkbPolygon)
+                            eGType = wkbMultiPolygon | n25DBit;
+                    }
+                    eGType = ForceCoordDimension(eGType, nCoordDim);
+                    oGFldDefn.SetType((OGRwkbGeometryType) eGType);
+                }
+                poDstLayer->CreateGeomField(&oGFldDefn);
+            }
+        }
 
         bAppend = FALSE;
     }
@@ -2544,7 +2733,7 @@ static TargetLayerInfo* SetupTargetLayer( OGRDataSource *poSrcDS,
     else if( !bAppend )
     {
         fprintf( stderr, "FAILED: Layer %s already exists, and -append not specified.\n"
-                "        Consider using -append, or -overwrite.\n",
+                         "        Consider using -append, or -overwrite.\n",
                 pszNewLayerName );
         return NULL;
     }
@@ -2553,7 +2742,7 @@ static TargetLayerInfo* SetupTargetLayer( OGRDataSource *poSrcDS,
         if( CSLCount(papszLCO) > 0 )
         {
             fprintf( stderr, "WARNING: Layer creation options ignored since an existing layer is\n"
-                    "         being appended to.\n" );
+                             "         being appended to.\n" );
         }
     }
 
@@ -2588,7 +2777,8 @@ static TargetLayerInfo* SetupTargetLayer( OGRDataSource *poSrcDS,
             bIdentity = TRUE;
         else if (CSLCount(papszFieldMap) != nSrcFieldCount)
         {
-            fprintf( stderr, "Field map should contain the value 'identity' or the same number of integer values as the source field count.\n");
+            fprintf( stderr, "Field map should contain the value 'identity' or "
+                    "the same number of integer values as the source field count.\n");
             VSIFree(panMap);
             return NULL;
         }
@@ -2657,16 +2847,6 @@ static TargetLayerInfo* SetupTargetLayer( OGRDataSource *poSrcDS,
                         panMap[iSrcField] = nDstFieldCount;
                         nDstFieldCount ++;
                     }
-                }
-            }
-            else
-            {
-                fprintf( stderr, "Field '%s' not found in source layer.\n",
-                        papszSelFields[iField] );
-                if( !bSkipFailures )
-                {
-                    VSIFree(panMap);
-                    return NULL;
                 }
             }
         }
@@ -2859,10 +3039,18 @@ static TargetLayerInfo* SetupTargetLayer( OGRDataSource *poSrcDS,
     psInfo->nFeaturesRead = 0;
     psInfo->bPerFeatureCT = FALSE;
     psInfo->poDstLayer = poDstLayer;
-    psInfo->poCT = NULL;
-    psInfo->papszTransformOptions = NULL;
+    psInfo->papoCT = (OGRCoordinateTransformation**)
+        CPLCalloc(poDstLayer->GetLayerDefn()->GetGeomFieldCount(),
+                  sizeof(OGRCoordinateTransformation*));
+    psInfo->papapszTransformOptions = (char***)
+        CPLCalloc(poDstLayer->GetLayerDefn()->GetGeomFieldCount(),
+                  sizeof(char**));
     psInfo->panMap = panMap;
     psInfo->iSrcZField = iSrcZField;
+    if( anRequestedGeomFields.size() == 1 )
+        psInfo->iRequestedSrcGeomField = anRequestedGeomFields[0];
+    else
+        psInfo->iRequestedSrcGeomField = -1;
 
     return psInfo;
 }
@@ -2875,12 +3063,174 @@ static void FreeTargetLayerInfo(TargetLayerInfo* psInfo)
 {
     if( psInfo == NULL )
         return;
-    delete psInfo->poCT;
-    CSLDestroy(psInfo->papszTransformOptions);
+    for(int i=0;i<psInfo->poDstLayer->GetLayerDefn()->GetGeomFieldCount();i++)
+    {
+        delete psInfo->papoCT[i];
+        CSLDestroy(psInfo->papapszTransformOptions[i]);
+    }
+    CPLFree(psInfo->papoCT);
+    CPLFree(psInfo->papapszTransformOptions);
     CPLFree(psInfo->panMap);
     CPLFree(psInfo);
 }
 
+/************************************************************************/
+/*                               SetupCT()                              */
+/************************************************************************/
+
+static int SetupCT( TargetLayerInfo* psInfo,
+                    OGRLayer* poSrcLayer,
+                    int bTransform,
+                    int bWrapDateline,
+                    const char* pszDateLineOffset,
+                    OGRSpatialReference* poUserSourceSRS,
+                    OGRFeature* poFeature,
+                    OGRSpatialReference* poOutputSRS,
+                    OGRCoordinateTransformation* poGCPCoordTrans)
+{
+    OGRLayer    *poDstLayer = psInfo->poDstLayer;
+    int nDstGeomFieldCount = poDstLayer->GetLayerDefn()->GetGeomFieldCount();
+    for( int iGeom = 0; iGeom < nDstGeomFieldCount; iGeom ++ )
+    {
+/* -------------------------------------------------------------------- */
+/*      Setup coordinate transformation if we need it.                  */
+/* -------------------------------------------------------------------- */
+        OGRSpatialReference* poSourceSRS = NULL;
+        OGRCoordinateTransformation* poCT = NULL;
+        char** papszTransformOptions = NULL;
+        
+        int iSrcGeomField;
+        if( psInfo->iRequestedSrcGeomField >= 0 )
+            iSrcGeomField = psInfo->iRequestedSrcGeomField;
+        else
+        {
+            iSrcGeomField = poSrcLayer->GetLayerDefn()->GetGeomFieldIndex(
+                poDstLayer->GetLayerDefn()->GetGeomFieldDefn(iGeom)->GetNameRef());
+            if( iSrcGeomField < 0 )
+            {
+                if( nDstGeomFieldCount == 1 && 
+                    poSrcLayer->GetLayerDefn()->GetGeomFieldCount() > 0 )
+                {
+                    iSrcGeomField = 0;
+                }
+                else
+                    continue;
+            }
+        }
+        
+        if( bTransform || bWrapDateline )
+        {
+            if( psInfo->nFeaturesRead == 0 )
+            {
+                poSourceSRS = poUserSourceSRS;
+                if( poSourceSRS == NULL )
+                {
+                    if( iSrcGeomField > 0 )
+                        poSourceSRS = poSrcLayer->GetLayerDefn()->
+                            GetGeomFieldDefn(iSrcGeomField)->GetSpatialRef();
+                    else
+                        poSourceSRS = poSrcLayer->GetSpatialRef();
+                }
+            }
+            if( poSourceSRS == NULL )
+            {
+                OGRGeometry* poSrcGeometry =
+                    poFeature->GetGeomFieldRef(iSrcGeomField);
+                if( poSrcGeometry )
+                    poSourceSRS = poSrcGeometry->getSpatialReference();
+                psInfo->bPerFeatureCT = TRUE;
+            }
+        }
+
+        if( bTransform )
+        {
+            if( poSourceSRS == NULL )
+            {
+                fprintf( stderr, "Can't transform coordinates, source layer has no\n"
+                        "coordinate system.  Use -s_srs to set one.\n" );
+
+                return FALSE;
+            }
+
+            CPLAssert( NULL != poSourceSRS );
+            CPLAssert( NULL != poOutputSRS );
+
+            if( psInfo->papoCT[iGeom] != NULL &&
+                psInfo->papoCT[iGeom]->GetSourceCS() == poSourceSRS )
+            {
+                poCT = psInfo->papoCT[iGeom];
+            }
+            else
+            {
+                poCT = OGRCreateCoordinateTransformation( poSourceSRS, poOutputSRS );
+                if( poCT == NULL )
+                {
+                    char        *pszWKT = NULL;
+
+                    fprintf( stderr, "Failed to create coordinate transformation between the\n"
+                        "following coordinate systems.  This may be because they\n"
+                        "are not transformable, or because projection services\n"
+                        "(PROJ.4 DLL/.so) could not be loaded.\n" );
+
+                    poSourceSRS->exportToPrettyWkt( &pszWKT, FALSE );
+                    fprintf( stderr,  "Source:\n%s\n", pszWKT );
+                    CPLFree(pszWKT);
+
+                    poOutputSRS->exportToPrettyWkt( &pszWKT, FALSE );
+                    fprintf( stderr,  "Target:\n%s\n", pszWKT );
+                    CPLFree(pszWKT);
+
+                    return FALSE;
+                }
+                if( poGCPCoordTrans != NULL )
+                    poCT = new CompositeCT( poGCPCoordTrans, poCT );
+            }
+
+            if( poCT != psInfo->papoCT[iGeom] )
+            {
+                delete psInfo->papoCT[iGeom];
+                psInfo->papoCT[iGeom] = poCT;
+            }
+        }
+        else
+        {
+            poCT = poGCPCoordTrans;
+        }
+
+        if (bWrapDateline)
+        {
+            if (bTransform && poCT != NULL && poOutputSRS != NULL && poOutputSRS->IsGeographic())
+            {
+                papszTransformOptions =
+                    CSLAddString(papszTransformOptions, "WRAPDATELINE=YES");
+                CPLString soOffset("DATELINEOFFSET=");
+                soOffset += pszDateLineOffset;
+                papszTransformOptions =
+                    CSLAddString(papszTransformOptions, soOffset);
+            }
+            else if (poSourceSRS != NULL && poSourceSRS->IsGeographic())
+            {
+                papszTransformOptions =
+                    CSLAddString(papszTransformOptions, "WRAPDATELINE=YES");
+                CPLString soOffset("DATELINEOFFSET=");
+                soOffset += pszDateLineOffset;
+                papszTransformOptions =
+                    CSLAddString(papszTransformOptions, soOffset);
+            }
+            else
+            {
+                static int bHasWarned = FALSE;
+                if( !bHasWarned )
+                    fprintf(stderr, "-wrapdateline option only works when reprojecting to a geographic SRS\n");
+                bHasWarned = TRUE;
+            }
+
+            CSLDestroy(psInfo->papapszTransformOptions[iGeom]);
+            psInfo->papapszTransformOptions[iGeom] = papszTransformOptions;
+        }
+    }
+    return TRUE;
+}
 /************************************************************************/
 /*                           TranslateLayer()                           */
 /************************************************************************/
@@ -2915,17 +3265,28 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
     int         bForceToPolygon = FALSE;
     int         bForceToMultiPolygon = FALSE;
     int         bForceToMultiLineString = FALSE;
-    char**      papszTransformOptions = NULL;
-    OGRCoordinateTransformation *poCT = NULL;
     int         *panMap = NULL;
     int         iSrcZField;
 
     poDstLayer = psInfo->poDstLayer;
     panMap = psInfo->panMap;
     iSrcZField = psInfo->iSrcZField;
+    int nSrcGeomFieldCount = poSrcLayer->GetLayerDefn()->GetGeomFieldCount();
+    int nDstGeomFieldCount = poDstLayer->GetLayerDefn()->GetGeomFieldCount();
 
     if( poOutputSRS == NULL && !bNullifyOutputSRS )
-        poOutputSRS = poSrcLayer->GetSpatialRef();
+    {
+        if( nSrcGeomFieldCount == 1 )
+        {
+            poOutputSRS = poSrcLayer->GetSpatialRef();
+        }
+        else if( psInfo->iRequestedSrcGeomField > 0 )
+        {
+            poOutputSRS = poSrcLayer->GetLayerDefn()->GetGeomFieldDefn(
+                psInfo->iRequestedSrcGeomField)->GetSpatialRef();
+        }
+
+    }
     
     if( wkbFlatten(eGType) == wkbPolygon )
         bForceToPolygon = TRUE;
@@ -2933,6 +3294,11 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
         bForceToMultiPolygon = TRUE;
     else if( wkbFlatten(eGType) == wkbMultiLineString )
         bForceToMultiLineString = TRUE;
+    
+    if( bExplodeCollections && nDstGeomFieldCount > 1 )
+    {
+        bExplodeCollections = FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Transfer features.                                              */
@@ -2965,133 +3331,13 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
 
         if( psInfo->nFeaturesRead == 0 || psInfo->bPerFeatureCT )
         {
-        /* -------------------------------------------------------------------- */
-        /*      Setup coordinate transformation if we need it.                  */
-        /* -------------------------------------------------------------------- */
-            OGRSpatialReference* poSourceSRS = NULL;
-
-            poCT = NULL;
-            papszTransformOptions = NULL;
-
-            if( bTransform )
+            if( !SetupCT( psInfo, poSrcLayer, bTransform, bWrapDateline,
+                          pszDateLineOffset, poUserSourceSRS,
+                          poFeature, poOutputSRS, poGCPCoordTrans) )
             {
-                if( psInfo->nFeaturesRead == 0 )
-                {
-                    poSourceSRS = poUserSourceSRS;
-                    if( poSourceSRS == NULL )
-                        poSourceSRS = poSrcLayer->GetSpatialRef();
-                }
-                if( poSourceSRS == NULL )
-                {
-                    OGRGeometry* poSrcGeometry = poFeature->GetGeometryRef();
-                    if( poSrcGeometry )
-                        poSourceSRS = poSrcGeometry->getSpatialReference();
-                    psInfo->bPerFeatureCT = TRUE;
-                }
-
-                if( poSourceSRS == NULL )
-                {
-                    fprintf( stderr, "Can't transform coordinates, source layer has no\n"
-                            "coordinate system.  Use -s_srs to set one.\n" );
-                    OGRFeature::DestroyFeature( poFeature );
-                    return FALSE;
-                }
-
-                CPLAssert( NULL != poSourceSRS );
-                CPLAssert( NULL != poOutputSRS );
-
-                if( psInfo->poCT != NULL &&
-                    psInfo->poCT->GetSourceCS() == poSourceSRS )
-                {
-                    poCT = psInfo->poCT;
-                }
-                else
-                {
-                    poCT = OGRCreateCoordinateTransformation( poSourceSRS, poOutputSRS );
-                    if( poCT == NULL )
-                    {
-                        char        *pszWKT = NULL;
-
-                        fprintf( stderr, "Failed to create coordinate transformation between the\n"
-                            "following coordinate systems.  This may be because they\n"
-                            "are not transformable, or because projection services\n"
-                            "(PROJ.4 DLL/.so) could not be loaded.\n" );
-
-                        poSourceSRS->exportToPrettyWkt( &pszWKT, FALSE );
-                        fprintf( stderr,  "Source:\n%s\n", pszWKT );
-                        CPLFree(pszWKT);
-
-                        poOutputSRS->exportToPrettyWkt( &pszWKT, FALSE );
-                        fprintf( stderr,  "Target:\n%s\n", pszWKT );
-                        CPLFree(pszWKT);
-
-                        OGRFeature::DestroyFeature( poFeature );
-                        return FALSE;
-                    }
-                    if( poGCPCoordTrans != NULL )
-                        poCT = new CompositeCT( poGCPCoordTrans, poCT );
-                }
-
-                if( poCT != psInfo->poCT )
-                {
-                    delete psInfo->poCT;
-                    psInfo->poCT = poCT;
-                }
+                OGRFeature::DestroyFeature( poFeature );
+                return FALSE;
             }
-            else
-            {
-                poCT = poGCPCoordTrans;
-            }
-
-            if (bWrapDateline)
-            {
-                if( poSourceSRS == NULL )
-                {
-                    if( psInfo->nFeaturesRead == 0 )
-                    {
-                        poSourceSRS = poUserSourceSRS;
-                        if( poSourceSRS == NULL )
-                            poSourceSRS = poSrcLayer->GetSpatialRef();
-                    }
-                    if( poSourceSRS == NULL )
-                    {
-                        OGRGeometry* poSrcGeometry = poFeature->GetGeometryRef();
-                        if( poSrcGeometry )
-                            poSourceSRS = poSrcGeometry->getSpatialReference();
-                        psInfo->bPerFeatureCT = TRUE;
-                    }
-                }
-
-                if (bTransform && poCT != NULL && poOutputSRS != NULL && poOutputSRS->IsGeographic())
-                {
-                    papszTransformOptions =
-                        CSLAddString(papszTransformOptions, "WRAPDATELINE=YES");
-                    CPLString soOffset("DATELINEOFFSET=");
-                    soOffset += pszDateLineOffset;
-                    papszTransformOptions =
-                        CSLAddString(papszTransformOptions, soOffset);
-                }
-                else if (poSourceSRS != NULL && poSourceSRS->IsGeographic())
-                {
-                    papszTransformOptions =
-                        CSLAddString(papszTransformOptions, "WRAPDATELINE=YES");
-                    CPLString soOffset("DATELINEOFFSET=");
-                    soOffset += pszDateLineOffset;
-                    papszTransformOptions =
-                        CSLAddString(papszTransformOptions, soOffset);
-                }
-                else
-                {
-                    static int bHasWarned = FALSE;
-                    if( !bHasWarned )
-                        fprintf(stderr, "-wrapdateline option only works when reprojecting to a geographic SRS\n");
-                    bHasWarned = TRUE;
-                }
-
-                CSLDestroy(psInfo->papszTransformOptions);
-                psInfo->papszTransformOptions = papszTransformOptions;
-            }
-
         }
 
         psInfo->nFeaturesRead ++;
@@ -3100,7 +3346,12 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
         int nIters = 1;
         if (bExplodeCollections)
         {
-            OGRGeometry* poSrcGeometry = poFeature->GetGeometryRef();
+            OGRGeometry* poSrcGeometry;
+            if( psInfo->iRequestedSrcGeomField >= 0 )
+                poSrcGeometry = poFeature->GetGeomFieldRef(
+                                        psInfo->iRequestedSrcGeomField);
+            else
+                poSrcGeometry = poFeature->GetGeometryRef();
             if (poSrcGeometry)
             {
                 switch (wkbFlatten(poSrcGeometry->getGeometryType()))
@@ -3134,8 +3385,17 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
             /* Optimization to avoid duplicating the source geometry in the */
             /* target feature : we steal it from the source feature for now... */
             OGRGeometry* poStealedGeometry = NULL;
-            if( !bExplodeCollections )
+            if( !bExplodeCollections && nSrcGeomFieldCount == 1 &&
+                nDstGeomFieldCount == 1 )
+            {
                 poStealedGeometry = poFeature->StealGeometry();
+            }
+            else if( !bExplodeCollections &&
+                     psInfo->iRequestedSrcGeomField >= 0 )
+            {
+                poStealedGeometry = poFeature->StealGeometry(
+                    psInfo->iRequestedSrcGeomField);
+            }
 
             if( poDstFeature->SetFrom( poFeature, panMap, TRUE ) != OGRERR_NONE )
             {
@@ -3154,20 +3414,25 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
 
             /* ... and now we can attach the stealed geometry */
             if( poStealedGeometry )
+            {
                 poDstFeature->SetGeometryDirectly(poStealedGeometry);
+            }
 
             if( bPreserveFID )
                 poDstFeature->SetFID( poFeature->GetFID() );
-
-            OGRGeometry* poDstGeometry = poDstFeature->GetGeometryRef();
-            if (poDstGeometry != NULL)
+            
+            for( int iGeom = 0; iGeom < nDstGeomFieldCount; iGeom ++ )
             {
+                OGRGeometry* poDstGeometry = poDstFeature->GetGeomFieldRef(iGeom);
+                if (poDstGeometry == NULL)
+                    continue;
+
                 if (nParts > 0)
                 {
                     /* For -explodecollections, extract the iPart(th) of the geometry */
                     OGRGeometry* poPart = ((OGRGeometryCollection*)poDstGeometry)->getGeometryRef(iPart);
                     ((OGRGeometryCollection*)poDstGeometry)->removeGeometry(iPart, FALSE);
-                    poDstFeature->SetGeometryDirectly(poPart);
+                    poDstFeature->SetGeomFieldDirectly(iGeom, poPart);
                     poDstGeometry = poPart;
                 }
 
@@ -3176,14 +3441,15 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
                     SetZ(poDstGeometry, poFeature->GetFieldAsDouble(iSrcZField));
                     /* This will correct the coordinate dimension to 3 */
                     OGRGeometry* poDupGeometry = poDstGeometry->clone();
-                    poDstFeature->SetGeometryDirectly(poDupGeometry);
+                    poDstFeature->SetGeomFieldDirectly(iGeom, poDupGeometry);
                     poDstGeometry = poDupGeometry;
                 }
 
                 if (nCoordDim == 2 || nCoordDim == 3)
                     poDstGeometry->setCoordinateDimension( nCoordDim );
                 else if ( nCoordDim == COORD_DIM_LAYER_DIM )
-                    poDstGeometry->setCoordinateDimension( (poDstLayer->GetGeomType() & wkb25DBit) ? 3 : 2 );
+                    poDstGeometry->setCoordinateDimension(
+                        (poDstLayer->GetLayerDefn()->GetGeomFieldDefn(iGeom)->GetType() & wkb25DBit) ? 3 : 2 );
 
                 if (eGeomOp == SEGMENTIZE)
                 {
@@ -3197,7 +3463,7 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
                         OGRGeometry* poNewGeom = poDstGeometry->SimplifyPreserveTopology(dfGeomOpParam);
                         if (poNewGeom)
                         {
-                            poDstFeature->SetGeometryDirectly(poNewGeom);
+                            poDstFeature->SetGeomFieldDirectly(iGeom, poNewGeom);
                             poDstGeometry = poNewGeom;
                         }
                     }
@@ -3211,9 +3477,14 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
                         OGRGeometryFactory::destroyGeometry(poClipped);
                         goto end_loop;
                     }
-                    poDstFeature->SetGeometryDirectly(poClipped);
+                    poDstFeature->SetGeomFieldDirectly(iGeom, poClipped);
                     poDstGeometry = poClipped;
                 }
+                
+                OGRCoordinateTransformation* poCT = psInfo->papoCT[iGeom];
+                if( !bTransform )
+                    poCT = poGCPCoordTrans;
+                char** papszTransformOptions = psInfo->papapszTransformOptions[iGeom];
 
                 if( poCT != NULL || papszTransformOptions != NULL)
                 {
@@ -3234,7 +3505,7 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
                         }
                     }
 
-                    poDstFeature->SetGeometryDirectly(poReprojectedGeom);
+                    poDstFeature->SetGeomFieldDirectly(iGeom, poReprojectedGeom);
                     poDstGeometry = poReprojectedGeom;
                 }
                 else if (poOutputSRS != NULL)
@@ -3251,29 +3522,29 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
                         goto end_loop;
                     }
 
-                    poDstFeature->SetGeometryDirectly(poClipped);
+                    poDstFeature->SetGeomFieldDirectly(iGeom, poClipped);
                     poDstGeometry = poClipped;
                 }
 
                 if( bForceToPolygon )
                 {
-                    poDstFeature->SetGeometryDirectly(
+                    poDstFeature->SetGeomFieldDirectly(iGeom, 
                         OGRGeometryFactory::forceToPolygon(
-                            poDstFeature->StealGeometry() ) );
+                            poDstFeature->StealGeometry(iGeom) ) );
                 }
                 else if( bForceToMultiPolygon ||
                         (bPromoteToMulti && wkbFlatten(poDstGeometry->getGeometryType()) == wkbPolygon) )
                 {
-                    poDstFeature->SetGeometryDirectly(
+                    poDstFeature->SetGeomFieldDirectly(iGeom, 
                         OGRGeometryFactory::forceToMultiPolygon(
-                            poDstFeature->StealGeometry() ) );
+                            poDstFeature->StealGeometry(iGeom) ) );
                 }
                 else if ( bForceToMultiLineString ||
                         (bPromoteToMulti && wkbFlatten(poDstGeometry->getGeometryType()) == wkbLineString) )
                 {
-                    poDstFeature->SetGeometryDirectly(
+                    poDstFeature->SetGeomFieldDirectly(iGeom, 
                         OGRGeometryFactory::forceToMultiLineString(
-                            poDstFeature->StealGeometry() ) );
+                            poDstFeature->StealGeometry(iGeom) ) );
                 }
             }
 
