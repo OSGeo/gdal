@@ -839,6 +839,22 @@ def ogr_rfc28_38():
     return 'success'
 
 ###############################################################################
+# Test COUNT() on a 0-row result
+
+def ogr_rfc28_39():
+
+    lyr = gdaltest.ds.ExecuteSQL( "SELECT COUNT(*) from poly where 0 = 1" )
+
+    tr = ogrtest.check_features_against_list( lyr, 'count_*', [0] )
+
+    gdaltest.ds.ReleaseResultSet( lyr )
+
+    if tr:
+        return 'success'
+    else:
+        return 'fail'
+
+###############################################################################
 def ogr_rfc28_cleanup():
     gdaltest.lyr = None
     gdaltest.ds.Destroy()
@@ -886,6 +902,7 @@ gdaltest_list = [
     ogr_rfc28_36,
     ogr_rfc28_37,
     ogr_rfc28_38,
+    ogr_rfc28_39,
     ogr_rfc28_cleanup ]
 
 if __name__ == '__main__':
