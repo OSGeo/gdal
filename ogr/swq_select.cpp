@@ -345,6 +345,9 @@ int swq_select::PushField( swq_expr_node *poExpr, const char *pszAlias,
         col_def->field_name = 
             CPLStrdup(poExpr->string_value);
     else if( poExpr->eNodeType == SNT_OPERATION
+             && (poExpr->nOperation == SWQ_CAST ||
+                 (poExpr->nOperation >= SWQ_AVG &&
+                  poExpr->nOperation <= SWQ_SUM))
              && poExpr->nSubExprCount >= 1
              && poExpr->papoSubExpr[0]->eNodeType == SNT_COLUMN )
         col_def->field_name = 
@@ -357,6 +360,18 @@ int swq_select::PushField( swq_expr_node *poExpr, const char *pszAlias,
 /* -------------------------------------------------------------------- */
     if( pszAlias != NULL )
         col_def->field_alias = CPLStrdup( pszAlias );
+    else if( pszAlias == NULL && poExpr->eNodeType == SNT_OPERATION
+             && poExpr->nSubExprCount >= 1
+             && ( poExpr->nOperation == SWQ_CONCAT ||
+                  poExpr->nOperation == SWQ_SUBSTR )
+             && poExpr->papoSubExpr[0]->eNodeType == SNT_COLUMN )
+    {
+        const swq_operation *op = swq_op_registrar::GetOperator( 
+                (swq_op) poExpr->nOperation );
+
+        col_def->field_alias = CPLStrdup( CPLSPrintf("%s_%s", op->pszName, 
+                                    poExpr->papoSubExpr[0]->string_value));
+    }
 
     col_def->table_index = -1;
     col_def->field_index = -1;
@@ -440,9 +455,25 @@ int swq_select::PushField( swq_expr_node *poExpr, const char *pszAlias,
     {
         if( poExpr->nSubExprCount != 1 )
         {
+            const swq_operation *poOp = 
+                    swq_op_registrar::GetOperator( (swq_op)poExpr->nOperation );
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Column Summary Function '%s' has wrong number of arguments.", 
-                      poExpr->string_value ? poExpr->string_value : "(null)");
+                      poOp->pszName );
+            CPLFree(col_def->field_name);
+            col_def->field_name = NULL;
+            CPLFree(col_def->field_alias);
+            col_def->field_alias = NULL;
+            result_columns--;
+            return FALSE;
+        }
+        else if( poExpr->papoSubExpr[0]->eNodeType != SNT_COLUMN )
+        {
+            const swq_operation *poOp = 
+                    swq_op_registrar::GetOperator( (swq_op)poExpr->nOperation );
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Argument of column Summary Function '%s' should be a column.", 
+                      poOp->pszName );
             CPLFree(col_def->field_name);
             col_def->field_name = NULL;
             CPLFree(col_def->field_alias);
