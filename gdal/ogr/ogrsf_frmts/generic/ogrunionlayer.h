@@ -134,9 +134,11 @@ class OGRUnionLayer : public OGRLayer
 
     virtual int         TestCapability( const char * );
 
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce = TRUE);
     virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce );
 
     virtual void        SetSpatialFilter( OGRGeometry * poGeomIn );
+    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry * );
 
     virtual OGRErr      SetIgnoredFields( const char **papszFields );
 
