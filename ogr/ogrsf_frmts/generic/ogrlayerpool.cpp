@@ -227,7 +227,7 @@ OGRGeometry *OGRProxiedLayer::GetSpatialFilter()
 }
 
 /************************************************************************/
-/*                          GetSpatialFilter()                          */
+/*                          SetSpatialFilter()                          */
 /************************************************************************/
 
 void        OGRProxiedLayer::SetSpatialFilter( OGRGeometry * poGeom )
@@ -236,6 +236,15 @@ void        OGRProxiedLayer::SetSpatialFilter( OGRGeometry * poGeom )
     poUnderlyingLayer->SetSpatialFilter(poGeom);
 }
 
+/************************************************************************/
+/*                          SetSpatialFilter()                          */
+/************************************************************************/
+
+void        OGRProxiedLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeom )
+{
+    if( poUnderlyingLayer == NULL && !OpenUnderlyingLayer() ) return;
+    poUnderlyingLayer->SetSpatialFilter(iGeomField, poGeom);
+}
 /************************************************************************/
 /*                          SetAttributeFilter()                        */
 /************************************************************************/
@@ -385,6 +394,16 @@ int         OGRProxiedLayer::GetFeatureCount( int bForce )
 {
     if( poUnderlyingLayer == NULL && !OpenUnderlyingLayer() ) return 0;
     return poUnderlyingLayer->GetFeatureCount(bForce);
+}
+
+/************************************************************************/
+/*                             GetExtent()                              */
+/************************************************************************/
+
+OGRErr      OGRProxiedLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+{
+    if( poUnderlyingLayer == NULL && !OpenUnderlyingLayer() ) return OGRERR_FAILURE;
+    return poUnderlyingLayer->GetExtent(iGeomField, psExtent, bForce);
 }
 
 /************************************************************************/

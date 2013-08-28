@@ -190,6 +190,7 @@ Currently casting to the following target types are supported:
 <li> date(field_length)
 <li> time(field_length)
 <li> timestamp(field_length)
+<li> geometry, geometry(geometry_type), geometry(geometry_type,epsg_code)
 </ol>
 
 Specifying the field_length and/or the field_precision is optional.  An
@@ -203,6 +204,10 @@ in a WHERE clause, the detailed control of output field format is only
 supported if the CAST operator is the "outer most" operators on a field
 in the field definition list.  In other contexts it is still useful to
 convert between numeric, string and date data types.
+
+Starting with OGR 2.0, casting a WKT string to a geometry is allowed.
+geometry_type can be POINT[Z], LINESTRING[Z], POLYGON[Z], MULTIPOINT[Z],
+MULTILINESTRING[Z], MULTIPOLYGON[Z], GEOMETRYCOLLECTION[Z] or GEOMETRY[Z].
 
 \subsection ogr_sql_where WHERE
 

@@ -48,6 +48,9 @@ class OGRLayerDecorator : public OGRLayer
     virtual void        SetSpatialFilter( OGRGeometry * );
     virtual void        SetSpatialFilterRect( double dfMinX, double dfMinY,
                                               double dfMaxX, double dfMaxY );
+    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry * );
+    virtual void        SetSpatialFilterRect( int iGeomField, double dfMinX, double dfMinY,
+                                              double dfMaxX, double dfMaxY );
 
     virtual OGRErr      SetAttributeFilter( const char * );
 
@@ -66,6 +69,7 @@ class OGRLayerDecorator : public OGRLayer
     virtual OGRSpatialReference *GetSpatialRef();
 
     virtual int         GetFeatureCount( int bForce = TRUE );
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce = TRUE);
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
 
     virtual int         TestCapability( const char * );

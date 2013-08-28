@@ -23,7 +23,7 @@ Usage:
 
 \verbatim
 ogrinfo [--help-general] [-ro] [-q] [-where restricted_where]
-        [-spat xmin ymin xmax ymax] [-fid fid]
+        [-spat xmin ymin xmax ymax] [-geomfield field] [-fid fid]
         [-sql statement] [-dialect dialect] [-al] [-so] [-fields={YES/NO}]
         [-geom={YES/NO/SUMMARY}][--formats]
         datasource_name [layer [layer ...]]
@@ -53,6 +53,8 @@ and return the result.</dd>
 Starting with GDAL 1.10, the "SQLITE" dialect can also be used with any datasource.</dd>
 <dt> <b>-spat</b> <i>xmin ymin xmax ymax</i>:</dt><dd> The area of interest.  Only
 features within the rectangle will be reported.</dd>
+<dt> <b>-geomfield>/b> <i>field</i>:</dt><dd> (OGR &gt;= 2.0) Name of the geometry field
+on which the spatial filter operates on.</dd>
 <dt> <b>-fid</b> <i>fid</i>:</dt><dd> If provided, only the feature with this feature
 id will be reported.  Operates exclusive of the spatial or attribute 
 queries. Note: if you want to select several features based on their feature id, you can
@@ -171,7 +173,7 @@ Usage: ogr2ogr [--help-general] [-skipfailures] [-append] [-update]
                [-select field_list] [-where restricted_where] 
                [-progress] [-sql <sql statement>] [-dialect dialect]
                [-preserve_fid] [-fid FID]
-               [-spat xmin ymin xmax ymax]
+               [-spat xmin ymin xmax ymax] [-geomfield field]
                [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]
                [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]
                dst_datasource_name src_datasource_name
@@ -221,7 +223,8 @@ new</dd>
 fields from input layer to copy to the new layer. A field is skipped if
 mentioned previously in the list even if the input layer has duplicate field
 names.  (Defaults to all; any field is skipped if a subsequent field with
-same name is found.)</dd>
+same name is found.) Starting with OGR 2.0, geometry fields can also be specified
+in the list.</dd>
 <dt> <b>-progress</b>:</dt><dd> (starting with GDAL 1.7.0) Display progress on terminal. Only works if input layers have the "fast feature count" capability.</dd>
 <dt> <b>-sql</b> <em>sql_statement</em>:</dt><dd> SQL statement to execute.
 The resulting table/layer will be saved to the output.</dd>
@@ -231,6 +234,8 @@ Starting with GDAL 1.10, the "SQLITE" dialect can also be used with any datasour
 <dt> <b>-skipfailures</b>:</dt><dd>Continue after a failure, skipping the failed feature.</dd>
 <dt> <b>-spat</b><em> xmin ymin xmax ymax</em>:</dt><dd> spatial query extents. Only features
 whose geometry intersects the extents will be selected. The geometries will not be clipped unless -clipsrc is specified</dd>
+<dt> <b>-geomfield>/b> <i>field</i>:</dt><dd> (OGR &gt;= 2.0) Name of the geometry field
+on which the spatial filter operates on.</dd>
 <dt> <b>-dsco</b> <em>NAME=VALUE</em>:</dt><dd> Dataset creation option (format specific)</dd>
 <dt> <b>-lco</b><em>  NAME=VALUE</em>:</dt><dd> Layer creation option (format specific)</dd>
 <dt> <b>-nln</b><em> name</em>:</dt><dd> Assign an alternate name to the new layer</dd>

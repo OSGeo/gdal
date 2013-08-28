@@ -72,7 +72,7 @@ class OGRCSVLayer : public OGRLayer
     int                 bWriteBOM;
     char                chDelimiter;
 
-    int                 iWktGeomReadField;
+    int*                panGeomFieldIndex;
     int                 bFirstFeatureAppendedDuringSession;
 
     /*http://www.faa.gov/airports/airport_safety/airportdata_5010/menu/index.cfm specific */
@@ -103,11 +103,14 @@ class OGRCSVLayer : public OGRLayer
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
+    virtual OGRErr      CreateGeomField( OGRGeomFieldDefn *poGeomField,
+                                         int bApproxOK = TRUE );
 
     virtual OGRErr      CreateFeature( OGRFeature *poFeature );
 
     void                SetCRLF(int);
-    void                SetWriteGeometry(OGRCSVGeometryFormat eGeometryFormat);
+    void                SetWriteGeometry(OGRwkbGeometryType eGType,
+                                         OGRCSVGeometryFormat eGeometryFormat);
     void                SetCreateCSVT(int bCreateCSVT);
     void                SetWriteBOM(int bWriteBOM);
 
@@ -130,6 +133,8 @@ class OGRCSVDataSource : public OGRDataSource
     int                 bUpdate;
 
     CPLString           osDefaultCSVName;
+    
+    int                 bEnableGeometryFields;
 
   public:
                         OGRCSVDataSource();
@@ -157,6 +162,8 @@ class OGRCSVDataSource : public OGRDataSource
 
     void                SetDefaultCSVName( const char *pszName ) 
         { osDefaultCSVName = pszName; }
+
+    void                EnableGeometryFields() { bEnableGeometryFields = TRUE; }
 
     static CPLString    GetRealExtension(CPLString osFilename);
 };

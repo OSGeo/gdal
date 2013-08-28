@@ -31,6 +31,7 @@
 
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "ogr_geometry.h"
 #include "swq.h"
 
 #define YYSTYPE  swq_expr_node*
@@ -53,7 +54,8 @@
 %parse-param {swq_parse_context *context}
 %lex-param {swq_parse_context *context}
 
-%token SWQT_NUMBER              "number"
+%token SWQT_INTEGER_NUMBER      "integer number"
+%token SWQT_FLOAT_NUMBER        "floating point number"
 %token SWQT_STRING              "string"
 %token SWQT_IDENTIFIER          "identifier"
 %token SWQT_IN                  "IN"
@@ -99,8 +101,8 @@
 %token SWQT_RESERVED_KEYWORD    "reserved keyword"
 
 /* Any grammar rule that does $$ =  must be listed afterwards */
-/* as well as SWQT_NUMBER SWQT_STRING SWQT_IDENTIFIER that are allocated by swqlex() */
-%destructor { delete $$; } SWQT_NUMBER SWQT_STRING SWQT_IDENTIFIER
+/* as well as SWQT_INTEGER_NUMBER SWQT_FLOAT_NUMBER SWQT_STRING SWQT_IDENTIFIER that are allocated by swqlex() */
+%destructor { delete $$; } SWQT_INTEGER_NUMBER SWQT_FLOAT_NUMBER SWQT_STRING SWQT_IDENTIFIER
 %destructor { delete $$; } logical_expr value_expr_list field_value value_expr type_def string_or_identifier table_def
 
 %%
@@ -370,7 +372,12 @@ field_value:
         }
 
 value_expr:
-    SWQT_NUMBER 
+    SWQT_INTEGER_NUMBER 
+        {
+            $$ = $1;
+        }
+
+    | SWQT_FLOAT_NUMBER 
         {
             $$ = $1;
         }
@@ -483,15 +490,53 @@ type_def:
         $$->PushSubExpression( $1 );
     }
 
-    | SWQT_IDENTIFIER '(' SWQT_NUMBER ')' 
+    | SWQT_IDENTIFIER '(' SWQT_INTEGER_NUMBER ')' 
     {
         $$ = new swq_expr_node( SWQ_CAST );
         $$->PushSubExpression( $3 );
         $$->PushSubExpression( $1 );
     }
 
-    | SWQT_IDENTIFIER '(' SWQT_NUMBER ',' SWQT_NUMBER ')' 
+    | SWQT_IDENTIFIER '(' SWQT_INTEGER_NUMBER ',' SWQT_INTEGER_NUMBER ')' 
     {
+        $$ = new swq_expr_node( SWQ_CAST );
+        $$->PushSubExpression( $5 );
+        $$->PushSubExpression( $3 );
+        $$->PushSubExpression( $1 );
+    }
+
+    /* e.g. GEOMETRY(POINT) */
+    | SWQT_IDENTIFIER '(' SWQT_IDENTIFIER ')' 
+    {
+        OGRwkbGeometryType eType = OGRFromOGCGeomType($3->string_value);
+        if( !EQUAL($1->string_value,"GEOMETRY") || 
+            (wkbFlatten(eType) == wkbUnknown &&
+            !EQUALN($3->string_value, "GEOMETRY", strlen("GEOMETRY"))) )
+        {
+            yyerror (context, "syntax error");
+            delete $1;
+            delete $3;
+            YYERROR;
+        }
+        $$ = new swq_expr_node( SWQ_CAST );
+        $$->PushSubExpression( $3 );
+        $$->PushSubExpression( $1 );
+    }
+
+    /* e.g. GEOMETRY(POINT,4326) */
+    | SWQT_IDENTIFIER '(' SWQT_IDENTIFIER ',' SWQT_INTEGER_NUMBER ')' 
+    {
+        OGRwkbGeometryType eType = OGRFromOGCGeomType($3->string_value);
+        if( !EQUAL($1->string_value,"GEOMETRY") || 
+            (wkbFlatten(eType) == wkbUnknown &&
+            !EQUALN($3->string_value, "GEOMETRY", strlen("GEOMETRY"))) )
+        {
+            yyerror (context, "syntax error");
+            delete $1;
+            delete $3;
+            delete $5;
+            YYERROR;
+        }
         $$ = new swq_expr_node( SWQ_CAST );
         $$->PushSubExpression( $5 );
         $$->PushSubExpression( $3 );
