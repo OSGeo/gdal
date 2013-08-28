@@ -141,6 +141,10 @@ OGRDataSource *OGRCSVDriver::CreateDataSource( const char * pszName,
 
     if( osDirName != pszName )
         poDS->SetDefaultCSVName( CPLGetFilename(pszName) );
+    
+    const char *pszGeometry = CSLFetchNameValue( papszOptions, "GEOMETRY");
+    if (pszGeometry != NULL && EQUAL(pszGeometry, "AS_WKT"))
+        poDS->EnableGeometryFields();
 
     return poDS;
 }

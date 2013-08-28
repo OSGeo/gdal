@@ -28,6 +28,7 @@
 
 #include "swq.h"
 #include "swq_parser.hpp"
+#include "ogr_geometry.h"
 
 /************************************************************************/
 /*                             swq_select()                             */
@@ -420,6 +421,10 @@ int swq_select::PushField( swq_expr_node *poExpr, const char *pszAlias,
         {
             col_def->target_type = SWQ_TIME;
         }
+        else if( strcasecmp(pszTypeName,"geometry") == 0 )
+        {
+            col_def->target_type = SWQ_GEOMETRY;
+        }
         else
         {
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -432,17 +437,57 @@ int swq_select::PushField( swq_expr_node *poExpr, const char *pszAlias,
             result_columns--;
             return FALSE;
         }
-
-        // field width.
-        if( poExpr->nSubExprCount > 2 )
+        
+        if( col_def->target_type == SWQ_GEOMETRY ) 
         {
-            col_def->field_length = poExpr->papoSubExpr[2]->int_value;
+            if( poExpr->nSubExprCount > 2 )
+            {
+                if( poExpr->papoSubExpr[2]->field_type != SWQ_STRING )
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined,
+                      "First argument of CAST operator should be an geometry type identifier." );
+                    CPLFree(col_def->field_name);
+                    col_def->field_name = NULL;
+                    CPLFree(col_def->field_alias);
+                    col_def->field_alias = NULL;
+                    result_columns--;
+                    return FALSE;
+                }
+
+                col_def->eGeomType =
+                    OGRFromOGCGeomType(poExpr->papoSubExpr[2]->string_value);
+
+                // SRID
+                if( poExpr->nSubExprCount > 3 )
+                {
+                    col_def->nSRID = poExpr->papoSubExpr[3]->int_value;
+                }
+            }
         }
-
-        // field width.
-        if( poExpr->nSubExprCount > 3 && parse_precision )
+        else
         {
-            col_def->field_precision = poExpr->papoSubExpr[3]->int_value;
+            // field width.
+            if( poExpr->nSubExprCount > 2 )
+            {
+                if( poExpr->papoSubExpr[2]->field_type != SWQ_INTEGER )
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined,
+                      "First argument of CAST operator should be of integer type." );
+                    CPLFree(col_def->field_name);
+                    col_def->field_name = NULL;
+                    CPLFree(col_def->field_alias);
+                    col_def->field_alias = NULL;
+                    result_columns--;
+                    return FALSE;
+                }
+                col_def->field_length = poExpr->papoSubExpr[2]->int_value;
+            }
+
+            // field width.
+            if( poExpr->nSubExprCount > 3 && parse_precision )
+            {
+                col_def->field_precision = poExpr->papoSubExpr[3]->int_value;
+            }
         }
     }
 
@@ -851,15 +896,17 @@ CPLErr swq_select::parse( swq_field_list *field_list,
              || def->col_func == SWQCF_MAX
              || def->col_func == SWQCF_AVG
              || def->col_func == SWQCF_SUM)
-            && def->field_type == SWQ_STRING )
+            && (def->field_type == SWQ_STRING ||
+                def->field_type == SWQ_GEOMETRY) )
         {
             // possibly this is already enforced by the checker?
             const swq_operation *op = swq_op_registrar::GetOperator( 
                 (swq_op) def->col_func );
-            
             CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Use of field function %s() on string field %s illegal.", 
-                          op->pszName, def->field_name );
+                      "Use of field function %s() on %s field %s illegal.", 
+                      op->pszName,
+                      SWQFieldTypeToString(def->field_type),
+                      def->field_name );
             return CE_Failure;
         }
     }
@@ -880,11 +927,29 @@ CPLErr swq_select::parse( swq_field_list *field_list,
             || def->col_func == SWQCF_AVG
             || def->col_func == SWQCF_SUM
             || def->col_func == SWQCF_COUNT )
+        {
             this_indicator = SWQM_SUMMARY_RECORD;
+            if( def->col_func == SWQCF_COUNT &&
+                def->distinct_flag &&
+                def->field_type == SWQ_GEOMETRY )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "SELECT COUNT DISTINCT on a geometry not supported." );
+                return CE_Failure;
+            }
+        }
         else if( def->col_func == SWQCF_NONE )
         {
             if( def->distinct_flag )
+            {
                 this_indicator = SWQM_DISTINCT_LIST;
+                if( def->field_type == SWQ_GEOMETRY )
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined,
+                              "SELECT DISTINCT on a geometry not supported." );
+                    return CE_Failure;
+                }
+            }
             else
                 this_indicator = SWQM_RECORDSET;
         }
@@ -987,6 +1052,14 @@ CPLErr swq_select::parse( swq_field_list *field_list,
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Cannot use field '%s' of a secondary table in a ORDER BY clause",
+                      def->field_name );
+            return CE_Failure;
+        }
+
+        if( field_type == SWQ_GEOMETRY )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Cannot use geometry field '%s' in a ORDER BY clause",
                       def->field_name );
             return CE_Failure;
         }

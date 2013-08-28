@@ -1987,6 +1987,97 @@ def test_ogr2ogr_50():
 
     return 'success'
 
+###############################################################################
+# Test RFC 41 support
+
+def test_ogr2ogr_51():
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    f = open('tmp/test_ogr2ogr_51_src.csv', 'wt')
+    f.write('id,_WKTgeom1_EPSG_4326,foo,_WKTgeom2_EPSG_32631\n')
+    f.write('1,"POINT(1 2)","bar","POINT(3 4)"\n')
+    f.close()
+
+    # Test conversion from a multi-geometry format into a multi-geometry format
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f CSV tmp/test_ogr2ogr_51_dst.csv tmp/test_ogr2ogr_51_src.csv -nln test_ogr2ogr_51_dst -dsco GEOMETRY=AS_WKT')
+    
+    f = open('tmp/test_ogr2ogr_51_dst.csv', 'rt')
+    lines = f.readlines()
+    f.close()
+
+    expected_lines = ['_WKTgeom1_EPSG_4326,_WKTgeom2_EPSG_32631,id,foo', '"POINT (1 2)","POINT (3 4)",1,bar']
+    for i in range(2):
+        if lines[i].strip() != expected_lines[i]:
+            gdaltest.post_reason('fail')
+            print(lines)
+            return 'fail'
+
+    # Test conversion from a multi-geometry format into a single-geometry format
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/test_ogr2ogr_51_dst.shp tmp/test_ogr2ogr_51_src.csv -nln test_ogr2ogr_51_dst')
+    
+    ds = ogr.Open('tmp/test_ogr2ogr_51_dst.shp')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    if feat.GetGeometryRef().ExportToWkt() != 'POINT (1 2)':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_51_dst.shp')
+
+    # Test -append into a multi-geometry format
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -append tmp/test_ogr2ogr_51_dst.csv tmp/test_ogr2ogr_51_src.csv -nln test_ogr2ogr_51_dst')
+    
+    f = open('tmp/test_ogr2ogr_51_dst.csv', 'rt')
+    lines = f.readlines()
+    f.close()
+
+    expected_lines = ['_WKTgeom1_EPSG_4326,_WKTgeom2_EPSG_32631,id,foo',
+                      '"POINT (1 2)","POINT (3 4)",1,bar',
+                      '"POINT (1 2)","POINT (3 4)",1,bar']
+    for i in range(3):
+        if lines[i].strip() != expected_lines[i]:
+            gdaltest.post_reason('fail')
+            print(lines)
+            return 'fail'
+
+    os.unlink('tmp/test_ogr2ogr_51_dst.csv')
+
+    # Test -select with geometry field names
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -select foo,geom__WKTgeom2_EPSG_32631,id,geom__WKTgeom1_EPSG_4326 -f CSV tmp/test_ogr2ogr_51_dst.csv tmp/test_ogr2ogr_51_src.csv -nln test_ogr2ogr_51_dst -dsco GEOMETRY=AS_WKT')
+    
+    f = open('tmp/test_ogr2ogr_51_dst.csv', 'rt')
+    lines = f.readlines()
+    f.close()
+
+    expected_lines = ['_WKTgeom2_EPSG_32631,_WKTgeom1_EPSG_4326,foo,id', '"POINT (3 4)","POINT (1 2)",bar,1']
+    for i in range(2):
+        if lines[i].strip() != expected_lines[i]:
+            gdaltest.post_reason('fail')
+            print(lines)
+            return 'fail'
+
+    # Test -geomfield option
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -append tmp/test_ogr2ogr_51_dst.csv tmp/test_ogr2ogr_51_src.csv -nln test_ogr2ogr_51_dst -spat 1 2 1 2 -geomfield geom__WKTgeom1_EPSG_4326')
+    
+    f = open('tmp/test_ogr2ogr_51_dst.csv', 'rt')
+    lines = f.readlines()
+    f.close()
+
+    expected_lines = ['_WKTgeom2_EPSG_32631,_WKTgeom1_EPSG_4326,foo,id',
+                      '"POINT (3 4)","POINT (1 2)",bar,1',
+                      '"POINT (3 4)","POINT (1 2)",bar,1']
+    for i in range(2):
+        if lines[i].strip() != expected_lines[i]:
+            gdaltest.post_reason('fail')
+            print(lines)
+            return 'fail'
+
+    os.unlink('tmp/test_ogr2ogr_51_src.csv')
+    os.unlink('tmp/test_ogr2ogr_51_dst.csv')
+
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_1,
     test_ogr2ogr_2,
@@ -2039,6 +2130,7 @@ gdaltest_list = [
     test_ogr2ogr_49,
     test_ogr2ogr_49_bis,
     test_ogr2ogr_50,
+    test_ogr2ogr_51,
     ]
 
 if __name__ == '__main__':

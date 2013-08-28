@@ -45,7 +45,8 @@ char**  papszOptions = NULL;
 
 static void Usage(const char* pszErrorMsg = NULL);
 
-static void ReportOnLayer( OGRLayer *, const char *, OGRGeometry * );
+static void ReportOnLayer( OGRLayer *, const char *, const char* pszGeomField, 
+                           OGRGeometry * );
 
 /************************************************************************/
 /*                                main()                                */
@@ -66,6 +67,7 @@ int main( int nArgc, char ** papszArgv )
     const char  *pszSQLStatement = NULL;
     const char  *pszDialect = NULL;
     int          nRet = 0;
+    const char* pszGeomField = NULL;
     
     /* Check strict compilation and runtime library version as we use C++ API */
     if (! GDAL_CHECK_VERSION(papszArgv[0]))
@@ -119,6 +121,11 @@ int main( int nArgc, char ** papszArgv )
             poSpatialFilter = new OGRPolygon();
             ((OGRPolygon *) poSpatialFilter)->addRing( &oRing );
             iArg += 4;
+        }
+        else if( EQUAL(papszArgv[iArg],"-geomfield") )
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            pszGeomField = papszArgv[++iArg];
         }
         else if( EQUAL(papszArgv[iArg],"-where") )
         {
@@ -245,7 +252,8 @@ int main( int nArgc, char ** papszArgv )
         if( CSLCount(papszLayers) > 0 )
             printf( "layer names ignored in combination with -sql.\n" );
         
-        poResultSet = poDS->ExecuteSQL( pszSQLStatement, poSpatialFilter, 
+        poResultSet = poDS->ExecuteSQL( pszSQLStatement,
+                                        (pszGeomField == NULL) ? poSpatialFilter: NULL, 
                                         pszDialect );
 
         if( poResultSet != NULL )
@@ -259,7 +267,10 @@ int main( int nArgc, char ** papszArgv )
                 }
             }
 
-            ReportOnLayer( poResultSet, NULL, NULL );
+            if( pszGeomField != NULL )
+                ReportOnLayer( poResultSet, NULL, pszGeomField, poSpatialFilter );
+            else
+                ReportOnLayer( poResultSet, NULL, NULL, NULL );
             poDS->ReleaseResultSet( poResultSet );
         }
     }
@@ -290,7 +301,24 @@ int main( int nArgc, char ** papszArgv )
                             iLayer+1,
                             poLayer->GetName() );
 
-                    if( poLayer->GetGeomType() != wkbUnknown )
+                    int nGeomFieldCount =
+                        poLayer->GetLayerDefn()->GetGeomFieldCount();
+                    if( nGeomFieldCount > 1 )
+                    {
+                        printf( " (");
+                        for(int iGeom = 0;iGeom < nGeomFieldCount; iGeom ++ )
+                        {
+                            if( iGeom > 0 )
+                                printf(", ");
+                            OGRGeomFieldDefn* poGFldDefn =
+                                poLayer->GetLayerDefn()->GetGeomFieldDefn(iGeom);
+                            printf( "%s", 
+                                OGRGeometryTypeToName( 
+                                    poGFldDefn->GetType() ) );
+                        }
+                        printf( ")");
+                    }
+                    else if( poLayer->GetGeomType() != wkbUnknown )
                         printf( " (%s)", 
                                 OGRGeometryTypeToName( 
                                     poLayer->GetGeomType() ) );
@@ -302,7 +330,7 @@ int main( int nArgc, char ** papszArgv )
                     if( iRepeat != 0 )
                         poLayer->ResetReading();
 
-                    ReportOnLayer( poLayer, pszWHERE, poSpatialFilter );
+                    ReportOnLayer( poLayer, pszWHERE, pszGeomField, poSpatialFilter );
                 }
             }
         }
@@ -326,7 +354,7 @@ int main( int nArgc, char ** papszArgv )
                 if( iRepeat != 0 )
                     poLayer->ResetReading();
 
-                ReportOnLayer( poLayer, pszWHERE, poSpatialFilter );
+                ReportOnLayer( poLayer, pszWHERE, pszGeomField, poSpatialFilter );
             }
         }
     }
@@ -355,7 +383,7 @@ static void Usage(const char* pszErrorMsg)
 
 {
     printf( "Usage: ogrinfo [--help-general] [-ro] [-q] [-where restricted_where]\n"
-            "               [-spat xmin ymin xmax ymax] [-fid fid]\n"
+            "               [-spat xmin ymin xmax ymax] [-geomfield field] [-fid fid]\n"
             "               [-sql statement] [-dialect sql_dialect] [-al] [-so] [-fields={YES/NO}]\n"
             "               [-geom={YES/NO/SUMMARY}][--formats]\n"
             "               datasource_name [layer [layer ...]]\n");
@@ -370,7 +398,8 @@ static void Usage(const char* pszErrorMsg)
 /*                           ReportOnLayer()                            */
 /************************************************************************/
 
-static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE, 
+static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
+                           const char* pszGeomField, 
                            OGRGeometry *poSpatialFilter )
 
 {
@@ -389,7 +418,19 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
     }
 
     if( poSpatialFilter != NULL )
-        poLayer->SetSpatialFilter( poSpatialFilter );
+    {
+        if( pszGeomField != NULL )
+        {
+            int iGeomField = poDefn->GetGeomFieldIndex(pszGeomField);
+            if( iGeomField >= 0 )
+                poLayer->SetSpatialFilter( iGeomField, poSpatialFilter );
+            else
+                printf("WARNING: Cannot find geometry field %s.\n",
+                       pszGeomField);
+        }
+        else
+            poLayer->SetSpatialFilter( poSpatialFilter );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Report various overall information.                             */
@@ -400,13 +441,42 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
 
     if( bVerbose )
     {
-        printf( "Geometry: %s\n", 
-                OGRGeometryTypeToName( poLayer->GetGeomType() ) );
+        int nGeomFieldCount =
+            poLayer->GetLayerDefn()->GetGeomFieldCount();
+        if( nGeomFieldCount > 1 )
+        {
+            for(int iGeom = 0;iGeom < nGeomFieldCount; iGeom ++ )
+            {
+                OGRGeomFieldDefn* poGFldDefn =
+                    poLayer->GetLayerDefn()->GetGeomFieldDefn(iGeom);
+                printf( "Geometry (%s): %s\n", poGFldDefn->GetNameRef(), 
+                    OGRGeometryTypeToName( poGFldDefn->GetType() ) );
+            }
+        }
+        else
+        {
+            printf( "Geometry: %s\n", 
+                    OGRGeometryTypeToName( poLayer->GetGeomType() ) );
+        }
         
         printf( "Feature Count: %d\n", poLayer->GetFeatureCount() );
         
         OGREnvelope oExt;
-        if (poLayer->GetExtent(&oExt, TRUE) == OGRERR_NONE)
+        if( nGeomFieldCount > 1 )
+        {
+            for(int iGeom = 0;iGeom < nGeomFieldCount; iGeom ++ )
+            {
+                if (poLayer->GetExtent(iGeom, &oExt, TRUE) == OGRERR_NONE)
+                {
+                    OGRGeomFieldDefn* poGFldDefn =
+                        poLayer->GetLayerDefn()->GetGeomFieldDefn(iGeom);
+                    printf("Extent (%s): (%f, %f) - (%f, %f)\n",
+                           poGFldDefn->GetNameRef(),
+                           oExt.MinX, oExt.MinY, oExt.MaxX, oExt.MaxY);
+                }
+            }
+        }
+        else if (poLayer->GetExtent(&oExt, TRUE) == OGRERR_NONE)
         {
             printf("Extent: (%f, %f) - (%f, %f)\n", 
                    oExt.MinX, oExt.MinY, oExt.MaxX, oExt.MaxY);
@@ -414,21 +484,53 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
 
         char    *pszWKT;
         
-        if( poLayer->GetSpatialRef() == NULL )
-            pszWKT = CPLStrdup( "(unknown)" );
+        if( nGeomFieldCount > 1 )
+        {
+            for(int iGeom = 0;iGeom < nGeomFieldCount; iGeom ++ )
+            {
+                OGRGeomFieldDefn* poGFldDefn =
+                    poLayer->GetLayerDefn()->GetGeomFieldDefn(iGeom);
+                OGRSpatialReference* poSRS = poGFldDefn->GetSpatialRef();
+                if( poSRS == NULL )
+                    pszWKT = CPLStrdup( "(unknown)" );
+                else
+                {
+                    poSRS->exportToPrettyWkt( &pszWKT );
+                }
+
+                printf( "SRS WKT (%s):\n%s\n",
+                        poGFldDefn->GetNameRef(), pszWKT );
+                CPLFree( pszWKT );
+            }
+        }
         else
         {
-            poLayer->GetSpatialRef()->exportToPrettyWkt( &pszWKT );
-        }            
+            if( poLayer->GetSpatialRef() == NULL )
+                pszWKT = CPLStrdup( "(unknown)" );
+            else
+            {
+                poLayer->GetSpatialRef()->exportToPrettyWkt( &pszWKT );
+            }            
 
-        printf( "Layer SRS WKT:\n%s\n", pszWKT );
-        CPLFree( pszWKT );
+            printf( "Layer SRS WKT:\n%s\n", pszWKT );
+            CPLFree( pszWKT );
+        }
     
         if( strlen(poLayer->GetFIDColumn()) > 0 )
             printf( "FID Column = %s\n", 
                     poLayer->GetFIDColumn() );
     
-        if( strlen(poLayer->GetGeometryColumn()) > 0 )
+        if( nGeomFieldCount > 1 )
+        {
+            for(int iGeom = 0;iGeom < nGeomFieldCount; iGeom ++ )
+            {
+                OGRGeomFieldDefn* poGFldDefn =
+                    poLayer->GetLayerDefn()->GetGeomFieldDefn(iGeom);
+                printf( "Geometry Column %d = %s\n", iGeom + 1,
+                        poGFldDefn->GetNameRef() );
+            }
+        }
+        else if( strlen(poLayer->GetGeometryColumn()) > 0 )
             printf( "Geometry Column = %s\n", 
                     poLayer->GetGeometryColumn() );
 

@@ -56,10 +56,21 @@ void        OGRLayerDecorator::SetSpatialFilter( OGRGeometry * poGeom )
     m_poDecoratedLayer->SetSpatialFilter(poGeom);
 }
 
+void        OGRLayerDecorator::SetSpatialFilter( int iGeomField, OGRGeometry * poGeom )
+{
+    m_poDecoratedLayer->SetSpatialFilter(iGeomField, poGeom);
+}
+
 void        OGRLayerDecorator::SetSpatialFilterRect( double dfMinX, double dfMinY,
                                   double dfMaxX, double dfMaxY )
 {
     m_poDecoratedLayer->SetSpatialFilterRect(dfMinX, dfMinY, dfMaxX, dfMaxY);
+}
+
+void        OGRLayerDecorator::SetSpatialFilterRect( int iGeomField, double dfMinX, double dfMinY,
+                                  double dfMaxX, double dfMaxY )
+{
+    m_poDecoratedLayer->SetSpatialFilterRect(iGeomField, dfMinX, dfMinY, dfMaxX, dfMaxY);
 }
 
 OGRErr      OGRLayerDecorator::SetAttributeFilter( const char * poAttrFilter )
@@ -130,6 +141,11 @@ int         OGRLayerDecorator::GetFeatureCount( int bForce )
 OGRErr      OGRLayerDecorator::GetExtent(OGREnvelope *psExtent, int bForce)
 {
     return m_poDecoratedLayer->GetExtent(psExtent, bForce);
+}
+
+OGRErr      OGRLayerDecorator::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+{
+    return m_poDecoratedLayer->GetExtent(iGeomField, psExtent, bForce);
 }
 
 int         OGRLayerDecorator::TestCapability( const char * pszCapability )

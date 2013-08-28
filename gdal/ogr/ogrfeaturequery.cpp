@@ -89,7 +89,8 @@ OGRErr OGRFeatureQuery::Compile( OGRFeatureDefn *poDefn,
     char        **papszFieldNames;
     swq_field_type *paeFieldTypes;
     int         iField;
-    int         nFieldCount = poDefn->GetFieldCount() + SPECIAL_FIELD_COUNT;
+    int         nFieldCount = poDefn->GetFieldCount() + SPECIAL_FIELD_COUNT +
+                              poDefn->GetGeomFieldCount();
 
     papszFieldNames = (char **) 
         CPLMalloc(sizeof(char *) * nFieldCount );
@@ -136,6 +137,15 @@ OGRErr OGRFeatureQuery::Compile( OGRFeatureDefn *poDefn,
         ++iField;
     }
 
+    for( iField = 0; iField < poDefn->GetGeomFieldCount(); iField++ )
+    {
+        OGRGeomFieldDefn    *poField = poDefn->GetGeomFieldDefn( iField );
+        int iDstField = poDefn->GetFieldCount() + SPECIAL_FIELD_COUNT + iField;
+
+        papszFieldNames[iDstField] = (char *) poField->GetNameRef();
+        paeFieldTypes[iDstField] = SWQ_GEOMETRY;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Try to parse.                                                   */
 /* -------------------------------------------------------------------- */
@@ -169,6 +179,13 @@ static swq_expr_node *OGRFeatureFetcher( swq_expr_node *op, void *pFeatureIn )
     OGRFeature *poFeature = (OGRFeature *) pFeatureIn;
     swq_expr_node *poRetNode = NULL;
 
+    if( op->field_type == SWQ_GEOMETRY )
+    {
+        int iField = op->field_index - (poFeature->GetFieldCount() + SPECIAL_FIELD_COUNT);
+        poRetNode = new swq_expr_node( poFeature->GetGeomFieldRef(iField) );
+        return poRetNode;
+    }
+
     switch( op->field_type )
     {
       case SWQ_INTEGER:
@@ -181,7 +198,7 @@ static swq_expr_node *OGRFeatureFetcher( swq_expr_node *op, void *pFeatureIn )
         poRetNode = new swq_expr_node( 
             poFeature->GetFieldAsDouble(op->field_index) );
         break;
-        
+
       default:
         poRetNode = new swq_expr_node( 
             poFeature->GetFieldAsString(op->field_index) );
