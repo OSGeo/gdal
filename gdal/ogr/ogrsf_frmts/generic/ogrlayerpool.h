@@ -110,6 +110,7 @@ class OGRProxiedLayer : public OGRAbstractProxiedLayer
 
     virtual OGRGeometry *GetSpatialFilter();
     virtual void        SetSpatialFilter( OGRGeometry * );
+    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry * );
 
     virtual OGRErr      SetAttributeFilter( const char * );
 
@@ -128,6 +129,7 @@ class OGRProxiedLayer : public OGRAbstractProxiedLayer
     virtual OGRSpatialReference *GetSpatialRef();
 
     virtual int         GetFeatureCount( int bForce = TRUE );
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce = TRUE);
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
 
     virtual int         TestCapability( const char * );

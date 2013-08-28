@@ -176,13 +176,13 @@ int swqlex( YYSTYPE *ppNode, swq_parse_context *context )
             || strstr(osToken,"E") )
         {
             *ppNode = new swq_expr_node( CPLAtof(osToken) );
+            return SWQT_FLOAT_NUMBER;
         }
         else
         {
             *ppNode = new swq_expr_node( atoi(osToken) );
+            return SWQT_INTEGER_NUMBER;
         }
-
-        return SWQT_NUMBER;
     }
 
 /* -------------------------------------------------------------------- */
@@ -780,4 +780,25 @@ int swq_is_reserved_keyword(const char* pszStr)
             return TRUE;
     }
     return FALSE;
+}
+
+/************************************************************************/
+/*                          SWQFieldTypeToString()                      */
+/************************************************************************/
+
+const char* SWQFieldTypeToString( swq_field_type field_type )
+{
+    switch(field_type)
+    {
+        case SWQ_INTEGER:   return "integer";
+        case SWQ_FLOAT:     return "float";
+        case SWQ_STRING:    return "string";
+        case SWQ_BOOLEAN:   return "boolean";
+        case SWQ_DATE:      return "date";
+        case SWQ_TIME:      return "time";
+        case SWQ_TIMESTAMP: return "timestamp";
+        case SWQ_GEOMETRY:  return "geometry";
+        case SWQ_NULL:      return "null";
+        default: return "unknown";
+    }
 }

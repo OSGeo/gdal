@@ -1548,24 +1548,33 @@ int OGR_G_IsRing( OGRGeometryH hGeom )
 /*      OGR constants.                                                  */
 /************************************************************************/
 
+#define EQUALN_CST(var, cst) EQUALN(var, cst, strlen(cst))
+
 OGRwkbGeometryType OGRFromOGCGeomType( const char *pszGeomType )
 {
-    if ( EQUAL(pszGeomType, "POINT") )
-        return wkbPoint;
-    else if ( EQUAL(pszGeomType, "LINESTRING") )
-        return wkbLineString;
-    else if ( EQUAL(pszGeomType, "POLYGON") )
-        return wkbPolygon;
-    else if ( EQUAL(pszGeomType, "MULTIPOINT") )
-        return wkbMultiPoint;
-    else if ( EQUAL(pszGeomType, "MULTILINESTRING") )
-        return wkbMultiLineString;
-    else if ( EQUAL(pszGeomType, "MULTIPOLYGON") )
-        return wkbMultiPolygon;
-    else if ( EQUAL(pszGeomType, "GEOMETRYCOLLECTION") )
-        return wkbGeometryCollection;
+    unsigned int n25DBit = 0;
+    if( *pszGeomType != '\0' )
+    {
+        char ch = pszGeomType[strlen(pszGeomType)-1];
+        if( ch == 'z' || ch == 'Z' )
+            n25DBit = wkb25DBit;
+    }
+    if ( EQUALN_CST(pszGeomType, "POINT") )
+        return (OGRwkbGeometryType)(wkbPoint | n25DBit);
+    else if ( EQUALN_CST(pszGeomType, "LINESTRING") )
+        return (OGRwkbGeometryType)(wkbLineString | n25DBit);
+    else if ( EQUALN_CST(pszGeomType, "POLYGON") )
+        return (OGRwkbGeometryType)(wkbPolygon | n25DBit);
+    else if ( EQUALN_CST(pszGeomType, "MULTIPOINT") )
+        return (OGRwkbGeometryType)(wkbMultiPoint | n25DBit);
+    else if ( EQUALN_CST(pszGeomType, "MULTILINESTRING") )
+        return (OGRwkbGeometryType)(wkbMultiLineString | n25DBit);
+    else if ( EQUALN_CST(pszGeomType, "MULTIPOLYGON") )
+        return (OGRwkbGeometryType)(wkbMultiPolygon | n25DBit);
+    else if ( EQUALN_CST(pszGeomType, "GEOMETRYCOLLECTION") )
+        return (OGRwkbGeometryType)(wkbGeometryCollection | n25DBit);
     else
-        return wkbUnknown;
+        return (OGRwkbGeometryType)(wkbUnknown | n25DBit);
 }
 
 /************************************************************************/

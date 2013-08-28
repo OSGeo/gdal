@@ -31,10 +31,24 @@
 #include "ogr_p.h"
 #include "ogr_gensql.h"
 #include "cpl_string.h"
+#include "ogr_api.h"
 #include <vector>
 
 CPL_CVSID("$Id$");
 
+
+class OGRGenSQLGeomFieldDefn: public OGRGeomFieldDefn
+{
+    public:
+        OGRGenSQLGeomFieldDefn(OGRGeomFieldDefn* poGeomFieldDefn) :
+            OGRGeomFieldDefn(poGeomFieldDefn->GetNameRef(),
+                             poGeomFieldDefn->GetType()), bForceGeomType(FALSE)
+        {
+            SetSpatialRef(poGeomFieldDefn->GetSpatialRef());
+        }
+
+        int bForceGeomType;
+};
 
 /************************************************************************/
 /*               OGRGenSQLResultsLayerHasSpecialField()                 */
@@ -48,7 +62,8 @@ int OGRGenSQLResultsLayerHasSpecialField(swq_expr_node* expr,
     {
         if (expr->table_index == 0)
         {
-            return expr->field_index >= nMinIndexForSpecialField;
+            return expr->field_index >= nMinIndexForSpecialField &&
+                   expr->field_index < nMinIndexForSpecialField + SPECIAL_FIELD_COUNT;
         }
     }
     else if (expr->eNodeType == SNT_OPERATION)
@@ -86,6 +101,7 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
     nNextIndexFID = 0;
     nExtraDSCount = 0;
     papoExtraDS = NULL;
+    panGeomFieldToSrcGeomField = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Identify all the layers involved in the SELECT.                 */
@@ -157,28 +173,29 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
         this->pszWHERE = NULL;
 
 /* -------------------------------------------------------------------- */
-/*      Now that we have poSrcLayer, we can install a spatial filter    */
-/*      if there is one.                                                */
-/* -------------------------------------------------------------------- */
-    if( poSpatFilter != NULL )
-        SetSpatialFilter( poSpatFilter );
-
-/* -------------------------------------------------------------------- */
 /*      Prepare a feature definition based on the query.                */
 /* -------------------------------------------------------------------- */
     OGRFeatureDefn *poSrcDefn = poSrcLayer->GetLayerDefn();
 
     poDefn = new OGRFeatureDefn( psSelectInfo->table_defs[0].table_alias );
+    poDefn->SetGeomType(wkbNone);
     poDefn->Reference();
 
     iFIDFieldIndex = poSrcDefn->GetFieldCount();
+
+    /* + 1 since we can add an implicit geometry field */
+    panGeomFieldToSrcGeomField = (int*) CPLMalloc(sizeof(int) * (1 + psSelectInfo->result_columns));
 
     for( int iField = 0; iField < psSelectInfo->result_columns; iField++ )
     {
         swq_col_def *psColDef = psSelectInfo->column_defs + iField;
         OGRFieldDefn oFDefn( "", OFTInteger );
+        OGRGeomFieldDefn oGFDefn( "", wkbUnknown );
         OGRFieldDefn *poSrcFDefn = NULL;
+        OGRGeomFieldDefn *poSrcGFDefn = NULL;
+        int bIsGeometry = FALSE;
         OGRFeatureDefn *poLayerDefn = NULL;
+        int iSrcGeomField = -1;
 
         if( psColDef->table_index != -1 )
             poLayerDefn = 
@@ -187,18 +204,38 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
         if( psColDef->field_index > -1 
             && poLayerDefn != NULL
             && psColDef->field_index < poLayerDefn->GetFieldCount() )
+        {
             poSrcFDefn = poLayerDefn->GetFieldDefn(psColDef->field_index);
+        }
 
-        if( strlen(psColDef->field_name) == 0 )
+        if( poLayerDefn != NULL &&
+            IS_GEOM_FIELD_INDEX(poLayerDefn, psColDef->field_index) )
+        {
+            bIsGeometry = TRUE;
+            iSrcGeomField =
+                ALL_FIELD_INDEX_TO_GEOM_FIELD_INDEX(poLayerDefn, psColDef->field_index);
+            poSrcGFDefn = poLayerDefn->GetGeomFieldDefn(iSrcGeomField);
+        }
+
+        if( psColDef->target_type == SWQ_GEOMETRY )
+            bIsGeometry = TRUE;
+
+        if( psColDef->col_func == SWQCF_COUNT )
+            bIsGeometry = FALSE;
+
+        if( strlen(psColDef->field_name) == 0 && !bIsGeometry )
         {
             CPLFree( psColDef->field_name );
             psColDef->field_name = (char *) CPLMalloc(40);
-            sprintf( psColDef->field_name, "FIELD_%d", iField+1 );
+            sprintf( psColDef->field_name, "FIELD_%d", poDefn->GetFieldCount()+1 );
         }
 
         if( psColDef->field_alias != NULL )
         {
-            oFDefn.SetName(psColDef->field_alias);
+            if( bIsGeometry )
+                oGFDefn.SetName(psColDef->field_alias);
+            else
+                oFDefn.SetName(psColDef->field_alias);
         }
         else if( psColDef->col_func != SWQCF_NONE )
         {
@@ -210,7 +247,12 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
                                         psColDef->field_name ) );
         }
         else
-            oFDefn.SetName( psColDef->field_name );
+        {
+            if( bIsGeometry )
+                oGFDefn.SetName(psColDef->field_name);
+            else
+                oFDefn.SetName( psColDef->field_name );
+        }
 
         if( psColDef->col_func == SWQCF_COUNT )
             oFDefn.SetType( OFTInteger );
@@ -226,6 +268,11 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
                 oFDefn.SetWidth( poSrcFDefn->GetWidth() );
                 oFDefn.SetPrecision( poSrcFDefn->GetPrecision() );
             }
+        }
+        else if( poSrcGFDefn != NULL )
+        {
+            oGFDefn.SetType( poSrcGFDefn->GetType() );
+            oGFDefn.SetSpatialRef( poSrcGFDefn->GetSpatialRef() );
         }
         else if ( psColDef->field_index >= iFIDFieldIndex )
         {
@@ -285,6 +332,8 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
           case SWQ_TIME:
             oFDefn.SetType( OFTTime );
             break;
+          case SWQ_GEOMETRY:
+            break;
 
           default:
             CPLAssert( FALSE );
@@ -302,10 +351,84 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
             oFDefn.SetPrecision( psColDef->field_precision );
         }
 
-        poDefn->AddFieldDefn( &oFDefn );
+        if( bIsGeometry )
+        {
+            panGeomFieldToSrcGeomField[poDefn->GetGeomFieldCount()] = iSrcGeomField;
+            /* Hack while drivers haven't been updated so that */
+            /* poSrcDefn->GetGeomFieldDefn(0)->GetSpatialRef() == poSrcLayer->GetSpatialRef() */
+            if( iSrcGeomField == 0 &&
+                poSrcDefn->GetGeomFieldCount() == 1 &&
+                oGFDefn.GetSpatialRef() == NULL )
+            {
+                oGFDefn.SetSpatialRef(poSrcLayer->GetSpatialRef());
+            }
+            int bForceGeomType = FALSE;
+            if( psColDef->eGeomType != wkbUnknown )
+            {
+                oGFDefn.SetType( psColDef->eGeomType );
+                bForceGeomType = TRUE;
+            }
+            if( psColDef->nSRID > 0 )
+            {
+                OGRSpatialReference* poSRS = new OGRSpatialReference();
+                if( poSRS->importFromEPSG( psColDef->nSRID ) == OGRERR_NONE )
+                {
+                    oGFDefn.SetSpatialRef( poSRS );
+                }
+                poSRS->Release();
+            }
+
+            OGRGenSQLGeomFieldDefn* poMyGeomFieldDefn =
+                new OGRGenSQLGeomFieldDefn(&oGFDefn);
+            poMyGeomFieldDefn->bForceGeomType = bForceGeomType;
+            poDefn->AddGeomFieldDefn( poMyGeomFieldDefn, FALSE );
+        }
+        else
+            poDefn->AddFieldDefn( &oFDefn );
     }
 
-    poDefn->SetGeomType( poSrcLayer->GetLayerDefn()->GetGeomType() );
+/* -------------------------------------------------------------------- */
+/*      Add implicit geometry field.                                    */
+/* -------------------------------------------------------------------- */
+    if( psSelectInfo->query_mode == SWQM_RECORDSET &&
+        poDefn->GetGeomFieldCount() == 0 &&
+        poSrcDefn->GetGeomFieldCount() == 1 )
+    {
+        psSelectInfo->result_columns++;
+
+        psSelectInfo->column_defs = (swq_col_def *) 
+            CPLRealloc( psSelectInfo->column_defs, sizeof(swq_col_def) * psSelectInfo->result_columns );
+
+        swq_col_def *col_def = psSelectInfo->column_defs + psSelectInfo->result_columns - 1;
+
+        memset( col_def, 0, sizeof(swq_col_def) );
+        col_def->field_name = CPLStrdup( poSrcDefn->GetGeomFieldDefn(0)->GetNameRef() );
+        col_def->field_alias = NULL;
+        col_def->table_index = 0;
+        col_def->field_index = GEOM_FIELD_INDEX_TO_ALL_FIELD_INDEX(poSrcDefn, 0);
+        col_def->field_type = SWQ_GEOMETRY;
+        col_def->target_type = SWQ_GEOMETRY;
+
+        panGeomFieldToSrcGeomField[poDefn->GetGeomFieldCount()] = 0;
+
+        OGRGenSQLGeomFieldDefn* poMyGeomFieldDefn =
+            new OGRGenSQLGeomFieldDefn(poSrcDefn->GetGeomFieldDefn(0));
+        poDefn->AddGeomFieldDefn( poMyGeomFieldDefn, FALSE );
+
+        /* Hack while drivers haven't been updated so that */
+        /* poSrcDefn->GetGeomFieldDefn(0)->GetSpatialRef() == poSrcLayer->GetSpatialRef() */
+        if( poSrcDefn->GetGeomFieldDefn(0)->GetSpatialRef() == NULL )
+        {
+            poDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSrcLayer->GetSpatialRef());
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Now that we have poSrcLayer, we can install a spatial filter    */
+/*      if there is one.                                                */
+/* -------------------------------------------------------------------- */
+    if( poSpatFilter != NULL )
+        SetSpatialFilter( 0, poSpatFilter );
 
     ResetReading();
 
@@ -338,6 +461,7 @@ OGRGenSQLResultsLayer::~OGRGenSQLResultsLayer()
     papoTableLayers = NULL;
              
     CPLFree( panFIDIndex );
+    CPLFree( panGeomFieldToSrcGeomField );
 
     delete poSummaryFeature;
     delete (swq_select *) pSelectInfo;
@@ -411,6 +535,42 @@ void OGRGenSQLResultsLayer::ClearFilters()
 }
 
 /************************************************************************/
+/*                    MustEvaluateSpatialFilterOnGenSQL()               */
+/************************************************************************/
+
+int OGRGenSQLResultsLayer::MustEvaluateSpatialFilterOnGenSQL()
+{
+    int bEvaluateSpatialFilter = FALSE;
+    if( m_poFilterGeom != NULL &&
+        m_iGeomFieldFilter >= 0 &&
+        m_iGeomFieldFilter < GetLayerDefn()->GetGeomFieldCount() )
+    {
+        int iSrcGeomField = panGeomFieldToSrcGeomField[m_iGeomFieldFilter];
+        if( iSrcGeomField < 0 )
+            bEvaluateSpatialFilter = TRUE;
+    }
+    return bEvaluateSpatialFilter;
+}
+
+/************************************************************************/
+/*                       ApplyFiltersToSource()                         */
+/************************************************************************/
+
+void OGRGenSQLResultsLayer::ApplyFiltersToSource()
+{
+    poSrcLayer->SetAttributeFilter( pszWHERE );
+    if( m_iGeomFieldFilter >= 0 &&
+        m_iGeomFieldFilter < GetLayerDefn()->GetGeomFieldCount() )
+    {
+        int iSrcGeomField = panGeomFieldToSrcGeomField[m_iGeomFieldFilter];
+        if( iSrcGeomField >= 0 )
+            poSrcLayer->SetSpatialFilter( iSrcGeomField, m_poFilterGeom );
+    }
+
+    poSrcLayer->ResetReading();
+}
+
+/************************************************************************/
 /*                            ResetReading()                            */
 /************************************************************************/
 
@@ -421,10 +581,7 @@ void OGRGenSQLResultsLayer::ResetReading()
 
     if( psSelectInfo->query_mode == SWQM_RECORDSET )
     {
-        poSrcLayer->SetAttributeFilter( pszWHERE );
-        poSrcLayer->SetSpatialFilter( m_poFilterGeom );
-        
-        poSrcLayer->ResetReading();
+        ApplyFiltersToSource();
     }
 
     nNextIndexFID = 0;
@@ -461,31 +618,36 @@ OGRErr OGRGenSQLResultsLayer::SetNextByIndex( long nIndex )
 /*                             GetExtent()                              */
 /************************************************************************/
 
-OGRErr OGRGenSQLResultsLayer::GetExtent( OGREnvelope *psExtent, 
+OGRErr OGRGenSQLResultsLayer::GetExtent( int iGeomField,
+                                         OGREnvelope *psExtent, 
                                          int bForce )
 
 {
     swq_select *psSelectInfo = (swq_select *) pSelectInfo;
 
+    if( iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount() ||
+        GetLayerDefn()->GetGeomFieldDefn(iGeomField)->GetType() == wkbNone )
+    {
+        if( iGeomField != 0 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid geometry field index : %d", iGeomField);
+        }
+        return OGRERR_FAILURE;
+    }
+
     if( psSelectInfo->query_mode == SWQM_RECORDSET )
-        return poSrcLayer->GetExtent( psExtent, bForce );
+    {
+        int iSrcGeomField = panGeomFieldToSrcGeomField[iGeomField];
+        if( iSrcGeomField >= 0 )
+            return poSrcLayer->GetExtent( iSrcGeomField, psExtent, bForce );
+        else if( iGeomField == 0 )
+            return OGRLayer::GetExtent( psExtent, bForce );
+        else
+            return OGRLayer::GetExtent( iGeomField, psExtent, bForce );
+    }
     else
         return OGRERR_FAILURE;
-}
-
-/************************************************************************/
-/*                           GetSpatialRef()                            */
-/************************************************************************/
-
-OGRSpatialReference *OGRGenSQLResultsLayer::GetSpatialRef() 
-
-{
-    swq_select *psSelectInfo = (swq_select *) pSelectInfo;
-
-    if( psSelectInfo->query_mode != SWQM_RECORDSET )
-        return NULL;
-    else
-        return poSrcLayer->GetSpatialRef();
 }
 
 /************************************************************************/
@@ -513,7 +675,7 @@ int OGRGenSQLResultsLayer::GetFeatureCount( int bForce )
     }
     else if( psSelectInfo->query_mode != SWQM_RECORDSET )
         return 1;
-    else if( m_poAttrQuery == NULL )
+    else if( m_poAttrQuery == NULL && !MustEvaluateSpatialFilterOnGenSQL() )
         return poSrcLayer->GetFeatureCount( bForce );
     else
         return OGRLayer::GetFeatureCount( bForce );
@@ -560,14 +722,19 @@ int OGRGenSQLResultsLayer::ContainGeomSpecialField(swq_expr_node* expr)
 {
     if (expr->eNodeType == SNT_COLUMN)
     {
-        if( expr->table_index != -1 && expr->field_index != -1 )
+        if( expr->table_index == 0 && expr->field_index != -1 )
         {
             OGRLayer* poLayer = papoTableLayers[expr->table_index];
             int nSpecialFieldIdx = expr->field_index -
                             poLayer->GetLayerDefn()->GetFieldCount();
-            return nSpecialFieldIdx == SPF_OGR_GEOMETRY ||
-                   nSpecialFieldIdx == SPF_OGR_GEOM_WKT ||
-                   nSpecialFieldIdx == SPF_OGR_GEOM_AREA;
+            if( nSpecialFieldIdx == SPF_OGR_GEOMETRY ||
+                nSpecialFieldIdx == SPF_OGR_GEOM_WKT ||
+                nSpecialFieldIdx == SPF_OGR_GEOM_AREA )
+                return TRUE;
+            if( expr->field_index ==
+                    GEOM_FIELD_INDEX_TO_ALL_FIELD_INDEX(poLayer->GetLayerDefn(), 0) )
+                return TRUE;
+            return FALSE;
         }
     }
     else if (expr->eNodeType == SNT_OPERATION)
@@ -600,10 +767,7 @@ int OGRGenSQLResultsLayer::PrepareSummary()
 /*      Ensure our query parameters are in place on the source          */
 /*      layer.  And initialize reading.                                 */
 /* -------------------------------------------------------------------- */
-    poSrcLayer->SetAttributeFilter(pszWHERE);
-    poSrcLayer->SetSpatialFilter( m_poFilterGeom );
-        
-    poSrcLayer->ResetReading();
+    ApplyFiltersToSource();
 
 /* -------------------------------------------------------------------- */
 /*      Ignore geometry reading if no spatial filter in place and that  */
@@ -618,7 +782,7 @@ int OGRGenSQLResultsLayer::PrepareSummary()
         for( int iField = 0; iField < psSelectInfo->result_columns; iField++ )
         {
             swq_col_def *psColDef = psSelectInfo->column_defs + iField;
-            if (psColDef->table_index != -1 && psColDef->field_index != -1)
+            if (psColDef->table_index == 0 && psColDef->field_index != -1)
             {
                 OGRLayer* poLayer = papoTableLayers[psColDef->table_index];
                 int nSpecialFieldIdx = psColDef->field_index -
@@ -626,6 +790,12 @@ int OGRGenSQLResultsLayer::PrepareSummary()
                 if (nSpecialFieldIdx == SPF_OGR_GEOMETRY ||
                     nSpecialFieldIdx == SPF_OGR_GEOM_WKT ||
                     nSpecialFieldIdx == SPF_OGR_GEOM_AREA)
+                {
+                    bFoundGeomExpr = TRUE;
+                    break;
+                }
+                if( psColDef->field_index ==
+                        GEOM_FIELD_INDEX_TO_ALL_FIELD_INDEX(poLayer->GetLayerDefn(), 0) )
                 {
                     bFoundGeomExpr = TRUE;
                     break;
@@ -674,6 +844,16 @@ int OGRGenSQLResultsLayer::PrepareSummary()
                 /* psColDef->field_index can be -1 in the case of a COUNT(*) */
                 if (psColDef->field_index < 0)
                     pszError = swq_select_summarize( psSelectInfo, iField, "" );
+                else if (IS_GEOM_FIELD_INDEX(poSrcLayer->GetLayerDefn(), psColDef->field_index) )
+                {
+                    int iSrcGeomField = ALL_FIELD_INDEX_TO_GEOM_FIELD_INDEX(
+                            poSrcLayer->GetLayerDefn(), psColDef->field_index);
+                    OGRGeometry* poGeom = poSrcFeature->GetGeomFieldRef(iSrcGeomField);
+                    if( poGeom != NULL )
+                        pszError = swq_select_summarize( psSelectInfo, iField, "" );
+                    else
+                        pszError = NULL;
+                }
                 else if (poSrcFeature->IsFieldSet(psColDef->field_index))
                     pszError = swq_select_summarize( psSelectInfo, iField, poSrcFeature->GetFieldAsString(
                                                 psColDef->field_index ) );
@@ -816,6 +996,20 @@ static swq_expr_node *OGRMultiFeatureFetcher( swq_expr_node *op,
                 poFeature->GetFieldAsDouble(op->field_index) );
         break;
         
+      case SWQ_GEOMETRY:
+        if( poFeature == NULL )
+        {
+            poRetNode = new swq_expr_node( (OGRGeometry*) NULL );
+        }
+        else
+        {
+            int iSrcGeomField = ALL_FIELD_INDEX_TO_GEOM_FIELD_INDEX(
+                poFeature->GetDefnRef(), op->field_index);
+            poRetNode = new swq_expr_node(
+                poFeature->GetGeomFieldRef(iSrcGeomField) );
+        }
+        break;
+
       default:
         if( poFeature == NULL 
             || !poFeature->IsFieldSet(op->field_index) )
@@ -941,20 +1135,27 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
 
     poDstFeat->SetFID( poSrcFeat->GetFID() );
 
-    poDstFeat->SetGeometry( poSrcFeat->GetGeometryRef() );
-
     poDstFeat->SetStyleString( poSrcFeat->GetStyleString() );
 
 /* -------------------------------------------------------------------- */
 /*      Evaluate fields that are complex expressions.                   */
 /* -------------------------------------------------------------------- */
+    int iRegularField = 0;
+    int iGeomField = 0;
     for( int iField = 0; iField < psSelectInfo->result_columns; iField++ )
     {
         swq_col_def *psColDef = psSelectInfo->column_defs + iField;
         swq_expr_node *poResult;
 
         if( psColDef->field_index != -1 )
+        {
+            if( psColDef->field_type == SWQ_GEOMETRY ||
+                psColDef->target_type == SWQ_GEOMETRY )
+                iGeomField++;
+            else
+                iRegularField++;
             continue;
+        }
 
         poResult = psColDef->expr->Evaluate( OGRMultiFeatureFetcher, 
                                              (void *) &apoFeatures );
@@ -967,6 +1168,10 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
 
         if( poResult->is_null )
         {
+            if( poResult->field_type == SWQ_GEOMETRY )
+                iGeomField++;
+            else
+                iRegularField++;
             delete poResult;
             continue;
         }
@@ -974,15 +1179,53 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
         switch( poResult->field_type )
         {
           case SWQ_INTEGER:
-            poDstFeat->SetField( iField, poResult->int_value );
+            poDstFeat->SetField( iRegularField++, poResult->int_value );
             break;
             
           case SWQ_FLOAT:
-            poDstFeat->SetField( iField, poResult->float_value );
+            poDstFeat->SetField( iRegularField++, poResult->float_value );
             break;
             
+          case SWQ_GEOMETRY:
+          {
+            OGRGenSQLGeomFieldDefn* poGeomFieldDefn =
+                (OGRGenSQLGeomFieldDefn*) poDstFeat->GetGeomFieldDefnRef(iGeomField);
+            if( poGeomFieldDefn->bForceGeomType &&
+                poResult->geometry_value != NULL )
+            {
+                OGRwkbGeometryType eCurType =
+                    wkbFlatten(poResult->geometry_value->getGeometryType());
+                OGRwkbGeometryType eReqType =
+                    wkbFlatten(poGeomFieldDefn->GetType());
+                if( eCurType == wkbPolygon && eReqType == wkbMultiPolygon )
+                {
+                    poResult->geometry_value = (OGRGeometry*)
+                        OGR_G_ForceToMultiPolygon( (OGRGeometryH) poResult->geometry_value );
+                }
+                else if( (eCurType == wkbMultiPolygon || eCurType == wkbGeometryCollection) &&
+                         eReqType == wkbPolygon )
+                {
+                    poResult->geometry_value = (OGRGeometry*)
+                        OGR_G_ForceToPolygon( (OGRGeometryH) poResult->geometry_value );
+                }
+                else if( eCurType == wkbLineString && eReqType == wkbMultiLineString )
+                {
+                    poResult->geometry_value = (OGRGeometry*)
+                        OGR_G_ForceToMultiLineString( (OGRGeometryH) poResult->geometry_value );
+                }
+                else if( (eCurType == wkbMultiLineString || eCurType == wkbGeometryCollection) &&
+                         eReqType == wkbLineString )
+                {
+                    poResult->geometry_value = (OGRGeometry*)
+                        OGR_G_ForceToLineString( (OGRGeometryH) poResult->geometry_value );
+                }
+            }
+            poDstFeat->SetGeomField( iGeomField++, poResult->geometry_value );
+            break;
+          }
+            
           default:
-            poDstFeat->SetField( iField, poResult->string_value );
+            poDstFeat->SetField( iRegularField++, poResult->string_value );
             break;
         }
 
@@ -992,51 +1235,73 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
 /* -------------------------------------------------------------------- */
 /*      Copy fields from primary record to the destination feature.     */
 /* -------------------------------------------------------------------- */
+    iRegularField = 0;
+    iGeomField = 0;
     for( int iField = 0; iField < psSelectInfo->result_columns; iField++ )
     {
         swq_col_def *psColDef = psSelectInfo->column_defs + iField;
 
         if( psColDef->table_index != 0 )
+        {
+            if( psColDef->field_type == SWQ_GEOMETRY ||
+                psColDef->target_type == SWQ_GEOMETRY )
+                iGeomField++;
+            else
+                iRegularField++;
             continue;
+        }
 
-        if ( psColDef->field_index >= iFIDFieldIndex &&
-            psColDef->field_index < iFIDFieldIndex + SPECIAL_FIELD_COUNT )
+        if( IS_GEOM_FIELD_INDEX(poSrcFeat->GetDefnRef(), psColDef->field_index) )
+        {
+            int iSrcGeomField = ALL_FIELD_INDEX_TO_GEOM_FIELD_INDEX(
+                poSrcFeat->GetDefnRef(), psColDef->field_index);
+            poDstFeat->SetGeomField( iGeomField ++,
+                                     poSrcFeat->GetGeomFieldRef(iSrcGeomField) );
+        }
+        else if( psColDef->field_index >= iFIDFieldIndex &&
+                 psColDef->field_index < iFIDFieldIndex + SPECIAL_FIELD_COUNT )
         {
             switch (SpecialFieldTypes[psColDef->field_index - iFIDFieldIndex])
             {
               case SWQ_INTEGER:
-                poDstFeat->SetField( iField, poSrcFeat->GetFieldAsInteger(psColDef->field_index) );
+                poDstFeat->SetField( iRegularField, poSrcFeat->GetFieldAsInteger(psColDef->field_index) );
                 break;
               case SWQ_FLOAT:
-                poDstFeat->SetField( iField, poSrcFeat->GetFieldAsDouble(psColDef->field_index) );
+                poDstFeat->SetField( iRegularField, poSrcFeat->GetFieldAsDouble(psColDef->field_index) );
                 break;
               default:
-                poDstFeat->SetField( iField, poSrcFeat->GetFieldAsString(psColDef->field_index) );
+                poDstFeat->SetField( iRegularField, poSrcFeat->GetFieldAsString(psColDef->field_index) );
             }
+            iRegularField ++;
         }
         else
         {
             switch (psColDef->target_type)
             {
               case SWQ_INTEGER:
-                poDstFeat->SetField( iField, poSrcFeat->GetFieldAsInteger(psColDef->field_index) );
+                poDstFeat->SetField( iRegularField, poSrcFeat->GetFieldAsInteger(psColDef->field_index) );
                 break;
 
               case SWQ_FLOAT:
-                poDstFeat->SetField( iField, poSrcFeat->GetFieldAsDouble(psColDef->field_index) );
+                poDstFeat->SetField( iRegularField, poSrcFeat->GetFieldAsDouble(psColDef->field_index) );
                 break;
               
               case SWQ_STRING:
               case SWQ_TIMESTAMP:
               case SWQ_DATE:
               case SWQ_TIME:
-                poDstFeat->SetField( iField, poSrcFeat->GetFieldAsString(psColDef->field_index) );
+                poDstFeat->SetField( iRegularField, poSrcFeat->GetFieldAsString(psColDef->field_index) );
                 break;
+                
+              case SWQ_GEOMETRY:
+                  CPLAssert(0);
+                  break;
 
               default:
-                poDstFeat->SetField( iField,
+                poDstFeat->SetField( iRegularField,
                          poSrcFeat->GetRawFieldRef( psColDef->field_index ) );
             }
+            iRegularField ++;
         }
     }
 
@@ -1054,14 +1319,21 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
             continue;
 
         // Copy over selected field values. 
+        iRegularField = 0;
         for( int iField = 0; iField < psSelectInfo->result_columns; iField++ )
         {
             swq_col_def *psColDef = psSelectInfo->column_defs + iField;
-            
+
+            if( psColDef->field_type == SWQ_GEOMETRY ||
+                psColDef->target_type == SWQ_GEOMETRY )
+                continue;
+
             if( psColDef->table_index == psJoinInfo->secondary_table )
-                poDstFeat->SetField( iField,
+                poDstFeat->SetField( iRegularField,
                                      poJoinFeature->GetRawFieldRef( 
                                          psColDef->field_index ) );
+
+            iRegularField ++;
         }
 
         delete poJoinFeature;
@@ -1088,6 +1360,8 @@ OGRFeature *OGRGenSQLResultsLayer::GetNextFeature()
         || psSelectInfo->query_mode == SWQM_DISTINCT_LIST )
         return GetFeature( nNextIndexFID++ );
 
+    int bEvaluateSpatialFilter = MustEvaluateSpatialFilterOnGenSQL();
+
 /* -------------------------------------------------------------------- */
 /*      Handle ordered sets.                                            */
 /* -------------------------------------------------------------------- */
@@ -1111,8 +1385,10 @@ OGRFeature *OGRGenSQLResultsLayer::GetNextFeature()
         if( poFeature == NULL )
             return NULL;
 
-        if( m_poAttrQuery == NULL
-            || m_poAttrQuery->Evaluate( poFeature ) )
+        if( (m_poAttrQuery == NULL
+            || m_poAttrQuery->Evaluate( poFeature )) &&
+            (!bEvaluateSpatialFilter ||
+             FilterGeometry( poFeature->GetGeomFieldRef(m_iGeomFieldFilter) )) )
             return poFeature;
 
         delete poFeature;
@@ -1522,7 +1798,12 @@ int OGRGenSQLResultsLayer::Compare( OGRField *pasFirstTuple,
         swq_order_def *psKeyDef = psSelectInfo->order_defs + iKey;
         OGRFieldDefn *poFDefn;
 
-        if( psKeyDef->field_index >= iFIDFieldIndex )
+        if( psKeyDef->field_index >= iFIDFieldIndex + SPECIAL_FIELD_COUNT )
+        {
+            CPLAssert( FALSE );
+            return 0;
+        }
+        else if( psKeyDef->field_index >= iFIDFieldIndex )
             poFDefn = NULL;
         else
             poFDefn = poSrcLayer->GetLayerDefn()->GetFieldDefn( 
@@ -1722,8 +2003,11 @@ OGRErr OGRGenSQLResultsLayer::SetAttributeFilter( const char* pszAttributeFilter
 /*                       SetSpatialFilter()                             */
 /************************************************************************/
 
-void OGRGenSQLResultsLayer::SetSpatialFilter( OGRGeometry * poGeom )
+void OGRGenSQLResultsLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeom )
 {
     InvalidateOrderByIndex();
-    OGRLayer::SetSpatialFilter(poGeom);
+    if( iGeomField == 0 )
+        OGRLayer::SetSpatialFilter(poGeom);
+    else
+        OGRLayer::SetSpatialFilter(iGeomField, poGeom);
 }

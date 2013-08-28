@@ -609,12 +609,446 @@ def ogr_rfc41_5():
 
     return 'success'
 
+###############################################################################
+# Test OGRSQL with geometries
+
+def ogr_rfc41_6():
+
+    ds = ogr.GetDriverByName('memory').CreateDataSource('')
+    sr = osr.SpatialReference()
+    lyr = ds.CreateLayer('poly', geom_type = ogr.wkbPolygon, srs = sr)
+    lyr.GetLayerDefn().GetGeomFieldDefn(0).SetName('geomfield')
+    lyr.CreateField(ogr.FieldDefn('intfield', ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn('wkt', ogr.OFTString))
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField('intfield', 1)
+    feat.SetField('wkt', 'POINT (0 0)')
+    feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POLYGON EMPTY'))
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(feat)
+    feat = None
+
+    # Test implicit geometry column (since poly has one single geometry column)
+    # then explicit geometry column
+    for sql in [ 'SELECT intfield FROM poly',
+                 'SELECT * FROM poly',
+                 'SELECT intfield, geomfield FROM poly',
+                 'SELECT geomfield, intfield FROM poly' ]:
+        sql_lyr = ds.ExecuteSQL(sql)
+        if sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetType() != ogr.wkbPolygon:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetSpatialRef() is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        feat = sql_lyr.GetNextFeature()
+        if feat.GetField('intfield') != 1:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if feat.GetGeomFieldRef('geomfield') is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        feat = sql_lyr.GetNextFeature()
+        if feat.GetGeomFieldRef('geomfield') is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        feat = None
+        ds.ReleaseResultSet(sql_lyr)
+
+    # Test CAST(geometry_field AS GEOMETRY)
+    sql_lyr = ds.ExecuteSQL('SELECT CAST(geomfield AS GEOMETRY) AS mygeom FROM poly WHERE CAST(geomfield AS GEOMETRY) IS NOT NULL')
+    if sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetType() != ogr.wkbUnknown:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetSpatialRef() is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetGeomFieldRef('mygeom') is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = None
+    ds.ReleaseResultSet(sql_lyr)
+
+    # Test CAST(xxx AS GEOMETRY(POLYGON))
+    sql_lyr = ds.ExecuteSQL('SELECT CAST(geomfield AS GEOMETRY(POLYGON)) AS mygeom FROM poly WHERE CAST(geomfield AS GEOMETRY(POLYGON)) IS NOT NULL')
+    if sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetType() != ogr.wkbPolygon:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetSpatialRef() is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetGeomFieldRef('mygeom') is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = None
+    ds.ReleaseResultSet(sql_lyr)
+
+    # Test CAST(xxx AS GEOMETRY(POLYGON,4326))
+    sql_lyr = ds.ExecuteSQL('SELECT CAST(geomfield AS GEOMETRY(POLYGON,4326)) AS mygeom FROM poly WHERE CAST(geomfield AS GEOMETRY(POLYGON,4326)) IS NOT NULL')
+    if sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetType() != ogr.wkbPolygon:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetSpatialRef().ExportToWkt().find('4326') < 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetGeomFieldRef('mygeom') is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = None
+    ds.ReleaseResultSet(sql_lyr)
+
+    # Test CAST(a_multipolygon AS GEOMETRY(POLYGON))
+    sql_lyr = ds.ExecuteSQL("SELECT CAST('MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)))' AS GEOMETRY(POLYGON)) AS mygeom FROM poly")
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetGeomFieldRef('mygeom').ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,1 0,0 0))':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = None
+    ds.ReleaseResultSet(sql_lyr)
+
+    # Test CAST(a_polygon AS GEOMETRY(MULTIPOLYGON))
+    sql_lyr = ds.ExecuteSQL("SELECT CAST('POLYGON ((0 0,0 1,1 1,1 0,0 0))' AS GEOMETRY(MULTIPOLYGON)) AS mygeom FROM poly")
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetGeomFieldRef('mygeom').ExportToWkt() != 'MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)))':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = None
+    ds.ReleaseResultSet(sql_lyr)
+
+    # Test CAST(a_multilinestring AS GEOMETRY(LINESTRING))
+    sql_lyr = ds.ExecuteSQL("SELECT CAST('MULTILINESTRING ((0 0,0 1,1 1,1 0,0 0))' AS GEOMETRY(LINESTRING)) AS mygeom FROM poly")
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetGeomFieldRef('mygeom').ExportToWkt() != 'LINESTRING (0 0,0 1,1 1,1 0,0 0)':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = None
+    ds.ReleaseResultSet(sql_lyr)
+
+    # Test CAST(a_linestring AS GEOMETRY(MULTILINESTRING))
+    sql_lyr = ds.ExecuteSQL("SELECT CAST('LINESTRING (0 0,0 1,1 1,1 0,0 0)' AS GEOMETRY(MULTILINESTRING)) AS mygeom FROM poly")
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetGeomFieldRef('mygeom').ExportToWkt() != 'MULTILINESTRING ((0 0,0 1,1 1,1 0,0 0))':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = None
+    ds.ReleaseResultSet(sql_lyr)
+
+    # Test expression with cast CHARACTER <--> GEOMETRY
+    sql_lyr = ds.ExecuteSQL('SELECT CAST(CAST(geomfield AS CHARACTER) AS GEOMETRY) AS mygeom, intfield FROM poly')
+    if sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetType() != ogr.wkbUnknown:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetSpatialRef() is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetField('intfield') != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if feat.GetGeomFieldRef('mygeom') is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = None
+    ds.ReleaseResultSet(sql_lyr)
+
+    # Test CAST(NULL AS GEOMETRY)
+    sql_lyr = ds.ExecuteSQL('SELECT CAST(NULL AS GEOMETRY) FROM poly')
+    if sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetType() != ogr.wkbUnknown:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetGeomFieldRef('') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = None
+    ds.ReleaseResultSet(sql_lyr)
+
+    # Test CAST(stringfield AS GEOMETRY)
+    sql_lyr = ds.ExecuteSQL('SELECT CAST(wkt AS GEOMETRY) FROM poly')
+    if sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetType() != ogr.wkbUnknown:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetGeomFieldRef('wkt').ExportToWkt() != 'POINT (0 0)':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = None
+    ds.ReleaseResultSet(sql_lyr)
+
+    # Test COUNT(geometry)
+    sql_lyr = ds.ExecuteSQL('SELECT COUNT(geomfield) FROM poly')
+    feat = sql_lyr.GetNextFeature()
+    if feat is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if feat.GetField(0) != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = None
+    ds.ReleaseResultSet(sql_lyr)
+
+    wrong_sql_list = [
+        ( 'SELECT DISTINCT geomfield FROM poly', 'SELECT DISTINCT on a geometry not supported' ),
+        ( 'SELECT COUNT(DISTINCT geomfield) FROM poly', 'SELECT COUNT DISTINCT on a geometry not supported' ),
+        ( 'SELECT MAX(geomfield) FROM poly', 'Use of field function MAX() on geometry field' ),
+        ( 'SELECT CAST(5 AS GEOMETRY) FROM poly', 'Cannot cast integer to geometry'),
+        ( 'SELECT CAST(geomfield AS integer) FROM poly', 'Cannot cast geometry to integer' ),
+        ( 'SELECT CAST(geomfield AS GEOMETRY(2)) FROM poly', 'First argument of CAST operator should be an geometry type identifier'),
+        ( 'SELECT CAST(geomfield AS GEOMETRY(UNSUPPORTED_TYPE)) FROM poly', 'SQL Expression Parsing Error: syntax error' ),
+        ( 'SELECT CAST(geomfield AS GEOMETRY(UNSUPPORTED_TYPE,5)) FROM poly', 'SQL Expression Parsing Error: syntax error' ),
+    ]
+
+    for (sql, error_msg) in wrong_sql_list:
+        gdal.ErrorReset()
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
+        sql_lyr = ds.ExecuteSQL(sql)
+        gdal.PopErrorHandler()
+        if gdal.GetLastErrorMsg().find(error_msg) != 0:
+            gdaltest.post_reason('fail')
+            print('For %s, expected error %s, got %s' % (sql, error_msg, gdal.GetLastErrorMsg()))
+            return 'fail'
+        if sql_lyr is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    # Test invalid expressions with geometry
+    for sql in [ "SELECT geomfield + 'a' FROM poly",
+                 "SELECT geomfield * 'a' FROM poly",
+                 "SELECT geomfield + 'a' FROM poly",
+                 "SELECT geomfield - 'a' FROM poly",
+                 "SELECT geomfield % 'a' FROM poly",
+                 "SELECT CONCAT(geomfield, 'a') FROM poly",
+                 "SELECT SUBSTR(geomfield, 0, 1) FROM poly",
+                 "SELECT * FROM poly WHERE geomfield = CAST('POINT EMPTY' AS GEOMETRY)",
+                 "SELECT * FROM poly WHERE geomfield LIKE 'a'",
+                 "SELECT * FROM poly WHERE geomfield IN( 'a' )"]:
+        gdal.ErrorReset()
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
+        sql_lyr = ds.ExecuteSQL(sql)
+        gdal.PopErrorHandler()
+        if gdal.GetLastErrorMsg().find('Cannot use geometry field in this operation') != 0:
+            gdaltest.post_reason('fail')
+            print(gdal.GetLastErrorMsg())
+            return 'fail'
+        if sql_lyr is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    # Test expression with geometry in WHERE
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM poly WHERE geomfield IS NOT NULL')
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetField('intfield') != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = sql_lyr.GetNextFeature()
+    if feat is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = None
+    ds.ReleaseResultSet(sql_lyr)
+    
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM poly WHERE geomfield IS NULL')
+    feat = sql_lyr.GetNextFeature()
+    if feat.IsFieldSet(0):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = sql_lyr.GetNextFeature()
+    if feat is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = None
+    ds.ReleaseResultSet(sql_lyr)
+
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM poly WHERE CAST(geomfield AS CHARACTER) = 'POLYGON EMPTY'")
+    feat = sql_lyr.GetNextFeature()
+    if feat is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = sql_lyr.GetNextFeature()
+    if feat is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = None
+    ds.ReleaseResultSet(sql_lyr)
+
+    sql_lyr = ds.ExecuteSQL('SELECT count(*) FROM poly WHERE geomfield IS NULL')
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetField(0) != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = None
+    ds.ReleaseResultSet(sql_lyr)
+    
+    sql_lyr = ds.ExecuteSQL('SELECT count(*) FROM poly WHERE geomfield IS NOT NULL')
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetField(0) != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = None
+    ds.ReleaseResultSet(sql_lyr)
+
+    # Test spatial filter
+    feat = lyr.GetFeature(0)
+    feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(1 2)'))
+    lyr.SetFeature(feat)
+    feat = None
+
+    lyr.DeleteFeature(1)
+
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM poly")
+    sql_lyr.SetSpatialFilterRect(0, 0, 0, 0)
+    feat = sql_lyr.GetNextFeature()
+    if feat is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = None
+
+    sql_lyr.SetSpatialFilterRect(0, 1,2,1,2)
+    feat = sql_lyr.GetNextFeature()
+    if feat is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = None
+
+    # Test invalid spatial filter index
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    sql_lyr.SetSpatialFilterRect(2, 0,0,0,0)
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Test invalid geometry field index
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    got_extent = sql_lyr.GetExtent(geom_field = 2)
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds.ReleaseResultSet(sql_lyr)
+
+    # Test querying several geometry fields
+    sql_lyr = ds.ExecuteSQL('SELECT geomfield as geom1, geomfield as geom2 FROM poly')
+    feat = sql_lyr.GetNextFeature()
+    if feat is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if feat.GetGeomFieldRef('geom1') is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if feat.GetGeomFieldRef('geom2') is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = None
+    ds.ReleaseResultSet(sql_lyr)
+
+    # Test querying a layer with several geometry fields
+    lyr.CreateGeomField(ogr.GeomFieldDefn('secondarygeom', ogr.wkbPoint))
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+    feat.SetGeomField('secondarygeom', ogr.CreateGeometryFromWkt('POINT (10 100)'))
+    lyr.SetFeature(feat)
+    feat = None
+
+    for sql in [ 'SELECT * FROM poly',
+                 'SELECT geomfield, secondarygeom FROM poly',
+                 'SELECT secondarygeom, geomfield FROM poly' ]:
+        sql_lyr = ds.ExecuteSQL(sql)
+        feat = sql_lyr.GetNextFeature()
+        if feat.GetGeomFieldRef('geomfield').ExportToWkt() != 'POINT (1 2)':
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if feat.GetGeomFieldRef('secondarygeom').ExportToWkt() != 'POINT (10 100)':
+            gdaltest.post_reason('fail')
+            return 'fail'
+        feat = None
+        ds.ReleaseResultSet(sql_lyr)
+
+    # Check that we don't get an implicit geometry field
+    sql_lyr = ds.ExecuteSQL('SELECT intfield FROM poly')
+    if sql_lyr.GetLayerDefn().GetGeomFieldCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
+    # Check GetExtent() and SetSpatialFilter()
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM poly')
+    if sql_lyr.GetExtent(geom_field = 0) != (1.0, 1.0, 2.0, 2.0):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if sql_lyr.GetExtent(geom_field = 1) != (10.0, 10.0, 100.0, 100.0):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    sql_lyr.SetSpatialFilterRect(0,0.5,1.5,1.5,2.5)
+    if sql_lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    sql_lyr.SetSpatialFilterRect(0,0,0,0.5,0.5)
+    if sql_lyr.GetFeatureCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    sql_lyr.SetSpatialFilterRect(1,9,99,11,101)
+    if sql_lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    sql_lyr.SetSpatialFilterRect(1,0,0,0.5,0.5)
+    if sql_lyr.GetFeatureCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test crazy OGRSQL
+
+def ogr_rfc41_7():
+
+    ds = ogr.Open('data')
+    sql = "select eas_id, \"\" as geom1, cast(null as geometry) as geom2, " + \
+          "'a', cast('POINT(3 4)' as geometry) as geom3, fid, \"\" as geom4, "+\
+          "'c', p.eas_id, cast(area as integer) as area_int, \"\", area from " +\
+          "poly join \"data\".poly p on poly.eas_id = p.eas_id"
+    sql_lyr = ds.ExecuteSQL(sql)
+    feat = sql_lyr.GetNextFeature()
+    if feat.eas_id != 168 or \
+       feat.FIELD_2 != 'a' or \
+       feat.fid != 0 or \
+       feat.FIELD_4 != 'c' or \
+       feat['p.eas_id'] != 168 or \
+       feat.area_int != 215229 or \
+       abs(feat.area - 215229.266) > 1e-5 or \
+       feat.geom1.GetGeometryType() != ogr.wkbPolygon or \
+       feat.geom2 != None or \
+       feat.geom3.GetGeometryType() != ogr.wkbPoint or \
+       feat.geom4.GetGeometryType() != ogr.wkbPolygon or \
+       feat[''].GetGeometryType() != ogr.wkbPolygon:
+        feat.DumpReadable()
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
+    ds = None
+
+    return 'success'
+
 gdaltest_list = [
     ogr_rfc41_1,
     ogr_rfc41_2,
     ogr_rfc41_3,
     ogr_rfc41_4,
     ogr_rfc41_5,
+    ogr_rfc41_6,
+    ogr_rfc41_7,
     ]
 
 if __name__ == '__main__':

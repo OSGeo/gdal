@@ -63,6 +63,19 @@ void        OGRMutexedLayer::SetSpatialFilterRect( double dfMinX, double dfMinY,
     OGRLayerDecorator::SetSpatialFilterRect(dfMinX, dfMinY, dfMaxX, dfMaxY);
 }
 
+void        OGRMutexedLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeom )
+{
+    CPLMutexHolderOptionalLockD(m_hMutex);
+    OGRLayerDecorator::SetSpatialFilter(iGeomField, poGeom);
+}
+
+void        OGRMutexedLayer::SetSpatialFilterRect( int iGeomField, double dfMinX, double dfMinY,
+                                  double dfMaxX, double dfMaxY )
+{
+    CPLMutexHolderOptionalLockD(m_hMutex);
+    OGRLayerDecorator::SetSpatialFilterRect(iGeomField, dfMinX, dfMinY, dfMaxX, dfMaxY);
+}
+
 OGRErr      OGRMutexedLayer::SetAttributeFilter( const char * poAttrFilter )
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
@@ -139,6 +152,12 @@ int         OGRMutexedLayer::GetFeatureCount( int bForce )
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::GetFeatureCount(bForce);
+}
+
+OGRErr      OGRMutexedLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+{
+    CPLMutexHolderOptionalLockD(m_hMutex);
+    return OGRLayerDecorator::GetExtent(iGeomField, psExtent, bForce);
 }
 
 OGRErr      OGRMutexedLayer::GetExtent(OGREnvelope *psExtent, int bForce)

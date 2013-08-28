@@ -1165,6 +1165,70 @@ def ogr_csv_28():
     return 'success'
 
 ###############################################################################
+# Check multi geometry field support
+
+def ogr_csv_29():
+
+    ds = ogr.GetDriverByName('CSV').CreateDataSource('tmp/ogr_csv_29', options = ['GEOMETRY=AS_WKT'])
+    lyr = ds.CreateLayer('test', geom_type = ogr.wkbNone)
+    lyr.CreateGeomField(ogr.GeomFieldDefn("geom__WKT_lyr1_EPSG_4326", ogr.wkbPoint))
+    lyr.CreateGeomField(ogr.GeomFieldDefn("geom__WKT_lyr2_EPSG_32632", ogr.wkbPolygon))
+    ds = None
+
+    ds = ogr.Open('tmp/ogr_csv_29', update = 1)
+    lyr = ds.GetLayerByName('test')
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeomField(0, ogr.CreateGeometryFromWkt('POINT (1 2)'))
+    feat.SetGeomField(1, ogr.CreateGeometryFromWkt('POLYGON ((0 0,0 1,1 1,1 0,0 0))'))
+    lyr.CreateFeature(feat)
+    ds = None
+
+    ds = ogr.Open('tmp/ogr_csv_29')
+    lyr = ds.GetLayerByName('test')
+    if lyr.GetLayerDefn().GetGeomFieldCount() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    srs = lyr.GetLayerDefn().GetGeomFieldDefn(0).GetSpatialRef()
+    if srs.GetAuthorityCode(None) != '4326':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    srs = lyr.GetLayerDefn().GetGeomFieldDefn(1).GetSpatialRef()
+    if srs.GetAuthorityCode(None) != '32632':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = lyr.GetNextFeature()
+    geom = feat.GetGeomFieldRef('geom__WKT_lyr1_EPSG_4326')
+    if geom.ExportToWkt() != 'POINT (1 2)':
+        feat.DumpReadable()
+        gdaltest.post_reason('fail')
+        return 'fail'
+    geom = feat.GetGeomFieldRef('geom__WKT_lyr2_EPSG_32632')
+    if geom.ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,1 0,0 0))':
+        feat.DumpReadable()
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Run test_ogrsf
+
+def ogr_csv_30():
+
+    import test_cli_utilities
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        return 'skip'
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/ogr_csv_29')
+
+    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+        print(ret)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_csv_cleanup():
@@ -1186,6 +1250,13 @@ def ogr_csv_cleanup():
     try:
         gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
         ogr.GetDriverByName('CSV').DeleteDataSource( 'tmp/csvwrk' )
+        gdal.PopErrorHandler()
+    except:
+        pass
+
+    try:
+        gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+        ogr.GetDriverByName('CSV').DeleteDataSource( 'tmp/ogr_csv_29' )
         gdal.PopErrorHandler()
     except:
         pass
@@ -1222,6 +1293,8 @@ gdaltest_list = [
     ogr_csv_26,
     ogr_csv_27,
     ogr_csv_28,
+    ogr_csv_29,
+    ogr_csv_30,
     ogr_csv_cleanup ]
 
 if __name__ == '__main__':

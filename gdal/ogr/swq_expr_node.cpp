@@ -30,6 +30,7 @@
 #include "cpl_conv.h"
 #include "cpl_multiproc.h"
 #include "swq.h"
+#include "ogr_geometry.h"
 #include <vector>
 
 /************************************************************************/
@@ -82,6 +83,20 @@ swq_expr_node::swq_expr_node( const char *pszValueIn )
 }
 
 /************************************************************************/
+/*                      swq_expr_node(OGRGeometry *)                    */
+/************************************************************************/
+
+swq_expr_node::swq_expr_node( OGRGeometry *poGeomIn )
+
+{
+    Initialize();
+
+    field_type = SWQ_GEOMETRY;
+    geometry_value = poGeomIn ? poGeomIn->clone() : NULL;
+    is_null = poGeomIn == NULL;
+}
+
+/************************************************************************/
 /*                        swq_expr_node(swq_op)                         */
 /************************************************************************/
 
@@ -110,6 +125,7 @@ void swq_expr_node::Initialize()
 
     is_null = FALSE;
     string_value = NULL;
+    geometry_value = NULL;
     papoSubExpr = NULL;
     nSubExprCount = 0;
 }
@@ -127,6 +143,7 @@ swq_expr_node::~swq_expr_node()
     for( i = 0; i < nSubExprCount; i++ )
         delete papoSubExpr[i];
     CPLFree( papoSubExpr );
+    delete geometry_value;
 }
 
 /************************************************************************/
@@ -292,6 +309,18 @@ void swq_expr_node::Dump( FILE * fp, int depth )
             fprintf( fp, "%s  %d\n", spaces, int_value );
         else if( field_type == SWQ_FLOAT )
             fprintf( fp, "%s  %.15g\n", spaces, float_value );
+        else if( field_type == SWQ_GEOMETRY )
+        {
+            if( geometry_value == NULL )
+                fprintf( fp, "%s  (null)\n", spaces );
+            else
+            {
+                char* pszWKT = NULL;
+                geometry_value->exportToWkt(&pszWKT);
+                fprintf( fp, "%s  %s\n", spaces, pszWKT );
+                CPLFree(pszWKT);
+            }
+        }
         else
             fprintf( fp, "%s  %s\n", spaces, string_value );
         return;
@@ -408,6 +437,10 @@ char *swq_expr_node::Unparse( swq_field_list *field_list, char chColumnQuote )
             }
         }
 
+        if( osExpr.size() == 0 )
+        {
+            return CPLStrdup(CPLSPrintf("%c%c", chColumnQuote, chColumnQuote));
+        }
 
         for( int i = 0; i < (int) osExpr.size(); i++ )
         {
@@ -539,14 +572,15 @@ char *swq_expr_node::Unparse( swq_field_list *field_list, char chColumnQuote )
                 osExpr += ", ";
 
             int nLen = (int)strlen(apszSubExpr[i]);
-            if( i != 1 ||
-                !(apszSubExpr[i][0] == '\'' && nLen > 2 && apszSubExpr[i][nLen-1] == '\'') )
-                osExpr += apszSubExpr[i];
-            else
+            if( (i == 1 &&
+                (apszSubExpr[i][0] == '\'' && nLen > 2 && apszSubExpr[i][nLen-1] == '\'')) ||
+                (i == 2 && EQUAL(apszSubExpr[1], "'GEOMETRY")) )
             {
                 apszSubExpr[i][nLen-1] = '\0';
                 osExpr += apszSubExpr[i] + 1;
             }
+            else
+                osExpr += apszSubExpr[i];
 
             if( i == 1 && nSubExprCount > 2)
                 osExpr += "(";
@@ -605,6 +639,11 @@ swq_expr_node *swq_expr_node::Evaluate( swq_field_fetcher pfnFetcher,
             poRetNode->string_value = CPLStrdup(string_value);
         else
             poRetNode->string_value = NULL;
+
+        if( geometry_value )
+            poRetNode->geometry_value = geometry_value->clone();
+        else
+            poRetNode->geometry_value = NULL;
 
         poRetNode->is_null = is_null;
 
