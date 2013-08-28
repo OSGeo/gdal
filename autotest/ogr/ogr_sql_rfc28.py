@@ -274,7 +274,7 @@ def ogr_rfc28_14():
     lyr = gdaltest.ds.ExecuteSQL( "SELECT SUBSTR(PRFEDEA,4,5) from poly where eas_id in (168,179)" )
 
     expect = [ '43411', '43423' ]
-    tr = ogrtest.check_features_against_list( lyr, 'prfedea', expect )
+    tr = ogrtest.check_features_against_list( lyr, 'substr_prfedea', expect )
 
     gdaltest.ds.ReleaseResultSet( lyr )
     
@@ -290,7 +290,7 @@ def ogr_rfc28_15():
     lyr = gdaltest.ds.ExecuteSQL( "SELECT CONCAT(PRFEDEA,' ',CAST(EAS_ID AS CHARACTER(3))) from poly where eas_id in (168,179)" )
 
     expect = [ '35043411 168', '35043423 179' ]
-    tr = ogrtest.check_features_against_list( lyr, 'prfedea', expect )
+    tr = ogrtest.check_features_against_list( lyr, 'concat_prfedea', expect )
 
     gdaltest.ds.ReleaseResultSet( lyr )
     
@@ -549,7 +549,7 @@ def ogr_rfc28_26():
     lyr = gdaltest.ds.ExecuteSQL( "SELECT SUBSTR(PRFEDEA,-2) from poly where eas_id in (168,179)" )
 
     expect = [ '11', '23' ]
-    tr = ogrtest.check_features_against_list( lyr, 'prfedea', expect )
+    tr = ogrtest.check_features_against_list( lyr, 'substr_prfedea', expect )
 
     gdaltest.ds.ReleaseResultSet( lyr )
 

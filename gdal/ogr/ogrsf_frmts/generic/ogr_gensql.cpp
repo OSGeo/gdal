@@ -216,8 +216,12 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
             oFDefn.SetType( OFTInteger );
         else if( poSrcFDefn != NULL )
         {
-            oFDefn.SetType( poSrcFDefn->GetType() );
             if( psColDef->col_func != SWQCF_AVG )
+                oFDefn.SetType( poSrcFDefn->GetType() );
+            else
+                oFDefn.SetType( OFTReal );
+            if( psColDef->col_func != SWQCF_AVG &&
+                psColDef->col_func != SWQCF_SUM )
             {
                 oFDefn.SetWidth( poSrcFDefn->GetWidth() );
                 oFDefn.SetPrecision( poSrcFDefn->GetPrecision() );
