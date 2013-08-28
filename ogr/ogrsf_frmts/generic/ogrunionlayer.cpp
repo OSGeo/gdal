@@ -904,6 +904,25 @@ int  OGRUnionLayer::TestCapability( const char * pszCap )
 }
 
 /************************************************************************/
+/*                              GetExtent()                             */
+/************************************************************************/
+
+OGRErr OGRUnionLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+{
+    if( iGeomField == 0 )
+    {
+        return GetExtent(psExtent, bForce);
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "OGRUnionLayer::GetExtent(iGeomField, poGeom, bForce) with "
+                 "iGeomField != 0 not supported");
+        return OGRERR_FAILURE;
+    }
+}
+
+/************************************************************************/
 /*                             GetExtent()                              */
 /************************************************************************/
 
@@ -947,6 +966,21 @@ void OGRUnionLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
     if( iCurLayer >= 0 && iCurLayer < nSrcLayers)
         papoSrcLayers[iCurLayer]->SetSpatialFilter(poGeomIn);
 }
+
+/************************************************************************/
+/*                         SetSpatialFilter()                           */
+/************************************************************************/
+
+void OGRUnionLayer::SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
+{
+    if( iGeomField == 0 )
+        SetSpatialFilter(poGeom);
+    else
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "OGRUnionLayer::SetSpatialFilter(iGeomField, poGeom) with "
+                 "iGeomField != 0 not supported");
+}
+
 
 /************************************************************************/
 /*                        TranslateFromSrcLayer()                       */

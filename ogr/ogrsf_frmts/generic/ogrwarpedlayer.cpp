@@ -108,6 +108,30 @@ void OGRWarpedLayer::SetSpatialFilterRect( double dfMinX, double dfMinY,
 }
 
 /************************************************************************/
+/*                         SetSpatialFilter()                           */
+/************************************************************************/
+
+void OGRWarpedLayer::SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
+{
+    if( iGeomField == 0 )
+        SetSpatialFilter(poGeom);
+    else
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "OGRWarpedLayer::SetSpatialFilter(iGeomField, poGeom) with "
+                 "iGeomField != 0 not supported");
+}
+
+/************************************************************************/
+/*                        SetSpatialFilterRect()                        */
+/************************************************************************/
+
+void OGRWarpedLayer::SetSpatialFilterRect( int iGeomField, double dfMinX, double dfMinY,
+                                           double dfMaxX, double dfMaxY )
+{
+    OGRLayer::SetSpatialFilterRect(iGeomField, dfMinX, dfMinY, dfMaxX, dfMaxY);
+}
+
+/************************************************************************/
 /*                          GetNextFeature()                            */
 /************************************************************************/
 
@@ -245,6 +269,25 @@ int OGRWarpedLayer::GetFeatureCount( int bForce )
         return m_poDecoratedLayer->GetFeatureCount(bForce);
 
     return OGRLayer::GetFeatureCount(bForce);
+}
+
+/************************************************************************/
+/*                              GetExtent()                             */
+/************************************************************************/
+
+OGRErr OGRWarpedLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+{
+    if( iGeomField == 0 )
+    {
+        return GetExtent(psExtent, bForce);
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "OGRWarpedLayer::GetExtent(iGeomField, poGeom, bForce) with "
+                 "iGeomField != 0 not supported");
+        return OGRERR_FAILURE;
+    }
 }
 
 /************************************************************************/
