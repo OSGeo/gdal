@@ -35,6 +35,7 @@ The following utility programs are distributed with GDAL.
 <li> \ref gdal_edit - Edit in place various information of an existing GDAL dataset (projection, geotransform, nodata, metadata)
 <li> \ref gdal-config - Get options required to build software using GDAL.
 <li> \ref gdalmanage - Identify, copy, rename and delete raster.
+<li> \ref gdalcompare - Compare two images and report on differences.
 </ul>
 
 \section gdal_utilities_creating Creating New Files
