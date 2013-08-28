@@ -131,22 +131,35 @@ def ogr_sql_4():
         return 'fail'
 
 ###############################################################################
-# Test MAX() column function.
+# Test column functions.
 
 def ogr_sql_5():
 
-    expect = [ 179 ]
-    
-    sql_lyr = gdaltest.ds.ExecuteSQL( 'select max(eas_id) from idlink' )
-
-    tr = ogrtest.check_features_against_list( sql_lyr, 'max_eas_id', expect )
-
+    sql_lyr = gdaltest.ds.ExecuteSQL( 'select max(eas_id), min(eas_id), avg(eas_id), sum(eas_id), count(eas_id) from idlink' )
+    feat = sql_lyr.GetNextFeature()
+    if feat['max_eas_id'] != 179:
+        feat.DumpReadable()
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if feat['min_eas_id'] != 158:
+        feat.DumpReadable()
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if abs(feat['avg_eas_id'] - 168.142857142857) > 1e-12:
+        feat.DumpReadable()
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if feat['count_eas_id'] != 7:
+        feat.DumpReadable()
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if feat['sum_eas_id'] != 1177:
+        feat.DumpReadable()
+        gdaltest.post_reason('fail')
+        return 'fail'
     gdaltest.ds.ReleaseResultSet( sql_lyr )
 
-    if tr:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success'
 
 ###############################################################################
 # Test simple COUNT() function.
@@ -771,6 +784,7 @@ def ogr_sql_28():
     "SELECT DISTINCT foo AS id id2 FROM",
     "SELECT DISTINCT FROM my_layer",
     "SELECT DISTINCT strfield, COUNT(DISTINCT intfield) FROM my_layer",
+    "SELECT MIN(intfield*2) FROM my_layer",
     "SELECT MIN(intfield,2) FROM my_layer",
     "SELECT MIN(foo) FROM my_layer",
     "SELECT MAX(foo) FROM my_layer",
