@@ -91,6 +91,10 @@ int main( int nArgc, char ** papszArgv )
 
     bRegistrarLoaded = oRegistrar.LoadInfo( pszDataPath, NULL, TRUE );
 
+    S57ClassContentExplorer *poClassContentExplorer = NULL;
+    if (bRegistrarLoaded)
+        poClassContentExplorer = new S57ClassContentExplorer(&oRegistrar);
+            
 /* -------------------------------------------------------------------- */
 /*      Get a list of candidate files.                                  */
 /* -------------------------------------------------------------------- */
@@ -120,31 +124,30 @@ int main( int nArgc, char ** papszArgv )
 
         if( bRegistrarLoaded )
         {
-            int i, anClassList[MAX_CLASSES], bGeneric = FALSE;
-            
-            for( i = 0; i < MAX_CLASSES; i++ )
-                anClassList[i] = 0;
-        
-            oReader.CollectClassList(anClassList, MAX_CLASSES);
+            int bGeneric = FALSE;
+            std::vector<int> anClassList;
+            unsigned int i;
+            oReader.CollectClassList(anClassList);
 
-            oReader.SetClassBased( &oRegistrar );
+            oReader.SetClassBased( &oRegistrar, poClassContentExplorer );
 
             printf( "Classes found:\n" );
-            for( i = 0; i < MAX_CLASSES; i++ )
+            for( i = 0; i < anClassList.size(); i++ )
             {
                 if( anClassList[i] == 0 )
                     continue;
                 
-                if( oRegistrar.SelectClass( i ) )
+                if( poClassContentExplorer->SelectClass( i ) )
                 {
                     printf( "%d: %s/%s\n",
                             i,
-                            oRegistrar.GetAcronym(),
-                            oRegistrar.GetDescription() );
+                            poClassContentExplorer->GetAcronym(),
+                            poClassContentExplorer->GetDescription() );
                     
                     oReader.AddFeatureDefn(
-                        S57GenerateObjectClassDefn( &oRegistrar, i, 
-                                                    nOptionFlags ) );
+                        S57GenerateObjectClassDefn( &oRegistrar, 
+                                                    poClassContentExplorer,
+                                                    i, nOptionFlags ) );
                 }
                 else
                 {
