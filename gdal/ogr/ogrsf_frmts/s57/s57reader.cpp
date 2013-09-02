@@ -181,8 +181,6 @@ S57Reader::S57Reader( const char * pszFilename )
     bMissingWarningIssued = FALSE;
     bAttrWarningIssued = FALSE;
 
-    memset( apoFDefnByOBJL, 0, sizeof(apoFDefnByOBJL) );
-    
     Aall=0;                 // see RecodeByDSSI() function
     Nall=0;                 // see RecodeByDSSI() function
     needAallNallSetup=true; // see RecodeByDSSI() function
@@ -2422,7 +2420,8 @@ OGRFeatureDefn * S57Reader::FindFDefn( DDFRecord * poRecord )
     {
         int     nOBJL = poRecord->GetIntSubfield( "FRID", 0, "OBJL", 0 );
 
-        if( apoFDefnByOBJL[nOBJL] != NULL )
+        if( nOBJL < (int)apoFDefnByOBJL.size() 
+            && apoFDefnByOBJL[nOBJL] != NULL )
             return apoFDefnByOBJL[nOBJL];
 
         if( !poClassContentExplorer->SelectClass( nOBJL ) )
@@ -2523,7 +2522,12 @@ void S57Reader::AddFeatureDefn( OGRFeatureDefn * poFDefn )
     if( poRegistrar != NULL )
     {
         if( poClassContentExplorer->SelectClass( poFDefn->GetName() ) )
-            apoFDefnByOBJL[poClassContentExplorer->GetOBJL()] = poFDefn;
+        {
+            int nOBJL = poClassContentExplorer->GetOBJL();
+            if( nOBJL >= (int) apoFDefnByOBJL.size() )
+                apoFDefnByOBJL.resize(nOBJL+1);
+            apoFDefnByOBJL[nOBJL] = poFDefn;
+        }
     }
 }
 
@@ -2534,7 +2538,7 @@ void S57Reader::AddFeatureDefn( OGRFeatureDefn * poFDefn )
 /*      occur in this dataset.                                          */
 /************************************************************************/
 
-int S57Reader::CollectClassList(int *panClassCount, int nMaxClass )
+int S57Reader::CollectClassList(std::vector<int> &anClassCount)
 
 {
     int         bSuccess = TRUE;
@@ -2547,10 +2551,14 @@ int S57Reader::CollectClassList(int *panClassCount, int nMaxClass )
         DDFRecord *poRecord = oFE_Index.GetByIndex( iFEIndex );
         int     nOBJL = poRecord->GetIntSubfield( "FRID", 0, "OBJL", 0 );
 
-        if( nOBJL < 0 || nOBJL >= nMaxClass )
+        if( nOBJL < 0 )
             bSuccess = FALSE;
         else
-            panClassCount[nOBJL]++;
+        {
+            if( nOBJL >= (int) anClassCount.size() )
+                anClassCount.resize(nOBJL+1);
+            anClassCount[nOBJL]++;
+        }
 
     }
 

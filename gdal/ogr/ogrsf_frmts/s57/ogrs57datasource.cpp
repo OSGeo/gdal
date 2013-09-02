@@ -320,8 +320,9 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
     else
     {
         OGRFeatureDefn  *poDefn;
-        int             *panClassCount;
-        int             iClass, bGeneric = FALSE;
+        std::vector<int> anClassCount;
+        int              bGeneric = FALSE;
+        unsigned int     iClass;
         
         poClassContentExplorer =
             new S57ClassContentExplorer( OGRS57Driver::GetS57Registrar() );
@@ -330,18 +331,15 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
             papoModules[iModule]->SetClassBased( OGRS57Driver::GetS57Registrar(),
                                                  poClassContentExplorer );
         
-        panClassCount = (int *) CPLCalloc(sizeof(int),MAX_CLASSES);
-
         for( iModule = 0; iModule < nModules; iModule++ )
         {
             bSuccess &= 
-                papoModules[iModule]->CollectClassList(panClassCount,
-                                                       MAX_CLASSES);
+                papoModules[iModule]->CollectClassList(anClassCount);
         }
 
-        for( iClass = 0; iClass < MAX_CLASSES; iClass++ )
+        for( iClass = 0; iClass < anClassCount.size(); iClass++ )
         {
-            if( panClassCount[iClass] > 0 )
+            if( anClassCount[iClass] > 0 )
             {
                 poDefn = 
                     S57GenerateObjectClassDefn( OGRS57Driver::GetS57Registrar(),
@@ -351,7 +349,7 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
 
                 if( poDefn != NULL )
                     AddLayer( new OGRS57Layer( this, poDefn, 
-                                               panClassCount[iClass] ) );
+                                               anClassCount[iClass] ) );
                 else
                 {
                     bGeneric = TRUE;
@@ -368,8 +366,6 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
                                                  poModule->GetOptionFlags() );
             AddLayer( new OGRS57Layer( this, poDefn ) );
         }
-            
-        CPLFree( panClassCount );
     }
 
 /* -------------------------------------------------------------------- */
@@ -529,17 +525,17 @@ int OGRS57DataSource::Create( const char *pszFilename, char **papszOptions )
 /* -------------------------------------------------------------------- */
 /*      Initialize a feature definition for each object class.          */
 /* -------------------------------------------------------------------- */
-    for( int iClass = 0; iClass < MAX_CLASSES; iClass++ )
+    poClassContentExplorer->Rewind();
+    while( poClassContentExplorer->NextClass() )
     {
         poDefn = 
             S57GenerateObjectClassDefn( OGRS57Driver::GetS57Registrar(), 
                                         poClassContentExplorer,
-                                        iClass, nOptionFlags );
+                                        poClassContentExplorer->GetOBJL(),
+                                        nOptionFlags );
         
-        if( poDefn == NULL )
-            continue;
-
-        AddLayer( new OGRS57Layer( this, poDefn, 0, iClass ) );
+        AddLayer( new OGRS57Layer( this, poDefn, 0, 
+                                   poClassContentExplorer->GetOBJL() ) );
     }
 
 /* -------------------------------------------------------------------- */

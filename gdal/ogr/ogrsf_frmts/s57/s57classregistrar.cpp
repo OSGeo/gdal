@@ -46,9 +46,6 @@ CPL_CVSID("$Id$");
 S57ClassRegistrar::S57ClassRegistrar()
 
 {
-    nClasses = 0;
-    papszClassesInfo = NULL;
-
     papszNextLine = NULL;
     pachAttrClass = NULL;
     pachAttrType = NULL;
@@ -67,8 +64,7 @@ S57ClassRegistrar::~S57ClassRegistrar()
 {
     int i;
 
-    CSLDestroy( papszClassesInfo );
-
+    nClasses = 0;
     if( papszAttrNames )
     {
         for( i = 0; i < MAX_ATTRIBUTES; i++ )
@@ -247,25 +243,11 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
 /* -------------------------------------------------------------------- */
 /*      Read and form string list.                                      */
 /* -------------------------------------------------------------------- */
-    
-    CSLDestroy( papszClassesInfo );
-    papszClassesInfo = (char **) CPLCalloc(sizeof(char *),MAX_CLASSES);
-
-    nClasses = 0;
-
-    while( nClasses < MAX_CLASSES
-           && (pszLine = ReadLine(fp)) != NULL )
+    apszClassesInfo.Clear();
+    while( (pszLine = ReadLine(fp)) != NULL )
     {
-        papszClassesInfo[nClasses] = CPLStrdup(pszLine);
-        if( papszClassesInfo[nClasses] == NULL )
-            break;
-
-        nClasses++;
+        apszClassesInfo.AddString(pszLine);
     }
-
-    if( nClasses == MAX_CLASSES )
-        CPLError( CE_Warning, CPLE_AppDefined,
-                  "MAX_CLASSES exceeded in S57ClassRegistrar::LoadInfo().\n" );
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup, and establish state.                                   */
@@ -273,6 +255,7 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
     if( fp != NULL )
         VSIFCloseL( fp );
 
+    nClasses = apszClassesInfo.size();
     if( nClasses == 0 )
         return FALSE;
 
@@ -422,7 +405,7 @@ int S57ClassContentExplorer::SelectClassByIndex( int nNewIndex )
 /* -------------------------------------------------------------------- */
     if( papapszClassesFields[nNewIndex] == NULL )
         papapszClassesFields[nNewIndex] = 
-            CSLTokenizeStringComplex( poRegistrar->papszClassesInfo[nNewIndex],
+            CSLTokenizeStringComplex( poRegistrar->apszClassesInfo[nNewIndex],
                                       ",", TRUE, TRUE );
 
     papszCurrentFields = papapszClassesFields[nNewIndex];
@@ -441,7 +424,7 @@ int S57ClassContentExplorer::SelectClass( int nOBJL )
 {
     for( int i = 0; i < poRegistrar->nClasses; i++ )
     {
-        if( atoi(poRegistrar->papszClassesInfo[i]) == nOBJL )
+        if( atoi(poRegistrar->apszClassesInfo[i]) == nOBJL )
             return SelectClassByIndex( i );
     }
 
@@ -475,7 +458,7 @@ int S57ClassContentExplorer::GetOBJL()
 
 {
     if( iCurrentClass >= 0 )
-        return atoi(poRegistrar->papszClassesInfo[iCurrentClass]);
+        return atoi(poRegistrar->apszClassesInfo[iCurrentClass]);
     else
         return -1;
 }
