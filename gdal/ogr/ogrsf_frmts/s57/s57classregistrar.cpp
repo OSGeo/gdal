@@ -300,7 +300,6 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
 /* -------------------------------------------------------------------- */
 /*      Prepare arrays for the per-attribute information.               */
 /* -------------------------------------------------------------------- */
-    nAttrMax = MAX_ATTRIBUTES-1;
     papszAttrNames = (char **) CPLCalloc(sizeof(char *),MAX_ATTRIBUTES);
     papszAttrAcronym = (char **) CPLCalloc(sizeof(char *),MAX_ATTRIBUTES);
     //papapszAttrValues = (char ***) CPLCalloc(sizeof(char **),MAX_ATTRIBUTES);
@@ -311,7 +310,7 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
 /* -------------------------------------------------------------------- */
 /*      Read and form string list.                                      */
 /* -------------------------------------------------------------------- */
-    GUInt16         iAttr;
+    int         iAttr;
     
     while( (pszLine = ReadLine(fp)) != NULL )
     {
@@ -324,9 +323,16 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
             continue;
         }
         
-        iAttr = (GUInt16) atoi(papszTokens[0]);
-        if( iAttr < 0 || iAttr >= nAttrMax
-            || papszAttrNames[iAttr] != NULL )
+        iAttr = atoi(papszTokens[0]);
+        if( iAttr < 0 || iAttr >= MAX_ATTRIBUTES )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Invalid S57 attribute %s",
+                      papszTokens[2] );
+            continue;
+        }
+
+        if( papszAttrNames[iAttr] != NULL )
         {
             CPLDebug( "S57", "Duplicate definition for attribute %d:%s", 
                       iAttr, papszTokens[2] );
@@ -348,16 +354,18 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
 /*      Build unsorted index of attributes.                             */
 /* -------------------------------------------------------------------- */
     nAttrCount = 0;
-    for( iAttr = 0; iAttr < nAttrMax; iAttr++ )
+    for( iAttr = 0; iAttr < MAX_ATTRIBUTES; iAttr++ )
     {
         if( papszAttrAcronym[iAttr] != NULL )
             panAttrIndex[nAttrCount++] = iAttr;
     }
+    nAttrMax = panAttrIndex[nAttrCount-1];
 
 /* -------------------------------------------------------------------- */
 /*      Sort index by acronym.                                          */
 /* -------------------------------------------------------------------- */
     int         bModified;
+    GUInt16     nTemp;
 
     do
     {
@@ -367,8 +375,6 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
             if( strcmp(papszAttrAcronym[panAttrIndex[iAttr]],
                        papszAttrAcronym[panAttrIndex[iAttr+1]]) > 0 )
             {
-                GInt16     nTemp;
-
                 nTemp = panAttrIndex[iAttr];
                 panAttrIndex[iAttr] = panAttrIndex[iAttr+1];
                 panAttrIndex[iAttr+1] = nTemp;

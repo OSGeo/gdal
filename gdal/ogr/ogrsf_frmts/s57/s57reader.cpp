@@ -904,7 +904,7 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
             {
                 bAttrWarningIssued = TRUE;
                 CPLError( CE_Warning, CPLE_AppDefined,
-                          "Illegal feature attribute id (ATTF:ATTL[%d]) of %d\n"
+                          "Unknown feature attribute id (ATTF:ATTL[%d]) of %d\n"
                           "on feature FIDN=%d, FIDS=%d.\n"
                           "Skipping attribute, no more warnings will be issued.",
                           iAttr, nAttrId, 
@@ -988,7 +988,7 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
             {
                 bAttrWarningIssued = TRUE;
                 CPLError( CE_Warning, CPLE_AppDefined,
-                          "Illegal feature attribute id (NATF:ATTL[%d]) of %d\n"
+                          "Unknown feature attribute id (NATF:ATTL[%d]) of %d\n"
                           "on feature FIDN=%d, FIDS=%d.\n"
                           "Skipping attribute, no more warnings will be issued.",
                           iAttr, nAttrId, 
