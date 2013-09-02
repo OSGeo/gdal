@@ -19,5 +19,7 @@ clean:
 
 all:	default s57dump$(EXE) mks57$(EXE)
 
+$(O_OBJ):	s57.h ogr_s57.h
+
 s57dump$(EXE):	s57dump.$(OBJ_EXT)
 	$(LD) $(LDFLAGS) s57dump.$(OBJ_EXT) $(CONFIG_LIBS) -o s57dump$(EXE)
