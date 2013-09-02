@@ -112,7 +112,6 @@ class CPL_DLL S57ClassRegistrar
     int         nAttrCount;
     char      **papszAttrNames;
     char      **papszAttrAcronym;
-    char     ***papapszAttrValues;
     char       *pachAttrType;
     char       *pachAttrClass;
     GUInt16    *panAttrIndex; // sorted by acronym.
@@ -133,7 +132,6 @@ public:
     int         GetMaxAttrIndex() { return nAttrMax; }
     const char *GetAttrName( int i ) { return papszAttrNames[i]; }
     const char *GetAttrAcronym( int i ) { return papszAttrAcronym[i]; }
-    char      **GetAttrValues( int i ) { return papapszAttrValues[i]; }
     char        GetAttrType( int i ) { return pachAttrType[i]; }
 #define SAT_ENUM        'E'
 #define SAT_LIST        'L'
