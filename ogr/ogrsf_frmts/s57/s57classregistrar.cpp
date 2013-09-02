@@ -52,7 +52,6 @@ S57ClassRegistrar::S57ClassRegistrar()
     panAttrIndex = NULL;
     papszAttrNames = NULL;
     papszAttrAcronym = NULL;
-    papapszAttrValues = NULL;
 }
 
 /************************************************************************/
@@ -304,7 +303,6 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
     nAttrMax = MAX_ATTRIBUTES-1;
     papszAttrNames = (char **) CPLCalloc(sizeof(char *),MAX_ATTRIBUTES);
     papszAttrAcronym = (char **) CPLCalloc(sizeof(char *),MAX_ATTRIBUTES);
-    //papapszAttrValues = (char ***) CPLCalloc(sizeof(char **),MAX_ATTRIBUTES);
     pachAttrType = (char *) CPLCalloc(sizeof(char),MAX_ATTRIBUTES);
     pachAttrClass = (char *) CPLCalloc(sizeof(char),MAX_ATTRIBUTES);
     panAttrIndex = (GUInt16 *) CPLCalloc(sizeof(GUInt16),MAX_ATTRIBUTES);
