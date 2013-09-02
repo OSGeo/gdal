@@ -32,6 +32,7 @@
 #ifndef _S57_H_INCLUDED
 #define _S57_H_INCLUDED
 
+#include <vector>
 #include "ogr_feature.h"
 #include "iso8211.h"
 
@@ -94,7 +95,6 @@ char **S57FileCollector( const char * pszDataset );
 /*                          S57ClassRegistrar                           */
 /************************************************************************/
 
-#define MAX_CLASSES 23000
 #define MAX_ATTRIBUTES 65535
 
 class S57ClassContentExplorer;
@@ -102,9 +102,10 @@ class S57ClassContentExplorer;
 class CPL_DLL S57ClassRegistrar
 {
     friend class S57ClassContentExplorer;
+
     // Class information:
     int         nClasses;
-    char      **papszClassesInfo;
+    CPLStringList apszClassesInfo;
 
     // Attribute Information:
     int         nAttrMax;
@@ -242,7 +243,7 @@ class CPL_DLL S57Reader
     int                 nFDefnCount;
     OGRFeatureDefn      **papoFDefnList;
 
-    OGRFeatureDefn      *apoFDefnByOBJL[MAX_CLASSES];
+    std::vector<OGRFeatureDefn*> apoFDefnByOBJL;
 
     char                *pszModuleName;
     char                *pszDSNM;
@@ -336,7 +337,7 @@ class CPL_DLL S57Reader
 
     void                AddFeatureDefn( OGRFeatureDefn * );
 
-    int                 CollectClassList( int *, int);
+    int                 CollectClassList(std::vector<int> &anClassCount);
 
     OGRErr              GetExtent( OGREnvelope *psExtent, int bForce );
 
