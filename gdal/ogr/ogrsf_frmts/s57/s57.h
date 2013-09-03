@@ -95,9 +95,16 @@ char **S57FileCollector( const char * pszDataset );
 /*                          S57ClassRegistrar                           */
 /************************************************************************/
 
-#define MAX_ATTRIBUTES 65535
-
 class S57ClassContentExplorer;
+
+class CPL_DLL S57AttrInfo 
+{
+  public:
+    CPLString    osName;
+    CPLString    osAcronym;
+    char         chType;
+    char         chClass;
+};
 
 class CPL_DLL S57ClassRegistrar
 {
@@ -108,13 +115,9 @@ class CPL_DLL S57ClassRegistrar
     CPLStringList apszClassesInfo;
 
     // Attribute Information:
-    int         nAttrMax;
     int         nAttrCount;
-    char      **papszAttrNames;
-    char      **papszAttrAcronym;
-    char       *pachAttrType;
-    char       *pachAttrClass;
-    GUInt16    *panAttrIndex; // sorted by acronym.
+    std::vector<S57AttrInfo*> aoAttrInfos;
+    std::vector<int> anAttrIndex; // sorted by acronym.
 
     int         FindFile( const char *pszTarget, const char *pszDirectory,
                           int bReportErr, VSILFILE **fp );
@@ -129,10 +132,14 @@ public:
     int         LoadInfo( const char *, const char *, int );
 
     // attribute table methods.
-    int         GetMaxAttrIndex() { return nAttrMax; }
-    const char *GetAttrName( int i ) { return papszAttrNames[i]; }
-    const char *GetAttrAcronym( int i ) { return papszAttrAcronym[i]; }
-    char        GetAttrType( int i ) { return pachAttrType[i]; }
+    //int         GetMaxAttrIndex() { return nAttrMax; }
+    const S57AttrInfo *GetAttrInfo(int i);
+    const char *GetAttrName( int i ) 
+    { return GetAttrInfo(i) == NULL ? NULL : aoAttrInfos[i]->osName; }
+    const char *GetAttrAcronym( int i )
+    { return GetAttrInfo(i) == NULL ? NULL : aoAttrInfos[i]->osAcronym; }
+    char        GetAttrType( int i )
+    { return GetAttrInfo(i) == NULL ? '\0' : aoAttrInfos[i]->chType; }
 #define SAT_ENUM        'E'
 #define SAT_LIST        'L'
 #define SAT_FLOAT       'F'
@@ -140,7 +147,8 @@ public:
 #define SAT_CODE_STRING 'A'
 #define SAT_FREE_TEXT   'S'
 
-    char        GetAttrClass( int i ) { return pachAttrClass[i]; }
+    char        GetAttrClass( int i )
+    { return GetAttrInfo(i) == NULL ? '\0' : aoAttrInfos[i]->chClass; }
     int         FindAttrByAcronym( const char * );
 
 };
