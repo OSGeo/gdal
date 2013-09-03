@@ -36,6 +36,17 @@ In addition to the standard parameters of the
     <p>The connection may contain the optional <b>
     Driver</b> parameter if a custom SQL server driver should be loaded (like FreeTDS). The default is <b>{SQL Server}</b></p>
 
+<h2>Layers</h2>
+
+<p>Starting with GDAL 2.0.0 if the user defines the environment variable
+<i>MSSQLSPATIAL_LIST_ALL_TABLES=YES</i> (and does not specify Tables= in the connection string),
+all regular user tables will be treated as layers. This option is useful if you want tables with 
+with no spatial data<p>
+
+<p>By default the MSSQL driver will only look for layers that are registered in the <i>geometry_columns</i> metadata table.
+Starting with GDAL 1.10 if the user defines the environment variable
+<i>MSSQLSPATIAL_USE_GEOMETRY_COLUMNS=NO</i> then the driver will look for all user spatial tables found in the system catalog<p>
+
 <h2>SQL statements</h2>
 
 <p>The MS SQL Spatial driver passes SQL statements directly to MS SQL by default,

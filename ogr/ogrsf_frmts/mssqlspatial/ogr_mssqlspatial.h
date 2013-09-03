@@ -303,6 +303,8 @@ class OGRMSSQLSpatialDataSource : public OGRDataSource
 
     int                 bUseGeometryColumns;
 
+    int                 bListAllTables;
+
     // We maintain a list of known SRID to reduce the number of trips to
     // the database to get SRSes. 
     int                 nKnownSRID;
