@@ -896,10 +896,8 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
     for( iAttr = 0; iAttr < nAttrCount; iAttr++ )
     {
         int     nAttrId = poRecord->GetIntSubfield("ATTF",0,"ATTL",iAttr);
-        const char *pszAcronym;
         
-        if( nAttrId < 1 || nAttrId > poRegistrar->GetMaxAttrIndex() 
-            || (pszAcronym = poRegistrar->GetAttrAcronym(nAttrId)) == NULL )
+        if( poRegistrar->GetAttrInfo(nAttrId) == NULL )
         {
             if( !bAttrWarningIssued )
             {
@@ -931,6 +929,7 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
         int iField;
         OGRFieldDefn *poFldDefn;
 
+        const char *pszAcronym = poRegistrar->GetAttrAcronym(nAttrId);
         iField = poFeature->GetDefnRef()->GetFieldIndex(pszAcronym);
         if( iField < 0 )
         {
@@ -978,10 +977,9 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
     for( iAttr = 0; iAttr < nAttrCount; iAttr++ )
     {
         int     nAttrId = poRecord->GetIntSubfield("NATF",0,"ATTL",iAttr);
-        const char *pszAcronym;
+        const char *pszAcronym = poRegistrar->GetAttrAcronym(nAttrId);
 
-        if( nAttrId < 1 || nAttrId >= poRegistrar->GetMaxAttrIndex()
-            || (pszAcronym = poRegistrar->GetAttrAcronym(nAttrId)) == NULL )
+        if( pszAcronym == NULL )
         {
             static int bAttrWarningIssued = FALSE;
 
