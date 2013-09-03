@@ -15,9 +15,9 @@ CPPFLAGS	:=	-I.. -I../.. -I$(ISODIR) $(GDAL_INCLUDE) $(CPPFLAGS)
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 
 clean:
-	rm -f *.o s57dump$(EXE) mks57$(EXE) $(O_OBJ)
+	rm -f *.o s57dump$(EXE) $(O_OBJ)
 
-all:	default s57dump$(EXE) mks57$(EXE)
+all:	default s57dump$(EXE)
 
 $(O_OBJ):	s57.h ogr_s57.h
 
