@@ -140,6 +140,7 @@ OGRFeatureDefn* OGRMSSQLSpatialTableLayer::GetLayerDefn()
         
         if( oGetKey.Fetch() ) // more than one field in key! 
         {
+            oGetKey.Clear();
             CPLFree( pszFIDColumn );
             pszFIDColumn = NULL;
 
