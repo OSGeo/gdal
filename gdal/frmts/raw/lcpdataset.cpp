@@ -907,7 +907,7 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
     int bHaveCrownFuels = FALSE;
     int bHaveGroundFuels = FALSE;
 
-    if( nBands == 10 || nBands == 8 )
+    if( nBands == 8 || nBands == 10 )
     {
         bHaveCrownFuels = TRUE;
     }
@@ -1173,7 +1173,7 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
 
     pszTemp = CSLFetchNameValueDef( papszOptions, "LINEAR_UNIT",
                                     "SET_FROM_SRS" );
-    int nLinearUnits;
+    int nLinearUnits = 0;
     int bSetLinearUnits = FALSE;
     if( EQUAL( pszTemp, "SET_FROM_SRS" ) )
     {
@@ -1204,6 +1204,11 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
             return NULL;
         }
     }
+    /*
+    ** If no latitude is supplied, attempt to extract the central latitude
+    ** from the image.  It must be set either manually or here, otherwise
+    ** we fail.
+    */
     double adfSrcGeoTransform[6];
     poSrcDS->GetGeoTransform( adfSrcGeoTransform );
     OGRSpatialReference oSrcSRS, oDstSRS;
@@ -1218,52 +1223,6 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
     {
         oSrcSRS.importFromWkt( (char**)&pszWkt );
         oDstSRS.importFromEPSG( 4269 );
-        if( bSetLinearUnits )
-        {
-            const char *pszUnit;
-            pszUnit = oSrcSRS.GetAttrValue( "UNIT", 0 );
-            if( pszUnit == NULL )
-            {
-                CPLError( CE_Warning, CPLE_AppDefined, 
-                          "Could not parse linear unit, using meters" );
-                nLinearUnits = 0;
-            }
-            else
-            {
-                CPLDebug( "LCP", "Setting linear unit to %s", pszUnit );
-                if( EQUAL( pszUnit, "meter" ) || EQUAL( pszUnit, "metre" ) )
-                {
-                    nLinearUnits = 0;
-                }
-                else if( EQUAL( pszUnit, "feet" ) || EQUAL( pszUnit, "foot" ) )
-                {
-                    nLinearUnits = 1;
-                }
-                else if( EQUAL( pszUnit, "kilometer" ) ||
-                         EQUAL( pszUnit, "kilometre" ) )
-                {
-                    nLinearUnits = 2;
-                }
-                else
-                {
-                    CPLError( CE_Warning, CPLE_AppDefined,
-                              "Could not parse linear unit, using meters" );
-                    nLinearUnits = 0;
-                }
-                pszUnit = oSrcSRS.GetAttrValue( "UNIT", 1 );
-                if( pszUnit != NULL )
-                {
-                    double dfScale = atof( pszUnit );
-                    if( dfScale != 1.0 )
-                    {
-                        CPLError( CE_Warning, CPLE_AppDefined,
-                                  "Unit scale is %lf (!=1.0). It is not " \
-                                  "supported.",
-                                  dfScale );
-                    }
-                }
-            }
-        }
         OGRCoordinateTransformation *poCT;
         poCT = (OGRCoordinateTransformation*)
             OGRCreateCoordinateTransformation( &oSrcSRS, &oDstSRS );
@@ -1275,6 +1234,15 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
             if( !nErr )
             {
                 dfLatitude = 0.0;
+                /*
+                ** For the most part, this is an invalid LCP, but it is a
+                ** changeable value in Flammap/Farsite, etc.  We should
+                ** probably be strict here all the time.
+                */
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Could not calculate latitude from spatial " \
+                          "reference and LATITUDE was not set." );
+                return NULL;
             }
         }
         OGRCoordinateTransformation::DestroyCT( poCT );
@@ -1282,12 +1250,98 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
     else
     {
         /*
-        ** This may have to be a warning or failure.  For now emit a
-        ** debugging message.
+        ** See comment above on failure to transform.
         */
-        CPLDebug( "LCP", "Could not calculate latitude from spatial " \
-                         "reference and LATITUDE was not set.  LCP may " \
-                         "be invalid. Set LATITUDE in the creation options." );
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Could not calculate latitude from spatial reference " \
+                  "and LATITUDE was not set." );
+        return NULL;
+    }
+    /*
+    ** Set the linear units if the metadata item wasn't already set, and we
+    ** have an SRS.
+    */
+    if( bSetLinearUnits && !EQUAL( pszWkt, "" ) )
+    {
+        const char *pszUnit;
+        pszUnit = oSrcSRS.GetAttrValue( "UNIT", 0 );
+        if( pszUnit == NULL )
+        {
+            if( bStrict )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Could not parse linear unit." );
+                return NULL;
+            }
+            else
+            {
+                CPLError( CE_Warning, CPLE_AppDefined,
+                          "Could not parse linear unit, using meters" );
+                nLinearUnits = 0;
+            }
+        }
+        else
+        {
+            CPLDebug( "LCP", "Setting linear unit to %s", pszUnit );
+            if( EQUAL( pszUnit, "meter" ) || EQUAL( pszUnit, "metre" ) )
+            {
+                nLinearUnits = 0;
+            }
+            else if( EQUAL( pszUnit, "feet" ) || EQUAL( pszUnit, "foot" ) )
+            {
+                nLinearUnits = 1;
+            }
+            else if( EQUALN( pszUnit, "kilomet", 7 ) )
+            {
+                nLinearUnits = 2;
+            }
+            else
+            {
+                if( bStrict )
+                nLinearUnits = 0;
+            }
+            pszUnit = oSrcSRS.GetAttrValue( "UNIT", 1 );
+            if( pszUnit != NULL )
+            {
+                double dfScale = atof( pszUnit );
+                if( dfScale != 1.0 )
+                {
+                    if( bStrict )
+                    {
+                        CPLError( CE_Failure, CPLE_AppDefined,
+                                  "Unit scale is %lf (!=1.0). It is not " \
+                                  "supported.", dfScale );
+                        return NULL;
+                    }
+                    else
+                    {
+                        CPLError( CE_Warning, CPLE_AppDefined,
+                                  "Unit scale is %lf (!=1.0). It is not " \
+                                  "supported, ignoring.", dfScale );
+                    }
+                }
+            }
+        }
+    }
+    else if( bSetLinearUnits )
+    {
+        /*
+        ** This can be defaulted if it isn't a strict creation.
+        */
+        if( bStrict )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Could not parse linear unit from spatial reference "
+                      "and LINEAR_UNIT was not set." );
+            return NULL;
+        }
+        else
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Could not parse linear unit from spatial reference "
+                      "and LINEAR_UNIT was not set, defaulting to meters." );
+            nLinearUnits = 0;
+        }
     }
 
     const char *pszDescription =
@@ -1350,6 +1404,10 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "Unable to create lcp file %s.", pszFilename );
+        CPLFree( padfMin );
+        CPLFree( padfMax );
+        CPLFree( panFound );
+        CPLFree( panClasses );
         return NULL;
     }
 
