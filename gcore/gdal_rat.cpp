@@ -502,6 +502,9 @@ CPLXMLNode *GDALRasterAttributeTable::Serialize() const
     CPLXMLNode *psTree = NULL;
     CPLXMLNode *psRow = NULL;
 
+    if( ( GetColumnCount() == 0 ) && ( GetRowCount() == 0 ) ) 
+ 	    return NULL;
+
     psTree = CPLCreateXMLNode( NULL, CXT_Element, "GDALRasterAttributeTable" );
 
 /* -------------------------------------------------------------------- */
