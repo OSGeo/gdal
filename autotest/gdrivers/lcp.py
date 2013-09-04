@@ -309,11 +309,12 @@ def lcp_7():
         return 'fail'
     # Make sure all avaible band counts work
     retval = 'success'
+    co = ['LATITUDE=0', 'LINEAR_UNIT=METER']
     for i in [5, 7, 8, 10]:
         src_ds = mem_drv.Create('/vsimem/lcptest', 10, 20, i, gdal.GDT_Int16)
         if src_ds == None:
             return 'fail'
-        dst_ds = lcp_drv.CreateCopy('tmp/lcp_7.lcp', src_ds)
+        dst_ds = lcp_drv.CreateCopy('tmp/lcp_7.lcp', src_ds, False, co)
         if dst_ds == None:
             gdaltest.post_reason('Failed to create lcp with %d bands' % i)
             retval = 'fail'
@@ -343,12 +344,13 @@ def lcp_8():
         return 'fail'
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     retval = 'success'
+    co = ['LATITUDE=0', 'LINEAR_UNIT=METER']
     for i in [0,1,2,3,4,6,9,11]:
         src_ds = mem_drv.Create('', 10, 10, i, gdal.GDT_Int16)
         if src_ds == None:
             retval = 'fail'
             break
-        dst_ds = lcp_drv.CreateCopy('tmp/lcp_8.lcp', src_ds)
+        dst_ds = lcp_drv.CreateCopy('tmp/lcp_8.lcp', src_ds, False, co)
         src_ds = None
         if dst_ds != None:
             gdaltest.post_reason('Created invalid lcp')
@@ -379,7 +381,8 @@ def lcp_9():
     if src_ds == None:
         return 'fail'
     retval = 'success'
-    lcp_ds = lcp_drv.CreateCopy('tmp/lcp_9.lcp', src_ds, False)
+    co = ['LATITUDE=0', 'LINEAR_UNIT=METER']
+    lcp_ds = lcp_drv.CreateCopy('tmp/lcp_9.lcp', src_ds, False, co)
     if lcp_ds == None:
         return 'fail'
     lcp_ds = None
@@ -407,7 +410,7 @@ def lcp_10():
 
     retval = 'success'
     for option in ['METERS', 'FEET']:
-        co = ['ELEVATION_UNIT=%s' % option]
+        co = ['LATITUDE=0', 'LINEAR_UNIT=METER', 'ELEVATION_UNIT=%s' % option]
         lcp_ds = drv.CreateCopy('tmp/lcp_10.lcp', src_ds, False, co)
         if lcp_ds == None:
             retval = 'fail'
@@ -446,7 +449,7 @@ def lcp_11():
 
     retval = 'success'
     for option in ['DEGREES', 'PERCENT']:
-        co = ['SLOPE_UNIT=%s' % option]
+        co = ['LATITUDE=0', 'LINEAR_UNIT=METER', 'SLOPE_UNIT=%s' % option]
         lcp_ds = drv.CreateCopy('tmp/lcp_11.lcp', src_ds, False, co)
         if lcp_ds == None:
             retval = 'fail'
@@ -485,7 +488,7 @@ def lcp_12():
 
     retval = 'success'
     for option in ['GRASS_CATEGORIES', 'AZIMUTH_DEGREES', 'GRASS_DEGREES']:
-        co = ['ASPECT_UNIT=%s' % option]
+        co = ['LATITUDE=0', 'LINEAR_UNIT=METER', 'ASPECT_UNIT=%s' % option]
         lcp_ds = drv.CreateCopy('tmp/lcp_12.lcp', src_ds, False, co)
         if lcp_ds == None:
             retval = 'fail'
@@ -523,7 +526,7 @@ def lcp_13():
 
     retval = 'success'
     for option in ['PERCENT', 'CATEGORIES']:
-        co = ['CANOPY_COV_UNIT=%s' % option]
+        co = ['LATITUDE=0', 'LINEAR_UNIT=METER', 'CANOPY_COV_UNIT=%s' % option]
         lcp_ds = drv.CreateCopy('tmp/lcp_13.lcp', src_ds, False, co)
         if lcp_ds == None:
             retval = 'fail'
@@ -562,7 +565,7 @@ def lcp_14():
 
     retval = 'success'
     for option in ['METERS', 'FEET', 'METERS_X_10', 'FEET_X_10']:
-        co = ['CANOPY_HT_UNIT=%s' % option]
+        co = ['LATITUDE=0', 'LINEAR_UNIT=METER', 'CANOPY_HT_UNIT=%s' % option]
         lcp_ds = drv.CreateCopy('tmp/lcp_14.lcp', src_ds, False, co)
         if lcp_ds == None:
             retval = 'fail'
@@ -601,7 +604,7 @@ def lcp_15():
 
     retval = 'success'
     for option in ['METERS', 'FEET', 'METERS_X_10', 'FEET_X_10']:
-        co = ['CBH_UNIT=%s' % option]
+        co = ['LATITUDE=0', 'LINEAR_UNIT=METER', 'CBH_UNIT=%s' % option]
         lcp_ds = drv.CreateCopy('tmp/lcp_15.lcp', src_ds, False, co)
         if lcp_ds == None:
             retval = 'fail'
@@ -644,7 +647,7 @@ def lcp_16():
     for i, option in enumerate(['KG_PER_CUBIC_METER', 'POUND_PER_CUBIC_FOOT',
                                 'KG_PER_CUBIC_METER_X_100',
                                 'POUND_PER_CUBIC_FOOT_X_1000']):
-        co = ['CBD_UNIT=%s' % option]
+        co = ['LATITUDE=0', 'LINEAR_UNIT=METER', 'CBD_UNIT=%s' % option]
         lcp_ds = drv.CreateCopy('tmp/lcp_16.lcp', src_ds, False, co)
         if lcp_ds == None:
             retval = 'fail'
@@ -686,7 +689,7 @@ def lcp_17():
     retval = 'success'
     answers = ['mg/ha', 't/ac x 10']
     for i, option in enumerate(['MG_PER_HECTARE_X_10', 'TONS_PER_ACRE_X_10']):
-        co = ['DUFF_UNIT=%s' % option]
+        co = ['LATITUDE=0', 'LINEAR_UNIT=METER', 'DUFF_UNIT=%s' % option]
         lcp_ds = drv.CreateCopy('tmp/lcp_17.lcp', src_ds, False, co)
         if lcp_ds == None:
             retval = 'fail'
@@ -724,9 +727,10 @@ def lcp_18():
         return 'fail'
 
     retval = 'success'
-    lcp_ds = drv.CreateCopy('tmp/lcp_18.lcp', src_ds, False, ['LATITUDE=45',])
+    co = ['LATITUDE=45', 'LINEAR_UNIT=METER']
+    lcp_ds = drv.CreateCopy('tmp/lcp_18.lcp', src_ds, False, co)
     if lcp_ds == None:
-        return 'fail'
+        retval = 'fail'
     if lcp_ds.GetMetadataItem('LATITUDE') != '45':
         gdaltest.post_reason('Failed to set LATITUDE creation option')
         retval = 'fail'
@@ -756,9 +760,10 @@ def lcp_19():
         return 'fail'
 
     retval = 'success'
-    lcp_ds = drv.CreateCopy('tmp/lcp_19.lcp', src_ds, False, ['LINEAR_UNIT=FOOT'])
+    co = ['LATITUDE=0', 'LINEAR_UNIT=FOOT']
+    lcp_ds = drv.CreateCopy('tmp/lcp_19.lcp', src_ds, False, co)
     if lcp_ds == None:
-        return 'fail'
+        retval = 'fail'
     if lcp_ds.GetMetadataItem('LINEAR_UNIT') != 'Feet':
         gdaltest.post_reason('Failed to set LINEAR_UNIT creation option')
         retval = 'fail'
@@ -789,10 +794,11 @@ def lcp_20():
         return 'fail'
 
     retval = 'success'
-    desc = "test description"
-    lcp_ds = drv.CreateCopy('tmp/lcp_20.lcp', src_ds, False, ['DESCRIPTION=%s' % desc])
+    desc = 'test descpiption'
+    co = ['LATITUDE=0', 'LINEAR_UNIT=METER', 'DESCRIPTION=%s' % desc]
+    lcp_ds = drv.CreateCopy('tmp/lcp_20.lcp', src_ds, False, co)
     if lcp_ds == None:
-        return 'fail'
+        retval = 'fail'
     if lcp_ds.GetMetadataItem('DESCRIPTION') != desc:
         gdaltest.post_reason('Failed to set DESCRIPTION creation option')
         retval = 'fail'
@@ -829,9 +835,10 @@ def lcp_21():
         data = [random.randint(0, 100) for i in range(9)]
         src_ds.GetRasterBand(i+1).WriteRaster(0, 0, 3, 3, struct.pack('h'*9, *data))
 
-    lcp_ds = drv.CreateCopy('tmp/lcp_21.lcp', src_ds, False)
+    co = ['LATITUDE=0', 'LINEAR_UNIT=METER']
+    lcp_ds = drv.CreateCopy('tmp/lcp_21.lcp', src_ds, False, co)
     if lcp_ds == None:
-        return 'fail'
+        retval = 'fail'
     retval = 'success'
     for i in range(10):
         if src_ds.GetRasterBand(i+1).Checksum() != lcp_ds.GetRasterBand(i+1).Checksum():
@@ -872,7 +879,9 @@ def lcp_22():
         data = [random.randint(0, 100) for i in range(9)]
         src_ds.GetRasterBand(i+1).WriteRaster(0, 0, 3, 3, struct.pack('h'*9, *data))
 
-    lcp_ds = drv.CreateCopy('tmp/lcp_22.lcp', src_ds, False)
+    retval = 'success'
+    co = ['LATITUDE=0', 'LINEAR_UNIT=METER']
+    lcp_ds = drv.CreateCopy('tmp/lcp_22.lcp', src_ds, False, co)
     if lcp_ds == None:
         return 'fail'
     retval = 'success'
