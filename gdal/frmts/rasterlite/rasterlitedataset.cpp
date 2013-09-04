@@ -1163,7 +1163,7 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
             //printf("[%d] xres=%.15f yres=%.15f\n", i,
             //       poDS->padfXResolutions[i], poDS->padfYResolutions[i]);
             
-            if (poDS->padfXResolutions[i] <= 0 || poDS->padfXResolutions[i] <= 0)
+            if (poDS->padfXResolutions[i] <= 0 || poDS->padfYResolutions[i] <= 0)
             {
                 CPLError(CE_Failure, CPLE_NotSupported,
                          "res=%d, xres=%.15f, yres=%.15f",
