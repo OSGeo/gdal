@@ -790,6 +790,25 @@ static int ProxyMain( int argc, char ** argv )
         char** papszDupArgv = CSLDuplicate(argv);
         int nRet = 0;
 
+        CPLString osPath = CPLGetPath(pszDest);
+        CPLString osBasename = CPLGetBasename(pszDest);
+        CPLString osExtension = CPLGetExtension(pszDest);
+        CPLString osTemp;
+
+        const char* pszFormat = NULL;
+        if ( CSLCount(papszSubdatasets)/2 < 10 )
+        {
+            pszFormat = "%s_%d";
+        }
+        else if ( CSLCount(papszSubdatasets)/2 < 100 )
+        {
+            pszFormat = "%s_%002d";
+        }
+        else
+        {
+            pszFormat = "%s_%003d";
+        }
+
         CPLFree(papszDupArgv[iDstFileArg]);
         papszDupArgv[iDstFileArg] = pszSubDest;
         bSubCall = TRUE;
@@ -797,13 +816,15 @@ static int ProxyMain( int argc, char ** argv )
         {
             CPLFree(papszDupArgv[iSrcFileArg]);
             papszDupArgv[iSrcFileArg] = CPLStrdup(strstr(papszSubdatasets[i],"=")+1);
-            sprintf( pszSubDest, "%s%d", pszDest, i/2 + 1 );
+            osTemp = CPLSPrintf( pszFormat, osBasename.c_str(), i/2 + 1 );
+            osTemp = CPLFormFilename( osPath, osTemp, osExtension ); 
+            strcpy( pszSubDest, osTemp.c_str() );
             nRet = ProxyMain( argc, papszDupArgv );
             if (nRet != 0)
                 break;
         }
         CSLDestroy(papszDupArgv);
-        
+
         bSubCall = bOldSubCall;
         CSLDestroy(argv);
 
