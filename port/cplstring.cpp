@@ -415,3 +415,32 @@ CPLString CPLURLAddKVP(const char* pszURL, const char* pszKey,
         return osURL;
     }
 }
+
+/************************************************************************/
+/*                            CPLOPrintf()                              */
+/************************************************************************/
+
+CPLString CPLOPrintf( const char *pszFormat, ... )
+
+{
+    va_list args;
+    CPLString osTarget;
+
+    va_start( args, pszFormat );
+    osTarget.vPrintf( pszFormat, args );
+    va_end( args );
+
+    return osTarget;
+}
+
+/************************************************************************/
+/*                            CPLOvPrintf()                             */
+/************************************************************************/
+
+CPLString CPLOvPrintf( const char *pszFormat, va_list args )
+
+{
+    CPLString osTarget;
+    osTarget.vPrintf( pszFormat, args);
+    return osTarget;
+}
