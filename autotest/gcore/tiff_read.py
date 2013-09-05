@@ -906,7 +906,35 @@ def tiff_read_rpc_txt():
     os.remove('tmp/test.tif')
     os.remove('tmp/test_rpc.txt')
 
-    if not 'HEIGHT_OFF' in rpc_md:
+    if rpc_md['HEIGHT_OFF'] != ' +0300.000 meters':
+        gdaltest.post_reason('HEIGHT_OFF wrong:"'+rpc_md['HEIGHT_OFF']+'"')
+        return 'fail'
+
+    if rpc_md['LINE_DEN_COEFF'].find(
+        ' +1.000000000000000E+00  -5.207696939454288E-03') != 0:
+        print rpc_md['LINE_DEN_COEFF']
+        gdaltest.post_reason('LINE_DEN_COEFF wrong')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading a TIFF with the RPC tag per 
+#  http://geotiff.maptools.org/rpc_prop.html
+
+def tiff_read_rpc_tif():
+
+    ds = gdal.Open('data/byte_rpc.tif')
+    rpc_md = ds.GetMetadata('RPC')
+    ds = None
+
+    if rpc_md['HEIGHT_OFF'] != '300':
+        gdaltest.post_reason('HEIGHT_OFF wrong:'+rpc_md['HEIGHT_OFF'])        
+        return 'fail'
+
+    if rpc_md['LINE_DEN_COEFF'].find('1 -0.00520769693945429') != 0:
+        print rpc_md['LINE_DEN_COEFF']
+        gdaltest.post_reason('LINE_DEN_COEFF wrong')
         return 'fail'
 
     return 'success'
@@ -1146,6 +1174,7 @@ gdaltest_list.append( (tiff_read_corrupted_gtiff) )
 gdaltest_list.append( (tiff_read_tag_without_null_byte) )
 gdaltest_list.append( (tiff_read_buggy_packbits) )
 gdaltest_list.append( (tiff_read_rpc_txt) )
+gdaltest_list.append( (tiff_read_rpc_tif) )
 gdaltest_list.append( (tiff_small) )
 gdaltest_list.append( (tiff_dos_strip_chop) )
 gdaltest_list.append( (tiff_read_exif_and_gps) )
