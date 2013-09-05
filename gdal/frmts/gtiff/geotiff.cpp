@@ -5376,9 +5376,9 @@ void GTiffDataset::ReadRPCTag()
 
 {
     double *padfRPCTag;
-    char **papszMD = NULL;
     CPLString osField;
     CPLString osMultiField;
+    CPLStringList asMD;
     int i;
     uint16 nCount;
 
@@ -5386,35 +5386,16 @@ void GTiffDataset::ReadRPCTag()
         || nCount != 92 )
         return;
 
-    osField.Printf( "%.15g", padfRPCTag[2] );
-    papszMD = CSLSetNameValue( papszMD, "LINE_OFF", osField );
-
-    osField.Printf( "%.15g", padfRPCTag[3] );
-    papszMD = CSLSetNameValue( papszMD, "SAMP_OFF", osField );
-
-    osField.Printf( "%.15g", padfRPCTag[4] );
-    papszMD = CSLSetNameValue( papszMD, "LAT_OFF", osField );
-
-    osField.Printf( "%.15g", padfRPCTag[5] );
-    papszMD = CSLSetNameValue( papszMD, "LONG_OFF", osField );
-
-    osField.Printf( "%.15g", padfRPCTag[6] );
-    papszMD = CSLSetNameValue( papszMD, "HEIGHT_OFF", osField );
-
-    osField.Printf( "%.15g", padfRPCTag[7] );
-    papszMD = CSLSetNameValue( papszMD, "LINE_SCALE", osField );
-
-    osField.Printf( "%.15g", padfRPCTag[8] );
-    papszMD = CSLSetNameValue( papszMD, "SAMP_SCALE", osField );
-
-    osField.Printf( "%.15g", padfRPCTag[9] );
-    papszMD = CSLSetNameValue( papszMD, "LAT_SCALE", osField );
-
-    osField.Printf( "%.15g", padfRPCTag[10] );
-    papszMD = CSLSetNameValue( papszMD, "LONG_SCALE", osField );
-
-    osField.Printf( "%.15g", padfRPCTag[11] );
-    papszMD = CSLSetNameValue( papszMD, "HEIGHT_SCALE", osField );
+    asMD.SetNameValue("LINE_OFF", CPLOPrintf("%.15g", padfRPCTag[2]));
+    asMD.SetNameValue("SAMP_OFF", CPLOPrintf("%.15g", padfRPCTag[3]));
+    asMD.SetNameValue("LAT_OFF", CPLOPrintf("%.15g", padfRPCTag[4]));
+    asMD.SetNameValue("LONG_OFF", CPLOPrintf("%.15g", padfRPCTag[5]));
+    asMD.SetNameValue("HEIGHT_OFF", CPLOPrintf("%.15g", padfRPCTag[6]));
+    asMD.SetNameValue("LINE_SCALE", CPLOPrintf("%.15g", padfRPCTag[7]));
+    asMD.SetNameValue("SAMP_SCALE", CPLOPrintf("%.15g", padfRPCTag[8]));
+    asMD.SetNameValue("LAT_SCALE", CPLOPrintf("%.15g", padfRPCTag[9]));
+    asMD.SetNameValue("LONG_SCALE", CPLOPrintf("%.15g", padfRPCTag[10]));
+    asMD.SetNameValue("HEIGHT_SCALE", CPLOPrintf("%.15g", padfRPCTag[11]));
 
     for( i = 0; i < 20; i++ )
     {
@@ -5425,7 +5406,7 @@ void GTiffDataset::ReadRPCTag()
             osMultiField = "";
         osMultiField += osField;
     }
-    papszMD = CSLSetNameValue( papszMD, "LINE_NUM_COEFF", osMultiField );
+    asMD.SetNameValue("LINE_NUM_COEFF", osMultiField );
 
     for( i = 0; i < 20; i++ )
     {
@@ -5436,7 +5417,7 @@ void GTiffDataset::ReadRPCTag()
             osMultiField = "";
         osMultiField += osField;
     }
-    papszMD = CSLSetNameValue( papszMD, "LINE_DEN_COEFF", osMultiField );
+    asMD.SetNameValue( "LINE_DEN_COEFF", osMultiField );
 
     for( i = 0; i < 20; i++ )
     {
@@ -5447,7 +5428,7 @@ void GTiffDataset::ReadRPCTag()
             osMultiField = "";
         osMultiField += osField;
     }
-    papszMD = CSLSetNameValue( papszMD, "SAMP_NUM_COEFF", osMultiField );
+    asMD.SetNameValue( "SAMP_NUM_COEFF", osMultiField );
 
     for( i = 0; i < 20; i++ )
     {
@@ -5458,10 +5439,9 @@ void GTiffDataset::ReadRPCTag()
             osMultiField = "";
         osMultiField += osField;
     }
-    papszMD = CSLSetNameValue( papszMD, "SAMP_DEN_COEFF", osMultiField );
+    asMD.SetNameValue( "SAMP_DEN_COEFF", osMultiField );
 
-    oGTiffMDMD.SetMetadata( papszMD, "RPC" );
-    CSLDestroy( papszMD );
+    oGTiffMDMD.SetMetadata( asMD, "RPC" );
 }
 
 /************************************************************************/
