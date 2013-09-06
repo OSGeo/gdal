@@ -754,7 +754,7 @@ GDALRasterAttributeTable *GeoRasterRasterBand::GetDefaultRAT()
     }
     else
     {
-        poDefaultRAT = new GDALDefaultRasterAttributeTable();
+        poDefaultRAT = new GDALRasterAttributeTable();
     }
 
     GeoRasterDataset* poGDS = (GeoRasterDataset*) poDS;
