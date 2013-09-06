@@ -376,14 +376,41 @@ CPLErr GeoRasterRasterBand::GetStatistics( int bApproxOK, int bForce,
     (void) bForce;
     (void) bApproxOK;
 
+    char szMin[MAX_DOUBLE_STR_REP + 1];
+    char szMax[MAX_DOUBLE_STR_REP + 1];
+    char szMean[MAX_DOUBLE_STR_REP + 1];
+    char szMedian[MAX_DOUBLE_STR_REP + 1];
+    char szMode[MAX_DOUBLE_STR_REP + 1];
+    char szStdDev[MAX_DOUBLE_STR_REP + 1];
+    char szSampling[MAX_DOUBLE_STR_REP + 1];
+
     if( ! bValidStats )
     {
         bValidStats = poGeoRaster->GetStatistics( nBand,
-                          dfMin, dfMax, dfMean, dfStdDev );
+                                                  szMin,  szMax,
+                                                  szMean, szMedian,
+                                                  szMode, szStdDev,
+                                                  szSampling );
     }
 
     if( bValidStats )
     {
+        dfMin        = CPLScanDouble( szMin,    MAX_DOUBLE_STR_REP );
+        dfMax        = CPLScanDouble( szMax,    MAX_DOUBLE_STR_REP );
+        dfMean       = CPLScanDouble( szMean,   MAX_DOUBLE_STR_REP );
+        dfMedian     = CPLScanDouble( szMedian, MAX_DOUBLE_STR_REP );
+        dfMode       = CPLScanDouble( szMode,   MAX_DOUBLE_STR_REP );
+        dfStdDev     = CPLScanDouble( szStdDev, MAX_DOUBLE_STR_REP );
+
+        SetMetadataItem( "STATISTICS_MINIMUM",     szMin );
+        SetMetadataItem( "STATISTICS_MAXIMUM",     szMax );
+        SetMetadataItem( "STATISTICS_MEAN",        szMean );
+        SetMetadataItem( "STATISTICS_MEDIAN",      szMedian );
+        SetMetadataItem( "STATISTICS_MODE",        szMode );
+        SetMetadataItem( "STATISTICS_STDDEV",      szStdDev );
+        SetMetadataItem( "STATISTICS_SKIPFACTORX", szSampling );
+        SetMetadataItem( "STATISTICS_SKIPFACTORY", szSampling ); 
+
         *pdfMin     = dfMin;
         *pdfMax     = dfMax;
         *pdfMean    = dfMean;
@@ -406,9 +433,6 @@ CPLErr GeoRasterRasterBand::SetStatistics( double dfMin, double dfMax,
     this->dfMax       = dfMax;
     this->dfMean      = dfMean;
     this->dfStdDev    = dfStdDev;
-    this->bValidStats = true;
-
-    poGeoRaster->SetStatistics( dfMin, dfMax, dfMean, dfStdDev, nBand );
 
     return CE_None;
 }
@@ -493,6 +517,10 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
 
     if( nColCount < 2 )
     {
+        delete poDefaultRAT;
+
+        poDefaultRAT = NULL;
+
         return CE_None;
     }
 
