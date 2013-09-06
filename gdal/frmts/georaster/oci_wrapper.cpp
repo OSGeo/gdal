@@ -4,7 +4,7 @@
  * Name:     oci_wrapper.cpp
  * Project:  Oracle Spatial GeoRaster Driver
  * Purpose:  Limited wrapper for OCI (Oracle Call Interfaces)
- * Author:   Ivan Lucena [ivan.lucena@pmldnet.com]
+ * Author:   Ivan Lucena [ivan.lucena at oracle.com]
  *
  ******************************************************************************
  * Copyright (c) 2008, Ivan Lucena
@@ -142,7 +142,7 @@ OWConnection::OWConnection( const char* pszUserIn,
     // ------------------------------------------------------
 
     if( CheckError( OCIServerAttach( hServer, hError, (text*) pszServer,
-        strlen((char*) pszServer), 0), hError ) )
+        (sb4) strlen((char*) pszServer), (ub4) 0), hError ) )
     {
         return;
     }
@@ -1518,76 +1518,6 @@ bool OWIsNumeric( const char *pszText )
     }
 
     return true;
-}
-
-/*****************************************************************************/
-/*                            Replace String at given token                  */
-/*****************************************************************************/
-
-/* Input Examples:
- *
- * "ID, RASTER, NAME VALUES (102, SDO_GEOR.INIT('RDT_80', 80), 'Nashua')"
- * "SDO_GEOR.INIT"
- * "SDO_GEOR.createBlank(20001, SDO_NUMBER_ARRAY(0, 0)..."
- */
-const char* OWReplaceString( const char* pszBaseString,
-                             const char* pszToken,
-                             const char* pszStopToken,
-                             const char* pszOWReplaceToken )
-{
-    char szUpcaseBase[OWTEXT];
-    char szUpcaseToken[OWTEXT];
-    char szUpcaseStopT[OWTEXT];
-    char szResult[OWTEXT];
-
-    strcpy( szUpcaseBase, pszBaseString );
-    strcpy( szUpcaseToken, pszToken );
-    strcpy( szUpcaseStopT, pszStopToken );
-    strcpy( szResult, pszBaseString );
-
-    char* pszIn = NULL;
-
-    // Upper case a copy of the base string
-
-    for( pszIn = szUpcaseBase; *pszIn != '\0'; pszIn++ )
-    {
-        *pszIn = (char) toupper( *pszIn );
-    }
-
-    // Upper case a copy of the token
-
-    for( pszIn = szUpcaseToken; *pszIn != '\0'; pszIn++ )
-    {
-        *pszIn = (char) toupper( *pszIn );
-    }
-
-    // Upper case a copy of the stop token
-
-    for( pszIn = szUpcaseStopT; *pszIn != '\0'; pszIn++ )
-    {
-        *pszIn = (char) toupper( *pszIn );
-    }
-
-    // Search for Token, Stop Token on the Base String
-
-    char* pszStart = strstr( szUpcaseBase, szUpcaseToken );
-
-    if( pszStart )
-    {
-        char* pszEnd = strstr( pszStart, szUpcaseStopT );
-
-        // Concatenate the result
-
-        int nStart = (int) ( pszStart - szUpcaseBase );
-        int nEnd   = (int) ( pszEnd   - szUpcaseBase );
-
-        strncpy( szResult, pszBaseString, nStart );
-        szResult[nStart] = '\0';
-        strcat( szResult, pszOWReplaceToken );
-        strcat( szResult, &pszBaseString[nEnd + 1] );
-    }
-
-    return szResult;
 }
 
 /*****************************************************************************/
