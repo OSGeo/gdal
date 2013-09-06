@@ -83,6 +83,10 @@ void jpeg_vsiio_dest (j_compress_ptr cinfo, VSILFILE * outfile);
 #define MCL_UPPERLEFT   1
 #define MCL_DEFAULT     MCL_CENTER
 
+// MAX double string representation
+
+#define MAX_DOUBLE_STR_REP 20
+
 struct hLevelDetails {
     int             nColumnBlockSize;
     int             nRowBlockSize;
@@ -214,6 +218,8 @@ private:
     double              dfMin;
     double              dfMax;
     double              dfMean;
+    double              dfMedian;
+    double              dfMode;
     double              dfStdDev;
     bool                bValidStats;
     double              dfNoData;
@@ -248,7 +254,7 @@ public:
                             double* pdfMin, double* pdfMax, 
                             double* pdfMean, double* pdfStdDev );
     virtual             GDALRasterAttributeTable *GetDefaultRAT();
-    virtual CPLErr      SetDefaultRAT( const GDALRasterAttributeTable * );
+    virtual CPLErr      SetDefaultRAT( const GDALRasterAttributeTable *poRAT );
     virtual int         GetOverviewCount();
     virtual GDALRasterBand*
                         GetOverview( int );
@@ -331,15 +337,21 @@ public:
     bool                Delete( void );
     void                GetRasterInfo( void );
     bool                GetStatistics( int nBand,
-                            double dfMin,
-                            double dfMax,
-                            double dfMean,
-                            double dfStdDev );
-    bool                SetStatistics( double dfMin,
-                            double dfMax,
-                            double dfMean,
-                            double dfStdDev,
-                            int nBand );
+                                       char* pszMin,
+                                       char* pszMax,
+                                       char* pszMean,
+                                       char* pszMedian,
+                                       char* pszMode,
+                                       char* pszStdDev,
+                                       char* pszSampling );
+    bool                SetStatistics( int nBand,
+                                       const char* pszMin,
+                                       const char* pszMax,
+                                       const char* pszMean,
+                                       const char* pszMedian,
+                                       const char* pszMode,
+                                       const char* pszStdDev,
+                                       const char* pszSampling );
     bool                HasColorMap( int nBand );
     void                GetColorMap( int nBand, GDALColorTable* poCT );
     void                SetColorMap( int nBand, GDALColorTable* poCT );
