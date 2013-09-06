@@ -866,13 +866,19 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
     int    bHasNoDataValue = FALSE;
     double dfNoDataValue = 0.0;
     double dfMin = 0.0, dfMax = 0.0, dfStdDev = 0.0, dfMean = 0.0;
+    double dfMedian = 0.0, dfMode = 0.0;
     int    iBand = 0;
 
     for( iBand = 1; iBand <= poSrcDS->GetRasterCount(); iBand++ )
     {
-        GDALRasterBand* poSrcBand = poSrcDS->GetRasterBand( iBand );
+        GDALRasterBand*      poSrcBand = poSrcDS->GetRasterBand( iBand );
         GeoRasterRasterBand* poDstBand = (GeoRasterRasterBand*) 
-                                    poDstDS->GetRasterBand( iBand );
+                                         poDstDS->GetRasterBand( iBand );
+
+        // ----------------------------------------------------------------
+        //  Copy Color Table
+        // ----------------------------------------------------------------
+
         GDALColorTable* poColorTable = poSrcBand->GetColorTable(); 
 
         if( poColorTable )
@@ -880,18 +886,74 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
             poDstBand->SetColorTable( poColorTable );
         }
 
+        // ----------------------------------------------------------------
+        //  Copy statitics information, without median and mode
+        // ----------------------------------------------------------------
+
         if( poSrcBand->GetStatistics( false, false, &dfMin, &dfMax,
             &dfMean, &dfStdDev ) == CE_None )
         {
             poDstBand->SetStatistics( dfMin, dfMax, dfMean, dfStdDev );
+
+            /* That will not be recorded in the GeoRaster metadata since it
+             * doesn't have median and mode, so those values are only useful
+             * at runtime.
+             */
         }
 
-        const GDALRasterAttributeTable *poRAT = poSrcBand->GetDefaultRAT();
+        // ----------------------------------------------------------------
+        //  Copy statitics metadata information, including median and mode
+        // ----------------------------------------------------------------
+
+        const char *pszMin     = poSrcBand->GetMetadataItem( "STATISTICS_MINIMUM" );
+        const char *pszMax     = poSrcBand->GetMetadataItem( "STATISTICS_MAXIMUM" );
+        const char *pszMean    = poSrcBand->GetMetadataItem( "STATISTICS_MEAN" );
+        const char *pszMedian  = poSrcBand->GetMetadataItem( "STATISTICS_MEDIAN" );
+        const char *pszMode    = poSrcBand->GetMetadataItem( "STATISTICS_MODE" );
+        const char *pszStdDev  = poSrcBand->GetMetadataItem( "STATISTICS_STDDEV" );
+        const char *pszSkipFX  = poSrcBand->GetMetadataItem( "STATISTICS_SKIPFACTORX" );
+        const char *pszSkipFY  = poSrcBand->GetMetadataItem( "STATISTICS_SKIPFACTORY" );
+
+        if ( pszMin    != NULL && pszMax  != NULL && pszMean   != NULL &&
+             pszMedian != NULL && pszMode != NULL && pszStdDev != NULL )
+        {
+            dfMin        = CPLScanDouble( pszMin, MAX_DOUBLE_STR_REP );
+            dfMax        = CPLScanDouble( pszMax, MAX_DOUBLE_STR_REP );
+            dfMean       = CPLScanDouble( pszMean, MAX_DOUBLE_STR_REP );
+            dfMedian     = CPLScanDouble( pszMedian, MAX_DOUBLE_STR_REP );
+            dfMode       = CPLScanDouble( pszMode, MAX_DOUBLE_STR_REP );
+
+            if ( ! ( ( dfMin    > dfMax ) ||
+                     ( dfMean   > dfMax ) || ( dfMean   < dfMin ) ||
+                     ( dfMedian > dfMax ) || ( dfMedian < dfMin ) ||
+                     ( dfMode   > dfMax ) || ( dfMode   < dfMin ) ) )
+            {
+                if ( ! pszSkipFX )
+                {
+                    pszSkipFX = pszSkipFY != NULL ? pszSkipFY : "1";
+                }
+
+                poDstBand->poGeoRaster->SetStatistics( iBand,
+                                                       pszMin, pszMax, pszMean, 
+                                                       pszMedian, pszMode,
+                                                       pszStdDev, pszSkipFX );
+            }
+        }
+
+        // ----------------------------------------------------------------
+        //  Copy Raster Attribute Table (RAT)
+        // ----------------------------------------------------------------
+
+        GDALRasterAttributeTableH poRAT = GDALGetDefaultRAT( poSrcBand );
 
         if( poRAT != NULL )
         {
-            poDstBand->SetDefaultRAT( poRAT );
+            poDstBand->SetDefaultRAT( (GDALRasterAttributeTable*) poRAT );
         }
+
+        // ----------------------------------------------------------------
+        //  Copy NoData Value
+        // ----------------------------------------------------------------
 
         dfNoDataValue = poSrcBand->GetNoDataValue( &bHasNoDataValue );
 
