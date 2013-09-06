@@ -4,7 +4,7 @@
  * Name:     georaster_rasterband.cpp
  * Project:  Oracle Spatial GeoRaster Driver
  * Purpose:  Implement GeoRasterRasterBand methods
- * Author:   Ivan Lucena [ivan.lucena@pmldnet.com]
+ * Author:   Ivan Lucena [ivan.lucena at oracle.com]
  *
  ******************************************************************************
  * Copyright (c) 2008, Ivan Lucena
@@ -376,14 +376,41 @@ CPLErr GeoRasterRasterBand::GetStatistics( int bApproxOK, int bForce,
     (void) bForce;
     (void) bApproxOK;
 
+    char szMin[MAX_DOUBLE_STR_REP + 1];
+    char szMax[MAX_DOUBLE_STR_REP + 1];
+    char szMean[MAX_DOUBLE_STR_REP + 1];
+    char szMedian[MAX_DOUBLE_STR_REP + 1];
+    char szMode[MAX_DOUBLE_STR_REP + 1];
+    char szStdDev[MAX_DOUBLE_STR_REP + 1];
+    char szSampling[MAX_DOUBLE_STR_REP + 1];
+
     if( ! bValidStats )
     {
         bValidStats = poGeoRaster->GetStatistics( nBand,
-                          dfMin, dfMax, dfMean, dfStdDev );
+                                                  szMin,  szMax,
+                                                  szMean, szMedian,
+                                                  szMode, szStdDev,
+                                                  szSampling );
     }
 
     if( bValidStats )
     {
+        dfMin        = CPLScanDouble( szMin,    MAX_DOUBLE_STR_REP );
+        dfMax        = CPLScanDouble( szMax,    MAX_DOUBLE_STR_REP );
+        dfMean       = CPLScanDouble( szMean,   MAX_DOUBLE_STR_REP );
+        dfMedian     = CPLScanDouble( szMedian, MAX_DOUBLE_STR_REP );
+        dfMode       = CPLScanDouble( szMode,   MAX_DOUBLE_STR_REP );
+        dfStdDev     = CPLScanDouble( szStdDev, MAX_DOUBLE_STR_REP );
+
+        SetMetadataItem( "STATISTICS_MINIMUM",     szMin );
+        SetMetadataItem( "STATISTICS_MAXIMUM",     szMax );
+        SetMetadataItem( "STATISTICS_MEAN",        szMean );
+        SetMetadataItem( "STATISTICS_MEDIAN",      szMedian );
+        SetMetadataItem( "STATISTICS_MODE",        szMode );
+        SetMetadataItem( "STATISTICS_STDDEV",      szStdDev );
+        SetMetadataItem( "STATISTICS_SKIPFACTORX", szSampling );
+        SetMetadataItem( "STATISTICS_SKIPFACTORY", szSampling ); 
+
         *pdfMin     = dfMin;
         *pdfMax     = dfMax;
         *pdfMean    = dfMean;
@@ -402,13 +429,10 @@ CPLErr GeoRasterRasterBand::GetStatistics( int bApproxOK, int bForce,
 CPLErr GeoRasterRasterBand::SetStatistics( double dfMin, double dfMax,
                                            double dfMean, double dfStdDev )
 {
-    dfMin       = dfMin;
-    dfMax       = dfMax;
-    dfMean      = dfMax;
-    dfStdDev    = dfStdDev;
-    bValidStats = true;
-
-    poGeoRaster->SetStatistics( dfMin, dfMax, dfMean, dfStdDev, nBand );
+    this->dfMin       = dfMin;
+    this->dfMax       = dfMax;
+    this->dfMean      = dfMean;
+    this->dfStdDev    = dfStdDev;
 
     return CE_None;
 }
@@ -493,6 +517,10 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
 
     if( nColCount < 2 )
     {
+        delete poDefaultRAT;
+
+        poDefaultRAT = NULL;
+
         return CE_None;
     }
 
@@ -519,7 +547,7 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
         }
         if( poRAT->GetTypeOfCol( iCol ) == GFT_Real )
         {
-            strcpy( szDescription, CPLSPrintf( "%s FLOAT",
+            strcpy( szDescription, CPLSPrintf( "%s NUMBER",
                 szDescription ) );
         }
         if( poRAT->GetTypeOfCol( iCol ) == GFT_String )
@@ -533,6 +561,11 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
     // ----------------------------------------------------------
     // Create VAT named based on RDT and RID and Layer (nBand)
     // ----------------------------------------------------------
+
+    if ( poGeoRaster->sValueAttributeTab.length() > 0 )
+    {
+        pszVATName = CPLStrdup( poGeoRaster->sValueAttributeTab.c_str() );
+    }
 
     if( ! pszVATName )
     {
@@ -638,7 +671,7 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
             }
             if( poRAT->GetTypeOfCol( iCol ) == GFT_Real )
             {
-                ((double *)(papWriteFields[iCol]))[iEntry + 1] =
+                ((double *)(papWriteFields[iCol + 1]))[iEntry] =
                     poRAT->GetValueAsDouble(iEntry, iCol);
             }
         }
@@ -713,15 +746,15 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
 //                                                              GetDefaultRAT()
 //  ---------------------------------------------------------------------------
 
-const GDALRasterAttributeTable *GeoRasterRasterBand::GetDefaultRAT()
+GDALRasterAttributeTable *GeoRasterRasterBand::GetDefaultRAT()
 {
     if( poDefaultRAT )
     {
-        return poDefaultRAT->Clone();
+        return poDefaultRAT;
     }
     else
     {
-        poDefaultRAT = new GDALRasterAttributeTable();
+        poDefaultRAT = new GDALDefaultRasterAttributeTable();
     }
 
     GeoRasterDataset* poGDS = (GeoRasterDataset*) poDS;

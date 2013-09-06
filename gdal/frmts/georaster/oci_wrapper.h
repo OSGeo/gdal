@@ -4,7 +4,7 @@
  * Name:     oci_wrapper.h
  * Project:  Oracle Spatial GeoRaster Driver
  * Purpose:  Limited wrapper for OCI (Oracle Call Interfaces)
- * Author:   Ivan Lucena [ivan.lucena@pmldnet.com]
+ * Author:   Ivan Lucena [ivan.lucena at oracle.com]
  *
  ******************************************************************************
  * Copyright (c) 2008, Ivan Lucena
@@ -65,10 +65,6 @@ int                 OWParseServerVersion( const char* pszText );
 int                 OWParseEPSG( const char* pszText );
 bool                OWIsNumeric( const char *pszText );
 const char*         OWParseSDO_GEOR_INIT( const char* pszInsert, int nField );
-const char*         OWReplaceString( const char* pszBaseString,
-                        const char* pszToken,
-                        const char* pszStopToken,
-                        const char* pszOWReplaceToken );
 
 /***************************************************************************/
 /*                            Arbitrary limits                             */
