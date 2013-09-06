@@ -1469,10 +1469,13 @@ void GeoRasterWrapper::GetRasterInfo( void )
 //  ---------------------------------------------------------------------------
 
 bool GeoRasterWrapper::GetStatistics( int nBand,
-                                      double dfMin,
-                                      double dfMax,
-                                      double dfMean,
-                                      double dfStdDev )
+                                      char* pszMin,
+                                      char* pszMax,
+                                      char* pszMean,
+                                      char* pszMedian,
+                                      char* pszMode,
+                                      char* pszStdDev,
+                                      char* pszSampling )
 {
     int n = 1;
 
@@ -1482,14 +1485,20 @@ bool GeoRasterWrapper::GetStatistics( int nBand,
     {
         if( n == nBand && CPLGetXMLNode( phSubLayer, "statisticDataset" ) )
         {
-            dfMin    = atoi( CPLGetXMLValue( phSubLayer,
-                                "statisticDataset.MIM",  "0.0" ) );
-            dfMax    = atoi( CPLGetXMLValue( phSubLayer,
-                                "statisticDataset.MAX",  "0.0" ) );
-            dfMean   = atoi( CPLGetXMLValue( phSubLayer,
-                                "statisticDataset.MEAN", "0.0" ) );
-            dfStdDev = atoi( CPLGetXMLValue( phSubLayer,
-                                "statisticDataset.STD",  "0.0" ) );
+            strncpy( pszSampling, CPLGetXMLValue( phSubLayer, 
+                "statisticDataset.samplingFactor",  "0.0" ), MAX_DOUBLE_STR_REP );
+            strncpy( pszMin, CPLGetXMLValue( phSubLayer, 
+                "statisticDataset.MIN",  "0.0" ), MAX_DOUBLE_STR_REP );
+            strncpy( pszMax, CPLGetXMLValue( phSubLayer,
+                "statisticDataset.MAX",  "0.0" ), MAX_DOUBLE_STR_REP );
+            strncpy( pszMean, CPLGetXMLValue( phSubLayer,
+                "statisticDataset.MEAN", "0.0" ), MAX_DOUBLE_STR_REP );
+            strncpy( pszMedian, CPLGetXMLValue( phSubLayer,
+                "statisticDataset.MEDIAN", "0.0" ), MAX_DOUBLE_STR_REP );
+            strncpy( pszMode, CPLGetXMLValue( phSubLayer,
+                "statisticDataset.MODEVALUE", "0.0" ), MAX_DOUBLE_STR_REP );
+            strncpy( pszStdDev, CPLGetXMLValue( phSubLayer,
+                "statisticDataset.STD",  "0.0" ), MAX_DOUBLE_STR_REP );
             return true;
         }
     }
@@ -1500,11 +1509,14 @@ bool GeoRasterWrapper::GetStatistics( int nBand,
 //                                                              SetStatistics()
 //  ---------------------------------------------------------------------------
 
-bool GeoRasterWrapper::SetStatistics( double dfMin,
-                                      double dfMax,
-                                      double dfMean,
-                                      double dfStdDev,
-                                      int nBand )
+bool GeoRasterWrapper::SetStatistics( int nBand,
+                                      const char* pszMin,
+                                      const char* pszMax,
+                                      const char* pszMean,
+                                      const char* pszMedian,
+                                      const char* pszMode,
+                                      const char* pszStdDev,
+                                      const char* pszSampling )
 {
     InitializeLayersNode();
 
@@ -1531,13 +1543,13 @@ bool GeoRasterWrapper::SetStatistics( double dfMin,
 
         psSDaset = CPLCreateXMLNode(phSubLayer,CXT_Element,"statisticDataset");
 
-        CPLCreateXMLElementAndValue(psSDaset,"samplingFactor", "1" );
-        CPLCreateXMLElementAndValue(psSDaset,"MIN", CPLSPrintf("%f",dfMin) );
-        CPLCreateXMLElementAndValue(psSDaset,"MAX", CPLSPrintf("%f",dfMax) );
-        CPLCreateXMLElementAndValue(psSDaset,"MEAN",CPLSPrintf("%f",dfMean) );
-        CPLCreateXMLElementAndValue(psSDaset,"MEDIAN",         "0");
-        CPLCreateXMLElementAndValue(psSDaset,"MODEVALUE",      "0");
-        CPLCreateXMLElementAndValue(psSDaset,"STD", CPLSPrintf("%f",dfStdDev));
+        CPLCreateXMLElementAndValue(psSDaset,"samplingFactor", pszSampling );
+        CPLCreateXMLElementAndValue(psSDaset,"MIN", pszMin );
+        CPLCreateXMLElementAndValue(psSDaset,"MAX", pszMax );
+        CPLCreateXMLElementAndValue(psSDaset,"MEAN", pszMean );
+        CPLCreateXMLElementAndValue(psSDaset,"MEDIAN", pszMedian );
+        CPLCreateXMLElementAndValue(psSDaset,"MODEVALUE", pszMode );
+        CPLCreateXMLElementAndValue(psSDaset,"STD", pszStdDev );
 
         return true;
     }
