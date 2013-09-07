@@ -71,7 +71,6 @@ def validate_layer(lyr, name, features, type, fields, box):
     maxy = abs(extent[3] - box[3])
 
     if max(minx, maxx, miny, maxy) > 0.0001:
-        print extent, box
         print('Wrong spatial extent of layer')
         return False
 
