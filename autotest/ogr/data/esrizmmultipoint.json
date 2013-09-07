@@ -1,0 +1,47 @@
+{
+  "objectIdFieldName" : "objectid",
+  "globalIdFieldName" : "",
+  "geometryType" : "esriGeometryMultiPoint",
+  "spatialReference" : {
+    "wkid" : 4326
+  },
+  "fields" : [
+    {
+      "name" : "objectid",
+      "alias" : "Object ID",
+      "type" : "esriFieldTypeOID"
+    },
+    {
+      "name" : "fooInt",
+      "alias" : "fooInt",
+      "type" : "esriFieldTypeInteger",
+      "length" : 36
+    },
+    {
+      "name" : "fooDouble",
+      "alias" : "fooDouble",
+      "type" : "esriFieldTypeDouble"
+    },
+    {
+      "name" : "fooString",
+      "alias" : "fooString",
+      "type" : "esriFieldTypeString",
+      "length" : 50
+    },
+  ],
+  "features" : [
+    {
+      "geometry" : {
+        "hasZ" : true,
+        "hasM" : true,
+        "points" : [ [2,49,1,100], [3,50,2,100] ],
+      },
+      "attributes" : {
+        "objectid" : 1,
+        "fooInt" : 2,
+        "fooDouble" : 3.4,
+        "fooString" : "56",
+      }
+    }
+  ]
+}

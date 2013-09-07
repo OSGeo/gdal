@@ -71,6 +71,7 @@ def validate_layer(lyr, name, features, type, fields, box):
     maxy = abs(extent[3] - box[3])
 
     if max(minx, maxx, miny, maxy) > 0.0001:
+        print extent, box
         print('Wrong spatial extent of layer')
         return False
 
@@ -1269,6 +1270,310 @@ def ogr_geojson_27():
     return 'success'
 
 ###############################################################################
+# Test reading ESRI point file with z value
+
+def ogr_geojson_28():
+
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    ds = ogr.Open('data/esrizpoint.json')
+    if ds is None:
+        gdaltest.post_reason('Failed to open datasource')
+        return 'fail'
+
+    if ds.GetLayerCount() is not 1:
+        gdaltest.post_reason('Wrong number of layers')
+        return 'fail'
+
+    lyr = ds.GetLayerByName('OGRGeoJSON')
+    if lyr is None:
+        gdaltest.post_reason('Missing layer called OGRGeoJSON')
+        return 'fail'
+
+    # validate layer doesn't check z, but put it in
+    extent = (2,2,49,49,1,1)
+
+    rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbPoint, 4, extent)
+    if rc is not True:
+        return 'fail'
+
+    ref = lyr.GetSpatialRef()
+    gcs = int(ref.GetAuthorityCode('GEOGCS'))
+
+    if  not gcs == 4326 :
+        gdaltest.post_reason("Spatial reference was not valid")
+        return 'fail'
+
+    feature = lyr.GetNextFeature()
+    ref_geom = ogr.CreateGeometryFromWkt('POINT(2 49 1)')
+    if ogrtest.check_feature_geometry(feature, ref_geom) != 0:
+        feature.DumpReadable()
+        return 'fail'
+
+    if feature.GetFID() != 1:
+        feature.DumpReadable()
+        return 'fail'
+
+    if feature.GetFieldAsInteger('fooInt') != 2:
+        feature.DumpReadable()
+        return 'fail'
+
+    if feature.GetFieldAsDouble('fooDouble') != 3.4:
+        feature.DumpReadable()
+        return 'fail'
+
+    if feature.GetFieldAsString('fooString') != '56':
+        feature.DumpReadable()
+        return 'fail'
+
+    lyr = None
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test reading ESRI linestring file with z
+
+def ogr_geojson_29():
+
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    ds = ogr.Open('data/esrizlinestring.json')
+    if ds is None:
+        gdaltest.post_reason('Failed to open datasource')
+        return 'fail'
+
+    if ds.GetLayerCount() is not 1:
+        gdaltest.post_reason('Wrong number of layers')
+        return 'fail'
+
+    lyr = ds.GetLayerByName('OGRGeoJSON')
+    if lyr is None:
+        gdaltest.post_reason('Missing layer called OGRGeoJSON')
+        return 'fail'
+
+    # validate layer doesn't check z, but put it in
+    extent = (2,3,49,50,1,2)
+
+    rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbLineString, 0, extent)
+    if rc is not True:
+        return 'fail'
+
+    feature = lyr.GetNextFeature()
+    ref_geom = ogr.CreateGeometryFromWkt('LINESTRING (2 49 1,3 50 2)')
+    if ogrtest.check_feature_geometry(feature, ref_geom) != 0:
+        feature.DumpReadable()
+        return 'fail'
+
+    lyr = None
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test reading ESRI multipoint file with z
+
+def ogr_geojson_30():
+
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    ds = ogr.Open('data/esrizmultipoint.json')
+    if ds is None:
+        gdaltest.post_reason('Failed to open datasource')
+        return 'fail'
+
+    if ds.GetLayerCount() is not 1:
+        gdaltest.post_reason('Wrong number of layers')
+        return 'fail'
+
+    lyr = ds.GetLayerByName('OGRGeoJSON')
+    if lyr is None:
+        gdaltest.post_reason('Missing layer called OGRGeoJSON')
+        return 'fail'
+
+    # validate layer doesn't check z, but put it in
+    extent = (2,3,49,50,1,2)
+
+    rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbMultiPoint, 4, extent)
+    if rc is not True:
+        return 'fail'
+
+    feature = lyr.GetNextFeature()
+    ref_geom = ogr.CreateGeometryFromWkt('MULTIPOINT (2 49 1,3 50 2)')
+    if ogrtest.check_feature_geometry(feature, ref_geom) != 0:
+        feature.DumpReadable()
+        return 'fail'
+
+    lyr = None
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test reading ESRI polygon file with z
+
+def ogr_geojson_31():
+
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    ds = ogr.Open('data/esrizpolygon.json')
+    if ds is None:
+        gdaltest.post_reason('Failed to open datasource')
+        return 'fail'
+
+    if ds.GetLayerCount() is not 1:
+        gdaltest.post_reason('Wrong number of layers')
+        return 'fail'
+
+    lyr = ds.GetLayerByName('OGRGeoJSON')
+    if lyr is None:
+        gdaltest.post_reason('Missing layer called OGRGeoJSON')
+        return 'fail'
+
+    # validate layer doesn't check z, but put it in
+    extent = (2,3,49,50,1,4)
+
+    rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbPolygon, 0, extent)
+    if rc is not True:
+        return 'fail'
+
+    feature = lyr.GetNextFeature()
+    ref_geom = ogr.CreateGeometryFromWkt('POLYGON ((2 49 1,2 50 2,3 50 3,3 49 4,2 49 1))')
+    if ogrtest.check_feature_geometry(feature, ref_geom) != 0:
+        feature.DumpReadable()
+        return 'fail'
+
+    lyr = None
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test reading ESRI multipoint file with m, but no z (hasM=true, hasZ omitted)
+
+def ogr_geojson_32():
+
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    ds = ogr.Open('data/esrihasmnozmultipoint.json')
+    if ds is None:
+        gdaltest.post_reason('Failed to open datasource')
+        return 'fail'
+
+    if ds.GetLayerCount() is not 1:
+        gdaltest.post_reason('Wrong number of layers')
+        return 'fail'
+
+    lyr = ds.GetLayerByName('OGRGeoJSON')
+    if lyr is None:
+        gdaltest.post_reason('Missing layer called OGRGeoJSON')
+        return 'fail'
+
+    # validate layer doesn't check z, but put it in
+    extent = (2,3,49,50)
+
+    rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbMultiPoint, 4, extent)
+    if rc is not True:
+        return 'fail'
+
+    feature = lyr.GetNextFeature()
+    ref_geom = ogr.CreateGeometryFromWkt('MULTIPOINT (2 49,3 50)')
+    if ogrtest.check_feature_geometry(feature, ref_geom) != 0:
+        feature.DumpReadable()
+        return 'fail'
+
+    lyr = None
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test reading ESRI multipoint file with hasZ=true, but only 2 points.
+
+def ogr_geojson_33():
+
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    ds = ogr.Open('data/esriinvalidhaszmultipoint.json')
+    if ds is None:
+        gdaltest.post_reason('Failed to open datasource')
+        return 'fail'
+
+    if ds.GetLayerCount() is not 1:
+        gdaltest.post_reason('Wrong number of layers')
+        return 'fail'
+
+    lyr = ds.GetLayerByName('OGRGeoJSON')
+    if lyr is None:
+        gdaltest.post_reason('Missing layer called OGRGeoJSON')
+        return 'fail'
+
+    # validate layer doesn't check z, but put it in
+    extent = (2,3,49,50)
+
+    rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbMultiPoint, 4, extent)
+    if rc is not True:
+        return 'fail'
+
+    feature = lyr.GetNextFeature()
+    ref_geom = ogr.CreateGeometryFromWkt('MULTIPOINT (2 49,3 50)')
+    if ogrtest.check_feature_geometry(feature, ref_geom) != 0:
+        feature.DumpReadable()
+        return 'fail'
+
+    lyr = None
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test reading ESRI multipoint file with m, but no z (hasM=true, hasZ omitted)
+
+def ogr_geojson_34():
+
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    ds = ogr.Open('data/esrizmmultipoint.json')
+    if ds is None:
+        gdaltest.post_reason('Failed to open datasource')
+        return 'fail'
+
+    if ds.GetLayerCount() is not 1:
+        gdaltest.post_reason('Wrong number of layers')
+        return 'fail'
+
+    lyr = ds.GetLayerByName('OGRGeoJSON')
+    if lyr is None:
+        gdaltest.post_reason('Missing layer called OGRGeoJSON')
+        return 'fail'
+
+    # validate layer doesn't check z, but put it in
+    extent = (2,3,49,50)
+
+    rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbMultiPoint, 4, extent)
+    if rc is not True:
+        return 'fail'
+
+    feature = lyr.GetNextFeature()
+    ref_geom = ogr.CreateGeometryFromWkt('MULTIPOINT (2 49 1,3 50 2)')
+    if ogrtest.check_feature_geometry(feature, ref_geom) != 0:
+        feature.DumpReadable()
+        return 'fail'
+
+    lyr = None
+    ds = None
+
+    return 'success'
+
+
+###############################################################################
 
 def ogr_geojson_cleanup():
 
@@ -1327,6 +1632,13 @@ gdaltest_list = [
     ogr_geojson_25,
     ogr_geojson_26,
     ogr_geojson_27,
+    ogr_geojson_28,
+    ogr_geojson_29,
+    ogr_geojson_30,
+    ogr_geojson_31,
+    ogr_geojson_32,
+    ogr_geojson_33,
+    ogr_geojson_34,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':
