@@ -804,7 +804,11 @@ int ReadNode(GByte* pabyData, GByte* pabyDataLimit,
     OSMNode sNode;
 
     sNode.nID = 0;
+    sNode.dfLat = 0.0;
+    sNode.dfLon = 0.0;
     INIT_INFO(sNode.sInfo);
+    sNode.nTags = 0;
+    sNode.pasTags = NULL;
 
     /* printf(">ReadNode\n"); */
     while(pabyData < pabyDataLimit)
