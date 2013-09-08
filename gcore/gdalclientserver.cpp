@@ -1884,6 +1884,8 @@ static int GDALServerLoop(GDALPipe* p,
                 CPLFree(pTemp);
             }
 
+            CPLFree(pszClientVersion);
+
             GDALPipeWrite(p, GDAL_RELEASE_NAME);
             GDALPipeWrite(p, GDAL_VERSION_MAJOR);
             GDALPipeWrite(p, GDAL_VERSION_MINOR);
@@ -1897,7 +1899,10 @@ static int GDALServerLoop(GDALPipe* p,
             char *pszKey = NULL, *pszValue = NULL;
             if( !GDALPipeRead(p, &pszKey) ||
                 !GDALPipeRead(p, &pszValue) )
+            {
+                CPLFree(pszKey);
                 break;
+            }
             CPLSetConfigOption(pszKey, pszValue);
             CPLFree(pszKey);
             CPLFree(pszValue);
