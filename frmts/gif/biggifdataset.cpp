@@ -310,12 +310,13 @@ int BIGGIFDataset::CloseDependentDatasets()
         bHasDroppedRef = TRUE;
 
         CPLString osTempFilename = poWorkDS->GetDescription();
+        GDALDriver* poDrv = poWorkDS->GetDriver();
 
         GDALClose( (GDALDatasetH) poWorkDS );
         poWorkDS = NULL;
 
-        GDALDriver *poGTiff = (GDALDriver *) GDALGetDriverByName( "GTiff" );
-        poGTiff->Delete( osTempFilename );
+        if( poDrv != NULL )
+            poDrv->Delete( osTempFilename );
 
         poWorkDS = NULL;
     }
