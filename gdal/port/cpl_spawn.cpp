@@ -464,7 +464,7 @@ void CPLSpawnAsyncCloseErrorFileHandle(CPLSpawnedProcess* p)
     #ifdef __APPLE__
         #include <TargetConditionals.h>
     #endif
-    #if defined(__APPLE__) && !defined(TARGET_OS_IPHONE)
+    #if defined(__APPLE__) && (!defined(TARGET_OS_IPHONE) || TARGET_OS_IPHONE==0)
         #include <crt_externs.h>
         #define environ (*_NSGetEnviron())
     #else
