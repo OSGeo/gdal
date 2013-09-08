@@ -3414,6 +3414,32 @@ def ogr_shape_70():
     return 'success'
 
 ###############################################################################
+# Test heterogenous file permissions on .shp and .dbf
+
+def ogr_shape_71():
+
+    if sys.platform.find('linux') != 0:
+        return 'skip'
+
+    import stat
+    shutil.copy('data/poly.shp', 'tmp/ogr_shape_71.shp')
+    shutil.copy('data/poly.shx', 'tmp/ogr_shape_71.shx')
+    shutil.copy('data/poly.dbf', 'tmp/ogr_shape_71.dbf')
+    old_mode = os.stat('tmp/ogr_shape_71.dbf').st_mode
+    os.chmod('tmp/ogr_shape_71.dbf', stat.S_IREAD)
+    ds = ogr.Open('tmp/ogr_shape_71.shp', update = 1)
+    ok = ds is None
+    ds = None
+    os.chmod('tmp/ogr_shape_71.dbf', old_mode)
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource( 'tmp/ogr_shape_71.shp' )
+
+    if not ok:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_shape_cleanup():
@@ -3517,6 +3543,7 @@ gdaltest_list = [
     ogr_shape_68,
     ogr_shape_69,
     ogr_shape_70,
+    ogr_shape_71,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':
