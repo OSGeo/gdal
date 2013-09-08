@@ -317,23 +317,12 @@ int OGRShapeDataSource::OpenFile( const char *pszNewName, int bUpdate,
             hDBF = DBFOpen( pszNewName, "r+" );
             if( hSHP != NULL && hDBF == NULL )
             {
-                VSIStatBufL sStat;
-                const char* pszDBFName = CPLResetExtension(pszNewName, "dbf");
-                VSILFILE* fp = NULL;
-                if( VSIStatExL( pszDBFName, &sStat, VSI_STAT_EXISTS_FLAG) == 0 )
+                for(int i=0;i<2;i++)
                 {
-                    fp = VSIFOpenL(pszDBFName, "r+");
-                    if (fp == NULL)
-                    {
-                        CPLError( CE_Failure, CPLE_OpenFailed,
-                                "%s exists, but cannot be opened in update mode",
-                                pszDBFName );
-                        return FALSE;
-                    }
-                }
-                else
-                {
-                    pszDBFName = CPLResetExtension(pszNewName, "DBF");
+                    VSIStatBufL sStat;
+                    const char* pszDBFName = CPLResetExtension(pszNewName,
+                                                    (i == 0 ) ? "dbf" : "DBF");
+                    VSILFILE* fp = NULL;
                     if( VSIStatExL( pszDBFName, &sStat, VSI_STAT_EXISTS_FLAG) == 0 )
                     {
                         fp = VSIFOpenL(pszDBFName, "r+");
@@ -342,12 +331,13 @@ int OGRShapeDataSource::OpenFile( const char *pszNewName, int bUpdate,
                             CPLError( CE_Failure, CPLE_OpenFailed,
                                     "%s exists, but cannot be opened in update mode",
                                     pszDBFName );
+                            SHPClose(hSHP);
                             return FALSE;
                         }
+                        VSIFCloseL(fp);
+                        break;
                     }
                 }
-                if (fp != NULL)
-                    VSIFCloseL(fp);
             }
         }
         else
