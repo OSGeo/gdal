@@ -378,10 +378,10 @@ BSBInfo *BSBOpen( const char *pszFilename )
 
     if( psInfo->nXSize <= 0 || psInfo->nYSize <= 0 )
     {
-        BSBClose( psInfo );
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Wrong dimensions found in header : %d x %d.",
                   psInfo->nXSize, psInfo->nYSize );
+        BSBClose( psInfo );
         return NULL;
     }
 
