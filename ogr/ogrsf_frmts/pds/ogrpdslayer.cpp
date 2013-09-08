@@ -44,7 +44,7 @@ OGRPDSLayer::OGRPDSLayer(   CPLString osTableID,
                             CPLString osStructureFilename,
                             int nRecords,
                             int nStartBytes, int nRecordSize,
-                            GByte* pabyRecord, int bIsASCII)
+                            GByte* pabyRecordIn, int bIsASCII)
 
 {
     fpPDS = fp;
@@ -61,7 +61,7 @@ OGRPDSLayer::OGRPDSLayer(   CPLString osTableID,
 
     pasFieldDesc = NULL;
 
-    this->pabyRecord = pabyRecord;
+    pabyRecord = pabyRecordIn;
 
     if (osStructureFilename.size() != 0)
     {
