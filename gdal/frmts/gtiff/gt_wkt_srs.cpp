@@ -623,6 +623,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
     dfSemiMajor = psDefn->SemiMajor;
     if( dfSemiMajor == 0.0 )
     {
+        CPLFree(pszSpheroidName);
         pszSpheroidName = CPLStrdup("unretrievable - using WGS84");
         dfSemiMajor = SRS_WGS84_SEMIMAJOR;
         dfInvFlattening = SRS_WGS84_INVFLATTENING;
