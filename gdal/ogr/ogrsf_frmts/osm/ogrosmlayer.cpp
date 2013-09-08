@@ -290,7 +290,6 @@ int  OGROSMLayer::AddToArray(OGRFeature* poFeature)
                                 nFeatureArrayMaxSize * sizeof(OGRFeature*));
         if (papoNewFeatures == NULL)
         {
-            delete poFeature;
             return FALSE;
         }
         papoFeatures = papoNewFeatures;
