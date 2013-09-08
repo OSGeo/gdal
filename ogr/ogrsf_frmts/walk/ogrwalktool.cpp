@@ -29,18 +29,152 @@
 
 #include "ogrwalk.h"
 
-#define COORDDIMENSION      2        //OgcWkb only supports simple 2D geometries
+#ifndef PI
+#define PI  3.14159265358979323846
+#endif 
 
 /************************************************************************/
-/*                         ByteOrder()                                  */
+/*                   OGRWalkArcCenterFromEdgePoints()                   */
+/*                                                                      */
+/*      Compute the center of an arc/circle from three edge points.     */
 /************************************************************************/
-static inline wkbByteOrder ByteOrder()
+
+static int 
+OGRWalkArcCenterFromEdgePoints( double x_c0, double y_c0,
+                               double x_c1, double y_c1, 
+                               double x_c2, double y_c2, 
+                               double *x_center, double *y_center )
+    
 {
-#ifdef CPL_LSB
-    return wkbNDR;    //Little Endian
-#else
-    return wkbXDR;    //Big endian
-#endif
+/* -------------------------------------------------------------------- */
+/*      Compute the inverse of the slopes connecting the first and      */
+/*      second points.  Also compute the center point of the two        */
+/*      points ... the point our crossing line will go through.          */
+/* -------------------------------------------------------------------- */
+    double m1, x1, y1;
+
+    if( (y_c1 - y_c0) != 0.0 )
+        m1 = (x_c0 - x_c1) / (y_c1 - y_c0);
+    else
+        m1 = 1e+10;
+
+    x1 = (x_c0 + x_c1) * 0.5;
+    y1 = (y_c0 + y_c1) * 0.5;
+
+/* -------------------------------------------------------------------- */
+/*      Compute the same for the second point compared to the third     */
+/*      point.                                                          */
+/* -------------------------------------------------------------------- */
+    double m2, x2, y2;
+
+    if( (y_c2 - y_c1) != 0.0 )
+        m2 = (x_c1 - x_c2) / (y_c2 - y_c1);
+    else
+        m2 = 1e+10;
+
+    x2 = (x_c1 + x_c2) * 0.5;
+    y2 = (y_c1 + y_c2) * 0.5;
+
+/* -------------------------------------------------------------------- */
+/*      Turn these into the Ax+By+C = 0 form of the lines.              */
+/* -------------------------------------------------------------------- */
+    double      a1, a2, b1, b2, c1, c2;
+
+    a1 = m1;
+    a2 = m2;
+
+    b1 = -1.0;
+    b2 = -1.0;
+    
+    c1 = (y1 - m1*x1);
+    c2 = (y2 - m2*x2);
+    
+/* -------------------------------------------------------------------- */
+/*      Compute the intersection of the two lines through the center    */
+/*      of the circle, using Kramers rule.                              */
+/* -------------------------------------------------------------------- */
+    double      det_inv;
+
+    if( a1*b2 - a2*b1 == 0.0 )
+        return FALSE;
+
+    det_inv = 1 / (a1*b2 - a2*b1);
+
+    *x_center = (b1*c2 - b2*c1) * det_inv;
+    *y_center = (a2*c1 - a1*c2) * det_inv;
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                       OGRWalkArcToLineString()                       */
+/************************************************************************/
+static int 
+OGRWalkArcToLineString( double dfStartX, double dfStartY,
+                        double dfAlongX, double dfAlongY,
+                        double dfEndX, double dfEndY,
+                        double dfCenterX, double dfCenterY, 
+                        double dfCenterZ, double dfRadius,
+                        int nNumPoints, OGRLineString *poLS )
+{
+    double dfStartAngle, dfEndAngle, dfAlongAngle;
+    double dfDeltaX, dfDeltaY;
+
+    dfDeltaX = dfStartX - dfCenterX;
+    dfDeltaY = dfStartY - dfCenterY;
+    dfStartAngle = -1 * atan2(dfDeltaY,dfDeltaX) * 180.0 / PI;
+
+    dfDeltaX = dfAlongX - dfCenterX;
+    dfDeltaY = dfAlongY - dfCenterY;
+    dfAlongAngle = -1 * atan2(dfDeltaY,dfDeltaX) * 180.0 / PI;
+
+    dfDeltaX = dfEndX - dfCenterX;
+    dfDeltaY = dfEndY - dfCenterY;
+    dfEndAngle = -1 * atan2(dfDeltaY,dfDeltaX) * 180.0 / PI;
+
+    // Try positive (clockwise?) winding.
+    while( dfAlongAngle < dfStartAngle )
+        dfAlongAngle += 360.0;
+
+    while( dfEndAngle < dfAlongAngle )
+        dfEndAngle += 360.0;
+
+    if( nNumPoints == 3 )        //Arc
+    {
+        if( dfEndAngle - dfStartAngle > 360.0 )
+        {
+            while( dfAlongAngle > dfStartAngle )
+                dfAlongAngle -= 360.0;
+
+            while( dfEndAngle > dfAlongAngle )
+                dfEndAngle -= 360.0;
+        }
+    }
+    else if( nNumPoints == 5 )  //Circle
+    {
+        // If anticlockwise, then start angle - end angle = 360.0;
+        // Otherwise end angle - start angle = 360.0;
+        if( dfEndAngle - dfStartAngle > 360.0 )
+            dfEndAngle = dfStartAngle - 360.0;
+        else
+            dfEndAngle = dfStartAngle + 360.0;
+    }
+    else
+        return FALSE;
+
+    OGRLineString* poArcpoLS = 
+        (OGRLineString*)OGRGeometryFactory::approximateArcAngles(
+            dfCenterX, dfCenterY, dfCenterZ,
+            dfRadius, dfRadius, 0.0, 
+            dfStartAngle, dfEndAngle, 0.0 );
+
+    if( poArcpoLS == NULL )
+        return FALSE;
+
+    poLS->addSubLineString(poArcpoLS);
+    delete poArcpoLS;
+
+    return TRUE;
 }
 
 /************************************************************************/
@@ -262,339 +396,228 @@ OGRErr Binary2WkbGeom(unsigned char *p, WKBGeometry* geom, int nBytes)
 }
 
 /************************************************************************/
-/*                 SZPointSize(): Size of WKBPoint                      */
+/*                       TranslateWalkPoint()                           */
 /************************************************************************/
-long SZPointSize(WKBPoint* pWalkWKBPoint)
+OGRBoolean TranslateWalkPoint(OGRPoint *poPoint, WKBPoint* pWalkWkbPoint)
 {
-    long retOgcWkbGeomSize = 0;
-    
-    retOgcWkbGeomSize += 5+8*COORDDIMENSION;
-    return retOgcWkbGeomSize;
+    if ( poPoint == NULL || pWalkWkbPoint == NULL ) 
+        return FALSE;
+
+    poPoint->setX(pWalkWkbPoint->x);
+    poPoint->setY(pWalkWkbPoint->y);
+    poPoint->setZ(pWalkWkbPoint->z);
+    return TRUE;
 }
 
 /************************************************************************/
-/*             SZLineStringSize(): Size of WKBLinestring                */
+/*                    TranslateCurveSegment()                           */
 /************************************************************************/
-long SZLineStringSize(WKBLineString* pLineString)
+OGRBoolean TranslateCurveSegment(OGRLineString *poLS, CurveSegment* pSegment)
 {
-    int nPointCount = 0;    //only linestring.
-    long retOgcWkbGeomSize = 0;
+    if ( poLS == NULL || pSegment == NULL )
+        return FALSE;
 
-    for (GUInt32 i = 0; i < pLineString->numSegments; ++i)
-        nPointCount += pLineString->segments[i].numPoints;
-
-    retOgcWkbGeomSize += 5+4+8*COORDDIMENSION*nPointCount;
-    return retOgcWkbGeomSize;
-}
-
-/************************************************************************/
-/*             SZLinearringSize(): Size of WKBLinearring                */
-/************************************************************************/
-long SZLinearringSize(WKBLineString* pLinearring)
-{
-    int nPointCount = 0;
-    long retOgcWkbGeomSize = 0;
-
-    for (GUInt32 i = 0; i < pLinearring->numSegments; ++i)
-        nPointCount += pLinearring->segments[i].numPoints;
-
-    retOgcWkbGeomSize += 4 + 8 * COORDDIMENSION*nPointCount;
-    return retOgcWkbGeomSize;
-}
-
-/************************************************************************/
-/*                SZPolygonSize(): Size of WKBPolygon                   */
-/************************************************************************/
-long SZPolygonSize(WKBPolygon* pWalkWKBPolygon)
-{
-    long retOgcWkbGeomSize = 9;
-
-    for (GUInt32 i = 0; i < pWalkWKBPolygon->numRings; ++i)
+    switch(pSegment->lineType)
     {
-        LineString* lineString = &pWalkWKBPolygon->rings[i];
-        retOgcWkbGeomSize += SZLinearringSize(lineString);
-    }
-    return retOgcWkbGeomSize;
-}
+    case wkLineType3PArc:
+    case wkLineType3PCircle:
+        {
+            double      dfCenterX, dfCenterY, dfCenterZ, dfRadius;
 
-/************************************************************************/
-/*                           SZWKBGeomSize()                            */
-/************************************************************************/
-long SZWKBGeomSize(WKBGeometry* pWalkWKBGeometry)
-{
-    long retOgcWkbGeomSize = 0;
+            if ( !OGRWalkArcCenterFromEdgePoints( pSegment->points[0].x, pSegment->points[0].y,
+                                           pSegment->points[1].x, pSegment->points[1].y,
+                                           pSegment->points[2].x, pSegment->points[2].y,
+                                           &dfCenterX, &dfCenterY ) )
+                return FALSE;
 
-    if (pWalkWKBGeometry == NULL)
-        return retOgcWkbGeomSize;
+            //Use Z value of the first point
+            dfCenterZ = pSegment->points[0].z;
+            dfRadius = sqrt( (dfCenterX - pSegment->points[0].x) * (dfCenterX - pSegment->points[0].x)
+                           + (dfCenterY - pSegment->points[0].y) * (dfCenterY - pSegment->points[0].y) );
 
-    switch (pWalkWKBGeometry->wkbType)
-    {
-    case wkbPoint:
-        retOgcWkbGeomSize += SZPointSize(&pWalkWKBGeometry->point);
-        break;
-    case wkbLineString:
-        retOgcWkbGeomSize += SZLineStringSize(&pWalkWKBGeometry->linestring);
-        break;
-    case wkbPolygon:
-        retOgcWkbGeomSize += SZPolygonSize(&pWalkWKBGeometry->polygon);
-        break;
-    case wkbMultiPoint:
-        {
-            retOgcWkbGeomSize = 9;
-            WKBMultiPoint mpoint = pWalkWKBGeometry->mpoint;
-            for (GUInt32 i = 0; i < mpoint.num_wkbPoints; ++i)
-            {
-                WKBPoint* point = &pWalkWKBGeometry->mpoint.WKBPoints[i];
-                retOgcWkbGeomSize += SZPointSize(point);
-            }
+            if ( !OGRWalkArcToLineString( pSegment->points[0].x, pSegment->points[0].y,
+                        pSegment->points[1].x, pSegment->points[1].y,
+                        pSegment->points[2].x, pSegment->points[2].y,
+                        dfCenterX, dfCenterY, dfCenterZ, dfRadius,
+                        pSegment->numPoints, poLS ) )
+                return FALSE;
         }
         break;
-    case wkbMultiLineString:
-        {
-            retOgcWkbGeomSize = 9;
-            WKBMultiLineString mlines = pWalkWKBGeometry->mlinestring;
-            for (GUInt32 i = 0; i < mlines.num_wkbLineStrings; ++i)
-            {
-                retOgcWkbGeomSize += SZLineStringSize(&mlines.WKBLineStrings[i]);
-            }
-        }
-        break;
-    case wkbMultiPolygon:
-        {
-            retOgcWkbGeomSize = 9;
-            WKBMultiPolygon mpoly = pWalkWKBGeometry->mpolygon;
-            for (GUInt32 i = 0; i < mpoly.num_wkbPolygons; ++i)
-            {
-                retOgcWkbGeomSize += SZPolygonSize(&mpoly.WKBPolygons[i]);
-            }
-        }
-        break;
-    case wkbGeometryCollection:
-        {
-            retOgcWkbGeomSize = 9;
-            WKBGeometryCollection mg = pWalkWKBGeometry->mgeometries;
-            for (GUInt32 i = 0; i < mg.num_wkbSGeometries; ++i)
-            {
-                WKBSimpleGeometry* sg = &mg.WKBGeometries[i];
-                switch (sg->wkbType)
-                {
-                case wkbPoint: retOgcWkbGeomSize += SZPointSize(&sg->point);
-                               break;
-                case wkbLineString: retOgcWkbGeomSize += SZLineStringSize(&sg->linestring);
-                                    break;
-                case wkbPolygon: retOgcWkbGeomSize += SZPolygonSize(&sg->polygon);
-                                 break;
-                default: break;
-                }                
-            }
-        }
-        break;
+    case wkLineTypeStraight:
     default:
+        {
+            for (GUInt32 i = 0; i < pSegment->numPoints; ++i)
+            {
+                Point point = pSegment->points[i];
+                poLS->addPoint(point.x, point.y, point.z);
+            }
+        }
         break;
     }
 
-    return retOgcWkbGeomSize;
-}
-
-/************************************************************************/
-/*                           WalkPoint2Wkb()                            */
-/************************************************************************/
-OGRBoolean WalkPoint2Wkb(unsigned char* pOgcWkb, WKBPoint* pWalkWkbPoint)
-{
-    if (pOgcWkb == NULL || pWalkWkbPoint == NULL)
-        return FALSE;
-
-    pOgcWkb[0] = (unsigned char)ByteOrder();
-    unsigned int nGType = wkbPoint;
-    memcpy(pOgcWkb+1, &nGType, 4);
-    memcpy(pOgcWkb+5, &pWalkWkbPoint->x, 8*COORDDIMENSION);
     return TRUE;
 }
 
 /************************************************************************/
-/*                        WalkLineString2Wkb()                          */
+/*                    TranslateWalkLineString()                         */
 /************************************************************************/
-OGRBoolean WalkLineString2Wkb(unsigned char* pOgcWkb, LineString* pLineString)
+OGRBoolean TranslateWalkLineString(OGRLineString *poLS, LineString* pLineString)
 {
-    if (pOgcWkb == NULL || pLineString == NULL)
+    if ( poLS == NULL || pLineString == NULL )
         return FALSE;
 
-    pOgcWkb[0] = (unsigned char)ByteOrder();
-    unsigned int nGType = wkbLineString;
-    memcpy(pOgcWkb+1, &nGType, 4);
-    //Copy in the data count.   
-    int nPointCount = 0;
-    
     for (GUInt32 i = 0; i < pLineString->numSegments; ++i)
     {
-        nPointCount += pLineString->segments[i].numPoints;
-        memcpy(pOgcWkb+5, &nPointCount, 4);    
-        
-        for (GUInt32 j = 0; j < pLineString->segments[i].numPoints; ++j)
-        {
-            Point* point = pLineString->segments[i].points;
-            memcpy(pOgcWkb+5+4+8*COORDDIMENSION*j, point+j, 8*COORDDIMENSION);
-        }
+        if ( !TranslateCurveSegment(poLS, &pLineString->segments[i]) )
+            return FALSE;
     }
-    
+
     return TRUE;
 }
 
 /************************************************************************/
-/*                        WalkLinearring2Wkb()                          */
+/*                    TranslateWalkLinearring()                         */
 /************************************************************************/
-OGRBoolean WalkLinearring2Wkb(unsigned char* pOgcWkb, LineString* pLineString)
+OGRBoolean TranslateWalkLinearring(OGRLinearRing *poRing, LineString* pLineString)
 {
-    if (pOgcWkb == NULL || pLineString == NULL)
+    if ( poRing == NULL || pLineString == NULL )
         return FALSE;
 
     for(GUInt32 i = 0; i < pLineString->numSegments; i++)
-    {
-        memcpy(pOgcWkb, &pLineString->segments[i].numPoints, 4);
-        
-        for (GUInt32 j = 0; j < pLineString->segments[i].numPoints; ++j)
-        {
-            Point* point = pLineString->segments[i].points;
-            memcpy(pOgcWkb+4+8*COORDDIMENSION*j, point+j, 8*COORDDIMENSION);
-        }
-    }    
+        TranslateCurveSegment(poRing, &pLineString->segments[i]);
+
     return TRUE;
 }
 
 /************************************************************************/
-/*                          WalkPolygon2Wkb()                           */
+/*                    TranslateWalkPolygon()                            */
 /************************************************************************/
-OGRBoolean WalkPolygon2Wkb(unsigned char* pOgcWkb, WKBPolygon* pWalkWkbPolgon)
+OGRBoolean TranslateWalkPolygon(OGRPolygon *poPolygon, WKBPolygon* pWalkWkbPolgon)
 {
-    if (pOgcWkb == NULL || pWalkWkbPolgon == NULL)
+    if ( poPolygon == NULL || pWalkWkbPolgon == NULL )
         return FALSE;
 
-    pOgcWkb[0] = (unsigned char)ByteOrder();
-    unsigned int nGType = wkbPolygon;
-    memcpy(pOgcWkb+1, &nGType, 4);
-    //Copy in the data count.   
-    GUInt32 nRingCount = pWalkWkbPolgon->numRings;
-    memcpy(pOgcWkb+5, &nRingCount, 4);
-    int nOffset = 9;
-    
-    for (GUInt32 i = 0; i < nRingCount; ++i)
+    for (GUInt32 i = 0; i < pWalkWkbPolgon->numRings; ++i)
     {
+        OGRLinearRing* poRing = new OGRLinearRing();
         LineString* lineString = &pWalkWkbPolgon->rings[i];
-        WalkLinearring2Wkb(nOffset + pOgcWkb, lineString);
-        nOffset += SZLinearringSize(lineString);            
-    }    
+        TranslateWalkLinearring(poRing, lineString);
+        poPolygon->addRingDirectly(poRing);
+    }
+
     return TRUE;
 }
 
 /************************************************************************/
-/*                            WalkGeom2Wkb()                            */
+/*                        TranslateWalkGeom()                           */
 /************************************************************************/
-OGRBoolean WalkGeom2Wkb(unsigned char* pOgcWkb, WKBGeometry* geom)
+OGRErr TranslateWalkGeom(OGRGeometry **ppoGeom, WKBGeometry* geom)
 {
-    if (pOgcWkb == NULL || geom == NULL)
-        return FALSE;
+    if ( ppoGeom == NULL || geom == NULL )
+        return OGRERR_NOT_ENOUGH_DATA;
+
+    OGRGeometry* poGeom = 
+        OGRGeometryFactory::createGeometry(wkbFlatten(geom->wkbType));
+
+    if ( poGeom == NULL )
+        return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
 
     switch (geom->wkbType)
     {
     case wkbPoint:
         {
-            WalkPoint2Wkb(pOgcWkb, &geom->point);
+            if (!TranslateWalkPoint((OGRPoint *)poGeom, &geom->point))
+                return OGRERR_CORRUPT_DATA;
         }
         break;
     case wkbLineString:
         {
-            WalkLineString2Wkb(pOgcWkb, &geom->linestring);
+            if (!TranslateWalkLineString((OGRLineString *)poGeom, &geom->linestring))
+                return OGRERR_CORRUPT_DATA;
         }
         break;
     case wkbPolygon:
         {
-            WalkPolygon2Wkb(pOgcWkb, &geom->polygon);
+            if (!TranslateWalkPolygon((OGRPolygon *)poGeom, &geom->polygon))
+                return OGRERR_CORRUPT_DATA;
         }
         break;
     case wkbMultiPoint:
         {
-            pOgcWkb[0] = (unsigned char)ByteOrder();
-            unsigned int nGType = wkbMultiPoint;
-            memcpy(pOgcWkb+1, &nGType, 4);
-            GUInt32 nCols = geom->mpoint.num_wkbPoints;
-            memcpy(pOgcWkb+5, &nCols, 4);
-            int nOffset = 9;
-
-            for (GUInt32 i = 0; i < nCols; ++i)
+            for (GUInt32 i = 0; i < geom->mpoint.num_wkbPoints; ++i)
             {
-                WKBPoint* point = &geom->mpoint.WKBPoints[i];    
-                WalkPoint2Wkb(pOgcWkb+nOffset, point);
-                nOffset += SZPointSize(point);                
-            }            
+                OGRPoint* poPoint = new OGRPoint();
+                if (!TranslateWalkPoint(poPoint, &geom->mpoint.WKBPoints[i]))
+                    return OGRERR_CORRUPT_DATA;
+                ((OGRMultiPoint *)poGeom)->addGeometryDirectly(poPoint);
+            }
         }
         break;
     case wkbMultiLineString:
         {
-            pOgcWkb[0] = (unsigned char)ByteOrder();
-            unsigned int nGType = wkbMultiLineString;
-            memcpy(pOgcWkb+1, &nGType, 4);
-            GUInt32 nCols = geom->mlinestring.num_wkbLineStrings;
-            memcpy(pOgcWkb+5, &nCols, 4);
-            int nOffset = 9;
-            
-            for (GUInt32 i = 0; i < nCols; ++i)
+            for (GUInt32 i = 0; i < geom->mlinestring.num_wkbLineStrings; ++i)
             {
-                WKBLineString* linestring = &geom->mlinestring.WKBLineStrings[i];
-                WalkLineString2Wkb(pOgcWkb+nOffset, linestring);
-                nOffset += SZLineStringSize(linestring);
+                OGRLineString* poLS = new OGRLineString();
+                if (!TranslateWalkLineString(poLS, &geom->mlinestring.WKBLineStrings[i]))
+                    return OGRERR_CORRUPT_DATA;
+                ((OGRMultiLineString *)poGeom)->addGeometryDirectly(poLS);
             }
         }
         break;
     case wkbMultiPolygon:
         {
-            pOgcWkb[0] = (unsigned char)ByteOrder();
-            unsigned int nGType = wkbMultiPolygon;
-            int nOffset = 9;
-            memcpy(pOgcWkb+1, &nGType, 4);
-            GUInt32 nCols = geom->mpolygon.num_wkbPolygons;
-            memcpy(pOgcWkb+5, &nCols, 4);
-            
-            for (GUInt32 i = 0; i < nCols; ++i)
+            for (GUInt32 i = 0; i < geom->mpolygon.num_wkbPolygons; ++i)
             {
-                WKBPolygon* polygon = &geom->mpolygon.WKBPolygons[i];
-                WalkPolygon2Wkb(pOgcWkb+nOffset, polygon);
-                nOffset += SZPolygonSize(polygon);
+                OGRPolygon* poPolygon = new OGRPolygon();
+                if (!TranslateWalkPolygon(poPolygon, &geom->mpolygon.WKBPolygons[i]))
+                    return OGRERR_CORRUPT_DATA;
+                ((OGRMultiPolygon *)poGeom)->addGeometryDirectly(poPolygon);
             }
         }
         break;
     case wkbGeometryCollection:
         {
-            pOgcWkb[0] = (unsigned char)ByteOrder();
-            unsigned int nGType = wkbGeometryCollection;
-            int nOffset = 9;
-            memcpy(pOgcWkb+1, &nGType, 4);
-            GUInt32 nCols = geom->mgeometries.num_wkbSGeometries;
-            memcpy(pOgcWkb+5, &nCols, 4);
-            
-            for (GUInt32 i = 0; i < nCols; ++i)
+            for (GUInt32 i = 0; i < geom->mgeometries.num_wkbSGeometries; ++i)
             {
                 WKBSimpleGeometry* sg = &geom->mgeometries.WKBGeometries[i];
                 switch (sg->wkbType)
                 {
-                    case wkbPoint: WalkPoint2Wkb(pOgcWkb+nOffset, &sg->point);
-                                   nOffset += SZPointSize(&sg->point);
-                                   break;
-                    case wkbLineString: WalkLineString2Wkb(pOgcWkb+nOffset, &sg->linestring);
-                                        nOffset += SZLineStringSize(&sg->linestring);
-                                        break;
-                    case wkbPolygon: WalkPolygon2Wkb(pOgcWkb+nOffset, &sg->polygon);
-                                     nOffset += SZPolygonSize(&sg->polygon);
-                                     break;
-                    default: break;
+                    case wkbPoint:
+                        {
+                            OGRPoint* poPoint = new OGRPoint();
+                            if (!TranslateWalkPoint(poPoint, &sg->point))
+                                return OGRERR_CORRUPT_DATA;
+                            ((OGRGeometryCollection *)poGeom)->addGeometryDirectly(poPoint);
+                        }
+                        break;
+                    case wkbLineString:
+                        {
+                            OGRLineString* poLS = new OGRLineString();
+                            if (!TranslateWalkLineString(poLS, &sg->linestring))
+                                return OGRERR_CORRUPT_DATA;
+                            ((OGRGeometryCollection *)poGeom)->addGeometryDirectly(poLS);
+                        }
+                        break;
+                    case wkbPolygon:
+                        {
+                            OGRPolygon* poPolygon = new OGRPolygon();    
+                            if (!TranslateWalkPolygon(poPolygon, &sg->polygon))
+                                return OGRERR_CORRUPT_DATA;
+                            ((OGRGeometryCollection *)poGeom)->addGeometryDirectly(poPolygon);
+                        }
+                        break;
+                    default: return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
                 }                
             }
         }
         break;
     default:
-        break;
+        return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
     }
 
-    return TRUE;
+    *ppoGeom = poGeom;
+
+    return OGRERR_NONE;
 }
 
 /************************************************************************/

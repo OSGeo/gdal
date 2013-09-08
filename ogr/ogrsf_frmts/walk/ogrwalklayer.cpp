@@ -60,7 +60,7 @@ OGRWalkLayer::~OGRWalkLayer()
 {
     if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
     {
-        CPLDebug( "OGR_Walk", "%d features read on layer '%s'.",
+        CPLDebug( "Walk", "%d features read on layer '%s'.",
                   (int) m_nFeaturesRead, 
                   poFeatureDefn->GetName() );
     }
@@ -159,10 +159,10 @@ CPLErr OGRWalkLayer::BuildFeatureDefn( const char *pszLayerName,
     }
 
     if( pszFIDColumn != NULL )
-        CPLDebug( "OGR_Walk", "Using column %s as FID for table %s.",
+        CPLDebug( "Walk", "Using column %s as FID for table %s.",
                   pszFIDColumn, poFeatureDefn->GetName() );
     else
-        CPLDebug( "OGR_Walk", "Table %s has no identified FID column.",
+        CPLDebug( "Walk", "Table %s has no identified FID column.",
                   poFeatureDefn->GetName() );
 
     return CE_None;
@@ -267,18 +267,13 @@ OGRFeature *OGRWalkLayer::GetNextRawFeature()
         if( pszGeomBin != NULL && bGeomColumnWKB )
         {
             WKBGeometry *WalkGeom = (WKBGeometry *)CPLMalloc(sizeof(WKBGeometry));
-            Binary2WkbGeom((unsigned char*)pszGeomBin, WalkGeom, nGeomLength);
-
-            int nWkbLength = SZWKBGeomSize(WalkGeom);
-            unsigned char* pszGeomWKB = (unsigned char*)CPLMalloc(nWkbLength);
-            WalkGeom2Wkb(pszGeomWKB, WalkGeom);
-
-            eErr =
-                OGRGeometryFactory::createFromWkb(pszGeomWKB, NULL, &poGeom, nWkbLength);
+            if( Binary2WkbGeom((unsigned char *)pszGeomBin, WalkGeom, nGeomLength) 
+                != OGRERR_NONE )
+                return NULL;
+            eErr = TranslateWalkGeom(&poGeom, WalkGeom);
 
             DeleteWKBGeometry(*WalkGeom);
             CPLFree(WalkGeom);
-            CPLFree(pszGeomWKB);
         }
 
         if ( eErr != OGRERR_NONE )
