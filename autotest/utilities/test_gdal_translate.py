@@ -401,7 +401,7 @@ def test_gdal_translate_15():
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -sds ../gdrivers/data/A.TOC tmp/test15.tif')
 
-    ds = gdal.Open('tmp/test15.tif1')
+    ds = gdal.Open('tmp/test15_1.tif')
     if ds is None:
         return 'fail'
 
@@ -686,7 +686,7 @@ def test_gdal_translate_cleanup():
         except:
             pass
     try:
-        os.remove('tmp/test15.tif1')
+        os.remove('tmp/test15_1.tif')
     except:
         pass
     try:
