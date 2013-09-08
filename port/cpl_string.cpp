@@ -918,7 +918,7 @@ char ** CSLTokenizeString2( const char * pszString,
     {
         // we prefer to return empty lists as a pointer to 
         // a null pointer since some client code might depend on this.
-        oRetList.Assign( (char**) CPLCalloc(sizeof(char**),1) );
+        oRetList.Assign( (char**) CPLCalloc(sizeof(char*),1) );
     }
 
     return oRetList.StealList();
