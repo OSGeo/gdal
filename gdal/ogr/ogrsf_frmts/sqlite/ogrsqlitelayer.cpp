@@ -1372,19 +1372,28 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         for( iRing = 0; iRing < nRingCount; iRing++ )
         {
             if( nBytes - nNextByte < 4 )
+            {
+                delete poPoly;
                 return OGRERR_NOT_ENOUGH_DATA;
+            }
 
             memcpy( &nPointCount, pabyData + nNextByte, 4 );
             if (NEED_SWAP_SPATIALITE())
                 CPL_SWAP32PTR( &nPointCount );
 
             if( nPointCount < 0 || nPointCount > INT_MAX / (2 * 8))
+            {
+                delete poPoly;
                 return OGRERR_CORRUPT_DATA;
+            }
 
             nNextByte += 4;
 
             if( nBytes - nNextByte < 2 * 8 * nPointCount )
+            {
+                delete poPoly;
                 return OGRERR_NOT_ENOUGH_DATA;
+            }
 
             poLR = new OGRLinearRing();
             poLR->setNumPoints( nPointCount );
@@ -1444,19 +1453,28 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         for( iRing = 0; iRing < nRingCount; iRing++ )
         {
             if( nBytes - nNextByte < 4 )
+            {
+                delete poPoly;
                 return OGRERR_NOT_ENOUGH_DATA;
+            }
 
             memcpy( &nPointCount, pabyData + nNextByte, 4 );
             if (NEED_SWAP_SPATIALITE())
                 CPL_SWAP32PTR( &nPointCount );
 
             if( nPointCount < 0 || nPointCount > INT_MAX / (3 * 8))
+            {
+                delete poPoly;
                 return OGRERR_CORRUPT_DATA;
+            }
 
             nNextByte += 4;
 
             if( nBytes - nNextByte < 3 * 8 * nPointCount )
+            {
+                delete poPoly;
                 return OGRERR_NOT_ENOUGH_DATA;
+            }
 
             poLR = new OGRLinearRing();
             poLR->setNumPoints( nPointCount );
@@ -1517,19 +1535,28 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         for( iRing = 0; iRing < nRingCount; iRing++ )
         {
             if( nBytes - nNextByte < 4 )
+            {
+                delete poPoly;
                 return OGRERR_NOT_ENOUGH_DATA;
+            }
 
             memcpy( &nPointCount, pabyData + nNextByte, 4 );
             if (NEED_SWAP_SPATIALITE())
                 CPL_SWAP32PTR( &nPointCount );
 
             if( nPointCount < 0 || nPointCount > INT_MAX / (3 * 8))
+            {
+                delete poPoly;
                 return OGRERR_CORRUPT_DATA;
+            }
 
             nNextByte += 4;
 
             if( nBytes - nNextByte < 3 * 8 * nPointCount )
+            {
+                delete poPoly;
                 return OGRERR_NOT_ENOUGH_DATA;
+            }
 
             poLR = new OGRLinearRing();
             poLR->setNumPoints( nPointCount );
@@ -1590,19 +1617,28 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         for( iRing = 0; iRing < nRingCount; iRing++ )
         {
             if( nBytes - nNextByte < 4 )
+            {
+                delete poPoly;
                 return OGRERR_NOT_ENOUGH_DATA;
+            }
 
             memcpy( &nPointCount, pabyData + nNextByte, 4 );
             if (NEED_SWAP_SPATIALITE())
                 CPL_SWAP32PTR( &nPointCount );
 
             if( nPointCount < 0 || nPointCount > INT_MAX / (4 * 8))
+            {
+                delete poPoly;
                 return OGRERR_CORRUPT_DATA;
+            }
 
             nNextByte += 4;
 
             if( nBytes - nNextByte < 4 * 8 * nPointCount )
+            {
+                delete poPoly;
                 return OGRERR_NOT_ENOUGH_DATA;
+            }
 
             poLR = new OGRLinearRing();
             poLR->setNumPoints( nPointCount );
@@ -1666,14 +1702,20 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         for( iRing = 0; iRing < nRingCount; iRing++ )
         {
             if( nBytes - nNextByte < 4 )
+            {
+                delete poPoly;
                 return OGRERR_NOT_ENOUGH_DATA;
+            }
 
             memcpy( &nPointCount, pabyData + nNextByte, 4 );
             if (NEED_SWAP_SPATIALITE())
                 CPL_SWAP32PTR( &nPointCount );
 
             if( nPointCount < 0 || nPointCount - 2 > (INT_MAX - 16 * 2) / 8)
+            {
+                delete poPoly;
                 return OGRERR_CORRUPT_DATA;
+            }
 
             compressedSize = 16 * 2;                  // first and last Points
             compressedSize += 8 * (nPointCount - 2);  // intermediate Points
@@ -1683,7 +1725,10 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
             adfTupleBase[1] = 0.0;
 
             if (nBytes - nNextByte < compressedSize )
+            {
+                delete poPoly;
                 return OGRERR_NOT_ENOUGH_DATA;
+            }
 
             poLR = new OGRLinearRing();
             poLR->setNumPoints( nPointCount );
@@ -1765,14 +1810,20 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         for( iRing = 0; iRing < nRingCount; iRing++ )
         {
             if( nBytes - nNextByte < 4 )
+            {
+                delete poPoly;
                 return OGRERR_NOT_ENOUGH_DATA;
+            }
 
             memcpy( &nPointCount, pabyData + nNextByte, 4 );
             if (NEED_SWAP_SPATIALITE())
                 CPL_SWAP32PTR( &nPointCount );
 
             if( nPointCount < 0 || nPointCount - 2 > (INT_MAX - 24 * 2) / 12)
+            {
+                delete poPoly;
                 return OGRERR_CORRUPT_DATA;
+            }
 
             compressedSize = 24 * 2;                  	// first and last Points
             compressedSize += 12 * (nPointCount - 2);  // intermediate Points
@@ -1783,7 +1834,10 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
             adfTupleBase[2] = 0.0;
 
             if (nBytes - nNextByte < compressedSize )
+            {
+                delete poPoly;
                 return OGRERR_NOT_ENOUGH_DATA;
+            }
 
             poLR = new OGRLinearRing();
             poLR->setNumPoints( nPointCount );
@@ -1869,7 +1923,10 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         for( iRing = 0; iRing < nRingCount; iRing++ )
         {
             if( nBytes - nNextByte < 4 )
+            {
+                delete poPoly;
                 return OGRERR_NOT_ENOUGH_DATA;
+            }
 
             memcpy( &nPointCount, pabyData + nNextByte, 4 );
             if (NEED_SWAP_SPATIALITE())
@@ -1877,7 +1934,10 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
 
 
             if( nPointCount < 0 || nPointCount - 2 > (INT_MAX - 24 * 2) / 16)
+            {
+                delete poPoly;
                 return OGRERR_CORRUPT_DATA;
+            }
 
             compressedSize = 24 * 2;                   // first and last Points
             compressedSize += 16 * (nPointCount - 2);  // intermediate Points
@@ -1887,7 +1947,10 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
 			adfTupleBase[1] = 0.0;
 
             if (nBytes - nNextByte < compressedSize )
+            {
+                delete poPoly;
                 return OGRERR_NOT_ENOUGH_DATA;
+            }
 
             poLR = new OGRLinearRing();
             poLR->setNumPoints( nPointCount );
@@ -1969,14 +2032,20 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         for( iRing = 0; iRing < nRingCount; iRing++ )
         {
             if( nBytes - nNextByte < 4 )
+            {
+                delete poPoly;
                 return OGRERR_NOT_ENOUGH_DATA;
+            }
 
             memcpy( &nPointCount, pabyData + nNextByte, 4 );
             if (NEED_SWAP_SPATIALITE())
                 CPL_SWAP32PTR( &nPointCount );
 
             if( nPointCount < 0 || nPointCount - 2 > (INT_MAX - 32 * 2) / 20)
+            {
+                delete poPoly;
                 return OGRERR_CORRUPT_DATA;
+            }
 
             compressedSize = 32 * 2;                   // first and last Points
             /* Note 20 is not an error : x,y,z are float and the m is a double */
@@ -1988,7 +2057,10 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
             adfTupleBase[2] = 0.0;
 
             if (nBytes - nNextByte < compressedSize )
+            {
+                delete poPoly;
                 return OGRERR_NOT_ENOUGH_DATA;
+            }
 
             poLR = new OGRLinearRing();
             poLR->setNumPoints( nPointCount );
@@ -2127,10 +2199,16 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
             OGRGeometry *poThisGeom = NULL;
 
             if (nBytes - nBytesUsed < 5)
+            {
+                delete poGC;
                 return OGRERR_NOT_ENOUGH_DATA;
+            }
 
             if (pabyData[nBytesUsed] != 0x69)
+            {
+                delete poGC;
                 return OGRERR_CORRUPT_DATA;
+            }
 
             nBytesUsed ++;
 
