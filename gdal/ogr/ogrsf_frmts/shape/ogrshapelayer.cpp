@@ -2260,6 +2260,7 @@ OGRErr OGRShapeLayer::Repack()
     {
         CPLFree( panRecordsToDelete );
         VSIUnlink( oTempFile );
+        DBFClose( hNewDBF );
         return eErr;
     }
 
@@ -2339,6 +2340,7 @@ OGRErr OGRShapeLayer::Repack()
             CPLFree( panRecordsToDelete );
             VSIUnlink( CPLResetExtension( oTempFile, "shp" ) );
             VSIUnlink( CPLResetExtension( oTempFile, "shx" ) );
+            SHPClose( hNewSHP );
             return eErr;
         }
 
