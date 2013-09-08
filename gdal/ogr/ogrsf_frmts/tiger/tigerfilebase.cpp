@@ -341,7 +341,7 @@ int TigerFileBase::WritePoint( char *pachRecord, int nStart,
 
     if( dfX == 0.0 && dfY == 0.0 )
     {
-        strncpy( pachRecord + nStart - 1, "+000000000+00000000", 19 );
+        memcpy( pachRecord + nStart - 1, "+000000000+00000000", 19 );
     }
     else
     {
