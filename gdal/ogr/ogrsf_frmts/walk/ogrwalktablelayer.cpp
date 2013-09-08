@@ -222,7 +222,7 @@ OGRErr OGRWalkTableLayer::ResetStatement()
     poStmt->Append( "Features" );
 
     /* Append attribute query if we have it */
-    if( pszQuery != NULL )
+    if( (pszQuery != NULL) && strcmp(pszQuery, "") )
         poStmt->Appendf( " WHERE %s", pszQuery );
 
     CPLDebug( "Walk", "ExecuteSQL(%s)", poStmt->GetCommand() );
@@ -332,7 +332,7 @@ int OGRWalkTableLayer::GetFeatureCount( int bForce )
     oStmt.Append( poFeatureDefn->GetName() );
     oStmt.Append( "Features" );
 
-    if( pszQuery != NULL )
+    if( (pszQuery != NULL) && strcmp(pszQuery, "") )
         oStmt.Appendf( " WHERE %s", pszQuery );
 
     if( !oStmt.ExecuteSQL() || !oStmt.Fetch() )

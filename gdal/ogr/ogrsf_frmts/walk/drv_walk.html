@@ -22,7 +22,7 @@
   Tools driver is used (check instructions below).</p>
   
   <p>OGR treats all feature tables as layers. Most geometry types
-  should be supported (curves are  converted into straight lines). Coordinate system information should be properly
+  should be supported (arcs and circles are translated into line segments, while other curves are currently converted into straight lines). Coordinate system information should be properly
   associated with layers. Currently no effort is made to preserve  styles and annotations.</p>
   <p>Currently the OGR Walk driver does not take
   advantage of spatial indexes for fast spatial queries.</p>
