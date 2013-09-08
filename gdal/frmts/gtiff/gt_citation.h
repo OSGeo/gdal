@@ -66,7 +66,7 @@ void GetGeogCSFromCitation(char* szGCSName, int nGCSName,
                           char	**ppszPMName,
                           char	**ppszSpheroidName,
                           char	**ppszAngularUnits);
-void CheckUTM( GTIFDefn * psDefn, char * pszCtString );
+void CheckUTM( GTIFDefn * psDefn, const char * pszCtString );
 
 
 #endif // GT_CITATION_H_INCLUDED
