@@ -1417,12 +1417,13 @@ void kml2FeatureDef (
             poKmlSchema->get_simplefield_array_at ( iSimpleField );
 
         const char *pszType = "string";
-    string osName = "Unknown";
+        string osName = "Unknown";
+        string osType;
 
         if ( poKmlSimpleField->has_type (  ) ) {
-            const string oType = poKmlSimpleField->get_type (  );
+            osType = poKmlSimpleField->get_type (  );
 
-            pszType = oType.c_str (  );
+            pszType = osType.c_str (  );
         }
 
         /* FIXME? We cannot set displayname as the field name because in kml2field() we make the */
