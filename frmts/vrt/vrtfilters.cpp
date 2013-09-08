@@ -79,11 +79,11 @@ void VRTFilteredSource::SetFilteringDataTypesSupported( int nTypeCount,
 
 {
     if( nTypeCount > 
-        (int) sizeof(sizeof(aeSupportedTypes)/sizeof(GDALDataType)) )
+        (int) (sizeof(aeSupportedTypes)/sizeof(GDALDataType)) )
     {
         CPLAssert( FALSE );
         nTypeCount = (int) 
-            sizeof(sizeof(aeSupportedTypes)/sizeof(GDALDataType));
+            (sizeof(aeSupportedTypes)/sizeof(GDALDataType));
     }
 
     nSupportedTypesCount = nTypeCount;
