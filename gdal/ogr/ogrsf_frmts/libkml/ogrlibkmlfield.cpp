@@ -453,6 +453,9 @@ void field2kml (
                 /***** icon *****/
 
                 else if ( EQUAL ( name, oFC.iconfield ) ) {
+
+                    CPLFree( pszUTF8String );
+
                     continue;
                 }
                 

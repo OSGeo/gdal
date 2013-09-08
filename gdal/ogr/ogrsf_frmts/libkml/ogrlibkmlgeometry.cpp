@@ -561,7 +561,6 @@ OGRGeometry *kml2geom_latlonbox_int (
 {
     OGRPolygon *poOgrPolygon;
     double north, south, east, west;
-    poOgrPolygon = new OGRPolygon (  );
     if ( !poKmlLatLonBox->has_north (  ) ||
          !poKmlLatLonBox->has_south (  ) ||
          !poKmlLatLonBox->has_east (  ) ||
@@ -569,6 +568,7 @@ OGRGeometry *kml2geom_latlonbox_int (
 
         return NULL;
     }
+    poOgrPolygon = new OGRPolygon (  );
     north = poKmlLatLonBox->get_north (  );
     south = poKmlLatLonBox->get_south (  );
     east = poKmlLatLonBox->get_east (  );
