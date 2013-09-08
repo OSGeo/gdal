@@ -211,7 +211,6 @@ int main( int argc, char ** argv )
             bValidate = TRUE;
         else if( argv[i][0] == '-' )
         {
-            CSLDestroy( argv );
             Usage(CPLSPrintf("Unknown option name '%s'", argv[i]));
         }
         else  
