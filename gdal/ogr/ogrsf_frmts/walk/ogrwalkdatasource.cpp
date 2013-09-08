@@ -89,7 +89,7 @@ int OGRWalkDataSource::Open( const char * pszNewName, int bUpdate )
 /* -------------------------------------------------------------------- */
 /*      Initialize based on the DSN.                                    */
 /* -------------------------------------------------------------------- */
-    CPLDebug( "OGR_Walk", "EstablishSession(%s)", pszDSN );
+    CPLDebug( "Walk", "EstablishSession(%s)", pszDSN );
 
     if( !oSession.EstablishSession( pszDSN, NULL, NULL ) )
     {
@@ -116,7 +116,7 @@ int OGRWalkDataSource::Open( const char * pszNewName, int bUpdate )
 
     if( !oStmt.ExecuteSQL() )
     {
-        CPLDebug( "OGR_Walk", 
+        CPLDebug( "Walk", 
                   "SELECT on WalkLayers fails, perhaps not a walk database?\n%s", 
                   oSession.GetLastError() );
         return FALSE;
@@ -205,7 +205,7 @@ OGRLayer * OGRWalkDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
     CPLODBCStatement *poStmt = new CPLODBCStatement( &oSession );
 
-    CPLDebug( "OGR_Walk", "ExecuteSQL(%s) called.", pszSQLCommand );
+    CPLDebug( "Walk", "ExecuteSQL(%s) called.", pszSQLCommand );
     poStmt->Append( pszSQLCommand );
     if( !poStmt->ExecuteSQL() )
     {

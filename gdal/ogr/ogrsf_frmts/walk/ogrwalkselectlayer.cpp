@@ -98,7 +98,7 @@ OGRErr OGRWalkSelectLayer::ResetStatement()
 
     iNextShapeId = 0;
 
-    CPLDebug( "OGR_Walk", "Recreating statement." );
+    CPLDebug( "Walk", "Recreating statement." );
     poStmt = new CPLODBCStatement( poDS->GetSession() );
     poStmt->Append( pszBaseStatement );
 
