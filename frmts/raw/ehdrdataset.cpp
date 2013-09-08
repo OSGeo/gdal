@@ -236,6 +236,7 @@ CPLErr EHdrRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                   "Failed to read %u bytes at offset %lu.\n%s",
                   nLineBytes, (unsigned long)nLineStart, 
                   VSIStrerror( errno ) );
+        CPLFree( pabyBuffer );
         return CE_Failure;
     }
 
@@ -300,6 +301,7 @@ CPLErr EHdrRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                   "Failed to read %u bytes at offset %lu.\n%s",
                   nLineBytes, (unsigned long)nLineStart, 
                   VSIStrerror( errno ) );
+        CPLFree( pabyBuffer );
         return CE_Failure;
     }
 
@@ -1830,6 +1832,7 @@ GDALDataset *EHdrDataset::CreateCopy( const char * pszFilename,
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "EHdr driver does not support source dataset with zero band.\n");
+        CSLDestroy( papszAdjustedOptions );
         return NULL;
     }
 
