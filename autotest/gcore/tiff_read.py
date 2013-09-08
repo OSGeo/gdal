@@ -618,6 +618,19 @@ def tiff_ProjectedCSTypeGeoKey_only():
     return 'success'
 
 ###############################################################################
+# Test reading a GeoTIFF with only GTModelTypeGeoKey defined
+
+def tiff_GTModelTypeGeoKey_only():
+
+    ds = gdal.Open('data/GTModelTypeGeoKey_only.tif')
+    if ds.GetProjectionRef().find('LOCAL_CS["unnamed",GEOGCS["unknown",DATUM["unknown",SPHEROID["unretrievable - using WGS84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT[,0.0174532925199433]],UNIT["unknown",1]]') != 0:
+        print(ds.GetProjectionRef())
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Test reading a 12bit jpeg compressed geotiff.
 
 def tiff_12bitjpeg():
@@ -1165,6 +1178,7 @@ gdaltest_list.append( (tiff_multi_images) )
 gdaltest_list.append( (tiff_vsimem) )
 gdaltest_list.append( (tiff_vsizip_and_mem) )
 gdaltest_list.append( (tiff_ProjectedCSTypeGeoKey_only) )
+gdaltest_list.append( (tiff_GTModelTypeGeoKey_only) )
 gdaltest_list.append( (tiff_12bitjpeg) )
 gdaltest_list.append( (tiff_read_stats_from_pam) )
 gdaltest_list.append( (tiff_read_from_tab) )
