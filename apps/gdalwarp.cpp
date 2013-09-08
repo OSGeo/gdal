@@ -2293,16 +2293,20 @@ RemoveConflictingMetadata( GDALMajorObjectH hObj, char **papszMetadata,
     int nCount = CSLCount( papszMetadataRef ); 
 
     for( int i = 0; i < nCount; i++ ) 
-    { 
+    {
+        pszKey = NULL;
         pszValueRef = CPLParseNameValue( papszMetadataRef[i], &pszKey ); 
-        pszValueComp = GDALGetMetadataItem( hObj, pszKey, NULL );
-        if ( ( pszValueRef == NULL || pszValueComp == NULL ||
-               ! EQUAL( pszValueRef, pszValueComp ) ) &&
-             ( pszValueComp == NULL ||
-               ! EQUAL( pszValueComp, pszValueConflict ) ) ) {
-            GDALSetMetadataItem( hObj, pszKey, pszValueConflict, NULL ); 
+        if( pszKey != NULL )
+        {
+            pszValueComp = GDALGetMetadataItem( hObj, pszKey, NULL );
+            if ( ( pszValueRef == NULL || pszValueComp == NULL ||
+                ! EQUAL( pszValueRef, pszValueComp ) ) &&
+                ( pszValueComp == NULL ||
+                ! EQUAL( pszValueComp, pszValueConflict ) ) ) {
+                GDALSetMetadataItem( hObj, pszKey, pszValueConflict, NULL ); 
+            }
+            CPLFree( pszKey );
         }
-        CPLFree( pszKey ); 
     } 
 
     CSLDestroy( papszMetadataRef );
