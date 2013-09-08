@@ -250,7 +250,7 @@ void ods_formula_node::Dump( FILE * fp, int depth )
     char        spaces[60];
     int         i;
 
-    for( i = 0; i < depth*2 && i < (int) sizeof(spaces); i++ )
+    for( i = 0; i < depth*2 && i < (int) sizeof(spaces) - 1; i++ )
         spaces[i] = ' ';
     spaces[i] = '\0';
 
