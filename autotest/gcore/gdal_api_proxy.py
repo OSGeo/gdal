@@ -374,7 +374,7 @@ def gdal_api_proxy_sub():
         return 'fail'
 
     rat = ds.GetRasterBand(1).GetDefaultRAT()
-    if rat is None:
+    if rat is not None:
         gdaltest.post_reason('fail')
         return 'fail'
  
