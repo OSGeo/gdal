@@ -281,6 +281,54 @@ def transformer_5():
         return 'fail'
 
     tr = None
+
+    # Test RPC_DEMINTERPOLATION=cubic
+
+    tr = gdal.Transformer( ds, None, [ 'METHOD=RPC', 'RPC_HEIGHT_SCALE=2', 'RPC_DEM=/vsimem/dem.tif', 'RPC_DEMINTERPOLATION=cubic' ] )
+
+    (success,pnt) = tr.TransformPoint( 0, 20, 10, 0 )
+
+    if not success \
+       or abs(pnt[0]-125.64828521533849) > 0.000001 \
+       or abs(pnt[1]-39.869345204440144) > 0.000001 :
+        print(success, pnt)
+        gdaltest.post_reason( 'got wrong forward transform result.(4)' )
+        return 'fail'
+
+    (success,pnt) = tr.TransformPoint( 1, pnt[0], pnt[1], pnt[2] )
+
+    if not success \
+       or abs(pnt[0]-20) > 0.001 \
+       or abs(pnt[1]-10) > 0.001 :
+        print(success, pnt)
+        gdaltest.post_reason( 'got wrong reverse transform result.(4)' )
+        return 'fail'
+
+    tr = None
+
+    # Test RPC_DEMINTERPOLATION=near
+
+    tr = gdal.Transformer( ds, None, [ 'METHOD=RPC', 'RPC_HEIGHT_SCALE=2', 'RPC_DEM=/vsimem/dem.tif', 'RPC_DEMINTERPOLATION=near' ] )
+
+    (success,pnt) = tr.TransformPoint( 0, 20, 10, 0 )
+
+    if not success \
+       or abs(pnt[0]-125.64830100509131) > 0.000001 \
+       or abs(pnt[1]-39.869433991997553) > 0.000001 :
+        print(success, pnt)
+        gdaltest.post_reason( 'got wrong forward transform result.(4)' )
+        return 'fail'
+
+    (success,pnt) = tr.TransformPoint( 1, pnt[0], pnt[1], pnt[2] )
+
+    if not success \
+       or abs(pnt[0]-20) > 0.001 \
+       or abs(pnt[1]-10) > 0.001 :
+        print(success, pnt)
+        gdaltest.post_reason( 'got wrong reverse transform result.(4)' )
+        return 'fail'
+
+    tr = None
     gdal.Unlink('/vsimem/dem.tif')
 
     return 'success' 
