@@ -72,7 +72,6 @@ struct LineString;
 
 typedef Point3D Point;       //3D by default
 typedef Point Vector;        //Space Vector    {dx, dy, dz}
-typedef Point WKBPoint;
 
 /**************************************************************************/
 /* Curves are continuous, connected and have a measurable length in terms */
@@ -90,7 +89,7 @@ typedef Point WKBPoint;
 
 enum wkLineType {
     wkLineTypePoint        =0,   // Point
-    wkLineTypeStraight    =1,    // Strightline
+    wkLineTypeStraight    =1,    // Straightline
     wkLineTypeBezier    =2,      // Bezier
     wkLineType3PArc        =3,   // 3-point Arc; Three points are defined
     wkLineTypeRArc        =4,    // Radius Arc; Three points are defined
