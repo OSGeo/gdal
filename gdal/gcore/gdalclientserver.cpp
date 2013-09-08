@@ -2463,6 +2463,7 @@ static int GDALServerLoop(GDALPipe* p,
             int nBandCount;
             int *panBandList = NULL;
             char** papszOptions = NULL;
+            int nLength = 0;
             if( !GDALPipeRead(p, &nXOff) ||
                 !GDALPipeRead(p, &nYOff) ||
                 !GDALPipeRead(p, &nXSize) ||
@@ -2471,8 +2472,32 @@ static int GDALServerLoop(GDALPipe* p,
                 !GDALPipeRead(p, &nBufYSize) ||
                 !GDALPipeRead(p, &nDT) ||
                 !GDALPipeRead(p, &nBandCount) ||
-                !GDALPipeRead(p, nBandCount, &panBandList) ||
-                !GDALPipeRead(p, &papszOptions) )
+                !GDALPipeRead(p, &nLength) )
+            {
+                break;
+            }
+
+            /* panBandList can be NULL, hence the following test */
+            /* to check if we have band numbers to actually read */
+            if( nLength != 0 )
+            {
+                if( nLength != (int)sizeof(int) * nBandCount )
+                {
+                    break;
+                }
+
+                panBandList = (int*) VSIMalloc(nLength);
+                if( panBandList == NULL )
+                    break;
+
+                if( !GDALPipeRead_nolength(p, nLength, (void*)panBandList) )
+                {
+                    VSIFree(panBandList);
+                    break;
+                }
+            }
+
+            if (!GDALPipeRead(p, &papszOptions) )
             {
                 CPLFree(panBandList);
                 CSLDestroy(papszOptions);
@@ -3982,7 +4007,7 @@ CPLErr GDALClientDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSi
         !GDALPipeWrite(p, nBufYSize) ||
         !GDALPipeWrite(p, eDT) ||
         !GDALPipeWrite(p, nBandCount) ||
-        !GDALPipeWrite(p, nBandCount * sizeof(int), panBandList) ||
+        !GDALPipeWrite(p, panBandList ? nBandCount * sizeof(int) : 0, panBandList) ||
         !GDALPipeWrite(p, papszOptions) )
         return CE_Failure;
     return CPLErrOnlyRet(p);
