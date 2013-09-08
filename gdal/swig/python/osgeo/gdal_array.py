@@ -125,7 +125,7 @@ def OpenArray( array, prototype_ds = None ):
     
     
 def flip_code(code):
-    if isinstance(code, type):
+    if isinstance(code, (numpy.dtype,type)):
         # since several things map to complex64 we must carefully select
         # the opposite that is an exact match (ticket 1518)
         if code == numpy.int8:
@@ -144,7 +144,7 @@ def flip_code(code):
             return None
 
 def NumericTypeCodeToGDALTypeCode(numeric_type):
-    if not isinstance(numeric_type, type):
+    if not isinstance(numeric_type, (numpy.dtype,type)):
         raise TypeError("Input must be a type")
     return flip_code(numeric_type)
 
