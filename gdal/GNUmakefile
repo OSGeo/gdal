@@ -18,7 +18,7 @@ LIBGDAL-$(HAVE_LD_SHARED)	+=	$(GDAL_SLIB)
 # override if we are using libtool
 LIBGDAL-$(HAVE_LIBTOOL)	:= $(LIBGDAL)
 
-default:	lib-target apps-target swig-target
+default:	lib-target apps-target swig-target gdal.pc
 
 lib-target:	check-lib;
 
@@ -180,7 +180,8 @@ ifneq ($(BINDINGS),)
 endif
 	for f in LICENSE.TXT data/*.* ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_DATA) ; done
 	$(LIBTOOL_FINISH) $(DESTDIR)$(INST_LIB)
-
+	$(INSTALL_DIR) $(DESTDIR)$(INST_LIB)/pkgconfig
+	$(INSTALL_DATA) gdal.pc $(DESTDIR)$(INST_LIB)/pkgconfig/gdal.pc
 
 ifeq ($(HAVE_LIBTOOL),yes)
 
@@ -235,3 +236,12 @@ endif # HAVE_LD_SHARED=no
 
 endif # HAVE_LIBTOOL=no 
 
+
+gdal.pc:	gdal.pc.in GDALmake.opt ./GNUmakefile VERSION
+	rm -f gdal.pc
+	echo 'CONFIG_VERSION='`cat ./VERSION`'' >> gdal.pc
+	echo 'CONFIG_INST_PREFIX=$(INST_PREFIX)' >> gdal.pc
+	echo 'CONFIG_INST_LIBS=$(CONFIG_LIBS_INS)' >> gdal.pc
+	echo 'CONFIG_INST_CFLAGS=-I$(INST_INCLUDE)' >> gdal.pc
+	echo 'CONFIG_INST_DATA=$(INST_DATA)/data' >> gdal.pc
+	cat gdal.pc.in >> gdal.pc
