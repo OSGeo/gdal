@@ -510,8 +510,6 @@ try_again:
      }
 
      poFeatureDefn->SetGeomType(eGeomType);
-     if( poFeatureDefn->GetGeomFieldCount() != 0 )
-         poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 
      if( eGeometryStyle == VGS_WKT
          || eGeometryStyle == VGS_WKB
@@ -739,6 +737,9 @@ try_again:
 /*      Is VRT layer definition identical to the source layer defn ?    */
 /*      If so, use it directly, and save the translation of features.   */
 /* -------------------------------------------------------------------- */
+     if( poFeatureDefn->GetGeomFieldCount() != 0 )
+         poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
+
      if (poSrcFeatureDefn != NULL && iFIDField == -1 && iStyleField == -1 &&
          eGeometryStyle == VGS_Direct &&
          poSrcFeatureDefn->IsSame(poFeatureDefn))
@@ -747,6 +748,14 @@ try_again:
         poFeatureDefn->Release();
         poFeatureDefn = poSrcFeatureDefn;
         poFeatureDefn->Reference();
+        if ( poFeatureDefn->GetGeomFieldCount() != 0 )
+        {
+            if( poSRS != NULL )
+                poSRS->Release();
+            poSRS = poFeatureDefn->GetGeomFieldDefn(0)->GetSpatialRef();
+            if( poSRS != NULL )
+                poSRS->Reference();
+        }
      }
 
 /* -------------------------------------------------------------------- */

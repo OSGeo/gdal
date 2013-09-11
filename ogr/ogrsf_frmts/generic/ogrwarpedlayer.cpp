@@ -46,6 +46,8 @@ OGRWarpedLayer::OGRWarpedLayer( OGRLayer* poDecoratedLayer,
 {
     CPLAssert(poCT != NULL);
 
+    m_poFeatureDefn = NULL;
+
     if( m_poCT->GetTargetCS() != NULL )
     {
         m_poSRS = m_poCT->GetTargetCS();
@@ -61,6 +63,8 @@ OGRWarpedLayer::OGRWarpedLayer( OGRLayer* poDecoratedLayer,
 
 OGRWarpedLayer::~OGRWarpedLayer()
 {
+    if( m_poFeatureDefn != NULL )
+        m_poFeatureDefn->Release();
     if( m_poSRS != NULL )
         m_poSRS->Release();
     delete m_poCT;
@@ -131,6 +135,59 @@ void OGRWarpedLayer::SetSpatialFilterRect( int iGeomField, double dfMinX, double
     OGRLayer::SetSpatialFilterRect(iGeomField, dfMinX, dfMinY, dfMaxX, dfMaxY);
 }
 
+
+/************************************************************************/
+/*                     SrcFeatureToWarpedFeature()                      */
+/************************************************************************/
+
+OGRFeature *OGRWarpedLayer::SrcFeatureToWarpedFeature(OGRFeature* poSrcFeature)
+{
+    OGRFeature* poFeature = new OGRFeature(GetLayerDefn());
+    poFeature->SetFrom(poSrcFeature);
+    poFeature->SetFID(poSrcFeature->GetFID());
+
+    OGRGeometry* poGeom = poFeature->GetGeometryRef();
+    if( poGeom == NULL )
+        return poFeature;
+
+    if( poGeom->transform(m_poCT) != OGRERR_NONE )
+    {
+        delete poFeature->StealGeometry();
+    }
+
+    return poFeature;
+}
+
+
+/************************************************************************/
+/*                     WarpedFeatureToSrcFeature()                      */
+/************************************************************************/
+
+OGRFeature *OGRWarpedLayer::WarpedFeatureToSrcFeature(OGRFeature* poFeature)
+{
+    OGRFeature* poSrcFeature = new OGRFeature(m_poDecoratedLayer->GetLayerDefn());
+    poSrcFeature->SetFrom(poFeature);
+    poSrcFeature->SetFID(poFeature->GetFID());
+
+    OGRGeometry* poGeom = poSrcFeature->GetGeometryRef();
+    if( poGeom != NULL )
+    {
+        if( m_poReversedCT == NULL )
+        {
+            delete poSrcFeature;
+            return NULL;
+        }
+
+        if( poGeom->transform(m_poReversedCT) != OGRERR_NONE )
+        {
+            delete poSrcFeature;
+            return NULL;
+        }
+    }
+
+    return poSrcFeature;
+}
+
 /************************************************************************/
 /*                          GetNextFeature()                            */
 /************************************************************************/
@@ -143,23 +200,17 @@ OGRFeature *OGRWarpedLayer::GetNextFeature()
         if( poFeature == NULL )
             return NULL;
 
-        OGRGeometry* poGeom = poFeature->GetGeometryRef();
-        if( poGeom == NULL )
-            return poFeature;
+        OGRFeature* poFeatureNew = SrcFeatureToWarpedFeature(poFeature);
+        delete poFeature;
 
-        if( poGeom->transform(m_poCT) != OGRERR_NONE )
+        OGRGeometry* poGeom = poFeatureNew->GetGeometryRef();
+        if( m_poFilterGeom != NULL && !FilterGeometry( poGeom ) )
         {
-            delete poFeature->StealGeometry();
+            delete poFeatureNew;
+            continue;
         }
-        else
-        {
-            if( m_poFilterGeom != NULL && !FilterGeometry( poGeom ) )
-            {
-                delete poFeature;
-                continue;
-            }
-        }
-        return poFeature;
+
+        return poFeatureNew;
     }
 }
 
@@ -172,11 +223,9 @@ OGRFeature *OGRWarpedLayer::GetFeature( long nFID )
     OGRFeature* poFeature = m_poDecoratedLayer->GetFeature(nFID);
     if( poFeature != NULL )
     {
-        OGRGeometry* poGeom = poFeature->GetGeometryRef();
-        if( poGeom != NULL && poGeom->transform(m_poCT) != OGRERR_NONE )
-        {
-            delete poFeature->StealGeometry();
-        }
+        OGRFeature* poFeatureNew = SrcFeatureToWarpedFeature(poFeature);
+        delete poFeature;
+        poFeature = poFeatureNew;
     }
     return poFeature;
 }
@@ -187,31 +236,15 @@ OGRFeature *OGRWarpedLayer::GetFeature( long nFID )
 
 OGRErr      OGRWarpedLayer::SetFeature( OGRFeature *poFeature )
 {
-    OGRGeometry* poOrigGeom = poFeature->GetGeometryRef();
     OGRErr eErr;
 
-    if( poOrigGeom != NULL )
-    {
-        if( m_poReversedCT == NULL )
-            return OGRERR_FAILURE;
+    OGRFeature* poFeatureNew = WarpedFeatureToSrcFeature(poFeature);
+    if( poFeatureNew == NULL )
+        return OGRERR_FAILURE;
 
-        OGRGeometry* poTransformedGeom = poOrigGeom->clone();
-        if( poTransformedGeom->transform(m_poReversedCT) != OGRERR_NONE )
-        {
-            delete poTransformedGeom;
-            return OGRERR_FAILURE;
-        }
-        poFeature->StealGeometry();
-        poFeature->SetGeometryDirectly(poTransformedGeom);
+    eErr = m_poDecoratedLayer->SetFeature(poFeatureNew);
 
-        eErr = m_poDecoratedLayer->SetFeature(poFeature);
-
-        poFeature->StealGeometry();
-        poFeature->SetGeometryDirectly(poOrigGeom);
-        delete poTransformedGeom;
-    }
-    else
-        eErr = m_poDecoratedLayer->SetFeature(poFeature);
+    delete poFeatureNew;
 
     return eErr;
 }
@@ -222,33 +255,35 @@ OGRErr      OGRWarpedLayer::SetFeature( OGRFeature *poFeature )
 
 OGRErr      OGRWarpedLayer::CreateFeature( OGRFeature *poFeature )
 {
-    OGRGeometry* poOrigGeom = poFeature->GetGeometryRef();
     OGRErr eErr;
 
-    if( poOrigGeom != NULL )
-    {
-        if( m_poReversedCT == NULL )
-            return OGRERR_FAILURE;
+    OGRFeature* poFeatureNew = WarpedFeatureToSrcFeature(poFeature);
+    if( poFeatureNew == NULL )
+        return OGRERR_FAILURE;
+   
+    eErr = m_poDecoratedLayer->CreateFeature(poFeatureNew);
 
-        OGRGeometry* poTransformedGeom = poOrigGeom->clone();
-        if( poTransformedGeom->transform(m_poReversedCT) != OGRERR_NONE )
-        {
-            delete poTransformedGeom;
-            return OGRERR_FAILURE;
-        }
-        poFeature->StealGeometry();
-        poFeature->SetGeometryDirectly(poTransformedGeom);
-
-        eErr = m_poDecoratedLayer->CreateFeature(poFeature);
-
-        poFeature->StealGeometry();
-        poFeature->SetGeometryDirectly(poOrigGeom);
-        delete poTransformedGeom;
-    }
-    else
-        eErr = m_poDecoratedLayer->CreateFeature(poFeature);
+    delete poFeatureNew;
 
     return eErr;
+}
+
+
+/************************************************************************/
+/*                            GetLayerDefn()                           */
+/************************************************************************/
+
+OGRFeatureDefn *OGRWarpedLayer::GetLayerDefn()
+{
+    if( m_poFeatureDefn != NULL )
+        return m_poFeatureDefn;
+
+    m_poFeatureDefn = m_poDecoratedLayer->GetLayerDefn()->Clone();
+    m_poFeatureDefn->Reference();
+    if( m_poFeatureDefn->GetGeomFieldCount() > 0 )
+        m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(m_poSRS);
+
+    return m_poFeatureDefn;
 }
 
 /************************************************************************/
@@ -259,6 +294,7 @@ OGRSpatialReference *OGRWarpedLayer::GetSpatialRef()
 {
     return m_poSRS;
 }
+
 /************************************************************************/
 /*                           GetFeatureCount()                          */
 /************************************************************************/
