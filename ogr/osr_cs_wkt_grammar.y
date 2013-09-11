@@ -167,11 +167,12 @@ geographic_cs:
                     angular_unit opt_twin_axis_authority_extension end_node
 
 datum:
-    T_DATUM begin_node_name ',' spheroid opt_towgs84_authority end_node
+    T_DATUM begin_node_name ',' spheroid opt_towgs84_authority_extension end_node
 
-opt_towgs84_authority:
-    | ',' towgs84 opt_authority
-    | ',' authority
+opt_towgs84_authority_extension:
+    | ',' towgs84 opt_authority_extension
+    | ',' authority opt_extension
+    | ',' extension
 
 spheroid:
     T_SPHEROID begin_node_name ',' semi_major_axis ','
