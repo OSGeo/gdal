@@ -223,8 +223,7 @@
 #undef sqlite3_vtab_config
 #undef sqlite3_vtab_on_conflict
 
-/* To make compilation work on systems with older sqlite3 */
-typedef struct sqlite3_backup sqlite3_backup;
+typedef struct sqlite3_backup ogr_sqlite3_backup;
 
 /*
 ** 2006 June 7
@@ -438,11 +437,11 @@ struct sqlite3_api_routines {
   sqlite3_stmt *(*next_stmt)(sqlite3*,sqlite3_stmt*);
   const char *(*sql)(sqlite3_stmt*);
   int (*status)(int,int*,int*,int);
-  int (*backup_finish)(sqlite3_backup*);
-  sqlite3_backup *(*backup_init)(sqlite3*,const char*,sqlite3*,const char*);
-  int (*backup_pagecount)(sqlite3_backup*);
-  int (*backup_remaining)(sqlite3_backup*);
-  int (*backup_step)(sqlite3_backup*,int);
+  int (*backup_finish)(ogr_sqlite3_backup*);
+  ogr_sqlite3_backup *(*backup_init)(sqlite3*,const char*,sqlite3*,const char*);
+  int (*backup_pagecount)(ogr_sqlite3_backup*);
+  int (*backup_remaining)(ogr_sqlite3_backup*);
+  int (*backup_step)(ogr_sqlite3_backup*,int);
   const char *(*compileoption_get)(int);
   int (*compileoption_used)(const char*);
   int (*create_function_v2)(sqlite3*,const char*,int,int,void*,
