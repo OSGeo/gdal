@@ -321,13 +321,18 @@ OGRPGDumpDataSource::CreateLayer( const char * pszLayerName,
 /*      Try to get the SRS Id of this spatial reference system,         */
 /*      adding tot the srs table if needed.                             */
 /* -------------------------------------------------------------------- */
-    int nSRSId = -1;
+    int nUnknownSRSId = -1;
     const char* pszPostgisVersion = CSLFetchNameValue( papszOptions, "POSTGIS_VERSION" );
     if( pszPostgisVersion != NULL && atoi(pszPostgisVersion) >= 2 )
-        nSRSId = 0;
+        nUnknownSRSId = 0;
 
+    int nSRSId = nUnknownSRSId;
+    int nForcedSRSId = -2;
     if( CSLFetchNameValue( papszOptions, "SRID") != NULL )
+    {
         nSRSId = atoi(CSLFetchNameValue( papszOptions, "SRID"));
+        nForcedSRSId = nSRSId;
+    }
     else
     {
         if (poSRS)
@@ -347,7 +352,7 @@ OGRPGDumpDataSource::CreateLayer( const char * pszLayerName,
         }
     }
 
-    CPLString osEscapedTableNameSingleQuote = OGRPGDumpEscapeString(pszTableName, -1, "");
+    CPLString osEscapedTableNameSingleQuote = OGRPGDumpEscapeString(pszTableName);
     const char* pszEscapedTableNameSingleQuote = osEscapedTableNameSingleQuote.c_str();
 
     const char *pszGeometryType = OGRToOGCGeomType(eType);
@@ -451,7 +456,9 @@ OGRPGDumpDataSource::CreateLayer( const char * pszLayerName,
         Log(osCommand);
     }
 
-    if( bCreateTable && bHavePostGIS )
+    const char *pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );
+    int bCreateSpatialIndex = ( pszSI == NULL || CSLTestBoolean(pszSI) );
+    if( bCreateTable && bHavePostGIS && bCreateSpatialIndex )
     {
 /* -------------------------------------------------------------------- */
 /*      Create the spatial index.                                       */
@@ -459,16 +466,12 @@ OGRPGDumpDataSource::CreateLayer( const char * pszLayerName,
 /*      We're doing this before we add geometry and record to the table */
 /*      so this may not be exactly the best way to do it.               */
 /* -------------------------------------------------------------------- */
-        const char *pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );
-        if( pszSI == NULL || CSLTestBoolean(pszSI) )
-        {
-            osCommand.Printf("CREATE INDEX \"%s_geom_idx\" "
-                            "ON \"%s\".\"%s\" "
-                            "USING GIST (\"%s\")",
-                    pszTableName, pszSchemaName, pszTableName, pszGFldName);
+        osCommand.Printf("CREATE INDEX \"%s_%s_geom_idx\" "
+                        "ON \"%s\".\"%s\" "
+                        "USING GIST (\"%s\")",
+                pszTableName, pszGFldName, pszSchemaName, pszTableName, pszGFldName);
 
-            Log(osCommand);
-        }
+        Log(osCommand);
     }
 
 /* -------------------------------------------------------------------- */
@@ -478,13 +481,26 @@ OGRPGDumpDataSource::CreateLayer( const char * pszLayerName,
 
     int bWriteAsHex = !CSLFetchBoolean(papszOptions,"WRITE_EWKT_GEOM",FALSE);
 
-    poLayer = new OGRPGDumpLayer( this, pszSchemaName, pszTableName, pszGFldName,
-                                  pszFIDColumnName, nDimension, nSRSId, bWriteAsHex, bCreateTable );
+    poLayer = new OGRPGDumpLayer( this, pszSchemaName, pszTableName,
+                                  pszFIDColumnName, bWriteAsHex, bCreateTable );
     poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
     poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
 
     const char* pszOverrideColumnTypes = CSLFetchNameValue( papszOptions, "COLUMN_TYPES" );
     poLayer->SetOverrideColumnTypes(pszOverrideColumnTypes);
+    poLayer->SetUnknownSRSId(nUnknownSRSId);
+    poLayer->SetForcedSRSId(nForcedSRSId);
+    poLayer->SetCreateSpatialIndexFlag(bCreateSpatialIndex);
+
+    if( bHavePostGIS )
+    {
+        OGRGeomFieldDefn oTmp( pszGFldName, eType );
+        OGRPGDumpGeomFieldDefn *poGeomField =
+            new OGRPGDumpGeomFieldDefn(&oTmp);
+        poGeomField->nSRSId = nSRSId;
+        poGeomField->nCoordDimension = nDimension;
+        poLayer->GetLayerDefn()->AddGeomFieldDefn(poGeomField, FALSE);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
@@ -508,6 +524,8 @@ int OGRPGDumpDataSource::TestCapability( const char * pszCap )
 
 {
     if( EQUAL(pszCap,ODsCCreateLayer) )
+        return TRUE;
+    else if( EQUAL(pszCap,ODsCCreateGeomFieldAfterCreateLayer) )
         return TRUE;
     else
         return FALSE;

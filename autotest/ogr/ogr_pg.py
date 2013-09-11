@@ -859,6 +859,7 @@ def ogr_pg_19():
 
     if max(minx, maxx, miny, maxy) > 0.0001:
         gdaltest.post_reason( 'Extents do not match' )
+        print(extent)
         return 'fail'
 
     return 'success'
@@ -1754,7 +1755,7 @@ def ogr_pg_37():
     return 'success'
 
 ###############################################################################
-# Test support for multiple geometry columns (#1476)
+# Test support for multiple geometry columns (RFC 41)
 
 def ogr_pg_38():
     if gdaltest.pg_ds is None or not gdaltest.pg_has_postgis:
@@ -1776,83 +1777,65 @@ def ogr_pg_38():
 
     lyr = ds.GetLayerByName( 'table37_inherited' )
     if lyr is None:
+        gdaltest.post_reason( 'fail' )
         return 'fail'
-    if gdaltest.pg_has_postgis and lyr.GetGeomType() != ogr.wkbPoint:
+    gfld_defn = lyr.GetLayerDefn().GetGeomFieldDefn(lyr.GetLayerDefn().GetGeomFieldIndex("wkb_geometry"))
+    if gfld_defn is None:
+        gdaltest.post_reason( 'fail' )
         return 'fail'
-
-    try:
-        if lyr.GetGeometryColumn() != 'wkb_geometry':
-            gdaltest.post_reason( 'wrong geometry column name' )
-            return 'fail'
-    except:
-        pass
+    if gfld_defn.GetType() != ogr.wkbPoint:
+        gdaltest.post_reason( 'fail' )
+        return 'fail'
+    if lyr.GetLayerDefn().GetGeomFieldCount() != 3:
+        gdaltest.post_reason( 'fail' )
+        print(lyr.GetLayerDefn().GetGeomFieldCount())
+        for i in range(lyr.GetLayerDefn().GetGeomFieldCount()):
+            print(lyr.GetLayerDefn().GetGeomFieldDefn(i).GetName())
+        return 'fail'
 
     # Explicit query to 'table37_inherited(wkb_geometry)' should also work
     lyr = ds.GetLayerByName( 'table37_inherited(wkb_geometry)' )
     if lyr is None:
-        return 'fail'
-
-
-    # Check for the layer with the new 'pointBase' geometry column inherited from table37_base
-    found = ogr_pg_check_layer_in_list(ds, 'table37_inherited(pointBase)')
-    if found is False:
-        gdaltest.post_reason( 'layer table37_inherited(pointBase) not listed' )
+        gdaltest.post_reason( 'fail' )
         return 'fail'
 
     lyr = ds.GetLayerByName( 'table37_inherited(pointBase)' )
     if lyr is None:
+        gdaltest.post_reason( 'fail' )
         return 'fail'
-    if gdaltest.pg_has_postgis and lyr.GetGeomType() != ogr.wkbPoint:
+    if lyr.GetGeomType() != ogr.wkbPoint:
+        gdaltest.post_reason( 'fail' )
         return 'fail'
-
-    try:
-        if lyr.GetGeometryColumn() != 'pointBase':
-            gdaltest.post_reason( 'wrong geometry column name' )
-            return 'fail'
-    except:
-        pass
-
-
-    # Check for the layer with the new 'point25D' geometry column
-    found = ogr_pg_check_layer_in_list(ds, 'table37_inherited(point25D)')
-    if found is False:
-        gdaltest.post_reason( 'layer table37_inherited(point25D) not listed' )
+    if lyr.GetGeometryColumn() != 'pointBase':
+        gdaltest.post_reason( 'wrong geometry column name' )
         return 'fail'
 
     lyr = ds.GetLayerByName( 'table37_inherited(point25D)' )
     if lyr is None:
+        gdaltest.post_reason( 'fail' )
         return 'fail'
-    if gdaltest.pg_has_postgis and lyr.GetGeomType() != ogr.wkbPoint25D:
+    if lyr.GetGeomType() != ogr.wkbPoint25D:
+        gdaltest.post_reason( 'fail' )
         return 'fail'
-
-    try:
-        if lyr.GetGeometryColumn() != 'point25D':
-            gdaltest.post_reason( 'wrong geometry column name' )
-            return 'fail'
-    except:
-        pass
+    if lyr.GetGeometryColumn() != 'point25D':
+        gdaltest.post_reason( 'wrong geometry column name' )
+        return 'fail'
 
     ds.Destroy()
 
     # Check for the layer with the new 'point25D' geometry column when tables= is specified
     ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string + ' tables=table37_inherited(point25D)', update = 1 )
-    found = ogr_pg_check_layer_in_list(ds, 'table37_inherited(point25D)')
-    if found is False:
-        gdaltest.post_reason( 'layer table37_inherited(point25D) not listed' )
-        return 'fail'
 
     lyr = ds.GetLayerByName( 'table37_inherited(point25D)' )
     if lyr is None:
+        gdaltest.post_reason( 'fail' )
         return 'fail'
-    if gdaltest.pg_has_postgis and lyr.GetGeomType() != ogr.wkbPoint25D:
+    if lyr.GetGeomType() != ogr.wkbPoint25D:
+        gdaltest.post_reason( 'fail' )
         return 'fail'
-
-    try:
-        if lyr.GetGeometryColumn() != 'point25D':
-            gdaltest.post_reason( 'wrong geometry column name' )
-            return 'fail'
-    except:
-        pass
+    if lyr.GetGeometryColumn() != 'point25D':
+        gdaltest.post_reason( 'wrong geometry column name' )
+        return 'fail'
 
     ds.Destroy()
 
@@ -1890,22 +1873,21 @@ def ogr_pg_39():
     lyr = ds.GetLayerByName( 'testview' )
     if lyr is None:
         return 'fail'
-    if gdaltest.pg_has_postgis and lyr.GetGeomType() != ogr.wkbPoint:
-        return 'fail'
-
-    try:
-        if lyr.GetGeometryColumn() != 'wkb_geometry':
-            gdaltest.post_reason( 'wrong geometry column name' )
+    if gdaltest.pg_has_postgis:
+        gfld_defn = lyr.GetLayerDefn().GetGeomFieldDefn(lyr.GetLayerDefn().GetGeomFieldIndex("wkb_geometry"))
+        if gfld_defn is None:
+            gdaltest.post_reason( 'fail' )
             return 'fail'
-    except:
-        pass
+        if gfld_defn.GetType() != ogr.wkbPoint:
+            gdaltest.post_reason( 'fail' )
+            return 'fail'
 
     feat = lyr.GetNextFeature()
     if feat is None:
         gdaltest.post_reason( 'no feature')
         return 'fail'
 
-    if feat.GetGeometryRef() is None or feat.GetGeometryRef().ExportToWkt() != 'POINT (0 1)':
+    if feat.GetGeomFieldRef("wkb_geometry") is None or feat.GetGeomFieldRef("wkb_geometry").ExportToWkt() != 'POINT (0 1)':
         gdaltest.post_reason( 'bad geometry %s' % feat.GetGeometryRef().ExportToWkt())
         return 'fail'
 
@@ -1921,10 +1903,6 @@ def ogr_pg_39():
     found = ogr_pg_check_layer_in_list(ds, 'testview')
     if found is False:
         gdaltest.post_reason( 'layer testview not listed' )
-        return 'fail'
-    found = ogr_pg_check_layer_in_list(ds, 'testview(point25D)')
-    if found is False:
-        gdaltest.post_reason( 'layer testview(point25D) not listed' )
         return 'fail'
 
     lyr = ds.GetLayerByName( 'testview(point25D)' )
@@ -3109,6 +3087,160 @@ def ogr_pg_64():
     return 'success' 
 
 ###############################################################################
+# Test RFC 41
+
+def ogr_pg_65():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    if not gdaltest.pg_has_postgis:
+        return 'skip'
+
+    ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update = 1)
+    if ds.TestCapability(ogr.ODsCCreateGeomFieldAfterCreateLayer) == 0:
+        gdaltest.post_reason('fail')
+        return 'fail' 
+    lyr = ds.CreateLayer('ogr_pg_65', geom_type = ogr.wkbNone)
+    if lyr.TestCapability(ogr.OLCCreateGeomField) == 0:
+        gdaltest.post_reason('fail')
+        return 'fail' 
+    gfld_defn = ogr.GeomFieldDefn('geom1', ogr.wkbPoint)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    gfld_defn.SetSpatialRef(srs)
+    if lyr.CreateGeomField(gfld_defn) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gfld_defn = ogr.GeomFieldDefn('geom2', ogr.wkbLineString25D)
+    if lyr.CreateGeomField(gfld_defn) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr.CreateField(ogr.FieldDefn('intfield', ogr.OFTInteger))
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField('intfield', 123)
+    feat.SetGeomFieldDirectly('geom1', ogr.CreateGeometryFromWkt('POINT (1 2)'))
+    feat.SetGeomFieldDirectly('geom2', ogr.CreateGeometryFromWkt('LINESTRING (3 4 5,6 7 8)'))
+    if lyr.CreateFeature(feat) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    if lyr.CreateFeature(feat) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+    if feat.GetField('intfield') != 123 or \
+       feat.GetGeomFieldRef('geom1').ExportToWkt() != 'POINT (1 2)' or \
+       feat.GetGeomFieldRef('geom2').ExportToWkt() != 'LINESTRING (3 4 5,6 7 8)':
+        feat.DumpReadable()
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = lyr.GetNextFeature()
+    if feat.GetGeomFieldRef('geom1') is not None or \
+       feat.GetGeomFieldRef('geom2') is not None:
+        feat.DumpReadable()
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = None
+    for i in range(2):
+        ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
+        if i == 0:
+            lyr = ds.GetLayerByName('ogr_pg_65')
+        else:
+            lyr = ds.ExecuteSQL('SELECT * FROM ogr_pg_65')
+        if lyr.GetLayerDefn().GetGeomFieldDefn(0).GetName() != 'geom1':
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if i == 0 and lyr.GetLayerDefn().GetGeomFieldDefn(0).GetType() != ogr.wkbPoint:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if lyr.GetLayerDefn().GetGeomFieldDefn(0).GetSpatialRef().ExportToWkt().find('4326') < 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if lyr.GetLayerDefn().GetGeomFieldDefn(1).GetName() != 'geom2':
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if i == 0 and lyr.GetLayerDefn().GetGeomFieldDefn(1).GetType() != ogr.wkbLineString25D:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if lyr.GetLayerDefn().GetGeomFieldDefn(1).GetSpatialRef() is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        feat = lyr.GetNextFeature()
+        if feat.GetField('intfield') != 123 or \
+        feat.GetGeomFieldRef('geom1').ExportToWkt() != 'POINT (1 2)' or \
+        feat.GetGeomFieldRef('geom2').ExportToWkt() != 'LINESTRING (3 4 5,6 7 8)':
+            feat.DumpReadable()
+            gdaltest.post_reason('fail')
+            return 'fail'
+        feat = lyr.GetNextFeature()
+        if feat.GetGeomFieldRef('geom1') is not None or \
+           feat.GetGeomFieldRef('geom2') is not None:
+            feat.DumpReadable()
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if i == 1:
+            ds.ReleaseResultSet(lyr)
+
+    gdal.SetConfigOption('PG_USE_COPY', 'YES')
+    ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update = 1)
+    lyr = ds.GetLayerByName('ogr_pg_65')
+    lyr.DeleteFeature(1)
+    lyr.DeleteFeature(2)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeomFieldDirectly('geom1', ogr.CreateGeometryFromWkt('POINT (3 4)'))
+    feat.SetGeomFieldDirectly('geom2', ogr.CreateGeometryFromWkt('LINESTRING (4 5 6,7 8 9)'))
+    if lyr.CreateFeature(feat) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    if lyr.CreateFeature(feat) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.SetConfigOption('PG_USE_COPY', 'NO')
+
+    ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
+    lyr = ds.GetLayerByName('ogr_pg_65')
+    feat = lyr.GetNextFeature()
+    if feat.GetGeomFieldRef('geom1').ExportToWkt() != 'POINT (3 4)' or \
+       feat.GetGeomFieldRef('geom2').ExportToWkt() != 'LINESTRING (4 5 6,7 8 9)':
+        feat.DumpReadable()
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = lyr.GetNextFeature()
+    if feat.GetGeomFieldRef('geom1') is not None or \
+        feat.GetGeomFieldRef('geom2') is not None:
+        feat.DumpReadable()
+        gdaltest.post_reason('fail')
+        return 'fail'
+    return 'success' 
+
+###############################################################################
+# Run test_ogrsf
+
+def ogr_pg_66():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    if not gdaltest.pg_has_postgis:
+        return 'skip'
+
+    import test_cli_utilities
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        return 'skip'
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' "' + 'PG:' + gdaltest.pg_connection_string + '" ogr_pg_65')
+
+    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+        print(ret)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_pg_table_cleanup():
@@ -3148,6 +3280,7 @@ def ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_60' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_61' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_63' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_65' )
     
     # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.tpoly' )
@@ -3244,6 +3377,8 @@ gdaltest_list_internal = [
     ogr_pg_62,
     ogr_pg_63,
     ogr_pg_64,
+    ogr_pg_65,
+    ogr_pg_66,
     ogr_pg_cleanup ]
 
 ###############################################################################

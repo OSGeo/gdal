@@ -90,11 +90,7 @@ OGRPGLayer::OGRPGLayer()
 {
     poDS = NULL;
 
-    bHasWkb = FALSE;
     bWkbAsOid = FALSE;
-    bHasPostGISGeometry = FALSE;
-    bHasPostGISGeography = FALSE;
-    pszGeomColumn = NULL;
     pszQueryStatement = NULL;
 
     bHasFid = FALSE;
@@ -103,19 +99,15 @@ OGRPGLayer::OGRPGLayer()
     iNextShapeId = 0;
     nResultOffset = 0;
 
-    nCoordDimension = 2; // initialize in case PostGIS is not available
-
-    poSRS = NULL;
-    nSRSId = UNDETERMINED_SRID; // we haven't even queried the database for it yet.
-
     pszCursorName = CPLStrdup(CPLSPrintf("OGRPGLayerReader%p", this));
-    
+
     hCursorResult = NULL;
 
     bCanUseBinaryCursor = TRUE;
 
     poFeatureDefn = NULL;
     panMapFieldNameToIndex = NULL;
+    panMapFieldNameToGeomIndex = NULL;
 }
 
 /************************************************************************/
@@ -134,17 +126,17 @@ OGRPGLayer::~OGRPGLayer()
 
     ResetReading();
 
-    CPLFree( pszGeomColumn );
     CPLFree( pszFIDColumn );
     CPLFree( pszQueryStatement );
     CPLFree( panMapFieldNameToIndex );
+    CPLFree( panMapFieldNameToGeomIndex );
     CPLFree( pszCursorName );
 
-    if( poSRS != NULL )
-        poSRS->Release();
-
     if( poFeatureDefn )
+    {
+        poFeatureDefn->UnsetLayer();
         poFeatureDefn->Release();
+    }
 }
 
 /************************************************************************/
@@ -635,11 +627,16 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
 /* -------------------------------------------------------------------- */
 /*      Handle PostGIS geometry                                         */
 /* -------------------------------------------------------------------- */
-
-        if( bHasPostGISGeometry || bHasPostGISGeography )
+        int iOGRGeomField = panMapFieldNameToGeomIndex[iField];
+        OGRPGGeomFieldDefn* poGeomFieldDefn = NULL;
+        if( iOGRGeomField >= 0 )
+            poGeomFieldDefn = poFeatureDefn->myGetGeomFieldDefn(iOGRGeomField);
+        if( iOGRGeomField >= 0 && (
+                poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOMETRY ||
+                poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOGRAPHY) )
         {
             if ( !poDS->bUseBinaryCursor &&
-                 EQUAL(pszFieldName,"BinaryBase64") )
+                 EQUALN(pszFieldName,"BinaryBase64", strlen("BinaryBase64")) )
             {
                 GByte* pabyData = (GByte*)PQgetvalue( hCursorResult,
                                                         iRecord, iField);
@@ -656,14 +653,14 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
 
                 if( poGeom != NULL )
                 {
-                    poGeom->assignSpatialReference( poSRS );
-                    poFeature->SetGeometryDirectly( poGeom );
+                    poGeom->assignSpatialReference( poGeomFieldDefn->GetSpatialRef() );
+                    poFeature->SetGeomFieldDirectly(iOGRGeomField,  poGeom );
                 }
 
                 continue;
             }
-            else if ( EQUAL(pszFieldName,"ST_AsBinary") ||
-                 EQUAL(pszFieldName,"AsBinary") )
+            else if ( EQUALN(pszFieldName,"ST_AsBinary", strlen("ST_AsBinary")) ||
+                      EQUALN(pszFieldName,"AsBinary", strlen("AsBinary")) )
             {
                 GByte* pabyVal = (GByte*) PQgetvalue( hCursorResult,
                                              iRecord, iField);
@@ -689,14 +686,14 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
                 
                 if( poGeom != NULL )
                 {
-                    poGeom->assignSpatialReference( poSRS );
-                    poFeature->SetGeometryDirectly( poGeom );
+                    poGeom->assignSpatialReference( poGeomFieldDefn->GetSpatialRef() );
+                    poFeature->SetGeomFieldDirectly(iOGRGeomField,  poGeom );
                 }
 
                 continue;
             }
             else if ( !poDS->bUseBinaryCursor &&
-                      EQUAL(pszFieldName,"EWKBBase64") )
+                      EQUALN(pszFieldName,"EWKBBase64",strlen("EWKBBase64")) )
             {
                 GByte* pabyData = (GByte*)PQgetvalue( hCursorResult,
                                                         iRecord, iField);
@@ -712,14 +709,13 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
 
                 if( poGeom != NULL )
                 {
-                    poGeom->assignSpatialReference( poSRS );
-                    poFeature->SetGeometryDirectly( poGeom );
+                    poGeom->assignSpatialReference( poGeomFieldDefn->GetSpatialRef() );
+                    poFeature->SetGeomFieldDirectly(iOGRGeomField,  poGeom );
                 }
 
                 continue;
             }
-            else if ( (poDS->bUseBinaryCursor &&
-                       (EQUAL(pszFieldName,pszGeomColumn))) ||
+            else if ( poDS->bUseBinaryCursor ||
                       EQUAL(pszFieldName,"ST_AsEWKB") ||
                       EQUAL(pszFieldName,"AsEWKB") )
             {
@@ -754,17 +750,16 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
 
                 if( poGeom != NULL )
                 {
-                    poGeom->assignSpatialReference( poSRS );
-                    poFeature->SetGeometryDirectly( poGeom );
+                    poGeom->assignSpatialReference( poGeomFieldDefn->GetSpatialRef() );
+                    poFeature->SetGeomFieldDirectly(iOGRGeomField,  poGeom );
                 }
 
                 continue;
             }
-            else if (EQUAL(pszFieldName,pszGeomColumn) ||
-                     EQUAL(pszFieldName,"asEWKT") ||
+            else /*if (EQUAL(pszFieldName,"asEWKT") ||
                      EQUAL(pszFieldName,"asText") ||
                      EQUAL(pszFieldName,"ST_AsEWKT") ||
-                     EQUAL(pszFieldName,"ST_AsText") )
+                     EQUAL(pszFieldName,"ST_AsText") )*/
             {
                 /* Handle WKT */
                 char        *pszWKT;
@@ -793,8 +788,8 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
                                                     &poGeometry );
                 if( poGeometry != NULL )
                 {
-                    poGeometry->assignSpatialReference( poSRS );
-                    poFeature->SetGeometryDirectly( poGeometry );
+                    poGeometry->assignSpatialReference( poGeomFieldDefn->GetSpatialRef() );
+                    poFeature->SetGeomFieldDirectly(iOGRGeomField,  poGeometry );
                 }
 
                 continue;
@@ -804,7 +799,8 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
 /*      Handle raw binary geometry ... this hasn't been tested in a     */
 /*      while.                                                          */
 /* -------------------------------------------------------------------- */
-        else if( EQUAL(pszFieldName,"WKB_GEOMETRY") )
+        else if( iOGRGeomField >= 0 && 
+                 poGeomFieldDefn->ePostgisType == GEOM_TYPE_WKB )
         {
             OGRGeometry *poGeometry = NULL;
             GByte* pabyData = (GByte*) PQgetvalue( hCursorResult, iRecord, iField);
@@ -833,8 +829,8 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
 
             if( poGeometry != NULL )
             {
-                poGeometry->assignSpatialReference( poSRS );
-                poFeature->SetGeometryDirectly( poGeometry );
+                poGeometry->assignSpatialReference( poGeomFieldDefn->GetSpatialRef() );
+                poFeature->SetGeomFieldDirectly(iOGRGeomField,  poGeometry );
             }
 
             continue;
@@ -1278,6 +1274,24 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
 }
 
 /************************************************************************/
+/*                    OGRPGIsKnownGeomFuncPrefix()                      */
+/************************************************************************/
+
+static const char* papszKnownGeomFuncPrefixes[] = {
+    "ST_AsBinary", "BinaryBase64", "ST_AsEWKT", "ST_AsEWKB", "EWKBBase64",
+    "ST_AsText", "AsBinary", "asEWKT", "asEWKB", "asText" };
+static int OGRPGIsKnownGeomFuncPrefix(const char* pszFieldName)
+{
+    for(size_t i=0; i<sizeof(papszKnownGeomFuncPrefixes) / sizeof(char*); i++)
+    {
+        if( EQUALN(pszFieldName, papszKnownGeomFuncPrefixes[i],
+                   strlen(papszKnownGeomFuncPrefixes[i])) )
+            return i;
+    }
+    return -1;
+}
+
+/************************************************************************/
 /*                CreateMapFromFieldNameToIndex()                       */
 /************************************************************************/
 
@@ -1289,16 +1303,39 @@ void OGRPGLayer::CreateMapFromFieldNameToIndex()
 {
     CPLFree(panMapFieldNameToIndex);
     panMapFieldNameToIndex = NULL;
+    CPLFree(panMapFieldNameToGeomIndex);
+    panMapFieldNameToGeomIndex = NULL;
     if ( PQresultStatus(hCursorResult)  == PGRES_TUPLES_OK )
     {
         panMapFieldNameToIndex =
+                (int*)CPLMalloc(sizeof(int) * PQnfields(hCursorResult));
+        panMapFieldNameToGeomIndex =
                 (int*)CPLMalloc(sizeof(int) * PQnfields(hCursorResult));
         for( int iField = 0;
             iField < PQnfields(hCursorResult);
             iField++ )
         {
+            const char* pszName = PQfname(hCursorResult,iField);
             panMapFieldNameToIndex[iField] =
-                    poFeatureDefn->GetFieldIndex(PQfname(hCursorResult,iField));
+                    poFeatureDefn->GetFieldIndex(pszName);
+            if( panMapFieldNameToIndex[iField] < 0 )
+            {
+                panMapFieldNameToGeomIndex[iField] =
+                        poFeatureDefn->GetGeomFieldIndex(pszName);
+                if( panMapFieldNameToGeomIndex[iField] < 0 )
+                {
+                    int iKnownPrefix = OGRPGIsKnownGeomFuncPrefix(pszName);
+                    if( iKnownPrefix >= 0 &&
+                        pszName[ strlen(papszKnownGeomFuncPrefixes[iKnownPrefix]) ] == '_' )
+                    {
+                        panMapFieldNameToGeomIndex[iField] =
+                            poFeatureDefn->GetGeomFieldIndex(pszName +
+                            strlen(papszKnownGeomFuncPrefixes[iKnownPrefix]) + 1);
+                    }
+                }
+            }
+            else
+                panMapFieldNameToGeomIndex[iField] = -1;
         }
     }
 }
@@ -1868,37 +1905,6 @@ OGRErr OGRPGLayer::RollbackTransaction()
 }
 
 /************************************************************************/
-/*                           GetSpatialRef()                            */
-/************************************************************************/
-
-OGRSpatialReference *OGRPGLayer::GetSpatialRef()
-
-{
-    if (nSRSId == UNDETERMINED_SRID)
-        GetLayerDefn();
-
-    if( poSRS == NULL && nSRSId > 0 )
-    {
-        poSRS = poDS->FetchSRS( nSRSId );
-        if( poSRS != NULL )
-            poSRS->Reference();
-    }
-
-    return poSRS;
-}
-
-/************************************************************************/
-/*                             GetSRID()                                */
-/************************************************************************/
-
-int OGRPGLayer::GetSRID()
-{
-    if (nSRSId == UNDETERMINED_SRID)
-        GetSpatialRef();
-    return nSRSId;
-};
-
-/************************************************************************/
 /*                            GetFIDColumn()                            */
 /************************************************************************/
 
@@ -1914,18 +1920,62 @@ const char *OGRPGLayer::GetFIDColumn()
 }
 
 /************************************************************************/
-/*                         GetGeometryColumn()                          */
+/*                             GetExtent()                              */
+/*                                                                      */
+/*      For PostGIS use internal Extend(geometry) function              */
+/*      in other cases we use standard OGRLayer::GetExtent()            */
 /************************************************************************/
 
-const char *OGRPGLayer::GetGeometryColumn() 
-
+OGRErr OGRPGLayer::GetExtent( int iGeomField, OGREnvelope *psExtent, int bForce )
 {
-    GetLayerDefn();
+    CPLString   osCommand;
 
-    if( pszGeomColumn != NULL )
-        return pszGeomColumn;
+    if( iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount() ||
+        GetLayerDefn()->GetGeomFieldDefn(iGeomField)->GetType() == wkbNone )
+    {
+        if( iGeomField != 0 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid geometry field index : %d", iGeomField);
+        }
+        return OGRERR_FAILURE;
+    }
+
+    OGRPGGeomFieldDefn* poGeomFieldDefn =
+        poFeatureDefn->myGetGeomFieldDefn(iGeomField);
+
+    const char* pszExtentFct;
+    if (poDS->sPostGISVersion.nMajor >= 2)
+        pszExtentFct = "ST_Extent";
     else
-        return "";
+        pszExtentFct = "Extent";
+
+    if ( TestCapability(OLCFastGetExtent) )
+    {
+        /* Do not take the spatial filter into account */
+        osCommand.Printf( "SELECT %s(%s) FROM %s AS ogrpgextent",
+                          pszExtentFct,
+                          OGRPGEscapeColumnName(poGeomFieldDefn->GetNameRef()).c_str(),
+                          GetFromClauseForGetExtent().c_str() );
+    }
+    else if ( poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOGRAPHY )
+    {
+        /* Probably not very efficient, but more efficient than client-side implementation */
+        osCommand.Printf( "SELECT %s(ST_GeomFromWKB(ST_AsBinary(%s))) FROM %s AS ogrpgextent",
+                          pszExtentFct,
+                          OGRPGEscapeColumnName(poGeomFieldDefn->GetNameRef()).c_str(),
+                          GetFromClauseForGetExtent().c_str() );
+    }
+
+    if( osCommand.size() != 0 )
+    {
+        if( RunGetExtentRequest(psExtent, bForce, osCommand) == OGRERR_NONE )
+            return OGRERR_NONE;
+    }
+    if( iGeomField == 0 )
+        return OGRLayer::GetExtent( psExtent, bForce );
+    else
+        return OGRLayer::GetExtent( iGeomField, psExtent, bForce );
 }
 
 /************************************************************************/
@@ -1938,75 +1988,70 @@ OGRErr OGRPGLayer::RunGetExtentRequest( OGREnvelope *psExtent, int bForce,
     if ( psExtent == NULL )
         return OGRERR_FAILURE;
 
-    if ( TestCapability(OLCFastGetExtent) || bHasPostGISGeography )
+    PGconn      *hPGConn = poDS->GetPGConn();
+    PGresult    *hResult = NULL;
+
+    hResult = OGRPG_PQexec( hPGConn, osCommand );
+    if( ! hResult || PQresultStatus(hResult) != PGRES_TUPLES_OK || PQgetisnull(hResult,0,0) )
     {
-        PGconn      *hPGConn = poDS->GetPGConn();
-        PGresult    *hResult = NULL;
-
-        hResult = OGRPG_PQexec( hPGConn, osCommand );
-        if( ! hResult || PQresultStatus(hResult) != PGRES_TUPLES_OK || PQgetisnull(hResult,0,0) )
-        {
-            OGRPGClearResult( hResult );
-            CPLDebug("PG","Unable to get extent by PostGIS. Using standard OGRLayer method.");
-            return OGRPGLayer::GetExtent( psExtent, bForce );
-        }
-
-        char * pszBox = PQgetvalue(hResult,0,0);
-        char * ptr, *ptrEndParenthesis;
-        char szVals[64*6+6];
-
-        ptr = strchr(pszBox, '(');
-        if (ptr)
-            ptr ++;
-        if (ptr == NULL ||
-            (ptrEndParenthesis = strchr(ptr, ')')) == NULL ||
-            ptrEndParenthesis - ptr > (int)(sizeof(szVals) - 1))
-        {
-            CPLError( CE_Failure, CPLE_IllegalArg,
-                      "Bad extent representation: '%s'", pszBox);
-
-            OGRPGClearResult( hResult );
-            return OGRERR_FAILURE;
-        }
-
-        strncpy(szVals,ptr,ptrEndParenthesis - ptr);
-        szVals[ptrEndParenthesis - ptr] = '\0';
-
-        char ** papszTokens = CSLTokenizeString2(szVals," ,",CSLT_HONOURSTRINGS);
-        int nTokenCnt = poDS->sPostGISVersion.nMajor >= 1 ? 4 : 6;
-
-        if ( CSLCount(papszTokens) != nTokenCnt )
-        {
-            CPLError( CE_Failure, CPLE_IllegalArg,
-                      "Bad extent representation: '%s'", pszBox);
-            CSLDestroy(papszTokens);
-
-            OGRPGClearResult( hResult );
-            return OGRERR_FAILURE;
-        }
-
-        // Take X,Y coords
-        // For PostGis ver >= 1.0.0 -> Tokens: X1 Y1 X2 Y2 (nTokenCnt = 4)
-        // For PostGIS ver < 1.0.0 -> Tokens: X1 Y1 Z1 X2 Y2 Z2 (nTokenCnt = 6)
-        // =>   X2 index calculated as nTokenCnt/2
-        //      Y2 index caluclated as nTokenCnt/2+1
-        
-        psExtent->MinX = CPLAtof( papszTokens[0] );
-        psExtent->MinY = CPLAtof( papszTokens[1] );
-        psExtent->MaxX = CPLAtof( papszTokens[nTokenCnt/2] );
-        psExtent->MaxY = CPLAtof( papszTokens[nTokenCnt/2+1] );
-
-        CSLDestroy(papszTokens);
         OGRPGClearResult( hResult );
-
-        return OGRERR_NONE;
+        CPLDebug("PG","Unable to get extent by PostGIS. Using standard OGRLayer method.");
+        return OGRERR_FAILURE;
     }
 
-    return OGRLayer::GetExtent( psExtent, bForce );
+    char * pszBox = PQgetvalue(hResult,0,0);
+    char * ptr, *ptrEndParenthesis;
+    char szVals[64*6+6];
+
+    ptr = strchr(pszBox, '(');
+    if (ptr)
+        ptr ++;
+    if (ptr == NULL ||
+        (ptrEndParenthesis = strchr(ptr, ')')) == NULL ||
+        ptrEndParenthesis - ptr > (int)(sizeof(szVals) - 1))
+    {
+        CPLError( CE_Failure, CPLE_IllegalArg,
+                    "Bad extent representation: '%s'", pszBox);
+
+        OGRPGClearResult( hResult );
+        return OGRERR_FAILURE;
+    }
+
+    strncpy(szVals,ptr,ptrEndParenthesis - ptr);
+    szVals[ptrEndParenthesis - ptr] = '\0';
+
+    char ** papszTokens = CSLTokenizeString2(szVals," ,",CSLT_HONOURSTRINGS);
+    int nTokenCnt = poDS->sPostGISVersion.nMajor >= 1 ? 4 : 6;
+
+    if ( CSLCount(papszTokens) != nTokenCnt )
+    {
+        CPLError( CE_Failure, CPLE_IllegalArg,
+                    "Bad extent representation: '%s'", pszBox);
+        CSLDestroy(papszTokens);
+
+        OGRPGClearResult( hResult );
+        return OGRERR_FAILURE;
+    }
+
+    // Take X,Y coords
+    // For PostGis ver >= 1.0.0 -> Tokens: X1 Y1 X2 Y2 (nTokenCnt = 4)
+    // For PostGIS ver < 1.0.0 -> Tokens: X1 Y1 Z1 X2 Y2 Z2 (nTokenCnt = 6)
+    // =>   X2 index calculated as nTokenCnt/2
+    //      Y2 index caluclated as nTokenCnt/2+1
+    
+    psExtent->MinX = CPLAtof( papszTokens[0] );
+    psExtent->MinY = CPLAtof( papszTokens[1] );
+    psExtent->MaxX = CPLAtof( papszTokens[nTokenCnt/2] );
+    psExtent->MaxY = CPLAtof( papszTokens[nTokenCnt/2+1] );
+
+    CSLDestroy(papszTokens);
+    OGRPGClearResult( hResult );
+
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
-/*                         GetLayerDefn()                              */
+/*                          GetLayerDefn()                              */
 /************************************************************************/
 
 OGRFeatureDefn * OGRPGLayer::GetLayerDefn()
@@ -2020,7 +2065,7 @@ OGRFeatureDefn * OGRPGLayer::GetLayerDefn()
 /*      Build a schema from the current resultset.                      */
 /************************************************************************/
 
-OGRFeatureDefn *OGRPGLayer::ReadResultDefinition(PGresult *hInitialResultIn)
+int OGRPGLayer::ReadResultDefinition(PGresult *hInitialResultIn)
 
 {
     PGresult            *hResult = hInitialResultIn;
@@ -2028,10 +2073,10 @@ OGRFeatureDefn *OGRPGLayer::ReadResultDefinition(PGresult *hInitialResultIn)
 /* -------------------------------------------------------------------- */
 /*      Parse the returned table information.                           */
 /* -------------------------------------------------------------------- */
-    OGRFeatureDefn *poDefn = new OGRFeatureDefn( "sql_statement" );
+    poFeatureDefn = new OGRPGFeatureDefn( "sql_statement" );
     int            iRawField;
 
-    poDefn->Reference();
+    poFeatureDefn->Reference();
 
     for( iRawField = 0; iRawField < PQnfields(hResult); iRawField++ )
     {
@@ -2040,6 +2085,7 @@ OGRFeatureDefn *OGRPGLayer::ReadResultDefinition(PGresult *hInitialResultIn)
 
         nTypeOID = PQftype(hResult,iRawField);
 
+        int iGeomFuncPrefix;
         if( EQUAL(oField.GetNameRef(),"ogc_fid") )
         {
             if (bHasFid)
@@ -2052,37 +2098,38 @@ OGRFeatureDefn *OGRPGLayer::ReadResultDefinition(PGresult *hInitialResultIn)
             pszFIDColumn = CPLStrdup(oField.GetNameRef());
             continue;
         }
-        else if( nTypeOID == poDS->GetGeometryOID()  ||
-                 nTypeOID == poDS->GetGeographyOID()  ||
-                 EQUAL(oField.GetNameRef(),"ST_AsBinary") ||
-                 EQUAL(oField.GetNameRef(),"BinaryBase64") ||
-                 EQUAL(oField.GetNameRef(),"ST_AsEWKT") ||
-                 EQUAL(oField.GetNameRef(),"ST_AsEWKB") ||
-                 EQUAL(oField.GetNameRef(),"EWKBBase64") ||
-                 EQUAL(oField.GetNameRef(),"ST_AsText") ||
-                 EQUAL(oField.GetNameRef(),"AsBinary") ||
-                 EQUAL(oField.GetNameRef(),"asEWKT") ||
-                 EQUAL(oField.GetNameRef(),"asEWKB") ||
-                 EQUAL(oField.GetNameRef(),"asText") )
+        else if( (iGeomFuncPrefix =
+                    OGRPGIsKnownGeomFuncPrefix(oField.GetNameRef())) >= 0 ||
+                 nTypeOID == poDS->GetGeometryOID()  ||
+                 nTypeOID == poDS->GetGeographyOID()  )
         {
-            if (bHasPostGISGeometry || bHasPostGISGeography )
+            OGRPGGeomFieldDefn* poGeomFieldDefn =
+                new OGRPGGeomFieldDefn(this, oField.GetNameRef());
+            if( iGeomFuncPrefix >= 0 &&
+                oField.GetNameRef()[strlen(
+                    papszKnownGeomFuncPrefixes[iGeomFuncPrefix])] == '_' )
             {
-                CPLError(CE_Warning, CPLE_AppDefined,
-                         "More than one geometry column was found in the result of the SQL request. Only last one will be used");
+                poGeomFieldDefn->SetName( oField.GetNameRef() +
+                    strlen(papszKnownGeomFuncPrefixes[iGeomFuncPrefix]) + 1 );
             }
             if (nTypeOID == poDS->GetGeographyOID())
-                bHasPostGISGeography = TRUE;
+            {
+                poGeomFieldDefn->ePostgisType = GEOM_TYPE_GEOGRAPHY;
+                poGeomFieldDefn->nSRSId = 4326;
+            }
             else
-                bHasPostGISGeometry = TRUE;
-            CPLFree(pszGeomColumn);
-            pszGeomColumn = CPLStrdup(oField.GetNameRef());
+                poGeomFieldDefn->ePostgisType = GEOM_TYPE_GEOMETRY;
+            poFeatureDefn->AddGeomFieldDefn(poGeomFieldDefn, FALSE);
             continue;
         }
         else if( EQUAL(oField.GetNameRef(),"WKB_GEOMETRY") )
         {
-            bHasWkb = TRUE;
             if( nTypeOID == OIDOID )
                 bWkbAsOid = TRUE;
+            OGRPGGeomFieldDefn* poGeomFieldDefn =
+                new OGRPGGeomFieldDefn(this, oField.GetNameRef());
+            poGeomFieldDefn->ePostgisType = GEOM_TYPE_WKB;
+            poFeatureDefn->AddGeomFieldDefn(poGeomFieldDefn, FALSE);
             continue;
         }
 
@@ -2193,8 +2240,28 @@ OGRFeatureDefn *OGRPGLayer::ReadResultDefinition(PGresult *hInitialResultIn)
             oField.SetType( OFTString );
         }
 
-        poDefn->AddFieldDefn( &oField );
+        poFeatureDefn->AddFieldDefn( &oField );
     }
 
-    return poDefn;
+    return TRUE;
+}
+
+/************************************************************************/
+/*                          GetSpatialRef()                             */
+/************************************************************************/
+
+OGRSpatialReference* OGRPGGeomFieldDefn::GetSpatialRef()
+{
+    if( poLayer == NULL )
+        return NULL;
+    if (nSRSId == UNDETERMINED_SRID)
+        poLayer->ResolveSRID(this);
+
+    if( poSRS == NULL && nSRSId > 0 )
+    {
+        poSRS = poLayer->GetDS()->FetchSRS( nSRSId );
+        if( poSRS != NULL )
+            poSRS->Reference();
+    }
+    return poSRS;
 }
