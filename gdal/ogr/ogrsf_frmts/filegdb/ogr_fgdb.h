@@ -132,7 +132,6 @@ public:
 
   // virtual const char *GetName();
   virtual const char* GetFIDColumn() { return m_strOIDFieldName.c_str(); }
-  virtual const char* GetGeometryColumn() { return m_strShapeFieldName.c_str(); }
 
   virtual void        ResetReading();
   virtual OGRFeature* GetNextFeature();
@@ -164,8 +163,6 @@ public:
 //  virtual OGRErr        RollbackTransaction( );
 
   OGRFeatureDefn *    GetLayerDefn() { return m_pFeatureDefn; }
-	
-  virtual OGRSpatialReference *GetSpatialRef() { return m_pSRS; }
 
   virtual int         TestCapability( const char * );
 
@@ -215,8 +212,6 @@ public:
   virtual void        ResetReading();
 
   OGRFeatureDefn *    GetLayerDefn() { return m_pFeatureDefn; }
-
-  //virtual OGRSpatialReference *GetSpatialRef() { return m_pSRS; }
 
   virtual int         TestCapability( const char * );
 

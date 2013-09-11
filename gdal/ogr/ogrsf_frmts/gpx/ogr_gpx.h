@@ -144,8 +144,6 @@ class OGRGPXLayer : public OGRLayer
     
     int                 TestCapability( const char * );
     
-    OGRSpatialReference *GetSpatialRef();
-    
 #ifdef HAVE_EXPAT
     void                startElementCbk(const char *pszName, const char **ppszAttr);
     void                endElementCbk(const char *pszName);

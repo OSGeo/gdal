@@ -51,18 +51,15 @@ OGRGeoJSONLayer::OGRGeoJSONLayer( const char* pszName,
                                   OGRSpatialReference* poSRSIn,
                                   OGRwkbGeometryType eGType,
                                   OGRGeoJSONDataSource* poDS )
-    : iterCurrent_( seqFeatures_.end() ), poDS_( poDS ), poFeatureDefn_(new OGRFeatureDefn( pszName ) ), poSRS_( NULL )
+    : iterCurrent_( seqFeatures_.end() ), poDS_( poDS ), poFeatureDefn_(new OGRFeatureDefn( pszName ) )
 {
     CPLAssert( NULL != poDS_ );
     CPLAssert( NULL != poFeatureDefn_ );
     
     poFeatureDefn_->Reference();
     poFeatureDefn_->SetGeomType( eGType );
-
-    if( NULL != poSRSIn )
-    {
-        SetSpatialRef( poSRSIn );
-    }
+    if( poFeatureDefn_->GetGeomFieldCount() != 0 )
+        poFeatureDefn_->GetGeomFieldDefn(0)->SetSpatialRef(poSRSIn);
 }
 
 /************************************************************************/
@@ -78,11 +75,6 @@ OGRGeoJSONLayer::~OGRGeoJSONLayer()
     {
         poFeatureDefn_->Release();
     }
-
-    if( NULL != poSRS_ )
-    {
-        poSRS_->Release();   
-    }
 }
 
 /************************************************************************/
@@ -92,37 +84,6 @@ OGRGeoJSONLayer::~OGRGeoJSONLayer()
 OGRFeatureDefn* OGRGeoJSONLayer::GetLayerDefn()
 {
     return poFeatureDefn_;
-}
-
-/************************************************************************/
-/*                           GetSpatialRef                              */
-/************************************************************************/
-
-OGRSpatialReference* OGRGeoJSONLayer::GetSpatialRef()
-{
-    return poSRS_;
-}
-
-/************************************************************************/
-/*                           SetSpatialRef                              */
-/************************************************************************/
-
-void OGRGeoJSONLayer::SetSpatialRef( OGRSpatialReference* poSRSIn )
-{
-    if( NULL == poSRSIn )
-    {
-        poSRS_ = NULL;
-        // poSRS_ = new OGRSpatialReference();
-        // if( OGRERR_NONE != poSRS_->importFromEPSG( 4326 ) )
-        // {
-        //     delete poSRS_;
-        //     poSRS_ = NULL;
-        // }
-    }
-    else
-    {
-        poSRS_ = poSRSIn->Clone(); 
-    }
 }
 
 /************************************************************************/
@@ -166,9 +127,9 @@ OGRFeature* OGRGeoJSONLayer::GetNextFeature()
             OGRFeature* poFeatureCopy = poFeature->Clone();
             CPLAssert( NULL != poFeatureCopy );
 
-            if (poFeatureCopy->GetGeometryRef() != NULL && poSRS_ != NULL)
+            if (poFeatureCopy->GetGeometryRef() != NULL && GetSpatialRef() != NULL)
             {
-                poFeatureCopy->GetGeometryRef()->assignSpatialReference( poSRS_ );
+                poFeatureCopy->GetGeometryRef()->assignSpatialReference( GetSpatialRef() );
             }
 
             return poFeatureCopy;

@@ -91,11 +91,7 @@ class OGRGMLLayer : public OGRLayer
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
 
-    virtual OGRSpatialReference *GetSpatialRef();
-    
     int                 TestCapability( const char * );
-    
-    virtual const char *GetGeometryColumn();
 };
 
 /************************************************************************/

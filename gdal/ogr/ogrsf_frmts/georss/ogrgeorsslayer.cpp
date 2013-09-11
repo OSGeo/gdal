@@ -98,7 +98,10 @@ OGRGeoRSSLayer::OGRGeoRSSLayer( const char* pszFilename,
 
     poSRS = poSRSIn;
     if (poSRS)
+    {
         poSRS->Reference();
+        poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
+    }
 
     nTotalFeatureCount = 0;
 
@@ -935,19 +938,6 @@ OGRFeature *OGRGeoRSSLayer::GetNextFeature()
 #else
     return NULL;
 #endif
-}
-
-/************************************************************************/
-/*                           GetSpatialRef()                            */
-/************************************************************************/
-
-OGRSpatialReference *OGRGeoRSSLayer::GetSpatialRef()
-
-{
-    if (!bWriteMode && !bHasReadSchema)
-        LoadSchema();
-
-    return poSRS;
 }
 
 /************************************************************************/
@@ -1791,6 +1781,8 @@ void OGRGeoRSSLayer::LoadSchema()
 
     if (eGeomType != wkbUnknown)
         poFeatureDefn->SetGeomType(eGeomType);
+    if( poFeatureDefn->GetGeomFieldCount() != 0 )
+        poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 
     if (setOfFoundFields)
         CPLHashSetDestroy(setOfFoundFields);

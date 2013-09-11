@@ -95,8 +95,6 @@ class OGRLIBKMLLayer:public OGRLayer
     //OGRErr                    SetAttributeFilter (const char * );
     OGRErr                    CreateFeature ( OGRFeature * poOgrFeat );
 
-    OGRSpatialReference      *GetSpatialRef (  ) { return m_poOgrSRS; };
-
     int                       GetFeatureCount ( int bForce = TRUE );
     OGRErr                    GetExtent ( OGREnvelope * psExtent,
                                           int bForce = TRUE );

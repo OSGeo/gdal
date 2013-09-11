@@ -93,6 +93,8 @@ OGRKMLLayer::OGRKMLLayer( const char * pszName,
     poFeatureDefn_ = new OGRFeatureDefn( pszName );
     poFeatureDefn_->Reference();
     poFeatureDefn_->SetGeomType( eReqType );
+    if( poFeatureDefn_->GetGeomFieldCount() != 0 )
+        poFeatureDefn_->GetGeomFieldDefn(0)->SetSpatialRef(poSRS_);
 
     OGRFieldDefn oFieldName( "Name", OFTString );
     poFeatureDefn_->AddFieldDefn( &oFieldName );
@@ -599,15 +601,6 @@ OGRErr OGRKMLLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
     poFeatureDefn_->AddFieldDefn( &oCleanCopy );
 
     return OGRERR_NONE;
-}
-
-/************************************************************************/
-/*                           GetSpatialRef()                            */
-/************************************************************************/
-
-OGRSpatialReference *OGRKMLLayer::GetSpatialRef()
-{
-    return poSRS_;
 }
 
 /************************************************************************/
