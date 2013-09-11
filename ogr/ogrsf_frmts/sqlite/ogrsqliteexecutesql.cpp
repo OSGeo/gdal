@@ -550,7 +550,7 @@ int OGR2SQLITEDealWithSpatialColumn(OGRLayer* poLayer,
         /*   table in the SQL --> old/traditionnal way of requesting spatial indices */
         /*   with spatialite. */
 
-        std::set<LayerDesc>::iterator oIter2 = oSetLayers.begin();
+        std::set<LayerDesc>::const_iterator oIter2 = oSetLayers.begin();
         for(; oIter2 != oSetLayers.end(); ++oIter2)
         {
             const LayerDesc& oLayerDescIter = *oIter2;
@@ -564,7 +564,7 @@ int OGR2SQLITEDealWithSpatialColumn(OGRLayer* poLayer,
         /* 2) or if there's a SELECT FROM SpatialIndex WHERE f_table_name = 'layername' */
         if( !bCreateSpatialIndex )
         {
-            std::set<CPLString>::iterator oIter3 = oSetSpatialIndex.begin();
+            std::set<CPLString>::const_iterator oIter3 = oSetSpatialIndex.begin();
             for(; oIter3 != oSetSpatialIndex.end(); ++oIter3)
             {
                 const CPLString& osNameIter = *oIter3;
