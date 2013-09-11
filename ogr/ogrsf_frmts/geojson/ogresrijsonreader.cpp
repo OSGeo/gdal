@@ -108,9 +108,14 @@ void OGRESRIJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS )
         return;
     }
 
-    poLayer_ = new OGRGeoJSONLayer( OGRGeoJSONLayer::DefaultName, NULL,
+    OGRSpatialReference* poSRS = NULL;
+    poSRS = OGRESRIJSONReadSpatialReference( poGJObject_ );
+
+    poLayer_ = new OGRGeoJSONLayer( OGRGeoJSONLayer::DefaultName, poSRS,
                                     OGRESRIJSONGetGeometryType(poGJObject_),
                                     poDS );
+    if( poSRS != NULL )
+        poSRS->Release();
 
     if( !GenerateLayerDefn() )
     {
@@ -129,13 +134,7 @@ void OGRESRIJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS )
         return;
     }
 
-    OGRSpatialReference* poSRS = NULL;
-    poSRS = OGRESRIJSONReadSpatialReference( poGJObject_ );
-    if (poSRS != NULL )
-    {
-        poLayer_->SetSpatialRef( poSRS );
-        delete poSRS;
-    }
+    CPLErrorReset();
 
     poDS->AddLayer(poLayer_);
 }

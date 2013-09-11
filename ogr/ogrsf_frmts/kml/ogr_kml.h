@@ -59,7 +59,6 @@ public:
     // OGRLayer Interface
     //
     OGRFeatureDefn* GetLayerDefn();
-    OGRSpatialReference* GetSpatialRef();
     OGRErr CreateFeature( OGRFeature* poFeature );
     OGRErr CreateField( OGRFieldDefn* poField, int bApproxOK = TRUE );
     void ResetReading();

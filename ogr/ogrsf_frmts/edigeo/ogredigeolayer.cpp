@@ -54,6 +54,8 @@ OGREDIGEOLayer::OGREDIGEOLayer( OGREDIGEODataSource* poDS,
     poFeatureDefn = new OGRFeatureDefn( pszName );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( eType );
+    if( poFeatureDefn->GetGeomFieldCount() != 0 )
+        poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 }
 
 /************************************************************************/
