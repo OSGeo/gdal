@@ -34,8 +34,25 @@
 #include "cpl_string.h"
 
 CPLString OGRPGDumpEscapeColumnName(const char* pszColumnName);
-CPLString OGRPGDumpEscapeString(   const char* pszStrValue, int nMaxLength,
-                                   const char* pszFieldName);
+CPLString OGRPGDumpEscapeString(   const char* pszStrValue, int nMaxLength = -1,
+                                   const char* pszFieldName = "");
+
+
+/************************************************************************/
+/*                        OGRPGDumpGeomFieldDefn                        */
+/************************************************************************/
+
+class OGRPGDumpGeomFieldDefn : public OGRGeomFieldDefn
+{
+    public:
+        OGRPGDumpGeomFieldDefn( OGRGeomFieldDefn *poGeomField ) :
+            OGRGeomFieldDefn(poGeomField), nSRSId(-1), nCoordDimension(2)
+            {
+            }
+            
+        int nSRSId;
+        int nCoordDimension;
+};
 
 /************************************************************************/
 /*                          OGRPGDumpLayer                              */
@@ -46,11 +63,9 @@ class OGRPGDumpDataSource;
 
 class OGRPGDumpLayer : public OGRLayer
 {
+    char                *pszSchemaName;
     char                *pszSqlTableName;
-    char                *pszGeomColumn;
     char                *pszFIDColumn;
-    int                  nCoordDimension;
-    int                  nSRSId;
     OGRFeatureDefn      *poFeatureDefn;
     OGRPGDumpDataSource *poDS;
     int                 nFeatures;
@@ -61,6 +76,9 @@ class OGRPGDumpLayer : public OGRLayer
     int                 bCopyActive;
     int                 bFIDColumnInCopyFields;
     int                 bCreateTable;
+    int                 nUnknownSRSId;
+    int                 nForcedSRSId;
+    int                 bCreateSpatialIndexFlag;
 
     char              **papszOverrideColumnTypes;
 
@@ -76,10 +94,7 @@ class OGRPGDumpLayer : public OGRLayer
                         OGRPGDumpLayer(OGRPGDumpDataSource* poDS,
                                        const char* pszSchemaName,
                                        const char* pszLayerName,
-                                       const char* pszGeomColumn,
                                        const char *pszFIDColumn,
-                                       int         nCoordDimension,
-                                       int         nSRSId,
                                        int         bWriteAsHexIn,
                                        int         bCreateTable);
     virtual             ~OGRPGDumpLayer();
@@ -95,7 +110,9 @@ class OGRPGDumpLayer : public OGRLayer
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
-                                     
+    virtual OGRErr      CreateGeomField( OGRGeomFieldDefn *poGeomField,
+                                         int bApproxOK = TRUE );
+
     virtual OGRFeature *GetNextFeature();
 
     // follow methods are not base class overrides
@@ -105,7 +122,12 @@ class OGRPGDumpLayer : public OGRLayer
                                 { bPreservePrecision = bFlag; }
 
     void                SetOverrideColumnTypes( const char* pszOverrideColumnTypes );
-
+    void                SetUnknownSRSId( int nUnknownSRSIdIn )
+                                { nUnknownSRSId = nUnknownSRSIdIn; }
+    void                SetForcedSRSId( int nForcedSRSIdIn )
+                                { nForcedSRSId = nForcedSRSIdIn; }
+    void                SetCreateSpatialIndexFlag( int bFlag )
+                                { bCreateSpatialIndexFlag = bFlag; }
     OGRErr              EndCopy();
 };
 
