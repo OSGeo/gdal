@@ -166,7 +166,7 @@ int OGRGeoJSONDataSource::GetLayerCount()
 
 OGRLayer* OGRGeoJSONDataSource::GetLayer( int nLayer )
 {
-    if( 0 <= nLayer || nLayer < nLayers_ )
+    if( 0 <= nLayer && nLayer < nLayers_ )
     {
         return papoLayers_[nLayer];
     }
