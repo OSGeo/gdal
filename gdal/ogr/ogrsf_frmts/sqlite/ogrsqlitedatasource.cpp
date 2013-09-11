@@ -1712,10 +1712,10 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
         
     CPLString osSQL = pszSQLCommand;
     poLayer = new OGRSQLiteSelectLayer( this, osSQL, hSQLStmt,
-                                        bUseStatementForGetNextFeature, bEmptyLayer );
+                                        bUseStatementForGetNextFeature, bEmptyLayer, TRUE );
 
     if( poSpatialFilter != NULL )
-        poLayer->SetSpatialFilter( poSpatialFilter );
+        poLayer->SetSpatialFilter( 0, poSpatialFilter );
     
     return poLayer;
 }

@@ -66,7 +66,7 @@ OGRSQLiteExecuteSQLLayer::OGRSQLiteExecuteSQLLayer(char* pszTmpDBName,
 
                                OGRSQLiteSelectLayer(poDS, osSQL, hStmt,
                                                     bUseStatementForGetNextFeature,
-                                                    bEmptyLayer)
+                                                    bEmptyLayer, TRUE)
 {
     this->pszTmpDBName = pszTmpDBName;
 }
@@ -482,6 +482,225 @@ void OGR2SQLITE_IgnoreAllFieldsExceptGeometry(OGRLayer* poLayer)
     CSLDestroy(papszIgnored);
 }
 
+
+/************************************************************************/
+/*                  OGR2SQLITEDealWithSpatialColumn()                   */
+/************************************************************************/
+static
+int OGR2SQLITEDealWithSpatialColumn(OGRLayer* poLayer,
+                                    int iGeomCol,
+                                    const LayerDesc& oLayerDesc,
+                                    const CPLString& osTableName,
+                                    OGRSQLiteDataSource* poSQLiteDS,
+                                    sqlite3* hDB,
+                                    int bSpatialiteDB,
+                                    const std::set<LayerDesc>& oSetLayers,
+                                    const std::set<CPLString>& oSetSpatialIndex
+                                   )
+{
+    OGRGeomFieldDefn* poGeomField =
+        poLayer->GetLayerDefn()->GetGeomFieldDefn(iGeomCol);
+    CPLString osGeomColRaw;
+    if( iGeomCol == 0 )
+        osGeomColRaw = OGR2SQLITE_GetNameForGeometryColumn(poLayer);
+    else
+        osGeomColRaw = poGeomField->GetNameRef();
+    const char* pszGeomColRaw = osGeomColRaw.c_str();
+
+    CPLString osGeomColEscaped(OGRSQLiteEscape(pszGeomColRaw));
+    const char* pszGeomColEscaped = osGeomColEscaped.c_str();
+
+    CPLString osLayerNameEscaped(OGRSQLiteEscape(osTableName));
+    const char* pszLayerNameEscaped = osLayerNameEscaped.c_str();
+
+    CPLString osIdxNameRaw(CPLSPrintf("idx_%s_%s",
+                    oLayerDesc.osLayerName.c_str(), pszGeomColRaw));
+    CPLString osIdxNameEscaped(OGRSQLiteEscapeName(osIdxNameRaw));
+
+    /* Make sure that the SRS is injected in spatial_ref_sys */
+    OGRSpatialReference* poSRS = poGeomField->GetSpatialRef();
+    if( iGeomCol == 0 && poSRS == NULL )
+        poSRS = poLayer->GetSpatialRef();
+    int nSRSId = poSQLiteDS->GetUndefinedSRID();
+    if( poSRS != NULL )
+        nSRSId = poSQLiteDS->FetchSRSId(poSRS);
+
+    CPLString osSQL;
+    int bCreateSpatialIndex = FALSE;
+    if( !bSpatialiteDB )
+    {
+        osSQL.Printf("INSERT INTO geometry_columns (f_table_name, "
+                    "f_geometry_column, geometry_format, geometry_type, "
+                    "coord_dimension, srid) "
+                    "VALUES ('%s','%s','SpatiaLite',%d,%d,%d)",
+                    pszLayerNameEscaped,
+                    pszGeomColEscaped,
+                        (int) wkbFlatten(poLayer->GetGeomType()),
+                    ( poLayer->GetGeomType() & wkb25DBit ) ? 3 : 2,
+                    nSRSId);
+    }
+#ifdef HAVE_SPATIALITE
+    else
+    {
+        /* We detect the need for creating a spatial index by 2 means : */
+
+        /* 1) if there's an explicit reference to a 'idx_layername_geometrycolumn' */
+        /*   table in the SQL --> old/traditionnal way of requesting spatial indices */
+        /*   with spatialite. */
+
+        std::set<LayerDesc>::iterator oIter2 = oSetLayers.begin();
+        for(; oIter2 != oSetLayers.end(); ++oIter2)
+        {
+            const LayerDesc& oLayerDescIter = *oIter2;
+            if( EQUAL(oLayerDescIter.osLayerName, osIdxNameRaw) )
+            {
+                    bCreateSpatialIndex = TRUE;
+                    break;
+            }
+        }
+
+        /* 2) or if there's a SELECT FROM SpatialIndex WHERE f_table_name = 'layername' */
+        if( !bCreateSpatialIndex )
+        {
+            std::set<CPLString>::iterator oIter3 = oSetSpatialIndex.begin();
+            for(; oIter3 != oSetSpatialIndex.end(); ++oIter3)
+            {
+                const CPLString& osNameIter = *oIter3;
+                if( EQUAL(osNameIter, oLayerDesc.osLayerName) )
+                {
+                    bCreateSpatialIndex = TRUE;
+                    break;
+                }
+            }
+        }
+
+        if( poSQLiteDS->HasSpatialite4Layout() )
+        {
+            int nGeomType = poLayer->GetGeomType();
+            int nCoordDimension = 2;
+            if( nGeomType & wkb25DBit )
+            {
+                nGeomType += 1000;
+                nCoordDimension = 3;
+            }
+
+            osSQL.Printf("INSERT INTO geometry_columns (f_table_name, "
+                        "f_geometry_column, geometry_type, coord_dimension, "
+                        "srid, spatial_index_enabled) "
+                        "VALUES ('%s',Lower('%s'),%d ,%d ,%d, %d)",
+                        pszLayerNameEscaped,
+                        pszGeomColEscaped, nGeomType,
+                        nCoordDimension,
+                        nSRSId, bCreateSpatialIndex );
+        }
+        else
+        {
+            const char *pszGeometryType = OGRToOGCGeomType(poLayer->GetGeomType());
+            if (pszGeometryType[0] == '\0')
+                pszGeometryType = "GEOMETRY";
+
+            osSQL.Printf("INSERT INTO geometry_columns (f_table_name, "
+                        "f_geometry_column, type, coord_dimension, "
+                        "srid, spatial_index_enabled) "
+                        "VALUES ('%s','%s','%s','%s',%d, %d)",
+                        pszLayerNameEscaped,
+                        pszGeomColEscaped, pszGeometryType,
+                        ( poLayer->GetGeomType() & wkb25DBit ) ? "XYZ" : "XY",
+                        nSRSId, bCreateSpatialIndex );
+        }
+    }
+#endif // HAVE_SPATIALITE
+    sqlite3_exec( hDB, osSQL.c_str(), NULL, NULL, NULL );
+
+#ifdef HAVE_SPATIALITE
+/* -------------------------------------------------------------------- */
+/*      Should we create a spatial index ?.                             */
+/* -------------------------------------------------------------------- */
+    if( !bSpatialiteDB || !bCreateSpatialIndex )
+        return TRUE;
+
+    CPLDebug("SQLITE", "Create spatial index %s", osIdxNameRaw.c_str());
+    int rc;
+
+    /* ENABLE_VIRTUAL_OGR_SPATIAL_INDEX is not defined */
+#ifdef ENABLE_VIRTUAL_OGR_SPATIAL_INDEX
+    osSQL.Printf("CREATE VIRTUAL TABLE \"%s\" USING "
+                    "VirtualOGRSpatialIndex(%d, '%s', pkid, xmin, xmax, ymin, ymax)",
+                    osIdxNameEscaped.c_str(),
+                    nExtraDS,
+                    OGRSQLiteEscape(oLayerDesc.osLayerName).c_str());
+
+    rc = sqlite3_exec( hDB, osSQL.c_str(), NULL, NULL, NULL );
+    if( rc != SQLITE_OK )
+    {
+        CPLDebug("SQLITE",
+                    "Error occured during spatial index creation : %s",
+                    sqlite3_errmsg(hDB));
+    }
+#else //  ENABLE_VIRTUAL_OGR_SPATIAL_INDEX
+    rc = sqlite3_exec( hDB, "BEGIN", NULL, NULL, NULL );
+
+    osSQL.Printf("CREATE VIRTUAL TABLE \"%s\" "
+                    "USING rtree(pkid, xmin, xmax, ymin, ymax)",
+                    osIdxNameEscaped.c_str());
+
+    if( rc == SQLITE_OK )
+        rc = sqlite3_exec( hDB, osSQL.c_str(), NULL, NULL, NULL );
+
+    sqlite3_stmt *hStmt = NULL;
+    if( rc == SQLITE_OK )
+    {
+        const char* pszInsertInto = CPLSPrintf(
+            "INSERT INTO \"%s\" (pkid, xmin, xmax, ymin, ymax) "
+            "VALUES (?,?,?,?,?)", osIdxNameEscaped.c_str());
+        rc = sqlite3_prepare(hDB, pszInsertInto, -1, &hStmt, NULL);
+    }
+
+    OGRFeature* poFeature;
+    OGREnvelope sEnvelope;
+    OGR2SQLITE_IgnoreAllFieldsExceptGeometry(poLayer);
+    poLayer->ResetReading();
+
+    while( rc == SQLITE_OK &&
+            (poFeature = poLayer->GetNextFeature()) != NULL )
+    {
+        OGRGeometry* poGeom = poFeature->GetGeometryRef();
+        if( poGeom != NULL && !poGeom->IsEmpty() )
+        {
+            poGeom->getEnvelope(&sEnvelope);
+            sqlite3_bind_int64(hStmt, 1,
+                                (sqlite3_int64) poFeature->GetFID() );
+            sqlite3_bind_double(hStmt, 2, sEnvelope.MinX);
+            sqlite3_bind_double(hStmt, 3, sEnvelope.MaxX);
+            sqlite3_bind_double(hStmt, 4, sEnvelope.MinY);
+            sqlite3_bind_double(hStmt, 5, sEnvelope.MaxY);
+            rc = sqlite3_step(hStmt);
+            if( rc == SQLITE_OK || rc == SQLITE_DONE )
+                rc = sqlite3_reset(hStmt);
+        }
+        delete poFeature;
+    }
+
+    poLayer->SetIgnoredFields(NULL);
+
+    sqlite3_finalize(hStmt);
+
+    if( rc == SQLITE_OK )
+        rc = sqlite3_exec( hDB, "COMMIT", NULL, NULL, NULL );
+    else
+    {
+        CPLDebug("SQLITE",
+                    "Error occured during spatial index creation : %s",
+                    sqlite3_errmsg(hDB));
+        rc = sqlite3_exec( hDB, "ROLLBACK", NULL, NULL, NULL );
+    }
+#endif //  ENABLE_VIRTUAL_OGR_SPATIAL_INDEX
+
+#endif // HAVE_SPATIALITE
+
+    return rc == SQLITE_OK;
+}
+
 /************************************************************************/
 /*                          OGRSQLiteExecuteSQL()                       */
 /************************************************************************/
@@ -654,12 +873,6 @@ OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
             osTableName = oLayerDesc.osLayerName;
 
             nExtraDS = -1;
-
-            osSQL.Printf("CREATE VIRTUAL TABLE \"%s\" USING VirtualOGR(%d,'%s',%d)",
-                         OGRSQLiteEscapeName(osTableName).c_str(),
-                         nExtraDS,
-                         OGRSQLiteEscape(osTableName).c_str(),
-                         bFoundOGRStyle);
         }
         else
         {
@@ -693,13 +906,13 @@ OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
             osTableName = oLayerDesc.osSubstitutedName;
 
             nExtraDS = OGR2SQLITE_AddExtraDS(poModule, poOtherDS);
-
-            osSQL.Printf("CREATE VIRTUAL TABLE \"%s\" USING VirtualOGR(%d,'%s',%d)",
-                         OGRSQLiteEscapeName(osTableName).c_str(),
-                         nExtraDS,
-                         OGRSQLiteEscape(oLayerDesc.osLayerName).c_str(),
-                         bFoundOGRStyle);
         }
+
+        osSQL.Printf("CREATE VIRTUAL TABLE \"%s\" USING VirtualOGR(%d,'%s',%d)",
+                OGRSQLiteEscapeName(osTableName).c_str(),
+                nExtraDS,
+                OGRSQLiteEscape(oLayerDesc.osLayerName).c_str(),
+                bFoundOGRStyle);
 
         char* pszErrMsg = NULL;
         int rc = sqlite3_exec( hDB, osSQL.c_str(),
@@ -713,199 +926,13 @@ OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
             continue;
         }
 
-        if( poLayer->GetGeomType() == wkbNone )
-            continue;
-
-        CPLString osGeomColRaw(OGR2SQLITE_GetNameForGeometryColumn(poLayer));
-        const char* pszGeomColRaw = osGeomColRaw.c_str();
-
-        CPLString osGeomColEscaped(OGRSQLiteEscape(pszGeomColRaw));
-        const char* pszGeomColEscaped = osGeomColEscaped.c_str();
-
-        CPLString osLayerNameEscaped(OGRSQLiteEscape(osTableName));
-        const char* pszLayerNameEscaped = osLayerNameEscaped.c_str();
-
-        CPLString osIdxNameRaw(CPLSPrintf("idx_%s_%s",
-                        oLayerDesc.osLayerName.c_str(), pszGeomColRaw));
-        CPLString osIdxNameEscaped(OGRSQLiteEscapeName(osIdxNameRaw));
-
-        /* Make sure that the SRS is injected in spatial_ref_sys */
-        OGRSpatialReference* poSRS = poLayer->GetSpatialRef();
-        int nSRSId = poSQLiteDS->GetUndefinedSRID();
-        if( poSRS != NULL )
-            nSRSId = poSQLiteDS->FetchSRSId(poSRS);
-
-        int bCreateSpatialIndex = FALSE;
-        if( !bSpatialiteDB )
+        for(int i=0; i<poLayer->GetLayerDefn()->GetGeomFieldCount(); i++)
         {
-            osSQL.Printf("INSERT INTO geometry_columns (f_table_name, "
-                        "f_geometry_column, geometry_format, geometry_type, "
-                        "coord_dimension, srid) "
-                        "VALUES ('%s','%s','SpatiaLite',%d,%d,%d)",
-                        pszLayerNameEscaped,
-                        pszGeomColEscaped,
-                         (int) wkbFlatten(poLayer->GetGeomType()),
-                        ( poLayer->GetGeomType() & wkb25DBit ) ? 3 : 2,
-                        nSRSId);
+            OGR2SQLITEDealWithSpatialColumn(poLayer, i, oLayerDesc,
+                                            osTableName, poSQLiteDS, hDB,
+                                            bSpatialiteDB, oSetLayers,
+                                            oSetSpatialIndex);
         }
-#ifdef HAVE_SPATIALITE
-        else
-        {
-            /* We detect the need for creating a spatial index by 2 means : */
-
-            /* 1) if there's an explicit reference to a 'idx_layername_geometrycolumn' */
-            /*   table in the SQL --> old/traditionnal way of requesting spatial indices */
-            /*   with spatialite. */
-
-            std::set<LayerDesc>::iterator oIter2 = oSetLayers.begin();
-            for(; oIter2 != oSetLayers.end(); ++oIter2)
-            {
-                const LayerDesc& oLayerDescIter = *oIter2;
-                if( EQUAL(oLayerDescIter.osLayerName, osIdxNameRaw) )
-                {
-                     bCreateSpatialIndex = TRUE;
-                     break;
-                }
-            }
-
-            /* 2) or if there's a SELECT FROM SpatialIndex WHERE f_table_name = 'layername' */
-            if( !bCreateSpatialIndex )
-            {
-                std::set<CPLString>::iterator oIter3 = oSetSpatialIndex.begin();
-                for(; oIter3 != oSetSpatialIndex.end(); ++oIter3)
-                {
-                    const CPLString& osNameIter = *oIter3;
-                    if( EQUAL(osNameIter, oLayerDesc.osLayerName) )
-                    {
-                        bCreateSpatialIndex = TRUE;
-                        break;
-                    }
-                }
-            }
-
-            if( poSQLiteDS->HasSpatialite4Layout() )
-            {
-                int nGeomType = poLayer->GetGeomType();
-                int nCoordDimension = 2;
-                if( nGeomType & wkb25DBit )
-                {
-                    nGeomType += 1000;
-                    nCoordDimension = 3;
-                }
-
-                osSQL.Printf("INSERT INTO geometry_columns (f_table_name, "
-                            "f_geometry_column, geometry_type, coord_dimension, "
-                            "srid, spatial_index_enabled) "
-                            "VALUES ('%s',Lower('%s'),%d ,%d ,%d, %d)",
-                            pszLayerNameEscaped,
-                            pszGeomColEscaped, nGeomType,
-                            nCoordDimension,
-                            nSRSId, bCreateSpatialIndex );
-            }
-            else
-            {
-                const char *pszGeometryType = OGRToOGCGeomType(poLayer->GetGeomType());
-                if (pszGeometryType[0] == '\0')
-                    pszGeometryType = "GEOMETRY";
-
-                osSQL.Printf("INSERT INTO geometry_columns (f_table_name, "
-                            "f_geometry_column, type, coord_dimension, "
-                            "srid, spatial_index_enabled) "
-                            "VALUES ('%s','%s','%s','%s',%d, %d)",
-                            pszLayerNameEscaped,
-                            pszGeomColEscaped, pszGeometryType,
-                            ( poLayer->GetGeomType() & wkb25DBit ) ? "XYZ" : "XY",
-                            nSRSId, bCreateSpatialIndex );
-            }
-        }
-#endif // HAVE_SPATIALITE
-        sqlite3_exec( hDB, osSQL.c_str(), NULL, NULL, NULL );
-
-#ifdef HAVE_SPATIALITE
-/* -------------------------------------------------------------------- */
-/*      Should we create a spatial index ?.                             */
-/* -------------------------------------------------------------------- */
-        if( !bSpatialiteDB || !bCreateSpatialIndex )
-            continue;
-
-        CPLDebug("SQLITE", "Create spatial index %s", osIdxNameRaw.c_str());
-
-        /* ENABLE_VIRTUAL_OGR_SPATIAL_INDEX is not defined */
-#ifdef ENABLE_VIRTUAL_OGR_SPATIAL_INDEX
-        osSQL.Printf("CREATE VIRTUAL TABLE \"%s\" USING "
-                     "VirtualOGRSpatialIndex(%d, '%s', pkid, xmin, xmax, ymin, ymax)",
-                     osIdxNameEscaped.c_str(),
-                     nExtraDS,
-                     OGRSQLiteEscape(oLayerDesc.osLayerName).c_str());
-
-        rc = sqlite3_exec( hDB, osSQL.c_str(), NULL, NULL, NULL );
-        if( rc != SQLITE_OK )
-        {
-            CPLDebug("SQLITE",
-                     "Error occured during spatial index creation : %s",
-                     sqlite3_errmsg(hDB));
-        }
-#else //  ENABLE_VIRTUAL_OGR_SPATIAL_INDEX
-        rc = sqlite3_exec( hDB, "BEGIN", NULL, NULL, NULL );
-
-        osSQL.Printf("CREATE VIRTUAL TABLE \"%s\" "
-                     "USING rtree(pkid, xmin, xmax, ymin, ymax)",
-                      osIdxNameEscaped.c_str());
-
-        if( rc == SQLITE_OK )
-            rc = sqlite3_exec( hDB, osSQL.c_str(), NULL, NULL, NULL );
-
-        sqlite3_stmt *hStmt = NULL;
-        if( rc == SQLITE_OK )
-        {
-            const char* pszInsertInto = CPLSPrintf(
-                "INSERT INTO \"%s\" (pkid, xmin, xmax, ymin, ymax) "
-                "VALUES (?,?,?,?,?)", osIdxNameEscaped.c_str());
-            rc = sqlite3_prepare(hDB, pszInsertInto, -1, &hStmt, NULL);
-        }
-
-        OGRFeature* poFeature;
-        OGREnvelope sEnvelope;
-        OGR2SQLITE_IgnoreAllFieldsExceptGeometry(poLayer);
-        poLayer->ResetReading();
-
-        while( rc == SQLITE_OK &&
-               (poFeature = poLayer->GetNextFeature()) != NULL )
-        {
-            OGRGeometry* poGeom = poFeature->GetGeometryRef();
-            if( poGeom != NULL && !poGeom->IsEmpty() )
-            {
-                poGeom->getEnvelope(&sEnvelope);
-                sqlite3_bind_int64(hStmt, 1,
-                                   (sqlite3_int64) poFeature->GetFID() );
-                sqlite3_bind_double(hStmt, 2, sEnvelope.MinX);
-                sqlite3_bind_double(hStmt, 3, sEnvelope.MaxX);
-                sqlite3_bind_double(hStmt, 4, sEnvelope.MinY);
-                sqlite3_bind_double(hStmt, 5, sEnvelope.MaxY);
-                rc = sqlite3_step(hStmt);
-                if( rc == SQLITE_OK || rc == SQLITE_DONE )
-                    rc = sqlite3_reset(hStmt);
-            }
-            delete poFeature;
-        }
-
-        poLayer->SetIgnoredFields(NULL);
-
-        sqlite3_finalize(hStmt);
-
-        if( rc == SQLITE_OK )
-            rc = sqlite3_exec( hDB, "COMMIT", NULL, NULL, NULL );
-        else
-        {
-            CPLDebug("SQLITE",
-                     "Error occured during spatial index creation : %s",
-                     sqlite3_errmsg(hDB));
-            rc = sqlite3_exec( hDB, "ROLLBACK", NULL, NULL, NULL );
-        }
-#endif //  ENABLE_VIRTUAL_OGR_SPATIAL_INDEX
-
-#endif // HAVE_SPATIALITE
-
     }
 
 /* -------------------------------------------------------------------- */
@@ -992,7 +1019,7 @@ OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
                                             bUseStatementForGetNextFeature, bEmptyLayer );
 
     if( poSpatialFilter != NULL )
-        poLayer->SetSpatialFilter( poSpatialFilter );
+        poLayer->SetSpatialFilter( 0, poSpatialFilter );
 
     return poLayer;
 }

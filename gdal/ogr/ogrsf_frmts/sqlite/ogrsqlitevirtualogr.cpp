@@ -422,6 +422,7 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
     OGRDataSource* poDS = NULL;
     int bExposeOGR_STYLE = FALSE;
     int bCloseDS = FALSE;
+    int bInternalUse = FALSE;
     int i;
 
 #ifdef DEBUG_OGR2SQLITE
@@ -438,6 +439,7 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
     if( poDS != NULL && argc == 6 &&
         CPLGetValueType(argv[3]) == CPL_VALUE_INTEGER )
     {
+        bInternalUse = TRUE;
         if( argc != 6 )
         {
             *pzErr = sqlite3_mprintf(
@@ -594,14 +596,41 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
     if( !bExposeOGR_STYLE )
      osSQL += " HIDDEN";
 
-    if( poFDefn->GetGeomType() != wkbNone )
+    for(i=0;i<poFDefn->GetGeomFieldCount();i++)
     {
         if( bAddComma )
             osSQL += ",";
         bAddComma = TRUE;
 
-        osSQL += OGRSQLiteEscapeName(OGR2SQLITE_GetNameForGeometryColumn(poLayer));
+        OGRGeomFieldDefn* poFieldDefn = poFDefn->GetGeomFieldDefn(i);
+
+        osSQL += "\"";
+        if( i == 0 )
+            osSQL += OGRSQLiteEscapeName(OGR2SQLITE_GetNameForGeometryColumn(poLayer));
+        else
+            osSQL += OGRSQLiteEscapeName(poFieldDefn->GetNameRef());
+        osSQL += "\"";
         osSQL += " BLOB";
+
+        /* We use a special column type, e.g. BLOB_POINT_25D_4326 */
+        /* when the virtual table is created by OGRSQLiteExecuteSQL() */
+        /* and thus for interal use only. */
+        if( bInternalUse )
+        {
+            osSQL += "_";
+            osSQL += OGRToOGCGeomType(poFieldDefn->GetType());
+            osSQL += "_";
+            osSQL += (poFieldDefn->GetType() & wkb25DBit) ? "25D" : "2D";
+            OGRSpatialReference* poSRS = poFieldDefn->GetSpatialRef();
+            if( poSRS == NULL && i == 0 )
+                poSRS = poLayer->GetSpatialRef();
+            int nSRID = poModule->FetchSRSId(poSRS);
+            if( nSRID >= 0 )
+            {
+                osSQL += "_";
+                osSQL += CPLSPrintf("%d", nSRID);
+            }
+        }
     }
 
     osSQL += ")";
@@ -640,7 +669,7 @@ int OGR2SQLITE_BestIndex(sqlite3_vtab *pVTab, sqlite3_index_info* pIndex)
         else if( iCol >= 0 && iCol < poFDefn->GetFieldCount() )
             pszFieldName = poFDefn->GetFieldDefn(iCol)->GetNameRef();
         else
-            pszFieldName = "unkown_field";
+            pszFieldName = "unknown_field";
 
         const char* pszOp;
         switch(pIndex->aConstraint[i].op)
@@ -1160,6 +1189,40 @@ int OGR2SQLITE_Column(sqlite3_vtab_cursor* pCursor,
 
         return SQLITE_OK;
     }
+    else if( nCol > (nFieldCount + 1) &&
+             nCol - (nFieldCount + 1) < poFDefn->GetGeomFieldCount() )
+    {
+        OGRGeometry* poGeom = poFeature->GetGeomFieldRef(nCol - (nFieldCount + 1));
+        if( poGeom == NULL )
+        {
+            sqlite3_result_null(pContext);
+        }
+        else
+        {
+            OGRSpatialReference* poSRS = poGeom->getSpatialReference();
+            int nSRSId = pMyCursor->pVTab->poModule->FetchSRSId(poSRS);
+
+            GByte* pabyGeomBLOB = NULL;
+            int nGeomBLOBLen = 0;
+            if( OGRSQLiteLayer::ExportSpatiaLiteGeometry(
+                    poGeom, nSRSId, wkbNDR, FALSE, FALSE, FALSE,
+                    &pabyGeomBLOB, &nGeomBLOBLen ) != CE_None )
+            {
+                nGeomBLOBLen = 0;
+            }
+
+            if( nGeomBLOBLen == 0 )
+            {
+                sqlite3_result_null(pContext);
+            }
+            else
+            {
+                sqlite3_result_blob(pContext, pabyGeomBLOB,
+                                    nGeomBLOBLen, CPLFree);
+            }
+        }
+        return SQLITE_OK;
+    }
     else if( nCol < 0 || nCol >= nFieldCount )
     {
         return SQLITE_ERROR;
@@ -1301,11 +1364,11 @@ static OGRFeature* OGR2SQLITE_FeatureFromArgs(OGRLayer* poLayer,
 {
     OGRFeatureDefn* poLayerDefn = poLayer->GetLayerDefn();
     int nFieldCount = poLayerDefn->GetFieldCount();
-    int bHasGeomField = (poLayerDefn->GetGeomType() != wkbNone);
-    if( argc != 2 + nFieldCount + 1 + bHasGeomField)
+    int nGeomFieldCount = poLayerDefn->GetGeomFieldCount();
+    if( argc != 2 + nFieldCount + 1 + nGeomFieldCount)
     {
         CPLDebug("OGR2SQLITE", "Did not get expect argument count : %d, %d", argc,
-                    2 + nFieldCount + 1 + bHasGeomField);
+                    2 + nFieldCount + 1 + nGeomFieldCount);
         return NULL;
     }
 
@@ -1360,9 +1423,9 @@ static OGRFeature* OGR2SQLITE_FeatureFromArgs(OGRLayer* poLayer,
         poFeature->SetStyleString((const char*) sqlite3_value_text(argv[nStyleIdx]));
     }
 
-    if( bHasGeomField )
+    for(i = 0; i < nGeomFieldCount; i++)
     {
-        int nGeomFieldIdx = 2 + nFieldCount + 1;
+        int nGeomFieldIdx = 2 + nFieldCount + 1 + i;
         if( sqlite3_value_type(argv[nGeomFieldIdx]) == SQLITE_BLOB )
         {
             GByte* pabyBlob = (GByte *) sqlite3_value_blob (argv[nGeomFieldIdx]);
@@ -1371,7 +1434,7 @@ static OGRFeature* OGR2SQLITE_FeatureFromArgs(OGRLayer* poLayer,
             if( OGRSQLiteLayer::ImportSpatiaLiteGeometry(
                             pabyBlob, nLen, &poGeom ) == CE_None )
             {
-                poFeature->SetGeometryDirectly(poGeom);
+                poFeature->SetGeomFieldDirectly(i, poGeom);
             }
         }
     }
