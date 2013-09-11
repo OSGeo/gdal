@@ -510,6 +510,8 @@ try_again:
      }
 
      poFeatureDefn->SetGeomType(eGeomType);
+     if( poFeatureDefn->GetGeomFieldCount() != 0 )
+         poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 
      if( eGeometryStyle == VGS_WKT
          || eGeometryStyle == VGS_WKB

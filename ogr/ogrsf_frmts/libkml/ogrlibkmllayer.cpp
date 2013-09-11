@@ -96,6 +96,8 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
     m_poOgrFeatureDefn = new OGRFeatureDefn ( pszLayerName );
     m_poOgrFeatureDefn->Reference (  );
     m_poOgrFeatureDefn->SetGeomType ( eGType );
+    if( m_poOgrFeatureDefn->GetGeomFieldCount() != 0 )
+        m_poOgrFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(m_poOgrSRS);
 
     /***** store the root element pointer *****/
 

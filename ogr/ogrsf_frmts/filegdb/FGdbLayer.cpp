@@ -1637,6 +1637,12 @@ bool FGdbLayer::Initialize(FGdbDataSource* pParentDataSource, Table* pTable,
     }
     CPLDestroyXMLNode( psRoot );
 
+    if( m_pFeatureDefn->GetGeomFieldCount() != 0 )
+    {
+        m_pFeatureDefn->GetGeomFieldDefn(0)->SetName(m_strShapeFieldName.c_str());
+        m_pFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(m_pSRS);
+    }
+
     if (abort)
         return false;
 

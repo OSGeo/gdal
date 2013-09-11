@@ -114,7 +114,6 @@ class OGROSMLayer : public OGRLayer
     virtual             ~OGROSMLayer();
 
     virtual OGRFeatureDefn *GetLayerDefn() {return poFeatureDefn;}
-    virtual OGRSpatialReference * GetSpatialRef() { return poSRS; }
     
     virtual void        ResetReading();
     virtual int         TestCapability( const char * );

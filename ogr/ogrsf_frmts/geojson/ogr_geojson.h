@@ -59,7 +59,6 @@ public:
     // OGRLayer Interface
     //
     OGRFeatureDefn* GetLayerDefn();
-    OGRSpatialReference* GetSpatialRef();
     
     int GetFeatureCount( int bForce = TRUE );
     void ResetReading();
@@ -72,7 +71,6 @@ public:
     // OGRGeoJSONLayer Interface
     //
     void AddFeature( OGRFeature* poFeature );
-    void SetSpatialRef( OGRSpatialReference* poSRS );
     void DetectGeometryType();
 
 private:
@@ -83,7 +81,6 @@ private:
 
     OGRGeoJSONDataSource* poDS_;
     OGRFeatureDefn* poFeatureDefn_;
-    OGRSpatialReference* poSRS_;
     CPLString sFIDColumn_;
 };
 
