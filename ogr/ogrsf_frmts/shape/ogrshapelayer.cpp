@@ -44,6 +44,27 @@
 
 CPL_CVSID("$Id$");
 
+
+class OGRShapeGeomFieldDefn: public OGRGeomFieldDefn
+{
+    char* pszFullName;
+    int   bSRSSet;
+
+    public:
+        OGRShapeGeomFieldDefn(const char* pszFullNameIn, OGRwkbGeometryType eType,
+                              int bSRSSetIn, OGRSpatialReference *poSRSIn) :
+            OGRGeomFieldDefn("", eType),
+            pszFullName(CPLStrdup(pszFullNameIn)),
+            bSRSSet(bSRSSetIn)
+        {
+            poSRS = poSRSIn;
+        }
+
+        virtual ~OGRShapeGeomFieldDefn() { CPLFree(pszFullName); }
+
+        virtual OGRSpatialReference* GetSpatialRef();
+};
+
 /************************************************************************/
 /*                           OGRShapeLayer()                            */
 /************************************************************************/
@@ -58,8 +79,6 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
 
 {
     poDS = poDSIn;
-    poSRS = poSRSIn;
-    bSRSSet = bSRSSetIn;
 
     pszFullName = CPLStrdup(pszFullNameIn);
     
@@ -132,6 +151,18 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
 
     poFeatureDefn = SHPReadOGRFeatureDefn( CPLGetBasename(pszFullName),
                                            hSHP, hDBF, osEncoding );
+
+    /* To make sure that GetLayerDefn()->GetGeomFieldDefn(0)->GetSpatialRef() == GetSpatialRef() */
+    OGRwkbGeometryType eGeomType = poFeatureDefn->GetGeomType();
+    if( eGeomType != wkbNone )
+    {
+        OGRShapeGeomFieldDefn* poGeomFieldDefn =
+            new OGRShapeGeomFieldDefn(pszFullName, eGeomType, bSRSSetIn, poSRSIn);
+        poFeatureDefn->SetGeomType(wkbNone);
+        poFeatureDefn->AddGeomFieldDefn(poGeomFieldDefn, FALSE);
+    }
+    else if( bSRSSetIn && poSRSIn != NULL )
+        poSRSIn->Release();
 }
 
 /************************************************************************/
@@ -160,9 +191,6 @@ OGRShapeLayer::~OGRShapeLayer()
 
     if( poFeatureDefn != NULL )
         poFeatureDefn->Release();
-
-    if( poSRS != NULL )
-        poSRS->Release();
 
     if( hDBF != NULL )
         DBFClose( hDBF );
@@ -1779,7 +1807,7 @@ OGRErr OGRShapeLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, 
 /*                           GetSpatialRef()                            */
 /************************************************************************/
 
-OGRSpatialReference *OGRShapeLayer::GetSpatialRef()
+OGRSpatialReference *OGRShapeGeomFieldDefn::GetSpatialRef()
 
 {
     if (bSRSSet)
