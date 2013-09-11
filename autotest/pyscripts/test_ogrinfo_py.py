@@ -203,6 +203,168 @@ def test_ogrinfo_py_11():
 
     return 'success'
 
+###############################################################################
+# Test RFC 41 support
+
+def test_ogrinfo_py_22():
+    script_path = test_py_scripts.get_py_script('ogrinfo')
+    if script_path is None:
+        return 'skip'
+
+    f = open('tmp/test_ogrinfo_22.csv', 'wt')
+    f.write('_WKTgeom1_EPSG_4326,_WKTgeom2_EPSG_32631\n')
+    f.write('"POINT(1 2)","POINT(3 4)"\n')
+    f.close()
+
+    ret = test_py_scripts.run_py_script(script_path, 'ogrinfo', 'tmp/test_ogrinfo_22.csv' )
+    if ret.find('1: test_ogrinfo_22 (Unknown (any), Unknown (any))') < 0:
+        print(ret)
+        return 'fail'
+
+    ret = test_py_scripts.run_py_script(script_path, 'ogrinfo', '-al tmp/test_ogrinfo_22.csv' )
+    expected_ret = """INFO: Open of `tmp/test_ogrinfo_22.csv'
+      using driver `CSV' successful.
+
+Layer name: test_ogrinfo_22
+Geometry (geom__WKTgeom1_EPSG_4326): Unknown (any)
+Geometry (geom__WKTgeom2_EPSG_32631): Unknown (any)
+Feature Count: 1
+Extent (geom__WKTgeom1_EPSG_4326): (1.000000, 2.000000) - (1.000000, 2.000000)
+Extent (geom__WKTgeom2_EPSG_32631): (3.000000, 4.000000) - (3.000000, 4.000000)
+SRS WKT (geom__WKTgeom1_EPSG_4326):
+GEOGCS["WGS 84",
+    DATUM["WGS_1984",
+        SPHEROID["WGS 84",6378137,298.257223563,
+            AUTHORITY["EPSG","7030"]],
+        AUTHORITY["EPSG","6326"]],
+    PRIMEM["Greenwich",0,
+        AUTHORITY["EPSG","8901"]],
+    UNIT["degree",0.0174532925199433,
+        AUTHORITY["EPSG","9122"]],
+    AUTHORITY["EPSG","4326"]]
+SRS WKT (geom__WKTgeom2_EPSG_32631):
+PROJCS["WGS 84 / UTM zone 31N",
+    GEOGCS["WGS 84",
+        DATUM["WGS_1984",
+            SPHEROID["WGS 84",6378137,298.257223563,
+                AUTHORITY["EPSG","7030"]],
+            AUTHORITY["EPSG","6326"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9122"]],
+        AUTHORITY["EPSG","4326"]],
+    PROJECTION["Transverse_Mercator"],
+    PARAMETER["latitude_of_origin",0],
+    PARAMETER["central_meridian",3],
+    PARAMETER["scale_factor",0.9996],
+    PARAMETER["false_easting",500000],
+    PARAMETER["false_northing",0],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]],
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH],
+    AUTHORITY["EPSG","32631"]]
+Geometry Column 1 = geom__WKTgeom1_EPSG_4326
+Geometry Column 2 = geom__WKTgeom2_EPSG_32631
+_WKTgeom1_EPSG_4326: String (0.0)
+_WKTgeom2_EPSG_32631: String (0.0)
+OGRFeature(test_ogrinfo_22):1
+  _WKTgeom1_EPSG_4326 (String) = POINT(1 2)
+  _WKTgeom2_EPSG_32631 (String) = POINT(3 4)
+  geom__WKTgeom1_EPSG_4326 = POINT (1 2)
+  geom__WKTgeom2_EPSG_32631 = POINT (3 4)
+"""
+    expected_lines = expected_ret.splitlines()
+    lines = ret.splitlines()
+    for i in range(len(expected_lines)):
+        if expected_lines[i] != lines[i]:
+            print(ret)
+            return 'fail'
+
+    os.unlink('tmp/test_ogrinfo_22.csv')
+
+    return 'success'
+
+###############################################################################
+# Test -geomfield (RFC 41) support
+
+def test_ogrinfo_py_23():
+    script_path = test_py_scripts.get_py_script('ogrinfo')
+    if script_path is None:
+        return 'skip'
+
+    f = open('tmp/test_ogrinfo_23.csv', 'wt')
+    f.write('_WKTgeom1_EPSG_4326,_WKTgeom2_EPSG_32631\n')
+    f.write('"POINT(1 2)","POINT(3 4)"\n')
+    f.write('"POINT(3 4)","POINT(1 2)"\n')
+    f.close()
+
+    ret = test_py_scripts.run_py_script(script_path, 'ogrinfo', '-al tmp/test_ogrinfo_23.csv -spat 1 2 1 2 -geomfield geom__WKTgeom2_EPSG_32631' )
+    expected_ret = """INFO: Open of `tmp/test_ogrinfo_23.csv'
+      using driver `CSV' successful.
+
+Layer name: test_ogrinfo_23
+Geometry (geom__WKTgeom1_EPSG_4326): Unknown (any)
+Geometry (geom__WKTgeom2_EPSG_32631): Unknown (any)
+Feature Count: 1
+Extent (geom__WKTgeom1_EPSG_4326): (3.000000, 4.000000) - (3.000000, 4.000000)
+Extent (geom__WKTgeom2_EPSG_32631): (1.000000, 2.000000) - (1.000000, 2.000000)
+SRS WKT (geom__WKTgeom1_EPSG_4326):
+GEOGCS["WGS 84",
+    DATUM["WGS_1984",
+        SPHEROID["WGS 84",6378137,298.257223563,
+            AUTHORITY["EPSG","7030"]],
+        AUTHORITY["EPSG","6326"]],
+    PRIMEM["Greenwich",0,
+        AUTHORITY["EPSG","8901"]],
+    UNIT["degree",0.0174532925199433,
+        AUTHORITY["EPSG","9122"]],
+    AUTHORITY["EPSG","4326"]]
+SRS WKT (geom__WKTgeom2_EPSG_32631):
+PROJCS["WGS 84 / UTM zone 31N",
+    GEOGCS["WGS 84",
+        DATUM["WGS_1984",
+            SPHEROID["WGS 84",6378137,298.257223563,
+                AUTHORITY["EPSG","7030"]],
+            AUTHORITY["EPSG","6326"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9122"]],
+        AUTHORITY["EPSG","4326"]],
+    PROJECTION["Transverse_Mercator"],
+    PARAMETER["latitude_of_origin",0],
+    PARAMETER["central_meridian",3],
+    PARAMETER["scale_factor",0.9996],
+    PARAMETER["false_easting",500000],
+    PARAMETER["false_northing",0],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]],
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH],
+    AUTHORITY["EPSG","32631"]]
+Geometry Column 1 = geom__WKTgeom1_EPSG_4326
+Geometry Column 2 = geom__WKTgeom2_EPSG_32631
+_WKTgeom1_EPSG_4326: String (0.0)
+_WKTgeom2_EPSG_32631: String (0.0)
+OGRFeature(test_ogrinfo_23):2
+  _WKTgeom1_EPSG_4326 (String) = POINT(3 4)
+  _WKTgeom2_EPSG_32631 (String) = POINT(1 2)
+  geom__WKTgeom1_EPSG_4326 = POINT (3 4)
+  geom__WKTgeom2_EPSG_32631 = POINT (1 2)
+"""
+    expected_lines = expected_ret.splitlines()
+    lines = ret.splitlines()
+    for i in range(len(expected_lines)):
+        if expected_lines[i] != lines[i]:
+            print(ret)
+            return 'fail'
+
+    os.unlink('tmp/test_ogrinfo_23.csv')
+
+    return 'success'
+
 gdaltest_list = [
     test_ogrinfo_py_1,
     test_ogrinfo_py_2,
@@ -214,7 +376,9 @@ gdaltest_list = [
     test_ogrinfo_py_8,
     test_ogrinfo_py_9,
     test_ogrinfo_py_10,
-    test_ogrinfo_py_11
+    test_ogrinfo_py_11,
+    test_ogrinfo_py_22,
+    test_ogrinfo_py_23,
     ]
 
 

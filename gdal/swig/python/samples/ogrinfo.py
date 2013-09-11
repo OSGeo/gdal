@@ -73,6 +73,7 @@ def main(argv = None):
     pszSQLStatement = None
     pszDialect = None
     options = {}
+    pszGeomField = None
 
     if argv is None:
         argv = sys.argv
@@ -114,6 +115,10 @@ def main(argv = None):
             poSpatialFilter = ogr.Geometry(ogr.wkbPolygon)
             poSpatialFilter.AddGeometry(oRing)
             iArg = iArg + 4
+
+        elif EQUAL(argv[iArg],"-geomfield") and iArg < nArgc-1:
+            iArg = iArg + 1
+            pszGeomField = argv[iArg]
 
         elif EQUAL(argv[iArg],"-where") and iArg < nArgc-1:
             iArg = iArg + 1
@@ -211,8 +216,11 @@ def main(argv = None):
         if papszLayers is not None:
             print( "layer names ignored in combination with -sql." )
 
-        poResultSet = poDS.ExecuteSQL( pszSQLStatement, poSpatialFilter, 
-                                        pszDialect )
+        if pszGeomField is None:
+            poResultSet = poDS.ExecuteSQL( pszSQLStatement, poSpatialFilter, 
+                                            pszDialect )
+        else:
+            poResultSet = poDS.ExecuteSQL( pszSQLStatement, None, pszDialect )
 
         if poResultSet is not None:
             if pszWHERE is not None:
@@ -220,7 +228,10 @@ def main(argv = None):
                     print("FAILURE: SetAttributeFilter(%s) failed." % pszWHERE)
                     return 1
 
-            ReportOnLayer( poResultSet, None, None, options )
+            if pszGeomField is not None:
+                ReportOnLayer( poResultSet, None, pszGeomField, poSpatialFilter, options )
+            else:
+                ReportOnLayer( poResultSet, None, None, None, options )
             poDS.ReleaseResultSet( poResultSet )
 
     #gdal.Debug( "OGR", "GetLayerCount() = %d\n", poDS.GetLayerCount() )
@@ -240,6 +251,16 @@ def main(argv = None):
                 if not bAllLayers:
                     line = "%d: %s" % (iLayer+1, poLayer.GetLayerDefn().GetName())
 
+                    nGeomFieldCount = poLayer.GetLayerDefn().GetGeomFieldCount()
+                    if nGeomFieldCount > 1:
+                        line = line + " ("
+                        for iGeom in range(nGeomFieldCount):
+                            if iGeom > 0:
+                                line = line + ", "
+                            poGFldDefn = poLayer.GetLayerDefn().GetGeomFieldDefn(iGeom)
+                            line = line + "%s" % ogr.GeometryTypeToName( poGFldDefn.GetType() )
+                        line = line + ")"
+
                     if poLayer.GetLayerDefn().GetGeomType() != ogr.wkbUnknown:
                         line = line + " (%s)" % ogr.GeometryTypeToName( poLayer.GetLayerDefn().GetGeomType() )
 
@@ -248,7 +269,7 @@ def main(argv = None):
                     if iRepeat != 0:
                         poLayer.ResetReading()
 
-                    ReportOnLayer( poLayer, pszWHERE, poSpatialFilter, options )
+                    ReportOnLayer( poLayer, pszWHERE, pszGeomField, poSpatialFilter, options )
 
         else:
 #/* -------------------------------------------------------------------- */ 
@@ -264,7 +285,7 @@ def main(argv = None):
                 if iRepeat != 0:
                     poLayer.ResetReading()
 
-                ReportOnLayer( poLayer, pszWHERE, poSpatialFilter, options )
+                ReportOnLayer( poLayer, pszWHERE, pszGeomField, poSpatialFilter, options )
 
 #/* -------------------------------------------------------------------- */
 #/*      Close down.                                                     */
@@ -280,7 +301,7 @@ def main(argv = None):
 def Usage():
 
     print( "Usage: ogrinfo [--help-general] [-ro] [-q] [-where restricted_where]\n"
-            "               [-spat xmin ymin xmax ymax] [-fid fid]\n"
+            "               [-spat xmin ymin xmax ymax] [-geomfield field] [-fid fid]\n"
             "               [-sql statement] [-al] [-so] [-fields={YES/NO}]\n"
             "               [-geom={YES/NO/SUMMARY}][--formats]\n"
             "               datasource_name [layer [layer ...]]")
@@ -290,7 +311,7 @@ def Usage():
 #/*                           ReportOnLayer()                            */
 #/************************************************************************/
 
-def ReportOnLayer( poLayer, pszWHERE, poSpatialFilter, options ):
+def ReportOnLayer( poLayer, pszWHERE, pszGeomField, poSpatialFilter, options ):
 
     poDefn = poLayer.GetLayerDefn()
 
@@ -303,7 +324,14 @@ def ReportOnLayer( poLayer, pszWHERE, poSpatialFilter, options ):
             return
 
     if poSpatialFilter is not None:
-        poLayer.SetSpatialFilter( poSpatialFilter )
+        if pszGeomField is not None:
+            iGeomField = poLayer.GetLayerDefn().GetGeomFieldIndex(pszGeomField)
+            if iGeomField >= 0:
+                poLayer.SetSpatialFilter( iGeomField, poSpatialFilter )
+            else:
+                print("WARNING: Cannot find geometry field %s." % pszGeomField)
+        else:
+            poLayer.SetSpatialFilter( poSpatialFilter )
 
 #/* -------------------------------------------------------------------- */
 #/*      Report various overall information.                             */
@@ -313,26 +341,52 @@ def ReportOnLayer( poLayer, pszWHERE, poSpatialFilter, options ):
     print( "Layer name: %s" % poDefn.GetName() )
 
     if bVerbose:
-        print( "Geometry: %s" % ogr.GeometryTypeToName( poDefn.GetGeomType() ) )
+        nGeomFieldCount = poLayer.GetLayerDefn().GetGeomFieldCount()
+        if nGeomFieldCount > 1:
+            for iGeom in range(nGeomFieldCount):
+                poGFldDefn = poLayer.GetLayerDefn().GetGeomFieldDefn(iGeom)
+                print( "Geometry (%s): %s" % (poGFldDefn.GetNameRef(), ogr.GeometryTypeToName( poGFldDefn.GetType() ) ))
+        else:
+            print( "Geometry: %s" % ogr.GeometryTypeToName( poDefn.GetGeomType() ) )
         
         print( "Feature Count: %d" % poLayer.GetFeatureCount() )
         
-        oExt = poLayer.GetExtent(True, can_return_null = True)
-        if oExt is not None:
-            print("Extent: (%f, %f) - (%f, %f)" % (oExt[0], oExt[1], oExt[2], oExt[3]))
-
-        if poLayer.GetSpatialRef() is None:
-            pszWKT = "(unknown)"
+        if nGeomFieldCount > 1:
+            for iGeom in range(nGeomFieldCount):
+                poGFldDefn = poLayer.GetLayerDefn().GetGeomFieldDefn(iGeom)
+                oExt = poLayer.GetExtent(True, geom_field = iGeom, can_return_null = True)
+                if oExt is not None:
+                    print("Extent (%s): (%f, %f) - (%f, %f)" % (poGFldDefn.GetNameRef(), oExt[0], oExt[2], oExt[1], oExt[3]))
         else:
-            pszWKT = poLayer.GetSpatialRef().ExportToPrettyWkt()
+            oExt = poLayer.GetExtent(True, can_return_null = True)
+            if oExt is not None:
+                print("Extent: (%f, %f) - (%f, %f)" % (oExt[0], oExt[2], oExt[1], oExt[3]))
 
-        print( "Layer SRS WKT:\n%s" % pszWKT )
+        if nGeomFieldCount > 1:
+            for iGeom in range(nGeomFieldCount):
+                poGFldDefn = poLayer.GetLayerDefn().GetGeomFieldDefn(iGeom)
+                if poGFldDefn.GetSpatialRef() is None:
+                    pszWKT = "(unknown)"
+                else:
+                    pszWKT = poGFldDefn.GetSpatialRef().ExportToPrettyWkt()
+                print( "SRS WKT (%s):\n%s" % (poGFldDefn.GetNameRef(), pszWKT) )
+        else:
+            if poLayer.GetSpatialRef() is None:
+                pszWKT = "(unknown)"
+            else:
+                pszWKT = poLayer.GetSpatialRef().ExportToPrettyWkt()
+            print( "Layer SRS WKT:\n%s" % pszWKT )
     
         if len(poLayer.GetFIDColumn()) > 0:
             print( "FID Column = %s" % poLayer.GetFIDColumn() )
     
-        if len(poLayer.GetGeometryColumn()) > 0:
-            print( "Geometry Column = %s" % poLayer.GetGeometryColumn() )
+        if nGeomFieldCount > 1:
+            for iGeom in range(nGeomFieldCount):
+                poGFldDefn = poLayer.GetLayerDefn().GetGeomFieldDefn(iGeom)
+                print( "Geometry Column %d = %s" % (iGeom + 1, poGFldDefn.GetNameRef() ))
+        else:
+            if len(poLayer.GetGeometryColumn()) > 0:
+                print( "Geometry Column = %s" % poLayer.GetGeometryColumn() )
 
         for iAttr in range(poDefn.GetFieldCount()):
             poField = poDefn.GetFieldDefn( iAttr )
@@ -394,10 +448,17 @@ def DumpReadableFeature( poFeature, options = None ):
         if 'DISPLAY_STYLE' not in options or EQUAL(options['DISPLAY_STYLE'], 'yes'):
             print("  Style = %s" % GetStyleString() )
 
-    poGeometry = poFeature.GetGeometryRef()
-    if poGeometry is not None:
+    nGeomFieldCount = poFeature.GetGeomFieldCount()
+    if nGeomFieldCount > 0:
         if 'DISPLAY_GEOMETRY' not in options or not EQUAL(options['DISPLAY_GEOMETRY'], 'no'):
-            DumpReadableGeometry( poGeometry, "  ", options)
+            for iField in range(nGeomFieldCount):
+                poGFldDefn = poFeature.GetDefnRef().GetGeomFieldDefn(iField)
+                poGeometry = poFeature.GetGeomFieldRef(iField)
+                if poGeometry is not None:
+                    sys.stdout.write("  ")
+                    if len(poGFldDefn.GetNameRef()) > 0 and nGeomFieldCount > 1:
+                        sys.stdout.write("%s = " % poGFldDefn.GetNameRef() )
+                    DumpReadableGeometry( poGeometry, "", options)
 
     print('')
 
