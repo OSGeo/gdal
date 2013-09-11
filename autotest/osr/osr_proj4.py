@@ -595,6 +595,27 @@ def osr_proj4_14():
 
     return 'success'
 
+###############################################################################
+# Test other authorities than EPSG, e.g. IGNF:XXXX
+#
+def osr_proj4_15():
+
+    srs = osr.SpatialReference()
+    if srs.ImportFromProj4("+init=IGNF:LAMB93") != 0:
+        return 'skip'
+
+    if srs.GetAuthorityName(None) != 'IGNF' or srs.GetAuthorityCode(None) != 'LAMB93':
+        gdaltest.post_reason('fail')
+        print(srs)
+        return 'fail'
+
+    if srs.Validate() != 0:
+        gdaltest.post_reason('fail')
+        print(srs)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ 
     osr_proj4_1,
     osr_proj4_2,
@@ -609,7 +630,8 @@ gdaltest_list = [
     osr_proj4_11,
     osr_proj4_12,
     osr_proj4_13,
-    osr_proj4_14 ]
+    osr_proj4_14,
+    osr_proj4_15 ]
 
 if __name__ == '__main__':
 
