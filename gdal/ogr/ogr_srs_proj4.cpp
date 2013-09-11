@@ -1288,9 +1288,26 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 /* -------------------------------------------------------------------- */
     if( strstr(pszProj4,"wktext") != NULL || bAddProj4Extension )
         SetExtension( GetRoot()->GetValue(), "PROJ4", pszProj4 );
-        
+
+/* -------------------------------------------------------------------- */
+/*      Preserve authority (for example IGNF)                           */
+/* -------------------------------------------------------------------- */
+    const char *pszINIT = CSLFetchNameValue(papszNV,"init");
+    const char *pszColumn;
+    if( pszINIT != NULL && (pszColumn = strchr(pszINIT, ':')) != NULL &&
+        GetRoot()->FindChild( "AUTHORITY" ) < 0 )
+    {
+        CPLString osAuthority;
+        osAuthority.assign(pszINIT, pszColumn - pszINIT);
+        OGR_SRSNode* poAuthNode = new OGR_SRSNode( "AUTHORITY" );
+        poAuthNode->AddChild( new OGR_SRSNode( osAuthority ) );
+        poAuthNode->AddChild( new OGR_SRSNode( pszColumn + 1 ) );
+
+        GetRoot()->AddChild( poAuthNode );
+    }
+
     CSLDestroy( papszNV );
-    
+
     return OGRERR_NONE;
 }
 

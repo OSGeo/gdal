@@ -2796,7 +2796,18 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /*      If there is no SRS ID with such auth_srid, use it as SRS ID.    */
 /* -------------------------------------------------------------------- */
         if ( nRowCount < 1 )
+        {
             nSRSId = atoi(pszAuthorityCode);
+            /* The authority code might be non numeric, e.g. IGNF:LAMB93 */
+            /* in which case we might fallback to the fake OGR authority */
+            /* for spatialite, since its auth_srid is INTEGER */
+            if( nSRSId == 0 )
+            {
+                nSRSId = nUndefinedSRID;
+                if( bIsSpatiaLiteDB )
+                    pszAuthorityName = NULL;
+            }
+        }
         sqlite3_free_table(papszResult);
     }
 
