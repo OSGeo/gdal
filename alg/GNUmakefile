@@ -26,9 +26,9 @@ endif
 
 CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) $(OPENCL_FLAGS)
 
-default:	$(OBJ:.o=.$(OBJ_EXT)) gdalgridavx.o
+default:	$(OBJ:.o=.$(OBJ_EXT)) gdalgridavx.$(OBJ_EXT)
 
-gdalgridavx.o:   gdalgridavx.cpp
+gdalgridavx.$(OBJ_EXT):   gdalgridavx.cpp
 	$(CXX) $(CXXFLAGS) $(AVXFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 clean:
