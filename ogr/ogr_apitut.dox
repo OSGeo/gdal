@@ -212,7 +212,70 @@ For each 2D geometry type there is a corresponding 2.5D type code.  The 2D
 and 2.5D geometry cases are handled by the same C++ class, so our code will
 handle 2D or 3D cases properly.  
 
-Note that OGRFeature::GetGeometryRef() returns a pointer to
+Starting with OGR 2.0,
+<a href="http://trac.osgeo.org/gdal/wiki/rfc41_multiple_geometry_fields">
+several geometry fields</a> can be associated to a feature.
+
+In C++ :
+\code
+    OGRGeometry *poGeometry;
+    int iGeomField;
+    int nGeomFieldCount;
+
+    nGeomFieldCount = poFeature->GetGeomFieldCount();
+    for(iGeomField = 0; iGeomField < nGeomFieldCount; iGeomField ++ )
+    {
+        poGeometry = poFeature->GetGeomFieldRef(iGeomField);
+        if( poGeometry != NULL 
+                && wkbFlatten(poGeometry->getGeometryType()) == wkbPoint )
+        {
+            OGRPoint *poPoint = (OGRPoint *) poGeometry;
+
+            printf( "%.3f,%3.f\n", poPoint->getX(), poPoint->getY() );
+        }
+        else
+        {
+            printf( "no point geometry\n" );
+        }
+    }
+\endcode
+
+In C :
+\code
+    OGRGeometryH hGeometry;
+    int iGeomField;
+    int nGeomFieldCount;
+
+    nGeomFieldCount = OGR_F_GetGeomFieldCount(hFeature);
+    for(iGeomField = 0; iGeomField < nGeomFieldCount; iGeomField ++ )
+    {
+        hGeometry = OGR_F_GetGeomFieldRef(hFeature, iGeomField);
+        if( hGeometry != NULL 
+                && wkbFlatten(OGR_G_GetGeometryType(hGeometry)) == wkbPoint )
+        {
+            printf( "%.3f,%3.f\n", OGR_G_GetX(hGeometry, 0),
+                    OGR_G_GetY(hGeometry, 0) );
+        }
+        else
+        {
+            printf( "no point geometry\n" );
+        }
+    }
+\endcode
+
+In Python:
+\code
+    nGeomFieldCount = feat.GetGeomFieldCount()
+    for iGeomField in range(nGeomFieldCount):
+        geom = feat.GetGeomFieldRef(iGeomField)
+        if geom is not None and geom.GetGeometryType() == ogr.wkbPoint:
+            print "%.3f, %.3f" % ( geom.GetX(), geom.GetY() )
+        else:
+            print "no point geometry\n"
+\endcode
+
+Note that OGRFeature::GetGeometryRef() and OGRFeature::GetGeomFieldRef()
+return a pointer to
 the internal geometry owned by the OGRFeature.  There we don't actually 
 deleted the return geometry.  However, the OGRLayer::GetNextFeature() method
 returns a copy of the feature that is now owned by us.  So at the end of
@@ -886,4 +949,145 @@ while len(linelist) == 3:
 ds = None
 \endcode
 
+Starting with OGR 2.0,
+<a href="http://trac.osgeo.org/gdal/wiki/rfc41_multiple_geometry_fields">
+several geometry fields</a> can be associated to a feature. This capability
+is just available for a few file formats, such as PostGIS.
+
+To create such datasources, geometry fields must be first created.
+Spatial reference system objects can be associated to each geometry field.
+
+In C++ :
+\code
+    OGRGeomFieldDefn oPointField( "PointField", wkbPoint );
+    OGRSpatialReference* poSRS = new OGRSpatialReference();
+    poSRS->importFromEPSG(4326);
+    oPointField.SetSpatialRef(poSRS);
+    poSRS->Release();
+    
+    if( poLayer->CreateGeomField( &oPointField ) != OGRERR_NONE )
+    {
+        printf( "Creating field PointField failed.\n" );
+        exit( 1 );
+    }
+    
+    OGRGeomFieldDefn oFieldPoint2( "PointField2", wkbPoint );
+    poSRS = new OGRSpatialReference();
+    poSRS->importFromEPSG(32631);
+    oPointField2.SetSpatialRef(poSRS);
+    poSRS->Release();
+    
+    if( poLayer->CreateGeomField( &oPointField2 ) != OGRERR_NONE )
+    {
+        printf( "Creating field PointField2 failed.\n" );
+        exit( 1 );
+    }
+\endcode
+
+In C :
+\code
+    OGRGeomFieldDefnH hPointField;
+    OGRGeomFieldDefnH hPointField2;
+    OGRSpatialReferenceH hSRS;
+
+    hPointField = OGR_GFld_Create( "PointField", wkbPoint );
+    hSRS = OSRNewSpatialReference( NULL );
+    OSRImportFromEPSG(hSRS, 4326);
+    OGR_GFld_SetSpatialRef(hPointField, hSRS);
+    OSRRelease(hSRS);
+    
+    if( OGR_L_CreateGeomField( hLayer, hPointField ) != OGRERR_NONE )
+    {
+        printf( "Creating field PointField failed.\n" );
+        exit( 1 );
+    }
+    
+    OGR_GFld_Destroy( hPointField );
+
+    hPointField2 = OGR_GFld_Create( "PointField2", wkbPoint );
+    OSRImportFromEPSG(hSRS, 32631);
+    OGR_GFld_SetSpatialRef(hPointField2, hSRS);
+    OSRRelease(hSRS);
+    
+    if( OGR_L_CreateGeomField( hLayer, hPointField2 ) != OGRERR_NONE )
+    {
+        printf( "Creating field PointField2 failed.\n" );
+        exit( 1 );
+    }
+    
+    OGR_GFld_Destroy( hPointField2 );
+\endcode
+
+To write a feature to disk, we must create a local OGRFeature, set attributes
+and attach geometries before trying to write it to the layer.  It is 
+imperative that this feature be instantiated from the OGRFeatureDefn 
+associated with the layer it will be written to.
+
+In C++ :
+\code
+        OGRFeature *poFeature;
+        OGRGeometry *poGeometry;
+        char* pszWKT;
+
+        poFeature = OGRFeature::CreateFeature( poLayer->GetLayerDefn() );
+        
+        pszWKT = (char*) "POINT (2 49)";
+        OGRGeometryFactory::createFromWkt( &pszWKT, NULL, &poGeometry );
+        poFeature->SetGeomFieldDirectly( "PointField", poGeometry );
+        
+        pszWKT = (char*) "POINT (500000 4500000)";
+        OGRGeometryFactory::createFromWkt( &pszWKT, NULL, &poGeometry );
+        poFeature->SetGeomFieldDirectly( "PointField2", poGeometry );
+        
+        if( poLayer->CreateFeature( poFeature ) != OGRERR_NONE )
+        {
+            printf( "Failed to create feature.\n" );
+            exit( 1 );
+        }
+
+        OGRFeature::DestroyFeature( poFeature );
+\endcode
+
+In C :
+\code
+        OGRFeatureH hFeature;
+        OGRGeometryH hGeometry;
+        char* pszWKT;
+
+        poFeature = OGR_F_Create( OGR_L_GetLayerDefn(hLayer) );
+        
+        pszWKT = (char*) "POINT (2 49)";
+        OGR_G_CreateFromWkt( &pszWKT, NULL, &hGeometry );
+        OGR_F_SetGeomFieldDirectly( hFeature,
+            OGR_F_GetGeomFieldIndex(hFeature, "PointField"), hGeometry );
+        
+        pszWKT = (char*) "POINT (500000 4500000)";
+        OGR_G_CreateFromWkt( &pszWKT, NULL, &hGeometry );
+        OGR_F_SetGeomFieldDirectly( hFeature,
+            OGR_F_GetGeomFieldIndex(hFeature, "PointField2"), hGeometry );
+        
+        if( OGR_L_CreateFeature( hFeature ) != OGRERR_NONE )
+        {
+            printf( "Failed to create feature.\n" );
+            exit( 1 );
+        }
+
+        OGR_F_Destroy( hFeature );
+\endcode
+
+In Python :
+\code
+        feat = ogr.Feature( lyr.GetLayerDefn() )
+        
+        feat.SetGeomFieldDirectly( "PointField",
+            ogr.CreateGeometryFromWkt( "POINT (2 49)" ) )
+        feat.SetGeomFieldDirectly( "PointField2",
+            ogr.CreateGeometryFromWkt( "POINT (500000 4500000)" ) )
+
+        if lyr.CreateFeature( feat ) != 0 )
+        {
+            print( "Failed to create feature.\n" );
+            sys.exit( 1 );
+        }
+\endcode
 */

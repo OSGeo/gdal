@@ -117,7 +117,9 @@ describing how to use the OGRSpatialReference class.<p>
 The OGRGeometry captures the geometry of a vector feature ... the 
 spatial position/region of a feature.  The OGRFeature contains this 
 geometry, and adds feature attributes, feature id, 
-and a feature class identify.<p>
+and a feature class identifier. Starting with OGR 2.0,
+<a href="http://trac.osgeo.org/gdal/wiki/rfc41_multiple_geometry_fields">
+several geometries</a> can be associated to a OGRFeature.<p>
 
 The set of attributes, their types, names and so forth is represented
 via the OGRFeatureDefn class.  One OGRFeatureDefn normally exists for a
@@ -139,8 +141,12 @@ If this is wkbUnknown then any type of geometry is allowed.  This implies that
 features in a given layer can potentially be of different geometry types
 though they will always share a common attribute schema. <p>
 
-The OGRFeatureDefn also contains a concept of default spatial reference
-system for all features of that type and a feature class name (normally 
+Starting with OGR 2.0, several geometry fields can be associated to a feature
+class. Each geometry field has its own indicator of geometry type allowed,
+returned by OGRGeomFieldDefn::GetType(), and its spatial reference system,
+returned by OGRGeomFieldDefn::GetSpatialRef().
+
+The OGRFeatureDefn also contains a feature class name (normally 
 used as a layer name).<p>
 
 
