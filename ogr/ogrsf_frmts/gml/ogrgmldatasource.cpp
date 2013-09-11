@@ -57,17 +57,18 @@ static CPLString ReplaceSpaceByPct20IfNeeded(const char* pszURL)
 {
     /* Replace ' ' by '%20' */
     CPLString osRet = pszURL;
-    const char* pszNeedle = strstr(pszURL, "text/xml; subtype=");
+    const char* pszNeedle = strstr(pszURL, "; ");
     if (pszNeedle)
     {
         char* pszTmp = (char*)CPLMalloc(strlen(pszURL) + 2 +1);
         int nBeforeNeedle = (int)(pszNeedle - pszURL);
         memcpy(pszTmp, pszURL, nBeforeNeedle);
-        strcpy(pszTmp + nBeforeNeedle, "text/xml;%20subtype=");
-        strcpy(pszTmp + nBeforeNeedle + strlen("text/xml;%20subtype="), pszNeedle + strlen("text/xml; subtype="));
+        strcpy(pszTmp + nBeforeNeedle, ";%20");
+        strcpy(pszTmp + nBeforeNeedle + strlen(";%20"), pszNeedle + strlen("; "));
         osRet = pszTmp;
         CPLFree(pszTmp);
     }
+
     return osRet;
 }
 
@@ -767,7 +768,8 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
                 {
                     for(int i=0;i<nTokens;i+=2)
                     {
-                        char* pszLocation = CPLUnescapeString(papszTokens[i+1], NULL, CPLES_URL);
+                        const char* pszEscapedURL = papszTokens[i+1];
+                        char* pszLocation = CPLUnescapeString(pszEscapedURL, NULL, CPLES_URL);
                         CPLString osLocation = pszLocation;
                         CPLFree(pszLocation);
                         if (osLocation.ifind("typename=") != std::string::npos &&
@@ -779,8 +781,7 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
                             if (!bHasFoundXSD && CPLHTTPEnabled() &&
                                 CSLTestBoolean(CPLGetConfigOption("GML_DOWNLOAD_WFS_SCHEMA", "YES")))
                             {
-                                CPLString osEscaped = ReplaceSpaceByPct20IfNeeded(osLocation);
-                                CPLHTTPResult* psResult = CPLHTTPFetch(osEscaped, NULL);
+                                CPLHTTPResult* psResult = CPLHTTPFetch(pszEscapedURL, NULL);
                                 if (psResult)
                                 {
                                     if (psResult->nStatus == 0 && psResult->pabyData != NULL)
