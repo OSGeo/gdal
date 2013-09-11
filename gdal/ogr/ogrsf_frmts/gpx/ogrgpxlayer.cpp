@@ -285,6 +285,8 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
         "       UNIT[\"degree\",0.01745329251994328,"
         "           AUTHORITY[\"EPSG\",\"9122\"]],"
         "           AUTHORITY[\"EPSG\",\"4326\"]]");
+    if( poFeatureDefn->GetGeomFieldCount() != 0 )
+        poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 
     poFeature = NULL;
 
@@ -1065,16 +1067,6 @@ OGRFeature *OGRGPXLayer::GetNextFeature()
 #else
     return NULL;
 #endif
-}
-
-/************************************************************************/
-/*                           GetSpatialRef()                            */
-/************************************************************************/
-
-OGRSpatialReference *OGRGPXLayer::GetSpatialRef()
-
-{
-    return poSRS;
 }
 
 /************************************************************************/

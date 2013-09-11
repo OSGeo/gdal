@@ -142,9 +142,23 @@ void OGRGeoJSONReader::ReadLayer( OGRGeoJSONDataSource* poDS,
         return;
     }
 
-    OGRGeoJSONLayer* poLayer = new OGRGeoJSONLayer( pszName, NULL,
+    OGRSpatialReference* poSRS = NULL;
+    poSRS = OGRGeoJSONReadSpatialReference( poObj );
+    if (poSRS == NULL ) {
+        // If there is none defined, we use 4326
+        poSRS = new OGRSpatialReference();
+        if( OGRERR_NONE != poSRS->importFromEPSG( 4326 ) )
+        {
+            delete poSRS;
+            poSRS = NULL;
+        }
+    }
+
+    OGRGeoJSONLayer* poLayer = new OGRGeoJSONLayer( pszName, poSRS,
                                     OGRGeoJSONLayer::DefaultGeometryType,
                                     poDS );
+    if( poSRS != NULL )
+        poSRS->Release();
 
     if( !GenerateLayerDefn(poLayer, poObj) )
     {
@@ -201,23 +215,7 @@ void OGRGeoJSONReader::ReadLayer( OGRGeoJSONDataSource* poDS,
         ReadFeatureCollection( poLayer, poObj );
     }
 
-    OGRSpatialReference* poSRS = NULL;
-    poSRS = OGRGeoJSONReadSpatialReference( poObj );
-    if (poSRS == NULL ) {
-        // If there is none defined, we use 4326
-        poSRS = new OGRSpatialReference();
-        if( OGRERR_NONE != poSRS->importFromEPSG( 4326 ) )
-        {
-            delete poSRS;
-            poSRS = NULL;
-        }
-        poLayer->SetSpatialRef( poSRS );
-        delete poSRS;
-    }
-    else {
-        poLayer->SetSpatialRef( poSRS );
-        delete poSRS;
-    }
+    CPLErrorReset();
 
     poDS->AddLayer(poLayer);
 }

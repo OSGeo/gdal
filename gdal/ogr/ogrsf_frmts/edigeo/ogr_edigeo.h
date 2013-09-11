@@ -73,8 +73,6 @@ class OGREDIGEOLayer : public OGRLayer
 
     virtual int                 TestCapability( const char * );
 
-    virtual OGRSpatialReference *GetSpatialRef() { return poSRS; }
-
     virtual OGRErr              GetExtent(OGREnvelope *psExtent, int bForce);
 
 

@@ -78,6 +78,13 @@ OGRGMLLayer::OGRGMLLayer( const char * pszName,
     else
         poFClass = NULL;
 
+    if( poFeatureDefn->GetGeomFieldCount() != 0 )
+    {
+        poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
+        if( poFClass != NULL && poFClass->GetGeometryElement() != NULL )
+            poFeatureDefn->GetGeomFieldDefn(0)->SetName( poFClass->GetGeometryElement() );
+    }
+
     hCacheSRS = GML_BuildOGRGeometryFromList_CreateCache();
 
     /* Compatibility option. Not advertized, because hopefully won't be needed */
@@ -817,26 +824,4 @@ OGRErr OGRGMLLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
     poFeatureDefn->AddFieldDefn( &oCleanCopy );
 
     return OGRERR_NONE;
-}
-
-/************************************************************************/
-/*                           GetSpatialRef()                            */
-/************************************************************************/
-
-OGRSpatialReference *OGRGMLLayer::GetSpatialRef()
-
-{
-    return poSRS;
-}
-
-/************************************************************************/
-/*                         GetGeometryColumn()                          */
-/************************************************************************/
-
-const char* OGRGMLLayer::GetGeometryColumn()
-{
-    if( poFClass == NULL || poFClass->GetGeometryElement() == NULL )
-        return "";
-
-    return poFClass->GetGeometryElement();
 }
