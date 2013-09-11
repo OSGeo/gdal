@@ -66,8 +66,7 @@ class OGRShapeDataSource;
 class OGRShapeLayer : public OGRAbstractProxiedLayer
 {
     OGRShapeDataSource  *poDS;
-    OGRSpatialReference *poSRS; /* lazy loaded --> use GetSpatialRef() */
-    int                 bSRSSet;
+
     OGRFeatureDefn     *poFeatureDefn;
     int                 iNextShapeId;
     int                 nTotalShapeCount;
@@ -173,8 +172,6 @@ class OGRShapeLayer : public OGRAbstractProxiedLayer
     virtual OGRErr      ReorderFields( int* panMap );
     virtual OGRErr      AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags );
 
-    virtual OGRSpatialReference *GetSpatialRef();
-    
     virtual int         TestCapability( const char * );
     virtual void        SetSpatialFilter( OGRGeometry * );
     virtual OGRErr      SetAttributeFilter( const char * );
