@@ -1093,6 +1093,11 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
                     return OGRERR_CORRUPT_DATA;
                 }
             }
+            else if( EQUAL(poNode->GetValue(),"EXTENSION") )
+            {
+                // We do not try to control the sub-organization of 
+                // EXTENSION nodes.
+            }
             else
             {
                 CPLDebug( "OGRSpatialReference::Validate",
