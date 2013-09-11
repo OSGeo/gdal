@@ -114,7 +114,7 @@ OGRFeatureDefn* OGRSQLiteViewLayer::GetLayerDefn()
     {
         bLayerDefnError = TRUE;
 
-        poFeatureDefn = new OGRFeatureDefn( pszViewName );
+        poFeatureDefn = new OGRSQLiteFeatureDefn( pszViewName );
         poFeatureDefn->Reference();
     }
 
@@ -200,10 +200,6 @@ CPLErr OGRSQLiteViewLayer::EstablishFeatureDefn()
         return CE_Failure;
     }
 
-    poSRS = poUnderlyingLayer->GetSpatialRef();
-    if (poSRS)
-        poSRS->Reference();
-
     this->bHasSpatialIndex = poUnderlyingLayer->HasSpatialIndex();
 
 /* -------------------------------------------------------------------- */
@@ -238,13 +234,23 @@ CPLErr OGRSQLiteViewLayer::EstablishFeatureDefn()
 /*      Collect the rest of the fields.                                 */
 /* -------------------------------------------------------------------- */
     std::set<CPLString> aosEmpty;
-    BuildFeatureDefn( pszViewName, hColStmt, aosEmpty );
+    BuildFeatureDefn( pszViewName, hColStmt, osGeomColumn, aosEmpty );
     sqlite3_finalize( hColStmt );
 
 /* -------------------------------------------------------------------- */
-/*      Set the geometry type if we know it.                            */
+/*      Set the properties of the geometry column.                      */
 /* -------------------------------------------------------------------- */
-    poFeatureDefn->SetGeomType( poUnderlyingLayer->GetGeomType() );
+    if( poFeatureDefn->GetGeomFieldCount() != 0 )
+    {
+        poFeatureDefn->SetGeomType( poUnderlyingLayer->GetGeomType() );
+        OGRSQLiteGeomFieldDefn* poGeomFieldDefn =
+            poFeatureDefn->myGetGeomFieldDefn(0);
+        poGeomFieldDefn->SetSpatialRef(poUnderlyingLayer->GetSpatialRef());
+        poGeomFieldDefn->nSRSId = poUnderlyingLayer->myGetLayerDefn()->
+            myGetGeomFieldDefn(0)->nSRSId;
+        if( eGeomFormat != OSGF_None )
+            poGeomFieldDefn->eGeomFormat = eGeomFormat;
+    }
 
     return CE_None;
 }
@@ -283,19 +289,6 @@ OGRErr OGRSQLiteViewLayer::ResetStatement()
         hStmt = NULL;
         return OGRERR_FAILURE;
     }
-}
-
-/************************************************************************/
-/*                           GetSpatialRef()                            */
-/************************************************************************/
-
-OGRSpatialReference *OGRSQLiteViewLayer::GetSpatialRef()
-
-{
-    if (HasLayerDefnError())
-        return NULL;
-
-    return poSRS;
 }
 
 /************************************************************************/
@@ -407,11 +400,13 @@ void OGRSQLiteViewLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 /*                           GetSpatialWhere()                          */
 /************************************************************************/
 
-CPLString OGRSQLiteViewLayer::GetSpatialWhere(OGRGeometry* poFilterGeom)
+CPLString OGRSQLiteViewLayer::GetSpatialWhere(int iGeomCol,
+                                              OGRGeometry* poFilterGeom)
 {
     CPLString osSpatialWHERE;
 
-    if (HasLayerDefnError())
+    if (HasLayerDefnError() || poFeatureDefn == NULL ||
+        iGeomCol < 0 || iGeomCol >= poFeatureDefn->GetGeomFieldCount())
         return "";
 
     if( poFilterGeom != NULL && bHasSpatialIndex )
@@ -432,7 +427,7 @@ CPLString OGRSQLiteViewLayer::GetSpatialWhere(OGRGeometry* poFilterGeom)
             osSQL.Printf("SELECT name FROM sqlite_master "
                         "WHERE name='idx_%s_%s'",
                         pszEscapedUnderlyingTableName,
-                         OGRSQLiteEscape(osUnderlyingGeometryColumn).c_str());
+                        OGRSQLiteEscape(osUnderlyingGeometryColumn).c_str());
 
             int  rc = sqlite3_get_table( poDS->GetDB(), osSQL.c_str(),
                                         &papszResult, &nRowCount,
@@ -482,7 +477,7 @@ CPLString OGRSQLiteViewLayer::GetSpatialWhere(OGRGeometry* poFilterGeom)
 
         /* A bit inefficient but still faster than OGR filtering */
         osSpatialWHERE.Printf("MBRIntersects(\"%s\", BuildMBR(%.12f, %.12f, %.12f, %.12f))",
-                       OGRSQLiteEscapeName(osGeomColumn).c_str(),
+                       OGRSQLiteEscapeName(poFeatureDefn->GetGeomFieldDefn(iGeomCol)->GetNameRef()).c_str(),
                        sEnvelope.MinX - 1e-11, sEnvelope.MinY - 1e-11,
                        sEnvelope.MaxX + 1e-11, sEnvelope.MaxY + 1e-11);
     }
@@ -502,7 +497,8 @@ void OGRSQLiteViewLayer::BuildWhere()
 {
     osWHERE = "";
 
-    CPLString osSpatialWHERE = GetSpatialWhere(m_poFilterGeom);
+    CPLString osSpatialWHERE = GetSpatialWhere(m_iGeomFieldFilter,
+                                               m_poFilterGeom);
     if (osSpatialWHERE.size() != 0)
     {
         osWHERE = "WHERE ";
