@@ -1041,6 +1041,88 @@ def ogr_rfc41_7():
 
     return 'success'
 
+###############################################################################
+# Test SQLite dialect
+
+def ogr_rfc41_8():
+
+    import ogr_sql_sqlite
+    if not ogr_sql_sqlite.ogr_sql_sqlite_available():
+        return 'skip'
+
+    ds = ogr.GetDriverByName('memory').CreateDataSource('')
+    lyr = ds.CreateLayer('mytable', geom_type = ogr.wkbPolygon)
+    lyr.GetLayerDefn().GetGeomFieldDefn(0).SetName('geomfield')
+    gfld_defn = ogr.GeomFieldDefn('geomfield2', ogr.wkbPoint25D)
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+    gfld_defn.SetSpatialRef(sr)
+    lyr.CreateGeomField(gfld_defn)
+
+    # Check that we get the geometry columns, even with no features
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM mytable', dialect = 'SQLite')
+    if sql_lyr.GetLayerDefn().GetGeomFieldCount() != 2:
+        print(sql_lyr.GetLayerDefn().GetGeomFieldCount())
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetType() != ogr.wkbPolygon:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetSpatialRef() is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if sql_lyr.GetLayerDefn().GetGeomFieldDefn(1).GetType() != ogr.wkbPoint25D:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    srs = sql_lyr.GetLayerDefn().GetGeomFieldDefn(1).GetSpatialRef()
+    if srs.GetAuthorityCode(None) != '4326':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
+    # Test INSERT INTO request
+    ds.ExecuteSQL("INSERT INTO mytable (geomfield, geomfield2) VALUES (" +
+                  "GeomFromText('POLYGON ((0 0,0 1,1 1,1 0,0 0))'), " +
+                  "GeomFromText('POINT Z(0 1 2)') )", dialect = 'SQLite')
+
+    # Check output
+    sql_lyr = ds.ExecuteSQL('SELECT geomfield2, geomfield FROM mytable', dialect = 'SQLite')
+    feat = sql_lyr.GetNextFeature()
+    geom = feat.GetGeomFieldRef('geomfield')
+    if geom.ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,1 0,0 0))':
+        feat.DumpReadable()
+        gdaltest.post_reason('fail')
+        return 'fail'
+    geom = feat.GetGeomFieldRef('geomfield2')
+    if geom.ExportToWkt() != 'POINT (0 1 2)':
+        feat.DumpReadable()
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = None
+    ds.ReleaseResultSet(sql_lyr)
+
+    # Test UPDATE
+    ds.ExecuteSQL("UPDATE mytable SET geomfield2 = " +
+                  "GeomFromText('POINT Z(3 4 5)')", dialect = 'SQLite')
+
+    # Check output
+    sql_lyr = ds.ExecuteSQL('SELECT geomfield2, geomfield FROM mytable', dialect = 'SQLite')
+    feat = sql_lyr.GetNextFeature()
+    geom = feat.GetGeomFieldRef('geomfield')
+    if geom.ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,1 0,0 0))':
+        feat.DumpReadable()
+        gdaltest.post_reason('fail')
+        return 'fail'
+    geom = feat.GetGeomFieldRef('geomfield2')
+    if geom.ExportToWkt() != 'POINT (3 4 5)':
+        feat.DumpReadable()
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = None
+    ds.ReleaseResultSet(sql_lyr)
+
+    return 'success'
+
 gdaltest_list = [
     ogr_rfc41_1,
     ogr_rfc41_2,
@@ -1049,6 +1131,7 @@ gdaltest_list = [
     ogr_rfc41_5,
     ogr_rfc41_6,
     ogr_rfc41_7,
+    ogr_rfc41_8,
     ]
 
 if __name__ == '__main__':
