@@ -498,6 +498,8 @@ int OGR2SQLITEDealWithSpatialColumn(OGRLayer* poLayer,
                                     const std::set<CPLString>& oSetSpatialIndex
                                    )
 {
+    int rc;
+
     OGRGeomFieldDefn* poGeomField =
         poLayer->GetLayerDefn()->GetGeomFieldDefn(iGeomCol);
     CPLString osGeomColRaw;
@@ -610,17 +612,16 @@ int OGR2SQLITEDealWithSpatialColumn(OGRLayer* poLayer,
         }
     }
 #endif // HAVE_SPATIALITE
-    sqlite3_exec( hDB, osSQL.c_str(), NULL, NULL, NULL );
+    rc = sqlite3_exec( hDB, osSQL.c_str(), NULL, NULL, NULL );
 
 #ifdef HAVE_SPATIALITE
 /* -------------------------------------------------------------------- */
 /*      Should we create a spatial index ?.                             */
 /* -------------------------------------------------------------------- */
     if( !bSpatialiteDB || !bCreateSpatialIndex )
-        return TRUE;
+        return rc == SQLITE_OK;
 
     CPLDebug("SQLITE", "Create spatial index %s", osIdxNameRaw.c_str());
-    int rc;
 
     /* ENABLE_VIRTUAL_OGR_SPATIAL_INDEX is not defined */
 #ifdef ENABLE_VIRTUAL_OGR_SPATIAL_INDEX
