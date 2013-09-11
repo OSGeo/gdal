@@ -39,6 +39,8 @@
 class OGRWarpedLayer : public OGRLayerDecorator
 {
   protected:
+      OGRFeatureDefn              *m_poFeatureDefn;
+
       OGRCoordinateTransformation *m_poCT;
       OGRCoordinateTransformation *m_poReversedCT; /* may be NULL */
       OGRSpatialReference         *m_poSRS;
@@ -47,6 +49,9 @@ class OGRWarpedLayer : public OGRLayerDecorator
 
       static int ReprojectEnvelope( OGREnvelope* psEnvelope,
                                     OGRCoordinateTransformation* poCT );
+
+      OGRFeature *                 SrcFeatureToWarpedFeature(OGRFeature* poFeature);
+      OGRFeature *                 WarpedFeatureToSrcFeature(OGRFeature* poFeature);
 
   public:
 
@@ -69,6 +74,8 @@ class OGRWarpedLayer : public OGRLayerDecorator
     virtual OGRFeature *GetFeature( long nFID );
     virtual OGRErr      SetFeature( OGRFeature *poFeature );
     virtual OGRErr      CreateFeature( OGRFeature *poFeature );
+
+    virtual OGRFeatureDefn *GetLayerDefn();
 
     virtual OGRSpatialReference *GetSpatialRef();
 
