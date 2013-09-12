@@ -117,42 +117,4 @@ namespace tut
         ensure("Shapefile driver is not registered", NULL != drv);
     }
 
-    // Test OGRFieldDefn assignment operator and copy constructors
-    template<>
-    template<>
-    void object::test<4>()
-    {
-        OGRFieldDefn a("foo", OFTInteger);
-        a = a;
-        {
-            ensure(strcmp(a.GetNameRef(), "foo") == 0);
-            ensure(a.GetType() == OFTInteger);
-        }
-        {
-            a = OGRFieldDefn("baz", OFTReal);
-        }
-        {
-            ensure(strcmp(a.GetNameRef(), "baz") == 0);
-            ensure(a.GetType() == OFTReal);
-        }
-        {
-            OGRFieldDefn b("bar", OFTString);
-            a = b;
-        }
-        {
-            ensure(strcmp(a.GetNameRef(), "bar") == 0);
-            ensure(a.GetType() == OFTString);
-        }
-        {
-            OGRFieldDefn c(a);
-            ensure(strcmp(c.GetNameRef(), "bar") == 0);
-            ensure(c.GetType() == OFTString);
-        }
-        {
-            OGRFieldDefn d(&a);
-            ensure(strcmp(d.GetNameRef(), "bar") == 0);
-            ensure(d.GetType() == OFTString);
-        }
-    }
-
 } // namespace tut
