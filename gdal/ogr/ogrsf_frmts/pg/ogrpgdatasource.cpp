@@ -1282,9 +1282,9 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
         pszSchemaName = CPLStrdup(CSLFetchNameValue( papszOptions, "SCHEMA" ));
     }
 
-    if ( pszSchemaName == NULL && strlen(osCurrentSchema) > 0)
+    if ( pszSchemaName == NULL )
     {
-      pszSchemaName = CPLStrdup(osCurrentSchema);
+        pszSchemaName = CPLStrdup(osCurrentSchema);
     }
 
 /* -------------------------------------------------------------------- */
