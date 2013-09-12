@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -529,14 +530,16 @@ def ogr_geom_closerings():
 def ogr_geom_segmentize():
 
     geom = ogr.CreateGeometryFromWkt( 'LINESTRING(0 0,0 10)' )
-    try:
-        geom.Segmentize
-    except:
-        return 'skip'
-
     geom.Segmentize(1.00001)
 
     if geom.ExportToWkt() != 'LINESTRING (0 0,0 1,0 2,0 3,0 4,0 5,0 6,0 7,0 8,0 9,0 10)':
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    geom = ogr.CreateGeometryFromWkt( 'LINESTRING(0 0 1,0 10 1)' )
+    geom.Segmentize(1.00001)
+
+    if geom.ExportToWkt() != 'LINESTRING (0 0 1,0 1 1,0 2 1,0 3 1,0 4 1,0 5 1,0 6 1,0 7 1,0 8 1,0 9 1,0 10 1)':
         print(geom.ExportToWkt())
         return 'fail'
 
