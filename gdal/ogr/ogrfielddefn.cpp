@@ -65,13 +65,48 @@ OGRFieldDefn::OGRFieldDefn( const char * pszNameIn, OGRFieldType eTypeIn )
 OGRFieldDefn::OGRFieldDefn( OGRFieldDefn *poPrototype )
 
 {
-    Initialize( poPrototype->GetNameRef(), poPrototype->GetType() );
-
-    SetJustify( poPrototype->GetJustify() );
-    SetWidth( poPrototype->GetWidth() );
-    SetPrecision( poPrototype->GetPrecision() );
-//    SetDefault( poPrototype->GetDefaultRef() );
+    pszName = NULL;
+    *this = *poPrototype;
 }
+
+/************************************************************************/
+/*                            OGRFieldDefn()                            */
+/************************************************************************/
+
+/**
+ * \brief Constructor.
+ *
+ * Create by cloning an existing field definition.
+ *
+ * @param oPrototype the field definition to clone.
+ */
+
+OGRFieldDefn::OGRFieldDefn( const OGRFieldDefn& oPrototype )
+
+{
+    pszName = NULL;
+    *this = oPrototype;
+}
+
+/************************************************************************/
+/*                           operator=                                  */
+/************************************************************************/
+
+OGRFieldDefn & OGRFieldDefn::operator= (const OGRFieldDefn & oOther)
+{
+    if( this != &oOther )
+    {
+        CPLFree(pszName);
+        Initialize( oOther.pszName, oOther.eType );
+
+        SetJustify( oOther.eJustify );
+        SetWidth( oOther.nWidth );
+        SetPrecision( oOther.nPrecision );
+    }
+
+    return *this;
+}
+
 
 /************************************************************************/
 /*                           OGR_Fld_Create()                           */
