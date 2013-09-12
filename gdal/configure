@@ -22290,11 +22290,11 @@ $as_echo_n "checking for FileGDBAPI... " >&6; }
     echo "#include <FileGDBAPI.h>" > testfgdb.cpp
     echo "using namespace FileGDBAPI;" >> testfgdb.cpp
     echo "int main() { Geodatabase oDB; std::wstring osStr; ::OpenGeodatabase(osStr, oDB); return 0; }" >> testfgdb.cpp
-    if test -z "`${CXX} ${CPPFLAGS} testfgdb.cpp -lFileGDBAPI -fgdbunixrtl -o testfgdb 2>&1`" ; then
+    if test -z "`${CXX} ${CPPFLAGS} testfgdb.cpp -lFileGDBAPI -lfgdbunixrtl -o testfgdb 2>&1`" ; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: FileGDBAPI found" >&5
 $as_echo "FileGDBAPI found" >&6; }
         FGDB_ENABLED="yes"
-        FGDB_LIB="-lFileGDBAPI -fgdbunixrtl"
+        FGDB_LIB="-lFileGDBAPI -lfgdbunixrtl"
     else
         if test "$with_fgdb" = "yes"; then
             as_fn_error $? "FileGDBAPI not found." "$LINENO" 5
@@ -22314,11 +22314,11 @@ $as_echo_n "checking for libFileGDBAPI.so in in $with_fgdb/lib... " >&6; }
   if test -r $with_fgdb/lib/libFileGDBAPI.so -a -r $with_fgdb/lib/libfgdbunixrtl.so ; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: found." >&5
 $as_echo "found." >&6; }
-    FGDB_LIB="-L$with_fgdb/lib -lFileGDBAPI -fgdbunixrtl"
+    FGDB_LIB="-L$with_fgdb/lib -lFileGDBAPI -lfgdbunixrtl"
   elif test -r $with_fgdb/lib/libFileGDBAPI.dylib -a -r $with_fgdb/lib/libfgdbunixrtl.dylib ; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: found." >&5
 $as_echo "found." >&6; }
-    FGDB_LIB="-L$with_fgdb/lib -lFileGDBAPI -fgdbunixrtl"
+    FGDB_LIB="-L$with_fgdb/lib -lFileGDBAPI -lfgdbunixrtl"
   else
     as_fn_error $? "not found." "$LINENO" 5
   fi
