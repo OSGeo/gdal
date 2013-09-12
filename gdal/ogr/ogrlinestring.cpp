@@ -1522,6 +1522,7 @@ void OGRLineString::segmentize( double dfMaxLength )
     double* padfNewZ = NULL;
     int nNewPointCount = 0;
     double dfSquareMaxLength = dfMaxLength * dfMaxLength;
+    const int nCoordinateDimension = getCoordinateDimension();
 
     for( i = 0; i < nPointCount; i++ )
     {
@@ -1529,7 +1530,7 @@ void OGRLineString::segmentize( double dfMaxLength )
             OGRRealloc(paoNewPoints, sizeof(OGRRawPoint) * (nNewPointCount + 1));
         paoNewPoints[nNewPointCount] = paoPoints[i];
 
-        if( getCoordinateDimension() == 3 )
+        if( nCoordinateDimension == 3 )
         {
             padfNewZ = (double *)
                 OGRRealloc(padfNewZ, sizeof(double) * (nNewPointCount + 1));
@@ -1551,7 +1552,7 @@ void OGRLineString::segmentize( double dfMaxLength )
 
             paoNewPoints = (OGRRawPoint *)
                 OGRRealloc(paoNewPoints, sizeof(OGRRawPoint) * (nNewPointCount + nIntermediatePoints));
-            if( getCoordinateDimension() == 3 )
+            if( nCoordinateDimension == 3 )
             {
                 padfNewZ = (double *)
                     OGRRealloc(padfNewZ, sizeof(double) * (nNewPointCount + nIntermediatePoints));
@@ -1561,10 +1562,10 @@ void OGRLineString::segmentize( double dfMaxLength )
             {
                 paoNewPoints[nNewPointCount + j - 1].x = paoPoints[i].x + j * dfX / (nIntermediatePoints + 1);
                 paoNewPoints[nNewPointCount + j - 1].y = paoPoints[i].y + j * dfY / (nIntermediatePoints + 1);
-                if( getCoordinateDimension() == 3 )
+                if( nCoordinateDimension == 3 )
                 {
                     /* No interpolation */
-                    padfNewZ[nNewPointCount + j - 1] = 0;
+                    padfNewZ[nNewPointCount + j - 1] = padfZ[i];
                 }
             }
 
@@ -1576,7 +1577,7 @@ void OGRLineString::segmentize( double dfMaxLength )
     paoPoints = paoNewPoints;
     nPointCount = nNewPointCount;
 
-    if( getCoordinateDimension() == 3 )
+    if( nCoordinateDimension == 3 )
     {
         OGRFree(padfZ);
         padfZ = padfNewZ;
