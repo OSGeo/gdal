@@ -65,7 +65,10 @@ class CPL_DLL OGRFieldDefn
   public:
                         OGRFieldDefn( const char *, OGRFieldType );
                         OGRFieldDefn( OGRFieldDefn * );
+                        OGRFieldDefn( const OGRFieldDefn& );
                         ~OGRFieldDefn();
+
+                        OGRFieldDefn & operator= (const OGRFieldDefn & oOther);
 
     void                SetName( const char * );
     const char         *GetNameRef() { return pszName; }
