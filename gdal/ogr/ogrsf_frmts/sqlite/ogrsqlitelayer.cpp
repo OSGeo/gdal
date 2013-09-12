@@ -313,7 +313,7 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
                 const int nBytes = sqlite3_column_bytes( hStmt, iCol );
                 if( nBytes > 0 )
                 {
-                    OGRSQLiteGeomFormat eGeomFormat;
+                    OGRSQLiteGeomFormat eGeomFormat = OSGF_None;
                     if( OGRIsBinaryGeomCol( hStmt, iCol, oField, eGeomFormat ) )
                     {
                         OGRSQLiteGeomFieldDefn* poGeomFieldDefn =
