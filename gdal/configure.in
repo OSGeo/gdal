@@ -1981,10 +1981,10 @@ elif test "$with_fgdb" = "yes" -o "$with_fgdb" = "" ; then
     echo "#include <FileGDBAPI.h>" > testfgdb.cpp
     echo "using namespace FileGDBAPI;" >> testfgdb.cpp
     echo "int main() { Geodatabase oDB; std::wstring osStr; ::OpenGeodatabase(osStr, oDB); return 0; }" >> testfgdb.cpp
-    if test -z "`${CXX} ${CPPFLAGS} testfgdb.cpp -lFileGDBAPI -o testfgdb 2>&1`" ; then
+    if test -z "`${CXX} ${CPPFLAGS} testfgdb.cpp -lFileGDBAPI -fgdbunixrtl -o testfgdb 2>&1`" ; then
         AC_MSG_RESULT([FileGDBAPI found])
         FGDB_ENABLED="yes"
-        FGDB_LIB="-lFileGDBAPI"
+        FGDB_LIB="-lFileGDBAPI -fgdbunixrtl"
     else
         if test "$with_fgdb" = "yes"; then
             AC_MSG_ERROR([FileGDBAPI not found.])
@@ -1999,9 +1999,12 @@ else
 
   AC_MSG_CHECKING([for libFileGDBAPI.so in in $with_fgdb/lib])
   FGDB_ENABLED=yes
-  if test -r $with_fgdb/lib/libFileGDBAPI.so ; then
+  if test -r $with_fgdb/lib/libFileGDBAPI.so -a -r $with_fgdb/lib/libfgdbunixrtl.so ; then
     AC_MSG_RESULT([found.])
-    FGDB_LIB="-L$with_fgdb/lib -lFileGDBAPI"
+    FGDB_LIB="-L$with_fgdb/lib -lFileGDBAPI -fgdbunixrtl"
+  elif test -r $with_fgdb/lib/libFileGDBAPI.dylib -a -r $with_fgdb/lib/libfgdbunixrtl.dylib ; then
+    AC_MSG_RESULT([found.])
+    FGDB_LIB="-L$with_fgdb/lib -lFileGDBAPI -fgdbunixrtl"
   else
     AC_MSG_ERROR([not found.])
   fi
