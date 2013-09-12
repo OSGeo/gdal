@@ -473,7 +473,10 @@ GetDictionaryItem( char **papszGMLMetadata, const char *pszURN )
     for( i = 0; pszLabel[i] != '#'; i++ )
     {
         if( pszLabel[i] == '\0' )
+        {
+            CPLFree(pszLabel);
             return NULL;
+        }
     }
 
     pszFragmentId = pszLabel + i + 1;
@@ -486,7 +489,10 @@ GetDictionaryItem( char **papszGMLMetadata, const char *pszURN )
         CSLFetchNameValue( papszGMLMetadata, pszLabel );
 
     if( pszDictionary == NULL )
+    {
+        CPLFree(pszLabel);
         return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Try and parse the dictionary.                                   */
@@ -495,7 +501,7 @@ GetDictionaryItem( char **papszGMLMetadata, const char *pszURN )
 
     if( psDictTree == NULL )
     {
-        CPLDestroyXMLNode( psDictTree );
+        CPLFree(pszLabel);
         return NULL;
     }
 
@@ -506,6 +512,7 @@ GetDictionaryItem( char **papszGMLMetadata, const char *pszURN )
     if( psDictRoot == NULL )
     {
         CPLDestroyXMLNode( psDictTree );
+        CPLFree(pszLabel);
         return NULL;
     }
 
