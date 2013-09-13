@@ -587,16 +587,6 @@ OGRFeature *OGRSVGLayer::GetNextFeature()
 }
 
 /************************************************************************/
-/*                           GetSpatialRef()                            */
-/************************************************************************/
-
-OGRSpatialReference *OGRSVGLayer::GetSpatialRef()
-
-{
-    return poSRS;
-}
-
-/************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
 
@@ -651,6 +641,7 @@ void OGRSVGLayer::LoadSchema()
         poLayer->poFeatureDefn = new OGRFeatureDefn( poLayer->osLayerName );
         poLayer->poFeatureDefn->Reference();
         poLayer->poFeatureDefn->SetGeomType(poLayer->GetGeomType());
+        poLayer->poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poLayer->poSRS);
     }
 
     oSchemaParser = OGRCreateExpatXMLParser();

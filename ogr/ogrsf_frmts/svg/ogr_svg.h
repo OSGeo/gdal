@@ -106,9 +106,7 @@ class OGRSVGLayer : public OGRLayer
     virtual OGRFeatureDefn *    GetLayerDefn();
     
     virtual int                 TestCapability( const char * );
-    
-    virtual OGRSpatialReference*GetSpatialRef();
-    
+
 #ifdef HAVE_EXPAT
     void                startElementCbk(const char *pszName, const char **ppszAttr);
     void                endElementCbk(const char *pszName);

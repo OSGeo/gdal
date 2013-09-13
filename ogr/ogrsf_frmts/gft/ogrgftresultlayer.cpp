@@ -46,6 +46,7 @@ OGRGFTResultLayer::OGRGFTResultLayer(OGRGFTDataSource* poDS,
     poFeatureDefn = new OGRFeatureDefn( "result" );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbUnknown );
+    poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 }
 
 /************************************************************************/
@@ -283,6 +284,8 @@ int OGRGFTResultLayer::RunSQL()
         else
             bGotAllRows = bEOF = TRUE;
     }
+
+    SetGeomFieldName();
 
     CPLHTTPDestroyResult(psResult);
 

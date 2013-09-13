@@ -94,8 +94,6 @@ protected:
 
     virtual int                 TestCapability( const char * );
 
-    virtual OGRSpatialReference*GetSpatialRef();
-
     virtual CouchDBLayerType    GetLayerType() = 0;
 
     virtual OGRErr              SetNextByIndex( long nIndex );
@@ -188,8 +186,6 @@ class OGRCouchDBTableLayer : public OGRCouchDBLayer
     virtual OGRErr              RollbackTransaction();
 
     virtual int                 TestCapability( const char * );
-
-    virtual OGRSpatialReference*GetSpatialRef();
 
     void                        SetInfoAfterCreation(OGRwkbGeometryType eGType,
                                              OGRSpatialReference* poSRSIn,

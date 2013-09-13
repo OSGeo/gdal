@@ -525,25 +525,6 @@ int OGRGFTLayer::TestCapability( const char * pszCap )
 }
 
 /************************************************************************/
-/*                         GetGeometryColumn()                          */
-/************************************************************************/
-
-const char *OGRGFTLayer::GetGeometryColumn()
-{
-    GetLayerDefn();
-    if (iGeometryField < 0)
-        return "";
-
-    if (iGeometryField == poFeatureDefn->GetFieldCount())
-    {
-        CPLAssert(bHiddenGeometryField);
-        return GetDefaultGeometryColumnName();
-    }
-
-    return poFeatureDefn->GetFieldDefn(iGeometryField)->GetNameRef();
-}
-
-/************************************************************************/
 /*                         ParseCSVResponse()                           */
 /************************************************************************/
 
@@ -648,20 +629,6 @@ CPLString OGRGFTLayer::PatchSQL(const char* pszSQL)
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
-/************************************************************************/
-
-OGRSpatialReference* OGRGFTLayer::GetSpatialRef()
-{
-    GetLayerDefn();
-
-    if (iGeometryField < 0)
-        return NULL;
-
-    return poSRS;
-}
-
-/************************************************************************/
 /*                         LaunderColName()                             */
 /************************************************************************/
 
@@ -677,4 +644,24 @@ CPLString OGRGFTLayer::LaunderColName(const char* pszColName)
             osLaunderedColName += pszColName[i];
     }
     return osLaunderedColName;
+}
+
+/************************************************************************/
+/*                         SetGeomFieldName()                           */
+/************************************************************************/
+
+void OGRGFTLayer::SetGeomFieldName()
+{
+    if (iGeometryField >= 0 && poFeatureDefn->GetGeomFieldCount() > 0)
+    {
+        const char* pszGeomColName;
+        if (iGeometryField == poFeatureDefn->GetFieldCount())
+        {
+            CPLAssert(bHiddenGeometryField);
+            pszGeomColName = GetDefaultGeometryColumnName();
+        }
+        else
+            pszGeomColName = poFeatureDefn->GetFieldDefn(iGeometryField)->GetNameRef();
+        poFeatureDefn->GetGeomFieldDefn(0)->SetName(pszGeomColName);
+    }
 }

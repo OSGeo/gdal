@@ -68,6 +68,8 @@ protected:
 
     static CPLString    LaunderColName(const char* pszColName);
 
+    void                SetGeomFieldName();
+
   public:
                          OGRGFTLayer(OGRGFTDataSource* poDS);
                         ~OGRGFTLayer();
@@ -78,10 +80,6 @@ protected:
     virtual OGRFeatureDefn *    GetLayerDefn();
 
     virtual int                 TestCapability( const char * );
-
-    virtual OGRSpatialReference*GetSpatialRef();
-
-    virtual const char *        GetGeometryColumn();
 
     virtual OGRErr              SetNextByIndex( long nIndex );
 
