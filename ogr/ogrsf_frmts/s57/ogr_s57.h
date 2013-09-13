@@ -72,8 +72,6 @@ class OGRS57Layer : public OGRLayer
 
     virtual OGRErr      CreateFeature( OGRFeature *poFeature );
     int                 TestCapability( const char * );
-
-    virtual OGRSpatialReference *GetSpatialRef();
 };
 
 /************************************************************************/
