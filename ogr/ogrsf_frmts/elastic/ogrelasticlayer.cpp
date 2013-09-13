@@ -70,6 +70,8 @@ OGRElasticLayer::OGRElasticLayer(const char* pszFilename,
     if (poSRS)
         poSRS->Reference();
 
+    poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
+
     ResetReading();
     return;
 }
@@ -114,14 +116,6 @@ OGRFeature *OGRElasticLayer::GetNextFeature() {
     CPLError(CE_Failure, CPLE_NotSupported,
             "Cannot read features when writing a Elastic file");
     return NULL;
-}
-
-/************************************************************************/
-/*                           GetSpatialRef()                            */
-/************************************************************************/
-
-OGRSpatialReference *OGRElasticLayer::GetSpatialRef() {
-    return poSRS;
 }
 
 /************************************************************************/

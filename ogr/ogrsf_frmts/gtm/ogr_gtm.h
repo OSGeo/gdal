@@ -90,7 +90,6 @@ public:
     // OGRLayer Interface
     //
     OGRFeatureDefn* GetLayerDefn();
-    OGRSpatialReference* GetSpatialRef() {return poSRS;}
     virtual void ResetReading() = 0;
     virtual OGRFeature* GetNextFeature() = 0;
     virtual int GetFeatureCount(int bForce = TRUE) = 0;

@@ -1735,17 +1735,6 @@ void OGRCouchDBTableLayer::SetInfoAfterCreation(OGRwkbGeometryType eGType,
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
-/************************************************************************/
-
-OGRSpatialReference* OGRCouchDBTableLayer::GetSpatialRef()
-{
-    LoadMetadata();
-
-    return poSRS;
-}
-
-/************************************************************************/
 /*                     OGRCouchDBIsNumericObject()                      */
 /************************************************************************/
 
@@ -1887,6 +1876,8 @@ void OGRCouchDBTableLayer::LoadMetadata()
         poFeatureDefn->Reference();
 
         poFeatureDefn->SetGeomType(eGeomType);
+        if( poFeatureDefn->GetGeomFieldCount() != 0 ) 
+            poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 
         OGRFieldDefn oFieldId("_id", OFTString);
         poFeatureDefn->AddFieldDefn(&oFieldId);

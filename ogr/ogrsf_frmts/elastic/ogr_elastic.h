@@ -66,8 +66,6 @@ public:
 
     int TestCapability(const char *);
 
-    OGRSpatialReference *GetSpatialRef();
-
     int GetFeatureCount(int bForce);
 
     void PushIndex();

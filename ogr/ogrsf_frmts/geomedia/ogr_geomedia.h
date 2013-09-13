@@ -80,9 +80,7 @@ class OGRGeomediaLayer : public OGRLayer
     virtual OGRFeature *GetFeature( long nFeatureId );
     
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
-
-    virtual OGRSpatialReference *GetSpatialRef();
-
+    
     virtual int         TestCapability( const char * );
 
     virtual const char *GetFIDColumn();

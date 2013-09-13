@@ -52,6 +52,7 @@ OGRXPlaneLayer::OGRXPlaneLayer( const char* pszLayerName )
 
     poSRS = new OGRSpatialReference();
     poSRS->SetWellKnownGeogCS("WGS84");
+    poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 
     poReader = NULL;
 }
