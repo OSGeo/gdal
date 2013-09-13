@@ -81,6 +81,7 @@ GTMTrackLayer::GTMTrackLayer( const char* pszName,
     poFeatureDefn = new OGRFeatureDefn( pszName );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType ( wkbLineString );
+    poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 
     /* We implement just name, type, and color for tracks, if others
        needed feel free to append more parameters and implement the

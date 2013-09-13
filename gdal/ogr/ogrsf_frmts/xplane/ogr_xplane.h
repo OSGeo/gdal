@@ -73,7 +73,6 @@ class OGRXPlaneLayer : public OGRLayer
     virtual OGRFeature *      GetFeature( long nFID );
     virtual OGRErr            SetNextByIndex( long nIndex );
     virtual int               GetFeatureCount( int bForce = TRUE );
-    virtual OGRSpatialReference * GetSpatialRef() { return poSRS; }
 
     virtual OGRFeatureDefn *  GetLayerDefn();
     virtual int               TestCapability( const char * pszCap );

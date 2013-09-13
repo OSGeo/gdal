@@ -81,6 +81,7 @@ GTMWaypointLayer::GTMWaypointLayer( const char* pszName,
     poFeatureDefn = new OGRFeatureDefn( pszName );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType ( wkbPoint );
+    poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 
     /* We implement just name, comment, and icon, if others needed feel
        free to append more parameters */

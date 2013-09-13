@@ -108,6 +108,7 @@ CPLErr OGRGeomediaLayer::BuildFeatureDefn( const char *pszLayerName,
     int    nRawColumns = poStmt->GetColCount();
 
     poFeatureDefn->Reference();
+    poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 
     panFieldOrdinals = (int *) CPLMalloc( sizeof(int) * nRawColumns );
 
@@ -321,16 +322,6 @@ int OGRGeomediaLayer::TestCapability( const char * pszCap )
 
 {
     return FALSE;
-}
-
-/************************************************************************/
-/*                           GetSpatialRef()                            */
-/************************************************************************/
-
-OGRSpatialReference *OGRGeomediaLayer::GetSpatialRef()
-
-{
-    return poSRS;
 }
 
 /************************************************************************/
