@@ -51,6 +51,8 @@ OGRS57Layer::OGRS57Layer( OGRS57DataSource *poDSIn,
     nFeatureCount = nFeatureCountIn;
 
     poFeatureDefn = poDefnIn;
+    if( poFeatureDefn->GetGeomFieldCount() > 0 )
+        poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poDS->GetSpatialRef());
 
     nOBJL = nOBJLIn;
 
@@ -219,16 +221,6 @@ int OGRS57Layer::TestCapability( const char * pszCap )
 
     else 
         return FALSE;
-}
-
-/************************************************************************/
-/*                           GetSpatialRef()                            */
-/************************************************************************/
-
-OGRSpatialReference *OGRS57Layer::GetSpatialRef()
-
-{
-    return poDS->GetSpatialRef();
 }
 
 /************************************************************************/

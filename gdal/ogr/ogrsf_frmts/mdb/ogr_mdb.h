@@ -277,12 +277,9 @@ class OGRMDBLayer : public OGRLayer
     
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
-    virtual OGRSpatialReference *GetSpatialRef();
-
     virtual int         TestCapability( const char * );
 
     virtual const char *GetFIDColumn();
-    virtual const char *GetGeometryColumn();
 
     virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce );
 };

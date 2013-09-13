@@ -174,6 +174,13 @@ CPLErr OGRMDBLayer::BuildFeatureDefn()
         panFieldOrdinals[poFeatureDefn->GetFieldCount() - 1] = iCol+1;
     }
 
+    if( poFeatureDefn->GetGeomFieldCount() > 0 )
+    {
+        poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
+        if( pszGeomColumn != NULL )
+            poFeatureDefn->GetGeomFieldDefn(0)->SetName(pszGeomColumn);
+    }
+
     return CE_None;
 }
 
@@ -284,6 +291,10 @@ OGRFeature *OGRMDBLayer::GetNextRawFeature()
         CPLFree(pszValue);
     }
 
+    if( !(m_poAttrQuery == NULL
+          || m_poAttrQuery->Evaluate( poFeature )) )
+        return poFeature;
+
 /* -------------------------------------------------------------------- */
 /*      Try to extract a geometry.                                      */
 /* -------------------------------------------------------------------- */
@@ -370,16 +381,6 @@ int OGRMDBLayer::TestCapability( const char * pszCap )
 
     else
         return FALSE;
-}
-
-/************************************************************************/
-/*                           GetSpatialRef()                            */
-/************************************************************************/
-
-OGRSpatialReference *OGRMDBLayer::GetSpatialRef()
-
-{
-    return poSRS;
 }
 
 /************************************************************************/
@@ -476,20 +477,6 @@ const char *OGRMDBLayer::GetFIDColumn()
     else
         return "";
 }
-
-/************************************************************************/
-/*                         GetGeometryColumn()                          */
-/************************************************************************/
-
-const char *OGRMDBLayer::GetGeometryColumn()
-
-{
-    if( pszGeomColumn != NULL )
-        return pszGeomColumn;
-    else
-        return "";
-}
-
 
 /************************************************************************/
 /*                             Initialize()                             */
