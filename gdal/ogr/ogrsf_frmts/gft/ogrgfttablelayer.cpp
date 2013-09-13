@@ -106,6 +106,7 @@ int OGRGFTTableLayer::FetchDescribe()
 {
     poFeatureDefn = new OGRFeatureDefn( osTableName );
     poFeatureDefn->Reference();
+    poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 
     const CPLString& osAuth = poDS->GetAccessToken();
     std::vector<CPLString> aosHeaderAndFirstDataLine;
@@ -293,6 +294,8 @@ int OGRGFTTableLayer::FetchDescribe()
         else
             poFeatureDefn->SetGeomType( eType );
     }
+
+    SetGeomFieldName();
 
     return TRUE;
 }
@@ -547,6 +550,8 @@ OGRErr OGRGFTTableLayer::CreateField( OGRFieldDefn *poField,
     {
         poFeatureDefn = new OGRFeatureDefn( osTableName );
         poFeatureDefn->Reference();
+        poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
+        poFeatureDefn->GetGeomFieldDefn(0)->SetName(GetDefaultGeometryColumnName());
     }
 
     poFeatureDefn->AddFieldDefn(poField);
@@ -576,6 +581,8 @@ void OGRGFTTableLayer::CreateTableIfNecessary()
         /* In case CreateField() hasn't yet been called */
         poFeatureDefn = new OGRFeatureDefn( osTableName );
         poFeatureDefn->Reference();
+        poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
+        poFeatureDefn->GetGeomFieldDefn(0)->SetName(GetDefaultGeometryColumnName());
     }
 
     /* If there are longitude and latitude fields, use the latitude */
