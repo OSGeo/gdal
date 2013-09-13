@@ -927,6 +927,14 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
     }
 
     ClearInsertStmt();
+    
+    if( poDS->IsSpatialiteDB() && EQUAL( oField.GetNameRef(), "ROWID") )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "In a Spatialite DB, a 'ROWID' column that is not the integer "
+                 "primary key can corrupt spatial index. "
+                 "See https://www.gaia-gis.it/fossil/libspatialite/wiki?name=Shadowed+ROWID+issues");
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Do we want to "launder" the column names into SQLite            */
