@@ -214,13 +214,3 @@ OGRFeature * OGRNTFLayer::FeatureTranslate( NTFFileReader *poReader,
 
     return pfnTranslator( poReader, this, papoGroup );
 }
-
-/************************************************************************/
-/*                           GetSpatialRef()                            */
-/************************************************************************/
-
-OGRSpatialReference *OGRNTFLayer::GetSpatialRef()
-
-{
-    return poDS->GetSpatialRef();
-}
