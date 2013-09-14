@@ -196,6 +196,10 @@ ifeq ($(ODBC_SETTING),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DWALK_ENABLED
 endif
 
+ifeq ($(CURL_SETTING),yes)
+CXXFLAGS :=	$(CXXFLAGS) -DCARTODB_ENABLED
+endif
+
 CPPFLAGS	:=	-I.. -I../.. $(GDAL_INCLUDE) $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))

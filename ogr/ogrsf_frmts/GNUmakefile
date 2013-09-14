@@ -38,6 +38,7 @@ SUBDIRS-$(HAVE_EXPAT)   += xlsx
 SUBDIRS-$(CURL_SETTING) += elastic
 SUBDIRS-$(HAVE_SQLITE)	+= osm
 SUBDIRS-$(HAVE_SOSI)	+= sosi
+SUBDIRS-$(CURL_SETTING) += cartodb
 
 ifeq ($(PCIDSK_SETTING),internal)
 SUBDIRS-yes  += pcidsk
