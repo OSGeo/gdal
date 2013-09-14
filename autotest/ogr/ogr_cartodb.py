@@ -75,7 +75,7 @@ def ogr_cartodb_test_ogrsf():
     if test_cli_utilities.get_test_ogrsf_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + '--config CARTODB_HTTPS NO -ro "CARTODB:gdalautotest2 tables=tm_world_borders_simpl_0_3"')
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' --config CARTODB_HTTPS NO -ro "CARTODB:gdalautotest2 tables=tm_world_borders_simpl_0_3"')
 
     if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
         print(ret)
