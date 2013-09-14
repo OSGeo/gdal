@@ -41,6 +41,9 @@ OGRSOSILayer::OGRSOSILayer( OGRSOSIDataSource *poPar, OGRFeatureDefn *poFeatDefn
     poHeaderDefn  = poHeadDefn;
     nNextFID      = 0;
     poNextSerial  = NULL;
+    
+    if( poFeatureDefn->GetGeomFieldCount() > 0 )
+        poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poParent->poSRS);
 
     ResetReading();
 }
@@ -57,16 +60,6 @@ OGRSOSILayer::~OGRSOSILayer() {
 /************************************************************************/
 OGRFeatureDefn *OGRSOSILayer::GetLayerDefn() {
     return poFeatureDefn;
-}
-
-/************************************************************************/
-/*                           GetSpatialRef()                            */
-/************************************************************************/
-OGRSpatialReference *OGRSOSILayer::GetSpatialRef() {
-    if (poParent->poSRS == NULL) {
-        CPLDebug( "[GetSpatialRef]", "Called, but parent spatial ref is unknown yet.");
-    }
-    return poParent->poSRS; /* The same for all layers */
 }
 
 /************************************************************************/

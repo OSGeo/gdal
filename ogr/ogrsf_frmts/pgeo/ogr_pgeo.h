@@ -79,8 +79,6 @@ class OGRPGeoLayer : public OGRLayer
     
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
-    virtual OGRSpatialReference *GetSpatialRef();
-
     virtual int         TestCapability( const char * );
 
     virtual const char *GetFIDColumn();

@@ -46,7 +46,6 @@ OGRPCIDSKLayer::OGRPCIDSKLayer( PCIDSK::PCIDSKSegment *poSegIn,
 
     poFeatureDefn = new OGRFeatureDefn( poSeg->GetName().c_str() );
     poFeatureDefn->Reference();
-    //poFeatureDefn->SetGeomType( wkbNone );
 
     hLastShapeId = PCIDSK::NullShapeId;
 
@@ -159,6 +158,9 @@ OGRPCIDSKLayer::OGRPCIDSKLayer( PCIDSK::PCIDSKSegment *poSegIn,
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Non-PCIDSK exception trapped while initializing layer, operation likely impaired." );
     }
+    
+    if( poFeatureDefn->GetGeomFieldCount() > 0 )
+        poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 }
 
 /************************************************************************/
@@ -179,16 +181,6 @@ OGRPCIDSKLayer::~OGRPCIDSKLayer()
 
     if (poSRS)
         poSRS->Release();
-}
-
-/************************************************************************/
-/*                           GetSpatialRef()                            */
-/************************************************************************/
-
-OGRSpatialReference *OGRPCIDSKLayer::GetSpatialRef()
-
-{
-    return poSRS;
 }
 
 /************************************************************************/
