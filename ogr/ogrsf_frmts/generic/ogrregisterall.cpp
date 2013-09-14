@@ -259,4 +259,7 @@ void OGRRegisterAll()
 #ifdef WALK_ENABLED
     RegisterOGRWalk();
 #endif
+#ifdef CARTODB_ENABLED
+    RegisterOGRCartoDB();
+#endif
 } /* OGRRegisterAll */
