@@ -149,11 +149,7 @@ class OGRWFSLayer : public OGRLayer
 
     virtual OGRFeatureDefn *    GetLayerDefn();
 
-    virtual const char *GetGeometryColumn() { return osGeometryColumnName; }
-
     virtual int                 TestCapability( const char * );
-
-    virtual OGRSpatialReference *GetSpatialRef();
 
     virtual void        SetSpatialFilter( OGRGeometry * );
 

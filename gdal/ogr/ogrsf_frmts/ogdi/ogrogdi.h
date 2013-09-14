@@ -78,8 +78,6 @@ class OGROGDILayer : public OGRLayer
 
     int                 TestCapability( const char * );
 
-    OGRSpatialReference *GetSpatialRef()  { return m_poSpatialRef; }
-
   private:
     void                BuildFeatureDefn();
 };

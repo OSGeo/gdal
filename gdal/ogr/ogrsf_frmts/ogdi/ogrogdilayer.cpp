@@ -524,6 +524,7 @@ void OGROGDILayer::BuildFeatureDefn()
     
     m_poFeatureDefn->SetGeomType(eLayerGeomType);
     m_poFeatureDefn->Reference();
+    m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(m_poSpatialRef);
 
 /* -------------------------------------------------------------------- */
 /*      Fetch schema from OGDI server and map to OGR types              */

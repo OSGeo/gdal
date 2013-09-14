@@ -1692,6 +1692,7 @@ void NTFFileReader::EstablishLayer( const char * pszLayerName,
 /*      Create a new feature definition.                                */
 /* -------------------------------------------------------------------- */
         poDefn = new OGRFeatureDefn( pszLayerName );
+        poDefn->GetGeomFieldDefn(0)->SetSpatialRef(poDS->GetSpatialRef());
         poDefn->SetGeomType( eGeomType );
         poDefn->Reference();
 

@@ -67,8 +67,6 @@ class OGRSDTSLayer : public OGRLayer
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
 //    int                 GetFeatureCount( int );
-
-    OGRSpatialReference *GetSpatialRef();
     
     int                 TestCapability( const char * );
 };

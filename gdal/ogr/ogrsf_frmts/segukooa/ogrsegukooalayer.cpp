@@ -137,6 +137,8 @@ OGRUKOOAP190Layer::OGRUKOOAP190Layer( const char* pszFilename,
         CSLTestBoolean(CPLGetConfigOption("UKOOAP190_USE_EASTING_NORTHING", "NO"));
 
     ParseHeaders();
+
+    poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 }
 
 /************************************************************************/
@@ -724,6 +726,7 @@ OGRSEGUKOOALineLayer::OGRSEGUKOOALineLayer(const char* pszFilename,
                                                    CPLGetBasename(pszFilename)) );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbLineString );
+    poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poBaseLayer->GetSpatialRef());
 
     OGRFieldDefn    oField( "LINENAME", OFTString );
     poFeatureDefn->AddFieldDefn( &oField );

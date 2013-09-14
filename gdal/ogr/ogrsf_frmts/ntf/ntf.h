@@ -409,8 +409,6 @@ class OGRNTFLayer : public OGRLayer
     
     int                 TestCapability( const char * );
 
-    virtual OGRSpatialReference *GetSpatialRef();
-
     // special to NTF
     OGRFeature         *FeatureTranslate( NTFFileReader *, NTFRecord ** );
 };
@@ -484,8 +482,6 @@ class OGRNTFRasterLayer : public OGRLayer
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
     int                 GetFeatureCount( int = TRUE );
-    
-    virtual OGRSpatialReference *GetSpatialRef();
     
     int                 TestCapability( const char * );
 };

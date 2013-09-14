@@ -61,9 +61,6 @@ class OGRSUALayer : public OGRLayer
     virtual OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
     virtual int                 TestCapability( const char * );
-
-    virtual OGRSpatialReference *GetSpatialRef() { return poSRS; }
-
 };
 
 /************************************************************************/

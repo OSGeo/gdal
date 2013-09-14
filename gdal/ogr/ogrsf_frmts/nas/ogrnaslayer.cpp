@@ -59,6 +59,7 @@ OGRNASLayer::OGRNASLayer( const char * pszName,
     else
         poFeatureDefn = new OGRFeatureDefn( pszName );
     poFeatureDefn->Reference();
+    poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
     poFeatureDefn->SetGeomType( eReqType );
 
 /* -------------------------------------------------------------------- */
@@ -329,14 +330,3 @@ int OGRNASLayer::TestCapability( const char * pszCap )
     else 
         return FALSE;
 }
-
-/************************************************************************/
-/*                           GetSpatialRef()                            */
-/************************************************************************/
-
-OGRSpatialReference *OGRNASLayer::GetSpatialRef()
-
-{
-    return poSRS;
-}
-
