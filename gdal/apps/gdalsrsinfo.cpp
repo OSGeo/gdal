@@ -347,8 +347,12 @@ int FindSRS( const char *pszInput, OGRSpatialReference &oSRS )
     } 
        
     /* try to open with GDAL */
-    CPLDebug( "gdalsrsinfo", "trying to open with GDAL" );
-    poGDALDS = (GDALDataset *) GDALOpen( pszInput, GA_ReadOnly );
+    if( strncmp(pszInput, "http://spatialreference.org/",
+                strlen("http://spatialreference.org/")) != 0 )
+    {
+        CPLDebug( "gdalsrsinfo", "trying to open with GDAL" );
+        poGDALDS = (GDALDataset *) GDALOpen( pszInput, GA_ReadOnly );
+    }
     if ( poGDALDS != NULL && poGDALDS->GetProjectionRef( ) != NULL ) {
         pszProjection = (char *) poGDALDS->GetProjectionRef( );
         if( oSRS.importFromWkt( &pszProjection ) == CE_None ) {
@@ -363,8 +367,12 @@ int FindSRS( const char *pszInput, OGRSpatialReference &oSRS )
 #ifdef OGR_ENABLED
     /* if unsuccessful, try to open with OGR */
     if ( ! bGotSRS ) {
-        CPLDebug( "gdalsrsinfo", "trying to open with OGR" );
-        poOGRDS = OGRSFDriverRegistrar::Open( pszInput, FALSE, NULL );
+        if( strncmp(pszInput, "http://spatialreference.org/",
+                    strlen("http://spatialreference.org/")) != 0 )
+        {
+            CPLDebug( "gdalsrsinfo", "trying to open with OGR" );
+            poOGRDS = OGRSFDriverRegistrar::Open( pszInput, FALSE, NULL );
+        }
         if( poOGRDS != NULL ) {
             poLayer = poOGRDS->GetLayer( 0 );
             if ( poLayer != NULL ) {
