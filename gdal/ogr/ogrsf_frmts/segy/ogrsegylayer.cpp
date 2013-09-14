@@ -233,7 +233,6 @@ OGRSEGYLayer::OGRSEGYLayer( const char* pszFilename,
     this->fp = fp;
     nNextFID = 0;
     bEOF = FALSE;
-    poSRS = NULL;
     memcpy(&sBFH, psBFH, sizeof(sBFH));
 
     nDataSize = 0;
@@ -286,9 +285,6 @@ OGRSEGYLayer::~OGRSEGYLayer()
     poFeatureDefn->Release();
 
     VSIFCloseL( fp );
-
-    if (poSRS)
-        poSRS->Release();
 }
 
 /************************************************************************/

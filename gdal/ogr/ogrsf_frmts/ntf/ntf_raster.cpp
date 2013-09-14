@@ -240,6 +240,7 @@ OGRNTFRasterLayer::OGRNTFRasterLayer( OGRNTFDataSource *poDSIn,
     poFeatureDefn = new OGRFeatureDefn( szLayerName );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbPoint25D );
+    poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poDSIn->GetSpatialRef());
 
     OGRFieldDefn      oHeight( "HEIGHT", OFTReal );
     poFeatureDefn->AddFieldDefn( &oHeight );
@@ -404,16 +405,6 @@ int OGRNTFRasterLayer::GetFeatureCount( int bForce )
 
 {
     return nFeatureCount;
-}
-
-/************************************************************************/
-/*                           GetSpatialRef()                            */
-/************************************************************************/
-
-OGRSpatialReference *OGRNTFRasterLayer::GetSpatialRef()
-
-{
-    return poDS->GetSpatialRef();
 }
 
 /************************************************************************/

@@ -77,9 +77,6 @@ class OGRUKOOAP190Layer : public OGRSEGUKOOABaseLayer
 
 
     virtual void                ResetReading();
-
-    virtual OGRSpatialReference *GetSpatialRef() { return poSRS; }
-
 };
 
 /************************************************************************/
@@ -100,8 +97,6 @@ class OGRSEGUKOOALineLayer : public OGRSEGUKOOABaseLayer
                         ~OGRSEGUKOOALineLayer();
 
     virtual void                ResetReading();
-
-    virtual OGRSpatialReference *GetSpatialRef() { return poBaseLayer->GetSpatialRef(); }
 };
 
 
@@ -128,8 +123,6 @@ class OGRSEGP1Layer: public OGRSEGUKOOABaseLayer
                         ~OGRSEGP1Layer();
 
     virtual void                ResetReading();
-
-    virtual OGRSpatialReference *GetSpatialRef() { return poSRS; }
 
 public:
     static char* ExpandTabs(const char* pszLine);

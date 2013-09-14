@@ -67,6 +67,7 @@ OGRHTFPolygonLayer::OGRHTFPolygonLayer( const char* pszFilename, int nZone, int 
     poFeatureDefn = new OGRFeatureDefn( "polygon" );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbPolygon  );
+    poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 
     OGRFieldDefn    oField1( "DESCRIPTION", OFTString);
     poFeatureDefn->AddFieldDefn( &oField1 );
@@ -93,6 +94,7 @@ OGRHTFSoundingLayer::OGRHTFSoundingLayer( const char* pszFilename, int nZone, in
     poFeatureDefn = new OGRFeatureDefn( "sounding" );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbPoint  );
+    poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 
     this->nTotalSoundings = nTotalSoundings;
     bHasFPK = FALSE;

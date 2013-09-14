@@ -50,6 +50,7 @@ OGROpenAirLabelLayer::OGROpenAirLabelLayer( VSILFILE* fp )
     poFeatureDefn = new OGRFeatureDefn( "labels"  );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbPoint );
+    poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 
     OGRFieldDefn    oField1( "CLASS", OFTString);
     poFeatureDefn->AddFieldDefn( &oField1 );
