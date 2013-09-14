@@ -74,7 +74,6 @@ class OGRPCIDSKLayer : public OGRLayer
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
 
-    virtual OGRSpatialReference *GetSpatialRef();
     int                 GetFeatureCount( int );
     OGRErr              GetExtent( OGREnvelope *psExtent, int bForce );
 };

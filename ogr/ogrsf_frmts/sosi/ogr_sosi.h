@@ -89,7 +89,6 @@ public:
     OGRErr              CreateField(OGRFieldDefn *poField, int bApproxOK=TRUE);
     OGRErr              CreateFeature(OGRFeature *poFeature);
     int                 TestCapability( const char * );
-    OGRSpatialReference  *GetSpatialRef();
 };
 
 /************************************************************************

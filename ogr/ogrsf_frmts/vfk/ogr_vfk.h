@@ -79,7 +79,6 @@ public:
     void                 ResetReading();
     
     int                  TestCapability(const char *);
-    OGRSpatialReference *GetSpatialRef();
 
     int                  GetFeatureCount(int = TRUE);
 };

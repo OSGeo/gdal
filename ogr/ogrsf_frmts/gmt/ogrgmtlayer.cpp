@@ -161,6 +161,7 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdate )
 /* -------------------------------------------------------------------- */
     poFeatureDefn = new OGRFeatureDefn( CPLGetBasename(pszFilename) );
     poFeatureDefn->Reference();
+    poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 
     if( osGeometryType == "POINT" )
         poFeatureDefn->SetGeomType( wkbPoint );
@@ -647,6 +648,7 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
 /*      Create feature.                                                 */
 /* -------------------------------------------------------------------- */
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
+    poGeom->assignSpatialReference(poSRS);
     poFeature->SetGeometryDirectly( poGeom );
     poFeature->SetFID( iNextFID++ );
 
@@ -1084,14 +1086,4 @@ OGRErr OGRGmtLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
             return OGRERR_NONE;
         }
     }
-}
-
-/************************************************************************/
-/*                           GetSpatialRef()                            */
-/************************************************************************/
-
-OGRSpatialReference *OGRGmtLayer::GetSpatialRef()
-
-{
-    return poSRS;
 }

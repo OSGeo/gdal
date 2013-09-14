@@ -87,6 +87,7 @@ OGRVFKLayer::OGRVFKLayer(const char *pszName,
 
     /* feature definition */
     poFeatureDefn = new OGRFeatureDefn(pszName);
+    poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType(eReqType);
@@ -142,14 +143,6 @@ void OGRVFKLayer::ResetReading()
 OGRGeometry *OGRVFKLayer::CreateGeometry(IVFKFeature * poVfkFeature)
 {
     return poVfkFeature->GetGeometry();
-}
-
-/*!
-  \brief Get spatial reference information
-*/
-OGRSpatialReference *OGRVFKLayer::GetSpatialRef()
-{
-    return poSRS;
 }
 
 /*!
