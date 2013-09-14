@@ -59,6 +59,7 @@ OGRSDTSLayer::OGRSDTSLayer( SDTSTransfer * poTransferIn, int iLayerIn,
     poFeatureDefn =
         new OGRFeatureDefn(poTransfer->GetCATD()->GetEntryModule(iCATDEntry));
     poFeatureDefn->Reference();
+    poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poDS->GetSpatialRef());
 
     OGRFieldDefn oRecId( "RCID", OFTInteger );
     poFeatureDefn->AddFieldDefn( &oRecId );
@@ -472,15 +473,4 @@ int OGRSDTSLayer::TestCapability( const char * pszCap )
 
     else 
         return FALSE;
-}
-
-
-/************************************************************************/
-/*                           GetSpatialRef()                            */
-/************************************************************************/
-
-OGRSpatialReference * OGRSDTSLayer::GetSpatialRef()
-
-{
-    return poDS->GetSpatialRef();
 }

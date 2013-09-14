@@ -93,8 +93,6 @@ class OGRPDSLayer : public OGRLayer
 
     virtual int                 TestCapability( const char * );
 
-    virtual OGRSpatialReference *GetSpatialRef() { return NULL; }
-
     virtual int                 GetFeatureCount(int bForce = TRUE );
 
     virtual OGRFeature         *GetFeature( long nFID );

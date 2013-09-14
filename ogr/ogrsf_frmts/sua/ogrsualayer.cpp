@@ -53,6 +53,7 @@ OGRSUALayer::OGRSUALayer( VSILFILE* fp )
     poFeatureDefn = new OGRFeatureDefn( "layer" );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbPolygon );
+    poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 
     OGRFieldDefn    oField1( "TYPE", OFTString);
     poFeatureDefn->AddFieldDefn( &oField1 );

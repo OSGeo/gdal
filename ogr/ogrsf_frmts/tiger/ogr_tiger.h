@@ -524,8 +524,6 @@ class OGRTigerLayer : public OGRLayer
 
     int                 TestCapability( const char * );
 
-    virtual OGRSpatialReference *GetSpatialRef();
-
     virtual OGRErr      CreateFeature( OGRFeature *poFeature );
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );

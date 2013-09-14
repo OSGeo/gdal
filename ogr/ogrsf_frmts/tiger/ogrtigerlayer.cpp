@@ -226,23 +226,19 @@ int OGRTigerLayer::TestCapability( const char * pszCap )
 }
 
 /************************************************************************/
-/*                           GetSpatialRef()                            */
-/************************************************************************/
-
-OGRSpatialReference *OGRTigerLayer::GetSpatialRef()
-
-{
-    return poDS->GetSpatialRef();
-}
-
-/************************************************************************/
 /*                            GetLayerDefn()                            */
 /************************************************************************/
 
 OGRFeatureDefn *OGRTigerLayer::GetLayerDefn()
 
 {
-    return poReader->GetFeatureDefn();
+    OGRFeatureDefn* poFDefn = poReader->GetFeatureDefn();
+    if( poFDefn != NULL )
+    {
+        if( poFDefn->GetGeomFieldCount() > 0 )
+            poFDefn->GetGeomFieldDefn(0)->SetSpatialRef(poDS->GetSpatialRef());
+    }
+    return poFDefn;
 }
 
 /************************************************************************/
