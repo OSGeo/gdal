@@ -76,8 +76,6 @@ protected:
 
     virtual int                 TestCapability( const char * );
 
-    virtual OGRSpatialReference *GetSpatialRef() { return poSRS; }
-
     void SetExtent(double dfMinX, double dfMinY, double dfMaxX, double dfMaxY);
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
 

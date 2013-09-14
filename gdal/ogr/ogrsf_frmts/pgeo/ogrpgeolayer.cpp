@@ -107,6 +107,7 @@ CPLErr OGRPGeoLayer::BuildFeatureDefn( const char *pszLayerName,
     int    nRawColumns = poStmt->GetColCount();
 
     poFeatureDefn->Reference();
+    poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 
     panFieldOrdinals = (int *) CPLMalloc( sizeof(int) * nRawColumns );
 
@@ -323,16 +324,6 @@ int OGRPGeoLayer::TestCapability( const char * pszCap )
 
 {
     return FALSE;
-}
-
-/************************************************************************/
-/*                           GetSpatialRef()                            */
-/************************************************************************/
-
-OGRSpatialReference *OGRPGeoLayer::GetSpatialRef()
-
-{
-    return poSRS;
 }
 
 /************************************************************************/
