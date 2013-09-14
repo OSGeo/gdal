@@ -90,6 +90,7 @@ CPLErr OGRWalkLayer::BuildFeatureDefn( const char *pszLayerName,
     int    nRawColumns = poStmt->GetColCount();
 
     poFeatureDefn->Reference();
+    poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 
     panFieldOrdinals = (int *) CPLMalloc( sizeof(int) * nRawColumns );
 
@@ -306,16 +307,6 @@ OGRFeature *OGRWalkLayer::GetNextRawFeature()
     }
 
     return poFeature;
-}
-
-/************************************************************************/
-/*                           GetSpatialRef()                            */
-/************************************************************************/
-
-OGRSpatialReference *OGRWalkLayer::GetSpatialRef()
-
-{
-    return poSRS;
 }
 
 /************************************************************************/

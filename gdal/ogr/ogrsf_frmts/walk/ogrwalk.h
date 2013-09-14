@@ -85,8 +85,6 @@ public:
     OGRFeature *        GetNextRawFeature();
 
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
-
-    virtual OGRSpatialReference *GetSpatialRef();
     
     int         TestCapability( const char * ) { return FALSE; }
 
