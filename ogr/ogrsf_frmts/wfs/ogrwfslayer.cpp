@@ -319,6 +319,7 @@ OGRFeatureDefn* OGRWFSLayer::BuildLayerDefnFromFeatureClass(GMLFeatureClass* poC
     this->poGMLFeatureClass = poClass;
 
     OGRFeatureDefn* poFDefn = new OGRFeatureDefn( pszName );
+    poFDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
     poFDefn->SetGeomType( (OGRwkbGeometryType)poGMLFeatureClass->GetGeometryType() );
 
 /* -------------------------------------------------------------------- */
@@ -362,7 +363,11 @@ OGRFeatureDefn* OGRWFSLayer::BuildLayerDefnFromFeatureClass(GMLFeatureClass* poC
 
     const char* pszGeometryColumnName = poGMLFeatureClass->GetGeometryElement();
     if (pszGeometryColumnName)
+    {
         osGeometryColumnName = pszGeometryColumnName;
+        if( poFDefn->GetGeomFieldCount() > 0 )
+            poFDefn->GetGeomFieldDefn(0)->SetName(pszGeometryColumnName);
+    }
 
     return poFDefn;
 }
@@ -970,6 +975,7 @@ OGRFeatureDefn * OGRWFSLayer::BuildLayerDefn(OGRFeatureDefn* poSrcFDefn)
     int bUnsetWidthPrecision = FALSE;
 
     poFeatureDefn = new OGRFeatureDefn( pszName );
+    poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
     poFeatureDefn->Reference();
 
     OGRDataSource* poDS = NULL;
@@ -1022,16 +1028,6 @@ OGRFeatureDefn * OGRWFSLayer::BuildLayerDefn(OGRFeatureDefn* poSrcFDefn)
         delete poSrcFDefn;
 
     return poFeatureDefn;
-}
-
-/************************************************************************/
-/*                           GetSpatialRef()                            */
-/************************************************************************/
-
-OGRSpatialReference *OGRWFSLayer::GetSpatialRef()
-{
-    GetLayerDefn();
-    return poSRS;
 }
 
 /************************************************************************/

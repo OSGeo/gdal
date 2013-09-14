@@ -76,7 +76,6 @@ typedef struct
 
 class OGRSEGYLayer: public OGRLayer
 {
-    OGRSpatialReference* poSRS;
     OGRFeatureDefn*    poFeatureDefn;
     int                bEOF;
     int                nNextFID;
@@ -96,8 +95,6 @@ class OGRSEGYLayer: public OGRLayer
     virtual OGRFeature *        GetNextFeature();
 
     virtual void                ResetReading();
-
-    virtual OGRSpatialReference *GetSpatialRef() { return poSRS; }
 
     virtual OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
@@ -127,8 +124,6 @@ class OGRSEGYHeaderLayer: public OGRLayer
     virtual OGRFeature *        GetNextFeature();
 
     virtual void                ResetReading();
-
-    virtual OGRSpatialReference *GetSpatialRef() { return NULL; }
 
     virtual OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
