@@ -691,8 +691,6 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
             nDatum = 6202;
         else if( nDatum == 4 )
             nDatum = 6203;
-        else if( nDatum == 4 )
-            nDatum = 6203;
         else if( nDatum == 6 )
             nDatum = 6222;
         else if( nDatum == 7 )
