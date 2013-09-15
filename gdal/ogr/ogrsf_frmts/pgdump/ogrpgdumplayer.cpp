@@ -30,16 +30,11 @@
 #include "ogr_pgdump.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "ogr_p.h"
 
 CPL_CVSID("$Id$");
 
 #define USE_COPY_UNSET -1
-
-/* Flags for creating WKB format for PostGIS */
-#define WKBZOFFSET 0x80000000
-#define WKBMOFFSET 0x40000000
-#define WKBSRIDFLAG 0x20000000
-#define WKBBBOXFLAG 0x10000000
 
 static CPLString OGRPGDumpEscapeStringList(
                                        char** papszItems, int bForInsertOrUpdate);
@@ -115,81 +110,6 @@ int OGRPGDumpLayer::TestCapability( const char * pszCap )
         return TRUE;
     else
         return FALSE;
-}
-
-/************************************************************************/
-/*                           GeometryToHex()                            */
-/************************************************************************/
-
-char *OGRPGDumpLayer::GeometryToHex( OGRGeometry * poGeometry, int nSRSId )
-{
-    GByte       *pabyWKB;
-    char        *pszTextBuf;
-    char        *pszTextBufCurrent;
-    char        *pszHex;
-
-    int nWkbSize = poGeometry->WkbSize();
-    pabyWKB = (GByte *) CPLMalloc(nWkbSize);
-
-    if( poGeometry->exportToWkb( wkbNDR, pabyWKB ) != OGRERR_NONE )
-    {
-        CPLFree( pabyWKB );
-        return CPLStrdup("");
-    }
-
-    /* When converting to hex, each byte takes 2 hex characters.  In addition
-       we add in 8 characters to represent the SRID integer in hex, and
-       one for a null terminator */
-
-    int pszSize = nWkbSize*2 + 8 + 1;
-    pszTextBuf = (char *) CPLMalloc(pszSize);
-    pszTextBufCurrent = pszTextBuf;
-
-    /* Convert the 1st byte, which is the endianess flag, to hex. */
-    pszHex = CPLBinaryToHex( 1, pabyWKB );
-    strcpy(pszTextBufCurrent, pszHex );
-    CPLFree ( pszHex );
-    pszTextBufCurrent += 2;
-
-    /* Next, get the geom type which is bytes 2 through 5 */
-    GUInt32 geomType;
-    memcpy( &geomType, pabyWKB+1, 4 );
-
-    /* Now add the SRID flag if an SRID is provided */
-    if (nSRSId > 0)
-    {
-        /* Change the flag to wkbNDR (little) endianess */
-        GUInt32 nGSrsFlag = CPL_LSBWORD32( WKBSRIDFLAG );
-        /* Apply the flag */
-        geomType = geomType | nGSrsFlag;
-    }
-
-    /* Now write the geom type which is 4 bytes */
-    pszHex = CPLBinaryToHex( 4, (GByte*) &geomType );
-    strcpy(pszTextBufCurrent, pszHex );
-    CPLFree ( pszHex );
-    pszTextBufCurrent += 8;
-
-    /* Now include SRID if provided */
-    if (nSRSId > 0)
-    {
-        /* Force the srsid to wkbNDR (little) endianess */
-        GUInt32 nGSRSId = CPL_LSBWORD32( nSRSId );
-        pszHex = CPLBinaryToHex( sizeof(nGSRSId),(GByte*) &nGSRSId );
-        strcpy(pszTextBufCurrent, pszHex );
-        CPLFree ( pszHex );
-        pszTextBufCurrent += 8;
-    }
-
-    /* Copy the rest of the data over - subtract
-       5 since we already copied 5 bytes above */
-    pszHex = CPLBinaryToHex( nWkbSize - 5, pabyWKB + 5 );
-    strcpy(pszTextBufCurrent, pszHex );
-    CPLFree ( pszHex );
-
-    CPLFree( pabyWKB );
-
-    return pszTextBuf;
 }
 
 /************************************************************************/
@@ -317,7 +237,7 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
 
             if( bWriteAsHex )
             {
-                char* pszHex = GeometryToHex( poGeom, poGFldDefn->nSRSId );
+                char* pszHex = OGRGeometryToHexEWKB( poGeom, poGFldDefn->nSRSId );
                 osCommand += "'";
                 if (pszHex)
                     osCommand += pszHex;
@@ -407,7 +327,7 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
             /*if (bHasWkb)
                 pszGeom = GeometryToBYTEA( poGeometry );
             else*/
-                pszGeom = GeometryToHex( poGeometry, poGFldDefn->nSRSId );
+                pszGeom = OGRGeometryToHexEWKB( poGeometry, poGFldDefn->nSRSId );
         }
     
         if (osCommand.size() > 0)

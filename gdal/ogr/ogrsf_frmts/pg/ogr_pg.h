@@ -164,9 +164,6 @@ class OGRPGLayer : public OGRLayer
     static char        *GeometryToBYTEA( OGRGeometry * );
     static GByte       *BYTEAToGByteArray( const char *pszBytea, int* pnLength );
     static OGRGeometry *BYTEAToGeometry( const char * );
-    static OGRGeometry *HEXToGeometry( const char * );
-    static OGRGeometry *EWKBToGeometry( GByte* pabyWKB, int nLength );
-    static char        *GeometryToHex( OGRGeometry * poGeometry, int nSRSId );
     Oid                 GeometryToOID( OGRGeometry * );
     OGRGeometry        *OIDToGeometry( Oid );
 

@@ -221,6 +221,62 @@ const char* OGRCARTODBDataSource::GetAPIURL() const
 }
 
 /************************************************************************/
+/*                             FetchSRSId()                             */
+/************************************************************************/
+
+int OGRCARTODBDataSource::FetchSRSId( OGRSpatialReference * poSRS )
+
+{
+    const char*         pszAuthorityName;
+
+    if( poSRS == NULL )
+        return 0;
+
+    OGRSpatialReference oSRS(*poSRS);
+    poSRS = NULL;
+
+    pszAuthorityName = oSRS.GetAuthorityName(NULL);
+
+    if( pszAuthorityName == NULL || strlen(pszAuthorityName) == 0 )
+    {
+/* -------------------------------------------------------------------- */
+/*      Try to identify an EPSG code                                    */
+/* -------------------------------------------------------------------- */
+        oSRS.AutoIdentifyEPSG();
+
+        pszAuthorityName = oSRS.GetAuthorityName(NULL);
+        if (pszAuthorityName != NULL && EQUAL(pszAuthorityName, "EPSG"))
+        {
+            const char* pszAuthorityCode = oSRS.GetAuthorityCode(NULL);
+            if ( pszAuthorityCode != NULL && strlen(pszAuthorityCode) > 0 )
+            {
+                /* Import 'clean' SRS */
+                oSRS.importFromEPSG( atoi(pszAuthorityCode) );
+
+                pszAuthorityName = oSRS.GetAuthorityName(NULL);
+            }
+        }
+    }
+/* -------------------------------------------------------------------- */
+/*      Check whether the EPSG authority code is already mapped to a    */
+/*      SRS ID.                                                         */
+/* -------------------------------------------------------------------- */
+    if( pszAuthorityName != NULL && EQUAL( pszAuthorityName, "EPSG" ) )
+    {
+        int             nAuthorityCode;
+
+        /* For the root authority name 'EPSG', the authority code
+         * should always be integral
+         */
+        nAuthorityCode = atoi( oSRS.GetAuthorityCode(NULL) );
+
+        return nAuthorityCode;
+    }
+
+    return 0;
+}
+
+/************************************************************************/
 /*                           CreateLayer()                              */
 /************************************************************************/
 
@@ -235,36 +291,84 @@ OGRLayer   *OGRCARTODBDataSource::CreateLayer( const char *pszName,
         return NULL;
     }
 
-    return NULL;
-}
-
-/************************************************************************/
-/*                            DeleteLayer()                             */
-/************************************************************************/
-
-void OGRCARTODBDataSource::DeleteLayer( const char *pszLayerName )
-
-{
+/* -------------------------------------------------------------------- */
+/*      Do we already have this layer?  If so, should we blow it        */
+/*      away?                                                           */
+/* -------------------------------------------------------------------- */
     int iLayer;
 
-/* -------------------------------------------------------------------- */
-/*      Try to find layer.                                              */
-/* -------------------------------------------------------------------- */
     for( iLayer = 0; iLayer < nLayers; iLayer++ )
     {
-        if( EQUAL(pszLayerName,papoLayers[iLayer]->GetName()) )
-            break;
+        if( EQUAL(pszName,papoLayers[iLayer]->GetName()) )
+        {
+            if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != NULL
+                && !EQUAL(CSLFetchNameValue(papszOptions,"OVERWRITE"),"NO") )
+            {
+                DeleteLayer( iLayer );
+            }
+            else
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Layer %s already exists, CreateLayer failed.\n"
+                          "Use the layer creation option OVERWRITE=YES to "
+                          "replace it.",
+                          pszName );
+                return NULL;
+            }
+        }
     }
 
-    if( iLayer == nLayers )
+    int nSRID = 0;
+    if( poSpatialRef != NULL )
+        nSRID = FetchSRSId( poSpatialRef );
+
+    CPLString osGeomType;
+    if( eGType != wkbNone )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Attempt to delete layer '%s', but this layer is not known to OGR.",
-                  pszLayerName );
-        return;
+        osGeomType = OGRToOGCGeomType(eGType);
+        if( eGType & wkb25DBit )
+            osGeomType += "Z";
     }
 
-    DeleteLayer(iLayer);
+    CPLString osSQL;
+    osSQL.Printf("CREATE TABLE %s ( %s SERIAL, ",
+                 OGRCARTODBEscapeIdentifier(pszName).c_str(),
+                 "cartodb_id");
+    if( osGeomType.size() > 0 )
+    {
+        osSQL += CPLSPrintf("%s GEOMETRY(%s, %d), %s GEOMETRY(%s, %d),",
+                 "the_geom",
+                 osGeomType.c_str(),
+                 nSRID,
+                 "the_geom_webmercator",
+                 osGeomType.c_str(),
+                 3857);
+    }
+    osSQL += CPLSPrintf("PRIMARY KEY (%s) )", "cartodb_id");
+
+    osSQL += ";";
+    osSQL += CPLSPrintf("DROP SEQUENCE IF EXISTS %s",
+                        OGRCARTODBEscapeIdentifier(CPLSPrintf("%s_%s_seq", pszName, "cartodb_id")).c_str());
+    osSQL += ";";
+    osSQL += CPLSPrintf("CREATE SEQUENCE %s START 1",
+                        OGRCARTODBEscapeIdentifier(CPLSPrintf("%s_%s_seq", pszName, "cartodb_id")).c_str());
+    osSQL += ";";
+    osSQL += CPLSPrintf("ALTER TABLE %s ALTER COLUMN %s SET DEFAULT nextval('%s')",
+                        pszName,
+                        "cartodb_id",
+                        OGRCARTODBEscapeLiteral(CPLSPrintf("%s_%s_seq", pszName, "cartodb_id")).c_str());
+
+    json_object* poObj = RunSQL(osSQL);
+    if( poObj == NULL )
+        return NULL;
+    json_object_put(poObj);
+
+    OGRCARTODBTableLayer* poLayer = new OGRCARTODBTableLayer(this, pszName);
+    papoLayers = (OGRLayer**) CPLRealloc(
+                    papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
+    papoLayers[nLayers ++] = poLayer;
+
+    return poLayer;
 }
 
 /************************************************************************/
@@ -288,7 +392,32 @@ OGRErr OGRCARTODBDataSource::DeleteLayer(int iLayer)
         return OGRERR_FAILURE;
     }
 
-    return OGRERR_FAILURE;
+/* -------------------------------------------------------------------- */
+/*      Blow away our OGR structures related to the layer.  This is     */
+/*      pretty dangerous if anything has a reference to this layer!     */
+/* -------------------------------------------------------------------- */
+    CPLString osLayerName = papoLayers[iLayer]->GetLayerDefn()->GetName();
+
+    CPLDebug( "CARTODB", "DeleteLayer(%s)", osLayerName.c_str() );
+
+    delete papoLayers[iLayer];
+    memmove( papoLayers + iLayer, papoLayers + iLayer + 1,
+             sizeof(void *) * (nLayers - iLayer - 1) );
+    nLayers--;
+
+    if (osLayerName.size() == 0)
+        return OGRERR_NONE;
+
+    CPLString osSQL;
+    osSQL.Printf("DROP TABLE %s",
+                 OGRCARTODBEscapeIdentifier(osLayerName).c_str());
+
+    json_object* poObj = RunSQL(osSQL);
+    if( poObj == NULL )
+        return OGRERR_FAILURE;
+    json_object_put(poObj);
+
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
@@ -363,7 +492,8 @@ json_object* OGRCARTODBDataSource::RunSQL(const char* pszUnescapedSQL)
         return NULL;
     }
     
-    //CPLDebug( "CARTODB", "RunSQL Response:%s", psResult->pabyData );
+    if( strlen((const char*)psResult->pabyData) < 1000 )
+        CPLDebug( "CARTODB", "RunSQL Response:%s", psResult->pabyData );
     
     json_tokener* jstok = NULL;
     json_object* poObj = NULL;
@@ -439,4 +569,73 @@ json_object* OGRCARTODBGetSingleRow(json_object* poObj)
     }
 
     return poRowObj;
+}
+
+/************************************************************************/
+/*                             ExecuteSQL()                             */
+/************************************************************************/
+
+OGRLayer * OGRCARTODBDataSource::ExecuteSQL( const char *pszSQLCommand,
+                                        OGRGeometry *poSpatialFilter,
+                                        const char *pszDialect )
+
+{
+    /* Skip leading spaces */
+    while(*pszSQLCommand == ' ')
+        pszSQLCommand ++;
+    
+/* -------------------------------------------------------------------- */
+/*      Use generic implementation for OGRSQL dialect.                  */
+/* -------------------------------------------------------------------- */
+    if( pszDialect != NULL && (EQUAL(pszDialect,"OGRSQL") || EQUAL(pszDialect,"SQLITE")) )
+        return OGRDataSource::ExecuteSQL( pszSQLCommand,
+                                          poSpatialFilter,
+                                          pszDialect );
+
+/* -------------------------------------------------------------------- */
+/*      Special case DELLAYER: command.                                 */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(pszSQLCommand,"DELLAYER:",9) )
+    {
+        const char *pszLayerName = pszSQLCommand + 9;
+
+        while( *pszLayerName == ' ' )
+            pszLayerName++;
+        
+        for( int iLayer = 0; iLayer < nLayers; iLayer++ )
+        {
+            if( EQUAL(papoLayers[iLayer]->GetName(), 
+                      pszLayerName ))
+            {
+                DeleteLayer( iLayer );
+                break;
+            }
+        }
+        return NULL;
+    }
+
+    OGRCARTODBResultLayer* poLayer = new OGRCARTODBResultLayer( this, pszSQLCommand );
+
+    if( poSpatialFilter != NULL )
+        poLayer->SetSpatialFilter( poSpatialFilter );
+
+    CPLErrorReset();
+    poLayer->GetLayerDefn();
+    if( CPLGetLastErrorNo() != 0 )
+    {
+        delete poLayer;
+        return NULL;
+    }
+
+    return poLayer;
+}
+
+/************************************************************************/
+/*                          ReleaseResultSet()                          */
+/************************************************************************/
+
+void OGRCARTODBDataSource::ReleaseResultSet( OGRLayer * poLayer )
+
+{
+    delete poLayer;
 }
