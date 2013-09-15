@@ -4129,3 +4129,174 @@ int OGRPreparedGeometryIntersects( const OGRPreparedGeometry* poPreparedGeom,
     return FALSE;
 #endif
 }
+
+/************************************************************************/
+/*                       OGRGeometryFromEWKB()                          */
+/************************************************************************/
+
+/* Flags for creating WKB format for PostGIS */
+#define WKBZOFFSET 0x80000000
+#define WKBMOFFSET 0x40000000
+#define WKBSRIDFLAG 0x20000000
+#define WKBBBOXFLAG 0x10000000
+
+OGRGeometry *OGRGeometryFromEWKB( GByte *pabyWKB, int nLength, int* pnSRID )
+
+{
+    OGRGeometry *poGeometry = NULL;
+    unsigned int ewkbFlags = 0;
+    
+    if (nLength < 5)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Invalid EWKB content : %d bytes", nLength );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Detect XYZM variant of PostGIS EWKB                             */
+/*                                                                      */
+/*      OGR does not support parsing M coordinate,                      */
+/*      so we return NULL geometry.                                     */
+/* -------------------------------------------------------------------- */
+    memcpy(&ewkbFlags, pabyWKB+1, 4);
+    OGRwkbByteOrder eByteOrder = (pabyWKB[0] == 0 ? wkbXDR : wkbNDR);
+    if( OGR_SWAP( eByteOrder ) )
+        ewkbFlags= CPL_SWAP32(ewkbFlags);
+
+    if (ewkbFlags & WKBMOFFSET)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+            "Reading EWKB with 4-dimensional coordinates (XYZM) is not supported" );
+
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      PostGIS EWKB format includes an  SRID, but this won't be        */
+/*      understood by OGR, so if the SRID flag is set, we remove the    */
+/*      SRID (bytes at offset 5 to 8).                                  */
+/* -------------------------------------------------------------------- */
+    if( nLength > 9 &&
+        ((pabyWKB[0] == 0 /* big endian */ && (pabyWKB[1] & 0x20) )
+        || (pabyWKB[0] != 0 /* little endian */ && (pabyWKB[4] & 0x20))) )
+    {
+        if( pnSRID )
+        {
+            memcpy(pnSRID, pabyWKB+5, 4);
+            if( OGR_SWAP( eByteOrder ) )
+                *pnSRID = CPL_SWAP32(*pnSRID);
+        }
+        memmove( pabyWKB+5, pabyWKB+9, nLength-9 );
+        nLength -= 4;
+        if( pabyWKB[0] == 0 )
+            pabyWKB[1] &= (~0x20);
+        else
+            pabyWKB[4] &= (~0x20);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try to ingest the geometry.                                     */
+/* -------------------------------------------------------------------- */
+    OGRGeometryFactory::createFromWkb( pabyWKB, NULL, &poGeometry, nLength );
+
+    return poGeometry;
+}
+
+/************************************************************************/
+/*                     OGRGeometryFromHexEWKB()                         */
+/************************************************************************/
+
+OGRGeometry *OGRGeometryFromHexEWKB( const char *pszBytea, int* pnSRID )
+
+{
+    GByte   *pabyWKB;
+    int     nWKBLength=0;
+    OGRGeometry *poGeometry;
+
+    if( pszBytea == NULL )
+        return NULL;
+
+    pabyWKB = CPLHexToBinary(pszBytea, &nWKBLength);
+
+    poGeometry = OGRGeometryFromEWKB(pabyWKB, nWKBLength, pnSRID);
+
+    CPLFree(pabyWKB);
+
+    return poGeometry;
+}
+
+/************************************************************************/
+/*                       OGRGeometryToHexEWKB()                         */
+/************************************************************************/
+
+char* OGRGeometryToHexEWKB( OGRGeometry * poGeometry, int nSRSId )
+{
+    GByte       *pabyWKB;
+    char        *pszTextBuf;
+    char        *pszTextBufCurrent;
+    char        *pszHex;
+
+    int nWkbSize = poGeometry->WkbSize();
+    pabyWKB = (GByte *) CPLMalloc(nWkbSize);
+
+    if( poGeometry->exportToWkb( wkbNDR, pabyWKB ) != OGRERR_NONE )
+    {
+        CPLFree( pabyWKB );
+        return CPLStrdup("");
+    }
+
+    /* When converting to hex, each byte takes 2 hex characters.  In addition
+       we add in 8 characters to represent the SRID integer in hex, and
+       one for a null terminator */
+
+    int pszSize = nWkbSize*2 + 8 + 1;
+    pszTextBuf = (char *) CPLMalloc(pszSize);
+    pszTextBufCurrent = pszTextBuf;
+
+    /* Convert the 1st byte, which is the endianess flag, to hex. */
+    pszHex = CPLBinaryToHex( 1, pabyWKB );
+    strcpy(pszTextBufCurrent, pszHex );
+    CPLFree ( pszHex );
+    pszTextBufCurrent += 2;
+
+    /* Next, get the geom type which is bytes 2 through 5 */
+    GUInt32 geomType;
+    memcpy( &geomType, pabyWKB+1, 4 );
+
+    /* Now add the SRID flag if an SRID is provided */
+    if (nSRSId > 0)
+    {
+        /* Change the flag to wkbNDR (little) endianess */
+        GUInt32 nGSrsFlag = CPL_LSBWORD32( WKBSRIDFLAG );
+        /* Apply the flag */
+        geomType = geomType | nGSrsFlag;
+    }
+
+    /* Now write the geom type which is 4 bytes */
+    pszHex = CPLBinaryToHex( 4, (GByte*) &geomType );
+    strcpy(pszTextBufCurrent, pszHex );
+    CPLFree ( pszHex );
+    pszTextBufCurrent += 8;
+
+    /* Now include SRID if provided */
+    if (nSRSId > 0)
+    {
+        /* Force the srsid to wkbNDR (little) endianess */
+        GUInt32 nGSRSId = CPL_LSBWORD32( nSRSId );
+        pszHex = CPLBinaryToHex( sizeof(nGSRSId),(GByte*) &nGSRSId );
+        strcpy(pszTextBufCurrent, pszHex );
+        CPLFree ( pszHex );
+        pszTextBufCurrent += 8;
+    }
+
+    /* Copy the rest of the data over - subtract
+       5 since we already copied 5 bytes above */
+    pszHex = CPLBinaryToHex( nWkbSize - 5, pabyWKB + 5 );
+    strcpy(pszTextBufCurrent, pszHex );
+    CPLFree ( pszHex );
+
+    CPLFree( pabyWKB );
+
+    return pszTextBuf;
+}

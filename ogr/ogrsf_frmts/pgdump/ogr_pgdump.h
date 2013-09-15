@@ -85,8 +85,7 @@ class OGRPGDumpLayer : public OGRLayer
     void                AppendFieldValue(CPLString& osCommand,
                                        OGRFeature* poFeature, int i);
     char*               GByteArrayToBYTEA( const GByte* pabyData, int nLen);
-    char*               GeometryToHex( OGRGeometry * poGeometry, int nSRSId );
-    
+
     OGRErr              StartCopy(int bSetFID);
     CPLString           BuildCopyFields(int bSetFID);
 

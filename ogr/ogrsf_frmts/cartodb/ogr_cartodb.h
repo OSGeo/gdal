@@ -37,6 +37,23 @@
 #include <json.h>
 
 json_object* OGRCARTODBGetSingleRow(json_object* poObj);
+CPLString OGRCARTODBEscapeIdentifier(const char* pszStr);
+CPLString OGRCARTODBEscapeLiteral(const char* pszStr);
+
+/************************************************************************/
+/*                      OGRCartoDBGeomFieldDefn                         */
+/************************************************************************/
+
+class OGRCartoDBGeomFieldDefn: public OGRGeomFieldDefn
+{
+    public:
+        int nSRID;
+
+        OGRCartoDBGeomFieldDefn(const char* pszName, OGRwkbGeometryType eType) :
+                OGRGeomFieldDefn(pszName, eType), nSRID(0)
+        {
+        }
+};
 
 /************************************************************************/
 /*                           OGRCARTODBLayer                            */
@@ -61,6 +78,9 @@ protected:
 
     OGRFeature          *GetNextRawFeature();
     OGRFeature          *BuildFeature(json_object* poRowObj);
+
+    void                 EstablishLayerDefn(const char* pszLayerName);
+    virtual OGRSpatialReference *GetSRS(const char* pszGeomCol, int *pnSRID) = 0;
 
   public:
                          OGRCARTODBLayer(OGRCARTODBDataSource* poDS);
@@ -87,8 +107,13 @@ class OGRCARTODBTableLayer : public OGRCARTODBLayer
     CPLString           osQuery;
     CPLString           osWHERE;
 
+    int                 bInTransaction;
+    CPLString           osTransactionSQL;
+    long                nNextFID;
+
     void                BuildWhere();
-    int                 GetSRID();
+
+    virtual OGRSpatialReference *GetSRS(const char* pszGeomCol, int *pnSRID);
 
   public:
                          OGRCARTODBTableLayer(OGRCARTODBDataSource* poDS, const char* pszName);
@@ -102,12 +127,39 @@ class OGRCARTODBTableLayer : public OGRCARTODBLayer
 
     virtual int                 TestCapability( const char * );
 
+    virtual OGRErr      CreateField( OGRFieldDefn *poField,
+                                     int bApproxOK = TRUE );
+
+    virtual OGRErr      CreateFeature( OGRFeature *poFeature );
+    virtual OGRErr      SetFeature( OGRFeature *poFeature );
+    virtual OGRErr      DeleteFeature( long nFID );
+
     virtual void        SetSpatialFilter( OGRGeometry *poGeom ) { SetSpatialFilter(0, poGeom); }
     virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom );
     virtual OGRErr      SetAttributeFilter( const char * );
 
     virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce ) { return GetExtent(0, psExtent, bForce); }
     virtual OGRErr      GetExtent( int iGeomField, OGREnvelope *psExtent, int bForce );
+    
+    virtual OGRErr      StartTransaction();
+    virtual OGRErr      CommitTransaction();
+    virtual OGRErr      RollbackTransaction();
+};
+
+/************************************************************************/
+/*                       OGRCARTODBResultLayer                          */
+/************************************************************************/
+
+class OGRCARTODBResultLayer : public OGRCARTODBLayer
+{
+    virtual OGRSpatialReference *GetSRS(const char* pszGeomCol, int *pnSRID);
+
+  public:
+                        OGRCARTODBResultLayer( OGRCARTODBDataSource* poDS,
+                                               const char * pszRawStatement );
+    virtual             ~OGRCARTODBResultLayer();
+
+    virtual OGRFeatureDefn *    GetLayerDefn();
 };
 
 /************************************************************************/
@@ -128,9 +180,9 @@ class OGRCARTODBDataSource : public OGRDataSource
 
     CPLString           osAPIKey;
 
-    void                DeleteLayer( const char *pszLayerName );
-
     int                 bMustCleanPersistant;
+
+    int                 FetchSRSId( OGRSpatialReference * poSRS );
 
   public:
                         OGRCARTODBDataSource();
@@ -153,6 +205,10 @@ class OGRCARTODBDataSource : public OGRDataSource
                                      char ** papszOptions = NULL );
     virtual OGRErr      DeleteLayer(int);
 
+    virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
+                                    OGRGeometry *poSpatialFilter,
+                                    const char *pszDialect );
+    virtual void        ReleaseResultSet( OGRLayer * poLayer );
 
     const char*                 GetAPIURL() const;
     int                         IsReadWrite() const { return bReadWrite; }

@@ -130,4 +130,12 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
                                       int bOrientation = TRUE,
                                       int bFaceHoleNegative = FALSE );
 
+/************************************************************************/
+/*                        PostGIS EWKB encoding                         */
+/************************************************************************/
+
+OGRGeometry CPL_DLL *OGRGeometryFromEWKB( GByte *pabyWKB, int nLength, int* pnSRID );
+OGRGeometry CPL_DLL *OGRGeometryFromHexEWKB( const char *pszBytea, int* pnSRID );
+char CPL_DLL * OGRGeometryToHexEWKB( OGRGeometry * poGeometry, int nSRSId );
+
 #endif /* ndef OGR_P_H_INCLUDED */

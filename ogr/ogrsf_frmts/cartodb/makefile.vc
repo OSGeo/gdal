@@ -1,5 +1,6 @@
 
-OBJ	=	ogrcartodbdriver.obj ogrcartodbdatasource.obj ogrcartodblayer.obj ogrcartodbtablelayer.obj
+OBJ	=	ogrcartodbdriver.obj ogrcartodbdatasource.obj ogrcartodblayer.obj ogrcartodbtablelayer.obj ogrcartodbresultlayer.obj
+
 EXTRAFLAGS =	-I.. -I..\.. -I..\geojson\libjson
 
 GDAL_ROOT	=	..\..\..
