@@ -1152,7 +1152,7 @@ static int ProxyMain( int argc, char ** argv )
             for( nColor = 0; nColor < nColorCount; nColor++ )
             {
                 const GDALColorEntry* poEntry = poColorTable->GetColorEntry(nColor);
-                if (poEntry->c1 != poEntry->c2 || poEntry->c1 != poEntry->c2)
+                if (poEntry->c1 != poEntry->c2 || poEntry->c1 != poEntry->c3)
                 {
                     fprintf(stderr, "Warning : color table contains non gray levels colors\n");
                     break;
