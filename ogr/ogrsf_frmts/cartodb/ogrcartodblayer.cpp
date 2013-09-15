@@ -91,92 +91,6 @@ OGRFeatureDefn * OGRCARTODBLayer::GetLayerDefn()
 }
 
 /************************************************************************/
-/*                          EWKBToGeometry()                            */
-/************************************************************************/
-
-static OGRGeometry *EWKBToGeometry( GByte *pabyWKB, int nLength )
-
-{
-    OGRGeometry *poGeometry = NULL;
-    unsigned int ewkbFlags = 0;
-    
-    if (nLength < 5)
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Invalid EWKB content : %d bytes", nLength );
-        return NULL;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Detect XYZM variant of PostGIS EWKB                             */
-/*                                                                      */
-/*      OGR does not support parsing M coordinate,                      */
-/*      so we return NULL geometry.                                     */
-/* -------------------------------------------------------------------- */
-    memcpy(&ewkbFlags, pabyWKB+1, 4);
-    OGRwkbByteOrder eByteOrder = (pabyWKB[0] == 0 ? wkbXDR : wkbNDR);
-    if( OGR_SWAP( eByteOrder ) )
-        ewkbFlags= CPL_SWAP32(ewkbFlags);
-
-    if (ewkbFlags & 0x40000000)
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-            "Reading EWKB with 4-dimensional coordinates (XYZM) is not supported" );
-
-        return NULL;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      PostGIS EWKB format includes an  SRID, but this won't be        */
-/*      understood by OGR, so if the SRID flag is set, we remove the    */
-/*      SRID (bytes at offset 5 to 8).                                  */
-/* -------------------------------------------------------------------- */
-    if( nLength > 9 &&
-        ((pabyWKB[0] == 0 /* big endian */ && (pabyWKB[1] & 0x20) )
-        || (pabyWKB[0] != 0 /* little endian */ && (pabyWKB[4] & 0x20))) )
-    {
-        memmove( pabyWKB+5, pabyWKB+9, nLength-9 );
-        nLength -= 4;
-        if( pabyWKB[0] == 0 )
-            pabyWKB[1] &= (~0x20);
-        else
-            pabyWKB[4] &= (~0x20);
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Try to ingest the geometry.                                     */
-/* -------------------------------------------------------------------- */
-    OGRGeometryFactory::createFromWkb( pabyWKB, NULL, &poGeometry, nLength );
-
-    return poGeometry;
-}
-
-
-/************************************************************************/
-/*                           HEXToGeometry()                            */
-/************************************************************************/
-
-static OGRGeometry *HEXToGeometry( const char *pszBytea )
-
-{
-    GByte   *pabyWKB;
-    int     nWKBLength=0;
-    OGRGeometry *poGeometry;
-
-    if( pszBytea == NULL )
-        return NULL;
-
-    pabyWKB = CPLHexToBinary(pszBytea, &nWKBLength);
-
-    poGeometry = EWKBToGeometry(pabyWKB, nWKBLength);
-
-    CPLFree(pabyWKB);
-
-    return poGeometry;
-}
-
-
-/************************************************************************/
 /*                           BuildFeature()                             */
 /************************************************************************/
 
@@ -243,7 +157,8 @@ OGRFeature *OGRCARTODBLayer::BuildFeature(json_object* poRowObj)
             if( poVal != NULL &&
                 json_object_get_type(poVal) == json_type_string )
             {
-                OGRGeometry* poGeom = HEXToGeometry(json_object_get_string(poVal));
+                OGRGeometry* poGeom = OGRGeometryFromHexEWKB(
+                                        json_object_get_string(poVal), NULL);
                 poFeature->SetGeomFieldDirectly(i, poGeom);
             }
         }
@@ -262,11 +177,20 @@ OGRFeature *OGRCARTODBLayer::GetNextRawFeature()
 
     if( iNextInFetchedObjects >= nFetchedObjects )
     {
+        if( nFetchedObjects > 0 && nFetchedObjects < GetFeaturesToFetch() )
+        {
+            bEOF = TRUE;
+            return NULL;
+        }
+
         CPLString osSQL = osBaseSQL;
-        osSQL += " LIMIT ";
-        osSQL += CPLSPrintf("%d", GetFeaturesToFetch());
-        osSQL += " OFFSET ";
-        osSQL += CPLSPrintf("%d", iNext);
+        if( osSQL.ifind(" LIMIT ") == std::string::npos )
+        {
+            osSQL += " LIMIT ";
+            osSQL += CPLSPrintf("%d", GetFeaturesToFetch());
+            osSQL += " OFFSET ";
+            osSQL += CPLSPrintf("%d", iNext);
+        }
         json_object* poObj = poDS->RunSQL(osSQL);
         if( poObj == NULL )
         {
@@ -340,4 +264,120 @@ int OGRCARTODBLayer::TestCapability( const char * pszCap )
     if ( EQUAL(pszCap, OLCStringsAsUTF8) )
         return TRUE;
     return FALSE;
+}
+
+/************************************************************************/
+/*                          EstablishLayerDefn()                        */
+/************************************************************************/
+
+void OGRCARTODBLayer::EstablishLayerDefn(const char* pszLayerName)
+{
+    poFeatureDefn = new OGRFeatureDefn(pszLayerName);
+    poFeatureDefn->Reference();
+    poFeatureDefn->SetGeomType(wkbNone);
+
+    CPLString osSQL;
+    size_t nPos = osBaseSQL.ifind(" LIMIT ");
+    if( nPos != std::string::npos )
+    {
+        osSQL = osBaseSQL;
+        size_t nSize = osSQL.size();
+        for(size_t i = nPos + strlen(" LIMIT "); i < nSize; i++)
+        {
+            if( osSQL[i] == ' ' )
+                break;
+            osSQL[i] = '0';
+        }
+    }
+    else
+        osSQL.Printf("%s LIMIT 0", osBaseSQL.c_str());
+    json_object* poObj = poDS->RunSQL(osSQL);
+    if( poObj == NULL )
+    {
+        return;
+    }
+
+    json_object* poFields = json_object_object_get(poObj, "fields");
+    if( poFields == NULL || json_object_get_type(poFields) != json_type_object)
+    {
+        json_object_put(poObj);
+        return;
+    }
+
+    json_object_iter it;
+    it.key = NULL;
+    it.val = NULL;
+    it.entry = NULL;
+    json_object_object_foreachC( poFields, it )
+    {
+        const char* pszColName = it.key;
+        if( it.val != NULL && json_object_get_type(it.val) == json_type_object)
+        {
+            json_object* poType = json_object_object_get(it.val, "type");
+            if( poType != NULL && json_object_get_type(poType) == json_type_string )
+            {
+                const char* pszType = json_object_get_string(poType);
+                CPLDebug("CARTODB", "%s : %s", pszColName, pszType);
+                if( EQUAL(pszType, "string") )
+                {
+                    OGRFieldDefn oFieldDefn(pszColName, OFTString);
+                    poFeatureDefn->AddFieldDefn(&oFieldDefn);
+                }
+                else if( EQUAL(pszType, "number") )
+                {
+                    if( !EQUAL(pszColName, "cartodb_id") )
+                    {
+                        OGRFieldDefn oFieldDefn(pszColName, OFTReal);
+                        poFeatureDefn->AddFieldDefn(&oFieldDefn);
+                    }
+                    else
+                        osFIDColName = pszColName;
+                }
+                else if( EQUAL(pszType, "date") )
+                {
+                    if( !EQUAL(pszColName, "created_at") &&
+                        !EQUAL(pszColName, "updated_at") )
+                    {
+                        OGRFieldDefn oFieldDefn(pszColName, OFTDateTime);
+                        poFeatureDefn->AddFieldDefn(&oFieldDefn);
+                    }
+                }
+                else if( EQUAL(pszType, "geometry") )
+                {
+                    if( !EQUAL(pszColName, "the_geom_webmercator") )
+                    {
+                        OGRCartoDBGeomFieldDefn *poFieldDefn =
+                            new OGRCartoDBGeomFieldDefn(pszColName, wkbUnknown);
+                        poFeatureDefn->AddGeomFieldDefn(poFieldDefn, FALSE);
+                        OGRSpatialReference* poSRS = GetSRS(pszColName, &poFieldDefn->nSRID);
+                        if( poSRS != NULL )
+                        {
+                            poFeatureDefn->GetGeomFieldDefn(
+                                poFeatureDefn->GetGeomFieldCount() - 1)->SetSpatialRef(poSRS);
+                            poSRS->Release();
+                        }
+                    }
+                }
+                else
+                {
+                    CPLDebug("CARTODB", "Unhandled type: %s", pszType);
+                }
+            }
+            else if( poType != NULL && json_object_get_type(poType) == json_type_int )
+            {
+                /* FIXME? manual creations of geometry columns return integer types */
+                OGRCartoDBGeomFieldDefn *poFieldDefn =
+                    new OGRCartoDBGeomFieldDefn(pszColName, wkbUnknown);
+                poFeatureDefn->AddGeomFieldDefn(poFieldDefn, FALSE);
+                OGRSpatialReference* poSRS = GetSRS(pszColName, &poFieldDefn->nSRID);
+                if( poSRS != NULL )
+                {
+                    poFeatureDefn->GetGeomFieldDefn(
+                        poFeatureDefn->GetGeomFieldCount() - 1)->SetSpatialRef(poSRS);
+                    poSRS->Release();
+                }
+            }
+        }
+    }
+    json_object_put(poObj);
 }

@@ -31,6 +31,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "cpl_error.h"
+#include "ogr_p.h"
 
 #define PQexec this_is_an_error
 
@@ -1307,7 +1308,7 @@ OGRErr OGRPGTableLayer::SetFeature( OGRFeature *poFeature )
             {
                 if ( poGeom != NULL )
                 {
-                    char* pszHexEWKB = GeometryToHex( poGeom, poGeomFieldDefn->nSRSId );
+                    char* pszHexEWKB = OGRGeometryToHexEWKB( poGeom, poGeomFieldDefn->nSRSId );
                     if ( poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOGRAPHY )
                         osCommand += CPLString().Printf("'%s'::GEOGRAPHY", pszHexEWKB);
                     else
@@ -1691,7 +1692,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
 
             if ( !CSLTestBoolean(CPLGetConfigOption("PG_USE_TEXT", "NO")) )
             {
-                char    *pszHexEWKB = GeometryToHex( poGeom, nSRSId );
+                char    *pszHexEWKB = OGRGeometryToHexEWKB( poGeom, nSRSId );
                 if ( poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOGRAPHY )
                     osCommand += CPLString().Printf("'%s'::GEOGRAPHY", pszHexEWKB);
                 else
@@ -1860,7 +1861,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
             if( poGeomFieldDefn->ePostgisType == GEOM_TYPE_WKB )
                 pszGeom = GeometryToBYTEA( poGeom );
             else
-                pszGeom = GeometryToHex( poGeom, poGeomFieldDefn->nSRSId );
+                pszGeom = OGRGeometryToHexEWKB( poGeom, poGeomFieldDefn->nSRSId );
         }
 
         if (osCommand.size() > 0)
