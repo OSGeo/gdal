@@ -1843,14 +1843,15 @@ GDALDataset *JPGDataset::Open( const char* pszFilename, char** papszSiblingFiles
             poDS->eGDALColorSpace = JCS_RGB;
             poDS->nBands = 3;
             poDS->SetMetadataItem( "SOURCE_COLOR_SPACE", "YCbCrK", "IMAGE_STRUCTURE" );
+
+            /* libjpeg does the translation from YCrCbK -> CMYK internally */
+            /* and we'll do the translation to RGB in IReadBlock() */
+            poDS->sDInfo.out_color_space = JCS_CMYK;
         }
         else
         {
             poDS->nBands = 4;
         }
-        /* libjpeg does the translation from YCrCbK -> CMYK internally */
-        /* and we'll do the translation to RGB in IReadBlock() */
-        poDS->sDInfo.out_color_space = JCS_CMYK;
     }
     else
     {
