@@ -213,12 +213,17 @@ GDALDataset *GTXDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information object.                                 */
 /* -------------------------------------------------------------------- */
-    poDS->SetBand( 
-        1, new RawRasterBand( poDS, 1, poDS->fpImage, 
+    RawRasterBand *poBand = new RawRasterBand( poDS, 1, poDS->fpImage, 
                               (poDS->nRasterYSize-1)*poDS->nRasterXSize*nDTSize + 40,
                               nDTSize, poDS->nRasterXSize * -nDTSize,
                               eDT,
-                              !CPL_IS_LSB, TRUE, FALSE ) );
+                              !CPL_IS_LSB, TRUE, FALSE );
+    if (eDT == GDT_Float64)
+      poBand->SetNoDataValue( -88.8888 );
+    else
+      /* GDT_Float32 */
+      poBand->SetNoDataValue( (double)-88.8888f );
+    poDS->SetBand( 1, poBand );
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
@@ -405,4 +410,3 @@ void GDALRegister_GTX()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-
