@@ -66,11 +66,38 @@ OGRFeatureDefn * OGRCARTODBResultLayer::GetLayerDefn()
 }
 
 /************************************************************************/
-/*                               GetSRS()                               */
+/*                             GetSRS_SQL()                             */
 /************************************************************************/
 
-OGRSpatialReference* OGRCARTODBResultLayer::GetSRS(const char* pszGeomCol,
-                                                  int *pnSRID)
+CPLString OGRCARTODBResultLayer::GetSRS_SQL(const char* pszGeomCol)
 {
-    return NULL;
+    CPLString osSQL;
+    CPLString osLimitedSQL;
+
+    size_t nPos = osBaseSQL.ifind(" LIMIT ");
+    if( nPos != std::string::npos )
+    {
+        osLimitedSQL = osBaseSQL;
+        size_t nSize = osLimitedSQL.size();
+        for(size_t i = nPos + strlen(" LIMIT "); i < nSize; i++)
+        {
+            if( osLimitedSQL[i] == ' ' && osLimitedSQL[i-1] == '0')
+            {
+                osLimitedSQL[i-1] = '1';
+                break;
+            }
+            osLimitedSQL[i] = '0';
+        }
+    }
+    else
+        osLimitedSQL.Printf("%s LIMIT 1", osBaseSQL.c_str());
+
+    /* Assuming that the SRID of the first non-NULL geometry applies */
+    /* to geometries of all rows. */
+    osSQL.Printf("SELECT srid, srtext FROM spatial_ref_sys WHERE srid IN "
+                "(SELECT ST_SRID(%s) FROM (%s) ogr_subselect)",
+                OGRCARTODBEscapeIdentifier(pszGeomCol).c_str(),
+                osLimitedSQL.c_str());
+
+    return osSQL;
 }

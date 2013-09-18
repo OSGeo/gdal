@@ -80,7 +80,8 @@ protected:
     OGRFeature          *BuildFeature(json_object* poRowObj);
 
     void                 EstablishLayerDefn(const char* pszLayerName);
-    virtual OGRSpatialReference *GetSRS(const char* pszGeomCol, int *pnSRID) = 0;
+    OGRSpatialReference *GetSRS(const char* pszGeomCol, int *pnSRID);
+    virtual CPLString    GetSRS_SQL(const char* pszGeomCol) = 0;
 
   public:
                          OGRCARTODBLayer(OGRCARTODBDataSource* poDS);
@@ -113,7 +114,7 @@ class OGRCARTODBTableLayer : public OGRCARTODBLayer
 
     void                BuildWhere();
 
-    virtual OGRSpatialReference *GetSRS(const char* pszGeomCol, int *pnSRID);
+    virtual CPLString    GetSRS_SQL(const char* pszGeomCol);
 
   public:
                          OGRCARTODBTableLayer(OGRCARTODBDataSource* poDS, const char* pszName);
@@ -152,7 +153,7 @@ class OGRCARTODBTableLayer : public OGRCARTODBLayer
 
 class OGRCARTODBResultLayer : public OGRCARTODBLayer
 {
-    virtual OGRSpatialReference *GetSRS(const char* pszGeomCol, int *pnSRID);
+    virtual CPLString    GetSRS_SQL(const char* pszGeomCol);
 
   public:
                         OGRCARTODBResultLayer( OGRCARTODBDataSource* poDS,
