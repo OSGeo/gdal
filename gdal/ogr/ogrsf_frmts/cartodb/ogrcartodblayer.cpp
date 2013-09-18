@@ -152,13 +152,16 @@ OGRFeature *OGRCARTODBLayer::BuildFeature(json_object* poRowObj)
 
         for(int i=0;i<poFeatureDefn->GetGeomFieldCount();i++)
         {
+            OGRGeomFieldDefn* poGeomFldDefn = poFeatureDefn->GetGeomFieldDefn(i);
             json_object* poVal = json_object_object_get(poRowObj,
-                            poFeatureDefn->GetGeomFieldDefn(i)->GetNameRef());
+                            poGeomFldDefn->GetNameRef());
             if( poVal != NULL &&
                 json_object_get_type(poVal) == json_type_string )
             {
                 OGRGeometry* poGeom = OGRGeometryFromHexEWKB(
                                         json_object_get_string(poVal), NULL);
+                if( poGeom != NULL )
+                    poGeom->assignSpatialReference(poGeomFldDefn->GetSpatialRef());
                 poFeature->SetGeomFieldDirectly(i, poGeom);
             }
         }

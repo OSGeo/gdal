@@ -675,10 +675,26 @@ OGRSpatialReference* OGRCARTODBTableLayer::GetSRS(const char* pszGeomCol,
                                                   int *pnSRID)
 {
     CPLString osSQL;
-    osSQL.Printf("SELECT srid, srtext FROM spatial_ref_sys WHERE srid IN "
-                 "(SELECT Find_SRID('public', '%s', '%s'))",
-                 OGRCARTODBEscapeLiteral(osName).c_str(),
-                 OGRCARTODBEscapeLiteral(pszGeomCol).c_str());
+
+    if( poDS->IsAuthenticatedConnection() )
+    {
+        /* Find_SRID needs access to geometry_columns table, whhose access */
+        /* is restricted to authenticated connections. */
+        osSQL.Printf("SELECT srid, srtext FROM spatial_ref_sys WHERE srid IN "
+                    "(SELECT Find_SRID('public', '%s', '%s'))",
+                    OGRCARTODBEscapeLiteral(osName).c_str(),
+                    OGRCARTODBEscapeLiteral(pszGeomCol).c_str());
+    }
+    else
+    {
+        /* Assuming that the SRID of the first non-NULL geometry applies */
+        /* to geometries of all rows. */
+        osSQL.Printf("SELECT srid, srtext FROM spatial_ref_sys WHERE srid IN "
+                    "(SELECT ST_SRID(%s) FROM %s WHERE %s IS NOT NULL LIMIT 1)",
+                    OGRCARTODBEscapeIdentifier(pszGeomCol).c_str(),
+                    OGRCARTODBEscapeIdentifier(osName).c_str(),
+                    OGRCARTODBEscapeIdentifier(pszGeomCol).c_str());
+    }
 
     json_object* poObj = poDS->RunSQL(osSQL);
     json_object* poRowObj = OGRCARTODBGetSingleRow(poObj);
