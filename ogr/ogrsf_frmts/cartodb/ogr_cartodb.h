@@ -214,6 +214,8 @@ class OGRCARTODBDataSource : public OGRDataSource
     int                         IsReadWrite() const { return bReadWrite; }
     char**                      AddHTTPOptions(char** papszOptions = NULL);
     json_object*                RunSQL(const char* pszUnescapedSQL);
+
+    int                         IsAuthenticatedConnection() { return osAPIKey.size() != 0; }
 };
 
 /************************************************************************/
