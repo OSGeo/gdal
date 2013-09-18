@@ -384,3 +384,43 @@ void OGRCARTODBLayer::EstablishLayerDefn(const char* pszLayerName)
     }
     json_object_put(poObj);
 }
+
+/************************************************************************/
+/*                               GetSRS()                               */
+/************************************************************************/
+
+OGRSpatialReference* OGRCARTODBLayer::GetSRS(const char* pszGeomCol,
+                                             int *pnSRID)
+{
+    json_object* poObj = poDS->RunSQL(GetSRS_SQL(pszGeomCol));
+    json_object* poRowObj = OGRCARTODBGetSingleRow(poObj);
+    if( poRowObj == NULL )
+    {
+        if( poObj != NULL )
+            json_object_put(poObj);
+        return NULL;
+    }
+
+    json_object* poSRID = json_object_object_get(poRowObj, "srid");
+    if( poSRID != NULL && json_object_get_type(poSRID) == json_type_int )
+    {
+        *pnSRID = json_object_get_int(poSRID);
+    }
+
+    json_object* poSRTEXT = json_object_object_get(poRowObj, "srtext");
+    OGRSpatialReference* poSRS = NULL;
+    if( poSRTEXT != NULL && json_object_get_type(poSRTEXT) == json_type_string )
+    {
+        const char* pszSRTEXT = json_object_get_string(poSRTEXT);
+        poSRS = new OGRSpatialReference();
+        char* pszTmp = (char* )pszSRTEXT;
+        if( poSRS->importFromWkt(&pszTmp) != OGRERR_NONE )
+        {
+            delete poSRS;
+            poSRS = NULL;
+        }
+    }
+    json_object_put(poObj);
+
+    return poSRS;
+}
