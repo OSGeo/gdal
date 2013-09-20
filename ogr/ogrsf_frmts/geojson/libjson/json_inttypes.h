@@ -4,7 +4,7 @@
 
 #include "json_config.h"
 
-#if defined(_MSC_VER) && _MSC_VER < 1700
+#if defined(_MSC_VER) && _MSC_VER <= 1700
 
 /* Anything less than Visual Studio C++ 10 is missing stdint.h and inttypes.h */
 typedef __int32 int32_t;
