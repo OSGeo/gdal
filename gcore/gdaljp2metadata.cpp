@@ -49,6 +49,14 @@ static const unsigned char xmp_uuid[16] =
 { 0xBE,0x7A,0xCF,0xCB,0x97,0xA9,0x42,0xE8,
   0x9C,0x71,0x99,0x94,0x91,0xE3,0xAF,0xAC};
 
+struct _GDALJP2GeoTIFFBox
+{
+    int    nGeoTIFFSize;
+    GByte  *pabyGeoTIFFData;
+};
+
+#define MAX_JP2GEOTIFF_BOXES 2
+
 /************************************************************************/
 /*                          GDALJP2Metadata()                           */
 /************************************************************************/
@@ -64,8 +72,8 @@ GDALJP2Metadata::GDALJP2Metadata()
     papszGMLMetadata = NULL;
     papszMetadata = NULL;
 
-    nGeoTIFFSize = 0;
-    pabyGeoTIFFData = NULL;
+    nGeoTIFFBoxesCount = 0;
+    pasGeoTIFFBoxes = NULL;
 
     nMSIGSize = 0;
     pabyMSIGData = NULL;
@@ -95,7 +103,11 @@ GDALJP2Metadata::~GDALJP2Metadata()
         CPLFree( pasGCPList );
     }
 
-    CPLFree( pabyGeoTIFFData );
+    for( int i=0; i < nGeoTIFFBoxesCount; i++ )
+    {
+        CPLFree( pasGeoTIFFBoxes[i].pabyGeoTIFFData );
+    }
+    CPLFree( pasGeoTIFFBoxes );
     CPLFree( pabyMSIGData );
     CSLDestroy( papszGMLMetadata );
     CSLDestroy( papszMetadata );
@@ -226,12 +238,30 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
         if( EQUAL(oBox.GetType(),"uuid") 
             && memcmp( oBox.GetUUID(), msi_uuid2, 16 ) == 0 )
         {
-            nGeoTIFFSize = (int) oBox.GetDataLength();
-            pabyGeoTIFFData = oBox.ReadBoxData();
-            if (pabyGeoTIFFData == NULL)
+            /* Erdas JPEG2000 files can in some conditions contain 2 GeoTIFF */
+            /* UUID boxes. One that is correct, another one that does not contain */
+            /* correct georeferencing. So let's fetch at most 2 of them */
+            /* for later analysis. */
+            if( nGeoTIFFBoxesCount == MAX_JP2GEOTIFF_BOXES )
             {
-                CPLDebug("GDALJP2", "Cannot read data for UUID GeoTIFF box");
-                nGeoTIFFSize = 0;
+                CPLDebug("GDALJP2", "Too many UUID GeoTIFF boxes. Ignoring this one");
+            }
+            else
+            {
+                int nGeoTIFFSize = (int) oBox.GetDataLength();
+                GByte* pabyGeoTIFFData = oBox.ReadBoxData();
+                if (pabyGeoTIFFData == NULL)
+                {
+                    CPLDebug("GDALJP2", "Cannot read data for UUID GeoTIFF box");
+                }
+                else
+                {
+                    pasGeoTIFFBoxes = (GDALJP2GeoTIFFBox*) CPLRealloc(
+                        pasGeoTIFFBoxes, sizeof(GDALJP2GeoTIFFBox) * (nGeoTIFFBoxesCount + 1) );
+                    pasGeoTIFFBoxes[nGeoTIFFBoxesCount].nGeoTIFFSize = nGeoTIFFSize;
+                    pasGeoTIFFBoxes[nGeoTIFFBoxesCount].pabyGeoTIFFData = pabyGeoTIFFData;
+                    nGeoTIFFBoxesCount ++;
+                }
             }
         }
 
@@ -241,16 +271,23 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
         if( EQUAL(oBox.GetType(),"uuid") 
             && memcmp( oBox.GetUUID(), msig_uuid, 16 ) == 0 )
         {
-            nMSIGSize = (int) oBox.GetDataLength();
-            pabyMSIGData = oBox.ReadBoxData();
-
-            if( nMSIGSize < 70
-                || pabyMSIGData == NULL
-                || memcmp( pabyMSIGData, "MSIG/", 5 ) != 0 )
+            if( nMSIGSize == 0 )
             {
-                CPLFree( pabyMSIGData );
-                pabyMSIGData = NULL;
-                nMSIGSize = 0;
+                nMSIGSize = (int) oBox.GetDataLength();
+                pabyMSIGData = oBox.ReadBoxData();
+
+                if( nMSIGSize < 70
+                    || pabyMSIGData == NULL
+                    || memcmp( pabyMSIGData, "MSIG/", 5 ) != 0 )
+                {
+                    CPLFree( pabyMSIGData );
+                    pabyMSIGData = NULL;
+                    nMSIGSize = 0;
+                }
+            }
+            else
+            {
+                CPLDebug("GDALJP2", "Too many UUID MSIG boxes. Ignoring this one");
             }
         }
 
@@ -261,7 +298,14 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
             && memcmp( oBox.GetUUID(), xmp_uuid, 16 ) == 0 &&
             pszXMPMetadata == NULL )
         {
-            pszXMPMetadata = (char*) oBox.ReadBoxData();
+            if( pszXMPMetadata == NULL )
+            {
+                pszXMPMetadata = (char*) oBox.ReadBoxData();
+            }
+            else
+            {
+                CPLDebug("GDALJP2", "Too many UUID XMP boxes. Ignoring this one");
+            }
         }
 
 /* -------------------------------------------------------------------- */
@@ -372,38 +416,80 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
 int GDALJP2Metadata::ParseJP2GeoTIFF()
 
 {
-    if( nGeoTIFFSize < 1 )
-        return FALSE;
+    int abValidInfo[MAX_JP2GEOTIFF_BOXES] = { FALSE };
+    char* apszProjection[MAX_JP2GEOTIFF_BOXES] = { NULL };
+    double aadfGeoTransform[MAX_JP2GEOTIFF_BOXES][6];
+    int anGCPCount[MAX_JP2GEOTIFF_BOXES] = { 0 };
+    GDAL_GCP    *apasGCPList[MAX_JP2GEOTIFF_BOXES] = { NULL };
 
-/* -------------------------------------------------------------------- */
-/*      Convert raw data into projection and geotransform.              */
-/* -------------------------------------------------------------------- */
-    int bSuccess = TRUE;
-
-    if( GTIFWktFromMemBuf( nGeoTIFFSize, pabyGeoTIFFData,
-                           &pszProjection, adfGeoTransform,
-                           &nGCPCount, &pasGCPList ) != CE_None )
+    int i;
+    int nMax = MIN(nGeoTIFFBoxesCount, MAX_JP2GEOTIFF_BOXES);
+    for(i=0; i < nMax; i++)
     {
-        bSuccess = FALSE;
+    /* -------------------------------------------------------------------- */
+    /*      Convert raw data into projection and geotransform.              */
+    /* -------------------------------------------------------------------- */
+        if( GTIFWktFromMemBuf( pasGeoTIFFBoxes[i].nGeoTIFFSize,
+                               pasGeoTIFFBoxes[i].pabyGeoTIFFData,
+                               &apszProjection[i], aadfGeoTransform[i],
+                               &anGCPCount[i], &apasGCPList[i] ) == CE_None )
+        {
+            if( apszProjection[i] != NULL && strlen(apszProjection[i]) != 0 )
+                abValidInfo[i] = TRUE;
+        }
     }
 
-    if( pszProjection == NULL || strlen(pszProjection) == 0 )
-        bSuccess = FALSE;
+    /* Detect which box is the better one */
+    int iBestIndex = -1;
+    for(i=0; i < nMax; i++)
+    {
+        if( abValidInfo[i] && iBestIndex < 0 )
+        {
+            iBestIndex = i;
+        }
+        else if( abValidInfo[i] )
+        {
+            /* Anything else than a LOCAL_CS will probably be better */
+            if( EQUALN(apszProjection[iBestIndex], "LOCAL_CS", strlen("LOCAL_CS")) )
+                iBestIndex = i;
+        }
+    }
 
-    if( bSuccess )
+    if( iBestIndex >= 0 )
+    {
+        pszProjection = apszProjection[iBestIndex];
+        memcpy(adfGeoTransform, aadfGeoTransform[iBestIndex], 6 * sizeof(double));
+        nGCPCount = anGCPCount[iBestIndex];
+        pasGCPList = apasGCPList[iBestIndex];
+
+        if( adfGeoTransform[0] != 0 
+            || adfGeoTransform[1] != 1 
+            || adfGeoTransform[2] != 0
+            || adfGeoTransform[3] != 0 
+            || adfGeoTransform[4] != 0
+            || adfGeoTransform[5] != 1 )
+            bHaveGeoTransform = TRUE;
+
         CPLDebug( "GDALJP2Metadata", 
-                  "Got projection from GeoJP2 (geotiff) box: %s", 
-                 pszProjection );
+                "Got projection from GeoJP2 (geotiff) box (%d): %s", 
+                iBestIndex, pszProjection );
+    }
 
-    if( adfGeoTransform[0] != 0 
-        || adfGeoTransform[1] != 1 
-        || adfGeoTransform[2] != 0
-        || adfGeoTransform[3] != 0 
-        || adfGeoTransform[4] != 0
-        || adfGeoTransform[5] != 1 )
-        bHaveGeoTransform = TRUE;
+    /* Cleanup unused boxes */
+    for(i=0; i < nMax; i++)
+    {
+        if( i != iBestIndex )
+        {
+            CPLFree( apszProjection[i] );
+            if( anGCPCount[i] > 0 )
+            {
+                GDALDeinitGCPs( anGCPCount[i], apasGCPList[i] );
+                CPLFree( apasGCPList[i] );
+            }
+        }
+    }
 
-    return bSuccess;;
+    return iBestIndex >= 0;
 }
 
 /************************************************************************/

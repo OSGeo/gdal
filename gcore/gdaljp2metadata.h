@@ -98,6 +98,8 @@ public:
 /*                           GDALJP2Metadata                            */
 /************************************************************************/
 
+typedef struct _GDALJP2GeoTIFFBox GDALJP2GeoTIFFBox;
+
 class CPL_DLL GDALJP2Metadata
 
 {
@@ -105,8 +107,8 @@ private:
     void    CollectGMLData( GDALJP2Box * );
     int     GMLSRSLookup( const char *pszURN );
 
-    int    nGeoTIFFSize;
-    GByte  *pabyGeoTIFFData;
+    int    nGeoTIFFBoxesCount;
+    GDALJP2GeoTIFFBox  *pasGeoTIFFBoxes;
 
     int    nMSIGSize;
     GByte  *pabyMSIGData;
