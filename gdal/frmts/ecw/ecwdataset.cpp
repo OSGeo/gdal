@@ -994,8 +994,30 @@ ECWDataset::~ECWDataset()
     // to avoid an issue with the ECW SDK 3.3 where the destructor of CNCSJP2File::CNCSJP2FileVector CNCSJP2File::sm_Files;
     // static ressource allocated in NCJP2File.cpp can be called before GDALDestroy(), causing
     // ECW SDK resources ( CNCSJP2File files ) to be closed before we get here.
-    if( poFileView != NULL &&
-        (!bIsJPEG2000 || !GDALIsInGlobalDestructor()) )
+    //
+    // We also have an issue with ECW SDK 5.0 and ECW files on Linux when
+    // running a multi-threaded test under Java if there's still an ECW dataset
+    // not explicitely closed at process termination.
+    /*  #0  0x00007fffb26e7a80 in NCSAtomicAdd64 () from /home/even/ecwjp2_sdk/redistributable/x64/libNCSEcw.so
+        #1  0x00007fffb2aa7684 in NCS::SDK::CBuffer2D::Free() () from /home/even/ecwjp2_sdk/redistributable/x64/libNCSEcw.so
+        #2  0x00007fffb2aa7727 in NCS::SDK::CBuffer2D::~CBuffer2D() () from /home/even/ecwjp2_sdk/redistributable/x64/libNCSEcw.so
+        #3  0x00007fffb29aa7be in NCS::ECW::CReader::~CReader() () from /home/even/ecwjp2_sdk/redistributable/x64/libNCSEcw.so
+        #4  0x00007fffb29aa819 in NCS::ECW::CReader::~CReader() () from /home/even/ecwjp2_sdk/redistributable/x64/libNCSEcw.so
+        #5  0x00007fffb291fd3a in NCS::CView::Close(bool) () from /home/even/ecwjp2_sdk/redistributable/x64/libNCSEcw.so
+        #6  0x00007fffb2927529 in NCS::CView::~CView() () from /home/even/ecwjp2_sdk/redistributable/x64/libNCSEcw.so
+        #7  0x00007fffb29277f9 in NCS::CView::~CView() () from /home/even/ecwjp2_sdk/redistributable/x64/libNCSEcw.so
+        #8  0x00007fffb71a9a53 in ECWDataset::~ECWDataset (this=0x7fff942cce10, __in_chrg=<optimized out>) at ecwdataset.cpp:1003
+        #9  0x00007fffb71a9cca in ECWDataset::~ECWDataset (this=0x7fff942cce10, __in_chrg=<optimized out>) at ecwdataset.cpp:1039
+        #10 0x00007fffb7551f98 in GDALDriverManager::~GDALDriverManager (this=0x7ffff01981a0, __in_chrg=<optimized out>) at gdaldrivermanager.cpp:196
+        #11 0x00007fffb7552140 in GDALDriverManager::~GDALDriverManager (this=0x7ffff01981a0, __in_chrg=<optimized out>) at gdaldrivermanager.cpp:288
+        #12 0x00007fffb7552e18 in GDALDestroyDriverManager () at gdaldrivermanager.cpp:824
+        #13 0x00007fffb7551c61 in GDALDestroy () at gdaldllmain.cpp:80
+        #14 0x00007ffff7de990e in _dl_fini () at dl-fini.c:254
+    */
+    // Not replicable with similar test in C++, but this might be just a matter of luck related
+    // to the order in which the libraries are unloaded, so just don't try
+    // to delete poFileView from the GDAL destructor.
+    if( poFileView != NULL && !GDALIsInGlobalDestructor() )
     {
         VSIIOStream *poUnderlyingIOStream = (VSIIOStream *)NULL;
 
