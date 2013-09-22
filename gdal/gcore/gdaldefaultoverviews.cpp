@@ -54,6 +54,7 @@ GDALDefaultOverviews::GDALDefaultOverviews()
 
     papszInitSiblingFiles = NULL;
     pszInitName = NULL;
+    bInitNameIsOVR = FALSE;
 }
 
 /************************************************************************/
