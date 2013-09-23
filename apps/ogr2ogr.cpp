@@ -2543,7 +2543,7 @@ static TargetLayerInfo* SetupTargetLayer( OGRDataSource *poSrcDS,
 
     if( poOutputSRS == NULL && !bNullifyOutputSRS )
     {
-        if( nSrcGeomFieldCount == 1 )
+        if( nSrcGeomFieldCount == 1 || anRequestedGeomFields.size() == 0 )
             poOutputSRS = poSrcLayer->GetSpatialRef();
         else if( anRequestedGeomFields.size() == 1 )
         {
