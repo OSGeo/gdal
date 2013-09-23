@@ -2018,6 +2018,10 @@ def test_ogr2ogr_51():
     
     ds = ogr.Open('tmp/test_ogr2ogr_51_dst.shp')
     lyr = ds.GetLayer(0)
+    sr = lyr.GetSpatialRef()
+    if sr is None or sr.ExportToWkt().find('GEOGCS["GCS_WGS_1984"') != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
     feat = lyr.GetNextFeature()
     if feat.GetGeometryRef().ExportToWkt() != 'POINT (1 2)':
         gdaltest.post_reason('fail')
