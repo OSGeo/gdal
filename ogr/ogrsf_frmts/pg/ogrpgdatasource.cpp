@@ -1160,10 +1160,9 @@ int OGRPGDataSource::DeleteLayer( int iLayer )
     {
         /* This is unnecessary if the layer is not a geometry table, or an inherited geometry table */
         /* but it shouldn't hurt */
-        // FIXME: multi geometry support
         osCommand.Printf(
-                 "SELECT DropGeometryColumn('%s','%s',(SELECT f_geometry_column from geometry_columns where f_table_name='%s' and f_table_schema='%s' order by f_geometry_column limit 1))",
-                 osSchemaName.c_str(), osTableName.c_str(), osTableName.c_str(), osSchemaName.c_str() );
+                 "DELETE FROM geometry_columns WHERE f_table_name='%s' and f_table_schema='%s'",
+                 osTableName.c_str(), osSchemaName.c_str() );
 
         hResult = OGRPG_PQexec( hPGConn, osCommand.c_str() );
         OGRPGClearResult( hResult );
