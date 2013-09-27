@@ -2135,7 +2135,7 @@ static int GWKCubicResampleNoMasksByte( GDALWarpKernel *poWK, int iBand,
     else if ( dfValue > 255.0 )
         *pbValue = 255;
     else
-        *pbValue = (GByte)(0.5 + dfValue);
+        *pbValue = (GByte)floor(0.5 + dfValue);
     
     return TRUE;
 }
@@ -2174,8 +2174,16 @@ static int GWKCubicResampleNoMasksShort( GDALWarpKernel *poWK, int iBand,
                 (double)((GInt16 *)poWK->papabySrcImage[iBand])[iOffset + 2]);
     }
 
-    *piValue = (GInt16)CubicConvolution(dfDeltaY, dfDeltaY2, dfDeltaY3,
-                        adfValue[0], adfValue[1], adfValue[2], adfValue[3]);
+    double dfValue = CubicConvolution(
+        dfDeltaY, dfDeltaY2, dfDeltaY3,
+        adfValue[0], adfValue[1], adfValue[2], adfValue[3]);
+    
+    if ( dfValue < -32768.0 )
+        *piValue = 32768;
+    else if ( dfValue > 32767.0 )
+        *piValue = 32767;
+    else
+        *piValue = (GInt16)floor(0.5 + dfValue);
     
     return TRUE;
 }
