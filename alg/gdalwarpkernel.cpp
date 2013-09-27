@@ -2135,7 +2135,7 @@ static int GWKCubicResampleNoMasksByte( GDALWarpKernel *poWK, int iBand,
     else if ( dfValue > 255.0 )
         *pbValue = 255;
     else
-        *pbValue = (GByte)floor(0.5 + dfValue);
+        *pbValue = (GByte)(0.5 + dfValue);
     
     return TRUE;
 }
