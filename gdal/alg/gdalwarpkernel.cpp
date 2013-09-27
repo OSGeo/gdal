@@ -2033,8 +2033,8 @@ static int GWKCubicResample( GDALWarpKernel *poWK, int iBand,
                              double *pdfReal, double *pdfImag )
 
 {
-    int     iSrcX = (int) floor( dfSrcX - 0.5 );
-    int     iSrcY = (int) floor( dfSrcY - 0.5 );
+    int     iSrcX = (int) (dfSrcX - 0.5);
+    int     iSrcY = (int) (dfSrcY - 0.5);
     int     iSrcOffset = iSrcX + iSrcY * poWK->nSrcXSize;
     double  dfDeltaX = dfSrcX - 0.5 - iSrcX;
     double  dfDeltaY = dfSrcY - 0.5 - iSrcY;
@@ -2098,8 +2098,8 @@ static int GWKCubicResampleNoMasksByte( GDALWarpKernel *poWK, int iBand,
                                         GByte *pbValue )
 
 {
-    int     iSrcX = (int) floor( dfSrcX - 0.5 );
-    int     iSrcY = (int) floor( dfSrcY - 0.5 );
+    int     iSrcX = (int) (dfSrcX - 0.5);
+    int     iSrcY = (int) (dfSrcY - 0.5);
     int     iSrcOffset = iSrcX + iSrcY * poWK->nSrcXSize;
     double  dfDeltaX = dfSrcX - 0.5 - iSrcX;
     double  dfDeltaY = dfSrcY - 0.5 - iSrcY;
@@ -2145,8 +2145,8 @@ static int GWKCubicResampleNoMasksShort( GDALWarpKernel *poWK, int iBand,
                                          GInt16 *piValue )
 
 {
-    int     iSrcX = (int) floor( dfSrcX - 0.5 );
-    int     iSrcY = (int) floor( dfSrcY - 0.5 );
+    int     iSrcX = (int) (dfSrcX - 0.5);
+    int     iSrcY = (int) (dfSrcY - 0.5);
     int     iSrcOffset = iSrcX + iSrcY * poWK->nSrcXSize;
     double  dfDeltaX = dfSrcX - 0.5 - iSrcX;
     double  dfDeltaY = dfSrcY - 0.5 - iSrcY;
