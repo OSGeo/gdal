@@ -2021,12 +2021,11 @@ static int GWKBilinearResampleNoMasksShort( GDALWarpKernel *poWK, int iBand,
 /*                        GWKCubicResample()                            */
 /*     Set of bicubic interpolators using cubic convolution.            */
 /************************************************************************/
-
 #define CubicConvolution(distance1,distance2,distance3,f0,f1,f2,f3) \
-   (  (   -f0 +     f1 - f2 + f3) * distance3                       \
-    + (2.0*(f0 - f1) + f2 - f3) * distance2                         \
-    + (   -f0          + f2     ) * distance1                       \
-    +               f1                         )
+     (             f1                                               \
+      + distance1*0.5*(f2 - f0)                                     \
+      + distance2*0.5*(2.0*f0 - 5.0*f1 + 4.0*f2 - f3)               \
+      + distance3*0.5*(3.0*(f1 - f2) + f3 - f0))
 
 static int GWKCubicResample( GDALWarpKernel *poWK, int iBand,
                              double dfSrcX, double dfSrcY,
