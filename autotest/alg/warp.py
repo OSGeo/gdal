@@ -255,7 +255,7 @@ def warp_8():
     if gdaltest.tiff_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'VRT', 'utmsmall_ds_cubic.vrt', 1, 4717 )
+    tst = gdaltest.GDALTest( 'VRT', 'utmsmall_ds_cubic.vrt', 1, 4833 )
 
     return tst.testOpen()
 
