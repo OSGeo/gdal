@@ -75,6 +75,8 @@ def ogr_pg_1():
     #gdaltest.pg_connection_string='dbname=autotest host=127.0.0.1 port=5433 user=postgres'
     #gdaltest.pg_connection_string='dbname=autotest host=127.0.0.1 port=5434 user=postgres'
     #gdaltest.pg_connection_string='dbname=autotest port=5435 host=127.0.0.1'
+    #7.4
+    #gdaltest.pg_connection_string='dbname=autotest port=5436 user=postgres'
 
     try:
         gdaltest.pg_dr = ogr.GetDriverByName( 'PostgreSQL' )
@@ -3241,6 +3243,48 @@ def ogr_pg_66():
     return 'success'
 
 ###############################################################################
+# Test retrieving SRID from values (#5131)
+
+def ogr_pg_67():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    if not gdaltest.pg_has_postgis:
+        return 'skip'
+
+    lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_67')
+    lyr = None
+
+    ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update = 1)
+    lyr = ds.GetLayerByName('ogr_pg_67')
+    if lyr.GetSpatialRef() is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(feat)
+    feat = None
+    ds = None
+
+    ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update = 1)
+    lyr = ds.GetLayerByName('ogr_pg_67')
+    if lyr.GetSpatialRef() is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ExecuteSQL("ALTER TABLE ogr_pg_67 DROP CONSTRAINT enforce_srid_wkb_geometry")
+    ds.ExecuteSQL("UPDATE ogr_pg_67 SET wkb_geometry = ST_GeomFromEWKT('SRID=4326;POINT(0 1)')")
+    ds = None
+
+    ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update = 1)
+    lyr = ds.GetLayerByName('ogr_pg_67')
+    if lyr.GetSpatialRef() is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_pg_table_cleanup():
@@ -3281,6 +3325,7 @@ def ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_61' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_63' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_65' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_67' )
     
     # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.tpoly' )
@@ -3379,6 +3424,7 @@ gdaltest_list_internal = [
     ogr_pg_64,
     ogr_pg_65,
     ogr_pg_66,
+    ogr_pg_67,
     ogr_pg_cleanup ]
 
 ###############################################################################
