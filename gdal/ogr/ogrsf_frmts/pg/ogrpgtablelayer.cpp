@@ -2810,6 +2810,38 @@ void OGRPGTableLayer::ResolveSRID(OGRPGGeomFieldDefn* poGFldDefn)
 
     OGRPGClearResult( hResult );
 
+    /* With PostGIS 2.0, SRID = 0 can also mean that there's no constraint */
+    /* so we need to fetch from values */
+    /* We assume that all geometry of this column have identical SRID */
+    if( nSRSId <= 0 )
+    {
+        CPLString osGetSRID;
+
+        const char* psGetSRIDFct;
+        if (poDS->sPostGISVersion.nMajor >= 2)
+            psGetSRIDFct = "ST_SRID";
+        else
+            psGetSRIDFct = "getsrid";
+
+        osGetSRID += "SELECT ";
+        osGetSRID += psGetSRIDFct;
+        osGetSRID += "(";
+        osGetSRID += OGRPGEscapeColumnName(poGFldDefn->GetNameRef());
+        osGetSRID += ") FROM ";
+        osGetSRID += pszSqlTableName;
+        osGetSRID += " LIMIT 1";
+
+        hResult = OGRPG_PQexec(poDS->GetPGConn(), osGetSRID );
+        if( hResult
+            && PQresultStatus(hResult) == PGRES_TUPLES_OK
+            && PQntuples(hResult) == 1 )
+        {
+            nSRSId = atoi(PQgetvalue(hResult,0,0));
+        }
+
+        OGRPGClearResult( hResult );
+    }
+
     poDS->SoftCommit();
 
     poGFldDefn->nSRSId = nSRSId;

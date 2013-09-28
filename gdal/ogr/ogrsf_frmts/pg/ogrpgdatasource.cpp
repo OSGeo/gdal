@@ -228,7 +228,9 @@ static void OGRPGTableEntryAddGeomColumn(PGTableEntry* psTableEntry,
     psTableEntry->pasGeomColumns[psTableEntry->nGeomColumnCount].pszName = CPLStrdup(pszName);
     psTableEntry->pasGeomColumns[psTableEntry->nGeomColumnCount].pszGeomType = (pszGeomType) ? CPLStrdup(pszGeomType) : NULL;
     psTableEntry->pasGeomColumns[psTableEntry->nGeomColumnCount].nCoordDimension = nCoordDimension;
-    psTableEntry->pasGeomColumns[psTableEntry->nGeomColumnCount].nSRID = nSRID;
+    /* With PostGIS 2.0, querying geometry_columns can return 0, not only when */
+    /* the SRID is truly set to 0, but also when there's no constraint */
+    psTableEntry->pasGeomColumns[psTableEntry->nGeomColumnCount].nSRID = nSRID > 0 ? nSRID : UNDETERMINED_SRID;
     psTableEntry->pasGeomColumns[psTableEntry->nGeomColumnCount].ePostgisType = ePostgisType;
     psTableEntry->nGeomColumnCount ++;
 }
