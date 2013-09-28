@@ -2813,7 +2813,7 @@ void OGRPGTableLayer::ResolveSRID(OGRPGGeomFieldDefn* poGFldDefn)
     /* With PostGIS 2.0, SRID = 0 can also mean that there's no constraint */
     /* so we need to fetch from values */
     /* We assume that all geometry of this column have identical SRID */
-    if( nSRSId <= 0 )
+    if( nSRSId <= 0 && poGFldDefn->ePostgisType == GEOM_TYPE_GEOMETRY )
     {
         CPLString osGetSRID;
 
