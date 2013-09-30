@@ -2809,6 +2809,7 @@ void OGRPGTableLayer::ResolveSRID(OGRPGGeomFieldDefn* poGFldDefn)
     }
 
     OGRPGClearResult( hResult );
+    poDS->FlushSoftTransaction();
 
     /* With PostGIS 2.0, SRID = 0 can also mean that there's no constraint */
     /* so we need to fetch from values */
