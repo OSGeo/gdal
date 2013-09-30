@@ -2179,7 +2179,7 @@ static int GWKCubicResampleNoMasksShort( GDALWarpKernel *poWK, int iBand,
         adfValue[0], adfValue[1], adfValue[2], adfValue[3]);
     
     if ( dfValue < -32768.0 )
-        *piValue = 32768;
+        *piValue = -32768;
     else if ( dfValue > 32767.0 )
         *piValue = 32767;
     else
