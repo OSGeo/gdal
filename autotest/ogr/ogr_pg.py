@@ -3282,6 +3282,13 @@ def ogr_pg_67():
         return 'fail'
     ds = None
 
+    ds = ogr.Open('PG:' + gdaltest.pg_connection_string + ' tables=fake', update = 1)
+    lyr = ds.GetLayerByName('ogr_pg_67')
+    if lyr.GetSpatialRef() is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
     return 'success'
 
 ###############################################################################
