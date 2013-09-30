@@ -602,7 +602,8 @@ int OGRPGTableLayer::ReadTableDefinition()
             int nSRSId = atoi(PQgetvalue(hResult,0,2));
 
             poGeomFieldDefn->nCoordDimension = nCoordDimension;
-            poGeomFieldDefn->nSRSId = nSRSId;
+            if( nSRSId > 0 )
+                poGeomFieldDefn->nSRSId = nSRSId;
             OGRwkbGeometryType eGeomType = OGRFromOGCGeomType(pszType);
             if( poGeomFieldDefn->nCoordDimension == 3 && eGeomType != wkbUnknown )
                 eGeomType = (OGRwkbGeometryType) (eGeomType | wkb25DBit);
