@@ -1916,3 +1916,14 @@ void OGR_DS_SetStyleTable( OGRDataSourceH hDS, OGRStyleTableH hStyleTable )
     
     ((OGRDataSource *) hDS)->SetStyleTable( (OGRStyleTable *) hStyleTable);
 }
+
+/************************************************************************/
+/*                         IsGenericSQLDialect()                        */
+/************************************************************************/
+
+int OGRDataSource::IsGenericSQLDialect(const char* pszDialect)
+{
+    return ( pszDialect != NULL && (EQUAL(pszDialect,"OGRSQL") ||
+                                    EQUAL(pszDialect,"SQLITE")) );
+
+}
