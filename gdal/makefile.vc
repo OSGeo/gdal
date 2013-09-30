@@ -61,7 +61,7 @@ LIBOBJ = port\*.obj gcore\*.obj alg\*.obj frmts\o\*.obj $(OGR_OBJ) $(VB6_OBJ)
 DISTDIR	=	gdal_$(VERSION)
 
 default:	port_dir ogr_dir core_dir frmts_dir $(VB6_TARGET) $(GDAL_DLL) \
-		plugin_dir apps_dir 
+		plugin_dir apps_dir python
 
 staticlib:
 	if exist gdal.lib del gdal.lib
@@ -136,6 +136,11 @@ plugin_dir:
 apps_dir:
 	cd apps
 	$(MAKE) /f makefile.vc
+	cd ..
+
+python:
+	cd swig
+	$(MAKE) /f makefile.vc python
 	cd ..
 
 vb6_dir:
