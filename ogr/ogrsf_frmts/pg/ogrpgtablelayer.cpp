@@ -2784,8 +2784,6 @@ void OGRPGTableLayer::ResolveSRID(OGRPGGeomFieldDefn* poGFldDefn)
 
     int nSRSId = poDS->GetUndefinedSRID();
 
-    poDS->SoftStartTransaction();
-
     osCommand.Printf(
                 "SELECT srid FROM geometry_columns "
                 "WHERE f_table_name = %s AND "
@@ -2841,8 +2839,6 @@ void OGRPGTableLayer::ResolveSRID(OGRPGGeomFieldDefn* poGFldDefn)
 
         OGRPGClearResult( hResult );
     }
-
-    poDS->SoftCommit();
 
     poGFldDefn->nSRSId = nSRSId;
 }
