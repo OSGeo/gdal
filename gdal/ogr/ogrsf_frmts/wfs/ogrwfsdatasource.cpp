@@ -1851,9 +1851,9 @@ OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
 
 {
 /* -------------------------------------------------------------------- */
-/*      Use generic implementation for OGRSQL dialect.                  */
+/*      Use generic implementation for recognized dialects              */
 /* -------------------------------------------------------------------- */
-    if( pszDialect != NULL && (EQUAL(pszDialect,"OGRSQL") || EQUAL(pszDialect, "SQLITE")) )
+    if( IsGenericSQLDialect(pszDialect) )
     {
         OGRLayer* poResLayer = OGRDataSource::ExecuteSQL( pszSQLCommand,
                                                           poSpatialFilter,
