@@ -1073,7 +1073,7 @@ DGNCreateArcElem( DGNHandle hDGN, int nType,
     }
     else
     {
-        memcpy( psArc->quat, panQuaternion, sizeof(long)*4 );
+        memcpy( psArc->quat, panQuaternion, sizeof(int)*4 );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1294,7 +1294,7 @@ DGNCreateConeElem( DGNHandle hDGN,
     memset( psCone->quat, 0, sizeof(int) * 4 );
     if( panQuaternion != NULL )
     {
-        memcpy( psCone->quat, panQuaternion, sizeof(long)*4 );
+        memcpy( psCone->quat, panQuaternion, sizeof(int)*4 );
     }
     else {
       psCone->quat[0] = 1 << 31;
