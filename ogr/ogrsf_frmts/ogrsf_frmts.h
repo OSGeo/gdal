@@ -264,6 +264,8 @@ class CPL_DLL OGRDataSource
 
     OGRSFDriver        *GetDriver() const;
     void                SetDriver( OGRSFDriver *poDriver );
+    
+    static int          IsGenericSQLDialect(const char* pszDialect);
 
   protected:
 
