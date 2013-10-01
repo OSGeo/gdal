@@ -2005,7 +2005,8 @@ GEOSGeom OGRGeometry::exportToGEOS(GEOSContextHandle_t hGEOSCtxt) const
 /**
  * \brief Compute distance between two geometries.
  *
- * Returns the shortest distance between the two geometries. 
+ * Returns the shortest distance between the two geometries. The distance is
+ * expressed into the same unit as the coordinates of the geometries.
  *
  * This method is the same as the C function OGR_G_Distance().
  *
@@ -2073,7 +2074,8 @@ double OGRGeometry::Distance( const OGRGeometry *poOtherGeom ) const
 /**
  * \brief Compute distance between two geometries.
  *
- * Returns the shortest distance between the two geometries. 
+ * Returns the shortest distance between the two geometries. The distance is
+ * expressed into the same unit as the coordinates of the geometries.
  *
  * This function is the same as the C++ method OGRGeometry::Distance().
  *
@@ -2328,7 +2330,8 @@ OGRGeometryH OGR_G_GetBoundary( OGRGeometryH hTarget )
  * If OGR is built without the GEOS library, this method will always fail, 
  * issuing a CPLE_NotSupported error. 
  *
- * @param dfDist the buffer distance to be applied. 
+ * @param dfDist the buffer distance to be applied. Should be expressed into
+ *               the same unit as the coordinates of the geometry.
  *
  * @param nQuadSegs the number of segments used to approximate a 90 degree (quadrant) of
  * curvature. 
@@ -2399,7 +2402,8 @@ OGRGeometry *OGRGeometry::Buffer( double dfDist, int nQuadSegs ) const
  * issuing a CPLE_NotSupported error. 
  *
  * @param hTarget the geometry.
- * @param dfDist the buffer distance to be applied. 
+ * @param dfDist the buffer distance to be applied. Should be expressed into
+ *               the same unit as the coordinates of the geometry.
  *
  * @param nQuadSegs the number of segments used to approximate a 90 degree
  * (quadrant) of curvature. 
