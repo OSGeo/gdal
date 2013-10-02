@@ -492,13 +492,13 @@ OGRErr OGROCIWritableLayer::TranslateToSDOGeometry( OGRGeometry * poGeometry,
     return OGRERR_FAILURE;
 }
 
-int OGROCIWritableLayer::FindFieldIndex( const char *pszFieldName )
+int OGROCIWritableLayer::FindFieldIndex( const char *pszFieldName, int bExactMatch )
 {
   int iField = GetLayerDefn()->GetFieldIndex( pszFieldName );
 
-  // try laundered version
-  if( iField < 0 )
+  if( !bExactMatch && iField < 0 )
   {
+      // try laundered version
       OGROCISession *poSession = poDS->GetSession();
       char *pszSafeName = CPLStrdup( pszFieldName );
 

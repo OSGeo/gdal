@@ -252,7 +252,7 @@ class OGROCILayer : public OGRLayer
   public:
                         OGROCILayer();
     virtual             ~OGROCILayer();
-    virtual int         FindFieldIndex( const char *pszFieldName ) { return OGRLayer::FindFieldIndex( pszFieldName ); }
+    virtual int         FindFieldIndex( const char *pszFieldName, int bExactMatch ) { return OGRLayer::FindFieldIndex( pszFieldName, bExactMatch ); }
 
     virtual void        ResetReading();
     virtual OGRFeature *GetNextRawFeature();
@@ -313,7 +313,7 @@ public:
     virtual OGRSpatialReference *GetSpatialRef() { return poSRS; }
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
-    virtual int         FindFieldIndex( const char *pszFieldName );
+    virtual int         FindFieldIndex( const char *pszFieldName, int bExactMatch );
 
     // following methods are not base class overrides
     void                SetOptions( char ** );
