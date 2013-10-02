@@ -222,6 +222,7 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
     this->chDelimiter = chDelimiter;
 
     bFirstFeatureAppendedDuringSession = TRUE;
+    bHiddenWKTColumn = FALSE;
     bUseCRLF = FALSE;
     bNeedRewindBeforeRead = FALSE;
     eGeometryFormat = OGR_CSV_GEOM_NONE;
@@ -1084,11 +1085,17 @@ OGRErr OGRCSVLayer::WriteHeader()
             }
         }
 
+        if( bHiddenWKTColumn )
+        {
+            if (fpCSV) VSIFPrintfL( fpCSV, "%s", "WKT" );
+            if (fpCSVT) VSIFPrintfL( fpCSVT, "%s", "String");
+        }
+
         for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
         {
             char *pszEscaped;
 
-            if( iField > 0 )
+            if( iField > 0 || bHiddenWKTColumn )
             {
                 if (fpCSV) VSIFPrintfL( fpCSV, "%c", chDelimiter );
                 if (fpCSVT) VSIFPrintfL( fpCSVT, "%s", ",");
@@ -1127,7 +1134,8 @@ OGRErr OGRCSVLayer::WriteHeader()
 
         /* The CSV driver will not recognize single column tables, so add */
         /* a fake second blank field */
-        if( poFeatureDefn->GetFieldCount() == 1 )
+        if( poFeatureDefn->GetFieldCount() == 1 ||
+            (poFeatureDefn->GetFieldCount() == 0 && bHiddenWKTColumn) )
         {
             if (fpCSV) VSIFPrintfL( fpCSV, "%c", chDelimiter );
         }
@@ -1251,14 +1259,38 @@ OGRErr OGRCSVLayer::CreateFeature( OGRFeature *poNewFeature )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Write out all the field values.                                 */
+/*      Special case to deal with hidden "WKT" geometry column          */
 /* -------------------------------------------------------------------- */
     int bNonEmptyLine = FALSE;
+
+    if( bHiddenWKTColumn )
+    {
+        char *pszEscaped;
+        OGRGeometry     *poGeom = poNewFeature->GetGeomFieldRef(0);
+        if (poGeom && poGeom->exportToWkt(&pszEscaped) == OGRERR_NONE)
+        {
+            char* pszNew = CPLStrdup(CPLSPrintf("\"%s\"", pszEscaped));
+            CPLFree(pszEscaped);
+            pszEscaped = pszNew;
+        }
+        else
+            pszEscaped = CPLStrdup("");
+
+        int nLen = (int)strlen(pszEscaped);
+        bNonEmptyLine |= (nLen != 0);
+        VSIFWriteL( pszEscaped, 1, nLen, fpCSV );
+        CPLFree( pszEscaped );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write out all the field values.                                 */
+/* -------------------------------------------------------------------- */
+
     for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {
         char *pszEscaped;
         
-        if( iField > 0 )
+        if( iField > 0 || bHiddenWKTColumn )
             VSIFPrintfL( fpCSV, "%c", chDelimiter );
 
         if (eGeometryFormat == OGR_CSV_GEOM_AS_WKT &&
@@ -1296,7 +1328,8 @@ OGRErr OGRCSVLayer::CreateFeature( OGRFeature *poNewFeature )
         CPLFree( pszEscaped );
     }
 
-    if(  poFeatureDefn->GetFieldCount() == 1 && !bNonEmptyLine )
+    if( (poFeatureDefn->GetFieldCount() == 1 ||
+         (poFeatureDefn->GetFieldCount() == 0 && bHiddenWKTColumn)) && !bNonEmptyLine )
         VSIFPrintfL( fpCSV, "%c", chDelimiter );
 
     if( bUseCRLF )
@@ -1327,7 +1360,12 @@ void OGRCSVLayer::SetWriteGeometry(OGRwkbGeometryType eGType,
     if (eGeometryFormat == OGR_CSV_GEOM_AS_WKT && eGType != wkbNone )
     {
         OGRGeomFieldDefn oGFld("WKT", eGType);
-        CreateGeomField(&oGFld);
+        bHiddenWKTColumn = TRUE;
+        /* We don't use CreateGeomField() since we don't want to generate */
+        /* a geometry field in first position, as it confuses applications */
+        /* (such as MapServer <= 6.4) that assume that the first regular field */
+        /* they add will be at index 0 */
+        poFeatureDefn->AddGeomFieldDefn( &oGFld );
     }
     else
         poFeatureDefn->SetGeomType( eGType );
