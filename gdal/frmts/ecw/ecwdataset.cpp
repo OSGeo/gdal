@@ -1505,11 +1505,12 @@ CPLErr ECWDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
 
     CPLErr eErr;
-    eErr = ValidateRasterIOOrAdviseReadParameters( "AdviseRead()",
+    int bStopProcessing = FALSE;
+    eErr = ValidateRasterIOOrAdviseReadParameters( "AdviseRead()", &bStopProcessing,
                                                     nXOff, nYOff, nXSize, nYSize,
                                                     nBufXSize, nBufYSize, 
                                                     nBandCount, panBandList);
-    if( eErr != CE_None )
+    if( eErr != CE_None || bStopProcessing )
         return eErr;
     
     if( nBandCount > 100 )

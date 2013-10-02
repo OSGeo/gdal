@@ -296,6 +296,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     CPLErr ValidateRasterIOOrAdviseReadParameters(
                                const char* pszCallingFunc,
+                               int* pbStopProcessingOnCENone,
                                int nXOff, int nYOff, int nXSize, int nYSize,
                                int nBufXSize, int nBufYSize, 
                                int nBandCount, int *panBandMap);

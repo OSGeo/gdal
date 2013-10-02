@@ -1504,6 +1504,7 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
 
 CPLErr GDALDataset::ValidateRasterIOOrAdviseReadParameters(
                                const char* pszCallingFunc,
+                               int* pbStopProcessingOnCENone,
                                int nXOff, int nYOff, int nXSize, int nYSize,
                                int nBufXSize, int nBufYSize, 
                                int nBandCount, int *panBandMap)
@@ -1523,10 +1524,12 @@ CPLErr GDALDataset::ValidateRasterIOOrAdviseReadParameters(
                   nXOff, nYOff, nXSize, nYSize, 
                   nBufXSize, nBufYSize );
 
+        *pbStopProcessingOnCENone = TRUE;
         return CE_None;
     }
 
     CPLErr eErr = CE_None;
+    *pbStopProcessingOnCENone = FALSE;
 
     if( nXOff < 0 || nXOff > INT_MAX - nXSize || nXOff + nXSize > nRasterXSize
         || nYOff < 0 || nYOff > INT_MAX - nYSize || nYOff + nYSize > nRasterYSize )
@@ -1677,11 +1680,12 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
         return CE_Failure;
     }
 
-    eErr = ValidateRasterIOOrAdviseReadParameters( "RasterIO()",
+    int bStopProcessing = FALSE;
+    eErr = ValidateRasterIOOrAdviseReadParameters( "RasterIO()", &bStopProcessing,
                                                     nXOff, nYOff, nXSize, nYSize,
                                                     nBufXSize, nBufYSize, 
                                                     nBandCount, panBandMap);
-    if( eErr != CE_None )
+    if( eErr != CE_None || bStopProcessing )
         return eErr;
 
 /* -------------------------------------------------------------------- */
@@ -1956,12 +1960,12 @@ CPLErr GDALDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
 /*      Do some validation of parameters.                               */
 /* -------------------------------------------------------------------- */
-
-    CPLErr eErr = ValidateRasterIOOrAdviseReadParameters( "AdviseRead()",
+    int bStopProcessing = FALSE;
+    CPLErr eErr = ValidateRasterIOOrAdviseReadParameters( "AdviseRead()", &bStopProcessing,
                                                     nXOff, nYOff, nXSize, nYSize,
                                                     nBufXSize, nBufYSize, 
                                                     nBandCount, panBandMap);
-    if( eErr != CE_None )
+    if( eErr != CE_None || bStopProcessing )
         return eErr;
 
     for( iBand = 0; iBand < nBandCount; iBand++ )
