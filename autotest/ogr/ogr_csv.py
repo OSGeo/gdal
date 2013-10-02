@@ -539,16 +539,29 @@ def ogr_csv_13():
     gdaltest.csv_tmpds = ogr.Open( 'tmp/csvwrk', update=1 )
 
     # AS_WKT
-    options = ['GEOMETRY=AS_WKT',]
+    options = ['GEOMETRY=AS_WKT','CREATE_CSVT=YES']
     lyr = gdaltest.csv_tmpds.CreateLayer( 'as_wkt', options = options )
 
     field_defn = ogr.FieldDefn( 'ADATA', ogr.OFTString )
     lyr.CreateField(field_defn)
     field_defn.Destroy()
 
+    # Some applications expect the WKT column not to be exposed. Check it
+    if lyr.GetLayerDefn().GetFieldCount() != 1:
+        return 'fail'
+
     dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(1 2)'))
     dst_feat.SetField('ADATA', 'avalue')
+    lyr.CreateFeature( dst_feat )
+    dst_feat.Destroy()
+
+    # AS_WKT but no field
+    options = ['GEOMETRY=AS_WKT','CREATE_CSVT=YES']
+    lyr = gdaltest.csv_tmpds.CreateLayer( 'as_wkt_no_field', options = options )
+
+    dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
+    dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(1 2)'))
     lyr.CreateFeature( dst_feat )
     dst_feat.Destroy()
 
@@ -619,6 +632,14 @@ def ogr_csv_13():
     lyr.ResetReading()
     expect = [ 'avalue' ]
     tr = ogrtest.check_features_against_list( lyr,'ADATA',expect)
+    if not tr:
+        return 'fail'
+
+    # Test as_wkt_no_field
+    lyr = gdaltest.csv_tmpds.GetLayerByName('as_wkt_no_field')
+
+    expect = [ 'POINT (1 2)' ]
+    tr = ogrtest.check_features_against_list( lyr,'WKT',expect)
     if not tr:
         return 'fail'
 

@@ -74,6 +74,7 @@ class OGRCSVLayer : public OGRLayer
 
     int*                panGeomFieldIndex;
     int                 bFirstFeatureAppendedDuringSession;
+    int                 bHiddenWKTColumn;
 
     /*http://www.faa.gov/airports/airport_safety/airportdata_5010/menu/index.cfm specific */
     int                 iNfdcLatitudeS, iNfdcLongitudeS;
