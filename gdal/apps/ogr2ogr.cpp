@@ -1409,7 +1409,7 @@ int main( int nArgc, char ** papszArgv )
     }
 
     if (pszFieldMap && bAddMissingFields)
-{
+    {
         Usage("if -addfields is specified, -fieldmap cannot be used.");
     }
 
@@ -3019,7 +3019,7 @@ static TargetLayerInfo* SetupTargetLayer( OGRDataSource *poSrcDS,
         for( iField = 0; iField < nSrcFieldCount; iField++ )
         {
             OGRFieldDefn* poSrcFieldDefn = poSrcFDefn->GetFieldDefn(iField);
-            int iDstField = poDstFDefn->GetFieldIndex(poSrcFieldDefn->GetNameRef());
+            int iDstField = poDstLayer->FindFieldIndex(poSrcFieldDefn->GetNameRef());
             if (iDstField >= 0)
                 panMap[iField] = iDstField;
             else

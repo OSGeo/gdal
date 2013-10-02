@@ -2070,6 +2070,44 @@ by the OGRSFDriverManager.
 
 /**
 
+ \fn int OGR_L_FindFieldIndex( OGRLayerH hLayer, const char * );
+
+ \brief Find the index of field in a layer.
+
+ The returned number is the index of the field in the layers, or -1 if the
+ field doesn't exist.
+
+ If the field doesn't exists in the given form the driver might apply
+ some changes to make it match, like those it might do if the layer was
+ created (eg. like LAUNDER in the OCI driver).
+ 
+ This method is the same as the C++ method OGRLayer::FindFieldIndex().
+
+ @return field index, or -1 if the field doesn't exist
+
+*/
+
+/**
+
+ \fn int OGRLayer::FindFieldIndex( const char * );
+
+ \brief Find the index of field in the layer.
+
+ The returned number is the index of the field in the layers, or -1 if the
+ field doesn't exist.
+
+ If the field doesn't exists in the given form the driver might apply
+ some changes to make it match, like those it might do if the layer was
+ created (eg. like LAUNDER in the OCI driver).
+ 
+ This method is the same as the C function OGR_L_FindFieldIndex().
+
+ @return field index, or -1 if the field doesn't exist
+
+*/
+
+/**
+
  \fn OGRSpatialReference *OGRLayer::GetSpatialRef();
 
  \brief Fetch the spatial reference system for this layer. 
