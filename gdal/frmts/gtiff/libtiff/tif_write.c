@@ -1,4 +1,4 @@
-/* $Id: tif_write.c,v 1.37 2012-08-13 22:10:17 fwarmerdam Exp $ */
+/* $Id: tif_write.c,v 1.38 2013-01-18 21:57:12 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -233,7 +233,7 @@ TIFFWriteEncodedStrip(TIFF* tif, uint32 strip, void* data, tmsize_t cc)
             /* more bytes available in the output buffer than the previous byte count, */
             /* so that TIFFAppendToStrip() will detect the overflow when it is called the first */
             /* time if the new compressed tile is bigger than the older one. (GDAL #4771) */
-            if( tif->tif_rawdatasize <= td->td_stripbytecount[strip] )
+            if( tif->tif_rawdatasize <= (tmsize_t)td->td_stripbytecount[strip] )
             {
                 if( !(TIFFWriteBufferSetup(tif, NULL,
                     (tmsize_t)TIFFroundup_64((uint64)(td->td_stripbytecount[strip] + 1), 1024))) )
@@ -379,7 +379,7 @@ TIFFWriteEncodedTile(TIFF* tif, uint32 tile, void* data, tmsize_t cc)
             /* more bytes available in the output buffer than the previous byte count, */
             /* so that TIFFAppendToStrip() will detect the overflow when it is called the first */
             /* time if the new compressed tile is bigger than the older one. (GDAL #4771) */
-            if( tif->tif_rawdatasize <= td->td_stripbytecount[tile] )
+            if( tif->tif_rawdatasize <= (tmsize_t) td->td_stripbytecount[tile] )
             {
                 if( !(TIFFWriteBufferSetup(tif, NULL,
                     (tmsize_t)TIFFroundup_64((uint64)(td->td_stripbytecount[tile] + 1), 1024))) )
@@ -391,8 +391,8 @@ TIFFWriteEncodedTile(TIFF* tif, uint32 tile, void* data, tmsize_t cc)
             tif->tif_curoff = 0;
         }
 
-    tif->tif_rawcc = 0;
-    tif->tif_rawcp = tif->tif_rawdata;
+	tif->tif_rawcc = 0;
+	tif->tif_rawcp = tif->tif_rawdata;
 
 	/* 
 	 * Compute tiles per row & per column to compute
