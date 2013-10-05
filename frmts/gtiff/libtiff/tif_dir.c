@@ -1,4 +1,4 @@
-/* $Id: tif_dir.c,v 1.113 2012-06-14 20:32:53 fwarmerdam Exp $ */
+/* $Id: tif_dir.c,v 1.114 2013-09-13 02:34:50 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -1344,6 +1344,7 @@ TIFFAdvanceDirectory(TIFF* tif, uint64* nextdir, uint64* off)
 			if (((uint64)poffa!=poff)||(poffb<poffa)||(poffb<(tmsize_t)sizeof(uint16))||(poffb>tif->tif_size))
 			{
 				TIFFErrorExt(tif->tif_clientdata,module,"Error fetching directory count");
+                                  *nextdir=0;
 				return(0);
 			}
 			_TIFFmemcpy(&dircount,tif->tif_base+poffa,sizeof(uint16));

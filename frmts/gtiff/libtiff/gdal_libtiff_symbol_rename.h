@@ -1,4 +1,5 @@
 /* This is a generated file by dump_symbols.h. *DO NOT EDIT MANUALLY !* */
+#define add_ms gdal_add_ms
 #define buildMap gdal_buildMap
 #define BuildMapBitdepth16To8 gdal_BuildMapBitdepth16To8
 #define BuildMapUaToAa gdal_BuildMapUaToAa
