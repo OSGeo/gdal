@@ -33,6 +33,7 @@
 #include "gdal_rat.h"
 #include "aigrid.h"
 #include "avc.h"
+#include <vector>
 
 CPL_CVSID("$Id$");
 
@@ -375,6 +376,34 @@ char **AIGDataset::GetFileList()
 }
 
 /************************************************************************/
+/*                          AIGErrorHandlerVATOpen()                    */
+/************************************************************************/
+
+class AIGErrorDescription
+{
+    public:
+        CPLErr eErr;
+        int    no;
+        CPLString osMsg;
+};
+
+static void AIGErrorHandlerVATOpen(CPLErr eErr, int no, const char* msg)
+{
+    std::vector<AIGErrorDescription>* paoErrors =
+        (std::vector<AIGErrorDescription>* )CPLGetErrorHandlerUserData();
+    if( EQUALN(msg, "EOF encountered in", strlen("EOF encountered in")) &&
+        strstr(msg, "../info/arc.dir") != NULL )
+        return;
+    if( EQUALN(msg, "Failed to open table ", strlen("Failed to open table ")) )
+        return;
+    AIGErrorDescription oError;
+    oError.eErr = eErr;
+    oError.no = no;
+    oError.osMsg = msg;
+    paoErrors->push_back(oError);
+}
+
+/************************************************************************/
 /*                              ReadRAT()                               */
 /************************************************************************/
 
@@ -408,9 +437,23 @@ void AIGDataset::ReadRAT()
     osTableName = CPLGetFilename(psInfo->pszCoverName);
     osTableName += ".VAT";
 
+    /* Turn off errors that can be triggered if the info has no VAT */
+    /* table related with this coverage */
+    std::vector<AIGErrorDescription> aoErrors;
+    CPLPushErrorHandlerEx(AIGErrorHandlerVATOpen, &aoErrors );
+
     AVCBinFile *psFile = 
         AVCBinReadOpen( osInfoPath, osTableName,
                         AVCCoverTypeUnknown, AVCFileTABLE, NULL );
+    CPLPopErrorHandler();
+
+    /* Emit other errors */
+    std::vector<AIGErrorDescription>::const_iterator oIter;
+    for( oIter = aoErrors.begin(); oIter != aoErrors.end(); ++oIter )
+    {
+        const AIGErrorDescription& oError = *oIter;
+        CPLError( oError.eErr, oError.no, "%s", oError.osMsg.c_str() );
+    }
 
     CPLErrorReset();
     if( psFile == NULL )
