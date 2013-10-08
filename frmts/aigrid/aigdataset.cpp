@@ -387,7 +387,7 @@ class AIGErrorDescription
         CPLString osMsg;
 };
 
-static void AIGErrorHandlerVATOpen(CPLErr eErr, int no, const char* msg)
+static void CPL_STDCALL AIGErrorHandlerVATOpen(CPLErr eErr, int no, const char* msg)
 {
     std::vector<AIGErrorDescription>* paoErrors =
         (std::vector<AIGErrorDescription>* )CPLGetErrorHandlerUserData();
