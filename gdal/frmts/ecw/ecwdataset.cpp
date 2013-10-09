@@ -1809,7 +1809,7 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
                                     (*panBandMap - 1) * nBufXSize * nBufYSize * nDataTypeSize +
                                     j * nBufXSize * nDataTypeSize,
                             eBufType, nDataTypeSize,
-                            ((GByte*)pData) + j * nLineSpace, eBufType, nDataTypeSize,
+                            ((GByte*)pData) + j * nLineSpace, eBufType, nPixelSpace,
                             nBufXSize);
             }
             return CE_None;
@@ -1973,7 +1973,7 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
                 GDALCopyWords(sCachedMultiBandIO.pabyData +
                                     j * nBufXSize * nDataTypeSize,
                               eBufType, nDataTypeSize,
-                              ((GByte*)pData) + j * nLineSpace, eBufType, nDataTypeSize,
+                              ((GByte*)pData) + j * nLineSpace, eBufType, nPixelSpace,
                               nBufXSize);
             }
             return CE_None;
