@@ -516,7 +516,7 @@ OPTIONAL_POD(int, int);
       return ret;
 }
 
-%apply (void *buffer_ptr) {GByte*};
+%apply (void *buffer_ptr) {GByte*, VSILFILE*};
 
 %csmethodmodifiers StringListDestroy "internal";
 %inline %{
