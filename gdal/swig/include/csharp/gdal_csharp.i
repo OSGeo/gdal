@@ -35,16 +35,6 @@
 
 %include typemaps_csharp.i
 
-%pragma(csharp) modulecode="public delegate int GDALProgressFuncDelegate(double Complete, IntPtr Message, IntPtr Data);"
-
-%typemap(imtype) (GDALProgressFunc callback)  "$module.GDALProgressFuncDelegate"
-%typemap(cstype) (GDALProgressFunc callback) "$module.GDALProgressFuncDelegate"
-%typemap(csin) (GDALProgressFunc callback)  "$csinput"
-%typemap(in) (GDALProgressFunc callback) %{ $1 = ($1_ltype)$input; %}
-%typemap(imtype) (void* callback_data) "string"
-%typemap(cstype) (void* callback_data) "string"
-%typemap(csin) (void* callback_data) "$csinput"
-
 %apply (void *buffer_ptr) {GDAL_GCP const *pGCPs};
 %csmethodmodifiers __SetGCPs "private";
 %csmethodmodifiers __GetGCPs "private";

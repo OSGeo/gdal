@@ -495,3 +495,16 @@ OPTIONAL_POD(int, int);
 %typemap(csin) (CPLErrorHandler)  "$csinput"
 %typemap(in) (CPLErrorHandler) %{ $1 = ($1_ltype)$input; %}
 
+/******************************************************************************
+ * GDALProgressFunc typemaps                                                  *
+ *****************************************************************************/
+%pragma(csharp) modulecode="public delegate int GDALProgressFuncDelegate(double Complete, IntPtr Message, IntPtr Data);"
+
+%typemap(imtype) (GDALProgressFunc callback)  "$module.GDALProgressFuncDelegate"
+%typemap(cstype) (GDALProgressFunc callback) "$module.GDALProgressFuncDelegate"
+%typemap(csin) (GDALProgressFunc callback)  "$csinput"
+%typemap(in) (GDALProgressFunc callback) %{ $1 = ($1_ltype)$input; %}
+%typemap(imtype) (void* callback_data) "string"
+%typemap(cstype) (void* callback_data) "string"
+%typemap(csin) (void* callback_data) "$csinput"
+
