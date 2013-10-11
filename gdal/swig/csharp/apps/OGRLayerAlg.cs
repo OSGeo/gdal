@@ -53,7 +53,7 @@ class OGRLayerAlg {
 
 	{
         Console.WriteLine("usage: ogrlayeralg {function} {Data Source 1} {layer1} {Data Source 2} {layer2} {Result Data Source Name} {Result Layer Name}");
-        Console.WriteLine("example: ogrlayeralg union data1.shp layer1 data.shp layer2 result.shp resultlayer");
+        Console.WriteLine("example: ogrlayeralg Union data1.shp layer1 data.shp layer2 result.shp resultlayer");
 		System.Environment.Exit(-1);
 	}
  
@@ -99,7 +99,7 @@ class OGRLayerAlg {
 
             Layer layer2 = ds1.GetLayerByName(args[4]);
 
-            if (layer1 == null)
+            if (layer2 == null)
             {
                 Console.WriteLine("FAILURE: Couldn't fetch layer " + args[4]);
                 System.Environment.Exit(-1);
