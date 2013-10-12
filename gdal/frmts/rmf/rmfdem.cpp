@@ -245,7 +245,7 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
 
                 while ( nCount-- > 0 )
                 {
-                    nCode =*((GInt32 *)pabyTempIn) & 0x0FFF;
+                    nCode =*((GInt32 *)pabyTempIn) & 0x00FFFFFF;
                     pabyTempIn += 3;
                     if ( nCode > RANGE_INT24 )
                         nCode |= INV_INT24;
