@@ -52,8 +52,8 @@ class OGRLayerAlg {
 	public static void usage() 
 
 	{
-        Console.WriteLine("usage: ogrlayeralg {function} {Data Source 1} {layer1} {Data Source 2} {layer2} {Result Data Source Name} {Result Layer Name}");
-        Console.WriteLine("example: ogrlayeralg Union data1.shp layer1 data.shp layer2 result.shp resultlayer");
+        Console.WriteLine("usage: ogrlayeralg {function} {Data Source 1} {layer1} {Data Source 2} {layer2} {Result Data Source Name} {Result Layer Name} [{Options}]");
+        Console.WriteLine("example: ogrlayeralg Union data1.shp layer1 data.shp layer2 result.shp resultlayer SKIP_FAILURES=YES");
 		System.Environment.Exit(-1);
 	}
  
@@ -105,12 +105,6 @@ class OGRLayerAlg {
                 System.Environment.Exit(-1);
             }
 
-            if (layer1.GetLayerDefn().GetGeomType() != layer2.GetLayerDefn().GetGeomType())
-            {
-                Console.WriteLine("FAILURE: Geometry type doesn't match");
-                System.Environment.Exit(-1);
-            }
-
             /* -------------------------------------------------------------------- */
 		    /*      Get driver for creating the result ds                          */
 		    /* -------------------------------------------------------------------- */	
@@ -131,6 +125,17 @@ class OGRLayerAlg {
             {
                 Console.WriteLine("Can't create the datasource.");
                 System.Environment.Exit(-1);
+            }
+
+            /* -------------------------------------------------------------------- */
+            /*      Process options                                                 */
+            /* -------------------------------------------------------------------- */
+
+            string[] options = null;
+            if (args.Length > 7)
+            {
+                options = new string[args.Length - 7];
+                Array.Copy(args, 7, options, 0, args.Length - 7);
             }
 
             /* -------------------------------------------------------------------- */
@@ -161,25 +166,25 @@ class OGRLayerAlg {
             switch(args[0])
             {
                 case "Intersection":
-                    layer1.Intersection(layer2, layer, null, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "Intersection");
+                    layer1.Intersection(layer2, layer, options, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "Intersection");
                     break;
                 case "Union":
-                    layer1.Union(layer2, layer, null, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "Union");
+                    layer1.Union(layer2, layer, options, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "Union");
                     break;
                 case "SymDifference":
-                    layer1.SymDifference(layer2, layer, null, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "SymDifference");
+                    layer1.SymDifference(layer2, layer, options, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "SymDifference");
                     break;
                 case "Identity":
-                    layer1.Identity(layer2, layer, null, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "Identity");
+                    layer1.Identity(layer2, layer, options, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "Identity");
                     break;
                 case "Update":
-                    layer1.Update(layer2, layer, null, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "Update");
+                    layer1.Update(layer2, layer, options, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "Update");
                     break;
                 case "Clip":
-                    layer1.Clip(layer2, layer, null, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "Clip");
+                    layer1.Clip(layer2, layer, options, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "Clip");
                     break;
                 case "Erase":
-                    layer1.Erase(layer2, layer, null, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "Erase");
+                    layer1.Erase(layer2, layer, options, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "Erase");
                     break;
             }
         }
