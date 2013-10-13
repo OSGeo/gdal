@@ -1787,6 +1787,23 @@ OGRErr OGRSQLiteTableLayer::BindValues( OGRFeature *poFeature,
                     break;
                 }
 
+                case OFTStringList:
+                {
+                    char** papszValues = poFeature->GetFieldAsStringList( iField );
+                    CPLString osValue;
+                    osValue += CPLSPrintf("(%d:", CSLCount(papszValues));
+                    for(int i=0; papszValues[i] != NULL; i++)
+                    {
+                        if( i != 0 )
+                            osValue += ",";
+                        osValue += papszValues[i];
+                    }
+                    osValue += ")";
+                    rc = sqlite3_bind_text(hStmt, nBindField++,
+                                               osValue.c_str(), -1, SQLITE_TRANSIENT);
+                    break;
+                }
+
                 default:
                 {
                     pszRawValue = poFeature->GetFieldAsString( iField );
