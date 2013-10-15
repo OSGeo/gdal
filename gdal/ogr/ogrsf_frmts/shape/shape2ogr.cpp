@@ -1358,3 +1358,22 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
     return OGRERR_NONE;
 }
 
+/************************************************************************/
+/*                    DBFFastAtof == OGRFastAtof
+ *
+ *  Same contract as CPLAtof, except than it doesn't always call the
+ *  system atof() that may be slow on some platforms. For simple but
+ *  common strings, it'll use a faster implementation (up to 20x faster
+ *  than atof() on MS runtime libraries) that has no garanty to return
+ *  exactly the same floating point number.
+ */
+/************************************************************************/
+
+#include "ogr_p.h"
+
+double DBFFastAtof(const char* pszStr)
+{
+   return OGRFastAtof(pszStr);
+}
+
+/************************************************************************/

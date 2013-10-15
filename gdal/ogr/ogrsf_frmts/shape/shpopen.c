@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: shpopen.c,v 1.73 2012-01-24 22:33:01 fwarmerdam Exp $
+ * $Id: shpopen.c,v 1.74 2013-10-15 20:30:00 ahuarte47 Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of core Shapefile read/write functions.
@@ -34,6 +34,9 @@
  ******************************************************************************
  *
  * $Log: shpopen.c,v $
+ * Revision 1.74  2013-10-15 20:30:00  ahuarte47
+ * avoid unnecessary memcpy's and calloc's for psShape->padf[XYZM]
+ *
  * Revision 1.73  2012-01-24 22:33:01  fwarmerdam
  * fix memory leak on failure to open .shp (gdal #4410)
  *
@@ -273,7 +276,7 @@
 #include <string.h>
 #include <stdio.h>
 
-SHP_CVSID("$Id: shpopen.c,v 1.73 2012-01-24 22:33:01 fwarmerdam Exp $")
+SHP_CVSID("$Id: shpopen.c,v 1.74 2013-10-15 20:30:00 ahuarte47 Exp $")
 
 typedef unsigned char uchar;
 
@@ -1679,8 +1682,8 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
         || psShape->nSHPType == SHPT_ARCM
         || psShape->nSHPType == SHPT_MULTIPATCH )
     {
-        int32		nPoints, nParts;
-        int    		i, nOffset;
+        int32       nPoints, nParts;
+        int         i, j, nOffset;
 
         if ( 40 + 8 + 4 > nEntitySize )
         {
@@ -1752,8 +1755,6 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
         psShape->nVertices = nPoints;
         psShape->padfX = (double *) calloc(nPoints,sizeof(double));
         psShape->padfY = (double *) calloc(nPoints,sizeof(double));
-        psShape->padfZ = (double *) calloc(nPoints,sizeof(double));
-        psShape->padfM = (double *) calloc(nPoints,sizeof(double));
 
         psShape->nParts = nParts;
         psShape->panPartStart = (int *) calloc(nParts,sizeof(int));
@@ -1761,8 +1762,6 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
         
         if (psShape->padfX == NULL ||
             psShape->padfY == NULL ||
-            psShape->padfZ == NULL ||
-            psShape->padfM == NULL ||
             psShape->panPartStart == NULL ||
             psShape->panPartType == NULL)
         {
@@ -1827,18 +1826,19 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 /* -------------------------------------------------------------------- */
 /*      Copy out the vertices from the record.                          */
 /* -------------------------------------------------------------------- */
-        for( i = 0; i < nPoints; i++ )
+
+        for( i = 0, j = nOffset; i < nPoints; i++, j+=16 )
         {
-            memcpy(psShape->padfX + i,
-                   psSHP->pabyRec + nOffset + i * 16,
-                   8 );
-
-            memcpy(psShape->padfY + i,
-                   psSHP->pabyRec + nOffset + i * 16 + 8,
-                   8 );
-
-            if( bBigEndian ) SwapWord( 8, psShape->padfX + i );
-            if( bBigEndian ) SwapWord( 8, psShape->padfY + i );
+           *(psShape->padfX + i) = *( (double *)(psSHP->pabyRec + j    ) );
+           *(psShape->padfY + i) = *( (double *)(psSHP->pabyRec + j + 8) );
+        }
+        if( bBigEndian )
+        {
+          for( i = 0; i < nPoints; i++ )
+          {
+            SwapWord( 8, psShape->padfX + i );
+            SwapWord( 8, psShape->padfY + i );
+          }
         }
 
         nOffset += 16*nPoints;
@@ -1850,6 +1850,17 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
             || psShape->nSHPType == SHPT_ARCZ
             || psShape->nSHPType == SHPT_MULTIPATCH )
         {
+            psShape->padfZ = (double *) calloc(nPoints,sizeof(double));
+            if (psShape->padfZ == NULL)
+            {
+                snprintf(szErrorMsg, sizeof(szErrorMsg), 
+                         "Not enough memory to allocate requested memory (nPoints=%d, nParts=%d) for shape %d. "
+                         "Probably broken SHP file", hEntity, nPoints, nParts );
+                psSHP->sHooks.Error( szErrorMsg );
+                SHPDestroyObject(psShape);
+                return NULL;
+            }
+
             memcpy( &(psShape->dfZMin), psSHP->pabyRec + nOffset, 8 );
             memcpy( &(psShape->dfZMax), psSHP->pabyRec + nOffset + 8, 8 );
             
@@ -1874,6 +1885,17 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 /* -------------------------------------------------------------------- */
         if( nEntitySize >= nOffset + 16 + 8*nPoints )
         {
+            psShape->padfM = (double *) calloc(nPoints,sizeof(double));
+            if (psShape->padfM == NULL)
+            {
+                snprintf(szErrorMsg, sizeof(szErrorMsg), 
+                         "Not enough memory to allocate requested memory (nPoints=%d, nParts=%d) for shape %d. "
+                         "Probably broken SHP file", hEntity, nPoints, nParts );
+                psSHP->sHooks.Error( szErrorMsg );
+                SHPDestroyObject(psShape);
+                return NULL;
+            }
+
             memcpy( &(psShape->dfMMin), psSHP->pabyRec + nOffset, 8 );
             memcpy( &(psShape->dfMMax), psSHP->pabyRec + nOffset + 8, 8 );
             

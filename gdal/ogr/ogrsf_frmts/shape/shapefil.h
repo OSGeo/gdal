@@ -37,6 +37,9 @@
  ******************************************************************************
  *
  * $Log: shapefil.h,v $
+ * Revision 1.53  2013-10-15 20:30:00  ahuarte47
+ * define DBFFastAtof using OGRFastAtof
+ *
  * Revision 1.52  2011-12-11 22:26:46  fwarmerdam
  * upgrade .qix access code to use SAHooks (gdal #3365)
  *
@@ -669,6 +672,9 @@ char    SHPAPI_CALL
 
 const char SHPAPI_CALL1(*)
       DBFGetCodePage(DBFHandle psDBF );
+
+// Fast atof function
+double SHPAPI_CALL DBFFastAtof(const char* pszStr);
 
 #ifdef __cplusplus
 }
