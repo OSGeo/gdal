@@ -432,6 +432,36 @@ AC_DEFUN([AC_LD_SHARED],
   AC_SUBST(SO_EXT,$SO_EXT)
 ])
 
+# --------------------------------------------------------
+dnl AC_CHECK_FW_FUNC(FRAMEWORK-BASENAME, FUNCTION,
+dnl              [ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND],
+dnl              [OTHER-LIBRARIES])
+dnl ------------------------------------------------------
+dnl
+dnl Duplicate of AC_CHECK_LIB, with small edit to handle -framework $1, i.e.:
+dnl   "-framework JavaVM" instead of "-ljvm"
+dnl See autoconf-src/lib/autoconf/libs.m4 for more information
+
+AC_DEFUN([AC_CHECK_FW_FUNC],
+[m4_ifval([$3], , [AH_CHECK_LIB([$1])])dnl
+AS_LITERAL_WORD_IF([$1],
+	      [AS_VAR_PUSHDEF([ac_Lib], [ac_cv_lib_$1_$2])],
+	      [AS_VAR_PUSHDEF([ac_Lib], [ac_cv_lib_$1''_$2])])dnl
+AC_CACHE_CHECK([for $2 in -framework $1], [ac_Lib],
+[ac_check_fw_func_save_LIBS=$LIBS
+LIBS="-framework $1 $5 $LIBS"
+AC_LINK_IFELSE([AC_LANG_CALL([], [$2])],
+	       [AS_VAR_SET([ac_Lib], [yes])],
+	       [AS_VAR_SET([ac_Lib], [no])])
+LIBS=$ac_check_fw_func_save_LIBS])
+AS_VAR_IF([ac_Lib], [yes],
+      [m4_default([$3], [AC_DEFINE_UNQUOTED(AS_TR_CPP(HAVE_LIB$1))
+  LIBS="-framework $1 $LIBS"
+])],
+      [$4])
+AS_VAR_POPDEF([ac_Lib])dnl
+])# AC_CHECK_FW_FUNC
+
 dnl ---------------------------------------------------------------------------
 dnl Message output
 dnl ---------------------------------------------------------------------------
