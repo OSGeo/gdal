@@ -3873,12 +3873,14 @@ AC_MSG_CHECKING([whether we should include Java support])
 
 JAVA_HOME=""
 JAVA_INC=""
+mac_java_fw=""
 
 if test "x$with_java" = "xyes"; then
 
 dnl Ubuntu
     JAVA_6_TEST_DIR=
     JAVA_7_TEST_DIR=
+    JAVA_MAC_TEST_DIR=
     case "$host_cpu" in
         i*86*)
             JAVA_6_TEST_DIR=/usr/lib/jvm/java-6-openjdk-i386
@@ -3890,6 +3892,11 @@ dnl Ubuntu
             ;;
         *)
             ;;
+    esac
+    case "${host_os}" in
+      darwin*)
+        JAVA_MAC_TEST_DIR=$(/usr/libexec/java_home)
+        ;;
     esac
 
     if test "x$JAVA_7_TEST_DIR" != "x" -a -d "$JAVA_7_TEST_DIR/include"; then
@@ -3905,17 +3912,27 @@ dnl RHEL6
     elif test -d /usr/lib/jvm/java-openjdk; then
         with_java="/usr/lib/jvm/java-openjdk"
 
-dnl    elif test -d /System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers; then
-dnl        JAVA_INC="-I/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers"
 
 dnl OpenSolaris
     elif test -d /usr/java; then
         with_java="/usr/java"
+
+dnl Mac OS X
+    elif test "x$JAVA_MAC_TEST_DIR" != "x"; then
+        if test -d "$JAVA_MAC_TEST_DIR/bundle"; then
+            # Mac default 1.6.0_x framework
+            # test for ./bundle first, since older installs also have ./include
+            with_java="$JAVA_MAC_TEST_DIR"
+            mac_java_fw="JavaVM"
+        elif test -d "$JAVA_MAC_TEST_DIR/include"; then
+            # Oracle Java install
+            with_java="$JAVA_MAC_TEST_DIR"
+        fi
     else
         AC_MSG_ERROR("cannot find JDK root directory.")
     fi
 
-    if test \! -d "$with_java/include" ; then
+    if test \! -d "$with_java/include" && test \! -d "$with_java/bundle"; then
         AC_MSG_ERROR("$with_java is not a valid JDK.")
     fi
 fi
@@ -3924,7 +3941,14 @@ if test "x$JAVA_INC" != "x"; then
     AC_MSG_RESULT([yes])
 elif test "x$with_java" != "x" -a "x$with_java" != "xno"; then
 
-    if test -d "$with_java/include"; then
+    if test -d "$with_java/bundle" && test -d "/System/Library/Frameworks/JavaVM.framework/Headers"; then
+        # Mac default 1.6.0_x framework
+        # test for ./bundle first, since older installs also have ./include
+        JAVA_HOME="$with_java"
+        JAVA_INC="-I/System/Library/Frameworks/JavaVM.framework/Headers"
+        mac_java_fw="JavaVM"
+        AC_MSG_RESULT([yes])
+    elif test -d "$with_java/include"; then
         if test -d "$with_java/include/linux"; then
             JAVA_HOME="$with_java"
             JAVA_INC="-I$JAVA_HOME/include -I$JAVA_HOME/include/linux"
@@ -3937,11 +3961,16 @@ elif test "x$with_java" != "x" -a "x$with_java" != "xno"; then
             JAVA_HOME="$with_java"
             JAVA_INC="-I$JAVA_HOME/include -I$JAVA_HOME/include/freebsd"
             AC_MSG_RESULT([yes])
+        elif test -d "$with_java/include/darwin"; then
+            # Oracle Java install, use instead of Mac default 1.6.0_x
+            JAVA_HOME="$with_java"
+            JAVA_INC="-I$JAVA_HOME/include -I$JAVA_HOME/include/darwin"
+            AC_MSG_RESULT([yes])
         else
-            AC_MSG_ERROR("Cannot find $with_java/include/linux or solaris or freebsd directory.")
+            AC_MSG_ERROR("Cannot find $with_java/include/linux or solaris or freebsd or darwin directory.")
         fi
     else
-        AC_MSG_ERROR("Cannot find $with_java/include directory.")
+        AC_MSG_ERROR("Cannot find $with_java/include or <mac_java_framework>/Headers directory.")
     fi
 
 else
@@ -3975,12 +4004,28 @@ if test "$with_mdb" = "yes" ; then
         if test -d "$with_jvm_lib"; then
             saved_LDFLAGS="$LDFLAGS"
             LDFLAGS="$LDFLAGS -L$with_jvm_lib"
-            AC_CHECK_LIB(jvm,JNI_CreateJavaVM,HAS_LIB_JVM=yes,HAS_LIB_JVM=no,)
+            if test "x$mac_java_fw" != "x"; then
+                AC_CHECK_FW_FUNC($mac_java_fw,JNI_CreateJavaVM,HAS_LIB_JVM=yes,HAS_LIB_JVM=no,)
+            else
+                AC_CHECK_LIB(jvm,JNI_CreateJavaVM,HAS_LIB_JVM=yes,HAS_LIB_JVM=no,)
+            fi
             LDFLAGS="$saved_LDFLAGS"
             if test "$HAS_LIB_JVM" = "yes"; then
                 JVM_LIB="-L$with_jvm_lib -ljvm"
+                if test "x$mac_java_fw" != "x"; then
+                    JVM_LIB="-framework $mac_java_fw"
+                fi
                 if test "x$with_jvm_lib_add_rpath" = "xyes"; then
-                    JVM_LIB="-Wl,-rpath=$with_jvm_lib $JVM_LIB"
+                    case "${host_os}" in
+                      darwin*)
+                          if test "x$mac_java_fw" = "x"; then
+                              JVM_LIB="-Wl,-rpath,$with_jvm_lib -L$with_jvm_lib -lazy-ljvm"
+                          fi
+                          ;;
+                      *)
+                          JVM_LIB="-Wl,-rpath=$with_jvm_lib $JVM_LIB"
+                          ;;
+                    esac
                 fi
             else
                 AC_MSG_ERROR("--with-jvm-lib must point to a directory with a libjvm.")
@@ -3990,16 +4035,40 @@ if test "$with_mdb" = "yes" ; then
         fi
     elif test "x$JAVA_HOME" != "x"; then
         TEST_DIR="$JAVA_HOME/jre/lib/amd64/server"
+        if test -d "$JAVA_HOME/jre/lib/server"; then
+            # Oracle Java install on Mac
+            TEST_DIR="$JAVA_HOME/jre/lib/server"
+        fi
+        if test "x$mac_java_fw" != "x"; then
+            # Mac default 1.6.0_x framework, TEST_DIR not used
+            TEST_DIR="$with_java"
+        fi
         if test "x$JVM_LIB" = "x" -a -d "$TEST_DIR"; then
             unset ac_cv_lib_jvm_JNI_CreateJavaVM
             saved_LDFLAGS="$LDFLAGS"
             LDFLAGS="$LDFLAGS -L$TEST_DIR"
-            AC_CHECK_LIB(jvm,JNI_CreateJavaVM,HAS_LIB_JVM=yes,HAS_LIB_JVM=no,)
+            if test "x$mac_java_fw" != "x"; then
+                AC_CHECK_FW_FUNC($mac_java_fw,JNI_CreateJavaVM,HAS_LIB_JVM=yes,HAS_LIB_JVM=no,)
+            else
+                AC_CHECK_LIB(jvm,JNI_CreateJavaVM,HAS_LIB_JVM=yes,HAS_LIB_JVM=no,)
+            fi
             LDFLAGS="$saved_LDFLAGS"
             if test "$HAS_LIB_JVM" = "yes"; then
                 JVM_LIB="-L$TEST_DIR -ljvm"
+                if test "x$mac_java_fw" != "x"; then
+                    JVM_LIB="-framework $mac_java_fw"
+                fi
                 if test "x$with_jvm_lib_add_rpath" = "xyes"; then
-                    JVM_LIB="-Wl,-rpath=$TEST_DIR $JVM_LIB"
+                    case "${host_os}" in
+                      darwin*)
+                          if test "x$mac_java_fw" = "x"; then
+                              JVM_LIB="-Wl,-rpath,$TEST_DIR -L$TEST_DIR -lazy-ljvm"
+                          fi
+                          ;;
+                      *)
+                          JVM_LIB="-Wl,-rpath=$TEST_DIR $JVM_LIB"
+                          ;;
+                    esac
                 fi
             fi
         fi
@@ -4022,8 +4091,6 @@ if test "$with_mdb" = "yes" ; then
         if test "x$JVM_LIB" = "x"; then
             AC_MSG_ERROR("--with-jvm-lib must be specified.")
         fi
-dnl    elif test -f /System/Library/Frameworks/JavaVM.framework/Versions/Current/JavaVM; then
-dnl        JVM_LIB="-framework /System/Library/Frameworks/JavaVM.framework/Versions/Current/JavaVM"
     else
         AC_MSG_ERROR("--with-jvm-lib must be specified.")
     fi
