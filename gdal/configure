@@ -28406,11 +28406,13 @@ $as_echo_n "checking whether we should include Java support... " >&6; }
 
 JAVA_HOME=""
 JAVA_INC=""
+mac_java_fw=""
 
 if test "x$with_java" = "xyes"; then
 
     JAVA_6_TEST_DIR=
     JAVA_7_TEST_DIR=
+    JAVA_MAC_TEST_DIR=
     case "$host_cpu" in
         i*86*)
             JAVA_6_TEST_DIR=/usr/lib/jvm/java-6-openjdk-i386
@@ -28422,6 +28424,11 @@ if test "x$with_java" = "xyes"; then
             ;;
         *)
             ;;
+    esac
+    case "${host_os}" in
+      darwin*)
+        JAVA_MAC_TEST_DIR=$(/usr/libexec/java_home)
+        ;;
     esac
 
     if test "x$JAVA_7_TEST_DIR" != "x" -a -d "$JAVA_7_TEST_DIR/include"; then
@@ -28439,11 +28446,22 @@ if test "x$with_java" = "xyes"; then
 
     elif test -d /usr/java; then
         with_java="/usr/java"
+
+    elif test "x$JAVA_MAC_TEST_DIR" != "x"; then
+        if test -d "$JAVA_MAC_TEST_DIR/bundle"; then
+            # Mac default 1.6.0_x framework
+            # test for ./bundle first, since older installs also have ./include
+            with_java="$JAVA_MAC_TEST_DIR"
+            mac_java_fw="JavaVM"
+        elif test -d "$JAVA_MAC_TEST_DIR/include"; then
+            # Oracle Java install
+            with_java="$JAVA_MAC_TEST_DIR"
+        fi
     else
         as_fn_error $? "\"cannot find JDK root directory.\"" "$LINENO" 5
     fi
 
-    if test \! -d "$with_java/include" ; then
+    if test \! -d "$with_java/include" && test \! -d "$with_java/bundle"; then
         as_fn_error $? "\"$with_java is not a valid JDK.\"" "$LINENO" 5
     fi
 fi
@@ -28453,7 +28471,15 @@ if test "x$JAVA_INC" != "x"; then
 $as_echo "yes" >&6; }
 elif test "x$with_java" != "x" -a "x$with_java" != "xno"; then
 
-    if test -d "$with_java/include"; then
+    if test -d "$with_java/bundle" && test -d "/System/Library/Frameworks/JavaVM.framework/Headers"; then
+        # Mac default 1.6.0_x framework
+        # test for ./bundle first, since older installs also have ./include
+        JAVA_HOME="$with_java"
+        JAVA_INC="-I/System/Library/Frameworks/JavaVM.framework/Headers"
+        mac_java_fw="JavaVM"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+    elif test -d "$with_java/include"; then
         if test -d "$with_java/include/linux"; then
             JAVA_HOME="$with_java"
             JAVA_INC="-I$JAVA_HOME/include -I$JAVA_HOME/include/linux"
@@ -28469,11 +28495,17 @@ $as_echo "yes" >&6; }
             JAVA_INC="-I$JAVA_HOME/include -I$JAVA_HOME/include/freebsd"
             { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
+        elif test -d "$with_java/include/darwin"; then
+            # Oracle Java install, use instead of Mac default 1.6.0_x
+            JAVA_HOME="$with_java"
+            JAVA_INC="-I$JAVA_HOME/include -I$JAVA_HOME/include/darwin"
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
         else
-            as_fn_error $? "\"Cannot find $with_java/include/linux or solaris or freebsd directory.\"" "$LINENO" 5
+            as_fn_error $? "\"Cannot find $with_java/include/linux or solaris or freebsd or darwin directory.\"" "$LINENO" 5
         fi
     else
-        as_fn_error $? "\"Cannot find $with_java/include directory.\"" "$LINENO" 5
+        as_fn_error $? "\"Cannot find $with_java/include or <mac_java_framework>/Headers directory.\"" "$LINENO" 5
     fi
 
 else
@@ -28523,7 +28555,53 @@ fi
         if test -d "$with_jvm_lib"; then
             saved_LDFLAGS="$LDFLAGS"
             LDFLAGS="$LDFLAGS -L$with_jvm_lib"
-            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for JNI_CreateJavaVM in -ljvm" >&5
+            if test "x$mac_java_fw" != "x"; then
+                as_ac_Lib=`$as_echo "ac_cv_lib_$mac_java_fw''_JNI_CreateJavaVM" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for JNI_CreateJavaVM in -framework $mac_java_fw" >&5
+$as_echo_n "checking for JNI_CreateJavaVM in -framework $mac_java_fw... " >&6; }
+if eval \${$as_ac_Lib+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_fw_func_save_LIBS=$LIBS
+LIBS="-framework $mac_java_fw  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char JNI_CreateJavaVM ();
+int
+main ()
+{
+return JNI_CreateJavaVM ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  eval "$as_ac_Lib=yes"
+else
+  eval "$as_ac_Lib=no"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_fw_func_save_LIBS
+fi
+eval ac_res=\$$as_ac_Lib
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
+  HAS_LIB_JVM=yes
+else
+  HAS_LIB_JVM=no
+fi
+
+            else
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking for JNI_CreateJavaVM in -ljvm" >&5
 $as_echo_n "checking for JNI_CreateJavaVM in -ljvm... " >&6; }
 if ${ac_cv_lib_jvm_JNI_CreateJavaVM+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -28565,11 +28643,24 @@ else
   HAS_LIB_JVM=no
 fi
 
+            fi
             LDFLAGS="$saved_LDFLAGS"
             if test "$HAS_LIB_JVM" = "yes"; then
                 JVM_LIB="-L$with_jvm_lib -ljvm"
+                if test "x$mac_java_fw" != "x"; then
+                    JVM_LIB="-framework $mac_java_fw"
+                fi
                 if test "x$with_jvm_lib_add_rpath" = "xyes"; then
-                    JVM_LIB="-Wl,-rpath=$with_jvm_lib $JVM_LIB"
+                    case "${host_os}" in
+                      darwin*)
+                          if test "x$mac_java_fw" = "x"; then
+                              JVM_LIB="-Wl,-rpath,$with_jvm_lib -L$with_jvm_lib -lazy-ljvm"
+                          fi
+                          ;;
+                      *)
+                          JVM_LIB="-Wl,-rpath=$with_jvm_lib $JVM_LIB"
+                          ;;
+                    esac
                 fi
             else
                 as_fn_error $? "\"--with-jvm-lib must point to a directory with a libjvm.\"" "$LINENO" 5
@@ -28579,11 +28670,65 @@ fi
         fi
     elif test "x$JAVA_HOME" != "x"; then
         TEST_DIR="$JAVA_HOME/jre/lib/amd64/server"
+        if test -d "$JAVA_HOME/jre/lib/server"; then
+            # Oracle Java install on Mac
+            TEST_DIR="$JAVA_HOME/jre/lib/server"
+        fi
+        if test "x$mac_java_fw" != "x"; then
+            # Mac default 1.6.0_x framework, TEST_DIR not used
+            TEST_DIR="$with_java"
+        fi
         if test "x$JVM_LIB" = "x" -a -d "$TEST_DIR"; then
             unset ac_cv_lib_jvm_JNI_CreateJavaVM
             saved_LDFLAGS="$LDFLAGS"
             LDFLAGS="$LDFLAGS -L$TEST_DIR"
-            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for JNI_CreateJavaVM in -ljvm" >&5
+            if test "x$mac_java_fw" != "x"; then
+                as_ac_Lib=`$as_echo "ac_cv_lib_$mac_java_fw''_JNI_CreateJavaVM" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for JNI_CreateJavaVM in -framework $mac_java_fw" >&5
+$as_echo_n "checking for JNI_CreateJavaVM in -framework $mac_java_fw... " >&6; }
+if eval \${$as_ac_Lib+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_fw_func_save_LIBS=$LIBS
+LIBS="-framework $mac_java_fw  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char JNI_CreateJavaVM ();
+int
+main ()
+{
+return JNI_CreateJavaVM ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  eval "$as_ac_Lib=yes"
+else
+  eval "$as_ac_Lib=no"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_fw_func_save_LIBS
+fi
+eval ac_res=\$$as_ac_Lib
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
+  HAS_LIB_JVM=yes
+else
+  HAS_LIB_JVM=no
+fi
+
+            else
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking for JNI_CreateJavaVM in -ljvm" >&5
 $as_echo_n "checking for JNI_CreateJavaVM in -ljvm... " >&6; }
 if ${ac_cv_lib_jvm_JNI_CreateJavaVM+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -28625,11 +28770,24 @@ else
   HAS_LIB_JVM=no
 fi
 
+            fi
             LDFLAGS="$saved_LDFLAGS"
             if test "$HAS_LIB_JVM" = "yes"; then
                 JVM_LIB="-L$TEST_DIR -ljvm"
+                if test "x$mac_java_fw" != "x"; then
+                    JVM_LIB="-framework $mac_java_fw"
+                fi
                 if test "x$with_jvm_lib_add_rpath" = "xyes"; then
-                    JVM_LIB="-Wl,-rpath=$TEST_DIR $JVM_LIB"
+                    case "${host_os}" in
+                      darwin*)
+                          if test "x$mac_java_fw" = "x"; then
+                              JVM_LIB="-Wl,-rpath,$TEST_DIR -L$TEST_DIR -lazy-ljvm"
+                          fi
+                          ;;
+                      *)
+                          JVM_LIB="-Wl,-rpath=$TEST_DIR $JVM_LIB"
+                          ;;
+                    esac
                 fi
             fi
         fi
