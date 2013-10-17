@@ -123,8 +123,8 @@ int OGRGMELayer::FetchDescribe()
         json_object *field_obj = (json_object*) 
             array_list_get_idx(column_list, i);
 
-        OGRFieldDefn oFieldDefn(poDS->GetJSONString(field_obj, "name"),
-                                OFTString);
+	const char* name = poDS->GetJSONString(field_obj, "name");
+        OGRFieldDefn oFieldDefn(name, OFTString);
         const char *type = poDS->GetJSONString(field_obj, "type");
 
         if (EQUAL(type, "integer")) 
@@ -189,7 +189,7 @@ void OGRGMELayer::GetPageOfFeatures()
 /*      Fetch features.                                                 */
 /* -------------------------------------------------------------------- */
     CPLString osRequest = "tables/" + osTableId + "/features";
-    CPLString osMoreOptions = "&maxResults=2";
+    CPLString osMoreOptions = "&maxResults=1000";
 
     if (!EQUAL(osNextPageToken,"")) 
     {
@@ -264,9 +264,19 @@ OGRFeature *OGRGMELayer::GetNextRawFeature()
                 properties_obj, 
                 poFeatureDefn->GetFieldDefn(iOGRField)->GetNameRef(),
                 NULL);
-        if (pszValue != NULL)
+        if (pszValue != NULL) {
             poFeature->SetField(iOGRField, pszValue);
+	}
     }
+/* -------------------------------------------------------------------- */
+/*      Handle gx_id.                                                   */
+/* -------------------------------------------------------------------- */
+    const char *gx_id = poDS->GetJSONString(properties_obj, "gx_id");
+    int nFID = atoi(gx_id);
+    if (EQUAL(CPLSPrintf("%d", nFID), gx_id))
+	poFeature->SetFID(nFID);
+    else
+        poFeature->SetFID(m_nFeaturesRead);
 
 /* -------------------------------------------------------------------- */
 /*      Handle geometry.                                                */
@@ -296,6 +306,7 @@ OGRFeature *OGRGMELayer::GetNextFeature()
 
 {
     OGRFeature *poFeature = NULL;
+    
     while( TRUE )
     {
         poFeature = GetNextRawFeature();
