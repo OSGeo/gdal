@@ -74,13 +74,42 @@ def png_copy_icc():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    try:
+        os.stat('tmp/icc_test.png.aux.xml')
+        gdaltest.post_reason('fail')
+        return 'fail'
+    except:
+        pass
+
     # Check again with dataset from Open()
     ds2 = gdal.Open('tmp/icc_test.png')
     md = ds2.GetMetadata("COLOR_PROFILE")
-    ds = None
     ds2 = None
 
+    try:
+        os.stat('tmp/icc_test.png.aux.xml')
+        gdaltest.post_reason('fail')
+        return 'fail'
+    except:
+        pass
+
     if md['SOURCE_ICC_PROFILE'] != icc:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Check again with GetMetadataItem()
+    ds2 = gdal.Open('tmp/icc_test.png')
+    source_icc_profile = ds2.GetMetadataItem("SOURCE_ICC_PROFILE", "COLOR_PROFILE")
+    ds2 = None
+
+    try:
+        os.stat('tmp/icc_test.png.aux.xml')
+        gdaltest.post_reason('fail')
+        return 'fail'
+    except:
+        pass
+
+    if source_icc_profile != icc:
         gdaltest.post_reason('fail')
         return 'fail'
 

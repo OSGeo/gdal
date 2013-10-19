@@ -157,9 +157,15 @@ def jpeg_copy_icc_64K():
     # Check with dataset from CreateCopy()
     ds2 = driver.CreateCopy('tmp/icc_test.jpg', ds)
     md = ds2.GetMetadata("COLOR_PROFILE")
-    ds = None
     ds2 = None
 
+    try:
+        os.stat('tmp/icc_test.jpg.aux.xml')
+        gdaltest.post_reason('fail')
+        return 'fail'
+    except:
+        pass
+    
     if md['SOURCE_ICC_PROFILE'] != icc:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -167,13 +173,35 @@ def jpeg_copy_icc_64K():
     # Check again with dataset from Open()
     ds2 = gdal.Open('tmp/icc_test.jpg')
     md = ds2.GetMetadata("COLOR_PROFILE")
-    ds = None
     ds2 = None
+
+    try:
+        os.stat('tmp/icc_test.jpg.aux.xml')
+        gdaltest.post_reason('fail')
+        return 'fail'
+    except:
+        pass
 
     if md['SOURCE_ICC_PROFILE'] != icc:
         gdaltest.post_reason('fail')
         return 'fail'
-    
+
+    # Check again with GetMetadataItem()
+    ds2 = gdal.Open('tmp/icc_test.jpg')
+    source_icc_profile = ds2.GetMetadataItem("SOURCE_ICC_PROFILE", "COLOR_PROFILE")
+    ds2 = None
+
+    try:
+        os.stat('tmp/icc_test.jpg.aux.xml')
+        gdaltest.post_reason('fail')
+        return 'fail'
+    except:
+        pass
+
+    if source_icc_profile != icc:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     driver_tiff.Delete('tmp/icc_test.tiff')
     driver.Delete('tmp/icc_test.jpg')
 
