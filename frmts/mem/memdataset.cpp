@@ -874,34 +874,44 @@ GDALDataset *MEMDataset::Create( const char * pszFilename,
     int         nWordSize = GDALGetDataTypeSize(eType) / 8;
     int         bAllocOK = TRUE;
 
+    GUIntBig nGlobalBigSize = (GUIntBig)nWordSize * nBands * nXSize * nYSize;
+    size_t nGlobalSize = (size_t)nGlobalBigSize;
+#if SIZEOF_VOIDP == 4
+    if( (GUIntBig)nGlobalSize != nGlobalBigSize )
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory,
+                  "Cannot allocate " CPL_FRMT_GUIB " bytes on this platform.",
+                  nGlobalBigSize );
+        return NULL;
+    }
+#endif
+
     if( bPixelInterleaved )
     {
         apbyBandData.push_back( 
-            (GByte *) VSIMalloc3( nWordSize * nBands, nXSize, nYSize ) );
+            (GByte *) VSICalloc( 1, nGlobalSize ) );
 
         if( apbyBandData[0] == NULL )
             bAllocOK = FALSE;
         else
-    {
-            memset(apbyBandData[0], 0, ((size_t)nWordSize) * nBands * nXSize * nYSize);
+        {
             for( iBand = 1; iBand < nBands; iBand++ )
                 apbyBandData.push_back( apbyBandData[0] + iBand * nWordSize );
         }
     }
-        else
+    else
+    {
+        for( iBand = 0; iBand < nBands; iBand++ )
         {
-            for( iBand = 0; iBand < nBands; iBand++ )
-            {
             apbyBandData.push_back( 
-                (GByte *) VSIMalloc3( nWordSize, nXSize, nYSize ) );
+                (GByte *) VSICalloc( 1, ((size_t)nWordSize) * nXSize * nYSize ) );
             if( apbyBandData[iBand] == NULL )
             {
                 bAllocOK = FALSE;
                 break;
             }
-            memset(apbyBandData[iBand], 0, ((size_t)nWordSize) * nXSize * nYSize);
         }
-            }
+    }
 
     if( !bAllocOK )
     {
@@ -910,10 +920,10 @@ GDALDataset *MEMDataset::Create( const char * pszFilename,
             if( apbyBandData[iBand] )
                 VSIFree( apbyBandData[iBand] );
         }
-            CPLError( CE_Failure, CPLE_OutOfMemory,
-                      "Unable to create band arrays ... out of memory." );
-            return NULL;
-        }
+        CPLError( CE_Failure, CPLE_OutOfMemory,
+                    "Unable to create band arrays ... out of memory." );
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create the new GTiffDataset object.                             */
