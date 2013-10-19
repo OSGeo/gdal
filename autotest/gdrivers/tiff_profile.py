@@ -66,7 +66,14 @@ def tiff_write_icc():
     # Check with dataset from Create()
     md = ds.GetMetadata("COLOR_PROFILE")
     ds = None
-    
+
+    try:
+        os.stat('tmp/icc_test.tiff.aux.xml')
+        gdaltest.post_reason('fail')
+        return 'fail'
+    except:
+        pass
+
     if md['SOURCE_ICC_PROFILE'] != icc:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -76,7 +83,30 @@ def tiff_write_icc():
     md = ds.GetMetadata("COLOR_PROFILE")
     ds = None
     
+    try:
+        os.stat('tmp/icc_test.tiff.aux.xml')
+        gdaltest.post_reason('fail')
+        return 'fail'
+    except:
+        pass
+
     if md['SOURCE_ICC_PROFILE'] != icc:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Check again with GetMetadataItem()
+    ds = gdal.Open('tmp/icc_test.tiff')
+    source_icc_profile = ds.GetMetadataItem("SOURCE_ICC_PROFILE", "COLOR_PROFILE")
+    ds = None
+
+    try:
+        os.stat('tmp/icc_test.tiff.aux.xml')
+        gdaltest.post_reason('fail')
+        return 'fail'
+    except:
+        pass
+
+    if source_icc_profile != icc:
         gdaltest.post_reason('fail')
         return 'fail'
 

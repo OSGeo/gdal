@@ -356,6 +356,9 @@ class GTiffDataset : public GDALPamDataset
     int           bEXIFMetadataLoaded;
     void          LoadEXIFMetadata();
 
+    int           bICCMetadataLoaded;
+    void          LoadICCProfile();
+
     int           bHasWarnedDisableAggressiveBandCaching;
 
     int           bDontReloadFirstBlock; /* Hack for libtiff 3.X and #3633 */
@@ -445,7 +448,6 @@ class GTiffDataset : public GDALPamDataset
 
     CPLErr   WriteEncodedTileOrStrip(uint32 tile_or_strip, void* data, int bPreserveDataBuffer);
 
-    void LoadICCProfile( TIFF *hTIFF );
     static void SaveICCProfile(GTiffDataset *pDS, TIFF *hTIFF, char **papszParmList, uint32 nBitsPerSample);
 };
 
@@ -3112,6 +3114,7 @@ GTiffDataset::GTiffDataset()
     bHasSearchedIMD = FALSE;
     bHasSearchedPVL = FALSE;
     bEXIFMetadataLoaded = FALSE;
+    bICCMetadataLoaded = FALSE;
 
     bScanDeferred = TRUE;
 
@@ -6192,7 +6195,7 @@ static CPLString ConvertTransferFunctionToString( const uint16 *pTable, uint32 n
 /*      Load ICC Profile or colorimetric data into metadata             */
 /************************************************************************/
 
-void GTiffDataset::LoadICCProfile( TIFF *hTIFF )
+void GTiffDataset::LoadICCProfile()
 {
     uint32 nEmbedLen;
     uint8* pEmbedBuffer;
@@ -6202,11 +6205,18 @@ void GTiffDataset::LoadICCProfile( TIFF *hTIFF )
     uint16 *pTransferRange = NULL;
     const int TIFFTAG_TRANSFERRANGE = 0x0156;
 
+    if (bICCMetadataLoaded)
+        return;
+    bICCMetadataLoaded = TRUE;
+
+    if (!SetDirectory())
+        return;
+
     if (TIFFGetField(hTIFF, TIFFTAG_ICCPROFILE, &nEmbedLen, &pEmbedBuffer)) 
     {
         char *pszBase64Profile = CPLBase64Encode(nEmbedLen, (const GByte*)pEmbedBuffer);
 
-        SetMetadataItem( "SOURCE_ICC_PROFILE", pszBase64Profile, "COLOR_PROFILE" );
+        oGTiffMDMD.SetMetadataItem( "SOURCE_ICC_PROFILE", pszBase64Profile, "COLOR_PROFILE" );
 
         CPLFree(pszBase64Profile);
 
@@ -6224,14 +6234,14 @@ void GTiffDataset::LoadICCProfile( TIFF *hTIFF )
             TIFFGetFieldDefaulted(hTIFF, TIFFTAG_TRANSFERRANGE, &pTransferRange);
 
             // Set all the colorimetric metadata.
-            SetMetadataItem( "SOURCE_PRIMARIES_RED", 
+            oGTiffMDMD.SetMetadataItem( "SOURCE_PRIMARIES_RED", 
                 CPLString().Printf( "%.9f, %.9f, 1.0", (double)pCHR[0], (double)pCHR[1] ) , "COLOR_PROFILE" );
-            SetMetadataItem( "SOURCE_PRIMARIES_GREEN", 
+            oGTiffMDMD.SetMetadataItem( "SOURCE_PRIMARIES_GREEN", 
                 CPLString().Printf( "%.9f, %.9f, 1.0", (double)pCHR[2], (double)pCHR[3] ) , "COLOR_PROFILE" );
-            SetMetadataItem( "SOURCE_PRIMARIES_BLUE", 
+            oGTiffMDMD.SetMetadataItem( "SOURCE_PRIMARIES_BLUE", 
                 CPLString().Printf( "%.9f, %.9f, 1.0", (double)pCHR[4], (double)pCHR[5] ) , "COLOR_PROFILE" );
 
-            SetMetadataItem( "SOURCE_WHITEPOINT", 
+            oGTiffMDMD.SetMetadataItem( "SOURCE_WHITEPOINT", 
                 CPLString().Printf( "%.9f, %.9f, 1.0", (double)pWP[0], (double)pWP[1] ) , "COLOR_PROFILE" );
 
             /* Set transfer function metadata */
@@ -6239,22 +6249,22 @@ void GTiffDataset::LoadICCProfile( TIFF *hTIFF )
             /* Get length of table. */
             const uint32 nTransferFunctionLength = 1 << nBitsPerSample;
 
-            SetMetadataItem( "TIFFTAG_TRANSFERFUNCTION_RED", 
+            oGTiffMDMD.SetMetadataItem( "TIFFTAG_TRANSFERFUNCTION_RED", 
                 ConvertTransferFunctionToString( pTFR, nTransferFunctionLength), "COLOR_PROFILE" );
 
-            SetMetadataItem( "TIFFTAG_TRANSFERFUNCTION_GREEN", 
+            oGTiffMDMD.SetMetadataItem( "TIFFTAG_TRANSFERFUNCTION_GREEN", 
                 ConvertTransferFunctionToString( pTFG, nTransferFunctionLength), "COLOR_PROFILE" );
 
-            SetMetadataItem( "TIFFTAG_TRANSFERFUNCTION_BLUE", 
+            oGTiffMDMD.SetMetadataItem( "TIFFTAG_TRANSFERFUNCTION_BLUE", 
                 ConvertTransferFunctionToString( pTFB, nTransferFunctionLength), "COLOR_PROFILE" );
 
             /* Set transfer range */
             if (pTransferRange)
             {
-                SetMetadataItem( "TIFFTAG_TRANSFERRANGE_BLACK",
+                oGTiffMDMD.SetMetadataItem( "TIFFTAG_TRANSFERRANGE_BLACK",
                     CPLString().Printf( "%d, %d, %d", 
                         (int)pTransferRange[0], (int)pTransferRange[2], (int)pTransferRange[4]), "COLOR_PROFILE" );
-                SetMetadataItem( "TIFFTAG_TRANSFERRANGE_WHITE",
+                oGTiffMDMD.SetMetadataItem( "TIFFTAG_TRANSFERRANGE_WHITE",
                     CPLString().Printf( "%d, %d, %d", 
                         (int)pTransferRange[1], (int)pTransferRange[3], (int)pTransferRange[5]), "COLOR_PROFILE" );
             }
@@ -7180,9 +7190,6 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         
     if( bMinIsWhite )
         SetMetadataItem( "MINISWHITE", "YES", "IMAGE_STRUCTURE" );
-
-    LoadICCProfile( hTIFF );
-    bColorProfileMetadataChanged = FALSE;
 
     if( TIFFGetField( hTIFF, TIFFTAG_GDAL_METADATA, &pszText ) )
     {
@@ -8239,8 +8246,6 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     poDS->nLZMAPreset = GTiffGetLZMAPreset(papszParmList);
     poDS->nJpegQuality = GTiffGetJpegQuality(papszParmList);
 
-    poDS->LoadICCProfile( hTIFF );
-    poDS->bColorProfileMetadataChanged = FALSE;
 #if !defined(BIGTIFF_SUPPORT)
 /* -------------------------------------------------------------------- */
 /*      If we are writing jpeg compression we need to write some        */
@@ -8975,9 +8980,6 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     hTIFF = (TIFF*) poDS->GetInternalHandle(NULL);
 
-    poDS->LoadICCProfile( hTIFF );
-    poDS->bColorProfileMetadataChanged = FALSE;
-
 /* -------------------------------------------------------------------- */
 /*      Handle forcing xml:ESRI data to be written to PAM.              */
 /* -------------------------------------------------------------------- */
@@ -9488,6 +9490,9 @@ char **GTiffDataset::GetMetadata( const char * pszDomain )
     else if( pszDomain != NULL && EQUAL(pszDomain,"EXIF") )
         LoadEXIFMetadata();
 
+    else if( pszDomain != NULL && EQUAL(pszDomain,"COLOR_PROFILE") )
+        LoadICCProfile();
+
     else if( pszDomain == NULL || EQUAL(pszDomain, "") )
         LoadMDAreaOrPoint(); /* to set GDALMD_AREA_OR_POINT */
 
@@ -9545,6 +9550,9 @@ const char *GTiffDataset::GetMetadataItem( const char * pszName,
 
     else if( pszDomain != NULL && EQUAL(pszDomain,"EXIF") )
         LoadEXIFMetadata();
+
+    else if( pszDomain != NULL && EQUAL(pszDomain,"COLOR_PROFILE") )
+        LoadICCProfile();
 
     else if( (pszDomain == NULL || EQUAL(pszDomain, "")) &&
         pszName != NULL && EQUAL(pszName, GDALMD_AREA_OR_POINT) )
