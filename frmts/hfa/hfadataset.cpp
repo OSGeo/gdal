@@ -3162,6 +3162,8 @@ CPLErr HFADataset::WriteProjection()
         int	i;
 
         sDatum.datumname = (char *) poGeogSRS->GetAttrValue( "GEOGCS|DATUM" );
+        if( sDatum.datumname == NULL )
+            sDatum.datumname = (char*) "";
 
         /* WKT to Imagine translation */
         for( i = 0; apszDatumMap[i] != NULL; i += 2 )
@@ -3214,6 +3216,11 @@ CPLErr HFADataset::WriteProjection()
 
         sPro.proSpheroid.eSquared = (a2-b2)/a2;
     }
+
+    if( sDatum.datumname == NULL )
+        sDatum.datumname = (char*) "";
+    if( sPro.proSpheroid.sphereName == NULL )
+        sPro.proSpheroid.sphereName = (char*) "";
 
 /* -------------------------------------------------------------------- */
 /*      Recognise various projections.                                  */
@@ -3884,6 +3891,10 @@ int WritePeStringIfNeeded(OGRSpatialReference* poSRS, HFAHandle hHFA)
   const char *pszDatum = poSRS->GetAttrValue( "DATUM" );
   int gcsNameOffset = 0;
   int datumNameOffset = 0;
+  if( pszGEOGCS == NULL )
+      pszGEOGCS = "";
+  if( pszDatum == NULL )
+      pszDatum = "";
   if(strstr(pszGEOGCS, "GCS_"))
     gcsNameOffset = strlen("GCS_");
   if(strstr(pszDatum, "D_"))
