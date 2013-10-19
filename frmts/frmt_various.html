@@ -924,6 +924,23 @@ pixel types other than 16bit unsigned will be written as eight bit.</p>
 <p>Starting with GDAL 1.9.0, XMP metadata can be extracted from the file, and will be
 stored as XML raw content in the xml:XMP metadata domain.</p>
 
+<h2>Color Profile Metadata</h2>
+
+<p>Starting with GDAL 2.0, GDAL can deal with the following color profile metadata in the COLOR_PROFILE domain:</p>
+<ul>
+<li>SOURCE_ICC_PROFILE (Base64 encoded ICC profile embedded in file. If available, other tags are ignored.)</li>
+<li>SOURCE_ICC_PROFILE_NAME : ICC profile name. sRGB is recognized as a special value.</li>
+<li>SOURCE_PRIMARIES_RED (xyY in "x,y,1" format for red primary.)</li>
+<li>SOURCE_PRIMARIES_GREEN (xyY in "x,y,1" format for green primary)</li>
+<li>SOURCE_PRIMARIES_BLUE (xyY in "x,y,1" format for blue primary)</li>
+<li>SOURCE_WHITEPOINT (xyY in "x,y,1" format for whitepoint)</li>
+<li>PNG_GAMMA</li>
+</ul>
+
+<p>Note that these metadata properties can only be used on the original raw pixel data. If automatic conversion to RGB has been done, the color profile information cannot be used.</p>
+
+<p>All these metadata tags can be used as creation options.</p>
+
 <p>Creation Options:</p>
 
 <ul>
