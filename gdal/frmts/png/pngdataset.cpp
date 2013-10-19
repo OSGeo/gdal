@@ -141,6 +141,7 @@ class PNGDataset : public GDALPamDataset
     virtual void FlushCache( void );
 
     virtual char  **GetMetadata( const char * pszDomain = "" );
+    void LoadICCProfile();
 
     // semi-private.
     jmp_buf     sSetJmpContext;
@@ -823,6 +824,82 @@ void PNGDataset::CollectXMPMetadata()
 }
 
 /************************************************************************/
+/*                           LoadICCProfile()                           */
+/************************************************************************/
+
+void PNGDataset::LoadICCProfile()
+{
+    png_charp pszProfileName;
+    png_uint_32 nProfileLength;
+#if (PNG_LIBPNG_VER_MAJOR == 1 && PNG_LIBPNG_VER_MINOR > 4) || PNG_LIBPNG_VER_MAJOR > 1
+    png_bytep pProfileData;
+#else
+    png_charp pProfileData;
+#endif
+    int nCompressionType;
+    int nsRGBIntent;
+    double dfGamma;
+    bool bGammaAvailable = false;
+
+    if (png_get_iCCP(hPNG, psPNGInfo, &pszProfileName,
+       &nCompressionType, &pProfileData, &nProfileLength) != 0)
+    {
+        /* Escape the profile */
+        char *pszBase64Profile = CPLBase64Encode(nProfileLength, (const GByte*)pProfileData);
+
+        /* Set ICC profile metadata */
+        SetMetadataItem( "SOURCE_ICC_PROFILE", pszBase64Profile, "COLOR_PROFILE" );
+        SetMetadataItem( "SOURCE_ICC_PROFILE_NAME", pszProfileName, "COLOR_PROFILE" );
+
+        CPLFree(pszBase64Profile);
+
+        return;
+    }
+
+    if (png_get_sRGB(hPNG, psPNGInfo, &nsRGBIntent) != 0)
+    {
+        SetMetadataItem( "SOURCE_ICC_PROFILE_NAME", "sRGB", "COLOR_PROFILE" );
+        return;
+    }
+
+    if (png_get_valid(hPNG, psPNGInfo, PNG_INFO_gAMA))
+    {
+        bGammaAvailable = true;
+
+        png_get_gAMA(hPNG,psPNGInfo, &dfGamma);
+
+        SetMetadataItem( "PNG_GAMMA", 
+            CPLString().Printf( "%.9f", dfGamma ) , "COLOR_PROFILE" );
+    }
+
+    // Check if both cHRM and gAMA available
+    if (bGammaAvailable && png_get_valid(hPNG, psPNGInfo, PNG_INFO_cHRM))
+    {
+        double dfaWhitepoint[2];
+        double dfaCHR[6];
+
+        png_get_cHRM(hPNG, psPNGInfo,
+                    &dfaWhitepoint[0], &dfaWhitepoint[1],
+                    &dfaCHR[0], &dfaCHR[1],
+                    &dfaCHR[2], &dfaCHR[3],
+                    &dfaCHR[4], &dfaCHR[5]);
+
+        // Set all the colorimetric metadata.
+        SetMetadataItem( "SOURCE_PRIMARIES_RED", 
+            CPLString().Printf( "%.9f, %.9f, 1.0", dfaCHR[0], dfaCHR[1] ) , "COLOR_PROFILE" );
+        SetMetadataItem( "SOURCE_PRIMARIES_GREEN", 
+            CPLString().Printf( "%.9f, %.9f, 1.0", dfaCHR[2], dfaCHR[3] ) , "COLOR_PROFILE" );
+        SetMetadataItem( "SOURCE_PRIMARIES_BLUE", 
+            CPLString().Printf( "%.9f, %.9f, 1.0", dfaCHR[4], dfaCHR[5] ) , "COLOR_PROFILE" );
+
+        SetMetadataItem( "SOURCE_WHITEPOINT", 
+            CPLString().Printf( "%.9f, %.9f, 1.0", dfaWhitepoint[0], dfaWhitepoint[1] ) , "COLOR_PROFILE" );
+
+    }
+}
+
+
+/************************************************************************/
 /*                           GetMetadata()                              */
 /************************************************************************/
 
@@ -1082,6 +1159,8 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
     }
 
+    poDS->LoadICCProfile();
+
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
@@ -1340,6 +1419,136 @@ PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
     
 /* -------------------------------------------------------------------- */
+/*      Copy colour profile data                                        */
+/* -------------------------------------------------------------------- */
+    const char *pszICCProfile = CSLFetchNameValue(papszOptions, "SOURCE_ICC_PROFILE");
+    const char *pszICCProfileName = CSLFetchNameValue(papszOptions, "SOURCE_ICC_PROFILE_NAME");
+    if (pszICCProfileName == NULL)
+        pszICCProfileName = poSrcDS->GetMetadataItem( "SOURCE_ICC_PROFILE_NAME", "COLOR_PROFILE" );
+
+    if (pszICCProfile == NULL)
+        pszICCProfile = poSrcDS->GetMetadataItem( "SOURCE_ICC_PROFILE", "COLOR_PROFILE" );
+
+    if ((pszICCProfileName != NULL) && EQUAL(pszICCProfileName, "sRGB"))
+    {
+        pszICCProfile = NULL;
+
+        png_set_sRGB(hPNG, psPNGInfo, PNG_sRGB_INTENT_PERCEPTUAL);
+    }
+
+    if (pszICCProfile != NULL)
+    {
+        char *pEmbedBuffer = CPLStrdup(pszICCProfile);
+        png_uint_32 nEmbedLen = CPLBase64DecodeInPlace((GByte*)pEmbedBuffer);
+        const char* pszLocalICCProfileName = (pszICCProfileName!=NULL)?pszICCProfileName:"ICC Profile";
+
+        png_set_iCCP(hPNG, psPNGInfo,
+#if (PNG_LIBPNG_VER_MAJOR == 1 && PNG_LIBPNG_VER_MINOR > 4) || PNG_LIBPNG_VER_MAJOR > 1
+            pszLocalICCProfileName,
+#else
+            (png_charp)pszLocalICCProfileName,
+#endif
+            0,
+#if (PNG_LIBPNG_VER_MAJOR == 1 && PNG_LIBPNG_VER_MINOR > 4) || PNG_LIBPNG_VER_MAJOR > 1
+            (png_const_bytep)pEmbedBuffer,
+#else
+            (png_charp)pEmbedBuffer,
+#endif
+            nEmbedLen);
+
+        CPLFree(pEmbedBuffer);
+    }
+    else if ((pszICCProfileName == NULL) || !EQUAL(pszICCProfileName, "sRGB"))
+    {
+        // Output gamma, primaries and whitepoint
+        const char *pszGamma = CSLFetchNameValue(papszOptions, "PNG_GAMMA");
+        if (pszGamma == NULL)
+            pszGamma = poSrcDS->GetMetadataItem( "PNG_GAMMA", "COLOR_PROFILE" );
+
+        if (pszGamma != NULL)
+        {
+            double dfGamma = atof(pszGamma);
+            png_set_gAMA(hPNG, psPNGInfo, dfGamma);
+        }
+
+        const char *pszPrimariesRed = CSLFetchNameValue(papszOptions, "SOURCE_PRIMARIES_RED");
+        if (pszPrimariesRed == NULL)
+            pszPrimariesRed = poSrcDS->GetMetadataItem( "SOURCE_PRIMARIES_RED", "COLOR_PROFILE" );
+        const char *pszPrimariesGreen = CSLFetchNameValue(papszOptions, "SOURCE_PRIMARIES_GREEN");
+        if (pszPrimariesGreen == NULL)
+            pszPrimariesGreen = poSrcDS->GetMetadataItem( "SOURCE_PRIMARIES_GREEN", "COLOR_PROFILE" );
+        const char *pszPrimariesBlue = CSLFetchNameValue(papszOptions, "SOURCE_PRIMARIES_BLUE");
+        if (pszPrimariesBlue == NULL)
+            pszPrimariesBlue = poSrcDS->GetMetadataItem( "SOURCE_PRIMARIES_BLUE", "COLOR_PROFILE" );
+        const char *pszWhitepoint = CSLFetchNameValue(papszOptions, "SOURCE_WHITEPOINT");
+        if (pszWhitepoint == NULL)
+            pszWhitepoint = poSrcDS->GetMetadataItem( "SOURCE_WHITEPOINT", "COLOR_PROFILE" );
+
+        if ((pszPrimariesRed != NULL) && (pszPrimariesGreen != NULL) && (pszPrimariesBlue != NULL) &&
+            (pszWhitepoint != NULL))
+        {
+            bool bOk = true;
+            double faColour[8];
+            char** apapszTokenList[4];
+
+            apapszTokenList[0] = CSLTokenizeString2( pszWhitepoint, ",", 
+                CSLT_ALLOWEMPTYTOKENS | CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES );
+            apapszTokenList[1] = CSLTokenizeString2( pszPrimariesRed, ",", 
+                CSLT_ALLOWEMPTYTOKENS | CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES );
+            apapszTokenList[2] = CSLTokenizeString2( pszPrimariesGreen, ",", 
+                CSLT_ALLOWEMPTYTOKENS | CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES );
+            apapszTokenList[3] = CSLTokenizeString2( pszPrimariesBlue, ",", 
+                CSLT_ALLOWEMPTYTOKENS | CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES );
+
+            if ((CSLCount( apapszTokenList[0] ) == 3) &&
+                (CSLCount( apapszTokenList[1] ) == 3) &&
+                (CSLCount( apapszTokenList[2] ) == 3) &&
+                (CSLCount( apapszTokenList[3] ) == 3))
+            {
+                for( int i = 0; i < 4; i++ )
+                {
+                    for( int j = 0; j < 3; j++ )
+                    {
+                        double v = atof(apapszTokenList[i][j]);
+
+                        if (j == 2)
+                        {
+                            /* Last term of xyY colour must be 1.0 */
+                            if (v != 1.0)
+                            {
+                                bOk = false;
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            faColour[i*2 + j] = v;
+                        }
+                    }
+                    if (!bOk)
+                        break;
+                }
+
+                if (bOk)
+                {
+                    png_set_cHRM(hPNG, psPNGInfo, 
+                        faColour[0], faColour[1], 
+                        faColour[2], faColour[3], 
+                        faColour[4], faColour[5], 
+                        faColour[6], faColour[7]);
+
+                }
+            }
+
+            CSLDestroy( apapszTokenList[0] );
+            CSLDestroy( apapszTokenList[1] );
+            CSLDestroy( apapszTokenList[2] );
+            CSLDestroy( apapszTokenList[3] );
+        }
+
+    }
+    
+/* -------------------------------------------------------------------- */
 /*      Write palette if there is one.  Technically, I think it is      */
 /*      possible to write 16bit palettes for PNG, but we will omit      */
 /*      this for now.                                                   */
@@ -1591,7 +1800,14 @@ void GDALRegister_PNG()
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
 "<CreationOptionList>\n"
 "   <Option name='WORLDFILE' type='boolean' description='Create world file'/>\n"
-"   <Option name='ZLEVEL' type='int' description='DEFLATE compression level 1-9' default='6'/>"
+"   <Option name='ZLEVEL' type='int' description='DEFLATE compression level 1-9' default='6'/>\n"
+"   <Option name='SOURCE_ICC_PROFILE' type='string' description='ICC Profile'/>\n"
+"   <Option name='SOURCE_ICC_PROFILE_NAME' type='string' descriptor='ICC Profile name'/>\n"
+"   <Option name='SOURCE_PRIMARIES_RED' type='string' description='x,y,1.0 (xyY) red chromaticity'/>\n"
+"   <Option name='SOURCE_PRIMARIES_GREEN' type='string' description='x,y,1.0 (xyY) green chromaticity'/>\n"
+"   <Option name='SOURCE_PRIMARIES_BLUE' type='string' description='x,y,1.0 (xyY) blue chromaticity'/>\n"
+"   <Option name='SOURCE_WHITEPOINT' type='string' description='x,y,1.0 (xyY) whitepoint'/>\n"
+"   <Option name='PNG_GAMMA' type='string' description='Gamma'/>\n"
 "</CreationOptionList>\n" );
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
