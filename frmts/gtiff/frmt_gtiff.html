@@ -132,6 +132,26 @@ stored as XML raw content in the xml:XMP metadata domain.</p>
 <p>Starting with GDAL 1.10, EXIF metadata can be extracted from the file, and will be
 stored the EXIF metadata domain.</p>
 
+<h2>Color Profile Metadata</h2>
+
+<p>Starting with GDAL 2.0, GDAL can deal with the following color profile metadata in the COLOR_PROFILE domain:</p>
+<ul>
+<li>SOURCE_ICC_PROFILE (Base64 encoded ICC profile embedded in file. If available, other tags are ignored.)</li>
+<li>SOURCE_PRIMARIES_RED (xyY in "x,y,1" format for red primary.)</li>
+<li>SOURCE_PRIMARIES_GREEN (xyY in "x,y,1" format for green primary)</li>
+<li>SOURCE_PRIMARIES_BLUE (xyY in "x,y,1" format for blue primary)</li>
+<li>SOURCE_WHITEPOINT (xyY in "x,y,1" format for whitepoint)</li>
+<li>TIFFTAG_TRANSFERFUNCTION_RED (Red table of TIFFTAG_TRANSFERFUNCTION)</li>
+<li>TIFFTAG_TRANSFERFUNCTION_GREEN (Green table of TIFFTAG_TRANSFERFUNCTION)</li>
+<li>TIFFTAG_TRANSFERFUNCTION_BLUE (Blue table of TIFFTAG_TRANSFERFUNCTION)</li>
+<li>TIFFTAG_TRANSFERRANGE_BLACK (Min range of TIFFTAG_TRANSFERRANGE)</li>
+<li>TIFFTAG_TRANSFERRANGE_WHITE (Max range of TIFFTAG_TRANSFERRANGE)</li>
+</ul>
+
+<p>Note that these metadata properties can only be used on the original raw pixel data. If automatic conversion to RGB has been done, the color profile information cannot be used.</p>
+
+<p>All these metadata tags can be overriden and/or used as creation options.</p>
+
 <h2>Nodata value</h2>
 
 <p>GDAL stores band nodata value in the non standard TIFFTAG_GDAL_NODATA ASCII tag (code 42113) for

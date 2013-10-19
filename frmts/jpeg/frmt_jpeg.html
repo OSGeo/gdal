@@ -51,6 +51,17 @@ and SSE2 SIMD instructions to accelerate baseline JPEG compression/decompression
 Starting with GDAL 1.9.0, XMP metadata can be extracted from the file, and will be
 stored as XML raw content in the xml:XMP metadata domain.<p>
 
+<h2>Color Profile Metadata</h2>
+
+<p>Starting with GDAL 2.0, GDAL can deal with the following color profile metadata in the COLOR_PROFILE domain:</p>
+<ul>
+<li>SOURCE_ICC_PROFILE (Base64 encoded ICC profile embedded in file.)</li>
+</ul>
+
+<p>Note that this metadata property can only be used on the original raw pixel data. If automatic conversion to RGB has been done, the color profile information cannot be used.</p>
+
+<p>This metadata tag can be used as creation options.</p>
+
 <h2>Creation Options</h2>
 
 JPEG files are created using the "JPEG" driver code.  Only Byte band types
