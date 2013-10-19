@@ -339,6 +339,65 @@ def hfa_update_existing_aux_overviews():
     return 'success'
 
 ###############################################################################
+# Test writing invalid WKT (#5258)
+
+def hfa_write_invalid_wkt():
+
+    # No GEOGCS
+    ds = gdal.GetDriverByName('HFA').Create('/vsimem/hfa_write_invalid_wkt.img', 1,1)
+    ds.SetProjection("""PROJCS["NAD27 / UTM zone 11N",
+    PROJECTION["Transverse_Mercator"],
+    PARAMETER["latitude_of_origin",0],
+    PARAMETER["central_meridian",-117],
+    PARAMETER["scale_factor",0.9996],
+    PARAMETER["false_easting",500000],
+    PARAMETER["false_northing",0],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]],
+    AUTHORITY["EPSG","26711"]]""")
+    ds = None
+
+    # No DATUM in GEOGCS
+    ds = gdal.GetDriverByName('HFA').Create('/vsimem/hfa_write_invalid_wkt.img', 1,1)
+    ds.SetProjection("""PROJCS["NAD27 / UTM zone 11N",
+    GEOGCS["NAD27",
+        AUTHORITY["EPSG","4267"]],
+    PROJECTION["Transverse_Mercator"],
+    PARAMETER["latitude_of_origin",0],
+    PARAMETER["central_meridian",-117],
+    PARAMETER["scale_factor",0.9996],
+    PARAMETER["false_easting",500000],
+    PARAMETER["false_northing",0],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]],
+    AUTHORITY["EPSG","26711"]]""")
+    ds = None
+
+    # No SPHEROID in DATUM
+    ds = gdal.GetDriverByName('HFA').Create('/vsimem/hfa_write_invalid_wkt.img', 1,1)
+    ds.SetProjection("""PROJCS["NAD27 / UTM zone 11N",
+    GEOGCS["NAD27",
+        DATUM["North_American_Datum_1927",
+            AUTHORITY["EPSG","6267"]],
+        PRIMEM["Greenwich",0],
+        UNIT["degree",0.0174532925199433],
+        AUTHORITY["EPSG","4267"]],
+    PROJECTION["Transverse_Mercator"],
+    PARAMETER["latitude_of_origin",0],
+    PARAMETER["central_meridian",-117],
+    PARAMETER["scale_factor",0.9996],
+    PARAMETER["false_easting",500000],
+    PARAMETER["false_northing",0],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]],
+    AUTHORITY["EPSG","26711"]]""")
+    ds = None
+
+    gdal.GetDriverByName('HFA').Delete('/vsimem/hfa_write_invalid_wkt.img')
+
+    return 'success'
+
+###############################################################################
 # Get the driver, and verify a few things about it. 
 
 init_list = [ \
@@ -361,7 +420,8 @@ gdaltest_list = [ hfa_write_desc,
                   hfa_clean_external_overviews,
                   hfa_bug_2525,
                   hfa_use_rrd,
-                  hfa_update_existing_aux_overviews ]
+                  hfa_update_existing_aux_overviews,
+                  hfa_write_invalid_wkt ]
 
 # full set of tests for normal mode.
 
