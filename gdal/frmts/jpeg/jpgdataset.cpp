@@ -155,6 +155,7 @@ protected:
 
     int    bHasReadEXIFMetadata;
     int    bHasReadXMPMetadata;
+    int    bHasReadICCMetadata;
     char   **papszMetadata;
     char   **papszSubDatasets;
     int	   bigendian;
@@ -453,8 +454,11 @@ char  **JPGDatasetCommon::GetMetadata( const char * pszDomain )
         (pszDomain == NULL || EQUAL(pszDomain, "")))
         ReadEXIFMetadata();
     if (eAccess == GA_ReadOnly && !bHasReadXMPMetadata &&
-        (pszDomain != NULL && EQUAL(pszDomain, "xml:XMP")))
+        pszDomain != NULL && EQUAL(pszDomain, "xml:XMP"))
         ReadXMPMetadata();
+    if (eAccess == GA_ReadOnly && !bHasReadICCMetadata &&
+        pszDomain != NULL && EQUAL(pszDomain, "COLOR_PROFILE"))
+        ReadICCProfile();
     return GDALPamDataset::GetMetadata(pszDomain);
 }
 
@@ -470,6 +474,9 @@ const char *JPGDatasetCommon::GetMetadataItem( const char * pszName,
         (pszDomain == NULL || EQUAL(pszDomain, "")) &&
         pszName != NULL && EQUALN(pszName, "EXIF_", 5))
         ReadEXIFMetadata();
+    if (eAccess == GA_ReadOnly && !bHasReadICCMetadata &&
+        pszDomain != NULL && EQUAL(pszDomain, "COLOR_PROFILE"))
+        ReadICCProfile();
     return GDALPamDataset::GetMetadataItem(pszName, pszDomain);
 }
 
@@ -480,6 +487,10 @@ const char *JPGDatasetCommon::GetMetadataItem( const char * pszName,
 /************************************************************************/
 void JPGDatasetCommon::ReadICCProfile()
 {
+    if (bHasReadICCMetadata)
+        return;
+    bHasReadICCMetadata = TRUE;
+
     vsi_l_offset nCurOffset = VSIFTellL(fpImage);
 
     int nTotalSize = 0;
@@ -589,7 +600,7 @@ void JPGDatasetCommon::ReadICCProfile()
     }
 
     /* Merge all segments together and set metadata */
-    if (bOk)
+    if (bOk && nChunkCount > 0)
     {
         char *pBuffer = (char*)VSIMalloc(nTotalSize);
         char *pBufferPtr = pBuffer;
@@ -602,8 +613,13 @@ void JPGDatasetCommon::ReadICCProfile()
         /* Escape the profile */
         char *pszBase64Profile = CPLBase64Encode(nTotalSize, (const GByte*)pBuffer);
 
+        /* Avoid setting the PAM dirty bit just for that */
+        int nOldPamFlags = nPamFlags;
+
         /* Set ICC profile metadata */
         SetMetadataItem( "SOURCE_ICC_PROFILE", pszBase64Profile, "COLOR_PROFILE" );
+
+        nPamFlags = nOldPamFlags;
 
         VSIFree(pBuffer);
         CPLFree(pszBase64Profile);
@@ -1065,6 +1081,7 @@ JPGDatasetCommon::JPGDatasetCommon()
 
     bHasReadEXIFMetadata = FALSE;
     bHasReadXMPMetadata = FALSE;
+    bHasReadICCMetadata = FALSE;
     papszMetadata   = NULL;
     papszSubDatasets= NULL;
     nExifOffset     = -1;
@@ -2023,11 +2040,6 @@ GDALDataset *JPGDataset::Open( const char* pszFilename, char** papszSiblingFiles
         poDS->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
         poDS->SetMetadataItem( "COMPRESSION", "JPEG", "IMAGE_STRUCTURE" );
     }
-
-/* -------------------------------------------------------------------- */
-/*      Read ICC Profile.                                               */
-/* -------------------------------------------------------------------- */
-    poDS->ReadICCProfile();
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
