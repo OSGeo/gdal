@@ -123,6 +123,9 @@ class PNGDataset : public GDALPamDataset
     void        LoadWorldFile();
     CPLString   osWldFilename;
 
+    int         bHasReadICCMetadata;
+    void        LoadICCProfile();
+
   public:
                  PNGDataset();
                  ~PNGDataset();
@@ -141,7 +144,8 @@ class PNGDataset : public GDALPamDataset
     virtual void FlushCache( void );
 
     virtual char  **GetMetadata( const char * pszDomain = "" );
-    void LoadICCProfile();
+    virtual const char *GetMetadataItem( const char * pszName,
+                                         const char * pszDomain = NULL );
 
     // semi-private.
     jmp_buf     sSetJmpContext;
@@ -434,6 +438,7 @@ PNGDataset::PNGDataset()
 
     bHasTriedLoadWorldFile = FALSE;
     bHasReadXMPMetadata = FALSE;
+    bHasReadICCMetadata = FALSE;
 }
 
 /************************************************************************/
@@ -829,6 +834,10 @@ void PNGDataset::CollectXMPMetadata()
 
 void PNGDataset::LoadICCProfile()
 {
+    if (hPNG == NULL || bHasReadICCMetadata)
+        return;
+    bHasReadICCMetadata = TRUE;
+
     png_charp pszProfileName;
     png_uint_32 nProfileLength;
 #if (PNG_LIBPNG_VER_MAJOR == 1 && PNG_LIBPNG_VER_MINOR > 4) || PNG_LIBPNG_VER_MAJOR > 1
@@ -841,6 +850,9 @@ void PNGDataset::LoadICCProfile()
     double dfGamma;
     bool bGammaAvailable = false;
 
+    /* Avoid setting the PAM dirty bit just for that */
+    int nOldPamFlags = nPamFlags;
+
     if (png_get_iCCP(hPNG, psPNGInfo, &pszProfileName,
        &nCompressionType, &pProfileData, &nProfileLength) != 0)
     {
@@ -851,6 +863,8 @@ void PNGDataset::LoadICCProfile()
         SetMetadataItem( "SOURCE_ICC_PROFILE", pszBase64Profile, "COLOR_PROFILE" );
         SetMetadataItem( "SOURCE_ICC_PROFILE_NAME", pszProfileName, "COLOR_PROFILE" );
 
+        nPamFlags = nOldPamFlags;
+
         CPLFree(pszBase64Profile);
 
         return;
@@ -859,6 +873,9 @@ void PNGDataset::LoadICCProfile()
     if (png_get_sRGB(hPNG, psPNGInfo, &nsRGBIntent) != 0)
     {
         SetMetadataItem( "SOURCE_ICC_PROFILE_NAME", "sRGB", "COLOR_PROFILE" );
+
+        nPamFlags = nOldPamFlags;
+
         return;
     }
 
@@ -896,8 +913,9 @@ void PNGDataset::LoadICCProfile()
             CPLString().Printf( "%.9f, %.9f, 1.0", dfaWhitepoint[0], dfaWhitepoint[1] ) , "COLOR_PROFILE" );
 
     }
-}
 
+    nPamFlags = nOldPamFlags;
+}
 
 /************************************************************************/
 /*                           GetMetadata()                              */
@@ -908,9 +926,24 @@ char  **PNGDataset::GetMetadata( const char * pszDomain )
     if (fpImage == NULL)
         return NULL;
     if (eAccess == GA_ReadOnly && !bHasReadXMPMetadata &&
-        (pszDomain != NULL && EQUAL(pszDomain, "xml:XMP")))
+        pszDomain != NULL && EQUAL(pszDomain, "xml:XMP"))
         CollectXMPMetadata();
+    if (eAccess == GA_ReadOnly && !bHasReadICCMetadata &&
+        pszDomain != NULL && EQUAL(pszDomain, "COLOR_PROFILE"))
+        LoadICCProfile();
     return GDALPamDataset::GetMetadata(pszDomain);
+}
+
+/************************************************************************/
+/*                       GetMetadataItem()                              */
+/************************************************************************/
+const char *PNGDataset::GetMetadataItem( const char * pszName,
+                                         const char * pszDomain )
+{
+    if (eAccess == GA_ReadOnly && !bHasReadICCMetadata &&
+        pszDomain != NULL && EQUAL(pszDomain, "COLOR_PROFILE"))
+        LoadICCProfile();
+    return GDALPamDataset::GetMetadataItem(pszName, pszDomain);
 }
 
 /************************************************************************/
@@ -1158,8 +1191,6 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         poDS->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
     }
-
-    poDS->LoadICCProfile();
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
