@@ -145,6 +145,7 @@ class OGRGMEDataSource : public OGRDataSource
     CPLString           osAccessToken;
     CPLString           osRefreshToken;
     CPLString           osAPIKey;
+    CPLString           osSelect;
 
     void                DeleteLayer( const char *pszLayerName );
 
