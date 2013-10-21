@@ -150,6 +150,8 @@ int OGRGMEDataSource::Open( const char * pszFilename, int bUpdateIn)
 
     CPLString osTables = OGRGMEGetOptionValue(pszFilename, "tables");
 
+    osSelect = OGRGMEGetOptionValue(pszFilename, "select");
+
     bUseHTTPS = TRUE;
 
     osAccessToken = OGRGMEGetOptionValue(pszFilename, "access");
@@ -294,6 +296,11 @@ CPLHTTPResult * OGRGMEDataSource::MakeRequest(const char *pszRequest,
 
     osQueryFields += "key=";
     osQueryFields += osAPIKey;
+
+    if (!osSelect.empty()) {
+	osQueryFields += "&select=";
+	osQueryFields += osSelect;
+    }
 
     if (pszMoreOptions)
         osQueryFields += pszMoreOptions;
