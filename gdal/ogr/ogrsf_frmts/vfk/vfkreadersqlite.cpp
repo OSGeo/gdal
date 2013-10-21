@@ -125,7 +125,9 @@ VFKReaderSQLite::~VFKReaderSQLite()
                  "Closing SQLite DB failed\n  %s",
                  sqlite3_errmsg(m_poDB));
     }
-
+    CPLDebug("OGR-VFK", "Internal DB (%s) closed",
+             m_pszDBname);
+    
     /* delete tmp SQLite DB if requested */
     if (CSLTestBoolean(CPLGetConfigOption("OGR_VFK_DB_DELETE", "NO"))) {
         CPLDebug("OGR-VFK", "Internal DB (%s) deleted",

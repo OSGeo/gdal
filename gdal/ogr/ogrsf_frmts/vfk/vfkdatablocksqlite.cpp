@@ -689,10 +689,10 @@ VFKFeatureSQLite *VFKDataBlockSQLite::GetFeature(const char *column, GUIntBig va
         return NULL;
     
     idx = sqlite3_column_int(hStmt, 0) - 1;
+    sqlite3_finalize(hStmt);
+    
     if (idx < 0 || idx >= m_nFeatureCount) // ? assert
         return NULL;
-    
-    sqlite3_finalize(hStmt);
 
     return (VFKFeatureSQLite *) GetFeatureByIndex(idx);
 }
@@ -736,11 +736,10 @@ VFKFeatureSQLite *VFKDataBlockSQLite::GetFeature(const char **column, GUIntBig *
         return NULL;
     
     idx = sqlite3_column_int(hStmt, 0) - 1; /* rowid starts at 1 */
-    
+    sqlite3_finalize(hStmt);    
+
     if (idx < 0 || idx >= m_nFeatureCount) // ? assert
         return NULL;
-
-    sqlite3_finalize(hStmt);
     
     return (VFKFeatureSQLite *) GetFeatureByIndex(idx);
 }
