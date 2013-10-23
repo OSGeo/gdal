@@ -16,6 +16,7 @@ DIRLIST		=	generic geojson shape ntf sdts tiger s57 dgn mitab gml \
 PLUGINDIRLIST	=	$(PLUGIN_ARCOBJECTS_DIR) \
 			$(PLUGIN_DWG_DIR) \
 			$(PLUGIN_PG_DIR) \
+			$(PLUGIN_SOSI_DIR) \
 			$(PLUGIN_FGDB_DIR) \
 			$(PLUGIN_OCIDIR) \
 			$(PLUGIN_SDE_DIR) \
@@ -157,9 +158,13 @@ WFSDIR = wfs
 WFS_OBJ = wfs\*.obj
 !ENDIF
 
-!IFDEF SOSI_ENABLED
+!IFDEF SOSI_INC_DIR
+!IF "$(SOSI_PLUGIN)" != "YES"
 SOSIDIR = sosi
 SOSI_OBJ = sosi\*.obj
+!ELSE
+PLUGIN_SOSI_DIR = sosi
+!ENDIF
 !ENDIF
 
 !IFDEF CURL_LIB
