@@ -685,7 +685,10 @@ CPLHTTPResult* OGRWFSDataSource::SendGetCapabilities(const char* pszBaseURL,
     osURL = CPLURLAddKVP(osURL, "SERVICE", "WFS");
     osURL = CPLURLAddKVP(osURL, "REQUEST", "GetCapabilities");
     osTypeName = CPLURLGetValue(osURL, "TYPENAME");
+    if( osTypeName.size() == 0 )
+        osTypeName = CPLURLGetValue(osURL, "TYPENAMES");
     osURL = CPLURLAddKVP(osURL, "TYPENAME", NULL);
+    osURL = CPLURLAddKVP(osURL, "TYPENAMES", NULL);
     osURL = CPLURLAddKVP(osURL, "FILTER", NULL);
     osURL = CPLURLAddKVP(osURL, "PROPERTYNAME", NULL);
     osURL = CPLURLAddKVP(osURL, "MAXFEATURES", NULL);
@@ -853,6 +856,8 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
             nBaseStartIndex = atoi(pszParm);
 
         osTypeName = CPLURLGetValue(pszBaseURL, "TYPENAME");
+        if( osTypeName.size() == 0 )
+            osTypeName = CPLURLGetValue(pszBaseURL, "TYPENAMES");
 
         psWFSCapabilities = WFSFindNode( psRoot, "WFS_Capabilities" );
         if (psWFSCapabilities == NULL)
