@@ -382,7 +382,10 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nRequestMaxFeatures, int bRequestHi
     osURL = CPLURLAddKVP(osURL, "SERVICE", "WFS");
     osURL = CPLURLAddKVP(osURL, "VERSION", poDS->GetVersion());
     osURL = CPLURLAddKVP(osURL, "REQUEST", "GetFeature");
-    osURL = CPLURLAddKVP(osURL, "TYPENAME", WFS_EscapeURL(pszName));
+    if( atoi(poDS->GetVersion()) >= 2 )
+        osURL = CPLURLAddKVP(osURL, "TYPENAMES", WFS_EscapeURL(pszName));
+    else
+        osURL = CPLURLAddKVP(osURL, "TYPENAME", WFS_EscapeURL(pszName));
     if (pszRequiredOutputFormat)
         osURL = CPLURLAddKVP(osURL, "OUTPUTFORMAT", WFS_EscapeURL(pszRequiredOutputFormat));
 
