@@ -77,7 +77,7 @@ void featurestyle2kml (
 
     /***** does the feature have style? *****/
 
-    if ( pszStyleString ) {
+    if ( pszStyleString && pszStyleString[0] != '\0' ) {
 
         /***** does it ref a style table? *****/
 
