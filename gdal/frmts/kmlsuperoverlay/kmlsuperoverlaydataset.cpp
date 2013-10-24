@@ -214,7 +214,7 @@ int  GenerateRootKml(const char* filename,
 
     const char* tmpfilename = CPLGetBasename(kmlfilename);
     // If we haven't writen any features yet, output the layer's schema
-    VSIFPrintfL(fp, "<kml xmlns=\"http://earth.google.com/kml/2.1\">\n");
+    VSIFPrintfL(fp, "<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n");
     VSIFPrintfL(fp, "\t<Document>\n");
     VSIFPrintfL(fp, "\t\t<name>%s</name>\n", tmpfilename);
     VSIFPrintfL(fp, "\t\t<description></description>\n");
@@ -223,7 +223,8 @@ int  GenerateRootKml(const char* filename,
     VSIFPrintfL(fp, "\t\t\t\t<listItemType>checkHideChildren</listItemType>\n");
     VSIFPrintfL(fp, "\t\t\t</ListStyle>\n");
     VSIFPrintfL(fp, "\t\t</Style>\n");
-    VSIFPrintfL(fp, "\t\t<Region>\n \t\t<LatLonAltBox>\n");
+    VSIFPrintfL(fp, "\t\t<Region>\n");
+    VSIFPrintfL(fp, "\t\t\t<LatLonAltBox>\n");
     VSIFPrintfL(fp, "\t\t\t\t<north>%f</north>\n", north);
     VSIFPrintfL(fp, "\t\t\t\t<south>%f</south>\n", south);
     VSIFPrintfL(fp, "\t\t\t\t<east>%f</east>\n", east);
@@ -233,16 +234,16 @@ int  GenerateRootKml(const char* filename,
     VSIFPrintfL(fp, "\t\t<NetworkLink>\n");
     VSIFPrintfL(fp, "\t\t\t<open>1</open>\n");
     VSIFPrintfL(fp, "\t\t\t<Region>\n");
-    VSIFPrintfL(fp, "\t\t\t\t<Lod>\n");
-    VSIFPrintfL(fp, "\t\t\t\t\t<minLodPixels>%d</minLodPixels>\n", minlodpixels);
-    VSIFPrintfL(fp, "\t\t\t\t\t<maxLodPixels>-1</maxLodPixels>\n");
-    VSIFPrintfL(fp, "\t\t\t\t</Lod>\n");
     VSIFPrintfL(fp, "\t\t\t\t<LatLonAltBox>\n");
     VSIFPrintfL(fp, "\t\t\t\t\t<north>%f</north>\n", north);
     VSIFPrintfL(fp, "\t\t\t\t\t<south>%f</south>\n", south);
     VSIFPrintfL(fp, "\t\t\t\t\t<east>%f</east>\n", east);
     VSIFPrintfL(fp, "\t\t\t\t\t<west>%f</west>\n", west);
     VSIFPrintfL(fp, "\t\t\t\t</LatLonAltBox>\n");
+    VSIFPrintfL(fp, "\t\t\t\t<Lod>\n");
+    VSIFPrintfL(fp, "\t\t\t\t\t<minLodPixels>%d</minLodPixels>\n", minlodpixels);
+    VSIFPrintfL(fp, "\t\t\t\t\t<maxLodPixels>-1</maxLodPixels>\n");
+    VSIFPrintfL(fp, "\t\t\t\t</Lod>\n");
     VSIFPrintfL(fp, "\t\t\t</Region>\n");
     VSIFPrintfL(fp, "\t\t\t<Link>\n");
     VSIFPrintfL(fp, "\t\t\t\t<href>0/0/0.kml</href>\n");
@@ -344,7 +345,7 @@ int  GenerateChildKml(std::string filename,
         return FALSE;
     }
 
-    VSIFPrintfL(fp, "<kml xmlns=\"http://earth.google.com/kml/2.1\" xmlns:gx=\"http://www.google.com/kml/ext/2.2\">\n");
+    VSIFPrintfL(fp, "<kml xmlns=\"http://www.opengis.net/kml/2.2\" xmlns:gx=\"http://www.google.com/kml/ext/2.2\">\n");
     VSIFPrintfL(fp, "\t<Document>\n");
     VSIFPrintfL(fp, "\t\t<name>%d/%d/%d.kml</name>\n", zoom, ix, iy);
     VSIFPrintfL(fp, "\t\t<Style>\n");
@@ -353,16 +354,16 @@ int  GenerateChildKml(std::string filename,
     VSIFPrintfL(fp, "\t\t\t</ListStyle>\n");
     VSIFPrintfL(fp, "\t\t</Style>\n");
     VSIFPrintfL(fp, "\t\t<Region>\n");
-    VSIFPrintfL(fp, "\t\t\t<Lod>\n");
-    VSIFPrintfL(fp, "\t\t\t\t<minLodPixels>%d</minLodPixels>\n", minLodPixels);
-    VSIFPrintfL(fp, "\t\t\t\t<maxLodPixels>%d</maxLodPixels>\n", maxLodPix);
-    VSIFPrintfL(fp, "\t\t\t</Lod>\n");
     VSIFPrintfL(fp, "\t\t\t<LatLonAltBox>\n");
     VSIFPrintfL(fp, "\t\t\t\t<north>%f</north>\n", tnorth);
     VSIFPrintfL(fp, "\t\t\t\t<south>%f</south>\n", tsouth);
     VSIFPrintfL(fp, "\t\t\t\t<east>%f</east>\n", teast);
     VSIFPrintfL(fp, "\t\t\t\t<west>%f</west>\n", twest);
     VSIFPrintfL(fp, "\t\t\t</LatLonAltBox>\n");
+    VSIFPrintfL(fp, "\t\t\t<Lod>\n");
+    VSIFPrintfL(fp, "\t\t\t\t<minLodPixels>%d</minLodPixels>\n", minLodPixels);
+    VSIFPrintfL(fp, "\t\t\t\t<maxLodPixels>%d</maxLodPixels>\n", maxLodPix);
+    VSIFPrintfL(fp, "\t\t\t</Lod>\n");
     VSIFPrintfL(fp, "\t\t</Region>\n");
     VSIFPrintfL(fp, "\t\t<GroundOverlay>\n");
     VSIFPrintfL(fp, "\t\t\t<drawOrder>%d</drawOrder>\n", zoom);
@@ -422,16 +423,16 @@ int  GenerateChildKml(std::string filename,
             VSIFPrintfL(fp, "\t\t<NetworkLink>\n");
             VSIFPrintfL(fp, "\t\t\t<name>%d/%d/%d%s</name>\n", zoom+1, cx, cy, fileExt.c_str());
             VSIFPrintfL(fp, "\t\t\t<Region>\n");
-            VSIFPrintfL(fp, "\t\t\t\t<Lod>\n");
-            VSIFPrintfL(fp, "\t\t\t\t\t<minLodPixels>128</minLodPixels>\n");
-            VSIFPrintfL(fp, "\t\t\t\t\t<maxLodPixels>-1</maxLodPixels>\n");
-            VSIFPrintfL(fp, "\t\t\t\t</Lod>\n");
             VSIFPrintfL(fp, "\t\t\t\t<LatLonAltBox>\n");
             VSIFPrintfL(fp, "\t\t\t\t\t<north>%f</north>\n", cnorth);
             VSIFPrintfL(fp, "\t\t\t\t\t<south>%f</south>\n", csouth);
             VSIFPrintfL(fp, "\t\t\t\t\t<east>%f</east>\n", ceast);
             VSIFPrintfL(fp, "\t\t\t\t\t<west>%f</west>\n", cwest);
             VSIFPrintfL(fp, "\t\t\t\t</LatLonAltBox>\n");
+            VSIFPrintfL(fp, "\t\t\t\t<Lod>\n");
+            VSIFPrintfL(fp, "\t\t\t\t\t<minLodPixels>128</minLodPixels>\n");
+            VSIFPrintfL(fp, "\t\t\t\t\t<maxLodPixels>-1</maxLodPixels>\n");
+            VSIFPrintfL(fp, "\t\t\t\t</Lod>\n");
             VSIFPrintfL(fp, "\t\t\t</Region>\n");
             VSIFPrintfL(fp, "\t\t\t<Link>\n");
             VSIFPrintfL(fp, "\t\t\t\t<href>../../%d/%d/%d.kml</href>\n", zoom+1, cx, cy);
