@@ -44,6 +44,7 @@ using kmldom::LinkPtr;
 using kmldom::SchemaPtr;
 using kmlbase::File;
 using kmldom::KmlPtr;
+using kmlbase::Attributes;
 
 #include "ogr_libkml.h"
 #include "ogrlibkmlstyle.h"
@@ -160,6 +161,18 @@ void OGRLIBKMLDataSource::WriteKml (
     return;
 }
 
+/******************************************************************************/
+/*                      OGRLIBKMLCreateOGCKml22()                             */
+/******************************************************************************/
+
+static KmlPtr OGRLIBKMLCreateOGCKml22(KmlFactory* poFactory)
+{
+    KmlPtr kml = poFactory->CreateKml (  );
+    const char* kAttrs[] = { "xmlns", "http://www.opengis.net/kml/2.2", NULL };
+    kml->AddUnknownAttributes(Attributes::Create(kAttrs));
+    return kml;
+}
+
 /******************************************************************************
  method to write a ds .kmz at ds destroy
 
@@ -192,7 +205,7 @@ void OGRLIBKMLDataSource::WriteKmz (
         /***** make it and add the container    *****/
         
         if ( !m_poKmlDocKmlRoot ) {
-            m_poKmlDocKmlRoot = m_poKmlFactory->CreateKml (  );
+            m_poKmlDocKmlRoot = OGRLIBKMLCreateOGCKml22(m_poKmlFactory);
 
             AsKml( m_poKmlDocKmlRoot )->set_feature ( m_poKmlDocKml );
         }
@@ -234,7 +247,7 @@ void OGRLIBKMLDataSource::WriteKmz (
 
         if ( !( poKmlKml = AsKml( papoLayers[iLayer]->GetKmlLayerRoot (  ) ) ) ) {
 
-            poKmlKml = m_poKmlFactory->CreateKml (  );
+            poKmlKml = OGRLIBKMLCreateOGCKml22(m_poKmlFactory);
 
             poKmlKml->set_feature ( poKlmContainer );
         }
@@ -253,7 +266,7 @@ void OGRLIBKMLDataSource::WriteKmz (
 
     if ( m_poKmlStyleKml ) {
 
-        KmlPtr poKmlKml = m_poKmlFactory->CreateKml (  );
+        KmlPtr poKmlKml = OGRLIBKMLCreateOGCKml22(m_poKmlFactory);
 
         poKmlKml->set_feature ( m_poKmlStyleKml );
         std::string oKmlOut = kmldom::SerializePretty ( poKmlKml );
@@ -294,7 +307,7 @@ void OGRLIBKMLDataSource::WriteDir (
         /***** make it and add the container    *****/
         
         if ( !m_poKmlDocKmlRoot ) {
-            m_poKmlDocKmlRoot = m_poKmlFactory->CreateKml (  );
+            m_poKmlDocKmlRoot = OGRLIBKMLCreateOGCKml22(m_poKmlFactory);
 
             AsKml( m_poKmlDocKmlRoot )->set_feature ( m_poKmlDocKml );
         }
@@ -341,7 +354,7 @@ void OGRLIBKMLDataSource::WriteDir (
 
         if ( !( poKmlKml = AsKml( papoLayers[iLayer]->GetKmlLayerRoot (  ) ) ) ) {
 
-            poKmlKml = m_poKmlFactory->CreateKml (  );
+            poKmlKml = OGRLIBKMLCreateOGCKml22(m_poKmlFactory);
 
             poKmlKml->set_feature ( poKmlContainer );
         }
@@ -370,7 +383,7 @@ void OGRLIBKMLDataSource::WriteDir (
 
     if ( m_poKmlStyleKml ) {
 
-        KmlPtr poKmlKml = m_poKmlFactory->CreateKml (  );
+        KmlPtr poKmlKml = OGRLIBKMLCreateOGCKml22(m_poKmlFactory);
 
         poKmlKml->set_feature ( m_poKmlStyleKml );
         std::string oKmlOut = kmldom::SerializePretty ( poKmlKml );
@@ -1345,7 +1358,7 @@ int OGRLIBKMLDataSource::CreateKml (
     char **papszOptions )
 {
 
-    m_poKmlDSKml = m_poKmlFactory->CreateKml (  );
+    m_poKmlDSKml = OGRLIBKMLCreateOGCKml22(m_poKmlFactory);
     DocumentPtr poKmlDocument = m_poKmlFactory->CreateDocument (  );
 
     m_poKmlDSKml->set_feature ( poKmlDocument );
