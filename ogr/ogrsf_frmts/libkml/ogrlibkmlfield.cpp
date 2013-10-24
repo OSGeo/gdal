@@ -343,6 +343,12 @@ void field2kml (
             {
                 char* pszUTF8String = OGRLIBKMLSanitizeUTF8String(
                                         poOgrFeat->GetFieldAsString ( i ));
+                if( pszUTF8String[0] == '\0' )
+                {
+                    CPLFree( pszUTF8String );
+                    continue;
+                }
+
                 /***** name *****/
 
                 if ( EQUAL ( name, oFC.namefield ) ) {
