@@ -829,6 +829,7 @@ typedef struct {
     double   adfDstInvGeoTransform[6];
     
     void     *pDstGCPTransformArg;
+    void     *pDstTPSTransformArg;
 
 } GDALGenImgProjTransformInfo;
 
@@ -859,6 +860,8 @@ void* GDALCloneGenImgProjTransformer( void *hTransformArg )
         psClonedInfo->pReprojectArg = GDALCloneTransformer( psInfo->pReprojectArg );
     if( psClonedInfo->pDstGCPTransformArg )
         psClonedInfo->pDstGCPTransformArg = GDALCloneTransformer( psInfo->pDstGCPTransformArg );
+    if( psClonedInfo->pDstTPSTransformArg )
+        psClonedInfo->pDstTPSTransformArg = GDALCloneTransformer( psInfo->pDstTPSTransformArg );
 
     return psClonedInfo;
 }
@@ -1061,9 +1064,14 @@ static CPLString InsertCenterLong( GDALDatasetH hDS, CPLString osWKT )
  * <li> MAX_GCP_ORDER: the maximum order to use for GCP derived polynomials if
  * possible.  The default is to autoselect based on the number of GCPs.  
  * A value of -1 triggers use of Thin Plate Spline instead of polynomials.
- * <li> METHOD: may have a value which is one of GEOTRANSFORM, GCP_POLYNOMIAL,
- * GCP_TPS, GEOLOC_ARRAY, RPC to force only one geolocation method to be
- * considered on the source dataset. 
+ * <li> SRC_METHOD: may have a value which is one of GEOTRANSFORM, 
+ * GCP_POLYNOMIAL, GCP_TPS, GEOLOC_ARRAY, RPC to force only one geolocation 
+ * method to be considered on the source dataset. Will be used for pixel/line 
+ * to georef transformation on the source dataset.
+ * <li> DST_METHOD: may have a value which is one of GEOTRANSFORM, 
+ * GCP_POLYNOMIAL, GCP_TPS, GEOLOC_ARRAY, RPC to force only one geolocation 
+ * method to be considered on the source dataset.  Will be used for pixel/line 
+ * to georef transformation on the destination dataset.
  * <li> RPC_HEIGHT: A fixed height to be used with RPC calculations.
  * <li> RPC_DEM: The name of a DEM file to be used with RPC calculations.
  * <li> INSERT_CENTER_LONG: May be set to FALSE to disable setting up a 
@@ -1087,7 +1095,9 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
     GDALGenImgProjTransformInfo *psInfo;
     char **papszMD;
     GDALRPCInfo sRPCInfo;
-    const char *pszMethod = CSLFetchNameValue( papszOptions, "METHOD" );
+    const char *pszMethod = CSLFetchNameValue( papszOptions, "SRC_METHOD" );
+    if( pszMethod == NULL )
+        pszMethod = CSLFetchNameValue( papszOptions, "METHOD" );
     const char *pszValue;
     int nOrder = 0, bGCPUseOK = TRUE, nMinimumGcps = -1, bRefine = FALSE;
     double dfTolerance = 0.0;
@@ -1265,11 +1275,104 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Get forward and inverse geotransform for destination image.     */
+/*      If we have no destination use a unit transform.                 */
+/* -------------------------------------------------------------------- */
+    const char *pszDstMethod = CSLFetchNameValue( papszOptions, "DST_METHOD" );
+
+    if( !hDstDS )
+    {
+        psInfo->adfDstGeoTransform[0] = 0.0;
+        psInfo->adfDstGeoTransform[1] = 1.0;
+        psInfo->adfDstGeoTransform[2] = 0.0;
+        psInfo->adfDstGeoTransform[3] = 0.0;
+        psInfo->adfDstGeoTransform[4] = 0.0;
+        psInfo->adfDstGeoTransform[5] = 1.0;
+        memcpy( psInfo->adfDstInvGeoTransform, psInfo->adfDstGeoTransform,
+                sizeof(double) * 6 );
+    }
+    else if( (pszDstMethod == NULL || EQUAL(pszDstMethod,"GEOTRANSFORM"))
+        && GDALGetGeoTransform( hDstDS, psInfo->adfDstGeoTransform ) == CE_None
+        && (psInfo->adfDstGeoTransform[0] != 0.0
+            || psInfo->adfDstGeoTransform[1] != 1.0
+            || psInfo->adfDstGeoTransform[2] != 0.0
+            || psInfo->adfDstGeoTransform[3] != 0.0
+            || psInfo->adfDstGeoTransform[4] != 0.0
+            || ABS(psInfo->adfDstGeoTransform[5]) != 1.0) )
+    {
+        if( pszDstWKT == NULL )
+            pszDstWKT = GDALGetProjectionRef( hDstDS );
+
+        if( !GDALInvGeoTransform( psInfo->adfDstGeoTransform, 
+                                  psInfo->adfDstInvGeoTransform ) )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot invert geotransform");
+            GDALDestroyGenImgProjTransformer( psInfo );
+            return NULL;
+        }
+    }
+    else if( bGCPUseOK 
+             && (pszDstMethod == NULL || EQUAL(pszDstMethod,"GCP_POLYNOMIAL") )
+             && GDALGetGCPCount( hDstDS ) > 0 && nOrder >= 0 )
+    {
+        if(bRefine)
+        {
+            psInfo->pDstGCPTransformArg = 
+                GDALCreateGCPRefineTransformer( GDALGetGCPCount( hDstDS ),
+                                                GDALGetGCPs( hDstDS ), nOrder, 
+                                                FALSE, dfTolerance, 
+                                                nMinimumGcps );
+        }
+        else
+        {
+            psInfo->pDstGCPTransformArg = 
+                GDALCreateGCPTransformer( GDALGetGCPCount( hDstDS ),
+                                          GDALGetGCPs( hDstDS ), nOrder, 
+                                          FALSE );
+        }
+
+        if( psInfo->pDstGCPTransformArg == NULL )
+        {
+            GDALDestroyGenImgProjTransformer( psInfo );
+            return NULL;
+        }
+
+        if( pszDstWKT == NULL )
+            pszDstWKT = GDALGetGCPProjection( hDstDS );
+    }
+    else if( bGCPUseOK 
+             && GDALGetGCPCount( hDstDS ) > 0 
+             && nOrder <= 0
+             && (pszDstMethod == NULL || EQUAL(pszDstMethod,"GCP_TPS")) )
+    {
+        psInfo->pDstTPSTransformArg = 
+            GDALCreateTPSTransformer( GDALGetGCPCount( hDstDS ),
+                                      GDALGetGCPs( hDstDS ), FALSE );
+        if( psInfo->pDstTPSTransformArg == NULL )
+        {
+            GDALDestroyGenImgProjTransformer( psInfo );
+            return NULL;
+        }
+
+        if( pszDstWKT == NULL )
+            pszDstWKT = GDALGetGCPProjection( hDstDS );
+    }
+
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Unable to compute a transformation between pixel/line\n"
+                  "and georeferenced coordinates for %s.\n"
+                  "There is no affine transformation and no GCPs.", 
+                  GDALGetDescription( hDstDS ) );
+
+        GDALDestroyGenImgProjTransformer( psInfo );
+        return NULL;
+    }
+    
+/* -------------------------------------------------------------------- */
 /*      Setup reprojection.                                             */
 /* -------------------------------------------------------------------- */
-    if( pszDstWKT == NULL && hDstDS != NULL )
-        pszDstWKT = GDALGetProjectionRef( hDstDS );
-
     if( pszSrcWKT != NULL && strlen(pszSrcWKT) > 0 
         && pszDstWKT != NULL && strlen(pszDstWKT) > 0 
         && !EQUAL(pszSrcWKT,pszDstWKT) )
@@ -1288,33 +1391,6 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
         }
     }
         
-/* -------------------------------------------------------------------- */
-/*      Get forward and inverse geotransform for destination image.     */
-/*      If we have no destination use a unit transform.                 */
-/* -------------------------------------------------------------------- */
-    if( hDstDS )
-    {
-        GDALGetGeoTransform( hDstDS, psInfo->adfDstGeoTransform );
-        if( !GDALInvGeoTransform( psInfo->adfDstGeoTransform, 
-                                  psInfo->adfDstInvGeoTransform ) )
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Cannot invert geotransform");
-            GDALDestroyGenImgProjTransformer( psInfo );
-            return NULL;
-        }
-    }
-    else
-    {
-        psInfo->adfDstGeoTransform[0] = 0.0;
-        psInfo->adfDstGeoTransform[1] = 1.0;
-        psInfo->adfDstGeoTransform[2] = 0.0;
-        psInfo->adfDstGeoTransform[3] = 0.0;
-        psInfo->adfDstGeoTransform[4] = 0.0;
-        psInfo->adfDstGeoTransform[5] = 1.0;
-        memcpy( psInfo->adfDstInvGeoTransform, psInfo->adfDstGeoTransform,
-                sizeof(double) * 6 );
-    }
-    
     return psInfo;
 }
 
@@ -1545,6 +1621,9 @@ void GDALDestroyGenImgProjTransformer( void *hTransformArg )
     if( psInfo->pDstGCPTransformArg != NULL )
         GDALDestroyGCPTransformer( psInfo->pDstGCPTransformArg );
 
+    if( psInfo->pDstTPSTransformArg != NULL )
+        GDALDestroyTPSTransformer( psInfo->pDstTPSTransformArg );
+
     if( psInfo->pReprojectArg != NULL )
         GDALDestroyReprojectionTransformer( psInfo->pReprojectArg );
 
@@ -1587,7 +1666,7 @@ int GDALGenImgProjTransform( void *pTransformArg, int bDstToSrc,
         padfGeoTransform = psInfo->adfDstGeoTransform;
         pGCPTransformArg = psInfo->pDstGCPTransformArg;
         pRPCTransformArg = NULL;
-        pTPSTransformArg = NULL;
+        pTPSTransformArg = psInfo->pDstTPSTransformArg;
         pGeoLocTransformArg = NULL;
     }
     else
@@ -1683,7 +1762,7 @@ int GDALGenImgProjTransform( void *pTransformArg, int bDstToSrc,
         padfGeoTransform = psInfo->adfDstInvGeoTransform;
         pGCPTransformArg = psInfo->pDstGCPTransformArg;
         pRPCTransformArg = NULL;
-        pTPSTransformArg = NULL;
+        pTPSTransformArg = psInfo->pDstTPSTransformArg;
         pGeoLocTransformArg = NULL;
     }
         
@@ -1847,25 +1926,62 @@ GDALSerializeGenImgProjTransformer( void *pTransformArg )
     }
     
 /* -------------------------------------------------------------------- */
+/*      Handle Dest GCP transformation.                                 */
+/* -------------------------------------------------------------------- */
+    if( psInfo->pDstGCPTransformArg != NULL )
+    {
+        CPLXMLNode *psTransformerContainer;
+        CPLXMLNode *psTransformer;
+
+        psTransformerContainer = 
+            CPLCreateXMLNode( psTree, CXT_Element, "DstGCPTransformer" );
+
+        psTransformer = GDALSerializeTransformer( GDALGCPTransform,
+                                                  psInfo->pDstGCPTransformArg);
+        if( psTransformer != NULL )
+            CPLAddXMLChild( psTransformerContainer, psTransformer );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Handle Dest TPS transformation.                                 */
+/* -------------------------------------------------------------------- */
+    else if( psInfo->pDstTPSTransformArg != NULL )
+    {
+        CPLXMLNode *psTransformerContainer;
+        CPLXMLNode *psTransformer;
+
+        psTransformerContainer = 
+            CPLCreateXMLNode( psTree, CXT_Element, "DstTPSTransformer" );
+
+        psTransformer = 
+            GDALSerializeTransformer( NULL, psInfo->pDstTPSTransformArg);
+        if( psTransformer != NULL )
+            CPLAddXMLChild( psTransformerContainer, psTransformer );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Handle destination geotransforms.                               */
 /* -------------------------------------------------------------------- */
-    sprintf( szWork, "%.18g,%.18g,%.18g,%.18g,%.18g,%.18g",
-             psInfo->adfDstGeoTransform[0],
-             psInfo->adfDstGeoTransform[1],
-             psInfo->adfDstGeoTransform[2],
-             psInfo->adfDstGeoTransform[3],
-             psInfo->adfDstGeoTransform[4],
-             psInfo->adfDstGeoTransform[5] );
-    CPLCreateXMLElementAndValue( psTree, "DstGeoTransform", szWork );
-    
-    sprintf( szWork, "%.18g,%.18g,%.18g,%.18g,%.18g,%.18g",
-             psInfo->adfDstInvGeoTransform[0],
-             psInfo->adfDstInvGeoTransform[1],
-             psInfo->adfDstInvGeoTransform[2],
-             psInfo->adfDstInvGeoTransform[3],
-             psInfo->adfDstInvGeoTransform[4],
-             psInfo->adfDstInvGeoTransform[5] );
-    CPLCreateXMLElementAndValue( psTree, "DstInvGeoTransform", szWork );
+    else
+    {
+        sprintf( szWork, "%.18g,%.18g,%.18g,%.18g,%.18g,%.18g",
+                 psInfo->adfDstGeoTransform[0],
+                 psInfo->adfDstGeoTransform[1],
+                 psInfo->adfDstGeoTransform[2],
+                 psInfo->adfDstGeoTransform[3],
+                 psInfo->adfDstGeoTransform[4],
+                 psInfo->adfDstGeoTransform[5] );
+        CPLCreateXMLElementAndValue( psTree, "DstGeoTransform", szWork );
+        
+        sprintf( szWork, "%.18g,%.18g,%.18g,%.18g,%.18g,%.18g",
+                 psInfo->adfDstInvGeoTransform[0],
+                 psInfo->adfDstInvGeoTransform[1],
+                 psInfo->adfDstInvGeoTransform[2],
+                 psInfo->adfDstInvGeoTransform[3],
+                 psInfo->adfDstInvGeoTransform[4],
+                 psInfo->adfDstInvGeoTransform[5] );
+        CPLCreateXMLElementAndValue( psTree, "DstInvGeoTransform", szWork );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a reprojection transformer?                          */
@@ -1983,6 +2099,16 @@ void *GDALDeserializeGenImgProjTransformer( CPLXMLNode *psTree )
     {
         psInfo->pSrcRPCTransformArg = 
             GDALDeserializeRPCTransformer( psSubtree->psChild );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Drc TPS Transform                                               */
+/* -------------------------------------------------------------------- */
+    psSubtree = CPLGetXMLNode( psTree, "DstTPSTransformer" );
+    if( psSubtree != NULL && psSubtree->psChild != NULL )
+    {
+        psInfo->pDstTPSTransformArg = 
+            GDALDeserializeTPSTransformer( psSubtree->psChild );
     }
 
 /* -------------------------------------------------------------------- */
