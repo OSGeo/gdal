@@ -2155,7 +2155,7 @@ void *GDALDeserializeGenImgProjTransformer( CPLXMLNode *psTree )
     if( psSubtree != NULL && psSubtree->psChild != NULL )
     {
         psInfo->pDstRPCTransformArg = 
-            GDALDeserializeTPSTransformer( psSubtree->psChild );
+            GDALDeserializeRPCTransformer( psSubtree->psChild );
     }
 
 /* -------------------------------------------------------------------- */
