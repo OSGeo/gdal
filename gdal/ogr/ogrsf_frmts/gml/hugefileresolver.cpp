@@ -1506,8 +1506,10 @@ static int gmlHugeResolveEdges( struct huge_helper *helper,
             const char *pszGmlText = NULL;
             pszGmlId = (const char *)sqlite3_column_text ( hStmtEdges, 0 );
             if( sqlite3_column_type( hStmtEdges, 1 ) != SQLITE_NULL )
+            {
                 pszGmlText = (const char *)sqlite3_column_text ( hStmtEdges, 1 );
-            gmlHugeSetHrefGmlText( helper, pszGmlId, pszGmlText );
+                gmlHugeSetHrefGmlText( helper, pszGmlId, pszGmlText );
+            }
         }
         else
         {
