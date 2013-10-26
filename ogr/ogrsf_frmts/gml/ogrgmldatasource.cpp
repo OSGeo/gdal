@@ -639,6 +639,7 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
             {
                 // we assume an errors have been reported.
                 VSIFCloseL(fp);
+                CPLFree( pszXlinkResolvedFilename );
                 return FALSE;
             }
         }
