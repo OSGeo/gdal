@@ -1829,8 +1829,8 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 
         for( i = 0, j = nOffset; i < nPoints; i++, j+=16 )
         {
-           *(psShape->padfX + i) = *( (double *)(psSHP->pabyRec + j    ) );
-           *(psShape->padfY + i) = *( (double *)(psSHP->pabyRec + j + 8) );
+          memcpy(psShape->padfX + i, psSHP->pabyRec + j,     8 );
+          memcpy(psShape->padfY + i, psSHP->pabyRec + j + 8, 8 );
         }
         if( bBigEndian )
         {
