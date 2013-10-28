@@ -34,7 +34,7 @@ from osgeo import gdal
 from osgeo import osr
 
 def Usage():
-    print('Usage: gdal_edit [--help-general] [-a_srs srs_def] [-a_ullr ulx uly lrx lry]')
+    print('Usage: gdal_edit [--help-general] [-ro] [-a_srs srs_def] [-a_ullr ulx uly lrx lry]')
     print('                 [-tr xres yres] [-unsetgt] [-a_nodata value] ')
     print('                 [-gcp pixel line easting northing [elevation]]*')
     print('                 [-mo "META-TAG=VALUE"]*  datasetname')
@@ -69,13 +69,16 @@ def gdal_edit(argv):
     xres = None
     yres = None
     unsetgt = False
+    ro = False
     molist = []
     gcp_list = []
 
     i = 1
     argc = len(argv)
     while i < argc:
-        if argv[i] == '-a_srs' and i < len(argv)-1:
+        if argv[i] == '-ro':
+            ro = True
+        elif argv[i] == '-a_srs' and i < len(argv)-1:
             srs = argv[i+1]
             i = i + 1
         elif argv[i] == '-a_ullr' and i < len(argv)-4:
@@ -147,7 +150,10 @@ def gdal_edit(argv):
         print('')
         return Usage()
 
-    ds = gdal.Open(datasetname, gdal.GA_Update)
+    if ro:
+        ds = gdal.Open(datasetname)
+    else:
+        ds = gdal.Open(datasetname, gdal.GA_Update)
     if ds is None:
         return -1
 
