@@ -1631,8 +1631,14 @@ OGRErr set_result_schema(OGRLayer *pLayerResult,
             if( pszInputPrefix != NULL )
                 oFieldDefn.SetName(CPLSPrintf("%s%s", pszInputPrefix, oFieldDefn.GetNameRef()));
             ret = pLayerResult->CreateField(&oFieldDefn);
-            if (!bSkipFailures && ret != OGRERR_NONE) return ret;
-            ret = OGRERR_NONE;
+            if (ret != OGRERR_NONE) {
+                if (!bSkipFailures) 
+                    return ret;
+                else {
+                    CPLErrorReset();
+                    ret = OGRERR_NONE;
+                }
+            }
             mapInput[iField] = iField;
         }
         if (!combined) return ret;
@@ -1642,8 +1648,14 @@ OGRErr set_result_schema(OGRLayer *pLayerResult,
             if( pszMethodPrefix != NULL )
                 oFieldDefn.SetName(CPLSPrintf("%s%s", pszMethodPrefix, oFieldDefn.GetNameRef()));
             ret = pLayerResult->CreateField(&oFieldDefn);
-            if (!bSkipFailures && ret != OGRERR_NONE) return ret;
-            ret = OGRERR_NONE;
+            if (ret != OGRERR_NONE) {
+                if (!bSkipFailures) 
+                    return ret;
+                else {
+                    CPLErrorReset();
+                    ret = OGRERR_NONE;
+                }
+            }
             mapMethod[iField] = nFieldsInput+iField;
         }
     }
@@ -1838,8 +1850,15 @@ OGRErr OGRLayer::Intersection( OGRLayer *pLayerMethod,
                 delete y;
                 ret = pLayerResult->CreateFeature(z);
                 delete z;
-                if (!bSkipFailures && ret != OGRERR_NONE) {delete x; goto done;}
-                ret = OGRERR_NONE;
+                if (ret != OGRERR_NONE) {
+                    if (!bSkipFailures) {
+                        delete x; 
+                        goto done;
+                    } else {
+                        CPLErrorReset();
+                        ret = OGRERR_NONE;
+                    }
+                }
             }
         }
 
@@ -2083,8 +2102,17 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
                 delete y;
                 ret = pLayerResult->CreateFeature(z);
                 delete z;
-                if (!bSkipFailures && ret != OGRERR_NONE) {delete x; if (x_geom_diff) delete x_geom_diff; goto done;}
-                ret = OGRERR_NONE;
+                if (ret != OGRERR_NONE) {
+                    if (!bSkipFailures) {
+                        delete x;
+                        if (x_geom_diff)
+                            delete x_geom_diff;
+                        goto done;
+                    } else {
+                        CPLErrorReset();
+                        ret = OGRERR_NONE;
+                    }
+                }
             }
         }
 
@@ -2103,8 +2131,14 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
             delete x;
             ret = pLayerResult->CreateFeature(z);
             delete z;
-            if (!bSkipFailures && ret != OGRERR_NONE) goto done;
-            ret = OGRERR_NONE;
+            if (ret != OGRERR_NONE) {
+                if (!bSkipFailures) {
+                    goto done;
+                } else {
+                    CPLErrorReset();
+                    ret = OGRERR_NONE;
+                }
+            }
         }
     }
 
@@ -2159,8 +2193,14 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
             delete x;
             ret = pLayerResult->CreateFeature(z);
             delete z;
-            if (!bSkipFailures && ret != OGRERR_NONE) goto done;
-            ret = OGRERR_NONE;
+            if (ret != OGRERR_NONE) {
+                if (!bSkipFailures) {
+                    goto done;
+                } else {
+                    CPLErrorReset();
+                    ret = OGRERR_NONE;
+                }
+            }
         }
     }
     if (pfnProgress && !pfnProgress(1.0, "", pProgressArg)) {
@@ -2404,8 +2444,14 @@ OGRErr OGRLayer::SymDifference( OGRLayer *pLayerMethod,
         if (z) {
             ret = pLayerResult->CreateFeature(z);
             delete z;
-            if (!bSkipFailures && ret != OGRERR_NONE) goto done;
-            ret = OGRERR_NONE;
+            if (ret != OGRERR_NONE) {
+                if (!bSkipFailures) {
+                    goto done;
+                } else {
+                    CPLErrorReset();
+                    ret = OGRERR_NONE;
+                }
+            }
         }
     }
 
@@ -2460,8 +2506,14 @@ OGRErr OGRLayer::SymDifference( OGRLayer *pLayerMethod,
         if (z) {
             ret = pLayerResult->CreateFeature(z);
             delete z;
-            if (!bSkipFailures && ret != OGRERR_NONE) goto done;
-            ret = OGRERR_NONE;
+            if (ret != OGRERR_NONE) {
+                if (!bSkipFailures) {
+                    goto done;
+                } else {
+                    CPLErrorReset();
+                    ret = OGRERR_NONE;
+                }
+            }
         }
     }
     if (pfnProgress && !pfnProgress(1.0, "", pProgressArg)) {
@@ -2702,8 +2754,16 @@ OGRErr OGRLayer::Identity( OGRLayer *pLayerMethod,
                 delete y;
                 ret = pLayerResult->CreateFeature(z);
                 delete z;
-                if (!bSkipFailures && ret != OGRERR_NONE) {delete x; delete x_geom_diff; goto done;}
-                ret = OGRERR_NONE;
+                if (ret != OGRERR_NONE) {
+                    if (!bSkipFailures) {
+                        delete x;
+                        delete x_geom_diff;
+                        goto done;
+                    } else {
+                        CPLErrorReset();
+                        ret = OGRERR_NONE;
+                    }
+                }
             }
         }
 
@@ -2722,8 +2782,14 @@ OGRErr OGRLayer::Identity( OGRLayer *pLayerMethod,
             delete x;
             ret = pLayerResult->CreateFeature(z);
             delete z;
-            if (!bSkipFailures && ret != OGRERR_NONE) goto done;
-            ret = OGRERR_NONE;
+            if (ret != OGRERR_NONE) {
+                if (!bSkipFailures) {
+                    goto done;
+                } else {
+                    CPLErrorReset();
+                    ret = OGRERR_NONE;
+                }
+            }
         }
     }
     if (pfnProgress && !pfnProgress(1.0, "", pProgressArg)) {
@@ -2960,8 +3026,14 @@ OGRErr OGRLayer::Update( OGRLayer *pLayerMethod,
             delete x;
             ret = pLayerResult->CreateFeature(z);
             delete z;
-            if (!bSkipFailures && ret != OGRERR_NONE) goto done;
-            ret = OGRERR_NONE;
+            if (ret != OGRERR_NONE) {
+                if (!bSkipFailures) {
+                    goto done;
+                } else {
+                    CPLErrorReset();
+                    ret = OGRERR_NONE;
+                }
+            }
         }
     }
 
@@ -2991,8 +3063,14 @@ OGRErr OGRLayer::Update( OGRLayer *pLayerMethod,
         delete y;
         ret = pLayerResult->CreateFeature(z);
         delete z;
-        if (!bSkipFailures && ret != OGRERR_NONE) goto done;
-        ret = OGRERR_NONE;
+        if (ret != OGRERR_NONE) {
+            if (!bSkipFailures) {
+                goto done;
+            } else {
+                CPLErrorReset();
+                ret = OGRERR_NONE;
+            }
+        }
     }
     if (pfnProgress && !pfnProgress(1.0, "", pProgressArg)) {
       CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
@@ -3228,8 +3306,14 @@ OGRErr OGRLayer::Clip( OGRLayer *pLayerMethod,
             if (z->GetGeometryRef() != NULL && !z->GetGeometryRef()->IsEmpty())
                 ret = pLayerResult->CreateFeature(z);
             delete z;
-            if (!bSkipFailures && ret != OGRERR_NONE) goto done;
-            ret = OGRERR_NONE;
+            if (ret != OGRERR_NONE) {
+                if (!bSkipFailures) {
+                    goto done;
+                } else {
+                    CPLErrorReset();
+                    ret = OGRERR_NONE;
+                }
+            }
         }
     }
     if (pfnProgress && !pfnProgress(1.0, "", pProgressArg)) {
@@ -3459,8 +3543,14 @@ OGRErr OGRLayer::Erase( OGRLayer *pLayerMethod,
             if (z->GetGeometryRef() != NULL && !z->GetGeometryRef()->IsEmpty())
                 ret = pLayerResult->CreateFeature(z);
             delete z;
-            if (!bSkipFailures && ret != OGRERR_NONE) goto done;
-            ret = OGRERR_NONE;
+            if (ret != OGRERR_NONE) {
+                if (!bSkipFailures) {
+                    goto done;
+                } else {
+                    CPLErrorReset();
+                    ret = OGRERR_NONE;
+                }
+            }
         }
     }
     if (pfnProgress && !pfnProgress(1.0, "", pProgressArg)) {
