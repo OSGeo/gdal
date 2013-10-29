@@ -591,8 +591,8 @@ raster.  This output is suitable for use with <a href="http://mapserver.org/">Ma
 tileindex. 
 
 <dl>
-dt><b>-f</b> format: |gdal2.0|</dt>
-<dd><p>The OGR format of the output tile index file. Default is Esri Shapefile.</p>
+<dt><b>-f</b> format:</dt><dd> |gdal2.0|
+<p>The OGR format of the output tile index file. Default is Esri Shapefile.</p>
 </dd>
 <dt><b>-tileindex</b> field_name:</dt>
 <dd><p>The output field name to hold the file path/location to the indexed rasters. The default tile index field name is <code>location</code>.</p>
@@ -606,11 +606,11 @@ dt><b>-f</b> format: |gdal2.0|</dt>
 <dt><b>-t_srs</b> target_srs:</dt>
 <dd><p>Geometries of input files will be transformed to the desired target coordinate reference system. Using this option generates files that are not compatible with MapServer &lt; 6.4. Default creates simple rectangular polygons in the same coordinate reference system as the input rasters.</p>
 </dd>
-<dt><b>-src_srs_name</b> field_name: |gdal2.0|</dt>
-<dd><p>The name of the field to store the SRS of each tile. This field name can be used as the value of the TILESRS keyword in MapServer &gt;= 6.4.</p>
+<dt><b>-src_srs_name</b> field_name:</dt><dd> |gdal2.0|
+<p>The name of the field to store the SRS of each tile. This field name can be used as the value of the TILESRS keyword in MapServer &gt;= 6.4.</p>
 </dd>
-<dt><b>-src_srs_format</b> type: |gdal2.0|</dt>
-<dd><p>The format in which the SRS of each tile must be written. Types can be AUTO, WKT, EPSG, PROJ.</p>
+<dt><b>-src_srs_format</b> type:</dt><dd> |gdal2.0|
+<p>The format in which the SRS of each tile must be written. Types can be AUTO, WKT, EPSG, PROJ.</p>
 </dd>
 <dt><b>-lyr_name</b> name:</dt>
 <dd><p>Layer name to create/append to in the output tile index file.</p>
