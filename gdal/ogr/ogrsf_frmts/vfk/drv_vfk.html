@@ -51,6 +51,12 @@ directory as input VFK file. If SQLite database already exists then
 the driver reads VFK features directly from the database (and not from
 original VFK file).
 
+<p>
+Since OGR 1.11, the driver reads by default all data blocks. When
+configuration option <tt>OGR_VFK_DB_READ_ALL_BLOCKS=NO</tt> is given
+than the driver reads only data blocks which are requested by the
+user.
+
 <h2>Datasource name</h2>
 
 Datasource name is a full path to the VFK file.

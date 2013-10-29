@@ -74,7 +74,7 @@ public:
     bool           IsLatin2() const { return m_bLatin2; }
     bool           IsSpatial() const { return FALSE; }
     int            ReadDataBlocks();
-    int            ReadDataRecords(IVFKDataBlock *);
+    int            ReadDataRecords(IVFKDataBlock * = NULL);
     int            LoadGeometry();
     
     int            GetDataBlockCount() const { return m_nDataBlockCount; }
@@ -108,7 +108,7 @@ public:
 
     bool          IsSpatial() const { return m_bSpatial; }
     int           ReadDataBlocks();
-    int           ReadDataRecords(IVFKDataBlock *);
+    int           ReadDataRecords(IVFKDataBlock * = NULL);
 
     sqlite3_stmt *PrepareStatement(const char *);
     OGRErr        ExecuteSQL(const char *, bool = FALSE);
