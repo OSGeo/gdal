@@ -97,6 +97,17 @@ HDF4Dataset::~HDF4Dataset()
 }
 
 /************************************************************************/
+/*                      GetMetadataDomainList()                         */
+/************************************************************************/
+
+char **HDF4Dataset::GetMetadataDomainList()
+{
+    return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
+                                   TRUE,
+                                   "SUBDATASETS", NULL);
+}
+
+/************************************************************************/
 /*                            GetMetadata()                             */
 /************************************************************************/
 

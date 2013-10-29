@@ -104,6 +104,7 @@ class RS2Dataset : public GDALPamDataset
     virtual const char *GetProjectionRef(void);
     virtual CPLErr GetGeoTransform( double * );
 
+    virtual char      **GetMetadataDomainList();
     virtual char **GetMetadata( const char * pszDomain = "" );
     virtual char **GetFileList(void);
 
@@ -1477,6 +1478,17 @@ CPLErr RS2Dataset::GetGeoTransform( double * padfTransform )
     return( CE_Failure );
 }
 
+
+/************************************************************************/
+/*                      GetMetadataDomainList()                         */
+/************************************************************************/
+
+char **RS2Dataset::GetMetadataDomainList()
+{
+    return BuildMetadataDomainList(GDALDataset::GetMetadataDomainList(),
+                                   TRUE,
+                                   "SUBDATASETS", NULL);
+}
 
 /************************************************************************/
 /*                            GetMetadata()                             */

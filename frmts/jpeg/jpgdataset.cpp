@@ -220,6 +220,7 @@ protected:
     virtual const char *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();
 
+    virtual char      **GetMetadataDomainList();
     virtual char  **GetMetadata( const char * pszDomain = "" );
     virtual const char *GetMetadataItem( const char * pszName,
                                          const char * pszDomain = "" );
@@ -441,6 +442,17 @@ void JPGDatasetCommon::ReadXMPMetadata()
     VSIFSeekL( fpImage, nCurOffset, SEEK_SET );
 
     bHasReadXMPMetadata = TRUE;
+}
+
+/************************************************************************/
+/*                      GetMetadataDomainList()                         */
+/************************************************************************/
+
+char **JPGDatasetCommon::GetMetadataDomainList()
+{
+    return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
+                                   TRUE,
+                                   "xml:XMP", "COLOR_PROFILE", NULL);
 }
 
 /************************************************************************/

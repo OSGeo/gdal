@@ -2938,6 +2938,17 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
 
 }
 
+/************************************************************************/
+/*                      GetMetadataDomainList()                         */
+/************************************************************************/
+
+char **PostGISRasterDataset::GetMetadataDomainList()
+{
+    return BuildMetadataDomainList(GDALDataset::GetMetadataDomainList(),
+                                   TRUE,
+                                   "SUBDATASETS", NULL);
+}
+
 /*****************************************
  * \brief Get Metadata from raster
  * TODO: Add more options (the result of

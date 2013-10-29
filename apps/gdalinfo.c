@@ -51,7 +51,8 @@ void Usage(const char* pszErrorMsg)
 
 {
     printf( "Usage: gdalinfo [--help-general] [-mm] [-stats] [-hist] [-nogcp] [-nomd]\n"
-            "                [-norat] [-noct] [-nofl] [-checksum] [-proj4] [-mdd domain]*\n"
+            "                [-norat] [-noct] [-nofl] [-checksum] [-proj4]\n"
+            "                [-listmdd] [-mdd domain|`all`]*\n"
             "                [-sd subdataset] datasetname\n" );
 
     if( pszErrorMsg != NULL )
@@ -86,6 +87,7 @@ int main( int argc, char ** argv )
     int                 nSubdataset = -1;
     const char          *pszFilename = NULL;
     char              **papszExtraMDDomains = NULL, **papszFileList;
+    int                 bListMDD = FALSE;
     const char  *pszProjection = NULL;
     OGRCoordinateTransformationH hTransform = NULL;
     int             bShowFileList = TRUE;
@@ -148,6 +150,8 @@ int main( int argc, char ** argv )
             bShowRAT = FALSE;
         else if( EQUAL(argv[i], "-noct") )
             bShowColorTable = FALSE;
+        else if( EQUAL(argv[i], "-listmdd") )
+            bListMDD = TRUE;
         else if( EQUAL(argv[i], "-mdd") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
@@ -382,6 +386,25 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Report metadata.                                                */
 /* -------------------------------------------------------------------- */
+
+    if( bListMDD )
+    {
+        char** papszMDDList = GDALGetMetadataDomainList( hDataset );
+        char** papszIter = papszMDDList;
+
+        if( papszMDDList != NULL )
+            printf( "Metadata domains:\n" );
+        while( papszIter != NULL && *papszIter != NULL )
+        {
+            if( EQUAL(*papszIter, "") )
+                printf( "  (default)\n");
+            else
+                printf( "  %s\n", *papszIter );
+            papszIter ++;
+        }
+        CSLDestroy(papszMDDList);
+    }
+
     papszMetadata = (bShowMetadata) ? GDALGetMetadata( hDataset, NULL ) : NULL;
     if( bShowMetadata && CSLCount(papszMetadata) > 0 )
     {
@@ -390,6 +413,30 @@ int main( int argc, char ** argv )
         {
             printf( "  %s\n", papszMetadata[i] );
         }
+    }
+
+    if( papszExtraMDDomains != NULL && EQUAL(papszExtraMDDomains[0], "all") &&
+        papszExtraMDDomains[1] == NULL )
+    {
+        char** papszMDDList = GDALGetMetadataDomainList( hDataset );
+        char** papszIter = papszMDDList;
+
+        CSLDestroy(papszExtraMDDomains);
+        papszExtraMDDomains = NULL;
+
+        while( papszIter != NULL && *papszIter != NULL )
+        {
+            if( !EQUAL(*papszIter, "") &&
+                !EQUAL(*papszIter, "IMAGE_STRUCTURE") &&
+                !EQUAL(*papszIter, "SUBDATASETS") &&
+                !EQUAL(*papszIter, "GEOLOCATION") &&
+                !EQUAL(*papszIter, "RPC") )
+            {
+                papszExtraMDDomains = CSLAddString(papszExtraMDDomains, *papszIter);
+            }
+            papszIter ++;
+        }
+        CSLDestroy(papszMDDList);
     }
 
     for( iMDD = 0; bShowMetadata && iMDD < CSLCount(papszExtraMDDomains); iMDD++ )
@@ -738,6 +785,23 @@ int main( int argc, char ** argv )
             printf( "  Offset: %.15g,   Scale:%.15g\n",
                     GDALGetRasterOffset( hBand, &bSuccess ),
                     GDALGetRasterScale( hBand, &bSuccess ) );
+
+        if( bListMDD )
+        {
+            char** papszMDDList = GDALGetMetadataDomainList( hBand );
+            char** papszIter = papszMDDList;
+            if( papszMDDList != NULL )
+                printf( "  Metadata domains:\n" );
+            while( papszIter != NULL && *papszIter != NULL )
+            {
+                if( EQUAL(*papszIter, "") )
+                    printf( "    (default)\n");
+                else
+                    printf( "    %s\n", *papszIter );
+                papszIter ++;
+            }
+            CSLDestroy(papszMDDList);
+        }
 
         papszMetadata = (bShowMetadata) ? GDALGetMetadata( hBand, NULL ) : NULL;
         if( bShowMetadata && CSLCount(papszMetadata) > 0 )

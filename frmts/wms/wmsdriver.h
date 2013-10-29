@@ -245,6 +245,8 @@ public:
     virtual CPLErr GetGeoTransform(double *gt);
     virtual CPLErr SetGeoTransform(double *gt);
     virtual CPLErr AdviseRead(int x0, int y0, int sx, int sy, int bsx, int bsy, GDALDataType bdt, int band_count, int *band_map, char **options);
+    
+    virtual char      **GetMetadataDomainList();
     virtual const char *GetMetadataItem( const char * pszName,
                                          const char * pszDomain = "" );
 
@@ -412,6 +414,7 @@ public:
     virtual int GetOverviewCount();
     virtual GDALRasterBand *GetOverview(int n);
 
+    virtual char      **GetMetadataDomainList();
     virtual const char *GetMetadataItem( const char * pszName,
                                          const char * pszDomain = "" );
 

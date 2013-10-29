@@ -106,6 +106,7 @@ class CPL_DLL WCSDataset : public GDALPamDataset
     virtual const char *GetProjectionRef(void);
     virtual char **GetFileList(void);
 
+    virtual char      **GetMetadataDomainList();
     virtual char **GetMetadata( const char *pszDomain );
 };
 
@@ -2334,6 +2335,17 @@ char **WCSDataset::GetFileList()
 #endif /* def ESRI_BUILD */
     
     return papszFileList;
+}
+
+/************************************************************************/
+/*                      GetMetadataDomainList()                         */
+/************************************************************************/
+
+char **WCSDataset::GetMetadataDomainList()
+{
+    return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
+                                   TRUE,
+                                   "xml:CoverageOffering", NULL);
 }
 
 /************************************************************************/

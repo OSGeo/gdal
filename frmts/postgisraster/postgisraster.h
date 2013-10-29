@@ -280,6 +280,7 @@ public:
     static GBool InsertRaster(PGconn *, PostGISRasterDataset *, 
         const char *, const char *, const char *);
     static CPLErr Delete(const char*);
+    virtual char      **GetMetadataDomainList();
     char ** GetMetadata(const char *);
     const char* GetProjectionRef();
     CPLErr SetProjection(const char*);

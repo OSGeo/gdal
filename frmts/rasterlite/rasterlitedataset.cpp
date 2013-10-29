@@ -658,6 +658,17 @@ void RasterliteDataset::AddSubDataset( const char* pszDSName)
 }
 
 /************************************************************************/
+/*                      GetMetadataDomainList()                         */
+/************************************************************************/
+
+char **RasterliteDataset::GetMetadataDomainList()
+{
+    return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
+                                   TRUE,
+                                   "SUBDATASETS", "IMAGE_STRUCTURE", NULL);
+}
+
+/************************************************************************/
 /*                            GetMetadata()                             */
 /************************************************************************/
 
