@@ -112,6 +112,8 @@ class CPL_DLL GDALMajorObject
     CPLString           sDescription;
     GDALMultiDomainMetadata oMDMD;
     
+    char               **BuildMetadataDomainList(char** papszList, int bCheckNonEmpty, ...) CPL_NULL_TERMINATED;
+    
   public:
                         GDALMajorObject();
     virtual            ~GDALMajorObject();
@@ -122,6 +124,8 @@ class CPL_DLL GDALMajorObject
     virtual const char *GetDescription() const;
     virtual void        SetDescription( const char * );
 
+    virtual char      **GetMetadataDomainList();
+    
     virtual char      **GetMetadata( const char * pszDomain = "" );
     virtual CPLErr      SetMetadata( char ** papszMetadata,
                                      const char * pszDomain = "" );

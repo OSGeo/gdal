@@ -186,8 +186,9 @@ lists information about a raster dataset
 
 \verbatim
 gdalinfo [--help-general] [-mm] [-stats] [-hist] [-nogcp] [-nomd]
-         [-norat] [-noct] [-nofl] [-checksum] [-proj4] [-mdd domain]*
-	 [-sd subdataset] datasetname
+         [-norat] [-noct] [-nofl] [-checksum] [-proj4]
+         [-listmdd] [-mdd domain|`all`]*
+         [-sd subdataset] datasetname
 \endverbatim
 
 \section gdalinfo_description DESCRIPTION
@@ -211,7 +212,9 @@ of metadata strings.</dd>
 <dt> <b>-nrat</b></dt><dd> Suppress printing of raster attribute table.</dd>
 <dt> <b>-noct</b></dt><dd> Suppress printing of color table.</dd>
 <dt> <b>-checksum</b></dt><dd> Force computation of the checksum for each band in the dataset.</dd>
-<dt> <b>-mdd domain</b></dt><dd> Report metadata for the specified domain</dd>
+<dt> <b>-listmdd</b></dt><dd> (GDAL >= 2.0) List all metadata domains available for the dataset.</dd>
+<dt> <b>-mdd domain</b></dt><dd> Report metadata for the specified domain. Starting with GDAL 2.0,
+"all" can be used to report metadata in all domains</dd>
 <dt> <b>-nofl</b></dt><dd> (GDAL >= 1.9.0) Only display the first file of the
 file list.</dd>
 <dt> <b>-sd</b> <i>subdataset</i></dt><dd> (GDAL >= 1.9.0) If the input
@@ -591,7 +594,7 @@ raster.  This output is suitable for use with <a href="http://mapserver.org/">Ma
 tileindex. 
 
 <dl>
-<dt><b>-f</b> format:</dt><dd> |gdal2.0|
+<dt><b>-f</b> format:</dt><dd> (GDAL >= 2.0)
 <p>The OGR format of the output tile index file. Default is Esri Shapefile.</p>
 </dd>
 <dt><b>-tileindex</b> field_name:</dt>
@@ -606,10 +609,10 @@ tileindex.
 <dt><b>-t_srs</b> target_srs:</dt>
 <dd><p>Geometries of input files will be transformed to the desired target coordinate reference system. Using this option generates files that are not compatible with MapServer &lt; 6.4. Default creates simple rectangular polygons in the same coordinate reference system as the input rasters.</p>
 </dd>
-<dt><b>-src_srs_name</b> field_name:</dt><dd> |gdal2.0|
+<dt><b>-src_srs_name</b> field_name:</dt><dd> (GDAL >= 2.0) 
 <p>The name of the field to store the SRS of each tile. This field name can be used as the value of the TILESRS keyword in MapServer &gt;= 6.4.</p>
 </dd>
-<dt><b>-src_srs_format</b> type:</dt><dd> |gdal2.0|
+<dt><b>-src_srs_format</b> type:</dt><dd> (GDAL >= 2.0) 
 <p>The format in which the SRS of each tile must be written. Types can be AUTO, WKT, EPSG, PROJ.</p>
 </dd>
 <dt><b>-lyr_name</b> name:</dt>

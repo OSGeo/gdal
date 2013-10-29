@@ -52,6 +52,13 @@ public:
   }
 %clear const char * pszNewDesc;
 
+
+%apply (char **CSL) {(char **)};
+  char ** GetMetadataDomainList( ) {
+    return GDALGetMetadataDomainList( self );
+  }
+%clear char **;
+
 /*
  * GetMetadata methods
  */

@@ -143,6 +143,8 @@ class PNGDataset : public GDALPamDataset
     virtual CPLErr GetGeoTransform( double * );
     virtual void FlushCache( void );
 
+    virtual char      **GetMetadataDomainList();
+
     virtual char  **GetMetadata( const char * pszDomain = "" );
     virtual const char *GetMetadataItem( const char * pszName,
                                          const char * pszDomain = NULL );
@@ -915,6 +917,17 @@ void PNGDataset::LoadICCProfile()
     }
 
     nPamFlags = nOldPamFlags;
+}
+
+/************************************************************************/
+/*                      GetMetadataDomainList()                         */
+/************************************************************************/
+
+char **PNGDataset::GetMetadataDomainList()
+{
+    return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
+                                   TRUE,
+                                   "xml:XMP", "COLOR_PROFILE", NULL);
 }
 
 /************************************************************************/

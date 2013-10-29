@@ -80,6 +80,7 @@ class CPL_DLL OGDIDataset : public GDALDataset
 
     virtual void *GetInternalHandle( const char * );
 
+    virtual char      **GetMetadataDomainList();
     virtual char **GetMetadata( const char * pszDomain = "" );
 };
 
@@ -530,6 +531,17 @@ OGDIDataset::~OGDIDataset()
     cln_DestroyClient( nClientID );
     CSLDestroy( papszSubDatasets );
     CPLFree( pszProjection );
+}
+
+/************************************************************************/
+/*                      GetMetadataDomainList()                         */
+/************************************************************************/
+
+char **OGDIDataset::GetMetadataDomainList()
+{
+    return BuildMetadataDomainList(GDALDataset::GetMetadataDomainList(),
+                                   TRUE,
+                                   "SUBDATASETS", NULL);
 }
 
 /************************************************************************/

@@ -425,6 +425,7 @@ class GTiffDataset : public GDALPamDataset
                                     void * pProgressData );
     virtual void    FlushCache( void );
 
+    virtual char      **GetMetadataDomainList();
     virtual CPLErr  SetMetadata( char **, const char * = "" );
     virtual char  **GetMetadata( const char * pszDomain = "" );
     virtual CPLErr  SetMetadataItem( const char*, const char*, 
@@ -534,6 +535,7 @@ public:
     virtual CPLErr SetUnitType( const char *pszNewValue );
     virtual CPLErr SetColorInterpretation( GDALColorInterp );
 
+    virtual char      **GetMetadataDomainList();
     virtual CPLErr  SetMetadata( char **, const char * = "" );
     virtual char  **GetMetadata( const char * pszDomain = "" );
     virtual CPLErr  SetMetadataItem( const char*, const char*, 
@@ -1492,6 +1494,15 @@ CPLErr GTiffRasterBand::SetUnitType( const char* pszNewValue )
 
     osUnitType = osNewValue;
     return CE_None;
+}
+
+/************************************************************************/
+/*                      GetMetadataDomainList()                         */
+/************************************************************************/
+
+char **GTiffRasterBand::GetMetadataDomainList()
+{
+    return CSLDuplicate(oGTiffMDMD.GetDomainList());
 }
 
 /************************************************************************/
@@ -9466,6 +9477,18 @@ CPLErr GTiffDataset::SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
             "SetGCPs() is only supported on newly created GeoTIFF files." );
         return CE_Failure;
     }
+}
+
+/************************************************************************/
+/*                      GetMetadataDomainList()                         */
+/************************************************************************/
+
+char **GTiffDataset::GetMetadataDomainList()
+{
+    return BuildMetadataDomainList(CSLDuplicate(oGTiffMDMD.GetDomainList()),
+                                   TRUE,
+                                   "", "ProxyOverviewRequest", "RPC", "IMD", "SUBDATASETS", "EXIF",
+                                   "xml:XMP", "COLOR_PROFILE", NULL);
 }
 
 /************************************************************************/

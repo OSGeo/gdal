@@ -335,6 +335,10 @@ class MajorObject(_object):
         """SetDescription(self, char pszNewDesc)"""
         return _gdal.MajorObject_SetDescription(self, *args)
 
+    def GetMetadataDomainList(self, *args):
+        """GetMetadataDomainList(self) -> char"""
+        return _gdal.MajorObject_GetMetadataDomainList(self, *args)
+
     def GetMetadata_Dict(self, *args):
         """GetMetadata_Dict(self, char pszDomain = "") -> char"""
         return _gdal.MajorObject_GetMetadata_Dict(self, *args)

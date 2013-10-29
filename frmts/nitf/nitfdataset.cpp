@@ -2939,6 +2939,19 @@ void NITFDataset::InitializeTREMetadata()
 }
 
 /************************************************************************/
+/*                      GetMetadataDomainList()                         */
+/************************************************************************/
+
+char **NITFDataset::GetMetadataDomainList()
+{
+    return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
+                                   TRUE,
+                                   "NITF_METADATA", "NITF_DES", "NITF_DES_METADATA",
+                                   "NITF_FILE_HEADER_TRES", "NITF_IMAGE_SEGMENT_TRES",
+                                   "CGM", "TEXT", "TRE", "xml:TRE", "OVERVIEWS", NULL);
+}
+
+/************************************************************************/
 /*                            GetMetadata()                             */
 /************************************************************************/
 
