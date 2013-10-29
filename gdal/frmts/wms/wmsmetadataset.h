@@ -105,6 +105,7 @@ class GDALWMSMetaDataset : public GDALPamDataset
         GDALWMSMetaDataset();
        ~GDALWMSMetaDataset();
 
+    virtual char      **GetMetadataDomainList();
     virtual char      **GetMetadata( const char * pszDomain = "" );
 
     static GDALDataset* AnalyzeGetCapabilities(CPLXMLNode* psXML,

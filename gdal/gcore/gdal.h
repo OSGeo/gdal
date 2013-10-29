@@ -290,6 +290,7 @@ void CPL_DLL CPL_STDCALL GDALApplyGeoTransform( double *, double, double,
 /*      major objects (dataset, and, driver, drivermanager).            */
 /* ==================================================================== */
 
+char CPL_DLL  ** CPL_STDCALL GDALGetMetadataDomainList( GDALMajorObjectH hObject );
 char CPL_DLL  ** CPL_STDCALL GDALGetMetadata( GDALMajorObjectH, const char * );
 CPLErr CPL_DLL CPL_STDCALL GDALSetMetadata( GDALMajorObjectH, char **,
                                             const char * );

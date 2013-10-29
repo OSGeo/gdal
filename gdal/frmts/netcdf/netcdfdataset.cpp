@@ -1577,6 +1577,17 @@ int netCDFDataset::SetDefineMode( int bNewDefineMode )
 }
 
 /************************************************************************/
+/*                      GetMetadataDomainList()                         */
+/************************************************************************/
+
+char **netCDFDataset::GetMetadataDomainList()
+{
+    return BuildMetadataDomainList(GDALDataset::GetMetadataDomainList(),
+                                   TRUE,
+                                   "SUBDATASETS", NULL);
+}
+
+/************************************************************************/
 /*                            GetMetadata()                             */
 /************************************************************************/
 char **netCDFDataset::GetMetadata( const char *pszDomain )

@@ -98,6 +98,7 @@ class ERSDataset : public RawDataset
     virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
                             const char *pszGCPProjection );
 
+    virtual char      **GetMetadataDomainList();
     virtual const char *GetMetadataItem( const char * pszName,
                                      const char * pszDomain = "" );
     virtual char      **GetMetadata( const char * pszDomain = "" );
@@ -216,6 +217,17 @@ void ERSDataset::FlushCache()
     }
 
     RawDataset::FlushCache();
+}
+
+/************************************************************************/
+/*                      GetMetadataDomainList()                         */
+/************************************************************************/
+
+char **ERSDataset::GetMetadataDomainList()
+{
+    return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
+                                   TRUE,
+                                   "ERS", NULL);
 }
 
 /************************************************************************/

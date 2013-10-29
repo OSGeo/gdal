@@ -211,6 +211,17 @@ void GIFAbstractDataset::CollectXMPMetadata()
 }
 
 /************************************************************************/
+/*                      GetMetadataDomainList()                         */
+/************************************************************************/
+
+char **GIFAbstractDataset::GetMetadataDomainList()
+{
+    return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
+                                   TRUE,
+                                   "xml:XMP", NULL);
+}
+
+/************************************************************************/
 /*                           GetMetadata()                              */
 /************************************************************************/
 

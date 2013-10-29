@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: wcsdataset.cpp 10645 2007-01-18 02:22:39Z warmerdam $
+ * $Id$
  *
  * Project:  WCS Client Driver
  * Purpose:  Implementation of an HTTP fetching driver.
@@ -32,7 +32,7 @@
 #include "cpl_http.h"
 #include "cpl_atomic_ops.h"
 
-CPL_CVSID("$Id: wcsdataset.cpp 10645 2007-01-18 02:22:39Z warmerdam $");
+CPL_CVSID("$Id$");
 
 
 /************************************************************************/

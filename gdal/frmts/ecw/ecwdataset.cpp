@@ -2665,6 +2665,17 @@ CPLErr ECWDataset::GetGeoTransform( double * padfTransform )
 }
 
 /************************************************************************/
+/*                      GetMetadataDomainList()                         */
+/************************************************************************/
+
+char **ECWDataset::GetMetadataDomainList()
+{
+    return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
+                                   TRUE,
+                                   "ECW", "GML", NULL);
+}
+
+/************************************************************************/
 /*                           GetMetadataItem()                          */
 /************************************************************************/
 

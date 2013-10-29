@@ -610,6 +610,7 @@ class PDFDataset : public GDALPamDataset
     virtual CPLErr      SetProjection(const char* pszWKTIn);
     virtual CPLErr      SetGeoTransform(double* padfGeoTransform);
 
+    virtual char      **GetMetadataDomainList();
     virtual char      **GetMetadata( const char * pszDomain = "" );
     virtual CPLErr      SetMetadata( char ** papszMetadata,
                                      const char * pszDomain = "" );
@@ -4972,6 +4973,17 @@ CPLErr PDFDataset::SetGeoTransform(double* padfGeoTransform)
     if (!bNeatLineDirty)
         SetMetadataItem("NEATLINE", NULL);
     return CE_None;
+}
+
+/************************************************************************/
+/*                      GetMetadataDomainList()                         */
+/************************************************************************/
+
+char **PDFDataset::GetMetadataDomainList()
+{
+    return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
+                                   TRUE,
+                                   "xml:XMP", "LAYERS_WITH_REF", "EMBEDDED_METADATA", NULL);
 }
 
 /************************************************************************/

@@ -67,6 +67,7 @@ class WEBPDataset : public GDALPamDataset
                                    void *, int, int, GDALDataType,
                                    int, int *, int, int, int );
 
+    virtual char      **GetMetadataDomainList();
     virtual char  **GetMetadata( const char * pszDomain = "" );
 
     static GDALDataset *Open( GDALOpenInfo * );
@@ -185,6 +186,17 @@ WEBPDataset::~WEBPDataset()
     if (fpImage)
         VSIFCloseL(fpImage);
     VSIFree(pabyUncompressed);
+}
+
+/************************************************************************/
+/*                      GetMetadataDomainList()                         */
+/************************************************************************/
+
+char **WEBPDataset::GetMetadataDomainList()
+{
+    return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
+                                   TRUE,
+                                   "xml:XMP", NULL);
 }
 
 /************************************************************************/

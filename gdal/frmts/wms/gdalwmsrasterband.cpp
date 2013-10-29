@@ -383,6 +383,16 @@ void GDALWMSRasterBand::ComputeRequestInfo(GDALWMSImageRequestInfo &iri,
     tiri.m_level = m_parent_dataset->m_data_window.m_tlevel - level;
 }
 
+
+/************************************************************************/
+/*                      GetMetadataDomainList()                         */
+/************************************************************************/
+
+char **GDALWMSRasterBand::GetMetadataDomainList()
+{
+    return CSLAddString(GDALPamRasterBand::GetMetadataDomainList(), "LocationInfo");
+}
+
 const char *GDALWMSRasterBand::GetMetadataItem( const char * pszName,
                                                 const char * pszDomain )
 {
