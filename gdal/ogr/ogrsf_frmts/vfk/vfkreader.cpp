@@ -208,7 +208,7 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
 {
     const char *pszName;
     char       *pszBlockName, *pszLine;
-    CPLString pszBlockNameLast;
+    CPLString   osBlockNameLast;
     int         nLength, iLine, nSkipped, nDupl, nRecords;
     int         iDataBlock;
     
@@ -274,14 +274,17 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
                 }
                 
                 if (!poDataBlock && pszBlockName) { /* read all data blocks */
-                    if (pszBlockNameLast.empty() ||
-                        !EQUAL(pszBlockName, pszBlockNameLast.c_str())) {
+                    if (osBlockNameLast.empty() ||
+                        !EQUAL(pszBlockName, osBlockNameLast.c_str())) {
                         poDataBlockCurrent = GetDataBlock(pszBlockName);
-                        pszBlockNameLast = CPLString(pszBlockName);
+                        osBlockNameLast = CPLString(pszBlockName);
                     }
                 }
                 if (!poDataBlockCurrent)
+                {
+                    CPLFree(pszBlockName);
                     continue; // assert ?
+                }
                 
                 poNewFeature = new VFKFeature(poDataBlockCurrent,
                                               poDataBlockCurrent->GetFeatureCount() + 1);
@@ -297,12 +300,12 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
                         poDataBlockCurrent->SetIncRecordCount(RecordValid);
                     }
                     delete poNewFeature;
-		}
+                }
                 else {
                     CPLDebug("OGR-VFK", 
                              "Invalid VFK data record skipped (line %d).\n%s\n", iLine, pszLine);
-		    poDataBlockCurrent->SetIncRecordCount(RecordSkipped);
-		}
+                    poDataBlockCurrent->SetIncRecordCount(RecordSkipped);
+                }
             }
             CPLFree(pszBlockName);
         }
