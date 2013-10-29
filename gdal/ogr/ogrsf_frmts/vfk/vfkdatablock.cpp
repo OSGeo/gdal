@@ -59,6 +59,10 @@ IVFKDataBlock::IVFKDataBlock(const char *pszName, const IVFKReader *poReader)
     m_bGeometryPerBlock = TRUE;    /* load geometry per block/feature */
 
     m_poReader       = (IVFKReader *) poReader;
+    
+    m_nRecordCount[RecordValid]      = 0L;      /* number of valid records */
+    m_nRecordCount[RecordSkipped]    = 0L;      /* number of skipped (invalid) records */
+    m_nRecordCount[RecordDuplicated] = 0L;      /* number of duplicated records */
 }
 
 /*!
@@ -577,6 +581,28 @@ void IVFKDataBlock::AddFeature(IVFKFeature *poNewFeature)
     m_papoFeature = (IVFKFeature **)
         CPLRealloc(m_papoFeature, sizeof (IVFKFeature *) * m_nFeatureCount);
     m_papoFeature[m_nFeatureCount-1] = poNewFeature;
+}
+
+/*!
+  \brief Get number of records
+
+  \param iRec record type (valid, skipped, duplicated)
+
+  \return number of records
+*/
+int IVFKDataBlock::GetRecordCount(RecordType iRec) const
+{
+    return m_nRecordCount[iRec];
+}
+
+/*!
+  \brief Increment number of records
+
+  \param iRec record type (valid, skipped, duplicated)
+*/
+void IVFKDataBlock::SetIncRecordCount(RecordType iRec)
+{
+    m_nRecordCount[iRec]++;
 }
 
 /*!

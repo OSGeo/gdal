@@ -54,6 +54,8 @@ typedef std::vector<VFKFeatureSQLite *> VFKFeatureSQLiteList;
 #define FID_COLUMN   "ogr_fid"
 #define GEOM_COLUMN  "geometry"
 
+enum RecordType { RecordValid, RecordSkipped, RecordDuplicated };
+
 /************************************************************************/
 /*                              VFKProperty                             */
 /************************************************************************/
@@ -233,6 +235,8 @@ protected:
 
     IVFKReader        *m_poReader;
 
+    long               m_nRecordCount[3];
+    
     bool               AppendLineToRing(PointListArray *, const OGRLineString *, bool, bool = FALSE);
     int                LoadData();
     
@@ -271,6 +275,8 @@ public:
     int                LoadGeometry();
 
     IVFKReader        *GetReader() const { return m_poReader; }
+    int                GetRecordCount(RecordType = RecordValid)  const;
+    void               SetIncRecordCount(RecordType);
 };
 
 /************************************************************************/
@@ -341,7 +347,7 @@ public:
     virtual bool           IsLatin2() const = 0;
     virtual bool           IsSpatial() const = 0;
     virtual int            ReadDataBlocks() = 0;
-    virtual int            ReadDataRecords(IVFKDataBlock *) = 0;
+    virtual int            ReadDataRecords(IVFKDataBlock * = NULL) = 0;
     virtual int            LoadGeometry() = 0;
 
     virtual int            GetDataBlockCount() const = 0;
