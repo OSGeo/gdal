@@ -572,7 +572,7 @@ Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
 *******************************************************************************
 /*! \page gdaltindex gdaltindex
 
-builds a shapefile as a raster tileindex
+Builds a shapefile as a raster tileindex
 
 \section gdaltindex_synopsis SYNOPSIS
 
@@ -590,26 +590,38 @@ an attribute containing the filename, and a polygon geometry outlining the
 raster.  This output is suitable for use with <a href="http://mapserver.org/">MapServer</a> as a raster 
 tileindex. 
 
-<ul>
-<li> The shapefile (index_file) will be created if it doesn't already exist, 
-otherwise it will append to the existing file.
-<li> The default tile index field is 'location'.
-<li> Raster filenames will be put in the file exactly as they are specified
-on the commandline unless the option -write_absolute_path is used.
-<li> If -skip_different_projection is specified, only files with same projection ref
-as files already inserted in the tileindex will be inserted (unless t_srs is specified).
-<li> If -t_srs is specified, geometries of input files will be transformed to the desired
-target coordinate reference system. 
-Note that using this option generates files that are NOT compatible with MapServer < 6.4
-<li> (GDAL >= 2.0) If -src_srs_name is specified, a field will be created with the SRS of each tile.
-     This field name can be used as the value of the TILESRS keyword in MapServer >= 6.4.
-<li> (GDAL >= 2.0) -src_srs_format can be used to specify the format in which the SRS of each tile must
-     be written.
-<li> (GDAL >= 2.0) -f can be specified to the name of a OGR driver, to output the tile index as any supported
-     OGR format.
-<li> Simple rectangular polygons are generated in the same coordinate reference system
-as the rasters, or in target reference system if the -t_srs option is used.
-</ul>
+<dl>
+dt><b>-f</b> format: |gdal2.0|</dt>
+<dd><p>The OGR format of the output tile index file. Default is Esri Shapefile.</p>
+</dd>
+<dt><b>-tileindex</b> field_name:</dt>
+<dd><p>The output field name to hold the file path/location to the indexed rasters. The default tile index field name is <code>location</code>.</p>
+</dd>
+<dt><b>-write_absolute_path</b>:</dt>
+<dd><p>The absolute path to the raster files is stored in the tile index file. By default the raster filenames will be put in the file exactly as they are specified on the command line.</p>
+</dd>
+<dt><b>-skip_different_projection</b>:</dt>
+<dd><p>Only files with same projection as files already inserted in the tileindex will be inserted (unless <code>-t_srs</code> is specified). Default does not check projection and accepts all inputs.</p>
+</dd>
+<dt><b>-t_srs</b> target_srs:</dt>
+<dd><p>Geometries of input files will be transformed to the desired target coordinate reference system. Using this option generates files that are not compatible with MapServer &lt; 6.4. Default creates simple rectangular polygons in the same coordinate reference system as the input rasters.</p>
+</dd>
+<dt><b>-src_srs_name</b> field_name: |gdal2.0|</dt>
+<dd><p>The name of the field to store the SRS of each tile. This field name can be used as the value of the TILESRS keyword in MapServer &gt;= 6.4.</p>
+</dd>
+<dt><b>-src_srs_format</b> type: |gdal2.0|</dt>
+<dd><p>The format in which the SRS of each tile must be written. Types can be AUTO, WKT, EPSG, PROJ.</p>
+</dd>
+<dt><b>-lyr_name</b> name:</dt>
+<dd><p>Layer name to create/append to in the output tile index file.</p>
+</dd>
+<dt><b>index_file</b>:</dt>
+<dd><p>The name of the output file to create/append to. The default shapefile will be created if it doesn't already exist, otherwise it will append to the existing file.</p>
+</dd>
+<dt><b>gdal_file</b>:</dt>
+<dd><p>The input GDAL raster files, can be multiple files separated by spaces. Wildcards my also be used. Stores the file locations in the same style as specified here, unless <code>-write_absolute_path</code> option is also used.</p>
+</dd>
+</dl>
 
 \section gdaltindex_example EXAMPLES
 
@@ -617,9 +629,19 @@ as the rasters, or in target reference system if the -t_srs option is used.
 Examples:
 \endhtmlonly
 
+Produce a shapefile (<code>doq_index.shp</code>) with a record for every 
+image that the utility found in the <code>doq</code> folder. Each record holds 
+information that points to the location of the image and also a bounding rectangle 
+shape showing the bounds of the image:
+
 \verbatim
 gdaltindex doq_index.shp doq/*.tif
+\endverbatim
 
+The <code>-t_srs</code> option can also be used to transform all input rasters
+into the same output projection:
+
+\verbatim
 gdaltindex -t_srs EPSG:4326 -src_srs_name src_srs tile_index_mixed_srs.shp *.tif
 \endverbatim
 
