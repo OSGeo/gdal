@@ -69,6 +69,7 @@ public:
     
     virtual CPLErr GetGeoTransform( double * );
     virtual const char *GetProjectionRef(void);
+    virtual char      **GetMetadataDomainList();
     virtual char      **GetMetadata( const char * pszDomain = "" );
 
     static GDALDataset  *Open( GDALOpenInfo * );
@@ -818,6 +819,17 @@ const char *BAGDataset::GetProjectionRef()
         return pszProjection;
     else 
         return GDALPamDataset::GetProjectionRef();
+}
+
+/************************************************************************/
+/*                      GetMetadataDomainList()                         */
+/************************************************************************/
+
+char **BAGDataset::GetMetadataDomainList()
+{
+    return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
+                                   TRUE,
+                                   "xml:BAG", NULL);
 }
 
 /************************************************************************/

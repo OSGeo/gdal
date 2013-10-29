@@ -167,6 +167,7 @@ public:
     virtual CPLErr      SetGeoTransform( double* padfTransform );
     virtual const char* GetProjectionRef( void );
     virtual CPLErr      SetProjection( const char* pszProjString );
+    virtual char      **GetMetadataDomainList();
     virtual char**      GetMetadata( const char* pszDomain );
     virtual void        FlushCache( void );
     virtual CPLErr      IRasterIO( GDALRWFlag eRWFlag, 

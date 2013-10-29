@@ -470,6 +470,37 @@ def test_gdalinfo_24():
 
     return 'success'
 
+###############################################################################
+# Test -listmdd
+
+def test_gdalinfo_25():
+    if test_cli_utilities.get_gdalinfo_path() is None:
+        return 'skip'
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/byte_with_xmp.tif -listmdd', check_memleak = False )
+    if ret.find('Metadata domains:') < 0:
+        print(ret)
+        return 'fail'
+    if ret.find('  xml:XMP') < 0:
+        print(ret)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test -mdd all
+
+def test_gdalinfo_26():
+    if test_cli_utilities.get_gdalinfo_path() is None:
+        return 'skip'
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/byte_with_xmp.tif -mdd all', check_memleak = False )
+    if ret.find('Metadata (xml:XMP)') < 0:
+        print(ret)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     test_gdalinfo_1,
     test_gdalinfo_2,
@@ -495,6 +526,8 @@ gdaltest_list = [
     test_gdalinfo_22,
     test_gdalinfo_23,
     test_gdalinfo_24,
+    test_gdalinfo_25,
+    test_gdalinfo_26,
     ]
 
 

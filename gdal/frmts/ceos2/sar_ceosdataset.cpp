@@ -161,6 +161,7 @@ class SAR_CEOSDataset : public GDALPamDataset
     virtual const char *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();
 
+    virtual char      **GetMetadataDomainList();
     virtual char **GetMetadata( const char * pszDomain );
 
     static GDALDataset *Open( GDALOpenInfo * );
@@ -724,6 +725,16 @@ const GDAL_GCP *SAR_CEOSDataset::GetGCPs()
 
 {
     return pasGCPList;
+}
+
+
+/************************************************************************/
+/*                      GetMetadataDomainList()                         */
+/************************************************************************/
+
+char **SAR_CEOSDataset::GetMetadataDomainList()
+{
+    return CSLAddString(GDALDataset::GetMetadataDomainList(), "ceos-FFF-n-n-n-n:r");
 }
 
 /************************************************************************/

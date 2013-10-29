@@ -63,6 +63,17 @@ VRTDriver::~VRTDriver()
 }
 
 /************************************************************************/
+/*                      GetMetadataDomainList()                         */
+/************************************************************************/
+
+char **VRTDriver::GetMetadataDomainList()
+{
+    return BuildMetadataDomainList(GDALDriver::GetMetadataDomainList(),
+                                   TRUE,
+                                   "SourceParsers", NULL);
+}
+
+/************************************************************************/
 /*                            GetMetadata()                             */
 /************************************************************************/
 

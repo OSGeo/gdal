@@ -608,6 +608,17 @@ CPLErr GDALWMSDataset::AdviseRead(int x0, int y0, int sx, int sy, int bsx, int b
 }
 
 /************************************************************************/
+/*                      GetMetadataDomainList()                         */
+/************************************************************************/
+
+char **GDALWMSDataset::GetMetadataDomainList()
+{
+    return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
+                                   TRUE,
+                                   "WMS", NULL);
+}
+
+/************************************************************************/
 /*                          GetMetadataItem()                           */
 /************************************************************************/
 const char *GDALWMSDataset::GetMetadataItem( const char * pszName,

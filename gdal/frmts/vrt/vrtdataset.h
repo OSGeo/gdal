@@ -376,6 +376,7 @@ class CPL_DLL VRTSourcedRasterBand : public VRTRasterBand
                               void *, int, int, GDALDataType,
                               int, int );
 
+    virtual char      **GetMetadataDomainList();
     virtual const char *GetMetadataItem( const char * pszName,
                                          const char * pszDomain = "" );
     virtual char      **GetMetadata( const char * pszDomain = "" );
@@ -553,6 +554,7 @@ class VRTDriver : public GDALDriver
 
     char         **papszSourceParsers;
 
+    virtual char      **GetMetadataDomainList();
     virtual char      **GetMetadata( const char * pszDomain = "" );
     virtual CPLErr      SetMetadata( char ** papszMetadata,
                                      const char * pszDomain = "" );

@@ -76,6 +76,7 @@ class PCIDSK2Dataset : public GDALPamDataset
     const char         *GetProjectionRef();
     CPLErr              SetProjection( const char * );
 
+    virtual char      **GetMetadataDomainList();
     CPLErr              SetMetadata( char **, const char * );
     char              **GetMetadata( const char* );
     CPLErr              SetMetadataItem(const char*,const char*,const char*);
@@ -130,6 +131,7 @@ class PCIDSK2Band : public GDALPamRasterBand
 
     virtual void        SetDescription( const char * );
 
+    virtual char      **GetMetadataDomainList();
     CPLErr              SetMetadata( char **, const char * );
     char              **GetMetadata( const char* );
     CPLErr              SetMetadataItem(const char*,const char*,const char*);
@@ -781,6 +783,17 @@ CPLErr PCIDSK2Band::SetMetadataItem( const char *pszName,
 }
 
 /************************************************************************/
+/*                      GetMetadataDomainList()                         */
+/************************************************************************/
+
+char **PCIDSK2Band::GetMetadataDomainList()
+{
+    return BuildMetadataDomainList(GDALPamRasterBand::GetMetadataDomainList(),
+                                   TRUE,
+                                   "", NULL);
+}
+
+/************************************************************************/
 /*                          GetMetadataItem()                           */
 /************************************************************************/
 
@@ -1180,6 +1193,17 @@ CPLErr PCIDSK2Dataset::SetMetadataItem( const char *pszName,
                   "%s", ex.what() );
         return CE_Failure;
     }
+}
+
+/************************************************************************/
+/*                      GetMetadataDomainList()                         */
+/************************************************************************/
+
+char **PCIDSK2Dataset::GetMetadataDomainList()
+{
+    return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
+                                   TRUE,
+                                   "", NULL);
 }
 
 /************************************************************************/

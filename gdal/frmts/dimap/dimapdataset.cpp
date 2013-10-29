@@ -87,6 +87,7 @@ class DIMAPDataset : public GDALPamDataset
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();
+    virtual char      **GetMetadataDomainList();
     virtual char **GetMetadata( const char *pszDomain );
     virtual char **GetFileList(void);
 
@@ -200,6 +201,17 @@ int DIMAPDataset::CloseDependentDatasets()
     nBands = 0;
 
     return bHasDroppedRef;
+}
+
+/************************************************************************/
+/*                      GetMetadataDomainList()                         */
+/************************************************************************/
+
+char **DIMAPDataset::GetMetadataDomainList()
+{
+    return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
+                                   TRUE,
+                                   "xml:dimap", NULL);
 }
 
 /************************************************************************/

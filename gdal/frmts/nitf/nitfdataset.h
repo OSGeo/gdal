@@ -148,6 +148,7 @@ class NITFDataset : public GDALPamDataset
     virtual const GDAL_GCP *GetGCPs();
     virtual char **GetFileList(void);
 
+    virtual char      **GetMetadataDomainList();
     virtual char      **GetMetadata( const char * pszDomain = "" );
     virtual const char *GetMetadataItem( const char * pszName,
                                          const char * pszDomain = "" );

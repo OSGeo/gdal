@@ -1520,6 +1520,17 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
     return eError;
 }
 
+/************************************************************************/
+/*                      GetMetadataDomainList()                         */
+/************************************************************************/
+
+char **GeoRasterDataset::GetMetadataDomainList()
+{
+    return BuildMetadataDomainList(GDALDataset::GetMetadataDomainList(),
+                                   TRUE,
+                                   "SUBDATASETS", NULL);
+}
+
 //  ---------------------------------------------------------------------------
 //                                                                GetMetadata()
 //  ---------------------------------------------------------------------------

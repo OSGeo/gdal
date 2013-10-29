@@ -3509,6 +3509,9 @@ SWIGINTERN char const *GDALMajorObjectShadow_GetDescription(GDALMajorObjectShado
 SWIGINTERN void GDALMajorObjectShadow_SetDescription(GDALMajorObjectShadow *self,char const *pszNewDesc){
     GDALSetDescription( self, pszNewDesc );
   }
+SWIGINTERN char **GDALMajorObjectShadow_GetMetadataDomainList(GDALMajorObjectShadow *self){
+    return GDALGetMetadataDomainList( self );
+  }
 SWIGINTERN char **GDALMajorObjectShadow_GetMetadata_Dict(GDALMajorObjectShadow *self,char const *pszDomain=""){
     return GDALGetMetadata( self, pszDomain );
   }
@@ -7325,6 +7328,55 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetDescription(PyObject *SWIGUNUSEDPARM(s
   return resultobj;
 fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_MajorObject_GetMetadataDomainList(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  GDALMajorObjectShadow *arg1 = (GDALMajorObjectShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  char **result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:MajorObject_GetMetadataDomainList",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALMajorObjectShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "MajorObject_GetMetadataDomainList" "', argument " "1"" of type '" "GDALMajorObjectShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALMajorObjectShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (char **)GDALMajorObjectShadow_GetMetadataDomainList(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  {
+    /* %typemap(out) char **CSL -> ( string ) */
+    char **stringarray = result;
+    if ( stringarray == NULL ) {
+      resultobj = Py_None;
+      Py_INCREF( resultobj );
+    }
+    else {
+      int len = CSLCount( stringarray );
+      resultobj = PyList_New( len );
+      for ( int i = 0; i < len; ++i ) {
+        PyObject *o = GDALPythonObjectFromCStr( stringarray[i] );
+        PyList_SetItem(resultobj, i, o );
+      }
+    }
+    CSLDestroy(result);
+  }
+  return resultobj;
+fail:
   return NULL;
 }
 
@@ -21610,6 +21662,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"VSIFWriteL", _wrap_VSIFWriteL, METH_VARARGS, (char *)"VSIFWriteL(int nLen, int size, int memb, VSILFILE f) -> int"},
 	 { (char *)"MajorObject_GetDescription", _wrap_MajorObject_GetDescription, METH_VARARGS, (char *)"MajorObject_GetDescription(MajorObject self) -> char"},
 	 { (char *)"MajorObject_SetDescription", _wrap_MajorObject_SetDescription, METH_VARARGS, (char *)"MajorObject_SetDescription(MajorObject self, char pszNewDesc)"},
+	 { (char *)"MajorObject_GetMetadataDomainList", _wrap_MajorObject_GetMetadataDomainList, METH_VARARGS, (char *)"MajorObject_GetMetadataDomainList(MajorObject self) -> char"},
 	 { (char *)"MajorObject_GetMetadata_Dict", _wrap_MajorObject_GetMetadata_Dict, METH_VARARGS, (char *)"MajorObject_GetMetadata_Dict(MajorObject self, char pszDomain = \"\") -> char"},
 	 { (char *)"MajorObject_GetMetadata_List", _wrap_MajorObject_GetMetadata_List, METH_VARARGS, (char *)"MajorObject_GetMetadata_List(MajorObject self, char pszDomain = \"\") -> char"},
 	 { (char *)"MajorObject_SetMetadata", _wrap_MajorObject_SetMetadata, METH_VARARGS, (char *)"\n"

@@ -567,6 +567,7 @@ class CPL_DLL ECWDataset : public GDALPamDataset
     virtual const char *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();
 
+    virtual char      **GetMetadataDomainList();
     virtual const char *GetMetadataItem( const char * pszName,
                                      const char * pszDomain = "" );
     virtual char      **GetMetadata( const char * pszDomain = "" );
