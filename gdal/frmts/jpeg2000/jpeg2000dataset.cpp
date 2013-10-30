@@ -27,9 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_pam.h"
-#include "cpl_string.h"
+#include "gdaljp2abstractdataset.h"
 #include "gdaljp2metadata.h"
+#include "cpl_string.h"
 
 #include <jasper/jasper.h>
 #include "jpeg2000_vsil_io.h"
@@ -167,19 +167,13 @@ int jp2_encode_uuid(jas_image_t *image, jas_stream_t *out,
 /* ==================================================================== */
 /************************************************************************/
 
-class JPEG2000Dataset : public GDALPamDataset
+class JPEG2000Dataset : public GDALJP2AbstractDataset
 {
     friend class JPEG2000RasterBand;
 
     jas_stream_t *psStream;
     jas_image_t *psImage;
     int         iFormat;
-
-    char        *pszProjection;
-    int         bGeoTransformValid;
-    double      adfGeoTransform[6];
-    int         nGCPCount;
-    GDAL_GCP    *pasGCPList;
 
     int         bAlreadyDecoded;
     int         DecodeImage();
@@ -190,12 +184,6 @@ class JPEG2000Dataset : public GDALPamDataset
     
     static int           Identify( GDALOpenInfo * );
     static GDALDataset  *Open( GDALOpenInfo * );
-
-    CPLErr              GetGeoTransform( double* );
-    virtual const char  *GetProjectionRef(void);
-    virtual int         GetGCPCount();
-    virtual const char  *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
 };
 
 /************************************************************************/
@@ -410,16 +398,6 @@ JPEG2000Dataset::JPEG2000Dataset()
     psStream = NULL;
     psImage = NULL;
     nBands = 0;
-    pszProjection = CPLStrdup("");
-    nGCPCount = 0;
-    pasGCPList = NULL;
-    bGeoTransformValid = FALSE;
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
     bAlreadyDecoded = FALSE;
     
     poDriver = (GDALDriver *)GDALGetDriverByName("JPEG2000");
@@ -438,14 +416,6 @@ JPEG2000Dataset::~JPEG2000Dataset()
         jas_stream_close( psStream );
     if ( psImage )
         jas_image_destroy( psImage );
-
-    if ( pszProjection )
-        CPLFree( pszProjection );
-    if( nGCPCount > 0 )
-    {
-        GDALDeinitGCPs( nGCPCount, pasGCPList );
-        CPLFree( pasGCPList );
-    }
 }
 
 /************************************************************************/
@@ -533,65 +503,6 @@ int JPEG2000Dataset::DecodeImage()
     }
     
     return TRUE;
-}
-
-
-/************************************************************************/
-/*                          GetProjectionRef()                          */
-/************************************************************************/
-
-const char *JPEG2000Dataset::GetProjectionRef()
-
-{
-    return( pszProjection );
-}
-
-/************************************************************************/
-/*                          GetGeoTransform()                           */
-/************************************************************************/
-
-CPLErr JPEG2000Dataset::GetGeoTransform( double * padfTransform )
-{
-    if( bGeoTransformValid )
-    {
-        memcpy( padfTransform, adfGeoTransform, sizeof(adfGeoTransform[0]) * 6 );
-        return CE_None;
-    }
-    else
-        return CE_Failure;
-}
-
-/************************************************************************/
-/*                            GetGCPCount()                             */
-/************************************************************************/
-
-int JPEG2000Dataset::GetGCPCount()
-
-{
-    return nGCPCount;
-}
-
-/************************************************************************/
-/*                          GetGCPProjection()                          */
-/************************************************************************/
-
-const char *JPEG2000Dataset::GetGCPProjection()
-
-{
-    if( nGCPCount > 0 )
-        return pszProjection;
-    else
-        return "";
-}
-
-/************************************************************************/
-/*                               GetGCP()                               */
-/************************************************************************/
-
-const GDAL_GCP *JPEG2000Dataset::GetGCPs()
-
-{
-    return pasGCPList;
 }
 
 static void JPEG2000Init()
@@ -831,45 +742,7 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
     if ( pabSignedness )
         CPLFree( pabSignedness );
 
-/* -------------------------------------------------------------------- */
-/*      Check for georeferencing information.                           */
-/* -------------------------------------------------------------------- */
-    GDALJP2Metadata oJP2Geo;
-    
-    if( oJP2Geo.ReadAndParse( poOpenInfo->pszFilename ) )
-    {
-        if ( poDS->pszProjection )
-            CPLFree( poDS->pszProjection );
-        poDS->pszProjection = CPLStrdup(oJP2Geo.pszProjection);
-        poDS->bGeoTransformValid = oJP2Geo.bHaveGeoTransform;
-        memcpy( poDS->adfGeoTransform, oJP2Geo.adfGeoTransform, 
-                sizeof(double) * 6 );
-        poDS->nGCPCount = oJP2Geo.nGCPCount;
-        poDS->pasGCPList =
-            GDALDuplicateGCPs( oJP2Geo.nGCPCount, oJP2Geo.pasGCPList );
-    }
-
-    if (oJP2Geo.pszXMPMetadata)
-    {
-        char *apszMDList[2];
-        apszMDList[0] = (char *) oJP2Geo.pszXMPMetadata;
-        apszMDList[1] = NULL;
-        poDS->SetMetadata(apszMDList, "xml:XMP");
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Check for world file.                                           */
-/* -------------------------------------------------------------------- */
-    if( !poDS->bGeoTransformValid )
-    {
-        poDS->bGeoTransformValid |=
-            GDALReadWorldFile2( poOpenInfo->pszFilename, NULL,
-                                poDS->adfGeoTransform,
-                                poOpenInfo->papszSiblingFiles, NULL )
-            || GDALReadWorldFile2( poOpenInfo->pszFilename, ".wld",
-                                   poDS->adfGeoTransform,
-                                   poOpenInfo->papszSiblingFiles, NULL );
-    }
+    poDS->LoadJP2Metadata(poOpenInfo);
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */

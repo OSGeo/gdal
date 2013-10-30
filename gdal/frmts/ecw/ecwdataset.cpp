@@ -908,22 +908,11 @@ ECWDataset::ECWDataset(int bIsJPEG2000)
 {
     this->bIsJPEG2000 = bIsJPEG2000;
     bUsingCustomStream = FALSE;
-    pszProjection = NULL;
     poFileView = NULL;
     bWinActive = FALSE;
     panWinBandList = NULL;
     eRasterDataType = GDT_Byte;
-    nGCPCount = 0;
-    pasGCPList = NULL;
     papszGMLMetadata = NULL;
-    
-    bGeoTransformValid = FALSE;
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
 
     bHdrDirty = FALSE;
     bGeoTransformChanged = FALSE;
@@ -1048,14 +1037,7 @@ ECWDataset::~ECWDataset()
     }
 #endif 
 
-    CPLFree( pszProjection );
     CSLDestroy( papszGMLMetadata );
-
-    if( nGCPCount > 0 )
-    {
-        GDALDeinitGCPs( nGCPCount, pasGCPList );
-        CPLFree( pasGCPList );
-    }
 
     CPLFree(sCachedMultiBandIO.pabyData);
 }
@@ -2521,31 +2503,25 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
 /* -------------------------------------------------------------------- */
     if( bIsJPEG2000 )
     {
-        GDALJP2Metadata oJP2Geo;
-        if ( oJP2Geo.ReadAndParse( osFilename ) )
-        {
-            poDS->pszProjection = CPLStrdup(oJP2Geo.pszProjection);
-            poDS->bGeoTransformValid = oJP2Geo.bHaveGeoTransform;
-            memcpy( poDS->adfGeoTransform, oJP2Geo.adfGeoTransform,
-                    sizeof(double) * 6 );
-            poDS->nGCPCount = oJP2Geo.nGCPCount;
-            poDS->pasGCPList = oJP2Geo.pasGCPList;
-            oJP2Geo.pasGCPList = NULL;
-            oJP2Geo.nGCPCount = 0;
-        }
-
-        if (oJP2Geo.pszXMPMetadata)
-        {
-            char *apszMDList[2];
-            apszMDList[0] = (char *) oJP2Geo.pszXMPMetadata;
-            apszMDList[1] = NULL;
-            poDS->SetMetadata(apszMDList, "xml:XMP");
-        }
+        poDS->LoadJP2Metadata(poOpenInfo, osFilename);
     }
     else
     {
         poDS->ECW2WKTProjection();
-		
+
+    /* -------------------------------------------------------------------- */
+    /*      Check for world file.                                           */
+    /* -------------------------------------------------------------------- */
+        if( !poDS->bGeoTransformValid )
+        {
+            poDS->bGeoTransformValid |= 
+                GDALReadWorldFile2( osFilename, NULL,
+                                    poDS->adfGeoTransform,
+                                    poOpenInfo->papszSiblingFiles, NULL )
+                || GDALReadWorldFile2( osFilename, ".wld",
+                                    poDS->adfGeoTransform,
+                                    poOpenInfo->papszSiblingFiles, NULL );
+        }
     }
 
 	poDS->SetMetadataItem("COMPRESSION_RATE_TARGET", CPLString().Printf("%d", poDS->psFileInfo->nCompressionRate));
@@ -2564,104 +2540,12 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
 #endif
 
 /* -------------------------------------------------------------------- */
-/*      Check for world file.                                           */
-/* -------------------------------------------------------------------- */
-    if( !poDS->bGeoTransformValid )
-    {
-        poDS->bGeoTransformValid |= 
-            GDALReadWorldFile2( osFilename, NULL,
-                                poDS->adfGeoTransform,
-                                poOpenInfo->papszSiblingFiles, NULL )
-            || GDALReadWorldFile2( osFilename, ".wld",
-                                   poDS->adfGeoTransform,
-                                   poOpenInfo->papszSiblingFiles, NULL );
-    }
-
-/* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( osFilename );
     poDS->TryLoadXML();
     
     return( poDS );
-}
-
-/************************************************************************/
-/*                            GetGCPCount()                             */
-/************************************************************************/
-
-int ECWDataset::GetGCPCount()
-
-{
-    if( nGCPCount != 0 )
-        return nGCPCount;
-    else
-        return GDALPamDataset::GetGCPCount();
-}
-
-/************************************************************************/
-/*                          GetGCPProjection()                          */
-/************************************************************************/
-
-const char *ECWDataset::GetGCPProjection()
-
-{
-    if( nGCPCount > 0 )
-        return pszProjection;
-    else
-        return GDALPamDataset::GetGCPProjection();
-}
-
-/************************************************************************/
-/*                               GetGCP()                               */
-/************************************************************************/
-
-const GDAL_GCP *ECWDataset::GetGCPs()
-
-{
-    if( nGCPCount != 0 )
-        return pasGCPList;
-    else
-        return GDALPamDataset::GetGCPs();
-}
-
-/************************************************************************/
-/*                          GetProjectionRef()                          */
-/*                                                                      */
-/*      We let PAM coordinate system override the one stored inside     */
-/*      our file.                                                       */
-/************************************************************************/
-
-const char *ECWDataset::GetProjectionRef() 
-
-{
-    const char* pszPamPrj = GDALPamDataset::GetProjectionRef();
-
-    if( pszProjection != NULL && strlen(pszPamPrj) == 0 )
-        return pszProjection;
-    else
-        return pszPamPrj;
-}
-
-/************************************************************************/
-/*                          GetGeoTransform()                           */
-/*                                                                      */
-/*      Let the PAM geotransform override the native one if it is       */
-/*      available.                                                      */
-/************************************************************************/
-
-CPLErr ECWDataset::GetGeoTransform( double * padfTransform )
-
-{
-    CPLErr eErr = GDALPamDataset::GetGeoTransform( padfTransform );
-
-    if( eErr != CE_None && bGeoTransformValid )
-    {
-        memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
-        return( CE_None );
-    }
-    else
-        return eErr;
 }
 
 /************************************************************************/
