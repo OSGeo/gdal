@@ -3570,6 +3570,9 @@ SWIGINTERN OGRErr OGRLayerShadow_CommitTransaction(OGRLayerShadow *self){
 SWIGINTERN OGRErr OGRLayerShadow_RollbackTransaction(OGRLayerShadow *self){
     return OGR_L_RollbackTransaction(self);
   }
+SWIGINTERN int OGRLayerShadow_FindFieldIndex(OGRLayerShadow *self,char const *pszFieldName,int bExactMatch){
+    return OGR_L_FindFieldIndex(self, pszFieldName, bExactMatch );
+  }
 SWIGINTERN OSRSpatialReferenceShadow *OGRLayerShadow_GetSpatialRef(OGRLayerShadow *self){
     OGRSpatialReferenceH ref =  OGR_L_GetSpatialRef(self);
     if( ref )
@@ -7813,6 +7816,60 @@ SWIGINTERN PyObject *_wrap_Layer_RollbackTransaction(PyObject *SWIGUNUSEDPARM(se
   }
   return resultobj;
 fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Layer_FindFieldIndex(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
+  char *arg2 = (char *) 0 ;
+  int arg3 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  int val3 ;
+  int ecode3 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  int result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOO:Layer_FindFieldIndex",&obj0,&obj1,&obj2)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_FindFieldIndex" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
+  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Layer_FindFieldIndex" "', argument " "2"" of type '" "char const *""'");
+  }
+  arg2 = reinterpret_cast< char * >(buf2);
+  ecode3 = SWIG_AsVal_int(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Layer_FindFieldIndex" "', argument " "3"" of type '" "int""'");
+  } 
+  arg3 = static_cast< int >(val3);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (int)OGRLayerShadow_FindFieldIndex(arg1,(char const *)arg2,arg3);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  return resultobj;
+fail:
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return NULL;
 }
 
@@ -21013,6 +21070,7 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"OGRERR_NONE on success. \n"
 		""},
+	 { (char *)"Layer_FindFieldIndex", _wrap_Layer_FindFieldIndex, METH_VARARGS, (char *)"Layer_FindFieldIndex(Layer self, char pszFieldName, int bExactMatch) -> int"},
 	 { (char *)"Layer_GetSpatialRef", _wrap_Layer_GetSpatialRef, METH_VARARGS, (char *)"\n"
 		"Layer_GetSpatialRef(Layer self) -> SpatialReference\n"
 		"\n"

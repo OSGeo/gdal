@@ -1812,6 +1812,10 @@ class Layer(_object):
         """
         return _ogr.Layer_RollbackTransaction(self, *args)
 
+    def FindFieldIndex(self, *args):
+        """FindFieldIndex(self, char pszFieldName, int bExactMatch) -> int"""
+        return _ogr.Layer_FindFieldIndex(self, *args)
+
     def GetSpatialRef(self, *args):
         """
         GetSpatialRef(self) -> SpatialReference
