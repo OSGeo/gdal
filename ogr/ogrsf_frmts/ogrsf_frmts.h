@@ -98,7 +98,7 @@ class CPL_DLL OGRLayer
     virtual const char *GetName();
     virtual OGRwkbGeometryType GetGeomType();
     virtual OGRFeatureDefn *GetLayerDefn() = 0;
-    virtual int         FindFieldIndex( const char *pszFieldName );
+    virtual int         FindFieldIndex( const char *pszFieldName, int bExactMatch );
 
     virtual OGRSpatialReference *GetSpatialRef();
 

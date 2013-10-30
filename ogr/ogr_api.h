@@ -412,7 +412,7 @@ OGRErr CPL_DLL OGR_L_CreateFeature( OGRLayerH, OGRFeatureH );
 OGRErr CPL_DLL OGR_L_DeleteFeature( OGRLayerH, long );
 OGRFeatureDefnH CPL_DLL OGR_L_GetLayerDefn( OGRLayerH );
 OGRSpatialReferenceH CPL_DLL OGR_L_GetSpatialRef( OGRLayerH );
-int    CPL_DLL OGR_L_FindFieldIndex( OGRLayerH, const char * );
+int    CPL_DLL OGR_L_FindFieldIndex( OGRLayerH, const char *, int bExactMatch );
 int    CPL_DLL OGR_L_GetFeatureCount( OGRLayerH, int );
 OGRErr CPL_DLL OGR_L_GetExtent( OGRLayerH, OGREnvelope *, int );
 OGRErr  CPL_DLL OGR_L_GetExtentEx( OGRLayerH, int iGeomField,
