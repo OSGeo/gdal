@@ -59,6 +59,14 @@ def has_write_support():
     return gdaltest.b_ecw_has_write_support
 
 ###############################################################################
+#
+
+def ecw_init():
+
+    gdaltest.deregister_all_jpeg2000_drivers_but('JP2ECW')
+    return 'success'
+
+###############################################################################
 # Verify we have the driver.
 
 def ecw_1():
@@ -71,8 +79,6 @@ def ecw_1():
         gdaltest.jp2ecw_drv = None
 
     gdaltest.ecw_write = 0
-
-    gdaltest.deregister_all_jpeg2000_drivers_but('JP2ECW')
 
     if gdaltest.ecw_drv is not None:
         if gdaltest.ecw_drv.GetMetadataItem('DMD_CREATIONDATATYPES') != None:
@@ -2085,6 +2091,7 @@ def ecw_cleanup():
     return 'success'
 
 gdaltest_list = [
+    ecw_init,
     ecw_1,
     ecw_2,
     ecw_3,
