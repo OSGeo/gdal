@@ -27,7 +27,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_pam.h"
+#include "gdaljp2abstractdataset.h"
 #include "gdaljp2metadata.h"
 #include "cpl_string.h"
 #include "cpl_multiproc.h"
@@ -98,7 +98,7 @@ static unsigned char jpc_header[] =
 /* ==================================================================== */
 /************************************************************************/
 
-class JP2KAKDataset : public GDALPamDataset
+class JP2KAKDataset : public GDALJP2AbstractDataset
 {
     friend class JP2KAKRasterBand;
 
@@ -115,15 +115,6 @@ class JP2KAKDataset : public GDALPamDataset
     int            bResilient;
     int            bFussy;
     bool           bUseYCC;
-
-    char	   *pszProjection;
-    double	   adfGeoTransform[6];
-    int            bGeoTransformValid;
-
-    int		   nGCPCount;
-    GDAL_GCP       *pasGCPList;
-
-    void           PamOverride();
 
     int         TestUseBlockIO( int, int, int, int, int, int,
                                 GDALDataType, int, int * );
@@ -142,12 +133,6 @@ class JP2KAKDataset : public GDALPamDataset
     
     virtual CPLErr IBuildOverviews( const char *, int, int *,
                                     int, int *, GDALProgressFunc, void * );
-    
-    virtual CPLErr GetGeoTransform( double * );
-    virtual const char *GetProjectionRef(void);
-    virtual int    GetGCPCount();
-    virtual const char *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
 
     static void KakaduInitialize();
     static GDALDataset *Open( GDALOpenInfo * );
@@ -795,22 +780,11 @@ JP2KAKDataset::JP2KAKDataset()
 {
     poInput = NULL;
     poRawInput = NULL;
-    pszProjection = NULL;
-    nGCPCount = 0;
-    pasGCPList = NULL;
     family = NULL;
     jpip_client = NULL;
     poThreadEnv = NULL;
 
     bPreferNPReads = false;
-
-    bGeoTransformValid = FALSE;
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
 
     poDriver = (GDALDriver*) GDALGetDriverByName( "JP2KAK" );
 }
@@ -823,14 +797,6 @@ JP2KAKDataset::~JP2KAKDataset()
 
 {
     FlushCache();
-
-    CPLFree( pszProjection );
-    
-    if( nGCPCount > 0 )
-    {
-        GDALDeinitGCPs( nGCPCount, pasGCPList );
-        CPLFree( pasGCPList );
-    }
 
     if( poInput != NULL )
     {
@@ -859,70 +825,6 @@ JP2KAKDataset::~JP2KAKDataset()
         poThreadEnv->destroy();
         delete poThreadEnv;
     }
-}
-
-
-/************************************************************************/
-/*                          GetProjectionRef()                          */
-/************************************************************************/
-
-const char *JP2KAKDataset::GetProjectionRef()
-
-{
-    if( pszProjection && *pszProjection )
-        return( pszProjection );
-    else
-        return GDALPamDataset::GetProjectionRef();
-}
-
-/************************************************************************/
-/*                          GetGeoTransform()                           */
-/************************************************************************/
-
-CPLErr JP2KAKDataset::GetGeoTransform( double * padfTransform )
-
-{
-    if( bGeoTransformValid )
-    {
-        memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
-    
-        return CE_None;
-    }
-    else
-        return GDALPamDataset::GetGeoTransform( padfTransform );
-}
-
-/************************************************************************/
-/*                            GetGCPCount()                             */
-/************************************************************************/
-
-int JP2KAKDataset::GetGCPCount()
-
-{
-    return nGCPCount;
-}
-
-/************************************************************************/
-/*                          GetGCPProjection()                          */
-/************************************************************************/
-
-const char *JP2KAKDataset::GetGCPProjection()
-
-{
-    if( nGCPCount > 0 )
-        return pszProjection;
-    else
-        return "";
-}
-
-/************************************************************************/
-/*                               GetGCP()                               */
-/************************************************************************/
-
-const GDAL_GCP *JP2KAKDataset::GetGCPs()
-
-{
-    return pasGCPList;
 }
 
 /************************************************************************/
@@ -1440,69 +1342,9 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Look for supporting coordinate system information.              */
 /* -------------------------------------------------------------------- */
-        if( poOpenInfo->nHeaderBytes > 0 )
+        if( poOpenInfo->nHeaderBytes != 0 )
         {
-            GDALJP2Metadata oJP2Geo;
-        
-            if( oJP2Geo.ReadAndParse( poOpenInfo->pszFilename ) )
-            {
-                poDS->pszProjection = CPLStrdup(oJP2Geo.pszProjection);
-                poDS->bGeoTransformValid = TRUE;
-                memcpy( poDS->adfGeoTransform, oJP2Geo.adfGeoTransform, 
-                        sizeof(double) * 6 );
-                poDS->nGCPCount = oJP2Geo.nGCPCount;
-                poDS->pasGCPList = oJP2Geo.pasGCPList;
-                oJP2Geo.pasGCPList = NULL;
-                oJP2Geo.nGCPCount = 0;
-            }
-
-            if (oJP2Geo.pszXMPMetadata)
-            {
-                char *apszMDList[2];
-                apszMDList[0] = (char *) oJP2Geo.pszXMPMetadata;
-                apszMDList[1] = NULL;
-                poDS->GDALPamDataset::SetMetadata(apszMDList, "xml:XMP");
-            }
-
-/* -------------------------------------------------------------------- */
-/*      Do we have any XML boxes we would like to treat as special      */
-/*      domain metadata?                                                */
-/* -------------------------------------------------------------------- */
-            int iBox;
-
-            for( iBox = 0; 
-                 oJP2Geo.papszGMLMetadata
-                     && oJP2Geo.papszGMLMetadata[iBox] != NULL; 
-                 iBox++ )
-            {
-                char *pszName = NULL;
-                const char *pszXML = 
-                    CPLParseNameValue( oJP2Geo.papszGMLMetadata[iBox], 
-                                       &pszName );
-                CPLString osDomain;
-                char *apszMDList[2];
-
-                osDomain.Printf( "xml:%s", pszName );
-                apszMDList[0] = (char *) pszXML;
-                apszMDList[1] = NULL;
-
-                poDS->GDALPamDataset::SetMetadata( apszMDList, osDomain );
-
-                CPLFree( pszName );
-            }
-
-/* -------------------------------------------------------------------- */
-/*      Do we have other misc metadata?                                 */
-/* -------------------------------------------------------------------- */
-            if( oJP2Geo.papszMetadata != NULL )
-            {
-                char **papszMD = CSLDuplicate(poDS->GDALPamDataset::GetMetadata());
-
-                papszMD = CSLMerge( papszMD, oJP2Geo.papszMetadata );
-                poDS->GDALPamDataset::SetMetadata( papszMD );
-
-                CSLDestroy( papszMD );
-            }
+            poDS->LoadJP2Metadata(poOpenInfo);
         }
 
 /* -------------------------------------------------------------------- */
@@ -1524,16 +1366,6 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->TryLoadXML();
         else
             poDS->nPamFlags |= GPF_NOSAVE;
-
-/* -------------------------------------------------------------------- */
-/*      Do we have PAM information to override other geo-info?          */
-/* -------------------------------------------------------------------- */
-        poDS->PamOverride();
-
-        if( !poDS->bGeoTransformValid )
-            poDS->bGeoTransformValid = 
-                GDALReadWorldFile( poOpenInfo->pszFilename, 0, 
-                                   poDS->adfGeoTransform );
 
 /* -------------------------------------------------------------------- */
 /*      Check for external overviews.                                   */
@@ -1565,44 +1397,6 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
             delete poDS;
 
         return NULL;
-    }
-}
-
-/************************************************************************/
-/*                            PamOverride()                             */
-/*                                                                      */
-/*      Override geolocation information from PAM if there is PAM       */
-/*      geolocation information.                                        */
-/************************************************************************/
-
-void JP2KAKDataset::PamOverride()
-
-{
-    if( strlen(GDALPamDataset::GetProjectionRef()) > 0 )
-    {
-        CPLFree( pszProjection );
-        pszProjection = CPLStrdup(GDALPamDataset::GetProjectionRef());
-    }
-
-    double adfPamGT[6];
-    if( GDALPamDataset::GetGeoTransform( adfPamGT ) == CE_None )
-    {
-        memcpy( adfGeoTransform, adfPamGT, sizeof(double) * 6 );
-        bGeoTransformValid = TRUE;
-    }
-
-    if( GDALPamDataset::GetGCPCount() > 0 )
-    {
-        if( nGCPCount > 0 )
-        {
-            GDALDeinitGCPs( nGCPCount, pasGCPList );
-            CPLFree( pasGCPList );
-        }
-
-        nGCPCount = GDALPamDataset::GetGCPCount();
-        pasGCPList = GDALDuplicateGCPs( nGCPCount, GDALPamDataset::GetGCPs() );
-        CPLFree( pszProjection );
-        pszProjection = CPLStrdup(GDALPamDataset::GetGCPProjection());
     }
 }
 

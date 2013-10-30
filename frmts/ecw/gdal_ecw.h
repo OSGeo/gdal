@@ -30,9 +30,8 @@
 #ifndef GDAL_ECW_H_INCLUDED
 #define GDAL_ECW_H_INCLUDED
 
-#include "gdal_pam.h"
+#include "gdaljp2abstractdataset.h"
 #include "gdal_frmts.h"
-#include "gdaljp2metadata.h"
 #include "cpl_string.h"
 #include "cpl_conv.h"
 #include "cpl_multiproc.h"
@@ -456,7 +455,7 @@ typedef struct
     GByte* pabyData;
 } ECWCachedMultiBandIO;
 
-class CPL_DLL ECWDataset : public GDALPamDataset
+class CPL_DLL ECWDataset : public GDALJP2AbstractDataset
 {
     friend class ECWRasterBand;
     friend class ECWAsyncReader;
@@ -479,12 +478,6 @@ class CPL_DLL ECWDataset : public GDALPamDataset
     int         *panWinBandList;
     int         nWinBufLoaded;
     void        **papCurLineBuf;
-
-    int         bGeoTransformValid;
-    double      adfGeoTransform[6];
-    char        *pszProjection;
-    int         nGCPCount;
-    GDAL_GCP    *pasGCPList;
 
     char        **papszGMLMetadata;
 
@@ -559,13 +552,6 @@ class CPL_DLL ECWDataset : public GDALPamDataset
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
                               int, int *, int, int, int );
-
-    virtual CPLErr GetGeoTransform( double * );
-    virtual const char *GetProjectionRef();
-
-    virtual int    GetGCPCount();
-    virtual const char *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
 
     virtual char      **GetMetadataDomainList();
     virtual const char *GetMetadataItem( const char * pszName,
