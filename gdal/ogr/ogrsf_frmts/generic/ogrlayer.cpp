@@ -846,19 +846,19 @@ OGRFeatureDefnH OGR_L_GetLayerDefn( OGRLayerH hLayer )
 /*                         OGR_L_FindFieldIndex()                       */
 /************************************************************************/
 
-int OGR_L_FindFieldIndex( OGRLayerH hLayer, const char *pszFieldName )
+int OGR_L_FindFieldIndex( OGRLayerH hLayer, const char *pszFieldName, int bExactMatch )
 
 {
     VALIDATE_POINTER1( hLayer, "OGR_L_FindFieldIndex", NULL );
 
-    return ((OGRLayer *)hLayer)->FindFieldIndex( pszFieldName );
+    return ((OGRLayer *)hLayer)->FindFieldIndex( pszFieldName, bExactMatch );
 }
 
 /************************************************************************/
 /*                           FindFieldIndex()                           */
 /************************************************************************/
 
-int OGRLayer::FindFieldIndex( const char *pszFieldName )
+int OGRLayer::FindFieldIndex( const char *pszFieldName, int bExactMatch )
 {
     return GetLayerDefn()->GetFieldIndex( pszFieldName );
 }

@@ -91,7 +91,8 @@ static TargetLayerInfo* SetupTargetLayer( OGRDataSource *poSrcDS,
                                                 int bExplodeCollections,
                                                 const char* pszZField,
                                                 char **papszFieldMap,
-                                                const char* pszWHERE );
+                                                const char* pszWHERE,
+                                                int bExactFieldNameMatch );
 
 static void FreeTargetLayerInfo(TargetLayerInfo* psInfo);
 
@@ -866,6 +867,7 @@ int main( int nArgc, char ** papszArgv )
     const char  *pszSourceSRSDef = NULL;
     OGRSpatialReference *poOutputSRS = NULL;
     int         bNullifyOutputSRS = FALSE;
+    int         bExactFieldNameMatch = TRUE;
     OGRSpatialReference *poSourceSRS = NULL;
     char        *pszNewLayerName = NULL;
     const char  *pszWHERE = NULL;
@@ -991,6 +993,10 @@ int main( int nArgc, char ** papszArgv )
         else if( EQUAL(papszArgv[iArg],"-update") )
         {
             bUpdate = TRUE;
+        }
+        else if( EQUAL(papszArgv[iArg],"-relaxedFieldNameMatch") )
+        {
+            bExactFieldNameMatch = FALSE;
         }
         else if( EQUAL(papszArgv[iArg],"-fid") )
         {
@@ -1770,7 +1776,8 @@ int main( int nArgc, char ** papszArgv )
                                                 bExplodeCollections,
                                                 pszZField,
                                                 papszFieldMap,
-                                                pszWHERE );
+                                                pszWHERE,
+                                                bExactFieldNameMatch );
 
             poPassedLayer->ResetReading();
 
@@ -1925,7 +1932,8 @@ int main( int nArgc, char ** papszArgv )
                                                     bExplodeCollections,
                                                     pszZField,
                                                     papszFieldMap,
-                                                    pszWHERE );
+                                                    pszWHERE,
+						    bExactFieldNameMatch );
 
                 if( psInfo == NULL && !bSkipFailures )
                     exit(1);
@@ -2199,7 +2207,8 @@ int main( int nArgc, char ** papszArgv )
                                                 bExplodeCollections,
                                                 pszZField,
                                                 papszFieldMap,
-                                                pszWHERE );
+                                                pszWHERE,
+						bExactFieldNameMatch );
 
             poPassedLayer->ResetReading();
 
@@ -2319,6 +2328,7 @@ static void Usage(const char* pszAdditionalMsg, int bShort)
             "               [-wrapdateline][-datelineoffset val]\n"
             "               [[-simplify tolerance] | [-segmentize max_dist]]\n"
             "               [-addfields]\n"
+            "               [-relaxedFieldNameMatch]\n"
             "               [-fieldTypeToString All|(type1[,type2]*)] [-unsetFieldWidth]\n"
             "               [-fieldmap identity | index1[,index2]*]\n"
             "               [-splitlistfields] [-maxsubfields val]\n"
@@ -2483,7 +2493,8 @@ static TargetLayerInfo* SetupTargetLayer( OGRDataSource *poSrcDS,
                                                 int bExplodeCollections,
                                                 const char* pszZField,
                                                 char **papszFieldMap,
-                                                const char* pszWHERE )
+                                                const char* pszWHERE,
+                                                int bExactFieldNameMatch )
 {
     OGRLayer    *poDstLayer;
     OGRFeatureDefn *poSrcFDefn;
@@ -3019,7 +3030,7 @@ static TargetLayerInfo* SetupTargetLayer( OGRDataSource *poSrcDS,
         for( iField = 0; iField < nSrcFieldCount; iField++ )
         {
             OGRFieldDefn* poSrcFieldDefn = poSrcFDefn->GetFieldDefn(iField);
-            int iDstField = poDstLayer->FindFieldIndex(poSrcFieldDefn->GetNameRef());
+            int iDstField = poDstLayer->FindFieldIndex(poSrcFieldDefn->GetNameRef(), bExactFieldNameMatch);
             if (iDstField >= 0)
                 panMap[iField] = iDstField;
             else
