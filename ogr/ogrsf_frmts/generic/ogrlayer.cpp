@@ -842,6 +842,26 @@ OGRFeatureDefnH OGR_L_GetLayerDefn( OGRLayerH hLayer )
     return (OGRFeatureDefnH) ((OGRLayer *)hLayer)->GetLayerDefn();
 }
 
+/************************************************************************/
+/*                         OGR_L_FindFieldIndex()                       */
+/************************************************************************/
+
+int OGR_L_FindFieldIndex( OGRLayerH hLayer, const char *pszFieldName )
+
+{
+    VALIDATE_POINTER1( hLayer, "OGR_L_FindFieldIndex", NULL );
+
+    return ((OGRLayer *)hLayer)->FindFieldIndex( pszFieldName );
+}
+
+/************************************************************************/
+/*                           FindFieldIndex()                           */
+/************************************************************************/
+
+int OGRLayer::FindFieldIndex( const char *pszFieldName )
+{
+    return GetLayerDefn()->GetFieldIndex( pszFieldName );
+}
 
 /************************************************************************/
 /*                           GetSpatialRef()                            */

@@ -138,6 +138,8 @@ int OGRNASDataSource::Open( const char * pszNewName, int bTestOpen )
                 strstr(szPtr,"NAS-Operationen_optional.xsd") == NULL &&
                 strstr(szPtr,"AAA-Fachschema.xsd") == NULL ) )
         {
+            CPLDebug( "NAS",
+                      "Skipping. No chevrons of NAS found [%s]\n", szPtr );
             VSIFClose( fp );
             return FALSE;
         }
