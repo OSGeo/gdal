@@ -33,7 +33,7 @@
 #include <openjpeg-2.0/openjpeg.h>
 #include <vector>
 
-#include "gdal_pam.h"
+#include "gdaljp2abstractdataset.h"
 #include "cpl_string.h"
 #include "gdaljp2metadata.h"
 #include "cpl_multiproc.h"
@@ -150,17 +150,11 @@ static OPJ_OFF_T JP2OpenJPEGDataset_Skip(OPJ_OFF_T nBytes, void * pUserData)
 
 class JP2OpenJPEGRasterBand;
 
-class JP2OpenJPEGDataset : public GDALPamDataset
+class JP2OpenJPEGDataset : public GDALJP2AbstractDataset
 {
     friend class JP2OpenJPEGRasterBand;
 
     VSILFILE   *fp; /* Large FILE API */
-
-    char        *pszProjection;
-    int         bGeoTransformValid;
-    double      adfGeoTransform[6];
-    int         nGCPCount;
-    GDAL_GCP    *pasGCPList;
 
     OPJ_CODEC_FORMAT eCodecFormat;
     OPJ_COLOR_SPACE eColorSpace;
@@ -190,11 +184,6 @@ class JP2OpenJPEGDataset : public GDALPamDataset
                                            int bStrict, char ** papszOptions, 
                                            GDALProgressFunc pfnProgress,
                                            void * pProgressData );
-    CPLErr              GetGeoTransform( double* );
-    virtual const char  *GetProjectionRef(void);
-    virtual int         GetGCPCount();
-    virtual const char  *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
 
     virtual CPLErr  IRasterIO( GDALRWFlag eRWFlag,
                                int nXOff, int nYOff, int nXSize, int nYSize,
@@ -842,16 +831,6 @@ JP2OpenJPEGDataset::JP2OpenJPEGDataset()
 {
     fp = NULL;
     nBands = 0;
-    pszProjection = CPLStrdup("");
-    nGCPCount = 0;
-    pasGCPList = NULL;
-    bGeoTransformValid = FALSE;
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
     eCodecFormat = OPJ_CODEC_UNKNOWN;
     eColorSpace = OPJ_CLRSPC_UNKNOWN;
     bIs420 = FALSE;
@@ -872,13 +851,6 @@ JP2OpenJPEGDataset::~JP2OpenJPEGDataset()
 {
     FlushCache();
 
-    if ( pszProjection )
-        CPLFree( pszProjection );
-    if( nGCPCount > 0 )
-    {
-        GDALDeinitGCPs( nGCPCount, pasGCPList );
-        CPLFree( pasGCPList );
-    }
     if( fp != NULL )
         VSIFCloseL( fp );
 
@@ -901,74 +873,6 @@ int JP2OpenJPEGDataset::CloseDependentDatasets()
         bRet = TRUE;
     }
     return bRet;
-}
-
-
-/************************************************************************/
-/*                          GetProjectionRef()                          */
-/************************************************************************/
-
-const char *JP2OpenJPEGDataset::GetProjectionRef()
-
-{
-    if ( pszProjection && pszProjection[0] != 0 )
-        return( pszProjection );
-    else
-        return GDALPamDataset::GetProjectionRef();
-}
-
-/************************************************************************/
-/*                          GetGeoTransform()                           */
-/************************************************************************/
-
-CPLErr JP2OpenJPEGDataset::GetGeoTransform( double * padfTransform )
-{
-    if( bGeoTransformValid )
-    {
-        memcpy( padfTransform, adfGeoTransform, sizeof(adfGeoTransform[0]) * 6 );
-        return CE_None;
-    }
-    else
-        return GDALPamDataset::GetGeoTransform(padfTransform);
-}
-
-/************************************************************************/
-/*                            GetGCPCount()                             */
-/************************************************************************/
-
-int JP2OpenJPEGDataset::GetGCPCount()
-
-{
-    if( nGCPCount > 0 )
-        return nGCPCount;
-    else
-        return GDALPamDataset::GetGCPCount();
-}
-
-/************************************************************************/
-/*                          GetGCPProjection()                          */
-/************************************************************************/
-
-const char *JP2OpenJPEGDataset::GetGCPProjection()
-
-{
-    if( nGCPCount > 0 )
-        return pszProjection;
-    else
-        return GDALPamDataset::GetGCPProjection();
-}
-
-/************************************************************************/
-/*                               GetGCP()                               */
-/************************************************************************/
-
-const GDAL_GCP *JP2OpenJPEGDataset::GetGCPs()
-
-{
-    if( nGCPCount > 0 )
-        return pasGCPList;
-    else
-        return GDALPamDataset::GetGCPs();
 }
 
 /************************************************************************/
@@ -1293,58 +1197,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
     }
 
-/* -------------------------------------------------------------------- */
-/*      Check for georeferencing information.                           */
-/* -------------------------------------------------------------------- */
-    GDALJP2Metadata oJP2Geo;
-
-    if( oJP2Geo.ReadAndParse( poOpenInfo->pszFilename ) )
-    {
-        if ( poDS->pszProjection )
-            CPLFree( poDS->pszProjection );
-        poDS->pszProjection = CPLStrdup(oJP2Geo.pszProjection);
-        poDS->bGeoTransformValid = oJP2Geo.bHaveGeoTransform;
-        memcpy( poDS->adfGeoTransform, oJP2Geo.adfGeoTransform, 
-                sizeof(double) * 6 );
-        poDS->nGCPCount = oJP2Geo.nGCPCount;
-        poDS->pasGCPList =
-            GDALDuplicateGCPs( oJP2Geo.nGCPCount, oJP2Geo.pasGCPList );
-    }
-
-    if (oJP2Geo.pszXMPMetadata)
-    {
-        char *apszMDList[2];
-        apszMDList[0] = (char *) oJP2Geo.pszXMPMetadata;
-        apszMDList[1] = NULL;
-        poDS->SetMetadata(apszMDList, "xml:XMP");
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Do we have other misc metadata?                                 */
-/* -------------------------------------------------------------------- */
-    if( oJP2Geo.papszMetadata != NULL )
-    {
-        char **papszMD = CSLDuplicate(poDS->GDALPamDataset::GetMetadata());
-
-        papszMD = CSLMerge( papszMD, oJP2Geo.papszMetadata );
-        poDS->GDALPamDataset::SetMetadata( papszMD );
-
-        CSLDestroy( papszMD );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Check for world file.                                           */
-/* -------------------------------------------------------------------- */
-    if( !poDS->bGeoTransformValid )
-    {
-        poDS->bGeoTransformValid |=
-            GDALReadWorldFile2( poOpenInfo->pszFilename, NULL,
-                                poDS->adfGeoTransform,
-                                poOpenInfo->papszSiblingFiles, NULL )
-            || GDALReadWorldFile2( poOpenInfo->pszFilename, ".wld",
-                                   poDS->adfGeoTransform,
-                                   poOpenInfo->papszSiblingFiles, NULL );
-    }
+    poDS->LoadJP2Metadata(poOpenInfo);
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
@@ -1688,21 +1541,34 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     GDALJP2Metadata oJP2MD;
 
     int bWriteExtraBoxes = FALSE;
+    int bGeoreferencingCompatOfGMLJP2 = FALSE;
     if( eCodecFormat == OPJ_CODEC_JP2 &&
         (CSLFetchBoolean( papszOptions, "GMLJP2", TRUE ) ||
          CSLFetchBoolean( papszOptions, "GeoJP2", TRUE )) )
     {
-        const char* pszWKT = poSrcDS->GetProjectionRef();
-        if( pszWKT != NULL && pszWKT[0] != '\0' )
+        if( poSrcDS->GetGCPCount() > 0 )
         {
             bWriteExtraBoxes = TRUE;
-            oJP2MD.SetProjection( pszWKT );
+            oJP2MD.SetGCPs( poSrcDS->GetGCPCount(),
+                            poSrcDS->GetGCPs() );
+            oJP2MD.SetProjection( poSrcDS->GetGCPProjection() );
         }
-        double adfGeoTransform[6];
-        if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
+        else
         {
-            bWriteExtraBoxes = TRUE;
-            oJP2MD.SetGeoTransform( adfGeoTransform );
+            const char* pszWKT = poSrcDS->GetProjectionRef();
+            if( pszWKT != NULL && pszWKT[0] != '\0' )
+            {
+                bGeoreferencingCompatOfGMLJP2 = TRUE;
+                bWriteExtraBoxes = TRUE;
+                oJP2MD.SetProjection( pszWKT );
+            }
+            double adfGeoTransform[6];
+            if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
+            {
+                bGeoreferencingCompatOfGMLJP2 = TRUE;
+                bWriteExtraBoxes = TRUE;
+                oJP2MD.SetGeoTransform( adfGeoTransform );
+            }
         }
     }
 
@@ -1817,7 +1683,8 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
             delete poRes;
         }
 
-        if( CSLFetchBoolean( papszOptions, "GMLJP2", TRUE ) )
+        if( CSLFetchBoolean( papszOptions, "GMLJP2", TRUE ) &&
+            bGeoreferencingCompatOfGMLJP2 )
         {
             GDALJP2Box* poBox = oJP2MD.CreateGMLJP2(nXSize,nYSize);
             WriteBox(fp, poBox);
