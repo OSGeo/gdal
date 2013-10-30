@@ -33,6 +33,7 @@ import os
 import sys
 import string
 import array
+import shutil
 from osgeo import gdal
 from osgeo import osr
 
@@ -356,6 +357,120 @@ def jp2openjpeg_11():
     return 'success'
 
 ###############################################################################
+# Check that PAM overrides internal georeferencing (#5279)
+
+def jp2openjpeg_12():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    # Override projection
+    shutil.copy('data/byte.jp2', 'tmp/jp2openjpeg_12.jp2')
+
+    ds = gdal.Open('tmp/jp2openjpeg_12.jp2')
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(32631)
+    ds.SetProjection(sr.ExportToWkt())
+    ds = None
+
+    ds = gdal.Open('tmp/jp2openjpeg_12.jp2')
+    wkt = ds.GetProjectionRef()
+    ds = None
+
+    gdaltest.jp2openjpeg_drv.Delete('tmp/jp2openjpeg_12.jp2')
+
+    if wkt.find('32631') < 0:
+        gdaltest.post_reason('fail')
+        print(wkt)
+        return 'fail'
+
+    # Override geotransform
+    shutil.copy('data/byte.jp2', 'tmp/jp2openjpeg_12.jp2')
+
+    ds = gdal.Open('tmp/jp2openjpeg_12.jp2')
+    ds.SetGeoTransform([1000,1,0,2000,0,-1])
+    ds = None
+
+    ds = gdal.Open('tmp/jp2openjpeg_12.jp2')
+    gt = ds.GetGeoTransform()
+    ds = None
+
+    gdaltest.jp2openjpeg_drv.Delete('tmp/jp2openjpeg_12.jp2')
+
+    if gt != (1000,1,0,2000,0,-1):
+        gdaltest.post_reason('fail')
+        print(gt)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Check that PAM overrides internal GCPs (#5279)
+
+def jp2openjpeg_13():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    # Create a dataset with GCPs
+    src_ds = gdal.Open('data/rgb_gcp.vrt')
+    ds = gdaltest.jp2openjpeg_drv.CreateCopy('tmp/jp2openjpeg_13.jp2', src_ds, options = ['RESOLUTIONS=1'])
+    ds = None
+    src_ds = None
+
+    try:
+        os.stat('tmp/jp2openjpeg_13.jp2.aux.xml')
+        gdaltest.post_reason('fail')
+        return 'fail'
+    except:
+        pass
+
+    ds = gdal.Open('tmp/jp2openjpeg_13.jp2')
+    count = ds.GetGCPCount()
+    gcps = ds.GetGCPs()
+    wkt = ds.GetGCPProjection()
+    if count != 4:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if len(gcps) != 4:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if wkt.find('4326') < 0:
+        gdaltest.post_reason('fail')
+        print(wkt)
+        return 'fail'
+    ds = None
+
+    # Override GCP
+    ds = gdal.Open('tmp/jp2openjpeg_13.jp2')
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(32631)
+    gcps = [ gdal.GCP(0,1,2,3,4) ]
+    ds.SetGCPs(gcps, sr.ExportToWkt())
+    ds = None
+
+    ds = gdal.Open('tmp/jp2openjpeg_13.jp2')
+    count = ds.GetGCPCount()
+    gcps = ds.GetGCPs()
+    wkt = ds.GetGCPProjection()
+    ds = None
+
+    gdaltest.jp2openjpeg_drv.Delete('tmp/jp2openjpeg_13.jp2')
+
+    if count != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if len(gcps) != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if wkt.find('32631') < 0:
+        gdaltest.post_reason('fail')
+        print(wkt)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 def jp2openjpeg_online_1():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -538,6 +653,8 @@ gdaltest_list = [
     jp2openjpeg_9,
     jp2openjpeg_10,
     jp2openjpeg_11,
+    jp2openjpeg_12,
+    jp2openjpeg_13,
     jp2openjpeg_online_1,
     jp2openjpeg_online_2,
     jp2openjpeg_online_3,
