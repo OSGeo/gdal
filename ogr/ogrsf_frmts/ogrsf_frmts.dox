@@ -2077,9 +2077,9 @@ by the OGRSFDriverManager.
  The returned number is the index of the field in the layers, or -1 if the
  field doesn't exist.
 
- If bExact match is set and the field doesn't exists in the given form the
- driver might apply some changes to make it match, like those it might do if
- the layer was created (eg. like LAUNDER in the OCI driver).
+ If bExactMatch is set to FALSE and the field doesn't exists in the given form
+ the driver might apply some changes to make it match, like those it might do
+ if the layer was created (eg. like LAUNDER in the OCI driver).
  
  This method is the same as the C++ method OGRLayer::FindFieldIndex().
 
@@ -2096,9 +2096,9 @@ by the OGRSFDriverManager.
  The returned number is the index of the field in the layers, or -1 if the
  field doesn't exist.
 
- If bExact match is set and the field doesn't exists in the given form the
- driver might apply some changes to make it match, like those it might do if
- the layer was created (eg. like LAUNDER in the OCI driver).
+ If bExactMatch is set to FALSE and the field doesn't exists in the given form
+ the driver might apply some changes to make it match, like those it might do
+ if the layer was created (eg. like LAUNDER in the OCI driver).
  
  This method is the same as the C function OGR_L_FindFieldIndex().
 
