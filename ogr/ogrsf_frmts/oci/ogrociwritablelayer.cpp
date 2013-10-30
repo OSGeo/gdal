@@ -492,3 +492,23 @@ OGRErr OGROCIWritableLayer::TranslateToSDOGeometry( OGRGeometry * poGeometry,
     return OGRERR_FAILURE;
 }
 
+int OGROCIWritableLayer::FindFieldIndex( const char *pszFieldName )
+{
+  int iField = GetLayerDefn()->GetFieldIndex( pszFieldName );
+
+  // try laundered version
+  if( iField < 0 )
+  {
+      OGROCISession *poSession = poDS->GetSession();
+      char *pszSafeName = CPLStrdup( pszFieldName );
+
+      poSession->CleanName( pszSafeName );
+
+      iField = GetLayerDefn()->GetFieldIndex( pszSafeName );
+
+      CPLFree( pszSafeName );
+  }
+
+  return iField;
+}
+
