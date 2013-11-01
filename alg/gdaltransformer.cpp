@@ -1295,13 +1295,7 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                 sizeof(double) * 6 );
     }
     else if( (pszDstMethod == NULL || EQUAL(pszDstMethod,"GEOTRANSFORM"))
-        && GDALGetGeoTransform( hDstDS, psInfo->adfDstGeoTransform ) == CE_None
-        && (psInfo->adfDstGeoTransform[0] != 0.0
-            || psInfo->adfDstGeoTransform[1] != 1.0
-            || psInfo->adfDstGeoTransform[2] != 0.0
-            || psInfo->adfDstGeoTransform[3] != 0.0
-            || psInfo->adfDstGeoTransform[4] != 0.0
-            || ABS(psInfo->adfDstGeoTransform[5]) != 1.0) )
+        && GDALGetGeoTransform( hDstDS, psInfo->adfDstGeoTransform ) == CE_None)
     {
         if( pszDstWKT == NULL )
             pszDstWKT = GDALGetProjectionRef( hDstDS );
