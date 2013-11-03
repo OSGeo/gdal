@@ -87,6 +87,9 @@ class OGROSMLayer : public OGRLayer
     int                   bHasUser;
     int                   bHasChangeset;
     int                   bHasOtherTags;
+    int                   nIndexOtherTags;
+    int                   bHasAllTags;
+    int                   nIndexAllTags;
 
     int                   bHasWarnedTooManyFeatures;
 
@@ -96,6 +99,8 @@ class OGROSMLayer : public OGRLayer
     int                   bUserInterested;
 
     int                  AddToArray(OGRFeature* poFeature);
+
+    int                   AddInOtherOrAllTags(const char* pszK);
 
     char                  szLaunderedFieldName[256];
     const char*           GetLaunderedFieldName(const char* pszName);
@@ -153,7 +158,9 @@ class OGROSMLayer : public OGRLayer
 
     void                SetHasOtherTags(int bIn) { bHasOtherTags = bIn; }
     int                 HasOtherTags() const { return bHasOtherTags; }
-    int                 AddInOtherTag(const char* pszK);
+
+    void                SetHasAllTags(int bIn) { bHasAllTags = bIn; }
+    int                 HasAllTags() const { return bHasAllTags; }
 
     void                SetFieldsFromTags(OGRFeature* poFeature,
                                           GIntBig nID,
