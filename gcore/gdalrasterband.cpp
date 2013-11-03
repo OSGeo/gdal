@@ -566,6 +566,8 @@ CPLErr CPL_STDCALL GDALWriteBlock( GDALRasterBandH hBand, int nXOff, int nYOff,
 /**
  * \brief Fetch the pixel data type for this band.
  *
+ * This method is the same as the C function GDALGetRasterDataType().
+ *
  * @return the data type of pixels for this band.
  */
   
@@ -613,6 +615,8 @@ GDALDataType CPL_STDCALL GDALGetRasterDataType( GDALRasterBandH hBand )
  * Note that the X and Y block sizes don't have to divide the image size
  * evenly, meaning that right and bottom edge blocks may be incomplete.
  * See ReadBlock() for an example of code dealing with these issues.
+ *
+ * This method is the same as the C function GDALGetBlockSize().
  *
  * @param pnXSize integer to put the X block size into or NULL.
  *
@@ -1280,7 +1284,9 @@ GDALRasterBlock * GDALRasterBand::GetLockedBlockRef( int nXBlockOff,
  * to the underlying type before writing to the file. An optional
  * second argument allows the imaginary component of a complex
  * constant value to be specified.
- * 
+ *
+ * This method is the same as the C function GDALFillRaster().
+ *
  * @param dfRealValue Real component of fill value
  * @param dfImaginaryValue Imaginary component of fill value, defaults to zero
  * 
@@ -1431,7 +1437,9 @@ GDALAccess CPL_STDCALL GDALGetRasterAccess( GDALRasterBandH hBand )
  * The returned stringlist should not be altered or freed by the application.
  * It may change on the next GDAL call, so please copy it if it is needed
  * for any period of time. 
- * 
+ *
+ * This method is the same as the C function GDALGetRasterCategoryNames().
+ *
  * @return list of names, or NULL if none.
  */
 
@@ -1835,6 +1843,8 @@ GDALGetRasterColorInterpretation( GDALRasterBandH hBand )
 
 /**
  * \brief Set color interpretation of a band.
+ *
+ * This method is the same as the C function GDALSetRasterColorInterpretation().
  *
  * @param eColorInterp the new color interpretation to apply to this band.
  * 
@@ -2269,7 +2279,9 @@ double CPL_STDCALL GDALGetRasterOffset( GDALRasterBandH hBand, int *pbSuccess )
  *
  * Very few formats implement this method.   When not implemented it will
  * issue a CPLE_NotSupported error and return CE_Failure. 
- * 
+ *
+ * This method is the same as the C function GDALSetRasterOffset().
+ *
  * @param dfNewOffset the new offset.
  *
  * @return CE_None or success or CE_Failure on failure. 
@@ -2367,6 +2379,8 @@ double CPL_STDCALL GDALGetRasterScale( GDALRasterBandH hBand, int *pbSuccess )
  *
  * Very few formats implement this method.   When not implemented it will
  * issue a CPLE_NotSupported error and return CE_Failure. 
+ *
+ * This method is the same as the C function GDALSetRasterScale().
  * 
  * @param dfNewScale the new scale.
  *
@@ -2620,7 +2634,7 @@ int CPL_STDCALL GDALGetBandNumber( GDALRasterBandH hBand )
  * Note that some GDALRasterBands are not considered to be a part of a dataset,
  * such as overviews or other "freestanding" bands. 
  *
- * This method is the same as the C function GDALGetBandDataset()
+ * This method is the same as the C function GDALGetBandDataset().
  *
  * @return the pointer to the GDALDataset to which this band belongs, or
  * NULL if this cannot be determined.
@@ -2676,6 +2690,8 @@ GDALDatasetH CPL_STDCALL GDALGetBandDataset( GDALRasterBandH hBand )
  * produce a representative histogram for the data that is suitable for use
  * in generating histogram based luts for instance.  Generally bApproxOK is
  * much faster than an exactly computed histogram.
+ *
+ * This method is the same as the C function GDALGetRasterHistogram().
  *
  * @param dfMin the lower bound of the histogram.
  * @param dfMax the upper bound of the histogram.
@@ -3125,6 +3141,8 @@ GDALGetRasterHistogram( GDALRasterBandH hBand,
  * The default method in GDALRasterBand will compute a default histogram. This
  * method is overriden by derived classes (such as GDALPamRasterBand, VRTDataset, HFADataset...)
  * that may be able to fetch efficiently an already stored histogram.
+ *
+ * This method is the same as the C function GDALGetDefaultHistogram().
  *
  * @param pdfMin pointer to double value that will contain the lower bound of the histogram.
  * @param pdfMax pointer to double value that will contain the upper bound of the histogram.
@@ -4273,6 +4291,8 @@ GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK,
 /* FIXME : add proper documentation */
 /**
  * \brief Set default histogram.
+ *
+ * This method is the same as the C function GDALSetDefaultHistogram().
  */
 CPLErr GDALRasterBand::SetDefaultHistogram( double dfMin, double dfMax, 
                                             int nBuckets, int *panHistogram )
@@ -4316,7 +4336,9 @@ CPLErr CPL_STDCALL GDALSetDefaultHistogram( GDALRasterBandH hBand,
  * A RAT will be returned if there is a default one associated with the
  * band, otherwise NULL is returned.  The returned RAT is owned by the
  * band and should not be deleted by the application. 
- * 
+ *
+ * This method is the same as the C function GDALGetDefaultRAT().
+ *
  * @return NULL, or a pointer to an internal RAT owned by the band.
  */
 
@@ -4355,6 +4377,8 @@ GDALRasterAttributeTableH CPL_STDCALL GDALGetDefaultRAT( GDALRasterBandH hBand)
  * Associates a default RAT with the band.  If not implemented for the
  * format a CPLE_NotSupported error will be issued.  If successful a copy
  * of the RAT is made, the original remains owned by the caller.
+ *
+ * This method is the same as the C function GDALSetDefaultRAT().
  *
  * @param poRAT the RAT to assign to the band.
  *
@@ -4421,7 +4445,9 @@ CPLErr CPL_STDCALL GDALSetDefaultRAT( GDALRasterBandH hBand,
  * </ul>
  *
  * Note that the GetMaskBand() should always return a GDALRasterBand mask, even if it is only
- * an all 255 mask with the flags indicating GMF_ALL_VALID. 
+ * an all 255 mask with the flags indicating GMF_ALL_VALID.
+ *
+ * This method is the same as the C function GDALGetMaskBand().
  *
  * @return a valid mask band.
  *
@@ -4612,6 +4638,8 @@ GDALRasterBandH CPL_STDCALL GDALGetMaskBand( GDALRasterBandH hBand )
  *     The null flags will return GMF_ALL_VALID.</li>
  * </ul>
  *
+ * This method is the same as the C function GDALGetMaskFlags().
+ *
  * @since GDAL 1.5.0
  *
  * @return a valid mask band.
@@ -4668,6 +4696,8 @@ int CPL_STDCALL GDALGetMaskFlags( GDALRasterBandH hBand )
  * Note that if you got a mask band with a previous call to GetMaskBand(),
  * it might be invalidated by CreateMaskBand(). So you have to call GetMaskBand()
  * again.
+ *
+ * This method is the same as the C function GDALCreateMaskBand().
  *
  * @since GDAL 1.5.0
  *
