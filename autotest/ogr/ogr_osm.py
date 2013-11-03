@@ -633,6 +633,28 @@ def ogr_osm_10():
 
     return 'success'
 
+###############################################################################
+# Test all_tags
+
+def ogr_osm_11():
+
+    if ogrtest.osm_drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('OSM_CONFIG_FILE', 'data/osmconf_alltags.ini')
+    ds = ogr.Open('data/test.pbf')
+    gdal.SetConfigOption('OSM_CONFIG_FILE', None)
+    lyr = ds.GetLayerByName('points')
+    feat = lyr.GetNextFeature()
+    if feat.GetFieldAsString('osm_id') != '3' or \
+       feat.GetFieldAsString('name') != 'Some interesting point' or \
+       feat.GetFieldAsString('all_tags') != '"name"=>"Some interesting point","foo"=>"bar","bar"=>"baz"' :
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     ogr_osm_1,
     ogr_osm_2,
@@ -646,6 +668,7 @@ gdaltest_list = [
     ogr_osm_8,
     ogr_osm_9,
     ogr_osm_10,
+    ogr_osm_11,
     ]
 
 if __name__ == '__main__':

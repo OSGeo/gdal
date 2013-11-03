@@ -3318,6 +3318,13 @@ int OGROSMDataSource::ParseConf()
                 else if( strcmp(papszTokens[1], "yes") == 0 )
                     papoLayers[iCurLayer]->SetHasOtherTags(TRUE);
             }
+            else if( CSLCount(papszTokens) == 2 && strcmp(papszTokens[0], "all_tags") == 0 )
+            {
+                if( strcmp(papszTokens[1], "no") == 0 )
+                    papoLayers[iCurLayer]->SetHasAllTags(FALSE);
+                else if( strcmp(papszTokens[1], "yes") == 0 )
+                    papoLayers[iCurLayer]->SetHasAllTags(TRUE);
+            }
             else if( CSLCount(papszTokens) == 2 && strcmp(papszTokens[0], "osm_id") == 0 )
             {
                 if( strcmp(papszTokens[1], "no") == 0 )
@@ -3415,7 +3422,15 @@ int OGROSMDataSource::ParseConf()
 
     for(i=0;i<nLayers;i++)
     {
-        if( papoLayers[i]->HasOtherTags() )
+        if( papoLayers[i]->HasAllTags() )
+        {
+            papoLayers[i]->AddField("all_tags", OFTString);
+            if( papoLayers[i]->HasOtherTags() )
+            {
+                papoLayers[i]->SetHasOtherTags(FALSE);
+            }
+        }
+        else if( papoLayers[i]->HasOtherTags() )
             papoLayers[i]->AddField("other_tags", OFTString);
     }
 

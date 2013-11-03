@@ -35,7 +35,7 @@ The customization is essentially which OSM attributes and keys should be transla
 
 <h3>"other_tags" field</h3>
 
-When keys are not strictly identified in the <i>osmconf.ini</i> file, the key value pair is appended
+When keys are not strictly identified in the <i>osmconf.ini</i> file, the key/value pair is appended
 in a "other_tags" field, with a syntax compatible with the PostgreSQL HSTORE type. See the
 <i>COLUMN_TYPES</i> layer creation option of the <a href="drv_pg.html">PG driver</a>.<p>
 
@@ -43,6 +43,14 @@ For example :
 <pre>
 ogr2ogr -f PostgreSQL "PG:dbname=osm" test.pbf -lco COLUMN_TYPES=other_tags=hstore
 </pre>
+
+<h3>"all_tags" field</h3>
+
+(OGR &gt;= 2.0)<p>
+
+Similar to "other_tags", except that it contains both keys specifically identified to be reported as
+dedicated fields, as well as other keys.<p>
+"all_tags" is disabled by default, and when enabled, it is exclusive with "other_tags".
 
 <h3>Internal working and performance tweaking</h3>
 
