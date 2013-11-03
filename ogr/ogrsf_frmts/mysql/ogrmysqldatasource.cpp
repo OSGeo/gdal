@@ -36,6 +36,16 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+/* Recent versions of mysql no longer declare load_defaults() in my_sys.h */
+/* but they still have it in the lib. Very fragile... */
+#ifdef MYSQL_NEEDS_LOAD_DEFAULTS_DECLARATION
+extern "C" {
+int load_defaults(const char *conf_file, const char **groups,
+                  int *argc, char ***argv);
+void free_defaults(char **argv);
+}
+#endif
+
 CPL_CVSID("$Id$");
 /************************************************************************/
 /*                         OGRMySQLDataSource()                         */
