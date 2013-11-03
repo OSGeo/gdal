@@ -23316,13 +23316,13 @@ $as_echo_n "checking load_defaults() in MySQL... " >&6; }
       echo '#include "my_global.h"' > testmysql.cpp
       echo '#include "my_sys.h"' >> testmysql.cpp
       echo 'int main(int argc, char** argv) { load_defaults(0, 0, 0, 0); return 0; } ' >> testmysql.cpp
-      if test -z "`${CXX} ${CXXFLAGS} ${MYSQL_INC} ${MYSQL_LIB} testmysql.cpp -o testmysql 2>&1`" ; then
+      if test -z "`${CXX} ${CXXFLAGS} ${MYSQL_INC} -o testmysql testmysql.cpp ${MYSQL_LIB} 2>&1`" ; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes, found in my_sys.h" >&5
 $as_echo "yes, found in my_sys.h" >&6; }
       else
         echo 'extern "C" void load_defaults(const char *conf_file, const char **groups, int *argc, char ***argv);' > testmysql.cpp
         echo 'int main(int argc, char** argv) { load_defaults(0, 0, 0, 0); return 0; } ' >> testmysql.cpp
-        if test -z "`${CXX} ${CXXFLAGS} ${MYSQL_INC} ${MYSQL_LIB} testmysql.cpp -o testmysql 2>&1`" ; then
+        if test -z "`${CXX} ${CXXFLAGS} ${MYSQL_INC} -o testmysql testmysql.cpp ${MYSQL_LIB} 2>&1`" ; then
             { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes, found in library but not in header" >&5
 $as_echo "yes, found in library but not in header" >&6; }
             MYSQL_NEEDS_LOAD_DEFAULTS_DECLARATION=yes
