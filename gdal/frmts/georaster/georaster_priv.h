@@ -419,6 +419,11 @@ public:
     bool                bCreateObjectTable;
     CPLXMLNode*         phMetadata;
     CPLString           sCellDepth;
+
+    bool                bGenPyramid;
+    CPLString           sPyramidResampling;
+    int                 nPyramidLevels;
+
     CPLString           sCompressionType;
     int                 nCompressQuality;
     CPLString           sWKText;

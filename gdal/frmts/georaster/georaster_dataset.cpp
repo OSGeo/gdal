@@ -784,6 +784,33 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
         poGRD->poGeoRaster->nCompressQuality = nQuality;
     }
 
+
+    pszFetched = CSLFetchNameValue( papszOptions, "GENPYRAMID" );
+
+    if( pszFetched != NULL )
+    {
+        if (!(EQUAL(pszFetched, "NN") ||
+              EQUAL(pszFetched, "BILINEAR") ||
+              EQUAL(pszFetched, "BIQUADRATIC") ||
+              EQUAL(pszFetched, "CUBIC") ||
+              EQUAL(pszFetched, "AVERAGE4") ||
+              EQUAL(pszFetched, "AVERAGE16")))
+        {
+            CPLError( CE_Warning, CPLE_IllegalArg, "Wrong resample method for pyramid (%s)", pszFetched);
+        }
+
+        poGRD->poGeoRaster->bGenPyramid = true;
+        poGRD->poGeoRaster->sPyramidResampling = pszFetched;
+    }
+
+    pszFetched = CSLFetchNameValue( papszOptions, "GENPYRLEVELS" );
+
+    if( pszFetched != NULL )
+    {
+        poGRD->poGeoRaster->bGenPyramid = true;
+        poGRD->poGeoRaster->nPyramidLevels = atoi(pszFetched);
+    }
+
     //  -------------------------------------------------------------------
     //  Return a new Dataset
     //  -------------------------------------------------------------------
@@ -2020,55 +2047,57 @@ void CPL_DLL GDALRegister_GEOR()
                                    "Float64 CFloat32 CFloat64" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
-"  <Option name='DESCRIPTION' type='string' description='Table Description' "
-                                           "default='(RASTER MDSYS.SDO_GEORASTER)'/>"
-"  <Option name='INSERT'      type='string' description='Column Values' "
-                                           "default='(SDO_GEOR.INIT())'/>"
+"  <Option name='DESCRIPTION' type='string' description='Table Description'/>"
+"  <Option name='INSERT'      type='string' description='Column Values'/>"
 "  <Option name='BLOCKXSIZE'  type='int'    description='Column Block Size' "
                                            "default='512'/>"
 "  <Option name='BLOCKYSIZE'  type='int'    description='Row Block Size' "
                                            "default='512'/>"
-"  <Option name='BLOCKBSIZE'  type='int'    description='Band Block Size' "
-                                           "default='1'/>"
-"  <Option name='SRID'        type='int'    description='Overwrite EPSG code' "
-                                           "default='0'/>"
-"  <Option name='OBJECTTABLE' type='boolean' "
-                                           "description='Create RDT as object table' "
-                                           "default='FALSE'/>"
-"  <Option name='SPATIALEXTENT' type='boolean' "
-                                           "description='Generate Spatial Extent' "
-                                           "default='TRUE'/>"
-"  <Option name='EXTENTSRID'  type='int'    description='Spatial ExtentSRID code' "
-                                           "default='0'/>"
-"  <Option name='VATNAME'     type='string' description='Value Attribute Table Name'/>"
-"  <Option name='NBITS'       type='int'    description='BITS for sub-byte "
-                                           "data types (1,2,4) bits'/>"
-"  <Option name='INTERLEAVE'  type='string-select' default='BAND'>"
-"       <Value>BAND</Value>"
-"       <Value>PIXEL</Value>"
-"       <Value>LINE</Value>"
-"       <Value>BSQ</Value>"
-"       <Value>BIP</Value>"
-"       <Value>BIL</Value>"
-"   </Option>"
-"  <Option name='COMPRESS'    type='string-select' default='NONE'>"
-"       <Value>NONE</Value>"
-"       <Value>JPEG-B</Value>"
-"       <Value>JPEG-F</Value>"
-"       <Value>DEFLATE</Value>"
-"  </Option>"
+"  <Option name='BLOCKBSIZE'  type='int'    description='Band Block Size'/>"
 "  <Option name='BLOCKING'    type='string-select' default='YES'>"
 "       <Value>YES</Value>"
 "       <Value>NO</Value>"
 "       <Value>OPTIMALPADDING</Value>"
 "  </Option>"
+"  <Option name='SRID'        type='int'    description='Overwrite EPSG code'/>"
+"  <Option name='GENPYRAMID'  type='string-select' "
+" description='Generate Pyramid, inform resampling method'>"
+"       <Value>NN</Value>"
+"       <Value>BILINEAR</Value>"
+"       <Value>BIQUADRATIC</Value>"
+"       <Value>CUBIC</Value>"
+"       <Value>AVERAGE4</Value>"
+"       <Value>AVERAGE16</Value>"
+"  </Option>"
+"  <Option name='GENPYRLEVELS'  type='int'  description='Number of pyramid level to generate'/>"
+"  <Option name='OBJECTTABLE' type='boolean' "
+                                           "description='Create RDT as object table'/>"
+"  <Option name='SPATIALEXTENT' type='boolean' "
+                                           "description='Generate Spatial Extent' "
+                                           "default='TRUE'/>"
+"  <Option name='EXTENTSRID'  type='int'    description='Spatial ExtentSRID code'/>"
 "  <Option name='COORDLOCATION'    type='string-select' default='CENTER'>"
 "       <Value>CENTER</Value>"
 "       <Value>UPPERLEFT</Value>"
 "  </Option>"
+"  <Option name='VATNAME'     type='string' description='Value Attribute Table Name'/>"
+"  <Option name='NBITS'       type='int'    description='BITS for sub-byte "
+                                           "data types (1,2,4) bits'/>"
+"  <Option name='INTERLEAVE'  type='string-select'>"
+"       <Value>BSQ</Value>"
+"       <Value>BIP</Value>"
+"       <Value>BIL</Value>"
+"   </Option>"
+"  <Option name='COMPRESS'    type='string-select'>"
+"       <Value>NONE</Value>"
+"       <Value>JPEG-B</Value>"
+"       <Value>JPEG-F</Value>"
+"       <Value>DEFLATE</Value>"
+"  </Option>"
 "  <Option name='QUALITY'     type='int'    description='JPEG quality 0..100' "
                                            "default='75'/>"
 "</CreationOptionList>" );
+
         poDriver->pfnOpen       = GeoRasterDataset::Open;
         poDriver->pfnCreate     = GeoRasterDataset::Create;
         poDriver->pfnCreateCopy = GeoRasterDataset::CreateCopy;
