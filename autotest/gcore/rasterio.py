@@ -322,13 +322,36 @@ def rasterio_6():
 
     return 'success'
 
+###############################################################################
+# Test that default window reading works via ReadRaster()
+
+def rasterio_7():
+
+    ds = gdal.Open('data/byte.tif')
+    
+    data = ds.GetRasterBand(1).ReadRaster()
+    l = len(data)
+    if l != 400:
+        gdaltest.post_reason('did not read expected band data via ReadRaster()')
+        return 'fail'
+
+    data = ds.ReadRaster()
+    l = len(data)
+    if l != 400:
+        gdaltest.post_reason('did not read expected dataset data via ReadRaster()')
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     rasterio_1,
     rasterio_2,
     rasterio_3,
     rasterio_4,
     rasterio_5,
-    rasterio_6 ]
+    rasterio_6,
+    rasterio_7,
+    ]
 
 if __name__ == '__main__':
 
