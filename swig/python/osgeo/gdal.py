@@ -804,11 +804,15 @@ class Dataset(MajorObject):
                 buf_string, buf_xsize, buf_ysize, buf_type, band_list,
                 buf_pixel_space, buf_line_space, buf_band_space )
 
-    def ReadRaster(self, xoff, yoff, xsize, ysize,
+    def ReadRaster(self, xoff = 0, yoff = 0, xsize = None, ysize = None,
                    buf_xsize = None, buf_ysize = None, buf_type = None,
                    band_list = None,
                    buf_pixel_space = None, buf_line_space = None, buf_band_space = None ):
 
+        if xsize is None:
+            xsize = self.RasterXSize
+        if ysize is None:
+            ysize = self.RasterYSize
         if band_list is None:
             band_list = range(1,self.RasterCount+1)
         if buf_xsize is None:
@@ -1085,9 +1089,14 @@ class Band(MajorObject):
         """ReadBlock(self, int xoff, int yoff) -> CPLErr"""
         return _gdal.Band_ReadBlock(self, *args, **kwargs)
 
-    def ReadRaster(self, xoff, yoff, xsize, ysize,
+    def ReadRaster(self, xoff = 0, yoff = 0, xsize = None, ysize = None,
                      buf_xsize = None, buf_ysize = None, buf_type = None,
                      buf_pixel_space = None, buf_line_space = None ):
+
+        if xsize is None:
+            xsize = self.XSize
+        if ysize is None:
+            ysize = self.YSize
 
         return _gdal.Band_ReadRaster1(self, xoff, yoff, xsize, ysize,
                                       buf_xsize, buf_ysize, buf_type,
