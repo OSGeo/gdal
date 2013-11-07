@@ -6,7 +6,7 @@
 ::  Name:     makegdal_gen.bat
 ::  Project:  GDAL 
 ::  Purpose:  Generate MS Visual Studio 2003...N project files    
-::  Author:   Ivan Lucena, ivan.lucena@pmldnet.com
+::  Author:   Ivan Lucena, [lucena_ivan at hotmail.com]
 :: 
 :: ****************************************************************************
 ::  Copyright (c) 2007, Ivan Lucena    
@@ -35,11 +35,29 @@
 ::  *********************
 
 if "%1"=="" (
-    echo Usage: makegdal_gen "MS Visual C++ version" ^> makegdalNN.vcproj
+    echo Usage: makegdal_gen "MS Visual C++ version" "platform{32,64}" ^> makegdalNN.vcproj
     echo Examples:
-    echo    makegdal_gen 7.10 ^> makegdal71.vcproj
-    echo    makegdal_gen 8.00 ^> makegdal80.vcproj
+    echo    makegdal_gen  7.10 32 ^> makegdal71.vcproj
+    echo    makegdal_gen  8.00 64 ^> makegdal80.vcproj
+    echo    makegdal_gen  9.00 64 ^> makegdal90.vcproj
+    echo    makegdal_gen 10.00 64 ^> makegdal10.vcproj
     goto :end
+)
+
+::  *********************
+::  Get plataform 32 or 64
+::  *********************
+
+set _plat_=%2
+
+if "%_plat_%"=="" (
+    set _plat_=32
+)
+
+if "%_plat_%"=="32" (
+    set _plat_=Win32
+) else (
+    set _plat_=x64
 )
 
 ::  *********************
@@ -64,6 +82,10 @@ if "%_vcver_%"=="8.00" (
 if "%_vcver_%"=="9.00" (
 	set _clver_=1500
 )
+if "%_vcver_%"=="10.00" (
+	set _vcver_=9.00
+	set _clver_=1600
+)
 
 ::  *********************
 ::  Get GDAL Version
@@ -85,11 +107,11 @@ echo 	Name="makegdal%_vcnum_%"
 echo 	ProjectGUID="{769DD10E-E284-46BE-9172-A35184250A3A}"
 echo 	Keyword="MakeFileProj"^>
 echo 	^<Platforms^>
-echo 		^<Platform Name="Win32"/^>
+echo 		^<Platform Name="%_plat_%"/^>
 echo 	^</Platforms^>
 echo 	^<Configurations^>
 echo 		^<Configuration
-echo 			Name="Debug|Win32"
+echo 			Name="Debug|%_plat_%"
 echo 			OutputDirectory="$(ConfigurationName)"
 echo 			IntermediateDirectory="$(ConfigurationName)"
 echo 			ConfigurationType="0"^>
@@ -101,7 +123,7 @@ echo 				CleanCommandLine=  ^"cd $(ProjectDir) ^&amp;^&amp; nmake -f makefile.vc
 echo 				Output="gdal%_gdalnum_%.dll"/^>
 echo 		^</Configuration^>
 echo 		^<Configuration
-echo 			Name="Release|Win32"
+echo 			Name="Release|%_plat_%"
 echo 			OutputDirectory="$(ConfigurationName)"
 echo 			IntermediateDirectory="$(ConfigurationName)"
 echo 			ConfigurationType="0"^>
@@ -116,9 +138,9 @@ echo 	^</Configurations^>
 echo 	^<References^>
 echo 	^</References^>
 echo 	^<Files^>
-call :create_filter . "*.vc;*.opt" "Make Files"    "	"
-call :create_filter . "*.h"        "Include Files" "	"
-call :create_filter . "*.c;*.cpp"  "Source Files"  "	"
+call :create_filter . "*.vc;*.opt;*.local" "Make Files"    "	"
+call :create_filter . "*.h"                "Include Files" "	"
+call :create_filter . "*.c;*.cpp"          "Source Files"  "	"
 echo 	^</Files^>
 echo 	^<Globals^>
 echo 	^</Globals^>
