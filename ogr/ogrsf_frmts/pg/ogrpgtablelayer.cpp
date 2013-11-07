@@ -103,6 +103,21 @@ void OGRPGTableFeatureDefn::SolveFields()
 }
 
 /************************************************************************/
+/*                            GetFIDColumn()                            */
+/************************************************************************/
+
+const char *OGRPGTableLayer::GetFIDColumn() 
+
+{
+    ReadTableDefinition();
+
+    if( pszFIDColumn != NULL )
+        return pszFIDColumn;
+    else
+        return "";
+}
+
+/************************************************************************/
 /*                          OGRPGTableLayer()                           */
 /************************************************************************/
 
