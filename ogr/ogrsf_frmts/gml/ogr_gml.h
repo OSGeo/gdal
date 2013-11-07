@@ -49,7 +49,6 @@ typedef enum
 
 class OGRGMLLayer : public OGRLayer
 {
-    OGRSpatialReference *poSRS;
     OGRFeatureDefn     *poFeatureDefn;
 
     int                 iNextGMLId;
@@ -58,6 +57,7 @@ class OGRGMLLayer : public OGRLayer
     char                *pszFIDPrefix;
 
     int                 bWriter;
+    int                 bSameSRS;
 
     OGRGMLDataSource    *poDS;
 
@@ -71,9 +71,7 @@ class OGRGMLLayer : public OGRLayer
 
   public:
                         OGRGMLLayer( const char * pszName, 
-                                     OGRSpatialReference *poSRS, 
                                      int bWriter,
-                                     OGRwkbGeometryType eType,
                                      OGRGMLDataSource *poDS );
 
                         ~OGRGMLLayer();
@@ -89,6 +87,8 @@ class OGRGMLLayer : public OGRLayer
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
+                                     int bApproxOK = TRUE );
+    virtual OGRErr      CreateGeomField( OGRGeomFieldDefn *poField,
                                      int bApproxOK = TRUE );
 
     int                 TestCapability( const char * );
@@ -157,7 +157,7 @@ class OGRGMLDataSource : public OGRDataSource
                         OGRGMLDataSource();
                         ~OGRGMLDataSource();
 
-    int                 Open( const char *, int bTestOpen );
+    int                 Open( const char * );
     int                 Create( const char *pszFile, char **papszOptions );
 
     const char          *GetName() { return pszName; }

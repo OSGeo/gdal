@@ -320,7 +320,8 @@ OGRFeatureDefn* OGRWFSLayer::BuildLayerDefnFromFeatureClass(GMLFeatureClass* poC
 
     OGRFeatureDefn* poFDefn = new OGRFeatureDefn( pszName );
     poFDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
-    poFDefn->SetGeomType( (OGRwkbGeometryType)poGMLFeatureClass->GetGeometryType() );
+    if( poGMLFeatureClass->GetGeometryPropertyCount() > 0 )
+        poFDefn->SetGeomType( (OGRwkbGeometryType)poGMLFeatureClass->GetGeometryProperty(0)->GetType() );
 
 /* -------------------------------------------------------------------- */
 /*      Added attributes (properties).                                  */
@@ -361,12 +362,15 @@ OGRFeatureDefn* OGRWFSLayer::BuildLayerDefnFromFeatureClass(GMLFeatureClass* poC
         poFDefn->AddFieldDefn( &oField );
     }
 
-    const char* pszGeometryColumnName = poGMLFeatureClass->GetGeometryElement();
-    if (pszGeometryColumnName)
+    if( poGMLFeatureClass->GetGeometryPropertyCount() > 0 )
     {
-        osGeometryColumnName = pszGeometryColumnName;
-        if( poFDefn->GetGeomFieldCount() > 0 )
-            poFDefn->GetGeomFieldDefn(0)->SetName(pszGeometryColumnName);
+        const char* pszGeometryColumnName = poGMLFeatureClass->GetGeometryProperty(0)->GetSrcElement();
+        if (pszGeometryColumnName[0] != '\0')
+        {
+            osGeometryColumnName = pszGeometryColumnName;
+            if( poFDefn->GetGeomFieldCount() > 0 )
+                poFDefn->GetGeomFieldDefn(0)->SetName(pszGeometryColumnName);
+        }
     }
 
     return poFDefn;
@@ -1690,7 +1694,8 @@ OGRErr OGRWFSLayer::CreateFeature( OGRFeature *poFeature )
     int i;
     for(i=1; i <= poFeature->GetFieldCount(); i++)
     {
-        if (poGMLFeatureClass->GetGeometryAttributeIndex() == i - 1)
+        if (poGMLFeatureClass->GetGeometryPropertyCount() == 1 &&
+            poGMLFeatureClass->GetGeometryProperty(0)->GetAttributeIndex() == i - 1)
         {
             OGRGeometry* poGeom = poFeature->GetGeometryRef();
             if (poGeom != NULL && osGeometryColumnName.size() != 0)
