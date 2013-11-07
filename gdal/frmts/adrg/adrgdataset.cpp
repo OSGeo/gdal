@@ -79,6 +79,7 @@ class ADRGDataset : public GDALPamDataset
     virtual CPLErr GetGeoTransform( double * padfGeoTransform );
     virtual CPLErr SetGeoTransform( double * padfGeoTransform );
 
+    virtual char      **GetMetadataDomainList();
     virtual char      **GetMetadata( const char * pszDomain = "" );
     
     virtual char      **GetFileList();
@@ -683,6 +684,17 @@ void ADRGDataset::AddSubDataset( const char* pszGENFileName, const char* pszIMGF
     sprintf( szName, "SUBDATASET_%d_DESC", nCount+1 );
     papszSubDatasets = 
         CSLSetNameValue( papszSubDatasets, szName, osSubDatasetName);
+}
+
+/************************************************************************/
+/*                      GetMetadataDomainList()                         */
+/************************************************************************/
+
+char **ADRGDataset::GetMetadataDomainList()
+{
+    return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
+                                   TRUE,
+                                   "SUBDATASETS", NULL);
 }
 
 /************************************************************************/

@@ -28,6 +28,7 @@
  ****************************************************************************/
 
 #include "gdal_ecw.h"
+#include "gdaljp2metadata.h"
 #include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");

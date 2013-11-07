@@ -746,6 +746,10 @@ public:
   OGRErr RollbackTransaction() {
     return OGR_L_RollbackTransaction(self);
   }
+
+  int FindFieldIndex( const char *pszFieldName, int bExactMatch ) {
+    return OGR_L_FindFieldIndex(self, pszFieldName, bExactMatch );
+  }
   
   %newobject GetSpatialRef;
   OSRSpatialReferenceShadow *GetSpatialRef() {

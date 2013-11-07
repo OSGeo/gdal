@@ -129,11 +129,17 @@ int CPLBase64DecodeInPlace(GByte* pszBase64)
             b4 = CPLBase64DecodeChar[c4];
 
             *p++=((b1<<2)|(b2>>4) );
+            if( p - pszBase64 == i )
+                break;
             if (c3 != '=') {
                 *p++=(((b2&0xf)<<4)|(b3>>2) );
+                if( p - pszBase64 == i )
+                    break;
             }
             if (c4 != '=') {
                 *p++=(((b3&0x3)<<6)|b4 );
+                if( p - pszBase64 == i )
+                    break;
             }
         }
         return(p-pszBase64);

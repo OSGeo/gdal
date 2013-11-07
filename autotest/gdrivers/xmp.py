@@ -81,6 +81,9 @@ class TestXMPRead:
             elif self.expect_xmp and len(xmp_md) == 0:
                 gdaltest.post_reason('did not find xml:XMP metadata')
                 ret = 'failure'
+            elif self.expect_xmp and 'xml:XMP' not in ds.GetMetadataDomainList():
+                gdaltest.post_reason('did not find xml:XMP metadata domain')
+                ret = 'failure'
             elif (not self.expect_xmp) and xmp_md is not None and len(xmp_md) != 0:
                 gdaltest.post_reason('found unexpected xml:XMP metadata')
                 ret = 'failure'

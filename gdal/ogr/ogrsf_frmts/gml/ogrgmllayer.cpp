@@ -42,16 +42,10 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRGMLLayer::OGRGMLLayer( const char * pszName,
-                          OGRSpatialReference *poSRSIn, int bWriterIn,
-                          OGRwkbGeometryType eReqType,
+                          int bWriterIn,
                           OGRGMLDataSource *poDSIn )
 
 {
-    if( poSRSIn == NULL )
-        poSRS = NULL;
-    else
-        poSRS = poSRSIn->Clone();
-    
     iNextGMLId = 0;
     nTotalGMLCount = -1;
     bInvalidFIDFound = FALSE;
@@ -65,9 +59,10 @@ OGRGMLLayer::OGRGMLLayer( const char * pszName,
     else
       poFeatureDefn = new OGRFeatureDefn( pszName );
     poFeatureDefn->Reference();
-    poFeatureDefn->SetGeomType( eReqType );
+    poFeatureDefn->SetGeomType( wkbNone );
 
     bWriter = bWriterIn;
+    bSameSRS = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Reader's should get the corresponding GMLFeatureClass and       */
@@ -77,13 +72,6 @@ OGRGMLLayer::OGRGMLLayer( const char * pszName,
         poFClass = poDS->GetReader()->GetClass( pszName );
     else
         poFClass = NULL;
-
-    if( poFeatureDefn->GetGeomFieldCount() != 0 )
-    {
-        poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
-        if( poFClass != NULL && poFClass->GetGeometryElement() != NULL )
-            poFeatureDefn->GetGeomFieldDefn(0)->SetName( poFClass->GetGeometryElement() );
-    }
 
     hCacheSRS = GML_BuildOGRGeometryFromList_CreateCache();
 
@@ -107,9 +95,6 @@ OGRGMLLayer::~OGRGMLLayer()
 
     if( poFeatureDefn )
         poFeatureDefn->Release();
-
-    if( poSRS != NULL )
-        poSRS->Release();
 
     GML_BuildOGRGeometryFromList_DestroyCache(hCacheSRS);
 }
@@ -286,8 +271,96 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
 /*      Does it satisfy the spatial query, if there is one?             */
 /* -------------------------------------------------------------------- */
 
+        OGRGeometry** papoGeometries = NULL;
         const CPLXMLNode* const * papsGeometry = poGMLFeature->GetGeometryList();
-        if (papsGeometry[0] != NULL)
+
+        if( poFeatureDefn->GetGeomFieldCount() > 1 )
+        {
+            papoGeometries = (OGRGeometry**)
+                CPLCalloc( poFeatureDefn->GetGeomFieldCount(), sizeof(OGRGeometry*) );
+            const char* pszSRSName = poDS->GetGlobalSRSName();
+            int i;
+            for( i=0; i < poFeatureDefn->GetGeomFieldCount(); i++)
+            {
+                const CPLXMLNode* psGeom = poGMLFeature->GetGeometryRef(i);
+                if( psGeom != NULL )
+                {
+                    const CPLXMLNode* myGeometryList[2];
+                    myGeometryList[0] = psGeom;
+                    myGeometryList[1] = NULL;
+                    poGeom = GML_BuildOGRGeometryFromList(myGeometryList, TRUE,
+                                                  poDS->GetInvertAxisOrderIfLatLong(),
+                                                  pszSRSName,
+                                                  poDS->GetConsiderEPSGAsURN(),
+                                                  poDS->GetSecondaryGeometryOption(),
+                                                  hCacheSRS,
+                                                  bFaceHoleNegative );
+
+                    /* Force single geometry to multigeometry if needed to match layer geometry type */
+                    if (poGeom != NULL)
+                    {
+                        OGRwkbGeometryType eType = poGeom->getGeometryType();
+                        OGRwkbGeometryType eLayerType = poFeatureDefn->GetGeomFieldDefn(i)->GetType();
+                        OGRGeometryCollection* poNewGeom = NULL;
+                        if (eType == wkbPoint && eLayerType == wkbMultiPoint)
+                        {
+                            poNewGeom = new OGRMultiPoint();
+                        }
+                        else if (eType == wkbLineString && eLayerType == wkbMultiLineString)
+                        {
+                            poNewGeom = new OGRMultiLineString();
+                        }
+                        else if (eType == wkbPolygon && eLayerType == wkbMultiPolygon)
+                        {
+                            poNewGeom = new OGRMultiPolygon();
+                        }
+
+                        if( poNewGeom != NULL )
+                        {
+                            OGRSpatialReference* poGeomSRS = poGeom->getSpatialReference();
+                            poNewGeom->addGeometryDirectly(poGeom);
+                            if( poGeomSRS != NULL )
+                                poNewGeom->assignSpatialReference(poGeomSRS);
+                            poGeom = poNewGeom;
+                        }
+
+                        OGRSpatialReference* poSRS = poFeatureDefn->GetGeomFieldDefn(i)->GetSpatialRef();
+                        if (poSRS != NULL)
+                            poGeom->assignSpatialReference(poSRS);
+
+                        papoGeometries[i] = poGeom;
+                        poGeom = NULL;
+                    }
+                    else
+                    // We assume the createFromGML() function would have already
+                    // reported the error.
+                    {
+                        for( i=0; i < poFeatureDefn->GetGeomFieldCount(); i++)
+                        {
+                            delete papoGeometries[i];
+                        }
+                        CPLFree(papoGeometries);
+                        delete poGMLFeature;
+                        return NULL;
+                    }
+                }
+            }
+
+            if( m_poFilterGeom != NULL &&
+                m_iGeomFieldFilter >= 0 &&
+                m_iGeomFieldFilter < poFeatureDefn->GetGeomFieldCount() &&
+                papoGeometries[m_iGeomFieldFilter] &&
+                !FilterGeometry( papoGeometries[m_iGeomFieldFilter] ) )
+            {
+                for( i=0; i < poFeatureDefn->GetGeomFieldCount(); i++)
+                {
+                    delete papoGeometries[i];
+                }
+                CPLFree(papoGeometries);
+                continue;
+            }
+        }
+        else if (papsGeometry[0] != NULL)
         {
             const char* pszSRSName = poDS->GetGlobalSRSName();
             poGeom = GML_BuildOGRGeometryFromList(papsGeometry, TRUE,
@@ -326,6 +399,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
                     poGeom = poNewGeom;
                 }
 
+                OGRSpatialReference* poSRS = poFeatureDefn->GetGeomFieldDefn(0)->GetSpatialRef();
                 if (poSRS != NULL)
                     poGeom->assignSpatialReference(poSRS);
             }
@@ -347,7 +421,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
 /* -------------------------------------------------------------------- */
         int iField;
         int iDstField = 0;
-        OGRFeature *poOGRFeature = new OGRFeature( GetLayerDefn() );
+        OGRFeature *poOGRFeature = new OGRFeature( poFeatureDefn );
 
         poOGRFeature->SetFID( nFID );
         if (poDS->ExposeId())
@@ -401,6 +475,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
               break;
 
               case GMLPT_StringList:
+              case GMLPT_FeaturePropertyList:
               {
                   poOGRFeature->SetField( iDstField, psGMLProperty->papszSubProperties );
               }
@@ -414,7 +489,17 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
 
         /* Assign the geometry before the attribute filter because */
         /* the attribute filter may use a special field like OGR_GEOMETRY */
-        poOGRFeature->SetGeometryDirectly( poGeom );
+        if( papoGeometries != NULL )
+        {
+            for( int i=0; i < poFeatureDefn->GetGeomFieldCount(); i++)
+            {
+                poOGRFeature->SetGeomFieldDirectly( i, papoGeometries[i] );
+            }
+            CPLFree(papoGeometries);
+            papoGeometries = NULL;
+        }
+        else
+            poOGRFeature->SetGeometryDirectly( poGeom );
         poGeom = NULL;
         
 /* -------------------------------------------------------------------- */
@@ -472,6 +557,9 @@ OGRErr OGRGMLLayer::GetExtent(OGREnvelope *psExtent, int bForce )
 
 {
     double dfXMin, dfXMax, dfYMin, dfYMax;
+
+    if( GetGeomType() == wkbNone )
+        return OGRERR_FAILURE;
 
     if( poFClass != NULL && 
         poFClass->GetExtents( &dfXMin, &dfXMax, &dfYMin, &dfYMax ) )
@@ -550,6 +638,27 @@ OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
     else
         poDS->PrintLine( fp, "<gml:featureMember>" );
 
+    if( iNextGMLId == 0 )
+    {
+        bSameSRS = TRUE;
+        for( int iGeomField = 1; iGeomField < poFeatureDefn->GetGeomFieldCount(); iGeomField++ )
+        {
+            OGRGeomFieldDefn *poFieldDefn0 = poFeatureDefn->GetGeomFieldDefn(0);
+            OGRGeomFieldDefn *poFieldDefn = poFeatureDefn->GetGeomFieldDefn(iGeomField);
+            OGRSpatialReference* poSRS0 = poFieldDefn0->GetSpatialRef();
+            OGRSpatialReference* poSRS = poFieldDefn->GetSpatialRef();
+            if( poSRS0 != NULL && poSRS == NULL )
+                bSameSRS = FALSE;
+            else if( poSRS0 == NULL && poSRS != NULL )
+                bSameSRS = FALSE;
+            else if( poSRS0 != NULL && poSRS != NULL &&
+                     poSRS0 != poSRS && !poSRS0->IsSame(poSRS) )
+            {
+                bSameSRS = FALSE;
+            }
+        }
+    }
+
     if( poFeature->GetFID() == OGRNullFID )
         poFeature->SetFID( iNextGMLId++ );
 
@@ -596,61 +705,83 @@ OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
         }
     }
 
-    // Write out Geometry - for now it isn't indented properly.
-    /* GML geometries don't like very much the concept of empty geometry */
-    OGRGeometry* poGeom = poFeature->GetGeometryRef();
-    if( poGeom != NULL && !poGeom->IsEmpty())
+
+    for( int iGeomField = 0; iGeomField < poFeatureDefn->GetGeomFieldCount(); iGeomField++ )
     {
-        char    *pszGeometry;
-        OGREnvelope3D sGeomBounds;
+        OGRGeomFieldDefn *poFieldDefn = poFeatureDefn->GetGeomFieldDefn(iGeomField);
 
-        int nCoordDimension = poGeom->getCoordinateDimension();
-
-        poGeom->getEnvelope( &sGeomBounds );
-        poDS->GrowExtents( &sGeomBounds, nCoordDimension );
-
-        if (poGeom->getSpatialReference() == NULL && poSRS != NULL)
-            poGeom->assignSpatialReference(poSRS);
-
-        if (bIsGML3Output && poDS->WriteFeatureBoundedBy())
+        // Write out Geometry - for now it isn't indented properly.
+        /* GML geometries don't like very much the concept of empty geometry */
+        OGRGeometry* poGeom = poFeature->GetGeomFieldRef(iGeomField);
+        if( poGeom != NULL && !poGeom->IsEmpty())
         {
-            int bCoordSwap;
+            char    *pszGeometry;
+            OGREnvelope3D sGeomBounds;
 
-            char* pszSRSName = GML_GetSRSName(poGeom->getSpatialReference(), poDS->IsLongSRSRequired(), &bCoordSwap);
-            char szLowerCorner[75], szUpperCorner[75];
-            if (bCoordSwap)
+            int nCoordDimension = poGeom->getCoordinateDimension();
+
+            poGeom->getEnvelope( &sGeomBounds );
+            if( bSameSRS )
+                poDS->GrowExtents( &sGeomBounds, nCoordDimension );
+
+            if (poGeom->getSpatialReference() == NULL && poFieldDefn->GetSpatialRef() != NULL)
+                poGeom->assignSpatialReference(poFieldDefn->GetSpatialRef());
+
+            if (bIsGML3Output && poDS->WriteFeatureBoundedBy())
             {
-                OGRMakeWktCoordinate(szLowerCorner, sGeomBounds.MinY, sGeomBounds.MinX, sGeomBounds.MinZ, nCoordDimension);
-                OGRMakeWktCoordinate(szUpperCorner, sGeomBounds.MaxY, sGeomBounds.MaxX, sGeomBounds.MaxZ, nCoordDimension);
+                int bCoordSwap;
+
+                char* pszSRSName = GML_GetSRSName(poGeom->getSpatialReference(), poDS->IsLongSRSRequired(), &bCoordSwap);
+                char szLowerCorner[75], szUpperCorner[75];
+                if (bCoordSwap)
+                {
+                    OGRMakeWktCoordinate(szLowerCorner, sGeomBounds.MinY, sGeomBounds.MinX, sGeomBounds.MinZ, nCoordDimension);
+                    OGRMakeWktCoordinate(szUpperCorner, sGeomBounds.MaxY, sGeomBounds.MaxX, sGeomBounds.MaxZ, nCoordDimension);
+                }
+                else
+                {
+                    OGRMakeWktCoordinate(szLowerCorner, sGeomBounds.MinX, sGeomBounds.MinY, sGeomBounds.MinZ, nCoordDimension);
+                    OGRMakeWktCoordinate(szUpperCorner, sGeomBounds.MaxX, sGeomBounds.MaxY, sGeomBounds.MaxZ, nCoordDimension);
+                }
+                if (bWriteSpaceIndentation)
+                    VSIFPrintfL(fp, "      ");
+                poDS->PrintLine( fp, "<gml:boundedBy><gml:Envelope%s%s><gml:lowerCorner>%s</gml:lowerCorner><gml:upperCorner>%s</gml:upperCorner></gml:Envelope></gml:boundedBy>",
+                                (nCoordDimension == 3) ? " srsDimension=\"3\"" : "",pszSRSName, szLowerCorner, szUpperCorner);
+                CPLFree(pszSRSName);
             }
-            else
+
+            char** papszOptions = (bIsGML3Output) ? CSLAddString(NULL, "FORMAT=GML3") : NULL;
+            if (bIsGML3Output && !poDS->IsLongSRSRequired())
+                papszOptions = CSLAddString(papszOptions, "GML3_LONGSRS=NO");
+            if (poDS->IsGML32Output())
             {
-                OGRMakeWktCoordinate(szLowerCorner, sGeomBounds.MinX, sGeomBounds.MinY, sGeomBounds.MinZ, nCoordDimension);
-                OGRMakeWktCoordinate(szUpperCorner, sGeomBounds.MaxX, sGeomBounds.MaxY, sGeomBounds.MaxZ, nCoordDimension);
+                if( poFeatureDefn->GetGeomFieldCount() > 1 )
+                    papszOptions = CSLAddString(papszOptions,
+                        CPLSPrintf("GMLID=%s.%s.%ld",
+                                   poFeatureDefn->GetName(),
+                                   poFieldDefn->GetNameRef(),
+                                   poFeature->GetFID()));
+                else
+                    papszOptions = CSLAddString(papszOptions,
+                        CPLSPrintf("GMLID=%s.geom.%ld",
+                                   poFeatureDefn->GetName(), poFeature->GetFID()));
             }
+            pszGeometry = poGeom->exportToGML(papszOptions);
+            CSLDestroy(papszOptions);
             if (bWriteSpaceIndentation)
                 VSIFPrintfL(fp, "      ");
-            poDS->PrintLine( fp, "<gml:boundedBy><gml:Envelope%s%s><gml:lowerCorner>%s</gml:lowerCorner><gml:upperCorner>%s</gml:upperCorner></gml:Envelope></gml:boundedBy>",
-                             (nCoordDimension == 3) ? " srsDimension=\"3\"" : "",pszSRSName, szLowerCorner, szUpperCorner);
-            CPLFree(pszSRSName);
+            if( bRemoveAppPrefix )
+                poDS->PrintLine( fp, "<%s>%s</%s>",
+                                 poFieldDefn->GetNameRef(),
+                                 pszGeometry,
+                                 poFieldDefn->GetNameRef() );
+            else
+                poDS->PrintLine( fp, "<%s:%s>%s</%s:%s>",
+                                 pszPrefix, poFieldDefn->GetNameRef(),
+                                 pszGeometry,
+                                 pszPrefix, poFieldDefn->GetNameRef() );
+            CPLFree( pszGeometry );
         }
-
-        char** papszOptions = (bIsGML3Output) ? CSLAddString(NULL, "FORMAT=GML3") : NULL;
-        if (bIsGML3Output && !poDS->IsLongSRSRequired())
-            papszOptions = CSLAddString(papszOptions, "GML3_LONGSRS=NO");
-        if (poDS->IsGML32Output())
-            papszOptions = CSLAddString(papszOptions, CPLSPrintf("GMLID=%s.geom.%ld", poFeatureDefn->GetName(), poFeature->GetFID()));
-        pszGeometry = poGeom->exportToGML(papszOptions);
-        CSLDestroy(papszOptions);
-        if (bWriteSpaceIndentation)
-            VSIFPrintfL(fp, "      ");
-        if( bRemoveAppPrefix )
-            poDS->PrintLine( fp, "<geometryProperty>%s</geometryProperty>",
-                             pszGeometry );
-        else
-            poDS->PrintLine( fp, "<%s:geometryProperty>%s</%s:geometryProperty>",
-                            pszPrefix, pszGeometry, pszPrefix );
-        CPLFree( pszGeometry );
     }
 
     // Write all "set" fields. 
@@ -755,6 +886,9 @@ int OGRGMLLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCCreateField) )
         return bWriter && iNextGMLId == 0;
 
+    else if( EQUAL(pszCap,OLCCreateGeomField) )
+        return bWriter && iNextGMLId == 0;
+
     else if( EQUAL(pszCap,OLCFastGetExtent) )
     {
         double  dfXMin, dfXMax, dfYMin, dfYMax;
@@ -822,6 +956,50 @@ OGRErr OGRGMLLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
 
     
     poFeatureDefn->AddFieldDefn( &oCleanCopy );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                          CreateGeomField()                           */
+/************************************************************************/
+
+OGRErr OGRGMLLayer::CreateGeomField( OGRGeomFieldDefn *poField, int bApproxOK )
+
+{
+    if( !bWriter || iNextGMLId != 0 )
+        return OGRERR_FAILURE;
+
+/* -------------------------------------------------------------------- */
+/*      Enforce XML naming semantics on element name.                   */
+/* -------------------------------------------------------------------- */
+    OGRGeomFieldDefn oCleanCopy( poField );
+    char *pszName = CPLStrdup( poField->GetNameRef() );
+    CPLCleanXMLElementName( pszName );
+    
+    if( strcmp(pszName,poField->GetNameRef()) != 0 )
+    {
+        if( !bApproxOK )
+        {
+            CPLFree( pszName );
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Unable to create field with name '%s', it would not\n"
+                      "be valid as an XML element name.",
+                      poField->GetNameRef() );
+            return OGRERR_FAILURE;
+        }
+
+        oCleanCopy.SetName( pszName );
+        CPLError( CE_Warning, CPLE_AppDefined, 
+                  "Field name '%s' adjusted to '%s' to be a valid\n"
+                  "XML element name.",
+                  poField->GetNameRef(), pszName );
+    }
+
+    CPLFree( pszName );
+
+    
+    poFeatureDefn->AddGeomFieldDefn( &oCleanCopy );
 
     return OGRERR_NONE;
 }

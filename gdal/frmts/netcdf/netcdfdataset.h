@@ -743,6 +743,7 @@ class netCDFDataset : public GDALPamDataset
     const char * GetProjectionRef();
     CPLErr 	SetProjection (const char *);
 
+    virtual char      **GetMetadataDomainList();
     char ** GetMetadata( const char * );
 
     int GetCDFID() { return cdfid; }

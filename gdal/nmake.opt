@@ -494,6 +494,7 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 #GEOS_LIB     = $(GEOS_DIR)/source/geos_c_i.lib
 
 # Uncomment for SOSI support
+#SOSI_PLUGIN = YES
 #SOSI_ENABLED = YES
 #SOSI_INC_DIR = e:/sosi
 #SOSI_LIBS = e:/sosi/FYBA.lib e:/sosi/GM.lib e:/sosi/UT.lib

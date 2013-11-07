@@ -1138,6 +1138,82 @@ def warp_37():
     return 'success'
 
 ###############################################################################
+# Test a warp with GCPs on the *destination* image.
+def warp_38():
+
+    # Create an output file with GCPs.
+    out_file = 'tmp/warp_38.tif'
+    ds = gdal.GetDriverByName('GTiff').Create(out_file, 50, 50, 3)
+
+    gcp_list = [
+        gdal.GCP(397000, 5642000, 0,  0,  0),
+        gdal.GCP(397000, 5641990, 0,  0, 50),
+        gdal.GCP(397010, 5642000, 0, 50,  0),
+        gdal.GCP(397010, 5641990, 0, 50, 50),
+        gdal.GCP(397005, 5641995, 0, 25, 25),
+        ]
+    ds.SetGCPs(gcp_list, gdaltest.user_srs_to_wkt('EPSG:32632'))
+    ds = None
+
+    cmd = test_cli_utilities.get_gdalwarp_path()  \
+        + ' -to DST_METHOD=GCP_POLYNOMIAL' \
+        + ' data/test3658.tif ' \
+        + out_file
+    gdaltest.runexternal(cmd, display_live_on_parent_stdout = False)
+
+    ds = gdal.Open(out_file)
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+
+    # Should exactly match the source file.
+    exp_cs = 30546
+    if cs != exp_cs:
+        gdaltest.post_reason('Got %d instead of expected checksum %d.' % (
+                cs, exp_cs))
+        return 'fail'
+
+    os.unlink(out_file)
+    return 'success'
+
+###############################################################################
+# Test a warp with GCPs for TPS on the *destination* image.
+def warp_39():
+
+    # Create an output file with GCPs.
+    out_file = 'tmp/warp_39.tif'
+    ds = gdal.GetDriverByName('GTiff').Create(out_file, 50, 50, 3)
+
+    gcp_list = [
+        gdal.GCP(397000, 5642000, 0,  0,  0),
+        gdal.GCP(397000, 5641990, 0,  0, 50),
+        gdal.GCP(397010, 5642000, 0, 50,  0),
+        gdal.GCP(397010, 5641990, 0, 50, 50),
+        gdal.GCP(397005, 5641995, 0, 25, 25),
+        ]
+    ds.SetGCPs(gcp_list, gdaltest.user_srs_to_wkt('EPSG:32632'))
+    ds = None
+
+    cmd = test_cli_utilities.get_gdalwarp_path()  \
+        + ' -to DST_METHOD=GCP_TPS' \
+        + ' data/test3658.tif ' \
+        + out_file
+    gdaltest.runexternal(cmd, display_live_on_parent_stdout = False)
+
+    ds = gdal.Open(out_file)
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+
+    # Should exactly match the source file.
+    exp_cs = 30546
+    if cs != exp_cs:
+        gdaltest.post_reason('Got %d instead of expected checksum %d.' % (
+                cs, exp_cs))
+        return 'fail'
+
+    os.unlink(out_file)
+    return 'success'
+
+###############################################################################
 
 gdaltest_list = [
     warp_1,
@@ -1182,7 +1258,10 @@ gdaltest_list = [
     warp_35,
     warp_36,
     warp_37,
+    warp_38,
+    warp_39,
     ]
+
 
 if __name__ == '__main__':
 

@@ -52,6 +52,7 @@ class RasterliteDataset : public GDALPamDataset
                  
     virtual     ~RasterliteDataset();
     
+    virtual char      **GetMetadataDomainList();
     virtual char **GetMetadata( const char *pszDomain );
     virtual const char *GetMetadataItem( const char *pszName, 
                                          const char *pszDomain );

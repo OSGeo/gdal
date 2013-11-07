@@ -971,6 +971,16 @@ CPLErr CPL_STDCALL VRTAddFuncSource( VRTSourcedRasterBandH hVRTBand,
 
 
 /************************************************************************/
+/*                      GetMetadataDomainList()                         */
+/************************************************************************/
+
+char **VRTSourcedRasterBand::GetMetadataDomainList()
+{
+    return CSLAddString(GDALRasterBand::GetMetadataDomainList(), "LocationInfo");
+}
+
+
+/************************************************************************/
 /*                          GetMetadataItem()                           */
 /************************************************************************/
 

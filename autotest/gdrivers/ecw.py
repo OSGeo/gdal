@@ -59,6 +59,14 @@ def has_write_support():
     return gdaltest.b_ecw_has_write_support
 
 ###############################################################################
+#
+
+def ecw_init():
+
+    gdaltest.deregister_all_jpeg2000_drivers_but('JP2ECW')
+    return 'success'
+
+###############################################################################
 # Verify we have the driver.
 
 def ecw_1():
@@ -71,8 +79,6 @@ def ecw_1():
         gdaltest.jp2ecw_drv = None
 
     gdaltest.ecw_write = 0
-
-    gdaltest.deregister_all_jpeg2000_drivers_but('JP2ECW')
 
     if gdaltest.ecw_drv is not None:
         if gdaltest.ecw_drv.GetMetadataItem('DMD_CREATIONDATATYPES') != None:
@@ -1234,6 +1240,50 @@ def ecw_33():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Check bugfix for #5262
+
+def ecw_33_bis():
+
+    if gdaltest.ecw_drv is None:
+        return 'skip'
+
+    ds = gdal.Open( 'data/jrc.ecw' )
+    data_ref = ds.ReadRaster(0,0,50,50)
+
+    ds = gdal.Open( 'data/jrc.ecw' )
+
+    # To feed the heuristics
+    ds.GetRasterBand(1).ReadRaster(0,0,50,50,buf_pixel_space=4)
+    ds.GetRasterBand(2).ReadRaster(0,0,50,50,buf_pixel_space=4)
+    ds.GetRasterBand(3).ReadRaster(0,0,50,50,buf_pixel_space=4)
+
+    # Now the heuristics should be set to ON
+    data1 = ds.GetRasterBand(1).ReadRaster(0,0,50,50,buf_pixel_space=4)
+    data2 = ds.GetRasterBand(2).ReadRaster(0,0,50,50,buf_pixel_space=4)
+    data3 = ds.GetRasterBand(3).ReadRaster(0,0,50,50,buf_pixel_space=4)
+
+    # Note: we must compare with the dataset RasterIO() buffer since
+    # with SDK 3.3, the results of band RasterIO() and dataset RasterIO() are
+    # not consistant. (which seems to be no longer the case with more recent
+    # SDK such as 5.0)
+    for i in range(50*50):
+        if data1[i*4] != data_ref[i]: 
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if data2[i*4] != data_ref[50*50+i]: 
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if data3[i*4] != data_ref[2*50*50+i]: 
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    ds = None
+
     return 'success'
 
 ###############################################################################
@@ -2041,6 +2091,7 @@ def ecw_cleanup():
     return 'success'
 
 gdaltest_list = [
+    ecw_init,
     ecw_1,
     ecw_2,
     ecw_3,
@@ -2073,7 +2124,8 @@ gdaltest_list = [
     ecw_30,
     ecw_31,
     ecw_32,
-    ecw_33,    
+    ecw_33,
+    ecw_33_bis,
     ecw_34,
     ecw_35,
     ecw_36,

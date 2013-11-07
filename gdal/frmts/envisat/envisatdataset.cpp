@@ -179,6 +179,7 @@ class EnvisatDataset : public RawDataset
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();
+    virtual char      **GetMetadataDomainList();
     virtual char **GetMetadata( const char * pszDomain );
 
 
@@ -490,6 +491,15 @@ void EnvisatDataset::ScanForGCPs_MERIS()
         }
     }
     CPLFree( pabyRecord );
+}
+
+/************************************************************************/
+/*                      GetMetadataDomainList()                         */
+/************************************************************************/
+
+char **EnvisatDataset::GetMetadataDomainList()
+{
+    return CSLAddString(GDALDataset::GetMetadataDomainList(), "envisat-ds-*-*");
 }
 
 /************************************************************************/

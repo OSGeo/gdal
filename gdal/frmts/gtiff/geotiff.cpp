@@ -298,6 +298,7 @@ class GTiffDataset : public GDALPamDataset
     double      dfNoDataValue;
 
     int	        bMetadataChanged;
+    int         bColorProfileMetadataChanged;
 
     int         bNeedsRewrite;
 
@@ -354,6 +355,9 @@ class GTiffDataset : public GDALPamDataset
 
     int           bEXIFMetadataLoaded;
     void          LoadEXIFMetadata();
+
+    int           bICCMetadataLoaded;
+    void          LoadICCProfile();
 
     int           bHasWarnedDisableAggressiveBandCaching;
 
@@ -421,6 +425,7 @@ class GTiffDataset : public GDALPamDataset
                                     void * pProgressData );
     virtual void    FlushCache( void );
 
+    virtual char      **GetMetadataDomainList();
     virtual CPLErr  SetMetadata( char **, const char * = "" );
     virtual char  **GetMetadata( const char * pszDomain = "" );
     virtual CPLErr  SetMetadataItem( const char*, const char*, 
@@ -443,6 +448,8 @@ class GTiffDataset : public GDALPamDataset
                               char **papszParmList );
 
     CPLErr   WriteEncodedTileOrStrip(uint32 tile_or_strip, void* data, int bPreserveDataBuffer);
+
+    static void SaveICCProfile(GTiffDataset *pDS, TIFF *hTIFF, char **papszParmList, uint32 nBitsPerSample);
 };
 
 /************************************************************************/
@@ -528,6 +535,7 @@ public:
     virtual CPLErr SetUnitType( const char *pszNewValue );
     virtual CPLErr SetColorInterpretation( GDALColorInterp );
 
+    virtual char      **GetMetadataDomainList();
     virtual CPLErr  SetMetadata( char **, const char * = "" );
     virtual char  **GetMetadata( const char * pszDomain = "" );
     virtual CPLErr  SetMetadataItem( const char*, const char*, 
@@ -1486,6 +1494,15 @@ CPLErr GTiffRasterBand::SetUnitType( const char* pszNewValue )
 
     osUnitType = osNewValue;
     return CE_None;
+}
+
+/************************************************************************/
+/*                      GetMetadataDomainList()                         */
+/************************************************************************/
+
+char **GTiffRasterBand::GetMetadataDomainList()
+{
+    return CSLDuplicate(oGTiffMDMD.GetDomainList());
 }
 
 /************************************************************************/
@@ -3042,6 +3059,7 @@ GTiffDataset::GTiffDataset()
     hTIFF = NULL;
     bNeedsRewrite = FALSE;
     bMetadataChanged = FALSE;
+    bColorProfileMetadataChanged = FALSE;
     bGeoTIFFInfoChanged = FALSE;
     bForceUnsetGT = FALSE;
     bForceUnsetProjection = FALSE;
@@ -3107,6 +3125,7 @@ GTiffDataset::GTiffDataset()
     bHasSearchedIMD = FALSE;
     bHasSearchedPVL = FALSE;
     bEXIFMetadataLoaded = FALSE;
+    bICCMetadataLoaded = FALSE;
 
     bScanDeferred = TRUE;
 
@@ -3135,6 +3154,12 @@ int GTiffDataset::Finalize()
     int bHasDroppedRef = FALSE;
 
     Crystalize();
+
+    if ( bColorProfileMetadataChanged )
+    {
+        SaveICCProfile(this, NULL, NULL, 0);
+        bColorProfileMetadataChanged = FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Handle forcing xml:ESRI data to be written to PAM.              */
@@ -4987,6 +5012,8 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
 
         if( EQUAL(papszDomainList[iDomain], "IMAGE_STRUCTURE") )
             continue; // ignored
+        if( EQUAL(papszDomainList[iDomain], "COLOR_PROFILE") )
+            continue; // ignored
         if( EQUAL(papszDomainList[iDomain], "RPC") )
             continue; // handled elsewhere
         if( EQUAL(papszDomainList[iDomain], "xml:ESRI") 
@@ -5290,7 +5317,8 @@ void GTiffDataset::PushMetadataToPam()
             if( EQUAL(papszDomainList[iDomain],"RPC")
                 || EQUAL(papszDomainList[iDomain],"IMD") 
                 || EQUAL(papszDomainList[iDomain],"_temporary_")
-                || EQUAL(papszDomainList[iDomain],"IMAGE_STRUCTURE") )
+                || EQUAL(papszDomainList[iDomain],"IMAGE_STRUCTURE")
+                || EQUAL(papszDomainList[iDomain],"COLOR_PROFILE") )
                 continue;
 
             papszMD = CSLDuplicate(papszMD);
@@ -5747,6 +5775,7 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
         }
     }
 
+    poDS->bColorProfileMetadataChanged = FALSE;
     poDS->bMetadataChanged = FALSE;
     poDS->bGeoTIFFInfoChanged = FALSE;
     poDS->bForceUnsetGT = FALSE;
@@ -6147,6 +6176,377 @@ GDALDataset *GTiffDataset::OpenDir( GDALOpenInfo * poOpenInfo )
     {
         poDS->bCloseTIFFHandle = TRUE;
         return poDS;
+    }
+}
+
+/************************************************************************/
+/*                   ConvertTransferFunctionToString()                  */
+/*                                                                      */
+/*      Convert a transfer function table into a string.                */
+/*      Used by LoadICCProfile().                                       */
+/************************************************************************/
+static CPLString ConvertTransferFunctionToString( const uint16 *pTable, uint32 nTableEntries )
+{
+    CPLString sValue;
+
+    for(uint32 i = 0; i < nTableEntries; i++)
+    {
+        if (i == 0)
+            sValue = sValue.Printf("%d", (uint32)pTable[i]);
+        else
+        sValue = sValue.Printf("%s, %d", (const char*)sValue, (uint32)pTable[i]);
+    }
+
+    return sValue;
+}
+
+/************************************************************************/
+/*                             LoadICCProfile()                         */
+/*                                                                      */
+/*      Load ICC Profile or colorimetric data into metadata             */
+/************************************************************************/
+
+void GTiffDataset::LoadICCProfile()
+{
+    uint32 nEmbedLen;
+    uint8* pEmbedBuffer;
+    float* pCHR;
+    float* pWP;
+    uint16 *pTFR, *pTFG, *pTFB;
+    uint16 *pTransferRange = NULL;
+    const int TIFFTAG_TRANSFERRANGE = 0x0156;
+
+    if (bICCMetadataLoaded)
+        return;
+    bICCMetadataLoaded = TRUE;
+
+    if (!SetDirectory())
+        return;
+
+    if (TIFFGetField(hTIFF, TIFFTAG_ICCPROFILE, &nEmbedLen, &pEmbedBuffer)) 
+    {
+        char *pszBase64Profile = CPLBase64Encode(nEmbedLen, (const GByte*)pEmbedBuffer);
+
+        oGTiffMDMD.SetMetadataItem( "SOURCE_ICC_PROFILE", pszBase64Profile, "COLOR_PROFILE" );
+
+        CPLFree(pszBase64Profile);
+
+        return;
+    }
+
+    /* Check for colorimetric tiff */
+    if (TIFFGetField(hTIFF, TIFFTAG_PRIMARYCHROMATICITIES, &pCHR)) 
+    {
+        if (TIFFGetField(hTIFF, TIFFTAG_WHITEPOINT, &pWP)) 
+        {
+            if (!TIFFGetFieldDefaulted(hTIFF, TIFFTAG_TRANSFERFUNCTION, &pTFR, &pTFG, &pTFB))
+                return;
+
+            TIFFGetFieldDefaulted(hTIFF, TIFFTAG_TRANSFERRANGE, &pTransferRange);
+
+            // Set all the colorimetric metadata.
+            oGTiffMDMD.SetMetadataItem( "SOURCE_PRIMARIES_RED", 
+                CPLString().Printf( "%.9f, %.9f, 1.0", (double)pCHR[0], (double)pCHR[1] ) , "COLOR_PROFILE" );
+            oGTiffMDMD.SetMetadataItem( "SOURCE_PRIMARIES_GREEN", 
+                CPLString().Printf( "%.9f, %.9f, 1.0", (double)pCHR[2], (double)pCHR[3] ) , "COLOR_PROFILE" );
+            oGTiffMDMD.SetMetadataItem( "SOURCE_PRIMARIES_BLUE", 
+                CPLString().Printf( "%.9f, %.9f, 1.0", (double)pCHR[4], (double)pCHR[5] ) , "COLOR_PROFILE" );
+
+            oGTiffMDMD.SetMetadataItem( "SOURCE_WHITEPOINT", 
+                CPLString().Printf( "%.9f, %.9f, 1.0", (double)pWP[0], (double)pWP[1] ) , "COLOR_PROFILE" );
+
+            /* Set transfer function metadata */
+
+            /* Get length of table. */
+            const uint32 nTransferFunctionLength = 1 << nBitsPerSample;
+
+            oGTiffMDMD.SetMetadataItem( "TIFFTAG_TRANSFERFUNCTION_RED", 
+                ConvertTransferFunctionToString( pTFR, nTransferFunctionLength), "COLOR_PROFILE" );
+
+            oGTiffMDMD.SetMetadataItem( "TIFFTAG_TRANSFERFUNCTION_GREEN", 
+                ConvertTransferFunctionToString( pTFG, nTransferFunctionLength), "COLOR_PROFILE" );
+
+            oGTiffMDMD.SetMetadataItem( "TIFFTAG_TRANSFERFUNCTION_BLUE", 
+                ConvertTransferFunctionToString( pTFB, nTransferFunctionLength), "COLOR_PROFILE" );
+
+            /* Set transfer range */
+            if (pTransferRange)
+            {
+                oGTiffMDMD.SetMetadataItem( "TIFFTAG_TRANSFERRANGE_BLACK",
+                    CPLString().Printf( "%d, %d, %d", 
+                        (int)pTransferRange[0], (int)pTransferRange[2], (int)pTransferRange[4]), "COLOR_PROFILE" );
+                oGTiffMDMD.SetMetadataItem( "TIFFTAG_TRANSFERRANGE_WHITE",
+                    CPLString().Printf( "%d, %d, %d", 
+                        (int)pTransferRange[1], (int)pTransferRange[3], (int)pTransferRange[5]), "COLOR_PROFILE" );
+            }
+        }
+    }
+}
+
+/************************************************************************/
+/*                             SaveICCProfile()                         */
+/*                                                                      */
+/*      Save ICC Profile or colorimetric data into file                 */
+/* pDS:                                                                 */
+/*      Dataset that contains the metadata with the ICC or colorimetric */ 
+/*      data. If this argument is specified, all other arguments are    */
+/*      ignored. Set them to NULL or 0.                                 */
+/* hTIFF:                                                               */
+/*      Pointer to TIFF handle. Only needed if pDS is NULL or           */
+/*      pDS->hTIFF is NULL.                                             */
+/* papszParmList:                                                       */
+/*      Options containing the ICC profile or colorimetric metadata.    */
+/*      Ignored if pDS is not NULL.                                     */
+/* nBitsPerSample:                                                      */
+/*      Bits per sample. Ignored if pDS is not NULL.                    */
+/************************************************************************/
+
+void GTiffDataset::SaveICCProfile(GTiffDataset *pDS, TIFF *hTIFF, char **papszParmList, uint32 nBitsPerSample)
+{
+    if ((pDS != NULL) && (pDS->eAccess != GA_Update))
+        return;
+
+    if (hTIFF == NULL)
+    {
+        if (pDS == NULL)
+            return;
+
+        hTIFF = pDS->hTIFF;
+        if (hTIFF == NULL)
+            return;
+    }
+
+    if ((papszParmList == NULL) && (pDS == NULL))
+        return;
+
+    const char *pszValue = NULL;
+    if (pDS != NULL)
+        pszValue = pDS->GetMetadataItem("SOURCE_ICC_PROFILE", "COLOR_PROFILE");
+    else
+        pszValue = CSLFetchNameValue(papszParmList, "SOURCE_ICC_PROFILE");
+    if( pszValue != NULL )
+    {
+        int32 nEmbedLen;
+        char *pEmbedBuffer = CPLStrdup(pszValue);
+        nEmbedLen = CPLBase64DecodeInPlace((GByte*)pEmbedBuffer);
+
+        TIFFSetField(hTIFF, TIFFTAG_ICCPROFILE, nEmbedLen, pEmbedBuffer);
+
+        CPLFree(pEmbedBuffer);        
+    }
+    else
+    {
+        /* Output colorimetric data. */
+        const int TIFFTAG_TRANSFERRANGE = 0x0156;
+
+        float pCHR[6]; // Primaries
+        float pWP[2];  // Whitepoint
+        uint16 pTXR[6]; // Transfer range
+        const char* pszCHRNames[] = {
+            "SOURCE_PRIMARIES_RED",
+            "SOURCE_PRIMARIES_GREEN",
+            "SOURCE_PRIMARIES_BLUE"
+        };
+        const char* pszTXRNames[] = {
+            "TIFFTAG_TRANSFERRANGE_BLACK",
+            "TIFFTAG_TRANSFERRANGE_WHITE"
+        };
+
+        /* Output chromacities */
+        bool bOutputCHR = true;
+        for(int i = 0; ((i < 3) && bOutputCHR); i++)
+        {
+            if (pDS != NULL)
+                pszValue = pDS->GetMetadataItem(pszCHRNames[i], "COLOR_PROFILE");
+            else
+                pszValue = CSLFetchNameValue(papszParmList, pszCHRNames[i]);
+            if (pszValue == NULL)
+            {
+                bOutputCHR = false;
+                break;
+            }
+
+            char** papszTokens = CSLTokenizeString2( pszValue, ",", 
+                CSLT_ALLOWEMPTYTOKENS | CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES );
+
+            if (CSLCount( papszTokens ) != 3)
+            {
+                bOutputCHR = false;
+                CSLDestroy( papszTokens );
+                break;
+            }
+
+            int j;
+            for( j = 0; j < 3; j++ )
+            {
+                float v = (float)atof(papszTokens[j]);
+
+                if (j == 2)
+                {
+                    /* Last term of xyY color must be 1.0 */
+                    if (v != 1.0)
+                    {
+                        bOutputCHR = false;
+                        break;
+                    }
+                }
+                else
+                {
+                    pCHR[i * 2 + j] = v;
+                }
+            }
+
+            CSLDestroy( papszTokens );
+        }
+        
+        if (bOutputCHR)
+        {
+            TIFFSetField(hTIFF, TIFFTAG_PRIMARYCHROMATICITIES, pCHR);
+        }
+
+        /* Output whitepoint */
+        bool bOutputWhitepoint = true;
+        if (pDS != NULL)
+            pszValue = pDS->GetMetadataItem("SOURCE_WHITEPOINT", "COLOR_PROFILE");
+        else
+            pszValue = CSLFetchNameValue(papszParmList, "SOURCE_WHITEPOINT");
+        if (pszValue != NULL)
+        {
+            char** papszTokens = CSLTokenizeString2( pszValue, ",", 
+                CSLT_ALLOWEMPTYTOKENS | CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES );
+
+            if (CSLCount( papszTokens ) != 3)
+            {
+                bOutputWhitepoint = false;
+            }
+            else
+            {
+                int j;
+                for( j = 0; j < 3; j++ )
+                {
+                    float v = (float)atof(papszTokens[j]);
+
+                    if (j == 2)
+                    {
+                        /* Last term of xyY color must be 1.0 */
+                        if (v != 1.0)
+                        {
+                            bOutputWhitepoint = false;
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        pWP[j] = v;
+                    }
+                }
+            }
+            CSLDestroy( papszTokens );
+        }
+        
+        if (bOutputWhitepoint)
+        {
+            TIFFSetField(hTIFF, TIFFTAG_WHITEPOINT, pWP);
+        }
+
+        /* Set transfer function metadata */
+        char const *pszTFRed = NULL;
+        char const *pszTFGreen = NULL;
+        char const *pszTFBlue = NULL;
+        if (pDS != NULL)
+            pszTFRed = pDS->GetMetadataItem("TIFFTAG_TRANSFERFUNCTION_RED", "COLOR_PROFILE");
+        else
+            pszTFRed = CSLFetchNameValue(papszParmList, "TIFFTAG_TRANSFERFUNCTION_RED");
+
+        if (pDS != NULL)
+            pszTFGreen = pDS->GetMetadataItem("TIFFTAG_TRANSFERFUNCTION_GREEN", "COLOR_PROFILE");
+        else
+            pszTFGreen = CSLFetchNameValue(papszParmList, "TIFFTAG_TRANSFERFUNCTION_GREEN");
+
+        if (pDS != NULL)
+            pszTFBlue = pDS->GetMetadataItem("TIFFTAG_TRANSFERFUNCTION_BLUE", "COLOR_PROFILE");
+        else
+            pszTFBlue = CSLFetchNameValue(papszParmList, "TIFFTAG_TRANSFERFUNCTION_BLUE");
+
+        if ((pszTFRed != NULL) && (pszTFGreen != NULL) && (pszTFBlue != NULL))
+        {
+            /* Get length of table. */
+            const int nTransferFunctionLength = 1 << ((pDS!=NULL)?pDS->nBitsPerSample:nBitsPerSample);
+
+            char** papszTokensRed = CSLTokenizeString2( pszTFRed, ",", 
+                CSLT_ALLOWEMPTYTOKENS | CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES );
+            char** papszTokensGreen = CSLTokenizeString2( pszTFGreen, ",", 
+                CSLT_ALLOWEMPTYTOKENS | CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES );
+            char** papszTokensBlue = CSLTokenizeString2( pszTFBlue, ",", 
+                CSLT_ALLOWEMPTYTOKENS | CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES );
+
+            if ((CSLCount( papszTokensRed ) == nTransferFunctionLength) &&
+                (CSLCount( papszTokensGreen ) == nTransferFunctionLength) &&
+                (CSLCount( papszTokensBlue ) == nTransferFunctionLength))
+            {
+                uint16 *pTransferFuncRed, *pTransferFuncGreen, *pTransferFuncBlue;
+                pTransferFuncRed = (uint16*)CPLMalloc(sizeof(uint16) * nTransferFunctionLength);
+                pTransferFuncGreen = (uint16*)CPLMalloc(sizeof(uint16) * nTransferFunctionLength);
+                pTransferFuncBlue = (uint16*)CPLMalloc(sizeof(uint16) * nTransferFunctionLength);
+
+                /* Convert our table in string format into int16 format. */
+                for(int i = 0; i < nTransferFunctionLength; i++)
+                {
+                    pTransferFuncRed[i] = (uint16)atoi(papszTokensRed[i]);
+                    pTransferFuncGreen[i] = (uint16)atoi(papszTokensGreen[i]);
+                    pTransferFuncBlue[i] = (uint16)atoi(papszTokensBlue[i]);
+                }
+
+                TIFFSetField(hTIFF, TIFFTAG_TRANSFERFUNCTION, 
+                    pTransferFuncRed, pTransferFuncGreen, pTransferFuncBlue);
+
+                CPLFree(pTransferFuncRed);
+                CPLFree(pTransferFuncGreen);
+                CPLFree(pTransferFuncBlue);
+            }
+
+            CSLDestroy( papszTokensRed );
+            CSLDestroy( papszTokensGreen );
+            CSLDestroy( papszTokensBlue );
+        }
+
+        /* Output transfer range */
+        bool bOutputTransferRange = true;
+        for(int i = 0; ((i < 2) && bOutputTransferRange); i++)
+        {
+            if (pDS != NULL)
+                pszValue = pDS->GetMetadataItem(pszTXRNames[i], "COLOR_PROFILE");
+            else
+                pszValue = CSLFetchNameValue(papszParmList, pszTXRNames[i]);
+            if (pszValue == NULL)
+            {
+                bOutputTransferRange = false;
+                break;
+            }
+
+            char** papszTokens = CSLTokenizeString2( pszValue, ",", 
+                CSLT_ALLOWEMPTYTOKENS | CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES );
+
+            if (CSLCount( papszTokens ) != 3)
+            {
+                bOutputTransferRange = false;
+                CSLDestroy( papszTokens );
+                break;
+            }
+            
+            int j;
+            for( j = 0; j < 3; j++ )
+            {
+                pTXR[i + j * 2] = (uint16)atoi(papszTokens[j]);
+            }
+
+            CSLDestroy( papszTokens );
+        }
+        
+        if (bOutputTransferRange)
+        {
+            TIFFSetField(hTIFF, TIFFTAG_TRANSFERRANGE, pTXR);
+        }
     }
 }
 
@@ -7622,6 +8022,12 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         CPLFree(v);
     }
     
+    /* Set the ICC color profile. */
+    if (!EQUAL(pszProfile,"BASELINE"))
+    {
+        SaveICCProfile(NULL, hTIFF, papszParmList, nBitsPerSample);
+    }
+
     /* Set the compression method before asking the default strip size */
     /* This is usefull when translating to a JPEG-In-TIFF file where */
     /* the default strip size is 8 or 16 depending on the photometric value */
@@ -8014,6 +8420,47 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                  "PIXELTYPE", "IMAGE_STRUCTURE" ) );
     }
     
+/* -------------------------------------------------------------------- */
+/*      Color profile.  Copy from band metadata if found.              */
+/* -------------------------------------------------------------------- */
+    if (bGeoTIFF)
+    {
+        const char* pszOptionsMD[] = {
+            "SOURCE_ICC_PROFILE",
+            "SOURCE_PRIMARIES_RED",
+            "SOURCE_PRIMARIES_GREEN",
+            "SOURCE_PRIMARIES_BLUE",
+            "SOURCE_WHITEPOINT",
+            "TIFFTAG_TRANSFERFUNCTION_RED",
+            "TIFFTAG_TRANSFERFUNCTION_GREEN",
+            "TIFFTAG_TRANSFERFUNCTION_BLUE",
+            "TIFFTAG_TRANSFERRANGE_BLACK",
+            "TIFFTAG_TRANSFERRANGE_WHITE",
+            NULL
+        };
+
+        /* Copy all the tags. Options will override tags in the source */
+        int i = 0;
+        while(pszOptionsMD[i] != NULL)
+        {
+            char const *pszMD = CSLFetchNameValue(papszOptions, pszOptionsMD[i]);
+            if (pszMD == NULL)
+                pszMD = poSrcDS->GetMetadataItem( pszOptionsMD[i], "COLOR_PROFILE" );
+
+            if ((pszMD != NULL) && !EQUAL(pszMD, "") )
+            {
+                papszCreateOptions = 
+                    CSLSetNameValue( papszCreateOptions, pszOptionsMD[i], pszMD );
+
+                /* If an ICC profile exists, other tags are not needed */
+                if (EQUAL(pszOptionsMD[i], "SOURCE_ICC_PROFILE"))
+                    break;
+            }
+
+            i++;
+        }
+    }
+
     int nSrcOverviews = poSrcDS->GetRasterBand(1)->GetOverviewCount();
     double dfExtraSpaceForOverviews = 0;
     if (nSrcOverviews != 0 &&
@@ -9033,6 +9480,18 @@ CPLErr GTiffDataset::SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
 }
 
 /************************************************************************/
+/*                      GetMetadataDomainList()                         */
+/************************************************************************/
+
+char **GTiffDataset::GetMetadataDomainList()
+{
+    return BuildMetadataDomainList(CSLDuplicate(oGTiffMDMD.GetDomainList()),
+                                   TRUE,
+                                   "", "ProxyOverviewRequest", "RPC", "IMD", "SUBDATASETS", "EXIF",
+                                   "xml:XMP", "COLOR_PROFILE", NULL);
+}
+
+/************************************************************************/
 /*                            GetMetadata()                             */
 /************************************************************************/
 
@@ -9054,6 +9513,9 @@ char **GTiffDataset::GetMetadata( const char * pszDomain )
     else if( pszDomain != NULL && EQUAL(pszDomain,"EXIF") )
         LoadEXIFMetadata();
 
+    else if( pszDomain != NULL && EQUAL(pszDomain,"COLOR_PROFILE") )
+        LoadICCProfile();
+
     else if( pszDomain == NULL || EQUAL(pszDomain, "") )
         LoadMDAreaOrPoint(); /* to set GDALMD_AREA_OR_POINT */
 
@@ -9066,7 +9528,9 @@ char **GTiffDataset::GetMetadata( const char * pszDomain )
 CPLErr GTiffDataset::SetMetadata( char ** papszMD, const char *pszDomain )
 
 {
-    if( pszDomain == NULL || !EQUAL(pszDomain,"_temporary_") )
+    if ((papszMD != NULL) && (pszDomain != NULL) && EQUAL(pszDomain, "COLOR_PROFILE"))
+        bColorProfileMetadataChanged = TRUE;
+    else if( pszDomain == NULL || !EQUAL(pszDomain,"_temporary_") )
         bMetadataChanged = TRUE;
 
     if( (pszDomain == NULL || EQUAL(pszDomain, "")) &&
@@ -9110,6 +9574,9 @@ const char *GTiffDataset::GetMetadataItem( const char * pszName,
     else if( pszDomain != NULL && EQUAL(pszDomain,"EXIF") )
         LoadEXIFMetadata();
 
+    else if( pszDomain != NULL && EQUAL(pszDomain,"COLOR_PROFILE") )
+        LoadICCProfile();
+
     else if( (pszDomain == NULL || EQUAL(pszDomain, "")) &&
         pszName != NULL && EQUAL(pszName, GDALMD_AREA_OR_POINT) )
     {
@@ -9128,7 +9595,9 @@ CPLErr GTiffDataset::SetMetadataItem( const char *pszName,
                                       const char *pszDomain )
 
 {
-    if( pszDomain == NULL || !EQUAL(pszDomain,"_temporary_") )
+    if ((pszDomain != NULL) && EQUAL(pszDomain, "COLOR_PROFILE"))
+        bColorProfileMetadataChanged = TRUE;
+    else if( pszDomain == NULL || !EQUAL(pszDomain,"_temporary_") )
         bMetadataChanged = TRUE;
 
     if( (pszDomain == NULL || EQUAL(pszDomain, "")) &&
@@ -9770,7 +10239,7 @@ void GDALRegister_GTiff()
     if( GDALGetDriverByName( "GTiff" ) == NULL )
     {
         GDALDriver	*poDriver;
-        char szCreateOptions[3072];
+        char szCreateOptions[4556];
         char szOptionalCompressItems[500];
         int bHasJPEG = FALSE, bHasLZW = FALSE, bHasDEFLATE = FALSE, bHasLZMA = FALSE;
 
@@ -9916,6 +10385,16 @@ void GDALRegister_GTiff()
 "       <Value>BIG</Value>"
 "   </Option>"
 "   <Option name='COPY_SRC_OVERVIEWS' type='boolean' default='NO' description='Force copy of overviews of source dataset (CreateCopy())'/>"
+"   <Option name='SOURCE_ICC_PROFILE' type='string' description='ICC profile'/>"
+"   <Option name='SOURCE_PRIMARIES_RED' type='string' description='x,y,1.0 (xyY) red chromaticity'/>"
+"   <Option name='SOURCE_PRIMARIES_GREEN' type='string' description='x,y,1.0 (xyY) green chromaticity'/>"
+"   <Option name='SOURCE_PRIMARIES_BLUE' type='string' description='x,y,1.0 (xyY) blue chromaticity'/>"
+"   <Option name='SOURCE_WHITEPOINT' type='string' description='x,y,1.0 (xyY) whitepoint'/>"
+"   <Option name='TIFFTAG_TRANSFERFUNCTION_RED' type='string' description='Transfer function for red'/>"
+"   <Option name='TIFFTAG_TRANSFERFUNCTION_GREEN' type='string' description='Transfer function for green'/>"
+"   <Option name='TIFFTAG_TRANSFERFUNCTION_BLUE' type='string' description='Transfer function for blue'/>"
+"   <Option name='TIFFTAG_TRANSFERRANGE_BLACK' type='string' description='Transfer range for black'/>"
+"   <Option name='TIFFTAG_TRANSFERRANGE_WHITE' type='string' description='Transfer range for white'/>"
 "</CreationOptionList>" );
                  
 /* -------------------------------------------------------------------- */
