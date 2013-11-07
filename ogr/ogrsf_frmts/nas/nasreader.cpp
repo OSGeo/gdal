@@ -893,8 +893,12 @@ int NASReader::PrescanForSchema( int bGetExtents, int bAnalyzeSRSPerFeature )
             {
                 double  dfXMin, dfXMax, dfYMin, dfYMax;
                 OGREnvelope sEnvelope;
-                OGRwkbGeometryType eGType = (OGRwkbGeometryType)
-                    poClass->GetGeometryType();
+
+                if( poClass->GetGeometryPropertyCount() == 0 )
+                    poClass->AddGeometryProperty( new GMLGeometryPropertyDefn( "", wkbUnknown ) );
+
+                OGRwkbGeometryType eGType = (OGRwkbGeometryType) 
+                    poClass->GetGeometryProperty(0)->GetType();
 
                 // Merge SRSName into layer.
                 const char* pszSRSName = GML_ExtractSrsNameFromGeometry(papsGeometry, osWork, FALSE);
@@ -906,7 +910,7 @@ int NASReader::PrescanForSchema( int bGetExtents, int bAnalyzeSRSPerFeature )
                 if( poClass->GetFeatureCount() == 1 && eGType == wkbUnknown )
                     eGType = wkbNone;
 
-                poClass->SetGeometryType(
+                poClass->GetGeometryProperty(0)->SetType(
                     (int) OGRMergeGeometryTypes(
                         eGType, poGeometry->getGeometryType() ) );
 
@@ -932,9 +936,12 @@ int NASReader::PrescanForSchema( int bGetExtents, int bAnalyzeSRSPerFeature )
             }
             else
             {
-                if( poClass->GetGeometryType() == (int) wkbUnknown
+                if( poClass->GetGeometryPropertyCount() == 1 &&
+                    poClass->GetGeometryProperty(0)->GetType() == (int) wkbUnknown
                     && poClass->GetFeatureCount() == 1 )
-                    poClass->SetGeometryType( wkbNone );
+                {
+                    poClass->ClearGeometryProperties();
+                }
             }
 #endif /* def SUPPORT_GEOMETRY */
         }

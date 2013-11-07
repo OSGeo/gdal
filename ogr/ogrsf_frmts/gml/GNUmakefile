@@ -4,7 +4,7 @@ include ../../../GDALmake.opt
 
 CORE_OBJ =	gmlpropertydefn.o gmlfeatureclass.o gmlfeature.o gmlreader.o \
 		parsexsd.o resolvexlinks.o hugefileresolver.o gmlutils.o \
-		gmlreadstate.o gmlhandler.o trstring.o gfstemplate.o
+		gmlreadstate.o gmlhandler.o trstring.o gfstemplate.o gmlregistry.o
 
 OGR_OBJ =	ogrgmldriver.o ogrgmldatasource.o ogrgmllayer.o
 

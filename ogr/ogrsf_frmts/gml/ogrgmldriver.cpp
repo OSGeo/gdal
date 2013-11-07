@@ -71,7 +71,7 @@ OGRDataSource *OGRGMLDriver::Open( const char * pszFilename,
 
     poDS = new OGRGMLDataSource();
 
-    if( !poDS->Open( pszFilename, TRUE ) )
+    if( !poDS->Open( pszFilename ) )
     {
         delete poDS;
         return NULL;

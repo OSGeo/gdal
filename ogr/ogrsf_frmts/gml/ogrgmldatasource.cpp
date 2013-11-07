@@ -41,6 +41,7 @@
 #include "cpl_http.h"
 #include "gmlutils.h"
 #include "ogr_p.h"
+#include "gmlregistry.h"
 
 #include <vector>
 
@@ -246,7 +247,7 @@ OGRGMLDataSource::~OGRGMLDataSource()
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
+int OGRGMLDataSource::Open( const char * pszNameIn )
 
 {
     VSILFILE   *fp;
@@ -275,14 +276,7 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
 /* -------------------------------------------------------------------- */
     fp = VSIFOpenL( pszFilename, "r" );
     if( fp == NULL )
-    {
-        if( !bTestOpen )
-            CPLError( CE_Failure, CPLE_OpenFailed, 
-                      "Failed to open GML file `%s'.", 
-                      pszFilename );
-
         return FALSE;
-    }
 
     int bExpatCompatibleEncoding = FALSE;
     int bHas3D = FALSE;
@@ -293,43 +287,41 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
     szSRSName[0] = '\0';
 
 /* -------------------------------------------------------------------- */
-/*      If we aren't sure it is GML, load a header chunk and check      */
-/*      for signs it is GML                                             */
+/*      Load a header chunk and check for signs it is GML               */
 /* -------------------------------------------------------------------- */
-    if( bTestOpen )
+
+    size_t nRead = VSIFReadL( szHeader, 1, sizeof(szHeader)-1, fp );
+    if (nRead <= 0)
     {
-        size_t nRead = VSIFReadL( szHeader, 1, sizeof(szHeader)-1, fp );
+        VSIFCloseL( fp );
+        return FALSE;
+    }
+    szHeader[nRead] = '\0';
+
+    /* Might be a OS-Mastermap gzipped GML, so let be nice and try to open */
+    /* it transparently with /vsigzip/ */
+    if ( ((GByte*)szHeader)[0] == 0x1f && ((GByte*)szHeader)[1] == 0x8b &&
+            EQUAL(CPLGetExtension(pszFilename), "gz") &&
+            strncmp(pszFilename, "/vsigzip/", strlen("/vsigzip/")) != 0 )
+    {
+        VSIFCloseL( fp );
+        osWithVsiGzip = "/vsigzip/";
+        osWithVsiGzip += pszFilename;
+
+        pszFilename = osWithVsiGzip;
+
+        fp = VSIFOpenL( pszFilename, "r" );
+        if( fp == NULL )
+            return FALSE;
+
+        nRead = VSIFReadL( szHeader, 1, sizeof(szHeader) - 1, fp );
         if (nRead <= 0)
         {
             VSIFCloseL( fp );
             return FALSE;
         }
         szHeader[nRead] = '\0';
-
-        /* Might be a OS-Mastermap gzipped GML, so let be nice and try to open */
-        /* it transparently with /vsigzip/ */
-        if ( ((GByte*)szHeader)[0] == 0x1f && ((GByte*)szHeader)[1] == 0x8b &&
-             EQUAL(CPLGetExtension(pszFilename), "gz") &&
-             strncmp(pszFilename, "/vsigzip/", strlen("/vsigzip/")) != 0 )
-        {
-            VSIFCloseL( fp );
-            osWithVsiGzip = "/vsigzip/";
-            osWithVsiGzip += pszFilename;
-
-            pszFilename = osWithVsiGzip;
-
-            fp = VSIFOpenL( pszFilename, "r" );
-            if( fp == NULL )
-                return FALSE;
-
-            nRead = VSIFReadL( szHeader, 1, sizeof(szHeader) - 1, fp );
-            if (nRead <= 0)
-            {
-                VSIFCloseL( fp );
-                return FALSE;
-            }
-            szHeader[nRead] = '\0';
-        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Check for a UTF-8 BOM and skip if found                         */
@@ -338,144 +330,143 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
 /*            Add BOM detection for other encodings.                    */
 /* -------------------------------------------------------------------- */
 
-        // Used to skip to actual beginning of XML data
-        char* szPtr = szHeader;
+    // Used to skip to actual beginning of XML data
+    char* szPtr = szHeader;
 
-        if( ( (unsigned char)szHeader[0] == 0xEF )
-            && ( (unsigned char)szHeader[1] == 0xBB )
-            && ( (unsigned char)szHeader[2] == 0xBF) )
-        {
-            szPtr += 3;
-        }
+    if( ( (unsigned char)szHeader[0] == 0xEF )
+        && ( (unsigned char)szHeader[1] == 0xBB )
+        && ( (unsigned char)szHeader[2] == 0xBF) )
+    {
+        szPtr += 3;
+    }
 
-        const char* pszEncoding = strstr(szPtr, "encoding=");
-        if (pszEncoding)
-            bExpatCompatibleEncoding = (pszEncoding[9] == '\'' || pszEncoding[9] == '"') &&
-                                       (EQUALN(pszEncoding + 10, "UTF-8", 5) ||
-                                        EQUALN(pszEncoding + 10, "ISO-8859-15", 11) ||
-                                        (EQUALN(pszEncoding + 10, "ISO-8859-1", 10) &&
-                                         pszEncoding[20] == pszEncoding[9])) ;
-        else
-            bExpatCompatibleEncoding = TRUE; /* utf-8 is the default */
+    const char* pszEncoding = strstr(szPtr, "encoding=");
+    if (pszEncoding)
+        bExpatCompatibleEncoding = (pszEncoding[9] == '\'' || pszEncoding[9] == '"') &&
+                                    (EQUALN(pszEncoding + 10, "UTF-8", 5) ||
+                                    EQUALN(pszEncoding + 10, "ISO-8859-15", 11) ||
+                                    (EQUALN(pszEncoding + 10, "ISO-8859-1", 10) &&
+                                        pszEncoding[20] == pszEncoding[9])) ;
+    else
+        bExpatCompatibleEncoding = TRUE; /* utf-8 is the default */
 
-        bHas3D = strstr(szPtr, "srsDimension=\"3\"") != NULL || strstr(szPtr, "<gml:Z>") != NULL;
+    bHas3D = strstr(szPtr, "srsDimension=\"3\"") != NULL || strstr(szPtr, "<gml:Z>") != NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Here, we expect the opening chevrons of GML tree root element   */
 /* -------------------------------------------------------------------- */
-        if( szPtr[0] != '<' 
-            || strstr(szPtr,"opengis.net/gml") == NULL )
-        {
-            VSIFCloseL( fp );
-            return FALSE;
-        }
-
-        /* Ignore .xsd schemas */
-        if( strstr(szPtr, "<schema") != NULL
-            || strstr(szPtr, "<xs:schema") != NULL
-            || strstr(szPtr, "<xsd:schema") != NULL )
-        {
-            VSIFCloseL( fp );
-            return FALSE;
-        }
-
-        /* Ignore GeoRSS documents. They will be recognized by the GeoRSS driver */
-        if( strstr(szPtr, "<rss") != NULL && strstr(szPtr, "xmlns:georss") != NULL )
-        {
-            VSIFCloseL( fp );
-            return FALSE;
-        }
-
-        /* Ignore OGR WFS xml description files */
-        if( strstr(szPtr, "<OGRWFSDataSource>") != NULL )
-        {
-            VSIFCloseL( fp );
-            return FALSE;
-        }
-
-        /* Small optimization: if we parse a <wfs:FeatureCollection>  and */
-        /* that numberOfFeatures is set, we can use it to set the FeatureCount */
-        /* but *ONLY* if there's just one class ! */
-        const char* pszFeatureCollection = strstr(szPtr, "wfs:FeatureCollection");
-        if (pszFeatureCollection == NULL)
-            pszFeatureCollection = strstr(szPtr, "gml:FeatureCollection"); /* GML 3.2.1 output */
-        if (pszFeatureCollection == NULL)
-        {
-            pszFeatureCollection = strstr(szPtr, "<FeatureCollection"); /* Deegree WFS 1.0.0 output */
-            if (pszFeatureCollection && strstr(szPtr, "xmlns:wfs=\"http://www.opengis.net/wfs\"") == NULL)
-                pszFeatureCollection = NULL;
-        }
-        if (pszFeatureCollection)
-        {
-            bExposeGMLId = TRUE;
-            bIsWFS = TRUE;
-            const char* pszNumberOfFeatures = strstr(szPtr, "numberOfFeatures=");
-            if (pszNumberOfFeatures)
-            {
-                pszNumberOfFeatures += 17;
-                char ch = pszNumberOfFeatures[0];
-                if ((ch == '\'' || ch == '"') && strchr(pszNumberOfFeatures + 1, ch) != NULL)
-                {
-                    nNumberOfFeatures = atoi(pszNumberOfFeatures + 1);
-                }
-            }
-            else if ((pszNumberOfFeatures = strstr(szPtr, "numberReturned=")) != NULL) /* WFS 2.0.0 */
-            {
-                pszNumberOfFeatures += 15;
-                char ch = pszNumberOfFeatures[0];
-                if ((ch == '\'' || ch == '"') && strchr(pszNumberOfFeatures + 1, ch) != NULL)
-                {
-                    /* 'unknown' might be a valid value in a corrected version of WFS 2.0 */
-                    /* but it will also evaluate to 0, that is considered as unknown, so nothing */
-                    /* particular to do */
-                    nNumberOfFeatures = atoi(pszNumberOfFeatures + 1);
-                }
-            }
-        }
-        else if (strncmp(pszFilename, "/vsimem/tempwfs_", strlen("/vsimem/tempwfs_")) == 0)
-        {
-            /* http://regis.intergraph.com/wfs/dcmetro/request.asp? returns a <G:FeatureCollection> */
-            /* Who knows what servers can return ? Ok, so when in the context of the WFS driver */
-            /* always expose the gml:id to avoid later crashes */
-            bExposeGMLId = TRUE;
-            bIsWFS = TRUE;
-        }
-        else
-        {
-            bExposeGMLId = strstr(szPtr, " gml:id=\"") != NULL ||
-                           strstr(szPtr, " gml:id='") != NULL;
-            bExposeFid = strstr(szPtr, " fid=\"") != NULL ||
-                         strstr(szPtr, " fid='") != NULL;
-            
-            const char* pszExposeGMLId = CPLGetConfigOption("GML_EXPOSE_GML_ID", NULL);
-            if (pszExposeGMLId)
-                bExposeGMLId = CSLTestBoolean(pszExposeGMLId);
-
-            const char* pszExposeFid = CPLGetConfigOption("GML_EXPOSE_FID", NULL);
-            if (pszExposeFid)
-                bExposeFid = CSLTestBoolean(pszExposeFid);
-        }
-
-        bHintConsiderEPSGAsURN = strstr(szPtr, "xmlns:fme=\"http://www.safe.com/gml/fme\"") != NULL;
-
-        /* MTKGML */
-        if( strstr(szPtr, "<Maastotiedot") != NULL )
-        {
-            if( strstr(szPtr, "http://xml.nls.fi/XML/Namespace/Maastotietojarjestelma/SiirtotiedostonMalli/2011-02") == NULL )
-                CPLDebug("GML", "Warning: a MTKGML file was detected, but its namespace is unknown");
-            bAnalyzeSRSPerFeature = FALSE;
-            bUseGlobalSRSName = TRUE;
-            if( !ExtractSRSName(szPtr, szSRSName, sizeof(szSRSName)) )
-                strcpy(szSRSName, "EPSG:3067");
-        }
-
-        pszSchemaLocation = strstr(szPtr, "schemaLocation=");
-        if (pszSchemaLocation)
-            pszSchemaLocation += strlen("schemaLocation=");
-
-        if (bIsWFS && EQUALN(pszFilename, "/vsicurl_streaming/", strlen("/vsicurl_streaming/")))
-            bCheckAuxFile = FALSE;
+    if( szPtr[0] != '<' 
+        || strstr(szPtr,"opengis.net/gml") == NULL )
+    {
+        VSIFCloseL( fp );
+        return FALSE;
     }
+
+    /* Ignore .xsd schemas */
+    if( strstr(szPtr, "<schema") != NULL
+        || strstr(szPtr, "<xs:schema") != NULL
+        || strstr(szPtr, "<xsd:schema") != NULL )
+    {
+        VSIFCloseL( fp );
+        return FALSE;
+    }
+
+    /* Ignore GeoRSS documents. They will be recognized by the GeoRSS driver */
+    if( strstr(szPtr, "<rss") != NULL && strstr(szPtr, "xmlns:georss") != NULL )
+    {
+        VSIFCloseL( fp );
+        return FALSE;
+    }
+
+    /* Ignore OGR WFS xml description files */
+    if( strstr(szPtr, "<OGRWFSDataSource>") != NULL )
+    {
+        VSIFCloseL( fp );
+        return FALSE;
+    }
+
+    /* Small optimization: if we parse a <wfs:FeatureCollection>  and */
+    /* that numberOfFeatures is set, we can use it to set the FeatureCount */
+    /* but *ONLY* if there's just one class ! */
+    const char* pszFeatureCollection = strstr(szPtr, "wfs:FeatureCollection");
+    if (pszFeatureCollection == NULL)
+        pszFeatureCollection = strstr(szPtr, "gml:FeatureCollection"); /* GML 3.2.1 output */
+    if (pszFeatureCollection == NULL)
+    {
+        pszFeatureCollection = strstr(szPtr, "<FeatureCollection"); /* Deegree WFS 1.0.0 output */
+        if (pszFeatureCollection && strstr(szPtr, "xmlns:wfs=\"http://www.opengis.net/wfs\"") == NULL)
+            pszFeatureCollection = NULL;
+    }
+    if (pszFeatureCollection)
+    {
+        bExposeGMLId = TRUE;
+        bIsWFS = TRUE;
+        const char* pszNumberOfFeatures = strstr(szPtr, "numberOfFeatures=");
+        if (pszNumberOfFeatures)
+        {
+            pszNumberOfFeatures += 17;
+            char ch = pszNumberOfFeatures[0];
+            if ((ch == '\'' || ch == '"') && strchr(pszNumberOfFeatures + 1, ch) != NULL)
+            {
+                nNumberOfFeatures = atoi(pszNumberOfFeatures + 1);
+            }
+        }
+        else if ((pszNumberOfFeatures = strstr(szPtr, "numberReturned=")) != NULL) /* WFS 2.0.0 */
+        {
+            pszNumberOfFeatures += 15;
+            char ch = pszNumberOfFeatures[0];
+            if ((ch == '\'' || ch == '"') && strchr(pszNumberOfFeatures + 1, ch) != NULL)
+            {
+                /* 'unknown' might be a valid value in a corrected version of WFS 2.0 */
+                /* but it will also evaluate to 0, that is considered as unknown, so nothing */
+                /* particular to do */
+                nNumberOfFeatures = atoi(pszNumberOfFeatures + 1);
+            }
+        }
+    }
+    else if (strncmp(pszFilename, "/vsimem/tempwfs_", strlen("/vsimem/tempwfs_")) == 0)
+    {
+        /* http://regis.intergraph.com/wfs/dcmetro/request.asp? returns a <G:FeatureCollection> */
+        /* Who knows what servers can return ? Ok, so when in the context of the WFS driver */
+        /* always expose the gml:id to avoid later crashes */
+        bExposeGMLId = TRUE;
+        bIsWFS = TRUE;
+    }
+    else
+    {
+        bExposeGMLId = strstr(szPtr, " gml:id=\"") != NULL ||
+                        strstr(szPtr, " gml:id='") != NULL;
+        bExposeFid = strstr(szPtr, " fid=\"") != NULL ||
+                        strstr(szPtr, " fid='") != NULL;
+        
+        const char* pszExposeGMLId = CPLGetConfigOption("GML_EXPOSE_GML_ID", NULL);
+        if (pszExposeGMLId)
+            bExposeGMLId = CSLTestBoolean(pszExposeGMLId);
+
+        const char* pszExposeFid = CPLGetConfigOption("GML_EXPOSE_FID", NULL);
+        if (pszExposeFid)
+            bExposeFid = CSLTestBoolean(pszExposeFid);
+    }
+
+    bHintConsiderEPSGAsURN = strstr(szPtr, "xmlns:fme=\"http://www.safe.com/gml/fme\"") != NULL;
+
+    /* MTKGML */
+    if( strstr(szPtr, "<Maastotiedot") != NULL )
+    {
+        if( strstr(szPtr, "http://xml.nls.fi/XML/Namespace/Maastotietojarjestelma/SiirtotiedostonMalli/2011-02") == NULL )
+            CPLDebug("GML", "Warning: a MTKGML file was detected, but its namespace is unknown");
+        bAnalyzeSRSPerFeature = FALSE;
+        bUseGlobalSRSName = TRUE;
+        if( !ExtractSRSName(szPtr, szSRSName, sizeof(szSRSName)) )
+            strcpy(szSRSName, "EPSG:3067");
+    }
+
+    pszSchemaLocation = strstr(szPtr, "schemaLocation=");
+    if (pszSchemaLocation)
+        pszSchemaLocation += strlen("schemaLocation=");
+
+    if (bIsWFS && EQUALN(pszFilename, "/vsicurl_streaming/", strlen("/vsicurl_streaming/")))
+        bCheckAuxFile = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      We assume now that it is GML.  Instantiate a GMLReader on it.   */
@@ -738,14 +729,89 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
         }
         else
         {
-            if ( VSIStatExL( osXSDFilename, &sXSDStatBuf, VSI_STAT_EXISTS_FLAG ) == 0 )
+            if ( strncmp(osXSDFilename, "http://", 7) == 0 ||
+                 strncmp(osXSDFilename, "https://", 8) == 0 ||
+                 VSIStatExL( osXSDFilename, &sXSDStatBuf, VSI_STAT_EXISTS_FLAG ) == 0 )
             {
                 bHasFoundXSD = TRUE;
             }
         }
 
+        /* If not found, try if there is a schema in the gml_registry.xml */
+        /* that might match a declared namespace and featuretype */
+        if( !bHasFoundXSD )
+        {
+            GMLRegistry oRegistry;
+            if( oRegistry.Parse() )
+            {
+                CPLString osHeader(szHeader);
+                for( size_t iNS = 0; iNS < oRegistry.aoNamespaces.size(); iNS ++ )
+                {
+                    GMLRegistryNamespace& oNamespace = oRegistry.aoNamespaces[iNS];
+                    const char* pszNSToFind =
+                                CPLSPrintf("xmlns:%s", oNamespace.osPrefix.c_str());
+                    const char* pszURIToFind =
+                                CPLSPrintf("\"%s\"", oNamespace.osURI.c_str());
+                    if( osHeader.ifind(pszNSToFind) != std::string::npos &&
+                        strstr(szHeader, pszURIToFind) != NULL )
+                    {
+                        if( oNamespace.bUseGlobalSRSName )
+                            bUseGlobalSRSName = TRUE;
+
+                        for( size_t iTypename = 0;
+                                    iTypename < oNamespace.aoFeatureTypes.size();
+                                    iTypename ++ )
+                        {
+                            GMLRegistryFeatureType& oFeatureType =
+                                        oNamespace.aoFeatureTypes[iTypename];
+                            const char* pszElementToFind =
+                                CPLSPrintf("%s:%s", oNamespace.osPrefix.c_str(),
+                                           oFeatureType.osElementName.c_str());
+                            if( osHeader.ifind(pszElementToFind) != std::string::npos )
+                            {
+                                if( oFeatureType.osSchemaLocation.size() )
+                                {
+                                    osXSDFilename = oFeatureType.osSchemaLocation;
+                                    if( strncmp(osXSDFilename, "http://", 7) == 0 ||
+                                        strncmp(osXSDFilename, "https://", 8) == 0 ||
+                                        VSIStatExL( osXSDFilename, &sXSDStatBuf,
+                                                    VSI_STAT_EXISTS_FLAG ) == 0 )
+                                    {
+                                        bHasFoundXSD = TRUE;
+                                        bHaveSchema = TRUE;
+                                        CPLDebug("GML", "Found %s for %s:%s in registry",
+                                                osXSDFilename.c_str(), 
+                                                oNamespace.osPrefix.c_str(),
+                                                oFeatureType.osElementName.c_str());
+                                    }
+                                    else
+                                    {
+                                        CPLDebug("GML", "Cannot open %s", osXSDFilename.c_str());
+                                    }
+                                }
+                                else
+                                {
+                                    bHaveSchema = poReader->LoadClasses(
+                                        oFeatureType.osGFSSchemaLocation );
+                                    if( bHaveSchema )
+                                    {
+                                        CPLDebug("GML", "Found %s for %s:%s in registry",
+                                                oFeatureType.osGFSSchemaLocation.c_str(), 
+                                                oNamespace.osPrefix.c_str(),
+                                                oFeatureType.osElementName.c_str());
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
         /* For WFS, try to fetch the application schema */
-        if( bIsWFS && pszSchemaLocation != NULL && 
+        if( bIsWFS && !bHaveSchema && pszSchemaLocation != NULL && 
             (pszSchemaLocation[0] == '\'' || pszSchemaLocation[0] == '"') &&
              strchr(pszSchemaLocation + 1, pszSchemaLocation[0]) != NULL )
         {
@@ -808,16 +874,29 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
             CPLFree(pszSchemaLocationTmp1);
         }
 
+        int bHasFeatureProperties = FALSE;
         if( bHasFoundXSD )
         {
             std::vector<GMLFeatureClass*> aosClasses;
             bHaveSchema = GMLParseXSD( osXSDFilename, aosClasses );
-            if (bHaveSchema)
+            if( bHaveSchema )
             {
                 CPLDebug("GML", "Using %s", osXSDFilename.c_str());
-
                 std::vector<GMLFeatureClass*>::const_iterator iter = aosClasses.begin();
                 std::vector<GMLFeatureClass*>::const_iterator eiter = aosClasses.end();
+                while (iter != eiter)
+                {
+                    GMLFeatureClass* poClass = *iter;
+
+                    if( poClass->HasFeatureProperties() )
+                    {
+                        bHasFeatureProperties = TRUE;
+                        break;
+                    }
+                    iter ++;
+                }
+
+                iter = aosClasses.begin();
                 while (iter != eiter)
                 {
                     GMLFeatureClass* poClass = *iter;
@@ -826,16 +905,18 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
                     /* We have no way of knowing if the geometry type is 25D */
                     /* when examining the xsd only, so if there was a hint */
                     /* it is, we force to 25D */
-                    if (bHas3D)
+                    if (bHas3D && poClass->GetGeometryPropertyCount() == 1)
                     {
-                        poClass->SetGeometryType(
-                            poClass->GetGeometryType() | wkb25DBit);
+                        poClass->GetGeometryProperty(0)->SetType(
+                            poClass->GetGeometryProperty(0)->GetType() | wkb25DBit);
                     }
 
                     int bAddClass = TRUE;
                     /* If typenames are declared, only register the matching classes, in case */
-                    /* the XSD contains more layers */
-                    if (papszTypeNames != NULL)
+                    /* the XSD contains more layers, but not if feature classes contain */
+                    /* feature properties, in which case we will have embedded features that */
+                    /* will be reported as top-level features */
+                    if( papszTypeNames != NULL && !bHasFeatureProperties )
                     {
                         bAddClass = FALSE;
                         char** papszIter = papszTypeNames;
@@ -875,6 +956,7 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
                     else
                         delete poClass;
                 }
+
                 poReader->SetClassListLocked( TRUE );
             }
         }
@@ -882,7 +964,8 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
         if (bHaveSchema && bIsWFS)
         {
             /* For WFS, we can assume sequential layers */
-            if (poReader->GetClassCount() > 1 && pszReadMode == NULL)
+            if (poReader->GetClassCount() > 1 && pszReadMode == NULL &&
+                !bHasFeatureProperties)
             {
                 CPLDebug("GML", "WFS output. Using SEQUENTIAL_LAYERS read mode");
                 eReadMode = SEQUENTIAL_LAYERS;
@@ -995,12 +1078,7 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
 
 {
     OGRGMLLayer *poLayer;
-    OGRwkbGeometryType eGType 
-        = (OGRwkbGeometryType) poClass->GetGeometryType();
 
-    if( poClass->GetFeatureCount() == 0 )
-        eGType = wkbUnknown;
-    
 /* -------------------------------------------------------------------- */
 /*      Create an empty layer.                                          */
 /* -------------------------------------------------------------------- */
@@ -1078,9 +1156,7 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
     }
 
 
-    poLayer = new OGRGMLLayer( poClass->GetName(), poSRS, FALSE,
-                               eGType, this );
-    delete poSRS;
+    poLayer = new OGRGMLLayer( poClass->GetName(), FALSE, this );
 
 /* -------------------------------------------------------------------- */
 /*      Added attributes (properties).                                  */
@@ -1096,7 +1172,20 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
         poLayer->GetLayerDefn()->AddFieldDefn( &oField );
     }
 
-    for( int iField = 0; iField < poClass->GetPropertyCount(); iField++ )
+    int iField;
+    for( iField = 0; iField < poClass->GetGeometryPropertyCount(); iField++ )
+    {
+        GMLGeometryPropertyDefn *poProperty = poClass->GetGeometryProperty( iField );
+        OGRGeomFieldDefn oField( poProperty->GetSrcElement(), (OGRwkbGeometryType)poProperty->GetType() );
+        if( poClass->GetGeometryPropertyCount() == 1 && poClass->GetFeatureCount() == 0 )
+        {
+            oField.SetType(wkbUnknown);
+        }
+        oField.SetSpatialRef(poSRS);
+        poLayer->GetLayerDefn()->AddGeomFieldDefn( &oField );
+    }
+
+    for( iField = 0; iField < poClass->GetPropertyCount(); iField++ )
     {
         GMLPropertyDefn *poProperty = poClass->GetProperty( iField );
         OGRFieldType eFType;
@@ -1115,6 +1204,8 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
             eFType = OFTIntegerList;
         else if( poProperty->GetType() == GMLPT_RealList )
             eFType = OFTRealList;
+        else if( poProperty->GetType() == GMLPT_FeaturePropertyList )
+            eFType = OFTStringList;
         else
             eFType = OFTString;
         
@@ -1128,6 +1219,9 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
 
         poLayer->GetLayerDefn()->AddFieldDefn( &oField );
     }
+
+    if( poSRS != NULL )
+        poSRS->Release();
 
     return poLayer;
 }
@@ -1374,7 +1468,20 @@ OGRGMLDataSource::CreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     OGRGMLLayer *poLayer;
 
-    poLayer = new OGRGMLLayer( pszCleanLayerName, poSRS, TRUE, eType, this );
+    poLayer = new OGRGMLLayer( pszCleanLayerName, TRUE, this );
+    poLayer->GetLayerDefn()->SetGeomType(eType);
+    if( eType != wkbNone )
+    {
+        poLayer->GetLayerDefn()->GetGeomFieldDefn(0)->SetName("geometryProperty");
+        if( poSRS != NULL )
+        {
+            /* Clone it since mapogroutput assumes that it can destroys */
+            /* the SRS it has passed to use, instead of deferencing it */
+            poSRS = poSRS->Clone();
+            poLayer->GetLayerDefn()->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
+            poSRS->Dereference();
+        }
+    }
 
     CPLFree( pszCleanLayerName );
 
@@ -1397,6 +1504,8 @@ int OGRGMLDataSource::TestCapability( const char * pszCap )
 
 {
     if( EQUAL(pszCap,ODsCCreateLayer) )
+        return TRUE;
+    else if( EQUAL(pszCap,ODsCCreateGeomFieldAfterCreateLayer) )
         return TRUE;
     else
         return FALSE;
@@ -1713,55 +1822,58 @@ void OGRGMLDataSource::InsertHeader()
         PrintLine( fpSchema, "    <xs:extension base=\"gml:AbstractFeatureType\">");
         PrintLine( fpSchema, "      <xs:sequence>");
 
-/* -------------------------------------------------------------------- */
-/*      Define the geometry attribute.                                  */
-/* -------------------------------------------------------------------- */
-        const char* pszGeometryTypeName = "GeometryPropertyType";
-        switch(wkbFlatten(poFDefn->GetGeomType()))
+        for( int iGeomField = 0; iGeomField < poFDefn->GetGeomFieldCount(); iGeomField++ )
         {
-            case wkbPoint:
-                pszGeometryTypeName = "PointPropertyType";
-                break;
-            case wkbLineString:
-                if (IsGML3Output())
-                    pszGeometryTypeName = "CurvePropertyType";
-                else
-                    pszGeometryTypeName = "LineStringPropertyType";
-                break;
-            case wkbPolygon:
-                if (IsGML3Output())
-                    pszGeometryTypeName = "SurfacePropertyType";
-                else
-                    pszGeometryTypeName = "PolygonPropertyType";
-                break;
-            case wkbMultiPoint:
-                pszGeometryTypeName = "MultiPointPropertyType";
-                break;
-            case wkbMultiLineString:
-                if (IsGML3Output())
-                    pszGeometryTypeName = "MultiCurvePropertyType";
-                else
-                    pszGeometryTypeName = "MultiLineStringPropertyType";
-                break;
-            case wkbMultiPolygon:
-                if (IsGML3Output())
-                    pszGeometryTypeName = "MultiSurfacePropertyType";
-                else
-                    pszGeometryTypeName = "MultiPolygonPropertyType";
-                break;
-            case wkbGeometryCollection:
-                pszGeometryTypeName = "MultiGeometryPropertyType";
-                break;
-            default:
-                break;
+            OGRGeomFieldDefn *poFieldDefn = poFDefn->GetGeomFieldDefn(iGeomField);
+
+    /* -------------------------------------------------------------------- */
+    /*      Define the geometry attribute.                                  */
+    /* -------------------------------------------------------------------- */
+            const char* pszGeometryTypeName = "GeometryPropertyType";
+            switch(wkbFlatten(poFieldDefn->GetType()))
+            {
+                case wkbPoint:
+                    pszGeometryTypeName = "PointPropertyType";
+                    break;
+                case wkbLineString:
+                    if (IsGML3Output())
+                        pszGeometryTypeName = "CurvePropertyType";
+                    else
+                        pszGeometryTypeName = "LineStringPropertyType";
+                    break;
+                case wkbPolygon:
+                    if (IsGML3Output())
+                        pszGeometryTypeName = "SurfacePropertyType";
+                    else
+                        pszGeometryTypeName = "PolygonPropertyType";
+                    break;
+                case wkbMultiPoint:
+                    pszGeometryTypeName = "MultiPointPropertyType";
+                    break;
+                case wkbMultiLineString:
+                    if (IsGML3Output())
+                        pszGeometryTypeName = "MultiCurvePropertyType";
+                    else
+                        pszGeometryTypeName = "MultiLineStringPropertyType";
+                    break;
+                case wkbMultiPolygon:
+                    if (IsGML3Output())
+                        pszGeometryTypeName = "MultiSurfacePropertyType";
+                    else
+                        pszGeometryTypeName = "MultiPolygonPropertyType";
+                    break;
+                case wkbGeometryCollection:
+                    pszGeometryTypeName = "MultiGeometryPropertyType";
+                    break;
+                default:
+                    break;
+            }
+
+            PrintLine( fpSchema,
+                "        <xs:element name=\"%s\" type=\"gml:%s\" nillable=\"true\" minOccurs=\"0\" maxOccurs=\"1\"/>",
+                       poFieldDefn->GetNameRef(), pszGeometryTypeName );
         }
 
-        if (poFDefn->GetGeomType() != wkbNone)
-        {
-            PrintLine( fpSchema,
-                "        <xs:element name=\"geometryProperty\" type=\"gml:%s\" nillable=\"true\" minOccurs=\"0\" maxOccurs=\"1\"/>", pszGeometryTypeName );
-        }
-            
 /* -------------------------------------------------------------------- */
 /*      Emit each of the attributes.                                    */
 /* -------------------------------------------------------------------- */

@@ -85,8 +85,8 @@ public:
         if (poClass != NULL)
         {
             poClass->SetFeatureCount( pItem->GetCount() );
-            if ( pItem->GetGeomCount() == 0)
-                poClass->SetGeometryType( wkbNone );
+            if ( pItem->GetGeomCount() != 0 && poClass->GetGeometryPropertyCount() == 0 )
+                poClass->AddGeometryProperty( new GMLGeometryPropertyDefn( "", wkbUnknown ) );
             m_bValid = TRUE;
         }
         pItem = pItem->GetNext();

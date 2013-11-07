@@ -207,6 +207,50 @@ void GMLFeature::SetGeometryDirectly( CPLXMLNode* psGeom )
 }
 
 /************************************************************************/
+/*                        SetGeometryDirectly()                         */
+/************************************************************************/
+
+void GMLFeature::SetGeometryDirectly( int nIdx, CPLXMLNode* psGeom )
+
+{
+    if( nIdx == 0 && m_nGeometryCount <= 1 )
+    {
+        SetGeometryDirectly( psGeom );
+        return;
+    }
+    else if( m_nGeometryCount == 1 && nIdx > 0 )
+    {
+        m_papsGeometry = (CPLXMLNode **) CPLMalloc(2 * sizeof(CPLXMLNode *));
+        m_papsGeometry[0] = m_apsGeometry[0];
+        m_papsGeometry[1] = NULL;
+        m_apsGeometry[0] = NULL;
+    }
+
+    if( nIdx >= m_nGeometryCount )
+    {
+        m_papsGeometry = (CPLXMLNode **) CPLRealloc(m_papsGeometry,
+            (nIdx + 2) * sizeof(CPLXMLNode *));
+        for( int i = m_nGeometryCount; i <= nIdx + 1; i++ )
+            m_papsGeometry[i] = NULL;
+        m_nGeometryCount = nIdx + 1;
+    }
+    if (m_papsGeometry[nIdx] != NULL)
+        CPLDestroyXMLNode(m_papsGeometry[nIdx]);
+    m_papsGeometry[nIdx] = psGeom;
+}
+
+/************************************************************************/
+/*                          GetGeometryRef()                            */
+/************************************************************************/
+
+const CPLXMLNode* GMLFeature::GetGeometryRef( int nIdx ) const
+{
+    if( nIdx < 0 || nIdx >= m_nGeometryCount )
+        return NULL;
+    return m_papsGeometry[nIdx];
+}
+
+/************************************************************************/
 /*                             AddGeometry()                            */
 /************************************************************************/
 

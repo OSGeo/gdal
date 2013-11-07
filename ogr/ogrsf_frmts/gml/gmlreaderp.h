@@ -81,6 +81,7 @@ typedef enum
     STATE_DEFAULT,
     STATE_FEATURE,
     STATE_PROPERTY,
+    STATE_FEATUREPROPERTY,
     STATE_GEOMETRY,
     STATE_IGNORED_FEATURE,
     STATE_BOUNDED_BY,
@@ -117,6 +118,7 @@ class GMLHandler
     int        m_nGeomLen;
     int        m_nGeometryDepth;
     int        m_bAlreadyFoundGeometry;
+    int        m_nGeometryPropertyIndex;
 
     int        m_nDepth;
     int        m_nDepthFeature;
@@ -160,6 +162,13 @@ class GMLHandler
     OGRErr     startElementDefault(const char *pszName, int nLenName, void* attr);
     OGRErr     endElementDefault();
 
+    OGRErr     startElementFeatureProperty(const char *pszName, int nLenName, void* attr);
+    OGRErr     endElementFeatureProperty();
+    
+    void       DealWithAttributes(const char *pszName, int nLenName, void* attr );
+    int        IsConditionMatched(const char* pszCondition, void* attr);
+    int        FindRealPropertyByCheckingConditions(int nIdx, void* attr);
+
 protected:
     GMLReader  *m_poReader;
     GMLAppSchemaType eAppSchemaType;
@@ -183,6 +192,7 @@ public:
     virtual ~GMLHandler();
 
     virtual char*       GetAttributeValue(void* attr, const char* pszAttributeName) = 0;
+    virtual char*       GetAttributeByIdx(void* attr, unsigned int idx, char** ppszKey) = 0;
 };
 
 
@@ -292,6 +302,7 @@ public:
     virtual const char* GetFID(void* attr);
     virtual CPLXMLNode* AddAttributes(CPLXMLNode* psNode, void* attr);
     virtual char*       GetAttributeValue(void* attr, const char* pszAttributeName);
+    virtual char*       GetAttributeByIdx(void* attr, unsigned int idx, char** ppszKey);
 };
 
 #endif
@@ -320,6 +331,7 @@ public:
     virtual const char* GetFID(void* attr);
     virtual CPLXMLNode* AddAttributes(CPLXMLNode* psNode, void* attr);
     virtual char*       GetAttributeValue(void* attr, const char* pszAttributeName);
+    virtual char*       GetAttributeByIdx(void* attr, unsigned int idx, char** ppszKey);
 
     static void XMLCALL startElementCbk(void *pUserData, const char *pszName,
                                         const char **ppszAttr);
@@ -377,6 +389,7 @@ private:
 
     int         m_nClassCount;
     GMLFeatureClass **m_papoClass;
+    int           m_bLookForClassAtAnyLevel;
 
     char          *m_pszFilename;
 
@@ -430,6 +443,7 @@ private:
     int           m_bCanUseGlobalSRSName;
 
     char         *m_pszFilteredClassName;
+    int           m_nFilteredClassIndex;
 
     int           m_bSequentialLayers;
 
@@ -489,8 +503,10 @@ public:
     void             PopState();
     void             PushState( GMLReadState * );
 
+    int              ShouldLookForClassAtAnyLevel() { return m_bLookForClassAtAnyLevel; }
+
     int         GetFeatureElementIndex( const char *pszElement, int nLen, GMLAppSchemaType eAppSchemaType );
-    int         GetAttributeElementIndex( const char *pszElement, int nLen );
+    int         GetAttributeElementIndex( const char *pszElement, int nLen, const char* pszAttrKey = NULL );
     int         IsCityGMLGenericAttributeElement( const char *pszElement, void* attr );
 
     void        PushFeature( const char *pszElement, 
@@ -515,6 +531,7 @@ public:
 
     int         SetFilteredClassName(const char* pszClassName);
     const char* GetFilteredClassName() { return m_pszFilteredClassName; }
+    int         GetFilteredClassIndex() { return m_nFilteredClassIndex; }
 
     int         IsSequentialLayers() const { return m_bSequentialLayers == TRUE; }
 
