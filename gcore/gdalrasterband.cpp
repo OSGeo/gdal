@@ -2979,7 +2979,10 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
                 GByte  *pabyData = (GByte *) pData;
                 
                 for( int i = 0; i < nPixels; i++ )
-                    panHistogram[pabyData[i]]++;
+                    if (! (bGotNoDataValue && (pabyData[i] == (GByte)dfNoDataValue)))
+                    {
+                        panHistogram[pabyData[i]]++;
+                    }
 
                 poBlock->DropLock();
                 continue; /* to next sample block */
