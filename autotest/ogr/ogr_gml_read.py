@@ -1124,6 +1124,7 @@ def ogr_gml_28():
     ds = ogr.Open('tmp/ogr_gml_28.gml')
     lyr = ds.GetLayer(0)
     if lyr.GetGeomType() != ogr.wkbNone:
+        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -1132,6 +1133,7 @@ def ogr_gml_28():
     ds = ogr.Open('tmp/ogr_gml_28.gml')
     lyr = ds.GetLayer(0)
     if lyr.GetGeomType() != ogr.wkbNone:
+        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -1139,6 +1141,7 @@ def ogr_gml_28():
     ds = ogr.Open('tmp/ogr_gml_28.gml')
     lyr = ds.GetLayer(0)
     if lyr.GetGeomType() != ogr.wkbNone:
+        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -2233,6 +2236,509 @@ def ogr_gml_54():
         pass
 
     return 'success'
+
+###############################################################################
+# Test support for <xs:include> in schemas
+# Necessary for Finnish NLS data
+
+def ogr_gml_55():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    ds = ogr.Open('data/ogr_gml_55.gml')
+    lyr = ds.GetLayer(0)
+    if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTString:
+        return 'fail'
+    ds = None
+
+    try:
+        os.unlink('data/ogr_gml_55.gfs')
+        return 'fail'
+    except:
+        pass
+
+    return 'success'
+
+###############################################################################
+# Test support for gml:FeaturePropertyType and multiple geometry field
+# Necessary for Finnish NLS data
+
+def ogr_gml_56():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    gdal.SetConfigOption('GML_REGISTRY', 'data/ogr_gml_56_registry.xml')
+    ds = ogr.Open('data/ogr_gml_56.gml')
+    gdal.SetConfigOption('GML_REGISTRY', None)
+    lyr = ds.GetLayerByName('mainFeature')
+    if lyr.GetSpatialRef() is None:
+        gdaltest.post_reason('fail')
+        return 'failure'
+    feat = lyr.GetNextFeature()
+    if feat.GetFieldAsString(feat.GetFieldIndex('subFeatureProperty_href')) != '#subFeature.0':
+        gdaltest.post_reason('fail')
+        return 'failure'
+    if feat.GetFieldAsStringList(feat.GetFieldIndex('subFeatureRepeatedProperty_href')) != ['#subFeatureRepeated.0','#subFeatureRepeated.1']:
+        gdaltest.post_reason('fail')
+        return 'failure'
+    if feat.GetGeomFieldRef(0).ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,1 0,0 0))':
+        gdaltest.post_reason('fail')
+        return 'failure'
+    if feat.GetGeomFieldRef(1).ExportToWkt() != 'POINT (10 10)':
+        gdaltest.post_reason('fail')
+        return 'failure'
+
+    lyr = ds.GetLayerByName('subFeature')
+    if lyr.GetLayerDefn().GetGeomFieldCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'failure'
+    feat = lyr.GetNextFeature()
+    if feat.GetFieldAsStringList(feat.GetFieldIndex('subFeatureRepeatedProperty_href')) != ['#subFeatureRepeated.2']:
+        gdaltest.post_reason('fail')
+        return 'failure'
+    if feat.GetField('foo') != 'bar':
+        gdaltest.post_reason('fail')
+        return 'failure'
+
+    lyr = ds.GetLayerByName('subFeatureRepeated')
+    feat = lyr.GetNextFeature()
+    if feat.GetField('gml_id') != 'subFeatureRepeated.2':
+        gdaltest.post_reason('fail')
+        return 'failure'
+    if feat.GetField('bar') != 'baz':
+        gdaltest.post_reason('fail')
+        return 'failure'
+    feat = lyr.GetNextFeature()
+    if feat.GetField('gml_id') != 'subFeatureRepeated.0':
+        gdaltest.post_reason('fail')
+        return 'failure'
+    feat = lyr.GetNextFeature()
+    if feat.GetField('gml_id') != 'subFeatureRepeated.1':
+        gdaltest.post_reason('fail')
+        return 'failure'
+    ds = None
+
+    try:
+        os.unlink('data/ogr_gml_56.gfs')
+        return 'fail'
+    except:
+        pass
+
+    return 'success'
+
+###############################################################################
+# Test write support for multiple geometry field
+
+def ogr_gml_57():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    for i in range(4):
+        options = []
+        if i == 3:
+            options = [ 'FORMAT=GML3.2' ]
+        ds = ogr.GetDriverByName('GML').CreateDataSource('/vsimem/ogr_gml_57.gml', options = options)
+        if ds.TestCapability(ogr.ODsCCreateGeomFieldAfterCreateLayer) != 1:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        lyr = ds.CreateLayer('myLayer', geom_type = ogr.wkbNone)
+        if lyr.TestCapability(ogr.OLCCreateGeomField) != 1:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        geomfielddefn = ogr.GeomFieldDefn('first_geometry', ogr.wkbPoint)
+        if i == 1 or i == 2:
+            sr = osr.SpatialReference()
+            sr.ImportFromEPSG(32630)
+            geomfielddefn.SetSpatialRef(sr)
+        lyr.CreateGeomField(geomfielddefn)
+        geomfielddefn = ogr.GeomFieldDefn('second_geometry', ogr.wkbLineString)
+        if i == 1:
+            sr = osr.SpatialReference()
+            sr.ImportFromEPSG(32630)
+            geomfielddefn.SetSpatialRef(sr)
+        elif i == 2:
+            sr = osr.SpatialReference()
+            sr.ImportFromEPSG(32631)
+            geomfielddefn.SetSpatialRef(sr)
+        lyr.CreateGeomField(geomfielddefn)
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetGeomFieldDirectly(0, ogr.CreateGeometryFromWkt('POINT (0 1)'))
+        feat.SetGeomFieldDirectly(1, ogr.CreateGeometryFromWkt('LINESTRING (2 3,4 5)'))
+        lyr.CreateFeature(feat)
+        feat = None
+        ds = None
+
+        if False:
+            f = gdal.VSIFOpenL('/vsimem/ogr_gml_57.gml', 'rb')
+            print(gdal.VSIFReadL(1, 1000, f))
+            gdal.VSIFCloseL(f)
+
+        ds = ogr.Open('/vsimem/ogr_gml_57.gml')
+        lyr = ds.GetLayer(0)
+        feat = lyr.GetNextFeature()
+        if i == 1 and feat.GetGeomFieldRef(0).GetSpatialReference().ExportToWkt().find('32630') < 0:
+            gdaltest.post_reason('fail')
+            return 'failure'
+        if i == 1 and feat.GetGeomFieldRef(1).GetSpatialReference().ExportToWkt().find('32630') < 0:
+            gdaltest.post_reason('fail')
+            return 'failure'
+        if i == 2 and feat.GetGeomFieldRef(1).GetSpatialReference().ExportToWkt().find('32631') < 0:
+            gdaltest.post_reason('fail')
+            return 'failure'
+        if feat.GetGeomFieldRef(0).ExportToWkt() != 'POINT (0 1)':
+            gdaltest.post_reason('fail')
+            return 'failure'
+        if feat.GetGeomFieldRef(1).ExportToWkt() != 'LINESTRING (2 3,4 5)':
+            gdaltest.post_reason('fail')
+            return 'failure'
+        ds = None
+
+        gdal.Unlink('/vsimem/ogr_gml_57.gml')
+        gdal.Unlink('/vsimem/ogr_gml_57.xsd')
+
+    return 'success'
+
+###############################################################################
+# Test support for Inspire Cadastral schemas
+
+def ogr_gml_58():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    ds = ogr.Open('data/inspire_cadastralparcel.xml')
+    lyr = ds.GetLayer(0)
+    lyr_defn = lyr.GetLayerDefn()
+    if lyr_defn.GetGeomFieldCount() != 2:
+        gdaltest.post_reason('fail')
+        return 'failure'
+    if lyr_defn.GetGeomFieldDefn(0).GetName() != 'geometry':
+        gdaltest.post_reason('fail')
+        return 'failure'
+    if lyr_defn.GetGeomFieldDefn(0).GetType() != ogr.wkbMultiPolygon:
+        gdaltest.post_reason('fail')
+        return 'failure'
+    if lyr_defn.GetGeomFieldDefn(1).GetName() != 'referencePoint':
+        gdaltest.post_reason('fail')
+        return 'failure'
+    if lyr_defn.GetGeomFieldDefn(1).GetType() != ogr.wkbPoint:
+        gdaltest.post_reason('fail')
+        return 'failure'
+
+    feat = lyr.GetNextFeature()
+    expected = [ ('gml_id', 'CadastralParcel-01'),
+                 ('areaValue', 10.0),
+                 ('areaValue_uom', 'm2'),
+                 ('beginLifespanVersion', '2000-01-01T00:00:00.0Z'),
+                 ('endLifespanVersion', '2001-01-01T00:00:00.0Z'),
+                 ('inspireId_localId', 'CadastralParcel-01-localId'),
+                 ('inspireId_namespace', 'namespace'),
+                 ('label', 'label'),
+                 ('nationalCadastralReference', 'nationalCadastralReference'),
+                 ('validFrom', '2002-01-01T00:00:00.0Z'),
+                 ('validTo', '2003-01-01T00:00:00.0Z'),
+                 ('basicPropertyUnit_href', ['#BPU.1','#BPU.2'] ),
+                 ('administrativeUnit_href', '#AU.1'),
+                 ('zoning_href', '#CZ.1') ]
+    for (key,val) in expected:
+        if feat.GetField(key) != val:
+            print(key)
+            print(val)
+            print(feat.GetField(key))
+            gdaltest.post_reason('fail')
+            return 'failure'
+    if feat.GetGeomFieldRef(0).ExportToWkt() != 'MULTIPOLYGON (((2 49,2 50,3 50,3 49)))':
+        gdaltest.post_reason('fail')
+        return 'failure'
+    if feat.GetGeomFieldRef(1).ExportToWkt() != 'POINT (2.5 49.5)':
+        gdaltest.post_reason('fail')
+        return 'failure'
+
+    feat = lyr.GetNextFeature()
+    expected = [ ('gml_id', 'CadastralParcel-02'),
+                 ('areaValue', None),
+                 ('areaValue_uom', None),
+                 ('beginLifespanVersion', '2000-01-01T00:00:00.0Z'),
+                 ('endLifespanVersion', None),
+                 ('inspireId_localId', 'CadastralParcel-02-localId'),
+                 ('inspireId_namespace', 'namespace'),
+                 ('label', 'label'),
+                 ('nationalCadastralReference', 'nationalCadastralReference'),
+                 ('validFrom', None),
+                 ('validTo', None),
+                 ('basicPropertyUnit_href', None ),
+                 ('administrativeUnit_href', None),
+                 ('zoning_href', None) ]
+    for (key,val) in expected:
+        if feat.GetField(key) != val:
+            print(key)
+            print(val)
+            print(feat.GetField(key))
+            gdaltest.post_reason('fail')
+            return 'failure'
+    if feat.GetGeomFieldRef(0).ExportToWkt() != 'MULTIPOLYGON (((2 49,2 50,3 50,3 49)))':
+        gdaltest.post_reason('fail')
+        return 'failure'
+    if feat.GetGeomFieldRef(1) is not None:
+        gdaltest.post_reason('fail')
+        return 'failure'
+    feat = None
+    lyr = None
+    ds = None
+
+
+    ds = ogr.Open('data/inspire_basicpropertyunit.xml')
+    lyr = ds.GetLayer(0)
+    lyr_defn = lyr.GetLayerDefn()
+    if lyr_defn.GetGeomFieldCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'failure'
+
+    feat = lyr.GetNextFeature()
+    expected = [ ('gml_id', 'BasicPropertyUnit-01'),
+                 ('inspireId_localId', 'BasicPropertyUnit-01-localId'),
+                 ('inspireId_namespace', 'namespace'),
+                 ('nationalCadastralReference', 'nationalCadastralReference'),
+                 ('areaValue', 10.0),
+                 ('areaValue_uom', 'm2'),
+                 ('validFrom', '2000-01-01T00:00:00.0Z'),
+                 ('validTo', '2001-01-01T00:00:00.0Z'),
+                 ('beginLifespanVersion', '2002-01-01T00:00:00.0Z'),
+                 ('endLifespanVersion', '2003-01-01T00:00:00.0Z'),
+                 ('administrativeUnit_href', '#AU.1') ]
+    for (key,val) in expected:
+        if feat.GetField(key) != val:
+            print(key)
+            print(val)
+            print(feat.GetField(key))
+            gdaltest.post_reason('fail')
+            return 'failure'
+
+    feat = lyr.GetNextFeature()
+    expected = [ ('gml_id', 'BasicPropertyUnit-02'),
+                 ('inspireId_localId', 'BasicPropertyUnit-02-localId'),
+                 ('inspireId_namespace', 'namespace'),
+                 ('nationalCadastralReference', 'nationalCadastralReference'),
+                 ('areaValue', None),
+                 ('areaValue_uom', None),
+                 ('validFrom', '2000-01-01T00:00:00.0Z'),
+                 ('validTo', None),
+                 ('beginLifespanVersion', '2002-01-01T00:00:00.0Z'),
+                 ('endLifespanVersion', None),
+                 ('administrativeUnit_href', None) ]
+    for (key,val) in expected:
+        if feat.GetField(key) != val:
+            print(key)
+            print(val)
+            print(feat.GetField(key))
+            gdaltest.post_reason('fail')
+            return 'failure'
+    feat = None
+    lyr = None
+    ds = None
+
+    ds = ogr.Open('data/inspire_cadastralboundary.xml')
+    lyr = ds.GetLayer(0)
+    lyr_defn = lyr.GetLayerDefn()
+    if lyr_defn.GetGeomFieldCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'failure'
+    if lyr_defn.GetGeomFieldDefn(0).GetName() != 'geometry':
+        gdaltest.post_reason('fail')
+        return 'failure'
+    if lyr_defn.GetGeomFieldDefn(0).GetType() != ogr.wkbLineString:
+        gdaltest.post_reason('fail')
+        return 'failure'
+
+    feat = lyr.GetNextFeature()
+    expected = [ ('gml_id', 'CadastralBoundary-01'),
+                 ('beginLifespanVersion', '2000-01-01T00:00:00.0Z'),
+                 ('endLifespanVersion', '2001-01-01T00:00:00.0Z'),
+                 ('estimatedAccuracy', 1.0),
+                 ('estimatedAccuracy_uom', 'm'),
+                 ('inspireId_localId', 'CadastralBoundary-01-localId'),
+                 ('inspireId_namespace', 'namespace'),
+                 ('validFrom', '2002-01-01T00:00:00.0Z'),
+                 ('validTo', '2003-01-01T00:00:00.0Z'),
+                 ('parcel_href', ['#Parcel.1','#Parcel.2'] ) ]
+    for (key,val) in expected:
+        if feat.GetField(key) != val:
+            print(key)
+            print(val)
+            print(feat.GetField(key))
+            gdaltest.post_reason('fail')
+            return 'failure'
+    if feat.GetGeomFieldRef(0).ExportToWkt() != 'LINESTRING (2 49,3 50)':
+        gdaltest.post_reason('fail')
+        return 'failure'
+
+    feat = lyr.GetNextFeature()
+    expected = [ ('gml_id', 'CadastralBoundary-02'),
+                 ('beginLifespanVersion', '2000-01-01T00:00:00.0Z'),
+                 ('endLifespanVersion', None),
+                 ('estimatedAccuracy', None),
+                 ('estimatedAccuracy_uom', None),
+                 ('inspireId_localId', 'CadastralBoundary-02-localId'),
+                 ('inspireId_namespace', 'namespace'),
+                 ('validFrom', None),
+                 ('validTo', None),
+                 ('parcel_href', None ) ]
+    for (key,val) in expected:
+        if feat.GetField(key) != val:
+            print(key)
+            print(val)
+            print(feat.GetField(key))
+            gdaltest.post_reason('fail')
+            return 'failure'
+    if feat.GetGeomFieldRef(0).ExportToWkt() != 'LINESTRING (2 49,3 50)':
+        gdaltest.post_reason('fail')
+        return 'failure'
+    feat = None
+    lyr = None
+    ds = None
+
+    ds = ogr.Open('data/inspire_cadastralzoning.xml')
+    lyr = ds.GetLayer(0)
+    lyr_defn = lyr.GetLayerDefn()
+    if lyr_defn.GetGeomFieldCount() != 2:
+        gdaltest.post_reason('fail')
+        return 'failure'
+    if lyr_defn.GetGeomFieldDefn(0).GetName() != 'geometry':
+        gdaltest.post_reason('fail')
+        return 'failure'
+    if lyr_defn.GetGeomFieldDefn(0).GetType() != ogr.wkbMultiPolygon:
+        gdaltest.post_reason('fail')
+        return 'failure'
+    if lyr_defn.GetGeomFieldDefn(1).GetName() != 'referencePoint':
+        gdaltest.post_reason('fail')
+        return 'failure'
+    if lyr_defn.GetGeomFieldDefn(1).GetType() != ogr.wkbPoint:
+        gdaltest.post_reason('fail')
+        return 'failure'
+
+    feat = lyr.GetNextFeature()
+    expected = [ ('gml_id', 'CadastralZoning-01'),
+                 ('beginLifespanVersion', '2000-01-01T00:00:00.0Z'),
+                 ('endLifespanVersion', '2001-01-01T00:00:00.0Z'),
+                 ('estimatedAccuracy', 1.0),
+                 ('estimatedAccuracy_uom', 'm'),
+                 ('inspireId_localId', 'CadastralZoning-01-localId'),
+                 ('inspireId_namespace', 'namespace'),
+                 ('label', 'label'),
+                 ('level', '3'),
+                 ('levelName', ['English', 'Francais', 'Deutsch']),
+                 ('levelName_locale', ['en', 'fr', 'de']),
+                 ('name_language', ['language']),
+                 ('name_nativeness', ['nativeness']),
+                 ('name_nameStatus', ['nameStatus']),
+                 ('name_pronunciation', None),
+                 ('name_spelling_text', ['text']),
+                 ('name_spelling_script', ['script']),
+                 ('nationalCadastalZoningReference', 'nationalCadastalZoningReference'),
+                 ('validFrom', '2002-01-01T00:00:00.0Z'),
+                 ('validTo', '2003-01-01T00:00:00.0Z'),
+                 ('upperLevelUnit_href', '#ulu.1') ]
+    for (key,val) in expected:
+        if feat.GetField(key) != val:
+            print(key)
+            print(val)
+            print(feat.GetField(key))
+            gdaltest.post_reason('fail')
+            return 'failure'
+    if feat.GetGeomFieldRef(0).ExportToWkt() != 'MULTIPOLYGON (((2 49,2 50,3 50,3 49)))':
+        gdaltest.post_reason('fail')
+        return 'failure'
+    if feat.GetGeomFieldRef(1).ExportToWkt() != 'POINT (2.5 49.5)':
+        gdaltest.post_reason('fail')
+        return 'failure'
+
+    feat = lyr.GetNextFeature()
+    expected = [ ('gml_id', 'CadastralZoning-02'),
+                 ('beginLifespanVersion', '2000-01-01T00:00:00.0Z'),
+                 ('endLifespanVersion', None),
+                 ('estimatedAccuracy', None),
+                 ('estimatedAccuracy_uom', None),
+                 ('inspireId_localId', None),
+                 ('inspireId_namespace', None),
+                 ('label', 'label'),
+                 ('level', '3'),
+                 ('levelName', ['English']),
+                 ('levelName_locale', ['en']),
+                 ('name_language', None),
+                 ('name_nativeness', None),
+                 ('name_nameStatus', None),
+                 ('name_pronunciation', None),
+                 ('name_spelling_text', None),
+                 ('name_spelling_script', None),
+                 ('nationalCadastalZoningReference', 'nationalCadastalZoningReference'),
+                 ('validFrom', None),
+                 ('validTo', None),
+                 ('upperLevelUnit_href', None) ]
+    for (key,val) in expected:
+        if feat.GetField(key) != val:
+            print(key)
+            print(val)
+            print(feat.GetField(key))
+            gdaltest.post_reason('fail')
+            return 'failure'
+    if feat.GetGeomFieldRef(0).ExportToWkt() != 'MULTIPOLYGON (((2 49,2 50,3 50,3 49)))':
+        gdaltest.post_reason('fail')
+        return 'failure'
+    if feat.GetGeomFieldRef(1) is not None:
+        gdaltest.post_reason('fail')
+        return 'failure'
+    feat = None
+    lyr = None
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test GFS conditions
+
+def ogr_gml_59():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    # Make sure the .gfs file is more recent that the .gml one
+    try:
+        gml_mtime = os.stat('data/testcondition.gml').st_mtime
+        gfs_mtime = os.stat('data/testcondition.gfs').st_mtime
+        touch_gfs = gfs_mtime <= gml_mtime
+    except:
+        touch_gfs = True
+    if touch_gfs:
+        print('Touching .gfs file')
+        f = open('data/testcondition.gfs', 'rb+')
+        data = f.read(1)
+        f.seek(0, 0)
+        f.write(data)
+        f.close()
+
+    ds = ogr.Open('data/testcondition.gml')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    expected = [ ('name_en', 'English name'),
+                 ('name_fr', 'Nom francais'),
+                 ('name_others_lang', ['de']),
+                 ('name_others', ['Deutsche name']) ]
+    for (key,val) in expected:
+        if feat.GetField(key) != val:
+            print(key)
+            print(val)
+            print(feat.GetField(key))
+            gdaltest.post_reason('fail')
+            return 'failure'
+    feat = None
+    lyr = None
+    ds = None
+
+    return 'success'
+
 ###############################################################################
 #  Cleanup
 
@@ -2414,7 +2920,22 @@ gdaltest_list = [
     ogr_gml_52,
     ogr_gml_53,
     ogr_gml_54,
+    ogr_gml_55,
+    ogr_gml_56,
+    ogr_gml_57,
+    ogr_gml_58,
+    ogr_gml_59,
     ogr_gml_cleanup ]
+
+if False:
+    gdaltest_list = [ 
+        ogr_gml_clean_files,
+        ogr_gml_1,
+        ogr_gml_55,
+        ogr_gml_56,
+        ogr_gml_57,
+        ogr_gml_58,
+        ogr_gml_59 ]
 
 if __name__ == '__main__':
 

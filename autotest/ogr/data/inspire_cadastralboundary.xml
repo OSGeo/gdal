@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gml:FeatureCollection xmlns:gml="http://www.opengis.net/gml/3.2"
+                       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                       xmlns:xlink="http://www.w3.org/1999/xlink" 
+                       xmlns:base="urn:x-inspire:specification:gmlas:BaseTypes:3.2"
+                       xmlns:cp="urn:x-inspire:specification:gmlas:CadastralParcels:3.0"
+                       gml:id="some_id"
+                       xsi:schemaLocation="urn:x-inspire:specification:gmlas:CadastralParcels:3.0 http://esdin.fgi.fi/schemas/CadastralParcels.xsd">
+  <gml:boundedBy>
+    <gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
+      <gml:lowerCorner>49 2</gml:lowerCorner>
+      <gml:upperCorner>50 3</gml:upperCorner>
+    </gml:Envelope>
+  </gml:boundedBy>
+  <gml:featureMember>
+    <cp:CadastralBoundary gml:id="CadastralBoundary-01">
+      <cp:beginLifespanVersion>2000-01-01T00:00:00.0Z</cp:beginLifespanVersion>
+      <cp:endLifespanVersion>2001-01-01T00:00:00.0Z</cp:endLifespanVersion>
+      <cp:estimatedAccuracy uom="m">1</cp:estimatedAccuracy>
+      <cp:geometry>
+        <gml:Curve gml:id="CadastralBoundary-01-geom" srsName="urn:ogc:def:crs:EPSG::4326">
+          <gml:segments>
+            <gml:LineStringSegment>
+              <gml:posList>49 2 50 3</gml:posList>
+            </gml:LineStringSegment>
+          </gml:segments>
+        </gml:Curve>
+      </cp:geometry>
+      <cp:inspireId>
+        <base:Identifier>
+          <base:localId>CadastralBoundary-01-localId</base:localId>
+          <base:namespace>namespace</base:namespace>
+        </base:Identifier>
+      </cp:inspireId>
+      <cp:validFrom>2002-01-01T00:00:00.0Z</cp:validFrom>
+      <cp:validTo>2003-01-01T00:00:00.0Z</cp:validTo>
+      <cp:parcel xlink:type="simple" xlink:href="#Parcel.1" />
+      <cp:parcel xlink:type="simple" xlink:href="#Parcel.2" />
+    </cp:CadastralBoundary>
+  </gml:featureMember>
+  <gml:featureMember>
+    <cp:CadastralBoundary gml:id="CadastralBoundary-02">
+      <cp:beginLifespanVersion>2000-01-01T00:00:00.0Z</cp:beginLifespanVersion>
+      <cp:geometry>
+        <gml:Curve gml:id="CadastralBoundary-02-geom" srsName="urn:ogc:def:crs:EPSG::4326">
+          <gml:segments>
+            <gml:LineStringSegment>
+              <gml:posList>49 2 50 3</gml:posList>
+            </gml:LineStringSegment>
+          </gml:segments>
+        </gml:Curve>
+      </cp:geometry>
+      <cp:inspireId>
+        <base:Identifier>
+          <base:localId>CadastralBoundary-02-localId</base:localId>
+          <base:namespace>namespace</base:namespace>
+        </base:Identifier>
+      </cp:inspireId>
+      <cp:parcel />
+    </cp:CadastralBoundary>
+  </gml:featureMember>
+</gml:FeatureCollection>

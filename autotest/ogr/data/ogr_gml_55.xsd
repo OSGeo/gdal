@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:ogr="http://ogr.maptools.org/"
+            xmlns:ogc="http://www.opengis.net/ogc"
+            xmlns:gml="http://www.opengis.net/gml"
+            targetNamespace="http://ogr.maptools.org/" elementFormDefault="qualified">
+
+    <xs:import namespace="http://www.opengis.net/gml" schemaLocation="http://schemas.opengis.net/gml/2.1.2/feature.xsd"/>
+
+    <xs:include schemaLocation="ogr_gml_55_included1.xsd"/>
+
+    <xs:element name="FeatureCollection" type="ogr:FeatureCollectionType" substitutionGroup="gml:_FeatureCollection"/>
+    <xs:complexType name="FeatureCollectionType">
+        <xs:complexContent>
+            <xs:extension base="gml:AbstractFeatureCollectionType">
+                <xs:attribute name="lockId" type="xs:string" use="optional"/>
+                <xs:attribute name="scope" type="xs:string" use="optional"/>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:element name="foo" type="ogr:fooType" substitutionGroup="gml:_Feature"/>
+
+    <xs:complexType name="fooType">
+        <xs:complexContent>
+            <xs:extension base="gml:AbstractFeatureType">
+                <xs:sequence>
+                    <xs:element name="geometryProperty" type="gml:GeometryPropertyType" minOccurs="0"/>
+                    <xs:element name="myAttr" type="ogr:myType"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+</xs:schema>

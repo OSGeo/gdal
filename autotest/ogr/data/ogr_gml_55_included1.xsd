@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:ogr="http://ogr.maptools.org/"
+            xmlns:ogc="http://www.opengis.net/ogc"
+            xmlns:gml="http://www.opengis.net/gml"
+            targetNamespace="http://ogr.maptools.org/" elementFormDefault="qualified">
+  <xs:include schemaLocation="ogr_gml_55_included2.xsd"/>
+</xs:schema>
