@@ -31,6 +31,9 @@
 #include "cpl_error.h"
 #include "cpl_conv.h"
 #include "ogr_core.h"
+#include "cpl_string.h"
+#include "cpl_http.h"
+#include <set>
 
 /************************************************************************/
 /*                              StripNS()                               */
@@ -202,6 +205,8 @@ static GMLPropertyType GetListTypeFromSingleType(GMLPropertyType eType)
         return GMLPT_IntegerList;
     if( eType == GMLPT_Real )
         return GMLPT_RealList;
+    if( eType == GMLPT_FeatureProperty )
+        return GMLPT_FeaturePropertyList;
     return eType;
 }
 
@@ -348,6 +353,10 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                      EQUAL(pszStrippedNSType, "integer") ||
                      EQUAL(pszStrippedNSType, "long"))
                 gmlType = GMLPT_Integer;
+            else if (strcmp(pszType, "gml:FeaturePropertyType") == 0 )
+            {
+                gmlType = GMLPT_FeatureProperty;
+            }
             else if (strncmp(pszType, "gml:", 4) == 0)
             {
                 const AssocNameType* psIter = apsPropertyTypes;
@@ -355,19 +364,10 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                 {
                     if (strncmp(pszType + 4, psIter->pszName, strlen(psIter->pszName)) == 0)
                     {
-                        if (poClass->GetGeometryAttributeIndex() != -1)
-                        {
-                            CPLDebug("GML", "Geometry field already found ! Ignoring the following ones");
-                        }
-                        else
-                        {
-                            poClass->SetGeometryElement(pszElementName);
-                            poClass->SetGeometryType(psIter->eType);
-                            poClass->SetGeometryAttributeIndex( nAttributeIndex );
+                        poClass->AddGeometryProperty( new GMLGeometryPropertyDefn( pszElementName, psIter->eType, nAttributeIndex ) );
 
-                            nAttributeIndex ++;
-                        }
-                        
+                        nAttributeIndex ++;
+
                         break;
                     }
 
@@ -382,7 +382,7 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                     return NULL;
                 }
 
-                if (poClass->GetGeometryAttributeIndex() == -1)
+                if (poClass->GetGeometryPropertyCount() == 0)
                     bGotUnrecognizedType = TRUE;
 
                 continue;
@@ -392,9 +392,7 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
             else if (strcmp(pszType, "G:Point_MultiPointPropertyType") == 0 ||
                      strcmp(pszType, "gmgml:Point_MultiPointPropertyType") == 0)
             {
-                poClass->SetGeometryElement(pszElementName);
-                poClass->SetGeometryType(wkbMultiPoint);
-                poClass->SetGeometryAttributeIndex( nAttributeIndex );
+                poClass->AddGeometryProperty( new GMLGeometryPropertyDefn( pszElementName, wkbMultiPoint, nAttributeIndex ) );
 
                 nAttributeIndex ++;
                 continue;
@@ -402,9 +400,7 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
             else if (strcmp(pszType, "G:LineString_MultiLineStringPropertyType") == 0 ||
                      strcmp(pszType, "gmgml:LineString_MultiLineStringPropertyType") == 0)
             {
-                poClass->SetGeometryElement(pszElementName);
-                poClass->SetGeometryType(wkbMultiLineString);
-                poClass->SetGeometryAttributeIndex( nAttributeIndex );
+                poClass->AddGeometryProperty( new GMLGeometryPropertyDefn( pszElementName, wkbMultiLineString, nAttributeIndex ) );
 
                 nAttributeIndex ++;
                 continue;
@@ -413,9 +409,7 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                      strcmp(pszType, "gmgml:Polygon_MultiPolygonPropertyType") == 0 ||
                      strcmp(pszType, "gmgml:Polygon_Surface_MultiSurface_CompositeSurfacePropertyType") == 0)
             {
-                poClass->SetGeometryElement(pszElementName);
-                poClass->SetGeometryType(wkbMultiPolygon);
-                poClass->SetGeometryAttributeIndex( nAttributeIndex );
+                poClass->AddGeometryProperty( new GMLGeometryPropertyDefn( pszElementName, wkbMultiPolygon, nAttributeIndex ) );
 
                 nAttributeIndex ++;
                 continue;
@@ -424,9 +418,7 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
             /* ERDAS Apollo stuff (like in http://apollo.erdas.com/erdas-apollo/vector/WORLDWIDE?SERVICE=WFS&VERSION=1.0.0&REQUEST=DescribeFeatureType&TYPENAME=wfs:cntry98) */
             else if (strcmp(pszType, "wfs:MixedPolygonPropertyType") == 0)
             {
-                poClass->SetGeometryElement(pszElementName);
-                poClass->SetGeometryType(wkbMultiPolygon);
-                poClass->SetGeometryAttributeIndex( nAttributeIndex );
+                poClass->AddGeometryProperty( new GMLGeometryPropertyDefn( pszElementName, wkbMultiPolygon, nAttributeIndex ) );
 
                 nAttributeIndex ++;
                 continue;
@@ -446,14 +438,18 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
 
             if (pszElementName == NULL)
                 pszElementName = "unnamed";
+            const char* pszPropertyName = pszElementName;
+            if( gmlType == GMLPT_FeatureProperty )
+            {
+                pszPropertyName = CPLSPrintf("%s_href", pszElementName);
+            }
             GMLPropertyDefn *poProp = new GMLPropertyDefn(
-                pszElementName, pszElementName );
+                pszPropertyName, pszElementName );
 
             if( pszMaxOccurs != NULL && strcmp(pszMaxOccurs, "unbounded") == 0 )
                 gmlType = GetListTypeFromSingleType(gmlType);
 
             poProp->SetType( gmlType );
-            poProp->SetAttributeIndex( nAttributeIndex );
             poProp->SetWidth( nWidth );
             poProp->SetPrecision( nPrecision );
 
@@ -479,15 +475,15 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                 {
                     if (strncmp(pszRef + 4, psIter->pszName, strlen(psIter->pszName)) == 0)
                     {
-                        if (poClass->GetGeometryAttributeIndex() != -1)
+                        if (poClass->GetGeometryPropertyCount() > 0)
                         {
                             OGRwkbGeometryType eNewType = psIter->eType;
-                            OGRwkbGeometryType eOldType = (OGRwkbGeometryType)poClass->GetGeometryType();
+                            OGRwkbGeometryType eOldType = (OGRwkbGeometryType)poClass->GetGeometryProperty(0)->GetType();
                             if ((eNewType == wkbMultiPoint && eOldType == wkbPoint) ||
                                 (eNewType == wkbMultiLineString && eOldType == wkbLineString) ||
                                 (eNewType == wkbMultiPolygon && eOldType == wkbPolygon))
                             {
-                                poClass->SetGeometryType(eNewType);
+                                poClass->GetGeometryProperty(0)->SetType(eNewType);
                             }
                             else
                             {
@@ -496,9 +492,7 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                         }
                         else
                         {
-                            poClass->SetGeometryElement(pszElementName);
-                            poClass->SetGeometryType(psIter->eType);
-                            poClass->SetGeometryAttributeIndex( nAttributeIndex );
+                            poClass->AddGeometryProperty( new GMLGeometryPropertyDefn( pszElementName, psIter->eType, nAttributeIndex ) );
 
                             nAttributeIndex ++;
                         }
@@ -517,7 +511,7 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                     return NULL;
                 }
 
-                if (poClass->GetGeometryAttributeIndex() == -1)
+                if (poClass->GetGeometryPropertyCount() == 0)
                     bGotUnrecognizedType = TRUE;
 
                 continue;
@@ -542,9 +536,7 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                 CheckMinMaxOccursCardinality(psComplexTypeSequence) &&
                 strcmp(CPLGetXMLValue( psComplexTypeSequenceElement, "ref", "" ), "gml:_Geometry") == 0 )
             {
-                poClass->SetGeometryElement(pszElementName);
-                poClass->SetGeometryType(wkbUnknown);
-                poClass->SetGeometryAttributeIndex( nAttributeIndex );
+                poClass->AddGeometryProperty( new GMLGeometryPropertyDefn( pszElementName, wkbUnknown, nAttributeIndex ) );
 
                 nAttributeIndex ++;
 
@@ -573,7 +565,6 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
         poProp->SetType( eType );
         poProp->SetWidth( nWidth );
         poProp->SetPrecision( nPrecision );
-        poProp->SetAttributeIndex( nAttributeIndex );
 
         if (poClass->AddProperty( poProp ) < 0)
             delete poProp;
@@ -581,13 +572,12 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
             nAttributeIndex ++;
     }
 
-    /* Only report wkbNone if we didn't find a known geometry type */
-    /* and there were not any unknown types (in case this unknown type */
-    /* would be a geometry type) */
-    if (poClass->GetGeometryAttributeIndex() == -1 &&
-        !bGotUnrecognizedType)
+    /* If we have found an unknown types, let's be on the side of caution and */
+    /* create a geometry field */
+    if( poClass->GetGeometryPropertyCount() == 0 &&
+        bGotUnrecognizedType )
     {
-        poClass->SetGeometryType(wkbNone);
+        poClass->AddGeometryProperty( new GMLGeometryPropertyDefn( "", wkbUnknown ) );
     }
 
 /* -------------------------------------------------------------------- */
@@ -596,6 +586,154 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
     poClass->SetSchemaLocked( TRUE );
 
     return poClass;
+}
+
+/************************************************************************/
+/*                         GMLParseXMLFile()                            */
+/************************************************************************/
+
+static
+CPLXMLNode* GMLParseXMLFile(const char* pszFilename)
+{
+    if( strncmp(pszFilename, "http://", 7) == 0 ||
+        strncmp(pszFilename, "https://", 8) == 0 )
+    {
+        CPLXMLNode* psRet = NULL;
+        CPLHTTPResult* psResult = CPLHTTPFetch( pszFilename, NULL );
+        if( psResult != NULL )
+        {
+            if( psResult->pabyData != NULL )
+            {
+                psRet = CPLParseXMLString( (const char*) psResult->pabyData );
+            }
+            CPLHTTPDestroyResult(psResult);
+        }
+        return psRet;
+    }
+    else
+    {
+        return CPLParseXMLFile(pszFilename);
+    }
+}
+
+/************************************************************************/
+/*                       CPLGetFirstChildNode()                         */
+/************************************************************************/
+
+static
+CPLXMLNode* CPLGetFirstChildNode( CPLXMLNode* psNode )
+{
+    if( psNode == NULL )
+        return NULL;
+    CPLXMLNode* psIter = psNode->psChild;
+    while( psIter != NULL )
+    {
+        if( psIter->eType == CXT_Element )
+            return psIter;
+        psIter = psIter->psNext;
+    }
+    return NULL;
+}
+
+/************************************************************************/
+/*                          CPLGetLastNode()                            */
+/************************************************************************/
+
+static
+CPLXMLNode* CPLGetLastNode( CPLXMLNode* psNode )
+{
+    if( psNode == NULL )
+        return NULL;
+    CPLXMLNode* psIter = psNode;
+    while( psIter->psNext != NULL )
+        psIter = psIter->psNext;
+    return psIter;
+}
+
+/************************************************************************/
+/*                       CPLXMLSchemaResolveInclude()                   */
+/************************************************************************/
+
+static
+void CPLXMLSchemaResolveInclude( const char* pszMainSchemaLocation,
+                                 CPLXMLNode *psSchemaNode )
+{
+    std::set<CPLString> osAlreadyIncluded;
+
+    int bTryAgain;
+    do
+    {
+        CPLXMLNode *psThis;
+        CPLXMLNode *psLast = NULL;
+        bTryAgain = FALSE;
+
+        for( psThis = psSchemaNode->psChild; 
+            psThis != NULL; psThis = psThis->psNext )
+        {
+            if( psThis->eType == CXT_Element &&
+                EQUAL(psThis->pszValue,"include") )
+            {
+                const char* pszSchemaLocation = 
+                        CPLGetXMLValue(psThis, "schemaLocation", NULL);
+                if( pszSchemaLocation != NULL &&
+                    osAlreadyIncluded.count( pszSchemaLocation) == 0 )
+                {
+                    osAlreadyIncluded.insert( pszSchemaLocation );
+
+                    if( strncmp(pszSchemaLocation, "http://", 7) != 0 &&
+                        strncmp(pszSchemaLocation, "https://", 8) != 0 &&
+                        CPLIsFilenameRelative(pszSchemaLocation ) )
+                    {
+                        pszSchemaLocation = CPLFormFilename(
+                            CPLGetPath(pszMainSchemaLocation), pszSchemaLocation, NULL );
+                    }
+
+                    CPLXMLNode *psIncludedXSDTree =
+                                GMLParseXMLFile( pszSchemaLocation );
+                    if( psIncludedXSDTree != NULL )
+                    {
+                        CPLStripXMLNamespace( psIncludedXSDTree, NULL, TRUE );
+                        CPLXMLNode *psIncludedSchemaNode =
+                                CPLGetXMLNode( psIncludedXSDTree, "=schema" );
+                        if( psIncludedSchemaNode != NULL )
+                        {
+                            /* Substitute de <include> node by its content */
+                            CPLXMLNode* psFirstChildElement =
+                                CPLGetFirstChildNode(psIncludedSchemaNode);
+                            if( psFirstChildElement != NULL )
+                            {
+                                CPLXMLNode* psCopy = CPLCloneXMLTree(psFirstChildElement);
+                                if( psLast != NULL )
+                                    psLast->psNext = psCopy;
+                                else
+                                    psSchemaNode->psChild = psCopy;
+                                CPLXMLNode* psNext = psThis->psNext;
+                                psThis->psNext = NULL;
+                                CPLDestroyXMLNode(psThis);
+                                psThis = CPLGetLastNode(psCopy);
+                                psThis->psNext = psNext;
+
+                                /* In case the included schema also contains */
+                                /* includes */
+                                bTryAgain = TRUE;
+                            }
+
+                        }
+                        CPLDestroyXMLNode( psIncludedXSDTree );
+                    }
+                }
+            }
+
+            psLast = psThis;
+        }
+    } while( bTryAgain );
+
+    const char* pszSchemaOutputName =
+        CPLGetConfigOption("GML_SCHEMA_OUTPUT_NAME", NULL);
+    if( pszSchemaOutputName != NULL )
+    {
+        CPLSerializeXMLTreeToFile( psSchemaNode, pszSchemaOutputName );
+    }
 }
 
 /************************************************************************/
@@ -612,7 +750,7 @@ int GMLParseXSD( const char *pszFile,
 /* -------------------------------------------------------------------- */
 /*      Load the raw XML file.                                          */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode *psXSDTree = CPLParseXMLFile( pszFile );
+    CPLXMLNode *psXSDTree = GMLParseXMLFile( pszFile );
     
     if( psXSDTree == NULL )
         return FALSE;
@@ -631,6 +769,13 @@ int GMLParseXSD( const char *pszFile,
         CPLDestroyXMLNode( psXSDTree );
         return FALSE;
     }
+
+/* ==================================================================== */
+/*      Process each include directive.                                 */
+/* ==================================================================== */
+    CPLXMLSchemaResolveInclude( pszFile, psSchemaNode );
+
+    //CPLSerializeXMLTreeToFile(psSchemaNode, "/vsistdout/");
 
 /* ==================================================================== */
 /*      Process each feature class definition.                          */
@@ -700,6 +845,17 @@ int GMLParseXSD( const char *pszFile,
             /* without any _Type or Type suffix */
             /* e.g. : http://apollo.erdas.com/erdas-apollo/vector/Cherokee?SERVICE=WFS&VERSION=1.0.0&REQUEST=DescribeFeatureType&TYPENAME=iwfs:Air */
         }
+
+        /* <element name="RekisteriyksikonPalstanTietoja" type="ktjkiiwfs:PalstanTietojaType" substitutionGroup="gml:_Feature" /> */
+        else if(  strlen(pszType) > 4 &&
+                  strcmp(pszType + strlen(pszType) - 4, "Type") == 0 &&
+                  strlen(pszName) > strlen(pszType) - 4 &&
+                  strncmp(pszName + strlen(pszName) - (strlen(pszType) - 4),
+                          pszType,
+                          strlen(pszType) - 4) == 0 )
+        {
+        }
+
         else if( !EQUALN(pszType,pszName,strlen(pszName))
             || !(EQUAL(pszType+strlen(pszName),"_Type") ||
                     EQUAL(pszType+strlen(pszName),"Type")) )

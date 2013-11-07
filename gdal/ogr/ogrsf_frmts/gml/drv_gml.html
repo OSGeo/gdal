@@ -103,20 +103,31 @@ German AAA GML Exchange Format (NAS/ALKIS).<p>
 
 Since OGR 1.8.0, the GML driver has partial support for reading AIXM or CityGML files.<p>
 
-Since OGR 2.0, the GML driver supports reading Finnish National Land Survey GML files (a.k.a MTK GML)
-for topographic data.<p>
+Since OGR 2.0, the GML driver supports reading :
+<ul>
+ <li><a href="http://xml.nls.fi/XML/Schema/Maastotietojarjestelma/MTK/201202/Maastotiedot.xsd">Finnish National Land Survey GML files (a.k.a MTK GML) for topographic data.</a></li>
+ <li><a href="http://xml.nls.fi/XML/Schema/sovellus/ktjkii/modules/kiinteistotietojen_kyselypalvelu_WFS/Asiakasdokumentaatio/ktjkiiwfs/2010/02/">Finnish National Land Survey GML files for cadastral data</a>.</li>
+ <li><a href="http://inspire.ec.europa.eu/schemas/cp/3.0/CadastralParcels.xsd">Cadastral data in Inspire GML schemas</a>.</li>
+</ul>
 
 <h2>Geometry reading</h2>
 
 When reading a feature, the driver will by default only take into account the
 last recognized GML geometry found (in case they are multiples) in the XML subtree describing the feature.<p>
 
+But, starting with OGR 2.0, if the .xsd schema is understood by the XSD parser and declares
+several geometry fields, or the .gfs file declares several geometry fields, multiple geometry
+fields will be reported by the GML driver according to
+<a href="http://trac.osgeo.org/gdal/wiki/rfc41_multiple_geometry_fields">RFC 41</a>.<p>
+
 Starting with OGR 1.10, in case of multiple geometry occurences, if a geometry is in a &lt;geometry&gt; element,
 this will be the one selected. This will make default behaviour consistant with Inspire objects.<p>
+
 
 Starting with OGR 1.8.0, the user can change the .gfs file to select the appropriate
 geometry by specifying its path with the &lt;GeometryElementPath&gt; element. See the
 description of the .gfs syntax below.<p>
+
 
 <!-- Voluntary commented : a bit experimental for now and perhaps a better solution
      will emerge later -->
@@ -446,6 +457,13 @@ specify the wished field/geometry element that is a nested XML element. Nested f
  as specifying &lt;GeometryElementPath&gt; If GeometryElementPath is not specified, the
 GML driver will use the last recognized geometry element.<p>
 
+The &lt;GeometryType&gt; element can be specified to force the geometry type.
+Accepted values are : 0 (any geometry type), 1 (point), 2 (linestring), 3 (polygon),
+4 (multipoint), 5 (multilinestring), 6 (multipolygon), 7 (geometrycollection).<p>
+
+Starting with OGR 2.0, the &lt;GeometryElementPath&gt; and &lt;GeometryType&gt; can be
+specified as many times as there are geometry fields in the GML file.<p>
+
 The output of <i>ogrinfo test.gml -ro -al</i> is:
 <pre>
 Layer name: LAYER
@@ -463,7 +481,235 @@ OGRFeature(LAYER):0
   POINT (3 50)
 </pre>
 
-<h2>Example</h2>
+<h2>Advanced .gfs syntax (OGR &gt;= 2.0)</h2>
+
+<h3>Getting XML attributes as OGR fields</h3>
+
+The element@attribute syntax can be used in the &lt;ElementPath&gt;
+to specify that the value of attribute 'attribute' of element 'element' must
+be fetched.<p>
+
+Let's consider the following test.gml file :
+
+<pre>
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;gml:FeatureCollection xmlns:gml="http://www.opengis.net/gml"&gt;
+  &lt;gml:featureMember&gt;
+    &lt;LAYER&gt;
+      &lt;length unit="m"&gt;5&lt;/length&gt;
+    &lt;/LAYER&gt;
+  &lt;/gml:featureMember&gt;
+&lt;/gml:FeatureCollection&gt;
+</pre>
+
+and the following associated .gfs file.
+
+<pre>
+&lt;GMLFeatureClassList&gt;
+  &lt;GMLFeatureClass&gt;
+    &lt;Name&gt;LAYER&lt;/Name&gt;
+    &lt;ElementPath&gt;LAYER&lt;/ElementPath&gt;
+    &lt;GeometryType&gt;100&lt;/GeometryType&gt; &lt;!-- no geometry --&gt;
+    &lt;PropertyDefn&gt;
+      &lt;Name&gt;length&lt;/Name&gt;
+      &lt;ElementPath&gt;length&lt;/ElementPath&gt;
+      &lt;Type&gt;Real&lt;/Type&gt;
+    &lt;/PropertyDefn&gt;
+    &lt;PropertyDefn&gt;
+      &lt;Name&gt;length_unit&lt;/Name&gt;
+      &lt;ElementPath&gt;length@unit&lt;/ElementPath&gt;
+      &lt;Type&gt;String&lt;/Type&gt;
+    &lt;/PropertyDefn&gt;
+  &lt;/GMLFeatureClass&gt;
+&lt;/GMLFeatureClassList&gt;
+</pre>
+
+The output of <i>ogrinfo test.gml -ro -al</i> is:
+
+<pre>
+Layer name: LAYER
+Geometry: None
+Feature Count: 1
+Layer SRS WKT:
+(unknown)
+gml_id: String (0.0)
+length: Real (0.0)
+length_unit: String (0.0)
+OGRFeature(LAYER):0
+  gml_id (String) = (null)
+  length (Real) = 5
+  length_unit (String) = m
+</pre>
+
+<h3>Using conditions on XML attributes</h3>
+
+A &lt;Condition&gt; element can be specified as a child element of a
+&lt;PropertyDefn&gt;. The content of the Condition follows a minimalistic
+XPath syntax. It must be of the form @attrname[=|!=]'attrvalue' [and|or other_cond]*.
+Note that 'and' and 'or' operators cannot be mixed (their precedence is not
+taken into account).<p>
+
+Several &lt;PropertyDefn&gt; can be defined with the same &lt;ElementPath&gt;, but with
+&lt;Condition&gt; that must be mutually exclusive.<p>
+
+Let's consider the following testcondition.gml file :
+
+<pre>
+&lt;?xml version="1.0" encoding="utf-8" ?&gt;
+&lt;ogr:FeatureCollection
+     xmlns:ogr="http://ogr.maptools.org/"
+     xmlns:gml="http://www.opengis.net/gml"&gt;
+  &lt;gml:featureMember&gt;
+    &lt;ogr:testcondition fid="testcondition.0"&gt;
+      &lt;ogr:name lang="en"&gt;English name&lt;/ogr:name&gt;
+      &lt;ogr:name lang="fr"&gt;Nom francais&lt;/ogr:name&gt;
+      &lt;ogr:name lang="de"&gt;Deutsche name&lt;/ogr:name&gt;
+    &lt;/ogr:testcondition&gt;
+  &lt;/gml:featureMember&gt;
+&lt;/ogr:FeatureCollection&gt;
+</pre>
+
+and the following associated .gfs file.
+
+<pre>
+&lt;GMLFeatureClassList&gt;
+  &lt;GMLFeatureClass&gt;
+    &lt;Name&gt;testcondition&lt;/Name&gt;
+    &lt;ElementPath&gt;testcondition&lt;/ElementPath&gt;
+    &lt;GeometryType&gt;100&lt;/GeometryType&gt;
+    &lt;PropertyDefn&gt;
+      &lt;Name&gt;name_en&lt;/Name&gt;
+      &lt;ElementPath&gt;name&lt;/ElementPath&gt;
+      &lt;Condition&gt;@lang='en'&lt;/Condition&gt;
+      &lt;Type&gt;String&lt;/Type&gt;
+    &lt;/PropertyDefn&gt;
+    &lt;PropertyDefn&gt;
+      &lt;Name&gt;name_fr&lt;/Name&gt;
+      &lt;ElementPath&gt;name&lt;/ElementPath&gt;
+      &lt;Condition&gt;@lang='fr'&lt;/Condition&gt;
+      &lt;Type&gt;String&lt;/Type&gt;
+    &lt;/PropertyDefn&gt;
+    &lt;PropertyDefn&gt;
+      &lt;Name&gt;name_others_lang&lt;/Name&gt;
+      &lt;ElementPath&gt;name@lang&lt;/ElementPath&gt;
+      &lt;Condition&gt;@lang!='en' and @lang!='fr'&lt;/Condition&gt;
+      &lt;Type&gt;StringList&lt;/Type&gt;
+    &lt;/PropertyDefn&gt;
+    &lt;PropertyDefn&gt;
+      &lt;Name&gt;name_others&lt;/Name&gt;
+      &lt;ElementPath&gt;name&lt;/ElementPath&gt;
+      &lt;Condition&gt;@lang!='en' and @lang!='fr'&lt;/Condition&gt;
+      &lt;Type&gt;StringList&lt;/Type&gt;
+    &lt;/PropertyDefn&gt;
+  &lt;/GMLFeatureClass&gt;
+&lt;/GMLFeatureClassList&gt;
+</pre>
+
+The output of <i>ogrinfo testcondition.gml -ro -al</i> is:
+<pre>
+Layer name: testcondition
+Geometry: None
+Feature Count: 1
+Layer SRS WKT:
+(unknown)
+fid: String (0.0)
+name_en: String (0.0)
+name_fr: String (0.0)
+name_others_lang: StringList (0.0)
+name_others: StringList (0.0)
+OGRFeature(testcondition):0
+  fid (String) = testcondition.0
+  name_en (String) = English name
+  name_fr (String) = Nom francais
+  name_others_lang (StringList) = (1:de)
+  name_others (StringList) = (1:Deutsche name)
+</pre>
+
+<h2>Registry for GML application schemas (OGR &gt;= 2.0)</h2>
+
+The "data" directory of the GDAL installation contains a "gml_registry.xml"
+file that links feature types of GML application schemas to .xsd or .gfs files
+that contain their definition. This is used in case no valid .gfs or .xsd file
+is found next to the GML file.<p>
+
+An alternate location for the registry file can be defined by setting its full
+pathname to the GML_REGISTRY configuration option.<p>
+
+An example of such a file is :
+<pre>
+&lt;gml_registry&gt;
+    &lt;!-- Finnish National Land Survey cadastral data --&gt;
+    &lt;namespace prefix="ktjkiiwfs" uri="http://xml.nls.fi/ktjkiiwfs/2010/02" useGlobalSRSName="true"&gt;
+        &lt;featureType elementName="KiinteistorajanSijaintitiedot"
+                 schemaLocation="http://xml.nls.fi/XML/Schema/sovellus/ktjkii/modules/kiinteistotietojen_kyselypalvelu_WFS/Asiakasdokumentaatio/ktjkiiwfs/2010/02/KiinteistorajanSijaintitiedot.xsd"/&gt;
+        &lt;featureType elementName="PalstanTunnuspisteenSijaintitiedot"
+                 schemaLocation="http://xml.nls.fi/XML/Schema/sovellus/ktjkii/modules/kiinteistotietojen_kyselypalvelu_WFS/Asiakasdokumentaatio/ktjkiiwfs/2010/02/palstanTunnuspisteenSijaintitiedot.xsd"/&gt;
+        &lt;featureType elementName="RekisteriyksikonTietoja"
+                 schemaLocation="http://xml.nls.fi/XML/Schema/sovellus/ktjkii/modules/kiinteistotietojen_kyselypalvelu_WFS/Asiakasdokumentaatio/ktjkiiwfs/2010/02/RekisteriyksikonTietoja.xsd"/&gt;
+        &lt;featureType elementName="PalstanTietoja"
+                 schemaLocation="http://xml.nls.fi/XML/Schema/sovellus/ktjkii/modules/kiinteistotietojen_kyselypalvelu_WFS/Asiakasdokumentaatio/ktjkiiwfs/2010/02/PalstanTietoja.xsd"/&gt;
+    &lt;/namespace&gt;
+
+    &lt;!-- Inspire CadastralParcels schema --&gt;
+    &lt;namespace prefix="cp" uri="urn:x-inspire:specification:gmlas:CadastralParcels:3.0" useGlobalSRSName="true"&gt;
+        &lt;featureType elementName="BasicPropertyUnit"
+                     gfsSchemaLocation="inspire_cp_BasicPropertyUnit.gfs"/&gt;
+        &lt;featureType elementName="CadastralBoundary"
+                     gfsSchemaLocation="inspire_cp_CadastralBoundary.gfs"/&gt;
+        &lt;featureType elementName="CadastralParcel"
+                     gfsSchemaLocation="inspire_cp_CadastralParcel.gfs"/&gt;
+        &lt;featureType elementName="CadastralZoning"
+                     gfsSchemaLocation="inspire_cp_CadastralZoning.gfs"/&gt;
+    &lt;/namespace&gt;
+
+&lt;/gml_registry&gt;
+</pre>
+
+XML schema definition (.xsd) files are pointed by the schemaLocation attribute,
+whereas OGR .gfs files are pointed by the gfsSchemaLocation attribute. In both
+cases, the filename can be a URL (http://, https://), an absolute filename,
+or a relative filename (relative to the location of gml_registry.xml).<p>
+
+The schema is used if and only if the namespace prefix and URI are found in the
+first bytes of the GML file (e.g. <i>xmlns:ktjkiiwfs="http://xml.nls.fi/ktjkiiwfs/2010/02"</i>),
+and that the feature type is also detected in the first bytes of the GML file
+(e.g. <i>ktjkiiwfs:KiinteistorajanSijaintitiedot</i>)<p>
+
+<h2>Building junction tables</h2>
+
+The <a href="http://svn.osgeo.org/gdal/trunk/gdal/swig/python/samples/ogr_build_junction_table.py">ogr_build_junction_table.py</a>
+script can be used to build a <a href="http://en.wikipedia.org/wiki/Junction_table">junction table</a> from
+OGR layers that contain "XXXX_href" fields.
+
+Let's considering the following output of a GML file with links to other features :
+
+<pre>
+OGRFeature(myFeature):1
+  gml_id (String) = myFeature.1
+  [...]
+  otherFeature_href (StringList) = (2:#otherFeature.10,#otherFeature.20)
+
+OGRFeature(myFeature):2
+  gml_id (String) = myFeature.2
+  [...]
+  otherFeature_href (StringList) = (2:#otherFeature.30,#otherFeature.10)
+</pre>
+
+After running <pre>ogr2ogr -f PG PG:dbname=mydb my.gml</pre> to
+import it into PostGIS and <pre>python ogr_build_junction_table.py PG:dbname=mydb</pre>,
+a <i>myfeature_otherfeature</i> table will be created and will
+contain the following content :<p>
+
+<table border="1">
+<tr><th>myfeature_gml_id</th><th>otherfeature_gml_id</th></tr>
+<tr><td>myFeature.1</td><td>otherFeature.10</td></tr>
+<tr><td>myFeature.1</td><td>otherFeature.20</td></tr>
+<tr><td>myFeature.2</td><td>otherFeature.30</td></tr>
+<tr><td>myFeature.2</td><td>otherFeature.10</td></tr>
+</table>
+
+
+<h2>Examples</h2>
 
 The ogr2ogr utility can be used to dump the results of a Oracle query to
 GML:

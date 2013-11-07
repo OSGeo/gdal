@@ -1,0 +1,26 @@
+<gml_registry>
+    <!-- Finnish National Land Survey cadastral data -->
+    <namespace prefix="ktjkiiwfs" uri="http://xml.nls.fi/ktjkiiwfs/2010/02" useGlobalSRSName="true">
+        <featureType elementName="KiinteistorajanSijaintitiedot"
+                 schemaLocation="http://xml.nls.fi/XML/Schema/sovellus/ktjkii/modules/kiinteistotietojen_kyselypalvelu_WFS/Asiakasdokumentaatio/ktjkiiwfs/2010/02/KiinteistorajanSijaintitiedot.xsd"/>
+        <featureType elementName="PalstanTunnuspisteenSijaintitiedot"
+                 schemaLocation="http://xml.nls.fi/XML/Schema/sovellus/ktjkii/modules/kiinteistotietojen_kyselypalvelu_WFS/Asiakasdokumentaatio/ktjkiiwfs/2010/02/palstanTunnuspisteenSijaintitiedot.xsd"/>
+        <featureType elementName="RekisteriyksikonTietoja"
+                 schemaLocation="http://xml.nls.fi/XML/Schema/sovellus/ktjkii/modules/kiinteistotietojen_kyselypalvelu_WFS/Asiakasdokumentaatio/ktjkiiwfs/2010/02/RekisteriyksikonTietoja.xsd"/>
+        <featureType elementName="PalstanTietoja"
+                 schemaLocation="http://xml.nls.fi/XML/Schema/sovellus/ktjkii/modules/kiinteistotietojen_kyselypalvelu_WFS/Asiakasdokumentaatio/ktjkiiwfs/2010/02/PalstanTietoja.xsd"/>
+    </namespace>
+
+    <!-- Inspire CadastralParcels schema -->
+    <namespace prefix="cp" uri="urn:x-inspire:specification:gmlas:CadastralParcels:3.0" useGlobalSRSName="true">
+        <featureType elementName="BasicPropertyUnit"
+                     gfsSchemaLocation="inspire_cp_BasicPropertyUnit.gfs"/>
+        <featureType elementName="CadastralBoundary"
+                     gfsSchemaLocation="inspire_cp_CadastralBoundary.gfs"/>
+        <featureType elementName="CadastralParcel"
+                     gfsSchemaLocation="inspire_cp_CadastralParcel.gfs"/>
+        <featureType elementName="CadastralZoning"
+                     gfsSchemaLocation="inspire_cp_CadastralZoning.gfs"/>
+    </namespace>
+
+</gml_registry>

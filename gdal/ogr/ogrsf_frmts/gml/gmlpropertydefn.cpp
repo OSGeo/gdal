@@ -53,7 +53,7 @@ GMLPropertyDefn::GMLPropertyDefn( const char *pszName,
     m_eType = GMLPT_Untyped;
     m_nWidth = 0; 
     m_nPrecision = 0;
-    m_nIndex = -1;
+    m_pszCondition = NULL;
 }
 
 /************************************************************************/
@@ -65,6 +65,7 @@ GMLPropertyDefn::~GMLPropertyDefn()
 {
     CPLFree( m_pszName );
     CPLFree( m_pszSrcElement );
+    CPLFree( m_pszCondition );
 }
 
 /************************************************************************/
@@ -85,6 +86,16 @@ void GMLPropertyDefn::SetSrcElement( const char *pszSrcElement )
         m_nSrcElementLen = 0;
         m_pszSrcElement = NULL;
     }
+}
+
+/************************************************************************/
+/*                           SetCondition()                             */
+/************************************************************************/
+
+void GMLPropertyDefn::SetCondition( const char *pszCondition )
+{
+    CPLFree( m_pszCondition );
+    m_pszCondition = ( pszCondition != NULL ) ? CPLStrdup(pszCondition) : NULL;
 }
 
 /************************************************************************/
@@ -179,4 +190,26 @@ void GMLPropertyDefn::AnalysePropertyValue( const GMLProperty* psGMLProperty,
             m_eType = GMLPT_RealList;
         }
     }
+}
+
+/************************************************************************/
+/*                       GMLGeometryPropertyDefn                        */
+/************************************************************************/
+
+GMLGeometryPropertyDefn::GMLGeometryPropertyDefn( const char *pszName,
+                                                  int nType,
+                                                  int nAttributeIndex )
+{
+    m_pszSrcElement = CPLStrdup(pszName);
+    m_nGeometryType = nType;
+    m_nAttributeIndex = nAttributeIndex;
+}
+
+/************************************************************************/
+/*                       ~GMLGeometryPropertyDefn                       */
+/************************************************************************/
+
+GMLGeometryPropertyDefn::~GMLGeometryPropertyDefn()
+{
+    CPLFree(m_pszSrcElement);
 }

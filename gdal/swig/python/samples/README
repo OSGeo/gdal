@@ -102,6 +102,9 @@ ogr_dispatch.py         Dispatch features into layers according to the value of
 
 wcs_virtds_params.py    Generates MapServer WCS layer definition from a tileindex with mixed SRS
 
+ogr_build_junction_table.py Create junction tables for layers coming from GML datasources
+                            that reference other objects in _href fields
+
 ------------------------------------------------------------------------------
 Ports of .c/.cpp utilities
 ------------------------------------------------------------------------------
