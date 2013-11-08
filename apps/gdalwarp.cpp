@@ -1487,7 +1487,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     CPLErrorReset();
     GDALFlushCache( hDstDS );
-    if( CPLGetLastErrorType() != CE_None )
+    if( CPLGetLastErrorType() == CE_Failure )
         bHasGotErr = TRUE;
     GDALClose( hDstDS );
     
