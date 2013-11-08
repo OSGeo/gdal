@@ -158,10 +158,7 @@ int OGRVFKLayer::GetFeatureCount(int bForce)
 {
     int nfeatures;
 
-    if(!bForce)
-        return -1;
-    
-    if (m_poFilterGeom || m_poAttrQuery)
+    if (m_poFilterGeom || m_poAttrQuery || bForce)
         nfeatures = OGRLayer::GetFeatureCount(bForce);
     else
         nfeatures = poDataBlock->GetFeatureCount();
