@@ -1023,21 +1023,32 @@ SHPComputeExtents( SHPObject * psObject )
     {
         psObject->dfXMin = psObject->dfXMax = psObject->padfX[0];
         psObject->dfYMin = psObject->dfYMax = psObject->padfY[0];
-        psObject->dfZMin = psObject->dfZMax = psObject->padfZ[0];
-        psObject->dfMMin = psObject->dfMMax = psObject->padfM[0];
+        psObject->dfZMin = psObject->dfZMax = psObject->padfZ ? psObject->padfZ[0] : 0.0;
+        psObject->dfMMin = psObject->dfMMax = psObject->padfM ? psObject->padfM[0] : 0.0;
     }
     
-    for( i = 0; i < psObject->nVertices; i++ )
+    for( i = 1; i < psObject->nVertices; i++ )
     {
         psObject->dfXMin = MIN(psObject->dfXMin, psObject->padfX[i]);
         psObject->dfYMin = MIN(psObject->dfYMin, psObject->padfY[i]);
-        psObject->dfZMin = MIN(psObject->dfZMin, psObject->padfZ[i]);
-        psObject->dfMMin = MIN(psObject->dfMMin, psObject->padfM[i]);
-
         psObject->dfXMax = MAX(psObject->dfXMax, psObject->padfX[i]);
         psObject->dfYMax = MAX(psObject->dfYMax, psObject->padfY[i]);
-        psObject->dfZMax = MAX(psObject->dfZMax, psObject->padfZ[i]);
-        psObject->dfMMax = MAX(psObject->dfMMax, psObject->padfM[i]);
+    }
+    if ( psObject->padfZ )
+    {
+        for( i = 1; i < psObject->nVertices; i++ )
+        {
+            psObject->dfZMin = MIN(psObject->dfZMin, psObject->padfZ[i]);
+            psObject->dfZMax = MAX(psObject->dfZMax, psObject->padfZ[i]);
+        }
+    }
+    if ( psObject->padfM )
+    {
+        for( i = 1; i < psObject->nVertices; i++ )
+        {
+            psObject->dfMMin = MIN(psObject->dfMMin, psObject->padfM[i]);
+            psObject->dfMMax = MAX(psObject->dfMMax, psObject->padfM[i]);
+        }
     }
 }
 
@@ -1547,8 +1558,8 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
         {
             psSHP->adBoundsMin[0] = psSHP->adBoundsMax[0] = psObject->padfX[0];
             psSHP->adBoundsMin[1] = psSHP->adBoundsMax[1] = psObject->padfY[0];
-            psSHP->adBoundsMin[2] = psSHP->adBoundsMax[2] = psObject->padfZ[0];
-            psSHP->adBoundsMin[3] = psSHP->adBoundsMax[3] = psObject->padfM[0];
+            psSHP->adBoundsMin[2] = psSHP->adBoundsMax[2] = psObject->padfZ ? psObject->padfZ[0] : 0.0;
+            psSHP->adBoundsMin[3] = psSHP->adBoundsMax[3] = psObject->padfM ? psObject->padfM[0] : 0.0;
         }
     }
 
@@ -1556,12 +1567,24 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
     {
         psSHP->adBoundsMin[0] = MIN(psSHP->adBoundsMin[0],psObject->padfX[i]);
         psSHP->adBoundsMin[1] = MIN(psSHP->adBoundsMin[1],psObject->padfY[i]);
-        psSHP->adBoundsMin[2] = MIN(psSHP->adBoundsMin[2],psObject->padfZ[i]);
-        psSHP->adBoundsMin[3] = MIN(psSHP->adBoundsMin[3],psObject->padfM[i]);
         psSHP->adBoundsMax[0] = MAX(psSHP->adBoundsMax[0],psObject->padfX[i]);
         psSHP->adBoundsMax[1] = MAX(psSHP->adBoundsMax[1],psObject->padfY[i]);
-        psSHP->adBoundsMax[2] = MAX(psSHP->adBoundsMax[2],psObject->padfZ[i]);
-        psSHP->adBoundsMax[3] = MAX(psSHP->adBoundsMax[3],psObject->padfM[i]);
+    }
+    if ( psObject->padfZ )
+    {
+        for( i = 0; i < psObject->nVertices; i++ )
+        {
+            psSHP->adBoundsMin[2] = MIN(psSHP->adBoundsMin[2],psObject->padfZ[i]);
+            psSHP->adBoundsMax[2] = MAX(psSHP->adBoundsMax[2],psObject->padfZ[i]);
+        }
+    }
+    if ( psObject->padfM )
+    {
+        for( i = 0; i < psObject->nVertices; i++ )
+        {
+            psSHP->adBoundsMin[3] = MIN(psSHP->adBoundsMin[3],psObject->padfM[i]);
+            psSHP->adBoundsMax[3] = MAX(psSHP->adBoundsMax[3],psObject->padfM[i]);
+        }
     }
 
     return( nShapeId  );
