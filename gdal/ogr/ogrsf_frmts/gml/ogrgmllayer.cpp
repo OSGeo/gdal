@@ -130,14 +130,47 @@ void OGRGMLLayer::ResetReading()
 }
 
 /************************************************************************/
+/*                     ConvertGeomToMultiIfNecessary()                  */
+/************************************************************************/
+
+OGRGeometry* OGRGMLLayer::ConvertGeomToMultiIfNecessary(OGRGeometry* poGeom)
+{
+    OGRwkbGeometryType eType = poGeom->getGeometryType();
+    OGRwkbGeometryType eLayerType = GetGeomType();
+    OGRGeometryCollection* poNewGeom = NULL;
+    if (eType == wkbPoint && eLayerType == wkbMultiPoint)
+    {
+        poNewGeom = new OGRMultiPoint();
+    }
+    else if (eType == wkbLineString && eLayerType == wkbMultiLineString)
+    {
+        poNewGeom = new OGRMultiLineString();
+    }
+    else if (eType == wkbPolygon && eLayerType == wkbMultiPolygon)
+    {
+        poNewGeom = new OGRMultiPolygon();
+    }
+
+    if( poNewGeom != NULL )
+    {
+        OGRSpatialReference* poGeomSRS = poGeom->getSpatialReference();
+        poNewGeom->addGeometryDirectly(poGeom);
+        if( poGeomSRS != NULL )
+            poNewGeom->assignSpatialReference(poGeomSRS);
+        poGeom = poNewGeom;
+    }
+
+    return poGeom;
+}
+
+/************************************************************************/
 /*                           GetNextFeature()                           */
 /************************************************************************/
 
 OGRFeature *OGRGMLLayer::GetNextFeature()
 
 {
-    GMLFeature  *poGMLFeature = NULL;
-    OGRGeometry *poGeom = NULL;
+    int i;
 
     if (bWriter)
     {
@@ -159,17 +192,8 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
 /* ==================================================================== */
     while( TRUE )
     {
-/* -------------------------------------------------------------------- */
-/*      Cleanup last feature, and get a new raw gml feature.            */
-/* -------------------------------------------------------------------- */
-        if( poGMLFeature != NULL )
-            delete poGMLFeature;
-
-        if( poGeom != NULL )
-        {
-            delete poGeom;
-            poGeom = NULL;
-        }
+        GMLFeature  *poGMLFeature = NULL;
+        OGRGeometry *poGeom = NULL;
 
         poGMLFeature = poDS->PeekStoredGMLFeature();
         if (poGMLFeature != NULL)
@@ -200,7 +224,10 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
                 return NULL;
             }
             else
+            {
+                delete poGMLFeature;
                 continue;
+            }
         }
 
 /* -------------------------------------------------------------------- */
@@ -224,7 +251,8 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
         }
         else if( iNextGMLId == 0 )
         {
-            int i = strlen( pszGML_FID )-1, j = 0;
+            int j = 0;
+            i = strlen( pszGML_FID )-1;
             while( i >= 0 && pszGML_FID[i] >= '0'
                           && pszGML_FID[i] <= '9' && j<8)
                 i--, j++;
@@ -279,7 +307,6 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
             papoGeometries = (OGRGeometry**)
                 CPLCalloc( poFeatureDefn->GetGeomFieldCount(), sizeof(OGRGeometry*) );
             const char* pszSRSName = poDS->GetGlobalSRSName();
-            int i;
             for( i=0; i < poFeatureDefn->GetGeomFieldCount(); i++)
             {
                 const CPLXMLNode* psGeom = poGMLFeature->GetGeometryRef(i);
@@ -299,36 +326,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
                     /* Force single geometry to multigeometry if needed to match layer geometry type */
                     if (poGeom != NULL)
                     {
-                        OGRwkbGeometryType eType = poGeom->getGeometryType();
-                        OGRwkbGeometryType eLayerType = poFeatureDefn->GetGeomFieldDefn(i)->GetType();
-                        OGRGeometryCollection* poNewGeom = NULL;
-                        if (eType == wkbPoint && eLayerType == wkbMultiPoint)
-                        {
-                            poNewGeom = new OGRMultiPoint();
-                        }
-                        else if (eType == wkbLineString && eLayerType == wkbMultiLineString)
-                        {
-                            poNewGeom = new OGRMultiLineString();
-                        }
-                        else if (eType == wkbPolygon && eLayerType == wkbMultiPolygon)
-                        {
-                            poNewGeom = new OGRMultiPolygon();
-                        }
-
-                        if( poNewGeom != NULL )
-                        {
-                            OGRSpatialReference* poGeomSRS = poGeom->getSpatialReference();
-                            poNewGeom->addGeometryDirectly(poGeom);
-                            if( poGeomSRS != NULL )
-                                poNewGeom->assignSpatialReference(poGeomSRS);
-                            poGeom = poNewGeom;
-                        }
-
-                        OGRSpatialReference* poSRS = poFeatureDefn->GetGeomFieldDefn(i)->GetSpatialRef();
-                        if (poSRS != NULL)
-                            poGeom->assignSpatialReference(poSRS);
-
-                        papoGeometries[i] = poGeom;
+                        papoGeometries[i] = ConvertGeomToMultiIfNecessary(poGeom);
                         poGeom = NULL;
                     }
                     else
@@ -357,6 +355,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
                     delete papoGeometries[i];
                 }
                 CPLFree(papoGeometries);
+                delete poGMLFeature;
                 continue;
             }
         }
@@ -374,34 +373,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
             /* Force single geometry to multigeometry if needed to match layer geometry type */
             if (poGeom != NULL)
             {
-                OGRwkbGeometryType eType = poGeom->getGeometryType();
-                OGRwkbGeometryType eLayerType = GetGeomType();
-                OGRGeometryCollection* poNewGeom = NULL;
-                if (eType == wkbPoint && eLayerType == wkbMultiPoint)
-                {
-                    poNewGeom = new OGRMultiPoint();
-                }
-                else if (eType == wkbLineString && eLayerType == wkbMultiLineString)
-                {
-                    poNewGeom = new OGRMultiLineString();
-                }
-                else if (eType == wkbPolygon && eLayerType == wkbMultiPolygon)
-                {
-                    poNewGeom = new OGRMultiPolygon();
-                }
-
-                if( poNewGeom != NULL )
-                {
-                    OGRSpatialReference* poGeomSRS = poGeom->getSpatialReference();
-                    poNewGeom->addGeometryDirectly(poGeom);
-                    if( poGeomSRS != NULL )
-                        poNewGeom->assignSpatialReference(poGeomSRS);
-                    poGeom = poNewGeom;
-                }
-
-                OGRSpatialReference* poSRS = poFeatureDefn->GetGeomFieldDefn(0)->GetSpatialRef();
-                if (poSRS != NULL)
-                    poGeom->assignSpatialReference(poSRS);
+                poGeom = ConvertGeomToMultiIfNecessary(poGeom);
             }
             else
             // We assume the createFromGML() function would have already
@@ -412,7 +384,11 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
             }
 
             if( m_poFilterGeom != NULL && !FilterGeometry( poGeom ) )
+            {
+                delete poGMLFeature;
+                delete poGeom;
                 continue;
+            }
         }
 
         
@@ -450,7 +426,6 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
               {
                   int nCount = psGMLProperty->nSubProperties;
                   int *panIntList = (int *) CPLMalloc(sizeof(int) * nCount );
-                  int i;
 
                   for( i = 0; i < nCount; i++ )
                       panIntList[i] = atoi(psGMLProperty->papszSubProperties[i]);
@@ -464,7 +439,6 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
               {
                   int nCount = psGMLProperty->nSubProperties;
                   double *padfList = (double *)CPLMalloc(sizeof(double)*nCount);
-                  int i;
 
                   for( i = 0; i < nCount; i++ )
                       padfList[i] = CPLAtof(psGMLProperty->papszSubProperties[i]);
@@ -487,11 +461,14 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
             }
         }
 
+        delete poGMLFeature;
+        poGMLFeature = NULL;
+
         /* Assign the geometry before the attribute filter because */
         /* the attribute filter may use a special field like OGR_GEOMETRY */
         if( papoGeometries != NULL )
         {
-            for( int i=0; i < poFeatureDefn->GetGeomFieldCount(); i++)
+            for( i=0; i < poFeatureDefn->GetGeomFieldCount(); i++)
             {
                 poOGRFeature->SetGeomFieldDirectly( i, papoGeometries[i] );
             }
@@ -500,7 +477,18 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
         }
         else
             poOGRFeature->SetGeometryDirectly( poGeom );
-        poGeom = NULL;
+
+        /* Assign SRS */
+        for( i=0; i < poFeatureDefn->GetGeomFieldCount(); i++)
+        {
+            poGeom = poOGRFeature->GetGeomFieldRef(i);
+            if( poGeom != NULL )
+            {
+                OGRSpatialReference* poSRS = poFeatureDefn->GetGeomFieldDefn(i)->GetSpatialRef();
+                if (poSRS != NULL)
+                    poGeom->assignSpatialReference(poSRS);
+            }
+        }
         
 /* -------------------------------------------------------------------- */
 /*      Test against the attribute query.                               */
@@ -515,7 +503,6 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
 /* -------------------------------------------------------------------- */
 /*      Wow, we got our desired feature. Return it.                     */
 /* -------------------------------------------------------------------- */
-        delete poGMLFeature;
 
         return poOGRFeature;
     }
