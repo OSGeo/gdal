@@ -143,7 +143,7 @@ void SASetupDefaultHooks( SAHooks *psHooks )
 
     psHooks->Remove  = VSI_SHP_Remove;
     #ifdef WIN32
-    psHooks->Atof    = DBFFastAtof; //-> OGRFastAtof is faster (up to 20x faster on MS runtime libraries) than CPLAtof;
+    psHooks->Atof    = CPLFastAtof; //-> CPLFastAtof is faster (up to 5x faster on MS runtime libraries) than CPLAtof;
     #else
     psHooks->Atof    = CPLAtof;
     #endif
