@@ -1992,6 +1992,56 @@ GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Compute source and destination ranges so we can normalize       */
+/*      the values to make the least squares computation more stable.   */
+/* -------------------------------------------------------------------- */
+    double min_pixel = pasGCPs[0].dfGCPPixel;
+    double max_pixel = pasGCPs[0].dfGCPPixel;
+    double min_line = pasGCPs[0].dfGCPLine;
+    double max_line = pasGCPs[0].dfGCPLine;
+    double min_geox = pasGCPs[0].dfGCPX;
+    double max_geox = pasGCPs[0].dfGCPX;
+    double min_geoy = pasGCPs[0].dfGCPY;
+    double max_geoy = pasGCPs[0].dfGCPY;
+
+    for (i = 1; i < nGCPCount; ++i) {
+        min_pixel = MIN(min_pixel, pasGCPs[i].dfGCPPixel);
+        max_pixel = MAX(max_pixel, pasGCPs[i].dfGCPPixel);
+        min_line = MIN(min_line, pasGCPs[i].dfGCPLine);
+        max_line = MAX(max_line, pasGCPs[i].dfGCPLine);
+        min_geox = MIN(min_geox, pasGCPs[i].dfGCPX);
+        max_geox = MAX(max_geox, pasGCPs[i].dfGCPX);
+        min_geoy = MIN(min_geoy, pasGCPs[i].dfGCPY);
+        max_geoy = MAX(max_geoy, pasGCPs[i].dfGCPY);
+    }
+
+    double EPS = 1.0e-12;
+
+    if( ABS(max_pixel - min_pixel) < EPS
+        || ABS(max_line - min_line) < EPS
+        || ABS(max_geox - min_geox) < EPS
+        || ABS(max_geoy - min_geoy) < EPS) 
+    {
+        return FALSE;  // degenerate in at least one dimension.
+    }
+
+    double pl_normalize[6], geo_normalize[6];
+    
+    pl_normalize[0] = -min_pixel / (max_pixel - min_pixel);
+    pl_normalize[1] = 1.0 / (max_pixel - min_pixel);
+    pl_normalize[2] = 0.0;
+    pl_normalize[3] = -min_line / (max_line - min_line);
+    pl_normalize[4] = 0.0;
+    pl_normalize[5] = 1.0 / (max_line - min_line);
+
+    geo_normalize[0] = -min_geox / (max_geox - min_geox);
+    geo_normalize[1] = 1.0 / (max_geox - min_geox);
+    geo_normalize[2] = 0.0;
+    geo_normalize[3] = -min_geoy / (max_geoy - min_geoy);
+    geo_normalize[4] = 0.0;
+    geo_normalize[5] = 1.0 / (max_geoy - min_geoy);
+
+/* -------------------------------------------------------------------- */
 /* In the general case, do a least squares error approximation by       */
 /* solving the equation Sum[(A - B*x + C*y - Lon)^2] = minimum		*/
 /* -------------------------------------------------------------------- */
@@ -2002,17 +2052,28 @@ GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
     double divisor;
 
     for (i = 0; i < nGCPCount; ++i) {
-        sum_x += pasGCPs[i].dfGCPPixel;
-        sum_y += pasGCPs[i].dfGCPLine;
-        sum_xy += pasGCPs[i].dfGCPPixel * pasGCPs[i].dfGCPLine;
-        sum_xx += pasGCPs[i].dfGCPPixel * pasGCPs[i].dfGCPPixel;
-        sum_yy += pasGCPs[i].dfGCPLine * pasGCPs[i].dfGCPLine;
-        sum_Lon += pasGCPs[i].dfGCPX;
-        sum_Lonx += pasGCPs[i].dfGCPX * pasGCPs[i].dfGCPPixel;
-        sum_Lony += pasGCPs[i].dfGCPX * pasGCPs[i].dfGCPLine;
-        sum_Lat += pasGCPs[i].dfGCPY;
-        sum_Latx += pasGCPs[i].dfGCPY * pasGCPs[i].dfGCPPixel;
-        sum_Laty += pasGCPs[i].dfGCPY * pasGCPs[i].dfGCPLine;
+        double pixel, line, geox, geoy;
+
+        GDALApplyGeoTransform(pl_normalize, 
+                              pasGCPs[i].dfGCPPixel,
+                              pasGCPs[i].dfGCPLine,
+                              &pixel, &line);
+        GDALApplyGeoTransform(geo_normalize, 
+                              pasGCPs[i].dfGCPX,
+                              pasGCPs[i].dfGCPY,
+                              &geox, &geoy);
+
+        sum_x += pixel;
+        sum_y += line;
+        sum_xy += pixel * line;
+        sum_xx += pixel * pixel;
+        sum_yy += line * line;
+        sum_Lon += geox;
+        sum_Lonx += geox * pixel;
+        sum_Lony += geox * line;
+        sum_Lat += geoy;
+        sum_Latx += geoy * pixel;
+        sum_Laty += geoy * line;
     }
 
     divisor = nGCPCount * (sum_xx * sum_yy - sum_xy * sum_xy)
@@ -2028,43 +2089,54 @@ GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
 /* -------------------------------------------------------------------- */
 /*      Compute top/left origin.                                        */
 /* -------------------------------------------------------------------- */
-
-    padfGeoTransform[0] = (sum_Lon * (sum_xx * sum_yy - sum_xy * sum_xy)
-                           + sum_Lonx * (sum_y * sum_xy - sum_x *  sum_yy)
-                           + sum_Lony * (sum_x * sum_xy - sum_y * sum_xx))
+    double gt_normalized[6];
+    gt_normalized[0] = (sum_Lon * (sum_xx * sum_yy - sum_xy * sum_xy)
+                  + sum_Lonx * (sum_y * sum_xy - sum_x *  sum_yy)
+                  + sum_Lony * (sum_x * sum_xy - sum_y * sum_xx))
         / divisor;
 
-    padfGeoTransform[3] = (sum_Lat * (sum_xx * sum_yy - sum_xy * sum_xy)
-                           + sum_Latx * (sum_y * sum_xy - sum_x *  sum_yy)
-                           + sum_Laty * (sum_x * sum_xy - sum_y * sum_xx)) 
+    gt_normalized[3] = (sum_Lat * (sum_xx * sum_yy - sum_xy * sum_xy)
+                  + sum_Latx * (sum_y * sum_xy - sum_x *  sum_yy)
+                  + sum_Laty * (sum_x * sum_xy - sum_y * sum_xx)) 
         / divisor;
 
 /* -------------------------------------------------------------------- */
 /*      Compute X related coefficients.                                 */
 /* -------------------------------------------------------------------- */
-    padfGeoTransform[1] = (sum_Lon * (sum_y * sum_xy - sum_x * sum_yy)
-                           + sum_Lonx * (nGCPCount * sum_yy - sum_y * sum_y)
-                           + sum_Lony * (sum_x * sum_y - sum_xy * nGCPCount))
+    gt_normalized[1] = (sum_Lon * (sum_y * sum_xy - sum_x * sum_yy)
+                  + sum_Lonx * (nGCPCount * sum_yy - sum_y * sum_y)
+                  + sum_Lony * (sum_x * sum_y - sum_xy * nGCPCount))
         / divisor;
 
-    padfGeoTransform[2] = (sum_Lon * (sum_x * sum_xy - sum_y * sum_xx)
-                           + sum_Lonx * (sum_x * sum_y - nGCPCount * sum_xy)
-                           + sum_Lony * (nGCPCount * sum_xx - sum_x * sum_x))
+    gt_normalized[2] = (sum_Lon * (sum_x * sum_xy - sum_y * sum_xx)
+                  + sum_Lonx * (sum_x * sum_y - nGCPCount * sum_xy)
+                  + sum_Lony * (nGCPCount * sum_xx - sum_x * sum_x))
         / divisor;
 
 /* -------------------------------------------------------------------- */
 /*      Compute Y related coefficients.                                 */
 /* -------------------------------------------------------------------- */
-    padfGeoTransform[4] = (sum_Lat * (sum_y * sum_xy - sum_x * sum_yy)
-                           + sum_Latx * (nGCPCount * sum_yy - sum_y * sum_y)
-                           + sum_Laty * (sum_x * sum_y - sum_xy * nGCPCount))
+    gt_normalized[4] = (sum_Lat * (sum_y * sum_xy - sum_x * sum_yy)
+                  + sum_Latx * (nGCPCount * sum_yy - sum_y * sum_y)
+                  + sum_Laty * (sum_x * sum_y - sum_xy * nGCPCount))
         / divisor;
 
-    padfGeoTransform[5] = (sum_Lat * (sum_x * sum_xy - sum_y * sum_xx)
-                           + sum_Latx * (sum_x * sum_y - nGCPCount * sum_xy)
-                           + sum_Laty * (nGCPCount * sum_xx - sum_x * sum_x))
+    gt_normalized[5] = (sum_Lat * (sum_x * sum_xy - sum_y * sum_xx)
+                  + sum_Latx * (sum_x * sum_y - nGCPCount * sum_xy)
+                  + sum_Laty * (nGCPCount * sum_xx - sum_x * sum_x))
         / divisor;
 
+/* -------------------------------------------------------------------- */
+/*      Compose the resulting transformation with the normalization     */
+/*      geotransformations.                                             */
+/* -------------------------------------------------------------------- */
+    double gt1p2[6], inv_geo_normalize[6];
+    if( !GDALInvGeoTransform(geo_normalize, inv_geo_normalize))
+        return FALSE;
+
+    GDALComposeGeoTransforms(pl_normalize, gt_normalized, gt1p2);
+    GDALComposeGeoTransforms(gt1p2, inv_geo_normalize, padfGeoTransform);
+    
 /* -------------------------------------------------------------------- */
 /*      Now check if any of the input points fit this poorly.           */
 /* -------------------------------------------------------------------- */
@@ -2097,6 +2169,64 @@ GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
     }
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                      GDALComposeGeoTransforms()                      */
+/************************************************************************/
+
+/**
+ * \brief Compose two geotransforms.
+ *
+ * The resulting geotransform is the equivelent to padfGT1 and then padfGT2
+ * being applied to a point.
+ * 
+ * @param padfGT1 the first geotransform, six values.
+ * @param padfGT2 the second geotransform, six values.
+ * @param padfGTOut the output geotransform, six values, may safely be the same
+ * array as padfGT1 or padfGT2.
+ */
+
+void GDALComposeGeoTransforms(const double *padfGT1, const double *padfGT2, 
+                              double *padfGTOut)
+
+{
+    double gtwrk[6];
+    // We need to think of the geotransform in a more normal form to do
+    // the matrix multiple:
+    //
+    //  __                     __ 
+    //  | gt[1]   gt[2]   gt[0] |
+    //  | gt[4]   gt[5]   gt[3] |
+    //  |  0.0     0.0     1.0  |
+    //  --                     --
+    // 
+    // Then we can use normal matrix multiplication to produce the 
+    // composed transformation.  I don't actually reform the matrix 
+    // explicitly which is why the following may seem kind of spagettish.
+
+    gtwrk[1] = 
+        padfGT2[1] * padfGT1[1]
+        + padfGT2[2] * padfGT1[4];
+    gtwrk[2] = 
+        padfGT2[1] * padfGT1[2]
+        + padfGT2[2] * padfGT1[5];
+    gtwrk[0] = 
+        padfGT2[1] * padfGT1[0]
+        + padfGT2[2] * padfGT1[3]
+        + padfGT2[0] * 1.0;
+
+    gtwrk[4] = 
+        padfGT2[4] * padfGT1[1]
+        + padfGT2[5] * padfGT1[4];
+    gtwrk[5] = 
+        padfGT2[4] * padfGT1[2]
+        + padfGT2[5] * padfGT1[5];
+    gtwrk[3] = 
+        padfGT2[4] * padfGT1[0]
+        + padfGT2[5] * padfGT1[3]
+        + padfGT2[3] * 1.0;
+    memcpy(padfGTOut, gtwrk, sizeof(double) * 6);
 }
 
 /************************************************************************/
