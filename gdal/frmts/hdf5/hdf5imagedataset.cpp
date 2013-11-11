@@ -540,6 +540,11 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->dataset_id   = H5Dopen( poDS->hHDF5,poDS->poH5Objects->pszPath );
     poDS->dataspace_id = H5Dget_space( poDS->dataset_id );
     poDS->ndims        = H5Sget_simple_extent_ndims( poDS->dataspace_id );
+    if( poDS->ndims < 0 )
+    {
+        delete poDS;
+        return NULL;
+    }
     poDS->dims         = (hsize_t*)CPLCalloc( poDS->ndims, sizeof(hsize_t) );
     poDS->maxdims      = (hsize_t*)CPLCalloc( poDS->ndims, sizeof(hsize_t) );
     poDS->dimensions   = H5Sget_simple_extent_dims( poDS->dataspace_id,
