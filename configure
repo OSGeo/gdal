@@ -22658,7 +22658,15 @@ $as_echo "no encoding support." >&6; }
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for MrSID JPEG2000 support" >&5
 $as_echo_n "checking for MrSID JPEG2000 support... " >&6; }
     if test "x$with_jp2mrsid" = "xyes" -a "$HAVE_KAKADU" = "yes" ; then
-      as_fn_error $? "MrSID JPEG2000 support requested, but this is incompatible with use of standalone Kakadu" "$LINENO" 5
+      major_version=`cat $with_mrsid/include/lti_version.h | grep MAJOR | sed 's/#define LTI_SDK_MAJOR[ ]*\(.*\)/\1/'`
+      if test "x$major_version" != "x"; then
+        if test "$major_version" -ge 8; then
+            V8_OR_LATER=yes
+        fi
+      fi
+      if test "x$V8_OR_LATER" = "x"; then
+        as_fn_error $? "MrSID JPEG2000 support requested, but this is incompatible with use of standalone Kakadu" "$LINENO" 5
+      fi
     fi
 
     MRSID_KAKADU_LIB=""
