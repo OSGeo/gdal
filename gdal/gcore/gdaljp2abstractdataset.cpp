@@ -65,6 +65,7 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(GDALOpenInfo* poOpenInfo,
 
     if( oJP2Geo.ReadAndParse( pszOverideFilename ) )
     {
+        CPLFree(pszProjection);
         pszProjection = CPLStrdup(oJP2Geo.pszProjection);
         bGeoTransformValid = oJP2Geo.bHaveGeoTransform;
         memcpy( adfGeoTransform, oJP2Geo.adfGeoTransform, 
