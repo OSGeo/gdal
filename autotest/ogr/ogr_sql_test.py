@@ -1253,6 +1253,28 @@ def ogr_sql_41():
     else:
         return 'fail'
 
+###############################################################################
+# Test comparing to empty string
+
+def ogr_sql_42():
+
+    lyr = gdaltest.ds.GetLayerByName('poly')
+    lyr.SetAttributeFilter("prfedea <> ''")
+    feat = lyr.GetNextFeature()
+    lyr.SetAttributeFilter(None)
+    if feat is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    sql_lyr = gdaltest.ds.ExecuteSQL( "SELECT * FROM poly WHERE prfedea <> ''" )
+    feat = sql_lyr.GetNextFeature()
+    gdaltest.ds.ReleaseResultSet( sql_lyr )
+    if feat is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
 def ogr_sql_cleanup():
     gdaltest.lyr = None
     gdaltest.ds.Destroy()
@@ -1303,6 +1325,7 @@ gdaltest_list = [
     ogr_sql_39,
     ogr_sql_40,
     ogr_sql_41,
+    ogr_sql_42,
     ogr_sql_cleanup ]
 
 if __name__ == '__main__':
