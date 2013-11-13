@@ -29,7 +29,7 @@
 
 #define NO_DELETE
 
-#include "gdal_pam.h"
+#include "gdaljp2abstractdataset.h"
 #include "ogr_spatialref.h"
 #include "cpl_string.h"
 #include "gdaljp2metadata.h"
@@ -208,7 +208,7 @@ private:
 /* ==================================================================== */
 /************************************************************************/
 
-class MrSIDDataset : public GDALPamDataset
+class MrSIDDataset : public GDALJP2AbstractDataset
 {
     friend class MrSIDRasterBand;
 
@@ -241,9 +241,6 @@ class MrSIDDataset : public GDALPamDataset
 
     double              dfCurrentMag;
 
-    int                 bHasGeoTransform;
-    double              adfGeoTransform[6];
-    char                *pszProjection;
     GTIFDefn            *psDefn;
 
     MrSIDDataset       *poParentDS;
@@ -275,8 +272,6 @@ class MrSIDDataset : public GDALPamDataset
                 ~MrSIDDataset();
 
     static GDALDataset  *Open( GDALOpenInfo * poOpenInfo, int bIsJP2 );
-    virtual CPLErr      GetGeoTransform( double * padfTransform );
-    const char          *GetProjectionRef();
 
     virtual char      **GetFileList();
 
@@ -752,14 +747,6 @@ MrSIDDataset::MrSIDDataset(int bIsJPEG2000)
     nPrevBlockXOff = 0;
     nPrevBlockYOff = 0;
     
-    pszProjection = CPLStrdup( "" );
-    bHasGeoTransform = FALSE;
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
     psDefn = NULL;
     
     dfCurrentMag = 1.0;
@@ -802,8 +789,6 @@ MrSIDDataset::~MrSIDDataset()
     // points to another member, don't delete
     poStream = NULL;
 
-    if ( pszProjection )
-        CPLFree( pszProjection );
     if ( psDefn )
         delete psDefn;
     CloseDependentDatasets();
@@ -1046,39 +1031,6 @@ CPLErr MrSIDDataset::IBuildOverviews( const char *, int, int *,
 }
 
 /************************************************************************/
-/*                          GetGeoTransform()                           */
-/************************************************************************/
-
-CPLErr MrSIDDataset::GetGeoTransform( double * padfTransform )
-{
-    if( (strlen(GDALPamDataset::GetProjectionRef()) > 0 &&
-         GDALPamDataset::GetGeoTransform( padfTransform ) == CE_None )
-        || !bHasGeoTransform )
-    {
-        return GDALPamDataset::GetGeoTransform( padfTransform );
-    }
-    else
-    {
-        memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
-        return( CE_None );
-    }
-}
-
-/************************************************************************/
-/*                          GetProjectionRef()                          */
-/************************************************************************/
-
-const char *MrSIDDataset::GetProjectionRef()
-{
-    const char* pszPamPrj = GDALPamDataset::GetProjectionRef();
-
-    if( strlen(pszProjection) > 0 && strlen(pszPamPrj) == 0 )
-        return pszProjection;
-    else
-        return pszPamPrj;
-}
-
-/************************************************************************/
 /*                        SerializeMetadataRec()                        */
 /************************************************************************/
 
@@ -1302,11 +1254,11 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
         
         adfGeoTransform[0] = adfGeoTransform[0] - adfGeoTransform[1] / 2;
         adfGeoTransform[3] = adfGeoTransform[3] - adfGeoTransform[5] / 2;
-        bHasGeoTransform = TRUE;
+        bGeoTransformValid = TRUE;
     }
     else if( iZoom == 0 )
     {
-        bHasGeoTransform = 
+        bGeoTransformValid = 
             GDALReadWorldFile( GetDescription(), NULL,
                                adfGeoTransform )
             || GDALReadWorldFile( GetDescription(), ".wld",
@@ -1698,26 +1650,7 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJP2 )
 
     if (bIsJP2)
     {
-        GDALJP2Metadata oJP2Geo;
-        if ( oJP2Geo.ReadAndParse( poOpenInfo->pszFilename ) )
-        {
-            /*poDS->pszProjection = CPLStrdup(oJP2Geo.pszProjection);
-            poDS->bGeoTransformValid = oJP2Geo.bHaveGeoTransform;
-            memcpy( poDS->adfGeoTransform, oJP2Geo.adfGeoTransform,
-                    sizeof(double) * 6 );
-            poDS->nGCPCount = oJP2Geo.nGCPCount;
-            poDS->pasGCPList = oJP2Geo.pasGCPList;
-            oJP2Geo.pasGCPList = NULL;
-            oJP2Geo.nGCPCount = 0;*/
-        }
-
-        if (oJP2Geo.pszXMPMetadata)
-        {
-            char *apszMDList[2];
-            apszMDList[0] = (char *) oJP2Geo.pszXMPMetadata;
-            apszMDList[1] = NULL;
-            poDS->SetMetadata(apszMDList, "xml:XMP");
-        }
+        poDS->LoadJP2Metadata(poOpenInfo);
     }
 
 /* -------------------------------------------------------------------- */
