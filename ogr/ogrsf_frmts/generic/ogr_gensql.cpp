@@ -402,7 +402,11 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
         swq_col_def *col_def = psSelectInfo->column_defs + psSelectInfo->result_columns - 1;
 
         memset( col_def, 0, sizeof(swq_col_def) );
-        col_def->field_name = CPLStrdup( poSrcDefn->GetGeomFieldDefn(0)->GetNameRef() );
+        const char* pszName = poSrcDefn->GetGeomFieldDefn(0)->GetNameRef();
+        if( *pszName != '\0' )
+            col_def->field_name = CPLStrdup( pszName );
+        else
+            col_def->field_name = CPLStrdup( "_ogr_geometry_" );
         col_def->field_alias = NULL;
         col_def->table_index = 0;
         col_def->field_index = GEOM_FIELD_INDEX_TO_ALL_FIELD_INDEX(poSrcDefn, 0);
