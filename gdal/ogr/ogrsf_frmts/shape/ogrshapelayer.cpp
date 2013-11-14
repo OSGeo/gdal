@@ -231,7 +231,7 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
     poFeatureDefn = SHPReadOGRFeatureDefn( CPLGetBasename(pszFullName),
                                            hSHP, hDBF, osEncoding );
 
-    m_poHeapObjectHooks = NULL;
+    m_poHeapObjectHooks = new OGRShapeHeapHooks();
 }
 
 /************************************************************************/
@@ -725,7 +725,7 @@ OGRFeature *OGRShapeLayer::FetchShape(int iShapeId /*, OGREnvelope* psShapeExten
     {
         SHPObject   *psShape;
         
-        psShape = SHPReadObject( hSHP, iShapeId );
+        psShape = SHPReadObjectH( hSHP, iShapeId, m_poHeapObjectHooks );
 
         // do not trust degenerate bounds on non-point geometries
         // or bounds on null shapes.
@@ -738,14 +738,14 @@ OGRFeature *OGRShapeLayer::FetchShape(int iShapeId /*, OGREnvelope* psShapeExten
             || psShape->nSHPType == SHPT_NULL )
         {
             poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn,
-                                           iShapeId, psShape, osEncoding );
+                                           iShapeId, psShape, m_poHeapObjectHooks, osEncoding );
         }
         else if( m_sFilterEnvelope.MaxX < psShape->dfXMin 
                  || m_sFilterEnvelope.MaxY < psShape->dfYMin
                  || psShape->dfXMax  < m_sFilterEnvelope.MinX
                  || psShape->dfYMax < m_sFilterEnvelope.MinY ) 
         {
-            SHPDestroyObject(psShape);
+            SHPDestroyObjectH( psShape, m_poHeapObjectHooks );
             poFeature = NULL;
         } 
         else 
@@ -755,13 +755,13 @@ OGRFeature *OGRShapeLayer::FetchShape(int iShapeId /*, OGREnvelope* psShapeExten
             psShapeExtent->MaxX = psShape->dfXMax;
             psShapeExtent->MaxY = psShape->dfYMax;*/
             poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn,
-                                           iShapeId, psShape, osEncoding );
+                                           iShapeId, psShape, m_poHeapObjectHooks, osEncoding );
         }                
     } 
     else 
     {
         poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn,
-                                       iShapeId, NULL, osEncoding );
+                                       iShapeId, NULL, m_poHeapObjectHooks, osEncoding );
     }    
     
     return poFeature;
@@ -865,7 +865,7 @@ OGRFeature *OGRShapeLayer::GetFeature( long nFeatureId )
         return NULL;
 
     OGRFeature *poFeature = NULL;
-    poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn, nFeatureId, NULL,
+    poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn, nFeatureId, NULL, m_poHeapObjectHooks,
                                    osEncoding );
 
     if( poFeature != NULL )
@@ -1146,7 +1146,7 @@ int OGRShapeLayer::GetFeatureCountWithSpatialFilterOnly()
 
         /* Read full shape for point layers */
         if (bExpectPoints)
-            psShape = SHPReadObject( hSHP, iShape);
+            psShape = SHPReadObjectH( hSHP, iShape, m_poHeapObjectHooks );
 
 /* -------------------------------------------------------------------- */
 /*      Only read feature type and bounding box for now. In case of     */
@@ -1198,10 +1198,10 @@ int OGRShapeLayer::GetFeatureCountWithSpatialFilterOnly()
                 /* We need to read the full geometry */
                 /* to compute the envelope */
                 if (psShape == &sShape)
-                    psShape = SHPReadObject( hSHP, iShape);
+                    psShape = SHPReadObjectH( hSHP, iShape, m_poHeapObjectHooks );
                 if (psShape)
                 {
-                    poGeometry = SHPReadOGRObject( hSHP, iShape, psShape );
+                    poGeometry = SHPReadOGRObject( hSHP, iShape, psShape, m_poHeapObjectHooks );
                     poGeometry->getEnvelope( &sGeomEnv );
                     psShape = NULL;
                 }
@@ -1251,11 +1251,10 @@ int OGRShapeLayer::GetFeatureCountWithSpatialFilterOnly()
                     if (poGeometry == NULL)
                     {
                         if (psShape == &sShape)
-                            psShape = SHPReadObject( hSHP, iShape);
+                            psShape = SHPReadObjectH( hSHP, iShape, m_poHeapObjectHooks );
                         if (psShape)
                         {
-                            poGeometry =
-                                SHPReadOGRObject( hSHP, iShape, psShape );
+                            poGeometry = SHPReadOGRObject( hSHP, iShape, psShape, m_poHeapObjectHooks );
                             psShape = NULL;
                         }
                     }
@@ -1282,7 +1281,7 @@ int OGRShapeLayer::GetFeatureCountWithSpatialFilterOnly()
             nFeatureCount ++;
 
         if (psShape && psShape != &sShape)
-            SHPDestroyObject( psShape );
+            SHPDestroyObjectH( psShape, m_poHeapObjectHooks );
     }
 
     return nFeatureCount;
@@ -2419,14 +2418,14 @@ OGRErr OGRShapeLayer::Repack()
             {
                 SHPObject *hObject;
 
-                hObject = SHPReadObject( hSHP, iShape );
+                hObject = SHPReadObjectH( hSHP, iShape, m_poHeapObjectHooks );
                 if( hObject == NULL )
                     eErr = OGRERR_FAILURE;
                 else if( SHPWriteObject( hNewSHP, -1, hObject ) == -1 )
                     eErr = OGRERR_FAILURE;
 
                 if( hObject )
-                    SHPDestroyObject( hObject );
+                    SHPDestroyObjectH( hObject, m_poHeapObjectHooks );
             }
         }
 
@@ -2686,7 +2685,7 @@ OGRErr OGRShapeLayer::RecomputeExtent()
     {
         if( hDBF == NULL || !DBFIsRecordDeleted( hDBF, iShape ) )
         {
-            SHPObject *psObject = SHPReadObject( hSHP, iShape );
+            SHPObject *psObject = SHPReadObjectH( hSHP, iShape, m_poHeapObjectHooks );
             if ( psObject != NULL &&
                  psObject->nSHPType != SHPT_NULL &&
                  psObject->nVertices != 0 )
@@ -2712,7 +2711,7 @@ OGRErr OGRShapeLayer::RecomputeExtent()
                     adBoundsMax[3] = MAX(adBoundsMax[3],psObject->padfM[i]);
                 }
             }
-            SHPDestroyObject(psObject);
+            SHPDestroyObjectH( psObject, m_poHeapObjectHooks );
         }
     }
 

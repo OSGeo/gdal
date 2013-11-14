@@ -1686,7 +1686,7 @@ SHPReadObjectH( SHPHandle psSHP, int hEntity, SAHeapHooks * psHeapHooks )
                  "Corrupted .shp file : shape %d : nEntitySize = %d",
                  hEntity, nEntitySize); 
         psSHP->sHooks.Error( szErrorMsg );
-        SHPDestroyObject(psShape);
+        SHPDestroyObjectH(psShape, psHeapHooks);
         return NULL;
     }
     memcpy( &psShape->nSHPType, psSHP->pabyRec + 8, 4 );
@@ -1712,7 +1712,7 @@ SHPReadObjectH( SHPHandle psSHP, int hEntity, SAHeapHooks * psHeapHooks )
                      "Corrupted .shp file : shape %d : nEntitySize = %d",
                      hEntity, nEntitySize); 
             psSHP->sHooks.Error( szErrorMsg );
-            SHPDestroyObject(psShape);
+            SHPDestroyObjectH(psShape, psHeapHooks);
             return NULL;
         }
 /* -------------------------------------------------------------------- */
@@ -1745,7 +1745,7 @@ SHPReadObjectH( SHPHandle psSHP, int hEntity, SAHeapHooks * psHeapHooks )
                      "Corrupted .shp file : shape %d, nPoints=%d, nParts=%d.",
                      hEntity, nPoints, nParts);
             psSHP->sHooks.Error( szErrorMsg );
-            SHPDestroyObject(psShape);
+            SHPDestroyObjectH(psShape, psHeapHooks);
             return NULL;
         }
         
@@ -1769,7 +1769,7 @@ SHPReadObjectH( SHPHandle psSHP, int hEntity, SAHeapHooks * psHeapHooks )
                      "Corrupted .shp file : shape %d, nPoints=%d, nParts=%d, nEntitySize=%d.",
                      hEntity, nPoints, nParts, nEntitySize);
             psSHP->sHooks.Error( szErrorMsg );
-            SHPDestroyObject(psShape);
+            SHPDestroyObjectH(psShape, psHeapHooks);
             return NULL;
         }
 
@@ -1797,7 +1797,7 @@ SHPReadObjectH( SHPHandle psSHP, int hEntity, SAHeapHooks * psHeapHooks )
                      "Not enough memory to allocate requested memory (nPoints=%d, nParts=%d) for shape %d. "
                      "Probably broken SHP file", hEntity, nPoints, nParts );
             psSHP->sHooks.Error( szErrorMsg );
-            SHPDestroyObject(psShape);
+            SHPDestroyObjectH(psShape, psHeapHooks);
             return NULL;
         }
 
@@ -1821,7 +1821,7 @@ SHPReadObjectH( SHPHandle psSHP, int hEntity, SAHeapHooks * psHeapHooks )
                          "Corrupted .shp file : shape %d : panPartStart[%d] = %d, nVertices = %d",
                          hEntity, i, psShape->panPartStart[i], psShape->nVertices); 
                 psSHP->sHooks.Error( szErrorMsg );
-                SHPDestroyObject(psShape);
+                SHPDestroyObjectH(psShape, psHeapHooks);
                 return NULL;
             }
             if (i > 0 && psShape->panPartStart[i] <= psShape->panPartStart[i-1])
@@ -1830,7 +1830,7 @@ SHPReadObjectH( SHPHandle psSHP, int hEntity, SAHeapHooks * psHeapHooks )
                          "Corrupted .shp file : shape %d : panPartStart[%d] = %d, panPartStart[%d] = %d",
                          hEntity, i, psShape->panPartStart[i], i - 1, psShape->panPartStart[i - 1]); 
                 psSHP->sHooks.Error( szErrorMsg );
-                SHPDestroyObject(psShape);
+                SHPDestroyObjectH(psShape, psHeapHooks);
                 return NULL;
             }
         }
@@ -1933,7 +1933,7 @@ SHPReadObjectH( SHPHandle psSHP, int hEntity, SAHeapHooks * psHeapHooks )
                      "Corrupted .shp file : shape %d : nEntitySize = %d",
                      hEntity, nEntitySize); 
             psSHP->sHooks.Error( szErrorMsg );
-            SHPDestroyObject(psShape);
+            SHPDestroyObjectH(psShape, psHeapHooks);
             return NULL;
         }
         memcpy( &nPoints, psSHP->pabyRec + 44, 4 );
@@ -1946,7 +1946,7 @@ SHPReadObjectH( SHPHandle psSHP, int hEntity, SAHeapHooks * psHeapHooks )
                      "Corrupted .shp file : shape %d : nPoints = %d",
                      hEntity, nPoints); 
             psSHP->sHooks.Error( szErrorMsg );
-            SHPDestroyObject(psShape);
+            SHPDestroyObjectH(psShape, psHeapHooks);
             return NULL;
         }
 
@@ -1961,7 +1961,7 @@ SHPReadObjectH( SHPHandle psSHP, int hEntity, SAHeapHooks * psHeapHooks )
                      "Corrupted .shp file : shape %d : nPoints = %d, nEntitySize = %d",
                      hEntity, nPoints, nEntitySize); 
             psSHP->sHooks.Error( szErrorMsg );
-            SHPDestroyObject(psShape);
+            SHPDestroyObjectH(psShape, psHeapHooks);
             return NULL;
         }
 
@@ -1983,7 +1983,7 @@ SHPReadObjectH( SHPHandle psSHP, int hEntity, SAHeapHooks * psHeapHooks )
                      "Not enough memory to allocate requested memory (nPoints=%d) for shape %d. "
                      "Probably broken SHP file", hEntity, nPoints );
             psSHP->sHooks.Error( szErrorMsg );
-            SHPDestroyObject(psShape);
+            SHPDestroyObjectH(psShape, psHeapHooks);
             return NULL;
         }
 
@@ -2080,7 +2080,7 @@ SHPReadObjectH( SHPHandle psSHP, int hEntity, SAHeapHooks * psHeapHooks )
                      "Corrupted .shp file : shape %d : nEntitySize = %d",
                      hEntity, nEntitySize); 
             psSHP->sHooks.Error( szErrorMsg );
-            SHPDestroyObject(psShape);
+            SHPDestroyObjectH(psShape, psHeapHooks);
             return NULL;
         }
         memcpy( psShape->padfX, psSHP->pabyRec + 12, 8 );

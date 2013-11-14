@@ -89,14 +89,14 @@ static OGRLinearRing * CreateLinearRing ( SHPObject *psShape, int ring, int bHas
 /*      representation.                                                 */
 /************************************************************************/
 
-OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
+OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape, SAHeapHooks *psHeapHooks )
 {
     // CPLDebug( "Shape", "SHPReadOGRObject( iShape=%d )\n", iShape );
 
     OGRGeometry *poOGR = NULL;
 
     if( psShape == NULL )
-        psShape = SHPReadObject( hSHP, iShape );
+        psShape = SHPReadObjectH( hSHP, iShape, psHeapHooks );
 
     if( psShape == NULL )
     {
@@ -450,7 +450,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
 /* -------------------------------------------------------------------- */
 /*      Cleanup shape, and set feature id.                              */
 /* -------------------------------------------------------------------- */
-    SHPDestroyObject( psShape );
+    SHPDestroyObjectH( psShape, psHeapHooks );
 
     return poOGR;
 }
@@ -983,7 +983,7 @@ OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
 
 OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                                OGRFeatureDefn * poDefn, int iShape,
-                               SHPObject *psShape, const char *pszSHPEncoding )
+                               SHPObject *psShape, SAHeapHooks *psHeapHooks, const char *pszSHPEncoding )
 
 {
     if( iShape < 0 
@@ -1014,7 +1014,7 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
         if( !poDefn->IsGeometryIgnored() )
         {
             OGRGeometry* poGeometry = NULL;
-            poGeometry = SHPReadOGRObject( hSHP, iShape, psShape );
+            poGeometry = SHPReadOGRObject( hSHP, iShape, psShape, psHeapHooks );
 
             /*
             * NOTE - mloskot:
@@ -1029,7 +1029,7 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
         }
         else if( psShape != NULL )
         {
-            SHPDestroyObject( psShape );
+            SHPDestroyObjectH( psShape, psHeapHooks );
         }
     }
 

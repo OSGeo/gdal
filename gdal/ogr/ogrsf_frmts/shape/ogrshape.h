@@ -47,8 +47,8 @@
 /* ==================================================================== */
 OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                                OGRFeatureDefn * poDefn, int iShape, 
-                               SHPObject *psShape, const char *pszSHPEncoding );
-OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape );
+                               SHPObject *psShape, SAHeapHooks *psHeapHooks, const char *pszSHPEncoding );
+OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape, SAHeapHooks *psHeapHooks );
 OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
                                        SHPHandle hSHP, DBFHandle hDBF,
                                        const char *pszSHPEncoding );
