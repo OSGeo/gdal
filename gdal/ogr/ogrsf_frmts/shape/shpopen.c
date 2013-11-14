@@ -340,10 +340,28 @@ static void * SfRealloc( void * pMem, int nNewSize )
 }
 
 /************************************************************************/
+/*                           SfHookCalloc()                             */
+/*                                                                      */
+/*      A calloc cover function using optionally a HeapHooks            */
+/*                                                                      */
+/************************************************************************/
+
+static void* SfHookCalloc( void** memblock, size_t num, size_t size, SAHeapHooks * psHeapHooks )
+{
+    if( psHeapHooks )
+    {
+       char* cmemblock = (char*)(*memblock);
+       *memblock = cmemblock + (num * size);
+       return cmemblock;
+    }
+    return calloc( num, size );
+}
+
+/************************************************************************/
 /*                          SHPWriteHeader()                            */
 /*                                                                      */
-/*      Write out a header for the .shp and .shx files as well as the	*/
-/*	contents of the index (.shx) file.				*/
+/*      Write out a header for the .shp and .shx files as well as the   */
+/*      contents of the index (.shx) file.                              */
 /************************************************************************/
 
 void SHPAPI_CALL SHPWriteHeader( SHPHandle psSHP )
@@ -1567,17 +1585,23 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 /************************************************************************/
 /*                          SHPReadObject()                             */
 /*                                                                      */
-/*      Read the vertices, parts, and other non-attribute information	*/
-/*	for one shape.							*/
+/*      Read the vertices, parts, and other non-attribute information   */
+/*      for one shape.                                                  */
 /************************************************************************/
 
 SHPObject SHPAPI_CALL1(*)
 SHPReadObject( SHPHandle psSHP, int hEntity )
+{
+    return SHPReadObjectH( psSHP, hEntity, NULL );
+}
 
+SHPObject SHPAPI_CALL1(*)
+SHPReadObjectH( SHPHandle psSHP, int hEntity, SAHeapHooks * psHeapHooks )
 {
     int                  nEntitySize, nRequiredSize;
     SHPObject           *psShape;
     char                 szErrorMsg[128];
+    void*                pabyObj;
 
 /* -------------------------------------------------------------------- */
 /*      Validate the record/entity number.                              */
@@ -1749,15 +1773,18 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
             return NULL;
         }
 
+        // Calloc heap memory of object using HeapHooks
+        pabyObj = psHeapHooks ? (*psHeapHooks->FCalloc)( psHeapHooks, 1, 4*nPoints*sizeof(double) + 2*nParts*sizeof(int) ) : NULL;
+
         psShape->nVertices = nPoints;
-        psShape->padfX = (double *) calloc(nPoints,sizeof(double));
-        psShape->padfY = (double *) calloc(nPoints,sizeof(double));
-        psShape->padfZ = (double *) calloc(nPoints,sizeof(double));
-        psShape->padfM = (double *) calloc(nPoints,sizeof(double));
+        psShape->padfX = (double *) SfHookCalloc(&pabyObj, nPoints,sizeof(double), psHeapHooks);
+        psShape->padfY = (double *) SfHookCalloc(&pabyObj, nPoints,sizeof(double), psHeapHooks);
+        psShape->padfZ = (double *) SfHookCalloc(&pabyObj, nPoints,sizeof(double), psHeapHooks);
+        psShape->padfM = (double *) SfHookCalloc(&pabyObj, nPoints,sizeof(double), psHeapHooks);
 
         psShape->nParts = nParts;
-        psShape->panPartStart = (int *) calloc(nParts,sizeof(int));
-        psShape->panPartType = (int *) calloc(nParts,sizeof(int));
+        psShape->panPartStart = (int *) SfHookCalloc(&pabyObj, nParts,sizeof(int), psHeapHooks);
+        psShape->panPartType  = (int *) SfHookCalloc(&pabyObj, nParts,sizeof(int), psHeapHooks);
         
         if (psShape->padfX == NULL ||
             psShape->padfY == NULL ||
@@ -1937,12 +1964,15 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
             SHPDestroyObject(psShape);
             return NULL;
         }
-        
+
+        // Calloc heap memory of object using HeapHooks
+        pabyObj = psHeapHooks ? (*psHeapHooks->FCalloc)( psHeapHooks, 1, 4*nPoints*sizeof(double) ) : NULL;
+
         psShape->nVertices = nPoints;
-        psShape->padfX = (double *) calloc(nPoints,sizeof(double));
-        psShape->padfY = (double *) calloc(nPoints,sizeof(double));
-        psShape->padfZ = (double *) calloc(nPoints,sizeof(double));
-        psShape->padfM = (double *) calloc(nPoints,sizeof(double));
+        psShape->padfX = (double *) SfHookCalloc(&pabyObj, nPoints,sizeof(double), psHeapHooks);
+        psShape->padfY = (double *) SfHookCalloc(&pabyObj, nPoints,sizeof(double), psHeapHooks);
+        psShape->padfZ = (double *) SfHookCalloc(&pabyObj, nPoints,sizeof(double), psHeapHooks);
+        psShape->padfM = (double *) SfHookCalloc(&pabyObj, nPoints,sizeof(double), psHeapHooks);
 
         if (psShape->padfX == NULL ||
             psShape->padfY == NULL ||
@@ -2034,12 +2064,15 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
              || psShape->nSHPType == SHPT_POINTZ )
     {
         int	nOffset;
-        
+
+        // Calloc heap memory of object using HeapHooks
+        pabyObj = psHeapHooks ? (*psHeapHooks->FCalloc)( psHeapHooks, 1, 4*sizeof(double) ) : NULL;
+
         psShape->nVertices = 1;
-        psShape->padfX = (double *) calloc(1,sizeof(double));
-        psShape->padfY = (double *) calloc(1,sizeof(double));
-        psShape->padfZ = (double *) calloc(1,sizeof(double));
-        psShape->padfM = (double *) calloc(1,sizeof(double));
+        psShape->padfX = (double *) SfHookCalloc(&pabyObj, 1,sizeof(double), psHeapHooks);
+        psShape->padfY = (double *) SfHookCalloc(&pabyObj, 1,sizeof(double), psHeapHooks);
+        psShape->padfZ = (double *) SfHookCalloc(&pabyObj, 1,sizeof(double), psHeapHooks);
+        psShape->padfM = (double *) SfHookCalloc(&pabyObj, 1,sizeof(double), psHeapHooks);
 
         if (20 + 8 + (( psShape->nSHPType == SHPT_POINTZ ) ? 8 : 0)> nEntitySize)
         {
@@ -2213,6 +2246,23 @@ SHPDestroyObject( SHPObject * psShape )
         free( psShape->panPartType );
 
     free( psShape );
+}
+
+void SHPAPI_CALL
+SHPDestroyObjectH( SHPObject * psShape, SAHeapHooks * psHeapHooks )
+{
+    if( psShape && psHeapHooks )
+    {
+        if( psShape->padfX != NULL ) (*psHeapHooks->FFree)( psHeapHooks, psShape->padfX );
+
+        psShape->padfX = NULL;
+        psShape->padfY = NULL;
+        psShape->padfZ = NULL;
+        psShape->padfM = NULL;
+        psShape->panPartStart = NULL;
+        psShape->panPartType = NULL;
+    }
+    SHPDestroyObject( psShape );
 }
 
 /************************************************************************/

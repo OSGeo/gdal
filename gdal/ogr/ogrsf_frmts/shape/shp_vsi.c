@@ -146,3 +146,32 @@ void SASetupDefaultHooks( SAHooks *psHooks )
 
     psHooks->Error   = VSI_SHP_Error;
 }
+
+/************************************************************************/
+/*                      SASetupDefaultHeapHooks()                       */
+/************************************************************************/
+
+static void *hook_malloc( void *thisHook, size_t size )
+{
+    return malloc( size );
+}
+static void *hook_calloc( void *thisHook, size_t num, size_t size )
+{
+    return calloc( num, size );
+}
+static void *hook_realloc( void *thisHook, void *memblock, size_t size )
+{
+    return realloc( memblock, size );
+}
+static void hook_free( void *thisHook, void *memblock )
+{
+    free( memblock );
+}
+
+void SASetupDefaultHeapHooks( SAHeapHooks *psHeapHooks )
+{
+    psHeapHooks->FMalloc  = hook_malloc;
+    psHeapHooks->FCalloc  = hook_calloc;
+    psHeapHooks->FRealloc = hook_realloc;
+    psHeapHooks->FFree    = hook_free;
+}
