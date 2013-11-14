@@ -45,6 +45,104 @@
 CPL_CVSID("$Id$");
 
 /************************************************************************/
+/*                         OGRShapeHeapHooks()                          */
+/************************************************************************/
+
+// Heap manager for optimize memory allocations in 'SHPReadObject'
+class OGRShapeHeapHooks : public SAHeapHooks
+{
+public:
+    OGRShapeHeapHooks() : mMemoryBuffer( NULL ), mMemorySize( 0 )
+    {
+        FMalloc  = OGRShapeHeapHooks::hook_malloc;
+        FCalloc  = OGRShapeHeapHooks::hook_calloc;
+        FRealloc = OGRShapeHeapHooks::hook_realloc;
+        FFree    = OGRShapeHeapHooks::hook_free;
+    }
+   ~OGRShapeHeapHooks()
+    {
+        freeMem();
+    }
+private:
+    void * mMemoryBuffer;
+    size_t mMemorySize;
+
+    // Free allocated memory
+    void freeMem()
+    {
+        if ( mMemoryBuffer )
+        {
+            free( mMemoryBuffer );
+            mMemoryBuffer = NULL;
+            mMemorySize = 0;
+        }
+    }
+
+    // Helper hook functions
+    static void *hook_malloc( void *thisHook, size_t size )
+    {
+        return ((OGRShapeHeapHooks*)thisHook)->sharedMalloc( size );
+    }
+    static void *hook_calloc( void *thisHook, size_t num, size_t size )
+    {
+        return ((OGRShapeHeapHooks*)thisHook)->sharedCalloc( num, size );
+    }
+    static void *hook_realloc( void *thisHook, void *memblock, size_t size )
+    {
+        return ((OGRShapeHeapHooks*)thisHook)->sharedRealloc( memblock, size );
+    }
+    static void hook_free( void *thisHook, void *memblock )
+    {
+        //-> Does nothing, the memory is free in the destructor
+    }
+
+    // Allocates shared memory blocks
+    void *sharedMalloc(size_t size )
+    {
+        if ( mMemoryBuffer && mMemorySize < size ) 
+            freeMem();
+
+        if ( !mMemoryBuffer )
+        {
+            mMemoryBuffer = malloc( size );
+            mMemorySize = size;
+        }
+        return mMemoryBuffer;
+    }
+    // Allocates shared memory blocks with elements initialized to 0
+    void *sharedCalloc( size_t num, size_t size )
+    {
+        if ( mMemoryBuffer && mMemorySize < (num*size) ) 
+            freeMem();
+
+        if ( !mMemoryBuffer )
+        {
+            mMemoryBuffer = calloc( num, size );
+            mMemorySize = num*size;
+        }
+        return mMemoryBuffer;
+    }
+    // Reallocate shared memory blocks
+    void *sharedRealloc( void *memblock, size_t size )
+    {
+        if ( mMemoryBuffer && mMemorySize < size ) 
+            freeMem();
+
+        if ( !mMemoryBuffer )
+        {
+            mMemoryBuffer = realloc( memblock, size );
+            mMemorySize = size;
+        }
+        return mMemoryBuffer;
+    }
+    // Deallocates or frees shared memory blocks
+    void sharedFreed()
+    { 
+        //-> Does nothing, the memory is free in the destructor
+    }
+};
+
+/************************************************************************/
 /*                           OGRShapeLayer()                            */
 /************************************************************************/
 
@@ -132,6 +230,8 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
 
     poFeatureDefn = SHPReadOGRFeatureDefn( CPLGetBasename(pszFullName),
                                            hSHP, hDBF, osEncoding );
+
+    m_poHeapObjectHooks = NULL;
 }
 
 /************************************************************************/
@@ -175,6 +275,12 @@ OGRShapeLayer::~OGRShapeLayer()
 
     if( hSBN != NULL )
         SBNCloseDiskTree( hSBN );
+
+    if( m_poHeapObjectHooks )
+    {
+        delete m_poHeapObjectHooks;
+        m_poHeapObjectHooks = NULL;
+    }
 }
 
 /************************************************************************/

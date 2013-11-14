@@ -62,6 +62,7 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 /************************************************************************/
 
 class OGRShapeDataSource;
+class OGRShapeHeapHooks;
 
 class OGRShapeLayer : public OGRAbstractProxiedLayer
 {
@@ -120,6 +121,7 @@ class OGRShapeLayer : public OGRAbstractProxiedLayer
 
     void                TruncateDBF();
 
+    OGRShapeHeapHooks  *m_poHeapObjectHooks; /* Heap object manager for optimize memory allocations in 'SHPReadObject' */
 
   protected:
 
