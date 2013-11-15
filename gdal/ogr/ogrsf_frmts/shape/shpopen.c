@@ -342,11 +342,14 @@ static void * SfRealloc( void * pMem, int nNewSize )
 /************************************************************************/
 /*                           SfHookCalloc()                             */
 /*                                                                      */
-/*      A calloc cover function using optionally a HeapHooks            */
-/*                                                                      */
+/*      A calloc cover function using optionally a HeapHooks struct.    */
+/*      It is a private utiliy for 'SHPReadObjectH' function and you    */
+/*      must not call it directly.                                      */
+/*      SfHookCalloc receives the memblock parameter preallocated to    */
+/*      full needed size.                                               */
 /************************************************************************/
 
-static void* SfHookCalloc( void** memblock, size_t num, size_t size, SAHeapHooks * psHeapHooks )
+static void* SfHookCalloc( void** memblock, size_t num, size_t size, SAHeapObjectHooks * psHeapHooks )
 {
     if( psHeapHooks )
     {
@@ -1595,8 +1598,24 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
     return SHPReadObjectH( psSHP, hEntity, NULL );
 }
 
+/************************************************************************/
+/*                          SHPReadObjectH()                            */
+/*                                                                      */
+/*      Read the vertices, parts, and other non-attribute information   */
+/*      for one shape.                                                  */
+/*                                                                      */
+/*      SAHeapObjectHooks provides a heap allocation mechanism for      */
+/*      override the default malloc/free routines of this function      */
+/*      and its related 'SHPDestroyObjectH'.                            */
+/*      e.g. We could override this hook for share a memory buffer      */
+/*      between consecutives object readings and therefore optimize     */
+/*      the memory management.                                          */
+/*      The pair 'SHPReadObjectH/SHPDestroyObjectH' function must be    */
+/*      called only once per object.                                    */
+/************************************************************************/
+
 SHPObject SHPAPI_CALL1(*)
-SHPReadObjectH( SHPHandle psSHP, int hEntity, SAHeapHooks * psHeapHooks )
+SHPReadObjectH( SHPHandle psSHP, int hEntity, SAHeapObjectHooks * psHeapHooks )
 {
     int                  nEntitySize, nRequiredSize;
     SHPObject           *psShape;
@@ -1774,7 +1793,7 @@ SHPReadObjectH( SHPHandle psSHP, int hEntity, SAHeapHooks * psHeapHooks )
         }
 
         // Calloc heap memory of object using HeapHooks
-        pabyObj = psHeapHooks ? (*psHeapHooks->FCalloc)( psHeapHooks, 1, 4*nPoints*sizeof(double) + 2*nParts*sizeof(int) ) : NULL;
+        pabyObj = psHeapHooks ? (*psHeapHooks->FMalloc)( psHeapHooks, 4*nPoints*sizeof(double) + 2*nParts*sizeof(int) ) : NULL;
 
         psShape->nVertices = nPoints;
         psShape->padfX = (double *) SfHookCalloc(&pabyObj, nPoints,sizeof(double), psHeapHooks);
@@ -1966,7 +1985,7 @@ SHPReadObjectH( SHPHandle psSHP, int hEntity, SAHeapHooks * psHeapHooks )
         }
 
         // Calloc heap memory of object using HeapHooks
-        pabyObj = psHeapHooks ? (*psHeapHooks->FCalloc)( psHeapHooks, 1, 4*nPoints*sizeof(double) ) : NULL;
+        pabyObj = psHeapHooks ? (*psHeapHooks->FMalloc)( psHeapHooks, 4*nPoints*sizeof(double) ) : NULL;
 
         psShape->nVertices = nPoints;
         psShape->padfX = (double *) SfHookCalloc(&pabyObj, nPoints,sizeof(double), psHeapHooks);
@@ -2066,7 +2085,7 @@ SHPReadObjectH( SHPHandle psSHP, int hEntity, SAHeapHooks * psHeapHooks )
         int	nOffset;
 
         // Calloc heap memory of object using HeapHooks
-        pabyObj = psHeapHooks ? (*psHeapHooks->FCalloc)( psHeapHooks, 1, 4*sizeof(double) ) : NULL;
+        pabyObj = psHeapHooks ? (*psHeapHooks->FMalloc)( psHeapHooks, 4*sizeof(double) ) : NULL;
 
         psShape->nVertices = 1;
         psShape->padfX = (double *) SfHookCalloc(&pabyObj, 1,sizeof(double), psHeapHooks);
@@ -2248,8 +2267,23 @@ SHPDestroyObject( SHPObject * psShape )
     free( psShape );
 }
 
+/************************************************************************/
+/*                          SHPDestroyObjectH()                         */
+/*                                                                      */
+/*      Release/Detach the heap memory allocated int the SHPObject.     */
+/*                                                                      */
+/*      SAHeapObjectHooks provides a heap allocation mechanism for      */
+/*      override the default malloc/free routines of this function      */
+/*      and its related 'SHPReadObjectH'.                               */
+/*      e.g. We could override this hook for share a memory buffer      */
+/*      between consecutive object readings and therefore optimize      */
+/*      the memory management.                                          */
+/*      The pair 'SHPReadObjectH/SHPDestroyObjectH' function must be    */
+/*      called only once per object.                                    */
+/************************************************************************/
+
 void SHPAPI_CALL
-SHPDestroyObjectH( SHPObject * psShape, SAHeapHooks * psHeapHooks )
+SHPDestroyObjectH( SHPObject * psShape, SAHeapObjectHooks * psHeapHooks )
 {
     if( psShape && psHeapHooks )
     {

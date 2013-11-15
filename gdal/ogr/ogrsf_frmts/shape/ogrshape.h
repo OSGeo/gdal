@@ -47,8 +47,8 @@
 /* ==================================================================== */
 OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                                OGRFeatureDefn * poDefn, int iShape, 
-                               SHPObject *psShape, SAHeapHooks *psHeapHooks, const char *pszSHPEncoding );
-OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape, SAHeapHooks *psHeapHooks );
+                               SHPObject *psShape, SAHeapObjectHooks *psHeapHooks, const char *pszSHPEncoding );
+OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape, SAHeapObjectHooks *psHeapHooks );
 OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
                                        SHPHandle hSHP, DBFHandle hDBF,
                                        const char *pszSHPEncoding );
@@ -62,7 +62,7 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 /************************************************************************/
 
 class OGRShapeDataSource;
-class OGRShapeHeapHooks;
+class OGRShapeHeapObjectHooks;
 
 class OGRShapeLayer : public OGRAbstractProxiedLayer
 {
@@ -121,7 +121,8 @@ class OGRShapeLayer : public OGRAbstractProxiedLayer
 
     void                TruncateDBF();
 
-    OGRShapeHeapHooks  *m_poHeapObjectHooks; /* Heap object manager for optimize memory allocations in 'SHPReadObject' */
+    OGRShapeHeapObjectHooks
+                       *m_poHeapObjectHooks; /* Heap object manager for optimize memory allocations of pair 'SHPReadObjectH/SHPDestroyObjectH' */
 
   protected:
 

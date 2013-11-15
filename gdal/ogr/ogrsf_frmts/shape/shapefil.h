@@ -270,15 +270,11 @@ void SHPAPI_CALL SASetupDefaultHooks( SAHooks *psHooks );
 void SHPAPI_CALL SASetupUtf8Hooks( SAHooks *psHooks );
 #endif
 
-// Support for override default routines to allocate, free, and reallocate memory.
+// Support for override default routines to allocate and free memory in pair 'SHPReadObjectH/SHPDestroyObjectH'.
 typedef struct {
-    void*      (*FMalloc) ( void *thisHook, size_t size );
-    void*      (*FCalloc) ( void *thisHook, size_t num, size_t size );
-    void*      (*FRealloc)( void *thisHook, void *memblock, size_t size );
+    void*      (*FMalloc) ( void *thisHook, size_t memsize );
     void       (*FFree)   ( void *thisHook, void *memblock );
-} SAHeapHooks;
-
-void SHPAPI_CALL SASetupDefaultHeapHooks( SAHeapHooks *psHeapHooks );
+} SAHeapObjectHooks;
 
 /************************************************************************/
 /*                             SHP Support.                             */
@@ -397,14 +393,14 @@ void SHPAPI_CALL
 SHPObject SHPAPI_CALL1(*)
       SHPReadObject( SHPHandle hSHP, int iShape );
 SHPObject SHPAPI_CALL1(*)
-      SHPReadObjectH( SHPHandle hSHP, int iShape, SAHeapHooks * psHeapHooks );
+      SHPReadObjectH( SHPHandle hSHP, int iShape, SAHeapObjectHooks * psHeapHooks );
 int SHPAPI_CALL
       SHPWriteObject( SHPHandle hSHP, int iShape, SHPObject * psObject );
 
 void SHPAPI_CALL
       SHPDestroyObject( SHPObject * psObject );
 void SHPAPI_CALL
-      SHPDestroyObjectH( SHPObject * psObject, SAHeapHooks * psHeapHooks );
+      SHPDestroyObjectH( SHPObject * psObject, SAHeapObjectHooks * psHeapHooks );
 void SHPAPI_CALL
       SHPComputeExtents( SHPObject * psObject );
 SHPObject SHPAPI_CALL1(*)

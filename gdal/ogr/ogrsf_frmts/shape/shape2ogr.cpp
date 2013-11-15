@@ -89,7 +89,7 @@ static OGRLinearRing * CreateLinearRing ( SHPObject *psShape, int ring, int bHas
 /*      representation.                                                 */
 /************************************************************************/
 
-OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape, SAHeapHooks *psHeapHooks )
+OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape, SAHeapObjectHooks *psHeapHooks )
 {
     // CPLDebug( "Shape", "SHPReadOGRObject( iShape=%d )\n", iShape );
 
@@ -983,7 +983,7 @@ OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
 
 OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                                OGRFeatureDefn * poDefn, int iShape,
-                               SHPObject *psShape, SAHeapHooks *psHeapHooks, const char *pszSHPEncoding )
+                               SHPObject *psShape, SAHeapObjectHooks *psHeapHooks, const char *pszSHPEncoding )
 
 {
     if( iShape < 0 

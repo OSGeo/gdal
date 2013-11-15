@@ -45,100 +45,81 @@
 CPL_CVSID("$Id$");
 
 /************************************************************************/
-/*                         OGRShapeHeapHooks()                          */
+/*                      OGRShapeHeapObjectHooks()                       */
+/*                                                                      */
+/*      SAHeapObjectHooks provides a heap allocation mechanism for      */
+/*      override the default malloc/free routines called in pair        */
+/*      'SHPReadObjectH/SHPDestroyObjectH' functions.                   */
+/*                                                                      */
+/*      We override this hook for share a memory buffer between the     */
+/*      consecutive object readings and therefore optimize the memory   */
+/*      management.                                                     */
+/*      The pair 'SHPReadObjectH/SHPDestroyObjectH' function must be    */
+/*      called only once per object.                                    */
 /************************************************************************/
 
-// Heap manager for optimize memory allocations in 'SHPReadObject'
-class OGRShapeHeapHooks : public SAHeapHooks
+// Heap manager for optimize memory allocations in 'SHPReadObjectH/SHPDestroyObjectH'
+class OGRShapeHeapObjectHooks : public SAHeapObjectHooks
 {
 public:
-    OGRShapeHeapHooks() : mMemoryBuffer( NULL ), mMemorySize( 0 )
+    OGRShapeHeapObjectHooks() : mMemoryBuffer( NULL ), mMemorySize( 0 ), mLocked( false )
     {
-        FMalloc  = OGRShapeHeapHooks::hook_malloc;
-        FCalloc  = OGRShapeHeapHooks::hook_calloc;
-        FRealloc = OGRShapeHeapHooks::hook_realloc;
-        FFree    = OGRShapeHeapHooks::hook_free;
+        FMalloc  = OGRShapeHeapObjectHooks::hook_malloc;
+        FFree    = OGRShapeHeapObjectHooks::hook_free;
     }
-   ~OGRShapeHeapHooks()
+   ~OGRShapeHeapObjectHooks()
     {
         freeMem();
     }
 private:
     void * mMemoryBuffer;
     size_t mMemorySize;
+    bool   mLocked;
 
     // Free allocated memory
     void freeMem()
     {
         if ( mMemoryBuffer )
         {
-            free( mMemoryBuffer );
+            OGRFree( mMemoryBuffer );
             mMemoryBuffer = NULL;
             mMemorySize = 0;
+            mLocked = false;
         }
     }
 
     // Helper hook functions
-    static void *hook_malloc( void *thisHook, size_t size )
+    static void *hook_malloc( void *thisHook, size_t memsize )
     {
-        return ((OGRShapeHeapHooks*)thisHook)->sharedMalloc( size );
-    }
-    static void *hook_calloc( void *thisHook, size_t num, size_t size )
-    {
-        return ((OGRShapeHeapHooks*)thisHook)->sharedCalloc( num, size );
-    }
-    static void *hook_realloc( void *thisHook, void *memblock, size_t size )
-    {
-        return ((OGRShapeHeapHooks*)thisHook)->sharedRealloc( memblock, size );
+        return ((OGRShapeHeapObjectHooks*)thisHook)->sharedMalloc( memsize );
     }
     static void hook_free( void *thisHook, void *memblock )
     {
-        //-> Does nothing, the memory is free in the destructor
+        return ((OGRShapeHeapObjectHooks*)thisHook)->sharedFree( memblock );
     }
 
     // Allocates shared memory blocks
-    void *sharedMalloc(size_t size )
+    void *sharedMalloc( size_t size )
     {
+        if ( mLocked )
+            throw "The pair 'SHPReadObjectH/SHPDestroyObjectH' must be called only once per object";
+
         if ( mMemoryBuffer && mMemorySize < size ) 
             freeMem();
 
         if ( !mMemoryBuffer )
         {
-            mMemoryBuffer = malloc( size );
+            mMemoryBuffer = OGRMalloc( size );
             mMemorySize = size;
         }
-        return mMemoryBuffer;
-    }
-    // Allocates shared memory blocks with elements initialized to 0
-    void *sharedCalloc( size_t num, size_t size )
-    {
-        if ( mMemoryBuffer && mMemorySize < (num*size) ) 
-            freeMem();
+        mLocked = true;
 
-        if ( !mMemoryBuffer )
-        {
-            mMemoryBuffer = calloc( num, size );
-            mMemorySize = num*size;
-        }
-        return mMemoryBuffer;
-    }
-    // Reallocate shared memory blocks
-    void *sharedRealloc( void *memblock, size_t size )
-    {
-        if ( mMemoryBuffer && mMemorySize < size ) 
-            freeMem();
-
-        if ( !mMemoryBuffer )
-        {
-            mMemoryBuffer = realloc( memblock, size );
-            mMemorySize = size;
-        }
         return mMemoryBuffer;
     }
     // Deallocates or frees shared memory blocks
-    void sharedFreed()
-    { 
-        //-> Does nothing, the memory is free in the destructor
+    void sharedFree( void *memblock )
+    {
+        mLocked = false;
     }
 };
 
@@ -231,7 +212,7 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
     poFeatureDefn = SHPReadOGRFeatureDefn( CPLGetBasename(pszFullName),
                                            hSHP, hDBF, osEncoding );
 
-    m_poHeapObjectHooks = new OGRShapeHeapHooks();
+    m_poHeapObjectHooks = new OGRShapeHeapObjectHooks();
 }
 
 /************************************************************************/
