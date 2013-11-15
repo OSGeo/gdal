@@ -270,10 +270,6 @@ void SHPAPI_CALL SASetupDefaultHooks( SAHooks *psHooks );
 void SHPAPI_CALL SASetupUtf8Hooks( SAHooks *psHooks );
 #endif
 
-#ifndef size_t
-typedef unsigned int size_t;
-#endif
-
 // Support for override default routines to allocate, free, and reallocate memory.
 typedef struct {
     void*      (*FMalloc) ( void *thisHook, size_t size );
