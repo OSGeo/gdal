@@ -401,4 +401,185 @@ float CPLStrtof(const char *nptr, char **endptr)
     return CPLStrtofDelim(nptr, endptr, '.');
 }
 
+/************************************************************************/
+/*                            CPLFastAtof()                             */
+/************************************************************************/
+
+/**
+ * Converts ASCII string to floating point number faster than CPLAtof.
+ *
+ * This function converts the initial portion of the string pointed to
+ * by nptr to double floating point representation. The behaviour is the
+ * same as
+ *
+ *   CPLAtof(nptr);
+ *
+ * This function does the same as standard atof(3), but does not take
+ * locale in account. That means, the decimal delimiter is always '.'
+ * (decimal point). Use CPLAtofDelim() function if you want to specify
+ * custom delimiter.
+ *
+ * RELATED INFO:
+ * http://tinodidriksen.com/2011/05/28/cpp-convert-string-to-double-speed
+ *
+ * SOURCE CODE (09-May-2009 Tom Van Baak (tvb) www.LeapSecond.com):
+ * http://www.leapsecond.com/tools/fast_atof.c
+ *
+ * IMPORTANT NOTE.
+ * - Executes about 5x faster than standard MSCRT library atof().
+ * - An attractive alternative if the number of calls is in the millions.
+ * - Assumes input is a proper integer, fraction, or scientific format.
+ * - Matches library atof() to 15 digits (except at extreme exponents).
+ * - Follows atof() precedent of essentially no error checking.
+ * 
+ * @param nptr Pointer to string to convert.
+ *
+ * @return Converted value, if any.
+ */
+
+#define white_space(c) ((c) == ' ' || (c) == '\t')
+#define valid_digit(c) ((c) >= '0' && (c) <= '9')
+
+// Simple and fast atof (ascii to float) function.
+static double fast_atof(const char *p)
+{
+    int frac;
+    double sign, value, scale;
+
+    static const double adfTenPower[] =
+    {
+        1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10,
+        1e11, 1e12, 1e13, 1e14, 1e15, 1e16, 1e17, 1e18, 1e19, 1e20,
+        1e21, 1e22, 1e23, 1e24, 1e25, 1e26, 1e27, 1e28, 1e29, 1e30, 1e31
+    };
+
+    // Skip leading white space, if any.
+    while ( white_space(*p) ) 
+    {
+        p += 1;
+    }
+
+    // Get sign, if any.
+    sign = 1.0;
+    if ( *p == '-' ) 
+    {
+        sign = -1.0;
+        p += 1;
+    } 
+    else if ( *p == '+' ) 
+    {
+        p += 1;
+    }
+
+    // Get digits before decimal point or exponent, if any.
+    for (value = 0.0; valid_digit(*p); p += 1) 
+    {
+        value = value * 10.0 + (*p - '0');
+    }
+
+    // Get digits after decimal point, if any.
+    if (*p == '.') 
+    {
+        unsigned int countFractionnal = 0;
+        p += 1;
+
+        while ( valid_digit(*p) ) 
+        {
+            value = value * 10.0 + (*p - '0');
+            p += 1;
+            countFractionnal++;
+        }
+        if ( countFractionnal )
+        {
+            value = value / adfTenPower[countFractionnal];
+        }
+    }
+
+    // Handle exponent, if any.
+    frac = 0;
+    scale = 1.0;
+    if ( (*p == 'e') || (*p == 'E') ) 
+    {
+        unsigned int expon;
+
+        // Get sign of exponent, if any.
+        p += 1;
+        if ( *p == '-' ) 
+        {
+            frac = 1;
+            p += 1;
+        } 
+        else if ( *p == '+' ) 
+        {
+            p += 1;
+        }
+
+        // Get digits of exponent, if any.
+        for (expon = 0; valid_digit(*p); p += 1) 
+        {
+            expon = expon * 10 + (*p - '0');
+        }
+        if (expon > 308) expon = 308;
+
+        // Calculate scaling factor.
+        while (expon >= 50) { scale *= 1E50; expon -= 50; }
+        while (expon >=  8) { scale *= 1E8;  expon -=  8; }
+        while (expon >   0) { scale *= 10.0; expon -=  1; }
+    }
+
+    // Return signed and scaled floating point result.
+    return sign * (frac ? (value / scale) : (value * scale));
+}
+
+// Converts ASCII string to floating point number faster than CPLAtof.
+double CPLFastAtof(const char *nptr)
+{
+    char point = '.';
+
+    while( *nptr == ' ' )
+        nptr ++;
+
+    if (nptr[0] == '-')
+    {
+        if (strcmp(nptr, "-1.#QNAN") == 0 ||
+            strcmp(nptr, "-1.#IND") == 0)
+            return NAN;
+
+        if (strcmp(nptr,"-inf") == 0 ||
+            strcmp(nptr,"-1.#INF") == 0)
+            return -INFINITY;
+    }
+    else if (nptr[0] == '1')
+    {
+        if (strcmp(nptr, "1.#QNAN") == 0)
+            return NAN;
+        if (strcmp (nptr,"1.#INF") == 0)
+            return INFINITY;
+    }
+    else if (nptr[0] == 'i' && strcmp(nptr,"inf") == 0)
+        return INFINITY;
+    else if (nptr[0] == 'n' && strcmp(nptr,"nan") == 0)
+        return NAN;
+
+/* -------------------------------------------------------------------- */
+/*  We are implementing a simple method here: copy the input string     */
+/*  into the temporary buffer, replace the specified decimal delimiter  */
+/*  with the one, taken from locale settings and use standard strtod()  */
+/*  on that buffer.                                                     */
+/* -------------------------------------------------------------------- */
+    double      dfValue;
+    int         nError;
+
+    char*       pszNumber = CPLReplacePointByLocalePoint(nptr, point);
+
+    dfValue = fast_atof( pszNumber );
+    nError = errno;
+
+    if (pszNumber != (char*) nptr)
+        CPLFree( pszNumber );
+
+    errno = nError;
+    return dfValue;
+}
+
 /* END OF FILE */

@@ -120,7 +120,14 @@ def ogr_shape_3():
             return 'fail'
 
         for fld in range(3):
-            if orig_feat.GetField(fld) != read_feat.GetField(fld):
+            flddef = gdaltest.shape_lyr.GetLayerDefn().GetFieldDefn(fld)
+
+            if flddef.GetType() == ogr.OFTReal:
+                if abs(orig_feat.GetFieldAsDouble(fld) - read_feat.GetFieldAsDouble(fld)) >= 0.000000001:
+                    gdaltest.post_reason( 'Double Attribute %d does not match' % fld )
+                    return 'fail'
+
+            elif orig_feat.GetField(fld) != read_feat.GetField(fld):
                 gdaltest.post_reason( 'Attribute %d does not match' % fld )
                 return 'fail'
 

@@ -142,7 +142,11 @@ void SASetupDefaultHooks( SAHooks *psHooks )
     psHooks->FClose  = VSI_SHP_Close;
 
     psHooks->Remove  = VSI_SHP_Remove;
+    #ifdef WIN32
+    psHooks->Atof    = CPLFastAtof; //-> CPLFastAtof is faster (up to 5x faster on MS runtime libraries) than CPLAtof;
+    #else
     psHooks->Atof    = CPLAtof;
+    #endif
 
     psHooks->Error   = VSI_SHP_Error;
 }

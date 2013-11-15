@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: shpopen.c,v 1.73 2012-01-24 22:33:01 fwarmerdam Exp $
+ * $Id: shpopen.c,v 1.74 2013-10-15 20:30:00 ahuarte47 Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of core Shapefile read/write functions.
@@ -34,6 +34,9 @@
  ******************************************************************************
  *
  * $Log: shpopen.c,v $
+ * Revision 1.74  2013-10-15 22:34:01  ahuarte47
+ * avoid unnecessary calloc's for SHPObject::padf[ZM] (gdal #5272)
+ *
  * Revision 1.73  2012-01-24 22:33:01  fwarmerdam
  * fix memory leak on failure to open .shp (gdal #4410)
  *
@@ -273,7 +276,7 @@
 #include <string.h>
 #include <stdio.h>
 
-SHP_CVSID("$Id: shpopen.c,v 1.73 2012-01-24 22:33:01 fwarmerdam Exp $")
+SHP_CVSID("$Id: shpopen.c,v 1.74 2013-10-15 20:30:00 ahuarte47 Exp $")
 
 typedef unsigned char uchar;
 
@@ -1020,21 +1023,32 @@ SHPComputeExtents( SHPObject * psObject )
     {
         psObject->dfXMin = psObject->dfXMax = psObject->padfX[0];
         psObject->dfYMin = psObject->dfYMax = psObject->padfY[0];
-        psObject->dfZMin = psObject->dfZMax = psObject->padfZ[0];
-        psObject->dfMMin = psObject->dfMMax = psObject->padfM[0];
+        psObject->dfZMin = psObject->dfZMax = psObject->padfZ ? psObject->padfZ[0] : 0.0;
+        psObject->dfMMin = psObject->dfMMax = psObject->padfM ? psObject->padfM[0] : 0.0;
     }
     
-    for( i = 0; i < psObject->nVertices; i++ )
+    for( i = 1; i < psObject->nVertices; i++ )
     {
         psObject->dfXMin = MIN(psObject->dfXMin, psObject->padfX[i]);
         psObject->dfYMin = MIN(psObject->dfYMin, psObject->padfY[i]);
-        psObject->dfZMin = MIN(psObject->dfZMin, psObject->padfZ[i]);
-        psObject->dfMMin = MIN(psObject->dfMMin, psObject->padfM[i]);
-
         psObject->dfXMax = MAX(psObject->dfXMax, psObject->padfX[i]);
         psObject->dfYMax = MAX(psObject->dfYMax, psObject->padfY[i]);
-        psObject->dfZMax = MAX(psObject->dfZMax, psObject->padfZ[i]);
-        psObject->dfMMax = MAX(psObject->dfMMax, psObject->padfM[i]);
+    }
+    if( psObject->padfZ )
+    {
+        for( i = 1; i < psObject->nVertices; i++ )
+        {
+            psObject->dfZMin = MIN(psObject->dfZMin, psObject->padfZ[i]);
+            psObject->dfZMax = MAX(psObject->dfZMax, psObject->padfZ[i]);
+        }
+    }
+    if( psObject->padfM )
+    {
+        for( i = 1; i < psObject->nVertices; i++ )
+        {
+            psObject->dfMMin = MIN(psObject->dfMMin, psObject->padfM[i]);
+            psObject->dfMMax = MAX(psObject->dfMMax, psObject->padfM[i]);
+        }
     }
 }
 
@@ -1127,8 +1141,8 @@ SHPCreateObject( int nSHPType, int nShapeId, int nParts,
     {
         psObject->padfX = (double *) calloc(sizeof(double),nVertices);
         psObject->padfY = (double *) calloc(sizeof(double),nVertices);
-        psObject->padfZ = (double *) calloc(sizeof(double),nVertices);
-        psObject->padfM = (double *) calloc(sizeof(double),nVertices);
+        if ( bHasZ ) psObject->padfZ = (double *) calloc(sizeof(double),nVertices);
+        if ( bHasM ) psObject->padfM = (double *) calloc(sizeof(double),nVertices);
 
         for( i = 0; i < nVertices; i++ )
         {
@@ -1237,8 +1251,8 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
         || psObject->nSHPType == SHPT_ARCM
         || psObject->nSHPType == SHPT_MULTIPATCH )
     {
-        int32		nPoints, nParts;
-        int    		i;
+        int32  nPoints, nParts;
+        int    i;
 
         nPoints = psObject->nVertices;
         nParts = psObject->nParts;
@@ -1544,8 +1558,8 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
         {
             psSHP->adBoundsMin[0] = psSHP->adBoundsMax[0] = psObject->padfX[0];
             psSHP->adBoundsMin[1] = psSHP->adBoundsMax[1] = psObject->padfY[0];
-            psSHP->adBoundsMin[2] = psSHP->adBoundsMax[2] = psObject->padfZ[0];
-            psSHP->adBoundsMin[3] = psSHP->adBoundsMax[3] = psObject->padfM[0];
+            psSHP->adBoundsMin[2] = psSHP->adBoundsMax[2] = psObject->padfZ ? psObject->padfZ[0] : 0.0;
+            psSHP->adBoundsMin[3] = psSHP->adBoundsMax[3] = psObject->padfM ? psObject->padfM[0] : 0.0;
         }
     }
 
@@ -1553,12 +1567,24 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
     {
         psSHP->adBoundsMin[0] = MIN(psSHP->adBoundsMin[0],psObject->padfX[i]);
         psSHP->adBoundsMin[1] = MIN(psSHP->adBoundsMin[1],psObject->padfY[i]);
-        psSHP->adBoundsMin[2] = MIN(psSHP->adBoundsMin[2],psObject->padfZ[i]);
-        psSHP->adBoundsMin[3] = MIN(psSHP->adBoundsMin[3],psObject->padfM[i]);
         psSHP->adBoundsMax[0] = MAX(psSHP->adBoundsMax[0],psObject->padfX[i]);
         psSHP->adBoundsMax[1] = MAX(psSHP->adBoundsMax[1],psObject->padfY[i]);
-        psSHP->adBoundsMax[2] = MAX(psSHP->adBoundsMax[2],psObject->padfZ[i]);
-        psSHP->adBoundsMax[3] = MAX(psSHP->adBoundsMax[3],psObject->padfM[i]);
+    }
+    if( psObject->padfZ )
+    {
+        for( i = 0; i < psObject->nVertices; i++ )
+        {
+            psSHP->adBoundsMin[2] = MIN(psSHP->adBoundsMin[2],psObject->padfZ[i]);
+            psSHP->adBoundsMax[2] = MAX(psSHP->adBoundsMax[2],psObject->padfZ[i]);
+        }
+    }
+    if( psObject->padfM )
+    {
+        for( i = 0; i < psObject->nVertices; i++ )
+        {
+            psSHP->adBoundsMin[3] = MIN(psSHP->adBoundsMin[3],psObject->padfM[i]);
+            psSHP->adBoundsMax[3] = MAX(psSHP->adBoundsMax[3],psObject->padfM[i]);
+        }
     }
 
     return( nShapeId  );
@@ -1679,8 +1705,8 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
         || psShape->nSHPType == SHPT_ARCM
         || psShape->nSHPType == SHPT_MULTIPATCH )
     {
-        int32		nPoints, nParts;
-        int    		i, nOffset;
+        int32  nPoints, nParts;
+        int    i, j, nOffset;
 
         if ( 40 + 8 + 4 > nEntitySize )
         {
@@ -1752,8 +1778,6 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
         psShape->nVertices = nPoints;
         psShape->padfX = (double *) calloc(nPoints,sizeof(double));
         psShape->padfY = (double *) calloc(nPoints,sizeof(double));
-        psShape->padfZ = (double *) calloc(nPoints,sizeof(double));
-        psShape->padfM = (double *) calloc(nPoints,sizeof(double));
 
         psShape->nParts = nParts;
         psShape->panPartStart = (int *) calloc(nParts,sizeof(int));
@@ -1761,8 +1785,6 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
         
         if (psShape->padfX == NULL ||
             psShape->padfY == NULL ||
-            psShape->padfZ == NULL ||
-            psShape->padfM == NULL ||
             psShape->panPartStart == NULL ||
             psShape->panPartType == NULL)
         {
@@ -1827,18 +1849,18 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 /* -------------------------------------------------------------------- */
 /*      Copy out the vertices from the record.                          */
 /* -------------------------------------------------------------------- */
-        for( i = 0; i < nPoints; i++ )
+        for( i = 0, j = nOffset; i < nPoints; i++, j+=16 )
         {
-            memcpy(psShape->padfX + i,
-                   psSHP->pabyRec + nOffset + i * 16,
-                   8 );
-
-            memcpy(psShape->padfY + i,
-                   psSHP->pabyRec + nOffset + i * 16 + 8,
-                   8 );
-
-            if( bBigEndian ) SwapWord( 8, psShape->padfX + i );
-            if( bBigEndian ) SwapWord( 8, psShape->padfY + i );
+            memcpy(psShape->padfX + i, psSHP->pabyRec + j    , 8 );
+            memcpy(psShape->padfY + i, psSHP->pabyRec + j + 8, 8 );
+        }
+        if( bBigEndian )
+        {
+            for( i = 0; i < nPoints; i++ )
+            {
+                SwapWord( 8, psShape->padfX + i );
+                SwapWord( 8, psShape->padfY + i );
+            }
         }
 
         nOffset += 16*nPoints;
@@ -1850,6 +1872,17 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
             || psShape->nSHPType == SHPT_ARCZ
             || psShape->nSHPType == SHPT_MULTIPATCH )
         {
+            psShape->padfZ = (double *) calloc(nPoints,sizeof(double));
+            if( !psShape->padfZ )
+            {
+                snprintf(szErrorMsg, sizeof(szErrorMsg),
+                         "Not enough memory to allocate requested memory (nPoints=%d, nParts=%d) for shape %d. "
+                         "Probably broken SHP file", hEntity, nPoints, nParts );
+                psSHP->sHooks.Error( szErrorMsg );
+                SHPDestroyObject(psShape);
+                return NULL;
+            }
+
             memcpy( &(psShape->dfZMin), psSHP->pabyRec + nOffset, 8 );
             memcpy( &(psShape->dfZMax), psSHP->pabyRec + nOffset + 8, 8 );
             
@@ -1874,6 +1907,17 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 /* -------------------------------------------------------------------- */
         if( nEntitySize >= nOffset + 16 + 8*nPoints )
         {
+            psShape->padfM = (double *) calloc(nPoints,sizeof(double));
+            if( !psShape->padfM )
+            {
+                snprintf(szErrorMsg, sizeof(szErrorMsg),
+                         "Not enough memory to allocate requested memory (nPoints=%d, nParts=%d) for shape %d. "
+                         "Probably broken SHP file", hEntity, nPoints, nParts );
+                psSHP->sHooks.Error( szErrorMsg );
+                SHPDestroyObject(psShape);
+                return NULL;
+            }
+
             memcpy( &(psShape->dfMMin), psSHP->pabyRec + nOffset, 8 );
             memcpy( &(psShape->dfMMax), psSHP->pabyRec + nOffset + 8, 8 );
             
@@ -1897,8 +1941,8 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
              || psShape->nSHPType == SHPT_MULTIPOINTM
              || psShape->nSHPType == SHPT_MULTIPOINTZ )
     {
-        int32		nPoints;
-        int    		i, nOffset;
+        int32   nPoints;
+        int     i, j, nOffset;
 
         if ( 44 + 4 > nEntitySize )
         {
@@ -1941,13 +1985,9 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
         psShape->nVertices = nPoints;
         psShape->padfX = (double *) calloc(nPoints,sizeof(double));
         psShape->padfY = (double *) calloc(nPoints,sizeof(double));
-        psShape->padfZ = (double *) calloc(nPoints,sizeof(double));
-        psShape->padfM = (double *) calloc(nPoints,sizeof(double));
 
         if (psShape->padfX == NULL ||
-            psShape->padfY == NULL ||
-            psShape->padfZ == NULL ||
-            psShape->padfM == NULL)
+            psShape->padfY == NULL)
         {
             snprintf(szErrorMsg, sizeof(szErrorMsg),
                      "Not enough memory to allocate requested memory (nPoints=%d) for shape %d. "
@@ -1957,10 +1997,10 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
             return NULL;
         }
 
-        for( i = 0; i < nPoints; i++ )
+        for( i = 0, j = 48; i < nPoints; i++, j+=16 )
         {
-            memcpy(psShape->padfX+i, psSHP->pabyRec + 48 + 16 * i, 8 );
-            memcpy(psShape->padfY+i, psSHP->pabyRec + 48 + 16 * i + 8, 8 );
+            memcpy(psShape->padfX+i, psSHP->pabyRec + j    , 8 );
+            memcpy(psShape->padfY+i, psSHP->pabyRec + j + 8, 8 );
 
             if( bBigEndian ) SwapWord( 8, psShape->padfX + i );
             if( bBigEndian ) SwapWord( 8, psShape->padfY + i );
@@ -1986,6 +2026,17 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 /* -------------------------------------------------------------------- */
         if( psShape->nSHPType == SHPT_MULTIPOINTZ )
         {
+            psShape->padfZ = (double *) calloc(nPoints,sizeof(double));
+            if( !psShape->padfZ )
+            {
+                snprintf(szErrorMsg, sizeof(szErrorMsg),
+                         "Not enough memory to allocate requested memory (nPoints=%d) for shape %d. "
+                         "Probably broken SHP file", hEntity, nPoints );
+                psSHP->sHooks.Error( szErrorMsg );
+                SHPDestroyObject(psShape);
+                return NULL;
+            }
+
             memcpy( &(psShape->dfZMin), psSHP->pabyRec + nOffset, 8 );
             memcpy( &(psShape->dfZMax), psSHP->pabyRec + nOffset + 8, 8 );
             
@@ -2010,6 +2061,17 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 /* -------------------------------------------------------------------- */
         if( nEntitySize >= nOffset + 16 + 8*nPoints )
         {
+            psShape->padfM = (double *) calloc(nPoints,sizeof(double));
+            if( !psShape->padfM )
+            {
+                snprintf(szErrorMsg, sizeof(szErrorMsg),
+                         "Not enough memory to allocate requested memory (nPoints=%d) for shape %d. "
+                         "Probably broken SHP file", hEntity, nPoints );
+                psSHP->sHooks.Error( szErrorMsg );
+                SHPDestroyObject(psShape);
+                return NULL;
+            }
+
             memcpy( &(psShape->dfMMin), psSHP->pabyRec + nOffset, 8 );
             memcpy( &(psShape->dfMMax), psSHP->pabyRec + nOffset + 8, 8 );
             
@@ -2038,8 +2100,6 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
         psShape->nVertices = 1;
         psShape->padfX = (double *) calloc(1,sizeof(double));
         psShape->padfY = (double *) calloc(1,sizeof(double));
-        psShape->padfZ = (double *) calloc(1,sizeof(double));
-        psShape->padfM = (double *) calloc(1,sizeof(double));
 
         if (20 + 8 + (( psShape->nSHPType == SHPT_POINTZ ) ? 8 : 0)> nEntitySize)
         {
@@ -2063,6 +2123,17 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 /* -------------------------------------------------------------------- */
         if( psShape->nSHPType == SHPT_POINTZ )
         {
+            psShape->padfZ = (double *) calloc(1,sizeof(double));
+            if( !psShape->padfZ )
+            {
+                snprintf(szErrorMsg, sizeof(szErrorMsg),
+                         "Not enough memory to allocate requested memory (nPoints=%d) for shape %d. "
+                         "Probably broken SHP file", hEntity, 1 );
+                psSHP->sHooks.Error( szErrorMsg );
+                SHPDestroyObject(psShape);
+                return NULL;
+            }
+
             memcpy( psShape->padfZ, psSHP->pabyRec + nOffset, 8 );
         
             if( bBigEndian ) SwapWord( 8, psShape->padfZ );
@@ -2078,6 +2149,17 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 /* -------------------------------------------------------------------- */
         if( nEntitySize >= nOffset + 8 )
         {
+            psShape->padfM = (double *) calloc(1,sizeof(double));
+            if( !psShape->padfM )
+            {
+                snprintf(szErrorMsg, sizeof(szErrorMsg),
+                         "Not enough memory to allocate requested memory (nPoints=%d) for shape %d. "
+                         "Probably broken SHP file", hEntity, 1 );
+                psSHP->sHooks.Error( szErrorMsg );
+                SHPDestroyObject(psShape);
+                return NULL;
+            }
+
             memcpy( psShape->padfM, psSHP->pabyRec + nOffset, 8 );
         
             if( bBigEndian ) SwapWord( 8, psShape->padfM );
@@ -2090,8 +2172,8 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 /* -------------------------------------------------------------------- */
         psShape->dfXMin = psShape->dfXMax = psShape->padfX[0];
         psShape->dfYMin = psShape->dfYMax = psShape->padfY[0];
-        psShape->dfZMin = psShape->dfZMax = psShape->padfZ[0];
-        psShape->dfMMin = psShape->dfMMax = psShape->padfM[0];
+        psShape->dfZMin = psShape->dfZMax = psShape->padfZ ? psShape->padfZ[0] : 0.0;
+        psShape->dfMMin = psShape->dfMMax = psShape->padfM ? psShape->padfM[0] : 0.0;
     }
 
     return( psShape );
