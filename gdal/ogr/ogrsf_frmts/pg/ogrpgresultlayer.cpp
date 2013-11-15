@@ -349,7 +349,14 @@ OGRSpatialReference *OGRPGResultLayer::GetSpatialRef()
                 OGRPGLayer* poBaseLayer = (OGRPGLayer*) poDS->GetLayerByName(osName);
                 if (poBaseLayer)
                 {
-                    nSRSId = poBaseLayer->GetSRID();
+                    /* In case the base table has several geometry columns, make */
+                    /* sure that the one of the base tables matches the one of the */
+                    /* SQL request */
+                    if( pszGeomColumn != NULL &&
+                        EQUAL(poBaseLayer->GetGeometryColumn(), pszGeomColumn) )
+                    {
+                        nSRSId = poBaseLayer->GetSRID();
+                    }
                 }
             }
 

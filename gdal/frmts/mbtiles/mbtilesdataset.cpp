@@ -1462,6 +1462,7 @@ int MBTilesGetBandCount(OGRDataSourceH &hDS, int nMinLevel, int nMaxLevel,
     OGRFeatureH hFeat;
     const char* pszSQL;
     VSILFILE* fpCURLOGR = NULL;
+    int bFirstSelect = TRUE;
 
     int nBands = -1;
 
@@ -1503,6 +1504,7 @@ int MBTilesGetBandCount(OGRDataSourceH &hDS, int nMinLevel, int nMaxLevel,
         /* Install a spy on the file connexion that will intercept */
         /* PNG or JPEG headers, to interrupt their downloading */
         /* once the header is found. Speeds up dataset opening. */
+        CPLErrorReset();
         VSICurlInstallReadCbk(fpCURLOGR, MBTilesCurlReadCbk, &nBands, TRUE);
 
         CPLErrorReset();
@@ -1545,21 +1547,29 @@ int MBTilesGetBandCount(OGRDataSourceH &hDS, int nMinLevel, int nMaxLevel,
         hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, NULL);
     }
 
-    if (hSQLLyr == NULL)
+    while( TRUE )
     {
-        pszSQL = CPLSPrintf("SELECT tile_data FROM tiles WHERE "
-                            "zoom_level = %d LIMIT 1", nMaxLevel);
-        CPLDebug("MBTILES", "%s", pszSQL);
-        hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, NULL);
-        if (hSQLLyr == NULL)
-            return -1;
-    }
+        if (hSQLLyr == NULL && bFirstSelect)
+        {
+            bFirstSelect = FALSE;
+            pszSQL = CPLSPrintf("SELECT tile_data FROM tiles WHERE "
+                                "zoom_level = %d LIMIT 1", nMaxLevel);
+            CPLDebug("MBTILES", "%s", pszSQL);
+            hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, NULL);
+            if (hSQLLyr == NULL)
+                return -1;
+        }
 
-    hFeat = OGR_L_GetNextFeature(hSQLLyr);
-    if (hFeat == NULL)
-    {
-        OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
-        return -1;
+        hFeat = OGR_L_GetNextFeature(hSQLLyr);
+        if (hFeat == NULL)
+        {
+            OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+            hSQLLyr = NULL;
+            if( !bFirstSelect )
+                return -1;
+        }
+        else
+            break;
     }
 
     CPLString osMemFileName;

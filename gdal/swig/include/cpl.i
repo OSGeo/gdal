@@ -385,7 +385,9 @@ int VSIRename(const char * pszOld, const char *pszNew );
 
 #if !defined(SWIGJAVA)
 
+#if !defined(SWIGCSHARP)
 typedef void VSILFILE;
+#endif
 
 #if defined(SWIGPERL)
 %apply RETURN_NONE_TRUE_IS_ERROR {RETURN_NONE};

@@ -28,7 +28,7 @@
  ****************************************************************************/
 
 #ifndef SDTS_AL_H_INCLUDED
-#define STDS_AL_H_INCLUDED
+#define SDTS_AL_H_INCLUDED
 
 #include "cpl_conv.h"
 #include "iso8211.h"
@@ -677,4 +677,4 @@ class SDTSTransfer
     SDTSIndexedReader **papoLayerReader;
 };
 
-#endif /* ndef SDTS_AL_H_INCLUDED */
+#endif /* ifndef SDTS_AL_H_INCLUDED */

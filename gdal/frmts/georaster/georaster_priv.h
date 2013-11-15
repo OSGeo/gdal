@@ -419,6 +419,11 @@ public:
     CPLXMLNode*         phMetadata;
     CPLString           sCellDepth;
     CPLString           sCompressionType;
+
+    bool                bGenPyramid;
+    CPLString           sPyramidResampling;
+    int                 nPyramidLevels;
+
     int                 nCompressQuality;
     CPLString           sWKText;
     CPLString           sAuthority;
