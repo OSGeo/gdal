@@ -481,6 +481,8 @@ const char *CPLFormFilename( const char * pszPath,
         /* prefer as directory separator */
         if (strncmp(pszPath, "/vsicurl/", 9) == 0)
             pszAddedPathSep = "/";
+        else if (strncmp(pszPath, "/vsizip/", 8) == 0)
+            pszAddedPathSep = "/";
         else
             pszAddedPathSep = SEP_STRING;
     }
