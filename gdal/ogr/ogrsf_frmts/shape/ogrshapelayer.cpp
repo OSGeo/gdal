@@ -2420,7 +2420,7 @@ OGRErr OGRShapeLayer::Repack()
         pszAccess = "r";
     
     if( bMustReopenSHP )
-        hSHP = SHPOpen ( osSHPName , pszAccess );
+        hSHP = OGRShapeSHPOpen ( osSHPName , pszAccess );
     hDBF = DBFOpen ( osDBFName , pszAccess );
 
     if( (bMustReopenSHP && NULL == hSHP) || NULL == hDBF )
@@ -2690,9 +2690,9 @@ int OGRShapeLayer::ReopenFileDescriptors()
     if( bHSHPWasNonNULL )
     {
         if( bUpdateAccess )
-            hSHP = SHPOpen( pszFullName, "r+" );
+            hSHP = OGRShapeSHPOpen( pszFullName, "r+" );
         else
-            hSHP = SHPOpen( pszFullName, "r" );
+            hSHP = OGRShapeSHPOpen( pszFullName, "r" );
 
         if (hSHP == NULL)
         {

@@ -36,6 +36,19 @@
 
 CPL_CVSID("$Id$");
 
+
+/************************************************************************/
+/*                         OGRShapeSHPOpen()                            */
+/************************************************************************/
+
+SHPHandle OGRShapeSHPOpen( const char * pszShapeFile, const char * pszAccess )
+{
+    SHPHandle hSHP = SHPOpen( pszShapeFile, pszAccess );
+    if( hSHP != NULL )
+        SHPSetFastModeReadObject( hSHP );
+    return hSHP;
+}
+
 /************************************************************************/
 /*                         OGRShapeDataSource()                         */
 /************************************************************************/
@@ -288,9 +301,9 @@ int OGRShapeDataSource::OpenFile( const char *pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
     CPLPushErrorHandler( CPLQuietErrorHandler );
     if( bUpdate )
-        hSHP = SHPOpen( pszNewName, "r+" );
+        hSHP = OGRShapeSHPOpen( pszNewName, "r+" );
     else
-        hSHP = SHPOpen( pszNewName, "r" );
+        hSHP = OGRShapeSHPOpen( pszNewName, "r" );
     CPLPopErrorHandler();
 
     if( hSHP == NULL 
@@ -584,6 +597,9 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
             CPLFree( pszFilenameWithoutExt );
             return NULL;
         }
+        
+        SHPSetFastModeReadObject( hSHP );
+
         CPLFree( pszFilename );
     }
     else
