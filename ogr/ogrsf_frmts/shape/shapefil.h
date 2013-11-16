@@ -273,7 +273,9 @@ void SHPAPI_CALL SASetupUtf8Hooks( SAHooks *psHooks );
 /************************************************************************/
 /*                             SHP Support.                             */
 /************************************************************************/
-typedef	struct
+typedef struct tagSHPObject SHPObject;
+
+typedef struct
 {
     SAHooks sHooks;
 
@@ -296,6 +298,11 @@ typedef	struct
 
     unsigned char *pabyRec;
     int         nBufSize;
+    
+    int            bFastModeReadObject;
+    unsigned char *pabyObjectBuf;
+    int            nObjectBufSize;
+    SHPObject*     psCachedObject;
 } SHPInfo;
 
 typedef SHPInfo * SHPHandle;
@@ -335,7 +342,7 @@ typedef SHPInfo * SHPHandle;
 /*      SHPObject - represents on shape (without attributes) read       */
 /*      from the .shp file.                                             */
 /* -------------------------------------------------------------------- */
-typedef struct
+struct tagSHPObject
 {
     int		nSHPType;
 
@@ -362,7 +369,8 @@ typedef struct
     double	dfMMax;
 
     int		bMeasureIsUsed;
-} SHPObject;
+    int     bFastModeReadObject;
+};
 
 /* -------------------------------------------------------------------- */
 /*      SHP API Prototypes                                              */
@@ -375,6 +383,13 @@ SHPHandle SHPAPI_CALL
 SHPHandle SHPAPI_CALL
       SHPOpenLL( const char *pszShapeFile, const char *pszAccess, 
                  SAHooks *psHooks );
+
+/* In this mode, the content of SHPReadObject() are owned by the SHPHandle. */
+/* So you cannot have 2 valid instances of SHPReadObject() simultaneously. */
+/* The SHPObject padfZ and padfM members may be NULL depending on the geometry */
+/* type. It is illegal to free at hand any of the pointer members of the SHPObject structure */
+void SHPAPI_CALL SHPSetFastModeReadObject( SHPHandle hSHP );
+
 SHPHandle SHPAPI_CALL
       SHPCreate( const char * pszShapeFile, int nShapeType );
 SHPHandle SHPAPI_CALL
