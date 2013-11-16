@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -426,6 +427,32 @@ def jp2kak_17():
     gdal.SetConfigOption( 'GDAL_JP2K_ALT_OFFSETVECTOR_ORDER', 'NO' )
 
     return 'success'
+
+###############################################################################
+# Test lossless copying of Int16
+
+def jp2kak_18():
+
+    if gdaltest.jp2kak_drv is None:
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'JP2KAK', 'int16.tif', 1, 4672,
+                             options = [ 'QUALITY=100' ] )
+
+    return tst.testCreateCopy()
+
+###############################################################################
+# Test lossless copying of UInt16
+
+def jp2kak_19():
+
+    if gdaltest.jp2kak_drv is None:
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'JP2KAK', '../gcore/data/uint16.tif', 1, 4672,
+                             options = [ 'QUALITY=100' ], absolute = 1 )
+
+    return tst.testCreateCopy()
     
 ###############################################################################
 # Cleanup.
@@ -454,6 +481,7 @@ gdaltest_list = [
     jp2kak_15,
     jp2kak_16,
     jp2kak_17,
+    jp2kak_18,
     jp2kak_cleanup ]
 
 if __name__ == '__main__':

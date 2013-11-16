@@ -1851,6 +1851,13 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
     kdu_push_ifc  *engines = new kdu_push_ifc[num_components];
     kdu_line_buf  *lines = new kdu_line_buf[num_components];
     kdu_sample_allocator allocator;
+    
+    // Ticket #4050 patch : use a 32 bits kdu_line_buf for GDT_UInt16 reversible compression
+    // ToDo: test for GDT_UInt16?
+    bool   bUseShorts = bReversible;
+    if ((eType == GDT_UInt16)&&(bReversible))
+        bUseShorts = false;
+
     for (c=0; c < num_components; c++)
     {
         kdu_resolution res = oTile.access_component(c).access_resolution(); 
@@ -1864,11 +1871,11 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
             roi_node = poROIImage->acquire_node(c,dims);
         }
 #if KAKADU_VERSION >= 700
-        lines[c].pre_create(&allocator,nXSize,bReversible,bReversible,0,0);
+        lines[c].pre_create(&allocator,nXSize,bReversible,bUseShorts,0,0);
 #else
-        lines[c].pre_create(&allocator,nXSize,bReversible,bReversible);
+        lines[c].pre_create(&allocator,nXSize,bReversible,bUseShorts);
 #endif
-        engines[c] = kdu_analysis(res,&allocator,bReversible,1.0F,roi_node);
+        engines[c] = kdu_analysis(res,&allocator,bUseShorts,1.0F,roi_node);
     }
 
     try
@@ -1932,11 +1939,12 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
                 }
                 else if( bReversible && eType == GDT_UInt16 )
                 {
-                    kdu_sample16 *dest = lines[c].get_buf16();
+                    // Ticket #4050 patch : use a 32 bits kdu_line_buf for GDT_UInt16 reversible compression
+                    kdu_sample32 *dest = lines[c].get_buf32();
                     GUInt16 *sp = (GUInt16 *) pabyBuffer;
                 
                     for (int n=nXSize; n > 0; n--, dest++, sp++)
-                        dest->ival = *sp;
+                        dest->ival = (kdu_int32)(*sp)-32768;
                 }
                 else if( eType == GDT_Byte )
                 {
