@@ -306,7 +306,7 @@ class CPL_DLL OGRLineString : public OGRCurve
     
     // non standard.
     virtual void setCoordinateDimension( int nDimension ); 
-    void        setNumPoints( int );
+    void        setNumPoints( int nNewPointCount, int bZeroizeNewContent = TRUE );
     void        setPoint( int, OGRPoint * );
     void        setPoint( int, double, double );
     void        setPoint( int, double, double, double );
