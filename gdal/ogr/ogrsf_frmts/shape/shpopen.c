@@ -1605,7 +1605,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 /*      for one shape.                                                  */
 /*                                                                      */
 /*      SAHeapObjectHooks provides a heap allocation mechanism for      */
-/*      override the default malloc/free routines of this function      */
+/*      override the default calloc/free routines of this function      */
 /*      and its related 'SHPDestroyObjectH'.                            */
 /*      e.g. We could override this hook for share a memory buffer      */
 /*      between consecutives object readings and therefore optimize     */
@@ -2270,10 +2270,10 @@ SHPDestroyObject( SHPObject * psShape )
 /************************************************************************/
 /*                          SHPDestroyObjectH()                         */
 /*                                                                      */
-/*      Release/Detach the heap memory allocated int the SHPObject.     */
+/*      Release/Detach the heap memory allocated in the SHPObject.      */
 /*                                                                      */
 /*      SAHeapObjectHooks provides a heap allocation mechanism for      */
-/*      override the default malloc/free routines of this function      */
+/*      override the default calloc/free routines of this function      */
 /*      and its related 'SHPReadObjectH'.                               */
 /*      e.g. We could override this hook for share a memory buffer      */
 /*      between consecutive object readings and therefore optimize      */
