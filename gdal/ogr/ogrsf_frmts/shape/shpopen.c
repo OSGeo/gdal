@@ -1793,7 +1793,7 @@ SHPReadObjectH( SHPHandle psSHP, int hEntity, SAHeapObjectHooks * psHeapHooks )
         }
 
         // Calloc heap memory of object using HeapHooks
-        pabyObj = psHeapHooks ? (*psHeapHooks->FMalloc)( psHeapHooks, 4*nPoints*sizeof(double) + 2*nParts*sizeof(int) ) : NULL;
+        pabyObj = psHeapHooks ? (*psHeapHooks->FCalloc)( psHeapHooks, 1, 4*nPoints*sizeof(double) + 2*nParts*sizeof(int) ) : NULL;
 
         psShape->nVertices = nPoints;
         psShape->padfX = (double *) SfHookCalloc(&pabyObj, nPoints,sizeof(double), psHeapHooks);
@@ -1985,7 +1985,7 @@ SHPReadObjectH( SHPHandle psSHP, int hEntity, SAHeapObjectHooks * psHeapHooks )
         }
 
         // Calloc heap memory of object using HeapHooks
-        pabyObj = psHeapHooks ? (*psHeapHooks->FMalloc)( psHeapHooks, 4*nPoints*sizeof(double) ) : NULL;
+        pabyObj = psHeapHooks ? (*psHeapHooks->FCalloc)( psHeapHooks, 1, 4*nPoints*sizeof(double) ) : NULL;
 
         psShape->nVertices = nPoints;
         psShape->padfX = (double *) SfHookCalloc(&pabyObj, nPoints,sizeof(double), psHeapHooks);
@@ -2085,7 +2085,7 @@ SHPReadObjectH( SHPHandle psSHP, int hEntity, SAHeapObjectHooks * psHeapHooks )
         int	nOffset;
 
         // Calloc heap memory of object using HeapHooks
-        pabyObj = psHeapHooks ? (*psHeapHooks->FMalloc)( psHeapHooks, 4*sizeof(double) ) : NULL;
+        pabyObj = psHeapHooks ? (*psHeapHooks->FCalloc)( psHeapHooks, 1, 4*sizeof(double) ) : NULL;
 
         psShape->nVertices = 1;
         psShape->padfX = (double *) SfHookCalloc(&pabyObj, 1,sizeof(double), psHeapHooks);

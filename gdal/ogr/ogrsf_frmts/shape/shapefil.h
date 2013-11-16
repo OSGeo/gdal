@@ -272,7 +272,7 @@ void SHPAPI_CALL SASetupUtf8Hooks( SAHooks *psHooks );
 
 // Support for override default routines to allocate and free memory in pair 'SHPReadObjectH/SHPDestroyObjectH'.
 typedef struct {
-    void*      (*FMalloc) ( void *thisHook, size_t memsize );
+    void*      (*FCalloc) ( void *thisHook, size_t num, size_t size );
     void       (*FFree)   ( void *thisHook, void *memblock );
 } SAHeapObjectHooks;
 

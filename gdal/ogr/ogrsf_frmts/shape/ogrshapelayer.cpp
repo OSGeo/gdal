@@ -64,8 +64,8 @@ class OGRShapeHeapObjectHooks : public SAHeapObjectHooks
 public:
     OGRShapeHeapObjectHooks() : mMemoryBuffer( NULL ), mMemorySize( 0 ), mLocked( false )
     {
-        FMalloc  = OGRShapeHeapObjectHooks::hook_malloc;
-        FFree    = OGRShapeHeapObjectHooks::hook_free;
+        FCalloc = OGRShapeHeapObjectHooks::hook_calloc;
+        FFree   = OGRShapeHeapObjectHooks::hook_free;
     }
    ~OGRShapeHeapObjectHooks()
     {
@@ -89,9 +89,9 @@ private:
     }
 
     // Helper hook functions
-    static void *hook_malloc( void *thisHook, size_t memsize )
+    static void *hook_calloc( void *thisHook, size_t num, size_t size )
     {
-        return ((OGRShapeHeapObjectHooks*)thisHook)->sharedMalloc( memsize );
+        return ((OGRShapeHeapObjectHooks*)thisHook)->sharedCalloc( num, size );
     }
     static void hook_free( void *thisHook, void *memblock )
     {
@@ -99,18 +99,22 @@ private:
     }
 
     // Allocates shared memory blocks
-    void *sharedMalloc( size_t size )
+    void *sharedCalloc( size_t num, size_t size )
     {
         if ( mLocked )
             throw "The pair 'SHPReadObjectH/SHPDestroyObjectH' must be called only once per object";
 
-        if ( mMemoryBuffer && mMemorySize < size ) 
+        if ( mMemoryBuffer && mMemorySize < (num*size) ) 
             freeMem();
 
         if ( !mMemoryBuffer )
         {
-            mMemoryBuffer = OGRMalloc( size );
-            mMemorySize = size;
+            mMemoryBuffer = OGRCalloc( num, size );
+            mMemorySize = num * size;
+        }
+        else
+        {
+            memset( mMemoryBuffer, 0, num * size );
         }
         mLocked = true;
 
