@@ -574,7 +574,11 @@ typedef	struct
     int		bNoHeader;
     int		bUpdated;
 
-    double      dfDoubleField;
+    union
+    {
+        double      dfDoubleField;
+        int         nIntField;
+    } fieldValue;
 
     int         iLanguageDriver;
     char        *pszCodePage;

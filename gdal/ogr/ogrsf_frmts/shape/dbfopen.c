@@ -996,7 +996,7 @@ static void *DBFReadAttribute(DBFHandle psDBF, int hEntity, int iField,
 /* -------------------------------------------------------------------- */
 /*	Extract the requested field.					*/
 /* -------------------------------------------------------------------- */
-    strncpy( psDBF->pszWorkField,
+    memcpy( psDBF->pszWorkField,
 	     ((const char *) pabyRec) + psDBF->panFieldOffset[iField],
 	     psDBF->panFieldSize[iField] );
     psDBF->pszWorkField[psDBF->panFieldSize[iField]] = '\0';
@@ -1006,11 +1006,17 @@ static void *DBFReadAttribute(DBFHandle psDBF, int hEntity, int iField,
 /* -------------------------------------------------------------------- */
 /*      Decode the field.                                               */
 /* -------------------------------------------------------------------- */
-    if( chReqType == 'N' )
+    if( chReqType == 'I' )
     {
-        psDBF->dfDoubleField = psDBF->sHooks.Atof(psDBF->pszWorkField);
+        psDBF->fieldValue.nIntField = atoi(psDBF->pszWorkField);
 
-	pReturnField = &(psDBF->dfDoubleField);
+        pReturnField = &(psDBF->fieldValue.nIntField);
+    }
+    else if( chReqType == 'N' )
+    {
+        psDBF->fieldValue.dfDoubleField = psDBF->sHooks.Atof(psDBF->pszWorkField);
+
+        pReturnField = &(psDBF->fieldValue.dfDoubleField);
     }
 
 /* -------------------------------------------------------------------- */
@@ -1047,14 +1053,14 @@ int SHPAPI_CALL
 DBFReadIntegerAttribute( DBFHandle psDBF, int iRecord, int iField )
 
 {
-    double	*pdValue;
+    int	*pnValue;
 
-    pdValue = (double *) DBFReadAttribute( psDBF, iRecord, iField, 'N' );
+    pnValue = (int *) DBFReadAttribute( psDBF, iRecord, iField, 'I' );
 
-    if( pdValue == NULL )
+    if( pnValue == NULL )
         return 0;
     else
-        return( (int) *pdValue );
+        return( *pnValue );
 }
 
 /************************************************************************/
