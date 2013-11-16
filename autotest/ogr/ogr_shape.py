@@ -2040,6 +2040,42 @@ def ogr_shape_48():
     ds = None
     
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/ogr_shape_48.shp')
+    
+    # Test with Polygon
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_48.shp')
+    lyr = ds.CreateLayer('ogr_shape_48')
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((0 0,0 -1,-1 -1,-1 0,0 0))'))
+    lyr.CreateFeature(feat)
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((0 0,0 1,1 1,1 0,0 0))'))
+    lyr.SetFeature(feat)
+    ds.ExecuteSQL('RECOMPUTE EXTENT ON ogr_shape_48')
+    extent = lyr.GetExtent()
+    if extent != (0,1,0,1):
+        gdaltest.post_reason('did not get expected extent (4)')
+        print(lyr.GetExtent())
+        return 'fail'
+    ds = None
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/ogr_shape_48.shp')
+    
+    # Test with PolygonZ
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_48.shp')
+    lyr = ds.CreateLayer('ogr_shape_48')
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((0 0 -2,0 -1 -2,-1 -1 -2,-1 0 -2,0 0 -2))'))
+    lyr.CreateFeature(feat)
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((0 0 2,0 1 2,1 1 2,1 0 2,0 0 2))'))
+    lyr.SetFeature(feat)
+    ds.ExecuteSQL('RECOMPUTE EXTENT ON ogr_shape_48')
+    # FIXME: when we have a GetExtent3D
+    extent = lyr.GetExtent()
+    if extent != (0,1,0,1):
+        gdaltest.post_reason('did not get expected extent (4)')
+        print(lyr.GetExtent())
+        return 'fail'
+    ds = None
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/ogr_shape_48.shp')
+
 
     return 'success'
     
