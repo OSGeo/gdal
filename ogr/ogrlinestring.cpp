@@ -297,7 +297,7 @@ double OGRLineString::getZ( int iVertex ) const
  * @param nNewPointCount the new number of points for geometry.
  */
 
-void OGRLineString::setNumPoints( int nNewPointCount )
+void OGRLineString::setNumPoints( int nNewPointCount, int bZeroizeNewContent )
 
 {
     if( nNewPointCount == 0 )
@@ -324,7 +324,8 @@ void OGRLineString::setNumPoints( int nNewPointCount )
         }
         paoPoints = paoNewPoints;
         
-        memset( paoPoints + nPointCount,
+        if( bZeroizeNewContent )
+            memset( paoPoints + nPointCount,
                 0, sizeof(OGRRawPoint) * (nNewPointCount - nPointCount) );
         
         if( getCoordinateDimension() == 3 )
@@ -338,7 +339,8 @@ void OGRLineString::setNumPoints( int nNewPointCount )
                 return;
             }
             padfZ = padfNewZ;
-            memset( padfZ + nPointCount, 0,
+            if( bZeroizeNewContent )
+                memset( padfZ + nPointCount, 0,
                     sizeof(double) * (nNewPointCount - nPointCount) );
         }
     }
@@ -507,7 +509,7 @@ void OGRLineString::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn,
                                double * padfZ )
 
 {
-    setNumPoints( nPointsIn );
+    setNumPoints( nPointsIn, FALSE );
     if (nPointCount < nPointsIn)
         return;
 
@@ -563,7 +565,7 @@ void OGRLineString::setPoints( int nPointsIn, double * padfX, double * padfY,
 /* -------------------------------------------------------------------- */
 /*      Assign values.                                                  */
 /* -------------------------------------------------------------------- */
-    setNumPoints( nPointsIn );
+    setNumPoints( nPointsIn, FALSE );
     if (nPointCount < nPointsIn)
         return;
 
