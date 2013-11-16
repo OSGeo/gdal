@@ -795,7 +795,30 @@ SHPClose(SHPHandle psSHP )
         free( psSHP->pabyRec );
     }
     
+    if( psSHP->pabyObjectBuf != NULL )
+    {
+        free( psSHP->pabyObjectBuf );
+    }
+    if( psSHP->psCachedObject != NULL )
+    {
+        free( psSHP->psCachedObject );
+    }
+    
     free( psSHP );
+}
+
+/************************************************************************/
+/*                    SHPSetFastModeReadObject()                        */
+/************************************************************************/
+
+/* In this mode, the content of SHPReadObject() are owned by the SHPHandle. */
+/* So you cannot have 2 valid instances of SHPReadObject() simultaneously. */
+/* The SHPObject padfZ and padfM members may be NULL depending on the geometry */
+/* type. It is illegal to free at hand any of the pointer members of the SHPObject structure */
+void SHPAPI_CALL SHPSetFastModeReadObject( SHPHandle hSHP )
+{
+    hSHP->bFastModeReadObject = TRUE;
+    hSHP->psCachedObject = (SHPObject*) calloc(1, sizeof(SHPObject));
 }
 
 /************************************************************************/
@@ -1544,8 +1567,8 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
         {
             psSHP->adBoundsMin[0] = psSHP->adBoundsMax[0] = psObject->padfX[0];
             psSHP->adBoundsMin[1] = psSHP->adBoundsMax[1] = psObject->padfY[0];
-            psSHP->adBoundsMin[2] = psSHP->adBoundsMax[2] = psObject->padfZ[0];
-            psSHP->adBoundsMin[3] = psSHP->adBoundsMax[3] = psObject->padfM[0];
+            psSHP->adBoundsMin[2] = psSHP->adBoundsMax[2] = psObject->padfZ ? psObject->padfZ[0] : 0.0;
+            psSHP->adBoundsMin[3] = psSHP->adBoundsMax[3] = psObject->padfM ? psObject->padfM[0] : 0.0;
         }
     }
 
@@ -1553,15 +1576,66 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
     {
         psSHP->adBoundsMin[0] = MIN(psSHP->adBoundsMin[0],psObject->padfX[i]);
         psSHP->adBoundsMin[1] = MIN(psSHP->adBoundsMin[1],psObject->padfY[i]);
-        psSHP->adBoundsMin[2] = MIN(psSHP->adBoundsMin[2],psObject->padfZ[i]);
-        psSHP->adBoundsMin[3] = MIN(psSHP->adBoundsMin[3],psObject->padfM[i]);
         psSHP->adBoundsMax[0] = MAX(psSHP->adBoundsMax[0],psObject->padfX[i]);
         psSHP->adBoundsMax[1] = MAX(psSHP->adBoundsMax[1],psObject->padfY[i]);
-        psSHP->adBoundsMax[2] = MAX(psSHP->adBoundsMax[2],psObject->padfZ[i]);
-        psSHP->adBoundsMax[3] = MAX(psSHP->adBoundsMax[3],psObject->padfM[i]);
+        if( psObject->padfZ )
+        {
+            psSHP->adBoundsMin[2] = MIN(psSHP->adBoundsMin[2],psObject->padfZ[i]);
+            psSHP->adBoundsMax[2] = MAX(psSHP->adBoundsMax[2],psObject->padfZ[i]);
+        }
+        if( psObject->padfM )
+        {
+            psSHP->adBoundsMin[3] = MIN(psSHP->adBoundsMin[3],psObject->padfM[i]);
+            psSHP->adBoundsMax[3] = MAX(psSHP->adBoundsMax[3],psObject->padfM[i]);
+        }
     }
 
     return( nShapeId  );
+}
+
+/************************************************************************/
+/*                         SHPAllocBuffer()                             */
+/************************************************************************/
+
+static void* SHPAllocBuffer(unsigned char** pBuffer, int nSize)
+{
+    unsigned char* pRet;
+
+    if( pBuffer == NULL )
+        return calloc(1, nSize);
+
+    pRet = *pBuffer;
+    if( pRet == NULL )
+        return NULL;
+
+    (*pBuffer) += nSize;
+    return pRet;
+}
+
+/************************************************************************/
+/*                    SHPReallocObjectBufIfNecessary()                  */
+/************************************************************************/
+
+static unsigned char* SHPReallocObjectBufIfNecessary ( SHPHandle psSHP,
+                                                       int nObjectBufSize )
+{
+    unsigned char* pBuffer;
+    if( nObjectBufSize == 0 )
+    {
+        nObjectBufSize = 4 * sizeof(double);
+    }
+    if( nObjectBufSize > psSHP->nObjectBufSize )
+    {
+        pBuffer = (unsigned char*) realloc( psSHP->pabyObjectBuf, nObjectBufSize );
+        if( pBuffer != NULL )
+        {
+            psSHP->pabyObjectBuf = pBuffer;
+            psSHP->nObjectBufSize = nObjectBufSize;
+        }
+    }
+    else
+        pBuffer = psSHP->pabyObjectBuf;
+    return pBuffer;
 }
 
 /************************************************************************/
@@ -1578,6 +1652,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
     int                  nEntitySize, nRequiredSize;
     SHPObject           *psShape;
     char                 szErrorMsg[128];
+    int                  nSHPType;
 
 /* -------------------------------------------------------------------- */
 /*      Validate the record/entity number.                              */
@@ -1649,25 +1724,39 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
         return NULL;
     }
 
-/* -------------------------------------------------------------------- */
-/*	Allocate and minimally initialize the object.			*/
-/* -------------------------------------------------------------------- */
-    psShape = (SHPObject *) calloc(1,sizeof(SHPObject));
-    psShape->nShapeId = hEntity;
-    psShape->bMeasureIsUsed = FALSE;
-
     if ( 8 + 4 > nEntitySize )
     {
         snprintf(szErrorMsg, sizeof(szErrorMsg),
                  "Corrupted .shp file : shape %d : nEntitySize = %d",
                  hEntity, nEntitySize); 
         psSHP->sHooks.Error( szErrorMsg );
-        SHPDestroyObject(psShape);
         return NULL;
     }
-    memcpy( &psShape->nSHPType, psSHP->pabyRec + 8, 4 );
+    memcpy( &nSHPType, psSHP->pabyRec + 8, 4 );
 
-    if( bBigEndian ) SwapWord( 4, &(psShape->nSHPType) );
+    if( bBigEndian ) SwapWord( 4, &(nSHPType) );
+
+/* -------------------------------------------------------------------- */
+/*	Allocate and minimally initialize the object.			*/
+/* -------------------------------------------------------------------- */
+    if( psSHP->bFastModeReadObject )
+    {
+        if( psSHP->psCachedObject->bFastModeReadObject )
+        {
+            psSHP->sHooks.Error( "Invalid read pattern in fast read mode. "
+                                 "SHPDestroyObject() should be called." );
+            return NULL;
+        }
+
+        psShape = psSHP->psCachedObject;
+        memset(psShape, 0, sizeof(SHPObject));
+    }
+    else
+        psShape = (SHPObject *) calloc(1,sizeof(SHPObject));
+    psShape->nShapeId = hEntity;
+    psShape->nSHPType = nSHPType;
+    psShape->bMeasureIsUsed = FALSE;
+    psShape->bFastModeReadObject = psSHP->bFastModeReadObject;
 
 /* ==================================================================== */
 /*  Extract vertices for a Polygon or Arc.				*/
@@ -1681,6 +1770,8 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
     {
         int32		nPoints, nParts;
         int    		i, nOffset;
+        unsigned char* pBuffer = NULL;
+        unsigned char** ppBuffer = NULL;
 
         if ( 40 + 8 + 4 > nEntitySize )
         {
@@ -1749,16 +1840,23 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
             return NULL;
         }
 
+        if( psShape->bFastModeReadObject )
+        {
+            int nObjectBufSize = 4 * sizeof(double) * nPoints + 2 * sizeof(int) * nParts;
+            pBuffer = SHPReallocObjectBufIfNecessary(psSHP, nObjectBufSize);
+            ppBuffer = &pBuffer;
+        }
+
         psShape->nVertices = nPoints;
-        psShape->padfX = (double *) calloc(nPoints,sizeof(double));
-        psShape->padfY = (double *) calloc(nPoints,sizeof(double));
-        psShape->padfZ = (double *) calloc(nPoints,sizeof(double));
-        psShape->padfM = (double *) calloc(nPoints,sizeof(double));
+        psShape->padfX = (double *) SHPAllocBuffer(ppBuffer, sizeof(double) * nPoints);
+        psShape->padfY = (double *) SHPAllocBuffer(ppBuffer, sizeof(double) * nPoints);
+        psShape->padfZ = (double *) SHPAllocBuffer(ppBuffer, sizeof(double) * nPoints);
+        psShape->padfM = (double *) SHPAllocBuffer(ppBuffer, sizeof(double) * nPoints);
 
         psShape->nParts = nParts;
-        psShape->panPartStart = (int *) calloc(nParts,sizeof(int));
-        psShape->panPartType = (int *) calloc(nParts,sizeof(int));
-        
+        psShape->panPartStart = (int *) SHPAllocBuffer(ppBuffer, nParts * sizeof(int));
+        psShape->panPartType = (int *) SHPAllocBuffer(ppBuffer, nParts * sizeof(int));
+
         if (psShape->padfX == NULL ||
             psShape->padfY == NULL ||
             psShape->padfZ == NULL ||
@@ -1767,8 +1865,8 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
             psShape->panPartType == NULL)
         {
             snprintf(szErrorMsg, sizeof(szErrorMsg),
-                     "Not enough memory to allocate requested memory (nPoints=%d, nParts=%d) for shape %d. "
-                     "Probably broken SHP file", hEntity, nPoints, nParts );
+                    "Not enough memory to allocate requested memory (nPoints=%d, nParts=%d) for shape %d. "
+                    "Probably broken SHP file", hEntity, nPoints, nParts );
             psSHP->sHooks.Error( szErrorMsg );
             SHPDestroyObject(psShape);
             return NULL;
@@ -1865,6 +1963,10 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 
             nOffset += 16 + 8*nPoints;
         }
+        else if( psShape->bFastModeReadObject )
+        {
+            psShape->padfZ = NULL;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      If we have a M measure value, then read it now.  We assume      */
@@ -1888,6 +1990,10 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
             }
             psShape->bMeasureIsUsed = TRUE;
         }
+        else if( psShape->bFastModeReadObject )
+        {
+            psShape->padfM = NULL;
+        }
     }
 
 /* ==================================================================== */
@@ -1899,6 +2005,8 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
     {
         int32		nPoints;
         int    		i, nOffset;
+        unsigned char* pBuffer = NULL;
+        unsigned char** ppBuffer = NULL;
 
         if ( 44 + 4 > nEntitySize )
         {
@@ -1938,11 +2046,19 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
             return NULL;
         }
         
+        if( psShape->bFastModeReadObject )
+        {
+            int nObjectBufSize = 4 * sizeof(double) * nPoints;
+            pBuffer = SHPReallocObjectBufIfNecessary(psSHP, nObjectBufSize);
+            ppBuffer = &pBuffer;
+        }
+
         psShape->nVertices = nPoints;
-        psShape->padfX = (double *) calloc(nPoints,sizeof(double));
-        psShape->padfY = (double *) calloc(nPoints,sizeof(double));
-        psShape->padfZ = (double *) calloc(nPoints,sizeof(double));
-        psShape->padfM = (double *) calloc(nPoints,sizeof(double));
+
+        psShape->padfX = (double *) SHPAllocBuffer(ppBuffer, sizeof(double) * nPoints);
+        psShape->padfY = (double *) SHPAllocBuffer(ppBuffer, sizeof(double) * nPoints);
+        psShape->padfZ = (double *) SHPAllocBuffer(ppBuffer, sizeof(double) * nPoints);
+        psShape->padfM = (double *) SHPAllocBuffer(ppBuffer, sizeof(double) * nPoints);
 
         if (psShape->padfX == NULL ||
             psShape->padfY == NULL ||
@@ -2001,6 +2117,8 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 
             nOffset += 16 + 8*nPoints;
         }
+        else if( psShape->bFastModeReadObject )
+            psShape->padfZ = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      If we have a M measure value, then read it now.  We assume      */
@@ -2024,6 +2142,8 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
             }
             psShape->bMeasureIsUsed = TRUE;
         }
+        else if( psShape->bFastModeReadObject )
+            psShape->padfM = NULL;
     }
 
 /* ==================================================================== */
@@ -2036,10 +2156,22 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
         int	nOffset;
         
         psShape->nVertices = 1;
-        psShape->padfX = (double *) calloc(1,sizeof(double));
-        psShape->padfY = (double *) calloc(1,sizeof(double));
-        psShape->padfZ = (double *) calloc(1,sizeof(double));
-        psShape->padfM = (double *) calloc(1,sizeof(double));
+        if( psShape->bFastModeReadObject )
+        {
+            psShape->padfX = &(psShape->dfXMin);
+            psShape->padfY = &(psShape->dfYMin);
+            psShape->padfZ = &(psShape->dfZMin);
+            psShape->padfM = &(psShape->dfMMin);
+            psShape->padfZ[0] = 0.0;
+            psShape->padfM[0] = 0.0;
+        }
+        else
+        {
+            psShape->padfX = (double *) calloc(1,sizeof(double));
+            psShape->padfY = (double *) calloc(1,sizeof(double));
+            psShape->padfZ = (double *) calloc(1,sizeof(double));
+            psShape->padfM = (double *) calloc(1,sizeof(double));
+        }
 
         if (20 + 8 + (( psShape->nSHPType == SHPT_POINTZ ) ? 8 : 0)> nEntitySize)
         {
@@ -2197,6 +2329,12 @@ SHPDestroyObject( SHPObject * psShape )
 {
     if( psShape == NULL )
         return;
+
+    if( psShape->bFastModeReadObject )
+    {
+        psShape->bFastModeReadObject = FALSE;
+        return;
+    }
     
     if( psShape->padfX != NULL )
         free( psShape->padfX );
