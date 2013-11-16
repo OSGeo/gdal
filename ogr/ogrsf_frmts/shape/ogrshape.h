@@ -57,6 +57,9 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                            OGRFeature *poFeature, const char *pszSHPEncoding,
                            int* pbTruncationWarningEmitted );
 
+/* In ogrshapedatasource.cpp */
+SHPHandle OGRShapeSHPOpen( const char * pszShapeFile, const char * pszAccess );
+
 /************************************************************************/
 /*                            OGRShapeLayer                             */
 /************************************************************************/
