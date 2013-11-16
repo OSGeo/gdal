@@ -634,7 +634,7 @@ herr_t HDF5AttrIterate( hid_t hH5ObjID,
     {
         papszTokens = CSLTokenizeString2( pszPath, "/", CSLT_HONOURSTRINGS );
 
-        for( int i = 0; papszTokens != NULL && papszTokens[i] != NULL; ++i )
+        for( i = 0; papszTokens != NULL && papszTokens[i] != NULL; ++i )
         {
             if( i != 0)
                 osKey += '_';
@@ -646,7 +646,7 @@ herr_t HDF5AttrIterate( hid_t hH5ObjID,
     // Convert whitespaces into "_" for the attribute name component
     papszTokens = CSLTokenizeString2( pszAttrName, " ",
                             CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES );
-    for( int i = 0; papszTokens != NULL && papszTokens[i] != NULL; ++i )
+    for( i = 0; papszTokens != NULL && papszTokens[i] != NULL; ++i )
     {
         if(!osKey.empty())
             osKey += '_';
