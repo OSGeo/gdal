@@ -300,8 +300,13 @@ typedef unsigned int	      int32;
 #  endif
 #endif
 
+#if defined(CPL_LSB)
+#define bBigEndian FALSE
+#elif defined(CPL_MSB)
+#define bBigEndian TRUE
+#else
 static int 	bBigEndian;
-
+#endif
 
 /************************************************************************/
 /*                              SwapWord()                              */
@@ -513,11 +518,13 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
 /* -------------------------------------------------------------------- */
 /*	Establish the byte order on this machine.			*/
 /* -------------------------------------------------------------------- */
+#if !defined(bBigEndian)
     i = 1;
     if( *((uchar *) &i) == 1 )
         bBigEndian = FALSE;
     else
         bBigEndian = TRUE;
+#endif
 
 /* -------------------------------------------------------------------- */
 /*	Initialize the info structure.					*/
@@ -891,11 +898,13 @@ SHPCreateLL( const char * pszLayer, int nShapeType, SAHooks *psHooks )
 /* -------------------------------------------------------------------- */
 /*      Establish the byte order on this system.                        */
 /* -------------------------------------------------------------------- */
+#if !defined(bBigEndian)
     i = 1;
     if( *((uchar *) &i) == 1 )
         bBigEndian = FALSE;
     else
         bBigEndian = TRUE;
+#endif
 
 /* -------------------------------------------------------------------- */
 /*	Compute the base (layer) name.  If there is any extension	*/
