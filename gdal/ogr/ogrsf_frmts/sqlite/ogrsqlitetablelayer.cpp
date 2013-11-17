@@ -53,7 +53,7 @@ OGRSQLiteTableLayer::OGRSQLiteTableLayer( OGRSQLiteDataSource *poDSIn )
        to support 2.5D: if an obsolete version of the library
        is found we'll unconditionally activate 2D casting mode.
     */
-    bSpatialite2D = OGRSQLiteGetSpatialiteVersionNumber() < 24;
+    bSpatialite2D = poDS->GetSpatialiteVersionNumber() < 24;
 
     iNextShapeId = 0;
 
@@ -183,8 +183,8 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
     const char *pszSQL;
 
     if ( eGeomFormat == OSGF_SpatiaLite &&
-         OGRSQLiteIsSpatialiteLoaded() && 
-         OGRSQLiteGetSpatialiteVersionNumber() < 24 && poDS->GetUpdate() )
+         poDS->IsSpatialiteLoaded() && 
+         poDS->GetSpatialiteVersionNumber() < 24 && poDS->GetUpdate() )
     {
     // we need to test version required by Spatialite TRIGGERs 
         hColStmt = NULL;
@@ -614,7 +614,7 @@ CPLString OGRSQLiteTableLayer::GetSpatialWhere(int iGeomCol,
     }
 
     if( poFilterGeom != NULL &&
-        OGRSQLiteIsSpatialiteLoaded() && !bHasSpatialIndex )
+        poDS->IsSpatialiteLoaded() && !bHasSpatialIndex )
     {
         OGREnvelope  sEnvelope;
 
@@ -2316,7 +2316,7 @@ int OGRSQLiteTableLayer::DoStatisticsNeedToBeFlushed()
 {
     return bStatisticsNeedsToBeFlushed &&
            poDS->IsSpatialiteDB() &&
-           OGRSQLiteIsSpatialiteLoaded();
+           poDS->IsSpatialiteLoaded();
 }
 
 /************************************************************************/
@@ -2443,7 +2443,7 @@ void OGRSQLiteTableLayer::LoadStatisticsSpatialite4DB()
 
 void OGRSQLiteTableLayer::LoadStatistics()
 {
-    if( !poDS->IsSpatialiteDB() || !OGRSQLiteIsSpatialiteLoaded() || pszGeomCol == NULL )
+    if( !poDS->IsSpatialiteDB() || !poDS->IsSpatialiteLoaded() || pszGeomCol == NULL )
         return;
 
     if( poDS->HasSpatialite4Layout() )
@@ -2549,7 +2549,7 @@ void OGRSQLiteTableLayer::LoadStatistics()
 
 int OGRSQLiteTableLayer::SaveStatistics()
 {
-    if( !bStatisticsNeedsToBeFlushed || !poDS->IsSpatialiteDB()  || !OGRSQLiteIsSpatialiteLoaded() || pszGeomCol == NULL )
+    if( !bStatisticsNeedsToBeFlushed || !poDS->IsSpatialiteDB()  || !poDS->IsSpatialiteLoaded() || pszGeomCol == NULL )
         return -1;
 
     CPLString osSQL;

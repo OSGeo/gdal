@@ -687,6 +687,7 @@ SQLITE_INC
 SQLITE3_LDFLAGS
 SQLITE3_CFLAGS
 SQLITE3_VERSION
+SPATIALITE_412_OR_LATER
 SPATIALITE_AMALGAMATION
 SPATIALITE_INC
 HAVE_SPATIALITE
@@ -22658,6 +22659,7 @@ $as_echo "no encoding support." >&6; }
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for MrSID JPEG2000 support" >&5
 $as_echo_n "checking for MrSID JPEG2000 support... " >&6; }
     if test "x$with_jp2mrsid" = "xyes" -a "$HAVE_KAKADU" = "yes" ; then
+      # SDK v8 or later don't seem to conflict with Kakadu
       major_version=`cat $with_mrsid/include/lti_version.h | grep MAJOR | sed 's/#define LTI_SDK_MAJOR[ ]*\(.*\)/\1/'`
       if test "x$major_version" != "x"; then
         if test "$major_version" -ge 8; then
@@ -25247,7 +25249,8 @@ fi
 
             if test "$SPATIALITE_INIT_FOUND" = "yes"; then
                 HAVE_SPATIALITE=yes
-                LIBS="$LIBS -lspatialite"
+                SPATIALITE_LIBS="-lspatialite -lsqlite3"
+                LIBS="$LIBS $SPATIALITE_LIBS"
                 HAVE_SQLITE3=yes
             fi
         else
@@ -25312,7 +25315,8 @@ $as_echo "enabled" >&6; }
         # as there's a spatialite.h file in it, which we don't want to include.
         # We want to include include/spatialite.h instead !
         SQLITE3_CFLAGS="-I$with_spatialite/include"
-        LIBS="$LIBS -L$with_spatialite/lib -lspatialite"
+        SPATIALITE_LIBS="-L$with_spatialite/lib -lspatialite"
+        LIBS="$LIBS $SPATIALITE_LIBS"
         HAVE_SQLITE3=yes
 
     elif test -f "$with_spatialite/include/spatialite.h" -a \
@@ -25334,7 +25338,8 @@ done
 $as_echo "enabled" >&6; }
             SPATIALITE_INC="-I$with_spatialite/include"
             HAVE_SPATIALITE=yes
-            LIBS="$LIBS -L$with_spatialite/lib -lspatialite"
+            SPATIALITE_LIBS="-L$with_spatialite/lib -lspatialite -lsqlite3"
+            LIBS="$LIBS $SPATIALITE_LIBS"
             HAVE_SQLITE3=yes
         fi
     else
@@ -25343,11 +25348,61 @@ $as_echo "disabled" >&6; }
     fi
 fi
 
+if test "$HAVE_SPATIALITE" = "yes"; then
+    ax_save_LIBS="${LIBS}"
+    LIBS="$SPATIALITE_LIBS"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for spatialite_target_cpu in -lspatialite" >&5
+$as_echo_n "checking for spatialite_target_cpu in -lspatialite... " >&6; }
+if ${ac_cv_lib_spatialite_spatialite_target_cpu+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lspatialite  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char spatialite_target_cpu ();
+int
+main ()
+{
+return spatialite_target_cpu ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_spatialite_spatialite_target_cpu=yes
+else
+  ac_cv_lib_spatialite_spatialite_target_cpu=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_spatialite_spatialite_target_cpu" >&5
+$as_echo "$ac_cv_lib_spatialite_spatialite_target_cpu" >&6; }
+if test "x$ac_cv_lib_spatialite_spatialite_target_cpu" = xyes; then :
+  SPATIALITE_412_OR_LATER=yes
+else
+  SPATIALITE_412_OR_LATER=no
+fi
+
+    LIBS="${ax_save_LIBS}"
+fi
+
 HAVE_SPATIALITE=$HAVE_SPATIALITE
 
 SPATIALITE_INC=$SPATIALITE_INC
 
 SPATIALITE_AMALGAMATION=$SPATIALITE_AMALGAMATION
+
+SPATIALITE_412_OR_LATER=$SPATIALITE_412_OR_LATER
 
 
 
