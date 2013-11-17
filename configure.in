@@ -2848,7 +2848,8 @@ elif test "$with_spatialite" = "yes"; then
             AC_CHECK_LIB(spatialite,spatialite_init,SPATIALITE_INIT_FOUND=yes,SPATIALITE_INIT_FOUND=no,)
             if test "$SPATIALITE_INIT_FOUND" = "yes"; then
                 HAVE_SPATIALITE=yes
-                LIBS="$LIBS -lspatialite"
+                SPATIALITE_LIBS="-lspatialite -lsqlite3"
+                LIBS="$LIBS $SPATIALITE_LIBS"
                 HAVE_SQLITE3=yes
             fi
         else
@@ -2870,7 +2871,8 @@ else
         # as there's a spatialite.h file in it, which we don't want to include.
         # We want to include include/spatialite.h instead !
         SQLITE3_CFLAGS="-I$with_spatialite/include"
-        LIBS="$LIBS -L$with_spatialite/lib -lspatialite"
+        SPATIALITE_LIBS="-L$with_spatialite/lib -lspatialite"
+        LIBS="$LIBS $SPATIALITE_LIBS"
         HAVE_SQLITE3=yes
 
     elif test -f "$with_spatialite/include/spatialite.h" -a \
@@ -2880,7 +2882,8 @@ else
             AC_MSG_RESULT(enabled)
             SPATIALITE_INC="-I$with_spatialite/include"
             HAVE_SPATIALITE=yes
-            LIBS="$LIBS -L$with_spatialite/lib -lspatialite"
+            SPATIALITE_LIBS="-L$with_spatialite/lib -lspatialite -lsqlite3"
+            LIBS="$LIBS $SPATIALITE_LIBS"
             HAVE_SQLITE3=yes
         fi
     else
@@ -2888,9 +2891,17 @@ else
     fi
 fi
 
+if test "$HAVE_SPATIALITE" = "yes"; then
+    ax_save_LIBS="${LIBS}"
+    LIBS="$SPATIALITE_LIBS"
+    AC_CHECK_LIB(spatialite,spatialite_target_cpu,SPATIALITE_412_OR_LATER=yes,SPATIALITE_412_OR_LATER=no)
+    LIBS="${ax_save_LIBS}"
+fi
+
 AC_SUBST([HAVE_SPATIALITE], $HAVE_SPATIALITE)
 AC_SUBST([SPATIALITE_INC], $SPATIALITE_INC)
 AC_SUBST([SPATIALITE_AMALGAMATION], $SPATIALITE_AMALGAMATION)
+AC_SUBST([SPATIALITE_412_OR_LATER], $SPATIALITE_412_OR_LATER)
 
 dnl ---------------------------------------------------------------------------
 dnl Check for SQLite (only if SpatiaLite is not detected)

@@ -65,9 +65,6 @@
 
 #define UNINITIALIZED_SRID  -2
 
-int OGRSQLiteIsSpatialiteLoaded();
-int OGRSQLiteGetSpatialiteVersionNumber();
-
 /************************************************************************/
 /*      Format used to store geometry data in the database.             */
 /************************************************************************/
@@ -584,6 +581,12 @@ class OGRSQLiteDataSource : public OGRDataSource
     int                 bIsSpatiaLiteDB;
     int                 bSpatialite4Layout;
 
+#ifdef SPATIALITE_412_OR_LATER
+    void               *hSpatialiteCtxt;
+    int                 InitNewSpatialite();
+    void                FinishNewSpatialite();
+#endif
+
     int                 nUndefinedSRID;
 
     virtual void        DeleteLayer( const char *pszLayer );
@@ -680,7 +683,10 @@ class OGRSQLiteDataSource : public OGRDataSource
             { return aoMapTableToSetOfGeomCols[pszTableName]; }
 
     GIntBig             GetFileTimestamp() const { return nFileTimestamp; }
-    
+
+    int                 IsSpatialiteLoaded();
+    int                 GetSpatialiteVersionNumber();
+
     int                 IsSpatialiteDB() const { return bIsSpatiaLiteDB; }
     int                 HasSpatialite4Layout() const { return bSpatialite4Layout; }
 
