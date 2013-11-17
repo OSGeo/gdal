@@ -432,6 +432,9 @@ class CPL_DLL GDALRasterBlock
     static void Verify();
 
     static int  SafeLockBlock( GDALRasterBlock ** );
+    
+    /* Should only be called by GDALDestroyDriverManager() */
+    static void DestroyRBMutex();
 };
 
 /* ******************************************************************** */
