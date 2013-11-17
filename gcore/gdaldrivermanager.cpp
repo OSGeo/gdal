@@ -188,8 +188,8 @@ GDALDriverManager::~GDALDriverManager()
     papoDSList = GDALDataset::GetOpenDatasets(&nDSCount);
     for(i=0;i<nDSCount;i++)
     {
-        CPLDebug( "GDAL", "force close of %s in GDALDriverManager cleanup.",
-                  papoDSList[i]->GetDescription() );
+        CPLDebug( "GDAL", "force close of %s (%p) in GDALDriverManager cleanup.",
+                  papoDSList[i]->GetDescription(), papoDSList[i] );
         /* Destroy with delete operator rather than GDALClose() to force deletion of */
         /* datasets with multiple reference count */
         /* We could also iterate while GetOpenDatasets() returns a non NULL list */
@@ -263,6 +263,11 @@ GDALDriverManager::~GDALDriverManager()
         CPLDestroyMutex( *GDALGetphDLMutex() ); 
         *GDALGetphDLMutex() = NULL; 
     } 
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup raster block mutex                                      */
+/* -------------------------------------------------------------------- */
+    GDALRasterBlock::DestroyRBMutex();
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup gdaltransformer.cpp mutex                               */
