@@ -42,7 +42,6 @@ static volatile GDALRasterBlock *poNewest = NULL;    /* head */
 
 static void *hRBMutex = NULL;
 
-
 /************************************************************************/
 /*                          GDALSetCacheMax()                           */
 /************************************************************************/
@@ -701,4 +700,15 @@ int GDALRasterBlock::SafeLockBlock( GDALRasterBlock ** ppBlock )
     }
     else
         return FALSE;
+}
+
+/************************************************************************/
+/*                          DestroyRBMutex()                           */
+/************************************************************************/
+
+void GDALRasterBlock::DestroyRBMutex()
+{
+    if( hRBMutex != NULL )
+        CPLDestroyMutex(hRBMutex);
+    hRBMutex = NULL;
 }
