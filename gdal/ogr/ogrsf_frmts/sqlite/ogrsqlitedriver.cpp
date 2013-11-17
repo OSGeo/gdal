@@ -37,6 +37,10 @@
 #include "ogr_sqlite.h"
 #include "cpl_conv.h"
 
+#ifdef HAVE_SPATIALITE
+#include "spatialite.h"
+#endif
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -46,6 +50,9 @@ CPL_CVSID("$Id$");
 OGRSQLiteDriver::~OGRSQLiteDriver()
 
 {
+#ifdef SPATIALITE_412_OR_LATER
+    spatialite_shutdown();
+#endif
 }
 
 /************************************************************************/
