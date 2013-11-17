@@ -469,7 +469,7 @@ CPLString OGRSQLiteViewLayer::GetSpatialWhere(int iGeomCol,
 
     }
 
-    if( poFilterGeom != NULL && OGRSQLiteIsSpatialiteLoaded() && !bHasSpatialIndex )
+    if( poFilterGeom != NULL && poDS->IsSpatialiteLoaded() && !bHasSpatialIndex )
     {
         OGREnvelope  sEnvelope;
 
