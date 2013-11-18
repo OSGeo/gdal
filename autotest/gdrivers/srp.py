@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -70,6 +71,23 @@ def srp_1(filename = 'USRP_PCB0/FKUSRP01.IMG'):
         print(ct.GetColorEntry(1))
         return 'fail'
 
+    expected_md = [ 'SRP_CLASSIFICATION=U',
+            'SRP_CREATIONDATE=20120505',
+            'SRP_EDN=0',
+            'SRP_NAM=FKUSRP',
+            'SRP_PRODUCT=USRP',
+            'SRP_REVISIONDATE=20120505',
+            'SRP_SCA=50000',
+            'SRP_ZNA=17' ]
+
+    got_md = ds.GetMetadata()
+    for md in expected_md:
+        (key,value) = md.split('=')
+        if not key in got_md or got_md[key] != value:
+            gdaltest.post_reason('did not find %s' % md)
+            print(got_md)
+            return 'fail'
+
     return 'success'
 
 ###############################################################################
@@ -83,6 +101,53 @@ def srp_2():
 
 def srp_3():
     return srp_1('USRP_PCB8/FKUSRP01.IMG')
+    
+###############################################################################
+# Read from TRANSH01.THF file.
+
+def srp_4():
+
+    tst = gdaltest.GDALTest( 'SRP', 'USRP_PCB0/TRANSH01.THF', 1, 24576 )
+    return tst.testOpen()
+
+###############################################################################
+# Read from TRANSH01.THF file (without "optimization" for single GEN in THF)
+
+def srp_5():
+
+    gdal.SetConfigOption('SRP_SINGLE_GEN_IN_THF_AS_DATASET', 'FALSE')
+    ds = gdal.Open('data/USRP_PCB0/TRANSH01.THF')
+    gdal.SetConfigOption('SRP_SINGLE_GEN_IN_THF_AS_DATASET', None)
+    subdatasets = ds.GetMetadata('SUBDATASETS')
+    if subdatasets['SUBDATASET_1_NAME'] != 'SRP:data/USRP_PCB0/FKUSRP01.GEN,data/USRP_PCB0/FKUSRP01.IMG':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if subdatasets['SUBDATASET_1_DESC'] != 'SRP:data/USRP_PCB0/FKUSRP01.GEN,data/USRP_PCB0/FKUSRP01.IMG':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    expected_md = [ 'SRP_CLASSIFICATION=U',
+            'SRP_CREATIONDATE=20120505',
+            'SRP_EDN=1',
+            'SRP_VOO=           ' ]
+
+    got_md = ds.GetMetadata()
+    for md in expected_md:
+        (key,value) = md.split('=')
+        if not key in got_md or got_md[key] != value:
+            gdaltest.post_reason('did not find %s' % md)
+            print(got_md)
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Read with subdataset syntax
+
+def srp_6():
+
+    tst = gdaltest.GDALTest( 'SRP', 'SRP:data/USRP_PCB4/FKUSRP01.GEN,data/USRP_PCB4/FKUSRP01.IMG', 1, 24576, filename_absolute = 1 )
+    return tst.testOpen()
 
 ###############################################################################
 
@@ -90,6 +155,9 @@ gdaltest_list = [
     srp_1,
     srp_2,
     srp_3,
+    srp_4,
+    srp_5,
+    srp_6
  ]
 
 if __name__ == '__main__':
