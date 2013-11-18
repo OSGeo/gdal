@@ -45,7 +45,7 @@ SHPHandle OGRShapeSHPOpen( const char * pszShapeFile, const char * pszAccess )
 {
     SHPHandle hSHP = SHPOpen( pszShapeFile, pszAccess );
     if( hSHP != NULL )
-        SHPSetFastModeReadObject( hSHP );
+        SHPSetFastModeReadObject( hSHP, TRUE );
     return hSHP;
 }
 
@@ -598,7 +598,7 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
             return NULL;
         }
         
-        SHPSetFastModeReadObject( hSHP );
+        SHPSetFastModeReadObject( hSHP, TRUE );
 
         CPLFree( pszFilename );
     }
