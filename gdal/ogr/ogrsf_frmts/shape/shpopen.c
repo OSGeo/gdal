@@ -818,14 +818,22 @@ SHPClose(SHPHandle psSHP )
 /*                    SHPSetFastModeReadObject()                        */
 /************************************************************************/
 
-/* In this mode, the content of SHPReadObject() are owned by the SHPHandle. */
+/* If setting bFastMode = TRUE, the content of SHPReadObject() is owned by the SHPHandle. */
 /* So you cannot have 2 valid instances of SHPReadObject() simultaneously. */
 /* The SHPObject padfZ and padfM members may be NULL depending on the geometry */
 /* type. It is illegal to free at hand any of the pointer members of the SHPObject structure */
-void SHPAPI_CALL SHPSetFastModeReadObject( SHPHandle hSHP )
+void SHPAPI_CALL SHPSetFastModeReadObject( SHPHandle hSHP, int bFastMode )
 {
-    hSHP->bFastModeReadObject = TRUE;
-    hSHP->psCachedObject = (SHPObject*) calloc(1, sizeof(SHPObject));
+    if( bFastMode )
+    {
+        if( hSHP->psCachedObject == NULL )
+        {
+            hSHP->psCachedObject = (SHPObject*) calloc(1, sizeof(SHPObject));
+            assert( hSHP->psCachedObject != NULL );
+        }
+    }
+
+    hSHP->bFastModeReadObject = bFastMode;
 }
 
 /************************************************************************/
