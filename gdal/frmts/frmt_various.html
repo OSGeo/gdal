@@ -1189,6 +1189,9 @@ file with a common basename.  The .IMG file should be selected to access the dat
 system) products are single band images with a palette and georeferencing.
 </p>
 
+<p>Starting with GDAL 2.0, the Transmission Header File (.THF) can also be used as an input to GDAL. If the THF references more than one image,
+GDAL will report the images it is composed of as subdatasets. If the THF references just one image, GDAL will open it directly.</p>
+
 <p>NOTE: Implemented as <tt>gdal/frmts/adrg/srpdataset.cpp</tt>.</p>
 
 <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
