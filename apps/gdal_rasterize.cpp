@@ -755,7 +755,7 @@ int main( int argc, char ** argv )
     {
         if( dfXRes == 0 && dfYRes == 0 && nXSize == 0 && nYSize == 0 )
         {
-            fprintf( stderr, "'-tr xres yes' or '-ts xsize ysize' is required.\n\n" );
+            fprintf( stderr, "'-tr xres yres' or '-ts xsize ysize' is required.\n\n" );
             Usage();
         }
     
