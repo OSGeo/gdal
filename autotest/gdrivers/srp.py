@@ -119,11 +119,15 @@ def srp_5():
     ds = gdal.Open('data/USRP_PCB0/TRANSH01.THF')
     gdal.SetConfigOption('SRP_SINGLE_GEN_IN_THF_AS_DATASET', None)
     subdatasets = ds.GetMetadata('SUBDATASETS')
-    if subdatasets['SUBDATASET_1_NAME'] != 'SRP:data/USRP_PCB0/FKUSRP01.GEN,data/USRP_PCB0/FKUSRP01.IMG':
+    if subdatasets['SUBDATASET_1_NAME'] != 'SRP:data/USRP_PCB0/FKUSRP01.GEN,data/USRP_PCB0/FKUSRP01.IMG' and \
+       subdatasets['SUBDATASET_1_NAME'] != 'SRP:data/USRP_PCB0\\FKUSRP01.GEN,data/USRP_PCB0\\FKUSRP01.IMG':
         gdaltest.post_reason('fail')
+        print(subdatasets)
         return 'fail'
-    if subdatasets['SUBDATASET_1_DESC'] != 'SRP:data/USRP_PCB0/FKUSRP01.GEN,data/USRP_PCB0/FKUSRP01.IMG':
+    if subdatasets['SUBDATASET_1_DESC'] != 'SRP:data/USRP_PCB0/FKUSRP01.GEN,data/USRP_PCB0/FKUSRP01.IMG' and \
+       subdatasets['SUBDATASET_1_DESC'] != 'SRP:data/USRP_PCB0\\FKUSRP01.GEN,data/USRP_PCB0\\FKUSRP01.IMG':
         gdaltest.post_reason('fail')
+        print(subdatasets)
         return 'fail'
 
     expected_md = [ 'SRP_CLASSIFICATION=U',
