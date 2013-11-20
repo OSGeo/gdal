@@ -471,6 +471,21 @@ def jp2openjpeg_13():
     return 'success'
 
 ###############################################################################
+# Check that we get GCPs even there's no projection info
+
+def jp2openjpeg_14():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    ds = gdal.Open('data/byte_2gcps.jp2')
+    if ds.GetGCPCount() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 def jp2openjpeg_online_1():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -655,6 +670,7 @@ gdaltest_list = [
     jp2openjpeg_11,
     jp2openjpeg_12,
     jp2openjpeg_13,
+    jp2openjpeg_14,
     jp2openjpeg_online_1,
     jp2openjpeg_online_2,
     jp2openjpeg_online_3,
