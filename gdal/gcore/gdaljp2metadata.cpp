@@ -416,7 +416,7 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
 int GDALJP2Metadata::ParseJP2GeoTIFF()
 
 {
-    int abValidInfo[MAX_JP2GEOTIFF_BOXES] = { FALSE };
+    int abValidProjInfo[MAX_JP2GEOTIFF_BOXES] = { FALSE };
     char* apszProjection[MAX_JP2GEOTIFF_BOXES] = { NULL };
     double aadfGeoTransform[MAX_JP2GEOTIFF_BOXES][6];
     int anGCPCount[MAX_JP2GEOTIFF_BOXES] = { 0 };
@@ -429,13 +429,19 @@ int GDALJP2Metadata::ParseJP2GeoTIFF()
     /* -------------------------------------------------------------------- */
     /*      Convert raw data into projection and geotransform.              */
     /* -------------------------------------------------------------------- */
+        aadfGeoTransform[i][0] = 0;
+        aadfGeoTransform[i][1] = 1;
+        aadfGeoTransform[i][2] = 0;
+        aadfGeoTransform[i][3] = 0;
+        aadfGeoTransform[i][4] = 0;
+        aadfGeoTransform[i][5] = 1;
         if( GTIFWktFromMemBuf( pasGeoTIFFBoxes[i].nGeoTIFFSize,
                                pasGeoTIFFBoxes[i].pabyGeoTIFFData,
                                &apszProjection[i], aadfGeoTransform[i],
                                &anGCPCount[i], &apasGCPList[i] ) == CE_None )
         {
-            if( apszProjection[i] != NULL && strlen(apszProjection[i]) != 0 )
-                abValidInfo[i] = TRUE;
+            if( apszProjection[i] != NULL && strlen(apszProjection[i]) != 0 ) 
+                abValidProjInfo[i] = TRUE;
         }
     }
 
@@ -443,15 +449,32 @@ int GDALJP2Metadata::ParseJP2GeoTIFF()
     int iBestIndex = -1;
     for(i=0; i < nMax; i++)
     {
-        if( abValidInfo[i] && iBestIndex < 0 )
+        if( abValidProjInfo[i] && iBestIndex < 0 )
         {
             iBestIndex = i;
         }
-        else if( abValidInfo[i] )
+        else if( abValidProjInfo[i] && apszProjection[i] != NULL )
         {
             /* Anything else than a LOCAL_CS will probably be better */
             if( EQUALN(apszProjection[iBestIndex], "LOCAL_CS", strlen("LOCAL_CS")) )
                 iBestIndex = i;
+        }
+    }
+
+    if( iBestIndex < 0 )
+    {
+        for(i=0; i < nMax; i++)
+        {
+            if( aadfGeoTransform[i][0] != 0 
+                || aadfGeoTransform[i][1] != 1 
+                || aadfGeoTransform[i][2] != 0
+                || aadfGeoTransform[i][3] != 0 
+                || aadfGeoTransform[i][4] != 0
+                || aadfGeoTransform[i][5] != 1
+                || anGCPCount[i] > 0)
+            {
+                iBestIndex = i;
+            }
         }
     }
 
@@ -470,7 +493,8 @@ int GDALJP2Metadata::ParseJP2GeoTIFF()
             || adfGeoTransform[5] != 1 )
             bHaveGeoTransform = TRUE;
 
-        CPLDebug( "GDALJP2Metadata", 
+        if( pszProjection )
+            CPLDebug( "GDALJP2Metadata", 
                 "Got projection from GeoJP2 (geotiff) box (%d): %s", 
                 iBestIndex, pszProjection );
     }
