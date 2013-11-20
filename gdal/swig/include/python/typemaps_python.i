@@ -846,7 +846,10 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 %typemap(in) (char **ignorechange) ( char *val )
 {
   /* %typemap(in) (char **ignorechange) */
-  PyArg_Parse( $input, "s", &val );
+  if( !PyArg_Parse( $input, "s", &val ) ) {
+    PyErr_SetString( PyExc_TypeError, "not a string" );
+    SWIG_fail;
+  }
   $1 = &val;
 }
 
