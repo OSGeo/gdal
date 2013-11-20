@@ -1245,7 +1245,12 @@ OGRErr GMLHandler::startElementDefault(const char *pszName, int nLenName, void* 
         }
     }
 
-    else if( (nClassIndex = m_poReader->GetFeatureElementIndex( pszName, nLenName, eAppSchemaType )) != -1 )
+    /* WFS 2.0 GetFeature documents have a wfs:FeatureCollection */
+    /* as a wfs:member of the top wfs:FeatureCollection. We don't want this */
+    /* wfs:FeatureCollection to be recognized as a feature */
+    else if( (!(nLenName == strlen("FeatureCollection") &&
+                strcmp(pszName, "FeatureCollection") == 0)) &&
+             (nClassIndex = m_poReader->GetFeatureElementIndex( pszName, nLenName, eAppSchemaType )) != -1 )
     {
         m_bAlreadyFoundGeometry = FALSE;
 

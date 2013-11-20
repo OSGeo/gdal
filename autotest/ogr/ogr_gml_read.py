@@ -2739,6 +2739,48 @@ def ogr_gml_59():
 
     return 'success'
 
+########################################################
+# Test reading WFS 2.0 GetFeature documents with wfs:FeatureCollection
+# as a wfs:member of the top wfs:FeatureCollection
+
+def ogr_gml_60():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    # Make sure the .gfs file is more recent that the .gml one
+    try:
+        os.unlink('data/wfs_200_multiplelayers.gfs')
+    except:
+        pass
+
+    for i in range(2):
+        ds = ogr.Open('data/wfs_200_multiplelayers.gml')
+        lyr = ds.GetLayerByName('road')
+        if lyr.GetFeatureCount() != 1:
+            gdaltest.post_reason('fail')
+            return 'failure'
+        feat = lyr.GetNextFeature()
+        if feat.GetField('gml_id') != 'road.21':
+            gdaltest.post_reason('fail')
+            return 'failure'
+        lyr = ds.GetLayerByName('popplace')
+        if lyr.GetFeatureCount() != 1:
+            gdaltest.post_reason('fail')
+            return 'failure'
+        feat = lyr.GetNextFeature()
+        if feat.GetField('gml_id') != 'popplace.BACMK':
+            gdaltest.post_reason('fail')
+            return 'failure'
+        ds = None
+
+    try:
+        os.unlink('data/wfs_200_multiplelayers.gfs')
+    except:
+        pass
+
+    return 'success'
+
 ###############################################################################
 #  Cleanup
 
@@ -2925,17 +2967,14 @@ gdaltest_list = [
     ogr_gml_57,
     ogr_gml_58,
     ogr_gml_59,
+    ogr_gml_60,
     ogr_gml_cleanup ]
 
 if False:
     gdaltest_list = [ 
         ogr_gml_clean_files,
         ogr_gml_1,
-        ogr_gml_55,
-        ogr_gml_56,
-        ogr_gml_57,
-        ogr_gml_58,
-        ogr_gml_59 ]
+        ogr_gml_60 ]
 
 if __name__ == '__main__':
 
