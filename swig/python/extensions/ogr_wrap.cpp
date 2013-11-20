@@ -15240,7 +15240,10 @@ SWIGINTERN PyObject *_wrap_CreateGeometryFromWkt(PyObject *SWIGUNUSEDPARM(self),
   if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"O|O:CreateGeometryFromWkt",kwnames,&obj0,&obj1)) SWIG_fail;
   {
     /* %typemap(in) (char **ignorechange) */
-    PyArg_Parse( obj0, "s", &val1 );
+    if( !PyArg_Parse( obj0, "s", &val1 ) ) {
+      PyErr_SetString( PyExc_TypeError, "not a string" );
+      SWIG_fail;
+    }
     arg1 = &val1;
   }
   if (obj1) {
