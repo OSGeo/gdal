@@ -1545,10 +1545,6 @@ GDALDataset *SRPDataset::Open( GDALOpenInfo * poOpenInfo )
         }
     }
 
-
-    CPLDebug("SRP", "gen=%s", osGENFileName.c_str());
-    CPLDebug("SRP", "IMG=%s", osIMGFileName.c_str());
-
     if (osGENFileName.size() > 0 &&
         osIMGFileName.size() > 0)
     {
