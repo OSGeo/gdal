@@ -10570,7 +10570,10 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromWkt(PyObject *SWIGUNUSEDPA
   arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
   {
     /* %typemap(in) (char **ignorechange) */
-    PyArg_Parse( obj1, "s", &val2 );
+    if( !PyArg_Parse( obj1, "s", &val2 ) ) {
+      PyErr_SetString( PyExc_TypeError, "not a string" );
+      SWIG_fail;
+    }
     arg2 = &val2;
   }
   {
