@@ -1806,6 +1806,7 @@ std::vector<CPLString> VSIZipFilesystemHandler::GetExtensions()
         {
             oList.push_back(papszExtensions[i]);
         }
+        CSLDestroy(papszExtensions);
     }
 
     return oList;
