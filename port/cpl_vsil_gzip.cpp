@@ -1793,6 +1793,21 @@ std::vector<CPLString> VSIZipFilesystemHandler::GetExtensions()
     oList.push_back(".dwf");
     oList.push_back(".ods");
     oList.push_back(".xlsx");
+
+    /* Add to zip FS handler extensions array additional extensions */
+    /* listed in CPL_VSIL_ZIP_ALLOWED_EXTENSIONS config option. */
+    /* The extensions divided by comma */
+    const char* pszAllowedExtensions =
+        CPLGetConfigOption("CPL_VSIL_ZIP_ALLOWED_EXTENSIONS", NULL);
+    if (pszAllowedExtensions)
+    {
+        char** papszExtensions = CSLTokenizeString2(pszAllowedExtensions, ", ", 0);
+        for (int i = 0; papszExtensions[i] != NULL; i++)
+        {
+            oList.push_back(papszExtensions[i]);
+        }
+    }
+
     return oList;
 }
 
