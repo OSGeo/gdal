@@ -37,20 +37,6 @@
 
 #include "thinplatespline.h"
 
-#ifdef HAVE_FLOAT_H
-#  include <float.h>
-#elif defined(HAVE_VALUES_H)
-#  include <values.h>
-#endif
-
-#ifndef FLT_MAX
-#  define FLT_MAX 1e+37
-#  define FLT_MIN 1e-37
-#endif
-
-VizGeorefSpline2D* viz_xy2llz;
-VizGeorefSpline2D* viz_llz2xy;
-
 /////////////////////////////////////////////////////////////////////////////////////
 //// vizGeorefSpline2D
 /////////////////////////////////////////////////////////////////////////////////////
@@ -61,40 +47,31 @@ VizGeorefSpline2D* viz_llz2xy;
 
 #define VIZ_GEOREF_SPLINE_DEBUG 0
 
+#ifndef HAVE_ARMADILLO
 static int matrixInvert( int N, double input[], double output[] );
+#endif
 
 void VizGeorefSpline2D::grow_points()
 
 {
     int new_max = _max_nof_points*2 + 2 + 3;
     int i;
-    
-    if( _max_nof_points == 0 )
+
+    x = (double *) VSIRealloc( x, sizeof(double) * new_max );
+    y = (double *) VSIRealloc( y, sizeof(double) * new_max );
+    u = (double *) VSIRealloc( u, sizeof(double) * new_max );
+    unused = (int *) VSIRealloc( unused, sizeof(int) * new_max );
+    index = (int *) VSIRealloc( index, sizeof(int) * new_max );
+    for( i = 0; i < VIZGEOREF_MAX_VARS; i++ )
     {
-        x = (double *) VSIMalloc( sizeof(double) * new_max );
-        y = (double *) VSIMalloc( sizeof(double) * new_max );
-        u = (double *) VSIMalloc( sizeof(double) * new_max );
-        unused = (int *) VSIMalloc( sizeof(int) * new_max );
-        index = (int *) VSIMalloc( sizeof(int) * new_max );
-        for( i = 0; i < VIZGEOREF_MAX_VARS; i++ )
+        rhs[i] = (double *) 
+            VSIRealloc( rhs[i], sizeof(double) * new_max );
+        coef[i] = (double *) 
+            VSIRealloc( coef[i], sizeof(double) * new_max );
+        if( _max_nof_points == 0 )
         {
-            rhs[i] = (double *) VSICalloc( sizeof(double), new_max );
-            coef[i] = (double *) VSICalloc( sizeof(double), new_max );
-        }
-    }
-    else
-    {
-        x = (double *) VSIRealloc( x, sizeof(double) * new_max );
-        y = (double *) VSIRealloc( y, sizeof(double) * new_max );
-        u = (double *) VSIRealloc( u, sizeof(double) * new_max );
-        unused = (int *) VSIRealloc( unused, sizeof(int) * new_max );
-        index = (int *) VSIRealloc( index, sizeof(int) * new_max );
-        for( i = 0; i < VIZGEOREF_MAX_VARS; i++ )
-        {
-            rhs[i] = (double *) 
-                VSIRealloc( rhs[i], sizeof(double) * new_max );
-            coef[i] = (double *) 
-                VSIRealloc( coef[i], sizeof(double) * new_max );
+            memset(rhs[i], 0, 3 * sizeof(double));
+            memset(coef[i], 0, 3 * sizeof(double));
         }
     }
 
@@ -119,6 +96,7 @@ int VizGeorefSpline2D::add_point( const double Px, const double Py, const double
     return 1;
 }
 
+#if 0
 bool VizGeorefSpline2D::change_point(int index, double Px, double Py, double* Pvars)
 {
     if ( index < _nof_points )
@@ -172,6 +150,7 @@ int VizGeorefSpline2D::delete_point(const double Px, const double Py )
     }
     return(0);
 }
+#endif
 
 #define SQ(x) ((x)*(x))
 
@@ -381,7 +360,7 @@ static void VizGeorefSpline2DBase_func4( double* res,
 
 int VizGeorefSpline2D::solve(void)
 {
-    int r, c, v;
+    int r, c;
     int p;
 	
     //	No points at all
@@ -486,11 +465,7 @@ int VizGeorefSpline2D::solve(void)
 	
     type = VIZ_GEOREF_SPLINE_FULL;
     // Make the necessary memory allocations
-    if ( _AA )
-        CPLFree(_AA);
-    if ( _Ainv )
-        CPLFree(_Ainv);
-	
+
     _nof_eqs = _nof_points + 3;
     
     if( _nof_eqs > INT_MAX / _nof_eqs )
@@ -499,12 +474,14 @@ int VizGeorefSpline2D::solve(void)
         return 0;
     }
 	
-    _AA = ( double * )VSICalloc( _nof_eqs * _nof_eqs, sizeof( double ) );
-    _Ainv = ( double * )VSICalloc( _nof_eqs * _nof_eqs, sizeof( double ) );
+    double* _AA = ( double * )VSICalloc( _nof_eqs * _nof_eqs, sizeof( double ) );
+    double* _Ainv = ( double * )VSICalloc( _nof_eqs * _nof_eqs, sizeof( double ) );
     
     if( _AA == NULL || _Ainv == NULL )
     {
         fprintf(stderr, "Out-of-memory while allocating temporary arrays. Computation aborted.\n");
+        VSIFree(_AA);
+        VSIFree(_Ainv);
         return 0;
     }
 	
@@ -542,26 +519,53 @@ int VizGeorefSpline2D::solve(void)
     }
 			
 #endif
-			
+
+    int ret  = 4;
+#ifdef HAVE_ARMADILLO
+    try
+    {
+        arma::mat matA(_AA,_nof_eqs,_nof_eqs,false);
+        arma::mat matRHS(_nof_eqs, _nof_vars);
+        int row, col;
+        for(row = 0; row < _nof_eqs; row++)
+            for(col = 0; col < _nof_vars; col++)
+                matRHS.at(row, col) = rhs[col][row];
+        arma::mat matCoefs(arma::solve(matA, matRHS));
+        for(row = 0; row < _nof_eqs; row++)
+            for(col = 0; col < _nof_vars; col++)
+                coef[col][row] = matCoefs.at(row, col);
+    }
+    catch(...)
+    {
+        fprintf(stderr, "There is a problem to invert the interpolation matrix\n");
+        ret = 0;
+    }
+#else
     // Invert the matrix
     int status = matrixInvert( _nof_eqs, _AA, _Ainv );
 			
     if ( !status )
     {
         fprintf(stderr, " There is a problem to invert the interpolation matrix\n");
-        return 0;
+        ret = 0;
     }
-			
-    // calc the coefs
-    for ( v = 0; v < _nof_vars; v++ )
-        for ( r = 0; r < _nof_eqs; r++ )
-        {
-            coef[v][r] = 0.0;
-            for ( c = 0; c < _nof_eqs; c++ )
-                coef[v][r] += Ainv(r,c) * rhs[v][c];
-        }
-				
-    return(4);
+    else
+    {
+        // calc the coefs
+        for ( int v = 0; v < _nof_vars; v++ )
+            for ( r = 0; r < _nof_eqs; r++ )
+            {
+                coef[v][r] = 0.0;
+                for ( c = 0; c < _nof_eqs; c++ )
+                    coef[v][r] += Ainv(r,c) * rhs[v][c];
+            }
+    }
+#endif
+
+    VSIFree(_AA);
+    VSIFree(_Ainv);
+
+    return(ret);
 }
 
 int VizGeorefSpline2D::get_point( const double Px, const double Py, double *vars )
@@ -659,31 +663,7 @@ int VizGeorefSpline2D::get_point( const double Px, const double Py, double *vars
 	return(1);
 }
 
-#ifdef HAVE_ARMADILLO
-
-static int matrixInvert( int N, double input[], double output[] )
-{
-    try
-    {
-        arma::mat matInput(input,N,N,false);
-        const arma::mat& matInv = arma::inv(matInput);
-        int row, col;
-        for(row = 0; row < N; row++)
-            for(col = 0; col < N; col++)
-                output[row * N + col] = matInv.at(row, col);
-        return true;
-        //arma::mat matInv(output,N,N,false);
-        //return arma::inv(matInv, matInput);
-    }
-    catch(...)
-    {
-        fprintf(stderr, "matrixInvert(): error occured.\n");
-        return false;
-    }
-}
-
-#else
-
+#ifndef HAVE_ARMADILLO
 static int matrixInvert( int N, double input[], double output[] )
 {
     // Receives an array of dimension NxN as input.  This is passed as a one-
