@@ -892,6 +892,10 @@ int main( int argc, char ** argv )
     void* hUniqueTransformArg = NULL;
     GDALDatasetH hUniqueSrcDS = NULL;
 
+    const char* pszWarpThreads = CSLFetchNameValue(papszWarpOptions, "NUM_THREADS");
+    if( pszWarpThreads != NULL )
+        papszTO = CSLSetNameValue(papszTO, "NUM_THREADS", pszWarpThreads);
+
     if( hDstDS == NULL )
     {
         if (!bQuiet && !bFormatExplicitelySet)
