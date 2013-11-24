@@ -941,12 +941,10 @@ int GDALGeoLocTransform( void *pTransformArg, int bDstToSrc,
             if( iX + 1 < psTransform->nGeoLocXSize &&
                 iY + 1 < psTransform->nGeoLocYSize )
             {
-                padfX[i] = padfGLX[0] 
-                    + (dfGeoLocPixel-iX) * (padfGLX[1] - padfGLX[0])
-                    + (dfGeoLocLine -iY) * (padfGLX[nXSize] - padfGLX[0]);
-                padfY[i] = padfGLY[0] 
-                    + (dfGeoLocPixel-iX) * (padfGLY[1] - padfGLY[0])
-                    + (dfGeoLocLine -iY) * (padfGLY[nXSize] - padfGLY[0]);
+                padfX[i] = (1 - (dfGeoLocLine -iY)) * (padfGLX[0] + (dfGeoLocPixel-iX) * (padfGLX[1] - padfGLX[0]))
+                           + (dfGeoLocLine -iY) * (padfGLX[nXSize] + (dfGeoLocPixel-iX) * (padfGLX[nXSize+1] - padfGLX[nXSize]));
+                padfY[i] = (1 - (dfGeoLocLine -iY)) * (padfGLY[0] + (dfGeoLocPixel-iX) * (padfGLY[1] - padfGLY[0]))
+                           + (dfGeoLocLine -iY) * (padfGLY[nXSize] + (dfGeoLocPixel-iX) * (padfGLY[nXSize+1] - padfGLY[nXSize]));
             }
             else if( iX + 1 < psTransform->nGeoLocXSize )
             {
@@ -1013,16 +1011,18 @@ int GDALGeoLocTransform( void *pTransformArg, int bDstToSrc,
 
             float* pafBMX = psTransform->pafBackMapX + iBM;
             float* pafBMY = psTransform->pafBackMapY + iBM;
+
             if( iBMX + 1 < psTransform->nBackMapWidth &&
                 iBMY + 1 < psTransform->nBackMapHeight &&
-                pafBMX[1] >=0 && pafBMX[psTransform->nBackMapWidth] >= 0 )
+                pafBMX[1] >=0 && pafBMX[psTransform->nBackMapWidth] >= 0 &&
+                pafBMX[psTransform->nBackMapWidth+1] >= 0)
             {
-                padfX[i] = pafBMX[0] +
-                            (dfBMX - iBMX) * (pafBMX[1] - pafBMX[0]) +
-                            (dfBMY - iBMY) * (pafBMX[psTransform->nBackMapWidth] - pafBMX[0]);
-                padfY[i] = pafBMY[0] +
-                            (dfBMX - iBMX) * (pafBMY[1] - pafBMY[0]) +
-                            (dfBMY - iBMY) * (pafBMY[psTransform->nBackMapWidth] - pafBMY[0]);
+                padfX[i] = (1-(dfBMY - iBMY)) * (pafBMX[0] + (dfBMX - iBMX) * (pafBMX[1] - pafBMX[0])) +
+                           (dfBMY - iBMY) * (pafBMX[psTransform->nBackMapWidth] +
+                                (dfBMX - iBMX) * (pafBMX[psTransform->nBackMapWidth+1] - pafBMX[psTransform->nBackMapWidth]));
+                padfY[i] = (1-(dfBMY - iBMY)) * (pafBMY[0] + (dfBMX - iBMX) * (pafBMY[1] - pafBMY[0])) +
+                           (dfBMY - iBMY) * (pafBMY[psTransform->nBackMapWidth] +
+                                (dfBMX - iBMX) * (pafBMY[psTransform->nBackMapWidth+1] - pafBMY[psTransform->nBackMapWidth]));
             }
             else if( iBMX + 1 < psTransform->nBackMapWidth &&
                      pafBMX[1] >=0)
