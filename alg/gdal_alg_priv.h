@@ -176,6 +176,8 @@ void* GDALCloneGenImgProjTransformer( void *pTransformArg );
 void* GDALCloneApproxTransformer( void *pTransformArg );
 /* TODO : GDALCloneGeoLocTransformer? , GDALCloneRPCTransformer? */ 
 
+void* GDALCreateTPSTransformerInt( int nGCPCount, const GDAL_GCP *pasGCPList, 
+                                   int bReversed, char** papszOptions );
 
 void CPL_DLL * GDALCloneTransformer( void *pTranformerArg );
 
