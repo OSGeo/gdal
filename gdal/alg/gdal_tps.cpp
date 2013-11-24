@@ -29,9 +29,11 @@
 
 #include "thinplatespline.h"
 #include "gdal_alg.h"
+#include "gdal_alg_priv.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "cpl_atomic_ops.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -46,6 +48,8 @@ typedef struct
 
     VizGeorefSpline2D   *poForward;
     VizGeorefSpline2D   *poReverse;
+    int                  bForwardSolved;
+    int                  bReverseSolved;
 
     int       bReversed;
 
@@ -109,6 +113,18 @@ void* GDALCloneTPSTransformer( void *hTransformArg )
 
 void *GDALCreateTPSTransformer( int nGCPCount, const GDAL_GCP *pasGCPList, 
                                 int bReversed )
+{
+    return GDALCreateTPSTransformerInt(nGCPCount, pasGCPList, bReversed, NULL);
+}
+
+static void GDALTPSComputeForwardInThread(void* pData)
+{
+    TPSTransformInfo *psInfo = (TPSTransformInfo *)pData;
+    psInfo->bForwardSolved = psInfo->poForward->solve() != 0;
+}
+
+void *GDALCreateTPSTransformerInt( int nGCPCount, const GDAL_GCP *pasGCPList, 
+                                   int bReversed, char** papszOptions )
 
 {
     TPSTransformInfo *psInfo;
@@ -158,8 +174,39 @@ void *GDALCreateTPSTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
 
     psInfo->nRefCount = 1;
 
-    psInfo->poForward->solve();
-    psInfo->poReverse->solve();
+    int nThreads = 1;
+    if( nGCPCount > 100 )
+    {
+        const char* pszWarpThreads = CSLFetchNameValue(papszOptions, "NUM_THREADS");
+        if (pszWarpThreads == NULL)
+            pszWarpThreads = CPLGetConfigOption("GDAL_NUM_THREADS", "1");
+        if (EQUAL(pszWarpThreads, "ALL_CPUS"))
+            nThreads = CPLGetNumCPUs();
+        else
+            nThreads = atoi(pszWarpThreads);
+    }
+
+    if( nThreads > 1 )
+    {
+        /* Compute direct and reverse transforms in parallel */
+        void* hThread = CPLCreateJoinableThread(GDALTPSComputeForwardInThread, psInfo);
+        psInfo->bReverseSolved = psInfo->poReverse->solve() != 0;
+        if( hThread != NULL )
+            CPLJoinThread(hThread);
+        else
+            psInfo->bForwardSolved = psInfo->poForward->solve() != 0;
+    }
+    else
+    {
+        psInfo->bForwardSolved = psInfo->poForward->solve() != 0;
+        psInfo->bReverseSolved = psInfo->poReverse->solve() != 0;
+    }
+
+    if( !psInfo->bForwardSolved || !psInfo->bReverseSolved )
+    {
+        delete psInfo;
+        return NULL;
+    }
 
     return psInfo;
 }
