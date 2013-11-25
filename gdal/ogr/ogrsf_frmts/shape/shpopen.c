@@ -1226,6 +1226,7 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
     int i;
     uchar	*pabyRec;
     int32	i32;
+    int     bExtendFile = FALSE;
 
     psSHP->bUpdated = TRUE;
 
@@ -1519,23 +1520,18 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
             return -1;
         }
 
-        if( nShapeId == -1 )
-            nShapeId = psSHP->nRecords++;
-
-        psSHP->panRecOffset[nShapeId] = nRecordOffset = psSHP->nFileSize;
-        psSHP->panRecSize[nShapeId] = nRecordSize-8;
-        psSHP->nFileSize += nRecordSize;
+        bExtendFile = TRUE;
+        nRecordOffset = psSHP->nFileSize;
     }
     else
     {
         nRecordOffset = psSHP->panRecOffset[nShapeId];
-        psSHP->panRecSize[nShapeId] = nRecordSize-8;
     }
     
 /* -------------------------------------------------------------------- */
 /*      Set the shape type, record number, and record size.             */
 /* -------------------------------------------------------------------- */
-    i32 = nShapeId+1;					/* record # */
+    i32 = (nShapeId < 0) ? psSHP->nRecords+1 : nShapeId+1;					/* record # */
     if( !bBigEndian ) SwapWord( 4, &i32 );
     ByteCopy( &i32, pabyRec, 4 );
 
@@ -1564,6 +1560,16 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
     }
     
     free( pabyRec );
+
+    if( bExtendFile )
+    {
+        if( nShapeId == -1 )
+            nShapeId = psSHP->nRecords++;
+
+        psSHP->panRecOffset[nShapeId] = psSHP->nFileSize;
+        psSHP->nFileSize += nRecordSize;
+    }
+    psSHP->panRecSize[nShapeId] = nRecordSize-8;
 
 /* -------------------------------------------------------------------- */
 /*	Expand file wide bounds based on this shape.			*/

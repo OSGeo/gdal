@@ -27,89 +27,195 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "shapefil.h"
-#include "cpl_vsi.h"
+#include "shp_vsi.h"
 #include "cpl_error.h"
 #include "cpl_conv.h"
 
 CPL_CVSID("$Id$");
 
+typedef struct
+{
+    VSILFILE *fp;
+    char     *pszFilename;
+    int       bEnforce2GBLimit;
+    int       bHasWarned2GB;
+    SAOffset  nCurOffset;
+} OGRSHPDBFFile;
+
+/************************************************************************/
+/*                         VSI_SHP_GetVSIL()                            */
+/************************************************************************/
+
+VSILFILE* VSI_SHP_GetVSIL( SAFile file )
+{
+    OGRSHPDBFFile* pFile = (OGRSHPDBFFile*) file;
+    return pFile->fp;
+}
+
+/************************************************************************/
+/*                         VSI_SHP_OpenInternal()                       */
+/************************************************************************/
+
+static
+SAFile VSI_SHP_OpenInternal( const char *pszFilename, const char *pszAccess,
+                             int bEnforce2GBLimit )
+
+{
+    OGRSHPDBFFile* pFile;
+    VSILFILE* fp = VSIFOpenL( pszFilename, pszAccess );
+    if( fp == NULL )
+        return NULL;
+    pFile = (OGRSHPDBFFile* )CPLCalloc(1,sizeof(OGRSHPDBFFile));
+    pFile->fp = fp;
+    pFile->pszFilename = CPLStrdup(pszFilename);
+    pFile->bEnforce2GBLimit = bEnforce2GBLimit;
+    pFile->nCurOffset = 0;
+    return (SAFile) pFile;
+}
+
 /************************************************************************/
 /*                            VSI_SHP_Open()                            */
 /************************************************************************/
 
+static
 SAFile VSI_SHP_Open( const char *pszFilename, const char *pszAccess )
 
 {
-    return (SAFile) VSIFOpenL( pszFilename, pszAccess );
+    return VSI_SHP_OpenInternal(pszFilename, pszAccess, FALSE);
+}
+
+/************************************************************************/
+/*                        VSI_SHP_Open2GBLimit()                        */
+/************************************************************************/
+
+static
+SAFile VSI_SHP_Open2GBLimit( const char *pszFilename, const char *pszAccess )
+
+{
+    return VSI_SHP_OpenInternal(pszFilename, pszAccess, TRUE);
 }
 
 /************************************************************************/
 /*                            VSI_SHP_Read()                            */
 /************************************************************************/
 
+static
 SAOffset VSI_SHP_Read( void *p, SAOffset size, SAOffset nmemb, SAFile file )
 
 {
-    return (SAOffset) VSIFReadL( p, (size_t) size, (size_t) nmemb, 
-                                 (VSILFILE *) file );
+    OGRSHPDBFFile* pFile = (OGRSHPDBFFile*) file;
+    SAOffset ret = (SAOffset) VSIFReadL( p, (size_t) size, (size_t) nmemb, 
+                                 pFile->fp );
+    pFile->nCurOffset += ret * size;
+    return ret;
+}
+
+/************************************************************************/
+/*                      VSI_SHP_WriteMoreDataOK()                       */
+/************************************************************************/
+
+int VSI_SHP_WriteMoreDataOK( SAFile file, SAOffset nExtraBytes )
+{
+    OGRSHPDBFFile* pFile = (OGRSHPDBFFile*) file;
+    if( pFile->nCurOffset + nExtraBytes > 0x7FFFFFFF )
+    {
+        if( pFile->bEnforce2GBLimit )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, "2GB file size limit reached for %s",
+                      pFile->pszFilename );
+            return FALSE;
+        }
+        else if( !pFile->bHasWarned2GB )
+        {
+            pFile->bHasWarned2GB = TRUE;
+            CPLError( CE_Warning, CPLE_AppDefined, "2GB file size limit reached for %s. "
+                      "Going on, but might cause compatibility issues with third party software",
+                      pFile->pszFilename );
+        }
+    }
+
+    return TRUE;
 }
 
 /************************************************************************/
 /*                           VSI_SHP_Write()                            */
 /************************************************************************/
 
+static
 SAOffset VSI_SHP_Write( void *p, SAOffset size, SAOffset nmemb, SAFile file )
 
 {
-    return (SAOffset) VSIFWriteL( p, (size_t) size, (size_t) nmemb, 
-                                  (VSILFILE *) file );
+    OGRSHPDBFFile* pFile = (OGRSHPDBFFile*) file;
+    SAOffset ret;
+    if( !VSI_SHP_WriteMoreDataOK( file, size * nmemb ) )
+        return 0;
+    ret = (SAOffset) VSIFWriteL( p, (size_t) size, (size_t) nmemb, 
+                                  pFile->fp );
+    pFile->nCurOffset += ret * size;
+    return ret;
 }
 
 /************************************************************************/
 /*                            VSI_SHP_Seek()                            */
 /************************************************************************/
 
+static
 SAOffset VSI_SHP_Seek( SAFile file, SAOffset offset, int whence )
 
 {
-    return (SAOffset) VSIFSeekL( (VSILFILE *) file, (vsi_l_offset) offset, whence );
+    OGRSHPDBFFile* pFile = (OGRSHPDBFFile*) file;
+    SAOffset ret = (SAOffset) VSIFSeekL( pFile->fp, (vsi_l_offset) offset, whence );
+    if( whence == 0 && ret == 0)
+        pFile->nCurOffset = offset;
+    else
+        pFile->nCurOffset = (SAOffset) VSIFTellL( pFile->fp );
+    return ret;
 }
 
 /************************************************************************/
 /*                            VSI_SHP_Tell()                            */
 /************************************************************************/
 
+static
 SAOffset VSI_SHP_Tell( SAFile file )
 
 {
-    return (SAOffset) VSIFTellL( (VSILFILE *) file );
+    OGRSHPDBFFile* pFile = (OGRSHPDBFFile*) file;
+    return (SAOffset) pFile->nCurOffset;
 }
 
 /************************************************************************/
 /*                           VSI_SHP_Flush()                            */
 /************************************************************************/
 
+static
 int VSI_SHP_Flush( SAFile file )
 
 {
-    return VSIFFlushL( (VSILFILE *) file );
+    OGRSHPDBFFile* pFile = (OGRSHPDBFFile*) file;
+    return VSIFFlushL( pFile->fp );
 }
 
 /************************************************************************/
 /*                           VSI_SHP_Close()                            */
 /************************************************************************/
 
+static
 int VSI_SHP_Close( SAFile file )
 
 {
-    return VSIFCloseL( (VSILFILE *) file );
+    OGRSHPDBFFile* pFile = (OGRSHPDBFFile*) file;
+    int ret = VSIFCloseL( pFile->fp );
+    CPLFree(pFile->pszFilename);
+    CPLFree(pFile);
+    return ret;
 }
 
 /************************************************************************/
 /*                              SADError()                              */
 /************************************************************************/
 
+static
 void VSI_SHP_Error( const char *message )
 
 {
@@ -120,6 +226,7 @@ void VSI_SHP_Error( const char *message )
 /*                           VSI_SHP_Remove()                           */
 /************************************************************************/
 
+static
 int VSI_SHP_Remove( const char *pszFilename )
 
 {
@@ -140,9 +247,45 @@ void SASetupDefaultHooks( SAHooks *psHooks )
     psHooks->FTell   = VSI_SHP_Tell;
     psHooks->FFlush  = VSI_SHP_Flush;
     psHooks->FClose  = VSI_SHP_Close;
-
     psHooks->Remove  = VSI_SHP_Remove;
-    psHooks->Atof    = CPLAtof;
 
     psHooks->Error   = VSI_SHP_Error;
+    psHooks->Atof    = CPLAtof;
+}
+
+/************************************************************************/
+/*                         VSI_SHP_GetHook()                            */
+/************************************************************************/
+
+static const SAHooks sOGRHook =
+{
+    VSI_SHP_Open,
+    VSI_SHP_Read,
+    VSI_SHP_Write,
+    VSI_SHP_Seek,
+    VSI_SHP_Tell,
+    VSI_SHP_Flush,
+    VSI_SHP_Close,
+    VSI_SHP_Remove,
+    VSI_SHP_Error,
+    CPLAtof
+};
+
+static const SAHooks sOGRHook2GBLimit =
+{
+    VSI_SHP_Open2GBLimit,
+    VSI_SHP_Read,
+    VSI_SHP_Write,
+    VSI_SHP_Seek,
+    VSI_SHP_Tell,
+    VSI_SHP_Flush,
+    VSI_SHP_Close,
+    VSI_SHP_Remove,
+    VSI_SHP_Error,
+    CPLAtof
+};
+
+const SAHooks* VSI_SHP_GetHook(int b2GBLimit)
+{
+    return (b2GBLimit) ? &sOGRHook2GBLimit : &sOGRHook;
 }
