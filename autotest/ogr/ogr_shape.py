@@ -3504,6 +3504,90 @@ def ogr_shape_71():
     return 'success'
 
 ###############################################################################
+# Test shapefile size limit
+
+def ogr_shape_72():
+
+    # Determine if the filesystem supports sparse files (we don't want to create a real 3 GB
+    # file !
+    if (gdaltest.filesystem_supports_sparse_files('tmp') == False):
+        return 'skip'
+
+    import struct
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/ogr_shape_72.shp')
+    lyr = ds.CreateLayer('2gb', geom_type = ogr.wkbPoint)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT (1 2)'))
+    lyr.CreateFeature(feat)
+    ds = None
+
+    f = open('tmp/ogr_shape_72.shp', 'rb+')
+    f.seek(24)
+    f.write(struct.pack('B' * 4, 0x7f,0xff,0xff,0xfe))
+    f.close()
+
+    # Test creating a feature over 4 GB file limit -> should fail
+    ds = ogr.Open('tmp/ogr_shape_72.shp', update = 1)
+    lyr = ds.GetLayer(0)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT (3 4)'))
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = lyr.CreateFeature(feat)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    f = open('tmp/ogr_shape_72.shp', 'rb+')
+    f.seek(24)
+    f.write(struct.pack('B' * 4, 0x3f,0xff,0xff,0xfe))
+    f.close()
+
+    # Test creating a feature over 2 GB file limit -> should fail
+    gdal.SetConfigOption('SHAPE_2GB_LIMIT', 'TRUE')
+    ds = ogr.Open('tmp/ogr_shape_72.shp', update = 1)
+    gdal.SetConfigOption('SHAPE_2GB_LIMIT', None)
+    lyr = ds.GetLayer(0)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT (5 6)'))
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = lyr.CreateFeature(feat)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    # Test creating a feature over 2 GB file limit -> should succeed with warning
+    ds = ogr.Open('tmp/ogr_shape_72.shp', update = 1)
+    lyr = ds.GetLayer(0)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT (7 8)'))
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = lyr.CreateFeature(feat)
+    gdal.PopErrorHandler()
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if gdal.GetLastErrorMsg().find('2GB file size limit reached') < 0:
+        gdaltest.post_reason('did not find expected warning')
+        return 'fail'
+    ds = None
+
+    ds = ogr.Open('tmp/ogr_shape_72.shp')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetFeature(1)
+    if feat.GetGeometryRef().ExportToWkt() != 'POINT (7 8)':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_shape_cleanup():
@@ -3531,7 +3615,7 @@ def ogr_shape_cleanup():
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_58' )
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_61' )
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_62' )
-    
+
     return 'success'
 
 gdaltest_list = [ 
@@ -3608,6 +3692,7 @@ gdaltest_list = [
     ogr_shape_69,
     ogr_shape_70,
     ogr_shape_71,
+    ogr_shape_72,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':
