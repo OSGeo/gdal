@@ -1206,7 +1206,6 @@ def ogr_shape_28():
     field_defn.SetWidth(99)
     lyr.CreateField(field_defn)
     field_defn.Destroy()
-    ds.Destroy()
     ds = None
 
     os.remove('tmp/hugedbf.shp')
@@ -1246,21 +1245,50 @@ def ogr_shape_28():
     # Update with a new value
     feat.SetField(0, 'updated_value')
     lyr.SetFeature(feat)
-    feat.Destroy()
+    feat = None
+
+    # Test creating a feature over 2 GB file limit -> should work
+    gdal.ErrorReset()
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = lyr.CreateFeature(feat)
+    gdal.PopErrorHandler()
+    if ret != 0:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    feat = None
+    if gdal.GetLastErrorMsg().find('2GB file size limit reached') < 0:
+        gdaltest.post_reason('did not find expected warning')
+        return 'fail'
 
     ds.Destroy()
     ds = None
 
     # Re-open and check the new value
-    ds = ogr.Open('tmp/hugedbf.dbf')
+    gdal.SetConfigOption('SHAPE_2GB_LIMIT', 'TRUE')
+    ds = ogr.Open('tmp/hugedbf.dbf', 1)
+    gdal.SetConfigOption('SHAPE_2GB_LIMIT', None)
     lyr = ds.GetLayer(0)
     feat = lyr.GetFeature(23900000);
     if feat.GetFieldAsString(0) != 'updated_value':
         print(feat.GetFieldAsString(0))
         return 'fail'
-    feat.Destroy()
+    feat = None
 
-    ds.Destroy()
+    # Test creating a feature over 2 GB file limit -> should fail
+    gdal.ErrorReset()
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = lyr.CreateFeature(feat)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    feat = None
+    if gdal.GetLastErrorMsg().find('2GB file size limit reached') < 0:
+        gdaltest.post_reason('did not find expected warning')
+        return 'fail'
+
     ds = None
 
     return 'success'
