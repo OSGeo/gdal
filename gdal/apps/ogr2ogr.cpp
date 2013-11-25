@@ -1799,7 +1799,7 @@ int main( int nArgc, char ** papszArgv )
                           "Terminating translation prematurely after failed\n"
                           "translation from sql statement." );
 
-                exit( 1 );
+                nRetCode = 1;
             }
 
             FreeTargetLayerInfo(psInfo);
@@ -1982,7 +1982,8 @@ int main( int nArgc, char ** papszArgv )
                                 "translation of layer %s (use -skipfailures to skip errors)\n",
                                 poLayer->GetName() );
 
-                        exit( 1 );
+                        nRetCode = 1;
+                        break;
                     }
                 }
                 else
@@ -2131,7 +2132,7 @@ int main( int nArgc, char ** papszArgv )
 
         /* Second pass to do the real job */
         for( iLayer = 0; 
-            iLayer < nLayerCount; 
+            iLayer < nLayerCount && nRetCode == 0; 
             iLayer++ )
         {
             OGRLayer        *poLayer = papoLayers[iLayer];
@@ -2232,7 +2233,7 @@ int main( int nArgc, char ** papszArgv )
                         "translation of layer %s (use -skipfailures to skip errors)\n", 
                         poLayer->GetName() );
 
-                exit( 1 );
+                nRetCode = 1;
             }
 
             FreeTargetLayerInfo(psInfo);
