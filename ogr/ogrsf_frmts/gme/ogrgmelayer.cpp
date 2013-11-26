@@ -338,9 +338,9 @@ OGRFeatureDefn * OGRGMELayer::GetLayerDefn()
     {
         if (osTableId.size() == 0)
             return NULL;
-        FetchDescribe();
+        if (!FetchDescribe())
+	    return NULL;
     }
 
     return poFeatureDefn;
 }
-

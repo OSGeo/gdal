@@ -44,42 +44,6 @@
 /************************************************************************/
 class OGRGMEDataSource;
 
-#ifdef notdef
-class OGRGMELayer : public OGRLayer
-{
-protected:
-    OGRGMEDataSource* poDS;
-
-    OGRFeatureDefn*    poFeatureDefn;
-    OGRSpatialReference *poSRS;
-
-    int                iGeometryField;
-
-    OGRFeature *       GetNextRawFeature();
-
-  public:
-                         OGRGMELayer(OGRGMEDataSource* poDS);
-                        ~OGRGMELayer();
-
-    virtual void                ResetReading();
-    virtual OGRFeature *        GetNextFeature();
-
-    virtual OGRFeatureDefn *    GetLayerDefn();
-
-    virtual int                 TestCapability( const char * );
-
-    virtual OGRSpatialReference*GetSpatialRef();
-
-    virtual const char *        GetGeometryColumn();
-
-    virtual OGRErr              SetNextByIndex( long nIndex );
-};
-#endif
-
-/************************************************************************/
-/*                             OGRGMELayer                              */
-/************************************************************************/
-
 class OGRGMELayer : public OGRLayer
 {
     OGRGMEDataSource* poDS;
@@ -146,10 +110,12 @@ class OGRGMEDataSource : public OGRDataSource
     CPLString           osRefreshToken;
     CPLString           osAPIKey;
     CPLString           osSelect;
+    CPLString           osWhere;
 
     void                DeleteLayer( const char *pszLayerName );
 
     int                 bMustCleanPersistant;
+    int                 nRetries;
 
   public:
                         OGRGMEDataSource();
