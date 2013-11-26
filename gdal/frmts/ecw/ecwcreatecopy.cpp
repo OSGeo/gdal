@@ -908,18 +908,28 @@ CPLErr GDALECWCompressor::Initialize(
 /* -------------------------------------------------------------------- */
 /*      Setup GML and GeoTIFF information.                              */
 /* -------------------------------------------------------------------- */
-    GDALJP2Metadata oJP2MD;
+    if( (pszWKT != NULL && pszWKT[0] != '\0') ||
+        !(padfGeoTransform[0] == 0.0 &&
+          padfGeoTransform[1] == 1.0 &&
+          padfGeoTransform[2] == 0.0 &&
+          padfGeoTransform[3] == 0.0 &&
+          padfGeoTransform[4] == 0.0 &&
+          padfGeoTransform[5] == 1.0) ||
+         nGCPCount > 0 )
+    {
+        GDALJP2Metadata oJP2MD;
 
-    oJP2MD.SetProjection( pszWKT );
-    oJP2MD.SetGeoTransform( padfGeoTransform );
-    oJP2MD.SetGCPs( nGCPCount, pasGCPList );
-    if (bIsJPEG2000) {
+        oJP2MD.SetProjection( pszWKT );
+        oJP2MD.SetGeoTransform( padfGeoTransform );
+        oJP2MD.SetGCPs( nGCPCount, pasGCPList );
+        if (bIsJPEG2000) {
 
-        if( CSLFetchBoolean( papszOptions, "GMLJP2", TRUE ) )
-            WriteJP2Box( oJP2MD.CreateGMLJP2(nXSize,nYSize) );
-        if( CSLFetchBoolean( papszOptions, "GeoJP2", TRUE ) )
-            WriteJP2Box( oJP2MD.CreateJP2GeoTIFF() );
+            if( CSLFetchBoolean( papszOptions, "GMLJP2", TRUE ) )
+                WriteJP2Box( oJP2MD.CreateGMLJP2(nXSize,nYSize) );
+            if( CSLFetchBoolean( papszOptions, "GeoJP2", TRUE ) )
+                WriteJP2Box( oJP2MD.CreateJP2GeoTIFF() );
 
+        }
     }
 /* -------------------------------------------------------------------- */
 /*      We handle all jpeg2000 files via the VSIIOStream, but ECW       */
