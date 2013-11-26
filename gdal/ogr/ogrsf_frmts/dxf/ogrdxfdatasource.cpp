@@ -134,17 +134,27 @@ int OGRDXFDataSource::Open( const char * pszFilename, int bHeaderOnly )
         return FALSE;
 
     if( ReadValue( szLineBuf ) != 2 
-        || (!EQUAL(szLineBuf,"HEADER") && !EQUAL(szLineBuf,"ENTITIES")) )
+        || (!EQUAL(szLineBuf,"HEADER") && !EQUAL(szLineBuf,"ENTITIES") && !EQUAL(szLineBuf,"TABLES")) )
         return FALSE;
 
     if( EQUAL(szLineBuf,"ENTITIES") )
         bEntitiesOnly = TRUE;
 
+    /* Some files might have no header but begin directly with a TABLES section */
+    else if( EQUAL(szLineBuf,"TABLES") )
+    {
+        if( CPLGetConfigOption( "DXF_ENCODING", NULL ) != NULL )
+            osEncoding = CPLGetConfigOption( "DXF_ENCODING", NULL );
+
+        ReadTablesSection();
+        ReadValue(szLineBuf);
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Process the header, picking up a few useful pieces of           */
 /*      information.                                                    */
 /* -------------------------------------------------------------------- */
-    if( !bEntitiesOnly )
+    else /* if( EQUAL(szLineBuf,"HEADER") ) */
     {
         ReadHeaderSection();
         ReadValue(szLineBuf);
