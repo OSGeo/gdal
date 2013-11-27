@@ -486,6 +486,29 @@ def jp2openjpeg_14():
     return 'success'
 
 ###############################################################################
+# Test multi-threading reading
+
+def jp2openjpeg_15():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 256,256)
+    src_ds.GetRasterBand(1).Fill(255)
+    data = src_ds.ReadRaster()
+    gdal.SetConfigOption('GDAL_NUM_THREADS', '2')
+    ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_15.jp2', src_ds, options = ['BLOCKXSIZE=32', 'BLOCKYSIZE=32', 'RESOLUTIONS=1'])
+    gdal.SetConfigOption('GDAL_NUM_THREADS', None)
+    src_ds = None
+    got_data = ds.ReadRaster()
+    ds = None
+    gdaltest.jp2openjpeg_drv.Delete('/vsimem/jp2openjpeg_15.jp2')
+    if got_data != data:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 def jp2openjpeg_online_1():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -671,6 +694,7 @@ gdaltest_list = [
     jp2openjpeg_12,
     jp2openjpeg_13,
     jp2openjpeg_14,
+    jp2openjpeg_15,
     jp2openjpeg_online_1,
     jp2openjpeg_online_2,
     jp2openjpeg_online_3,
