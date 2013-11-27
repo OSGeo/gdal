@@ -223,22 +223,22 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC )
             double dfEndY;
 
             if( poDS->ReadValue(szLineBuf,sizeof(szLineBuf)) == 10 )
-                dfStartX = atof(szLineBuf);
+                dfStartX = CPLAtof(szLineBuf);
             else
                 break;
 
             if( poDS->ReadValue(szLineBuf,sizeof(szLineBuf)) == 20 )
-                dfStartY = atof(szLineBuf);
+                dfStartY = CPLAtof(szLineBuf);
             else
                 break;
 
             if( poDS->ReadValue(szLineBuf,sizeof(szLineBuf)) == 11 )
-                dfEndX = atof(szLineBuf);
+                dfEndX = CPLAtof(szLineBuf);
             else
                 break;
 
             if( poDS->ReadValue(szLineBuf,sizeof(szLineBuf)) == 21 )
-                dfEndY = atof(szLineBuf);
+                dfEndY = CPLAtof(szLineBuf);
             else
                 break;
 
@@ -262,27 +262,27 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC )
             int    bCounterClockwise = FALSE;
 
             if( poDS->ReadValue(szLineBuf,sizeof(szLineBuf)) == 10 )
-                dfCenterX = atof(szLineBuf);
+                dfCenterX = CPLAtof(szLineBuf);
             else
                 break;
 
             if( poDS->ReadValue(szLineBuf,sizeof(szLineBuf)) == 20 )
-                dfCenterY = atof(szLineBuf);
+                dfCenterY = CPLAtof(szLineBuf);
             else
                 break;
 
             if( poDS->ReadValue(szLineBuf,sizeof(szLineBuf)) == 40 )
-                dfRadius = atof(szLineBuf);
+                dfRadius = CPLAtof(szLineBuf);
             else
                 break;
 
             if( poDS->ReadValue(szLineBuf,sizeof(szLineBuf)) == 50 )
-                dfStartAngle = -1 * atof(szLineBuf);
+                dfStartAngle = -1 * CPLAtof(szLineBuf);
             else
                 break;
 
             if( poDS->ReadValue(szLineBuf,sizeof(szLineBuf)) == 51 )
-                dfEndAngle = -1 * atof(szLineBuf);
+                dfEndAngle = -1 * CPLAtof(szLineBuf);
             else
                 break;
 
@@ -327,37 +327,37 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC )
             int    bCounterClockwise = FALSE;
 
             if( poDS->ReadValue(szLineBuf,sizeof(szLineBuf)) == 10 )
-                dfCenterX = atof(szLineBuf);
+                dfCenterX = CPLAtof(szLineBuf);
             else
                 break;
 
             if( poDS->ReadValue(szLineBuf,sizeof(szLineBuf)) == 20 )
-                dfCenterY = atof(szLineBuf);
+                dfCenterY = CPLAtof(szLineBuf);
             else
                 break;
 
             if( poDS->ReadValue(szLineBuf,sizeof(szLineBuf)) == 11 )
-                dfMajorX = atof(szLineBuf);
+                dfMajorX = CPLAtof(szLineBuf);
             else
                 break;
 
             if( poDS->ReadValue(szLineBuf,sizeof(szLineBuf)) == 21 )
-                dfMajorY = atof(szLineBuf);
+                dfMajorY = CPLAtof(szLineBuf);
             else
                 break;
 
             if( poDS->ReadValue(szLineBuf,sizeof(szLineBuf)) == 40 )
-                dfRatio = atof(szLineBuf) / 100.0;
+                dfRatio = CPLAtof(szLineBuf) / 100.0;
             else
                 break;
 
             if( poDS->ReadValue(szLineBuf,sizeof(szLineBuf)) == 50 )
-                dfStartAngle = -1 * atof(szLineBuf);
+                dfStartAngle = -1 * CPLAtof(szLineBuf);
             else
                 break;
 
             if( poDS->ReadValue(szLineBuf,sizeof(szLineBuf)) == 51 )
-                dfEndAngle = -1 * atof(szLineBuf);
+                dfEndAngle = -1 * CPLAtof(szLineBuf);
             else
                 break;
 
