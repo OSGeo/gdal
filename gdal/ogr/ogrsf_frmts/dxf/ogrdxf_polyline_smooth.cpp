@@ -262,6 +262,8 @@ void DXFSmoothPolyline::EmitArc
     if(!bClockwise && (ogrArcStartAngle < ogrArcEndAngle))
         ogrArcEndAngle = -180.0 + (linedir * a);
 
+    if(bClockwise && (ogrArcStartAngle > ogrArcEndAngle)) 
+        ogrArcEndAngle += 360.0; 
 
 /* -------------------------------------------------------------------- */
 /*      Flip arc's rotation if necessary.                               */
