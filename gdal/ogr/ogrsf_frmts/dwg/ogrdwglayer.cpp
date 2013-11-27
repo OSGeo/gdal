@@ -34,6 +34,8 @@
 
 #include "DbPolyline.h"
 #include "Db2dPolyline.h"
+#include "Db3dPolyline.h"
+#include "Db3dPolylineVertex.h"
 #include "DbLine.h"
 #include "DbPoint.h"
 #include "DbEllipse.h"
@@ -756,6 +758,39 @@ OGRFeature *OGRDWGLayer::Translate2DPOLYLINE( OdDbEntityPtr poEntity )
 }
 
 /************************************************************************/
+/*                        Translate3DPOLYLINE()                         */
+/************************************************************************/
+
+OGRFeature *OGRDWGLayer::Translate3DPOLYLINE( OdDbEntityPtr poEntity )
+
+{
+    OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
+    OdDb3dPolylinePtr poPL = OdDb3dPolyline::cast( poEntity );
+
+    TranslateGenericProperties( poFeature, poEntity );
+
+/* -------------------------------------------------------------------- */
+/*      Create a polyline geometry from the vertices.                   */
+/* -------------------------------------------------------------------- */
+    OGRLineString *poLS = new OGRLineString();
+    OdDbObjectIteratorPtr poIter = poPL->vertexIterator();
+
+    while( !poIter->done() )
+    {
+        OdDb3dPolylineVertexPtr poVertex = poIter->entity();
+        OdGePoint3d oPoint = poVertex->position();
+        poLS->addPoint( oPoint.x, oPoint.y, oPoint.z );
+        poIter->step();
+    }
+
+    poFeature->SetGeometryDirectly( poLS );
+
+    PrepareLineStyle( poFeature );
+
+    return poFeature;
+}
+
+/************************************************************************/
 /*                           TranslateLINE()                            */
 /************************************************************************/
 
@@ -1311,6 +1346,10 @@ OGRFeature *OGRDWGLayer::GetNextUnfilteredFeature()
         else if( EQUAL(pszEntityClassName,"AcDb2dPolyline") )
         {
             poFeature = Translate2DPOLYLINE( poEntity );
+        }
+        else if( EQUAL(pszEntityClassName,"AcDb3dPolyline") )
+        {
+            poFeature = Translate3DPOLYLINE( poEntity );
         }
         else if( EQUAL(pszEntityClassName,"AcDbEllipse") )
         {
