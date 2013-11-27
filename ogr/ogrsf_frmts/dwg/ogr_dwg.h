@@ -132,6 +132,7 @@ class OGRDWGLayer : public OGRLayer
     OGRFeature *        TranslateLINE( OdDbEntityPtr poEntity );
     OGRFeature *        TranslateLWPOLYLINE( OdDbEntityPtr poEntity );
     OGRFeature *        Translate2DPOLYLINE( OdDbEntityPtr poEntity );
+    OGRFeature *        Translate3DPOLYLINE( OdDbEntityPtr poEntity );
     OGRFeature *        TranslateELLIPSE( OdDbEntityPtr poEntity );
     OGRFeature *        TranslateARC( OdDbEntityPtr poEntity );
     OGRFeature *        TranslateMTEXT( OdDbEntityPtr poEntity );

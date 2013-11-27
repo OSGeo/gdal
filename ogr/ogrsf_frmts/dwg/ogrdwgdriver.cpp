@@ -53,7 +53,8 @@ OGRDWGDriver::OGRDWGDriver()
 OGRDWGDriver::~OGRDWGDriver()
 
 {
-    if( bInitialized )
+    if( bInitialized && !CSLTestBoolean(
+            CPLGetConfigOption("IN_GDAL_GLOBAL_DESTRUCTOR", "NO")) )
     {
         bInitialized = FALSE;
         odUninitialize();
