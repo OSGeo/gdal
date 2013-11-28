@@ -291,13 +291,13 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC )
             else if (nCode >= 0)
                 poDS->UnreadValue();
 
+            if( dfStartAngle > dfEndAngle )
+                dfEndAngle += 360.0;
             if( bCounterClockwise )
             {
                 dfStartAngle *= -1; 
                 dfEndAngle *= -1; 
             }
-            else if( dfStartAngle > dfEndAngle )
-                dfEndAngle += 360.0;
 
             OGRGeometry *poArc = OGRGeometryFactory::approximateArcAngles( 
                 dfCenterX, dfCenterY, 0.0,
@@ -364,13 +364,13 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC )
             else if (nCode >= 0)
                 poDS->UnreadValue();
 
+            if( dfStartAngle > dfEndAngle )
+                dfEndAngle += 360.0;
             if( bCounterClockwise )
             {
                 dfStartAngle *= -1; 
                 dfEndAngle *= -1; 
             }
-            else if( dfStartAngle > dfEndAngle )
-                dfEndAngle += 360.0;
 
             dfMajorRadius = sqrt( dfMajorX * dfMajorX + dfMajorY * dfMajorY );
             dfMinorRadius = dfMajorRadius * dfRatio;
