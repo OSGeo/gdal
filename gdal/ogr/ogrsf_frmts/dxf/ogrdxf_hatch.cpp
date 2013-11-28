@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrdxf_dimension.cpp 19643 2010-05-08 21:56:18Z rouault $
+ * $Id$
  *
  * Project:  DXF Translator
  * Purpose:  Implements translation support for HATCH elements as part
@@ -34,7 +34,7 @@
 
 #include "ogrdxf_polyline_smooth.h"
 
-CPL_CVSID("$Id: ogrdxf_dimension.cpp 19643 2010-05-08 21:56:18Z rouault $");
+CPL_CVSID("$Id$");
 
 #ifndef PI
 #define PI  3.14159265358979323846
@@ -277,12 +277,12 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC )
                 break;
 
             if( poDS->ReadValue(szLineBuf,sizeof(szLineBuf)) == 50 )
-                dfStartAngle = -1 * CPLAtof(szLineBuf);
+                dfStartAngle = CPLAtof(szLineBuf);
             else
                 break;
 
             if( poDS->ReadValue(szLineBuf,sizeof(szLineBuf)) == 51 )
-                dfEndAngle = -1 * CPLAtof(szLineBuf);
+                dfEndAngle = CPLAtof(szLineBuf);
             else
                 break;
 
@@ -293,12 +293,10 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC )
 
             if( bCounterClockwise )
             {
-                double dfTemp = dfStartAngle;
-                dfStartAngle = dfEndAngle;
-                dfEndAngle = dfTemp;
+                dfStartAngle *= -1; 
+                dfEndAngle *= -1; 
             }
-
-            if( dfStartAngle > dfEndAngle )
+            else if( dfStartAngle > dfEndAngle )
                 dfEndAngle += 360.0;
 
             OGRGeometry *poArc = OGRGeometryFactory::approximateArcAngles( 
@@ -352,12 +350,12 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC )
                 break;
 
             if( poDS->ReadValue(szLineBuf,sizeof(szLineBuf)) == 50 )
-                dfStartAngle = -1 * CPLAtof(szLineBuf);
+                dfStartAngle = CPLAtof(szLineBuf);
             else
                 break;
 
             if( poDS->ReadValue(szLineBuf,sizeof(szLineBuf)) == 51 )
-                dfEndAngle = -1 * CPLAtof(szLineBuf);
+                dfEndAngle = CPLAtof(szLineBuf);
             else
                 break;
 
@@ -368,12 +366,10 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC )
 
             if( bCounterClockwise )
             {
-                double dfTemp = dfStartAngle;
-                dfStartAngle = dfEndAngle;
-                dfEndAngle = dfTemp;
+                dfStartAngle *= -1; 
+                dfEndAngle *= -1; 
             }
-
-            if( dfStartAngle > dfEndAngle )
+            else if( dfStartAngle > dfEndAngle )
                 dfEndAngle += 360.0;
 
             dfMajorRadius = sqrt( dfMajorX * dfMajorX + dfMajorY * dfMajorY );
