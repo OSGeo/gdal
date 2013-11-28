@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrdxf_dimension.cpp 19643 2010-05-08 21:56:18Z rouault $
+ * $Id$
  *
  * Project:  DWG Translator
  * Purpose:  Implements translation support for HATCH elements as part
@@ -41,7 +41,7 @@
 #include "Ge/GeCircArc2d.h"
 #include "Ge/GeEllipArc2d.h"
 
-CPL_CVSID("$Id: ogrdxf_dimension.cpp 19643 2010-05-08 21:56:18Z rouault $");
+CPL_CVSID("$Id$");
 
 #ifndef PI
 #define PI  3.14159265358979323846
@@ -191,20 +191,18 @@ static OGRErr DWGCollectBoundaryLoop( OdDbHatchPtr poHatch, int iLoop,
         {
             OdGeCircArc2d* poCircArc = (OdGeCircArc2d*) poEdge;
             OdGePoint2d oCenter = poCircArc->center();
-            double dfStartAngle = poCircArc->endAng() * 180 / PI;
-            double dfEndAngle = poCircArc->startAng() * 180 / PI;
+            double dfStartAngle = poCircArc->startAng() * 180 / PI;
+            double dfEndAngle = poCircArc->endAng() * 180 / PI;
             
             if( !poCircArc->isClockWise() )
             {
                 dfStartAngle *= -1;
                 dfEndAngle *= -1;
-//                double dfTemp = dfStartAngle;
-//                dfStartAngle = dfEndAngle;
-//                dfEndAngle = dfTemp;
             }
-
-            if( dfStartAngle > dfEndAngle )
+            else if( dfStartAngle > dfEndAngle )
+            {
                 dfEndAngle += 360.0;
+            }
 
             OGRLineString *poLS = (OGRLineString *) 
                 OGRGeometryFactory::approximateArcAngles( 
@@ -225,8 +223,18 @@ static OGRErr DWGCollectBoundaryLoop( OdDbHatchPtr poHatch, int iLoop,
 
             dfRotation = -1 * atan2( oMajorAxis.y, oMajorAxis.x ) * 180 / PI;
 
-            dfStartAng = -1 * poArc->endAng()*180/PI;
-            dfEndAng = -1 * poArc->startAng()*180/PI;
+            dfStartAng = poArc->startAng()*180/PI;
+            dfEndAng = poArc->endAng()*180/PI;
+ 
+            if( !poArc->isClockWise() )
+            {
+                dfStartAng *= -1;
+                dfEndAng *= -1;
+            }
+            else if( dfStartAng > dfEndAng )
+            {
+                dfEndAng += 360.0;
+            }
 
             OGRLineString *poLS = (OGRLineString *) 
                 OGRGeometryFactory::approximateArcAngles( 
