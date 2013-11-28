@@ -1189,6 +1189,33 @@ def ogr_dxf_23():
     return 'success'
 
 ###############################################################################
+# HATCH
+
+def ogr_dxf_24():
+
+    ds = ogr.Open('data/hatch.dxf')
+    lyr = ds.GetLayer(0)
+
+    gdal.SetConfigOption('OGR_ARC_STEPSIZE', '45')
+    feat = lyr.GetNextFeature()
+    gdal.SetConfigOption('OGR_ARC_STEPSIZE', None)
+    if ogrtest.check_feature_geometry( feat, 'POLYGON ((2 1,1.646446609406726 0.853553390593274,1.5 0.5,1.646446609406726 0.146446609406726,2 0,2.0 0.0,2.146446609406726 -0.353553390593274,2.5 -0.5,2.853553390593274 -0.353553390593274,3.0 -0.0,3 0,3.353553390593274 0.146446609406726,3.5 0.5,3.353553390593274 0.853553390593273,3 1,2.853553390593274 1.353553390593274,2.5 1.5,2.146446609406726 1.353553390593274,2 1))' ):
+        return 'fail'
+
+    gdal.SetConfigOption('OGR_ARC_STEPSIZE', '45')
+    feat = lyr.GetNextFeature()
+    gdal.SetConfigOption('OGR_ARC_STEPSIZE', None)
+    if ogrtest.check_feature_geometry( feat, 'POLYGON ((0.0 0.0 0,-0.353553390593274 0.146446609406726 0,-0.5 0.5 0,-0.353553390593274 0.853553390593274 0,-0.0 1.0 0,0.0 1.0 0,0.146446609406726 1.353553390593274 0,0.5 1.5 0,0.853553390593274 1.353553390593274 0,1.0 1.0 0,1.0 1.0 0,1.353553390593274 0.853553390593274 0,1.5 0.5 0,1.353553390593274 0.146446609406727 0,1.0 0.0 0,1 0 0,0.853553390593274 -0.353553390593274 0,0.5 -0.5 0,0.146446609406726 -0.353553390593274 0,0.0 -0.0 0,0.0 0.0 0))' ):
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry( feat, 'POLYGON ((-1 -1,-1 0,0 0,-1 -1))' ):
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_dxf_cleanup():
@@ -1225,6 +1252,7 @@ gdaltest_list = [
     ogr_dxf_21,
     ogr_dxf_22,
     ogr_dxf_23,
+    ogr_dxf_24,
     ogr_dxf_cleanup ]
 
 if __name__ == '__main__':
