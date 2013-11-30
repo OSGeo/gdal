@@ -889,6 +889,8 @@ def tiff_write_24():
 
     new_ds = None
 
+    os.unlink( 'tmp/stefan_full_greyunspecified.tif.aux.xml' )
+
     new_ds = gdal.Open( 'tmp/stefan_full_greyunspecified.tif' )
     if new_ds.GetRasterBand(2).GetRasterColorInterpretation() != gdal.GCI_Undefined:
         return 'fail'
@@ -4593,6 +4595,61 @@ def tiff_write_122():
     return 'success'
 
 ###############################################################################
+# Test implicit photometric interpretation
+
+def tiff_write_123():
+
+    src_ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_123_src.tif', 1,1,3,gdal.GDT_Int16)
+    src_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_RedBand)
+    src_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_GreenBand)
+    src_ds.GetRasterBand(3).SetColorInterpretation(gdal.GCI_BlueBand)
+    src_ds = None
+    statBuf = gdal.VSIStatL('/vsimem/tiff_write_123_src.tif.aux.xml', gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
+    if statBuf is not None:
+        gdaltest.post_reason('did not expect PAM file')
+        return 'fail'
+    src_ds = gdal.Open('/vsimem/tiff_write_123_src.tif')
+    if src_ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    new_ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_123.tif', src_ds)
+    new_ds = None
+    statBuf = gdal.VSIStatL('/vsimem/tiff_write_123.tif.aux.xml', gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
+    if statBuf is not None:
+        gdaltest.post_reason('did not expect PAM file')
+        return 'fail'
+    ds = gdal.Open('/vsimem/tiff_write_123.tif')
+    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_123_src.tif')
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_123.tif')
+    
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_123_bgr.tif', 1,1,3,gdal.GDT_Byte)
+    ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_BlueBand)
+    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_BlueBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_GreenBand)
+    ds.GetRasterBand(3).SetColorInterpretation(gdal.GCI_RedBand)
+    ds = None
+    statBuf = gdal.VSIStatL('/vsimem/tiff_write_123_bgr.tif.aux.xml', gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
+    if statBuf is None:
+        gdaltest.post_reason('expected PAM file')
+        return 'fail'
+    ds = gdal.Open('/vsimem/tiff_write_123_bgr.tif')
+    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_BlueBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_123_bgr.tif')
+
+    return 'success'
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 def tiff_write_api_proxy():
@@ -4743,6 +4800,7 @@ gdaltest_list = [
     tiff_write_120,
     tiff_write_121,
     tiff_write_122,
+    tiff_write_123,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 
