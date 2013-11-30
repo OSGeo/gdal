@@ -384,6 +384,8 @@ class GTiffDataset : public GDALPamDataset
     CPLString     osWldFilename;
 
     int           bDirectIO;
+    
+    int           nSetPhotometricFromBandColorInterp;
 
   protected:
     virtual int         CloseDependentDatasets();
@@ -1600,9 +1602,15 @@ CPLErr GTiffRasterBand::SetColorInterpretation( GDALColorInterp eInterp )
 {
     if( eInterp == eBandInterp )
         return CE_None;
-    
+
+    eBandInterp = eInterp;
+
     if( poGDS->bCrystalized )
+    {
+        CPLDebug("GTIFF", "ColorInterpretation %s for band %d goes to PAM instead of TIFF tag",
+                 GDALGetColorInterpretationName(eInterp), nBand);
         return GDALPamRasterBand::SetColorInterpretation( eInterp );
+    }
 
     /* greyscale + alpha */
     else if( eInterp == GCI_AlphaBand 
@@ -1615,7 +1623,6 @@ CPLErr GTiffRasterBand::SetColorInterpretation( GDALColorInterp eInterp )
                                   DEFAULT_ALPHA_TYPE);
 
         TIFFSetField(poGDS->hTIFF, TIFFTAG_EXTRASAMPLES, 1, v);
-        eBandInterp = eInterp;
         return CE_None;
     }
 
@@ -1630,12 +1637,64 @@ CPLErr GTiffRasterBand::SetColorInterpretation( GDALColorInterp eInterp )
                                   DEFAULT_ALPHA_TYPE);
 
         TIFFSetField(poGDS->hTIFF, TIFFTAG_EXTRASAMPLES, 1, v);
-        eBandInterp = eInterp;
         return CE_None;
     }
     
     else
-        return GDALPamRasterBand::SetColorInterpretation( eInterp );
+    {
+        /* Try to autoset TIFFTAG_PHOTOMETRIC = PHOTOMETRIC_RGB if possible */
+        if( poGDS->nCompression != COMPRESSION_JPEG &&
+            poGDS->nSetPhotometricFromBandColorInterp >= 0 &&
+            CSLFetchNameValue( poGDS->papszCreationOptions, "PHOTOMETRIC") == NULL &&
+            (poGDS->nBands == 3 || poGDS->nBands == 4) &&
+            ((nBand == 1 && eInterp == GCI_RedBand) ||
+             (nBand == 2 && eInterp == GCI_GreenBand) ||
+             (nBand == 3 && eInterp == GCI_BlueBand) ||
+             (nBand == 4 && eInterp == GCI_AlphaBand)) )
+        {
+            poGDS->nSetPhotometricFromBandColorInterp ++;
+            if( poGDS->nSetPhotometricFromBandColorInterp == poGDS->nBands )
+            {
+                poGDS->nPhotometric = PHOTOMETRIC_RGB;
+                TIFFSetField(poGDS->hTIFF, TIFFTAG_PHOTOMETRIC, poGDS->nPhotometric);
+                if( poGDS->nSetPhotometricFromBandColorInterp == 4 )
+                {
+                    uint16 v[1];
+                    v[0] = GTiffGetAlphaValue(CPLGetConfigOption("GTIFF_ALPHA", NULL),
+                                            DEFAULT_ALPHA_TYPE);
+
+                    TIFFSetField(poGDS->hTIFF, TIFFTAG_EXTRASAMPLES, 1, v);
+                }
+            }
+            return CE_None;
+        }
+        else
+        {
+            if( poGDS->nPhotometric != PHOTOMETRIC_MINISBLACK &&
+                CSLFetchNameValue( poGDS->papszCreationOptions, "PHOTOMETRIC") == NULL )
+            {
+                poGDS->nPhotometric = PHOTOMETRIC_MINISBLACK;
+                TIFFSetField(poGDS->hTIFF, TIFFTAG_PHOTOMETRIC, poGDS->nPhotometric);
+            }
+            if( poGDS->nSetPhotometricFromBandColorInterp > 0 )
+            {
+                for(int i=1;i<=poGDS->nBands;i++)
+                {
+                    if( i != nBand )
+                    {
+                        ((GDALPamRasterBand*)poGDS->GetRasterBand(i))->GDALPamRasterBand::SetColorInterpretation(
+                            poGDS->GetRasterBand(i)->GetColorInterpretation() );
+                        CPLDebug("GTIFF", "ColorInterpretation %s for band %d goes to PAM instead of TIFF tag",
+                                 GDALGetColorInterpretationName(poGDS->GetRasterBand(i)->GetColorInterpretation()), i);
+                    }
+                }
+            }
+            poGDS->nSetPhotometricFromBandColorInterp = -1;
+            CPLDebug("GTIFF", "ColorInterpretation %s for band %d goes to PAM instead of TIFF tag",
+                     GDALGetColorInterpretationName(eInterp), nBand);
+            return GDALPamRasterBand::SetColorInterpretation( eInterp );
+        }
+    }
 }
 
 /************************************************************************/
@@ -3130,6 +3189,7 @@ GTiffDataset::GTiffDataset()
     bScanDeferred = TRUE;
 
     bDirectIO = CSLTestBoolean(CPLGetConfigOption("GTIFF_DIRECT_IO", "NO"));
+    nSetPhotometricFromBandColorInterp = 0;
 }
 
 /************************************************************************/
@@ -5773,6 +5833,10 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
             if (pszUnitType)
                 poBand->osUnitType = pszUnitType;
         }
+
+        GDALColorInterp ePAMColorInterp = poBand->GDALPamRasterBand::GetColorInterpretation();
+        if( ePAMColorInterp != GCI_Undefined )
+            poBand->eBandInterp = ePAMColorInterp;
     }
 
     poDS->bColorProfileMetadataChanged = FALSE;
@@ -8551,15 +8615,33 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     TIFFGetField( hTIFF, TIFFTAG_PLANARCONFIG, &nPlanarConfig );
     TIFFGetField(hTIFF, TIFFTAG_BITSPERSAMPLE, &nBitsPerSample );
 
+    uint16      nCompression;
+
+    if( !TIFFGetField( hTIFF, TIFFTAG_COMPRESSION, &(nCompression) ) )
+        nCompression = COMPRESSION_NONE;
+
+    int bForcePhotometric = 
+        CSLFetchNameValue(papszOptions,"PHOTOMETRIC") != NULL;
+
+/* -------------------------------------------------------------------- */
+/*      If the source is RGB, then set the PHOTOMETRIC_RGB value        */
+/* -------------------------------------------------------------------- */
+    if( nBands == 3 && !bForcePhotometric &&
+        nCompression != COMPRESSION_JPEG &&
+        poSrcDS->GetRasterBand(1)->GetColorInterpretation() == GCI_RedBand &&
+        poSrcDS->GetRasterBand(2)->GetColorInterpretation() == GCI_GreenBand &&
+        poSrcDS->GetRasterBand(3)->GetColorInterpretation() == GCI_BlueBand )
+    {
+        TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Are we really producing an RGBA image?  If so, set the          */
 /*      associated alpha information.                                   */
 /* -------------------------------------------------------------------- */
-    int bForcePhotometric = 
-        CSLFetchNameValue(papszOptions,"PHOTOMETRIC") != NULL;
-
-    if( nBands == 4 && !bForcePhotometric
-        && poSrcDS->GetRasterBand(4)->GetColorInterpretation()==GCI_AlphaBand)
+    else if( nBands == 4 && !bForcePhotometric &&
+             nCompression != COMPRESSION_JPEG &&
+             poSrcDS->GetRasterBand(4)->GetColorInterpretation()==GCI_AlphaBand)
     {
         uint16 v[1];
 
@@ -8570,14 +8652,19 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB );
     }
 
+    else if( !bForcePhotometric && nBands == 3 &&
+             nCompression != COMPRESSION_JPEG &&
+             (poSrcDS->GetRasterBand(1)->GetColorInterpretation() != GCI_Undefined ||
+              poSrcDS->GetRasterBand(2)->GetColorInterpretation() != GCI_Undefined ||
+              poSrcDS->GetRasterBand(3)->GetColorInterpretation() != GCI_Undefined) )
+    {
+        TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      If the output is jpeg compressed, and the input is RGB make     */
 /*      sure we note that.                                              */
 /* -------------------------------------------------------------------- */
-    uint16      nCompression;
-
-    if( !TIFFGetField( hTIFF, TIFFTAG_COMPRESSION, &(nCompression) ) )
-        nCompression = COMPRESSION_NONE;
 
     if( nCompression == COMPRESSION_JPEG )
     {
@@ -10422,3 +10509,4 @@ void GDALRegister_GTiff()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
+
