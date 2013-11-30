@@ -1,4 +1,4 @@
-/* $Id: tif_dir.c,v 1.115 2013-10-21 18:23:48 fwarmerdam Exp $ */
+/* $Id: tif_dir.c,v 1.114 2013-09-13 02:34:50 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -1471,7 +1471,6 @@ TIFFAdvanceDirectory(TIFF* tif, uint64* nextdir, uint64* off)
 uint16
 TIFFNumberOfDirectories(TIFF* tif)
 {
-	static const char module[] = "TIFFNumberOfDirectories";
 	uint64 nextdir;
 	uint16 n;
 	if (!(tif->tif_flags&TIFF_BIGTIFF))
@@ -1480,14 +1479,7 @@ TIFFNumberOfDirectories(TIFF* tif)
 		nextdir = tif->tif_header.big.tiff_diroff;
 	n = 0;
 	while (nextdir != 0 && TIFFAdvanceDirectory(tif, &nextdir, NULL))
-        {
-		if(n++ == 0)
-                {
-                        TIFFErrorExt(tif->tif_clientdata, module,
-                                     "Directory count exceeded 65535 limit, giving up on counting.");
-                        return (65535);
-                }
-        }
+		n++;
 	return (n);
 }
 
