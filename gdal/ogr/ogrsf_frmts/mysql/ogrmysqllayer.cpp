@@ -203,7 +203,7 @@ OGRFeature *OGRMySQLLayer::RecordToFeature( char **papszRow,
 
             if( poGeometry != NULL )
             {
-                poGeometry->assignSpatialReference( poSRS );
+                poGeometry->assignSpatialReference( GetSpatialRef() );
                 poFeature->SetGeometryDirectly( poGeometry );
             }
             continue;

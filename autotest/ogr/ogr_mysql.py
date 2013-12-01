@@ -707,6 +707,26 @@ def ogr_mysql_23():
     return 'success'
 
 ###############################################################################
+# Run test_ogrsf
+
+def ogr_mysql_24():
+
+    if gdaltest.mysql_ds is None:
+        return 'skip'
+
+    import test_cli_utilities
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        return 'skip'
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + " 'MYSQL:autotest' tpoly")
+
+    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+        print(ret)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_mysql_cleanup():
@@ -749,6 +769,7 @@ gdaltest_list = [
     ogr_mysql_21,
     ogr_mysql_22,
     ogr_mysql_23,
+    ogr_mysql_24,
     ogr_mysql_cleanup
     ]
 
