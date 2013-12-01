@@ -372,7 +372,7 @@ static void MyChdir(const char* pszCWD)
 #ifdef WIN32
     SetCurrentDirectory(pszCWD);
 #else
-    chdir(pszCWD);
+    CPLAssert(chdir(pszCWD) == 0);
 #endif
 }
 
@@ -385,7 +385,7 @@ static void MyChdirRootDirectory()
 #ifdef WIN32
     SetCurrentDirectory("C:\\");
 #else
-    chdir("/");
+    CPLAssert(chdir("/") == 0);
 #endif
 }
 
