@@ -1006,7 +1006,7 @@ int GDALDefaultOverviews::HaveMaskFile( char ** papszSiblingFiles,
 /*      Are we even initialized?  If not, we apparently don't want      */
 /*      to support overviews and masks.                                 */
 /* -------------------------------------------------------------------- */
-    if( !IsInitialized() )
+    if( poDS == NULL )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
