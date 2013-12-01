@@ -3902,7 +3902,8 @@ int GTiffDataset::IsBlockAvailable( int nBlockId )
         (hTIFF->tif_dir.td_stripoffset_entry.tdir_type == TIFF_LONG ||
          hTIFF->tif_dir.td_stripoffset_entry.tdir_type == TIFF_LONG8) &&
         (hTIFF->tif_dir.td_stripbytecount_entry.tdir_type == TIFF_LONG ||
-         hTIFF->tif_dir.td_stripbytecount_entry.tdir_type == TIFF_LONG8) )
+         hTIFF->tif_dir.td_stripbytecount_entry.tdir_type == TIFF_LONG8) &&
+        strcmp(GetDescription(), "/vsistdin/") != 0 )
     {
         if( hTIFF->tif_dir.td_stripoffset == NULL )
         {
