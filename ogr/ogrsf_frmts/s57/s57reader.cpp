@@ -764,8 +764,17 @@ OGRFeature *S57Reader::ReadFeature( int nFeatureId, OGRFeatureDefn *poTarget )
     if( nFeatureId < 0 || nFeatureId >= oFE_Index.GetCount() )
         return NULL;
 
-    poFeature = AssembleFeature( oFE_Index.GetByIndex(nFeatureId),
-                                 poTarget );
+    if( (nOptionFlags & S57M_RETURN_DSID) 
+        && nFeatureId == 0 
+        && (poTarget == NULL || EQUAL(poTarget->GetName(),"DSID")) )
+    {
+        poFeature = ReadDSID();
+    }
+    else
+    {
+        poFeature = AssembleFeature( oFE_Index.GetByIndex(nFeatureId),
+                                    poTarget );
+    }
     if( poFeature != NULL )
         poFeature->SetFID( nFeatureId );
 
