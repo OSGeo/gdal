@@ -54,6 +54,7 @@ class CPL_DLL GDALProxyDataset : public GDALDataset
                                 int, int *, int, int, int );
     public:
 
+        virtual char      **GetMetadataDomainList();
         virtual char      **GetMetadata( const char * pszDomain  );
         virtual CPLErr      SetMetadata( char ** papszMetadata,
                                         const char * pszDomain  );
@@ -109,6 +110,7 @@ class CPL_DLL GDALProxyRasterBand : public GDALRasterBand
 
     public:
 
+        virtual char      **GetMetadataDomainList();
         virtual char      **GetMetadata( const char * pszDomain  );
         virtual CPLErr      SetMetadata( char ** papszMetadata,
                                         const char * pszDomain  );

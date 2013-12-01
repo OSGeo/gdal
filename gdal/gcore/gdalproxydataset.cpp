@@ -86,6 +86,7 @@ void  GDALProxyDataset::FlushCache()
     }
 }
 
+D_PROXY_METHOD_WITH_RET(char**, NULL, GetMetadataDomainList, (), ())
 D_PROXY_METHOD_WITH_RET(char**, NULL, GetMetadata, (const char * pszDomain), (pszDomain))
 D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetMetadata,
                         (char ** papszMetadata, const char * pszDomain),
@@ -189,6 +190,7 @@ RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, IRasterIO,
                                 pData, nBufXSize, nBufYSize, eBufType,
                                 nPixelSpace, nLineSpace ) )
 
+RB_PROXY_METHOD_WITH_RET(char**, NULL, GetMetadataDomainList, (), ())
 RB_PROXY_METHOD_WITH_RET(char**, NULL, GetMetadata, (const char * pszDomain), (pszDomain))
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetMetadata,
                         (char ** papszMetadata, const char * pszDomain),
