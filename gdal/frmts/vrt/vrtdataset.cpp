@@ -1361,7 +1361,7 @@ CPLErr VRTDataset::IRasterIO( GDALRWFlag eRWFlag,
     {
         bCompatibleForDatasetIO = CheckCompatibleForDatasetIO();
     }
-    if (bCompatibleForDatasetIO && eRWFlag == GF_Read && nBandCount > 1)
+    if (bCompatibleForDatasetIO && eRWFlag == GF_Read)
     {
         for(int iBandIndex=0; iBandIndex<nBandCount; iBandIndex++)
         {
