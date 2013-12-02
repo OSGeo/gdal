@@ -3837,7 +3837,7 @@ void GTiffCacheOffsetOrCount4(VSILFILE* fp,
     if( nBlockId + iStartBefore < 0 )
         iStartBefore = -nBlockId;
     for(i=iStartBefore; (uint32)(nBlockId + i) < nstrips &&
-                nOffset + (i+1) * sizeof(val) <= nOffsetEndPage; i++)
+        (GIntBig)nOffset + (i+1) * (int)sizeof(val) <= (GIntBig)nOffsetEndPage; i++)
     {
         memcpy(&val,
             buffer + (nOffset - nOffsetStartPage) + i * sizeof(val),
@@ -3871,7 +3871,7 @@ void GTiffCacheOffsetOrCount8(VSILFILE* fp,
     if( nBlockId + iStartBefore < 0 )
         iStartBefore = -nBlockId;
     for(i=iStartBefore; (uint32)(nBlockId + i) < nstrips &&
-                nOffset + (i+1) * sizeof(val) <= nOffsetEndPage; i++)
+        (GIntBig)nOffset + (i+1) * (int)sizeof(val) <= (GIntBig)nOffsetEndPage; i++)
     {
         memcpy(&val,
             buffer + (nOffset - nOffsetStartPage) + i * sizeof(val),
