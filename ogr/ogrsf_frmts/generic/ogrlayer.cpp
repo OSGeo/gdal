@@ -44,6 +44,7 @@ OGRLayer::OGRLayer()
 {
     m_poStyleTable = NULL;
     m_poAttrQuery = NULL;
+    m_pszAttrQueryString = NULL;
     m_poAttrIndex = NULL;
     m_nRefCount = 0;
 
@@ -79,6 +80,8 @@ OGRLayer::~OGRLayer()
         delete m_poAttrQuery;
         m_poAttrQuery = NULL;
     }
+
+    CPLFree( m_pszAttrQueryString );
 
     if( m_poFilterGeom )
     {
@@ -316,6 +319,9 @@ OGRErr OGR_L_GetExtentEx( OGRLayerH hLayer, int iGeomField,
 OGRErr OGRLayer::SetAttributeFilter( const char *pszQuery )
 
 {
+    CPLFree(m_pszAttrQueryString);
+    m_pszAttrQueryString = (pszQuery) ? CPLStrdup(pszQuery) : NULL;
+
 /* -------------------------------------------------------------------- */
 /*      Are we just clearing any existing query?                        */
 /* -------------------------------------------------------------------- */
@@ -416,16 +422,30 @@ OGRFeature *OGRLayer::GetFeature( long nFID )
 {
     OGRFeature *poFeature;
 
+    /* Save old attribute and spatial filters */
+    char* pszOldFilter = m_pszAttrQueryString ? CPLStrdup(m_pszAttrQueryString) : NULL;
+    OGRGeometry* poOldFilterGeom = ( m_poFilterGeom != NULL ) ? m_poFilterGeom->clone() : NULL;
+    int iOldGeomFieldFilter = m_iGeomFieldFilter;
+    /* Unset filters */
+    SetAttributeFilter(NULL);
+    SetSpatialFilter(0, NULL);
+
     ResetReading();
     while( (poFeature = GetNextFeature()) != NULL )
     {
         if( poFeature->GetFID() == nFID )
-            return poFeature;
+            break;
         else
             delete poFeature;
     }
     
-    return NULL;
+    /* Restore filters */
+    SetAttributeFilter(pszOldFilter);
+    CPLFree(pszOldFilter);
+    SetSpatialFilter(iOldGeomFieldFilter, poOldFilterGeom);
+    delete poOldFilterGeom;
+    
+    return poFeature;
 }
 
 /************************************************************************/
