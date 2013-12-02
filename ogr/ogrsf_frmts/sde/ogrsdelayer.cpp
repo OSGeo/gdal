@@ -717,6 +717,9 @@ int OGRSDELayer::InstallQuery( int bCountingOnly )
 OGRErr OGRSDELayer::SetAttributeFilter( const char *pszQuery )
 
 {
+    CPLFree(m_pszAttrQueryString);
+    m_pszAttrQueryString = (pszQuery) ? CPLStrdup(pszQuery) : NULL;
+
     if( pszQuery == NULL )
         osAttributeFilter = "";
     else

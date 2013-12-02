@@ -190,6 +190,7 @@ class CPL_DLL OGRLayer
  protected:
     OGRStyleTable       *m_poStyleTable;
     OGRFeatureQuery     *m_poAttrQuery;
+    char                *m_pszAttrQueryString;
     OGRLayerAttrIndex   *m_poAttrIndex;
 
     int                  m_nRefCount;

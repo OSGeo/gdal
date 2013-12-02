@@ -1019,6 +1019,8 @@ static int TestOGRLayerRandomWrite( OGRLayer *poLayer )
     if( !poFeature->Equal(papoFeatures[1]) )
     {
         bRet = FALSE;
+        poFeature->DumpReadable(stderr);
+        papoFeatures[1]->DumpReadable(stderr);
         printf( "ERROR: Written feature didn't seem to retain value.\n" );
     }
     else if( bVerbose )
@@ -1199,6 +1201,40 @@ static int TestSpatialFilter( OGRLayer *poLayer, int iGeomField )
         printf( "INFO: Spatial filter exclusion seems to work.\n" );
     }
 
+    // Check that GetFeature() ignores the spatial filter
+    poFeature = poLayer->GetFeature( poTargetFeature->GetFID() );
+    if( poFeature == NULL || !poFeature->Equal(poTargetFeature) )
+    {
+        bRet = FALSE;
+        printf( "ERROR: Spatial filter has been taken into account by GetFeature()\n");
+    }
+    else if( bVerbose )
+    {
+        printf( "INFO: Spatial filter is ignored by GetFeature() as expected.\n");
+    }
+    if( poFeature != NULL )
+        OGRFeature::DestroyFeature(poFeature);
+
+    if( bRet )
+    {
+        poLayer->ResetReading();
+        while( (poFeature = poLayer->GetNextFeature()) != NULL )
+        {
+            if( poFeature->Equal(poTargetFeature) )
+            {
+                OGRFeature::DestroyFeature(poFeature);
+                break;
+            }
+            else
+                OGRFeature::DestroyFeature(poFeature);
+        }
+        if( poFeature != NULL )
+        {
+            bRet = FALSE;
+            printf( "ERROR: Spatial filter has not been restored correctly after GetFeature()\n");
+        }
+    }
+
     OGRFeature::DestroyFeature(poTargetFeature);
 
     poLayer->SetSpatialFilter( NULL );
@@ -1259,7 +1295,7 @@ static int TestAttributeFilter( OGRDataSource* poDS, OGRLayer *poLayer )
 
 {
     int bRet = TRUE;
-    OGRFeature  *poFeature, *poTargetFeature;
+    OGRFeature  *poFeature, *poFeature2, *poFeature3, *poTargetFeature;
     int         nInclusiveCount, nExclusiveCount, nTotalCount;
     CPLString osAttributeFilter;
 
@@ -1415,6 +1451,21 @@ static int TestAttributeFilter( OGRDataSource* poDS, OGRLayer *poLayer )
 
     nExclusiveCount = poLayer->GetFeatureCount();
 
+    // Check that GetFeature() ignores the attribute filter
+    poFeature2 = poLayer->GetFeature( poTargetFeature->GetFID() );
+
+    poLayer->ResetReading();
+    while( (poFeature3 = poLayer->GetNextFeature()) != NULL )
+    {
+        if( poFeature3->Equal(poTargetFeature) )
+        {
+            OGRFeature::DestroyFeature(poFeature3);
+            break;
+        }
+        else
+            OGRFeature::DestroyFeature(poFeature3);
+    }
+
     poLayer->SetAttributeFilter( NULL );
 
     nTotalCount = poLayer->GetFeatureCount();
@@ -1439,6 +1490,25 @@ static int TestAttributeFilter( OGRDataSource* poDS, OGRLayer *poLayer )
     {
         printf( "INFO: Attribute filter exclusion seems to work.\n" );
     }
+    
+    if( poFeature2 == NULL || !poFeature2->Equal(poTargetFeature) )
+    {
+        bRet = FALSE;
+        printf( "ERROR: Attribute filter has been taken into account by GetFeature()\n");
+    }
+    else if( bVerbose )
+    {
+        printf( "INFO: Attribute filter is ignored by GetFeature() as expected.\n");
+    }
+
+    if( poFeature3 != NULL )
+    {
+        bRet = FALSE;
+        printf( "ERROR: Attribute filter has not been restored correctly after GetFeature()\n");
+    }
+
+    if( poFeature2 != NULL )
+        OGRFeature::DestroyFeature(poFeature2);
 
     OGRFeature::DestroyFeature(poTargetFeature);
 

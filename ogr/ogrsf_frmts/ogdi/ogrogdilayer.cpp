@@ -204,9 +204,7 @@ void OGROGDILayer::ResetReading()
 OGRFeature *OGROGDILayer::GetNextFeature()
 
 {
-    OGRFeature  *poFeature=NULL;
-    ecs_Result  *psResult;
-    int         i;
+    OGRFeature  *poFeature;
 
     /* Reset reading if we are not the current layer */
     /* WARNING : this does not allow interleaved reading of layers */ 
@@ -216,10 +214,42 @@ OGRFeature *OGROGDILayer::GetNextFeature()
         ResetReading();
     }
 
+    while( TRUE )
+    {
+        poFeature = GetNextRawFeature();
+        if( poFeature == NULL )
+            return NULL;
+
+    /* -------------------------------------------------------------------- */
+    /*      Do we need to apply an attribute test?                          */
+    /* -------------------------------------------------------------------- */
+        if( (m_poAttrQuery != NULL
+            && !m_poAttrQuery->Evaluate( poFeature ) ) 
+            || (m_poFilterGeom != NULL 
+                && !FilterGeometry( poFeature->GetGeometryRef() ) ) )
+        {
+            m_nFilteredOutShapes ++;
+            delete poFeature;
+        }
+        else
+            return poFeature;
+    }
+}
+
+/************************************************************************/
+/*                           GetNextFeature()                           */
+/************************************************************************/
+
+OGRFeature *OGROGDILayer::GetNextRawFeature()
+{
+    ecs_Result  *psResult;
+    int         i;
+    OGRFeature  *poFeature;
+
 /* -------------------------------------------------------------------- */
 /*      Retrieve object from OGDI server and create new feature         */
 /* -------------------------------------------------------------------- */
-  TryAgain:
+
     psResult = cln_GetNextObject(m_nClientID);
     if (! ECSSUCCESS(psResult))
     {
@@ -353,19 +383,6 @@ OGRFeature *OGROGDILayer::GetNextFeature()
         poFeature->SetField( "text", ECSGEOM(psResult).text.desc );
     }
 
-/* -------------------------------------------------------------------- */
-/*      Do we need to apply an attribute test?                          */
-/* -------------------------------------------------------------------- */
-    if( (m_poAttrQuery != NULL
-         && !m_poAttrQuery->Evaluate( poFeature ) ) 
-        || (m_poFilterGeom != NULL 
-            && !FilterGeometry( poFeature->GetGeometryRef() ) ) )
-    {
-        m_nFilteredOutShapes ++;
-        delete poFeature;
-        goto TryAgain;
-    }
-
     return poFeature;
 }
 
@@ -380,6 +397,11 @@ OGRFeature *OGROGDILayer::GetFeature( long nFeatureId )
 
     if (m_nTotalShapeCount != -1 && nFeatureId > m_nTotalShapeCount)
         return NULL;
+
+    /* Unset spatial filter */
+    OGRGeometry* poOldFilterGeom = ( m_poFilterGeom != NULL ) ? m_poFilterGeom->clone() : NULL;
+    if( poOldFilterGeom != NULL )
+        SetSpatialFilter(NULL);
 
     /* Reset reading if we are not the current layer */
     /* WARNING : this does not allow interleaved reading of layers */
@@ -400,12 +422,23 @@ OGRFeature *OGROGDILayer::GetFeature( long nFeatureId )
         {
             // We probably reached EOF... keep track of shape count.
             m_nTotalShapeCount = m_iNextShapeId;
+            if( poOldFilterGeom != NULL )
+            {
+                SetSpatialFilter(poOldFilterGeom);
+                delete poOldFilterGeom;
+            }
             return NULL;
         }
     }
 
     // OK, we're ready to read the requested feature...
-    return GetNextFeature();
+    OGRFeature* poFeature = GetNextRawFeature();
+    if( poOldFilterGeom != NULL )
+    {
+        SetSpatialFilter(poOldFilterGeom);
+        delete poOldFilterGeom;
+    }
+    return poFeature;
 }
 
 /************************************************************************/
