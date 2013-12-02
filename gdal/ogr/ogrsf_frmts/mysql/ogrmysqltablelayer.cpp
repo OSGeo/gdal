@@ -547,6 +547,9 @@ char *OGRMySQLTableLayer::BuildFields()
 OGRErr OGRMySQLTableLayer::SetAttributeFilter( const char *pszQuery )
 
 {
+    CPLFree(m_pszAttrQueryString);
+    m_pszAttrQueryString = (pszQuery) ? CPLStrdup(pszQuery) : NULL;
+
     CPLFree( this->pszQuery );
 
     if( pszQuery == NULL || strlen(pszQuery) == 0 )
