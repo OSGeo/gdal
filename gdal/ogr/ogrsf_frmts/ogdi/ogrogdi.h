@@ -58,6 +58,8 @@ class OGROGDILayer : public OGRLayer
     int                 m_iNextShapeId;
     int                 m_nTotalShapeCount;
     int                 m_nFilteredOutShapes;
+    
+    OGRFeature *        GetNextRawFeature();
 
   public:
                         OGROGDILayer(OGROGDIDataSource *, const char *, 

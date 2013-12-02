@@ -2152,7 +2152,9 @@ by the OGRSFDriverManager.
 
  This function will attempt to read the identified feature.  The nFID
  value cannot be OGRNullFID.  Success or failure of this operation is
- unaffected by the spatial or attribute filters.
+ unaffected by the spatial or attribute filters (and specialized implementations
+ in drivers should make sure that they do not take into account spatial or
+ attribute filters).
 
  If this method returns a non-NULL feature, it is guaranteed that its  
  feature id (OGRFeature::GetFID()) will be the same as nFID.
@@ -2162,7 +2164,8 @@ by the OGRSFDriverManager.
  call should always work if the feature exists as a fallback implementation
  just scans all the features in the layer looking for the desired feature.
  
- Sequential reads are generally considered interrupted by a GetFeature() call.
+ Sequential reads (with GetNextFeature()) are generally considered interrupted
+ by a GetFeature() call.
  
  The returned feature should be free with OGRFeature::DestroyFeature().
 
@@ -2183,7 +2186,9 @@ by the OGRSFDriverManager.
 
  This function will attempt to read the identified feature.  The nFID
  value cannot be OGRNullFID.  Success or failure of this operation is
- unaffected by the spatial or attribute filters.
+ unaffected by the spatial or attribute filters (and specialized implementations
+ in drivers should make sure that they do not take into account spatial or
+ attribute filters).
 
  If this function returns a non-NULL feature, it is guaranteed that its  
  feature id (OGR_F_GetFID()) will be the same as nFID.
@@ -2194,7 +2199,7 @@ by the OGRSFDriverManager.
  implementation just scans all the features in the layer looking for the 
  desired feature.
  
- Sequential reads are generally considered interrupted by a 
+ Sequential reads (with OGR_L_GetNextFeature()) are generally considered interrupted by a 
  OGR_L_GetFeature() call.
  
  The returned feature should be free with OGR_F_Destroy().

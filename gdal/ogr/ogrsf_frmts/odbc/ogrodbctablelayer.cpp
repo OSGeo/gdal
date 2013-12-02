@@ -306,6 +306,9 @@ OGRFeature *OGRODBCTableLayer::GetFeature( long nFeatureId )
 OGRErr OGRODBCTableLayer::SetAttributeFilter( const char *pszQuery )
 
 {
+    CPLFree(m_pszAttrQueryString);
+    m_pszAttrQueryString = (pszQuery) ? CPLStrdup(pszQuery) : NULL;
+
     if( (pszQuery == NULL && this->pszQuery == NULL)
         || (pszQuery != NULL && this->pszQuery != NULL 
             && EQUAL(pszQuery,this->pszQuery)) )
