@@ -135,9 +135,9 @@ public:
     //int         GetMaxAttrIndex() { return nAttrMax; }
     const S57AttrInfo *GetAttrInfo(int i);
     const char *GetAttrName( int i ) 
-    { return GetAttrInfo(i) == NULL ? NULL : aoAttrInfos[i]->osName; }
+    { return GetAttrInfo(i) == NULL ? NULL : aoAttrInfos[i]->osName.c_str(); }
     const char *GetAttrAcronym( int i )
-    { return GetAttrInfo(i) == NULL ? NULL : aoAttrInfos[i]->osAcronym; }
+    { return GetAttrInfo(i) == NULL ? NULL : aoAttrInfos[i]->osAcronym.c_str(); }
     char        GetAttrType( int i )
     { return GetAttrInfo(i) == NULL ? '\0' : aoAttrInfos[i]->chType; }
 #define SAT_ENUM        'E'
