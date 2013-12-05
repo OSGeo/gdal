@@ -34,6 +34,7 @@
 #include <assert.h>
 
 #include "gdal_pam.h"
+#include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
 
@@ -75,8 +76,10 @@ class SAGADataset : public GDALPamDataset
 									double dfCellsize, double dfNoData,
 									double dfZFactor, bool bTopToBottom );
     VSILFILE				*fp;
+    char                *pszProjection;
 
   public:
+        SAGADataset();
 		~SAGADataset();
 
 		static GDALDataset		*Open( GDALOpenInfo * );
@@ -90,6 +93,8 @@ class SAGADataset : public GDALPamDataset
 										GDALProgressFunc pfnProgress,
 										void *pProgressData );
 		
+        virtual const char     *GetProjectionRef(void);
+        virtual CPLErr          SetProjection( const char * );
         virtual char          **GetFileList();
 
 		CPLErr					GetGeoTransform( double *padfGeoTransform );
@@ -299,16 +304,23 @@ double SAGARasterBand::GetNoDataValue( int * pbSuccess )
     return m_NoData;
 }
 
-
 /************************************************************************/
 /* ==================================================================== */
 /*                              SAGADataset	                            */
 /* ==================================================================== */
 /************************************************************************/
 
+
+SAGADataset::SAGADataset()
+
+{
+    pszProjection = CPLStrdup("");
+}
+
 SAGADataset::~SAGADataset()
 
 {
+    CPLFree( pszProjection );
     FlushCache();
     if( fp != NULL )
         VSIFCloseL( fp );
@@ -323,7 +335,7 @@ char** SAGADataset::GetFileList()
 {
     CPLString osPath = CPLGetPath( GetDescription() );
     CPLString osName = CPLGetBasename( GetDescription() );
-    CPLString osHDRFilename;
+    VSIStatBufL sStatBuf;
 
     char **papszFileList = NULL;
 
@@ -331,10 +343,72 @@ char** SAGADataset::GetFileList()
     papszFileList = GDALPamDataset::GetFileList();
 
     // Header file.
-    osHDRFilename = CPLFormCIFilename( osPath, osName, ".sgrd" );
-    papszFileList = CSLAddString( papszFileList, osHDRFilename );
+    CPLString osFilename = CPLFormCIFilename( osPath, osName, ".sgrd" );
+    papszFileList = CSLAddString( papszFileList, osFilename );
+
+    // projections file.
+    osFilename = CPLFormCIFilename( osPath, osName, "prj" );
+    if( VSIStatExL( osFilename, &sStatBuf, VSI_STAT_EXISTS_FLAG ) == 0 )
+        papszFileList = CSLAddString( papszFileList, osFilename );
     
     return papszFileList;
+}
+
+/************************************************************************/
+/*                          GetProjectionRef()                          */
+/************************************************************************/
+
+const char *SAGADataset::GetProjectionRef()
+
+{
+    if (pszProjection && strlen(pszProjection) > 0)
+        return pszProjection;
+
+    return GDALPamDataset::GetProjectionRef();
+}
+
+/************************************************************************/
+/*                           SetProjection()                            */
+/************************************************************************/
+
+CPLErr SAGADataset::SetProjection( const char *pszSRS )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Reset coordinate system on the dataset.                         */
+/* -------------------------------------------------------------------- */
+    CPLFree( pszProjection );
+    pszProjection = CPLStrdup( pszSRS );
+
+    if( strlen(pszSRS) == 0 )
+        return CE_None;
+
+/* -------------------------------------------------------------------- */
+/*      Convert to ESRI WKT.                                            */
+/* -------------------------------------------------------------------- */
+    OGRSpatialReference oSRS( pszSRS );
+    char *pszESRI_SRS = NULL;
+
+    oSRS.morphToESRI();
+    oSRS.exportToWkt( &pszESRI_SRS );
+
+/* -------------------------------------------------------------------- */
+/*      Write to .prj file.                                             */
+/* -------------------------------------------------------------------- */
+    CPLString osPrjFilename = CPLResetExtension( GetDescription(), "prj" );
+    VSILFILE *fp;
+
+    fp = VSIFOpenL( osPrjFilename.c_str(), "wt" );
+    if( fp != NULL )
+    {
+        VSIFWriteL( pszESRI_SRS, 1, strlen(pszESRI_SRS), fp );
+        VSIFWriteL( (void *) "\n", 1, 1, fp );
+        VSIFCloseL( fp );
+    }
+
+    CPLFree( pszESRI_SRS );
+
+    return CE_None;
 }
 
 /************************************************************************/
@@ -569,6 +643,31 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( poOpenInfo->pszFilename );
     poDS->TryLoadXML();
+
+/* -------------------------------------------------------------------- */
+/*      Check for a .prj file.                                          */
+/* -------------------------------------------------------------------- */
+    const char  *pszPrjFilename = CPLFormCIFilename( osPath, osName, "prj" );
+
+    fp = VSIFOpenL( pszPrjFilename, "r" );
+
+    if( fp != NULL )
+    {
+        char  **papszLines;
+        OGRSpatialReference oSRS;
+
+        VSIFCloseL( fp );
+        
+        papszLines = CSLLoad( pszPrjFilename );
+
+        if( oSRS.importFromESRI( papszLines ) == OGRERR_NONE )
+        {
+            CPLFree( poDS->pszProjection );
+            oSRS.exportToWkt( &(poDS->pszProjection) );
+        }
+
+        CSLDestroy( papszLines );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Check for external overviews.                                   */
@@ -964,6 +1063,8 @@ GDALDataset *SAGADataset::CreateCopy( const char *pszFilename,
 
     poSrcDS->GetGeoTransform( adfGeoTransform );
     poDstDS->SetGeoTransform( adfGeoTransform );
+    
+    poDstDS->SetProjection( poSrcDS->GetProjectionRef() );
 
     return poDstDS;
 }
