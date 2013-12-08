@@ -992,10 +992,20 @@ int main( int argc, char ** argv )
                     {
                         hSrcBand = GDALGetRasterBand( hSrcDS, iBand + 1 );
                         hDstBand = GDALGetRasterBand( hDstDS, iBand + 1 );
-                        /* copy metadata */
+                        /* copy metadata, except stats (#5319) */
                         papszMetadata = GDALGetMetadata( hSrcBand, NULL);              
                         if ( CSLCount(papszMetadata) > 0 )
-                            GDALSetMetadata( hDstBand, papszMetadata, NULL );
+                        {
+                            //GDALSetMetadata( hDstBand, papszMetadata, NULL );       
+                            char** papszMetadataNew = NULL;
+                            for( int i = 0; papszMetadata != NULL && papszMetadata[i] != NULL; i++ )
+                            {
+                                if (strncmp(papszMetadata[i], "STATISTICS_", 11) != 0)
+                                    papszMetadataNew = CSLAddString(papszMetadataNew, papszMetadata[i]);
+                            }
+                            GDALSetMetadata( hDstBand, papszMetadataNew, NULL );
+                            CSLDestroy(papszMetadataNew);
+                        }
                         /* copy other info (Description, Unit Type) - what else? */
                         if ( bCopyBandInfo ) {
                             pszSrcInfo = GDALGetDescription( hSrcBand );
