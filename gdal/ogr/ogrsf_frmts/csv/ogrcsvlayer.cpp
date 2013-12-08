@@ -165,8 +165,7 @@ char **OGRCSVReadParseLineL( VSILFILE * fp, char chDelimiter, int bDontHonourStr
     {
         for( ; pszWorkLine[i] != '\0'; i++ )
         {
-            if( pszWorkLine[i] == '\"'
-                && (i == 0 || pszWorkLine[i-1] != '\\') )
+            if( pszWorkLine[i] == '\"' )
                 nCount++;
         }
 
