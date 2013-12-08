@@ -1027,6 +1027,40 @@ def test_gdalwarp_36():
     return 'success'
 
 ###############################################################################
+# Test metadata copying - stats should not be copied (#5319)
+
+def test_gdalwarp_37():
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -tr 60 60 ./data/utmsmall.tif tmp/testgdalwarp37.tif')
+
+    ds = gdal.Open('tmp/testgdalwarp37.tif')
+    if ds is None:
+        return 'fail'
+
+    md = ds.GetRasterBand(1).GetMetadata()
+
+    # basic metadata test
+    if 'testkey' not in md or md['testkey'] != 'test value':
+        gdaltest.post_reason('Output file metadata is wrong : { %s }' % md)
+        return 'fail'
+
+    # make sure stats not copied
+    if 'STATISTICS_MEAN' in md :
+        gdaltest.post_reason('Output file contains statistics metadata')
+        return 'fail'
+
+    min = ds.GetRasterBand(1).GetMinimum()
+    if min is not None:
+        gdaltest.post_reason('Output file has statistics')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_cleanup():
@@ -1072,6 +1106,10 @@ def test_gdalwarp_cleanup():
         os.remove('tmp/testgdalwarp33_mask.tif')
     except:
         pass
+    try:
+        os.remove('tmp/testgdalwarp37.tif')
+    except:
+        pass
     return 'success'
 
 gdaltest_list = [
@@ -1112,6 +1150,7 @@ gdaltest_list = [
     test_gdalwarp_34,
     test_gdalwarp_35,
     test_gdalwarp_36,
+    test_gdalwarp_37,
     test_gdalwarp_cleanup
     ]
 
