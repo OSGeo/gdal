@@ -328,7 +328,8 @@ static char *CSVFindNextLine( char *pszThisLine )
 
     for( i = 0; pszThisLine[i] != '\0'; i++ )
     {
-        if( pszThisLine[i] == '\"' )
+        if( pszThisLine[i] == '\"'
+            && (i == 0 || pszThisLine[i-1] != '\\') )
             nQuoteCount++;
 
         if( (pszThisLine[i] == 10 || pszThisLine[i] == 13)
