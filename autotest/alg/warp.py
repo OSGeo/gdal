@@ -1214,6 +1214,26 @@ def warp_39():
     return 'success'
 
 ###############################################################################
+# test average (#5311)
+def warp_40():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
+    if gdaltest.tiff_drv is None:
+        return 'skip'
+    
+    ds = gdal.Open( 'data/2by2.vrt' )
+    ref_ds = gdal.Open( 'data/2by2.tif' )
+    maxdiff = gdaltest.compare_ds(ds, ref_ds)
+    ds = None
+    ref_ds = None
+ 
+    if maxdiff > 1:
+        gdaltest.post_reason('Image too different from reference')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 gdaltest_list = [
     warp_1,
@@ -1260,6 +1280,8 @@ gdaltest_list = [
     warp_37,
     warp_38,
     warp_39,
+    warp_39,
+    warp_40,
     ]
 
 
