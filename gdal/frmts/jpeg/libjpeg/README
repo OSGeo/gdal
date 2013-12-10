@@ -1,3 +1,13 @@
+GDAL specific
+-------------
+
+The patch http://src.chromium.org/viewvc/chrome/trunk/src/third_party/libjpeg/jdmarker.c?view=patch&r1=228354&r2=228353&pathrev=228354
+for CVE-2013-6629 has been applied on top of libjpeg 6b.
+See https://bugzilla.redhat.com/show_bug.cgi?id=1031734
+
+End of GDAL specific
+--------------------
+
 The Independent JPEG Group's JPEG software
 ==========================================
 
