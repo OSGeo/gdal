@@ -28,6 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+%include constraints.i
+
 #ifdef PERL_CPAN_NAMESPACE
 %module "Geo::GDAL"
 #elif defined(SWIGCSHARP)
