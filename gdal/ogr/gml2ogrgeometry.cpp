@@ -769,6 +769,16 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
                 else
                     poLS = NULL;
 
+                // try to join multiline string to one linestring
+                if( poLS && wkbFlatten(poLS->getGeometryType()) == wkbMultiLineString )
+                {
+                  OGRGeometry *poG = OGRGeometryFactory::forceToLineString( poLS, false );
+                  if( poG && wkbFlatten( poG->getGeometryType() ) == wkbLineString )
+                  {
+                    poLS = (OGRLineString *) poG;
+                  }
+                }
+
                 if( poLS == NULL 
                     || wkbFlatten(poLS->getGeometryType()) != wkbLineString )
                 {
