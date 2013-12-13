@@ -1158,7 +1158,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
             sSchema.c_str(), sTable.c_str(),
             sColumn.c_str(), sColumn.c_str(), sColumn.c_str(),
             sSchema.c_str(), sSchema.c_str(), sSchema.c_str(),
-            UNKNOWN_CRS, MCL_DEFAULT,
+            DEFAULT_CRS, MCL_DEFAULT,
             sSchema.c_str(), sTable.c_str(),
             sColumn.c_str(), sColumn.c_str(), sColumn.c_str() ) );
 
@@ -1462,12 +1462,6 @@ void GeoRasterWrapper::GetRasterInfo( void )
 
     nSRID               = atoi( CPLGetXMLValue( phMetadata,
                             "spatialReferenceInfo.SRID", "0" ) );
-
-    if( nSRID == 0 ||
-        nSRID == UNKNOWN_CRS )
-    {
-        bIsReferenced   = false;
-    }
 }
 
 //  ---------------------------------------------------------------------------
