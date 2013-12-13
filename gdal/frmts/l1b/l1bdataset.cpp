@@ -160,6 +160,8 @@ static const char *apszBandDesc[] =
 #define L1B_NOAA15_HDR_REC_STAT_OFF 116 // Instrument status offset
 #define L1B_NOAA15_HDR_REC_SRC_OFF  154 // Receiving station name offset
 
+/* This only apply if L1B_HIGH_GCP_DENSITY is explicitely set to NO */
+/* otherwise we will report more GCPs */
 #define DESIRED_GCPS_PER_LINE 11
 #define DESIRED_LINES_OF_GCPS 20
 
@@ -219,6 +221,7 @@ class L1BDataset : public GDALPamDataset
     TimeCode    sStartTime;
     TimeCode    sStopTime;
 
+    int         bHighGCPDensityStrategy;
     GDAL_GCP    *pasGCPList;
     int         nGCPCount;
     int         iGCPOffset;
@@ -246,7 +249,7 @@ class L1BDataset : public GDALPamDataset
     int         bGuessDataFormat;
 
     void        ProcessRecordHeaders();
-    void        FetchGCPs( GDAL_GCP *, GByte *, int );
+    int         FetchGCPs( GDAL_GCP *, GByte *, int );
     void        FetchNOAA9TimeCode(TimeCode *, GByte *, int *);
     void        FetchNOAA15TimeCode(TimeCode *, GUInt16 *, int *);
     CPLErr      ProcessDatasetHeader();
@@ -415,6 +418,7 @@ L1BDataset::L1BDataset( int eL1BFormat )
     this->eL1BFormat = eL1BFormat;
     fp = NULL;
     nGCPCount = 0;
+    bHighGCPDensityStrategy = CSLTestBoolean(CPLGetConfigOption("L1B_HIGH_GCP_DENSITY", "TRUE"));
     pasGCPList = NULL;
     pszGCPProjection = CPLStrdup( "GEOGCS[\"WGS 72\",DATUM[\"WGS_1972\",SPHEROID[\"WGS 72\",6378135,298.26,AUTHORITY[\"EPSG\",7043]],TOWGS84[0,0,4.5,0,0,0.554,0.2263],AUTHORITY[\"EPSG\",6322]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",8901]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",9108]],AUTHORITY[\"EPSG\",4322]]" );
     nBands = 0;
@@ -544,8 +548,8 @@ void L1BDataset::FetchNOAA15TimeCode( TimeCode *psTime,
 /*      Fetch GCPs from the individual scanlines                        */
 /************************************************************************/
 
-void L1BDataset::FetchGCPs( GDAL_GCP *pasGCPList,
-                            GByte *pabyRecordHeader, int iLine )
+int L1BDataset::FetchGCPs( GDAL_GCP *pasGCPListRow,
+                           GByte *pabyRecordHeader, int iLine )
 {
     // LAC and HRPT GCPs are tied to the center of pixel,
     // GAC ones are slightly displaced.
@@ -570,6 +574,7 @@ void L1BDataset::FetchGCPs( GDAL_GCP *pasGCPList,
 
     pabyRecordHeader += iGCPOffset;
 
+    int nGCPCountRow = 0;
     while ( nGCPs-- )
     {
         if ( eSpacecraftID <= NOAA14 )
@@ -579,8 +584,8 @@ void L1BDataset::FetchGCPs( GDAL_GCP *pasGCPList,
             GInt16  nRawX = CPL_MSBWORD16( *(GInt16*)pabyRecordHeader );
             pabyRecordHeader += sizeof(GInt16);
 
-            pasGCPList[nGCPCount].dfGCPY = nRawY / L1B_NOAA9_GCP_SCALE;
-            pasGCPList[nGCPCount].dfGCPX = nRawX / L1B_NOAA9_GCP_SCALE;
+            pasGCPListRow[nGCPCountRow].dfGCPY = nRawY / L1B_NOAA9_GCP_SCALE;
+            pasGCPListRow[nGCPCountRow].dfGCPX = nRawX / L1B_NOAA9_GCP_SCALE;
         }
         else
         {
@@ -589,24 +594,25 @@ void L1BDataset::FetchGCPs( GDAL_GCP *pasGCPList,
             GInt32  nRawX = CPL_MSBWORD32( *(GInt32*)pabyRecordHeader );
             pabyRecordHeader += sizeof(GInt32);
 
-            pasGCPList[nGCPCount].dfGCPY = nRawY / L1B_NOAA15_GCP_SCALE;
-            pasGCPList[nGCPCount].dfGCPX = nRawX / L1B_NOAA15_GCP_SCALE;
+            pasGCPListRow[nGCPCountRow].dfGCPY = nRawY / L1B_NOAA15_GCP_SCALE;
+            pasGCPListRow[nGCPCountRow].dfGCPX = nRawX / L1B_NOAA15_GCP_SCALE;
         }
 
-        if ( pasGCPList[nGCPCount].dfGCPX < -180
-             || pasGCPList[nGCPCount].dfGCPX > 180
-             || pasGCPList[nGCPCount].dfGCPY < -90
-             || pasGCPList[nGCPCount].dfGCPY > 90 )
+        if ( pasGCPListRow[nGCPCountRow].dfGCPX < -180
+             || pasGCPListRow[nGCPCountRow].dfGCPX > 180
+             || pasGCPListRow[nGCPCountRow].dfGCPY < -90
+             || pasGCPListRow[nGCPCountRow].dfGCPY > 90 )
             continue;
 
-        pasGCPList[nGCPCount].dfGCPZ = 0.0;
-        pasGCPList[nGCPCount].dfGCPPixel = dfPixel;
+        pasGCPListRow[nGCPCountRow].dfGCPZ = 0.0;
+        pasGCPListRow[nGCPCountRow].dfGCPPixel = dfPixel;
         dfPixel += (eLocationIndicator == DESCEND) ? iGCPStep : -iGCPStep;
-        pasGCPList[nGCPCount].dfGCPLine =
+        pasGCPListRow[nGCPCountRow].dfGCPLine =
             (double)( (eLocationIndicator == DESCEND) ?
                 iLine : nRasterYSize - iLine - 1 ) + 0.5;
-        nGCPCount++;
+        nGCPCountRow++;
     }
+    return nGCPCountRow;
 }
 
 /************************************************************************/
@@ -645,9 +651,36 @@ void L1BDataset::ProcessRecordHeaders()
 /*      worth of GCPs.  That should give respectible coverage on all    */
 /*      but the longest swaths.                                         */
 /* -------------------------------------------------------------------- */
-    int nTargetLines = DESIRED_LINES_OF_GCPS;
-    int nLineSkip = nRasterYSize / ( nTargetLines - 1 );
-    
+    int nTargetLines;
+    double dfLineStep;
+
+    if( bHighGCPDensityStrategy )
+    {
+        if (nRasterYSize < nGCPsPerLine)
+        {
+            nTargetLines = nRasterYSize;
+        }
+        else
+        {
+            int nColStep;
+            nColStep = nRasterXSize / nGCPsPerLine;
+            if (nRasterYSize >= nRasterXSize)
+            {
+                dfLineStep = nColStep;
+            }
+            else
+            {
+                dfLineStep = nRasterYSize / nGCPsPerLine;
+            }
+            nTargetLines = nRasterYSize / dfLineStep;
+        }
+    }
+    else
+    {
+        nTargetLines = MIN(DESIRED_LINES_OF_GCPS, nRasterYSize);
+    }
+    dfLineStep = 1.0 * (nRasterYSize - 1) / ( nTargetLines - 1 );
+
 /* -------------------------------------------------------------------- */
 /*      Initialize the GCP list.                                        */
 /* -------------------------------------------------------------------- */
@@ -667,49 +700,62 @@ void L1BDataset::ProcessRecordHeaders()
 /*      leaves a bigger than expected gap.                              */
 /* -------------------------------------------------------------------- */
     int iStep;
+    int iPrevLine = -1;
 
     for( iStep = 0; iStep < nTargetLines; iStep++ )
     {
-        int nOrigGCPs = nGCPCount;
         int iLine;
 
         if( iStep == nTargetLines - 1 )
-            iLine = nRasterXSize - 1;
+            iLine = nRasterYSize - 1;
         else
-            iLine = nLineSkip * iStep;
+            iLine = (int)(dfLineStep * iStep);
+        if( iLine == iPrevLine )
+            continue;
+        iPrevLine = iLine;
 
         VSIFSeekL( fp, nDataStartOffset + iLine * nRecordSize, SEEK_SET );
         VSIFReadL( pRecordHeader, 1, nRecordDataStart, fp );
 
-        FetchGCPs( pasGCPList, (GByte *)pRecordHeader, iLine );
+        int nGCPsOnThisLine = FetchGCPs( pasGCPList + nGCPCount, (GByte *)pRecordHeader, iLine );
 
+        if( !bHighGCPDensityStrategy )
+        {
 /* -------------------------------------------------------------------- */
 /*      We don't really want too many GCPs per line.  Downsample to     */
 /*      11 per line.                                                    */
 /* -------------------------------------------------------------------- */
-        int iGCP;
-        int nGCPsOnThisLine = nGCPCount - nOrigGCPs;
-        int nDesiredGCPsPerLine = MIN(DESIRED_GCPS_PER_LINE,nGCPsOnThisLine);
-        int nGCPStep = ( nDesiredGCPsPerLine > 1 ) ?
-            ( nGCPsOnThisLine - 1 ) / ( nDesiredGCPsPerLine-1 ) : 1;
-        int iSrcGCP = nOrigGCPs;
-        int iDstGCP = nOrigGCPs;
 
-        if( nGCPStep == 0 )
-            nGCPStep = 1;
+            int iGCP;
+            int nDesiredGCPsPerLine = MIN(DESIRED_GCPS_PER_LINE,nGCPsOnThisLine);
+            int nGCPStep = ( nDesiredGCPsPerLine > 1 ) ?
+                ( nGCPsOnThisLine - 1 ) / ( nDesiredGCPsPerLine-1 ) : 1;
+            int iSrcGCP = nGCPCount;
+            int iDstGCP = nGCPCount;
 
-        for( iGCP = 0; iGCP < nDesiredGCPsPerLine; iGCP++ )
-        {
-            iSrcGCP += iGCP * nGCPStep;
-            iDstGCP += iGCP;
+            if( nGCPStep == 0 )
+                nGCPStep = 1;
 
-            pasGCPList[iDstGCP].dfGCPX = pasGCPList[iSrcGCP].dfGCPX;
-            pasGCPList[iDstGCP].dfGCPY = pasGCPList[iSrcGCP].dfGCPY;
-            pasGCPList[iDstGCP].dfGCPPixel = pasGCPList[iSrcGCP].dfGCPPixel;
-            pasGCPList[iDstGCP].dfGCPLine = pasGCPList[iSrcGCP].dfGCPLine;
+            for( iGCP = 0; iGCP < nDesiredGCPsPerLine; iGCP++ )
+            {
+                if( iGCP == nDesiredGCPsPerLine - 1 )
+                    iSrcGCP = nGCPCount + nGCPsOnThisLine - 1;
+                else
+                    iSrcGCP += nGCPStep;
+                iDstGCP ++;
+
+                pasGCPList[iDstGCP].dfGCPX = pasGCPList[iSrcGCP].dfGCPX;
+                pasGCPList[iDstGCP].dfGCPY = pasGCPList[iSrcGCP].dfGCPY;
+                pasGCPList[iDstGCP].dfGCPPixel = pasGCPList[iSrcGCP].dfGCPPixel;
+                pasGCPList[iDstGCP].dfGCPLine = pasGCPList[iSrcGCP].dfGCPLine;
+            }
+
+            nGCPCount += nDesiredGCPsPerLine;
         }
-
-        nGCPCount = nOrigGCPs + nDesiredGCPsPerLine;
+        else
+        {
+            nGCPCount += nGCPsOnThisLine;
+        }
     }
 
     if( nGCPCount < nTargetLines * nGCPsPerLine )
@@ -1313,7 +1359,7 @@ int L1BDataset::ComputeFileOffsets()
         case FRAC:
             nRasterXSize = 2048;
             nBufferSize = 20484;
-            iGCPStart = 25;
+            iGCPStart = 25 - 1; /* http://www.ncdc.noaa.gov/oa/pod-guide/ncdc/docs/klm/html/c2/sec2-4.htm */
             iGCPStep = 40;
             nGCPsPerLine = 51;
             if ( eL1BFormat == L1B_NOAA9 )
@@ -1454,7 +1500,7 @@ int L1BDataset::ComputeFileOffsets()
         case GAC:
             nRasterXSize = 409;
             nBufferSize = 4092;
-            iGCPStart = 5; // FIXME: depends of scan direction
+            iGCPStart = 5 - 1; // FIXME: depends of scan direction
             iGCPStep = 8;
             nGCPsPerLine = 51;
             if (  eL1BFormat == L1B_NOAA9 )
