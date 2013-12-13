@@ -20,11 +20,16 @@ Note, that GDAL simple affine georeference model completely unsuitable for
 the NOAA data. So you should not rely on it. It is recommended to use the
 thin plate spline warper (tps). Automatic image rectification can be done with
 ground control points (GCPs) from the input file.
-
+<br>
 NOAA stores 51 GCPs per scanline both in the LAC and GAC datasets. In fact
 you may get less than 51 GCPs, especially at end of scanlines. Another approach
 to rectification is manual selection of the GCPs using external source of
 georeference information.
+<br>
+Before GDAL 1.10.2, a maximum of 11 x 20 GCPs were reported. This might be
+unsuitable for correct warping. Starting with GDAL 1.10.2, a much higher density
+will be reported, unless the L1B_HIGH_GCP_DENSITY configuration option is set
+to NO.
 <br>
 Precision of the GCPs determination depends from the satellite type. In the
 NOAA-9 -- NOAA-14 datasets geographic coordinates of the GCPs stored in
