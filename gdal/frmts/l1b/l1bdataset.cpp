@@ -10,6 +10,10 @@
  ******************************************************************************
  * Copyright (c) 2002, Andrey Kiselev <dron@ak4719.spb.edu>
  *
+ * ----------------------------------------------------------------------------
+ * Lagrange interpolation suitable for NOAA level 1B file formats.
+ * Submitted by Andrew Brooks <arb@sat.dundee.ac.uk>
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -160,6 +164,8 @@ static const char *apszBandDesc[] =
 #define L1B_NOAA15_HDR_REC_STAT_OFF 116 // Instrument status offset
 #define L1B_NOAA15_HDR_REC_SRC_OFF  154 // Receiving station name offset
 
+/* This only apply if L1B_HIGH_GCP_DENSITY is explicitely set to NO */
+/* otherwise we will report more GCPs */
 #define DESIRED_GCPS_PER_LINE 11
 #define DESIRED_LINES_OF_GCPS 20
 
@@ -208,10 +214,14 @@ class TimeCode {
 /*                              L1BDataset                              */
 /* ==================================================================== */
 /************************************************************************/
+class L1BGeolocDataset;
+class L1BGeolocRasterBand;
 
 class L1BDataset : public GDALPamDataset
 {
     friend class L1BRasterBand;
+    friend class L1BGeolocDataset;
+    friend class L1BGeolocRasterBand;
 
     //char        pszRevolution[6]; // Five-digit number identifying spacecraft revolution
     int         eSource;        // Source of data (receiving station name)
@@ -219,6 +229,7 @@ class L1BDataset : public GDALPamDataset
     TimeCode    sStartTime;
     TimeCode    sStopTime;
 
+    int         bHighGCPDensityStrategy;
     GDAL_GCP    *pasGCPList;
     int         nGCPCount;
     int         iGCPOffset;
@@ -246,13 +257,13 @@ class L1BDataset : public GDALPamDataset
     int         bGuessDataFormat;
 
     void        ProcessRecordHeaders();
-    void        FetchGCPs( GDAL_GCP *, GByte *, int );
-    void        FetchNOAA9TimeCode(TimeCode *, GByte *, int *);
-    void        FetchNOAA15TimeCode(TimeCode *, GUInt16 *, int *);
+    int         FetchGCPs( GDAL_GCP *, GByte *, int );
+    void        FetchNOAA9TimeCode(TimeCode *, const GByte *, int *);
+    void        FetchNOAA15TimeCode(TimeCode *, const GUInt16 *, int *);
     CPLErr      ProcessDatasetHeader();
     int         ComputeFileOffsets();
     
-    static int  DetectFormat( GDALOpenInfo *poOpenInfo );
+    static int  DetectFormat( const GByte* pabyHeader, int nHeaderBytes );
 
   public:
                 L1BDataset( int );
@@ -415,6 +426,7 @@ L1BDataset::L1BDataset( int eL1BFormat )
     this->eL1BFormat = eL1BFormat;
     fp = NULL;
     nGCPCount = 0;
+    bHighGCPDensityStrategy = CSLTestBoolean(CPLGetConfigOption("L1B_HIGH_GCP_DENSITY", "TRUE"));
     pasGCPList = NULL;
     pszGCPProjection = CPLStrdup( "GEOGCS[\"WGS 72\",DATUM[\"WGS_1972\",SPHEROID[\"WGS 72\",6378135,298.26,AUTHORITY[\"EPSG\",7043]],TOWGS84[0,0,4.5,0,0,0.554,0.2263],AUTHORITY[\"EPSG\",6322]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",8901]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",9108]],AUTHORITY[\"EPSG\",4322]]" );
     nBands = 0;
@@ -481,7 +493,8 @@ const GDAL_GCP *L1BDataset::GetGCPs()
 /*      Fetch timecode from the record header (NOAA9-NOAA14 version)    */
 /************************************************************************/
 
-void L1BDataset::FetchNOAA9TimeCode( TimeCode *psTime, GByte *piRecordHeader,
+void L1BDataset::FetchNOAA9TimeCode( TimeCode *psTime,
+                                     const GByte *piRecordHeader,
                                      int *peLocationIndicator )
 {
     GUInt32 lTemp;
@@ -507,45 +520,33 @@ void L1BDataset::FetchNOAA9TimeCode( TimeCode *psTime, GByte *piRecordHeader,
 /************************************************************************/
 
 void L1BDataset::FetchNOAA15TimeCode( TimeCode *psTime,
-                                      GUInt16 *piRecordHeader,
+                                      const GUInt16 *piRecordHeader,
                                       int *peLocationIndicator )
 {
-#ifdef CPL_LSB
     GUInt16 iTemp;
     GUInt32 lTemp;
 
     iTemp = piRecordHeader[1];
-    psTime->SetYear(CPL_SWAP16(iTemp));
+    psTime->SetYear(CPL_MSBWORD16(iTemp));
     iTemp = piRecordHeader[2];
-    psTime->SetDay(CPL_SWAP16(iTemp));
-    lTemp = (GUInt32)CPL_SWAP16(piRecordHeader[4]) << 16 |
-        (GUInt32)CPL_SWAP16(piRecordHeader[5]);
+    psTime->SetDay(CPL_MSBWORD16(iTemp));
+    lTemp = (GUInt32)CPL_MSBWORD16(piRecordHeader[4]) << 16 |
+        (GUInt32)CPL_MSBWORD16(piRecordHeader[5]);
     psTime->SetMillisecond(lTemp);
     if ( peLocationIndicator )
     {
         // FIXME: hemisphere
         *peLocationIndicator =
-            ((CPL_SWAP16(piRecordHeader[6]) & 0x8000) == 0) ? ASCEND : DESCEND;
+            ((CPL_MSBWORD16(piRecordHeader[6]) & 0x8000) == 0) ? ASCEND : DESCEND;
     }
-#else
-    psTime->SetYear(piRecordHeader[1]);
-    psTime->SetDay(piRecordHeader[2]);
-    psTime->SetMillisecond( (GUInt32)piRecordHeader[4] << 16
-                            | (GUInt32)piRecordHeader[5] );
-    if ( peLocationIndicator )
-    {
-        *peLocationIndicator =
-            ((piRecordHeader[6] & 0x8000) == 0) ? ASCEND : DESCEND;
-    }
-#endif
 }
 
 /************************************************************************/
 /*      Fetch GCPs from the individual scanlines                        */
 /************************************************************************/
 
-void L1BDataset::FetchGCPs( GDAL_GCP *pasGCPList,
-                            GByte *pabyRecordHeader, int iLine )
+int L1BDataset::FetchGCPs( GDAL_GCP *pasGCPListRow,
+                           GByte *pabyRecordHeader, int iLine )
 {
     // LAC and HRPT GCPs are tied to the center of pixel,
     // GAC ones are slightly displaced.
@@ -570,6 +571,7 @@ void L1BDataset::FetchGCPs( GDAL_GCP *pasGCPList,
 
     pabyRecordHeader += iGCPOffset;
 
+    int nGCPCountRow = 0;
     while ( nGCPs-- )
     {
         if ( eSpacecraftID <= NOAA14 )
@@ -579,8 +581,8 @@ void L1BDataset::FetchGCPs( GDAL_GCP *pasGCPList,
             GInt16  nRawX = CPL_MSBWORD16( *(GInt16*)pabyRecordHeader );
             pabyRecordHeader += sizeof(GInt16);
 
-            pasGCPList[nGCPCount].dfGCPY = nRawY / L1B_NOAA9_GCP_SCALE;
-            pasGCPList[nGCPCount].dfGCPX = nRawX / L1B_NOAA9_GCP_SCALE;
+            pasGCPListRow[nGCPCountRow].dfGCPY = nRawY / L1B_NOAA9_GCP_SCALE;
+            pasGCPListRow[nGCPCountRow].dfGCPX = nRawX / L1B_NOAA9_GCP_SCALE;
         }
         else
         {
@@ -589,24 +591,25 @@ void L1BDataset::FetchGCPs( GDAL_GCP *pasGCPList,
             GInt32  nRawX = CPL_MSBWORD32( *(GInt32*)pabyRecordHeader );
             pabyRecordHeader += sizeof(GInt32);
 
-            pasGCPList[nGCPCount].dfGCPY = nRawY / L1B_NOAA15_GCP_SCALE;
-            pasGCPList[nGCPCount].dfGCPX = nRawX / L1B_NOAA15_GCP_SCALE;
+            pasGCPListRow[nGCPCountRow].dfGCPY = nRawY / L1B_NOAA15_GCP_SCALE;
+            pasGCPListRow[nGCPCountRow].dfGCPX = nRawX / L1B_NOAA15_GCP_SCALE;
         }
 
-        if ( pasGCPList[nGCPCount].dfGCPX < -180
-             || pasGCPList[nGCPCount].dfGCPX > 180
-             || pasGCPList[nGCPCount].dfGCPY < -90
-             || pasGCPList[nGCPCount].dfGCPY > 90 )
+        if ( pasGCPListRow[nGCPCountRow].dfGCPX < -180
+             || pasGCPListRow[nGCPCountRow].dfGCPX > 180
+             || pasGCPListRow[nGCPCountRow].dfGCPY < -90
+             || pasGCPListRow[nGCPCountRow].dfGCPY > 90 )
             continue;
 
-        pasGCPList[nGCPCount].dfGCPZ = 0.0;
-        pasGCPList[nGCPCount].dfGCPPixel = dfPixel;
+        pasGCPListRow[nGCPCountRow].dfGCPZ = 0.0;
+        pasGCPListRow[nGCPCountRow].dfGCPPixel = dfPixel;
         dfPixel += (eLocationIndicator == DESCEND) ? iGCPStep : -iGCPStep;
-        pasGCPList[nGCPCount].dfGCPLine =
+        pasGCPListRow[nGCPCountRow].dfGCPLine =
             (double)( (eLocationIndicator == DESCEND) ?
                 iLine : nRasterYSize - iLine - 1 ) + 0.5;
-        nGCPCount++;
+        nGCPCountRow++;
     }
+    return nGCPCountRow;
 }
 
 /************************************************************************/
@@ -645,9 +648,36 @@ void L1BDataset::ProcessRecordHeaders()
 /*      worth of GCPs.  That should give respectible coverage on all    */
 /*      but the longest swaths.                                         */
 /* -------------------------------------------------------------------- */
-    int nTargetLines = DESIRED_LINES_OF_GCPS;
-    int nLineSkip = nRasterYSize / ( nTargetLines - 1 );
-    
+    int nTargetLines;
+    double dfLineStep;
+
+    if( bHighGCPDensityStrategy )
+    {
+        if (nRasterYSize < nGCPsPerLine)
+        {
+            nTargetLines = nRasterYSize;
+        }
+        else
+        {
+            int nColStep;
+            nColStep = nRasterXSize / nGCPsPerLine;
+            if (nRasterYSize >= nRasterXSize)
+            {
+                dfLineStep = nColStep;
+            }
+            else
+            {
+                dfLineStep = nRasterYSize / nGCPsPerLine;
+            }
+            nTargetLines = nRasterYSize / dfLineStep;
+        }
+    }
+    else
+    {
+        nTargetLines = MIN(DESIRED_LINES_OF_GCPS, nRasterYSize);
+    }
+    dfLineStep = 1.0 * (nRasterYSize - 1) / ( nTargetLines - 1 );
+
 /* -------------------------------------------------------------------- */
 /*      Initialize the GCP list.                                        */
 /* -------------------------------------------------------------------- */
@@ -667,49 +697,62 @@ void L1BDataset::ProcessRecordHeaders()
 /*      leaves a bigger than expected gap.                              */
 /* -------------------------------------------------------------------- */
     int iStep;
+    int iPrevLine = -1;
 
     for( iStep = 0; iStep < nTargetLines; iStep++ )
     {
-        int nOrigGCPs = nGCPCount;
         int iLine;
 
         if( iStep == nTargetLines - 1 )
-            iLine = nRasterXSize - 1;
+            iLine = nRasterYSize - 1;
         else
-            iLine = nLineSkip * iStep;
+            iLine = (int)(dfLineStep * iStep);
+        if( iLine == iPrevLine )
+            continue;
+        iPrevLine = iLine;
 
         VSIFSeekL( fp, nDataStartOffset + iLine * nRecordSize, SEEK_SET );
         VSIFReadL( pRecordHeader, 1, nRecordDataStart, fp );
 
-        FetchGCPs( pasGCPList, (GByte *)pRecordHeader, iLine );
+        int nGCPsOnThisLine = FetchGCPs( pasGCPList + nGCPCount, (GByte *)pRecordHeader, iLine );
 
+        if( !bHighGCPDensityStrategy )
+        {
 /* -------------------------------------------------------------------- */
 /*      We don't really want too many GCPs per line.  Downsample to     */
 /*      11 per line.                                                    */
 /* -------------------------------------------------------------------- */
-        int iGCP;
-        int nGCPsOnThisLine = nGCPCount - nOrigGCPs;
-        int nDesiredGCPsPerLine = MIN(DESIRED_GCPS_PER_LINE,nGCPsOnThisLine);
-        int nGCPStep = ( nDesiredGCPsPerLine > 1 ) ?
-            ( nGCPsOnThisLine - 1 ) / ( nDesiredGCPsPerLine-1 ) : 1;
-        int iSrcGCP = nOrigGCPs;
-        int iDstGCP = nOrigGCPs;
 
-        if( nGCPStep == 0 )
-            nGCPStep = 1;
+            int iGCP;
+            int nDesiredGCPsPerLine = MIN(DESIRED_GCPS_PER_LINE,nGCPsOnThisLine);
+            int nGCPStep = ( nDesiredGCPsPerLine > 1 ) ?
+                ( nGCPsOnThisLine - 1 ) / ( nDesiredGCPsPerLine-1 ) : 1;
+            int iSrcGCP = nGCPCount;
+            int iDstGCP = nGCPCount;
 
-        for( iGCP = 0; iGCP < nDesiredGCPsPerLine; iGCP++ )
-        {
-            iSrcGCP += iGCP * nGCPStep;
-            iDstGCP += iGCP;
+            if( nGCPStep == 0 )
+                nGCPStep = 1;
 
-            pasGCPList[iDstGCP].dfGCPX = pasGCPList[iSrcGCP].dfGCPX;
-            pasGCPList[iDstGCP].dfGCPY = pasGCPList[iSrcGCP].dfGCPY;
-            pasGCPList[iDstGCP].dfGCPPixel = pasGCPList[iSrcGCP].dfGCPPixel;
-            pasGCPList[iDstGCP].dfGCPLine = pasGCPList[iSrcGCP].dfGCPLine;
+            for( iGCP = 0; iGCP < nDesiredGCPsPerLine; iGCP++ )
+            {
+                if( iGCP == nDesiredGCPsPerLine - 1 )
+                    iSrcGCP = nGCPCount + nGCPsOnThisLine - 1;
+                else
+                    iSrcGCP += nGCPStep;
+                iDstGCP ++;
+
+                pasGCPList[iDstGCP].dfGCPX = pasGCPList[iSrcGCP].dfGCPX;
+                pasGCPList[iDstGCP].dfGCPY = pasGCPList[iSrcGCP].dfGCPY;
+                pasGCPList[iDstGCP].dfGCPPixel = pasGCPList[iSrcGCP].dfGCPPixel;
+                pasGCPList[iDstGCP].dfGCPLine = pasGCPList[iSrcGCP].dfGCPLine;
+            }
+
+            nGCPCount += nDesiredGCPsPerLine;
         }
-
-        nGCPCount = nOrigGCPs + nDesiredGCPsPerLine;
+        else
+        {
+            nGCPCount += nGCPsOnThisLine;
+        }
     }
 
     if( nGCPCount < nTargetLines * nGCPsPerLine )
@@ -1313,7 +1356,7 @@ int L1BDataset::ComputeFileOffsets()
         case FRAC:
             nRasterXSize = 2048;
             nBufferSize = 20484;
-            iGCPStart = 25;
+            iGCPStart = 25 - 1; /* http://www.ncdc.noaa.gov/oa/pod-guide/ncdc/docs/klm/html/c2/sec2-4.htm */
             iGCPStep = 40;
             nGCPsPerLine = 51;
             if ( eL1BFormat == L1B_NOAA9 )
@@ -1454,7 +1497,7 @@ int L1BDataset::ComputeFileOffsets()
         case GAC:
             nRasterXSize = 409;
             nBufferSize = 4092;
-            iGCPStart = 5; // FIXME: depends of scan direction
+            iGCPStart = 5 - 1; // FIXME: depends of scan direction
             iGCPStep = 8;
             nGCPsPerLine = 51;
             if (  eL1BFormat == L1B_NOAA9 )
@@ -1597,18 +1640,320 @@ int L1BDataset::ComputeFileOffsets()
 }
 
 /************************************************************************/
+/*                       L1BGeolocDataset                               */
+/************************************************************************/
+
+class L1BGeolocDataset : public GDALDataset
+{
+    friend class L1BGeolocRasterBand;
+
+    L1BDataset* poL1BDS;
+    int bInterpolGeolocationDS;
+
+    public:
+                L1BGeolocDataset(L1BDataset* poMainDS,
+                                 int bInterpolGeolocationDS);
+       virtual ~L1BGeolocDataset();
+
+       static GDALDataset* CreateGeolocationDS(L1BDataset* poL1BDS,
+                                               int bInterpolGeolocationDS);
+};
+
+/************************************************************************/
+/*                       L1BGeolocRasterBand                            */
+/************************************************************************/
+
+class L1BGeolocRasterBand: public GDALRasterBand
+{
+    public:
+            L1BGeolocRasterBand(L1BGeolocDataset* poDS, int nBand);
+
+            virtual CPLErr IReadBlock(int, int, void*);
+            virtual double GetNoDataValue( int *pbSuccess = NULL );
+};
+
+/************************************************************************/
+/*                        L1BGeolocDataset()                            */
+/************************************************************************/
+
+L1BGeolocDataset::L1BGeolocDataset(L1BDataset* poL1BDS,
+                                   int bInterpolGeolocationDS)
+{
+    this->poL1BDS = poL1BDS;
+    this->bInterpolGeolocationDS = bInterpolGeolocationDS;
+    if( bInterpolGeolocationDS )
+        nRasterXSize = poL1BDS->nRasterXSize;
+    else
+        nRasterXSize = poL1BDS->nGCPsPerLine;
+    nRasterYSize = poL1BDS->nRasterYSize;
+}
+
+/************************************************************************/
+/*                       ~L1BGeolocDataset()                            */
+/************************************************************************/
+
+L1BGeolocDataset::~L1BGeolocDataset()
+{
+    delete poL1BDS;
+}
+
+/************************************************************************/
+/*                        L1BGeolocRasterBand()                         */
+/************************************************************************/
+
+L1BGeolocRasterBand::L1BGeolocRasterBand(L1BGeolocDataset* poDS, int nBand)
+{
+    this->poDS = poDS;
+    this->nBand = nBand;
+    nRasterXSize = poDS->nRasterXSize;
+    nRasterYSize = poDS->nRasterYSize;
+    eDataType = GDT_Float64;
+    nBlockXSize = nRasterXSize;
+    nBlockYSize = 1;
+    if( nBand == 1 )
+        SetDescription("GEOLOC X");
+    else
+        SetDescription("GEOLOC Y");
+}
+
+/************************************************************************/
+/*                         LagrangeInterpol()                           */
+/************************************************************************/
+
+/* ----------------------------------------------------------------------------
+ * Perform a Lagrangian interpolation through the given x,y coordinates
+ * and return the interpolated y value for the given x value.
+ * The array size and thus the polynomial order is defined by numpt.
+ * Input: x[] and y[] are of size numpt,
+ *  x0 is the x value for which we calculate the corresponding y
+ * Returns: y value calculated for given x0.
+ */
+static double LagrangeInterpol(const double x[],
+                               const double y[], double x0, int numpt)
+{
+    int i, j;
+    double L;
+    double y0 = 0;
+
+    for (i=0; i<numpt; i++)
+    {
+        L = 1.0;
+        for (j=0; j<numpt; j++)
+        {
+            if (i == j)
+                continue;
+            L = L * (x0 - x[j]) / (x[i] - x[j]);
+        }
+        y0 = y0 + L * y[i];
+    }
+    return(y0);
+}
+
+/************************************************************************/
+/*                         L1BInterpol()                                */
+/************************************************************************/
+
+/* ----------------------------------------------------------------------------
+ * Interpolate an array of size numPoints where the only values set on input are
+ * at knownFirst, and intervals of knownStep thereafter.
+ * On return all the rest from 0..numPoints-1 will be filled in.
+ * Uses the LagrangeInterpol() function to do the interpolation; 5-point for the
+ * beginning and end of the array and 4-point for the rest.
+ * To use this function for NOAA level 1B data extract the 51 latitude values
+ * into their appropriate places in the vals array then call L1BInterpol to
+ * calculate the rest of the values.  Do similarly for longitudes, solar zenith
+ * angles, and any others which are present in the file.
+ * Reference:
+ *  http://www.ncdc.noaa.gov/oa/pod-guide/ncdc/docs/klm/html/c2/sec2-4.htm
+ */
+
+#define MIDDLE_INTERP_ORDER 4
+#define END_INTERP_ORDER  5  /* Ensure this is an odd number, 5 is suitable.*/
+
+/* Convert number of known point to its index in full array */
+#define IDX(N) ((N)*knownStep+knownFirst)
+
+static void
+L1BInterpol(double vals[],
+            int numKnown,   /* Number of known points (typically 51) */
+            int knownFirst, /* Index in full array of first known point (24) */
+            int knownStep,  /* Interval to next and subsequent known points (40) */
+            int numPoints   /* Number of points in whole array (2048) */ )
+{
+    int i, j;
+    double x[END_INTERP_ORDER];
+    double y[END_INTERP_ORDER];
+
+    /* First extrapolate first 24 points */
+    for (i=0; i<END_INTERP_ORDER; i++)
+    {
+        x[i] = IDX(i);
+        y[i] = vals[IDX(i)];
+    }
+    for (i=0; i<knownFirst; i++)
+    {
+        vals[i] = LagrangeInterpol(x, y, i, END_INTERP_ORDER);
+    }
+
+    /* Next extrapolate last 23 points */
+    for (i=0; i<END_INTERP_ORDER; i++)
+    {
+        x[i] = IDX(numKnown-END_INTERP_ORDER+i);
+        y[i] = vals[IDX(numKnown-END_INTERP_ORDER+i)];
+    }
+    for (i=IDX(numKnown-1); i<numPoints; i++)
+    {
+        vals[i] = LagrangeInterpol(x, y, i, END_INTERP_ORDER);
+    }
+
+    /* Interpolate all intermediate points using two before and two after */
+    for (i=knownFirst; i<IDX(numKnown-1); i++)
+    {
+        double x[MIDDLE_INTERP_ORDER];
+        double y[MIDDLE_INTERP_ORDER];
+        int startpt;
+
+        /* Find a suitable set of two known points before and two after */
+        startpt = (i/knownStep)-MIDDLE_INTERP_ORDER/2;
+        if (startpt<0)
+            startpt=0;
+        if (startpt+MIDDLE_INTERP_ORDER-1 >= numKnown)
+            startpt = numKnown-MIDDLE_INTERP_ORDER;
+        for (j=0; j<MIDDLE_INTERP_ORDER; j++)
+        {
+            x[j] = IDX(startpt+j);
+            y[j] = vals[IDX(startpt+j)];
+        }
+        vals[i] = LagrangeInterpol(x, y, i, MIDDLE_INTERP_ORDER);
+    }
+}
+
+/************************************************************************/
+/*                         IReadBlock()                                 */
+/************************************************************************/
+
+CPLErr L1BGeolocRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void* pData)
+{
+    L1BGeolocDataset* poGDS = (L1BGeolocDataset*)poDS;
+    L1BDataset* poL1BDS = poGDS->poL1BDS;
+    GDAL_GCP* pasGCPList = (GDAL_GCP *)CPLCalloc( poL1BDS->nGCPsPerLine,
+                                        sizeof(GDAL_GCP) );
+    GDALInitGCPs( poL1BDS->nGCPsPerLine, pasGCPList );
+
+
+    GByte* pabyRecordHeader = (GByte*)CPLMalloc(poL1BDS->nRecordSize);
+
+/* -------------------------------------------------------------------- */
+/*      Seek to data.                                                   */
+/* -------------------------------------------------------------------- */
+    int iDataOffset = (poL1BDS->eLocationIndicator == DESCEND) ?
+        poL1BDS->nDataStartOffset + nBlockYOff * poL1BDS->nRecordSize :
+        poL1BDS->nDataStartOffset +
+            (nRasterYSize - nBlockYOff - 1) * poL1BDS->nRecordSize;
+    VSIFSeekL( poL1BDS->fp, iDataOffset, SEEK_SET );
+
+    VSIFReadL( pabyRecordHeader, 1, poL1BDS->nRecordDataStart, poL1BDS->fp );
+
+    /* Fetch the GCPs for the row */
+    int nGotGCPs = poL1BDS->FetchGCPs(pasGCPList, pabyRecordHeader, nBlockYOff );
+    double* padfData = (double*)pData;
+    int i;
+    if( poGDS->bInterpolGeolocationDS )
+    {
+        /* Fill the known position */
+        for(i=0;i<nGotGCPs;i++)
+        {
+            double dfVal = (nBand == 1) ? pasGCPList[i].dfGCPX : pasGCPList[i].dfGCPY;
+            padfData[poL1BDS->iGCPStart + i * poL1BDS->iGCPStep] = dfVal;
+        }
+
+        if( nGotGCPs == poL1BDS->nGCPsPerLine )
+        {
+            /* And do Lagangian interpolation to fill the holes */
+            L1BInterpol(padfData, poL1BDS->nGCPsPerLine,
+                        poL1BDS->iGCPStart, poL1BDS->iGCPStep, nRasterXSize);
+        }
+        else
+        {
+            int iFirstNonValid = 0;
+            if( nGotGCPs > 5 )
+                iFirstNonValid = poL1BDS->iGCPStart + nGotGCPs * poL1BDS->iGCPStep + poL1BDS->iGCPStep / 2;
+            for(i=iFirstNonValid; i<nRasterXSize; i++)
+            {
+                padfData[i] = GetNoDataValue(NULL);
+            }
+            if( iFirstNonValid > 0 )
+            {
+                L1BInterpol(padfData, poL1BDS->nGCPsPerLine,
+                            poL1BDS->iGCPStart, poL1BDS->iGCPStep, iFirstNonValid);
+            }
+        }
+    }
+    else
+    {
+        for(i=0;i<nGotGCPs;i++)
+        {
+            padfData[i] = (nBand == 1) ? pasGCPList[i].dfGCPX : pasGCPList[i].dfGCPY;
+        }
+        for(i=nGotGCPs;i<nRasterXSize;i++)
+            padfData[i] = GetNoDataValue(NULL);
+    }
+
+    if( poL1BDS->eLocationIndicator == ASCEND )
+    {
+        for(i=0;i<nRasterXSize/2;i++)
+        {
+            double dfTmp = padfData[i];
+            padfData[i] = padfData[nRasterXSize-1-i];
+            padfData[nRasterXSize-1-i] = dfTmp;
+        }
+    }
+
+    CPLFree(pabyRecordHeader);
+    GDALDeinitGCPs( poL1BDS->nGCPsPerLine, pasGCPList );
+    CPLFree(pasGCPList);
+    
+    return CE_None;
+}
+
+/************************************************************************/
+/*                        GetNoDataValue()                              */
+/************************************************************************/
+
+double L1BGeolocRasterBand::GetNoDataValue( int *pbSuccess )
+{
+    if( pbSuccess )
+        *pbSuccess = TRUE;
+    return -200.0;
+}
+
+/************************************************************************/
+/*                      CreateGeolocationDS()                           */
+/************************************************************************/
+
+GDALDataset* L1BGeolocDataset::CreateGeolocationDS(L1BDataset* poL1BDS,
+                                             int bInterpolGeolocationDS)
+{
+    L1BGeolocDataset* poGeolocDS = new L1BGeolocDataset(poL1BDS, bInterpolGeolocationDS);
+    for(int i=1;i<=2;i++)
+    {
+        poGeolocDS->SetBand(i, new L1BGeolocRasterBand(poGeolocDS, i));
+    }
+    return poGeolocDS;
+}
+
+/************************************************************************/
 /*                           DetectFormat()                             */
 /************************************************************************/
 
-int L1BDataset::DetectFormat( GDALOpenInfo *poOpenInfo )
+int L1BDataset::DetectFormat( const GByte* pabyHeader, int nHeaderBytes )
 
 {
-    GByte* pabyHeader = poOpenInfo->pabyHeader;
-    if (pabyHeader == NULL || poOpenInfo->nHeaderBytes < L1B_NOAA9_HEADER_SIZE)
+    if (pabyHeader == NULL || nHeaderBytes < L1B_NOAA9_HEADER_SIZE)
         return L1B_NONE;
 
     // We will try the NOAA-15 and later formats first
-    if ( poOpenInfo->nHeaderBytes > L1B_NOAA15_HEADER_SIZE + 61
+    if ( nHeaderBytes > L1B_NOAA15_HEADER_SIZE + 61
          && *(pabyHeader + L1B_NOAA15_HEADER_SIZE + 25) == '.'
          && *(pabyHeader + L1B_NOAA15_HEADER_SIZE + 30) == '.'
          && *(pabyHeader + L1B_NOAA15_HEADER_SIZE + 33) == '.'
@@ -1658,7 +2003,13 @@ int L1BDataset::DetectFormat( GDALOpenInfo *poOpenInfo )
 int L1BDataset::Identify( GDALOpenInfo *poOpenInfo )
 
 {
-    if ( DetectFormat(poOpenInfo) == L1B_NONE )
+    if ( EQUALN( poOpenInfo->pszFilename, "L1BGCPS:", strlen("L1BGCPS:") ) )
+        return TRUE;
+    if ( EQUALN( poOpenInfo->pszFilename, "L1BGCPS_INTERPOL:", strlen("L1BGCPS_INTERPOL:") ) )
+        return TRUE;
+
+    if ( DetectFormat(poOpenInfo->pabyHeader,
+                      poOpenInfo->nHeaderBytes) == L1B_NONE )
         return FALSE;
 
     return TRUE;
@@ -1671,10 +2022,54 @@ int L1BDataset::Identify( GDALOpenInfo *poOpenInfo )
 GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    int     eL1BFormat = DetectFormat( poOpenInfo );
+    VSILFILE* fp = NULL;
+    CPLString osFilename = poOpenInfo->pszFilename;
+    int bAskGeolocationDS = FALSE;
+    int bInterpolGeolocationDS = FALSE;
+    int eL1BFormat;
+
+    if ( EQUALN( poOpenInfo->pszFilename, "L1BGCPS:", strlen("L1BGCPS:") ) ||
+         EQUALN( poOpenInfo->pszFilename, "L1BGCPS_INTERPOL:", strlen("L1BGCPS_INTERPOL:") ) )
+    {
+        GByte abyHeader[1024];
+        bAskGeolocationDS = TRUE;
+        const char* pszFilename;
+        if( EQUALN( poOpenInfo->pszFilename, "L1BGCPS_INTERPOL:", strlen("L1BGCPS_INTERPOL:")) )
+        {
+            bInterpolGeolocationDS = TRUE;
+            pszFilename = poOpenInfo->pszFilename + strlen("L1BGCPS_INTERPOL:");
+        }
+        else
+        {
+            pszFilename = poOpenInfo->pszFilename + strlen("L1BGCPS:");
+        }
+        if( pszFilename[0] == '"' )
+            pszFilename ++;
+        osFilename = pszFilename;
+        if( osFilename.size() > 0 && osFilename[osFilename.size()-1] == '"' )
+            osFilename.resize(osFilename.size()-1);
+        fp = VSIFOpenL( osFilename, "rb" );
+        if ( !fp )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Can't open file \"%s\".", osFilename.c_str() );
+            return NULL;
+        }
+        VSIFReadL( abyHeader, 1, sizeof(abyHeader)-1, fp);
+        abyHeader[sizeof(abyHeader)-1] = '\0';
+        eL1BFormat = DetectFormat( abyHeader, sizeof(abyHeader) );
+    }
+    else
+        eL1BFormat = DetectFormat( poOpenInfo->pabyHeader,
+                                   poOpenInfo->nHeaderBytes );
+
     if ( eL1BFormat == L1B_NONE )
+    {
+        if( fp != NULL )
+            VSIFCloseL(fp);
         return NULL;
-        
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
 /* -------------------------------------------------------------------- */
@@ -1683,28 +2078,25 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "The L1B driver does not support update access to existing"
                   " datasets.\n" );
+        if( fp != NULL )
+            VSIFCloseL(fp);
         return NULL;
     }
-    
-#if 0
-    Geolocation
-    if ( EQUAL( poOpenInfo->pszFilename, "L1BGCPS:" ) )
-        bFetchGeolocation = TRUE;
-#endif
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
     L1BDataset  *poDS;
     VSIStatBufL  sStat;
-    const char  *pszFilename = poOpenInfo->pszFilename;
 
     poDS = new L1BDataset( eL1BFormat );
 
-    poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
+    if( fp == NULL )
+        fp = VSIFOpenL( osFilename, "rb" );
+    poDS->fp = fp;
     if ( !poDS->fp )
     {
-        CPLDebug( "L1B", "Can't open file \"%s\".", poOpenInfo->pszFilename );
+        CPLDebug( "L1B", "Can't open file \"%s\".", osFilename.c_str() );
         goto bad;
     }
     
@@ -1717,7 +2109,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
         goto bad;
     }
 
-    VSIStatL(pszFilename, &sStat);
+    VSIStatL(osFilename, &sStat);
 
     if ( poDS->bGuessDataFormat )
     {
@@ -1748,9 +2140,8 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 
                 VSIFSeekL(poDS->fp, poDS->nDataStartOffset + i * poDS->nRecordSize, SEEK_SET);
                 VSIFReadL(&nScanlineNumber, 1, 2, poDS->fp);
-#ifdef CPL_LSB
-                CPL_SWAP16PTR( &nScanlineNumber );
-#endif
+                CPL_MSBPTR16( &nScanlineNumber );
+
                 if (i == 1)
                 {
                     nDiffLine = nScanlineNumber - nLastScanlineNumber;
@@ -1791,6 +2182,49 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
     // downloaded files
     poDS->nRasterYSize =
         (sStat.st_size - poDS->nDataStartOffset) / poDS->nRecordSize;
+
+/* -------------------------------------------------------------------- */
+/*      Deal with GCPs                                                  */
+/* -------------------------------------------------------------------- */
+    poDS->ProcessRecordHeaders();
+
+    if( bAskGeolocationDS )
+    {
+        GDALDataset* poGeolocDS = L1BGeolocDataset::CreateGeolocationDS(poDS, bInterpolGeolocationDS);
+        return poGeolocDS;
+    }
+
+    {
+        CPLString  osTMP;
+        int bInterpol = CSLTestBoolean(CPLGetConfigOption("L1B_INTERPOL_GCPS", "TRUE"));
+
+        poDS->SetMetadataItem( "SRS", poDS->pszGCPProjection, "GEOLOCATION" ); /* unused by gdalgeoloc.cpp */
+
+        if( bInterpol )
+            osTMP.Printf( "L1BGCPS_INTERPOL:\"%s\"", osFilename.c_str() );
+        else
+            osTMP.Printf( "L1BGCPS:\"%s\"", osFilename.c_str() );
+        poDS->SetMetadataItem( "X_DATASET", osTMP, "GEOLOCATION" );
+        poDS->SetMetadataItem( "X_BAND", "1" , "GEOLOCATION" );
+        poDS->SetMetadataItem( "Y_DATASET", osTMP, "GEOLOCATION" );
+        poDS->SetMetadataItem( "Y_BAND", "2" , "GEOLOCATION" );
+
+        if( bInterpol )
+        {
+            poDS->SetMetadataItem( "PIXEL_OFFSET", "0", "GEOLOCATION" );
+            poDS->SetMetadataItem( "PIXEL_STEP", "1", "GEOLOCATION" );
+        }
+        else
+        {
+            osTMP.Printf( "%d", poDS->iGCPStart);
+            poDS->SetMetadataItem( "PIXEL_OFFSET", osTMP, "GEOLOCATION" );
+            osTMP.Printf( "%d", poDS->iGCPStep);
+            poDS->SetMetadataItem( "PIXEL_STEP", osTMP, "GEOLOCATION" );
+        }
+
+        poDS->SetMetadataItem( "LINE_OFFSET", "0", "GEOLOCATION" );
+        poDS->SetMetadataItem( "LINE_STEP", "1", "GEOLOCATION" );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
@@ -1849,37 +2283,6 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
                 continue;
             }
         }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Do we have GCPs?                                                */
-/* -------------------------------------------------------------------- */
-    if ( 1/*EQUALN((const char *)pabyTBMHeader + 96, "Y", 1)*/ )
-    {
-        poDS->ProcessRecordHeaders();
-
-#if 0
-    Geolocation
-        CPLString  osTMP;
-
-        poDS->SetMetadataItem( "SRS", poDS->pszGCPProjection, "GEOLOCATION" );
-        
-        osTMP.Printf( "L1BGCPS:\"%s\"", pszFilename );
-        poDS->SetMetadataItem( "X_DATASET", osTMP, "GEOLOCATION" );
-        poDS->SetMetadataItem( "X_BAND", "1" , "GEOLOCATION" );
-        poDS->SetMetadataItem( "Y_DATASET", osTMP, "GEOLOCATION" );
-        poDS->SetMetadataItem( "Y_BAND", "2" , "GEOLOCATION" );
-
-        osTMP.Printf( "%d", (poDS->eLocationIndicator == DESCEND) ?
-            poDS->iGCPStart : (poDS->nRasterXSize - poDS->iGCPStart) );
-        poDS->SetMetadataItem( "PIXEL_OFFSET", osTMP, "GEOLOCATION" );
-        osTMP.Printf( "%d", (poDS->eLocationIndicator == DESCEND) ?
-                      poDS->iGCPStep : -poDS->iGCPStep );
-        poDS->SetMetadataItem( "PIXEL_STEP", osTMP, "GEOLOCATION" );
-
-        poDS->SetMetadataItem( "LINE_OFFSET", "0", "GEOLOCATION" );
-        poDS->SetMetadataItem( "LINE_STEP", "1", "GEOLOCATION" );
-#endif
     }
 
 /* -------------------------------------------------------------------- */
