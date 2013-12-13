@@ -182,7 +182,7 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
     }
 
     //  -------------------------------------------------------------------
-    //  Assign GeoRaster informationf
+    //  Assign GeoRaster information
     //  -------------------------------------------------------------------
 
     poGRD->poGeoRaster   = poGRW;
@@ -865,9 +865,18 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
 
     double adfTransform[6];
 
-    poSrcDS->GetGeoTransform( adfTransform );
-
-    poDstDS->SetGeoTransform( adfTransform );
+    if ( poSrcDS->GetGeoTransform( adfTransform ) == CE_None )
+    {
+        if ( ! ( adfTransform[0] == 0.0 && 
+                 adfTransform[1] == 1.0 &&
+                 adfTransform[2] == 0.0 &&
+                 adfTransform[3] == 0.0 &&
+                 adfTransform[4] == 0.0 &&
+                 adfTransform[5] == 1.0 ) ) 
+        {
+            poDstDS->SetGeoTransform( adfTransform );
+        }
+    }
 
     if( ! poDstDS->bForcedSRID ) /* forced by create option SRID */
     {
@@ -1215,18 +1224,11 @@ CPLErr GeoRasterDataset::GetGeoTransform( double *padfTransform )
         return CE_Failure;
     }
 
-    memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
-    
-    if( bGeoTransform )
-    {
-        return CE_None;
-    }
-
-    if( ! poGeoRaster->bIsReferenced )
+    if( poGeoRaster->nSRID == 0 )
     {
         return CE_Failure;
     }
-
+    
     memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
 
     bGeoTransform = true;
@@ -1423,7 +1425,7 @@ CPLErr GeoRasterDataset::SetGeoTransform( double *padfTransform )
     poGeoRaster->dfYCoefficient[2] = adfGeoTransform[3];
 
     bGeoTransform = true;
-
+    
     return CE_None;
 }
 
@@ -1441,7 +1443,7 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
 
     if( eOGRErr != OGRERR_NONE )
     {
-        poGeoRaster->SetGeoReference( UNKNOWN_CRS );
+        poGeoRaster->SetGeoReference( DEFAULT_CRS );
 
         return CE_Failure;
     }
