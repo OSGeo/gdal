@@ -3396,16 +3396,16 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
 
             /* Optimization to avoid duplicating the source geometry in the */
             /* target feature : we steal it from the source feature for now... */
-            OGRGeometry* poStealedGeometry = NULL;
+            OGRGeometry* poStolenGeometry = NULL;
             if( !bExplodeCollections && nSrcGeomFieldCount == 1 &&
                 nDstGeomFieldCount == 1 )
             {
-                poStealedGeometry = poFeature->StealGeometry();
+                poStolenGeometry = poFeature->StealGeometry();
             }
             else if( !bExplodeCollections &&
                      psInfo->iRequestedSrcGeomField >= 0 )
             {
-                poStealedGeometry = poFeature->StealGeometry(
+                poStolenGeometry = poFeature->StealGeometry(
                     psInfo->iRequestedSrcGeomField);
             }
 
@@ -3420,14 +3420,14 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
 
                 OGRFeature::DestroyFeature( poFeature );
                 OGRFeature::DestroyFeature( poDstFeature );
-                OGRGeometryFactory::destroyGeometry( poStealedGeometry );
+                OGRGeometryFactory::destroyGeometry( poStolenGeometry );
                 return FALSE;
             }
 
-            /* ... and now we can attach the stealed geometry */
-            if( poStealedGeometry )
+            /* ... and now we can attach the stolen geometry */
+            if( poStolenGeometry )
             {
-                poDstFeature->SetGeometryDirectly(poStealedGeometry);
+                poDstFeature->SetGeometryDirectly(poStolenGeometry);
             }
 
             if( bPreserveFID )
