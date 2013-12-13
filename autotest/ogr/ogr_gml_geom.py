@@ -1246,6 +1246,64 @@ def gml_SimpleMultiPoint():
     return 'success'
 
 ###############################################################################
+# Test  gml:CompositeCurve> in <gml:Ring>
+
+def gml_CompositeCurveInRing():
+
+    gml = """<gml:Surface>
+    <gml:patches>
+        <gml:PolygonPatch interpolation="planar">
+            <gml:exterior>
+                <gml:Ring>
+                    <gml:curveMember>
+                        <gml:CompositeCurve>
+                            <gml:curveMember>
+                                <gml:Curve>
+                                    <gml:segments>
+                                        <gml:LineStringSegment>
+                                            <gml:pos>0 0</gml:pos>
+                                            <gml:pos>0 1</gml:pos>
+                                        </gml:LineStringSegment>
+                                    </gml:segments>
+                                </gml:Curve>
+                            </gml:curveMember>
+                            <gml:curveMember>
+                                <gml:Curve>
+                                    <gml:segments>
+                                        <gml:LineStringSegment>
+                                            <gml:pos>0 1</gml:pos>
+                                            <gml:pos>1 1</gml:pos>
+                                        </gml:LineStringSegment>
+                                    </gml:segments>
+                                </gml:Curve>
+                            </gml:curveMember>
+                            <gml:curveMember>
+                                <gml:Curve>
+                                    <gml:segments>
+                                        <gml:LineStringSegment>
+                                            <gml:pos>1 1</gml:pos>
+                                            <gml:pos>0 0</gml:pos>
+                                        </gml:LineStringSegment>
+                                    </gml:segments>
+                                </gml:Curve>
+                            </gml:curveMember>
+                        </gml:CompositeCurve>
+                    </gml:curveMember>
+                </gml:Ring>
+            </gml:exterior>
+        </gml:PolygonPatch>
+    </gml:patches>
+</gml:Surface>"""
+
+    geom = ogr.CreateGeometryFromGML( gml )
+
+    if geom.ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,0 0))':
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # When imported build a list of units based on the files available.
 
 #print 'hit enter'
@@ -1300,6 +1358,7 @@ gdaltest_list.append( gml_SimplePolygon )
 gdaltest_list.append( gml_SimpleRectangle )
 gdaltest_list.append( gml_SimpleTriangle )
 gdaltest_list.append( gml_SimpleMultiPoint )
+gdaltest_list.append( gml_CompositeCurveInRing )
 
 if __name__ == '__main__':
 

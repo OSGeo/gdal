@@ -761,32 +761,29 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
                 && EQUAL(BareGMLElement(psChild->pszValue),"curveMember") )
             {
                 const CPLXMLNode* psCurveChild = GetChildElement(psChild);
-                OGRLineString *poLS;
+                OGRGeometry* poGeom;
                 if (psCurveChild != NULL)
-                    poLS = (OGRLineString *) 
+                    poGeom =
                         GML2OGRGeometry_XMLNode( psCurveChild, bGetSecondaryGeometryOption,
                                                  nRecLevel + 1);
                 else
-                    poLS = NULL;
+                    poGeom = NULL;
 
                 // try to join multiline string to one linestring
-                if( poLS && wkbFlatten(poLS->getGeometryType()) == wkbMultiLineString )
+                if( poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbMultiLineString )
                 {
-                  OGRGeometry *poG = OGRGeometryFactory::forceToLineString( poLS, false );
-                  if( poG && wkbFlatten( poG->getGeometryType() ) == wkbLineString )
-                  {
-                    poLS = (OGRLineString *) poG;
-                  }
+                    poGeom = OGRGeometryFactory::forceToLineString( poGeom, false );
                 }
 
-                if( poLS == NULL 
-                    || wkbFlatten(poLS->getGeometryType()) != wkbLineString )
+                if( poGeom == NULL 
+                    || wkbFlatten(poGeom->getGeometryType()) != wkbLineString )
                 {
-                    delete poLS;
+                    delete poGeom;
                     delete poLinearRing;
                     return NULL;
                 }
 
+                OGRLineString *poLS = (OGRLineString *) poGeom;
                 if( poLS->getNumPoints() < 2 )
                 {
                     // skip it
