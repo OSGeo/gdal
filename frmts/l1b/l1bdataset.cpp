@@ -260,10 +260,11 @@ class L1BDataset : public GDALPamDataset
     int         FetchGCPs( GDAL_GCP *, GByte *, int );
     void        FetchNOAA9TimeCode(TimeCode *, const GByte *, int *);
     void        FetchNOAA15TimeCode(TimeCode *, const GUInt16 *, int *);
-    CPLErr      ProcessDatasetHeader();
+    CPLErr      ProcessDatasetHeader(const char* pszFilename);
     int         ComputeFileOffsets();
     
-    static int  DetectFormat( const GByte* pabyHeader, int nHeaderBytes );
+    static int  DetectFormat( const char* pszFilename,
+                              const GByte* pabyHeader, int nHeaderBytes );
 
   public:
                 L1BDataset( int );
@@ -813,7 +814,7 @@ static const GByte EBCDICToASCII[] =
 /*                      ProcessDatasetHeader()                          */
 /************************************************************************/
 
-CPLErr L1BDataset::ProcessDatasetHeader()
+CPLErr L1BDataset::ProcessDatasetHeader(const char* pszFilename)
 {
     char    szDatasetName[L1B_DATASET_NAME_SIZE + 1];
 
@@ -849,18 +850,22 @@ CPLErr L1BDataset::ProcessDatasetHeader()
                 L1B_DATASET_NAME_SIZE );
         szDatasetName[L1B_DATASET_NAME_SIZE] = '\0';
 
+        // Deal with a few NOAA <= 9 datasets with no dataset name in TBM header
+        if( memcmp(szDatasetName,
+                    "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", L1B_DATASET_NAME_SIZE) == 0 &&
+            strlen(pszFilename) == L1B_DATASET_NAME_SIZE )
+        {
+            strcpy(szDatasetName, pszFilename);
+        }
+
         // Determine processing center where the dataset was created
-        if ( EQUALN((const char *)abyTBMHeader
-                    + L1B_NOAA9_HDR_NAME_OFF, "CMS", 3) )
+        if ( EQUALN(szDatasetName, "CMS", 3) )
              eProcCenter = CMS;
-        else if ( EQUALN((const char *)abyTBMHeader
-                         + L1B_NOAA9_HDR_NAME_OFF, "DSS", 3) )
+        else if ( EQUALN(szDatasetName, "DSS", 3) )
              eProcCenter = DSS;
-        else if ( EQUALN((const char *)abyTBMHeader
-                         + L1B_NOAA9_HDR_NAME_OFF, "NSS", 3) )
+        else if ( EQUALN(szDatasetName, "NSS", 3) )
              eProcCenter = NSS;
-        else if ( EQUALN((const char *)abyTBMHeader
-                         + L1B_NOAA9_HDR_NAME_OFF, "UKM", 3) )
+        else if ( EQUALN(szDatasetName, "UKM", 3) )
              eProcCenter = UKM;
         else
              eProcCenter = UNKNOWN_CENTER;
@@ -925,14 +930,6 @@ CPLErr L1BDataset::ProcessDatasetHeader()
         // Determine the spacecraft name
         switch ( abyRecHeader[L1B_NOAA9_HDR_REC_ID_OFF] )
         {
-            /* FIXME: use time code to determine TIROS-N, because the SatID
-             * identical to NOAA-11
-             * case 1:
-                eSpacecraftID = TIROSN;
-                break;
-            case 2:
-                eSpacecraftID = NOAA6;
-                break;*/
             case 4:
                 eSpacecraftID = NOAA7;
                 break;
@@ -946,14 +943,28 @@ CPLErr L1BDataset::ProcessDatasetHeader()
                 eSpacecraftID = NOAA10;
                 break;
             case 1:
-                eSpacecraftID = NOAA11;
+            {
+                /* We could also use the time code to determine TIROS-N */
+                if( strlen(pszFilename) == L1B_DATASET_NAME_SIZE &&
+                    strncmp(pszFilename + 8, ".TN.", 4) == 0 )
+                    eSpacecraftID = TIROSN;
+                else
+                    eSpacecraftID = NOAA11;
                 break;
+            }
             case 5:
                 eSpacecraftID = NOAA12;
                 break;
             case 2:
-                eSpacecraftID = NOAA13;
+            {
+                /* We could also use the time code to determine NOAA6 */
+                if( strlen(pszFilename) == L1B_DATASET_NAME_SIZE &&
+                    strncmp(pszFilename + 8, ".NA.", 4) == 0 )
+                    eSpacecraftID = NOAA6;
+                else
+                    eSpacecraftID = NOAA13;
                 break;
+            }
             case 3:
                 eSpacecraftID = NOAA14;
                 break;
@@ -1946,7 +1957,8 @@ GDALDataset* L1BGeolocDataset::CreateGeolocationDS(L1BDataset* poL1BDS,
 /*                           DetectFormat()                             */
 /************************************************************************/
 
-int L1BDataset::DetectFormat( const GByte* pabyHeader, int nHeaderBytes )
+int L1BDataset::DetectFormat( const char* pszFilename,
+                              const GByte* pabyHeader, int nHeaderBytes )
 
 {
     if (pabyHeader == NULL || nHeaderBytes < L1B_NOAA9_HEADER_SIZE)
@@ -1993,6 +2005,22 @@ int L1BDataset::DetectFormat( const GByte* pabyHeader, int nHeaderBytes )
          && *(pabyHeader + 61) == '.' )
         return L1B_NOAA15_NOHDR;
 
+    // A few NOAA <= 9 datasets with no dataset name in TBM header
+    if( strlen(pszFilename) == L1B_DATASET_NAME_SIZE &&
+        pszFilename[3] == '.' &&
+        pszFilename[8] == '.' &&
+        pszFilename[11] == '.' &&
+        pszFilename[18] == '.' &&
+        pszFilename[24] == '.' &&
+        pszFilename[30] == '.' &&
+        pszFilename[39] == '.' &&
+        memcmp(pabyHeader + 30, "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", L1B_DATASET_NAME_SIZE) == 0 &&
+        (pabyHeader[75] == '+' || pabyHeader[75] == '-') &&
+        (pabyHeader[78] == '+' || pabyHeader[78] == '-') &&
+        (pabyHeader[81] == '+' || pabyHeader[81] == '-') &&
+        (pabyHeader[85] == '+' || pabyHeader[85] == '-') )
+        return L1B_NOAA9;
+
     return L1B_NONE;
 }
 
@@ -2008,7 +2036,8 @@ int L1BDataset::Identify( GDALOpenInfo *poOpenInfo )
     if ( EQUALN( poOpenInfo->pszFilename, "L1BGCPS_INTERPOL:", strlen("L1BGCPS_INTERPOL:") ) )
         return TRUE;
 
-    if ( DetectFormat(poOpenInfo->pabyHeader,
+    if ( DetectFormat(CPLGetFilename(poOpenInfo->pszFilename),
+                      poOpenInfo->pabyHeader,
                       poOpenInfo->nHeaderBytes) == L1B_NONE )
         return FALSE;
 
@@ -2057,10 +2086,12 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         VSIFReadL( abyHeader, 1, sizeof(abyHeader)-1, fp);
         abyHeader[sizeof(abyHeader)-1] = '\0';
-        eL1BFormat = DetectFormat( abyHeader, sizeof(abyHeader) );
+        eL1BFormat = DetectFormat( CPLGetFilename(osFilename),
+                                   abyHeader, sizeof(abyHeader) );
     }
     else
-        eL1BFormat = DetectFormat( poOpenInfo->pabyHeader,
+        eL1BFormat = DetectFormat( CPLGetFilename(osFilename),
+                                   poOpenInfo->pabyHeader,
                                    poOpenInfo->nHeaderBytes );
 
     if ( eL1BFormat == L1B_NONE )
@@ -2103,7 +2134,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Read the header.                                                */
 /* -------------------------------------------------------------------- */
-    if ( poDS->ProcessDatasetHeader() != CE_None )
+    if ( poDS->ProcessDatasetHeader(CPLGetFilename(osFilename)) != CE_None )
     {
         CPLDebug( "L1B", "Error reading L1B record header." );
         goto bad;
