@@ -1674,7 +1674,9 @@ int GDALGenImgProjTransform( void *pTransformArg, int bDstToSrc,
     void *pGeoLocTransformArg;
 
     for( i = 0; i < nPointCount; i++ )
-        panSuccess[i] = 1;
+    {
+        panSuccess[i] = ( padfX[i] != HUGE_VAL && padfY[i] != HUGE_VAL );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Convert from src (dst) pixel/line to src (dst)                  */
