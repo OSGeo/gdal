@@ -91,8 +91,36 @@ millisecond of day).<p>
 <li> <b>LOCATION</b>: AVHRR Earth location indication. Will be <b>Ascending</b>
 when satellite moves from low latitudes to high latitudes and <b>Descending</b>
 in other case.<p>
-
 </ul>
+
+Starting with GDAL 2.0, most metadata records can be written to a .CSV file when
+the L1B_FETCH_METADATA configuration file is set to YES. By default, the filename
+will be called "[l1b_dataset_name]_metadata.csv", and located in the
+same directory as the L1B dataset. By defining the L1B_METADATA_DIRECTORY configuration
+option, it is possible to create that file in another directory.
+The documentation to interpret those metadata is <a href="http://www.ncdc.noaa.gov/oa/pod-guide/ncdc/docs/podug/html/c3/sec3-1.htm">
+PODUG 3.1</a> for NOAA &lt;=14 and <a href="http://www.ncdc.noaa.gov/oa/pod-guide/ncdc/docs/klm/html/c8/sec83133-1.htm">
+KLM 8.3.1.3.3.1</a> for NOAA &gt;=15.
+<p>
+
+<h2>Subdatasets</h2>
+
+(Starting with GDAL 2.0)<p>
+
+NOAA &lt;=14 datasets advertize a L1B_SOLAR_ZENITH_ANGLES:"l1b_dataset_name"
+subdataset that contains a maximum of 51 solar zenith angles for each scanline (
+beginning at sample 5 with a step of 8 samples for GAC data, beginning at sample
+25 with a step of 40 samples for HRPT/LAC/FRAC data).<p>
+
+NOAA &gt;=15 datasets advertize a L1B_ANGLES:"l1b_dataset_name"
+subdataset that contains 3 bands (solar zenith angles, satellite zenith angles
+and relative azimuth angles) with 51 values for each scanline (
+beginning at sample 5 with a step of 8 samples for GAC data, beginning at sample
+25 with a step of 40 samples for HRPT/LAC/FRAC data).<p>
+
+NOAA &gt;=15 datasets advertize a L1B_CLOUDS:"l1b_dataset_name"
+subdataset that contains a band of same dimensions as bands of the main L1B
+dataset. The values of each pixel are 0 = unknown; 1 = clear; 2 = cloudy; 3 = partly cloudy.<p>
 
 <h2>See Also:</h2>
 
