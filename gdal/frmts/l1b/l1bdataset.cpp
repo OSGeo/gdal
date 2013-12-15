@@ -912,12 +912,16 @@ void L1BDataset::FetchMetadata()
                     (pabyRecordHeader[10] >> 4) & 1,
                     (pabyRecordHeader[10] >> 3) & 1);
         VSIFPrintfL(fpCSV, "%d,", pabyRecordHeader[11] >> 2);
-        GUInt32 n32;
+        GInt32 i32;
         for(int i=0;i<10;i++)
         {
-            memcpy(&n32, pabyRecordHeader + 12 + 4 *i, 4);
-            CPL_MSBPTR32(&n32);
-            VSIFPrintfL(fpCSV, "%u,", n32);
+            memcpy(&i32, pabyRecordHeader + 12 + 4 *i, 4);
+            CPL_MSBPTR32(&i32);
+            /* Scales : http://www.ncdc.noaa.gov/oa/pod-guide/ncdc/docs/podug/html/c3/sec3-3.htm */
+            if( (i % 2) == 0 )
+                VSIFPrintfL(fpCSV, "%f,", i32 / pow(2.0, 30.0));
+            else
+                VSIFPrintfL(fpCSV, "%f,", i32 / pow(2.0, 22.0));
         }
         VSIFPrintfL(fpCSV, "%d", pabyRecordHeader[52]);
         VSIFPrintfL(fpCSV, "\n");
