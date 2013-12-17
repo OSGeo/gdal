@@ -1216,6 +1216,28 @@ def ogr_dxf_24():
     return 'success'
 
 ###############################################################################
+# 3DFACE
+
+def ogr_dxf_25():
+
+    ds = ogr.Open('data/3dface.dxf')
+    lyr = ds.GetLayer(0)
+
+    feat = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry( feat, 'POLYGON ((10 20 30,11 21 31,12 22 32,10 20 30))' ):
+        feat.DumpReadable()
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry( feat, 'POLYGON ((10 20 30,11 21 31,12 22 32,13 23 33,10 20 30))' ):
+        feat.DumpReadable()
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_dxf_cleanup():
@@ -1253,6 +1275,7 @@ gdaltest_list = [
     ogr_dxf_22,
     ogr_dxf_23,
     ogr_dxf_24,
+    ogr_dxf_25,
     ogr_dxf_cleanup ]
 
 if __name__ == '__main__':

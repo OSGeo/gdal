@@ -1454,6 +1454,106 @@ OGRFeature *OGRDXFLayer::TranslateSPLINE()
 }
 
 /************************************************************************/
+/*                          Translate3DFACE()                           */
+/************************************************************************/
+
+OGRFeature *OGRDXFLayer::Translate3DFACE()
+
+{
+    char szLineBuf[257];
+    int nCode;
+    OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
+    double dfX1 = 0.0, dfY1 = 0.0, dfZ1 = 0.0;
+    double dfX2 = 0.0, dfY2 = 0.0, dfZ2 = 0.0;
+    double dfX3 = 0.0, dfY3 = 0.0, dfZ3 = 0.0;
+    double dfX4 = 0.0, dfY4 = 0.0, dfZ4 = 0.0;
+
+/* -------------------------------------------------------------------- */
+/*      Process values.                                                 */
+/* -------------------------------------------------------------------- */
+    while( (nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf))) > 0 )
+    {
+        switch( nCode )
+        {
+          case 10:
+            dfX1 = CPLAtof(szLineBuf);
+            break;
+
+          case 11:
+            dfX2 = CPLAtof(szLineBuf);
+            break;
+
+          case 12:
+            dfX3 = CPLAtof(szLineBuf);
+            break;
+
+          case 13:
+            dfX4 = CPLAtof(szLineBuf);
+            break;
+
+          case 20:
+            dfY1 = CPLAtof(szLineBuf);
+            break;
+
+          case 21:
+            dfY2 = CPLAtof(szLineBuf);
+            break;
+
+          case 22:
+            dfY3 = CPLAtof(szLineBuf);
+            break;
+
+          case 23:
+            dfY4 = CPLAtof(szLineBuf);
+            break;
+
+          case 30:
+            dfZ1 = CPLAtof(szLineBuf);
+            break;
+
+          case 31:
+            dfZ2 = CPLAtof(szLineBuf);
+            break;
+
+          case 32:
+            dfZ3 = CPLAtof(szLineBuf);
+            break;
+
+          case 33:
+            dfZ4 = CPLAtof(szLineBuf);
+            break;
+
+          default:
+            TranslateGenericProperty( poFeature, nCode, szLineBuf );
+            break;
+        }
+    }
+
+    if( nCode == 0 )
+        poDS->UnreadValue();
+
+/* -------------------------------------------------------------------- */
+/*      Create geometry                                                 */
+/* -------------------------------------------------------------------- */
+    OGRPolygon *poPoly = new OGRPolygon();
+    OGRLinearRing* poLR = new OGRLinearRing();
+    poLR->addPoint( dfX1, dfY1, dfZ1 );
+    poLR->addPoint( dfX2, dfY2, dfZ2 );
+    poLR->addPoint( dfX3, dfY3, dfZ3 );
+    if( dfX4 != dfX3 || dfY4 != dfY3 || dfZ4 != dfZ3 )
+        poLR->addPoint( dfX4, dfY4, dfZ4 );
+    poPoly->addRingDirectly(poLR);
+    poPoly->closeRings();
+
+    ApplyOCSTransformer( poLR );
+    poFeature->SetGeometryDirectly( poPoly );
+
+    /* PrepareLineStyle( poFeature ); */
+
+    return poFeature;
+}
+
+/************************************************************************/
 /*                      GeometryInsertTransformer                       */
 /************************************************************************/
 
@@ -1763,6 +1863,10 @@ OGRFeature *OGRDXFLayer::GetNextUnfilteredFeature()
         else if( EQUAL(szLineBuf,"SPLINE") )
         {
             poFeature = TranslateSPLINE();
+        }
+        else if( EQUAL(szLineBuf,"3DFACE") )
+        {
+            poFeature = Translate3DFACE();
         }
         else if( EQUAL(szLineBuf,"INSERT") )
         {
