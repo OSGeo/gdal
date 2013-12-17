@@ -445,22 +445,35 @@ CPLErr L1BRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 L1BDataset::L1BDataset( L1BFileFormat eL1BFormat )
 
 {
-    this->eL1BFormat = eL1BFormat;
-    fp = NULL;
-    nGCPCount = 0;
+    eSource = UNKNOWN_STATION;
+    eProcCenter = UNKNOWN_CENTER;
+    // sStartTime
+    // sStopTime
     bHighGCPDensityStrategy = CSLTestBoolean(CPLGetConfigOption("L1B_HIGH_GCP_DENSITY", "TRUE"));
     pasGCPList = NULL;
-    pszGCPProjection = CPLStrdup( "GEOGCS[\"WGS 72\",DATUM[\"WGS_1972\",SPHEROID[\"WGS 72\",6378135,298.26,AUTHORITY[\"EPSG\",7043]],TOWGS84[0,0,4.5,0,0,0.554,0.2263],AUTHORITY[\"EPSG\",6322]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",8901]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",9108]],AUTHORITY[\"EPSG\",4322]]" );
-    nBands = 0;
-    eLocationIndicator = DESCEND; // XXX: should be initialised
-    iChannelsMask = 0;
-    iInstrumentStatus = 0;
-    bFetchGeolocation = FALSE;
-    bGuessDataFormat = FALSE;
+    nGCPCount = 0;
     iGCPOffset = 0;
     iGCPCodeOffset = 0;
     iCLAVRStart = 0;
     nGCPsPerLine = 0;
+    eLocationIndicator = DESCEND; // XXX: should be initialised
+    iGCPStart = 0;
+    iGCPStep = 0;
+    this->eL1BFormat = eL1BFormat;
+    nBufferSize = 0;
+    eSpacecraftID = TIROSN;
+    eProductType = HRPT;
+    iDataFormat = PACKED10BIT;
+    nRecordDataStart = 0;
+    nRecordDataEnd = 0;
+    nDataStartOffset = 0;
+    nRecordSize = 0;
+    iInstrumentStatus = 0;
+    iChannelsMask = 0;
+    pszGCPProjection = CPLStrdup( "GEOGCS[\"WGS 72\",DATUM[\"WGS_1972\",SPHEROID[\"WGS 72\",6378135,298.26,AUTHORITY[\"EPSG\",7043]],TOWGS84[0,0,4.5,0,0,0.554,0.2263],AUTHORITY[\"EPSG\",6322]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",8901]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",9108]],AUTHORITY[\"EPSG\",4322]]" );
+    fp = NULL;
+    bFetchGeolocation = FALSE;
+    bGuessDataFormat = FALSE;
 }
 
 /************************************************************************/
