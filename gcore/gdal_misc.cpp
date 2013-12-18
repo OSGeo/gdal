@@ -3037,3 +3037,132 @@ int GDALCheckBandCount( int nBands, int bIsZeroAllowed )
 }
 
 CPL_C_END
+
+
+/************************************************************************/
+/*                     GDALSerializeGCPListToXML()                      */
+/************************************************************************/
+
+void GDALSerializeGCPListToXML( CPLXMLNode* psParentNode,
+                                GDAL_GCP* pasGCPList,
+                                int nGCPCount,
+                                const char* pszGCPProjection )
+{
+    CPLString oFmt;
+
+    CPLXMLNode *psPamGCPList = CPLCreateXMLNode( psParentNode, CXT_Element, 
+                                                 "GCPList" );
+
+    CPLXMLNode* psLastChild = NULL;
+
+    if( pszGCPProjection != NULL 
+        && strlen(pszGCPProjection) > 0 )
+    {
+        CPLSetXMLValue( psPamGCPList, "#Projection", 
+                        pszGCPProjection );
+        psLastChild = psPamGCPList->psChild;
+    }
+
+    for( int iGCP = 0; iGCP < nGCPCount; iGCP++ )
+    {
+        CPLXMLNode *psXMLGCP;
+        GDAL_GCP *psGCP = pasGCPList + iGCP;
+
+        psXMLGCP = CPLCreateXMLNode( NULL, CXT_Element, "GCP" );
+
+        if( psLastChild == NULL )
+            psPamGCPList->psChild = psXMLGCP;
+        else
+            psLastChild->psNext = psXMLGCP;
+        psLastChild = psXMLGCP;
+
+        CPLSetXMLValue( psXMLGCP, "#Id", psGCP->pszId );
+
+        if( psGCP->pszInfo != NULL && strlen(psGCP->pszInfo) > 0 )
+            CPLSetXMLValue( psXMLGCP, "Info", psGCP->pszInfo );
+
+        CPLSetXMLValue( psXMLGCP, "#Pixel", 
+                        oFmt.Printf( "%.4f", psGCP->dfGCPPixel ) );
+
+        CPLSetXMLValue( psXMLGCP, "#Line", 
+                        oFmt.Printf( "%.4f", psGCP->dfGCPLine ) );
+
+        CPLSetXMLValue( psXMLGCP, "#X", 
+                        oFmt.Printf( "%.12E", psGCP->dfGCPX ) );
+
+        CPLSetXMLValue( psXMLGCP, "#Y", 
+                        oFmt.Printf( "%.12E", psGCP->dfGCPY ) );
+
+        /* Note: GDAL 1.10.1 and older generated #GCPZ, but could not read it back */
+        if( psGCP->dfGCPZ != 0.0 )
+            CPLSetXMLValue( psXMLGCP, "#Z", 
+                            oFmt.Printf( "%.12E", psGCP->dfGCPZ ) );
+    }
+}
+
+/************************************************************************/
+/*                     GDALDeserializeGCPListFromXML()                  */
+/************************************************************************/
+
+void GDALDeserializeGCPListFromXML( CPLXMLNode* psGCPList,
+                                    GDAL_GCP** ppasGCPList,
+                                    int* pnGCPCount,
+                                    char** ppszGCPProjection )
+{
+    CPLXMLNode *psXMLGCP;
+    OGRSpatialReference oSRS;
+
+    if( ppszGCPProjection )
+    {
+        const char *pszRawProj = CPLGetXMLValue(psGCPList, "Projection", "");
+
+        if( strlen(pszRawProj) > 0 
+            && oSRS.SetFromUserInput( pszRawProj ) == OGRERR_NONE )
+            oSRS.exportToWkt( ppszGCPProjection );
+        else
+            *ppszGCPProjection = CPLStrdup("");
+    }
+
+    // Count GCPs.
+    int  nGCPMax = 0;
+
+    for( psXMLGCP = psGCPList->psChild; psXMLGCP != NULL; 
+         psXMLGCP = psXMLGCP->psNext )
+        nGCPMax++;
+
+    *ppasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),nGCPMax);
+    *pnGCPCount = 0;
+
+    for( psXMLGCP = psGCPList->psChild; psXMLGCP != NULL; 
+         psXMLGCP = psXMLGCP->psNext )
+    {
+        GDAL_GCP *psGCP = *ppasGCPList + *pnGCPCount;
+
+        if( !EQUAL(psXMLGCP->pszValue,"GCP") || 
+            psXMLGCP->eType != CXT_Element )
+            continue;
+
+        GDALInitGCPs( 1, psGCP );
+
+        CPLFree( psGCP->pszId );
+        psGCP->pszId = CPLStrdup(CPLGetXMLValue(psXMLGCP,"Id",""));
+
+        CPLFree( psGCP->pszInfo );
+        psGCP->pszInfo = CPLStrdup(CPLGetXMLValue(psXMLGCP,"Info",""));
+
+        psGCP->dfGCPPixel = atof(CPLGetXMLValue(psXMLGCP,"Pixel","0.0"));
+        psGCP->dfGCPLine = atof(CPLGetXMLValue(psXMLGCP,"Line","0.0"));
+
+        psGCP->dfGCPX = atof(CPLGetXMLValue(psXMLGCP,"X","0.0"));
+        psGCP->dfGCPY = atof(CPLGetXMLValue(psXMLGCP,"Y","0.0"));
+        const char* pszZ = CPLGetXMLValue(psXMLGCP,"Z",NULL);
+        if( pszZ == NULL )
+        {
+            /* Note: GDAL 1.10.1 and older generated #GCPZ, but could not read it back */
+            pszZ = CPLGetXMLValue(psXMLGCP,"GCPZ","0.0");
+        }
+        psGCP->dfGCPZ = atof(pszZ);
+
+        (*pnGCPCount) ++;
+    }
+}
