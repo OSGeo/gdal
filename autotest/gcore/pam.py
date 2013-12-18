@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -296,6 +297,16 @@ def pam_10():
 
     if ds.GetGCPProjection().find("WGS 84") == -1:
         print(ds.GetGCPProjection())
+        return 'fail'
+
+    if gcps[0].GCPPixel != 0 or gcps[0].GCPLine != 1 or \
+       gcps[0].GCPX != 2 or gcps[0].GCPY != 3 or gcps[0].GCPZ != 4:
+        print(gcps[0])
+        return 'fail'
+
+    if gcps[1].GCPPixel != 1 or gcps[1].GCPLine != 2 or \
+       gcps[1].GCPX != 3 or gcps[1].GCPY != 4 or gcps[1].GCPZ != 5:
+        print(gcps[1])
         return 'fail'
 
     band = ds.GetRasterBand(1)
