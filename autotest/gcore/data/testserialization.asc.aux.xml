@@ -1,7 +1,8 @@
 <PAMDataset>
   <GCPList Projection="GEOGCS[&quot;WGS 84&quot;,DATUM[&quot;WGS_1984&quot;,SPHEROID[&quot;WGS 84&quot;,6378137,298.257223563,AUTHORITY[&quot;EPSG&quot;,&quot;7030&quot;]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[&quot;EPSG&quot;,&quot;6326&quot;]],PRIMEM[&quot;Greenwich&quot;,0,AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;,0.0174532925199433,AUTHORITY[&quot;EPSG&quot;,&quot;9108&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;4326&quot;]]">
-    <GCP Id="" Pixel="0" Line="1" X="2" Y="3" />
-    <GCP Id="" Pixel="1" Line="2" X="3" Y="4" />
+    <!-- GCPZ : old unconsistant serialization. See #5326 -->
+    <GCP Id="" Pixel="0" Line="1" X="2" Y="3" GCPZ="4" />
+    <GCP Id="" Pixel="1" Line="2" X="3" Y="4" Z="5" />
   </GCPList>
   <PAMRasterBand band="1">
     <Description>MyDescription</Description>
