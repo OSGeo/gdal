@@ -423,7 +423,13 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
              
             psGCP->dfGCPX = atof(CPLGetXMLValue(psXMLGCP,"X","0.0"));
             psGCP->dfGCPY = atof(CPLGetXMLValue(psXMLGCP,"Y","0.0"));
-            psGCP->dfGCPZ = atof(CPLGetXMLValue(psXMLGCP,"Z","0.0"));
+            const char* pszZ = CPLGetXMLValue(psXMLGCP,"Z",NULL);
+            if( pszZ == NULL )
+            {
+                /* Note: GDAL 1.10.1 and older generated #GCPZ, but could not read it back */
+                pszZ = CPLGetXMLValue(psXMLGCP,"GCPZ","0.0");
+            }
+            psGCP->dfGCPZ = atof(pszZ);
 
             nGCPCount++;
         }
