@@ -29,7 +29,10 @@
 
 #include "kdu_file_io.h"
 #include "cpl_error.h"
+#include "cpl_vsi_virtual.h"
 
+#define IO_CHUNK_SIZE 65536L
+#define IO_BUFFER_SIZE 1048576L
 /************************************************************************/
 /*                            subfile_source                            */
 /************************************************************************/
@@ -45,7 +48,7 @@ class subfile_source : public kdu_compressed_source {
 
     bool operator!() { return (file == NULL); }
 
-    void open(const char *fname, int bSequential )
+    void open(const char *fname, int bSequential, int bCached )
       {
           const char *real_filename;
           close();
@@ -94,6 +97,18 @@ class subfile_source : public kdu_compressed_source {
               e << "Unable to open compressed data file, \"" << 
                   real_filename << "\"!";
               return;
+          }
+
+          if ( bCached )
+          {
+              file = (VSILFILE*)VSICreateCachedFile( (VSIVirtualHandle*)file, IO_CHUNK_SIZE, IO_BUFFER_SIZE );
+              if( file == NULL )
+              {
+                  kdu_error e;
+                  e << "Unable to open compressed data file, \"" << 
+                      real_filename << "\"!";
+                  return;
+              }
           }
 
           if( bSequential ) 

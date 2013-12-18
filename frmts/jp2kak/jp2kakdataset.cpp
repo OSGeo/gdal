@@ -112,6 +112,7 @@ class JP2KAKDataset : public GDALJP2AbstractDataset
     bool           bPreferNPReads;
     kdu_thread_env *poThreadEnv;
 
+    int            bCached;
     int            bResilient;
     int            bFussy;
     bool           bUseYCC;
@@ -784,6 +785,7 @@ JP2KAKDataset::JP2KAKDataset()
     jpip_client = NULL;
     poThreadEnv = NULL;
 
+    bCached = 0;
     bPreferNPReads = false;
 
     poDriver = (GDALDriver*) GDALGetDriverByName( "JP2KAK" );
@@ -963,6 +965,16 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
     int bResilient = CSLTestBoolean(
         CPLGetConfigOption( "JP2KAK_RESILIENT", "NO" ) );
 
+    /* Doesn't seem to bring any real performance gain on Linux */
+    int bBuffered = CSLTestBoolean(
+        CPLGetConfigOption( "JP2KAK_BUFFERED",
+#ifdef WIN32
+                            "YES"
+#else
+                            "NO"
+#endif
+                            ) );
+
 /* -------------------------------------------------------------------- */
 /*      Handle setting up datasource for JPIP.                          */
 /* -------------------------------------------------------------------- */
@@ -985,7 +997,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
             try
             {
                 poRawInput = new subfile_source;
-                poRawInput->open( poOpenInfo->pszFilename, bResilient );
+                poRawInput->open( poOpenInfo->pszFilename, bResilient, bBuffered );
                 poRawInput->seek( 0 );
 
                 poRawInput->read( abySubfileHeader, 16 );
@@ -1015,12 +1027,12 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( poRawInput == NULL
         && !bIsJPIP
-        && (bResilient || poOpenInfo->fp == NULL) )
+        && (bBuffered || bResilient || poOpenInfo->fp == NULL) )
     {
         try
         {
             poRawInput = new subfile_source;
-            poRawInput->open( poOpenInfo->pszFilename, bResilient );
+            poRawInput->open( poOpenInfo->pszFilename, bResilient, bBuffered );
             poRawInput->seek( 0 );
         }
         catch( ... )
@@ -1171,6 +1183,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->oCodeStream.create( poInput );
         poDS->oCodeStream.set_persistent();
 
+        poDS->bCached = bBuffered;
         poDS->bResilient = bResilient;
         poDS->bFussy = CSLTestBoolean(
             CPLGetConfigOption( "JP2KAK_FUSSY", "NO" ) );
@@ -1431,7 +1444,7 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag eRWFlag,
 
     if( bPreferNPReads )
     {
-        subfile_src.open( GetDescription(), bResilient );
+        subfile_src.open( GetDescription(), bResilient, bCached );
 
         if( family != NULL )
         {
