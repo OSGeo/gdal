@@ -37,15 +37,27 @@ CPL_CVSID("$Id$");
 /* ==================================================================== */
 /************************************************************************/
 
-#define CHUNK_SIZE  32768
-
 class VSICacheChunk
 {
 public:
-    VSICacheChunk() { 
+    VSICacheChunk() 
+    { 
         poLRUPrev = poLRUNext = NULL;
         nDataFilled = 0;
         bDirty = FALSE;
+        pabyData = NULL;
+    }
+
+    virtual ~VSICacheChunk()
+    {
+        VSIFree( pabyData );
+    }
+
+    bool Allocate( size_t nChunkSize )
+    {
+        CPLAssert( pabyData == NULL );
+        pabyData = (GByte *)VSIMalloc( nChunkSize );
+        return (pabyData != NULL);
     }
 
     int            bDirty;
@@ -55,7 +67,7 @@ public:
     VSICacheChunk *poLRUNext;
 
     vsi_l_offset   nDataFilled;
-    GByte          abyData[CHUNK_SIZE];
+    GByte          *pabyData;
 };
 
 /************************************************************************/
@@ -67,7 +79,9 @@ public:
 class VSICachedFile : public VSIVirtualHandle
 { 
   public:
-    VSICachedFile( VSIVirtualHandle * );
+    VSICachedFile( VSIVirtualHandle *poBaseHandle, 
+                   size_t nChunkSize,
+                   size_t nCacheSize );
     ~VSICachedFile() { Close(); }
 
     void          FlushLRU();
@@ -82,6 +96,8 @@ class VSICachedFile : public VSIVirtualHandle
 
     GUIntBig      nCacheUsed;
     GUIntBig      nCacheMax;
+
+    size_t        nChunkSize;
 
     VSICacheChunk *poLRUStart;
     VSICacheChunk *poLRUEnd;
@@ -103,14 +119,18 @@ class VSICachedFile : public VSIVirtualHandle
 /*                           VSICachedFile()                            */
 /************************************************************************/
 
-VSICachedFile::VSICachedFile( VSIVirtualHandle *poBaseHandle )
+VSICachedFile::VSICachedFile( VSIVirtualHandle *poBaseHandle, size_t nChunkSize, size_t nCacheSize )
 
 {
     poBase = poBaseHandle;
+    this->nChunkSize = nChunkSize;
 
     nCacheUsed = 0;
-    nCacheMax = CPLScanUIntBig( 
-        CPLGetConfigOption( "VSI_CACHE_SIZE", "25000000" ), 40 );
+    if ( nCacheSize == 0 )
+        nCacheMax = CPLScanUIntBig( 
+             CPLGetConfigOption( "VSI_CACHE_SIZE", "25000000" ), 40 );
+    else
+        nCacheMax = nCacheSize;
 
     poLRUStart = NULL;
     poLRUEnd = NULL;
@@ -276,14 +296,19 @@ int VSICachedFile::LoadBlocks( vsi_l_offset nStartBlock, size_t nBlockCount,
 /* -------------------------------------------------------------------- */
     if( nBlockCount == 1 )
     {
-        poBase->Seek( nStartBlock * CHUNK_SIZE, SEEK_SET );
+        poBase->Seek( (vsi_l_offset)nStartBlock * nChunkSize, SEEK_SET );
 
-        apoCache[nStartBlock] = new VSICacheChunk();
+        VSICacheChunk *poBlock = new VSICacheChunk();
+        if ( !poBlock || !poBlock->Allocate( nChunkSize ) )
+        {
+            delete poBlock;
+            return 0;
+        }
 
-        VSICacheChunk *poBlock = apoCache[nStartBlock];
+        apoCache[nStartBlock] = poBlock;
 
         poBlock->iBlock = nStartBlock;
-        poBlock->nDataFilled = poBase->Read( poBlock->abyData, 1, CHUNK_SIZE );
+        poBlock->nDataFilled = poBase->Read( poBlock->pabyData, 1, nChunkSize );
         nCacheUsed += poBlock->nDataFilled;
 
         // Merges into the LRU list. 
@@ -298,8 +323,8 @@ int VSICachedFile::LoadBlocks( vsi_l_offset nStartBlock, size_t nBlockCount,
 /*      io request in two in order to avoid allocating a large          */
 /*      temporary buffer.                                               */
 /* -------------------------------------------------------------------- */
-    if( nBufferSize > CHUNK_SIZE * 20 
-        && nBufferSize < nBlockCount * CHUNK_SIZE )
+    if( nBufferSize > nChunkSize * 20 
+        && nBufferSize < nBlockCount * nChunkSize )
     {
         if( !LoadBlocks( nStartBlock, 2, pBuffer, nBufferSize ) )
             return 0;
@@ -312,23 +337,28 @@ int VSICachedFile::LoadBlocks( vsi_l_offset nStartBlock, size_t nBlockCount,
 /* -------------------------------------------------------------------- */
     GByte *pabyWorkBuffer = (GByte *) pBuffer;
 
-    if( nBufferSize < CHUNK_SIZE * nBlockCount )
-        pabyWorkBuffer = (GByte *) CPLMalloc(CHUNK_SIZE * nBlockCount);
+    if( nBufferSize < nChunkSize * nBlockCount )
+        pabyWorkBuffer = (GByte *) CPLMalloc(nChunkSize * nBlockCount);
 
 /* -------------------------------------------------------------------- */
 /*      Read the whole request into the working buffer.                 */
 /* -------------------------------------------------------------------- */
-    if( poBase->Seek( nStartBlock * CHUNK_SIZE, SEEK_SET ) != 0 )
+    if( poBase->Seek( (vsi_l_offset)nStartBlock * nChunkSize, SEEK_SET ) != 0 )
         return 0;
 
-    size_t nDataRead = poBase->Read( pabyWorkBuffer, 1, nBlockCount*CHUNK_SIZE);
+    size_t nDataRead = poBase->Read( pabyWorkBuffer, 1, nBlockCount*nChunkSize);
 
-    if( nBlockCount * CHUNK_SIZE > nDataRead + CHUNK_SIZE - 1 )
-        nBlockCount = (nDataRead + CHUNK_SIZE - 1) / CHUNK_SIZE;
+    if( nBlockCount * nChunkSize > nDataRead + nChunkSize - 1 )
+        nBlockCount = (nDataRead + nChunkSize - 1) / nChunkSize;
 
     for( size_t i = 0; i < nBlockCount; i++ )
     {
         VSICacheChunk *poBlock = new VSICacheChunk();
+        if ( !poBlock || !poBlock->Allocate( nChunkSize ) )
+        {
+            delete poBlock;
+            return 0;
+        }
 
         poBlock->iBlock = nStartBlock + i;
 
@@ -336,12 +366,12 @@ int VSICachedFile::LoadBlocks( vsi_l_offset nStartBlock, size_t nBlockCount,
 
         apoCache[i + nStartBlock] = poBlock;
 
-        if( nDataRead >= (i+1) * CHUNK_SIZE )
-            poBlock->nDataFilled = CHUNK_SIZE;
+        if( nDataRead >= (i+1) * nChunkSize )
+            poBlock->nDataFilled = nChunkSize;
         else
-            poBlock->nDataFilled = nDataRead - i*CHUNK_SIZE;
+            poBlock->nDataFilled = nDataRead - i*nChunkSize;
 
-        memcpy( poBlock->abyData, pabyWorkBuffer + i*CHUNK_SIZE,
+        memcpy( poBlock->pabyData, pabyWorkBuffer + i*nChunkSize,
                 (size_t) poBlock->nDataFilled );
 
         nCacheUsed += poBlock->nDataFilled;
@@ -372,8 +402,8 @@ size_t VSICachedFile::Read( void * pBuffer, size_t nSize, size_t nCount )
 /* ==================================================================== */
 /*      Make sure the cache is loaded for the whole request region.     */
 /* ==================================================================== */
-    vsi_l_offset nStartBlock = nOffset / CHUNK_SIZE;
-    vsi_l_offset nEndBlock = (nOffset + nSize * nCount - 1) / CHUNK_SIZE;
+    vsi_l_offset nStartBlock = nOffset / nChunkSize;
+    vsi_l_offset nEndBlock = (nOffset + nSize * nCount - 1) / nChunkSize;
 
     for( vsi_l_offset iBlock = nStartBlock; iBlock <= nEndBlock; iBlock++ )
     {
@@ -396,7 +426,7 @@ size_t VSICachedFile::Read( void * pBuffer, size_t nSize, size_t nCount )
 
     while( nAmountCopied < nSize * nCount )
     {
-        vsi_l_offset iBlock = (nOffset + nAmountCopied) / CHUNK_SIZE;
+        vsi_l_offset iBlock = (nOffset + nAmountCopied) / nChunkSize;
         size_t nThisCopy;
         VSICacheChunk *poBlock = apoCache[iBlock];
         if( poBlock == NULL )
@@ -404,13 +434,14 @@ size_t VSICachedFile::Read( void * pBuffer, size_t nSize, size_t nCount )
             /* We can reach that point when the amount to read exceeds */
             /* the cache size */
             LoadBlocks( iBlock, 1, ((GByte *) pBuffer) + nAmountCopied,
-                        MIN(nSize * nCount - nAmountCopied, CHUNK_SIZE) );
+                        MIN(nSize * nCount - nAmountCopied, nChunkSize) );
             poBlock = apoCache[iBlock];
             CPLAssert(poBlock != NULL);
         }
 
+        vsi_l_offset nStartOffset = (vsi_l_offset)iBlock * nChunkSize;
         nThisCopy = (size_t)
-            ((iBlock * CHUNK_SIZE + poBlock->nDataFilled) 
+            ((nStartOffset + poBlock->nDataFilled) 
              - nAmountCopied - nOffset);
         
         if( nThisCopy > nSize * nCount - nAmountCopied )
@@ -420,8 +451,8 @@ size_t VSICachedFile::Read( void * pBuffer, size_t nSize, size_t nCount )
             break;
 
         memcpy( ((GByte *) pBuffer) + nAmountCopied,
-                poBlock->abyData 
-                + (nOffset + nAmountCopied) - iBlock * CHUNK_SIZE, 
+                poBlock->pabyData 
+                + (nOffset + nAmountCopied) - nStartOffset, 
                 nThisCopy );
 
         nAmountCopied += nThisCopy;
@@ -476,8 +507,8 @@ int VSICachedFile::Flush()
 /************************************************************************/
 
 VSIVirtualHandle *
-VSICreateCachedFile( VSIVirtualHandle *poBaseHandle )
+VSICreateCachedFile( VSIVirtualHandle *poBaseHandle, size_t nChunkSize, size_t nCacheSize )
 
 {
-    return new VSICachedFile( poBaseHandle );
+    return new VSICachedFile( poBaseHandle, nChunkSize, nCacheSize );
 }
