@@ -309,6 +309,7 @@ class CPL_DLL OGRLineString : public OGRCurve
     void        setNumPoints( int nNewPointCount, int bZeroizeNewContent = TRUE );
     void        setPoint( int, OGRPoint * );
     void        setPoint( int, double, double );
+    void        setZ( int, double );
     void        setPoint( int, double, double, double );
     void        setPoints( int, OGRRawPoint *, double * = NULL );
     void        setPoints( int, double * padfX, double * padfY,
