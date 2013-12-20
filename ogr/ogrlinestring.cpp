@@ -435,6 +435,26 @@ void OGRLineString::setPoint( int iPoint, double xIn, double yIn )
 }
 
 /************************************************************************/
+/*                                setZ()                                */
+/************************************************************************/
+
+void OGRLineString::setZ( int iPoint, double zIn )
+{
+    if( getCoordinateDimension() == 2 )
+        Make3D();
+
+    if( iPoint >= nPointCount )
+    {
+        setNumPoints( iPoint+1 );
+        if (nPointCount < iPoint + 1)
+            return;
+    }
+
+    if( padfZ )
+        padfZ[iPoint] = zIn;
+}
+
+/************************************************************************/
 /*                              addPoint()                              */
 /************************************************************************/
 
