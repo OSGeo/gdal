@@ -72,6 +72,13 @@
 #define ESRI_LAYERGEOMTYPE_POLYGON       4
 #define ESRI_LAYERGEOMTYPE_MULTIPATCH    9
 
+void OGRCreateFromMultiPatchPart(OGRMultiPolygon *poMP,
+                                 OGRPolygon*& poLastPoly,
+                                 int nPartType,
+                                 int nPartPoints,
+                                 double* padfX,
+                                 double* padfY,
+                                 double* padfZ);
 
 OGRErr CPL_DLL OGRCreateFromShapeBin( GByte *pabyShape,
                               OGRGeometry **ppoGeom,
