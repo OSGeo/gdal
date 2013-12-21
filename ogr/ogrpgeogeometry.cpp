@@ -45,6 +45,166 @@ CPL_CVSID("$Id$");
 
 
 /************************************************************************/
+/*                  OGRCreateFromMultiPatchPart()                       */
+/************************************************************************/
+
+void OGRCreateFromMultiPatchPart(OGRMultiPolygon *poMP,
+                                 OGRPolygon*& poLastPoly,
+                                 int nPartType,
+                                 int nPartPoints,
+                                 double* padfX,
+                                 double* padfY,
+                                 double* padfZ)
+{
+    nPartType &= 0xf;
+
+    if( nPartType == SHPP_TRISTRIP )
+    {
+        int iBaseVert;
+
+        if( poLastPoly != NULL )
+        {
+            poMP->addGeometryDirectly( poLastPoly );
+            poLastPoly = NULL;
+        }
+
+        for( iBaseVert = 0; iBaseVert < nPartPoints-2; iBaseVert++ )
+        {
+            OGRPolygon *poPoly = new OGRPolygon();
+            OGRLinearRing *poRing = new OGRLinearRing();
+            int iSrcVert = iBaseVert;
+
+            poRing->setPoint( 0,
+                            padfX[iSrcVert],
+                            padfY[iSrcVert],
+                            padfZ[iSrcVert] );
+            poRing->setPoint( 1,
+                            padfX[iSrcVert+1],
+                            padfY[iSrcVert+1],
+                            padfZ[iSrcVert+1] );
+
+            poRing->setPoint( 2,
+                            padfX[iSrcVert+2],
+                            padfY[iSrcVert+2],
+                            padfZ[iSrcVert+2] );
+            poRing->setPoint( 3,
+                            padfX[iSrcVert],
+                            padfY[iSrcVert],
+                            padfZ[iSrcVert] );
+
+            poPoly->addRingDirectly( poRing );
+            poMP->addGeometryDirectly( poPoly );
+        }
+    }
+    else if( nPartType == SHPP_TRIFAN )
+    {
+        int iBaseVert;
+
+        if( poLastPoly != NULL )
+        {
+            poMP->addGeometryDirectly( poLastPoly );
+            poLastPoly = NULL;
+        }
+
+        for( iBaseVert = 0; iBaseVert < nPartPoints-2; iBaseVert++ )
+        {
+            OGRPolygon *poPoly = new OGRPolygon();
+            OGRLinearRing *poRing = new OGRLinearRing();
+            int iSrcVert = iBaseVert;
+
+            poRing->setPoint( 0,
+                            padfX[0],
+                            padfY[0],
+                            padfZ[0] );
+            poRing->setPoint( 1,
+                            padfX[iSrcVert+1],
+                            padfY[iSrcVert+1],
+                            padfZ[iSrcVert+1] );
+
+            poRing->setPoint( 2,
+                            padfX[iSrcVert+2],
+                            padfY[iSrcVert+2],
+                            padfZ[iSrcVert+2] );
+            poRing->setPoint( 3,
+                            padfX[0],
+                            padfY[0],
+                            padfZ[0] );
+
+            poPoly->addRingDirectly( poRing );
+            poMP->addGeometryDirectly( poPoly );
+        }
+    }
+    else if( nPartType == SHPP_OUTERRING
+            || nPartType == SHPP_INNERRING
+            || nPartType == SHPP_FIRSTRING
+            || nPartType == SHPP_RING )
+    {
+        if( poLastPoly != NULL
+            && (nPartType == SHPP_OUTERRING
+                || nPartType == SHPP_FIRSTRING) )
+        {
+            poMP->addGeometryDirectly( poLastPoly );
+            poLastPoly = NULL;
+        }
+
+        if( poLastPoly == NULL )
+            poLastPoly = new OGRPolygon();
+
+        OGRLinearRing *poRing = new OGRLinearRing;
+
+        poRing->setPoints( nPartPoints,
+                            padfX,
+                            padfY,
+                            padfZ );
+
+        poRing->closeRings();
+
+        poLastPoly->addRingDirectly( poRing );
+    }
+    else if ( nPartType == SHPP_TRIANGLES )
+    {
+        int iBaseVert;
+
+        if( poLastPoly != NULL )
+        {
+            poMP->addGeometryDirectly( poLastPoly );
+            poLastPoly = NULL;
+        }
+
+        for( iBaseVert = 0; iBaseVert < nPartPoints-2; iBaseVert+=3 )
+        {
+            OGRPolygon *poPoly = new OGRPolygon();
+            OGRLinearRing *poRing = new OGRLinearRing();
+            int iSrcVert = iBaseVert;
+
+            poRing->setPoint( 0,
+                            padfX[iSrcVert],
+                            padfY[iSrcVert],
+                            padfZ[iSrcVert] );
+            poRing->setPoint( 1,
+                            padfX[iSrcVert+1],
+                            padfY[iSrcVert+1],
+                            padfZ[iSrcVert+1] );
+
+            poRing->setPoint( 2,
+                            padfX[iSrcVert+2],
+                            padfY[iSrcVert+2],
+                            padfZ[iSrcVert+2] );
+            poRing->setPoint( 3,
+                            padfX[iSrcVert],
+                            padfY[iSrcVert],
+                            padfZ[iSrcVert] );
+
+            poPoly->addRingDirectly( poRing );
+            poMP->addGeometryDirectly( poPoly );
+        }
+    }
+    else
+        CPLDebug( "OGR", "Unrecognised parttype %d, ignored.",
+                nPartType );
+}
+
+/************************************************************************/
 /*                     OGRCreateFromMultiPatch()                        */
 /*                                                                      */
 /*      Translate a multipatch representation to an OGR geometry        */
@@ -85,152 +245,13 @@ static OGRGeometry* OGRCreateFromMultiPatch(int nParts,
             nPartStart = panPartStart[iPart];
         }
 
-        panPartType[iPart] &= 0xf;
-
-        if( panPartType[iPart] == SHPP_TRISTRIP )
-        {
-            int iBaseVert;
-
-            if( poLastPoly != NULL )
-            {
-                poMP->addGeometryDirectly( poLastPoly );
-                poLastPoly = NULL;
-            }
-
-            for( iBaseVert = 0; iBaseVert < nPartPoints-2; iBaseVert++ )
-            {
-                OGRPolygon *poPoly = new OGRPolygon();
-                OGRLinearRing *poRing = new OGRLinearRing();
-                int iSrcVert = iBaseVert + nPartStart;
-
-                poRing->setPoint( 0,
-                                padfX[iSrcVert],
-                                padfY[iSrcVert],
-                                padfZ[iSrcVert] );
-                poRing->setPoint( 1,
-                                padfX[iSrcVert+1],
-                                padfY[iSrcVert+1],
-                                padfZ[iSrcVert+1] );
-
-                poRing->setPoint( 2,
-                                padfX[iSrcVert+2],
-                                padfY[iSrcVert+2],
-                                padfZ[iSrcVert+2] );
-                poRing->setPoint( 3,
-                                padfX[iSrcVert],
-                                padfY[iSrcVert],
-                                padfZ[iSrcVert] );
-
-                poPoly->addRingDirectly( poRing );
-                poMP->addGeometryDirectly( poPoly );
-            }
-        }
-        else if( panPartType[iPart] == SHPP_TRIFAN )
-        {
-            int iBaseVert;
-
-            if( poLastPoly != NULL )
-            {
-                poMP->addGeometryDirectly( poLastPoly );
-                poLastPoly = NULL;
-            }
-
-            for( iBaseVert = 0; iBaseVert < nPartPoints-2; iBaseVert++ )
-            {
-                OGRPolygon *poPoly = new OGRPolygon();
-                OGRLinearRing *poRing = new OGRLinearRing();
-                int iSrcVert = iBaseVert + nPartStart;
-
-                poRing->setPoint( 0,
-                                padfX[nPartStart],
-                                padfY[nPartStart],
-                                padfZ[nPartStart] );
-                poRing->setPoint( 1,
-                                padfX[iSrcVert+1],
-                                padfY[iSrcVert+1],
-                                padfZ[iSrcVert+1] );
-
-                poRing->setPoint( 2,
-                                padfX[iSrcVert+2],
-                                padfY[iSrcVert+2],
-                                padfZ[iSrcVert+2] );
-                poRing->setPoint( 3,
-                                padfX[nPartStart],
-                                padfY[nPartStart],
-                                padfZ[nPartStart] );
-
-                poPoly->addRingDirectly( poRing );
-                poMP->addGeometryDirectly( poPoly );
-            }
-        }
-        else if( panPartType[iPart] == SHPP_OUTERRING
-                || panPartType[iPart] == SHPP_INNERRING
-                || panPartType[iPart] == SHPP_FIRSTRING
-                || panPartType[iPart] == SHPP_RING )
-        {
-            if( poLastPoly != NULL
-                && (panPartType[iPart] == SHPP_OUTERRING
-                    || panPartType[iPart] == SHPP_FIRSTRING) )
-            {
-                poMP->addGeometryDirectly( poLastPoly );
-                poLastPoly = NULL;
-            }
-
-            if( poLastPoly == NULL )
-                poLastPoly = new OGRPolygon();
-
-            OGRLinearRing *poRing = new OGRLinearRing;
-
-            poRing->setPoints( nPartPoints,
-                                padfX + nPartStart,
-                                padfY + nPartStart,
-                                padfZ + nPartStart );
-
-            poRing->closeRings();
-
-            poLastPoly->addRingDirectly( poRing );
-        }
-        else if ( panPartType[iPart] == SHPP_TRIANGLES )
-        {
-            int iBaseVert;
-
-            if( poLastPoly != NULL )
-            {
-                poMP->addGeometryDirectly( poLastPoly );
-                poLastPoly = NULL;
-            }
-
-            for( iBaseVert = 0; iBaseVert < nPartPoints-2; iBaseVert+=3 )
-            {
-                OGRPolygon *poPoly = new OGRPolygon();
-                OGRLinearRing *poRing = new OGRLinearRing();
-                int iSrcVert = iBaseVert + nPartStart;
-
-                poRing->setPoint( 0,
-                                padfX[iSrcVert],
-                                padfY[iSrcVert],
-                                padfZ[iSrcVert] );
-                poRing->setPoint( 1,
-                                padfX[iSrcVert+1],
-                                padfY[iSrcVert+1],
-                                padfZ[iSrcVert+1] );
-
-                poRing->setPoint( 2,
-                                padfX[iSrcVert+2],
-                                padfY[iSrcVert+2],
-                                padfZ[iSrcVert+2] );
-                poRing->setPoint( 3,
-                                padfX[iSrcVert],
-                                padfY[iSrcVert],
-                                padfZ[iSrcVert] );
-
-                poPoly->addRingDirectly( poRing );
-                poMP->addGeometryDirectly( poPoly );
-            }
-        }
-        else
-            CPLDebug( "OGR", "Unrecognised parttype %d, ignored.",
-                    panPartType[iPart] );
+        OGRCreateFromMultiPatchPart(poMP,
+                                    poLastPoly,
+                                    panPartType[iPart],
+                                    nPartPoints,
+                                    padfX + nPartStart,
+                                    padfY + nPartStart,
+                                    padfZ + nPartStart);
     }
 
     if( poLastPoly != NULL )
