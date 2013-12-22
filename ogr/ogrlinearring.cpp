@@ -118,11 +118,13 @@ OGRErr OGRLinearRing::importFromWkb( unsigned char *pabyData, int nSize )
 /************************************************************************/
 
 OGRErr OGRLinearRing::exportToWkb( OGRwkbByteOrder eByteOrder, 
-                                   unsigned char * pabyData ) const
+                                   unsigned char * pabyData,
+                                   OGRwkbVariant eWkbVariant ) const
 
 {
     (void) eByteOrder;
     (void) pabyData;
+    (void) eWkbVariant;
 
     return OGRERR_UNSUPPORTED_OPERATION;
 }

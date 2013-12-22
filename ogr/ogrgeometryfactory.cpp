@@ -118,10 +118,13 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
 /*      geometry type is between 0 and 255 so we only have to fetch     */
 /*      one byte.                                                       */
 /* -------------------------------------------------------------------- */
-    if( eByteOrder == wkbNDR )
-        eGeometryType = (OGRwkbGeometryType) pabyData[1];
-    else
-        eGeometryType = (OGRwkbGeometryType) pabyData[4];
+
+    OGRBoolean bIs3D;
+    OGRErr err = OGRReadWKBGeometryType( pabyData, &eGeometryType, &bIs3D );
+
+    if( err != OGRERR_NONE )
+        return err;
+
 
 /* -------------------------------------------------------------------- */
 /*      Instantiate a geometry of the appropriate type, and             */
