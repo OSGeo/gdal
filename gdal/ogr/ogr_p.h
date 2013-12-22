@@ -138,4 +138,10 @@ OGRGeometry CPL_DLL *OGRGeometryFromEWKB( GByte *pabyWKB, int nLength, int* pnSR
 OGRGeometry CPL_DLL *OGRGeometryFromHexEWKB( const char *pszBytea, int* pnSRID );
 char CPL_DLL * OGRGeometryToHexEWKB( OGRGeometry * poGeometry, int nSRSId );
 
+/************************************************************************/
+/*                        WKB Type Handling encoding                    */
+/************************************************************************/
+
+OGRErr OGRReadWKBGeometryType( unsigned char * pabyData, OGRwkbGeometryType *eGeometryType, OGRBoolean *b3D );
+
 #endif /* ndef OGR_P_H_INCLUDED */

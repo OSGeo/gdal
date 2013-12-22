@@ -1423,3 +1423,69 @@ OGRErr OGRCheckPermutation(int* panPermutation, int nSize)
     CPLFree(panCheck);
     return eErr;
 }
+
+
+OGRErr OGRReadWKBGeometryType( unsigned char * pabyData, OGRwkbGeometryType *peGeometryType, OGRBoolean *pbIs3D )
+{
+    if ( ! (peGeometryType && pbIs3D) )
+        return OGRERR_FAILURE;
+    
+/* -------------------------------------------------------------------- */
+/*      Get the byte order byte.                                        */
+/* -------------------------------------------------------------------- */
+    OGRwkbByteOrder eByteOrder = DB2_V72_FIX_BYTE_ORDER((OGRwkbByteOrder) *pabyData);
+    if (!( eByteOrder == wkbXDR || eByteOrder == wkbNDR ))
+        return OGRERR_CORRUPT_DATA;
+
+/* -------------------------------------------------------------------- */
+/*      Get the geometry feature type.  For now we assume that          */
+/*      geometry type is between 0 and 255 so we only have to fetch     */
+/*      one byte.                                                       */
+/* -------------------------------------------------------------------- */
+    int bIs3D = FALSE;
+    int iRawType;
+    
+    memcpy(&iRawType, pabyData + 1, 4);
+    if ( OGR_SWAP(eByteOrder))
+    {
+        CPL_SWAP32PTR(&iRawType);
+    }
+    
+    /* Old-style OGC z-bit is flipped? */
+    if ( wkb25DBit & iRawType )
+    {
+        /* Clean off top 3 bytes */
+        iRawType &= 0x000000FF;
+        bIs3D = TRUE;        
+    }
+    
+    /* ISO SQL/MM style Z types (between 1001 and 1007)? */
+    if ( iRawType >= 1001 && iRawType <= 1007 )
+    {
+        /* Remove the ISO padding */
+        iRawType -= 1000;
+        bIs3D = TRUE;
+    }
+    
+    /* Sometimes the Z flag is in the 2nd byte? */
+    if ( iRawType & (wkb25DBit >> 16) )
+    {
+        /* Clean off top 3 bytes */
+        iRawType &= 0x000000FF;
+        bIs3D = TRUE;        
+    }
+
+    /* Nothing left but (hopefully) basic 2D types */
+
+    /* What if what we have is still out of range? */
+    if ( iRawType < 1 || iRawType > wkbGeometryCollection )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Unsupported WKB type %d", iRawType);            
+        return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+    }
+
+    *pbIs3D = bIs3D;
+    *peGeometryType = (OGRwkbGeometryType)iRawType;
+    
+    return OGRERR_NONE;
+}
