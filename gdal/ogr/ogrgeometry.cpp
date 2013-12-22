@@ -566,6 +566,15 @@ OGRErr OGR_G_Transform( OGRGeometryH hGeom,
  * @return 0 for points, 1 for lines and 2 for surfaces.
  */
 
+int OGRGeometry::getIsoGeometryType() const
+{
+    int nGType = wkbFlatten(getGeometryType());
+
+    if ( getCoordinateDimension() == 3 )
+        nGType += 1000;
+
+    return nGType;
+}
 
 /************************************************************************/
 /*                  OGRGeometry::segmentize()                           */

@@ -106,11 +106,12 @@ void OGRPolygon::empty()
 OGRwkbGeometryType OGRPolygon::getGeometryType() const
 
 {
-    if( getCoordinateDimension() == 3 )
+    if( nCoordDimension == 3 )
         return wkbPolygon25D;
     else
         return wkbPolygon;
 }
+
 
 /************************************************************************/
 /*                            getDimension()                            */
@@ -337,7 +338,7 @@ OGRErr OGRPolygon::importFromWkb( unsigned char * pabyData,
 
 {
     OGRwkbByteOrder     eByteOrder;
-    int                 nDataOffset, b3D;
+    int                 nDataOffset;
     
     if( nSize < 9 && nSize != -1 )
         return OGRERR_NOT_ENOUGH_DATA;
@@ -354,27 +355,19 @@ OGRErr OGRPolygon::importFromWkb( unsigned char * pabyData,
 /*      geometry type is between 0 and 255 so we only have to fetch     */
 /*      one byte.                                                       */
 /* -------------------------------------------------------------------- */
-#ifdef DEBUG
+
+    OGRBoolean b3D;
     OGRwkbGeometryType eGeometryType;
-    
-    if( eByteOrder == wkbNDR )
-        eGeometryType = (OGRwkbGeometryType) pabyData[1];
-    else
-        eGeometryType = (OGRwkbGeometryType) pabyData[4];
+    OGRErr err = OGRReadWKBGeometryType( pabyData, &eGeometryType, &b3D );
 
-    if( eGeometryType != wkbPolygon )
+    if( err != OGRERR_NONE || eGeometryType != wkbPolygon )
         return OGRERR_CORRUPT_DATA;
-#endif    
-
-    if( eByteOrder == wkbNDR )
-        b3D = pabyData[4] & 0x80 || pabyData[2] & 0x80;
-    else
-        b3D = pabyData[1] & 0x80 || pabyData[3] & 0x80;
 
     if( b3D )
         nCoordDimension = 3;
     else
         nCoordDimension = 2;
+
 
 /* -------------------------------------------------------------------- */
 /*      Do we already have some rings?                                  */
@@ -456,7 +449,8 @@ OGRErr OGRPolygon::importFromWkb( unsigned char * pabyData,
 /************************************************************************/
 
 OGRErr  OGRPolygon::exportToWkb( OGRwkbByteOrder eByteOrder,
-                                 unsigned char * pabyData ) const
+                                 unsigned char * pabyData,
+                                 OGRwkbVariant eWkbVariant ) const
 
 {
     int         nOffset;
@@ -471,6 +465,9 @@ OGRErr  OGRPolygon::exportToWkb( OGRwkbByteOrder eByteOrder,
 /*      Set the geometry feature type.                                  */
 /* -------------------------------------------------------------------- */
     GUInt32 nGType = getGeometryType();
+
+    if ( eWkbVariant == wkbVariantIso )
+        nGType = getIsoGeometryType();
     
     if( eByteOrder == wkbNDR )
         nGType = CPL_LSBWORD32( nGType );
@@ -722,8 +719,8 @@ OGRErr OGRPolygon::exportToWkt( char ** ppszDstText ) const
 /* -------------------------------------------------------------------- */
 /*      If we have no valid exterior ring, return POLYGON EMPTY.        */
 /* -------------------------------------------------------------------- */
-    if (getExteriorRing() == NULL ||
-        getExteriorRing()->IsEmpty())
+    if (getExteriorRing() == NULL || 
+        getExteriorRing()->IsEmpty() )
     {
         *ppszDstText = CPLStrdup("POLYGON EMPTY");
         return OGRERR_NONE;
@@ -810,7 +807,7 @@ error:
 int OGRPolygon::PointOnSurface( OGRPoint *poPoint ) const
 
 {
-    if( poPoint == NULL )
+    if( poPoint == NULL || poPoint->IsEmpty() )
         return OGRERR_FAILURE;
 
     OGRGeometryH hInsidePoint = OGR_G_PointOnSurface( (OGRGeometryH) this );
@@ -933,6 +930,9 @@ OGRBoolean OGRPolygon::Equals( OGRGeometry * poOther ) const
     
     if( poOther->getGeometryType() != getGeometryType() )
         return FALSE;
+
+    if ( IsEmpty() && poOther->IsEmpty() )
+        return TRUE;
 
     if( getNumInteriorRings() != poOPoly->getNumInteriorRings() )
         return FALSE;
@@ -1075,7 +1075,7 @@ void OGRPolygon::setCoordinateDimension( int nNewDimension )
 OGRBoolean OGRPolygon::IsEmpty(  ) const
 {
     for( int iRing = 0; iRing < nRingCount; iRing++ )
-        if (papoRings[iRing]->IsEmpty() == FALSE)
+        if ( papoRings[iRing]->IsEmpty() == FALSE )
             return FALSE;
     return TRUE;
 }
