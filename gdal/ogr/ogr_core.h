@@ -61,7 +61,12 @@ class CPL_DLL OGREnvelope
     double      MinY;
     double      MaxY;
 
+/* See http://trac.osgeo.org/gdal/ticket/5299 for details on this pragma */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
     int  IsInit() const { return MinX != 0 || MinY != 0 || MaxX != 0 || MaxY != 0; }
+#pragma GCC diagnostic pop
+
     void Merge( OGREnvelope const& sOther ) {
         if( IsInit() )
         {
