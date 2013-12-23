@@ -30,6 +30,9 @@
 #include "ogr_geometry.h"
 #include "ogr_p.h"
 
+/* for std::numeric_limits */
+#include <limits>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
