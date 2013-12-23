@@ -973,7 +973,8 @@ OGRErr OGR_G_ImportFromWkb( OGRGeometryH hGeom,
 
 /**
  * \fn OGRErr OGRGeometry::exportToWkb( OGRwkbByteOrder eByteOrder,
-                                        unsigned char * pabyData ) const;
+                                        unsigned char * pabyData,
+                                        OGRwkbVariant eWkbVariant=wkbVariantOgc ) const
  *
  * \brief Convert a geometry into well known binary format.
  *
@@ -986,6 +987,11 @@ OGRErr OGR_G_ImportFromWkb( OGRGeometryH hGeom,
  * @param pabyData a buffer into which the binary representation is
  *                      written.  This buffer must be at least
  *                      OGRGeometry::WkbSize() byte in size.
+ * @param eWkbVariant What standard to use when exporting geometries with 
+ *                      three dimensions (or more). The default wkbVariantOgc is 
+ *                      the historical OGR variant. wkbVariantIso is the 
+ *                      variant defined in ISO SQL/MM and adopted by OGC 
+ *                      for SFSQL 1.2.
  *
  * @return Currently OGRERR_NONE is always returned.
  */
