@@ -855,6 +855,40 @@ def ogr_rfc28_39():
         return 'fail'
 
 ###############################################################################
+# Test MIN(), MAX() and AVG() on a date (#5333)
+
+def ogr_rfc28_40():
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    lyr = ds.CreateLayer('test')
+    lyr.CreateField(ogr.FieldDefn('DATE', ogr.OFTDateTime))
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, '2013/12/31 23:59:59')
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, '2013/01/01 00:00:00')
+    lyr.CreateFeature(feat)
+    lyr = ds.ExecuteSQL( "SELECT MIN(DATE), MAX(DATE), AVG(DATE) from test" )
+
+    tr = ogrtest.check_features_against_list( lyr, 'MIN_DATE', ['2013/01/01 00:00:00'] )
+    lyr.ResetReading()
+    tr2 = ogrtest.check_features_against_list( lyr, 'MAX_DATE', ['2013/12/31 23:59:59'] )
+    lyr.ResetReading()
+    tr3 = ogrtest.check_features_against_list( lyr, 'AVG_DATE', ['2013/07/02 11:59:59'] )
+
+    gdaltest.ds.ReleaseResultSet( lyr )
+
+    if not tr:
+        return 'fail'
+
+    if not tr2:
+        return 'fail'
+
+    if not tr3:
+        return 'fail'
+    return 'success'
+
+###############################################################################
 def ogr_rfc28_cleanup():
     gdaltest.lyr = None
     gdaltest.ds.Destroy()
@@ -903,6 +937,7 @@ gdaltest_list = [
     ogr_rfc28_37,
     ogr_rfc28_38,
     ogr_rfc28_39,
+    ogr_rfc28_40,
     ogr_rfc28_cleanup ]
 
 if __name__ == '__main__':
