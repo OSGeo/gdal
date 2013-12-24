@@ -1590,6 +1590,12 @@ OGRLayer* OGRDataSource::BuildLayerFromSelectInfo(void* psSelectInfoIn,
                 sFieldList.types[iOutField] = SWQ_FLOAT;
             else if( poFDefn->GetType() == OFTString )
                 sFieldList.types[iOutField] = SWQ_STRING;
+            else if( poFDefn->GetType() == OFTTime )
+                sFieldList.types[iOutField] = SWQ_TIME;
+            else if( poFDefn->GetType() == OFTDate )
+                sFieldList.types[iOutField] = SWQ_DATE;
+            else if( poFDefn->GetType() == OFTDateTime )
+                sFieldList.types[iOutField] = SWQ_TIMESTAMP;
             else
                 sFieldList.types[iOutField] = SWQ_OTHER;
 
