@@ -32,6 +32,7 @@
 #include "ogr_gensql.h"
 #include "cpl_string.h"
 #include "ogr_api.h"
+#include "cpl_time.h"
 #include <vector>
 
 CPL_CVSID("$Id$");
@@ -258,7 +259,10 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
             oFDefn.SetType( OFTInteger );
         else if( poSrcFDefn != NULL )
         {
-            if( psColDef->col_func != SWQCF_AVG )
+            if( psColDef->col_func != SWQCF_AVG ||
+                psColDef->field_type == SWQ_DATE ||
+                psColDef->field_type == SWQ_TIME ||
+                psColDef->field_type == SWQ_TIMESTAMP )
                 oFDefn.SetType( poSrcFDefn->GetType() );
             else
                 oFDefn.SetType( OFTReal );
@@ -923,12 +927,43 @@ int OGRGenSQLResultsLayer::PrepareSummary()
                 swq_summary *psSummary = psSelectInfo->column_summary + iField;
 
                 if( psColDef->col_func == SWQCF_AVG )
-                    poSummaryFeature->SetField( iField,
-                                            psSummary->sum / psSummary->count );
+                {
+                    if( psColDef->field_type == SWQ_DATE ||
+                        psColDef->field_type == SWQ_TIME ||
+                        psColDef->field_type == SWQ_TIMESTAMP)
+                    {
+                        struct tm brokendowntime;
+                        CPLUnixTimeToYMDHMS((GIntBig)(psSummary->sum / psSummary->count), &brokendowntime);
+                        poSummaryFeature->SetField( iField,
+                                                    brokendowntime.tm_year + 1900,
+                                                    brokendowntime.tm_mon + 1,
+                                                    brokendowntime.tm_mday,
+                                                    brokendowntime.tm_hour,
+                                                    brokendowntime.tm_min,
+                                                    brokendowntime.tm_sec, 0);
+                    }
+                    else
+                        poSummaryFeature->SetField( iField,
+                                                    psSummary->sum / psSummary->count );
+                }
                 else if( psColDef->col_func == SWQCF_MIN )
-                    poSummaryFeature->SetField( iField, psSummary->min );
+                {
+                    if( psColDef->field_type == SWQ_DATE ||
+                        psColDef->field_type == SWQ_TIME ||
+                        psColDef->field_type == SWQ_TIMESTAMP)
+                        poSummaryFeature->SetField( iField, psSummary->szMin );
+                    else
+                        poSummaryFeature->SetField( iField, psSummary->min );
+                }
                 else if( psColDef->col_func == SWQCF_MAX )
-                    poSummaryFeature->SetField( iField, psSummary->max );
+                {
+                    if( psColDef->field_type == SWQ_DATE ||
+                        psColDef->field_type == SWQ_TIME ||
+                        psColDef->field_type == SWQ_TIMESTAMP)
+                        poSummaryFeature->SetField( iField, psSummary->szMax );
+                    else
+                        poSummaryFeature->SetField( iField, psSummary->max );
+                }
                 else if( psColDef->col_func == SWQCF_COUNT )
                     poSummaryFeature->SetField( iField, psSummary->count );
                 else if( psColDef->col_func == SWQCF_SUM )
