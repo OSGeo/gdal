@@ -253,6 +253,8 @@ typedef struct {
     double      sum;
     double      min;
     double      max;
+    char        szMin[32];
+    char        szMax[32];
 } swq_summary;
 
 typedef struct {
