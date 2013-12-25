@@ -907,7 +907,7 @@ GDALDataset *GSBGDataset::Create( const char * pszFilename,
         && eType != GDT_Int16 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-		  "Golden Software ASCII Grid only supports Byte, Int16, "
+		  "Golden Software Binary Grid only supports Byte, Int16, "
 		  "Uint16, and Float32 datatypes.  Unable to create with "
 		  "type %s.\n", GDALGetDataTypeName( eType ) );
 
