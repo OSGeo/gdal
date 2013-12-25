@@ -1563,6 +1563,47 @@ def ogr_sql_sqlite_26():
 
     return 'success'
 
+
+###############################################################################
+# Test MIN(), MAX() on a date
+
+def ogr_sql_sqlite_27():
+
+    if not ogrtest.has_sqlite_dialect:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    lyr = ds.CreateLayer('test')
+    lyr.CreateField(ogr.FieldDefn('DATE', ogr.OFTDateTime))
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, '2013/12/31 23:59:59')
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, '2013/01/01 00:00:00')
+    lyr.CreateFeature(feat)
+    lyr = ds.ExecuteSQL( "SELECT MIN(DATE), MAX(DATE) from test", dialect = 'SQLite' )
+    if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTDateTime:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(1).GetType() != ogr.OFTDateTime:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    tr = ogrtest.check_features_against_list( lyr, 'MIN(DATE)', ['2013/01/01 00:00:00'] )
+    lyr.ResetReading()
+    tr2 = ogrtest.check_features_against_list( lyr, 'MAX(DATE)', ['2013/12/31 23:59:59'] )
+
+    ds.ReleaseResultSet( lyr )
+
+    if not tr:
+        return 'fail'
+
+    if not tr2:
+        return 'fail'
+
+    return 'success'
+
+    
 gdaltest_list = [
     ogr_sql_sqlite_1,
     ogr_sql_sqlite_2,
@@ -1592,6 +1633,7 @@ gdaltest_list = [
     ogr_sql_sqlite_24,
     ogr_sql_sqlite_25,
     ogr_sql_sqlite_26,
+    ogr_sql_sqlite_27
 ]
 
 if __name__ == '__main__':
