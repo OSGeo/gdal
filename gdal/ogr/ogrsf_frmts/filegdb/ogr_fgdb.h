@@ -115,6 +115,8 @@ class FGdbLayer : public FGdbBaseLayer
   OGRErr              PopulateRowWithFeature( Row& row, OGRFeature *poFeature );
   OGRErr              GetRow( EnumRows& enumRows, Row& row, long nFID );
 
+  char              **m_papszOptions;
+
   char*               CreateFieldDefn(OGRFieldDefn& oField,
                                       int bApproxOK,
                                       std::string& fieldname_clean,

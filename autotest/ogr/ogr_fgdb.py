@@ -58,6 +58,13 @@ def ogr_fgdb_init():
         return 'skip'
 
     try:
+        ogrtest.openfilegdb_drv = ogr.GetDriverByName('OpenFileGDB')
+    except:
+        ogrtest.openfilegdb_drv = None
+    if ogrtest.openfilegdb_drv is not None:
+        ogrtest.openfilegdb_drv.Deregister()
+
+    try:
         shutil.rmtree("tmp/test.gdb")
     except:
         pass
@@ -93,16 +100,23 @@ def ogr_fgdb_1():
                  [ "empty_polygon", ogr.wkbPolygon, "POLYGON EMPTY", None],
                ]
 
+    options = ['COLUMN_TYPES=smallint=esriFieldTypeSmallInteger,float=esriFieldTypeSingle,guid=esriFieldTypeGUID,xml=esriFieldTypeXML']
+
     for data in datalist:
         #import pdb; pdb.set_trace()
         if data[1] == ogr.wkbNone:
-            lyr = ds.CreateLayer(data[0], geom_type=data[1])
+            lyr = ds.CreateLayer(data[0], geom_type=data[1], options = options )
         else:
-            lyr = ds.CreateLayer(data[0], geom_type=data[1], srs=srs)
+            lyr = ds.CreateLayer(data[0], geom_type=data[1], srs=srs, options = options )
         lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
         lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
+        lyr.CreateField(ogr.FieldDefn("smallint", ogr.OFTInteger))
         lyr.CreateField(ogr.FieldDefn("int", ogr.OFTInteger))
+        lyr.CreateField(ogr.FieldDefn("float", ogr.OFTReal))
         lyr.CreateField(ogr.FieldDefn("real", ogr.OFTReal))
+        lyr.CreateField(ogr.FieldDefn("adate", ogr.OFTDateTime))
+        lyr.CreateField(ogr.FieldDefn("guid", ogr.OFTString))
+        lyr.CreateField(ogr.FieldDefn("xml", ogr.OFTString))
 
         # We need at least 5 features so that test_ogrsf can test SetFeature()
         for i in range(5):
@@ -111,8 +125,13 @@ def ogr_fgdb_1():
                 feat.SetGeometry(ogr.CreateGeometryFromWkt(data[2]))
             feat.SetField("id", i + 1)
             feat.SetField("str", "foo_\xc3\xa9")
+            feat.SetField("smallint", -13)
             feat.SetField("int", 123)
+            feat.SetField("float", 1.5)
             feat.SetField("real", 4.56)
+            feat.SetField("adate", "2013/12/26 12:34:56")
+            feat.SetField("guid", "{12345678-9abc-DEF0-1234-567890ABCDEF}")
+            feat.SetField("xml", "<foo></foo>")
             lyr.CreateFeature(feat)
 
     for data in datalist:
@@ -133,6 +152,17 @@ def ogr_fgdb_1():
             if geom != expected_wkt:
                 feat.DumpReadable()
                 return 'fail'
+
+        if feat.GetField('id') != 1 or \
+           feat.GetField('smallint') != -13 or \
+           feat.GetField('int') != 123 or \
+           feat.GetField('float') != 1.5 or \
+           feat.GetField('real') != 4.56 or \
+           feat.GetField('adate') != "2013/12/26 12:34:56" or \
+           feat.GetField('guid') != "{12345678-9ABC-DEF0-1234-567890ABCDEF}" or \
+           feat.GetField('xml') != "<foo></foo>":
+            feat.DumpReadable()
+            return 'fail'
 
         sql_lyr = ds.ExecuteSQL("GetLayerDefinition %s" % lyr.GetName())
         if sql_lyr is None:
@@ -773,6 +803,11 @@ def ogr_fgdb_cleanup():
         shutil.rmtree("tmp/poly.gdb")
     except:
         pass
+
+    if ogrtest.openfilegdb_drv is not None:
+        ogrtest.fgdb_drv.Deregister()
+        ogrtest.openfilegdb_drv.Register()
+        ogrtest.fgdb_drv.Register()
 
     return 'success'
 
