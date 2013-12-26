@@ -390,7 +390,8 @@ bool GDBFieldTypeToWidthPrecision(std::string &gdbType, int *width, int *precisi
         *width = 8;
         *precision = 15; // FIXME ?
     }
-    else if(gdbType == "esriFieldTypeString" )
+    else if(gdbType == "esriFieldTypeString" ||
+            gdbType == "esriFieldTypeXML")
     {
         *width = 2147483647;
     }
@@ -401,6 +402,10 @@ bool GDBFieldTypeToWidthPrecision(std::string &gdbType, int *width, int *precisi
     else if(gdbType == "esriFieldTypeOID" )
     {
         *width = 4;
+    }
+    else if(gdbType == "esriFieldTypeGUID" )
+    {
+        *width = 16;
     }
     else
     {
