@@ -470,6 +470,7 @@ void *GDALDeserializeGCPTransformer( CPLXMLNode *psTree )
         for( psXMLGCP = psGCPList->psChild; psXMLGCP != NULL; 
              psXMLGCP = psXMLGCP->psNext )
         {
+            const char* pszZ;
             GDAL_GCP *psGCP = pasGCPList + nGCPCount;
 
             if( !EQUAL(psXMLGCP->pszValue,"GCP") || 
@@ -489,7 +490,7 @@ void *GDALDeserializeGCPTransformer( CPLXMLNode *psTree )
              
             psGCP->dfGCPX = atof(CPLGetXMLValue(psXMLGCP,"X","0.0"));
             psGCP->dfGCPY = atof(CPLGetXMLValue(psXMLGCP,"Y","0.0"));
-            const char* pszZ = CPLGetXMLValue(psXMLGCP,"Z",NULL);
+            pszZ = CPLGetXMLValue(psXMLGCP,"Z",NULL);
             if( pszZ == NULL )
             {
                 /* Note: GDAL 1.10.1 and older generated #GCPZ, but could not read it back */
