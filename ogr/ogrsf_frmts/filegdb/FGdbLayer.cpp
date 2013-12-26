@@ -134,6 +134,7 @@ FGdbLayer::FGdbLayer():
     m_bLayerEnvelopeValid = false;
     m_bLayerJustCreated = false;
 #endif
+    m_papszOptions = NULL;
 }
 
 /************************************************************************/
@@ -162,7 +163,8 @@ FGdbLayer::~FGdbLayer()
         OGRGeometryFactory::destroyGeometry(m_pOGRFilterGeometry);
         m_pOGRFilterGeometry = NULL;
     }
-    
+
+    CSLDestroy(m_papszOptions);
 }
 
 #ifdef EXTENT_WORKAROUND
@@ -482,15 +484,18 @@ OGRErr FGdbLayer::PopulateRowWithFeature( Row& fgdb_row, OGRFeature *poFeature )
         {
             /* Strings we convert to wstring */
             std::string fldvalue = poFeature->GetFieldAsString(i);
-            std::wstring wfldvalue = StringToWString(fldvalue);
             if( strFieldType == "esriFieldTypeString" )
+            {
+                std::wstring wfldvalue = StringToWString(fldvalue);
                 hr = fgdb_row.SetString(wfield_name, wfldvalue);
+            }
             // Apparently, esriFieldTypeGlobalID can not be set, but is
             // initialized by the FileGDB SDK itself.
             else if( strFieldType == "esriFieldTypeGUID" /*||
                      strFieldType == "esriFieldTypeGlobalID" */ )
             {
                 Guid guid;
+                std::wstring wfldvalue = StringToWString(fldvalue);
                 if( FAILED(hr = guid.FromString(wfldvalue)) )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined,
@@ -501,6 +506,10 @@ OGRErr FGdbLayer::PopulateRowWithFeature( Row& fgdb_row, OGRFeature *poFeature )
                 {
                     hr = fgdb_row.SetGUID(wfield_name, guid);
                 }
+            }
+            else if( strFieldType == "esriFieldTypeXML"  )
+            {
+                hr = fgdb_row.SetXML(wfield_name, fldvalue);
             }
             else
                 hr = 0;
@@ -712,6 +721,31 @@ char* FGdbLayer::CreateFieldDefn(OGRFieldDefn& oField,
     {
         GDBErr(-1, "Failed converting field type.");
         return NULL;
+    }
+
+    const char* pszColumnTypes = CSLFetchNameValue(m_papszOptions, "COLUMN_TYPES");
+    if( pszColumnTypes != NULL )
+    {
+        char** papszTokens = CSLTokenizeString2(pszColumnTypes, ",", 0);
+        const char* pszFieldType = CSLFetchNameValue(papszTokens, fieldname.c_str());
+        if( pszFieldType != NULL )
+        {
+            OGRFieldType fldtypeCheck;
+            if( GDBToOGRFieldType(pszFieldType, &fldtypeCheck) )
+            {
+                if( fldtypeCheck != fldtype )
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined, "Ignoring COLUMN_TYPES=%s=%s : %s not consistant with OGR data type",
+                         fieldname.c_str(), pszFieldType, pszFieldType);
+                }
+                else
+                    gdbFieldType = pszFieldType;
+            }
+            else
+                CPLError(CE_Warning, CPLE_AppDefined, "Ignoring COLUMN_TYPES=%s=%s : %s not recognized",
+                         fieldname.c_str(), pszFieldType, pszFieldType);
+        }
+        CSLDestroy(papszTokens);
     }
 
     if (fieldname_clean.size() != 0)
@@ -1534,6 +1568,8 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
         return GDBErr(hr, "Failed at creating table for " + table_path);
     }
 
+    m_papszOptions = CSLDuplicate(papszOptions);
+
     /* Store the new FGDB Table pointer and set up the OGRFeatureDefn */
     return FGdbLayer::Initialize(pParentDataSource, table, wtable_path, L"Table");
 }
@@ -2166,7 +2202,8 @@ bool FGdbBaseLayer::OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature)
             case OFTString:
             {
                 wstring val;
-                
+                std::string strValue;
+
                 if( strFieldType == "esriFieldTypeGlobalID" )
                 {
                     Guid guid;
@@ -2178,6 +2215,7 @@ bool FGdbBaseLayer::OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature)
                         foundBadColumn = true;
                         continue;
                     }
+                    strValue = WStringToString(val);
                 }
                 else if( strFieldType == "esriFieldTypeGUID" )
                 {
@@ -2186,6 +2224,17 @@ bool FGdbBaseLayer::OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature)
                         FAILED(hr = guid.ToString(val)) )
                     {
                         GDBErr(hr, "Failed to determine string value for column " +
+                            WStringToString(wstrFieldName));
+                        foundBadColumn = true;
+                        continue;
+                    }
+                    strValue = WStringToString(val);
+                }
+                else if( strFieldType == "esriFieldTypeXML" )
+                {
+                    if (FAILED(hr = pRow->GetXML(wstrFieldName, strValue)))
+                    {
+                        GDBErr(hr, "Failed to determine XML value for column " +
                             WStringToString(wstrFieldName));
                         foundBadColumn = true;
                         continue;
@@ -2200,9 +2249,10 @@ bool FGdbBaseLayer::OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature)
                         foundBadColumn = true;
                         continue;
                     }
+                    strValue = WStringToString(val);
                 }
 
-                pOutFeature->SetField(i, WStringToString(val).c_str());
+                pOutFeature->SetField(i, strValue.c_str());
             }
             break;
 
