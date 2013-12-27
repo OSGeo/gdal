@@ -1237,7 +1237,93 @@ static int TestSpatialFilter( OGRLayer *poLayer, int iGeomField )
 
     OGRFeature::DestroyFeature(poTargetFeature);
 
+/* -------------------------------------------------------------------- */
+/*     Test infinity envelope                                           */
+/* -------------------------------------------------------------------- */
+
+#define NEG_INF (-1.0 / 0.0)
+#define POS_INF (1.0 / 0.0)
+
+    oRing.setPoint( 0, NEG_INF, NEG_INF );
+    oRing.setPoint( 1, NEG_INF, POS_INF );
+    oRing.setPoint( 2, POS_INF, POS_INF );
+    oRing.setPoint( 3, POS_INF, NEG_INF );
+    oRing.setPoint( 4, NEG_INF, NEG_INF );
+
+    OGRPolygon oInfinityFilter;
+    oInfinityFilter.addRing( &oRing );
+
+    poLayer->SetSpatialFilter( iGeomField, &oInfinityFilter );
+    poLayer->ResetReading();
+    int nCountInf = 0;
+    while( (poFeature = poLayer->GetNextFeature()) != NULL )
+    {
+        if( poFeature->GetGeomFieldRef(iGeomField) != NULL )
+            nCountInf ++;
+        delete poFeature;
+    }
+
+/* -------------------------------------------------------------------- */
+/*     Test envelope with huge coords                                   */
+/* -------------------------------------------------------------------- */
+
+#define HUGE_COORDS (1e300)
+
+    oRing.setPoint( 0, -HUGE_COORDS, -HUGE_COORDS );
+    oRing.setPoint( 1, -HUGE_COORDS, HUGE_COORDS );
+    oRing.setPoint( 2, HUGE_COORDS, HUGE_COORDS );
+    oRing.setPoint( 3, HUGE_COORDS, -HUGE_COORDS );
+    oRing.setPoint( 4, -HUGE_COORDS, -HUGE_COORDS );
+
+    OGRPolygon oHugeFilter;
+    oHugeFilter.addRing( &oRing );
+
+    poLayer->SetSpatialFilter( iGeomField, &oHugeFilter );
+    poLayer->ResetReading();
+    int nCountHuge = 0;
+    while( (poFeature = poLayer->GetNextFeature()) != NULL )
+    {
+        if( poFeature->GetGeomFieldRef(iGeomField) != NULL )
+            nCountHuge ++;
+        delete poFeature;
+    }
+
+/* -------------------------------------------------------------------- */
+/*     Reset spatial filter                                             */
+/* -------------------------------------------------------------------- */
     poLayer->SetSpatialFilter( NULL );
+
+    int nExpected = 0;
+    poLayer->ResetReading();
+    while( (poFeature = poLayer->GetNextFeature()) != NULL )
+    {
+        if( poFeature->GetGeomFieldRef(iGeomField) != NULL )
+            nExpected ++;
+        delete poFeature;
+    }
+    poLayer->ResetReading();
+
+    if( nCountInf != nExpected )
+    {
+        /*bRet = FALSE; */
+        printf( "WARNING: Infinity spatial filter returned %d features instead of %d\n",
+                nCountInf, nExpected );
+    }
+    else if( bVerbose )
+    {
+        printf( "INFO: Infinity spatial filter works as expected.\n");
+    }
+
+    if( nCountHuge != nExpected )
+    {
+        bRet = FALSE;
+        printf( "ERROR: Huge coords spatial filter returned %d features instead of %d\n",
+                nCountHuge, nExpected );
+    }
+    else if( bVerbose )
+    {
+        printf( "INFO: Huge coords spatial filter works as expected.\n");
+    }
 
     return bRet;
 }
@@ -1341,6 +1427,8 @@ static int TestAttributeFilter( OGRDataSource* poDS, OGRLayer *poLayer )
 
     const char* pszFieldName = poTargetFeature->GetFieldDefnRef(i)->GetNameRef();
     CPLString osValue = poTargetFeature->GetFieldAsString(i);
+    if( eType == OFTReal )
+        osValue.Printf("%.18g", poTargetFeature->GetFieldAsDouble(i));
 
 /* -------------------------------------------------------------------- */
 /*      Construct inclusive filter.                                     */
