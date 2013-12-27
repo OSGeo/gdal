@@ -411,15 +411,15 @@ void OGRMySQLTableLayer::BuildWhere()
 
     if( m_poFilterGeom != NULL && pszGeomColumn )
     {
-        char szEnvelope[4096];
+        char szEnvelope[400];
         OGREnvelope  sEnvelope;
         szEnvelope[0] = '\0';
         
         //POLYGON((MINX MINY, MAXX MINY, MAXX MAXY, MINX MAXY, MINX MINY))
         m_poFilterGeom->getEnvelope( &sEnvelope );
         
-        sprintf(szEnvelope,
-                "POLYGON((%.12f %.12f, %.12f %.12f, %.12f %.12f, %.12f %.12f, %.12f %.12f))",
+        snprintf(szEnvelope, sizeof(szEnvelope),
+                "POLYGON((%.18g %.18g, %.18g %.18g, %.18g %.18g, %.18g %.18g, %.18g %.18g))",
                 sEnvelope.MinX, sEnvelope.MinY,
                 sEnvelope.MaxX, sEnvelope.MinY,
                 sEnvelope.MaxX, sEnvelope.MaxY,
