@@ -455,8 +455,9 @@ endif
 #
 # Java stuff
 #
-JAVA_INC  =   @JAVA_INC@
-JVM_LIB  =   @JVM_LIB@
+JAVA_HOME = @JAVA_HOME@
+JAVA_INC  = @JAVA_INC@
+JVM_LIB   = @JVM_LIB@
 
 MDB_ENABLED =   @MDB_ENABLED@
 
