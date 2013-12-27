@@ -1996,6 +1996,8 @@ void FGdbLayer::ResetReading()
 
 void FGdbLayer::SetSpatialFilter( OGRGeometry* pOGRGeom )
 {
+    InstallFilter(pOGRGeom);
+
     if (m_pOGRFilterGeometry)
     {
         OGRGeometryFactory::destroyGeometry(m_pOGRFilterGeometry);
@@ -2366,33 +2368,39 @@ int FGdbLayer::GetFeatureCount( int bForce )
     EndBulkLoad();
 
     if (m_pOGRFilterGeometry != NULL || m_wstrWhereClause.size() != 0)
-        return OGRLayer::GetFeatureCount(bForce);
+    {
+        ResetReading();
+        if (m_pEnumRows == NULL)
+            return 0;
+
+        int nFeatures = 0;
+        while( TRUE )
+        {
+            long hr;
+
+            Row row;
+
+            if (FAILED(hr = m_pEnumRows->Next(row)))
+            {
+                GDBErr(hr, "Failed fetching features");
+                return 0;
+            }
+
+            if (hr != S_OK)
+            {
+                break;
+            }
+            nFeatures ++;
+        }
+        ResetReading();
+        return nFeatures;
+    }
 
     if (FAILED(hr = m_pTable->GetRowCount(rowCount)))
     {
         GDBErr(hr, "Failed counting rows");
         return 0;
     }
-
-#if 0
-  Row            row;
-  EnumRows       enumRows;
-
-  if (FAILED(hr = m_pTable->Search(StringToWString(m_strOIDFieldName), L"", true, enumRows)))
-  {
-    GDBErr(hr, "Failed counting rows");
-    return -1;
-  }
-
-  while (S_OK == (hr = enumRows.Next(row)))
-    ++rowCount;
-
-  if (FAILED(hr))
-  {
-    GDBErr(hr, "Failed counting rows (during fetch)");
-    return -1;
-  }
-#endif
 
     return static_cast<int>(rowCount);
 }
@@ -2407,7 +2415,21 @@ OGRErr FGdbLayer::GetExtent (OGREnvelope* psExtent, int bForce)
 {
     if (m_pOGRFilterGeometry != NULL || m_wstrWhereClause.size() != 0 ||
         m_strShapeFieldName.size() == 0)
-        return OGRLayer::GetExtent(psExtent, bForce);
+    {
+        int* pabSaveFieldIgnored = new int[m_pFeatureDefn->GetFieldCount()];
+        for(int i=0;i<m_pFeatureDefn->GetFieldCount();i++)
+        {
+            pabSaveFieldIgnored[i] = m_pFeatureDefn->GetFieldDefn(i)->IsIgnored();
+            m_pFeatureDefn->GetFieldDefn(i)->SetIgnored(TRUE);
+        }
+        OGRErr eErr = OGRLayer::GetExtent(psExtent, bForce);
+        for(int i=0;i<m_pFeatureDefn->GetFieldCount();i++)
+        {
+            m_pFeatureDefn->GetFieldDefn(i)->SetIgnored(pabSaveFieldIgnored[i]);
+        }
+        delete[] pabSaveFieldIgnored;
+        return eErr;
+    }
 
     long hr;
     Envelope envelope;
