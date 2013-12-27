@@ -719,10 +719,21 @@ void OGRPGTableLayer::BuildWhere()
         OGREnvelope  sEnvelope;
 
         m_poFilterGeom->getEnvelope( &sEnvelope );
-        snprintf(szBox3D_1, sizeof(szBox3D_1), "%.12f %.12f", sEnvelope.MinX, sEnvelope.MinY);
+        if( poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOGRAPHY )
+        {
+            if( sEnvelope.MinX < -180.0 )
+                sEnvelope.MinX = -180.0;
+            if( sEnvelope.MinY < -90.0 )
+                sEnvelope.MinY = -90.0;
+            if( sEnvelope.MaxX > 180.0 )
+                sEnvelope.MaxX = 180.0;
+            if( sEnvelope.MaxY > 90.0 )
+                sEnvelope.MaxY = 90.0;
+        }
+        snprintf(szBox3D_1, sizeof(szBox3D_1), "%.18g %.18g", sEnvelope.MinX, sEnvelope.MinY);
         while((pszComma = strchr(szBox3D_1, ',')) != NULL)
             *pszComma = '.';
-        snprintf(szBox3D_2, sizeof(szBox3D_2), "%.12f %.12f", sEnvelope.MaxX, sEnvelope.MaxY);
+        snprintf(szBox3D_2, sizeof(szBox3D_2), "%.18g %.18g", sEnvelope.MaxX, sEnvelope.MaxY);
         while((pszComma = strchr(szBox3D_2, ',')) != NULL)
             *pszComma = '.';
         osWHERE.Printf("WHERE %s && %s('BOX3D(%s, %s)'::box3d,%d) ",
