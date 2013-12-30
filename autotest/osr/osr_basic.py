@@ -245,8 +245,8 @@ def osr_basic_6():
         return 'fail'
 
     # With a version
-    wkt_1 = osr.GetUserInputAsWKT( 'urn:x-ogc:def:crs:EPSG:6.6:4326' )
-    if wkt_1.find('GEOGCS["WGS 84",DATUM["WGS_1984"') == -1 or wkt_1.find('AXIS["Latitude",NORTH],AXIS["Longitude",EAST]') == -1:
+    wkt_2 = osr.GetUserInputAsWKT( 'urn:x-ogc:def:crs:EPSG:6.6:4326' )
+    if wkt_2.find('GEOGCS["WGS 84",DATUM["WGS_1984"') == -1 or wkt_2.find('AXIS["Latitude",NORTH],AXIS["Longitude",EAST]') == -1:
         print(wkt_1)
         print(wkt_2)
         gdaltest.post_reason( 'EPSG:4326 urn lookup not as expected.' )
@@ -255,8 +255,8 @@ def osr_basic_6():
     # Without version, but with no repeated :. Probably illegal from my understanding
     # of http://www.opengeospatial.org/ogcUrnPolicy, but found quite often in the wild
     # especially in content returned by GeoServer
-    wkt_1 = osr.GetUserInputAsWKT( 'urn:x-ogc:def:crs:EPSG:4326' )
-    if wkt_1.find('GEOGCS["WGS 84",DATUM["WGS_1984"') == -1 or wkt_1.find('AXIS["Latitude",NORTH],AXIS["Longitude",EAST]') == -1:
+    wkt_2 = osr.GetUserInputAsWKT( 'urn:x-ogc:def:crs:EPSG:4326' )
+    if wkt_2.find('GEOGCS["WGS 84",DATUM["WGS_1984"') == -1 or wkt_2.find('AXIS["Latitude",NORTH],AXIS["Longitude",EAST]') == -1:
         print(wkt_1)
         print(wkt_2)
         gdaltest.post_reason( 'EPSG:4326 urn lookup not as expected.' )
