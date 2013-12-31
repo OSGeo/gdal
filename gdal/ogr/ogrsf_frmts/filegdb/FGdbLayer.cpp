@@ -1996,7 +1996,8 @@ void FGdbLayer::ResetReading()
 
 void FGdbLayer::SetSpatialFilter( OGRGeometry* pOGRGeom )
 {
-    InstallFilter(pOGRGeom);
+    if( !InstallFilter(pOGRGeom) )
+        return;
 
     if (m_pOGRFilterGeometry)
     {
