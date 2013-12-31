@@ -393,7 +393,7 @@ bool GDBFieldTypeToWidthPrecision(std::string &gdbType, int *width, int *precisi
     else if(gdbType == "esriFieldTypeString" ||
             gdbType == "esriFieldTypeXML")
     {
-        *width = 2147483647;
+        *width = atoi(CPLGetConfigOption("FGDB_STRING_WIDTH", "65536"));
     }
     else if(gdbType == "esriFieldTypeDate" )
     {
