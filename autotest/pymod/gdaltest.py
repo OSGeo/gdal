@@ -1265,7 +1265,7 @@ def filesystem_supports_sparse_files(path):
 ###############################################################################
 # Unzip a file
 
-def unzip(target_dir, zipfilename):
+def unzip(target_dir, zipfilename, verbose = False):
 
     try:
         import zipfile
@@ -1275,7 +1275,8 @@ def unzip(target_dir, zipfilename):
         return
 
     for filename in zf.namelist():
-        print(filename)
+        if verbose:
+            print(filename)
         outfilename = os.path.join(target_dir, filename)
         if filename.endswith('/'):
             if not os.path.exists(outfilename):
