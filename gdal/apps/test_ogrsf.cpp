@@ -848,7 +848,7 @@ static int TestOGRLayerSetNextByIndex( OGRLayer *poLayer )
     }
     
     poFeature = poLayer->GetNextFeature();
-    if( !poFeature->Equal( papoFeatures[1] ) )
+    if( poFeature == NULL || !poFeature->Equal( papoFeatures[1] ) )
     {
         bRet = FALSE;
         printf( "ERROR: Attempt to read feature at index %d appears to\n"
@@ -862,7 +862,7 @@ static int TestOGRLayerSetNextByIndex( OGRLayer *poLayer )
     OGRFeature::DestroyFeature(poFeature);
     
     poFeature = poLayer->GetNextFeature();
-    if( !poFeature->Equal( papoFeatures[2] ) )
+    if( poFeature == NULL || !poFeature->Equal( papoFeatures[2] ) )
     {
         bRet = FALSE;
         printf( "ERROR: Attempt to read feature after feature at index %d appears to\n"
