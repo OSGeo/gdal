@@ -226,7 +226,7 @@ def osr_ct_6():
     ll_srs = osr.SpatialReference()
     ll_srs.SetWellKnownGeogCS( 'WGS84' )
 
-    ct = osr.CoordinateTransformation( ll_srs, utm_srs )
+    ct = osr.CreateCoordinateTransformation( ll_srs, utm_srs )
     if ct is None:
         return 'fail'
 
