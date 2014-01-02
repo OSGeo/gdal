@@ -30,8 +30,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_sxf.h"
 #include "cpl_conv.h"
+#include "ogr_sxf.h"
 #include "cpl_string.h"
 #include "cpl_multiproc.h"
 
@@ -775,7 +775,7 @@ void OGRSXFDataSource::FillLayers()
 
         if (nObjectsRead != 1 || buff[0] != IDSXFOBJ)
         {
-            CPLError(CE_Failure, CPLE_FileIO, "Read record %d failed", nFID);
+            CPLError(CE_Failure, CPLE_FileIO, "Read record %ld failed", nFID);
             return;
         }
 

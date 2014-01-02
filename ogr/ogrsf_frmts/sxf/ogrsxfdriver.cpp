@@ -29,8 +29,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_sxf.h"
 #include "cpl_conv.h"
+#include "ogr_sxf.h"
 
 CPL_CVSID("$Id: ogrsxfdriver.cpp  $");
 
