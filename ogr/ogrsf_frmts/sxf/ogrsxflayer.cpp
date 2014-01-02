@@ -786,6 +786,7 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
                     char * value = (char*)CPLMalloc(stAttInfo.nScale + 1);
                     memcpy(value, psSemanticsdBuf + offset, stAttInfo.nScale + 1);
                     poFeature->SetField(oFieldName, value);//TODO: CPLRecode(value, "CP866", CPL_ENC_UTF8)
+                    CPLFree(value);
 
                     offset += stAttInfo.nScale + 1;
                     break;
@@ -837,7 +838,10 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
                     unsigned nLen = unsigned(stAttInfo.nScale) + 1;
                     char * value = (char*)CPLMalloc(nLen);
                     memcpy(value, psSemanticsdBuf + offset, nLen);
-                    poFeature->SetField(oFieldName, CPLRecode(value, "CP1251", CPL_ENC_UTF8));
+                    char* pszRecoded = CPLRecode(value, "CP1251", CPL_ENC_UTF8);
+                    poFeature->SetField(oFieldName, pszRecoded);
+                    CPLFree(pszRecoded);
+                    CPLFree(value);
 
                     offset += nLen;
                     break;
@@ -848,6 +852,7 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
                     char * value = (char*)CPLMalloc(nLen);
                     memcpy(value, psSemanticsdBuf + offset, nLen);
                     poFeature->SetField(oFieldName, value);
+                    CPLFree(value);
 
                     offset += nLen;
                     break;
@@ -860,7 +865,10 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
 
                     char * value = (char*)CPLMalloc(scale2 + 1);
                     memcpy(value, psSemanticsdBuf + offset, scale2 + 1);
-                    poFeature->SetField(oFieldName, CPLRecode(value, CPL_ENC_UTF16, CPL_ENC_UTF8));
+                    char* pszRecoded = CPLRecode(value, CPL_ENC_UTF16, CPL_ENC_UTF8);
+                    poFeature->SetField(oFieldName, pszRecoded);
+                    CPLFree(pszRecoded);
+                    CPLFree(value);
 
                     offset += scale2;
                     break;
