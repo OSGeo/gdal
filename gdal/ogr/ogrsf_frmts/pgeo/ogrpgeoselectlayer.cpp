@@ -49,6 +49,21 @@ OGRPGeoSelectLayer::OGRPGeoSelectLayer( OGRPGeoDataSource *poDSIn,
 
     poStmt = poStmtIn;
     pszBaseStatement = CPLStrdup( poStmtIn->GetCommand() );
+    
+    /* Just to make test_ogrsf happy, but would/could need be extended to */
+    /* other cases */
+    if( EQUALN(pszBaseStatement, "SELECT * FROM ", strlen("SELECT * FROM ")) )
+    {
+        
+        OGRLayer* poBaseLayer =
+            poDSIn->GetLayerByName(pszBaseStatement + strlen("SELECT * FROM "));
+        if( poBaseLayer != NULL )
+        {
+            poSRS = poBaseLayer->GetSpatialRef();
+            if( poSRS != NULL )
+                poSRS->Reference();
+        }
+    }
 
     BuildFeatureDefn( "SELECT", poStmt );
 }
