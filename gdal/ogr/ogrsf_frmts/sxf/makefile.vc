@@ -1,6 +1,6 @@
 
 OBJ	=	ogrsxfdriver.obj ogrsxfdatasource.obj ogrsxflayer.obj
-EXTRAFLAGS =	/Zp1 -I.. -I..\.. 
+EXTRAFLAGS =	 -I.. -I..\.. 
 
 GDAL_ROOT	=	..\..\..
 
