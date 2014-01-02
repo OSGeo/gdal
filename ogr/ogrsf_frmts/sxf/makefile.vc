@@ -1,0 +1,15 @@
+
+OBJ	=	ogrsxfdriver.obj ogrsxfdatasource.obj ogrsxflayer.obj
+EXTRAFLAGS =	/Zp1 -I.. -I..\.. 
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+
+clean:
+	-del *.obj *.pdb
+
+
+
