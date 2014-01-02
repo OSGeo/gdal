@@ -830,6 +830,8 @@ void OGRSXFDataSource::FillLayers()
             nLayers--;
             i--;
         }
+        else if (pOGRSXFLayer)
+            pOGRSXFLayer->ResetReading();
     }
 }
 
