@@ -134,7 +134,6 @@ int VSITarReader::GotoNextFile()
         abyHeader[154] != '\0' ||
         abyHeader[155] != ' ')
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Bad .tar structure");
         return FALSE;
     }
 
