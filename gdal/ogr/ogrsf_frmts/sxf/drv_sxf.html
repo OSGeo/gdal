@@ -1,0 +1,41 @@
+<html>
+<head>
+<title>SXF</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>Storage and eXchange Format - SXF</h1>
+
+(GDAL/OGR >= 1.10.2)<p>
+
+This driver reads SXF files, open format often associated with Russian GIS Software Panorama.<p>
+The driver is read only, but supports deletion of data source. The driver supports SXF binary files version 3.0 and higher.<p>
+The SXF layer support the following capabilities:
+<ul>
+<li> Strings as UTF8
+<li> Random Read
+<li> Fast Feature Count
+<li> Fast Get Extent
+<li> Fast Set Next By Index
+</ul>
+The driver uses classifiers (RSC files) to map feature from SXF to layers. Features that do not belong to any layer are put to the layer named "Not_Classified". The layers with zero features are not present in data source.<p>
+To be used automatically, the RSC file should have the same name as SXF file. User can provide RSC file path using config option <b>SXF_RSC_FILENAME</b>. This config option overrides the use of same name RSC. <p>
+The RSC file usually stores long and short layer name. The long name is usually in Russian, and short in English. The <b>SXF_LAYER_FULLNAME</b> config option allows choosing which layer names to use. If SXF_LAYER_FULLNAME is TRUE - the driver uses long names, if FALSE - short.<p>
+The attributes are read from SXF file. Maximum number of fields is created for the same layer features with different number of attributes. If attribute has a code mapped to RSC file, driver adds only the code (don't get real value from RSC, as the value type may differ from field type).<p>
+
+
+<h3>See Also</h3>
+
+<ul>
+<li> <a href="http://gisinfo.ru">Panorama web page</a><p>
+<li> <a href="http://gistoolkit.ru/download/doc/sxf4bin.pdf">SXF binary format description v.4 (rus) - pdf</a><p>
+<li> <a href="http://gistoolkit.ru/download/classifiers/formatsxf.zip">SXF binary format description v.4 (rus) - doc</a><p>
+<li> <a href="http://loi.sscc.ru/gis/formats/Format-geo/sxf/sxf3-231.txt">SXF format description v.3 (rus)</a><p>
+<li> <a href="http://gistoolkit.ru/download/classifiers/formatrsc.zip">RSC format description (rus)</a><p>
+<li> <a href="http://www.gisinfo.ru/price/price_map.htm">Test spatial data in SXF format (rus)</a><p>
+<li> <a href="http://www.gisinfo.ru/classifiers/classifiers.htm">Some RSC files (rus)</a><p>
+</ul>
+
+</body>
+</html>

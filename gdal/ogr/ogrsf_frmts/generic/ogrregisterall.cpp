@@ -262,4 +262,7 @@ void OGRRegisterAll()
 #ifdef CARTODB_ENABLED
     RegisterOGRCartoDB();
 #endif
+#ifdef SXF_ENABLED
+    RegisterOGRSXF();
+#endif
 } /* OGRRegisterAll */
