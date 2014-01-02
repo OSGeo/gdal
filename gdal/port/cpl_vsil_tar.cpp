@@ -133,7 +133,10 @@ int VSITarReader::GotoNextFile()
         (abyHeader[147] != '\0' && abyHeader[147] != ' ') ||
         abyHeader[154] != '\0' ||
         abyHeader[155] != ' ')
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Bad .tar structure");
         return FALSE;
+    }
 
     osNextFileName = abyHeader;
     nNextFileSize = 0;
@@ -148,6 +151,12 @@ int VSITarReader::GotoNextFile()
     nCurOffset = VSIFTellL(fp);
 
     GUIntBig nBytesToSkip = ((nNextFileSize + 511) / 512) * 512;
+    if( nBytesToSkip > (~((GUIntBig)0)) - nCurOffset )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Bad .tar structure");
+        return FALSE;
+    }
+
     VSIFSeekL(fp, nBytesToSkip, SEEK_CUR);
 
     return TRUE;
