@@ -768,7 +768,7 @@ static int TestOGRLayerRandomRead( OGRLayer *poLayer )
 /*      Test feature 5.                                                 */
 /* -------------------------------------------------------------------- */
     poFeature = poLayer->GetFeature( papoFeatures[4]->GetFID() );
-    if( !poFeature->Equal( papoFeatures[4] ) )
+    if( poFeature == NULL || !poFeature->Equal( papoFeatures[4] ) )
     {
         bRet = FALSE;
         printf( "ERROR: Attempt to randomly read feature %ld appears to\n"
