@@ -343,7 +343,7 @@ typedef struct{
     char szMapType[32];
     char szClassifyName[32];
     char szClassifyCode[8];
-    long nScale;
+    GUInt32 nScale;
     char nScales[4];
     RSCSection Objects;
     RSCSection Semantic;

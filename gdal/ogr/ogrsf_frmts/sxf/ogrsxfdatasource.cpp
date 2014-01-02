@@ -293,7 +293,8 @@ OGRErr OGRSXFDataSource::ReadSXFDescription(VSILFILE* fpSXF, SXFPassport& passpo
         passport.sMapSheet = pszRecoded; //TODO: check the encoding in SXF created in Linux
         CPLFree(pszRecoded);
 
-        passport.nScale = *(unsigned long *)(buff + 32);
+        memcpy(&passport.nScale, buff + 32, 4);
+        CPL_LSBPTR32(&passport.nScale);
 
         memset(szName, 0, 26);
         memcpy(szName, buff + 36, 26);
@@ -327,7 +328,9 @@ OGRErr OGRSXFDataSource::ReadSXFDescription(VSILFILE* fpSXF, SXFPassport& passpo
         char* pszRecoded = CPLRecode(szName + 2, "CP1251", CPL_ENC_UTF8);
         passport.sMapSheet = pszRecoded; //TODO: check the encoding in SXF created in Linux
         CPLFree(pszRecoded);
-        passport.nScale = *(unsigned long *)(buff + 44);
+        
+        memcpy(&passport.nScale, buff + 44, 4);
+        CPL_LSBPTR32(&passport.nScale);
 
         memset(szName, 0, 32);
         memcpy(szName, buff + 48, 32);
