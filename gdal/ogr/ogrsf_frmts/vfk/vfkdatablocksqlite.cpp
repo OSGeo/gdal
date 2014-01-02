@@ -211,13 +211,13 @@ int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
 		}
 		else {
 		    CPLDebug("OGR-VFK", 
-			     "Geometry (point ID = %lld) not valid", id);
+			     "Geometry (point ID = " CPL_FRMT_GUIB ") not valid", id);
 		    bValid = FALSE;
 		}
 	    }
 	    else {
                 CPLDebug("OGR-VFK", 
-                         "Point ID = %lld not found (rowid = %d)",
+                         "Point ID = " CPL_FRMT_GUIB " not found (rowid = %d)",
                          id, rowId);
 		bValid = FALSE;
             }
