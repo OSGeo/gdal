@@ -289,14 +289,17 @@ OGRErr OGRSXFDataSource::ReadSXFDescription(VSILFILE* fpSXF, SXFPassport& passpo
 
         char szName[26] = { 0 };
         memcpy(szName, buff + 8, 24);
-        passport.sMapSheet = CPLRecode(szName + 2, "CP1251", CPL_ENC_UTF8); //TODO: check the encoding in SXF created in Linux
+        char* pszRecoded = CPLRecode(szName + 2, "CP1251", CPL_ENC_UTF8);
+        passport.sMapSheet = pszRecoded; //TODO: check the encoding in SXF created in Linux
+        CPLFree(pszRecoded);
 
         passport.nScale = *(unsigned long *)(buff + 32);
 
         memset(szName, 0, 26);
         memcpy(szName, buff + 36, 26);
-        passport.sMapSheetName = CPLRecode(szName, "CP866", CPL_ENC_UTF8); //TODO: check the encoding in SXF created in Linux
-
+        pszRecoded = CPLRecode(szName, "CP866", CPL_ENC_UTF8);
+        passport.sMapSheetName = pszRecoded; //TODO: check the encoding in SXF created in Linux
+        CPLFree(pszRecoded);
 
     }
     else if (passport.version == 4)
@@ -321,12 +324,16 @@ OGRErr OGRSXFDataSource::ReadSXFDescription(VSILFILE* fpSXF, SXFPassport& passpo
 
         char szName[32] = { 0 };
         memcpy(szName, buff + 12, 32);
-        passport.sMapSheet = CPLRecode(szName + 2, "CP1251", CPL_ENC_UTF8); //TODO: check the encoding in SXF created in Linux
+        char* pszRecoded = CPLRecode(szName + 2, "CP1251", CPL_ENC_UTF8);
+        passport.sMapSheet = pszRecoded; //TODO: check the encoding in SXF created in Linux
+        CPLFree(pszRecoded);
         passport.nScale = *(unsigned long *)(buff + 44);
 
         memset(szName, 0, 32);
         memcpy(szName, buff + 48, 32);
-        passport.sMapSheetName = CPLRecode(szName, "CP1251", CPL_ENC_UTF8); //TODO: check the encoding in SXF created in Linux
+        pszRecoded = CPLRecode(szName, "CP1251", CPL_ENC_UTF8);
+        passport.sMapSheetName = pszRecoded; //TODO: check the encoding in SXF created in Linux
+        CPLFree(pszRecoded);
     }
 
     return OGRERR_NONE;
@@ -1134,10 +1141,18 @@ void OGRSXFDataSource::CreateLayers(VSILFILE* fpRSC)
         papoLayers = (OGRLayer**)CPLRealloc(papoLayers, sizeof(OGRLayer*)* (nLayers + 1));
         bool bLayerFullName = CSLTestBoolean(CPLGetConfigOption("SXF_LAYER_FULLNAME", "NO"));
 
+        char* pszRecoded;
         if (bLayerFullName)
-            papoLayers[nLayers] = new OGRSXFLayer(fpSXF, &hIOMutex, LAYER.nNo, CPLString(CPLRecode(LAYER.szName, "CP1251", CPL_ENC_UTF8)), oSXFPassport.version, oSXFPassport.stMapDescription);
+        {
+            pszRecoded = CPLRecode(LAYER.szName, "CP1251", CPL_ENC_UTF8);
+            papoLayers[nLayers] = new OGRSXFLayer(fpSXF, &hIOMutex, LAYER.nNo, CPLString(pszRecoded), oSXFPassport.version, oSXFPassport.stMapDescription);
+        }
         else
-            papoLayers[nLayers] = new OGRSXFLayer(fpSXF, &hIOMutex, LAYER.nNo, CPLString(CPLRecode(LAYER.szShortName, "CP1251", CPL_ENC_UTF8)), oSXFPassport.version, oSXFPassport.stMapDescription);
+        {
+            pszRecoded = CPLRecode(LAYER.szShortName, "CP1251", CPL_ENC_UTF8);
+            papoLayers[nLayers] = new OGRSXFLayer(fpSXF, &hIOMutex, LAYER.nNo, CPLString(pszRecoded), oSXFPassport.version, oSXFPassport.stMapDescription);
+        }
+        CPLFree(pszRecoded);
         nLayers++;
 
         nOffset += LAYER.nLength;
