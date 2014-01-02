@@ -62,6 +62,16 @@ const char *OGRSXFDriver::GetName()
 OGRDataSource *OGRSXFDriver::Open( const char * pszFilename, int bUpdate )
 
 {
+/* -------------------------------------------------------------------- */
+/*      Determine what sort of object this is.                          */
+/* -------------------------------------------------------------------- */
+
+    VSIStatBufL sStatBuf;
+    if (!EQUAL(CPLGetExtension(pszFilename), "sxf") ||
+        VSIStatL(pszFilename, &sStatBuf) != 0 ||
+        !VSI_ISREG(sStatBuf.st_mode))
+        return FALSE;
+
     OGRSXFDataSource   *poDS = new OGRSXFDataSource();
 
     if( !poDS->Open( pszFilename, bUpdate ) )

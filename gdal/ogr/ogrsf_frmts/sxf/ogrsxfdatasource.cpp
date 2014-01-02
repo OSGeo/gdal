@@ -133,17 +133,6 @@ int OGRSXFDataSource::Open( const char * pszFilename, int bUpdateIn)
 
     pszName = pszFilename;
 
-/* -------------------------------------------------------------------- */
-/*      Determine what sort of object this is.                          */
-/* -------------------------------------------------------------------- */
-
-    VSIStatBufL sStatBuf;
-    if (VSIStatL(pszName, &sStatBuf) != 0 ||
-        !VSI_ISREG(sStatBuf.st_mode) ||
-        !EQUAL(CPLGetExtension(pszName), "sxf"))
-        return FALSE;
-
-
     fpSXF = VSIFOpenL(pszName, "rb");
     if ( fpSXF == NULL )
     {
@@ -160,6 +149,7 @@ int OGRSXFDataSource::Open( const char * pszFilename, int bUpdateIn)
     {
         CPLError(CE_Failure, CPLE_None, "SXF head read failed");
         CloseFile();
+		return FALSE;
     }
 
     //check version
