@@ -564,7 +564,7 @@ CPLErr MrSIDRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                && nBlockYOff >= 0
                && pImage != NULL );
 
-#if DEBUG
+#ifdef DEBUG
     CPLDebug( "MrSID", "IWriteBlock(): nBlockXOff=%d, nBlockYOff=%d",
               nBlockXOff, nBlockYOff );
 #endif
