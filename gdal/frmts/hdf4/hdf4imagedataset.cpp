@@ -2161,6 +2161,11 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
     {
         char    **papszGeoDimList = NULL;
 
+        // Skip "SceneLineNumber" table if present in the list of geolocation
+        // fields. It is not needed to fetch geocoding data.
+        if ( EQUAL(papszGeolocations[i], "SceneLineNumber") )
+            continue;
+
         if ( SWfieldinfo( hSW, papszGeolocations[i], &iRank,
                           aiDimSizes, &iWrkNumType, szGeoDimList ) < 0 )
         {
