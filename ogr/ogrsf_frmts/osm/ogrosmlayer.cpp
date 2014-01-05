@@ -149,6 +149,39 @@ void OGROSMLayer::ForceResetReading()
 }
 
 /************************************************************************/
+/*                        SetAttributeFilter()                          */
+/************************************************************************/
+
+OGRErr OGROSMLayer::SetAttributeFilter( const char* pszAttrQuery )
+{
+    if( pszAttrQuery == NULL && m_pszAttrQueryString == NULL )
+        return OGRERR_NONE;
+    if( pszAttrQuery != NULL && m_pszAttrQueryString != NULL &&
+        strcmp(pszAttrQuery, m_pszAttrQueryString) == 0 )
+        return OGRERR_NONE;
+
+    OGRErr eErr = OGRLayer::SetAttributeFilter(pszAttrQuery);
+    if( eErr != OGRERR_NONE )
+        return eErr;
+
+    if( nFeatureArrayIndex == 0 )
+    {
+        if( !poDS->IsInterleavedReading() )
+        {
+            poDS->ResetReading();
+        }
+    }
+    else
+    {
+        CPLError(CE_Warning, CPLE_AppDefined, "The new attribute filter will "
+                 "not be taken into account immediately. It is advised to "
+                 "set attribute filters for all needed layers, before reading *any* layer");
+    }
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 

@@ -125,7 +125,9 @@ class OGROSMLayer : public OGRLayer
                                      
     virtual OGRFeature *GetNextFeature();
     virtual int         GetFeatureCount( int bForce );
-    
+        
+    virtual OGRErr      SetAttributeFilter( const char* pszAttrQuery );
+
     virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce );
 
     const OGREnvelope*  GetSpatialFilterEnvelope();
