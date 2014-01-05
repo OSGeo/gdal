@@ -779,27 +779,33 @@ void OGRSXFDataSource::FillLayers()
             return;
         }
 
-	bool bIsSupported = oSXFPassport.version == 3 || !CHECK_BIT(buff[5], 2); 
-	if(bIsSupported)
-	{
-		bool bHasSemantic = CHECK_BIT(buff[5], 9);
-		if (bHasSemantic) //check has attributes
-		{
-		    //we have already 24 byte readed
-		    nOffsetSemantic = 8 + buff[2];
-		    VSIFSeekL(fpSXF, nOffsetSemantic, SEEK_CUR);
-		}
+        bool bIsSupported = oSXFPassport.version == 3 || !CHECK_BIT(buff[5], 2); 
+        if(bIsSupported)
+        {
+            bool bHasSemantic = CHECK_BIT(buff[5], 9);
+            if (bHasSemantic) //check has attributes
+            {
+                //we have already 24 byte readed
+                nOffsetSemantic = 8 + buff[2];
+                VSIFSeekL(fpSXF, nOffsetSemantic, SEEK_CUR);
+            }
 
-		int nSemanticSize = buff[1] - 32 - buff[2];
-		for (i = 0; i < nLayers; i++)
-		{
-		    OGRSXFLayer* pOGRSXFLayer = (OGRSXFLayer*)papoLayers[i];
-		    if (pOGRSXFLayer && pOGRSXFLayer->AddRecord(nFID, buff[3], nOffset, bHasSemantic, nSemanticSize) == TRUE)
-		    {
-		        break;
-		    }
-		}
-	}
+            int nSemanticSize = buff[1] - 32 - buff[2];
+            if( nSemanticSize < 0 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Invalid value");
+                break;
+            }
+            for (i = 0; i < nLayers; i++)
+            {
+                OGRSXFLayer* pOGRSXFLayer = (OGRSXFLayer*)papoLayers[i];
+                if (pOGRSXFLayer && pOGRSXFLayer->AddRecord(nFID, buff[3], nOffset, bHasSemantic, nSemanticSize) == TRUE)
+                {
+                    break;
+                }
+            }
+        }
+
         nOffset += buff[1];
         VSIFSeekL(fpSXF, nOffset, SEEK_SET);
     }
