@@ -655,6 +655,34 @@ def ogr_osm_11():
 
     return 'success'
 
+
+###############################################################################
+# Test that attribute filter set on a line layer is well taken into
+# account
+
+def ogr_osm_12():
+
+    if ogrtest.osm_drv is None:
+        return 'skip'
+
+    ds = ogr.Open('data/test.pbf')
+    for i in range(2):
+        lay = ds.GetLayerByIndex(i)
+        lay.SetAttributeFilter("highway IS NOT NULL")
+        # lay.GetNextFeature()
+        lay.ResetReading()
+        feat = lay.GetNextFeature()
+        count = 0
+        while feat is not None:
+            count = count + 1
+            feat = lay.GetNextFeature()
+        if i == 1 and count != 1:
+            print(count)
+            return 'fail'
+    ds = None
+
+    return 'success'
+
 gdaltest_list = [
     ogr_osm_1,
     ogr_osm_2,
@@ -669,6 +697,7 @@ gdaltest_list = [
     ogr_osm_9,
     ogr_osm_10,
     ogr_osm_11,
+    ogr_osm_12,
     ]
 
 if __name__ == '__main__':
