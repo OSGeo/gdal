@@ -234,6 +234,80 @@ static void ProcessGeometry( OGRPoint *poGeom, OGRGeometry *poClipSrc,
 }
 
 /************************************************************************/
+/*                       ProcessCommonGeometry()                        */
+/*                                                                      */
+/*  Process recursivelly geometry and extract points                    */
+/************************************************************************/
+
+static void ProcessCommonGeometry(OGRGeometry* poGeom, OGRGeometry *poClipSrc,
+                                int iBurnField, double dfBurnValue,
+                                std::vector<double> &adfX,
+                                std::vector<double> &adfY,
+                                std::vector<double> &adfZ)
+{
+    if (NULL == poGeom)
+        return;
+
+    OGRwkbGeometryType eType = wkbFlatten(poGeom->getGeometryType());
+    switch (eType)
+    {
+    case wkbPoint:
+        return ProcessGeometry((OGRPoint *)poGeom, poClipSrc,
+            iBurnField, dfBurnValue, adfX, adfY, adfZ);
+    case wkbLinearRing:
+    case wkbLineString:
+        {
+            OGRLineString *poLS = (OGRLineString*)poGeom;
+            OGRPoint point;
+            for (size_t pointIndex = 0; pointIndex < poLS->getNumPoints(); pointIndex++)
+            {
+                poLS->getPoint(pointIndex, &point);
+                ProcessCommonGeometry((OGRGeometry*)&point, poClipSrc,
+                    iBurnField, dfBurnValue, adfX, adfY, adfZ);
+            }
+        }
+        break;
+    case wkbPolygon:
+        {
+            int nRings(0);
+            OGRPolygon* poPoly = (OGRPolygon*)poGeom;
+            OGRLinearRing* poRing = poPoly->getExteriorRing();
+            ProcessCommonGeometry((OGRGeometry*)poRing, poClipSrc,
+                iBurnField, dfBurnValue, adfX, adfY, adfZ);
+
+            nRings = poPoly->getNumInteriorRings();
+            if (nRings > 0)
+            {
+                for (int ir = 0; ir < nRings; ++ir)
+                {
+                    OGRLinearRing* poRing = poPoly->getInteriorRing(ir);
+                    ProcessCommonGeometry((OGRGeometry*)poRing, poClipSrc,
+                        iBurnField, dfBurnValue, adfX, adfY, adfZ);
+                }
+            }
+        }
+        break;
+    case wkbMultiPoint:
+    case wkbMultiPolygon:
+    case wkbMultiLineString:
+    case wkbGeometryCollection:
+        {
+            OGRGeometryCollection* pOGRGeometryCollection = (OGRGeometryCollection*)poGeom;
+            for (int i = 0; i < pOGRGeometryCollection->getNumGeometries(); ++i)
+            {
+                ProcessCommonGeometry(pOGRGeometryCollection->getGeometryRef(i), poClipSrc,
+                    iBurnField, dfBurnValue, adfX, adfY, adfZ);
+            }
+        }
+        break;
+    case wkbUnknown:
+    case wkbNone:
+    default:
+        break;
+    }
+}
+
+/************************************************************************/
 /*                            ProcessLayer()                            */
 /*                                                                      */
 /*      Process all the features in a layer selection, collecting       */
@@ -282,33 +356,13 @@ static CPLErr ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
     while( (poFeat = (OGRFeature *)OGR_L_GetNextFeature( hSrcLayer )) != NULL )
     {
         OGRGeometry *poGeom = poFeat->GetGeometryRef();
+        double  dfBurnValue = 0.0;
 
-        if ( poGeom != NULL )
-        {
-            OGRwkbGeometryType eType = wkbFlatten( poGeom->getGeometryType() );
-            double  dfBurnValue = 0.0;
+        if ( iBurnField >= 0 )
+            dfBurnValue = poFeat->GetFieldAsDouble( iBurnField );
 
-            if ( iBurnField >= 0 )
-                dfBurnValue = poFeat->GetFieldAsDouble( iBurnField );
-
-            if ( eType == wkbMultiPoint )
-            {
-                int iGeom;
-                int nGeomCount = ((OGRMultiPoint *)poGeom)->getNumGeometries();
-
-                for ( iGeom = 0; iGeom < nGeomCount; iGeom++ )
-                {
-                    ProcessGeometry( (OGRPoint *)((OGRMultiPoint *)poGeom)->getGeometryRef(iGeom),
-                                     poClipSrc, iBurnField, dfBurnValue,
-                                     adfX, adfY, adfZ);
-                }
-            }
-            else if ( eType == wkbPoint )
-            {
-                ProcessGeometry( (OGRPoint *)poGeom, poClipSrc,
-                                 iBurnField, dfBurnValue, adfX, adfY, adfZ);
-            }
-        }
+        ProcessCommonGeometry(poGeom, poClipSrc, iBurnField, dfBurnValue,
+            adfX, adfY, adfZ);
 
         OGRFeature::DestroyFeature( poFeat );
     }
@@ -979,7 +1033,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     for( i = 0; i < nLayerCount; i++ )
     {
-        OGRLayerH hLayer = OGR_DS_GetLayerByName( hSrcDS, papszLayers[i] );
+        OGRLayerH hLayer = OGR_DS_GetLayerByName( hSrcDS, papszLayers[i]);
         if( hLayer == NULL )
         {
             fprintf( stderr, "Unable to find layer \"%s\", skipping.\n", 
