@@ -64,14 +64,15 @@ protected:
 
     virtual OGRFeature *       GetNextRawFeature(long nFID);
 
-    GUInt32 TranslateXYH(const SXFRecordDescription& certifInfo, char *psBuff,
-                          double *dfX, double *dfY, double *dfH = NULL);
+    GUInt32 TranslateXYH(const SXFRecordDescription& certifInfo,
+                         const char *psBuff, GUInt32 nBufLen,
+                         double *dfX, double *dfY, double *dfH = NULL);
 
 
-    OGRFeature *TranslatePoint(const SXFRecordDescription& certifInfo, char * psRecordBuf);
-    OGRFeature *TranslateText(const SXFRecordDescription& certifInfo, char * psBuff);
-    OGRFeature *TranslatePolygon(const SXFRecordDescription& certifInfo, char * psBuff);
-    OGRFeature *TranslateLine(const SXFRecordDescription& certifInfo, char * psBuff);
+    OGRFeature *TranslatePoint(const SXFRecordDescription& certifInfo, const char * psRecordBuf, GUInt32 nBufLen);
+    OGRFeature *TranslateText(const SXFRecordDescription& certifInfo, const char * psBuff, GUInt32 nBufLen);
+    OGRFeature *TranslatePolygon(const SXFRecordDescription& certifInfo, const char * psBuff, GUInt32 nBufLen);
+    OGRFeature *TranslateLine(const SXFRecordDescription& certifInfo, const char * psBuff, GUInt32 nBufLen);
 public:
     OGRSXFLayer(VSILFILE* fp, void** hIOMutex, GByte nID, const char* pszLayerName, int nVer, const SXFMapDescription&  sxfMapDesc);
     ~OGRSXFLayer();
