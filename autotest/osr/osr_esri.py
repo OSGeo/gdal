@@ -600,7 +600,7 @@ def osr_esri_18():
     return 'success'
 
 ###############################################################################
-# Test spheroid remaping (per #3904)
+# Test spheroid remapping (per #3904)
 
 def osr_esri_19():
     
