@@ -1145,12 +1145,24 @@ void OGRSXFDataSource::CreateLayers(VSILFILE* fpRSC)
         char* pszRecoded;
         if (bLayerFullName)
         {
-            pszRecoded = CPLRecode(LAYER.szName, "CP1251", CPL_ENC_UTF8);
-            papoLayers[nLayers] = new OGRSXFLayer(fpSXF, &hIOMutex, LAYER.nNo, CPLString(pszRecoded), oSXFPassport.version, oSXFPassport.stMapDescription);
+            if (stRSCFileHeader.szFontEnc == 125)
+                pszRecoded = CPLRecode(LAYER.szName, "KOI8-R", CPL_ENC_UTF8);
+            else if (stRSCFileHeader.szFontEnc == 126)
+                pszRecoded = CPLRecode(LAYER.szName, "CP1251", CPL_ENC_UTF8);
+            else
+                pszRecoded = LAYER.szName;
+
+                papoLayers[nLayers] = new OGRSXFLayer(fpSXF, &hIOMutex, LAYER.nNo, CPLString(pszRecoded), oSXFPassport.version, oSXFPassport.stMapDescription);
         }
         else
         {
-            pszRecoded = CPLRecode(LAYER.szShortName, "CP1251", CPL_ENC_UTF8);
+            if (stRSCFileHeader.szFontEnc == 125)
+                pszRecoded = CPLRecode(LAYER.szName, "KOI8-R", CPL_ENC_UTF8);
+            else if (stRSCFileHeader.szFontEnc == 126)
+                pszRecoded = CPLRecode(LAYER.szName, "CP1251", CPL_ENC_UTF8);
+            else
+                pszRecoded = LAYER.szName;
+
             papoLayers[nLayers] = new OGRSXFLayer(fpSXF, &hIOMutex, LAYER.nNo, CPLString(pszRecoded), oSXFPassport.version, oSXFPassport.stMapDescription);
         }
         CPLFree(pszRecoded);
@@ -1190,7 +1202,14 @@ void OGRSXFDataSource::CreateLayers(VSILFILE* fpRSC)
         OGRSXFLayer* pLayer = GetLayerById(OBJECT.szLayernNo);
         if (NULL != pLayer)
         {
-            pLayer->AddClassifyCode(OBJECT.nClassifyCode, OBJECT.szName);
+            char* pszRecoded;
+            if (stRSCFileHeader.szFontEnc == 125)
+                pszRecoded = CPLRecode(OBJECT.szName, "KOI8-R", CPL_ENC_UTF8);
+            else if (stRSCFileHeader.szFontEnc == 126)
+                pszRecoded = CPLRecode(OBJECT.szName, "CP1251", CPL_ENC_UTF8);
+            else
+                pszRecoded = OBJECT.szName; //already in  CPL_ENC_UTF8
+            pLayer->AddClassifyCode(OBJECT.nClassifyCode, pszRecoded);
             //printf("%d;%s\n", OBJECT.nClassifyCode, OBJECT.szName);
         }
 
