@@ -353,6 +353,14 @@ int OGRLinearRing::isClockwise() const
                paoPoints[i].x > paoPoints[v].x ) )
         {
             v = i;
+            bUseFallback = FALSE;
+        }
+        else if ( paoPoints[i].y == paoPoints[v].y &&
+                  paoPoints[i].x == paoPoints[v].x )
+        {
+            /* Two vertex with same coordinates are the lowest rightmost */
+            /* vertex! We cannot use that point as the pivot (#5342) */
+            bUseFallback = TRUE;
         }
     }
 
