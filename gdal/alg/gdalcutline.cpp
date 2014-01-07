@@ -88,6 +88,30 @@ BlendMaskGenerator( int nXOff, int nYOff, int nXSize, int nYSize,
 
     if( poClipRect )
     {
+
+        /***** if it doesnt intersect the polym zero the mask and return *****/
+
+        if ( ! ((OGRGeometry *) hPolygon)->Intersects( poClipRect ) )
+        {
+            
+            memset( pafValidityMask, 0, sizeof(float) * nXSize * nYSize );
+
+            delete poLines;
+            delete poClipRect;
+
+            return CE_None;
+        }
+
+        /***** if it doesnt intersect the line at all just return *****/
+         
+        else if ( ! ((OGRGeometry *) poLines)->Intersects( poClipRect ) )
+        {
+            delete poLines;
+            delete poClipRect;
+
+            return CE_None;
+        }
+
         OGRGeometry *poClippedLines = 
             poLines->Intersection( poClipRect );
         delete poLines;
@@ -109,12 +133,17 @@ BlendMaskGenerator( int nXOff, int nYOff, int nXSize, int nYSize,
 
     delete poLines;
 
-    if( sEnvelope.MinY - dfBlendDist > nYOff+nYSize 
+    /***** this check was already done in the calling *****/
+    /***** function and should never be true          *****/
+
+    /*if( sEnvelope.MinY - dfBlendDist > nYOff+nYSize 
         || sEnvelope.MaxY + dfBlendDist < nYOff 
         || sEnvelope.MinX - dfBlendDist > nXOff+nXSize
         || sEnvelope.MaxX + dfBlendDist < nXOff )
         return CE_None;
-    
+    */
+
+
     iXMin = MAX(0,(int) floor(sEnvelope.MinX - dfBlendDist - nXOff));
     iXMax = MIN(nXSize, (int) ceil(sEnvelope.MaxX + dfBlendDist - nXOff));
     iYMin = MAX(0,(int) floor(sEnvelope.MinY - dfBlendDist - nYOff));
@@ -281,6 +310,7 @@ GDALWarpCutlineMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
     }
 
     OGR_G_GetEnvelope( hPolygon, &sEnvelope );
+
     if( sEnvelope.MaxX + psWO->dfCutlineBlendDist < nXOff
         || sEnvelope.MinX - psWO->dfCutlineBlendDist > nXOff + nXSize
         || sEnvelope.MaxY + psWO->dfCutlineBlendDist < nYOff
