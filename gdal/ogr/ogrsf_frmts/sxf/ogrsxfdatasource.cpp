@@ -1150,9 +1150,9 @@ void OGRSXFDataSource::CreateLayers(VSILFILE* fpRSC)
             else if (stRSCFileHeader.szFontEnc == 126)
                 pszRecoded = CPLRecode(LAYER.szName, "CP1251", CPL_ENC_UTF8);
             else
-                pszRecoded = LAYER.szName;
+                pszRecoded = CPLStrdup(LAYER.szName);
 
-                papoLayers[nLayers] = new OGRSXFLayer(fpSXF, &hIOMutex, LAYER.nNo, CPLString(pszRecoded), oSXFPassport.version, oSXFPassport.stMapDescription);
+            papoLayers[nLayers] = new OGRSXFLayer(fpSXF, &hIOMutex, LAYER.nNo, CPLString(pszRecoded), oSXFPassport.version, oSXFPassport.stMapDescription);
         }
         else
         {
@@ -1161,7 +1161,7 @@ void OGRSXFDataSource::CreateLayers(VSILFILE* fpRSC)
             else if (stRSCFileHeader.szFontEnc == 126)
                 pszRecoded = CPLRecode(LAYER.szName, "CP1251", CPL_ENC_UTF8);
             else
-                pszRecoded = LAYER.szName;
+                pszRecoded = CPLStrdup(LAYER.szName);
 
             papoLayers[nLayers] = new OGRSXFLayer(fpSXF, &hIOMutex, LAYER.nNo, CPLString(pszRecoded), oSXFPassport.version, oSXFPassport.stMapDescription);
         }
@@ -1208,9 +1208,10 @@ void OGRSXFDataSource::CreateLayers(VSILFILE* fpRSC)
             else if (stRSCFileHeader.szFontEnc == 126)
                 pszRecoded = CPLRecode(OBJECT.szName, "CP1251", CPL_ENC_UTF8);
             else
-                pszRecoded = OBJECT.szName; //already in  CPL_ENC_UTF8
+                pszRecoded = CPLStrdup(OBJECT.szName); //already in  CPL_ENC_UTF8
             pLayer->AddClassifyCode(OBJECT.nClassifyCode, pszRecoded);
             //printf("%d;%s\n", OBJECT.nClassifyCode, OBJECT.szName);
+            CPLFree(pszRecoded);
         }
 
         nOffset += OBJECT.nLength;
