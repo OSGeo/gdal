@@ -363,7 +363,7 @@ typedef struct{
     GByte nFlagKeysAsCodes;
     GByte nFlagPalleteMods;
     GByte Reserved[30];
-    GByte szFontEnc[4];
+    GUInt32 szFontEnc;
     GUInt32 nColorsInPalette;
 } RSCHeader;
 
