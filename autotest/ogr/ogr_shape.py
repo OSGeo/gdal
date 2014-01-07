@@ -3327,6 +3327,37 @@ def ogr_shape_69():
     return 'success'
 
 ###############################################################################
+# Test that isClockwise() works correctly on a degenerated ring that passes
+# twice by the same point (#5342)
+
+def ogr_shape_73():
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_73.shp')
+    lyr = ds.CreateLayer('ogr_shape_73', geom_type = ogr.wkbPolygon)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    # (5 1) is the first(and last) point, and the pivot point selected by the
+    # algorithm (lowest rightmost vertex), but is is also reused later in the
+    # coordinate list
+    # But the second ring is counter-clock-wise
+    geom = ogr.CreateGeometryFromWkt('POLYGON ((0 0,0 10,10 10,10 0,0 0),(5 1,4 3,4 2,5 1,6 2,6 3,5 1))')
+    feat.SetGeometry(geom)
+    lyr.CreateFeature(feat)
+    feat = None
+    ds = None
+    
+    ds = ogr.Open('/vsimem/ogr_shape_73.shp')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    got_geom = feat.GetGeometryRef()
+    if geom.ExportToWkt() != got_geom.ExportToWkt():
+        feat.DumpReadable()
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+
+###############################################################################
 # 
 
 def ogr_shape_cleanup():
@@ -3354,7 +3385,7 @@ def ogr_shape_cleanup():
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_58' )
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_61' )
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_62' )
-    
+    shape_drv.DeleteDataSource( '/vsimem/ogr_shape_73.shp' )
     return 'success'
 
 gdaltest_list = [ 
@@ -3428,6 +3459,7 @@ gdaltest_list = [
     ogr_shape_67,
     ogr_shape_68,
     ogr_shape_69,
+    ogr_shape_73,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':
