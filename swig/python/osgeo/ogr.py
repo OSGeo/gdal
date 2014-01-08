@@ -2704,6 +2704,13 @@ class Feature(_object):
         """
         return _ogr.Feature_SetFieldStringList(self, *args)
 
+    def SetFieldBinaryFromHexString(self, *args):
+        """
+        SetFieldBinaryFromHexString(self, int id, char pszValue)
+        SetFieldBinaryFromHexString(self, char name, char pszValue)
+        """
+        return _ogr.Feature_SetFieldBinaryFromHexString(self, *args)
+
     def SetFrom(self, *args, **kwargs):
         """
         SetFrom(self, Feature other, int forgiving = 1) -> OGRErr
