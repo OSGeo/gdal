@@ -74,7 +74,8 @@ else
 swig-target:    swig-modules;
 endif
 
-swig-modules:	lib-target
+# Python bindings needs gdal-config, hence apps-target
+swig-modules:	apps-target
 	(cd swig; $(MAKE) build)
 
 clean:	lclean
