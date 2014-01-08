@@ -235,9 +235,8 @@ def ogr_basic_7():
     feat_defn.AddFieldDefn(field_defn)
     field_defn = ogr.FieldDefn('field9', ogr.OFTDateTime)
     feat_defn.AddFieldDefn(field_defn)
-    # Cannot test : no binding yet for Binary content
-    #field_defn = ogr.FieldDefn('field10', ogr.OFTBinary)
-    #feat_defn.AddFieldDefn(field_defn)
+    field_defn = ogr.FieldDefn('field10', ogr.OFTBinary)
+    feat_defn.AddFieldDefn(field_defn)
 
     feat = ogr.Feature(feat_defn)
     feat.SetFID(100)
@@ -250,6 +249,7 @@ def ogr_basic_7():
     feat.SetField(6, 2010, 1, 8, 22, 48, 15, 4)
     feat.SetField(7, 2010, 1, 8, 22, 48, 15, 4)
     feat.SetField(8, 2010, 1, 8, 22, 48, 15, 4)
+    feat.SetFieldBinaryFromHexString(9, '012345678ABCDEF')
 
     feat_clone = feat.Clone()
     if not feat.Equal(feat_clone):
@@ -359,6 +359,13 @@ def ogr_basic_7():
                 feat.DumpReadable()
                 feat_almost_clone.DumpReadable()
                 return 'fail'
+
+    feat_almost_clone = feat.Clone()
+    feat_almost_clone.SetFieldBinaryFromHexString(9, '00')
+    if feat.Equal(feat_almost_clone):
+        feat.DumpReadable()
+        feat_almost_clone.DumpReadable()
+        return 'fail'
 
     return 'success'
 
