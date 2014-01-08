@@ -407,6 +407,10 @@ bool GDBFieldTypeToWidthPrecision(std::string &gdbType, int *width, int *precisi
     {
         *width = 16;
     }
+    else if(gdbType == "esriFieldTypeBlob" )
+    {
+        *width = 0;
+    }
     else
     {
         CPLError( CE_Warning, CPLE_AppDefined,
