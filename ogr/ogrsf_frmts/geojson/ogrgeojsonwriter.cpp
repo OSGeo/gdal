@@ -691,6 +691,6 @@ json_object* json_object_new_double_with_precision(double dfVal,
 {
     json_object* jso = json_object_new_double(dfVal);
     json_object_set_serializer(jso, OGR_json_double_with_precision_to_string,
-                               (void*)nCoordPrecision, NULL );
+                               (void*)(size_t)nCoordPrecision, NULL );
     return jso;
 }

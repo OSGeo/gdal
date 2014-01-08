@@ -127,7 +127,6 @@ class CPL_DLL GMLFeatureClass
     char        *m_pszElementName;
     int          n_nNameLen;
     int          n_nElementNameLen;
-    char        *m_pszGeometryElement;
     int         m_nPropertyCount;
     GMLPropertyDefn **m_papoProperty;
     
