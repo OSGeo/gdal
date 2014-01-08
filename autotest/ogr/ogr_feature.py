@@ -96,7 +96,7 @@ def mk_src_feature():
     src_feature.SetField( 'field_integer', 17 )
     src_feature.SetField( 'field_real', 18.4 )
     src_feature.SetField( 'field_string', 'abc def' )
-    src_feature.field_binary = 'abc\0xyz'
+    src_feature.SetFieldBinaryFromHexString( 'field_binary', '0123465789ABCDEF' )
     src_feature.SetField( 'field_date', '2011/11/11' )
     src_feature.SetField( 'field_time', '14:10:35' )
     src_feature.SetField( 'field_datetime', '2011/11/11 14:10:35')
@@ -224,7 +224,7 @@ def ogr_feature_cp_3():
     if not check( dst_feature, 'field_string', 'abc def' ):
         return 'failure'
 
-    if not check( dst_feature, 'field_binary', None ):
+    if not check( dst_feature, 'field_binary', '0123465789ABCDEF' ):
         return 'failure'
 
     if not check( dst_feature, 'field_date', '2011/11/11' ):
@@ -265,7 +265,7 @@ def ogr_feature_cp_4():
     if not check( dst_feature, 'field_string', None ):
         return 'failure'
 
-    if not check( dst_feature, 'field_binary', None ):  # TODO: fixme!
+    if not check( dst_feature, 'field_binary', '0123465789ABCDEF' ):
         return 'failure'
 
     if not check( dst_feature, 'field_date', None ):
