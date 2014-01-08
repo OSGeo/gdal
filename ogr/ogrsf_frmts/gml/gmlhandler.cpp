@@ -248,7 +248,7 @@ char* GMLXercesHandler::GetAttributeValue(void* attr, const char* pszAttributeNa
 char* GMLXercesHandler::GetAttributeByIdx(void* attr, unsigned int idx, char** ppszKey)
 {
     const Attributes* attrs = (const Attributes*) attr;
-    if( idx < 0 || idx >= attrs->getLength() )
+    if( idx >= attrs->getLength() )
     {
         *ppszKey = NULL;
         return NULL;
