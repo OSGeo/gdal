@@ -1280,12 +1280,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
             {
                 if (bUseFastVersion)
                 {
-                    /* Note that isPointInRing only test strict inclusion in the ring */
-                    if (asPolyEx[j].poExteriorRing->isPointInRing(&asPolyEx[i].poAPoint, FALSE))
-                    {
-                        b_i_inside_j = TRUE;
-                    }
-                    else if (asPolyEx[j].poExteriorRing->isPointOnRingBoundary(&asPolyEx[i].poAPoint, FALSE))
+                    if (asPolyEx[j].poExteriorRing->isPointOnRingBoundary(&asPolyEx[i].poAPoint, FALSE))
                     {
                         /* If the point of i is on the boundary of j, we will iterate over the other points of i */
                         int k, nPoints = asPolyEx[i].poExteriorRing->getNumPoints();
@@ -1293,22 +1288,56 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                         {
                             OGRPoint point;
                             asPolyEx[i].poExteriorRing->getPoint(k, &point);
-                            if (asPolyEx[j].poExteriorRing->isPointInRing(&point, FALSE))
+                            if (asPolyEx[j].poExteriorRing->isPointOnRingBoundary(&point, FALSE))
+                            {
+                                /* If it is on the boundary of j, iterate again */ 
+                            }
+                            else if (asPolyEx[j].poExteriorRing->isPointInRing(&point, FALSE))
                             {
                                 /* If then point is strictly included in j, then i is considered inside j */
                                 b_i_inside_j = TRUE;
                                 break;
                             }
-                            else if (asPolyEx[j].poExteriorRing->isPointOnRingBoundary(&point, FALSE))
-                            {
-                                /* If it is on the boundary of j, iterate again */ 
-                            }
-                            else
+                            else 
                             {
                                 /* If it is outside, then i cannot be inside j */
                                 break;
                             }
                         }
+                        if( !b_i_inside_j && k == nPoints && nPoints > 2 )
+                        {
+                            /* all points of i are on the boundary of j ... */
+                            /* take a point in the middle of a segment of i and */
+                            /* test it against j */
+                            for(k=0;k<nPoints-1;k++)
+                            {
+                                OGRPoint point1, point2, pointMiddle;
+                                asPolyEx[i].poExteriorRing->getPoint(k, &point1);
+                                asPolyEx[i].poExteriorRing->getPoint(k+1, &point2);
+                                pointMiddle.setX((point1.getX() + point2.getX()) / 2);
+                                pointMiddle.setY((point1.getY() + point2.getY()) / 2);
+                                if (asPolyEx[j].poExteriorRing->isPointOnRingBoundary(&pointMiddle, FALSE))
+                                {
+                                    /* If it is on the boundary of j, iterate again */ 
+                                }
+                                else if (asPolyEx[j].poExteriorRing->isPointInRing(&pointMiddle, FALSE))
+                                {
+                                    /* If then point is strictly included in j, then i is considered inside j */
+                                    b_i_inside_j = TRUE;
+                                    break;
+                                }
+                                else 
+                                {
+                                    /* If it is outside, then i cannot be inside j */
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    /* Note that isPointInRing only test strict inclusion in the ring */
+                    else if (asPolyEx[j].poExteriorRing->isPointInRing(&asPolyEx[i].poAPoint, FALSE))
+                    {
+                        b_i_inside_j = TRUE;
                     }
                 }
                 else if (asPolyEx[j].poPolygon->Contains(asPolyEx[i].poPolygon))
