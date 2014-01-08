@@ -822,7 +822,7 @@ GDALDataset* RPFTOCSubDataset::CreateDataSetFromTocEntry(const char* openInforma
                             if( bHasNoDataValue && iC == (int)noDataValue )
                                 continue;
 
-                            const GDALColorEntry* entry = poCT->GetColorEntry(i);
+                            const GDALColorEntry* entry = poCT->GetColorEntry(iC);
                             if( entry->c1 != 0 || entry->c2 != 0 || entry->c3 != 0)
                             {
                                 bAllBlack = FALSE;
