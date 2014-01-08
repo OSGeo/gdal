@@ -3626,6 +3626,43 @@ def ogr_shape_73():
     return 'success'
 
 ###############################################################################
+# Test organizePolygons() in OGR_ORGANIZE_POLYGONS=DEFAULT mode when
+# two outer rings are touching, by the first vertex of one.
+
+def ogr_shape_74():
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_74.shp')
+    lyr = ds.CreateLayer('ogr_shape_74', geom_type = ogr.wkbPolygon)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    geom = ogr.CreateGeometryFromWkt('MULTIPOLYGON (((0 10,10 10,10 0,0 0,0 1,9 1,9 9,0 9,0 10)),((9 5,5 4,0 5,5 6, 9 5)))')
+    feat.SetGeometry(geom)
+    lyr.CreateFeature(feat)
+    feat = None
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_shape_74.shp')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    got_geom = feat.GetGeometryRef()
+    if geom.ExportToWkt() != got_geom.ExportToWkt():
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    lyr.ResetReading()
+    gdal.SetConfigOption('OGR_ORGANIZE_POLYGONS', 'DEFAULT')
+    feat = lyr.GetNextFeature()
+    gdal.SetConfigOption('OGR_ORGANIZE_POLYGONS', None)
+    got_geom = feat.GetGeometryRef()
+    if geom.ExportToWkt() != got_geom.ExportToWkt():
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    ds = None
+
+    return 'success'
+    
+###############################################################################
 # 
 
 def ogr_shape_cleanup():
@@ -3654,6 +3691,7 @@ def ogr_shape_cleanup():
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_61' )
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_62' )
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_73.shp' )
+    shape_drv.DeleteDataSource( '/vsimem/ogr_shape_74.shp' )
 
     return 'success'
 
@@ -3733,6 +3771,7 @@ gdaltest_list = [
     ogr_shape_71,
     ogr_shape_72,
     ogr_shape_73,
+    ogr_shape_74,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':
