@@ -1257,6 +1257,28 @@ public:
   }
 %clear char**pList;
 
+  void SetFieldBinaryFromHexString(int id, const char* pszValue)
+  {
+     int nBytes;
+     GByte* pabyBuf = CPLHexToBinary(pszValue, &nBytes );
+     OGR_F_SetFieldBinary(self, id, nBytes, pabyBuf);
+     CPLFree(pabyBuf);
+  }
+
+  void SetFieldBinaryFromHexString(const char* name, const char* pszValue)
+  {
+      int i = OGR_F_GetFieldIndex(self, name);
+      if (i == -1)
+        CPLError(CE_Failure, 1, "No such field: '%s'", name);
+      else
+      {
+        int nBytes;
+        GByte* pabyBuf = CPLHexToBinary(pszValue, &nBytes );
+        OGR_F_SetFieldBinary(self, i, nBytes, pabyBuf);
+        CPLFree(pabyBuf);
+      }
+  }
+
   /* ------------------------------------------- */  
   
 #ifndef SWIGJAVA
