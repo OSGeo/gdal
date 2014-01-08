@@ -2216,6 +2216,8 @@ int OGRGeoRSSLayer::TestCapability( const char * pszCap )
 
     else if( EQUAL(pszCap,OLCSequentialWrite) )
         return bWriteMode;
+    else if( EQUAL(pszCap,OLCCreateField) )
+        return bWriteMode;
     else 
         return FALSE;
 }
