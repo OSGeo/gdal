@@ -1280,7 +1280,14 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
             {
                 if (bUseFastVersion)
                 {
-                    if (asPolyEx[j].poExteriorRing->isPointOnRingBoundary(&asPolyEx[i].poAPoint, FALSE))
+                    if( method == METHOD_ONLY_CCW && j == 0 )
+                    {
+                        /* We are testing if a CCW ring is in the biggest CW ring */
+                        /* It *must* be inside as this is the last candidate, otherwise */
+                        /* the winding order rules is broken */
+                        b_i_inside_j = TRUE;
+                    }
+                    else if (asPolyEx[j].poExteriorRing->isPointOnRingBoundary(&asPolyEx[i].poAPoint, FALSE))
                     {
                         /* If the point of i is on the boundary of j, we will iterate over the other points of i */
                         int k, nPoints = asPolyEx[i].poExteriorRing->getNumPoints();
