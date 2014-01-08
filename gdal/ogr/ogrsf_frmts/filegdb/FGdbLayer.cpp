@@ -2259,22 +2259,20 @@ bool FGdbBaseLayer::OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature)
             }
             break;
 
-            /* TODO: Need to get test dataset to implement these leave it as NULL for now
             case OFTBinary:
             {
                 ByteArray binaryBuf;
 
                 if (FAILED(hr = pRow->GetBinary(wstrFieldName, binaryBuf)))
-                {
-                GDBErr(hr, "Failed to determine binary value for column " + WStringToString(wstrFieldName));
-                foundBadColumn = true;
-                continue;
+                    {
+                    GDBErr(hr, "Failed to determine binary value for column " + WStringToString(wstrFieldName));
+                    foundBadColumn = true;
+                    continue;
                 }
 
                 pOutFeature->SetField(i, (int)binaryBuf.inUseLength, (GByte*)binaryBuf.byteArray);
             }
             break;
-            */
 
             case OFTDateTime:
             {
