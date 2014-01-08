@@ -297,6 +297,8 @@ int OGRSOSILayer::TestCapability( const char * pszCap ) {
 
     if( EQUAL(pszCap,OLCStringsAsUTF8) )
         return TRUE;
+    if( EQUAL(pszCap,OLCCreateField) )
+        return TRUE;
     else
         return FALSE;
 }
