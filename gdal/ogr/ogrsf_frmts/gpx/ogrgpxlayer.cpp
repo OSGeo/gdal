@@ -1803,7 +1803,8 @@ int OGRGPXLayer::TestCapability( const char * pszCap )
 {
     if( EQUAL(pszCap,OLCSequentialWrite) )
         return bWriteMode;
-
+    else if( EQUAL(pszCap,OLCCreateField) )
+        return bWriteMode;
     else if( EQUAL(pszCap,OLCStringsAsUTF8) )
         return TRUE;
 
