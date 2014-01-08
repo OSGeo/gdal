@@ -650,14 +650,11 @@ def ogr_sqlite_14():
     dst_feat.SetField('INTEGER', 1)
     dst_feat.SetField('FLOAT', 1.2)
     dst_feat.SetField('STRING', 'myString\'a')
+    dst_feat.SetFieldBinaryFromHexString('BLOB', '0001FF')
 
     gdaltest.sl_lyr.CreateFeature( dst_feat )
 
     dst_feat.Destroy()
-
-    # Set the BLOB attribute via SQL UPDATE instructions as there's no binding
-    # for OGR_F_SetFieldBinary
-    gdaltest.sl_ds.ExecuteSQL("UPDATE testtypes SET BLOB = x'0001FF' WHERE OGC_FID = 1")
 
     ######################################################
     # Reopen DB
