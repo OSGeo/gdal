@@ -117,6 +117,8 @@ def ogr_fgdb_1():
         lyr.CreateField(ogr.FieldDefn("adate", ogr.OFTDateTime))
         lyr.CreateField(ogr.FieldDefn("guid", ogr.OFTString))
         lyr.CreateField(ogr.FieldDefn("xml", ogr.OFTString))
+        lyr.CreateField(ogr.FieldDefn("binary", ogr.OFTBinary))
+        lyr.CreateField(ogr.FieldDefn("binary2", ogr.OFTBinary))
 
         # We need at least 5 features so that test_ogrsf can test SetFeature()
         for i in range(5):
@@ -132,6 +134,8 @@ def ogr_fgdb_1():
             feat.SetField("adate", "2013/12/26 12:34:56")
             feat.SetField("guid", "{12345678-9abc-DEF0-1234-567890ABCDEF}")
             feat.SetField("xml", "<foo></foo>")
+            feat.SetFieldBinaryFromHexString("binary", "00FF7F")
+            feat.SetFieldBinaryFromHexString("binary2", "123456")
             lyr.CreateFeature(feat)
 
     for data in datalist:
@@ -160,7 +164,9 @@ def ogr_fgdb_1():
            feat.GetField('real') != 4.56 or \
            feat.GetField('adate') != "2013/12/26 12:34:56" or \
            feat.GetField('guid') != "{12345678-9ABC-DEF0-1234-567890ABCDEF}" or \
-           feat.GetField('xml') != "<foo></foo>":
+           feat.GetField('xml') != "<foo></foo>" or \
+           feat.GetField('binary') != "00FF7F" or \
+           feat.GetField('binary2') != "123456":
             feat.DumpReadable()
             return 'fail'
 
@@ -247,7 +253,7 @@ def ogr_fgdb_2():
     if test_cli_utilities.get_test_ogrsf_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro tmp/test.gdb')
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro tmp/test.gdb --config OGR_SKIP OpenFileGDB')
 
     if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
         print(ret)
