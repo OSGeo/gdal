@@ -1161,7 +1161,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
 
     /* If we are in ONLY_CCW mode and that we have found that there is only one outer ring, */
     /* then it is pretty easy : we can assume that all other rings are inside */
-    if ((method == METHOD_ONLY_CCW || method == METHOD_SEQUENTIAL_W) &&
+    if (method == METHOD_ONLY_CCW &&
         nCountCWPolygon == 1 && bUseFastVersion && !bNonPolygon )
     {
         geom = asPolyEx[indexOfCWPolygon].poPolygon;
