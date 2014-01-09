@@ -60,7 +60,7 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal, char chDeci
         return;
     }
 
-    while(TRUE)
+    while(nPrecision > 0)
     {
         i = 0;
         int nCountBeforeDot = 0;
