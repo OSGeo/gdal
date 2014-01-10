@@ -102,32 +102,6 @@ int ILI1Reader::OpenFile( const char *pszFilename ) {
     return TRUE;
 }
 
-int ILI1Reader::HasMultiplePointGeom(const char* layername) {
-    if (metaLayer != NULL) {
-        OGRFeature *metaFeature = NULL;
-        metaLayer->ResetReading();
-        int i = -1;
-        while((metaFeature = metaLayer->GetNextFeature()) != NULL ) {
-            if(EQUAL(layername, metaFeature->GetFieldAsString(0))) {
-              i++;
-            }
-            delete metaFeature;
-        }
-        return i;
-    } else {
-        return -1;
-    }
-}
-
-char* ILI1Reader::GetPointLayerName(const char* layername, char* newlayername) {
-    static char geomlayername[512];
-    geomlayername[0] = '\0';
-    strcat(geomlayername, layername);
-    strcat(geomlayername, "__");
-    strcat(geomlayername, newlayername);
-    return geomlayername;
-}
-
 const char* ILI1Reader::GetLayerNameString(const char* topicname, const char* tablename) {
     static char layername[512];
     layername[0] = '\0';
@@ -154,6 +128,10 @@ void ILI1Reader::AddCoord(OGRILI1Layer* layer, IOM_BASKET model, IOM_OBJECT mode
     layer->GetLayerDefn()->AddFieldDefn(&fieldDef);
     //CPLDebug( "AddCoord   OGR_ILI", "Field %s: OFTReal", fieldDef.GetNameRef());
   }
+  OGRwkbGeometryType geomType = (dim > 2) ? wkbPoint25D : wkbPoint;
+  OGRGeomFieldDefn oGFld(iom_getattrvalue(modelele, "name"), geomType);
+  oGFld.SetSpatialRef(layer->GetSpatialRef());
+  layer->GetLayerDefn()->AddGeomFieldDefn(&oGFld);
 }
 
 OGRILI1Layer* ILI1Reader::AddGeomTable(const char* datalayername, const char* geomname, OGRwkbGeometryType eType) {
@@ -174,34 +152,45 @@ OGRILI1Layer* ILI1Reader::AddGeomTable(const char* datalayername, const char* ge
   }
   OGRFieldDefn fieldDef2("ILI_Geometry", OFTString); //in write mode only?
   geomlayer->GetLayerDefn()->AddFieldDefn(&fieldDef2);
+
+  OGRGeomFieldDefn oGFld(geomname, eType);
+  oGFld.SetSpatialRef(geomlayer->GetSpatialRef());
+  geomlayer->GetLayerDefn()->AddGeomFieldDefn(&oGFld);
+
   return geomlayer;
 }
 
 void ILI1Reader::AddField(OGRILI1Layer* layer, IOM_BASKET model, IOM_OBJECT obj) {
   const char* typenam = "Reference";
   if (EQUAL(iom_getobjecttag(obj),"iom04.metamodel.LocalAttribute")) typenam = GetTypeName(model, obj);
-  //CPLDebug( "OGR_ILI", "Field %s: %s", iom_getattrvalue(obj, "name"), typenam);
+  CPLDebug( "OGR_ILI", "Field %s: %s", iom_getattrvalue(obj, "name"), typenam);
   if (EQUAL(typenam, "iom04.metamodel.SurfaceType")) {
+    OGRGeomFieldDefn oGFld(iom_getattrvalue(obj, "name"), wkbPolygon);
+    oGFld.SetSpatialRef(layer->GetSpatialRef());
+    layer->GetLayerDefn()->AddGeomFieldDefn(&oGFld);
     OGRILI1Layer* polyLayer = AddGeomTable(layer->GetLayerDefn()->GetName(), iom_getattrvalue(obj, "name"), wkbPolygon);
-    layer->SetSurfacePolyLayer(polyLayer);
+    layer->SetSurfacePolyLayer(polyLayer, layer->GetLayerDefn()->GetGeomFieldCount()-1); //TODO: support multiple surface geoms in layer -> use metadata struct
     //TODO: add line attributes to geometry
   } else if (EQUAL(typenam, "iom04.metamodel.AreaType")) {
     IOM_OBJECT controlPointDomain = GetAttrObj(model, GetTypeObj(model, obj), "controlPointDomain");
     if (controlPointDomain) {
       AddCoord(layer, model, obj, GetTypeObj(model, controlPointDomain));
-      layer->GetLayerDefn()->SetGeomType(wkbPoint);
     }
     OGRILI1Layer* areaLineLayer = AddGeomTable(layer->GetLayerDefn()->GetName(), iom_getattrvalue(obj, "name"), wkbMultiLineString);
 #ifdef POLYGONIZE_AREAS
     OGRILI1Layer* areaLayer = new OGRILI1Layer(CPLSPrintf("%s__Areas",layer->GetLayerDefn()->GetName()), NULL, 0, wkbPolygon, NULL);
+    OGRGeomFieldDefn oGFld(iom_getattrvalue(obj, "name"), wkbPolygon);
+    oGFld.SetSpatialRef(areaLayer->GetSpatialRef());
+    areaLayer->GetLayerDefn()->AddGeomFieldDefn(&oGFld);
     AddLayer(areaLayer);
-    areaLayer->SetAreaLayers(layer, areaLineLayer);
+    areaLayer->SetAreaLayers(layer, areaLineLayer); //TODO: support multiple area geoms in layer -> use metadata struct
 #endif
   } else if (EQUAL(typenam, "iom04.metamodel.PolylineType") ) {
-    layer->GetLayerDefn()->SetGeomType(wkbMultiLineString);
+    OGRGeomFieldDefn oGFld(iom_getattrvalue(obj, "name"), wkbMultiLineString);
+    oGFld.SetSpatialRef(layer->GetSpatialRef());
+    layer->GetLayerDefn()->AddGeomFieldDefn(&oGFld);
   } else if (EQUAL(typenam, "iom04.metamodel.CoordType")) {
     AddCoord(layer, model, obj, GetTypeObj(model, obj));
-    if (layer->GetLayerDefn()->GetGeomType() == wkbUnknown) layer->GetLayerDefn()->SetGeomType(wkbPoint);
   } else if (EQUAL(typenam, "iom04.metamodel.NumericType") ) {
      OGRFieldDefn fieldDef(iom_getattrvalue(obj, "name"), OFTReal);
      layer->GetLayerDefn()->AddFieldDefn(&fieldDef);
@@ -305,14 +294,10 @@ int ILI1Reader::ReadModel(const char *pszModelFilename) {
           }
           iom_releaseiterator(fieldit);
 
-          // if multiple gets positive we have more than one geometry column (only points)
-          int multiple = -1;
-
           for (int i=0; i<=maxIdx; i++) {
             IOM_OBJECT obj = fields[i];
             if (obj) {
-             attributes.push_back(obj);
-             if (EQUAL(GetTypeName(model, obj), "iom04.metamodel.CoordType")) multiple++;
+              attributes.push_back(obj);
             }
           }
 
@@ -322,29 +307,21 @@ int ILI1Reader::ReadModel(const char *pszModelFilename) {
           }
 
           OGRFeature *feature = NULL;
-          char* geomlayername = '\0';
+          //char* geomlayername = '\0';
           OGRILI1Layer* layer = NULL;
 
           for(size_t i=0; i<attributes.size(); i++) {
             IOM_OBJECT obj = attributes.at(i);
             const char* typenam = GetTypeName(model, obj);
-            if (EQUAL(typenam, "iom04.metamodel.CoordType")  || EQUAL(typenam, "iom04.metamodel.AreaType")) {
+            if (EQUAL(typenam, "iom04.metamodel.AreaType")) {
               feature = OGRFeature::CreateFeature(metaLayer->GetLayerDefn());
               feature->SetFID(j+1);
               feature->SetField("layername", layername);
               feature->SetField("geomIdx", (int)i);
+              feature->SetField("geomlayername", layername);
+              layer = new OGRILI1Layer(layername, poSRSIn, bWriterIn, eReqType, poDSIn);
+              AddLayer(layer);
 
-              if(multiple > 0) {
-                geomlayername = GetPointLayerName(layername, iom_getattrvalue(obj, "name"));
-                feature->SetField("geomlayername", geomlayername);
-                layer = new OGRILI1Layer(geomlayername, poSRSIn, bWriterIn, eReqType, poDSIn);
-                AddLayer(layer);
-
-              } else {
-                feature->SetField("geomlayername", layername);
-                layer = new OGRILI1Layer(layername, poSRSIn, bWriterIn, eReqType, poDSIn);
-                AddLayer(layer);
-              }
               metaLayer->AddFeature(feature);
             }
           }
@@ -360,17 +337,6 @@ int ILI1Reader::ReadModel(const char *pszModelFilename) {
           for(size_t i=0; i<attributes.size(); i++) {
             IOM_OBJECT obj = attributes.at(i);
             AddField(layer, model, obj);
-          }
-
-          // additional point layer added
-          if(multiple > 0) {
-            for(int i = 1; i <= multiple; i++) {
-               OGRILI1Layer* pointLayer = papoLayers[nLayers-(i+1)];
-               for (int j=0; j < layer->GetLayerDefn()->GetFieldCount(); j++) {
-                 pointLayer->CreateField(layer->GetLayerDefn()->GetFieldDefn(j));
-               }
-            if (pointLayer->GetLayerDefn()->GetGeomType() == wkbUnknown) pointLayer->GetLayerDefn()->SetGeomType(wkbPoint);
-            }
           }
 
           if (papoLayers[nLayers-1]->GetLayerDefn()->GetFieldCount() == 0) {
@@ -452,11 +418,7 @@ int ILI1Reader::ReadFeatures() {
         const char *layername = GetLayerNameString(topic, CSLGetField(tokens, 1));
         curLayer = GetLayerByName(layername);
 
-        int multiple = HasMultiplePointGeom(layername);
-
-        // create only a new layer if there is no curLayer AND
-        // if there are more than one point geometry columns
-        if (curLayer == NULL && multiple < 1) { //create one
+        if (curLayer == NULL) { //create one
           CPLDebug( "OGR_ILI", "No model found, using default field names." );
           OGRSpatialReference *poSRSIn = NULL;
           int bWriterIn = 0;
@@ -529,39 +491,10 @@ int ILI1Reader::ReadTable(const char *layername) {
     int ret = TRUE;
     int warned = FALSE;
     int fIndex;
-    int geomIdx = 0;
-
-    // curLayer is NULL if we have more than one
-    // point geometry column
-    if(curLayer == NULL) {
-      OGRFeature *metaFeature = NULL;
-      metaLayer->ResetReading();
-      while((metaFeature = metaLayer->GetNextFeature()) != NULL ) {
-        if(EQUAL(layername, metaFeature->GetFieldAsString(0))) {
-          const char *geomlayername = metaFeature->GetFieldAsString(2);
-          curLayer = GetLayerByName(geomlayername);
-          delete metaFeature;
-          break;
-        }
-        delete metaFeature;
-      }
-    }
+    int geomIdx = -1;
 
     OGRFeatureDefn *featureDef = curLayer->GetLayerDefn();
     OGRFeature *feature = NULL;
-
-    // get the geometry index of the current layer
-    // only if the model is read
-    if(featureDef->GetFieldCount() != 0) {
-      OGRFeature *metaFeature = NULL;
-      metaLayer->ResetReading();
-      while((metaFeature = metaLayer->GetNextFeature()) != NULL ) {
-        if(EQUAL(curLayer->GetLayerDefn()->GetName(), metaFeature->GetFieldAsString(2))) {
-          geomIdx = metaFeature->GetFieldAsInteger(1);
-        }
-        delete metaFeature;
-      }
-    }
 
     long fpos = VSIFTell(fpItf);
     while (ret && (tokens = ReadParseLine()))
@@ -620,19 +553,29 @@ int ILI1Reader::ReadTable(const char *layername) {
               }
               if (featureDef->GetFieldDefn(fieldno)->GetType() == OFTReal
                   && fieldno > 0
-                  && featureDef->GetFieldDefn(fieldno-1)->GetType() == OFTReal
-                  && featureDef->GetGeomType() == wkbPoint
-
-                  /*
-                  // if there is no ili model read,
-                  // we have no chance to detect the
-                  // geometry column!!
-                  */
-
-                  && (fieldno-2) == geomIdx) {
-                //add Point geometry
-                OGRPoint *ogrPoint = new OGRPoint(atof(tokens[fIndex-1]), atof(tokens[fIndex]));
-                feature->SetGeometryDirectly(ogrPoint);
+                  && featureDef->GetFieldDefn(fieldno-1)->GetType() == OFTReal) {
+                //check for Point geometry (Coord type)
+                // if there is no ili model read,
+                // we have no chance to detect the
+                // geometry column!!
+                CPLString geomfldname = featureDef->GetFieldDefn(fieldno)->GetNameRef();
+                //Check if name ends with _1
+                if (geomfldname.size() >= 2 && geomfldname[geomfldname.size()-2] == '_') {
+                  geomIdx = featureDef->GetGeomFieldIndex(geomfldname.substr(0, geomfldname.size()-2).c_str());
+                } else {
+                  geomIdx = -1;
+                }
+                if (geomIdx >= 0) {
+                  if (featureDef->GetGeomFieldDefn(geomIdx)->GetType() == wkbPoint) {
+                    //add Point geometry
+                    OGRPoint *ogrPoint = new OGRPoint(atof(tokens[fIndex-1]), atof(tokens[fIndex]));
+                    feature->SetGeomFieldDirectly(geomIdx, ogrPoint);
+                  } else if (featureDef->GetGeomFieldDefn(geomIdx)->GetType() == wkbPoint25D && fieldno > 1 && featureDef->GetFieldDefn(fieldno-2)->GetType() == OFTReal) {
+                    //add 3D Point geometry
+                    OGRPoint *ogrPoint = new OGRPoint(atof(tokens[fIndex-2]), atof(tokens[fIndex-1]), atof(tokens[fIndex]));
+                    feature->SetGeomFieldDirectly(geomIdx, ogrPoint);
+                  }
+                }
               }
             }
           }
@@ -640,16 +583,19 @@ int ILI1Reader::ReadTable(const char *layername) {
             CPLDebug( "OGR_ILI", "Field count doesn't match. %d declared, %d found", featureDef->GetFieldCount(), CSLCount(tokens)-1);
             warned = TRUE;
           }
-          if (featureDef->GetGeomType() == wkbPolygon)
-            feature->SetFID(atol(feature->GetFieldAsString(1)));
-          else if (feature->GetFieldCount() > 0)
-            feature->SetFID(atol(feature->GetFieldAsString(0)));
+          if (feature->GetFieldCount() > 0) {
+            feature->SetFID(atol(feature->GetFieldAsString(0))); //TODO: use IDENT field from model instead of TID
+          }
           curLayer->AddFeature(feature);
+          geomIdx = -1; //Reset
         }
       }
       else if (EQUAL(firsttok, "STPT"))
       {
-        ReadGeom(tokens, featureDef->GetGeomType(), feature);
+        //Find next non-Point geometry
+        do { geomIdx++; } while (geomIdx < featureDef->GetGeomFieldCount() && featureDef->GetGeomFieldDefn(geomIdx)->GetType() == wkbPoint);
+        OGRwkbGeometryType geomType = (geomIdx < featureDef->GetGeomFieldCount()) ? featureDef->GetGeomFieldDefn(geomIdx)->GetType() : wkbNone;
+        ReadGeom(tokens, geomIdx, geomType, feature);
         if (EQUAL(featureDef->GetFieldDefn(featureDef->GetFieldCount()-1)->GetNameRef(), "ILI_Geometry"))
         {
           AddIliGeom(feature, featureDef->GetFieldCount()-1, fpos); //TODO: append multi-OBJECT geometries
@@ -662,7 +608,9 @@ int ILI1Reader::ReadTable(const char *layername) {
       else if (EQUAL(firsttok, "EDGE"))
       {
         tokens = ReadParseLine(); //STPT
-        ReadGeom(tokens, wkbMultiLineString, feature);
+        //Find next non-Point geometry
+        do { geomIdx++; } while (geomIdx < featureDef->GetGeomFieldCount() && featureDef->GetGeomFieldDefn(geomIdx)->GetType() == wkbPoint);
+        ReadGeom(tokens, geomIdx, wkbMultiLineString, feature);
         if (EQUAL(featureDef->GetFieldDefn(featureDef->GetFieldCount()-1)->GetNameRef(), "ILI_Geometry"))
         {
           AddIliGeom(feature, featureDef->GetFieldCount()-1, fpos);
@@ -673,26 +621,6 @@ int ILI1Reader::ReadTable(const char *layername) {
       }
       else if (EQUAL(firsttok, "ETAB"))
       {
-        if(HasMultiplePointGeom(layername) > 0) {
-          OGRFeature *metaFeature = NULL;
-          metaLayer->ResetReading();
-          while((metaFeature = metaLayer->GetNextFeature()) != NULL ) {
-            int pntCln = 1;
-            if(EQUAL(layername, metaFeature->GetFieldAsString(0)) && !EQUAL(curLayer->GetLayerDefn()->GetName(), metaFeature->GetFieldAsString(2))) {
-              pntCln++;
-              OGRILI1Layer *curLayerTmp = GetLayerByName(metaFeature->GetFieldAsString(2));
-              OGRFeature *tmpFeature = NULL;
-              int geomIdxTmp = metaFeature->GetFieldAsInteger(1);
-              curLayer->ResetReading();
-              while((tmpFeature = curLayer->GetNextFeature()) != NULL ) {
-                OGRPoint *ogrPoint = new OGRPoint(atof(tmpFeature->GetFieldAsString(geomIdxTmp + pntCln)), atof(tmpFeature->GetFieldAsString(geomIdxTmp + pntCln + 1)));
-                tmpFeature->SetGeometryDirectly(ogrPoint);
-                curLayerTmp->AddFeature(tmpFeature);
-              }
-            }
-            delete metaFeature;
-          }
-        }
         CSLDestroy(tokens);
         return TRUE;
       }
@@ -708,8 +636,7 @@ int ILI1Reader::ReadTable(const char *layername) {
     return ret;
 }
 
-void ILI1Reader::ReadGeom(char **stgeom, OGRwkbGeometryType eType, OGRFeature *feature) {
-
+void ILI1Reader::ReadGeom(char **stgeom, int geomIdx, OGRwkbGeometryType eType, OGRFeature *feature) {
     char **tokens = NULL;
     const char *firsttok = NULL;
     int end = FALSE;
@@ -720,6 +647,7 @@ void ILI1Reader::ReadGeom(char **stgeom, OGRwkbGeometryType eType, OGRFeature *f
     OGRPoint ogrPoint, arcPoint, endPoint; //points for arc interpolation
     OGRMultiLineString *ogrMultiLine = NULL; //current multi line
 
+    //CPLDebug( "OGR_ILI", "ILI1Reader::ReadGeom geomIdx: %d", geomIdx);
     //tokens = ["STPT", "1111", "22222"]
     ogrPoint.setX(atof(stgeom[1])); ogrPoint.setY(atof(stgeom[2]));
     ogrLine = (eType == wkbPolygon) ? new OGRLinearRing() : new OGRLineString();
@@ -729,7 +657,7 @@ void ILI1Reader::ReadGeom(char **stgeom, OGRwkbGeometryType eType, OGRFeature *f
     if (eType == wkbMultiLineString)
     {
       ogrMultiLine = new OGRMultiLineString();
-      feature->SetGeometryDirectly(ogrMultiLine);
+      feature->SetGeomFieldDirectly(geomIdx, ogrMultiLine);
     }
     else if (eType == wkbGeometryCollection) //AREA
     {
@@ -738,7 +666,7 @@ void ILI1Reader::ReadGeom(char **stgeom, OGRwkbGeometryType eType, OGRFeature *f
       else
       {
         ogrMultiLine = new OGRMultiLineString();
-        feature->SetGeometryDirectly(ogrMultiLine);
+        feature->SetGeomFieldDirectly(geomIdx, ogrMultiLine);
       }
     }
     else if (eType == wkbPolygon)
@@ -755,12 +683,12 @@ void ILI1Reader::ReadGeom(char **stgeom, OGRwkbGeometryType eType, OGRFeature *f
       else
       {
         ogrPoly = new OGRPolygon();
-        feature->SetGeometryDirectly(ogrPoly);
+        feature->SetGeomFieldDirectly(geomIdx, ogrPoly);
       }
     }
     else
     {
-      feature->SetGeometryDirectly(ogrLine);
+      feature->SetGeomFieldDirectly(geomIdx, ogrLine);
     }
 
     //Parse geometry
@@ -832,10 +760,6 @@ void ILI1Reader::AddLayer( OGRILI1Layer * poNewLayer )
 
     papoLayers[nLayers-1] = poNewLayer;
 }
-
-/************************************************************************/
-/*                              AddAreaLayer()                              */
-/************************************************************************/
 
 /************************************************************************/
 /*                              GetLayer()                              */

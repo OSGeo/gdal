@@ -76,8 +76,6 @@ private:
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
     OGRErr              CreateField( OGRFieldDefn *poField, int bApproxOK = TRUE );
-
-    OGRSpatialReference *GetSpatialRef();
     
     int                 TestCapability( const char * );
 };

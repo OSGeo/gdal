@@ -53,7 +53,8 @@ OGRILI1Layer::OGRILI1Layer( const char * pszName,
 
     poFeatureDefn = new OGRFeatureDefn( pszName );
     poFeatureDefn->Reference();
-    poFeatureDefn->SetGeomType( eReqType );
+    // Delete default geometry field
+    poFeatureDefn->DeleteGeomFieldDefn(0);
 
     nFeatures = 0;
     papoFeatures = NULL;
@@ -402,21 +403,14 @@ OGRErr OGRILI1Layer::CreateField( OGRFieldDefn *poField, int bApproxOK ) {
     return OGRERR_NONE;
 }
 
-/************************************************************************/
-/*                           GetSpatialRef()                            */
-/************************************************************************/
-
-OGRSpatialReference *OGRILI1Layer::GetSpatialRef() {
-    return poSRS;
-}
-
 
 /************************************************************************/
 /*                         Internal routines                            */
 /************************************************************************/
 
-void OGRILI1Layer::SetSurfacePolyLayer(OGRILI1Layer *poSurfacePolyLayerIn) {
+void OGRILI1Layer::SetSurfacePolyLayer(OGRILI1Layer *poSurfacePolyLayerIn, int geomFieldId) {
     poSurfacePolyLayer = poSurfacePolyLayerIn;
+    surfaceGeomFieldId = geomFieldId;
 }
 
 void OGRILI1Layer::JoinSurfaceLayer()
@@ -424,13 +418,14 @@ void OGRILI1Layer::JoinSurfaceLayer()
     if (poSurfacePolyLayer == 0) return;
 
     CPLDebug( "OGR_ILI", "Joining surface layer %s with geometries", GetLayerDefn()->GetName());
-    GetLayerDefn()->SetGeomType(poSurfacePolyLayer->GetLayerDefn()->GetGeomType());
-    ResetReading();
-    while (OGRFeature *feature = GetNextFeatureRef())
-    {
-        OGRFeature *polyfeature = poSurfacePolyLayer->GetFeatureRef(feature->GetFID());
-        if (polyfeature) {
-            feature->SetGeometry(polyfeature->GetGeometryRef());
+    poSurfacePolyLayer->ResetReading();
+    while (OGRFeature *polyfeature = poSurfacePolyLayer->GetNextFeatureRef()) {
+        int reftid = polyfeature->GetFieldAsInteger(1);
+        OGRFeature *feature = GetFeatureRef(reftid);
+        if (feature) {
+            feature->SetGeomField(surfaceGeomFieldId, polyfeature->GetGeomFieldRef(0));
+        } else {
+            CPLDebug( "OGR_ILI", "Couldn't join feature FID %d", reftid );
         }
     }
 
@@ -529,7 +524,7 @@ void OGRILI1Layer::PolygonizeAreaLayer()
     GEOSGeom *ahInGeoms = NULL;
 
     CPLDebug( "OGR_ILI", "Associating layer %s with area polygons", GetLayerDefn()->GetName());
-    ahInGeoms = (GEOSGeom *) CPLCalloc(sizeof(void*),polys->getNumGeometries());
+    ahInGeoms = (GEOSGeom *) CPLCalloc(sizeof(void*), polys->getNumGeometries());
     GEOSContextHandle_t hGEOSCtxt = OGRGeometry::createGEOSContext();
     for( i = 0; i < polys->getNumGeometries(); i++ )
     {

@@ -350,11 +350,3 @@ OGRErr OGRILI2Layer::CreateField( OGRFieldDefn *poField, int bApproxOK ) {
     poFeatureDefn->AddFieldDefn( poField );
     return OGRERR_NONE;
 }
-
-/************************************************************************/
-/*                           GetSpatialRef()                            */
-/************************************************************************/
-
-OGRSpatialReference *OGRILI2Layer::GetSpatialRef() {
-    return poSRS;
-}
