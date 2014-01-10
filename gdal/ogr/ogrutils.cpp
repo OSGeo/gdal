@@ -1478,7 +1478,7 @@ OGRErr OGRReadWKBGeometryType( unsigned char * pabyData, OGRwkbGeometryType *peG
     /* Nothing left but (hopefully) basic 2D types */
 
     /* What if what we have is still out of range? */
-    if ( iRawType < 1 || iRawType > wkbGeometryCollection )
+    if ( iRawType < 1 || iRawType > (int)wkbGeometryCollection )
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Unsupported WKB type %d", iRawType);            
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
