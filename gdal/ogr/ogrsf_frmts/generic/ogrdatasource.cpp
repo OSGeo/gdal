@@ -1615,7 +1615,7 @@ OGRLayer* OGRDataSource::BuildLayerFromSelectInfo(void* psSelectInfoIn,
                 int iOutField = sFieldList.count++;
                 sFieldList.names[iOutField] = (char *) poFDefn->GetNameRef();
                 if( *sFieldList.names[iOutField] == '\0' )
-                    sFieldList.names[iOutField] = "_ogr_geometry_";
+                    sFieldList.names[iOutField] = (char*) OGR_GEOMETRY_DEFAULT_NON_EMPTY_NAME;
                 sFieldList.types[iOutField] = SWQ_GEOMETRY;
 
                 sFieldList.table_ids[iOutField] = iTable;
