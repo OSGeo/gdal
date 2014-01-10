@@ -42,6 +42,9 @@
 #include "ogr_core.h"
 #include "ogr_geometry.h"
 
+/* A default name for the default geometry column, instead of '' */
+#define OGR_GEOMETRY_DEFAULT_NON_EMPTY_NAME     "_ogr_geometry_"
+
 #ifdef CPL_MSB 
 #  define OGR_SWAP(x)   (x == wkbNDR)
 #else

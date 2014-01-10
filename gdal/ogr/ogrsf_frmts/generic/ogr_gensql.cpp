@@ -410,7 +410,7 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
         if( *pszName != '\0' )
             col_def->field_name = CPLStrdup( pszName );
         else
-            col_def->field_name = CPLStrdup( "_ogr_geometry_" );
+            col_def->field_name = CPLStrdup( OGR_GEOMETRY_DEFAULT_NON_EMPTY_NAME );
         col_def->field_alias = NULL;
         col_def->table_index = 0;
         col_def->field_index = GEOM_FIELD_INDEX_TO_ALL_FIELD_INDEX(poSrcDefn, 0);
