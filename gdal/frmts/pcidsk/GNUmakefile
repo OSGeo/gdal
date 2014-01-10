@@ -5,6 +5,10 @@ ifeq ($(JPEG_SETTING),internal)
 JPEG_INCLUDE	=	-I../jpeg/libjpeg
 endif
 
+ifneq ($(JPEG_SETTING),no)
+JPEG_FLAGS = -DHAVE_LIBJPEG
+endif
+
 ifeq ($(PCIDSK_SETTING),old)
 OBJ	=	pcidskdataset.o pcidsktiledrasterband.o
 CPPFLAGS	:=	$(GDAL_INCLUDE) -I../raw $(CPPFLAGS)
@@ -12,7 +16,7 @@ $(O_OBJ):	../raw/rawdataset.h gdal_pcidsk.h
 else
 OBJ	=	pcidskdataset2.o vsi_pcidsk_io.o gdal_edb.o $(SDKOBJ)
 ifeq ($(PCIDSK_SETTING),internal)
-CPPFLAGS	:=	-DHAVE_LIBJPEG $(JPEG_INCLUDE) -DPCIDSK_INTERNAL \
+CPPFLAGS	:=	$(JPEG_FLAGS) $(JPEG_INCLUDE) -DPCIDSK_INTERNAL \
 	-Isdk $(GDAL_INCLUDE) $(CPPFLAGS)
 
 SDKOBJ 	=	\
