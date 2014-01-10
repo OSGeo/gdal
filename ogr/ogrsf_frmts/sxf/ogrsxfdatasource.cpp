@@ -684,7 +684,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXF, SXFPassport& pas
     else if (iEllips == 9 && iProjSys == 17) // WGS84 / UTM
     {
         double dfCenterLongEnv = passport.stMapDescription.stGeoCoords[1] + fabs(passport.stMapDescription.stGeoCoords[5] - passport.stMapDescription.stGeoCoords[1]) / 2;
-        int nZoneEnv = (dfCenterLongEnv + 3.0) / 6.0 + 0.5;
+        int nZoneEnv = 30 + (dfCenterLongEnv + 3.0) / 6.0 + 0.5;
         bool bNorth = passport.stMapDescription.stGeoCoords[6] + (passport.stMapDescription.stGeoCoords[2] - passport.stMapDescription.stGeoCoords[6]) / 2 < 0;
         int nEPSG;
         if (bNorth)
