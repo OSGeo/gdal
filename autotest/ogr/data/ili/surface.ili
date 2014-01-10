@@ -1,0 +1,38 @@
+ TRANSFER SURFC_TRA;
+
+ MODEL SURFC
+
+ DOMAIN
+   LKoord = COORD2 480000.000  70000.000 
+                   840000.000 300000.000;
+
+   I4 = [1 .. 9999];
+   I8 = [1 .. 99999999];
+   I9 = [1 .. 999999999];
+   FLOAT = [1.0 .. 10.0];
+
+TOPIC SURFC_TOP = 
+
+      TABLE SURFC_TBL = 
+	    SHAPE :	SURFACE WITH (STRAIGHTS) VERTEX LKoord;
+            ID1:  I9;
+            ID2:  I9;
+            ID3:  I9;
+            ID4:  I9;
+            ID5: I9;
+            ID6: I8;
+      IDENT
+            ID1;
+      END SURFC_TBL;  
+
+END SURFC_TOP.
+
+
+
+ END SURFC.
+
+ FORMAT FREE;
+ CODE
+   BLANK = DEFAULT, UNDEFINED = DEFAULT, CONTINUE = DEFAULT;
+ TID = ANY;
+ END.

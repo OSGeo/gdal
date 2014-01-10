@@ -1,0 +1,13 @@
+SCNT
+Multicoord Transfer-File
+////
+MTID Multicoord
+MODL Multicoord
+TOPI MulticoordTests
+TABL MulticoordTable
+OBJE 0 102.1 102.2 103.1 103.2 103.3
+ELIN
+ETAB
+ETOP
+EMOD
+ENDE
