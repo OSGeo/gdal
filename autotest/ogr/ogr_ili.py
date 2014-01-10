@@ -63,7 +63,6 @@ def ogr_interlis1_1():
         gdaltest.post_reason( 'skipping test: ili2c.jar not found in PATH' )
         return 'skip'
 
-    ds.Destroy()    
     gdaltest.have_ili_reader = 1
     
     return 'success'
@@ -123,8 +122,6 @@ def ogr_interlis1_2():
         gdaltest.post_reason( 'Geometry of wrong type.' )
         return 'fail'
 
-    ds.Destroy()
-
     return 'success'
 
 ###############################################################################
@@ -167,8 +164,6 @@ def ogr_interlis1_3():
           print(feat.GetFieldAsString(i))
           gdaltest.post_reason( 'field value wrong.' )
           return 'fail'
-
-    ds.Destroy()
 
     return 'success'
 
@@ -213,8 +208,6 @@ def ogr_interlis1_4():
           gdaltest.post_reason( 'field value wrong.' )
           return 'fail'
 
-    ds.Destroy()
-
     return 'success'
 
 ###############################################################################
@@ -226,6 +219,7 @@ def ogr_interlis1_5():
         return 'skip'
 
     ds = ogr.Open( 'data/ili/format-default.itf,data/ili/format-default.ili' )
+
     lyr = ds.GetLayerByName('FormatTests__FormatTable')
     feat = lyr.GetNextFeature()
 
@@ -240,9 +234,6 @@ def ogr_interlis1_5():
     dst_feat = ogr.Feature( feature_def = dst_lyr.GetLayerDefn() )
     dst_feat.SetFrom( feat )
     dst_lyr.CreateFeature( dst_feat )
-    dst_feat.Destroy()
-
-    ds.Destroy()
 
     return 'success'
 
@@ -269,9 +260,6 @@ def ogr_interlis1_6():
     dst_feat = ogr.Feature( feature_def = dst_lyr.GetLayerDefn() )
     dst_feat.SetFrom( feat )
     dst_lyr.CreateFeature( dst_feat )
-    dst_feat.Destroy()
-
-    ds.Destroy()
 
     return 'success'
 
@@ -330,9 +318,6 @@ def ogr_interlis1_7():
     dst_feat = ogr.Feature( feature_def = dst_lyr.GetLayerDefn() )
     dst_feat.SetFrom( feat )
     dst_lyr.CreateFeature( dst_feat )
-    dst_feat.Destroy()
-
-    ds.Destroy()
 
     return 'success'
 
@@ -380,8 +365,6 @@ def ogr_interlis1_9():
           gdaltest.post_reason( 'field value wrong.' )
           return 'fail'
 
-    ds.Destroy()
-
     return 'success'
 
 ###############################################################################
@@ -428,7 +411,153 @@ def ogr_interlis1_10():
           gdaltest.post_reason( 'field value wrong.' )
           return 'fail'
 
-    ds.Destroy()
+    return 'success'
+
+###############################################################################
+# Ili1 multi-geom test (RFC41)
+
+def ogr_interlis1_11():
+
+    if not gdaltest.have_ili_reader:
+        return 'skip'
+
+    ds = ogr.Open( 'data/ili/multigeom.itf,data/ili/multigeom.ili' )
+
+    layers = ['MultigeomTests__MultigeomTable']
+    if ds.GetLayerCount() != len(layers):
+        gdaltest.post_reason( 'layer count wrong.' )
+        return 'fail'
+
+    for i in range(ds.GetLayerCount()):
+      if not ds.GetLayer(i).GetName() in layers:
+          gdaltest.post_reason( 'Did not get right layers' )
+          return 'fail'
+
+    lyr = ds.GetLayerByName('MultigeomTests__MultigeomTable')
+
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason( 'feature count wrong.' )
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+
+    #feat.DumpReadable()
+    #        _TID (String) = 0
+    #        Text1 (String) = aa bb
+    #        Number (Real) = 40
+    #        MULTILINESTRING ((190.26 208.0 0, ...
+    #        GeomPoint_0 (Real) = 148.41
+    #        GeomPoint_1 (Real) = 175.96
+
+    if feat.GetFieldCount() != 5:
+        gdaltest.post_reason( 'field count wrong.' )
+        print feat.GetFieldCount()
+        return 'fail'
+
+    geom_columns = ['GeomLine', 'GeomPoint']
+
+    if feat.GetGeomFieldCount() != len(geom_columns):
+        gdaltest.post_reason( 'geom field count wrong.' )
+        print feat.GetGeomFieldCount()
+        return 'fail'
+
+    for i in range(feat.GetGeomFieldCount()):
+        defn = lyr.GetLayerDefn().GetGeomFieldDefn(i)
+        if defn.GetName() != str(geom_columns[i]):
+            print("Geom field: " + defn.GetName())
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Ili1 multi-geom test (RFC41)
+
+def ogr_interlis1_12():
+
+    if not gdaltest.have_ili_reader:
+        return 'skip'
+
+    ds = ogr.Open( 'data/ili/multicoord.itf,data/ili/multicoord.ili' )
+
+    layers = ['MulticoordTests__MulticoordTable']
+    if ds.GetLayerCount() != len(layers):
+        gdaltest.post_reason( 'layer count wrong.' )
+        return 'fail'
+
+    for i in range(ds.GetLayerCount()):
+      if not ds.GetLayer(i).GetName() in layers:
+          gdaltest.post_reason( 'Did not get right layers' )
+          return 'fail'
+
+    lyr = ds.GetLayerByName('MulticoordTests__MulticoordTable')
+
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason( 'feature count wrong.' )
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+
+    if feat.GetFieldCount() != 6:
+        gdaltest.post_reason( 'field count wrong.' )
+        print feat.GetFieldCount()
+        return 'fail'
+
+    geom_columns = ['coordPoint1', 'coordPoint2']
+
+    if feat.GetGeomFieldCount() != len(geom_columns):
+        gdaltest.post_reason( 'geom field count wrong.' )
+        print feat.GetGeomFieldCount()
+        return 'fail'
+
+    for i in range(feat.GetGeomFieldCount()):
+        defn = lyr.GetLayerDefn().GetGeomFieldDefn(i)
+        if defn.GetName() != str(geom_columns[i]):
+            print("Geom field: " + defn.GetName())
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Ili1 Surface test.
+
+def ogr_interlis1_13():
+
+    if not gdaltest.have_ili_reader:
+        return 'skip'
+
+    ds = ogr.Open( 'data/ili/surface.itf,data/ili/surface.ili' )
+
+    layers = ['SURFC_TOP__SURFC_TBL', 'SURFC_TOP__SURFC_TBL_SHAPE']
+
+    if ds.GetLayerCount() != len(layers):
+        gdaltest.post_reason( 'layer count wrong.' )
+        return 'fail'
+
+    for i in range(ds.GetLayerCount()):
+      if not ds.GetLayer(i).GetName() in layers:
+          gdaltest.post_reason( 'Did not get right layers' )
+          return 'fail'
+
+    lyr = ds.GetLayerByName('SURFC_TOP__SURFC_TBL')
+
+    if lyr.GetFeatureCount() != 3:
+        gdaltest.post_reason( 'feature count wrong.' )
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+
+    field_values = ['103', 1, 3, 1, 23, 25000, 20060111]
+
+    if feat.GetFieldCount() != len(field_values):
+        gdaltest.post_reason( 'field count wrong.' )
+        return 'fail'
+
+    for i in range(feat.GetFieldCount()):
+        if feat.GetFieldAsString(i) != str(field_values[i]):
+          feat.DumpReadable()
+          print(feat.GetFieldAsString(i))
+          gdaltest.post_reason( 'field value wrong.' )
+          return 'fail'
 
     return 'success'
 
@@ -464,8 +593,6 @@ def ogr_interlis2_1():
       if not ds.GetLayer(i).GetName() in layers:
           gdaltest.post_reason( 'Did not get right layers' )
           return 'fail'
-
-    ds.Destroy()
 
     return 'success'
 
@@ -528,8 +655,6 @@ def ogr_interlis2_2():
         gdaltest.post_reason( 'Geometry of wrong type.' )
         return 'fail'
 
-    ds.Destroy()
-
     return 'success'
 
 
@@ -589,8 +714,6 @@ def ogr_interlis_arc1():
         gdaltest.post_reason( 'line point count wrong.' )
         return 'fail'
 
-    ds.Destroy()
-
     #0.1 deg instead of default (1 deg) (max deg for ili sementizer is about 1.3 degrees)
     os.environ['ARC_DEGREES'] = '0.1'
     #GML: gdal.SetConfigOption('OGR_ARC_STEPSIZE','0.1')
@@ -613,8 +736,6 @@ def ogr_interlis_arc1():
     if len(points) != 755: #80 for 1 deg
         gdaltest.post_reason( 'line point count wrong.' )
         return 'fail'
-
-    ds.Destroy()
 
     #Compare with GML segmentation
     gml = """<gml:Curve xmlns:gml="http://www.opengis.net/gml" srsName="foo">
@@ -669,6 +790,9 @@ def ogr_interlis_cleanup():
 
 gdaltest_list = [ 
     ogr_interlis1_1,
+    ogr_interlis1_11,
+    ogr_interlis1_12,
+    ogr_interlis1_13,
     ogr_interlis1_2,
     ogr_interlis1_3,
     ogr_interlis1_4,
