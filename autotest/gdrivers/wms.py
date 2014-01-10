@@ -417,6 +417,9 @@ def wms_11():
     if gdaltest.wms_drv is None:
         return 'skip'
 
+    if gdaltest.skip_on_travis():
+        return 'skip'
+
     name = "WMS:http://onearth.jpl.nasa.gov/wms.cgi?request=GetTileService"
     ds = gdal.Open( name )
     if ds is None:
