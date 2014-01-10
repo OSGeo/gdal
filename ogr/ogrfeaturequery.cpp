@@ -144,7 +144,7 @@ OGRErr OGRFeatureQuery::Compile( OGRFeatureDefn *poDefn,
 
         papszFieldNames[iDstField] = (char *) poField->GetNameRef();
         if( *papszFieldNames[iDstField] == '\0' )
-            papszFieldNames[iDstField] = "_ogr_geometry_";
+            papszFieldNames[iDstField] = (char*) OGR_GEOMETRY_DEFAULT_NON_EMPTY_NAME;
         paeFieldTypes[iDstField] = SWQ_GEOMETRY;
     }
 
