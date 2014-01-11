@@ -73,6 +73,9 @@ void        CPL_DLL   CPLQuadTreeSetMaxDepth(CPLQuadTree *hQuadtree,
 
 void        CPL_DLL   CPLQuadTreeInsert(CPLQuadTree *hQuadtree,
                                         void* hFeature);
+void        CPL_DLL   CPLQuadTreeInsertWithBounds(CPLQuadTree *hQuadtree,
+                                                  void* hFeature,
+                                                  const CPLRectObj* psBounds);
 
 void        CPL_DLL **CPLQuadTreeSearch(const CPLQuadTree *hQuadtree,
                                         const CPLRectObj* pAoi,
