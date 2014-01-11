@@ -176,6 +176,12 @@ def compare_db(golden_db, new_db):
         % (golden_db.RasterCount, new_db.RasterCount))
     found_diff += 1
 
+  elif golden_db.RasterXSize != new_db.RasterXSize or \
+       golden_db.RasterYSize != new_db.RasterYSize:
+    print('Image dimension mismatch (golden=%dx%d, new=%dx%d)' \
+          % (golden_db.RasterXSize, golden_db.RasterYSize,
+             new_db.RasterXSize, new_db.RasterYSize))
+    found_diff += 1
   else:
     for i in range(golden_db.RasterCount):
       found_diff += compare_band(golden_db.GetRasterBand(i+1),
