@@ -1158,7 +1158,7 @@ int OGRPGDataSource::DeleteLayer( int iLayer )
     hResult = OGRPG_PQexec(hPGConn, "BEGIN");
     OGRPGClearResult( hResult );
 
-    if( bHavePostGIS )
+    if( bHavePostGIS  && sPostGISVersion.nMajor < 2)
     {
         /* This is unnecessary if the layer is not a geometry table, or an inherited geometry table */
         /* but it shouldn't hurt */
