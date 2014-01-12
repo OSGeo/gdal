@@ -523,10 +523,10 @@ OGRGeometry *OGRGeometryFactory::forceToPolygon( OGRGeometry *poGeom )
         if( poOldPoly->getExteriorRing() == NULL )
             continue;
 
-        poPolygon->addRing( poOldPoly->stealExteriorRing() );
+        poPolygon->addRingDirectly( poOldPoly->stealExteriorRing() );
 
         for( iRing = 0; iRing < poOldPoly->getNumInteriorRings(); iRing++ )
-            poPolygon->addRing( poOldPoly->stealInteriorRing( iRing ) );
+            poPolygon->addRingDirectly( poOldPoly->stealInteriorRing( iRing ) );
     }
     
     delete poGC;
