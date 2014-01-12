@@ -62,7 +62,7 @@ OGRLinearRing::OGRLinearRing( OGRLinearRing * poSrcRing )
         return;
     }
 
-    setNumPoints( poSrcRing->getNumPoints() );
+    setNumPoints( poSrcRing->getNumPoints(), FALSE );
 
     memcpy( paoPoints, poSrcRing->paoPoints,
             sizeof(OGRRawPoint) * getNumPoints() );
@@ -171,7 +171,7 @@ OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder, int b3D,
     }
 
     /* (Re)Allocation of paoPoints buffer. */
-    setNumPoints( nNewNumPoints );
+    setNumPoints( nNewNumPoints, FALSE );
 
     if( b3D )
         Make3D();

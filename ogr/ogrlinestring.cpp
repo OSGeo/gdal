@@ -774,7 +774,7 @@ void OGRLineString::addSubLineString( const OGRLineString *poOtherLine,
     int nOldPoints = nPointCount;
     int nPointsToAdd = ABS(nEndVertex-nStartVertex) + 1;
 
-    setNumPoints( nPointsToAdd + nOldPoints );
+    setNumPoints( nPointsToAdd + nOldPoints, FALSE );
     if (nPointCount < nPointsToAdd + nOldPoints)
         return;
 
@@ -882,7 +882,7 @@ OGRErr OGRLineString::importFromWkb( unsigned char * pabyData,
         return OGRERR_NOT_ENOUGH_DATA;
     }
 
-    setNumPoints( nNewNumPoints );
+    setNumPoints( nNewNumPoints, FALSE );
     if (nPointCount < nNewNumPoints)
         return OGRERR_FAILURE;
     
