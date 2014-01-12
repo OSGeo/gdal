@@ -473,6 +473,9 @@ class CPL_DLL OGRPolygon : public OGRSurface
     OGRLinearRing *getInteriorRing( int );
     const OGRLinearRing *getInteriorRing( int ) const;
 
+    OGRLinearRing *stealExteriorRing();
+    OGRLinearRing *stealInteriorRing(int);
+
     OGRBoolean IsPointOnSurface( const OGRPoint * ) const;
 
     virtual void closeRings();

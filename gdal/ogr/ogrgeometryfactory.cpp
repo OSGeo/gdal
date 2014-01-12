@@ -523,10 +523,10 @@ OGRGeometry *OGRGeometryFactory::forceToPolygon( OGRGeometry *poGeom )
         if( poOldPoly->getExteriorRing() == NULL )
             continue;
 
-        poPolygon->addRing( poOldPoly->getExteriorRing() );
+        poPolygon->addRing( poOldPoly->stealExteriorRing() );
 
         for( iRing = 0; iRing < poOldPoly->getNumInteriorRings(); iRing++ )
-            poPolygon->addRing( poOldPoly->getInteriorRing( iRing ) );
+            poPolygon->addRing( poOldPoly->stealInteriorRing( iRing ) );
     }
     
     delete poGC;
@@ -1169,7 +1169,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
         {
             if (i != indexOfCWPolygon)
             {
-                ((OGRPolygon*)geom)->addRing(asPolyEx[i].poPolygon->getExteriorRing());
+                ((OGRPolygon*)geom)->addRingDirectly(asPolyEx[i].poPolygon->stealExteriorRing());
                 delete asPolyEx[i].poPolygon;
             }
         }
@@ -1447,8 +1447,8 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
         {
             if (asPolyEx[i].bIsTopLevel == FALSE)
             {
-                asPolyEx[i].poEnclosingPolygon->addRing(
-                    asPolyEx[i].poPolygon->getExteriorRing());
+                asPolyEx[i].poEnclosingPolygon->addRingDirectly(
+                    asPolyEx[i].poPolygon->stealExteriorRing());
                 delete asPolyEx[i].poPolygon;
             }
             else if (nCountTopLevel == 1)
