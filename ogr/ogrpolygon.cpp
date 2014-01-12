@@ -282,8 +282,8 @@ OGRLinearRing *OGRPolygon::stealInteriorRing(int iRing)
 {
     if( iRing < 0 || iRing >= nRingCount-1 )
         return NULL;
-    OGRLinearRing *poRet = papoRings[iRing];
-    papoRings[iRing] = NULL;
+    OGRLinearRing *poRet = papoRings[iRing+1];
+    papoRings[iRing+1] = NULL;
     return poRet;
 }
 
