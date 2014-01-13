@@ -95,7 +95,7 @@ def stats_signedbyte():
 
 ###############################################################################
 # Test return of GetStatistics() when we don't have stats and don't
-# force their cmoputation (#3572)
+# force their computation (#3572)
 
 def stats_dont_force():
 
