@@ -782,7 +782,8 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     else if( EQUAL(pszProj,"lcc") ) 
     {
         if( OSR_GDV(papszNV, "lat_0", 0.0 ) 
-            == OSR_GDV(papszNV, "lat_1", 0.0 ) )
+            == OSR_GDV(papszNV, "lat_1", 0.0 ) &&
+            CSLFetchNameValue( papszNV, "lat_2" ) == NULL )
         {
             /* 1SP form */
             SetLCC1SP( OSR_GDV( papszNV, "lat_0", 0.0 ), 
