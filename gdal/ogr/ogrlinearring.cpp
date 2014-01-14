@@ -540,17 +540,18 @@ OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint* poPoint, int bTestEnvelo
     // test if ray starting from given point crosses segment (p - 1, p)
     int iNumCrossings = 0;
 
+    double prev_diff_x = getX(0) - dfTestX;
+    double prev_diff_y = getY(0) - dfTestY;
+
     for ( int iPoint = 1; iPoint < iNumPoints; iPoint++ ) 
     {
-        const int iPointPrev = iPoint - 1;
-
         const double x1 = getX(iPoint) - dfTestX;
         const double y1 = getY(iPoint) - dfTestY;
 
-        const double x2 = getX(iPointPrev) - dfTestX;
-        const double y2 = getY(iPointPrev) - dfTestY;
+        const double x2 = prev_diff_x;
+        const double y2 = prev_diff_y;
 
-        if( ( ( y1 > 0 ) && ( y2 <= 0 ) ) || ( ( y2 > 0 ) && ( y1 <= 0 ) ) ) 
+        if( ( ( y1 > 0 ) && ( y2 <= 0 ) ) || ( ( y2 > 0 ) && ( y1 <= 0 ) ) )
         {
             // Check if ray intersects with segment of the ring
             const double dfIntersection = ( x1 * y2 - x2 * y1 ) / (y2 - y1);
@@ -560,6 +561,9 @@ OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint* poPoint, int bTestEnvelo
                 iNumCrossings++;
             }
         }
+
+        prev_diff_x = x1;
+        prev_diff_y = y1;
     }
 
     // If iNumCrossings number is even, given point is outside the ring,
@@ -600,30 +604,33 @@ OGRBoolean OGRLinearRing::isPointOnRingBoundary(const OGRPoint* poPoint, int bTe
         }
     }
 
+    double prev_diff_x = getX(0) - dfTestX;
+    double prev_diff_y = getY(0) - dfTestY;
+
     for ( int iPoint = 1; iPoint < iNumPoints; iPoint++ ) 
     {
-        const int iPointPrev = iPoint - 1;
-
         const double x1 = getX(iPoint) - dfTestX;
         const double y1 = getY(iPoint) - dfTestY;
 
-        const double x2 = getX(iPointPrev) - dfTestX;
-        const double y2 = getY(iPointPrev) - dfTestY;
-
-        /* If iPoint and iPointPrev are the same, go on */
-        if (x1 == x2 && y1 == y2)
-        {
-            continue;
-        }
+        const double x2 = prev_diff_x;
+        const double y2 = prev_diff_y;
 
         /* If the point is on the segment, return immediatly */
         /* FIXME? If the test point is not exactly identical to one of */
         /* the vertices of the ring, but somewhere on a segment, there's */
         /* little chance that we get 0. So that should be tested against some epsilon */
+
         if ( x1 * y2 - x2 * y1 == 0 )
         {
-            return 1;
+            /* If iPoint and iPointPrev are the same, go on */
+            if( !(x1 == x2 && y1 == y2) )
+            {
+                return 1;
+            }
         }
+
+        prev_diff_x = x1;
+        prev_diff_y = y1;
     }
 
     return 0;
