@@ -2,7 +2,7 @@ CXX = g++
 CXXFLAGS =`gdal-config --cflags` -Wall -I. -Itut $(CPPFLAGS)
 LDFLAGS = `gdal-config --libs`
 
-PROGS = gdal_unit_test testperfcopywords testcopywords testclosedondestroydm testthreadcond
+PROGS = gdal_unit_test testperfcopywords testcopywords testclosedondestroydm testthreadcond test_virtualmem
 
 all: $(PROGS)
 
@@ -15,6 +15,7 @@ quick_test:
 	./testcopywords
 	./testclosedondestroydm
 	./testthreadcond
+	./test_virtualmem
 
 OBJ = \
     gdal_unit_test.o \
@@ -43,6 +44,9 @@ testclosedondestroydm: testclosedondestroydm.c
 	$(CXX) -g $(CXXFLAGS) $< $(LDFLAGS) -o $@
 
 testthreadcond: testthreadcond.c
+	$(CXX) -g $(CXXFLAGS) $< $(LDFLAGS) -o $@
+
+test_virtualmem: test_virtualmem.cpp
 	$(CXX) -g $(CXXFLAGS) $< $(LDFLAGS) -o $@
 
 vsipreload.so: ../../gdal/port/vsipreload.cpp

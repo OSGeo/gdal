@@ -618,6 +618,11 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     virtual int             GetMaskFlags();
     virtual CPLErr          CreateMaskBand( int nFlags );
 
+    virtual CPLVirtualMem  *GetVirtualMemAuto( GDALRWFlag eRWFlag,
+                                               int *pnPixelSpace,
+                                               GIntBig *pnLineSpace,
+                                               char **papszOptions );
+
     void ReportError(CPLErr eErrClass, int err_no, const char *fmt, ...)  CPL_PRINT_FUNC_FORMAT (4, 5);
 };
 

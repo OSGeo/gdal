@@ -1659,3 +1659,66 @@ DecomposeSequenceOfCoordinates( PyObject *seq, int nCount, double *x, double *y,
   else
     $result = Py_None;
 }
+
+%typemap(in,numinputs=0) (void** pptr, size_t* pnsize, GDALDataType* pdatatype, int* preadonly) (void* ptr, size_t nsize, GDALDataType datatype, int readonly)
+{
+  /* %typemap(in,numinputs=0) (void** pptr, size_t* pnsize, GDALDataType* pdatatype, int* preadonly) */
+  $1 = &ptr;
+  $2 = &nsize;
+  $3 = &datatype;
+  $4 = &readonly;
+}
+%typemap(argout) (void** pptr, size_t* pnsize, GDALDataType* pdatatype, int* preadonly)
+{
+%#if PY_VERSION_HEX >= 0x02070000 
+  /* %typemap(argout) (void** pptr, size_t* pnsize, GDALDataType* pdatatype, int* preadonly)*/
+  Py_buffer *buf=(Py_buffer*)malloc(sizeof(Py_buffer));
+  if (PyBuffer_FillInfo(buf,  obj0,  *($1), *($2), *($4), PyBUF_ND)) {
+    // error, handle
+  }
+  if( *($3) == GDT_Byte )
+  {
+    buf->format = "B";
+    buf->itemsize = 1;
+  }
+  else if( *($3) == GDT_Int16 )
+  {
+    buf->format = "h";
+    buf->itemsize = 2;
+  }
+  else if( *($3) == GDT_UInt16 )
+  {
+    buf->format = "H";
+    buf->itemsize = 2;
+  }
+  else if( *($3) == GDT_Int32 )
+  {
+    buf->format = "i";
+    buf->itemsize = 4;
+  }
+  else if( *($3) == GDT_UInt32 )
+  {
+    buf->format = "I";
+    buf->itemsize = 4;
+  }
+  else if( *($3) == GDT_Float32 )
+  {
+    buf->format = "f";
+    buf->itemsize = 4;
+  }
+  else if( *($3) == GDT_Float64 )
+  {
+    buf->format = "F";
+    buf->itemsize = 8;
+  }
+  else
+  {
+    buf->format = "B";
+    buf->itemsize = 1;
+  }
+  $result = PyMemoryView_FromBuffer(buf);
+%#else
+  PyErr_SetString( PyExc_RuntimeError, "needs Python 2.7 or later" );
+  SWIG_fail;
+%#endif
+}

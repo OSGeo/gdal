@@ -113,6 +113,7 @@ class VSICachedFile : public VSIVirtualHandle
     virtual int       Eof();
     virtual int       Flush();
     virtual int       Close();
+    virtual void     *GetNativeFileDescriptor() { return poBase->GetNativeFileDescriptor(); }
 };
 
 /************************************************************************/

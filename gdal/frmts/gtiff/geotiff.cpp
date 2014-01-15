@@ -53,6 +53,7 @@
 #include "cpl_multiproc.h"
 #include "cplkeywordparser.h"
 #include "gt_jpeg_copy.h"
+#include <set>
 
 #ifdef INTERNAL_LIBTIFF
 #include "tiffiop.h"
@@ -391,6 +392,9 @@ class GTiffDataset : public GDALPamDataset
     
     int           nSetPhotometricFromBandColorInterp;
 
+    CPLVirtualMem *pBaseMapping;
+    int            nRefBaseMapping;
+
   protected:
     virtual int         CloseDependentDatasets();
 
@@ -502,6 +506,12 @@ class GTiffRasterBand : public GDALPamRasterBand
                                   GDALDataType eBufType,
                                   int nPixelSpace, int nLineSpace );
 
+    std::set<GTiffRasterBand **> aSetPSelf;
+    static void     DropReferenceVirtualMem(void* pUserData);
+    CPLVirtualMem * GetVirtualMemAutoInternal( GDALRWFlag eRWFlag,
+                                               int *pnPixelSpace,
+                                               GIntBig *pnLineSpace,
+                                               char **papszOptions );
 protected:
     GTiffDataset       *poGDS;
     GDALMultiDomainMetadata oGTiffMDMD;
@@ -514,6 +524,7 @@ protected:
 
 public:
                    GTiffRasterBand( GTiffDataset *, int );
+                  ~GTiffRasterBand();
 
     virtual CPLErr IReadBlock( int, int, void * );
     virtual CPLErr IWriteBlock( int, int, void * );
@@ -554,6 +565,11 @@ public:
     virtual GDALRasterBand *GetMaskBand();
     virtual int             GetMaskFlags();
     virtual CPLErr          CreateMaskBand( int nFlags );
+
+    virtual CPLVirtualMem  *GetVirtualMemAuto( GDALRWFlag eRWFlag,
+                                               int *pnPixelSpace,
+                                               GIntBig *pnLineSpace,
+                                               char **papszOptions );
 };
 
 /************************************************************************/
@@ -699,6 +715,24 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDS, int nBand )
 
     bNoDataSet = FALSE;
     dfNoDataValue = -9999.0;
+}
+
+/************************************************************************/
+/*                          ~GTiffRasterBand()                          */
+/************************************************************************/
+
+GTiffRasterBand::~GTiffRasterBand()
+{
+    /* So that any future DropReferenceVirtualMem() will not try to access the */
+    /* raster band object, but this wouldn't conform the advertized contract */
+    if( aSetPSelf.size() != 0 )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Virtual memory objects still exist at GTiffRasterBand destruction");
+        std::set<GTiffRasterBand**>::iterator oIter = aSetPSelf.begin();
+        for(; oIter != aSetPSelf.end(); ++oIter )
+            *(*oIter) = NULL;
+    }
 }
 
 /************************************************************************/
@@ -884,6 +918,293 @@ CPLErr GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
     CPLFree(panSizes);
 
     return eErr;
+}
+
+/************************************************************************/
+/*                           GetVirtualMemAuto()                        */
+/************************************************************************/
+
+CPLVirtualMem* GTiffRasterBand::GetVirtualMemAuto( GDALRWFlag eRWFlag,
+                                                  int *pnPixelSpace,
+                                                  GIntBig *pnLineSpace,
+                                                  char **papszOptions )
+{
+    CPLVirtualMem* psRet;
+
+    if( !CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "USE_DEFAULT_IMPLEMENTATION", "NO")) )
+    {
+        psRet = GetVirtualMemAutoInternal(eRWFlag, pnPixelSpace, pnLineSpace,
+                                        papszOptions);
+        if( psRet != NULL )
+        {
+            CPLDebug("GTiff", "GetVirtualMemAuto(): Using memory file mapping");
+            return psRet;
+        }
+    }
+
+    CPLDebug("GTiff", "GetVirtualMemAuto(): Defaulting to base implementation");
+    return GDALRasterBand::GetVirtualMemAuto(eRWFlag, pnPixelSpace,
+                                             pnLineSpace, papszOptions);
+}
+
+/************************************************************************/
+/*                     DropReferenceVirtualMem()                        */
+/************************************************************************/
+
+void GTiffRasterBand::DropReferenceVirtualMem(void* pUserData)
+{
+    /* This function may also be called when the dataset and rasterband */
+    /* objects have been destroyed */
+    /* If they are still alive, it updates the reference counter of the */
+    /* base mapping to invalidate the pointer to it if needed */
+
+    GTiffRasterBand** ppoSelf = (GTiffRasterBand**) pUserData;
+    GTiffRasterBand* poSelf = *ppoSelf;
+    if( poSelf != NULL )
+    {
+        if( --(poSelf->poGDS->nRefBaseMapping) == 0 )
+        {
+            poSelf->poGDS->pBaseMapping = NULL;
+        }
+        poSelf->aSetPSelf.erase(ppoSelf);
+    }
+    CPLFree(pUserData);
+}
+
+/************************************************************************/
+/*                     GetVirtualMemAutoInternal()                      */
+/************************************************************************/
+
+CPLVirtualMem* GTiffRasterBand::GetVirtualMemAutoInternal( GDALRWFlag eRWFlag,
+                                                           int *pnPixelSpace,
+                                                           GIntBig *pnLineSpace,
+                                                           char **papszOptions )
+{
+    int nLineSize = nBlockXSize * (GDALGetDataTypeSize(eDataType) / 8);
+    if( poGDS->nPlanarConfig == PLANARCONFIG_CONTIG )
+        nLineSize *= poGDS->nBands;
+
+    if( poGDS->nPlanarConfig == PLANARCONFIG_CONTIG )
+    {
+        /* In case of a pixel interleaved file, we save virtual memory space */
+        /* by reusing a base mapping that embraces the whole imagery */
+        if( poGDS->pBaseMapping != NULL )
+        {
+            /* Offset between the base mapping and the requested mapping */
+            vsi_l_offset nOffset = (nBand - 1) * GDALGetDataTypeSize(eDataType) / 8;
+
+            GTiffRasterBand** ppoSelf = (GTiffRasterBand** )CPLCalloc(1, sizeof(GTiffRasterBand*));
+            *ppoSelf = this;
+
+            CPLVirtualMem* pVMem = CPLVirtualMemDerivedNew(
+                    poGDS->pBaseMapping,
+                    nOffset,
+                    CPLVirtualMemGetSize(poGDS->pBaseMapping) - nOffset,
+                    GTiffRasterBand::DropReferenceVirtualMem,
+                    ppoSelf);
+            if( pVMem == NULL )
+            {
+                CPLFree(ppoSelf);
+                return NULL;
+            }
+
+            /* Mechanism used so that the memory mapping object can be */
+            /* destroyed after the raster band */
+            aSetPSelf.insert(ppoSelf);
+            poGDS->nRefBaseMapping ++;
+            *pnPixelSpace = GDALGetDataTypeSize(eDataType) / 8;
+            if( poGDS->nPlanarConfig == PLANARCONFIG_CONTIG )
+                *pnPixelSpace *= poGDS->nBands;
+            *pnLineSpace = nLineSize;
+            return pVMem;
+        }
+    }
+
+    VSILFILE* fp = (VSILFILE*) TIFFClientdata( poGDS->hTIFF );
+
+    vsi_l_offset nLength = (vsi_l_offset)nRasterYSize * nLineSize;
+
+    if( !(CPLIsVirtualMemFileMapAvailable() &&
+          VSIFGetNativeFileDescriptorL(fp) != NULL &&
+          nLength == (size_t)nLength &&
+          poGDS->nCompression == COMPRESSION_NONE &&
+          (poGDS->nBitsPerSample == 8 || poGDS->nBitsPerSample == 16 ||
+           poGDS->nBitsPerSample == 32 || poGDS->nBitsPerSample == 64) &&
+          poGDS->nBitsPerSample == GDALGetDataTypeSize(eDataType) &&
+          !TIFFIsTiled( poGDS->hTIFF ) && !TIFFIsByteSwapped(poGDS->hTIFF)) )
+    {
+        return NULL;
+    }
+
+    if (!poGDS->SetDirectory())
+        return NULL;
+
+    /* Make sure that TIFFTAG_STRIPOFFSETS is up-to-date */
+    if (poGDS->GetAccess() == GA_Update)
+        poGDS->FlushCache();
+
+    /* Get strip offsets */
+    toff_t *panTIFFOffsets = NULL;
+    if ( !TIFFGetField( poGDS->hTIFF, TIFFTAG_STRIPOFFSETS, &panTIFFOffsets ) ||
+         panTIFFOffsets == NULL )
+    {
+        return NULL;
+    }
+
+    int nBlockSize =
+        nBlockXSize * nBlockYSize * GDALGetDataTypeSize(eDataType) / 8;
+    if( poGDS->nPlanarConfig == PLANARCONFIG_CONTIG )
+        nBlockSize *= poGDS->nBands;
+
+    int nBlocks = poGDS->nBlocksPerBand;
+    if( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE )
+        nBlocks *= poGDS->nBands;
+    int i;
+    for(i = 0; i < nBlocks; i ++)
+    {
+        if( panTIFFOffsets[i] != 0 )
+            break;
+    }
+    if( i == nBlocks )
+    {
+        /* All zeroes */
+        if( poGDS->eAccess == GA_Update )
+        {
+            /* Initialize the file with empty blocks so that the file has */
+            /* the appropriate size */
+
+            toff_t* panByteCounts = NULL;
+            if( !TIFFGetField( poGDS->hTIFF, TIFFTAG_STRIPBYTECOUNTS, &panByteCounts ) ||
+                panByteCounts == NULL )
+            {
+                return NULL;
+            }
+            VSIFSeekL(fp, 0, SEEK_END);
+            vsi_l_offset nBaseOffset = VSIFTellL(fp);
+
+            /* Just write one tile with libtiff to put it in appropriate state */
+            GByte* pabyData = (GByte*)VSICalloc(1, nBlockSize);
+            if( pabyData == NULL )
+            {
+                return NULL;
+            }
+            int ret = TIFFWriteEncodedStrip(poGDS->hTIFF, 0, pabyData, nBlockSize);
+            VSIFree(pabyData);
+            if( ret != nBlockSize )
+            {
+                return NULL;
+            }
+            CPLAssert(panTIFFOffsets[0] == nBaseOffset);
+            CPLAssert(panByteCounts[0] == (toff_t)nBlockSize);
+
+            /* Now simulate the writing of other blocks */
+            vsi_l_offset nDataSize = (vsi_l_offset)nBlockSize * nBlocks;
+            VSIFSeekL(fp, nBaseOffset + nDataSize - 1, SEEK_SET);
+            char ch = 0;
+            if( VSIFWriteL(&ch, 1, 1, fp) != 1 )
+            {
+                return NULL;
+            }
+
+            for(i = 1; i < nBlocks; i ++)
+            {
+                panTIFFOffsets[i] = nBaseOffset + i * (toff_t)nBlockSize;
+                panByteCounts[i] = nBlockSize;
+            }
+        }
+        else
+        {
+            CPLDebug("GTiff", "Sparse files not supported in file mapping");
+            return NULL;
+        }
+    }
+
+    GIntBig nBlockSpacing = 0;
+    int bCompatibleSpacing = TRUE;
+    toff_t nPrevOffset = 0, nFirstOffset = 0;
+    for(i = 0; i < poGDS->nBlocksPerBand; i ++)
+    {
+        toff_t nCurOffset;
+        if( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE )
+            nCurOffset = panTIFFOffsets[poGDS->nBlocksPerBand * (nBand - 1) + i];
+        else
+            nCurOffset = panTIFFOffsets[i];
+        if( nCurOffset == 0 )
+        {
+            bCompatibleSpacing = FALSE;
+            break;
+        }
+        if( i > 0 )
+        {
+            GIntBig nCurSpacing = nCurOffset - nPrevOffset;
+            if( i == 1 )
+            {
+                if( nCurSpacing != nBlockYSize * nLineSize )
+                {
+                    bCompatibleSpacing = FALSE;
+                    break;
+                }
+                nBlockSpacing = nCurSpacing;
+            }
+            else if( nBlockSpacing != nCurSpacing )
+            {
+                bCompatibleSpacing = FALSE;
+                break;
+            }
+        }
+        else
+        {
+            nFirstOffset = nCurOffset;
+        }
+        nPrevOffset = nCurOffset;
+    }
+
+    if( !bCompatibleSpacing )
+    {
+        return NULL;
+    }
+    else
+    {
+        vsi_l_offset nOffset;
+        if( poGDS->nPlanarConfig == PLANARCONFIG_CONTIG )
+        {
+            CPLAssert( poGDS->pBaseMapping == NULL );
+            nOffset = panTIFFOffsets[0];
+        }
+        else
+            nOffset = panTIFFOffsets[poGDS->nBlocksPerBand * (nBand - 1)];
+        CPLVirtualMem* pVMem = CPLVirtualMemFileMapNew(
+            fp, nOffset, nLength,
+            (eRWFlag == GF_Write) ? VIRTUALMEM_READWRITE : VIRTUALMEM_READONLY,
+            NULL, NULL);
+        if( pVMem == NULL )
+        {
+            return NULL;
+        }
+        else
+        {
+            if( poGDS->nPlanarConfig == PLANARCONFIG_CONTIG )
+            {
+                poGDS->pBaseMapping = pVMem;
+                pVMem = GetVirtualMemAutoInternal( eRWFlag,
+                                                   pnPixelSpace,
+                                                   pnLineSpace,
+                                                   papszOptions );
+                /* drop ref on base mapping */
+                CPLVirtualMemFree(poGDS->pBaseMapping);
+                if( pVMem == NULL )
+                    poGDS->pBaseMapping = NULL;
+            }
+            else
+            {
+                *pnPixelSpace = GDALGetDataTypeSize(eDataType) / 8;
+                if( poGDS->nPlanarConfig == PLANARCONFIG_CONTIG )
+                    *pnPixelSpace *= poGDS->nBands;
+                *pnLineSpace = nLineSize;
+            }
+            return pVMem;
+        }
+    }
 }
 
 /************************************************************************/
@@ -3194,6 +3515,9 @@ GTiffDataset::GTiffDataset()
 
     bDirectIO = CSLTestBoolean(CPLGetConfigOption("GTIFF_DIRECT_IO", "NO"));
     nSetPhotometricFromBandColorInterp = 0;
+
+    pBaseMapping = NULL;
+    nRefBaseMapping = 0;
 }
 
 /************************************************************************/

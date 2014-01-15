@@ -140,6 +140,11 @@ public:
 
     virtual CPLErr  FlushCache();
 
+    virtual CPLVirtualMem  *GetVirtualMemAuto( GDALRWFlag eRWFlag,
+                                               int *pnPixelSpace,
+                                               GIntBig *pnLineSpace,
+                                               char **papszOptions );
+
     CPLErr          AccessLine( int iLine );
 
     void            SetAccess( GDALAccess eAccess );
