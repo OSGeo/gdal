@@ -3509,6 +3509,9 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "GARIO_UPDATE",SWIG_From_int((int)(GARIO_UPDATE)));
   SWIG_Python_SetConstant(d, "GARIO_ERROR",SWIG_From_int((int)(GARIO_ERROR)));
   SWIG_Python_SetConstant(d, "GARIO_COMPLETE",SWIG_From_int((int)(GARIO_COMPLETE)));
+  SWIG_Python_SetConstant(d, "GTO_TIP",SWIG_From_int((int)(GTO_TIP)));
+  SWIG_Python_SetConstant(d, "GTO_BIT",SWIG_From_int((int)(GTO_BIT)));
+  SWIG_Python_SetConstant(d, "GTO_BSQ",SWIG_From_int((int)(GTO_BSQ)));
 #if PY_VERSION_HEX >= 0x03000000
   return m;
 #else
