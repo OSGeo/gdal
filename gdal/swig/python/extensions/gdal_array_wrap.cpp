@@ -2717,15 +2717,23 @@ SWIG_Python_MustGetPtr(PyObject *obj, swig_type_info *ty, int argnum, int flags)
 
 
 
+  #define SWIG_exception(code, msg) do { SWIG_Error(code, msg); SWIG_fail;; } while(0) 
+
+
 /* -------- TYPES TABLE (BEGIN) -------- */
 
-#define SWIGTYPE_p_GDALRasterAttributeTableShadow swig_types[0]
-#define SWIGTYPE_p_GDALRasterBandShadow swig_types[1]
-#define SWIGTYPE_p_PyArrayObject swig_types[2]
-#define SWIGTYPE_p_char swig_types[3]
-#define SWIGTYPE_p_int swig_types[4]
-static swig_type_info *swig_types[6];
-static swig_module_info swig_module = {swig_types, 5, 0, 0, 0, 0};
+#define SWIGTYPE_p_CPLVirtualMemShadow swig_types[0]
+#define SWIGTYPE_p_GDALDataType swig_types[1]
+#define SWIGTYPE_p_GDALRasterAttributeTableShadow swig_types[2]
+#define SWIGTYPE_p_GDALRasterBandShadow swig_types[3]
+#define SWIGTYPE_p_PyArrayObject swig_types[4]
+#define SWIGTYPE_p_char swig_types[5]
+#define SWIGTYPE_p_int swig_types[6]
+#define SWIGTYPE_p_p_CPLVirtualMemShadow swig_types[7]
+#define SWIGTYPE_p_p_void swig_types[8]
+#define SWIGTYPE_p_size_t swig_types[9]
+static swig_type_info *swig_types[11];
+static swig_module_info swig_module = {swig_types, 10, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -2821,6 +2829,242 @@ namespace swig {
   };
 }
 
+
+#include "gdal.h"
+
+typedef struct
+{
+    CPLVirtualMem *vmem;
+    int            bAuto;
+    GDALDataType   eBufType;
+    int            bIsBandSequential;
+    int            bReadOnly;
+    int            nBufXSize;
+    int            nBufYSize;
+    int            nBandCount;
+    GDALTileOrganization eTileOrganization;
+    int                  nTileXSize;
+    int                  nTileYSize;
+    int            nPixelSpace; /* if bAuto == TRUE */
+    GIntBig        nLineSpace; /* if bAuto == TRUE */
+} CPLVirtualMemShadow;
+
+
+SWIGINTERN void delete_CPLVirtualMemShadow(CPLVirtualMemShadow *self){
+        CPLVirtualMemFree( self->vmem );
+        free(self);
+    }
+SWIGINTERN void CPLVirtualMemShadow_GetAddr(CPLVirtualMemShadow *self,void **pptr,size_t *pnsize,GDALDataType *pdatatype,int *preadonly){
+        *pptr = CPLVirtualMemGetAddr( self->vmem );
+        *pnsize = CPLVirtualMemGetSize( self->vmem );
+        *pdatatype = self->eBufType;
+        *preadonly = self->bReadOnly;
+    }
+
+SWIGINTERN int
+SWIG_AsVal_double (PyObject *obj, double *val)
+{
+  int res = SWIG_TypeError;
+  if (PyFloat_Check(obj)) {
+    if (val) *val = PyFloat_AsDouble(obj);
+    return SWIG_OK;
+  } else if (PyInt_Check(obj)) {
+    if (val) *val = PyInt_AsLong(obj);
+    return SWIG_OK;
+  } else if (PyLong_Check(obj)) {
+    double v = PyLong_AsDouble(obj);
+    if (!PyErr_Occurred()) {
+      if (val) *val = v;
+      return SWIG_OK;
+    } else {
+      PyErr_Clear();
+    }
+  }
+#ifdef SWIG_PYTHON_CAST_MODE
+  {
+    int dispatch = 0;
+    double d = PyFloat_AsDouble(obj);
+    if (!PyErr_Occurred()) {
+      if (val) *val = d;
+      return SWIG_AddCast(SWIG_OK);
+    } else {
+      PyErr_Clear();
+    }
+    if (!dispatch) {
+      long v = PyLong_AsLong(obj);
+      if (!PyErr_Occurred()) {
+	if (val) *val = v;
+	return SWIG_AddCast(SWIG_AddCast(SWIG_OK));
+      } else {
+	PyErr_Clear();
+      }
+    }
+  }
+#endif
+  return res;
+}
+
+
+#include <float.h>
+
+
+#include <math.h>
+
+
+SWIGINTERNINLINE int
+SWIG_CanCastAsInteger(double *d, double min, double max) {
+  double x = *d;
+  if ((min <= x && x <= max)) {
+   double fx = floor(x);
+   double cx = ceil(x);
+   double rd =  ((x - fx) < 0.5) ? fx : cx; /* simple rint */
+   if ((errno == EDOM) || (errno == ERANGE)) {
+     errno = 0;
+   } else {
+     double summ, reps, diff;
+     if (rd < x) {
+       diff = x - rd;
+     } else if (rd > x) {
+       diff = rd - x;
+     } else {
+       return 1;
+     }
+     summ = rd + x;
+     reps = diff/summ;
+     if (reps < 8*DBL_EPSILON) {
+       *d = rd;
+       return 1;
+     }
+   }
+  }
+  return 0;
+}
+
+
+SWIGINTERN int
+SWIG_AsVal_unsigned_SS_long (PyObject *obj, unsigned long *val) 
+{
+  if (PyInt_Check(obj)) {
+    long v = PyInt_AsLong(obj);
+    if (v >= 0) {
+      if (val) *val = v;
+      return SWIG_OK;
+    } else {
+      return SWIG_OverflowError;
+    }
+  } else if (PyLong_Check(obj)) {
+    unsigned long v = PyLong_AsUnsignedLong(obj);
+    if (!PyErr_Occurred()) {
+      if (val) *val = v;
+      return SWIG_OK;
+    } else {
+      PyErr_Clear();
+    }
+  }
+#ifdef SWIG_PYTHON_CAST_MODE
+  {
+    int dispatch = 0;
+    unsigned long v = PyLong_AsUnsignedLong(obj);
+    if (!PyErr_Occurred()) {
+      if (val) *val = v;
+      return SWIG_AddCast(SWIG_OK);
+    } else {
+      PyErr_Clear();
+    }
+    if (!dispatch) {
+      double d;
+      int res = SWIG_AddCast(SWIG_AsVal_double (obj,&d));
+      if (SWIG_IsOK(res) && SWIG_CanCastAsInteger(&d, 0, ULONG_MAX)) {
+	if (val) *val = (unsigned long)(d);
+	return res;
+      }
+    }
+  }
+#endif
+  return SWIG_TypeError;
+}
+
+
+SWIGINTERNINLINE int
+SWIG_AsVal_size_t (PyObject * obj, size_t *val)
+{
+  unsigned long v;
+  int res = SWIG_AsVal_unsigned_SS_long (obj, val ? &v : 0);
+  if (SWIG_IsOK(res) && val) *val = static_cast< size_t >(v);
+  return res;
+}
+
+
+#include <limits.h>
+#if !defined(SWIG_NO_LLONG_MAX)
+# if !defined(LLONG_MAX) && defined(__GNUC__) && defined (__LONG_LONG_MAX__)
+#   define LLONG_MAX __LONG_LONG_MAX__
+#   define LLONG_MIN (-LLONG_MAX - 1LL)
+#   define ULLONG_MAX (LLONG_MAX * 2ULL + 1ULL)
+# endif
+#endif
+
+
+SWIGINTERN int
+SWIG_AsVal_long (PyObject *obj, long* val)
+{
+  if (PyInt_Check(obj)) {
+    if (val) *val = PyInt_AsLong(obj);
+    return SWIG_OK;
+  } else if (PyLong_Check(obj)) {
+    long v = PyLong_AsLong(obj);
+    if (!PyErr_Occurred()) {
+      if (val) *val = v;
+      return SWIG_OK;
+    } else {
+      PyErr_Clear();
+    }
+  }
+#ifdef SWIG_PYTHON_CAST_MODE
+  {
+    int dispatch = 0;
+    long v = PyInt_AsLong(obj);
+    if (!PyErr_Occurred()) {
+      if (val) *val = v;
+      return SWIG_AddCast(SWIG_OK);
+    } else {
+      PyErr_Clear();
+    }
+    if (!dispatch) {
+      double d;
+      int res = SWIG_AddCast(SWIG_AsVal_double (obj,&d));
+      if (SWIG_IsOK(res) && SWIG_CanCastAsInteger(&d, LONG_MIN, LONG_MAX)) {
+	if (val) *val = (long)(d);
+	return res;
+      }
+    }
+  }
+#endif
+  return SWIG_TypeError;
+}
+
+
+SWIGINTERN int
+SWIG_AsVal_int (PyObject * obj, int *val)
+{
+  long v;
+  int res = SWIG_AsVal_long (obj, &v);
+  if (SWIG_IsOK(res)) {
+    if ((v < INT_MIN || v > INT_MAX)) {
+      return SWIG_OverflowError;
+    } else {
+      if (val) *val = static_cast< int >(v);
+    }
+  }  
+  return res;
+}
+
+SWIGINTERN void CPLVirtualMemShadow_Pin__SWIG_0(CPLVirtualMemShadow *self,size_t start_offset=0,size_t nsize=0,int bWriteOp=0){
+        if( nsize == 0 || start_offset + nsize >= CPLVirtualMemGetSize( self->vmem ) )
+            nsize = CPLVirtualMemGetSize( self->vmem ) - start_offset;
+        char* start_addr = (char*)CPLVirtualMemGetAddr( self->vmem ) + start_offset;
+        CPLVirtualMemPin(self->vmem, start_addr, nsize, bWriteOp);
+    }
 
 
 /* Return a PyObject* from a NULL terminated C String */
@@ -3316,151 +3560,6 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
   }
 
 
-#include <limits.h>
-#if !defined(SWIG_NO_LLONG_MAX)
-# if !defined(LLONG_MAX) && defined(__GNUC__) && defined (__LONG_LONG_MAX__)
-#   define LLONG_MAX __LONG_LONG_MAX__
-#   define LLONG_MIN (-LLONG_MAX - 1LL)
-#   define ULLONG_MAX (LLONG_MAX * 2ULL + 1ULL)
-# endif
-#endif
-
-
-SWIGINTERN int
-SWIG_AsVal_double (PyObject *obj, double *val)
-{
-  int res = SWIG_TypeError;
-  if (PyFloat_Check(obj)) {
-    if (val) *val = PyFloat_AsDouble(obj);
-    return SWIG_OK;
-  } else if (PyInt_Check(obj)) {
-    if (val) *val = PyInt_AsLong(obj);
-    return SWIG_OK;
-  } else if (PyLong_Check(obj)) {
-    double v = PyLong_AsDouble(obj);
-    if (!PyErr_Occurred()) {
-      if (val) *val = v;
-      return SWIG_OK;
-    } else {
-      PyErr_Clear();
-    }
-  }
-#ifdef SWIG_PYTHON_CAST_MODE
-  {
-    int dispatch = 0;
-    double d = PyFloat_AsDouble(obj);
-    if (!PyErr_Occurred()) {
-      if (val) *val = d;
-      return SWIG_AddCast(SWIG_OK);
-    } else {
-      PyErr_Clear();
-    }
-    if (!dispatch) {
-      long v = PyLong_AsLong(obj);
-      if (!PyErr_Occurred()) {
-	if (val) *val = v;
-	return SWIG_AddCast(SWIG_AddCast(SWIG_OK));
-      } else {
-	PyErr_Clear();
-      }
-    }
-  }
-#endif
-  return res;
-}
-
-
-#include <float.h>
-
-
-#include <math.h>
-
-
-SWIGINTERNINLINE int
-SWIG_CanCastAsInteger(double *d, double min, double max) {
-  double x = *d;
-  if ((min <= x && x <= max)) {
-   double fx = floor(x);
-   double cx = ceil(x);
-   double rd =  ((x - fx) < 0.5) ? fx : cx; /* simple rint */
-   if ((errno == EDOM) || (errno == ERANGE)) {
-     errno = 0;
-   } else {
-     double summ, reps, diff;
-     if (rd < x) {
-       diff = x - rd;
-     } else if (rd > x) {
-       diff = rd - x;
-     } else {
-       return 1;
-     }
-     summ = rd + x;
-     reps = diff/summ;
-     if (reps < 8*DBL_EPSILON) {
-       *d = rd;
-       return 1;
-     }
-   }
-  }
-  return 0;
-}
-
-
-SWIGINTERN int
-SWIG_AsVal_long (PyObject *obj, long* val)
-{
-  if (PyInt_Check(obj)) {
-    if (val) *val = PyInt_AsLong(obj);
-    return SWIG_OK;
-  } else if (PyLong_Check(obj)) {
-    long v = PyLong_AsLong(obj);
-    if (!PyErr_Occurred()) {
-      if (val) *val = v;
-      return SWIG_OK;
-    } else {
-      PyErr_Clear();
-    }
-  }
-#ifdef SWIG_PYTHON_CAST_MODE
-  {
-    int dispatch = 0;
-    long v = PyInt_AsLong(obj);
-    if (!PyErr_Occurred()) {
-      if (val) *val = v;
-      return SWIG_AddCast(SWIG_OK);
-    } else {
-      PyErr_Clear();
-    }
-    if (!dispatch) {
-      double d;
-      int res = SWIG_AddCast(SWIG_AsVal_double (obj,&d));
-      if (SWIG_IsOK(res) && SWIG_CanCastAsInteger(&d, LONG_MIN, LONG_MAX)) {
-	if (val) *val = (long)(d);
-	return res;
-      }
-    }
-  }
-#endif
-  return SWIG_TypeError;
-}
-
-
-SWIGINTERN int
-SWIG_AsVal_int (PyObject * obj, int *val)
-{
-  long v;
-  int res = SWIG_AsVal_long (obj, &v);
-  if (SWIG_IsOK(res)) {
-    if ((v < INT_MIN || v > INT_MAX)) {
-      return SWIG_OverflowError;
-    } else {
-      if (val) *val = static_cast< int >(v);
-    }
-  }  
-  return res;
-}
-
-
   #define SWIG_From_long   PyInt_FromLong 
 
 
@@ -3469,6 +3568,12 @@ SWIG_From_int  (int value)
 {    
   return SWIG_From_long  (value);
 }
+
+
+    void VirtualMemGetArray(CPLVirtualMemShadow* virtualmem, CPLVirtualMemShadow** pvirtualmem, int numpytypemap)
+    {
+        *pvirtualmem = virtualmem;
+    }
 
 
   // need different functions for read and write
@@ -3641,6 +3746,355 @@ SWIG_From_int  (int value)
 #ifdef __cplusplus
 extern "C" {
 #endif
+SWIGINTERN PyObject *_wrap_delete_VirtualMem(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  CPLVirtualMemShadow *arg1 = (CPLVirtualMemShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:delete_VirtualMem",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_CPLVirtualMemShadow, SWIG_POINTER_DISOWN |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "delete_VirtualMem" "', argument " "1"" of type '" "CPLVirtualMemShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< CPLVirtualMemShadow * >(argp1);
+  delete_CPLVirtualMemShadow(arg1);
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_VirtualMem_GetAddr(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  CPLVirtualMemShadow *arg1 = (CPLVirtualMemShadow *) 0 ;
+  void **arg2 = (void **) 0 ;
+  size_t *arg3 = (size_t *) 0 ;
+  GDALDataType *arg4 = (GDALDataType *) 0 ;
+  int *arg5 = (int *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *ptr2 ;
+  size_t nsize2 ;
+  GDALDataType datatype2 ;
+  int readonly2 ;
+  PyObject * obj0 = 0 ;
+  
+  {
+    /* %typemap(in,numinputs=0) (void** pptr, size_t* pnsize, GDALDataType* pdatatype, int* preadonly) */
+    arg2 = &ptr2;
+    arg3 = &nsize2;
+    arg4 = &datatype2;
+    arg5 = &readonly2;
+  }
+  if (!PyArg_ParseTuple(args,(char *)"O:VirtualMem_GetAddr",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_CPLVirtualMemShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VirtualMem_GetAddr" "', argument " "1"" of type '" "CPLVirtualMemShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< CPLVirtualMemShadow * >(argp1);
+  CPLVirtualMemShadow_GetAddr(arg1,arg2,arg3,arg4,arg5);
+  resultobj = SWIG_Py_Void();
+  {
+#if PY_VERSION_HEX >= 0x02070000 
+    /* %typemap(argout) (void** pptr, size_t* pnsize, GDALDataType* pdatatype, int* preadonly)*/
+    Py_buffer *buf=(Py_buffer*)malloc(sizeof(Py_buffer));
+    if (PyBuffer_FillInfo(buf,  obj0,  *(arg2), *(arg3), *(arg5), PyBUF_ND)) {
+      // error, handle
+    }
+    if( *(arg4) == GDT_Byte )
+    {
+      buf->format = "B";
+      buf->itemsize = 1;
+    }
+    else if( *(arg4) == GDT_Int16 )
+    {
+      buf->format = "h";
+      buf->itemsize = 2;
+    }
+    else if( *(arg4) == GDT_UInt16 )
+    {
+      buf->format = "H";
+      buf->itemsize = 2;
+    }
+    else if( *(arg4) == GDT_Int32 )
+    {
+      buf->format = "i";
+      buf->itemsize = 4;
+    }
+    else if( *(arg4) == GDT_UInt32 )
+    {
+      buf->format = "I";
+      buf->itemsize = 4;
+    }
+    else if( *(arg4) == GDT_Float32 )
+    {
+      buf->format = "f";
+      buf->itemsize = 4;
+    }
+    else if( *(arg4) == GDT_Float64 )
+    {
+      buf->format = "F";
+      buf->itemsize = 8;
+    }
+    else
+    {
+      buf->format = "B";
+      buf->itemsize = 1;
+    }
+    resultobj = PyMemoryView_FromBuffer(buf);
+#else
+    PyErr_SetString( PyExc_RuntimeError, "needs Python 2.7 or later" );
+    SWIG_fail;
+#endif
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_VirtualMem_Pin__SWIG_0(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  CPLVirtualMemShadow *arg1 = (CPLVirtualMemShadow *) 0 ;
+  size_t arg2 ;
+  size_t arg3 ;
+  int arg4 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  size_t val2 ;
+  int ecode2 = 0 ;
+  size_t val3 ;
+  int ecode3 = 0 ;
+  int val4 ;
+  int ecode4 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOO:VirtualMem_Pin",&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_CPLVirtualMemShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VirtualMem_Pin" "', argument " "1"" of type '" "CPLVirtualMemShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< CPLVirtualMemShadow * >(argp1);
+  ecode2 = SWIG_AsVal_size_t(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "VirtualMem_Pin" "', argument " "2"" of type '" "size_t""'");
+  } 
+  arg2 = static_cast< size_t >(val2);
+  ecode3 = SWIG_AsVal_size_t(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "VirtualMem_Pin" "', argument " "3"" of type '" "size_t""'");
+  } 
+  arg3 = static_cast< size_t >(val3);
+  ecode4 = SWIG_AsVal_int(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "VirtualMem_Pin" "', argument " "4"" of type '" "int""'");
+  } 
+  arg4 = static_cast< int >(val4);
+  CPLVirtualMemShadow_Pin__SWIG_0(arg1,arg2,arg3,arg4);
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_VirtualMem_Pin__SWIG_1(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  CPLVirtualMemShadow *arg1 = (CPLVirtualMemShadow *) 0 ;
+  size_t arg2 ;
+  size_t arg3 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  size_t val2 ;
+  int ecode2 = 0 ;
+  size_t val3 ;
+  int ecode3 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOO:VirtualMem_Pin",&obj0,&obj1,&obj2)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_CPLVirtualMemShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VirtualMem_Pin" "', argument " "1"" of type '" "CPLVirtualMemShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< CPLVirtualMemShadow * >(argp1);
+  ecode2 = SWIG_AsVal_size_t(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "VirtualMem_Pin" "', argument " "2"" of type '" "size_t""'");
+  } 
+  arg2 = static_cast< size_t >(val2);
+  ecode3 = SWIG_AsVal_size_t(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "VirtualMem_Pin" "', argument " "3"" of type '" "size_t""'");
+  } 
+  arg3 = static_cast< size_t >(val3);
+  CPLVirtualMemShadow_Pin__SWIG_0(arg1,arg2,arg3);
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_VirtualMem_Pin__SWIG_2(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  CPLVirtualMemShadow *arg1 = (CPLVirtualMemShadow *) 0 ;
+  size_t arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  size_t val2 ;
+  int ecode2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:VirtualMem_Pin",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_CPLVirtualMemShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VirtualMem_Pin" "', argument " "1"" of type '" "CPLVirtualMemShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< CPLVirtualMemShadow * >(argp1);
+  ecode2 = SWIG_AsVal_size_t(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "VirtualMem_Pin" "', argument " "2"" of type '" "size_t""'");
+  } 
+  arg2 = static_cast< size_t >(val2);
+  CPLVirtualMemShadow_Pin__SWIG_0(arg1,arg2);
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_VirtualMem_Pin__SWIG_3(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  CPLVirtualMemShadow *arg1 = (CPLVirtualMemShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:VirtualMem_Pin",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_CPLVirtualMemShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VirtualMem_Pin" "', argument " "1"" of type '" "CPLVirtualMemShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< CPLVirtualMemShadow * >(argp1);
+  CPLVirtualMemShadow_Pin__SWIG_0(arg1);
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_VirtualMem_Pin(PyObject *self, PyObject *args) {
+  int argc;
+  PyObject *argv[5];
+  int ii;
+  
+  if (!PyTuple_Check(args)) SWIG_fail;
+  argc = (int)PyObject_Length(args);
+  for (ii = 0; (ii < argc) && (ii < 4); ii++) {
+    argv[ii] = PyTuple_GET_ITEM(args,ii);
+  }
+  if (argc == 1) {
+    int _v;
+    void *vptr = 0;
+    int res = SWIG_ConvertPtr(argv[0], &vptr, SWIGTYPE_p_CPLVirtualMemShadow, 0);
+    _v = SWIG_CheckState(res);
+    if (_v) {
+      return _wrap_VirtualMem_Pin__SWIG_3(self, args);
+    }
+  }
+  if (argc == 2) {
+    int _v;
+    void *vptr = 0;
+    int res = SWIG_ConvertPtr(argv[0], &vptr, SWIGTYPE_p_CPLVirtualMemShadow, 0);
+    _v = SWIG_CheckState(res);
+    if (_v) {
+      {
+        int res = SWIG_AsVal_size_t(argv[1], NULL);
+        _v = SWIG_CheckState(res);
+      }
+      if (_v) {
+        return _wrap_VirtualMem_Pin__SWIG_2(self, args);
+      }
+    }
+  }
+  if (argc == 3) {
+    int _v;
+    void *vptr = 0;
+    int res = SWIG_ConvertPtr(argv[0], &vptr, SWIGTYPE_p_CPLVirtualMemShadow, 0);
+    _v = SWIG_CheckState(res);
+    if (_v) {
+      {
+        int res = SWIG_AsVal_size_t(argv[1], NULL);
+        _v = SWIG_CheckState(res);
+      }
+      if (_v) {
+        {
+          int res = SWIG_AsVal_size_t(argv[2], NULL);
+          _v = SWIG_CheckState(res);
+        }
+        if (_v) {
+          return _wrap_VirtualMem_Pin__SWIG_1(self, args);
+        }
+      }
+    }
+  }
+  if (argc == 4) {
+    int _v;
+    void *vptr = 0;
+    int res = SWIG_ConvertPtr(argv[0], &vptr, SWIGTYPE_p_CPLVirtualMemShadow, 0);
+    _v = SWIG_CheckState(res);
+    if (_v) {
+      {
+        int res = SWIG_AsVal_size_t(argv[1], NULL);
+        _v = SWIG_CheckState(res);
+      }
+      if (_v) {
+        {
+          int res = SWIG_AsVal_size_t(argv[2], NULL);
+          _v = SWIG_CheckState(res);
+        }
+        if (_v) {
+          {
+            int res = SWIG_AsVal_int(argv[3], NULL);
+            _v = SWIG_CheckState(res);
+          }
+          if (_v) {
+            return _wrap_VirtualMem_Pin__SWIG_0(self, args);
+          }
+        }
+      }
+    }
+  }
+  
+fail:
+  SWIG_SetErrorMsg(PyExc_NotImplementedError,"Wrong number of arguments for overloaded function 'VirtualMem_Pin'.\n"
+    "  Possible C/C++ prototypes are:\n"
+    "    Pin(CPLVirtualMemShadow *,size_t,size_t,int)\n"
+    "    Pin(CPLVirtualMemShadow *,size_t,size_t)\n"
+    "    Pin(CPLVirtualMemShadow *,size_t)\n"
+    "    Pin(CPLVirtualMemShadow *)\n");
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *VirtualMem_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *obj;
+  if (!PyArg_ParseTuple(args,(char*)"O:swigregister", &obj)) return NULL;
+  SWIG_TypeNewClientData(SWIGTYPE_p_CPLVirtualMemShadow, SWIG_NewClientData(obj));
+  return SWIG_Py_Void();
+}
+
 SWIGINTERN PyObject *_wrap_GetArrayFilename(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   PyArrayObject *arg1 = (PyArrayObject *) 0 ;
@@ -3768,6 +4222,206 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_VirtualMemGetArray(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  CPLVirtualMemShadow *arg1 = (CPLVirtualMemShadow *) 0 ;
+  CPLVirtualMemShadow **arg2 = (CPLVirtualMemShadow **) 0 ;
+  int arg3 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  CPLVirtualMemShadow *virtualmem2 ;
+  PyObject * obj0 = 0 ;
+  
+  {
+    arg2 = &virtualmem2;
+    arg3 = 0;
+  }
+  if (!PyArg_ParseTuple(args,(char *)"O:VirtualMemGetArray",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_CPLVirtualMemShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VirtualMemGetArray" "', argument " "1"" of type '" "CPLVirtualMemShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< CPLVirtualMemShadow * >(argp1);
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  VirtualMemGetArray(arg1,arg2,arg3);
+  resultobj = SWIG_Py_Void();
+  {
+    CPLVirtualMemShadow* virtualmem = *(arg2);
+    void* ptr = CPLVirtualMemGetAddr( virtualmem->vmem );
+    /*size_t nsize = CPLVirtualMemGetSize( virtualmem->vmem );*/
+    GDALDataType datatype = virtualmem->eBufType;
+    int readonly = virtualmem->bReadOnly;
+    GIntBig nBufXSize = virtualmem->nBufXSize;
+    GIntBig nBufYSize = virtualmem->nBufYSize;
+    int nBandCount = virtualmem->nBandCount;
+    int bIsBandSequential = virtualmem->bIsBandSequential;
+    GDALTileOrganization eTileOrganization = virtualmem->eTileOrganization;
+    int nTileXSize = virtualmem->nTileXSize;
+    int nTileYSize = virtualmem->nTileYSize;
+    int bAuto = virtualmem->bAuto;
+    int            nPixelSpace = virtualmem->nPixelSpace; /* if bAuto == TRUE */
+    GIntBig        nLineSpace = virtualmem->nLineSpace; /* if bAuto == TRUE */
+    int numpytype;
+    
+    if( datatype == GDT_CInt16 || datatype == GDT_CInt32 )
+    {
+      PyErr_SetString( PyExc_RuntimeError, "GDT_CInt16 and GDT_CInt32 not supported for now" );
+      SWIG_fail;
+    }
+    
+    switch(datatype)
+    {
+      case GDT_Byte: numpytype = NPY_UBYTE; break;
+      case GDT_Int16: numpytype = NPY_INT16; break;
+      case GDT_UInt16: numpytype = NPY_UINT16; break;
+      case GDT_Int32: numpytype = NPY_INT32; break;
+      case GDT_UInt32: numpytype = NPY_UINT32; break;
+      case GDT_Float32: numpytype = NPY_FLOAT32; break;
+      case GDT_Float64: numpytype = NPY_FLOAT64; break;
+      //case GDT_CInt16: numpytype = NPY_INT16; break;
+      //case GDT_CInt32: numpytype = NPY_INT32; break;
+      case GDT_CFloat32: numpytype = NPY_CFLOAT; break;
+      case GDT_CFloat64: numpytype = NPY_CDOUBLE; break;
+      default: numpytype = NPY_UBYTE; break;
+    }
+    PyArrayObject* ar;
+    int flags = (readonly) ? 0x1 : 0x1 | 0x0400;
+    int nDataTypeSize = GDALGetDataTypeSize(datatype) / 8;
+    if( bAuto )
+    {
+      if( nBandCount == 1 )
+      {
+        npy_intp shape[2], stride[2];
+        shape[0] = nBufYSize;
+        shape[1] = nBufXSize;
+        stride[1] = nPixelSpace;
+        stride[0] = nLineSpace;
+        ar = (PyArrayObject*) PyArray_New(&PyArray_Type, 2, shape,
+          numpytype, stride, ptr, 0, flags , NULL);
+      }
+      else
+      {
+        PyErr_SetString( PyExc_RuntimeError, "Code update needed for bAuto and nBandCount > 1 !" );
+        SWIG_fail;
+      }
+    }
+    else if( bIsBandSequential >= 0 )
+    {
+      if( nBandCount == 1 )
+      {
+        npy_intp shape[2], stride[2];
+        shape[0] = nBufYSize;
+        shape[1] = nBufXSize;
+        stride[1] = nDataTypeSize;
+        stride[0] = stride[1] * nBufXSize;
+        ar = (PyArrayObject*) PyArray_New(&PyArray_Type, 2, shape,
+          numpytype, stride, ptr, 0, flags , NULL);
+      }
+      else
+      {
+        npy_intp shape[3], stride[3];
+        if( bIsBandSequential )
+        {
+          shape[0] = nBandCount;
+          shape[1] = nBufYSize;
+          shape[2] = nBufXSize;
+          stride[2] = nDataTypeSize;
+          stride[1] = stride[2] * nBufXSize;
+          stride[0] = stride[1] * nBufYSize;
+        }
+        else
+        {
+          shape[0] = nBufYSize;
+          shape[1] = nBufXSize;
+          shape[2] = nBandCount;
+          stride[2] = nDataTypeSize;
+          stride[1] = stride[2] * nBandCount;
+          stride[0] = stride[1] * nBufXSize;
+        }
+        ar = (PyArrayObject*) PyArray_New(&PyArray_Type, 3, shape,
+          numpytype, stride, ptr, 0, flags , NULL);
+      }
+    }
+    else
+    {
+      int nTilesPerRow = (nBufXSize + nTileXSize - 1) / nTileXSize;
+      int nTilesPerCol = (nBufYSize + nTileYSize - 1) / nTileYSize;
+      npy_intp shape[5], stride[5];
+      if( nBandCount == 1 )
+      {
+        shape[0] = nTilesPerCol;
+        shape[1] = nTilesPerRow;
+        shape[2] = nTileYSize;
+        shape[3] = nTileXSize;
+        stride[3] = nDataTypeSize;
+        stride[2] = stride[3] * nTileXSize;
+        stride[1] = stride[2] * nTileYSize;
+        stride[0] = stride[1] * nTilesPerRow;
+        ar = (PyArrayObject*) PyArray_New(&PyArray_Type, 4, shape,
+          numpytype, stride, ptr, 0, flags , NULL);
+      }
+      else if( eTileOrganization == GTO_TIP )
+      {
+        shape[0] = nTilesPerCol;
+        shape[1] = nTilesPerRow;
+        shape[2] = nTileYSize;
+        shape[3] = nTileXSize;
+        shape[4] = nBandCount;
+        stride[4] = nDataTypeSize;
+        stride[3] = stride[4] * nBandCount;
+        stride[2] = stride[3] * nTileXSize;
+        stride[1] = stride[2] * nTileYSize;
+        stride[0] = stride[1] * nTilesPerRow;
+        ar = (PyArrayObject*) PyArray_New(&PyArray_Type, 5, shape,
+          numpytype, stride, ptr, 0, flags , NULL);
+      }
+      else if( eTileOrganization == GTO_BIT )
+      {
+        shape[0] = nTilesPerCol;
+        shape[1] = nTilesPerRow;
+        shape[2] = nBandCount;
+        shape[3] = nTileYSize;
+        shape[4] = nTileXSize;
+        stride[4] = nDataTypeSize;
+        stride[3] = stride[4] * nTileXSize;
+        stride[2] = stride[3] * nTileYSize;
+        stride[1] = stride[2] * nBandCount;
+        stride[0] = stride[1] * nTilesPerRow;
+        ar = (PyArrayObject*) PyArray_New(&PyArray_Type, 5, shape,
+          numpytype, stride, ptr, 0, flags , NULL);
+      }
+      else /* GTO_BSQ */
+      {
+        shape[0] = nBandCount;
+        shape[1] = nTilesPerCol;
+        shape[2] = nTilesPerRow;
+        shape[3] = nTileYSize;
+        shape[4] = nTileXSize;
+        stride[4] = nDataTypeSize;
+        stride[3] = stride[4] * nTileXSize;
+        stride[2] = stride[3] * nTileYSize;
+        stride[1] = stride[2] * nTilesPerRow;
+        stride[0] = stride[1] * nTilesPerCol;
+        ar = (PyArrayObject*) PyArray_New(&PyArray_Type, 5, shape,
+          numpytype, stride, ptr, 0, flags , NULL);
+      }
+    }
+    
+    /* Keep a reference to the VirtualMem object */
+    ar->base = obj0;
+    Py_INCREF(obj0);
+    resultobj = (PyObject*) ar;
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_RATValuesIONumPyWrite(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
   PyObject *resultobj = 0;
   GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
@@ -3879,11 +4533,21 @@ fail:
 
 static PyMethodDef SwigMethods[] = {
 	 { (char *)"SWIG_PyInstanceMethod_New", (PyCFunction)SWIG_PyInstanceMethod_New, METH_O, NULL},
+	 { (char *)"delete_VirtualMem", _wrap_delete_VirtualMem, METH_VARARGS, (char *)"delete_VirtualMem(VirtualMem self)"},
+	 { (char *)"VirtualMem_GetAddr", _wrap_VirtualMem_GetAddr, METH_VARARGS, (char *)"VirtualMem_GetAddr(VirtualMem self)"},
+	 { (char *)"VirtualMem_Pin", _wrap_VirtualMem_Pin, METH_VARARGS, (char *)"\n"
+		"Pin(size_t start_offset = 0, size_t nsize = 0, int bWriteOp = 0)\n"
+		"Pin(size_t start_offset = 0, size_t nsize = 0)\n"
+		"Pin(size_t start_offset = 0)\n"
+		"VirtualMem_Pin(VirtualMem self)\n"
+		""},
+	 { (char *)"VirtualMem_swigregister", VirtualMem_swigregister, METH_VARARGS, NULL},
 	 { (char *)"GetArrayFilename", _wrap_GetArrayFilename, METH_VARARGS, (char *)"GetArrayFilename(PyArrayObject psArray) -> retStringAndCPLFree"},
 	 { (char *)"BandRasterIONumPy", (PyCFunction) _wrap_BandRasterIONumPy, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
 		"BandRasterIONumPy(Band band, int bWrite, int xoff, int yoff, int xsize, \n"
 		"    int ysize, PyArrayObject psArray, int buf_type) -> CPLErr\n"
 		""},
+	 { (char *)"VirtualMemGetArray", _wrap_VirtualMemGetArray, METH_VARARGS, (char *)"VirtualMemGetArray(VirtualMem virtualmem)"},
 	 { (char *)"RATValuesIONumPyWrite", (PyCFunction) _wrap_RATValuesIONumPyWrite, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
 		"RATValuesIONumPyWrite(RasterAttributeTable poRAT, int nField, int nStart, \n"
 		"    PyArrayObject psArray) -> CPLErr\n"
@@ -3898,32 +4562,52 @@ static PyMethodDef SwigMethods[] = {
 
 /* -------- TYPE CONVERSION AND EQUIVALENCE RULES (BEGIN) -------- */
 
+static swig_type_info _swigt__p_CPLVirtualMemShadow = {"_p_CPLVirtualMemShadow", "CPLVirtualMemShadow *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_GDALDataType = {"_p_GDALDataType", "GDALDataType *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALRasterAttributeTableShadow = {"_p_GDALRasterAttributeTableShadow", "GDALRasterAttributeTableShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALRasterBandShadow = {"_p_GDALRasterBandShadow", "GDALRasterBandShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_PyArrayObject = {"_p_PyArrayObject", "PyArrayObject *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_char = {"_p_char", "char *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_int = {"_p_int", "GDALRATFieldType *|CPLErr *|int *|GDALRATFieldUsage *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_p_CPLVirtualMemShadow = {"_p_p_CPLVirtualMemShadow", "CPLVirtualMemShadow **", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_p_void = {"_p_p_void", "void **", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_size_t = {"_p_size_t", "size_t *", 0, 0, (void*)0, 0};
 
 static swig_type_info *swig_type_initial[] = {
+  &_swigt__p_CPLVirtualMemShadow,
+  &_swigt__p_GDALDataType,
   &_swigt__p_GDALRasterAttributeTableShadow,
   &_swigt__p_GDALRasterBandShadow,
   &_swigt__p_PyArrayObject,
   &_swigt__p_char,
   &_swigt__p_int,
+  &_swigt__p_p_CPLVirtualMemShadow,
+  &_swigt__p_p_void,
+  &_swigt__p_size_t,
 };
 
+static swig_cast_info _swigc__p_CPLVirtualMemShadow[] = {  {&_swigt__p_CPLVirtualMemShadow, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_GDALDataType[] = {  {&_swigt__p_GDALDataType, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALRasterAttributeTableShadow[] = {  {&_swigt__p_GDALRasterAttributeTableShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALRasterBandShadow[] = {  {&_swigt__p_GDALRasterBandShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_PyArrayObject[] = {  {&_swigt__p_PyArrayObject, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_char[] = {  {&_swigt__p_char, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_int[] = {  {&_swigt__p_int, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_p_CPLVirtualMemShadow[] = {  {&_swigt__p_p_CPLVirtualMemShadow, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_p_void[] = {  {&_swigt__p_p_void, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_size_t[] = {  {&_swigt__p_size_t, 0, 0, 0},{0, 0, 0, 0}};
 
 static swig_cast_info *swig_cast_initial[] = {
+  _swigc__p_CPLVirtualMemShadow,
+  _swigc__p_GDALDataType,
   _swigc__p_GDALRasterAttributeTableShadow,
   _swigc__p_GDALRasterBandShadow,
   _swigc__p_PyArrayObject,
   _swigc__p_char,
   _swigc__p_int,
+  _swigc__p_p_CPLVirtualMemShadow,
+  _swigc__p_p_void,
+  _swigc__p_size_t,
 };
 
 
