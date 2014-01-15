@@ -1121,7 +1121,7 @@ CPLVirtualMem* GTiffRasterBand::GetVirtualMemAutoInternal( GDALRWFlag eRWFlag,
 
     GIntBig nBlockSpacing = 0;
     int bCompatibleSpacing = TRUE;
-    toff_t nPrevOffset = 0, nFirstOffset = 0;
+    toff_t nPrevOffset = 0;
     for(i = 0; i < poGDS->nBlocksPerBand; i ++)
     {
         toff_t nCurOffset;
@@ -1151,10 +1151,6 @@ CPLVirtualMem* GTiffRasterBand::GetVirtualMemAutoInternal( GDALRWFlag eRWFlag,
                 bCompatibleSpacing = FALSE;
                 break;
             }
-        }
-        else
-        {
-            nFirstOffset = nCurOffset;
         }
         nPrevOffset = nCurOffset;
     }
