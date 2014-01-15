@@ -171,6 +171,8 @@ int CPL_DLL     VSIStatExL( const char * pszFilename, VSIStatBufL * psStatBuf, i
 
 int CPL_DLL     VSIIsCaseSensitiveFS( const char * pszFilename );
 
+void CPL_DLL   *VSIFGetNativeFileDescriptorL( VSILFILE* );
+
 /* ==================================================================== */
 /*      Memory allocation                                               */
 /* ==================================================================== */

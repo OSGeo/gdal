@@ -41,6 +41,7 @@
 #include "cpl_port.h"
 #include "cpl_error.h"
 #include "cpl_progress.h"
+#include "cpl_virtualmem.h"
 #endif
 
 /* -------------------------------------------------------------------- */
@@ -771,6 +772,77 @@ GIntBig CPL_DLL CPL_STDCALL GDALGetCacheMax64(void);
 GIntBig CPL_DLL CPL_STDCALL GDALGetCacheUsed64(void);
 
 int CPL_DLL CPL_STDCALL GDALFlushCacheBlock(void);
+
+/* ==================================================================== */
+/*      GDAL virtual memory                                             */
+/* ==================================================================== */
+
+CPLVirtualMem CPL_DLL* GDALDatasetGetVirtualMem( GDALDatasetH hDS,
+                                                 GDALRWFlag eRWFlag,
+                                                 int nXOff, int nYOff,
+                                                 int nXSize, int nYSize,
+                                                 int nBufXSize, int nBufYSize,
+                                                 GDALDataType eBufType,
+                                                 int nBandCount, int* panBandMap,
+                                                 int nPixelSpace,
+                                                 GIntBig nLineSpace,
+                                                 GIntBig nBandSpace,
+                                                 size_t nCacheSize,
+                                                 size_t nPageSizeHint,
+                                                 int bSingleThreadUsage,
+                                                 char **papszOptions );
+
+CPLVirtualMem CPL_DLL* GDALRasterBandGetVirtualMem( GDALRasterBandH hBand,
+                                         GDALRWFlag eRWFlag,
+                                         int nXOff, int nYOff,
+                                         int nXSize, int nYSize,
+                                         int nBufXSize, int nBufYSize,
+                                         GDALDataType eBufType,
+                                         int nPixelSpace,
+                                         GIntBig nLineSpace,
+                                         size_t nCacheSize,
+                                         size_t nPageSizeHint,
+                                         int bSingleThreadUsage,
+                                         char **papszOptions );
+
+CPLVirtualMem CPL_DLL* GDALGetVirtualMemAuto( GDALRasterBandH hBand,
+                                              GDALRWFlag eRWFlag,
+                                              int *pnPixelSpace,
+                                              GIntBig *pnLineSpace,
+                                              char **papszOptions );
+
+typedef enum
+{
+    /*! Tile Interleaved by Pixel: tile (0,0) with internal band interleaved by pixel organization, tile (1, 0), ...  */
+    GTO_TIP,
+    /*! Band Interleaved by Tile : tile (0,0) of first band, tile (0,0) of second band, ... tile (1,0) of fisrt band, tile (1,0) of second band, ... */
+    GTO_BIT,
+    /*! Band SeQuential : all the tiles of first band, all the tiles of following band... */
+    GTO_BSQ
+} GDALTileOrganization;
+
+CPLVirtualMem CPL_DLL* GDALDatasetGetTiledVirtualMem( GDALDatasetH hDS,
+                                                      GDALRWFlag eRWFlag,
+                                                      int nXOff, int nYOff,
+                                                      int nXSize, int nYSize,
+                                                      int nTileXSize, int nTileYSize,
+                                                      GDALDataType eBufType,
+                                                      int nBandCount, int* panBandMap,
+                                                      GDALTileOrganization eTileOrganization,
+                                                      size_t nCacheSize,
+                                                      int bSingleThreadUsage,
+                                                      char **papszOptions );
+
+CPLVirtualMem CPL_DLL* GDALRasterBandGetTiledVirtualMem( GDALRasterBandH hBand,
+                                                         GDALRWFlag eRWFlag,
+                                                         int nXOff, int nYOff,
+                                                         int nXSize, int nYSize,
+                                                         int nTileXSize, int nTileYSize,
+                                                         GDALDataType eBufType,
+                                                         size_t nCacheSize,
+                                                         int bSingleThreadUsage,
+                                                         char **papszOptions );
+
 
 CPL_C_END
 

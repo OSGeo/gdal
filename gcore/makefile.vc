@@ -10,7 +10,8 @@ OBJ	=	gdalopeninfo.obj gdaldrivermanager.obj gdaldriver.obj \
 		gdal_rpcimdio.obj gdalproxydataset.obj gdalproxypool.obj \
 		gdalnodatavaluesmaskband.obj gdaldefaultasync.obj \
 		gdaldllmain.obj gdalexif.obj gdalclientserver.obj \
-		gdalgeorefpamdataset.obj  gdaljp2abstractdataset.obj
+		gdalgeorefpamdataset.obj  gdaljp2abstractdataset.obj \
+		gdalvirtualmem.obj
 
 RES	=	Version.res
 

@@ -1008,6 +1008,31 @@ int VSIIngestFile( VSILFILE* fp,
     return TRUE;
 }
 
+/************************************************************************/
+/*                        VSIFGetNativeFileDescriptorL()                */
+/************************************************************************/
+
+/**
+ * \brief Returns the "native" file descriptor for the virtual handle.
+ *
+ * This will only return a non-NULL value for "real" files handled by the
+ * operating system (to be opposed to GDAL virtual file systems).
+ *
+ * On POSIX systems, this will be a integer value ("fd") cast as a void*.
+ * On Windows systems, this will be the HANDLE.
+ *
+ * @param fp file handle opened with VSIFOpenL(). 
+ * 
+ * @return the native file descriptor, or NULL.
+ */
+
+void *VSIFGetNativeFileDescriptorL( VSILFILE* fp )
+{
+    VSIVirtualHandle *poFileHandle = (VSIVirtualHandle *) fp;
+    
+    return poFileHandle->GetNativeFileDescriptor();
+}
+
 
 /************************************************************************/
 /* ==================================================================== */

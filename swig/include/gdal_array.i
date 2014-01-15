@@ -32,11 +32,15 @@
 
 %module gdal_array
 
+%include constraints.i
+
 %import typemaps_python.i
 
 %import MajorObject.i
 %import Band.i
 %import RasterAttributeTable.i
+
+%include "cplvirtualmem.i"
 
 %init %{
   import_array();
@@ -491,6 +495,190 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
                           ntype, pixel_space, line_space );
   }
 %}
+
+%typemap(in,numinputs=0) (CPLVirtualMemShadow** pvirtualmem, int numpytypemap) (CPLVirtualMemShadow* virtualmem)
+{
+  $1 = &virtualmem;
+  $2 = 0;
+}
+
+%typemap(argout) (CPLVirtualMemShadow** pvirtualmem, int numpytypemap)
+{
+    CPLVirtualMemShadow* virtualmem = *($1);
+    void* ptr = CPLVirtualMemGetAddr( virtualmem->vmem );
+    /*size_t nsize = CPLVirtualMemGetSize( virtualmem->vmem );*/
+    GDALDataType datatype = virtualmem->eBufType;
+    int readonly = virtualmem->bReadOnly;
+    GIntBig nBufXSize = virtualmem->nBufXSize;
+    GIntBig nBufYSize = virtualmem->nBufYSize;
+    int nBandCount = virtualmem->nBandCount;
+    int bIsBandSequential = virtualmem->bIsBandSequential;
+    GDALTileOrganization eTileOrganization = virtualmem->eTileOrganization;
+    int nTileXSize = virtualmem->nTileXSize;
+    int nTileYSize = virtualmem->nTileYSize;
+    int bAuto = virtualmem->bAuto;
+    int            nPixelSpace = virtualmem->nPixelSpace; /* if bAuto == TRUE */
+    GIntBig        nLineSpace = virtualmem->nLineSpace; /* if bAuto == TRUE */
+    int numpytype;
+
+    if( datatype == GDT_CInt16 || datatype == GDT_CInt32 )
+    {
+        PyErr_SetString( PyExc_RuntimeError, "GDT_CInt16 and GDT_CInt32 not supported for now" );
+        SWIG_fail;
+    }
+
+    switch(datatype)
+    {
+        case GDT_Byte: numpytype = NPY_UBYTE; break;
+        case GDT_Int16: numpytype = NPY_INT16; break;
+        case GDT_UInt16: numpytype = NPY_UINT16; break;
+        case GDT_Int32: numpytype = NPY_INT32; break;
+        case GDT_UInt32: numpytype = NPY_UINT32; break;
+        case GDT_Float32: numpytype = NPY_FLOAT32; break;
+        case GDT_Float64: numpytype = NPY_FLOAT64; break;
+        //case GDT_CInt16: numpytype = NPY_INT16; break;
+        //case GDT_CInt32: numpytype = NPY_INT32; break;
+        case GDT_CFloat32: numpytype = NPY_CFLOAT; break;
+        case GDT_CFloat64: numpytype = NPY_CDOUBLE; break;
+        default: numpytype = NPY_UBYTE; break;
+    }
+    PyArrayObject* ar;
+    int flags = (readonly) ? 0x1 : 0x1 | 0x0400;
+    int nDataTypeSize = GDALGetDataTypeSize(datatype) / 8;
+    if( bAuto )
+    {
+        if( nBandCount == 1 )
+        {
+            npy_intp shape[2], stride[2];
+            shape[0] = nBufYSize;
+            shape[1] = nBufXSize;
+            stride[1] = nPixelSpace;
+            stride[0] = nLineSpace;
+            ar = (PyArrayObject*) PyArray_New(&PyArray_Type, 2, shape,
+                    numpytype, stride, ptr, 0, flags , NULL);
+        }
+        else
+        {
+            PyErr_SetString( PyExc_RuntimeError, "Code update needed for bAuto and nBandCount > 1 !" );
+            SWIG_fail;
+        }
+    }
+    else if( bIsBandSequential >= 0 )
+    {
+        if( nBandCount == 1 )
+        {
+            npy_intp shape[2], stride[2];
+            shape[0] = nBufYSize;
+            shape[1] = nBufXSize;
+            stride[1] = nDataTypeSize;
+            stride[0] = stride[1] * nBufXSize;
+            ar = (PyArrayObject*) PyArray_New(&PyArray_Type, 2, shape,
+                    numpytype, stride, ptr, 0, flags , NULL);
+        }
+        else
+        {
+            npy_intp shape[3], stride[3];
+            if( bIsBandSequential )
+            {
+                shape[0] = nBandCount;
+                shape[1] = nBufYSize;
+                shape[2] = nBufXSize;
+                stride[2] = nDataTypeSize;
+                stride[1] = stride[2] * nBufXSize;
+                stride[0] = stride[1] * nBufYSize;
+            }
+            else
+            {
+                shape[0] = nBufYSize;
+                shape[1] = nBufXSize;
+                shape[2] = nBandCount;
+                stride[2] = nDataTypeSize;
+                stride[1] = stride[2] * nBandCount;
+                stride[0] = stride[1] * nBufXSize;
+            }
+            ar = (PyArrayObject*) PyArray_New(&PyArray_Type, 3, shape,
+                    numpytype, stride, ptr, 0, flags , NULL);
+        }
+    }
+    else
+    {
+        int nTilesPerRow = (nBufXSize + nTileXSize - 1) / nTileXSize;
+        int nTilesPerCol = (nBufYSize + nTileYSize - 1) / nTileYSize;
+        npy_intp shape[5], stride[5];
+        if( nBandCount == 1 )
+        {
+            shape[0] = nTilesPerCol;
+            shape[1] = nTilesPerRow;
+            shape[2] = nTileYSize;
+            shape[3] = nTileXSize;
+            stride[3] = nDataTypeSize;
+            stride[2] = stride[3] * nTileXSize;
+            stride[1] = stride[2] * nTileYSize;
+            stride[0] = stride[1] * nTilesPerRow;
+            ar = (PyArrayObject*) PyArray_New(&PyArray_Type, 4, shape,
+                    numpytype, stride, ptr, 0, flags , NULL);
+        }
+        else if( eTileOrganization == GTO_TIP )
+        {
+            shape[0] = nTilesPerCol;
+            shape[1] = nTilesPerRow;
+            shape[2] = nTileYSize;
+            shape[3] = nTileXSize;
+            shape[4] = nBandCount;
+            stride[4] = nDataTypeSize;
+            stride[3] = stride[4] * nBandCount;
+            stride[2] = stride[3] * nTileXSize;
+            stride[1] = stride[2] * nTileYSize;
+            stride[0] = stride[1] * nTilesPerRow;
+            ar = (PyArrayObject*) PyArray_New(&PyArray_Type, 5, shape,
+                    numpytype, stride, ptr, 0, flags , NULL);
+        }
+        else if( eTileOrganization == GTO_BIT )
+        {
+            shape[0] = nTilesPerCol;
+            shape[1] = nTilesPerRow;
+            shape[2] = nBandCount;
+            shape[3] = nTileYSize;
+            shape[4] = nTileXSize;
+            stride[4] = nDataTypeSize;
+            stride[3] = stride[4] * nTileXSize;
+            stride[2] = stride[3] * nTileYSize;
+            stride[1] = stride[2] * nBandCount;
+            stride[0] = stride[1] * nTilesPerRow;
+            ar = (PyArrayObject*) PyArray_New(&PyArray_Type, 5, shape,
+                    numpytype, stride, ptr, 0, flags , NULL);
+        }
+        else /* GTO_BSQ */
+        {
+            shape[0] = nBandCount;
+            shape[1] = nTilesPerCol;
+            shape[2] = nTilesPerRow;
+            shape[3] = nTileYSize;
+            shape[4] = nTileXSize;
+            stride[4] = nDataTypeSize;
+            stride[3] = stride[4] * nTileXSize;
+            stride[2] = stride[3] * nTileYSize;
+            stride[1] = stride[2] * nTilesPerRow;
+            stride[0] = stride[1] * nTilesPerCol;
+            ar = (PyArrayObject*) PyArray_New(&PyArray_Type, 5, shape,
+                    numpytype, stride, ptr, 0, flags , NULL);
+        }
+    }
+
+    /* Keep a reference to the VirtualMem object */
+    ar->base = obj0;
+    Py_INCREF(obj0);
+    $result = (PyObject*) ar;
+}
+
+%apply Pointer NONNULL {CPLVirtualMemShadow* virtualmem};
+%inline %{
+    void VirtualMemGetArray(CPLVirtualMemShadow* virtualmem, CPLVirtualMemShadow** pvirtualmem, int numpytypemap)
+    {
+        *pvirtualmem = virtualmem;
+    }
+%}
+%clear CPLVirtualMemShadow* virtualmem;
 
 %feature( "kwargs" ) RATValuesIONumPyWrite;
 %inline %{
