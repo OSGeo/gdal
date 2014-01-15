@@ -1,0 +1,13 @@
+
+OBJ	=	ogropenfilegdbdriver.obj ogropenfilegdbdatasource.obj ogropenfilegdblayer.obj filegdbtable.obj filegdbindex.obj
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+EXTRAFLAGS =	-I.. -I..\.. -I..\mem
+
+default:	$(OBJ)
+
+clean:
+	-del *.obj *.pdb
