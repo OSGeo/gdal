@@ -204,3 +204,9 @@
 %constant GARIO_UPDATE = GARIO_UPDATE;
 %constant GARIO_ERROR = GARIO_ERROR;
 %constant GARIO_COMPLETE = GARIO_COMPLETE;
+
+// GDALTileOrganization
+%constant GTO_TIP  = GTO_TIP;
+%constant GTO_BIT = GTO_BIT;
+%constant GTO_BSQ = GTO_BSQ;
+

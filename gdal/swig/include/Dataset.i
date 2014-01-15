@@ -732,7 +732,109 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
     GDALEndAsyncReader(self, hReader);
     DisableAsyncReaderWrapper(ario);
   }
-#endif
+
+%feature( "kwargs" ) GetVirtualMem;
+%newobject GetVirtualMem;
+%apply (int nList, int *pList ) { (int band_list, int *pband_list ) };
+  CPLVirtualMemShadow* GetVirtualMem( GDALRWFlag eRWFlag,
+                                      int nXOff, int nYOff,
+                                      int nXSize, int nYSize,
+                                      int nBufXSize, int nBufYSize,
+                                      GDALDataType eBufType,
+                                      int band_list, int *pband_list,
+                                      int bIsBandSequential,
+                                      size_t nCacheSize,
+                                      size_t nPageSizeHint,
+                                      char** options = NULL )
+    {
+        int nPixelSpace;
+        GIntBig nBandSpace;
+        if( bIsBandSequential != 0 && bIsBandSequential != 1 )
+            return NULL;
+        if( band_list == 0 )
+            return NULL;
+        if( bIsBandSequential || band_list == 1 )
+        {
+            nPixelSpace = 0;
+            nBandSpace = 0;
+        }
+        else
+        {
+            nBandSpace = GDALGetDataTypeSize(eBufType) / 8;
+            nPixelSpace  = nBandSpace * band_list;
+        }
+        CPLVirtualMem* vmem = GDALDatasetGetVirtualMem( self,
+                                         eRWFlag,
+                                         nXOff, nYOff,
+                                         nXSize, nYSize,
+                                         nBufXSize, nBufYSize,
+                                         eBufType,
+                                         band_list, pband_list,
+                                         nPixelSpace,
+                                         0,
+                                         nBandSpace,
+                                         nCacheSize,
+                                         nPageSizeHint,
+                                         FALSE,
+                                         options );
+        if( vmem == NULL )
+            return NULL;
+        CPLVirtualMemShadow* vmemshadow = (CPLVirtualMemShadow*)calloc(1, sizeof(CPLVirtualMemShadow));
+        vmemshadow->vmem = vmem;
+        vmemshadow->eBufType = eBufType;
+        vmemshadow->bIsBandSequential = bIsBandSequential;
+        vmemshadow->bReadOnly = (eRWFlag == GF_Read);
+        vmemshadow->nBufXSize = nBufXSize;
+        vmemshadow->nBufYSize = nBufYSize;
+        vmemshadow->nBandCount = band_list;
+        return vmemshadow;
+    }
+%clear(int band_list, int *pband_list);
+
+%feature( "kwargs" ) GetTiledVirtualMem;
+%newobject GetTiledVirtualMem;
+%apply (int nList, int *pList ) { (int band_list, int *pband_list ) };
+  CPLVirtualMemShadow* GetTiledVirtualMem( GDALRWFlag eRWFlag,
+                                      int nXOff, int nYOff,
+                                      int nXSize, int nYSize,
+                                      int nTileXSize, int nTileYSize,
+                                      GDALDataType eBufType,
+                                      int band_list, int *pband_list,
+                                      GDALTileOrganization eTileOrganization,
+                                      size_t nCacheSize,
+                                      char** options = NULL )
+    {
+        if( band_list == 0 )
+            return NULL;
+        CPLVirtualMem* vmem = GDALDatasetGetTiledVirtualMem( self,
+                                         eRWFlag,
+                                         nXOff, nYOff,
+                                         nXSize, nYSize,
+                                         nTileXSize, nTileYSize,
+                                         eBufType,
+                                         band_list, pband_list,
+                                         eTileOrganization,
+                                         nCacheSize,
+                                         FALSE,
+                                         options );
+        if( vmem == NULL )
+            return NULL;
+        CPLVirtualMemShadow* vmemshadow = (CPLVirtualMemShadow*)calloc(1, sizeof(CPLVirtualMemShadow));
+        vmemshadow->vmem = vmem;
+        vmemshadow->eBufType = eBufType;
+        vmemshadow->bIsBandSequential = -1;
+        vmemshadow->bReadOnly = (eRWFlag == GF_Read);
+        vmemshadow->nBufXSize = nXSize;
+        vmemshadow->nBufYSize = nYSize;
+        vmemshadow->eTileOrganization = eTileOrganization;
+        vmemshadow->nTileXSize = nTileXSize;
+        vmemshadow->nTileYSize = nTileYSize;
+        vmemshadow->nBandCount = band_list;
+        return vmemshadow;
+    }
+%clear(int band_list, int *pband_list);
+
+#endif /* PYTHON */
 
 } /* extend */
 }; /* GDALDatasetShadow */

@@ -4954,3 +4954,118 @@ void GDALRasterBand::ReportError(CPLErr eErrClass, int err_no, const char *fmt, 
     }
     va_end(args);
 }
+
+
+/************************************************************************/
+/*                           GetVirtualMemAuto()                        */
+/************************************************************************/
+
+/** \brief Create a CPLVirtualMem object from a GDAL raster band object.
+ *
+ * Only supported on Linux for now.
+ *
+ * This method allows creating a virtual memory object for a GDALRasterBand,
+ * that exposes the whole image data as a virtual array.
+ *
+ * The default implementation relies on GDALRasterBandGetVirtualMem(), but specialized
+ * implementation, such as for raw files, may also directly use mechanisms of the
+ * operating system to create a view of the underlying file into virtual memory
+ * ( CPLVirtualMemFileMapNew() )
+ *
+ * At the time of writing, the GeoTIFF driver and "raw" drivers (EHdr, ...) offer
+ * a specialized implementation with direct file mapping, provided that some
+ * requirements are met :
+ *   - for all drivers, the dataset must be backed by a "real" file in the file
+ *     system, and the byte ordering of multi-byte datatypes (Int16, etc.)
+ *     must match the native ordering of the CPU.
+ *   - in addition, for the GeoTIFF driver, the GeoTIFF file must be uncompressed, scanline
+ *     oriented (i.e. not tiled). Strips must be organized in the file in sequential
+ *     order, and be equally spaced (which is generally the case). Only power-of-two
+ *     bit depths are supported (8 for GDT_Bye, 16 for GDT_Int16/GDT_UInt16,
+ *     32 for GDT_Float32 and 64 for GDT_Float64)
+ *
+ * The pointer returned remains valid until CPLVirtualMemFree() is called.
+ * CPLVirtualMemFree() must be called before the raster band object is destroyed.
+ *
+ * If p is such a pointer and base_type the type matching GDALGetRasterDataType(),
+ * the element of image coordinates (x, y) can be accessed with
+ * *(base_type*) ((GByte*)p + x * *pnPixelSpace + y * *pnLineSpace)
+ *
+ * This method is the same as the C GDALGetVirtualMemAuto() function.
+ *
+ * @param eRWFlag Either GF_Read to read the band, or GF_Write to
+ * read/write the band.
+ *
+ * @param pnPixelSpace Output parameter giving the byte offset from the start of one pixel value in
+ * the buffer to the start of the next pixel value within a scanline.
+ *
+ * @param pnLineSpace Output parameter giving the byte offset from the start of one scanline in
+ * the buffer to the start of the next.
+ *
+ * @param papszOptions NULL terminated list of options.
+ *                     If a specialized implementation exists, defining USE_DEFAULT_IMPLEMENTATION=YES
+ *                     will cause the default implementation to be used.
+ *                     When requiring or falling back to the default implementation, the following
+ *                     options are available : CACHE_SIZE (in bytes, defaults to 40 MB),
+ *                     PAGE_SIZE_HINT (in bytes),
+ *                     SINGLE_THREAD ("FALSE" / "TRUE", defaults to FALSE)
+ *
+ * @return a virtual memory object that must be unreferenced by CPLVirtualMemFree(),
+ *         or NULL in case of failure.
+ *
+ * @since GDAL 2.0
+ */
+
+CPLVirtualMem  *GDALRasterBand::GetVirtualMemAuto( GDALRWFlag eRWFlag,
+                                                   int *pnPixelSpace,
+                                                   GIntBig *pnLineSpace,
+                                                   char **papszOptions )
+{
+    int nPixelSpace = GDALGetDataTypeSize(eDataType) / 8;
+    GIntBig nLineSpace = (GIntBig)nRasterXSize * nPixelSpace;
+    if( pnPixelSpace )
+        *pnPixelSpace = nPixelSpace;
+    if( pnLineSpace )
+        *pnLineSpace = nLineSpace;
+    size_t nCacheSize = atoi(CSLFetchNameValueDef(papszOptions,
+                                            "CACHE_SIZE", "40000000"));
+    size_t nPageSizeHint = atoi(CSLFetchNameValueDef(papszOptions,
+                                            "PAGE_SIZE_HINT", "0"));
+    int bSingleThreadUsage = CSLTestBoolean(CSLFetchNameValueDef(papszOptions,
+                                            "SINGLE_THREAD", "FALSE"));
+    return GDALRasterBandGetVirtualMem( (GDALRasterBandH) this,
+                                        eRWFlag,
+                                        0, 0, nRasterXSize, nRasterYSize,
+                                        nRasterXSize, nRasterYSize,
+                                        eDataType,
+                                        nPixelSpace, nLineSpace,
+                                        nCacheSize,
+                                        nPageSizeHint,
+                                        bSingleThreadUsage,
+                                        papszOptions );
+}
+
+/************************************************************************/
+/*                         GDALGetVirtualMemAuto()                      */
+/************************************************************************/
+
+/**
+ * \brief Create a CPLVirtualMem object from a GDAL raster band object.
+ *
+ * @see GDALRasterBand::GetVirtualMemAuto()
+ */
+
+CPLVirtualMem * GDALGetVirtualMemAuto( GDALRasterBandH hBand,
+                                       GDALRWFlag eRWFlag,
+                                       int *pnPixelSpace,
+                                       GIntBig *pnLineSpace,
+                                       char **papszOptions )
+{
+    VALIDATE_POINTER1( hBand, "GDALGetVirtualMemAuto", NULL );
+
+    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+
+    return poBand->GetVirtualMemAuto(eRWFlag, pnPixelSpace,
+                                     pnLineSpace, papszOptions);
+}
+
