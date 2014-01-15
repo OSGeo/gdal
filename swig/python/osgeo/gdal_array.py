@@ -66,6 +66,32 @@ except AttributeError:
     _newclass = 0
 
 
+class VirtualMem(_object):
+    """Proxy of C++ CPLVirtualMemShadow class"""
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, VirtualMem, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, VirtualMem, name)
+    def __init__(self, *args, **kwargs): raise AttributeError("No constructor defined")
+    __repr__ = _swig_repr
+    __swig_destroy__ = _gdal_array.delete_VirtualMem
+    __del__ = lambda self : None;
+    def GetAddr(self):
+        """GetAddr(self)"""
+        return _gdal_array.VirtualMem_GetAddr(self)
+
+    def Pin(self, start_offset = 0, nsize = 0, bWriteOp = 0):
+        """
+        Pin(self, size_t start_offset = 0, size_t nsize = 0, int bWriteOp = 0)
+        Pin(self, size_t start_offset = 0, size_t nsize = 0)
+        Pin(self, size_t start_offset = 0)
+        Pin(self)
+        """
+        return _gdal_array.VirtualMem_Pin(self, start_offset, nsize, bWriteOp)
+
+VirtualMem_swigregister = _gdal_array.VirtualMem_swigregister
+VirtualMem_swigregister(VirtualMem)
+
 
 def GetArrayFilename(*args):
   """GetArrayFilename(PyArrayObject psArray) -> retStringAndCPLFree"""
@@ -77,6 +103,10 @@ def BandRasterIONumPy(*args, **kwargs):
         int ysize, PyArrayObject psArray, int buf_type) -> CPLErr
     """
   return _gdal_array.BandRasterIONumPy(*args, **kwargs)
+
+def VirtualMemGetArray(*args):
+  """VirtualMemGetArray(VirtualMem virtualmem)"""
+  return _gdal_array.VirtualMemGetArray(*args)
 
 def RATValuesIONumPyWrite(*args, **kwargs):
   """
