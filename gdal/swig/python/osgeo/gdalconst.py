@@ -176,5 +176,8 @@ GARIO_PENDING = _gdalconst.GARIO_PENDING
 GARIO_UPDATE = _gdalconst.GARIO_UPDATE
 GARIO_ERROR = _gdalconst.GARIO_ERROR
 GARIO_COMPLETE = _gdalconst.GARIO_COMPLETE
+GTO_TIP = _gdalconst.GTO_TIP
+GTO_BIT = _gdalconst.GTO_BIT
+GTO_BSQ = _gdalconst.GTO_BSQ
 
 
