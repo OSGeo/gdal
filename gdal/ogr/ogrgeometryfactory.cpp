@@ -998,7 +998,8 @@ typedef enum
 {
    METHOD_NORMAL,
    METHOD_SKIP,
-   METHOD_ONLY_CCW
+   METHOD_ONLY_CCW,
+   METHOD_CCW_INNER_JUST_AFTER_CW_OUTER
 } OrganizePolygonMethod;
 
 /**
@@ -1006,7 +1007,8 @@ typedef enum
  *
  * Analyse a set of rings (passed as simple polygons), and based on a 
  * geometric analysis convert them into a polygon with inner rings, 
- * or a MultiPolygon if dealing with more than one polygon.
+ * (or a MultiPolygon if dealing with more than one polygon) that follow the
+ * OGC Simple Feature specification.
  *
  * All the input geometries must be OGRPolygons with only a valid exterior
  * ring (at least 4 points) and no interior rings. 
@@ -1025,7 +1027,15 @@ typedef enum
  * to the option list (the result of the function will be a multi-polygon with all polygons
  * as toplevel polygons) or only make it analyze counterclockwise polygons by adding
  * METHOD=ONLY_CCW to the option list if you can assume that the outline
- * of holes is counterclockwise defined (this is the convention for shapefiles e.g.)
+ * of holes is counterclockwise defined (this is the convention for example in shapefiles,
+ * Personal Geodatabases or File Geodatabases).
+ *
+ * For FileGDB, in most cases, but not always, a faster method than ONLY_CCW can be used. It is
+ * CCW_INNER_JUST_AFTER_CW_OUTER. When using it, inner rings are assumed to be
+ * counterclockwise oriented, and following immediately the outer ring (clockwise
+ * oriented) that they belong to. If that assumption is not met, an inner ring
+ * could be attached to the wrong outer ring, so this method must be used
+ * with care.
  *
  * If the OGR_ORGANIZE_POLYGONS configuration option is defined, its value will override
  * the value of the METHOD option of papszOptions (usefull to modify the behaviour of the
@@ -1111,6 +1121,10 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
         {
             method = METHOD_ONLY_CCW;
         }
+        else if (EQUAL(pszMethodValue, "CCW_INNER_JUST_AFTER_CW_OUTER"))
+        {
+            method = METHOD_CCW_INNER_JUST_AFTER_CW_OUTER;
+        }
         else if (!EQUAL(pszMethodValue, "DEFAULT"))
         {
             CPLError(CE_Warning, CPLE_AppDefined,
@@ -1131,7 +1145,8 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
             && ((OGRPolygon *) papoPolygons[i])->getNumInteriorRings() == 0
             && ((OGRPolygon *)papoPolygons[i])->getExteriorRing()->getNumPoints() >= 4)
         {
-            asPolyEx[i].dfArea = asPolyEx[i].poPolygon->get_Area();
+            if( method != METHOD_CCW_INNER_JUST_AFTER_CW_OUTER )
+                asPolyEx[i].dfArea = asPolyEx[i].poPolygon->get_Area();
             asPolyEx[i].poExteriorRing = asPolyEx[i].poPolygon->getExteriorRing();
             asPolyEx[i].poExteriorRing->getPoint(0, &asPolyEx[i].poAPoint);
             asPolyEx[i].bIsCW = asPolyEx[i].poExteriorRing->isClockwise();
@@ -1161,7 +1176,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
 
     /* If we are in ONLY_CCW mode and that we have found that there is only one outer ring, */
     /* then it is pretty easy : we can assume that all other rings are inside */
-    if (method == METHOD_ONLY_CCW &&
+    if ((method == METHOD_ONLY_CCW || method == METHOD_CCW_INNER_JUST_AFTER_CW_OUTER) &&
         nCountCWPolygon == 1 && bUseFastVersion && !bNonPolygon )
     {
         geom = asPolyEx[indexOfCWPolygon].poPolygon;
@@ -1177,6 +1192,55 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
         if (pbIsValidGeometry)
             *pbIsValidGeometry = TRUE;
         return geom;
+    }
+
+    if( method == METHOD_CCW_INNER_JUST_AFTER_CW_OUTER && !bNonPolygon && asPolyEx[0].bIsCW )
+    {
+        /* Inner rings are CCW oriented and follow immediately the outer */
+        /* ring (that is CW oriented) in which they are included */
+        OGRMultiPolygon* poMulti = NULL;
+        OGRPolygon* poCur = asPolyEx[0].poPolygon;
+        OGRGeometry* poRet = poCur;
+        /* We have already checked that the first ring is CW */
+        OGREnvelope* psEnvelope = &(asPolyEx[0].sEnvelope);
+        for(i=1;i<nPolygonCount;i++)
+        {
+            if( asPolyEx[i].bIsCW )
+            {
+                if( poMulti == NULL )
+                {
+                    poMulti = new OGRMultiPolygon();
+                    poRet = poMulti;
+                    poMulti->addGeometryDirectly(poCur);
+                }
+                poCur = asPolyEx[i].poPolygon;
+                poMulti->addGeometryDirectly(poCur);
+                psEnvelope = &(asPolyEx[i].sEnvelope);
+            }
+            else
+            {
+                poCur->addRingDirectly(asPolyEx[i].poPolygon->stealExteriorRing());
+                if(!(asPolyEx[i].poAPoint.getX() >= psEnvelope->MinX &&
+                     asPolyEx[i].poAPoint.getX() <= psEnvelope->MaxX &&
+                     asPolyEx[i].poAPoint.getY() >= psEnvelope->MinY &&
+                     asPolyEx[i].poAPoint.getY() <= psEnvelope->MaxY))
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Part %d does not respect CCW_INNER_JUST_AFTER_CW_OUTER rule", i);
+                }
+                delete asPolyEx[i].poPolygon;
+            }
+        }
+        delete [] asPolyEx;
+        if (pbIsValidGeometry)
+            *pbIsValidGeometry = TRUE;
+        return poRet;
+    }
+    else if( method == METHOD_CCW_INNER_JUST_AFTER_CW_OUTER && !bNonPolygon )
+    {
+        method = METHOD_ONLY_CCW;
+        for(i=0;i<nPolygonCount;i++)
+            asPolyEx[i].dfArea = asPolyEx[i].poPolygon->get_Area();
     }
 
     /* Emits a warning if the number of parts is sufficiently big to anticipate for */
