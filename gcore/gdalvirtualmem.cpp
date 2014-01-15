@@ -139,12 +139,12 @@ GDALVirtualMem::GDALVirtualMem( GDALDatasetH hDS,
 
     int nDataTypeSize = GDALGetDataTypeSize(eBufType) / 8;
     if( nPixelSpace == nDataTypeSize &&
-        nLineSpace == nBufXSize * nPixelSpace &&
+        nLineSpace == (GIntBig)nBufXSize * nPixelSpace &&
         nBandSpace == nBufYSize * nLineSpace )
         bIsCompact = TRUE;
     else if( nBandSpace == nDataTypeSize &&
             nPixelSpace == nBandCount * nBandSpace &&
-            nLineSpace == nBufXSize * nPixelSpace )
+            nLineSpace == (GIntBig)nBufXSize * nPixelSpace )
         bIsCompact = TRUE;
     else
         bIsCompact = FALSE;
@@ -669,9 +669,9 @@ static CPLVirtualMem* GDALGetVirtualMem( GDALDatasetH hDS,
     if( nPixelSpace == 0 )
         nPixelSpace = nDataTypeSize;
     if( nLineSpace == 0 )
-        nLineSpace = nBufXSize * nPixelSpace;
+        nLineSpace = (GIntBig)nBufXSize * nPixelSpace;
     if( nBandSpace == 0 )
-        nBandSpace = nBufYSize * nLineSpace;
+        nBandSpace = (GIntBig)nBufYSize * nLineSpace;
 
     // OFFSET = offset(x,y,band) = x * nPixelSpace + y * nLineSpace + band * nBandSpace
     // where 0 <= x < nBufXSize and 0 <= y < nBufYSize and 0 <= band < nBandCount
@@ -687,7 +687,8 @@ static CPLVirtualMem* GDALGetVirtualMem( GDALDatasetH hDS,
     //      x = (OFFSET - y * nLineSpace) / nPixelSpace
     //      band = (OFFSET - y * nLineSpace - x * nPixelSpace) / nBandSpace
 
-    if( nLineSpace < nBufXSize * nPixelSpace ||
+    if( nDataTypeSize == 0 || /* to please Coverity. not needed */
+        nLineSpace < (GIntBig)nBufXSize * nPixelSpace ||
         (nBandCount > 1 &&
         (nBandSpace == nPixelSpace ||
         (nBandSpace < nPixelSpace && 

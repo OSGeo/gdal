@@ -142,7 +142,7 @@ class FileGDBGeomField: public FileGDBField
         double            dfYMax;
 
     public:
-                          FileGDBGeomField(FileGDBTable* poParent) : FileGDBField(poParent) {}
+                          FileGDBGeomField(FileGDBTable* poParent);
         virtual          ~FileGDBGeomField() {}
 
         const std::string& GetWKT() const { return osWKT; }
