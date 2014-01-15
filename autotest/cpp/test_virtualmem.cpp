@@ -78,7 +78,7 @@ static void test_two_pages_thread(void* p)
     CPLVirtualMemUnDeclareThread(ctxt);
 }
 
-static void test_two_pages()
+static int test_two_pages()
 {
     CPLVirtualMem* ctxt;
     volatile char* addr;
@@ -92,7 +92,9 @@ static void test_two_pages()
                         test_two_pages_cbk,
                         NULL,
                         NULL, NULL);
-    assert(ctxt);
+    if( ctxt == NULL )
+        return FALSE;
+
     addr = (char*) CPLVirtualMemGetAddr(ctxt);
     assert(CPLVirtualMemGetPageSize(ctxt) == MINIMUM_PAGE_SIZE);
     assert(CPLVirtualMemIsAccessThreadSafe(ctxt));
@@ -111,6 +113,8 @@ static void test_two_pages()
     CPLVirtualMemUnDeclareThread(ctxt);
     CPLJoinThread(hThread);
     CPLVirtualMemFree(ctxt);
+    
+    return TRUE;
 }
 
 static void test_raw_auto(int bFileMapping)
@@ -180,7 +184,8 @@ int main(int argc, char* argv[])
     /*printf("test_huge_mapping\n");
     test_huge_mapping();*/
 
-    test_two_pages();
+    if( !test_two_pages() )
+        return 0;
 
     test_raw_auto(TRUE);
     test_raw_auto(FALSE);
