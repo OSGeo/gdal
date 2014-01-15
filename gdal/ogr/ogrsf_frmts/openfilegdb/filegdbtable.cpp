@@ -114,6 +114,7 @@ void FileGDBTable::Init()
     nOffsetFieldDesc = 0;
     nFieldDescLength = 0;
     anFeatureOffsets.resize(0);
+    nOffsetHeaderEnd = 0;
 }
 
 /************************************************************************/
@@ -302,12 +303,13 @@ int FileGDBTable::IsLikelyFeatureAtOffset(GUInt32 nFileSize,
     {
         GByte* pabyNewBuffer = (GByte*) VSIRealloc( pabyBuffer,
                                 nRowBlobLength + ZEROES_AFTER_END_OF_BUFFER );
-        if( pabyBuffer == NULL )
+        if( pabyNewBuffer == NULL )
             return FALSE;
 
         pabyBuffer = pabyNewBuffer;
         nBufferMaxSize = nRowBlobLength;
     }
+    if( pabyBuffer == NULL ) return FALSE; /* to please Coverity. Not needed */
     if( nCountNullableFields > 0 )
     {
         if( VSIFReadL(pabyBuffer, nNullableFieldsSizeInBytes, 1, fpTable) != 1 )
@@ -718,7 +720,7 @@ int FileGDBTable::Open(const char* pszFilename)
                 case FGFT_STRING:
                     returnErrorIf(nRemaining < 6 );
                     nMaxWidth = GetInt32(pabyIter, 0);
-                    returnErrorIf(nMaxWidth > INT_MAX );
+                    returnErrorIf(nMaxWidth < 0);
                     flags = pabyIter[4];
                     defaultValueLength = pabyIter[5];
                     pabyIter += 6;
@@ -1799,6 +1801,19 @@ FileGDBIndex *FileGDBField::GetIndex()
 }
 
 /************************************************************************/
+/*                           FileGDBGeomField()                         */
+/************************************************************************/
+
+FileGDBGeomField::FileGDBGeomField(FileGDBTable* poParent) :
+    FileGDBField(poParent), bHasZ(FALSE), bHasM(FALSE),
+    dfXOrigin(0.0), dfYOrigin(0.0), dfXYScale(0.0), dfMOrigin(0.0),
+    dfMScale(0.0), dfZOrigin(0.0), dfZScale(0.0), dfXYTolerance(0.0),
+    dfMTolerance(0.0), dfZTolerance(0.0), dfXMin(0.0), dfYMin(0.0),
+    dfXMax(0.0), dfYMax(0.0)
+{
+}
+
+/************************************************************************/
 /*                      FileGDBOGRGeometryConverterImpl                 */
 /************************************************************************/
 
@@ -2136,9 +2151,9 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
         case SHPT_MULTIPOINTM:
         {
             returnErrorIf(!ReadVarUInt32(pabyCur, pabyEnd, nPoints) );
-            OGRMultiPoint* poMP = new OGRMultiPoint();
             if( nPoints == 0 )
             {
+                OGRMultiPoint* poMP = new OGRMultiPoint();
                 if( bHasZ )
                     poMP->setCoordinateDimension(3);
                 return poMP;
@@ -2148,6 +2163,7 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
 
             dx = dy = dz = 0;
 
+            OGRMultiPoint* poMP = new OGRMultiPoint();
             XYMultiPointSetter mpSetter(poMP);
             if( !ReadXYArray<XYMultiPointSetter>(mpSetter,
                              pabyCur, pabyEnd, nPoints, dx, dy) )

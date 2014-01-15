@@ -648,7 +648,8 @@ FileGDBIndexIterator::FileGDBIndexIterator(FileGDBTable* poParent, int bAscendin
                     nValueCountInIdx(0), nIndexDepth(0), eOp(FGSO_ISNOTNULL),
                     iCurFeatureInPage(-1), nFeaturesInPage(0),
                     bEvaluateToFALSE(FALSE), bEOF(FALSE),
-                    iSorted(0), nSortedCount(-1), panSortedRows(NULL)
+                    iSorted(0), nSortedCount(-1), panSortedRows(NULL),
+                    nStrLen(0)
 {
     memset(iFirstPageIdx, 0xFF, MAX_DEPTH * sizeof(int));
     memset(iLastPageIdx, 0xFF, MAX_DEPTH * sizeof(int));
