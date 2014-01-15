@@ -30,12 +30,13 @@
 #ifndef _OGR_OPENFILEGDB_H_INCLUDED
 #define _OGR_OPENFILEGDB_H_INCLUDED
 
-#include <vector>
-#include <map>
 #include "ogrsf_frmts.h"
 #include "filegdbtable.h"
 #include "swq.h"
 #include "cpl_quad_tree.h"
+
+#include <vector>
+#include <map>
 
 using namespace OpenFileGDB;
 
