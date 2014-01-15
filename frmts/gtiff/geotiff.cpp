@@ -991,7 +991,7 @@ CPLVirtualMem* GTiffRasterBand::GetVirtualMemAutoInternal( GDALRWFlag eRWFlag,
         if( poGDS->pBaseMapping != NULL )
         {
             /* Offset between the base mapping and the requested mapping */
-            vsi_l_offset nOffset = (nBand - 1) * GDALGetDataTypeSize(eDataType) / 8;
+            vsi_l_offset nOffset = (vsi_l_offset)(nBand - 1) * GDALGetDataTypeSize(eDataType) / 8;
 
             GTiffRasterBand** ppoSelf = (GTiffRasterBand** )CPLCalloc(1, sizeof(GTiffRasterBand*));
             *ppoSelf = this;
@@ -1139,7 +1139,7 @@ CPLVirtualMem* GTiffRasterBand::GetVirtualMemAutoInternal( GDALRWFlag eRWFlag,
             GIntBig nCurSpacing = nCurOffset - nPrevOffset;
             if( i == 1 )
             {
-                if( nCurSpacing != nBlockYSize * nLineSize )
+                if( nCurSpacing != (GIntBig)nBlockYSize * nLineSize )
                 {
                     bCompatibleSpacing = FALSE;
                     break;

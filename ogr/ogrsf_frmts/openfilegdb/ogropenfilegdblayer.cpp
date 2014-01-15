@@ -57,7 +57,7 @@ class OGROpenFileGDBGeomFieldDefn: public OGRGeomFieldDefn
             if( poSRS )
                 return poSRS;
             if( m_poLayer != NULL )
-                m_poLayer->BuildLayerDefinition();
+                (void) m_poLayer->BuildLayerDefinition();
             return poSRS;
         }
 };
@@ -94,7 +94,7 @@ class OGROpenFileGDBFeatureDefn: public OGRFeatureDefn
             if( !m_bHasBuildFieldDefn && m_poLayer != NULL )
             {
                 m_bHasBuildFieldDefn = TRUE;
-                m_poLayer->BuildLayerDefinition();
+                (void) m_poLayer->BuildLayerDefinition();
             }
             return nFieldCount;
         }
@@ -364,6 +364,8 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
                 break;
             case FGFT_STRING:
                 nWidth = poGDBField->GetMaxWidth();
+                eType = OFTString;
+                break;
             case FGFT_UUID_1:
             case FGFT_UUID_2:
             case FGFT_XML:
@@ -409,7 +411,7 @@ OGRwkbGeometryType OGROpenFileGDBLayer::GetGeomType()
 {
     if( m_eGeomType == wkbUnknown )
     {
-        BuildLayerDefinition();
+        (void) BuildLayerDefinition();
     }
 
     return m_eGeomType;
