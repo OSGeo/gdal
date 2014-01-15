@@ -143,6 +143,10 @@ void OGRRegisterAll()
 #ifdef SDE_ENABLED
     RegisterOGRSDE();
 #endif
+/* Register OpenFileGDB before FGDB as it is more capable for read-only */
+#ifdef OPENFILEGDB_ENABLED
+    RegisterOGROpenFileGDB();
+#endif
 #ifdef FGDB_ENABLED
     RegisterOGRFileGDB();
 #endif
