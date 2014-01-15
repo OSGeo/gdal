@@ -180,6 +180,10 @@ class CPL_DLL GDALProxyRasterBand : public GDALRasterBand
         virtual int             GetMaskFlags();
         virtual CPLErr          CreateMaskBand( int nFlags );
 
+        virtual CPLVirtualMem  *GetVirtualMemAuto( GDALRWFlag eRWFlag,
+                                                int *pnPixelSpace,
+                                                GIntBig *pnLineSpace,
+                                                char **papszOptions );
 };
 
 

@@ -1058,6 +1058,49 @@ GDALColorInterp RawRasterBand::GetColorInterpretation()
 }
 
 /************************************************************************/
+/*                           GetVirtualMemAuto()                        */
+/************************************************************************/
+
+CPLVirtualMem  *RawRasterBand::GetVirtualMemAuto( GDALRWFlag eRWFlag,
+                                                  int *pnPixelSpace,
+                                                  GIntBig *pnLineSpace,
+                                                  char **papszOptions )
+{
+    CPLAssert(pnPixelSpace);
+    CPLAssert(pnLineSpace);
+
+    vsi_l_offset nSize =  (vsi_l_offset)(nRasterYSize - 1) * nLineOffset +
+        (nRasterXSize - 1) * nPixelOffset + GDALGetDataTypeSize(eDataType) / 8;
+
+    if( !bIsVSIL || VSIFGetNativeFileDescriptorL(fpRawL) == NULL ||
+        !CPLIsVirtualMemFileMapAvailable() || !bNativeOrder ||
+        (size_t)nSize != nSize || nPixelOffset < 0 || nLineOffset < 0 ||
+        CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "USE_DEFAULT_IMPLEMENTATION", "NO")) )
+    {
+        return GDALRasterBand::GetVirtualMemAuto(eRWFlag, pnPixelSpace,
+                                                 pnLineSpace, papszOptions);
+    }
+
+    FlushCache();
+
+    CPLVirtualMem* pVMem = CPLVirtualMemFileMapNew(
+        fpRawL, nImgOffset, nSize,
+        (eRWFlag == GF_Write) ? VIRTUALMEM_READWRITE : VIRTUALMEM_READONLY,
+        NULL, NULL);
+    if( pVMem == NULL )
+    {
+        return GDALRasterBand::GetVirtualMemAuto(eRWFlag, pnPixelSpace,
+                                                 pnLineSpace, papszOptions);
+    }
+    else
+    {
+        *pnPixelSpace = nPixelOffset;
+        *pnLineSpace = nLineOffset;
+        return pVMem;
+    }
+}
+
+/************************************************************************/
 /* ==================================================================== */
 /*      RawDataset                                                      */
 /* ==================================================================== */

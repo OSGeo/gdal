@@ -160,6 +160,7 @@ class VSIUnixStdioHandle : public VSIVirtualHandle
     virtual int       Flush();
     virtual int       Close();
     virtual int       Truncate( vsi_l_offset nNewSize );
+    virtual void     *GetNativeFileDescriptor() { return (void*) (size_t) fileno(fp); }
 };
 
 
