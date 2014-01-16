@@ -751,11 +751,203 @@ def ogr_openfilegdb_8():
     # looking at the structure of the .gdbtable
     expected_str = [ 'fid13', 'fid2', 'fid3', 'fid4', 'fid5', 'fid6', 'fid7', 'fid8', 'fid9', 'fid10', 'fid11', None ]
     i = 0
-    for feat in lyr:
+    feat = lyr.GetNextFeature()
+    while feat is not None:
         if feat.GetField('str') != expected_str[i]:
             feat.DumpReadable()
             return 'fail'
         i = i + 1
+        feat = lyr.GetNextFeature()
+
+    return 'success'
+
+###############################################################################
+# Test reading a .gdbtable outside a .gdb
+
+def ogr_openfilegdb_9():
+
+    try:
+        os.stat('tmp/testopenfilegdb.gdb')
+    except:
+        return 'skip'
+ 
+    shutil.copy('tmp/testopenfilegdb.gdb/a00000009.gdbtable', 'tmp/a00000009.gdbtable')
+    shutil.copy('tmp/testopenfilegdb.gdb/a00000009.gdbtablx', 'tmp/a00000009.gdbtablx')
+    ds = ogr.Open('tmp/a00000009.gdbtable')
+    if ds is None:
+        return 'fail'
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    if feat is None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test various error conditions
+
+def fuzz(filename, offset):
+    f = open(filename, "rb+")
+    f.seek(offset, 0)
+    v = ord(f.read(1))
+    f.seek(offset, 0)
+    import sys
+    if sys.version_info >= (3,0,0):
+        f.write(('%c' % (255 - v)).encode('ISO-8859-1'))
+    else:
+        f.write('%c' % (255 - v))
+    f.close()
+    return (filename, offset, v)
+
+def unfuzz(backup):
+    (filename, offset, v) = backup
+    f = open(filename, "rb+")
+    f.seek(offset, 0)
+    import sys
+    if sys.version_info >= (3,0,0):
+        f.write(('%c' % (v)).encode('ISO-8859-1'))
+    else:
+        f.write('%c' % (v))
+    f.close()
+
+def ogr_openfilegdb_10():
+
+    try:
+        os.stat('tmp/testopenfilegdb.gdb')
+    except:
+        return 'skip'
+ 
+    shutil.copytree('tmp/testopenfilegdb.gdb', 'tmp/testopenfilegdb_fuzzed.gdb')
+
+    if False:
+        for filename in ['tmp/testopenfilegdb_fuzzed.gdb/a00000001.gdbtable',
+                        'tmp/testopenfilegdb_fuzzed.gdb/a00000001.gdbtablx']:
+            errors = set()
+            offsets = []
+            last_error_msg = ''
+            last_offset = -1
+            for offset in range(os.stat(filename).st_size):
+                #print(offset)
+                backup = fuzz(filename, offset)
+                gdal.ErrorReset()
+                print(offset)
+                ds = ogr.Open('tmp/testopenfilegdb_fuzzed.gdb')
+                error_msg = gdal.GetLastErrorMsg()
+                feat = None
+                if ds is not None:
+                    gdal.ErrorReset()
+                    lyr = ds.GetLayerByName('GDB_SystemCatalog')
+                    if error_msg == '':
+                        error_msg = gdal.GetLastErrorMsg()
+                    if lyr is not None:
+                        gdal.ErrorReset()
+                        feat = lyr.GetNextFeature()
+                        if error_msg == '':
+                            error_msg = gdal.GetLastErrorMsg()
+                if feat is None or error_msg != '':
+                    if offset - last_offset >= 4 or last_error_msg != error_msg:
+                        if error_msg != '' and not error_msg in errors:
+                            errors.add(error_msg)
+                            offsets.append(offset)
+                        else:
+                            offsets.append(offset)
+                    last_offset = offset
+                    last_error_msg = error_msg
+                ds = None
+                unfuzz(backup)
+            print(offsets)
+
+        for filename in ['tmp/testopenfilegdb_fuzzed.gdb/a00000004.gdbindexes',
+                         'tmp/testopenfilegdb_fuzzed.gdb/a00000004.CatItemsByPhysicalName.atx']:
+            errors = set()
+            offsets = []
+            last_error_msg = ''
+            last_offset = -1
+            for offset in range(os.stat(filename).st_size):
+                #print(offset)
+                backup = fuzz(filename, offset)
+                gdal.ErrorReset()
+                print(offset)
+                ds = ogr.Open('tmp/testopenfilegdb_fuzzed.gdb')
+                error_msg = gdal.GetLastErrorMsg()
+                feat = None
+                if ds is not None:
+                    gdal.ErrorReset()
+                    lyr = ds.GetLayerByName('GDB_Items')
+                    lyr.SetAttributeFilter("PhysicalName = 'NO_FIELD'")
+                    if error_msg == '':
+                        error_msg = gdal.GetLastErrorMsg()
+                    if lyr is not None:
+                        gdal.ErrorReset()
+                        feat = lyr.GetNextFeature()
+                        if error_msg == '':
+                            error_msg = gdal.GetLastErrorMsg()
+                if feat is None or error_msg != '':
+                    if offset - last_offset >= 4 or last_error_msg != error_msg:
+                        if error_msg != '' and not error_msg in errors:
+                            errors.add(error_msg)
+                            offsets.append(offset)
+                        else:
+                            offsets.append(offset)
+                    last_offset = offset
+                    last_error_msg = error_msg
+                ds = None
+                unfuzz(backup)
+            print(offsets)
+
+    else:
+
+        for (filename, offsets) in [ ('tmp/testopenfilegdb_fuzzed.gdb/a00000001.gdbtable', [4, 7, 32, 33, 41, 42, 52, 59, 60, 63, 64, 72, 73, 77, 78, 79, 80, 81, 101, 102, 104, 105, 111, 180]),
+                          ('tmp/testopenfilegdb_fuzzed.gdb/a00000001.gdbtablx', [4, 7, 11, 16, 31, 5136, 5140, 5142, 5144])]:
+            for offset in offsets:
+                backup = fuzz(filename, offset)
+                gdal.PushErrorHandler('CPLQuietErrorHandler')
+                gdal.ErrorReset()
+                ds = ogr.Open('tmp/testopenfilegdb_fuzzed.gdb')
+                error_msg = gdal.GetLastErrorMsg()
+                feat = None
+                if ds is not None:
+                    gdal.ErrorReset()
+                    lyr = ds.GetLayerByName('GDB_SystemCatalog')
+                    if error_msg == '':
+                        error_msg = gdal.GetLastErrorMsg()
+                    if lyr is not None:
+                        gdal.ErrorReset()
+                        feat = lyr.GetNextFeature()
+                        if error_msg == '':
+                            error_msg = gdal.GetLastErrorMsg()
+                if feat is not None and error_msg == '':
+                    print('%s: expected problem at offset %d, but did not find' % (filename, offset))
+                ds = None
+                gdal.PopErrorHandler()
+                unfuzz(backup)
+
+        for (filename, offsets) in [ ('tmp/testopenfilegdb_fuzzed.gdb/a00000004.gdbindexes', [0, 4, 5, 44, 45, 66, 67, 100, 101, 116, 117, 148, 149, 162, 163, 206, 207, 220, 221, 224, 280, 281]),
+                          ('tmp/testopenfilegdb_fuzzed.gdb/a00000004.CatItemsByPhysicalName.atx', [4, 68, 108, 268, 428, 588, 748, 908, 1068, 1228, 1388, 1548, 1708, 1868, 2028, 2188, 2348, 4096, 4098, 4102, 4106]) ]:
+            for offset in offsets:
+                #print(offset)
+                backup = fuzz(filename, offset)
+                gdal.PushErrorHandler('CPLQuietErrorHandler')
+                gdal.ErrorReset()
+                ds = ogr.Open('tmp/testopenfilegdb_fuzzed.gdb')
+                error_msg = gdal.GetLastErrorMsg()
+                feat = None
+                if ds is not None:
+                    gdal.ErrorReset()
+                    lyr = ds.GetLayerByName('GDB_Items')
+                    lyr.SetAttributeFilter("PhysicalName = 'NO_FIELD'")
+                    if error_msg == '':
+                        error_msg = gdal.GetLastErrorMsg()
+                    if lyr is not None:
+                        gdal.ErrorReset()
+                        feat = lyr.GetNextFeature()
+                        if error_msg == '':
+                            error_msg = gdal.GetLastErrorMsg()
+                if feat is not None and error_msg == '':
+                    print('%s: expected problem at offset %d, but did not find' % (filename, offset))
+                ds = None
+                gdal.PopErrorHandler()
+                unfuzz(backup)
 
     return 'success'
 
@@ -769,6 +961,15 @@ def ogr_openfilegdb_cleanup():
 
     try:
         shutil.rmtree('tmp/testopenfilegdb.gdb')
+    except:
+        pass
+    try:
+        os.remove('tmp/a00000009.gdbtable')
+        os.remove('tmp/a00000009.gdbtablx')
+    except:
+        pass
+    try:
+        shutil.rmtree('tmp/testopenfilegdb_fuzzed.gdb')
     except:
         pass
 
@@ -785,6 +986,8 @@ gdaltest_list = [
     ogr_openfilegdb_6,
     ogr_openfilegdb_7,
     ogr_openfilegdb_8,
+    ogr_openfilegdb_9,
+    ogr_openfilegdb_10,
     ogr_openfilegdb_cleanup,
     ]
 
