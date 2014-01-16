@@ -1578,6 +1578,10 @@ void JPGDataset::Restart()
 CPLErr JPGDatasetCommon::GetGeoTransform( double * padfTransform )
 
 {
+    CPLErr eErr = GDALPamDataset::GetGeoTransform( padfTransform );
+    if( eErr != CE_Failure )
+        return eErr;
+
     LoadWorldFileOrTab();
 
     if( bGeoTransformValid )
@@ -1587,7 +1591,7 @@ CPLErr JPGDatasetCommon::GetGeoTransform( double * padfTransform )
         return CE_None;
     }
     else 
-        return GDALPamDataset::GetGeoTransform( padfTransform );
+        return eErr;
 }
 
 /************************************************************************/
@@ -1597,6 +1601,10 @@ CPLErr JPGDatasetCommon::GetGeoTransform( double * padfTransform )
 int JPGDatasetCommon::GetGCPCount()
 
 {
+    int nPAMGCPCount = GDALPamDataset::GetGCPCount();
+    if( nPAMGCPCount != 0 )
+        return nPAMGCPCount;
+
     LoadWorldFileOrTab();
 
     return nGCPCount;
@@ -1609,6 +1617,10 @@ int JPGDatasetCommon::GetGCPCount()
 const char *JPGDatasetCommon::GetGCPProjection()
 
 {
+    int nPAMGCPCount = GDALPamDataset::GetGCPCount();
+    if( nPAMGCPCount != 0 )
+        return GDALPamDataset::GetGCPProjection();
+
     LoadWorldFileOrTab();
 
     if( pszProjection && nGCPCount > 0 )
@@ -1624,6 +1636,10 @@ const char *JPGDatasetCommon::GetGCPProjection()
 const GDAL_GCP *JPGDatasetCommon::GetGCPs()
 
 {
+    int nPAMGCPCount = GDALPamDataset::GetGCPCount();
+    if( nPAMGCPCount != 0 )
+        return GDALPamDataset::GetGCPs();
+
     LoadWorldFileOrTab();
 
     return pasGCPList;

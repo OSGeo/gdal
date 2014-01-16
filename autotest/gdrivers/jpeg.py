@@ -770,6 +770,32 @@ def jpeg_19():
     return 'success'
 
 ###############################################################################
+# Test correct GCP reading with PAM (#5352)
+
+def jpeg_20():
+
+    src_ds = gdal.Open('data/rgb_gcp.vrt')
+    ds = gdal.GetDriverByName('JPEG').CreateCopy('/vsimem/jpeg_20.jpg', src_ds)
+    ds = None
+
+    ds = gdal.Open('/vsimem/jpeg_20.jpg')
+    if ds.GetGCPProjection().find('GEOGCS["WGS 84"') != 0:
+        gdaltest.post_reason('failure')
+        print(ds.GetGCPProjection())
+        return 'fail'
+    if ds.GetGCPCount() != 4:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    if len(ds.GetGCPs()) != 4:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    ds = None
+    
+    gdal.GetDriverByName('JPEG').Delete('/vsimem/jpeg_20.jpg')
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def jpeg_cleanup():
@@ -805,6 +831,7 @@ gdaltest_list = [
     jpeg_17,
     jpeg_18,
     jpeg_19,
+    jpeg_20,
     jpeg_cleanup ]
 
 if __name__ == '__main__':
