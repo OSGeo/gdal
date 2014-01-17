@@ -48,7 +48,7 @@ ogrtest.openfilegdb_datalist = [ [ "none", ogr.wkbNone, None],
                 [ "linestring", ogr.wkbLineString, "LINESTRING (1 2,3 4)", "MULTILINESTRING ((1 2,3 4))" ],
                 [ "multilinestring", ogr.wkbMultiLineString, "MULTILINESTRING ((1 2,3 4))" ],
                 [ "polygon", ogr.wkbPolygon, "POLYGON ((0 0,0 1,1 1,1 0,0 0))", "MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)))" ],
-                [ "multipolygon", ogr.wkbMultiPolygon, "MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0),(0.25 0.25,0.75 0.25,0.75 0.75,0.75 0.25,0.25 0.25)),((2 0,2 1,3 1,3 0,2 0)))" ],
+                [ "multipolygon", ogr.wkbMultiPolygon, "MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0),(0.25 0.25,0.75 0.25,0.75 0.75,0.25 0.75,0.25 0.25)),((2 0,2 1,3 1,3 0,2 0)))" ],
                 [ "point25D", ogr.wkbPoint25D, "POINT (1 2 3)" ],
                 [ "multipoint25D", ogr.wkbMultiPoint25D, "MULTIPOINT (1 2 -10,3 4 -20)" ],
                 [ "linestring25D", ogr.wkbLineString25D, "LINESTRING (1 2 -10,3 4 -20)", "MULTILINESTRING ((1 2 -10,3 4 -20))" ],
@@ -195,6 +195,20 @@ def ogr_openfilegdb_make_test_data():
             feat = ogr.Feature(lyr.GetLayerDefn())
             lyr.CreateFeature(feat)
             feat = None
+
+    if True:
+        lyr = ds.CreateLayer('several_polygons', geom_type = ogr.wkbPolygon, srs = None)
+        for i in range(3):
+            for j in range(3):
+                feat = ogr.Feature(lyr.GetLayerDefn())
+                x1 = 2 * i
+                x2 = 2 * i + 1
+                y1 = 2 * j
+                y2 = 2 * j + 1
+                geom = ogr.CreateGeometryFromWkt('POLYGON((%d %d,%d %d,%d %d,%d %d,%d %d))' % (x1,y1,x1,y2,x2,y2,x2,y1,x1,y1))
+                feat.SetGeometry(geom)
+                lyr.CreateFeature(feat)
+                feat = None
 
     for fld_name in [ 'id', 'str', 'smallint', 'int', 'float', 'real', 'adate', 'guid', 'nullint' ]:
         ds.ExecuteSQL('CREATE INDEX idx_%s ON point(%s)' % (fld_name, fld_name))
@@ -952,6 +966,92 @@ def ogr_openfilegdb_10():
     return 'success'
 
 ###############################################################################
+# Test spatial filtering
+
+def ogr_openfilegdb_11():
+
+    # Test building spatial index with GetFeatureCount()
+    ds = ogr.Open('data/testopenfilegdb.gdb.zip')
+    lyr = ds.GetLayerByName('several_polygons')
+    if lyr.TestCapability(ogr.OLCFastFeatureCount) != 1:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    lyr.SetSpatialFilterRect(0.25,0.25,0.5,0.5)
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    # Should return cached value
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    # Should use index
+    c = 0
+    feat = lyr.GetNextFeature()
+    while feat is not None:
+        c = c + 1
+        feat = lyr.GetNextFeature()
+    if c != 1:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    feat = None
+    lyr = None
+    ds = None
+
+    # Test iterating without spatial index already built
+    ds = ogr.Open('data/testopenfilegdb.gdb.zip')
+    lyr = ds.GetLayerByName('several_polygons')
+    lyr.SetSpatialFilterRect(0.25,0.25,0.5,0.5)
+    c = 0
+    feat = lyr.GetNextFeature()
+    while feat is not None:
+        c = c + 1
+        feat = lyr.GetNextFeature()
+    if c != 1:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    feat = None
+    lyr = None
+    ds = None
+    
+    # Test GetFeatureCount() without spatial index already built, with no matching feature
+    # when GEOS is available
+    if ogrtest.have_geos():
+        expected_count = 0
+    else:
+        expected_count = 5
+
+    ds = ogr.Open('data/testopenfilegdb.gdb.zip')
+    lyr = ds.GetLayerByName('multipolygon')
+    lyr.SetSpatialFilterRect(1.4,0.4,1.6,0.6)
+    if lyr.GetFeatureCount() != expected_count:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    lyr = None
+    ds = None
+
+    # Test iterating without spatial index already built, with no matching feature
+    # when GEOS is available
+    ds = ogr.Open('data/testopenfilegdb.gdb.zip')
+    lyr = ds.GetLayerByName('multipolygon')
+    lyr.SetSpatialFilterRect(1.4,0.4,1.6,0.6)
+    c = 0
+    feat = lyr.GetNextFeature()
+    while feat is not None:
+        c = c + 1
+        feat = lyr.GetNextFeature()
+    if c != expected_count:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    if lyr.GetFeatureCount() != expected_count:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    feat = None
+    lyr = None
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def ogr_openfilegdb_cleanup():
@@ -988,6 +1088,7 @@ gdaltest_list = [
     ogr_openfilegdb_8,
     ogr_openfilegdb_9,
     ogr_openfilegdb_10,
+    ogr_openfilegdb_11,
     ogr_openfilegdb_cleanup,
     ]
 

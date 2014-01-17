@@ -1384,6 +1384,14 @@ int OGROpenFileGDBLayer::GetFeatureCount( int bForce )
         int nCount = 0;
         if( m_eSpatialIndexState == SPI_IN_BUILDING && m_iCurFeat != 0 )
             m_eSpatialIndexState = SPI_INVALID;
+        
+        int nFilteredFeatureCountAlloc = 0;
+        if( m_eSpatialIndexState == SPI_IN_BUILDING )
+        {
+            CPLFree(m_pahFilteredFeatures);
+            m_pahFilteredFeatures = NULL;
+            m_nFilteredFeatureCount = 0;
+        }
 
         for(int i=0;i<m_poLyrTable->GetTotalRecordCount();i++)
         {
@@ -1417,12 +1425,30 @@ int OGROpenFileGDBLayer::GetFeatureCount( int bForce )
 
                 if( m_poLyrTable->DoesGeometryIntersectsFilterEnvelope(psField) )
                 {
-                    nCount ++;
+                    OGRGeometry* poGeom = m_poGeomConverter->GetAsGeometry(psField);
+                    if( poGeom != NULL && FilterGeometry( poGeom ))
+                    {
+                        if( m_eSpatialIndexState == SPI_IN_BUILDING )
+                        {
+                            if( nCount == nFilteredFeatureCountAlloc )
+                            {
+                                nFilteredFeatureCountAlloc = 4 * nFilteredFeatureCountAlloc / 3 + 1024;
+                                m_pahFilteredFeatures = (void**)CPLRealloc(
+                                    m_pahFilteredFeatures, sizeof(void*) * nFilteredFeatureCountAlloc);
+                            }
+                            m_pahFilteredFeatures[nCount] = (void*)(size_t)i;
+                        }
+                        nCount ++;
+                    }
+                    delete poGeom;
                 }
             }
         }
         if( m_eSpatialIndexState == SPI_IN_BUILDING )
+        {
+            m_nFilteredFeatureCount = nCount;
             m_eSpatialIndexState = SPI_COMPLETED;
+        }
 
         return nCount;
     }
