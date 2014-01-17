@@ -56,11 +56,13 @@ any recoding. (Recoding support is new for GDAL/OGR 1.9.0)</p>
 attribute indexing.</p>
 
 <p>The spatial indexing uses the same .qix quadtree spatial index files that
-are used by UMN MapServer. Starting with OGR 1.10, it can also use the ESRI spatial index
-files (.sbn / .sbx).  Spatial indexing can accelerate spatially filtered
+are used by UMN MapServer. Spatial indexing can accelerate spatially filtered
 passes through large datasets to pick out a small area quite dramatically.</p>
 
-<p>To create a spatial index, issue a SQL command of the form</p>
+<p>Starting with OGR 1.10, it can also use the ESRI spatial index
+files (.sbn / .sbx), but writing them is not supported currently.</p> 
+
+<p>To create a spatial index (in .qix format), issue a SQL command of the form</p>
 <pre>CREATE SPATIAL INDEX ON tablename [DEPTH N]</pre>
 <p>where optional DEPTH specifier can be used to control number of index tree levels
 generated. If DEPTH is omitted, tree depth is estimated on basis of number of features
