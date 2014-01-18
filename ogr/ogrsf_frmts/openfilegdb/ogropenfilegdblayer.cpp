@@ -1084,6 +1084,8 @@ OGRErr OGROpenFileGDBLayer::SetAttributeFilter( const char* pszFilter )
         swq_expr_node* poNode = (swq_expr_node*) m_poAttrQuery->GetSWGExpr();
         m_bIteratorSufficientToEvaluateFilter = -1;
         m_poIterator = BuildIteratorFromExprNode(poNode);
+        if( m_poIterator != NULL && m_eSpatialIndexState == SPI_IN_BUILDING )
+            m_eSpatialIndexState = SPI_INVALID;
         if( m_bIteratorSufficientToEvaluateFilter < 0 )
             m_bIteratorSufficientToEvaluateFilter = FALSE;
     }
@@ -1294,11 +1296,16 @@ OGRFeature* OGROpenFileGDBLayer::GetFeature( long nFeatureId )
     /* Temporarily disable spatial filter */
     OGRGeometry* poOldSpatialFilter = m_poFilterGeom;
     m_poFilterGeom = NULL;
+    /* and also spatial index state to avoid features to be inserted */
+    /* multiple times in spatial index */
+    SPIState eOldState = m_eSpatialIndexState;
+    m_eSpatialIndexState = SPI_INVALID;
 
     OGRFeature* poFeature = GetCurrentFeature();
 
     /* Set it back */
     m_poFilterGeom = poOldSpatialFilter;
+    m_eSpatialIndexState = eOldState;
 
     return poFeature;
 }
@@ -1314,6 +1321,9 @@ OGRErr OGROpenFileGDBLayer::SetNextByIndex( long nIndex )
 
     if( !BuildLayerDefinition() )
         return OGRERR_FAILURE;
+
+    if( m_eSpatialIndexState == SPI_IN_BUILDING )
+        m_eSpatialIndexState = SPI_INVALID;
 
     if( m_nFilteredFeatureCount >= 0 )
     {

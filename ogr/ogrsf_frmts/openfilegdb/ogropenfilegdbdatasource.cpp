@@ -856,6 +856,23 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Special case GetLayerSpatialIndexState (only for debugging purposes) */
+/* -------------------------------------------------------------------- */
+    if (EQUALN(pszSQLCommand, "GetLayerSpatialIndexState ", strlen("GetLayerSpatialIndexState ")))
+    {
+        OGROpenFileGDBLayer* poLayer = (OGROpenFileGDBLayer*)
+            GetLayerByName(pszSQLCommand + strlen("GetLayerSpatialIndexState "));
+        if (poLayer)
+        {
+            OGRLayer* poRet = new OGROpenFileGDBSingleFeatureLayer(
+                "LayerSpatialIndexState", CPLSPrintf("%d", poLayer->GetSpatialIndexState()) );
+            return poRet;
+        }
+        else
+            return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Special case GetLastSQLUsedOptimizedImplementation (only for debugging purposes) */
 /* -------------------------------------------------------------------- */
     if (EQUAL(pszSQLCommand, "GetLastSQLUsedOptimizedImplementation"))
