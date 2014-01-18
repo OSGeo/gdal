@@ -62,7 +62,7 @@ static void Usage(const char* pszErrorMsg = NULL, int bShort = TRUE)
             "       [-a_srs srs_def] [-a_ullr ulx uly lrx lry] [-a_nodata value]\n"
             "       [-gcp pixel line easting northing [elevation]]*\n" 
             "       [-mo \"META-TAG=VALUE\"]* [-q] [-sds]\n"
-            "       [-co \"NAME=VALUE\"]* [-stats]\n"
+            "       [-co \"NAME=VALUE\"]* [-stats] [-norat]\n"
             "       src_dataset dst_dataset\n" );
 
     if( !bShort )
@@ -317,6 +317,7 @@ static int ProxyMain( int argc, char ** argv )
     int                 bStats = FALSE, bApproxStats = FALSE;
     int                 bErrorOnPartiallyOutside = FALSE;
     int                 bErrorOnCompletelyOutside = FALSE;
+    int                 bNoRAT = FALSE;
 
 
     anSrcWin[0] = 0;
@@ -707,7 +708,10 @@ static int ProxyMain( int argc, char ** argv )
             bStats = TRUE;
             bApproxStats = TRUE;
         }
-
+        else if( EQUAL(argv[i], "-norat") )
+        {
+            bNoRAT = TRUE;
+        }
         else if( argv[i][0] == '-' )
         {
             Usage(CPLSPrintf("Unknown option name '%s'", argv[i]));
@@ -1044,7 +1048,7 @@ static int ProxyMain( int argc, char ** argv )
         && bSpatialArrangementPreserved
         && nGCPCount == 0 && !bGotBounds
         && pszOutputSRS == NULL && !bSetNoData && !bUnsetNoData
-        && nRGBExpand == 0 && !bStats )
+        && nRGBExpand == 0 && !bStats && !bNoRAT )
     {
         
         hOutDS = GDALCreateCopy( hDriver, pszDest, hDataset, 
