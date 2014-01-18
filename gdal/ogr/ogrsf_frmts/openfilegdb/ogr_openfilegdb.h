@@ -118,6 +118,7 @@ public:
                                    int bAscending,
                                    swq_op op,
                                    swq_expr_node* poValue);
+  SPIState              GetSpatialIndexState() const { return m_eSpatialIndexState; }
 
   virtual const char* GetName() { return m_osName.c_str(); }
   virtual OGRwkbGeometryType GetGeomType();

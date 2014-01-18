@@ -968,16 +968,36 @@ def ogr_openfilegdb_10():
 ###############################################################################
 # Test spatial filtering
 
+SPI_IN_BUILDING = 0
+SPI_COMPLETED = 1
+SPI_INVALID = 2
+
+def get_spi_state(ds, lyr):
+    sql_lyr = ds.ExecuteSQL('GetLayerSpatialIndexState %s' % lyr.GetName())
+    value = int(sql_lyr.GetNextFeature().GetField(0))
+    ds.ReleaseResultSet(sql_lyr)
+    return value
+
 def ogr_openfilegdb_11():
 
     # Test building spatial index with GetFeatureCount()
     ds = ogr.Open('data/testopenfilegdb.gdb.zip')
     lyr = ds.GetLayerByName('several_polygons')
+    if get_spi_state(ds, lyr) != SPI_IN_BUILDING:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    lyr.ResetReading()
+    if get_spi_state(ds, lyr) != SPI_IN_BUILDING:
+        gdaltest.post_reason('failure')
+        return 'fail'
     if lyr.TestCapability(ogr.OLCFastFeatureCount) != 1:
         gdaltest.post_reason('failure')
         return 'fail'
     lyr.SetSpatialFilterRect(0.25,0.25,0.5,0.5)
     if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    if get_spi_state(ds, lyr) != SPI_COMPLETED:
         gdaltest.post_reason('failure')
         return 'fail'
     # Should return cached value
@@ -1003,10 +1023,16 @@ def ogr_openfilegdb_11():
     lyr.SetSpatialFilterRect(0.25,0.25,0.5,0.5)
     c = 0
     feat = lyr.GetNextFeature()
+    if get_spi_state(ds, lyr) != SPI_IN_BUILDING:
+        gdaltest.post_reason('failure')
+        return 'fail'
     while feat is not None:
         c = c + 1
         feat = lyr.GetNextFeature()
     if c != 1:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    if get_spi_state(ds, lyr) != SPI_COMPLETED:
         gdaltest.post_reason('failure')
         return 'fail'
     feat = None
@@ -1049,6 +1075,67 @@ def ogr_openfilegdb_11():
     lyr = None
     ds = None
 
+    # GetFeature() should not impact spatial index building
+    ds = ogr.Open('data/testopenfilegdb.gdb.zip')
+    lyr = ds.GetLayerByName('several_polygons')
+    lyr.SetSpatialFilterRect(0.25,0.25,0.5,0.5)
+    feat = lyr.GetFeature(1)
+    feat = lyr.GetFeature(1)
+    if get_spi_state(ds, lyr) != SPI_IN_BUILDING:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    feat = lyr.GetNextFeature()
+    while feat is not None:
+        feat = lyr.GetNextFeature()
+    if get_spi_state(ds, lyr) != SPI_COMPLETED:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    lyr.ResetReading()
+    c = 0
+    feat = lyr.GetNextFeature()
+    while feat is not None:
+        c = c + 1
+        feat = lyr.GetNextFeature()
+    if c != 1:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    feat = None
+    lyr = None
+    ds = None
+
+    # but SetNextByIndex() does
+    ds = ogr.Open('data/testopenfilegdb.gdb.zip')
+    lyr = ds.GetLayerByName('multipolygon')
+    lyr.SetNextByIndex(3)
+    if get_spi_state(ds, lyr) != SPI_INVALID:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    feat = None
+    lyr = None
+    ds = None
+
+    # and ResetReading() as well
+    ds = ogr.Open('data/testopenfilegdb.gdb.zip')
+    lyr = ds.GetLayerByName('multipolygon')
+    feat = lyr.GetNextFeature()
+    lyr.ResetReading()
+    if get_spi_state(ds, lyr) != SPI_INVALID:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    feat = None
+    lyr = None
+    ds = None
+
+    # and SetAttributeFilter() with an index too
+    ds = ogr.Open('data/testopenfilegdb.gdb.zip')
+    lyr = ds.GetLayerByName('point')
+    lyr.SetAttributeFilter('id = 1')
+    if get_spi_state(ds, lyr) != SPI_INVALID:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    feat = None
+    lyr = None
+    ds = None
     return 'success'
 
 ###############################################################################
