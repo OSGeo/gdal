@@ -1141,6 +1141,9 @@ def warp_37():
 # Test a warp with GCPs on the *destination* image.
 def warp_38():
 
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        return 'skip'
+
     # Create an output file with GCPs.
     out_file = 'tmp/warp_38.tif'
     ds = gdal.GetDriverByName('GTiff').Create(out_file, 50, 50, 3)
@@ -1178,6 +1181,9 @@ def warp_38():
 ###############################################################################
 # Test a warp with GCPs for TPS on the *destination* image.
 def warp_39():
+
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        return 'skip'
 
     # Create an output file with GCPs.
     out_file = 'tmp/warp_39.tif'
