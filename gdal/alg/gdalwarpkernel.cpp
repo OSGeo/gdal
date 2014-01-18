@@ -5116,11 +5116,11 @@ static void GWKAverageOrModeThread( void* pData)
                 int iSrcXMin, iSrcXMax,iSrcYMin,iSrcYMax;
 
                 // compute corners in source crs
-                iSrcXMin = MAX( ((int) floor(padfX[iDstX])) - poWK->nSrcXOff, 0 );
-                iSrcXMax = MIN( ((int) ceil(padfX2[iDstX])) - poWK->nSrcXOff, nSrcXSize );
-                iSrcYMin = MAX( ((int) floor(padfY[iDstX])) - poWK->nSrcYOff, 0 );
-                iSrcYMax = MIN( ((int) ceil(padfY2[iDstX])) - poWK->nSrcYOff, nSrcYSize );
-                
+                iSrcXMin = MAX( ((int) floor((padfX[iDstX] + 1e-10))) - poWK->nSrcXOff, 0 ); 
+                iSrcXMax = MIN( ((int) ceil((padfX2[iDstX] - 1e-10))) - poWK->nSrcXOff, nSrcXSize ); 
+                iSrcYMin = MAX( ((int) floor((padfY[iDstX] + 1e-10))) - poWK->nSrcYOff, 0 ); 
+                iSrcYMax = MIN( ((int) ceil((padfY2[iDstX] - 1e-10))) - poWK->nSrcYOff, nSrcYSize ); 
+
                 // loop over source lines and pixels - 3 possible algorithms
                 
                 if ( nAlgo == 1 ) // poWK->eResample == GRA_Average
