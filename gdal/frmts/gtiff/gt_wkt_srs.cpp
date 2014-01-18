@@ -3,9 +3,8 @@
  *
  * Project:  GeoTIFF Driver
  * Purpose:  Implements translation between GeoTIFF normalized projection
- *           definitions and OpenGIS WKT SRS format.  This code is
- *           deliberately GDAL free, and it is intended to be moved into
- *           libgeotiff someday if possible.
+ *           definitions and OpenGIS WKT SRS format.  This code is intended to
+ *           be moved into libgeotiff someday if possible.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -30,9 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_serv.h"
-#include "geo_tiffp.h"
-#define CPL_ERROR_H_INCLUDED
+#include "cpl_error.h"
+#include "cpl_conv.h"
+#include "cpl_csv.h"
+#include "gdal_csv.h"
 
 #include "geovalues.h"
 #include "ogr_spatialref.h"
@@ -52,68 +52,13 @@ CPL_CVSID("$Id$")
 #  define CT_HotineObliqueMercatorAzimuthCenter 9815
 #endif
 
+#if !defined(GTIFAtof)
+#  define GTIFAtof CPLAtof
+#endif
 
 CPL_C_START
 void CPL_DLL LibgeotiffOneTimeInit();
 void    LibgeotiffOneTimeCleanupMutex();
-
-// replicated from gdal_csv.h. 
-const char * GDALDefaultCSVFilename( const char *pszBasename );
-
-#ifndef CPL_SERV_H_INTERNAL
-/* Make VSIL_STRICT_ENFORCE active in DEBUG builds */
-#ifdef DEBUG
-#define VSIL_STRICT_ENFORCE
-#endif
-
-#ifdef VSIL_STRICT_ENFORCE
-typedef struct _VSILFILE VSILFILE;
-#else
-typedef FILE VSILFILE;
-#endif
-
-// ensure compatability with older libgeotiffs. 
-#if !defined(GTIFAtof)
-#  define GTIFAtof atof
-#endif
-
-int CPL_DLL VSIFCloseL( VSILFILE * );
-int CPL_DLL VSIUnlink( const char * );
-VSILFILE CPL_DLL *VSIFileFromMemBuffer( const char *pszFilename,
-                                    GByte *pabyData, 
-                                    GUIntBig nDataLength,
-                                    int bTakeOwnership );
-GByte CPL_DLL *VSIGetMemFileBuffer( const char *pszFilename, 
-                                    GUIntBig *pnDataLength, 
-                                    int bUnlinkAndSeize );
-
-int CPL_DLL CSLTestBoolean( const char *pszValue );
-const char CPL_DLL * CPL_STDCALL CPLGetConfigOption( const char *, const char * );
-									
-/* Those stuff are redefined in external libgeotiff cpl_serv.h */
-/* as macros. Let's use GDAL functions instead */
-/* E.Rouault : I'm wondering why we just don't #define CPL_SERV_H_INCLUDED */
-/* at the beginning of this file to avoid cpl_serv.h to be used at all ??? */
-
-#undef CSVReadParseLine
-char CPL_DLL  **CSVReadParseLine( FILE *fp);
-#undef CSLDestroy
-void CPL_DLL CPL_STDCALL CSLDestroy(char **papszStrList);
-#undef VSIFree
-void CPL_DLL    VSIFree( void * );
-#undef CPLFree
-#define CPLFree VSIFree
-#undef CPLMalloc
-void CPL_DLL *CPLMalloc( size_t );
-#undef CPLCalloc
-void CPL_DLL *CPLCalloc( size_t, size_t );
-#undef CPLStrdup
-char CPL_DLL *CPLStrdup( const char * );
-
-#endif /* CPL_SERV_H_INTERNAL */
-
-const char CPL_DLL * CPL_STDCALL CPLGetConfigOption( const char *, const char * );
-void CPL_DLL CPL_STDCALL CPLDebug( const char *, const char *, ... );
 
 CPL_C_END
 
