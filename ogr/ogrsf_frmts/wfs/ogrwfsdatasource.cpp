@@ -754,8 +754,9 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
             strncmp(pszBaseURL, "https://", 8) != 0)
             return FALSE;
 
-        CPLHTTPResult* psResult = SendGetCapabilities(pszBaseURL,
-                                                      osTypeName);
+        CPLString strOriginalTypeName = "";
+        CPLHTTPResult* psResult = SendGetCapabilities(pszBaseURL, strOriginalTypeName);
+        osTypeName = WFS_DecodeURL(strOriginalTypeName);
         if (psResult == NULL)
         {
             return FALSE;
@@ -855,15 +856,17 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
         if( pszParm )
             nBaseStartIndex = atoi(pszParm);
 
-        osTypeName = CPLURLGetValue(pszBaseURL, "TYPENAME");
-        if( osTypeName.size() == 0 )
-            osTypeName = CPLURLGetValue(pszBaseURL, "TYPENAMES");
+        CPLString strOriginalTypeName = CPLURLGetValue(pszBaseURL, "TYPENAME");
+        if( strOriginalTypeName.size() == 0 )
+            strOriginalTypeName = CPLURLGetValue(pszBaseURL, "TYPENAMES");
+        osTypeName = WFS_DecodeURL(strOriginalTypeName);
 
         psWFSCapabilities = WFSFindNode( psRoot, "WFS_Capabilities" );
         if (psWFSCapabilities == NULL)
         {
-            CPLHTTPResult* psResult = SendGetCapabilities(pszBaseURL,
-                                                          osTypeName);
+            CPLHTTPResult* psResult = SendGetCapabilities(pszBaseURL, strOriginalTypeName);
+            osTypeName = WFS_DecodeURL(strOriginalTypeName);
+
             if (psResult == NULL)
             {
                 CPLDestroyXMLNode( psXML );
@@ -1798,6 +1801,32 @@ CPLString WFS_EscapeURL(const char* pszURL)
     }
 
     return osEscapedURL;
+}
+
+/************************************************************************/
+/*                         WFS_DecodeURL()                              */
+/************************************************************************/
+
+CPLString WFS_DecodeURL(const CPLString &osSrc)
+{
+    CPLString ret;
+    char ch;
+    int ii;
+    for (size_t i=0; i<osSrc.length(); i++) 
+    {
+        if (osSrc[i]=='%' && i+2 < osSrc.length())
+        {
+            sscanf(osSrc.substr(i+1,2).c_str(), "%x", &ii);
+            ch=static_cast<char>(ii);
+            ret+=ch;
+            i=i+2;
+        }
+        else 
+        {
+            ret+=osSrc[i];
+        }
+    }
+    return (ret);
 }
 
 /************************************************************************/
