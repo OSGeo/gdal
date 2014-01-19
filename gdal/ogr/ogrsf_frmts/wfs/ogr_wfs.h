@@ -52,6 +52,7 @@ const char* FindSubStringInsensitive(const char* pszStr,
                                      const char* pszSubStr);
 
 CPLString WFS_EscapeURL(const char* pszURL);
+CPLString WFS_DecodeURL(const CPLString &osSrc);
 
 /************************************************************************/
 /*                             OGRWFSLayer                              */
