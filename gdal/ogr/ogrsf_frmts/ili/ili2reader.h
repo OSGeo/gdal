@@ -36,6 +36,7 @@
 #define INFINITY INFINITY_XERCES
 #endif
 
+#include "imdreader.h"
 #include <list>
 
 
@@ -45,7 +46,8 @@ public:
     virtual     ~IILI2Reader();
 
     virtual void SetSourceFile( const char *pszFilename ) = 0;
-    virtual int  ReadModel( char **modelFilenames ) = 0;
+
+    virtual int  ReadModel( ImdReader *poImdReader, char *modelFilename ) = 0;
     virtual int  SaveClasses( const char *pszFilename ) = 0;
     
     virtual std::list<OGRLayer *> GetLayers() = 0;
