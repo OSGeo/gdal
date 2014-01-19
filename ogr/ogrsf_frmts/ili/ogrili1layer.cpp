@@ -38,23 +38,14 @@ CPL_CVSID("$Id$");
 /*                           OGRILI1Layer()                              */
 /************************************************************************/
 
-OGRILI1Layer::OGRILI1Layer( const char * pszName,
-                          OGRSpatialReference *poSRSIn, int bWriterIn,
-                          OGRwkbGeometryType eReqType,
-                          OGRILI1DataSource *poDSIn )
+OGRILI1Layer::OGRILI1Layer( OGRFeatureDefn* poFeatureDefnIn,
+                            OGRILI1DataSource *poDSIn )
 
 {
-    if( poSRSIn == NULL )
-        poSRS = NULL;
-    else
-        poSRS = poSRSIn->Clone();
-
     poDS = poDSIn;
 
-    poFeatureDefn = new OGRFeatureDefn( pszName );
+    poFeatureDefn = poFeatureDefnIn;
     poFeatureDefn->Reference();
-    // Delete default geometry field
-    poFeatureDefn->DeleteGeomFieldDefn(0);
 
     nFeatures = 0;
     papoFeatures = NULL;
@@ -62,8 +53,6 @@ OGRILI1Layer::OGRILI1Layer( const char * pszName,
 
     poSurfacePolyLayer = 0;
     poAreaLineLayer = 0;
-
-    bWriter = bWriterIn;
 }
 
 /************************************************************************/
@@ -82,9 +71,6 @@ OGRILI1Layer::~OGRILI1Layer()
 
     if( poFeatureDefn )
         poFeatureDefn->Release();
-
-    if( poSRS != NULL )
-        poSRS->Release();
 }
 
 

@@ -32,7 +32,6 @@
 #include "cpl_string.h"
 
 #include "ilihelper.h"
-#include "iomhelper.h"
 #include "ili2reader.h"
 #include "ili2readerp.h"
 
@@ -267,7 +266,7 @@ OGRLineString *getLineString(DOMElement *elem, int bAsLinearRing) {
       delete ptStart;
       delete ptEnd;
       delete ptOnArc;
-    } /* else { // FIXME StructureValue in Polyline not yet supported
+    } /* else { // TODO: StructureValue in Polyline not yet supported
     } */
     XMLString::release(&pszTagName);
 
@@ -374,136 +373,26 @@ OGRGeometry *ILI2Reader::getGeometry(DOMElement *elem, int type) {
   return gm;
 }
 
-const char* ILI2Reader::GetLayerName(IOM_BASKET model, IOM_OBJECT table) {
-    static char layername[512];
-    IOM_OBJECT topic = GetAttrObj(model, table, "container");
-    layername[0] = '\0';
-    strcat(layername, iom_getattrvalue(GetAttrObj(model, topic, "container"), "name"));
-    strcat(layername, ".");
-    strcat(layername, iom_getattrvalue(topic, "name"));
-    strcat(layername, ".");
-    strcat(layername, iom_getattrvalue(table, "name"));
-    return layername;
-}
-
-void ILI2Reader::AddField(OGRLayer* layer, IOM_BASKET model, IOM_OBJECT obj) {
-  const char* typenam = "Reference";
-  if (EQUAL(iom_getobjecttag(obj),"iom04.metamodel.LocalAttribute")) typenam = GetTypeName(model, obj);
-  if (EQUAL(typenam, "iom04.metamodel.SurfaceType")) {
-  } else if (EQUAL(typenam, "iom04.metamodel.AreaType")) {
-  } else if (EQUAL(typenam, "iom04.metamodel.PolylineType") ) {
-  } else if (EQUAL(typenam, "iom04.metamodel.CoordType")) {
-  } else {
-    OGRFieldDefn fieldDef(iom_getattrvalue(obj, "name"), OFTString);
-    layer->GetLayerDefn()->AddFieldDefn(&fieldDef);
-    CPLDebug( "OGR_ILI", "Field %s: %s", fieldDef.GetNameRef(), typenam);
+int ILI2Reader::ReadModel(ImdReader *poImdReader, char *modelFilename) {
+  std::list<OGRFeatureDefn*> poTableList = poImdReader->ReadModel(modelFilename);
+  for (std::list<OGRFeatureDefn*>::const_iterator it = poTableList.begin(); it != poTableList.end(); ++it)
+  {
+    OGRLayer* layer = new OGRILI2Layer(*it, NULL);
+    m_listLayer.push_back(layer);
   }
-}
-
-int ILI2Reader::ReadModel(char **modelFilenames) {
-
-  IOM_BASKET model;
-  IOM_ITERATOR modelelei;
-  IOM_OBJECT modelele;
-
-  iom_init();
-
-  // set error listener to a iom provided one, that just
-  // dumps all errors to stderr
-  iom_seterrlistener(iom_stderrlistener);
-
-  // compile ili models
-  model=iom_compileIli(CSLCount(modelFilenames), modelFilenames);
-  if(!model){
-    CPLError( CE_Failure, CPLE_FileIO, "iom_compileIli failed." );
-    iom_end();
-    return FALSE;
-  }
-
-  // read tables
-  modelelei=iom_iteratorobject(model);
-  modelele=iom_nextobject(modelelei);
-  while(modelele){
-    const char *tag=iom_getobjecttag(modelele);
-    if (tag && EQUAL(tag,"iom04.metamodel.Table")) {
-      const char* topic = iom_getattrvalue(GetAttrObj(model, modelele, "container"), "name");
-      if (!EQUAL(topic, "INTERLIS")) {
-        const char* layername = GetLayerName(model, modelele);
-        OGRLayer* layer = new OGRILI2Layer(layername, NULL, 0, wkbUnknown, NULL);
-        m_listLayer.push_back(layer);
-        CPLDebug( "OGR_ILI", "Reading table model '%s'", layername );
-
-        // read fields
-        IOM_OBJECT fields[255];
-        IOM_OBJECT roledefs[255];
-        memset(fields, 0, 255);
-        memset(roledefs, 0, 255);
-        int maxIdx = -1;
-        IOM_ITERATOR fieldit=iom_iteratorobject(model);
-        for (IOM_OBJECT fieldele=iom_nextobject(fieldit); fieldele; fieldele=iom_nextobject(fieldit)){
-          const char *etag=iom_getobjecttag(fieldele);
-          if (etag && (EQUAL(etag,"iom04.metamodel.ViewableAttributesAndRoles"))) {
-            IOM_OBJECT table = GetAttrObj(model, fieldele, "viewable");
-            if (table == modelele) {
-              IOM_OBJECT obj = GetAttrObj(model, fieldele, "attributesAndRoles");
-              int ili1AttrIdx = GetAttrObjPos(fieldele, "attributesAndRoles")-1;
-              if (EQUAL(iom_getobjecttag(obj),"iom04.metamodel.RoleDef")) {
-                //??ili1AttrIdx = atoi(iom_getattrvalue(GetAttrObj(model, obj, "oppend"), "ili1AttrIdx"));
-                roledefs[ili1AttrIdx] = obj;
-              } else {
-                fields[ili1AttrIdx] = obj;
-              }
-              if (ili1AttrIdx > maxIdx) maxIdx = ili1AttrIdx;
-              //CPLDebug( "OGR_ILI", "Field %s Pos: %d", iom_getattrvalue(obj, "name"), ili1AttrIdx);
-            }
-          }
-          iom_releaseobject(fieldele);
-        }
-        iom_releaseiterator(fieldit);
-
-        for (int i=0; i<=maxIdx; i++) {
-          IOM_OBJECT obj = fields[i];
-          IOM_OBJECT roleobj = roledefs[i];
-          if (roleobj) AddField(layer, model, roleobj);
-          if (obj) AddField(layer, model, obj);
-        }
-      }
-    }
-    iom_releaseobject(modelele);
-
-    modelele=iom_nextobject(modelelei);
-  }
-
-  iom_releaseiterator(modelelei);
-
-  iom_releasebasket(model);
-
-  iom_end();
-
   return 0;
 }
 
 char* fieldName(DOMElement* elem) {
-  string fullname;
   int depth = 0;
   DOMNode *node;
   for (node = elem; node; node = node->getParentNode()) ++depth;
-  depth-=3; //ignore root elements
-
-// We cannot do this sort of dynamic stack alloc on MSVC6.
-//  DOMNode* elements[depth];
-  DOMNode* elements[1000];
-  CPLAssert( depth < (int)(sizeof(elements) / sizeof(DOMNode*)) );
-
-  int d=0;
-  for (node = elem; d<depth; node = node->getParentNode()) elements[d++] = node;
-  for (d=depth-1; d>=0; --d) {
-    if (d < depth-1) fullname += "_";
-    char* pszNodeName = XMLString::transcode(elements[d]->getNodeName());
-    fullname += pszNodeName;
-    XMLString::release(&pszNodeName);
-  }
-  return CPLStrdup(fullname.c_str());
+  node = elem;
+  for (int d = 0; d<depth-4; ++d) node = node->getParentNode();
+  char* pszNodeName = XMLString::transcode(node->getNodeName());
+  char* pszRet = CPLStrdup(pszNodeName);
+  XMLString::release(&pszNodeName);
+  return pszRet;
 }
 
 void ILI2Reader::setFieldDefn(OGRFeatureDefn *featureDef, DOMElement* elem) {
@@ -555,7 +444,10 @@ void ILI2Reader::SetFieldValues(OGRFeature *feature, DOMElement* elem) {
         CPLFree(fName);
       }
     } else {
-      feature->SetGeometryDirectly(getGeometry(childElem, type));
+      char *fName = fieldName(childElem);
+      int fIndex = feature->GetGeomFieldIndex(fName);
+      feature->SetGeomFieldDirectly(fIndex, getGeometry(childElem, type));
+      CPLFree(fName);
     }
   }
 }
@@ -728,6 +620,7 @@ int ILI2Reader::AddFeature(DOMElement *elem) {
   bool newLayer = true;
   OGRLayer *curLayer = 0;
   char *pszName = XMLString::transcode(elem->getTagName());
+  //CPLDebug( "OGR_ILI", "Reading layer: %s", pszName );
 
   // test if this layer exist
   for (list<OGRLayer *>::reverse_iterator layerIt = m_listLayer.rbegin();
@@ -742,14 +635,11 @@ int ILI2Reader::AddFeature(DOMElement *elem) {
   }
 
   // add a layer
-  if (newLayer) { // FIXME in Layer: SRS Writer Type datasource
+  if (newLayer) {
     CPLDebug( "OGR_ILI", "Adding layer: %s", pszName );
-    // new layer data
-    OGRSpatialReference *poSRSIn = NULL; // FIXME fix values for initial layer
-    int bWriterIn = 0;
-    OGRwkbGeometryType eReqType = wkbUnknown;
-    OGRILI2DataSource *poDSIn = NULL;
-    curLayer = new OGRILI2Layer(pszName, poSRSIn, bWriterIn, eReqType, poDSIn);
+    OGRFeatureDefn* poFeatureDefn = new OGRFeatureDefn(pszName);
+    poFeatureDefn->SetGeomType( wkbUnknown );
+    curLayer = new OGRILI2Layer(poFeatureDefn, NULL);
     m_listLayer.push_back(curLayer);
   }
 
