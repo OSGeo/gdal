@@ -33,9 +33,6 @@
 
 #include "ili1reader.h"
 
-#include "iomhelper.h"
-#include "iom/iom.h"
-
 #include <string>
 
 CPL_CVSID("$Id$");
@@ -48,6 +45,7 @@ OGRILI1DataSource::OGRILI1DataSource()
 
 {
     pszName = NULL;
+    poImdReader = new ImdReader(1);
     poReader = NULL;
     fpTransfer = NULL;
     pszTopic = NULL;
@@ -73,6 +71,7 @@ OGRILI1DataSource::~OGRILI1DataSource()
     CPLFree( pszName );
     CPLFree( pszTopic );
     DestroyILI1Reader( poReader );
+    delete poImdReader;
     if( fpTransfer )
     {
         VSIFPrintf( fpTransfer, "ETAB\n" );
@@ -163,7 +162,7 @@ int OGRILI1DataSource::Open( const char * pszNewName, int bTestOpen )
     pszName = CPLStrdup( osBasename.c_str() );
 
     if (osModelFilename.length() > 0 )
-        poReader->ReadModel( osModelFilename.c_str() );
+        poReader->ReadModel( poImdReader, osModelFilename.c_str() );
 
     if( getenv( "ARC_DEGREES" ) != NULL ) {
       //No better way to pass arguments to the reader (it could even be an -lco arg)
@@ -194,11 +193,6 @@ int OGRILI1DataSource::Create( const char *pszFilename,
 
     CSLDestroy( filenames );
 
-    if( osModelFilename.length() == 0 )
-    {
-      //TODO: create automatic model
-    }
-
 /* -------------------------------------------------------------------- */
 /*      Create the empty file.                                          */
 /* -------------------------------------------------------------------- */
@@ -217,29 +211,17 @@ int OGRILI1DataSource::Create( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Parse model                                                     */
 /* -------------------------------------------------------------------- */
-    iom_init();
-
-    // set error listener to a iom provided one, that just
-    // dumps all errors to stderr
-    iom_seterrlistener(iom_stderrlistener);
-
-    IOM_BASKET model = 0;
-    if( osModelFilename.length() != 0 ) {
-      // compile ili model
-      char *iliFiles[1] = {(char *)osModelFilename.c_str()};
-      model=iom_compileIli(1,iliFiles);
-      if(!model){
-        CPLError( CE_Warning, CPLE_OpenFailed,
-                  "iom_compileIli %s, %s.",
-                  pszName, VSIStrerror( errno ) );
-        iom_end();
-        return FALSE;
-      }
+    ImdReader m_imdReader(1);
+    if( osModelFilename.length() == 0 )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+            "Creating Interlis transfer file without model definition." );
+    } else {
+        /* std::list<OGRFeatureDefn*> poTableList = */
+        m_imdReader.ReadModel(osModelFilename.c_str());
     }
 
-    pszTopic = CPLStrdup(model ?
-                         GetAttrObjName(model, "iom04.metamodel.Topic") :
-                         CPLGetBasename(osBasename.c_str()));
+    pszTopic = CPLStrdup(m_imdReader.mainTopicName.c_str());
 
 /* -------------------------------------------------------------------- */
 /*      Write headers                                                   */
@@ -248,9 +230,7 @@ int OGRILI1DataSource::Create( const char *pszFilename,
     VSIFPrintf( fpTransfer, "OGR/GDAL %s, INTERLIS Driver\n", GDAL_RELEASE_NAME );
     VSIFPrintf( fpTransfer, "////\n" );
     VSIFPrintf( fpTransfer, "MTID INTERLIS1\n" );
-    const char* modelname = model ?
-                            GetAttrObjName(model, "iom04.metamodel.DataModel") :
-                            CPLGetBasename(osBasename.c_str());
+    const char* modelname = m_imdReader.mainModelName.c_str();
     VSIFPrintf( fpTransfer, "MODL %s\n", modelname );
 
     return TRUE;
@@ -302,7 +282,9 @@ OGRILI1DataSource::CreateLayer( const char * pszLayerName,
     }
     VSIFPrintf( fpTransfer, "TABL %s\n", table );
 
-    OGRILI1Layer *poLayer = new OGRILI1Layer(table, poSRS, TRUE, eType, this);
+    OGRFeatureDefn* poFeatureDefn = new OGRFeatureDefn(table);
+    poFeatureDefn->SetGeomType( eType );
+    OGRILI1Layer *poLayer = new OGRILI1Layer(poFeatureDefn, this);
 
     nLayers ++;
     papoLayers = (OGRILI1Layer**)CPLRealloc(papoLayers, sizeof(OGRILI1Layer*) * nLayers);

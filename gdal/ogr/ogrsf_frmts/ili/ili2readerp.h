@@ -73,7 +73,7 @@ class ILI2Reader;
 class ILI2Handler : public DefaultHandler 
 {
     ILI2Reader  *m_poReader;
-    
+
     int level;
     
     DOMDocument *dom_doc;
@@ -140,7 +140,7 @@ public:
 
     void     SetArcDegrees(double arcDegrees);
     void     SetSourceFile( const char *pszFilename );
-    int      ReadModel( char **modelFilenames );
+    int      ReadModel( ImdReader *poImdReader, char *modelFilename );
     int      SaveClasses( const char *pszFile );
     
     std::list<OGRLayer *> GetLayers();
@@ -148,8 +148,8 @@ public:
     
     int      AddFeature(DOMElement *elem);
     void     SetFieldValues(OGRFeature *feature, DOMElement* elem);
-    const char* GetLayerName(IOM_BASKET model, IOM_OBJECT table);
-    void     AddField(OGRLayer* layer, IOM_BASKET model, IOM_OBJECT obj);
+    const char* GetLayerName(/*IOM_BASKET model, IOM_OBJECT table*/);
+    void     AddField(OGRLayer* layer/*, IOM_BASKET model, IOM_OBJECT obj*/);
     OGRLineString *getArc(DOMElement *elem);
     OGRGeometry *getGeometry(DOMElement *elem, int type);
     void     setFieldDefn(OGRFeatureDefn *featureDef, DOMElement* elem);

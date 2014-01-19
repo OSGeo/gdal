@@ -37,24 +37,13 @@ CPL_CVSID("$Id$");
 /*                           OGRILI2Layer()                              */
 /************************************************************************/
 
-OGRILI2Layer::OGRILI2Layer( const char * pszName,
-                          OGRSpatialReference *poSRSIn, int bWriterIn,
-                          OGRwkbGeometryType eReqType,
-                          OGRILI2DataSource *poDSIn )
-
+OGRILI2Layer::OGRILI2Layer( OGRFeatureDefn* poFeatureDefnIn,
+                            OGRILI2DataSource *poDSIn )
 {
-    if( poSRSIn == NULL )
-        poSRS = NULL;
-    else
-        poSRS = poSRSIn->Clone();
+    poFeatureDefn = poFeatureDefnIn;
+    poFeatureDefn->Reference();
 
     poDS = poDSIn;
-
-    poFeatureDefn = new OGRFeatureDefn( pszName );
-    poFeatureDefn->Reference();
-    poFeatureDefn->SetGeomType( eReqType );
-
-    bWriter = bWriterIn;
 
     listFeatureIt = listFeature.begin();
 }
@@ -64,13 +53,9 @@ OGRILI2Layer::OGRILI2Layer( const char * pszName,
 /************************************************************************/
 
 OGRILI2Layer::~OGRILI2Layer()
-
 {
     if( poFeatureDefn )
         poFeatureDefn->Release();
-
-    if( poSRS != NULL )
-        poSRS->Release();
 
     listFeatureIt = listFeature.begin();
     while(listFeatureIt != listFeature.end())
@@ -85,7 +70,8 @@ OGRILI2Layer::~OGRILI2Layer()
 /*                             SetFeature()                             */
 /************************************************************************/
 
-OGRErr OGRILI2Layer::SetFeature (OGRFeature *poFeature) {
+OGRErr OGRILI2Layer::SetFeature (OGRFeature *poFeature)
+{
     listFeature.push_back(poFeature);
     return OGRERR_NONE;
 }
@@ -94,7 +80,8 @@ OGRErr OGRILI2Layer::SetFeature (OGRFeature *poFeature) {
 /*                            ResetReading()                            */
 /************************************************************************/
 
-void OGRILI2Layer::ResetReading(){
+void OGRILI2Layer::ResetReading()
+{
     listFeatureIt = listFeature.begin();
 }
 
@@ -102,7 +89,8 @@ void OGRILI2Layer::ResetReading(){
 /*                           GetNextFeature()                           */
 /************************************************************************/
 
-OGRFeature *OGRILI2Layer::GetNextFeature() {
+OGRFeature *OGRILI2Layer::GetNextFeature()
+{
     OGRFeature *poFeature = NULL;
     while (listFeatureIt != listFeature.end())
     {
@@ -147,87 +135,71 @@ static char* d2str(double val)
     return strbuf;
 }
 
-static void AppendCoordinateList( OGRLineString *poLine, IOM_OBJECT sequence)
+static void AppendCoordinateList( OGRLineString *poLine, VSILFILE* fp )
 {
-	IOM_OBJECT coordValue;
     int         b3D = (poLine->getGeometryType() & wkb25DBit);
 
     for( int iPoint = 0; iPoint < poLine->getNumPoints(); iPoint++ )
     {
-        coordValue=iom_addattrobj(sequence,"segment","COORD");
-        iom_setattrvalue(coordValue,"C1", d2str(poLine->getX(iPoint)));
-        iom_setattrvalue(coordValue,"C2", d2str(poLine->getY(iPoint)));
-        if (b3D) iom_setattrvalue(coordValue,"C3", d2str(poLine->getZ(iPoint)));
-        iom_releaseobject(coordValue);
+        VSIFPrintfL(fp, "<COORD>");
+        VSIFPrintfL(fp, "<C1>%s></C1>", d2str(poLine->getX(iPoint)));
+        VSIFPrintfL(fp, "<C2>%s></C2>", d2str(poLine->getY(iPoint)));
+        if (b3D) VSIFPrintfL(fp, "<C3>%s></C3>", d2str(poLine->getZ(iPoint)));
+        VSIFPrintfL(fp, "</COORD>\n");
     }
 }
 
-static int OGR2ILIGeometryAppend( OGRGeometry *poGeometry, IOM_OBJECT obj, const char *attrname )
+static int OGR2ILIGeometryAppend( OGRGeometry *poGeometry, VSILFILE* fp, const char *attrname )
 {
-    IOM_OBJECT polylineValue;
-    IOM_OBJECT sequence;
-    IOM_OBJECT coordValue;
-    IOM_OBJECT multisurface;
-    IOM_OBJECT surface;
-    IOM_OBJECT boundary;
-
 /* -------------------------------------------------------------------- */
-/*      2D Point                                                        */
+/*      2D/3D Point                                                     */
 /* -------------------------------------------------------------------- */
-    if( poGeometry->getGeometryType() == wkbPoint )
+    if( poGeometry->getGeometryType() == wkbPoint || poGeometry->getGeometryType() == wkbPoint25D )
     {
         OGRPoint *poPoint = (OGRPoint *) poGeometry;
 
-        coordValue=iom_changeattrobj(obj,attrname,0,"COORD");
-        iom_setattrvalue(coordValue,"C1", d2str(poPoint->getX()));
-        iom_setattrvalue(coordValue,"C2", d2str(poPoint->getY()));
-        iom_releaseobject(coordValue);
-    }
-/* -------------------------------------------------------------------- */
-/*      3D Point                                                        */
-/* -------------------------------------------------------------------- */
-    else if( poGeometry->getGeometryType() == wkbPoint25D )
-    {
-        OGRPoint *poPoint = (OGRPoint *) poGeometry;
-
-        coordValue=iom_changeattrobj(obj,attrname,0,"COORD");
-        iom_setattrvalue(coordValue,"C1", d2str(poPoint->getX()));
-        iom_setattrvalue(coordValue,"C2", d2str(poPoint->getY()));
-        iom_setattrvalue(coordValue,"C3", d2str(poPoint->getZ()));
-        iom_releaseobject(coordValue);
+        VSIFPrintfL(fp, "<%s>\n", attrname);
+        VSIFPrintfL(fp, "<COORD>");
+        VSIFPrintfL(fp, "<C1>%s></C1>", d2str(poPoint->getX()));
+        VSIFPrintfL(fp, "<C2>%s></C2>", d2str(poPoint->getY()));
+        if( poGeometry->getGeometryType() == wkbPoint25D )
+            VSIFPrintfL(fp, "<C3>%s></C3>", d2str(poPoint->getZ()));
+        VSIFPrintfL(fp, "</COORD>\n");
+        VSIFPrintfL(fp, "</%s>\n", attrname);
     }
 
 /* -------------------------------------------------------------------- */
 /*      LineString and LinearRing                                       */
 /* -------------------------------------------------------------------- */
-    else if( poGeometry->getGeometryType() == wkbLineString 
+    else if( poGeometry->getGeometryType() == wkbLineString
              || poGeometry->getGeometryType() == wkbLineString25D )
     {
-        //int bRing = EQUAL(poGeometry->getGeometryName(),"LINEARRING");
-        if (attrname) polylineValue=iom_changeattrobj(obj,attrname,0,"POLYLINE");
-        else polylineValue=iom_addattrobj(obj,"polyline","POLYLINE");
+        if (attrname) VSIFPrintfL(fp, "<%s>\n", attrname);
+        VSIFPrintfL(fp, "<POLYLINE>\n");
         // unclipped polyline, add one sequence
-        sequence=iom_changeattrobj(polylineValue,"sequence",0,"SEGMENTS");
-        AppendCoordinateList( (OGRLineString *) poGeometry, sequence );
-        iom_releaseobject(sequence);
-        iom_releaseobject(polylineValue);
+        // VSIFPrintfL(fp, "<SEGMENTS>\n");
+        AppendCoordinateList( (OGRLineString *) poGeometry, fp );
+        // VSIFPrintfL(fp, "</SEGMENTS>\n");
+        VSIFPrintfL(fp, "</POLYLINE>\n");
+        if (attrname) VSIFPrintfL(fp, "</%s>\n", attrname);
     }
 
 /* -------------------------------------------------------------------- */
 /*      Polygon                                                         */
 /* -------------------------------------------------------------------- */
-    else if( poGeometry->getGeometryType() == wkbPolygon 
+    else if( poGeometry->getGeometryType() == wkbPolygon
              || poGeometry->getGeometryType() == wkbPolygon25D )
     {
         OGRPolygon      *poPolygon = (OGRPolygon *) poGeometry;
 
-        multisurface=iom_changeattrobj(obj,attrname,0,"MULTISURFACE");
-        surface=iom_changeattrobj(multisurface,"surface",0,"SURFACE");
-        boundary=iom_changeattrobj(surface,"boundary",0,"BOUNDARY");
+        if (attrname) VSIFPrintfL(fp, "<%s>\n", attrname);
+        VSIFPrintfL(fp, "<MULTISURFACE>\n");
+        VSIFPrintfL(fp, "<SURFACE>\n");
+        VSIFPrintfL(fp, "<BOUNDARY>\n");
 
         if( poPolygon->getExteriorRing() != NULL )
         {
-            if( !OGR2ILIGeometryAppend( poPolygon->getExteriorRing(), boundary, NULL  ) )
+            if( !OGR2ILIGeometryAppend( poPolygon->getExteriorRing(), fp, NULL  ) )
                 return FALSE;
         }
 
@@ -235,18 +207,19 @@ static int OGR2ILIGeometryAppend( OGRGeometry *poGeometry, IOM_OBJECT obj, const
         {
             OGRLinearRing *poRing = poPolygon->getInteriorRing(iRing);
 
-            if( !OGR2ILIGeometryAppend( poRing, boundary, NULL ) )
+            if( !OGR2ILIGeometryAppend( poRing, fp, NULL ) )
                 return FALSE;
         }
-        iom_releaseobject(boundary);
-        iom_releaseobject(surface);
-        iom_releaseobject(multisurface);
+        VSIFPrintfL(fp, "</BOUNDARY>\n");
+        VSIFPrintfL(fp, "</SURFACE>\n");
+        VSIFPrintfL(fp, "</MULTISURFACE>\n");
+        if (attrname) VSIFPrintfL(fp, "</%s>\n", attrname);
     }
 
 /* -------------------------------------------------------------------- */
 /*      MultiPolygon                                                    */
 /* -------------------------------------------------------------------- */
-    else if( wkbFlatten(poGeometry->getGeometryType()) == wkbMultiPolygon 
+    else if( wkbFlatten(poGeometry->getGeometryType()) == wkbMultiPolygon
              || wkbFlatten(poGeometry->getGeometryType()) == wkbMultiLineString
              || wkbFlatten(poGeometry->getGeometryType()) == wkbMultiPoint
              || wkbFlatten(poGeometry->getGeometryType()) == wkbGeometryCollection )
@@ -271,7 +244,7 @@ static int OGR2ILIGeometryAppend( OGRGeometry *poGeometry, IOM_OBJECT obj, const
         {
             OGRGeometry *poMember = poGC->getGeometryRef( iMember );
 
-            if( !OGR2ILIGeometryAppend( poMember, obj, NULL ) )
+            if( !OGR2ILIGeometryAppend( poMember, fp, NULL ) )
                 return FALSE;
         }
 
@@ -301,15 +274,24 @@ OGRErr OGRILI2Layer::CreateFeature( OGRFeature *poFeature ) {
         sprintf( szTempBuffer, "%ld", poFeature->GetFID() );
         tid = szTempBuffer;
     }
-    // create new object
-    IOM_OBJECT obj;
-    obj=iom_newobject(poDS->GetBasket(), poFeatureDefn->GetName(), tid);
 
-    // Write out Geometry
-    if( poFeature->GetGeometryRef() != NULL )
+    VSILFILE* fp = poDS->GetOutputFP();
+    if (fp == NULL)
+        return CE_Failure;
+
+    VSIFPrintfL(fp, "<%s TID=\"%s\">\n", poFeatureDefn->GetName(), tid);
+
+    // Write out Geometries
+    for( int iGeomField = 0; iGeomField < poFeatureDefn->GetGeomFieldCount(); iGeomField++ )
     {
-        OGR2ILIGeometryAppend(poFeature->GetGeometryRef(), obj, "Geometry");
+        OGRGeomFieldDefn *poFieldDefn = poFeatureDefn->GetGeomFieldDefn(iGeomField);
+        OGRGeometry* poGeom = poFeature->GetGeomFieldRef(iGeomField);
+        if( poGeom != NULL )
+        {
+            OGR2ILIGeometryAppend(poGeom, fp, poFieldDefn->GetNameRef());
+        }
     }
+
     // Write all "set" fields. 
     for( ; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {
@@ -319,18 +301,12 @@ OGRErr OGRILI2Layer::CreateFeature( OGRFeature *poFeature ) {
         if( poFeature->IsFieldSet( iField ) )
         {
             const char *pszRaw = poFeature->GetFieldAsString( iField );
-
-            //while( *pszRaw == ' ' )
-            //    pszRaw++;
-
-            //char *pszEscaped = CPLEscapeString( pszRaw, -1, CPLES_XML );
-
-            iom_setattrvalue(obj, poField->GetNameRef(), pszRaw);
-            //CPLFree( pszEscaped );
+            VSIFPrintfL(fp, "<%s>%s</%s>\n", poField->GetNameRef(), pszRaw, poField->GetNameRef());
         }
     }
 
-    iom_releaseobject(obj);
+    VSIFPrintfL(fp, "</%s>\n", poFeatureDefn->GetName());
+
     return OGRERR_NONE;
 }
 

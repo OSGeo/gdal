@@ -1,6 +1,6 @@
 <OGRVRTDataSource>
   <OGRVRTLayer name="BoFlaechenJoined">
-    <SrcDataSource>data/ili/Beispiel.itf,data/ili/Beispiel.ili</SrcDataSource>
+    <SrcDataSource>data/ili/Beispiel.itf,data/ili/Beispiel.imd</SrcDataSource>
     <SrcSQL>SELECT Bodenbedeckung__BoFlaechen.*, Bodenbedeckung__BoFlaechen__Art.value FROM Bodenbedeckung__BoFlaechen LEFT JOIN Bodenbedeckung__BoFlaechen__Art ON Bodenbedeckung__BoFlaechen.Art = Bodenbedeckung__BoFlaechen__Art.id </SrcSQL>
   </OGRVRTLayer>
 </OGRVRTDataSource>

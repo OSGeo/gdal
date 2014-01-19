@@ -1,6 +1,6 @@
 <OGRVRTDataSource>
   <OGRVRTLayer name="BoGebaeude">
-    <SrcDataSource>data/ili/Beispiel.itf,data/ili/Beispiel.ili</SrcDataSource>
+    <SrcDataSource>data/ili/Beispiel.itf,data/ili/Beispiel.imd</SrcDataSource>
     <SrcLayer>Bodenbedeckung__Gebaeude</SrcLayer>
     <Field name="AssekuranzNr" src="AssNr" />
     <Field name="Flaeche" src="Flaeche" type="Real" />
