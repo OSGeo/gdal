@@ -238,7 +238,7 @@ ImdReader::ImdReader(int iliVersionIn) : iliVersion(iliVersionIn) {
 ImdReader::~ImdReader() {
 }
 
-const char* ImdReader::LayerName(const char* psClassTID) {
+CPLString ImdReader::LayerName(const char* psClassTID) {
     if (iliVersion == 1)
     {
         char **papszTokens =
