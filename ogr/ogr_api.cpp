@@ -84,7 +84,7 @@ int OGR_G_GetPointCount( OGRGeometryH hGeom )
 void OGR_G_SetPointCount( OGRGeometryH hGeom, int nNewPointCount )
 
 {
-    VALIDATE_POINTER0( hGeom, "OGR_G_SetPointCount", 0 );
+    VALIDATE_POINTER0( hGeom, "OGR_G_SetPointCount" );
 
     switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
     {
