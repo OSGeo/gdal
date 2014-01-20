@@ -51,7 +51,7 @@ public:
 public:
                          ImdReader(int iliVersion);
                         ~ImdReader();
-    const char*          LayerName(const char* psClassTID);
+    CPLString            LayerName(const char* psClassTID);
     FeatureDefnList      ReadModel(const char *pszFilename);
 };
 
