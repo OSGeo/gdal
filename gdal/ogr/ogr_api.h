@@ -189,12 +189,17 @@ double CPL_DLL OGR_G_GetY( OGRGeometryH, int );
 double CPL_DLL OGR_G_GetZ( OGRGeometryH, int );
 void   CPL_DLL OGR_G_GetPoint( OGRGeometryH, int iPoint, 
                                double *, double *, double * );
+void   CPL_DLL OGR_G_SetPointCount( OGRGeometryH hGeom, int nNewPointCount );
 void   CPL_DLL OGR_G_SetPoint( OGRGeometryH, int iPoint, 
                                double, double, double );
 void   CPL_DLL OGR_G_SetPoint_2D( OGRGeometryH, int iPoint, 
                                   double, double );
 void   CPL_DLL OGR_G_AddPoint( OGRGeometryH, double, double, double );
 void   CPL_DLL OGR_G_AddPoint_2D( OGRGeometryH, double, double );
+void   CPL_DLL OGR_G_SetPoints( OGRGeometryH hGeom, int nPointsIn,
+                                void* pabyX, int nXStride,
+                                void* pabyY, int nYStride,
+                                void* pabyZ, int nZStride );
 
 /* Methods for getting/setting rings and members collections */
 
