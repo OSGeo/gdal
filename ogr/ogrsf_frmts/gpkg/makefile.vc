@@ -1,0 +1,21 @@
+
+OBJ	=	ogrgeopackagedriver.obj ogrgeopackagedatasource.obj \
+        ogrgeopackagelayer.obj ogrgeopackageutility.obj
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+EXTRAFLAGS = -I.. -I..\.. $(SQLITE_INC) $(SPATIALITE_412_OR_LATER_EXTRAFLAGS)
+
+!IFDEF SPATIALITE_412_OR_LATER
+SPATIALITE_412_OR_LATER_EXTRAFLAGS = -DSPATIALITE_412_OR_LATER
+!ENDIF
+
+default:	$(OBJ)
+
+clean:
+	-del *.lib
+	-del *.obj *.pdb
+	-del *.exe
+
