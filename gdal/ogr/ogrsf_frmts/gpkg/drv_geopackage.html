@@ -1,0 +1,105 @@
+<html>
+<head>
+<title>GeoPackage</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>GeoPackage</h1>
+
+<p>This driver implements support for access to spatial tables in the 
+<a href="http://opengis.github.io/geopackage/">OGC GeoPackage format standard</a>.
+The GeoPackage standard uses a SQLite database file as a generic container, and the standard defines:
+</p>
+<ul>
+  <li>Expected metadata tables (<code>gpkg_contents</code>, <code>gpkg_spatial_ref_sys</code>, <code>gpkg_geometry_columns</code>)</li>
+  <li>Binary format encoding for geometries in spatial tables (basically a GPKG standard header object followed by ISO standard well-known binary (WKB))</li>
+  <li>Naming and conventions for extensions (extended feature types) and indexes (how to use SQLite r-tree in an interoperable manner)</li>
+</ul>
+<p>This driver reads and writes SQLite files from the file system, so it must be run by a user with read/write access to the files it is working with.</p>
+
+<h2>Limitations</h2>
+
+<ul>
+<li>GeoPackage only supports one geometry column per table.</li>
+<li>This driver does not currently implement the GeoPackage index extension.</li>
+<li>GeoPackage does not currently support non-spatial tables.</li>
+</ul>
+
+<h2>SQL</h2>
+
+<p>The driver supports OGR attribute filters, and users are expected
+  to provide filters in the SQLite dialect, as they will be executed directly
+  against the database.
+</p>
+
+<h2>Creation Issues</h2>
+
+<p>When creating a new GeoPackage file, the driver will attempt to
+  force the database into a UTF-8 mode for text handling, satisfying 
+  the OGR strict UTF-8 capability. For pre-existing files, the driver
+  will work with whatever it's given.</p>
+
+<h3>Dataset Creation Options</h3>
+
+<p>None</p>
+
+<h3>Layer Creation Options</h3>
+
+<ul>
+<li><b>GEOMETRY_COLUMN</b>: Column to use for the geometry column.</li>
+<li><b>FID</b>: Column name to use for the OGR FID (primary key in the SQLite database).</li>
+<li><b>OVERWRITE</b>: If set to "YES" will delete any existing layers that have the same name as the layer being created.</li>
+<li><b>SPATIAL_INDEX</b>: [NOT IMPLEMENTED] If set to "YES" will create a spatial index for this layer.</li>
+
+</ul>
+
+<h3>Examples</h3>
+
+<ul>
+<li>
+Simple translation of a single shapefile into GeoPackage.  The table 'abc' will
+be created with the features from abc.shp and attributes from abc.dbf. 
+The file <code>filename.gpkg</code> must <strong>not</strong> already exist, as it will be created.
+<pre>
+% ogr2ogr -f GPKG filename.gpkg abc.shp
+</pre>
+</li>
+
+<li>
+Translation of a directory of shapefiles into a GeoSpackage. Each file will end
+up as a new table within the GPKG file.
+The file <code>filename.gpkg</code> must <strong>not</strong> already exist, as it will be created.
+<pre>
+% ogr2ogr -f GPKG filename.gpkg ./path/to/dir
+</pre>
+</li>
+
+<li>
+Translation of a PostGIS database into a GeoPackage. Each table in the database will end up
+as a table in the GPKG file.
+The file <code>filename.gpkg</code> must <strong>not</strong> already exist, as it will be created.
+<pre>
+% ogr2ogr -f GPKG filename.gpkg PG:'dbname=mydatabase host=localhost'
+</pre>
+</li>
+
+</ul>
+
+<h3>FAQs</h3>
+
+<ul>
+  <li> <b>...</b><br>
+...
+</li>
+</ul>
+
+
+<h3>See Also</h3>
+
+<ul>
+<li> <a href="http://sqlite.org/">SQLite</a><p>
+</ul>
+
+</body>
+</html>

@@ -2,6 +2,7 @@
 ogr/tmp
 ogr/data/delete_nas.gfs
 ogr/data/replace_nas.gfs
+ogr/data/test_point2.gfs
 ogr/data/schema_with_geom_in_complextype.gfs
 ogr/data/bylany.vfk.db
 gcore/tmp
