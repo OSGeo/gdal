@@ -397,6 +397,9 @@ def ogr_gpkg_8():
 
 def ogr_gpkg_9():
 
+    if gdaltest.gpkg_dr is None or gdaltest.gpkg_ds is None:
+        return 'skip'
+
     lyr = gdaltest.gpkg_ds.GetLayerByName('tbl_linestring')
     extent = lyr.GetExtent()
     if extent != (5.0, 10.0, 5.0, 10.0):
