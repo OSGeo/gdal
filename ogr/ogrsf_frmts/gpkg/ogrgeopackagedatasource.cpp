@@ -105,7 +105,7 @@ OGRErr OGRGeoPackageDataSource::PragmaCheck(const char * pszPragma, const char *
 {
     CPLAssert( pszPragma != NULL );
     CPLAssert( pszExpected != NULL );
-    CPLAssert( nExpected >= 0 );
+    CPLAssert( nRowsExpected >= 0 );
     
     char *pszErrMsg = NULL;
     int nRowCount, nColCount, rc;
