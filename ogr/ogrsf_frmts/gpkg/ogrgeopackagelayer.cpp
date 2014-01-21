@@ -237,7 +237,7 @@ OGRErr OGRGeoPackageLayer::FeatureBindParameters( OGRFeature *poFeature, sqlite3
         {
             size_t szWkb;
             pabyWkb = GPkgGeometryFromOGR(poFeature->GetGeomFieldRef(0), m_iSrs, &szWkb);
-            err = sqlite3_bind_blob(poStmt, nColCount++, pabyWkb, szWkb, NULL);
+            err = sqlite3_bind_blob(poStmt, nColCount++, pabyWkb, szWkb, free);
         }
         /* NULL geometry */
         else
