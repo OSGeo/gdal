@@ -796,6 +796,7 @@ OGRErr OGRGeoPackageLayer::CreateFeature( OGRFeature *poFeature )
     }
 
     sqlite3_reset(m_poInsertStatement);
+    sqlite3_clear_bindings(m_poInsertStatement);
 
     /* Update the layer extents with this new object */
     if ( IsGeomFieldSet(poFeature) )
@@ -881,6 +882,7 @@ OGRErr OGRGeoPackageLayer::SetFeature( OGRFeature *poFeature )
     }
 
     sqlite3_reset(m_poUpdateStatement);
+    sqlite3_clear_bindings(m_poInsertStatement);
 
     /* Only update the envelope if we changed something */
     if (sqlite3_changes(m_poDS->GetDatabaseHandle()) )
