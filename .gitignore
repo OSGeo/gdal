@@ -1,4 +1,8 @@
 GDALmake.opt
+autom4te.cache
+detectavx.dSYM
+detectsse.dSYM
+gdal.pc
 config.log
 config.status
 libtool
