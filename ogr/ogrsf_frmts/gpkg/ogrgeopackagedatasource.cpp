@@ -147,12 +147,11 @@ OGRSpatialReference* OGRGeoPackageDataSource::GetSpatialRef(int iSrsId)
 {
     SQLResult oResult;
     
-    char *pszSQL = sqlite3_mprintf(
-                     "SELECT definition FROM gpkg_spatial_ref_sys WHERE "
-                     "srs_id = %d",
-                     iSrsId );
+    CPLString oSQL;
+    oSQL.Printf("SELECT definition FROM gpkg_spatial_ref_sys WHERE srs_id = %d", iSrsId);
     
-    OGRErr err = SQLQuery(m_poDb, pszSQL, &oResult);
+    OGRErr err = SQLQuery(m_poDb, oSQL.c_str(), &oResult);
+
     if ( err != OGRERR_NONE || oResult.nRowCount != 1 )
     {
         CPLError( CE_Warning, CPLE_AppDefined, "unable to read srs_id '%d' from gpkg_spatial_ref_sys",
@@ -170,10 +169,9 @@ OGRSpatialReference* OGRGeoPackageDataSource::GetSpatialRef(int iSrsId)
         return NULL;
     }
     
-    OGRSpatialReference *poSpatialRef = new OGRSpatialReference();
-    err = poSpatialRef->importFromWkt(&pszWkt);
+    OGRSpatialReference *poSpatialRef = new OGRSpatialReference(pszWkt);
     
-    if ( err != OGRERR_NONE )
+    if ( poSpatialRef == NULL )
     {
         CPLError( CE_Warning, CPLE_AppDefined, "unable to parse srs_id '%d' well-known text '%s'",
                   iSrsId, pszWkt);
@@ -182,6 +180,7 @@ OGRSpatialReference* OGRGeoPackageDataSource::GetSpatialRef(int iSrsId)
         return NULL;
     }
     
+    SQLResultFree(&oResult);
     return poSpatialRef;
 }
 
