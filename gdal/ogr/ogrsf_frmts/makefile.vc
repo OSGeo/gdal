@@ -45,8 +45,8 @@ ODBCOBJ =	odbc\*.obj pgeo\*.obj mssqlspatial\*.obj geomedia\*.obj walk\*.obj
 !ENDIF
 
 !IFDEF SQLITE_LIB
-SQLITE_DIR	=	sqlite
-SQLITE_OBJ =	sqlite\*.obj
+SQLITE_DIR	=	sqlite gpkg
+SQLITE_OBJ =	sqlite\*.obj gpkg\*.obj
 !ENDIF
 
 !IFDEF OCI_LIB
