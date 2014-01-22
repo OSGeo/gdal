@@ -1158,10 +1158,16 @@ OGRErr OGRGeoPackageLayer::RollbackTransaction()
 
 int OGRGeoPackageLayer::GetFeatureCount( int bForce )
 {
+    if( m_poFilterGeom != NULL )
+        return OGRLayer::GetFeatureCount(bForce);
+
     /* Ignore bForce, because we always do a full count on the database */
     OGRErr err;
     CPLString soSQL;
-    soSQL.Printf("SELECT Count(*) FROM %s", m_pszTableName);
+    if ( m_soFilter.length() > 0 )
+        soSQL.Printf("SELECT Count(*) FROM %s WHERE %s", m_pszTableName, m_soFilter.c_str());
+    else
+        soSQL.Printf("SELECT Count(*) FROM %s ", m_pszTableName);
 
     /* Just run the query directly and get back integer */
     int iFeatureCount = SQLGetInteger(m_poDS->GetDatabaseHandle(), soSQL.c_str(), &err);
