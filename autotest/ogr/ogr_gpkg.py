@@ -415,18 +415,38 @@ def ogr_gpkg_9():
     
     
     return 'success'
-    
-    
 
+###############################################################################
+# Run test_ogrsf
+
+def ogr_gpkg_10():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    import test_cli_utilities
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        return 'skip'
+
+    gdaltest.gpkg_ds = None
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/gpkg_test.gpkg')
+
+    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+        print(ret)
+        return 'fail'
+
+    return 'success'
+    
 ###############################################################################
 # Remove the test db from the tmp directory
 
 def ogr_gpkg_cleanup():
 
-    if gdaltest.gpkg_dr is None or gdaltest.gpkg_ds is None:
+    if gdaltest.gpkg_dr is None:
         return 'skip'
 
-    gdaltest.gpkg_ds.Destroy()
+    gdaltest.gpkg_ds = None
 
     try:
         os.remove( 'tmp/gpkg_test.gpkg' )
@@ -448,6 +468,7 @@ gdaltest_list = [
     ogr_gpkg_7,
     ogr_gpkg_8,
     ogr_gpkg_9,
+    ogr_gpkg_10,
     ogr_gpkg_cleanup,
 ]
 
