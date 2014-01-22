@@ -408,6 +408,7 @@ public:
     int               nElementSize;
     HFAEntry         *poColumn;
     int               bIsBinValues; // handled differently
+    int               bConvertColors; // map 0-1 floats to 0-255 ints
 };
 
 class HFARasterAttributeTable : public GDALRasterAttributeTable
@@ -430,7 +431,8 @@ private:
     CPLString osWorkingResult;
 
     void AddColumn(const char *pszName, GDALRATFieldType eType, GDALRATFieldUsage eUsage, 
-                int nDataOffset, int nElementSize, HFAEntry *poColumn, int bIsBinValues=FALSE)
+                int nDataOffset, int nElementSize, HFAEntry *poColumn, int bIsBinValues=FALSE,
+                int bConvertColors=FALSE)
     {
         HFAAttributeField aField;
         aField.sName = pszName;
@@ -440,6 +442,7 @@ private:
         aField.nElementSize = nElementSize;
         aField.poColumn = poColumn;
         aField.bIsBinValues = bIsBinValues;
+        aField.bConvertColors = bConvertColors;
 
         this->aoFields.push_back(aField);
     }
@@ -494,6 +497,8 @@ public:
 
     virtual CPLXMLNode   *Serialize() const;
 
+protected:
+    CPLErr                ColorsIO(GDALRWFlag eRWFlag, int iField, int iStartRow, int iLength, int *pnData);
 };
 
 /************************************************************************/
@@ -553,35 +558,68 @@ HFARasterAttributeTable::HFARasterAttributeTable(HFARasterBand *poBand, const ch
             int nOffset = poDTChild->GetIntField( "columnDataPtr" );
             const char * pszType = poDTChild->GetStringField( "dataType" );
             GDALRATFieldUsage eUsage = GFU_Generic;
+            int bConvertColors = FALSE;
 
             if( pszType == NULL || nOffset == 0 )
+                continue;
+
+            GDALRATFieldType eType;
+            if( EQUAL(pszType,"real") )
+                eType = GFT_Real;
+            else if( EQUAL(pszType,"string") )
+                eType = GFT_String;
+            else if( EQUALN(pszType,"int",3) )
+                eType = GFT_Integer;
+            else
                 continue;
         
             if( EQUAL(poDTChild->GetName(),"Histogram") )
                 eUsage = GFU_Generic;
             else if( EQUAL(poDTChild->GetName(),"Red") )
+            {
                 eUsage = GFU_Red;
+                // treat color columns as ints regardless
+                // of how they are stored
+                bConvertColors = (eType == GFT_Real);
+                eType = GFT_Integer;
+            }
             else if( EQUAL(poDTChild->GetName(),"Green") )
+            {
                 eUsage = GFU_Green;
+                bConvertColors = (eType == GFT_Real);
+                eType = GFT_Integer;
+            }
             else if( EQUAL(poDTChild->GetName(),"Blue") )
+            {
                 eUsage = GFU_Blue;
-            else if( EQUAL(poDTChild->GetName(),"Alpha") )
+                bConvertColors = (eType == GFT_Real);
+                eType = GFT_Integer;
+            }
+            else if( EQUAL(poDTChild->GetName(),"Opacity") )
+            {
                 eUsage = GFU_Alpha;
+                bConvertColors = (eType == GFT_Real);
+                eType = GFT_Integer;
+            }
             else if( EQUAL(poDTChild->GetName(),"Class_Names") )
                 eUsage = GFU_Name;
-            
-            if( EQUAL(pszType,"real") )
+
+            if( eType == GFT_Real )
             {
                 AddColumn(poDTChild->GetName(), GFT_Real, eUsage, nOffset, sizeof(double), poDTChild);
             }
-            else if( EQUAL(pszType,"string") )
+            else if( eType == GFT_String )
             {
                 int nMaxNumChars = poDTChild->GetIntField( "maxNumChars" );
                 AddColumn(poDTChild->GetName(), GFT_String, eUsage, nOffset, nMaxNumChars, poDTChild);
             }
-            else if( EQUALN(pszType,"int",3) )
+            else if( eType == GFT_Integer )
             {
-                AddColumn(poDTChild->GetName(), GFT_Integer, eUsage, nOffset, sizeof(GInt32), poDTChild);
+                int nSize = sizeof(GInt32);
+                if( bConvertColors )
+                    nSize = sizeof(double);
+                AddColumn(poDTChild->GetName(), GFT_Integer, eUsage, nOffset, nSize, poDTChild, 
+                                        FALSE, bConvertColors);
             }
         }
     }
@@ -880,6 +918,37 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
         return CE_Failure;
     }
 
+    if( aoFields[iField].bConvertColors )
+    {
+        // convert to/from float color field
+        int *panColData = (int*)VSIMalloc2(iLength, sizeof(int) );
+        if( panColData == NULL )
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory,
+                "Memory Allocation failed in HFARasterAttributeTable::ValuesIO");
+            CPLFree(panColData);
+            return CE_Failure;
+        }
+
+        if( eRWFlag == GF_Write )
+        {
+            for( int i = 0; i < iLength; i++ )
+                panColData[i] = pdfData[i];
+        }
+
+        CPLErr ret = ColorsIO(eRWFlag, iField, iStartRow, iLength, panColData);
+
+        if( eRWFlag == GF_Read )
+        {
+            // copy them back to doubles
+            for( int i = 0; i < iLength; i++ )
+                pdfData[i] = panColData[i];
+        }
+
+        CPLFree(panColData);
+        return ret;
+    }
+
     switch( aoFields[iField].eType )
     {
         case GFT_Integer:
@@ -1045,6 +1114,12 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
                   "iStartRow (%d) + iLength(%d) out of range.", iStartRow, iLength );
 
         return CE_Failure;
+    }
+
+    if( aoFields[iField].bConvertColors )
+    {
+        // convert to/from float color field
+        return ColorsIO(eRWFlag, iField, iStartRow, iLength, pnData);
     }
 
     switch( aoFields[iField].eType )
@@ -1215,6 +1290,40 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
                   "iStartRow (%d) + iLength(%d) out of range.", iStartRow, iLength );
 
         return CE_Failure;
+    }
+
+    if( aoFields[iField].bConvertColors )
+    {
+        // convert to/from float color field
+        int *panColData = (int*)VSIMalloc2(iLength, sizeof(int) );
+        if( panColData == NULL )
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory,
+                "Memory Allocation failed in HFARasterAttributeTable::ValuesIO");
+            CPLFree(panColData);
+            return CE_Failure;
+        }
+
+        if( eRWFlag == GF_Write )
+        {
+            for( int i = 0; i < iLength; i++ )
+                panColData[i] = atol(papszStrList[i]);
+        }
+
+        CPLErr ret = ColorsIO(eRWFlag, iField, iStartRow, iLength, panColData);
+
+        if( eRWFlag == GF_Read )
+        {
+            // copy them back to strings
+            for( int i = 0; i < iLength; i++ )
+            {
+                osWorkingResult.Printf( "%d", panColData[i]);
+                papszStrList[i] = CPLStrdup(osWorkingResult);
+            }
+        }
+
+        CPLFree(panColData);
+        return ret;
     }
 
     switch( aoFields[iField].eType )
@@ -1403,6 +1512,73 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
 }
 
 /************************************************************************/
+/*                               ColorsIO()                              */
+/************************************************************************/
+
+// Handle the fact that HFA stores colours as floats, but we need to 
+// read them in as ints 0...255
+CPLErr HFARasterAttributeTable::ColorsIO(GDALRWFlag eRWFlag, int iField, int iStartRow, int iLength, int *pnData)
+{
+    // allocate space for doubles
+    double *padfData = (double*)VSIMalloc2(iLength, sizeof(double) );
+    if( padfData == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory,
+            "Memory Allocation failed in HFARasterAttributeTable::ColorsIO");
+        return CE_Failure;
+    }
+
+    if( eRWFlag == GF_Write )
+    {
+        // copy the application supplied ints to doubles
+        // and convert 0..255 to 0..1 in the same manner 
+        // as the color table
+        for( int i = 0; i < iLength; i++ )
+            padfData[i] = pnData[i] / 255.0;
+    }
+
+    VSIFSeekL( hHFA->fp, aoFields[iField].nDataOffset + (iStartRow*aoFields[iField].nElementSize), SEEK_SET );
+
+    if( eRWFlag == GF_Read )
+    {
+        if ((int)VSIFReadL(padfData, sizeof(double), iLength, hHFA->fp ) != iLength)
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                "HFARasterAttributeTable::ColorsIO : Cannot read values");
+            return CE_Failure;
+        }
+#ifdef CPL_MSB
+        GDALSwapWords( padfData, 8, iLength, 8 );
+#endif
+    }
+    else
+    {
+#ifdef CPL_MSB
+        GDALSwapWords( padfData, 8, iLength, 8 );
+#endif
+        // Note: HFAAllocateSpace now called by CreateColumn so space should exist
+        if((int)VSIFWriteL(padfData, sizeof(double), iLength, hHFA->fp) != iLength)
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                "HFARasterAttributeTable::ColorsIO : Cannot write values");
+            return CE_Failure;
+        }
+    }
+
+    if( eRWFlag == GF_Read )
+    {
+        // copy them back to ints converting 0..1 to 0..255 in
+        // the same manner as the color table 
+        for( int i = 0; i < iLength; i++ )
+            pnData[i] = MIN(255,(int) (padfData[i] * 256));
+    }
+
+    CPLFree(padfData);
+
+    return CE_None;
+}
+
+/************************************************************************/
 /*                       ChangesAreWrittenToFile()                      */
 /************************************************************************/
 
@@ -1582,23 +1758,35 @@ CPLErr HFARasterAttributeTable::CreateColumn( const char *pszFieldName,
     if( this->poDT == NULL || !EQUAL(this->poDT->GetType(),"Edsc_Table") )
         CreateDT();
 
+    int bConvertColors = FALSE;
+
     // Imagine doesn't have a concept of usage - works of the names instead.
     // must make sure name matches use
     if( eFieldUsage == GFU_Red )
     {
         pszFieldName = "Red";
+        // create a real column in the file, but make it
+        // available as int to GDAL
+        bConvertColors = TRUE;
+        eFieldType = GFT_Real;
     }
     else if( eFieldUsage == GFU_Green )
     {
         pszFieldName = "Green";
+        bConvertColors = TRUE;
+        eFieldType = GFT_Real;
     }
     else if( eFieldUsage == GFU_Blue )
     {
         pszFieldName = "Blue";
+        bConvertColors = TRUE;
+        eFieldType = GFT_Real;
     }
     else if( eFieldUsage == GFU_Alpha )
     {
-        pszFieldName = "Alpha";
+        pszFieldName = "Opacity";
+        bConvertColors = TRUE;
+        eFieldType = GFT_Real;
     }
     else if( eFieldUsage == GFU_PixelCount )
     {
@@ -1656,7 +1844,11 @@ CPLErr HFARasterAttributeTable::CreateColumn( const char *pszFieldName,
                                         this->nRows * nElementSize );
     poColumn->SetIntField( "columnDataPtr", nOffset );
 
-    AddColumn(pszFieldName, eFieldType, eFieldUsage, nOffset, nElementSize, poColumn);
+    if( bConvertColors )
+        // GDAL Int column 
+        eFieldType = GFT_Integer;
+
+    AddColumn(pszFieldName, eFieldType, eFieldUsage, nOffset, nElementSize, poColumn, FALSE, bConvertColors);
 
     return CE_None;
 }
@@ -2906,7 +3098,7 @@ CPLErr HFARasterBand::WriteNamedRAT( const char *pszName, const GDALRasterAttrib
         }
         else if( poRAT->GetUsageOfCol(col) == GFU_Alpha )
         {
-            pszName = "Alpha";
+            pszName = "Opacity";
         }
         else if( poRAT->GetUsageOfCol(col) == GFU_PixelCount )
         {
@@ -2936,8 +3128,15 @@ CPLErr HFARasterBand::WriteNamedRAT( const char *pszName, const GDALRasterAttrib
 
 
         poColumn->SetIntField( "numRows", nRowCount );
+        // color cols which are integer in GDAL are written as floats in HFA
+        int bIsColorCol = FALSE;
+        if( ( poRAT->GetUsageOfCol(col) == GFU_Red ) || ( poRAT->GetUsageOfCol(col) == GFU_Green ) ||
+            ( poRAT->GetUsageOfCol(col) == GFU_Blue) || ( poRAT->GetUsageOfCol(col) == GFU_Alpha ) )
+        {
+            bIsColorCol = TRUE;
+        }
    
-        if( poRAT->GetTypeOfCol(col) == GFT_Real )
+        if( ( poRAT->GetTypeOfCol(col) == GFT_Real ) || bIsColorCol )
         {
             int nOffset = HFAAllocateSpace( hHFA->papoBand[nBand-1]->psInfo,
                                             nRowCount * sizeof(double) );
@@ -2947,7 +3146,11 @@ CPLErr HFARasterBand::WriteNamedRAT( const char *pszName, const GDALRasterAttrib
             double *padfColData = (double*)CPLCalloc( nRowCount, sizeof(double) );
             for( int i = 0; i < nRowCount; i++)
             {
-                padfColData[i] = poRAT->GetValueAsDouble(i,col);
+                if( bIsColorCol )
+                    // stored 0..1
+                    padfColData[i] = poRAT->GetValueAsInt(i,col) / 255.0;
+                else
+                    padfColData[i] = poRAT->GetValueAsDouble(i,col);
             }
 #ifdef CPL_MSB
             GDALSwapWords( padfColData, 8, nRowCount, 8 );
