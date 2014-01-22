@@ -497,7 +497,12 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
     else if( chReqType == 'd' )
     {
         dfDoubleValue = *((double *) pValue);
-        nIntValue = (int) dfDoubleValue;
+        if( dfDoubleValue > INT_MAX )
+            nIntValue = INT_MAX;
+        else if( dfDoubleValue < INT_MIN )
+            nIntValue = INT_MIN;
+        else
+            nIntValue = (int) dfDoubleValue;
     }
     else if( chReqType == 'i' )
     {
@@ -1177,7 +1182,12 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
               HFAStandard( 8, &dfValue );
 
               dfDoubleRet = dfValue;
-              nIntRet = (int) dfValue;
+              if( dfDoubleRet > INT_MAX )
+                  nIntRet = INT_MAX;
+              else if( dfDoubleRet < INT_MIN )
+                  nIntRet = INT_MIN;
+              else
+                  nIntRet = (int) dfDoubleRet;
           }
           else
           {
