@@ -1772,6 +1772,13 @@ CPLErr GDALDefaultRasterAttributeTable::CreateColumn( const char *pszFieldName,
     aoFields.resize( iNewField+1 );
 
     aoFields[iNewField].sName = pszFieldName;
+
+    // color columns should be int 0..255 
+    if( ( eFieldUsage == GFU_Red ) || ( eFieldUsage == GFU_Green ) || 
+        ( eFieldUsage == GFU_Blue ) || ( eFieldUsage == GFU_Alpha ) )
+    {
+        eFieldType = GFT_Integer;
+    }
     aoFields[iNewField].eType = eFieldType;
     aoFields[iNewField].eUsage = eFieldUsage;
 
