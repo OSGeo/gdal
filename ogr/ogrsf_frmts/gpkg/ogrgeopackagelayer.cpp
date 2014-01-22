@@ -354,7 +354,7 @@ OGRErr OGRGeoPackageLayer::FeatureBindInsertParameters( OGRFeature *poFeature, s
 //
 CPLString OGRGeoPackageLayer::FeatureGenerateInsertSQL( OGRFeature *poFeature )
 {
-    OGRBoolean bNeedComma;
+    OGRBoolean bNeedComma = FALSE;
     OGRFeatureDefn *poFeatureDefn = poFeature->GetDefnRef();
 
     /* Set up our SQL string basics */
@@ -407,7 +407,7 @@ CPLString OGRGeoPackageLayer::FeatureGenerateInsertSQL( OGRFeature *poFeature )
 //
 CPLString OGRGeoPackageLayer::FeatureGenerateUpdateSQL( OGRFeature *poFeature )
 {
-    OGRBoolean bNeedComma;
+    OGRBoolean bNeedComma = FALSE;
     OGRFeatureDefn *poFeatureDefn = poFeature->GetDefnRef();
 
     /* Set up our SQL string basics */
