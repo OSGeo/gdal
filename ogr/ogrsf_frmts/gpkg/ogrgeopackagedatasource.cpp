@@ -464,6 +464,8 @@ int OGRGeoPackageDataSource::Open(const char * pszFilename, int bUpdate )
             SQLResultFree(&oResult);
             return FALSE;
         }
+        
+        SQLResultFree(&oResult);
     }
         
     /* Load layer definitions for all tables in gpkg_contents & gpkg_geometry_columns */
@@ -475,7 +477,10 @@ int OGRGeoPackageDataSource::Open(const char * pszFilename, int bUpdate )
         
     err = SQLQuery(m_poDb, osSQL.c_str(), &oResult);
     if  ( err != OGRERR_NONE )
+    {
+        SQLResultFree(&oResult);
         return FALSE;
+    }
 
     if ( oResult.nRowCount > 0 )
     {
@@ -499,6 +504,8 @@ int OGRGeoPackageDataSource::Open(const char * pszFilename, int bUpdate )
             m_papoLayers[m_nLayers++] = poLayer;
         }
     }
+    
+    SQLResultFree(&oResult);
 
     return TRUE;
 }
