@@ -574,7 +574,7 @@ HFARasterAttributeTable::HFARasterAttributeTable(HFARasterBand *poBand, const ch
                 continue;
         
             if( EQUAL(poDTChild->GetName(),"Histogram") )
-                eUsage = GFU_Generic;
+                eUsage = GFU_PixelCount;
             else if( EQUAL(poDTChild->GetName(),"Red") )
             {
                 eUsage = GFU_Red;
