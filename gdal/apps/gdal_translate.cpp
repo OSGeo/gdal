@@ -1395,10 +1395,9 @@ static int ProxyMain( int argc, char ** argv )
 
         if( bScale )
         {
+            /* To avoid a divide by zero */
             if( dfScaleSrcMax == dfScaleSrcMin )
                 dfScaleSrcMax += 0.1;
-            if( dfScaleDstMax == dfScaleDstMin )
-                dfScaleDstMax += 0.1;
 
             if( !bExponentScaling )
             {
