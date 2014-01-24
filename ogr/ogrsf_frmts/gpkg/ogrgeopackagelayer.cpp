@@ -220,12 +220,13 @@ OGRBoolean OGRGeoPackageLayer::IsGeomFieldSet( OGRFeature *poFeature )
 
 OGRErr OGRGeoPackageLayer::FeatureBindParameters( OGRFeature *poFeature, sqlite3_stmt *poStmt, int *pnColCount )
 {
-    OGRFeatureDefn *poFeatureDefn = poFeature->GetDefnRef();
     int nColCount = 1;
     int err;
     
     if ( ! (poFeature && poStmt && pnColCount) )
         return OGRERR_FAILURE;
+
+    OGRFeatureDefn *poFeatureDefn = poFeature->GetDefnRef();
     
     /* Bind data values to the statement, here bind the blob for geometry */
     if ( poFeatureDefn->GetGeomFieldCount() )
@@ -667,6 +668,7 @@ OGRGeoPackageLayer::OGRGeoPackageLayer(
 {
     m_pszTableName = CPLStrdup(pszTableName);
     m_pszFidColumn = NULL;
+    m_iSrs = 0;
     m_poDS = poDS;
     m_poExtent = NULL;
     m_bExtentChanged = FALSE;
