@@ -113,11 +113,11 @@ char* SQLResultGetColumn(const SQLResult * poResult, int iColNum)
 
 char* SQLResultGetValue(const SQLResult * poResult, int iColNum, int iRowNum)
 {
-    int nCols = poResult->nColCount;
-    int nRows = poResult->nRowCount;
-    
     if ( ! poResult ) 
         return NULL;
+
+    int nCols = poResult->nColCount;
+    int nRows = poResult->nRowCount;    
         
     if ( iColNum < 0 || iColNum >= nCols )
         return NULL;
@@ -130,12 +130,12 @@ char* SQLResultGetValue(const SQLResult * poResult, int iColNum, int iRowNum)
 
 int SQLResultGetValueAsInteger(const SQLResult * poResult, int iColNum, int iRowNum)
 {
-    int nCols = poResult->nColCount;
-    int nRows = poResult->nRowCount;
-    
     if ( ! poResult ) 
         return 0;
         
+    int nCols = poResult->nColCount;
+    int nRows = poResult->nRowCount;
+    
     if ( iColNum < 0 || iColNum >= nCols )
         return 0;
 
@@ -377,7 +377,7 @@ int SQLiteFieldFromOGR(OGRFieldType nType)
 *
 */
 
-GByte* GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId, size_t *szWkb)
+GByte* GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId, size_t *pszWkb)
 {
     CPLAssert( poGeometry != NULL );
     
@@ -398,9 +398,10 @@ GByte* GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId, size_t *sz
     }
     
     /* Total BLOB size is header + WKB size */
-    if (szWkb)
-        *szWkb = szHeader + poGeometry->WkbSize();
-    GByte *pabyWkb = (GByte *)CPLMalloc(*szWkb);
+    size_t szWkb = szHeader + poGeometry->WkbSize();
+    GByte *pabyWkb = (GByte *)CPLMalloc(szWkb);
+    if (pszWkb)
+        *pszWkb = szWkb;
     
     /* Header Magic */
     pabyWkb[0] = 0x47;
