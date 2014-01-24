@@ -94,7 +94,8 @@ OGRErr OGRGeoPackageDataSource::SetApplicationId()
     }
 
     /* And re-open the file */
-    sqlite3_open(m_pszFileName, &m_poDb);
+    if ( sqlite3_open(m_pszFileName, &m_poDb) != SQLITE_OK )
+        return OGRERR_FAILURE;
 
     return OGRERR_NONE;
 }
@@ -154,18 +155,18 @@ OGRSpatialReference* OGRGeoPackageDataSource::GetSpatialRef(int iSrsId)
 
     if ( err != OGRERR_NONE || oResult.nRowCount != 1 )
     {
+        SQLResultFree(&oResult);
         CPLError( CE_Warning, CPLE_AppDefined, "unable to read srs_id '%d' from gpkg_spatial_ref_sys",
                   iSrsId);
-        SQLResultFree(&oResult);
         return NULL;
     }
     
     char *pszWkt = SQLResultGetValue(&oResult, 0, 0);
     if ( ! pszWkt )
     {
+        SQLResultFree(&oResult);
         CPLError( CE_Warning, CPLE_AppDefined, "null definition for srs_id '%d' in gpkg_spatial_ref_sys",
                   iSrsId);
-        SQLResultFree(&oResult);
         return NULL;
     }
     
@@ -173,10 +174,9 @@ OGRSpatialReference* OGRGeoPackageDataSource::GetSpatialRef(int iSrsId)
     
     if ( poSpatialRef == NULL )
     {
+        SQLResultFree(&oResult);
         CPLError( CE_Warning, CPLE_AppDefined, "unable to parse srs_id '%d' well-known text '%s'",
                   iSrsId, pszWkt);
-        SQLResultFree(&oResult);
-        delete poSpatialRef;
         return NULL;
     }
     
@@ -345,6 +345,7 @@ OGRGeoPackageDataSource::OGRGeoPackageDataSource()
     m_nLayers = 0;
     m_bUtf8 = FALSE;
     m_poDb = NULL;
+    m_bUpdate = FALSE;
 }
 
 /************************************************************************/
