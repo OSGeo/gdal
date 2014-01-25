@@ -2038,8 +2038,14 @@ Usage:
                 [-compute_edges] [-b Band (default=1)] [-of format] [-q]
 
 Notes :
-  Scale is the ratio of vertical units to horizontal
-   for Feet:Latlong use scale=370400, for Meters:LatLong use scale=111120)
+  gdaldem generally assumes that x, y and z units are identical.  If x (east-west)
+  and y (north-south) units are identical, but z (elevation) units are different, the
+  scale (-s) option can be used to set the ratio of vertical units to horizontal.  For 
+  LatLong projections near the equator, where units of latitude and units of 
+  longitude are similar, elevation (z) units can be converted to be compatible
+  by using scale=370400 (if elevation is in feet) or scale=111120 (if elevation is in 
+  meters).  For locations not near the equator, it would be best to reproject your
+  grid using gdalwarp before using gdaldem.
 
 \endverbatim
 \if man
