@@ -1,0 +1,28 @@
+<VSISparseFile>
+  <Length>5000000447</Length>
+  <SubfileRegion>
+    <Filename relative="1">zero_stored.bin.zip.start</Filename>
+    <DestinationOffset>0</DestinationOffset>
+    <SourceOffset>0</SourceOffset>
+    <RegionLength>83</RegionLength>
+  </SubfileRegion>
+
+  <ConstantRegion>
+    <DestinationOffset>83</DestinationOffset>
+    <RegionLength>5000000003</RegionLength>
+    <Value>0</Value>
+  </ConstantRegion>
+
+  <ConstantRegion>
+    <DestinationOffset>5000000086</DestinationOffset>
+    <RegionLength>1</RegionLength>
+    <Value>3</Value>
+  </ConstantRegion>
+
+  <SubfileRegion>
+    <Filename relative="1">zero_stored.bin.zip.end</Filename>
+    <DestinationOffset>5000000087</DestinationOffset>
+    <SourceOffset>0</SourceOffset>
+    <RegionLength>360</RegionLength>
+  </SubfileRegion>
+</VSISparseFile>
