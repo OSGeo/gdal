@@ -960,24 +960,36 @@ local int unzlocal_GetCurrentFileInfoInternal (unzFile file,
             if (headerId == 0x0001)
             {
                 uLong64 u64;
-                if (unzlocal_getLong64(&s->z_filefunc, s->filestream,&u64) != UNZ_OK)
-                    err=UNZ_ERRNO;
                 if( file_info.uncompressed_size == 0xFFFFFFFF )
+                {
+                    if (unzlocal_getLong64(&s->z_filefunc, s->filestream,&u64) != UNZ_OK)
+                        err=UNZ_ERRNO;
                     file_info.uncompressed_size = u64;
+                }
 
-                if (unzlocal_getLong64(&s->z_filefunc, s->filestream,&u64) != UNZ_OK)
-                    err=UNZ_ERRNO;
                 if( file_info.compressed_size == 0xFFFFFFFF )
+                {
+                    if (unzlocal_getLong64(&s->z_filefunc, s->filestream,&u64) != UNZ_OK)
+                        err=UNZ_ERRNO;
                     file_info.compressed_size = u64;
+                }
 
                 /* Relative Header offset */
-                if (unzlocal_getLong64(&s->z_filefunc, s->filestream,&u64) != UNZ_OK)
-                    err=UNZ_ERRNO;
+                if( file_info_internal.offset_curfile == 0xFFFFFFFF )
+                {
+                    if (unzlocal_getLong64(&s->z_filefunc, s->filestream,&u64) != UNZ_OK)
+                        err=UNZ_ERRNO;
+                    file_info_internal.offset_curfile = u64;
+                }
 
                 /* Disk Start Number */
-                uLong uL;
-                if (unzlocal_getLong(&s->z_filefunc, s->filestream,&uL) != UNZ_OK)
-                    err=UNZ_ERRNO;
+                if( file_info.disk_num_start == 0xFFFF )
+                {
+                    uLong uL;
+                    if (unzlocal_getLong(&s->z_filefunc, s->filestream,&uL) != UNZ_OK)
+                        err=UNZ_ERRNO;
+                    file_info.disk_num_start = uL;
+                }
             }
             /* Info-ZIP Unicode Path Extra Field (0x7075) */
             else if( headerId == 0x7075 && dataSize > 5 &&
