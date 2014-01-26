@@ -4,6 +4,7 @@
      - Undef EXPORT so that we are sure the symbols are not exported
      - Remove old C style function prototypes
      - Add support for ZIP64
+     - Use Info-ZIP Unicode Path Extra Field (0x7075) to get UTF-8 filenames
 
    Copyright (C) 2007-2008 Even Rouault
 
@@ -973,6 +974,54 @@ local int unzlocal_GetCurrentFileInfoInternal (unzFile file,
                 uLong uL;
                 if (unzlocal_getLong(&s->z_filefunc, s->filestream,&uL) != UNZ_OK)
                     err=UNZ_ERRNO;
+            }
+            /* Info-ZIP Unicode Path Extra Field (0x7075) */
+            else if( headerId == 0x7075 && dataSize > 5 &&
+                     file_info.size_filename<=fileNameBufferSize )
+            {
+                int version;
+                if (unzlocal_getByte(&s->z_filefunc, s->filestream,&version) != UNZ_OK)
+                    err=UNZ_ERRNO;
+                if( version != 1 )
+                {
+                    /* If version != 1, ignore that extra field */
+                    if (ZSEEK(s->z_filefunc, s->filestream,dataSize - 1,ZLIB_FILEFUNC_SEEK_CUR)!=0)
+                        err=UNZ_ERRNO;
+                }
+                else
+                {
+                    uLong nameCRC32;
+                    if (unzlocal_getLong(&s->z_filefunc, s->filestream,&nameCRC32) != UNZ_OK)
+                        err=UNZ_ERRNO;
+
+                    /* Check expected CRC for filename */
+                    if( nameCRC32 == crc32(0, (const Bytef*)szFileName, file_info.size_filename) )
+                    {
+                        uLong utf8Size = dataSize - 1 - 4;
+                        uLong uSizeRead ;
+                        if (utf8Size<fileNameBufferSize)
+                        {
+                            *(szFileName+utf8Size)='\0';
+                            uSizeRead = utf8Size;
+                        }
+                        else
+                            uSizeRead = fileNameBufferSize;
+
+                        if (ZREAD(s->z_filefunc, s->filestream,szFileName,uSizeRead)!=uSizeRead)
+                            err=UNZ_ERRNO;
+                        else if( utf8Size > fileNameBufferSize )
+                        {
+                            if (ZSEEK(s->z_filefunc, s->filestream,utf8Size - fileNameBufferSize,ZLIB_FILEFUNC_SEEK_CUR)!=0)
+                                err=UNZ_ERRNO;
+                        }
+                    }
+                    else
+                    {
+                        /* ignore unicode name if CRC mismatch */
+                        if (ZSEEK(s->z_filefunc, s->filestream,dataSize - 1- 4,ZLIB_FILEFUNC_SEEK_CUR)!=0)
+                                err=UNZ_ERRNO;
+                    }
+                }
             }
             else
             {
