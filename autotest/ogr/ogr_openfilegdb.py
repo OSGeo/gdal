@@ -55,6 +55,7 @@ ogrtest.openfilegdb_datalist = [ [ "none", ogr.wkbNone, None],
                 [ "multilinestring25D", ogr.wkbMultiLineString25D, "MULTILINESTRING ((1 2 -10,3 4 -20))" ],
                 [ "polygon25D", ogr.wkbPolygon25D, "POLYGON ((0 0 -10,0 1 -10,1 1 -10,1 0 -10,0 0 -10))", "MULTIPOLYGON (((0 0 -10,0 1 -10,1 1 -10,1 0 -10,0 0 -10)))" ],
                 [ "multipolygon25D", ogr.wkbMultiPolygon25D, "MULTIPOLYGON (((0 0 -10,0 1 -10,1 1 -10,1 0 -10,0 0 -10)))" ],
+                [ "multipatch", ogr.wkbMultiPolygon25D, "MULTIPOLYGON (((0 0 0,0 1 0,1 0 0,0 0 0)),((0 1 0,1 0 0,1 1 0,0 1 0)),((10 0 0,10 1 0,11 0 0,10 0 0)),((10 0 0,11 0 0,10 -1 0,10 0 0)),((5 0 0,5 1 0,6 0 0,5 0 0)),((100 0 0,100 1 0,101 1 0,101 0 0,100 0 0),(100.25 0.25 0,100.75 0.25 0,100.75 0.75 0,100.75 0.25 0,100.25 0.25 0)))" ],
                 [ "null_polygon", ogr.wkbPolygon, None],
                 [ "empty_polygon", ogr.wkbPolygon, "POLYGON EMPTY", None],
                 [ "empty_multipoint", ogr.wkbMultiPoint, "MULTIPOINT EMPTY", None],
@@ -90,6 +91,8 @@ def ogr_openfilegdb_make_test_data():
     for data in ogrtest.openfilegdb_datalist:
         if data[1] == ogr.wkbNone:
             lyr = ds.CreateLayer(data[0], geom_type=data[1], options = options )
+        elif data[0] == 'multipatch':
+            lyr = ds.CreateLayer(data[0], geom_type=data[1], srs=srs, options = [ 'CREATE_MULTIPATCH=YES', options[0] ] )
         else:
             lyr = ds.CreateLayer(data[0], geom_type=data[1], srs=srs, options = options )
         lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
@@ -937,7 +940,7 @@ def ogr_openfilegdb_10():
                 unfuzz(backup)
 
         for (filename, offsets) in [ ('tmp/testopenfilegdb_fuzzed.gdb/a00000004.gdbindexes', [0, 4, 5, 44, 45, 66, 67, 100, 101, 116, 117, 148, 149, 162, 163, 206, 207, 220, 221, 224, 280, 281]),
-                          ('tmp/testopenfilegdb_fuzzed.gdb/a00000004.CatItemsByPhysicalName.atx', [4, 68, 108, 268, 428, 588, 748, 908, 1068, 1228, 1388, 1548, 1708, 1868, 2028, 2188, 2348, 4096, 4098, 4102, 4106]) ]:
+                          ('tmp/testopenfilegdb_fuzzed.gdb/a00000004.CatItemsByPhysicalName.atx', [4, 108, 268, 428, 588, 748, 908, 1068, 1228, 1388, 1548, 1708, 1868, 2028, 2188, 2348, 4096, 4098, 4102, 4106]) ]:
             for offset in offsets:
                 #print(offset)
                 backup = fuzz(filename, offset)

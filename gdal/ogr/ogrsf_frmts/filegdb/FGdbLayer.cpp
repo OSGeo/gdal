@@ -135,6 +135,7 @@ FGdbLayer::FGdbLayer():
     m_bLayerJustCreated = false;
 #endif
     m_papszOptions = NULL;
+    m_bCreateMultipatch = FALSE;
 }
 
 /************************************************************************/
@@ -584,7 +585,16 @@ OGRErr FGdbLayer::PopulateRowWithFeature( Row& fgdb_row, OGRFeature *poFeature )
             /* Write geometry to a buffer */
             GByte *pabyShape = NULL;
             int nShapeSize = 0;
-            OGRErr err = OGRWriteToShapeBin( poGeom, &pabyShape, &nShapeSize );
+            OGRErr err;
+
+            if( m_bCreateMultipatch && wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon )
+            {
+                err = OGRWriteMultiPatchToShapeBin( poGeom, &pabyShape, &nShapeSize );
+            }
+            else
+            {
+                err = OGRWriteToShapeBin( poGeom, &pabyShape, &nShapeSize );
+            }
             if ( err != OGRERR_NONE )
                 return err;
 
@@ -1417,6 +1427,13 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
         }
         if ( ! OGRGeometryToGDB(eType, &esri_type, &has_z) )
             return GDBErr(-1, "Unable to map OGR type to ESRI type");
+
+        if( wkbFlatten(eType) == wkbMultiPolygon &&
+            CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "CREATE_MULTIPATCH", "NO")) )
+        {
+            esri_type = "esriGeometryMultiPatch";
+            has_z = true;
+        }
     }
 
     m_bLaunderReservedKeywords = CSLFetchBoolean( papszOptions, "LAUNDER_RESERVED_KEYWORDS", TRUE) == TRUE;
@@ -1579,6 +1596,7 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
     }
 
     m_papszOptions = CSLDuplicate(papszOptions);
+    m_bCreateMultipatch = CSLTestBoolean(CSLFetchNameValueDef(m_papszOptions, "CREATE_MULTIPATCH", "NO"));
 
     /* Store the new FGDB Table pointer and set up the OGRFeatureDefn */
     return FGdbLayer::Initialize(pParentDataSource, table, wtable_path, L"Table");
