@@ -117,6 +117,8 @@ class FGdbLayer : public FGdbBaseLayer
   OGRErr              GetRow( EnumRows& enumRows, Row& row, long nFID );
 
   char              **m_papszOptions;
+  
+  int                 m_bCreateMultipatch;
 
   char*               CreateFieldDefn(OGRFieldDefn& oField,
                                       int bApproxOK,
