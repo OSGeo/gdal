@@ -541,7 +541,7 @@ int VSIMemFilesystemHandler::Stat( const char * pszFilename,
     }
     else
     {
-        pStatBuf->st_size = (long)poFile->nLength;
+        pStatBuf->st_size = poFile->nLength;
         pStatBuf->st_mode = S_IFREG;
     }
 
