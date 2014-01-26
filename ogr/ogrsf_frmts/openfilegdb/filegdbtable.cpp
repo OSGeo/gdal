@@ -2400,9 +2400,10 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
             break;
         }
 
-        case SHPT_GENERALMULTIPATCH:
         case SHPT_MULTIPATCHM:
         case SHPT_MULTIPATCH:
+            bHasZ = TRUE; /* go on */
+        case SHPT_GENERALMULTIPATCH:
         {
             returnErrorIf(!ReadPartDefs(pabyCur, pabyEnd, nPoints, nParts, FALSE, TRUE ) );
 
@@ -2494,10 +2495,6 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
             CPLDebug("OpenFileGDB", "Unhandled geometry type = %d", (int)nGeomType);
             break;
 /*
-
-#define SHPT_MULTIPATCHM  31
-#define SHPT_MULTIPATCH   32
-
 #define SHPT_GENERALPOLYGON     51
 #define SHPT_GENERALPOINT       52
 #define SHPT_GENERALMULTIPOINT  53
