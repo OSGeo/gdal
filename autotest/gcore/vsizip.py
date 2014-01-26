@@ -362,49 +362,29 @@ def vsizip_8():
 
 def vsizip_9():
 
-    if (gdaltest.filesystem_supports_sparse_files('tmp') == False):
-        return 'skip'
-
-    shutil.copy('data/zero_stored.bin.zip.start', 'tmp/zero_stored.bin.zip')
-    f = open('tmp/zero_stored.bin.zip', 'rb+')
-    f.seek(5000000086, 0)
-    f.write('\x03'.encode('ascii'))
-    f.seek(5000000087, 0)
-    f2 = open('data/zero_stored.bin.zip.end', 'rb')
-    end_data = f2.read()
-    f2.close()
-    f.write(end_data)
-    f.close()
-
-    if gdal.VSIStatL('/vsizip/tmp/zero_stored.bin.zip/zero.bin').size != 5000 * 1000 * 1000 + 1:
+    if gdal.VSIStatL('/vsizip//vsisparse/data/zero_stored.bin.xml.zip/zero.bin').size != 5000 * 1000 * 1000 + 1:
         gdaltest.post_reason('fail')
-        os.unlink('tmp/zero_stored.bin.zip')
         return 'fail'
 
-    if gdal.VSIStatL('/vsizip/tmp/zero_stored.bin.zip/hello.txt').size != 6:
+    if gdal.VSIStatL('/vsizip//vsisparse/data/zero_stored.bin.xml.zip/hello.txt').size != 6:
         gdaltest.post_reason('fail')
-        os.unlink('tmp/zero_stored.bin.zip')
         return 'fail'
 
-    f = gdal.VSIFOpenL('/vsizip/tmp/zero_stored.bin.zip/zero.bin', 'rb')
+    f = gdal.VSIFOpenL('/vsizip//vsisparse/data/zero_stored.bin.xml.zip/zero.bin', 'rb')
     gdal.VSIFSeekL(f, 5000 * 1000 * 1000, 0)
     data = gdal.VSIFReadL(1, 1, f)
     gdal.VSIFCloseL(f)
     if data.decode('ascii') != '\x03':
         gdaltest.post_reason('fail')
-        os.unlink('tmp/zero_stored.bin.zip')
         return 'fail'
 
-    f = gdal.VSIFOpenL('/vsizip/tmp/zero_stored.bin.zip/hello.txt', 'rb')
+    f = gdal.VSIFOpenL('/vsizip//vsisparse/data/zero_stored.bin.xml.zip/hello.txt', 'rb')
     data = gdal.VSIFReadL(1, 6, f)
     gdal.VSIFCloseL(f)
     if data.decode('ascii') != 'HELLO\n':
         print(data)
         gdaltest.post_reason('fail')
-        os.unlink('tmp/zero_stored.bin.zip')
         return 'fail'
-
-    os.unlink('tmp/zero_stored.bin.zip')
 
     return 'success'
 
