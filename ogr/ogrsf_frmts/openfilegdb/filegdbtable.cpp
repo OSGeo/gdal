@@ -1642,6 +1642,8 @@ int FileGDBTable::GetFeatureExtent(const OGRField* psField,
 
         case SHPT_GENERALPOLYLINE:
         case SHPT_GENERALMULTIPATCH:
+        case SHPT_MULTIPATCHM:
+        case SHPT_MULTIPATCH:
         {
             nToSkip = 2;
             break;
@@ -1730,6 +1732,8 @@ int FileGDBTable::DoesGeometryIntersectsFilterEnvelope(const OGRField* psField)
 
         case SHPT_GENERALPOLYLINE:
         case SHPT_GENERALMULTIPATCH:
+        case SHPT_MULTIPATCHM:
+        case SHPT_MULTIPATCH:
         {
             nToSkip = 2;
             break;
@@ -2397,6 +2401,8 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
         }
 
         case SHPT_GENERALMULTIPATCH:
+        case SHPT_MULTIPATCHM:
+        case SHPT_MULTIPATCH:
         {
             returnErrorIf(!ReadPartDefs(pabyCur, pabyEnd, nPoints, nParts, FALSE, TRUE ) );
 

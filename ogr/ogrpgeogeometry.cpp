@@ -871,6 +871,230 @@ OGRErr OGRWriteToShapeBin( OGRGeometry *poGeom,
 
 
 /************************************************************************/
+/*                   OGRWriteMultiPatchToShapeBin()                     */
+/************************************************************************/
+
+OGRErr OGRWriteMultiPatchToShapeBin( OGRGeometry *poGeom, 
+                                     GByte **ppabyShape,
+                                     int *pnBytes )
+{
+    if( wkbFlatten(poGeom->getGeometryType()) != wkbMultiPolygon )
+        return OGRERR_UNSUPPORTED_OPERATION;
+    
+    poGeom->closeRings();
+    OGRMultiPolygon *poMPoly = (OGRMultiPolygon*)poGeom;
+    int nParts = 0;
+    int* panPartStart = NULL;
+    int* panPartType = NULL;
+    int nPoints = 0;
+    OGRRawPoint* poPoints = NULL;
+    double* padfZ = NULL;
+    int nBeginLastPart = 0;
+
+    for( int j = 0; j < poMPoly->getNumGeometries(); j++ )
+    {
+        OGRPolygon *poPoly = (OGRPolygon*)(poMPoly->getGeometryRef(j));
+        int nRings = poPoly->getNumInteriorRings() + 1;
+
+        /* Skip empties */
+        if ( poPoly->IsEmpty() ) 
+            continue;
+
+        OGRLinearRing *poRing = poPoly->getExteriorRing();
+        if( nRings == 1 && poRing->getNumPoints() == 4 )
+        {
+            if( nParts > 0 &&
+                (panPartType[nParts-1] == SHPP_TRIANGLES ||
+                 panPartType[nParts-1] == SHPP_TRIFAN) &&
+                poRing->getX(0) == poPoints[nBeginLastPart].x &&
+                poRing->getY(0) == poPoints[nBeginLastPart].y &&
+                poRing->getZ(0) == padfZ[nBeginLastPart] &&
+                poRing->getX(1) == poPoints[nPoints-1].x &&
+                poRing->getY(1) == poPoints[nPoints-1].y &&
+                poRing->getZ(1) == padfZ[nPoints-1] )
+            {
+                panPartType[nParts-1] = SHPP_TRIFAN;
+
+                poPoints = (OGRRawPoint*)CPLRealloc(poPoints,
+                                            (nPoints + 1) * sizeof(OGRRawPoint));
+                padfZ = (double*)CPLRealloc(padfZ, (nPoints + 1) * sizeof(double));
+                poPoints[nPoints].x = poRing->getX(2);
+                poPoints[nPoints].y = poRing->getY(2);
+                padfZ[nPoints] = poRing->getZ(2);
+                nPoints ++;
+            }
+            else if( nParts > 0 &&
+                (panPartType[nParts-1] == SHPP_TRIANGLES ||
+                 panPartType[nParts-1] == SHPP_TRISTRIP) &&
+                poRing->getX(0) == poPoints[nPoints-2].x &&
+                poRing->getY(0) == poPoints[nPoints-2].y &&
+                poRing->getZ(0) == padfZ[nPoints-2] &&
+                poRing->getX(1) == poPoints[nPoints-1].x &&
+                poRing->getY(1) == poPoints[nPoints-1].y &&
+                poRing->getZ(1) == padfZ[nPoints-1] )
+            {
+                panPartType[nParts-1] = SHPP_TRISTRIP;
+
+                poPoints = (OGRRawPoint*)CPLRealloc(poPoints,
+                                            (nPoints + 1) * sizeof(OGRRawPoint));
+                padfZ = (double*)CPLRealloc(padfZ, (nPoints + 1) * sizeof(double));
+                poPoints[nPoints].x = poRing->getX(2);
+                poPoints[nPoints].y = poRing->getY(2);
+                padfZ[nPoints] = poRing->getZ(2);
+                nPoints ++;
+            }
+            else
+            {
+                nBeginLastPart = nPoints;
+
+                panPartStart = (int*)CPLRealloc(panPartStart, (nParts + 1) * sizeof(int));
+                panPartType = (int*)CPLRealloc(panPartType, (nParts + 1) * sizeof(int));
+                panPartStart[nParts] = nPoints;
+                panPartType[nParts] = SHPP_TRIANGLES;
+                nParts ++;
+
+                poPoints = (OGRRawPoint*)CPLRealloc(poPoints,
+                                        (nPoints + 3) * sizeof(OGRRawPoint));
+                padfZ = (double*)CPLRealloc(padfZ, (nPoints + 3) * sizeof(double));
+                for(int i=0;i<3;i++)
+                {
+                    poPoints[nPoints+i].x = poRing->getX(i);
+                    poPoints[nPoints+i].y = poRing->getY(i);
+                    padfZ[nPoints+i] = poRing->getZ(i);
+                }
+                nPoints += 3;
+            }
+        }
+        else
+        {
+            panPartStart = (int*)CPLRealloc(panPartStart, (nParts + nRings) * sizeof(int));
+            panPartType = (int*)CPLRealloc(panPartType, (nParts + nRings) * sizeof(int));
+
+            for ( int i = 0; i < nRings; i++ )
+            {
+                panPartStart[nParts + i] = nPoints;
+                if ( i == 0 )
+                {
+                    poRing = poPoly->getExteriorRing();
+                    panPartType[nParts + i] = SHPP_OUTERRING;
+                }
+                else
+                {
+                    poRing = poPoly->getInteriorRing(i-1);
+                    panPartType[nParts + i] = SHPP_INNERRING;
+                }
+                poPoints = (OGRRawPoint*)CPLRealloc(poPoints,
+                        (nPoints + poRing->getNumPoints()) * sizeof(OGRRawPoint));
+                padfZ = (double*)CPLRealloc(padfZ,
+                        (nPoints + poRing->getNumPoints()) * sizeof(double));
+                for( int k = 0; k < poRing->getNumPoints(); k++ )
+                {
+                    poPoints[nPoints+k].x = poRing->getX(k);
+                    poPoints[nPoints+k].y = poRing->getY(k);
+                    padfZ[nPoints+k] = poRing->getZ(k);
+                }
+                nPoints += poRing->getNumPoints();
+            }
+
+            nParts += nRings;
+        }
+    }
+
+    int nShpSize = 4; /* All types start with integer type number */
+    nShpSize += 16 * 2; /* xy bbox */ 
+    nShpSize += 4; /* nparts */
+    nShpSize += 4; /* npoints */
+    nShpSize += 4 * nParts; /* panPartStart[nparts] */
+    nShpSize += 4 * nParts; /* panPartType[nparts] */
+    nShpSize += 8 * 2 * nPoints; /* xy points */
+    nShpSize += 16; /* z bbox */
+    nShpSize += 8 * nPoints; /* z points */
+
+    *pnBytes = nShpSize;
+    *ppabyShape = (GByte*) CPLMalloc(nShpSize);
+
+    GByte* pabyPtr = *ppabyShape;
+
+    /* Write in the type number and advance the pointer */
+    GUInt32 nGType = CPL_LSBWORD32( SHPT_MULTIPATCH );
+    memcpy( pabyPtr, &nGType, 4 );
+    pabyPtr += 4;
+
+    OGREnvelope3D envelope;
+    poGeom->getEnvelope(&envelope);
+    memcpy( pabyPtr, &(envelope.MinX), 8 );
+    memcpy( pabyPtr+8, &(envelope.MinY), 8 );
+    memcpy( pabyPtr+8+8, &(envelope.MaxX), 8 );
+    memcpy( pabyPtr+8+8+8, &(envelope.MaxY), 8 );
+
+    int i;
+    /* Swap box if needed. Shape doubles are always LSB */
+    if( OGR_SWAP( wkbNDR ) )
+    {
+        for ( i = 0; i < 4; i++ )
+            CPL_SWAPDOUBLE( pabyPtr + 8*i );
+    }
+    pabyPtr += 32;
+
+    /* Write in the part count */
+    GUInt32 nPartsLsb = CPL_LSBWORD32( nParts );
+    memcpy( pabyPtr, &nPartsLsb, 4 );
+    pabyPtr += 4;
+
+    /* Write in the total point count */
+    GUInt32 nPointsLsb = CPL_LSBWORD32( nPoints );
+    memcpy( pabyPtr, &nPointsLsb, 4 );
+    pabyPtr += 4;
+
+    for( i = 0; i < nParts; i ++ )
+    {
+        int nPartStart = CPL_LSBWORD32(panPartStart[i]);
+        memcpy( pabyPtr, &nPartStart, 4 );
+        pabyPtr += 4;
+    }
+    for( i = 0; i < nParts; i ++ )
+    {
+        int nPartType = CPL_LSBWORD32(panPartType[i]);
+        memcpy( pabyPtr, &nPartType, 4 );
+        pabyPtr += 4;
+    }
+
+    memcpy(pabyPtr, poPoints, 2 * 8 * nPoints);
+    /* Swap box if needed. Shape doubles are always LSB */
+    if( OGR_SWAP( wkbNDR ) )
+    {
+        for ( i = 0; i < 2 * nPoints; i++ )
+            CPL_SWAPDOUBLE( pabyPtr + 8*i );
+    }
+    pabyPtr += 2 * 8 * nPoints;
+
+    memcpy( pabyPtr, &(envelope.MinZ), 8 );
+    memcpy( pabyPtr+8, &(envelope.MaxZ), 8 );
+    if( OGR_SWAP( wkbNDR ) )
+    {
+        for ( i = 0; i < 2; i++ )
+            CPL_SWAPDOUBLE( pabyPtr + 8*i );
+    }
+    pabyPtr += 16;
+    
+    memcpy(pabyPtr, padfZ, 8 * nPoints);
+    /* Swap box if needed. Shape doubles are always LSB */
+    if( OGR_SWAP( wkbNDR ) )
+    {
+        for ( i = 0; i < nPoints; i++ )
+            CPL_SWAPDOUBLE( pabyPtr + 8*i );
+    }
+    pabyPtr +=  8 * nPoints;
+    
+    CPLFree(panPartStart);
+    CPLFree(panPartType);
+    CPLFree(poPoints);
+    CPLFree(padfZ);
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
 /*                      OGRCreateFromShapeBin()                         */
 /*                                                                      */
 /*      Translate shapefile binary representation to an OGR             */
@@ -1047,8 +1271,8 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
         if (nRequiredSize > nBytes)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Corrupted Shape : nPoints=%d, nParts=%d, nBytes=%d, nSHPType=%d",
-                     nPoints, nParts, nBytes, nSHPType);
+                     "Corrupted Shape : nPoints=%d, nParts=%d, nBytes=%d, nSHPType=%d, nRequiredSize=%d",
+                     nPoints, nParts, nBytes, nSHPType, nRequiredSize);
             return OGRERR_FAILURE;
         }
 
