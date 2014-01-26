@@ -1448,7 +1448,7 @@ int VSIGZipFilesystemHandler::Stat( const char *pszFilename,
             if (nCompressedSize == (GUIntBig) pStatBuf->st_size)
             {
                 /* Patch with the uncompressed size */
-                pStatBuf->st_size = (long)nUncompressedSize;
+                pStatBuf->st_size = nUncompressedSize;
 
                 VSIGZipHandle* poHandle =
                     VSIGZipFilesystemHandler::OpenGZipReadOnly(pszFilename, "rb");
@@ -1474,7 +1474,7 @@ int VSIGZipFilesystemHandler::Stat( const char *pszFilename,
             poHandle->Seek(0, SEEK_SET);
 
             /* Patch with the uncompressed size */
-            pStatBuf->st_size = (long)uncompressed_size;
+            pStatBuf->st_size = uncompressed_size;
 
             delete poHandle;
         }
