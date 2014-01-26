@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -80,7 +81,10 @@ def display_file(fout, dirname, prefix, filename, longformat, check_open = False
     else:
         line = filename_displayed + "\n"
 
-    fout.write(line)
+    try:
+        fout.write(line.encode('utf-8'))
+    except:
+        fout.write(line)
 
 def readDir(fout, dirname, prefix, longformat, recurse, depth, recurseInZip, recurseInTGZ, first = False):
 
