@@ -959,14 +959,18 @@ local int unzlocal_GetCurrentFileInfoInternal (unzFile file,
             /* ZIP64 extra fields */
             if (headerId == 0x0001)
             {
-                if (unzlocal_getLong64(&s->z_filefunc, s->filestream,&file_info.compressed_size) != UNZ_OK)
+                uLong64 u64;
+                if (unzlocal_getLong64(&s->z_filefunc, s->filestream,&u64) != UNZ_OK)
                     err=UNZ_ERRNO;
+                if( file_info.uncompressed_size == 0xFFFFFFFF )
+                    file_info.uncompressed_size = u64;
 
-                if (unzlocal_getLong64(&s->z_filefunc, s->filestream,&file_info.uncompressed_size) != UNZ_OK)
+                if (unzlocal_getLong64(&s->z_filefunc, s->filestream,&u64) != UNZ_OK)
                     err=UNZ_ERRNO;
+                if( file_info.compressed_size == 0xFFFFFFFF )
+                    file_info.compressed_size = u64;
 
                 /* Relative Header offset */
-                uLong64 u64;
                 if (unzlocal_getLong64(&s->z_filefunc, s->filestream,&u64) != UNZ_OK)
                     err=UNZ_ERRNO;
 

@@ -346,6 +346,17 @@ def vsizip_7():
 
     return 'success'
 
+###############################################################################
+# Basic test for ZIP64 support
+
+def vsizip_8():
+
+    if gdal.VSIStatL('/vsizip/vsizip/data/zero.bin.zip.zip/zero.bin.zip').size != 5000 * 1000 * 1000 + 1:
+        return 'fail'
+
+    return 'success'
+
+
 gdaltest_list = [ vsizip_1,
                   vsizip_2,
                   vsizip_3,
@@ -353,6 +364,7 @@ gdaltest_list = [ vsizip_1,
                   vsizip_5,
                   vsizip_6,
                   vsizip_7,
+                  vsizip_8,
                   ]
 
 
