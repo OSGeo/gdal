@@ -904,7 +904,7 @@ OGRErr OGRWriteMultiPatchToShapeBin( OGRGeometry *poGeom,
         if( nRings == 1 && poRing->getNumPoints() == 4 )
         {
             if( nParts > 0 &&
-                (panPartType[nParts-1] == SHPP_TRIANGLES ||
+                ((panPartType[nParts-1] == SHPP_TRIANGLES && nPoints - panPartStart[nParts-1] == 3) ||
                  panPartType[nParts-1] == SHPP_TRIFAN) &&
                 poRing->getX(0) == poPoints[nBeginLastPart].x &&
                 poRing->getY(0) == poPoints[nBeginLastPart].y &&
@@ -924,7 +924,7 @@ OGRErr OGRWriteMultiPatchToShapeBin( OGRGeometry *poGeom,
                 nPoints ++;
             }
             else if( nParts > 0 &&
-                (panPartType[nParts-1] == SHPP_TRIANGLES ||
+                ((panPartType[nParts-1] == SHPP_TRIANGLES && nPoints - panPartStart[nParts-1] == 3) ||
                  panPartType[nParts-1] == SHPP_TRISTRIP) &&
                 poRing->getX(0) == poPoints[nPoints-2].x &&
                 poRing->getY(0) == poPoints[nPoints-2].y &&
@@ -945,13 +945,16 @@ OGRErr OGRWriteMultiPatchToShapeBin( OGRGeometry *poGeom,
             }
             else
             {
-                nBeginLastPart = nPoints;
+                if( nParts == 0 || panPartType[nParts-1] != SHPP_TRIANGLES )
+                {
+                    nBeginLastPart = nPoints;
 
-                panPartStart = (int*)CPLRealloc(panPartStart, (nParts + 1) * sizeof(int));
-                panPartType = (int*)CPLRealloc(panPartType, (nParts + 1) * sizeof(int));
-                panPartStart[nParts] = nPoints;
-                panPartType[nParts] = SHPP_TRIANGLES;
-                nParts ++;
+                    panPartStart = (int*)CPLRealloc(panPartStart, (nParts + 1) * sizeof(int));
+                    panPartType = (int*)CPLRealloc(panPartType, (nParts + 1) * sizeof(int));
+                    panPartStart[nParts] = nPoints;
+                    panPartType[nParts] = SHPP_TRIANGLES;
+                    nParts ++;
+                }
 
                 poPoints = (OGRRawPoint*)CPLRealloc(poPoints,
                                         (nPoints + 3) * sizeof(OGRRawPoint));
