@@ -410,6 +410,26 @@ def vsizip_10():
 
     return 'success'
 
+###############################################################################
+# Test that we don't do anything with ZIP with filenames in UTF-8 already (#5361)
+
+def vsizip_11():
+
+    content = gdal.ReadDir("/vsizip/data/utf8.zip")
+    ok = 0
+    try:
+        exec("if content == [u'\u0430\u0431\u0432\u0433\u0434\u0435', u'\u0436\u0437\u0438\u0439\u043a\u043b']: ok = 1")
+    except:
+        if content == ['\u0430\u0431\u0432\u0433\u0434\u0435', '\u0436\u0437\u0438\u0439\u043a\u043b']:
+            ok = 1
+
+    if ok == 0:
+        gdaltest.post_reason('bad content')
+        print(content)
+        return 'fail'
+
+    return 'success'
+    
 gdaltest_list = [ vsizip_1,
                   vsizip_2,
                   vsizip_3,
@@ -420,6 +440,7 @@ gdaltest_list = [ vsizip_1,
                   vsizip_8,
                   vsizip_9,
                   vsizip_10,
+                  vsizip_11,
                   ]
 
 
