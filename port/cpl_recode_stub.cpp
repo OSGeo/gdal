@@ -169,6 +169,8 @@ char *CPLRecodeStub( const char *pszSource,
         if( nCode > 0 ) {
            return CPLWin32Recode( pszSource, nCode, CP_UTF8 );
         }
+        else if( EQUAL(pszSrcEncoding, "CP_OEMCP") )
+            return CPLWin32Recode( pszSource, CP_OEMCP, CP_UTF8 );
     }
 
 /* ---------------------------------------------------------------------*/
