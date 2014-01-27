@@ -4,6 +4,7 @@
      - Undef EXPORT so that we are sure the symbols are not exported
      - Remove old C style function prototypes
      - Add support for ZIP64
+     - Recode filename to UTF-8 if GP 11 is unset
      - Use Info-ZIP Unicode Path Extra Field (0x7075) to get UTF-8 filenames
 
    Copyright (C) 2007-2008 Even Rouault
@@ -55,6 +56,7 @@ woven in by Terry Thorsen 1/2003.
 
 #include "zlib.h"
 #include "cpl_minizip_unzip.h"
+#include "cpl_string.h"
 
 #ifdef STDC
 #  include <stddef.h>
@@ -823,6 +825,7 @@ local int unzlocal_GetCurrentFileInfoInternal (unzFile file,
     uLong uMagic;
     long lSeek=0;
     uLong uL;
+    int bHasUTF8Filename = FALSE;
 
     if (file==NULL)
         return UNZ_PARAMERROR;
@@ -905,8 +908,10 @@ local int unzlocal_GetCurrentFileInfoInternal (unzFile file,
             uSizeRead = fileNameBufferSize;
 
         if ((file_info.size_filename>0) && (fileNameBufferSize>0))
+        {
             if (ZREAD(s->z_filefunc, s->filestream,szFileName,uSizeRead)!=uSizeRead)
                 err=UNZ_ERRNO;
+        }
         lSeek -= uSizeRead;
     }
 
@@ -1015,6 +1020,9 @@ local int unzlocal_GetCurrentFileInfoInternal (unzFile file,
                     {
                         uLong utf8Size = dataSize - 1 - 4;
                         uLong uSizeRead ;
+
+                        bHasUTF8Filename = TRUE;
+
                         if (utf8Size<fileNameBufferSize)
                         {
                             *(szFileName+utf8Size)='\0';
@@ -1047,6 +1055,24 @@ local int unzlocal_GetCurrentFileInfoInternal (unzFile file,
 
             acc += 2 + 2 + dataSize;
         }
+    }
+    
+    if( !bHasUTF8Filename && (file_info.flag & (1 << 11)) == 0 &&
+        file_info.size_filename<fileNameBufferSize )
+    {
+        const char* pszSrcEncoding = CPLGetConfigOption("CPL_ZIP_ENCODING",
+#ifdef _WIN32
+                                                        "CP_OEMCP"
+#else
+                                                        "CP437"
+#endif
+                                                        );
+        char* pszRecoded = CPLRecode(szFileName, pszSrcEncoding, CPL_ENC_UTF8);
+        if( pszRecoded != NULL && strlen(pszRecoded) < fileNameBufferSize)
+        {
+            strcpy(szFileName, pszRecoded);
+        }
+        CPLFree(pszRecoded);
     }
 
 #if 0
