@@ -1073,7 +1073,7 @@ CPLVirtualMem  *RawRasterBand::GetVirtualMemAuto( GDALRWFlag eRWFlag,
         (nRasterXSize - 1) * nPixelOffset + GDALGetDataTypeSize(eDataType) / 8;
 
     if( !bIsVSIL || VSIFGetNativeFileDescriptorL(fpRawL) == NULL ||
-        !CPLIsVirtualMemFileMapAvailable() || !bNativeOrder ||
+        !CPLIsVirtualMemFileMapAvailable() || (eDataType != GDT_Byte && !bNativeOrder) ||
         (size_t)nSize != nSize || nPixelOffset < 0 || nLineOffset < 0 ||
         CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "USE_DEFAULT_IMPLEMENTATION", "NO")) )
     {
