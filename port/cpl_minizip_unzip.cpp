@@ -998,7 +998,8 @@ local int unzlocal_GetCurrentFileInfoInternal (unzFile file,
             }
             /* Info-ZIP Unicode Path Extra Field (0x7075) */
             else if( headerId == 0x7075 && dataSize > 5 &&
-                     file_info.size_filename<=fileNameBufferSize )
+                     file_info.size_filename<=fileNameBufferSize &&
+                     szFileName != NULL )
             {
                 int version;
                 if (unzlocal_getByte(&s->z_filefunc, s->filestream,&version) != UNZ_OK)
@@ -1057,7 +1058,8 @@ local int unzlocal_GetCurrentFileInfoInternal (unzFile file,
         }
     }
     
-    if( !bHasUTF8Filename && (file_info.flag & (1 << 11)) == 0 &&
+    if( !bHasUTF8Filename && szFileName != NULL &&
+        (file_info.flag & (1 << 11)) == 0 &&
         file_info.size_filename<fileNameBufferSize )
     {
         const char* pszSrcEncoding = CPLGetConfigOption("CPL_ZIP_ENCODING",
