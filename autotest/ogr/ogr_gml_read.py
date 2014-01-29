@@ -2782,6 +2782,60 @@ def ogr_gml_60():
     return 'success'
 
 ###############################################################################
+# Test reading a element specified with a full path in <ElementPath>
+
+def ogr_gml_61():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    # Make sure the .gfs file is more recent that the .gml one
+    try:
+        gml_mtime = os.stat('data/gmlsubfeature.gml').st_mtime
+        gfs_mtime = os.stat('data/gmlsubfeature.gfs').st_mtime
+        touch_gfs = gfs_mtime <= gml_mtime
+    except:
+        touch_gfs = True
+    if touch_gfs:
+        print('Touching .gfs file')
+        f = open('data/gmlsubfeature.gfs', 'rb+')
+        data = f.read(1)
+        f.seek(0, 0)
+        f.write(data)
+        f.close()
+
+    ds = ogr.Open('data/gmlsubfeature.gml')
+    lyr = ds.GetLayer(0)
+    if lyr.GetFeatureCount() != 2:
+        gdaltest.post_reason('did not get expected geometry column name')
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+    if feat.GetField('gml_id') != 'Object.1' or feat.GetField('foo') != 'bar':
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    geom = feat.GetGeometryRef()
+    if geom.ExportToWkt() != 'POLYGON ((2 48,2 49,3 49,3 48,2 48))':
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+    if feat.GetField('gml_id') != 'Object.2' or feat.GetField('foo') != 'baz':
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    geom = feat.GetGeometryRef()
+    if geom.ExportToWkt() != 'POLYGON ((2 -48,2 -49,3 -49,3 -48,2 -48))':
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    ds = None
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -2968,13 +3022,8 @@ gdaltest_list = [
     ogr_gml_58,
     ogr_gml_59,
     ogr_gml_60,
+    ogr_gml_61,
     ogr_gml_cleanup ]
-
-if False:
-    gdaltest_list = [ 
-        ogr_gml_clean_files,
-        ogr_gml_1,
-        ogr_gml_60 ]
 
 if __name__ == '__main__':
 
