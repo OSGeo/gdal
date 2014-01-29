@@ -775,7 +775,22 @@ int GMLReader::GetFeatureElementIndex( const char *pszElement, int nElementLengt
             /* GML answer of MapServer WMS GetFeatureInfo request */
         }
         else
+        {
+            if( m_bClassListLocked )
+            {
+                for( int i = 0; i < m_nClassCount; i++ )
+                {
+                    if( m_poState->osPath.size() + 1 + nElementLength == m_papoClass[i]->GetElementNameLen() &&
+                        m_papoClass[i]->GetElementName()[m_poState->osPath.size()] == '|' &&
+                        memcmp(m_poState->osPath.c_str(), m_papoClass[i]->GetElementName(), m_poState->osPath.size()) == 0 &&
+                        memcmp(pszElement,m_papoClass[i]->GetElementName() + 1 + m_poState->osPath.size(), nElementLength) == 0 )
+                    {
+                        return i;
+                    }
+                }
+            }
             return -1;
+        }
     }
 
     // If the class list isn't locked, any element that is a featureMember
