@@ -541,15 +541,16 @@ CPLErr RawRasterBand::AccessBlock( vsi_l_offset nBlockOff, int nBlockSize,
 }
 
 /************************************************************************/
-/*                          IsLineLoaded()                              */
+/*               IsSignificantNumberOfLinesLoaded()                     */
 /*                                                                      */
-/*  Check whether at least one scanline from the specified block of     */
-/*  lines is cached.                                                    */
+/*  Check if there is a significant number of scanlines (>20%) from the */
+/*  specified block of lines already cached.                            */
 /************************************************************************/
 
-int RawRasterBand::IsLineLoaded( int nLineOff, int nLines )
+int RawRasterBand::IsSignificantNumberOfLinesLoaded( int nLineOff, int nLines )
 {
     int         iLine;
+    int         nCountLoaded = 0;
 
     for ( iLine = nLineOff; iLine < nLineOff + nLines; iLine++ )
     {
@@ -557,7 +558,11 @@ int RawRasterBand::IsLineLoaded( int nLineOff, int nLines )
         if( poBlock != NULL )
         {
             poBlock->DropLock();
-            return TRUE;
+            nCountLoaded ++;
+            if( nCountLoaded > nLines / 20 )
+            {
+                return TRUE;
+            }
         }
     }
 
@@ -581,7 +586,8 @@ int RawRasterBand::CanUseDirectIO(int nXOff, int nYOff, int nXSize, int nYSize,
 /*                                                                      */
 /* the length of a scanline on disk is more than 50000 bytes, and the   */
 /* width of the requested chunk is less than 40% of the whole scanline  */
-/* and none of the requested scanlines are already in the cache.        */
+/* and no significant number of requested scanlines are already in the  */
+/* cache.                                                               */
 /* -------------------------------------------------------------------- */
     if( nPixelOffset < 0 ) 
     {
@@ -594,7 +600,7 @@ int RawRasterBand::CanUseDirectIO(int nXOff, int nYOff, int nXSize, int nYSize,
         int         nBytesToRW = nPixelOffset * nXSize;
         if ( nLineSize < 50000
              || nBytesToRW > nLineSize / 5 * 2
-             || IsLineLoaded( nYOff, nYSize ) )
+             || IsSignificantNumberOfLinesLoaded( nYOff, nYSize ) )
         {
 
             return FALSE;

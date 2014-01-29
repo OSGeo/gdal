@@ -102,7 +102,7 @@ protected:
 
     CPLErr      AccessBlock( vsi_l_offset nBlockOff, int nBlockSize,
                              void * pData );
-    int         IsLineLoaded( int nLineOff, int nLines );
+    int         IsSignificantNumberOfLinesLoaded( int nLineOff, int nLines );
     void        Initialize();
 
     virtual CPLErr  IRasterIO( GDALRWFlag, int, int, int, int,
