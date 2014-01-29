@@ -565,19 +565,12 @@ int RawRasterBand::IsLineLoaded( int nLineOff, int nLines )
 }
 
 /************************************************************************/
-/*                             IRasterIO()                              */
+/*                           CanUseDirectIO()                           */
 /************************************************************************/
 
-CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
-                                 int nXOff, int nYOff, int nXSize, int nYSize,
-                                 void * pData, int nBufXSize, int nBufYSize,
-                                 GDALDataType eBufType,
-                                 int nPixelSpace, int nLineSpace )
-
+int RawRasterBand::CanUseDirectIO(int nXOff, int nYOff, int nXSize, int nYSize,
+                                  GDALDataType eBufType)
 {
-    int         nBandDataSize = GDALGetDataTypeSize(eDataType) / 8;
-    int         nBufDataSize = GDALGetDataTypeSize( eBufType ) / 8;
-    int         nBytesToRW = nPixelOffset * nXSize;
 
 /* -------------------------------------------------------------------- */
 /* Use direct IO without caching if:                                    */
@@ -592,6 +585,43 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
     if( nPixelOffset < 0 ) 
     {
+        return FALSE;
+    }
+
+    const char* pszGDAL_ONE_BIG_READ = CPLGetConfigOption( "GDAL_ONE_BIG_READ", NULL);
+    if ( pszGDAL_ONE_BIG_READ == NULL )
+    {
+        int         nBytesToRW = nPixelOffset * nXSize;
+        if ( nLineSize < 50000
+             || nBytesToRW > nLineSize / 5 * 2
+             || IsLineLoaded( nYOff, nYSize ) )
+        {
+
+            return FALSE;
+        }
+        return TRUE;
+    }
+    else
+        return CSLTestBoolean(pszGDAL_ONE_BIG_READ);
+}
+
+/************************************************************************/
+/*                             IRasterIO()                              */
+/************************************************************************/
+
+CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
+                                 int nXOff, int nYOff, int nXSize, int nYSize,
+                                 void * pData, int nBufXSize, int nBufYSize,
+                                 GDALDataType eBufType,
+                                 int nPixelSpace, int nLineSpace )
+
+{
+    int         nBandDataSize = GDALGetDataTypeSize(eDataType) / 8;
+    int         nBufDataSize = GDALGetDataTypeSize( eBufType ) / 8;
+    int         nBytesToRW = nPixelOffset * nXSize;
+
+    if( !CanUseDirectIO(nXOff, nYOff, nXSize, nYSize, eBufType ) )
+    {
         return GDALRasterBand::IRasterIO( eRWFlag, nXOff, nYOff,
                                           nXSize, nYSize,
                                           pData, nBufXSize, nBufYSize,
@@ -599,20 +629,7 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                           nPixelSpace, nLineSpace );
     }
 
-    if ( !CSLTestBoolean( CPLGetConfigOption( "GDAL_ONE_BIG_READ", "NO") ) )
-    {
-        if ( nLineSize < 50000
-             || nBytesToRW > nLineSize / 5 * 2
-             || IsLineLoaded( nYOff, nYSize ) )
-        {
-
-            return GDALRasterBand::IRasterIO( eRWFlag, nXOff, nYOff,
-                                              nXSize, nYSize,
-                                              pData, nBufXSize, nBufYSize,
-                                              eBufType,
-                                              nPixelSpace, nLineSpace );
-        }
-    }
+    CPLDebug("RAW", "Using direct IO implementation");
 
 /* ==================================================================== */
 /*   Read data.                                                         */
@@ -1140,14 +1157,53 @@ CPLErr RawDataset::IRasterIO( GDALRWFlag eRWFlag,
                               int nPixelSpace, int nLineSpace, int nBandSpace )
 
 {
-/*    if( nBandCount > 1 )
-        return GDALDataset::BlockBasedRasterIO( 
-            eRWFlag, nXOff, nYOff, nXSize, nYSize,
-            pData, nBufXSize, nBufYSize, eBufType, 
-            nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace );
-    else*/
-        return 
-            GDALDataset::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+    const char* pszInterleave;
+
+    /* The default GDALDataset::IRasterIO() implementation would go to */
+    /* BlockBasedRasterIO if the dataset is interleaved. However if the */
+    /* access pattern is compatible with DirectIO() we don't want to go */
+    /* BlockBasedRasterIO, but rather used our optimized path in RawRasterBand::IRasterIO() */
+    if (nXSize == nBufXSize && nYSize == nBufYSize && nBandCount > 1 &&
+        (pszInterleave = GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE")) != NULL &&
+        EQUAL(pszInterleave, "PIXEL"))
+    {
+        int iBandIndex;
+        for(iBandIndex = 0; iBandIndex < nBandCount; iBandIndex ++ )
+        {
+            RawRasterBand* poBand = (RawRasterBand*) GetRasterBand(panBandMap[iBandIndex]);
+            if( !poBand->CanUseDirectIO(nXOff, nYOff, nXSize, nYSize, eBufType ) )
+            {
+                break;
+            }
+        }
+        if( iBandIndex == nBandCount )
+        {
+            CPLErr eErr = CE_None;
+            for( iBandIndex = 0; 
+                iBandIndex < nBandCount && eErr == CE_None; 
+                iBandIndex++ )
+            {
+                GDALRasterBand *poBand = GetRasterBand(panBandMap[iBandIndex]);
+                GByte *pabyBandData;
+
+                if (poBand == NULL)
+                {
+                    eErr = CE_Failure;
+                    break;
+                }
+
+                pabyBandData = ((GByte *) pData) + iBandIndex * nBandSpace;
+                
+                eErr = poBand->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
+                                        (void *) pabyBandData, nBufXSize, nBufYSize,
+                                        eBufType, nPixelSpace, nLineSpace );
+            }
+
+            return eErr;
+        }
+    }
+
+    return  GDALDataset::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                     pData, nBufXSize, nBufYSize, eBufType, 
                                     nBandCount, panBandMap, 
                                     nPixelSpace, nLineSpace, nBandSpace );
