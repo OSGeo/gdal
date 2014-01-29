@@ -2661,7 +2661,15 @@ static void GDALCopyWholeRasterGetSwathSize(GDALRasterBand *poSrcPrototypeBand,
 
     int nMaxBlockXSize = MAX(nBlockXSize, nSrcBlockXSize);
     int nMaxBlockYSize = MAX(nBlockYSize, nSrcBlockYSize);
-    
+
+    int nPixelSize = (GDALGetDataTypeSize(eDT) / 8);
+    if( bInterleave)
+        nPixelSize *= nBandCount;
+
+    // aim for one row of blocks.  Do not settle for less.
+    int nSwathCols  = nXSize;
+    int nSwathLines = nBlockYSize;
+
 /* -------------------------------------------------------------------- */
 /*      What will our swath size be?                                    */
 /* -------------------------------------------------------------------- */
@@ -2673,8 +2681,16 @@ static void GDALCopyWholeRasterGetSwathSize(GDALRasterBand *poSrcPrototypeBand,
     if( pszSwathSize != NULL )
         nTargetSwathSize = atoi(pszSwathSize);
     else
+    {
         /* As a default, take one 1/4 of the cache size */
         nTargetSwathSize = MIN(INT_MAX, GDALGetCacheMax64() / 4);
+
+        /* but if the minimum idal swath buf size is less, then go for it to */
+        /* avoid unnecessarily abusing RAM usage */
+        GIntBig nIdealSwathBufSize = (GIntBig)nSwathCols * nSwathLines * nPixelSize;
+        if( nTargetSwathSize > nIdealSwathBufSize )
+            nTargetSwathSize = nIdealSwathBufSize;
+    }
 
     if (nTargetSwathSize < 1000000)
         nTargetSwathSize = 1000000;
@@ -2686,14 +2702,6 @@ static void GDALCopyWholeRasterGetSwathSize(GDALRasterBand *poSrcPrototypeBand,
                  "When translating into a compressed interleave format, the block cache size (" CPL_FRMT_GIB ") "
                  "should be at least the size of the swath (%d) (GDAL_SWATH_SIZE config. option)", GDALGetCacheMax64(), nTargetSwathSize);
     }
-
-    int nPixelSize = (GDALGetDataTypeSize(eDT) / 8);
-    if( bInterleave)
-        nPixelSize *= nBandCount;
-
-    // aim for one row of blocks.  Do not settle for less.
-    int nSwathCols  = nXSize;
-    int nSwathLines = nBlockYSize;
 
 #define IS_MULTIPLE_OF(x,y) ((y)%(x) == 0)
 #define ROUND_TO(x,y) (((x)/(y))*(y))
