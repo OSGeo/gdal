@@ -483,6 +483,69 @@ OGRFeature(LAYER):0
 
 <h2>Advanced .gfs syntax (OGR &gt;= 2.0)</h2>
 
+<h3>Specifying ElementPath to find objets embedded into top level objects</h3>
+
+Let's consider the following test.gml file :
+<pre>
+&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;gml:FeatureCollection xmlns:xlink="http://www.w3.org/1999/xlink"
+                       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                       gml:id="foo" xmlns:gml="http://www.opengis.net/gml/3.2"&gt;
+  &lt;gml:featureMember&gt;
+    &lt;TopLevelObject gml:id="TopLevelObject.1"&gt;
+      &lt;content&gt;
+        &lt;Object gml:id="Object.1"&gt;
+          &lt;geometry&gt;
+            &lt;gml:Polygon gml:id="Object.1.Geometry" srsName="urn:ogc:def:crs:EPSG::4326"&gt;
+              &lt;gml:exterior&gt;
+                &lt;gml:LinearRing&gt;
+                  &lt;gml:posList srsDimension="2"&gt;48 2 49 2 49 3 48 3 48 2&lt;/gml:posList&gt;
+                &lt;/gml:LinearRing&gt;
+              &lt;/gml:exterior&gt;
+            &lt;/gml:Polygon&gt;
+          &lt;/geometry&gt;
+          &lt;foo&gt;bar&lt;/foo&gt;
+        &lt;/Object&gt;
+      &lt;/content&gt;
+      &lt;content&gt;
+        &lt;Object gml:id="Object.2"&gt;
+          &lt;geometry&gt;
+            &lt;gml:Polygon gml:id="Object.2.Geometry" srsName="urn:ogc:def:crs:EPSG::4326"&gt;
+              &lt;gml:exterior&gt;
+                &lt;gml:LinearRing&gt;
+                  &lt;gml:posList srsDimension="2"&gt;-48 2 -49 2 -49 3 -48 3 -48 2&lt;/gml:posList&gt;
+                &lt;/gml:LinearRing&gt;
+              &lt;/gml:exterior&gt;
+            &lt;/gml:Polygon&gt;
+          &lt;/geometry&gt;
+          &lt;foo&gt;baz&lt;/foo&gt;
+        &lt;/Object&gt;
+      &lt;/content&gt;
+    &lt;/TopLevelObject&gt;
+  &lt;/gml:featureMember&gt;
+&lt;/gml:FeatureCollection&gt;
+</pre>
+
+By default, only the TopLevelObject object would be reported and it would only
+use the second geometry. This is not the desired behaviour in that instance.
+You can edit the generated .gfs and modify it like the following in order to
+specify a full path to the element (top level XML element being omitted) :
+
+<pre>
+&lt;GMLFeatureClassList&gt;
+  &lt;GMLFeatureClass&gt;
+    &lt;Name&gt;Object&lt;/Name&gt;
+    &lt;ElementPath&gt;featureMember|TopLevelObject|content|Object&lt;/ElementPath&gt;
+    &lt;GeometryType&gt;3&lt;/GeometryType&gt;
+    &lt;PropertyDefn&gt;
+      &lt;Name&gt;foo&lt;/Name&gt;
+      &lt;ElementPath&gt;foo&lt;/ElementPath&gt;
+      &lt;Type&gt;String&lt;/Type&gt;
+    &lt;/PropertyDefn&gt;
+  &lt;/GMLFeatureClass&gt;
+&lt;/GMLFeatureClassList&gt;
+</pre>
+
 <h3>Getting XML attributes as OGR fields</h3>
 
 The element@attribute syntax can be used in the &lt;ElementPath&gt;
