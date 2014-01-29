@@ -2668,8 +2668,14 @@ static void GDALCopyWholeRasterGetSwathSize(GDALRasterBand *poSrcPrototypeBand,
     /* When writing interleaved data in a compressed format, we want to be sure */
     /* that each block will only be written once, so the swath size must not be */
     /* greater than the block cache. */
-    /* So as the default cache size is 40 MB, 10 MB is a safe value */
-    int nTargetSwathSize = atoi(CPLGetConfigOption("GDAL_SWATH_SIZE", "10000000"));
+    const char* pszSwathSize = CPLGetConfigOption("GDAL_SWATH_SIZE", NULL);
+    int nTargetSwathSize;
+    if( pszSwathSize != NULL )
+        nTargetSwathSize = atoi(pszSwathSize);
+    else
+        /* As a default, take one 1/4 of the cache size */
+        nTargetSwathSize = MIN(INT_MAX, GDALGetCacheMax64() / 4);
+
     if (nTargetSwathSize < 1000000)
         nTargetSwathSize = 1000000;
 
@@ -2678,7 +2684,7 @@ static void GDALCopyWholeRasterGetSwathSize(GDALRasterBand *poSrcPrototypeBand,
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "When translating into a compressed interleave format, the block cache size (" CPL_FRMT_GIB ") "
-                 "should be at least the size of the swath (%d)", GDALGetCacheMax64(), nTargetSwathSize);
+                 "should be at least the size of the swath (%d) (GDAL_SWATH_SIZE config. option)", GDALGetCacheMax64(), nTargetSwathSize);
     }
 
     int nPixelSize = (GDALGetDataTypeSize(eDT) / 8);
@@ -2734,7 +2740,7 @@ static void GDALCopyWholeRasterGetSwathSize(GDALRasterBand *poSrcPrototypeBand,
 
         CPLDebug( "GDAL",
               "GDALCopyWholeRasterGetSwathSize(): adjusting to %d line swath "
-              "since requirement (%d * %d bytes) exceed target swath size (%d bytes) ",
+              "since requirement (%d * %d bytes) exceed target swath size (%d bytes) (GDAL_SWATH_SIZE config. option)",
               nSwathLines, nBlockYSize, nMemoryPerCol, nTargetSwathSize);
     }
     // If we are processing single scans, try to handle several at once.
