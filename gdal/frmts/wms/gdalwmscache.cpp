@@ -40,6 +40,24 @@ GDALWMSCache::~GDALWMSCache() {
 }
 
 CPLErr GDALWMSCache::Initialize(CPLXMLNode *config) {
+    const char *xmlcache_path = CPLGetXMLValue(config, "Path", NULL); 
+    const char *usercache_path = CPLGetConfigOption("GDAL_DEFAULT_WMS_CACHE_PATH", NULL); 
+    if(xmlcache_path) 
+    {
+        m_cache_path = xmlcache_path;
+    }
+    else
+    {
+        if(usercache_path)
+        {
+            m_cache_path = usercache_path;
+        }
+        else
+        {
+            m_cache_path = "./gdalwmscache"; 
+        }
+    }
+
     const char *cache_path = CPLGetXMLValue(config, "Path", "./gdalwmscache");
     m_cache_path = cache_path;
 
