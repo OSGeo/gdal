@@ -1042,7 +1042,7 @@ static int ProxyMain( int argc, char ** argv )
         && pszOXSize == NULL && pszOYSize == NULL );
 
     if( eOutputType == GDT_Unknown 
-        && nScaleRepeat == 0 && !bUnscale
+        && nScaleRepeat == 0 && nExponentRepeat == 0 && !bUnscale
         && CSLCount(papszMetadataOptions) == 0 && bDefBands 
         && eMaskMode == MASK_AUTO
         && bSpatialArrangementPreserved
