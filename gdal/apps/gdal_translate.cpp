@@ -933,9 +933,9 @@ static int ProxyMain( int argc, char ** argv )
         }
 
         anSrcWin[0] = (int) 
-            ((dfULX - adfGeoTransform[0]) / adfGeoTransform[1] + 0.001);
+            floor((dfULX - adfGeoTransform[0]) / adfGeoTransform[1] + 0.001);
         anSrcWin[1] = (int) 
-            ((dfULY - adfGeoTransform[3]) / adfGeoTransform[5] + 0.001);
+            floor((dfULY - adfGeoTransform[3]) / adfGeoTransform[5] + 0.001);
 
         anSrcWin[2] = (int) ((dfLRX - dfULX) / adfGeoTransform[1] + 0.5);
         anSrcWin[3] = (int) ((dfLRY - dfULY) / adfGeoTransform[5] + 0.5);
