@@ -1154,10 +1154,11 @@ void OGRXLSXDataSource::startElementWBCbk(const char *pszName,
     if (strcmp(pszName,"sheet") == 0)
     {
         const char* pszSheetName = GetAttributeValue(ppszAttr, "name", NULL);
-        const char* pszSheetId = GetAttributeValue(ppszAttr, "sheetId", NULL);
-        if (pszSheetName && pszSheetId)
+        /*const char* pszSheetId = GetAttributeValue(ppszAttr, "sheetId", NULL);*/
+        if (pszSheetName /*&& pszSheetId*/)
         {
-            int nSheetId = atoi(pszSheetId);
+            /*int nSheetId = atoi(pszSheetId);*/
+            int nSheetId = nLayers + 1;
             papoLayers = (OGRLayer**)CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
             papoLayers[nLayers++] = new OGRXLSXLayer(this, nSheetId, pszSheetName);
         }
