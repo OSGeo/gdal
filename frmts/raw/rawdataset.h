@@ -109,6 +109,9 @@ protected:
                               void *, int, int, GDALDataType,
                               int, int );
 
+    int         CanUseDirectIO(int nXOff, int nYOff, int nXSize, int nYSize,
+                               GDALDataType eBufType);
+
 public:
 
                  RawRasterBand( GDALDataset *poDS, int nBand, void * fpRaw,
