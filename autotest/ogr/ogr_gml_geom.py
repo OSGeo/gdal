@@ -1304,6 +1304,43 @@ def gml_CompositeCurveInRing():
     return 'success'
 
 ###############################################################################
+# Test <gml:CompositeSurface> in <gml:surfaceMembers> (#5369)
+
+def gml_CompositeSurface_in_surfaceMembers():
+
+    gml = """<gml:MultiSurface>
+          <gml:surfaceMembers>
+            <gml:CompositeSurface>
+              <gml:surfaceMember>
+                <gml:Polygon>
+                  <gml:exterior>
+                    <gml:LinearRing>
+                      <gml:posList>0 0 0 1 1 1 1 0 0 0</gml:posList>
+                    </gml:LinearRing>
+                  </gml:exterior>
+                </gml:Polygon>
+              </gml:surfaceMember>
+              <gml:surfaceMember>
+                <gml:Polygon>
+                  <gml:exterior>
+                    <gml:LinearRing>
+                      <gml:posList>2 0 2 1 3 1 3 0 2 0</gml:posList>
+                    </gml:LinearRing>
+                  </gml:exterior>
+                </gml:Polygon>
+              </gml:surfaceMember>
+            </gml:CompositeSurface>
+          </gml:surfaceMembers>
+        </gml:MultiSurface>"""
+
+    geom = ogr.CreateGeometryFromGML( gml )
+
+    if geom.ExportToWkt() != 'MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)),((2 0,2 1,3 1,3 0,2 0)))':
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    return 'success'
+###############################################################################
 # When imported build a list of units based on the files available.
 
 #print 'hit enter'
@@ -1359,6 +1396,7 @@ gdaltest_list.append( gml_SimpleRectangle )
 gdaltest_list.append( gml_SimpleTriangle )
 gdaltest_list.append( gml_SimpleMultiPoint )
 gdaltest_list.append( gml_CompositeCurveInRing )
+gdaltest_list.append( gml_CompositeSurface_in_surfaceMembers )
 
 if __name__ == '__main__':
 
