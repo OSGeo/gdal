@@ -1124,6 +1124,31 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
             else
                 SetLinearUnits( "unknown", CPLAtofM(pszValue) );
         }
+        /*
+        ** Units from cs2cs -lu (* indicates added to logic):
+        **
+        **     km 1000.                Kilometer*
+        **      m 1.                   Meter*
+        **     dm 1/10                 Decimeter*
+        **     cm 1/100                Centimeter*
+        **     mm 1/1000               Millimeter*
+        **    kmi 1852.0               International Nautical Mile*
+        **     in 0.0254               International Inch*
+        **     ft 0.3048               International Foot*
+        **     yd 0.9144               International Yard*
+        **     mi 1609.344             International Statute Mile*
+        **   fath 1.8288               International Fathom*
+        **     ch 20.1168              International Chain*
+        **   link 0.201168             International Link*
+        **  us-in 1./39.37             U.S. Surveyor's Inch*
+        **  us-ft 0.304800609601219    U.S. Surveyor's Foot*
+        **  us-yd 0.914401828803658    U.S. Surveyor's Yard*
+        **  us-ch 20.11684023368047    U.S. Surveyor's Chain*
+        **  us-mi 1609.347218694437    U.S. Surveyor's Statute Mile*
+        ** ind-yd 0.91439523           Indian Yard*
+        ** ind-ft 0.30479841           Indian Foot*
+        ** ind-ch 20.11669506          Indian Chain*
+        */
         else if( (pszValue = CSLFetchNameValue(papszNV, "units")) != NULL )
         {
             if( EQUAL(pszValue,"meter" ) || EQUAL(pszValue,"m") || EQUAL(pszValue,"metre") )
@@ -1138,6 +1163,38 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
                 SetLinearUnits( pszValue, 0.9144 );
             else if( EQUAL(pszValue,"us-yd" ) )
                 SetLinearUnits( pszValue, 0.914401828803658 );
+            else if( EQUAL(pszValue,"us-yd" ) )
+                SetLinearUnits( pszValue, 0.914401828803658 );
+            else if( EQUAL(pszValue,"dm" ) )
+                SetLinearUnits( pszValue, 0.1 );
+            else if( EQUAL(pszValue,"cm" ) )
+                SetLinearUnits( pszValue, 0.01 );
+            else if( EQUAL(pszValue,"mm" ) )
+                SetLinearUnits( pszValue, 0.001 );
+            else if( EQUAL(pszValue,"kmi" ) )
+                SetLinearUnits( pszValue, CPLAtof(SRS_UL_NAUTICAL_MILE_CONV) );
+            else if( EQUAL(pszValue,"in" ) )
+                SetLinearUnits( pszValue, 0.0254 );
+            else if( EQUAL(pszValue,"mi" ) )
+                SetLinearUnits( pszValue, 1609.344 );
+            else if( EQUAL(pszValue,"fath" ) )
+                SetLinearUnits( pszValue, 1.8288 );
+            else if( EQUAL(pszValue,"ch" ) )
+                SetLinearUnits( pszValue, 20.1168 );
+            else if( EQUAL(pszValue,"link" ) )
+                SetLinearUnits( pszValue, 0.201168 );
+            else if( EQUAL(pszValue,"us-in" ) )
+                SetLinearUnits( pszValue, 1 / 39.37 );
+            else if( EQUAL(pszValue, "us-ch" ) )
+                SetLinearUnits( pszValue, 20.11684023368047 );
+            else if( EQUAL(pszValue, "us-mi" ) )
+                SetLinearUnits( pszValue, 1609.347218694437 );
+            else if( EQUAL(pszValue, "ind-yd" ) )
+                SetLinearUnits( pszValue, 0.91439523 );
+            else if( EQUAL(pszValue, "ind-ft" ) )
+                SetLinearUnits( pszValue, 0.30479841 );
+            else if( EQUAL(pszValue, "ind-ch" ) )
+                SetLinearUnits( pszValue, 20.11669506 );
             else // This case is untranslatable.  Should add all proj.4 unts
                 SetLinearUnits( pszValue, 1.0 );
         }
