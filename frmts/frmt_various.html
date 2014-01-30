@@ -672,6 +672,22 @@ Institute (GSI) Web Site.</a></p>
 
 <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
 
+<h2><a name="KRO">KRO -- KOLOR Raw format</a></h2>
+
+<p>(GDAL >= 2.0)</p>
+
+<p>Supported for read access, update and creation.
+This format is a binary raw format, that supports data of several depths (
+8 bit, unsigned integer 16 bit and floating point 32 bit) and with several band
+number (3 or 4 typically, for RGB and RGBA). There is no file size limit,
+except the limitation of the file system.</p>
+
+<p><a href="http://www.autopano.net/wiki-en/Format_KRO">Specification of the format</a></p>
+
+<p>NOTE: Implemented as <tt>gdal/frmts/raw/krodataset.cpp</tt>.</p>
+
+<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+
 <h2><a name="LAN">LAN -- Erdas 7.x .LAN and .GIS</a></h2>
 
 <p>GDAL supports reading and writing
