@@ -617,6 +617,47 @@ def osr_proj4_15():
 
     return 'success'
 
+###############################################################################
+# Test unit parsing
+#
+def osr_proj4_16():
+
+    def almost(a,b):
+        if abs(a-b) > 0.000000000001:
+            return False
+        return True
+    units = (('km', 1000.),
+             ('m', 1.),
+             ('dm', 1./10.),
+             ('cm', 1./100.),
+             ('mm', 1./1000.),
+             ('kmi', 1852.0),
+             ('in', 0.0254),
+             ('ft', 0.3048),
+             ('yd', 0.9144),
+             ('mi', 1609.344),
+             ('fath', 1.8288),
+             ('ch', 20.1168),
+             ('link', 0.201168),
+             ('us-in', 1./39.37),
+             ('us-ft', 0.304800609601219),
+             ('us-yd', 0.914401828803658),
+             ('us-ch', 20.11684023368047),
+             ('us-mi', 1609.347218694437),
+             ('ind-yd', 0.91439523),
+             ('ind-ft', 0.30479841),
+             ('ind-ch', 20.11669506))
+
+    srs = osr.SpatialReference()
+    for u in units:
+        if srs.ImportFromProj4('+proj=utm +zone=11 +datum=WGS84 +units=%s' % u[0] ) != 0:
+            return 'fail'
+        to_met = srs.GetLinearUnits()
+        if not almost(to_met, u[1]):
+            gdaltest.post_reason('Did not get expected units: %s vs %s' % (str(u), str(to_met)))
+            return 'fail'
+    return 'success'
+
 gdaltest_list = [ 
     osr_proj4_1,
     osr_proj4_2,
@@ -632,7 +673,8 @@ gdaltest_list = [
     osr_proj4_12,
     osr_proj4_13,
     osr_proj4_14,
-    osr_proj4_15 ]
+    osr_proj4_15,
+    osr_proj4_16]
 
 if __name__ == '__main__':
 
