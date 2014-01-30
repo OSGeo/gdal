@@ -1115,7 +1115,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
                     if( psChild2->eType == CXT_Element
                         && (EQUAL(BareGMLElement(psChild2->pszValue),"Surface") ||
                             EQUAL(BareGMLElement(psChild2->pszValue),"Polygon") ||
-                            EQUAL(BareGMLElement(psChild2->pszValue),"PolygonPatch")) )
+                            EQUAL(BareGMLElement(psChild2->pszValue),"PolygonPatch") ||
+                            EQUAL(BareGMLElement(psChild2->pszValue),"CompositeSurface")) )
                     {
                         OGRGeometry* poGeom = GML2OGRGeometry_XMLNode( psChild2, bGetSecondaryGeometryOption,
                                                                        nRecLevel + 1);
