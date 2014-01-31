@@ -54,7 +54,6 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFilename) : VFKReader(pszFilenam
     CPLString   pszDbName;
     CPLString   osCommand;
     VSIStatBufL sStatBuf;
-    bool        bNewDb;
     
     /* open tmp SQLite DB (re-use DB file if already exists) */
     pszDbNameConf = CPLGetConfigOption("OGR_VFK_DB_NAME", NULL);
@@ -74,16 +73,16 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFilename) : VFKReader(pszFilenam
     else
 	m_bSpatial = FALSE;   /* store also geometry in DB */
     
-    bNewDb = TRUE;
+    m_bNewDb = TRUE;
     if (VSIStatL(pszDbName, &sStatBuf ) == 0) {
 	if (CSLTestBoolean(CPLGetConfigOption("OGR_VFK_DB_OVERWRITE", "NO"))) {
-	    bNewDb = TRUE;     /* overwrite existing DB */
+	    m_bNewDb = TRUE;     /* overwrite existing DB */
             CPLDebug("OGR-VFK", "Internal DB (%s) already exists and will be overwritten",
                      m_pszDBname);
 	    VSIUnlink(pszDbName);
 	}
 	else {
-	    bNewDb = FALSE;    /* re-use exising DB */
+	    m_bNewDb = FALSE;    /* re-use exising DB */
 	}
     }
     /*
@@ -93,7 +92,7 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFilename) : VFKReader(pszFilenam
     }
     */
     CPLDebug("OGR-VFK", "New DB: %s Spatial: %s",
-	     bNewDb ? "yes" : "no", m_bSpatial ? "yes" : "no");
+	     m_bNewDb ? "yes" : "no", m_bSpatial ? "yes" : "no");
 
     if (SQLITE_OK != sqlite3_open(pszDbName, &m_poDB)) {
         CPLError(CE_Failure, CPLE_AppDefined, 
@@ -105,7 +104,7 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFilename) : VFKReader(pszFilenam
         sqlite3_free(pszErrMsg);
     }
     
-    if (bNewDb) {
+    if (m_bNewDb) {
         /* new DB, create support metadata tables */
         osCommand = "CREATE TABLE 'vfk_blocks' "
 	  "(file_name text, table_name text, num_records integer, "
