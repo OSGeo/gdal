@@ -162,6 +162,11 @@ OGRLayer *OGRVFKDataSource::GetLayer(int iLayer)
 */
 int OGRVFKDataSource::TestCapability(const char * pszCap)
 {
+    if (EQUAL(pszCap, "IsPreProcessed") && poReader) {
+        if (poReader->IsPreProcessed())
+            return TRUE;
+    }
+
     return FALSE;
 }
 
