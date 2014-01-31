@@ -109,6 +109,10 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFilename) : VFKReader(pszFilenam
         osCommand.Printf("CREATE TABLE %s (file_name text, table_name text, num_records integer, "
                          "num_geometries integer, table_defn text)", VFK_DB_TABLE);
         ExecuteSQL(osCommand.c_str());
+
+        /* header table */
+        osCommand.Printf("CREATE TABLE %s (key text, value text)", VFK_DB_HEADER);
+        ExecuteSQL(osCommand.c_str());
     }
 }
 
@@ -166,6 +170,8 @@ int VFKReaderSQLite::ReadDataBlocks()
         /* CREATE TABLE ... */
         nDataBlocks = VFKReader::ReadDataBlocks();
         sqlite3_exec(m_poDB, "COMMIT", 0, 0, 0);
+
+        StoreInfo2DB();
     }
     
     return nDataBlocks;
@@ -281,6 +287,28 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
     }
     
     return nDataRecords;
+}
+
+/*!
+  \brief Store header info to VFK_DB_HEADER
+*/
+void VFKReaderSQLite::StoreInfo2DB()
+{
+    CPLString osSQL;
+    const char *value;
+    char q;
+
+    for(std::map<CPLString, CPLString>::iterator i = poInfo.begin();
+        i != poInfo.end(); ++i) {
+        value = i->second.c_str();
+
+        q = (value[0] == '"') ? ' ' : '"';
+
+        osSQL.Printf("INSERT INTO %s VALUES(\"%s\", %c%s%c)",
+                     VFK_DB_HEADER, i->first.c_str(),
+                     q, value, q);
+        ExecuteSQL(osSQL);
+    }
 }
 
 /*!
