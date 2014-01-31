@@ -53,9 +53,6 @@ private:
     FILE          *m_poFD;
     char          *ReadLine(bool = FALSE);
     
-    /* metadata */
-    std::map<CPLString, CPLString> poInfo;
-    
     void          AddInfo(const char *);
 
 protected:
@@ -67,6 +64,9 @@ protected:
     void            AddDataBlock(IVFKDataBlock *, const char *);
     OGRErr          AddFeature(IVFKDataBlock *, VFKFeature *);
 
+    /* metadata */
+    std::map<CPLString, CPLString> poInfo;
+    
 public:
     VFKReader(const char *);
     virtual ~VFKReader();
@@ -100,6 +100,8 @@ private:
     IVFKDataBlock *CreateDataBlock(const char *);
     void           AddDataBlock(IVFKDataBlock *, const char *);
     OGRErr         AddFeature(IVFKDataBlock *, VFKFeature *);
+
+    void           StoreInfo2DB();
 
     void           CreateIndex(const char *, const char *, const char *, bool = TRUE);
     
