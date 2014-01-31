@@ -6,7 +6,7 @@
  * Author:   Martin Landa, landa.martin gmail.com
  *
  ******************************************************************************
- * Copyright (c) 2009-2010, 2012-2013, Martin Landa <landa.martin gmail.com>
+ * Copyright (c) 2009-2014, Martin Landa <landa.martin gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -53,6 +53,10 @@ typedef std::vector<VFKFeatureSQLite *> VFKFeatureSQLiteList;
 
 #define FID_COLUMN   "ogr_fid"
 #define GEOM_COLUMN  "geometry"
+
+#define VFK_DB_HEADER   "vfk_header"
+#define VFK_DB_TABLE    "vfk_tables"
+
 
 enum RecordType { RecordValid, RecordSkipped, RecordDuplicated };
 
