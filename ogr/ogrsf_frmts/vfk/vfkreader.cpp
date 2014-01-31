@@ -432,9 +432,10 @@ int VFKReader::LoadGeometry()
 */
 void VFKReader::AddInfo(const char *pszLine)
 {
-    int         iKeyLength, iValueLength;
+    int         i, iKeyLength, iValueLength;
+    int         nSkip;
     char       *pszKey, *pszValue;
-    const char *poChar, *poKey, *poValue;
+    const char *poChar, *poKey;
     CPLString   key, value;
     
     poChar = poKey = pszLine + 2; /* &H */
@@ -450,21 +451,36 @@ void VFKReader::AddInfo(const char *pszLine)
     strncpy(pszKey, poKey, iKeyLength);
     pszKey[iKeyLength] = '\0';
 
-    poValue = ++poChar; /* skip ';' */
+    poChar++; /* skip ; */
+
     iValueLength = 0;
+    nSkip = 3; /* &H + ; */
     while (*poChar != '\0') {
-        iValueLength++;
+        if (*poChar == '"' && iValueLength == 0) {
+            nSkip++;
+        }
+        else {
+            iValueLength++; 
+        }
         poChar++;
     }
-
+    if (nSkip > 3)
+        iValueLength--;
+    
     pszValue = (char *) CPLMalloc(iValueLength + 1);
-    strncpy(pszValue, poValue, iValueLength);
+    for (i = 0; i < iValueLength; i++) {
+        pszValue[i] = pszLine[iKeyLength+nSkip+i];
+        if (pszValue[i] == '"') {
+            pszValue[i] = '\''; /* " -> ' */
+        }
+    }
+
     pszValue[iValueLength] = '\0';
 
     poInfo[pszKey] = pszValue;
 
     if (EQUAL(pszKey, "CODEPAGE")) {
-        if (!EQUAL(pszValue, "\"WE8ISO8859P2\""))
+        if (!EQUAL(pszValue, "WE8ISO8859P2"))
             m_bLatin2 = FALSE;
     }
 
