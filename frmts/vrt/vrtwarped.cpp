@@ -1028,16 +1028,21 @@ CPLXMLNode *VRTWarpedDataset::SerializeToXML( const char *pszVRTPath )
 /*      the VRT file if possible.  Adjust accordingly.                  */
 /* -------------------------------------------------------------------- */
         CPLXMLNode *psSDS = CPLGetXMLNode( psWOTree, "SourceDataset" );
-        int bRelativeToVRT;
-        char *pszRelativePath;
+        int bRelativeToVRT = FALSE;
+        VSIStatBufL  sStat;
 
-        pszRelativePath = 
-            CPLStrdup(
+        if( VSIStatExL( psSDS->psChild->pszValue, &sStat, 
+                        VSI_STAT_EXISTS_FLAG) == 0 ) 
+        {
+            char *pszRelativePath;
+        
+            pszRelativePath = CPLStrdup(
                 CPLExtractRelativePath( pszVRTPath, psSDS->psChild->pszValue, 
                                         &bRelativeToVRT ) );
 
-        CPLFree( psSDS->psChild->pszValue );
-        psSDS->psChild->pszValue = pszRelativePath;
+            CPLFree( psSDS->psChild->pszValue );
+            psSDS->psChild->pszValue = pszRelativePath;
+        }
 
         CPLCreateXMLNode( 
             CPLCreateXMLNode( psSDS, CXT_Attribute, "relativeToVRT" ), 
