@@ -111,7 +111,7 @@ public:
     virtual ~VFKReaderSQLite();
 
     bool          IsSpatial() const { return m_bSpatial; }
-    bool          IsPreProcessed() const { return m_bNewDb; }
+    bool          IsPreProcessed() const { return !m_bNewDb; }
     int           ReadDataBlocks();
     int           ReadDataRecords(IVFKDataBlock * = NULL);
 
