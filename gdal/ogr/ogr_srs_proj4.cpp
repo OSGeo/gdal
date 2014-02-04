@@ -1163,8 +1163,6 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
                 SetLinearUnits( pszValue, 0.9144 );
             else if( EQUAL(pszValue,"us-yd" ) )
                 SetLinearUnits( pszValue, 0.914401828803658 );
-            else if( EQUAL(pszValue,"us-yd" ) )
-                SetLinearUnits( pszValue, 0.914401828803658 );
             else if( EQUAL(pszValue,"dm" ) )
                 SetLinearUnits( pszValue, 0.1 );
             else if( EQUAL(pszValue,"cm" ) )
