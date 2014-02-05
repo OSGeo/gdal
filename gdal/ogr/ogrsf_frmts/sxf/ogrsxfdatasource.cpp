@@ -1157,11 +1157,11 @@ void OGRSXFDataSource::CreateLayers(VSILFILE* fpRSC)
         else
         {
             if (stRSCFileHeader.nFontEnc == 125)
-                pszRecoded = CPLRecode(LAYER.szName, "KOI8-R", CPL_ENC_UTF8);
+                pszRecoded = CPLRecode(LAYER.szShortName, "KOI8-R", CPL_ENC_UTF8);
             else if (stRSCFileHeader.nFontEnc == 126)
-                pszRecoded = CPLRecode(LAYER.szName, "CP1251", CPL_ENC_UTF8);
+                pszRecoded = CPLRecode(LAYER.szShortName, "CP1251", CPL_ENC_UTF8);
             else
-                pszRecoded = CPLStrdup(LAYER.szName);
+                pszRecoded = CPLStrdup(LAYER.szShortName);
 
             papoLayers[nLayers] = new OGRSXFLayer(fpSXF, &hIOMutex, LAYER.nNo, CPLString(pszRecoded), oSXFPassport.version, oSXFPassport.stMapDescription);
         }
