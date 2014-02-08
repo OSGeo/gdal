@@ -587,13 +587,16 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK
         && PQntuples(hResult) > 0 )
     {
+        const char* pszSpace;
         char * pszVer = PQgetvalue(hResult,0,0);
 
         CPLDebug("PG","PostgreSQL version string : '%s'", pszVer);
 
-        if (EQUALN(pszVer, "PostgreSQL ", 11))
+        /* Should work with "PostgreSQL X.Y.Z ..." or "EnterpriseDB X.Y.Z ..." */
+        pszSpace = strchr(pszVer, ' ');
+        if( pszSpace != NULL && isdigit(pszSpace[1]) )
         {
-            OGRPGDecodeVersionString(&sPostgreSQLVersion, pszVer + 11);
+            OGRPGDecodeVersionString(&sPostgreSQLVersion, pszSpace + 1);
             if (sPostgreSQLVersion.nMajor == 7 && sPostgreSQLVersion.nMinor < 4)
             {
                 /* We don't support BINARY CURSOR for PostgreSQL < 7.4. */
