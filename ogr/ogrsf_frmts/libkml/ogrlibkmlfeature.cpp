@@ -37,6 +37,7 @@ using kmldom::ElementPtr;
 using kmldom::GeometryPtr;
 using kmldom::Geometry;
 using kmldom::GroundOverlayPtr;
+using kmldom::CameraPtr;
 
 #include "ogr_libkml.h"
 
@@ -61,9 +62,36 @@ PlacemarkPtr feat2kml (
     /***** geometry *****/
 
     OGRGeometry *poOgrGeom = poOgrFeat->GetGeometryRef (  );
-    ElementPtr poKmlElement = geom2kml ( poOgrGeom, -1, 0, poKmlFactory );
+    int iHeading = poOgrFeat->GetFieldIndex("heading"),
+        iTilt = poOgrFeat->GetFieldIndex("tilt"),
+        iRoll = poOgrFeat->GetFieldIndex("roll");
 
-    poKmlPlacemark->set_geometry ( AsGeometry ( poKmlElement ) );
+    if( poOgrGeom != NULL && !poOgrGeom->IsEmpty() &&
+        wkbFlatten(poOgrGeom->getGeometryType()) == wkbPoint &&
+        ((iHeading >= 0 && poOgrFeat->IsFieldSet(iHeading)) ||
+         (iTilt >= 0 && poOgrFeat->IsFieldSet(iTilt)) ||
+         (iRoll >= 0 && poOgrFeat->IsFieldSet(iRoll))) )
+    {
+        OGRPoint* poOgrPoint = (OGRPoint*) poOgrGeom;
+        CameraPtr camera = poKmlFactory->CreateCamera();
+        camera->set_latitude(poOgrPoint->getY());
+        camera->set_longitude(poOgrPoint->getX());
+        if( poOgrPoint->getCoordinateDimension() == 3 )
+            camera->set_altitude(poOgrPoint->getZ());
+        if( iHeading >= 0 && poOgrFeat->IsFieldSet(iHeading) )
+            camera->set_heading(poOgrFeat->GetFieldAsDouble(iHeading));
+        if( iTilt >= 0 && poOgrFeat->IsFieldSet(iTilt) )
+            camera->set_tilt(poOgrFeat->GetFieldAsDouble(iTilt));
+        if( iRoll >= 0 && poOgrFeat->IsFieldSet(iRoll) )
+            camera->set_roll(poOgrFeat->GetFieldAsDouble(iRoll));
+        poKmlPlacemark->set_abstractview(camera);
+    }
+    else
+    {
+        ElementPtr poKmlElement = geom2kml ( poOgrGeom, -1, 0, poKmlFactory );
+
+        poKmlPlacemark->set_geometry ( AsGeometry ( poKmlElement ) );
+    }
 
     /***** fields *****/
 
@@ -96,6 +124,18 @@ OGRFeature *kml2feat (
             kml2geom ( poKmlPlacemark->get_geometry (  ), poOgrSRS );
         poOgrFeat->SetGeometryDirectly ( poOgrGeom );
 
+    }
+    else if ( poKmlPlacemark->has_abstractview (  ) &&
+              poKmlPlacemark->get_abstractview()->IsA( kmldom::Type_Camera) ) {
+        const CameraPtr& camera = AsCamera(poKmlPlacemark->get_abstractview());
+        if( camera->has_longitude() && camera->has_latitude() )
+        {
+            if( camera->has_altitude() )
+                poOgrFeat->SetGeometryDirectly( new OGRPoint( camera->get_longitude(), camera->get_latitude(), camera->get_altitude() ) );
+            else
+                poOgrFeat->SetGeometryDirectly( new OGRPoint( camera->get_longitude(), camera->get_latitude() ) );
+            poOgrFeat->GetGeometryRef()->assignSpatialReference( poOgrSRS );
+        }
     }
 
     /***** fields *****/

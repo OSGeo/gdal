@@ -30,7 +30,7 @@
   <p>
     Libkml from Google provides reading services for any valid KML file.
     However, please be advised that some KML facilities do not map into the
-    Simple Features specification ogr uses as its internal structure.
+    Simple Features specification OGR uses as its internal structure.
     Therefore, a best effort will be made by the driver to understand the
     content of a KML file read by libkml into ogr, but your mileage may vary.
     Please try a few KML files as samples to get a sense of what is understood.
@@ -239,6 +239,27 @@
       &lt;drawOrder&gt;</a>. The name of the ogr field can be changed with the
       enviroment variable LIBKML_DRAWORDER_FIELD .
     </dd>
+    <dt>heading</dt>
+    <dd>This real field maps to the kml tag 
+      <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#heading">
+      &lt;heading&gt;</a>. The name of the ogr field can be changed with the
+      enviroment variable LIBKML_HEADING_FIELD. This field is present only if a Placemark has
+      a Camera with a heading element.
+    </dd>
+    <dt>tilt</dt>
+    <dd>This real field maps to the kml tag 
+      <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#tilt">
+      &lt;tilt&gt;</a>. The name of the ogr field can be changed with the
+      enviroment variable LIBKML_TILT_FIELD. This field is present only if a Placemark has
+      a Camera with a tilt element.
+    </dd>
+    <dt>roll</dt>
+    <dd>This real field maps to the kml tag 
+      <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#roll">
+      &lt;roll&gt;</a>. The name of the ogr field can be changed with the
+      enviroment variable LIBKML_ROLL_FIELD. This field is present only if a Placemark has
+      a Camera with a roll element.
+    </dd>
     <dt>OGR_STYLE</dt>
     <dd>This string field maps to a features style string, OGR reads this field
       if there is no style string set on the feature.
@@ -253,7 +274,8 @@
     Geometry</a> to KML Geometry is pretty strait forwards with only a couple
     of exceptions. Point to 
     <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#point">
-    &lt;Point&gt;</a>, LineString to
+    &lt;Point&gt;</a> (unless heading and/or tilt and/or roll field names are found, in
+    which case a <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#camera">Camera</a> object will be generated), LineString to
     <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#linestring">
     &lt;LineString&gt;</a>, LinearRing to
     <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#linearring">

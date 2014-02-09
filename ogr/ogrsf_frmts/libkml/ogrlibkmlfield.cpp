@@ -52,6 +52,7 @@ using kmldom::GeometryPtr;
 using kmldom::FeaturePtr;
 using kmldom::GroundOverlayPtr;
 using kmldom::IconPtr;
+using kmldom::CameraPtr;
 
 #include "ogr_libkml.h"
 
@@ -703,6 +704,13 @@ void field2kml (
 
         case OFTReal:          //   Double Precision floating point
         {
+            if( EQUAL(name, oFC.headingfield) ||
+                EQUAL(name, oFC.tiltfield) ||
+                EQUAL(name, oFC.rollfield) )
+            {
+                continue;
+            }
+
             poKmlSimpleData = poKmlFactory->CreateSimpleData (  );
             poKmlSimpleData->set_name ( name );
 
@@ -1175,6 +1183,36 @@ void kml2field (
             poOgrFeat->SetField ( iField, nExtrude );
 
     }
+    
+    /***** camera *****/
+    
+    else if ( poKmlPlacemark &&
+              poKmlPlacemark->has_abstractview (  ) &&
+              poKmlPlacemark->get_abstractview()->IsA( kmldom::Type_Camera) ) {
+
+        const CameraPtr& camera = AsCamera(poKmlPlacemark->get_abstractview());
+
+        if( camera->has_heading() )
+        {
+            int iField = poOgrFeat->GetFieldIndex ( oFC.headingfield );
+            if ( iField > -1 )
+                poOgrFeat->SetField ( iField, camera->get_heading() );
+        }
+
+        if( camera->has_tilt() )
+        {
+            int iField = poOgrFeat->GetFieldIndex ( oFC.tiltfield );
+            if ( iField > -1 )
+                poOgrFeat->SetField ( iField, camera->get_tilt() );
+        }
+
+        if( camera->has_roll() )
+        {
+            int iField = poOgrFeat->GetFieldIndex ( oFC.rollfield );
+            if ( iField > -1 )
+                poOgrFeat->SetField ( iField, camera->get_roll() );
+        }
+    }
 
     /***** ground overlay *****/
 
@@ -1503,4 +1541,7 @@ void get_fieldconfig( struct fieldconfig *oFC) {
                                                        "drawOrder" );
     oFC->iconfield = CPLGetConfigOption ( "LIBKML_ICON_FIELD",
                                                   "icon" );
+    oFC->headingfield = CPLGetConfigOption( "LIBKML_HEADING_FIELD", "heading");
+    oFC->tiltfield = CPLGetConfigOption( "LIBKML_TILT_FIELD", "tilt");
+    oFC->rollfield = CPLGetConfigOption( "LIBKML_ROLL_FIELD", "roll");
 }
