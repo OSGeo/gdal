@@ -218,7 +218,8 @@ int  GenerateRootKml(const char* filename,
     VSIFPrintfL(fp, "\t<Document>\n");
     VSIFPrintfL(fp, "\t\t<name>%s</name>\n", tmpfilename);
     VSIFPrintfL(fp, "\t\t<description></description>\n");
-    VSIFPrintfL(fp, "\t\t<Style>\n");
+    VSIFPrintfL(fp, "\t\t<styleUrl>#hideChildrenStyle</styleUrl>\n");
+    VSIFPrintfL(fp, "\t\t<Style id=\"hideChildrenStyle\">\n");
     VSIFPrintfL(fp, "\t\t\t<ListStyle id=\"hideChildren\">\n");
     VSIFPrintfL(fp, "\t\t\t\t<listItemType>checkHideChildren</listItemType>\n");
     VSIFPrintfL(fp, "\t\t\t</ListStyle>\n");
@@ -348,7 +349,8 @@ int  GenerateChildKml(std::string filename,
     VSIFPrintfL(fp, "<kml xmlns=\"http://www.opengis.net/kml/2.2\" xmlns:gx=\"http://www.google.com/kml/ext/2.2\">\n");
     VSIFPrintfL(fp, "\t<Document>\n");
     VSIFPrintfL(fp, "\t\t<name>%d/%d/%d.kml</name>\n", zoom, ix, iy);
-    VSIFPrintfL(fp, "\t\t<Style>\n");
+    VSIFPrintfL(fp, "\t\t<styleUrl>#hideChildrenStyle</styleUrl>\n");
+    VSIFPrintfL(fp, "\t\t<Style id=\"hideChildrenStyle\">\n");
     VSIFPrintfL(fp, "\t\t\t<ListStyle id=\"hideChildren\">\n");
     VSIFPrintfL(fp, "\t\t\t\t<listItemType>checkHideChildren</listItemType>\n");
     VSIFPrintfL(fp, "\t\t\t</ListStyle>\n");
