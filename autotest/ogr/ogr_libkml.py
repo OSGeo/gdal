@@ -813,7 +813,72 @@ def ogr_libkml_gxtrack():
     ds = None
 
     return 'success'
+
+###############################################################################
+# Test generating and reading KML with <Camera> element
+
+def ogr_libkml_camera():
+
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_camera.kml")
+    lyr = ds.CreateLayer('test')
+    lyr.CreateField(ogr.FieldDefn("heading", ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn("tilt", ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn("roll", ogr.OFTReal))
+    dst_feat = ogr.Feature( lyr.GetLayerDefn() )
+    dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT (2 49)'))
+    dst_feat.SetField("heading", 70)
+    dst_feat.SetField("tilt", 75)
+    dst_feat.SetField("roll", 10)
+    lyr.CreateFeature( dst_feat )
     
+    dst_feat = ogr.Feature( lyr.GetLayerDefn() )
+    dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT (3 50 1)'))
+    dst_feat.SetField("heading", -70)
+    lyr.CreateFeature( dst_feat )
+
+    ds = None
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_libkml_camera.kml', 'rb')
+    data = gdal.VSIFReadL(1, 2048, f)
+    gdal.VSIFCloseL(f)
+
+    if data.find('<Camera>') == -1 or \
+       data.find('<longitude>2</longitude>') == -1 or \
+       data.find('<latitude>49</latitude>') == -1 or \
+       data.find('<heading>70</heading>') == -1 or \
+       data.find('<tilt>75</tilt>') == -1 or \
+       data.find('<roll>10</roll>') == -1:
+        print(data)
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    ds = ogr.Open('/vsimem/ogr_libkml_camera.kml')
+    lyr = ds.GetLayer(0)
+
+    feat = lyr.GetNextFeature()
+    if feat.GetGeometryRef().ExportToWkt() != 'POINT (2 49)' or \
+       feat.GetField("heading") != 70.0 or \
+       feat.GetField("tilt") != 75.0 or \
+       feat.GetField("roll") != 10.0:
+        feat.DumpReadable()
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+    if feat.GetGeometryRef().ExportToWkt() != 'POINT (3 50 1)' or \
+       feat.GetField("heading") != -70.0 or \
+       feat.IsFieldSet("tilt") or \
+       feat.IsFieldSet("roll"):
+        feat.DumpReadable()
+        gdaltest.post_reason('failure')
+        return 'fail'
+    ds = None
+
+    return 'success'
+
 ###############################################################################
 #  Cleanup
 
@@ -826,6 +891,7 @@ def ogr_libkml_cleanup():
 
     gdal.Unlink('/vsimem/libkml.kml')
     gdal.Unlink('/vsimem/libkml.kmz')
+    gdal.Unlink("/vsimem/ogr_libkml_camera.kml")
 
     # Re-register KML driver if necessary
     if ogrtest.kml_drv is not None:
@@ -861,6 +927,7 @@ gdaltest_list = [
     ogr_libkml_read_schema,
     ogr_libkml_extended_data_without_schema_data,
     ogr_libkml_gxtrack,
+    ogr_libkml_camera,
     ogr_libkml_cleanup ]
 
 if __name__ == '__main__':
