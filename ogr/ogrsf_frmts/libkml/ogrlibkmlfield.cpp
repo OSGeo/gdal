@@ -372,29 +372,7 @@ void field2kml (
                     const char *pszAltitudeMode = pszUTF8String ;
 
                     int isGX = FALSE;
-                    int iAltitudeMode = kmldom::ALTITUDEMODE_CLAMPTOGROUND;
-
-                    if ( EQUAL ( pszAltitudeMode, "clampToGround" ) )
-                        iAltitudeMode = kmldom::ALTITUDEMODE_CLAMPTOGROUND;
-
-                    else if ( EQUAL ( pszAltitudeMode, "relativeToGround" ) )
-                        iAltitudeMode = kmldom::ALTITUDEMODE_RELATIVETOGROUND;
-
-                    else if ( EQUAL ( pszAltitudeMode, "absolute" ) )
-                        iAltitudeMode = kmldom::ALTITUDEMODE_ABSOLUTE;
-
-                    else if ( EQUAL ( pszAltitudeMode, "relativeToSeaFloor" ) ) {
-                        iAltitudeMode =
-                            kmldom::GX_ALTITUDEMODE_RELATIVETOSEAFLOOR;
-                        isGX = TRUE;
-                    }
-
-                    else if ( EQUAL ( pszAltitudeMode, "clampToSeaFloor" ) ) {
-                        iAltitudeMode =
-                            kmldom::GX_ALTITUDEMODE_CLAMPTOSEAFLOOR;
-                        isGX = TRUE;
-                    }
-
+                    int iAltitudeMode = kmlAltitudeModeFromString(pszAltitudeMode, isGX);
 
                     if ( poKmlPlacemark->has_geometry (  ) ) {
                         GeometryPtr poKmlGeometry =
@@ -1544,4 +1522,44 @@ void get_fieldconfig( struct fieldconfig *oFC) {
     oFC->headingfield = CPLGetConfigOption( "LIBKML_HEADING_FIELD", "heading");
     oFC->tiltfield = CPLGetConfigOption( "LIBKML_TILT_FIELD", "tilt");
     oFC->rollfield = CPLGetConfigOption( "LIBKML_ROLL_FIELD", "roll");
+}
+
+/************************************************************************/
+/*                 kmlAltitudeModeFromString()                          */
+/************************************************************************/
+
+int kmlAltitudeModeFromString(const char* pszAltitudeMode,
+                              int& isGX)
+{
+    isGX = FALSE;
+    int iAltitudeMode = kmldom::ALTITUDEMODE_CLAMPTOGROUND;
+
+    if ( EQUAL ( pszAltitudeMode, "clampToGround" ) )
+        iAltitudeMode = kmldom::ALTITUDEMODE_CLAMPTOGROUND;
+
+    else if ( EQUAL ( pszAltitudeMode, "relativeToGround" ) )
+        iAltitudeMode = kmldom::ALTITUDEMODE_RELATIVETOGROUND;
+
+    else if ( EQUAL ( pszAltitudeMode, "absolute" ) )
+        iAltitudeMode = kmldom::ALTITUDEMODE_ABSOLUTE;
+
+    else if ( EQUAL ( pszAltitudeMode, "relativeToSeaFloor" ) ) {
+        iAltitudeMode =
+            kmldom::GX_ALTITUDEMODE_RELATIVETOSEAFLOOR;
+        isGX = TRUE;
+    }
+
+    else if ( EQUAL ( pszAltitudeMode, "clampToSeaFloor" ) ) {
+        iAltitudeMode =
+            kmldom::GX_ALTITUDEMODE_CLAMPTOSEAFLOOR;
+        isGX = TRUE;
+    }
+    else
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "Unrecognized value for altitudeMode: %s",
+                 pszAltitudeMode);
+    }
+
+    return iAltitudeMode;
 }

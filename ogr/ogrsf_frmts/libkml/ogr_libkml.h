@@ -117,6 +117,13 @@ class OGRLIBKMLLayer:public OGRLayer
     SchemaPtr                 GetKmlSchema () { return m_poKmlSchema; };
     const char               *GetFileName (  ) { return m_pszFileName; };
 
+    void                      SetLookAt(const char* pszLookatLongitude,
+                                        const char* pszLookatLatitude,
+                                        const char* pszLookatAltitude,
+                                        const char* pszLookatHeading,
+                                        const char* pszLookatTilt,
+                                        const char* pszLookatRange,
+                                        const char* pszLookatAltitudeMode);
 
     static CPLString          LaunderFieldNames(CPLString osName);
 
@@ -240,11 +247,11 @@ class OGRLIBKMLDataSource:public OGRDataSource
 
     /***** methods to create layers on various datasource types *****/
     
-    OGRLayer                 *CreateLayerKml ( const char *pszLayerName,
+    OGRLIBKMLLayer           *CreateLayerKml ( const char *pszLayerName,
                                                OGRSpatialReference * poOgrSRS,
                                                OGRwkbGeometryType eGType,
                                                char **papszOptions );
-    OGRLayer                 *CreateLayerKmz ( const char *pszLayerName,
+    OGRLIBKMLLayer           *CreateLayerKmz ( const char *pszLayerName,
                                                OGRSpatialReference * poOgrSRS,
                                                OGRwkbGeometryType eGType,
                                                char **papszOptions );
