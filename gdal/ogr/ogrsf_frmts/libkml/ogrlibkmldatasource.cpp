@@ -1692,7 +1692,7 @@ OGRErr OGRLIBKMLDataSource::DeleteLayer (
 
 ******************************************************************************/
 
-OGRLayer *OGRLIBKMLDataSource::CreateLayerKml (
+OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKml (
     const char *pszLayerName,
     OGRSpatialReference * poOgrSRS,
     OGRwkbGeometryType eGType,
@@ -1714,7 +1714,7 @@ OGRLayer *OGRLIBKMLDataSource::CreateLayerKml (
 
     poKmlDocument->set_name ( pszLayerName );
 
-    return ( OGRLayer * ) poOgrLayer;
+    return poOgrLayer;
 }
 
 /******************************************************************************
@@ -1729,7 +1729,7 @@ OGRLayer *OGRLIBKMLDataSource::CreateLayerKml (
 
 ******************************************************************************/
 
-OGRLayer *OGRLIBKMLDataSource::CreateLayerKmz (
+OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKmz (
     const char *pszLayerName,
     OGRSpatialReference * poOgrSRS,
     OGRwkbGeometryType eGType,
@@ -1773,7 +1773,7 @@ OGRLayer *OGRLIBKMLDataSource::CreateLayerKmz (
 
     poKmlDocument->set_name ( pszLayerName );
 
-    return ( OGRLayer * ) poOgrLayer;
+    return poOgrLayer;
 }
 
 /******************************************************************************
@@ -1805,7 +1805,7 @@ OGRLayer *OGRLIBKMLDataSource::CreateLayer (
         return NULL;
     }
 
-    OGRLayer *poOgrLayer = NULL;
+    OGRLIBKMLLayer *poOgrLayer = NULL;
 
     /***** kml DS *****/
 
@@ -1821,8 +1821,24 @@ OGRLayer *OGRLIBKMLDataSource::CreateLayer (
 
     }
 
-
-
+    const char* pszLookatLongitude = CSLFetchNameValue(papszOptions, "LOOKAT_LONGITUDE");
+    const char* pszLookatLatitude = CSLFetchNameValue(papszOptions, "LOOKAT_LATITUDE");
+    const char* pszLookatAltitude = CSLFetchNameValue(papszOptions, "LOOKAT_ALTITUDE");
+    const char* pszLookatHeading = CSLFetchNameValue(papszOptions, "LOOKAT_HEADING");
+    const char* pszLookatTilt = CSLFetchNameValue(papszOptions, "LOOKAT_TILT");
+    const char* pszLookatRange = CSLFetchNameValue(papszOptions, "LOOKAT_RANGE");
+    const char* pszLookatAltitudeMode = CSLFetchNameValue(papszOptions, "LOOKAT_ALTITUDEMODE");
+    if( pszLookatLongitude != NULL && pszLookatLatitude != NULL &&
+        pszLookatRange != NULL )
+    {
+        poOgrLayer->SetLookAt(pszLookatLongitude,
+                              pszLookatLatitude,
+                              pszLookatAltitude,
+                              pszLookatHeading,
+                              pszLookatTilt,
+                              pszLookatRange,
+                              pszLookatAltitudeMode);
+    }
 
     /***** mark the dataset as updated *****/
 

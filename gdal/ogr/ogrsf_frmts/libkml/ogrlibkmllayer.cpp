@@ -49,6 +49,7 @@ using kmldom::ExtendedDataPtr;
 using kmldom::SchemaDataPtr;
 using kmldom::DataPtr;
 using kmldom::CameraPtr;
+using kmldom::LookAtPtr;
 
 #include "ogrlibkmlfeature.h"
 #include "ogrlibkmlfield.h"
@@ -766,4 +767,40 @@ CPLString OGRLIBKMLLayer::LaunderFieldNames(CPLString osName)
             osLaunderedName += "_";
     }
     return osLaunderedName;
+}
+
+/************************************************************************/
+/*                            SetLookAt()                               */
+/************************************************************************/
+
+void OGRLIBKMLLayer::SetLookAt( const char* pszLookatLongitude,
+                                const char* pszLookatLatitude,
+                                const char* pszLookatAltitude,
+                                const char* pszLookatHeading,
+                                const char* pszLookatTilt,
+                                const char* pszLookatRange,
+                                const char* pszLookatAltitudeMode )
+{
+    KmlFactory *poKmlFactory = m_poOgrDS->GetKmlFactory (  );
+    LookAtPtr lookAt = poKmlFactory->CreateLookAt();
+    lookAt->set_latitude(CPLAtof(pszLookatLatitude));
+    lookAt->set_longitude(CPLAtof(pszLookatLongitude));
+    if( pszLookatAltitude != NULL )
+        lookAt->set_altitude(CPLAtof(pszLookatAltitude));
+    if( pszLookatHeading != NULL )
+        lookAt->set_heading(CPLAtof(pszLookatHeading));
+    if( pszLookatTilt != NULL )
+        lookAt->set_tilt(CPLAtof(pszLookatTilt));
+    lookAt->set_range(CPLAtof(pszLookatRange));
+    if( pszLookatAltitudeMode != NULL )
+    {
+        int isGX = FALSE;
+        int iAltitudeMode = kmlAltitudeModeFromString(pszLookatAltitudeMode, isGX);
+        if( isGX )
+            lookAt->set_gx_altitudemode(iAltitudeMode);
+        else
+            lookAt->set_altitudemode(iAltitudeMode);
+    }
+
+    m_poKmlLayer->set_abstractview(lookAt);
 }
