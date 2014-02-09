@@ -80,6 +80,16 @@ typedef struct
 } BandProperty;
 
 /************************************************************************/
+/*                            ArgIsNumeric()                            */
+/************************************************************************/
+
+static int ArgIsNumeric( const char *pszArg )
+
+{
+    return CPLGetValueType(pszArg) != CPL_VALUE_STRING;
+}
+
+/************************************************************************/
 /*                               Usage()                                */
 /************************************************************************/
 
@@ -1026,7 +1036,15 @@ int VRTBuilder::Build(GDALProgressFunc pfnProgress, void * pProgressData)
             nSrcNoDataCount = CSLCount(papszTokens);
             padfSrcNoData = (double *) CPLMalloc(sizeof(double) * nSrcNoDataCount);
             for(i=0;i<nSrcNoDataCount;i++)
+            {
+                if( !ArgIsNumeric(papszTokens[i]) )
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg, "Invalid -srcnodata value");
+                    CSLDestroy(papszTokens);
+                    return CE_Failure;
+                }
                 padfSrcNoData[i] = CPLAtofM(papszTokens[i]);
+            }
             CSLDestroy(papszTokens);
         }
     }
@@ -1043,7 +1061,15 @@ int VRTBuilder::Build(GDALProgressFunc pfnProgress, void * pProgressData)
             nVRTNoDataCount = CSLCount(papszTokens);
             padfVRTNoData = (double *) CPLMalloc(sizeof(double) * nVRTNoDataCount);
             for(i=0;i<nVRTNoDataCount;i++)
+            {
+                if( !ArgIsNumeric(papszTokens[i]) )
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg, "Invalid -vrtnodata value");
+                    CSLDestroy(papszTokens);
+                    return CE_Failure;
+                }
                 padfVRTNoData[i] = CPLAtofM(papszTokens[i]);
+            }
             CSLDestroy(papszTokens);
         }
     }
@@ -1271,6 +1297,8 @@ int main( int nArgc, char ** papszArgv )
     int *panBandList = NULL;
     int nBandCount = 0;
     int nMaxBandNo = 0;
+    int nRet;
+
     /* Check strict compilation and runtime library version as we use C++ API */
     if (! GDAL_CHECK_VERSION(papszArgv[0]))
         exit(1);
@@ -1519,7 +1547,7 @@ int main( int nArgc, char ** papszArgv )
                         bSeparate, bAllowProjectionDifference, bAddAlpha, bHideNoData, nSubdataset,
                         pszSrcNoData, pszVRTNoData, pszOutputSRS);
 
-    oBuilder.Build(pfnProgress, NULL);
+    nRet = (oBuilder.Build(pfnProgress, NULL) == CE_None) ? 0 : 1;
     
     for(i=0;i<nInputFiles;i++)
     {
@@ -1535,5 +1563,5 @@ int main( int nArgc, char ** papszArgv )
     OGRCleanupAll();
 #endif
 
-    return 0;
+    return nRet;
 }
