@@ -312,6 +312,7 @@ void field2kml (
     int nFields = poOgrFeat->GetFieldCount (  );
     int iSkip1 = -1;
     int iSkip2 = -1;
+    int iAltitudeMode = kmldom::ALTITUDEMODE_CLAMPTOGROUND;
 
     for ( i = 0; i < nFields; i++ ) {
 
@@ -372,7 +373,7 @@ void field2kml (
                     const char *pszAltitudeMode = pszUTF8String ;
 
                     int isGX = FALSE;
-                    int iAltitudeMode = kmlAltitudeModeFromString(pszAltitudeMode, isGX);
+                    iAltitudeMode = kmlAltitudeModeFromString(pszAltitudeMode, isGX);
 
                     if ( poKmlPlacemark->has_geometry (  ) ) {
                         GeometryPtr poKmlGeometry =
@@ -631,10 +632,20 @@ void field2kml (
 
                 if ( poKmlPlacemark->has_geometry (  )
                      && -1 < poOgrFeat->GetFieldAsInteger ( i ) ) {
-                    GeometryPtr poKmlGeometry =
-                        poKmlPlacemark->get_geometry (  );
-                    ogr2extrude_rec ( poOgrFeat->GetFieldAsInteger ( i ),
-                                      poKmlGeometry );
+                    int iExtrude = poOgrFeat->GetFieldAsInteger ( i );
+                    if( iExtrude &&
+                        iAltitudeMode == kmldom::ALTITUDEMODE_CLAMPTOGROUND )
+                    {
+                        CPLError(CE_Warning, CPLE_NotSupported,
+                            "altitudeMode=clampToGround unsupported with extrude=1");
+                    }
+                    else
+                    {
+                        GeometryPtr poKmlGeometry =
+                            poKmlPlacemark->get_geometry (  );
+                        ogr2extrude_rec ( iExtrude,
+                                        poKmlGeometry );
+                    }
                 }
                 continue;
             }
