@@ -634,7 +634,8 @@ void field2kml (
                      && -1 < poOgrFeat->GetFieldAsInteger ( i ) ) {
                     int iExtrude = poOgrFeat->GetFieldAsInteger ( i );
                     if( iExtrude &&
-                        iAltitudeMode == kmldom::ALTITUDEMODE_CLAMPTOGROUND )
+                        iAltitudeMode == kmldom::ALTITUDEMODE_CLAMPTOGROUND &&
+                        CSLTestBoolean(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
                     {
                         CPLError(CE_Warning, CPLE_NotSupported,
                             "altitudeMode=clampToGround unsupported with extrude=1");
@@ -657,10 +658,22 @@ void field2kml (
 
                 if ( poKmlPlacemark->has_geometry (  )
                      && -1 < poOgrFeat->GetFieldAsInteger ( i ) ) {
-                    GeometryPtr poKmlGeometry =
-                        poKmlPlacemark->get_geometry (  );
-                    ogr2tessellate_rec ( poOgrFeat->GetFieldAsInteger ( i ),
-                                         poKmlGeometry );
+                    int iTesselate = poOgrFeat->GetFieldAsInteger ( i );
+                    if( iTesselate &&
+                        iAltitudeMode != kmldom::ALTITUDEMODE_CLAMPTOGROUND &&
+                        iAltitudeMode != kmldom::GX_ALTITUDEMODE_CLAMPTOSEAFLOOR &&
+                        CSLTestBoolean(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
+                    {
+                        CPLError(CE_Warning, CPLE_NotSupported,
+                            "altitudeMode!=clampToGround && altitudeMode!=clampToSeaFloor unsupported with tesselate=1");
+                    }
+                    else
+                    {
+                        GeometryPtr poKmlGeometry =
+                            poKmlPlacemark->get_geometry (  );
+                        ogr2tessellate_rec ( iTesselate,
+                                            poKmlGeometry );
+                    }
                 }
 
                 continue;
