@@ -880,6 +880,48 @@ def ogr_libkml_camera():
     return 'success'
 
 ###############################################################################
+# Test generating a LookAt element at Document level
+
+def ogr_libkml_write_layer_lookat():
+
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_layer_lookat.kml")
+    options = [ 'LOOKAT_LONGITUDE=2', 'LOOKAT_LATITUDE=49', 'LOOKAT_RANGE=150' ]
+    lyr = ds.CreateLayer('test', options = options)
+    options = [ 'LOOKAT_LONGITUDE=3', 'LOOKAT_LATITUDE=50', 'LOOKAT_RANGE=250',
+                'LOOKAT_ALTITUDE=100', 'LOOKAT_HEADING=70', 'LOOKAT_TILT=50', 'LOOKAT_ALTITUDEMODE=relativeToGround']
+    lyr = ds.CreateLayer('test2', options = options)
+    ds = None
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_layer_lookat.kml', 'rb')
+    data = gdal.VSIFReadL(1, 2048, f)
+    gdal.VSIFCloseL(f)
+
+    if data.find('<LookAt>') == -1 or \
+       data.find('<longitude>2</longitude>') == -1 or \
+       data.find('<latitude>49</latitude>') == -1 or \
+       data.find('<range>150</range>') == -1:
+        print(data)
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    if data.find('<LookAt>') == -1 or \
+       data.find('<longitude>3</longitude>') == -1 or \
+       data.find('<latitude>50</latitude>') == -1 or \
+       data.find('<altitude>100</altitude>') == -1 or \
+       data.find('<heading>70</heading>') == -1 or \
+       data.find('<tilt>50</tilt>') == -1 or \
+       data.find('<range>150</range>') == -1 or \
+       data.find('<altitudeMode>relativeToGround</altitudeMode>') == -1:
+        print(data)
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_libkml_cleanup():
@@ -892,6 +934,7 @@ def ogr_libkml_cleanup():
     gdal.Unlink('/vsimem/libkml.kml')
     gdal.Unlink('/vsimem/libkml.kmz')
     gdal.Unlink("/vsimem/ogr_libkml_camera.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_write_layer_lookat.kml")
 
     # Re-register KML driver if necessary
     if ogrtest.kml_drv is not None:
@@ -928,6 +971,7 @@ gdaltest_list = [
     ogr_libkml_extended_data_without_schema_data,
     ogr_libkml_gxtrack,
     ogr_libkml_camera,
+    ogr_libkml_write_layer_lookat,
     ogr_libkml_cleanup ]
 
 if __name__ == '__main__':
