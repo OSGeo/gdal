@@ -48,6 +48,7 @@ using kmlengine::Bbox;
 using kmldom::ExtendedDataPtr;
 using kmldom::SchemaDataPtr;
 using kmldom::DataPtr;
+using kmldom::CameraPtr;
 
 #include "ogrlibkmlfeature.h"
 #include "ogrlibkmlfield.h"
@@ -201,6 +202,7 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
 
             /***** try to find the correct schema *****/
 
+            int bHasHeading = FALSE, bHasTilt = FALSE, bHasRoll = FALSE;
             FeaturePtr poKmlFeature;
 
             /***** find the first placemark *****/
@@ -212,6 +214,34 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
                 poKmlFeature =
                     m_poKmlLayer->get_feature_array_at ( iFeature++ );
 
+                if( poKmlFeature->Type() == kmldom::Type_Placemark )
+                {
+                    PlacemarkPtr poKmlPlacemark = AsPlacemark ( poKmlFeature );
+                    if( !poKmlPlacemark->has_geometry (  ) &&
+                        poKmlPlacemark->has_abstractview (  ) &&
+                        poKmlPlacemark->get_abstractview()->IsA( kmldom::Type_Camera) )
+                    {
+                        const CameraPtr& camera = AsCamera(poKmlPlacemark->get_abstractview());
+                        if( camera->has_heading() && !bHasHeading )
+                        {
+                            bHasHeading = TRUE;
+                            OGRFieldDefn oOgrField ( oFC.headingfield, OFTReal );
+                            m_poOgrFeatureDefn->AddFieldDefn ( &oOgrField );
+                        }
+                        if( camera->has_tilt() && !bHasTilt )
+                        {
+                            bHasTilt = TRUE;
+                            OGRFieldDefn oOgrField ( oFC.tiltfield, OFTReal );
+                            m_poOgrFeatureDefn->AddFieldDefn ( &oOgrField );
+                        }
+                        if( camera->has_roll() && !bHasRoll )
+                        {
+                            bHasRoll = TRUE;
+                            OGRFieldDefn oOgrField ( oFC.rollfield, OFTReal );
+                            m_poOgrFeatureDefn->AddFieldDefn ( &oOgrField );
+                        }
+                    }
+                }
             } while ( poKmlFeature->Type (  ) != kmldom::Type_Placemark );
 
             if ( iFeature <= nFeatures && poKmlFeature &&
@@ -553,7 +583,13 @@ OGRErr OGRLIBKMLLayer::CreateField (
 
     SimpleFieldPtr poKmlSimpleField = NULL;
 
-    if ( (poKmlSimpleField =
+    struct fieldconfig oFC;
+    get_fieldconfig( &oFC );
+
+    if ( strcmp(poField->GetNameRef(), oFC.headingfield) != 0 &&
+         strcmp(poField->GetNameRef(), oFC.tiltfield) != 0 &&
+         strcmp(poField->GetNameRef(), oFC.rollfield) != 0 &&
+         (poKmlSimpleField =
          FieldDef2kml ( poField, m_poOgrDS->GetKmlFactory (  ) )) != NULL )
         m_poKmlSchema->add_simplefield ( poKmlSimpleField );
 
