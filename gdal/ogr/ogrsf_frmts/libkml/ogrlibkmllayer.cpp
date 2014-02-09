@@ -790,13 +790,26 @@ void OGRLIBKMLLayer::SetLookAt( const char* pszLookatLongitude,
     if( pszLookatHeading != NULL )
         lookAt->set_heading(CPLAtof(pszLookatHeading));
     if( pszLookatTilt != NULL )
-        lookAt->set_tilt(CPLAtof(pszLookatTilt));
+    {
+        double dfTilt = CPLAtof(pszLookatTilt);
+        if( dfTilt >= 0 && dfTilt <= 90 )
+            lookAt->set_tilt(dfTilt);
+        else
+            CPLError(CE_Warning, CPLE_AppDefined, "Invalid value for tilt: %s",
+                     pszLookatTilt);
+    }
     lookAt->set_range(CPLAtof(pszLookatRange));
     if( pszLookatAltitudeMode != NULL )
     {
         int isGX = FALSE;
         int iAltitudeMode = kmlAltitudeModeFromString(pszLookatAltitudeMode, isGX);
-        if( isGX )
+        if( iAltitudeMode != kmldom::ALTITUDEMODE_CLAMPTOGROUND &&
+            pszLookatAltitude == NULL )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined, "Lookat altitude should be present for altitudeMode = %s",
+                     pszLookatAltitudeMode);
+        }
+        else if( isGX )
             lookAt->set_gx_altitudemode(iAltitudeMode);
         else
             lookAt->set_altitudemode(iAltitudeMode);
