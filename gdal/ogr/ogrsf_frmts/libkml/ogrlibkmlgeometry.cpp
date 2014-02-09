@@ -303,6 +303,14 @@ ElementPtr geom2kml (
 
     case wkbPolygon:
 
+        CPLErrorReset();
+        if( CSLTestBoolean(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) &&
+            OGRGeometryFactory::haveGEOS() && (!poOgrGeom->IsValid() ||
+             CPLGetLastErrorType() != CE_None) )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported, "Invalid polygon");
+            return NULL;
+        }
         poOgrPolygon = ( OGRPolygon * ) poOgrGeom;
 
         poKmlGeometry = poKmlPolygon = poKmlFactory->CreatePolygon (  );
@@ -324,6 +332,14 @@ ElementPtr geom2kml (
 
     case wkbPolygon25D:
 
+        CPLErrorReset();
+        if( CSLTestBoolean(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) &&
+            OGRGeometryFactory::haveGEOS() && (!poOgrGeom->IsValid() ||
+             CPLGetLastErrorType() != CE_None) )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported, "Invalid polygon");
+            return NULL;
+        }
         poOgrPolygon = ( OGRPolygon * ) poOgrGeom;
 
         poKmlGeometry = poKmlPolygon = poKmlFactory->CreatePolygon (  );

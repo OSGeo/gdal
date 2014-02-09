@@ -438,7 +438,7 @@ def ogr_libkml_write(filename):
     dst_feat.Destroy()
 
     dst_feat = ogr.Feature( lyr.GetLayerDefn() )
-    dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON ((0 1 0,2 3 0,4 5 0,0 1 0),(0 1 0,2 3 0,4 5 0,0 1 0))'))
+    dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON ((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0),(0.25 0.25 0,0.25 0.75 0,0.75 0.75 0,0.75 0.25 0,0.25 0.25 0))'))
     if lyr.CreateFeature( dst_feat ) != 0:
         gdaltest.post_reason('CreateFeature failed.')
         return 'fail'
@@ -459,7 +459,7 @@ def ogr_libkml_write(filename):
     dst_feat.Destroy()
 
     dst_feat = ogr.Feature( lyr.GetLayerDefn() )
-    dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('MULTIPOLYGON (((0 1 0,2 3 0,4 5 0,0 1 0),(0 1 0,2 3 0,4 5 0,0 1 0)),((0 1 0,2 3 0,4 5 0,0 1 0),(0 1 0,2 3 0,4 5 0,0 1 0)))'))
+    dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('MULTIPOLYGON (((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0),(0.25 0.25 0,0.25 0.75 0,0.75 0.75 0,0.75 0.25 0,0.25 0.25 0)),((-0.25 0.25 0,-0.25 0.75 0,-0.75 0.75 0,-0.75 0.25 0,-0.25 0.25 0)))'))
     if lyr.CreateFeature( dst_feat ) != 0:
         gdaltest.post_reason('CreateFeature failed.')
         return 'fail'
@@ -524,7 +524,7 @@ def ogr_libkml_check_write(filename):
     feat.Destroy()
 
     feat = lyr.GetNextFeature()
-    if feat.GetGeometryRef().ExportToWkt() != 'POLYGON ((0 1 0,2 3 0,4 5 0,0 1 0),(0 1 0,2 3 0,4 5 0,0 1 0))':
+    if feat.GetGeometryRef().ExportToWkt() != 'POLYGON ((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0),(0.25 0.25 0,0.25 0.75 0,0.75 0.75 0,0.75 0.25 0,0.25 0.25 0))':
         print(feat.GetGeometryRef().ExportToWkt())
         gdaltest.post_reason('Unexpected geometry.')
         return 'fail'
@@ -545,7 +545,7 @@ def ogr_libkml_check_write(filename):
     feat.Destroy()
 
     feat = lyr.GetNextFeature()
-    if feat.GetGeometryRef().ExportToWkt() != 'MULTIPOLYGON (((0 1 0,2 3 0,4 5 0,0 1 0),(0 1 0,2 3 0,4 5 0,0 1 0)),((0 1 0,2 3 0,4 5 0,0 1 0),(0 1 0,2 3 0,4 5 0,0 1 0)))':
+    if feat.GetGeometryRef().ExportToWkt() != 'MULTIPOLYGON (((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0),(0.25 0.25 0,0.25 0.75 0,0.75 0.75 0,0.75 0.25 0,0.25 0.25 0)),((-0.25 0.25 0,-0.25 0.75 0,-0.75 0.75 0,-0.75 0.25 0,-0.25 0.25 0)))':
         print(feat.GetGeometryRef().ExportToWkt())
         gdaltest.post_reason('Unexpected geometry.')
         return 'fail'
