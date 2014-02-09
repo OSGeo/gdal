@@ -108,3 +108,5 @@ struct fieldconfig {
 
 void get_fieldconfig( struct fieldconfig *oFC );
 
+int kmlAltitudeModeFromString(const char* pszAltitudeMode,
+                              int& isGX);
