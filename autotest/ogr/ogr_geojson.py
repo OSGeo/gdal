@@ -1571,6 +1571,121 @@ def ogr_geojson_34():
 
     return 'success'
 
+###############################################################################
+# Test handling of huge coordinates (#5377)
+
+def ogr_geojson_35():
+
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    ds = gdaltest.geojson_drv.CreateDataSource('/vsimem/ogr_geojson_35.json')
+    lyr = ds.CreateLayer('foo')
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    geom = ogr.Geometry(ogr.wkbPoint)
+    geom.AddPoint_2D(-1.79769313486231571e+308, -1.79769313486231571e+308)
+    feat.SetGeometry(geom)
+    lyr.CreateFeature(feat)
+    
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    geom = ogr.Geometry(ogr.wkbPoint)
+    geom.AddPoint(-1.7e308 * 2, 1.7e308 * 2, 1.7e308 * 2) # evaluates to -inf, inf
+    feat.SetGeometry(geom)
+    lyr.CreateFeature(feat)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    geom = ogr.Geometry(ogr.wkbLineString)
+    geom.AddPoint_2D(0,0)
+    geom.AddPoint_2D(-1.7e308 * 2, 1.7e308 * 2) # evaluates to -inf, inf
+    feat.SetGeometry(geom)
+    lyr.CreateFeature(feat)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    geom = ogr.Geometry(ogr.wkbPolygon)
+    geom2 = ogr.Geometry(ogr.wkbLinearRing)
+    geom2.AddPoint_2D(0,0)
+    geom2.AddPoint_2D(-1.7e308 * 2, 1.7e308 * 2) # evaluates to -inf, inf
+    geom.AddGeometry(geom2)
+    feat.SetGeometry(geom)
+    lyr.CreateFeature(feat)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    geom = ogr.Geometry(ogr.wkbMultiPoint)
+    geom2 = ogr.Geometry(ogr.wkbPoint)
+    geom2.AddPoint_2D(0,0)
+    geom2 = ogr.Geometry(ogr.wkbPoint)
+    geom2.AddPoint_2D(-1.7e308 * 2, 1.7e308 * 2) # evaluates to -inf, inf
+    geom.AddGeometry(geom2)
+    feat.SetGeometry(geom)
+    lyr.CreateFeature(feat)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    geom = ogr.Geometry(ogr.wkbMultiLineString)
+    geom2 = ogr.Geometry(ogr.wkbLineString)
+    geom2.AddPoint_2D(0,0)
+    geom2 = ogr.Geometry(ogr.wkbLineString)
+    geom2.AddPoint_2D(-1.7e308 * 2, 1.7e308 * 2) # evaluates to -inf, inf
+    geom.AddGeometry(geom2)
+    feat.SetGeometry(geom)
+    lyr.CreateFeature(feat)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    geom = ogr.Geometry(ogr.wkbMultiPolygon)
+    geom2 = ogr.Geometry(ogr.wkbPolygon)
+    geom3 = ogr.Geometry(ogr.wkbLinearRing)
+    geom3.AddPoint_2D(0,0)
+    geom2.AddGeometry(geom3)
+    geom2 = ogr.Geometry(ogr.wkbPolygon)
+    geom3 = ogr.Geometry(ogr.wkbLinearRing)
+    geom3.AddPoint_2D(-1.7e308 * 2, 1.7e308 * 2) # evaluates to -inf, inf
+    geom2.AddGeometry(geom3)
+    geom.AddGeometry(geom2)
+    feat.SetGeometry(geom)
+    lyr.CreateFeature(feat)
+    
+    gdal.PopErrorHandler()
+
+    ds = None
+
+    fp = gdal.VSIFOpenL('/vsimem/ogr_geojson_35.json', 'rb')
+    data = gdal.VSIFReadL(1, 10000, fp).decode('ascii')
+    gdal.VSIFCloseL(fp)
+    #print(data)
+
+    gdal.Unlink('/vsimem/ogr_geojson_35.json')
+
+    if data.find('-1.79') == -1 and data.find('e+308') == -1:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+    if data.find('"type": "Point", "coordinates": null }') == -1:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+    if data.find('"type": "LineString", "coordinates": null }') == -1:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+    if data.find('"type": "Polygon", "coordinates": null }') == -1:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+    if data.find('"type": "MultiPoint", "coordinates": null }') == -1:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+    if data.find('"type": "MultiLineString", "coordinates": null }') == -1:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+    if data.find('"type": "MultiPolygon", "coordinates": null }') == -1:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    return 'success'
 
 ###############################################################################
 
@@ -1638,6 +1753,7 @@ gdaltest_list = [
     ogr_geojson_32,
     ogr_geojson_33,
     ogr_geojson_34,
+    ogr_geojson_35,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':
