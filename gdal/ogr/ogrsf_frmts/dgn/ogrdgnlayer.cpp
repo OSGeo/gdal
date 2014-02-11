@@ -31,6 +31,7 @@
 #include "cpl_conv.h"
 #include "ogr_featurestyle.h"
 #include "ogr_api.h"
+#include <list>
 
 CPL_CVSID("$Id$");
 
@@ -1055,9 +1056,52 @@ OGRErr OGRDGNLayer::CreateFeatureWithGeom( OGRFeature *poFeature,
     {
         OGRPolygon *poPoly = ((OGRPolygon *) poGeom);
 
-        // Ignore all but the exterior ring. 
-        papsGroup = LineStringToElementGroup( poPoly->getExteriorRing(),
-                                              DGNT_SHAPE );
+        DGNElemCore **papsGroupExt = LineStringToElementGroup(
+                poPoly->getExteriorRing(), DGNT_SHAPE);
+
+        int innerRingsCnt = poPoly->getNumInteriorRings();
+
+        if (innerRingsCnt > 0) {
+            CPLDebug("InnerRings", "there are %d inner rings", innerRingsCnt);
+            std::list<DGNElemCore*> dgnElements;
+
+            for (i = 0; papsGroupExt[i] != NULL; i++) {
+                dgnElements.push_back(papsGroupExt[i]);
+            }
+            CPLFree(papsGroupExt);
+
+            // get all interior rings and create complex group shape
+            for (int iRing = 0; iRing < innerRingsCnt; iRing++) {
+                DGNElemCore **papsGroupInner = LineStringToElementGroup(
+                        poPoly->getInteriorRing(iRing), DGNT_SHAPE);
+                papsGroupInner[0]->properties |= DGNPF_HOLE;
+                DGNUpdateElemCoreExtended(hDGN, papsGroupInner[0]);
+                for (i = 0; papsGroupInner[i] != NULL; i++) {
+                    dgnElements.push_back(papsGroupInner[i]);
+                }
+                CPLFree(papsGroupInner);
+            }
+            int index = 1;
+            papsGroup = (DGNElemCore **) CPLCalloc(sizeof(void*),
+                    dgnElements.size() + 2);
+            for (std::list<DGNElemCore*>::iterator list_iter =
+                    dgnElements.begin(); list_iter != dgnElements.end();
+                    list_iter++) {
+                papsGroup[index++] = *list_iter;
+            }
+
+            //papsGroup[0] = DGNCreateComplexHeaderFromGroup( hDGN, DGNT_COMPLEX_SHAPE_HEADER, dgnElements.size(), papsGroup+1);
+            DGNPoint asPoints[1];
+            asPoints[0].x = 0;
+            asPoints[0].y = 0;
+            asPoints[0].z = 0;
+            papsGroup[0] = DGNCreateCellHeaderFromGroup(hDGN, "", 1, NULL,
+                    dgnElements.size(), papsGroup + 1, asPoints + 0, 1.0, 1.0,
+                    0.0);
+            DGNAddShapeFillInfo(hDGN, papsGroup[0], 6);
+        } else {
+            papsGroup = papsGroupExt;
+        }
     }
     else if( wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon 
              || wkbFlatten(poGeom->getGeometryType()) == wkbMultiPoint
@@ -1093,15 +1137,17 @@ OGRErr OGRDGNLayer::CreateFeatureWithGeom( OGRFeature *poFeature,
     int nColor = poFeature->GetFieldAsInteger( "ColorIndex" );
     int nWeight = poFeature->GetFieldAsInteger( "Weight" );
     int nStyle = poFeature->GetFieldAsInteger( "Style" );
+    int nMSLink = poFeature->GetFieldAsInteger( "MSLink" );
 
     nLevel = MAX(0,MIN(63,nLevel));
     nColor = MAX(0,MIN(255,nColor));
     nWeight = MAX(0,MIN(31,nWeight));
     nStyle = MAX(0,MIN(7,nStyle));
+    nMSLink = MAX(0,MIN(4294967295,nMSLink));
 
     DGNUpdateElemCore( hDGN, papsGroup[0], nLevel, nGraphicGroup, nColor, 
                        nWeight, nStyle );
-    
+    DGNAddMSLink( hDGN, papsGroup[0], DGNLT_ODBC, 0, nMSLink );
 /* -------------------------------------------------------------------- */
 /*      Write to file.                                                  */
 /* -------------------------------------------------------------------- */
