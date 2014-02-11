@@ -121,6 +121,7 @@ class OGRDXFLayer : public OGRLayer
     OGRFeature *        TranslateTEXT();
     OGRFeature *        TranslateDIMENSION();
     OGRFeature *        TranslateHATCH();
+    OGRFeature *        TranslateSOLID();
 
     void                FormatDimension( CPLString &osText, double dfValue );
     OGRErr              CollectBoundaryPath( OGRGeometryCollection * );
