@@ -790,23 +790,20 @@ CPLErr swq_select::expand_wildcard( swq_field_list *field_list )
                 }
             }
 
+            int itable = field_list->table_ids[i];
+            char *composed_name;
+            const char *field_name = field_list->names[i];
+            const char *table_alias = 
+                field_list->table_defs[itable].table_alias;
+
+            composed_name = (char *) 
+                CPLMalloc(strlen(field_name)+strlen(table_alias)+2);
+
+            sprintf( composed_name, "%s.%s", table_alias, field_name );
+
+            def->field_name = composed_name;
             if( !compose )
-                def->field_name = CPLStrdup( field_list->names[i] );
-            else
-            {
-                int itable = field_list->table_ids[i];
-                char *composed_name;
-                const char *field_name = field_list->names[i];
-                const char *table_alias = 
-                    field_list->table_defs[itable].table_alias;
-
-                composed_name = (char *) 
-                    CPLMalloc(strlen(field_name)+strlen(table_alias)+2);
-
-                sprintf( composed_name, "%s.%s", table_alias, field_name );
-
-                def->field_name = composed_name;
-            }							
+                def->field_alias = CPLStrdup( field_list->names[i] );
 
             iout++;
 
