@@ -47,12 +47,12 @@ CPL_C_START
 /** List element structure. */
 typedef struct _CPLList
 {
-    /*! Pointer to the data object. Should be allocated and frred by the
+    /*! Pointer to the data object. Should be allocated and freed by the
      * caller.
      * */
     void        *pData;
     /*! Pointer to the next element in list. NULL, if current element is the
-     * last one
+     * last one.
      */
     struct _CPLList    *psNext;
 } CPLList;
@@ -70,4 +70,3 @@ void CPL_DLL *CPLListGetData( CPLList *psElement );
 CPL_C_END
 
 #endif /* _CPL_LIST_H_INCLUDED */
-
