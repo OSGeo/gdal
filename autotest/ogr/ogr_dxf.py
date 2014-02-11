@@ -1238,6 +1238,23 @@ def ogr_dxf_25():
     return 'success'
 
 ###############################################################################
+# SOLID (#5380)
+
+def ogr_dxf_26():
+
+    ds = ogr.Open('data/solid.dxf')
+    lyr = ds.GetLayer(0)
+
+    feat = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry( feat, 'POLYGON ((2.716846 2.762514,2.393674 1.647962,4.391042 1.06881,4.714214 2.183362,2.716846 2.762514))' ):
+        feat.DumpReadable()
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+    
+###############################################################################
 # cleanup
 
 def ogr_dxf_cleanup():
@@ -1276,6 +1293,7 @@ gdaltest_list = [
     ogr_dxf_23,
     ogr_dxf_24,
     ogr_dxf_25,
+    ogr_dxf_26,
     ogr_dxf_cleanup ]
 
 if __name__ == '__main__':
