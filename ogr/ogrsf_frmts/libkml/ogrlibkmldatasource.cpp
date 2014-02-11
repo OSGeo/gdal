@@ -1828,7 +1828,7 @@ OGRLayer *OGRLIBKMLDataSource::CreateLayer (
     const char* pszLookatTilt = CSLFetchNameValue(papszOptions, "LOOKAT_TILT");
     const char* pszLookatRange = CSLFetchNameValue(papszOptions, "LOOKAT_RANGE");
     const char* pszLookatAltitudeMode = CSLFetchNameValue(papszOptions, "LOOKAT_ALTITUDEMODE");
-    if( pszLookatLongitude != NULL && pszLookatLatitude != NULL &&
+    if( poOgrLayer != NULL && pszLookatLongitude != NULL && pszLookatLatitude != NULL &&
         pszLookatRange != NULL )
     {
         poOgrLayer->SetLookAt(pszLookatLongitude,
