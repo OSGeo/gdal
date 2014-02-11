@@ -888,6 +888,38 @@ def ogr_rfc28_40():
         return 'fail'
     return 'success'
 
+
+###############################################################################
+# Verify that SELECT * works on a layer with a field that has a dot character (#5379)
+
+def ogr_rfc28_41():
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
+    lyr = ds.CreateLayer( "my_layer")
+    field_defn = ogr.FieldDefn('a.b', ogr.OFTInteger)
+    lyr.CreateField(field_defn)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, 2)
+    lyr.CreateFeature(feat)
+
+    sql_lyr = ds.ExecuteSQL( 'select * from my_layer' )
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetField('a.b') != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ReleaseResultSet( sql_lyr )
+
+    sql_lyr = ds.ExecuteSQL( 'select l.* from my_layer l' )
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetField('l.a.b') != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ReleaseResultSet( sql_lyr )
+
+    ds = None
+
+    return 'success'
+
 ###############################################################################
 def ogr_rfc28_cleanup():
     gdaltest.lyr = None
@@ -938,6 +970,7 @@ gdaltest_list = [
     ogr_rfc28_38,
     ogr_rfc28_39,
     ogr_rfc28_40,
+    ogr_rfc28_41,
     ogr_rfc28_cleanup ]
 
 if __name__ == '__main__':
