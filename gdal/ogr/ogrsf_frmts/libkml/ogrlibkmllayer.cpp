@@ -55,6 +55,35 @@ using kmldom::LookAtPtr;
 #include "ogrlibkmlfield.h"
 #include "ogrlibkmlstyle.h"
 
+/************************************************************************/
+/*                    OGRLIBKMLGetSanitizedNCName()                     */
+/************************************************************************/
+
+static CPLString OGRLIBKMLGetSanitizedNCName(const char* pszName)
+{
+    CPLString osName(pszName);
+    /* (Approximate) validation rules for a valic NCName */
+    for(size_t i = 0; i < osName.size(); i++)
+    {
+        char ch = osName[i];
+        if( (ch >= 'A' && ch <= 'Z') || ch == '_' || (ch >= 'a' && ch <= 'z') )
+        {
+            /* ok */
+        }
+        else if ( i > 0 && (ch == '-' || ch == '.' || (ch >= '0' && ch <= '9')) )
+        {
+            /* ok */
+        }
+        else if ( ch > 127 )
+        {
+            /* ok : this is an approximation */
+        }
+        else
+            osName[i] = '_';
+    }
+    return osName;
+}
+
 /******************************************************************************
  OGRLIBKMLLayer constructor
 
@@ -319,7 +348,7 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
 
         /***** set the id on the new schema *****/
 
-        std::string oKmlSchemaID = m_pszName;
+        std::string oKmlSchemaID = OGRLIBKMLGetSanitizedNCName(m_pszName);
         oKmlSchemaID.append ( ".schema" );
         m_poKmlSchema->set_id ( oKmlSchemaID );
     }
@@ -467,6 +496,10 @@ OGRErr OGRLIBKMLLayer::CreateFeature (
     /***** update the layer class count of features  *****/
 
     nFeatures++;
+    
+    const char* pszId = CPLSPrintf("%s.%d",
+                    OGRLIBKMLGetSanitizedNCName(GetName()).c_str(), nFeatures);
+    poKmlPlacemark->set_id(pszId);
     
     /***** mark the layer as updated *****/
 
