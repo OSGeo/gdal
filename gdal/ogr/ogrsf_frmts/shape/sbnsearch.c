@@ -245,10 +245,10 @@ SBNSearchHandle SBNOpenDiskTree( const char* pszSBNFilename,
 /* -------------------------------------------------------------------- */
 /*      Compute tree depth.                                             */
 /*      It is computed such as in average there are not more than 8     */
-/*      shapes per node. With a minimum depth of 2, and a maximum of 15 */
+/*      shapes per node. With a minimum depth of 2, and a maximum of 24 */
 /* -------------------------------------------------------------------- */
     nMaxDepth = 2;
-    while( nMaxDepth < 15 && nShapeCount > ((1 << nMaxDepth) - 1) * 8 )
+    while( nMaxDepth < 24 && nShapeCount > ((1 << nMaxDepth) - 1) * 8 )
         nMaxDepth ++;
     hSBN->nMaxDepth = nMaxDepth;
     nMaxNodes = (1 << nMaxDepth) - 1;
