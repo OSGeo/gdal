@@ -1791,6 +1791,8 @@ CPLErr HFARasterAttributeTable::CreateColumn( const char *pszFieldName,
     else if( eFieldUsage == GFU_PixelCount )
     {
         pszFieldName = "Histogram";
+        // histogram is always float in HFA
+        eFieldType = GFT_Real;
     }
     else if( eFieldUsage == GFU_Name )
     {
@@ -3136,7 +3138,8 @@ CPLErr HFARasterBand::WriteNamedRAT( const char *pszName, const GDALRasterAttrib
             bIsColorCol = TRUE;
         }
    
-        if( ( poRAT->GetTypeOfCol(col) == GFT_Real ) || bIsColorCol )
+        // write float also if a color column, or histogram
+        if( ( poRAT->GetTypeOfCol(col) == GFT_Real ) || bIsColorCol || (poRAT->GetUsageOfCol(col) == GFU_PixelCount) )
         {
             int nOffset = HFAAllocateSpace( hHFA->papoBand[nBand-1]->psInfo,
                                             nRowCount * sizeof(double) );
