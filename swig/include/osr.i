@@ -259,6 +259,10 @@ public:
     return OSREPSGTreatsAsLatLong(self);
   }
 
+  int EPSGTreatsAsNorthingEasting() {
+    return OSREPSGTreatsAsNorthingEasting(self);
+  }
+
   OGRErr SetAuthority( const char * pszTargetKey,
                        const char * pszAuthority,
                        int nCode ) {
