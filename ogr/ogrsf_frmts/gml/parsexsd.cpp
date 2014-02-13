@@ -337,7 +337,8 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
 
             GMLPropertyType gmlType = GMLPT_Untyped;
             if (EQUAL(pszStrippedNSType, "string") ||
-                EQUAL(pszStrippedNSType, "Character"))
+                EQUAL(pszStrippedNSType, "Character") ||
+                EQUAL(pszStrippedNSType, "boolean"))
                 gmlType = GMLPT_String;
             /* TODO: Would be nice to have a proper date type */
             else if (EQUAL(pszStrippedNSType, "date") ||
