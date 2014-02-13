@@ -3249,6 +3249,9 @@ SWIGINTERN int OSRSpatialReferenceShadow_IsVertical(OSRSpatialReferenceShadow *s
 SWIGINTERN int OSRSpatialReferenceShadow_EPSGTreatsAsLatLong(OSRSpatialReferenceShadow *self){
     return OSREPSGTreatsAsLatLong(self);
   }
+SWIGINTERN int OSRSpatialReferenceShadow_EPSGTreatsAsNorthingEasting(OSRSpatialReferenceShadow *self){
+    return OSREPSGTreatsAsNorthingEasting(self);
+  }
 
 #include <limits.h>
 #if !defined(SWIG_NO_LLONG_MAX)
@@ -4558,6 +4561,39 @@ SWIGINTERN PyObject *_wrap_SpatialReference_EPSGTreatsAsLatLong(PyObject *SWIGUN
       CPLErrorReset();
     }
     result = (int)OSRSpatialReferenceShadow_EPSGTreatsAsLatLong(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_EPSGTreatsAsNorthingEasting(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  int result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:SpatialReference_EPSGTreatsAsNorthingEasting",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_EPSGTreatsAsNorthingEasting" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (int)OSRSpatialReferenceShadow_EPSGTreatsAsNorthingEasting(arg1);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -12913,6 +12949,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"SpatialReference_IsLocal", _wrap_SpatialReference_IsLocal, METH_VARARGS, (char *)"SpatialReference_IsLocal(SpatialReference self) -> int"},
 	 { (char *)"SpatialReference_IsVertical", _wrap_SpatialReference_IsVertical, METH_VARARGS, (char *)"SpatialReference_IsVertical(SpatialReference self) -> int"},
 	 { (char *)"SpatialReference_EPSGTreatsAsLatLong", _wrap_SpatialReference_EPSGTreatsAsLatLong, METH_VARARGS, (char *)"SpatialReference_EPSGTreatsAsLatLong(SpatialReference self) -> int"},
+	 { (char *)"SpatialReference_EPSGTreatsAsNorthingEasting", _wrap_SpatialReference_EPSGTreatsAsNorthingEasting, METH_VARARGS, (char *)"SpatialReference_EPSGTreatsAsNorthingEasting(SpatialReference self) -> int"},
 	 { (char *)"SpatialReference_SetAuthority", _wrap_SpatialReference_SetAuthority, METH_VARARGS, (char *)"\n"
 		"SpatialReference_SetAuthority(SpatialReference self, char pszTargetKey, char pszAuthority, \n"
 		"    int nCode) -> OGRErr\n"
