@@ -43,7 +43,14 @@ static CPLString OGRPGEscapeStringList(PGconn *hPGConn,
 
 #define UNSUPPORTED_OP_READ_ONLY "%s : unsupported operation on a read-only datasource."
 
-
+int strlen_utf8_c(const char *s) {
+    int i = 0, j = 0;
+    while (s[i]) {
+        if ((s[i] & 0xc0) != 0x80) j++;
+        i++;
+    }
+    return j;
+}
 /************************************************************************/
 /*                        OGRPGTableFeatureDefn                         */
 /************************************************************************/
@@ -1524,7 +1531,7 @@ CPLString OGRPGEscapeString(PGconn *hPGConn,
     /* We need to quote and escape string fields. */
     osCommand += "'";
 
-    int nSrcLen = strlen(pszStrValue);
+    int nSrcLen = strlen_utf8_c(pszStrValue);
     if (nMaxLength > 0 && nSrcLen > nMaxLength)
     {
         CPLDebug( "PG",
@@ -2045,11 +2052,11 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
             nOGRFieldType != OFTBinary )
         {
             int         iChar;
-
+            int         iUTFChar = 0;
             for( iChar = 0; pszStrValue[iChar] != '\0'; iChar++ )
             {
                 if( poFeatureDefn->GetFieldDefn(i)->GetWidth() > 0
-                    && iChar == poFeatureDefn->GetFieldDefn(i)->GetWidth() )
+                    && iUTFChar == poFeatureDefn->GetFieldDefn(i)->GetWidth() )
                 {
                     CPLDebug( "PG",
                               "Truncated %s.%s field value '%s' to %d characters.",
@@ -2060,6 +2067,9 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
                     break;
                 }
 
+                //count of utf chars
+                if ((pszStrValue[iChar] & 0xc0) != 0x80) 
+                    iUTFChar++;
                 /* Escape embedded \, \t, \n, \r since they will cause COPY
                    to misinterpret a line of text and thus abort */
                 if( pszStrValue[iChar] == '\\' || 
