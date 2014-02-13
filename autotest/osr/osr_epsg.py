@@ -144,6 +144,42 @@ def osr_epsg_6():
     return 'success'
 
 ###############################################################################
+#   Check that EPSG:2193 is *not* considered as N/E
+
+def osr_epsg_7():
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG( 2193 )
+
+    if srs.EPSGTreatsAsNorthingEasting() :
+        gdaltest.post_reason('not supposed to be treated as n/e')
+        return 'fail'
+
+    if srs.ExportToWkt().find('AXIS') != -1:
+        gdaltest.post_reason('should not have AXIS node')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+#   Check that EPSGA:2193 is considered as N/E
+
+def osr_epsg_8():
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSGA( 2193 )
+
+    if not srs.EPSGTreatsAsNorthingEasting() :
+        gdaltest.post_reason('supposed to be treated as n/e')
+        return 'fail'
+
+    if srs.ExportToWkt().find('AXIS') == -1:
+        gdaltest.post_reason('should  have AXIS node')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 gdaltest_list = [ 
     osr_epsg_1,
@@ -152,6 +188,8 @@ gdaltest_list = [
     osr_epsg_4,
     osr_epsg_5,
     osr_epsg_6,
+    osr_epsg_7,
+    osr_epsg_8,
     None ]
 
 if __name__ == '__main__':
