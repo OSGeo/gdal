@@ -258,6 +258,10 @@ class SpatialReference(_object):
         """EPSGTreatsAsLatLong(self) -> int"""
         return _osr.SpatialReference_EPSGTreatsAsLatLong(self, *args)
 
+    def EPSGTreatsAsNorthingEasting(self, *args):
+        """EPSGTreatsAsNorthingEasting(self) -> int"""
+        return _osr.SpatialReference_EPSGTreatsAsNorthingEasting(self, *args)
+
     def SetAuthority(self, *args):
         """SetAuthority(self, char pszTargetKey, char pszAuthority, int nCode) -> OGRErr"""
         return _osr.SpatialReference_SetAuthority(self, *args)
