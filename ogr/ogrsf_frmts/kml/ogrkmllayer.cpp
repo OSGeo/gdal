@@ -292,10 +292,6 @@ void OGRKMLLayer::WriteSchema()
                 pszKMLType = "string";
                 pszKMLEltName = "SimpleArrayField";
                 break;
-              case OFTBinary:
-                pszKMLType = "bool";
-                pszKMLEltName = "SimpleField";
-                break;
                 //TODO: KML doesn't handle these data types yet...
               case OFTDate:                
               case OFTTime:                
