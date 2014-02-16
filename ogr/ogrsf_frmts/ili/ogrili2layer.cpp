@@ -38,10 +38,12 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRILI2Layer::OGRILI2Layer( OGRFeatureDefn* poFeatureDefnIn,
+                            GeomFieldInfos oGeomFieldInfosIn,
                             OGRILI2DataSource *poDSIn )
 {
     poFeatureDefn = poFeatureDefnIn;
     poFeatureDefn->Reference();
+    oGeomFieldInfos = oGeomFieldInfosIn;
 
     poDS = poDSIn;
 
@@ -142,15 +144,16 @@ static void AppendCoordinateList( OGRLineString *poLine, VSILFILE* fp )
     for( int iPoint = 0; iPoint < poLine->getNumPoints(); iPoint++ )
     {
         VSIFPrintfL(fp, "<COORD>");
-        VSIFPrintfL(fp, "<C1>%s></C1>", d2str(poLine->getX(iPoint)));
-        VSIFPrintfL(fp, "<C2>%s></C2>", d2str(poLine->getY(iPoint)));
-        if (b3D) VSIFPrintfL(fp, "<C3>%s></C3>", d2str(poLine->getZ(iPoint)));
+        VSIFPrintfL(fp, "<C1>%s</C1>", d2str(poLine->getX(iPoint)));
+        VSIFPrintfL(fp, "<C2>%s</C2>", d2str(poLine->getY(iPoint)));
+        if (b3D) VSIFPrintfL(fp, "<C3>%s</C3>", d2str(poLine->getZ(iPoint)));
         VSIFPrintfL(fp, "</COORD>\n");
     }
 }
 
-static int OGR2ILIGeometryAppend( OGRGeometry *poGeometry, VSILFILE* fp, const char *attrname )
+static int OGR2ILIGeometryAppend( OGRGeometry *poGeometry, VSILFILE* fp, const char *attrname, CPLString iliGeomType )
 {
+    //CPLDebug( "OGR_ILI", "OGR2ILIGeometryAppend getGeometryType %s iliGeomType %s", poGeometry->getGeometryName(), iliGeomType.c_str());
 /* -------------------------------------------------------------------- */
 /*      2D/3D Point                                                     */
 /* -------------------------------------------------------------------- */
@@ -160,10 +163,10 @@ static int OGR2ILIGeometryAppend( OGRGeometry *poGeometry, VSILFILE* fp, const c
 
         VSIFPrintfL(fp, "<%s>\n", attrname);
         VSIFPrintfL(fp, "<COORD>");
-        VSIFPrintfL(fp, "<C1>%s></C1>", d2str(poPoint->getX()));
-        VSIFPrintfL(fp, "<C2>%s></C2>", d2str(poPoint->getY()));
+        VSIFPrintfL(fp, "<C1>%s</C1>", d2str(poPoint->getX()));
+        VSIFPrintfL(fp, "<C2>%s</C2>", d2str(poPoint->getY()));
         if( poGeometry->getGeometryType() == wkbPoint25D )
-            VSIFPrintfL(fp, "<C3>%s></C3>", d2str(poPoint->getZ()));
+            VSIFPrintfL(fp, "<C3>%s</C3>", d2str(poPoint->getZ()));
         VSIFPrintfL(fp, "</COORD>\n");
         VSIFPrintfL(fp, "</%s>\n", attrname);
     }
@@ -193,13 +196,16 @@ static int OGR2ILIGeometryAppend( OGRGeometry *poGeometry, VSILFILE* fp, const c
         OGRPolygon      *poPolygon = (OGRPolygon *) poGeometry;
 
         if (attrname) VSIFPrintfL(fp, "<%s>\n", attrname);
-        VSIFPrintfL(fp, "<MULTISURFACE>\n");
-        VSIFPrintfL(fp, "<SURFACE>\n");
-        VSIFPrintfL(fp, "<BOUNDARY>\n");
+        if( iliGeomType == "Surface" )
+        {
+            //VSIFPrintfL(fp, "<MULTISURFACE>\n");
+            VSIFPrintfL(fp, "<SURFACE>\n");
+            VSIFPrintfL(fp, "<BOUNDARY>\n");
+        }
 
         if( poPolygon->getExteriorRing() != NULL )
         {
-            if( !OGR2ILIGeometryAppend( poPolygon->getExteriorRing(), fp, NULL  ) )
+            if( !OGR2ILIGeometryAppend( poPolygon->getExteriorRing(), fp, NULL, "" ) )
                 return FALSE;
         }
 
@@ -207,12 +213,15 @@ static int OGR2ILIGeometryAppend( OGRGeometry *poGeometry, VSILFILE* fp, const c
         {
             OGRLinearRing *poRing = poPolygon->getInteriorRing(iRing);
 
-            if( !OGR2ILIGeometryAppend( poRing, fp, NULL ) )
+            if( !OGR2ILIGeometryAppend( poRing, fp, NULL, "" ) )
                 return FALSE;
         }
-        VSIFPrintfL(fp, "</BOUNDARY>\n");
-        VSIFPrintfL(fp, "</SURFACE>\n");
-        VSIFPrintfL(fp, "</MULTISURFACE>\n");
+        if( iliGeomType == "Surface" )
+        {
+            VSIFPrintfL(fp, "</BOUNDARY>\n");
+            VSIFPrintfL(fp, "</SURFACE>\n");
+            //VSIFPrintfL(fp, "</MULTISURFACE>\n");
+        }
         if (attrname) VSIFPrintfL(fp, "</%s>\n", attrname);
     }
 
@@ -244,7 +253,7 @@ static int OGR2ILIGeometryAppend( OGRGeometry *poGeometry, VSILFILE* fp, const c
         {
             OGRGeometry *poMember = poGC->getGeometryRef( iMember );
 
-            if( !OGR2ILIGeometryAppend( poMember, fp, NULL ) )
+            if( !OGR2ILIGeometryAppend( poMember, fp, NULL, "" ) )
                 return FALSE;
         }
 
@@ -288,7 +297,8 @@ OGRErr OGRILI2Layer::CreateFeature( OGRFeature *poFeature ) {
         OGRGeometry* poGeom = poFeature->GetGeomFieldRef(iGeomField);
         if( poGeom != NULL )
         {
-            OGR2ILIGeometryAppend(poGeom, fp, poFieldDefn->GetNameRef());
+            CPLString iliGeomType = GetIliGeomType(poFieldDefn->GetNameRef());
+            OGR2ILIGeometryAppend(poGeom, fp, poFieldDefn->GetNameRef(), iliGeomType);
         }
     }
 
