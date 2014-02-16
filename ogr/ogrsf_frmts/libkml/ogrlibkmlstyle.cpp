@@ -58,15 +58,15 @@ using kmldom::KmlPtr;
 
 args:
             pszStyleString  the stylestring to parse
-            poKmlStyle      the kml style to add to
+            poKmlStyle      the kml style to add to (or NULL)
             poKmlFactory    the kml dom factory
 
 returns:
-            nothing
+            the kml style
 
 ******************************************************************************/
 
-void addstylestring2kml (
+StylePtr addstylestring2kml (
     const char *pszStyleString,
     StylePtr poKmlStyle,
     KmlFactory * poKmlFactory,
@@ -82,7 +82,7 @@ void addstylestring2kml (
     /***** just bail now if stylestring is empty *****/
 
     if ( !pszStyleString || !*pszStyleString ) {
-        return;
+        return poKmlStyle;
     }
 
     /***** create and init a style mamager with the style string *****/
@@ -340,19 +340,27 @@ void addstylestring2kml (
         delete poOgrST;
     }
 
-    if ( poKmlLineStyle )
-        poKmlStyle->set_linestyle ( poKmlLineStyle );
+    if ( poKmlLineStyle || poKmlPolyStyle || poKmlIconStyle || poKmlLabelStyle )
+    {
+        if( poKmlStyle == NULL )
+            poKmlStyle = poKmlFactory->CreateStyle (  );
 
-    if ( poKmlPolyStyle )
-        poKmlStyle->set_polystyle ( poKmlPolyStyle );
+        if ( poKmlLineStyle )
+            poKmlStyle->set_linestyle ( poKmlLineStyle );
 
-    if ( poKmlIconStyle )
-        poKmlStyle->set_iconstyle ( poKmlIconStyle );
+        if ( poKmlPolyStyle )
+            poKmlStyle->set_polystyle ( poKmlPolyStyle );
 
-    if ( poKmlLabelStyle )
-        poKmlStyle->set_labelstyle ( poKmlLabelStyle );
-    
+        if ( poKmlIconStyle )
+            poKmlStyle->set_iconstyle ( poKmlIconStyle );
+
+        if ( poKmlLabelStyle )
+            poKmlStyle->set_labelstyle ( poKmlLabelStyle );
+    }
+
     delete poOgrSM;
+    
+    return poKmlStyle;
 }
 
 /******************************************************************************
