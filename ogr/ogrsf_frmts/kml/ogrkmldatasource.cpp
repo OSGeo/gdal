@@ -66,10 +66,24 @@ OGRKMLDataSource::~OGRKMLDataSource()
 {
     if( fpOutput_ != NULL )
     {
-        VSIFPrintfL( fpOutput_, "%s", "</Folder>\n");
-        for( int i = 0; i < nLayers_; i++ )
+        if( nLayers_ > 0 )
         {
-            papoLayers_[i]->WriteSchema();
+            if( nLayers_ == 1 && papoLayers_[0]->nWroteFeatureCount_ == 0 )
+            {
+                VSIFPrintfL( fpOutput_, "<Folder><name>%s</name>\n", papoLayers_[0]->GetName() );
+            }
+
+            VSIFPrintfL( fpOutput_, "%s", "</Folder>\n");
+
+            for( int i = 0; i < nLayers_; i++ )
+            {
+                if( !(papoLayers_[i]->bSchemaWritten_) && papoLayers_[i]->nWroteFeatureCount_ != 0 )
+                {
+                    CPLString osRet = papoLayers_[i]->WriteSchema();
+                    if( osRet.size() )
+                        VSIFPrintfL( fpOutput_, "%s", osRet.c_str() );
+                }
+            }
         }
         VSIFPrintfL( fpOutput_, "%s", "</Document></kml>\n" );
 
@@ -298,7 +312,7 @@ int OGRKMLDataSource::Create( const char* pszName, char** papszOptions )
 
     if (strcmp(pszName, "/dev/stdout") == 0)
         pszName = "/vsistdout/";
-
+    
     pszName_ = CPLStrdup( pszName );
 
     fpOutput_ = VSIFOpenL( pszName, "wb" );
@@ -314,7 +328,7 @@ int OGRKMLDataSource::Create( const char* pszName, char** papszOptions )
 /* -------------------------------------------------------------------- */
     VSIFPrintfL( fpOutput_, "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n" );	
     
-    VSIFPrintfL( fpOutput_, "<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n<Document>" );
+    VSIFPrintfL( fpOutput_, "<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n<Document>\n" );
 
     return TRUE;
 }
@@ -349,6 +363,11 @@ OGRKMLDataSource::CreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     if (GetLayerCount() > 0)
     {
+        if( nLayers_ == 1 && papoLayers_[0]->nWroteFeatureCount_ == 0 )
+        {
+            VSIFPrintfL( fpOutput_, "<Folder><name>%s</name>\n", papoLayers_[0]->GetName() );
+        }
+
         VSIFPrintfL( fpOutput_, "</Folder>\n");
         ((OGRKMLLayer*)GetLayer(GetLayerCount()-1))->SetClosedForWriting();
     }
@@ -365,7 +384,11 @@ OGRKMLDataSource::CreateLayer( const char * pszLayerName,
                   "Layer name '%s' adjusted to '%s' for XML validity.",
                   pszLayerName, pszCleanLayerName );
     }
-    VSIFPrintfL( fpOutput_, "<Folder><name>%s</name>\n", pszCleanLayerName);
+    
+    if (GetLayerCount() > 0)
+    {
+        VSIFPrintfL( fpOutput_, "<Folder><name>%s</name>\n", pszCleanLayerName);
+    }
     
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */

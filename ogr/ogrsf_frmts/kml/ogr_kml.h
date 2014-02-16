@@ -73,9 +73,11 @@ public:
 
     void SetClosedForWriting() { bClosedForWriting = TRUE; }
     
-    void WriteSchema();
+    CPLString WriteSchema();
 
 private:
+    friend class OGRKMLDataSource;
+
     OGRKMLDataSource* poDS_;
     OGRSpatialReference* poSRS_;
 	OGRCoordinateTransformation *poCT_;
@@ -87,6 +89,7 @@ private:
     int bWriter_;
     int nLayerNumber_;
     int nWroteFeatureCount_;
+    int bSchemaWritten_;
     int bClosedForWriting;
     char* pszName_;
 
