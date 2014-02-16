@@ -982,6 +982,43 @@ int kml2tessellate_rec (
     return FALSE;
 }
 
+/************************************************************************/
+/*                     ogrkmlSetAltitudeMode()                          */
+/************************************************************************/
+
+static void ogrkmlSetAltitudeMode(OGRFeature* poOgrFeat, int iField,
+                                  int nAltitudeMode, int bIsGX)
+{
+    if ( !bIsGX ) {
+        switch ( nAltitudeMode ) {
+        case kmldom::ALTITUDEMODE_CLAMPTOGROUND:
+            poOgrFeat->SetField ( iField, "clampToGround" );
+            break;
+
+        case kmldom::ALTITUDEMODE_RELATIVETOGROUND:
+            poOgrFeat->SetField ( iField, "relativeToGround" );
+            break;
+
+        case kmldom::ALTITUDEMODE_ABSOLUTE:
+            poOgrFeat->SetField ( iField, "absolute" );
+            break;
+
+        }
+    }
+
+    else {
+        switch ( nAltitudeMode ) {
+        case kmldom::GX_ALTITUDEMODE_RELATIVETOSEAFLOOR:
+            poOgrFeat->SetField ( iField, "relativeToSeaFloor" );
+            break;
+
+        case kmldom::GX_ALTITUDEMODE_CLAMPTOSEAFLOOR:
+            poOgrFeat->SetField ( iField, "clampToSeaFloor" );
+            break;
+        }
+    }
+}
+
 /******************************************************************************
  function to read kml into ogr fields
 ******************************************************************************/
@@ -1129,37 +1166,7 @@ void kml2field (
 
             if ( kml2altitudemode_rec ( poKmlGeometry,
                                         &nAltitudeMode, &bIsGX ) ) {
-
-                if ( !bIsGX ) {
-
-                    switch ( nAltitudeMode ) {
-                    case kmldom::ALTITUDEMODE_CLAMPTOGROUND:
-                        poOgrFeat->SetField ( iField, "clampToGround" );
-                        break;
-
-                    case kmldom::ALTITUDEMODE_RELATIVETOGROUND:
-                        poOgrFeat->SetField ( iField, "relativeToGround" );
-                        break;
-
-                    case kmldom::ALTITUDEMODE_ABSOLUTE:
-                        poOgrFeat->SetField ( iField, "absolute" );
-                        break;
-
-                    }
-                }
-
-                else {
-                    switch ( nAltitudeMode ) {
-                    case kmldom::GX_ALTITUDEMODE_RELATIVETOSEAFLOOR:
-                        poOgrFeat->SetField ( iField, "relativeToSeaFloor" );
-                        break;
-
-                    case kmldom::GX_ALTITUDEMODE_CLAMPTOSEAFLOOR:
-                        poOgrFeat->SetField ( iField, "clampToSeaFloor" );
-                        break;
-                    }
-
-                }
+                ogrkmlSetAltitudeMode(poOgrFeat, iField, nAltitudeMode, bIsGX);
             }
 
         }
@@ -1213,6 +1220,22 @@ void kml2field (
             int iField = poOgrFeat->GetFieldIndex ( oFC.rollfield );
             if ( iField > -1 )
                 poOgrFeat->SetField ( iField, camera->get_roll() );
+        }
+
+        int nAltitudeMode = -1;
+
+        int iField = poOgrFeat->GetFieldIndex ( oFC.altitudeModefield );
+
+        if ( iField > -1 ) {
+
+            if ( camera->has_altitudemode (  ) ) {
+                nAltitudeMode = camera->get_altitudemode (  );
+                ogrkmlSetAltitudeMode(poOgrFeat, iField, nAltitudeMode, FALSE);
+            }
+            else if ( camera->has_gx_altitudemode (  ) ) {
+                nAltitudeMode = camera->get_gx_altitudemode (  );
+                ogrkmlSetAltitudeMode(poOgrFeat, iField, nAltitudeMode, TRUE);
+            }
         }
     }
 

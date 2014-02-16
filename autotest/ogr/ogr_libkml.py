@@ -827,6 +827,7 @@ def ogr_libkml_camera():
     lyr.CreateField(ogr.FieldDefn("heading", ogr.OFTReal))
     lyr.CreateField(ogr.FieldDefn("tilt", ogr.OFTReal))
     lyr.CreateField(ogr.FieldDefn("roll", ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn("altitudeMode", ogr.OFTString))
     dst_feat = ogr.Feature( lyr.GetLayerDefn() )
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT (2 49)'))
     dst_feat.SetField("heading", 70)
@@ -837,6 +838,7 @@ def ogr_libkml_camera():
     dst_feat = ogr.Feature( lyr.GetLayerDefn() )
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT (3 50 1)'))
     dst_feat.SetField("heading", -70)
+    dst_feat.SetField("altitudeMode", "relativeToGround")
     lyr.CreateFeature( dst_feat )
 
     ds = None
@@ -850,7 +852,8 @@ def ogr_libkml_camera():
        data.find('<latitude>49</latitude>') == -1 or \
        data.find('<heading>70</heading>') == -1 or \
        data.find('<tilt>75</tilt>') == -1 or \
-       data.find('<roll>10</roll>') == -1:
+       data.find('<roll>10</roll>') == -1 or \
+       data.find('<altitudeMode>relativeToGround</altitudeMode>') == -1:
         print(data)
         gdaltest.post_reason('failure')
         return 'fail'
@@ -871,7 +874,8 @@ def ogr_libkml_camera():
     if feat.GetGeometryRef().ExportToWkt() != 'POINT (3 50 1)' or \
        feat.GetField("heading") != -70.0 or \
        feat.IsFieldSet("tilt") or \
-       feat.IsFieldSet("roll"):
+       feat.IsFieldSet("roll") or \
+       feat.GetField("altitudeMode") != 'relativeToGround':
         feat.DumpReadable()
         gdaltest.post_reason('failure')
         return 'fail'
