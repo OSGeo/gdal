@@ -211,17 +211,15 @@ int OGRILI1DataSource::Create( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Parse model                                                     */
 /* -------------------------------------------------------------------- */
-    ImdReader m_imdReader(1);
     if( osModelFilename.length() == 0 )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
             "Creating Interlis transfer file without model definition." );
     } else {
-        /* std::list<OGRFeatureDefn*> poTableList = */
-        m_imdReader.ReadModel(osModelFilename.c_str());
+        poImdReader->ReadModel(osModelFilename.c_str());
     }
 
-    pszTopic = CPLStrdup(m_imdReader.mainTopicName.c_str());
+    pszTopic = CPLStrdup(poImdReader->mainTopicName.c_str());
 
 /* -------------------------------------------------------------------- */
 /*      Write headers                                                   */
@@ -230,7 +228,7 @@ int OGRILI1DataSource::Create( const char *pszFilename,
     VSIFPrintf( fpTransfer, "OGR/GDAL %s, INTERLIS Driver\n", GDAL_RELEASE_NAME );
     VSIFPrintf( fpTransfer, "////\n" );
     VSIFPrintf( fpTransfer, "MTID INTERLIS1\n" );
-    const char* modelname = m_imdReader.mainModelName.c_str();
+    const char* modelname = poImdReader->mainModelName.c_str();
     VSIFPrintf( fpTransfer, "MODL %s\n", modelname );
 
     return TRUE;
@@ -254,6 +252,7 @@ OGRILI1DataSource::CreateLayer( const char * pszLayerName,
                                char ** papszOptions )
 
 {
+    FeatureDefnInfo featureDefnInfo = poImdReader->GetFeatureDefnInfo(pszLayerName);
     const char *table = pszLayerName;
     char * topic = ExtractTopic(pszLayerName);
     if (nLayers) VSIFPrintf( fpTransfer, "ETAB\n" );
@@ -284,7 +283,7 @@ OGRILI1DataSource::CreateLayer( const char * pszLayerName,
 
     OGRFeatureDefn* poFeatureDefn = new OGRFeatureDefn(table);
     poFeatureDefn->SetGeomType( eType );
-    OGRILI1Layer *poLayer = new OGRILI1Layer(poFeatureDefn, this);
+    OGRILI1Layer *poLayer = new OGRILI1Layer(poFeatureDefn, featureDefnInfo.poGeomFieldInfos, this);
 
     nLayers ++;
     papoLayers = (OGRILI1Layer**)CPLRealloc(papoLayers, sizeof(OGRILI1Layer*) * nLayers);

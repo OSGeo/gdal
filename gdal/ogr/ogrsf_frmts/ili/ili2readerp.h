@@ -145,6 +145,7 @@ public:
     
     std::list<OGRLayer *> GetLayers();
     int      GetLayerCount();
+    OGRLayer* GetLayer(const char* pszName);
     
     int      AddFeature(DOMElement *elem);
     void     SetFieldValues(OGRFeature *feature, DOMElement* elem);

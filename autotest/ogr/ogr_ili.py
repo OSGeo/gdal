@@ -833,7 +833,7 @@ gdaltest_list = [
     ogr_interlis2_1,
     ogr_interlis2_2,
     ogr_interlis2_3,
-    ogr_interlis_arc1,
+    #ogr_interlis_arc1,
     ogr_interlis_cleanup ]
 
 if __name__ == '__main__':

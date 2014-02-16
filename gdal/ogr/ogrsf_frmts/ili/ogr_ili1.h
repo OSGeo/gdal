@@ -46,11 +46,7 @@ class OGRILI1Layer : public OGRLayer
 private:
     OGRSpatialReference *poSRS;
     OGRFeatureDefn      *poFeatureDefn;
-
-    OGRILI1Layer        *poSurfacePolyLayer; //Corresponding poly layer for surfaces
-    int                 surfaceGeomFieldId;
-    OGRILI1Layer        *poAreaReferenceLayer; //corresponding point layer for AREA's
-    OGRILI1Layer        *poAreaLineLayer; //corresponding line layer with AREA's
+    GeomFieldInfos      oGeomFieldInfos;
 
     int                 nFeatures;
     OGRFeature          **papoFeatures;
@@ -62,6 +58,7 @@ private:
 
   public:
                         OGRILI1Layer( OGRFeatureDefn* poFeatureDefn,
+                                      GeomFieldInfos oGeomFieldInfos,
                                       OGRILI1DataSource *poDS );
 
                        ~OGRILI1Layer();
@@ -72,9 +69,6 @@ private:
     OGRFeature *        GetNextFeature();
     OGRFeature *        GetNextFeatureRef();
     OGRFeature *        GetFeatureRef( long nFID );
-
-    void                SetSurfacePolyLayer(OGRILI1Layer *poSurfacePolyLayer, int geomFieldId);
-    void                SetAreaLayers(OGRILI1Layer *poReferenceLayer, OGRILI1Layer *poAreaLineLayer);
 
     int                 GetFeatureCount( int bForce = TRUE );
 

@@ -231,7 +231,7 @@ int OGRILI2DataSource::Create( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Parse model                                                     */
 /* -------------------------------------------------------------------- */
-    listModelLayerDefs = poImdReader->ReadModel(pszModelFilename);
+    poImdReader->ReadModel(pszModelFilename);
 
 /* -------------------------------------------------------------------- */
 /*      Write headers                                                   */
@@ -263,12 +263,8 @@ OGRILI2DataSource::CreateLayer( const char * pszLayerName,
     if (fpOutput == NULL)
         return NULL;
 
-    OGRFeatureDefn* poFeatureDefn = NULL;
-    for (std::list<OGRFeatureDefn*>::const_iterator it = listModelLayerDefs.begin();
-         it != listModelLayerDefs.end() && poFeatureDefn == NULL; ++it)
-    {
-        if (EQUAL((*it)->GetName(), pszLayerName)) poFeatureDefn = *it;
-    }
+    FeatureDefnInfo featureDefnInfo = poImdReader->GetFeatureDefnInfo(pszLayerName);
+    OGRFeatureDefn* poFeatureDefn = featureDefnInfo.poTableDefn;
     if (poFeatureDefn == NULL)
     {
         CPLError(CE_Warning, CPLE_AppDefined,
@@ -276,8 +272,7 @@ OGRILI2DataSource::CreateLayer( const char * pszLayerName,
         poFeatureDefn = new OGRFeatureDefn(pszLayerName);
         poFeatureDefn->SetGeomType( eType );
     }
-
-    OGRILI2Layer *poLayer = new OGRILI2Layer(poFeatureDefn, this);
+    OGRILI2Layer *poLayer = new OGRILI2Layer(poFeatureDefn, featureDefnInfo.poGeomFieldInfos, this);
 
     nLayers++;
     papoLayers = (OGRILI2Layer**)CPLRealloc(papoLayers, sizeof(OGRILI2Layer*) * nLayers);
