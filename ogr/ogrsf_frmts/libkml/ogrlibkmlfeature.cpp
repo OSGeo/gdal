@@ -76,8 +76,21 @@ PlacemarkPtr feat2kml (
         CameraPtr camera = poKmlFactory->CreateCamera();
         camera->set_latitude(poOgrPoint->getY());
         camera->set_longitude(poOgrPoint->getX());
+        int isGX = FALSE;
+        int iAltitudeMode = poOgrFeat->GetFieldIndex("altitudeMode");
+        int nAltitudeMode = kmldom::ALTITUDEMODE_CLAMPTOGROUND;
+        if( iAltitudeMode >= 0 && poOgrFeat->IsFieldSet(iAltitudeMode) )
+        {
+            nAltitudeMode = kmlAltitudeModeFromString(
+                poOgrFeat->GetFieldAsString(iAltitudeMode), isGX);
+            camera->set_altitudemode(nAltitudeMode);
+        }
+        else if( CSLTestBoolean(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
+            CPLError(CE_Warning, CPLE_AppDefined, "Camera should define altitudeMode != 'clampToGround'");
         if( poOgrPoint->getCoordinateDimension() == 3 )
             camera->set_altitude(poOgrPoint->getZ());
+        else if( CSLTestBoolean(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
+            CPLError(CE_Warning, CPLE_AppDefined, "Camera should have an altitude/Z");
         if( iHeading >= 0 && poOgrFeat->IsFieldSet(iHeading) )
             camera->set_heading(poOgrFeat->GetFieldAsDouble(iHeading));
         if( iTilt >= 0 && poOgrFeat->IsFieldSet(iTilt) )
