@@ -55,7 +55,7 @@ public:
     StrNodeMap& oTidLookup;
     ClassesMap& oClasses;
     NodeCountMap& oAxisCount;
-    GeomFieldInfos  poGeomFieldInfos;
+    GeomFieldInfos poGeomFieldInfos;
     StructFieldInfos poStructFieldInfos;
     NodeVector oFields;
     bool isAssocClass;
