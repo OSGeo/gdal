@@ -3,7 +3,7 @@
 #******************************************************************************
 # 
 #  Project:  GDAL
-#  Purpose:  Command line raster calculator for gdal supported files
+#  Purpose:  Command line raster calculator with numpy syntax
 #  Author:   Chris Yesson, chris.yesson@ioz.ac.uk
 # 
 #******************************************************************************
@@ -29,7 +29,7 @@
 #******************************************************************************
 
 ################################################################
-# Command line raster calculator for gdal supported files. Use any basic arithmetic supported by numpy arrays such as +-*\ along with logical operators such as >.  Note that all files must be the same dimensions, but no projection checking is performed.  Use gdal_calc.py --help for list of options.
+# Command line raster calculator with numpy syntax. Use any basic arithmetic supported by numpy arrays such as +-*\ along with logical operators such as >.  Note that all files must have the same dimensions, but no projection checking is performed.  Use gdal_calc.py --help for list of options.
 
 # example 1 - add two files together
 # gdal_calc.py -A input1.tif -B input2.tif --outfile=result.tif --calc="A+B"
@@ -299,18 +299,18 @@ def main():
     # hack to limit the number of input file options close to required number
     for myAlpha in AlphaList[0:len(sys.argv)-1]:
         eval('parser.add_option("-%s", dest="%s", help="input gdal raster file, note you can use any letter A-Z")' %(myAlpha, myAlpha))
-        eval('parser.add_option("--%s_band", dest="%s_band", default=0, type=int, help="number of raster band for file %s")' %(myAlpha, myAlpha, myAlpha))
+        eval('parser.add_option("--%s_band", dest="%s_band", default=0, type=int, help="number of raster band for file %s (default 0)")' %(myAlpha, myAlpha, myAlpha))
 
-    parser.add_option("--outfile", dest="outF", default='gdal_calc.tif', help="output file to generate or fill.")
-    parser.add_option("--NoDataValue", dest="NoDataValue", type=float, help="set output nodatavalue (Defaults to datatype specific values)")
-    parser.add_option("--type", dest="type", help="set datatype must be one of %s" % list(DefaultNDVLookup.keys()))
+    parser.add_option("--outfile", dest="outF", default='gdal_calc.tif', help="output file to generate or fill")
+    parser.add_option("--NoDataValue", dest="NoDataValue", type=float, help="set output nodata value (Defaults to datatype specific value)")
+    parser.add_option("--type", dest="type", help="output datatype, must be one of %s" % list(DefaultNDVLookup.keys()))
     parser.add_option("--format", dest="format", default="GTiff", help="GDAL format for output file (default 'GTiff')")
     parser.add_option(
         "--creation-option", "--co", dest="creation_options", default=[], action="append",
-        help="Passes a creation option to the output format driver. Multiple"
-        "options may be listed. See format specific documentation for legal"
+        help="Passes a creation option to the output format driver. Multiple "
+        "options may be listed. See format specific documentation for legal "
         "creation options for each format.")
-    parser.add_option("--allBands", dest="allBands", default="", help="process all Bands for given raster (A-Z)")
+    parser.add_option("--allBands", dest="allBands", default="", help="process all bands of given raster (A-Z)")
     parser.add_option("--overwrite", dest="overwrite", action="store_true", help="overwrite output file if it already exists")
     parser.add_option("--debug", dest="debug", action="store_true", help="print debugging information")
 
