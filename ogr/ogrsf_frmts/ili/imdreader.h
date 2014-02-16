@@ -34,9 +34,29 @@
 #include "cpl_error.h"
 #include "ogr_feature.h"
 #include <list>
+#include <map>
 
 
-typedef std::list<OGRFeatureDefn*> FeatureDefnList;
+class GeomFieldInfo
+{
+public:
+    OGRFeatureDefn* geomTable; /* separate geometry table for Ili 1 */
+    CPLString       iliGeomType;
+    GeomFieldInfo() : geomTable(0) {};
+};
+
+typedef std::map<CPLString,GeomFieldInfo> GeomFieldInfos; /* key: geom field name, value: ILI geom field info */
+typedef std::map<CPLString,CPLString> StructFieldInfos; /* key: struct field name, value: struct table */
+
+class FeatureDefnInfo
+{
+public:
+    OGRFeatureDefn* poTableDefn;
+    GeomFieldInfos  poGeomFieldInfos;
+    StructFieldInfos poStructFieldInfos;
+};
+
+typedef std::list<FeatureDefnInfo> FeatureDefnInfos;
 
 class ImdReader
 {
@@ -45,14 +65,15 @@ public:
     CPLString            mainModelName;
     CPLString            mainBasketName;
     CPLString            mainTopicName;
+    FeatureDefnInfos     featureDefnInfos;
     char                 codeBlank;
     char                 codeUndefined;
     char                 codeContinue;
 public:
                          ImdReader(int iliVersion);
                         ~ImdReader();
-    CPLString            LayerName(const char* psClassTID);
-    FeatureDefnList      ReadModel(const char *pszFilename);
+    void                 ReadModel(const char *pszFilename);
+    FeatureDefnInfo      GetFeatureDefnInfo(const char *pszLayerName);
 };
 
 #endif /* _IMDREADER_H_INCLUDED */
