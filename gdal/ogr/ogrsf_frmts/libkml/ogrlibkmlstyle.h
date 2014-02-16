@@ -34,7 +34,7 @@ using kmldom::DocumentPtr;
 using kmldom::ContainerPtr;
 using kmldom::PlacemarkPtr;
 
-void addstylestring2kml (
+StylePtr addstylestring2kml (
     const char *stylestring,
     StylePtr poKmlStyle,
     KmlFactory * poKmlFactory,

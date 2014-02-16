@@ -117,16 +117,14 @@ void featurestyle2kml (
         /***** no style table ref *****/
 
         else {
-            StylePtr poKmlStyle = poKmlFactory->CreateStyle (  );
-
             /***** parse the style string *****/
 
-            addstylestring2kml ( pszStyleString, poKmlStyle, poKmlFactory,
+            StylePtr poKmlStyle = addstylestring2kml ( pszStyleString, NULL, poKmlFactory,
                                  poKmlPlacemark, poOgrFeat );
 
             /***** add the style to the placemark *****/
-
-            poKmlPlacemark->set_styleselector ( poKmlStyle );
+            if( poKmlStyle != NULL )
+                poKmlPlacemark->set_styleselector ( poKmlStyle );
 
         }
     }
@@ -136,7 +134,7 @@ void featurestyle2kml (
     else if ( ( poOgrSTBL = poOgrFeat->GetStyleTable (  ) ) ) {
 
 
-        StylePtr poKmlStyle = poKmlFactory->CreateStyle (  );
+        StylePtr poKmlStyle = NULL;
 
         /***** parse the style table *****/
 
@@ -182,12 +180,14 @@ void featurestyle2kml (
 
                 /***** parse the style string *****/
 
-                addstylestring2kml ( pszStyleString, poKmlStyle,
+                poKmlStyle = addstylestring2kml ( pszStyleString, poKmlStyle,
                                      poKmlFactory, poKmlPlacemark, poOgrFeat );
+                if( poKmlStyle != NULL )
+                {
+                    /***** add the style to the placemark *****/
 
-                /***** add the style to the placemark *****/
-
-                poKmlPlacemark->set_styleselector ( poKmlStyle );
+                    poKmlPlacemark->set_styleselector ( poKmlStyle );
+                }
 
             }
         }
