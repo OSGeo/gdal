@@ -48,7 +48,6 @@ private:
     int          nLayers;
     OGRILI1Layer **papoLayers;
     OGRILI1Layer *curLayer;
-    OGRILI1Layer *metaLayer;
     double       arcIncr;
     char         codeBlank;
     char         codeUndefined;

@@ -62,7 +62,6 @@ ILI1Reader::ILI1Reader() {
   nLayers = 0;
   papoLayers = NULL;
   curLayer = NULL;
-  metaLayer = NULL;
   codeBlank = '_';
   codeUndefined = '@';
   codeContinue = '\\';
@@ -76,8 +75,6 @@ ILI1Reader::~ILI1Reader() {
   for(i=0;i<nLayers;i++)
      delete papoLayers[i];
   CPLFree(papoLayers);
-
-  delete metaLayer;
 }
 
 void ILI1Reader::SetArcDegrees(double arcDegrees) {
@@ -107,55 +104,13 @@ const char* ILI1Reader::GetLayerNameString(const char* topicname, const char* ta
 
 int ILI1Reader::ReadModel(ImdReader *poImdReader, const char *pszModelFilename) {
 
-  std::list<OGRFeatureDefn*> poTableList = poImdReader->ReadModel(pszModelFilename);
-  for (std::list<OGRFeatureDefn*>::const_iterator it = poTableList.begin(); it != poTableList.end(); ++it)
+  poImdReader->ReadModel(pszModelFilename);
+  for (FeatureDefnInfos::const_iterator it = poImdReader->featureDefnInfos.begin(); it != poImdReader->featureDefnInfos.end(); ++it)
   {
-    OGRILI1Layer* layer = new OGRILI1Layer(*it, NULL);
+    OGRILI1Layer* layer = new OGRILI1Layer(it->poTableDefn, it->poGeomFieldInfos, NULL);
     AddLayer(layer);
   }
 
-  // create new layer with meta information (ILI table name and geometry column index)
-  // while reading the features from the ITF we have to know which column is the geometry column
-  OGRFeatureDefn* poFeatureDefn = new OGRFeatureDefn("Metatable");
-  poFeatureDefn->SetGeomType(wkbUnknown);
-  metaLayer = new OGRILI1Layer(poFeatureDefn, NULL);
-  OGRFieldDefn fieldDef1("layername", OFTString);
-  metaLayer->GetLayerDefn()->AddFieldDefn(&fieldDef1);
-  OGRFieldDefn fieldDef2("geomIdx", OFTInteger);
-  metaLayer->GetLayerDefn()->AddFieldDefn(&fieldDef2);
-  OGRFieldDefn fieldDef3("geomlayername", OFTString);
-  metaLayer->GetLayerDefn()->AddFieldDefn(&fieldDef3);
-
-
-/*          for(size_t i=0; i<attributes.size(); i++) {
-            IOM_OBJECT obj = attributes.at(i);
-            const char* typenam = GetTypeName(model, obj);
-            if (EQUAL(typenam, "iom04.metamodel.AreaType")) {
-              feature = OGRFeature::CreateFeature(metaLayer->GetLayerDefn());
-              feature->SetFID(j+1);
-              feature->SetField("layername", layername);
-              feature->SetField("geomIdx", (int)i);
-              feature->SetField("geomlayername", layername);
-              layer = new OGRILI1Layer(layername, poSRSIn, bWriterIn, eReqType, poDSIn);
-              AddLayer(layer);
-
-              metaLayer->AddFeature(feature);
-            }
-          }
-*/
-/*          if(layer == NULL) {
-            layer = new OGRILI1Layer(layername, poSRSIn, bWriterIn, eReqType, poDSIn);
-            AddLayer(layer);
-          }
-*/
-/*          if (papoLayers[nLayers-1]->GetLayerDefn()->GetFieldCount() == 0) {
-              //Area layer added
-              OGRILI1Layer* areaLayer = papoLayers[nLayers-1];
-              for (int i=0; i < layer->GetLayerDefn()->GetFieldCount(); i++) {
-                areaLayer->CreateField(layer->GetLayerDefn()->GetFieldDefn(i));
-              }
-          }
-*/
   codeBlank = poImdReader->codeBlank;
   CPLDebug( "OGR_ILI", "Ili1Format blankCode '%c'", poImdReader->codeBlank );
   codeUndefined = poImdReader->codeUndefined;
@@ -217,7 +172,8 @@ int ILI1Reader::ReadFeatures() {
               "No model definition for table '%s' found, using default field names.", layername );
           OGRFeatureDefn* poFeatureDefn = new OGRFeatureDefn(GetLayerNameString(topic, CSLGetField(tokens, 1)));
           poFeatureDefn->SetGeomType( wkbUnknown );
-          curLayer = new OGRILI1Layer(poFeatureDefn, NULL);
+          GeomFieldInfos oGeomFieldInfos;
+          curLayer = new OGRILI1Layer(poFeatureDefn, oGeomFieldInfos, NULL);
           AddLayer(curLayer);
         }
         if(curLayer != NULL) {

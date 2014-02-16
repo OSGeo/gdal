@@ -374,21 +374,26 @@ OGRGeometry *ILI2Reader::getGeometry(DOMElement *elem, int type) {
 }
 
 int ILI2Reader::ReadModel(ImdReader *poImdReader, char *modelFilename) {
-  std::list<OGRFeatureDefn*> poTableList = poImdReader->ReadModel(modelFilename);
-  for (std::list<OGRFeatureDefn*>::const_iterator it = poTableList.begin(); it != poTableList.end(); ++it)
+  poImdReader->ReadModel(modelFilename);
+  for (FeatureDefnInfos::const_iterator it = poImdReader->featureDefnInfos.begin(); it != poImdReader->featureDefnInfos.end(); ++it)
   {
-    OGRLayer* layer = new OGRILI2Layer(*it, NULL);
+    OGRLayer* layer = new OGRILI2Layer(it->poTableDefn, it->poGeomFieldInfos, NULL);
     m_listLayer.push_back(layer);
   }
   return 0;
 }
 
+//Detect field name of value element
 char* fieldName(DOMElement* elem) {
-  int depth = 0;
-  DOMNode *node;
-  for (node = elem; node; node = node->getParentNode()) ++depth;
-  node = elem;
-  for (int d = 0; d<depth-4; ++d) node = node->getParentNode();
+  DOMNode *node = elem;
+  if (getGeometryTypeOfElem(elem))
+  {
+    int depth = 0; // Depth of value elem node
+    for (node = elem; node; node = node->getParentNode()) ++depth;
+    //Field name is on level 4
+    node = elem;
+    for (int d = 0; d<depth-4; ++d) node = node->getParentNode();
+  }
   char* pszNodeName = XMLString::transcode(node->getNodeName());
   char* pszRet = CPLStrdup(pszNodeName);
   XMLString::release(&pszNodeName);
@@ -615,6 +620,17 @@ int ILI2Reader::GetLayerCount() {
   return m_listLayer.size();
 }
 
+OGRLayer* ILI2Reader::GetLayer(const char* pszName) {
+  for (list<OGRLayer *>::reverse_iterator layerIt = m_listLayer.rbegin();
+       layerIt != m_listLayer.rend();
+       ++layerIt) {
+    OGRFeatureDefn *fDef = (*layerIt)->GetLayerDefn();
+    if (cmpStr(fDef->GetName(), pszName) == 0) {
+      return *layerIt;
+    }
+  }
+  return NULL;
+}
 
 int ILI2Reader::AddFeature(DOMElement *elem) {
   bool newLayer = true;
@@ -623,23 +639,16 @@ int ILI2Reader::AddFeature(DOMElement *elem) {
   //CPLDebug( "OGR_ILI", "Reading layer: %s", pszName );
 
   // test if this layer exist
-  for (list<OGRLayer *>::reverse_iterator layerIt = m_listLayer.rbegin();
-       layerIt != m_listLayer.rend();
-       ++layerIt) {
-    OGRFeatureDefn *fDef = (*layerIt)->GetLayerDefn();
-    if (cmpStr(fDef->GetName(), pszName) == 0) {
-      newLayer = false;
-      curLayer = *layerIt;
-      break;
-    }
-  }
+  curLayer = GetLayer(pszName);
+  newLayer = (curLayer == NULL);
 
   // add a layer
   if (newLayer) {
     CPLDebug( "OGR_ILI", "Adding layer: %s", pszName );
     OGRFeatureDefn* poFeatureDefn = new OGRFeatureDefn(pszName);
     poFeatureDefn->SetGeomType( wkbUnknown );
-    curLayer = new OGRILI2Layer(poFeatureDefn, NULL);
+    GeomFieldInfos oGeomFieldInfos;
+    curLayer = new OGRILI2Layer(poFeatureDefn, oGeomFieldInfos, NULL);
     m_listLayer.push_back(curLayer);
   }
 

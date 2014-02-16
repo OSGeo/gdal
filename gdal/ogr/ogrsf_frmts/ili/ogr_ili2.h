@@ -47,14 +47,16 @@ class OGRILI2Layer : public OGRLayer
 {
 private:
     OGRFeatureDefn     *poFeatureDefn;
+    GeomFieldInfos      oGeomFieldInfos;
     std::list<OGRFeature *>    listFeature;
     std::list<OGRFeature *>::const_iterator listFeatureIt;
 
-    OGRILI2DataSource   *poDS;
+    OGRILI2DataSource  *poDS;
 
   public:
                         OGRILI2Layer( OGRFeatureDefn* poFeatureDefn,
-                                     OGRILI2DataSource *poDS );
+                                      GeomFieldInfos oGeomFieldInfos,
+                                      OGRILI2DataSource *poDS );
 
                        ~OGRILI2Layer();
 
@@ -69,6 +71,8 @@ private:
     
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
+    CPLString           GetIliGeomType( const char* cFieldName) { return oGeomFieldInfos[cFieldName].iliGeomType; };
+
     OGRErr              CreateField( OGRFieldDefn *poField, int bApproxOK = TRUE );
     
     int                 TestCapability( const char * );
@@ -82,7 +86,6 @@ class OGRILI2DataSource : public OGRDataSource
 {
   private:
     std::list<OGRLayer *> listLayer;
-    std::list<OGRFeatureDefn*> listModelLayerDefs;
     
     char        *pszName;
     ImdReader   *poImdReader;
