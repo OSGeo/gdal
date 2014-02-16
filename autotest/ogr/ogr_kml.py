@@ -705,6 +705,24 @@ def ogr_kml_read_emptylayers():
     return 'success'
 
 ###############################################################################
+
+def compare_output(content, expected_content):
+    content_lines = content.strip().split('\n')
+    expected_lines = expected_content.strip().split('\n')
+
+    if len(content_lines) != len(expected_lines):
+        gdaltest.post_reason('fail')
+        print(content)
+        return 'fail'
+    for i in range(len(content_lines)):
+        if content_lines[i].strip() != expected_lines[i].strip():
+            gdaltest.post_reason('fail')
+            print(content)
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test that we can write a schema
 
 def ogr_kml_write_schema():
@@ -729,7 +747,13 @@ def ogr_kml_write_schema():
 
     expected_content="""<?xml version="1.0" encoding="utf-8" ?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
-<Document><Folder><name>lyr</name>
+<Document>
+<Schema name="lyr" id="lyr">
+    <SimpleField name="strfield" type="string"></SimpleField>
+    <SimpleField name="intfield" type="int"></SimpleField>
+    <SimpleField name="realfield" type="float"></SimpleField>
+</Schema>
+<Folder><name>lyr</name>
   <Placemark>
     <ExtendedData><SchemaData schemaUrl="#lyr">
         <SimpleData name="strfield">strfield_val</SimpleData>
@@ -738,27 +762,73 @@ def ogr_kml_write_schema():
     </SchemaData></ExtendedData>
   </Placemark>
 </Folder>
+</Document></kml>"""
+
+    return compare_output(content, expected_content)
+
+###############################################################################
+#
+
+def ogr_kml_empty_layer():
+
+    ds = ogr.GetDriverByName('KML').CreateDataSource('/vsimem/ogr_kml_empty_layer.kml')
+    lyr = ds.CreateLayer("empty")
+    ds = None
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_kml_empty_layer.kml', 'rb')
+    content = gdal.VSIFReadL(1,1000,f)
+    gdal.VSIFCloseL(f)
+
+    gdal.Unlink('/vsimem/ogr_kml_empty_layer.kml')
+
+    expected_content="""<?xml version="1.0" encoding="utf-8" ?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Document>
+<Folder><name>empty</name>
+</Folder>
+</Document></kml>"""
+
+    return compare_output(content, expected_content)
+
+###############################################################################
+# Empty layer followed by regular layer
+
+def ogr_kml_two_layers():
+
+    ds = ogr.GetDriverByName('KML').CreateDataSource('/vsimem/ogr_kml_two_layers.kml')
+    lyr = ds.CreateLayer("empty")
+    lyr = ds.CreateLayer("lyr")
+    lyr.CreateField(ogr.FieldDefn("foo", ogr.OFTString))
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField("foo", "bar")
+    lyr.CreateFeature(feat)
+    ds = None
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_kml_two_layers.kml', 'rb')
+    content = gdal.VSIFReadL(1,1000,f)
+    gdal.VSIFCloseL(f)
+
+    gdal.Unlink('/vsimem/ogr_kml_two_layers.kml')
+
+    # FIXME: the schema for lyr should be written before the first Folter for XML compliance
+    expected_content="""<?xml version="1.0" encoding="utf-8" ?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Document>
+<Folder><name>empty</name>
+</Folder>
+<Folder><name>lyr</name>
+  <Placemark>
+    <ExtendedData><SchemaData schemaUrl="#lyr">
+        <SimpleData name="foo">bar</SimpleData>
+    </SchemaData></ExtendedData>
+  </Placemark>
+</Folder>
 <Schema name="lyr" id="lyr">
-    <SimpleField name="strfield" type="string"></SimpleField>
-    <SimpleField name="intfield" type="int"></SimpleField>
-    <SimpleField name="realfield" type="float"></SimpleField>
+    <SimpleField name="foo" type="string"></SimpleField>
 </Schema>
 </Document></kml>"""
 
-    content_lines = content.strip().split('\n')
-    expected_lines = expected_content.strip().split('\n')
-
-    if len(content_lines) != len(expected_lines):
-        gdaltest.post_reason('fail')
-        print(content)
-        return 'fail'
-    for i in range(len(content_lines)):
-        if content_lines[i].strip() != expected_lines[i].strip():
-            gdaltest.post_reason('fail')
-            print(content)
-            return 'fail'
-
-    return 'success'
+    return compare_output(content, expected_content)
 
 ###############################################################################
 #  Cleanup
@@ -800,6 +870,8 @@ gdaltest_list = [
     ogr_kml_read_empty,
     ogr_kml_read_emptylayers,
     ogr_kml_write_schema,
+    ogr_kml_empty_layer,
+    ogr_kml_two_layers,
     ogr_kml_cleanup ]
 
 if __name__ == '__main__':
