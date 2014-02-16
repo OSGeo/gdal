@@ -137,8 +137,6 @@ void addstylestring2kml (
             {
                 GBool nullcheck;
 
-                poKmlPolyStyle = poKmlFactory->CreatePolyStyle (  );
-
                 OGRStyleBrush *poStyleBrush = ( OGRStyleBrush * ) poOgrST;
 
                 /***** brush color *****/
@@ -152,6 +150,7 @@ void addstylestring2kml (
 
                 if ( !nullcheck
                      && poStyleBrush->GetRGBFromString ( pszcolor, nR, nG, nB, nA ) ) {
+                    poKmlPolyStyle = poKmlFactory->CreatePolyStyle (  );
                     poKmlPolyStyle->set_color ( Color32 ( nA, nB, nG, nR ) );
                 }
                 
