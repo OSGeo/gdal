@@ -1416,10 +1416,6 @@ SimpleFieldPtr FieldDef2kml (
     case OFTRealList:
         poKmlSimpleField->set_type ( "float" );
         return poKmlSimpleField;
-			
-    case OFTBinary:
-        poKmlSimpleField->set_type ( "bool" );
-        return poKmlSimpleField;
 	
     case OFTString:
     case OFTStringList:
@@ -1489,7 +1485,7 @@ void kml2FeatureDef (
             osName = poKmlSimpleField->get_name (  );
         }
 
-        if ( EQUAL ( pszType, "bool" ) ||
+        if ( EQUAL ( pszType, "boolean" ) ||
              EQUAL ( pszType, "int" ) ||
              EQUAL ( pszType, "short" ) ||
              EQUAL ( pszType, "ushort" ) ) {
