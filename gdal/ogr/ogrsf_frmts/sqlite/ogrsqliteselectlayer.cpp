@@ -249,7 +249,11 @@ OGRErr OGRSQLiteSelectLayer::ResetStatement()
 void OGRSQLiteSelectLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn )
 
 {
-    if( iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount() )
+    if( iGeomField == 0 && poGeomIn == NULL && GetLayerDefn()->GetGeomFieldCount() == 0 )
+    {
+        /* do nothing */
+    }
+    else if( iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                     "Invalid geometry field index : %d", iGeomField);
