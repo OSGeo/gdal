@@ -370,15 +370,30 @@ ElementPtr geom2kml (
 
         poOgrMultiGeom = ( OGRGeometryCollection * ) poOgrGeom;
 
-        poKmlGeometry = poKmlMultiGeometry =
-            poKmlFactory->CreateMultiGeometry (  );
-
         nGeom = poOgrMultiGeom->getNumGeometries (  );
-        for ( i = 0; i < nGeom; i++ ) {
-            poKmlTmpGeometry = geom2kml ( poOgrMultiGeom->getGeometryRef ( i ),
-                                          -1, wkb25D, poKmlFactory );
-            poKmlMultiGeometry->
-                add_geometry ( AsGeometry ( poKmlTmpGeometry ) );
+
+        if( nGeom == 1 && 
+            CSLTestBoolean(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
+        {
+            CPLDebug("LIBKML", "Turning multiple geometry into single geometry");
+            poKmlGeometry = geom2kml( poOgrMultiGeom->getGeometryRef ( 0 ),
+                                      -1, wkb25D, poKmlFactory );
+        }
+        else
+        {
+            if( nGeom == 0 && 
+                CSLTestBoolean(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined, "Empty multi geometry are not recommended");
+            }
+            poKmlGeometry = poKmlMultiGeometry =
+                poKmlFactory->CreateMultiGeometry (  );
+            for ( i = 0; i < nGeom; i++ ) {
+                poKmlTmpGeometry = geom2kml ( poOgrMultiGeom->getGeometryRef ( i ),
+                                            -1, wkb25D, poKmlFactory );
+                poKmlMultiGeometry->
+                    add_geometry ( AsGeometry ( poKmlTmpGeometry ) );
+            }
         }
 
         break;

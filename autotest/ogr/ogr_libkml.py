@@ -926,6 +926,42 @@ def ogr_libkml_write_layer_lookat():
     return 'success'
 
 ###############################################################################
+# Test writing MultiGeometry
+
+def ogr_libkml_write_multigeometry():
+
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_multigeometry.kml")
+    lyr = ds.CreateLayer('test')
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    # Transformed into POINT per ATC 66
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('MULTIPOINT(0 1)'))
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    # Warning emitted per ATC 66
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('MULTIPOINT EMPTY'))
+    lyr.CreateFeature(feat)
+
+    ds = None
+    
+    ds = ogr.Open("/vsimem/ogr_libkml_write_multigeometry.kml")
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    if feat.GetGeometryRef().ExportToWkt() != 'POINT (0 1 0)':
+        feat.DumpReadable()
+        gdaltest.post_reason('failure')
+        return 'fail'
+    feat = lyr.GetNextFeature()
+    if feat.GetGeometryRef().ExportToWkt() != 'GEOMETRYCOLLECTION EMPTY':
+        feat.DumpReadable()
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_libkml_cleanup():
@@ -939,6 +975,7 @@ def ogr_libkml_cleanup():
     gdal.Unlink('/vsimem/libkml.kmz')
     gdal.Unlink("/vsimem/ogr_libkml_camera.kml")
     gdal.Unlink("/vsimem/ogr_libkml_write_layer_lookat.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_write_multigeometry.kml")
 
     # Re-register KML driver if necessary
     if ogrtest.kml_drv is not None:
@@ -976,6 +1013,7 @@ gdaltest_list = [
     ogr_libkml_gxtrack,
     ogr_libkml_camera,
     ogr_libkml_write_layer_lookat,
+    ogr_libkml_write_multigeometry,
     ogr_libkml_cleanup ]
 
 if __name__ == '__main__':
