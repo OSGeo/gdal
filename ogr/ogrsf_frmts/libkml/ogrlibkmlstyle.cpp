@@ -256,8 +256,6 @@ void addstylestring2kml (
                 GBool nullcheck;
                 GBool nullcheck2;
                 
-                poKmlLabelStyle = poKmlFactory->CreateLabelStyle (  );
-
                 OGRStyleLabel *poStyleLabel = ( OGRStyleLabel * ) poOgrST;
 
                 /***** color *****/
@@ -271,6 +269,8 @@ void addstylestring2kml (
 
                 if ( !nullcheck
                      && poStyleLabel->GetRGBFromString ( pszcolor, nR, nG, nB, nA ) ) {
+                    if( poKmlLabelStyle == NULL )
+                        poKmlLabelStyle = poKmlFactory->CreateLabelStyle (  );
                     poKmlLabelStyle->set_color ( Color32 ( nA, nB, nG, nR ) );
                 }
 
@@ -280,6 +280,8 @@ void addstylestring2kml (
 
                 if ( !nullcheck ) {
                     dfScale /= 100.0;
+                    if( poKmlLabelStyle == NULL )
+                        poKmlLabelStyle = poKmlFactory->CreateLabelStyle (  );
                     poKmlLabelStyle->set_scale ( dfScale );
                 }
                 
