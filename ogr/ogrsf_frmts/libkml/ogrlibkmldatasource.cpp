@@ -1908,12 +1908,15 @@ void OGRLIBKMLDataSource::SetStyleTable2Kml (
 void OGRLIBKMLDataSource::SetStyleTable2Kmz (
     OGRStyleTable * poStyleTable )
 {
+    if( m_poKmlStyleKml != NULL || poStyleTable != NULL )
+    {
+        /***** replace the style document with a new one *****/
 
-    /***** replace the style document with a new one *****/
+        m_poKmlStyleKml = m_poKmlFactory->CreateDocument (  );
+        m_poKmlStyleKml->set_id ( "styleId" );
 
-    m_poKmlStyleKml = m_poKmlFactory->CreateDocument (  );
-
-    styletable2kml ( poStyleTable, m_poKmlFactory, m_poKmlStyleKml );
+        styletable2kml ( poStyleTable, m_poKmlFactory, m_poKmlStyleKml );
+    }
 
     return;
 }
