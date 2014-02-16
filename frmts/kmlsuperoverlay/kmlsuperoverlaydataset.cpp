@@ -224,14 +224,14 @@ int  GenerateRootKml(const char* filename,
     VSIFPrintfL(fp, "\t\t\t\t<listItemType>checkHideChildren</listItemType>\n");
     VSIFPrintfL(fp, "\t\t\t</ListStyle>\n");
     VSIFPrintfL(fp, "\t\t</Style>\n");
-    VSIFPrintfL(fp, "\t\t<Region>\n");
+    /*VSIFPrintfL(fp, "\t\t<Region>\n");
     VSIFPrintfL(fp, "\t\t\t<LatLonAltBox>\n");
     VSIFPrintfL(fp, "\t\t\t\t<north>%f</north>\n", north);
     VSIFPrintfL(fp, "\t\t\t\t<south>%f</south>\n", south);
     VSIFPrintfL(fp, "\t\t\t\t<east>%f</east>\n", east);
     VSIFPrintfL(fp, "\t\t\t\t<west>%f</west>\n", west);
     VSIFPrintfL(fp, "\t\t\t</LatLonAltBox>\n");
-    VSIFPrintfL(fp, "\t\t</Region>\n");
+    VSIFPrintfL(fp, "\t\t</Region>\n");*/
     VSIFPrintfL(fp, "\t\t<NetworkLink>\n");
     VSIFPrintfL(fp, "\t\t\t<open>1</open>\n");
     VSIFPrintfL(fp, "\t\t\t<Region>\n");
