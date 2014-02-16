@@ -196,7 +196,7 @@ static int OGR2ILIGeometryAppend( OGRGeometry *poGeometry, VSILFILE* fp, const c
         OGRPolygon      *poPolygon = (OGRPolygon *) poGeometry;
 
         if (attrname) VSIFPrintfL(fp, "<%s>\n", attrname);
-        if( iliGeomType == "Surface" )
+        if( iliGeomType == "Surface" || iliGeomType == "Area" )
         {
             //VSIFPrintfL(fp, "<MULTISURFACE>\n");
             VSIFPrintfL(fp, "<SURFACE>\n");
@@ -216,7 +216,7 @@ static int OGR2ILIGeometryAppend( OGRGeometry *poGeometry, VSILFILE* fp, const c
             if( !OGR2ILIGeometryAppend( poRing, fp, NULL, "" ) )
                 return FALSE;
         }
-        if( iliGeomType == "Surface" )
+        if( iliGeomType == "Surface" || iliGeomType == "Area" )
         {
             VSIFPrintfL(fp, "</BOUNDARY>\n");
             VSIFPrintfL(fp, "</SURFACE>\n");
