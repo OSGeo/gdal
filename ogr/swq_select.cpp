@@ -763,8 +763,7 @@ CPLErr swq_select::expand_wildcard( swq_field_list *field_list )
             int compose = itable != -1;
 
             /* skip this field if it isn't in the target table.  */
-            if( itable != -1 && field_list->table_ids != NULL 
-                && itable != field_list->table_ids[i] )
+            if( itable != -1 && itable != field_list->table_ids[i] )
                 continue;
 
             /* set up some default values. */
@@ -773,8 +772,7 @@ CPLErr swq_select::expand_wildcard( swq_field_list *field_list )
             def->target_type = SWQ_OTHER;
 
             /* does this field duplicate an earlier one? */
-            if( field_list->table_ids != NULL 
-                && field_list->table_ids[i] != 0 
+            if( field_list->table_ids[i] != 0 
                 && !compose )
             {
                 int other;
