@@ -2058,7 +2058,17 @@ elif test "$with_ecw" = "yes" -o "$with_ecw" = "" ; then
       ECW_LIBS="-lecwj2 $CARBON_FRAMEWORK"
     fi
   fi
-
+  # ECWJP2 SDK 5.1 style
+  if test "$ECW_SETTING" = "no" ; then
+        if test -r /Intergraph/ERDASEcwJpeg2000SDK5.1/lib/libEcwJp2SDK.a; then
+                ECW_LIBDIR=/Intergraph/ERDASEcwJpeg2000SDK5.1/lib
+                ECW_INCLUDE=-I/Intergraph/ERDASEcwJpeg2000SDK5.1/include
+                ECW_LIBS="-L$ECW_LIBDIR -lEcwJp2SDK -framework Cocoa"
+                ECW_SETTING=yes
+                ECW_FLAGS="-DHAVE_ECW_BUILDNUMBER_H $ECW_FLAGS"
+                AC_MSG_RESULT([found Intergraph ERDAS EcwJpeg2000 SDK 5.1 in /Intergraph/ERDASEcwJpeg2000SDK5.1/.])
+        fi
+  fi
 else
 
   AC_MSG_CHECKING([for libNCSEcw.so or libecwj2])
@@ -2086,7 +2096,14 @@ else
     ECW_FLAGS="-DLINUX -DX86 -DPOSIX -DHAVE_COMPRESS -DECW_COMPRESS_RW_SDK_VERSION"
     ECW_LIBS="-L$ECW_LIBDIR -lNCSEcw"
     AC_MSG_RESULT([found Intergraph 5.x+ SDK in ${ECW_LIBDIR}.])
-  else
+ # ECWJP2 SDK 5.1 style
+  elif test -r $with_ecw/lib/libEcwJp2SDK.a; then
+        ECW_LIBDIR=$with_ecw/lib
+        ECW_INCLUDE=-I$with_ecw/include
+        ECW_LIBS="-L$ECW_LIBDIR -lEcwJp2SDK -framework Cocoa"
+        ECW_FLAGS="-DHAVE_ECW_BUILDNUMBER_H $ECW_FLAGS"
+        AC_MSG_RESULT([found Intergraph 5.1+ SDK in $ {with_ecw}.]) 
+ else
     AC_MSG_ERROR([not found in $with_ecw/lib or $with_ecw/bin.])
   fi
 
