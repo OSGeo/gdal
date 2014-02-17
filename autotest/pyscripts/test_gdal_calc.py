@@ -40,6 +40,16 @@ from osgeo import gdal
 import gdaltest
 import test_py_scripts
 
+# test that gdalnumeric is available, if not skip all tests
+gdalnumeric_not_available = False
+try:
+    from osgeo.gdalnumeric import *
+except ImportError:
+    try:
+        from gdalnumeric import *
+    except ImportError:
+        gdalnumeric_not_available = True
+
 #Usage: gdal_calc.py [-A <filename>] [--A_band] [-B...-Z filename] [other_options]
 
 
@@ -47,6 +57,10 @@ import test_py_scripts
 # test basic copy
 
 def test_gdal_calc_py_1():
+
+    if gdalnumeric_not_available:
+        gdaltest.post_reason('gdalnumeric is not available, skipping all tests')
+        return 'skip'
 
     script_path = test_py_scripts.get_py_script('gdal_calc')
     if script_path is None:
@@ -84,6 +98,9 @@ def test_gdal_calc_py_1():
 
 def test_gdal_calc_py_2():
 
+    if gdalnumeric_not_available:
+        return 'skip'
+
     script_path = test_py_scripts.get_py_script('gdal_calc')
     if script_path is None:
         return 'skip'
@@ -119,6 +136,9 @@ def test_gdal_calc_py_2():
 
 def test_gdal_calc_py_3():
 
+    if gdalnumeric_not_available:
+        return 'skip'
+
     script_path = test_py_scripts.get_py_script('gdal_calc')
     if script_path is None:
         return 'skip'
@@ -151,6 +171,9 @@ def test_gdal_calc_py_3():
 # test --allBands option (simple calc)
 
 def test_gdal_calc_py_4():
+
+    if gdalnumeric_not_available:
+        return 'skip'
 
     script_path = test_py_scripts.get_py_script('gdal_calc')
     if script_path is None:
