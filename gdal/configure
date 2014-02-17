@@ -22463,7 +22463,18 @@ fi
       ECW_LIBS="-lecwj2 $CARBON_FRAMEWORK"
     fi
   fi
-
+  # ECWJP2 SDK 5.1 style
+  if test "$ECW_SETTING" = "no" ; then
+        if test -r /Intergraph/ERDASEcwJpeg2000SDK5.1/lib/libEcwJp2SDK.a; then
+                ECW_LIBDIR=/Intergraph/ERDASEcwJpeg2000SDK5.1/lib
+                ECW_INCLUDE=-I/Intergraph/ERDASEcwJpeg2000SDK5.1/include
+                ECW_LIBS="-L$ECW_LIBDIR -lEcwJp2SDK -framework Cocoa"
+                ECW_SETTING=yes
+                ECW_FLAGS="-DHAVE_ECW_BUILDNUMBER_H $ECW_FLAGS"
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: found Intergraph ERDAS EcwJpeg2000 SDK 5.1 in /Intergraph/ERDASEcwJpeg2000SDK5.1/." >&5
+$as_echo "found Intergraph ERDAS EcwJpeg2000 SDK 5.1 in /Intergraph/ERDASEcwJpeg2000SDK5.1/." >&6; }
+        fi
+  fi
 else
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libNCSEcw.so or libecwj2" >&5
@@ -22497,7 +22508,15 @@ $as_echo "found libecwj2 in $with_ecw/lib." >&6; }
     ECW_LIBS="-L$ECW_LIBDIR -lNCSEcw"
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: found Intergraph 5.x+ SDK in ${ECW_LIBDIR}." >&5
 $as_echo "found Intergraph 5.x+ SDK in ${ECW_LIBDIR}." >&6; }
-  else
+ # ECWJP2 SDK 5.1 style
+  elif test -r $with_ecw/lib/libEcwJp2SDK.a; then
+        ECW_LIBDIR=$with_ecw/lib
+        ECW_INCLUDE=-I$with_ecw/include
+        ECW_LIBS="-L$ECW_LIBDIR -lEcwJp2SDK -framework Cocoa"
+        ECW_FLAGS="-DHAVE_ECW_BUILDNUMBER_H $ECW_FLAGS"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: found Intergraph 5.1+ SDK in $ {with_ecw}." >&5
+$as_echo "found Intergraph 5.1+ SDK in $ {with_ecw}." >&6; }
+ else
     as_fn_error $? "not found in $with_ecw/lib or $with_ecw/bin." "$LINENO" 5
   fi
 
