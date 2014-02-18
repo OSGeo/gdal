@@ -269,7 +269,7 @@ known definition (ie. EPSG:4326) or a file with a WKT definition.
 Advanced options :
 
 <dl>
-<dt> <b>-gt</b> <em>n</em>:</dt><dd> group <em>n</em> features per transaction (default 200). Increase the value
+<dt> <b>-gt</b> <em>n</em>:</dt><dd> group <em>n</em> features per transaction (default 20000 in OGR 1.11, 200 in previous releases). Increase the value
 for better performance when writing into DBMS drivers that have transaction support.</dd>
 <dt> <b>-clipsrc</b><em> [xmin ymin xmax ymax]|WKT|datasource|spat_extent</em>:
 </dt><dd> (starting with GDAL 1.7.0) clip geometries to the specified bounding
@@ -329,8 +329,7 @@ When writing into transactional DBMS (SQLite/PostgreSQL,MySQL, etc...),
 it might be beneficial to increase the number
 of INSERT statements executed between BEGIN TRANSACTION and COMMIT TRANSACTION statements.
 This number is specified with the -gt option. For example, for SQLite, explicitly defining
-<b>-gt 1024</b> usually ensures a noticeable performance boost;
-defining an even bigger <b>-gt 65536</b> ensures optimal performance while
+<b>-gt 65536</b> ensures optimal performance while
 populating some table containing many hundredth thousand or million rows. However, note that
 if there are failed insertions, the scope of -skipfailures is a whole transaction.
 
