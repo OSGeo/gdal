@@ -1429,14 +1429,16 @@ int OGRLIBKMLDataSource::CreateKml (
     const char* pszAuthorName = CSLFetchNameValue(papszOptions, "AUTHOR_NAME");
     const char* pszAuthorURI = CSLFetchNameValue(papszOptions, "AUTHOR_URI");
     const char* pszAuthorEmail = CSLFetchNameValue(papszOptions, "AUTHOR_EMAIL");
+    const char* pszLink = CSLFetchNameValue(papszOptions, "LINK");
     int bWithAtom = pszAuthorName != NULL ||
                     pszAuthorURI != NULL ||
-                    pszAuthorEmail != NULL;
+                    pszAuthorEmail != NULL ||
+                    pszLink != NULL;
     
     m_poKmlDSKml = OGRLIBKMLCreateOGCKml22(m_poKmlFactory, bWithAtom);
     DocumentPtr poKmlDocument = m_poKmlFactory->CreateDocument (  );
     
-    if( bWithAtom )
+    if( pszAuthorName != NULL || pszAuthorURI != NULL || pszAuthorEmail != NULL )
     {
         kmldom::AtomAuthorPtr author = m_poKmlFactory->CreateAtomAuthor();
         if( pszAuthorName != NULL )
@@ -1467,6 +1469,14 @@ int OGRLIBKMLDataSource::CreateKml (
             }
         }
         poKmlDocument->set_atomauthor(author);
+    }
+
+    if( pszLink != NULL )
+    {
+        kmldom::AtomLinkPtr link = m_poKmlFactory->CreateAtomLink();
+        link->set_href(pszLink);
+        link->set_rel("related");
+        poKmlDocument->set_atomlink(link);
     }
 
     m_poKmlDSKml->set_feature ( poKmlDocument );
