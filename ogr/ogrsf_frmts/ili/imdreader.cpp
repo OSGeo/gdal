@@ -65,7 +65,9 @@ public:
         node(node_), iliVersion(iliVersion_), oTidLookup(oTidLookup_), oClasses(oClasses_), oAxisCount(oAxisCount_),
         poGeomFieldInfos(), poStructFieldInfos(), oFields(), isAssocClass(false), hasDerivedClasses(false)
     {
-        poTableDefn = new OGRFeatureDefn(LayerName(name));
+        char* layerName = LayerName(name);
+        poTableDefn = new OGRFeatureDefn(layerName);
+        CPLFree(layerName);
     };
     ~IliClass()
     {
@@ -74,9 +76,10 @@ public:
     const char* GetName() {
         return poTableDefn->GetName();
     }
-    const char* LayerName(const char* psClassTID) {
+    char* LayerName(const char* psClassTID) {
         if (iliVersion == 1)
         {
+            //Skip topic and replace . with __
             char **papszTokens =
                 CSLTokenizeString2( psClassTID, ".", CSLT_ALLOWEMPTYTOKENS );
 
@@ -87,9 +90,9 @@ public:
                 layername += papszTokens[i];
             }
             CSLDestroy( papszTokens );
-            return layername;
+            return CPLStrdup(layername);
         } else {
-            return psClassTID;
+            return CPLStrdup(psClassTID);
         }
     };
     void AddFieldNode(CPLXMLNode* node, int iOrderPos)
@@ -129,7 +132,7 @@ public:
         poGeomTableDefn->DeleteGeomFieldDefn(0);
         OGRGeomFieldDefn fieldDefGeom(psFieldName, eType);
         poGeomTableDefn->AddGeomFieldDefn(&fieldDefGeom);
-        CPLDebug( "OGR_ILI", "Adding geometry field %s to Class %s", psFieldName, poGeomTableDefn->GetName());
+        CPLDebug( "OGR_ILI", "Adding geometry table %s for field %s", poGeomTableDefn->GetName(), psFieldName);
         poGeomFieldInfos[psFieldName].geomTable = poGeomTableDefn;
     }
     void AddField(const char* psName, OGRFieldType fieldType)
@@ -374,7 +377,7 @@ void ImdReader::ReadModel(const char *pszFilename) {
                 }
                 else if( EQUAL(psEntry->pszValue, "IlisMeta07.ModelData.Class") && !EQUAL(modelName, "MODEL.INTERLIS"))
                 {
-                    //CPLDebug( "OGR_ILI", "Class name: '%s'", psTID);
+                    CPLDebug( "OGR_ILI", "Class name: '%s'", psTID);
                     oClasses[psEntry] = new IliClass(psEntry, psTID, iliVersion, oTidLookup, oClasses, oAxisCount);
                 }
             }

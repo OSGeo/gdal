@@ -107,8 +107,20 @@ int ILI1Reader::ReadModel(ImdReader *poImdReader, const char *pszModelFilename) 
   poImdReader->ReadModel(pszModelFilename);
   for (FeatureDefnInfos::const_iterator it = poImdReader->featureDefnInfos.begin(); it != poImdReader->featureDefnInfos.end(); ++it)
   {
+    //CPLDebug( "OGR_ILI", "Adding OGRILI1Layer with table '%s'", it->poTableDefn->GetName() );
     OGRILI1Layer* layer = new OGRILI1Layer(it->poTableDefn, it->poGeomFieldInfos, NULL);
     AddLayer(layer);
+    //Create additional layers for surface and area geometries
+    for (GeomFieldInfos::const_iterator it2 = it->poGeomFieldInfos.begin(); it2 != it->poGeomFieldInfos.end(); ++it2)
+    {
+      if (it2->second.geomTable)
+      {
+        GeomFieldInfos oGeomFieldInfos;
+        //CPLDebug( "OGR_ILI", "Adding OGRILI1Layer with geometry table '%s'", it2->second.geomTable->GetName() );
+        OGRILI1Layer* geomlayer = new OGRILI1Layer(it2->second.geomTable, oGeomFieldInfos, NULL);
+        AddLayer(geomlayer);
+      }
+    }
   }
 
   codeBlank = poImdReader->codeBlank;
