@@ -218,11 +218,21 @@ void OGRLIBKMLDataSource::WriteKml (
 /*                      OGRLIBKMLCreateOGCKml22()                             */
 /******************************************************************************/
 
-static KmlPtr OGRLIBKMLCreateOGCKml22(KmlFactory* poFactory)
+static KmlPtr OGRLIBKMLCreateOGCKml22(KmlFactory* poFactory,
+                                      int bWithAtom = FALSE)
 {
     KmlPtr kml = poFactory->CreateKml (  );
-    const char* kAttrs[] = { "xmlns", "http://www.opengis.net/kml/2.2", NULL };
-    kml->AddUnknownAttributes(Attributes::Create(kAttrs));
+    if( bWithAtom )
+    {
+        const char* kAttrs[] = { "xmlns", "http://www.opengis.net/kml/2.2",
+                                 "xmlns:atom", "http://www.w3.org/2005/Atom", NULL };
+        kml->AddUnknownAttributes(Attributes::Create(kAttrs));
+    }
+    else
+    {
+        const char* kAttrs[] = { "xmlns", "http://www.opengis.net/kml/2.2", NULL };
+        kml->AddUnknownAttributes(Attributes::Create(kAttrs));
+    }
     return kml;
 }
 
@@ -1416,9 +1426,48 @@ int OGRLIBKMLDataSource::CreateKml (
     const char *pszFilename,
     char **papszOptions )
 {
-
-    m_poKmlDSKml = OGRLIBKMLCreateOGCKml22(m_poKmlFactory);
+    const char* pszAuthorName = CSLFetchNameValue(papszOptions, "AUTHOR_NAME");
+    const char* pszAuthorURI = CSLFetchNameValue(papszOptions, "AUTHOR_URI");
+    const char* pszAuthorEmail = CSLFetchNameValue(papszOptions, "AUTHOR_EMAIL");
+    int bWithAtom = pszAuthorName != NULL ||
+                    pszAuthorURI != NULL ||
+                    pszAuthorEmail != NULL;
+    
+    m_poKmlDSKml = OGRLIBKMLCreateOGCKml22(m_poKmlFactory, bWithAtom);
     DocumentPtr poKmlDocument = m_poKmlFactory->CreateDocument (  );
+    
+    if( bWithAtom )
+    {
+        kmldom::AtomAuthorPtr author = m_poKmlFactory->CreateAtomAuthor();
+        if( pszAuthorName != NULL )
+            author->set_name(pszAuthorName);
+        if( pszAuthorURI != NULL )
+        {
+            /* Ad-hoc validation. The ABNF is horribly complicated : http://tools.ietf.org/search/rfc3987#page-7 */
+            if( strncmp(pszAuthorURI, "http://", strlen("http://")) == 0 ||
+                strncmp(pszAuthorURI, "https://", strlen("https://")) == 0 )
+            {
+                author->set_uri(pszAuthorURI);
+            }
+            else
+            {
+                CPLError(CE_Warning, CPLE_AppDefined, "Invalid IRI for AUTHOR_URI");
+            }
+        }
+        if( pszAuthorEmail != NULL )
+        {
+            const char* pszArobase = strchr(pszAuthorEmail, '@');
+            if( pszArobase != NULL && strchr(pszArobase + 1, '.') != NULL )
+            {
+                author->set_email(pszAuthorEmail);
+            }
+            else
+            {
+                CPLError(CE_Warning, CPLE_AppDefined, "Invalid email for AUTHOR_EMAIL");
+            }
+        }
+        poKmlDocument->set_atomauthor(author);
+    }
 
     m_poKmlDSKml->set_feature ( poKmlDocument );
     m_poKmlDSContainer = poKmlDocument;
