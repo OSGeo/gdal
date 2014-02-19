@@ -233,6 +233,7 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
             /***** try to find the correct schema *****/
 
             int bHasHeading = FALSE, bHasTilt = FALSE, bHasRoll = FALSE;
+            int bHasSnippet = FALSE;
             FeaturePtr poKmlFeature;
 
             /***** find the first placemark *****/
@@ -271,6 +272,12 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
                             m_poOgrFeatureDefn->AddFieldDefn ( &oOgrField );
                         }
                     }
+                }
+                if( !bHasSnippet && poKmlFeature->has_snippet() )
+                {
+                    bHasSnippet = TRUE;
+                    OGRFieldDefn oOgrField ( oFC.snippetfield, OFTString );
+                    m_poOgrFeatureDefn->AddFieldDefn ( &oOgrField );
                 }
             } while ( poKmlFeature->Type (  ) != kmldom::Type_Placemark );
 

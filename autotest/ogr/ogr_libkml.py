@@ -962,6 +962,46 @@ def ogr_libkml_write_multigeometry():
     return 'success'
 
 ###############################################################################
+# Test writing <snippet>
+
+def ogr_libkml_write_snippet():
+
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_snippet.kml")
+    lyr = ds.CreateLayer('test')
+    lyr.CreateField(ogr.FieldDefn("snippet", ogr.OFTString))
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField('snippet', 'test_snippet')
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(0 1)'))
+    lyr.CreateFeature(feat)
+    ds = None
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_snippet.kml', 'rb')
+    data = gdal.VSIFReadL(1, 2048, f)
+    gdal.VSIFCloseL(f)
+
+    if data.find('<snippet>') == -1:
+        print(data)
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    ds = ogr.Open("/vsimem/ogr_libkml_write_snippet.kml")
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    if feat.GetField('snippet') != 'test_snippet':
+        feat.DumpReadable()
+        gdaltest.post_reason('failure')
+        return 'fail'
+    if feat.GetGeometryRef().ExportToWkt() != 'POINT (0 1 0)':
+        feat.DumpReadable()
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_libkml_cleanup():
@@ -976,6 +1016,7 @@ def ogr_libkml_cleanup():
     gdal.Unlink("/vsimem/ogr_libkml_camera.kml")
     gdal.Unlink("/vsimem/ogr_libkml_write_layer_lookat.kml")
     gdal.Unlink("/vsimem/ogr_libkml_write_multigeometry.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_write_snippet.kml")
 
     # Re-register KML driver if necessary
     if ogrtest.kml_drv is not None:
@@ -1014,6 +1055,7 @@ gdaltest_list = [
     ogr_libkml_camera,
     ogr_libkml_write_layer_lookat,
     ogr_libkml_write_multigeometry,
+    ogr_libkml_write_snippet,
     ogr_libkml_cleanup ]
 
 if __name__ == '__main__':
