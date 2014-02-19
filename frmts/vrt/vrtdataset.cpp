@@ -58,7 +58,7 @@ VRTDataset::VRTDataset( int nXSize, int nYSize )
 
     nGCPCount = 0;
     pasGCPList = NULL;
-    pszGCPProjection = CPLStrdup("");
+    pszGCPProjection = NULL;
 
     pszVRTPath = NULL;
 
@@ -458,7 +458,10 @@ int VRTDataset::GetGCPCount()
 const char *VRTDataset::GetGCPProjection()
 
 {
-    return pszGCPProjection;
+    if( pszGCPProjection == NULL )
+        return "";
+    else
+        return pszGCPProjection;
 }
 
 /************************************************************************/
