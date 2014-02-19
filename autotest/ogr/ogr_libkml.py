@@ -1002,6 +1002,32 @@ def ogr_libkml_write_snippet():
     return 'success'
 
 ###############################################################################
+# Test writing <atom:author>
+
+def ogr_libkml_write_atom_author():
+
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_atom_author.kml",
+                                                        options = ['author_name=name', 'author_uri=http://foo', 'author_email=foo@bar.com'])
+    ds = None
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_atom_author.kml', 'rb')
+    data = gdal.VSIFReadL(1, 2048, f)
+    gdal.VSIFCloseL(f)
+
+    if data.find('<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">') == -1 or \
+       data.find('<atom:name>name</atom:name>') == -1 or \
+       data.find('<atom:uri>http://foo</atom:uri>') == -1 or \
+       data.find('<atom:email>foo@bar.com</atom:email>') == -1:
+        print(data)
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_libkml_cleanup():
@@ -1017,6 +1043,7 @@ def ogr_libkml_cleanup():
     gdal.Unlink("/vsimem/ogr_libkml_write_layer_lookat.kml")
     gdal.Unlink("/vsimem/ogr_libkml_write_multigeometry.kml")
     gdal.Unlink("/vsimem/ogr_libkml_write_snippet.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_write_atom_author.kml")
 
     # Re-register KML driver if necessary
     if ogrtest.kml_drv is not None:
@@ -1056,6 +1083,7 @@ gdaltest_list = [
     ogr_libkml_write_layer_lookat,
     ogr_libkml_write_multigeometry,
     ogr_libkml_write_snippet,
+    ogr_libkml_write_atom_author,
     ogr_libkml_cleanup ]
 
 if __name__ == '__main__':
