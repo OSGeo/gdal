@@ -452,29 +452,28 @@ void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed,
 /*      vectors.                                                        */
 /* -------------------------------------------------------------------- */
     double dfRefPixelDelta, dfRefLineDelta, dfLLDelta = 0.0001;
-    
+
     RPCTransformPoint( psRPCInfo, dfRefLong+dfLLDelta, dfRefLat, 0.0, 
                        &dfRefPixelDelta, &dfRefLineDelta );
     adfGTFromLL[1] = (dfRefPixelDelta - dfRefPixel) / dfLLDelta;
-    adfGTFromLL[2] = (dfRefLineDelta - dfRefLine) / dfLLDelta;
+    adfGTFromLL[4] = (dfRefLineDelta - dfRefLine) / dfLLDelta;
     
     RPCTransformPoint( psRPCInfo, dfRefLong, dfRefLat+dfLLDelta, 0.0, 
                        &dfRefPixelDelta, &dfRefLineDelta );
-    adfGTFromLL[4] = (dfRefPixelDelta - dfRefPixel) / dfLLDelta;
+    adfGTFromLL[2] = (dfRefPixelDelta - dfRefPixel) / dfLLDelta;
     adfGTFromLL[5] = (dfRefLineDelta - dfRefLine) / dfLLDelta;
 
-    adfGTFromLL[0] = dfRefPixel 
+    adfGTFromLL[0] = dfRefPixel
         - adfGTFromLL[1] * dfRefLong - adfGTFromLL[2] * dfRefLat;
-    adfGTFromLL[3] = dfRefLine 
+    adfGTFromLL[3] = dfRefLine
         - adfGTFromLL[4] * dfRefLong - adfGTFromLL[5] * dfRefLat;
-
+    
     if( !GDALInvGeoTransform( adfGTFromLL, psTransform->adfPLToLatLongGeoTransform) )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot invert geotransform");
         GDALDestroyRPCTransformer(psTransform);
         return NULL;
     }
-    
     return psTransform;
 }
 
@@ -553,14 +552,17 @@ RPCInverseTransformPoint( GDALRPCTransformInfo *psTransform,
             //CPLDebug( "RPC", "Converged!" );
             break;
         }
-
     }
 
     if( iIter != -1 )
-        CPLDebug( "RPC", "Iterations %d: Got: %g,%g  Offset=%g,%g", 
+    {
+#ifdef notdef
+        CPLDebug( "RPC", "Failed Iterations %d: Got: %g,%g  Offset=%g,%g", 
                   iIter, 
                   dfResultX, dfResultY,
                   dfPixelDeltaX, dfPixelDeltaY );
+#endif
+    }
     
     *pdfLong = dfResultX;
     *pdfLat = dfResultY;
