@@ -96,6 +96,58 @@ OGRLIBKMLDataSource::OGRLIBKMLDataSource ( KmlFactory * poKmlFactory )
 
 }
 
+/************************************************************************/
+/*                          PreProcessInput()                           */
+/************************************************************************/
+
+/* Substitute <snippet> by deprecated <Snippet> since libkml currently */
+/* only supports Snippet but ogckml22.xsd has deprecated it in favor of snippet */
+static void PreProcessInput(std::string& oKml)
+{
+    size_t nPos = 0;
+    while( TRUE )
+    {
+        nPos = oKml.find("<snippet>", nPos);
+        if( nPos == std::string::npos )
+        {
+            break;
+        }
+        oKml[nPos+1] = 'S';
+        nPos = oKml.find("</snippet>", nPos);
+        if( nPos == std::string::npos )
+        {
+            break;
+        }
+        oKml[nPos+2] = 'S';
+    }
+}
+
+/************************************************************************/
+/*                        PostProcessOutput()                           */
+/************************************************************************/
+
+/* Substitute deprecated <Snippet> by <snippet> since libkml currently */
+/* only supports Snippet but ogckml22.xsd has deprecated it in favor of snippet */
+static void PostProcessOutput(std::string& oKml)
+{
+    size_t nPos = 0;
+    while( TRUE )
+    {
+        nPos = oKml.find("<Snippet>", nPos);
+        if( nPos == std::string::npos )
+        {
+            break;
+        }
+        oKml[nPos+1] = 's';
+        nPos = oKml.find("</Snippet>", nPos);
+        if( nPos == std::string::npos )
+        {
+            break;
+        }
+        oKml[nPos+2] = 's';
+    }
+}
+
 /******************************************************************************
  method to write a single file ds .kml at ds destroy
 
@@ -143,6 +195,7 @@ void OGRLIBKMLDataSource::WriteKml (
     else if ( m_poKmlDSContainer ) {
         oKmlOut = kmldom::SerializePretty ( m_poKmlDSContainer );
     }
+    PostProcessOutput(oKmlOut);
 
     if (oKmlOut.size() != 0)
     {
@@ -211,7 +264,7 @@ void OGRLIBKMLDataSource::WriteKmz (
         }
         
         std::string oKmlOut = kmldom::SerializePretty ( m_poKmlDocKmlRoot );
-
+        PostProcessOutput(oKmlOut);
 
         if ( CPLCreateFileInZip( hZIP, "doc.kml", NULL ) != CE_None ||
              CPLWriteFileInZip( hZIP, oKmlOut.data(), oKmlOut.size() ) != CE_None )
@@ -253,6 +306,7 @@ void OGRLIBKMLDataSource::WriteKmz (
         }
 
         std::string oKmlOut = kmldom::SerializePretty ( poKmlKml );
+        PostProcessOutput(oKmlOut);
 
         if ( CPLCreateFileInZip( hZIP, papoLayers[iLayer]->GetFileName (  ), NULL ) != CE_None ||
              CPLWriteFileInZip( hZIP, oKmlOut.data(), oKmlOut.size() ) != CE_None )
@@ -270,6 +324,7 @@ void OGRLIBKMLDataSource::WriteKmz (
 
         poKmlKml->set_feature ( m_poKmlStyleKml );
         std::string oKmlOut = kmldom::SerializePretty ( poKmlKml );
+        PostProcessOutput(oKmlOut);
 
         if ( CPLCreateFileInZip( hZIP, "style/style.kml", NULL ) != CE_None ||
              CPLWriteFileInZip( hZIP, oKmlOut.data(), oKmlOut.size() ) != CE_None )
@@ -313,6 +368,7 @@ void OGRLIBKMLDataSource::WriteDir (
         }
         
         std::string oKmlOut = kmldom::SerializePretty ( m_poKmlDocKmlRoot );
+        PostProcessOutput(oKmlOut);
 
         const char *pszOutfile = CPLFormFilename ( pszName, "doc.kml", NULL );
 
@@ -360,6 +416,7 @@ void OGRLIBKMLDataSource::WriteDir (
         }
 
         std::string oKmlOut = kmldom::SerializePretty ( poKmlKml );
+        PostProcessOutput(oKmlOut);
 
         const char *pszOutfile = CPLFormFilename ( pszName,
                                                    papoLayers[iLayer]->
@@ -387,6 +444,7 @@ void OGRLIBKMLDataSource::WriteDir (
 
         poKmlKml->set_feature ( m_poKmlStyleKml );
         std::string oKmlOut = kmldom::SerializePretty ( poKmlKml );
+        PostProcessOutput(oKmlOut);
 
         const char *pszOutfile = CPLFormFilename ( pszName,
                                                    "style.kml",
@@ -834,6 +892,7 @@ int OGRLIBKMLDataSource::OpenKml (
             return FALSE;
         }
     }
+    PreProcessInput(oKmlKml);
     VSIFCloseL(fp);
 
     CPLLocaleC  oLocaleForcer;

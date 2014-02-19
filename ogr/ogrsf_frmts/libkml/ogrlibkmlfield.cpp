@@ -42,6 +42,7 @@ using kmldom::DataPtr;
 using kmldom::TimeStampPtr;
 using kmldom::TimeSpanPtr;
 using kmldom::TimePrimitivePtr;
+using kmldom::SnippetPtr;
 
 using kmldom::PointPtr;
 using kmldom::LineStringPtr;
@@ -443,6 +444,20 @@ void field2kml (
                     CPLFree( pszUTF8String );
 
                     continue;
+                }
+
+                /***** snippet *****/
+
+                else if  ( EQUAL ( name, oFC.snippetfield ) ) {
+
+                    SnippetPtr snippet = poKmlFactory->CreateSnippet (  );
+                    snippet->set_text(pszUTF8String);
+                    poKmlPlacemark->set_snippet ( snippet );
+
+                    CPLFree( pszUTF8String );
+
+                    continue;
+
                 }
                 
                 /***** other *****/
@@ -1019,6 +1034,31 @@ static void ogrkmlSetAltitudeMode(OGRFeature* poOgrFeat, int iField,
     }
 }
 
+/************************************************************************/
+/*                            TrimSpaces()                              */
+/************************************************************************/
+
+static const char* TrimSpaces(string& oText)
+{
+
+    /* SerializePretty() adds a new line before the data */
+    /* ands trailing spaces. I believe this is wrong */
+    /* as it breaks round-tripping */
+
+    /* Trim trailing spaces */
+    while (oText.size() != 0 && oText[oText.size()-1] == ' ')
+        oText.resize(oText.size()-1);
+
+    /* Skip leading newline and spaces */
+    const char* pszText = oText.c_str (  );
+    if (pszText[0] == '\n')
+        pszText ++;
+    while (pszText[0] == ' ')
+        pszText ++;
+
+    return pszText;
+}
+
 /******************************************************************************
  function to read kml into ogr fields
 ******************************************************************************/
@@ -1315,6 +1355,19 @@ void kml2field (
     if ( iField > -1 )
         poOgrFeat->SetField ( iField, nVisibility );
 
+    /***** snippet *****/
+
+    if ( poKmlFeature->has_snippet (  ) )
+    {
+        string oText = poKmlFeature->get_snippet (  )->get_text();
+
+        iField = poOgrFeat->GetFieldIndex ( oFC.snippetfield );
+
+        if ( iField > -1 )
+            poOgrFeat->SetField ( iField, TrimSpaces(oText) );
+    }
+
+    /***** extended schema *****/
     ExtendedDataPtr poKmlExtendedData = NULL;
 
     if ( poKmlFeature->has_extendeddata (  ) ) {
@@ -1357,22 +1410,7 @@ void kml2field (
                 if ( iField > -1 && poKmlSimpleData->has_text (  ) ) {
                     string oText = poKmlSimpleData->get_text (  );
 
-                    /* SerializePretty() adds a new line before the data */
-                    /* ands trailing spaces. I believe this is wrong */
-                    /* as it breaks round-tripping */
-
-                    /* Trim trailing spaces */
-                    while (oText.size() != 0 && oText[oText.size()-1] == ' ')
-                        oText.resize(oText.size()-1);
-
-                    /* Skip leading newline and spaces */
-                    const char* pszText = oText.c_str (  );
-                    if (pszText[0] == '\n')
-                        pszText ++;
-                    while (pszText[0] == ' ')
-                        pszText ++;
-
-                    poOgrFeat->SetField ( iField, pszText );
+                    poOgrFeat->SetField ( iField, TrimSpaces(oText) );
                 }
             }
         }
@@ -1445,7 +1483,8 @@ SimpleFieldPtr FieldDef2kml (
         if ( EQUAL ( pszFieldName, oFC.namefield ) ||
              EQUAL ( pszFieldName, oFC.descfield ) ||
              EQUAL ( pszFieldName, oFC.altitudeModefield ) ||
-             EQUAL ( pszFieldName, oFC.iconfield ) )
+             EQUAL ( pszFieldName, oFC.iconfield ) ||
+             EQUAL ( pszFieldName, oFC.snippetfield ) )
             break;
         poKmlSimpleField->set_type ( "string" );
         return poKmlSimpleField;
@@ -1565,6 +1604,7 @@ void get_fieldconfig( struct fieldconfig *oFC) {
     oFC->headingfield = CPLGetConfigOption( "LIBKML_HEADING_FIELD", "heading");
     oFC->tiltfield = CPLGetConfigOption( "LIBKML_TILT_FIELD", "tilt");
     oFC->rollfield = CPLGetConfigOption( "LIBKML_ROLL_FIELD", "roll");
+    oFC->snippetfield = CPLGetConfigOption( "LIBKML_SNIPPET_FIELD", "snippet");
 }
 
 /************************************************************************/
