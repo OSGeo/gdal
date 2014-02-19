@@ -335,9 +335,32 @@ def transformer_5():
 
 
 ###############################################################################
-# Test Transformer.TransformPoints
+# Test RPC convergence bug (bug # 5395)
 
 def transformer_6():
+
+    if not gdaltest.have_ng:
+        return 'skip'
+
+    ds = gdal.Open('data/rpc_5395.vrt')
+    tr = gdal.Transformer( ds, None, [ 'METHOD=RPC' ] )
+
+    (success,pnt) = tr.TransformPoint( 0, 0, 0 )
+
+    if not success \
+       or abs(pnt[0]-28.26163232) > 0.0001 \
+       or abs(pnt[1]--27.79853245) > 0.0001 \
+       or pnt[2] != 0:
+        print(success, pnt)
+        gdaltest.post_reason( 'got wrong forward transform result.' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test Transformer.TransformPoints
+
+def transformer_7():
 
     if not gdaltest.have_ng:
         return 'skip'
