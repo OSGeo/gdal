@@ -4617,6 +4617,13 @@ fail:
 }
 
 
+SWIGINTERN PyObject *StyleTable_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *obj;
+  if (!PyArg_ParseTuple(args,(char*)"O:swigregister", &obj)) return NULL;
+  SWIG_TypeNewClientData(SWIGTYPE_p_OGRStyleTableShadow, SWIG_NewClientData(obj));
+  return SWIG_Py_Void();
+}
+
 SWIGINTERN PyObject *_wrap_Driver_name_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   OGRDriverShadow *arg1 = (OGRDriverShadow *) 0 ;
@@ -20004,6 +20011,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"GetUseExceptions", _wrap_GetUseExceptions, METH_VARARGS, (char *)"GetUseExceptions() -> int"},
 	 { (char *)"UseExceptions", _wrap_UseExceptions, METH_VARARGS, (char *)"UseExceptions()"},
 	 { (char *)"DontUseExceptions", _wrap_DontUseExceptions, METH_VARARGS, (char *)"DontUseExceptions()"},
+	 { (char *)"StyleTable_swigregister", StyleTable_swigregister, METH_VARARGS, NULL},
 	 { (char *)"Driver_name_get", _wrap_Driver_name_get, METH_VARARGS, (char *)"Driver_name_get(Driver self) -> char"},
 	 { (char *)"Driver_CreateDataSource", (PyCFunction) _wrap_Driver_CreateDataSource, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
 		"Driver_CreateDataSource(Driver self, char utf8_path, char options = None) -> DataSource\n"
@@ -20506,13 +20514,13 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		""},
 	 { (char *)"DataSource_GetStyleTable", _wrap_DataSource_GetStyleTable, METH_VARARGS, (char *)"\n"
-		"DataSource_GetStyleTable(DataSource self) -> OGRStyleTableShadow\n"
+		"DataSource_GetStyleTable(DataSource self) -> StyleTable\n"
 		"\n"
 		"OGRStyleTableH\n"
 		"OGR_DS_GetStyleTable(OGRDataSourceH hDS) \n"
 		""},
 	 { (char *)"DataSource_SetStyleTable", _wrap_DataSource_SetStyleTable, METH_VARARGS, (char *)"\n"
-		"DataSource_SetStyleTable(DataSource self, OGRStyleTableShadow table)\n"
+		"DataSource_SetStyleTable(DataSource self, StyleTable table)\n"
 		"\n"
 		"void\n"
 		"OGR_DS_SetStyleTable(OGRDataSourceH hDS, OGRStyleTableH hStyleTable)\n"
@@ -21532,13 +21540,13 @@ static PyMethodDef SwigMethods[] = {
 		"    void callback_data = None) -> OGRErr\n"
 		""},
 	 { (char *)"Layer_GetStyleTable", _wrap_Layer_GetStyleTable, METH_VARARGS, (char *)"\n"
-		"Layer_GetStyleTable(Layer self) -> OGRStyleTableShadow\n"
+		"Layer_GetStyleTable(Layer self) -> StyleTable\n"
 		"\n"
 		"OGRStyleTableH\n"
 		"OGR_L_GetStyleTable(OGRLayerH hLayer) \n"
 		""},
 	 { (char *)"Layer_SetStyleTable", _wrap_Layer_SetStyleTable, METH_VARARGS, (char *)"\n"
-		"Layer_SetStyleTable(Layer self, OGRStyleTableShadow table)\n"
+		"Layer_SetStyleTable(Layer self, StyleTable table)\n"
 		"\n"
 		"void\n"
 		"OGR_L_SetStyleTable(OGRLayerH hLayer, OGRStyleTableH hStyleTable) \n"
