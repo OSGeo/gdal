@@ -149,6 +149,7 @@ typedef void OGRGeometryShadow;
 typedef void OSRCoordinateTransformationShadow;
 typedef void OGRFieldDefnShadow;
 #endif
+typedef struct OGRStyleTableHS OGRStyleTableShadow;
 typedef struct OGRGeomFieldDefnHS OGRGeomFieldDefnShadow;
 %}
 
@@ -335,6 +336,9 @@ typedef struct
 #endif
 
 #ifndef GDAL_BINDINGS
+
+%rename (StyleTable) OGRStyleTableShadow;
+
 /************************************************************************/
 /*                              OGRDriver                               */
 /************************************************************************/
@@ -541,6 +545,15 @@ public:
     OGR_DS_ReleaseResultSet(self, layer);
   }
 %clear OGRLayerShadow *layer;
+  
+  OGRStyleTableShadow *GetStyleTable() {
+    return (OGRStyleTableShadow*) OGR_DS_GetStyleTable(self);
+  }
+
+  void SetStyleTable(OGRStyleTableShadow* table) {
+    if( table != NULL )
+        OGR_DS_SetStyleTable(self, (OGRStyleTableH) table);
+  }
 
 } /* %extend */
 
@@ -845,6 +858,15 @@ public:
                 GDALProgressFunc callback=NULL,
                 void* callback_data=NULL ) {
     return OGR_L_Erase( self, method_layer, result_layer, options, callback, callback_data );
+  }
+  
+  OGRStyleTableShadow *GetStyleTable() {
+    return (OGRStyleTableShadow*) OGR_L_GetStyleTable(self);
+  }
+
+  void SetStyleTable(OGRStyleTableShadow* table) {
+    if( table != NULL )
+        OGR_L_SetStyleTable(self, (OGRStyleTableH) table);
   }
 
 } /* %extend */

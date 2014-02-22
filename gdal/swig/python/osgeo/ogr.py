@@ -727,6 +727,25 @@ class DataSource(_object):
         """
         return _ogr.DataSource_ReleaseResultSet(self, *args)
 
+    def GetStyleTable(self, *args):
+        """
+        GetStyleTable(self) -> OGRStyleTableShadow
+
+        OGRStyleTableH
+        OGR_DS_GetStyleTable(OGRDataSourceH hDS) 
+        """
+        return _ogr.DataSource_GetStyleTable(self, *args)
+
+    def SetStyleTable(self, *args):
+        """
+        SetStyleTable(self, OGRStyleTableShadow table)
+
+        void
+        OGR_DS_SetStyleTable(OGRDataSourceH hDS, OGRStyleTableH hStyleTable)
+
+        """
+        return _ogr.DataSource_SetStyleTable(self, *args)
+
     def Destroy(self):
       "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
       _ogr.delete_DataSource( self )
@@ -1930,6 +1949,24 @@ class Layer(_object):
             GDALProgressFunc callback = None, void callback_data = None) -> OGRErr
         """
         return _ogr.Layer_Erase(self, *args, **kwargs)
+
+    def GetStyleTable(self, *args):
+        """
+        GetStyleTable(self) -> OGRStyleTableShadow
+
+        OGRStyleTableH
+        OGR_L_GetStyleTable(OGRLayerH hLayer) 
+        """
+        return _ogr.Layer_GetStyleTable(self, *args)
+
+    def SetStyleTable(self, *args):
+        """
+        SetStyleTable(self, OGRStyleTableShadow table)
+
+        void
+        OGR_L_SetStyleTable(OGRLayerH hLayer, OGRStyleTableH hStyleTable) 
+        """
+        return _ogr.Layer_SetStyleTable(self, *args)
 
     def Reference(self):
       "For backwards compatibility only."

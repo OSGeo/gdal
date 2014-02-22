@@ -2732,17 +2732,18 @@ SWIG_Python_MustGetPtr(PyObject *obj, swig_type_info *ty, int argnum, int flags)
 #define SWIGTYPE_p_OGRGeomFieldDefnShadow swig_types[7]
 #define SWIGTYPE_p_OGRGeometryShadow swig_types[8]
 #define SWIGTYPE_p_OGRLayerShadow swig_types[9]
-#define SWIGTYPE_p_OSRCoordinateTransformationShadow swig_types[10]
-#define SWIGTYPE_p_OSRSpatialReferenceShadow swig_types[11]
-#define SWIGTYPE_p_char swig_types[12]
-#define SWIGTYPE_p_double swig_types[13]
-#define SWIGTYPE_p_f_double_p_q_const__char_p_void__int swig_types[14]
-#define SWIGTYPE_p_int swig_types[15]
-#define SWIGTYPE_p_p_char swig_types[16]
-#define SWIGTYPE_p_p_double swig_types[17]
-#define SWIGTYPE_p_p_int swig_types[18]
-static swig_type_info *swig_types[20];
-static swig_module_info swig_module = {swig_types, 19, 0, 0, 0, 0};
+#define SWIGTYPE_p_OGRStyleTableShadow swig_types[10]
+#define SWIGTYPE_p_OSRCoordinateTransformationShadow swig_types[11]
+#define SWIGTYPE_p_OSRSpatialReferenceShadow swig_types[12]
+#define SWIGTYPE_p_char swig_types[13]
+#define SWIGTYPE_p_double swig_types[14]
+#define SWIGTYPE_p_f_double_p_q_const__char_p_void__int swig_types[15]
+#define SWIGTYPE_p_int swig_types[16]
+#define SWIGTYPE_p_p_char swig_types[17]
+#define SWIGTYPE_p_p_double swig_types[18]
+#define SWIGTYPE_p_p_int swig_types[19]
+static swig_type_info *swig_types[21];
+static swig_module_info swig_module = {swig_types, 20, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -2874,6 +2875,7 @@ typedef void OGRGeometryShadow;
 typedef void OSRCoordinateTransformationShadow;
 typedef void OGRFieldDefnShadow;
 #endif
+typedef struct OGRStyleTableHS OGRStyleTableShadow;
 typedef struct OGRGeomFieldDefnHS OGRGeomFieldDefnShadow;
 
 
@@ -3462,6 +3464,13 @@ SWIGINTERN OGRLayerShadow *OGRDataSourceShadow_ExecuteSQL(OGRDataSourceShadow *s
 SWIGINTERN void OGRDataSourceShadow_ReleaseResultSet(OGRDataSourceShadow *self,OGRLayerShadow *layer){
     OGR_DS_ReleaseResultSet(self, layer);
   }
+SWIGINTERN OGRStyleTableShadow *OGRDataSourceShadow_GetStyleTable(OGRDataSourceShadow *self){
+    return (OGRStyleTableShadow*) OGR_DS_GetStyleTable(self);
+  }
+SWIGINTERN void OGRDataSourceShadow_SetStyleTable(OGRDataSourceShadow *self,OGRStyleTableShadow *table){
+    if( table != NULL )
+        OGR_DS_SetStyleTable(self, (OGRStyleTableH) table);
+  }
 SWIGINTERN int OGRLayerShadow_GetRefCount(OGRLayerShadow *self){
     return OGR_L_GetRefCount(self);
   }
@@ -3605,6 +3614,13 @@ SWIGINTERN OGRErr OGRLayerShadow_Clip(OGRLayerShadow *self,OGRLayerShadow *metho
   }
 SWIGINTERN OGRErr OGRLayerShadow_Erase(OGRLayerShadow *self,OGRLayerShadow *method_layer,OGRLayerShadow *result_layer,char **options=NULL,GDALProgressFunc callback=NULL,void *callback_data=NULL){
     return OGR_L_Erase( self, method_layer, result_layer, options, callback, callback_data );
+  }
+SWIGINTERN OGRStyleTableShadow *OGRLayerShadow_GetStyleTable(OGRLayerShadow *self){
+    return (OGRStyleTableShadow*) OGR_L_GetStyleTable(self);
+  }
+SWIGINTERN void OGRLayerShadow_SetStyleTable(OGRLayerShadow *self,OGRStyleTableShadow *table){
+    if( table != NULL )
+        OGR_L_SetStyleTable(self, (OGRStyleTableH) table);
   }
 SWIGINTERN void delete_OGRFeatureShadow(OGRFeatureShadow *self){
     OGR_F_Destroy(self);
@@ -5969,6 +5985,80 @@ SWIGINTERN PyObject *_wrap_DataSource_ReleaseResultSet(PyObject *SWIGUNUSEDPARM(
       CPLErrorReset();
     }
     OGRDataSourceShadow_ReleaseResultSet(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_DataSource_GetStyleTable(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRDataSourceShadow *arg1 = (OGRDataSourceShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  OGRStyleTableShadow *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:DataSource_GetStyleTable",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRDataSourceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "DataSource_GetStyleTable" "', argument " "1"" of type '" "OGRDataSourceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRDataSourceShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (OGRStyleTableShadow *)OGRDataSourceShadow_GetStyleTable(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRStyleTableShadow, 0 |  0 );
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_DataSource_SetStyleTable(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRDataSourceShadow *arg1 = (OGRDataSourceShadow *) 0 ;
+  OGRStyleTableShadow *arg2 = (OGRStyleTableShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:DataSource_SetStyleTable",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRDataSourceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "DataSource_SetStyleTable" "', argument " "1"" of type '" "OGRDataSourceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRDataSourceShadow * >(argp1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_OGRStyleTableShadow, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "DataSource_SetStyleTable" "', argument " "2"" of type '" "OGRStyleTableShadow *""'"); 
+  }
+  arg2 = reinterpret_cast< OGRStyleTableShadow * >(argp2);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    OGRDataSourceShadow_SetStyleTable(arg1,arg2);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -9331,6 +9421,80 @@ fail:
     CPLFree(psProgressInfo);
     
   }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Layer_GetStyleTable(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  OGRStyleTableShadow *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:Layer_GetStyleTable",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_GetStyleTable" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (OGRStyleTableShadow *)OGRLayerShadow_GetStyleTable(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRStyleTableShadow, 0 |  0 );
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Layer_SetStyleTable(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
+  OGRStyleTableShadow *arg2 = (OGRStyleTableShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:Layer_SetStyleTable",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_SetStyleTable" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_OGRStyleTableShadow, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Layer_SetStyleTable" "', argument " "2"" of type '" "OGRStyleTableShadow *""'"); 
+  }
+  arg2 = reinterpret_cast< OGRStyleTableShadow * >(argp2);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    OGRLayerShadow_SetStyleTable(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
   return NULL;
 }
 
@@ -20341,6 +20505,19 @@ static PyMethodDef SwigMethods[] = {
 		"hLayer:  handle to the result of a previous OGR_DS_ExecuteSQL() call.\n"
 		"\n"
 		""},
+	 { (char *)"DataSource_GetStyleTable", _wrap_DataSource_GetStyleTable, METH_VARARGS, (char *)"\n"
+		"DataSource_GetStyleTable(DataSource self) -> OGRStyleTableShadow\n"
+		"\n"
+		"OGRStyleTableH\n"
+		"OGR_DS_GetStyleTable(OGRDataSourceH hDS) \n"
+		""},
+	 { (char *)"DataSource_SetStyleTable", _wrap_DataSource_SetStyleTable, METH_VARARGS, (char *)"\n"
+		"DataSource_SetStyleTable(DataSource self, OGRStyleTableShadow table)\n"
+		"\n"
+		"void\n"
+		"OGR_DS_SetStyleTable(OGRDataSourceH hDS, OGRStyleTableH hStyleTable)\n"
+		"\n"
+		""},
 	 { (char *)"DataSource_swigregister", DataSource_swigregister, METH_VARARGS, NULL},
 	 { (char *)"Layer_GetRefCount", _wrap_Layer_GetRefCount, METH_VARARGS, (char *)"\n"
 		"Layer_GetRefCount(Layer self) -> int\n"
@@ -21353,6 +21530,18 @@ static PyMethodDef SwigMethods[] = {
 		"Layer_Erase(Layer self, Layer method_layer, Layer result_layer, \n"
 		"    char options = None, GDALProgressFunc callback = None, \n"
 		"    void callback_data = None) -> OGRErr\n"
+		""},
+	 { (char *)"Layer_GetStyleTable", _wrap_Layer_GetStyleTable, METH_VARARGS, (char *)"\n"
+		"Layer_GetStyleTable(Layer self) -> OGRStyleTableShadow\n"
+		"\n"
+		"OGRStyleTableH\n"
+		"OGR_L_GetStyleTable(OGRLayerH hLayer) \n"
+		""},
+	 { (char *)"Layer_SetStyleTable", _wrap_Layer_SetStyleTable, METH_VARARGS, (char *)"\n"
+		"Layer_SetStyleTable(Layer self, OGRStyleTableShadow table)\n"
+		"\n"
+		"void\n"
+		"OGR_L_SetStyleTable(OGRLayerH hLayer, OGRStyleTableH hStyleTable) \n"
 		""},
 	 { (char *)"Layer_swigregister", Layer_swigregister, METH_VARARGS, NULL},
 	 { (char *)"delete_Feature", _wrap_delete_Feature, METH_VARARGS, (char *)"delete_Feature(Feature self)"},
@@ -23718,6 +23907,7 @@ static swig_type_info _swigt__p_OGRFieldDefnShadow = {"_p_OGRFieldDefnShadow", "
 static swig_type_info _swigt__p_OGRGeomFieldDefnShadow = {"_p_OGRGeomFieldDefnShadow", "OGRGeomFieldDefnShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_OGRGeometryShadow = {"_p_OGRGeometryShadow", "OGRGeometryShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_OGRLayerShadow = {"_p_OGRLayerShadow", "OGRLayerShadow *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_OGRStyleTableShadow = {"_p_OGRStyleTableShadow", "OGRStyleTableShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_OSRCoordinateTransformationShadow = {"_p_OSRCoordinateTransformationShadow", "OSRCoordinateTransformationShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_OSRSpatialReferenceShadow = {"_p_OSRSpatialReferenceShadow", "OSRSpatialReferenceShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_char = {"_p_char", "char *|retStringAndCPLFree *", 0, 0, (void*)0, 0};
@@ -23739,6 +23929,7 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_OGRGeomFieldDefnShadow,
   &_swigt__p_OGRGeometryShadow,
   &_swigt__p_OGRLayerShadow,
+  &_swigt__p_OGRStyleTableShadow,
   &_swigt__p_OSRCoordinateTransformationShadow,
   &_swigt__p_OSRSpatialReferenceShadow,
   &_swigt__p_char,
@@ -23760,6 +23951,7 @@ static swig_cast_info _swigc__p_OGRFieldDefnShadow[] = {  {&_swigt__p_OGRFieldDe
 static swig_cast_info _swigc__p_OGRGeomFieldDefnShadow[] = {  {&_swigt__p_OGRGeomFieldDefnShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_OGRGeometryShadow[] = {  {&_swigt__p_OGRGeometryShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_OGRLayerShadow[] = {  {&_swigt__p_OGRLayerShadow, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_OGRStyleTableShadow[] = {  {&_swigt__p_OGRStyleTableShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_OSRCoordinateTransformationShadow[] = {  {&_swigt__p_OSRCoordinateTransformationShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_OSRSpatialReferenceShadow[] = {  {&_swigt__p_OSRSpatialReferenceShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_char[] = {  {&_swigt__p_char, 0, 0, 0},{0, 0, 0, 0}};
@@ -23781,6 +23973,7 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_OGRGeomFieldDefnShadow,
   _swigc__p_OGRGeometryShadow,
   _swigc__p_OGRLayerShadow,
+  _swigc__p_OGRStyleTableShadow,
   _swigc__p_OSRCoordinateTransformationShadow,
   _swigc__p_OSRSpatialReferenceShadow,
   _swigc__p_char,
