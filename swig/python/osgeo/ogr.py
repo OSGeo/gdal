@@ -141,6 +141,17 @@ def DontUseExceptions(*args):
   """DontUseExceptions()"""
   return _ogr.DontUseExceptions(*args)
 import osr
+class StyleTable(_object):
+    """Proxy of C++ OGRStyleTableShadow class"""
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, StyleTable, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, StyleTable, name)
+    def __init__(self, *args, **kwargs): raise AttributeError("No constructor defined")
+    __repr__ = _swig_repr
+StyleTable_swigregister = _ogr.StyleTable_swigregister
+StyleTable_swigregister(StyleTable)
+
 class Driver(_object):
     """Proxy of C++ OGRDriverShadow class"""
     __swig_setmethods__ = {}
@@ -729,7 +740,7 @@ class DataSource(_object):
 
     def GetStyleTable(self, *args):
         """
-        GetStyleTable(self) -> OGRStyleTableShadow
+        GetStyleTable(self) -> StyleTable
 
         OGRStyleTableH
         OGR_DS_GetStyleTable(OGRDataSourceH hDS) 
@@ -738,7 +749,7 @@ class DataSource(_object):
 
     def SetStyleTable(self, *args):
         """
-        SetStyleTable(self, OGRStyleTableShadow table)
+        SetStyleTable(self, StyleTable table)
 
         void
         OGR_DS_SetStyleTable(OGRDataSourceH hDS, OGRStyleTableH hStyleTable)
@@ -1952,7 +1963,7 @@ class Layer(_object):
 
     def GetStyleTable(self, *args):
         """
-        GetStyleTable(self) -> OGRStyleTableShadow
+        GetStyleTable(self) -> StyleTable
 
         OGRStyleTableH
         OGR_L_GetStyleTable(OGRLayerH hLayer) 
@@ -1961,7 +1972,7 @@ class Layer(_object):
 
     def SetStyleTable(self, *args):
         """
-        SetStyleTable(self, OGRStyleTableShadow table)
+        SetStyleTable(self, StyleTable table)
 
         void
         OGR_L_SetStyleTable(OGRLayerH hLayer, OGRStyleTableH hStyleTable) 

@@ -338,6 +338,10 @@ typedef struct
 #ifndef GDAL_BINDINGS
 
 %rename (StyleTable) OGRStyleTableShadow;
+class OGRStyleTableShadow {
+  OGRStyleTableShadow();
+  ~OGRStyleTableShadow();
+};
 
 /************************************************************************/
 /*                              OGRDriver                               */
