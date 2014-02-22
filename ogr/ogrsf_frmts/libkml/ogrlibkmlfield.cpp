@@ -314,6 +314,7 @@ void field2kml (
     int iSkip1 = -1;
     int iSkip2 = -1;
     int iAltitudeMode = kmldom::ALTITUDEMODE_CLAMPTOGROUND;
+    int isGX = FALSE;
 
     for ( i = 0; i < nFields; i++ ) {
 
@@ -373,7 +374,6 @@ void field2kml (
                 else if ( EQUAL ( name, oFC.altitudeModefield ) ) {
                     const char *pszAltitudeMode = pszUTF8String ;
 
-                    int isGX = FALSE;
                     iAltitudeMode = kmlAltitudeModeFromString(pszAltitudeMode, isGX);
 
                     if ( poKmlPlacemark->has_geometry (  ) ) {
@@ -649,7 +649,7 @@ void field2kml (
                      && -1 < poOgrFeat->GetFieldAsInteger ( i ) ) {
                     int iExtrude = poOgrFeat->GetFieldAsInteger ( i );
                     if( iExtrude &&
-                        iAltitudeMode == kmldom::ALTITUDEMODE_CLAMPTOGROUND &&
+                        isGX == FALSE && iAltitudeMode == kmldom::ALTITUDEMODE_CLAMPTOGROUND &&
                         CSLTestBoolean(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
                     {
                         CPLError(CE_Warning, CPLE_NotSupported,
@@ -675,8 +675,8 @@ void field2kml (
                      && -1 < poOgrFeat->GetFieldAsInteger ( i ) ) {
                     int iTesselate = poOgrFeat->GetFieldAsInteger ( i );
                     if( iTesselate &&
-                        iAltitudeMode != kmldom::ALTITUDEMODE_CLAMPTOGROUND &&
-                        iAltitudeMode != kmldom::GX_ALTITUDEMODE_CLAMPTOSEAFLOOR &&
+                        !(isGX == FALSE && iAltitudeMode == kmldom::ALTITUDEMODE_CLAMPTOGROUND) &&
+                        !(isGX == TRUE && iAltitudeMode == kmldom::GX_ALTITUDEMODE_CLAMPTOSEAFLOOR) &&
                         CSLTestBoolean(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
                     {
                         CPLError(CE_Warning, CPLE_NotSupported,
@@ -688,6 +688,9 @@ void field2kml (
                             poKmlPlacemark->get_geometry (  );
                         ogr2tessellate_rec ( iTesselate,
                                             poKmlGeometry );
+                        if( isGX == FALSE && iAltitudeMode == kmldom::ALTITUDEMODE_CLAMPTOGROUND )
+                            ogr2altitudemode_rec ( poKmlGeometry, iAltitudeMode,
+                                                   isGX );
                     }
                 }
 
