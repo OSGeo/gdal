@@ -1052,6 +1052,29 @@ def ogr_libkml_write_atom_link():
     return 'success'
 
 ###############################################################################
+# Test writing <phoneNumber>
+
+def ogr_libkml_write_phonenumber():
+
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_phonenumber.kml",
+                                                        options = ['phonenumber=tel:911'])
+    ds = None
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_phonenumber.kml', 'rb')
+    data = gdal.VSIFReadL(1, 2048, f)
+    gdal.VSIFCloseL(f)
+
+    if data.find('<phoneNumber>tel:911</phoneNumber>') == -1:
+        print(data)
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_libkml_cleanup():
@@ -1069,6 +1092,7 @@ def ogr_libkml_cleanup():
     gdal.Unlink("/vsimem/ogr_libkml_write_snippet.kml")
     gdal.Unlink("/vsimem/ogr_libkml_write_atom_author.kml")
     gdal.Unlink("/vsimem/ogr_libkml_write_atom_link.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_write_phonenumber.kml")
 
     # Re-register KML driver if necessary
     if ogrtest.kml_drv is not None:
@@ -1110,6 +1134,7 @@ gdaltest_list = [
     ogr_libkml_write_snippet,
     ogr_libkml_write_atom_author,
     ogr_libkml_write_atom_link,
+    ogr_libkml_write_phonenumber,
     ogr_libkml_cleanup ]
 
 if __name__ == '__main__':

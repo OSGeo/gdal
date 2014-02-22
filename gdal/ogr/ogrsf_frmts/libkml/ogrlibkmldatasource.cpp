@@ -1412,6 +1412,32 @@ int OGRLIBKMLDataSource::Open (
     }
 }
 
+/************************************************************************/
+/*                         IsValidPhoneNumber()                         */
+/************************************************************************/
+
+/* Very approximative validation of http://tools.ietf.org/html/rfc3966#page-6 */
+static int IsValidPhoneNumber(const char* pszPhoneNumber)
+{
+    if( strncmp(pszPhoneNumber, "tel:", strlen("tel:")) == 0 )
+        pszPhoneNumber += strlen("tel:");
+    char ch;
+    int bDigitFound = FALSE;
+    if( *pszPhoneNumber == '+' )
+        pszPhoneNumber ++;
+    while( (ch = *pszPhoneNumber) != '\0' )
+    {
+        if( ch >= '0' && ch <= '9' )
+            bDigitFound = TRUE;
+        else if( ch == ';' )
+            break;
+        else if( !(ch == '-' || ch == '.' || ch == '(' || ch == ')') )
+            return FALSE;
+        pszPhoneNumber ++;
+    }
+    return bDigitFound;
+}
+
 /******************************************************************************
  method to create a single file .kml ds
  
@@ -1477,6 +1503,22 @@ int OGRLIBKMLDataSource::CreateKml (
         link->set_href(pszLink);
         link->set_rel("related");
         poKmlDocument->set_atomlink(link);
+    }
+    
+    const char* pszPhoneNumber = CSLFetchNameValue(papszOptions, "PHONENUMBER");
+    if( pszPhoneNumber != NULL )
+    {
+        if( IsValidPhoneNumber(pszPhoneNumber) )
+        {
+            if( strncmp(pszPhoneNumber, "tel:", strlen("tel:")) != 0 )
+                poKmlDocument->set_phonenumber(CPLSPrintf("tel:%s", pszPhoneNumber));
+            else
+                poKmlDocument->set_phonenumber(pszPhoneNumber);
+        }
+        else
+        {
+            CPLError(CE_Warning, CPLE_AppDefined, "Invalid phone number");
+        }
     }
 
     m_poKmlDSKml->set_feature ( poKmlDocument );
