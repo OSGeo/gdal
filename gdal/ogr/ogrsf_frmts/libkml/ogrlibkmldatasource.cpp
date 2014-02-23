@@ -1999,6 +1999,27 @@ OGRLayer *OGRLIBKMLDataSource::CreateLayer (
                               pszLookatRange,
                               pszLookatAltitudeMode);
     }
+    else
+    {
+        const char* pszCameraLongitude = CSLFetchNameValue(papszOptions, "CAMERA_LONGITUDE");
+        const char* pszCameraLatitude = CSLFetchNameValue(papszOptions, "CAMERA_LATITUDE");
+        const char* pszCameraAltitude = CSLFetchNameValue(papszOptions, "CAMERA_ALTITUDE");
+        const char* pszCameraHeading = CSLFetchNameValue(papszOptions, "CAMERA_HEADING");
+        const char* pszCameraTilt = CSLFetchNameValue(papszOptions, "CAMERA_TILT");
+        const char* pszCameraRoll = CSLFetchNameValue(papszOptions, "CAMERA_ROLL");
+        const char* pszCameraAltitudeMode = CSLFetchNameValue(papszOptions, "CAMERA_ALTITUDEMODE");
+        if( poOgrLayer != NULL && pszCameraLongitude != NULL && pszCameraLatitude != NULL &&
+            pszCameraAltitude != NULL && pszCameraAltitudeMode != NULL )
+        {
+            poOgrLayer->SetCamera(pszCameraLongitude,
+                                pszCameraLatitude,
+                                pszCameraAltitude,
+                                pszCameraHeading,
+                                pszCameraTilt,
+                                pszCameraRoll,
+                                pszCameraAltitudeMode);
+        }
+    }
 
     /***** mark the dataset as updated *****/
 

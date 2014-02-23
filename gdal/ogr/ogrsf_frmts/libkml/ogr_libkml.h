@@ -124,6 +124,13 @@ class OGRLIBKMLLayer:public OGRLayer
                                         const char* pszLookatTilt,
                                         const char* pszLookatRange,
                                         const char* pszLookatAltitudeMode);
+    void                      SetCamera(const char* pszCameraLongitude,
+                                        const char* pszCameraLatitude,
+                                        const char* pszCameraAltitude,
+                                        const char* pszCameraHeading,
+                                        const char* pszCameraTilt,
+                                        const char* pszCameraRoll,
+                                        const char* pszCameraAltitudeMode);
 
     static CPLString          LaunderFieldNames(CPLString osName);
 

@@ -857,3 +857,49 @@ void OGRLIBKMLLayer::SetLookAt( const char* pszLookatLongitude,
 
     m_poKmlLayer->set_abstractview(lookAt);
 }
+
+/************************************************************************/
+/*                            SetCamera()                               */
+/************************************************************************/
+
+void OGRLIBKMLLayer::SetCamera( const char* pszCameraLongitude,
+                                const char* pszCameraLatitude,
+                                const char* pszCameraAltitude,
+                                const char* pszCameraHeading,
+                                const char* pszCameraTilt,
+                                const char* pszCameraRoll,
+                                const char* pszCameraAltitudeMode )
+{
+    int isGX = FALSE;
+    int iAltitudeMode = kmlAltitudeModeFromString(pszCameraAltitudeMode, isGX);
+    if( isGX == FALSE && iAltitudeMode == kmldom::ALTITUDEMODE_CLAMPTOGROUND )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined, "Camera altitudeMode should be different from %s",
+                    pszCameraAltitudeMode);
+        return;
+    }
+    KmlFactory *poKmlFactory = m_poOgrDS->GetKmlFactory (  );
+    CameraPtr camera = poKmlFactory->CreateCamera();
+    camera->set_latitude(CPLAtof(pszCameraLatitude));
+    camera->set_longitude(CPLAtof(pszCameraLongitude));
+    camera->set_altitude(CPLAtof(pszCameraAltitude));
+    if( pszCameraHeading != NULL )
+        camera->set_heading(CPLAtof(pszCameraHeading));
+    if( pszCameraTilt != NULL )
+    {
+        double dfTilt = CPLAtof(pszCameraTilt);
+        if( dfTilt >= 0 && dfTilt <= 90 )
+            camera->set_tilt(dfTilt);
+        else
+            CPLError(CE_Warning, CPLE_AppDefined, "Invalid value for tilt: %s",
+                     pszCameraTilt);
+    }
+    if( pszCameraRoll != NULL )
+        camera->set_roll(CPLAtof(pszCameraRoll));
+    if( isGX )
+        camera->set_gx_altitudemode(iAltitudeMode);
+    else
+        camera->set_altitudemode(iAltitudeMode);
+
+    m_poKmlLayer->set_abstractview(camera);
+}

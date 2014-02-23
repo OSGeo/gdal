@@ -925,6 +925,39 @@ def ogr_libkml_write_layer_lookat():
 
     return 'success'
 
+
+###############################################################################
+# Test generating a Camera element at Document level
+
+def ogr_libkml_write_layer_camera():
+
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_layer_camera.kml")
+    options = [ 'CAMERA_LONGITUDE=3', 'CAMERA_LATITUDE=50', 'CAMERA_ALTITUDE=100',
+                'CAMERA_HEADING=70', 'CAMERA_TILT=50', 'CAMERA_ROLL=10', 'CAMERA_ALTITUDEMODE=relativeToGround']
+    lyr = ds.CreateLayer('test', options = options)
+    ds = None
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_layer_camera.kml', 'rb')
+    data = gdal.VSIFReadL(1, 2048, f)
+    gdal.VSIFCloseL(f)
+
+    if data.find('<Camera>') == -1 or \
+       data.find('<longitude>3</longitude>') == -1 or \
+       data.find('<latitude>50</latitude>') == -1 or \
+       data.find('<altitude>100</altitude>') == -1 or \
+       data.find('<heading>70</heading>') == -1 or \
+       data.find('<tilt>50</tilt>') == -1 or \
+       data.find('<roll>10</roll>') == -1 or \
+       data.find('<altitudeMode>relativeToGround</altitudeMode>') == -1:
+        print(data)
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # Test writing MultiGeometry
 
@@ -1088,6 +1121,7 @@ def ogr_libkml_cleanup():
     gdal.Unlink('/vsimem/libkml.kmz')
     gdal.Unlink("/vsimem/ogr_libkml_camera.kml")
     gdal.Unlink("/vsimem/ogr_libkml_write_layer_lookat.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_write_layer_camera.kml")
     gdal.Unlink("/vsimem/ogr_libkml_write_multigeometry.kml")
     gdal.Unlink("/vsimem/ogr_libkml_write_snippet.kml")
     gdal.Unlink("/vsimem/ogr_libkml_write_atom_author.kml")
@@ -1130,6 +1164,7 @@ gdaltest_list = [
     ogr_libkml_gxtrack,
     ogr_libkml_camera,
     ogr_libkml_write_layer_lookat,
+    ogr_libkml_write_layer_camera,
     ogr_libkml_write_multigeometry,
     ogr_libkml_write_snippet,
     ogr_libkml_write_atom_author,
