@@ -151,6 +151,21 @@
     </ul>
   </p>
 
+  <p>A <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#region">
+    &lt;Region&gt;</a> element can be generated to control when objects of the layer are visible or not.
+    If REGION_XMIN, REGION_YMIN, REGION_XMAX and REGION_YMAX, the region coordinates are determined from
+    the spatial extent of the features being written in the layer.
+    <ul>
+        <li><b>ADD_REGION=YES/NO</b> : defaults to NO</li>
+        <li><b>REGION_XMIN</b> (optional) : defines the west coordinate of the region.</li>
+        <li><b>REGION_YMIN</b> (optional) : defines the south coordinate of the region.</li>
+        <li><b>REGION_XMAX</b> (optional) : defines the east coordinate of the region.</li>
+        <li><b>REGION_YMAX</b> (optional) : defines the north coordinate of the region.</li>
+        <li><b>REGION_MIN_LOD_PIXELS</b> (optional) : minimum size in pixels of the region so that it is displayed. Defaults to 256.</li>
+        <li><b>REGION_MAX_LOD_PIXELS</b> (optional) : maximum size in pixels of the region so that it is displayed. Defaults to -1 (infinite).</li>
+    </ul>
+  </p>
+
   <h2>Feature</h2>
   
   <p>

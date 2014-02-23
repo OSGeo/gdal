@@ -50,6 +50,9 @@ using kmldom::SchemaDataPtr;
 using kmldom::DataPtr;
 using kmldom::CameraPtr;
 using kmldom::LookAtPtr;
+using kmldom::RegionPtr;
+using kmldom::LatLonAltBoxPtr;
+using kmldom::LodPtr;
 
 #include "ogrlibkmlfeature.h"
 #include "ogrlibkmlfield.h"
@@ -137,6 +140,17 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
     /***** store the layers container *****/
 
     m_poKmlLayer = poKmlContainer;
+
+    /***** related to Region *****/
+
+    m_bWriteRegion = FALSE;
+    m_bRegionBoundsAuto = FALSE;
+    m_dfRegionMinLodPixels = 0;
+    m_dfRegionMaxLodPixels = -1;
+    m_dfRegionMinX = 200;
+    m_dfRegionMinY = 200;
+    m_dfRegionMaxX = -200;
+    m_dfRegionMaxY = -200;
 
     /***** was the layer created from a DS::Open *****/
 
@@ -494,6 +508,17 @@ OGRErr OGRLIBKMLLayer::CreateFeature (
 
     if ( !bUpdate )
         return OGRERR_UNSUPPORTED_OPERATION;
+
+    if( m_bRegionBoundsAuto && poOgrFeat->GetGeometryRef() != NULL &&
+        !(poOgrFeat->GetGeometryRef()->IsEmpty()) )
+    {
+        OGREnvelope sEnvelope;
+        poOgrFeat->GetGeometryRef()->getEnvelope(&sEnvelope);
+        m_dfRegionMinX = MIN(m_dfRegionMinX, sEnvelope.MinX);
+        m_dfRegionMinY = MIN(m_dfRegionMinY, sEnvelope.MinY);
+        m_dfRegionMaxX = MAX(m_dfRegionMaxX, sEnvelope.MaxX);
+        m_dfRegionMaxY = MAX(m_dfRegionMaxY, sEnvelope.MaxY);
+    }
 
     PlacemarkPtr poKmlPlacemark =
         feat2kml ( m_poOgrDS, this, poOgrFeat, m_poOgrDS->GetKmlFactory (  ) );
@@ -902,4 +927,54 @@ void OGRLIBKMLLayer::SetCamera( const char* pszCameraLongitude,
         camera->set_altitudemode(iAltitudeMode);
 
     m_poKmlLayer->set_abstractview(camera);
+}
+
+/************************************************************************/
+/*                         SetWriteRegion()                             */
+/************************************************************************/
+
+void OGRLIBKMLLayer::SetWriteRegion(double dfMinLodPixels, double dfMaxLodPixels)
+{
+    m_bWriteRegion = TRUE;
+    m_bRegionBoundsAuto = TRUE;
+    m_dfRegionMinLodPixels = dfMinLodPixels;
+    m_dfRegionMaxLodPixels = dfMaxLodPixels;
+}
+
+/************************************************************************/
+/*                          SetRegionBounds()                           */
+/************************************************************************/
+
+void OGRLIBKMLLayer::SetRegionBounds(double dfMinX, double dfMinY,
+                                     double dfMaxX, double dfMaxY)
+{
+    m_bRegionBoundsAuto = FALSE;
+    m_dfRegionMinX = dfMinX;
+    m_dfRegionMinY = dfMinY;
+    m_dfRegionMaxX = dfMaxX;
+    m_dfRegionMaxY = dfMaxY;
+}
+
+/************************************************************************/
+/*                            Finalize()                                */
+/************************************************************************/
+
+void OGRLIBKMLLayer::Finalize()
+{
+    if( m_bWriteRegion && m_dfRegionMinX < m_dfRegionMaxX )
+    {
+        KmlFactory *poKmlFactory = m_poOgrDS->GetKmlFactory (  );
+        RegionPtr region = poKmlFactory->CreateRegion();
+        LatLonAltBoxPtr box = poKmlFactory->CreateLatLonAltBox();
+        box->set_west(m_dfRegionMinX);
+        box->set_east(m_dfRegionMaxX);
+        box->set_south(m_dfRegionMinY);
+        box->set_north(m_dfRegionMaxY);
+        region->set_latlonaltbox(box);
+        LodPtr lod = poKmlFactory->CreateLod();
+        lod->set_minlodpixels(m_dfRegionMinLodPixels);
+        lod->set_maxlodpixels(m_dfRegionMaxLodPixels);
+        region->set_lod(lod);
+        m_poKmlLayer->set_region(region);
+    }
 }
