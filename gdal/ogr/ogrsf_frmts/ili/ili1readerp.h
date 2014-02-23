@@ -59,7 +59,7 @@ public:
 
     void         SetArcDegrees(double arcDegrees);
     int          OpenFile( const char *pszFilename );
-    int          ReadModel( ImdReader *poImdReader, const char *pszModelFilename );
+    int          ReadModel( ImdReader *poImdReader, const char *pszModelFilename, OGRILI1DataSource *poDS );
     int          ReadFeatures();
     int          ReadTable(const char *layername);
     void         ReadGeom(char **stgeom, int geomIdx, OGRwkbGeometryType eType, OGRFeature *feature);

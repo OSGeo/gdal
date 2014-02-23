@@ -264,18 +264,13 @@ public:
                             CPLString lineLayerName = GetName() + CPLString("_") + psName;
                             AddGeomTable(lineLayerName, psName, wkbMultiLineString);
 
-                            // OGR 1.10 had a seperate areay polygon table:
-                            // CPLString areaLayerName = GetName() + CPLString("__Areas");
-                            // AddGeomTable(areaLayerName, psName, wkbPolygon);
-                            // areaLayer->SetAreaLayers(layer, areaLineLayer);
-
                             //Add geometry field for polygonized areas
                             AddGeomField(psName, wkbPolygon);
                         } else if (EQUAL(psKind, "Surface"))
                         {
                             CPLString geomLayerName = GetName() + CPLString("_") + psName;
                             AddGeomTable(geomLayerName, psName, wkbPolygon);
-                            //layer->SetSurfacePolyLayer(polyLayer, layer->GetLayerDefn()->GetGeomFieldCount()-1);
+                            AddGeomField(psName, wkbPolygon);
                         } else { // Polyline, DirectedPolyline
                             AddGeomField(psName, wkbMultiLineString);
                         }
@@ -312,7 +307,7 @@ public:
 };
 
 
-ImdReader::ImdReader(int iliVersionIn) : iliVersion(iliVersionIn) {
+ImdReader::ImdReader(int iliVersionIn) : iliVersion(iliVersionIn), modelInfos() {
   mainModelName = "OGR";
   mainTopicName = "OGR";
   codeBlank = '_';
@@ -358,7 +353,12 @@ void ImdReader::ReadModel(const char *pszFilename) {
 
                 if( EQUAL(psEntry->pszValue, "IlisMeta07.ModelData.Model") && !EQUAL(modelName, "MODEL.INTERLIS"))
                 {
-                    mainModelName = CPLGetXMLValue( psEntry, "Name", "OGR" ); //FIXME: check model inheritance
+                    IliModelInfo modelInfo;
+                    modelInfo.name = CPLGetXMLValue( psEntry, "Name", "OGR" );
+                    modelInfo.version = CPLGetXMLValue( psEntry, "Version", "" );
+                    modelInfo.uri = CPLGetXMLValue( psEntry, "At", "" );
+                    modelInfos.push_back(modelInfo);
+                    mainModelName = modelInfo.name; //FIXME: check model inheritance
                     //version = CPLGetXMLValue(psEntry, "iliVersion", "0"); //1 or 2.3
 
                     CPLXMLNode *psFormatNode = CPLGetXMLNode( psEntry, "ili1Format" );

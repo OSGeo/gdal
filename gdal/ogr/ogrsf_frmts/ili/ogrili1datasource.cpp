@@ -162,7 +162,7 @@ int OGRILI1DataSource::Open( const char * pszNewName, int bTestOpen )
     pszName = CPLStrdup( osBasename.c_str() );
 
     if (osModelFilename.length() > 0 )
-        poReader->ReadModel( poImdReader, osModelFilename.c_str() );
+        poReader->ReadModel( poImdReader, osModelFilename.c_str(), this );
 
     if( getenv( "ARC_DEGREES" ) != NULL ) {
       //No better way to pass arguments to the reader (it could even be an -lco arg)
@@ -312,4 +312,13 @@ int OGRILI1DataSource::TestCapability( const char * pszCap )
 OGRLayer *OGRILI1DataSource::GetLayer( int iLayer )
 {
   return poReader->GetLayer( iLayer );
+}
+
+/************************************************************************/
+/*                              GetLayerByName()                              */
+/************************************************************************/
+
+OGRILI1Layer *OGRILI1DataSource::GetLayerByName( const char* pszLayerName )
+{
+  return (OGRILI1Layer*)poReader->GetLayerByName( pszLayerName );
 }
