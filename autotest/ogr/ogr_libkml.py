@@ -1121,7 +1121,9 @@ def ogr_libkml_write_region():
     feat.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((2 48,2 49,3 49,3 48,2 48))'))
     lyr.CreateFeature(feat)
     lyr = ds.CreateLayer('manual', options = ['ADD_REGION=YES', 'REGION_XMIN=-180', \
-        'REGION_XMAX=180', 'REGION_YMIN=-90', 'REGION_YMAX=90', 'REGION_MIN_LOD_PIXELS=128', 'REGION_MAX_LOD_PIXELS=10000000'])
+        'REGION_XMAX=180', 'REGION_YMIN=-90', 'REGION_YMAX=90', \
+        'REGION_MIN_LOD_PIXELS=128', 'REGION_MAX_LOD_PIXELS=10000000', \
+        'REGION_MIN_FADE_EXTENT=1', 'REGION_MAX_FADE_EXTENT=2' ])
     ds = None
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_region.kml', 'rb')
@@ -1143,7 +1145,9 @@ def ogr_libkml_write_region():
        data.find('<east>180</east>') == -1 or \
        data.find('<west>-180</west>') == -1 or \
        data.find('<minLodPixels>128</minLodPixels>') == -1 or \
-       data.find('<maxLodPixels>10000000</maxLodPixels>') == -1:
+       data.find('<maxLodPixels>10000000</maxLodPixels>') == -1 or \
+       data.find('<minFadeExtent>1</minFadeExtent>') == -1 or \
+       data.find('<maxFadeExtent>2</maxFadeExtent>') == -1:
         print(data)
         gdaltest.post_reason('failure')
         return 'fail'
