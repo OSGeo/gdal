@@ -2040,7 +2040,7 @@ OGRLayer *OGRLIBKMLDataSource::CreateLayer (
         CSLFetchNameValueDef(papszOptions, "REGION_MIN_FADE_EXTENT", "0");
     const char* pszRegionMaxFadeExtent =
         CSLFetchNameValueDef(papszOptions, "REGION_MAX_FADE_EXTENT", "0");
-    if( CSLTestBoolean(pszRegionAdd) )
+    if( poOgrLayer != NULL && CSLTestBoolean(pszRegionAdd) )
     {
         poOgrLayer->SetWriteRegion(CPLAtof(pszRegionMinLodPixels),
                                    CPLAtof(pszRegionMaxLodPixels),
@@ -2056,6 +2056,40 @@ OGRLayer *OGRLIBKMLDataSource::CreateLayer (
             if( xmin < xmax && ymin < ymax )
                 poOgrLayer->SetRegionBounds(xmin, ymin, xmax, ymax);
         }
+    }
+    
+    const char* pszSOHref = CSLFetchNameValue(papszOptions, "SO_HREF");
+    const char* pszSOName = CSLFetchNameValue(papszOptions, "SO_NAME");
+    const char* pszSODescription = CSLFetchNameValue(papszOptions, "SO_DESCRIPTION");
+    const char* pszSOOverlayX = CSLFetchNameValue(papszOptions, "SO_OVERLAY_X");
+    const char* pszSOOverlayY = CSLFetchNameValue(papszOptions, "SO_OVERLAY_Y");
+    const char* pszSOOverlayXUnits = CSLFetchNameValue(papszOptions, "SO_OVERLAY_XUNITS");
+    const char* pszSOOverlayYUnits = CSLFetchNameValue(papszOptions, "SO_OVERLAY_YUNITS");
+    const char* pszSOScreenX = CSLFetchNameValue(papszOptions, "SO_SCREEN_X");
+    const char* pszSOScreenY = CSLFetchNameValue(papszOptions, "SO_SCREEN_Y");
+    const char* pszSOScreenXUnits = CSLFetchNameValue(papszOptions, "SO_SCREEN_XUNITS");
+    const char* pszSOScreenYUnits = CSLFetchNameValue(papszOptions, "SO_SCREEN_YUNITS");
+    const char* pszSOSizeX = CSLFetchNameValue(papszOptions, "SO_SIZE_X");
+    const char* pszSOSizeY = CSLFetchNameValue(papszOptions, "SO_SIZE_Y");
+    const char* pszSOSizeXUnits = CSLFetchNameValue(papszOptions, "SO_SIZE_XUNITS");
+    const char* pszSOSizeYUnits = CSLFetchNameValue(papszOptions, "SO_SIZE_YUNITS");
+    if( poOgrLayer != NULL && pszSOHref != NULL )
+    {
+        poOgrLayer->SetScreenOverlay(pszSOHref,
+                                     pszSOName,
+                                     pszSODescription,
+                                     pszSOOverlayX,
+                                     pszSOOverlayY,
+                                     pszSOOverlayXUnits,
+                                     pszSOOverlayYUnits,
+                                     pszSOScreenX,
+                                     pszSOScreenY,
+                                     pszSOScreenXUnits,
+                                     pszSOScreenYUnits,
+                                     pszSOSizeX,
+                                     pszSOSizeY,
+                                     pszSOSizeXUnits,
+                                     pszSOSizeYUnits);
     }
 
     /***** mark the dataset as updated *****/
