@@ -147,6 +147,8 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
     m_bRegionBoundsAuto = FALSE;
     m_dfRegionMinLodPixels = 0;
     m_dfRegionMaxLodPixels = -1;
+    m_dfRegionMinFadeExtent = 0;
+    m_dfRegionMaxFadeExtent = 0;
     m_dfRegionMinX = 200;
     m_dfRegionMinY = 200;
     m_dfRegionMaxX = -200;
@@ -933,12 +935,17 @@ void OGRLIBKMLLayer::SetCamera( const char* pszCameraLongitude,
 /*                         SetWriteRegion()                             */
 /************************************************************************/
 
-void OGRLIBKMLLayer::SetWriteRegion(double dfMinLodPixels, double dfMaxLodPixels)
+void OGRLIBKMLLayer::SetWriteRegion(double dfMinLodPixels,
+                                    double dfMaxLodPixels,
+                                    double dfMinFadeExtent,
+                                    double dfMaxFadeExtent)
 {
     m_bWriteRegion = TRUE;
     m_bRegionBoundsAuto = TRUE;
     m_dfRegionMinLodPixels = dfMinLodPixels;
     m_dfRegionMaxLodPixels = dfMaxLodPixels;
+    m_dfRegionMinFadeExtent = dfMinFadeExtent;
+    m_dfRegionMaxFadeExtent = dfMaxFadeExtent;
 }
 
 /************************************************************************/
@@ -965,15 +972,25 @@ void OGRLIBKMLLayer::Finalize()
     {
         KmlFactory *poKmlFactory = m_poOgrDS->GetKmlFactory (  );
         RegionPtr region = poKmlFactory->CreateRegion();
+
         LatLonAltBoxPtr box = poKmlFactory->CreateLatLonAltBox();
         box->set_west(m_dfRegionMinX);
         box->set_east(m_dfRegionMaxX);
         box->set_south(m_dfRegionMinY);
         box->set_north(m_dfRegionMaxY);
         region->set_latlonaltbox(box);
+
         LodPtr lod = poKmlFactory->CreateLod();
         lod->set_minlodpixels(m_dfRegionMinLodPixels);
         lod->set_maxlodpixels(m_dfRegionMaxLodPixels);
+        if( (m_dfRegionMinFadeExtent != 0 || m_dfRegionMaxFadeExtent != 0) &&
+            m_dfRegionMinFadeExtent + m_dfRegionMaxFadeExtent <
+                m_dfRegionMaxLodPixels - m_dfRegionMinLodPixels )
+        {
+            lod->set_minfadeextent(m_dfRegionMinFadeExtent);
+            lod->set_maxfadeextent(m_dfRegionMaxFadeExtent);
+        }
+
         region->set_lod(lod);
         m_poKmlLayer->set_region(region);
     }
