@@ -53,6 +53,8 @@ using kmldom::LookAtPtr;
 using kmldom::RegionPtr;
 using kmldom::LatLonAltBoxPtr;
 using kmldom::LodPtr;
+using kmldom::ScreenOverlayPtr;
+using kmldom::IconPtr;
 
 #include "ogrlibkmlfeature.h"
 #include "ogrlibkmlfield.h"
@@ -994,4 +996,109 @@ void OGRLIBKMLLayer::Finalize()
         region->set_lod(lod);
         m_poKmlLayer->set_region(region);
     }
+}
+
+/************************************************************************/
+/*                             LIBKMLGetUnits()                         */
+/************************************************************************/
+
+static int LIBKMLGetUnits(const char* pszUnits)
+{
+    if( EQUAL(pszUnits, "fraction") )
+        return kmldom::UNITS_FRACTION;
+    if( EQUAL(pszUnits, "pixels") )
+        return  kmldom::UNITS_PIXELS;
+    if( EQUAL(pszUnits, "insetPixels") )
+        return  kmldom::UNITS_INSETPIXELS;
+    return  kmldom::UNITS_FRACTION;
+}
+
+/************************************************************************/
+/*                         LIBKMLSetVec2()                              */
+/************************************************************************/
+
+static void LIBKMLSetVec2(kmldom::Vec2Ptr vec2, const char* pszX, const char* pszY,
+                    const char* pszXUnits, const char* pszYUnits)
+{
+    double dfX = CPLAtof(pszX); 
+    double dfY = CPLAtof(pszY);
+    vec2->set_x(dfX);
+    vec2->set_y(dfY);
+    if( dfX <= 1 && dfY <= 1 )
+    {
+        if( pszXUnits == NULL ) pszXUnits = "fraction";
+        if( pszYUnits == NULL ) pszYUnits = "fraction";
+    }
+    else
+    {
+        if( pszXUnits == NULL ) pszXUnits = "pixels";
+        if( pszYUnits == NULL ) pszYUnits = "pixels";
+    }
+    vec2->set_xunits(LIBKMLGetUnits(pszXUnits));
+    vec2->set_yunits(LIBKMLGetUnits(pszYUnits));
+}
+
+/************************************************************************/
+/*                         SetScreenOverlay()                           */
+/************************************************************************/
+
+void OGRLIBKMLLayer::SetScreenOverlay(const char* pszSOHref,
+                                      const char* pszSOName,
+                                      const char* pszSODescription,
+                                      const char* pszSOOverlayX,
+                                      const char* pszSOOverlayY,
+                                      const char* pszSOOverlayXUnits,
+                                      const char* pszSOOverlayYUnits,
+                                      const char* pszSOScreenX,
+                                      const char* pszSOScreenY,
+                                      const char* pszSOScreenXUnits,
+                                      const char* pszSOScreenYUnits,
+                                      const char* pszSOSizeX,
+                                      const char* pszSOSizeY,
+                                      const char* pszSOSizeXUnits,
+                                      const char* pszSOSizeYUnits)
+{
+    KmlFactory *poKmlFactory = m_poOgrDS->GetKmlFactory (  );
+    ScreenOverlayPtr so = poKmlFactory->CreateScreenOverlay();
+
+    if( pszSOName != NULL )
+        so->set_name(pszSOName);
+    if( pszSODescription != NULL )
+        so->set_description(pszSODescription);
+
+    IconPtr icon = poKmlFactory->CreateIcon();
+    icon->set_href(pszSOHref);
+    so->set_icon(icon);
+
+    if( pszSOOverlayX != NULL && pszSOOverlayY != NULL )
+    {
+        kmldom::OverlayXYPtr overlayxy = poKmlFactory->CreateOverlayXY();
+        LIBKMLSetVec2(overlayxy, pszSOOverlayX, pszSOOverlayY,
+                      pszSOOverlayXUnits, pszSOOverlayYUnits);
+        so->set_overlayxy(overlayxy);
+    }
+
+    if( pszSOScreenX != NULL && pszSOScreenY != NULL )
+    {
+        kmldom::ScreenXYPtr screenxy = poKmlFactory->CreateScreenXY();
+        LIBKMLSetVec2(screenxy, pszSOScreenX, pszSOScreenY,
+                      pszSOScreenXUnits, pszSOScreenYUnits);
+        so->set_screenxy(screenxy);
+    }
+    else
+    {
+        kmldom::ScreenXYPtr screenxy = poKmlFactory->CreateScreenXY();
+        LIBKMLSetVec2(screenxy, "0.05", "0.05", NULL, NULL);
+        so->set_screenxy(screenxy);
+    }
+
+    if( pszSOSizeX != NULL && pszSOSizeY != NULL )
+    {
+        kmldom::SizePtr sizexy = poKmlFactory->CreateSize();
+        LIBKMLSetVec2(sizexy, pszSOSizeX, pszSOSizeY,
+                      pszSOSizeXUnits, pszSOSizeYUnits);
+        so->set_size(sizexy);
+    }
+
+    m_poKmlLayer->add_feature(so);
 }

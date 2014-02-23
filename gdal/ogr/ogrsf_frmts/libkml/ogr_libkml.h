@@ -151,6 +151,23 @@ class OGRLIBKMLLayer:public OGRLayer
                                              double dfMaxFadeExtent);
     void                      SetRegionBounds(double dfMinX, double dfMinY,
                                               double dfMaxX, double dfMaxY);
+
+    void                      SetScreenOverlay(const char* pszSOHref,
+                                               const char* pszSOName,
+                                               const char* pszSODescription,
+                                               const char* pszSOOverlayX,
+                                               const char* pszSOOverlayY,
+                                               const char* pszSOOverlayXUnits,
+                                               const char* pszSOOverlayYUnits,
+                                               const char* pszSOScreenX,
+                                               const char* pszSOScreenY,
+                                               const char* pszSOScreenXUnits,
+                                               const char* pszSOScreenYUnits,
+                                               const char* pszSOSizeX,
+                                               const char* pszSOSizeY,
+                                               const char* pszSOSizeXUnits,
+                                               const char* pszSOSizeYUnits);
+
     void                      Finalize();
 };
 
