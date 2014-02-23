@@ -185,6 +185,8 @@ void OGRLIBKMLDataSource::WriteKml (
                 if ( poKmlSchema2 != poKmlSchema )
                     poKmlDocument->add_schema ( poKmlSchema );
             }
+
+            papoLayers[iLayer]->Finalize();
         }
     }
 
@@ -303,6 +305,8 @@ void OGRLIBKMLDataSource::WriteKmz (
             }
         }
 
+        papoLayers[iLayer]->Finalize();
+
         /***** if we dont have the layers root *****/
         /***** make it and add the container    *****/
 
@@ -412,6 +416,8 @@ void OGRLIBKMLDataSource::WriteDir (
                 poKmlDocument->add_schema ( poKmlSchema );
             };
         }
+
+        papoLayers[iLayer]->Finalize();
 
         /***** if we dont have the layers root *****/
         /***** make it and add the container    *****/
@@ -2018,6 +2024,31 @@ OGRLayer *OGRLIBKMLDataSource::CreateLayer (
                                 pszCameraTilt,
                                 pszCameraRoll,
                                 pszCameraAltitudeMode);
+        }
+    }
+    
+    const char* pszRegionAdd = CSLFetchNameValueDef(papszOptions, "ADD_REGION", "FALSE");
+    const char* pszRegionXMin = CSLFetchNameValue(papszOptions, "REGION_XMIN");
+    const char* pszRegionYMin = CSLFetchNameValue(papszOptions, "REGION_YMIN");
+    const char* pszRegionXMax = CSLFetchNameValue(papszOptions, "REGION_XMAX");
+    const char* pszRegionYMax = CSLFetchNameValue(papszOptions, "REGION_YMAX");
+    const char* pszRegionMinLodPixels =
+        CSLFetchNameValueDef(papszOptions, "REGION_MIN_LOD_PIXELS", "256");
+    const char* pszRegionMaxLodPixels =
+        CSLFetchNameValueDef(papszOptions, "REGION_MAX_LOD_PIXELS", "-1");
+    if( CSLTestBoolean(pszRegionAdd) )
+    {
+        poOgrLayer->SetWriteRegion(CPLAtof(pszRegionMinLodPixels),
+                                   CPLAtof(pszRegionMaxLodPixels));
+        if( pszRegionXMin != NULL && pszRegionYMin != NULL &&
+            pszRegionXMax != NULL && pszRegionYMax != NULL )
+        {
+            double xmin = CPLAtof(pszRegionXMin);
+            double ymin = CPLAtof(pszRegionYMin);
+            double xmax = CPLAtof(pszRegionXMax);
+            double ymax = CPLAtof(pszRegionYMax);
+            if( xmin < xmax && ymin < ymax )
+                poOgrLayer->SetRegionBounds(xmin, ymin, xmax, ymax);
         }
     }
 
