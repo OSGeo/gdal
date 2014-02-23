@@ -54,6 +54,8 @@ private:
 
     int                 bWriter;
 
+    int                 bGeomsJoined;
+
     OGRILI1DataSource   *poDS;
 
   public:
@@ -82,9 +84,10 @@ private:
     int                 TestCapability( const char * );
 
   private:
-    void                JoinSurfaceLayer();
+    void                JoinGeomLayers();
+    void                JoinSurfaceLayer( OGRILI1Layer* poSurfacePolyLayer, int nSurfaceFieldIndex );
     OGRMultiPolygon*    Polygonize( OGRGeometryCollection* poLines, bool fix_crossing_lines = false );
-    void                PolygonizeAreaLayer();
+    void                PolygonizeAreaLayer( OGRILI1Layer* poAreaLineLayer, int nAreaFieldIndex, int nPointFieldIndex );
 };
 
 /************************************************************************/
@@ -112,6 +115,7 @@ class OGRILI1DataSource : public OGRDataSource
     const char *GetName() { return pszName; }
     int         GetLayerCount() { return poReader ? poReader->GetLayerCount() : 0; }
     OGRLayer   *GetLayer( int );
+    OGRILI1Layer *GetLayerByName( const char* );
 
     FILE       *GetTransferFile() { return fpTransfer; }
 
