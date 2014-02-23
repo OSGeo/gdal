@@ -2036,10 +2036,16 @@ OGRLayer *OGRLIBKMLDataSource::CreateLayer (
         CSLFetchNameValueDef(papszOptions, "REGION_MIN_LOD_PIXELS", "256");
     const char* pszRegionMaxLodPixels =
         CSLFetchNameValueDef(papszOptions, "REGION_MAX_LOD_PIXELS", "-1");
+    const char* pszRegionMinFadeExtent =
+        CSLFetchNameValueDef(papszOptions, "REGION_MIN_FADE_EXTENT", "0");
+    const char* pszRegionMaxFadeExtent =
+        CSLFetchNameValueDef(papszOptions, "REGION_MAX_FADE_EXTENT", "0");
     if( CSLTestBoolean(pszRegionAdd) )
     {
         poOgrLayer->SetWriteRegion(CPLAtof(pszRegionMinLodPixels),
-                                   CPLAtof(pszRegionMaxLodPixels));
+                                   CPLAtof(pszRegionMaxLodPixels),
+                                   CPLAtof(pszRegionMinFadeExtent),
+                                   CPLAtof(pszRegionMaxFadeExtent));
         if( pszRegionXMin != NULL && pszRegionYMin != NULL &&
             pszRegionXMax != NULL && pszRegionYMax != NULL )
         {

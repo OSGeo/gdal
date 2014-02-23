@@ -80,6 +80,8 @@ class OGRLIBKMLLayer:public OGRLayer
     int                       m_bRegionBoundsAuto;
     double                    m_dfRegionMinLodPixels;
     double                    m_dfRegionMaxLodPixels;
+    double                    m_dfRegionMinFadeExtent;
+    double                    m_dfRegionMaxFadeExtent;
     double                    m_dfRegionMinX;
     double                    m_dfRegionMinY;
     double                    m_dfRegionMaxX;
@@ -144,7 +146,9 @@ class OGRLIBKMLLayer:public OGRLayer
     static CPLString          LaunderFieldNames(CPLString osName);
     
     void                      SetWriteRegion(double dfMinLodPixels,
-                                             double dfMaxLodPixels);
+                                             double dfMaxLodPixels,
+                                             double dfMinFadeExtent,
+                                             double dfMaxFadeExtent);
     void                      SetRegionBounds(double dfMinX, double dfMinY,
                                               double dfMaxX, double dfMaxY);
     void                      Finalize();
