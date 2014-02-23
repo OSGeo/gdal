@@ -102,13 +102,13 @@ const char* ILI1Reader::GetLayerNameString(const char* topicname, const char* ta
     return CPLSPrintf("%s__%s", topicname, tablename);
 }
 
-int ILI1Reader::ReadModel(ImdReader *poImdReader, const char *pszModelFilename) {
+int ILI1Reader::ReadModel(ImdReader *poImdReader, const char *pszModelFilename, OGRILI1DataSource *poDS) {
 
   poImdReader->ReadModel(pszModelFilename);
   for (FeatureDefnInfos::const_iterator it = poImdReader->featureDefnInfos.begin(); it != poImdReader->featureDefnInfos.end(); ++it)
   {
     //CPLDebug( "OGR_ILI", "Adding OGRILI1Layer with table '%s'", it->poTableDefn->GetName() );
-    OGRILI1Layer* layer = new OGRILI1Layer(it->poTableDefn, it->poGeomFieldInfos, NULL);
+    OGRILI1Layer* layer = new OGRILI1Layer(it->poTableDefn, it->poGeomFieldInfos, poDS);
     AddLayer(layer);
     //Create additional layers for surface and area geometries
     for (GeomFieldInfos::const_iterator it2 = it->poGeomFieldInfos.begin(); it2 != it->poGeomFieldInfos.end(); ++it2)
@@ -117,7 +117,7 @@ int ILI1Reader::ReadModel(ImdReader *poImdReader, const char *pszModelFilename) 
       {
         GeomFieldInfos oGeomFieldInfos;
         //CPLDebug( "OGR_ILI", "Adding OGRILI1Layer with geometry table '%s'", it2->second.geomTable->GetName() );
-        OGRILI1Layer* geomlayer = new OGRILI1Layer(it2->second.geomTable, oGeomFieldInfos, NULL);
+        OGRILI1Layer* geomlayer = new OGRILI1Layer(it2->second.geomTable, oGeomFieldInfos, poDS);
         AddLayer(geomlayer);
       }
     }

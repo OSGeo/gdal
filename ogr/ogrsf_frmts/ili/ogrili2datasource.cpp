@@ -240,6 +240,11 @@ int OGRILI2DataSource::Create( const char *pszFilename,
     VSIFPrintfL(fpOutput, "<TRANSFER xmlns=\"http://www.interlis.ch/INTERLIS2.3\">\n");
     VSIFPrintfL(fpOutput, "<HEADERSECTION SENDER=\"OGR/GDAL %s\" VERSION=\"2.3\">\n", GDAL_RELEASE_NAME);
     VSIFPrintfL(fpOutput, "<MODELS>\n");
+    for (IliModelInfos::const_iterator it = poImdReader->modelInfos.begin(); it != poImdReader->modelInfos.end(); ++it)
+    {
+        VSIFPrintfL(fpOutput, "<MODEL NAME=\"%s\" URI=\"%s\" VERSION=\"%s\"/>\n",
+            it->name.c_str(), it->uri.c_str(), it->version.c_str());
+    }
     VSIFPrintfL(fpOutput, "</MODELS>\n");
     VSIFPrintfL(fpOutput, "</HEADERSECTION>\n");
     VSIFPrintfL(fpOutput, "<DATASECTION>\n");
