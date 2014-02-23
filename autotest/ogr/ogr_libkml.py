@@ -1155,6 +1155,54 @@ def ogr_libkml_write_region():
     return 'success'
 
 ###############################################################################
+# Test writing ScreenOverlay
+
+def ogr_libkml_write_screenoverlay():
+
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_screenoverlay.kml")
+    lyr = ds.CreateLayer('auto', options = ['SO_HREF=http://foo'])
+    lyr = ds.CreateLayer('manual', options = ['SO_HREF=http://bar',
+                                              'SO_NAME=name',
+                                              'SO_DESCRIPTION=description',
+                                              'SO_OVERLAY_X=10',
+                                              'SO_OVERLAY_Y=20',
+                                              'SO_OVERLAY_XUNITS=pixels',
+                                              'SO_OVERLAY_YUNITS=pixels',
+                                              'SO_SCREEN_X=0.4',
+                                              'SO_SCREEN_Y=0.5',
+                                              'SO_SCREEN_XUNITS=fraction',
+                                              'SO_SCREEN_YUNITS=fraction',
+                                              'SO_SIZE_X=1.1',
+                                              'SO_SIZE_Y=1.2',
+                                              'SO_SIZE_XUNITS=fraction',
+                                              'SO_SIZE_YUNITS=fraction'])
+    ds = None
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_screenoverlay.kml', 'rb')
+    data = gdal.VSIFReadL(1, 2048, f)
+    gdal.VSIFCloseL(f)
+
+    if data.find('<href>http://foo</href>') == -1 or \
+       data.find('<screenXY x="0.05" xunits="fraction" y="0.05" yunits="fraction"/>') == -1:
+        print(data)
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    if data.find('<overlayXY x="10" xunits="pixels" y="20" yunits="pixels"/>') == -1 or \
+       data.find('<screenXY x="0.4" xunits="fraction" y="0.5" yunits="fraction"/>') == -1 or \
+       data.find('<size x="1.1" xunits="fraction" y="1.2" yunits="fraction"/>') == -1 or \
+       data.find('<name>name</name>') == -1 or \
+       data.find('<description>description</description>') == -1:
+        print(data)
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_libkml_cleanup():
@@ -1175,6 +1223,7 @@ def ogr_libkml_cleanup():
     gdal.Unlink("/vsimem/ogr_libkml_write_atom_link.kml")
     gdal.Unlink("/vsimem/ogr_libkml_write_phonenumber.kml")
     gdal.Unlink("/vsimem/ogr_libkml_write_region.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_write_screenoverlay.kml")
 
     # Re-register KML driver if necessary
     if ogrtest.kml_drv is not None:
@@ -1219,6 +1268,7 @@ gdaltest_list = [
     ogr_libkml_write_atom_link,
     ogr_libkml_write_phonenumber,
     ogr_libkml_write_region,
+    ogr_libkml_write_screenoverlay,
     ogr_libkml_cleanup ]
 
 if __name__ == '__main__':
