@@ -52,6 +52,8 @@ OGRILI1Layer::OGRILI1Layer( OGRFeatureDefn* poFeatureDefnIn,
     nFeatures = 0;
     papoFeatures = NULL;
     nFeatureIdx = 0;
+
+    bGeomsJoined = FALSE;
 }
 
 /************************************************************************/
@@ -101,10 +103,7 @@ OGRFeature *OGRILI1Layer::GetNextFeature()
 {
     OGRFeature *poFeature;
 
-    /*
-    if (poSurfacePolyLayer != 0) JoinSurfaceLayer();
-    if (poAreaLineLayer != 0) PolygonizeAreaLayer(); //TODO: polygonize only when polygon layer is reqested
-    */
+    if (!bGeomsJoined) JoinGeomLayers();
 
     while(nFeatureIdx < nFeatures)
     {
@@ -395,18 +394,41 @@ OGRErr OGRILI1Layer::CreateField( OGRFieldDefn *poField, int bApproxOK ) {
 /*                         Internal routines                            */
 /************************************************************************/
 
-void OGRILI1Layer::JoinSurfaceLayer()
+void OGRILI1Layer::JoinGeomLayers()
 {
-    OGRILI1Layer* poSurfacePolyLayer = 0;
-    if (poSurfacePolyLayer == 0) return;
+    for (GeomFieldInfos::const_iterator it = oGeomFieldInfos.begin(); it != oGeomFieldInfos.end(); ++it)
+    {
+        OGRFeatureDefn* geomFeatureDefn = it->second.geomTable;
+        if (geomFeatureDefn)
+        {
+            CPLDebug( "OGR_ILI", "Join geometry table %s of field '%s'", geomFeatureDefn->GetName(), it->first.c_str() );
+            OGRILI1Layer* poGeomLayer = poDS->GetLayerByName(geomFeatureDefn->GetName());
+            int nGeomFieldIndex = GetLayerDefn()->GetGeomFieldIndex(it->first.c_str());
+            if (it->second.iliGeomType == "Surface")
+            {
+                JoinSurfaceLayer(poGeomLayer, nGeomFieldIndex);
+            }
+            else if (it->second.iliGeomType == "Area")
+            {
+                CPLString pointField = it->first + "__Point";
+                int nPointFieldIndex = GetLayerDefn()->GetGeomFieldIndex(pointField.c_str());
+                PolygonizeAreaLayer(poGeomLayer, nGeomFieldIndex, nPointFieldIndex);
+            }
+        }
+    }
+    bGeomsJoined = TRUE;
+}
 
+
+void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfacePolyLayer, int nSurfaceFieldIndex )
+{
     CPLDebug( "OGR_ILI", "Joining surface layer %s with geometries", GetLayerDefn()->GetName());
     poSurfacePolyLayer->ResetReading();
     while (OGRFeature *polyfeature = poSurfacePolyLayer->GetNextFeatureRef()) {
         int reftid = polyfeature->GetFieldAsInteger(1);
         OGRFeature *feature = GetFeatureRef(reftid);
         if (feature) {
-            //feature->SetGeomField(surfaceGeomFieldId, polyfeature->GetGeomFieldRef(0));
+            feature->SetGeomField(nSurfaceFieldIndex, polyfeature->GetGeomFieldRef(0));
         } else {
             CPLDebug( "OGR_ILI", "Couldn't join feature FID %d", reftid );
         }
@@ -471,12 +493,8 @@ OGRMultiPolygon* OGRILI1Layer::Polygonize( OGRGeometryCollection* poLines, bool 
 }
 
 
-void OGRILI1Layer::PolygonizeAreaLayer()
+void OGRILI1Layer::PolygonizeAreaLayer( OGRILI1Layer* poAreaLineLayer, int nAreaFieldIndex, int nPointFieldIndex )
 {
-    OGRILI1Layer* poAreaLineLayer = 0;
-    OGRILI1Layer* poAreaReferenceLayer = 0;
-    if (poAreaLineLayer == 0) return;
-
     //add all lines from poAreaLineLayer to collection
     OGRGeometryCollection *gc = new OGRGeometryCollection();
     poAreaLineLayer->ResetReading();
@@ -488,9 +506,9 @@ void OGRILI1Layer::PolygonizeAreaLayer()
     poAreaLineLayer = 0;
     OGRMultiPolygon* polys = Polygonize( gc , false);
     CPLDebug( "OGR_ILI", "Resulting polygons: %d", polys->getNumGeometries());
-    if (polys->getNumGeometries() != poAreaReferenceLayer->GetFeatureCount())
+    if (polys->getNumGeometries() != GetFeatureCount())
     {
-        CPLDebug( "OGR_ILI", "Feature count of layer %s: %d", poAreaReferenceLayer->GetLayerDefn()->GetName(), GetFeatureCount());
+        CPLDebug( "OGR_ILI", "Feature count of layer %s: %d", GetLayerDefn()->GetName(), GetFeatureCount());
         CPLDebug( "OGR_ILI", "Polygonizing again with crossing line fix");
         delete polys;
         polys = Polygonize( gc, true ); //try again with crossing line fix
@@ -511,10 +529,10 @@ void OGRILI1Layer::PolygonizeAreaLayer()
         ahInGeoms[i] = polys->getGeometryRef(i)->exportToGEOS(hGEOSCtxt);
         if (!GEOSisValid_r(hGEOSCtxt, ahInGeoms[i])) ahInGeoms[i] = NULL;
     }
-    poAreaReferenceLayer->ResetReading();
-    while (OGRFeature *feature = poAreaReferenceLayer->GetNextFeatureRef())
+    for ( int nFidx = 0; nFidx < nFeatures; nFidx++)
     {
-        OGRGeometry* geomRef = feature->GetGeometryRef();
+        OGRFeature *feature = papoFeatures[nFidx];
+        OGRGeometry* geomRef = feature->GetGeomFieldRef(nPointFieldIndex);
         if( !geomRef )
         {
             continue;
@@ -524,10 +542,7 @@ void OGRILI1Layer::PolygonizeAreaLayer()
         {
             if (ahInGeoms[i] && GEOSWithin_r(hGEOSCtxt, point, ahInGeoms[i]))
             {
-                OGRFeature* areaFeature = new OGRFeature(poFeatureDefn);
-                areaFeature->SetFrom(feature);
-                areaFeature->SetGeometry( polys->getGeometryRef(i) );
-                AddFeature(areaFeature);
+                feature->SetGeomField(nAreaFieldIndex, polys->getGeometryRef(i));
                 break;
             }
         }

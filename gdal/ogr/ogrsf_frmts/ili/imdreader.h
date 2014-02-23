@@ -55,13 +55,22 @@ public:
     GeomFieldInfos  poGeomFieldInfos;
     StructFieldInfos poStructFieldInfos;
 };
-
 typedef std::list<FeatureDefnInfo> FeatureDefnInfos;
+
+class IliModelInfo
+{
+public:
+    CPLString name;
+    CPLString version;
+    CPLString uri;
+};
+typedef std::list<IliModelInfo> IliModelInfos;
 
 class ImdReader
 {
 public:
     int                  iliVersion; /* 1 or 2 */
+    IliModelInfos        modelInfos;
     CPLString            mainModelName;
     CPLString            mainBasketName;
     CPLString            mainTopicName;
