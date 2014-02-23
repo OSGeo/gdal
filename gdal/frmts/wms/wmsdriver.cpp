@@ -434,6 +434,22 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromTileMap(CPLXMLNode* psXML)
 }
 
 /************************************************************************/
+/*                             GetJSonValue()                           */
+/************************************************************************/
+
+static const char* GetJSonValue(const char* pszLine, const char* pszKey)
+{
+    const char* pszJSonKey = CPLSPrintf("\"%s\" : ", pszKey);
+    const char* pszPtr;
+    if( (pszPtr = strstr(pszLine, pszJSonKey)) != NULL )
+        return pszPtr + strlen(pszJSonKey);
+    pszJSonKey = CPLSPrintf("\"%s\": ", pszKey);
+    if( (pszPtr = strstr(pszLine, pszJSonKey)) != NULL )
+        return pszPtr + strlen(pszJSonKey);
+    return NULL;
+}
+
+/************************************************************************/
 /*             GDALWMSDatasetGetConfigFromArcGISJSON()                  */
 /************************************************************************/
 
@@ -455,14 +471,14 @@ static CPLXMLNode* GDALWMSDatasetGetConfigFromArcGISJSON(const char* pszURL,
     double dfBaseResolution = 0;
     while((pszLine = CPLReadLine2L(fp, 4096, NULL)) != NULL)
     {
-        const char* pszPtr;
-        if ((pszPtr = strstr(pszLine, "\"rows\" : ")) != NULL)
-            nTileHeight = atoi(pszPtr + strlen("\"rows\" : "));
-        else if ((pszPtr = strstr(pszLine, "\"cols\" : ")) != NULL)
-            nTileWidth = atoi(pszPtr + strlen("\"cols\" : "));
-        else if ((pszPtr = strstr(pszLine, "\"wkid\" : ")) != NULL)
+        const char* pszVal;
+        if ((pszVal = GetJSonValue(pszLine, "rows")) != NULL)
+            nTileHeight = atoi(pszVal);
+        else if ((pszVal = GetJSonValue(pszLine, "cols")) != NULL)
+            nTileWidth = atoi(pszVal);
+        else if ((pszVal = GetJSonValue(pszLine, "wkid")) != NULL)
         {
-            int nVal = atoi(pszPtr + strlen("\"wkid\" : "));
+            int nVal = atoi(pszVal);
             if (nWKID < 0)
                 nWKID = nVal;
             else if (nWKID != nVal)
@@ -472,19 +488,19 @@ static CPLXMLNode* GDALWMSDatasetGetConfigFromArcGISJSON(const char* pszURL,
                 return NULL;
             }
         }
-        else if ((pszPtr = strstr(pszLine, "\"x\" : ")) != NULL)
+        else if ((pszVal = GetJSonValue(pszLine, "x")) != NULL)
         {
             bHasMinX = TRUE;
-            dfMinX = CPLAtofM(pszPtr + strlen("\"x\" : "));
+            dfMinX = CPLAtofM(pszVal);
         }
-        else if ((pszPtr = strstr(pszLine, "\"y\" : ")) != NULL)
+        else if ((pszVal = GetJSonValue(pszLine, "y")) != NULL)
         {
             bHasMaxY = TRUE;
-            dfMaxY = CPLAtofM(pszPtr + strlen("\"y\" : "));
+            dfMaxY = CPLAtofM(pszVal);
         }
-        else if ((pszPtr = strstr(pszLine, "\"level\" : ")) != NULL)
+        else if ((pszVal = GetJSonValue(pszLine, "level")) != NULL)
         {
-            int nLevel = atoi(pszPtr + strlen("\"level\" : "));
+            int nLevel = atoi(pszVal);
             if (nLevel != nExpectedLevel)
             {
                 CPLDebug("WMS", "Expected level : %d, got : %d", nExpectedLevel, nLevel);
@@ -492,9 +508,17 @@ static CPLXMLNode* GDALWMSDatasetGetConfigFromArcGISJSON(const char* pszURL,
                 return NULL;
             }
 
-            if ((pszPtr = strstr(pszLine, "\"resolution\" : ")) != NULL)
+            pszVal = GetJSonValue(pszLine, "resolution");
+            if( pszVal == NULL )
             {
-                double dfResolution = CPLAtofM(pszPtr + strlen("\"resolution\" : "));
+                pszLine = CPLReadLine2L(fp, 4096, NULL);
+                if( pszLine == NULL )
+                    break;
+                pszVal = GetJSonValue(pszLine, "resolution");
+            }
+            if (pszVal != NULL)
+            {
+                double dfResolution = CPLAtofM(pszVal);
                 if (nLevel == 0)
                     dfBaseResolution = dfResolution;
             }
