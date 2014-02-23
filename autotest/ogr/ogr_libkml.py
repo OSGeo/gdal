@@ -1108,6 +1108,49 @@ def ogr_libkml_write_phonenumber():
     return 'success'
 
 ###############################################################################
+# Test writing Region
+
+def ogr_libkml_write_region():
+
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_region.kml")
+    lyr = ds.CreateLayer('auto', options = ['ADD_REGION=YES'])
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((2 48,2 49,3 49,3 48,2 48))'))
+    lyr.CreateFeature(feat)
+    lyr = ds.CreateLayer('manual', options = ['ADD_REGION=YES', 'REGION_XMIN=-180', \
+        'REGION_XMAX=180', 'REGION_YMIN=-90', 'REGION_YMAX=90', 'REGION_MIN_LOD_PIXELS=128', 'REGION_MAX_LOD_PIXELS=10000000'])
+    ds = None
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_region.kml', 'rb')
+    data = gdal.VSIFReadL(1, 2048, f)
+    gdal.VSIFCloseL(f)
+
+    if data.find('<north>49</north>') == -1 or \
+       data.find('<south>48</south>') == -1 or \
+       data.find('<east>3</east>') == -1 or \
+       data.find('<west>2</west>') == -1 or \
+       data.find('<minLodPixels>256</minLodPixels>') == -1 or \
+       data.find('<maxLodPixels>-1</maxLodPixels>') == -1:
+        print(data)
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    if data.find('<north>90</north>') == -1 or \
+       data.find('<south>-90</south>') == -1 or \
+       data.find('<east>180</east>') == -1 or \
+       data.find('<west>-180</west>') == -1 or \
+       data.find('<minLodPixels>128</minLodPixels>') == -1 or \
+       data.find('<maxLodPixels>10000000</maxLodPixels>') == -1:
+        print(data)
+        gdaltest.post_reason('failure')
+        return 'fail'
+        
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_libkml_cleanup():
@@ -1127,6 +1170,7 @@ def ogr_libkml_cleanup():
     gdal.Unlink("/vsimem/ogr_libkml_write_atom_author.kml")
     gdal.Unlink("/vsimem/ogr_libkml_write_atom_link.kml")
     gdal.Unlink("/vsimem/ogr_libkml_write_phonenumber.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_write_region.kml")
 
     # Re-register KML driver if necessary
     if ogrtest.kml_drv is not None:
@@ -1170,6 +1214,7 @@ gdaltest_list = [
     ogr_libkml_write_atom_author,
     ogr_libkml_write_atom_link,
     ogr_libkml_write_phonenumber,
+    ogr_libkml_write_region,
     ogr_libkml_cleanup ]
 
 if __name__ == '__main__':

@@ -76,6 +76,15 @@ class OGRLIBKMLLayer:public OGRLayer
 
     int                       m_bReadGroundOverlay;
 
+    int                       m_bWriteRegion;
+    int                       m_bRegionBoundsAuto;
+    double                    m_dfRegionMinLodPixels;
+    double                    m_dfRegionMaxLodPixels;
+    double                    m_dfRegionMinX;
+    double                    m_dfRegionMinY;
+    double                    m_dfRegionMaxX;
+    double                    m_dfRegionMaxY;
+
   public:
     OGRLIBKMLLayer            ( const char *pszLayerName,
                                 OGRSpatialReference * poSpatialRef,
@@ -133,7 +142,12 @@ class OGRLIBKMLLayer:public OGRLayer
                                         const char* pszCameraAltitudeMode);
 
     static CPLString          LaunderFieldNames(CPLString osName);
-
+    
+    void                      SetWriteRegion(double dfMinLodPixels,
+                                             double dfMaxLodPixels);
+    void                      SetRegionBounds(double dfMinX, double dfMinY,
+                                              double dfMaxX, double dfMaxY);
+    void                      Finalize();
 };
 
 /******************************************************************************
