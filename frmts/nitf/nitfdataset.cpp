@@ -3694,13 +3694,13 @@ static const char *GDALToNITFDataType( GDALDataType eType )
 }
 
 /************************************************************************/
-/*                           NITFJP2Options()                           */
+/*                          NITFJP2ECWOptions()                         */
 /*                                                                      */
 /*      Prepare JP2-in-NITF creation options based in part of the       */
 /*      NITF creation options.                                          */
 /************************************************************************/
 
-static char **NITFJP2Options( char **papszOptions )
+static char **NITFJP2ECWOptions( char **papszOptions )
 
 {
     int i;
@@ -3721,6 +3721,39 @@ static char **NITFJP2Options( char **papszOptions )
     }
 
     return papszJP2Options;
+}
+/************************************************************************/
+/*                           NITFJP2KAKOptions()                        */
+/*                                                                      */
+/*      Prepare JP2-in-NITF creation options based in part of the       */
+/*      NITF creation options.                                          */
+/************************************************************************/
+
+static char **NITFJP2KAKOptions( char **papszOptions )
+
+{
+    int i;
+    char** papszKAKOptions = NULL;
+    
+    for( i = 0; papszOptions != NULL && papszOptions[i] != NULL; i++ )
+    {
+       if(      EQUALN(papszOptions[i],"QUALITY=", 8) )
+          papszKAKOptions = CSLAddString(papszKAKOptions, papszOptions[i]);
+       else if (EQUALN(papszOptions[i],"BLOCKXSIZE=", 11) )
+          papszKAKOptions = CSLAddString(papszKAKOptions, papszOptions[i]);
+       else if (EQUALN(papszOptions[i],"BLOCKYSIZE=", 11) )
+          papszKAKOptions = CSLAddString(papszKAKOptions, papszOptions[i]);
+       else if (EQUALN(papszOptions[i],"GMLPJ2=", 7) )
+          papszKAKOptions = CSLAddString(papszKAKOptions, papszOptions[i]);
+       else if (EQUALN(papszOptions[i],"GeoJP2=", 7) )
+          papszKAKOptions = CSLAddString(papszKAKOptions, papszOptions[i]);
+       else if (EQUALN(papszOptions[i],"LAYERS=", 7) )
+          papszKAKOptions = CSLAddString(papszKAKOptions, papszOptions[i]);
+       else if (EQUALN(papszOptions[i],"ROI=", 4) )
+          papszKAKOptions = CSLAddString(papszKAKOptions, papszOptions[i]);
+    }
+
+    return papszKAKOptions;
 }
 
 
@@ -3828,7 +3861,7 @@ NITFDataset::NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize,
     if( pszIC != NULL && EQUAL(pszIC,"C8") )
     {
         int bHasCreate = FALSE;
-
+       
         poJ2KDriver = GetGDALDriverManager()->GetDriverByName( "JP2ECW" );
         if( poJ2KDriver != NULL )
             bHasCreate = poJ2KDriver->GetMetadataItem( GDAL_DCAP_CREATE, 
@@ -3838,7 +3871,7 @@ NITFDataset::NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize,
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "Unable to create JPEG2000 encoded NITF files.  The\n"
                       "JP2ECW driver is unavailable, or missing Create support." );
-            return NULL;
+           return NULL;
         }
     }
 
@@ -3907,7 +3940,7 @@ NITFDataset::NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize,
 
         NITFClose( psFile );
 
-        char** papszJP2Options = NITFJP2Options(papszOptions);
+        char** papszJP2Options = NITFJP2ECWOptions(papszOptions);
         poWritableJ2KDataset = 
             poJ2KDriver->Create( osDSName, nXSize, nYSize, nBands, eType, 
                                  papszJP2Options );
@@ -3987,15 +4020,15 @@ NITFDataset::NITFCreateCopy(
             if( poJ2KDriver == NULL || 
                 poJ2KDriver->GetMetadataItem( GDAL_DCAP_CREATECOPY, NULL ) == NULL )
             {
-                /* Try with Jasper as an alternate driver */
+                /* Try with  JP2KAK as an alternate driver */
                 poJ2KDriver = 
-                    GetGDALDriverManager()->GetDriverByName( "JPEG2000" );
+                    GetGDALDriverManager()->GetDriverByName(  "JP2KAK" );
             }
             if( poJ2KDriver == NULL )
             {
-                /* Try with JP2KAK as an alternate driver */
+                /* Try with Jasper as an alternate driver */
                 poJ2KDriver = 
-                    GetGDALDriverManager()->GetDriverByName( "JP2KAK" );
+                    GetGDALDriverManager()->GetDriverByName( "JPEG2000" );
             }
             if( poJ2KDriver == NULL )
             {
@@ -4374,12 +4407,22 @@ NITFDataset::NITFCreateCopy(
                              
         if (EQUAL(poJ2KDriver->GetDescription(), "JP2ECW"))
         {
-            char** papszJP2Options = NITFJP2Options(papszOptions);
+            char** papszJP2Options = NITFJP2ECWOptions(papszOptions);
             poJ2KDataset = 
                 poJ2KDriver->CreateCopy( osDSName, poSrcDS, FALSE,
                                          papszJP2Options,
                                          pfnProgress, pProgressData );
             CSLDestroy(papszJP2Options);
+        }
+        else if (EQUAL(poJ2KDriver->GetDescription(), "JP2KAK"))
+        {
+           char** papszKAKOptions = NITFJP2KAKOptions(papszOptions);
+            poJ2KDataset = 
+                poJ2KDriver->CreateCopy( osDSName, poSrcDS, FALSE,
+                                         papszKAKOptions,
+                                         pfnProgress, pProgressData );
+            CSLDestroy(papszKAKOptions);
+            
         }
         else
         {
