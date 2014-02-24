@@ -1124,6 +1124,9 @@ def nitf_43_jp2ecw():
         return 'skip'
     return nitf_43('JP2ECW', ['IC=C8', 'TARGET=0'])
 
+def nitf_43_jp2kak():
+    return nitf_43('JP2KAK', ['IC=C8', 'QUALITY=100'])
+
 ###############################################################################
 # Check creating a monoblock 10000x1 image (ticket #3263)
 
@@ -3014,6 +3017,7 @@ gdaltest_list = [
     nitf_42,
     nitf_43_jasper,
     nitf_43_jp2ecw,
+    nitf_43_jp2kak,
     nitf_44,
     nitf_45,
     #nitf_46_jp2ecw,
