@@ -69,12 +69,18 @@ creation options can be used. See the <a href="frmt_jpeg.html">JPEG driver
 documentation</a>. Starting with GDAL 1.7.0, multi-block images can be written.
 <li>M3 is a variation of C3. The only difference is that a block map is written,
 which allow for fast seeking to any block. (Starting with GDAL 1.7.0.)
-<li>C8 means JPEG2000 compression (one block) and is available for both
-CreateCopy() and Create() methods. JPEG2000 compression is only available
-if the JP2ECW driver is available. The TARGET and PROFILE JP2ECW-specific
-creation options can be used. See the <a href="frmt_jp2ecw.html">JP2ECW driver
-documentation</a>. Starting with GDAL 1.7.0, if JP2ECW driver is not available,
-Jasper JPEG2000 driver can be used in the CreateCopy() case.
+<li>C8 means JPEG2000 compression (one block) and is available for 
+CreateCopy() and/or Create() methods. JPEG2000 compression is only available
+if the JP2ECW, JP2KAK or Jasper driver is available :
+<ul>
+<li> JP2ECW : The TARGET and PROFILE JP2ECW-specific creation options can be used.
+Both CreateCopy() and/or Create() methods are available.
+See the <a href="frmt_jp2ecw.html">JP2ECW driver documentation</a>.
+<li> JP2KAK : The general JP2KAK-specific creation options can be used (QUALITY, BLOCKXSIZE, BLOCKYSIZE, GMLPJ2, GeoJP2, LAYERS, ROI).
+Only CreateCopy() method is available.
+See the <a href="frmt_jp2kak.html">JP2KAK driver documentation</a>.
+<li>Starting with GDAL 1.7.0, if JP2ECW and JP2KAK drivers are not available, Jasper JPEG2000 driver can be used in the CreateCopy() case.
+</ul>
 </ul>
 </li>
 <p>
