@@ -49,6 +49,37 @@ typedef enum {
 } OGRVRTGeometryStyle;
 
 /************************************************************************/
+/*                         OGRVRTGeomFieldProps                         */
+/************************************************************************/
+
+class OGRVRTGeomFieldProps
+{
+    public:
+        CPLString           osName;         /* Name of the VRT geometry field */
+        CPLString           osSrcName;      /* Name of the source geometry field */
+        OGRwkbGeometryType  eGeomType;
+        OGRSpatialReference *poSRS;
+
+        int                 bSrcClip;
+        OGRGeometry         *poSrcRegion;
+
+        // Geometry interpretation related.
+        OGRVRTGeometryStyle eGeometryStyle;
+
+        int                 iGeomField; 
+
+                            // VGS_PointFromColumn
+        int                 iGeomXField, iGeomYField, iGeomZField;
+        int                 bReportSrcColumn;
+        int                 bUseSpatialSubquery;
+
+        OGREnvelope         sStaticEnvelope;
+
+                        OGRVRTGeomFieldProps();
+                       ~OGRVRTGeomFieldProps();
+};
+
+/************************************************************************/
 /*                            OGRVRTLayer                                */
 /************************************************************************/
 
@@ -58,10 +89,10 @@ class OGRVRTLayer : public OGRLayer
 {
   protected:
     OGRVRTDataSource*   poDS;
+    std::vector<OGRVRTGeomFieldProps*> apoGeomFieldProps;
 
     int                 bHasFullInitialized;
     CPLString           osName;
-    OGRwkbGeometryType  eGeomType;
     CPLXMLNode         *psLTree;
     CPLString           osVRTDirectory;
 
@@ -75,26 +106,10 @@ class OGRVRTLayer : public OGRLayer
     int                 bSrcDSShared;
     int                 bAttrFilterPassThrough;
 
-    // Layer spatial reference system, and srid.
-    OGRSpatialReference *poSRS;
-
     char                *pszAttrFilter;
-
-    int                 bSrcClip;
-    OGRGeometry         *poSrcRegion;
 
     int                 iFIDField; // -1 means pass through. 
     int                 iStyleField; // -1 means pass through.
-
-    // Geometry interpretation related.
-    OGRVRTGeometryStyle eGeometryStyle;
-    
-    int                 iGeomField; 
-
-                        // VGS_PointFromColumn
-    int                 iGeomXField, iGeomYField, iGeomZField;
-
-    int                 bUseSpatialSubquery;
 
     // Attribute Mapping
     std::vector<int>    anSrcField;
@@ -113,7 +128,10 @@ class OGRVRTLayer : public OGRLayer
     void                ClipAndAssignSRS(OGRFeature* poFeature);
 
     int                 nFeatureCount;
-    OGREnvelope         sStaticEnvelope;
+
+    int                 ParseGeometryField(CPLXMLNode* psNode,
+                                           OGRVRTGeomFieldProps* poProps,
+                                           const char* pszGType);
 
   public:
                         OGRVRTLayer(OGRVRTDataSource* poDSIn);
@@ -148,7 +166,8 @@ class OGRVRTLayer : public OGRLayer
 
     virtual int         TestCapability( const char * );
 
-    virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce );
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent,
+                                  int bForce = TRUE);
 
     virtual void        SetSpatialFilter( OGRGeometry * poGeomIn );
 
