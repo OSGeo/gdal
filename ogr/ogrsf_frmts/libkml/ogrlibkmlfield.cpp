@@ -471,6 +471,9 @@ void field2kml (
                 break;
             }
 
+        /* This code checks if there's a OFTTime field with the same name */
+        /* that could be used to compose a DateTime. Not sure this is really */
+        /* supported in OGR data model to have 2 fields with same name... */
         case OFTDate:          //   Date
             {
                 poOgrFeat->GetFieldAsDateTime ( i, &year, &month, &day,
@@ -520,7 +523,9 @@ void field2kml (
 
             }
 
-
+        /* This code checks if there's a OFTTime field with the same name */
+        /* that could be used to compose a DateTime. Not sure this is really */
+        /* supported in OGR data model to have 2 fields with same name... */
         case OFTTime:          //   Time
             {
                 poOgrFeat->GetFieldAsDateTime ( i, &year, &month, &day,
@@ -537,7 +542,7 @@ void field2kml (
                     OGRFieldType type2 = poOgrFieldDef2->GetType (  );
                     const char *name2 = poOgrFieldDef2->GetNameRef (  );
 
-                    if ( EQUAL ( name2, name ) && type2 == OFTTime &&
+                    if ( EQUAL ( name2, name ) && type2 == OFTDate &&
                          ( EQUAL ( name, oFC.tsfield ) ||
                            EQUAL ( name, oFC.beginfield ) ||
                            EQUAL ( name, oFC.endfield ) ) ) {
