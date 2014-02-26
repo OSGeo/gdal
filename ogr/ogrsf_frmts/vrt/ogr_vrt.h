@@ -56,7 +56,6 @@ class OGRVRTGeomFieldProps
 {
     public:
         CPLString           osName;         /* Name of the VRT geometry field */
-        CPLString           osSrcName;      /* Name of the source geometry field */
         OGRwkbGeometryType  eGeomType;
         OGRSpatialReference *poSRS;
 
@@ -66,7 +65,8 @@ class OGRVRTGeomFieldProps
         // Geometry interpretation related.
         OGRVRTGeometryStyle eGeometryStyle;
 
-        int                 iGeomField; 
+        /* points to a OGRField for VGS_WKT, VGS_WKB, VGS_Shape and OGRGeomField for VGS_Direct */
+        int                 iGeomField;
 
                             // VGS_PointFromColumn
         int                 iGeomXField, iGeomYField, iGeomZField;
@@ -129,9 +129,11 @@ class OGRVRTLayer : public OGRLayer
 
     int                 nFeatureCount;
 
+    int                 bError;
+
     int                 ParseGeometryField(CPLXMLNode* psNode,
-                                           OGRVRTGeomFieldProps* poProps,
-                                           const char* pszGType);
+                                           CPLXMLNode* psNodeParent,
+                                           OGRVRTGeomFieldProps* poProps);
 
   public:
                         OGRVRTLayer(OGRVRTDataSource* poDSIn);
@@ -166,10 +168,12 @@ class OGRVRTLayer : public OGRLayer
 
     virtual int         TestCapability( const char * );
 
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
     virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent,
                                   int bForce = TRUE);
 
     virtual void        SetSpatialFilter( OGRGeometry * poGeomIn );
+    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn );
 
     virtual OGRErr      CreateFeature( OGRFeature* poFeature );
 
