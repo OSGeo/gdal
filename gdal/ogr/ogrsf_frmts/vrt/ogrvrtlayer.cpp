@@ -1664,7 +1664,7 @@ OGRFeature* OGRVRTLayer::TranslateVRTFeatureToSrcFeature( OGRFeature* poVRTFeatu
         {
             CPLDebug("OGR_VRT", "Update of VGS_Shape geometries not supported");
         }
-        else if( eGeometryStyle == VGS_Direct && iGeomField)
+        else if( eGeometryStyle == VGS_Direct && iGeomField >= 0 )
         {
             poSrcFeat->SetGeomField( iGeomField, poVRTFeature->GetGeomFieldRef(i) );
         }

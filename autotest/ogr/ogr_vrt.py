@@ -1021,7 +1021,7 @@ def ogr_vrt_20():
         <SrcLayer>test</SrcLayer>
     </OGRVRTLayer>
 </OGRVRTDataSource>"""
-    vrt_ds = ogr.Open( vrt_xml )
+    vrt_ds = ogr.Open( vrt_xml, update = 1 )
     vrt_lyr = vrt_ds.GetLayerByName( 'mytest' )
 
     if vrt_lyr.TestCapability(ogr.OLCFastFeatureCount) != 1:
@@ -1080,6 +1080,20 @@ def ogr_vrt_20():
     vrt_lyr.SetSpatialFilter(None)
     if vrt_lyr.GetFeatureCount() != 4:
         gdaltest.post_reason( 'Feature count not 4 as expected with no filter.')
+        return 'fail'
+
+    vrt_lyr.ResetReading()
+    feat = vrt_lyr.GetNextFeature()
+    feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (1 2)'))
+    vrt_lyr.SetFeature(feat)
+    feat = None
+
+    vrt_lyr.ResetReading()
+    feat = vrt_lyr.GetNextFeature()
+    if feat.GetGeometryRef() is None or \
+       feat.GetGeometryRef().ExportToWkt() != 'POINT (1 2)':
+        gdaltest.post_reason( 'fail')
+        feat.DumpReadable()
         return 'fail'
 
     vrt_ds.Destroy()
@@ -2733,13 +2747,18 @@ def ogr_vrt_33():
     <OGRVRTLayer name="test">
         <SrcDataSource>tmp/ogr_vrt_33</SrcDataSource>
         <GeometryField name="geom__WKT_EPSG_4326_POINT"/>
-        <GeometryField name="foo" encoding="PointFromColumns" x="X" y="Y" reportSrcColumn="false"/>
+        <GeometryField name="foo" encoding="PointFromColumns" x="X" y="Y" reportSrcColumn="false">
+            <SRS>EPSG:4326</SRS>
+        </GeometryField>
     </OGRVRTLayer>
 </OGRVRTDataSource>
 """
     ds = ogr.Open(ds_str)
     lyr = ds.GetLayer(0)
     if lyr.GetLayerDefn().GetGeomFieldDefn(1).GetType() != ogr.wkbPoint:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetGeomFieldDefn(1).GetSpatialRef().ExportToWkt().find('4326') < 0:
         gdaltest.post_reason('fail')
         return 'fail'
     feat = lyr.GetNextFeature()
