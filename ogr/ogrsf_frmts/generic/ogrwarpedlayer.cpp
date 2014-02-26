@@ -120,7 +120,16 @@ void OGRWarpedLayer::SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
         {
             OGREnvelope sEnvelope;
             poGeom->getEnvelope(&sEnvelope);
-            if( ReprojectEnvelope(&sEnvelope, m_poReversedCT) )
+            if( CPLIsInf(sEnvelope.MinX) && CPLIsInf(sEnvelope.MinY) &&
+                CPLIsInf(sEnvelope.MaxX) && CPLIsInf(sEnvelope.MaxY) )
+            {
+                m_poDecoratedLayer->SetSpatialFilterRect(m_iGeomFieldFilter,
+                                                        sEnvelope.MinX,
+                                                        sEnvelope.MinY,
+                                                        sEnvelope.MaxX,
+                                                        sEnvelope.MaxY);
+            }
+            else if( ReprojectEnvelope(&sEnvelope, m_poReversedCT) )
             {
                 m_poDecoratedLayer->SetSpatialFilterRect(m_iGeomFieldFilter,
                                                         sEnvelope.MinX,
@@ -134,6 +143,11 @@ void OGRWarpedLayer::SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
                                                     NULL);
             }
         }
+    }
+    else
+    {
+        m_poDecoratedLayer->SetSpatialFilter(m_iGeomFieldFilter,
+                                             poGeom);
     }
 }
 

@@ -309,12 +309,13 @@ OGRLayer*  OGRVRTDataSource::InstanciateUnionLayer(
 /*      source layer.                                                   */
 /* -------------------------------------------------------------------- */
     const char* pszGType = CPLGetXMLValue( psLTree, "GeometryType", NULL );
-    OGRwkbGeometryType eGeomType = wkbUnknown;
-    GeometryTypeUnionStrategy eGeometryTypeStrategy = GEOMTYPE_UNION_ALL_LAYERS;
+    int bGlobalGeomTypeSet = FALSE;
+    OGRwkbGeometryType eGlobalGeomType = wkbUnknown;
     if( pszGType != NULL )
     {
         int bError;
-        eGeomType = OGRVRTGetGeometryType(pszGType, &bError);
+        bGlobalGeomTypeSet = TRUE;
+        eGlobalGeomType = OGRVRTGetGeometryType(pszGType, &bError);
         if( bError )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -322,22 +323,18 @@ OGRLayer*  OGRVRTDataSource::InstanciateUnionLayer(
                     pszGType );
             return NULL;
         }
-
-        eGeometryTypeStrategy = GEOMTYPE_SPECIFIED;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Apply a spatial reference system if provided                    */
 /* -------------------------------------------------------------------- */
      const char* pszLayerSRS = CPLGetXMLValue( psLTree, "LayerSRS", NULL );
-     OGRSpatialReference* poSRS = NULL;
-     int bSRSSet = FALSE;
+     OGRSpatialReference* poGlobalSRS = NULL;
+     int bGlobalSRSSet = FALSE;
      if( pszLayerSRS != NULL )
      {
-         bSRSSet = TRUE;
-         if( EQUAL(pszLayerSRS,"NULL") )
-             poSRS = NULL;
-         else
+         bGlobalSRSSet = TRUE;
+         if( !EQUAL(pszLayerSRS,"NULL") )
          {
              OGRSpatialReference oSRS;
 
@@ -347,7 +344,7 @@ OGRLayer*  OGRVRTDataSource::InstanciateUnionLayer(
                            "Failed to import LayerSRS `%s'.", pszLayerSRS );
                  return FALSE;
              }
-             poSRS = oSRS.Clone();
+             poGlobalSRS = oSRS.Clone();
          }
      }
 
@@ -356,6 +353,8 @@ OGRLayer*  OGRVRTDataSource::InstanciateUnionLayer(
 /* -------------------------------------------------------------------- */
     OGRFieldDefn** papoFields = NULL;
     int nFields = 0;
+    OGRUnionLayerGeomFieldDefn** papoGeomFields = NULL;
+    int nGeomFields = 0;
 
     for( psSubNode=psLTree->psChild;
          psSubNode != NULL;
@@ -435,6 +434,130 @@ OGRLayer*  OGRVRTDataSource::InstanciateUnionLayer(
              papoFields[nFields] = new OGRFieldDefn(&oFieldDefn);
              nFields ++;
          }
+
+         else if( psSubNode->eType == CXT_Element &&
+                  EQUAL(psSubNode->pszValue,"GeometryField") )
+         {
+             const char *pszName = CPLGetXMLValue( psSubNode, "name", NULL );
+             if( pszName == NULL )
+             {
+                 CPLError( CE_Failure, CPLE_AppDefined,
+                           "Unable to identify GeometryField name." );
+                 break;
+             }
+
+             pszGType = CPLGetXMLValue( psSubNode, "GeometryType", NULL );
+             if( pszGType == NULL && nGeomFields == 0 )
+                 pszGType = CPLGetXMLValue( psLTree, "GeometryType", NULL );
+             OGRwkbGeometryType eGeomType = wkbUnknown;
+             int bGeomTypeSet = FALSE;
+             if( pszGType != NULL )
+             {
+                int bError;
+                eGeomType = OGRVRTGetGeometryType(pszGType, &bError);
+                bGeomTypeSet = TRUE;
+                if( bError || eGeomType == wkbNone )
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined,
+                            "GeometryType %s not recognised.",
+                            pszGType );
+                    break;
+                }
+             }
+
+             const char* pszSRS = CPLGetXMLValue( psSubNode, "SRS", NULL );
+             if( pszSRS == NULL && nGeomFields == 0 )
+                 pszSRS = CPLGetXMLValue( psLTree, "LayerSRS", NULL );
+             OGRSpatialReference* poSRS = NULL;
+             int bSRSSet = FALSE;
+             if( pszSRS != NULL )
+             {
+                 bSRSSet = TRUE;
+                 if( !EQUAL(pszSRS,"NULL") )
+                 {
+                    OGRSpatialReference oSRS;
+
+                    if( oSRS.SetFromUserInput( pszSRS ) != OGRERR_NONE )
+                    {
+                        CPLError( CE_Failure, CPLE_AppDefined,
+                                "Failed to import SRS `%s'.", pszSRS );
+                        break;
+                    }
+                    poSRS = oSRS.Clone();
+                }
+             }
+
+             OGRUnionLayerGeomFieldDefn* poFieldDefn =
+                    new OGRUnionLayerGeomFieldDefn(pszName, eGeomType);
+             if( poSRS != NULL )
+             {
+                poFieldDefn->SetSpatialRef(poSRS);
+                poSRS->Dereference();
+             }
+             poFieldDefn->bGeomTypeSet = bGeomTypeSet;
+             poFieldDefn->bSRSSet = bSRSSet;
+
+             const char* pszExtentXMin = CPLGetXMLValue( psSubNode, "ExtentXMin", NULL );
+             const char* pszExtentYMin = CPLGetXMLValue( psSubNode, "ExtentYMin", NULL );
+             const char* pszExtentXMax = CPLGetXMLValue( psSubNode, "ExtentXMax", NULL );
+             const char* pszExtentYMax = CPLGetXMLValue( psSubNode, "ExtentYMax", NULL );
+             if( pszExtentXMin != NULL && pszExtentYMin != NULL &&
+                 pszExtentXMax != NULL && pszExtentYMax != NULL )
+             {
+                poFieldDefn->sStaticEnvelope.MinX = CPLAtof(pszExtentXMin);
+                poFieldDefn->sStaticEnvelope.MinY = CPLAtof(pszExtentYMin);
+                poFieldDefn->sStaticEnvelope.MaxX = CPLAtof(pszExtentXMax);
+                poFieldDefn->sStaticEnvelope.MaxY = CPLAtof(pszExtentYMax);
+             }
+
+             papoGeomFields = (OGRUnionLayerGeomFieldDefn**) CPLRealloc(papoGeomFields,
+                                        sizeof(OGRUnionLayerGeomFieldDefn*) * (nGeomFields + 1));
+             papoGeomFields[nGeomFields] = poFieldDefn;
+             nGeomFields ++;
+         }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Set Extent if provided                                          */
+/* -------------------------------------------------------------------- */
+    const char* pszExtentXMin = CPLGetXMLValue( psLTree, "ExtentXMin", NULL );
+    const char* pszExtentYMin = CPLGetXMLValue( psLTree, "ExtentYMin", NULL );
+    const char* pszExtentXMax = CPLGetXMLValue( psLTree, "ExtentXMax", NULL );
+    const char* pszExtentYMax = CPLGetXMLValue( psLTree, "ExtentYMax", NULL );
+
+    if( eGlobalGeomType != wkbNone && nGeomFields == 0 &&
+        (bGlobalGeomTypeSet || bGlobalSRSSet ||
+         (pszExtentXMin != NULL && pszExtentYMin != NULL &&
+          pszExtentXMax != NULL && pszExtentYMax != NULL)) )
+    {
+        OGRUnionLayerGeomFieldDefn* poFieldDefn =
+                new OGRUnionLayerGeomFieldDefn("", eGlobalGeomType);
+        if( poGlobalSRS != NULL )
+        {
+            poFieldDefn->SetSpatialRef(poGlobalSRS);
+            poGlobalSRS->Dereference();
+            poGlobalSRS = NULL;
+        }
+        poFieldDefn->bGeomTypeSet = bGlobalGeomTypeSet;
+        poFieldDefn->bSRSSet = bGlobalSRSSet;
+        if( pszExtentXMin != NULL && pszExtentYMin != NULL &&
+            pszExtentXMax != NULL && pszExtentYMax != NULL )
+        {
+            poFieldDefn->sStaticEnvelope.MinX = CPLAtof(pszExtentXMin);
+            poFieldDefn->sStaticEnvelope.MinY = CPLAtof(pszExtentYMin);
+            poFieldDefn->sStaticEnvelope.MaxX = CPLAtof(pszExtentXMax);
+            poFieldDefn->sStaticEnvelope.MaxY = CPLAtof(pszExtentYMax);
+        }
+
+        papoGeomFields = (OGRUnionLayerGeomFieldDefn**) CPLRealloc(papoGeomFields,
+                                sizeof(OGRUnionLayerGeomFieldDefn*) * (nGeomFields + 1));
+        papoGeomFields[nGeomFields] = poFieldDefn;
+        nGeomFields ++;
+    }
+    else
+    {
+        delete poGlobalSRS;
+        poGlobalSRS = NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -466,10 +589,13 @@ OGRLayer*  OGRVRTDataSource::InstanciateUnionLayer(
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Cannot find source layers" );
-        for(int iField = 0; iField < nFields; iField++)
+        int iField;
+        for(iField = 0; iField < nFields; iField++)
             delete papoFields[iField];
         CPLFree(papoFields);
-        delete poSRS;
+        for(iField = 0; iField < nGeomFields; iField++)
+            delete papoGeomFields[iField];
+        CPLFree(papoGeomFields);
         return NULL;
     }
 
@@ -480,19 +606,6 @@ OGRLayer*  OGRVRTDataSource::InstanciateUnionLayer(
                                                 nSrcLayers,
                                                 papoSrcLayers,
                                                 TRUE );
-
-/* -------------------------------------------------------------------- */
-/*      Set SRS if provided                                             */
-/* -------------------------------------------------------------------- */
-    if( bSRSSet )
-        poLayer->SetSRS(poSRS);
-
-    delete poSRS;
-
-/* -------------------------------------------------------------------- */
-/*      Set geometry type                                               */
-/* -------------------------------------------------------------------- */
-    poLayer->SetGeometryType(eGeometryTypeStrategy, eGeomType);
 
 /* -------------------------------------------------------------------- */
 /*      Set the source layer field name attribute.                      */
@@ -529,18 +642,24 @@ OGRLayer*  OGRVRTDataSource::InstanciateUnionLayer(
                       "Unhandled value for FieldStrategy `%s'.", pszFieldStrategy );
         }
     }
-    if( nFields != 0 )
+    if( nFields != 0 || nGeomFields > 1 )
     {
         if( pszFieldStrategy != NULL )
             CPLError( CE_Warning, CPLE_AppDefined,
-                      "Ignoring FieldStrategy value, because explicit Field is provided") ;
+                      "Ignoring FieldStrategy value, because explicit Field or GeometryField is provided") ;
         eFieldStrategy = FIELD_SPECIFIED;
     }
 
-    poLayer->SetFields(eFieldStrategy, nFields, papoFields);
-    for(int iField = 0; iField < nFields; iField++)
+    poLayer->SetFields(eFieldStrategy, nFields, papoFields,
+                       (nGeomFields == 0 && eGlobalGeomType == wkbNone) ? -1 : nGeomFields,
+                       papoGeomFields);
+    int iField;
+    for(iField = 0; iField < nFields; iField++)
         delete papoFields[iField];
     CPLFree(papoFields);
+    for(iField = 0; iField < nGeomFields; iField++)
+        delete papoGeomFields[iField];
+    CPLFree(papoGeomFields);
 
 /* -------------------------------------------------------------------- */
 /*      Set FeatureCount if provided                                    */
@@ -549,22 +668,6 @@ OGRLayer*  OGRVRTDataSource::InstanciateUnionLayer(
     if( pszFeatureCount != NULL )
     {
         poLayer->SetFeatureCount(atoi(pszFeatureCount));
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Set Extent if provided                                          */
-/* -------------------------------------------------------------------- */
-    const char* pszExtentXMin = CPLGetXMLValue( psLTree, "ExtentXMin", NULL );
-    const char* pszExtentYMin = CPLGetXMLValue( psLTree, "ExtentYMin", NULL );
-    const char* pszExtentXMax = CPLGetXMLValue( psLTree, "ExtentXMax", NULL );
-    const char* pszExtentYMax = CPLGetXMLValue( psLTree, "ExtentYMax", NULL );
-    if( pszExtentXMin != NULL && pszExtentYMin != NULL &&
-        pszExtentXMax != NULL && pszExtentYMax != NULL )
-    {
-        poLayer->SetExtent( CPLAtof(pszExtentXMin),
-                            CPLAtof(pszExtentYMin),
-                            CPLAtof(pszExtentXMax),
-                            CPLAtof(pszExtentYMax) );
     }
 
     return poLayer;
