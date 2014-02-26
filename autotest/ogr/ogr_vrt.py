@@ -389,8 +389,8 @@ def ogr_vrt_11():
         return 'skip'
 
     f = open('tmp/test.csv', 'wb')
-    f.write('x,val1,y,val2\n'.encode('ascii'))
-    f.write('2,"val11",49,"val12"\n'.encode('ascii'))
+    f.write('x,val1,y,val2,style\n'.encode('ascii'))
+    f.write('2,"val11",49,"val12","PEN(c:#FF0000,w:5pt,p:""2px 1pt"")"\n'.encode('ascii'))
     f.close()
 
     try:
@@ -404,13 +404,14 @@ def ogr_vrt_11():
         <SrcDataSource relativeToVRT="0">tmp/test.csv</SrcDataSource>
         <SrcLayer>test</SrcLayer>
         <GeometryField encoding="PointFromColumns" x="x" y="y" reportSrcColumn="false"/>
+        <Style>style</Style>
     </OGRVRTLayer>
 </OGRVRTDataSource>"""
     vrt_ds = ogr.Open( vrt_xml, update = 1 )
     vrt_lyr = vrt_ds.GetLayerByName( 'test' )
 
-    # Only val1 and val2 attributes should be reported
-    if vrt_lyr.GetLayerDefn().GetFieldCount() != 2:
+    # Only val1, val2, style attributes should be reported
+    if vrt_lyr.GetLayerDefn().GetFieldCount() != 3:
         gdaltest.post_reason('failure')
         print(vrt_lyr.GetLayerDefn().GetFieldCount())
         return 'fail'
@@ -419,6 +420,12 @@ def ogr_vrt_11():
         return 'fail'
     if vrt_lyr.GetLayerDefn().GetFieldDefn(1).GetNameRef() != 'val2':
         gdaltest.post_reason('failure')
+        return 'fail'
+
+    feat = vrt_lyr.GetNextFeature()
+    if feat.GetStyleString() != 'PEN(c:#FF0000,w:5pt,p:"2px 1pt")':
+        gdaltest.post_reason('failure')
+        feat.DumpReadable()
         return 'fail'
 
     feat = ogr.Feature(vrt_lyr.GetLayerDefn())
