@@ -204,12 +204,12 @@ reference to use for the layer after reprojection. </li>
 <li> <b>ExtentXMin</b>, <b>ExtentYMin</b>, <b>ExtentXMax</b> and <b>ExtentXMax</b> (optional, from GDAL 1.10.0) :
 Those elements are used to define the extent of the layer. This can be usefull on static data, when
 getting the extent from the source layer is slow.</li>
+<br>
 
 <li> <b>WarpedGeomFieldName</b> (optional, from GDAL 2.0) : The value of this element
 is the geometry field name of the source layer to wrap. If not specified, the first geometry
 field will be used. If there are several geometry fields, only the one matching
 WarpedGeomFieldName will be warped; the other ones will be untouched.</li>
-
 <br>
 
 </ul>
@@ -242,7 +242,7 @@ will be deduced from the geometry type of all source layers.</li>
 SRS of the first source layer.</li>
 <br>
 
-<li> <b>FieldStrategy</b> (optional, exclusive with <b>Field</b>) :
+<li> <b>FieldStrategy</b> (optional, exclusive with <b>Field</b> or <b>GeometryField</b>) :
 may be <b>FirstLayer</b> to use the fields from the first layer found,
 <b>Union</b> to use a super-set of all the fields from all source layers, or
 <b>Intersection</b> to use a sub-set of all the common fields from all source layers. Defaults to <b>Union</b>.</li>
@@ -250,6 +250,10 @@ may be <b>FirstLayer</b> to use the fields from the first layer found,
 
 <li> <b>Field</b> (optional, exclusive with <b>FieldStrategy</b>) : see above for the syntax. Note: the src attribute
 is not supported in the context of a OGRVRTUnionLayer element (field names are assumed to be identical).</li>
+<br>
+
+<li> <b>GeometryField</b> (optional, exclusive with <b>FieldStrategy</b>, GDAL &gt;= 2.0) : the <b>name</b> attribute and
+the following sub-elements <b>GeometryType</b>, <b>SRS</b> and <b>Extent[X|Y][Min|Max]</b> are available.</li>
 <br>
 
 <li> <b>FeatureCount</b> (optional) : see above for the syntax</li>
@@ -418,6 +422,43 @@ To expose only part (or all!) of the fields:
         &lt;/GeometryField&gt;
         &lt;Field name="vrt_field_1" src="src_field_1" /&gt;
     &lt;/OGRVRTLayer&gt;w
+&lt;/OGRVRTDataSource&gt;
+</pre>
+
+To reproject the 'pg_geom_field_2' geometry field to EPSG:4326:<p>
+
+<pre>&lt;OGRVRTDataSource&gt;
+    &lt;OGRVRTWarpedLayer&gt;
+        &lt;OGRVRTLayer name="other_test"&gt;
+            &lt;SrcDataSource&gt;PG:dbname=testdb&lt;/SrcDataSource&gt;
+        &lt;/OGRVRTLayer&gt;
+        &lt;WarpedGeomFieldName&gt;pg_geom_field_2&lt;/WarpedGeomFieldName&gt;
+        &lt;TargetSRS&gt;EPSG:32631&lt;/TargetSRS&gt;
+    &lt;/OGRVRTWarpedLayer&gt;
+&lt;/OGRVRTDataSource&gt;
+</pre>
+
+To make the union of several multi-geometry layers and keep only a few of them:<p>
+
+<pre>&lt;OGRVRTDataSource&gt;
+    &lt;OGRVRTUnionLayer name="unionLayer"&gt;
+        &lt;OGRVRTLayer name="source1"&gt;
+            &lt;SrcDataSource&gt;PG:dbname=testdb&lt;/SrcDataSource&gt;
+        &lt;/OGRVRTLayer&gt;
+        &lt;OGRVRTLayer name="source2"&gt;
+            &lt;SrcDataSource&gt;PG:dbname=testdb&lt;/SrcDataSource&gt;
+        &lt;/OGRVRTLayer&gt;
+        &lt;GeometryField name="pg_geom_field_2"&gt;
+            &lt;GeometryType&gt;wkbPolygon&lt;/GeometryType&gt;
+            &lt;SRS&gt;EPSG:4326&lt;/SRS&gt;
+            &lt;ExtentXMin&gt;-180&lt;/ExtentXMin&gt;
+            &lt;ExtentYMin&gt;-90&lt;/ExtentYMin&gt;
+            &lt;ExtentXMax&gt;180&lt;/ExtentXMax&gt;
+            &lt;ExtentYMax&gt;90&lt;/ExtentYMax&gt;
+        &lt;/GeometryField&gt;
+        &lt;GeometryField name="pg_geom_field_3" /&gt;
+        &lt;Field name="src_field_1" /&gt;
+    &lt;/OGRVRTUnionLayer&gt;
 &lt;/OGRVRTDataSource&gt;
 </pre>
 
