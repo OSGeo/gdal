@@ -230,6 +230,9 @@ int OGRS57Layer::TestCapability( const char * pszCap )
 OGRErr OGRS57Layer::GetExtent( OGREnvelope *psExtent, int bForce )
 
 {
+    if( GetGeomType() == wkbNone )
+        return OGRERR_FAILURE;
+
     return poDS->GetDSExtent( psExtent, bForce );
 }
 
