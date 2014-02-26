@@ -1381,6 +1381,22 @@ static int TestSpatialFilter( OGRLayer *poLayer )
     int nGeomFieldCount = poLayer->GetLayerDefn()->GetGeomFieldCount();
     for( int iGeom = 0; iGeom < nGeomFieldCount; iGeom ++ )
         bRet &= TestSpatialFilter(poLayer, iGeom);
+    
+    OGRPolygon oPolygon;
+    CPLErrorReset();
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    poLayer->SetSpatialFilter(-1, &oPolygon);
+    CPLPopErrorHandler();
+    if( CPLGetLastErrorType() == 0 )
+        printf( "WARNING: poLayer->SetSpatialFilter(-1) should emit an error.\n" );
+
+    CPLErrorReset();
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    poLayer->SetSpatialFilter(nGeomFieldCount, &oPolygon);
+    CPLPopErrorHandler();
+    if( CPLGetLastErrorType() == 0 )
+        printf( "WARNING: poLayer->SetSpatialFilter(nGeomFieldCount) should emit an error.\n" );
+
     return bRet;
 }
 
@@ -1805,6 +1821,27 @@ static int TestGetExtent ( OGRLayer *poLayer )
     int nGeomFieldCount = poLayer->GetLayerDefn()->GetGeomFieldCount();
     for( int iGeom = 0; iGeom < nGeomFieldCount; iGeom ++ )
         bRet &= TestGetExtent(poLayer, iGeom);
+
+    OGREnvelope sExtent;
+    
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    OGRErr eErr = poLayer->GetExtent(-1, &sExtent, TRUE);
+    CPLPopErrorHandler();
+    if( eErr != OGRERR_FAILURE )
+    {
+        printf("ERROR: poLayer->GetExtent(-1) should fail.\n");
+        bRet = FALSE;
+    }
+    
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    eErr = poLayer->GetExtent(nGeomFieldCount, &sExtent, TRUE);
+    CPLPopErrorHandler();
+    if( eErr != OGRERR_FAILURE )
+    {
+        printf("ERROR: poLayer->GetExtent(nGeomFieldCount) should fail.\n");
+        bRet = FALSE;
+    }
+
     return bRet;
 }
 
