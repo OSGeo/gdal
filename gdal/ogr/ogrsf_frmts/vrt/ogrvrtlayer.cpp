@@ -946,8 +946,10 @@ try_again:
              for( size_t iGF = 0; iGF < apoGeomFieldProps.size(); iGF++ )
              {
                 if( apoGeomFieldProps[iGF]->bReportSrcColumn == FALSE &&
-                    (iSrcField == apoGeomFieldProps[iGF]->iGeomXField || iSrcField == apoGeomFieldProps[iGF]->iGeomYField ||
-                     iSrcField == apoGeomFieldProps[iGF]->iGeomZField || iSrcField == apoGeomFieldProps[iGF]->iGeomField) )
+                    (iSrcField == apoGeomFieldProps[iGF]->iGeomXField ||
+                     iSrcField == apoGeomFieldProps[iGF]->iGeomYField ||
+                     iSrcField == apoGeomFieldProps[iGF]->iGeomZField ||
+                     iSrcField == apoGeomFieldProps[iGF]->iGeomField) )
                 {
                     bSkip = TRUE;
                     break;
@@ -2277,6 +2279,10 @@ OGRErr OGRVRTLayer::SetIgnoredFields( const char **papszFields )
                 panSrcFieldsUsed[iSrcField] = TRUE;
         }
     }
+    if( iStyleField >= 0 )
+        panSrcFieldsUsed[iStyleField] = TRUE;
+    if( iFIDField >= 0 )
+        panSrcFieldsUsed[iFIDField] = TRUE;
     for(int iSrcField = 0; iSrcField < poSrcFeatureDefn->GetFieldCount(); iSrcField ++)
     {
         if( !panSrcFieldsUsed[iSrcField] )
