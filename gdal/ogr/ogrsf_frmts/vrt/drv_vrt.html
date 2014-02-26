@@ -192,7 +192,7 @@ a source layer. It may have the following subelements:
 the source layer to reproject.</li>
 <br>
 
-<li> <b>SrcSRS</b> (mandatory): The value of this element is the spatial
+<li> <b>SrcSRS</b> (optional): The value of this element is the spatial
 reference to use for the layer before reprojection. If not specified, it is deduced from
 the source layer.</li>
 <br>
@@ -204,6 +204,11 @@ reference to use for the layer after reprojection. </li>
 <li> <b>ExtentXMin</b>, <b>ExtentYMin</b>, <b>ExtentXMax</b> and <b>ExtentXMax</b> (optional, from GDAL 1.10.0) :
 Those elements are used to define the extent of the layer. This can be usefull on static data, when
 getting the extent from the source layer is slow.</li>
+
+<li> <b>WarpedGeomFieldName</b> (optional, from GDAL 2.0) : The value of this element
+is the geometry field name of the source layer to wrap. If not specified, the first geometry
+field will be used. If there are several geometry fields, only the one matching
+WarpedGeomFieldName will be warped; the other ones will be untouched.</li>
 
 <br>
 

@@ -168,7 +168,22 @@ OGRLayer*  OGRVRTDataSource::InstanciateWarpedLayer(
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Missing TargetSRS element within OGRVRTWarpedLayer" );
+        delete poSrcLayer;
         return NULL;
+    }
+
+    const char* pszGeomFieldName = CPLGetXMLValue(psLTree, "WarpedGeomFieldName", NULL);
+    int iGeomField = 0;
+    if( pszGeomFieldName != NULL )
+    {
+        iGeomField = poSrcLayer->GetLayerDefn()->GetGeomFieldIndex(pszGeomFieldName);
+        if( iGeomField < 0 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                  "Cannot find source geometry field '%s'", pszGeomFieldName );
+            delete poSrcLayer;
+            return NULL;
+        }
     }
 
     OGRSpatialReference* poSrcSRS;
@@ -177,7 +192,7 @@ OGRLayer*  OGRVRTDataSource::InstanciateWarpedLayer(
 
     if( pszSourceSRS == NULL )
     {
-        poSrcSRS = poSrcLayer->GetSpatialRef();
+        poSrcSRS = poSrcLayer->GetLayerDefn()->GetGeomFieldDefn(iGeomField)->GetSpatialRef();
         if( poSrcSRS != NULL)
             poSrcSRS = poSrcSRS->Clone();
     }
@@ -240,7 +255,8 @@ OGRLayer*  OGRVRTDataSource::InstanciateWarpedLayer(
 /*      Build the OGRWarpedLayer.                                       */
 /* -------------------------------------------------------------------- */
 
-    OGRWarpedLayer* poLayer = new OGRWarpedLayer(poSrcLayer, TRUE, poCT, poReversedCT);
+    OGRWarpedLayer* poLayer = new OGRWarpedLayer(poSrcLayer, iGeomField,
+                                                 TRUE, poCT, poReversedCT);
 
 /* -------------------------------------------------------------------- */
 /*      Set Extent if provided                                          */

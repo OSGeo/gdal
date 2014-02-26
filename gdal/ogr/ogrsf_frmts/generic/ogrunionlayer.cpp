@@ -474,7 +474,7 @@ void OGRUnionLayer::AutoWarpLayerIfNecessary(int iLayer)
                 OGRCreateCoordinateTransformation( poSRS, poSRS2 ) : NULL;
             if( poCT != NULL && poReversedCT != NULL )
                 papoSrcLayers[iLayer] = new OGRWarpedLayer(
-                            papoSrcLayers[iLayer], TRUE, poCT, poReversedCT);
+                            papoSrcLayers[iLayer], 0, TRUE, poCT, poReversedCT);
         }
 
         if( poSRS != NULL )
