@@ -164,6 +164,16 @@
     </xs:simpleType>
 
     <xs:complexType name="GeometryFieldType">
+
+        <xs:sequence>
+            <xs:choice minOccurs="0" maxOccurs="unbounded">
+                <xs:element name="GeometryType" type="GeometryTypeType"/>
+                <xs:element name="SrcRegion" type="SrcRegionType"/>
+                <xs:element name="SRS" type="nonEmptyStringType"/>
+                <xs:group ref="ExtentType"/>
+            </xs:choice>
+        </xs:sequence>
+
         <xs:attribute name="encoding">
             <xs:annotation>
                 <xs:documentation>Defaults to Direct.</xs:documentation>
@@ -179,9 +189,17 @@
                 </xs:restriction>
             </xs:simpleType>
         </xs:attribute>
+        <xs:attribute name="name" type="xs:string">
+            <xs:annotation>
+                <xs:documentation>Name of the geometry field</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
         <xs:attribute name="field" type="nonEmptyStringType">
             <xs:annotation>
-                <xs:documentation>Only used if encoding = "WKT", "WKB" or "Shape"</xs:documentation>
+                <xs:documentation>Used if encoding = "WKT", "WKB" or "Shape" to find
+                the attribute field of the source layer.
+                Used also in multiple geometry fields scenario to retrieve the
+                source geometry field matching the target VRT geometry field.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
         <xs:attribute name="x" type="nonEmptyStringType">
