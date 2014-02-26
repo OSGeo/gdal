@@ -2231,9 +2231,9 @@ int CPLUnlinkTree( const char *pszPath )
 /* -------------------------------------------------------------------- */
 /*      First, ensure there isn't any such file yet.                    */
 /* -------------------------------------------------------------------- */
-    VSIStatBuf sStatBuf;
+    VSIStatBufL sStatBuf;
 
-    if( VSIStat( pszPath, &sStatBuf ) != 0 )
+    if( VSIStatL( pszPath, &sStatBuf ) != 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "It seems no file system object called '%s' exists.",
