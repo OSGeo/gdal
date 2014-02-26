@@ -40,6 +40,7 @@ class OGRWarpedLayer : public OGRLayerDecorator
 {
   protected:
       OGRFeatureDefn              *m_poFeatureDefn;
+      int                          m_iGeomField;
 
       OGRCoordinateTransformation *m_poCT;
       OGRCoordinateTransformation *m_poReversedCT; /* may be NULL */
@@ -56,6 +57,7 @@ class OGRWarpedLayer : public OGRLayerDecorator
   public:
 
                        OGRWarpedLayer(OGRLayer* poDecoratedLayer,
+                                      int iGeomField,
                                       int bTakeOwnership,
                                       OGRCoordinateTransformation* poCT,  /* must NOT be NULL, ownership acquired by OGRWarpedLayer */
                                       OGRCoordinateTransformation* poReversedCT /* may be NULL, ownership acquired by OGRWarpedLayer */);
