@@ -1,6 +1,7 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
-# $Id: tigerpoly.py 13104 2007-11-26 21:23:48Z hobu $
+# $Id$
 #
 # Project:  OGR Python samples
 # Purpose:  Create OGR VRT from source datasource
@@ -68,7 +69,7 @@ def Esc(x):
 
 #############################################################################
 def Usage():
-    print('Usage: ogr2vrt.py [-relative] [-schema] ')
+    print('Usage: ogr2vrt.py [-relative] [-schema] [-feature_count] [-extent]')
     print('                  in_datasource out_vrtfile [layers]')
     print('')
     sys.exit(1)
@@ -81,6 +82,8 @@ outfile = None
 layer_list = []
 relative = "0"
 schema=0
+feature_count=0
+extent=0
 
 argv = gdal.GeneralCmdLineProcessor( sys.argv )
 if argv is None:
@@ -96,6 +99,15 @@ while i < len(argv):
     elif arg == '-schema':
         schema = 1
 
+    elif arg == '-feature_count':
+        feature_count = 1
+
+    elif arg == '-extent':
+        extent = 1
+
+    elif arg[0] == '-':
+        Usage()
+
     elif infile is None:
         infile = arg
 
@@ -110,6 +122,14 @@ while i < len(argv):
 if outfile is None:
     Usage()
 
+if schema and feature_count:
+    sys.stderr.write('Ignoring -feature_count when used with -schema.\n')
+    feature_count = 0
+
+if schema and extent:
+    sys.stderr.write('Ignoring -extent when used with -schema.\n')
+    extent = 0
+    
 #############################################################################
 # Open the datasource to read.
 
@@ -141,13 +161,43 @@ for name in layer_list:
         vrt += '    <SrcLayer>@dummy@</SrcLayer>\n' 
     else:
         vrt += '    <SrcLayer>%s</SrcLayer>\n' % Esc(name)
-    vrt += '    <GeometryType>%s</GeometryType>\n' \
-           % GeomType2Name(layerdef.GetGeomType())
-    srs = layer.GetSpatialRef()
-    if srs is not None:
-        vrt += '    <LayerSRS>%s</LayerSRS>\n' \
-               % (Esc(srs.ExportToWkt()))
-    
+
+    # Historic format for mono-geometry layers
+    if layerdef.GetGeomFieldCount() == 0:
+        vrt += '    <GeometryType>wkbNone</GeometryType>\n'
+    elif layerdef.GetGeomFieldCount() == 1:
+        vrt += '    <GeometryType>%s</GeometryType>\n' \
+            % GeomType2Name(layerdef.GetGeomType())
+        srs = layer.GetSpatialRef()
+        if srs is not None:
+            vrt += '    <LayerSRS>%s</LayerSRS>\n' \
+                % (Esc(srs.ExportToWkt()))
+        if extent:
+            (xmin, xmax, ymin, ymax) = layer.GetExtent()
+            vrt += '    <ExtentXMin>%.15g</ExtentXMin>\n' % xmin
+            vrt += '    <ExtentYMin>%.15g</ExtentYMin>\n' % ymin
+            vrt += '    <ExtentXMax>%.15g</ExtentXMax>\n' % xmax
+            vrt += '    <ExtentYMax>%.15g</ExtentYMax>\n' % ymax
+
+    # New format for multi-geometry field support
+    else:
+        for fld_index in range(layerdef.GetGeomFieldCount()):
+            src_fd = layerdef.GetGeomFieldDefn( fld_index )
+            vrt += '    <GeometryField name="%s">\n' % src_fd.GetName()
+            vrt += '      <GeometryType>%s</GeometryType>\n' \
+                    % GeomType2Name(src_fd.GetType())
+            srs = src_fd.GetSpatialRef()
+            if srs is not None:
+                vrt += '      <SRS>%s</SRS>\n' \
+                        % (Esc(srs.ExportToWkt()))
+            if extent:
+                (xmin, xmax, ymin, ymax) = layer.GetExtent(geom_field = fld_index)
+                vrt += '      <ExtentXMin>%.15g</ExtentXMin>\n' % xmin
+                vrt += '      <ExtentYMin>%.15g</ExtentYMin>\n' % ymin
+                vrt += '      <ExtentXMax>%.15g</ExtentXMax>\n' % xmax
+                vrt += '      <ExtentYMax>%.15g</ExtentYMax>\n' % ymax
+            vrt += '    </GeometryField>\n'
+
     # Process all the fields.
     for fld_index in range(layerdef.GetFieldCount()):
         src_fd = layerdef.GetFieldDefn( fld_index )
@@ -183,7 +233,10 @@ for name in layer_list:
         if src_fd.GetPrecision() > 0:
             vrt += ' precision="%d"' % src_fd.GetPrecision()
         vrt += '/>\n'
-        
+
+    if feature_count:
+        vrt += '    <FeatureCount>%d</FeatureCount>\n' % layer.GetFeatureCount()
+
     vrt += '  </OGRVRTLayer>\n'
 
 vrt += '</OGRVRTDataSource>\n' 
