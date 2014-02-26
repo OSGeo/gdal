@@ -66,4 +66,8 @@
         <SrcDataSource relativeToVRT="1">poly.shp</SrcDataSource>
         <SrcRegion>POINT (0 1)</SrcRegion>
     </OGRVRTLayer>
+    <OGRVRTLayer name="poly">
+        <SrcDataSource relativeToVRT="1">poly.shp</SrcDataSource>
+        <GeometryField name="foo" field="bar"/>
+    </OGRVRTLayer>
 </OGRVRTDataSource>
