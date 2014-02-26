@@ -2104,6 +2104,7 @@ def ogr_vrt_30():
                         return 'fail'
                     if ogrtest.check_feature_geometry(feat, 'POINT(%f %f)' % (2 + int(i / 5) / 5.0, 49 + int(i % 5) / 5.0)) != 0:
                         gdaltest.post_reason('did not get expected value')
+                        feat.DumpReadable()
                         return 'fail'
                 else:
                     if feat.GetFID() != i:
@@ -2558,8 +2559,16 @@ def ogr_vrt_33():
     lyr = ds.CreateLayer('test', geom_type = ogr.wkbNone, options = ['CREATE_CSVT=YES'] )
     lyr.CreateGeomField(ogr.GeomFieldDefn("geom__WKT_EPSG_4326_POINT", ogr.wkbPoint))
     lyr.CreateGeomField(ogr.GeomFieldDefn("geom__WKT_EPSG_32632_POLYGON", ogr.wkbPolygon))
+    lyr.CreateGeomField(ogr.GeomFieldDefn("geom__WKT_EPSG_4326_LINESTRING", ogr.wkbLineString))
     lyr.CreateField(ogr.FieldDefn("X", ogr.OFTReal))
     lyr.CreateField(ogr.FieldDefn("Y", ogr.OFTReal))
+    
+    lyr = ds.CreateLayer('test2', geom_type = ogr.wkbNone, options = ['CREATE_CSVT=YES'] )
+    lyr.CreateGeomField(ogr.GeomFieldDefn("geom__WKT_EPSG_32632_POLYGON", ogr.wkbPolygon))
+    lyr.CreateGeomField(ogr.GeomFieldDefn("geom__WKT_EPSG_4326_POINT", ogr.wkbPoint))
+    lyr.CreateGeomField(ogr.GeomFieldDefn("geom__WKT_EPSG_32631_POINT", ogr.wkbPoint))
+    lyr.CreateField(ogr.FieldDefn("Y", ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn("X", ogr.OFTReal))
     ds = None
 
     ds = ogr.Open('tmp/ogr_vrt_33', update = 1)
@@ -2569,6 +2578,15 @@ def ogr_vrt_33():
     feat.SetGeomField(1, ogr.CreateGeometryFromWkt('POLYGON ((0 0,0 1,1 1,1 0,0 0))'))
     feat.SetField("X", -1)
     feat.SetField("Y", -2)
+    lyr.CreateFeature(feat)
+    
+    lyr = ds.GetLayerByName('test2')
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeomField(0, ogr.CreateGeometryFromWkt('POLYGON ((1 1,1 2,2 2,2 1,1 1))'))
+    feat.SetGeomField(1, ogr.CreateGeometryFromWkt('POINT (3 4)'))
+    feat.SetGeomField(2, ogr.CreateGeometryFromWkt('POINT (5 6)'))
+    feat.SetField("X", -3)
+    feat.SetField("Y", -4)
     lyr.CreateFeature(feat)
     ds = None
 
@@ -2895,7 +2913,391 @@ def ogr_vrt_33():
         gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
-        
+
+    # UnionLayer with default union strategy
+
+    ds_str = """<OGRVRTDataSource>
+    <OGRVRTUnionLayer name="union_layer">
+        <OGRVRTLayer name="test">
+            <SrcDataSource shared="1">tmp/ogr_vrt_33</SrcDataSource>
+        </OGRVRTLayer>
+        <OGRVRTLayer name="test2">
+            <SrcDataSource shared="1">tmp/ogr_vrt_33</SrcDataSource>
+        </OGRVRTLayer>
+    </OGRVRTUnionLayer>
+</OGRVRTDataSource>"""
+    ds = ogr.Open(ds_str)
+    lyr = ds.GetLayer(0)
+    geom_fields = [ ['geom__WKT_EPSG_4326_POINT', ogr.wkbPoint, '4326' ],
+                    ['geom__WKT_EPSG_32632_POLYGON', ogr.wkbPolygon, '32632' ],
+                    ['geom__WKT_EPSG_4326_LINESTRING', ogr.wkbLineString, '4326' ],
+                    ['geom__WKT_EPSG_32631_POINT', ogr.wkbPoint, '32631' ] ]
+    if lyr.GetLayerDefn().GetGeomFieldCount() != len(geom_fields):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    for i in range(len(geom_fields)):
+        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetName() != geom_fields[i][0]:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetType() != geom_fields[i][1]:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetSpatialRef().ExportToWkt().find(geom_fields[i][2]) < 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+    feat = lyr.GetNextFeature()
+    if feat.GetGeomFieldRef(0).ExportToWkt() != 'POINT (1 2)' or \
+       feat.GetGeomFieldRef(1).ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,1 0,0 0))' or \
+       feat.GetGeomFieldRef(2) is not None or \
+       feat.GetGeomFieldRef(3) is not None:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+    if feat.GetGeomFieldRef(0).ExportToWkt() != 'POINT (3 4)' or \
+       feat.GetGeomFieldRef(1).ExportToWkt() != 'POLYGON ((1 1,1 2,2 2,2 1,1 1))' or \
+       feat.GetGeomFieldRef(2) is not None or \
+       feat.GetGeomFieldRef(3).ExportToWkt() != 'POINT (5 6)':
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    ds = None
+
+    if test_cli_utilities.get_test_ogrsf_path() is not None:
+        f = open('tmp/ogr_vrt_33.vrt', 'wb')
+        f.write(ds_str)
+        f.close()
+        ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro tmp/ogr_vrt_33.vrt')
+        os.unlink('tmp/ogr_vrt_33.vrt')
+
+        if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+            gdaltest.post_reason('fail')
+            print(ret)
+            return 'fail'
+
+    # UnionLayer with intersection strategy
+
+    ds_str = """<OGRVRTDataSource>
+    <OGRVRTUnionLayer name="union_layer">
+        <OGRVRTLayer name="test">
+            <SrcDataSource shared="1">tmp/ogr_vrt_33</SrcDataSource>
+        </OGRVRTLayer>
+        <OGRVRTLayer name="test2">
+            <SrcDataSource shared="1">tmp/ogr_vrt_33</SrcDataSource>
+        </OGRVRTLayer>
+        <FieldStrategy>Intersection</FieldStrategy>
+    </OGRVRTUnionLayer>
+</OGRVRTDataSource>"""
+    ds = ogr.Open(ds_str)
+    lyr = ds.GetLayer(0)
+    geom_fields = [ ['geom__WKT_EPSG_4326_POINT', ogr.wkbPoint, '4326' ],
+                    ['geom__WKT_EPSG_32632_POLYGON', ogr.wkbPolygon, '32632' ] ]
+    if lyr.GetLayerDefn().GetGeomFieldCount() != len(geom_fields):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    for i in range(len(geom_fields)):
+        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetName() != geom_fields[i][0]:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetType() != geom_fields[i][1]:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetSpatialRef().ExportToWkt().find(geom_fields[i][2]) < 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+    feat = lyr.GetNextFeature()
+    if feat.GetGeomFieldRef(0).ExportToWkt() != 'POINT (1 2)' or \
+       feat.GetGeomFieldRef(1).ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,1 0,0 0))':
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+    if feat.GetGeomFieldRef(0).ExportToWkt() != 'POINT (3 4)' or \
+       feat.GetGeomFieldRef(1).ExportToWkt() != 'POLYGON ((1 1,1 2,2 2,2 1,1 1))':
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    ds = None
+
+    if test_cli_utilities.get_test_ogrsf_path() is not None:
+        f = open('tmp/ogr_vrt_33.vrt', 'wb')
+        f.write(ds_str)
+        f.close()
+        ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro tmp/ogr_vrt_33.vrt')
+        os.unlink('tmp/ogr_vrt_33.vrt')
+
+        if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+            gdaltest.post_reason('fail')
+            print(ret)
+            return 'fail'
+
+    # UnionLayer with FirstLayer strategy
+
+    ds_str = """<OGRVRTDataSource>
+    <OGRVRTUnionLayer name="union_layer">
+        <OGRVRTLayer name="test">
+            <SrcDataSource shared="1">tmp/ogr_vrt_33</SrcDataSource>
+        </OGRVRTLayer>
+        <OGRVRTLayer name="test2">
+            <SrcDataSource shared="1">tmp/ogr_vrt_33</SrcDataSource>
+        </OGRVRTLayer>
+        <FieldStrategy>FirstLayer</FieldStrategy>
+    </OGRVRTUnionLayer>
+</OGRVRTDataSource>"""
+    ds = ogr.Open(ds_str)
+    lyr = ds.GetLayer(0)
+    geom_fields = [ ['geom__WKT_EPSG_4326_POINT', ogr.wkbPoint, '4326' ],
+                    ['geom__WKT_EPSG_32632_POLYGON', ogr.wkbPolygon, '32632' ],
+                    ['geom__WKT_EPSG_4326_LINESTRING', ogr.wkbLineString, '4326' ] ]
+    if lyr.GetLayerDefn().GetGeomFieldCount() != len(geom_fields):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    for i in range(len(geom_fields)):
+        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetName() != geom_fields[i][0]:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetType() != geom_fields[i][1]:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetSpatialRef().ExportToWkt().find(geom_fields[i][2]) < 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+    feat = lyr.GetNextFeature()
+    if feat.GetGeomFieldRef(0).ExportToWkt() != 'POINT (1 2)' or \
+       feat.GetGeomFieldRef(1).ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,1 0,0 0))':
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+    if feat.GetGeomFieldRef(0).ExportToWkt() != 'POINT (3 4)' or \
+       feat.GetGeomFieldRef(1).ExportToWkt() != 'POLYGON ((1 1,1 2,2 2,2 1,1 1))':
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    ds = None
+
+    if test_cli_utilities.get_test_ogrsf_path() is not None:
+        f = open('tmp/ogr_vrt_33.vrt', 'wb')
+        f.write(ds_str)
+        f.close()
+        ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro tmp/ogr_vrt_33.vrt')
+        os.unlink('tmp/ogr_vrt_33.vrt')
+
+        if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+            gdaltest.post_reason('fail')
+            print(ret)
+            return 'fail'
+
+    # UnionLayer with explicit fields but without further information
+
+    ds_str = """<OGRVRTDataSource>
+    <OGRVRTUnionLayer name="union_layer">
+        <OGRVRTLayer name="test">
+            <SrcDataSource shared="1">tmp/ogr_vrt_33</SrcDataSource>
+        </OGRVRTLayer>
+        <OGRVRTLayer name="test2">
+            <SrcDataSource shared="1">tmp/ogr_vrt_33</SrcDataSource>
+        </OGRVRTLayer>
+        <GeometryField name="geom__WKT_EPSG_32632_POLYGON"/>
+        <GeometryField name="geom__WKT_EPSG_4326_POINT"/>
+    </OGRVRTUnionLayer>
+</OGRVRTDataSource>"""
+    ds = ogr.Open(ds_str)
+    lyr = ds.GetLayer(0)
+    geom_fields = [ ['geom__WKT_EPSG_32632_POLYGON', ogr.wkbPolygon, '32632' ],
+                    ['geom__WKT_EPSG_4326_POINT', ogr.wkbPoint, '4326' ] ]
+    if lyr.GetLayerDefn().GetGeomFieldCount() != len(geom_fields):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    for i in range(len(geom_fields)):
+        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetName() != geom_fields[i][0]:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetType() != geom_fields[i][1]:
+            print(i)
+            print(lyr.GetLayerDefn().GetGeomFieldDefn(i).GetType())
+            print(geom_fields[i][1])
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetSpatialRef().ExportToWkt().find(geom_fields[i][2]) < 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+    feat = lyr.GetNextFeature()
+    if feat.GetGeomFieldRef(0).ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,1 0,0 0))' or \
+       feat.GetGeomFieldRef(1).ExportToWkt() != 'POINT (1 2)':
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    ds = None
+
+    if test_cli_utilities.get_test_ogrsf_path() is not None:
+        f = open('tmp/ogr_vrt_33.vrt', 'wb')
+        f.write(ds_str)
+        f.close()
+        ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro tmp/ogr_vrt_33.vrt')
+        os.unlink('tmp/ogr_vrt_33.vrt')
+
+        if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+            gdaltest.post_reason('fail')
+            print(ret)
+            return 'fail'
+
+    # UnionLayer with explicit fields with extra information
+
+    ds_str = """<OGRVRTDataSource>
+    <OGRVRTUnionLayer name="union_layer">
+        <OGRVRTLayer name="test">
+            <SrcDataSource shared="1">tmp/ogr_vrt_33</SrcDataSource>
+        </OGRVRTLayer>
+        <OGRVRTLayer name="test2">
+            <SrcDataSource shared="1">tmp/ogr_vrt_33</SrcDataSource>
+        </OGRVRTLayer>
+        <GeometryField name="geom__WKT_EPSG_32632_POLYGON">
+            <GeometryType>wkbPolygon25D</GeometryType>
+        </GeometryField>
+        <GeometryField name="geom__WKT_EPSG_4326_POINT">
+            <SRS>EPSG:4322</SRS> <!-- will trigger reprojection -->
+            <ExtentXMin>1</ExtentXMin>
+            <ExtentYMin>2</ExtentYMin>
+            <ExtentXMax>3</ExtentXMax>
+            <ExtentYMax>4</ExtentYMax>
+        </GeometryField>
+    </OGRVRTUnionLayer>
+</OGRVRTDataSource>"""
+    ds = ogr.Open(ds_str)
+    lyr = ds.GetLayer(0)
+    geom_fields = [ ['geom__WKT_EPSG_32632_POLYGON', ogr.wkbPolygon25D, '32632' ],
+                    ['geom__WKT_EPSG_4326_POINT', ogr.wkbPoint, '4322' ] ]
+    if lyr.GetLayerDefn().GetGeomFieldCount() != len(geom_fields):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    bb = lyr.GetExtent(geom_field = 1)
+    if bb != ( 1, 3, 2, 4 ):
+        gdaltest.post_reason('fail')
+        print(bb)
+        return 'fail'
+    for i in range(len(geom_fields)):
+        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetName() != geom_fields[i][0]:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetType() != geom_fields[i][1]:
+            print(i)
+            print(lyr.GetLayerDefn().GetGeomFieldDefn(i).GetType())
+            print(geom_fields[i][1])
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if lyr.GetLayerDefn().GetGeomFieldDefn(i).GetSpatialRef().ExportToWkt().find(geom_fields[i][2]) < 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+    feat = lyr.GetNextFeature()
+    if feat.GetGeomFieldRef(0).ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,1 0,0 0))' or \
+       feat.GetGeomFieldRef(1).ExportToWkt().find('POINT (') != 0 or \
+       feat.GetGeomFieldRef(1).ExportToWkt() == 'POINT (1 2)':
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    ds = None
+
+    if test_cli_utilities.get_test_ogrsf_path() is not None:
+        f = open('tmp/ogr_vrt_33.vrt', 'wb')
+        f.write(ds_str)
+        f.close()
+        ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro tmp/ogr_vrt_33.vrt')
+        os.unlink('tmp/ogr_vrt_33.vrt')
+
+        if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+            gdaltest.post_reason('fail')
+            print(ret)
+            return 'fail'
+
+    # UnionLayer with geometry fields disabled
+
+    ds_str = """<OGRVRTDataSource>
+    <OGRVRTUnionLayer name="union_layer">
+        <OGRVRTLayer name="test">
+            <SrcDataSource shared="1">tmp/ogr_vrt_33</SrcDataSource>
+        </OGRVRTLayer>
+        <OGRVRTLayer name="test2">
+            <SrcDataSource shared="1">tmp/ogr_vrt_33</SrcDataSource>
+        </OGRVRTLayer>
+        <GeometryType>wkbNone</GeometryType>
+    </OGRVRTUnionLayer>
+</OGRVRTDataSource>"""
+    ds = ogr.Open(ds_str)
+    lyr = ds.GetLayer(0)
+    if lyr.GetLayerDefn().GetGeomFieldCount() != 0:
+        print(lyr.GetLayerDefn().GetGeomFieldCount())
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldCount() != 6:
+        print(lyr.GetLayerDefn().GetGeomFieldCount())
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = lyr.GetNextFeature()
+    if feat is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = None
+
+    if test_cli_utilities.get_test_ogrsf_path() is not None:
+        f = open('tmp/ogr_vrt_33.vrt', 'wb')
+        f.write(ds_str)
+        f.close()
+        ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro tmp/ogr_vrt_33.vrt')
+        os.unlink('tmp/ogr_vrt_33.vrt')
+
+        if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+            gdaltest.post_reason('fail')
+            print(ret)
+            return 'fail'
+
+    ds = ogr.Open('tmp/ogr_vrt_33')
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM test UNION ALL SELECT * FROM test2')
+    geom_fields = [ ['geom__WKT_EPSG_4326_POINT', ogr.wkbPoint, '4326' ],
+                    ['geom__WKT_EPSG_32632_POLYGON', ogr.wkbPolygon, '32632' ],
+                    ['geom__WKT_EPSG_4326_LINESTRING', ogr.wkbLineString, '4326' ],
+                    ['geom__WKT_EPSG_32631_POINT', ogr.wkbPoint, '32631' ] ]
+    if sql_lyr.GetLayerDefn().GetGeomFieldCount() != len(geom_fields):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    for i in range(len(geom_fields)):
+        if sql_lyr.GetLayerDefn().GetGeomFieldDefn(i).GetName() != geom_fields[i][0]:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if sql_lyr.GetLayerDefn().GetGeomFieldDefn(i).GetType() != geom_fields[i][1]:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if sql_lyr.GetLayerDefn().GetGeomFieldDefn(i).GetSpatialRef().ExportToWkt().find(geom_fields[i][2]) < 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetGeomFieldRef(0).ExportToWkt() != 'POINT (1 2)' or \
+       feat.GetGeomFieldRef(1).ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,1 0,0 0))' or \
+       feat.GetGeomFieldRef(2) is not None or \
+       feat.GetGeomFieldRef(3) is not None:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetGeomFieldRef(0).ExportToWkt() != 'POINT (3 4)' or \
+       feat.GetGeomFieldRef(1).ExportToWkt() != 'POLYGON ((1 1,1 2,2 2,2 1,1 1))' or \
+       feat.GetGeomFieldRef(2) is not None or \
+       feat.GetGeomFieldRef(3).ExportToWkt() != 'POINT (5 6)':
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+    ds = None
+
     return 'success'
 
 ###############################################################################
