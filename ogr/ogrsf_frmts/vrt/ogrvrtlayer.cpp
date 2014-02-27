@@ -1207,8 +1207,25 @@ int OGRVRTLayer::ResetSourceReading()
             }
             else
             {
-                poSpatialGeom = m_poFilterGeom->Intersection(poSrcRegion);
-                bToDelete = TRUE;
+                int bDoIntersection = TRUE;
+                if( m_bFilterIsEnvelope )
+                {
+                    OGREnvelope sEnvelope;
+                    m_poFilterGeom->getEnvelope(&sEnvelope);
+                    if( CPLIsInf(sEnvelope.MinX) && CPLIsInf(sEnvelope.MinY) &&
+                        CPLIsInf(sEnvelope.MaxX) && CPLIsInf(sEnvelope.MaxY) &&
+                        sEnvelope.MinX < 0 && sEnvelope.MinY < 0 &&
+                        sEnvelope.MaxY > 0 && sEnvelope.MaxY > 0 )
+                    {
+                        poSpatialGeom = poSrcRegion;
+                        bDoIntersection = FALSE;
+                    }
+                }
+                if( bDoIntersection )
+                {
+                    poSpatialGeom = m_poFilterGeom->Intersection(poSrcRegion);
+                    bToDelete = TRUE;
+                }
             }
         }
         poSrcLayer->SetSpatialFilter( apoGeomFieldProps[m_iGeomFieldFilter]->iGeomField,
