@@ -56,6 +56,10 @@
 
 CPL_CVSID("$Id$");
 
+#if SIZEOF_VOIDP == 4
+static int bGlobalStripIntegerOverflow = FALSE;
+#endif
+
 /************************************************************************/
 /* ==================================================================== */
 /*                                GDALOverviewDS                        */
@@ -5651,8 +5655,32 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 
     /* Disable strip chop for now */
     hTIFF = VSI_TIFFOpen( pszFilename, ( poOpenInfo->eAccess == GA_ReadOnly ) ? "rc" : "r+c" );
+#if SIZEOF_VOIDP == 4
+    if( hTIFF == NULL )
+    {
+        /* Case of one-strip file where the strip size is > 2GB (#5403) */
+        if( bGlobalStripIntegerOverflow )
+        {
+            hTIFF = VSI_TIFFOpen( pszFilename, ( poOpenInfo->eAccess == GA_ReadOnly ) ? "r" : "r+" );
+            bGlobalStripIntegerOverflow = FALSE;
+            if( hTIFF == NULL )
+            {
+                return( NULL );
+            }
+        }
+        else
+        {
+            return( NULL );
+        }
+    }
+    else
+    {
+        bGlobalStripIntegerOverflow = FALSE;
+    }
+#else
     if( hTIFF == NULL )
         return( NULL );
+#endif
 
     uint32  nXSize, nYSize;
     uint16  nPlanarConfig;
@@ -9619,6 +9647,21 @@ void
 GTiffErrorHandler(const char* module, const char* fmt, va_list ap )
 {
     char *pszModFmt;
+
+#if SIZEOF_VOIDP == 4
+    /* Case of one-strip file where the strip size is > 2GB (#5403) */
+    if( strcmp(module, "TIFFStripSize") == 0 &&
+        strstr(fmt, "Integer overflow") != NULL )
+    {
+        bGlobalStripIntegerOverflow = TRUE;
+        return;
+    }
+    if( bGlobalStripIntegerOverflow &&
+        strstr(fmt, "Cannot handle zero strip size") != NULL )
+    {
+        return;
+    }
+#endif
 
     pszModFmt = PrepareTIFFErrorFormat( module, fmt );
     CPLErrorV( CE_Failure, CPLE_AppDefined, pszModFmt, ap );
