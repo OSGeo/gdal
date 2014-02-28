@@ -1689,7 +1689,11 @@ int VSIZipReader::GotoFirstFile()
 int VSIZipReader::GotoFileOffset(VSIArchiveEntryFileOffset* pOffset)
 {
     VSIZipEntryFileOffset* pZipEntryOffset = (VSIZipEntryFileOffset*)pOffset;
-    cpl_unzGoToFilePos(unzF, &(pZipEntryOffset->file_pos));
+    if( cpl_unzGoToFilePos(unzF, &(pZipEntryOffset->file_pos)) != UNZ_OK )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "GotoFileOffset failed");
+        return FALSE;
+    }
 
     SetInfo();
 
@@ -1896,12 +1900,23 @@ VSIVirtualHandle* VSIZipFilesystemHandler::Open( const char *pszFilename,
 
     unzFile unzF = ((VSIZipReader*)poReader)->GetUnzFileHandle();
 
-    cpl_unzOpenCurrentFile(unzF);
+    if( cpl_unzOpenCurrentFile(unzF) != UNZ_OK )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "cpl_unzOpenCurrentFile() failed");
+        delete poReader;
+        return NULL;
+    }
 
     uLong64 pos = cpl_unzGetCurrentFileZStreamPos(unzF);
 
     unz_file_info file_info;
-    cpl_unzGetCurrentFileInfo (unzF, &file_info, NULL, 0, NULL, 0, NULL, 0);
+    if( cpl_unzGetCurrentFileInfo (unzF, &file_info, NULL, 0, NULL, 0, NULL, 0) != UNZ_OK )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "cpl_unzGetCurrentFileInfo() failed");
+        cpl_unzCloseCurrentFile(unzF);
+        delete poReader;
+        return NULL;
+    }
 
     cpl_unzCloseCurrentFile(unzF);
 
