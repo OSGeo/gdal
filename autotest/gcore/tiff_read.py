@@ -1146,6 +1146,30 @@ def tiff_read_online_2():
 
     return 'success'
 
+###############################################################################
+# Test reading a TIFF made of a single-strip that is more than 2GB (#5403)
+
+def tiff_read_huge4GB():
+
+    if (gdaltest.filesystem_supports_sparse_files('tmp') == False):
+        ds = gdal.Open('data/huge4GB.tif')
+        if ds is None:
+            return 'fail'
+    else:
+        shutil.copy('data/huge4GB.tif', 'tmp/huge4GB.tif')
+        f = open('tmp/huge4GB.tif', 'rb+')
+        f.seek(65535 * 65535 + 401)
+        f.write(' ')
+        f.close()
+        ds = gdal.Open('tmp/huge4GB.tif')
+        if ds is None:
+            os.remove('tmp/huge4GB.tif')
+            return 'fail'
+        ds = None
+        os.remove('tmp/huge4GB.tif')
+
+    return 'success'
+
 ###############################################################################################
 
 for item in init_list:
@@ -1196,6 +1220,7 @@ gdaltest_list.append( (tiff_jpeg_rgba_pixel_interleaved) )
 gdaltest_list.append( (tiff_jpeg_rgba_band_interleaved) )
 gdaltest_list.append( (tiff_read_online_1) )
 gdaltest_list.append( (tiff_read_online_2) )
+gdaltest_list.append( (tiff_read_huge4GB) )
 
 if __name__ == '__main__':
 
