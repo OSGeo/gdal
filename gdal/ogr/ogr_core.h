@@ -257,7 +257,7 @@ class CPL_DLL OGREnvelope3D : public OGREnvelope
     {
         return MinX <= other.MinX && MinY <= other.MinY &&
                MaxX >= other.MaxX && MaxY >= other.MaxY &&
-               MaxZ >= other.MaxZ && MaxZ >= other.MaxZ;
+               MinZ <= other.MinZ && MaxZ >= other.MaxZ;
     }
 };
 #else
