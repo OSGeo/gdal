@@ -52,6 +52,16 @@ const char *OGRVRTDriver::GetName()
 }
 
 /************************************************************************/
+/*                           OGRVRTErrorHandler()                       */
+/************************************************************************/
+
+static void CPL_STDCALL OGRVRTErrorHandler(CPLErr eErr, int nType, const char* pszMsg)
+{
+    std::vector<CPLString>* paosErrors = (std::vector<CPLString>* )CPLGetErrorHandlerUserData();
+    paosErrors->push_back(pszMsg);
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -134,10 +144,40 @@ OGRDataSource *OGRVRTDriver::Open( const char * pszFilename,
 /*      Parse the XML.                                                  */
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psTree = CPLParseXMLString( pszXML );
-    CPLFree( pszXML );
 
     if( psTree == NULL )
+    {
+        CPLFree( pszXML );
         return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      XML Validation.                                                 */
+/* -------------------------------------------------------------------- */
+    if( CSLTestBoolean(CPLGetConfigOption("GDAL_XML_VALIDATION", "YES")) )
+    {
+        const char* pszXSD = CPLFindFile( "gdal", "ogrvrt.xsd" );
+        if( pszXSD != NULL )
+        {
+            std::vector<CPLString> aosErrors;
+            CPLPushErrorHandlerEx(OGRVRTErrorHandler, &aosErrors);
+            int bRet = CPLValidateXML(pszXML, pszXSD, NULL);
+            CPLPopErrorHandler();
+            if( !bRet )
+            {
+                if( aosErrors.size() > 0 &&
+                    strstr(aosErrors[0].c_str(), "missing libxml2 support") == NULL )
+                {
+                    for(size_t i = 0; i < aosErrors.size(); i++)
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined, "%s", aosErrors[i].c_str());
+                    }
+                }
+            }
+            CPLErrorReset();
+        }
+    }
+    CPLFree( pszXML );
 
 /* -------------------------------------------------------------------- */
 /*      Create a virtual datasource configured based on this XML input. */
