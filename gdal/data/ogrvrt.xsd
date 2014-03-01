@@ -4,7 +4,7 @@
  * $Id$
  *
  * Project:  GDAL/OGR
- * Purpose:  (Non normative) XML Schema for OGR VRT files.
+ * Purpose:  XML Schema for OGR VRT files.
  * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
  *
  **********************************************************************
@@ -66,22 +66,42 @@
                 </xs:element>
                 <xs:element name="FID" type="nonEmptyStringType"/>
                 <xs:element name="Style" type="nonEmptyStringType"/>
-                <xs:element name="GeometryType" type="GeometryTypeType"/>
-                <xs:element name="GeometryField" type="GeometryFieldType"/>
-                <xs:element name="LayerSRS" type="nonEmptyStringType"/>
+                <xs:element name="GeometryType" type="GeometryTypeType">
+                    <xs:annotation>
+                        <xs:documentation>Use GeometryField.GeometryType for multi-geometry field support.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="LayerSRS" type="nonEmptyStringType">
+                    <xs:annotation>
+                        <xs:documentation>Use GeometryField.SRS for multi-geometry field support.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
                 <xs:element name="Field" type="FieldType">
                     <xs:annotation>
                         <xs:documentation>May be repeated</xs:documentation>
                     </xs:annotation>
                 </xs:element>
-                <xs:element name="SrcRegion" type="SrcRegionType"/>
+                <xs:element name="GeometryField" type="GeometryFieldType">
+                    <xs:annotation>
+                        <xs:documentation>May be repeated</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="SrcRegion" type="SrcRegionType">
+                    <xs:annotation>
+                        <xs:documentation>Use GeometryField.SrcRegion for multi-geometry field support.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
                 <xs:element name="attrFilterPassThrough" type="OGRBooleanType">
                     <xs:annotation>
                         <xs:documentation>Default to FALSE.</xs:documentation>
                     </xs:annotation>
                 </xs:element>
                 <xs:element name="FeatureCount" type="xs:integer"/>
-                <xs:group ref="ExtentType"/>
+                <xs:group ref="ExtentType">
+                    <xs:annotation>
+                        <xs:documentation>Use GeometryField.ExtentXMin, etc... for multi-geometry field support.</xs:documentation>
+                    </xs:annotation>
+                </xs:group>
             </xs:choice>
         </xs:sequence>
         <xs:attribute name="name" type="nonEmptyStringType" use="required"/>
@@ -100,6 +120,12 @@
         <xs:simpleContent>
             <xs:extension base="nonEmptyStringType">
                 <xs:attribute name="relativeToVRT" type="OGRBooleanType" default="FALSE">
+                    <xs:annotation>
+                        <xs:documentation>Default to FALSE.</xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+                <!-- alternate case -->
+                <xs:attribute name="relativetoVRT" type="OGRBooleanType" default="FALSE">
                     <xs:annotation>
                         <xs:documentation>Default to FALSE.</xs:documentation>
                     </xs:annotation>
@@ -136,70 +162,71 @@
         </xs:restriction>
     </xs:simpleType>
 
-    <xs:complexType name="FieldType">
+    <xs:complexType name="FieldTypeWithoutSrc">
         <xs:attribute name="name" type="nonEmptyStringType" use="required"/>
         <xs:attribute name="type" type="OGRFieldTypeType" default="String"/>
-        <xs:attribute name="src" type="nonEmptyStringType">
-            <xs:annotation>
-                <xs:documentation>Defaults to the value of "name" if not specified.</xs:documentation>
-            </xs:annotation>
-        </xs:attribute>
         <xs:attribute name="width" type="xs:nonNegativeInteger"/>
         <xs:attribute name="precision" type="xs:nonNegativeInteger"/>
+    </xs:complexType>
+
+    <xs:complexType name="FieldType">
+        <xs:complexContent>
+            <xs:extension base="FieldTypeWithoutSrc">
+                <xs:attribute name="src" type="nonEmptyStringType">
+                    <xs:annotation>
+                        <xs:documentation>Defaults to the value of "name" if not specified.</xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+            </xs:extension>
+        </xs:complexContent>
     </xs:complexType>
 
     <xs:simpleType name="OGRFieldTypeType">
         <xs:restriction base="xs:string">
             <xs:enumeration value="Integer"/>
+            <xs:enumeration value="integer"/>
             <xs:enumeration value="Real"/>
+            <xs:enumeration value="real"/>
             <xs:enumeration value="String"/>
+            <xs:enumeration value="string"/>
             <xs:enumeration value="IntegerList"/>
+            <xs:enumeration value="integerlist"/>
             <xs:enumeration value="RealList"/>
+            <xs:enumeration value="reallist"/>
             <xs:enumeration value="StringList"/>
+            <xs:enumeration value="stringlist"/>
             <xs:enumeration value="Binary"/>
+            <xs:enumeration value="binary"/>
             <xs:enumeration value="Date"/>
+            <xs:enumeration value="date"/>
             <xs:enumeration value="Time"/>
+            <xs:enumeration value="time"/>
             <xs:enumeration value="DateTime"/>
+            <xs:enumeration value="datetime"/>
         </xs:restriction>
     </xs:simpleType>
 
-    <xs:complexType name="GeometryFieldType">
+    <xs:simpleType name="EncodingType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="Direct"/>
+            <xs:enumeration value="None"/>
+            <xs:enumeration value="WKT"/>
+            <xs:enumeration value="WKB"/>
+            <xs:enumeration value="Shape"/>
+            <xs:enumeration value="shape"/>
+            <xs:enumeration value="PointFromColumns"/>
+        </xs:restriction>
+    </xs:simpleType>
 
-        <xs:sequence>
-            <xs:choice minOccurs="0" maxOccurs="unbounded">
-                <xs:element name="GeometryType" type="GeometryTypeType"/>
-                <xs:element name="SrcRegion" type="SrcRegionType"/>
-                <xs:element name="SRS" type="nonEmptyStringType"/>
-                <xs:group ref="ExtentType"/>
-            </xs:choice>
-        </xs:sequence>
-
-        <xs:attribute name="encoding">
+    <xs:attributeGroup name="GeometryFieldTypeAttrGroupWithoutSrc">
+        <xs:attribute name="encoding" type="EncodingType">
             <xs:annotation>
                 <xs:documentation>Defaults to Direct.</xs:documentation>
             </xs:annotation>
-            <xs:simpleType>
-                <xs:restriction base="xs:string">
-                    <xs:enumeration value="Direct"/>
-                    <xs:enumeration value="None"/>
-                    <xs:enumeration value="WKT"/>
-                    <xs:enumeration value="WKB"/>
-                    <xs:enumeration value="Shape"/>
-                    <xs:enumeration value="PointFromColumns"/>
-                </xs:restriction>
-            </xs:simpleType>
         </xs:attribute>
         <xs:attribute name="name" type="xs:string">
             <xs:annotation>
                 <xs:documentation>Name of the geometry field</xs:documentation>
-            </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="field" type="nonEmptyStringType">
-            <xs:annotation>
-                <xs:documentation>Used if encoding = "WKT", "WKB" or "Shape" to find
-                the attribute field of the source layer.
-                Used also in multiple geometry fields scenario to retrieve the
-                source geometry field matching the target VRT geometry field.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
         <xs:attribute name="x" type="nonEmptyStringType">
@@ -227,6 +254,33 @@
                 <xs:documentation>Only used if no Field element is found at the OGRVRTLayer level</xs:documentation>
             </xs:annotation>
         </xs:attribute>
+    </xs:attributeGroup>
+
+    <xs:complexType name="GeometryFieldTypeWithoutSrc">
+        <xs:sequence>
+            <xs:choice minOccurs="0" maxOccurs="unbounded">
+                <xs:element name="GeometryType" type="GeometryTypeType"/>
+                <xs:element name="SrcRegion" type="SrcRegionType"/>
+                <xs:element name="SRS" type="nonEmptyStringType"/>
+                <xs:group ref="ExtentType"/>
+            </xs:choice>
+        </xs:sequence>
+        <xs:attributeGroup ref="GeometryFieldTypeAttrGroupWithoutSrc"/>
+    </xs:complexType>
+
+    <xs:complexType name="GeometryFieldType">
+        <xs:complexContent>
+            <xs:extension base="GeometryFieldTypeWithoutSrc">
+                <xs:attribute name="field" type="nonEmptyStringType">
+                    <xs:annotation>
+                        <xs:documentation>Used if encoding = "WKT", "WKB" or "Shape" to find
+                        the attribute field of the source layer.
+                        Used also in multiple geometry fields scenario to retrieve the
+                        source geometry field matching the target VRT geometry field.</xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+            </xs:extension>
+        </xs:complexContent>
     </xs:complexType>
 
     <xs:complexType name="SrcRegionType">
@@ -276,6 +330,7 @@
                 <xs:element name="OGRVRTWarpedLayer" type="OGRVRTWarpedLayerType"/>
                 <xs:element name="OGRVRTUnionLayer" type="OGRVRTUnionLayerType"/>
             </xs:choice>
+            <xs:element name="WarpedGeomFieldName" type="nonEmptyStringType" minOccurs="0" maxOccurs="1"/>
             <xs:element name="SrcSRS" type="nonEmptyStringType" minOccurs="0" maxOccurs="1"/>
             <xs:element name="TargetSRS" type="nonEmptyStringType" minOccurs="1" maxOccurs="1"/>
             <xs:group ref="ExtentType" minOccurs="0" maxOccurs="1"/>
@@ -301,14 +356,27 @@
                     </xs:annotation>
                 </xs:element>
 
-                <xs:element name="GeometryType" type="GeometryTypeType"/>
-                <xs:element name="LayerSRS" type="nonEmptyStringType"/>
-                <xs:element name="FieldStrategy" type="FieldStrategyType">
+                <xs:element name="GeometryType" type="GeometryTypeType">
                     <xs:annotation>
-                        <xs:documentation>Defaults to Union if no Field element is speicified.</xs:documentation>
+                        <xs:documentation>Use GeometryField.GeometryType for multi-geometry field support.</xs:documentation>
                     </xs:annotation>
                 </xs:element>
-                <xs:element name="Field" type="FieldType">
+                <xs:element name="LayerSRS" type="nonEmptyStringType">
+                    <xs:annotation>
+                        <xs:documentation>Use GeometryField.SRS for multi-geometry field support.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="FieldStrategy" type="FieldStrategyType">
+                    <xs:annotation>
+                        <xs:documentation>Defaults to Union if no Field or GeometryField element is speicified.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="Field" type="FieldTypeWithoutSrc">
+                    <xs:annotation>
+                        <xs:documentation>May be repeated</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="GeometryField" type="GeometryFieldTypeWithoutSrc">
                     <xs:annotation>
                         <xs:documentation>May be repeated</xs:documentation>
                     </xs:annotation>
@@ -318,9 +386,17 @@
                         <xs:documentation>Defaults to FALSE.</xs:documentation>
                     </xs:annotation>
                 </xs:element>
-                <xs:element name="SourceLayerFieldName" type="nonEmptyStringType"/>
+                <xs:element name="SourceLayerFieldName" type="nonEmptyStringType">
+                    <xs:annotation>
+                        <xs:documentation>Name of fields in which to place the name of the source layer of each feature.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
                 <xs:element name="FeatureCount" type="xs:integer"/>
-                <xs:group ref="ExtentType"/>
+                <xs:group ref="ExtentType">
+                    <xs:annotation>
+                        <xs:documentation>Use GeometryField.ExtentXMin, etc. for multi-geometry field support.</xs:documentation>
+                    </xs:annotation>
+                </xs:group>
             </xs:choice>
         </xs:sequence>
         <xs:attribute name="name" type="nonEmptyStringType" use="required"/>
