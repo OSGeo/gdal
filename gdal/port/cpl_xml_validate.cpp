@@ -853,8 +853,16 @@ static void CPLLibXMLWarningErrorCallback (void * ctx, const char * msg, ...)
         int nLen = (int)strlen(pszStrDup);
         if (nLen > 0 && pszStrDup[nLen-1] == '\n')
             pszStrDup[nLen-1] = '\0';
-        CPLError(CE_Failure, CPLE_AppDefined, "libXML: %s:%d: %s",
-                 pszFilename, pErrorPtr ? pErrorPtr->line : 0, pszStrDup);
+        if( pszFilename != NULL && pszFilename[0] != '<' )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "libXML: %s:%d: %s",
+                     pszFilename, pErrorPtr ? pErrorPtr->line : 0, pszStrDup);
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "libXML: %d: %s",
+                     pErrorPtr ? pErrorPtr->line : 0, pszStrDup);
+        }
         CPLFree(pszStrDup);
     }
 
@@ -978,18 +986,27 @@ int CPLValidateXML(const char* pszXMLFilename,
                    const char* pszXSDFilename,
                    char** papszOptions)
 {
-    VSILFILE* fpXML = VSIFOpenL(pszXMLFilename, "rb");
-    if (fpXML == NULL)
-    {
-        CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Cannot open %s", pszXMLFilename);
-        return FALSE;
-    }
-    CPLString osTmpXSDFilename;
     char szHeader[2048];
-    int nRead = (int)VSIFReadL(szHeader, 1, sizeof(szHeader)-1, fpXML);
-    szHeader[nRead] = '\0';
-    VSIFCloseL(fpXML);
+    CPLString osTmpXSDFilename;
+
+    if( pszXMLFilename[0] == '<' )
+    {
+        strncpy(szHeader, pszXMLFilename, sizeof(szHeader));
+        szHeader[sizeof(szHeader)-1] = '\0';
+    }
+    else
+    {
+        VSILFILE* fpXML = VSIFOpenL(pszXMLFilename, "rb");
+        if (fpXML == NULL)
+        {
+            CPLError(CE_Failure, CPLE_OpenFailed,
+                    "Cannot open %s", pszXMLFilename);
+            return FALSE;
+        }
+        int nRead = (int)VSIFReadL(szHeader, 1, sizeof(szHeader)-1, fpXML);
+        szHeader[nRead] = '\0';
+        VSIFCloseL(fpXML);
+    }
 
     /* Workaround following bug : "element FeatureCollection: Schemas validity error : Element '{http://www.opengis.net/wfs}FeatureCollection': No matching global declaration available for the validation root" */
     /* We create a wrapping XSD that imports the WFS .xsd (and possibly the GML .xsd too) and the application schema */
@@ -1069,7 +1086,16 @@ int CPLValidateXML(const char* pszXMLFilename,
                             (void*) pszXMLFilename);
 
     int bValid = FALSE;
-    if (strncmp(pszXMLFilename, "/vsi", 4) != 0)
+    if( pszXMLFilename[0] == '<' )
+    {
+        xmlDocPtr pDoc = xmlParseDoc((const xmlChar *)pszXMLFilename);
+        if (pDoc != NULL)
+        {
+            bValid = xmlSchemaValidateDoc(pSchemaValidCtxt, pDoc) == 0;
+        }
+        xmlFreeDoc(pDoc);
+    }
+    else if (strncmp(pszXMLFilename, "/vsi", 4) != 0)
     {
         bValid =
             xmlSchemaValidateFile(pSchemaValidCtxt, pszXMLFilename, 0) == 0;

@@ -36,6 +36,11 @@ The root element of the XML control file is <b>OGRVRTDataSource</b>.  It has
 an <b>OGRVRTLayer</b> (or <b>OGRVRTWarpedLayer</b> or <b>OGRVRTUnionLayer</b> starting
 with GDAL 1.10.0) child for each layer in the virtual datasource.<p>
 
+A <a href="http://svn.osgeo.org/gdal/trunk/gdal/data/ogrvrt.xsd">XML schema of the OGR VRT format</a>
+is available. Starting with GDAL 2.0, when GDAL is configured with libXML2 support, that
+schema will be used to validate the VRT documents. Non-conformities will be reported only as
+warnings. That validation can be disabled by setting the GDAL_XML_VALIDATION configuration option to NO.<p>
+
 A <b>OGRVRTLayer</b> element should have a <b>name</b> attribute with the layer name, and may have the
 following subelements:
 
