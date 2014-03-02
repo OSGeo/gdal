@@ -1565,6 +1565,16 @@ def ogr_vrt_27():
 
 def ogr_vrt_28():
 
+    ds = ogr.Open("<OGRVRTDataSource></foo>")
+    if ds is not None:
+        return 'fail'
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_vrt_28_invalid.vrt', "<bla><OGRVRTDataSource></OGRVRTDataSource></bla>")
+    ds = ogr.Open("/vsimem/ogr_vrt_28_invalid.vrt")
+    if ds is not None:
+        return 'fail'
+    gdal.Unlink("/vsimem/ogr_vrt_28_invalid.vrt")
+
     ds = ogr.Open("data/invalid.vrt")
     if ds is None:
         return 'fail'
