@@ -45,16 +45,6 @@ static CPLString OGRPGEscapeStringList(PGconn *hPGConn,
 
 #define UNSUPPORTED_OP_READ_ONLY "%s : unsupported operation on a read-only datasource."
 
-int strlen_utf8_c(const char *s) {
-    int i = 0, j = 0;
-    while (s[i]) {
-        if ((s[i] & 0xc0) != 0x80) j++;
-        i++;
-    }
-    return j;
-}
-
-
 /************************************************************************/
 /*                        OGRPGTableFeatureDefn                         */
 /************************************************************************/
@@ -1537,7 +1527,7 @@ CPLString OGRPGEscapeString(PGconn *hPGConn,
 
 
     int nSrcLen = strlen(pszStrValue);
-    int nSrcLenUTF = strlen_utf8_c(pszStrValue);
+    int nSrcLenUTF = CPLStrlenUTF8(pszStrValue);
 
     if (nMaxLength > 0 && nSrcLenUTF > nMaxLength)
     {
