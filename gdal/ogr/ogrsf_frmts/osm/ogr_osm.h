@@ -59,8 +59,9 @@ class OGROSMDataSource;
 class OGROSMLayer : public OGRLayer
 {
     friend class OGROSMDataSource;
-    
+
     OGROSMDataSource    *poDS;
+    int                  nIdxLayer;
     OGRFeatureDefn      *poFeatureDefn;
     OGRSpatialReference *poSRS;
     long                 nFeatureCount;
@@ -107,6 +108,7 @@ class OGROSMLayer : public OGRLayer
 
   public:
                         OGROSMLayer( OGROSMDataSource* poDS,
+                                     int nIdxLayer,
                                      const char* pszName );
     virtual             ~OGROSMLayer();
 
@@ -409,7 +411,7 @@ class OGROSMDataSource : public OGRDataSource
     int                 Open ( const char* pszFilename, int bUpdateIn );
 
     int                 ResetReading();
-    int                 ParseNextChunk();
+    int                 ParseNextChunk(int nIdxLayer);
     OGRErr              GetExtent( OGREnvelope *psExtent );
     int                 IsInterleavedReading();
 

@@ -2537,19 +2537,19 @@ int OGROSMDataSource::Open( const char * pszFilename, int bUpdateIn)
     nLayers = 5;
     papoLayers = (OGROSMLayer**) CPLMalloc(nLayers * sizeof(OGROSMLayer*));
 
-    papoLayers[IDX_LYR_POINTS] = new OGROSMLayer(this, "points");
+    papoLayers[IDX_LYR_POINTS] = new OGROSMLayer(this, IDX_LYR_POINTS, "points");
     papoLayers[IDX_LYR_POINTS]->GetLayerDefn()->SetGeomType(wkbPoint);
 
-    papoLayers[IDX_LYR_LINES] = new OGROSMLayer(this, "lines");
+    papoLayers[IDX_LYR_LINES] = new OGROSMLayer(this, IDX_LYR_LINES, "lines");
     papoLayers[IDX_LYR_LINES]->GetLayerDefn()->SetGeomType(wkbLineString);
 
-    papoLayers[IDX_LYR_MULTILINESTRINGS] = new OGROSMLayer(this, "multilinestrings");
+    papoLayers[IDX_LYR_MULTILINESTRINGS] = new OGROSMLayer(this, IDX_LYR_MULTILINESTRINGS, "multilinestrings");
     papoLayers[IDX_LYR_MULTILINESTRINGS]->GetLayerDefn()->SetGeomType(wkbMultiLineString);
 
-    papoLayers[IDX_LYR_MULTIPOLYGONS] = new OGROSMLayer(this, "multipolygons");
+    papoLayers[IDX_LYR_MULTIPOLYGONS] = new OGROSMLayer(this, IDX_LYR_MULTIPOLYGONS, "multipolygons");
     papoLayers[IDX_LYR_MULTIPOLYGONS]->GetLayerDefn()->SetGeomType(wkbMultiPolygon);
 
-    papoLayers[IDX_LYR_OTHER_RELATIONS] = new OGROSMLayer(this, "other_relations");
+    papoLayers[IDX_LYR_OTHER_RELATIONS] = new OGROSMLayer(this, IDX_LYR_OTHER_RELATIONS, "other_relations");
     papoLayers[IDX_LYR_OTHER_RELATIONS]->GetLayerDefn()->SetGeomType(wkbGeometryCollection);
 
     if( !ParseConf() )
@@ -3389,7 +3389,7 @@ int OGROSMDataSource::ResetReading()
 /*                           ParseNextChunk()                           */
 /************************************************************************/
 
-int OGROSMDataSource::ParseNextChunk()
+int OGROSMDataSource::ParseNextChunk(int nIdxLayer)
 {
     if( bStopParsing )
         return FALSE;
@@ -3417,6 +3417,13 @@ int OGROSMDataSource::ParseNextChunk()
 
                 if( !bHasRowInPolygonsStandalone )
                     bStopParsing = TRUE;
+
+                if( !bInterleavedReading && !bFeatureAdded &&
+                    bHasRowInPolygonsStandalone &&
+                    nIdxLayer != IDX_LYR_MULTIPOLYGONS )
+                {
+                    return FALSE;
+                }
 
                 return bFeatureAdded || bHasRowInPolygonsStandalone;
             }
