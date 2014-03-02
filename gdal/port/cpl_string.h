@@ -177,6 +177,7 @@ wchar_t CPL_DLL *CPLRecodeToWChar( const char *pszSource,
                                    const char *pszDstEncoding ) CPL_WARN_UNUSED_RESULT;
 int CPL_DLL CPLIsUTF8(const char* pabyData, int nLen);
 char CPL_DLL *CPLForceToASCII(const char* pabyData, int nLen, char chReplacementChar) CPL_WARN_UNUSED_RESULT;
+int CPL_DLL CPLStrlenUTF8(const char *pszUTF8Str);
 
 CPL_C_END
 
