@@ -335,3 +335,28 @@ void CPLClearRecodeWarningFlags()
 #endif
     CPLClearRecodeStubWarningFlags();
 }
+
+
+/************************************************************************/
+/*                         CPLStrlenUTF8()                              */
+/************************************************************************/
+
+/**
+ * Return the number of UTF-8 characters of a nul-terminated string.
+ *
+ * This is different from strlen() which returns the number of bytes.
+ *
+ * @param pszUTF8Str a nul-terminated UTF-8 string
+ *
+ * @return the number of UTF-8 characters. 
+ */
+
+int CPLStrlenUTF8(const char *pszUTF8Str) {
+    int i = 0, j = 0;
+    while (pszUTF8Str[i]) {
+        if ((pszUTF8Str[i] & 0xc0) != 0x80) j++;
+        i++;
+    }
+    return j;
+}
+
