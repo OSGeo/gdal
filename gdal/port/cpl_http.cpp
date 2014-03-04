@@ -135,14 +135,16 @@ static size_t CPLHdrWriteFct(void *buffer, size_t size, size_t nmemb, void *reqI
  *                form proxy.server.com:port_number
  * <li>PROXYUSERPWD=val, where val is of the form username:password
  * <li>PROXYAUTH=[BASIC/NTLM/DIGEST/ANY] to specify an proxy authentication scheme to use.
+ * <li>NETRC=[YES/NO] to enable or disable use of $HOME/.netrc, default YES.
  * <li>CUSTOMREQUEST=val, where val is GET, PUT, POST, DELETE, etc.. (GDAL >= 1.9.0)
  * </ul>
  *
  * Alternatively, if not defined in the papszOptions arguments, the PROXY,  
- * PROXYUSERPWD and PROXYAUTH values are searched in the configuration options named 
- * GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD and GDAL_PROXY_AUTH, as proxy configuration belongs 
- * to networking setup and makes more sense at the configuration option level 
- * than at the connection level.
+ * PROXYUSERPWD, PROXYAUTH and NETRC values are searched in the configuration 
+ * options named GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD, GDAL_PROXY_AUTH and 
+ * GDAL_HTTP_NETRC, as proxy configuration belongs to networking setup and 
+ * makes more sense at the configuration option level than at the connection 
+ * level.
  *
  * @return a CPLHTTPResult* structure that must be freed by 
  * CPLHTTPDestroyResult(), or NULL if libcurl support is disabled
@@ -398,6 +400,13 @@ void CPLHTTPSetOptions(CURL *http_handle, char** papszOptions)
                   "HTTPAUTH option needs curl >= 7.11.0" );
     }
 #endif
+
+    /* Support use of .netrc - default enabled */
+    const char *pszHttpNetrc = CSLFetchNameValue( papszOptions, "NETRC" );
+    if( pszHttpNetrc == NULL )
+        pszHttpNetrc = CPLGetConfigOption( "GDAL_HTTP_NETRC", "YES" );
+    if( pszHttpNetrc == NULL || CSLTestBoolean(pszHttpNetrc) )
+        curl_easy_setopt(http_handle, CURLOPT_NETRC, 1L);
 
     /* Support setting userid:password */
     const char *pszUserPwd = CSLFetchNameValue( papszOptions, "USERPWD" );
