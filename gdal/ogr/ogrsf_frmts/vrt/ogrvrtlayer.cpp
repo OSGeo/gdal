@@ -1019,8 +1019,7 @@ try_again:
 error:
     bError = TRUE;
     CPLFree( pszSrcDSName );
-    if( poFeatureDefn )
-        poFeatureDefn->Release();
+    poFeatureDefn->Release();
     poFeatureDefn = new OGRFeatureDefn( osName );
     poFeatureDefn->Reference();
     return FALSE;
