@@ -459,7 +459,16 @@ void field2kml (
                     continue;
 
                 }
-                
+
+                /***** model *****/
+
+                else if ( EQUAL ( name, oFC.modelfield ) ) {
+
+                    CPLFree( pszUTF8String );
+
+                    continue;
+                }
+
                 /***** other *****/
 
                 poKmlSimpleData = poKmlFactory->CreateSimpleData (  );
@@ -1483,6 +1492,10 @@ SimpleFieldPtr FieldDef2kml (
 			
     case OFTReal:
     case OFTRealList:
+        if ( EQUAL ( pszFieldName, oFC.scalexfield ) ||
+             EQUAL ( pszFieldName, oFC.scaleyfield ) ||
+             EQUAL ( pszFieldName, oFC.scalezfield ) )
+            break;
         poKmlSimpleField->set_type ( "float" );
         return poKmlSimpleField;
 	
@@ -1492,7 +1505,8 @@ SimpleFieldPtr FieldDef2kml (
              EQUAL ( pszFieldName, oFC.descfield ) ||
              EQUAL ( pszFieldName, oFC.altitudeModefield ) ||
              EQUAL ( pszFieldName, oFC.iconfield ) ||
-             EQUAL ( pszFieldName, oFC.snippetfield ) )
+             EQUAL ( pszFieldName, oFC.snippetfield ) ||
+             EQUAL ( pszFieldName, oFC.modelfield ) )
             break;
         poKmlSimpleField->set_type ( "string" );
         return poKmlSimpleField;
@@ -1613,6 +1627,10 @@ void get_fieldconfig( struct fieldconfig *oFC) {
     oFC->tiltfield = CPLGetConfigOption( "LIBKML_TILT_FIELD", "tilt");
     oFC->rollfield = CPLGetConfigOption( "LIBKML_ROLL_FIELD", "roll");
     oFC->snippetfield = CPLGetConfigOption( "LIBKML_SNIPPET_FIELD", "snippet");
+    oFC->modelfield = CPLGetConfigOption( "LIBKML_MODEL_FIELD", "model");
+    oFC->scalexfield = CPLGetConfigOption( "LIBKML_SCALE_X_FIELD", "scale_x");
+    oFC->scaleyfield = CPLGetConfigOption( "LIBKML_SCALE_Y_FIELD", "scale_y");
+    oFC->scalezfield = CPLGetConfigOption( "LIBKML_SCALE_Z_FIELD", "scale_z");
 }
 
 /************************************************************************/
