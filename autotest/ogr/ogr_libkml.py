@@ -1203,6 +1203,71 @@ def ogr_libkml_write_screenoverlay():
     return 'success'
 
 ###############################################################################
+# Test writing Model
+
+def ogr_libkml_write_model():
+
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_model.kml")
+    lyr = ds.CreateLayer('test')
+    lyr.CreateField(ogr.FieldDefn("model", ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn("heading", ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn("tilt", ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn("roll", ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn("altitudeMode", ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn("scale_x", ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn("scale_y", ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn("scale_z", ogr.OFTReal))
+
+    feat = ogr.Feature( lyr.GetLayerDefn() )
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT (2 49 10)'))
+    feat.SetField("tilt", 75)
+    feat.SetField("roll", 10)
+    feat.SetField("heading", -70)
+    feat.SetField("scale_x", 2)
+    feat.SetField("scale_y", 3)
+    feat.SetField("scale_z", 4)
+    feat.SetField("altitudeMode", "relativeToGround")
+    feat.SetField("model", "http://makc.googlecode.com/svn/trunk/flash/sandy_flar2/cube.dae")
+    lyr.CreateFeature(feat)
+
+    feat = ogr.Feature( lyr.GetLayerDefn() )
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT (2 49)'))
+    feat.SetField("model", "http://foo")
+    lyr.CreateFeature(feat)
+
+    ds = None
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_model.kml', 'rb')
+    data = gdal.VSIFReadL(1, 2048, f)
+    gdal.VSIFCloseL(f)
+
+    if data.find('<longitude>2</longitude>') == -1 or \
+       data.find('<latitude>49</latitude>') == -1 or \
+       data.find('<altitude>10</altitude>') == -1 or \
+       data.find('<altitudeMode>relativeToGround</altitudeMode>') == -1 or \
+       data.find('<heading>-70</heading>') == -1 or \
+       data.find('<tilt>75</tilt>') == -1 or \
+       data.find('<roll>10</roll>') == -1 or \
+       data.find('<x>2</x>') == -1 or \
+       data.find('<y>3</y>') == -1 or \
+       data.find('<z>4</z>') == -1 or \
+       data.find('<x>1</x>') == -1 or \
+       data.find('<y>1</y>') == -1 or \
+       data.find('<z>1</z>') == -1 or \
+       data.find('<href>http://makc.googlecode.com/svn/trunk/flash/sandy_flar2/cube.dae</href>') == -1 or \
+       data.find('<href>http://foo</href>') == -1 or \
+       data.find('<targetHref>cube.gif</targetHref>') == -1 or \
+       data.find('<sourceHref>cube.gif</sourceHref>') == -1:
+        print(data)
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_libkml_cleanup():
@@ -1224,6 +1289,7 @@ def ogr_libkml_cleanup():
     gdal.Unlink("/vsimem/ogr_libkml_write_phonenumber.kml")
     gdal.Unlink("/vsimem/ogr_libkml_write_region.kml")
     gdal.Unlink("/vsimem/ogr_libkml_write_screenoverlay.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_write_model.kml")
 
     # Re-register KML driver if necessary
     if ogrtest.kml_drv is not None:
@@ -1269,6 +1335,7 @@ gdaltest_list = [
     ogr_libkml_write_phonenumber,
     ogr_libkml_write_region,
     ogr_libkml_write_screenoverlay,
+    ogr_libkml_write_model,
     ogr_libkml_cleanup ]
 
 if __name__ == '__main__':
