@@ -30,6 +30,8 @@
 
 #include "cpl_conv.h"
 #include "ogr_sqlite.h"
+#include "swq.h"
+#include "ogr_p.h"
 
 CPL_CVSID("$Id$");
 /************************************************************************/
@@ -156,6 +158,65 @@ OGRFeature *OGRSQLiteSelectLayer::GetNextFeature()
 }
 
 /************************************************************************/
+/*               OGRGenSQLResultsLayerHasSpecialField()                 */
+/************************************************************************/
+
+static
+int HasSpecialFields(swq_expr_node* expr, int nMinIndexForSpecialField)
+{
+    if (expr->eNodeType == SNT_COLUMN)
+    {
+        if (expr->table_index == 0)
+        {
+            return expr->field_index >= nMinIndexForSpecialField &&
+                   expr->field_index < nMinIndexForSpecialField + SPECIAL_FIELD_COUNT;
+        }
+    }
+    else if (expr->eNodeType == SNT_OPERATION)
+    {
+        for( int i = 0; i < expr->nSubExprCount; i++ )
+        {
+            if (HasSpecialFields(expr->papoSubExpr[i], nMinIndexForSpecialField))
+                return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+/************************************************************************/
+/*                         SetAttributeFilter()                         */
+/************************************************************************/
+
+OGRErr OGRSQLiteSelectLayer::SetAttributeFilter( const char *pszQuery )
+
+{
+    if( m_pszAttrQueryString == NULL && pszQuery == NULL )
+        return OGRERR_NONE;
+
+    CPLFree(m_pszAttrQueryString);
+    m_pszAttrQueryString = (pszQuery) ? CPLStrdup(pszQuery) : NULL;
+
+    bAllowResetReadingEvenIfIndexAtZero = TRUE;
+
+    OGRFeatureQuery oQuery;
+
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    int bHasSpecialFields = (pszQuery != NULL && pszQuery[0] != '\0' &&
+        oQuery.Compile( GetLayerDefn(), pszQuery ) == OGRERR_NONE &&
+        HasSpecialFields((swq_expr_node*)oQuery.GetSWGExpr(), GetLayerDefn()->GetFieldCount()) );
+    CPLPopErrorHandler();
+
+    if( bHasSpecialFields || !BuildSQL() )
+    {
+        return OGRSQLiteLayer::SetAttributeFilter(pszQuery);
+    }
+
+    ResetReading();
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
 /*                           GetNextFeature()                           */
 /************************************************************************/
 
@@ -265,7 +326,7 @@ void OGRSQLiteSelectLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeo
     m_iGeomFieldFilter = iGeomField;
     if( InstallFilter( poGeomIn ) )
     {
-        bSpatialFilterInSQL = RebuildSQLWithSpatialClause();
+        BuildSQL();
 
         ResetReading();
     }
@@ -278,7 +339,7 @@ void OGRSQLiteSelectLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeo
 OGRSQLiteLayer* OGRSQLiteSelectLayer::GetBaseLayer(size_t& i)
 {
     char** papszTokens = CSLTokenizeString(osSQLBase.c_str());
-    int bCanInsertSpatialFilter = TRUE;
+    int bCanInsertFilter = TRUE;
     int nCountSelect = 0, nCountFrom = 0, nCountWhere = 0;
 
     for(int iToken = 0; papszTokens[iToken] != NULL; iToken++)
@@ -294,12 +355,12 @@ OGRSQLiteLayer* OGRSQLiteSelectLayer::GetBaseLayer(size_t& i)
                  EQUAL(papszTokens[iToken], "INTERSECT") ||
                  EQUAL(papszTokens[iToken], "EXCEPT"))
         {
-            bCanInsertSpatialFilter = FALSE;
+            bCanInsertFilter = FALSE;
         }
     }
     CSLDestroy(papszTokens);
 
-    if (!(bCanInsertSpatialFilter && nCountSelect == 1 && nCountFrom == 1 && nCountWhere <= 1))
+    if (!(bCanInsertFilter && nCountSelect == 1 && nCountFrom == 1 && nCountWhere <= 1))
     {
         CPLDebug("SQLITE", "SQL expression too complex to analyse");
         return NULL;
@@ -311,23 +372,24 @@ OGRSQLiteLayer* OGRSQLiteSelectLayer::GetBaseLayer(size_t& i)
         return NULL;
     }
 
-    int bInSingleQuotes = (osSQLBase[nFromPos + 6] == '\'');
+    char chQuote = osSQLBase[nFromPos + 6];
+    int bInQuotes = (chQuote == '\'' || chQuote == '"' );
     CPLString osBaseLayerName;
-    for( i = nFromPos + 6 + (bInSingleQuotes ? 1 : 0);
+    for( i = nFromPos + 6 + (bInQuotes ? 1 : 0);
          i < osSQLBase.size(); i++ )
     {
-        if (osSQLBase[i] == '\'' && i + 1 < osSQLBase.size() &&
-            osSQLBase[i + 1] == '\'' )
+        if (osSQLBase[i] == chQuote && i + 1 < osSQLBase.size() &&
+            osSQLBase[i + 1] == chQuote )
         {
             osBaseLayerName += osSQLBase[i];
             i++;
         }
-        else if (osSQLBase[i] == '\'' && bInSingleQuotes)
+        else if (osSQLBase[i] == chQuote && bInQuotes)
         {
             i++;
             break;
         }
-        else if (osSQLBase[i] == ' ' && !bInSingleQuotes)
+        else if (osSQLBase[i] == ' ' && !bInQuotes)
             break;
         else
             osBaseLayerName += osSQLBase[i];
@@ -360,43 +422,63 @@ OGRSQLiteLayer* OGRSQLiteSelectLayer::GetBaseLayer(size_t& i)
 }
 
 /************************************************************************/
-/*                    RebuildSQLWithSpatialClause()                     */
+/*                             BuildSQL()                               */
 /************************************************************************/
 
-int OGRSQLiteSelectLayer::RebuildSQLWithSpatialClause()
+int OGRSQLiteSelectLayer::BuildSQL()
 
 {
     osSQLCurrent = osSQLBase;
-
-    if (m_poFilterGeom == NULL)
-    {
-        return TRUE;
-    }
+    bSpatialFilterInSQL = TRUE;
 
     size_t i = 0;
     OGRSQLiteLayer* poBaseLayer = GetBaseLayer(i);
     if (poBaseLayer == NULL)
     {
         CPLDebug("SQLITE", "Cannot find base layer");
+        bSpatialFilterInSQL = FALSE;
         return FALSE;
     }
 
-    const char* pszGeomCol =
-        poFeatureDefn->GetGeomFieldDefn(m_iGeomFieldFilter)->GetNameRef();
-    int nIdx = poBaseLayer->GetLayerDefn()->GetGeomFieldIndex(pszGeomCol);
-    if( nIdx < 0 )
+    CPLString osSpatialWhere;
+    if (m_poFilterGeom != NULL)
     {
-        CPLDebug("SQLITE", "Cannot find field %s in base layer", pszGeomCol);
-        return FALSE;
+        const char* pszGeomCol =
+            poFeatureDefn->GetGeomFieldDefn(m_iGeomFieldFilter)->GetNameRef();
+        int nIdx = poBaseLayer->GetLayerDefn()->GetGeomFieldIndex(pszGeomCol);
+        if( nIdx < 0 )
+        {
+            CPLDebug("SQLITE", "Cannot find field %s in base layer", pszGeomCol);
+            bSpatialFilterInSQL = FALSE;
+        }
+        else
+        {
+            osSpatialWhere = poBaseLayer->GetSpatialWhere(nIdx, m_poFilterGeom);
+            if (osSpatialWhere.size() == 0)
+            {
+                CPLDebug("SQLITE", "Cannot get spatial where clause");
+                bSpatialFilterInSQL = FALSE;
+            }
+        }
     }
 
-    CPLString    osSpatialWhere = poBaseLayer->GetSpatialWhere(nIdx,
-                                                               m_poFilterGeom);
-    if (osSpatialWhere.size() == 0)
+    CPLString osCustomWhere;
+    if( osSpatialWhere.size() != 0 )
     {
-        CPLDebug("SQLITE", "Cannot get spatial where clause");
-        return FALSE;
+        osCustomWhere = osSpatialWhere;
     }
+    if( m_pszAttrQueryString != NULL && m_pszAttrQueryString[0] != '\0' )
+    {
+        if( osSpatialWhere.size() != 0)
+            osCustomWhere += " AND (";
+        osCustomWhere += m_pszAttrQueryString;
+        if( osSpatialWhere.size() != 0)
+            osCustomWhere += ")";
+    }
+
+    /* Nothing to do */
+    if( osCustomWhere.size() == 0 )
+        return TRUE;
 
     while (i < osSQLBase.size() && osSQLBase[i] == ' ')
         i ++;
@@ -404,7 +486,7 @@ int OGRSQLiteSelectLayer::RebuildSQLWithSpatialClause()
     if (i < osSQLBase.size() && EQUALN(osSQLBase.c_str() + i, "WHERE ", 6))
     {
         osSQLCurrent = osSQLBase.substr(0, i + 6);
-        osSQLCurrent += osSpatialWhere;
+        osSQLCurrent += osCustomWhere;
         osSQLCurrent += " AND (";
 
         size_t nEndOfWhere = osSQLBase.ifind(" GROUP ");
@@ -432,7 +514,7 @@ int OGRSQLiteSelectLayer::RebuildSQLWithSpatialClause()
     {
         osSQLCurrent = osSQLBase.substr(0, i);
         osSQLCurrent += " WHERE ";
-        osSQLCurrent += osSpatialWhere;
+        osSQLCurrent += osCustomWhere;
         osSQLCurrent += " ";
         osSQLCurrent += osSQLBase.substr(i);
     }
@@ -440,11 +522,12 @@ int OGRSQLiteSelectLayer::RebuildSQLWithSpatialClause()
     {
         osSQLCurrent = osSQLBase.substr(0, i);
         osSQLCurrent += " WHERE ";
-        osSQLCurrent += osSpatialWhere;
+        osSQLCurrent += osCustomWhere;
     }
     else
     {
-        CPLDebug("SQLITE", "SQL expression too complex for the driver to insert spatial filter in it");
+        CPLDebug("SQLITE", "SQL expression too complex for the driver to insert attribute and/or spatial filter in it");
+        bSpatialFilterInSQL = FALSE;
         return FALSE;
     }
 

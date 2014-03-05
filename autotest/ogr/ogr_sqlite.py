@@ -2454,6 +2454,102 @@ def ogr_sqlite_34():
     return 'success'
 
 ###############################################################################
+# Test SetAttributeFilter() on SQL result layer
+
+def ogr_sqlite_35():
+
+    if gdaltest.sl_ds is None:
+        return 'skip'
+
+    if gdaltest.has_spatialite == True and gdaltest.spatialite_version.find('2.3') < 0:
+        options = ['SPATIALITE=YES']
+    else:
+        options = []
+
+    try:
+        os.remove('tmp/ogr_sqlite_35.sqlite')
+    except:
+        pass
+
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_sqlite_35.sqlite', options = options)
+    lyr = ds.CreateLayer('test')
+    field_defn = ogr.FieldDefn('foo', ogr.OFTString)
+    lyr.CreateField(field_defn)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField('foo', 'bar')
+    feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 1)"))
+    lyr.CreateFeature(feat)
+    feat = None
+
+    for sql in [ "SELECT * FROM test",
+                    "SELECT * FROM test GROUP BY foo",
+                    "SELECT * FROM test ORDER BY foo",
+                    "SELECT * FROM test LIMIT 1",
+                    "SELECT * FROM test WHERE 1=1",
+                    "SELECT * FROM test WHERE 1=1 GROUP BY foo",
+                    "SELECT * FROM test WHERE 1=1 ORDER BY foo",
+                    "SELECT * FROM test WHERE 1=1 LIMIT 1" ]:
+        sql_lyr = ds.ExecuteSQL(sql)
+
+        sql_lyr.SetAttributeFilter("foo = 'bar'")
+        sql_lyr.ResetReading()
+        feat = sql_lyr.GetNextFeature()
+        if feat is None:
+            gdaltest.post_reason('failure')
+            return 'fail'
+        feat = None
+
+        sql_lyr.SetAttributeFilter("foo = 'baz'")
+        sql_lyr.ResetReading()
+        feat = sql_lyr.GetNextFeature()
+        if feat is not None:
+            gdaltest.post_reason('failure')
+            return 'fail'
+        feat = None
+
+        sql_lyr.SetAttributeFilter(None)
+        sql_lyr.ResetReading()
+        feat = sql_lyr.GetNextFeature()
+        if feat is None:
+            gdaltest.post_reason('failure')
+            return 'fail'
+        feat = None
+
+        sql_lyr.SetSpatialFilterRect(0,0,2,2)
+        sql_lyr.SetAttributeFilter("foo = 'bar'")
+        sql_lyr.ResetReading()
+        feat = sql_lyr.GetNextFeature()
+        if feat is None:
+            gdaltest.post_reason('failure')
+            return 'fail'
+        feat = None
+
+        sql_lyr.SetSpatialFilterRect(1.5,1.5,2,2)
+        sql_lyr.SetAttributeFilter("foo = 'bar'")
+        sql_lyr.ResetReading()
+        feat = sql_lyr.GetNextFeature()
+        if feat is not None:
+            gdaltest.post_reason('failure')
+            return 'fail'
+        feat = None
+
+        sql_lyr.SetSpatialFilterRect(0,0,2,2)
+        sql_lyr.SetAttributeFilter(None)
+        sql_lyr.ResetReading()
+        feat = sql_lyr.GetNextFeature()
+        if feat is None:
+            gdaltest.post_reason('failure')
+            return 'fail'
+        feat = None
+
+        ds.ReleaseResultSet(sql_lyr)
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_sqlite_cleanup():
@@ -2541,6 +2637,11 @@ def ogr_sqlite_cleanup():
     except:
         pass
 
+    try:
+        os.remove( 'tmp/ogr_sqlite_35.sqlite' )
+    except:
+        pass
+
     return 'success'
 
 ###############################################################################
@@ -2604,6 +2705,7 @@ gdaltest_list = [
     ogr_sqlite_32,
     ogr_sqlite_33,
     ogr_sqlite_34,
+    ogr_sqlite_35,
     ogr_sqlite_cleanup,
     ogr_sqlite_without_spatialite,
 ]

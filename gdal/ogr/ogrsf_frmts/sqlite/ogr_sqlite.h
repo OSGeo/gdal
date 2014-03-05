@@ -503,7 +503,7 @@ class OGRSQLiteSelectLayer : public OGRSQLiteLayer
     virtual OGRErr      ResetStatement();
 
     OGRSQLiteLayer     *GetBaseLayer(size_t& i);
-    int                 RebuildSQLWithSpatialClause();
+    int                 BuildSQL();
 
     int                 bAllowResetReadingEvenIfIndexAtZero;
  
@@ -522,6 +522,7 @@ class OGRSQLiteSelectLayer : public OGRSQLiteLayer
 
     virtual void        SetSpatialFilter( OGRGeometry * poGeom ) { SetSpatialFilter(0, poGeom); }
     virtual void        SetSpatialFilter( int iGeomField, OGRGeometry * );
+    virtual OGRErr      SetAttributeFilter( const char * );
 
     virtual int         TestCapability( const char * );
 
