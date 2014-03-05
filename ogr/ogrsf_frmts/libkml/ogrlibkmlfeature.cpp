@@ -38,6 +38,13 @@ using kmldom::GeometryPtr;
 using kmldom::Geometry;
 using kmldom::GroundOverlayPtr;
 using kmldom::CameraPtr;
+using kmldom::ModelPtr;
+using kmldom::LinkPtr;
+using kmldom::LocationPtr;
+using kmldom::OrientationPtr;
+using kmldom::ScalePtr;
+using kmldom::ResourceMapPtr;
+using kmldom::AliasPtr;
 
 #include "ogr_libkml.h"
 
@@ -53,6 +60,9 @@ PlacemarkPtr feat2kml (
 {
 
     PlacemarkPtr poKmlPlacemark = poKmlFactory->CreatePlacemark (  );
+    
+    struct fieldconfig oFC;
+    get_fieldconfig( &oFC );
 
     /***** style *****/
 
@@ -62,11 +72,147 @@ PlacemarkPtr feat2kml (
     /***** geometry *****/
 
     OGRGeometry *poOgrGeom = poOgrFeat->GetGeometryRef (  );
-    int iHeading = poOgrFeat->GetFieldIndex("heading"),
-        iTilt = poOgrFeat->GetFieldIndex("tilt"),
-        iRoll = poOgrFeat->GetFieldIndex("roll");
+    int iHeading = poOgrFeat->GetFieldIndex(oFC.headingfield),
+        iTilt = poOgrFeat->GetFieldIndex(oFC.tiltfield),
+        iRoll = poOgrFeat->GetFieldIndex(oFC.rollfield),
+        iModel = poOgrFeat->GetFieldIndex(oFC.modelfield);
 
-    if( poOgrGeom != NULL && !poOgrGeom->IsEmpty() &&
+    /* Model */
+    if( iModel>= 0 && poOgrFeat->IsFieldSet(iModel) &&
+        poOgrGeom != NULL && !poOgrGeom->IsEmpty() &&
+        wkbFlatten(poOgrGeom->getGeometryType()) == wkbPoint )
+    {
+        OGRPoint* poOgrPoint = (OGRPoint*) poOgrGeom;
+        ModelPtr model = poKmlFactory->CreateModel();
+
+        LocationPtr location = poKmlFactory->CreateLocation();
+        model->set_location(location);
+        location->set_latitude(poOgrPoint->getY());
+        location->set_longitude(poOgrPoint->getX());
+        if( poOgrPoint->getCoordinateDimension() == 3 )
+            location->set_altitude(poOgrPoint->getZ());
+
+        int isGX = FALSE;
+        int iAltitudeMode = poOgrFeat->GetFieldIndex(oFC.altitudeModefield);
+        int nAltitudeMode = kmldom::ALTITUDEMODE_CLAMPTOGROUND;
+        if( iAltitudeMode >= 0 && poOgrFeat->IsFieldSet(iAltitudeMode) )
+        {
+            nAltitudeMode = kmlAltitudeModeFromString(
+                poOgrFeat->GetFieldAsString(iAltitudeMode), isGX);
+            model->set_altitudemode(nAltitudeMode);
+
+            /* ATC 55 */
+            if( nAltitudeMode != kmldom::ALTITUDEMODE_CLAMPTOGROUND &&
+                poOgrPoint->getCoordinateDimension() != 3 )
+            {
+                if( CSLTestBoolean(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
+                    CPLError(CE_Warning, CPLE_AppDefined, "Altitude should be defined");
+            }
+        }
+
+        if( (iHeading >= 0 && poOgrFeat->IsFieldSet(iHeading)) ||
+            (iTilt >= 0 && poOgrFeat->IsFieldSet(iTilt)) ||
+            (iRoll >= 0 && poOgrFeat->IsFieldSet(iRoll)) )
+        {
+            OrientationPtr orientation = poKmlFactory->CreateOrientation();
+            model->set_orientation(orientation);
+            if( iHeading >= 0 && poOgrFeat->IsFieldSet(iHeading) )
+                orientation->set_heading(poOgrFeat->GetFieldAsDouble(iHeading));
+            else
+                orientation->set_heading(0);
+            if( iTilt >= 0 && poOgrFeat->IsFieldSet(iTilt) )
+                orientation->set_tilt(poOgrFeat->GetFieldAsDouble(iTilt));
+            else
+                orientation->set_tilt(0);
+            if( iRoll >= 0 && poOgrFeat->IsFieldSet(iRoll) )
+                orientation->set_roll(poOgrFeat->GetFieldAsDouble(iRoll));
+            else
+                orientation->set_roll(0);
+        }
+        int iScaleX = poOgrFeat->GetFieldIndex(oFC.scalexfield);
+        int iScaleY = poOgrFeat->GetFieldIndex(oFC.scaleyfield);
+        int iScaleZ = poOgrFeat->GetFieldIndex(oFC.scalezfield);
+        
+        ScalePtr scale = poKmlFactory->CreateScale();
+        model->set_scale(scale);
+        if( iScaleX >= 0 && poOgrFeat->IsFieldSet(iScaleX) )
+            scale->set_x(poOgrFeat->GetFieldAsDouble(iScaleX));
+        else
+            scale->set_x(1.0);
+        if( iScaleY >= 0 && poOgrFeat->IsFieldSet(iScaleY) )
+            scale->set_y(poOgrFeat->GetFieldAsDouble(iScaleY));
+        else
+            scale->set_y(1.0);
+        if( iScaleZ >= 0 && poOgrFeat->IsFieldSet(iScaleZ) )
+            scale->set_z(poOgrFeat->GetFieldAsDouble(iScaleZ));
+        else
+            scale->set_z(1.0);
+
+        LinkPtr link = poKmlFactory->CreateLink();
+        model->set_link(link);
+        const char* pszURL = poOgrFeat->GetFieldAsString(oFC.modelfield);
+        link->set_href( pszURL );
+
+        /* Collada 3D file ? */
+        if( EQUAL(CPLGetExtension(pszURL), "dae") &&
+            CSLTestBoolean(CPLGetConfigOption("LIBKML_ADD_RESOURCE_MAP", "TRUE")) )
+        {
+            VSILFILE* fp;
+            if( EQUALN(pszURL, "http://", strlen("http://")) ||
+                EQUALN(pszURL, "https://", strlen("https://")) )
+            {
+                fp = VSIFOpenL(CPLSPrintf("/vsicurl/%s", pszURL), "rb");
+            }
+            else if( strstr(pszURL, ".kmz/") != NULL )
+            {
+                fp = VSIFOpenL(CPLSPrintf("/vsizip/%s", pszURL), "rb");
+            }
+            else
+            {
+                fp = VSIFOpenL(pszURL, "rb");
+            }
+            if( fp != NULL )
+            {
+                ResourceMapPtr resourceMap = NULL;
+                const char* pszLine;
+                while( (pszLine = CPLReadLineL(fp)) != NULL )
+                {
+                    const char* pszInitFrom = strstr(pszLine, "<init_from>");
+                    if( pszInitFrom )
+                    {
+                        pszInitFrom += strlen("<init_from>");
+                        const char* pszInitFromEnd = strstr(pszInitFrom, "</init_from>");
+                        if( pszInitFromEnd )
+                        {
+                            CPLString osImage(pszInitFrom);
+                            osImage.resize(pszInitFromEnd - pszInitFrom);
+                            const char* pszExtension = CPLGetExtension(osImage);
+                            if( EQUAL(pszExtension, "jpg") ||
+                                EQUAL(pszExtension, "jpeg") ||
+                                EQUAL(pszExtension, "png") ||
+                                EQUAL(pszExtension, "gif") )
+                            {
+                                if( resourceMap == NULL )
+                                    resourceMap = poKmlFactory->CreateResourceMap();
+                                AliasPtr alias = poKmlFactory->CreateAlias();
+                                alias->set_targethref(osImage);
+                                alias->set_sourcehref(osImage);
+                                resourceMap->add_alias(alias);
+                            }
+                        }
+                    }
+                }
+                if( resourceMap != NULL )
+                    model->set_resourcemap(resourceMap);
+                VSIFCloseL(fp);
+            }
+        }
+
+        poKmlPlacemark->set_geometry ( AsGeometry ( model ) );
+    }
+
+    /* Camera */
+    else if( poOgrGeom != NULL && !poOgrGeom->IsEmpty() &&
         wkbFlatten(poOgrGeom->getGeometryType()) == wkbPoint &&
         ((iHeading >= 0 && poOgrFeat->IsFieldSet(iHeading)) ||
          (iTilt >= 0 && poOgrFeat->IsFieldSet(iTilt)) ||
@@ -77,7 +223,7 @@ PlacemarkPtr feat2kml (
         camera->set_latitude(poOgrPoint->getY());
         camera->set_longitude(poOgrPoint->getX());
         int isGX = FALSE;
-        int iAltitudeMode = poOgrFeat->GetFieldIndex("altitudeMode");
+        int iAltitudeMode = poOgrFeat->GetFieldIndex(oFC.altitudeModefield);
         int nAltitudeMode = kmldom::ALTITUDEMODE_CLAMPTOGROUND;
         if( iAltitudeMode >= 0 && poOgrFeat->IsFieldSet(iAltitudeMode) )
         {
@@ -99,6 +245,7 @@ PlacemarkPtr feat2kml (
             camera->set_roll(poOgrFeat->GetFieldAsDouble(iRoll));
         poKmlPlacemark->set_abstractview(camera);
     }
+
     else
     {
         ElementPtr poKmlElement = geom2kml ( poOgrGeom, -1, 0, poKmlFactory );
