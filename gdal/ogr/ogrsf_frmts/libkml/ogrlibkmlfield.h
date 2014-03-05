@@ -105,6 +105,10 @@ struct fieldconfig {
     const char *tiltfield;
     const char *rollfield;
     const char *snippetfield;
+    const char *modelfield;
+    const char *scalexfield;
+    const char *scaleyfield;
+    const char *scalezfield;
 };
 
 void get_fieldconfig( struct fieldconfig *oFC );
