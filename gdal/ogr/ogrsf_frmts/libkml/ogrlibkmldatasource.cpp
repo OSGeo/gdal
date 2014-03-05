@@ -131,6 +131,12 @@ static void PreProcessInput(std::string& oKml)
 static void PostProcessOutput(std::string& oKml)
 {
     size_t nPos = 0;
+
+    /* Manually add <?xml> node since libkml does not produce it currently */
+    /* and this is usefull in some circumstances (#5407) */
+    if( !(oKml[0] == '<' && oKml[1] == '?') )
+        oKml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + oKml;
+
     while( TRUE )
     {
         nPos = oKml.find("<Snippet>", nPos);
