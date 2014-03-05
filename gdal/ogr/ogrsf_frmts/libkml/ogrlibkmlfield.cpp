@@ -740,7 +740,10 @@ void field2kml (
         {
             if( EQUAL(name, oFC.headingfield) ||
                 EQUAL(name, oFC.tiltfield) ||
-                EQUAL(name, oFC.rollfield) )
+                EQUAL(name, oFC.rollfield) ||
+                EQUAL(name, oFC.scalexfield) ||
+                EQUAL(name, oFC.scaleyfield) ||
+                EQUAL(name, oFC.scalezfield) )
             {
                 continue;
             }
