@@ -694,7 +694,10 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
             }
         }
         else
-            bUseGeometryColumns = FALSE;
+        {
+            /* probably the table is missing at all */
+            InitializeMetadataTables();
+        }
     }
 
     /* Query catalog for tables having geometry columns */
