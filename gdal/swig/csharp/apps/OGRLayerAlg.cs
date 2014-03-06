@@ -97,7 +97,7 @@ class OGRLayerAlg {
                 System.Environment.Exit(-1);
             }
 
-            Layer layer2 = ds1.GetLayerByName(args[4]);
+            Layer layer2 = ds2.GetLayerByName(args[4]);
 
             if (layer2 == null)
             {
