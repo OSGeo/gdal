@@ -99,8 +99,8 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFilename) : VFKReader(pszFilenam
     
     /*
     if (m_bNewDb) {
-        printf("INFO: No internal SQLite DB found. Reading VFK data may take some time...\n");
-        fflush(stdout);
+      CPLError(CE_Warning, CPLE_AppDefined, 
+               "INFO: No internal SQLite DB found. Reading VFK data may take some time...");
     }
     */
 
