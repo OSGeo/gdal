@@ -16,7 +16,7 @@ A WebP file consists of VP8 image data, and a container based on RIFF.</p>
 
 <p>The driver rely on the Open Source WebP library (BSD licenced). The WebP library (at least in its
 version 0.1) only offers compression and decompression of whole images, so RAM might be a limitation
-when dealing with big images.</p>
+when dealing with big images (which are limited to 16383x16383 pixels).</p>
 
 <p>The WEBP driver supports 3 bands (RGB) images. It also supports 4 bands (RGBA) starting with GDAL 1.10 and libwebp 0.1.4.</p>
 
@@ -44,7 +44,7 @@ lossless compression will be used.<p></li>
 <p>See Also:</p>
 
 <ul>
-<li><a href="http://code.google.com/intl/fr/speed/webp/">WebP home page</a></li>
+<li><a href="https://developers.google.com/speed/webp/">WebP home page</a></li>
 </ul>
 
 </body>
