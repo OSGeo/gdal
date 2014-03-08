@@ -144,7 +144,7 @@ def kmlsuperoverlay_4():
     gdal.FileFromMemBuffer("/vsimem/src.vrt", vrt_xml)
 
     src_ds = gdal.Open("/vsimem/src.vrt")
-    ds = gdal.GetDriverByName('KMLSUPEROVERLAY').CreateCopy('/vsimem/kmlsuperoverlay_4.kmz', src_ds, options = ['FORMAT=PNG', 'NAME=myname', 'DESCRIPTION=mydescription'])
+    ds = gdal.GetDriverByName('KMLSUPEROVERLAY').CreateCopy('/vsimem/kmlsuperoverlay_4.kmz', src_ds, options = ['FORMAT=PNG', 'NAME=myname', 'DESCRIPTION=mydescription', 'ALTITUDE=10', 'ALTITUDEMODE=absolute'])
     if ds.GetMetadataItem('NAME') != 'myname':
         gdaltest.post_reason('fail')
         return 'fail'
