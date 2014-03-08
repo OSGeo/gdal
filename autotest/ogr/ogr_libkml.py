@@ -1268,6 +1268,200 @@ def ogr_libkml_write_model():
     return 'success'
 
 ###############################################################################
+# Test read / write of style
+
+def ogr_libkml_read_write_style():
+
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_libkml_read_write_style_read.kml', 'wb')
+
+    styles = """<Style id="style1">
+            <IconStyle>
+                <color>01234567</color>
+                <scale>1.1</scale>
+                <heading>50</heading>
+                <Icon>
+                    <href>http://style1</href>
+                </Icon>
+                <hotSpot x="15" y="20"/>
+            </IconStyle>
+            <LabelStyle>
+                <color>01234567</color>
+                <scale>1.1</scale>
+            </LabelStyle>
+        </Style>
+        <Style id="style2">
+            <LineStyle>
+                <color>01234567</color>
+                <width>1</width>
+            </LineStyle>
+            <PolyStyle>
+                <color>01234567</color>
+            </PolyStyle>
+        </Style>"""
+
+    content = """<kml xmlns="http://www.opengis.net/kml/2.2">
+    <Document>
+        %s
+        <StyleMap id="styleMapExample">
+            <Pair>
+                <key>normal</key>
+                <Style id="inline_style">
+                    <IconStyle>
+                        <Icon>
+                            <href>http://inline_style</href>
+                        </Icon>
+                    </IconStyle>
+                </Style>
+            </Pair>
+            <Pair>
+                <key>highlight</key>
+                <styleUrl>#style2</styleUrl>
+            </Pair>
+        </StyleMap>
+    </Document>
+    </kml>""" % styles
+    
+    resolved_stylemap = """<Style id="styleMapExample">
+      <IconStyle>
+        <Icon>
+          <href>http://inline_style</href>
+        </Icon>
+      </IconStyle>
+    </Style>"""
+
+    resolved_stylemap_highlight = """<Style id="styleMapExample">
+        <LineStyle>
+            <color>01234567</color>
+            <width>1</width>
+        </LineStyle>
+        <PolyStyle>
+            <color>01234567</color>
+        </PolyStyle>
+    </Style>"""
+    gdal.VSIFWriteL(content, 1, len(content), f)
+    gdal.VSIFCloseL(f)
+
+    src_ds = ogr.Open('/vsimem/ogr_libkml_read_write_style_read.kml')
+    style_table = src_ds.GetStyleTable()
+
+    ds = ogr.GetDriverByName('LIBKML').CreateDataSource('/vsimem/ogr_libkml_read_write_style_write.kml')
+    ds.SetStyleTable(style_table)
+    ds = None
+    src_ds = None
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_libkml_read_write_style_write.kml', 'rb')
+    data = gdal.VSIFReadL(1, 2048, f)
+    gdal.VSIFCloseL(f)
+    lines = [ l.strip() for l in data.split('\n')]
+
+    lines_got = lines[lines.index('<Style id="style1">'):lines.index('<Style id="styleMapExample">')]
+    lines_ref = [ l.strip() for l in styles.split('\n')]
+    if lines_got != lines_ref:
+        print(data)
+        print(styles)
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    lines_got = lines[lines.index('<Style id="styleMapExample">'):lines.index('</Document>')]
+    lines_ref = [ l.strip() for l in resolved_stylemap.split('\n')]
+    if lines_got != lines_ref:
+        print(data)
+        print(resolved_stylemap)
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    gdal.SetConfigOption('LIBKML_STYLEMAP_KEY', 'HIGHLIGHT')
+    src_ds = ogr.Open('/vsimem/ogr_libkml_read_write_style_read.kml')
+    style_table = src_ds.GetStyleTable()
+    gdal.SetConfigOption('LIBKML_STYLEMAP_KEY', None)
+
+    ds = ogr.GetDriverByName('LIBKML').CreateDataSource('/vsimem/ogr_libkml_read_write_style_write.kml')
+    ds.SetStyleTable(style_table)
+    ds = None
+    src_ds = None
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_libkml_read_write_style_write.kml', 'rb')
+    data = gdal.VSIFReadL(1, 2048, f)
+    gdal.VSIFCloseL(f)
+    lines = [ l.strip() for l in data.split('\n')]
+
+    lines_got = lines[lines.index('<Style id="styleMapExample">'):lines.index('</Document>')]
+    lines_ref = [ l.strip() for l in resolved_stylemap_highlight.split('\n')]
+    if lines_got != lines_ref:
+        print(data)
+        print(resolved_stylemap_highlight)
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    ds = ogr.GetDriverByName('LIBKML').CreateDataSource('/vsimem/ogr_libkml_read_write_style_write.kml')
+    lyr = ds.CreateLayer('test')
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetStyleString('@unknown_style')
+    lyr.CreateFeature(feat)
+    feat = None
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    style_string = 'PEN(c:#01234567,w:5.000000px);BRUSH(fc:#01234567);SYMBOL(id:"http://foo",a:50.000000,c:#01234567,s:1.100000);LABEL(c:#01234567,w:150.000000)'
+    feat.SetStyleString(style_string)
+    lyr.CreateFeature(feat)
+    feat = None
+    ds = None
+    
+    ds = ogr.Open('/vsimem/ogr_libkml_read_write_style_write.kml')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    if feat.GetStyleString() != '@unknown_style':
+        print(feat.GetStyleString())
+        gdaltest.post_reason('failure')
+        return 'fail'
+    feat = lyr.GetNextFeature()
+    if feat.GetStyleString() != style_string:
+        print(feat.GetStyleString())
+        gdaltest.post_reason('failure')
+        return 'fail'
+    ds = None
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_libkml_read_write_style_write.kml', 'rb')
+    data = gdal.VSIFReadL(1, 2048, f)
+    gdal.VSIFCloseL(f)
+
+    expected_style = """<Style>
+          <IconStyle>
+            <color>67452301</color>
+            <scale>1.1</scale>
+            <heading>50</heading>
+            <Icon>
+              <href>http://foo</href>
+            </Icon>
+          </IconStyle>
+          <LabelStyle>
+            <color>67452301</color>
+            <scale>1.5</scale>
+          </LabelStyle>
+          <LineStyle>
+            <color>67452301</color>
+            <width>5</width>
+          </LineStyle>
+          <PolyStyle>
+            <color>67452301</color>
+          </PolyStyle>
+        </Style>"""
+    lines = [ l.strip() for l in data.split('\n')]
+
+    lines_got = lines[lines.index('<Style>'):lines.index('</Style>')+1]
+    lines_ref = [ l.strip() for l in expected_style.split('\n')]
+    if lines_got != lines_ref:
+        print(data)
+        print(resolved_stylemap_highlight)
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_libkml_cleanup():
@@ -1290,6 +1484,8 @@ def ogr_libkml_cleanup():
     gdal.Unlink("/vsimem/ogr_libkml_write_region.kml")
     gdal.Unlink("/vsimem/ogr_libkml_write_screenoverlay.kml")
     gdal.Unlink("/vsimem/ogr_libkml_write_model.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_read_write_style_read.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_read_write_style_write.kml")
 
     # Re-register KML driver if necessary
     if ogrtest.kml_drv is not None:
@@ -1336,6 +1532,7 @@ gdaltest_list = [
     ogr_libkml_write_region,
     ogr_libkml_write_screenoverlay,
     ogr_libkml_write_model,
+    ogr_libkml_read_write_style,
     ogr_libkml_cleanup ]
 
 if __name__ == '__main__':
