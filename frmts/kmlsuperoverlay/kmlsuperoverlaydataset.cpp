@@ -287,7 +287,9 @@ int  GenerateChildKml(std::string filename,
                       int ysize, int maxzoom, 
                       OGRCoordinateTransformation * poTransform,
                       std::string fileExt,
-                      bool fixAntiMeridian)
+                      bool fixAntiMeridian,
+                      const char* pszAltitude,
+                      const char* pszAltitudeMode)
 {
     double tnorth = south + zoomypixel *((iy + 1)*dysize);
     double tsouth = south + zoomypixel *(iy*dysize);
@@ -390,6 +392,23 @@ int  GenerateChildKml(std::string filename,
     VSIFPrintfL(fp, "\t\t\t<Icon>\n");
     VSIFPrintfL(fp, "\t\t\t\t<href>%d%s</href>\n", iy, fileExt.c_str());
     VSIFPrintfL(fp, "\t\t\t</Icon>\n");
+
+    if( pszAltitude != NULL )
+    {
+        VSIFPrintfL(fp, "\t\t\t<altitude>%s</altitude>\n", pszAltitude);
+    }
+    if( pszAltitudeMode != NULL &&
+        (strcmp(pszAltitudeMode, "clampToGround") == 0 ||
+         strcmp(pszAltitudeMode, "absolute") == 0) )
+    {
+        VSIFPrintfL(fp, "\t\t\t<altitudeMode>%s</altitudeMode>\n", pszAltitudeMode);
+    }
+    else if( pszAltitudeMode != NULL &&
+        (strcmp(pszAltitudeMode, "relativeToSeaFloor") == 0 ||
+         strcmp(pszAltitudeMode, "clampToSeaFloor") == 0) )
+    {
+        VSIFPrintfL(fp, "\t\t\t<gx:altitudeMode>%s</gx:altitudeMode>\n", pszAltitudeMode);
+    }
 
     /* When possible, use <LatLonBox>. I've noticed otherwise that */
     /* if using <gx:LatLonQuad> with extents of the size of a country or */
@@ -804,6 +823,39 @@ GDALDataset *KmlSuperOverlayCreateCopy( const char * pszFilename, GDALDataset *p
         return NULL;
     }
 
+    const char* pszAltitude = CSLFetchNameValue(papszOptions, "ALTITUDE");
+    const char* pszAltitudeMode = CSLFetchNameValue(papszOptions, "ALTITUDEMODE");
+    if( pszAltitudeMode != NULL )
+    {
+        if( strcmp(pszAltitudeMode, "clampToGround") == 0 )
+        {
+            pszAltitudeMode = NULL;
+            pszAltitude = NULL;
+        }
+        else if( strcmp(pszAltitudeMode, "absolute") == 0 )
+        {
+            if( pszAltitude == NULL )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined, "Using ALTITUDE=0 as default value");
+                pszAltitude = "0";
+            }
+        }
+        else if( strcmp(pszAltitudeMode, "relativeToSeaFloor") == 0 )
+        {
+            /* nothing to do */
+        }
+        else if( strcmp(pszAltitudeMode, "clampToSeaFloor") == 0 )
+        {
+            pszAltitude = NULL;
+        }
+        else
+        {
+            CPLError(CE_Warning, CPLE_AppDefined, "Ignoring unhandled value of ALTITUDEMODE");
+            pszAltitudeMode = NULL;
+            pszAltitude = NULL;
+        }
+    }
+
     for (int zoom = maxzoom; zoom >= 0; --zoom)
     {
         int rmaxxsize = static_cast<int>(pow(2.0, (maxzoom-zoom)) * tilexsize);
@@ -876,7 +928,9 @@ GDALDataset *KmlSuperOverlayCreateCopy( const char * pszFilename, GDALDataset *p
                 }
 
                 GenerateChildKml(childKmlfile, zoom, ix, iy, zoomxpix, zoomypix, 
-                                 dxsize, dysize, tmpSouth, adfGeoTransform[0], xsize, ysize, maxzoom, poTransform, fileExt, fixAntiMeridian);
+                                 dxsize, dysize, tmpSouth, adfGeoTransform[0],
+                                 xsize, ysize, maxzoom, poTransform, fileExt, fixAntiMeridian,
+                                 pszAltitude, pszAltitudeMode);
             }
         }
     }
@@ -1956,7 +2010,14 @@ void GDALRegister_KMLSUPEROVERLAY()
 "<CreationOptionList>"
 "   <Option name='NAME' type='string' description='Overlay name'/>"
 "   <Option name='DESCRIPTION' type='string' description='Overlay description'/>"
-"   <Option name='FORMAT' type='string-select' default='JPEG' description='Force of the tiles'>"
+"   <Option name='ALTITUDE' type='float' description='Distance above the earth surface, in meters, interpreted according to the altitude mode'/>"
+"   <Option name='ALTITUDEMODE' type='string-select' default='clampToGround' description='Specifies hows the altitude is interpreted'>"
+"       <Value>clampToGround</Value>"
+"       <Value>absolute</Value>"
+"       <Value>relativeToSeaFloor</Value>"
+"       <Value>clampToSeaFloor</Value>"
+"   </Option>"
+"   <Option name='FORMAT' type='string-select' default='JPEG' description='Format of the tiles'>"
 "       <Value>PNG</Value>"
 "       <Value>JPEG</Value>"
 "   </Option>"
