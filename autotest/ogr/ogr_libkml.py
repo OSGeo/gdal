@@ -1458,6 +1458,82 @@ def ogr_libkml_read_write_style():
         gdaltest.post_reason('failure')
         return 'fail'
 
+    # Automatic StyleMap creation testing
+    f = gdal.VSIFOpenL('/vsimem/ogr_libkml_read_write_style_read.kml', 'wb')
+
+    styles = """<Style id="style1_normal">
+            <IconStyle>
+                <color>01234567</color>
+                <Icon>
+                    <href>http://style1_normal</href>
+                </Icon>
+            </IconStyle>
+        </Style>
+        <Style id="style1_highlight">
+            <IconStyle>
+                <color>76543210</color>
+                <Icon>
+                    <href>http://style1_highlight</href>
+                </Icon>
+            </IconStyle>
+        </Style>"""
+
+    content = """<kml xmlns="http://www.opengis.net/kml/2.2">
+    <Document>
+        %s
+    </Document>
+    </kml>""" % styles
+
+    gdal.VSIFWriteL(content, 1, len(content), f)
+    gdal.VSIFCloseL(f)
+
+    src_ds = ogr.Open('/vsimem/ogr_libkml_read_write_style_read.kml')
+    style_table = src_ds.GetStyleTable()
+
+    ds = ogr.GetDriverByName('LIBKML').CreateDataSource('/vsimem/ogr_libkml_read_write_style_write.kml')
+    ds.SetStyleTable(style_table)
+    ds = None
+    src_ds = None
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_libkml_read_write_style_write.kml', 'rb')
+    data = gdal.VSIFReadL(1, 2048, f)
+    gdal.VSIFCloseL(f)
+    lines = [ l.strip() for l in data.split('\n')]
+
+    expected_styles = """<Style id="style1_normal">
+      <IconStyle>
+        <color>01234567</color>
+        <Icon>
+          <href>http://style1_normal</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Style id="style1_highlight">
+      <IconStyle>
+        <color>76543210</color>
+        <Icon>
+          <href>http://style1_highlight</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <StyleMap id="style1">
+      <Pair>
+        <key>normal</key>
+        <styleUrl>#style1_normal</styleUrl>
+      </Pair>
+      <Pair>
+        <key>highlight</key>
+        <styleUrl>#style1_highlight</styleUrl>
+      </Pair>
+    </StyleMap>"""
+
+    lines_got = lines[lines.index('<Style id="style1_normal">'):lines.index('</StyleMap>') + 1]
+    lines_ref = [ l.strip() for l in expected_styles.split('\n')]
+    if lines_got != lines_ref:
+        print(data)
+        print(styles)
+        gdaltest.post_reason('failure')
+        return 'fail'
 
     return 'success'
 
