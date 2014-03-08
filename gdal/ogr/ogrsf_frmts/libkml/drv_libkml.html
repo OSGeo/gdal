@@ -238,7 +238,13 @@
      wish to use the highlighted styles set the enviroment variable
      LIBKML_STYLEMAP_KEY to "highlight"
   </p>
-    
+
+  <p>
+     When writing a kml, if there exist 2 styles of the form "astylename_normal"
+     and "astylename_highlight" (where astylename is any string), then a StyleMap
+     object will be creating from both styles and called "astylename".
+  </p>
+
   <h2>Fields</h2>
   
   <p> OGR fields (feature atributes) are mapped to kml with

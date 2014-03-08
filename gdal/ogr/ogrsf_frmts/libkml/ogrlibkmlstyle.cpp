@@ -28,6 +28,8 @@
 
 #include <ogr_featurestyle.h>
 
+#include <set>
+
 #include <kml/dom.h>
 #include <kml/engine.h>
 #include <kml/base/color32.h>
@@ -1097,13 +1099,43 @@ void styletable2kml (
     if ( !poOgrStyleTable )
         return;
 
-    /***** parse the style table *****/
-
+    std::set<CPLString> aoSetNormalStyles;
+    std::set<CPLString> aoSetHighlightStyles;
     poOgrStyleTable->ResetStyleStringReading (  );
     const char *pszStyleString;
 
+    /* Collect styles that end with _normal or _highlight */
     while ( ( pszStyleString = poOgrStyleTable->GetNextStyle (  ) ) ) {
         const char *pszStyleName = poOgrStyleTable->GetLastStyleName (  );
+
+        if( strlen(pszStyleName) > strlen("_normal") &&
+            EQUAL(pszStyleName + strlen(pszStyleName) - strlen("_normal"), "_normal") )
+        {
+            CPLString osName(pszStyleName);
+            osName.resize(strlen(pszStyleName) - strlen("_normal"));
+            aoSetNormalStyles.insert(osName);
+        }
+        else if( strlen(pszStyleName) > strlen("_highlight") &&
+                  EQUAL(pszStyleName + strlen(pszStyleName) - strlen("_highlight"), "_highlight") )
+        {
+            CPLString osName(pszStyleName);
+            osName.resize(strlen(pszStyleName) - strlen("_highlight"));
+            aoSetHighlightStyles.insert(osName);
+        }
+    }
+
+    /***** parse the style table *****/
+
+    poOgrStyleTable->ResetStyleStringReading (  );
+    
+    while ( ( pszStyleString = poOgrStyleTable->GetNextStyle (  ) ) ) {
+        const char *pszStyleName = poOgrStyleTable->GetLastStyleName (  );
+
+        if( aoSetNormalStyles.find(pszStyleName) != aoSetNormalStyles.end() &&
+            aoSetHighlightStyles.find(pszStyleName) != aoSetHighlightStyles.end() )
+        {
+            continue;
+        }
 
         /***** add the style header to the kml *****/
 
@@ -1118,11 +1150,37 @@ void styletable2kml (
         /***** add the style to the container *****/
 
         DocumentPtr poKmlDocument = AsDocument ( poKmlContainer );
-
-        //ObjectPtr pokmlObject = boost::static_pointer_cast <kmldom::Object> () ;
-        //poKmlContainer->add_feature ( AsFeature( poKmlStyle) );
         poKmlDocument->add_styleselector ( poKmlStyle );
 
+    }
+
+    /* Find style name that end with _normal and _highlight to create */
+    /* a StyleMap from both */
+    std::set<CPLString>::iterator aoSetNormalStylesIter =
+        aoSetNormalStyles.begin();
+    for( ; aoSetNormalStylesIter != aoSetNormalStyles.end(); ++aoSetNormalStylesIter )
+    {
+        CPLString osStyleName(*aoSetNormalStylesIter);
+        if( aoSetHighlightStyles.find(osStyleName) !=
+                aoSetHighlightStyles.end() )
+        {
+            StyleMapPtr poKmlStyleMap = poKmlFactory->CreateStyleMap (  );
+            poKmlStyleMap->set_id ( osStyleName );
+
+            PairPtr poKmlPairNormal = poKmlFactory->CreatePair (  );
+            poKmlPairNormal->set_key(STYLESTATE_NORMAL);
+            poKmlPairNormal->set_styleurl(CPLSPrintf("#%s_normal", osStyleName.c_str()));
+            poKmlStyleMap->add_pair(poKmlPairNormal);
+
+            PairPtr poKmlPairHightlight = poKmlFactory->CreatePair (  );
+            poKmlPairHightlight->set_key(STYLESTATE_HIGHLIGHT);
+            poKmlPairHightlight->set_styleurl(CPLSPrintf("#%s_highlight", osStyleName.c_str()));
+            poKmlStyleMap->add_pair(poKmlPairHightlight);
+
+            /***** add the style to the container *****/
+            DocumentPtr poKmlDocument = AsDocument ( poKmlContainer );
+            poKmlDocument->add_styleselector ( poKmlStyleMap );
+        }
     }
 
     return;
