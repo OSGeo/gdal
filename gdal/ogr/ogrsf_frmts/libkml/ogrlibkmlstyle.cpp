@@ -124,6 +124,7 @@ StylePtr addstylestring2kml (
                      && poStylePen->GetRGBFromString ( pszcolor, nR, nG, nB, nA ) ) {
                     poKmlLineStyle->set_color ( Color32 ( nA, nB, nG, nR ) );
                 }
+                poStylePen->SetUnit(OGRSTUPixel);
                 double dfWidth = poStylePen->Width ( nullcheck );
 
                 if ( nullcheck )
@@ -741,7 +742,7 @@ void kml2styletable (
         const std::string oName = poKmlStyle->get_id (  );
 
 
-        poOgrSM->AddStyle ( CPLString (  ).Printf ( "@%s",
+        poOgrSM->AddStyle ( CPLString (  ).Printf ( "%s",
                                                     oName.c_str (  ) ), NULL );
 
         /***** cleanup the style manager *****/
@@ -858,7 +859,7 @@ StyleSelectorPtr StyleFromStyleURL(
     else if ( strchr(pszUrl, '#') ) {
 
         const char *pszFetch = CPLGetConfigOption ( "LIBKML_EXTERNAL_STYLE", "no" );
-        if ( EQUAL(pszFetch, "yes") ) {
+        if ( CSLTestBoolean(pszFetch) ) {
 
             /***** Lets go out and fetch the style from the external URL *****/
 
@@ -1108,7 +1109,7 @@ void styletable2kml (
 
         StylePtr poKmlStyle = poKmlFactory->CreateStyle (  );
 
-        poKmlStyle->set_id ( pszStyleName + 1 );
+        poKmlStyle->set_id ( pszStyleName );
 
         /***** parse the style string *****/
 
