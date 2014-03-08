@@ -201,7 +201,9 @@ int  GenerateRootKml(const char* filename,
                      double south, 
                      double east, 
                      double west, 
-                     int tilesize)
+                     int tilesize,
+                     const char* pszOverlayName,
+                     const char* pszOverlayDescription)
 {
     VSILFILE* fp = VSIFOpenL(filename, "wb");
     if (fp == NULL)
@@ -213,11 +215,26 @@ int  GenerateRootKml(const char* filename,
     int minlodpixels = tilesize/2;
 
     const char* tmpfilename = CPLGetBasename(kmlfilename);
+    if( pszOverlayName == NULL )
+        pszOverlayName = tmpfilename;
+
     // If we haven't writen any features yet, output the layer's schema
+    VSIFPrintfL(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     VSIFPrintfL(fp, "<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n");
     VSIFPrintfL(fp, "\t<Document>\n");
-    VSIFPrintfL(fp, "\t\t<name>%s</name>\n", tmpfilename);
-    VSIFPrintfL(fp, "\t\t<description></description>\n");
+    char* pszEncoded = CPLEscapeString(pszOverlayName, -1, CPLES_XML);
+    VSIFPrintfL(fp, "\t\t<name>%s</name>\n", pszEncoded);
+    CPLFree(pszEncoded);
+    if( pszOverlayDescription == NULL )
+    {
+        VSIFPrintfL(fp, "\t\t<description></description>\n");
+    }
+    else
+    {
+        pszEncoded = CPLEscapeString(pszOverlayDescription, -1, CPLES_XML);
+        VSIFPrintfL(fp, "\t\t<description>%s</description>\n", pszEncoded);
+        CPLFree(pszEncoded);
+    }
     VSIFPrintfL(fp, "\t\t<styleUrl>#hideChildrenStyle</styleUrl>\n");
     VSIFPrintfL(fp, "\t\t<Style id=\"hideChildrenStyle\">\n");
     VSIFPrintfL(fp, "\t\t\t<ListStyle id=\"hideChildren\">\n");
@@ -346,6 +363,7 @@ int  GenerateChildKml(std::string filename,
         return FALSE;
     }
 
+    VSIFPrintfL(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     VSIFPrintfL(fp, "<kml xmlns=\"http://www.opengis.net/kml/2.2\" xmlns:gx=\"http://www.google.com/kml/ext/2.2\">\n");
     VSIFPrintfL(fp, "\t<Document>\n");
     VSIFPrintfL(fp, "\t\t<name>%d/%d/%d.kml</name>\n", zoom, ix, iy);
@@ -759,15 +777,23 @@ GDALDataset *KmlSuperOverlayCreateCopy( const char * pszFilename, GDALDataset *p
     std::string tmpFileName; 
     std::vector<std::string> fileVector;
     int nRet;
+
+    const char* pszOverlayName = CSLFetchNameValue(papszOptions, "NAME");
+    const char* pszOverlayDescription = CSLFetchNameValue(papszOptions, "DESCRIPTION");
+
     if (isKmz)
     {
         tmpFileName = CPLFormFilename(outDir, "tmp.kml", NULL);
-        nRet = GenerateRootKml(tmpFileName.c_str(), pszFilename, north, south, east, west, (int)tilexsize);
+        nRet = GenerateRootKml(tmpFileName.c_str(), pszFilename,
+                               north, south, east, west, (int)tilexsize,
+                               pszOverlayName, pszOverlayDescription);
         fileVector.push_back(tmpFileName);
     }
     else
     {
-        nRet = GenerateRootKml(pszFilename, pszFilename, north, south, east, west, (int)tilexsize);
+        nRet = GenerateRootKml(pszFilename, pszFilename,
+                               north, south, east, west, (int)tilexsize,
+                               pszOverlayName, pszOverlayDescription);
     }
     
     if (nRet == FALSE)
@@ -1776,12 +1802,42 @@ GDALDataset *KmlSuperOverlayReadDataset::Open(const char* pszFilename,
             osSubFilename += pszHref;
             osSubFilename = KMLRemoveSlash(osSubFilename);
         }
+
+        CPLString osOverlayName, osOverlayDescription;
+        psDocument = CPLGetXMLNode(psNode, "=kml.Document");
+        if( psDocument )
+        {
+            const char* pszOverlayName = CPLGetXMLValue(psDocument, "name", NULL);
+            if( pszOverlayName != NULL &&
+                strcmp(pszOverlayName, CPLGetBasename(pszFilename)) != 0 )
+            {
+                osOverlayName = pszOverlayName;
+            }
+            const char* pszOverlayDescription = CPLGetXMLValue(psDocument, "description", NULL);
+            if( pszOverlayDescription != NULL )
+            {
+                osOverlayDescription = pszOverlayDescription;
+            }
+        }
+
         CPLDestroyXMLNode(psNode);
 
         // FIXME
         GDALDataset* poDS = Open(osSubFilename, poParent, nRec + 1);
         if( poDS != NULL )
+        {
             poDS->SetDescription(pszFilename);
+
+            if( osOverlayName.size() )
+            {
+                poDS->SetMetadataItem( "NAME", osOverlayName);
+            }
+            if( osOverlayDescription.size() )
+            {
+                poDS->SetMetadataItem( "DESCRIPTION", osOverlayDescription);
+            }
+        }
+
         return poDS;
     }
 
@@ -1898,6 +1954,8 @@ void GDALRegister_KMLSUPEROVERLAY()
 
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
+"   <Option name='NAME' type='string' description='Overlay name'/>"
+"   <Option name='DESCRIPTION' type='string' description='Overlay description'/>"
 "   <Option name='FORMAT' type='string-select' default='JPEG' description='Force of the tiles'>"
 "       <Value>PNG</Value>"
 "       <Value>JPEG</Value>"
