@@ -1697,6 +1697,73 @@ def pdf_georef_on_image(src_filename = 'data/byte.tif'):
 def pdf_georef_on_image_rgb():
     return pdf_georef_on_image('data/rgbsmall.tif')
 
+###############################################################################
+# Test writing a PDF that hits Acrobat limits in term of page dimensions (#5412)
+
+def pdf_write_huge():
+
+    if gdaltest.pdf_drv is None:
+        return 'skip'
+
+    for (xsize, ysize) in [ (19200,1), (1,19200) ]:
+        src_ds = gdal.GetDriverByName('MEM').Create('', xsize, ysize, 1)
+        ds = gdaltest.pdf_drv.CreateCopy('/vsimem/pdf_write_huge.pdf', src_ds)
+        ds = None
+        ds = gdal.Open('/vsimem/pdf_write_huge.pdf')
+        if int(ds.GetMetadataItem('DPI')) != 96:
+            gdaltest.post_reason('failure')
+            print(ds.GetMetadataItem('DPI'))
+            return 'fail'
+        if ds.RasterXSize != src_ds.RasterXSize or \
+        ds.RasterYSize != src_ds.RasterYSize:
+            gdaltest.post_reason('failure')
+            print(ds.RasterXSize)
+            print(ds.RasterYSize)
+            return 'fail'
+        ds = None
+
+        gdal.ErrorReset()
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
+        ds = gdaltest.pdf_drv.CreateCopy('/vsimem/pdf_write_huge.pdf', src_ds, options = ['DPI=72'])
+        gdal.PopErrorHandler()
+        msg = gdal.GetLastErrorMsg()
+        if msg == '':
+            gdaltest.post_reason('failure')
+            return 'fail'
+        ds = None
+        ds = gdal.Open('/vsimem/pdf_write_huge.pdf')
+        if int(ds.GetMetadataItem('DPI')) != 72:
+            gdaltest.post_reason('failure')
+            print(ds.GetMetadataItem('DPI'))
+            return 'fail'
+        ds = None
+
+        src_ds = None
+
+    for option in [ 'LEFT_MARGIN=14400', 'TOP_MARGIN=14400' ]:
+        src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 1)
+        gdal.ErrorReset()
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
+        ds = gdaltest.pdf_drv.CreateCopy('/vsimem/pdf_write_huge.pdf', src_ds, options = [ option ])
+        gdal.PopErrorHandler()
+        msg = gdal.GetLastErrorMsg()
+        if msg == '':
+            gdaltest.post_reason('failure')
+            return 'fail'
+        ds = None
+        ds = gdal.Open('/vsimem/pdf_write_huge.pdf')
+        if int(ds.GetMetadataItem('DPI')) != 72:
+            gdaltest.post_reason('failure')
+            print(ds.GetMetadataItem('DPI'))
+            return 'fail'
+        ds = None
+
+        src_ds = None
+
+    gdal.Unlink('/vsimem/pdf_write_huge.pdf')
+
+    return 'success'
+
 gdaltest_list = [
     pdf_init,
     pdf_online_1,
@@ -1745,6 +1812,7 @@ gdaltest_list = [
     pdf_jpeg_in_vrt_direct_copy,
     pdf_georef_on_image,
     pdf_georef_on_image_rgb,
+    pdf_write_huge,
 
     pdf_switch_underlying_lib,
 
