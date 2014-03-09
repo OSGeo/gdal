@@ -51,7 +51,7 @@
 #include <set>
 #include <map>
 
-#define DEFAULT_DPI 150.0
+#define GDAL_DEFAULT_DPI 150.0
 
 /* g++ -fPIC -g -Wall frmts/pdf/pdfdataset.cpp -shared -o gdal_PDF.so -Iport -Igcore -Iogr -L. -lgdal -lpoppler -I/usr/include/poppler */
 
@@ -1330,7 +1330,7 @@ PDFDataset::PDFDataset()
 #endif
     poImageObj = NULL;
     pszWKT = NULL;
-    dfDPI = DEFAULT_DPI;
+    dfDPI = GDAL_DEFAULT_DPI;
     dfMaxArea = 0;
     adfGeoTransform[0] = 0;
     adfGeoTransform[1] = 1;
@@ -1720,7 +1720,7 @@ int GDALPDFParseStreamContent(const char* pszContent,
     double adfVals[6];
     CPLString osCurrentImage;
 
-    double dfDPI = 72.0;
+    double dfDPI = DEFAULT_DPI;
     *pbDPISet = FALSE;
 
     while((ch = *pszContent) != '\0')
@@ -1822,8 +1822,8 @@ int GDALPDFParseStreamContent(const char* pszContent,
                                 double dfHeight = Get(poHeight);
                                 double dfScaleX = adfVals[0];
                                 double dfScaleY = adfVals[3];
-                                double dfDPI_X = ROUND_TO_INT_IF_CLOSE(dfWidth / dfScaleX * 72, 1e-3);
-                                double dfDPI_Y = ROUND_TO_INT_IF_CLOSE(dfHeight / dfScaleY * 72, 1e-3);
+                                double dfDPI_X = ROUND_TO_INT_IF_CLOSE(dfWidth / dfScaleX * DEFAULT_DPI, 1e-3);
+                                double dfDPI_Y = ROUND_TO_INT_IF_CLOSE(dfHeight / dfScaleY * DEFAULT_DPI, 1e-3);
                                 //CPLDebug("PDF", "Image %s, width = %.16g, height = %.16g, scaleX = %.16g, scaleY = %.16g --> DPI_X = %.16g, DPI_Y = %.16g",
                                 //                osCurrentImage.c_str(), dfWidth, dfHeight, dfScaleX, dfScaleY, dfDPI_X, dfDPI_Y);
                                 if (dfDPI_X > dfDPI) dfDPI = dfDPI_X;
@@ -1863,16 +1863,17 @@ int PDFDataset::CheckTiledRaster()
 {
     size_t i;
     int nBlockXSize = 0, nBlockYSize = 0;
+    const double dfUserUnit = dfDPI * USER_UNIT_IN_INCH;
 
     /* First pass : check that all tiles have same DPI, */
     /* are contained entirely in the raster size, */
     /* and determine the block size */
     for(i=0; i<asTiles.size(); i++)
     {
-        double dfDrawWidth = asTiles[i].adfCM[0] * dfDPI / 72.0;
-        double dfDrawHeight = asTiles[i].adfCM[3] * dfDPI / 72.0;
-        double dfX = asTiles[i].adfCM[4] * dfDPI / 72.0;
-        double dfY = asTiles[i].adfCM[5] * dfDPI / 72.0;
+        double dfDrawWidth = asTiles[i].adfCM[0] * dfUserUnit;
+        double dfDrawHeight = asTiles[i].adfCM[3] * dfUserUnit;
+        double dfX = asTiles[i].adfCM[4] * dfUserUnit;
+        double dfY = asTiles[i].adfCM[5] * dfUserUnit;
         int nX = (int)(dfX+0.1);
         int nY = (int)(dfY+0.1);
         int nWidth = (int)(asTiles[i].dfWidth + 1e-8);
@@ -1935,8 +1936,8 @@ int PDFDataset::CheckTiledRaster()
     /* Second pass to determine that all tiles are properly aligned on block size */
     for(i=0; i<asTiles.size(); i++)
     {
-        double dfX = asTiles[i].adfCM[4] * dfDPI / 72.0;
-        double dfY = asTiles[i].adfCM[5] * dfDPI / 72.0;
+        double dfX = asTiles[i].adfCM[4] * dfUserUnit;
+        double dfY = asTiles[i].adfCM[5] * dfUserUnit;
         int nX = (int)(dfX+0.1);
         int nY = (int)(dfY+0.1);
         int nWidth = (int)(asTiles[i].dfWidth + 1e-8);
@@ -1967,8 +1968,8 @@ int PDFDataset::CheckTiledRaster()
     aiTiles.resize(nXBlocks * nYBlocks, -1);
     for(i=0; i<asTiles.size(); i++)
     {
-        double dfX = asTiles[i].adfCM[4] * dfDPI / 72.0;
-        double dfY = asTiles[i].adfCM[5] * dfDPI / 72.0;
+        double dfX = asTiles[i].adfCM[4] * dfUserUnit;
+        double dfY = asTiles[i].adfCM[5] * dfUserUnit;
         int nHeight = (int)(asTiles[i].dfHeight + 1e-8);
         int nX = (int)(dfX+0.1);
         int nY = nRasterYSize - ((int)(dfY+0.1) + nHeight);
@@ -2216,7 +2217,7 @@ void PDFDataset::GuessDPI(GDALPDFDictionary* poPageDict, int* pnBands)
               (poUserUnit->GetType() == PDFObjectType_Int ||
                poUserUnit->GetType() == PDFObjectType_Real) )
         {
-            dfDPI = ROUND_TO_INT_IF_CLOSE(Get(poUserUnit) * 72.0);
+            dfDPI = ROUND_TO_INT_IF_CLOSE(Get(poUserUnit) * DEFAULT_DPI);
             CPLDebug("PDF", "Found UserUnit in Page --> DPI = %.16g", dfDPI);
             SetMetadataItem("DPI", CPLSPrintf("%.16g", dfDPI));
         }
@@ -2226,7 +2227,7 @@ void PDFDataset::GuessDPI(GDALPDFDictionary* poPageDict, int* pnBands)
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "Invalid value for GDAL_PDF_DPI. Using default value instead");
-        dfDPI = DEFAULT_DPI;
+        dfDPI = GDAL_DEFAULT_DPI;
     }
 }
 
@@ -3132,7 +3133,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 #endif
 
-    double dfUserUnit = poDS->dfDPI / 72.0;
+    double dfUserUnit = poDS->dfDPI * USER_UNIT_IN_INCH;
     poDS->nRasterXSize = (int) floor((dfX2 - dfX1) * dfUserUnit+0.5);
     poDS->nRasterYSize = (int) floor((dfY2 - dfY1) * dfUserUnit+0.5);
 
@@ -5212,7 +5213,6 @@ void GDALRegister_PDF()
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "pdf" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                    "Byte" );
-        poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
 #ifdef HAVE_POPPLER
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
         poDriver->SetMetadataItem( "HAVE_POPPLER", "YES" );
@@ -5282,6 +5282,7 @@ void GDALRegister_PDF()
 #if defined(HAVE_POPPLER) || defined(HAVE_PODOFO)
         poDriver->pfnOpen = PDFDataset::Open;
         poDriver->pfnIdentify = PDFDataset::Identify;
+        poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
 #endif
 
         poDriver->pfnCreateCopy = GDALPDFCreateCopy;
