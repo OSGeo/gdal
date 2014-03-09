@@ -34,6 +34,9 @@
 #include <map>
 #include <vector>
 
+#define DEFAULT_DPI         (72.0)
+#define USER_UNIT_IN_INCH   (1.0 / DEFAULT_DPI)
+
 #ifdef HAVE_POPPLER
 
 /* begin of poppler xpdf includes */

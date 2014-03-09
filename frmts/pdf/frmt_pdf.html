@@ -131,7 +131,9 @@ Set the compression to use for raster data. DEFLATE is the default.</p></li>
 Set the compression to use for stream objects. DEFLATE is the default.</p></li>
 
 <li><p><b>DPI=value</b>:
-Set the DPI to use. Default to 72.</p></li>
+Set the DPI to use. Default to 72. May be automatically adjusted to higher value
+so that page dimension does not exceed the 14400 maximum value (in user units)
+allowed by Acrobat.</p></li>
 
 <li><p><b>PREDICTOR=[1/2]</b>:
 Only for DEFLATE compression. Might be set to 2 to use horizontal predictor that can make files smaller (but not always!).
