@@ -112,11 +112,29 @@ int OGROpenFileGDBDataSource::Open( const char* pszFilename )
     if( strncmp(m_osDirName, "/vsizip/", strlen("/vsizip/")) == 0 ||
         strncmp(m_osDirName, "/vsitar/", strlen("/vsitar/")) == 0)
     {
+        /* Look for one subdirectory ending with .gdb extension */
         char** papszDir = CPLReadDir(m_osDirName);
-        if( CSLCount(papszDir) == 1 )
+        int iCandidate = -1;
+        for( int i=0; papszDir && papszDir[i] != NULL; i++ )
+        {
+            VSIStatBufL sStat;
+            if( EQUAL(CPLGetExtension(papszDir[i]), "gdb") &&
+                VSIStatL( CPLSPrintf("%s/%s", m_osDirName.c_str(), papszDir[i]), &sStat ) == 0 &&
+                VSI_ISDIR(sStat.st_mode) )
+            {
+                if( iCandidate < 0 )
+                    iCandidate = i;
+                else
+                {
+                    iCandidate = -1;
+                    break;
+                }
+            }
+        }
+        if( iCandidate >= 0 )
         {
             m_osDirName += "/";
-            m_osDirName += papszDir[0];
+            m_osDirName += papszDir[iCandidate];
         }
         CSLDestroy(papszDir);
     }
