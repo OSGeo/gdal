@@ -82,8 +82,8 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFilename) : VFKReader(pszFilenam
 	    VSIUnlink(pszDbName);
 	}
 	else {
-            VSIStatL(pszFilename, &sStatBufVfk);
-            if (sStatBufVfk.st_mtime > sStatBufDb.st_mtime) {
+            if (VSIStatL(pszFilename, &sStatBufVfk) == 0 &&
+                sStatBufVfk.st_mtime > sStatBufDb.st_mtime) {
                 CPLDebug("OGR-VFK",
                          "Found %s but ignoring because it appears\n"
                          "be older than the associated VFK file.",
