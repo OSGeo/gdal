@@ -1105,7 +1105,7 @@ void styletable2kml (
     const char *pszStyleString;
 
     /* Collect styles that end with _normal or _highlight */
-    while ( ( pszStyleString = poOgrStyleTable->GetNextStyle (  ) ) ) {
+    while ( poOgrStyleTable->GetNextStyle (  ) != NULL ) {
         const char *pszStyleName = poOgrStyleTable->GetLastStyleName (  );
 
         if( strlen(pszStyleName) > strlen("_normal") &&
