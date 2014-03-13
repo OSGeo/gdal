@@ -390,7 +390,7 @@ class GTiffDataset : public GDALPamDataset
 
     int           bIgnoreReadErrors;
 
-    CPLString     osWldFilename;
+    CPLString     osGeorefFilename;
 
     int           bDirectIO;
     
@@ -7532,38 +7532,44 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         }
 
 /* -------------------------------------------------------------------- */
-/*      Otherwise try looking for a .tfw, .tifw or .wld file.           */
+/*      Otherwise try looking for a .tab, .tfw, .tifw or .wld file.     */
 /* -------------------------------------------------------------------- */
         else
         {
-            char* pszWldFilename = NULL;
+            char* pszGeorefFilename = NULL;
 
-            bGeoTransformValid =
-                GDALReadWorldFile2( osFilename, NULL, adfGeoTransform,
-                                    papszSiblingFiles, &pszWldFilename);
+            /* Begin with .tab since it can also have projection info */
+            int bTabFileOK =
+                GDALReadTabFile2( osFilename, adfGeoTransform,
+                                    &pszTabWKT, &nGCPCount, &pasGCPList,
+                                    papszSiblingFiles, &pszGeorefFilename );
 
-            if( !bGeoTransformValid )
+            if( bTabFileOK )
             {
-                bGeoTransformValid =
-                    GDALReadWorldFile2( osFilename, "wld", adfGeoTransform,
-                                        papszSiblingFiles, &pszWldFilename);
-            }
-
-            if( !bGeoTransformValid )
-            {
-                int bTabFileOK =
-                    GDALReadTabFile2( osFilename, adfGeoTransform,
-                                      &pszTabWKT, &nGCPCount, &pasGCPList,
-                                      papszSiblingFiles, &pszWldFilename );
-
-                if( bTabFileOK && nGCPCount == 0 )
+                if( nGCPCount == 0 )
                     bGeoTransformValid = TRUE;
             }
-
-            if (pszWldFilename)
+            else
             {
-                osWldFilename = pszWldFilename;
-                CPLFree(pszWldFilename);
+                if( !bGeoTransformValid )
+                {
+                    bGeoTransformValid =
+                        GDALReadWorldFile2( osFilename, NULL, adfGeoTransform,
+                                            papszSiblingFiles, &pszGeorefFilename);
+                }
+
+                if( !bGeoTransformValid )
+                {
+                    bGeoTransformValid =
+                        GDALReadWorldFile2( osFilename, "wld", adfGeoTransform,
+                                            papszSiblingFiles, &pszGeorefFilename);
+                }
+            }
+
+            if (pszGeorefFilename)
+            {
+                osGeorefFilename = pszGeorefFilename;
+                CPLFree(pszGeorefFilename);
             }
         }
 
@@ -10467,10 +10473,10 @@ char **GTiffDataset::GetFileList()
     if (osRPCFile.size() != 0)
         papszFileList = CSLAddString( papszFileList, osRPCFile );
 
-    if (osWldFilename.size() != 0 &&
-        CSLFindString(papszFileList, osWldFilename) == -1)
+    if (osGeorefFilename.size() != 0 &&
+        CSLFindString(papszFileList, osGeorefFilename) == -1)
     {
-        papszFileList = CSLAddString( papszFileList, osWldFilename );
+        papszFileList = CSLAddString( papszFileList, osGeorefFilename );
     }
 
     return papszFileList;
@@ -10676,6 +10682,13 @@ GTiffErrorHandler(const char* module, const char* fmt, va_list ap )
         strstr(fmt, "Cannot handle zero strip size") != NULL )
     {
         return;
+    }
+#endif
+
+#ifdef BIGTIFF_SUPPORT
+    if( strcmp(fmt, "Maximum TIFF file size exceeded") == 0 )
+    {
+        fmt = "Maximum TIFF file size exceeded. Use BIGTIFF=YES creation option.";
     }
 #endif
 
