@@ -385,6 +385,7 @@ void CPL_DLL RegisterOGRTAB();
 void CPL_DLL RegisterOGRMIF();
 void CPL_DLL RegisterOGROGDI();
 void CPL_DLL RegisterOGRODBC();
+void CPL_DLL RegisterOGRWAsP();
 void CPL_DLL RegisterOGRPG();
 void CPL_DLL RegisterOGRMSSQLSpatial();
 void CPL_DLL RegisterOGRMySQL();
