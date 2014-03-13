@@ -1,0 +1,27 @@
+<html>
+<head>
+<title>WAsP - WAsP .map format</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>WAsP - WAsP .map format</h1>
+
+(GDAL/OGR &lt;= 1.11.0)<p>
+
+This driver writes .map files to be used with WAsP. The only allowed geometries are linestrings.<p>
+
+<h3>Configuration options</h3>
+
+<ul>
+    <li>WASP_FIELDS : a coma separated list of fields. For elevation, the name of the height field. For rouhgness, the name of the left and right roughness fields resp.</li>
+    <li>WASP_MERGE : this may be set to "NO". Used only when generating roughness from polygons. All polygon boundaries will be output (including those with the same left and righ roughness). This is usefull (along with option -skipfailures) for debugging incorect input geometries.</li>
+    <li>WASP_GEOM_FIELD : in case input has several geometry columns and the first one (default) is not the right one.</li>
+    <li>WASP_TOLERANCE : specify a tolerance for line simplification of output.</li>
+</ul>
+
+<p>
+Note that if not option is specified, the layer is assumed to be an elevation layer where the elevation is the z-components of the linestrings' points. 
+</p>
+</body>
+</html>
