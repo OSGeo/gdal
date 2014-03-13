@@ -304,7 +304,7 @@ OGRErr OGRWAsPLayer::WriteElevation( OGRGeometry * poGeom, const double & dfZ )
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Cannot handle geometry of type %s", 
                  OGRGeometryTypeToName( poGeom->getGeometryType() ) );
-        return OGRERR_FAILURE;
+        break;
     }
     }
     return OGRERR_FAILURE; /* avoid visual warning */
@@ -487,7 +487,7 @@ OGRErr OGRWAsPLayer::WriteRoughness( OGRGeometry * poGeom, const double & dfZlef
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Cannot handle geometry of type %s", 
                  OGRGeometryTypeToName( poGeom->getGeometryType() ) );
-        return OGRERR_FAILURE;
+        break;
     }
     }
     return OGRERR_FAILURE; /* avoid visual warning */
@@ -775,7 +775,7 @@ double OGRWAsPLayer::AvgZ( OGRGeometry * poGeom )
         return AvgZ( dynamic_cast< OGRGeometryCollection * >(poGeom) );
     default: 
         CPLError( CE_Warning, CPLE_NotSupported, "Unsuported geometry type in OGRWAsPLayer::AvgZ()");
-        return 0;
+        break;
     }
     return 0; /* avoid warning */
 }
