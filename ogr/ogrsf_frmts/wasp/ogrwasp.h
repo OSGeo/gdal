@@ -84,7 +84,7 @@ class OGRWAsPLayer : public OGRLayer
     OGRFeatureDefn *      poLayerDefn;
     OGRSpatialReference * poSpatialReference;
 
-    int                   iOffsetFeatureBegin;
+    vsi_l_offset          iOffsetFeatureBegin;
 
     enum OpenMode {READ_ONLY, WRITE_ONLY};
     OpenMode              eMode;
