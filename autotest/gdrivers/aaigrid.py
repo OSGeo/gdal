@@ -271,6 +271,73 @@ def aaigrid_10():
     return 'success'
 
 ###############################################################################
+# Test SIGNIFICANT_DIGITS creation option (same as DECIMAL_PRECISION test)
+
+def aaigrid_11():
+
+    ds = gdal.Open('data/float32.bil')
+    ds2 = gdal.GetDriverByName('AAIGRID').CreateCopy('tmp/aaigrid.tmp', ds, options = ['SIGNIFICANT_DIGITS=2'] )
+    got_minmax = ds2.GetRasterBand(1).ComputeRasterMinMax()
+    ds2 = None
+
+    gdal.GetDriverByName('AAIGRID').Delete('tmp/aaigrid.tmp')
+
+    if abs(got_minmax[0] - -0.84) < 1e-7:
+        return 'success'
+    else:
+        return 'fail'
+
+###############################################################################
+# Test no data is written to correct precision with DECIMAL_PRECISION.
+
+def aaigrid_12():
+
+    retval = 'success'
+    ds = gdal.Open('data/nodata_float.asc')
+    ds2 = gdal.GetDriverByName('AAIGRID').CreateCopy('tmp/aaigrid.tmp', ds,
+                               options = ['DECIMAL_PRECISION=3'] )
+    ds2 = None
+
+    aai = open('tmp/aaigrid.tmp')
+    if not aai:
+        return 'fail'
+    for i in range(5):
+        aai.readline()
+    ndv = aai.readline().strip().lower()
+    aai.close()
+    gdal.GetDriverByName('AAIGRID').Delete('tmp/aaigrid.tmp')
+    if not ndv.startswith('nodata_value'):
+        return 'fail'
+    if not ndv.endswith('-99999.000'):
+        return 'fail'
+    return 'success'
+
+###############################################################################
+# Test no data is written to correct precision WITH SIGNIFICANT_DIGITS.
+
+def aaigrid_13():
+
+    retval = 'success'
+    ds = gdal.Open('data/nodata_float.asc')
+    ds2 = gdal.GetDriverByName('AAIGRID').CreateCopy('tmp/aaigrid.tmp', ds,
+                               options = ['SIGNIFICANT_DIGITS=3'] )
+    ds2 = None
+
+    aai = open('tmp/aaigrid.tmp')
+    if not aai:
+        return 'fail'
+    for i in range(5):
+        aai.readline()
+    ndv = aai.readline().strip().lower()
+    aai.close()
+    gdal.GetDriverByName('AAIGRID').Delete('tmp/aaigrid.tmp')
+    if not ndv.startswith('nodata_value'):
+        return 'fail'
+    if not ndv.endswith('-1e+05'):
+        return 'fail'
+    return 'success'
+
+###############################################################################
 
 gdaltest_list = [
     aaigrid_1,
@@ -284,9 +351,10 @@ gdaltest_list = [
     aaigrid_7,
     aaigrid_8,
     aaigrid_9,
-    aaigrid_10 ]
-  
-
+    aaigrid_10,
+    aaigrid_11,
+    aaigrid_12,
+    aaigrid_13 ]
 
 if __name__ == '__main__':
 
