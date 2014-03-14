@@ -24,7 +24,8 @@ It is normally produced with the Arc/Info ASCIIGRID command.</p>
 limited.  Additional sample .prj files may be sent to the maintainer,
 <a href="mailto:warmerdam@pobox.com">warmerdam@pobox.com</a>.</p>
 
-<p>The NODATA value for the grid read is also preserved when available.
+<p>The NODATA value for the grid read is also preserved when available in the
+same format as the band data.
 </p>
 
 <p>By default, the datatype returned for AAIGRID datasets by GDAL is autodetected,
@@ -41,11 +42,13 @@ ascii grid reading programs.  For force the X pixel size to be used as CELLSIZE
 use the FORCE_CELLSIZE=YES creation option or resample the input to have 
 square pixels.</p>
 
-<p>When writing floating-point values, the driver uses the "%6.20g" format
+<p>When writing floating-point values, the driver uses the "%.20g" format
 pattern as a default. You can consult a <a href="http://en.wikipedia.org/wiki/Printf">
 reference manual</a> for printf to have an idea of the exact behaviour of this ;-).
 You can alternatively specify the number of decimal places with the DECIMAL_PRECISION creation
-option. For example, DECIMAL_PRECISION=3 will output numbers with 3 decimal places.</p>
+option. For example, DECIMAL_PRECISION=3 will output numbers with 3 decimal
+places(using %lf format).  Starting with GDAL 1.11, another option is
+SIGNIFICANT_DIGITS=3, which will output 3 significant digits (using %g format).</p>
 
 <p>The <a href="#AIG">AIG</a> driver is also available
 for Arc/Info Binary Grid format.</p>
