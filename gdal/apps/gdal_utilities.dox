@@ -1681,7 +1681,7 @@ creates regular grid from the scattered data
 gdal_grid [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/
           CInt16/CInt32/CFloat32/CFloat64}]
 	  [-of format] [-co "NAME=VALUE"]
-	  [-zfield field_name]
+	  [-zfield field_name] [-z_increase increase_value] [-z_multiply multiply_value]
 	  [-a_srs srs_def] [-spat xmin ymin xmax ymax]
           [-clipsrc <xmin ymin xmax ymax>|WKT|datasource|spat_extent]
           [-clipsrcsql sql_statement] [-clipsrclayer layer]
@@ -1729,6 +1729,15 @@ on the features to be used to get a Z value from. This value overrides Z value
 read from feature geometry record (naturally, if you have a Z value in
 geometry, otherwise you have no choice and should specify a field name
 containing Z value).</dd>
+
+<dt> <b>-z_increase</b> <i>increase_value</i>:</dt><dd> Addition to the attribute field
+on the features to be used to get a Z value from. The addition should be the same
+unit as Z value. The result value will be Z value + Z increase value. The default value is 0.</dd>
+
+<dt> <b>-z_multiply</b> <i>multiply_value</i>:</dt><dd> This is multiplication 
+ratio for Z field. This can be used for shift from e.g. foot to meters or from 
+elevation to deep. The result value will be (Z value + Z increase value) * Z multiply value. 
+The default value is 1.</dd>
 
 <dt> <b>-a</b> <i>[algorithm[:parameter1=value1][:parameter2=value2]...]</i>:
 </dt><dd> Set the interpolation algorithm or data metric name and (optionally)
