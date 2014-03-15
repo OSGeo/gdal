@@ -2902,16 +2902,19 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     /* If outputing to stdout, we can't reopen it, so we'll return */
     /* a fake dataset to make the caller happy */
-    CPLPushErrorHandler(CPLQuietErrorHandler);
-    JPGDataset *poDS = (JPGDataset*) Open( pszFilename );
-    CPLPopErrorHandler();
-    if( poDS )
+    if( CSLTestBoolean(CPLGetConfigOption("GDAL_OPEN_AFTER_COPY", "YES")) )
     {
-        poDS->CloneInfo( poSrcDS, nCloneFlags );
-        return poDS;
-    }
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        JPGDataset *poDS = (JPGDataset*) Open( pszFilename );
+        CPLPopErrorHandler();
+        if( poDS )
+        {
+            poDS->CloneInfo( poSrcDS, nCloneFlags );
+            return poDS;
+        }
 
-    CPLErrorReset();
+        CPLErrorReset();
+    }
 
     JPGDataset* poJPG_DS = new JPGDataset();
     poJPG_DS->nRasterXSize = nXSize;
