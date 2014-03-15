@@ -1545,6 +1545,61 @@ def ogr_libkml_read_write_style():
     return 'success'
 
 ###############################################################################
+# Test writing Update
+
+def ogr_libkml_write_update():
+
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+
+    for i in range(3):
+
+        if i == 0:
+            name = "/vsimem/ogr_libkml_write_update.kml"
+        elif i == 1:
+            name = "/vsimem/ogr_libkml_write_update.kmz"
+        else:
+            name = "/vsimem/ogr_libkml_write_update_dir"
+
+        ds = ogr.GetDriverByName('LIBKML').CreateDataSource(name,
+                                                            options = [ 'UPDATE_TARGETHREF=http://foo'] )
+        lyr = ds.CreateLayer('layer_to_edit')
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        lyr.CreateFeature(feat)
+        feat.SetFID(2)
+        lyr.SetFeature(feat)
+        lyr.DeleteFeature(3)
+        ds = None
+
+        if i == 0:
+            f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_update.kml', 'rb')
+        elif i == 1:
+            f = gdal.VSIFOpenL('/vsizip//vsimem/ogr_libkml_write_update.kmz', 'rb')
+        else:
+            f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_update_dir/doc.kml', 'rb')
+        if f is None:
+            gdaltest.post_reason('failure')
+            return 'fail'
+        data = gdal.VSIFReadL(1, 2048, f)
+        gdal.VSIFCloseL(f)
+
+        if data.find('<NetworkLinkControl>') == -1 or \
+        data.find('<Update>') == -1 or \
+        data.find('<targetHref>http://foo</targetHref>') == -1 or \
+        data.find('<Placemark id="layer_to_edit.1"/>') == -1 or \
+        data.find('<Create>') == -1 or \
+        data.find('<Document targetId="layer_to_edit">') == -1 or \
+        data.find('<Change>') == -1 or \
+        data.find('<Placemark targetId="layer_to_edit.2"/>') == -1 or \
+        data.find('<Delete>') == -1 or \
+        data.find('<Placemark targetId="layer_to_edit.3"/>') == -1:
+            print(data)
+            gdaltest.post_reason('failure')
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_libkml_cleanup():
@@ -1569,6 +1624,10 @@ def ogr_libkml_cleanup():
     gdal.Unlink("/vsimem/ogr_libkml_write_model.kml")
     gdal.Unlink("/vsimem/ogr_libkml_read_write_style_read.kml")
     gdal.Unlink("/vsimem/ogr_libkml_read_write_style_write.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_write_update.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_write_update.kmz")
+    gdal.Unlink("/vsimem/ogr_libkml_write_update_dir/doc.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_write_update_dir")
 
     # Re-register KML driver if necessary
     if ogrtest.kml_drv is not None:
@@ -1616,6 +1675,7 @@ gdaltest_list = [
     ogr_libkml_write_screenoverlay,
     ogr_libkml_write_model,
     ogr_libkml_read_write_style,
+    ogr_libkml_write_update,
     ogr_libkml_cleanup ]
 
 if __name__ == '__main__':
