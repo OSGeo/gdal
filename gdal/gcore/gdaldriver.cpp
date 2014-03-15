@@ -187,7 +187,8 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
                     poDstDS->poDriver = poAPIPROXYDriver;
             }
 
-            return poDstDS;
+            if( poDstDS != NULL || CPLGetLastErrorNo() != CPLE_NotSupported )
+                return poDstDS;
         }
     }
 
@@ -656,7 +657,8 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
             }
 
             CSLDestroy(papszOptionsDup);
-            return poDstDS;
+            if( poDstDS != NULL || CPLGetLastErrorNo() != CPLE_NotSupported )
+                return poDstDS;
         }
     }
 
@@ -665,9 +667,19 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
 /*      name.  But even if that seems to fail we will continue since    */
 /*      it might just be a corrupt file or something.                   */
 /* -------------------------------------------------------------------- */
-    if( !CSLFetchBoolean(papszOptions, "APPEND_SUBDATASET", FALSE) )
+    if( !CSLFetchBoolean(papszOptions, "APPEND_SUBDATASET", FALSE) &&
+        CSLFetchBoolean(papszOptions, "QUIET_DELETE_ON_CREATE_COPY", TRUE) )
         QuietDelete( pszFilename );
 
+    int iIdxQuietDeleteOnCreateCopy = 
+        CSLPartialFindString(papszOptions, "QUIET_DELETE_ON_CREATE_COPY=");
+    char** papszOptionsToDelete = NULL;
+    if( iIdxQuietDeleteOnCreateCopy >= 0 )
+    {
+        papszOptions = CSLRemoveStrings(CSLDuplicate(papszOptions), iIdxQuietDeleteOnCreateCopy, 1, NULL);
+        papszOptionsToDelete = papszOptions;
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Validate creation options.                                      */
 /* -------------------------------------------------------------------- */
@@ -679,10 +691,9 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
 /*      otherwise fallback to the internal implementation using the     */
 /*      Create() method.                                                */
 /* -------------------------------------------------------------------- */
-    if( pfnCreateCopy != NULL )
+    GDALDataset *poDstDS;
+    if( pfnCreateCopy != NULL && !CSLTestBoolean(CPLGetConfigOption("GDAL_DEFAULT_CREATE_COPY", "NO")) )
     {
-        GDALDataset *poDstDS;
-
         poDstDS = pfnCreateCopy( pszFilename, poSrcDS, bStrict, papszOptions,
                                  pfnProgress, pProgressData );
         if( poDstDS != NULL )
@@ -694,12 +705,13 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
             if( poDstDS->poDriver == NULL )
                 poDstDS->poDriver = this;
         }
-
-        return poDstDS;
     }
     else
-        return DefaultCreateCopy( pszFilename, poSrcDS, bStrict, 
+        poDstDS = DefaultCreateCopy( pszFilename, poSrcDS, bStrict, 
                                   papszOptions, pfnProgress, pProgressData );
+
+    CSLDestroy(papszOptionsToDelete);
+    return poDstDS;
 }
 
 /************************************************************************/
