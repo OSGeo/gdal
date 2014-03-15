@@ -73,6 +73,7 @@ protected:
     OGRFeature *TranslateText(const SXFRecordDescription& certifInfo, const char * psBuff, GUInt32 nBufLen);
     OGRFeature *TranslatePolygon(const SXFRecordDescription& certifInfo, const char * psBuff, GUInt32 nBufLen);
     OGRFeature *TranslateLine(const SXFRecordDescription& certifInfo, const char * psBuff, GUInt32 nBufLen);
+    OGRFeature *TranslateVetorAngle(const SXFRecordDescription& certifInfo, const char * psBuff, GUInt32 nBufLen);
 public:
     OGRSXFLayer(VSILFILE* fp, void** hIOMutex, GByte nID, const char* pszLayerName, int nVer, const SXFMapDescription&  sxfMapDesc);
     ~OGRSXFLayer();
@@ -116,6 +117,7 @@ class OGRSXFDataSource : public OGRDataSource
     void CreateLayers(VSILFILE* fpRSC);
     OGRErr ReadSXFInformationFlags(VSILFILE* fpSXF, SXFPassport& passport);
     OGRErr ReadSXFDescription(VSILFILE* fpSXF, SXFPassport& passport);
+    void SetVertCS(const long iVCS, SXFPassport& passport);
     OGRErr ReadSXFMapDescription(VSILFILE* fpSXF, SXFPassport& passport);
     OGRSXFLayer*       GetLayerById(GByte);
 public:

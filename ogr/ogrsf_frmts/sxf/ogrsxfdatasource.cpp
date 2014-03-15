@@ -42,6 +42,41 @@
 CPL_CVSID("$Id: ogrsxfdatasource.cpp  $");
 
 static void  *hIOMutex = NULL;
+
+static const long aoVCS[] =
+{
+    0,
+    5705,   //1
+    5711,   //2
+    0,      //3
+    5710,   //4
+    5710,   //5
+    0,      //6
+    0,      //7
+    0,      //8
+    0,      //9
+    5716,   //10
+    5733,   //11
+    0,      //12
+    0,      //13
+    0,      //14
+    0,      //15
+    5709,   //16
+    5776,   //17
+    0,      //18
+    0,      //19
+    5717,   //20
+    5613,   //21
+    0,      //22
+    5775,   //23
+    5702,   //24
+    0,      //25
+    0,      //26
+    5714    //27
+};
+
+#define NUMBER_OF_VERTICALCS    (sizeof(aoVCS)/sizeof(aoVCS[0]))
+
 /************************************************************************/
 /*                         OGRSXFDataSource()                           */
 /************************************************************************/
@@ -413,6 +448,45 @@ OGRErr OGRSXFDataSource::ReadSXFInformationFlags(VSILFILE* fpSXF, SXFPassport& p
     return OGRERR_NONE;
 }
 
+void OGRSXFDataSource::SetVertCS(const long iVCS, SXFPassport& passport)
+{
+    if (!CSLTestBoolean(CPLGetConfigOption("SXF_SET_VERTCS", "NO")))
+        return;
+
+    const long nEPSG = aoVCS[iVCS];
+
+    if (nEPSG == 0)
+    {
+        CPLError( CE_Warning, CPLE_NotSupported,
+                  CPLString().Printf("SXF. Vertical coordinate system (SXF index %ld) not supported", iVCS) );
+        return;
+    }
+
+    OGRSpatialReference* sr = new OGRSpatialReference();
+    OGRErr eImportFromEPSGErr = sr->importFromEPSG(nEPSG);
+    if (eImportFromEPSGErr != OGRERR_NONE)
+    {
+        CPLError( CE_Warning, CPLE_None,
+                  CPLString().Printf("SXF. Vertical coordinate system (SXF index %ld, EPSG %d) import from EPSG error", iVCS, nEPSG) );
+        return;
+    }
+
+    if (sr->IsVertical() != 1)
+    {
+        CPLError( CE_Warning, CPLE_None,
+                  CPLString().Printf("SXF. Coordinate system (SXF index %ld, EPSG %d) is not Vertical", iVCS, nEPSG) );
+        return;
+    }
+
+    //passport.stMapDescription.pSpatRef->SetVertCS("Baltic", "Baltic Sea");
+    OGRErr eSetVertCSErr = passport.stMapDescription.pSpatRef->SetVertCS(sr->GetAttrValue("VERT_CS"), sr->GetAttrValue("VERT_DATUM"));
+    if (eSetVertCSErr != OGRERR_NONE)
+    {
+        CPLError( CE_Warning, CPLE_None,
+                  CPLString().Printf("SXF. Vertical coordinate system (SXF index %ld, EPSG %d) set error", iVCS, nEPSG) );
+        return;
+    }
+}
 OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXF, SXFPassport& passport)
 {
     int nObjectsRead;
@@ -517,6 +591,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXF, SXFPassport& pas
     GByte anData[8] = { 0 };
     nObjectsRead = VSIFReadL(&anData, 8, 1, fpSXF);
     long iEllips = anData[0];
+    long iVCS = anData[1];
     long iProjSys = anData[2];
     long iDatum = anData[3];
     double dfProjScale = 1;
@@ -665,11 +740,11 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXF, SXFPassport& pas
             int nEPSG = 28400 + nZoneEnv;
             passport.stMapDescription.pSpatRef = new OGRSpatialReference();
             OGRErr eErr = passport.stMapDescription.pSpatRef->importFromEPSG(nEPSG);
+            SetVertCS(iVCS, passport);
             return eErr;
         }
         else
         {
-            adfPrjParams[2] = nZoneEnv * 6 * TO_RADIANS;// to radians
             adfPrjParams[7] = nZoneEnv;
 
             if (adfPrjParams[5] == 0)//False Easting
@@ -697,18 +772,21 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXF, SXFPassport& pas
         }
         passport.stMapDescription.pSpatRef = new OGRSpatialReference();
         OGRErr eErr = passport.stMapDescription.pSpatRef->importFromEPSG(nEPSG);
+        SetVertCS(iVCS, passport);
         return eErr;
     }
     else if (iEllips == 45 && iProjSys == 35) //Mercator 3395
     {
         passport.stMapDescription.pSpatRef = new OGRSpatialReference();
         OGRErr eErr = passport.stMapDescription.pSpatRef->importFromEPSG(3395);
+        SetVertCS(iVCS, passport);
         return eErr;
     }
     else if (iEllips == 9 && iProjSys == 34) //Miller 54003
     {
         passport.stMapDescription.pSpatRef = new OGRSpatialReference();
         OGRErr eErr = passport.stMapDescription.pSpatRef->importFromEPSG(54003);
+        SetVertCS(iVCS, passport);
         return eErr;
     }
 
@@ -731,6 +809,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXF, SXFPassport& pas
 
     passport.stMapDescription.pSpatRef = new OGRSpatialReference();
     OGRErr eErr = passport.stMapDescription.pSpatRef->importFromPanorama(anData[2], anData[3], anData[0], adfPrjParams);
+    SetVertCS(iVCS, passport);
     return eErr;
 }
 
@@ -779,33 +858,28 @@ void OGRSXFDataSource::FillLayers()
             return;
         }
 
-        bool bIsSupported = oSXFPassport.version == 3 || !CHECK_BIT(buff[5], 2); 
-        if(bIsSupported)
+        bool bHasSemantic = CHECK_BIT(buff[5], 9);
+        if (bHasSemantic) //check has attributes
         {
-            bool bHasSemantic = CHECK_BIT(buff[5], 9);
-            if (bHasSemantic) //check has attributes
-            {
-                //we have already 24 byte readed
-                nOffsetSemantic = 8 + buff[2];
-                VSIFSeekL(fpSXF, nOffsetSemantic, SEEK_CUR);
-            }
-
-            int nSemanticSize = buff[1] - 32 - buff[2];
-            if( nSemanticSize < 0 )
-            {
-                CPLError(CE_Failure, CPLE_AppDefined, "Invalid value");
-                break;
-            }
-            for (i = 0; i < nLayers; i++)
-            {
-                OGRSXFLayer* pOGRSXFLayer = (OGRSXFLayer*)papoLayers[i];
-                if (pOGRSXFLayer && pOGRSXFLayer->AddRecord(nFID, buff[3], nOffset, bHasSemantic, nSemanticSize) == TRUE)
-                {
-                    break;
-                }
-            }
+            //we have already 24 byte readed
+            nOffsetSemantic = 8 + buff[2];
+            VSIFSeekL(fpSXF, nOffsetSemantic, SEEK_CUR);
         }
 
+        int nSemanticSize = buff[1] - 32 - buff[2];
+        if( nSemanticSize < 0 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid value");
+            break;
+        }
+        for (i = 0; i < nLayers; i++)
+        {
+            OGRSXFLayer* pOGRSXFLayer = (OGRSXFLayer*)papoLayers[i];
+            if (pOGRSXFLayer && pOGRSXFLayer->AddRecord(nFID, buff[3], nOffset, bHasSemantic, nSemanticSize) == TRUE)
+            {
+                break;
+            }
+        }
         nOffset += buff[1];
         VSIFSeekL(fpSXF, nOffset, SEEK_SET);
     }
