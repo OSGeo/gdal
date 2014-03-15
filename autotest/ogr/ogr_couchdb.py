@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -352,7 +353,11 @@ def ogr_couchdb_changeLayer():
     ogrtest.couchdb_test_layer = 'poly_nongeojson'
     return 'success'
 
-gdaltest_list = [ 
+# CouchDB tests fail in unreliable ways on Travis
+if gdaltest.skip_on_travis():
+    gdaltest_list = []
+else:
+    gdaltest_list = [ 
     ogr_couchdb_init,
     ogr_couchdb_GetFeatureCount,
     ogr_couchdb_GetNextFeature,
