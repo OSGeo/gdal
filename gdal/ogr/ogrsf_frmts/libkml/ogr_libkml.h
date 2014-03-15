@@ -49,6 +49,8 @@ using kmlengine::KmlFilePtr;
 
 class OGRLIBKMLDataSource;
 
+CPLString OGRLIBKMLGetSanitizedNCName(const char* pszName);
+
 /******************************************************************************
   layer class
 ******************************************************************************/

@@ -64,7 +64,7 @@ using kmldom::IconPtr;
 /*                    OGRLIBKMLGetSanitizedNCName()                     */
 /************************************************************************/
 
-static CPLString OGRLIBKMLGetSanitizedNCName(const char* pszName)
+CPLString OGRLIBKMLGetSanitizedNCName(const char* pszName)
 {
     CPLString osName(pszName);
     /* (Approximate) validation rules for a valic NCName */
