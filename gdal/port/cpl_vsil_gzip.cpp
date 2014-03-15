@@ -2244,8 +2244,8 @@ int VSIZipWriteHandle::Eof()
 
 int VSIZipWriteHandle::Flush()
 {
-    CPLError(CE_Failure, CPLE_NotSupported,
-             "VSIFFlushL() is not supported on writable Zip files");
+    /*CPLError(CE_Failure, CPLE_NotSupported,
+             "VSIFFlushL() is not supported on writable Zip files");*/
     return 0;
 }
 

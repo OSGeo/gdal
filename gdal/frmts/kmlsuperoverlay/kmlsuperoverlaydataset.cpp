@@ -183,7 +183,13 @@ void GenerateTiles(std::string filename,
     delete [] pafScanline;
     delete [] hadnoData;
 
-    GDALDataset* outDs = poOutputTileDriver->CreateCopy(filename.c_str(), poTmpDataset, FALSE, NULL, NULL, NULL);
+    CPLString osOpenAfterCopy = CPLGetConfigOption("GDAL_OPEN_AFTER_COPY", "");
+    CPLSetThreadLocalConfigOption("GDAL_OPEN_AFTER_COPY", "NO");
+    /* to prevent CreateCopy() from calling QuietDelete() */
+    char** papszOptions = CSLAddNameValue(NULL, "QUIET_DELETE_ON_CREATE_COPY", "NO");
+    GDALDataset* outDs = poOutputTileDriver->CreateCopy(filename.c_str(), poTmpDataset, FALSE, papszOptions, NULL, NULL);
+    CSLDestroy(papszOptions);
+    CPLSetThreadLocalConfigOption("GDAL_OPEN_AFTER_COPY", osOpenAfterCopy.size() ? osOpenAfterCopy.c_str() : NULL);
 
     GDALClose(poTmpDataset);
     if (outDs)
@@ -637,6 +643,9 @@ GDALDataset *KmlSuperOverlayCreateCopy( const char * pszFilename, GDALDataset *p
                                         int bStrict, char ** papszOptions, GDALProgressFunc pfnProgress, void * pProgressData)
 {
     bool isKmz = false;
+    
+    if( pfnProgress == NULL )
+        pfnProgress = GDALDummyProgress;
 
     int bands = poSrcDS->GetRasterCount();
     if (bands != 1 && bands != 3 && bands != 4)
@@ -674,13 +683,15 @@ GDALDataset *KmlSuperOverlayCreateCopy( const char * pszFilename, GDALDataset *p
     CPLFree(output_dir);
     output_dir = NULL;
 
+    VSILFILE* zipHandle = NULL;
     if (isKmz)
     {
-        outDir = CPLFormFilename(outDir, CPLSPrintf("kmlsuperoverlaytmp_%p", pszFilename) , NULL);
-        if (VSIMkdir(outDir, 0755) != 0)
+        outDir = "/vsizip/";
+        outDir += pszFilename;
+        zipHandle = VSIFOpenL(outDir, "wb");
+        if( zipHandle == NULL )
         {
-            CPLError( CE_Failure, CPLE_None,
-                    "Cannot create %s", outDir.c_str() );
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot create %s", pszFilename);
             return NULL;
         }
     }
@@ -701,8 +712,11 @@ GDALDataset *KmlSuperOverlayCreateCopy( const char * pszFilename, GDALDataset *p
     {
         CPLError( CE_Failure, CPLE_None,
                   "Image export driver was not found.." );
-        if (isKmz)
-            KMLSuperOverlayRecursiveUnlink(outDir);
+        if( zipHandle != NULL )
+        {
+            VSIFCloseL(zipHandle);
+            VSIUnlink(pszFilename);
+        }
         return NULL;
     }
 
@@ -802,7 +816,7 @@ GDALDataset *KmlSuperOverlayCreateCopy( const char * pszFilename, GDALDataset *p
 
     if (isKmz)
     {
-        tmpFileName = CPLFormFilename(outDir, "tmp.kml", NULL);
+        tmpFileName = CPLFormFilename(outDir, "doc.kml", NULL);
         nRet = GenerateRootKml(tmpFileName.c_str(), pszFilename,
                                north, south, east, west, (int)tilexsize,
                                pszOverlayName, pszOverlayDescription);
@@ -856,7 +870,21 @@ GDALDataset *KmlSuperOverlayCreateCopy( const char * pszFilename, GDALDataset *p
         }
     }
 
-    for (int zoom = maxzoom; zoom >= 0; --zoom)
+    int zoom;
+    int nTotalTiles = 0;
+    int nTileCount = 0;
+
+    for (zoom = maxzoom; zoom >= 0; --zoom)
+    {
+        int rmaxxsize = static_cast<int>(pow(2.0, (maxzoom-zoom)) * tilexsize);
+        int rmaxysize = static_cast<int>(pow(2.0, (maxzoom-zoom)) * tileysize);
+
+        int xloop = (int)xsize/rmaxxsize;
+        int yloop = (int)ysize/rmaxysize;
+        nTotalTiles += xloop * yloop;
+    }
+
+    for (zoom = maxzoom; zoom >= 0; --zoom)
     {
         int rmaxxsize = static_cast<int>(pow(2.0, (maxzoom-zoom)) * tilexsize);
         int rmaxysize = static_cast<int>(pow(2.0, (maxzoom-zoom)) * tileysize);
@@ -866,34 +894,36 @@ GDALDataset *KmlSuperOverlayCreateCopy( const char * pszFilename, GDALDataset *p
 
         xloop = xloop>0 ? xloop : 1;
         yloop = yloop>0 ? yloop : 1;
+        
+        std::stringstream zoomStr;
+        zoomStr << zoom;
+
+        std::string zoomDir = outDir;
+        zoomDir+= "/" + zoomStr.str();
+        VSIMkdir(zoomDir.c_str(), 0775);
+
         for (int ix = 0; ix < xloop; ix++)
         {
             int rxsize = (int)(rmaxxsize);
             int rx = (int)(ix * rmaxxsize);
+            int dxsize = (int)(rxsize/rmaxxsize * tilexsize);
+
+            std::stringstream ixStr;
+            ixStr << ix;
+
+            zoomDir = outDir;
+            zoomDir+= "/" + zoomStr.str();
+            zoomDir+= "/" + ixStr.str();
+            VSIMkdir(zoomDir.c_str(), 0775);
 
             for (int iy = 0; iy < yloop; iy++)
             {
                 int rysize = (int)(rmaxysize);
                 int ry = (int)(ysize - (iy * rmaxysize)) - rysize;
-
-                int dxsize = (int)(rxsize/rmaxxsize * tilexsize);
                 int dysize = (int)(rysize/rmaxysize * tileysize);
 
-                std::stringstream zoomStr;
-                std::stringstream ixStr;
                 std::stringstream iyStr;
-
-                zoomStr << zoom;
-                ixStr << ix;
                 iyStr << iy;
-
-                std::string zoomDir = outDir;
-                zoomDir+= "/" + zoomStr.str();
-                VSIMkdir(zoomDir.c_str(), 0775);
-        
-
-                zoomDir = zoomDir + "/" + ixStr.str();
-                VSIMkdir(zoomDir.c_str(), 0775);
 
                 std::string fileExt = ".jpg";
                 if (isJpegDriver == false)
@@ -931,30 +961,19 @@ GDALDataset *KmlSuperOverlayCreateCopy( const char * pszFilename, GDALDataset *p
                                  dxsize, dysize, tmpSouth, adfGeoTransform[0],
                                  xsize, ysize, maxzoom, poTransform, fileExt, fixAntiMeridian,
                                  pszAltitude, pszAltitudeMode);
+
+                nTileCount ++;
+                pfnProgress(1.0 * nTileCount / nTotalTiles, "", pProgressData);
             }
         }
     }
 
     OGRCoordinateTransformation::DestroyCT( poTransform );
     poTransform = NULL;
-    
-    if (isKmz)
+
+    if( zipHandle != NULL )
     {
-        std::string outputfile = pszFilename;
-        bool zipDone = true;
-        if (zipWithMinizip(fileVector, outDir, outputfile) == false)
-        {
-            CPLError( CE_Failure, CPLE_FileIO,
-                      "Unable to do zip.." );
-            zipDone = false;
-        }
-
-        KMLSuperOverlayRecursiveUnlink(outDir);
-
-        if (zipDone == false)
-        {
-            return NULL;
-        }
+        VSIFCloseL(zipHandle);
     }
 
     GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
