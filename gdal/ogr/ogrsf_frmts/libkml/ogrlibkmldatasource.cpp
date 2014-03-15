@@ -42,6 +42,7 @@ using kmldom::NetworkLinkPtr;
 using kmldom::StyleSelectorPtr;
 using kmldom::LinkPtr;
 using kmldom::SchemaPtr;
+using kmldom::NetworkLinkControlPtr;
 using kmlbase::File;
 using kmldom::KmlPtr;
 using kmlbase::Attributes;
@@ -83,6 +84,7 @@ OGRLIBKMLDataSource::OGRLIBKMLDataSource ( KmlFactory * poKmlFactory )
     m_isKml = FALSE;
     m_poKmlDSKml = NULL;
     m_poKmlDSContainer = NULL;
+    m_poKmlUpdate = NULL;
 
     m_isKmz = FALSE;
     m_poKmlDocKml = NULL;
@@ -270,7 +272,7 @@ void OGRLIBKMLDataSource::WriteKmz (
     const char *pszUseDocKml =
         CPLGetConfigOption ( "LIBKML_USE_DOC.KML", "yes" );
 
-    if ( EQUAL ( pszUseDocKml, "yes" ) && m_poKmlDocKml ) {
+    if ( EQUAL ( pszUseDocKml, "yes" ) && (m_poKmlDocKml || m_poKmlUpdate) ) {
 
         /***** if we dont have the doc.kml root *****/
         /***** make it and add the container    *****/
@@ -278,7 +280,14 @@ void OGRLIBKMLDataSource::WriteKmz (
         if ( !m_poKmlDocKmlRoot ) {
             m_poKmlDocKmlRoot = OGRLIBKMLCreateOGCKml22(m_poKmlFactory);
 
-            AsKml( m_poKmlDocKmlRoot )->set_feature ( m_poKmlDocKml );
+            if( m_poKmlDocKml != NULL )
+                AsKml( m_poKmlDocKmlRoot )->set_feature ( m_poKmlDocKml );
+            else if( m_poKmlUpdate )
+            {
+                NetworkLinkControlPtr nlc = m_poKmlFactory->CreateNetworkLinkControl();
+                AsKml( m_poKmlDocKmlRoot )->set_networklinkcontrol ( nlc );
+                nlc->set_update(m_poKmlUpdate);
+            }
         }
         
         std::string oKmlOut = kmldom::SerializePretty ( m_poKmlDocKmlRoot );
@@ -296,7 +305,7 @@ void OGRLIBKMLDataSource::WriteKmz (
 
     int iLayer;
 
-    for ( iLayer = 0; iLayer < nLayers; iLayer++ ) {
+    for ( iLayer = 0; iLayer < nLayers && m_poKmlUpdate == NULL; iLayer++ ) {
         ContainerPtr poKlmContainer = papoLayers[iLayer]->GetKmlLayer (  );
 
         if ( poKlmContainer->IsA ( kmldom::Type_Document ) ) {
@@ -377,15 +386,21 @@ void OGRLIBKMLDataSource::WriteDir (
     const char *pszUseDocKml =
         CPLGetConfigOption ( "LIBKML_USE_DOC.KML", "yes" );
 
-    if ( EQUAL ( pszUseDocKml, "yes" ) && m_poKmlDocKml ) {
+    if ( EQUAL ( pszUseDocKml, "yes" ) && (m_poKmlDocKml || m_poKmlUpdate) ) {
 
         /***** if we dont have the doc.kml root *****/
         /***** make it and add the container    *****/
         
         if ( !m_poKmlDocKmlRoot ) {
             m_poKmlDocKmlRoot = OGRLIBKMLCreateOGCKml22(m_poKmlFactory);
-
-            AsKml( m_poKmlDocKmlRoot )->set_feature ( m_poKmlDocKml );
+            if( m_poKmlDocKml != NULL )
+                AsKml( m_poKmlDocKmlRoot )->set_feature ( m_poKmlDocKml );
+            else if( m_poKmlUpdate )
+            {
+                NetworkLinkControlPtr nlc = m_poKmlFactory->CreateNetworkLinkControl();
+                AsKml( m_poKmlDocKmlRoot )->set_networklinkcontrol ( nlc );
+                nlc->set_update(m_poKmlUpdate);
+            }
         }
         
         std::string oKmlOut = kmldom::SerializePretty ( m_poKmlDocKmlRoot );
@@ -409,7 +424,7 @@ void OGRLIBKMLDataSource::WriteDir (
 
     int iLayer;
 
-    for ( iLayer = 0; iLayer < nLayers; iLayer++ ) {
+    for ( iLayer = 0; iLayer < nLayers && m_poKmlUpdate == NULL; iLayer++ ) {
         ContainerPtr poKmlContainer = papoLayers[iLayer]->GetKmlLayer (  );
 
         if ( poKmlContainer->IsA ( kmldom::Type_Document ) ) {
@@ -706,6 +721,7 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::AddLayer (
                                                       poOgrDS,
                                                       poKmlRoot,
                                                       poKmlContainer,
+                                                      m_poKmlUpdate,
                                                       pszFileName,
                                                       bNew,
                                                       bUpdate );
@@ -1475,67 +1491,77 @@ int OGRLIBKMLDataSource::CreateKml (
                     pszLink != NULL;
     
     m_poKmlDSKml = OGRLIBKMLCreateOGCKml22(m_poKmlFactory, bWithAtom);
-    DocumentPtr poKmlDocument = m_poKmlFactory->CreateDocument (  );
-    
-    if( pszAuthorName != NULL || pszAuthorURI != NULL || pszAuthorEmail != NULL )
+    if( osUpdateTargetHref.size() == 0 )
     {
-        kmldom::AtomAuthorPtr author = m_poKmlFactory->CreateAtomAuthor();
-        if( pszAuthorName != NULL )
-            author->set_name(pszAuthorName);
-        if( pszAuthorURI != NULL )
+        DocumentPtr poKmlDocument = m_poKmlFactory->CreateDocument (  );
+        
+        if( pszAuthorName != NULL || pszAuthorURI != NULL || pszAuthorEmail != NULL )
         {
-            /* Ad-hoc validation. The ABNF is horribly complicated : http://tools.ietf.org/search/rfc3987#page-7 */
-            if( strncmp(pszAuthorURI, "http://", strlen("http://")) == 0 ||
-                strncmp(pszAuthorURI, "https://", strlen("https://")) == 0 )
+            kmldom::AtomAuthorPtr author = m_poKmlFactory->CreateAtomAuthor();
+            if( pszAuthorName != NULL )
+                author->set_name(pszAuthorName);
+            if( pszAuthorURI != NULL )
             {
-                author->set_uri(pszAuthorURI);
+                /* Ad-hoc validation. The ABNF is horribly complicated : http://tools.ietf.org/search/rfc3987#page-7 */
+                if( strncmp(pszAuthorURI, "http://", strlen("http://")) == 0 ||
+                    strncmp(pszAuthorURI, "https://", strlen("https://")) == 0 )
+                {
+                    author->set_uri(pszAuthorURI);
+                }
+                else
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined, "Invalid IRI for AUTHOR_URI");
+                }
             }
-            else
+            if( pszAuthorEmail != NULL )
             {
-                CPLError(CE_Warning, CPLE_AppDefined, "Invalid IRI for AUTHOR_URI");
+                const char* pszArobase = strchr(pszAuthorEmail, '@');
+                if( pszArobase != NULL && strchr(pszArobase + 1, '.') != NULL )
+                {
+                    author->set_email(pszAuthorEmail);
+                }
+                else
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined, "Invalid email for AUTHOR_EMAIL");
+                }
             }
+            poKmlDocument->set_atomauthor(author);
         }
-        if( pszAuthorEmail != NULL )
-        {
-            const char* pszArobase = strchr(pszAuthorEmail, '@');
-            if( pszArobase != NULL && strchr(pszArobase + 1, '.') != NULL )
-            {
-                author->set_email(pszAuthorEmail);
-            }
-            else
-            {
-                CPLError(CE_Warning, CPLE_AppDefined, "Invalid email for AUTHOR_EMAIL");
-            }
-        }
-        poKmlDocument->set_atomauthor(author);
-    }
 
-    if( pszLink != NULL )
+        if( pszLink != NULL )
+        {
+            kmldom::AtomLinkPtr link = m_poKmlFactory->CreateAtomLink();
+            link->set_href(pszLink);
+            link->set_rel("related");
+            poKmlDocument->set_atomlink(link);
+        }
+        
+        const char* pszPhoneNumber = CSLFetchNameValue(papszOptions, "PHONENUMBER");
+        if( pszPhoneNumber != NULL )
+        {
+            if( IsValidPhoneNumber(pszPhoneNumber) )
+            {
+                if( strncmp(pszPhoneNumber, "tel:", strlen("tel:")) != 0 )
+                    poKmlDocument->set_phonenumber(CPLSPrintf("tel:%s", pszPhoneNumber));
+                else
+                    poKmlDocument->set_phonenumber(pszPhoneNumber);
+            }
+            else
+            {
+                CPLError(CE_Warning, CPLE_AppDefined, "Invalid phone number");
+            }
+        }
+
+        m_poKmlDSKml->set_feature ( poKmlDocument );
+        m_poKmlDSContainer = poKmlDocument;
+    }
+    else
     {
-        kmldom::AtomLinkPtr link = m_poKmlFactory->CreateAtomLink();
-        link->set_href(pszLink);
-        link->set_rel("related");
-        poKmlDocument->set_atomlink(link);
+        NetworkLinkControlPtr nlc = m_poKmlFactory->CreateNetworkLinkControl();
+        m_poKmlDSKml->set_networklinkcontrol ( nlc );
+        nlc->set_update(m_poKmlUpdate);
     }
     
-    const char* pszPhoneNumber = CSLFetchNameValue(papszOptions, "PHONENUMBER");
-    if( pszPhoneNumber != NULL )
-    {
-        if( IsValidPhoneNumber(pszPhoneNumber) )
-        {
-            if( strncmp(pszPhoneNumber, "tel:", strlen("tel:")) != 0 )
-                poKmlDocument->set_phonenumber(CPLSPrintf("tel:%s", pszPhoneNumber));
-            else
-                poKmlDocument->set_phonenumber(pszPhoneNumber);
-        }
-        else
-        {
-            CPLError(CE_Warning, CPLE_AppDefined, "Invalid phone number");
-        }
-    }
-
-    m_poKmlDSKml->set_feature ( poKmlDocument );
-    m_poKmlDSContainer = poKmlDocument;
     m_isKml = TRUE;
     bUpdated = TRUE;
 
@@ -1559,11 +1585,13 @@ int OGRLIBKMLDataSource::CreateKmz (
 
 
     /***** create the doc.kml  *****/
+    if( osUpdateTargetHref.size() == 0 )
+    {
+        const char *namefield = CPLGetConfigOption ( "LIBKML_USE_DOC.KML", "yes" );
 
-    const char *namefield = CPLGetConfigOption ( "LIBKML_USE_DOC.KML", "yes" );
-
-    if ( !strcmp ( namefield, "yes" ) ) {
-        m_poKmlDocKml = m_poKmlFactory->CreateDocument (  );
+        if ( !strcmp ( namefield, "yes" ) ) {
+            m_poKmlDocKml = m_poKmlFactory->CreateDocument (  );
+        }
     }
 
     pszStylePath = CPLStrdup((char *) "style/style.kml");
@@ -1598,11 +1626,13 @@ int OGRLIBKMLDataSource::CreateDir (
     m_isDir = TRUE;
     bUpdated = TRUE;
 
+    if( osUpdateTargetHref.size() == 0 )
+    {
+        const char *namefield = CPLGetConfigOption ( "LIBKML_USE_DOC.KML", "yes" );
 
-    const char *namefield = CPLGetConfigOption ( "LIBKML_USE_DOC.KML", "yes" );
-
-    if ( !strcmp ( namefield, "yes" ) ) {
-        m_poKmlDocKml = m_poKmlFactory->CreateDocument (  );
+        if ( !strcmp ( namefield, "yes" ) ) {
+            m_poKmlDocKml = m_poKmlFactory->CreateDocument (  );
+        }
     }
 
     pszStylePath = CPLStrdup((char *) "style.kml");
@@ -1636,6 +1666,13 @@ int OGRLIBKMLDataSource::Create (
 
     pszName = CPLStrdup ( pszFilename );
     bUpdate = TRUE;
+
+    osUpdateTargetHref = CSLFetchNameValueDef(papszOptions, "UPDATE_TARGETHREF", "");
+    if( osUpdateTargetHref.size() )
+    {
+        m_poKmlUpdate = m_poKmlFactory->CreateUpdate();
+        m_poKmlUpdate->set_targethref(osUpdateTargetHref.c_str());
+    }
 
     /***** kml *****/
 
@@ -1873,11 +1910,15 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKml (
 {
 
     OGRLIBKMLLayer *poOgrLayer = NULL;
+    DocumentPtr poKmlDocument = NULL;
+    
+    if( m_poKmlDSContainer != NULL )
+    {
+        poKmlDocument = m_poKmlFactory->CreateDocument (  );
+        poKmlDocument->set_id(OGRLIBKMLGetSanitizedNCName(pszLayerName).c_str());
 
-    DocumentPtr poKmlDocument = m_poKmlFactory->CreateDocument (  );
-    poKmlDocument->set_id(OGRLIBKMLGetSanitizedNCName(pszLayerName).c_str());
-
-    m_poKmlDSContainer->add_feature ( poKmlDocument );
+        m_poKmlDSContainer->add_feature ( poKmlDocument );
+    }
 
     /***** create the layer *****/
 
@@ -1885,8 +1926,8 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKml (
                             NULL, poKmlDocument, "", TRUE, bUpdate, 1 );
 
     /***** add the layer name as a <Name> *****/
-
-    poKmlDocument->set_name ( pszLayerName );
+    if( poKmlDocument != NULL )
+        poKmlDocument->set_name ( pszLayerName );
 
     return poOgrLayer;
 }
@@ -1909,35 +1950,38 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKmz (
     OGRwkbGeometryType eGType,
     char **papszOptions )
 {
-
-    /***** add a network link to doc.kml *****/
-
-    const char *pszUseDocKml =
-        CPLGetConfigOption ( "LIBKML_USE_DOC.KML", "yes" );
-
-    if ( EQUAL ( pszUseDocKml, "yes" ) && m_poKmlDocKml ) {
-
-        DocumentPtr poKmlDocument = AsDocument ( m_poKmlDocKml );
-
-        NetworkLinkPtr poKmlNetLink = m_poKmlFactory->CreateNetworkLink (  );
-        LinkPtr poKmlLink = m_poKmlFactory->CreateLink (  );
-
-        std::string oHref;
-        oHref.append ( pszLayerName );
-        oHref.append ( ".kml" );
-        poKmlLink->set_href ( oHref );
-
-        poKmlNetLink->set_link ( poKmlLink );
-        poKmlDocument->add_feature ( poKmlNetLink );
-
-    }
-
-    /***** create the layer *****/
-
     OGRLIBKMLLayer *poOgrLayer = NULL;
+    DocumentPtr poKmlDocument = NULL;
+    
+    if( m_poKmlUpdate == NULL )
+    {
+        /***** add a network link to doc.kml *****/
 
-    DocumentPtr poKmlDocument = m_poKmlFactory->CreateDocument (  );
-    poKmlDocument->set_id(OGRLIBKMLGetSanitizedNCName(pszLayerName).c_str());
+        const char *pszUseDocKml =
+            CPLGetConfigOption ( "LIBKML_USE_DOC.KML", "yes" );
+
+        if ( EQUAL ( pszUseDocKml, "yes" ) && m_poKmlDocKml ) {
+
+            DocumentPtr poKmlDocument = AsDocument ( m_poKmlDocKml );
+
+            NetworkLinkPtr poKmlNetLink = m_poKmlFactory->CreateNetworkLink (  );
+            LinkPtr poKmlLink = m_poKmlFactory->CreateLink (  );
+
+            std::string oHref;
+            oHref.append ( pszLayerName );
+            oHref.append ( ".kml" );
+            poKmlLink->set_href ( oHref );
+
+            poKmlNetLink->set_link ( poKmlLink );
+            poKmlDocument->add_feature ( poKmlNetLink );
+
+        }
+
+        /***** create the layer *****/
+
+        poKmlDocument = m_poKmlFactory->CreateDocument (  );
+        poKmlDocument->set_id(OGRLIBKMLGetSanitizedNCName(pszLayerName).c_str());
+    }
 
     poOgrLayer = AddLayer ( pszLayerName, poOgrSRS, eGType, this,
                             NULL, poKmlDocument,
@@ -1945,8 +1989,10 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKmz (
                             TRUE, bUpdate, 1 );
 
     /***** add the layer name as a <Name> *****/
-
-    poKmlDocument->set_name ( pszLayerName );
+    if( m_poKmlUpdate == NULL )
+    {
+        poKmlDocument->set_name ( pszLayerName );
+    }
 
     return poOgrLayer;
 }
@@ -2138,6 +2184,8 @@ OGRStyleTable *OGRLIBKMLDataSource::GetStyleTable (
 void OGRLIBKMLDataSource::SetStyleTable2Kml (
     OGRStyleTable * poStyleTable )
 {
+    if( m_poKmlDSContainer == NULL )
+        return;
 
     /***** delete all the styles *****/
 

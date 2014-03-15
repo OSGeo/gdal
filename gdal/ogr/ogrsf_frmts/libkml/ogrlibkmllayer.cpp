@@ -55,6 +55,9 @@ using kmldom::LatLonAltBoxPtr;
 using kmldom::LodPtr;
 using kmldom::ScreenOverlayPtr;
 using kmldom::IconPtr;
+using kmldom::CreatePtr;
+using kmldom::ChangePtr;
+using kmldom::DeletePtr;
 
 #include "ogrlibkmlfeature.h"
 #include "ogrlibkmlfield.h"
@@ -97,6 +100,7 @@ CPLString OGRLIBKMLGetSanitizedNCName(const char* pszName)
                 eGType          the layers geometry type
                 poOgrDS         pointer to the datasource the layer is in
                 poKmlRoot       pointer to the root kml element of the layer
+                poKmlContainer  pointer to the kml container of the layer
                 pszFileName     the filename of the layer
                 bNew            true if its a new layer
                 bUpdate         true if the layer is writeable
@@ -111,6 +115,7 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
                                  OGRLIBKMLDataSource * poOgrDS,
                                  ElementPtr poKmlRoot,
                                  ContainerPtr poKmlContainer,
+                                 UpdatePtr poKmlUpdate,
                                  const char *pszFileName,
                                  int bNew,
                                  int bUpdate )
@@ -142,6 +147,9 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
     /***** store the layers container *****/
 
     m_poKmlLayer = poKmlContainer;
+    
+    /* update container */
+    m_poKmlUpdate = poKmlUpdate;
 
     /***** related to Region *****/
 
@@ -450,6 +458,9 @@ OGRFeature *OGRLIBKMLLayer::GetNextRawFeature (
 {
     FeaturePtr poKmlFeature;
     OGRFeature *poOgrFeature = NULL;
+    
+    if( m_poKmlLayer == NULL )
+        return NULL;
 
     /***** loop over the kml features to find the next placemark *****/
 
@@ -527,7 +538,19 @@ OGRErr OGRLIBKMLLayer::CreateFeature (
     PlacemarkPtr poKmlPlacemark =
         feat2kml ( m_poOgrDS, this, poOgrFeat, m_poOgrDS->GetKmlFactory (  ) );
 
-    m_poKmlLayer->add_feature ( poKmlPlacemark );
+    if( m_poKmlLayer != NULL )
+        m_poKmlLayer->add_feature ( poKmlPlacemark );
+    else
+    {
+        CPLAssert( m_poKmlUpdate != NULL );
+        KmlFactory *poKmlFactory = m_poOgrDS->GetKmlFactory (  );
+        CreatePtr poCreate = poKmlFactory->CreateCreate();
+        DocumentPtr poDocument = poKmlFactory->CreateDocument();
+        poDocument->set_targetid(OGRLIBKMLGetSanitizedNCName(GetName()));
+        poDocument->add_feature ( poKmlPlacemark );
+        poCreate->add_container(poDocument);
+        m_poKmlUpdate->add_updateoperation(poCreate);
+    }
 
     /***** update the layer class count of features  *****/
 
@@ -535,8 +558,80 @@ OGRErr OGRLIBKMLLayer::CreateFeature (
     
     const char* pszId = CPLSPrintf("%s.%d",
                     OGRLIBKMLGetSanitizedNCName(GetName()).c_str(), nFeatures);
+    poOgrFeat->SetFID(nFeatures);
     poKmlPlacemark->set_id(pszId);
     
+    /***** mark the layer as updated *****/
+
+    bUpdated = TRUE;
+    m_poOgrDS->Updated (  );
+
+    return OGRERR_NONE;
+}
+
+
+/******************************************************************************
+ method to update a feature to a layer. Only work on a NetworkLinkControl/Update
+
+ Args:          poOgrFeat   pointer to the feature to update
+ 
+ Returns:       OGRERR_NONE, or OGRERR_UNSUPPORTED_OPERATION of the layer is
+                not writeable
+
+******************************************************************************/
+
+OGRErr OGRLIBKMLLayer::SetFeature ( OGRFeature * poOgrFeat )
+{
+    if( !bUpdate || m_poKmlUpdate == NULL )
+        return OGRERR_UNSUPPORTED_OPERATION;
+    if( poOgrFeat->GetFID() == OGRNullFID )
+        return OGRERR_FAILURE;
+
+    PlacemarkPtr poKmlPlacemark =
+        feat2kml ( m_poOgrDS, this, poOgrFeat, m_poOgrDS->GetKmlFactory (  ) );
+
+    KmlFactory *poKmlFactory = m_poOgrDS->GetKmlFactory (  );
+    ChangePtr poChange = poKmlFactory->CreateChange();
+    poChange->add_object(poKmlPlacemark);
+    m_poKmlUpdate->add_updateoperation(poChange);
+    
+    const char* pszId = CPLSPrintf("%s.%ld",
+                    OGRLIBKMLGetSanitizedNCName(GetName()).c_str(), poOgrFeat->GetFID());
+    poKmlPlacemark->set_targetid(pszId);
+
+    /***** mark the layer as updated *****/
+
+    bUpdated = TRUE;
+    m_poOgrDS->Updated (  );
+
+    return OGRERR_NONE;
+}
+
+/******************************************************************************
+ method to delete a feature to a layer. Only work on a NetworkLinkControl/Update
+
+ Args:          nFID   id of the feature to delete
+ 
+ Returns:       OGRERR_NONE, or OGRERR_UNSUPPORTED_OPERATION of the layer is
+                not writeable
+
+******************************************************************************/
+
+OGRErr OGRLIBKMLLayer::DeleteFeature( long nFID )
+{
+    if( !bUpdate || m_poKmlUpdate == NULL )
+        return OGRERR_UNSUPPORTED_OPERATION;
+
+    KmlFactory *poKmlFactory = m_poOgrDS->GetKmlFactory (  );
+    DeletePtr poDelete = poKmlFactory->CreateDelete();
+    m_poKmlUpdate->add_updateoperation(poDelete);
+    PlacemarkPtr poKmlPlacemark = poKmlFactory->CreatePlacemark();
+    poDelete->add_feature(poKmlPlacemark);
+    
+    const char* pszId = CPLSPrintf("%s.%ld",
+                    OGRLIBKMLGetSanitizedNCName(GetName()).c_str(), nFID);
+    poKmlPlacemark->set_targetid(pszId);
+
     /***** mark the layer as updated *****/
 
     bUpdated = TRUE;
@@ -567,7 +662,7 @@ int OGRLIBKMLLayer::GetFeatureCount (
         i = OGRLayer::GetFeatureCount( bForce );
     }
 
-    else {
+    else if( m_poKmlLayer != NULL ) {
         size_t iKmlFeature; 
         size_t nKmlFeatures = m_poKmlLayer->get_feature_array_size (  );
         FeaturePtr poKmlFeature;
@@ -616,7 +711,8 @@ OGRErr OGRLIBKMLLayer::GetExtent (
 {
     Bbox oKmlBbox;
 
-    if ( kmlengine::
+    if ( m_poKmlLayer != NULL &&
+        kmlengine::
          GetFeatureBounds ( AsFeature ( m_poKmlLayer ), &oKmlBbox ) ) {
         psExtent->MinX = oKmlBbox.get_west (  );
         psExtent->MinY = oKmlBbox.get_south (  );
@@ -721,7 +817,7 @@ void OGRLIBKMLLayer::SetStyleTableDirectly (
     OGRStyleTable * poStyleTable )
 {
 
-    if ( !bUpdate )
+    if ( !bUpdate || m_poKmlLayer == NULL )
         return;
 
     KmlFactory *poKmlFactory = m_poOgrDS->GetKmlFactory (  );
@@ -773,7 +869,7 @@ void OGRLIBKMLLayer::SetStyleTable (
     OGRStyleTable * poStyleTable )
 {
 
-    if ( !bUpdate )
+    if ( !bUpdate || m_poKmlLayer == NULL )
         return;
 
     if ( poStyleTable )
