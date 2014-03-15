@@ -346,7 +346,8 @@ void OGRLIBKMLDataSource::WriteKmz (
         std::string oKmlOut = kmldom::SerializePretty ( poKmlKml );
         PostProcessOutput(oKmlOut);
 
-        if ( CPLCreateFileInZip( hZIP, "style/style.kml", NULL ) != CE_None ||
+        if ( CPLCreateFileInZip( hZIP, "style/", NULL ) != CE_None ||
+             CPLCreateFileInZip( hZIP, "style/style.kml", NULL ) != CE_None ||
              CPLWriteFileInZip( hZIP, oKmlOut.data(), oKmlOut.size() ) != CE_None )
             CPLError ( CE_Failure, CPLE_FileIO,
                        "ERROR adding %s to %s", "style/style.kml", pszName );
@@ -1874,6 +1875,7 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKml (
     OGRLIBKMLLayer *poOgrLayer = NULL;
 
     DocumentPtr poKmlDocument = m_poKmlFactory->CreateDocument (  );
+    poKmlDocument->set_id(OGRLIBKMLGetSanitizedNCName(pszLayerName).c_str());
 
     m_poKmlDSContainer->add_feature ( poKmlDocument );
 
@@ -1935,6 +1937,7 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKmz (
     OGRLIBKMLLayer *poOgrLayer = NULL;
 
     DocumentPtr poKmlDocument = m_poKmlFactory->CreateDocument (  );
+    poKmlDocument->set_id(OGRLIBKMLGetSanitizedNCName(pszLayerName).c_str());
 
     poOgrLayer = AddLayer ( pszLayerName, poOgrSRS, eGType, this,
                             NULL, poKmlDocument,
