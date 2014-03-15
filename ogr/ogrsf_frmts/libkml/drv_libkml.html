@@ -426,7 +426,23 @@
     Setting the enviroment variable LIBKML_WRAPDATELINE to "yes" will cause the
     libkml driver to split the geometry at the dateline when read.
   </p>
+  
+<h2>Update documents</h2>
 
+When defining the dataset creation options UPDATE_TARGETHREF, a NetworkLinkControl KML
+file with an <a href="https://developers.google.com/kml/documentation/kmlreference#update">
+&lt;Update&gt;</a> element will be generated.
+See the <a href="https://developers.google.com/kml/documentation/updates">tutorial about update</a>.<p>
+
+The CreateFeature() operation on a layer will be translated as a
+<a href="https://developers.google.com/kml/documentation/kmlreference#create">&lt;Create&gt;</a> element.<p>
+
+The SetFeature() operation on a layer will be translated as a
+<a href="https://developers.google.com/kml/documentation/kmlreference#change">&lt;Change&gt;</a> element.<p>
+
+The DeleteFeature() operation on a layer will be translated as a
+<a href="https://developers.google.com/kml/documentation/kmlreference#delete">&lt;Delete&gt;</a> element.<p>
+  
 <h2>VSI Virtual File System API support</h2>
 
 (Some features below might require OGR >= 1.9.0)<p>

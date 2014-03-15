@@ -41,6 +41,7 @@ using kmldom::DocumentPtr;
 using kmldom::ContainerPtr;
 using kmldom::ElementPtr;
 using kmldom::SchemaPtr;
+using kmldom::UpdatePtr;
 using kmlengine::KmzFile;
 using kmlengine::KmzFilePtr;
 
@@ -67,7 +68,7 @@ class OGRLIBKMLLayer:public OGRLayer
 
     ContainerPtr              m_poKmlLayer;
     ElementPtr                m_poKmlLayerRoot;
-    //KmlFile                  *m_poKmlKmlfile;
+    UpdatePtr                 m_poKmlUpdate;
 
     DocumentPtr               m_poKmlDocument;
     //OGRStyleTable            *m_poStyleTable;
@@ -96,6 +97,7 @@ class OGRLIBKMLLayer:public OGRLayer
                                 OGRLIBKMLDataSource *poOgrDS,
                                 ElementPtr poKmlRoot,
                                 ContainerPtr poKmlContainer,
+                                UpdatePtr poKmlUpdate,
                                 const char *pszFileName,
                                 int bNew,
                                 int bUpdate);
@@ -107,6 +109,8 @@ class OGRLIBKMLLayer:public OGRLayer
     OGRFeatureDefn           *GetLayerDefn (  ) { return m_poOgrFeatureDefn; };
     //OGRErr                    SetAttributeFilter (const char * );
     OGRErr                    CreateFeature ( OGRFeature * poOgrFeat );
+    OGRErr                    SetFeature ( OGRFeature * poOgrFeat );
+    OGRErr                    DeleteFeature( long nFID );
 
     int                       GetFeatureCount ( int bForce = TRUE );
     OGRErr                    GetExtent ( OGREnvelope * psExtent,
@@ -190,11 +194,13 @@ class OGRLIBKMLDataSource:public OGRDataSource
 
     int                       bUpdate;
     int                       bUpdated;
+    CPLString                 osUpdateTargetHref;
 
     /***** for kml files *****/
     int                       m_isKml;
     KmlPtr                    m_poKmlDSKml;
     ContainerPtr              m_poKmlDSContainer;
+    UpdatePtr                 m_poKmlUpdate;
 
     /***** for kmz files *****/
 
