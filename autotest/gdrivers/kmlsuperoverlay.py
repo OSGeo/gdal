@@ -266,7 +266,7 @@ def kmlsuperoverlay_6():
             return 'fail'
     for i in range(4):
         cs = ds.GetRasterBand(i+1).Checksum()
-        if cs != 60283:
+        if cs != 47673:
             print(cs)
             gdaltest.post_reason('failure')
             return 'fail'
