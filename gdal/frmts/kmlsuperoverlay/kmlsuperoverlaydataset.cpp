@@ -2153,11 +2153,18 @@ GDALDataset* KmlSingleDocRasterDataset::Open(const char* pszFilename,
                 strcpy(sDesc.szExt, szExt);
                 aosDescs.push_back(sDesc);
             }
-            else if( j > aosDescs[level-1].nMaxJ && i > aosDescs[level-1].nMaxI )
+            else
             {
-                aosDescs[level-1].nMaxJ = j;
-                aosDescs[level-1].nMaxI = i;
-                strcpy(aosDescs[level-1].szExt, szExt);
+                if( j > aosDescs[level-1].nMaxJ )
+                {
+                    aosDescs[level-1].nMaxJ = j;
+                    strcpy(aosDescs[level-1].szExt, szExt);
+                }
+                if( i > aosDescs[level-1].nMaxI )
+                {
+                    aosDescs[level-1].nMaxI = i;
+                    strcpy(aosDescs[level-1].szExt, szExt);
+                }
             }
         }
     }
