@@ -249,6 +249,42 @@ def kmlsuperoverlay_5():
     return 'success'
 
 ###############################################################################
+# Test raster KML with alternate structure (such as http://opentopo.sdsc.edu/files/Haiti/NGA_Haiti_LiDAR2.kmz))
+
+def kmlsuperoverlay_6():
+
+    ds = gdal.Open('data/kmlimage.kmz')
+    if ds.GetProjectionRef().find('WGS_1984') < 0:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    got_gt = ds.GetGeoTransform()
+    ref_gt = [ 1.2554125761846773, 1.6640895429971981e-05, 0.0, 43.452120815728101, 0.0, -1.0762348187666334e-05 ]
+    for i in range(6):
+        if abs(got_gt[i] - ref_gt[i]) > 1e-6:
+            gdaltest.post_reason('failure')
+            print(got_gt)
+            return 'fail'
+    for i in range(4):
+        cs = ds.GetRasterBand(i+1).Checksum()
+        if cs != 60283:
+            print(cs)
+            gdaltest.post_reason('failure')
+            return 'fail'
+        if ds.GetRasterBand(i+1).GetRasterColorInterpretation() != gdal.GCI_RedBand + i:
+            gdaltest.post_reason('failure')
+            return 'fail'
+    if ds.GetRasterBand(1).GetOverviewCount() != 1:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    if cs != 61070:
+        print(cs)
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def  kmlsuperoverlay_cleanup():
@@ -262,6 +298,7 @@ gdaltest_list = [
     kmlsuperoverlay_3,
     kmlsuperoverlay_4,
     kmlsuperoverlay_5,
+    kmlsuperoverlay_6,
     kmlsuperoverlay_cleanup ]
 
 if __name__ == '__main__':
