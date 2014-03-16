@@ -12,6 +12,7 @@
  * Trents contribution. 
  ******************************************************************************
  * Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
+ * Copyright (c) 2009-2010, Even Rouault <even dot rouault at mines-paris dot org>
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),

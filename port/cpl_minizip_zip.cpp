@@ -22,6 +22,7 @@
    Modification to zipOpen2 to support globalComment retrieval.
 
    Copyright (C) 1998-2005 Gilles Vollant
+ * Copyright (c) 2010-2012, Even Rouault <even dot rouault at mines-paris dot org>
 
    Read zip.h for more info
 */

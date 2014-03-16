@@ -11,6 +11,7 @@
 *
 ******************************************************************************
 * Copyright( c ) 2006, Ivan Lucena
+ * Copyright (c) 2007-2012, Even Rouault <even dot rouault at mines-paris dot org>
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files( the "Software" ),

@@ -10,6 +10,7 @@
  ******************************************************************************
  * Copyright (c) 2006, Christopher Condit
  *               2007, Jens Oberender
+ * Copyright (c) 2007-2014, Even Rouault <even dot rouault at mines-paris dot org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),

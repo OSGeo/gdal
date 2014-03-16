@@ -8,6 +8,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2005, Andrey Kiselev <dron@remotesensing.org>
+ * Copyright (c) 2010, Even Rouault <even dot rouault at mines-paris dot org>
  *
  * This code is based on the code from OpenEXR project with the following
  * copyright:

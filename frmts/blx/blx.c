@@ -1,6 +1,7 @@
 /* libblx - Magellan BLX topo reader/writer library
  *
  * Copyright (c) 2008, Henrik Johansson <henrik@johome.net>
+ * Copyright (c) 2008-2009, Even Rouault <even dot rouault at mines-paris dot org>
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation

@@ -6,7 +6,7 @@
  * Derived from ADRG driver by Even Rouault, even.rouault at mines-paris.org.
  *
  ******************************************************************************
- * Copyright (c) 2007, Even Rouault
+ * Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
  * Copyright (c) 2009, Frank Warmerdam
  *
  * Permission is hereby granted, free of charge, to any person obtaining a

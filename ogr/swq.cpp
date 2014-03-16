@@ -6,6 +6,7 @@
  * 
  ******************************************************************************
  * Copyright (C) 2001 Information Interoperability Institute (3i)
+ * Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
  *
  * Permission to use, copy, modify and distribute this software and
  * its documentation for any purpose and without fee is hereby granted,
