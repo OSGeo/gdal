@@ -8,7 +8,7 @@
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
 # 
 ###############################################################################
-# Copyright (c) 2008, Even Rouault <even dot rouault at mines dash paris dot org>,
+# Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
 #                     Frank Warmerdam <warmerdam@pobox.com>
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a

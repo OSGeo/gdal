@@ -9,6 +9,7 @@
  *
  ****************************************************************************
  * Copyright (c) 2007, Adam Guernsey <adam@ctech.com>
+ * Copyright (c) 2009-2011, Even Rouault <even dot rouault at mines-paris dot org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),

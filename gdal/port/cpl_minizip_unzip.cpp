@@ -7,7 +7,7 @@
      - Recode filename to UTF-8 if GP 11 is unset
      - Use Info-ZIP Unicode Path Extra Field (0x7075) to get UTF-8 filenames
 
-   Copyright (C) 2007-2008 Even Rouault
+ * Copyright (c) 2008-2014, Even Rouault <even dot rouault at mines-paris dot org>
 
    Original licence available in port/LICENCE_minizip
 */

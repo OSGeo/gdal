@@ -8,6 +8,7 @@
 # 
 ###############################################################################
 # Copyright (c) 2003, Andrey Kiselev <dron@remotesensing.org>
+# Copyright (c) 2008-2009, Even Rouault <even dot rouault at mines-paris dot org>
 # 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public

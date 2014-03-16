@@ -3,6 +3,7 @@
 /* Bison implementation for Yacc-like parsers in C
 
    Copyright (C) 1984, 1989-1990, 2000-2013 Free Software Foundation, Inc.
+ * Copyright (c) 2013, Even Rouault <even dot rouault at mines-paris dot org>
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by

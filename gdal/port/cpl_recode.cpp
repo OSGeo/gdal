@@ -9,6 +9,7 @@
  **********************************************************************
  * Copyright (c) 2011, Andrey Kiselev <dron@ak4719.spb.edu>
  * Copyright (c) 2008, Frank Warmerdam
+ * Copyright (c) 2011-2014, Even Rouault <even dot rouault at mines-paris dot org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

@@ -31,6 +31,7 @@
       
 
     Copyright (c) 1992, Michigan State University
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
    
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the "Software"),
