@@ -9,7 +9,7 @@
 # * Port from ogrinfo.cpp whose author is Frank Warmerdam
 # *
 # ******************************************************************************
-# * Copyright (c) 2010, Even Rouault
+# * Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
 # * Copyright (c) 1999, Frank Warmerdam
 # *
 # * Permission is hereby granted, free of charge, to any person obtaining a

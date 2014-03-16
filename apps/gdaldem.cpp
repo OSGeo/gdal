@@ -10,7 +10,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2006, 2009 Matthew Perry 
- * Copyright (c) 2009 Even Rouault
+ * Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
  * Portions derived from GRASS 4.1 (public domain) See 
  * http://trac.osgeo.org/gdal/ticket/2975 for more information regarding 
  * history of this code
