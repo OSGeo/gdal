@@ -8,6 +8,7 @@
  ******************************************************************************
  * Copyright (c) 1998, Global Geomatics
  * Copyright (c) 1998, Frank Warmerdam
+ * Copyright (c) 2008-2012, Even Rouault <even dot rouault at mines-paris dot org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),

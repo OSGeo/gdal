@@ -8,7 +8,7 @@
 # Author:   Even Rouault <even dot rouault at mines dash paris dot org>
 #
 ###############################################################################
-# Copyright (c) 2012, Even Rouault <even dot rouault at mines dash paris dot org>
+# Copyright (c) 2012-2013, Even Rouault <even dot rouault at mines-paris dot org>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),

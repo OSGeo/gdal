@@ -8,6 +8,7 @@
 #
 ###############################################################################
 # Copyright (c) 2000, Atlantis Scientific Inc. (www.atlsci.com)
+# Copyright (c) 2009-2011, Even Rouault <even dot rouault at mines-paris dot org>
 # 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public

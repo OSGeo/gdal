@@ -15,6 +15,7 @@
  *   British Columbia.
  * Copyright (c) 2001-2003 Michael David Adams.
  * All rights reserved.
+ * Copyright (c) 2009-2010, Even Rouault <even dot rouault at mines-paris dot org>
  */
 
 /* __START_OF_JASPER_LICENSE__

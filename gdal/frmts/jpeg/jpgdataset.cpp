@@ -7,6 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2000, Frank Warmerdam
+ * Copyright (c) 2007-2014, Even Rouault <even dot rouault at mines-paris dot org>
  *
  * Portions Copyright (c) Her majesty the Queen in right of Canada as
  * represented by the Minister of National Defence, 2006.
