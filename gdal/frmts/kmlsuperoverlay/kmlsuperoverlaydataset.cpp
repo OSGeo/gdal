@@ -1130,7 +1130,7 @@ KmlSuperOverlayRasterBand::KmlSuperOverlayRasterBand(KmlSuperOverlayReadDataset*
 }
 
 /************************************************************************/
-/*                       ~KmlSuperOverlayRasterBand()                   */
+/*                               IReadBlock()                           */
 /************************************************************************/
 
 CPLErr KmlSuperOverlayRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, void *pData )
@@ -1795,6 +1795,424 @@ static void KmlSuperOverlayComputeDepth(CPLString osFilename,
 }
 
 /************************************************************************/
+/*                    KmlSingleDocRasterDataset                         */
+/************************************************************************/
+
+class KmlSingleDocRasterRasterBand;
+
+struct KmlSingleDocRasterTilesDesc
+{
+    int nMaxJ;
+    int nMaxI;
+    char szExt[4];
+};
+
+class KmlSingleDocRasterDataset: public GDALDataset
+{
+        friend class KmlSingleDocRasterRasterBand;
+        CPLString osDirname;
+        CPLString osNominalExt;
+        GDALDataset* poCurTileDS;
+        double adfGlobalExtents[4];
+        double adfGeoTransform[6];
+        std::vector<KmlSingleDocRasterDataset*> apoOverviews;
+        std::vector<KmlSingleDocRasterTilesDesc> aosDescs;
+        int nLevel;
+        int bHasBuiltOverviews;
+
+  protected:
+    virtual int         CloseDependentDatasets();
+
+    public:
+                KmlSingleDocRasterDataset();
+                ~KmlSingleDocRasterDataset();
+
+        virtual CPLErr GetGeoTransform( double * padfGeoTransform )
+        {
+            memcpy(padfGeoTransform, adfGeoTransform, 6 * sizeof(double));
+            return CE_None;
+        }
+
+        virtual const char *GetProjectionRef() { return SRS_WKT_WGS84; }
+
+        void BuildOverviews();
+
+        static GDALDataset* Open(const char* pszFilename,
+                                 const CPLString& osFilename,
+                                 CPLXMLNode* psNode);
+};
+
+/************************************************************************/
+/*                    KmlSingleDocRasterRasterBand                      */
+/************************************************************************/
+
+class KmlSingleDocRasterRasterBand: public GDALRasterBand
+{
+        int nLevel;
+
+    public:
+        KmlSingleDocRasterRasterBand(KmlSingleDocRasterDataset* poDS,
+                                     int nBand);
+
+        virtual CPLErr IReadBlock( int, int, void * );
+        virtual GDALColorInterp GetColorInterpretation();
+
+        virtual int GetOverviewCount();
+        virtual GDALRasterBand *GetOverview(int);
+};
+
+/************************************************************************/
+/*                        KmlSingleDocRasterDataset()                   */
+/************************************************************************/
+
+KmlSingleDocRasterDataset::KmlSingleDocRasterDataset()
+{
+    poCurTileDS = NULL;
+    bHasBuiltOverviews = FALSE;
+}
+
+/************************************************************************/
+/*                       ~KmlSingleDocRasterDataset()                   */
+/************************************************************************/
+
+KmlSingleDocRasterDataset::~KmlSingleDocRasterDataset()
+{
+    CloseDependentDatasets();
+}
+
+/************************************************************************/
+/*                         CloseDependentDatasets()                     */
+/************************************************************************/
+
+int KmlSingleDocRasterDataset::CloseDependentDatasets()
+{
+    int bRet = FALSE;
+
+    if( poCurTileDS != NULL )
+    {
+        bRet = TRUE;
+        GDALClose((GDALDatasetH) poCurTileDS);
+        poCurTileDS = NULL;
+    }
+    if( apoOverviews.size() > 0 )
+    {
+        bRet = TRUE;
+        for(size_t i = 0; i < apoOverviews.size(); i++)
+            delete apoOverviews[i];
+        apoOverviews.resize(0);
+    }
+
+    return bRet;
+}
+
+/************************************************************************/
+/*                           BuildOverviews()                           */
+/************************************************************************/
+
+void KmlSingleDocRasterDataset::BuildOverviews()
+{
+    if( bHasBuiltOverviews )
+        return;
+    bHasBuiltOverviews = TRUE;
+
+    for(int k = 2; k <= (int)aosDescs.size(); k++)
+    {
+        const char* pszImageFilename = CPLFormFilename( osDirname,
+            CPLSPrintf("kml_image_L%d_%d_%d", (int)aosDescs.size() - k  + 1,
+                    aosDescs[aosDescs.size()-k].nMaxJ,
+                    aosDescs[aosDescs.size()-k].nMaxI),
+                    aosDescs[aosDescs.size()-k].szExt );
+        GDALDataset* poImageDS = (GDALDataset*) GDALOpen(pszImageFilename, GA_ReadOnly);
+        if( poImageDS == NULL )
+        {
+            break;
+        }
+        int nRightXSize = poImageDS->GetRasterXSize();
+        int nBottomYSize = poImageDS->GetRasterYSize();
+        GDALClose( (GDALDatasetH) poImageDS) ;
+
+        KmlSingleDocRasterDataset* poOvrDS = new KmlSingleDocRasterDataset();
+        poOvrDS->nRasterXSize = nRightXSize + aosDescs[aosDescs.size()-k].nMaxI * 1024;
+        poOvrDS->nRasterYSize = nBottomYSize + aosDescs[aosDescs.size()-k].nMaxJ * 1024;
+        poOvrDS->nLevel = (int)aosDescs.size() - k +  1;
+        poOvrDS->osDirname = osDirname;
+        poOvrDS->osNominalExt = aosDescs[aosDescs.size()-k].szExt;
+        poOvrDS->adfGeoTransform[0] = adfGlobalExtents[0];
+        poOvrDS->adfGeoTransform[1] = (adfGlobalExtents[2] - adfGlobalExtents[0]) / poOvrDS->nRasterXSize;
+        poOvrDS->adfGeoTransform[2] = 0.0;
+        poOvrDS->adfGeoTransform[3] = adfGlobalExtents[3];
+        poOvrDS->adfGeoTransform[4] = 0.0;
+        poOvrDS->adfGeoTransform[5] = -(adfGlobalExtents[3] - adfGlobalExtents[1]) / poOvrDS->nRasterXSize;
+        for(int iBand = 1; iBand <= nBands; iBand ++ )
+            poOvrDS->SetBand(iBand, new KmlSingleDocRasterRasterBand(poOvrDS, iBand));
+        poOvrDS->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
+
+        apoOverviews.push_back(poOvrDS);
+    }
+}
+
+/************************************************************************/
+/*                      KmlSingleDocRasterRasterBand()                  */
+/************************************************************************/
+
+KmlSingleDocRasterRasterBand::KmlSingleDocRasterRasterBand(KmlSingleDocRasterDataset* poDS,
+                                                           int nBand)
+{
+    this->poDS = poDS;
+    this->nBand = nBand;
+    nBlockXSize = 1024;
+    nBlockYSize = 1024;
+    eDataType = GDT_Byte;
+}
+
+/************************************************************************/
+/*                               IReadBlock()                           */
+/************************************************************************/
+
+CPLErr KmlSingleDocRasterRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+                                                 void * pImage )
+{
+    KmlSingleDocRasterDataset* poGDS = (KmlSingleDocRasterDataset*) poDS;
+    const char* pszImageFilename = CPLFormFilename( poGDS->osDirname,
+        CPLSPrintf("kml_image_L%d_%d_%d", poGDS->nLevel, nBlockYOff, nBlockXOff), poGDS->osNominalExt );
+    if( poGDS->poCurTileDS == NULL || 
+        strcmp(poGDS->poCurTileDS->GetDescription(), pszImageFilename) != 0 )
+    {
+        if( poGDS->poCurTileDS != NULL ) GDALClose((GDALDatasetH) poGDS->poCurTileDS);
+        poGDS->poCurTileDS = (GDALDataset*) GDALOpen(pszImageFilename, GA_ReadOnly);
+    }
+    GDALDataset* poImageDS = poGDS->poCurTileDS;
+    if( poImageDS == NULL )
+        return CE_Failure;
+    int nXSize = poImageDS->GetRasterXSize();
+    int nYSize = poImageDS->GetRasterYSize();
+
+    int nReqXSize = nBlockXSize;
+    if( nBlockXOff * nBlockXSize + nReqXSize > nRasterXSize )
+        nReqXSize = nRasterXSize - nBlockXOff * nBlockXSize;
+    int nReqYSize = nBlockYSize;
+    if( nBlockYOff * nBlockYSize + nReqYSize > nRasterYSize )
+        nReqYSize = nRasterYSize - nBlockYOff * nBlockYSize;
+
+    if( nXSize != nReqXSize || nYSize != nReqYSize )
+    {
+        CPLDebug("KMLSUPEROVERLAY", "Tile %s, dimensions %dx%d, expected %dx%d",
+                 pszImageFilename, nXSize, nYSize, nReqXSize, nReqYSize);
+        return CE_Failure;
+    }
+
+    CPLErr eErr = CE_Failure;
+    if( poImageDS->GetRasterCount() == 1 )
+    {
+        GDALColorTable* poColorTable = poImageDS->GetRasterBand(1)->GetColorTable();
+        if( nBand == 4 && poColorTable == NULL )
+        {
+            /* Add fake alpha band */
+            memset( pImage, 255, nBlockXSize * nBlockYSize );
+            eErr = CE_None;
+        }
+        else
+        {
+            eErr = poImageDS->GetRasterBand(1)->RasterIO(GF_Read,
+                                                    0, 0, nXSize, nYSize,
+                                                    pImage,
+                                                    nXSize, nYSize,
+                                                    GDT_Byte, 1, nBlockXSize);
+
+            /* Expand color table */
+            if( eErr == CE_None && poColorTable != NULL )
+            {
+                int j, i;
+                for(j = 0; j < nReqYSize; j++ )
+                {
+                    for(i = 0; i < nReqXSize; i++ )
+                    {
+                        GByte nVal = ((GByte*) pImage)[j * nBlockXSize + i];
+                        const GDALColorEntry * poEntry = poColorTable->GetColorEntry(nVal);
+                        if( poEntry != NULL )
+                        {
+                            if( nBand == 1 )
+                                ((GByte*) pImage)[j * nBlockXSize + i] = poEntry->c1;
+                            else if( nBand == 2 )
+                                ((GByte*) pImage)[j * nBlockXSize + i] = poEntry->c2;
+                            else if( nBand == 3 )
+                                ((GByte*) pImage)[j * nBlockXSize + i] = poEntry->c3;
+                            else
+                                ((GByte*) pImage)[j * nBlockXSize + i] = poEntry->c4;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    else if( nBand <= poImageDS->GetRasterCount() )
+    {
+        eErr = poImageDS->GetRasterBand(nBand)->RasterIO(GF_Read,
+                                                0, 0, nXSize, nYSize,
+                                                pImage,
+                                                nXSize, nYSize,
+                                                GDT_Byte, 1, nBlockXSize);
+    }
+    else if( nBand == 4 && poImageDS->GetRasterCount() == 3 )
+    {
+        /* Add fake alpha band */
+        memset( pImage, 255, nBlockXSize * nBlockYSize );
+        eErr = CE_None;
+    }
+
+    return eErr;
+}
+
+/************************************************************************/
+/*                          GetColorInterpretation()                    */
+/************************************************************************/
+
+GDALColorInterp  KmlSingleDocRasterRasterBand::GetColorInterpretation()
+{
+    return (GDALColorInterp)(GCI_RedBand + nBand - 1);
+}
+
+/************************************************************************/
+/*                          GetOverviewCount()                          */
+/************************************************************************/
+
+int KmlSingleDocRasterRasterBand::GetOverviewCount()
+{
+    KmlSingleDocRasterDataset* poGDS = (KmlSingleDocRasterDataset*) poDS;
+    poGDS->BuildOverviews();
+
+    return (int)poGDS->apoOverviews.size();
+}
+
+/************************************************************************/
+/*                           GetOverview()                              */
+/************************************************************************/
+
+GDALRasterBand *KmlSingleDocRasterRasterBand::GetOverview(int iOvr)
+{
+    KmlSingleDocRasterDataset* poGDS = (KmlSingleDocRasterDataset*) poDS;
+    poGDS->BuildOverviews();
+
+    if( iOvr < 0 || iOvr >= (int)poGDS->apoOverviews.size() )
+        return NULL;
+
+    return poGDS->apoOverviews[iOvr]->GetRasterBand(nBand);
+}
+
+/************************************************************************/
+/*                                Open()                                */
+/************************************************************************/
+
+/* Read raster with a structure like http://opentopo.sdsc.edu/files/Haiti/NGA_Haiti_LiDAR2.kmz */
+/* i.e. made of a doc.kml that list all tiles at all overview levels */
+/* The tile name pattern is "kml_image_L{level}_{j}_{i}.{png|jpg}" */
+GDALDataset* KmlSingleDocRasterDataset::Open(const char* pszFilename,
+                                             const CPLString& osFilename,
+                                             CPLXMLNode* psRoot)
+{
+    CPLXMLNode* psRootFolder = CPLGetXMLNode(psRoot, "=kml.Document.Folder");
+    if( psRootFolder == NULL )
+        return NULL;
+    const char* pszRootFolderName =
+        CPLGetXMLValue(psRootFolder, "name", "");
+    if( strcmp(pszRootFolderName, "kml_image_L1_0_0") != 0 )
+        return NULL;
+
+    double adfGlobalExtents[4];
+    CPLXMLNode* psRegion = CPLGetXMLNode(psRootFolder, "Region");
+    if( psRegion == NULL )
+        return NULL;
+    if( !KmlSuperOverlayGetBoundingBox(psRegion, adfGlobalExtents) )
+        return NULL;
+    
+    char** papszFiles = VSIReadDir(CPLGetPath(osFilename));
+    if( papszFiles == NULL )
+        return NULL;
+    int k;
+    std::vector<KmlSingleDocRasterTilesDesc> aosDescs;
+    for(k = 0; papszFiles[k] != NULL; k++)
+    {
+        int level, j, i;
+        char szExt[4];
+        if( sscanf(papszFiles[k], "kml_image_L%d_%d_%d.%3s", &level, &j, &i, szExt) == 4 )
+        {
+            if( level > (int)aosDescs.size() )
+            {
+                KmlSingleDocRasterTilesDesc sDesc;
+                while( level > (int)aosDescs.size() + 1 )
+                {
+                    sDesc.nMaxJ = -1;
+                    sDesc.nMaxI = -1;
+                    strcpy(sDesc.szExt, "");
+                    aosDescs.push_back(sDesc);
+                }
+
+                sDesc.nMaxJ = j;
+                sDesc.nMaxI = i;
+                strcpy(sDesc.szExt, szExt);
+                aosDescs.push_back(sDesc);
+            }
+            else if( j > aosDescs[level-1].nMaxJ && i > aosDescs[level-1].nMaxI )
+            {
+                aosDescs[level-1].nMaxJ = j;
+                aosDescs[level-1].nMaxI = i;
+                strcpy(aosDescs[level-1].szExt, szExt);
+            }
+        }
+    }
+    CSLDestroy(papszFiles);
+    if( aosDescs.size() == 0 )
+        return NULL;
+    for(k = 0; k < (int)aosDescs.size(); k++)
+    {
+        if( aosDescs[k].nMaxJ < 0 || aosDescs[k].nMaxI < 0 )
+            return NULL;
+    }
+
+    CPLString osDirname = CPLGetPath(osFilename);
+    const char* pszImageFilename = CPLFormFilename( osDirname,
+        CPLSPrintf("kml_image_L%d_%d_%d", (int)aosDescs.size(),
+                   aosDescs[aosDescs.size()-1].nMaxJ,
+                   aosDescs[aosDescs.size()-1].nMaxI),
+                   aosDescs[aosDescs.size()-1].szExt );
+    GDALDataset* poImageDS = (GDALDataset*) GDALOpen(pszImageFilename, GA_ReadOnly);
+    if( poImageDS == NULL )
+        return NULL;
+    int nRightXSize = poImageDS->GetRasterXSize();
+    int nBottomYSize = poImageDS->GetRasterYSize();
+    int nBands = poImageDS->GetRasterCount();
+    int bHasCT = (nBands == 1 && poImageDS->GetRasterBand(1)->GetColorTable() != NULL);
+    GDALClose( (GDALDatasetH) poImageDS) ;
+
+    int nXSize = nRightXSize + aosDescs[aosDescs.size()-1].nMaxI * 1024;
+    int nYSize = nBottomYSize + aosDescs[aosDescs.size()-1].nMaxJ * 1024;
+    if( nXSize <= 0 || nYSize <= 0 )
+        return NULL;
+
+    KmlSingleDocRasterDataset* poDS = new KmlSingleDocRasterDataset();
+    poDS->nRasterXSize = nXSize;
+    poDS->nRasterYSize = nYSize;
+    poDS->nLevel = (int)aosDescs.size();
+    poDS->osDirname = osDirname;
+    poDS->osNominalExt = aosDescs[aosDescs.size()-1].szExt;
+    memcpy(poDS->adfGlobalExtents, adfGlobalExtents, 4 * sizeof(double));
+    poDS->adfGeoTransform[0] = adfGlobalExtents[0];
+    poDS->adfGeoTransform[1] = (adfGlobalExtents[2] - adfGlobalExtents[0]) / poDS->nRasterXSize;
+    poDS->adfGeoTransform[2] = 0.0;
+    poDS->adfGeoTransform[3] = adfGlobalExtents[3];
+    poDS->adfGeoTransform[4] = 0.0;
+    poDS->adfGeoTransform[5] = -(adfGlobalExtents[3] - adfGlobalExtents[1]) / poDS->nRasterYSize;
+    if( nBands == 1 && bHasCT ) nBands = 4;
+    for(int iBand = 1; iBand <= nBands; iBand ++ )
+        poDS->SetBand(iBand, new KmlSingleDocRasterRasterBand(poDS, iBand));
+    poDS->SetDescription(pszFilename);
+    poDS->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
+    poDS->aosDescs = aosDescs;
+
+    return poDS;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -1852,8 +2270,11 @@ GDALDataset *KmlSuperOverlayReadDataset::Open(const char* pszFilename,
     if( !KmlSuperOverlayFindRegionStart(psNode, &psRegion,
                                         &psDocument, &psGroundOverlay, &psLink) )
     {
+        GDALDataset* psDS = KmlSingleDocRasterDataset::Open(pszFilename,
+                                                            osFilename,
+                                                            psNode);
         CPLDestroyXMLNode(psNode);
-        return NULL;
+        return psDS;
     }
 
     if( psLink != NULL )
