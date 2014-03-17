@@ -1803,9 +1803,12 @@ class KmlSingleDocRasterRasterBand;
 
 struct KmlSingleDocRasterTilesDesc
 {
-    int nMaxJ;
-    int nMaxI;
-    char szExt[4];
+    int nMaxJ_i;     /* i index at which a tile with max j is realized */
+    int nMaxJ_j;     /* j index at which a tile with max j is realized */
+    int nMaxI_i;     /* i index at which a tile with max i is realized */
+    int nMaxI_j;     /* j index at which a tile with max i is realized */
+    char szExtJ[4];  /* extension of tile at which max j is realized */
+    char szExtI[4];  /* extension of tile at which max i is realized */
 };
 
 class KmlSingleDocRasterDataset: public GDALDataset
@@ -1906,6 +1909,59 @@ int KmlSingleDocRasterDataset::CloseDependentDatasets()
 }
 
 /************************************************************************/
+/*                     KmlSingleDocGetDimensions()                      */
+/************************************************************************/
+
+static int KmlSingleDocGetDimensions(const CPLString& osDirname,
+                                     const KmlSingleDocRasterTilesDesc& oDesc,
+                                     int nLevel,
+                                     int& nXSize,
+                                     int& nYSize,
+                                     int& nBands,
+                                     int& bHasCT)
+{
+    const char* pszImageFilename = CPLFormFilename( osDirname,
+            CPLSPrintf("kml_image_L%d_%d_%d", nLevel,
+                    oDesc.nMaxJ_j,
+                    oDesc.nMaxJ_i),
+                    oDesc.szExtJ );
+    GDALDataset* poImageDS = (GDALDataset*) GDALOpen(pszImageFilename, GA_ReadOnly);
+    if( poImageDS == NULL )
+    {
+        return FALSE;
+    }
+    int nRightXSize;
+    int nBottomYSize = poImageDS->GetRasterYSize();
+    nBands = poImageDS->GetRasterCount();
+    bHasCT = (nBands == 1 && poImageDS->GetRasterBand(1)->GetColorTable() != NULL);
+    if( oDesc.nMaxJ_j == oDesc.nMaxI_j &&
+        oDesc.nMaxJ_i == oDesc.nMaxI_i)
+    {
+        nRightXSize = poImageDS->GetRasterXSize();
+    }
+    else
+    {
+        GDALClose( (GDALDatasetH) poImageDS) ;
+        pszImageFilename = CPLFormFilename( osDirname,
+            CPLSPrintf("kml_image_L%d_%d_%d", nLevel,
+                    oDesc.nMaxI_j,
+                    oDesc.nMaxI_i),
+                    oDesc.szExtI );
+        poImageDS = (GDALDataset*) GDALOpen(pszImageFilename, GA_ReadOnly);
+        if( poImageDS == NULL )
+        {
+            return FALSE;
+        }
+        nRightXSize = poImageDS->GetRasterXSize();
+    }
+    GDALClose( (GDALDatasetH) poImageDS) ;
+
+    nXSize = nRightXSize + oDesc.nMaxI_i * 1024;
+    nYSize = nBottomYSize + oDesc.nMaxJ_j * 1024;
+    return (nXSize > 0 && nYSize > 0);
+}
+
+/************************************************************************/
 /*                           BuildOverviews()                           */
 /************************************************************************/
 
@@ -1917,26 +1973,20 @@ void KmlSingleDocRasterDataset::BuildOverviews()
 
     for(int k = 2; k <= (int)aosDescs.size(); k++)
     {
-        const char* pszImageFilename = CPLFormFilename( osDirname,
-            CPLSPrintf("kml_image_L%d_%d_%d", (int)aosDescs.size() - k  + 1,
-                    aosDescs[aosDescs.size()-k].nMaxJ,
-                    aosDescs[aosDescs.size()-k].nMaxI),
-                    aosDescs[aosDescs.size()-k].szExt );
-        GDALDataset* poImageDS = (GDALDataset*) GDALOpen(pszImageFilename, GA_ReadOnly);
-        if( poImageDS == NULL )
+        const KmlSingleDocRasterTilesDesc& oDesc = aosDescs[aosDescs.size()-k];
+        int nXSize = 0, nYSize = 0, nTileBands = 0, bHasCT = FALSE;
+        if( !KmlSingleDocGetDimensions(osDirname, oDesc, (int)aosDescs.size() - k  + 1,
+                                    nXSize, nYSize, nTileBands, bHasCT) )
         {
             break;
         }
-        int nRightXSize = poImageDS->GetRasterXSize();
-        int nBottomYSize = poImageDS->GetRasterYSize();
-        GDALClose( (GDALDatasetH) poImageDS) ;
 
         KmlSingleDocRasterDataset* poOvrDS = new KmlSingleDocRasterDataset();
-        poOvrDS->nRasterXSize = nRightXSize + aosDescs[aosDescs.size()-k].nMaxI * 1024;
-        poOvrDS->nRasterYSize = nBottomYSize + aosDescs[aosDescs.size()-k].nMaxJ * 1024;
+        poOvrDS->nRasterXSize = nXSize;
+        poOvrDS->nRasterYSize = nYSize;
         poOvrDS->nLevel = (int)aosDescs.size() - k +  1;
         poOvrDS->osDirname = osDirname;
-        poOvrDS->osNominalExt = aosDescs[aosDescs.size()-k].szExt;
+        poOvrDS->osNominalExt = oDesc.szExtI;
         poOvrDS->adfGeoTransform[0] = adfGlobalExtents[0];
         poOvrDS->adfGeoTransform[1] = (adfGlobalExtents[2] - adfGlobalExtents[0]) / poOvrDS->nRasterXSize;
         poOvrDS->adfGeoTransform[2] = 0.0;
@@ -1979,11 +2029,16 @@ CPLErr KmlSingleDocRasterRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         strcmp(poGDS->poCurTileDS->GetDescription(), pszImageFilename) != 0 )
     {
         if( poGDS->poCurTileDS != NULL ) GDALClose((GDALDatasetH) poGDS->poCurTileDS);
+        CPLPushErrorHandler(CPLQuietErrorHandler);
         poGDS->poCurTileDS = (GDALDataset*) GDALOpen(pszImageFilename, GA_ReadOnly);
+        CPLPopErrorHandler();
     }
     GDALDataset* poImageDS = poGDS->poCurTileDS;
     if( poImageDS == NULL )
-        return CE_Failure;
+    {
+        memset( pImage, 0, nBlockXSize * nBlockYSize );
+        return CE_None;
+    }
     int nXSize = poImageDS->GetRasterXSize();
     int nYSize = poImageDS->GetRasterYSize();
 
@@ -2141,28 +2196,42 @@ GDALDataset* KmlSingleDocRasterDataset::Open(const char* pszFilename,
                 KmlSingleDocRasterTilesDesc sDesc;
                 while( level > (int)aosDescs.size() + 1 )
                 {
-                    sDesc.nMaxJ = -1;
-                    sDesc.nMaxI = -1;
-                    strcpy(sDesc.szExt, "");
+                    sDesc.nMaxJ_i = -1;
+                    sDesc.nMaxJ_j = -1;
+                    sDesc.nMaxI_i = -1;
+                    sDesc.nMaxI_j = -1;
+                    strcpy(sDesc.szExtI, "");
+                    strcpy(sDesc.szExtJ, "");
                     aosDescs.push_back(sDesc);
                 }
 
-                sDesc.nMaxJ = j;
-                sDesc.nMaxI = i;
-                strcpy(sDesc.szExt, szExt);
+                sDesc.nMaxJ_j = j;
+                sDesc.nMaxJ_i = i;
+                strcpy(sDesc.szExtJ, szExt);
+                sDesc.nMaxI_j = j;
+                sDesc.nMaxI_i = i;
+                strcpy(sDesc.szExtI, szExt);
                 aosDescs.push_back(sDesc);
             }
             else
             {
-                if( j > aosDescs[level-1].nMaxJ )
+                /* 2010_USACE_JALBTCX_Louisiana_Mississippi_Lidar.kmz has not a lower-right tile */
+                /* so the right most tile and the bottom most tile might be different */
+                if( (j > aosDescs[level-1].nMaxJ_j) ||
+                    (j == aosDescs[level-1].nMaxJ_j &&
+                     i > aosDescs[level-1].nMaxJ_i) )
                 {
-                    aosDescs[level-1].nMaxJ = j;
-                    strcpy(aosDescs[level-1].szExt, szExt);
+                    aosDescs[level-1].nMaxJ_j = j;
+                    aosDescs[level-1].nMaxJ_i = i;
+                    strcpy(aosDescs[level-1].szExtJ, szExt);
                 }
-                if( i > aosDescs[level-1].nMaxI )
+                if( i > aosDescs[level-1].nMaxI_i ||
+                   (i == aosDescs[level-1].nMaxI_i &&
+                    j > aosDescs[level-1].nMaxI_j) )
                 {
-                    aosDescs[level-1].nMaxI = i;
-                    strcpy(aosDescs[level-1].szExt, szExt);
+                    aosDescs[level-1].nMaxI_j = j;
+                    aosDescs[level-1].nMaxI_i = i;
+                    strcpy(aosDescs[level-1].szExtI, szExt);
                 }
             }
         }
@@ -2172,36 +2241,25 @@ GDALDataset* KmlSingleDocRasterDataset::Open(const char* pszFilename,
         return NULL;
     for(k = 0; k < (int)aosDescs.size(); k++)
     {
-        if( aosDescs[k].nMaxJ < 0 || aosDescs[k].nMaxI < 0 )
+        if( aosDescs[k].nMaxJ_i < 0 )
             return NULL;
     }
 
     CPLString osDirname = CPLGetPath(osFilename);
-    const char* pszImageFilename = CPLFormFilename( osDirname,
-        CPLSPrintf("kml_image_L%d_%d_%d", (int)aosDescs.size(),
-                   aosDescs[aosDescs.size()-1].nMaxJ,
-                   aosDescs[aosDescs.size()-1].nMaxI),
-                   aosDescs[aosDescs.size()-1].szExt );
-    GDALDataset* poImageDS = (GDALDataset*) GDALOpen(pszImageFilename, GA_ReadOnly);
-    if( poImageDS == NULL )
+    const KmlSingleDocRasterTilesDesc& oDesc = aosDescs[aosDescs.size()-1];
+    int nXSize = 0, nYSize = 0, nBands = 0, bHasCT = FALSE;
+    if( !KmlSingleDocGetDimensions(osDirname, oDesc, (int)aosDescs.size(),
+                                   nXSize, nYSize, nBands, bHasCT) )
+    {
         return NULL;
-    int nRightXSize = poImageDS->GetRasterXSize();
-    int nBottomYSize = poImageDS->GetRasterYSize();
-    int nBands = poImageDS->GetRasterCount();
-    int bHasCT = (nBands == 1 && poImageDS->GetRasterBand(1)->GetColorTable() != NULL);
-    GDALClose( (GDALDatasetH) poImageDS) ;
-
-    int nXSize = nRightXSize + aosDescs[aosDescs.size()-1].nMaxI * 1024;
-    int nYSize = nBottomYSize + aosDescs[aosDescs.size()-1].nMaxJ * 1024;
-    if( nXSize <= 0 || nYSize <= 0 )
-        return NULL;
+    }
 
     KmlSingleDocRasterDataset* poDS = new KmlSingleDocRasterDataset();
     poDS->nRasterXSize = nXSize;
     poDS->nRasterYSize = nYSize;
     poDS->nLevel = (int)aosDescs.size();
     poDS->osDirname = osDirname;
-    poDS->osNominalExt = aosDescs[aosDescs.size()-1].szExt;
+    poDS->osNominalExt = oDesc.szExtI;
     memcpy(poDS->adfGlobalExtents, adfGlobalExtents, 4 * sizeof(double));
     poDS->adfGeoTransform[0] = adfGlobalExtents[0];
     poDS->adfGeoTransform[1] = (adfGlobalExtents[2] - adfGlobalExtents[0]) / poDS->nRasterXSize;
