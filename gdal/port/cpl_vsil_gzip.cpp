@@ -523,6 +523,7 @@ int VSIGZipHandle::gzseek( vsi_l_offset offset, int whence )
     vsi_l_offset original_offset = offset;
     int original_nWhence = whence;
 
+    z_eof = 0;
     if (ENABLE_DEBUG) CPLDebug("GZIP", "Seek(" CPL_FRMT_GUIB ",%d)", offset, whence);
 
     if (transparent)
