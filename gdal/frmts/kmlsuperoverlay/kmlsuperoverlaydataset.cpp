@@ -1849,8 +1849,6 @@ class KmlSingleDocRasterDataset: public GDALDataset
 
 class KmlSingleDocRasterRasterBand: public GDALRasterBand
 {
-        int nLevel;
-
     public:
         KmlSingleDocRasterRasterBand(KmlSingleDocRasterDataset* poDS,
                                      int nBand);
@@ -1870,6 +1868,7 @@ KmlSingleDocRasterDataset::KmlSingleDocRasterDataset()
 {
     poCurTileDS = NULL;
     bHasBuiltOverviews = FALSE;
+    nLevel = 0;
 }
 
 /************************************************************************/
