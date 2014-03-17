@@ -128,6 +128,7 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
     nFID = 1;
 
     this->bUpdate = bUpdate;
+    bUpdated = FALSE;
     m_pszName = CPLStrdup ( pszLayerName );
     m_pszFileName = CPLStrdup ( pszFileName );
     m_poOgrDS = poOgrDS;
