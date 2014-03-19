@@ -876,7 +876,7 @@ def ogr_libkml_camera():
     lyr = ds.GetLayer(0)
 
     feat = lyr.GetNextFeature()
-    if feat.GetGeometryRef().ExportToWkt() != 'POINT (2 49)' or \
+    if feat.GetGeometryRef().ExportToWkt() != 'POINT (2 49 0)' or \
        feat.GetField("heading") != 70.0 or \
        feat.GetField("tilt") != 75.0 or \
        feat.GetField("roll") != 10.0:
@@ -1776,6 +1776,79 @@ def ogr_libkml_write_networklink():
     return 'success'
 
 ###############################################################################
+# Test writing PhotoOverlay
+
+def ogr_libkml_write_photooverlay():
+
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_photooverlay.kml")
+    lyr = ds.CreateLayer('test')
+    lyr.CreateField(ogr.FieldDefn('name', ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn("heading", ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn("tilt", ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn("roll", ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn("camera_longitude", ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn("camera_latitude", ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn("camera_altitude", ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn("camera_altitudemode", ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn("photooverlay", ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn("leftfov", ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn("rightfov", ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn("bottomfov", ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn("topfov", ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn("near", ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn("photooverlay_shape", ogr.OFTString))
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField("name", "a photo overlay")
+    feat.SetField("photooverlay", "http://www.gdal.org/gdalicon.png")
+    feat.SetField("camera_longitude", 2.2946)
+    feat.SetField("camera_latitude", 48.8583)
+    feat.SetField("camera_altitude", 20)
+    feat.SetField("camera_altitudemode", "relativeToGround")
+    feat.SetField("leftfov", -60)
+    feat.SetField("rightfov", 59)
+    feat.SetField("bottomfov", -58)
+    feat.SetField("topfov", 57)
+    feat.SetField("near", 100)
+    feat.SetField("heading", 0)
+    feat.SetField("tilt", 90)
+    feat.SetField("roll", 0)
+    feat.SetField("photooverlay_shape", "rectangle")
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(2.2945 48.85825)'))
+    lyr.CreateFeature(feat)
+
+    ds = None
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_photooverlay.kml', 'rb')
+    data = gdal.VSIFReadL(1, 2048, f)
+    gdal.VSIFCloseL(f)
+
+    if data.find('<Camera>') == -1 or \
+       data.find('<longitude>2.2946</longitude>') == -1 or \
+       data.find('<latitude>48.8583</latitude>') == -1 or \
+       data.find('<altitude>20</altitude>') == -1 or \
+       data.find('<heading>0</heading>') == -1 or \
+       data.find('<tilt>90</tilt>') == -1 or \
+       data.find('<roll>0</roll>') == -1 or \
+       data.find('<altitudeMode>relativeToGround</altitudeMode>') == -1 or \
+       data.find('<href>http://www.gdal.org/gdalicon.png</href>') == -1 or \
+       data.find('<leftFov>-60</leftFov>') == -1 or \
+       data.find('<rightFov>59</rightFov>') == -1 or \
+       data.find('<bottomFov>-58</bottomFov>') == -1 or \
+       data.find('<topFov>57</topFov>') == -1 or \
+       data.find('<near>100</near>') == -1 or \
+       data.find('2.2945,48.85825,0') == -1 or \
+       data.find('<shape>rectangle</shape>') == -1:
+        print(data)
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_libkml_cleanup():
@@ -1811,6 +1884,7 @@ def ogr_libkml_cleanup():
     gdal.Unlink("/vsimem/ogr_libkml_write_networklinkcontrol_dir")
     gdal.Unlink("/vsimem/ogr_libkml_write_liststyle.kml")
     gdal.Unlink("/vsimem/ogr_libkml_write_networklink.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_write_photooverlay.kml")
 
     # Re-register KML driver if necessary
     if ogrtest.kml_drv is not None:
@@ -1864,6 +1938,7 @@ gdaltest_list = [
     ogr_libkml_write_networklinkcontrol,
     ogr_libkml_write_liststyle,
     ogr_libkml_write_networklink,
+    ogr_libkml_write_photooverlay,
     ogr_libkml_cleanup ]
 
 if __name__ == '__main__':

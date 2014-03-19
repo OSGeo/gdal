@@ -273,7 +273,18 @@
   </p>
 
   <p>If the networklink field is defined, a <a href="https://developers.google.com/kml/documentation/kmlreference#networklink">
-    &lt;NetworkLink&gt;</a> will be generated.
+    &lt;NetworkLink&gt;</a> will be generated. Other networklink_ fields are optional.
+  </p>
+
+  <p>If the photooverlay field is defined, a <a href="https://developers.google.com/kml/documentation/kmlreference#photooverlay">
+    &lt;PhotoOverlay&gt;</a> will be generated (provided that the camera_longitude,
+    camera_latitude, camera_altitude, camera_altitudemode, head and/or tilt and/or roll,
+    leftfov, rightfov, bottomfov, topfov, near fields are also set. The shape field is optional.
+  </p>
+
+  <p>Placemark, Model, NetworkLink and PhotoOverlay objects can have an associated camera
+     if the camera_longitude, camera_latitude, camera_altitude, camera_altitudemode, head and/or tilt and/or roll
+     fields are defined.
   </p>
 
   <p>
@@ -423,21 +434,21 @@
     <dd>This real field maps to the kml tag 
       <a href="https://developers.google.com/kml/documentation/kmlreference#heading">
       &lt;heading&gt;</a>. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_HEADING_FIELD. This field is present only if a Placemark has
+      enviroment variable LIBKML_HEADING_FIELD. When reading, this field is present only if a Placemark has
       a Camera with a heading element.
     </dd>
     <dt>tilt</dt>
     <dd>This real field maps to the kml tag 
       <a href="https://developers.google.com/kml/documentation/kmlreference#tilt">
       &lt;tilt&gt;</a>. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_TILT_FIELD. This field is present only if a Placemark has
+      enviroment variable LIBKML_TILT_FIELD. When reading, this field is present only if a Placemark has
       a Camera with a tilt element.
     </dd>
     <dt>roll</dt>
     <dd>This real field maps to the kml tag 
       <a href="https://developers.google.com/kml/documentation/kmlreference#roll">
       &lt;roll&gt;</a>. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_ROLL_FIELD. This field is present only if a Placemark has
+      enviroment variable LIBKML_ROLL_FIELD. When reading, this field is present only if a Placemark has
       a Camera with a roll element.
     </dd>
 
@@ -534,6 +545,94 @@
       <a href="https://developers.google.com/kml/documentation/kmlreference#httpquery">
       &lt;httpQuery&gt;</a> of a NetworkLink. The name of the ogr field can be changed with the
       enviroment variable LIBKML_NETWORKLINK_HTTPQUERY_FIELD.
+    </dd>
+
+    <dt>camera_longitude</dt>
+    <dd>This real field maps to kml tag 
+      <a href="https://developers.google.com/kml/documentation/kmlreference#longitude">
+      &lt;longitude&gt;</a> of a <a href="https://developers.google.com/kml/documentation/kmlreference#camera">
+      &lt;Camera&gt;</a>. The name of the ogr field can be changed with the
+      enviroment variable LIBKML_CACameraMERA_LONGITUDE_FIELD.
+    </dd>
+
+    <dt>camera_latitude</dt>
+    <dd>This real field maps to kml tag 
+      <a href="https://developers.google.com/kml/documentation/kmlreference#latitude">
+      &lt;latitude&gt;</a> of a <a href="https://developers.google.com/kml/documentation/kmlreference#camera">
+      &lt;Camera&gt;</a>. The name of the ogr field can be changed with the
+      enviroment variable LIBKML_CAMERA_LATITUDE_FIELD.
+    </dd>
+
+    <dt>camera_altitude</dt>
+    <dd>This real field maps to kml tag 
+      <a href="https://developers.google.com/kml/documentation/kmlreference#altitude">
+      &lt;altitude&gt;</a> of a <a href="https://developers.google.com/kml/documentation/kmlreference#camera">
+      &lt;Camera&gt;</a>. The name of the ogr field can be changed with the
+      enviroment variable LIBKML_CAMERA_ALTITUDE_FIELD.
+    </dd>
+
+    <dt>camera_altitudemode</dt>
+    <dd>This real field maps to kml tag 
+      <a href="https://developers.google.com/kml/documentation/kmlreference#altitudemode">
+      &lt;altitudeMode&gt;</a> of a <a href="https://developers.google.com/kml/documentation/kmlreference#camera">
+      &lt;Camera&gt;</a>. The name of the ogr field can be changed with the
+      enviroment variable LIBKML_CAMERA_ALTITUDEMODE_FIELD.
+    </dd>
+
+    <dt>photooverlay</dt>
+    <dd>This string field maps to the href element of the kml tag 
+      <a href="https://developers.google.com/kml/documentation/kmlreference#href">
+      &lt;href&gt;</a> of a <a href="https://developers.google.com/kml/documentation/kmlreference#photooverlay">
+      &lt;PhotoOverlay&gt;</a>. The name of the ogr field can be changed with the
+      enviroment variable LIBKML_PHOTOOVERLAY_FIELD.
+    </dd>
+
+    <dt>leftfov</dt>
+    <dd>This real field maps to to kml tag 
+      <a href="https://developers.google.com/kml/documentation/kmlreference#leftfov">
+      &lt;LeftFov&gt;</a> of a <a href="https://developers.google.com/kml/documentation/kmlreference#photooverlay">
+      &lt;PhotoOverlay&gt;</a>. The name of the ogr field can be changed with the
+      enviroment variable LIBKML_LEFTFOV_FIELD.
+    </dd>
+
+    <dt>rightfov</dt>
+    <dd>This real field maps to to kml tag 
+      <a href="https://developers.google.com/kml/documentation/kmlreference#rightfov">
+      &lt;RightFov&gt;</a> of a <a href="https://developers.google.com/kml/documentation/kmlreference#photooverlay">
+      &lt;PhotoOverlay&gt;</a>. The name of the ogr field can be changed with the
+      enviroment variable LIBKML_RightFOV_FIELD.
+    </dd>
+
+    <dt>bottomfov</dt>
+    <dd>This real field maps to to kml tag 
+      <a href="https://developers.google.com/kml/documentation/kmlreference#bottomfov">
+      &lt;BottomFov&gt;</a> of a <a href="https://developers.google.com/kml/documentation/kmlreference#photooverlay">
+      &lt;PhotoOverlay&gt;</a>. The name of the ogr field can be changed with the
+      enviroment variable LIBKML_BOTTOMTFOV_FIELD.
+    </dd>
+
+    <dt>topfov</dt>
+    <dd>This real field maps to to kml tag 
+      <a href="https://developers.google.com/kml/documentation/kmlreference#topfov">
+      &lt;TopFov&gt;</a> of a <a href="https://developers.google.com/kml/documentation/kmlreference#photooverlay">
+      &lt;PhotoOverlay&gt;</a>. The name of the ogr field can be changed with the
+      enviroment variable LIBKML_TOPFOV_FIELD.
+    </dd>
+
+    <dt>near</dt>
+    <dd>This real field maps to to kml tag 
+      <a href="https://developers.google.com/kml/documentation/kmlreference#leftfov">
+      &lt;Near&gt;</a> of a <a href="https://developers.google.com/kml/documentation/kmlreference#photooverlay">
+      &lt;PhotoOverlay&gt;</a>. The name of the ogr field can be changed with the
+      enviroment variable LIBKML_NEAR_FIELD.
+    </dd>
+
+    <dt>shape</dt>
+    <dd>This string field maps to to kml tag 
+      <a href="https://developers.google.com/kml/documentation/kmlreference#shape">
+      &lt;shape&gt;</a> of a <a href="https://developers.google.com/kml/documentation/kmlreference#photooverlay">
+      &lt;PhotoOverlay&gt;</a>. The name of the ogr field can be changed with the
+      enviroment variable LIBKML_SHAPE_FIELD.
     </dd>
 
     <dt>OGR_STYLE</dt>
