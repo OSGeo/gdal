@@ -297,7 +297,7 @@ void OGRLIBKMLDataSource::WriteKmz (
         /***** make it and add the container    *****/
         
         if ( !m_poKmlDocKmlRoot ) {
-            m_poKmlDocKmlRoot = OGRLIBKMLCreateOGCKml22(m_poKmlFactory);
+            m_poKmlDocKmlRoot = OGRLIBKMLCreateOGCKml22(m_poKmlFactory, m_papszOptions);
 
             if( m_poKmlDocKml != NULL )
             {
@@ -418,7 +418,7 @@ void OGRLIBKMLDataSource::WriteDir (
         /***** make it and add the container    *****/
         
         if ( !m_poKmlDocKmlRoot ) {
-            m_poKmlDocKmlRoot = OGRLIBKMLCreateOGCKml22(m_poKmlFactory);
+            m_poKmlDocKmlRoot = OGRLIBKMLCreateOGCKml22(m_poKmlFactory, m_papszOptions);
             if( m_poKmlDocKml != NULL )
                 AsKml( m_poKmlDocKmlRoot )->set_feature ( m_poKmlDocKml );
 
