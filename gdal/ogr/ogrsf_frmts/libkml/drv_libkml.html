@@ -83,13 +83,57 @@
   </p>
   <p>
     The href of an <a href="https://developers.google.com/kml/documentation/kmlreference#atomlink">
-    &lt;atom:link&gt;</a> element at the top Document level can be specified with the LINK creation option.
+    &lt;atom:link&gt;</a> element at the top Document level can be specified with the <b>LINK</b> creation option.
   </p>
   <p>
     The <a href="https://developers.google.com/kml/documentation/kmlreference#phonenumber">
-    &lt;phoneNumber&gt;</a> element at the top Document level can be specified with the PHONENUMBER creation option.
+    &lt;phoneNumber&gt;</a> element at the top Document level can be specified with the <b>PHONENUMBER</b> creation option.
     The value must follow the syntax of <a href="http://tools.ietf.org/html/rfc3966">IETF RFC 3966</a>.
   </p>
+
+    <h4>NetworkLinkControl</h4>
+
+    <p>
+    A  <a href="https://developers.google.com/kml/documentation/kmlreference#networklinkcontrol">
+    &lt;NetworkLinkControl&gt;</a> element can be defined if at least one of the following dataset creation option
+    is specified:
+    <ul>
+        <li><b>NLC_MINREFRESHPERIOD</b> : to set the <a href="https://developers.google.com/kml/documentation/kmlreference#minrefreshperiod">
+    &lt;minRefreshPeriod&gt;</a> element</li>
+        <li><b>NLC_MAXSESSIONLENGTH</b> : to set the <a href="https://developers.google.com/kml/documentation/kmlreference#maxsessionlength">
+    &lt;maxSessionLength&gt;</a> element</li>
+        <li><b>NLC_COOKIE</b> : to set the <a href="https://developers.google.com/kml/documentation/kmlreference#cookie">
+    &lt;cookie&gt;</a> element</li>
+        <li><b>NLC_MESSAGE</b> : to set the <a href="https://developers.google.com/kml/documentation/kmlreference#message">
+    &lt;message&gt;</a> element</li>
+        <li><b>NLC_LINKNAME</b> : to set the <a href="https://developers.google.com/kml/documentation/kmlreference#linkname">
+    &lt;linkName&gt;</a> element</li>
+        <li><b>NLC_LINKDESCRIPTION</b> : to set the <a href="https://developers.google.com/kml/documentation/kmlreference#linkdescription">
+    &lt;linkDescription&gt;</a> element</li>
+        <li><b>NLC_LINKSNIPPET</b> : to set the <a href="https://developers.google.com/kml/documentation/kmlreference#linksnippet">
+    &lt;linkSnippet&gt;</a> element</li>
+        <li><b>NLC_EXPIRES</b> : to set the <a href="https://developers.google.com/kml/documentation/kmlreference#expires">
+    &lt;expires&gt;</a> element</li>
+    </ul>
+    </p>
+
+    <h4>Update documents</h4>
+
+    <p>
+    When defining the dataset creation option <b>UPDATE_TARGETHREF</b>, a NetworkLinkControl KML
+    file with an <a href="https://developers.google.com/kml/documentation/kmlreference#update">
+    &lt;Update&gt;</a> element will be generated.
+    See the <a href="https://developers.google.com/kml/documentation/updates">tutorial about update</a>.<p>
+
+    The CreateFeature() operation on a layer will be translated as a
+    <a href="https://developers.google.com/kml/documentation/kmlreference#create">&lt;Create&gt;</a> element.<p>
+
+    The SetFeature() operation on a layer will be translated as a
+    <a href="https://developers.google.com/kml/documentation/kmlreference#change">&lt;Change&gt;</a> element.<p>
+
+    The DeleteFeature() operation on a layer will be translated as a
+    <a href="https://developers.google.com/kml/documentation/kmlreference#delete">&lt;Delete&gt;</a> element.<p>
+    </p>
  
   <h2>Layer</h2>
   
@@ -426,23 +470,7 @@
     Setting the enviroment variable LIBKML_WRAPDATELINE to "yes" will cause the
     libkml driver to split the geometry at the dateline when read.
   </p>
-  
-<h2>Update documents</h2>
 
-When defining the dataset creation options UPDATE_TARGETHREF, a NetworkLinkControl KML
-file with an <a href="https://developers.google.com/kml/documentation/kmlreference#update">
-&lt;Update&gt;</a> element will be generated.
-See the <a href="https://developers.google.com/kml/documentation/updates">tutorial about update</a>.<p>
-
-The CreateFeature() operation on a layer will be translated as a
-<a href="https://developers.google.com/kml/documentation/kmlreference#create">&lt;Create&gt;</a> element.<p>
-
-The SetFeature() operation on a layer will be translated as a
-<a href="https://developers.google.com/kml/documentation/kmlreference#change">&lt;Change&gt;</a> element.<p>
-
-The DeleteFeature() operation on a layer will be translated as a
-<a href="https://developers.google.com/kml/documentation/kmlreference#delete">&lt;Delete&gt;</a> element.<p>
-  
 <h2>VSI Virtual File System API support</h2>
 
 (Some features below might require OGR >= 1.9.0)<p>
