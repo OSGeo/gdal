@@ -44,12 +44,14 @@ using kmldom::StyleSelectorPtr;
 using kmldom::LinkPtr;
 using kmldom::SchemaPtr;
 using kmldom::NetworkLinkControlPtr;
+using kmldom::LinkSnippetPtr;
 using kmlbase::File;
 using kmldom::KmlPtr;
 using kmlbase::Attributes;
 
 #include "ogr_libkml.h"
 #include "ogrlibkmlstyle.h"
+#include "ogr_p.h"
 
 /***** this was shamelessly swiped from the kml driver *****/
 
@@ -201,6 +203,15 @@ void OGRLIBKMLDataSource::WriteKml (
 
     std::string oKmlOut;
     if ( m_poKmlDSKml ) {
+    
+        if( m_poKmlDSKml->has_networklinkcontrol() )
+        {
+            NetworkLinkControlPtr nlc = m_poKmlDSKml->get_networklinkcontrol();
+            if( nlc->has_update() && nlc->get_update()->get_updateoperation_array_size() == 0 )
+            {
+                nlc->clear_update();
+            }
+        }
         oKmlOut = kmldom::SerializePretty ( m_poKmlDSKml );
     }
     else if ( m_poKmlDSContainer ) {
@@ -287,7 +298,10 @@ void OGRLIBKMLDataSource::WriteKmz (
             {
                 NetworkLinkControlPtr nlc = m_poKmlFactory->CreateNetworkLinkControl();
                 AsKml( m_poKmlDocKmlRoot )->set_networklinkcontrol ( nlc );
-                nlc->set_update(m_poKmlUpdate);
+                if( m_poKmlUpdate->get_updateoperation_array_size() != 0 )
+                {
+                    nlc->set_update(m_poKmlUpdate);
+                }
             }
         }
         
@@ -400,7 +414,10 @@ void OGRLIBKMLDataSource::WriteDir (
             {
                 NetworkLinkControlPtr nlc = m_poKmlFactory->CreateNetworkLinkControl();
                 AsKml( m_poKmlDocKmlRoot )->set_networklinkcontrol ( nlc );
-                nlc->set_update(m_poKmlUpdate);
+                if( m_poKmlUpdate->get_updateoperation_array_size() != 0 )
+                {
+                    nlc->set_update(m_poKmlUpdate);
+                }
             }
         }
         
@@ -1491,6 +1508,7 @@ int OGRLIBKMLDataSource::CreateKml (
                     pszAuthorEmail != NULL ||
                     pszLink != NULL;
     
+    NetworkLinkControlPtr nlc = NULL;
     m_poKmlDSKml = OGRLIBKMLCreateOGCKml22(m_poKmlFactory, bWithAtom);
     if( osUpdateTargetHref.size() == 0 )
     {
@@ -1559,9 +1577,74 @@ int OGRLIBKMLDataSource::CreateKml (
     }
     else
     {
-        NetworkLinkControlPtr nlc = m_poKmlFactory->CreateNetworkLinkControl();
+        nlc = m_poKmlFactory->CreateNetworkLinkControl();
         m_poKmlDSKml->set_networklinkcontrol ( nlc );
         nlc->set_update(m_poKmlUpdate);
+    }
+    
+    const char* pszNLCMinRefreshPeriod = CSLFetchNameValue(papszOptions, "NLC_MINREFRESHPERIOD");
+    const char* pszNLCMaxSessionLength = CSLFetchNameValue(papszOptions, "NLC_MAXSESSIONLENGTH");
+    const char* pszNLCCookie = CSLFetchNameValue(papszOptions, "NLC_COOKIE");
+    const char* pszNLCMessage = CSLFetchNameValue(papszOptions, "NLC_MESSAGE");
+    const char* pszNLCLinkName = CSLFetchNameValue(papszOptions, "NLC_LINKNAME");
+    const char* pszNLCLinkDescription = CSLFetchNameValue(papszOptions, "NLC_LINKDESCRIPTION");
+    const char* pszNLCLinkSnippet = CSLFetchNameValue(papszOptions, "NLC_LINKSNIPPET");
+    const char* pszNLCExpires = CSLFetchNameValue(papszOptions, "NLC_EXPIRES");
+    if( pszNLCMinRefreshPeriod != NULL || pszNLCMaxSessionLength != NULL ||
+        pszNLCCookie != NULL || pszNLCMessage != NULL || pszNLCLinkName != NULL ||
+        pszNLCLinkDescription != NULL || pszNLCLinkSnippet != NULL ||
+        pszNLCExpires != NULL )
+    {
+        if( nlc == NULL )
+        {
+            nlc = m_poKmlFactory->CreateNetworkLinkControl();
+            m_poKmlDSKml->set_networklinkcontrol ( nlc );
+        }
+        if( pszNLCMinRefreshPeriod != NULL )
+        {
+            double dfVal = CPLAtof(pszNLCMinRefreshPeriod);
+            if( dfVal >= 0 )
+                nlc->set_minrefreshperiod(dfVal);
+        }
+        if( pszNLCMaxSessionLength != NULL )
+        {
+            double dfVal = CPLAtof(pszNLCMaxSessionLength);
+            nlc->set_maxsessionlength(dfVal);
+        }
+        if( pszNLCCookie != NULL )
+        {
+            nlc->set_cookie(pszNLCCookie);
+        }
+        if( pszNLCMessage != NULL )
+        {
+            nlc->set_message(pszNLCMessage);
+        }
+        if( pszNLCLinkName != NULL )
+        {
+            nlc->set_linkname(pszNLCLinkName);
+        }
+        if( pszNLCLinkDescription != NULL )
+        {
+            nlc->set_linkdescription(pszNLCLinkDescription);
+        }
+        if( pszNLCLinkSnippet != NULL )
+        {
+            LinkSnippetPtr linksnippet = m_poKmlFactory->CreateLinkSnippet();
+            linksnippet->set_text(pszNLCLinkSnippet);
+            nlc->set_linksnippet(linksnippet);
+        }
+        if( pszNLCExpires != NULL )
+        {
+            int year, month, day, hour, minute, tz;
+            float fSecond;
+            if( OGRParseXMLDateTime( pszNLCExpires, &year, &month, &day,
+                                     &hour, &minute, &fSecond, &tz) )
+            {
+                char* pszXMLDate = OGRGetXMLDateTime(year, month, day, hour, minute, (int)fSecond, tz);
+                nlc->set_expires(pszXMLDate);
+                CPLFree(pszXMLDate);
+            }
+        }
     }
     
     m_isKml = TRUE;
