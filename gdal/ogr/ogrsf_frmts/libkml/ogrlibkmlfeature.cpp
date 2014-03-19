@@ -47,12 +47,65 @@ using kmldom::ScalePtr;
 using kmldom::ResourceMapPtr;
 using kmldom::AliasPtr;
 using kmldom::NetworkLinkPtr;
+using kmldom::PhotoOverlayPtr;
+using kmldom::IconPtr;
+using kmldom::ViewVolumePtr;
 
 #include "ogr_libkml.h"
 
 #include "ogrlibkmlgeometry.h"
 #include "ogrlibkmlfield.h"
 #include "ogrlibkmlfeaturestyle.h"
+
+static CameraPtr feat2kmlcamera( const struct fieldconfig& oFC,
+                                 int iHeading,
+                                 int iTilt,
+                                 int iRoll,
+                                 OGRFeature * poOgrFeat,
+                                 KmlFactory * poKmlFactory )
+{
+    int iCameraLongitudeField = poOgrFeat->GetFieldIndex(oFC.camera_longitude_field);
+    int iCameraLatitudeField = poOgrFeat->GetFieldIndex(oFC.camera_latitude_field);
+    int iCameraAltitudeField = poOgrFeat->GetFieldIndex(oFC.camera_altitude_field);
+    int iCameraAltitudeModeField = poOgrFeat->GetFieldIndex(oFC.camera_altitudemode_field);
+    if( iCameraLongitudeField >= 0 && poOgrFeat->IsFieldSet(iCameraLongitudeField) &&
+        iCameraLatitudeField >= 0  && poOgrFeat->IsFieldSet(iCameraLatitudeField) &&
+        ((iHeading >= 0 && poOgrFeat->IsFieldSet(iHeading)) ||
+        (iTilt >= 0 && poOgrFeat->IsFieldSet(iTilt)) ||
+        (iRoll >= 0 && poOgrFeat->IsFieldSet(iRoll))) )
+    {
+        CameraPtr camera = poKmlFactory->CreateCamera();
+        camera->set_latitude(poOgrFeat->GetFieldAsDouble(iCameraLatitudeField));
+        camera->set_longitude(poOgrFeat->GetFieldAsDouble(iCameraLongitudeField));
+        int isGX = FALSE;
+        int nAltitudeMode = kmldom::ALTITUDEMODE_CLAMPTOGROUND;
+        if( iCameraAltitudeModeField >= 0 && poOgrFeat->IsFieldSet(iCameraAltitudeModeField) )
+        {
+            nAltitudeMode = kmlAltitudeModeFromString(
+                poOgrFeat->GetFieldAsString(iCameraAltitudeModeField), isGX);
+            camera->set_altitudemode(nAltitudeMode);
+        }
+        else if( CSLTestBoolean(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
+            CPLError(CE_Warning, CPLE_AppDefined, "Camera should define altitudeMode != 'clampToGround'");
+        if( iCameraAltitudeField >= 0 && poOgrFeat->IsFieldSet(iCameraAltitudeField))
+            camera->set_altitude(poOgrFeat->GetFieldAsDouble(iCameraAltitudeField));
+        else if( CSLTestBoolean(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined, "Camera should have an altitude/Z");
+            camera->set_altitude(0.0);
+        }
+        if( iHeading >= 0 && poOgrFeat->IsFieldSet(iHeading) )
+            camera->set_heading(poOgrFeat->GetFieldAsDouble(iHeading));
+        if( iTilt >= 0 && poOgrFeat->IsFieldSet(iTilt) )
+            camera->set_tilt(poOgrFeat->GetFieldAsDouble(iTilt));
+        if( iRoll >= 0 && poOgrFeat->IsFieldSet(iRoll) )
+            camera->set_roll(poOgrFeat->GetFieldAsDouble(iRoll));
+        return camera;
+    }
+    else
+        return NULL;
+}
+
 
 FeaturePtr feat2kml (
     OGRLIBKMLDataSource * poOgrDS,
@@ -72,10 +125,71 @@ FeaturePtr feat2kml (
         iTilt = poOgrFeat->GetFieldIndex(oFC.tiltfield),
         iRoll = poOgrFeat->GetFieldIndex(oFC.rollfield),
         iModel = poOgrFeat->GetFieldIndex(oFC.modelfield);
+    int iNetworkLink = poOgrFeat->GetFieldIndex(oFC.networklinkfield);
+    int iPhotoOverlay = poOgrFeat->GetFieldIndex(oFC.photooverlayfield);
+    CameraPtr camera = NULL;
+
+    /* PhotoOverlay */
+    if( iPhotoOverlay >= 0 && poOgrFeat->IsFieldSet(iPhotoOverlay) &&
+        poOgrGeom != NULL && !poOgrGeom->IsEmpty() &&
+        wkbFlatten(poOgrGeom->getGeometryType()) == wkbPoint &&
+        (camera = feat2kmlcamera(oFC, iHeading, iTilt, iRoll, poOgrFeat, poKmlFactory)) != NULL)
+    {
+        int iLeftFovField = poOgrFeat->GetFieldIndex(oFC.leftfovfield);
+        int iRightFovField = poOgrFeat->GetFieldIndex(oFC.rightfovfield);
+        int iBottomFovField = poOgrFeat->GetFieldIndex(oFC.bottomfovfield);
+        int iTopFovField = poOgrFeat->GetFieldIndex(oFC.topfovfield);
+        int iNearField = poOgrFeat->GetFieldIndex(oFC.nearfield);
+        double dfNear;
+
+        /* ATC 19 & 35 */
+        if( iLeftFovField >= 0 && poOgrFeat->IsFieldSet(iLeftFovField) &&
+            iRightFovField >= 0 && poOgrFeat->IsFieldSet(iRightFovField) &&
+            iBottomFovField >= 0 && poOgrFeat->IsFieldSet(iBottomFovField) &&
+            iTopFovField >= 0 && poOgrFeat->IsFieldSet(iTopFovField) &&
+            iNearField >= 0 && (dfNear = poOgrFeat->GetFieldAsDouble(iNearField)) > 0 )
+        {
+            PhotoOverlayPtr poKmlPhotoOverlay = poKmlFactory->CreatePhotoOverlay (  );
+            poKmlFeature = poKmlPhotoOverlay;
+
+            IconPtr poKmlIcon = poKmlFactory->CreateIcon (  );
+            poKmlPhotoOverlay->set_icon(poKmlIcon);
+            poKmlIcon->set_href( poOgrFeat->GetFieldAsString(iPhotoOverlay) );
+
+            ViewVolumePtr poKmlViewVolume = poKmlFactory->CreateViewVolume( );
+            poKmlPhotoOverlay->set_viewvolume(poKmlViewVolume);
+
+            double dfLeftFov = poOgrFeat->GetFieldAsDouble(iLeftFovField);
+            double dfRightFov = poOgrFeat->GetFieldAsDouble(iRightFovField);
+            double dfBottomFov = poOgrFeat->GetFieldAsDouble(iBottomFovField);
+            double dfTopFov = poOgrFeat->GetFieldAsDouble(iTopFovField);
+
+            poKmlViewVolume->set_leftfov(dfLeftFov);
+            poKmlViewVolume->set_rightfov(dfRightFov);
+            poKmlViewVolume->set_bottomfov(dfBottomFov);
+            poKmlViewVolume->set_topfov(dfTopFov);
+            poKmlViewVolume->set_near(dfNear);
+            
+            int iPhotoOverlayShapeField = poOgrFeat->GetFieldIndex(oFC.photooverlay_shape_field);
+            if( iPhotoOverlayShapeField >= 0 && poOgrFeat->IsFieldSet(iPhotoOverlayShapeField) )
+            {
+                const char* pszShape = poOgrFeat->GetFieldAsString(iPhotoOverlayShapeField);
+                if( EQUAL(pszShape, "rectangle") )
+                    poKmlPhotoOverlay->set_shape(kmldom::SHAPE_RECTANGLE);
+                else if( EQUAL(pszShape, "cylinder") )
+                    poKmlPhotoOverlay->set_shape(kmldom::SHAPE_CYLINDER);
+                else if( EQUAL(pszShape, "sphere") )
+                    poKmlPhotoOverlay->set_shape(kmldom::SHAPE_SPHERE);
+            }
+
+            ElementPtr poKmlElement = geom2kml ( poOgrGeom, -1, 0, poKmlFactory );
+
+            poKmlPhotoOverlay->set_point ( AsPoint ( poKmlElement ) );
+        }
+    }
 
     /* NetworkLink */
-    int iNetworkLink = poOgrFeat->GetFieldIndex(oFC.networklinkfield);
-    if( iNetworkLink >= 0 && poOgrFeat->IsFieldSet(iNetworkLink) )
+    if( poKmlFeature == NULL && iNetworkLink >= 0 && poOgrFeat->IsFieldSet(iNetworkLink) )
     {
         NetworkLinkPtr poKmlNetworkLink = poKmlFactory->CreateNetworkLink (  );
         poKmlFeature = poKmlNetworkLink;
@@ -179,7 +293,7 @@ FeaturePtr feat2kml (
     }
 
     /* Model */
-    else if( iModel>= 0 && poOgrFeat->IsFieldSet(iModel) &&
+    else if( poKmlFeature == NULL && iModel>= 0 && poOgrFeat->IsFieldSet(iModel) &&
         poOgrGeom != NULL && !poOgrGeom->IsEmpty() &&
         wkbFlatten(poOgrGeom->getGeometryType()) == wkbPoint )
     {
@@ -316,8 +430,9 @@ FeaturePtr feat2kml (
     }
 
     /* Camera */
-    else if( poOgrGeom != NULL && !poOgrGeom->IsEmpty() &&
+    else if( poKmlFeature == NULL && poOgrGeom != NULL && !poOgrGeom->IsEmpty() &&
         wkbFlatten(poOgrGeom->getGeometryType()) == wkbPoint &&
+        poOgrFeat->GetFieldIndex(oFC.camera_longitude_field) < 0 &&
         ((iHeading >= 0 && poOgrFeat->IsFieldSet(iHeading)) ||
          (iTilt >= 0 && poOgrFeat->IsFieldSet(iTilt)) ||
          (iRoll >= 0 && poOgrFeat->IsFieldSet(iRoll))) )
@@ -343,7 +458,10 @@ FeaturePtr feat2kml (
         if( poOgrPoint->getCoordinateDimension() == 3 )
             camera->set_altitude(poOgrPoint->getZ());
         else if( CSLTestBoolean(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
+        {
             CPLError(CE_Warning, CPLE_AppDefined, "Camera should have an altitude/Z");
+            camera->set_altitude(0.0);
+        }
         if( iHeading >= 0 && poOgrFeat->IsFieldSet(iHeading) )
             camera->set_heading(poOgrFeat->GetFieldAsDouble(iHeading));
         if( iTilt >= 0 && poOgrFeat->IsFieldSet(iTilt) )
@@ -353,7 +471,7 @@ FeaturePtr feat2kml (
         poKmlPlacemark->set_abstractview(camera);
     }
 
-    else
+    else if( poKmlFeature == NULL )
     {
         PlacemarkPtr poKmlPlacemark = poKmlFactory->CreatePlacemark (  );
         poKmlFeature = poKmlPlacemark;
@@ -362,6 +480,11 @@ FeaturePtr feat2kml (
 
         poKmlPlacemark->set_geometry ( AsGeometry ( poKmlElement ) );
     }
+
+    if( camera == NULL )
+        camera = feat2kmlcamera(oFC, iHeading, iTilt, iRoll, poOgrFeat, poKmlFactory);
+    if( camera != NULL )
+        poKmlFeature->set_abstractview(camera);
 
     /***** style *****/
 
