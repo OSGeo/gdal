@@ -38,8 +38,7 @@ StylePtr addstylestring2kml (
     const char *stylestring,
     StylePtr poKmlStyle,
     KmlFactory * poKmlFactory,
-    FeaturePtr poKmlFeature,
-    OGRFeature * poOgrFeat );
+    FeaturePtr poKmlFeature );
 
 
 
@@ -84,7 +83,8 @@ void ParseStyles (
 void styletable2kml (
     OGRStyleTable * poOgrStyleTable,
     KmlFactory * poKmlFactory,
-    ContainerPtr poKmlContainer  );
+    ContainerPtr poKmlContainer,
+    char** papszOptions = NULL  );
 
 /******************************************************************************
  function to add a ListStyle and select it to a container
