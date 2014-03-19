@@ -1495,7 +1495,8 @@ int OGRLIBKMLDataSource::CreateKml (
     if( osUpdateTargetHref.size() == 0 )
     {
         DocumentPtr poKmlDocument = m_poKmlFactory->CreateDocument (  );
-        
+        poKmlDocument->set_id("root_doc");
+
         if( pszAuthorName != NULL || pszAuthorURI != NULL || pszAuthorEmail != NULL )
         {
             kmldom::AtomAuthorPtr author = m_poKmlFactory->CreateAtomAuthor();
@@ -1592,6 +1593,7 @@ int OGRLIBKMLDataSource::CreateKmz (
 
         if ( !strcmp ( namefield, "yes" ) ) {
             m_poKmlDocKml = m_poKmlFactory->CreateDocument (  );
+            m_poKmlDocKml->set_id("root_doc");
         }
     }
 
@@ -1633,6 +1635,7 @@ int OGRLIBKMLDataSource::CreateDir (
 
         if ( !strcmp ( namefield, "yes" ) ) {
             m_poKmlDocKml = m_poKmlFactory->CreateDocument (  );
+            m_poKmlDocKml->set_id("root_doc");
         }
     }
 
