@@ -32,13 +32,13 @@ using kmldom::StylePtr;
 using kmldom::StyleMapPtr;
 using kmldom::DocumentPtr;
 using kmldom::ContainerPtr;
-using kmldom::PlacemarkPtr;
+using kmldom::FeaturePtr;
 
 StylePtr addstylestring2kml (
     const char *stylestring,
     StylePtr poKmlStyle,
     KmlFactory * poKmlFactory,
-    PlacemarkPtr poKmlPlacemark,
+    FeaturePtr poKmlFeature,
     OGRFeature * poOgrFeat );
 
 

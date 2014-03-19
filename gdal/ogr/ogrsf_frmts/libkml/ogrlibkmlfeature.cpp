@@ -46,6 +46,7 @@ using kmldom::OrientationPtr;
 using kmldom::ScalePtr;
 using kmldom::ResourceMapPtr;
 using kmldom::AliasPtr;
+using kmldom::NetworkLinkPtr;
 
 #include "ogr_libkml.h"
 
@@ -53,22 +54,16 @@ using kmldom::AliasPtr;
 #include "ogrlibkmlfield.h"
 #include "ogrlibkmlfeaturestyle.h"
 
-PlacemarkPtr feat2kml (
+FeaturePtr feat2kml (
     OGRLIBKMLDataSource * poOgrDS,
     OGRLayer * poOgrLayer,
     OGRFeature * poOgrFeat,
     KmlFactory * poKmlFactory )
 {
+    FeaturePtr poKmlFeature = NULL;
 
-    PlacemarkPtr poKmlPlacemark = poKmlFactory->CreatePlacemark (  );
-    
     struct fieldconfig oFC;
     get_fieldconfig( &oFC );
-
-    /***** style *****/
-
-    featurestyle2kml ( poOgrDS, poOgrLayer, poOgrFeat, poKmlFactory,
-                       poKmlPlacemark );
 
     /***** geometry *****/
 
@@ -78,11 +73,119 @@ PlacemarkPtr feat2kml (
         iRoll = poOgrFeat->GetFieldIndex(oFC.rollfield),
         iModel = poOgrFeat->GetFieldIndex(oFC.modelfield);
 
+    /* NetworkLink */
+    int iNetworkLink = poOgrFeat->GetFieldIndex(oFC.networklinkfield);
+    if( iNetworkLink >= 0 && poOgrFeat->IsFieldSet(iNetworkLink) )
+    {
+        NetworkLinkPtr poKmlNetworkLink = poKmlFactory->CreateNetworkLink (  );
+        poKmlFeature = poKmlNetworkLink;
+
+        int iRefreshVisibility = poOgrFeat->GetFieldIndex(oFC.networklink_refreshvisibility_field);
+        int iFlyToView = poOgrFeat->GetFieldIndex(oFC.networklink_flytoview_field);
+
+        if( iRefreshVisibility >= 0 && poOgrFeat->IsFieldSet(iRefreshVisibility) )
+            poKmlNetworkLink->set_refreshvisibility(poOgrFeat->GetFieldAsInteger(iRefreshVisibility));
+
+        if( iFlyToView >= 0 && poOgrFeat->IsFieldSet(iFlyToView) )
+            poKmlNetworkLink->set_flytoview(poOgrFeat->GetFieldAsInteger(iFlyToView));
+
+        LinkPtr poKmlLink = poKmlFactory->CreateLink (  );
+        poKmlLink->set_href( poOgrFeat->GetFieldAsString( iNetworkLink ) );
+        poKmlNetworkLink->set_link(poKmlLink);
+
+        int iRefreshMode = poOgrFeat->GetFieldIndex(oFC.networklink_refreshMode_field);
+        int iRefreshInterval = poOgrFeat->GetFieldIndex(oFC.networklink_refreshInterval_field);
+        int iViewRefreshMode = poOgrFeat->GetFieldIndex(oFC.networklink_viewRefreshMode_field);
+        int iViewRefreshTime = poOgrFeat->GetFieldIndex(oFC.networklink_viewRefreshTime_field);
+        int iViewBoundScale = poOgrFeat->GetFieldIndex(oFC.networklink_viewBoundScale_field);
+        int iViewFormat = poOgrFeat->GetFieldIndex(oFC.networklink_viewFormat_field);
+        int iHttpQuery = poOgrFeat->GetFieldIndex(oFC.networklink_httpQuery_field);
+
+        double dfRefreshInterval = 0.0;
+        if( iRefreshInterval >= 0 && poOgrFeat->IsFieldSet(iRefreshInterval) )
+        {
+            dfRefreshInterval = poOgrFeat->GetFieldAsDouble(iRefreshInterval);
+            if( dfRefreshInterval < 0 )
+                dfRefreshInterval = 0.0;
+        }
+
+        double dfViewRefreshTime = 0.0;
+        if( iViewRefreshTime >= 0 && poOgrFeat->IsFieldSet(iViewRefreshTime) )
+        {
+            dfViewRefreshTime = poOgrFeat->GetFieldAsDouble(iViewRefreshTime);
+            if( dfViewRefreshTime < 0 )
+                dfViewRefreshTime = 0.0;
+        }
+
+        if( dfRefreshInterval > 0 ) /* ATC 51 */
+            poKmlLink->set_refreshmode(kmldom::REFRESHMODE_ONINTERVAL);
+        else if( iRefreshMode >= 0 && poOgrFeat->IsFieldSet(iRefreshMode) )
+        {
+            const char* pszRefreshMode = poOgrFeat->GetFieldAsString(iRefreshMode);
+            if( EQUAL(pszRefreshMode, "onChange") )
+                poKmlLink->set_refreshmode(kmldom::REFRESHMODE_ONCHANGE);
+            else if( EQUAL(pszRefreshMode, "onInterval") )
+                poKmlLink->set_refreshmode(kmldom::REFRESHMODE_ONINTERVAL);
+            else if( EQUAL(pszRefreshMode, "onExpire") )
+                poKmlLink->set_refreshmode(kmldom::REFRESHMODE_ONEXPIRE);
+        }
+
+        if( dfRefreshInterval > 0 ) /* ATC 9 */
+            poKmlLink->set_refreshinterval(dfRefreshInterval);
+
+        if( dfViewRefreshTime > 0 ) /* ATC  51 */
+            poKmlLink->set_viewrefreshmode(kmldom::VIEWREFRESHMODE_ONSTOP);
+        else if( iViewRefreshMode >= 0 && poOgrFeat->IsFieldSet(iViewRefreshMode) )
+        {
+            const char* pszViewRefreshMode = poOgrFeat->GetFieldAsString(iViewRefreshMode);
+            if( EQUAL(pszViewRefreshMode, "never") )
+                poKmlLink->set_viewrefreshmode(kmldom::VIEWREFRESHMODE_NEVER);
+            else if( EQUAL(pszViewRefreshMode, "onRequest") )
+                poKmlLink->set_viewrefreshmode(kmldom::VIEWREFRESHMODE_ONREQUEST);
+            else if( EQUAL(pszViewRefreshMode, "onStop") )
+                poKmlLink->set_viewrefreshmode(kmldom::VIEWREFRESHMODE_ONSTOP);
+            else if( EQUAL(pszViewRefreshMode, "onRegion") )
+                poKmlLink->set_viewrefreshmode(kmldom::VIEWREFRESHMODE_ONREGION);
+        }
+
+        if( dfViewRefreshTime > 0 ) /* ATC 9 */
+            poKmlLink->set_viewrefreshtime(dfViewRefreshTime);
+
+        if( iViewBoundScale >= 0 && poOgrFeat->IsFieldSet(iViewBoundScale) )
+        {
+            double dfViewBoundScale = poOgrFeat->GetFieldAsDouble(iViewBoundScale);
+            if( dfViewBoundScale > 0 ) /* ATC 9 */
+                poKmlLink->set_viewboundscale(dfViewBoundScale);
+        }
+
+        if( iViewFormat >= 0 && poOgrFeat->IsFieldSet(iViewFormat) )
+        {
+            const char* pszViewFormat = poOgrFeat->GetFieldAsString(iViewFormat);
+            if( pszViewFormat[0] != '\0' ) /* ATC 46 */
+                poKmlLink->set_viewformat(pszViewFormat);
+        }
+
+        if( iHttpQuery >= 0 && poOgrFeat->IsFieldSet(iHttpQuery) )
+        {
+            const char* pszHttpQuery = poOgrFeat->GetFieldAsString(iHttpQuery);
+            if( strstr(pszHttpQuery, "[clientVersion]") != NULL ||
+                strstr(pszHttpQuery, "[kmlVersion]") != NULL ||
+                strstr(pszHttpQuery, "[clientName]") != NULL || 
+                strstr(pszHttpQuery, "[language]") != NULL ) /* ATC 47 */
+            {
+                poKmlLink->set_httpquery(pszHttpQuery);
+            }
+        }
+    }
+
     /* Model */
-    if( iModel>= 0 && poOgrFeat->IsFieldSet(iModel) &&
+    else if( iModel>= 0 && poOgrFeat->IsFieldSet(iModel) &&
         poOgrGeom != NULL && !poOgrGeom->IsEmpty() &&
         wkbFlatten(poOgrGeom->getGeometryType()) == wkbPoint )
     {
+        PlacemarkPtr poKmlPlacemark = poKmlFactory->CreatePlacemark (  );
+        poKmlFeature = poKmlPlacemark;
+
         OGRPoint* poOgrPoint = (OGRPoint*) poOgrGeom;
         ModelPtr model = poKmlFactory->CreateModel();
 
@@ -219,6 +322,9 @@ PlacemarkPtr feat2kml (
          (iTilt >= 0 && poOgrFeat->IsFieldSet(iTilt)) ||
          (iRoll >= 0 && poOgrFeat->IsFieldSet(iRoll))) )
     {
+        PlacemarkPtr poKmlPlacemark = poKmlFactory->CreatePlacemark (  );
+        poKmlFeature = poKmlPlacemark;
+
         OGRPoint* poOgrPoint = (OGRPoint*) poOgrGeom;
         CameraPtr camera = poKmlFactory->CreateCamera();
         camera->set_latitude(poOgrPoint->getY());
@@ -249,19 +355,25 @@ PlacemarkPtr feat2kml (
 
     else
     {
+        PlacemarkPtr poKmlPlacemark = poKmlFactory->CreatePlacemark (  );
+        poKmlFeature = poKmlPlacemark;
+
         ElementPtr poKmlElement = geom2kml ( poOgrGeom, -1, 0, poKmlFactory );
 
         poKmlPlacemark->set_geometry ( AsGeometry ( poKmlElement ) );
     }
 
+    /***** style *****/
+
+    featurestyle2kml ( poOgrDS, poOgrLayer, poOgrFeat, poKmlFactory,
+                       poKmlFeature );
+
     /***** fields *****/
 
     field2kml ( poOgrFeat, ( OGRLIBKMLLayer * ) poOgrLayer, poKmlFactory,
-                poKmlPlacemark );
+                poKmlFeature );
 
-
-
-    return poKmlPlacemark;
+    return poKmlFeature;
 }
 
 OGRFeature *kml2feat (
