@@ -123,7 +123,7 @@ void featurestyle2kml (
             /***** parse the style string *****/
 
             StylePtr poKmlStyle = addstylestring2kml ( pszStyleString, NULL, poKmlFactory,
-                                 poKmlFeature, poOgrFeat );
+                                 poKmlFeature );
 
             /***** add the style to the placemark *****/
             if( poKmlStyle != NULL )
@@ -186,7 +186,7 @@ void featurestyle2kml (
                 /***** parse the style string *****/
 
                 poKmlStyle = addstylestring2kml ( pszStyleString, poKmlStyle,
-                                     poKmlFactory, poKmlFeature, poOgrFeat );
+                                     poKmlFactory, poKmlFeature );
                 if( poKmlStyle != NULL )
                 {
                     /***** add the style to the placemark *****/
