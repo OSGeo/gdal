@@ -388,21 +388,23 @@ def ogr_libkml_write(filename):
     if ogrtest.kml_drv is None:
         return 'skip'
 
-    srs = osr.SpatialReference()
-    srs.SetWellKnownGeogCS('WGS72')
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource(filename)
-    lyr = ds.CreateLayer('test_wgs72', srs = srs)
 
-    dst_feat = ogr.Feature( lyr.GetLayerDefn() )
-    dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT (2 49)'))
-    if lyr.CreateFeature( dst_feat ) != 0:
-        gdaltest.post_reason('CreateFeature failed.')
-        return 'fail'
-    if dst_feat.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
-        print(dst_feat.GetGeometryRef().ExportToWkt())
-        gdaltest.post_reason('CreateFeature changed the geometry.')
-        return 'fail'
-    dst_feat.Destroy()
+    if filename != '/vsimem/libkml_use_doc_off.kmz':
+        srs = osr.SpatialReference()
+        srs.SetWellKnownGeogCS('WGS72')
+        lyr = ds.CreateLayer('test_wgs72', srs = srs)
+
+        dst_feat = ogr.Feature( lyr.GetLayerDefn() )
+        dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT (2 49)'))
+        if lyr.CreateFeature( dst_feat ) != 0:
+            gdaltest.post_reason('CreateFeature failed.')
+            return 'fail'
+        if dst_feat.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
+            print(dst_feat.GetGeometryRef().ExportToWkt())
+            gdaltest.post_reason('CreateFeature changed the geometry.')
+            return 'fail'
+        dst_feat.Destroy()
 
     lyr = ds.CreateLayer('test_wgs84')
 
@@ -485,7 +487,10 @@ def ogr_libkml_check_write(filename):
         return 'skip'
 
     ds = ogr.Open(filename)
-    lyr = ds.GetLayerByName('test_wgs84')
+    if filename != '/vsimem/libkml_use_doc_off.kmz':
+        lyr = ds.GetLayerByName('test_wgs84')
+    else:
+        lyr = ds.GetLayer(0)
     if lyr.GetFeatureCount() != 8:
         gdaltest.post_reason('Bad feature count.')
         return 'fail'
@@ -574,6 +579,15 @@ def ogr_libkml_write_kmz():
 
 def ogr_libkml_check_write_kmz():
     return ogr_libkml_check_write('/vsimem/libkml.kmz')
+
+def ogr_libkml_write_kmz_use_doc_off():
+    gdal.SetConfigOption("LIBKML_USE_DOC.KML", "NO")
+    ret = ogr_libkml_write('/vsimem/libkml_use_doc_off.kmz')
+    gdal.SetConfigOption("LIBKML_USE_DOC.KML", None)
+    return ret
+
+def ogr_libkml_check_write_kmz_use_doc_off():
+    return ogr_libkml_check_write('/vsimem/libkml_use_doc_off.kmz')
 
 def ogr_libkml_write_dir():
     return ogr_libkml_write('/vsimem/libkmldir')
@@ -1773,6 +1787,7 @@ def ogr_libkml_cleanup():
 
     gdal.Unlink('/vsimem/libkml.kml')
     gdal.Unlink('/vsimem/libkml.kmz')
+    gdal.Unlink('/vsimem/libkml_use_doc_off.kmz')
     gdal.Unlink("/vsimem/ogr_libkml_camera.kml")
     gdal.Unlink("/vsimem/ogr_libkml_write_layer_lookat.kml")
     gdal.Unlink("/vsimem/ogr_libkml_write_layer_camera.kml")
@@ -1820,6 +1835,8 @@ gdaltest_list = [
     ogr_libkml_check_write_kml,
     ogr_libkml_write_kmz,
     ogr_libkml_check_write_kmz,
+    ogr_libkml_write_kmz_use_doc_off,
+    ogr_libkml_check_write_kmz_use_doc_off,
     ogr_libkml_write_dir,
     ogr_libkml_check_write_dir,
     ogr_libkml_xml_attributes,
