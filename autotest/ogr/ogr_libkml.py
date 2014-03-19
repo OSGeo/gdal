@@ -1600,6 +1600,43 @@ def ogr_libkml_write_update():
     return 'success'
 
 ###############################################################################
+# Test writing NetworkLinkControl
+
+def ogr_libkml_write_networklinkcontrol():
+
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+
+    options = [ 'NLC_MINREFRESHPERIOD=3600',
+                'NLC_MAXSESSIONLENGTH=-1',
+                'NLC_COOKIE=cookie',
+                'NLC_MESSAGE=message',
+                'NLC_LINKNAME=linkname',
+                'NLC_LINKDESCRIPTION=linkdescription',
+                'NLC_LINKSNIPPET=linksnippet',
+                'NLC_EXPIRES=2014-12-31T23:59:59Z' ]
+    ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_networklinkcontrol.kml", options = options)
+    ds = None
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_networklinkcontrol.kml', 'rb')
+    data = gdal.VSIFReadL(1, 2048, f)
+    gdal.VSIFCloseL(f)
+
+    if data.find('<minRefreshPeriod>3600</minRefreshPeriod>') == -1 or \
+       data.find('<maxSessionLength>-1</maxSessionLength>') == -1 or \
+       data.find('<cookie>cookie</cookie>') == -1 or \
+       data.find('<message>message</message>') == -1 or \
+       data.find('<linkName>linkname</linkName>') == -1 or \
+       data.find('<linkDescription>linkdescription</linkDescription>') == -1 or \
+       data.find('linksnippet') == -1 or \
+       data.find('<expires>2014-12-31T23:59:59Z</expires>') == -1:
+        print(data)
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_libkml_cleanup():
@@ -1628,6 +1665,7 @@ def ogr_libkml_cleanup():
     gdal.Unlink("/vsimem/ogr_libkml_write_update.kmz")
     gdal.Unlink("/vsimem/ogr_libkml_write_update_dir/doc.kml")
     gdal.Unlink("/vsimem/ogr_libkml_write_update_dir")
+    gdal.Unlink("/vsimem/ogr_libkml_write_networklinkcontrol.kml")
 
     # Re-register KML driver if necessary
     if ogrtest.kml_drv is not None:
@@ -1676,6 +1714,7 @@ gdaltest_list = [
     ogr_libkml_write_model,
     ogr_libkml_read_write_style,
     ogr_libkml_write_update,
+    ogr_libkml_write_networklinkcontrol,
     ogr_libkml_cleanup ]
 
 if __name__ == '__main__':
