@@ -120,6 +120,17 @@ struct fieldconfig {
     const char *networklink_viewBoundScale_field;
     const char *networklink_viewFormat_field;
     const char *networklink_httpQuery_field;
+    const char *camera_longitude_field;
+    const char *camera_latitude_field;
+    const char *camera_altitude_field;
+    const char *camera_altitudemode_field;
+    const char *photooverlayfield;
+    const char *leftfovfield;
+    const char *rightfovfield;
+    const char *bottomfovfield;
+    const char *topfovfield;
+    const char *nearfield;
+    const char *photooverlay_shape_field;
 };
 
 void get_fieldconfig( struct fieldconfig *oFC );
