@@ -64,13 +64,13 @@ class CPL_DLL OGREnvelope
 
 /* See http://trac.osgeo.org/gdal/ticket/5299 for details on this pragma */
 #if (__GNUC__ == 4 && __GNUC_MINOR__ >= 6 && !defined(_MSC_VER)) 
-#pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
+#pragma GCC diagnostic push
 #endif
     int  IsInit() const { return MinX != 0 || MinY != 0 || MaxX != 0 || MaxY != 0; }
 
 #if (__GNUC__ == 4 && __GNUC_MINOR__ >= 6 && !defined(_MSC_VER))
-#pragma GCC diagnostic ignored pop
+#pragma GCC diagnostic pop
 #endif
 
     void Merge( OGREnvelope const& sOther ) {
