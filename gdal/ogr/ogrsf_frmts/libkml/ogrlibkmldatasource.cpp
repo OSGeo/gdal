@@ -81,6 +81,7 @@ OGRLIBKMLDataSource::OGRLIBKMLDataSource ( KmlFactory * poKmlFactory )
     papoLayers = NULL;
     nLayers = 0;
     nAlloced = 0;
+    m_papszOptions = NULL;
 
     bUpdated = FALSE;
 
@@ -178,6 +179,8 @@ void OGRLIBKMLDataSource::WriteKml (
         DocumentPtr poKmlDocument = AsDocument ( m_poKmlDSContainer );
         int iLayer;
 
+        ParseDocumentOptions(m_poKmlDSKml, poKmlDocument);
+
         for ( iLayer = 0; iLayer < nLayers; iLayer++ ) {
             SchemaPtr poKmlSchema;
             SchemaPtr poKmlSchema2;
@@ -200,18 +203,13 @@ void OGRLIBKMLDataSource::WriteKml (
             papoLayers[iLayer]->Finalize();
         }
     }
+    else
+    {
+        ParseDocumentOptions(m_poKmlDSKml, NULL);
+    }
 
     std::string oKmlOut;
     if ( m_poKmlDSKml ) {
-    
-        if( m_poKmlDSKml->has_networklinkcontrol() )
-        {
-            NetworkLinkControlPtr nlc = m_poKmlDSKml->get_networklinkcontrol();
-            if( nlc->has_update() && nlc->get_update()->get_updateoperation_array_size() == 0 )
-            {
-                nlc->clear_update();
-            }
-        }
         oKmlOut = kmldom::SerializePretty ( m_poKmlDSKml );
     }
     else if ( m_poKmlDSContainer ) {
@@ -241,8 +239,17 @@ void OGRLIBKMLDataSource::WriteKml (
 /******************************************************************************/
 
 static KmlPtr OGRLIBKMLCreateOGCKml22(KmlFactory* poFactory,
-                                      int bWithAtom = FALSE)
+                                      char** papszOptions = NULL)
 {
+    const char* pszAuthorName = CSLFetchNameValue(papszOptions, "AUTHOR_NAME");
+    const char* pszAuthorURI = CSLFetchNameValue(papszOptions, "AUTHOR_URI");
+    const char* pszAuthorEmail = CSLFetchNameValue(papszOptions, "AUTHOR_EMAIL");
+    const char* pszLink = CSLFetchNameValue(papszOptions, "LINK");
+    int bWithAtom = pszAuthorName != NULL ||
+                    pszAuthorURI != NULL ||
+                    pszAuthorEmail != NULL ||
+                    pszLink != NULL;
+
     KmlPtr kml = poFactory->CreateKml (  );
     if( bWithAtom )
     {
@@ -293,18 +300,13 @@ void OGRLIBKMLDataSource::WriteKmz (
             m_poKmlDocKmlRoot = OGRLIBKMLCreateOGCKml22(m_poKmlFactory);
 
             if( m_poKmlDocKml != NULL )
-                AsKml( m_poKmlDocKmlRoot )->set_feature ( m_poKmlDocKml );
-            else if( m_poKmlUpdate )
             {
-                NetworkLinkControlPtr nlc = m_poKmlFactory->CreateNetworkLinkControl();
-                AsKml( m_poKmlDocKmlRoot )->set_networklinkcontrol ( nlc );
-                if( m_poKmlUpdate->get_updateoperation_array_size() != 0 )
-                {
-                    nlc->set_update(m_poKmlUpdate);
-                }
+                AsKml( m_poKmlDocKmlRoot )->set_feature ( m_poKmlDocKml );
             }
+
+            ParseDocumentOptions(AsKml( m_poKmlDocKmlRoot ), AsDocument(m_poKmlDocKml));
         }
-        
+
         std::string oKmlOut = kmldom::SerializePretty ( m_poKmlDocKmlRoot );
         PostProcessOutput(oKmlOut);
 
@@ -321,11 +323,11 @@ void OGRLIBKMLDataSource::WriteKmz (
     int iLayer;
 
     for ( iLayer = 0; iLayer < nLayers && m_poKmlUpdate == NULL; iLayer++ ) {
-        ContainerPtr poKlmContainer = papoLayers[iLayer]->GetKmlLayer (  );
+        ContainerPtr poKmlContainer = papoLayers[iLayer]->GetKmlLayer (  );
 
-        if ( poKlmContainer->IsA ( kmldom::Type_Document ) ) {
+        if ( poKmlContainer->IsA ( kmldom::Type_Document ) ) {
 
-            DocumentPtr poKmlDocument = AsDocument ( poKlmContainer );
+            DocumentPtr poKmlDocument = AsDocument ( poKmlContainer );
             SchemaPtr poKmlSchema = papoLayers[iLayer]->GetKmlSchema (  );
 
             if ( !poKmlDocument->get_schema_array_size (  ) &&
@@ -346,7 +348,7 @@ void OGRLIBKMLDataSource::WriteKmz (
 
             poKmlKml = OGRLIBKMLCreateOGCKml22(m_poKmlFactory);
 
-            poKmlKml->set_feature ( poKlmContainer );
+            poKmlKml->set_feature ( poKmlContainer );
         }
 
         std::string oKmlOut = kmldom::SerializePretty ( poKmlKml );
@@ -410,15 +412,8 @@ void OGRLIBKMLDataSource::WriteDir (
             m_poKmlDocKmlRoot = OGRLIBKMLCreateOGCKml22(m_poKmlFactory);
             if( m_poKmlDocKml != NULL )
                 AsKml( m_poKmlDocKmlRoot )->set_feature ( m_poKmlDocKml );
-            else if( m_poKmlUpdate )
-            {
-                NetworkLinkControlPtr nlc = m_poKmlFactory->CreateNetworkLinkControl();
-                AsKml( m_poKmlDocKmlRoot )->set_networklinkcontrol ( nlc );
-                if( m_poKmlUpdate->get_updateoperation_array_size() != 0 )
-                {
-                    nlc->set_update(m_poKmlUpdate);
-                }
-            }
+
+            ParseDocumentOptions(AsKml( m_poKmlDocKmlRoot ), AsDocument(m_poKmlDocKml));
         }
         
         std::string oKmlOut = kmldom::SerializePretty ( m_poKmlDocKmlRoot );
@@ -583,6 +578,8 @@ OGRLIBKMLDataSource::~OGRLIBKMLDataSource (  )
         delete papoLayers[i];
 
     CPLFree ( papoLayers );
+    
+    CSLDestroy( m_papszOptions );
 
     //delete m_poStyleTable;
 
@@ -1485,35 +1482,21 @@ static int IsValidPhoneNumber(const char* pszPhoneNumber)
     return bDigitFound;
 }
 
-/******************************************************************************
- method to create a single file .kml ds
- 
- Args:          pszFilename     the datasource to create
-                papszOptions    datasource creation options
- 
- Returns:       True on success, false on failure
+/************************************************************************/
+/*                        ParseDocumentOptions()                        */
+/************************************************************************/
 
-******************************************************************************/
-
-int OGRLIBKMLDataSource::CreateKml (
-    const char *pszFilename,
-    char **papszOptions )
+void OGRLIBKMLDataSource::ParseDocumentOptions(KmlPtr poKml,
+                                               DocumentPtr poKmlDocument)
 {
-    const char* pszAuthorName = CSLFetchNameValue(papszOptions, "AUTHOR_NAME");
-    const char* pszAuthorURI = CSLFetchNameValue(papszOptions, "AUTHOR_URI");
-    const char* pszAuthorEmail = CSLFetchNameValue(papszOptions, "AUTHOR_EMAIL");
-    const char* pszLink = CSLFetchNameValue(papszOptions, "LINK");
-    int bWithAtom = pszAuthorName != NULL ||
-                    pszAuthorURI != NULL ||
-                    pszAuthorEmail != NULL ||
-                    pszLink != NULL;
-    
-    NetworkLinkControlPtr nlc = NULL;
-    m_poKmlDSKml = OGRLIBKMLCreateOGCKml22(m_poKmlFactory, bWithAtom);
-    if( osUpdateTargetHref.size() == 0 )
+    if( poKmlDocument != NULL )
     {
-        DocumentPtr poKmlDocument = m_poKmlFactory->CreateDocument (  );
         poKmlDocument->set_id("root_doc");
+
+        const char* pszAuthorName = CSLFetchNameValue(m_papszOptions, "AUTHOR_NAME");
+        const char* pszAuthorURI = CSLFetchNameValue(m_papszOptions, "AUTHOR_URI");
+        const char* pszAuthorEmail = CSLFetchNameValue(m_papszOptions, "AUTHOR_EMAIL");
+        const char* pszLink = CSLFetchNameValue(m_papszOptions, "LINK");
 
         if( pszAuthorName != NULL || pszAuthorURI != NULL || pszAuthorEmail != NULL )
         {
@@ -1555,8 +1538,8 @@ int OGRLIBKMLDataSource::CreateKml (
             link->set_rel("related");
             poKmlDocument->set_atomlink(link);
         }
-        
-        const char* pszPhoneNumber = CSLFetchNameValue(papszOptions, "PHONENUMBER");
+
+        const char* pszPhoneNumber = CSLFetchNameValue(m_papszOptions, "PHONENUMBER");
         if( pszPhoneNumber != NULL )
         {
             if( IsValidPhoneNumber(pszPhoneNumber) )
@@ -1572,81 +1555,119 @@ int OGRLIBKMLDataSource::CreateKml (
             }
         }
 
-        m_poKmlDSKml->set_feature ( poKmlDocument );
-        m_poKmlDSContainer = poKmlDocument;
+        CPLString osListStyleType = CSLFetchNameValueDef(m_papszOptions, "LISTSTYLE_TYPE", "");
+        CPLString osListStyleIconHref = CSLFetchNameValueDef(m_papszOptions, "LISTSTYLE_ICON_HREF", "");
+        createkmlliststyle (m_poKmlFactory,
+                            "root_doc",
+                            poKmlDocument,
+                            osListStyleType,
+                            osListStyleIconHref);
     }
-    else
+
+    if( poKml != NULL )
     {
-        nlc = m_poKmlFactory->CreateNetworkLinkControl();
-        m_poKmlDSKml->set_networklinkcontrol ( nlc );
-        nlc->set_update(m_poKmlUpdate);
-    }
-    
-    const char* pszNLCMinRefreshPeriod = CSLFetchNameValue(papszOptions, "NLC_MINREFRESHPERIOD");
-    const char* pszNLCMaxSessionLength = CSLFetchNameValue(papszOptions, "NLC_MAXSESSIONLENGTH");
-    const char* pszNLCCookie = CSLFetchNameValue(papszOptions, "NLC_COOKIE");
-    const char* pszNLCMessage = CSLFetchNameValue(papszOptions, "NLC_MESSAGE");
-    const char* pszNLCLinkName = CSLFetchNameValue(papszOptions, "NLC_LINKNAME");
-    const char* pszNLCLinkDescription = CSLFetchNameValue(papszOptions, "NLC_LINKDESCRIPTION");
-    const char* pszNLCLinkSnippet = CSLFetchNameValue(papszOptions, "NLC_LINKSNIPPET");
-    const char* pszNLCExpires = CSLFetchNameValue(papszOptions, "NLC_EXPIRES");
-    if( pszNLCMinRefreshPeriod != NULL || pszNLCMaxSessionLength != NULL ||
-        pszNLCCookie != NULL || pszNLCMessage != NULL || pszNLCLinkName != NULL ||
-        pszNLCLinkDescription != NULL || pszNLCLinkSnippet != NULL ||
-        pszNLCExpires != NULL )
-    {
-        if( nlc == NULL )
+        if( m_poKmlUpdate != NULL )
         {
-            nlc = m_poKmlFactory->CreateNetworkLinkControl();
-            m_poKmlDSKml->set_networklinkcontrol ( nlc );
-        }
-        if( pszNLCMinRefreshPeriod != NULL )
-        {
-            double dfVal = CPLAtof(pszNLCMinRefreshPeriod);
-            if( dfVal >= 0 )
-                nlc->set_minrefreshperiod(dfVal);
-        }
-        if( pszNLCMaxSessionLength != NULL )
-        {
-            double dfVal = CPLAtof(pszNLCMaxSessionLength);
-            nlc->set_maxsessionlength(dfVal);
-        }
-        if( pszNLCCookie != NULL )
-        {
-            nlc->set_cookie(pszNLCCookie);
-        }
-        if( pszNLCMessage != NULL )
-        {
-            nlc->set_message(pszNLCMessage);
-        }
-        if( pszNLCLinkName != NULL )
-        {
-            nlc->set_linkname(pszNLCLinkName);
-        }
-        if( pszNLCLinkDescription != NULL )
-        {
-            nlc->set_linkdescription(pszNLCLinkDescription);
-        }
-        if( pszNLCLinkSnippet != NULL )
-        {
-            LinkSnippetPtr linksnippet = m_poKmlFactory->CreateLinkSnippet();
-            linksnippet->set_text(pszNLCLinkSnippet);
-            nlc->set_linksnippet(linksnippet);
-        }
-        if( pszNLCExpires != NULL )
-        {
-            int year, month, day, hour, minute, tz;
-            float fSecond;
-            if( OGRParseXMLDateTime( pszNLCExpires, &year, &month, &day,
-                                     &hour, &minute, &fSecond, &tz) )
+            NetworkLinkControlPtr nlc = m_poKmlFactory->CreateNetworkLinkControl();
+            poKml->set_networklinkcontrol ( nlc );
+            if( m_poKmlUpdate->get_updateoperation_array_size() != 0 )
             {
-                char* pszXMLDate = OGRGetXMLDateTime(year, month, day, hour, minute, (int)fSecond, tz);
-                nlc->set_expires(pszXMLDate);
-                CPLFree(pszXMLDate);
+                nlc->set_update(m_poKmlUpdate);
+            }
+        }
+
+        const char* pszNLCMinRefreshPeriod = CSLFetchNameValue(m_papszOptions, "NLC_MINREFRESHPERIOD");
+        const char* pszNLCMaxSessionLength = CSLFetchNameValue(m_papszOptions, "NLC_MAXSESSIONLENGTH");
+        const char* pszNLCCookie = CSLFetchNameValue(m_papszOptions, "NLC_COOKIE");
+        const char* pszNLCMessage = CSLFetchNameValue(m_papszOptions, "NLC_MESSAGE");
+        const char* pszNLCLinkName = CSLFetchNameValue(m_papszOptions, "NLC_LINKNAME");
+        const char* pszNLCLinkDescription = CSLFetchNameValue(m_papszOptions, "NLC_LINKDESCRIPTION");
+        const char* pszNLCLinkSnippet = CSLFetchNameValue(m_papszOptions, "NLC_LINKSNIPPET");
+        const char* pszNLCExpires = CSLFetchNameValue(m_papszOptions, "NLC_EXPIRES");
+        if( pszNLCMinRefreshPeriod != NULL || pszNLCMaxSessionLength != NULL ||
+            pszNLCCookie != NULL || pszNLCMessage != NULL || pszNLCLinkName != NULL ||
+            pszNLCLinkDescription != NULL || pszNLCLinkSnippet != NULL ||
+            pszNLCExpires != NULL )
+        {
+            NetworkLinkControlPtr nlc;
+            if( poKml->has_networklinkcontrol() )
+                nlc = poKml->get_networklinkcontrol();
+            else
+            {
+                nlc = m_poKmlFactory->CreateNetworkLinkControl();
+                poKml->set_networklinkcontrol ( nlc );
+            }
+            if( pszNLCMinRefreshPeriod != NULL )
+            {
+                double dfVal = CPLAtof(pszNLCMinRefreshPeriod);
+                if( dfVal >= 0 )
+                    nlc->set_minrefreshperiod(dfVal);
+            }
+            if( pszNLCMaxSessionLength != NULL )
+            {
+                double dfVal = CPLAtof(pszNLCMaxSessionLength);
+                nlc->set_maxsessionlength(dfVal);
+            }
+            if( pszNLCCookie != NULL )
+            {
+                nlc->set_cookie(pszNLCCookie);
+            }
+            if( pszNLCMessage != NULL )
+            {
+                nlc->set_message(pszNLCMessage);
+            }
+            if( pszNLCLinkName != NULL )
+            {
+                nlc->set_linkname(pszNLCLinkName);
+            }
+            if( pszNLCLinkDescription != NULL )
+            {
+                nlc->set_linkdescription(pszNLCLinkDescription);
+            }
+            if( pszNLCLinkSnippet != NULL )
+            {
+                LinkSnippetPtr linksnippet = m_poKmlFactory->CreateLinkSnippet();
+                linksnippet->set_text(pszNLCLinkSnippet);
+                nlc->set_linksnippet(linksnippet);
+            }
+            if( pszNLCExpires != NULL )
+            {
+                int year, month, day, hour, minute, tz;
+                float fSecond;
+                if( OGRParseXMLDateTime( pszNLCExpires, &year, &month, &day,
+                                        &hour, &minute, &fSecond, &tz) )
+                {
+                    char* pszXMLDate = OGRGetXMLDateTime(year, month, day, hour, minute, (int)fSecond, tz);
+                    nlc->set_expires(pszXMLDate);
+                    CPLFree(pszXMLDate);
+                }
             }
         }
     }
-    
+}
+
+/******************************************************************************
+ method to create a single file .kml ds
+ 
+ Args:          pszFilename     the datasource to create
+                papszOptions    datasource creation options
+ 
+ Returns:       True on success, false on failure
+
+******************************************************************************/
+
+int OGRLIBKMLDataSource::CreateKml (
+    const char *pszFilename,
+    char **papszOptions )
+{
+    m_poKmlDSKml = OGRLIBKMLCreateOGCKml22(m_poKmlFactory, papszOptions);
+    if( osUpdateTargetHref.size() == 0 )
+    {
+        DocumentPtr poKmlDocument = m_poKmlFactory->CreateDocument (  );
+        m_poKmlDSKml->set_feature ( poKmlDocument );
+        m_poKmlDSContainer = poKmlDocument;
+    }
+
     m_isKml = TRUE;
     bUpdated = TRUE;
 
@@ -1676,7 +1697,6 @@ int OGRLIBKMLDataSource::CreateKmz (
 
         if ( !strcmp ( namefield, "yes" ) ) {
             m_poKmlDocKml = m_poKmlFactory->CreateDocument (  );
-            m_poKmlDocKml->set_id("root_doc");
         }
     }
 
@@ -1718,7 +1738,6 @@ int OGRLIBKMLDataSource::CreateDir (
 
         if ( !strcmp ( namefield, "yes" ) ) {
             m_poKmlDocKml = m_poKmlFactory->CreateDocument (  );
-            m_poKmlDocKml->set_id("root_doc");
         }
     }
 
@@ -1760,6 +1779,8 @@ int OGRLIBKMLDataSource::Create (
         m_poKmlUpdate = m_poKmlFactory->CreateUpdate();
         m_poKmlUpdate->set_targethref(osUpdateTargetHref.c_str());
     }
+
+    m_papszOptions = CSLDuplicate(papszOptions);
 
     /***** kml *****/
 
@@ -2232,6 +2253,13 @@ OGRLayer *OGRLIBKMLDataSource::CreateLayer (
                                      pszSOSizeY,
                                      pszSOSizeXUnits,
                                      pszSOSizeYUnits);
+    }
+    
+    const char* pszListStyleType = CSLFetchNameValue(papszOptions, "LISTSTYLE_TYPE");
+    const char* pszListStyleIconHref = CSLFetchNameValue(papszOptions, "LISTSTYLE_ICON_HREF");
+    if( poOgrLayer != NULL )
+    {
+        poOgrLayer->SetListStyle(pszListStyleType, pszListStyleIconHref);
     }
 
     /***** mark the dataset as updated *****/

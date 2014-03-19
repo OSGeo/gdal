@@ -153,6 +153,8 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
     /* update container */
     m_poKmlUpdate = poKmlUpdate;
 
+    m_poKmlSchema = NULL;
+
     /***** related to Region *****/
 
     m_bWriteRegion = FALSE;
@@ -242,8 +244,6 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
             ParseStyles ( AsDocument ( m_poKmlLayer ), &m_poStyleTable );
 
         /***** get the schema if the layer is a Document *****/
-
-        m_poKmlSchema = NULL;
 
         if ( m_poKmlLayer->IsA ( kmldom::Type_Document ) ) {
             DocumentPtr poKmlDocument = AsDocument ( m_poKmlLayer );
@@ -374,22 +374,7 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
         /***** mark the layer as updated *****/
 
         bUpdated = TRUE;
-
-        /***** create a new schema *****/
-
-        KmlFactory *poKmlFactory = m_poOgrDS->GetKmlFactory (  );
-
-        m_poKmlSchema = poKmlFactory->CreateSchema (  );
-
-        /***** set the id on the new schema *****/
-
-        std::string oKmlSchemaID = OGRLIBKMLGetSanitizedNCName(m_pszName);
-        oKmlSchemaID.append ( ".schema" );
-        m_poKmlSchema->set_id ( oKmlSchemaID );
     }
-
-
-
 
 }
 
@@ -759,7 +744,24 @@ OGRErr OGRLIBKMLLayer::CreateField (
          strcmp(poField->GetNameRef(), oFC.rollfield) != 0 &&
          (poKmlSimpleField =
          FieldDef2kml ( poField, m_poOgrDS->GetKmlFactory (  ) )) != NULL )
+    {
+        if( m_poKmlSchema == NULL )
+        {
+            /***** create a new schema *****/
+
+            KmlFactory *poKmlFactory = m_poOgrDS->GetKmlFactory (  );
+
+            m_poKmlSchema = poKmlFactory->CreateSchema (  );
+
+            /***** set the id on the new schema *****/
+
+            std::string oKmlSchemaID = OGRLIBKMLGetSanitizedNCName(m_pszName);
+            oKmlSchemaID.append ( ".schema" );
+            m_poKmlSchema->set_id ( oKmlSchemaID );
+        }
+
         m_poKmlSchema->add_simplefield ( poKmlSimpleField );
+    }
 
     m_poOgrFeatureDefn->AddFieldDefn ( poField );
 
@@ -1068,9 +1070,10 @@ void OGRLIBKMLLayer::SetRegionBounds(double dfMinX, double dfMinY,
 
 void OGRLIBKMLLayer::Finalize()
 {
+    KmlFactory *poKmlFactory = m_poOgrDS->GetKmlFactory (  );
+
     if( m_bWriteRegion && m_dfRegionMinX < m_dfRegionMaxX )
     {
-        KmlFactory *poKmlFactory = m_poOgrDS->GetKmlFactory (  );
         RegionPtr region = poKmlFactory->CreateRegion();
 
         LatLonAltBoxPtr box = poKmlFactory->CreateLatLonAltBox();
@@ -1094,6 +1097,12 @@ void OGRLIBKMLLayer::Finalize()
         region->set_lod(lod);
         m_poKmlLayer->set_region(region);
     }
+
+    createkmlliststyle (poKmlFactory,
+                        GetName(),
+                        AsDocument(m_poKmlLayer),
+                        osListStyleType,
+                        osListStyleIconHref);
 }
 
 /************************************************************************/
@@ -1199,4 +1208,15 @@ void OGRLIBKMLLayer::SetScreenOverlay(const char* pszSOHref,
     }
 
     m_poKmlLayer->add_feature(so);
+}
+
+/************************************************************************/
+/*                           SetListStyle()                              */
+/************************************************************************/
+
+void OGRLIBKMLLayer::SetListStyle(const char* pszListStyleType,
+                                  const char* pszListStyleIconHref)
+{
+    osListStyleType = (pszListStyleType) ? pszListStyleType : "";
+    osListStyleIconHref = (pszListStyleIconHref) ? pszListStyleIconHref : "";
 }
