@@ -2328,7 +2328,7 @@ void OGRLIBKMLDataSource::SetStyleTable2Kml (
     /***** add the new style table to the document *****/
 
     styletable2kml ( poStyleTable, m_poKmlFactory,
-                     AsContainer ( poKmlDocument ) );
+                     AsContainer ( poKmlDocument ), m_papszOptions );
 
     return;
 }
