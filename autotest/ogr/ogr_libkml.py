@@ -1312,6 +1312,10 @@ def ogr_libkml_read_write_style():
                 <color>01234567</color>
                 <scale>1.1</scale>
             </LabelStyle>
+            <BalloonStyle>
+                <bgColor>ff00ffff</bgColor>
+                <text><![CDATA[This is $[name], whose description is:<br/>$[description]]]></text>
+            </BalloonStyle>
         </Style>
         <Style id="style2">
             <LineStyle>
@@ -1368,7 +1372,9 @@ def ogr_libkml_read_write_style():
     src_ds = ogr.Open('/vsimem/ogr_libkml_read_write_style_read.kml')
     style_table = src_ds.GetStyleTable()
 
-    ds = ogr.GetDriverByName('LIBKML').CreateDataSource('/vsimem/ogr_libkml_read_write_style_write.kml')
+    options = [ 'style1_balloonstyle_bgcolor=#FFFF00',
+                'style1_balloonstyle_text=This is $[name], whose description is:<br/>$[description]']
+    ds = ogr.GetDriverByName('LIBKML').CreateDataSource('/vsimem/ogr_libkml_read_write_style_write.kml', options = options)
     ds.SetStyleTable(style_table)
     ds = None
     src_ds = None

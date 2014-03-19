@@ -49,6 +49,7 @@ using kmldom::PolyStylePtr;
 using kmldom::IconStylePtr;
 using kmldom::IconStyleIconPtr;
 using kmldom::LabelStylePtr;
+using kmldom::BalloonStylePtr;
 using kmldom::HotSpotPtr;
 using kmlbase::Color32;
 using kmldom::PairPtr;
@@ -76,8 +77,7 @@ StylePtr addstylestring2kml (
     const char *pszStyleString,
     StylePtr poKmlStyle,
     KmlFactory * poKmlFactory,
-    FeaturePtr poKmlFeature,
-    OGRFeature * poOgrFeat )
+    FeaturePtr poKmlFeature )
 {
 
     LineStylePtr poKmlLineStyle = NULL;
@@ -1095,7 +1095,8 @@ void ParseStyles (
 void styletable2kml (
     OGRStyleTable * poOgrStyleTable,
     KmlFactory * poKmlFactory,
-    ContainerPtr poKmlContainer )
+    ContainerPtr poKmlContainer,
+    char** papszOptions )
 {
 
     /***** just return if the styletable is null *****/
@@ -1149,7 +1150,25 @@ void styletable2kml (
 
         /***** parse the style string *****/
 
-        addstylestring2kml ( pszStyleString, poKmlStyle, poKmlFactory, NULL, NULL );
+        addstylestring2kml ( pszStyleString, poKmlStyle, poKmlFactory, NULL );
+
+        /***** add balloon style *****/
+        const char* pszBalloonStyleBgColor = CSLFetchNameValue(papszOptions, CPLSPrintf("%s_balloonstyle_bgcolor", pszStyleName));
+        const char* pszBalloonStyleText = CSLFetchNameValue(papszOptions, CPLSPrintf("%s_balloonstyle_text", pszStyleName));
+        int nR, nG, nB, nA;
+        OGRStylePen oStyleTool;
+        if( (pszBalloonStyleBgColor != NULL &&
+             oStyleTool.GetRGBFromString ( pszBalloonStyleBgColor, nR, nG, nB, nA )  ) ||
+            pszBalloonStyleText != NULL )
+        {
+            BalloonStylePtr poKmlBalloonStyle = poKmlFactory->CreateBalloonStyle();
+            if( pszBalloonStyleBgColor != NULL &&
+                oStyleTool.GetRGBFromString ( pszBalloonStyleBgColor, nR, nG, nB, nA ) )
+                poKmlBalloonStyle->set_bgcolor ( Color32 ( nA, nB, nG, nR ) );
+            if( pszBalloonStyleText != NULL )
+                poKmlBalloonStyle->set_text(pszBalloonStyleText);
+            poKmlStyle->set_balloonstyle ( poKmlBalloonStyle );
+        }
 
         /***** add the style to the container *****/
 
