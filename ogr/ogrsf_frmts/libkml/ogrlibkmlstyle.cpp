@@ -76,7 +76,7 @@ StylePtr addstylestring2kml (
     const char *pszStyleString,
     StylePtr poKmlStyle,
     KmlFactory * poKmlFactory,
-    PlacemarkPtr poKmlPlacemark,
+    FeaturePtr poKmlFeature,
     OGRFeature * poOgrFeat )
 {
 
@@ -331,9 +331,9 @@ StylePtr addstylestring2kml (
                 const char *pszText = poStyleLabel->TextString ( nullcheck );
 
                 if ( !nullcheck ) {
-                    if ( poKmlPlacemark ) {
+                    if ( poKmlFeature ) {
 
-                        poKmlPlacemark->set_name( pszText );
+                        poKmlFeature->set_name( pszText );
                     }
                 }
                     

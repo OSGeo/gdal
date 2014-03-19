@@ -522,11 +522,11 @@ OGRErr OGRLIBKMLLayer::CreateFeature (
         m_dfRegionMaxY = MAX(m_dfRegionMaxY, sEnvelope.MaxY);
     }
 
-    PlacemarkPtr poKmlPlacemark =
+    FeaturePtr poKmlFeature =
         feat2kml ( m_poOgrDS, this, poOgrFeat, m_poOgrDS->GetKmlFactory (  ) );
 
     if( m_poKmlLayer != NULL )
-        m_poKmlLayer->add_feature ( poKmlPlacemark );
+        m_poKmlLayer->add_feature ( poKmlFeature );
     else
     {
         CPLAssert( m_poKmlUpdate != NULL );
@@ -534,7 +534,7 @@ OGRErr OGRLIBKMLLayer::CreateFeature (
         CreatePtr poCreate = poKmlFactory->CreateCreate();
         DocumentPtr poDocument = poKmlFactory->CreateDocument();
         poDocument->set_targetid(OGRLIBKMLGetSanitizedNCName(GetName()));
-        poDocument->add_feature ( poKmlPlacemark );
+        poDocument->add_feature ( poKmlFeature );
         poCreate->add_container(poDocument);
         m_poKmlUpdate->add_updateoperation(poCreate);
     }
@@ -546,7 +546,7 @@ OGRErr OGRLIBKMLLayer::CreateFeature (
     const char* pszId = CPLSPrintf("%s.%d",
                     OGRLIBKMLGetSanitizedNCName(GetName()).c_str(), nFeatures);
     poOgrFeat->SetFID(nFeatures);
-    poKmlPlacemark->set_id(pszId);
+    poKmlFeature->set_id(pszId);
     
     /***** mark the layer as updated *****/
 
@@ -574,17 +574,17 @@ OGRErr OGRLIBKMLLayer::SetFeature ( OGRFeature * poOgrFeat )
     if( poOgrFeat->GetFID() == OGRNullFID )
         return OGRERR_FAILURE;
 
-    PlacemarkPtr poKmlPlacemark =
+    FeaturePtr poKmlFeature =
         feat2kml ( m_poOgrDS, this, poOgrFeat, m_poOgrDS->GetKmlFactory (  ) );
 
     KmlFactory *poKmlFactory = m_poOgrDS->GetKmlFactory (  );
     ChangePtr poChange = poKmlFactory->CreateChange();
-    poChange->add_object(poKmlPlacemark);
+    poChange->add_object(poKmlFeature);
     m_poKmlUpdate->add_updateoperation(poChange);
     
     const char* pszId = CPLSPrintf("%s.%ld",
                     OGRLIBKMLGetSanitizedNCName(GetName()).c_str(), poOgrFeat->GetFID());
-    poKmlPlacemark->set_targetid(pszId);
+    poKmlFeature->set_targetid(pszId);
 
     /***** mark the layer as updated *****/
 
@@ -736,13 +736,7 @@ OGRErr OGRLIBKMLLayer::CreateField (
 
     SimpleFieldPtr poKmlSimpleField = NULL;
 
-    struct fieldconfig oFC;
-    get_fieldconfig( &oFC );
-
-    if ( strcmp(poField->GetNameRef(), oFC.headingfield) != 0 &&
-         strcmp(poField->GetNameRef(), oFC.tiltfield) != 0 &&
-         strcmp(poField->GetNameRef(), oFC.rollfield) != 0 &&
-         (poKmlSimpleField =
+    if ( (poKmlSimpleField =
          FieldDef2kml ( poField, m_poOgrDS->GetKmlFactory (  ) )) != NULL )
     {
         if( m_poKmlSchema == NULL )
