@@ -56,7 +56,7 @@ args:
             poOgrLayer      the layer the feature is in
             poOgrFeat       the feature
             poKmlFactory    the kml dom factory
-            poKmlPlacemark  the placemark to add it to
+            poKmlFeature  the placemark to add it to
 
 returns:
             nothing
@@ -67,7 +67,7 @@ void featurestyle2kml (
     OGRLayer * poOgrLayer,
     OGRFeature * poOgrFeat,
     KmlFactory * poKmlFactory,
-    PlacemarkPtr poKmlPlacemark )
+    FeaturePtr poKmlFeature )
 {
 
     /***** get the style table *****/
@@ -99,7 +99,7 @@ void featurestyle2kml (
 
                 oTmp.append ( pszStyleName );
 
-                poKmlPlacemark->set_styleurl ( oTmp );
+                poKmlFeature->set_styleurl ( oTmp );
             }
 
 
@@ -113,7 +113,7 @@ void featurestyle2kml (
                 oTmp.append ( "#" );
                 oTmp.append ( pszStyleName );
 
-                poKmlPlacemark->set_styleurl ( oTmp );
+                poKmlFeature->set_styleurl ( oTmp );
             }
         }
 
@@ -123,11 +123,11 @@ void featurestyle2kml (
             /***** parse the style string *****/
 
             StylePtr poKmlStyle = addstylestring2kml ( pszStyleString, NULL, poKmlFactory,
-                                 poKmlPlacemark, poOgrFeat );
+                                 poKmlFeature, poOgrFeat );
 
             /***** add the style to the placemark *****/
             if( poKmlStyle != NULL )
-                poKmlPlacemark->set_styleselector ( poKmlStyle );
+                poKmlFeature->set_styleselector ( poKmlStyle );
 
         }
     }
@@ -163,7 +163,7 @@ void featurestyle2kml (
 
                     oTmp.append ( pszStyleName );
 
-                    poKmlPlacemark->set_styleurl ( oTmp );
+                    poKmlFeature->set_styleurl ( oTmp );
                 }
 
                 /***** assume its a dataset style,      *****/
@@ -177,7 +177,7 @@ void featurestyle2kml (
                     oTmp.append ( "#" );
                     oTmp.append ( pszStyleName );
 
-                    poKmlPlacemark->set_styleurl ( oTmp );
+                    poKmlFeature->set_styleurl ( oTmp );
                 }
             }
 
@@ -186,12 +186,12 @@ void featurestyle2kml (
                 /***** parse the style string *****/
 
                 poKmlStyle = addstylestring2kml ( pszStyleString, poKmlStyle,
-                                     poKmlFactory, poKmlPlacemark, poOgrFeat );
+                                     poKmlFactory, poKmlFeature, poOgrFeat );
                 if( poKmlStyle != NULL )
                 {
                     /***** add the style to the placemark *****/
 
-                    poKmlPlacemark->set_styleselector ( poKmlStyle );
+                    poKmlFeature->set_styleselector ( poKmlStyle );
                 }
 
             }
@@ -205,7 +205,7 @@ void featurestyle2kml (
 ******************************************************************************/
 
 void kml2featurestyle (
-    PlacemarkPtr poKmlPlacemark,
+    FeaturePtr poKmlFeature,
     OGRLIBKMLDataSource * poOgrDS,
     OGRLayer * poOgrLayer,
     OGRFeature * poOgrFeat )
@@ -213,9 +213,9 @@ void kml2featurestyle (
 
     /***** does the placemark have a style url? *****/
 
-    if (    poKmlPlacemark->has_styleurl (  ) ) {
+    if (    poKmlFeature->has_styleurl (  ) ) {
 
-        const string poKmlStyleUrl = poKmlPlacemark->get_styleurl (  );
+        const string poKmlStyleUrl = poKmlFeature->get_styleurl (  );
 
         /***** is the name in the layer style table *****/
 
@@ -339,7 +339,7 @@ void kml2featurestyle (
 
                         if ( poOgrDS->ParseIntoStyleTable (&oStyle, pszUrlTmp)) {
 
-                            kml2featurestyle (poKmlPlacemark,
+                            kml2featurestyle (poKmlFeature,
                                               poOgrDS,
                                               poOgrLayer,
                                               poOgrFeat );
@@ -368,10 +368,10 @@ void kml2featurestyle (
 
     /***** does the placemark have a style selector *****/
 
-   if ( poKmlPlacemark->has_styleselector (  ) ) {
+   if ( poKmlFeature->has_styleselector (  ) ) {
 
         StyleSelectorPtr poKmlStyleSelector =
-            poKmlPlacemark->get_styleselector (  );
+            poKmlFeature->get_styleselector (  );
 
         /***** is the style a style? *****/
 

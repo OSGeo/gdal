@@ -1693,6 +1693,75 @@ def ogr_libkml_write_liststyle():
     return 'success'
 
 ###############################################################################
+# Test writing NetworkLink
+
+def ogr_libkml_write_networklink():
+
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_networklink.kml")
+    lyr = ds.CreateLayer('test')
+    lyr.CreateField(ogr.FieldDefn('name', ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn("networklink", ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn("networklink_refreshvisibility", ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn("networklink_flytoview", ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn("networklink_refreshMode", ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn("networklink_refreshInterval", ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn("networklink_viewRefreshMode", ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn("networklink_viewRefreshTime", ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn("networklink_viewBoundScale", ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn("networklink_viewFormat", ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn("networklink_httpQuery", ogr.OFTString))
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField("name", "a network link")
+    feat.SetField("networklink", "http://developers.google.com/kml/documentation/Point.kml")
+    feat.SetField("networklink_refreshVisibility", 1)
+    feat.SetField("networklink_flyToView", 1)
+    feat.SetField("networklink_refreshInterval", 60)
+    feat.SetField("networklink_httpQuery", "[clientVersion]")
+    lyr.CreateFeature(feat)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField("networklink", "http://developers.google.com/kml/documentation/Point.kml")
+    feat.SetField("networklink_viewRefreshTime", 30)
+    lyr.CreateFeature(feat)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField("networklink", "http://developers.google.com/kml/documentation/Point.kml")
+    feat.SetField("networklink_refreshMode", 'onExpire')
+    feat.SetField("networklink_viewRefreshMode", 'onRegion')
+    feat.SetField("networklink_viewBoundScale", 0.5)
+    feat.SetField("networklink_viewFormat", 'BBOX=[bboxWest],[bboxSouth],[bboxEast],[bboxNorth]')
+    lyr.CreateFeature(feat)
+
+    ds = None
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_networklink.kml', 'rb')
+    data = gdal.VSIFReadL(1, 2048, f)
+    gdal.VSIFCloseL(f)
+
+    if data.find('<name>a network link</name>') == -1 or \
+       data.find('<refreshVisibility>1</refreshVisibility>') == -1 or \
+       data.find('<flyToView>1</flyToView>') == -1 or \
+       data.find('<href>http://developers.google.com/kml/documentation/Point.kml</href>') == -1 or \
+       data.find('<refreshMode>onInterval</refreshMode>') == -1 or \
+       data.find('<refreshInterval>60</refreshInterval>') == -1 or \
+       data.find('<httpQuery>[clientVersion]</httpQuery>') == -1 or \
+       data.find('<viewRefreshMode>onStop</viewRefreshMode>') == -1 or \
+       data.find('<viewRefreshTime>30</viewRefreshTime>') == -1 or \
+       data.find('<refreshMode>onExpire</refreshMode>') == -1 or \
+       data.find('<viewRefreshMode>onRegion</viewRefreshMode>') == -1 or \
+       data.find('<viewBoundScale>0.5</viewBoundScale>') == -1 or \
+       data.find('<viewFormat>BBOX=[bboxWest],[bboxSouth],[bboxEast],[bboxNorth]</viewFormat>') == -1:
+        print(data)
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_libkml_cleanup():
@@ -1726,6 +1795,7 @@ def ogr_libkml_cleanup():
     gdal.Unlink("/vsimem/ogr_libkml_write_networklinkcontrol_dir/doc.kml")
     gdal.Unlink("/vsimem/ogr_libkml_write_networklinkcontrol_dir")
     gdal.Unlink("/vsimem/ogr_libkml_write_liststyle.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_write_networklink.kml")
 
     # Re-register KML driver if necessary
     if ogrtest.kml_drv is not None:
@@ -1776,6 +1846,7 @@ gdaltest_list = [
     ogr_libkml_write_update,
     ogr_libkml_write_networklinkcontrol,
     ogr_libkml_write_liststyle,
+    ogr_libkml_write_networklink,
     ogr_libkml_cleanup ]
 
 if __name__ == '__main__':

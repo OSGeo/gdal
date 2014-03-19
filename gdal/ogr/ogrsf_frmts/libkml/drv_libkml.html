@@ -263,9 +263,17 @@
   
   <p>
     An OGR <a href="http://www.gdal.org/ogr/ogr_arch.html#ogr_arch_feature">feature</a>
-    translates to kml as a
+    generally translates to kml as a
     <a href="https://developers.google.com/kml/documentation/kmlreference#placemark">
     &lt;Placemark&gt;</a>, and vice-versa.
+  </p>
+
+  <p>If the model field is defined, a <a href="https://developers.google.com/kml/documentation/kmlreference#model">
+    &lt;Model&gt;</a> object within the Placemark will be generated.
+  </p>
+
+  <p>If the networklink field is defined, a <a href="https://developers.google.com/kml/documentation/kmlreference#networklink">
+    &lt;NetworkLink&gt;</a> will be generated.
   </p>
 
   <p>
@@ -432,6 +440,7 @@
       enviroment variable LIBKML_ROLL_FIELD. This field is present only if a Placemark has
       a Camera with a roll element.
     </dd>
+
     <dt>model</dt>
     <dd>This string field can be used to define the URL of a 3D
       <a href="https://developers.google.com/kml/documentation/kmlreference#model">
@@ -440,22 +449,93 @@
     </dd>
     <dt>scale_x</dt>
     <dd>This real field maps to the x element of the kml tag 
-      <a href="https://developers.google.com/kml/documentation/kmlreference#roll">
-      &lt;scale&gt;</a>. The name of the ogr field can be changed with the
+      <a href="https://developers.google.com/kml/documentation/kmlreference#scale">
+      &lt;scale&gt;</a> for a 3D model. The name of the ogr field can be changed with the
       enviroment variable LIBKML_SCALE_X_FIELD.
     </dd>
     <dt>scale_y</dt>
     <dd>This real field maps to the y element of the kml tag 
-      <a href="https://developers.google.com/kml/documentation/kmlreference#roll">
-      &lt;scale&gt;</a>. The name of the ogr field can be changed with the
+      <a href="https://developers.google.com/kml/documentation/kmlreference#scale">
+      &lt;scale&gt;</a>for a 3D model. The name of the ogr field can be changed with the
       enviroment variable LIBKML_SCALE_Y_FIELD.
     </dd>
     <dt>scale_z</dt>
     <dd>This real field maps to the z element of the kml tag 
-      <a href="https://developers.google.com/kml/documentation/kmlreference#roll">
-      &lt;scale&gt;</a>. The name of the ogr field can be changed with the
+      <a href="https://developers.google.com/kml/documentation/kmlreference#scale">
+      &lt;scale&gt;</a>for a 3D model. The name of the ogr field can be changed with the
       enviroment variable LIBKML_SCALE_Z_FIELD.
     </dd>
+
+    <dt>networklink</dt>
+    <dd>This string field maps to the href element of the kml tag 
+      <a href="https://developers.google.com/kml/documentation/kmlreference#href">
+      &lt;href&gt;</a> of a NetworkLink. The name of the ogr field can be changed with the
+      enviroment variable LIBKML_NETWORKLINK_FIELD.
+    </dd>
+
+    <dt>networklink_refreshvisibility</dt>
+    <dd>This integer field maps to kml tag 
+      <a href="https://developers.google.com/kml/documentation/kmlreference#refreshvisibility">
+      &lt;refreshVisibility&gt;</a> of a NetworkLink. The name of the ogr field can be changed with the
+      enviroment variable LIBKML_NETWORKLINK_REFRESHVISIBILITY_FIELD.
+    </dd>
+
+    <dt>networklink_flytoview</dt>
+    <dd>This integer field maps to kml tag 
+      <a href="https://developers.google.com/kml/documentation/kmlreference#flytoview">
+      &lt;flyToView&gt;</a> of a NetworkLink. The name of the ogr field can be changed with the
+      enviroment variable LIBKML_NETWORKLINK_FLYTOVIEW_FIELD.
+    </dd>
+
+    <dt>networklink_refreshmode</dt>
+    <dd>This string field maps to kml tag 
+      <a href="https://developers.google.com/kml/documentation/kmlreference#refreshmode">
+      &lt;refreshMode&gt;</a> of a NetworkLink. The name of the ogr field can be changed with the
+      enviroment variable LIBKML_NETWORKLINK_REFRESHMODE_FIELD.
+    </dd>
+
+    <dt>networklink_refreshinterval</dt>
+    <dd>This real field maps to kml tag 
+      <a href="https://developers.google.com/kml/documentation/kmlreference#refreshinterval">
+      &lt;refreshInterval&gt;</a> of a NetworkLink. The name of the ogr field can be changed with the
+      enviroment variable LIBKML_NETWORKLINK_REFRESHINTERVAL_FIELD.
+    </dd>
+
+    <dt>networklink_viewrefreshmode</dt>
+    <dd>This string field maps to kml tag 
+      <a href="https://developers.google.com/kml/documentation/kmlreference#viewrefreshmode">
+      &lt;viewRefreshMode&gt;</a> of a NetworkLink. The name of the ogr field can be changed with the
+      enviroment variable LIBKML_NETWORKLINK_VIEWREFRESHMODE_FIELD.
+    </dd>
+
+    <dt>networklink_viewrefreshtime</dt>
+    <dd>This real field maps to kml tag 
+      <a href="https://developers.google.com/kml/documentation/kmlreference#viewrefreshtime">
+      &lt;viewRefreshTime&gt;</a> of a NetworkLink. The name of the ogr field can be changed with the
+      enviroment variable LIBKML_NETWORKLINK_VIEWREFRESHTIME_FIELD.
+    </dd>
+
+    <dt>networklink_viewboundscale</dt>
+    <dd>This real field maps to kml tag 
+      <a href="https://developers.google.com/kml/documentation/kmlreference#viewboundscale">
+      &lt;viewBoundScale&gt;</a> of a NetworkLink. The name of the ogr field can be changed with the
+      enviroment variable LIBKML_NETWORKLINK_VIEWBOUNDSCALE_FIELD.
+    </dd>
+
+    <dt>networklink_viewformat</dt>
+    <dd>This string field maps to kml tag 
+      <a href="https://developers.google.com/kml/documentation/kmlreference#viewformat">
+      &lt;viewFormat&gt;</a> of a NetworkLink. The name of the ogr field can be changed with the
+      enviroment variable LIBKML_NETWORKLINK_VIEWFORMAT_FIELD.
+    </dd>
+
+    <dt>networklink_httpquery</dt>
+    <dd>This string field maps to kml tag 
+      <a href="https://developers.google.com/kml/documentation/kmlreference#httpquery">
+      &lt;httpQuery&gt;</a> of a NetworkLink. The name of the ogr field can be changed with the
+      enviroment variable LIBKML_NETWORKLINK_HTTPQUERY_FIELD.
+    </dd>
+
     <dt>OGR_STYLE</dt>
     <dd>This string field maps to a features style string, OGR reads this field
       if there is no style string set on the feature.
