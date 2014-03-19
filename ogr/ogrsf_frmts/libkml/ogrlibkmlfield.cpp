@@ -463,7 +463,10 @@ void field2kml (
                            EQUAL ( name, oFC.networklink_refreshMode_field ) ||
                            EQUAL ( name, oFC.networklink_viewRefreshMode_field ) ||
                            EQUAL ( name, oFC.networklink_viewFormat_field ) ||
-                           EQUAL ( name, oFC.networklink_httpQuery_field ) ) {
+                           EQUAL ( name, oFC.networklink_httpQuery_field ) ||
+                           EQUAL ( name, oFC.camera_altitudemode_field ) ||
+                           EQUAL ( name, oFC.photooverlayfield ) ||
+                           EQUAL ( name, oFC.photooverlay_shape_field ) ) {
 
                     CPLFree( pszUTF8String );
 
@@ -758,10 +761,19 @@ void field2kml (
                 EQUAL(name, oFC.scalexfield) ||
                 EQUAL(name, oFC.scaleyfield) ||
                 EQUAL(name, oFC.scalezfield) ||
-                EQUAL( name, oFC.networklink_refreshInterval_field ) ||
+                EQUAL(name, oFC.networklink_refreshInterval_field ) ||
                 EQUAL(name, oFC.networklink_viewRefreshMode_field) ||
                 EQUAL(name, oFC.networklink_viewRefreshTime_field) ||
-                EQUAL(name, oFC.networklink_viewBoundScale_field) )
+                EQUAL(name, oFC.networklink_viewBoundScale_field) ||
+                EQUAL(name, oFC.camera_longitude_field) ||
+                EQUAL(name, oFC.camera_latitude_field) ||
+                EQUAL(name, oFC.camera_altitude_field) ||
+                EQUAL(name, oFC.leftfovfield) ||
+                EQUAL(name, oFC.rightfovfield) ||
+                EQUAL(name, oFC.bottomfovfield) ||
+                EQUAL(name, oFC.topfovfield) ||
+                EQUAL(name, oFC.nearfield) ||
+                EQUAL(name, oFC.camera_altitude_field) )
             {
                 continue;
             }
@@ -1521,7 +1533,18 @@ SimpleFieldPtr FieldDef2kml (
          EQUAL ( pszFieldName, oFC.networklink_viewRefreshTime_field ) ||
          EQUAL ( pszFieldName, oFC.networklink_viewBoundScale_field ) ||
          EQUAL ( pszFieldName, oFC.networklink_viewFormat_field ) ||
-         EQUAL ( pszFieldName, oFC.networklink_httpQuery_field ) )
+         EQUAL ( pszFieldName, oFC.networklink_httpQuery_field ) ||
+         EQUAL ( pszFieldName, oFC.camera_longitude_field ) ||
+         EQUAL ( pszFieldName, oFC.camera_latitude_field ) ||
+         EQUAL ( pszFieldName, oFC.camera_altitude_field ) ||
+         EQUAL ( pszFieldName, oFC.camera_altitudemode_field ) ||
+         EQUAL ( pszFieldName, oFC.photooverlayfield ) ||
+         EQUAL ( pszFieldName, oFC.leftfovfield ) ||
+         EQUAL ( pszFieldName, oFC.rightfovfield ) ||
+         EQUAL ( pszFieldName, oFC.bottomfovfield ) ||
+         EQUAL ( pszFieldName, oFC.topfovfield ) ||
+         EQUAL ( pszFieldName, oFC.nearfield ) ||
+         EQUAL ( pszFieldName, oFC.photooverlay_shape_field ) )
     {
         return NULL;
     }
@@ -1535,48 +1558,16 @@ SimpleFieldPtr FieldDef2kml (
     switch ( poOgrFieldDef->GetType (  ) ) {
     case OFTInteger:
     case OFTIntegerList:
-        if ( EQUAL ( pszFieldName, oFC.tessellatefield ) ||
-             EQUAL ( pszFieldName, oFC.extrudefield ) ||
-             EQUAL ( pszFieldName, oFC.visibilityfield ) ||
-             EQUAL ( pszFieldName, oFC.drawOrderfield ) ||
-             EQUAL ( pszFieldName, oFC.networklink_refreshvisibility_field ) ||
-             EQUAL ( pszFieldName, oFC.networklink_flytoview_field ) ||
-             EQUAL ( pszFieldName, oFC.networklink_refreshInterval_field ) ||
-             EQUAL ( pszFieldName, oFC.networklink_viewRefreshTime_field ) ||
-             EQUAL ( pszFieldName, oFC.networklink_viewBoundScale_field ) )
-            break;
         poKmlSimpleField->set_type ( "int" );
         return poKmlSimpleField;
 			
     case OFTReal:
     case OFTRealList:
-        if ( EQUAL ( pszFieldName, oFC.headingfield ) ||
-             EQUAL ( pszFieldName, oFC.tiltfield ) ||
-             EQUAL ( pszFieldName, oFC.rollfield ) ||
-             EQUAL ( pszFieldName, oFC.scalexfield ) ||
-             EQUAL ( pszFieldName, oFC.scaleyfield ) ||
-             EQUAL ( pszFieldName, oFC.scalezfield ) ||
-             EQUAL ( pszFieldName, oFC.networklink_refreshInterval_field ) ||
-             EQUAL ( pszFieldName, oFC.networklink_viewRefreshTime_field ) ||
-             EQUAL ( pszFieldName, oFC.networklink_viewBoundScale_field ) )
-            break;
         poKmlSimpleField->set_type ( "float" );
         return poKmlSimpleField;
 	
     case OFTString:
     case OFTStringList:
-        if ( EQUAL ( pszFieldName, oFC.namefield ) ||
-             EQUAL ( pszFieldName, oFC.descfield ) ||
-             EQUAL ( pszFieldName, oFC.altitudeModefield ) ||
-             EQUAL ( pszFieldName, oFC.iconfield ) ||
-             EQUAL ( pszFieldName, oFC.snippetfield ) ||
-             EQUAL ( pszFieldName, oFC.modelfield ) ||
-             EQUAL ( pszFieldName, oFC.networklinkfield ) ||
-             EQUAL ( pszFieldName, oFC.networklink_refreshMode_field ) ||
-             EQUAL ( pszFieldName, oFC.networklink_viewRefreshMode_field ) ||
-             EQUAL ( pszFieldName, oFC.networklink_viewFormat_field ) ||
-             EQUAL ( pszFieldName, oFC.networklink_httpQuery_field ) )
-            break;
         poKmlSimpleField->set_type ( "string" );
         return poKmlSimpleField;
 
@@ -1585,11 +1576,8 @@ SimpleFieldPtr FieldDef2kml (
     case OFTDate:
     case OFTTime:
     case OFTDateTime:
-        if ( EQUAL ( pszFieldName, oFC.tsfield )
-             || EQUAL ( pszFieldName, oFC.beginfield )
-             || EQUAL ( pszFieldName, oFC.endfield ) )
-            break;
-    
+        break;
+
     default:
         poKmlSimpleField->set_type ( "string" );
         return poKmlSimpleField;
@@ -1710,6 +1698,17 @@ void get_fieldconfig( struct fieldconfig *oFC) {
     oFC->networklink_viewBoundScale_field = CPLGetConfigOption( "LIBKML_NETWORKLINK_VIEWBOUNDSCALE_FIELD", "networklink_viewboundscale");
     oFC->networklink_viewFormat_field = CPLGetConfigOption( "LIBKML_NETWORKLINK_VIEWFORMAT_FIELD", "networklink_viewformat");
     oFC->networklink_httpQuery_field = CPLGetConfigOption( "LIBKML_NETWORKLINK_HTTPQUERY_FIELD", "networklink_httpquery");
+    oFC->camera_longitude_field = CPLGetConfigOption( "LIBKML_CAMERA_LONGITUDE_FIELD", "camera_longitude");
+    oFC->camera_latitude_field = CPLGetConfigOption( "LIBKML_CAMERA_LATITUDE_FIELD", "camera_latitude");
+    oFC->camera_altitude_field = CPLGetConfigOption( "LIBKML_CAMERA_ALTITUDE_FIELD", "camera_altitude");
+    oFC->camera_altitudemode_field = CPLGetConfigOption( "LIBKML_CAMERA_ALTITUDEMODE_FIELD", "camera_altitudemode");
+    oFC->photooverlayfield = CPLGetConfigOption( "LIBKML_PHOTOOVERLAY_FIELD", "photooverlay");
+    oFC->leftfovfield = CPLGetConfigOption( "LIBKML_LEFTFOV_FIELD", "leftfov");
+    oFC->rightfovfield = CPLGetConfigOption( "LIBKML_RIGHTFOV_FIELD", "rightfov");
+    oFC->bottomfovfield = CPLGetConfigOption( "LIBKML_BOTTOMFOV_FIELD", "bottomfov");
+    oFC->topfovfield = CPLGetConfigOption( "LIBKML_TOPFOV_FIELD", "topfov");
+    oFC->nearfield = CPLGetConfigOption( "LIBKML_NEARFOV_FIELD", "near");
+    oFC->photooverlay_shape_field = CPLGetConfigOption( "LIBKML_PHOTOOVERLAY_SHAPE_FIELD", "photooverlay_shape");
 }
 
 /************************************************************************/
