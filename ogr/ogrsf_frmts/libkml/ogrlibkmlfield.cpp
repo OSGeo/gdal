@@ -285,7 +285,7 @@ void field2kml (
     OGRFeature * poOgrFeat,
     OGRLIBKMLLayer * poOgrLayer,
     KmlFactory * poKmlFactory,
-    PlacemarkPtr poKmlPlacemark )
+    FeaturePtr poKmlFeature )
 {
     int i;
 
@@ -357,7 +357,7 @@ void field2kml (
                 /***** name *****/
 
                 if ( EQUAL ( name, oFC.namefield ) ) {
-                    poKmlPlacemark->set_name ( pszUTF8String );
+                    poKmlFeature->set_name ( pszUTF8String );
                     CPLFree( pszUTF8String );
                     continue;
                 }
@@ -365,7 +365,7 @@ void field2kml (
                 /***** description *****/
 
                 else if ( EQUAL ( name, oFC.descfield ) ) {
-                    poKmlPlacemark->set_description ( pszUTF8String );
+                    poKmlFeature->set_description ( pszUTF8String );
                     CPLFree( pszUTF8String );
                     continue;
                 }
@@ -377,13 +377,16 @@ void field2kml (
 
                     iAltitudeMode = kmlAltitudeModeFromString(pszAltitudeMode, isGX);
 
-                    if ( poKmlPlacemark->has_geometry (  ) ) {
-                        GeometryPtr poKmlGeometry =
-                            poKmlPlacemark->get_geometry (  );
+                    if ( poKmlFeature->IsA ( kmldom::Type_Placemark ) ) {
+                        PlacemarkPtr poKmlPlacemark = AsPlacemark ( poKmlFeature );
+                        if ( poKmlPlacemark->has_geometry (  ) ) {
+                            GeometryPtr poKmlGeometry =
+                                poKmlPlacemark->get_geometry (  );
 
-                        ogr2altitudemode_rec ( poKmlGeometry, iAltitudeMode,
-                                               isGX );
+                            ogr2altitudemode_rec ( poKmlGeometry, iAltitudeMode,
+                                                isGX );
 
+                        }
                     }
 
                     CPLFree( pszUTF8String );
@@ -398,7 +401,7 @@ void field2kml (
                     TimeStampPtr poKmlTimeStamp =
                         poKmlFactory->CreateTimeStamp (  );
                     poKmlTimeStamp->set_when ( pszUTF8String  );
-                    poKmlPlacemark->set_timeprimitive ( poKmlTimeStamp );
+                    poKmlFeature->set_timeprimitive ( poKmlTimeStamp );
 
                     CPLFree( pszUTF8String );
 
@@ -411,7 +414,7 @@ void field2kml (
 
                     if ( !poKmlTimeSpan ) {
                         poKmlTimeSpan = poKmlFactory->CreateTimeSpan (  );
-                        poKmlPlacemark->set_timeprimitive ( poKmlTimeSpan );
+                        poKmlFeature->set_timeprimitive ( poKmlTimeSpan );
                     }
 
                     poKmlTimeSpan->set_begin ( pszUTF8String );
@@ -428,19 +431,10 @@ void field2kml (
 
                     if ( !poKmlTimeSpan ) {
                         poKmlTimeSpan = poKmlFactory->CreateTimeSpan (  );
-                        poKmlPlacemark->set_timeprimitive ( poKmlTimeSpan );
+                        poKmlFeature->set_timeprimitive ( poKmlTimeSpan );
                     }
 
                     poKmlTimeSpan->set_end ( pszUTF8String );
-
-                    CPLFree( pszUTF8String );
-
-                    continue;
-                }
-
-                /***** icon *****/
-
-                else if ( EQUAL ( name, oFC.iconfield ) ) {
 
                     CPLFree( pszUTF8String );
 
@@ -453,7 +447,7 @@ void field2kml (
 
                     SnippetPtr snippet = poKmlFactory->CreateSnippet (  );
                     snippet->set_text(pszUTF8String);
-                    poKmlPlacemark->set_snippet ( snippet );
+                    poKmlFeature->set_snippet ( snippet );
 
                     CPLFree( pszUTF8String );
 
@@ -461,9 +455,15 @@ void field2kml (
 
                 }
 
-                /***** model *****/
+                /***** other special fields *****/
 
-                else if ( EQUAL ( name, oFC.modelfield ) ) {
+                else if (  EQUAL ( name, oFC.iconfield ) ||
+                           EQUAL ( name, oFC.modelfield ) ||
+                           EQUAL ( name, oFC.networklinkfield ) ||
+                           EQUAL ( name, oFC.networklink_refreshMode_field ) ||
+                           EQUAL ( name, oFC.networklink_viewRefreshMode_field ) ||
+                           EQUAL ( name, oFC.networklink_viewFormat_field ) ||
+                           EQUAL ( name, oFC.networklink_httpQuery_field ) ) {
 
                     CPLFree( pszUTF8String );
 
@@ -600,7 +600,7 @@ void field2kml (
                     TimeStampPtr poKmlTimeStamp =
                         poKmlFactory->CreateTimeStamp (  );
                     poKmlTimeStamp->set_when ( timebuf );
-                    poKmlPlacemark->set_timeprimitive ( poKmlTimeStamp );
+                    poKmlFeature->set_timeprimitive ( poKmlTimeStamp );
                     CPLFree( timebuf );
 
                     continue;
@@ -615,7 +615,7 @@ void field2kml (
 
                     if ( !poKmlTimeSpan ) {
                         poKmlTimeSpan = poKmlFactory->CreateTimeSpan (  );
-                        poKmlPlacemark->set_timeprimitive ( poKmlTimeSpan );
+                        poKmlFeature->set_timeprimitive ( poKmlTimeSpan );
                     }
 
                     poKmlTimeSpan->set_begin ( timebuf );
@@ -635,7 +635,7 @@ void field2kml (
 
                     if ( !poKmlTimeSpan ) {
                         poKmlTimeSpan = poKmlFactory->CreateTimeSpan (  );
-                        poKmlPlacemark->set_timeprimitive ( poKmlTimeSpan );
+                        poKmlFeature->set_timeprimitive ( poKmlTimeSpan );
                     }
 
                     poKmlTimeSpan->set_end ( timebuf );
@@ -660,22 +660,25 @@ void field2kml (
 
             if ( EQUAL ( name, oFC.extrudefield ) ) {
 
-                if ( poKmlPlacemark->has_geometry (  )
-                     && -1 < poOgrFeat->GetFieldAsInteger ( i ) ) {
-                    int iExtrude = poOgrFeat->GetFieldAsInteger ( i );
-                    if( iExtrude &&
-                        isGX == FALSE && iAltitudeMode == kmldom::ALTITUDEMODE_CLAMPTOGROUND &&
-                        CSLTestBoolean(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
-                    {
-                        CPLError(CE_Warning, CPLE_NotSupported,
-                            "altitudeMode=clampToGround unsupported with extrude=1");
-                    }
-                    else
-                    {
-                        GeometryPtr poKmlGeometry =
-                            poKmlPlacemark->get_geometry (  );
-                        ogr2extrude_rec ( iExtrude,
-                                        poKmlGeometry );
+                if ( poKmlFeature->IsA ( kmldom::Type_Placemark ) ) {
+                    PlacemarkPtr poKmlPlacemark = AsPlacemark ( poKmlFeature );
+                    if ( poKmlPlacemark->has_geometry (  )
+                        && -1 < poOgrFeat->GetFieldAsInteger ( i ) ) {
+                        int iExtrude = poOgrFeat->GetFieldAsInteger ( i );
+                        if( iExtrude &&
+                            isGX == FALSE && iAltitudeMode == kmldom::ALTITUDEMODE_CLAMPTOGROUND &&
+                            CSLTestBoolean(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
+                        {
+                            CPLError(CE_Warning, CPLE_NotSupported,
+                                "altitudeMode=clampToGround unsupported with extrude=1");
+                        }
+                        else
+                        {
+                            GeometryPtr poKmlGeometry =
+                                poKmlPlacemark->get_geometry (  );
+                            ogr2extrude_rec ( iExtrude,
+                                            poKmlGeometry );
+                        }
                     }
                 }
                 continue;
@@ -686,26 +689,29 @@ void field2kml (
 
             if ( EQUAL ( name, oFC.tessellatefield ) ) {
 
-                if ( poKmlPlacemark->has_geometry (  )
-                     && -1 < poOgrFeat->GetFieldAsInteger ( i ) ) {
-                    int iTesselate = poOgrFeat->GetFieldAsInteger ( i );
-                    if( iTesselate &&
-                        !(isGX == FALSE && iAltitudeMode == kmldom::ALTITUDEMODE_CLAMPTOGROUND) &&
-                        !(isGX == TRUE && iAltitudeMode == kmldom::GX_ALTITUDEMODE_CLAMPTOSEAFLOOR) &&
-                        CSLTestBoolean(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
-                    {
-                        CPLError(CE_Warning, CPLE_NotSupported,
-                            "altitudeMode!=clampToGround && altitudeMode!=clampToSeaFloor unsupported with tesselate=1");
-                    }
-                    else
-                    {
-                        GeometryPtr poKmlGeometry =
-                            poKmlPlacemark->get_geometry (  );
-                        ogr2tessellate_rec ( iTesselate,
-                                            poKmlGeometry );
-                        if( isGX == FALSE && iAltitudeMode == kmldom::ALTITUDEMODE_CLAMPTOGROUND )
-                            ogr2altitudemode_rec ( poKmlGeometry, iAltitudeMode,
-                                                   isGX );
+                if ( poKmlFeature->IsA ( kmldom::Type_Placemark ) ) {
+                    PlacemarkPtr poKmlPlacemark = AsPlacemark ( poKmlFeature );
+                    if ( poKmlPlacemark->has_geometry (  )
+                        && -1 < poOgrFeat->GetFieldAsInteger ( i ) ) {
+                        int iTesselate = poOgrFeat->GetFieldAsInteger ( i );
+                        if( iTesselate &&
+                            !(isGX == FALSE && iAltitudeMode == kmldom::ALTITUDEMODE_CLAMPTOGROUND) &&
+                            !(isGX == TRUE && iAltitudeMode == kmldom::GX_ALTITUDEMODE_CLAMPTOSEAFLOOR) &&
+                            CSLTestBoolean(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
+                        {
+                            CPLError(CE_Warning, CPLE_NotSupported,
+                                "altitudeMode!=clampToGround && altitudeMode!=clampToSeaFloor unsupported with tesselate=1");
+                        }
+                        else
+                        {
+                            GeometryPtr poKmlGeometry =
+                                poKmlPlacemark->get_geometry (  );
+                            ogr2tessellate_rec ( iTesselate,
+                                                poKmlGeometry );
+                            if( isGX == FALSE && iAltitudeMode == kmldom::ALTITUDEMODE_CLAMPTOGROUND )
+                                ogr2altitudemode_rec ( poKmlGeometry, iAltitudeMode,
+                                                    isGX );
+                        }
                     }
                 }
 
@@ -717,18 +723,25 @@ void field2kml (
 
             if ( EQUAL ( name, oFC.visibilityfield ) ) {
                 if ( -1 < poOgrFeat->GetFieldAsInteger ( i ) )
-                    poKmlPlacemark->set_visibility ( poOgrFeat->
+                    poKmlFeature->set_visibility ( poOgrFeat->
                                                      GetFieldAsInteger ( i ) );
 
                 continue;
             }
 
-            /***** icon *****/
 
-            else if ( EQUAL ( name, oFC.drawOrderfield ) ) {
+            /***** other special fields *****/
+
+            else if (  EQUAL ( name, oFC.drawOrderfield ) ||
+                        EQUAL ( name, oFC.networklink_refreshvisibility_field ) ||
+                        EQUAL ( name, oFC.networklink_flytoview_field ) ||
+                        EQUAL ( name, oFC.networklink_refreshInterval_field ) ||
+                        EQUAL ( name, oFC.networklink_viewRefreshMode_field ) ||
+                        EQUAL ( name, oFC.networklink_viewRefreshTime_field ) ) {
+
                 continue;
             }
-                
+
             /***** other *****/
 
             poKmlSimpleData = poKmlFactory->CreateSimpleData (  );
@@ -744,7 +757,11 @@ void field2kml (
                 EQUAL(name, oFC.rollfield) ||
                 EQUAL(name, oFC.scalexfield) ||
                 EQUAL(name, oFC.scaleyfield) ||
-                EQUAL(name, oFC.scalezfield) )
+                EQUAL(name, oFC.scalezfield) ||
+                EQUAL( name, oFC.networklink_refreshInterval_field ) ||
+                EQUAL(name, oFC.networklink_viewRefreshMode_field) ||
+                EQUAL(name, oFC.networklink_viewRefreshTime_field) ||
+                EQUAL(name, oFC.networklink_viewBoundScale_field) )
             {
                 continue;
             }
@@ -787,7 +804,7 @@ void field2kml (
         ExtendedDataPtr poKmlExtendedData =
             poKmlFactory->CreateExtendedData (  );
         poKmlExtendedData->add_schemadata ( poKmlSchemaData );
-        poKmlPlacemark->set_extendeddata ( poKmlExtendedData );
+        poKmlFeature->set_extendeddata ( poKmlExtendedData );
     }
 
     return;
@@ -1469,36 +1486,79 @@ SimpleFieldPtr FieldDef2kml (
     OGRFieldDefn * poOgrFieldDef,
     KmlFactory * poKmlFactory )
 {
+    /***** get the field config *****/
 
-    SimpleFieldPtr poKmlSimpleField = poKmlFactory->CreateSimpleField (  );
+    struct fieldconfig oFC;
+    get_fieldconfig( &oFC );
+
     const char *pszFieldName = poOgrFieldDef->GetNameRef (  );
 
+    if ( EQUAL ( pszFieldName, oFC.namefield ) ||
+         EQUAL ( pszFieldName, oFC.descfield ) ||
+         EQUAL ( pszFieldName, oFC.tsfield ) ||
+         EQUAL ( pszFieldName, oFC.beginfield ) ||
+         EQUAL ( pszFieldName, oFC.endfield ) ||
+         EQUAL ( pszFieldName, oFC.altitudeModefield ) ||
+         EQUAL ( pszFieldName, oFC.tessellatefield ) ||
+         EQUAL ( pszFieldName, oFC.extrudefield ) ||
+         EQUAL ( pszFieldName, oFC.visibilityfield ) ||
+         EQUAL ( pszFieldName, oFC.drawOrderfield ) ||
+         EQUAL ( pszFieldName, oFC.iconfield ) ||
+         EQUAL ( pszFieldName, oFC.headingfield ) ||
+         EQUAL ( pszFieldName, oFC.tiltfield ) ||
+         EQUAL ( pszFieldName, oFC.rollfield ) ||
+         EQUAL ( pszFieldName, oFC.snippetfield ) ||
+         EQUAL ( pszFieldName, oFC.modelfield ) ||
+         EQUAL ( pszFieldName, oFC.scalexfield ) ||
+         EQUAL ( pszFieldName, oFC.scaleyfield ) ||
+         EQUAL ( pszFieldName, oFC.scalezfield ) ||
+         EQUAL ( pszFieldName, oFC.networklinkfield ) ||
+         EQUAL ( pszFieldName, oFC.networklink_refreshvisibility_field ) ||
+         EQUAL ( pszFieldName, oFC.networklink_flytoview_field ) ||
+         EQUAL ( pszFieldName, oFC.networklink_refreshMode_field ) ||
+         EQUAL ( pszFieldName, oFC.networklink_refreshInterval_field ) ||
+         EQUAL ( pszFieldName, oFC.networklink_viewRefreshMode_field ) ||
+         EQUAL ( pszFieldName, oFC.networklink_viewRefreshTime_field ) ||
+         EQUAL ( pszFieldName, oFC.networklink_viewBoundScale_field ) ||
+         EQUAL ( pszFieldName, oFC.networklink_viewFormat_field ) ||
+         EQUAL ( pszFieldName, oFC.networklink_httpQuery_field ) )
+    {
+        return NULL;
+    }
+
+    SimpleFieldPtr poKmlSimpleField = poKmlFactory->CreateSimpleField (  );
     poKmlSimpleField->set_name ( pszFieldName );
 
-	/***** get the field config *****/
-	
-	struct fieldconfig oFC;
-	get_fieldconfig( &oFC );
 
     SimpleDataPtr poKmlSimpleData = NULL;
 
     switch ( poOgrFieldDef->GetType (  ) ) {
-
     case OFTInteger:
     case OFTIntegerList:
         if ( EQUAL ( pszFieldName, oFC.tessellatefield ) ||
              EQUAL ( pszFieldName, oFC.extrudefield ) ||
              EQUAL ( pszFieldName, oFC.visibilityfield ) ||
-             EQUAL ( pszFieldName, oFC.drawOrderfield ) )
+             EQUAL ( pszFieldName, oFC.drawOrderfield ) ||
+             EQUAL ( pszFieldName, oFC.networklink_refreshvisibility_field ) ||
+             EQUAL ( pszFieldName, oFC.networklink_flytoview_field ) ||
+             EQUAL ( pszFieldName, oFC.networklink_refreshInterval_field ) ||
+             EQUAL ( pszFieldName, oFC.networklink_viewRefreshTime_field ) ||
+             EQUAL ( pszFieldName, oFC.networklink_viewBoundScale_field ) )
             break;
         poKmlSimpleField->set_type ( "int" );
         return poKmlSimpleField;
 			
     case OFTReal:
     case OFTRealList:
-        if ( EQUAL ( pszFieldName, oFC.scalexfield ) ||
+        if ( EQUAL ( pszFieldName, oFC.headingfield ) ||
+             EQUAL ( pszFieldName, oFC.tiltfield ) ||
+             EQUAL ( pszFieldName, oFC.rollfield ) ||
+             EQUAL ( pszFieldName, oFC.scalexfield ) ||
              EQUAL ( pszFieldName, oFC.scaleyfield ) ||
-             EQUAL ( pszFieldName, oFC.scalezfield ) )
+             EQUAL ( pszFieldName, oFC.scalezfield ) ||
+             EQUAL ( pszFieldName, oFC.networklink_refreshInterval_field ) ||
+             EQUAL ( pszFieldName, oFC.networklink_viewRefreshTime_field ) ||
+             EQUAL ( pszFieldName, oFC.networklink_viewBoundScale_field ) )
             break;
         poKmlSimpleField->set_type ( "float" );
         return poKmlSimpleField;
@@ -1510,7 +1570,12 @@ SimpleFieldPtr FieldDef2kml (
              EQUAL ( pszFieldName, oFC.altitudeModefield ) ||
              EQUAL ( pszFieldName, oFC.iconfield ) ||
              EQUAL ( pszFieldName, oFC.snippetfield ) ||
-             EQUAL ( pszFieldName, oFC.modelfield ) )
+             EQUAL ( pszFieldName, oFC.modelfield ) ||
+             EQUAL ( pszFieldName, oFC.networklinkfield ) ||
+             EQUAL ( pszFieldName, oFC.networklink_refreshMode_field ) ||
+             EQUAL ( pszFieldName, oFC.networklink_viewRefreshMode_field ) ||
+             EQUAL ( pszFieldName, oFC.networklink_viewFormat_field ) ||
+             EQUAL ( pszFieldName, oFC.networklink_httpQuery_field ) )
             break;
         poKmlSimpleField->set_type ( "string" );
         return poKmlSimpleField;
@@ -1635,6 +1700,16 @@ void get_fieldconfig( struct fieldconfig *oFC) {
     oFC->scalexfield = CPLGetConfigOption( "LIBKML_SCALE_X_FIELD", "scale_x");
     oFC->scaleyfield = CPLGetConfigOption( "LIBKML_SCALE_Y_FIELD", "scale_y");
     oFC->scalezfield = CPLGetConfigOption( "LIBKML_SCALE_Z_FIELD", "scale_z");
+    oFC->networklinkfield = CPLGetConfigOption( "LIBKML_NETWORKLINK_FIELD", "networklink");
+    oFC->networklink_refreshvisibility_field = CPLGetConfigOption( "LIBKML_NETWORKLINK_REFRESHVISIBILITY_FIELD", "networklink_refreshvisibility");
+    oFC->networklink_flytoview_field = CPLGetConfigOption( "LIBKML_NETWORKLINK_FLYTOVIEW_FIELD", "networklink_flytoview");
+    oFC->networklink_refreshMode_field = CPLGetConfigOption( "LIBKML_NETWORKLINK_REFRESHMODE_FIELD", "networklink_refreshmode");
+    oFC->networklink_refreshInterval_field = CPLGetConfigOption( "LIBKML_NETWORKLINK_REFRESHINTERVAL_FIELD", "networklink_refreshinterval");
+    oFC->networklink_viewRefreshMode_field = CPLGetConfigOption( "LIBKML_NETWORKLINK_VIEWREFRESHMODE_FIELD", "networklink_viewrefreshmode");
+    oFC->networklink_viewRefreshTime_field = CPLGetConfigOption( "LIBKML_NETWORKLINK_VIEWREFRESHTIME_FIELD", "networklink_viewrefreshtime");
+    oFC->networklink_viewBoundScale_field = CPLGetConfigOption( "LIBKML_NETWORKLINK_VIEWBOUNDSCALE_FIELD", "networklink_viewboundscale");
+    oFC->networklink_viewFormat_field = CPLGetConfigOption( "LIBKML_NETWORKLINK_VIEWFORMAT_FIELD", "networklink_viewformat");
+    oFC->networklink_httpQuery_field = CPLGetConfigOption( "LIBKML_NETWORKLINK_HTTPQUERY_FIELD", "networklink_httpquery");
 }
 
 /************************************************************************/

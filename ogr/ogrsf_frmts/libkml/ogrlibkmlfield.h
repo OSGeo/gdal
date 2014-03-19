@@ -59,7 +59,7 @@ void field2kml (
     OGRFeature * poOgrFeat,
     OGRLIBKMLLayer * poOgrLayer,
     KmlFactory * poKmlFactory,
-    PlacemarkPtr poKmlPlacemark );
+    FeaturePtr poKmlPlacemark );
 
 /******************************************************************************
  function to read kml into ogr fields
@@ -110,6 +110,16 @@ struct fieldconfig {
     const char *scalexfield;
     const char *scaleyfield;
     const char *scalezfield;
+    const char *networklinkfield;
+    const char *networklink_refreshvisibility_field;
+    const char *networklink_flytoview_field;
+    const char *networklink_refreshMode_field;
+    const char *networklink_refreshInterval_field;
+    const char *networklink_viewRefreshMode_field;
+    const char *networklink_viewRefreshTime_field;
+    const char *networklink_viewBoundScale_field;
+    const char *networklink_viewFormat_field;
+    const char *networklink_httpQuery_field;
 };
 
 void get_fieldconfig( struct fieldconfig *oFC );
