@@ -291,7 +291,7 @@ void OGRLIBKMLDataSource::WriteKmz (
     const char *pszUseDocKml =
         CPLGetConfigOption ( "LIBKML_USE_DOC.KML", "yes" );
 
-    if ( EQUAL ( pszUseDocKml, "yes" ) && (m_poKmlDocKml || m_poKmlUpdate) ) {
+    if ( CSLTestBoolean ( pszUseDocKml ) && (m_poKmlDocKml || m_poKmlUpdate) ) {
 
         /***** if we dont have the doc.kml root *****/
         /***** make it and add the container    *****/
@@ -354,7 +354,16 @@ void OGRLIBKMLDataSource::WriteKmz (
         std::string oKmlOut = kmldom::SerializePretty ( poKmlKml );
         PostProcessOutput(oKmlOut);
 
-        if ( CPLCreateFileInZip( hZIP, papoLayers[iLayer]->GetFileName (  ), NULL ) != CE_None ||
+        if( iLayer == 0 && CSLTestBoolean ( pszUseDocKml ) )
+            CPLCreateFileInZip( hZIP, "layers/", NULL );
+        
+        const char* pszLayerFileName;
+        if( CSLTestBoolean ( pszUseDocKml ) )
+            pszLayerFileName = CPLSPrintf("layers/%s", papoLayers[iLayer]->GetFileName (  ));
+        else
+            pszLayerFileName = papoLayers[iLayer]->GetFileName (  );
+
+        if ( CPLCreateFileInZip( hZIP, pszLayerFileName , NULL ) != CE_None ||
              CPLWriteFileInZip( hZIP, oKmlOut.data(), oKmlOut.size() ) != CE_None )
             CPLError ( CE_Failure, CPLE_FileIO,
                        "ERROR adding %s to %s", papoLayers[iLayer]->GetFileName (  ), pszName );
@@ -403,7 +412,7 @@ void OGRLIBKMLDataSource::WriteDir (
     const char *pszUseDocKml =
         CPLGetConfigOption ( "LIBKML_USE_DOC.KML", "yes" );
 
-    if ( EQUAL ( pszUseDocKml, "yes" ) && (m_poKmlDocKml || m_poKmlUpdate) ) {
+    if ( CSLTestBoolean ( pszUseDocKml ) && (m_poKmlDocKml || m_poKmlUpdate) ) {
 
         /***** if we dont have the doc.kml root *****/
         /***** make it and add the container    *****/
@@ -1693,9 +1702,10 @@ int OGRLIBKMLDataSource::CreateKmz (
     /***** create the doc.kml  *****/
     if( osUpdateTargetHref.size() == 0 )
     {
-        const char *namefield = CPLGetConfigOption ( "LIBKML_USE_DOC.KML", "yes" );
+        const char *pszUseDocKml =
+            CPLGetConfigOption ( "LIBKML_USE_DOC.KML", "yes" );
 
-        if ( !strcmp ( namefield, "yes" ) ) {
+        if ( CSLTestBoolean( pszUseDocKml ) ) {
             m_poKmlDocKml = m_poKmlFactory->CreateDocument (  );
         }
     }
@@ -1734,9 +1744,10 @@ int OGRLIBKMLDataSource::CreateDir (
 
     if( osUpdateTargetHref.size() == 0 )
     {
-        const char *namefield = CPLGetConfigOption ( "LIBKML_USE_DOC.KML", "yes" );
+        const char *pszUseDocKml =
+            CPLGetConfigOption ( "LIBKML_USE_DOC.KML", "yes" );
 
-        if ( !strcmp ( namefield, "yes" ) ) {
+        if ( CSLTestBoolean( pszUseDocKml ) ) {
             m_poKmlDocKml = m_poKmlFactory->CreateDocument (  );
         }
     }
@@ -1895,7 +1906,7 @@ OGRErr OGRLIBKMLDataSource::DeleteLayerKmz (
     const char *pszUseDocKml =
         CPLGetConfigOption ( "LIBKML_USE_DOC.KML", "yes" );
 
-    if ( EQUAL ( pszUseDocKml, "yes" ) && m_poKmlDocKml ) {
+    if ( CSLTestBoolean ( pszUseDocKml ) && m_poKmlDocKml ) {
 
         /***** loop over the features *****/
 
@@ -2068,7 +2079,7 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKmz (
         const char *pszUseDocKml =
             CPLGetConfigOption ( "LIBKML_USE_DOC.KML", "yes" );
 
-        if ( EQUAL ( pszUseDocKml, "yes" ) && m_poKmlDocKml ) {
+        if ( CSLTestBoolean ( pszUseDocKml ) && m_poKmlDocKml ) {
 
             DocumentPtr poKmlDocument = AsDocument ( m_poKmlDocKml );
 
@@ -2076,6 +2087,8 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKmz (
             LinkPtr poKmlLink = m_poKmlFactory->CreateLink (  );
 
             std::string oHref;
+            if( IsKmz() )
+                oHref.append ( "layers/" );
             oHref.append ( pszLayerName );
             oHref.append ( ".kml" );
             poKmlLink->set_href ( oHref );
