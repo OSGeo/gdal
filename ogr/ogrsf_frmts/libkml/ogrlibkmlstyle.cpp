@@ -53,8 +53,11 @@ using kmldom::HotSpotPtr;
 using kmlbase::Color32;
 using kmldom::PairPtr;
 using kmldom::KmlPtr;
+using kmldom::ListStylePtr;
+using kmldom::ItemIconPtr;
 
 #include "ogrlibkmlstyle.h"
+#include "ogr_libkml.h"
 
 /******************************************************************************
  generic function to parse a stylestring and add to a kml style
@@ -1185,4 +1188,56 @@ void styletable2kml (
     }
 
     return;
+}
+
+
+/******************************************************************************
+ function to add a ListStyle and select it to a container
+******************************************************************************/
+
+void createkmlliststyle (
+    KmlFactory * poKmlFactory,
+    const char* pszBaseName,
+    DocumentPtr poKmlDocument,
+    const CPLString& osListStyleType,
+    const CPLString& osListStyleIconHref)
+{
+    if( osListStyleType.size() || osListStyleIconHref.size() )
+    {
+        StylePtr poKmlStyle = poKmlFactory->CreateStyle (  );
+
+        const char* pszStyleName = CPLSPrintf("%s_liststyle", OGRLIBKMLGetSanitizedNCName(pszBaseName).c_str());
+        poKmlStyle->set_id ( pszStyleName );
+
+        ListStylePtr poKmlListStyle = poKmlFactory->CreateListStyle (  );
+        poKmlStyle->set_liststyle ( poKmlListStyle );
+        if( osListStyleType.size() )
+        {
+            if( EQUAL(osListStyleType, "check") )
+                poKmlListStyle->set_listitemtype( kmldom::LISTITEMTYPE_CHECK );
+            else if( EQUAL(osListStyleType, "radioFolder") )
+                poKmlListStyle->set_listitemtype( kmldom::LISTITEMTYPE_RADIOFOLDER );
+            else if( EQUAL(osListStyleType, "checkOffOnly") )
+                poKmlListStyle->set_listitemtype( kmldom::LISTITEMTYPE_CHECKOFFONLY );
+            else if( EQUAL(osListStyleType, "checkHideChildren") )
+                poKmlListStyle->set_listitemtype( kmldom::LISTITEMTYPE_CHECKHIDECHILDREN );
+            else
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Invalid value for list style type: %s. Defaulting to Check",
+                         osListStyleType.c_str());
+                poKmlListStyle->set_listitemtype( kmldom::LISTITEMTYPE_CHECK );
+            }
+        }
+
+        if( osListStyleIconHref.size() )
+        {
+            ItemIconPtr poItemIcon = poKmlFactory->CreateItemIcon (  );
+            poItemIcon->set_href( osListStyleIconHref.c_str() );
+            poKmlListStyle->add_itemicon(poItemIcon);
+        }
+
+        poKmlDocument->add_styleselector ( poKmlStyle );
+        poKmlDocument->set_styleurl( CPLSPrintf("#%s", pszStyleName) );
+    }
 }
