@@ -1929,7 +1929,7 @@ def test_ogr2ogr_49_bis():
     expected_lines = [
 """<?xml version="1.0" encoding="utf-8" ?>""",
 """<kml xmlns="http://www.opengis.net/kml/2.2">""",
-"""<Document>""",
+"""<Document id="root_doc">""",
 """<Folder><name>grid</name>""",
 """  <Placemark>""",
 """        <name>440750.000</name>""",
