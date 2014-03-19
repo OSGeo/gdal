@@ -91,6 +91,9 @@ class OGRLIBKMLLayer:public OGRLayer
     double                    m_dfRegionMaxX;
     double                    m_dfRegionMaxY;
 
+    CPLString                 osListStyleType;
+    CPLString                 osListStyleIconHref;
+
   public:
     OGRLIBKMLLayer            ( const char *pszLayerName,
                                 OGRSpatialReference * poSpatialRef,
@@ -175,6 +178,9 @@ class OGRLIBKMLLayer:public OGRLayer
                                                const char* pszSOSizeXUnits,
                                                const char* pszSOSizeYUnits);
 
+    void                      SetListStyle(const char* pszListStyleType,
+                                           const char* pszListStyleIconHref);
+
     void                      Finalize();
 };
 
@@ -196,6 +202,8 @@ class OGRLIBKMLDataSource:public OGRDataSource
     int                       bUpdate;
     int                       bUpdated;
     CPLString                 osUpdateTargetHref;
+
+    char                    **m_papszOptions;
 
     /***** for kml files *****/
     int                       m_isKml;
@@ -222,6 +230,9 @@ class OGRLIBKMLDataSource:public OGRDataSource
     /***** style table pointer *****/
     
     //OGRStyleTable            *m_poStyleTable;
+    
+    void                      ParseDocumentOptions(KmlPtr poKml,
+                                                   DocumentPtr poKmlDocument);
 
   public:
     OGRLIBKMLDataSource       ( KmlFactory *poKmlFactory );

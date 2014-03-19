@@ -91,6 +91,20 @@
     The value must follow the syntax of <a href="http://tools.ietf.org/html/rfc3966">IETF RFC 3966</a>.
   </p>
 
+    <h4>List style</h4>
+
+    <p>
+    The following dataset creation options can be used to control how the main folder
+    (folder of layers) appear in the Places panel of the Earth browser, trough a
+     <a href="https://developers.google.com/kml/documentation/kmlreference#liststyle">&lt;ListStyle&gt;</a> element:
+    <ul>
+        <li><b>LISTSTYLE_TYPE</b>: can be one of "check", "radioFolder", "checkOffOnly" or "checkHideChildren". Sets the
+            <a href="https://developers.google.com/kml/documentation/kmlreference#listItemType">&lt;listItemType&gt;</a> element.</li>
+        <li><b>LISTSTYLE_ICON_HREF</b>: URL of the icon to display for the main folder. Sets the href element of the
+            <a href="https://developers.google.com/kml/documentation/kmlreference#itemicon">&lt;ItemIcon&gt;</a> element.</li>
+    </ul>
+    </p>
+
     <h4>NetworkLinkControl</h4>
 
     <p>
@@ -232,6 +246,18 @@
         <li><b>SO_SIZE_YUNITS</b> (optional)</li>
     </ul>
   </p>
+
+    <p>
+    The following layer creation options can be used to control how the folder
+    of a layer appear in the Places panel of the Earth browser, trough a
+     <a href="https://developers.google.com/kml/documentation/kmlreference#liststyle">&lt;ListStyle&gt;</a> element:
+    <ul>
+        <li><b>LISTSTYLE_TYPE</b>: can be one of "check", "radioFolder", "checkOffOnly" or "checkHideChildren". Sets the
+            <a href="https://developers.google.com/kml/documentation/kmlreference#listItemType">&lt;listItemType&gt;</a> element.</li>
+        <li><b>LISTSTYLE_ICON_HREF</b>: URL of the icon to display for the layer folder. Sets the href element of the
+            <a href="https://developers.google.com/kml/documentation/kmlreference#itemicon">&lt;ItemIcon&gt;</a> element.</li>
+    </ul>
+    </p>
 
   <h2>Feature</h2>
   

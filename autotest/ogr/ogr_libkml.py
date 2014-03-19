@@ -1615,21 +1615,77 @@ def ogr_libkml_write_networklinkcontrol():
                 'NLC_LINKDESCRIPTION=linkdescription',
                 'NLC_LINKSNIPPET=linksnippet',
                 'NLC_EXPIRES=2014-12-31T23:59:59Z' ]
-    ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_networklinkcontrol.kml", options = options)
+
+    for i in range(3):
+
+        if i == 0:
+            name = "/vsimem/ogr_libkml_write_networklinkcontrol.kml"
+        elif i == 1:
+            name = "/vsimem/ogr_libkml_write_networklinkcontrol.kmz"
+        else:
+            name = "/vsimem/ogr_libkml_write_networklinkcontrol_dir"
+
+        ds = ogr.GetDriverByName('LIBKML').CreateDataSource(name, options = options)
+        ds = None
+
+        if i == 0:
+            f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_networklinkcontrol.kml', 'rb')
+        elif i == 1:
+            f = gdal.VSIFOpenL('/vsizip//vsimem/ogr_libkml_write_networklinkcontrol.kmz', 'rb')
+        else:
+            f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_networklinkcontrol_dir/doc.kml', 'rb')
+        if f is None:
+            gdaltest.post_reason('failure')
+            return 'fail'
+        data = gdal.VSIFReadL(1, 2048, f)
+        gdal.VSIFCloseL(f)
+
+        if data.find('<minRefreshPeriod>3600</minRefreshPeriod>') == -1 or \
+        data.find('<maxSessionLength>-1</maxSessionLength>') == -1 or \
+        data.find('<cookie>cookie</cookie>') == -1 or \
+        data.find('<message>message</message>') == -1 or \
+        data.find('<linkName>linkname</linkName>') == -1 or \
+        data.find('<linkDescription>linkdescription</linkDescription>') == -1 or \
+        data.find('linksnippet') == -1 or \
+        data.find('<expires>2014-12-31T23:59:59Z</expires>') == -1:
+            print(data)
+            gdaltest.post_reason('failure')
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test writing ListStyle
+
+def ogr_libkml_write_liststyle():
+
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+
+    options = [ 'LISTSTYLE_ICON_HREF=http://www.gdal.org/gdalicon.png' ]
+    ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_liststyle.kml", options = options)
+    lyr = ds.CreateLayer('test', options = [ 'LISTSTYLE_ICON_HREF=http://foo'] )
+    lyr = ds.CreateLayer('test_check', options = [ 'LISTSTYLE_TYPE=check'] )
+    lyr = ds.CreateLayer('test_radioFolder', options = [ 'LISTSTYLE_TYPE=radioFolder'] )
+    lyr = ds.CreateLayer('test_checkOffOnly', options = [ 'LISTSTYLE_TYPE=checkOffOnly'] )
+    lyr = ds.CreateLayer('test_checkHideChildren', options = [ 'LISTSTYLE_TYPE=checkHideChildren'] )
+    lyr = ds.CreateLayer('test_error', options = [ 'LISTSTYLE_TYPE=error'] )
     ds = None
 
-    f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_networklinkcontrol.kml', 'rb')
+    f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_liststyle.kml', 'rb')
     data = gdal.VSIFReadL(1, 2048, f)
     gdal.VSIFCloseL(f)
 
-    if data.find('<minRefreshPeriod>3600</minRefreshPeriod>') == -1 or \
-       data.find('<maxSessionLength>-1</maxSessionLength>') == -1 or \
-       data.find('<cookie>cookie</cookie>') == -1 or \
-       data.find('<message>message</message>') == -1 or \
-       data.find('<linkName>linkname</linkName>') == -1 or \
-       data.find('<linkDescription>linkdescription</linkDescription>') == -1 or \
-       data.find('linksnippet') == -1 or \
-       data.find('<expires>2014-12-31T23:59:59Z</expires>') == -1:
+    if data.find('<styleUrl>#root_doc_liststyle</styleUrl>') == -1 or \
+       data.find('<Style id="root_doc_liststyle">') == -1 or \
+       data.find('<href>http://www.gdal.org/gdalicon.png</href>') == -1 or \
+       data.find('<styleUrl>#test_liststyle</styleUrl>') == -1 or \
+       data.find('<Style id="test_liststyle">') == -1 or \
+       data.find('<href>http://foo</href>') == -1 or \
+       data.find('<listItemType>check</listItemType>') == -1 or \
+       data.find('<listItemType>radioFolder</listItemType>') == -1 or \
+       data.find('<listItemType>checkOffOnly</listItemType>') == -1 or \
+       data.find('<listItemType>checkHideChildren</listItemType>') == -1:
         print(data)
         gdaltest.post_reason('failure')
         return 'fail'
@@ -1666,6 +1722,10 @@ def ogr_libkml_cleanup():
     gdal.Unlink("/vsimem/ogr_libkml_write_update_dir/doc.kml")
     gdal.Unlink("/vsimem/ogr_libkml_write_update_dir")
     gdal.Unlink("/vsimem/ogr_libkml_write_networklinkcontrol.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_write_networklinkcontrol.kmz")
+    gdal.Unlink("/vsimem/ogr_libkml_write_networklinkcontrol_dir/doc.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_write_networklinkcontrol_dir")
+    gdal.Unlink("/vsimem/ogr_libkml_write_liststyle.kml")
 
     # Re-register KML driver if necessary
     if ogrtest.kml_drv is not None:
@@ -1715,6 +1775,7 @@ gdaltest_list = [
     ogr_libkml_read_write_style,
     ogr_libkml_write_update,
     ogr_libkml_write_networklinkcontrol,
+    ogr_libkml_write_liststyle,
     ogr_libkml_cleanup ]
 
 if __name__ == '__main__':

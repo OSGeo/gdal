@@ -86,3 +86,13 @@ void styletable2kml (
     KmlFactory * poKmlFactory,
     ContainerPtr poKmlContainer  );
 
+/******************************************************************************
+ function to add a ListStyle and select it to a container
+******************************************************************************/
+
+void createkmlliststyle (
+    KmlFactory * poKmlFactory,
+    const char* pszBaseName,
+    DocumentPtr poKmlDocument,
+    const CPLString& osListStyleType,
+    const CPLString& osListStyleIconHref);
