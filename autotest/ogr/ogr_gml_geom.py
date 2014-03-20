@@ -1341,6 +1341,62 @@ def gml_CompositeSurface_in_surfaceMembers():
         return 'fail'
 
     return 'success'
+
+###############################################################################
+# Test <gml:PolygonPatch> with only Interior ring (#5421)
+
+def gml_MultiSurfaceOfSurfaceOfPolygonPatchWithInteriorRing():
+ 
+    gml = """<gml:MultiSurface>
+               <gml:surfaceMember>
+                 <gml:Surface>
+                    <gml:patches>
+                      <gml:PolygonPatch>
+                        <gml:exterior>
+                          <gml:LinearRing>
+                            <gml:posList>0 0 0 1 1 1 1 0 0 0</gml:posList>
+                          </gml:LinearRing>
+                        </gml:exterior>
+                      </gml:PolygonPatch>
+                    </gml:patches>
+                  </gml:Surface>
+                </gml:surfaceMember>
+                <gml:surfaceMember>
+                  <gml:Surface>
+                    <gml:patches>
+                      <gml:PolygonPatch>
+                        <gml:interior>
+                          <gml:LinearRing>
+                            <gml:posList>0.25 0.25 0.25 0.75 0.75 0.75 0.75 0.25 0.25 0.25</gml:posList>
+                          </gml:LinearRing>
+                        </gml:interior>
+                      </gml:PolygonPatch>
+                    </gml:patches>
+                  </gml:Surface>
+                </gml:surfaceMember>
+               <gml:surfaceMember>
+                 <gml:Surface>
+                    <gml:patches>
+                      <gml:PolygonPatch>
+                        <gml:exterior>
+                          <gml:LinearRing>
+                            <gml:posList>0 0 0 -1 -1 -1 -1 0 0 0</gml:posList>
+                          </gml:LinearRing>
+                        </gml:exterior>
+                      </gml:PolygonPatch>
+                    </gml:patches>
+                  </gml:Surface>
+                </gml:surfaceMember>
+              </gml:MultiSurface>"""
+
+    geom = ogr.CreateGeometryFromGML( gml )
+
+    if geom.ExportToWkt() != 'MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0),(0.25 0.25,0.25 0.75,0.75 0.75,0.75 0.25,0.25 0.25)),((0 0,0 -1,-1 -1,-1 0,0 0)))':
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # When imported build a list of units based on the files available.
 
@@ -1398,6 +1454,7 @@ gdaltest_list.append( gml_SimpleTriangle )
 gdaltest_list.append( gml_SimpleMultiPoint )
 gdaltest_list.append( gml_CompositeCurveInRing )
 gdaltest_list.append( gml_CompositeSurface_in_surfaceMembers )
+gdaltest_list.append( gml_MultiSurfaceOfSurfaceOfPolygonPatchWithInteriorRing )
 
 if __name__ == '__main__':
 

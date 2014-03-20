@@ -1065,6 +1065,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
     {
         const CPLXMLNode *psChild;
         OGRMultiPolygon *poMPoly = new OGRMultiPolygon();
+        int bReconstructTopology = FALSE;
 
         // Iterate over children
         for( psChild = psNode->psChild; 
@@ -1079,31 +1080,88 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
                 OGRPolygon *poPolygon;
 
                 if (psSurfaceChild != NULL)
-                    poPolygon = (OGRPolygon *) 
-                        GML2OGRGeometry_XMLNode( psSurfaceChild, bGetSecondaryGeometryOption,
-                                                 nRecLevel + 1);
-                else
-                    poPolygon = NULL;
+                {
+                    /* Cf #5421 where there are PolygonPatch with only inner rings */
+                    const CPLXMLNode* psPolygonPatch = GetChildElement(GetChildElement(psSurfaceChild));
+                    if( psPolygonPatch != NULL &&
+                        psPolygonPatch->eType == CXT_Element &&
+                        EQUAL(BareGMLElement(psPolygonPatch->pszValue),"PolygonPatch") &&
+                        GetChildElement(psPolygonPatch) != NULL &&
+                        EQUAL(BareGMLElement(GetChildElement(psPolygonPatch)->pszValue),"interior") )
+                    {
+                        // Find all inner rings 
+                        for( const CPLXMLNode* psChild2 = psPolygonPatch->psChild; 
+                            psChild2 != NULL;
+                            psChild2 = psChild2->psNext ) 
+                        {
+                            if( psChild2->eType == CXT_Element
+                                && (EQUAL(BareGMLElement(psChild2->pszValue),"interior")))
+                            {
+                                const CPLXMLNode* psInteriorChild = GetChildElement(psChild2);
+                                OGRLinearRing* poRing;
+                                if (psInteriorChild != NULL)
+                                    poRing = (OGRLinearRing *) 
+                                        GML2OGRGeometry_XMLNode( psInteriorChild, bGetSecondaryGeometryOption,
+                                                                nRecLevel + 1);
+                                else
+                                    poRing = NULL;
+                                if (poRing == NULL)
+                                {
+                                    CPLError( CE_Failure, CPLE_AppDefined, "Invalid interior ring");
+                                    delete poMPoly;
+                                    return NULL;
+                                }
+                                if( !EQUAL(poRing->getGeometryName(),"LINEARRING") )
+                                {
+                                    CPLError( CE_Failure, CPLE_AppDefined, 
+                                            "%s: Got %.500s geometry as innerBoundaryIs instead of LINEARRING.",
+                                            pszBaseGeometry, poRing->getGeometryName() );
+                                    delete poRing;
+                                    delete poMPoly;
+                                    return NULL;
+                                }
 
-                if( poPolygon == NULL )
+                                bReconstructTopology = TRUE;
+                                poPolygon = new OGRPolygon();
+                                poPolygon->addRingDirectly( poRing );
+                                poMPoly->addGeometryDirectly( poPolygon );
+                            }
+                        }
+                    }
+                    else
+                    {
+                        poPolygon = (OGRPolygon *) 
+                            GML2OGRGeometry_XMLNode( psSurfaceChild, bGetSecondaryGeometryOption,
+                                                     nRecLevel + 1);
+
+                        if( poPolygon == NULL )
+                        {
+                            CPLError( CE_Failure, CPLE_AppDefined, "Invalid %s",
+                                    BareGMLElement(psChild->pszValue));
+                            delete poMPoly;
+                            return NULL;
+                        }
+
+                        if( !EQUAL(poPolygon->getGeometryName(),"POLYGON") )
+                        {
+                            CPLError( CE_Failure, CPLE_AppDefined, 
+                                    "Got %.500s geometry as polygonMember instead of MULTIPOLYGON.",
+                                    poPolygon->getGeometryName() );
+                            delete poPolygon;
+                            delete poMPoly;
+                            return NULL;
+                        }
+
+                        poMPoly->addGeometryDirectly( poPolygon );
+                    }
+                }
+                else
                 {
                     CPLError( CE_Failure, CPLE_AppDefined, "Invalid %s",
-                              BareGMLElement(psChild->pszValue));
+                                    BareGMLElement(psChild->pszValue));
                     delete poMPoly;
                     return NULL;
                 }
-
-                if( !EQUAL(poPolygon->getGeometryName(),"POLYGON") )
-                {
-                    CPLError( CE_Failure, CPLE_AppDefined, 
-                              "Got %.500s geometry as polygonMember instead of MULTIPOLYGON.",
-                              poPolygon->getGeometryName() );
-                    delete poPolygon;
-                    delete poMPoly;
-                    return NULL;
-                }
-
-                poMPoly->addGeometryDirectly( poPolygon );
             }
             else if (psChild->eType == CXT_Element
                 && EQUAL(BareGMLElement(psChild->pszValue),"surfaceMembers") )
@@ -1157,7 +1215,24 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
             }
         }
 
-        return poMPoly;
+        if( bReconstructTopology )
+        {
+            int nPolygonCount = poMPoly->getNumGeometries();
+            OGRGeometry** papoPolygons = new OGRGeometry*[ nPolygonCount ];
+            for(int i=0;i<nPolygonCount;i++)
+            {
+                papoPolygons[i] = poMPoly->getGeometryRef(0);
+                poMPoly->removeGeometry(0, FALSE);
+            }
+            delete poMPoly;
+            int bResultValidGeometry = FALSE;
+            OGRGeometry* poRet = OGRGeometryFactory::organizePolygons(
+                papoPolygons, nPolygonCount, &bResultValidGeometry );
+            delete[] papoPolygons;
+            return poRet;
+        }
+        else
+            return poMPoly;
     }
 
 /* -------------------------------------------------------------------- */
