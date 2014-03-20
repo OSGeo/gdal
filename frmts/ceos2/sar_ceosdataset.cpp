@@ -2164,7 +2164,7 @@ ProcessData( VSILFILE *fp, int fileid, CeosSARVolume_t *sar, int max_records,
             if( record->Length <= max_bytes )
                 max_bytes -= record->Length;
             else {
-                CPLDebug( "SAR_CEOS", "Partial record found.  %d > %llu",
+                CPLDebug( "SAR_CEOS", "Partial record found.  %d > " CPL_FRMT_GUIB,
                           record->Length, max_bytes );
                 max_bytes = 0;
             }
