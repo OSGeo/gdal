@@ -10,20 +10,23 @@
 ###############################################################################
 # Copyright (c) 2014, Oslandia <info at oslandia dot com>
 # 
-# This library is free software; you can redistribute it and/or
-# modify it under the terms of the GNU Library General Public
-# License as published by the Free Software Foundation; either
-# version 2 of the License, or (at your option) any later version.
-# 
-# This library is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# Library General Public License for more details.
-# 
-# You should have received a copy of the GNU Library General Public
-# License along with this library; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-# Boston, MA 02111-1307, USA.
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
 import os
@@ -48,6 +51,7 @@ def ogr_wasp_create_ds():
     
     gdaltest.wasp_ds = wasp_drv.CreateDataSource( 'tmp.map' )
 
+
     if gdaltest.wasp_ds is not None:
         return 'success'
     else:
@@ -66,6 +70,10 @@ def ogr_wasp_elevation_from_linestring_z():
     layer = gdaltest.wasp_ds.CreateLayer('mylayer',
                                           ref,
                                           geom_type=ogr.wkbLineString25D )
+
+    if layer == None:
+        gdaltest.post_reason( 'unable to create layer')
+        return 'fail'
 
     dfn = ogr.FeatureDefn()
 
@@ -101,6 +109,10 @@ def ogr_wasp_elevation_from_linestring_z():
             j+=1
         i+=1
 
+    if j != 10:
+        gdaltest.post_reason( 'nb of feature should be 10 and is %d' % j )
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
@@ -113,10 +125,16 @@ def ogr_wasp_elevation_from_linestring_z_toler():
     ref = osr.SpatialReference()
     ref.ImportFromProj4('+proj=lcc +lat_1=46.8 +lat_0=46.8 +lon_0=0 +k_0=0.99987742 +x_0=600000 +y_0=2200000 +a=6378249.2 +b=6356514.999978254 +pm=2.337229167 +units=m +no_defs')
 
+    if not ogrtest.have_geos() : gdal.PushErrorHandler('CPLQuietErrorHandler')
     layer = gdaltest.wasp_ds.CreateLayer('mylayer',
                                           ref,
                                           options = ['WASP_TOLERANCE=.1'],
                                           geom_type=ogr.wkbLineString25D )
+    if not ogrtest.have_geos() : gdal.PopErrorHandler()
+
+    if layer == None:
+        gdaltest.post_reason( 'unable to create layer')
+        return 'fail'
 
     dfn = ogr.FeatureDefn()
 
@@ -142,8 +160,12 @@ def ogr_wasp_elevation_from_linestring_z_toler():
         if not i%2:
             [h,n] = line.split()
             if int(n) != 2:
-                gdaltest.post_reason( 'number of points sould be 2 and is %s' % n )
-                return 'fail'
+                if ogrtest.have_geos():
+                    gdaltest.post_reason( 'number of points sould be 2 and is %s' % n )
+                    return 'fail'
+                elif int(n) != 3:
+                    gdaltest.post_reason( 'number of points sould be 3 and is %s' % n )
+                    return 'fail'
 
             if int(h) != j: 
                 gdaltest.post_reason( 'altitude should be %d and is %s' %(j,h) )
@@ -151,6 +173,10 @@ def ogr_wasp_elevation_from_linestring_z_toler():
 
             j+=1
         i+=1
+
+    if j != 10:
+        gdaltest.post_reason( 'nb of feature should be 10 and is %d' % j )
+        return 'fail'
 
     return 'success'
 
@@ -165,6 +191,10 @@ def ogr_wasp_elevation_from_linestring_field():
     layer = gdaltest.wasp_ds.CreateLayer('mylayer',  
                                           options = ['WASP_FIELDS=elevation'],
                                           geom_type=ogr.wkbLineString )
+
+    if layer == None:
+        gdaltest.post_reason( 'unable to create layer')
+        return 'fail'
 
     layer.CreateField( ogr.FieldDefn( 'elevation', ogr.OFTReal ) )
 
@@ -212,7 +242,11 @@ def ogr_wasp_roughness_from_linestring_fields():
 
     layer = gdaltest.wasp_ds.CreateLayer('mylayer',  
                                           options = ['WASP_FIELDS=z_left,z_right'],
-                                          geom_type=ogr.wkbPolygon )
+                                          geom_type=ogr.wkbLineString )
+
+    if layer == None:
+        gdaltest.post_reason( 'unable to create layer')
+        return 'fail'
 
     layer.CreateField( ogr.FieldDefn( 'dummy', ogr.OFTString ) )
     layer.CreateField( ogr.FieldDefn( 'z_left', ogr.OFTReal ) )
@@ -253,6 +287,10 @@ def ogr_wasp_roughness_from_linestring_fields():
             j+=1
         i+=1
 
+    if j != 10:
+        gdaltest.post_reason( 'nb of feature should be 10 and is %d' % j )
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
@@ -262,8 +300,17 @@ def ogr_wasp_roughness_from_polygon_z():
 
     if ogr_wasp_create_ds() != 'success': return 'skip'
 
+    if not ogrtest.have_geos() : gdal.PushErrorHandler('CPLQuietErrorHandler')
     layer = gdaltest.wasp_ds.CreateLayer('mylayer',  
                                           geom_type=ogr.wkbPolygon25D )
+    if not ogrtest.have_geos() : gdal.PopErrorHandler()
+
+    if layer == None:
+        if ogrtest.have_geos():
+            gdaltest.post_reason( 'unable to create layer')
+            return 'fail'
+        else:
+            return 'success'
 
     dfn = ogr.FeatureDefn()
 
@@ -317,9 +364,18 @@ def ogr_wasp_roughness_from_polygon_field():
 
     if ogr_wasp_create_ds() != 'success': return 'skip'
 
+    if not ogrtest.have_geos() : gdal.PushErrorHandler('CPLQuietErrorHandler')
     layer = gdaltest.wasp_ds.CreateLayer('mylayer',  
                                           options = ['WASP_FIELDS=roughness'],
                                           geom_type=ogr.wkbPolygon )
+    if not ogrtest.have_geos() : gdal.PopErrorHandler()
+
+    if layer == None:
+        if ogrtest.have_geos():
+            gdaltest.post_reason( 'unable to create layer')
+            return 'fail'
+        else:
+            return 'success'
 
     layer.CreateField( ogr.FieldDefn( 'roughness', ogr.OFTReal ) )
     layer.CreateField( ogr.FieldDefn( 'dummy', ogr.OFTString ) )
@@ -377,8 +433,17 @@ def ogr_wasp_merge():
 
     if ogr_wasp_create_ds() != 'success': return 'skip'
 
+    if not ogrtest.have_geos() : gdal.PushErrorHandler('CPLQuietErrorHandler')
     layer = gdaltest.wasp_ds.CreateLayer('mylayer',  
                                           geom_type=ogr.wkbPolygon25D )
+    if not ogrtest.have_geos() : gdal.PopErrorHandler()
+
+    if layer == None:
+        if ogrtest.have_geos():
+            gdaltest.post_reason( 'unable to create layer')
+            return 'fail'
+        else:
+            return 'success'
 
     dfn = ogr.FeatureDefn()
 
@@ -472,6 +537,9 @@ gdaltest_list = [
     ]
 
 if __name__ == '__main__':
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ogrtest.have_geos() 
+    gdal.PopErrorHandler()
 
     gdaltest.setup_run( 'ogr_wasp' )
 
