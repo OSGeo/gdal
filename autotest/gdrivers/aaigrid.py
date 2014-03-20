@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -309,8 +310,12 @@ def aaigrid_12():
     aai.close()
     gdal.GetDriverByName('AAIGRID').Delete('tmp/aaigrid.tmp')
     if not ndv.startswith('nodata_value'):
+        gdaltest.post_reason('fail')
+        print(ndv)
         return 'fail'
     if not ndv.endswith('-99999.000'):
+        gdaltest.post_reason('fail')
+        print(ndv)
         return 'fail'
     return 'success'
 
@@ -334,8 +339,12 @@ def aaigrid_13():
     aai.close()
     gdal.GetDriverByName('AAIGRID').Delete('tmp/aaigrid.tmp')
     if not ndv.startswith('nodata_value'):
+        gdaltest.post_reason('fail')
+        print(ndv)
         return 'fail'
     if not ndv.endswith('-1e+05'):
+        gdaltest.post_reason('fail')
+        print(ndv)
         return 'fail'
     return 'success'
 
