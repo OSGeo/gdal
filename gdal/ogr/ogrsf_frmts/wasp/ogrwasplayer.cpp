@@ -48,6 +48,7 @@ OGRWAsPLayer::OGRWAsPLayer( const char * pszName,
     , hFile( hFileHandle )
     , iFirstFieldIdx( 0 )
     , iSecondFieldIdx( 1 )
+    , iGeomFieldIdx( 0 )
     , poLayerDefn( new OGRFeatureDefn( pszName ) )
     , poSpatialReference( poSpatialRef )
     , iOffsetFeatureBegin( VSIFTellL( hFile ) )
@@ -81,6 +82,7 @@ OGRWAsPLayer::OGRWAsPLayer( const char * pszName,
     , iGeomFieldIdx( sGeomFieldParam.empty() ? 0 : -1 )
     , poLayerDefn( new OGRFeatureDefn( pszName ) )
     , poSpatialReference( poSpatialRef )
+    , iOffsetFeatureBegin( VSIFTellL( hFile ) ) /* avoids coverity warning */
     , eMode( WRITE_ONLY )
     , pdfTolerance( pdfToleranceParam )
 
@@ -260,7 +262,7 @@ OGRErr OGRWAsPLayer::WriteElevation( OGRLineString * poGeom, const double & dfZ 
 
 {
     OGRLineString * poLine = pdfTolerance.get() 
-        ? dynamic_cast<OGRLineString *>(poGeom->Simplify( *pdfTolerance )) 
+        ? static_cast<OGRLineString *>(poGeom->Simplify( *pdfTolerance )) 
         : poGeom; 
 
     const int iNumPoints = poLine->getNumPoints();
@@ -287,11 +289,11 @@ OGRErr OGRWAsPLayer::WriteElevation( OGRGeometry * poGeom, const double & dfZ )
     {
     case wkbLineString:
     case wkbLineString25D:
-        return WriteElevation( dynamic_cast<OGRLineString *>(poGeom), dfZ );
+        return WriteElevation( static_cast<OGRLineString *>(poGeom), dfZ );
     case wkbMultiLineString25D:
     case wkbMultiLineString:
     {
-        OGRGeometryCollection * collection =  dynamic_cast<OGRGeometryCollection *>(poGeom);
+        OGRGeometryCollection * collection =  static_cast<OGRGeometryCollection *>(poGeom);
         for ( int i=0; i<collection->getNumGeometries(); i++ )
         {
             const OGRErr err = WriteElevation( collection->getGeometryRef(i), dfZ );
@@ -340,7 +342,7 @@ OGRErr OGRWAsPLayer::WriteRoughness( OGRPolygon * poGeom, const double & dfZ )
                 case wkbLineString:
                 case wkbLineString25D:
                 {
-                    Boundary oB = {dynamic_cast<OGRLineString *>(poIntersection->clone()), dfZ, oZones[i].dfZ };
+                    Boundary oB = {static_cast<OGRLineString *>(poIntersection->clone()), dfZ, oZones[i].dfZ };
                     oBoundaries.push_back( oB );
                 }
                 break;
@@ -348,27 +350,27 @@ OGRErr OGRWAsPLayer::WriteRoughness( OGRPolygon * poGeom, const double & dfZ )
                 case wkbMultiLineString25D:
                 {
                     /*TODO join the multilinestring into linestring*/
-                    OGRGeometryCollection * collection = dynamic_cast<OGRGeometryCollection *>(poIntersection);
+                    OGRGeometryCollection * collection = static_cast<OGRGeometryCollection *>(poIntersection);
                     OGRLineString * oLine = NULL;
                     OGRPoint * oStart = new OGRPoint;
                     OGRPoint * oEnd   = new OGRPoint;
                     for ( int j=0; j<collection->getNumGeometries(); j++ )
                     {
-                        OGRLineString * poLine = dynamic_cast<OGRLineString *>(collection->getGeometryRef(j));
+                        OGRLineString * poLine = static_cast<OGRLineString *>(collection->getGeometryRef(j));
                         assert(poLine);
                         poLine->StartPoint( oStart );
 
                         if ( !oLine || !oLine->getNumPoints() || oStart->Equals( oEnd ) )
                         {
                             if (oLine) oLine->addSubLineString ( poLine, 1 );
-                            else oLine = dynamic_cast<OGRLineString *>( poLine->clone() );
+                            else oLine = static_cast<OGRLineString *>( poLine->clone() );
                             oLine->EndPoint( oEnd );
                         }
                         else
                         {
                             Boundary oB = {oLine, dfZ, oZones[i].dfZ};
                             oBoundaries.push_back( oB );
-                            oLine = dynamic_cast<OGRLineString *>( poLine->clone() );
+                            oLine = static_cast<OGRLineString *>( poLine->clone() );
                             oLine->EndPoint( oEnd );
                         }
                     }
@@ -395,7 +397,7 @@ OGRErr OGRWAsPLayer::WriteRoughness( OGRPolygon * poGeom, const double & dfZ )
                 case wkbGeometryCollection:
                 case wkbGeometryCollection25D:
                 {
-                    OGRGeometryCollection * collection = dynamic_cast<OGRGeometryCollection *>(poIntersection);
+                    OGRGeometryCollection * collection = static_cast<OGRGeometryCollection *>(poIntersection);
                     for ( int j=0; j<collection->getNumGeometries(); j++ )
                     {   
                         const OGRwkbGeometryType eType = collection->getGeometryRef(j)->getGeometryType();
@@ -429,7 +431,7 @@ OGRErr OGRWAsPLayer::WriteRoughness( OGRPolygon * poGeom, const double & dfZ )
         }
     }
 
-    Zone oZ =  { oEnvelope, dynamic_cast<OGRPolygon *>(poGeom->clone()), dfZ };
+    Zone oZ =  { oEnvelope, static_cast<OGRPolygon *>(poGeom->clone()), dfZ };
     oZones.push_back( oZ ); 
     return err;
 }
@@ -438,7 +440,7 @@ OGRErr OGRWAsPLayer::WriteRoughness( OGRLineString * poGeom, const double & dfZl
 
 {
     OGRLineString * poLine = pdfTolerance.get() 
-        ? dynamic_cast<OGRLineString *>(poGeom->Simplify( *pdfTolerance ))
+        ? static_cast<OGRLineString *>(poGeom->Simplify( *pdfTolerance ))
         : poGeom; 
 
     const int iNumPoints = poLine->getNumPoints();
@@ -465,16 +467,16 @@ OGRErr OGRWAsPLayer::WriteRoughness( OGRGeometry * poGeom, const double & dfZlef
     {
     case wkbLineString:
     case wkbLineString25D:
-        return WriteRoughness( dynamic_cast<OGRLineString *>(poGeom), dfZleft, dfZright );
+        return WriteRoughness( static_cast<OGRLineString *>(poGeom), dfZleft, dfZright );
     case wkbPolygon:
     case wkbPolygon25D:
-        return WriteRoughness( dynamic_cast<OGRPolygon *>(poGeom), dfZleft );
+        return WriteRoughness( static_cast<OGRPolygon *>(poGeom), dfZleft );
     case wkbMultiPolygon:
     case wkbMultiPolygon25D:
     case wkbMultiLineString25D:
     case wkbMultiLineString:
     {
-        OGRGeometryCollection * collection =  dynamic_cast<OGRGeometryCollection *>(poGeom);
+        OGRGeometryCollection * collection =  static_cast<OGRGeometryCollection *>(poGeom);
         for ( int i=0; i<collection->getNumGeometries(); i++ )
         {
             const OGRErr err = WriteRoughness( collection->getGeometryRef(i), dfZleft, dfZright );
@@ -670,7 +672,11 @@ OGRFeature *OGRWAsPLayer::GetNextRawFeature()
         }
     }
 
-    assert( poLayerDefn->GetFieldCount() == iNumValues-1 );
+    if( poLayerDefn->GetFieldCount() != iNumValues-1 )
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "looking for %d values and found %d on line: %s", poLayerDefn->GetFieldCount(), iNumValues-1, pszLine );
+        return NULL;
+    }
 
     std::auto_ptr< OGRFeature > poFeature( new OGRFeature( poLayerDefn ) );
     poFeature->SetFID( ++iFeatureCount );
@@ -678,7 +684,7 @@ OGRFeature *OGRWAsPLayer::GetNextRawFeature()
 
     const int iNumValuesToRead = 2*dfValues[iNumValues-1];
     int iReadValues = 0;
-    double * values = new double[iNumValuesToRead];
+    std::vector<double> values(iNumValuesToRead);
     for ( pszLine = CPLReadLineL( hFile ); 
             pszLine; 
             pszLine = iNumValuesToRead > iReadValues ? CPLReadLineL( hFile ) : NULL )
@@ -699,7 +705,6 @@ OGRFeature *OGRWAsPLayer::GetNextRawFeature()
         poLine->addPoint( values[i], values[i+1], 0 );
     }
     poFeature->SetGeomFieldDirectly(0, poLine.release() );
-    delete [] values;
 
     return poFeature.release();
 }
@@ -763,16 +768,16 @@ double OGRWAsPLayer::AvgZ( OGRGeometry * poGeom )
     {
     case wkbLineString:
     case wkbLineString25D:
-        return AvgZ( dynamic_cast< OGRLineString * >(poGeom) );
+        return AvgZ( static_cast< OGRLineString * >(poGeom) );
     case wkbPolygon:
     case wkbPolygon25D:
-        return AvgZ( dynamic_cast< OGRPolygon * >(poGeom) );
+        return AvgZ( static_cast< OGRPolygon * >(poGeom) );
     case wkbMultiLineString:
     case wkbMultiLineString25D:
 
     case wkbMultiPolygon:
     case wkbMultiPolygon25D:
-        return AvgZ( dynamic_cast< OGRGeometryCollection * >(poGeom) );
+        return AvgZ( static_cast< OGRGeometryCollection * >(poGeom) );
     default: 
         CPLError( CE_Warning, CPLE_NotSupported, "Unsuported geometry type in OGRWAsPLayer::AvgZ()");
         break;
