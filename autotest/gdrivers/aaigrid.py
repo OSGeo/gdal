@@ -342,7 +342,7 @@ def aaigrid_13():
         gdaltest.post_reason('fail')
         print(ndv)
         return 'fail'
-    if not ndv.endswith('-1e+05'):
+    if not ndv.endswith('-1e+05') and not ndv.endswith('-1e+005'):
         gdaltest.post_reason('fail')
         print(ndv)
         return 'fail'
