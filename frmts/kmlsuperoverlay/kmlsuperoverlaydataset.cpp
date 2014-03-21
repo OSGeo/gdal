@@ -497,139 +497,6 @@ int  GenerateChildKml(std::string filename,
 }
 
 /************************************************************************/
-/*                           zipWithMinizip()                           */
-/************************************************************************/
-bool zipWithMinizip(std::vector<std::string> srcFiles, std::string srcDirectory, std::string targetFile)
-{
-    void  *zipfile = CPLCreateZip(targetFile.c_str(), NULL);
-    if (!zipfile)
-    {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Unable to open target zip file.." );
-        return false;
-    }
-
-    std::vector <std::string>::iterator v1_Iter;
-    for(v1_Iter = srcFiles.begin(); v1_Iter != srcFiles.end(); v1_Iter++)
-    {
-        std::string fileRead = *v1_Iter;
-
-        // Find relative path and open new file with zip file
-        std::string relativeFileReadPath = fileRead;
-        int remNumChars = srcDirectory.size();
-        if(remNumChars > 0)
-        {
-            int f = fileRead.find(srcDirectory);
-            if( f >= 0 )
-            {
-                relativeFileReadPath.erase(f, remNumChars + 1); // 1 added for backslash at the end
-            }      
-        }
-
-        std::basic_string<char>::iterator iter1;
-        for (iter1 = relativeFileReadPath.begin(); iter1 != relativeFileReadPath.end(); iter1++)
-        {
-            int f = relativeFileReadPath.find("\\");
-            if (f >= 0)
-            {
-                relativeFileReadPath.replace(f, 1, "/");
-            }
-            else
-            {
-                break;
-            }
-        }
-        if (CPLCreateFileInZip(zipfile, relativeFileReadPath.c_str(), NULL) != CE_None)
-        {
-            CPLError( CE_Failure, CPLE_FileIO,
-                      "Unable to create file within the zip file.." );
-            return false;
-        }
-
-        // Read source file and write to zip file
-        VSILFILE* fp = VSIFOpenL(fileRead.c_str(), "rb");
-        if (fp == NULL)
-        {
-            CPLError( CE_Failure, CPLE_FileIO,
-                      "Could not open source file.." );
-            return false;
-        }
-
-        // Read file in buffer
-        std::string fileData;
-        const unsigned int bufSize = 1024;
-        char buf[bufSize];
-        int nRead;
-        while((nRead = VSIFReadL(buf, 1, bufSize, fp)) != 0)
-        {
-            if ( CPLWriteFileInZip(zipfile, buf, nRead) != CE_None )
-            {
-                CPLError( CE_Failure, CPLE_FileIO,
-                        "Could not write to file within zip file.." );
-                CPLCloseFileInZip(zipfile);
-                CPLCloseZip(zipfile);
-                VSIFCloseL(fp);
-                return false;
-            }
-        }
-
-        VSIFCloseL(fp);
-
-        // Close one src file zipped completely
-        if ( CPLCloseFileInZip(zipfile) != CE_None )
-        {
-            CPLError( CE_Failure, CPLE_FileIO,
-                      "Could not close file written within zip file.." );
-            CPLCloseZip(zipfile);
-            return false;
-        }
-    }
-
-    CPLCloseZip(zipfile);
-
-    return true;
-}
-
-/************************************************************************/
-/*                   KMLSuperOverlayRecursiveUnlink()                   */
-/************************************************************************/
-
-static void KMLSuperOverlayRecursiveUnlink( const char *pszName )
-
-{
-    char **papszFileList;
-    int i;
-
-    papszFileList = CPLReadDir( pszName );
-
-    for( i = 0; papszFileList != NULL && papszFileList[i] != NULL; i++ )
-    {
-        VSIStatBufL  sStatBuf;
-
-        if( EQUAL(papszFileList[i],".") || EQUAL(papszFileList[i],"..") )
-            continue;
-
-        CPLString osFullFilename =
-                 CPLFormFilename( pszName, papszFileList[i], NULL );
-
-        VSIStatL( osFullFilename, &sStatBuf );
-
-        if( VSI_ISREG( sStatBuf.st_mode ) )
-        {
-            VSIUnlink( osFullFilename );
-        }
-        else if( VSI_ISDIR( sStatBuf.st_mode ) )
-        {
-            KMLSuperOverlayRecursiveUnlink( osFullFilename );
-        }
-    }
-
-    CSLDestroy( papszFileList );
-
-    VSIRmdir( pszName );
-}
-
-/************************************************************************/
 /*                           CreateCopy()                               */
 /************************************************************************/
 
@@ -833,8 +700,11 @@ GDALDataset *KmlSuperOverlayCreateCopy( const char * pszFilename, GDALDataset *p
     if (nRet == FALSE)
     {
         OGRCoordinateTransformation::DestroyCT( poTransform );
-        if (isKmz)
-            KMLSuperOverlayRecursiveUnlink(outDir);
+        if( zipHandle != NULL )
+        {
+            VSIFCloseL(zipHandle);
+            VSIUnlink(pszFilename);
+        }
         return NULL;
     }
 
