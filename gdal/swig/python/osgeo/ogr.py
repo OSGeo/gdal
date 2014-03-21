@@ -147,8 +147,42 @@ class StyleTable(_object):
     __setattr__ = lambda self, name, value: _swig_setattr(self, StyleTable, name, value)
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, StyleTable, name)
-    def __init__(self, *args, **kwargs): raise AttributeError("No constructor defined")
     __repr__ = _swig_repr
+    def __init__(self, *args): 
+        """__init__(self) -> StyleTable"""
+        this = _ogr.new_StyleTable(*args)
+        try: self.this.append(this)
+        except: self.this = this
+    __swig_destroy__ = _ogr.delete_StyleTable
+    __del__ = lambda self : None;
+    def AddStyle(self, *args):
+        """AddStyle(self, char pszName, char pszStyleString) -> int"""
+        return _ogr.StyleTable_AddStyle(self, *args)
+
+    def LoadStyleTable(self, *args):
+        """LoadStyleTable(self, char utf8_path) -> int"""
+        return _ogr.StyleTable_LoadStyleTable(self, *args)
+
+    def SaveStyleTable(self, *args):
+        """SaveStyleTable(self, char utf8_path) -> int"""
+        return _ogr.StyleTable_SaveStyleTable(self, *args)
+
+    def Find(self, *args):
+        """Find(self, char pszName) -> char"""
+        return _ogr.StyleTable_Find(self, *args)
+
+    def ResetStyleStringReading(self, *args):
+        """ResetStyleStringReading(self)"""
+        return _ogr.StyleTable_ResetStyleStringReading(self, *args)
+
+    def GetNextStyle(self, *args):
+        """GetNextStyle(self) -> char"""
+        return _ogr.StyleTable_GetNextStyle(self, *args)
+
+    def GetLastStyleName(self, *args):
+        """GetLastStyleName(self) -> char"""
+        return _ogr.StyleTable_GetLastStyleName(self, *args)
+
 StyleTable_swigregister = _ogr.StyleTable_swigregister
 StyleTable_swigregister(StyleTable)
 
