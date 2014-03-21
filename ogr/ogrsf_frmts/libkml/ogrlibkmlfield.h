@@ -131,6 +131,10 @@ struct fieldconfig {
     const char *topfovfield;
     const char *nearfield;
     const char *photooverlay_shape_field;
+    const char *imagepyramid_tilesize_field;
+    const char *imagepyramid_maxwidth_field;
+    const char *imagepyramid_maxheight_field;
+    const char *imagepyramid_gridorigin_field;
 };
 
 void get_fieldconfig( struct fieldconfig *oFC );

@@ -288,6 +288,12 @@
     camera_latitude, camera_altitude, camera_altitudemode, head and/or tilt and/or roll,
     leftfov, rightfov, bottomfov, topfov, near fields are also set. The shape field is optional.
   </p>
+  <p>In case the PhotoOverlay is a big image, it is highly recommanded to tile it and
+     generate overview levels, as explained in the <a href="https://developers.google.com/kml/documentation/photos">
+     PhotoOverlay tutorial</a>. In which case, the URL should contain the "$[level]", "$[x]" and "$[y]"
+     sub-strings in the photooverlay field, and the imagepyramid_tilesize,
+     imagepyramid_maxwidth, imagepyramid_maxheight and imagepyramid_gridorigin fields should be set.
+  </p>
 
   <p>Placemark, Model, NetworkLink and PhotoOverlay objects can have an associated camera
      if the camera_longitude, camera_latitude, camera_altitude, camera_altitudemode, head and/or tilt and/or roll
@@ -640,6 +646,38 @@
       &lt;shape&gt;</a> of a <a href="https://developers.google.com/kml/documentation/kmlreference#photooverlay">
       &lt;PhotoOverlay&gt;</a>. The name of the ogr field can be changed with the
       enviroment variable LIBKML_SHAPE_FIELD.
+    </dd>
+
+    <dt>imagepyramid_tilesize</dt>
+    <dd>This integer field maps to to kml tag 
+      <a href="https://developers.google.com/kml/documentation/kmlreference#tilesize">
+      &lt;tileSize&gt;</a> of a <a href="https://developers.google.com/kml/documentation/kmlreference#imagepyramid">
+      &lt;ImagePyramid&gt;</a>. The name of the ogr field can be changed with the
+      enviroment variable LIBKML_IMAGEPYRAMID_TILESIZE.
+    </dd>
+
+    <dt>imagepyramid_maxwidth</dt>
+    <dd>This integer field maps to to kml tag 
+      <a href="https://developers.google.com/kml/documentation/kmlreference#maxwidth">
+      &lt;maxWidth&gt;</a> of a <a href="https://developers.google.com/kml/documentation/kmlreference#imagepyramid">
+      &lt;ImagePyramid&gt;</a>. The name of the ogr field can be changed with the
+      enviroment variable LIBKML_IMAGEPYRAMID_MAXWIDTH.
+    </dd>
+
+    <dt>imagepyramid_maxheight</dt>
+    <dd>This integer field maps to to kml tag 
+      <a href="https://developers.google.com/kml/documentation/kmlreference#maxheight">
+      &lt;maxHeight&gt;</a> of a <a href="https://developers.google.com/kml/documentation/kmlreference#imagepyramid">
+      &lt;ImagePyramid&gt;</a>. The name of the ogr field can be changed with the
+      enviroment variable LIBKML_IMAGEPYRAMID_MAXHEIGHT.
+    </dd>
+
+    <dt>imagepyramid_gridorigin</dt>
+    <dd>This string field maps to to kml tag 
+      <a href="https://developers.google.com/kml/documentation/kmlreference#maxheight">
+      &lt;gridOrigin&gt;</a> of a <a href="https://developers.google.com/kml/documentation/kmlreference#imagepyramid">
+      &lt;ImagePyramid&gt;</a>. The name of the ogr field can be changed with the
+      enviroment variable LIBKML_IMAGEPYRAMID_GRIDORIGIN.
     </dd>
 
     <dt>OGR_STYLE</dt>
