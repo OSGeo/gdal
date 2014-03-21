@@ -59,7 +59,8 @@ void field2kml (
     OGRFeature * poOgrFeat,
     OGRLIBKMLLayer * poOgrLayer,
     KmlFactory * poKmlFactory,
-    FeaturePtr poKmlPlacemark );
+    FeaturePtr poKmlPlacemark,
+    int bUseSimpleField );
 
 /******************************************************************************
  function to read kml into ogr fields

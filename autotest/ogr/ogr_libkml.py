@@ -1486,41 +1486,12 @@ def ogr_libkml_read_write_style():
         return 'fail'
 
     # Automatic StyleMap creation testing
-    f = gdal.VSIFOpenL('/vsimem/ogr_libkml_read_write_style_read.kml', 'wb')
-
-    styles = """<Style id="style1_normal">
-            <IconStyle>
-                <color>01234567</color>
-                <Icon>
-                    <href>http://style1_normal</href>
-                </Icon>
-            </IconStyle>
-        </Style>
-        <Style id="style1_highlight">
-            <IconStyle>
-                <color>76543210</color>
-                <Icon>
-                    <href>http://style1_highlight</href>
-                </Icon>
-            </IconStyle>
-        </Style>"""
-
-    content = """<kml xmlns="http://www.opengis.net/kml/2.2">
-    <Document>
-        %s
-    </Document>
-    </kml>""" % styles
-
-    gdal.VSIFWriteL(content, 1, len(content), f)
-    gdal.VSIFCloseL(f)
-
-    src_ds = ogr.Open('/vsimem/ogr_libkml_read_write_style_read.kml')
-    style_table = src_ds.GetStyleTable()
-
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource('/vsimem/ogr_libkml_read_write_style_write.kml')
+    style_table = ogr.StyleTable()
+    style_table.AddStyle('style1_normal','SYMBOL(id:"http://style1_normal",c:#67452301)')
+    style_table.AddStyle('style1_highlight','SYMBOL(id:"http://style1_highlight",c:#10325476)')
     ds.SetStyleTable(style_table)
     ds = None
-    src_ds = None
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_read_write_style_write.kml', 'rb')
     data = gdal.VSIFReadL(1, 2048, f)
@@ -1869,6 +1840,44 @@ def ogr_libkml_write_photooverlay():
     return 'success'
 
 ###############################################################################
+# Test writing and reading Data element
+
+def ogr_libkml_read_write_data():
+
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_read_write_data.kml")
+    gdal.SetConfigOption('LIBKML_USE_SIMPLEFIELD', 'NO')
+    lyr = ds.CreateLayer('test')
+    gdal.SetConfigOption('LIBKML_USE_SIMPLEFIELD', None)
+    lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField("foo", "bar")
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(2.2945 48.85825)'))
+    lyr.CreateFeature(feat)
+    ds = None
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_libkml_read_write_data.kml', 'rb')
+    data = gdal.VSIFReadL(1, 2048, f)
+    gdal.VSIFCloseL(f)
+
+    if data.find('<Data name="foo">') == -1 or \
+       data.find('<value>bar</value>') == -1:
+        print(data)
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    ds = ogr.Open("/vsimem/ogr_libkml_read_write_data.kml")
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    if feat.GetField('foo') != 'bar':
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_libkml_cleanup():
@@ -1905,6 +1914,7 @@ def ogr_libkml_cleanup():
     gdal.Unlink("/vsimem/ogr_libkml_write_liststyle.kml")
     gdal.Unlink("/vsimem/ogr_libkml_write_networklink.kml")
     gdal.Unlink("/vsimem/ogr_libkml_write_photooverlay.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_read_write_data.kml")
 
     # Re-register KML driver if necessary
     if ogrtest.kml_drv is not None:
@@ -1959,6 +1969,7 @@ gdaltest_list = [
     ogr_libkml_write_liststyle,
     ogr_libkml_write_networklink,
     ogr_libkml_write_photooverlay,
+    ogr_libkml_read_write_data,
     ogr_libkml_cleanup ]
 
 if __name__ == '__main__':
