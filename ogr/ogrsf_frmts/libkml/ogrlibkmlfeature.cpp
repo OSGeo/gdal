@@ -29,6 +29,7 @@
 
 #include <ogrsf_frmts.h>
 #include <ogr_geometry.h>
+#include "gdal.h"
 
 #include <kml/dom.h>
 
@@ -50,6 +51,7 @@ using kmldom::NetworkLinkPtr;
 using kmldom::PhotoOverlayPtr;
 using kmldom::IconPtr;
 using kmldom::ViewVolumePtr;
+using kmldom::ImagePyramidPtr;
 
 #include "ogr_libkml.h"
 
@@ -107,6 +109,92 @@ static CameraPtr feat2kmlcamera( const struct fieldconfig& oFC,
 }
 
 
+/************************************************************************/
+/*                 OGRLIBKMLReplaceXYLevelInURL()                       */
+/************************************************************************/
+
+static CPLString OGRLIBKMLReplaceLevelXYInURL(const char* pszURL,
+                                              int level, int x, int y)
+{
+    CPLString osRet(pszURL);
+    int nPos = osRet.find("$[level]");
+    osRet = osRet.substr(0, nPos) + CPLSPrintf("%d", level) + osRet.substr(nPos + strlen("$[level]"));
+    nPos = osRet.find("$[x]");
+    osRet = osRet.substr(0, nPos) + CPLSPrintf("%d", x) + osRet.substr(nPos + strlen("$[x]"));
+    nPos = osRet.find("$[y]");
+    osRet = osRet.substr(0, nPos) + CPLSPrintf("%d", y) + osRet.substr(nPos + strlen("$[y]"));
+    return osRet;
+}
+
+
+/************************************************************************/
+/*                        IsPowerOf2                                    */
+/************************************************************************/
+
+static int IsPowerOf2(int nVal)
+{
+    unsigned int nTmp = (unsigned int) nVal;
+    while( (nTmp & 1) == 0 )
+    {
+        nTmp >>= 1;
+    }
+    return( nTmp == 1 );
+}
+
+/************************************************************************/
+/*                    OGRLIBKMLGetMaxDimensions()                       */
+/************************************************************************/
+
+static void OGRLIBKMLGetMaxDimensions(const char* pszURL, 
+                                      int nTileSize,
+                                      int* panMaxWidth,
+                                      int* panMaxHeight)
+{
+    VSIStatBufL sStat;
+    int nMaxLevel = 0;
+    *panMaxWidth = 0;
+    *panMaxHeight = 0;
+    while( TRUE )
+    {
+        CPLString osURL = OGRLIBKMLReplaceLevelXYInURL(pszURL, nMaxLevel, 0, 0);
+        if( strstr(osURL, ".kmz/") )
+            osURL = "/vsizip/" + osURL;
+        if( VSIStatL(osURL, &sStat) == 0 )
+            nMaxLevel ++;
+        else
+        {
+            if( nMaxLevel == 0 )
+                return;
+            break;
+        }
+    }
+    nMaxLevel --;
+
+    int i;
+    for(i = 0; ; i++ )
+    {
+        CPLString osURL = OGRLIBKMLReplaceLevelXYInURL(pszURL, nMaxLevel, i + 1, 0);
+        if( strstr(osURL, ".kmz/") )
+            osURL = "/vsizip/" + osURL;
+        if( VSIStatL(osURL, &sStat) != 0 )
+            break;
+    }
+    *panMaxWidth = (i + 1) * nTileSize;
+    for(i = 0; ; i++ )
+    {
+        CPLString osURL = OGRLIBKMLReplaceLevelXYInURL(pszURL, nMaxLevel, 0, i + 1);
+        if( strstr(osURL, ".kmz/") )
+            osURL = "/vsizip/" + osURL;
+        if( VSIStatL(osURL, &sStat) != 0 )
+            break;
+    }
+    *panMaxHeight = (i + 1) * nTileSize;
+}
+
+/************************************************************************/
+/*                           feat2kml()                                 */
+/************************************************************************/
+
 FeaturePtr feat2kml (
     OGRLIBKMLDataSource * poOgrDS,
     OGRLayer * poOgrLayer,
@@ -142,8 +230,107 @@ FeaturePtr feat2kml (
         int iNearField = poOgrFeat->GetFieldIndex(oFC.nearfield);
         double dfNear;
 
+        const char* pszURL = poOgrFeat->GetFieldAsString(iPhotoOverlay);
+        int iImagePyramidTileSize = poOgrFeat->GetFieldIndex(oFC.imagepyramid_tilesize_field);
+        int iImagePyramidMaxWidth = poOgrFeat->GetFieldIndex(oFC.imagepyramid_maxwidth_field);
+        int iImagePyramidMaxHeight = poOgrFeat->GetFieldIndex(oFC.imagepyramid_maxheight_field);
+        int iImagePyramidGridOrigin = poOgrFeat->GetFieldIndex(oFC.imagepyramid_gridorigin_field);
+        int nTileSize = 0, nMaxWidth = 0, nMaxHeight = 0;
+        int bIsTiledPhotoOverlay = FALSE;
+        int bGridOriginIsUpperLeft = TRUE;
+        /* ATC 52 and 62 */
+        if( strstr(pszURL, "$[x]") && strstr(pszURL, "$[y]") && strstr(pszURL, "$[level]") )
+        {
+            bIsTiledPhotoOverlay = TRUE;
+            int bErrorEmitted = FALSE;
+            if( iImagePyramidTileSize < 0 || !poOgrFeat->IsFieldSet(iImagePyramidTileSize) )
+            {
+                CPLDebug("LIBKML", "Missing ImagePyramid tileSize. Computing it");
+                CPLString osURL = OGRLIBKMLReplaceLevelXYInURL(pszURL, 0, 0, 0);
+                if( strstr(osURL, ".kmz/") )
+                    osURL = "/vsizip/" + osURL;
+                GDALDatasetH hDS = GDALOpen( osURL, GA_ReadOnly );
+                if( hDS != NULL )
+                {
+                    nTileSize = GDALGetRasterXSize(hDS);
+                    if( nTileSize != GDALGetRasterYSize(hDS) )
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined, "Non square tile : %dx%d",
+                                 GDALGetRasterXSize(hDS), GDALGetRasterYSize(hDS));
+                        nTileSize = 0;
+                        bErrorEmitted = TRUE;
+                    }
+                    GDALClose(hDS);
+                }
+                else
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined, "Cannot open %s", osURL.c_str());
+                    bErrorEmitted = TRUE;
+                }
+            }
+            else
+            {
+                nTileSize = poOgrFeat->GetFieldAsInteger(iImagePyramidTileSize);
+            }
+            if( !bErrorEmitted && (nTileSize <= 1 || !IsPowerOf2(nTileSize)) )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Tile size is not a power of two: %d", nTileSize);
+                nTileSize = 0;
+            }
+
+            if( nTileSize > 0 )
+            {
+                if( iImagePyramidMaxWidth < 0 || !poOgrFeat->IsFieldSet(iImagePyramidMaxWidth) ||
+                    iImagePyramidMaxHeight < 0 || !poOgrFeat->IsFieldSet(iImagePyramidMaxHeight) )
+                {
+                    CPLDebug("LIBKML", "Missing ImagePyramid maxWidth and/or maxHeight. Computing it");
+                    OGRLIBKMLGetMaxDimensions(pszURL, nTileSize, &nMaxWidth, &nMaxHeight);
+                }
+                else
+                {
+                    nMaxWidth = poOgrFeat->GetFieldAsInteger(iImagePyramidMaxWidth);
+                    nMaxHeight = poOgrFeat->GetFieldAsInteger(iImagePyramidMaxHeight);
+                }
+
+                if( nTileSize <= 0 || nMaxWidth <= 0 || nMaxHeight <= 0)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                            "Cannot generate PhotoOverlay object since there are "
+                            "missing information to generate ImagePyramid element");
+                }
+            }
+
+            if( iImagePyramidGridOrigin >= 0 && poOgrFeat->IsFieldSet(iImagePyramidGridOrigin) )
+            {
+                const char* pszGridOrigin = poOgrFeat->GetFieldAsString(iImagePyramidGridOrigin);
+                if( EQUAL(pszGridOrigin, "UpperLeft") )
+                    bGridOriginIsUpperLeft = TRUE;
+                else if( EQUAL(pszGridOrigin, "BottomLeft") )
+                    bGridOriginIsUpperLeft = FALSE;
+                else
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Unhandled value for imagepyramid_gridorigin : %s. Assuming UpperLeft",
+                             pszGridOrigin);
+                }
+            }
+        }
+        else
+        {
+            if( (iImagePyramidTileSize >= 0 && poOgrFeat->IsFieldSet(iImagePyramidTileSize)) ||
+                (iImagePyramidMaxWidth >= 0 && poOgrFeat->IsFieldSet(iImagePyramidMaxWidth)) ||
+                (iImagePyramidMaxHeight >= 0 && poOgrFeat->IsFieldSet(iImagePyramidMaxHeight)) ||
+                (iImagePyramidGridOrigin >= 0 && poOgrFeat->IsFieldSet(iImagePyramidGridOrigin)) )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Ignoring any ImagePyramid information since the URL does "
+                         "not include $[x] and/or $[y] and/or $[level]");
+            }
+        }
+
         /* ATC 19 & 35 */
-        if( iLeftFovField >= 0 && poOgrFeat->IsFieldSet(iLeftFovField) &&
+        if( (!bIsTiledPhotoOverlay || (nTileSize > 0 && nMaxWidth > 0 && nMaxHeight > 0)) &&
+            iLeftFovField >= 0 && poOgrFeat->IsFieldSet(iLeftFovField) &&
             iRightFovField >= 0 && poOgrFeat->IsFieldSet(iRightFovField) &&
             iBottomFovField >= 0 && poOgrFeat->IsFieldSet(iBottomFovField) &&
             iTopFovField >= 0 && poOgrFeat->IsFieldSet(iTopFovField) &&
@@ -154,7 +341,7 @@ FeaturePtr feat2kml (
 
             IconPtr poKmlIcon = poKmlFactory->CreateIcon (  );
             poKmlPhotoOverlay->set_icon(poKmlIcon);
-            poKmlIcon->set_href( poOgrFeat->GetFieldAsString(iPhotoOverlay) );
+            poKmlIcon->set_href( pszURL );
 
             ViewVolumePtr poKmlViewVolume = poKmlFactory->CreateViewVolume( );
             poKmlPhotoOverlay->set_viewvolume(poKmlViewVolume);
@@ -170,6 +357,18 @@ FeaturePtr feat2kml (
             poKmlViewVolume->set_topfov(dfTopFov);
             poKmlViewVolume->set_near(dfNear);
             
+            if( bIsTiledPhotoOverlay )
+            {
+                ImagePyramidPtr poKmlImagePyramid = poKmlFactory->CreateImagePyramid( );
+                poKmlPhotoOverlay->set_imagepyramid(poKmlImagePyramid);
+
+                poKmlImagePyramid->set_tilesize(nTileSize);
+                poKmlImagePyramid->set_maxwidth(nMaxWidth);
+                poKmlImagePyramid->set_maxheight(nMaxHeight);
+                poKmlImagePyramid->set_gridorigin( (bGridOriginIsUpperLeft) ?
+                    kmldom::GRIDORIGIN_UPPERLEFT : kmldom::GRIDORIGIN_LOWERLEFT );
+            }
+
             int iPhotoOverlayShapeField = poOgrFeat->GetFieldIndex(oFC.photooverlay_shape_field);
             if( iPhotoOverlayShapeField >= 0 && poOgrFeat->IsFieldSet(iPhotoOverlayShapeField) )
             {
