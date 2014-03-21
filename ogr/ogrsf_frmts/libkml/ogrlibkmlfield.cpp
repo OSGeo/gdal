@@ -285,23 +285,29 @@ void field2kml (
     OGRFeature * poOgrFeat,
     OGRLIBKMLLayer * poOgrLayer,
     KmlFactory * poKmlFactory,
-    FeaturePtr poKmlFeature )
+    FeaturePtr poKmlFeature,
+    int bUseSimpleField)
 {
     int i;
 
-    SchemaDataPtr poKmlSchemaData = poKmlFactory->CreateSchemaData (  );
-    SchemaPtr poKmlSchema = poOgrLayer->GetKmlSchema (  );
+    ExtendedDataPtr poKmlExtendedData = NULL;
+    SchemaDataPtr poKmlSchemaData = NULL;
+    if( bUseSimpleField )
+    {
+        poKmlSchemaData = poKmlFactory->CreateSchemaData (  );
+        SchemaPtr poKmlSchema = poOgrLayer->GetKmlSchema (  );
 
-    /***** set the url to the schema *****/
+        /***** set the url to the schema *****/
 
-    if ( poKmlSchema && poKmlSchema->has_id (  ) ) {
-        std::string oKmlSchemaID = poKmlSchema->get_id (  );
+        if ( poKmlSchema && poKmlSchema->has_id (  ) ) {
+            std::string oKmlSchemaID = poKmlSchema->get_id (  );
 
 
-        std::string oKmlSchemaURL = "#";
-        oKmlSchemaURL.append ( oKmlSchemaID );
+            std::string oKmlSchemaURL = "#";
+            oKmlSchemaURL.append ( oKmlSchemaID );
 
-        poKmlSchemaData->set_schemaurl ( oKmlSchemaURL );
+            poKmlSchemaData->set_schemaurl ( oKmlSchemaURL );
+        }
     }
 
     /***** get the field config *****/
@@ -334,6 +340,7 @@ void field2kml (
         const char *name = poOgrFieldDef->GetNameRef (  );
 
         SimpleDataPtr poKmlSimpleData = NULL;
+        DataPtr poKmlData = NULL;
         int year,
             month,
             day,
@@ -476,9 +483,18 @@ void field2kml (
 
                 /***** other *****/
 
-                poKmlSimpleData = poKmlFactory->CreateSimpleData (  );
-                poKmlSimpleData->set_name ( name );
-                poKmlSimpleData->set_text ( pszUTF8String );
+                if( bUseSimpleField )
+                {
+                    poKmlSimpleData = poKmlFactory->CreateSimpleData (  );
+                    poKmlSimpleData->set_name ( name );
+                    poKmlSimpleData->set_text ( pszUTF8String );
+                }
+                else
+                {
+                    poKmlData = poKmlFactory->CreateData (  );
+                    poKmlData->set_name ( name );
+                    poKmlData->set_value ( pszUTF8String );
+                }
 
                 CPLFree( pszUTF8String );
 
@@ -650,10 +666,20 @@ void field2kml (
 
                 /***** other *****/
 
-                poKmlSimpleData = poKmlFactory->CreateSimpleData (  );
-                poKmlSimpleData->set_name ( name );
-                poKmlSimpleData->set_text ( poOgrFeat->
-                                            GetFieldAsString ( i ) );
+                if( bUseSimpleField )
+                {
+                    poKmlSimpleData = poKmlFactory->CreateSimpleData (  );
+                    poKmlSimpleData->set_name ( name );
+                    poKmlSimpleData->set_text ( poOgrFeat->
+                                                GetFieldAsString ( i ) );
+                }
+                else
+                {
+                    poKmlData = poKmlFactory->CreateData (  );
+                    poKmlData->set_name ( name );
+                    poKmlData->set_value ( poOgrFeat->
+                                                GetFieldAsString ( i ) );
+                }
 
                 break;
             }
@@ -751,9 +777,18 @@ void field2kml (
 
             /***** other *****/
 
-            poKmlSimpleData = poKmlFactory->CreateSimpleData (  );
-            poKmlSimpleData->set_name ( name );
-            poKmlSimpleData->set_text ( poOgrFeat->GetFieldAsString ( i ) );
+            if( bUseSimpleField )
+            {
+                poKmlSimpleData = poKmlFactory->CreateSimpleData (  );
+                poKmlSimpleData->set_name ( name );
+                poKmlSimpleData->set_text ( poOgrFeat->GetFieldAsString ( i ) );
+            }
+            else
+            {
+                poKmlData = poKmlFactory->CreateData (  );
+                poKmlData->set_name ( name );
+                poKmlData->set_value ( poOgrFeat->GetFieldAsString ( i ) );
+            }
 
             break;
 
@@ -782,15 +817,25 @@ void field2kml (
                 continue;
             }
 
-            poKmlSimpleData = poKmlFactory->CreateSimpleData (  );
-            poKmlSimpleData->set_name ( name );
-
             char* pszStr = CPLStrdup( poOgrFeat->GetFieldAsString ( i ) );
             /* Use point as decimal separator */
             char* pszComma = strchr(pszStr, ',');
             if (pszComma)
                 *pszComma = '.';
-            poKmlSimpleData->set_text ( pszStr );
+
+            if( bUseSimpleField )
+            {
+                poKmlSimpleData = poKmlFactory->CreateSimpleData (  );
+                poKmlSimpleData->set_name ( name );
+                poKmlSimpleData->set_text ( pszStr );
+            }
+            else
+            {
+                poKmlData = poKmlFactory->CreateData (  );
+                poKmlData->set_name ( name );
+                poKmlData->set_value ( pszStr );
+            }
+
             CPLFree(pszStr);
 
             break;
@@ -805,21 +850,42 @@ void field2kml (
 
         /***** other *****/
 
-            poKmlSimpleData = poKmlFactory->CreateSimpleData (  );
-            poKmlSimpleData->set_name ( name );
-            poKmlSimpleData->set_text ( poOgrFeat->GetFieldAsString ( i ) );
+            if( bUseSimpleField )
+            {
+                poKmlSimpleData = poKmlFactory->CreateSimpleData (  );
+                poKmlSimpleData->set_name ( name );
+                poKmlSimpleData->set_text ( poOgrFeat->GetFieldAsString ( i ) );
+            }
+            else
+            {
+                poKmlData = poKmlFactory->CreateData (  );
+                poKmlData->set_name ( name );
+                poKmlData->set_value ( poOgrFeat->GetFieldAsString ( i ) );
+            }
 
             break;
         }
-        poKmlSchemaData->add_simpledata ( poKmlSimpleData );
+        
+        if( poKmlSimpleData )
+        {
+            poKmlSchemaData->add_simpledata ( poKmlSimpleData );
+        }
+        else if( poKmlData )
+        {
+            if( poKmlExtendedData == NULL )
+                poKmlExtendedData = poKmlFactory->CreateExtendedData (  );
+            poKmlExtendedData->add_data ( poKmlData );
+        }
     }
 
     /***** dont add it to the placemark unless there is data *****/
 
-    if ( poKmlSchemaData->get_simpledata_array_size (  ) > 0 ) {
-        ExtendedDataPtr poKmlExtendedData =
-            poKmlFactory->CreateExtendedData (  );
+    if ( bUseSimpleField && poKmlSchemaData->get_simpledata_array_size (  ) > 0 ) {
+        poKmlExtendedData = poKmlFactory->CreateExtendedData (  );
         poKmlExtendedData->add_schemadata ( poKmlSchemaData );
+    }
+    if( poKmlExtendedData != NULL )
+    {
         poKmlFeature->set_extendeddata ( poKmlExtendedData );
     }
 
