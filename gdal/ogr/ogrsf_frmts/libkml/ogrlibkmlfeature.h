@@ -43,7 +43,8 @@ FeaturePtr feat2kml (
     OGRLIBKMLDataSource *poOgrDS,
     OGRLayer * poKOgrLayer,
     OGRFeature * poOgrFeat,
-    KmlFactory * poKmlFactory );
+    KmlFactory * poKmlFactory,
+    int bUseSimpleField );
 
 /******************************************************************************
  function to read a kml placemark into a ogr feature

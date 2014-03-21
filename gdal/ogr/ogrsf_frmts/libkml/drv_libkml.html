@@ -349,13 +349,19 @@
 
   <h2>Fields</h2>
   
-  <p> OGR fields (feature atributes) are mapped to kml with
+  <p> OGR fields (feature attributes) are mapped to kml with
     <a href="https://developers.google.com/kml/documentation/kmlreference#schema">
-    &lt;Schema&gt</a>; and
+    &lt;Schema&gt;</a>; and
     <a href="https://developers.google.com/kml/documentation/kmlreference#simpledata">
     &lt;SimpleData&gt;</a>, except for some special fields as noted below.
   </p>
-  
+
+  <p>Note: it is also possible to export fields as
+    <a href="https://developers.google.com/kml/documentation/kmlreference#data">
+    &lt;Data&gt;</a> elements if the LIBKML_USE_SCHEMADATA configuration option is
+    set to NO.
+  </p>
+
   <p>
     A rich set of environment variables are available to define how fields in
     input and output, map to a KML 

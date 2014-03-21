@@ -79,6 +79,7 @@ class OGRLIBKMLLayer:public OGRLayer
     OGRSpatialReference      *m_poOgrSRS;
 
     int                       m_bReadGroundOverlay;
+    int                       m_bUseSimpleField;
 
     int                       m_bWriteRegion;
     int                       m_bRegionBoundsAuto;
