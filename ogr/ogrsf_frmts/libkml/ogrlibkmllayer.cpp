@@ -171,6 +171,7 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
     /***** was the layer created from a DS::Open *****/
 
     m_bReadGroundOverlay = CSLTestBoolean(CPLGetConfigOption("LIBKML_READ_GROUND_OVERLAY", "YES"));
+    m_bUseSimpleField = CSLTestBoolean(CPLGetConfigOption("LIBKML_USE_SIMPLEFIELD", "YES"));
 
     if ( !bNew ) {
 
@@ -523,7 +524,8 @@ OGRErr OGRLIBKMLLayer::CreateFeature (
     }
 
     FeaturePtr poKmlFeature =
-        feat2kml ( m_poOgrDS, this, poOgrFeat, m_poOgrDS->GetKmlFactory (  ) );
+        feat2kml ( m_poOgrDS, this, poOgrFeat, m_poOgrDS->GetKmlFactory (  ),
+                   m_bUseSimpleField );
 
     if( m_poKmlLayer != NULL )
         m_poKmlLayer->add_feature ( poKmlFeature );
@@ -575,7 +577,8 @@ OGRErr OGRLIBKMLLayer::SetFeature ( OGRFeature * poOgrFeat )
         return OGRERR_FAILURE;
 
     FeaturePtr poKmlFeature =
-        feat2kml ( m_poOgrDS, this, poOgrFeat, m_poOgrDS->GetKmlFactory (  ) );
+        feat2kml ( m_poOgrDS, this, poOgrFeat, m_poOgrDS->GetKmlFactory (  ),
+                   m_bUseSimpleField );
 
     KmlFactory *poKmlFactory = m_poOgrDS->GetKmlFactory (  );
     ChangePtr poChange = poKmlFactory->CreateChange();
@@ -734,27 +737,30 @@ OGRErr OGRLIBKMLLayer::CreateField (
     if ( !bUpdate )
         return OGRERR_UNSUPPORTED_OPERATION;
 
-    SimpleFieldPtr poKmlSimpleField = NULL;
-
-    if ( (poKmlSimpleField =
-         FieldDef2kml ( poField, m_poOgrDS->GetKmlFactory (  ) )) != NULL )
+    if( m_bUseSimpleField )
     {
-        if( m_poKmlSchema == NULL )
+        SimpleFieldPtr poKmlSimpleField = NULL;
+
+        if ( (poKmlSimpleField =
+            FieldDef2kml ( poField, m_poOgrDS->GetKmlFactory (  ) )) != NULL )
         {
-            /***** create a new schema *****/
+            if( m_poKmlSchema == NULL )
+            {
+                /***** create a new schema *****/
 
-            KmlFactory *poKmlFactory = m_poOgrDS->GetKmlFactory (  );
+                KmlFactory *poKmlFactory = m_poOgrDS->GetKmlFactory (  );
 
-            m_poKmlSchema = poKmlFactory->CreateSchema (  );
+                m_poKmlSchema = poKmlFactory->CreateSchema (  );
 
-            /***** set the id on the new schema *****/
+                /***** set the id on the new schema *****/
 
-            std::string oKmlSchemaID = OGRLIBKMLGetSanitizedNCName(m_pszName);
-            oKmlSchemaID.append ( ".schema" );
-            m_poKmlSchema->set_id ( oKmlSchemaID );
+                std::string oKmlSchemaID = OGRLIBKMLGetSanitizedNCName(m_pszName);
+                oKmlSchemaID.append ( ".schema" );
+                m_poKmlSchema->set_id ( oKmlSchemaID );
+            }
+
+            m_poKmlSchema->add_simplefield ( poKmlSimpleField );
         }
-
-        m_poKmlSchema->add_simplefield ( poKmlSimpleField );
     }
 
     m_poOgrFeatureDefn->AddFieldDefn ( poField );

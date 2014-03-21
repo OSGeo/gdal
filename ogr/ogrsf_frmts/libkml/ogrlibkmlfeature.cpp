@@ -199,7 +199,8 @@ FeaturePtr feat2kml (
     OGRLIBKMLDataSource * poOgrDS,
     OGRLayer * poOgrLayer,
     OGRFeature * poOgrFeat,
-    KmlFactory * poKmlFactory )
+    KmlFactory * poKmlFactory,
+    int bUseSimpleField )
 {
     FeaturePtr poKmlFeature = NULL;
 
@@ -693,7 +694,7 @@ FeaturePtr feat2kml (
     /***** fields *****/
 
     field2kml ( poOgrFeat, ( OGRLIBKMLLayer * ) poOgrLayer, poKmlFactory,
-                poKmlFeature );
+                poKmlFeature, bUseSimpleField );
 
     return poKmlFeature;
 }
