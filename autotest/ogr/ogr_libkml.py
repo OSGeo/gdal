@@ -1806,6 +1806,9 @@ def ogr_libkml_write_photooverlay():
     lyr.CreateField(ogr.FieldDefn("topfov", ogr.OFTReal))
     lyr.CreateField(ogr.FieldDefn("near", ogr.OFTReal))
     lyr.CreateField(ogr.FieldDefn("photooverlay_shape", ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn("imagepyramid_tilesize", ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn("imagepyramid_maxwidth", ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn("imagepyramid_maxheight", ogr.OFTInteger))
 
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField("name", "a photo overlay")
@@ -1824,6 +1827,12 @@ def ogr_libkml_write_photooverlay():
     feat.SetField("roll", 0)
     feat.SetField("photooverlay_shape", "rectangle")
     feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(2.2945 48.85825)'))
+    lyr.CreateFeature(feat)
+
+    feat.SetField("photooverlay", "http://tile.openstreetmap.org/$[level]/$[x]/$[y].png")
+    feat.SetField("imagepyramid_tilesize", 256)
+    feat.SetField("imagepyramid_maxwidth", 512)
+    feat.SetField("imagepyramid_maxheight", 512)
     lyr.CreateFeature(feat)
 
     ds = None
@@ -1847,7 +1856,12 @@ def ogr_libkml_write_photooverlay():
        data.find('<topFov>57</topFov>') == -1 or \
        data.find('<near>100</near>') == -1 or \
        data.find('2.2945,48.85825,0') == -1 or \
-       data.find('<shape>rectangle</shape>') == -1:
+       data.find('<shape>rectangle</shape>') == -1 or \
+       data.find('<href>http://tile.openstreetmap.org/$[level]/$[x]/$[y].png</href>') == -1 or \
+       data.find('<tileSize>256</tileSize>') == -1 or \
+       data.find('<maxWidth>512</maxWidth>') == -1 or \
+       data.find('<maxHeight>512</maxHeight>') == -1 or \
+       data.find('<gridOrigin>upperLeft</gridOrigin>') == -1:
         print(data)
         gdaltest.post_reason('failure')
         return 'fail'

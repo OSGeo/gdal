@@ -466,7 +466,8 @@ void field2kml (
                            EQUAL ( name, oFC.networklink_httpQuery_field ) ||
                            EQUAL ( name, oFC.camera_altitudemode_field ) ||
                            EQUAL ( name, oFC.photooverlayfield ) ||
-                           EQUAL ( name, oFC.photooverlay_shape_field ) ) {
+                           EQUAL ( name, oFC.photooverlay_shape_field ) ||
+                           EQUAL ( name, oFC.imagepyramid_gridorigin_field ) ) {
 
                     CPLFree( pszUTF8String );
 
@@ -740,7 +741,10 @@ void field2kml (
                         EQUAL ( name, oFC.networklink_flytoview_field ) ||
                         EQUAL ( name, oFC.networklink_refreshInterval_field ) ||
                         EQUAL ( name, oFC.networklink_viewRefreshMode_field ) ||
-                        EQUAL ( name, oFC.networklink_viewRefreshTime_field ) ) {
+                        EQUAL ( name, oFC.networklink_viewRefreshTime_field ) ||
+                        EQUAL ( name, oFC.imagepyramid_tilesize_field ) ||
+                        EQUAL ( name, oFC.imagepyramid_maxwidth_field ) ||
+                        EQUAL ( name, oFC.imagepyramid_maxheight_field ) ) {
 
                 continue;
             }
@@ -1544,7 +1548,11 @@ SimpleFieldPtr FieldDef2kml (
          EQUAL ( pszFieldName, oFC.bottomfovfield ) ||
          EQUAL ( pszFieldName, oFC.topfovfield ) ||
          EQUAL ( pszFieldName, oFC.nearfield ) ||
-         EQUAL ( pszFieldName, oFC.photooverlay_shape_field ) )
+         EQUAL ( pszFieldName, oFC.photooverlay_shape_field ) ||
+         EQUAL ( pszFieldName, oFC.imagepyramid_tilesize_field) ||
+         EQUAL ( pszFieldName, oFC.imagepyramid_maxwidth_field) ||
+         EQUAL ( pszFieldName, oFC.imagepyramid_maxheight_field) ||
+         EQUAL ( pszFieldName, oFC.imagepyramid_gridorigin_field) )
     {
         return NULL;
     }
@@ -1709,6 +1717,10 @@ void get_fieldconfig( struct fieldconfig *oFC) {
     oFC->topfovfield = CPLGetConfigOption( "LIBKML_TOPFOV_FIELD", "topfov");
     oFC->nearfield = CPLGetConfigOption( "LIBKML_NEARFOV_FIELD", "near");
     oFC->photooverlay_shape_field = CPLGetConfigOption( "LIBKML_PHOTOOVERLAY_SHAPE_FIELD", "photooverlay_shape");
+    oFC->imagepyramid_tilesize_field = CPLGetConfigOption( "LIBKML_IMAGEPYRAMID_TILESIZE", "imagepyramid_tilesize");
+    oFC->imagepyramid_maxwidth_field = CPLGetConfigOption( "LIBKML_IMAGEPYRAMID_MAXWIDTH", "imagepyramid_maxwidth");
+    oFC->imagepyramid_maxheight_field = CPLGetConfigOption( "LIBKML_IMAGEPYRAMID_MAXHEIGHT", "imagepyramid_maxheight");
+    oFC->imagepyramid_gridorigin_field = CPLGetConfigOption( "LIBKML_IMAGEPYRAMID_GRIDORIGIN", "imagepyramid_gridorigin");
 }
 
 /************************************************************************/
