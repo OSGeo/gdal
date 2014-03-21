@@ -337,10 +337,59 @@ typedef struct
 
 #ifndef GDAL_BINDINGS
 
+/************************************************************************/
+/*                          OGRStyleTable                               */
+/************************************************************************/
+
 %rename (StyleTable) OGRStyleTableShadow;
 class OGRStyleTableShadow {
-  OGRStyleTableShadow();
-  ~OGRStyleTableShadow();
+public:
+
+%extend {
+
+   OGRStyleTableShadow() {
+        return (OGRStyleTableShadow*) OGR_STBL_Create();
+   }
+
+   ~OGRStyleTableShadow() {
+        OGR_STBL_Destroy( (OGRStyleTableH) self );
+   }
+
+   int AddStyle( const char *pszName, const char *pszStyleString )
+   {
+        return OGR_STBL_AddStyle( (OGRStyleTableH) self, pszName, pszStyleString);
+   }
+
+   int LoadStyleTable( const char *utf8_path )
+   {
+        return OGR_STBL_LoadStyleTable( (OGRStyleTableH) self, utf8_path );
+   }
+
+   int SaveStyleTable( const char *utf8_path )
+   {
+        return OGR_STBL_SaveStyleTable( (OGRStyleTableH) self, utf8_path );
+   }
+
+   const char* Find( const char* pszName )
+   {
+        return OGR_STBL_Find( (OGRStyleTableH) self, pszName );
+   }
+
+   void ResetStyleStringReading()
+   {
+        OGR_STBL_ResetStyleStringReading( (OGRStyleTableH) self );
+   }
+
+   const char *GetNextStyle( )
+   {
+        return OGR_STBL_GetNextStyle( (OGRStyleTableH) self );
+   }
+
+   const char *GetLastStyleName( )
+   {
+        return OGR_STBL_GetLastStyleName( (OGRStyleTableH) self );
+   }
+}
 };
 
 /************************************************************************/

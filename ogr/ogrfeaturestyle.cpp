@@ -786,6 +786,7 @@ OGRStyleTool *OGRStyleMgr::CreateStyleToolFromStyleString(const char *
 OGRStyleTable::OGRStyleTable()
 {
     m_papszStyleTable = NULL;
+    iNextStyle = 0;
 }
 
 /************************************************************************/
@@ -922,6 +923,31 @@ GBool OGRStyleTable::AddStyle(const char *pszName, const char *pszStyleString)
         return TRUE;
     }
     return FALSE;
+}
+
+/************************************************************************/
+/*                       OGR_STBL_AddStyle()                            */
+/************************************************************************/
+
+/**
+ * \brief Add a new style in the table.
+ * No comparison will be done on the
+ * Style string, only on the name.
+ * This function is the same as the C++ method OGRStyleTable::AddStyle().
+ *
+ * @param hStyleTable handle to the style table.
+ * @param pszName the name the style to add.
+ * @param pszStyleString the style string to add.
+ *
+ * @return TRUE on success, FALSE on error
+ */
+
+int OGR_STBL_AddStyle( OGRStyleTableH hStyleTable,
+                       const char *pszName, const char *pszStyleString)
+{
+    VALIDATE_POINTER1( hStyleTable, "OGR_STBL_AddStyle", FALSE );
+    
+    return ((OGRStyleTable *) hStyleTable)->AddStyle( pszName, pszStyleString );
 }
 
 /****************************************************************************/

@@ -3104,6 +3104,12 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
     return bContinue;    
 }
 
+SWIGINTERN OGRStyleTableShadow *new_OGRStyleTableShadow(){
+        return (OGRStyleTableShadow*) OGR_STBL_Create();
+   }
+SWIGINTERN void delete_OGRStyleTableShadow(OGRStyleTableShadow *self){
+        OGR_STBL_Destroy( (OGRStyleTableH) self );
+   }
 
 SWIGINTERN int
 SWIG_AsCharPtrAndSize(PyObject *obj, char** cptr, size_t* psize, int *alloc)
@@ -3183,6 +3189,27 @@ SWIG_AsCharPtrAndSize(PyObject *obj, char** cptr, size_t* psize, int *alloc)
 
 
 
+SWIGINTERN int OGRStyleTableShadow_AddStyle(OGRStyleTableShadow *self,char const *pszName,char const *pszStyleString){
+        return OGR_STBL_AddStyle( (OGRStyleTableH) self, pszName, pszStyleString);
+   }
+SWIGINTERN int OGRStyleTableShadow_LoadStyleTable(OGRStyleTableShadow *self,char const *utf8_path){
+        return OGR_STBL_LoadStyleTable( (OGRStyleTableH) self, utf8_path );
+   }
+SWIGINTERN int OGRStyleTableShadow_SaveStyleTable(OGRStyleTableShadow *self,char const *utf8_path){
+        return OGR_STBL_SaveStyleTable( (OGRStyleTableH) self, utf8_path );
+   }
+SWIGINTERN char const *OGRStyleTableShadow_Find(OGRStyleTableShadow *self,char const *pszName){
+        return OGR_STBL_Find( (OGRStyleTableH) self, pszName );
+   }
+SWIGINTERN void OGRStyleTableShadow_ResetStyleStringReading(OGRStyleTableShadow *self){
+        OGR_STBL_ResetStyleStringReading( (OGRStyleTableH) self );
+   }
+SWIGINTERN char const *OGRStyleTableShadow_GetNextStyle(OGRStyleTableShadow *self){
+        return OGR_STBL_GetNextStyle( (OGRStyleTableH) self );
+   }
+SWIGINTERN char const *OGRStyleTableShadow_GetLastStyleName(OGRStyleTableShadow *self){
+        return OGR_STBL_GetLastStyleName( (OGRStyleTableH) self );
+   }
 SWIGINTERN OGRDataSourceShadow *OGRDriverShadow_CreateDataSource(OGRDriverShadow *self,char const *utf8_path,char **options=0){
     OGRDataSourceShadow *ds = (OGRDataSourceShadow*) OGR_Dr_CreateDataSource( self, utf8_path, options);
     return ds;
@@ -4611,6 +4638,368 @@ SWIGINTERN PyObject *_wrap_DontUseExceptions(PyObject *SWIGUNUSEDPARM(self), PyO
   if (!PyArg_ParseTuple(args,(char *)":DontUseExceptions")) SWIG_fail;
   DontUseExceptions();
   resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_new_StyleTable(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRStyleTableShadow *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)":new_StyleTable")) SWIG_fail;
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (OGRStyleTableShadow *)new_OGRStyleTableShadow();
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRStyleTableShadow, SWIG_POINTER_NEW |  0 );
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_delete_StyleTable(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRStyleTableShadow *arg1 = (OGRStyleTableShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:delete_StyleTable",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRStyleTableShadow, SWIG_POINTER_DISOWN |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "delete_StyleTable" "', argument " "1"" of type '" "OGRStyleTableShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRStyleTableShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    delete_OGRStyleTableShadow(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_StyleTable_AddStyle(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRStyleTableShadow *arg1 = (OGRStyleTableShadow *) 0 ;
+  char *arg2 = (char *) 0 ;
+  char *arg3 = (char *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  int res3 ;
+  char *buf3 = 0 ;
+  int alloc3 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  int result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOO:StyleTable_AddStyle",&obj0,&obj1,&obj2)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRStyleTableShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "StyleTable_AddStyle" "', argument " "1"" of type '" "OGRStyleTableShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRStyleTableShadow * >(argp1);
+  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "StyleTable_AddStyle" "', argument " "2"" of type '" "char const *""'");
+  }
+  arg2 = reinterpret_cast< char * >(buf2);
+  res3 = SWIG_AsCharPtrAndSize(obj2, &buf3, NULL, &alloc3);
+  if (!SWIG_IsOK(res3)) {
+    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "StyleTable_AddStyle" "', argument " "3"" of type '" "char const *""'");
+  }
+  arg3 = reinterpret_cast< char * >(buf3);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (int)OGRStyleTableShadow_AddStyle(arg1,(char const *)arg2,(char const *)arg3);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
+  return resultobj;
+fail:
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_StyleTable_LoadStyleTable(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRStyleTableShadow *arg1 = (OGRStyleTableShadow *) 0 ;
+  char *arg2 = (char *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int bToFree2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  int result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:StyleTable_LoadStyleTable",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRStyleTableShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "StyleTable_LoadStyleTable" "', argument " "1"" of type '" "OGRStyleTableShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRStyleTableShadow * >(argp1);
+  {
+    /* %typemap(in) (const char *utf8_path) */
+    arg2 = GDALPythonObjectToCStr( obj1, &bToFree2 );
+    if (arg2 == NULL)
+    {
+      PyErr_SetString( PyExc_RuntimeError, "not a string" );
+      SWIG_fail;
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (int)OGRStyleTableShadow_LoadStyleTable(arg1,(char const *)arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg2, bToFree2);
+  }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg2, bToFree2);
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_StyleTable_SaveStyleTable(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRStyleTableShadow *arg1 = (OGRStyleTableShadow *) 0 ;
+  char *arg2 = (char *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int bToFree2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  int result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:StyleTable_SaveStyleTable",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRStyleTableShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "StyleTable_SaveStyleTable" "', argument " "1"" of type '" "OGRStyleTableShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRStyleTableShadow * >(argp1);
+  {
+    /* %typemap(in) (const char *utf8_path) */
+    arg2 = GDALPythonObjectToCStr( obj1, &bToFree2 );
+    if (arg2 == NULL)
+    {
+      PyErr_SetString( PyExc_RuntimeError, "not a string" );
+      SWIG_fail;
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (int)OGRStyleTableShadow_SaveStyleTable(arg1,(char const *)arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg2, bToFree2);
+  }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg2, bToFree2);
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_StyleTable_Find(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRStyleTableShadow *arg1 = (OGRStyleTableShadow *) 0 ;
+  char *arg2 = (char *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  char *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:StyleTable_Find",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRStyleTableShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "StyleTable_Find" "', argument " "1"" of type '" "OGRStyleTableShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRStyleTableShadow * >(argp1);
+  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "StyleTable_Find" "', argument " "2"" of type '" "char const *""'");
+  }
+  arg2 = reinterpret_cast< char * >(buf2);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (char *)OGRStyleTableShadow_Find(arg1,(char const *)arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_FromCharPtr((const char *)result);
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  return resultobj;
+fail:
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_StyleTable_ResetStyleStringReading(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRStyleTableShadow *arg1 = (OGRStyleTableShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:StyleTable_ResetStyleStringReading",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRStyleTableShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "StyleTable_ResetStyleStringReading" "', argument " "1"" of type '" "OGRStyleTableShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRStyleTableShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    OGRStyleTableShadow_ResetStyleStringReading(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_StyleTable_GetNextStyle(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRStyleTableShadow *arg1 = (OGRStyleTableShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  char *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:StyleTable_GetNextStyle",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRStyleTableShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "StyleTable_GetNextStyle" "', argument " "1"" of type '" "OGRStyleTableShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRStyleTableShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (char *)OGRStyleTableShadow_GetNextStyle(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_FromCharPtr((const char *)result);
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_StyleTable_GetLastStyleName(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRStyleTableShadow *arg1 = (OGRStyleTableShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  char *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:StyleTable_GetLastStyleName",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRStyleTableShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "StyleTable_GetLastStyleName" "', argument " "1"" of type '" "OGRStyleTableShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRStyleTableShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (char *)OGRStyleTableShadow_GetLastStyleName(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_FromCharPtr((const char *)result);
   return resultobj;
 fail:
   return NULL;
@@ -20011,6 +20400,15 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"GetUseExceptions", _wrap_GetUseExceptions, METH_VARARGS, (char *)"GetUseExceptions() -> int"},
 	 { (char *)"UseExceptions", _wrap_UseExceptions, METH_VARARGS, (char *)"UseExceptions()"},
 	 { (char *)"DontUseExceptions", _wrap_DontUseExceptions, METH_VARARGS, (char *)"DontUseExceptions()"},
+	 { (char *)"new_StyleTable", _wrap_new_StyleTable, METH_VARARGS, (char *)"new_StyleTable() -> StyleTable"},
+	 { (char *)"delete_StyleTable", _wrap_delete_StyleTable, METH_VARARGS, (char *)"delete_StyleTable(StyleTable self)"},
+	 { (char *)"StyleTable_AddStyle", _wrap_StyleTable_AddStyle, METH_VARARGS, (char *)"StyleTable_AddStyle(StyleTable self, char pszName, char pszStyleString) -> int"},
+	 { (char *)"StyleTable_LoadStyleTable", _wrap_StyleTable_LoadStyleTable, METH_VARARGS, (char *)"StyleTable_LoadStyleTable(StyleTable self, char utf8_path) -> int"},
+	 { (char *)"StyleTable_SaveStyleTable", _wrap_StyleTable_SaveStyleTable, METH_VARARGS, (char *)"StyleTable_SaveStyleTable(StyleTable self, char utf8_path) -> int"},
+	 { (char *)"StyleTable_Find", _wrap_StyleTable_Find, METH_VARARGS, (char *)"StyleTable_Find(StyleTable self, char pszName) -> char"},
+	 { (char *)"StyleTable_ResetStyleStringReading", _wrap_StyleTable_ResetStyleStringReading, METH_VARARGS, (char *)"StyleTable_ResetStyleStringReading(StyleTable self)"},
+	 { (char *)"StyleTable_GetNextStyle", _wrap_StyleTable_GetNextStyle, METH_VARARGS, (char *)"StyleTable_GetNextStyle(StyleTable self) -> char"},
+	 { (char *)"StyleTable_GetLastStyleName", _wrap_StyleTable_GetLastStyleName, METH_VARARGS, (char *)"StyleTable_GetLastStyleName(StyleTable self) -> char"},
 	 { (char *)"StyleTable_swigregister", StyleTable_swigregister, METH_VARARGS, NULL},
 	 { (char *)"Driver_name_get", _wrap_Driver_name_get, METH_VARARGS, (char *)"Driver_name_get(Driver self) -> char"},
 	 { (char *)"Driver_CreateDataSource", (PyCFunction) _wrap_Driver_CreateDataSource, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
