@@ -859,6 +859,7 @@ def ogr_libkml_camera():
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_camera.kml', 'rb')
     data = gdal.VSIFReadL(1, 2048, f)
+    data = data.decode('ascii')
     gdal.VSIFCloseL(f)
 
     if data.find('<Camera>') == -1 or \
@@ -915,6 +916,7 @@ def ogr_libkml_write_layer_lookat():
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_layer_lookat.kml', 'rb')
     data = gdal.VSIFReadL(1, 2048, f)
+    data = data.decode('ascii')
     gdal.VSIFCloseL(f)
 
     if data.find('<LookAt>') == -1 or \
@@ -956,6 +958,7 @@ def ogr_libkml_write_layer_camera():
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_layer_camera.kml', 'rb')
     data = gdal.VSIFReadL(1, 2048, f)
+    data = data.decode('ascii')
     gdal.VSIFCloseL(f)
 
     if data.find('<Camera>') == -1 or \
@@ -1027,6 +1030,7 @@ def ogr_libkml_write_snippet():
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_snippet.kml', 'rb')
     data = gdal.VSIFReadL(1, 2048, f)
+    data = data.decode('ascii')
     gdal.VSIFCloseL(f)
 
     if data.find('<snippet>test_snippet</snippet>') == -1:
@@ -1062,6 +1066,7 @@ def ogr_libkml_write_atom_author():
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_atom_author.kml', 'rb')
     data = gdal.VSIFReadL(1, 2048, f)
+    data = data.decode('ascii')
     gdal.VSIFCloseL(f)
 
     if data.find('<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">') == -1 or \
@@ -1088,6 +1093,7 @@ def ogr_libkml_write_atom_link():
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_atom_link.kml', 'rb')
     data = gdal.VSIFReadL(1, 2048, f)
+    data = data.decode('ascii')
     gdal.VSIFCloseL(f)
 
     if data.find('<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">') == -1 or \
@@ -1112,6 +1118,7 @@ def ogr_libkml_write_phonenumber():
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_phonenumber.kml', 'rb')
     data = gdal.VSIFReadL(1, 2048, f)
+    data = data.decode('ascii')
     gdal.VSIFCloseL(f)
 
     if data.find('<phoneNumber>tel:911</phoneNumber>') == -1:
@@ -1142,6 +1149,7 @@ def ogr_libkml_write_region():
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_region.kml', 'rb')
     data = gdal.VSIFReadL(1, 2048, f)
+    data = data.decode('ascii')
     gdal.VSIFCloseL(f)
 
     if data.find('<north>49</north>') == -1 or \
@@ -1197,6 +1205,7 @@ def ogr_libkml_write_screenoverlay():
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_screenoverlay.kml', 'rb')
     data = gdal.VSIFReadL(1, 2048, f)
+    data = data.decode('ascii')
     gdal.VSIFCloseL(f)
 
     if data.find('<href>http://foo</href>') == -1 or \
@@ -1256,6 +1265,7 @@ def ogr_libkml_write_model():
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_model.kml', 'rb')
     data = gdal.VSIFReadL(1, 2048, f)
+    data = data.decode('ascii')
     gdal.VSIFCloseL(f)
 
     if data.find('<longitude>2</longitude>') == -1 or \
@@ -1381,6 +1391,7 @@ def ogr_libkml_read_write_style():
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_read_write_style_write.kml', 'rb')
     data = gdal.VSIFReadL(1, 2048, f)
+    data = data.decode('ascii')
     gdal.VSIFCloseL(f)
     lines = [ l.strip() for l in data.split('\n')]
 
@@ -1413,6 +1424,7 @@ def ogr_libkml_read_write_style():
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_read_write_style_write.kml', 'rb')
     data = gdal.VSIFReadL(1, 2048, f)
+    data = data.decode('ascii')
     gdal.VSIFCloseL(f)
     lines = [ l.strip() for l in data.split('\n')]
 
@@ -1454,6 +1466,7 @@ def ogr_libkml_read_write_style():
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_read_write_style_write.kml', 'rb')
     data = gdal.VSIFReadL(1, 2048, f)
+    data = data.decode('ascii')
     gdal.VSIFCloseL(f)
 
     expected_style = """<Style>
@@ -1497,6 +1510,7 @@ def ogr_libkml_read_write_style():
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_read_write_style_write.kml', 'rb')
     data = gdal.VSIFReadL(1, 2048, f)
+    data = data.decode('ascii')
     gdal.VSIFCloseL(f)
     lines = [ l.strip() for l in data.split('\n')]
 
@@ -1574,6 +1588,7 @@ def ogr_libkml_write_update():
             gdaltest.post_reason('failure')
             return 'fail'
         data = gdal.VSIFReadL(1, 2048, f)
+        data = data.decode('ascii')
         gdal.VSIFCloseL(f)
 
         if data.find('<NetworkLinkControl>') == -1 or \
@@ -1631,6 +1646,7 @@ def ogr_libkml_write_networklinkcontrol():
             gdaltest.post_reason('failure')
             return 'fail'
         data = gdal.VSIFReadL(1, 2048, f)
+        data = data.decode('ascii')
         gdal.VSIFCloseL(f)
 
         if data.find('<minRefreshPeriod>3600</minRefreshPeriod>') == -1 or \
@@ -1667,6 +1683,7 @@ def ogr_libkml_write_liststyle():
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_liststyle.kml', 'rb')
     data = gdal.VSIFReadL(1, 2048, f)
+    data = data.decode('ascii')
     gdal.VSIFCloseL(f)
 
     if data.find('<styleUrl>#root_doc_liststyle</styleUrl>') == -1 or \
@@ -1733,6 +1750,7 @@ def ogr_libkml_write_networklink():
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_networklink.kml', 'rb')
     data = gdal.VSIFReadL(1, 2048, f)
+    data = data.decode('ascii')
     gdal.VSIFCloseL(f)
 
     if data.find('<name>a network link</name>') == -1 or \
@@ -1812,6 +1830,7 @@ def ogr_libkml_write_photooverlay():
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_photooverlay.kml', 'rb')
     data = gdal.VSIFReadL(1, 2048, f)
+    data = data.decode('ascii')
     gdal.VSIFCloseL(f)
 
     if data.find('<Camera>') == -1 or \
@@ -1862,6 +1881,7 @@ def ogr_libkml_read_write_data():
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_read_write_data.kml', 'rb')
     data = gdal.VSIFReadL(1, 2048, f)
+    data = data.decode('ascii')
     gdal.VSIFCloseL(f)
 
     if data.find('<Data name="foo">') == -1 or \
@@ -1894,6 +1914,7 @@ def ogr_libkml_write_folder():
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_folder.kml', 'rb')
     data = gdal.VSIFReadL(1, 2048, f)
+    data = data.decode('ascii')
     gdal.VSIFCloseL(f)
 
     if data.find('<Style id="test_liststyle">') == -1 or \
@@ -1901,6 +1922,40 @@ def ogr_libkml_write_folder():
        data.find('<Folder id="test">') == -1 or \
        data.find('<styleUrl>#test_liststyle</styleUrl>') == -1 or \
        data.find('<Folder id="test2">') == -1:
+        print(data)
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    return 'success'
+    
+###############################################################################
+# Test writing datasource and layer container propreties
+
+def ogr_libkml_write_container_properties():
+
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_container_properties.kml",
+                                 options = [ 'NAME=ds_name', 'DESCRIPTION=ds_description', 'OPEN=1', 'VISIBILITY=1', 'SNIPPET=ds_snippet'])
+    lyr = ds.CreateLayer('test', options = [ 'NAME=lyr_name', 'DESCRIPTION=lyr_description', 'OPEN=0', 'VISIBILITY=0', 'SNIPPET=lyr_snippet'] )
+    ds = None
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_container_properties.kml', 'rb')
+    data = gdal.VSIFReadL(1, 2048, f)
+    data = data.decode('ascii')
+    gdal.VSIFCloseL(f)
+
+    if data.find('<name>ds_name</name>') == -1 or \
+       data.find('<visibility>1</visibility>') == -1 or \
+       data.find('<open>1</open>') == -1 or \
+       data.find('<snippet>ds_snippet</snippet>') == -1 or \
+       data.find('<description>ds_description</description>') == -1 or \
+       data.find('<name>lyr_name</name>') == -1 or \
+       data.find('<visibility>0</visibility>') == -1 or \
+       data.find('<open>0</open>') == -1 or \
+       data.find('<snippet>lyr_snippet</snippet>') == -1 or \
+       data.find('<description>lyr_description</description>') == -1:
         print(data)
         gdaltest.post_reason('failure')
         return 'fail'
@@ -1946,6 +2001,7 @@ def ogr_libkml_cleanup():
     gdal.Unlink("/vsimem/ogr_libkml_write_photooverlay.kml")
     gdal.Unlink("/vsimem/ogr_libkml_read_write_data.kml")
     gdal.Unlink("/vsimem/ogr_libkml_write_folder.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_write_container_properties.kml")
 
     # Re-register KML driver if necessary
     if ogrtest.kml_drv is not None:
@@ -2002,6 +2058,7 @@ gdaltest_list = [
     ogr_libkml_write_photooverlay,
     ogr_libkml_read_write_data,
     ogr_libkml_write_folder,
+    ogr_libkml_write_container_properties,
     ogr_libkml_cleanup ]
 
 if __name__ == '__main__':

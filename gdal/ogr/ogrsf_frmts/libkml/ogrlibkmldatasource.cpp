@@ -47,6 +47,7 @@ using kmldom::NetworkLinkControlPtr;
 using kmldom::LinkSnippetPtr;
 using kmlbase::File;
 using kmldom::KmlPtr;
+using kmldom::SnippetPtr;
 using kmlbase::Attributes;
 
 #include "ogr_libkml.h"
@@ -103,12 +104,12 @@ OGRLIBKMLDataSource::OGRLIBKMLDataSource ( KmlFactory * poKmlFactory )
 }
 
 /************************************************************************/
-/*                          PreProcessInput()                           */
+/*                       OGRLIBKMLPreProcessInput()                     */
 /************************************************************************/
 
 /* Substitute <snippet> by deprecated <Snippet> since libkml currently */
 /* only supports Snippet but ogckml22.xsd has deprecated it in favor of snippet */
-static void PreProcessInput(std::string& oKml)
+static void OGRLIBKMLPreProcessInput(std::string& oKml)
 {
     size_t nPos = 0;
     while( TRUE )
@@ -129,12 +130,46 @@ static void PreProcessInput(std::string& oKml)
 }
 
 /************************************************************************/
-/*                        PostProcessOutput()                           */
+/*                       OGRLIBKMLRemoveSpaces()                        */
+/************************************************************************/
+
+static void OGRLIBKMLRemoveSpaces(std::string& oKml, const std::string& osNeedle)
+{
+    size_t nPos = 0;
+    while( TRUE )
+    {
+        nPos = oKml.find("<" + osNeedle, nPos);
+        if( nPos == std::string::npos )
+        {
+            break;
+        }
+        size_t nPosOri = nPos;
+        nPos = oKml.find(">", nPos);
+        if( nPos == std::string::npos || oKml[nPos+1] != '\n' )
+        {
+            break;
+        }
+        oKml = oKml.substr(0, nPos) + ">" + oKml.substr(nPos + strlen(">\n"));
+        CPLString osSpaces;
+        for(size_t nPosTmp = nPosOri - 1; oKml[nPosTmp] == ' '; nPosTmp -- )
+        {
+            osSpaces += ' ';
+        }
+        nPos = oKml.find(osSpaces + "</" + osNeedle +">", nPos);
+        if( nPos != std::string::npos )
+            oKml = oKml.substr(0, nPos) + "</" + osNeedle +">" + oKml.substr(nPos + osSpaces.size() + strlen("</>") + osNeedle.size());
+        else
+            break;
+    }
+}
+
+/************************************************************************/
+/*                      OGRLIBKMLPostProcessOutput()                    */
 /************************************************************************/
 
 /* Substitute deprecated <Snippet> by <snippet> since libkml currently */
 /* only supports Snippet but ogckml22.xsd has deprecated it in favor of snippet */
-static void PostProcessOutput(std::string& oKml)
+static void OGRLIBKMLPostProcessOutput(std::string& oKml)
 {
     size_t nPos = 0;
 
@@ -160,73 +195,9 @@ static void PostProcessOutput(std::string& oKml)
     }
 
     /* Fix indentation problems */
-    nPos = 0;
-    while( TRUE )
-    {
-        nPos = oKml.find("<snippet>\n", nPos);
-        if( nPos == std::string::npos )
-        {
-            break;
-        }
-        oKml = oKml.substr(0, nPos) + "<snippet>" + oKml.substr(nPos + strlen("<snippet>\n"));
-        size_t nPosBefore = nPos;
-        nPos = oKml.find("        </snippet>", nPos);
-        if( nPos != std::string::npos )
-            oKml = oKml.substr(0, nPos) + "</snippet>" + oKml.substr(nPos + strlen("        </snippet>"));
-        else
-        {
-            nPos = oKml.find("      </snippet>", nPosBefore);
-            if( nPos != std::string::npos )
-                oKml = oKml.substr(0, nPos) + "</snippet>" + oKml.substr(nPos + strlen("      </snippet>"));
-            else
-                break;
-        }
-    }
-
-    nPos = 0;
-    while( TRUE )
-    {
-        nPos = oKml.find("<linkSnippet>\n", nPos);
-        if( nPos == std::string::npos )
-        {
-            break;
-        }
-        oKml = oKml.substr(0, nPos) + "<linkSnippet>" + oKml.substr(nPos + strlen("<linkSnippet>\n"));
-        nPos = oKml.find("    </linkSnippet>", nPos);
-        if( nPos == std::string::npos )
-        {
-            break;
-        }
-        oKml = oKml.substr(0, nPos) + "</linkSnippet>" + oKml.substr(nPos + strlen("    </linkSnippet>"));
-    }
-
-    nPos = 0;
-    while( TRUE )
-    {
-        nPos = oKml.find("<SimpleData", nPos);
-        if( nPos == std::string::npos )
-        {
-            break;
-        }
-        nPos = oKml.find(">", nPos);
-        if( nPos == std::string::npos || oKml[nPos+1] != '\n' )
-        {
-            break;
-        }
-        oKml = oKml.substr(0, nPos) + ">" + oKml.substr(nPos + strlen(">\n"));
-        size_t nPosBefore = nPos;
-        nPos = oKml.find("            </SimpleData>", nPos);
-        if( nPos != std::string::npos )
-            oKml = oKml.substr(0, nPos) + "</SimpleData>" + oKml.substr(nPos + strlen("            </SimpleData>"));
-        else
-        {
-            nPos = oKml.find("          </SimpleData>", nPosBefore);
-            if( nPos != std::string::npos )
-                oKml = oKml.substr(0, nPos) + "</SimpleData>" + oKml.substr(nPos + strlen("          </SimpleData>"));
-            else
-                break;
-        }
-    }
+    OGRLIBKMLRemoveSpaces(oKml, "snippet");
+    OGRLIBKMLRemoveSpaces(oKml, "linkSnippet");
+    OGRLIBKMLRemoveSpaces(oKml, "SimpleData");
 }
 
 /******************************************************************************
@@ -279,7 +250,7 @@ void OGRLIBKMLDataSource::WriteKml (
 
     std::string oKmlOut;
     oKmlOut = kmldom::SerializePretty ( m_poKmlDSKml );
-    PostProcessOutput(oKmlOut);
+    OGRLIBKMLPostProcessOutput(oKmlOut);
 
     if (oKmlOut.size() != 0)
     {
@@ -372,7 +343,7 @@ void OGRLIBKMLDataSource::WriteKmz (
         }
 
         std::string oKmlOut = kmldom::SerializePretty ( m_poKmlDocKmlRoot );
-        PostProcessOutput(oKmlOut);
+        OGRLIBKMLPostProcessOutput(oKmlOut);
 
         if ( CPLCreateFileInZip( hZIP, "doc.kml", NULL ) != CE_None ||
              CPLWriteFileInZip( hZIP, oKmlOut.data(), oKmlOut.size() ) != CE_None )
@@ -416,7 +387,7 @@ void OGRLIBKMLDataSource::WriteKmz (
         }
 
         std::string oKmlOut = kmldom::SerializePretty ( poKmlKml );
-        PostProcessOutput(oKmlOut);
+        OGRLIBKMLPostProcessOutput(oKmlOut);
 
         if( iLayer == 0 && CSLTestBoolean ( pszUseDocKml ) )
             CPLCreateFileInZip( hZIP, "layers/", NULL );
@@ -443,7 +414,7 @@ void OGRLIBKMLDataSource::WriteKmz (
 
         poKmlKml->set_feature ( m_poKmlStyleKml );
         std::string oKmlOut = kmldom::SerializePretty ( poKmlKml );
-        PostProcessOutput(oKmlOut);
+        OGRLIBKMLPostProcessOutput(oKmlOut);
 
         if ( CPLCreateFileInZip( hZIP, "style/", NULL ) != CE_None ||
              CPLCreateFileInZip( hZIP, "style/style.kml", NULL ) != CE_None ||
@@ -490,7 +461,7 @@ void OGRLIBKMLDataSource::WriteDir (
         }
         
         std::string oKmlOut = kmldom::SerializePretty ( m_poKmlDocKmlRoot );
-        PostProcessOutput(oKmlOut);
+        OGRLIBKMLPostProcessOutput(oKmlOut);
 
         const char *pszOutfile = CPLFormFilename ( pszName, "doc.kml", NULL );
 
@@ -540,7 +511,7 @@ void OGRLIBKMLDataSource::WriteDir (
         }
 
         std::string oKmlOut = kmldom::SerializePretty ( poKmlKml );
-        PostProcessOutput(oKmlOut);
+        OGRLIBKMLPostProcessOutput(oKmlOut);
 
         const char *pszOutfile = CPLFormFilename ( pszName,
                                                    papoLayers[iLayer]->
@@ -568,7 +539,7 @@ void OGRLIBKMLDataSource::WriteDir (
 
         poKmlKml->set_feature ( m_poKmlStyleKml );
         std::string oKmlOut = kmldom::SerializePretty ( poKmlKml );
-        PostProcessOutput(oKmlOut);
+        OGRLIBKMLPostProcessOutput(oKmlOut);
 
         const char *pszOutfile = CPLFormFilename ( pszName,
                                                    "style.kml",
@@ -1019,7 +990,7 @@ int OGRLIBKMLDataSource::OpenKml (
             return FALSE;
         }
     }
-    PreProcessInput(oKmlKml);
+    OGRLIBKMLPreProcessInput(oKmlKml);
     VSIFCloseL(fp);
 
     CPLLocaleC  oLocaleForcer;
@@ -1556,6 +1527,38 @@ static int IsValidPhoneNumber(const char* pszPhoneNumber)
 }
 
 /************************************************************************/
+/*                           SetCommonOptions()                         */
+/************************************************************************/
+
+void OGRLIBKMLDataSource::SetCommonOptions(ContainerPtr poKmlContainer,
+                                           char** papszOptions)
+{
+    const char* pszName = CSLFetchNameValue(papszOptions, "NAME");
+    if( pszName != NULL )
+        poKmlContainer->set_name(pszName);
+
+    const char* pszVisibilility = CSLFetchNameValue(papszOptions, "VISIBILITY");
+    if( pszVisibilility != NULL )
+        poKmlContainer->set_visibility(CSLTestBoolean(pszVisibilility));
+
+    const char* pszOpen = CSLFetchNameValue(papszOptions, "OPEN");
+    if( pszOpen != NULL )
+        poKmlContainer->set_open(CSLTestBoolean(pszOpen));
+
+    const char* pszSnippet = CSLFetchNameValue(papszOptions, "SNIPPET");
+    if( pszSnippet != NULL )
+    {
+        SnippetPtr poKmlSnippet = m_poKmlFactory->CreateSnippet();
+        poKmlSnippet->set_text(pszSnippet);
+        poKmlContainer->set_snippet(poKmlSnippet);
+    }
+
+    const char* pszDescription = CSLFetchNameValue(papszOptions, "DESCRIPTION");
+    if( pszDescription != NULL )
+        poKmlContainer->set_description(pszDescription);
+}
+
+/************************************************************************/
 /*                        ParseDocumentOptions()                        */
 /************************************************************************/
 
@@ -1627,6 +1630,8 @@ void OGRLIBKMLDataSource::ParseDocumentOptions(KmlPtr poKml,
                 CPLError(CE_Warning, CPLE_AppDefined, "Invalid phone number");
             }
         }
+
+        SetCommonOptions(poKmlDocument, m_papszOptions);
 
         CPLString osListStyleType = CSLFetchNameValueDef(m_papszOptions, "LISTSTYLE_TYPE", "");
         CPLString osListStyleIconHref = CSLFetchNameValueDef(m_papszOptions, "LISTSTYLE_ICON_HREF", "");
@@ -2345,6 +2350,11 @@ OGRLayer *OGRLIBKMLDataSource::CreateLayer (
     if( poOgrLayer != NULL )
     {
         poOgrLayer->SetListStyle(pszListStyleType, pszListStyleIconHref);
+    }
+
+    if( poOgrLayer != NULL && poOgrLayer->GetKmlLayer() != NULL )
+    {
+        SetCommonOptions(poOgrLayer->GetKmlLayer(), papszOptions);
     }
 
     /***** mark the dataset as updated *****/
