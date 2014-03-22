@@ -1029,7 +1029,7 @@ def ogr_libkml_write_snippet():
     data = gdal.VSIFReadL(1, 2048, f)
     gdal.VSIFCloseL(f)
 
-    if data.find('<snippet>') == -1:
+    if data.find('<snippet>test_snippet</snippet>') == -1:
         print(data)
         gdaltest.post_reason('failure')
         return 'fail'
@@ -1400,6 +1400,7 @@ def ogr_libkml_read_write_style():
         gdaltest.post_reason('failure')
         return 'fail'
 
+    # Test reading highlight style in StyleMap
     gdal.SetConfigOption('LIBKML_STYLEMAP_KEY', 'HIGHLIGHT')
     src_ds = ogr.Open('/vsimem/ogr_libkml_read_write_style_read.kml')
     style_table = src_ds.GetStyleTable()
@@ -1423,6 +1424,7 @@ def ogr_libkml_read_write_style():
         gdaltest.post_reason('failure')
         return 'fail'
 
+    # Test writing feature style
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource('/vsimem/ogr_libkml_read_write_style_write.kml')
     lyr = ds.CreateLayer('test')
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -1637,7 +1639,7 @@ def ogr_libkml_write_networklinkcontrol():
         data.find('<message>message</message>') == -1 or \
         data.find('<linkName>linkname</linkName>') == -1 or \
         data.find('<linkDescription>linkdescription</linkDescription>') == -1 or \
-        data.find('linksnippet') == -1 or \
+        data.find('<linkSnippet>linksnippet</linkSnippet>') == -1 or \
         data.find('<expires>2014-12-31T23:59:59Z</expires>') == -1:
             print(data)
             gdaltest.post_reason('failure')
