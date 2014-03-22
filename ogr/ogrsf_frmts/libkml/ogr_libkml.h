@@ -94,6 +94,8 @@ class OGRLIBKMLLayer:public OGRLayer
 
     CPLString                 osListStyleType;
     CPLString                 osListStyleIconHref;
+    
+    int                       m_bUpdateIsFolder;
 
   public:
     OGRLIBKMLLayer            ( const char *pszLayerName,
@@ -182,7 +184,8 @@ class OGRLIBKMLLayer:public OGRLayer
     void                      SetListStyle(const char* pszListStyleType,
                                            const char* pszListStyleIconHref);
 
-    void                      Finalize();
+    void                      Finalize(DocumentPtr poKmlDocument);
+    void                      SetUpdateIsFolder(int bUpdateIsFolder) { m_bUpdateIsFolder = bUpdateIsFolder; }
 };
 
 /******************************************************************************

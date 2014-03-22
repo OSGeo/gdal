@@ -93,6 +93,7 @@ void styletable2kml (
 void createkmlliststyle (
     KmlFactory * poKmlFactory,
     const char* pszBaseName,
+    ContainerPtr poKmlLayerContainer,
     DocumentPtr poKmlDocument,
     const CPLString& osListStyleType,
     const CPLString& osListStyleIconHref);
