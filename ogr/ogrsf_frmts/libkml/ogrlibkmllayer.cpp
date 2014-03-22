@@ -168,10 +168,13 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
     m_dfRegionMaxX = -200;
     m_dfRegionMaxY = -200;
 
-    /***** was the layer created from a DS::Open *****/
 
     m_bReadGroundOverlay = CSLTestBoolean(CPLGetConfigOption("LIBKML_READ_GROUND_OVERLAY", "YES"));
     m_bUseSimpleField = CSLTestBoolean(CPLGetConfigOption("LIBKML_USE_SIMPLEFIELD", "YES"));
+    
+    m_bUpdateIsFolder = FALSE;
+
+    /***** was the layer created from a DS::Open *****/
 
     if ( !bNew ) {
 
@@ -534,10 +537,14 @@ OGRErr OGRLIBKMLLayer::CreateFeature (
         CPLAssert( m_poKmlUpdate != NULL );
         KmlFactory *poKmlFactory = m_poOgrDS->GetKmlFactory (  );
         CreatePtr poCreate = poKmlFactory->CreateCreate();
-        DocumentPtr poDocument = poKmlFactory->CreateDocument();
-        poDocument->set_targetid(OGRLIBKMLGetSanitizedNCName(GetName()));
-        poDocument->add_feature ( poKmlFeature );
-        poCreate->add_container(poDocument);
+        ContainerPtr poContainer;
+        if( m_bUpdateIsFolder )
+            poContainer = poKmlFactory->CreateFolder();
+        else
+            poContainer = poKmlFactory->CreateDocument();
+        poContainer->set_targetid(OGRLIBKMLGetSanitizedNCName(GetName()));
+        poContainer->add_feature ( poKmlFeature );
+        poCreate->add_container(poContainer);
         m_poKmlUpdate->add_updateoperation(poCreate);
     }
 
@@ -1068,7 +1075,7 @@ void OGRLIBKMLLayer::SetRegionBounds(double dfMinX, double dfMinY,
 /*                            Finalize()                                */
 /************************************************************************/
 
-void OGRLIBKMLLayer::Finalize()
+void OGRLIBKMLLayer::Finalize(DocumentPtr poKmlDocument)
 {
     KmlFactory *poKmlFactory = m_poOgrDS->GetKmlFactory (  );
 
@@ -1100,7 +1107,8 @@ void OGRLIBKMLLayer::Finalize()
 
     createkmlliststyle (poKmlFactory,
                         GetName(),
-                        AsDocument(m_poKmlLayer),
+                        m_poKmlLayer,
+                        poKmlDocument,
                         osListStyleType,
                         osListStyleIconHref);
 }

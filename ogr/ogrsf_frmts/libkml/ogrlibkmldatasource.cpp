@@ -200,7 +200,7 @@ void OGRLIBKMLDataSource::WriteKml (
                     poKmlDocument->add_schema ( poKmlSchema );
             }
 
-            papoLayers[iLayer]->Finalize();
+            papoLayers[iLayer]->Finalize(poKmlDocument);
         }
     }
     else
@@ -335,9 +335,9 @@ void OGRLIBKMLDataSource::WriteKmz (
                  poKmlSchema->get_simplefield_array_size (  ) ) {
                 poKmlDocument->add_schema ( poKmlSchema );
             }
-        }
 
-        papoLayers[iLayer]->Finalize();
+            papoLayers[iLayer]->Finalize(poKmlDocument);
+        }
 
         /***** if we dont have the layers root *****/
         /***** make it and add the container    *****/
@@ -458,10 +458,10 @@ void OGRLIBKMLDataSource::WriteDir (
                  poKmlSchema &&
                  poKmlSchema->get_simplefield_array_size (  ) ) {
                 poKmlDocument->add_schema ( poKmlSchema );
-            };
-        }
+            }
 
-        papoLayers[iLayer]->Finalize();
+            papoLayers[iLayer]->Finalize(poKmlDocument);
+        }
 
         /***** if we dont have the layers root *****/
         /***** make it and add the container    *****/
@@ -1569,6 +1569,7 @@ void OGRLIBKMLDataSource::ParseDocumentOptions(KmlPtr poKml,
         createkmlliststyle (m_poKmlFactory,
                             "root_doc",
                             poKmlDocument,
+                            poKmlDocument,
                             osListStyleType,
                             osListStyleIconHref);
     }
@@ -2029,24 +2030,31 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKml (
 {
 
     OGRLIBKMLLayer *poOgrLayer = NULL;
-    DocumentPtr poKmlDocument = NULL;
+    ContainerPtr poKmlLayerContainer = NULL;
     
     if( m_poKmlDSContainer != NULL )
     {
-        poKmlDocument = m_poKmlFactory->CreateDocument (  );
-        poKmlDocument->set_id(OGRLIBKMLGetSanitizedNCName(pszLayerName).c_str());
+        if( CSLFetchBoolean( papszOptions, "FOLDER", FALSE ) )
+            poKmlLayerContainer = m_poKmlFactory->CreateFolder (  );
+        else
+            poKmlLayerContainer = m_poKmlFactory->CreateDocument (  );
+        poKmlLayerContainer->set_id(OGRLIBKMLGetSanitizedNCName(pszLayerName).c_str());
 
-        m_poKmlDSContainer->add_feature ( poKmlDocument );
+        m_poKmlDSContainer->add_feature ( poKmlLayerContainer );
     }
 
     /***** create the layer *****/
 
     poOgrLayer = AddLayer ( pszLayerName, poOgrSRS, eGType, this,
-                            NULL, poKmlDocument, "", TRUE, bUpdate, 1 );
+                            NULL, poKmlLayerContainer, "", TRUE, bUpdate, 1 );
 
     /***** add the layer name as a <Name> *****/
-    if( poKmlDocument != NULL )
-        poKmlDocument->set_name ( pszLayerName );
+    if( poKmlLayerContainer != NULL )
+        poKmlLayerContainer->set_name ( pszLayerName );
+    else if(  CSLFetchBoolean( papszOptions, "FOLDER", FALSE ) )
+    {
+        poOgrLayer->SetUpdateIsFolder(TRUE);
+    }
 
     return poOgrLayer;
 }
