@@ -233,8 +233,9 @@ class OGRLIBKMLDataSource:public OGRDataSource
     
     /***** style table pointer *****/
     
-    //OGRStyleTable            *m_poStyleTable;
-    
+    void                      SetCommonOptions(ContainerPtr poKmlContainer,
+                                               char** papszOptions);
+
     void                      ParseDocumentOptions(KmlPtr poKml,
                                                    DocumentPtr poKmlDocument);
 
