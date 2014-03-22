@@ -64,8 +64,8 @@ def ogr_libkml_datastore():
     except:
         pass
 
-    # Unregister LIBKML driver if present as it's behaviour is not identical
-    # to old KML driver
+    # Unregister KML driver if present as its behaviour is not identical
+    # to new LIBKML driver
     if ogrtest.kml_drv is not None:
         print('Unregister KML driver')
         ogrtest.kml_drv.Deregister()
