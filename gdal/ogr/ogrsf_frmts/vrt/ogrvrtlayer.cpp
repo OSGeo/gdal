@@ -543,8 +543,27 @@ int OGRVRTLayer::FullInitialize()
     if( CSLTestBoolean(CPLGetXMLValue( psLTree, "SrcDataSource.relativetoVRT", 
                                        "0")) )
     {
-        pszSrcDSName = CPLStrdup(
-            CPLProjectRelativeFilename( osVRTDirectory, pszSrcDSName ) );
+        static const char* apszPrefixes[] = { "CSV:", "GPSBABEL:" };
+        int bDone = FALSE;
+        for( size_t i = 0; i < sizeof(apszPrefixes) / sizeof(apszPrefixes[0]); i ++)
+        {
+            const char* pszPrefix = apszPrefixes[i];
+            if( EQUALN(pszSrcDSName, pszPrefix, strlen(pszPrefix)) )
+            {
+                const char* pszLastPart = strrchr(pszSrcDSName, ':') + 1;
+                CPLString osPrefix(pszSrcDSName);
+                osPrefix.resize(pszLastPart - pszSrcDSName);
+                pszSrcDSName = CPLStrdup( (osPrefix +
+                    CPLProjectRelativeFilename( osVRTDirectory, pszLastPart )).c_str() );
+                bDone = TRUE;
+                break;
+            }
+        }
+        if( !bDone )
+        {
+            pszSrcDSName = CPLStrdup(
+                CPLProjectRelativeFilename( osVRTDirectory, pszSrcDSName ) );
+        }
     }
     else
     {
