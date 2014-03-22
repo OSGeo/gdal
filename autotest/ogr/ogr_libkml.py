@@ -1878,6 +1878,34 @@ def ogr_libkml_read_write_data():
     return 'success'
 
 ###############################################################################
+# Test writing layer as Folder
+
+def ogr_libkml_write_folder():
+
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_folder.kml")
+    lyr = ds.CreateLayer('test', options = [ 'LISTSTYLE_ICON_HREF=http://foo', 'FOLDER=YES' ] )
+    lyr = ds.CreateLayer('test2', options = [ 'FOLDER=YES' ] )
+    ds = None
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_folder.kml', 'rb')
+    data = gdal.VSIFReadL(1, 2048, f)
+    gdal.VSIFCloseL(f)
+
+    if data.find('<Style id="test_liststyle">') == -1 or \
+       data.find('<href>http://foo</href>') == -1 or \
+       data.find('<Folder id="test">') == -1 or \
+       data.find('<styleUrl>#test_liststyle</styleUrl>') == -1 or \
+       data.find('<Folder id="test2">') == -1:
+        print(data)
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_libkml_cleanup():
@@ -1915,6 +1943,7 @@ def ogr_libkml_cleanup():
     gdal.Unlink("/vsimem/ogr_libkml_write_networklink.kml")
     gdal.Unlink("/vsimem/ogr_libkml_write_photooverlay.kml")
     gdal.Unlink("/vsimem/ogr_libkml_read_write_data.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_write_folder.kml")
 
     # Re-register KML driver if necessary
     if ogrtest.kml_drv is not None:
@@ -1970,6 +1999,7 @@ gdaltest_list = [
     ogr_libkml_write_networklink,
     ogr_libkml_write_photooverlay,
     ogr_libkml_read_write_data,
+    ogr_libkml_write_folder,
     ogr_libkml_cleanup ]
 
 if __name__ == '__main__':
