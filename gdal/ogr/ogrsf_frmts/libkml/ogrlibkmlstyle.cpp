@@ -1217,6 +1217,7 @@ void styletable2kml (
 void createkmlliststyle (
     KmlFactory * poKmlFactory,
     const char* pszBaseName,
+    ContainerPtr poKmlLayerContainer,
     DocumentPtr poKmlDocument,
     const CPLString& osListStyleType,
     const CPLString& osListStyleIconHref)
@@ -1257,6 +1258,6 @@ void createkmlliststyle (
         }
 
         poKmlDocument->add_styleselector ( poKmlStyle );
-        poKmlDocument->set_styleurl( CPLSPrintf("#%s", pszStyleName) );
+        poKmlLayerContainer->set_styleurl( CPLSPrintf("#%s", pszStyleName) );
     }
 }
