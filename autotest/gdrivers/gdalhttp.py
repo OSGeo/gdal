@@ -61,11 +61,11 @@ def http_1():
     except:
         gdaltest.dods_drv = None
 
-    tst = gdaltest.GDALTest( 'GIF','http://home.gdal.org/~warmerda/frank.gif',
-                             1, 35415, filename_absolute = 1 )
+    tst = gdaltest.GDALTest( 'PNG','http://gdal.org/gdalicon.png',
+                             1, 7617, filename_absolute = 1 )
     ret = tst.testOpen()
     if ret == 'fail':
-        conn = gdaltest.gdalurlopen('http://home.gdal.org/~warmerda/frank.gif')
+        conn = gdaltest.gdalurlopen('http://gdal.org/gdalicon.png')
         if conn is None:
             print('cannot open URL')
             return 'skip'
