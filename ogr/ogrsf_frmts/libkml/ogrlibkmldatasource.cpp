@@ -158,6 +158,75 @@ static void PostProcessOutput(std::string& oKml)
         }
         oKml[nPos+2] = 's';
     }
+
+    /* Fix indentation problems */
+    nPos = 0;
+    while( TRUE )
+    {
+        nPos = oKml.find("<snippet>\n", nPos);
+        if( nPos == std::string::npos )
+        {
+            break;
+        }
+        oKml = oKml.substr(0, nPos) + "<snippet>" + oKml.substr(nPos + strlen("<snippet>\n"));
+        size_t nPosBefore = nPos;
+        nPos = oKml.find("        </snippet>", nPos);
+        if( nPos != std::string::npos )
+            oKml = oKml.substr(0, nPos) + "</snippet>" + oKml.substr(nPos + strlen("        </snippet>"));
+        else
+        {
+            nPos = oKml.find("      </snippet>", nPosBefore);
+            if( nPos != std::string::npos )
+                oKml = oKml.substr(0, nPos) + "</snippet>" + oKml.substr(nPos + strlen("      </snippet>"));
+            else
+                break;
+        }
+    }
+
+    nPos = 0;
+    while( TRUE )
+    {
+        nPos = oKml.find("<linkSnippet>\n", nPos);
+        if( nPos == std::string::npos )
+        {
+            break;
+        }
+        oKml = oKml.substr(0, nPos) + "<linkSnippet>" + oKml.substr(nPos + strlen("<linkSnippet>\n"));
+        nPos = oKml.find("    </linkSnippet>", nPos);
+        if( nPos == std::string::npos )
+        {
+            break;
+        }
+        oKml = oKml.substr(0, nPos) + "</linkSnippet>" + oKml.substr(nPos + strlen("    </linkSnippet>"));
+    }
+
+    nPos = 0;
+    while( TRUE )
+    {
+        nPos = oKml.find("<SimpleData", nPos);
+        if( nPos == std::string::npos )
+        {
+            break;
+        }
+        nPos = oKml.find(">", nPos);
+        if( nPos == std::string::npos || oKml[nPos+1] != '\n' )
+        {
+            break;
+        }
+        oKml = oKml.substr(0, nPos) + ">" + oKml.substr(nPos + strlen(">\n"));
+        size_t nPosBefore = nPos;
+        nPos = oKml.find("            </SimpleData>", nPos);
+        if( nPos != std::string::npos )
+            oKml = oKml.substr(0, nPos) + "</SimpleData>" + oKml.substr(nPos + strlen("            </SimpleData>"));
+        else
+        {
+            nPos = oKml.find("          </SimpleData>", nPosBefore);
+            if( nPos != std::string::npos )
+                oKml = oKml.substr(0, nPos) + "</SimpleData>" + oKml.substr(nPos + strlen("          </SimpleData>"));
+            else
+                break;
+        }
+    }
 }
 
 /******************************************************************************
@@ -209,12 +278,7 @@ void OGRLIBKMLDataSource::WriteKml (
     }
 
     std::string oKmlOut;
-    if ( m_poKmlDSKml ) {
-        oKmlOut = kmldom::SerializePretty ( m_poKmlDSKml );
-    }
-    else if ( m_poKmlDSContainer ) {
-        oKmlOut = kmldom::SerializePretty ( m_poKmlDSContainer );
-    }
+    oKmlOut = kmldom::SerializePretty ( m_poKmlDSKml );
     PostProcessOutput(oKmlOut);
 
     if (oKmlOut.size() != 0)
