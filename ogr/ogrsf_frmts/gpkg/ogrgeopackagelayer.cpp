@@ -537,7 +537,11 @@ OGRErr OGRGeoPackageLayer::ReadTableDefinition()
 
     if ( err != OGRERR_NONE || oResultTable.nRowCount == 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "%s", oResultTable.pszErrMsg );
+        if( oResultTable.pszErrMsg != NULL )
+            CPLError( CE_Failure, CPLE_AppDefined, "%s", oResultTable.pszErrMsg );
+        else
+            CPLError( CE_Failure, CPLE_AppDefined, "Cannot find table %s", m_pszTableName );
+        err = OGRERR_FAILURE;
         SQLResultFree(&oResultGeomCols);
         SQLResultFree(&oResultTable);
         return err;
