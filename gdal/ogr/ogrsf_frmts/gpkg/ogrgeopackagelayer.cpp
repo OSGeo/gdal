@@ -39,7 +39,7 @@
 //
 OGRErr OGRGeoPackageLayer::SaveExtent()
 {
-    if ( ! m_bExtentChanged || ! m_poExtent ) 
+    if ( !m_poDS->IsUpdatable() || ! m_bExtentChanged || ! m_poExtent ) 
         return OGRERR_NONE;
 
     sqlite3* poDb = m_poDS->GetDatabaseHandle();
@@ -729,6 +729,10 @@ OGRGeoPackageLayer::~OGRGeoPackageLayer()
 
 OGRErr OGRGeoPackageLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
 {
+    if( !m_poDS->IsUpdatable() )
+    {
+        return OGRERR_FAILURE;
+    }
     
     if ( ! m_poFeatureDefn || ! m_pszTableName )
     {
@@ -756,6 +760,11 @@ OGRErr OGRGeoPackageLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
 
 OGRErr OGRGeoPackageLayer::CreateFeature( OGRFeature *poFeature )
 {
+    if( !m_poDS->IsUpdatable() )
+    {
+        return OGRERR_FAILURE;
+    }
+
     if ( ! m_poFeatureDefn || ! m_pszTableName )
     {
         CPLError(CE_Failure, CPLE_AppDefined, 
@@ -836,6 +845,11 @@ OGRErr OGRGeoPackageLayer::CreateFeature( OGRFeature *poFeature )
 
 OGRErr OGRGeoPackageLayer::SetFeature( OGRFeature *poFeature )
 {
+    if( !m_poDS->IsUpdatable() )
+    {
+        return OGRERR_FAILURE;
+    }
+    
     if ( ! m_poFeatureDefn || ! m_pszTableName )
     {
         CPLError(CE_Failure, CPLE_AppDefined, 
@@ -1088,6 +1102,11 @@ OGRFeature* OGRGeoPackageLayer::GetFeature(long nFID)
 
 OGRErr OGRGeoPackageLayer::DeleteFeature(long nFID)	
 {
+    if( !m_poDS->IsUpdatable() )
+    {
+        return OGRERR_FAILURE;
+    }
+    
     /* No FID, no answer. */
     if (nFID == OGRNullFID)
     {
@@ -1229,10 +1248,13 @@ int OGRGeoPackageLayer::TestCapability ( const char * pszCap )
 {
     if ( EQUAL(pszCap, OLCCreateField) ||
          EQUAL(pszCap, OLCSequentialWrite) ||
-         EQUAL(pszCap, OLCRandomRead) ||
          EQUAL(pszCap, OLCDeleteFeature) ||
-         EQUAL(pszCap, OLCRandomWrite) ||
-         EQUAL(pszCap, OLCTransactions) )
+         EQUAL(pszCap, OLCRandomWrite) )
+    {
+        return m_poDS->IsUpdatable();
+    }
+    else if ( EQUAL(pszCap, OLCRandomRead) ||
+              EQUAL(pszCap, OLCTransactions) )
     {
         return TRUE;
     }

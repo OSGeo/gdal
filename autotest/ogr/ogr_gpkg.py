@@ -84,7 +84,7 @@ def ogr_gpkg_2():
     if gdaltest.gpkg_dr is None: 
         return 'skip'
 
-    gdaltest.gpkg_ds = gdaltest.gpkg_dr.Open( 'tmp/gpkg_test.gpkg' )
+    gdaltest.gpkg_ds = gdaltest.gpkg_dr.Open( 'tmp/gpkg_test.gpkg', update = 1 )
 
     if gdaltest.gpkg_ds is not None:
         return 'success'
@@ -131,7 +131,7 @@ def ogr_gpkg_4():
     gdaltest.gpkg_ds.Destroy()
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    gdaltest.gpkg_ds = gdaltest.gpkg_dr.Open( 'tmp/gpkg_test.gpkg' )
+    gdaltest.gpkg_ds = gdaltest.gpkg_dr.Open( 'tmp/gpkg_test.gpkg', update = 1 )
     gdal.PopErrorHandler()
 
     if gdaltest.gpkg_ds is None:
@@ -206,7 +206,7 @@ def ogr_gpkg_6():
     gdaltest.gpkg_ds.Destroy()
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    gdaltest.gpkg_ds = gdaltest.gpkg_dr.Open( 'tmp/gpkg_test.gpkg' )
+    gdaltest.gpkg_ds = gdaltest.gpkg_dr.Open( 'tmp/gpkg_test.gpkg', update = 1 )
     gdal.PopErrorHandler()
 
     if gdaltest.gpkg_ds is None:
