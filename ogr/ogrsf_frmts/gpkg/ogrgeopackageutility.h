@@ -59,8 +59,8 @@ int                 SQLGetInteger(sqlite3 * poDb, const char * pszSQL, OGRErr *e
 
 OGRErr              SQLResultInit(SQLResult * poResult);
 OGRErr              SQLQuery(sqlite3 *poDb, const char * pszSQL, SQLResult * poResult);
-char*               SQLResultGetColumn(const SQLResult * poResult, int iColumnNum);
-char*               SQLResultGetValue(const SQLResult * poResult, int iColumnNum, int iRowNum);
+const char*         SQLResultGetColumn(const SQLResult * poResult, int iColumnNum);
+const char*         SQLResultGetValue(const SQLResult * poResult, int iColumnNum, int iRowNum);
 int                 SQLResultGetValueAsInteger(const SQLResult * poResult, int iColNum, int iRowNum);
 OGRErr              SQLResultFree(SQLResult * poResult);
 
