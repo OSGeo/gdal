@@ -148,6 +148,12 @@ OGRSpatialReference* OGRGeoPackageDataSource::GetSpatialRef(int iSrsId)
 {
     SQLResult oResult;
     
+    /* Should we do something special with undefined SRS ? */
+    if( iSrsId == 0 || iSrsId == -1 )
+    {
+        return NULL;
+    }
+    
     CPLString oSQL;
     oSQL.Printf("SELECT definition FROM gpkg_spatial_ref_sys WHERE srs_id = %d", iSrsId);
     

@@ -559,7 +559,6 @@ OGRErr GPkgHeaderFromWKB(const GByte *pabyGpkg, GPkgHeader *poHeader)
 
 OGRGeometry* GPkgGeometryToOGR(GByte *pabyGpkg, size_t szGpkg, OGRSpatialReference *poSrs)
 {
-    CPLAssert( poSrs != NULL );
     CPLAssert( pabyGpkg != NULL );
     
     GPkgHeader oHeader;
