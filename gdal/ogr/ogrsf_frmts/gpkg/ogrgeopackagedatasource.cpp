@@ -161,7 +161,7 @@ OGRSpatialReference* OGRGeoPackageDataSource::GetSpatialRef(int iSrsId)
         return NULL;
     }
     
-    char *pszWkt = SQLResultGetValue(&oResult, 0, 0);
+    const char *pszWkt = SQLResultGetValue(&oResult, 0, 0);
     if ( ! pszWkt )
     {
         SQLResultFree(&oResult);
@@ -489,7 +489,7 @@ int OGRGeoPackageDataSource::Open(const char * pszFilename, int bUpdate )
 
         for ( i = 0; i < oResult.nRowCount; i++ )
         {
-            char *pszTableName = SQLResultGetValue(&oResult, 0, i);
+            const char *pszTableName = SQLResultGetValue(&oResult, 0, i);
             if ( ! pszTableName )
             {
                 CPLError(CE_Warning, CPLE_AppDefined, "unable to read table name for layer(%d)", i);            
