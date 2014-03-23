@@ -929,7 +929,50 @@ def nitf_38():
         print(cs)
         gdaltest.post_reason( 'bad checksum for overview of image of 998th subdataset' )
         return 'fail'
+
+    out_ds = gdal.GetDriverByName('VRT').CreateCopy('tmp/nitf38.vrt', ds)
+    out_ds = None
     ds = None
+
+    ds = gdal.Open('tmp/nitf38.vrt')
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+
+    gdal.Unlink('tmp/nitf38.vrt')
+    if cs != expected_cs:
+        gdaltest.post_reason('failure')
+        print(cs)
+        return 'fail'
+
+    ds = gdal.Open( 'NITF_IM:998:%s/tmp/nitf38.ntf' % os.getcwd() )
+    out_ds = gdal.GetDriverByName('VRT').CreateCopy('%s/tmp/nitf38.vrt' % os.getcwd(), ds)
+    out_ds = None
+    ds = None
+
+    ds = gdal.Open('tmp/nitf38.vrt')
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+
+    gdal.Unlink('tmp/nitf38.vrt')
+    if cs != expected_cs:
+        gdaltest.post_reason('failure')
+        print(cs)
+        return 'fail'
+
+    ds = gdal.Open( 'NITF_IM:998:%s/tmp/nitf38.ntf' % os.getcwd() )
+    out_ds = gdal.GetDriverByName('VRT').CreateCopy('tmp/nitf38.vrt', ds)
+    out_ds = None
+    ds = None
+
+    ds = gdal.Open('tmp/nitf38.vrt')
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+
+    gdal.Unlink('tmp/nitf38.vrt')
+    if cs != expected_cs:
+        gdaltest.post_reason('failure')
+        print(cs)
+        return 'fail'
 
     return 'success'
 
