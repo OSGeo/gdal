@@ -7,6 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2013, Paul Ramsey <pramsey@boundlessgeo.com>
+ * Copyright (c) 2014, Even Rouault <even dot rouault at mines-paris dot org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +31,14 @@
 #include "ogr_geopackage.h"
 #include "ogrgeopackageutility.h"
 
+/* 1.1.1: A GeoPackage SHALL contain 0x47503130 ("GP10" in ASCII) in the application id */
+/* http://opengis.github.io/geopackage/#_file_format */
+/* 0x47503130 = 1196437808 */
+#define GPKG_APPLICATION_ID 1196437808
+
+/* "GP10" in ASCII bytes */
+static const char aGpkgId[4] = {0x47, 0x50, 0x31, 0x30};
+static const size_t szGpkgIdPos = 68;
 
 /* Cannnot count on the "PRAGMA application_id" command existing */
 /* it is a very recent addition to SQLite. */
@@ -37,9 +46,6 @@ bool OGRGeoPackageDataSource::CheckApplicationId(const char * pszFileName)
 {
     CPLAssert( m_poDb == NULL );
     
-    /* "GP10" in ASCII bytes */
-    static char aGpkgId[4] = {0x47, 0x50, 0x31, 0x30};
-    static size_t szGpkgIdPos = 68;
     char aFileId[4];
 
     VSILFILE *fp = VSIFOpenL( pszFileName, "rb" );
@@ -74,14 +80,14 @@ OGRErr OGRGeoPackageDataSource::SetApplicationId()
 
     /* Have to flush the file before f***ing with the header */
     sqlite3_close(m_poDb);
+    m_poDb = NULL;
 
-    /* "GP10" */
-    static char aGpkgId[4] = {0x47, 0x50, 0x31, 0x30};
-    static size_t szGpkgIdPos = 68;
     size_t szWritten = 0;
 
     /* Open for modification, write to application id area */
     VSILFILE *pfFile = VSIFOpenL( m_pszFileName, "rb+" );
+    if( pfFile == NULL )
+        return OGRERR_FAILURE;
     VSIFSeekL(pfFile, szGpkgIdPos, SEEK_SET);
     szWritten = VSIFWriteL(aGpkgId, 1, 4, pfFile);
     VSIFCloseL(pfFile);
@@ -934,4 +940,163 @@ int OGRGeoPackageDataSource::TestCapability( const char * pszCap )
          return m_bUpdate;
     }
     return FALSE;
+}
+
+/************************************************************************/
+/*                             ExecuteSQL()                             */
+/************************************************************************/
+
+OGRLayer * OGRGeoPackageDataSource::ExecuteSQL( const char *pszSQLCommand,
+                                          OGRGeometry *poSpatialFilter,
+                                          const char *pszDialect )
+
+{
+    if( EQUALN(pszSQLCommand, "SELECT ", 7) ||
+        (pszDialect != NULL && EQUAL(pszDialect,"OGRSQL")) )
+        return OGRDataSource::ExecuteSQL( pszSQLCommand, 
+                                          poSpatialFilter, 
+                                          pszDialect );
+
+/* -------------------------------------------------------------------- */
+/*      Prepare statement.                                              */
+/* -------------------------------------------------------------------- */
+    int rc;
+    sqlite3_stmt *hSQLStmt = NULL;
+
+    CPLString osSQLCommand = pszSQLCommand;
+
+#if 0
+    /* This will speed-up layer creation */
+    /* ORDER BY are costly to evaluate and are not necessary to establish */
+    /* the layer definition. */
+    int bUseStatementForGetNextFeature = TRUE;
+    int bEmptyLayer = FALSE;
+
+    if( osSQLCommand.ifind("SELECT ") == 0 &&
+        osSQLCommand.ifind(" UNION ") == std::string::npos &&
+        osSQLCommand.ifind(" INTERSECT ") == std::string::npos &&
+        osSQLCommand.ifind(" EXCEPT ") == std::string::npos )
+    {
+        size_t nOrderByPos = osSQLCommand.ifind(" ORDER BY ");
+        if( nOrderByPos != std::string::npos )
+        {
+            osSQLCommand.resize(nOrderByPos);
+            bUseStatementForGetNextFeature = FALSE;
+        }
+    }
+#endif
+
+    rc = sqlite3_prepare( m_poDb, osSQLCommand.c_str(), osSQLCommand.size(),
+                          &hSQLStmt, NULL );
+
+    if( rc != SQLITE_OK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                "In ExecuteSQL(): sqlite3_prepare(%s):\n  %s", 
+                pszSQLCommand, sqlite3_errmsg(m_poDb) );
+
+        if( hSQLStmt != NULL )
+        {
+            sqlite3_finalize( hSQLStmt );
+        }
+
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Do we get a resultset?                                          */
+/* -------------------------------------------------------------------- */
+    rc = sqlite3_step( hSQLStmt );
+    if( rc != SQLITE_ROW )
+    {
+        if ( rc != SQLITE_DONE )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                  "In ExecuteSQL(): sqlite3_step(%s):\n  %s", 
+                  pszSQLCommand, sqlite3_errmsg(m_poDb) );
+
+            sqlite3_finalize( hSQLStmt );
+            return NULL;
+        }
+        
+        if( EQUAL(pszSQLCommand, "VACUUM") )
+        {
+            sqlite3_finalize( hSQLStmt );
+            /* VACUUM rewrites the DB, so we need to reset the application id */
+            SetApplicationId();
+            return NULL;
+        }
+        
+        if( EQUALN(pszSQLCommand, "ALTER TABLE ", strlen("ALTER TABLE ")) )
+        {
+            char **papszTokens = CSLTokenizeString( pszSQLCommand );
+            /* ALTER TABLE src_table RENAME TO dst_table */
+            if( CSLCount(papszTokens) == 6 && EQUAL(papszTokens[3], "RENAME") &&
+                EQUAL(papszTokens[4], "TO") )
+            {
+                const char* pszSrcTableName = papszTokens[2];
+                const char* pszDstTableName = papszTokens[5];
+                OGRLayer* poSrcLayer = GetLayerByName(pszSrcTableName);
+                if( poSrcLayer )
+                {
+                    /* We also need to update GeoPackage metadata tables */
+                    char* pszSQL;
+                    pszSQL = sqlite3_mprintf(
+                            "UPDATE gpkg_geometry_columns SET table_name = '%s' WHERE table_name = '%s'",
+                            pszDstTableName, pszSrcTableName);
+                    
+                    SQLCommand(m_poDb, pszSQL);
+                    sqlite3_free(pszSQL);
+                    
+                    pszSQL = sqlite3_mprintf(
+                            "UPDATE gpkg_contents SET table_name = '%s' WHERE table_name = '%s'",
+                            pszDstTableName, pszSrcTableName);
+
+                    SQLCommand(m_poDb, pszSQL);
+                    sqlite3_free(pszSQL);
+                }
+            }
+            CSLDestroy(papszTokens);
+        }
+
+        if( !EQUALN(pszSQLCommand, "SELECT ", 7) )
+        {
+            sqlite3_finalize( hSQLStmt );
+            return NULL;
+        }
+#if 0
+        bUseStatementForGetNextFeature = FALSE;
+        bEmptyLayer = TRUE;
+#endif
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create layer.                                                   */
+/* -------------------------------------------------------------------- */
+#if 0
+    OGRSQLiteSelectLayer *poLayer = NULL;
+        
+    CPLString osSQL = pszSQLCommand;
+    poLayer = new OGRGeopackageSelectLayer( this, osSQL, hSQLStmt,
+                                        bUseStatementForGetNextFeature, bEmptyLayer, TRUE );
+
+    if( poSpatialFilter != NULL )
+        poLayer->SetSpatialFilter( 0, poSpatialFilter );
+    
+    return poLayer;
+#else
+    return OGRDataSource::ExecuteSQL( pszSQLCommand, 
+                                          poSpatialFilter, 
+                                          pszDialect );
+#endif
+}
+
+/************************************************************************/
+/*                          ReleaseResultSet()                          */
+/************************************************************************/
+
+void OGRGeoPackageDataSource::ReleaseResultSet( OGRLayer * poLayer )
+
+{
+    delete poLayer;
 }

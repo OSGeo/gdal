@@ -33,16 +33,7 @@
 #include "ogrsf_frmts.h"
 #include "sqlite3.h"
 
-/* 1.1.1: A GeoPackage SHALL contain 0x47503130 ("GP10" in ASCII) in the application id */
-/* http://opengis.github.io/geopackage/#_file_format */
-/* 0x47503130 = 1196437808 */
-#define GPKG_APPLICATION_ID 1196437808
-
 #define UNDEFINED_SRID 0
-
-
-
-  
 
 /************************************************************************/
 /*                           OGRGeoPackageDriver                        */
@@ -89,7 +80,12 @@ class OGRGeoPackageDataSource : public OGRDataSource
                                          OGRwkbGeometryType eGType,
                                          char **papszOptions );
         int                 TestCapability( const char * );
-        
+
+        virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
+                                        OGRGeometry *poSpatialFilter,
+                                        const char *pszDialect );
+        virtual void        ReleaseResultSet( OGRLayer * poLayer );
+
         int                 IsUpdatable() { return m_bUpdate; }
         int                 GetSrsId( const OGRSpatialReference * poSRS );
         const char*         GetSrsName( const OGRSpatialReference * poSRS );
