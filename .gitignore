@@ -52,6 +52,17 @@ apps/ogrtindex
 apps/testepsg
 apps/gdalserver
 apps/test_ogrsf
+swig/java/build
+swig/java/gdal.jar
+swig/java/gdal_wrap.cpp
+swig/java/gdalconst_wrap.c
+swig/java/libgdalconstjni.so
+swig/java/libgdaljni.so
+swig/java/libogrjni.so
+swig/java/libosrjni.so
+swig/java/ogr_wrap.cpp
+swig/java/org/
+swig/java/osr_wrap.cpp
 swig/python/build
 swig/perl/Const.bs
 swig/perl/GDAL.bs
