@@ -543,6 +543,7 @@ int OGRGeoPackageDataSource::Create( const char * pszFilename, char **papszOptio
     }
 
     m_pszFileName = CPLStrdup(pszFilename);
+    m_bUpdate = TRUE;
 
     /* OGR UTF-8 support. If we set the UTF-8 Pragma early on, it */
     /* will be written into the main file and supported henceforth */
@@ -711,6 +712,9 @@ OGRLayer* OGRGeoPackageDataSource::CreateLayer( const char * pszLayerName,
 {
     int iLayer;
     OGRErr err;
+    
+    if( !m_bUpdate )
+        return NULL;
 
     /* Read GEOMETRY_COLUMN option */
     const char* pszGeomColumnName = CSLFetchNameValue(papszOptions, "GEOMETRY_COLUMN");
@@ -869,9 +873,8 @@ OGRLayer* OGRGeoPackageDataSource::CreateLayer( const char * pszLayerName,
 int OGRGeoPackageDataSource::DeleteLayer( int iLayer )
 {
     char *pszSQL;
-    OGRErr err;
-    
-    if( iLayer < 0 || iLayer >= m_nLayers )
+
+    if( !m_bUpdate || iLayer < 0 || iLayer >= m_nLayers )
         return OGRERR_FAILURE;
 
     CPLString osLayerName = m_papoLayers[iLayer]->GetLayerDefn()->GetName();
@@ -891,21 +894,21 @@ int OGRGeoPackageDataSource::DeleteLayer( int iLayer )
             "DROP TABLE %s",
              osLayerName.c_str());
     
-    err = SQLCommand(m_poDb, pszSQL);
+    SQLCommand(m_poDb, pszSQL);
     sqlite3_free(pszSQL);
 
     pszSQL = sqlite3_mprintf(
             "DELETE FROM gpkg_geometry_columns WHERE table_name = '%s'",
              osLayerName.c_str());
     
-    err = SQLCommand(m_poDb, pszSQL);
+    SQLCommand(m_poDb, pszSQL);
     sqlite3_free(pszSQL);
     
     pszSQL = sqlite3_mprintf(
              "DELETE FROM gpkg_contents WHERE table_name = '%s'",
               osLayerName.c_str());
 
-    err = SQLCommand(m_poDb, pszSQL);
+    SQLCommand(m_poDb, pszSQL);
     sqlite3_free(pszSQL);
 
     return OGRERR_NONE;
@@ -922,7 +925,7 @@ int OGRGeoPackageDataSource::TestCapability( const char * pszCap )
     if ( EQUAL(pszCap,ODsCCreateLayer) ||
          EQUAL(pszCap,ODsCDeleteLayer) )
     {
-         return TRUE;
+         return m_bUpdate;
     }
     return FALSE;
 }

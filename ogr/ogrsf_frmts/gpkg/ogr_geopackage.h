@@ -90,7 +90,7 @@ class OGRGeoPackageDataSource : public OGRDataSource
                                          char **papszOptions );
         int                 TestCapability( const char * );
         
-        virtual int         IsReadOnly() { return m_bUpdate; }
+        int                 IsUpdatable() { return m_bUpdate; }
         int                 GetSrsId( const OGRSpatialReference * poSRS );
         const char*         GetSrsName( const OGRSpatialReference * poSRS );
         OGRSpatialReference* GetSpatialRef( int iSrsId );
