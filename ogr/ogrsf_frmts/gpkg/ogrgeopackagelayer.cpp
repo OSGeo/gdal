@@ -488,10 +488,10 @@ OGRErr OGRGeoPackageLayer::ReadTableDefinition()
         return err;        
     }
 
-    char *pszMinX = SQLResultGetValue(&oResultContents, 4, 0);
-    char *pszMinY = SQLResultGetValue(&oResultContents, 5, 0);
-    char *pszMaxX = SQLResultGetValue(&oResultContents, 6, 0);
-    char *pszMaxY = SQLResultGetValue(&oResultContents, 7, 0);
+    const char *pszMinX = SQLResultGetValue(&oResultContents, 4, 0);
+    const char *pszMinY = SQLResultGetValue(&oResultContents, 5, 0);
+    const char *pszMaxX = SQLResultGetValue(&oResultContents, 6, 0);
+    const char *pszMaxY = SQLResultGetValue(&oResultContents, 7, 0);
     
 	/* All the extrema have to be non-NULL for this to make sense */
     OGREnvelope oExtent;
@@ -547,7 +547,7 @@ OGRErr OGRGeoPackageLayer::ReadTableDefinition()
     m_poFeatureDefn = new OGRFeatureDefn( m_pszTableName );
     m_poFeatureDefn->Reference();
     
-    char *pszGeomColsType = SQLResultGetValue(&oResultGeomCols, 2, 0);
+    const char *pszGeomColsType = SQLResultGetValue(&oResultGeomCols, 2, 0);
     int iSrsId = SQLResultGetValueAsInteger(&oResultGeomCols, 3, 0);
     int bHasZ = SQLResultGetValueAsInteger(&oResultGeomCols, 4, 0);
     int iRecord;
@@ -556,8 +556,8 @@ OGRErr OGRGeoPackageLayer::ReadTableDefinition()
     
     for ( iRecord = 0; iRecord < oResultTable.nRowCount; iRecord++ )
     {
-        char *pszName = SQLResultGetValue(&oResultTable, 1, iRecord);
-        char *pszType = SQLResultGetValue(&oResultTable, 2, iRecord);
+        const char *pszName = SQLResultGetValue(&oResultTable, 1, iRecord);
+        const char *pszType = SQLResultGetValue(&oResultTable, 2, iRecord);
         OGRBoolean bFid = SQLResultGetValueAsInteger(&oResultTable, 5, iRecord);
         OGRFieldType oType = GPkgFieldToOGR(pszType);
 
