@@ -551,6 +551,10 @@ int OGRVRTLayer::FullInitialize()
             if( EQUALN(pszSrcDSName, pszPrefix, strlen(pszPrefix)) )
             {
                 const char* pszLastPart = strrchr(pszSrcDSName, ':') + 1;
+                /* CSV:z:/foo.xyz */
+                if( (pszLastPart[0] == '/' || pszLastPart[0] == '\\') &&
+                    pszLastPart - pszSrcDSName >= 3 && pszLastPart[-3] == ':' )
+                    pszLastPart -= 2;
                 CPLString osPrefix(pszSrcDSName);
                 osPrefix.resize(pszLastPart - pszSrcDSName);
                 pszSrcDSName = CPLStrdup( (osPrefix +
