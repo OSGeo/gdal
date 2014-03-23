@@ -176,6 +176,14 @@ void VRTSimpleSource::SetNoDataValue( double dfNewNoDataValue )
 /*                           SerializeToXML()                           */
 /************************************************************************/
 
+static const char* apszSpecialSyntax[] = { "HDF5:\"{FILENAME}\":{ANY}",
+                                            "HDF5:{FILENAME}:{ANY}",
+                                            "NETCDF:\"{FILENAME}\":{ANY}",
+                                            "NETCDF:{FILENAME}:{ANY}",
+                                            "NITF_IM:{ANY}:{FILENAME}",
+                                            "PDF:{ANY}:{FILENAME}",
+                                            "RASTERLITE:{FILENAME},{ANY}" };
+
 CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
 
 {
@@ -205,6 +213,7 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
     psSrc = CPLCreateXMLNode( NULL, CXT_Element, "SimpleSource" );
 
     VSIStatBufL sStat;
+    CPLString osTmp;
     if ( strstr(poDS->GetDescription(), "/vsicurl/http") != NULL ||
          strstr(poDS->GetDescription(), "/vsicurl/ftp") != NULL )
     {
@@ -222,6 +231,52 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
     {
         pszRelativePath = poDS->GetDescription();
         bRelativeToVRT = FALSE;
+        for( size_t i = 0; i < sizeof(apszSpecialSyntax) / sizeof(apszSpecialSyntax[0]); i ++)
+        {
+            const char* pszSyntax = apszSpecialSyntax[i];
+            CPLString osPrefix(pszSyntax);
+            osPrefix.resize(strchr(pszSyntax, ':') - pszSyntax + 1);
+            if( pszSyntax[osPrefix.size()] == '"' )
+                osPrefix += '"';
+            if( EQUALN(pszRelativePath, osPrefix, osPrefix.size()) )
+            {
+                if( EQUALN(pszSyntax + osPrefix.size(), "{ANY}", strlen("{ANY}")) )
+                {
+                    const char* pszLastPart = strrchr(pszRelativePath, ':') + 1;
+                    /* CSV:z:/foo.xyz */
+                    if( (pszLastPart[0] == '/' || pszLastPart[0] == '\\') &&
+                        pszLastPart - pszRelativePath >= 3 && pszLastPart[-3] == ':' )
+                        pszLastPart -= 2;
+                    CPLString osPrefixFilename = pszRelativePath;
+                    osPrefixFilename.resize(pszLastPart - pszRelativePath);
+                    pszRelativePath =
+                        CPLExtractRelativePath( pszVRTPath, pszLastPart,
+                                    &bRelativeToVRT );
+                    osTmp = osPrefixFilename + pszRelativePath;
+                    pszRelativePath = osTmp.c_str();
+                }
+                else if( EQUALN(pszSyntax + osPrefix.size(), "{FILENAME}", strlen("{FILENAME}")) )
+                {
+                    CPLString osFilename(pszRelativePath + osPrefix.size());
+                    size_t nPos = 0;
+                    if( osFilename.size() >= 3 && osFilename[1] == ':' &&
+                        (osFilename[2] == '\\' || osFilename[2] == '/') )
+                        nPos = 2;
+                    nPos = osFilename.find(pszSyntax[osPrefix.size() + strlen("{FILENAME}")], nPos);
+                    if( nPos != std::string::npos )
+                    {
+                        CPLString osSuffix = osFilename.substr(nPos);
+                        osFilename.resize(nPos);
+                        pszRelativePath =
+                            CPLExtractRelativePath( pszVRTPath, osFilename,
+                                        &bRelativeToVRT );
+                        osTmp = osPrefix + pszRelativePath + osSuffix;
+                        pszRelativePath = osTmp.c_str();
+                    }
+                }
+                break;
+            }
+        }
     }
     else
     {
@@ -313,8 +368,54 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
     if( pszVRTPath != NULL
         && atoi(CPLGetXMLValue( psSourceFileNameNode, "relativetoVRT", "0")) )
     {
-        pszSrcDSName = CPLStrdup(
-            CPLProjectRelativeFilename( pszVRTPath, pszFilename ) );
+        int bDone = FALSE;
+        for( size_t i = 0; i < sizeof(apszSpecialSyntax) / sizeof(apszSpecialSyntax[0]); i ++)
+        {
+            const char* pszSyntax = apszSpecialSyntax[i];
+            CPLString osPrefix(pszSyntax);
+            osPrefix.resize(strchr(pszSyntax, ':') - pszSyntax + 1);
+            if( pszSyntax[osPrefix.size()] == '"' )
+                osPrefix += '"';
+            if( EQUALN(pszFilename, osPrefix, osPrefix.size()) )
+            {
+                if( EQUALN(pszSyntax + osPrefix.size(), "{ANY}", strlen("{ANY}")) )
+                {
+                    const char* pszLastPart = strrchr(pszFilename, ':') + 1;
+                    /* CSV:z:/foo.xyz */
+                    if( (pszLastPart[0] == '/' || pszLastPart[0] == '\\') &&
+                        pszLastPart - pszFilename >= 3 && pszLastPart[-3] == ':' )
+                        pszLastPart -= 2;
+                    CPLString osPrefixFilename = pszFilename;
+                    osPrefixFilename.resize(pszLastPart - pszFilename);
+                    pszSrcDSName = CPLStrdup( (osPrefixFilename +
+                        CPLProjectRelativeFilename( pszVRTPath, pszLastPart )).c_str() );
+                    bDone = TRUE;
+                }
+                else if( EQUALN(pszSyntax + osPrefix.size(), "{FILENAME}", strlen("{FILENAME}")) )
+                {
+                    CPLString osFilename(pszFilename + osPrefix.size());
+                    size_t nPos = 0;
+                    if( osFilename.size() >= 3 && osFilename[1] == ':' &&
+                        (osFilename[2] == '\\' || osFilename[2] == '/') )
+                        nPos = 2;
+                    nPos = osFilename.find(pszSyntax[osPrefix.size() + strlen("{FILENAME}")], nPos);
+                    if( nPos != std::string::npos )
+                    {
+                        CPLString osSuffix = osFilename.substr(nPos);
+                        osFilename.resize(nPos);
+                        pszSrcDSName = CPLStrdup( (osPrefix +
+                            CPLProjectRelativeFilename( pszVRTPath, osFilename ) + osSuffix).c_str() );
+                        bDone = TRUE;
+                    }
+                }
+                break;
+            }
+        }
+        if( !bDone )
+        {
+            pszSrcDSName = CPLStrdup(
+                CPLProjectRelativeFilename( pszVRTPath, pszFilename ) );
+        }
     }
     else
         pszSrcDSName = CPLStrdup( pszFilename );
