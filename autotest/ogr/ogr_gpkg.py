@@ -318,7 +318,8 @@ def ogr_gpkg_8():
     lyr = gdaltest.gpkg_ds.CreateLayer( 'tbl_linestring', geom_type = ogr.wkbLineString, srs = srs)
     if lyr is None:
         return 'fail'
-    
+
+    lyr.StartTransaction()
     ret = lyr.CreateField(ogr.FieldDefn('fld_integer', ogr.OFTInteger))
     ret = lyr.CreateField(ogr.FieldDefn('fld_string', ogr.OFTString))
     ret = lyr.CreateField(ogr.FieldDefn('fld_real', ogr.OFTReal))
@@ -335,7 +336,7 @@ def ogr_gpkg_8():
         if lyr.CreateFeature(feat) != 0:
             gdaltest.post_reason('cannot create feature %d' % i)
             return 'fail'
-                        
+    lyr.CommitTransaction()
     
     feat = ogr.Feature(lyr.GetLayerDefn())
     if lyr.CreateFeature(feat) != 0:
@@ -351,6 +352,7 @@ def ogr_gpkg_8():
     if lyr is None:
         return 'fail'
 
+    lyr.StartTransaction()
     ret = lyr.CreateField(ogr.FieldDefn('fld_datetime', ogr.OFTDateTime))
     ret = lyr.CreateField(ogr.FieldDefn('fld_string', ogr.OFTString))
 
@@ -365,6 +367,7 @@ def ogr_gpkg_8():
         if lyr.CreateFeature(feat) != 0:
             gdaltest.post_reason('cannot create polygon feature %d' % i)
             return 'fail'
+    lyr.CommitTransaction()
 
     feat = lyr.GetFeature(3)
     geom_read = feat.GetGeometryRef()
@@ -438,7 +441,31 @@ def ogr_gpkg_10():
         return 'fail'
 
     return 'success'
+
+###############################################################################
+# Test non-SELECT SQL commands
+
+def ogr_gpkg_11():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    gdaltest.gpkg_ds = ogr.Open('tmp/gpkg_test.gpkg', update = 1)
+    gdaltest.gpkg_ds.ExecuteSQL('CREATE INDEX tbl_linestring_fld_integer_idx ON tbl_linestring(fld_integer)')
+    gdaltest.gpkg_ds.ExecuteSQL('ALTER TABLE tbl_linestring RENAME TO tbl_linestring_renamed')
+    gdaltest.gpkg_ds.ExecuteSQL('VACUUM')
+    gdaltest.gpkg_ds = None
     
+    gdaltest.gpkg_ds = ogr.Open('tmp/gpkg_test.gpkg', update = 1)
+    lyr = gdaltest.gpkg_ds.GetLayerByName('tbl_linestring_renamed')
+    if lyr is None:
+        return 'fail'
+    lyr.SetAttributeFilter('fld_integer = 10')
+    if lyr.GetFeatureCount() != 1:
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # Remove the test db from the tmp directory
 
@@ -470,6 +497,7 @@ gdaltest_list = [
     ogr_gpkg_8,
     ogr_gpkg_9,
     ogr_gpkg_10,
+    ogr_gpkg_11,
     ogr_gpkg_cleanup,
 ]
 
