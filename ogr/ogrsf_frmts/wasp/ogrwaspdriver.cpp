@@ -50,12 +50,12 @@ OGRDataSource *OGRWAsPDriver::Open( const char * pszFilename, int bUpdate )
     VSILFILE * fh = VSIFOpenL( pszFilename, "r" );
     if ( !fh )
     {
-        CPLError( CE_Failure, CPLE_FileIO, "cannot open file %s", pszFilename );
+        /*CPLError( CE_Failure, CPLE_FileIO, "cannot open file %s", pszFilename );*/
         return NULL;
     }
     std::auto_ptr<OGRWAsPDataSource> pDataSource( new OGRWAsPDataSource( pszFilename, fh ));
 
-    if ( pDataSource->Load() != OGRERR_NONE )
+    if ( pDataSource->Load(true) != OGRERR_NONE )
     {
         return NULL;
     }
