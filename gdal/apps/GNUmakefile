@@ -20,6 +20,7 @@ BIN_LIST += 	gdal_contour$(EXE) \
 		ogrinfo$(EXE) \
 		ogr2ogr$(EXE) \
 		ogrtindex$(EXE) \
+        ogrlineref$(EXE) \
 		testepsg$(EXE) \
 		gdalbuildvrt$(EXE)
 endif
@@ -107,6 +108,9 @@ gdal2ogr$(EXE):	gdal2ogr.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 ogrinfo$(EXE):	ogrinfo.$(OBJ_EXT) commonutils.$(OBJ_EXT)  $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) $< commonutils.$(OBJ_EXT)  $(XTRAOBJ) $(CONFIG_LIBS) -o $@
+
+ogrlineref$(EXE):	ogrlineref.$(OBJ_EXT) commonutils.$(OBJ_EXT)  $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) $< commonutils.$(OBJ_EXT)  $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 ogr2ogr$(EXE):	ogr2ogr.$(OBJ_EXT) commonutils.$(OBJ_EXT)  $(DEP_LIBS)

@@ -11,7 +11,7 @@ XTRAFLAGS =	-I..\frmts -I..\alg -I..\ogr -I..\ogr\ogrsf_frmts
 
 !IFDEF INCLUDE_OGR_FRMTS
 OGR_PROGRAMS =	gdal_contour.exe gdaltindex.exe gdal_rasterize.exe \
-		gdal_grid.exe ogrinfo.exe ogr2ogr.exe ogrtindex.exe \
+		gdal_grid.exe ogrinfo.exe ogr2ogr.exe ogrtindex.exe ogrlineref.exe\
 		gdalbuildvrt.exe testepsg.exe
 !ENDIF
 
@@ -135,6 +135,11 @@ ogrinfo.exe:	ogrinfo.cpp commonutils.cpp $(GDALLIB) $(XTRAOBJ)
 	
 ogrtindex.exe:	ogrtindex.cpp $(GDALLIB) $(XTRAOBJ) 
 	$(CC) $(CFLAGS) $(XTRAFLAGS) ogrtindex.cpp $(XTRAOBJ) $(LIBS) \
+		/link $(LINKER_FLAGS)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
+
+ogrlineref.exe:	ogrlineref.cpp commonutils.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(CFLAGS) $(XTRAFLAGS) ogrlineref.cpp commonutils.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
