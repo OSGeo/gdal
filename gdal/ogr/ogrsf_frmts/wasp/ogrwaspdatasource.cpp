@@ -93,7 +93,7 @@ OGRErr OGRWAsPDataSource::Load(bool bSilent)
         return OGRERR_FAILURE;
     }
     /* Parse the first line of the file in case it'a a spatial ref*/
-    const char * pszLine = CPLReadLineL( hFile );
+    const char * pszLine = CPLReadLine2L( hFile, 1024, NULL );
     if ( !pszLine )
     {
         if (!bSilent) CPLError( CE_Failure, CPLE_FileIO, "empty file");
