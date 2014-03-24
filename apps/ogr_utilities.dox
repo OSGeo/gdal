@@ -7,6 +7,7 @@ toolkit:
 <li> \ref ogrinfo - Lists information about an OGR supported data source
 <li> \ref ogr2ogr - Converts simple features data between file formats
 <li> \ref ogrtindex - Creates a tileindex
+<li> \ref ogrlineref - Create linear reference and provide some calculations using it
 </ul>
 
 */
@@ -429,6 +430,100 @@ of the BL2000_LINK layers in all the NTF files in the wrk directory:
 \if man
 \section ogrtindex_author AUTHORS
 Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
+
+\endif
+
+*/
+
+/*! \page ogrlineref ogrlineref
+
+The utility can be used for:
+- create linear reference file from input data
+- return the "linear referenced" distance for the projection of the input coordinates (point) on the path
+- return the coordinates (point) on the path according to the "linear referenced" distance 
+- return the portion of the path according to the "linear referenced" begin and end distances
+
+\section ogrlineref_synopsis SYNOPSIS
+
+\htmlonly
+Usage:
+\endhtmlonly
+
+\verbatim
+ogrlineref [--help-general] [-progress] [-quiet]
+           [-f format_name] [[-dsco NAME=VALUE] ...] [[-lco NAME=VALUE]...]
+           [-create]
+           [-l src_line_datasource_name] [-ln layer_name] [-lf field_name]
+           [-p src_repers_datasource_name] [-pn layer_name] [-pm pos_field_name] [-pf field_name]
+           [-r src_parts_datasource_name] [-rn layer_name]
+           [-o dst_datasource_name] [-on layer_name]  [-of field_name] [-s step]
+           [-get_pos] [-x long] [-y lat]
+           [-get_coord] [-m position]
+           [-get_subline] [-mb position] [-me position]
+\endverbatim
+
+\section ogrlineref_description DESCRIPTION
+
+The ogrlineref program can be used to create a linear reference - a file containing
+a segments of special length (e.g. 1 km in reference units) and get coordinates, 
+linear referenced distances or sublines (subpaths) from this file. The utility not
+required the M or Z values in geometry. The results can be stored in any OGR supported 
+format. Also some information writed to the stdout.  
+
+<dl>
+<dt><b>--help-general</b>:</dt><dd> Show the usage.</dd>
+<dt><b>-progress</b>:</dt><dd> Show progress.</dd>
+<dt><b>-quiet</b>:</dt><dd> Supress all messages except errors and results.</dd>
+<dt><b>-f</b> <em>format_name</em>:</dt><dd> Select an output format name.
+    The default is to create a shapefile.</dd>
+<dt> <b>-dsco</b> <em>NAME=VALUE</em>:</dt><dd> Dataset creation option 
+    (format specific)</dd>
+<dt> <b>-lco</b><em>  NAME=VALUE</em>:</dt><dd> Layer creation option 
+    (format specific)</dd>
+<dt><b>-create</b>:</dt><dd> Create the linear reference file (linestring of parts).</dd>
+<dt> <b>-l</b><em>src_line_datasource_name</em>:</dt><dd> The path to input linestring 
+    datasource (e.g. the road)</dd>
+<dt> <b>-ln</b><em>layer_name</em>:</dt><dd> The layer name in datasource</dd>
+<dt> <b>-lf</b><em>field_name</em>:</dt><dd> The field name of uniq values to 
+    separate the input lines (e.g. the set of roads)</dd>
+<dt> <b>-p</b><em>src_repers_datasource_name</em>:</dt><dd> The path to linear 
+    references points (e.g. the road mile-stones)</dd>
+<dt> <b>-pn</b><em>layer_name</em>:</dt><dd> The layer name in datasource</dd>
+<dt> <b>-pm</b><em>pos_field_name</em>:</dt><dd> The field name of distances 
+    along path (e.g. mile-stones values)</dd>
+<dt> <b>-pf</b><em>field_name</em>:</dt><dd> The field name of uniq values to 
+    map input reference points to lines</dd>
+<dt> <b>-r</b><em>src_parts_datasource_name</em>:</dt><dd> The path to linear 
+    reference file</dd>
+<dt> <b>-rn</b><em>layer_name</em>:</dt><dd> The layer name in datasource</dd>
+<dt> <b>-o</b><em>dst_datasource_name</em>:</dt><dd> The path to output linear 
+    reference file (linestring datasource)</dd>
+<dt> <b>-on</b><em>layer_name</em>:</dt><dd> The layer name in datasource</dd>
+<dt> <b>-of</b><em>field_name</em>:</dt><dd> The field name for storing the 
+    uniq values of input lines</dd>
+<dt> <b>-s</b><em>step</em>:</dt><dd> The part size in linear units</dd>
+<dt> <b>-get_pos</b>:</dt><dd> Return linear referenced postion for input X, Y</dd>
+<dt> <b>-x</b><em>long</em>:</dt><dd> Input X coordinate</dd>
+<dt> <b>-y</b><em>lat</em>:</dt><dd> Input Y coordinate</dd>
+<dt> <b>-get_coord</b>:</dt><dd> Return point on path for input linear distance</dd>
+<dt> <b>-m</b><em>position</em>:</dt><dd> The input linear distance</dd>
+<dt> <b>-get_subline</b>:</dt><dd> Return the portion of the input path from and to 
+    input linear positions</dd>
+<dt> <b>-mb</b><em>position</em>:</dt><dd> The input begin linear distance</dd>
+<dt> <b>-me</b><em>position</em>:</dt><dd> The input end linear distance</dd>
+</dl>
+
+\section ogrlineref_example EXAMPLE
+
+This example would create a shapefile (parts.shp) containing a data needed
+for linear referencing (1 km parts):
+\verbatim
+% ogrlineref -create -l roads.shp -p references.shp -pm dist -o parts.shp -s 1000 -progress
+\endverbatim
+
+\if man
+\section ogrlineref_author AUTHORS
+Dmitry Baryshnikov <polimax@mail.ru>
 
 \endif
 

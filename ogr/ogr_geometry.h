@@ -295,6 +295,8 @@ class CPL_DLL OGRLineString : public OGRCurve
     virtual void StartPoint(OGRPoint *) const;
     virtual void EndPoint(OGRPoint *) const;
     virtual void Value( double, OGRPoint * ) const;
+    virtual double Project(const OGRPoint *) const;
+    virtual OGRLineString* getSubLine(double, double, int) const;
     
     // ILineString methods
     int         getNumPoints() const { return nPointCount; }
