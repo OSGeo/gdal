@@ -31,6 +31,7 @@
 #include "ogr_geometry.h"
 #include "ogr_p.h"
 #include <assert.h>
+#include "ogr_geos.h"
 
 CPL_CVSID("$Id$");
 
