@@ -308,7 +308,7 @@ def ogr_osm_3(options = None):
         options = ' ' + options
     else:
         options = ''
-    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/ogr_osm_3 data/test.pbf points lines polygons multipolygons multilinestrings -progress' + options)
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/ogr_osm_3 data/test.pbf points lines multipolygons multilinestrings -progress' + options)
 
     ret = ogr_osm_1('tmp/ogr_osm_3')
 
