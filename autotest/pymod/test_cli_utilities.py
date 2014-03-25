@@ -142,6 +142,11 @@ def get_ogr2ogr_path():
 # 
 def get_ogrtindex_path():
     return get_cli_utility_path('ogrtindex')
+    
+###############################################################################
+# 
+def get_ogrlineref_path():
+    return get_cli_utility_path('ogrlineref')
 
 ###############################################################################
 # 

@@ -5,7 +5,7 @@ XTRAOBJ =	$(SETARGV)
 
 LIBS	=	$(GDAL_ROOT)\gdal_i.lib
 
-XTRAFLAGS =	-I..\frmts -I..\alg -I..\ogr -I..\ogr\ogrsf_frmts
+XTRAFLAGS =	-I..\frmts -I..\alg -I..\ogr -I..\ogr\ogrsf_frmts  $(GEOS_CFLAGS)
 
 !INCLUDE ..\nmake.opt
 

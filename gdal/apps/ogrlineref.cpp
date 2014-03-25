@@ -38,11 +38,18 @@
 #include <set>
 #include <limits>
 #include "cpl_error.h"
+#include "ogr_geos.h"
 
 #define FIELD_START "beg"
 #define FIELD_FINISH "end"
 #define FIELD_SCALE_FACTOR "scale"
 #define DELTA 0.00000001 //- delta
+
+#if defined(HAVE_GEOS)
+#if GEOS_VERSION_MAJOR > 3 || (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 2)
+#define HAVE_GEOS_PROJECT
+#endif
+#endif
 
 enum operation
 {
@@ -1010,7 +1017,7 @@ int GetPosition(OGRLayer* const poPkLayer, double dfX, double dfY, int bDisplayP
     double dfRefDist = dfBeg + dfRealDist / dfScale;
     if (bQuiet == TRUE)
     {
-        fprintf(stdout, "%\n", dfRefDist);
+        fprintf(stdout, "%f\n", dfRefDist);
     }
     else
     {
@@ -1284,6 +1291,7 @@ int main( int nArgc, char ** papszArgv )
     
     if(stOper == op_create)
     {
+#ifdef HAVE_GEOS_PROJECT
         if( pszOutputDataSource == NULL)
             Usage("no output datasource provided");
         else if(pszLineDataSource == NULL)
@@ -1454,9 +1462,14 @@ int main( int nArgc, char ** papszArgv )
             
         if (NULL != pszOutputLayerName)
             CPLFree(pszOutputLayerName);
+#else //HAVE_GEOS_PROJECT
+        fprintf( stderr, "GEOS support not enabled or incompatible version.\n" );
+        exit( 1 );       
+#endif //HAVE_GEOS_PROJECT            
     }
     else if(stOper == op_get_pos)
     {
+#ifdef HAVE_GEOS_PROJECT    
         OGRDataSource *poPartsDS = NULL;
         OGRLayer *poPartsLayer = NULL;
 
@@ -1505,6 +1518,10 @@ int main( int nArgc, char ** papszArgv )
 
         //clean up
         OGRDataSource::DestroyDataSource(poPartsDS);
+#else //HAVE_GEOS_PROJECT
+        fprintf( stderr, "GEOS support not enabled or incompatible version.\n" );
+        exit( 1 );       
+#endif //HAVE_GEOS_PROJECT            
     }
     else if(stOper == op_get_coord)
     {
