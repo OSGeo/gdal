@@ -1321,7 +1321,9 @@ void OGRLineString::Value( double dfDistance, OGRPoint * poPoint ) const
 
 /* GEOS >= 3.2.0 for project capabilty */
 #if defined(HAVE_GEOS)
+#if GEOS_VERSION_MAJOR > 3 || (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 2)
 #define HAVE_GEOS_PROJECT
+#endif
 #endif
 
 
