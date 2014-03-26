@@ -1080,6 +1080,7 @@ ADRGDataset* ADRGDataset::OpenDataset(
     if (fdIMG == NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot open %s\n", pszIMGFileName);
+        delete[] TILEINDEX;
         return NULL;
     }
     
@@ -1087,6 +1088,7 @@ ADRGDataset* ADRGDataset::OpenDataset(
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Polar cases are not handled by ADRG driver");
         VSIFCloseL(fdIMG);
+        delete[] TILEINDEX;
         return NULL;
     }
     
@@ -1097,6 +1099,7 @@ ADRGDataset* ADRGDataset::OpenDataset(
     if (VSIFReadL(&c, 1, 1, fdIMG) != 1)
     {
         VSIFCloseL(fdIMG);
+        delete[] TILEINDEX;
         return NULL;
     }
     while (!VSIFEofL(fdIMG))
@@ -1106,20 +1109,18 @@ ADRGDataset* ADRGDataset::OpenDataset(
             if (VSIFReadL(recordName, 1, 3, fdIMG) != 3)
             {
                 VSIFCloseL(fdIMG);
+                delete[] TILEINDEX;
                 return NULL;
             }
             offsetInIMG += 3;
             if (strncmp(recordName,"IMG",3) == 0)
             {
                 offsetInIMG += 4;
-                if (VSIFSeekL(fdIMG,3,SEEK_CUR) != 0)
+                if (VSIFSeekL(fdIMG,3,SEEK_CUR) != 0 ||
+                    VSIFReadL(&c, 1, 1, fdIMG) != 1)
                 {
                     VSIFCloseL(fdIMG);
-                    return NULL;
-                }
-                if (VSIFReadL(&c, 1, 1, fdIMG) != 1)
-                {
-                    VSIFCloseL(fdIMG);
+                    delete[] TILEINDEX;
                     return NULL;
                 }
                 while(c ==' ')
@@ -1128,6 +1129,7 @@ ADRGDataset* ADRGDataset::OpenDataset(
                     if (VSIFReadL(&c, 1, 1, fdIMG) != 1)
                     {
                         VSIFCloseL(fdIMG);
+                        delete[] TILEINDEX;
                         return NULL;
                     }
                 }
@@ -1140,6 +1142,7 @@ ADRGDataset* ADRGDataset::OpenDataset(
         if (VSIFReadL(&c, 1, 1, fdIMG) != 1)
         {
             VSIFCloseL(fdIMG);
+            delete[] TILEINDEX;
             return NULL;
         }
     }
@@ -1147,6 +1150,7 @@ ADRGDataset* ADRGDataset::OpenDataset(
     if (VSIFEofL(fdIMG))
     {
         VSIFCloseL(fdIMG);
+        delete[] TILEINDEX;
         return NULL;
     }
     
