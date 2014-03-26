@@ -262,11 +262,47 @@ static int ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGeo
 
 /* -------------------------------------------------------------------- */
 /*      Handle <coordinates> case.                                      */
+/*      Note that we don't do a strict validation, so we accept and     */
+/*      sometimes generate output whereas we should just reject it.     */
 /* -------------------------------------------------------------------- */
     if( psCoordinates != NULL )
     {
         const char *pszCoordString = GetElementText( psCoordinates );
+
+        const char *pszDecimal = CPLGetXMLValue( (CPLXMLNode*) psCoordinates, "decimal", NULL);
+        char chDecimal = '.';
+        if( pszDecimal != NULL )
+        {
+            if( strlen(pszDecimal) != 1 || (pszDecimal[0] >= '0' && pszDecimal[0] <= '9') )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, "Wrong value for decimal attribute");
+                return FALSE;
+            }
+            chDecimal = pszDecimal[0];
+        }
+
+        const char *pszCS = CPLGetXMLValue( (CPLXMLNode*) psCoordinates, "cs", NULL);
         char chCS = ',';
+        if( pszCS != NULL )
+        {
+            if( strlen(pszCS) != 1 || (pszCS[0] >= '0' && pszCS[0] <= '9') )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, "Wrong value for cs attribute");
+                return FALSE;
+            }
+            chCS = pszCS[0];
+        }
+        const char *pszTS = CPLGetXMLValue( (CPLXMLNode*) psCoordinates, "ts", NULL);
+        char chTS = ' ';
+        if( pszTS != NULL )
+        {
+            if( strlen(pszTS) != 1 || (pszTS[0] >= '0' && pszTS[0] <= '9') )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, "Wrong value for tes attribute");
+                return FALSE;
+            }
+            chTS = pszTS[0];
+        }
 
         if( pszCoordString == NULL )
         {
@@ -280,9 +316,12 @@ static int ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGeo
             int nDimension = 2;
 
             // parse out 2 or 3 tuple. 
-            dfX = OGRFastAtof( pszCoordString );
+            if( chDecimal == '.' )
+                dfX = OGRFastAtof( pszCoordString );
+            else
+                dfX = CPLAtofDelim( pszCoordString, chDecimal) ;
             while( *pszCoordString != '\0'
-                   && *pszCoordString != ','
+                   && *pszCoordString != chCS
                    && !isspace((unsigned char)*pszCoordString) )
                 pszCoordString++;
 
@@ -292,7 +331,7 @@ static int ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGeo
                         "Corrupt <coordinates> value." );
                 return FALSE;
             }
-            else if( chCS == ',' && isspace((unsigned char)*pszCoordString) )
+            else if( chCS == ',' && pszCS == NULL && isspace((unsigned char)*pszCoordString) )
             {
                 /* In theory, the coordinates inside a coordinate tuple should be */
                 /* separated by a comma. However it has been found in the wild */
@@ -300,27 +339,36 @@ static int ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGeo
                 /* See https://52north.org/twiki/bin/view/Processing/WPS-IDWExtension-ObservationCollectionExample */
                 /* or http://agisdemo.faa.gov/aixmServices/getAllFeaturesByLocatorId?locatorId=DFW */
                 chCS = ' ';
+                chTS = ',';
             }
 
             pszCoordString++;
-            dfY = OGRFastAtof( pszCoordString );
+            if( chDecimal == '.' )
+                dfY = OGRFastAtof( pszCoordString );
+            else
+                dfY = CPLAtofDelim( pszCoordString, chDecimal) ;
             while( *pszCoordString != '\0' 
-                   && *pszCoordString != ','
+                   && *pszCoordString != chCS
+                   && *pszCoordString != chTS
                    && !isspace((unsigned char)*pszCoordString) )
                 pszCoordString++;
 
             if( *pszCoordString == chCS )
             {
                 pszCoordString++;
-                dfZ = OGRFastAtof( pszCoordString );
+                if( chDecimal == '.' )
+                    dfZ = OGRFastAtof( pszCoordString );
+                else
+                    dfZ = CPLAtofDelim( pszCoordString, chDecimal) ;
                 nDimension = 3;
                 while( *pszCoordString != '\0' 
-                       && *pszCoordString != ','
+                       && *pszCoordString != chCS
+                       && *pszCoordString != chTS
                        && !isspace((unsigned char)*pszCoordString) )
                 pszCoordString++;
             }
 
-            if ( chCS == ' ' && *pszCoordString == ',' )
+            if( *pszCoordString == chTS )
             {
                 pszCoordString++;
             }
