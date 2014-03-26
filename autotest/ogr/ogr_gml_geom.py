@@ -1044,6 +1044,15 @@ def gml_invalid_geoms():
         ('<gml:Envelope/>',None),
         ('<gml:Envelope><gml:lowerCorner/><gml:upperCorner/></gml:Envelope>',None),
         ('<gml:Envelope><gml:lowerCorner>1</gml:lowerCorner><gml:upperCorner>3 4</gml:upperCorner/></gml:Envelope>',None),
+        ('<gml:Point><gml:coordinates cs="bla">1bla2</gml:coordinates></gml:Point>',None),
+        ('<gml:Point><gml:coordinates cs="">1bla2</gml:coordinates></gml:Point>',None),
+        ('<gml:Point><gml:coordinates cs="0">1bla2</gml:coordinates></gml:Point>',None),
+        ('<gml:Point><gml:coordinates ts="bla">1,2</gml:coordinates></gml:Point>',None),
+        ('<gml:Point><gml:coordinates ts="">1,2</gml:coordinates></gml:Point>',None),
+        ('<gml:Point><gml:coordinates ts="0">1,2</gml:coordinates></gml:Point>',None),
+        ('<gml:Point><gml:coordinates decimal="bla">1,2</gml:coordinates></gml:Point>',None),
+        ('<gml:Point><gml:coordinates decimal="">1,2</gml:coordinates></gml:Point>',None),
+        ('<gml:Point><gml:coordinates decimal="0">1,2</gml:coordinates></gml:Point>',None),
     ]
 
     for (gml, expected_wkt) in gml_expected_wkt_list:
@@ -1398,6 +1407,41 @@ def gml_MultiSurfaceOfSurfaceOfPolygonPatchWithInteriorRing():
     return 'success'
 
 ###############################################################################
+# Test ts, cs and decimal attributes of gml:coordinates
+
+def gml_Coordinates_ts_cs_decimal():
+
+    gml_expected_wkt_list = [
+        ('<gml:Point><gml:coordinates>1,2</gml:coordinates></gml:Point>', 'POINT (1 2)'), # default values
+        ('<gml:Point><gml:coordinates cs="," ts=" " decimal=".">1,2</gml:coordinates></gml:Point>', 'POINT (1 2)'), # default values
+        ('<gml:Point><gml:coordinates cs="," ts=" " decimal=".">1,2,3</gml:coordinates></gml:Point>', 'POINT (1 2 3)'), # default values
+        ('<gml:Point><gml:coordinates cs="," ts=" " decimal=".">  1,2  </gml:coordinates></gml:Point>', 'POINT (1 2)'), # we accept that...
+        ('<gml:Point><gml:coordinates>1 2</gml:coordinates></gml:Point>', 'POINT (1 2)'), # this is completely out of specification ! but we accept that too !
+        ('<gml:Point><gml:coordinates cs=";">1;2</gml:coordinates></gml:Point>', 'POINT (1 2)'),
+        ('<gml:Point><gml:coordinates decimal="," cs=";">1,2;3,4</gml:coordinates></gml:Point>', 'POINT (1.2 3.4)'), 
+        ('<gml:Point><gml:coordinates decimal="," cs=";">1,2;3,4;5,6</gml:coordinates></gml:Point>', 'POINT (1.2 3.4 5.6)'), 
+        ('<gml:LineString><gml:coordinates>1,2 3,4</gml:coordinates></gml:LineString>', 'LINESTRING (1 2,3 4)'), # default values
+        ('<gml:LineString><gml:coordinates cs="," ts=" " decimal=".">1,2 3,4</gml:coordinates></gml:LineString>', 'LINESTRING (1 2,3 4)'), # default values
+        ('<gml:LineString><gml:coordinates cs="," ts=" " decimal=".">1,2,2.5 3,4</gml:coordinates></gml:LineString>', 'LINESTRING (1 2 2.5,3 4 0)'), # default values
+        ('<gml:LineString><gml:coordinates ts="-">1,2-3,4</gml:coordinates></gml:LineString>', 'LINESTRING (1 2,3 4)'),
+        ('<gml:LineString><gml:coordinates cs=" " ts=",">1 2,3 4</gml:coordinates></gml:LineString>', 'LINESTRING (1 2,3 4)'),
+        ('<gml:LineString><gml:coordinates cs=" " ts=",">1 2 2.5,3 4</gml:coordinates></gml:LineString>', 'LINESTRING (1 2 2.5,3 4 0)'),
+    ]
+
+    for (gml, expected_wkt) in gml_expected_wkt_list:
+        geom = ogr.CreateGeometryFromGML(gml)
+        wkt = geom.ExportToWkt()
+        if expected_wkt is None:
+            gdaltest.post_reason('did not get expected result for %s. Got %s instead of None' % (gml, wkt))
+            return 'fail'
+        else:
+            if wkt != expected_wkt:
+                gdaltest.post_reason('did not get expected result for %s. Got %s instead of %s' % (gml, wkt, expected_wkt))
+                return 'fail'
+
+    return 'success'
+
+###############################################################################
 # When imported build a list of units based on the files available.
 
 #print 'hit enter'
@@ -1455,6 +1499,7 @@ gdaltest_list.append( gml_SimpleMultiPoint )
 gdaltest_list.append( gml_CompositeCurveInRing )
 gdaltest_list.append( gml_CompositeSurface_in_surfaceMembers )
 gdaltest_list.append( gml_MultiSurfaceOfSurfaceOfPolygonPatchWithInteriorRing )
+gdaltest_list.append( gml_Coordinates_ts_cs_decimal )
 
 if __name__ == '__main__':
 
