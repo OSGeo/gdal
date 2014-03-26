@@ -409,7 +409,7 @@ OGRErr AddFeature(OGRLayer* const poOutLayer, OGRLineString* pPart, double dfFro
 //------------------------------------------------------------------------
 // CreateSubline
 //------------------------------------------------------------------------
-int CreateSubline(OGRLayer* const poPkLayer, double dfPosBeg, double dfPosEnd, OGRLayer* const poOutLayer, int bDisplayProgress, int bQuiet)
+OGRErr CreateSubline(OGRLayer* const poPkLayer, double dfPosBeg, double dfPosEnd, OGRLayer* const poOutLayer, int bDisplayProgress, int bQuiet)
 {
     OGRFeature* pFeature = NULL;
     //get step
@@ -420,7 +420,7 @@ int CreateSubline(OGRLayer* const poPkLayer, double dfPosBeg, double dfPosEnd, O
     if (pFeature == NULL)
     {
         fprintf(stderr, "Get step for positions %f - %f failed\n", dfPosBeg, dfPosEnd);
-        return 1;
+        return OGRERR_FAILURE;
     }
     double dfBeg = pFeature->GetFieldAsDouble(FIELD_START);
     double dfEnd = pFeature->GetFieldAsDouble(FIELD_FINISH);
@@ -448,7 +448,7 @@ int CreateSubline(OGRLayer* const poPkLayer, double dfPosBeg, double dfPosEnd, O
     if (moParts.size() == 0)
     {
         fprintf(stderr, "Get parts for positions %f - %f failed\n", dfPosBeg, dfPosEnd);
-        return 1;
+        return OGRERR_FAILURE;
     }
     else if (moParts.size() == 1)
     {
@@ -467,8 +467,7 @@ int CreateSubline(OGRLayer* const poPkLayer, double dfPosBeg, double dfPosEnd, O
 
         OGRFeature::DestroyFeature(IT->second);
         //store
-        if (AddFeature(poOutLayer, pSubLine, dfPosBeg, dfPosEnd, 1.0, bQuiet) == OGRERR_NONE)
-            return 0;
+        return AddFeature(poOutLayer, pSubLine, dfPosBeg, dfPosEnd, 1.0, bQuiet);
     }
     else
     {
@@ -513,11 +512,11 @@ int CreateSubline(OGRLayer* const poPkLayer, double dfPosBeg, double dfPosEnd, O
 
         OGRFeature::DestroyFeature(IT->second);
         //store
-        if (AddFeature(poOutLayer, pOutLine, dfPosBeg, dfPosEnd, 1.0, bQuiet) == OGRERR_NONE)
-            return 0;
+        return AddFeature(poOutLayer, pOutLine, dfPosBeg, dfPosEnd, 1.0, bQuiet);
     }
 
-    return 0;
+    //should never reach here
+    return OGRERR_NONE;
 }
 
 
@@ -526,14 +525,14 @@ int CreateSubline(OGRLayer* const poPkLayer, double dfPosBeg, double dfPosEnd, O
 // CreatePartsFromLineString
 //------------------------------------------------------------------------
 
-int CreatePartsFromLineString(OGRLineString* pPathGeom, OGRLayer* const poPkLayer, int nMValField, double dfStep, OGRLayer* const poOutLayer, int bDisplayProgress, int bQuiet, const char* pszOutputSepFieldName = NULL, const char* pszOutputSepFieldValue = NULL)
+OGRErr CreatePartsFromLineString(OGRLineString* pPathGeom, OGRLayer* const poPkLayer, int nMValField, double dfStep, OGRLayer* const poOutLayer, int bDisplayProgress, int bQuiet, const char* pszOutputSepFieldName = NULL, const char* pszOutputSepFieldValue = NULL)
 {
     //check repers type
     OGRwkbGeometryType eGeomType = poPkLayer->GetGeomType();
     if (wkbFlatten(eGeomType) != wkbPoint)
     {
         fprintf(stderr, "Unsupported geometry type %s for path\n", OGRGeometryTypeToName(eGeomType));
-        return 1;
+        return OGRERR_FAILURE;
     }
 
     //create sorted list of repers
@@ -577,7 +576,7 @@ int CreatePartsFromLineString(OGRLineString* pPathGeom, OGRLayer* const poPkLaye
     if (moRepers.size() < 2)
     {
         fprintf(stderr, "Not enough repers to proceed\n");
-        return 1;
+        return OGRERR_FAILURE;
     }
 
     //check direction
@@ -867,13 +866,13 @@ int CreatePartsFromLineString(OGRLineString* pPathGeom, OGRLayer* const poPkLaye
         fprintf(stdout, "\nSuccess!\n\n");
     }
 
-    return 0;
+    return OGRERR_NONE;
 }
 
 //------------------------------------------------------------------------
 // CreateParts
 //------------------------------------------------------------------------
-int CreateParts(OGRLayer* const poLnLayer, OGRLayer* const poPkLayer, int nMValField, double dfStep, OGRLayer* const poOutLayer, int bDisplayProgress, int bQuiet, const char* pszOutputSepFieldName = NULL, const char* pszOutputSepFieldValue = NULL)
+OGRErr CreateParts(OGRLayer* const poLnLayer, OGRLayer* const poPkLayer, int nMValField, double dfStep, OGRLayer* const poOutLayer, int bDisplayProgress, int bQuiet, const char* pszOutputSepFieldName = NULL, const char* pszOutputSepFieldValue = NULL)
 {
 
 
@@ -882,7 +881,7 @@ int CreateParts(OGRLayer* const poLnLayer, OGRLayer* const poPkLayer, int nMValF
     if (wkbFlatten(eGeomType) != wkbLineString && wkbFlatten(eGeomType) != wkbMultiLineString)
     {
         fprintf(stderr, "Unsupported geometry type %s for path\n", OGRGeometryTypeToName(eGeomType));
-        return 1;
+        return OGRERR_FAILURE;
     }
 
     poLnLayer->ResetReading();
@@ -905,10 +904,10 @@ int CreateParts(OGRLayer* const poLnLayer, OGRLayer* const poPkLayer, int nMValF
             {
                 OGRLineString* pPath = (OGRLineString*)pGeomColl->getGeometryRef(i)->clone();
                 pPath->assignSpatialReference(pGeomColl->getSpatialReference());
-                if (CreatePartsFromLineString(pPath, poPkLayer, nMValField, dfStep, poOutLayer, bDisplayProgress, bQuiet, pszOutputSepFieldName, pszOutputSepFieldValue) != 0)
-                    return 1;
+                if (CreatePartsFromLineString(pPath, poPkLayer, nMValField, dfStep, poOutLayer, bDisplayProgress, bQuiet, pszOutputSepFieldName, pszOutputSepFieldValue) != OGRERR_NONE)
+                    return OGRERR_FAILURE;
             }
-            return 0;
+            return OGRERR_NONE;
         }
         else
         {
@@ -921,14 +920,14 @@ int CreateParts(OGRLayer* const poLnLayer, OGRLayer* const poPkLayer, int nMValF
         OGRFeature::DestroyFeature(pPathFeature);
     }
 
-
-    return 1;
+    //should never reach
+    return OGRERR_FAILURE;
 }
 
 //------------------------------------------------------------------------
 // CreatePartsMultiple
 //------------------------------------------------------------------------
-int CreatePartsMultiple(OGRLayer* const poLnLayer, const char* pszLineSepFieldName, OGRLayer* const poPkLayer, const char* pszPicketsSepFieldName, int nMValField, double dfStep, OGRLayer* const poOutLayer, const char* pszOutputSepFieldName, int bDisplayProgress, int bQuiet)
+OGRErr CreatePartsMultiple(OGRLayer* const poLnLayer, const char* pszLineSepFieldName, OGRLayer* const poPkLayer, const char* pszPicketsSepFieldName, int nMValField, double dfStep, OGRLayer* const poOutLayer, const char* pszOutputSepFieldName, int bDisplayProgress, int bQuiet)
 {
     //read all sep field values into array
     std::set<CPLString> asIDs;
@@ -938,7 +937,7 @@ int CreatePartsMultiple(OGRLayer* const poLnLayer, const char* pszLineSepFieldNa
     if (nLineSepFieldInd == -1)
     {
         fprintf(stderr, "The field %s not found\n", pszLineSepFieldName);
-        return 1;
+        return OGRERR_FAILURE;
     }
 
     poLnLayer->ResetReading();
@@ -954,31 +953,30 @@ int CreatePartsMultiple(OGRLayer* const poLnLayer, const char* pszLineSepFieldNa
     for (std::set<CPLString>::const_iterator it = asIDs.begin(); it != asIDs.end(); ++it)
     {
         //create select clause
-        //int ntest1 = poLnLayer->GetFeatureCount();
         CPLString sLineWhere;
         sLineWhere.Printf("%s = \"%s\"", pszLineSepFieldName, it->c_str());
         poLnLayer->SetAttributeFilter(sLineWhere);
-        //int ntest2 = poLnLayer->GetFeatureCount();
 
-        //ntest1 = poPkLayer->GetFeatureCount();
         CPLString sPkWhere;
         sPkWhere.Printf("%s = \"%s\"", pszPicketsSepFieldName, it->c_str());
         poPkLayer->SetAttributeFilter(sPkWhere);
-        //ntest2 = poPkLayer->GetFeatureCount();
 
         if (!bQuiet)
         {
             fprintf(stdout, "The %s %s\n", pszPicketsSepFieldName, it->c_str());
         }
 
+        //don't check success as we want to try all paths
         CreateParts(poLnLayer, poPkLayer, nMValField, dfStep, poOutLayer, bDisplayProgress, bQuiet, pszOutputSepFieldName, *it);
     }
+
+    return OGRERR_NONE;
 }
 
 //------------------------------------------------------------------------
 // GetPosition
 //------------------------------------------------------------------------
-int GetPosition(OGRLayer* const poPkLayer, double dfX, double dfY, int bDisplayProgress, int bQuiet)
+OGRErr GetPosition(OGRLayer* const poPkLayer, double dfX, double dfY, int bDisplayProgress, int bQuiet)
 {
     //create point
     OGRPoint pt;
@@ -1024,13 +1022,13 @@ int GetPosition(OGRLayer* const poPkLayer, double dfX, double dfY, int bDisplayP
         fprintf(stdout, "The position for coordinates lat:%f, long:%f is %f\n", dfY, dfX, dfRefDist);
     }
 
-    return 0;
+    return OGRERR_NONE;
 }
 
 //------------------------------------------------------------------------
 // GetCoordinates
 //------------------------------------------------------------------------
-int GetCoordinates(OGRLayer* const poPkLayer, double dfPos, int bDisplayProgress, int bQuiet)
+OGRErr GetCoordinates(OGRLayer* const poPkLayer, double dfPos, int bDisplayProgress, int bQuiet)
 {
     CPLString szAttributeFilter;
     szAttributeFilter.Printf("%s < %f AND %s > %f", FIELD_START, dfPos, FIELD_FINISH, dfPos);
@@ -1064,12 +1062,12 @@ int GetCoordinates(OGRLayer* const poPkLayer, double dfPos, int bDisplayProgress
 
     if (bHaveCoords)
     {
-        return 0;
+        return OGRERR_NONE;
     }
     else
     {
         fprintf(stderr, "Get coordinates for position %f failed\n", dfPos);
-        return 1;
+        return OGRERR_FAILURE;
     }
 }
 
@@ -1084,7 +1082,7 @@ int GetCoordinates(OGRLayer* const poPkLayer, double dfPos, int bDisplayProgress
 int main( int nArgc, char ** papszArgv )
 
 {
-    int          nRetCode = 0;
+    OGRErr       eErr = OGRERR_NONE;
     int          bQuiet = FALSE;
     const char  *pszFormat = "ESRI Shapefile";
 
@@ -1434,7 +1432,7 @@ int main( int nArgc, char ** papszArgv )
             }    
 
             //do the work
-            nRetCode = CreatePartsMultiple(poLnLayer, pszLineSepFieldName, poPkLayer, pszPicketsSepFieldName, nMValField, dfStep, poOutLayer, pszOutputSepFieldName, bDisplayProgress, bQuiet);
+            eErr = CreatePartsMultiple(poLnLayer, pszLineSepFieldName, poPkLayer, pszPicketsSepFieldName, nMValField, dfStep, poOutLayer, pszOutputSepFieldName, bDisplayProgress, bQuiet);
         }
         else
         {
@@ -1446,7 +1444,7 @@ int main( int nArgc, char ** papszArgv )
             }     
         
             //do the work
-            nRetCode = CreateParts(poLnLayer, poPkLayer, nMValField, dfStep, poOutLayer, bDisplayProgress, bQuiet);
+            eErr = CreateParts(poLnLayer, poPkLayer, nMValField, dfStep, poOutLayer, bDisplayProgress, bQuiet);
         }
         
         //clean up        
@@ -1508,7 +1506,7 @@ int main( int nArgc, char ** papszArgv )
         }  
 
         //do the work
-        nRetCode = GetPosition(poPartsLayer, dfX, dfY, bDisplayProgress, bQuiet);
+        eErr = GetPosition(poPartsLayer, dfX, dfY, bDisplayProgress, bQuiet);
 
         //clean up
         OGRDataSource::DestroyDataSource(poPartsDS);
@@ -1562,7 +1560,7 @@ int main( int nArgc, char ** papszArgv )
             exit( 1 );    
         }     
         //do the work
-        nRetCode = GetCoordinates(poPartsLayer, dfPos, bDisplayProgress, bQuiet);
+        eErr = GetCoordinates(poPartsLayer, dfPos, bDisplayProgress, bQuiet);
 
         //clean up
         OGRDataSource::DestroyDataSource(poPartsDS);
@@ -1672,7 +1670,7 @@ int main( int nArgc, char ** papszArgv )
         }
 
         //do the work
-        nRetCode = CreateSubline(poPartsLayer, dfPosBeg, dfPosEnd, poOutLayer, bDisplayProgress, bQuiet);
+        eErr = CreateSubline(poPartsLayer, dfPosBeg, dfPosEnd, poOutLayer, bDisplayProgress, bQuiet);
 
         //clean up        
         OGRDataSource::DestroyDataSource(poPartsDS);
@@ -1700,6 +1698,6 @@ int main( int nArgc, char ** papszArgv )
     malloc_dump(1);
 #endif
     
-    return nRetCode;
+    return eErr == OGRERR_NONE ? 0 : 1;
 }
 
