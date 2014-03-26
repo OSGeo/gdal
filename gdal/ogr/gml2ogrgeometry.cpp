@@ -1155,13 +1155,6 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
                         poMPoly->addGeometryDirectly( poPolygon );
                     }
                 }
-                else
-                {
-                    CPLError( CE_Failure, CPLE_AppDefined, "Invalid %s",
-                                    BareGMLElement(psChild->pszValue));
-                    delete poMPoly;
-                    return NULL;
-                }
             }
             else if (psChild->eType == CXT_Element
                 && EQUAL(BareGMLElement(psChild->pszValue),"surfaceMembers") )
@@ -1255,23 +1248,23 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
                 OGRPoint *poPoint;
 
                 if (psPointChild != NULL)
+                {
                     poPoint = (OGRPoint *) 
                         GML2OGRGeometry_XMLNode( psPointChild, bGetSecondaryGeometryOption,
                                                  nRecLevel + 1);
-                else
-                    poPoint = NULL;
-                if( poPoint == NULL 
-                    || wkbFlatten(poPoint->getGeometryType()) != wkbPoint )
-                {
-                    CPLError( CE_Failure, CPLE_AppDefined, 
-                              "MultiPoint: Got %.500s geometry as pointMember instead of POINT",
-                              poPoint ? poPoint->getGeometryName() : "NULL" );
-                    delete poPoint;
-                    delete poMP;
-                    return NULL;
-                }
+                    if( poPoint == NULL 
+                        || wkbFlatten(poPoint->getGeometryType()) != wkbPoint )
+                    {
+                        CPLError( CE_Failure, CPLE_AppDefined, 
+                                "MultiPoint: Got %.500s geometry as pointMember instead of POINT",
+                                poPoint ? poPoint->getGeometryName() : "NULL" );
+                        delete poPoint;
+                        delete poMP;
+                        return NULL;
+                    }
 
-                poMP->addGeometryDirectly( poPoint );
+                    poMP->addGeometryDirectly( poPoint );
+                }
             }
             else if (psChild->eType == CXT_Element
                 && EQUAL(BareGMLElement(psChild->pszValue),"pointMembers") )
@@ -1384,25 +1377,31 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
                     psCurve = FindBareXMLChild( psChild, "LineString" );
                 if( psCurve == NULL )
                 {
-                    CPLError( CE_Failure, CPLE_AppDefined, 
-                              "Failed to get curve element in curveMember" );
-                    delete poMLS;
-                    return NULL;
+                    if( GetChildElement(psChild) != NULL )
+                    {
+                        CPLError( CE_Failure, CPLE_AppDefined, 
+                                "Failed to get curve element in curveMember" );
+                        delete poMLS;
+                        return NULL;
+                    }
                 }
-                poGeom = GML2OGRGeometry_XMLNode( psCurve, bGetSecondaryGeometryOption,
-                                                  nRecLevel + 1);
-                if( poGeom == NULL ||
-                    ( wkbFlatten(poGeom->getGeometryType()) != wkbLineString ) )
+                else
                 {
-                    CPLError( CE_Failure, CPLE_AppDefined, 
-                              "MultiCurve: Got %.500s geometry as Member instead of LINESTRING.",
-                              poGeom ? poGeom->getGeometryName() : "NULL" );
-                    if( poGeom != NULL ) delete poGeom;
-                    delete poMLS;
-                    return NULL;
-                }
+                    poGeom = GML2OGRGeometry_XMLNode( psCurve, bGetSecondaryGeometryOption,
+                                                    nRecLevel + 1);
+                    if( poGeom == NULL ||
+                        ( wkbFlatten(poGeom->getGeometryType()) != wkbLineString ) )
+                    {
+                        CPLError( CE_Failure, CPLE_AppDefined, 
+                                "MultiCurve: Got %.500s geometry as Member instead of LINESTRING.",
+                                poGeom ? poGeom->getGeometryName() : "NULL" );
+                        if( poGeom != NULL ) delete poGeom;
+                        delete poMLS;
+                        return NULL;
+                    }
 
-                poMLS->addGeometryDirectly( (OGRLineString *)poGeom );
+                    poMLS->addGeometryDirectly( (OGRLineString *)poGeom );
+                }
             }
             else if (psChild->eType == CXT_Element
                 && EQUAL(BareGMLElement(psChild->pszValue),"curveMembers") )
@@ -1562,20 +1561,20 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
                 OGRGeometry *poGeom;
 
                 if (psGeometryChild != NULL)
+                {
                     poGeom = GML2OGRGeometry_XMLNode( psGeometryChild, bGetSecondaryGeometryOption,
                                                       nRecLevel + 1 );
-                else
-                    poGeom = NULL;
-                if( poGeom == NULL )
-                {
-                    CPLError( CE_Failure, CPLE_AppDefined, 
-                              "GeometryCollection: Failed to get geometry in geometryMember" );
-                    delete poGeom;
-                    delete poGC;
-                    return NULL;
-                }
+                    if( poGeom == NULL )
+                    {
+                        CPLError( CE_Failure, CPLE_AppDefined, 
+                                "GeometryCollection: Failed to get geometry in geometryMember" );
+                        delete poGeom;
+                        delete poGC;
+                        return NULL;
+                    }
 
-                poGC->addGeometryDirectly( poGeom );
+                    poGC->addGeometryDirectly( poGeom );
+                }
             }
         }
 
