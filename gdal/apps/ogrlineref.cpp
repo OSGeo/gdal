@@ -813,7 +813,7 @@ int CreatePartsFromLineString(OGRLineString* pPathGeom, OGRLayer* const poPkLaye
             nCount++;
         }
 
-        for (int j = 0; j < astSubLines.size(); j++)
+        for (int j = 0; j < (int)astSubLines.size(); j++)
         {
             if (astSubLines[j].IsInside(dfDist))
             {
@@ -875,7 +875,7 @@ int CreatePartsFromLineString(OGRLineString* pPathGeom, OGRLayer* const poPkLaye
 //------------------------------------------------------------------------
 int CreateParts(OGRLayer* const poLnLayer, OGRLayer* const poPkLayer, int nMValField, double dfStep, OGRLayer* const poOutLayer, int bDisplayProgress, int bQuiet, const char* pszOutputSepFieldName = NULL, const char* pszOutputSepFieldValue = NULL)
 {
-    OGRLineString* pPathGeom = NULL;
+
 
     //check path and get first line
     OGRwkbGeometryType eGeomType = poLnLayer->GetGeomType();
@@ -897,11 +897,11 @@ int CreateParts(OGRLayer* const poLnLayer, OGRLayer* const poPkLayer, int nMValF
         {
             if (!bQuiet)
             {
-                fprintf(stdout, "\nThe geometry %d is wkbMultiLineString type\n", pPathFeature->GetFID());
+                fprintf(stdout, "\nThe geometry %ld is wkbMultiLineString type\n", pPathFeature->GetFID());
             }
 
             OGRGeometryCollection* pGeomColl = (OGRGeometryCollection*)pGeom;
-            for (size_t i = 0; i < pGeomColl->getNumGeometries(); ++i)
+            for (int i = 0; i < pGeomColl->getNumGeometries(); ++i)
             {
                 OGRLineString* pPath = (OGRLineString*)pGeomColl->getGeometryRef(i)->clone();
                 pPath->assignSpatialReference(pGeomColl->getSpatialReference());
@@ -1104,12 +1104,6 @@ int main( int nArgc, char ** papszArgv )
     
     char        **papszDSCO = NULL, **papszLCO = NULL;
     
-    const char  *pszOutputSRSDef = NULL;
-    const char  *pszSourceSRSDef = NULL;
-    OGRSpatialReference *poOutputSRS = NULL;
-    int         bNullifyOutputSRS = FALSE;
-    OGRSpatialReference *poSourceSRS = NULL;
-
     operation stOper = op_unknown;
     double dfX(-100000000), dfY(-100000000), dfPos(-100000000);
 
