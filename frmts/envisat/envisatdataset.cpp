@@ -28,6 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "timedelta.hpp"
+#include "adsrange.hpp"
 #include "rawdataset.h"
 #include "cpl_string.h"
 #include "ogr_srs_api.h"
@@ -169,6 +171,8 @@ class EnvisatDataset : public RawDataset
     void        ScanForGCPs_ASAR();
     void        ScanForGCPs_MERIS();
 
+    void        UnwrapGCPs(); 
+
     void	CollectMetadata( EnvisatFile_HeaderFlag );
     void        CollectDSDMetadata();
     void        CollectADSMetadata();
@@ -262,6 +266,18 @@ const GDAL_GCP *EnvisatDataset::GetGCPs()
 {
     return pasGCPList;
 }
+
+/************************************************************************/
+/*                         UnwrapGCPs()                                 */
+/************************************************************************/
+
+/* external C++ implementation of the in-place unwrapper */
+void EnvisatUnwrapGCPs( int nGCPCount, GDAL_GCP *pasGCPList ) ;
+
+void  EnvisatDataset::UnwrapGCPs()
+{ 
+    EnvisatUnwrapGCPs( nGCPCount, pasGCPList ) ;
+} 
 
 /************************************************************************/
 /*                          ScanForGCPs_ASAR()                          */
@@ -386,7 +402,8 @@ void EnvisatDataset::ScanForGCPs_ASAR()
 void EnvisatDataset::ScanForGCPs_MERIS()
 
 {
-    int		nDatasetIndex, nNumDSR, nDSRSize, iRecord;
+    int		nDatasetIndex, nNumDSR, nDSRSize;
+    bool    isBrowseProduct ; 
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a meaningful geolocation grid?  Seach for a          */
@@ -428,41 +445,109 @@ void EnvisatDataset::ScanForGCPs_MERIS()
     nTPPerLine = (GetRasterXSize() + nSamplesPerTiePoint - 1)
         / nSamplesPerTiePoint;
 
-    if( (GetRasterYSize() + nLinesPerTiePoint - 1)
-        / nLinesPerTiePoint != nTPPerColumn )
+/* -------------------------------------------------------------------- */
+/*      Find a Mesurement type dataset to use as a reference raster     */
+/*      band.                                                           */
+/* -------------------------------------------------------------------- */
+
+    int		nMDSIndex;
+
+    for( nMDSIndex = 0; TRUE; nMDSIndex++ )
     {
-        CPLDebug( "EnvisatDataset", "Got %d instead of %d nTPPerColumn.",
-                  (GetRasterYSize()+nLinesPerTiePoint-1)/nLinesPerTiePoint,
-                  nTPPerColumn );
-        return;
+        char *pszDSType;
+        if( EnvisatFile_GetDatasetInfo( hEnvisatFile, nMDSIndex,
+            NULL, &pszDSType, NULL, NULL, NULL, NULL, NULL ) == FAILURE )
+        {
+            CPLDebug("EnvisatDataset",
+                            "Unable to find MDS in Envisat file.") ;
+            return ;
+    }
+        if( EQUAL(pszDSType,"M") ) break;
     }
 
-    if( 50*nTPPerLine + 13 != nDSRSize )
+/* -------------------------------------------------------------------- */
+/*      Get subset of TP ADS records matching the MDS records	*/
+/* -------------------------------------------------------------------- */
+
+    /* get the MDS line sampling time interval */
+    TimeDelta tdMDSSamplingInterval( 0 , 0 ,  
+        EnvisatFile_GetKeyValueAsInt( hEnvisatFile, SPH,
+                                      "LINE_TIME_INTERVAL", 0  ) );
+
+    /* get range of TiePoint ADS records matching the measurements */
+    ADSRangeLastAfter arTP( *hEnvisatFile , nDatasetIndex, 
+        nMDSIndex , tdMDSSamplingInterval ) ; 
+    
+    /* check if there are any TPs to be used */ 
+    if ( arTP.getDSRCount() <= 0 )
     {
-        CPLDebug( "EnvisatDataset",
-                  "DSRSize=%d instead of expected %d for tiepoints ADS.",
-                  nDSRSize, 50*nTPPerLine + 13 );
+        CPLDebug( "EnvisatDataset" , "No tiepoint covering "
+            "the measurement records." ) ;
+        return; /* No TPs - no extraction. */
+    } 
+
+    /* check if TPs cover the whole range of MDSRs */
+    if(( arTP.getFirstOffset() < 0 )||( arTP.getLastOffset() < 0 ))
+    {
+        CPLDebug( "EnvisatDataset" , "The tiepoints do not cover "
+            "whole range of measurement records." ) ;
+        /* Not good but we can still extract some of the TPS, can we? */
+    }
+
+    /* check TP records spacing */
+    if ((1+(arTP.getFirstOffset()+arTP.getLastOffset()+GetRasterYSize()-1) 
+           / nLinesPerTiePoint ) != arTP.getDSRCount() )
+    {
+        CPLDebug( "EnvisatDataset", "Not enough tieponts per column! "
+            "received=%d expected=%d", nTPPerColumn , 
+                1 + (arTP.getFirstOffset()+arTP.getLastOffset()+
+                      GetRasterYSize()-1) / nLinesPerTiePoint ) ; 
+        return; /* That is far more serious - we risk missplaces TPs. */
+    }
+
+    if ( 50*nTPPerLine + 13 == nDSRSize ) /* regular product */
+    {
+        isBrowseProduct = false ; 
+    } 
+    else if ( 8*nTPPerLine + 13 == nDSRSize ) /* browse product */
+    { 
+        /* although BPs are rare there is no reason not to support them */
+        isBrowseProduct = true ; 
+    } 
+    else 
+    {
+        CPLDebug( "EnvisatDataset", "Unexpectd size of 'Tie points ADS' !"
+                " received=%d expected=%d or %d" , nDSRSize ,
+                50*nTPPerLine+13, 8*nTPPerLine+13 ) ;
         return;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Collect the first GCP set from each record.			*/
 /* -------------------------------------------------------------------- */
-    GByte	*pabyRecord = (GByte *) CPLMalloc(nDSRSize);
+
+    GByte	*pabyRecord = (GByte *) CPLMalloc(nDSRSize-13);
     int  	iGCP;
-    GUInt32 	unValue;
+
+    GUInt32 *tpLat = ((GUInt32*)pabyRecord) + nTPPerLine*0 ; /* latitude */  
+    GUInt32 *tpLon = ((GUInt32*)pabyRecord) + nTPPerLine*1 ; /* longitude */  
+    GUInt32 *tpLtc = ((GUInt32*)pabyRecord) + nTPPerLine*4 ; /* lat. DEM correction */
+    GUInt32 *tpLnc = ((GUInt32*)pabyRecord) + nTPPerLine*5 ; /* lon. DEM correction */ 
 
     nGCPCount = 0;
-    pasGCPList = (GDAL_GCP *)
-        CPLCalloc(sizeof(GDAL_GCP),nNumDSR * nTPPerLine);
+    pasGCPList = (GDAL_GCP *) CPLCalloc( sizeof(GDAL_GCP), 
+                                        arTP.getDSRCount() * nTPPerLine );
 
-    for( iRecord = 0; iRecord < nNumDSR; iRecord++ )
+    for( int ir = 0 ; ir < arTP.getDSRCount() ; ir++ )
     {
-        if( EnvisatFile_ReadDatasetRecord( hEnvisatFile, nDatasetIndex,
-                                           iRecord, pabyRecord ) != SUCCESS )
-            continue;
+        int iRecord = ir + arTP.getFirstIndex() ; 
 
-        memcpy( &unValue, pabyRecord + 13, 4 );
+        double dfGCPLine = 0.5 + 
+            ( iRecord*nLinesPerTiePoint - arTP.getFirstOffset() ) ; 
+
+        if( EnvisatFile_ReadDatasetRecordChunk( hEnvisatFile, nDatasetIndex,
+                    iRecord , pabyRecord, 13 , -1 ) != SUCCESS )
+            continue;
 
         for( iGCP = 0; iGCP < nTPPerLine; iGCP++ )
         {
@@ -475,17 +560,21 @@ void EnvisatDataset::ScanForGCPs_MERIS()
             sprintf( szId, "%d", nGCPCount+1 );
             pasGCPList[nGCPCount].pszId = CPLStrdup( szId );
 
-            memcpy( &unValue, pabyRecord + 13 + nTPPerLine*4 + iGCP*4, 4 );
-            pasGCPList[nGCPCount].dfGCPX =
-                ((int)CPL_MSBWORD32(unValue))*0.000001;
+            #define INT32(x)    ((GInt32)CPL_MSBWORD32(x)) 
 
-            memcpy( &unValue, pabyRecord + 13 + iGCP*4, 4 );
-            pasGCPList[nGCPCount].dfGCPY =
-                ((int)CPL_MSBWORD32(unValue))*0.000001;
-
+            pasGCPList[nGCPCount].dfGCPX = 1e-6*INT32(tpLon[iGCP]) ; 
+            pasGCPList[nGCPCount].dfGCPY = 1e-6*INT32(tpLat[iGCP]) ; 
             pasGCPList[nGCPCount].dfGCPZ = 0.0;
 
-            pasGCPList[nGCPCount].dfGCPLine = iRecord*nLinesPerTiePoint + 0.5;
+            if( !isBrowseProduct ) /* add DEM corrections */
+            { 
+                pasGCPList[nGCPCount].dfGCPX += 1e-6*INT32(tpLnc[iGCP]) ; 
+                pasGCPList[nGCPCount].dfGCPY += 1e-6*INT32(tpLtc[iGCP]) ; 
+            } 
+
+            #undef INT32
+
+            pasGCPList[nGCPCount].dfGCPLine = dfGCPLine ; 
             pasGCPList[nGCPCount].dfGCPPixel = iGCP*nSamplesPerTiePoint + 0.5;
 
             nGCPCount++;
@@ -1060,6 +1149,9 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->ScanForGCPs_MERIS();
     else
         poDS->ScanForGCPs_ASAR();
+
+    /* unwrap GCPs for products crossing date border */
+    poDS->UnwrapGCPs();
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
