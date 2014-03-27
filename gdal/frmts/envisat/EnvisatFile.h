@@ -101,6 +101,11 @@ int EnvisatFile_SetDatasetInfo( EnvisatFile *self,
                                 int num_dsr,
                                 int dsr_size );
                               
+int EnvisatFile_ReadDatasetRecordChunk( EnvisatFile *self, 
+                                    int ds_index,
+                                    int record_index,
+                                    void *buffer, 
+                                    int offset, int size ) ;
 int EnvisatFile_ReadDatasetRecord( EnvisatFile *self, 
                                    int ds_index,
                                    int record_index, 
