@@ -146,8 +146,8 @@ ADSRangeLastAfter::ADSRangeLastAfter( EnvisatFile & envfile,
     mjd_last = t_ads_prev ; /* set time of the last rec. if no match */
 
     /* valuate the line offsets */
-    off_first = round( ( mjd_m_first - mjd_first ) / line_interval ) ; 
-    off_last  = round( ( mjd_last  - mjd_m_last  ) / line_interval ) ; 
+    off_first = (int)floor( 0.5 + ( mjd_m_first - mjd_first ) / line_interval ) ; 
+    off_last  = (int)floor( 0.5 + ( mjd_last  - mjd_m_last  ) / line_interval ) ; 
 
 } ;
 
