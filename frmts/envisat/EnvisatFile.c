@@ -1508,41 +1508,97 @@ Returns:
 
 -----------------------------------------------------------------------------*/
 
+int EnvisatFile_ReadDatasetRecordChunk(EnvisatFile*,int,int,void*,int,int);
+
 int EnvisatFile_ReadDatasetRecord( EnvisatFile *self, 
                                     int ds_index,
                                     int record_index,
                                     void *buffer )
+{
+    return EnvisatFile_ReadDatasetRecordChunk( self, 
+                ds_index, record_index, buffer, 0 , -1 ) ; 
+} 
 
+/*-----------------------------------------------------------------------------
+
+Name:
+    EnvisatFile_ReadDatasetRecordChunk()
+
+Purpose:
+    Read a part of an arbitrary dataset record.
+
+Description:
+    Note that no range checking is made on dataset's offset and size, 
+    and data may be read from outside the dataset if they are inappropriate.
+
+Inputs:
+    self -- the file to be searched.
+    ds_index -- the index of dataset to access.
+    record_index -- the record to write.
+    record_buffer -- buffer to load data into
+    offset -- chunk offset relative to the record start (zerro offset)
+    size -- chunk size (set -1 to read from offset to the records' end)  
+
+Outputs:
+
+Returns:
+    SUCCESS or FAILURE
+
+-----------------------------------------------------------------------------*/
+
+int EnvisatFile_ReadDatasetRecordChunk( EnvisatFile *self, 
+                                    int ds_index,
+                                    int record_index,
+                                    void *buffer, 
+                                    int offset, int size )
 {
     int		absolute_offset;
     int         result;
+    int     dsr_size = self->ds_info[ds_index]->dsr_size ; 
+
+    if (( offset < 0 )||(offset > dsr_size))
+    {
+        SendError( "Invalid chunk offset in "
+                   "EnvisatFile_ReadDatasetRecordChunk()" );
+        return FAILURE;
+    } 
+
+    if ( size < 0 ) 
+        size = dsr_size - offset ; 
 
     if( ds_index < 0 || ds_index >= self->ds_count )
     {
-        SendError( "Attempt to write non-existant dataset in "
-                   "EnvisatFile_WriteDatasetRecord()" );
+        SendError( "Attempt to read non-existant dataset in "
+                   "EnvisatFile_ReadDatasetRecordChunk()" );
         return FAILURE;
     }
 
     if( record_index < 0
         || record_index >=  self->ds_info[ds_index]->num_dsr )
     {
-        SendError( "Attempt to write beyond end of dataset in "
-                   "EnvisatFile_WriteDatasetRecord()" );
+        SendError( "Attempt to read beyond end of dataset in "
+                   "EnvisatFile_ReadDatasetRecordChunk()" );
+        return FAILURE;
+    }
+
+    if( (offset + size) > dsr_size )
+    {
+        SendError( "Attempt to read beyond the record's boundary"
+                   "EnvisatFile_ReadDatasetRecord()" );
         return FAILURE;
     }
 
     absolute_offset = self->ds_info[ds_index]->ds_offset
-        + record_index * self->ds_info[ds_index]->dsr_size;
+        + record_index * dsr_size + offset ;
 
     if( VSIFSeekL( self->fp, absolute_offset, SEEK_SET ) != 0 )
     {
-        SendError( "seek failed in EnvisatFile_WriteDatasetRecord()" );
+        SendError( "seek failed in EnvisatFile_ReadDatasetRecordChunk()" );
         return FAILURE;
     }
 
-    result = VSIFReadL( buffer, 1, self->ds_info[ds_index]->dsr_size, self->fp );
-    if( result != self->ds_info[ds_index]->dsr_size )
+    result = VSIFReadL( buffer, 1, size, self->fp );
+    if( result != size )
     {
         SendError( "read failed in EnvisatFile_ReadDatasetRecord()" );
         return FAILURE;
