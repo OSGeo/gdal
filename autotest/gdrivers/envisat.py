@@ -33,6 +33,7 @@ import os
 import sys
 import gzip
 from osgeo import gdal
+import numpy as np
 
 sys.path.append( '../pymod' )
 
@@ -362,6 +363,41 @@ class TestEnvisatMERIS(TestEnvisat):
 
         return 'success'
 
+    def test_envisat_meris_4( self ):
+        # test DEM corrections (see #5423)
+
+        if not self.download_file():
+            return 'skip'
+
+        ds = gdal.Open(os.path.join('tmp', 'cache', self.fileName))
+        if ds is None:
+            return 'fail'
+
+        gcp_values = [
+            (gcp.Id, gcp.GCPLine, gcp.GCPPixel, gcp.GCPX, gcp.GCPY, gcp.GCPZ)
+            for gcp in ds.GetGCPs()
+        ]
+
+        ref = [
+            ('1', 0.5, 0.5, 6.484722, 47.191889, 0.0),
+            ('2', 0.5, 16.5, 6.279611, 47.245535999999994, 0.0),
+            ('3', 0.5, 32.5, 6.074068, 47.298809, 0.0),
+            ('4', 0.5, 48.5, 5.868156999999999, 47.351724999999995, 0.0),
+            ('5', 0.5, 64.5, 5.661817999999999, 47.404264999999995, 0.0),
+            ('6', 0.5, 80.5, 5.455087999999999, 47.456436, 0.0),
+            ('7', 0.5, 96.5, 5.247959, 47.508236000000004, 0.0),
+            ('8', 0.5, 112.5, 5.04043, 47.559663, 0.0),
+            ('9', 0.5, 128.5, 4.8324869999999995, 47.61071, 0.0),
+            ('10', 0.5, 144.5, 4.624124, 47.66137499999999, 0.0),
+        ]
+
+        for r, v in zip(ref, gcp_values):
+            if not np.allclose(r[1:], v[1:]):
+                gdaltest.post_reason('Wrong GCP coordinates.')
+                return 'failure'
+
+        return 'success'
+
 
 ut1 = TestEnvisatASAR(
     'http://earth.esa.int/services/sample_products/asar/DS1/WS/ASA_WS__BPXPDE20020714_100425_000001202007_00380_01937_0053.N1.gz',
@@ -388,6 +424,7 @@ gdaltest_list = [
     ut2.test_envisat_meris_1,
     ut2.test_envisat_meris_2,
     ut2.test_envisat_meris_3,
+    ut2.test_envisat_meris_4,
 ]
 
 
