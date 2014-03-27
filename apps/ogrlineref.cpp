@@ -412,19 +412,35 @@ OGRErr AddFeature(OGRLayer* const poOutLayer, OGRLineString* pPart, double dfFro
 OGRErr CreateSubline(OGRLayer* const poPkLayer, double dfPosBeg, double dfPosEnd, OGRLayer* const poOutLayer, int bDisplayProgress, int bQuiet)
 {
     OGRFeature* pFeature = NULL;
+    double dfBeg, dfEnd, dfStep;
     //get step
     poPkLayer->ResetReading();
     pFeature = poPkLayer->GetNextFeature();
-    //get second part
-    pFeature = poPkLayer->GetNextFeature();
-    if (pFeature == NULL)
+    if (NULL != pFeature)
+    {
+        dfBeg = pFeature->GetFieldAsDouble(FIELD_START);
+        dfEnd = pFeature->GetFieldAsDouble(FIELD_FINISH);
+        OGRFeature::DestroyFeature(pFeature);
+    }
+    else
     {
         fprintf(stderr, "Get step for positions %f - %f failed\n", dfPosBeg, dfPosEnd);
         return OGRERR_FAILURE;
     }
-    double dfBeg = pFeature->GetFieldAsDouble(FIELD_START);
-    double dfEnd = pFeature->GetFieldAsDouble(FIELD_FINISH);
-    double dfStep = dfEnd - dfBeg;
+    //get second part
+    pFeature = poPkLayer->GetNextFeature();
+    if (NULL != pFeature)
+    {
+        dfBeg = pFeature->GetFieldAsDouble(FIELD_START);
+        dfEnd = pFeature->GetFieldAsDouble(FIELD_FINISH);
+        OGRFeature::DestroyFeature(pFeature);
+    }
+    else
+    {
+        fprintf(stderr, "Get step for positions %f - %f failed\n", dfPosBeg, dfPosEnd);
+        return OGRERR_FAILURE;
+    }
+    dfStep = dfEnd - dfBeg;
 
     //round input to step
     CPLString szAttributeFilter;
@@ -865,6 +881,12 @@ OGRErr CreatePartsFromLineString(OGRLineString* pPathGeom, OGRLayer* const poPkL
     {
         fprintf(stdout, "\nSuccess!\n\n");
     }
+    
+    if (NULL != pProgressArg)
+    {
+        GDALDestroyScaledProgress(pProgressArg);
+    }
+
 
     return OGRERR_NONE;
 }
@@ -874,14 +896,14 @@ OGRErr CreatePartsFromLineString(OGRLineString* pPathGeom, OGRLayer* const poPkL
 //------------------------------------------------------------------------
 OGRErr CreateParts(OGRLayer* const poLnLayer, OGRLayer* const poPkLayer, int nMValField, double dfStep, OGRLayer* const poOutLayer, int bDisplayProgress, int bQuiet, const char* pszOutputSepFieldName = NULL, const char* pszOutputSepFieldValue = NULL)
 {
-
+    OGRErr eRetCode = OGRERR_FAILURE;
 
     //check path and get first line
     OGRwkbGeometryType eGeomType = poLnLayer->GetGeomType();
     if (wkbFlatten(eGeomType) != wkbLineString && wkbFlatten(eGeomType) != wkbMultiLineString)
     {
         fprintf(stderr, "Unsupported geometry type %s for path\n", OGRGeometryTypeToName(eGeomType));
-        return OGRERR_FAILURE;
+        return eRetCode;
     }
 
     poLnLayer->ResetReading();
@@ -904,24 +926,27 @@ OGRErr CreateParts(OGRLayer* const poLnLayer, OGRLayer* const poPkLayer, int nMV
             {
                 OGRLineString* pPath = (OGRLineString*)pGeomColl->getGeometryRef(i)->clone();
                 pPath->assignSpatialReference(pGeomColl->getSpatialReference());
-                if (CreatePartsFromLineString(pPath, poPkLayer, nMValField, dfStep, poOutLayer, bDisplayProgress, bQuiet, pszOutputSepFieldName, pszOutputSepFieldValue) != OGRERR_NONE)
-                    return OGRERR_FAILURE;
+                eRetCode = CreatePartsFromLineString(pPath, poPkLayer, nMValField, dfStep, poOutLayer, bDisplayProgress, bQuiet, pszOutputSepFieldName, pszOutputSepFieldValue);
+
+                if (eRetCode != OGRERR_NONE)
+                {
+                    OGRFeature::DestroyFeature(pPathFeature);
+                    return eRetCode;
+                }
             }
-            return OGRERR_NONE;
         }
         else
         {
             if (NULL != pGeom)
             {
-                return CreatePartsFromLineString((OGRLineString*)pGeom->clone(), poPkLayer, nMValField, dfStep, poOutLayer, bDisplayProgress, bQuiet, pszOutputSepFieldName, pszOutputSepFieldValue);
+                eRetCode = CreatePartsFromLineString((OGRLineString*)pGeom->clone(), poPkLayer, nMValField, dfStep, poOutLayer, bDisplayProgress, bQuiet, pszOutputSepFieldName, pszOutputSepFieldValue);
             }
         }
 
         OGRFeature::DestroyFeature(pPathFeature);
     }
 
-    //should never reach
-    return OGRERR_FAILURE;
+    return eRetCode;
 }
 
 //------------------------------------------------------------------------
@@ -1008,6 +1033,11 @@ OGRErr GetPosition(OGRLayer* const poPkLayer, double dfX, double dfY, int bDispl
         OGRFeature::DestroyFeature(pFeature);
     }
 
+    if(NULL == pCloserPart)
+    {
+        fprintf(stderr, "Filed to find closest part\n");
+        return OGRERR_FAILURE;
+    }
     //now we have closest part
     //get real distance
     double dfRealDist = pCloserPart->Project(&pt);
