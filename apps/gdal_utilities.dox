@@ -213,8 +213,8 @@ of metadata strings.</dd>
 <dt> <b>-nrat</b></dt><dd> Suppress printing of raster attribute table.</dd>
 <dt> <b>-noct</b></dt><dd> Suppress printing of color table.</dd>
 <dt> <b>-checksum</b></dt><dd> Force computation of the checksum for each band in the dataset.</dd>
-<dt> <b>-listmdd</b></dt><dd> (GDAL >= 2.0) List all metadata domains available for the dataset.</dd>
-<dt> <b>-mdd domain</b></dt><dd> Report metadata for the specified domain. Starting with GDAL 2.0,
+<dt> <b>-listmdd</b></dt><dd> (GDAL >= 1.11) List all metadata domains available for the dataset.</dd>
+<dt> <b>-mdd domain</b></dt><dd> Report metadata for the specified domain. Starting with GDAL 1.11,
 "all" can be used to report metadata in all domains</dd>
 <dt> <b>-nofl</b></dt><dd> (GDAL >= 1.9.0) Only display the first file of the
 file list.</dd>
@@ -347,15 +347,15 @@ input pixels values from the range <i>src_min</i> to <i>src_max</i> to
 the range <i>dst_min</i> to <i>dst_max</i>.  If omitted the output range is
 0 to 255.  If omitted the input range is automatically computed from the
 source data.
-Before GDAL 2.0, it can be specified only once, and in that case, it applies to
+Before GDAL 1.11, it can be specified only once, and in that case, it applies to
 all bands of the output dataset.
-Starting with GDAL 2.0, -scale can be repeated several times (if specified only once,
+Starting with GDAL 1.11, -scale can be repeated several times (if specified only once,
 it also applies to all bands of the output dataset), so as to specify per band parameters.
 It is also possible to use the "-scale_bn" syntax where bn is a band number
 (e.g. "-scale_2" for the 2nd band of the output dataset) to specify the parameters of
 one or several specific bands.
 </dd>
-<dt> <b>-exponent</b> <i> exp_val</i>:</dt><dd> (From GDAL 2.0) To apply non-linear scaling
+<dt> <b>-exponent</b> <i> exp_val</i>:</dt><dd> (From GDAL 1.11) To apply non-linear scaling
 with a power function. exp_val is the exponent of the power function (must be postive). This option
 must be used with the -scale option.
 If specified only once, -exponent applies to all bands of the output image.
@@ -405,7 +405,7 @@ output.</dd>
 output files.  Use with formats like HDF or OGDI that have subdatasets.
 The output file naming scheme has changed in GDAL 1.11 (e.g. ofile_1.tif, ofile_2.tif).</dd>
 <dt> <b>-stats</b>:</dt><dd> (GDAL >= 1.8.0) Force (re)computation of statistics.</dd>
-<dt> <b>-norat</b></dt><dd> (GDAL >= 2.0) Do not copy source RAT into destination dataset.</dd>
+<dt> <b>-norat</b></dt><dd> (GDAL >= 1.11) Do not copy source RAT into destination dataset.</dd>
 <dt> <i>src_dataset</i>:</dt><dd>The source dataset name. It can be either
 file name, URL of data source or subdataset name for multi-dataset files.</dd>
 <dt> <i>dst_dataset</i>:</dt><dd> The destination file name.</dd>
@@ -596,7 +596,7 @@ raster.  This output is suitable for use with <a href="http://mapserver.org/">Ma
 tileindex. 
 
 <dl>
-<dt><b>-f</b> format:</dt><dd> (GDAL >= 2.0)
+<dt><b>-f</b> format:</dt><dd> (GDAL >= 1.11)
 <p>The OGR format of the output tile index file. Default is Esri Shapefile.</p>
 </dd>
 <dt><b>-tileindex</b> field_name:</dt>
@@ -611,10 +611,10 @@ tileindex.
 <dt><b>-t_srs</b> target_srs:</dt>
 <dd><p>Geometries of input files will be transformed to the desired target coordinate reference system. Using this option generates files that are not compatible with MapServer &lt; 6.4. Default creates simple rectangular polygons in the same coordinate reference system as the input rasters.</p>
 </dd>
-<dt><b>-src_srs_name</b> field_name:</dt><dd> (GDAL >= 2.0) 
+<dt><b>-src_srs_name</b> field_name:</dt><dd> (GDAL >= 1.11) 
 <p>The name of the field to store the SRS of each tile. This field name can be used as the value of the TILESRS keyword in MapServer &gt;= 6.4.</p>
 </dd>
-<dt><b>-src_srs_format</b> type:</dt><dd> (GDAL >= 2.0) 
+<dt><b>-src_srs_format</b> type:</dt><dd> (GDAL >= 1.11) 
 <p>The format in which the SRS of each tile must be written. Types can be AUTO, WKT, EPSG, PROJ.</p>
 </dd>
 <dt><b>-lyr_name</b> name:</dt>

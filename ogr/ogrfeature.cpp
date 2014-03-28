@@ -473,7 +473,7 @@ OGRGeometryH OGR_F_StealGeometry( OGRFeatureH hFeat )
  *
  * This method is the same as the C function OGR_F_GetGeometryRef().
  * 
- * Starting with GDAL 2.0, this is equivalent to calling
+ * Starting with GDAL 1.11, this is equivalent to calling
  * OGRFeature::GetGeomFieldRef(0).
  *
  * @return pointer to internal feature geometry.  This object should
@@ -525,7 +525,7 @@ OGRGeometryH OGR_F_GetGeometryRef( OGRFeatureH hFeat )
  * @return pointer to internal feature geometry.  This object should
  * not be modified.
  *
- * @since GDAL 2.0
+ * @since GDAL 1.11
  */
 OGRGeometry *OGRFeature::GetGeomFieldRef(int iField)
 
@@ -548,7 +548,7 @@ OGRGeometry *OGRFeature::GetGeomFieldRef(int iField)
  * @return pointer to internal feature geometry.  This object should
  * not be modified.
  *
- * @since GDAL 2.0
+ * @since GDAL 1.11
  */
 OGRGeometry *OGRFeature::GetGeomFieldRef(const char* pszFName)
 
@@ -574,7 +574,7 @@ OGRGeometry *OGRFeature::GetGeomFieldRef(const char* pszFName)
  * @return an handle to internal feature geometry.  This object should
  * not be modified.
  *
- * @since GDAL 2.0
+ * @since GDAL 1.11
  */
 
 OGRGeometryH OGR_F_GetGeomFieldRef( OGRFeatureH hFeat, int iField )
@@ -607,7 +607,7 @@ OGRGeometryH OGR_F_GetGeomFieldRef( OGRFeatureH hFeat, int iField )
  * or OGR_UNSUPPORTED_GEOMETRY_TYPE if the geometry type is illegal for the
  * OGRFeatureDefn (checking not yet implemented). 
  *
- * @since GDAL 2.0
+ * @since GDAL 1.11
  */ 
 
 OGRErr OGRFeature::SetGeomFieldDirectly( int iField, OGRGeometry * poGeomIn )
@@ -646,7 +646,7 @@ OGRErr OGRFeature::SetGeomFieldDirectly( int iField, OGRGeometry * poGeomIn )
  * or OGR_UNSUPPORTED_GEOMETRY_TYPE if the geometry type is illegal for the
  * OGRFeatureDefn (checking not yet implemented).
  *
- * @since GDAL 2.0
+ * @since GDAL 1.11
  */ 
 
 OGRErr OGR_F_SetGeomFieldDirectly( OGRFeatureH hFeat, int iField,
@@ -681,7 +681,7 @@ OGRErr OGR_F_SetGeomFieldDirectly( OGRFeatureH hFeat, int iField,
  * or OGR_UNSUPPORTED_GEOMETRY_TYPE if the geometry type is illegal for the
  * OGRFeatureDefn (checking not yet implemented).
  *
- * @since GDAL 2.0
+ * @since GDAL 1.11
  */ 
 
 OGRErr OGRFeature::SetGeomField( int iField, OGRGeometry * poGeomIn )
@@ -933,7 +933,7 @@ int OGR_F_GetFieldIndex( OGRFeatureH hFeat, const char *pszName )
  *
  * @return count of geometry fields.
  *
- * @since GDAL 2.0
+ * @since GDAL 1.11
  */
 
 /************************************************************************/
@@ -950,7 +950,7 @@ int OGR_F_GetFieldIndex( OGRFeatureH hFeat, const char *pszName )
  * @param hFeat handle to the feature to get the geometry fields count from.
  * @return count of geometry fields.
  *
- * @since GDAL 2.0
+ * @since GDAL 1.11
  */
 
 int OGR_F_GetGeomFieldCount( OGRFeatureH hFeat )
@@ -977,7 +977,7 @@ int OGR_F_GetGeomFieldCount( OGRFeatureH hFeat )
  * @return the field definition (from the OGRFeatureDefn).  This is an
  * internal reference, and should not be deleted or modified.
  *
- * @since GDAL 2.0
+ * @since GDAL 1.11
  */
 
 /************************************************************************/
@@ -995,7 +995,7 @@ int OGR_F_GetGeomFieldCount( OGRFeatureH hFeat )
  * @return an handle to the field definition (from the OGRFeatureDefn).
  * This is an internal reference, and should not be deleted or modified.
  *
- * @since GDAL 2.0
+ * @since GDAL 1.11
  */
 
 OGRGeomFieldDefnH OGR_F_GetGeomFieldDefnRef( OGRFeatureH hFeat, int i )
@@ -1023,7 +1023,7 @@ OGRGeomFieldDefnH OGR_F_GetGeomFieldDefnRef( OGRFeatureH hFeat, int i )
  *
  * @return the geometry field index, or -1 if no matching geometry field is found.
  *
- * @since GDAL 2.0
+ * @since GDAL 1.11
  */
 
 /************************************************************************/
@@ -1042,7 +1042,7 @@ OGRGeomFieldDefnH OGR_F_GetGeomFieldDefnRef( OGRFeatureH hFeat, int i )
  *
  * @return the geometry field index, or -1 if no matching geometry field is found.
  *
- * @since GDAL 2.0
+ * @since GDAL 1.11
  */
 
 int OGR_F_GetGeomFieldIndex( OGRFeatureH hFeat, const char *pszName )

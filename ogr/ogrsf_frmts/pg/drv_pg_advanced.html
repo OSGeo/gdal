@@ -40,9 +40,9 @@ active_schema=bar_schema, 2 layers will be listed : 'foo' (implicetly within 'ba
 
 Starting with GDAL 1.6.0, the PostgreSQL driver supports accessing tables with multiple PostGIS geometry columns.
 
-<h3> OGR &gt;= 2.0 </h3>
+<h3> OGR &gt;= 1.11 </h3>
 
-OGR 2.0 supports reading, updating, creating tables with multiple PostGIS
+OGR 1.11 supports reading, updating, creating tables with multiple PostGIS
 geometry columns (following
 <a href="http://trac.osgeo.org/gdal/wiki/rfc41_multiple_geometry_fields">RFC 41</a>)
 
@@ -52,7 +52,7 @@ fields as there are geometry columns in the table.<p>
 For backward compatibility, it is also possible to query a layer with GetLayerByName()
 with a name formatted like 'foo(bar)' where 'foo' is a table and 'bar' a geometry column.<p>
 
-<h3> OGR &lt; 2.0 </h3>
+<h3> OGR &lt; 1.11 </h3>
 
 For such a table, there will be as many layers reported as the number of geometry columns listed for that
 table in the <i>geometry_columns</i> table.

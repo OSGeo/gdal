@@ -1654,7 +1654,7 @@ static void GDALGridJobProcess(void* user_data)
  * This can provide substantial speed-up, but sometimes at the expense of
  * reduced floating point precision. This can be disabled by setting the
  * GDAL_USE_SSE configuration option to NO.
- * Starting with GDAL 2.0, a further optimized version can use the AVX
+ * Starting with GDAL 1.11, a further optimized version can use the AVX
  * instruction set. This can be disabled by setting the GDAL_USE_AVX
  * configuration option to NO.
  * 

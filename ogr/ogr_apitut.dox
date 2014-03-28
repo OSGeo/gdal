@@ -212,7 +212,7 @@ For each 2D geometry type there is a corresponding 2.5D type code.  The 2D
 and 2.5D geometry cases are handled by the same C++ class, so our code will
 handle 2D or 3D cases properly.  
 
-Starting with OGR 2.0,
+Starting with OGR 1.11,
 <a href="http://trac.osgeo.org/gdal/wiki/rfc41_multiple_geometry_fields">
 several geometry fields</a> can be associated to a feature.
 
@@ -949,7 +949,7 @@ while len(linelist) == 3:
 ds = None
 \endcode
 
-Starting with OGR 2.0,
+Starting with OGR 1.11,
 <a href="http://trac.osgeo.org/gdal/wiki/rfc41_multiple_geometry_fields">
 several geometry fields</a> can be associated to a feature. This capability
 is just available for a few file formats, such as PostGIS.
