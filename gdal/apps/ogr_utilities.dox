@@ -54,7 +54,7 @@ and return the result.</dd>
 Starting with GDAL 1.10, the "SQLITE" dialect can also be used with any datasource.</dd>
 <dt> <b>-spat</b> <i>xmin ymin xmax ymax</i>:</dt><dd> The area of interest.  Only
 features within the rectangle will be reported.</dd>
-<dt> <b>-geomfield</b> <i>field</i>:</dt><dd> (OGR &gt;= 2.0) Name of the geometry field
+<dt> <b>-geomfield</b> <i>field</i>:</dt><dd> (OGR &gt;= 1.11) Name of the geometry field
 on which the spatial filter operates on.</dd>
 <dt> <b>-fid</b> <i>fid</i>:</dt><dd> If provided, only the feature with this feature
 id will be reported.  Operates exclusive of the spatial or attribute 
@@ -224,7 +224,7 @@ new</dd>
 fields from input layer to copy to the new layer. A field is skipped if
 mentioned previously in the list even if the input layer has duplicate field
 names.  (Defaults to all; any field is skipped if a subsequent field with
-same name is found.) Starting with OGR 2.0, geometry fields can also be specified
+same name is found.) Starting with OGR 1.11, geometry fields can also be specified
 in the list.</dd>
 <dt> <b>-progress</b>:</dt><dd> (starting with GDAL 1.7.0) Display progress on terminal. Only works if input layers have the "fast feature count" capability.</dd>
 <dt> <b>-sql</b> <em>sql_statement</em>:</dt><dd> SQL statement to execute.
@@ -235,7 +235,7 @@ Starting with GDAL 1.10, the "SQLITE" dialect can also be used with any datasour
 <dt> <b>-skipfailures</b>:</dt><dd>Continue after a failure, skipping the failed feature.</dd>
 <dt> <b>-spat</b><em> xmin ymin xmax ymax</em>:</dt><dd> spatial query extents. Only features
 whose geometry intersects the extents will be selected. The geometries will not be clipped unless -clipsrc is specified</dd>
-<dt> <b>-geomfield</b> <i>field</i>:</dt><dd> (OGR &gt;= 2.0) Name of the geometry field
+<dt> <b>-geomfield</b> <i>field</i>:</dt><dd> (OGR &gt;= 1.11) Name of the geometry field
 on which the spatial filter operates on.</dd>
 <dt> <b>-dsco</b> <em>NAME=VALUE</em>:</dt><dd> Dataset creation option (format specific)</dd>
 <dt> <b>-lco</b><em>  NAME=VALUE</em>:</dt><dd> Layer creation option (format specific)</dd>
@@ -250,7 +250,7 @@ multilinestrings to multilinestrings. Can be usefull when converting shapefiles 
 (and other target drivers) that implements strict checks for geometry type.</dd>
 <dt> <b>-dim</b><em> val</em>:</dt><dd>(starting with GDAL 1.10) Force the coordinate dimension to val (valid values are 2 or 3).
 This affects both the layer geometry type, and feature geometries.
-Starting with GDAL 2.0, the value can be set to "layer_dim" to instruct feature geometries to be promoted
+Starting with GDAL 1.11, the value can be set to "layer_dim" to instruct feature geometries to be promoted
 to the coordinate dimension declared by the layer.
 </dd>
 <dt> <b>-a_srs</b><em> srs_def</em>:</dt><dd> Assign an output SRS</dd>
@@ -298,7 +298,7 @@ Used to create intermediate points</dd>
 specified type to a field of type string in the destination layer. Valid types are : Integer, Real, String, Date, Time,
 DateTime, Binary, IntegerList, RealList, StringList. Special value <b>All</b> can be used to convert all fields to strings.
 This is an alternate way to using the CAST operator of OGR SQL, that may avoid typing a long SQL query.</dd>
-<dt> <b>-unsetFieldWidth</b>:</dt><dd> (starting with GDAL 2.0) set field width and precision to 0.</dd>
+<dt> <b>-unsetFieldWidth</b>:</dt><dd> (starting with GDAL 1.11) set field width and precision to 0.</dd>
 <dt> <b>-splitlistfields</b>:</dt><dd>(starting with GDAL 1.8.0) split fields of type StringList, RealList or IntegerList into as many fields of type String, Real or Integer as necessary.</dd>
 <dt> <b>-maxsubfields</b> <em>val</em>:</dt><dd>To be combined with -splitlistfields to limit the number of subfields created for each split field.</dd>
 <dt> <b>-explodecollections</b>:</dt><dd>(starting with GDAL 1.8.0) produce one feature for each geometry in any kind of geometry collection in the source file</dd>
@@ -317,7 +317,7 @@ target layer definition in which the n(th) field of the source layer must be cop
 zero. There must be exactly as many values in the list as the count of the fields in the source layer. 
 We can use the 'identity' setting to specify that the fields should be transferred by using the same order. 
 This setting should be used along with the -append setting.</dd>
-<dt> <b>-addfields</b>:</dt><dd>(starting with GDAL 2.0) This is a specialized version of
+<dt> <b>-addfields</b>:</dt><dd>(starting with GDAL 1.11) This is a specialized version of
 -append. Contrary to -append, -addfields has the effect of adding, to existing target layers,
 the new fields found in source layers. This option is usefull when merging files that have non-strictly
 identical structures.

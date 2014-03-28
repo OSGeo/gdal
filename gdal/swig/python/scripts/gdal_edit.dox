@@ -26,7 +26,7 @@ Gives a brief usage message for the generic GDAL commandline options
 and exit.
 </dd>
 
-<dt> <b>-ro</b></dt>:<dd> (GDAL >= 2.0)
+<dt> <b>-ro</b></dt>:<dd> (GDAL >= 1.11)
 Open the dataset in read-only. Might be usefull for drivers refusing to
 use the dataset in update-mode. In which case, updated information will go
 into PAM .aux.xml files.</dd>

@@ -37,7 +37,7 @@ an <b>OGRVRTLayer</b> (or <b>OGRVRTWarpedLayer</b> or <b>OGRVRTUnionLayer</b> st
 with GDAL 1.10.0) child for each layer in the virtual datasource.<p>
 
 A <a href="http://svn.osgeo.org/gdal/trunk/gdal/data/ogrvrt.xsd">XML schema of the OGR VRT format</a>
-is available. Starting with GDAL 2.0, when GDAL is configured with libXML2 support, that
+is available. Starting with GDAL 1.11, when GDAL is configured with libXML2 support, that
 schema will be used to validate the VRT documents. Non-conformities will be reported only as
 warnings. That validation can be disabled by setting the GDAL_XML_VALIDATION configuration option to NO.<p>
 
@@ -118,7 +118,7 @@ whether the source geometry fields (the fields set in the <b>field</b>, <b>x</b>
 or <b>z</b> attributes) should be reported as fields of the VRT layer. It defaults to TRUE.
 If set to FALSE, the source geometry fields will only be used to build the geometry of the features of the VRT layer.</li>
 <p>
-Starting with OGR 2.0, the GeometryField element can be repeated as many times
+Starting with OGR 1.11, the GeometryField element can be repeated as many times
 as necessary to create multiple geometry fields. It accepts a <b>name</b>
 attribute (recommanded) that will be used to define the VRT geometry field name. When <b>encoding</b> is
 not specified, the <b>field</b> attribute will be used to determine the corresponding
@@ -211,7 +211,7 @@ Those elements are used to define the extent of the layer. This can be usefull o
 getting the extent from the source layer is slow.</li>
 <br>
 
-<li> <b>WarpedGeomFieldName</b> (optional, from GDAL 2.0) : The value of this element
+<li> <b>WarpedGeomFieldName</b> (optional, from GDAL 1.11) : The value of this element
 is the geometry field name of the source layer to wrap. If not specified, the first geometry
 field will be used. If there are several geometry fields, only the one matching
 WarpedGeomFieldName will be warped; the other ones will be untouched.</li>
@@ -257,7 +257,7 @@ may be <b>FirstLayer</b> to use the fields from the first layer found,
 is not supported in the context of a OGRVRTUnionLayer element (field names are assumed to be identical).</li>
 <br>
 
-<li> <b>GeometryField</b> (optional, exclusive with <b>FieldStrategy</b>, GDAL &gt;= 2.0) : the <b>name</b> attribute and
+<li> <b>GeometryField</b> (optional, exclusive with <b>FieldStrategy</b>, GDAL &gt;= 1.11) : the <b>name</b> attribute and
 the following sub-elements <b>GeometryType</b>, <b>SRS</b> and <b>Extent[X|Y][Min|Max]</b> are available.</li>
 <br>
 
@@ -396,7 +396,7 @@ compiled with SQLite and Spatialite.<p>
 &lt;/OGRVRTDataSource&gt;
 </pre>
 
-<h2>Example: Multiple geometry fields (GDAL &gt;= 2.0)</h2>
+<h2>Example: Multiple geometry fields (GDAL &gt;= 1.11)</h2>
 
 <p>
 The following example will expose all the attribute and geometry fields of the

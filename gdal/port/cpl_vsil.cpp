@@ -867,7 +867,7 @@ int VSIFPutcL( int nChar, VSILFILE * fp )
  * 
  * @return TRUE in case of success.
  *
- * @since GDAL 2.0
+ * @since GDAL 1.11
  */
 
 int VSIIngestFile( VSILFILE* fp,

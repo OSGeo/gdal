@@ -1831,7 +1831,7 @@ by the OGRSFDriverManager.
  be passed indicating that the current spatial filter should be cleared,
  but no new one instituted.
 
- @since GDAL 2.0
+ @since GDAL 1.11
  
  */
 
@@ -1872,7 +1872,7 @@ by the OGRSFDriverManager.
  be passed indicating that the current spatial filter should be cleared,
  but no new one instituted.
 
- @since GDAL 2.0
+ @since GDAL 1.11
  
  */
 
@@ -1906,7 +1906,7 @@ by the OGRSFDriverManager.
  @param dfMaxX the maximum X coordinate for the rectangular region.
  @param dfMaxY the maximum Y coordinate for the rectangular region.
  
- @since GDAL 2.0
+ @since GDAL 1.11
  */
 
 /** 
@@ -1941,7 +1941,7 @@ by the OGRSFDriverManager.
  @param dfMaxX the maximum X coordinate for the rectangular region.
  @param dfMaxY the maximum Y coordinate for the rectangular region.
  
- @since GDAL 2.0
+ @since GDAL 1.11
  */
 
 
@@ -2115,7 +2115,7 @@ by the OGRSFDriverManager.
  The returned object is owned by the OGRLayer and should not be modified
  or freed by the application.
  
- Starting with OGR 2.0, several geometry fields can be associated to a
+ Starting with OGR 1.11, several geometry fields can be associated to a
  feature definition. Each geometry field can have its own spatial reference
  system, which is returned by OGRGeomFieldDefn::GetSpatialRef().
  OGRLayer::GetSpatialRef() is equivalent to
@@ -2393,7 +2393,7 @@ FALSE.<p>
  <li> <b>OLCCreateField</b> / "CreateField": TRUE if this layer can create 
 new fields on the current layer using CreateField(), otherwise FALSE.<p>
 
- <li> <b>OLCCreateGeomField</b> / "CreateGeomField": (GDAL >= 2.0) TRUE if this layer can create 
+ <li> <b>OLCCreateGeomField</b> / "CreateGeomField": (GDAL >= 1.11) TRUE if this layer can create 
 new geometry fields on the current layer using CreateGeomField(), otherwise FALSE.<p>
 
  <li> <b>OLCDeleteField</b> / "DeleteField": TRUE if this layer can delete
@@ -2487,7 +2487,7 @@ FALSE.<p>
  <li> <b>OLCCreateField</b> / "CreateField": TRUE if this layer can create 
 new fields on the current layer using CreateField(), otherwise FALSE.<p>
 
- <li> <b>OLCCreateGeomField</b> / "CreateGeomField": (GDAL >= 2.0) TRUE if this layer can create 
+ <li> <b>OLCCreateGeomField</b> / "CreateGeomField": (GDAL >= 1.11) TRUE if this layer can create 
 new geometry fields on the current layer using CreateGeomField(), otherwise FALSE.<p>
 
  <li> <b>OLCDeleteField</b> / "DeleteField": TRUE if this layer can delete
@@ -3032,7 +3032,7 @@ form depending on the limitations of the format driver.
 
 @return OGRERR_NONE on success.
 
-@since OGR 2.0
+@since OGR 1.11
 */
  
 /**
@@ -3064,7 +3064,7 @@ form depending on the limitations of the format driver.
 
  @return OGRERR_NONE on success.
 
- @since OGR 2.0
+ @since OGR 1.11
 */
 
 /**
