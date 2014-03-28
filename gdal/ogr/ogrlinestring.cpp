@@ -1387,7 +1387,6 @@ OGRLineString* OGRLineString::getSubLine(double dfDistanceFrom, double dfDistanc
 
 {
     OGRLineString       *poNewLineString;
-    OGRPoint * poPoint;
     double      dfLength = 0;
     int         i;
 
