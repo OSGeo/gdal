@@ -820,9 +820,11 @@ def ogr_libkml_gxtrack():
     lyr = ds.GetLayer(0)
 
     feat = lyr.GetNextFeature()
-    if feat.GetGeometryRef().ExportToWkt() != 'LINESTRING (2 49,3 50)':
-        print(feat.GetGeometryRef().ExportToWkt())
-        gdaltest.post_reason('Unexpected geometry.')
+    if feat.GetField('begin') != '2013/05/28 12:00:00' or \
+       feat.GetField('end') != '2013/05/28 13:00:00' or \
+       feat.GetGeometryRef().ExportToWkt() != 'LINESTRING (2 49,3 50)':
+        feat.DumpReadable()
+        gdaltest.post_reason('failure')
         return 'fail'
     ds = None
 
