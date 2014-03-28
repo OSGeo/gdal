@@ -1830,7 +1830,7 @@ OGRErr OGRPGLayer::RunGetExtentRequest( OGREnvelope *psExtent, int bForce,
     if( ! hResult || PQresultStatus(hResult) != PGRES_TUPLES_OK || PQgetisnull(hResult,0,0) )
     {
         OGRPGClearResult( hResult );
-        CPLDebug("PG","Unable to get extent by PostGIS. Using standard OGRLayer method.");
+        CPLDebug("PG","Unable to get extent by PostGIS.");
         return OGRERR_FAILURE;
     }
 
