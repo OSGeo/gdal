@@ -7015,13 +7015,13 @@ void GTiffDataset::SaveICCProfile(GTiffDataset *pDS, TIFF *hTIFF, char **papszPa
                 }
             }
             CSLDestroy( papszTokens );
+
+            if (bOutputWhitepoint)
+            {
+                TIFFSetField(hTIFF, TIFFTAG_WHITEPOINT, pWP);
+            }
         }
         
-        if (bOutputWhitepoint)
-        {
-            TIFFSetField(hTIFF, TIFFTAG_WHITEPOINT, pWP);
-        }
-
         /* Set transfer function metadata */
         char const *pszTFRed = NULL;
         char const *pszTFGreen = NULL;
