@@ -293,11 +293,14 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
                 }
             }
             else if ((EQUAL(pszDeclType, "TIMESTAMP") ||
-                      EQUAL(pszDeclType, "DATETIME")) && nColType == SQLITE_TEXT)
+                      EQUAL(pszDeclType, "DATETIME")) &&
+                     (nColType == SQLITE_TEXT || nColType == SQLITE_NULL))
                 eFieldType = OFTDateTime;
-            else if (EQUAL(pszDeclType, "DATE") && nColType == SQLITE_TEXT)
+            else if (EQUAL(pszDeclType, "DATE") &&
+                     (nColType == SQLITE_TEXT || nColType == SQLITE_NULL))
                 eFieldType = OFTDate;
-            else if (EQUAL(pszDeclType, "TIME") && nColType == SQLITE_TEXT)
+            else if (EQUAL(pszDeclType, "TIME") &&
+                     (nColType == SQLITE_TEXT || nColType == SQLITE_NULL))
                 eFieldType = OFTTime;
         }
         else if( nColType == SQLITE_TEXT &&
