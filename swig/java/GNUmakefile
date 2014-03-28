@@ -1,5 +1,3 @@
-
-
 include ../../GDALmake.opt
 include java.opt
 
@@ -41,6 +39,11 @@ JAVA_OBJECTS = gdalconst_wrap.$(OBJ_EXT) gdal_wrap.$(OBJ_EXT) osr_wrap.$(OBJ_EXT
 clean:
 	-rm -f ${JAVA_MODULES}
 	-rm *.$(OBJ_EXT)
+	-rm .libs/*.so
+	-rm .libs/*.dylib
+	-rm *.so
+	-rm *.dylib
+
 	ant clean
 
 veryclean: clean
@@ -48,15 +51,31 @@ veryclean: clean
 	-rm -rf ${EXTRA_DIST}/*
 
 generate: makedir ${WRAPPERS}
-  
+
 build: generate ${JAVA_OBJECTS} ${JAVA_MODULES}
 ifeq ($(HAVE_LIBTOOL),yes)
-	-cp ./.libs/*.so ./
-endif
+
+	if [ -f ".libs/libgdaljni.so" ] ; then \
+		cp .libs/*.so . ; \
+	fi
+
+	echo "$(wildcard .libs/*.dylib)"
+
+	if [ -f ".libs/libgdaljni.dylib" ] ; then \
+		cp .libs/*.dylib . ; \
+	fi
+
+endif # HAVE_LIBTOOL=yes
 	ant
 
-install: generate
-	@echo "No installation to be done"
+install: build
+	if [ -f "libgdaljni.so" ] ; then \
+		for f in *.so; do $(INSTALL_LIB) $$f $(DESTDIR)$(INST_LIB) ; done ; \
+	fi
+
+	if [ -f "libgdaljni.dylib" ] ; then \
+		for f in *.dylib; do $(INSTALL_LIB) $$f $(DESTDIR)$(INST_LIB) ; done ; \
+	fi
 
 JAVA_RUN = java -Djava.library.path=. -cp gdal.jar:build/apps
 
