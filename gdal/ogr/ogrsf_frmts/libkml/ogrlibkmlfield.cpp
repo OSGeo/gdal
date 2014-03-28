@@ -56,6 +56,8 @@ using kmldom::GroundOverlayPtr;
 using kmldom::IconPtr;
 using kmldom::CameraPtr;
 
+using kmldom::GxTrackPtr;
+
 #include "ogr_libkml.h"
 
 #include "ogrlibkmlfield.h"
@@ -1179,6 +1181,34 @@ static const char* TrimSpaces(string& oText)
     return pszText;
 }
 
+/************************************************************************/
+/*                            kmldatetime2ogr()                         */
+/************************************************************************/
+
+static void kmldatetime2ogr( OGRFeature* poOgrFeat,
+                             const char* pszOGRField,
+                             const std::string& osKmlDateTime )
+{
+    int iField = poOgrFeat->GetFieldIndex ( pszOGRField );
+
+    if ( iField > -1 ) {
+        int nYear,
+            nMonth,
+            nDay,
+            nHour,
+            nMinute,
+            nTZ;
+        float fSecond;
+
+        if ( OGRParseXMLDateTime
+                ( osKmlDateTime.c_str (  ), &nYear, &nMonth, &nDay, &nHour,
+                &nMinute, &fSecond, &nTZ ) )
+            poOgrFeat->SetField ( iField, nYear, nMonth, nDay,
+                                    nHour, nMinute, ( int )fSecond,
+                                    nTZ );
+    }
+}
+
 /******************************************************************************
  function to read kml into ogr fields
 ******************************************************************************/
@@ -1224,26 +1254,7 @@ void kml2field (
 
             if ( poKmlTimeStamp->has_when (  ) ) {
                 const std::string oKmlWhen = poKmlTimeStamp->get_when (  );
-
-
-                int iField = poOgrFeat->GetFieldIndex ( oFC.tsfield );
-
-                if ( iField > -1 ) {
-                    int nYear,
-                        nMonth,
-                        nDay,
-                        nHour,
-                        nMinute,
-                        nTZ;
-                    float fSecond;
-
-                    if ( OGRParseXMLDateTime
-                         ( oKmlWhen.c_str (  ), &nYear, &nMonth, &nDay, &nHour,
-                           &nMinute, &fSecond, &nTZ ) )
-                        poOgrFeat->SetField ( iField, nYear, nMonth, nDay,
-                                              nHour, nMinute, ( int )fSecond,
-                                              nTZ );
-                }
+                kmldatetime2ogr(poOgrFeat, oFC.tsfield, oKmlWhen );
             }
         }
 
@@ -1256,56 +1267,17 @@ void kml2field (
 
             if ( poKmlTimeSpan->has_begin (  ) ) {
                 const std::string oKmlWhen = poKmlTimeSpan->get_begin (  );
-
-
-                int iField = poOgrFeat->GetFieldIndex ( oFC.beginfield );
-
-                if ( iField > -1 ) {
-                    int nYear,
-                        nMonth,
-                        nDay,
-                        nHour,
-                        nMinute,
-                        nTZ;
-                    float fSecond;
-
-                    if ( OGRParseXMLDateTime
-                         ( oKmlWhen.c_str (  ), &nYear, &nMonth, &nDay, &nHour,
-                           &nMinute, &fSecond, &nTZ ) )
-                        poOgrFeat->SetField ( iField, nYear, nMonth, nDay,
-                                              nHour, nMinute, ( int )fSecond,
-                                              nTZ );
-                }
+                kmldatetime2ogr(poOgrFeat, oFC.beginfield, oKmlWhen );
             }
 
             /***** end *****/
 
             if ( poKmlTimeSpan->has_end (  ) ) {
                 const std::string oKmlWhen = poKmlTimeSpan->get_end (  );
-
-
-                int iField = poOgrFeat->GetFieldIndex ( oFC.endfield );
-
-                if ( iField > -1 ) {
-                    int nYear,
-                        nMonth,
-                        nDay,
-                        nHour,
-                        nMinute,
-                        nTZ;
-                    float fSecond;
-
-                    if ( OGRParseXMLDateTime
-                         ( oKmlWhen.c_str (  ), &nYear, &nMonth, &nDay, &nHour,
-                           &nMinute, &fSecond, &nTZ ) )
-                        poOgrFeat->SetField ( iField, nYear, nMonth, nDay,
-                                              nHour, nMinute, ( int )fSecond,
-                                              nTZ );
-                }
+                kmldatetime2ogr(poOgrFeat, oFC.endfield, oKmlWhen );
             }
         }
     }
-
 
     /***** placemark *****/
     
@@ -1351,6 +1323,20 @@ void kml2field (
         if ( iField > -1 )
             poOgrFeat->SetField ( iField, nExtrude );
 
+        /***** special case for gx:Track ******/
+        /* we set the first timestamp as begin and the last one as end */
+        if ( poKmlGeometry->Type (  )  == kmldom::Type_GxTrack && 
+             !poKmlFeature->has_timeprimitive (  ) ) {
+            GxTrackPtr poKmlGxTrack = AsGxTrack ( poKmlGeometry );
+            size_t nCoords = poKmlGxTrack->get_gx_coord_array_size();
+            if( nCoords > 0 )
+            {
+                kmldatetime2ogr(poOgrFeat, oFC.beginfield,
+                            poKmlGxTrack->get_when_array_at ( 0 ).c_str() );
+                kmldatetime2ogr(poOgrFeat, oFC.endfield,
+                            poKmlGxTrack->get_when_array_at ( nCoords - 1 ).c_str() );
+            }
+        }
     }
     
     /***** camera *****/
