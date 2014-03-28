@@ -3110,3 +3110,59 @@ void OGRPGTableLayer::SetOverrideColumnTypes( const char* pszOverrideColumnTypes
     if( osCur.size() )
         papszOverrideColumnTypes = CSLAddString(papszOverrideColumnTypes, osCur);
 }
+
+/************************************************************************/
+/*                             GetExtent()                              */
+/*                                                                      */
+/*      For PostGIS use internal ST_EstimatedExtent(geometry) function  */
+/*      if bForce == 0                                                  */
+/************************************************************************/
+
+OGRErr OGRPGTableLayer::GetExtent( int iGeomField, OGREnvelope *psExtent, int bForce )
+{
+    CPLString   osCommand;
+
+    if( iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount() ||
+        GetLayerDefn()->GetGeomFieldDefn(iGeomField)->GetType() == wkbNone )
+    {
+        if( iGeomField != 0 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid geometry field index : %d", iGeomField);
+        }
+        return OGRERR_FAILURE;
+    }
+
+    OGRPGGeomFieldDefn* poGeomFieldDefn =
+        poFeatureDefn->myGetGeomFieldDefn(iGeomField);
+
+    const char* pszExtentFct;
+    // if bForce is 0 and ePostgisType is not GEOM_TYPE_GEOGRAPHY we can use 
+    // the ST_EstimatedExtent function which is quicker
+    // ST_EstimatedExtent was called ST_Estimated_Extent up to PostGIS 2.0.x
+    // ST_EstimatedExtent returns NULL in absence of statistics (an exception before 
+    //   PostGIS 1.5.4)
+    if ( bForce == 0 && TestCapability(OLCFastGetExtent) )
+    {
+        PGconn              *hPGConn = poDS->GetPGConn();
+
+        if ( poDS->sPostGISVersion.nMajor > 2 ||
+             ( poDS->sPostGISVersion.nMajor == 2 && poDS->sPostGISVersion.nMinor >= 1 ) )
+            pszExtentFct = "ST_EstimatedExtent";
+        else
+            pszExtentFct = "ST_Estimated_Extent";
+
+        osCommand.Printf( "SELECT %s(%s, %s, %s)",
+                        pszExtentFct,
+                        OGRPGEscapeString(hPGConn, pszSchemaName).c_str(),
+                        OGRPGEscapeString(hPGConn, pszTableName).c_str(),
+                        OGRPGEscapeString(hPGConn, poGeomFieldDefn->GetNameRef()).c_str() );
+
+        if( RunGetExtentRequest(psExtent, bForce, osCommand) == OGRERR_NONE )
+            return OGRERR_NONE;
+
+        CPLDebug("PG","Unable to get extimated extent by PostGIS. Trying real extent.");
+    }
+
+    return OGRPGLayer::GetExtent( iGeomField, psExtent, bForce );
+}
