@@ -865,6 +865,20 @@ def ogr_pg_19():
         print(extent)
         return 'fail'
 
+    estimated_extent = layer.GetExtent(force = 0)
+    if not gdaltest.pg_has_postgis:
+        # The OGRLayer default implementation in force = 0 returns error
+        if estimated_extent != (0, 0, 0, 0):
+            gdaltest.post_reason( 'Wrong estimated extent' )
+            print(extent)
+            return 'fail'
+    else:
+        # Better testing needed ?
+        if estimated_extent == (0, 0, 0, 0):
+            gdaltest.post_reason( 'Wrong estimated extent' )
+            print(extent)
+            return 'fail'
+
     return 'success'
 
 ###############################################################################
