@@ -157,7 +157,7 @@ public:
  * This object also can contain some other information such as a name, the
  * base geometry type and potentially other metadata.
  *
- * Starting with GDAL 2.0, in addition to attribute fields, it can also
+ * Starting with GDAL 1.11, in addition to attribute fields, it can also
  * contain multiple geometry fields.
  *
  * It is reasonable for different translators to derive classes from
