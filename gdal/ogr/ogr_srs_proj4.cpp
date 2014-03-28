@@ -1127,74 +1127,80 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
                 SetLinearUnits( "unknown", CPLAtofM(pszValue) );
         }
         /*
-        ** Units from cs2cs -lu (* indicates added to logic):
-        **
-        **     km 1000.                Kilometer*
-        **      m 1.                   Meter*
-        **     dm 1/10                 Decimeter*
-        **     cm 1/100                Centimeter*
-        **     mm 1/1000               Millimeter*
-        **    kmi 1852.0               International Nautical Mile*
-        **     in 0.0254               International Inch*
-        **     ft 0.3048               International Foot*
-        **     yd 0.9144               International Yard*
-        **     mi 1609.344             International Statute Mile*
-        **   fath 1.8288               International Fathom*
-        **     ch 20.1168              International Chain*
-        **   link 0.201168             International Link*
-        **  us-in 1./39.37             U.S. Surveyor's Inch*
-        **  us-ft 0.304800609601219    U.S. Surveyor's Foot*
-        **  us-yd 0.914401828803658    U.S. Surveyor's Yard*
-        **  us-ch 20.11684023368047    U.S. Surveyor's Chain*
-        **  us-mi 1609.347218694437    U.S. Surveyor's Statute Mile*
-        ** ind-yd 0.91439523           Indian Yard*
-        ** ind-ft 0.30479841           Indian Foot*
-        ** ind-ch 20.11669506          Indian Chain*
+        ** All units reported by cs2cs -lu are supported, fall back to meter.
         */
         else if( (pszValue = CSLFetchNameValue(papszNV, "units")) != NULL )
         {
             if( EQUAL(pszValue,"meter" ) || EQUAL(pszValue,"m") || EQUAL(pszValue,"metre") )
                 SetLinearUnits( SRS_UL_METER, 1.0 );
-            else if( EQUAL(pszValue,"km") )
-                SetLinearUnits( "kilometre", 1000.0 );
-            else if( EQUAL(pszValue,"us-ft" ) )
-                SetLinearUnits( SRS_UL_US_FOOT, CPLAtof(SRS_UL_US_FOOT_CONV) );
-            else if( EQUAL(pszValue,"ft" ) )
-                SetLinearUnits( SRS_UL_FOOT, CPLAtof(SRS_UL_FOOT_CONV) );
-            else if( EQUAL(pszValue,"yd" ) )
-                SetLinearUnits( pszValue, 0.9144 );
-            else if( EQUAL(pszValue,"us-yd" ) )
-                SetLinearUnits( pszValue, 0.914401828803658 );
-            else if( EQUAL(pszValue,"dm" ) )
-                SetLinearUnits( pszValue, 0.1 );
-            else if( EQUAL(pszValue,"cm" ) )
-                SetLinearUnits( pszValue, 0.01 );
-            else if( EQUAL(pszValue,"mm" ) )
-                SetLinearUnits( pszValue, 0.001 );
-            else if( EQUAL(pszValue,"kmi" ) )
-                SetLinearUnits( pszValue, CPLAtof(SRS_UL_NAUTICAL_MILE_CONV) );
-            else if( EQUAL(pszValue,"in" ) )
-                SetLinearUnits( pszValue, 0.0254 );
-            else if( EQUAL(pszValue,"mi" ) )
-                SetLinearUnits( pszValue, 1609.344 );
-            else if( EQUAL(pszValue,"fath" ) )
-                SetLinearUnits( pszValue, 1.8288 );
-            else if( EQUAL(pszValue,"ch" ) )
-                SetLinearUnits( pszValue, 20.1168 );
-            else if( EQUAL(pszValue,"link" ) )
-                SetLinearUnits( pszValue, 0.201168 );
-            else if( EQUAL(pszValue,"us-in" ) )
-                SetLinearUnits( pszValue, 1 / 39.37 );
-            else if( EQUAL(pszValue, "us-ch" ) )
-                SetLinearUnits( pszValue, 20.11684023368047 );
-            else if( EQUAL(pszValue, "us-mi" ) )
-                SetLinearUnits( pszValue, 1609.347218694437 );
-            else if( EQUAL(pszValue, "ind-yd" ) )
-                SetLinearUnits( pszValue, 0.91439523 );
-            else if( EQUAL(pszValue, "ind-ft" ) )
-                SetLinearUnits( pszValue, 0.30479841 );
-            else if( EQUAL(pszValue, "ind-ch" ) )
-                SetLinearUnits( pszValue, 20.11669506 );
+            /*
+            ** Leave as 'kilometre' instead of SRS_UL_KILOMETER due to
+            ** historical usage
+            */
+            else if( EQUAL( pszValue,"km") )
+                SetLinearUnits( "kilometre",
+                                CPLAtof( SRS_UL_KILOMETER_CONV ) );
+            else if( EQUAL( pszValue,"us-ft" ) )
+                SetLinearUnits( SRS_UL_US_FOOT,
+                                CPLAtof( SRS_UL_US_FOOT_CONV ) );
+            /*
+            ** Leave as 'Foot (International)' or SRS_UL_FOOT instead of
+            ** SRS_UL_INTL_FOOT due to historical usage
+            */
+            else if( EQUAL( pszValue,"ft" ) )
+                SetLinearUnits( SRS_UL_FOOT,
+                                CPLAtof( SRS_UL_FOOT_CONV) );
+            else if( EQUAL( pszValue,"yd" ) )
+                SetLinearUnits( SRS_UL_INTL_YARD,
+                                CPLAtof( SRS_UL_INTL_YARD_CONV ) );
+            else if( EQUAL( pszValue,"us-yd" ) )
+                SetLinearUnits( SRS_UL_US_YARD,
+                                CPLAtof( SRS_UL_US_YARD_CONV ) );
+            else if( EQUAL( pszValue,"dm" ) )
+                SetLinearUnits( SRS_UL_DECIMETER, 
+                                CPLAtof( SRS_UL_DECIMETER_CONV ) );
+            else if( EQUAL( pszValue,"cm" ) )
+                SetLinearUnits( SRS_UL_CENTIMETER,
+                                CPLAtof( SRS_UL_CENTIMETER_CONV ) );
+            else if( EQUAL( pszValue,"mm" ) )
+                SetLinearUnits( SRS_UL_MILLIMETER,
+                                CPLAtof( SRS_UL_MILLIMETER_CONV ) );
+            else if( EQUAL( pszValue,"kmi" ) )
+                SetLinearUnits( SRS_UL_INTL_NAUT_MILE,
+                                CPLAtof( SRS_UL_INTL_NAUT_MILE_CONV ) );
+            else if( EQUAL( pszValue,"in" ) )
+                SetLinearUnits( SRS_UL_INTL_INCH,
+                                CPLAtof( SRS_UL_INTL_INCH_CONV ) );
+            else if( EQUAL( pszValue,"mi" ) )
+                SetLinearUnits( SRS_UL_INTL_STAT_MILE,
+                                CPLAtof( SRS_UL_INTL_STAT_MILE_CONV ) );
+            else if( EQUAL( pszValue,"fath" ) )
+                SetLinearUnits( SRS_UL_INTL_FATHOM,
+                                CPLAtof( SRS_UL_INTL_FATHOM_CONV ) );
+            else if( EQUAL( pszValue,"ch" ) )
+                SetLinearUnits( SRS_UL_INTL_CHAIN,
+                                CPLAtof( SRS_UL_INTL_CHAIN_CONV ) );
+            else if( EQUAL( pszValue,"link" ) )
+                SetLinearUnits( SRS_UL_INTL_LINK,
+                                CPLAtof( SRS_UL_INTL_LINK_CONV ) );
+            else if( EQUAL( pszValue,"us-in" ) )
+                SetLinearUnits( SRS_UL_US_INCH,
+                                CPLAtof( SRS_UL_US_INCH_CONV ) );
+            else if( EQUAL( pszValue, "us-ch" ) )
+                SetLinearUnits( SRS_UL_US_CHAIN,
+                                CPLAtof( SRS_UL_US_CHAIN_CONV ) );
+            else if( EQUAL( pszValue, "us-mi" ) )
+                SetLinearUnits( SRS_UL_US_STAT_MILE,
+                                CPLAtof( SRS_UL_US_STAT_MILE_CONV ) );
+            else if( EQUAL( pszValue, "ind-yd" ) )
+                SetLinearUnits( SRS_UL_INDIAN_YARD,
+                                CPLAtof( SRS_UL_INDIAN_YARD_CONV ) );
+            else if( EQUAL( pszValue, "ind-ft" ) )
+                SetLinearUnits( SRS_UL_INDIAN_FOOT,
+                                CPLAtof( SRS_UL_INDIAN_FOOT_CONV ) );
+            else if( EQUAL( pszValue, "ind-ch" ) )
+                SetLinearUnits( SRS_UL_INDIAN_CHAIN,
+                                CPLAtof( SRS_UL_INDIAN_CHAIN_CONV ) );
             else // This case is untranslatable.  Should add all proj.4 unts
                 SetLinearUnits( pszValue, 1.0 );
         }
