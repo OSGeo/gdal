@@ -293,7 +293,7 @@ DestRect elements), but it provides support to rescale and offset
 the range of the source values. Certain regions of the source
 can be masked by specifying the NODATA value.
 
-Starting with GDAL 2.0, alternatively to linear scaling, non-linear
+Starting with GDAL 1.11, alternatively to linear scaling, non-linear
 scaling using a power function can be used by specifying the Exponent,
 SrcMin, SrcMax, DstMin and DstMax elements. If SrcMin and SrcMax are
 not specified, they are computed from the source minimum and maximum

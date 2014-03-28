@@ -677,7 +677,7 @@ Institute (GSI) Web Site.</a></p>
 
 <h2><a name="KRO">KRO -- KOLOR Raw format</a></h2>
 
-<p>(GDAL >= 2.0)</p>
+<p>(GDAL >= 1.11)</p>
 
 <p>Supported for read access, update and creation.
 This format is a binary raw format, that supports data of several depths (
@@ -945,7 +945,7 @@ stored as XML raw content in the xml:XMP metadata domain.</p>
 
 <h2>Color Profile Metadata</h2>
 
-<p>Starting with GDAL 2.0, GDAL can deal with the following color profile metadata in the COLOR_PROFILE domain:</p>
+<p>Starting with GDAL 1.11, GDAL can deal with the following color profile metadata in the COLOR_PROFILE domain:</p>
 <ul>
 <li>SOURCE_ICC_PROFILE (Base64 encoded ICC profile embedded in file. If available, other tags are ignored.)</li>
 <li>SOURCE_ICC_PROFILE_NAME : ICC profile name. sRGB is recognized as a special value.</li>
@@ -1208,7 +1208,7 @@ file with a common basename.  The .IMG file should be selected to access the dat
 system) products are single band images with a palette and georeferencing.
 </p>
 
-<p>Starting with GDAL 2.0, the Transmission Header File (.THF) can also be used as an input to GDAL. If the THF references more than one image,
+<p>Starting with GDAL 1.11, the Transmission Header File (.THF) can also be used as an input to GDAL. If the THF references more than one image,
 GDAL will report the images it is composed of as subdatasets. If the THF references just one image, GDAL will open it directly.</p>
 
 <p>NOTE: Implemented as <tt>gdal/frmts/adrg/srpdataset.cpp</tt>.</p>

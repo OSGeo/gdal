@@ -5014,7 +5014,7 @@ void GDALRasterBand::ReportError(CPLErr eErrClass, int err_no, const char *fmt, 
  * @return a virtual memory object that must be unreferenced by CPLVirtualMemFree(),
  *         or NULL in case of failure.
  *
- * @since GDAL 2.0
+ * @since GDAL 1.11
  */
 
 CPLVirtualMem  *GDALRasterBand::GetVirtualMemAuto( GDALRWFlag eRWFlag,
