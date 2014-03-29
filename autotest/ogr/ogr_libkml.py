@@ -1290,7 +1290,7 @@ def ogr_libkml_write_model():
         return 'fail'
 
     # This can only appear if HTTP ressource is available
-    if data.find('<targetHref>cube.gif</targetHref>') == -1 or \
+    if data.find('<targetHref>http://makc.googlecode.com/svn/trunk/flash/sandy_flar2/cube.gif</targetHref>') == -1 or \
        data.find('<sourceHref>cube.gif</sourceHref>') == -1:
 
         if gdaltest.gdalurlopen('http://makc.googlecode.com/svn/trunk/flash/sandy_flar2/cube.dae') is not None:
