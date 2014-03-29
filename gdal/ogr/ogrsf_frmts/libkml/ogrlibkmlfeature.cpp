@@ -576,9 +576,11 @@ FeaturePtr feat2kml (
             CSLTestBoolean(CPLGetConfigOption("LIBKML_ADD_RESOURCE_MAP", "TRUE")) )
         {
             VSILFILE* fp;
+            int bIsURL = FALSE;
             if( EQUALN(pszURL, "http://", strlen("http://")) ||
                 EQUALN(pszURL, "https://", strlen("https://")) )
             {
+                bIsURL = TRUE;
                 fp = VSIFOpenL(CPLSPrintf("/vsicurl/%s", pszURL), "rb");
             }
             else if( strstr(pszURL, ".kmz/") != NULL )
@@ -613,7 +615,10 @@ FeaturePtr feat2kml (
                                 if( resourceMap == NULL )
                                     resourceMap = poKmlFactory->CreateResourceMap();
                                 AliasPtr alias = poKmlFactory->CreateAlias();
-                                alias->set_targethref(osImage);
+                                if( bIsURL && CPLIsFilenameRelative(osImage) )
+                                    alias->set_targethref(CPLFormFilename(CPLGetPath(pszURL), osImage, NULL));
+                                else
+                                    alias->set_targethref(osImage);
                                 alias->set_sourcehref(osImage);
                                 resourceMap->add_alias(alias);
                             }
