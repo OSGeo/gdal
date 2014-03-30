@@ -1,4 +1,4 @@
-= GDAL/OGR 1.11.0 Release Notes (r25919 to r27026) =
+= GDAL/OGR 1.11.0 Release Notes (r25919 to r27113) =
 
 == In a nutshell... ==
 
@@ -11,7 +11,8 @@
     - OpenFileGDB: read-only support (no external dependency)
     - SXF driver: read-only support
     - WALK : read-only support
- * Significantly improved drivers: GML
+    - WasP : read-write support
+ * Significantly improved drivers: GML, LIBKML
  * RFC 40: enhanced RAT support (#5129)
  * RFC 41: multiple geometry fields support
  * RFC 42: OGR Layer laundered field lookup 
@@ -46,6 +47,7 @@ Build(Unix):
  * Fix parallel build in Python bindings (#5346)
  * PCIDSK: don't link against libjpeg if configured --without-jpeg
  * Update configure script to pick up ECW JP2 SDK 5.1 (#5390)
+ * add a 'make install' target for the Java bindings  (#5424)
 
 Build(Windows):
  * add option to generate VC project for x64 on makegdal_gen.bat
@@ -65,6 +67,7 @@ Port:
  * vsizip: allow additional extensions listed in CPL_VSIL_ZIP_ALLOWED_EXTENSIONS config option.
  * vsizip: improve UTF-8 support of filenames inside ZIP file (#5361)
  * vsizip: fix ZIP64 support
+ * vsigzip: reset EOF flag when doing a Seek() to be POSIX compliant
  * curl: add .netrc support
  * Windows CPLGetSymbol(): avoid dialog boxes to pop up when a DLL or one of its dependencies does not exist (#5211)
  * Add CPLOPrintf() and CPLOvPrintf() functions for easy CPLString formatting
@@ -131,6 +134,7 @@ Utilities:
  * gdalwarp: prevent from copying statistics metadata (#5319)
  * gdal_rasterize: set the progress bar to 100% even when there's nothing to do
  * gdal_grid: add support for diffferent types of geometries (#5341)
+ * gdal_grid: add  -z_increase and -z_multiply options
  * gdaldem: check that value of -z, -s, -az and -alt is numeric
  * gdalbuildvrt: validate values of -srcnodata and -vrtnodata arguments
  * gdal2tiles.py: Corrected OpenLayers code to reflect fix to geodetic resolution factor
@@ -143,6 +147,9 @@ Utilities:
  * gdalcompare.py: move to scripts
  * gdalcompare.py: ensure image dimensions match
  * gdal_ls.py: Fix issue with UTF-8 characters
+
+AAIGRID:
+ * revert DECIMAL_PRECISION and add SIGNIFICANT_DIGITS to CreateCopy() (#3732)
 
 AIGRID:
  * Turn off errors that can be triggered if the info has no VAT table related with this coverage (#3031)
@@ -159,6 +166,11 @@ DTED driver:
 ECW driver:
  * fix crash in GDALDeregister_ECW() with ECW SDK 5 called from GDALDestroy() (#5214)
  * fix issue with ECW_CLEVER optimization when nPixelSpace != sizeof eBufDataType (#5262)
+
+Envisat driver:
+ * implement more reliable way of extracting GCPs from Meris tie-points (#5423)
+ * add DEM corrections of TP-ADS products when present (#5423)
+ * workaround dateline discontinuity in GCPs so they can be used with GDAL warping transformers (#5423)
 
 ERS driver:
  * fix wrong interpretation of RegistrationCellX/RegistrationCellY (#2612, #3056, #5075)
@@ -190,6 +202,7 @@ GTiff driver:
  * gt_wkt_srs.cpp: fix compilation with external libgeotiff. The file is dependant of quite a few CPL stuff, don't try to pretend otherwise
  * implement GetVirtualMemAuto() for some formulations of TIFF files (RFC 45)
  * fix reading a single-strip TIFF file where the single strip is bigger than 2GB (32bit builds only) (#5403)
+ * look for .tab file before .wld/.tfw
 
 GTX driver:
  * Add nodata support (#4660)
@@ -248,6 +261,8 @@ JPEG driver:
  * give priority to PAM GeoTransform if it exists and other source of geotransform (.wld, .tab) also exists (#5352)
 
 KMLSuperOverlay driver:
+ * recognize an alternate structure for raster KMZ file made of a single doc.kml
+    and tiles whose name pattern is kml_image_L{level}_{j}_{i}.{png|jpg}
  * fix horrible speed performance in Open() (#5094)
  * fix crash at dataset closing and inability to read some big PNG tiles (#5154)
  * fix to generate files validating against OGC KML 2.2 schema
@@ -255,6 +270,9 @@ KMLSuperOverlay driver:
  * remove Region in root KML (ATC 41)
  * add NAME and DESCRIPTION creation options; read them back as metadata
  * add ALTITUDE and ALTITUDEMODE creation options
+ * directly write into .kmz file (instead of in temporary location)
+ * correctly write directories entry in .kmz file
+ * add progress callback
 
 L1B driver:
  * report correct values for GCP (#2403)
@@ -341,6 +359,7 @@ VRT driver:
  * Make GDALAutoCreateWarpedVRT() return NULL when GDALSuggestedWarpOutput() fails
  * VRTDataset::IRasterIO(): use source DatasetRasterIO even if band count is 1
  * VRTWarped: avoid setting up relative paths for things that aren't file-like
+ * make relativeToVRT=1 work with NITF_IM:, NETCDF:, HDF5:, RASTERLITE:
 
 WCS driver:
  * ensure C locale is enforced before parsing floating point values
@@ -370,6 +389,7 @@ Core:
  * OGRLineString::segmentize() : don't set 0 as z for interpolated points, but the z from the previous point
  * OGRLineString::setNumPoints() : add an optional argument to avoid zeroizing the arrays
  * Add OGRLineString::setZ()
+ * Add OGRLineString::Project() and OGRLineString::getSubline()
  * OGRPolygon: add stealExteriorRing() and stealInteriorRing(int iRing)
  * OGRLinearRing::isClockwise(): optimizations and make it work in a degenerated case when a vertex is used several times in the vertex list (#5342)
  * OGRLinearRing::isPointOnRingBoundary() : optimizations and take into account bTestEnvelope
@@ -409,6 +429,7 @@ OGRSpatialReference:
  * preserve authority when importing +init=auth_name:auth_code (e.g. +init=IGNF:LAMB93)
 
 Utilities:
+ * ogrlineref: new utility to deal with linear geometries.
  * ogrinfo: upgrade to support RFC 41 (multiple geometry fields)
  * ogr2ogr: upgrade to support RFC 41 (multiple geometry fields)
  * ogr2ogr: bump default value for -gt from 200 to 20000 (#5391)
@@ -496,9 +517,13 @@ GML driver:
  * open successfully GML datasources with 0 layers (#249, #5205)
  * fix tweaking of DescribeFeatureType requests
  * support reading WFS 2.0 GetFeature documents with wfs:FeatureCollection as a wfs:member of the top wfs:FeatureCollection
+ * fix for crash on certain xlink:href with GML_SKIP_RESOLVE_ELEMS=NONE (#5417)
  * GML geometry: fix duplicated points in GML_FACE_HOLE_NEGATIVE=YES mode (TopoSurface) (#5230)
  * GML geometry: accept CompositeSurface as a child of surfaceMembers (#5369)
  * GML geometry: join multilinestrings to linestrings in rings
+ * GML geometry: correctly deal with MultiSurface of Surface of PolygonPatch where a PolygonPatch has only interior ring(s) and no exterior ring (#5421)
+ * GML geometry: accept formulations of 'MULTIPOINT EMPTY, MULTILINESTRING EMPTY, MULTIPOLYGON EMPTY and GEOMETRYCOLLECTION EMPTY that are valid GML 3 (and accepted by PostGIS)
+ * GML geometry: make use of cs, ts and decimal attributes of (deprecated) gml:coordinates element
 
 GPX driver:
  * advertize OLCCreateField capability
@@ -513,18 +538,30 @@ KML driver:
  * in writing mode, avoid defining an extending schema for the name and description fields (related to #5208)
 
 LIBKML driver:
- * various checks and fixes related to OGC KML 2.2 Abstract Test Suite
+ * various checks, fixes and improvements related to OGC KML 2.2 Abstract Test Suite
  * add support for reading <gx:Track> as a LINESTRING (#5095)
  * add support for writing and reading <snippet>
  * add support for writing atom:author, atom:link, phonenumber, Region,
    ScreenOverlay, 3D model, StlyeMap
  * add support for reading and generating Camera object
  * add layer creation options to generate a LookAt element at layer level
+ * if UPDATE_TARGETHREF dataset creation option is defined, a NetworkLinkControl/Update document will be created
+ * add dataset creation options to generate a NetworkLinkControl element
+ * add dataset and layer creation options LISTSTYLE_ICON_HREF and LISTSTYLE_TYPE
+ * add support for writing a NetworkLink
+ * add support for creating PhotoOverlay objects
+ * add support for creating BalloonStyle elements
+ * offer LIBKML_USE_SIMPLEFIELD configuration option can be set to NO to use Data element instead of SimpleField
+ * add layer creation option FOLDER to optionally write layers as Folder instead of Document
+ * add dataset and layer creation options NAME, VISIBILITY, OPEN, SNIPPET and DESCRIPTION
+ * workaround bugs in pretty serializers
+ * when writing a .kmz file, put layers .kml docs into a layers/ subdirectory
  * fix mem leaks, and use after free in kml2FeatureDef() (#5240)
  * create document with default namespace set to http://www.opengis.net/kml/2.2
  * when writing, consider empty strings as unset (usefull when converting from CSV)
  * don't write empty <Style /> element if OGR_STYLE is empty string
  * transform multigeometry with one single component into single geometry
+ * create libkml/ subdirectory entry in .kmz
 
 MITAB driver:
  * support reading MIF file with no associated MID file (when MIF file advertizes 'Columns 0') (#5141)
@@ -561,6 +598,7 @@ OSM driver:
 
 PG driver:
  * upgrade to support RFC 41 in read/write (multiple geometry fields)
+ * use ST_Estimated_Extent() on table layers if GetExtent() is called with force = 0 (#5427)
  * add a OGR_TRUNCATE configuration option (#5091)
  * let postgres name the constraints to avoid long name truncation resulting in conflicts (#5125)
  * map PG 'numeric' to OFTReal instead of OFTInteger
@@ -609,6 +647,7 @@ SQLite/Spatialite driver:
  * add warning when calling CreateField() with a field name that is 'ROWID' since it can cause corrupted spatial index
  * serialize StringList as non-truncated strings
  * detection of DateTime/Date/Time column type on the result of a max() / min() function
+ * ensure fields of type DateTime/Date/Time are properly recognized if the table is empty (#5426)
 
 VFK driver:
  * fix memory leak
@@ -622,6 +661,7 @@ VRT driver:
  * add support for multiple geometry columns in OGRVRTLayer, OGRVRTUnionLayer and OGRVRTWarpedLayer (RFC 41)
  * add validation of OGR VRT document against the schema (if libXML2 available);
    can be disabled by setting GDAL_XML_VALIDATION configuration option to NO
+ * make relativeToVRT=1 work with CSV:filename or GPSBABEL:driver:filename (#5419)
 
 WFS driver:
  * WFS 2.0: be a good citizen and send TYPENAMES (with a S) for GetFeature request (but still TYPENAME for DescribeFeatureType)
@@ -637,6 +677,7 @@ All bindings:
  * add Feature.SetFieldBinaryFromHexString()
  * add SpatialReference.EPSGTreatsAsNorthingEasting (#5385)
  * map OGR_L_GetStyleTable(), OGR_L_SetStyleTable(), OGR_DS_GetStyleTable(), OGR_DS_SetStyleTable()
+ * Add OGR_STBL_AddStyle() and map all OGR_STBL_ C methods to SWIG
 
 CSharp bindings:
  * Fix handling UTF8 strings in GDAL C# (#4971)
