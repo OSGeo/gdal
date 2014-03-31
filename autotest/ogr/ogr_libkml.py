@@ -1575,6 +1575,8 @@ def ogr_libkml_write_update():
         lyr = ds.CreateLayer('layer_to_edit')
         feat = ogr.Feature(lyr.GetLayerDefn())
         lyr.CreateFeature(feat)
+        feat.SetFID(10)
+        lyr.CreateFeature(feat)
         feat.SetFID(2)
         lyr.SetFeature(feat)
         lyr.DeleteFeature(3)
@@ -1596,7 +1598,8 @@ def ogr_libkml_write_update():
         if data.find('<NetworkLinkControl>') == -1 or \
         data.find('<Update>') == -1 or \
         data.find('<targetHref>http://foo</targetHref>') == -1 or \
-        data.find('<Placemark id="layer_to_edit.1"/>') == -1 or \
+        data.find('<Placemark/>') == -1 or \
+        data.find('<Placemark id="layer_to_edit.10"/>') == -1 or \
         data.find('<Create>') == -1 or \
         data.find('<Document targetId="layer_to_edit">') == -1 or \
         data.find('<Change>') == -1 or \

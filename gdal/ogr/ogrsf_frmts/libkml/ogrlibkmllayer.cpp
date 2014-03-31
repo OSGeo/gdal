@@ -550,13 +550,36 @@ OGRErr OGRLIBKMLLayer::CreateFeature (
 
     /***** update the layer class count of features  *****/
 
-    nFeatures++;
-    
-    const char* pszId = CPLSPrintf("%s.%d",
-                    OGRLIBKMLGetSanitizedNCName(GetName()).c_str(), nFeatures);
-    poOgrFeat->SetFID(nFeatures);
-    poKmlFeature->set_id(pszId);
-    
+    if( m_poKmlLayer != NULL )
+    {
+        nFeatures++;
+        
+        const char* pszId = CPLSPrintf("%s.%d",
+                        OGRLIBKMLGetSanitizedNCName(GetName()).c_str(), nFeatures);
+        poOgrFeat->SetFID(nFeatures);
+        poKmlFeature->set_id(pszId);
+    }
+    else
+    {
+        if( poOgrFeat->GetFID() < 0 )
+        {
+            static int bAlreadyWarned = FALSE;
+            if( !bAlreadyWarned )
+            {
+                bAlreadyWarned = TRUE;
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "It is recommanded to define a FID when calling CreateFeature() in a update document");
+            }
+        }
+        else
+        {
+            const char* pszId = CPLSPrintf("%s.%ld",
+                    OGRLIBKMLGetSanitizedNCName(GetName()).c_str(), poOgrFeat->GetFID());
+            poOgrFeat->SetFID(nFeatures);
+            poKmlFeature->set_id(pszId);
+        }
+    }
+
     /***** mark the layer as updated *****/
 
     bUpdated = TRUE;
