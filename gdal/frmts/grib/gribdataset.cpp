@@ -122,6 +122,21 @@ private:
     int      nGribDataYSize;
 };
 
+/************************************************************************/
+/*                         ConvertUnitInText()                          */
+/************************************************************************/
+
+static CPLString ConvertUnitInText(int bMetricUnits, const char* pszTxt)
+{
+    if( !bMetricUnits )
+        return pszTxt;
+
+    CPLString osRes(pszTxt);
+    size_t iPos = osRes.find("[K]");
+    if( iPos != std::string::npos )
+        osRes = osRes.substr(0, iPos) + "[C]" + osRes.substr(iPos + 3);
+    return osRes;
+}
 
 /************************************************************************/
 /*                           GRIBRasterBand()                            */
@@ -145,8 +160,11 @@ GRIBRasterBand::GRIBRasterBand( GRIBDataset *poDS, int nBand,
     nGribDataXSize = poDS->nRasterXSize;
     nGribDataYSize = poDS->nRasterYSize;
 
-    SetMetadataItem( "GRIB_UNIT", psInv->unitName );
-    SetMetadataItem( "GRIB_COMMENT", psInv->comment );
+    const char* pszGribNormalizeUnits = CPLGetConfigOption("GRIB_NORMALIZE_UNITS", "YES");
+    int bMetricUnits = CSLTestBoolean(pszGribNormalizeUnits);
+
+    SetMetadataItem( "GRIB_UNIT", ConvertUnitInText(bMetricUnits, psInv->unitName) );
+    SetMetadataItem( "GRIB_COMMENT", ConvertUnitInText(bMetricUnits, psInv->comment) );
     SetMetadataItem( "GRIB_ELEMENT", psInv->element );
     SetMetadataItem( "GRIB_SHORT_NAME", psInv->shortFstLevel );
     SetMetadataItem( "GRIB_REF_TIME", 
@@ -416,8 +434,8 @@ void GRIBRasterBand::ReadGribData( DataSource & fp, sInt4 start, int subgNum, do
 
     IS_Init (&is);
 
-    const char* pszGribNormalizeUnits = CPLGetConfigOption("GRIB_NORMALIZE_UNITS", NULL);
-    if ( pszGribNormalizeUnits != NULL && ( STRCASECMP(pszGribNormalizeUnits,"NO")==0 ) )
+    const char* pszGribNormalizeUnits = CPLGetConfigOption("GRIB_NORMALIZE_UNITS", "YES");
+    if ( !CSLTestBoolean(pszGribNormalizeUnits) )
         f_unit = 0; /* do not normalize units to metric */
 
     /* Read GRIB message from file position "start". */

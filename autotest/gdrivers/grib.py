@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -33,6 +34,7 @@ import os
 import sys
 import string
 import array
+import shutil
 from osgeo import gdal
 
 sys.path.append( '../pymod' )
@@ -98,11 +100,60 @@ def grib_4():
 
     return 'success'
 
+###############################################################################
+# Check grib units (#3606)
+
+def grib_5():
+
+    if gdaltest.grib_drv is None:
+        return 'skip'
+
+    try:
+        os.unlink('tmp/ds.mint.bin.aux.xml')
+    except:
+        pass
+
+    shutil.copy('data/ds.mint.bin', 'tmp/ds.mint.bin')
+    ds = gdal.Open('tmp/ds.mint.bin')
+    md = ds.GetRasterBand(1).GetMetadata()
+    if md['GRIB_UNIT'] != '[C]' or md['GRIB_COMMENT'] != 'Minimum Temperature [C]':
+        gdaltest.post_reason('fail')
+        print(md)
+        return 'success'
+    ds.GetRasterBand(1).ComputeStatistics(False)
+    if abs(ds.GetRasterBand(1).GetMinimum() - 13) > 1:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetMinimum())
+        return 'success'
+    ds = None
+
+    os.unlink('tmp/ds.mint.bin.aux.xml')
+
+    gdal.SetConfigOption('GRIB_NORMALIZE_UNITS', 'NO')
+    ds = gdal.Open('tmp/ds.mint.bin')
+    gdal.SetConfigOption('GRIB_NORMALIZE_UNITS', None)
+    md = ds.GetRasterBand(1).GetMetadata()
+    if md['GRIB_UNIT'] != '[K]' or md['GRIB_COMMENT'] != 'Minimum Temperature [K]':
+        gdaltest.post_reason('fail')
+        print(md)
+        return 'success'
+    ds.GetRasterBand(1).ComputeStatistics(False)
+    if abs(ds.GetRasterBand(1).GetMinimum() - 286) > 1:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetMinimum())
+        return 'success'
+    ds = None
+
+    gdal.GetDriverByName('GRIB').Delete('tmp/ds.mint.bin')
+
+    return 'success'
+
 gdaltest_list = [
     grib_1,
     grib_2,
     grib_3,
-    grib_4
+    grib_4,
+    grib_5,
     ]
 
 if __name__ == '__main__':
