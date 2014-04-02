@@ -182,7 +182,8 @@ void OGRXPlaneAptReader::Rewind()
 int OGRXPlaneAptReader::IsRecognizedVersion( const char* pszVersionString)
 {
     return EQUALN(pszVersionString, "850 Version", 11) ||
-           EQUALN(pszVersionString, "810 Version", 11);
+           EQUALN(pszVersionString, "810 Version", 11) ||
+           EQUALN(pszVersionString, "1000 Version", 12);
 }
 
 /************************************************************************/
