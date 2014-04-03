@@ -49,6 +49,9 @@ static void *hSharedFileMutex = NULL;
 static volatile int nSharedFileCount = 0;
 static volatile CPLSharedFileInfo *pasSharedFileList = NULL;
 
+/* Used by CPLsetlocale() */
+static void *hSetLocaleMutex = NULL;
+
 /* Note: ideally this should be added in CPLSharedFileInfo* */
 /* but CPLSharedFileInfo is exposed in the API, hence that trick */
 /* to hide this detail */
@@ -1296,9 +1299,9 @@ int CPLPrintDouble( char *pszBuffer, const char *pszFormat,
     if ( pszLocale || EQUAL( pszLocale, "" ) )
     {
         // Save the current locale
-        pszCurLocale = setlocale(LC_ALL, NULL );
+        pszCurLocale = CPLsetlocale(LC_ALL, NULL );
         // Set locale to the specified value
-        setlocale( LC_ALL, pszLocale );
+        CPLsetlocale( LC_ALL, pszLocale );
     }
 #else
     (void) pszLocale;
@@ -1320,7 +1323,7 @@ int CPLPrintDouble( char *pszBuffer, const char *pszFormat,
 #if defined(HAVE_LOCALE_H) && defined(HAVE_SETLOCALE)
     // Restore stored locale back
     if ( pszCurLocale )
-        setlocale( LC_ALL, pszCurLocale );
+        CPLsetlocale( LC_ALL, pszCurLocale );
 #endif
 
     return CPLPrintString( pszBuffer, szTemp, 64 );
@@ -1380,9 +1383,9 @@ int CPLPrintTime( char *pszBuffer, int nMaxLen, const char *pszFormat,
     if ( pszLocale || EQUAL( pszLocale, "" ) )
     {
         // Save the current locale
-        pszCurLocale = setlocale(LC_ALL, NULL );
+        pszCurLocale = CPLsetlocale(LC_ALL, NULL );
         // Set locale to the specified value
-        setlocale( LC_ALL, pszLocale );
+        CPLsetlocale( LC_ALL, pszLocale );
     }
 #else
     (void) pszLocale;
@@ -1394,7 +1397,7 @@ int CPLPrintTime( char *pszBuffer, int nMaxLen, const char *pszFormat,
 #if defined(HAVE_LOCALE_H) && defined(HAVE_SETLOCALE)
     // Restore stored locale back
     if ( pszCurLocale )
-        setlocale( LC_ALL, pszCurLocale );
+        CPLsetlocale( LC_ALL, pszCurLocale );
 #endif
 
     nChars = CPLPrintString( pszBuffer, pszTemp, nMaxLen );
@@ -2400,16 +2403,23 @@ int CPLMoveFile( const char *pszNewPath, const char *pszOldPath )
 /*                             CPLLocaleC()                             */
 /************************************************************************/
 
-CPLLocaleC::CPLLocaleC() : pszOldLocale(CPLStrdup(setlocale(LC_NUMERIC,NULL)))
+CPLLocaleC::CPLLocaleC()
 
 {
-    if( CSLTestBoolean(CPLGetConfigOption("GDAL_DISABLE_CPLLOCALEC","NO"))
-        || EQUAL(pszOldLocale,"C")
-        || EQUAL(pszOldLocale,"POSIX")
-        || setlocale(LC_NUMERIC,"C") == NULL )
+    if( CSLTestBoolean(CPLGetConfigOption("GDAL_DISABLE_CPLLOCALEC","NO")) )
     {
-        CPLFree( pszOldLocale );
         pszOldLocale = NULL;
+    }
+    else
+    {
+        pszOldLocale = CPLStrdup(CPLsetlocale(LC_NUMERIC,NULL));
+        if( EQUAL(pszOldLocale,"C")
+            || EQUAL(pszOldLocale,"POSIX")
+            || CPLsetlocale(LC_NUMERIC,"C") == NULL )
+        {
+            CPLFree( pszOldLocale );
+            pszOldLocale = NULL;
+        }
     }
 }
 
@@ -2422,9 +2432,44 @@ CPLLocaleC::~CPLLocaleC()
 {
     if( pszOldLocale != NULL )
     {
-        setlocale( LC_NUMERIC, pszOldLocale );
+        CPLsetlocale( LC_NUMERIC, pszOldLocale );
         CPLFree( pszOldLocale );
     }
+}
+
+
+/************************************************************************/
+/*                          CPLsetlocale()                              */
+/************************************************************************/
+
+/**
+ * Prevents parallel executions of setlocale().
+ *
+ * Calling setlocale() concurrently from two or more threads is a 
+ * potential data race. A mutex is used to provide a critical region so
+ * that only one thread at a time can be executing setlocale().
+ *
+ * @param category See your compiler's documentation on setlocale.
+ * @param locale See your compiler's documentation on setlocale.
+ *
+ * @return See your compiler's documentation on setlocale.
+ */
+char* CPLsetlocale (int category, const char* locale)
+{
+    CPLMutexHolder oHolder(&hSetLocaleMutex);
+    return setlocale(category, locale);
+}
+
+
+/************************************************************************/
+/*                       CPLCleanupSetlocaleMutex()                     */
+/************************************************************************/
+
+void CPLCleanupSetlocaleMutex(void)
+{
+    if( hSetLocaleMutex != NULL )
+        CPLDestroyMutex(hSetLocaleMutex);
+    hSetLocaleMutex = NULL;
 }
 
 /************************************************************************/
