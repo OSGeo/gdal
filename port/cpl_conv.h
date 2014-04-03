@@ -240,6 +240,12 @@ void CPL_DLL *CPLZLibInflate( const void* ptr, size_t nBytes,
 int CPL_DLL CPLValidateXML(const char* pszXMLFilename,
                            const char* pszXSDFilename,
                            char** papszOptions);
+						   
+/* -------------------------------------------------------------------- */
+/*      Locale handling. Prevents parallel executions of setlocale().   */
+/* -------------------------------------------------------------------- */
+char* CPLsetlocale (int category, const char* locale);
+void CPLCleanupSetlocaleMutex(void);
 
 CPL_C_END
 
