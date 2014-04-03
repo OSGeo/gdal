@@ -29,6 +29,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_conv.h"
 #include "cpl_vsi.h"
 
 #include <ctype.h>
@@ -729,7 +730,7 @@ int OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
 /* -------------------------------------------------------------------- */
         else if( EQUAL(papszArgv[iArg],"--locale") && iArg < nArgc-1 )
         {
-            setlocale( LC_ALL, papszArgv[++iArg] );
+            CPLsetlocale( LC_ALL, papszArgv[++iArg] );
         }
 
 /* -------------------------------------------------------------------- */
