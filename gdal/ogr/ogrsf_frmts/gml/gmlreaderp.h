@@ -453,6 +453,8 @@ private:
     int           m_bFaceHoleNegative;
     
     int           m_bSetWidthFlag;
+    
+    int           m_bReportAllAttributes;
 
     int           ParseXMLHugeFile( const char *pszOutputFilename, 
                                     const int bSqliteIsTempFile,
@@ -535,6 +537,8 @@ public:
     int         GetFilteredClassIndex() { return m_nFilteredClassIndex; }
 
     int         IsSequentialLayers() const { return m_bSequentialLayers == TRUE; }
+    
+    int         ReportAllAttributes() const { return m_bReportAllAttributes; }
 
     static void* hMutex;
 };

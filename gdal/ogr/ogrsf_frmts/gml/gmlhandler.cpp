@@ -830,6 +830,15 @@ void GMLHandler::DealWithAttributes(const char *pszName, int nLenName, void* att
             pszAttrVal = NULL;
         }
 
+        /* Should we report all attributes ? */
+        else if( m_poReader->ReportAllAttributes() && !poClass->IsSchemaLocked() )
+        {
+            m_poReader->SetFeaturePropertyDirectly(
+                CPLSPrintf("%s@%s", pszName, pszAttrKeyNoNS ? pszAttrKeyNoNS : pszAttrKey),
+                pszAttrVal, -1 );
+            pszAttrVal = NULL;
+        }
+
         CPLFree(pszAttrKey);
         CPLFree(pszAttrVal);
     }

@@ -88,6 +88,10 @@ field.  In some applications it is easier if all fields are just treated as
 string fields.  This can be accomplished by setting the configuration option
 <b>GML_FIELDTYPES</b> to the value <b>ALWAYS_STRING</b>.<p>
 
+Starting with GDAL 1.11, the <b>GML_ATTRIBUTES_TO_OGR_FIELDS</b> configuration
+option can be set to <b>YES</b> so that attributes of GML elements are also
+taken into account to create OGR fields.<p>
+
 Configuration options can be set via the CPLSetConfigOption() function or as
 environment variables.<p>
 
