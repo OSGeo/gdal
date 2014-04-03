@@ -181,6 +181,10 @@ GMLReader::GMLReader(int bUseExpatParserPreferably,
     m_bFaceHoleNegative = CSLTestBoolean(CPLGetConfigOption("GML_FACE_HOLE_NEGATIVE", "NO"));
 
     m_bSetWidthFlag = TRUE;
+
+    m_bReportAllAttributes = CSLTestBoolean(
+                    CPLGetConfigOption("GML_ATTRIBUTES_TO_OGR_FIELDS", "NO"));
+
 }
 
 /************************************************************************/
@@ -1079,6 +1083,10 @@ void GMLReader::SetFeaturePropertyDirectly( const char *pszElement,
                 if( poClass->GetPropertyIndex(osFieldName) != -1 )
                     osFieldName = pszElement;
             }
+
+            size_t nPos = osFieldName.find("@");
+            if( nPos != std::string::npos )
+                osFieldName[nPos] = '_';
 
             // Does this conflict with an existing property name?
             while( poClass->GetProperty(osFieldName) != NULL )
