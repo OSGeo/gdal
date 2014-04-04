@@ -1,4 +1,4 @@
-= GDAL/OGR 1.11.0 Release Notes (r25919 to r27113) =
+= GDAL/OGR 1.11.0 Release Notes (r25919 to r27121) =
 
 == In a nutshell... ==
 
@@ -21,7 +21,9 @@
  * Upgrade to EPSG 8.2 database
 
 == New installed files ==
- * gdal.pc
+ * bin/ogrlineref
+ * lib/pkgconfig/gdal.pc
+ * gdalcompare.py
  * data/gml_registry.xml
  * data/inspire_cp_CadastralParcel.gfs
  * data/inspire_cp_BasicPropertyUnit.gfs
@@ -74,6 +76,7 @@ Port:
  * CPLBase64DecodeInPlace() : fix to be robust to malformed base64 strings
  * CPLQuadTree: add CPLQuadTreeInsertWithBounds() where the pfnGetBounds is not needed.
  * CPLQuadTree: fix potential infinite recursion when inserting several points with identical coordinates in the mode with limited bucket size
+ * Protect concurrent calls to setlocale() by a mutex (#5366)
 
 Core:
  * RFC 45: GDAL datasets and raster bands as virtual memory mapping
@@ -187,6 +190,9 @@ GeoRaster driver:
 
 GRASS driver:
  * fix compilation issues for GRASS 7
+
+GRIB driver:
+ * display temperature unit as deg Celcius in metadata (#3606)
 
 GTiff driver:
  * when compiling against internal libtiff, in read-only mode, optimization to
@@ -503,6 +509,7 @@ GML driver:
  * add support for support Finnish NLS cadastral data and Inspire cadastral data.
  * add data/gml_registry.xml file to associate feature types with schemas.
  * extend .gfs syntax to be able to fetch OGR fields from XML attributes.
+ * autodiscover all XML attributes as OGR fields when creating .gfs file if GML_ATTRIBUTES_TO_OGR_FIELDS is set to YES (#5418)
  * allow the <ElementPath> in .gfs to have several components that give the full XML path
  * fix writing of .xsd file to avoid fid/gml_id being written as regular fields (#5142)
  * fix writing of global srsName attribue on the global boundedBy.Envelope when all layers have same SRS (#5143)
@@ -669,6 +676,9 @@ WFS driver:
 
 XLS driver:
  * don't use sheetId attribute from workbook.xml to link a sheet name to its filename. The first sheet is sheet1.xml, etc...
+
+XPlane driver:
+ * accept V1000 APT files
 
 == SWIG Language Bindings ==
 
