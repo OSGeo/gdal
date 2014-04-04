@@ -159,7 +159,7 @@ STDCALL=YES
 
 # Version number embedded in DLL name. 
 !IFNDEF VERSION
-VERSION =	110
+VERSION =	111
 !ENDIF
 
 # Comment the following out if you want PAM supported disabled
