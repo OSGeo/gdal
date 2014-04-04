@@ -942,6 +942,8 @@ def gml_out_precision():
 def gml_invalid_geoms():
 
     gml_expected_wkt_list = [
+        ('<?xml version="1.0" encoding="UTF-8"?>', None),
+        ('<!-- bla -->', None),
         ('<foo/>', None),
         ('<gml:Point><gml:pos>31 29 16</gml:pos><gml:pos>31 29 16</gml:pos></gml:Point>', None),
         ('<gml:Point><gml:coordinates/></gml:Point>', 'POINT EMPTY'), # This is valid GML actually
@@ -1442,6 +1444,49 @@ def gml_Coordinates_ts_cs_decimal():
     return 'success'
 
 ###############################################################################
+# Test gml with XML header and comments
+
+def gml_with_xml_header_and_comments():
+
+    gml_expected_wkt_list = [
+        ('<?xml version="1.0" encoding="UTF-8"?><!-- comment --><gml:Point> <!-- comment --> <gml:coordinates>1,2</gml:coordinates></gml:Point>', 'POINT (1 2)'),
+        ("""<gml:MultiSurface><!-- comment -->
+               <gml:surfaceMember><!-- comment -->
+                 <gml:Surface><!-- comment -->
+                    <gml:patches><!-- comment -->
+                      <gml:PolygonPatch><!-- comment -->
+                        <gml:exterior><!-- comment -->
+                          <gml:LinearRing><!-- comment -->
+                            <gml:posList>0 0 0 1 1 1 1 0 0 0</gml:posList>
+                          </gml:LinearRing>
+                        </gml:exterior>
+                        <!-- comment -->
+                        <gml:interior><!-- comment -->
+                          <gml:LinearRing><!-- comment -->
+                            <gml:posList>0.25 0.25 0.25 0.75 0.75 0.75 0.75 0.25 0.25 0.25</gml:posList>
+                          </gml:LinearRing>
+                        </gml:interior>
+                      </gml:PolygonPatch>
+                    </gml:patches>
+                  </gml:Surface>
+                </gml:surfaceMember>
+              </gml:MultiSurface>""", 'MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0),(0.25 0.25,0.25 0.75,0.75 0.75,0.75 0.25,0.25 0.25)))'),
+    ]
+
+    for (gml, expected_wkt) in gml_expected_wkt_list:
+        geom = ogr.CreateGeometryFromGML(gml)
+        wkt = geom.ExportToWkt()
+        if expected_wkt is None:
+            gdaltest.post_reason('did not get expected result for %s. Got %s instead of None' % (gml, wkt))
+            return 'fail'
+        else:
+            if wkt != expected_wkt:
+                gdaltest.post_reason('did not get expected result for %s. Got %s instead of %s' % (gml, wkt, expected_wkt))
+                return 'fail'
+
+    return 'success'
+
+###############################################################################
 # When imported build a list of units based on the files available.
 
 #print 'hit enter'
@@ -1500,6 +1545,7 @@ gdaltest_list.append( gml_CompositeCurveInRing )
 gdaltest_list.append( gml_CompositeSurface_in_surfaceMembers )
 gdaltest_list.append( gml_MultiSurfaceOfSurfaceOfPolygonPatchWithInteriorRing )
 gdaltest_list.append( gml_Coordinates_ts_cs_decimal )
+gdaltest_list.append( gml_with_xml_header_and_comments )
 
 if __name__ == '__main__':
 
