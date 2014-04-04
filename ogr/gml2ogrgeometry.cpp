@@ -674,6 +674,13 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
                                       int bFaceHoleNegative ) 
 
 {
+    if( psNode != NULL && strcmp(psNode->pszValue, "?xml") == 0 )
+        psNode = psNode->psNext;
+    while( psNode != NULL && psNode->eType == CXT_Comment )
+        psNode = psNode->psNext;
+    if( psNode == NULL )
+        return NULL;
+
     const char *pszBaseGeometry = BareGMLElement( psNode->pszValue );
     if (bGetSecondaryGeometryOption < 0)
         bGetSecondaryGeometryOption = CSLTestBoolean(CPLGetConfigOption("GML_GET_SECONDARY_GEOM", "NO"));
