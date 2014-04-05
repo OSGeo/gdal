@@ -46,7 +46,7 @@ import test_cli_utilities
 # create test
 
 def test_ogrlineref_1():
-    if test_cli_utilities.get_ogrlineref_path() is None:
+    if ogrtest.have_geos() is 0 or test_cli_utilities.get_ogrlineref_path() is None:
         return 'skip'
 
     try:
@@ -75,7 +75,7 @@ def test_ogrlineref_1():
 # get_pos test
 
 def test_ogrlineref_2():
-    if test_cli_utilities.get_ogrlineref_path() is None:
+    if ogrtest.have_geos() is 0 or test_cli_utilities.get_ogrlineref_path() is None:
         return 'skip'
 
     ret = gdaltest.runexternal(test_cli_utilities.get_ogrlineref_path() + ' -get_pos -r tmp/parts.shp -x -1.4345 -y 51.9497 -quiet')
@@ -89,7 +89,7 @@ def test_ogrlineref_2():
 # get_coord test
 
 def test_ogrlineref_3():
-    if test_cli_utilities.get_ogrlineref_path() is None:
+    if ogrtest.have_geos() is 0 or test_cli_utilities.get_ogrlineref_path() is None:
         return 'skip'
  
     ret = gdaltest.runexternal(test_cli_utilities.get_ogrlineref_path() + ' -get_coord -r tmp/parts.shp -m 15984.938840 -quiet')
@@ -103,7 +103,7 @@ def test_ogrlineref_3():
 # get_subline test
 
 def test_ogrlineref_4():
-    if test_cli_utilities.get_ogrlineref_path() is None:
+    if ogrtest.have_geos() is 0 or test_cli_utilities.get_ogrlineref_path() is None:
         return 'skip'
 
     try:
@@ -124,6 +124,8 @@ def test_ogrlineref_4():
     return 'success'
 
 def test_ogrlineref_cleanup():
+    if ogrtest.have_geos() is 0 or test_cli_utilities.get_ogrlineref_path() is None:
+        return 'skip'
     try:
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/parts.shp')
     except:
