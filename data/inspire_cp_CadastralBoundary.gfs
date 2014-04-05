@@ -4,7 +4,7 @@
     <ElementPath>CadastralBoundary</ElementPath>
 
     <GeometryElementPath>geometry</GeometryElementPath>
-    <GeometryType>2</GeometryType> <!-- LineString -->
+    <GeometryType>LineString</GeometryType>
 
     <PropertyDefn>
       <Name>beginLifespanVersion</Name>

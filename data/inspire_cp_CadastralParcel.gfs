@@ -2,13 +2,16 @@
   <GMLFeatureClass>
     <Name>CadastralParcel</Name>
     <ElementPath>CadastralParcel</ElementPath>
-
-    <GeometryElementPath>geometry</GeometryElementPath>
-    <GeometryType>6</GeometryType> <!-- Multipolygon -->
-
-    <GeometryElementPath>referencePoint</GeometryElementPath>
-    <GeometryType>1</GeometryType> <!-- Point -->
-
+    <GeomPropertyDefn>
+        <Name>geometry</Name>
+        <ElementPath>geometry</ElementPath>
+        <Type>MultiPolygon</Type>
+    </GeomPropertyDefn>
+    <GeomPropertyDefn>
+        <Name>referencePoint</Name>
+        <ElementPath>referencePoint</ElementPath>
+        <Type>Point</Type>
+    </GeomPropertyDefn>
     <PropertyDefn>
       <Name>areaValue</Name>
       <ElementPath>areaValue</ElementPath>

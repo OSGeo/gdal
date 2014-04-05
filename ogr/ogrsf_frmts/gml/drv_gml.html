@@ -466,7 +466,28 @@ Accepted values are : 0 (any geometry type), 1 (point), 2 (linestring), 3 (polyg
 4 (multipoint), 5 (multilinestring), 6 (multipolygon), 7 (geometrycollection).<p>
 
 Starting with OGR 1.11, the &lt;GeometryElementPath&gt; and &lt;GeometryType&gt; can be
-specified as many times as there are geometry fields in the GML file.<p>
+specified as many times as there are geometry fields in the GML file. Another possibility
+is to define a &lt;GeomPropertyDefn&gt;element as many times as necessary:
+<pre>
+&lt;GMLFeatureClassList&gt;
+  &lt;GMLFeatureClass&gt;
+    &lt;Name&gt;LAYER&lt;/Name&gt;
+    &lt;ElementPath&gt;LAYER&lt;/ElementPath&gt;
+    &lt;GeomPropertyDefn&gt;
+        &lt;Name&gt;geometry&lt;/Name&gt; &lt;-- OGR geometry name --&gt;
+        &lt;ElementPath&gt;geometry&lt;/ElementPath&gt; &lt;!-- XML element name possibly with '|' to specify the path --&gt;
+        &lt;Type&gt;MultiPolygon&lt;/Type&gt;
+    &lt;/GeomPropertyDefn&gt;
+    &lt;GeomPropertyDefn&gt;
+        &lt;Name&gt;referencePoint&lt;/Name&gt;
+        &lt;ElementPath&gt;referencePoint&lt;/ElementPath&gt;
+        &lt;Type&gt;Point&lt;/Type&gt;
+    &lt;/GeomPropertyDefn&gt;
+  &lt;/GMLFeatureClass&gt;
+&lt;/GMLFeatureClassList&gt;
+</pre>
+<p>
+
 
 The output of <i>ogrinfo test.gml -ro -al</i> is:
 <pre>

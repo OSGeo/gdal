@@ -896,7 +896,7 @@ int NASReader::PrescanForSchema( int bGetExtents, int bAnalyzeSRSPerFeature )
                 OGREnvelope sEnvelope;
 
                 if( poClass->GetGeometryPropertyCount() == 0 )
-                    poClass->AddGeometryProperty( new GMLGeometryPropertyDefn( "", wkbUnknown ) );
+                    poClass->AddGeometryProperty( new GMLGeometryPropertyDefn( "", "", wkbUnknown ) );
 
                 OGRwkbGeometryType eGType = (OGRwkbGeometryType) 
                     poClass->GetGeometryProperty(0)->GetType();

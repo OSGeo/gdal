@@ -31,6 +31,7 @@
 #include "gmlreader.h"
 #include "cpl_conv.h"
 #include "ogr_core.h"
+#include "ogr_geometry.h"
 
 /************************************************************************/
 /*                          GMLFeatureClass()                           */
@@ -428,24 +429,72 @@ int GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psThis;
 
+    int bHasValidGeometryName = FALSE;
     int bHasValidGeometryElementPath = FALSE;
     int bHasFoundGeomType = FALSE;
     int bHasFoundGeomElements = FALSE;
+    const char* pszGName = "";
     const char* pszGPath = "";
     int nGeomType = wkbUnknown;
 
     for( psThis = psRoot->psChild; psThis != NULL; psThis = psThis->psNext )
     {
         if( psThis->eType == CXT_Element &&
+            EQUAL(psThis->pszValue, "GeomPropertyDefn") )
+        {
+            const char *pszName = CPLGetXMLValue( psThis, "Name", "" );
+            const char *pszElementPath = CPLGetXMLValue( psThis, "ElementPath", "" );
+            const char *pszType = CPLGetXMLValue( psThis, "Type", NULL );
+            nGeomType = wkbUnknown;
+            if( pszType != NULL && !EQUAL(pszType, "0") )
+            {
+                nGeomType = atoi(pszType);
+                int nFlattenGeomType = nGeomType & (~wkb25DBit);
+                if( nGeomType != 0 && !(nFlattenGeomType >= 0 && nFlattenGeomType <= 7) )
+                {
+                    nGeomType = wkbUnknown;
+                    CPLError(CE_Warning, CPLE_AppDefined, "Unrecognised geometry type : %s",
+                            pszType);
+                }
+                else if( nGeomType == 0 )
+                    nGeomType = OGRFromOGCGeomType(pszType);
+            }
+            bHasFoundGeomElements = TRUE;
+            AddGeometryProperty( new GMLGeometryPropertyDefn( pszName, pszElementPath, nGeomType ) );
+            bHasValidGeometryName = FALSE;
+            bHasValidGeometryElementPath = FALSE;
+            bHasFoundGeomType = FALSE;
+        }
+        else if( psThis->eType == CXT_Element &&
+            strcmp(psThis->pszValue, "GeometryName") == 0 )
+        {
+            bHasFoundGeomElements = TRUE;
+
+            if( bHasValidGeometryName )
+            {
+                AddGeometryProperty( new GMLGeometryPropertyDefn( pszGName, pszGPath, nGeomType ) );
+                bHasValidGeometryName = FALSE;
+                bHasValidGeometryElementPath = FALSE;
+                bHasFoundGeomType = FALSE;
+                pszGName = "";
+                pszGPath = "";
+                nGeomType = wkbUnknown;
+            }
+            pszGName = CPLGetXMLValue( psThis, NULL, "" );
+            bHasValidGeometryName = TRUE;
+        }
+        else if( psThis->eType == CXT_Element &&
             strcmp(psThis->pszValue, "GeometryElementPath") == 0 )
         {
             bHasFoundGeomElements = TRUE;
 
             if( bHasValidGeometryElementPath )
             {
-                AddGeometryProperty( new GMLGeometryPropertyDefn( pszGPath, nGeomType ) );
+                AddGeometryProperty( new GMLGeometryPropertyDefn( pszGName, pszGPath, nGeomType ) );
+                bHasValidGeometryName = FALSE;
                 bHasValidGeometryElementPath = FALSE;
                 bHasFoundGeomType = FALSE;
+                pszGName = "";
                 pszGPath = "";
                 nGeomType = wkbUnknown;
             }
@@ -459,29 +508,34 @@ int GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
 
             if( bHasFoundGeomType )
             {
-                AddGeometryProperty( new GMLGeometryPropertyDefn( pszGPath, nGeomType ) );
+                AddGeometryProperty( new GMLGeometryPropertyDefn( pszGName, pszGPath, nGeomType ) );
+                bHasValidGeometryName = FALSE;
                 bHasValidGeometryElementPath = FALSE;
                 bHasFoundGeomType = FALSE;
+                pszGName = "";
                 pszGPath = "";
                 nGeomType = wkbUnknown;
             }
             const char* pszGeometryType = CPLGetXMLValue( psThis, NULL, NULL );
-            if( pszGeometryType != NULL )
+            nGeomType = wkbUnknown;
+            if( pszGeometryType != NULL && !EQUAL(pszGeometryType, "0") )
             {
                 nGeomType = atoi(pszGeometryType);
                 int nFlattenGeomType = nGeomType & (~wkb25DBit);
-                if( nGeomType == 100 )
+                if( nGeomType == 100 || EQUAL(pszGeometryType, "NONE") )
                 {
                     bHasValidGeometryElementPath = FALSE;
                     bHasFoundGeomType = FALSE;
                     break;
                 }
-                else if( !(nFlattenGeomType >= 0 && nFlattenGeomType <= 7) )
+                else if( nGeomType != 0 && !(nFlattenGeomType >= 0 && nFlattenGeomType <= 7) )
                 {
                     nGeomType = wkbUnknown;
                     CPLError(CE_Warning, CPLE_AppDefined, "Unrecognised geometry type : %s",
                             pszGeometryType);
                 }
+                else if( nGeomType == 0 )
+                    nGeomType = OGRFromOGCGeomType(pszGeometryType);
             }
             bHasFoundGeomType = TRUE;
         }
@@ -492,7 +546,7 @@ int GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
     /* a geometry field */
     if( bHasValidGeometryElementPath || bHasFoundGeomType || !bHasFoundGeomElements )
     {
-        AddGeometryProperty( new GMLGeometryPropertyDefn( pszGPath, nGeomType ) );
+        AddGeometryProperty( new GMLGeometryPropertyDefn( pszGName, pszGPath, nGeomType ) );
     }
 
     SetSRSName( CPLGetXMLValue( psRoot, "SRSName", NULL ) );
@@ -620,6 +674,10 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
     {
         GMLGeometryPropertyDefn* poGeomFDefn = m_papoGeometryProperty[0];
         
+        if( strlen(poGeomFDefn->GetName()) > 0 )
+            CPLCreateXMLElementAndValue( psRoot, "GeometryName", 
+                                         poGeomFDefn->GetName() );
+
         if( poGeomFDefn->GetSrcElement() != NULL && strlen(poGeomFDefn->GetSrcElement()) > 0 )
             CPLCreateXMLElementAndValue( psRoot, "GeometryElementPath", 
                                          poGeomFDefn->GetSrcElement() );

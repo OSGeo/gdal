@@ -1177,7 +1177,7 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
     for( iField = 0; iField < poClass->GetGeometryPropertyCount(); iField++ )
     {
         GMLGeometryPropertyDefn *poProperty = poClass->GetGeometryProperty( iField );
-        OGRGeomFieldDefn oField( poProperty->GetSrcElement(), (OGRwkbGeometryType)poProperty->GetType() );
+        OGRGeomFieldDefn oField( poProperty->GetName(), (OGRwkbGeometryType)poProperty->GetType() );
         if( poClass->GetGeometryPropertyCount() == 1 && poClass->GetFeatureCount() == 0 )
         {
             oField.SetType(wkbUnknown);
