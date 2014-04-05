@@ -9,12 +9,17 @@ export NUMTHREADS
 svn checkout https://svn.osgeo.org/gdal/trunk gdal
 cd gdal/gdal
 #  --with-ecw=/usr/local --with-mrsid=/usr/local --with-mrsid-lidar=/usr/local --with-fgdb=/usr/local
-./configure  --prefix=/usr --without-libtool --enable-debug --with-jpeg12 --with-python --with-poppler \
+./configure  --prefix=/usr --without-libtool --enable-debug --with-jpeg12 \
+            --with-perl --with-python --with-poppler \
             --with-podofo --with-spatialite --with-java --with-mdb \
             --with-jvm-lib-add-rpath --with-epsilon --with-gta \
-            --with-mysql --with-liblzma --with-webp --with-libkml  --with-openjpeg=/usr/local
+            --with-mysql --with-liblzma --with-webp --with-libkml \
+            --with-openjpeg=/usr/local --with-armadillo
 
 make -j $NUMTHREADS
+cd apps
+make test_ogrsf
+cd ..
 
 # A previous version of GDAL has been installed by PostGIS
 sudo rm -f /usr/lib/libgdal.so*
