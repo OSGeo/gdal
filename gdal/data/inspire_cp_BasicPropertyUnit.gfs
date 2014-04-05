@@ -2,7 +2,7 @@
   <GMLFeatureClass>
     <Name>BasicPropertyUnit</Name>
     <ElementPath>BasicPropertyUnit</ElementPath>
-    <GeometryType>100</GeometryType> <!-- no geometry -->
+    <GeometryType>None</GeometryType>
     <PropertyDefn>
       <Name>inspireId_localId</Name>
       <ElementPath>inspireId|Identifier|localId</ElementPath>
