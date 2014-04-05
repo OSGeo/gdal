@@ -263,7 +263,7 @@ static void ProcessCommonGeometry(OGRGeometry* poGeom, OGRGeometry *poClipSrc,
         {
             OGRLineString *poLS = (OGRLineString*)poGeom;
             OGRPoint point;
-            for (size_t pointIndex = 0; pointIndex < poLS->getNumPoints(); pointIndex++)
+            for (int pointIndex = 0; pointIndex < poLS->getNumPoints(); pointIndex++)
             {
                 poLS->getPoint(pointIndex, &point);
                 ProcessCommonGeometry((OGRGeometry*)&point, poClipSrc,
