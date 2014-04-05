@@ -65,6 +65,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     "liblcms2-2",
     "libpcre3-dev",
     "libjasper-dev",
+    "libarmadillo-dev",
     "make",
     "g++",
     "autoconf", # for libkml
