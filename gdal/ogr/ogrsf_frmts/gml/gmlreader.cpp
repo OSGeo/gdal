@@ -1351,7 +1351,7 @@ int GMLReader::PrescanForSchema( int bGetExtents, int bAnalyzeSRSPerFeature )
         if( papsGeometry != NULL && papsGeometry[0] != NULL )
         {
             if( poClass->GetGeometryPropertyCount() == 0 )
-                poClass->AddGeometryProperty( new GMLGeometryPropertyDefn( "", wkbUnknown ) );
+                poClass->AddGeometryProperty( new GMLGeometryPropertyDefn( "", "", wkbUnknown ) );
         }
 
 #ifdef SUPPORT_GEOMETRY
