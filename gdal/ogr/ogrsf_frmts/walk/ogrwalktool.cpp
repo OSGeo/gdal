@@ -253,8 +253,8 @@ OGRErr Binary2WkbMGeom(unsigned char *& p, WKBGeometry* geom, int nBytes)
                     new Point[geom->polygon.rings[i].segments[j].numPoints];
                 memcpy(geom->polygon.rings[i].segments[j].points, p, 
                     sizeof(Point) * geom->polygon.rings[i].segments[j].numPoints);
-                CPL_LSBPTRPOINTS(geom->linestring.segments[i].points[j], 
-                    geom->linestring.segments[i].numPoints);
+                CPL_LSBPTRPOINTS(geom->polygon.rings[i].segments[j].points, 
+                    geom->polygon.rings[i].segments[j].numPoints);
                 p += sizeof(Point) * geom->polygon.rings[i].segments[j].numPoints;
             }
         }
