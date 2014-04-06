@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -33,7 +34,6 @@ import os
 import sys
 import gzip
 from osgeo import gdal
-import numpy as np
 
 sys.path.append( '../pymod' )
 
@@ -392,9 +392,12 @@ class TestEnvisatMERIS(TestEnvisat):
         ]
 
         for r, v in zip(ref, gcp_values):
-            if not np.allclose(r[1:], v[1:]):
-                gdaltest.post_reason('Wrong GCP coordinates.')
-                return 'failure'
+            for i in range(len(r)):
+                if abs(float(r[i]) - float(v[i])) > 1e-10:
+                    gdaltest.post_reason('Wrong GCP coordinates.')
+                    print(r)
+                    print(v)
+                    return 'failure'
 
         return 'success'
 
