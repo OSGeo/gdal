@@ -1564,10 +1564,10 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
                     delete poLS;
                     return NULL;
                 }
-                if( poGeom != NULL )
+                OGRLineString *poAddLS = (OGRLineString *)poGeom;
+                if( poAddLS != NULL && poAddLS->getNumPoints() >= 2 )
                 {
-                    OGRLineString *poAddLS = (OGRLineString *)poGeom;
-                    if( poLS->getNumPoints() > 0 && poAddLS->getNumPoints() > 0
+                    if( poLS->getNumPoints() > 0
                         && fabs(poLS->getX(poLS->getNumPoints()-1)
                                 - poAddLS->getX(0)) < 1e-14
                         && fabs(poLS->getY(poLS->getNumPoints()-1)
@@ -1584,8 +1584,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
                         // Add the whole new line string
                         poLS->addSubLineString( poAddLS );
                     }
-                    delete poGeom;
                 }
+                delete poGeom;
             }
         }
 
@@ -2144,7 +2144,11 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
                 {
                   poLS = (OGRLineString *)poEdgeGeom;
                   poAddLS = (OGRLineString *)poFaceGeom;
-                  if( poLS->getNumPoints() > 0 && poAddLS->getNumPoints() > 0
+                  if( poAddLS->getNumPoints() < 2 )
+                  {
+                      /* skip it */
+                  }
+                  else if( poLS->getNumPoints() > 0
                       && fabs(poLS->getX(poLS->getNumPoints()-1)
                               - poAddLS->getX(0)) < 1e-14
                       && fabs(poLS->getY(poLS->getNumPoints()-1)
@@ -2165,7 +2169,11 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
                 }
                 poLS = (OGRLineString *)poFaceGeom;
                 poAddLS = (OGRLineString *)poEdgeGeom;
-                if( poLS->getNumPoints() > 0 && poAddLS->getNumPoints() > 0
+                if( poAddLS->getNumPoints() < 2 )
+                {
+                    /* skip it */
+                }
+                else if( poLS->getNumPoints() > 0
                     && fabs(poLS->getX(poLS->getNumPoints()-1)
                             - poAddLS->getX(0)) < 1e-14
                     && fabs(poLS->getY(poLS->getNumPoints()-1)
