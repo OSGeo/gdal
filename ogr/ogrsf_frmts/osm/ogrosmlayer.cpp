@@ -306,9 +306,9 @@ int OGROSMLayer::TestCapability( const char * pszCap )
 /*                             AddToArray()                             */
 /************************************************************************/
 
-int  OGROSMLayer::AddToArray(OGRFeature* poFeature)
+int  OGROSMLayer::AddToArray(OGRFeature* poFeature, int bCheckFeatureThreshold)
 {
-    if( nFeatureArraySize > MAX_THRESHOLD)
+    if( bCheckFeatureThreshold && nFeatureArraySize > MAX_THRESHOLD)
     {
         if( !bHasWarnedTooManyFeatures )
         {
@@ -329,6 +329,9 @@ int  OGROSMLayer::AddToArray(OGRFeature* poFeature)
                                 nFeatureArrayMaxSize * sizeof(OGRFeature*));
         if (papoNewFeatures == NULL)
         {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "For layer %s, cannot resize feature array to %d features",
+                     GetName(), nFeatureArrayMaxSize);
             return FALSE;
         }
         papoFeatures = papoNewFeatures;
@@ -354,7 +357,8 @@ int OGROSMLayer::EvaluateAttributeFilter(OGRFeature* poFeature)
 
 int  OGROSMLayer::AddFeature(OGRFeature* poFeature,
                              int bAttrFilterAlreadyEvaluated,
-                             int* pbFilteredOut)
+                             int* pbFilteredOut,
+                             int bCheckFeatureThreshold)
 {
     if( !bUserInterested )
     {
@@ -373,7 +377,7 @@ int  OGROSMLayer::AddFeature(OGRFeature* poFeature,
         && (m_poAttrQuery == NULL || bAttrFilterAlreadyEvaluated
             || m_poAttrQuery->Evaluate( poFeature )) )
     {
-        if (!AddToArray(poFeature))
+        if (!AddToArray(poFeature, bCheckFeatureThreshold))
         {
             delete poFeature;
             return FALSE;
