@@ -679,6 +679,12 @@ int OGROSMDataSource::FlushCurrentSectorCompressedCase()
 
         return TRUE;
     }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot write in temporary node file %s : %s",
+                 osNodesFilename.c_str(), VSIStrerror(errno));
+    }
 
     return FALSE;
 }
@@ -694,6 +700,12 @@ int OGROSMDataSource::FlushCurrentSectorNonCompressedCase()
         memset(pabySector, 0, SECTOR_SIZE);
         nNodesFileSize += SECTOR_SIZE;
         return TRUE;
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot write in temporary node file %s : %s",
+                 osNodesFilename.c_str(), VSIStrerror(errno));
     }
 
     return FALSE;
