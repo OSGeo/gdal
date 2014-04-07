@@ -99,7 +99,7 @@ class OGROSMLayer : public OGRLayer
 
     int                   bUserInterested;
 
-    int                  AddToArray(OGRFeature* poFeature);
+    int                  AddToArray(OGRFeature* poFeature, int bCheckFeatureThreshold);
 
     int                   AddInOtherOrAllTags(const char* pszK);
 
@@ -136,7 +136,8 @@ class OGROSMLayer : public OGRLayer
 
     int                 AddFeature(OGRFeature* poFeature,
                                    int bAttrFilterAlreadyEvaluated,
-                                   int* pbFilteredOut = NULL);
+                                   int* pbFilteredOut = NULL,
+                                   int bCheckFeatureThreshold = TRUE);
     void                ForceResetReading();
 
     void                AddField(const char* pszName, OGRFieldType eFieldType);

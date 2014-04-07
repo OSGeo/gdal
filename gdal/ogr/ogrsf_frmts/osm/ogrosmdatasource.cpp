@@ -835,7 +835,9 @@ void OGROSMDataSource::NotifyNodes(unsigned int nNodes, OSMNode* pasNodes)
                 poFeature, pasNodes[i].nID, FALSE, pasNodes[i].nTags, pasTags, &pasNodes[i].sInfo );
 
             int bFilteredOut = FALSE;
-            if( !papoLayers[IDX_LYR_POINTS]->AddFeature(poFeature, FALSE, &bFilteredOut) )
+            if( !papoLayers[IDX_LYR_POINTS]->AddFeature(poFeature, FALSE,
+                                                        &bFilteredOut,
+                                                        !bFeatureAdded) )
             {
                 bStopParsing = TRUE;
                 break;
@@ -1733,7 +1735,8 @@ void OGROSMDataSource::ProcessWaysBatch()
         int bFilteredOut = FALSE;
         if( !papoLayers[IDX_LYR_LINES]->AddFeature(psWayFeaturePairs->poFeature,
                                                    psWayFeaturePairs->bAttrFilterAlreadyEvaluated,
-                                                   &bFilteredOut) )
+                                                   &bFilteredOut,
+                                                   !bFeatureAdded) )
             bStopParsing = TRUE;
         else if (!bFilteredOut)
             bFeatureAdded = TRUE;
@@ -2492,7 +2495,8 @@ void OGROSMDataSource::NotifyRelation (OSMRelation* psRelation)
         int bFilteredOut = FALSE;
         if( !papoLayers[iCurLayer]->AddFeature( poFeature,
                                                 bAttrFilterAlreadyEvaluated,
-                                                &bFilteredOut ) )
+                                                &bFilteredOut,
+                                                !bFeatureAdded ) )
             bStopParsing = TRUE;
         else if (!bFilteredOut)
             bFeatureAdded = TRUE;
@@ -2584,7 +2588,8 @@ void OGROSMDataSource::ProcessPolygonsStandalone()
             int bFilteredOut = FALSE;
             if( !papoLayers[IDX_LYR_MULTIPOLYGONS]->AddFeature( poFeature,
                                                     FALSE,
-                                                    &bFilteredOut ) )
+                                                    &bFilteredOut,
+                                                    !bFeatureAdded ) )
             {
                 bStopParsing = TRUE;
                 break;
