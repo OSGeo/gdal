@@ -776,10 +776,10 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXF, SXFPassport& pas
         SetVertCS(iVCS, passport);
         return eErr;
     }
-    else if (iEllips == 45 && iProjSys == 35) //Mercator 3395
+   else if (iEllips == 45 && iProjSys == 35) //Mercator 3395 on sphere wgs84
     {
-        passport.stMapDescription.pSpatRef = new OGRSpatialReference();
-        OGRErr eErr = passport.stMapDescription.pSpatRef->importFromEPSG(3395);
+        passport.stMapDescription.pSpatRef = new OGRSpatialReference("PROJCS[\"WGS_1984_Web_Mercator\",GEOGCS[\"GCS_WGS_1984_Major_Auxiliary_Sphere\",DATUM[\"WGS_1984_Major_Auxiliary_Sphere\",SPHEROID[\"WGS_1984_Major_Auxiliary_Sphere\",6378137.0,0.0]],PRIMEM[\"Greenwich\",0.0],UNIT[\"Degree\",0.0174532925199433]],PROJECTION[\"Mercator_1SP\"],PARAMETER[\"False_Easting\",0.0],PARAMETER[\"False_Northing\",0.0],PARAMETER[\"Central_Meridian\",0.0],PARAMETER[\"latitude_of_origin\",0.0],UNIT[\"Meter\",1.0]]");
+        OGRErr eErr = OGRERR_NONE; //passport.stMapDescription.pSpatRef->importFromEPSG(3395);
         SetVertCS(iVCS, passport);
         return eErr;
     }
