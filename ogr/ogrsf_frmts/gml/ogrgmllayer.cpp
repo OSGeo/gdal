@@ -126,8 +126,14 @@ void OGRGMLLayer::ResetReading()
     iNextGMLId = 0;
     poDS->GetReader()->ResetReading();
     CPLDebug("GML", "ResetReading()");
-    if (poDS->GetLayerCount() > 1 && poDS->GetReadMode() == STANDARD)
-        poDS->GetReader()->SetFilteredClassName(poFClass->GetName());
+    if ( poDS->GetLayerCount() > 1 && poDS->GetReadMode() == STANDARD )
+    {
+        const char* pszElementName = poFClass->GetElementName();
+        const char* pszLastPipe = strrchr( pszElementName, '|' );
+        if ( pszLastPipe != NULL )
+            pszElementName = pszLastPipe + 1;
+        poDS->GetReader()->SetFilteredClassName(pszElementName);
+    }
 }
 
 /************************************************************************/
