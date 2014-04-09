@@ -17,7 +17,7 @@ generate: ${WRAPPERS}
 	if [ -f OGR.pm ]; then mv OGR.pm lib/Geo; fi
 	if [ -f OSR.pm ]; then mv OSR.pm lib/Geo; fi
 
-build: Makefile_Geo__GDAL gdal_wrap.cc
+build: gdal_wrap.cc Makefile_Geo__GDAL
 	$(MAKE) -f Makefile_Geo__GDAL
 	$(MAKE) -f Makefile_Geo__GDAL__Const
 	$(MAKE) -f Makefile_Geo__OGR
