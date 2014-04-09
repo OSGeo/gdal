@@ -750,6 +750,20 @@ An example of such a file is :
                      gfsSchemaLocation="inspire_cp_CadastralZoning.gfs"/&gt;
     &lt;/namespace&gt;
 
+    &lt;!-- Czech RUIAN (VFR) schema (v1) --&gt;
+    &lt;namespace prefix="vf"
+               uri="urn:cz:isvs:ruian:schemas:VymennyFormatTypy:v1 ../ruian/xsd/vymenny_format/VymennyFormatTypy.xsd"
+               useGlobalSRSName="true"&gt;
+        &lt;featureType elementName="TypSouboru"
+                     elementValue="OB_UKSH"
+                     gfsSchemaLocation="vfr_ob_uksh_v1.gfs"/&gt;
+        &lt;featureType elementName="TypSouboru"
+                     elementValue="ST_UKSH"
+                     gfsSchemaLocation="vfr_st_uksh_v1.gfs"/&gt;
+        &lt;featureType elementName="TypSouboru"
+                     elementValue="ST_UKSG"
+                     gfsSchemaLocation="vfr_st_uksg_v1.gfs"/&gt;
+    &lt;/namespace&gt;
 &lt;/gml_registry&gt;
 </pre>
 
@@ -758,10 +772,14 @@ whereas OGR .gfs files are pointed by the gfsSchemaLocation attribute. In both
 cases, the filename can be a URL (http://, https://), an absolute filename,
 or a relative filename (relative to the location of gml_registry.xml).<p>
 
-The schema is used if and only if the namespace prefix and URI are found in the
-first bytes of the GML file (e.g. <i>xmlns:ktjkiiwfs="http://xml.nls.fi/ktjkiiwfs/2010/02"</i>),
-and that the feature type is also detected in the first bytes of the GML file
-(e.g. <i>ktjkiiwfs:KiinteistorajanSijaintitiedot</i>)<p>
+The schema is used if and only if the namespace prefix and URI are
+found in the first bytes of the GML file
+(e.g. <i>xmlns:ktjkiiwfs="http://xml.nls.fi/ktjkiiwfs/2010/02"</i>),
+and that the feature type is also detected in the first bytes of the
+GML file (e.g. <i>ktjkiiwfs:KiinteistorajanSijaintitiedot</i>). If the
+element value is defined than the schema is used only if the feature
+type together with the value is found in the first bytes of the GML
+file (e.g. <i>vf:TypSouboru&gt;OB_UKSH</i>). <p>
 
 <h2>Building junction tables</h2>
 
