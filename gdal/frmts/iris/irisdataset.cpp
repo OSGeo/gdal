@@ -229,13 +229,23 @@ CPLErr IRISRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( (int)VSIFReadL( pszRecord, nBlockXSize*nDataLength, 1, poGDS->fp ) != 1 )
         return CE_Failure;
     
-    //If datatype is dbZ:
-    //See point 3.3.5 at page 3.42 of the manual
-    if(poGDS->nDataTypeCode == 2){
+    //If datatype is dbZ or dBT:
+    //See point 3.3.3 at page 3.33 of the manual
+    if(poGDS->nDataTypeCode == 2 || poGDS->nDataTypeCode == 1){
         float fVal;
         for (i=0;i<nBlockXSize;i++){
             fVal = (((float) *(pszRecord+i*nDataLength)) -64)/2.0;
             if (fVal == 95.5)
+                fVal = -9999;
+            ((float *) pImage)[i] = fVal;
+        }
+    //If datatype is dbZ2 or dBT2:
+    //See point 3.3.4 at page 3.33 of the manual
+    } else if(poGDS->nDataTypeCode == 8 || poGDS->nDataTypeCode == 9){
+        float fVal;
+        for (i=0;i<nBlockXSize;i++){
+            fVal = (((float) CPL_LSBUINT16PTR(pszRecord+i*nDataLength)) - 32768)/100.0;
+            if (fVal == 327.67)
                 fVal = -9999;
             ((float *) pImage)[i] = fVal;
         }
