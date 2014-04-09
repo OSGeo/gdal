@@ -758,16 +758,26 @@ int OGRGMLDataSource::Open( const char * pszNameIn )
                     {
                         if( oNamespace.bUseGlobalSRSName )
                             bUseGlobalSRSName = TRUE;
-
+                        
                         for( size_t iTypename = 0;
                                     iTypename < oNamespace.aoFeatureTypes.size();
                                     iTypename ++ )
                         {
+                            const char* pszElementToFind = NULL;
+                            
                             GMLRegistryFeatureType& oFeatureType =
                                         oNamespace.aoFeatureTypes[iTypename];
-                            const char* pszElementToFind =
-                                CPLSPrintf("%s:%s", oNamespace.osPrefix.c_str(),
-                                           oFeatureType.osElementName.c_str());
+                            
+                            if ( oFeatureType.osElementValue.size() ) 
+                                pszElementToFind = CPLSPrintf("%s:%s>%s",
+                                                              oNamespace.osPrefix.c_str(),
+                                                              oFeatureType.osElementName.c_str(),
+                                                              oFeatureType.osElementValue.c_str());
+                            else
+                                pszElementToFind = CPLSPrintf("%s:%s",
+                                                              oNamespace.osPrefix.c_str(),
+                                                              oFeatureType.osElementName.c_str());
+                            
                             if( osHeader.ifind(pszElementToFind) != std::string::npos )
                             {
                                 if( oFeatureType.osSchemaLocation.size() )
