@@ -10,7 +10,7 @@ svn checkout https://svn.osgeo.org/gdal/trunk gdal
 cd gdal/gdal
 #  --with-ecw=/usr/local --with-mrsid=/usr/local --with-mrsid-lidar=/usr/local --with-fgdb=/usr/local
 ./configure  --prefix=/usr --without-libtool --enable-debug --with-jpeg12 \
-            --with-python --with-poppler \
+            --with-perl --with-python --with-poppler \
             --with-podofo --with-spatialite --with-java --with-mdb \
             --with-jvm-lib-add-rpath --with-epsilon --with-gta \
             --with-mysql --with-liblzma --with-webp --with-libkml \
