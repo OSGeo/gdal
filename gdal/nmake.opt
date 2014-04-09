@@ -7,6 +7,12 @@
 # nmake -f makefile.vc MSVC_VER=1400
 # nmake -f makefile.vc MSVC_VER=1500 DEBUG=1
 # nmake -f makefile.vc MSVC_VER=1600 DEBUG=1 ANALYZE=1
+# nmake -f makefile.vc MSVC_VER=1600 DEBUG=1 ANALYZE=1 WITH_PDB=1
+#
+# Options:
+#    DEBUG - set to disable optimizations and link with debug runtimes; also implies WITH_PDB.
+#  ANALYZE - set to enable code analysis output.
+# WITH_PDB - set to enable output of PDB files, supported for both debug and release modes.
 #
 ###############################################################################
 # For convenience, user may put custom settings in a local settings file
@@ -25,6 +31,7 @@
 # Check version of Visual C++ compiler:
 # nmake -f makefile.vc MSVC_VER=xxxx
 # where xxxx is one of following:
+# 1800 = 12.0(2013)
 # 1700 = 11.0(2012)
 # 1600 = 10.0(2010)
 # 1500 = 9.0 (2008)
@@ -106,18 +113,29 @@ CXX_ANALYZE_FLAGS=/analyze
 CXX_ANALYZE_FLAGS=
 !ENDIF
 
+# Force PDB output for DEBUG mode
+!IFDEF DEBUG
+WITH_PDB=1
+!ENDIF
+
+!IFDEF WITH_PDB
+CXX_PDB_FLAGS=/Zi /Fd$(GDAL_ROOT)\gdal$(VERSION).pdb
+!ELSE
+CXX_PDB_FLAGS=
+!ENDIF
+
 !IFNDEF OPTFLAGS
 !IF $(MSVC_VER) >= 1400
 !IFNDEF DEBUG
-OPTFLAGS= $(CXX_ANALYZE_FLAGS) /nologo /MD /EHsc /Ox /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /DNDEBUG
+OPTFLAGS= $(CXX_ANALYZE_FLAGS) $(CXX_PDB_FLAGS) /nologo /MD /EHsc /Ox /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /DNDEBUG
 !ELSE
-OPTFLAGS= $(CXX_ANALYZE_FLAGS) /nologo /MD /EHsc /Zi /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /Fd$(GDAL_ROOT)\gdal$(VERSION).pdb /DDEBUG
+OPTFLAGS= $(CXX_ANALYZE_FLAGS) $(CXX_PDB_FLAGS) /nologo /MD /EHsc /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /DDEBUG
 !ENDIF
 !ELSE
 !IFNDEF DEBUG
-OPTFLAGS=	/nologo /MD /EHsc /GR /Ox /DNDEBUG
+OPTFLAGS= $(CXX_PDB_FLAGS) /nologo /MD /EHsc /GR /Ox /DNDEBUG
 !ELSE
-OPTFLAGS=	/nologo /MD /EHsc /GR /Zi /Fd$(GDAL_ROOT)\gdal$(VERSION).pdb  /DDEBUG
+OPTFLAGS= $(CXX_PDB_FLAGS) /nologo /MD /EHsc /GR /DDEBUG
 !ENDIF
 !ENDIF  #MSVC_VER
 !ENDIF  # OPTFLAGS
