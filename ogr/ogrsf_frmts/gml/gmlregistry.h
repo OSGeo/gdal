@@ -39,6 +39,7 @@ class GMLRegistryFeatureType
 {
     public:
         CPLString                           osElementName;
+        CPLString                           osElementValue;
         CPLString                           osSchemaLocation;
         CPLString                           osGFSSchemaLocation;
 

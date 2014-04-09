@@ -110,6 +110,7 @@ int GMLRegistryNamespace::Parse(const char* pszRegistryFilename, CPLXMLNode* psN
 int GMLRegistryFeatureType::Parse(const char* pszRegistryFilename, CPLXMLNode* psNode)
 {
     const char* pszElementName = CPLGetXMLValue(psNode, "elementName", NULL);
+    const char* pszElementValue = CPLGetXMLValue(psNode, "elementValue", NULL);
     const char* pszSchemaLocation = CPLGetXMLValue(psNode, "schemaLocation", NULL);
     const char* pszGFSSchemaLocation = CPLGetXMLValue(psNode, "gfsSchemaLocation", NULL);
     if( pszElementName == NULL || (pszSchemaLocation == NULL && pszGFSSchemaLocation == NULL) )
@@ -137,6 +138,11 @@ int GMLRegistryFeatureType::Parse(const char* pszRegistryFilename, CPLXMLNode* p
                 CPLGetPath(pszRegistryFilename), pszGFSSchemaLocation, NULL );
         }
         osGFSSchemaLocation = pszGFSSchemaLocation;
+    }
+
+    if ( pszElementValue != NULL )
+    {
+        osElementValue = pszElementValue; 
     }
 
     return TRUE;
