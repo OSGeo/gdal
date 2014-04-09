@@ -5,9 +5,12 @@
 
 # You may need to customize the following versions to match your cross-compiler
 # name and your native python installation
-CXX=i586-mingw32msvc-g++
+if test "x${CXX}" = "x"; then
+  CXX=i586-mingw32msvc-g++
+else
+  CXX="${CXX}"
+fi
 PYTHONHOME=$HOME/.wine/drive_c/Python27
-OUTDIR=build/lib.win32-2.7/osgeo
 PYTHONLIB=python27
 
 if test -d ${PYTHONHOME}/Lib/site-packages/numpy/core/include; then
@@ -23,6 +26,17 @@ CFLAGS="-O2 -D__MSVCRT_VERSION__=0x0601"
 
 # Run native python
 wine ${PYTHONHOME}/python setup.py build
+
+# Determine OUTDIR
+if test -d build/lib.win32-2.7; then
+  OUTDIR=build/lib.win32-2.7/osgeo
+elif test -d build/lib.win-amd64-2.7; then
+  OUTDIR=build/lib.win-amd64-2.7/osgeo
+  CFLAGS="-DMS_WIN64 $CFLAGS"
+else
+  echo "Cannot determine OUTDIR"
+  exit 1
+fi
 
 # Build extensions
 ${CXX} ${CFLAGS} extensions/gdal_wrap.cpp -shared -o ${OUTDIR}/_gdal.pyd ${INCFLAGS} ${LINKFLAGS}
