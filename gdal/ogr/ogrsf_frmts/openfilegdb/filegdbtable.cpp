@@ -1731,6 +1731,12 @@ int FileGDBTable::DoesGeometryIntersectsFilterEnvelope(const OGRField* psField)
         }
 
         case SHPT_GENERALPOLYLINE:
+        case SHPT_GENERALPOLYGON:
+        {
+            nToSkip = 1 + ((nGeomType & 0x20000000) ? 1 : 0);
+            break;
+        }
+
         case SHPT_GENERALMULTIPATCH:
         case SHPT_MULTIPATCHM:
         case SHPT_MULTIPATCH:
@@ -2200,7 +2206,7 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
         case SHPT_GENERALPOLYLINE:
         {
             returnErrorIf(!ReadPartDefs(pabyCur, pabyEnd, nPoints, nParts,
-                              (nGeomType & 0xff) == SHPT_GENERALPOLYLINE,
+                              (nGeomType & 0x20000000) != 0,
                               FALSE) );
 
             if( nPoints == 0 || nParts == 0 )
@@ -2272,8 +2278,11 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
             bHasZ = TRUE; /* go on */
         case SHPT_POLYGON:
         case SHPT_POLYGONM:
+        case SHPT_GENERALPOLYGON:
         {
-            returnErrorIf(!ReadPartDefs(pabyCur, pabyEnd, nPoints, nParts, FALSE, FALSE ) );
+            returnErrorIf(!ReadPartDefs(pabyCur, pabyEnd, nPoints, nParts,
+                              (nGeomType & 0x20000000) != 0,
+                              FALSE) );
 
             if( nPoints == 0 || nParts == 0 )
             {
@@ -2495,7 +2504,6 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
             CPLDebug("OpenFileGDB", "Unhandled geometry type = %d", (int)nGeomType);
             break;
 /*
-#define SHPT_GENERALPOLYGON     51
 #define SHPT_GENERALPOINT       52
 #define SHPT_GENERALMULTIPOINT  53
 */
