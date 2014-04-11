@@ -61,7 +61,7 @@ protected:
     int m_nSXFFormatVer;
     CPLString sFIDColumn_;
     void            **m_hIOMutex;
-
+    double              m_dfCoeff;
     virtual OGRFeature *       GetNextRawFeature(long nFID);
 
     GUInt32 TranslateXYH(const SXFRecordDescription& certifInfo,
