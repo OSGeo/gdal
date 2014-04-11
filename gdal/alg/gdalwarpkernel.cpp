@@ -5127,7 +5127,28 @@ static void GWKAverageOrModeThread( void* pData)
                 iSrcXMin = MAX( ((int) floor((padfX[iDstX] + 1e-10))) - poWK->nSrcXOff, 0 ); 
                 iSrcXMax = MIN( ((int) ceil((padfX2[iDstX] - 1e-10))) - poWK->nSrcXOff, nSrcXSize ); 
                 iSrcYMin = MAX( ((int) floor((padfY[iDstX] + 1e-10))) - poWK->nSrcYOff, 0 ); 
-                iSrcYMax = MIN( ((int) ceil((padfY2[iDstX] - 1e-10))) - poWK->nSrcYOff, nSrcYSize ); 
+                iSrcYMax = MIN( ((int) ceil((padfY2[iDstX] - 1e-10))) - poWK->nSrcYOff, nSrcYSize );
+                
+                // The transformation might not have preserved ordering of coordinates
+                // so do the necessary swapping (#5433)
+                // NOTE: this is really an approximative fix. To do something more precise
+                // we would for example need to compute the transformation of coordinates
+                // in the [iDstX,iDstY]x[iDstX+1,iDstY+1] square back to source coordinates,
+                // and take the bounding box of the got source coordinates.
+                if( iSrcXMax < iSrcXMin )
+                {
+                    iSrcXMin = MAX( ((int) floor((padfX2[iDstX] + 1e-10))) - poWK->nSrcXOff, 0 ); 
+                    iSrcXMax = MIN( ((int) ceil((padfX[iDstX] - 1e-10))) - poWK->nSrcXOff, nSrcXSize ); 
+                }
+                if( iSrcYMax < iSrcYMin )
+                {
+                    iSrcYMin = MAX( ((int) floor((padfY2[iDstX] + 1e-10))) - poWK->nSrcYOff, 0 ); 
+                    iSrcYMax = MIN( ((int) ceil((padfY[iDstX] - 1e-10))) - poWK->nSrcYOff, nSrcYSize );
+                }
+                if( iSrcXMin == iSrcXMax && iSrcXMax < nSrcXSize )
+                    iSrcXMax ++;
+                if( iSrcYMin == iSrcYMax && iSrcYMax < nSrcYSize )
+                    iSrcYMax ++;
 
                 // loop over source lines and pixels - 3 possible algorithms
                 
