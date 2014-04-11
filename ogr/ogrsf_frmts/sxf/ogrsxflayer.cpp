@@ -55,7 +55,7 @@ OGRSXFLayer::OGRSXFLayer(VSILFILE* fp, void** hIOMutex, GByte nID, const char* p
     m_nSXFFormatVer = nVer;
     oNextIt = mnRecordDesc.begin();
     m_hIOMutex = hIOMutex;
-
+    m_dfCoeff = stSXFMapDescription.dfScale / stSXFMapDescription.nResolution;
     poFeatureDefn = new OGRFeatureDefn(pszLayerName);
     poFeatureDefn->Reference();
     
@@ -430,8 +430,6 @@ GUInt32 OGRSXFLayer::TranslateXYH(const SXFRecordDescription& certifInfo,
 {
     //Xp, Yp(м) = Xo, Yo(м) + (Xd, Yd / R * S), (1)
 
-    double dfCoeff = stSXFMapDescription.dfScale / stSXFMapDescription.nResolution;
-
 	int offset = 0;
     switch (certifInfo.eValType)
     {
@@ -453,8 +451,17 @@ GUInt32 OGRSXFLayer::TranslateXYH(const SXFRecordDescription& certifInfo,
         }
         else
         {
-            *dfX = stSXFMapDescription.dfXOr + (double)x * dfCoeff;
-            *dfY = stSXFMapDescription.dfYOr + (double)y * dfCoeff;
+            if (m_nSXFFormatVer == 3)
+            {
+                *dfX = stSXFMapDescription.dfXOr + (double)y * m_dfCoeff;
+                *dfY = stSXFMapDescription.dfYOr + (double)x * m_dfCoeff;
+            }
+            else if (m_nSXFFormatVer == 4)
+            {
+                //TODO: check on real data
+                *dfX = stSXFMapDescription.dfXOr + (double)y * m_dfCoeff;
+                *dfY = stSXFMapDescription.dfYOr + (double)x * m_dfCoeff;
+            }
         }
 
         offset += 4;
@@ -489,8 +496,8 @@ GUInt32 OGRSXFLayer::TranslateXYH(const SXFRecordDescription& certifInfo,
         }
         else
         {
-            *dfX = stSXFMapDescription.dfXOr + (double)x * dfCoeff;
-            *dfY = stSXFMapDescription.dfYOr + (double)y * dfCoeff;
+            *dfX = stSXFMapDescription.dfXOr + (double)x * m_dfCoeff;
+            *dfY = stSXFMapDescription.dfYOr + (double)y * m_dfCoeff;
         }
 
         offset += 8;
@@ -525,10 +532,18 @@ GUInt32 OGRSXFLayer::TranslateXYH(const SXFRecordDescription& certifInfo,
         }
         else
         {
-            *dfX = stSXFMapDescription.dfXOr + (double)x * dfCoeff;
-            *dfY = stSXFMapDescription.dfYOr + (double)y * dfCoeff;
+            //TODO: check on real data
+            if (m_nSXFFormatVer == 3)
+            {
+                *dfX = stSXFMapDescription.dfXOr + (double)y * m_dfCoeff;
+                *dfY = stSXFMapDescription.dfYOr + (double)x * m_dfCoeff;
+            }
+            else if (m_nSXFFormatVer == 4)
+            {
+                *dfX = stSXFMapDescription.dfXOr + (double)y * m_dfCoeff;
+                *dfY = stSXFMapDescription.dfYOr + (double)x * m_dfCoeff;
+            }
         }
-
         offset += 8;
 
         if (dfH != NULL)
@@ -561,8 +576,8 @@ GUInt32 OGRSXFLayer::TranslateXYH(const SXFRecordDescription& certifInfo,
         }
         else
         {
-            *dfX = stSXFMapDescription.dfXOr + y * dfCoeff;
-            *dfY = stSXFMapDescription.dfYOr + x * dfCoeff;
+            *dfX = stSXFMapDescription.dfXOr + x * m_dfCoeff;
+            *dfY = stSXFMapDescription.dfYOr + y * m_dfCoeff;
         }
 
         offset += 16;
