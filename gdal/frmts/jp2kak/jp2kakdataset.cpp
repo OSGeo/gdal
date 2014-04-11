@@ -1563,11 +1563,13 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag eRWFlag,
                     sample_offsets[i] = i * nBandSpace / 2;
                     sample_gaps[i] = nPixelSpace / 2;
                     row_gaps[i] = nLineSpace / 2;
+                    /* Introduced in r25136 with an unrelated commit message.
+                    Reverted per ticket #5328
                     if( precisions[i] == 12 )
                     {
                       CPLDebug( "JP2KAK", "16bit extend 12 bit data." );
                       precisions[i] = 16;
-                    }
+                    }*/
                 }
                 
             }
