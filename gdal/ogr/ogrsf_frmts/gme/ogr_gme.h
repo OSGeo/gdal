@@ -58,7 +58,7 @@ class OGRGMELayer : public OGRLayer
     CPLString          osGeomColumnName;
 
     CPLString          osWhere;
-    CPLString          osQuery;
+    CPLString          osSelect;
 
     json_object*       current_feature_page;
     json_object*       current_features_array;
@@ -89,7 +89,9 @@ class OGRGMELayer : public OGRLayer
 
     virtual int         TestCapability( const char * );
 
-    virtual OGRErr      SetAttributeFilter( const char * );
+    virtual OGRErr      SetAttributeFilter( const char * pszWhere );
+
+    virtual OGRErr      SetIgnoredFields(const char ** papszFields );
 };
 
 /************************************************************************/

@@ -196,6 +196,11 @@ void OGRGMELayer::GetPageOfFeatures()
         osMoreOptions += "&pageToken=";
         osMoreOptions += osNextPageToken;
     }
+    if (!osSelect.empty()) {
+        CPLDebug( "GME", "found select=%s", osSelect.c_str());
+        osMoreOptions += "&select=";
+        osMoreOptions += osSelect;
+    }
     if (!osWhere.empty()) {
         CPLDebug( "GME Layer", "found where=%s", osWhere.c_str());
         osMoreOptions += "&where=";
@@ -365,4 +370,19 @@ OGRErr OGRGMELayer::SetAttributeFilter( const char *pszWhere )
         CPLFree(pszEscaped);
     }
     return eErr;
+}
+
+OGRErr OGRGMELayer::SetIgnoredFields(const char ** papszFields )
+{
+    osSelect = "";
+    OGRLayer::SetIgnoredFields(papszFields);
+
+    for (int iOGRField = 0; iOGRField < poFeatureDefn->GetFieldCount(); iOGRField++ ) 
+    {
+        if (!poFeatureDefn->GetFieldDefn(iOGRField)->IsIgnored()) {
+            osSelect += poFeatureDefn->GetFieldDefn(iOGRField)->GetNameRef();
+            osSelect += ",";
+	}
+    }
+    osSelect.erase(osSelect.length()-1);
 }
