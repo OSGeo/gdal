@@ -53,6 +53,7 @@ class OGRGMELayer : public OGRLayer
     OGRSpatialReference *poSRS;
 
     int                iGeometryField;
+  int                iGxIdField;
 
     CPLString          osTableName;
     CPLString          osTableId;

@@ -150,8 +150,8 @@ def ogr_gme_write():
     feature.SetField('strcol', 'foo')
     feature.SetField('dblcol', 3.45)
     feature.SetField('intcol', 11)
-    feature.SetField('gx_id', 'GDAL-1')
     expected_wkt = "POLYGON ((1 1,4 1,4 4,1 4,1 1),(2 2,3 2,3 3,2 3,2 2))"
+
     geom = ogr.CreateGeometryFromWkt(expected_wkt)
     feature.SetGeometry(geom)
 
@@ -176,7 +176,7 @@ def ogr_gme_write():
         gdaltest.post_reason('GetNextFeature() did not return a feature o_O')
         return 'fail'
 
-    if feature.GetFieldAsString('gx_id') != 'GDAL-1':
+    if feature.GetFieldAsString('strcol') != 'bar':
         gdaltest.post_reason('GetNextFeature() did not get expected feature')
         feature.DumpReadable()
         return 'fail'
