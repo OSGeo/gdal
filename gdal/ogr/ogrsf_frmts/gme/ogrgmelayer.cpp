@@ -30,6 +30,7 @@
  ****************************************************************************/
 
 #include "ogr_gme.h"
+#include "ogrgmejson.h"
 
 CPL_CVSID("$Id: ogrgmetablelayer.cpp 25475 2013-01-09 09:09:59Z warmerdam $");
 
@@ -428,6 +429,8 @@ OGRErr OGRGMELayer::SetFeature( OGRFeature *poFeature )
 
 {
     bDirty = true;
+    OGRFeature *poFeat = poFeature->Clone();
+    // poFeat->SetGeometryDirectly(poFeature->GetGeometryRef()->clone());
     oListOfUpdatedFeatures.push_back(poFeature->Clone());
     if (oListOfUpdatedFeatures.size() == iBatchPatchSize) {
         CPLDebug("GME", "Have %d uncommitted features, patching", iBatchPatchSize);
@@ -446,18 +449,22 @@ void OGRGMELayer::BatchPatch()
     std::vector<OGRFeature *>::const_iterator fit;
     for ( fit = oListOfUpdatedFeatures.begin(); fit != oListOfUpdatedFeatures.end(); fit++)
     {
-        CPLDebug("GME", "Patching feature: %ld:", (*fit)->GetFID());
-        for ( int iField = 0; iField < (*fit)->GetFieldCount(); iField++ )
+        OGRFeature *poFeature = *fit;
+        json_object *pojFeature = OGRGMEFeatureToGeoJSON(poFeature);
+        CPLDebug("GME", "Patching feature: %ld:\n%s",
+                 poFeature->GetFID(),
+                 json_object_to_json_string_ext(pojFeature, JSON_C_TO_STRING_PRETTY) );
+        for ( int iField = 0; iField < poFeature->GetFieldCount(); iField++ )
         {
-            if ((*fit)->IsFieldSet(iField))
+            if (poFeature->IsFieldSet(iField))
             {
-                OGRFieldDefn *poFieldDefn = (*fit)->GetFieldDefnRef(iField);
+                OGRFieldDefn *poFieldDefn = poFeature->GetFieldDefnRef(iField);
                 OGRFieldType type = poFieldDefn->GetType();
                 const char *name = poFieldDefn->GetNameRef();
-                CPLDebug("GME", "\t%s: %s", name, (*fit)->GetFieldAsString(iField));
+                CPLDebug("GME", "\t%s: %s", name, poFeature->GetFieldAsString(iField));
             }
         }
-        delete (*fit);
+        delete poFeature;
     }
     oListOfUpdatedFeatures.clear();
     bDirty = false;
