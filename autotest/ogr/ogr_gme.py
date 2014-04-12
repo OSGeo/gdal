@@ -75,11 +75,15 @@ def ogr_gme_read():
     gdal.SetConfigOption('GME_AUTH', None)
     gdal.SetConfigOption('GME_ACCESS_TOKEN', None)
     gdal.SetConfigOption('GME_REFRESH_TOKEN', None)
+
+#    gdal.SetConfigOption('GME_TRACE_TOKEN', 'token:...')
+
     ds = ogr.Open('GME:tables=%s' % table_id)
     gdal.SetConfigOption('GME_AUTH', old_auth)
     gdal.SetConfigOption('GME_ACCESS_TOKEN', old_access)
     gdal.SetConfigOption('GME_REFRESH_TOKEN', old_refresh)
     gdal.SetConfigOption('GME_BATCH_PATCH_SIZE', '1')
+
     if ds is None:
         return 'fail'
 

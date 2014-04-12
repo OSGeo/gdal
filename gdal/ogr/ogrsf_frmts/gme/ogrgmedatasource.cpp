@@ -194,6 +194,15 @@ int OGRGMEDataSource::Open( const char * pszFilename, int bUpdateIn)
         return FALSE;
     }
 
+    osTraceToken = OGRGMEGetOptionValue(pszFilename, "trace");
+    if (osTraceToken.size() == 0) {
+        CPLDebug("GME", "Looking for GME_TRACE_TOKEN");
+        osTraceToken = CPLGetConfigOption("GME_TRACE_TOKEN", "");
+    }
+    if (osTraceToken.size() != 0) {
+      CPLDebug("GME", "Found trace token %s", osTraceToken.c_str());
+    }
+
     if (osTables.size() != 0)
     {
         char** papszTables = CSLTokenizeString2(osTables, ",", 0);
@@ -247,6 +256,14 @@ OGRLayer   *OGRGMEDataSource::CreateLayer( const char *pszName,
 
     if ((CSLFetchNameValue( papszOptions, "projectId" ) == NULL) && (osProjectId.size() != 0)) {
         papszOptions = CSLAddNameValue( papszOptions, "projectId", osProjectId.c_str() );
+    }
+
+    osTraceToken = OGRGMEGetOptionValue(pszName, "trace");
+    if (osTraceToken.size() == 0) {
+      osTraceToken = CPLGetConfigOption("GME_TRACE_TOKEN", "");
+    }
+    if (osTraceToken.size() != 0) {
+      CPLDebug("GME", "Found trace token %s", osTraceToken.c_str());
     }
 
     OGRGMELayer* poLayer = new OGRGMELayer(this, pszName, papszOptions);
@@ -325,6 +342,13 @@ CPLHTTPResult * OGRGMEDataSource::MakeRequest(const char *pszRequest,
         osURL += "?";
     }
     osURL += osQueryFields;
+
+    // Trace the request if we have a tracing token
+    if (osTraceToken.size() != 0) {
+      CPLDebug("GME", "Using trace token %s", osTraceToken.c_str());
+      osURL += "&trace=";
+      osURL += osTraceToken;
+    }
 
     CPLDebug( "GME", "Sleep for 1s to try and avoid qps limiting errors.");
     CPLSleep( 1.0 );
@@ -474,6 +498,13 @@ CPLHTTPResult * OGRGMEDataSource::PostRequest(const char *pszRequest,
         osURL += "?";
     }
     osURL += osQueryFields;
+
+    // Trace the request if we have a tracing token
+    if (osTraceToken.size() != 0) {
+      CPLDebug("GME", "Using trace token %s", osTraceToken.c_str());
+      osURL += "&trace=";
+      osURL += osTraceToken;
+    }
 
     CPLDebug( "GME", "Sleep for 1s to try and avoid qps limiting errors.");
     CPLSleep( 1.0 );
