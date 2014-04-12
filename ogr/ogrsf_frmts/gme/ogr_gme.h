@@ -142,6 +142,7 @@ class OGRGMEDataSource : public OGRDataSource
     CPLString           osAuth;
     CPLString           osAccessToken;
     CPLString           osRefreshToken;
+    CPLString           osTraceToken;
     CPLString           osAPIKey;
     CPLString           osSelect;
     CPLString           osWhere;
