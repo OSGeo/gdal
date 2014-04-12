@@ -100,8 +100,8 @@ def ogr_gme_read():
         gdaltest.post_reason('got wrong feature')
         print(feature.FIPS_CODE)
         return 'fail'
-    if str(feature.GetFID()) != feature.gx_id:
-        gdaltest.post_reason('unexpected feature id')
+    if feature.gx_id != '163':
+        gdaltest.post_reason('unexpected feature id %s (%d)' % (feature.gx_id.feature.GetFID()))
         return 'fail'
     if feature.YR94_ID is not None:
         gdaltest.post_reason('ignored field is not ignored')

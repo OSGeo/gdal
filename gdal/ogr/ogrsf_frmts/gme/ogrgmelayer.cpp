@@ -3,7 +3,8 @@
  *
  * Project:  Google Maps Engine API Driver
  * Purpose:  OGRGMELayer Implementation.
- * Author:   Frank Warmerdam <warmerdam@pobox.com>
+ * Author:   Wolf Beregnheim <wolf+grass@bergenheim.net>
+ *           Frank Warmerdam <warmerdam@pobox.com>
  *           (derived from GFT driver by Even)
  *
  ******************************************************************************
@@ -285,11 +286,10 @@ OGRFeature *OGRGMELayer::GetNextRawFeature()
 /*      Handle gx_id.                                                   */
 /* -------------------------------------------------------------------- */
     const char *gx_id = poDS->GetJSONString(properties_obj, "gx_id");
-    int nFID = atoi(gx_id);
-    if (EQUAL(CPLSPrintf("%d", nFID), gx_id))
-	poFeature->SetFID(nFID);
-    else
-        poFeature->SetFID(m_nFeaturesRead);
+    CPLString gmeId(gx_id);
+    oMapIdToGMEKey.insert(std::pair<int, CPLString>(m_nFeaturesRead, gmeId));
+    poFeature->SetFID(m_nFeaturesRead);
+    CPLDebug("GME", "Mapping ids: \"%s\" to %d", gx_id, m_nFeaturesRead);
 
 /* -------------------------------------------------------------------- */
 /*      Handle geometry.                                                */
