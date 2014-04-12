@@ -102,8 +102,10 @@ OGRErr OGRGMELayer::SyncToDisk()
 
 {
     CPLDebug("GME", "SyncToDisk()");
-    if (bDirty)
+    if (bDirty) {
+        BatchInsert();
         BatchPatch();
+    }
     return OGRERR_NONE;
 }
 
@@ -306,7 +308,7 @@ OGRFeature *OGRGMELayer::GetNextRawFeature()
 /* -------------------------------------------------------------------- */
     const char *gx_id = poDS->GetJSONString(properties_obj, "gx_id");
     CPLString gmeId(gx_id);
-    oMapIdToGMEKey.insert(std::pair<int, CPLString>(m_nFeaturesRead, gmeId));
+    oMapIdToGMEKey.insert(std::pair<int, CPLString>(++m_nFeaturesRead, gmeId));
     poFeature->SetFID(m_nFeaturesRead);
     CPLDebug("GME", "Mapping ids: \"%s\" to %lld", gx_id, m_nFeaturesRead);
 
@@ -345,7 +347,8 @@ OGRFeature *OGRGMELayer::GetNextFeature()
         if( poFeature == NULL )
             break;
 
-        m_nFeaturesRead++;
+        // incremeted in GetNextRawFeature()
+        // m_nFeaturesRead++;
 
         if( (m_poFilterGeom == NULL
              || poFeature->GetGeometryRef() == NULL 
@@ -442,31 +445,58 @@ OGRErr OGRGMELayer::SetFeature( OGRFeature *poFeature )
 /************************************************************************/
 
 void OGRGMELayer::BatchPatch()
+{
+    BatchRequest("batchPatch", oListOfUpdatedFeatures);
+    if (oListOfInsertedFeatures.size())
+        bDirty = true;
+    else
+        bDirty = false;
+}
 
+/************************************************************************/
+/*                            BatchInsert()                              */
+/************************************************************************/
+
+void OGRGMELayer::BatchInsert()
+{
+    BatchRequest("batchInsert", oListOfInsertedFeatures);
+    if (oListOfUpdatedFeatures.size())
+        bDirty = true;
+    else
+        bDirty = false;
+}
+
+/************************************************************************/
+/*                            BatchRequest()                            */
+/************************************************************************/
+
+void OGRGMELayer::BatchRequest(const char *pszMethod, std::vector<OGRFeature *> &oListOfFeatures)
 {
     json_object *pjoBatchPatch = json_object_new_object();
     json_object *pjoFeatures = json_object_new_array();
     std::vector<OGRFeature *>::const_iterator fit;
-    for ( fit = oListOfUpdatedFeatures.begin(); fit != oListOfUpdatedFeatures.end(); fit++)
+    CPLDebug("GME", "BatchRequest('%s', <%d>)", pszMethod, oListOfFeatures.size() );
+    for ( fit = oListOfFeatures.begin(); fit != oListOfFeatures.end(); fit++)
     {
         OGRFeature *poFeature = *fit;
         json_object *pjoFeature = OGRGMEFeatureToGeoJSON(poFeature);
-        CPLDebug("GME", "Patching feature: %ld", poFeature->GetFID() );
+        CPLDebug("GME", "Processing feature: %ld", poFeature->GetFID() );
         delete poFeature;
-        json_object_array_add( pjoFeatures, pjoFeature );
+        if (pjoFeature != NULL)
+            json_object_array_add( pjoFeatures, pjoFeature );
     }
-    oListOfUpdatedFeatures.clear();
-    bDirty = false;
+    oListOfFeatures.clear();
+    if (json_object_array_length(pjoFeatures) == 0)
+        return;
     json_object_object_add( pjoBatchPatch, "features", pjoFeatures );
     const char *body =
         json_object_to_json_string_ext(pjoBatchPatch,
                                        JSON_C_TO_STRING_SPACED | JSON_C_TO_STRING_PRETTY);
-    //CPLDebug("GME", "BatchPatch:\n%s", body);
 
 /* -------------------------------------------------------------------- */
 /*      POST changes                                                    */
 /* -------------------------------------------------------------------- */
-   CPLString osRequest = "tables/" + osTableId + "/features/batchPatch";
+   CPLString osRequest = "tables/" + osTableId + "/features/" + pszMethod;
    CPLHTTPResult *psBatchPatchResult = poDS->PostRequest(osRequest, body);
    CPLDebug("GME", "batchPatch returned %d", psBatchPatchResult->nStatus);
 }
@@ -479,4 +509,28 @@ void OGRGMELayer::SetBatchPatchSize(unsigned int iSize)
 
 {
     iBatchPatchSize = iSize;
+}
+
+/************************************************************************/
+/*                           CreateFeature()                            */
+/************************************************************************/
+
+OGRErr OGRGMELayer::CreateFeature( OGRFeature *poFeature )
+
+{
+    bDirty = true;
+    poFeature->SetFID(++m_nFeaturesRead);
+    int nGxId = poFeature->GetFieldIndex("gx_id");
+    if (!poFeature->IsFieldSet(nGxId)) {
+        CPLString osGxId = CPLSPrintf("GDAL-%ld", poFeature->GetFID());
+        poFeature->SetField( nGxId, osGxId.c_str() );
+    }
+
+    oListOfInsertedFeatures.push_back(poFeature->Clone());
+    if (oListOfInsertedFeatures.size() == iBatchPatchSize) {
+        CPLDebug("GME", "Have %d uncommitted features, inserting", iBatchPatchSize);
+        BatchInsert();
+    }
+    CPLDebug("GME", "Inserted feature %ld", poFeature->GetFID());
+    return OGRERR_NONE;
 }

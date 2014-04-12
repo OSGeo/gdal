@@ -79,7 +79,7 @@ def ogr_gme_read():
     gdal.SetConfigOption('GME_AUTH', old_auth)
     gdal.SetConfigOption('GME_ACCESS_TOKEN', old_access)
     gdal.SetConfigOption('GME_REFRESH_TOKEN', old_refresh)
-    gdal.SetConfigOption('GME_BATCH_PATCH_SIZE', '2')
+    gdal.SetConfigOption('GME_BATCH_PATCH_SIZE', '1')
     if ds is None:
         return 'fail'
 
@@ -137,26 +137,37 @@ def ogr_gme_write():
 #    lyr.CreateField(ogr.FieldDefn('strcol', ogr.OFTString))
 #    lyr.CreateField(ogr.FieldDefn('numcol', ogr.OFTReal))
     lyr = ds.GetLayer(0)
+    count = lyr.GetFeatureCount()
+
     if lyr is None:
         return 'fail'
 
-#    feature = ogr.Feature(lyr.GetLayerDefn())
     feature = lyr.GetNextFeature()
 
     feature.SetField('YR94_', feature.YR94_ID)
-#    feature.SetField('numcol', '3.45')
-#    expected_wkt = "POLYGON ((0 0,0 1,1 1,1 0),(0.25 0.25,0.25 0.75,0.75 0.75,0.75 0.25))"
-#    geom = ogr.CreateGeometryFromWkt(expected_wkt)
-#    feature.SetGeometry(geom)
-#    if lyr.CreateFeature(feat) != 0:
-#        gdaltest.post_reason('CreateFeature() failed')
-#        return 'fail'
-
-#    fid = feature.GetFID()
-#    feature.SetField('strcol', 'bar')
     if lyr.SetFeature(feature) != 0:
         gdaltest.post_reason('SetFeature() failed')
         return 'fail'
+
+    feature = ogr.Feature(lyr.GetLayerDefn())
+    feature.SetField('AREA', 8.0)
+    feature.SetField('PERIMETER', 9.0)
+    feature.SetField('YR94_', "1102")
+    feature.SetField('YR94_ID', "1103")
+    feature.SetField('ABBREVNAME', "Wolfstein")
+    feature.SetField('FIPS_CODE', "WB")
+    feature.SetField('PR_POP2000', 11.0)
+    feature.SetField('P_0_14_89', 4.0)
+    feature.SetField('P_15_64_89', 11.0)
+    feature.SetField('LIFE_EXP', 236.0)
+    feature.SetField('LIFE_EXP_F', 77.25)
+    expected_wkt = "POLYGON ((1 4, 1 1, 4 1, 4 4, 1 4),(2 3, 2 2, 3 2, 3 3, 2 3))"
+    geom = ogr.CreateGeometryFromWkt(expected_wkt)
+    feature.SetGeometry(geom)
+    if lyr.CreateFeature(feature) != 0:
+        gdaltest.post_reason('CreateFeature() failed')
+        return 'fail'
+    fid = feature.GetFID()
 
     ds = None
     return 'success'
