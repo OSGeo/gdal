@@ -127,7 +127,7 @@ def ogr_gme_write():
         return 'skip'
 
     project_id = '09572813676992841461'
-    ds = ogr.Open('GME:project=%s' % project_id, update = 1)
+    ds = ogr.Open('GME:projectId=%s' % project_id, update = 1)
 
     if ds is None:
         ogrtest.gme_can_write = False
