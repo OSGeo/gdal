@@ -282,9 +282,9 @@ int VSIMemHandle::Seek( vsi_l_offset nOffset, int nWhence )
         if( !bUpdate ) // Read-only files cannot be extended by seek.
         {
             CPLDebug( "VSIMemHandle", 
-                      "Attempt to extend read-only file '%s' to length %d from %d, .", 
+                      "Attempt to extend read-only file '%s' to length " CPL_FRMT_GUIB " from " CPL_FRMT_GUIB ".",
                       poFile->osFilename.c_str(), 
-                      (int) this->nOffset, (int) poFile->nLength );
+                      this->nOffset, poFile->nLength );
 
             this->nOffset = poFile->nLength;
             errno = EACCES;
