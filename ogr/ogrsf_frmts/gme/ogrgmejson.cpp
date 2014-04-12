@@ -473,3 +473,55 @@ static int json_gme_double_to_string(json_object *pjo,
   printbuf_memappend(pb, buf, size);
   return size;
 }
+
+/************************************************************************/
+/*                       OGRGMEParseJSON()                              */
+/************************************************************************/
+
+json_object *OGRGMEParseJSON( const char* pszText )
+{
+    if( NULL != pszText )
+    {
+        json_tokener* jstok = NULL;
+        json_object* jsobj = NULL;
+
+        jstok = json_tokener_new();
+        jsobj = json_tokener_parse_ex(jstok, pszText, -1);
+        if( jstok->err != json_tokener_success)
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "JSON parsing error: %s (at offset %d)",
+                          json_tokener_errors[jstok->err], jstok->char_offset);
+
+            json_tokener_free(jstok);
+            return NULL;
+        }
+        json_tokener_free(jstok);
+
+        /* JSON tree is shared for while lifetime of the reader object
+         * and will be released in the destructor.
+         */
+        return jsobj;
+    }
+
+    return NULL;
+}
+
+
+/************************************************************************/
+/*                        OGRGMEGetJSONString()                         */
+/*                                                                      */
+/*      Fetch a string field from a json_object (only an immediate      */
+/*      child).                                                         */
+/************************************************************************/
+
+const char *OGRGMEGetJSONString(json_object *parent,
+                               const char *field,
+                               const char *default_value)
+{
+    json_object *child = json_object_object_get(parent, field);
+    if (child == NULL )
+        return default_value;
+
+    return json_object_get_string(child);
+}

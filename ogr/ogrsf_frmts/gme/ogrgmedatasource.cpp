@@ -29,6 +29,7 @@
  ****************************************************************************/
 
 #include "ogr_gme.h"
+#include "ogrgmejson.h"
 #include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
@@ -151,8 +152,11 @@ int OGRGMEDataSource::Open( const char * pszFilename, int bUpdateIn)
 
     CPLString osTables = OGRGMEGetOptionValue(pszFilename, "tables");
 
+    osProjectId = OGRGMEGetOptionValue(pszFilename, "project");
+
     osSelect = OGRGMEGetOptionValue(pszFilename, "select");
     osWhere = OGRGMEGetOptionValue(pszFilename, "where");
+
     CPLString osBatchPatchSize;
     osBatchPatchSize = OGRGMEGetOptionValue(pszFilename, "batchpatchsize");
     if (osBatchPatchSize.size() == 0) {
@@ -208,7 +212,40 @@ int OGRGMEDataSource::Open( const char * pszFilename, int bUpdateIn)
         return TRUE;
     }
 
+    if (osProjectId.size() != 0)
+        return true;
     return FALSE;
+}
+
+/************************************************************************/
+/*                           CreateLayer()                              */
+/************************************************************************/
+
+OGRLayer   *OGRGMEDataSource::CreateLayer( const char *pszName,
+                                           OGRSpatialReference *poSpatialRef,
+                                           OGRwkbGeometryType eGType,
+                                           char ** papszOptions )
+{
+    if (!bReadWrite)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Operation not available in read-only mode");
+        return NULL;
+    }
+
+    if (osAccessToken.size() == 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Operation not available in unauthenticated mode");
+        return NULL;
+    }
+
+    if (CSLFetchNameValue( papszOptions, "projectId" ) == NULL) {
+        papszOptions = CSLAddNameValue( papszOptions, "projectId", osProjectId.c_str() );
+    }
+    OGRGMELayer* poLayer = new OGRGMELayer(this, pszName, papszOptions);
+    poLayer->SetGeometryType(eGType);
+    papoLayers = (OGRLayer**) CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
+    papoLayers[nLayers ++] = poLayer;
+    return poLayer;
 }
 
 /************************************************************************/
@@ -293,17 +330,31 @@ CPLHTTPResult * OGRGMEDataSource::MakeRequest(const char *pszRequest,
     if (psResult && psResult->pszContentType &&
         strncmp(psResult->pszContentType, "text/html", 9) == 0)
     {
-        CPLDebug( "GME", "MakeRequest HTML Response:%s", psResult->pabyData );
+        CPLDebug( "GME", "MakeRequest HTML Response: %s", psResult->pabyData );
         CPLError(CE_Failure, CPLE_AppDefined, 
                  "HTML error page returned by server");
-        CPLHTTPDestroyResult(psResult);
-        psResult = NULL;
+        if (nRetries < 2) {
+            CPLDebug("GME", "Sleeping 5s and retrying");
+            nRetries ++;
+            CPLSleep( 5.0 );
+            psResult = MakeRequest(pszRequest, pszMoreOptions);
+            if (psResult)
+                CPLDebug( "GME", "Got a result after %d retries", nRetries );
+            else
+                CPLDebug( "GME", "Didn't get a result after %d retries", nRetries );
+            nRetries--;
+        } else {
+            CPLDebug("GME", "I've waited too long on GME. Giving up!");
+            CPLHTTPDestroyResult(psResult);
+            psResult = NULL;
+        }
+        return psResult;
     }
     if (psResult && psResult->pszErrBuf != NULL) 
     {
         CPLDebug( "GME", "MakeRequest Error Message: %s", psResult->pszErrBuf );
         CPLDebug( "GME", "error doc:\n%s\n", psResult->pabyData);
-        json_object *error_response = Parse((const char *) psResult->pabyData);
+        json_object *error_response = OGRGMEParseJSON((const char *) psResult->pabyData);
         CPLHTTPDestroyResult(psResult);
         psResult = NULL;
         json_object *error_doc = json_object_object_get(error_response, "error");
@@ -312,11 +363,11 @@ CPLHTTPResult * OGRGMEDataSource::MakeRequest(const char *pszRequest,
         int nErrors = array_list_length(errors_array);
         for (int i = 0; i < nErrors; i++) {
             json_object *error_obj = (json_object *)array_list_get_idx(errors_array, i);
-            const char* reason = GetJSONString(error_obj, "reason");
-            const char* domain = GetJSONString(error_obj, "domain");
-            const char* message = GetJSONString(error_obj, "message");
-            const char* locationType = GetJSONString(error_obj, "locationType");
-            const char* location = GetJSONString(error_obj, "location");
+            const char* reason = OGRGMEGetJSONString(error_obj, "reason");
+            const char* domain = OGRGMEGetJSONString(error_obj, "domain");
+            const char* message = OGRGMEGetJSONString(error_obj, "message");
+            const char* locationType = OGRGMEGetJSONString(error_obj, "locationType");
+            const char* location = OGRGMEGetJSONString(error_obj, "location");
             if ((nRetries < 10) && EQUAL(reason, "rateLimitExceeded")) {
                 // Sleep nRetries * 1.0s and retry
                 nRetries ++;
@@ -336,6 +387,11 @@ CPLHTTPResult * OGRGMEDataSource::MakeRequest(const char *pszRequest,
 	    }
 	    else if (EQUAL(reason, "backendError")) {
                 CPLDebug( "GME", "Backend error retrying: GET %s: %s", pszRequest, message );
+                psResult = MakeRequest(pszRequest, pszMoreOptions);
+	    }
+	    else if ((EQUAL(reason, "invalid")) && (EQUAL(location, "id"))) {
+                CPLDebug( "GME", "Invalid ID my but! Try again is 5s" );
+                CPLSleep( 5.0 );
                 psResult = MakeRequest(pszRequest, pszMoreOptions);
 	    }
             else {
@@ -439,7 +495,7 @@ CPLHTTPResult * OGRGMEDataSource::PostRequest(const char *pszRequest,
     {
         CPLDebug( "GME", "MakeRequest Error Message: %s", psResult->pszErrBuf );
         CPLDebug( "GME", "error doc:\n%s\n", psResult->pabyData);
-        json_object *error_response = Parse((const char *) psResult->pabyData);
+        json_object *error_response = OGRGMEParseJSON((const char *) psResult->pabyData);
         CPLHTTPDestroyResult(psResult);
         psResult = NULL;
         json_object *error_doc = json_object_object_get(error_response, "error");
@@ -448,11 +504,11 @@ CPLHTTPResult * OGRGMEDataSource::PostRequest(const char *pszRequest,
         int nErrors = array_list_length(errors_array);
         for (int i = 0; i < nErrors; i++) {
             json_object *error_obj = (json_object *)array_list_get_idx(errors_array, i);
-            const char* reason = GetJSONString(error_obj, "reason");
-            const char* domain = GetJSONString(error_obj, "domain");
-            const char* message = GetJSONString(error_obj, "message");
-            const char* locationType = GetJSONString(error_obj, "locationType");
-            const char* location = GetJSONString(error_obj, "location");
+            const char* reason = OGRGMEGetJSONString(error_obj, "reason");
+            const char* domain = OGRGMEGetJSONString(error_obj, "domain");
+            const char* message = OGRGMEGetJSONString(error_obj, "message");
+            const char* locationType = OGRGMEGetJSONString(error_obj, "locationType");
+            const char* location = OGRGMEGetJSONString(error_obj, "location");
             if ((nRetries < 10) && EQUAL(reason, "rateLimitExceeded")) {
                 // Sleep nRetries * 1.0s and retry
                 nRetries ++;
@@ -492,55 +548,4 @@ CPLHTTPResult * OGRGMEDataSource::PostRequest(const char *pszRequest,
         CPLDebug( "GME", "MakeRequest Error Status:%d", psResult->nStatus );
     }
     return psResult;
-}
-
-/************************************************************************/
-/*                           Parse()                                    */
-/************************************************************************/
-
-json_object *OGRGMEDataSource::Parse( const char* pszText )
-{
-    if( NULL != pszText )
-    {
-        json_tokener* jstok = NULL;
-        json_object* jsobj = NULL;
-
-        jstok = json_tokener_new();
-        jsobj = json_tokener_parse_ex(jstok, pszText, -1);
-        if( jstok->err != json_tokener_success)
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "JSON parsing error: %s (at offset %d)",
-                          json_tokener_errors[jstok->err], jstok->char_offset);
-            
-            json_tokener_free(jstok);
-            return NULL;
-        }
-        json_tokener_free(jstok);
-
-        /* JSON tree is shared for while lifetime of the reader object
-         * and will be released in the destructor.
-         */
-        return jsobj;
-    }
-
-    return NULL;
-}
-
-/************************************************************************/
-/*                           GetJSONString()                            */
-/*                                                                      */
-/*      Fetch a string field from a json_object (only an immediate      */
-/*      child).                                                         */
-/************************************************************************/
-
-const char *OGRGMEDataSource::GetJSONString(json_object *parent,
-                                            const char *field,
-                                            const char *default_value)
-{
-    json_object *child = json_object_object_get(parent, field);
-    if (child == NULL )
-        return default_value;
-
-    return json_object_get_string(child);
 }
