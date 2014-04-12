@@ -131,11 +131,11 @@ def ogr_gme_write():
 
     if ds is None:
         ogrtest.gme_can_write = False
-        return 'skip'
+        return 'fail'
     ogrtest.gme_can_write = True
 
     import random
-    import time
+
     ogrtest.gme_rand_val = random.randint(0,2147000000)
     table_name = "test_%d" % ogrtest.gme_rand_val
 
@@ -150,25 +150,21 @@ def ogr_gme_write():
     feature.SetField('strcol', 'foo')
     feature.SetField('dblcol', 3.45)
     feature.SetField('intcol', 11)
-    expected_wkt = "POLYGON ((1 1,4 1,4 4,1 4,1 1),(2 2,3 2,3 3,2 3,2 2))"
 
+    expected_wkt = "POLYGON ((1 1,4 1,4 4,1 4,1 1),(3 3,2 3,2 2,3 2,3 3))"
     geom = ogr.CreateGeometryFromWkt(expected_wkt)
+    expected_geom = ogr.CreateGeometryFromWkt(expected_wkt)
     feature.SetGeometry(geom)
-
-    time.sleep(5)
+    input_feature = feature
 
     if lyr.CreateFeature(feature) != 0:
         gdaltest.post_reason('CreateFeature() failed')
         return 'fail'
 
-    time.sleep(5)
-
     feature.SetField('strcol', 'bar')
     if lyr.SetFeature(feature) != 0:
         gdaltest.post_reason('SetFeature() failed')
         return 'fail'
-
-    time.sleep(5)
 
     lyr.ResetReading()
     feature = lyr.GetNextFeature()
@@ -181,18 +177,15 @@ def ogr_gme_write():
         feature.DumpReadable()
         return 'fail'
 
-    got_wkt = feature.GetGeometryRef().ExportToWkt()
-    if got_wkt != expected_wkt:
-        gdaltest.post_reason('did not get expected geometry')
-        print(expected_wkt)
-        print(got_wkt)
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('GetFeatureCount() did not return expected value')
         return 'fail'
 
-#    if lyr.GetFeatureCount() != 1:
-#        gdaltest.post_reason('GetFeatureCount() did not return expected value')
-#        return 'fail'
+    if feature.GetGeometryRef().Difference(geom):
+        gdaltest.post_reason('Returned geometry was unexpected.\n%s\n%s' %
+                             (feature.GetGeometryRef().Difference(geom).ExportToWkt()))
+        return 'fail'
 
-#    time.sleep(1.5)
 
 #    if lyr.DeleteFeature(feature.GetFID()) != 0:
 #        gdaltest.post_reason('DeleteFeature() failed')

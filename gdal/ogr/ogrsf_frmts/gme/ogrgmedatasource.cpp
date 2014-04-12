@@ -327,6 +327,7 @@ CPLHTTPResult * OGRGMEDataSource::MakeRequest(const char *pszRequest,
 /*      Collect the header options.                                     */
 /* -------------------------------------------------------------------- */
     CPLStringList oOptions;
+    oOptions.AddString("CUSTOMREQUEST=GET");
     AddHTTPOptions(oOptions);
 
 /* -------------------------------------------------------------------- */
@@ -365,10 +366,10 @@ CPLHTTPResult * OGRGMEDataSource::MakeRequest(const char *pszRequest,
         CPLDebug( "GME", "MakeRequest HTML Response: %s", psResult->pabyData );
         CPLError(CE_Failure, CPLE_AppDefined,
                  "HTML error page returned by server");
-        if (nRetries < 2) {
-            CPLDebug("GME", "Sleeping 5s and retrying");
+        if (nRetries < 5) {
+            CPLDebug("GME", "Sleeping 30s and retrying");
             nRetries ++;
-            CPLSleep( 5.0 );
+            CPLSleep( 30.0 );
             psResult = MakeRequest(pszRequest, pszMoreOptions);
             if (psResult)
                 CPLDebug( "GME", "Got a result after %d retries", nRetries );
@@ -573,8 +574,8 @@ CPLHTTPResult * OGRGMEDataSource::PostRequest(const char *pszRequest,
                 CPLError( CE_Failure, CPLE_AppDefined, "GME: %s %s %s: %s - %s",
                           domain, reason, locationType, location, message );
                 if ((code == 400) && (EQUAL(reason, "invalid")) && (EQUAL(location, "id"))) {
-                  CPLDebug("GME", "Got the notorious 400 - invalid id, retrying in 5s");
-                  CPLSleep( 5.0 );
+                  CPLDebug("GME", "Got the notorious 400 - invalid id, retrying in 10s");
+                  CPLSleep( 10.0 );
                   psResult = PostRequest(pszRequest, pszBody);
                 }
                 else {

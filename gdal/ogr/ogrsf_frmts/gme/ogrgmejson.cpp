@@ -420,14 +420,14 @@ json_object* OGRGMEAttributesToGeoJSON( OGRFeature* poFeature )
 
         // In GME integers are encoded as strings.
         else if( OFTInteger == eType )
-            pjoProperty = json_object_new_string( poFeature->GetFieldAsString( nField ) ); 
+            pjoProperty = json_object_new_string( poFeature->GetFieldAsString( nField ) );
 
         else if( OFTReal == eType )
             pjoProperty = json_object_new_gme_double( poFeature->GetFieldAsDouble(nField) );
 
         // Supported types are integer, double and string. So treating everything else as strings
         else
-            pjoProperty = json_object_new_string( poFeature->GetFieldAsString(nField) ); 
+            pjoProperty = json_object_new_string( poFeature->GetFieldAsString(nField) );
 
         json_object_object_add( pjoProperties, poFieldDefn->GetNameRef(), pjoProperty );
     }
