@@ -80,9 +80,7 @@ void OGRGMELayer::ResetReading()
 int OGRGMELayer::TestCapability( const char * pszCap )
 
 {
-    if( EQUAL(pszCap,OLCRandomRead) )
-        return TRUE;
-    else if(EQUAL(pszCap,OLCStringsAsUTF8))
+    if(EQUAL(pszCap,OLCStringsAsUTF8))
         return TRUE;
     else if(EQUAL(pszCap,OLCIgnoreFields))
         return TRUE;
@@ -319,7 +317,6 @@ OGRFeature *OGRGMELayer::GetNextRawFeature()
 /************************************************************************/
 
 OGRFeature *OGRGMELayer::GetNextFeature()
-
 {
     OGRFeature *poFeature = NULL;
     
@@ -383,16 +380,19 @@ OGRErr OGRGMELayer::SetAttributeFilter( const char *pszWhere )
     return eErr;
 }
 
+/************************************************************************/
+/*                       SetIgnoredFields()                             */
+/************************************************************************/
+
 OGRErr OGRGMELayer::SetIgnoredFields(const char ** papszFields )
 {
-    osSelect = "";
+    osSelect = "geometry";
     OGRLayer::SetIgnoredFields(papszFields);
 
     for (int iOGRField = 0; iOGRField < poFeatureDefn->GetFieldCount(); iOGRField++ ) 
     {
         if (!poFeatureDefn->GetFieldDefn(iOGRField)->IsIgnored()) {
-            if(osSelect.size() != 0)
-                osSelect += ",";
+            osSelect += ",";
             osSelect += poFeatureDefn->GetFieldDefn(iOGRField)->GetNameRef();
 	}
     }
