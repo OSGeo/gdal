@@ -389,7 +389,7 @@ CPLHTTPResult * OGRGMEDataSource::MakeRequest(const char *pszRequest,
     if (psResult && psResult->pszErrBuf != NULL)
     {
         CPLDebug( "GME", "MakeRequest Error Message: %s", psResult->pszErrBuf );
-        CPLDebug( "GME", "error doc:\n%s\n", psResult->pabyData ? psResult->pabyData : "null");
+        CPLDebug( "GME", "error doc:\n%s\n", psResult->pabyData ? (const char*)psResult->pabyData : "null");
         json_object *error_response = OGRGMEParseJSON((const char *) psResult->pabyData);
         CPLHTTPDestroyResult(psResult);
         psResult = NULL;
