@@ -86,6 +86,10 @@ OGRGMELayer::~OGRGMELayer()
 {
     SyncToDisk();
     ResetReading();
+    if( poSRS )
+        poSRS->Release();
+    if( poFeatureDefn )
+        poFeatureDefn->Release();
 }
 
 /************************************************************************/
@@ -345,7 +349,7 @@ OGRFeature *OGRGMELayer::GetNextRawFeature()
     CPLString gmeId(gx_id);
     omnosIdToGMEKey[++m_nFeaturesRead] = gmeId;
     poFeature->SetFID(m_nFeaturesRead);
-    CPLDebug("GME", "Mapping ids: \"%s\" to %lld", gx_id, m_nFeaturesRead);
+    CPLDebug("GME", "Mapping ids: \"%s\" to %d", gx_id, (int)m_nFeaturesRead);
 
 /* -------------------------------------------------------------------- */
 /*      Handle geometry.                                                */
@@ -465,7 +469,7 @@ OGRErr OGRGMELayer::SetIgnoredFields(const char ** papszFields )
 
 OGRErr OGRGMELayer::BatchPatch()
 {
-    CPLDebug("GME", "BatchPatch() - <%ld>", oListOfDeletedFeatures.size() );
+    CPLDebug("GME", "BatchPatch() - <%d>", (int)oListOfDeletedFeatures.size() );
     return BatchRequest("batchPatch", omnpoUpdatedFeatures);
 }
 
@@ -475,7 +479,7 @@ OGRErr OGRGMELayer::BatchPatch()
 
 OGRErr OGRGMELayer::BatchInsert()
 {
-    CPLDebug("GME", "BatchInsert() - <%ld>", oListOfDeletedFeatures.size() );
+    CPLDebug("GME", "BatchInsert() - <%d>", (int)oListOfDeletedFeatures.size() );
     return BatchRequest("batchInsert", omnpoInsertedFeatures);
 }
 
@@ -488,7 +492,7 @@ OGRErr OGRGMELayer::BatchDelete()
     json_object *pjoBatchDelete = json_object_new_object();
     json_object *pjoGxIds = json_object_new_array();
     std::vector<long>::const_iterator fit;
-    CPLDebug("GME", "BatchDelete() - <%ld>", oListOfDeletedFeatures.size() );
+    CPLDebug("GME", "BatchDelete() - <%d>", (int)oListOfDeletedFeatures.size() );
     for ( fit = oListOfDeletedFeatures.begin(); fit != oListOfDeletedFeatures.end(); fit++)
     {
         long nFID = *fit;
@@ -533,7 +537,7 @@ OGRErr OGRGMELayer::BatchRequest(const char *pszMethod, std::map<int, OGRFeature
     json_object *pjoBatchDoc = json_object_new_object();
     json_object *pjoFeatures = json_object_new_array();
     std::map<int, OGRFeature *>::const_iterator fit;
-    CPLDebug("GME", "BatchRequest('%s', <%ld>)", pszMethod, omnpoFeatures.size() );
+    CPLDebug("GME", "BatchRequest('%s', <%d>)", pszMethod, (int)omnpoFeatures.size() );
     for ( fit = omnpoFeatures.begin(); fit != omnpoFeatures.end(); fit++)
     {
         long nFID = fit->first;
@@ -621,7 +625,7 @@ OGRErr OGRGMELayer::CreateFeature( OGRFeature *poFeature )
         iGxIdField = nGxId;
         if(poFeature->IsFieldSet(iGxIdField)) {
           osGxId = poFeature->GetFieldAsString(iGxIdField);
-          CPLDebug("GME", "Feature already has %d gx_id='%s'", poFeature->GetFID(),
+          CPLDebug("GME", "Feature already has %ld gx_id='%s'", poFeature->GetFID(),
                    osGxId.c_str());
         }
         else {
