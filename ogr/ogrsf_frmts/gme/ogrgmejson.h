@@ -50,4 +50,10 @@ json_object* OGRGMELineCoordsToGeoJSON( OGRLineString* poLine );
 json_object* OGRGMEAttributesToGeoJSON( OGRFeature* poFeature );
 
 json_object* json_object_new_gme_double(double dfVal);
+
+json_object* OGRGMEParseJSON( const char* pszText );
+const char*  OGRGMEGetJSONString(json_object *parent,
+                                 const char *field_name,
+                                 const char *default_value = NULL);
+
 #endif /* ndef _OGR_GME_JSON_H_INCLUDED */
