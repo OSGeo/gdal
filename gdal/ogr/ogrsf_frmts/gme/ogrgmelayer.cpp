@@ -99,6 +99,7 @@ void OGRGMELayer::ResetReading()
     {
         json_object_put(current_feature_page);
         current_feature_page = NULL;
+        m_nFeaturesRead = 0;
 
         // TODO - clear current page.
     }
@@ -539,6 +540,7 @@ OGRErr OGRGMELayer::BatchRequest(const char *pszMethod, std::map<int, OGRFeature
         OGRFeature *poFeature = fit->second;
         CPLDebug("GME", "Processing feature: %ld", nFID );
         json_object *pjoFeature = OGRGMEFeatureToGeoJSON(poFeature);
+
         if (pjoFeature != NULL)
             json_object_array_add( pjoFeatures, pjoFeature );
         delete poFeature;
