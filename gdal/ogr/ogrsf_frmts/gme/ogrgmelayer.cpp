@@ -196,6 +196,11 @@ void OGRGMELayer::GetPageOfFeatures()
         osMoreOptions += "&pageToken=";
         osMoreOptions += osNextPageToken;
     }
+    if (!osWhere.empty()) {
+        CPLDebug( "GME Layer", "found where=%s", osWhere.c_str());
+        osMoreOptions += "&where=";
+        osMoreOptions += osWhere;
+    }
 
     CPLHTTPResult *psFeaturesResult = 
         poDS->MakeRequest(osRequest, osMoreOptions);
@@ -343,4 +348,21 @@ OGRFeatureDefn * OGRGMELayer::GetLayerDefn()
     }
 
     return poFeatureDefn;
+}
+
+
+/************************************************************************/
+/*                        SetAttributeFilter()                          */
+/************************************************************************/
+
+OGRErr OGRGMELayer::SetAttributeFilter( const char *pszWhere )
+{
+    OGRErr eErr;
+    eErr = OGRLayer::SetAttributeFilter(pszWhere);
+    if( eErr == OGRERR_NONE ) {
+        char * pszEscaped = CPLEscapeString(pszWhere, -1, CPLES_URL);
+        osWhere = CPLString(pszEscaped);
+        CPLFree(pszEscaped);
+    }
+    return eErr;
 }
