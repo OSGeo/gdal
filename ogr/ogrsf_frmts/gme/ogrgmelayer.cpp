@@ -446,28 +446,23 @@ OGRErr OGRGMELayer::SetFeature( OGRFeature *poFeature )
 void OGRGMELayer::BatchPatch()
 
 {
+    json_object *pjoBatchPatch = json_object_new_object();
+    json_object *pjoFeatures = json_object_new_array();
     std::vector<OGRFeature *>::const_iterator fit;
     for ( fit = oListOfUpdatedFeatures.begin(); fit != oListOfUpdatedFeatures.end(); fit++)
     {
         OGRFeature *poFeature = *fit;
-        json_object *pojFeature = OGRGMEFeatureToGeoJSON(poFeature);
-        CPLDebug("GME", "Patching feature: %ld:\n%s",
-                 poFeature->GetFID(),
-                 json_object_to_json_string_ext(pojFeature, JSON_C_TO_STRING_PRETTY) );
-        for ( int iField = 0; iField < poFeature->GetFieldCount(); iField++ )
-        {
-            if (poFeature->IsFieldSet(iField))
-            {
-                OGRFieldDefn *poFieldDefn = poFeature->GetFieldDefnRef(iField);
-                OGRFieldType type = poFieldDefn->GetType();
-                const char *name = poFieldDefn->GetNameRef();
-                CPLDebug("GME", "\t%s: %s", name, poFeature->GetFieldAsString(iField));
-            }
-        }
+        json_object *pjoFeature = OGRGMEFeatureToGeoJSON(poFeature);
+        CPLDebug("GME", "Patching feature: %ld", poFeature->GetFID() );
         delete poFeature;
+        json_object_array_add( pjoFeatures, pjoFeature );
     }
     oListOfUpdatedFeatures.clear();
     bDirty = false;
+    json_object_object_add( pjoBatchPatch, "features", pjoFeatures );
+    CPLDebug("GME", "BatchPatch:\n%s",
+             json_object_to_json_string_ext(pjoBatchPatch,
+                                            JSON_C_TO_STRING_SPACED | JSON_C_TO_STRING_PRETTY) );
 }
 
 /************************************************************************/
