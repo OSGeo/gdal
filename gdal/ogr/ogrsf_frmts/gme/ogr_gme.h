@@ -59,6 +59,7 @@ class OGRGMELayer : public OGRLayer
     std::map<int, CPLString> oMapIdToGMEKey;
     std::vector<OGRFeature *> oListOfUpdatedFeatures;
     std::vector<OGRFeature *> oListOfInsertedFeatures;
+    std::vector<long> oListOfDeletedFeatures;
     CPLString          osGeomColumnName;
 
     CPLString          osWhere;
@@ -80,6 +81,7 @@ class OGRGMELayer : public OGRLayer
     void               GetPageOfFEatures();
     void               BatchPatch();
     void               BatchInsert();
+    void               BatchDelete();
     void               BatchRequest(const char *osMethod, std::vector<OGRFeature *> &oListOfFeatures);
 
   public:
@@ -107,6 +109,7 @@ class OGRGMELayer : public OGRLayer
 
     virtual OGRErr      SetFeature( OGRFeature *poFeature );
     virtual OGRErr      CreateFeature( OGRFeature *poFeature );
+    virtual OGRErr      DeleteFeature(long int);
 };
 
 /************************************************************************/

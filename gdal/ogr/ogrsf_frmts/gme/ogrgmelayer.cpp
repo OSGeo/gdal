@@ -308,7 +308,7 @@ OGRFeature *OGRGMELayer::GetNextRawFeature()
 /* -------------------------------------------------------------------- */
     const char *gx_id = poDS->GetJSONString(properties_obj, "gx_id");
     CPLString gmeId(gx_id);
-    oMapIdToGMEKey.insert(std::pair<int, CPLString>(++m_nFeaturesRead, gmeId));
+    oMapIdToGMEKey[++m_nFeaturesRead] = gmeId;
     poFeature->SetFID(m_nFeaturesRead);
     CPLDebug("GME", "Mapping ids: \"%s\" to %lld", gx_id, m_nFeaturesRead);
 
@@ -447,20 +447,73 @@ OGRErr OGRGMELayer::SetFeature( OGRFeature *poFeature )
 void OGRGMELayer::BatchPatch()
 {
     BatchRequest("batchPatch", oListOfUpdatedFeatures);
-    if (oListOfInsertedFeatures.size())
+    if (oListOfDeletedFeatures.size() || oListOfInsertedFeatures.size())
         bDirty = true;
     else
         bDirty = false;
 }
 
 /************************************************************************/
-/*                            BatchInsert()                              */
+/*                            BatchInsert()                             */
 /************************************************************************/
 
 void OGRGMELayer::BatchInsert()
 {
+    std::vector<OGRFeature *>::const_iterator fit;
+    for ( fit = oListOfInsertedFeatures.begin(); fit != oListOfInsertedFeatures.end(); fit++)
+    {
+        OGRFeature *poFeature = *fit;
+        int nGxIdFn = poFeature->GetFieldIndex("gx_id");
+        CPLString osGxId = poFeature->GetFieldAsString(nGxIdFn);
+        CPLDebug("GME", "BatchInsert(%ld -> '%s')",
+                 poFeature->GetFID(), osGxId.c_str() );
+        oMapIdToGMEKey[poFeature->GetFID()] = osGxId;
+    }
+
     BatchRequest("batchInsert", oListOfInsertedFeatures);
-    if (oListOfUpdatedFeatures.size())
+    if (oListOfUpdatedFeatures.size() || oListOfDeletedFeatures.size())
+        bDirty = true;
+    else
+        bDirty = false;
+}
+
+/************************************************************************/
+/*                            BatchDelete()                             */
+/************************************************************************/
+
+void OGRGMELayer::BatchDelete()
+{
+    json_object *pjoBatchDelete = json_object_new_object();
+    json_object *pjoGxIds = json_object_new_array();
+    std::vector<long>::const_iterator fit;
+    CPLDebug("GME", "BatchDelete() - <%ld>", oListOfDeletedFeatures.size() );
+    for ( fit = oListOfDeletedFeatures.begin(); fit != oListOfDeletedFeatures.end(); fit++)
+    {
+        long nFID = *fit;
+        if (nFID > 0) {
+            CPLString osGxId(oMapIdToGMEKey[nFID]);
+            CPLDebug("GME", "Deleting feature %ld -> '%s'", nFID, osGxId.c_str());
+            json_object *pjoGxId = json_object_new_string(osGxId.c_str());
+            oMapIdToGMEKey.erase(nFID);
+            json_object_array_add( pjoGxIds, pjoGxId );
+        }
+    }
+    oListOfDeletedFeatures.clear();
+    if (json_object_array_length(pjoGxIds) == 0)
+        return;
+    json_object_object_add( pjoBatchDelete, "gx_ids", pjoGxIds );
+    const char *body =
+        json_object_to_json_string_ext(pjoBatchDelete,
+                                       JSON_C_TO_STRING_SPACED | JSON_C_TO_STRING_PRETTY);
+
+/* -------------------------------------------------------------------- */
+/*      POST changes                                                    */
+/* -------------------------------------------------------------------- */
+    CPLString osRequest = "tables/" + osTableId + "/features/batchDelete";
+    CPLHTTPResult *psBatchDeleteResult = poDS->PostRequest(osRequest, body);
+    CPLDebug("GME", "batchDelete returned %d", psBatchDeleteResult->nStatus);
+
+    if (oListOfUpdatedFeatures.size() || oListOfInsertedFeatures.size())
         bDirty = true;
     else
         bDirty = false;
@@ -472,10 +525,10 @@ void OGRGMELayer::BatchInsert()
 
 void OGRGMELayer::BatchRequest(const char *pszMethod, std::vector<OGRFeature *> &oListOfFeatures)
 {
-    json_object *pjoBatchPatch = json_object_new_object();
+    json_object *pjoBatchDoc = json_object_new_object();
     json_object *pjoFeatures = json_object_new_array();
     std::vector<OGRFeature *>::const_iterator fit;
-    CPLDebug("GME", "BatchRequest('%s', <%d>)", pszMethod, oListOfFeatures.size() );
+    CPLDebug("GME", "BatchRequest('%s', <%ld>)", pszMethod, oListOfFeatures.size() );
     for ( fit = oListOfFeatures.begin(); fit != oListOfFeatures.end(); fit++)
     {
         OGRFeature *poFeature = *fit;
@@ -488,17 +541,17 @@ void OGRGMELayer::BatchRequest(const char *pszMethod, std::vector<OGRFeature *> 
     oListOfFeatures.clear();
     if (json_object_array_length(pjoFeatures) == 0)
         return;
-    json_object_object_add( pjoBatchPatch, "features", pjoFeatures );
+    json_object_object_add( pjoBatchDoc, "features", pjoFeatures );
     const char *body =
-        json_object_to_json_string_ext(pjoBatchPatch,
+        json_object_to_json_string_ext(pjoBatchDoc,
                                        JSON_C_TO_STRING_SPACED | JSON_C_TO_STRING_PRETTY);
 
 /* -------------------------------------------------------------------- */
 /*      POST changes                                                    */
 /* -------------------------------------------------------------------- */
-   CPLString osRequest = "tables/" + osTableId + "/features/" + pszMethod;
-   CPLHTTPResult *psBatchPatchResult = poDS->PostRequest(osRequest, body);
-   CPLDebug("GME", "batchPatch returned %d", psBatchPatchResult->nStatus);
+    CPLString osRequest = "tables/" + osTableId + "/features/" + pszMethod;
+    CPLHTTPResult *psBatchResult = poDS->PostRequest(osRequest, body);
+    CPLDebug("GME", "%s returned %d", pszMethod, psBatchResult->nStatus);
 }
 
 /************************************************************************/
@@ -532,5 +585,21 @@ OGRErr OGRGMELayer::CreateFeature( OGRFeature *poFeature )
         BatchInsert();
     }
     CPLDebug("GME", "Inserted feature %ld", poFeature->GetFID());
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                           DeleteteFeature()                          */
+/************************************************************************/
+
+OGRErr OGRGMELayer::DeleteFeature( long nFID )
+{
+    bDirty = true;
+    oListOfDeletedFeatures.push_back(nFID);
+    if (oListOfDeletedFeatures.size() == iBatchPatchSize) {
+        CPLDebug("GME", "Have %d uncommitted features, deleting", iBatchPatchSize);
+        BatchDelete();
+    }
+    CPLDebug("GME", "Deleted feature %ld", nFID);
     return OGRERR_NONE;
 }
