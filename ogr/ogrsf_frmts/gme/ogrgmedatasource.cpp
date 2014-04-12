@@ -209,17 +209,20 @@ int OGRGMEDataSource::Open( const char * pszFilename, int bUpdateIn)
         for(int i=0;papszTables && papszTables[i];i++)
         {
             papoLayers = (OGRLayer**) CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
-	    OGRGMELayer *poGMELayer = new OGRGMELayer(this, papszTables[i]);
+            OGRGMELayer *poGMELayer = new OGRGMELayer(this, papszTables[i]);
             poGMELayer->SetBatchPatchSize(iBatchPatchSize);
-	    if (poGMELayer->GetLayerDefn()) {
+            if (poGMELayer->GetLayerDefn()) {
                 papoLayers[nLayers ++] = poGMELayer;
+            }
+            else {
+                delete poGMELayer;
             }
         }
         CSLDestroy(papszTables);
-	if ( nLayers == 0 ) {
+        if ( nLayers == 0 ) {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Could not find any tables.");
-	    return FALSE;
+            return FALSE;
         }
         CPLDebug("GME", "Found %d layers", nLayers);
         return TRUE;
@@ -386,52 +389,56 @@ CPLHTTPResult * OGRGMEDataSource::MakeRequest(const char *pszRequest,
     if (psResult && psResult->pszErrBuf != NULL)
     {
         CPLDebug( "GME", "MakeRequest Error Message: %s", psResult->pszErrBuf );
-        CPLDebug( "GME", "error doc:\n%s\n", psResult->pabyData);
+        CPLDebug( "GME", "error doc:\n%s\n", psResult->pabyData ? psResult->pabyData : "null");
         json_object *error_response = OGRGMEParseJSON((const char *) psResult->pabyData);
         CPLHTTPDestroyResult(psResult);
         psResult = NULL;
-        json_object *error_doc = json_object_object_get(error_response, "error");
-        json_object *errors_doc = json_object_object_get(error_doc, "errors");
-        array_list *errors_array = json_object_get_array(errors_doc);
-        int nErrors = array_list_length(errors_array);
-        for (int i = 0; i < nErrors; i++) {
-            json_object *error_obj = (json_object *)array_list_get_idx(errors_array, i);
-            const char* reason = OGRGMEGetJSONString(error_obj, "reason");
-            const char* domain = OGRGMEGetJSONString(error_obj, "domain");
-            const char* message = OGRGMEGetJSONString(error_obj, "message");
-            const char* locationType = OGRGMEGetJSONString(error_obj, "locationType");
-            const char* location = OGRGMEGetJSONString(error_obj, "location");
-            if ((nRetries < 10) && EQUAL(reason, "rateLimitExceeded")) {
-                // Sleep nRetries * 1.0s and retry
-                nRetries ++;
-                CPLDebug( "GME", "Got a %s (%d) times.", reason, nRetries );
-                CPLDebug( "GME", "Sleep for %2.2f to try and avoid qps limiting errors.", 1.0 * nRetries );
-                CPLSleep( 1.0 * nRetries );
-                psResult = MakeRequest(pszRequest, pszMoreOptions);
-                if (psResult)
-                    CPLDebug( "GME", "Got a result after %d retries", nRetries );
-                else
-                    CPLDebug( "GME", "Didn't get a result after %d retries", nRetries );
-                nRetries = 0;
-            }
-	    else if (EQUAL(reason, "authError")) {
-                CPLDebug( "GME", "Failed to GET %s: %s", pszRequest, message );
-                CPLError( CE_Failure, CPLE_OpenFailed, "GME: %s", message);
-	    }
-	    else if (EQUAL(reason, "backendError")) {
-                CPLDebug( "GME", "Backend error retrying: GET %s: %s", pszRequest, message );
-                psResult = MakeRequest(pszRequest, pszMoreOptions);
-	    }
-            else {
-                int code = 444;
-                json_object *code_child = json_object_object_get(error_doc, "code");
-                if (code_child != NULL )
-                    code = json_object_get_int(code_child);
+        if( error_response != NULL )
+        {
+            json_object *error_doc = json_object_object_get(error_response, "error");
+            json_object *errors_doc = json_object_object_get(error_doc, "errors");
+            array_list *errors_array = json_object_get_array(errors_doc);
+            int nErrors = array_list_length(errors_array);
+            for (int i = 0; i < nErrors; i++) {
+                json_object *error_obj = (json_object *)array_list_get_idx(errors_array, i);
+                const char* reason = OGRGMEGetJSONString(error_obj, "reason", "");
+                const char* domain = OGRGMEGetJSONString(error_obj, "domain", "");
+                const char* message = OGRGMEGetJSONString(error_obj, "message", "");
+                const char* locationType = OGRGMEGetJSONString(error_obj, "locationType", "");
+                const char* location = OGRGMEGetJSONString(error_obj, "location", "");
+                if ((nRetries < 10) && EQUAL(reason, "rateLimitExceeded")) {
+                    // Sleep nRetries * 1.0s and retry
+                    nRetries ++;
+                    CPLDebug( "GME", "Got a %s (%d) times.", reason, nRetries );
+                    CPLDebug( "GME", "Sleep for %2.2f to try and avoid qps limiting errors.", 1.0 * nRetries );
+                    CPLSleep( 1.0 * nRetries );
+                    psResult = MakeRequest(pszRequest, pszMoreOptions);
+                    if (psResult)
+                        CPLDebug( "GME", "Got a result after %d retries", nRetries );
+                    else
+                        CPLDebug( "GME", "Didn't get a result after %d retries", nRetries );
+                    nRetries = 0;
+                }
+                else if (EQUAL(reason, "authError")) {
+                        CPLDebug( "GME", "Failed to GET %s: %s", pszRequest, message );
+                        CPLError( CE_Failure, CPLE_OpenFailed, "GME: %s", message);
+                }
+                else if (EQUAL(reason, "backendError")) {
+                        CPLDebug( "GME", "Backend error retrying: GET %s: %s", pszRequest, message );
+                        psResult = MakeRequest(pszRequest, pszMoreOptions);
+                }
+                else {
+                    int code = 444;
+                    json_object *code_child = json_object_object_get(error_doc, "code");
+                    if (code_child != NULL )
+                        code = json_object_get_int(code_child);
 
-                CPLDebug( "GME", "MakeRequest Error for %s: %s:%d", pszRequest, reason, code);
-                CPLError( CE_Failure, CPLE_AppDefined, "GME: %s %s %s: %s - %s",
-                          domain, reason, locationType, location, message );
+                    CPLDebug( "GME", "MakeRequest Error for %s: %s:%d", pszRequest, reason, code);
+                    CPLError( CE_Failure, CPLE_AppDefined, "GME: %s %s %s: %s - %s",
+                            domain, reason, locationType, location, message );
+                }
             }
+            json_object_put(error_response);
         }
         return psResult;
     }
