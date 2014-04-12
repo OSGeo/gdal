@@ -152,7 +152,7 @@ int OGRGMEDataSource::Open( const char * pszFilename, int bUpdateIn)
 
     CPLString osTables = OGRGMEGetOptionValue(pszFilename, "tables");
 
-    osProjectId = OGRGMEGetOptionValue(pszFilename, "project");
+    osProjectId = OGRGMEGetOptionValue(pszFilename, "projectId");
 
     osSelect = OGRGMEGetOptionValue(pszFilename, "select");
     osWhere = OGRGMEGetOptionValue(pszFilename, "where");
