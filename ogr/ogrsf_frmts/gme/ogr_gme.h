@@ -35,6 +35,7 @@
 #include "ogrgeojsonreader.h"
 #include "cpl_http.h"
 
+#include <map>
 #include <vector>
 
 #include <json.h>
@@ -55,6 +56,7 @@ class OGRGMELayer : public OGRLayer
 
     CPLString          osTableName;
     CPLString          osTableId;
+    std::map<int, CPLString> oMapIdToGMEKey;
     CPLString          osGeomColumnName;
 
     CPLString          osWhere;
