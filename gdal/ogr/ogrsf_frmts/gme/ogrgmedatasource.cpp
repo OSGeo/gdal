@@ -153,6 +153,12 @@ int OGRGMEDataSource::Open( const char * pszFilename, int bUpdateIn)
 
     osSelect = OGRGMEGetOptionValue(pszFilename, "select");
     osWhere = OGRGMEGetOptionValue(pszFilename, "where");
+    CPLString osBatchPatchSize;
+    osBatchPatchSize = OGRGMEGetOptionValue(pszFilename, "batchpatchsize");
+    if (osBatchPatchSize.size() == 0) {
+        osBatchPatchSize = CPLGetConfigOption("GME_BATCH_PATCH_SIZE","50");
+    }
+    int iBatchPatchSize = atoi( osBatchPatchSize.c_str() );
 
     bUseHTTPS = TRUE;
 
@@ -191,6 +197,7 @@ int OGRGMEDataSource::Open( const char * pszFilename, int bUpdateIn)
         {
             papoLayers = (OGRLayer**) CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
 	    OGRGMELayer *poGMELayer = new OGRGMELayer(this, papszTables[i]);
+            poGMELayer->SetBatchPatchSize(iBatchPatchSize);
 	    if (poGMELayer->GetLayerDefn()) {
                 papoLayers[nLayers ++] = poGMELayer;
             }

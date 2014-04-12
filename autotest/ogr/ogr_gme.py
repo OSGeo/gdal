@@ -75,10 +75,11 @@ def ogr_gme_read():
     gdal.SetConfigOption('GME_AUTH', None)
     gdal.SetConfigOption('GME_ACCESS_TOKEN', None)
     gdal.SetConfigOption('GME_REFRESH_TOKEN', None)
-    ds = ogr.Open('GME:tables='+table_id)
+    ds = ogr.Open('GME:tables=%s' % table_id)
     gdal.SetConfigOption('GME_AUTH', old_auth)
     gdal.SetConfigOption('GME_ACCESS_TOKEN', old_access)
     gdal.SetConfigOption('GME_REFRESH_TOKEN', old_refresh)
+    gdal.SetConfigOption('GME_BATCH_PATCH_SIZE', '2')
     if ds is None:
         return 'fail'
 
@@ -109,10 +110,62 @@ def ogr_gme_read():
  
     return 'success'
 
+###############################################################################
+# Write test on WORLD94
+
+def ogr_gme_write():
+    if ogrtest.gme_drv is None:
+        return 'skip'
+
+    if ogrtest.gme_refresh is None:
+        ogrtest.gme_can_write = False
+        return 'skip'
+
+    table_id = '08857392491625866347-07947734823975336729'
+    ds = ogr.Open('GME:tables=%s' % table_id)
+
+    if ds is None:
+        ogrtest.gme_can_write = False
+        return 'skip'
+    ogrtest.gme_can_write = True
+
+#    import random
+#    ogrtest.gme_rand_val = random.randint(0,2147000000)
+#    table_name = "test_%d" % ogrtest.gme_rand_val
+
+#    lyr = ds.CreateLayer(table_name)
+#    lyr.CreateField(ogr.FieldDefn('strcol', ogr.OFTString))
+#    lyr.CreateField(ogr.FieldDefn('numcol', ogr.OFTReal))
+    lyr = ds.GetLayer(0)
+    if lyr is None:
+        return 'fail'
+
+#    feature = ogr.Feature(lyr.GetLayerDefn())
+    feature = lyr.GetNextFeature()
+
+    feature.SetField('YR94_', feature.YR94_ID)
+#    feature.SetField('numcol', '3.45')
+#    expected_wkt = "POLYGON ((0 0,0 1,1 1,1 0),(0.25 0.25,0.25 0.75,0.75 0.75,0.75 0.25))"
+#    geom = ogr.CreateGeometryFromWkt(expected_wkt)
+#    feature.SetGeometry(geom)
+#    if lyr.CreateFeature(feat) != 0:
+#        gdaltest.post_reason('CreateFeature() failed')
+#        return 'fail'
+
+#    fid = feature.GetFID()
+#    feature.SetField('strcol', 'bar')
+    if lyr.SetFeature(feature) != 0:
+        gdaltest.post_reason('SetFeature() failed')
+        return 'fail'
+
+    ds = None
+    return 'success'
+
 
 gdaltest_list = [ 
     ogr_gme_init,
     ogr_gme_read,
+    ogr_gme_write,
     ]
 
 if __name__ == '__main__':
