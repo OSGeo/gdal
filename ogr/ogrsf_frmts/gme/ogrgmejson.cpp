@@ -398,7 +398,6 @@ json_object* OGRGMEAttributesToGeoJSON( OGRFeature* poFeature )
 {
     if ( NULL == poFeature )
         return NULL;
-
     json_object* pjoProperties = json_object_new_object();
     CPLAssert( NULL != pjoProperties );
 
