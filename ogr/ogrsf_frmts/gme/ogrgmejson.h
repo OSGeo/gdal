@@ -48,4 +48,6 @@ json_object* OGRGMECoordsToGeoJSON( double const& fX, double const& fY );
 json_object* OGRGMECoordsToGeoJSON( double const& fX, double const& fY, double const& fZ );
 json_object* OGRGMELineCoordsToGeoJSON( OGRLineString* poLine );
 json_object* OGRGMEAttributesToGeoJSON( OGRFeature* poFeature );
+
+json_object* json_object_new_gme_double(double dfVal);
 #endif /* ndef _OGR_GME_JSON_H_INCLUDED */
