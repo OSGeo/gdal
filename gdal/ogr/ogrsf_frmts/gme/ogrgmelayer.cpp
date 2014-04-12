@@ -187,8 +187,12 @@ int OGRGMELayer::FetchDescribe()
             oFieldDefn.SetType(OFTInteger);
         else if (EQUAL(type, "string"))
             oFieldDefn.SetType(OFTString);
-        else if (EQUAL(type, "string"))
+        else if (EQUAL(type, "string")) {
+            if (EQUAL(name, "gx_id")) {
+                iGxIdField = i;
+            }
             oFieldDefn.SetType(OFTString);
+        }
         else if (EQUAL(type, "points"))
             eFieldGeomType = wkbPoint;
         else if (EQUAL(type, "linestrings"))
@@ -603,17 +607,28 @@ OGRErr OGRGMELayer::CreateFeature( OGRFeature *poFeature )
     if (!CreateTableIfNotCreated()) {
         return OGRERR_FAILURE;
     }
-    poFeature->SetFID(++m_nFeaturesRead);
-    long nFID = m_nFeaturesRead;
+
+    long nFID = ++m_nFeaturesRead;
+    poFeature->SetFID(nFID);
 
     int nGxId = poFeature->GetFieldIndex("gx_id");
-    CPLDebug("GME", "gx_id is field %d", nGxId);
-    CPLString osGxId = CPLSPrintf("GDAL-%ld", poFeature->GetFID());
-    CPLDebug("GME", "Inserting feature %lld as %s", poFeature->GetFID(), osGxId.c_str());
-    poFeature->SetField( nGxId, osGxId.c_str() );
-
+    CPLDebug("GME", "gx_id is field %d", iGxIdField);
+    CPLString osGxId;
+    CPLDebug("GME", "Inserting feature %ld as %s", poFeature->GetFID(), osGxId.c_str());
+    if (nGxId >= 0) {
+        iGxIdField = nGxId;
+        if(poFeature->IsFieldSet(iGxIdField)) {
+          osGxId = poFeature->GetFieldAsString(iGxIdField);
+          CPLDebug("GME", "Feature already has %d gx_id='%s'", poFeature->GetFID(),
+                   osGxId.c_str());
+        }
+        else {
+            osGxId = CPLSPrintf("GDAL-%ld", nFID);
+            CPLDebug("GME", "Setting field %d as %s", iGxIdField, osGxId.c_str() );
+            poFeature->SetField( iGxIdField, osGxId.c_str() );
+        }
+    }
     omnosIdToGMEKey[poFeature->GetFID()] = osGxId;
-
     omnpoInsertedFeatures[nFID] = poFeature->Clone();
 
     if (bInTransaction) {
@@ -822,10 +837,15 @@ bool OGRGMELayer::CreateTableIfNotCreated()
                  "Table creation failed, or could not find table id.");
         return false;
     }
-
     osTableId = pszTableId;
+    /*
     OGRFieldDefn *poGxIdField = new OGRFieldDefn("gx_id", OFTString);
+
     poFeatureDefn->AddFieldDefn(poGxIdField);
+    iGxIdField = poFeatureDefn->GetFieldCount() - 1;
+    CPLDebug("GME", "create field %s(%d) of type %s",
+             "gx_id", iGxIdField, OGRFieldDefn::GetFieldTypeName(OFTString));
+    */
     bCreateTablePending = false;
     CPLDebug("GME", "sleeping 3s to give GME time to create the table...");
     CPLSleep( 3.0 );
