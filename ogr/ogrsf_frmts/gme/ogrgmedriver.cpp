@@ -113,4 +113,3 @@ void RegisterOGRGME()
 {
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRGMEDriver );
 }
-
