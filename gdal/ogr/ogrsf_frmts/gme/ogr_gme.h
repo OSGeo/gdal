@@ -58,6 +58,7 @@ class OGRGMELayer : public OGRLayer
     CPLString          osTableId;
     std::map<int, CPLString> oMapIdToGMEKey;
     std::vector<OGRFeature *> oListOfUpdatedFeatures;
+    std::vector<OGRFeature *> oListOfInsertedFeatures;
     CPLString          osGeomColumnName;
 
     CPLString          osWhere;
@@ -78,6 +79,8 @@ class OGRGMELayer : public OGRLayer
     OGRFeature        *GetNextRawFeature();
     void               GetPageOfFEatures();
     void               BatchPatch();
+    void               BatchInsert();
+    void               BatchRequest(const char *osMethod, std::vector<OGRFeature *> &oListOfFeatures);
 
   public:
     OGRGMELayer(OGRGMEDataSource* poDS, const char* pszTableId);
@@ -103,6 +106,7 @@ class OGRGMELayer : public OGRLayer
     virtual OGRErr      SyncToDisk();
 
     virtual OGRErr      SetFeature( OGRFeature *poFeature );
+    virtual OGRErr      CreateFeature( OGRFeature *poFeature );
 };
 
 /************************************************************************/
