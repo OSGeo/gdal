@@ -431,6 +431,20 @@ json_object* OGRGMEAttributesToGeoJSON( OGRFeature* poFeature )
 
         json_object_object_add( pjoProperties, poFieldDefn->GetNameRef(), pjoProperty );
     }
+    int nGxId = poFeature->GetFieldIndex("gx_id");
+    if (nGxId < 0) {
+        json_object* pjoProperty = NULL;
+        long nFID = poFeature->GetFID();
+
+        char acGxId[128];
+        snprintf(acGxId, 128, "GDAL-%ld", nFID);
+        CPLDebug("GME", "gx_id is not set, so adding \"gx_id\": \"%s\" field.",
+                 acGxId);
+
+        pjoProperty = json_object_new_string( acGxId );
+        json_object_object_add( pjoProperties, "gx_id", pjoProperty);
+    }
+
     return pjoProperties;
 }
 
