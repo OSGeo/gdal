@@ -429,8 +429,6 @@ OGRErr OGRGMELayer::SetFeature( OGRFeature *poFeature )
 
 {
     bDirty = true;
-    OGRFeature *poFeat = poFeature->Clone();
-    // poFeat->SetGeometryDirectly(poFeature->GetGeometryRef()->clone());
     oListOfUpdatedFeatures.push_back(poFeature->Clone());
     if (oListOfUpdatedFeatures.size() == iBatchPatchSize) {
         CPLDebug("GME", "Have %d uncommitted features, patching", iBatchPatchSize);
@@ -460,9 +458,17 @@ void OGRGMELayer::BatchPatch()
     oListOfUpdatedFeatures.clear();
     bDirty = false;
     json_object_object_add( pjoBatchPatch, "features", pjoFeatures );
-    CPLDebug("GME", "BatchPatch:\n%s",
-             json_object_to_json_string_ext(pjoBatchPatch,
-                                            JSON_C_TO_STRING_SPACED | JSON_C_TO_STRING_PRETTY) );
+    const char *body =
+        json_object_to_json_string_ext(pjoBatchPatch,
+                                       JSON_C_TO_STRING_SPACED | JSON_C_TO_STRING_PRETTY);
+    //CPLDebug("GME", "BatchPatch:\n%s", body);
+
+/* -------------------------------------------------------------------- */
+/*      POST changes                                                    */
+/* -------------------------------------------------------------------- */
+   CPLString osRequest = "tables/" + osTableId + "/features/batchPatch";
+   CPLHTTPResult *psBatchPatchResult = poDS->PostRequest(osRequest, body);
+   CPLDebug("GME", "batchPatch returned %d", psBatchPatchResult->nStatus);
 }
 
 /************************************************************************/
