@@ -161,13 +161,20 @@ def ogr_gme_write():
     feature.SetField('P_15_64_89', 11.0)
     feature.SetField('LIFE_EXP', 236.0)
     feature.SetField('LIFE_EXP_F', 77.25)
-    expected_wkt = "POLYGON ((1 4, 1 1, 4 1, 4 4, 1 4),(2 3, 2 2, 3 2, 3 3, 2 3))"
+    expected_wkt = "POLYGON ((1 4,1 1,4 1,4 4,1 4),(2 3,2 2,3 2,3 3,2 3))"
     geom = ogr.CreateGeometryFromWkt(expected_wkt)
     feature.SetGeometry(geom)
     if lyr.CreateFeature(feature) != 0:
         gdaltest.post_reason('CreateFeature() failed')
         return 'fail'
     fid = feature.GetFID()
+    if fid < 1:
+        gdaltest.post_reason('CreateFeature() failed to set feature ID')
+        return 'fail'
+
+    if lyr.DeleteFeature(fid) != 0:
+        gdaltest.post_reason('DeleteFeature() failed')
+        return 'fail'
 
     ds = None
     return 'success'
