@@ -32,6 +32,8 @@
 #include "ogr_gme.h"
 #include "ogrgmejson.h"
 
+#include "cpl_multiproc.h"
+
 CPL_CVSID("$Id: ogrgmetablelayer.cpp 25475 2013-01-09 09:09:59Z warmerdam $");
 
 /************************************************************************/
@@ -42,13 +44,37 @@ OGRGMELayer::OGRGMELayer(OGRGMEDataSource* poDS,
                          const char* pszTableId)
 
 {
+    CPLDebug("GME", "Open() ctor...");
     this->poDS = poDS;
     poSRS = new OGRSpatialReference(SRS_WKT_WGS84);
     poFeatureDefn = NULL;
-    osTableId = pszTableId;
     current_feature_page = NULL;
     bDirty = false;
-    iBatchPatchSize = 1;
+    iBatchPatchSize = 50;
+    bCreateTablePending = false;
+    osTableId = pszTableId;
+    bInTransaction = false;
+}
+
+
+OGRGMELayer::OGRGMELayer(OGRGMEDataSource* poDS,
+                         const char* pszTableName,
+                         char ** papszOptions)
+
+{
+    CPLDebug("GME", "Create() ctor...");
+    this->poDS = poDS;
+    poSRS = new OGRSpatialReference(SRS_WKT_WGS84);
+    poFeatureDefn = NULL;
+    current_feature_page = NULL;
+    bDirty = false;
+    iBatchPatchSize = 50;
+    bCreateTablePending = true;
+    osTableName = pszTableName;
+    osProjectId = CSLFetchNameValue( papszOptions, "projectId" );
+    osDraftACL = CSLFetchNameValueDef( papszOptions, "draftAccessList", "Map Editors" );
+    osPublishedACL = CSLFetchNameValueDef( papszOptions, "publishedAccessList", "Map Viewers" );
+    // TODO: support tags and description
 }
 
 /************************************************************************/
@@ -91,6 +117,8 @@ int OGRGMELayer::TestCapability( const char * pszCap )
         return TRUE;
     else if(EQUAL(pszCap,OLCRandomWrite))
         return TRUE;
+    else if(EQUAL(pszCap,OLCTransactions))
+        return TRUE;
     return FALSE;
 }
 
@@ -124,11 +152,11 @@ int OGRGMELayer::FetchDescribe()
     CPLDebug("GME", "table doc = %s\n", psDescribe->pabyData);
 
     json_object *table_doc = 
-        poDS->Parse((const char *) psDescribe->pabyData);
+        OGRGMEParseJSON((const char *) psDescribe->pabyData);
 
     CPLHTTPDestroyResult(psDescribe);
 
-    osTableName = poDS->GetJSONString(table_doc, "name");
+    osTableName = OGRGMEGetJSONString(table_doc, "name");
 
     poFeatureDefn = new OGRFeatureDefn(osTableName);
     poFeatureDefn->Reference();
@@ -147,9 +175,9 @@ int OGRGMELayer::FetchDescribe()
         json_object *field_obj = (json_object*) 
             array_list_get_idx(column_list, i);
 
-	const char* name = poDS->GetJSONString(field_obj, "name");
+	const char* name = OGRGMEGetJSONString(field_obj, "name");
         OGRFieldDefn oFieldDefn(name, OFTString);
-        const char *type = poDS->GetJSONString(field_obj, "type");
+        const char *type = OGRGMEGetJSONString(field_obj, "type");
 
         if (EQUAL(type, "integer")) 
             oFieldDefn.SetType(OFTInteger);
@@ -197,7 +225,7 @@ void OGRGMELayer::GetPageOfFeatures()
 
     if (current_feature_page != NULL) 
     {
-        osNextPageToken = poDS->GetJSONString(current_feature_page, 
+        osNextPageToken = OGRGMEGetJSONString(current_feature_page,
                                               "nextPageToken", "");
         json_object_put(current_feature_page);
         current_feature_page = NULL;
@@ -235,11 +263,13 @@ void OGRGMELayer::GetPageOfFeatures()
     CPLHTTPResult *psFeaturesResult = 
         poDS->MakeRequest(osRequest, osMoreOptions);
 
-    if (psFeaturesResult == NULL)
+    if (psFeaturesResult == NULL) {
+        CPLDebug("GME", "Got NULL from MakeRequest. Something went wrong. You figure it out!");
+        current_feature_page = NULL;
         return;
-    
-    CPLDebug("GME", 
-             "features doc = %s...", 
+    }
+    CPLDebug("GME",
+             "features doc = %s...",
              psFeaturesResult->pabyData);
     
 /* -------------------------------------------------------------------- */
@@ -247,7 +277,7 @@ void OGRGMELayer::GetPageOfFeatures()
 /* -------------------------------------------------------------------- */
     
     current_feature_page = 
-        poDS->Parse((const char *) psFeaturesResult->pabyData);
+        OGRGMEParseJSON((const char *) psFeaturesResult->pabyData);
     CPLHTTPDestroyResult(psFeaturesResult);
 
     current_features_array = 
@@ -295,7 +325,7 @@ OGRFeature *OGRGMELayer::GetNextRawFeature()
          iOGRField++ ) 
     {
         const char *pszValue = 
-            poDS->GetJSONString(
+            OGRGMEGetJSONString(
                 properties_obj, 
                 poFeatureDefn->GetFieldDefn(iOGRField)->GetNameRef(),
                 NULL);
@@ -306,9 +336,9 @@ OGRFeature *OGRGMELayer::GetNextRawFeature()
 /* -------------------------------------------------------------------- */
 /*      Handle gx_id.                                                   */
 /* -------------------------------------------------------------------- */
-    const char *gx_id = poDS->GetJSONString(properties_obj, "gx_id");
+    const char *gx_id = OGRGMEGetJSONString(properties_obj, "gx_id");
     CPLString gmeId(gx_id);
-    oMapIdToGMEKey[++m_nFeaturesRead] = gmeId;
+    omnosIdToGMEKey[++m_nFeaturesRead] = gmeId;
     poFeature->SetFID(m_nFeaturesRead);
     CPLDebug("GME", "Mapping ids: \"%s\" to %lld", gx_id, m_nFeaturesRead);
 
@@ -425,63 +455,30 @@ OGRErr OGRGMELayer::SetIgnoredFields(const char ** papszFields )
 }
 
 /************************************************************************/
-/*                           SetFeature()                               */
-/************************************************************************/
-
-OGRErr OGRGMELayer::SetFeature( OGRFeature *poFeature )
-
-{
-    bDirty = true;
-    oListOfUpdatedFeatures.push_back(poFeature->Clone());
-    if (oListOfUpdatedFeatures.size() == iBatchPatchSize) {
-        CPLDebug("GME", "Have %d uncommitted features, patching", iBatchPatchSize);
-        BatchPatch();
-    }
-    return OGRERR_NONE;
-}
-
-/************************************************************************/
 /*                            BatchPatch()                              */
 /************************************************************************/
 
-void OGRGMELayer::BatchPatch()
+OGRErr OGRGMELayer::BatchPatch()
 {
-    BatchRequest("batchPatch", oListOfUpdatedFeatures);
-    if (oListOfDeletedFeatures.size() || oListOfInsertedFeatures.size())
-        bDirty = true;
-    else
-        bDirty = false;
+    CPLDebug("GME", "BatchPatch() - <%ld>", oListOfDeletedFeatures.size() );
+    return BatchRequest("batchPatch", omnpoUpdatedFeatures);
 }
 
 /************************************************************************/
 /*                            BatchInsert()                             */
 /************************************************************************/
 
-void OGRGMELayer::BatchInsert()
+OGRErr OGRGMELayer::BatchInsert()
 {
-    std::vector<OGRFeature *>::const_iterator fit;
-    for ( fit = oListOfInsertedFeatures.begin(); fit != oListOfInsertedFeatures.end(); fit++)
-    {
-        OGRFeature *poFeature = *fit;
-        int nGxIdFn = poFeature->GetFieldIndex("gx_id");
-        CPLString osGxId = poFeature->GetFieldAsString(nGxIdFn);
-        CPLDebug("GME", "BatchInsert(%ld -> '%s')",
-                 poFeature->GetFID(), osGxId.c_str() );
-        oMapIdToGMEKey[poFeature->GetFID()] = osGxId;
-    }
-
-    BatchRequest("batchInsert", oListOfInsertedFeatures);
-    if (oListOfUpdatedFeatures.size() || oListOfDeletedFeatures.size())
-        bDirty = true;
-    else
-        bDirty = false;
+    CPLDebug("GME", "BatchInsert() - <%ld>", oListOfDeletedFeatures.size() );
+    return BatchRequest("batchInsert", omnpoInsertedFeatures);
 }
 
 /************************************************************************/
 /*                            BatchDelete()                             */
 /************************************************************************/
 
-void OGRGMELayer::BatchDelete()
+OGRErr OGRGMELayer::BatchDelete()
 {
     json_object *pjoBatchDelete = json_object_new_object();
     json_object *pjoGxIds = json_object_new_array();
@@ -491,16 +488,16 @@ void OGRGMELayer::BatchDelete()
     {
         long nFID = *fit;
         if (nFID > 0) {
-            CPLString osGxId(oMapIdToGMEKey[nFID]);
+            CPLString osGxId(omnosIdToGMEKey[nFID]);
             CPLDebug("GME", "Deleting feature %ld -> '%s'", nFID, osGxId.c_str());
             json_object *pjoGxId = json_object_new_string(osGxId.c_str());
-            oMapIdToGMEKey.erase(nFID);
+            omnosIdToGMEKey.erase(nFID);
             json_object_array_add( pjoGxIds, pjoGxId );
         }
     }
     oListOfDeletedFeatures.clear();
     if (json_object_array_length(pjoGxIds) == 0)
-        return;
+        return OGRERR_FAILURE;
     json_object_object_add( pjoBatchDelete, "gx_ids", pjoGxIds );
     const char *body =
         json_object_to_json_string_ext(pjoBatchDelete,
@@ -510,37 +507,41 @@ void OGRGMELayer::BatchDelete()
 /*      POST changes                                                    */
 /* -------------------------------------------------------------------- */
     CPLString osRequest = "tables/" + osTableId + "/features/batchDelete";
-    CPLHTTPResult *psBatchDeleteResult = poDS->PostRequest(osRequest, body);
-    CPLDebug("GME", "batchDelete returned %d", psBatchDeleteResult->nStatus);
-
-    if (oListOfUpdatedFeatures.size() || oListOfInsertedFeatures.size())
-        bDirty = true;
-    else
-        bDirty = false;
+    CPLHTTPResult *poBatchDeleteResult = poDS->PostRequest(osRequest, body);
+    if (poBatchDeleteResult) {
+        CPLDebug("GME", "batchDelete returned %d", poBatchDeleteResult->nStatus);
+        return OGRERR_NONE;
+    }
+    else {
+        CPLDebug("GME", "batchPatch failed, NULL was returned.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Server error for batchDelete");
+        return OGRERR_FAILURE;
+    }
 }
 
 /************************************************************************/
 /*                            BatchRequest()                            */
 /************************************************************************/
 
-void OGRGMELayer::BatchRequest(const char *pszMethod, std::vector<OGRFeature *> &oListOfFeatures)
+OGRErr OGRGMELayer::BatchRequest(const char *pszMethod, std::map<int, OGRFeature *> &omnpoFeatures)
 {
     json_object *pjoBatchDoc = json_object_new_object();
     json_object *pjoFeatures = json_object_new_array();
-    std::vector<OGRFeature *>::const_iterator fit;
-    CPLDebug("GME", "BatchRequest('%s', <%ld>)", pszMethod, oListOfFeatures.size() );
-    for ( fit = oListOfFeatures.begin(); fit != oListOfFeatures.end(); fit++)
+    std::map<int, OGRFeature *>::const_iterator fit;
+    CPLDebug("GME", "BatchRequest('%s', <%ld>)", pszMethod, omnpoFeatures.size() );
+    for ( fit = omnpoFeatures.begin(); fit != omnpoFeatures.end(); fit++)
     {
-        OGRFeature *poFeature = *fit;
+        long nFID = fit->first;
+        OGRFeature *poFeature = fit->second;
+        CPLDebug("GME", "Processing feature: %ld", nFID );
         json_object *pjoFeature = OGRGMEFeatureToGeoJSON(poFeature);
-        CPLDebug("GME", "Processing feature: %ld", poFeature->GetFID() );
-        delete poFeature;
         if (pjoFeature != NULL)
             json_object_array_add( pjoFeatures, pjoFeature );
+        delete poFeature;
     }
-    oListOfFeatures.clear();
+    omnpoFeatures.clear();
     if (json_object_array_length(pjoFeatures) == 0)
-        return;
+        return OGRERR_FAILURE;
     json_object_object_add( pjoBatchDoc, "features", pjoFeatures );
     const char *body =
         json_object_to_json_string_ext(pjoBatchDoc,
@@ -551,7 +552,15 @@ void OGRGMELayer::BatchRequest(const char *pszMethod, std::vector<OGRFeature *> 
 /* -------------------------------------------------------------------- */
     CPLString osRequest = "tables/" + osTableId + "/features/" + pszMethod;
     CPLHTTPResult *psBatchResult = poDS->PostRequest(osRequest, body);
-    CPLDebug("GME", "%s returned %d", pszMethod, psBatchResult->nStatus);
+    if (psBatchResult) {
+        CPLDebug("GME", "%s returned %d", pszMethod, psBatchResult->nStatus);
+        return OGRERR_NONE;
+    }
+    else {
+        CPLDebug("GME", "%s failed, NULL was returned.", pszMethod );
+        CPLError(CE_Failure, CPLE_AppDefined, "Server error for %s", pszMethod);
+        return OGRERR_FAILURE;
+    }
 }
 
 /************************************************************************/
@@ -565,27 +574,88 @@ void OGRGMELayer::SetBatchPatchSize(unsigned int iSize)
 }
 
 /************************************************************************/
+/*                         GetBatchPatchSize()                          */
+/************************************************************************/
+
+unsigned int OGRGMELayer::GetBatchPatchSize()
+
+{
+    CPLString osBatchPatchSize;
+    osBatchPatchSize = CPLGetConfigOption("GME_BATCH_PATCH_SIZE","0");
+    int iSize = atoi( osBatchPatchSize.c_str() );
+    if (iSize < 1)
+        return iBatchPatchSize;
+    else {
+        iBatchPatchSize = iSize;
+        return (unsigned int) iSize;
+    }
+}
+
+/************************************************************************/
 /*                           CreateFeature()                            */
 /************************************************************************/
 
 OGRErr OGRGMELayer::CreateFeature( OGRFeature *poFeature )
 
 {
-    bDirty = true;
+    if (!poFeature)
+        return OGRERR_FAILURE;
+    if (!CreateTableIfNotCreated()) {
+        return OGRERR_FAILURE;
+    }
     poFeature->SetFID(++m_nFeaturesRead);
-    int nGxId = poFeature->GetFieldIndex("gx_id");
-    if (!poFeature->IsFieldSet(nGxId)) {
-        CPLString osGxId = CPLSPrintf("GDAL-%ld", poFeature->GetFID());
-        poFeature->SetField( nGxId, osGxId.c_str() );
-    }
+    long nFID = m_nFeaturesRead;
 
-    oListOfInsertedFeatures.push_back(poFeature->Clone());
-    if (oListOfInsertedFeatures.size() == iBatchPatchSize) {
-        CPLDebug("GME", "Have %d uncommitted features, inserting", iBatchPatchSize);
-        BatchInsert();
+    int nGxId = poFeature->GetFieldIndex("gx_id");
+    CPLDebug("GME", "gx_id is field %d", nGxId);
+    CPLString osGxId = CPLSPrintf("GDAL-%ld", poFeature->GetFID());
+    CPLDebug("GME", "Inserting feature %lld as %s", poFeature->GetFID(), osGxId.c_str());
+    poFeature->SetField( nGxId, osGxId.c_str() );
+
+    omnosIdToGMEKey[poFeature->GetFID()] = osGxId;
+
+    omnpoInsertedFeatures[nFID] = poFeature->Clone();
+
+    if (bInTransaction) {
+        CPLDebug("GME", "In Transaction, added feature to memory only");
+        bDirty = true;
+        return OGRERR_NONE;
     }
-    CPLDebug("GME", "Inserted feature %ld", poFeature->GetFID());
-    return OGRERR_NONE;
+    else {
+        CPLDebug("GME", "Not in Transaction, BatchInsert()");
+        return BatchInsert();
+    }
+}
+
+/************************************************************************/
+/*                           SetFeature()                               */
+/************************************************************************/
+
+OGRErr OGRGMELayer::SetFeature( OGRFeature *poFeature )
+
+{
+    if (!poFeature)
+        return OGRERR_FAILURE;
+    long nFID = poFeature->GetFID();
+    if(bInTransaction) {
+        std::map<int, OGRFeature *>::const_iterator fit;
+        fit = omnpoInsertedFeatures.find(nFID);
+        if (fit != omnpoInsertedFeatures.end()) {
+            omnpoInsertedFeatures[nFID] = poFeature->Clone();
+            CPLDebug("GME", "Updated Feature %ld in Transaction", nFID);
+        }
+        else {
+            CPLDebug("GME", "In Transaction, adding feature to Map");
+            bDirty = true;
+            omnpoUpdatedFeatures[nFID] = poFeature->Clone();
+        }
+        return OGRERR_NONE;
+    }
+    else {
+        omnpoUpdatedFeatures[nFID] = poFeature->Clone();
+        CPLDebug("GME", "Not in Transaction, BatchPatch()");
+        return BatchPatch();
+    }
 }
 
 /************************************************************************/
@@ -594,12 +664,179 @@ OGRErr OGRGMELayer::CreateFeature( OGRFeature *poFeature )
 
 OGRErr OGRGMELayer::DeleteFeature( long nFID )
 {
-    bDirty = true;
-    oListOfDeletedFeatures.push_back(nFID);
-    if (oListOfDeletedFeatures.size() == iBatchPatchSize) {
-        CPLDebug("GME", "Have %d uncommitted features, deleting", iBatchPatchSize);
-        BatchDelete();
+    if(bInTransaction) {
+        std::map<int, OGRFeature *>::iterator fit;
+        fit = omnpoInsertedFeatures.find(nFID);
+        if (fit != omnpoInsertedFeatures.end()) {
+            omnpoInsertedFeatures.erase(fit);
+            CPLDebug("GME", "Found %ld in omnpoInsertedFeatures", nFID);
+        }
+        else {
+            CPLDebug("GME", "In Transaction, adding feature to List");
+            bDirty = true;
+            oListOfDeletedFeatures.push_back(nFID); 
+        }
+        return OGRERR_NONE;
     }
-    CPLDebug("GME", "Deleted feature %ld", nFID);
+    else {
+        CPLDebug("GME", "Not in Transaction, BatchDelete()");
+        return BatchDelete();
+    }
+}
+
+/************************************************************************/
+/*                            CreateField()                             */
+/************************************************************************/
+
+OGRErr OGRGMELayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
+{
+    CPLDebug("GME", "create field %s of type %s, pending = %d",
+             poField->GetNameRef(), OGRFieldDefn::GetFieldTypeName(poField->GetType()),
+             bCreateTablePending);
+    if (!bCreateTablePending) {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot add field to table after schema is defined.");
+        return OGRERR_FAILURE;
+    }
+
+    if (poFeatureDefn == NULL) {
+        poFeatureDefn = new OGRFeatureDefn( osTableName );
+
+        poFeatureDefn->Reference();
+        poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
+        poFeatureDefn->GetGeomFieldDefn(0)->SetName("geometry");
+    }
+    poFeatureDefn->AddFieldDefn(poField);
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                      CreateTableIfNotCreated()                       */
+/************************************************************************/
+
+bool OGRGMELayer::CreateTableIfNotCreated()
+{
+    if (!bCreateTablePending || (osTableId.size() != 0)) {
+        CPLDebug("GME", "Not creating table since already created");
+        CPLDebug("GME", "bCreateTablePending = %d osTableId ='%s'",
+                 bCreateTablePending, osTableId.c_str());
+        return true;
+    }
+    CPLDebug("GME", "Creating table...");
+
+    json_object *pjoCreateDoc = json_object_new_object();
+    json_object *pjoProjectId = json_object_new_string( osProjectId.c_str() );
+    json_object_object_add( pjoCreateDoc, "projectId", pjoProjectId );
+    json_object *pjoName = json_object_new_string( osTableName.c_str() );
+    json_object_object_add( pjoCreateDoc, "name",  pjoName );
+    json_object *pjoDraftACL = json_object_new_string( osDraftACL.c_str() );
+    json_object_object_add( pjoCreateDoc, "draftAccessList", pjoDraftACL );
+    json_object *pjoPublishedACL = json_object_new_string( osPublishedACL.c_str() );
+    json_object_object_add( pjoCreateDoc, "publishedAccessList", pjoPublishedACL );
+    json_object *pjoSchema = json_object_new_object();
+
+    json_object *pjoColumns = json_object_new_array();
+
+    poFeatureDefn->SetGeomType( eGTypeForCreation );
+
+    json_object *pjoGeometryColumn = json_object_new_object();
+    json_object *pjoGeometryName = json_object_new_string( "geometry" );
+    json_object *pjoGeometryType;
+    switch(eGTypeForCreation) {
+    case wkbPoint:
+    case wkbPoint25D:
+    case wkbMultiPoint:
+    case wkbMultiPoint25D:
+        pjoGeometryType = json_object_new_string( "points" );
+        break;
+    case wkbLineString:
+    case wkbLineString25D:
+    case wkbMultiLineString:
+    case wkbLinearRing:
+    case wkbMultiLineString25D:
+        pjoGeometryType = json_object_new_string( "lineStrings" );
+        break;
+    case wkbPolygon:
+    case wkbPolygon25D:
+    case wkbMultiPolygon:
+    case wkbGeometryCollection:
+    case wkbMultiPolygon25D:
+        pjoGeometryType = json_object_new_string( "polygons" );
+        break;
+    case wkbGeometryCollection25D:
+        pjoGeometryType = json_object_new_string( "mixedGeometry" );
+        break;
+    default:
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Unsupported Geometry type. Defaulting to Points");
+        pjoGeometryType = json_object_new_string( "points" );
+        poFeatureDefn->SetGeomType( wkbPoint );
+    }
+    json_object_object_add( pjoGeometryColumn, "name", pjoGeometryName );
+    json_object_object_add( pjoGeometryColumn, "type", pjoGeometryType );
+    json_object_array_add( pjoColumns, pjoGeometryColumn );
+
+    for (int iOGRField = 0; iOGRField < poFeatureDefn->GetFieldCount(); iOGRField++ )
+    {
+        json_object *pjoColumn = json_object_new_object();
+        json_object *pjoFieldName =
+            json_object_new_string( poFeatureDefn->GetFieldDefn(iOGRField)->GetNameRef() );
+        json_object *pjoFieldType;
+
+        switch(poFeatureDefn->GetFieldDefn(iOGRField)->GetType()) {
+        case OFTInteger:
+            pjoFieldType = json_object_new_string( "integer" );
+            break;
+        case OFTReal:
+            pjoFieldType = json_object_new_string( "double" );
+            break;
+        default:
+            pjoFieldType = json_object_new_string( "string" );
+        }
+        json_object_object_add( pjoColumn, "name", pjoFieldName );
+        json_object_object_add( pjoColumn, "type", pjoFieldType );
+        json_object_array_add( pjoColumns, pjoColumn );
+    }
+
+    json_object_object_add( pjoSchema, "columns", pjoColumns );
+    json_object_object_add( pjoCreateDoc, "schema", pjoSchema );
+    const char *body =
+        json_object_to_json_string_ext(pjoCreateDoc,
+                                       JSON_C_TO_STRING_SPACED | JSON_C_TO_STRING_PRETTY);
+
+    CPLDebug("GME", "Create Table Doc:\n%s", body);
+
+/* -------------------------------------------------------------------- */
+/*      POST changes                                                    */
+/* -------------------------------------------------------------------- */
+    CPLString osRequest = "tables";
+    CPLHTTPResult *poCreateResult = poDS->PostRequest(osRequest, body);
+    CPLDebug("GME", "CreateTable returned %d\n%s", poCreateResult->nStatus,
+             poCreateResult->pabyData);
+
+    json_object *pjoResponseDoc = OGRGMEParseJSON((const char *) poCreateResult->pabyData);
+
+    char *pszTableId = strdup(OGRGMEGetJSONString(pjoResponseDoc, "id", NULL));
+    if (pszTableId == NULL) {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Table creation failed, or could not find table id.");
+        return false;
+    }
+
+    osTableId = pszTableId;
+    OGRFieldDefn *poGxIdField = new OGRFieldDefn("gx_id", OFTString);
+    poFeatureDefn->AddFieldDefn(poGxIdField);
+    bCreateTablePending = false;
+    CPLDebug("GME", "sleeping 3s to give GME time to create the table...");
+    CPLSleep( 3.0 );
+    return true;
+}
+
+/************************************************************************/
+/*                          SetGeometryType()                           */
+/************************************************************************/
+
+void OGRGMELayer::SetGeometryType(OGRwkbGeometryType eGType)
+{
+    eGTypeForCreation = eGType;
 }
