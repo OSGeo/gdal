@@ -46,6 +46,8 @@ OGRGMELayer::OGRGMELayer(OGRGMEDataSource* poDS,
     poFeatureDefn = NULL;
     osTableId = pszTableId;
     current_feature_page = NULL;
+    bDirty = false;
+    iBatchPatchSize = 1;
 }
 
 /************************************************************************/
@@ -55,6 +57,7 @@ OGRGMELayer::OGRGMELayer(OGRGMEDataSource* poDS,
 OGRGMELayer::~OGRGMELayer()
 
 {
+    SyncToDisk();
     ResetReading();
 }
 
@@ -85,7 +88,22 @@ int OGRGMELayer::TestCapability( const char * pszCap )
         return TRUE;
     else if(EQUAL(pszCap,OLCIgnoreFields))
         return TRUE;
+    else if(EQUAL(pszCap,OLCRandomWrite))
+        return TRUE;
     return FALSE;
+}
+
+/************************************************************************/
+/*                             SyncToDisk()                             */
+/************************************************************************/
+
+OGRErr OGRGMELayer::SyncToDisk()
+
+{
+    CPLDebug("GME", "SyncToDisk()");
+    if (bDirty)
+        BatchPatch();
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
@@ -289,7 +307,7 @@ OGRFeature *OGRGMELayer::GetNextRawFeature()
     CPLString gmeId(gx_id);
     oMapIdToGMEKey.insert(std::pair<int, CPLString>(m_nFeaturesRead, gmeId));
     poFeature->SetFID(m_nFeaturesRead);
-    CPLDebug("GME", "Mapping ids: \"%s\" to %d", gx_id, m_nFeaturesRead);
+    CPLDebug("GME", "Mapping ids: \"%s\" to %lld", gx_id, m_nFeaturesRead);
 
 /* -------------------------------------------------------------------- */
 /*      Handle geometry.                                                */
@@ -368,7 +386,7 @@ OGRErr OGRGMELayer::SetAttributeFilter( const char *pszWhere )
     OGRErr eErr;
     eErr = OGRLayer::SetAttributeFilter(pszWhere);
     if( eErr == OGRERR_NONE ) {
-        if (pszWhere) {
+        if ( pszWhere ) {
             char * pszEscaped = CPLEscapeString(pszWhere, -1, CPLES_URL);
             osWhere = CPLString(pszEscaped);
             CPLFree(pszEscaped);
@@ -387,13 +405,70 @@ OGRErr OGRGMELayer::SetAttributeFilter( const char *pszWhere )
 OGRErr OGRGMELayer::SetIgnoredFields(const char ** papszFields )
 {
     osSelect = "geometry";
-    OGRLayer::SetIgnoredFields(papszFields);
+    OGRErr eErr;
+    eErr = OGRLayer::SetIgnoredFields(papszFields);
 
-    for (int iOGRField = 0; iOGRField < poFeatureDefn->GetFieldCount(); iOGRField++ ) 
-    {
-        if (!poFeatureDefn->GetFieldDefn(iOGRField)->IsIgnored()) {
-            osSelect += ",";
-            osSelect += poFeatureDefn->GetFieldDefn(iOGRField)->GetNameRef();
-	}
+    if( eErr == OGRERR_NONE ) {
+        for ( int iOGRField = 0; iOGRField < poFeatureDefn->GetFieldCount(); iOGRField++ )
+        {
+            if (!poFeatureDefn->GetFieldDefn(iOGRField)->IsIgnored()) {
+                osSelect += ",";
+                osSelect += poFeatureDefn->GetFieldDefn(iOGRField)->GetNameRef();
+            }
+        }
     }
+    return eErr;
+}
+
+/************************************************************************/
+/*                           SetFeature()                               */
+/************************************************************************/
+
+OGRErr OGRGMELayer::SetFeature( OGRFeature *poFeature )
+
+{
+    bDirty = true;
+    oListOfUpdatedFeatures.push_back(poFeature->Clone());
+    if (oListOfUpdatedFeatures.size() == iBatchPatchSize) {
+        CPLDebug("GME", "Have %d uncommitted features, patching", iBatchPatchSize);
+        BatchPatch();
+    }
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                            BatchPatch()                              */
+/************************************************************************/
+
+void OGRGMELayer::BatchPatch()
+
+{
+    std::vector<OGRFeature *>::const_iterator fit;
+    for ( fit = oListOfUpdatedFeatures.begin(); fit != oListOfUpdatedFeatures.end(); fit++)
+    {
+        CPLDebug("GME", "Patching feature: %ld:", (*fit)->GetFID());
+        for ( int iField = 0; iField < (*fit)->GetFieldCount(); iField++ )
+        {
+            if ((*fit)->IsFieldSet(iField))
+            {
+                OGRFieldDefn *poFieldDefn = (*fit)->GetFieldDefnRef(iField);
+                OGRFieldType type = poFieldDefn->GetType();
+                const char *name = poFieldDefn->GetNameRef();
+                CPLDebug("GME", "\t%s: %s", name, (*fit)->GetFieldAsString(iField));
+            }
+        }
+        delete (*fit);
+    }
+    oListOfUpdatedFeatures.clear();
+    bDirty = false;
+}
+
+/************************************************************************/
+/*                         SetBatchPatchSize()                          */
+/************************************************************************/
+
+void OGRGMELayer::SetBatchPatchSize(unsigned int iSize)
+
+{
+    iBatchPatchSize = iSize;
 }

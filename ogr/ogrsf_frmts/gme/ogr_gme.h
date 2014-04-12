@@ -57,6 +57,7 @@ class OGRGMELayer : public OGRLayer
     CPLString          osTableName;
     CPLString          osTableId;
     std::map<int, CPLString> oMapIdToGMEKey;
+    std::vector<OGRFeature *> oListOfUpdatedFeatures;
     CPLString          osGeomColumnName;
 
     CPLString          osWhere;
@@ -65,6 +66,8 @@ class OGRGMELayer : public OGRLayer
     json_object*       current_feature_page;
     json_object*       current_features_array;
     int                index_in_page;
+    unsigned int       iBatchPatchSize;
+    bool               bDirty;
 
     void               GetPageOfFeatures();
 
@@ -74,12 +77,14 @@ class OGRGMELayer : public OGRLayer
 
     OGRFeature        *GetNextRawFeature();
     void               GetPageOfFEatures();
+    void               BatchPatch();
 
   public:
     OGRGMELayer(OGRGMEDataSource* poDS, const char* pszTableId);
     ~OGRGMELayer();
 
-    virtual void                ResetReading();
+    virtual void       ResetReading();
+    void               SetBatchPatchSize(unsigned int iSize);
 
     virtual OGRFeatureDefn *    GetLayerDefn();
 
@@ -94,6 +99,10 @@ class OGRGMELayer : public OGRLayer
     virtual OGRErr      SetAttributeFilter( const char * pszWhere );
 
     virtual OGRErr      SetIgnoredFields(const char ** papszFields );
+
+    virtual OGRErr      SyncToDisk();
+
+    virtual OGRErr      SetFeature( OGRFeature *poFeature );
 };
 
 /************************************************************************/
