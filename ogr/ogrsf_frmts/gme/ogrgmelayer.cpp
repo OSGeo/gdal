@@ -44,7 +44,7 @@ OGRGMELayer::OGRGMELayer(OGRGMEDataSource* poDS,
                          const char* pszTableId)
 
 {
-    CPLDebug("GME", "Open() ctor...");
+    CPLDebug("GME", "Opening existing layer %s", pszTableId);
     this->poDS = poDS;
     poSRS = new OGRSpatialReference(SRS_WKT_WGS84);
     poFeatureDefn = NULL;
@@ -62,7 +62,7 @@ OGRGMELayer::OGRGMELayer(OGRGMEDataSource* poDS,
                          char ** papszOptions)
 
 {
-    CPLDebug("GME", "Create() ctor...");
+    CPLDebug("GME", "Creating new layer %s", pszTableName);
     this->poDS = poDS;
     poSRS = new OGRSpatialReference(SRS_WKT_WGS84);
     poFeatureDefn = NULL;
@@ -95,7 +95,7 @@ OGRGMELayer::~OGRGMELayer()
 void OGRGMELayer::ResetReading()
 
 {
-    if (current_feature_page != NULL) 
+    if (current_feature_page != NULL)
     {
         json_object_put(current_feature_page);
         current_feature_page = NULL;
@@ -148,10 +148,10 @@ int OGRGMELayer::FetchDescribe()
     CPLHTTPResult *psDescribe = poDS->MakeRequest(osRequest);
     if (psDescribe == NULL)
         return FALSE;
-    
+
     CPLDebug("GME", "table doc = %s\n", psDescribe->pabyData);
 
-    json_object *table_doc = 
+    json_object *table_doc =
         OGRGMEParseJSON((const char *) psDescribe->pabyData);
 
     CPLHTTPDestroyResult(psDescribe);
@@ -168,26 +168,26 @@ int OGRGMELayer::FetchDescribe()
     CPLString osLastGeomColumn;
 
     int field_count = array_list_length(column_list);
-    for( int i = 0; i < field_count; i++ ) 
+    for( int i = 0; i < field_count; i++ )
     {
         OGRwkbGeometryType eFieldGeomType = wkbNone;
 
-        json_object *field_obj = (json_object*) 
+        json_object *field_obj = (json_object*)
             array_list_get_idx(column_list, i);
 
 	const char* name = OGRGMEGetJSONString(field_obj, "name");
         OGRFieldDefn oFieldDefn(name, OFTString);
         const char *type = OGRGMEGetJSONString(field_obj, "type");
 
-        if (EQUAL(type, "integer")) 
+        if (EQUAL(type, "integer"))
             oFieldDefn.SetType(OFTInteger);
-        else if (EQUAL(type, "double")) 
+        else if (EQUAL(type, "double"))
             oFieldDefn.SetType(OFTReal);
-        else if (EQUAL(type, "boolean")) 
+        else if (EQUAL(type, "boolean"))
             oFieldDefn.SetType(OFTInteger);
-        else if (EQUAL(type, "string")) 
+        else if (EQUAL(type, "string"))
             oFieldDefn.SetType(OFTString);
-        else if (EQUAL(type, "string")) 
+        else if (EQUAL(type, "string"))
             oFieldDefn.SetType(OFTString);
         else if (EQUAL(type, "points"))
             eFieldGeomType = wkbPoint;
@@ -198,7 +198,7 @@ int OGRGMELayer::FetchDescribe()
         else if (EQUAL(type, "mixedGeometry"))
             eFieldGeomType = wkbGeometryCollection;
 
-        if (eFieldGeomType == wkbNone) 
+        if (eFieldGeomType == wkbNone)
         {
             poFeatureDefn->AddFieldDefn(&oFieldDefn);
         }
@@ -223,7 +223,7 @@ void OGRGMELayer::GetPageOfFeatures()
 {
     CPLString osNextPageToken;
 
-    if (current_feature_page != NULL) 
+    if (current_feature_page != NULL)
     {
         osNextPageToken = OGRGMEGetJSONString(current_feature_page,
                                               "nextPageToken", "");
@@ -244,7 +244,7 @@ void OGRGMELayer::GetPageOfFeatures()
     CPLString osRequest = "tables/" + osTableId + "/features";
     CPLString osMoreOptions = "&maxResults=1000";
 
-    if (!EQUAL(osNextPageToken,"")) 
+    if (!EQUAL(osNextPageToken,""))
     {
         osMoreOptions += "&pageToken=";
         osMoreOptions += osNextPageToken;
@@ -260,7 +260,7 @@ void OGRGMELayer::GetPageOfFeatures()
         osMoreOptions += osWhere;
     }
 
-    CPLHTTPResult *psFeaturesResult = 
+    CPLHTTPResult *psFeaturesResult =
         poDS->MakeRequest(osRequest, osMoreOptions);
 
     if (psFeaturesResult == NULL) {
@@ -271,16 +271,16 @@ void OGRGMELayer::GetPageOfFeatures()
     CPLDebug("GME",
              "features doc = %s...",
              psFeaturesResult->pabyData);
-    
+
 /* -------------------------------------------------------------------- */
 /*      Parse result.                                                   */
 /* -------------------------------------------------------------------- */
-    
-    current_feature_page = 
+
+    current_feature_page =
         OGRGMEParseJSON((const char *) psFeaturesResult->pabyData);
     CPLHTTPDestroyResult(psFeaturesResult);
 
-    current_features_array = 
+    current_features_array =
         json_object_object_get(current_feature_page, "features");
 }
 
@@ -295,12 +295,12 @@ OGRFeature *OGRGMELayer::GetNextRawFeature()
 /*      Fetch a new page of features if needed.                         */
 /* -------------------------------------------------------------------- */
     if (current_feature_page == NULL
-        || index_in_page >= json_object_array_length(current_features_array)) 
+        || index_in_page >= json_object_array_length(current_features_array))
     {
         GetPageOfFeatures();
     }
 
-    if (current_feature_page == NULL) 
+    if (current_feature_page == NULL)
     {
         return NULL;
     }

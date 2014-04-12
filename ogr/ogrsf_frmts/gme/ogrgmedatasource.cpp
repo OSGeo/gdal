@@ -85,12 +85,12 @@ OGRGMEDataSource::~OGRGMEDataSource()
 int OGRGMEDataSource::TestCapability( const char * pszCap )
 
 {
-    //if( bReadWrite && EQUAL(pszCap,ODsCCreateLayer) )
-    //    return TRUE;
+    if( EQUAL(pszCap,ODsCCreateLayer) )
+        return TRUE;
     //else if( bReadWrite && EQUAL(pszCap,ODsCDeleteLayer) )
     //    return TRUE;
     //else
-        return FALSE;
+    return FALSE;
 }
 
 /************************************************************************/
@@ -169,29 +169,29 @@ int OGRGMEDataSource::Open( const char * pszFilename, int bUpdateIn)
     osAccessToken = OGRGMEGetOptionValue(pszFilename, "access");
     if (osAccessToken.size() == 0)
         osAccessToken = CPLGetConfigOption("GME_ACCESS_TOKEN","");
-    if (osAccessToken.size() == 0 && osRefreshToken.size() > 0) 
+    if (osAccessToken.size() == 0 && osRefreshToken.size() > 0)
     {
         osAccessToken.Seize(GOA2GetAccessToken(osRefreshToken,
-                                               GME_TABLE_SCOPE_RO)); // TODO
-        if (osAccessToken.size() == 0)
+                                               GME_TABLE_SCOPE)); // TODO
+        if (osAccessToken.size() == 0) {
+            CPLDebug( "GME", "Cannot get access token");
             return FALSE;
+        }
     }
 
     if (osAccessToken.size() == 0 && osAuth.size() > 0)
     {
-        osRefreshToken.Seize(GOA2GetRefreshToken(osAuth, GME_TABLE_SCOPE_RO)); // TODO
+        osRefreshToken.Seize(GOA2GetRefreshToken(osAuth, GME_TABLE_SCOPE)); // TODO
         if (osRefreshToken.size() == 0)
+            CPLDebug( "GME", "Cannot get refresh token");
             return FALSE;
     }
 
-    if (osAccessToken.size() == 0)
+    if ((osAccessToken.size() ==0) && (osTables.size() == 0))
     {
-        if (osTables.size() == 0)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                    "Unauthenticated access requires explicit tables= parameter");
-            return FALSE;
-        }
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Unauthenticated access requires explicit tables= parameter");
+        return FALSE;
     }
 
     if (osTables.size() != 0)
@@ -207,13 +207,20 @@ int OGRGMEDataSource::Open( const char * pszFilename, int bUpdateIn)
             }
         }
         CSLDestroy(papszTables);
-	if ( nLayers == 0 )
+	if ( nLayers == 0 ) {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Could not find any tables.");
 	    return FALSE;
+        }
+        CPLDebug("GME", "Found %d layers", nLayers);
         return TRUE;
     }
-
-    if (osProjectId.size() != 0)
-        return true;
+    else if (osProjectId.size() != 0) {
+        CPLDebug("GME", "We have a projectId: %s. Use CreateLayer to create tables.",
+                 osProjectId.c_str());
+        return TRUE;
+    }
+    CPLDebug("GME", "No table no project, giving up!");
     return FALSE;
 }
 
@@ -238,9 +245,10 @@ OGRLayer   *OGRGMEDataSource::CreateLayer( const char *pszName,
         return NULL;
     }
 
-    if (CSLFetchNameValue( papszOptions, "projectId" ) == NULL) {
+    if ((CSLFetchNameValue( papszOptions, "projectId" ) == NULL) && (osProjectId.size() != 0)) {
         papszOptions = CSLAddNameValue( papszOptions, "projectId", osProjectId.c_str() );
     }
+
     OGRGMELayer* poLayer = new OGRGMELayer(this, pszName, papszOptions);
     poLayer->SetGeometryType(eGType);
     papoLayers = (OGRLayer**) CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
@@ -273,7 +281,7 @@ void OGRGMEDataSource::AddHTTPOptions(CPLStringList &oOptions)
 
     if (strlen(osAccessToken) > 0)
         oOptions.AddString(
-            CPLSPrintf("HEADERS=Authorization: Bearer %s", 
+            CPLSPrintf("HEADERS=Authorization: Bearer %s",
                        osAccessToken.c_str()));
 
     oOptions.AddString(CPLSPrintf("PERSISTENT=GME:%p", this));
@@ -331,7 +339,7 @@ CPLHTTPResult * OGRGMEDataSource::MakeRequest(const char *pszRequest,
         strncmp(psResult->pszContentType, "text/html", 9) == 0)
     {
         CPLDebug( "GME", "MakeRequest HTML Response: %s", psResult->pabyData );
-        CPLError(CE_Failure, CPLE_AppDefined, 
+        CPLError(CE_Failure, CPLE_AppDefined,
                  "HTML error page returned by server");
         if (nRetries < 2) {
             CPLDebug("GME", "Sleeping 5s and retrying");
@@ -350,7 +358,7 @@ CPLHTTPResult * OGRGMEDataSource::MakeRequest(const char *pszRequest,
         }
         return psResult;
     }
-    if (psResult && psResult->pszErrBuf != NULL) 
+    if (psResult && psResult->pszErrBuf != NULL)
     {
         CPLDebug( "GME", "MakeRequest Error Message: %s", psResult->pszErrBuf );
         CPLDebug( "GME", "error doc:\n%s\n", psResult->pabyData);
@@ -389,11 +397,6 @@ CPLHTTPResult * OGRGMEDataSource::MakeRequest(const char *pszRequest,
                 CPLDebug( "GME", "Backend error retrying: GET %s: %s", pszRequest, message );
                 psResult = MakeRequest(pszRequest, pszMoreOptions);
 	    }
-	    else if ((EQUAL(reason, "invalid")) && (EQUAL(location, "id"))) {
-                CPLDebug( "GME", "Invalid ID my but! Try again is 5s" );
-                CPLSleep( 5.0 );
-                psResult = MakeRequest(pszRequest, pszMoreOptions);
-	    }
             else {
                 int code = 444;
                 json_object *code_child = json_object_object_get(error_doc, "code");
@@ -401,13 +404,13 @@ CPLHTTPResult * OGRGMEDataSource::MakeRequest(const char *pszRequest,
                     code = json_object_get_int(code_child);
 
                 CPLDebug( "GME", "MakeRequest Error for %s: %s:%d", pszRequest, reason, code);
-                CPLError( CE_Failure, CPLE_AppDefined, "GME: %s (%s) in %s/%s: %s",
-                          reason, domain, locationType, location, message );
+                CPLError( CE_Failure, CPLE_AppDefined, "GME: %s %s %s: %s - %s",
+                          domain, reason, locationType, location, message );
             }
         }
         return psResult;
     }
-    else if (psResult && psResult->nStatus != 0) 
+    else if (psResult && psResult->nStatus != 0)
     {
         CPLDebug( "GME", "MakeRequest Error Status:%d", psResult->nStatus );
     }
@@ -485,7 +488,7 @@ CPLHTTPResult * OGRGMEDataSource::PostRequest(const char *pszRequest,
     if (psResult && psResult->pszContentType &&
         strncmp(psResult->pszContentType, "text/html", 9) == 0)
     {
-        CPLDebug( "GME", "MakeRequest HTML Response:%s", psResult->pabyData );
+        CPLDebug( "GME", "PostRequest HTML Response:%s", psResult->pabyData );
         CPLError(CE_Failure, CPLE_AppDefined,
                  "HTML error page returned by server");
         CPLHTTPDestroyResult(psResult);
@@ -493,7 +496,7 @@ CPLHTTPResult * OGRGMEDataSource::PostRequest(const char *pszRequest,
     }
     if (psResult && psResult->pszErrBuf != NULL)
     {
-        CPLDebug( "GME", "MakeRequest Error Message: %s", psResult->pszErrBuf );
+        CPLDebug( "GME", "PostRequest Error Message: %s", psResult->pszErrBuf );
         CPLDebug( "GME", "error doc:\n%s\n", psResult->pabyData);
         json_object *error_response = OGRGMEParseJSON((const char *) psResult->pabyData);
         CPLHTTPDestroyResult(psResult);
@@ -536,16 +539,23 @@ CPLHTTPResult * OGRGMEDataSource::PostRequest(const char *pszRequest,
                 if (code_child != NULL )
                     code = json_object_get_int(code_child);
 
-                CPLDebug( "GME", "MakeRequest Error for %s: %s:%d", pszRequest, reason, code);
-                CPLError( CE_Failure, CPLE_AppDefined, "GME: %s (%s) in %s/%s: %s",
-                          reason, domain, locationType, location, message );
+                CPLError( CE_Failure, CPLE_AppDefined, "GME: %s %s %s: %s - %s",
+                          domain, reason, locationType, location, message );
+                if ((code == 400) && (EQUAL(reason, "invalid")) && (EQUAL(location, "id"))) {
+                  CPLDebug("GME", "Got the notorious 400 - invalid id, retrying in 5s");
+                  CPLSleep( 5.0 );
+                  psResult = PostRequest(pszRequest, pszBody);
+                }
+                else {
+                    CPLDebug( "GME", "PostRequest Error for %s: %s:%d", pszRequest, reason, code);
+                }
             }
         }
         return psResult;
     }
     else if (psResult && psResult->nStatus != 0)
     {
-        CPLDebug( "GME", "MakeRequest Error Status:%d", psResult->nStatus );
+        CPLDebug( "GME", "PostRequest Error Status:%d", psResult->nStatus );
     }
     return psResult;
 }

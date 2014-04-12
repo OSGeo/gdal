@@ -291,15 +291,20 @@ json_object* OGRGMEPolygonToGeoJSON( OGRPolygon* poPolygon )
     /* Generate "coordinates" array object. */
     json_object* pjoCoordinates = NULL;
     pjoCoordinates = json_object_new_array();
-    
+
     /* Exterior ring. */
     OGRLinearRing* poRing = poPolygon->getExteriorRing();
     if (poRing == NULL) {
         json_object_put(pjoCoordinates);
         return NULL;
     }
-    
+
     json_object* pjoRing = NULL;
+    // If the linear ring is CW re-wind it CCW
+    if (poRing->isClockwise() ) {
+      poRing->reverseWindingOrder();;
+    }
+
     pjoRing = OGRGMELineCoordsToGeoJSON( poRing );
     json_object_array_add( pjoCoordinates, pjoRing );
 
@@ -309,6 +314,7 @@ json_object* OGRGMEPolygonToGeoJSON( OGRPolygon* poPolygon )
         poRing = poPolygon->getInteriorRing( i );
         if (poRing == NULL)
             continue;
+        // If the linear ring is CW re-wind it CCW
         pjoRing = OGRGMELineCoordsToGeoJSON( poRing );
         json_object_array_add( pjoCoordinates, pjoRing );
     }
