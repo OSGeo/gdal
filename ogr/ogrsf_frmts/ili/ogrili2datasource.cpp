@@ -112,6 +112,7 @@ int OGRILI2DataSource::Open( const char * pszNewName, int bTestOpen )
                       pszNewName );
 
         CSLDestroy( filenames );
+        CPLFree( modelFilename );
         return FALSE;
     }
 
@@ -132,6 +133,7 @@ int OGRILI2DataSource::Open( const char * pszNewName, int bTestOpen )
         { // "www.interlis.ch/INTERLIS2.3"
             VSIFClose( fp );
             CSLDestroy( filenames );
+            CPLFree( modelFilename );
             return FALSE;
         }
     }
@@ -151,6 +153,7 @@ int OGRILI2DataSource::Open( const char * pszNewName, int bTestOpen )
                   "configured in.", 
                   pszNewName );
         CSLDestroy( filenames );
+        CPLFree( modelFilename );
         return FALSE;
     }
 
@@ -173,6 +176,7 @@ int OGRILI2DataSource::Open( const char * pszNewName, int bTestOpen )
     }
 
     CSLDestroy( filenames );
+    CPLFree( modelFilename );
 
     return TRUE;
 }
