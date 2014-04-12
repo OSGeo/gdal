@@ -296,7 +296,7 @@ CPLHTTPResult * OGRGMEDataSource::MakeRequest(const char *pszRequest,
     }
 
     CPLDebug( "GME", "Sleep for 0.1s to try and avoid qps limiting errors.");
-    CPLSleep( 0.1 );
+    CPLSleep( 1.0 );
 
     CPLHTTPResult * psResult = CPLHTTPFetch(osURL, oOptions);
 
@@ -332,11 +332,11 @@ CPLHTTPResult * OGRGMEDataSource::MakeRequest(const char *pszRequest,
             const char* locationType = GetJSONString(error_obj, "locationType");
             const char* location = GetJSONString(error_obj, "location");
             if ((nRetries < 10) && EQUAL(reason, "rateLimitExceeded")) {
-                // Sleep nRetries * 0.9s and retry
+                // Sleep nRetries * 1.0s and retry
                 nRetries ++;
                 CPLDebug( "GME", "Got a %s (%d) times.", reason, nRetries );
-                CPLDebug( "GME", "Sleep for %2.2f to try and avoid qps limiting errors.", 0.9 * nRetries );
-                CPLSleep( 0.9 * nRetries );
+                CPLDebug( "GME", "Sleep for %2.2f to try and avoid qps limiting errors.", 1.0 * nRetries );
+                CPLSleep( 1.0 * nRetries );
                 psResult = MakeRequest(pszRequest, pszMoreOptions);
                 if (psResult)
                     CPLDebug( "GME", "Got a result after %d retries", nRetries );
@@ -350,7 +350,6 @@ CPLHTTPResult * OGRGMEDataSource::MakeRequest(const char *pszRequest,
 	    }
 	    else if (EQUAL(reason, "backendError")) {
                 CPLDebug( "GME", "Backend error retrying: GET %s: %s", pszRequest, message );
-                CPLSleep( 0.9 );
                 psResult = MakeRequest(pszRequest, pszMoreOptions);
 	    }
             else {

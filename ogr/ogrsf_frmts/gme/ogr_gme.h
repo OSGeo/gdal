@@ -57,7 +57,7 @@ class OGRGMELayer : public OGRLayer
     CPLString          osTableId;
     CPLString          osGeomColumnName;
 
-    CPLString          osWHERE;
+    CPLString          osWhere;
     CPLString          osQuery;
 
     json_object*       current_feature_page;
@@ -88,6 +88,8 @@ class OGRGMELayer : public OGRLayer
     virtual const char *GetGeometryColumn() { return osGeomColumnName; }
 
     virtual int         TestCapability( const char * );
+
+    virtual OGRErr      SetAttributeFilter( const char * );
 };
 
 /************************************************************************/
