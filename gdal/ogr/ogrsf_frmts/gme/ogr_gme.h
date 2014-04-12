@@ -148,10 +148,13 @@ class OGRGMEDataSource : public OGRDataSource
 
     CPLHTTPResult*      MakeRequest(const char *pszRequest,
                                     const char *pszMoreOptions = NULL);
+    CPLHTTPResult*      PostRequest(const char *pszRequest,
+                                    const char *pszBody);
     const CPLString&    GetAccessToken() const { return osAccessToken;}
     const char*         GetAPIURL() const;
     int                 IsReadWrite() const { return bReadWrite; }
     void                AddHTTPOptions(CPLStringList &oOptions);
+    void                AddHTTPPostOptions(CPLStringList &oOptions);
     json_object*        Parse( const char* pszText );
     const char*         GetJSONString(json_object *parent, 
                                       const char *field_name,
