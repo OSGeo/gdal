@@ -1,5 +1,5 @@
 
-OBJ	=	ogrgftdriver.obj ogrgftdatasource.obj ogrgftlayer.obj ogrgfttablelayer.obj ogrgftresultlayer.obj
+OBJ	=	ogrgmedriver.obj ogrgmedatasource.obj ogrgmelayer.obj ogrgmejson.obj
 EXTRAFLAGS =	-I.. -I..\..
 
 GDAL_ROOT	=	..\..\..
