@@ -388,7 +388,7 @@ json_object *OGRGMEDataSource::Parse( const char* pszText )
         if( jstok->err != json_tokener_success)
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "ESRIJSON parsing error: %s (at offset %d)",
+                      "JSON parsing error: %s (at offset %d)",
                           json_tokener_errors[jstok->err], jstok->char_offset);
             
             json_tokener_free(jstok);
