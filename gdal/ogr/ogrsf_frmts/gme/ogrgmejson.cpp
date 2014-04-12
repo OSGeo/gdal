@@ -29,6 +29,12 @@
  ****************************************************************************/
 
 #include "ogrgmejson.h"
+#include <printbuf.h>
+
+static int json_gme_double_to_string(json_object *jso,
+                                     printbuf *pb,
+                                     int level,
+                                     int flags);
 
 /************************************************************************/
 /*                      OGRGMEFeatureToGeoJSON()                        */
@@ -345,8 +351,8 @@ json_object* OGRGMECoordsToGeoJSON( double const& fX, double const& fY )
 {
     json_object* pjoCoords = NULL;
     pjoCoords = json_object_new_array();
-    json_object_array_add( pjoCoords, json_object_new_double( fX ) );
-    json_object_array_add( pjoCoords, json_object_new_double( fY ) );
+    json_object_array_add( pjoCoords, json_object_new_gme_double( fX ) );
+    json_object_array_add( pjoCoords, json_object_new_gme_double( fY ) );
 
     return pjoCoords;
 }
@@ -355,9 +361,9 @@ json_object* OGRGMECoordsToGeoJSON( double const& fX, double const& fY, double c
 {
     json_object* pjoCoords = NULL;
     pjoCoords = json_object_new_array();
-    json_object_array_add( pjoCoords, json_object_new_double( fX ) );
-    json_object_array_add( pjoCoords, json_object_new_double( fY ) );
-    json_object_array_add( pjoCoords, json_object_new_double( fZ ) );
+    json_object_array_add( pjoCoords, json_object_new_gme_double( fX ) );
+    json_object_array_add( pjoCoords, json_object_new_gme_double( fY ) );
+    json_object_array_add( pjoCoords, json_object_new_gme_double( fZ ) );
 
     return pjoCoords;
 }
@@ -412,7 +418,7 @@ json_object* OGRGMEAttributesToGeoJSON( OGRFeature* poFeature )
             pjoProperty = json_object_new_string( poFeature->GetFieldAsString( nField ) ); 
 
         else if( OFTReal == eType )
-            pjoProperty = json_object_new_double( poFeature->GetFieldAsDouble(nField) );
+            pjoProperty = json_object_new_gme_double( poFeature->GetFieldAsDouble(nField) );
 
         // Supported types are integer, double and string. So treating everything else as strings
         else
@@ -421,4 +427,50 @@ json_object* OGRGMEAttributesToGeoJSON( OGRFeature* poFeature )
         json_object_object_add( pjoProperties, poFieldDefn->GetNameRef(), pjoProperty );
     }
     return pjoProperties;
+}
+
+/************************************************************************/
+/*                        json_object_new_gme_double()                  */
+/************************************************************************/
+
+json_object* json_object_new_gme_double(double dfVal)
+
+{
+    json_object* pjoD = json_object_new_double(dfVal);
+    json_object_set_serializer(pjoD, json_gme_double_to_string, NULL, NULL );
+
+    return pjoD;
+}
+
+/************************************************************************/
+/*                        json_gme_double_to_string()                   */
+/************************************************************************/
+
+static int json_gme_double_to_string(json_object *pjo,
+                                     printbuf *pb,
+                                     int level,
+                                     int flags)
+{
+  char buf[128], *p, *q;
+  int size;
+
+  size = snprintf(buf, 128, "%.8f", json_object_get_double(pjo));
+  p = strchr(buf, ',');
+  if (p) {
+    *p = '.';
+  } else {
+    p = strchr(buf, '.');
+  }
+  if (p) {
+    /* last useful digit, always keep 1 zero */
+    p++;
+    for (q=p ; *q ; q++) {
+      if (*q!='0') p=q;
+    }
+    /* drop trailing zeroes */
+    *(++p) = 0;
+    size = p-buf;
+  }
+  printbuf_memappend(pb, buf, size);
+  return size;
 }
