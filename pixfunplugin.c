@@ -29,7 +29,6 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
-#include <stdio.h>
 #include <gdal.h>
 
 CPL_CVSID("$Id: $");
