@@ -1,0 +1,13 @@
+<VRTDataset rasterXSize="20" rasterYSize="20">
+  <VRTRasterBand dataType="uint32" band="1" subClass="VRTDerivedRasterBand">
+    <Description>Magnitude</Description>
+    <PixelFunctionType>mod</PixelFunctionType>
+    <SourceTransferType>Int32</SourceTransferType>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">int32.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="20" ySize="20"/>
+      <DstRect xOff="0" yOff="0" xSize="20" ySize="20"/>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>
