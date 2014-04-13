@@ -1,9 +1,20 @@
 gdal-pixfun-plugin
 ==================
 
-A small gdal plugin that provides a small set of "pixel functions" (see
+A gdal plugin that provides a small set of "pixel functions" (see
 http://www.gdal.org/gdal_vrttut.html) that can be used to create derived
 raster bands.
+
+The package provides:
+
+* the implementation of a set of GDALDerivedPixelFunc(s) to be used with
+  source raster band of virtual GDAL datasets
+* a fake GDAL driver to register pixel functions
+
+.. note::
+
+    using the plugin mechanism is a hack aimed to enable python users
+    to use pixel functions without C++ coding
 
 
 List of pixel functions
@@ -60,7 +71,7 @@ A copy of the latest version of the sources can be obtained ising git_::
 
 
 How to build, test and install
------------------------------
+------------------------------
 
 The gdal-pixfun-plugin can be built using the following command::
 
@@ -75,6 +86,11 @@ To run the unit test suite::
 
 To install the plugin just copy the generated shared object (gdal_PIXFUN.so)
 into the GDAL plugin directory (/usr/lib/gdalplugins/1.XX/ on unix).
+
+The plugin can also be used without installing it.
+The user just needs to set the GDAL_DRIVER_PATH environment variable::
+
+    export GDAL_DRIVER_PATH=<PATH_TO_GDAL_PIXFUN_SO>:$GDAL_DRIVER_PATH
 
 
 License
