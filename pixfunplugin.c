@@ -3,8 +3,8 @@
  * Project:  GDAL
  * Purpose:  Provide a fake GDAL driver to register a small set of pixel
  *           functions to be used with the virtual driver.
- *           Indeed it is a dirty hack aimed to enable python users to use
- *           a small set of custom pixel functions without C++ coding.
+ *           It is a hack aimed to enable python users to use a small set
+ *           of custom pixel functions without C++ coding.
  * Author:   Antonio Valentino <antonio.valentino@tiscali.it>
  *
  ******************************************************************************

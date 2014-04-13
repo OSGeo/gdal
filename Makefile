@@ -27,7 +27,7 @@
 # DEALINGS IN THE SOFTWARE.
 ##############################################################################
 
-.PHONY: all clean dist
+.PHONY: all clean dist check
 
 OBJS = pixfunplugin.o pixelfunctions.o
 CFLAGS := -fPIC -Wall -Wno-long-long $(shell gdal-config --cflags) $(CFLAGS)
@@ -50,7 +50,7 @@ $(TARGET): $(OBJS)
 
 PYTHON=python
 
-check:
+check: $(TARGET)
 	cd autotest/gcore && \
 	env GDAL_DRIVER_PATH=$(PWD):$(GDAL_DRIVER_PATH) \
 	PYTHONPATH=$(PWD)/autotest/pymod:$(PYTHONPATH) \
