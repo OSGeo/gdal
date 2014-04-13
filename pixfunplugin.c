@@ -42,7 +42,7 @@ extern CPLErr GDALRegisterDefaultPixelFunc();
 /************************************************************************/
 /*                         GDALRegister_PIXFUN()                        */
 /************************************************************************/
-void GDALRegister_PIXFUN()
+void GDALRegister_PIXFUN(void)
 {
     const char PLUGINNAME[]="Pixfun";
 
