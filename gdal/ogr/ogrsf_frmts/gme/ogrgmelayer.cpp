@@ -136,8 +136,16 @@ OGRErr OGRGMELayer::SyncToDisk()
 {
     CPLDebug("GME", "SyncToDisk()");
     if (bDirty) {
-        BatchInsert();
-        BatchPatch();
+        if (omnpoInsertedFeatures.size() > 0) {
+            BatchInsert();
+        }
+        if (omnpoUpdatedFeatures.size() > 0) {
+            BatchPatch();
+        }
+        if (oListOfDeletedFeatures.size() > 0) {
+            BatchDelete();
+        }
+        bDirty = false;
     }
     return OGRERR_NONE;
 }
@@ -493,6 +501,10 @@ OGRErr OGRGMELayer::BatchDelete()
     json_object *pjoGxIds = json_object_new_array();
     std::vector<long>::const_iterator fit;
     CPLDebug("GME", "BatchDelete() - <%d>", (int)oListOfDeletedFeatures.size() );
+    if (oListOfDeletedFeatures.size() == 0) {
+        CPLDebug("GME", "Empty list, not doing BatchDelete");
+        return OGRERR_NONE;
+    }
     for ( fit = oListOfDeletedFeatures.begin(); fit != oListOfDeletedFeatures.end(); fit++)
     {
         long nFID = *fit;
@@ -538,6 +550,10 @@ OGRErr OGRGMELayer::BatchRequest(const char *pszMethod, std::map<int, OGRFeature
     json_object *pjoFeatures = json_object_new_array();
     std::map<int, OGRFeature *>::const_iterator fit;
     CPLDebug("GME", "BatchRequest('%s', <%d>)", pszMethod, (int)omnpoFeatures.size() );
+    if (omnpoFeatures.size() == 0) {
+        CPLDebug("GME", "Empty map, not doing '%s'", pszMethod);
+        return OGRERR_NONE;
+    }
     for ( fit = omnpoFeatures.begin(); fit != omnpoFeatures.end(); fit++)
     {
         long nFID = fit->first;
@@ -666,7 +682,7 @@ OGRErr OGRGMELayer::SetFeature( OGRFeature *poFeature )
             CPLDebug("GME", "Updated Feature %ld in Transaction", nFID);
         }
         else {
-            CPLDebug("GME", "In Transaction, adding feature to Map");
+            CPLDebug("GME", "In Transaction, add update to Transaction");
             bDirty = true;
             omnpoUpdatedFeatures[nFID] = poFeature->Clone();
         }
@@ -799,6 +815,8 @@ bool OGRGMELayer::CreateTableIfNotCreated()
 
     for (int iOGRField = 0; iOGRField < poFeatureDefn->GetFieldCount(); iOGRField++ )
     {
+        if (iOGRField == iGxIdField)
+            continue; // don't create the gx_id field.
         json_object *pjoColumn = json_object_new_object();
         json_object *pjoFieldName =
             json_object_new_string( poFeatureDefn->GetFieldDefn(iOGRField)->GetNameRef() );
@@ -865,4 +883,61 @@ bool OGRGMELayer::CreateTableIfNotCreated()
 void OGRGMELayer::SetGeometryType(OGRwkbGeometryType eGType)
 {
     eGTypeForCreation = eGType;
+}
+
+/************************************************************************/
+/*                         StartTransaction()                           */
+/************************************************************************/
+
+OGRErr OGRGMELayer::StartTransaction()
+{
+    if (bInTransaction)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Already in transaction");
+        return OGRERR_FAILURE;
+    }
+
+    if (!poDS->IsReadWrite())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Operation not available in read-only mode");
+        return OGRERR_FAILURE;
+    }
+
+    bInTransaction = TRUE;
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                         CommitTransaction()                          */
+/************************************************************************/
+
+OGRErr OGRGMELayer::CommitTransaction()
+{
+    if (!bInTransaction)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Should be in transaction");
+        return OGRERR_FAILURE;
+    }
+    bInTransaction = FALSE;
+    return SyncToDisk();
+}
+
+/************************************************************************/
+/*                        RollbackTransaction()                         */
+/************************************************************************/
+
+OGRErr OGRGMELayer::RollbackTransaction()
+{
+    if (!bInTransaction)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Should be in transaction");
+        return OGRERR_FAILURE;
+    }
+    bInTransaction = FALSE;
+    omnpoUpdatedFeatures.clear();
+    omnpoInsertedFeatures.clear();
+    oListOfDeletedFeatures.clear();
+    return OGRERR_NONE;
 }
