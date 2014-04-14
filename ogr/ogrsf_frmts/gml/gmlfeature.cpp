@@ -219,7 +219,7 @@ void GMLFeature::SetGeometryDirectly( int nIdx, CPLXMLNode* psGeom )
         SetGeometryDirectly( psGeom );
         return;
     }
-    else if( m_nGeometryCount == 1 && nIdx > 0 )
+    else if( nIdx > 0 && m_nGeometryCount <= 1 )
     {
         m_papsGeometry = (CPLXMLNode **) CPLMalloc(2 * sizeof(CPLXMLNode *));
         m_papsGeometry[0] = m_apsGeometry[0];
