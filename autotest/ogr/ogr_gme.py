@@ -29,7 +29,9 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import json
 import os
+import random
 import sys
 import string
 
@@ -116,7 +118,7 @@ def ogr_gme_read():
     return 'success'
 
 ###############################################################################
-# Write test on WORLD94
+# Write test on random table
 
 def ogr_gme_write():
     if ogrtest.gme_drv is None:
@@ -134,13 +136,11 @@ def ogr_gme_write():
         return 'fail'
     ogrtest.gme_can_write = True
 
-    import random
-
     ogrtest.gme_rand_val = random.randint(0,2147000000)
     table_name = "test_%d" % ogrtest.gme_rand_val
 
     lyr = ds.CreateLayer(table_name, geom_type=ogr.wkbPolygon)
-#                         options='drafAccessList=19821b415820e9ea:publishedAccessList=e4b26d3d3f4a190d')
+
     lyr.CreateField(ogr.FieldDefn('strcol', ogr.OFTString))
     lyr.CreateField(ogr.FieldDefn('dblcol', ogr.OFTReal))
     lyr.CreateField(ogr.FieldDefn('intcol', ogr.OFTInteger))
@@ -151,7 +151,8 @@ def ogr_gme_write():
     feature.SetField('dblcol', 3.45)
     feature.SetField('intcol', 11)
 
-    expected_wkt = "POLYGON ((1 1,4 1,4 4,1 4,1 1),(3 3,2 3,2 2,3 2,3 3))"
+    expected_wkt = ("POLYGON ((1.1 1.1,4.1 1.1,4.1 4.1,1.1 4.1,1.1 1.1),"
+                    "(2.1 2.1,3.1 2.1,3.1 3.1,2.1 3.1,2.1 2.1))")
     geom = ogr.CreateGeometryFromWkt(expected_wkt)
     expected_geom = ogr.CreateGeometryFromWkt(expected_wkt)
     feature.SetGeometry(geom)
@@ -183,15 +184,80 @@ def ogr_gme_write():
 
     if feature.GetGeometryRef().Difference(geom):
         gdaltest.post_reason('Returned geometry was unexpected.\n%s\n%s' %
-                             (feature.GetGeometryRef().Difference(geom).ExportToWkt()))
+                             (feature.GetGeometryRef().ExportToWkt(),
+                              geom.ExportToWkt()))
         return 'fail'
 
 
-#    if lyr.DeleteFeature(feature.GetFID()) != 0:
-#        gdaltest.post_reason('DeleteFeature() failed')
-#        return 'fail'
+    if lyr.DeleteFeature(feature.GetFID()) != 0:
+        gdaltest.post_reason('DeleteFeature() failed')
+        return 'fail'
 
     ds = None
+    return 'success'
+
+
+def generate_plus(lat, lng):
+    plus_line = { "type": "MultiLineString",
+                  "coordinates":
+                      [[(lng, lat-1), (lng, lat+1)],
+                       [(lng-1, lat), (lng+1, lat)]]
+                }
+    return json.dumps(plus_line)
+
+def ogr_gme_transaction():
+    if ogrtest.gme_drv is None:
+        return 'skip'
+
+    project_id = '09572813676992841461'
+    ds = ogr.Open('GME:projectId=%s' % project_id, update = 1)
+
+    ogrtest.gme_rand_val = random.randint(0,2147000000)
+    table_name = "test_%d" % ogrtest.gme_rand_val
+
+    lyr = ds.CreateLayer(table_name, geom_type=ogr.wkbMultiLineString)
+
+    lyr.CreateField(ogr.FieldDefn('gx_id', ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn('lat', ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn('lng', ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn('n', ogr.OFTInteger))
+
+    plus_list = []
+    if lyr.StartTransaction() != 0:
+        gdaltest.post_reason('StartTransaction failed!')
+        return 'fail'
+    id = 0
+    size = 0
+    for longitude in xrange(-175,185,10):
+        for latitude in xrange(-85, 95, 10):
+            lat = float(latitude)
+            lng = float(longitude)
+            id += 1
+            size += 1
+            if size > 50:
+                if lyr.CommitTransaction() != 0:
+                    gdaltest.post_reason('CommitTransaction failed!')
+                    return 'fail'
+                if lyr.StartTransaction() != 0:
+                    gdaltest.post_reason('StartTransaction failed!')
+                    return 'fail'
+                size = 1
+
+            plus_geom = ogr.CreateGeometryFromJson(generate_plus(lat, lng))
+            plus = ogr.Feature(lyr.GetLayerDefn())
+            plus.SetField('gx_id', str(id))
+            plus.SetField('lat', lat)
+            plus.SetField('lng', lng)
+            plus.SetField('n', id)
+            plus.SetGeometry(plus_geom)
+
+            if lyr.CreateFeature(plus) != 0:
+                gdaltest.post_reason('SetFeature(%d, %f, %f) failed' % (id, lat, lng))
+                return 'fail'
+
+    if lyr.CommitTransaction() != 0:
+        gdaltest.post_reason('CommitTransaction failed!')
+        return 'fail'
     return 'success'
 
 
@@ -199,7 +265,9 @@ gdaltest_list = [
     ogr_gme_init,
     ogr_gme_read,
     ogr_gme_write,
+    ogr_gme_transaction,
     ]
+
 
 if __name__ == '__main__':
 
