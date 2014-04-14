@@ -990,9 +990,9 @@ GDALJP2Box *GDALJP2Metadata::CreateJP2GeoTIFF()
     int         nGTBufSize = 0;
     unsigned char *pabyGTBuf = NULL;
 
-    if( GTIFMemBufFromWkt( pszProjection, adfGeoTransform, 
-                           nGCPCount, pasGCPList,
-                           &nGTBufSize, &pabyGTBuf ) != CE_None )
+    if( GTIFMemBufFromWktEx( pszProjection, adfGeoTransform, 
+                             nGCPCount, pasGCPList,
+                             &nGTBufSize, &pabyGTBuf, bPixelIsPoint ) != CE_None )
         return NULL;
 
     if( nGTBufSize == 0 )
