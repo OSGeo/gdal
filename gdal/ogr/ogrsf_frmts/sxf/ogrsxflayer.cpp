@@ -636,7 +636,7 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
         }
         else
         {
-            code = stRecordHeader.nRef[0] & 0x03;//get first 2 bits
+            code = stRecordHeader.nRef[0] & 3;//get first 2 bits
         }
     }
     else if (m_nSXFFormatVer == 4)
@@ -647,7 +647,7 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
         }
 
         //check if vector
-        code = stRecordHeader.nRef[0] & 0x15;//get first 4 bits
+        code = stRecordHeader.nRef[0] & 15;//get first 4 bits
         if (code == 0x04) // xxxx0100
         {
             code = 0x21;
@@ -886,7 +886,7 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
                     char * value = (char*)CPLMalloc(nLen);
                     memcpy(value, psSemanticsdBuf + offset, nLen);
                     value[nLen-1] = 0;
-                    poFeature->SetField(oFieldName, value);//TODO: CPLRecode(value, "CP866", CPL_ENC_UTF8)
+                    poFeature->SetField(oFieldName, CPLRecode(value, "CP866", CPL_ENC_UTF8));
                     CPLFree(value);
 
                     offset += stAttInfo.nScale + 1;
