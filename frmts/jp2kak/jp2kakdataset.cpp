@@ -2554,7 +2554,9 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             oJP2MD.SetGeoTransform( adfGeoTransform );
         }
 
-        
+        const char* pszAreaOrPoint = poSrcDS->GetMetadataItem(GDALMD_AREA_OR_POINT);
+        oJP2MD.bPixelIsPoint = pszAreaOrPoint != NULL && EQUAL(pszAreaOrPoint, GDALMD_AOP_POINT);
+
         if( CSLFetchBoolean( papszOptions, "GMLJP2", TRUE ) )
             JP2KAKWriteBox( &jp2_out, oJP2MD.CreateGMLJP2(nXSize,nYSize) );
         if( CSLFetchBoolean( papszOptions, "GeoJP2", TRUE ) )

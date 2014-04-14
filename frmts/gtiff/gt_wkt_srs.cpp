@@ -2510,6 +2510,16 @@ CPLErr GTIFWktFromMemBufEx( int nSize, unsigned char *pabyBuffer,
 CPLErr GTIFMemBufFromWkt( const char *pszWKT, const double *padfGeoTransform,
                           int nGCPCount, const GDAL_GCP *pasGCPList,
                           int *pnSize, unsigned char **ppabyBuffer )
+{
+    return GTIFMemBufFromWktEx(pszWKT, padfGeoTransform,
+                               nGCPCount,pasGCPList,
+                               pnSize, ppabyBuffer, FALSE);
+}
+
+CPLErr GTIFMemBufFromWktEx( const char *pszWKT, const double *padfGeoTransform,
+                            int nGCPCount, const GDAL_GCP *pasGCPList,
+                            int *pnSize, unsigned char **ppabyBuffer,
+                            int bPixelIsPoint )
 
 {
     TIFF        *hTIFF;
@@ -2551,10 +2561,26 @@ CPLErr GTIFMemBufFromWkt( const char *pszWKT, const double *padfGeoTransform,
 /*      Get the projection definition.                                  */
 /* -------------------------------------------------------------------- */
 
-    if( pszWKT != NULL )
+    int  bPointGeoIgnore = FALSE;
+    if( bPixelIsPoint )
+    {
+        bPointGeoIgnore = 
+            CSLTestBoolean( CPLGetConfigOption("GTIFF_POINT_GEO_IGNORE",
+                                               "FALSE") );
+    }
+
+    if( pszWKT != NULL || bPixelIsPoint )
     {
         hGTIF = GTIFNew(hTIFF);
-        GTIFSetFromOGISDefn( hGTIF, pszWKT );
+        if( pszWKT != NULL )
+            GTIFSetFromOGISDefn( hGTIF, pszWKT );
+
+        if( bPixelIsPoint )
+        {
+            GTIFKeySet(hGTIF, GTRasterTypeGeoKey, TYPE_SHORT, 1,
+                       RasterPixelIsPoint);
+        }
+
         GTIFWriteKeys( hGTIF );
         GTIFFree( hGTIF );
     }
@@ -2562,6 +2588,7 @@ CPLErr GTIFMemBufFromWkt( const char *pszWKT, const double *padfGeoTransform,
 /* -------------------------------------------------------------------- */
 /*      Set the geotransform, or GCPs.                                  */
 /* -------------------------------------------------------------------- */
+
     if( padfGeoTransform[0] != 0.0 || padfGeoTransform[1] != 1.0
         || padfGeoTransform[2] != 0.0 || padfGeoTransform[3] != 0.0
         || padfGeoTransform[4] != 0.0 || ABS(padfGeoTransform[5]) != 1.0 )
@@ -2583,7 +2610,13 @@ CPLErr GTIFMemBufFromWkt( const char *pszWKT, const double *padfGeoTransform,
             adfTiePoints[3] = padfGeoTransform[0];
             adfTiePoints[4] = padfGeoTransform[3];
             adfTiePoints[5] = 0.0;
-        
+
+            if( bPixelIsPoint && !bPointGeoIgnore )
+            {
+                adfTiePoints[3] += padfGeoTransform[1] * 0.5 + padfGeoTransform[2] * 0.5;
+                adfTiePoints[4] += padfGeoTransform[4] * 0.5 + padfGeoTransform[5] * 0.5;
+            }
+
             TIFFSetField( hTIFF, TIFFTAG_GEOTIEPOINTS, 6, adfTiePoints );
         }
         else
@@ -2599,6 +2632,12 @@ CPLErr GTIFMemBufFromWkt( const char *pszWKT, const double *padfGeoTransform,
             adfMatrix[5] = padfGeoTransform[5];
             adfMatrix[7] = padfGeoTransform[3];
             adfMatrix[15] = 1.0;
+
+            if( bPixelIsPoint && !bPointGeoIgnore )
+            {
+                adfMatrix[3] += padfGeoTransform[1] * 0.5 + padfGeoTransform[2] * 0.5;
+                adfMatrix[7] += padfGeoTransform[4] * 0.5 + padfGeoTransform[5] * 0.5;
+            }
 
             TIFFSetField( hTIFF, TIFFTAG_GEOTRANSMATRIX, 16, adfMatrix );
         }
