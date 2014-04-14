@@ -850,18 +850,27 @@ bool OGRGMELayer::CreateTableIfNotCreated()
 /* -------------------------------------------------------------------- */
     CPLString osRequest = "tables";
     CPLHTTPResult *poCreateResult = poDS->PostRequest(osRequest, body);
+    if( poCreateResult == NULL || poCreateResult->pabyData == NULL )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Table creation failed.");
+        if( poCreateResult )
+            CPLHTTPDestroyResult(poCreateResult);
+        return false;
+    }
     CPLDebug("GME", "CreateTable returned %d\n%s", poCreateResult->nStatus,
              poCreateResult->pabyData);
 
     json_object *pjoResponseDoc = OGRGMEParseJSON((const char *) poCreateResult->pabyData);
 
-    char *pszTableId = strdup(OGRGMEGetJSONString(pjoResponseDoc, "id", NULL));
-    if (pszTableId == NULL) {
+    osTableId = OGRGMEGetJSONString(pjoResponseDoc, "id", "");
+    CPLHTTPDestroyResult(poCreateResult);
+    if (osTableId.size() == 0) {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Table creation failed, or could not find table id.");
         return false;
     }
-    osTableId = pszTableId;
+
     /*
     OGRFieldDefn *poGxIdField = new OGRFieldDefn("gx_id", OFTString);
 
