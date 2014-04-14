@@ -374,7 +374,7 @@ OGRGeometry *ILI2Reader::getGeometry(DOMElement *elem, int type) {
   return gm;
 }
 
-int ILI2Reader::ReadModel(ImdReader *poImdReader, char *modelFilename) {
+int ILI2Reader::ReadModel(ImdReader *poImdReader, const char *modelFilename) {
   poImdReader->ReadModel(modelFilename);
   for (FeatureDefnInfos::const_iterator it = poImdReader->featureDefnInfos.begin(); it != poImdReader->featureDefnInfos.end(); ++it)
   {
