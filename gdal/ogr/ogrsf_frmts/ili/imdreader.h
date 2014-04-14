@@ -54,6 +54,7 @@ public:
     OGRFeatureDefn* poTableDefn;
     GeomFieldInfos  poGeomFieldInfos;
     StructFieldInfos poStructFieldInfos;
+    FeatureDefnInfo() : poTableDefn(0) {};
 };
 typedef std::list<FeatureDefnInfo> FeatureDefnInfos;
 
