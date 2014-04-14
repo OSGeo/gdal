@@ -53,7 +53,7 @@ class OGRGMELayer : public OGRLayer
     OGRSpatialReference *poSRS;
 
     int                iGeometryField;
-  int                iGxIdField;
+    int                iGxIdField;
 
     CPLString          osTableName;
     CPLString          osTableId;
@@ -122,6 +122,11 @@ class OGRGMELayer : public OGRLayer
     virtual OGRErr      CreateFeature( OGRFeature *poFeature );
     virtual OGRErr      DeleteFeature(long int);
     virtual OGRErr      CreateField( OGRFieldDefn *poField, int bApproxOK = TRUE );
+
+    virtual OGRErr      StartTransaction();
+    virtual OGRErr      CommitTransaction();
+    virtual OGRErr      RollbackTransaction();
+
     void                SetGeometryType(OGRwkbGeometryType eGType);
 };
 
