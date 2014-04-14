@@ -508,7 +508,6 @@ def jp2openjpeg_15():
 
     return 'success'
 
-
 ###############################################################################
 # Test reading PixelIsPoint file (#5437)
 
@@ -545,10 +544,42 @@ def jp2openjpeg_16():
         print(gt)
         gdaltest.post_reason( 'did not get expected geotransform with GTIFF_POINT_GEO_IGNORE TRUE' )
         return 'fail'
-    
 
     return 'success'
  
+###############################################################################
+# Test writing PixelIsPoint file (#5437)
+
+def jp2openjpeg_17():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    src_ds = gdal.Open( 'data/byte_point.jp2' )
+    ds = gdaltest.jp2openjpeg_drv.CreateCopy( '/vsimem/jp2openjpeg_17.jp2', src_ds, options = [ 'RESOLUTIONS=1' ])
+    ds = None
+    src_ds = None
+
+    gdal.Unlink( '/vsimem/jp2openjpeg_17.jp2.aux.xml' )
+    
+    ds = gdal.Open( '/vsimem/jp2openjpeg_17.jp2' )
+    gt = ds.GetGeoTransform()
+    if ds.GetMetadataItem('AREA_OR_POINT') != 'Point':
+        gdaltest.post_reason( 'did not get AREA_OR_POINT = Point' )
+        return 'fail'
+    ds = None
+
+    gt_expected = (440690.0, 60.0, 0.0, 3751350.0, 0.0, -60.0)
+
+    if gt != gt_expected:
+        print(gt)
+        gdaltest.post_reason( 'did not get expected geotransform' )
+        return 'fail'
+
+    gdal.Unlink( '/vsimem/jp2openjpeg_17.jp2' )
+
+    return 'success'
+
 ###############################################################################
 def jp2openjpeg_online_1():
 
@@ -737,6 +768,7 @@ gdaltest_list = [
     jp2openjpeg_14,
     jp2openjpeg_15,
     jp2openjpeg_16,
+    jp2openjpeg_17,
     jp2openjpeg_online_1,
     jp2openjpeg_online_2,
     jp2openjpeg_online_3,

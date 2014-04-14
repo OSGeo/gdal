@@ -1222,6 +1222,9 @@ void JP2OpenJPEGDataset::WriteBox(VSILFILE* fp, GDALJP2Box* poBox)
     GUInt32   nLBox;
     GUInt32   nTBox;
 
+    if( poBox == NULL )
+        return;
+
     nLBox = (int) poBox->GetDataLength() + 8;
     nLBox = CPL_MSBWORD32( nLBox );
 
@@ -1574,6 +1577,9 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
                 oJP2MD.SetGeoTransform( adfGeoTransform );
             }
         }
+
+        const char* pszAreaOrPoint = poSrcDS->GetMetadataItem(GDALMD_AREA_OR_POINT);
+        oJP2MD.bPixelIsPoint = pszAreaOrPoint != NULL && EQUAL(pszAreaOrPoint, GDALMD_AOP_POINT);
     }
 
 #define PIXELS_PER_INCH 2
