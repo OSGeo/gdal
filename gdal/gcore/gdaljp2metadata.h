@@ -119,6 +119,7 @@ public:
     
     int     bHaveGeoTransform;
     double  adfGeoTransform[6];
+    int     bPixelIsPoint;
 
     char   *pszProjection;
 
