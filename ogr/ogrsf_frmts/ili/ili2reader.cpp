@@ -678,7 +678,7 @@ int ILI2Reader::AddFeature(DOMElement *elem) {
   SetFieldValues(feature, elem);
   curLayer->SetFeature(feature);
   
-  XMLString::release (&pszName);
+  CPLFree(pszName);
 
   return 0;
 }
