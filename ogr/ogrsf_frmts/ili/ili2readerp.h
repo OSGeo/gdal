@@ -140,7 +140,7 @@ public:
 
     void     SetArcDegrees(double arcDegrees);
     void     SetSourceFile( const char *pszFilename );
-    int      ReadModel( ImdReader *poImdReader, char *modelFilename );
+    int      ReadModel( ImdReader *poImdReader, const char *modelFilename );
     int      SaveClasses( const char *pszFile );
     
     std::list<OGRLayer *> GetLayers();
