@@ -886,7 +886,9 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
                     char * value = (char*)CPLMalloc(nLen);
                     memcpy(value, psSemanticsdBuf + offset, nLen);
                     value[nLen-1] = 0;
-                    poFeature->SetField(oFieldName, CPLRecode(value, "CP866", CPL_ENC_UTF8));
+                    char* pszRecoded = CPLRecode(value, "CP866", CPL_ENC_UTF8);
+                    poFeature->SetField(oFieldName, pszRecoded);
+                    CPLFree(pszRecoded);
                     CPLFree(value);
 
                     offset += stAttInfo.nScale + 1;
