@@ -546,11 +546,11 @@ CPLHTTPResult * OGRGMEDataSource::PostRequest(const char *pszRequest,
         int nErrors = array_list_length(errors_array);
         for (int i = 0; i < nErrors; i++) {
             json_object *error_obj = (json_object *)array_list_get_idx(errors_array, i);
-            const char* reason = OGRGMEGetJSONString(error_obj, "reason");
-            const char* domain = OGRGMEGetJSONString(error_obj, "domain");
-            const char* message = OGRGMEGetJSONString(error_obj, "message");
-            const char* locationType = OGRGMEGetJSONString(error_obj, "locationType");
-            const char* location = OGRGMEGetJSONString(error_obj, "location");
+            const char* reason = OGRGMEGetJSONString(error_obj, "reason", "");
+            const char* domain = OGRGMEGetJSONString(error_obj, "domain", "");
+            const char* message = OGRGMEGetJSONString(error_obj, "message", "");
+            const char* locationType = OGRGMEGetJSONString(error_obj, "locationType", "");
+            const char* location = OGRGMEGetJSONString(error_obj, "location", "");
             if ((nRetries < 10) && EQUAL(reason, "rateLimitExceeded")) {
                 // Sleep nRetries * 1.0s and retry
                 nRetries ++;
