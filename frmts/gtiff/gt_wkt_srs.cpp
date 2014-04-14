@@ -2331,8 +2331,20 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
 CPLErr GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer, 
                           char **ppszWKT, double *padfGeoTransform,
                           int *pnGCPCount, GDAL_GCP **ppasGCPList )
+{
+    return GTIFWktFromMemBufEx(nSize, pabyBuffer, ppszWKT, padfGeoTransform,
+                               pnGCPCount, ppasGCPList, NULL);
+}
+
+CPLErr GTIFWktFromMemBufEx( int nSize, unsigned char *pabyBuffer, 
+                            char **ppszWKT, double *padfGeoTransform,
+                            int *pnGCPCount, GDAL_GCP **ppasGCPList,
+                            int *pbPixelIsPoint )
 
 {
+    bool    bPixelIsPoint = false;
+    int     bPointGeoIgnore = FALSE;
+    short nRasterType;
     char szFilename[100];
 
     sprintf( szFilename, "/vsimem/wkt_from_mem_buf_%ld.tif",
@@ -2373,12 +2385,25 @@ CPLErr GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer,
 
     hGTIF = GTIFNew(hTIFF);
 
+    if( hGTIF != NULL && GTIFKeyGet(hGTIF, GTRasterTypeGeoKey, &nRasterType,
+                0, 1 ) == 1
+        && nRasterType == (short) RasterPixelIsPoint )
+    {
+        bPixelIsPoint = true;
+        bPointGeoIgnore =
+            CSLTestBoolean( CPLGetConfigOption("GTIFF_POINT_GEO_IGNORE",
+                                            "FALSE") );
+    }
+    if( pbPixelIsPoint )
+        *pbPixelIsPoint = bPixelIsPoint;
+
 #if LIBGEOTIFF_VERSION >= 1410
     psGTIFDefn = GTIFAllocDefn();
 #else
     psGTIFDefn = (GTIFDefn *) CPLCalloc(1,sizeof(GTIFDefn));
 #endif    
 
+                
     if( hGTIF != NULL && GTIFGetDefn( hGTIF, psGTIFDefn ) )
         *ppszWKT = GTIFGetOGISDefn( hGTIF, psGTIFDefn );
     else
@@ -2422,6 +2447,13 @@ CPLErr GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer,
                 padfTiePoints[3] - padfTiePoints[0] * padfGeoTransform[1];
             padfGeoTransform[3] =
                 padfTiePoints[4] - padfTiePoints[1] * padfGeoTransform[5];
+        
+            // adjust for pixel is point in transform
+            if( bPixelIsPoint && !bPointGeoIgnore )
+            {
+                padfGeoTransform[0] -= (padfGeoTransform[1] * 0.5 + padfGeoTransform[2] * 0.5);
+                padfGeoTransform[3] -= (padfGeoTransform[4] * 0.5 + padfGeoTransform[5] * 0.5);
+            }
         }
     }
 

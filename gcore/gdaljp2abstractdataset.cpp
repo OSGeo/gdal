@@ -73,6 +73,9 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(GDALOpenInfo* poOpenInfo,
         nGCPCount = oJP2Geo.nGCPCount;
         pasGCPList =
             GDALDuplicateGCPs( oJP2Geo.nGCPCount, oJP2Geo.pasGCPList );
+
+        if( oJP2Geo.bPixelIsPoint )
+            GDALPamDataset::SetMetadataItem(GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT);
     }
 
     if (oJP2Geo.pszXMPMetadata)
