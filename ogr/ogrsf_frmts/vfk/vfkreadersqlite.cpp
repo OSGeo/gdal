@@ -62,7 +62,7 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFilename) : VFKReader(pszFilenam
 	pszDbName = pszDbNameConf;
     }
     else {
-	pszDbName.Printf("%s.db", m_pszFilename);
+	pszDbName = CPLResetExtension(m_pszFilename, "db");
     }
     m_pszDBname = new char [pszDbName.length()+1];
     std::strcpy(m_pszDBname, pszDbName.c_str());
