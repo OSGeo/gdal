@@ -277,13 +277,6 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_JP2OpenJPEG();
 #endif
 
-#ifdef FRMT_jpeg2000
-// JPEG2000 support using JasPer toolkit
-// This one should always be placed after other JasPer supported formats,
-// such as BMP or PNM. In other case we will get bad side effects.
-    GDALRegister_JPEG2000();
-#endif
-
 #ifdef FRMT_l1b
     GDALRegister_L1B();
 #endif
@@ -298,6 +291,13 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_mrsid
     GDALRegister_MrSID();
+#endif
+
+#ifdef FRMT_jpeg2000
+// JPEG2000 support using JasPer toolkit
+// This one should always be placed after other JasPer supported formats,
+// such as BMP or PNM. In other case we will get bad side effects.
+    GDALRegister_JPEG2000();
 #endif
 
 #ifdef FRMT_mrsid_lidar
