@@ -120,7 +120,13 @@ int OGRGMELayer::TestCapability( const char * pszCap )
         return TRUE;
     else if(EQUAL(pszCap,OLCIgnoreFields))
         return TRUE;
+    else if(EQUAL(pszCap,OLCFastSpatialFilter))
+        return TRUE;
+    else if(EQUAL(pszCap,OLCSequentialWrite))
+        return TRUE;
     else if(EQUAL(pszCap,OLCRandomWrite))
+        return TRUE;
+    else if(EQUAL(pszCap,OLCDeleteFeature))
         return TRUE;
     else if(EQUAL(pszCap,OLCTransactions))
         return TRUE;
@@ -275,6 +281,12 @@ void OGRGMELayer::GetPageOfFeatures()
         CPLDebug( "GME Layer", "found where=%s", osWhere.c_str());
         osMoreOptions += "&where=";
         osMoreOptions += osWhere;
+    }
+
+    if (!osIntersects.empty()) {
+        CPLDebug( "GME Layer", "found intersects=%s", osIntersects.c_str());
+        osMoreOptions += "&intersects=";
+        osMoreOptions += osIntersects;
     }
 
     CPLHTTPResult *psFeaturesResult =
@@ -470,6 +482,74 @@ OGRErr OGRGMELayer::SetIgnoredFields(const char ** papszFields )
     }
     return eErr;
 }
+
+/************************************************************************/
+/*                       SetSpatialFilter()                             */
+/************************************************************************/
+
+void OGRGMELayer::SetSpatialFilter( OGRGeometry *poGeomIn)
+{
+    switch( poGeomIn->getGeometryType() )
+    {
+      case wkbPolygon:
+        WindPolygonCCW((OGRPolygon *) poGeomIn);
+      case wkbPoint:
+      case wkbLineString:
+        if( poGeomIn == NULL ) {
+          osIntersects = "";
+        }
+        else {
+            char * pszWkt;
+            poGeomIn->exportToWkt(&pszWkt);
+            char * pszEscaped = CPLEscapeString(pszWkt, -1, CPLES_URL);
+            osIntersects = CPLString(pszEscaped);
+            CPLFree(pszEscaped);
+            CPLFree(pszWkt);
+        }
+        ResetReading();
+        break;
+      default:
+        m_iGeomFieldFilter = 0;
+        if( InstallFilter( poGeomIn ) )
+            ResetReading();
+        break;
+    }
+}
+
+/************************************************************************/
+/*                          WindPolygonCCW()                            */
+/************************************************************************/
+
+OGRPolygon* OGRGMELayer::WindPolygonCCW( OGRPolygon *poPolygon )
+{
+    CPLAssert( NULL != poPolygon );
+
+    OGRLinearRing* poRing = poPolygon->getExteriorRing();
+    if (poRing == NULL) {
+        return poPolygon;
+    }
+
+    // If the linear ring is CW re-wind it CCW
+    if (poRing->isClockwise() ) {
+      poRing->reverseWindingOrder();
+    }
+
+    /* Interior rings. */
+    const int nCount = poPolygon->getNumInteriorRings();
+    for( int i = 0; i < nCount; ++i ) {
+        poRing = poPolygon->getInteriorRing( i );
+        if (poRing == NULL)
+            continue;
+        // If the linear ring is CW re-wind it CCW
+
+        if (poRing->isClockwise() ) {
+            poRing->reverseWindingOrder();
+        }
+    }
+
+    return poPolygon;
+}
+
 
 /************************************************************************/
 /*                            BatchPatch()                              */
