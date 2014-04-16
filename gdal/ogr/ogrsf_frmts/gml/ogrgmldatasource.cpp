@@ -777,8 +777,11 @@ int OGRGMLDataSource::Open( const char * pszNameIn )
                                 pszElementToFind = CPLSPrintf("%s:%s",
                                                               oNamespace.osPrefix.c_str(),
                                                               oFeatureType.osElementName.c_str());
-                            
-                            if( osHeader.ifind(pszElementToFind) != std::string::npos )
+
+                            /* Case sensitive test since in a CadastralParcel feature */
+                            /* there is a property basicPropertyUnit xlink, not to be */
+                            /* confused with a top-level BasicPropertyUnit feature... */
+                            if( osHeader.find(pszElementToFind) != std::string::npos )
                             {
                                 if( oFeatureType.osSchemaLocation.size() )
                                 {
