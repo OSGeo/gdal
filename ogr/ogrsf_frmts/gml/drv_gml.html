@@ -112,6 +112,7 @@ Since OGR 1.11, the GML driver supports reading :
  <li><a href="http://xml.nls.fi/XML/Schema/Maastotietojarjestelma/MTK/201202/Maastotiedot.xsd">Finnish National Land Survey GML files (a.k.a MTK GML) for topographic data.</a></li>
  <li><a href="http://xml.nls.fi/XML/Schema/sovellus/ktjkii/modules/kiinteistotietojen_kyselypalvelu_WFS/Asiakasdokumentaatio/ktjkiiwfs/2010/02/">Finnish National Land Survey GML files for cadastral data</a>.</li>
  <li><a href="http://inspire.ec.europa.eu/schemas/cp/3.0/CadastralParcels.xsd">Cadastral data in Inspire GML schemas</a>.</li>
+ <li><a href="http://www.cuzk.cz/Uvod/Produkty-a-sluzby/RUIAN/2-Poskytovani-udaju-RUIAN-ISUI-VDP/Vymenny-format-RUIAN/Vymenny-format-RUIAN-%28VFR%29.aspx">Czech RUIAN Exchange Format (VFR)</a>.</li>
 </ul>
 
 <h2>Geometry reading</h2>
@@ -755,14 +756,11 @@ An example of such a file is :
                uri="urn:cz:isvs:ruian:schemas:VymennyFormatTypy:v1 ../ruian/xsd/vymenny_format/VymennyFormatTypy.xsd"
                useGlobalSRSName="true"&gt;
         &lt;featureType elementName="TypSouboru"
-                     elementValue="OB_UKSH"
-                     gfsSchemaLocation="vfr_ob_uksh_v1.gfs"/&gt;
+                     elementValue="OB"
+                     gfsSchemaLocation="ruian_vf_ob_v1.gfs"/&gt;
         &lt;featureType elementName="TypSouboru"
-                     elementValue="ST_UKSH"
-                     gfsSchemaLocation="vfr_st_uksh_v1.gfs"/&gt;
-        &lt;featureType elementName="TypSouboru"
-                     elementValue="ST_UKSG"
-                     gfsSchemaLocation="vfr_st_uksg_v1.gfs"/&gt;
+                     elementValue="ST"
+                     gfsSchemaLocation="ruian_vf_st_v1.gfs"/&gt;
     &lt;/namespace&gt;
 &lt;/gml_registry&gt;
 </pre>
