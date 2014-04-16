@@ -733,7 +733,7 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                        (int)(iPixel * dfSrcXInc) * nPixelOffset,
                                        eDataType, 0,
                                        (GByte *)pData + iLine * nLineSpace +
-                                       iPixel * nBufDataSize,
+                                       iPixel * nPixelSpace,
                                        eBufType, nPixelSpace, 1 );
                     }
                 }
@@ -874,7 +874,7 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     for ( iPixel = 0; iPixel < nBufXSize; iPixel++ )
                     {
                         GDALCopyWords( (GByte *)pData+iLine*nLineSpace +
-                                       iPixel * nBufDataSize,
+                                       iPixel * nPixelSpace,
                                        eBufType, nPixelSpace,
                                        pabyData +
                                        (int)(iPixel * dfSrcXInc) * nPixelOffset,
