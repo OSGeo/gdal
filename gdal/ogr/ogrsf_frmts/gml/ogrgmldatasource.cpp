@@ -252,7 +252,7 @@ int OGRGMLDataSource::Open( const char * pszNameIn )
 
 {
     VSILFILE   *fp;
-    char        szHeader[2048];
+    char        szHeader[4096];
     int         nNumberOfFeatures = 0;
     CPLString   osWithVsiGzip;
     const char *pszSchemaLocation = NULL;
