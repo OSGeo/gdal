@@ -1,0 +1,61 @@
+Index: frmts/jpeg/libjpeg12/makefile.vc
+===================================================================
+--- frmts/jpeg/libjpeg12/makefile.vc	(révision 27183)
++++ frmts/jpeg/libjpeg12/makefile.vc	(copie de travail)
+@@ -20,6 +20,8 @@
+ 	xcopy /D  /Y *.obj ..\..\o
+ 
+ jcapimin12.c:	../libjpeg/jcapimin.c
++
++_jcapimin12.c:	../libjpeg/jcapimin.c
+ 	xcopy /Y ..\libjpeg\*.h
+ 	xcopy /Y jmorecfg.h.12 jmorecfg.h
+ 	xcopy /Y ..\libjpeg\*.c
+Index: frmts/makefile.vc
+===================================================================
+--- frmts/makefile.vc	(révision 27183)
++++ frmts/makefile.vc	(copie de travail)
+@@ -174,10 +174,11 @@
+ 	for %d in ( $(DIRLIST) ) do \
+ 		cd %d \
+ 		&& $(MAKE) /f makefile.vc \
+-		&& cd .. \
+-		|| exit 1
++		&& cd ..
+ 
+ plugindirs:
++	@echo plugins: $(PLUGINDIRLIST)
++aplugindirs:
+ 	-for %d in ( $(PLUGINDIRLIST) ) do \
+ 		cd %d \
+ 		&& $(MAKE) /f makefile.vc plugin \
+Index: ogr/ogrsf_frmts/makefile.vc
+===================================================================
+--- ogr/ogrsf_frmts/makefile.vc	(révision 27183)
++++ ogr/ogrsf_frmts/makefile.vc	(copie de travail)
+@@ -219,8 +219,7 @@
+ 	for %d in ( $(DIRLIST) ) do \
+ 		cd %d \
+ 		&& $(MAKE) /f makefile.vc \
+-		&& cd .. \
+-		|| exit 1
++		&& cd ..
+ 
+ 	lib /out:ogrsf_frmts.lib generic\*.obj shape\*.obj ntf\*.obj \
+ 				 sdts\*.obj s57\*.obj tiger\*.obj gml\*.obj \
+@@ -256,11 +255,13 @@
+ 
+ plugindirs:
+ 	@echo plugins: $(PLUGINDIRLIST)
++
++aplugindirs:
++	@echo plugins: $(PLUGINDIRLIST)
+         -for %d in ( $(PLUGINDIRLIST) ) do \
+                 cd %d \
+                 && $(MAKE) /f makefile.vc plugin \
+-                && cd .. \
+-                || exit 1
++                && cd .. 
+ 
+ clean:
+ 	-del ogrsf_frmts.lib

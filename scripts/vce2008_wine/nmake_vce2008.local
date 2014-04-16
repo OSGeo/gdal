@@ -1,0 +1,73 @@
+# SQLite Libraries
+SQLITE_INC=-Ic:\release-1500\include -DHAVE_SPATIALITE -DSPATIALITE_AMALGAMATION
+SQLITE_LIB=c:\release-1500\lib\spatialite_i.lib
+
+#PCRE_INC=-I"C:\Program Files\GNUWin32\include" -DHAVE_PCRE
+#PCRE_LIB="C:\Program Files\GNUWin32\lib\pcre.lib"
+
+GEOS_DIR = c:\release-1500
+GEOS_CFLAGS = -Ic:\release-1500\include -DHAVE_GEOS
+GEOS_LIB     = c:\release-1500\lib\geos_c.lib
+
+# Uncomment to use libcurl (DLL by default)
+# The cURL library is used for WCS, WMS, GeoJSON, SRS call importFromUrl(), WFS, GFT, CouchDB, /vsicurl/ etc.
+CURL_DIR=c:\release-1500
+CURL_INC = -I$(CURL_DIR)/include
+# Uncoment following line to use libcurl as dynamic library
+CURL_LIB = $(CURL_DIR)/lib/libcurl_imp.lib wsock32.lib wldap32.lib winmm.lib
+
+# Uncomment for Expat support (required for KML, GPX and GeoRSS read support).
+EXPAT_DIR = c:\release-1500
+EXPAT_INCLUDE = -I$(EXPAT_DIR)\include
+EXPAT_LIB = $(EXPAT_DIR)\lib\libexpat.lib
+
+# Uncomment for Xerces based GML and ILI support.
+XERCES_DIR =   c:\release-1500
+XERCES_INCLUDE = -I$(XERCES_DIR)/include -I$(XERCES_DIR)/include/xercesc
+XERCES_LIB = $(XERCES_DIR)/lib/xerces-c_2.lib
+
+# Uncomment the following for Interlis support.  Note that a Xercex 2.x
+# is also required (see above).  Also, Interlis support only works with
+# Visual Studio.NET or newer, not VC6.
+ILI_ENABLED = YES
+
+
+# Uncomment the following and update to enable ECW support with the 3.3 SDK.
+# Significant adaption may be needed.
+ECWDIR  =  c:\release-1500
+ECWLIB  =  $(ECWDIR)\lib\libecwj2.lib
+ECWFLAGS =     -DECWSDK_VERSION=33 \
+       -I$(ECWDIR)\include \
+       /D_MBCS /D_UNICODE /DUNICODE /D_WINDOWS \
+       /DLIBECWJ2 /DWIN32 /D_WINDLL -DNO_X86_MMI
+
+# Uncomment for PDF support
+POPPLER_ENABLED = YES
+POPPLER_CFLAGS = -Ic:\release-1500\include -Ic:\release-1500\include\poppler
+POPPLER_HAS_OPTCONTENT = YES
+POPPLER_BASE_STREAM_HAS_TWO_ARGS = YES
+POPPLER_0_20_OR_LATER = YES
+POPPLER_0_23_OR_LATER = YES
+POPPLER_LIBS = c:\release-1500\lib\poppler.lib c:\release-1500\lib\freetype239.lib advapi32.lib gdi32.lib /FORCE:MULTIPLE
+
+# Uncomment for OpenJpeg support
+OPENJPEG_ENABLED = YES
+OPENJPEG_CFLAGS = -Ic:\release-1500\include
+OPENJPEG_LIB = c:\release-1500\lib\openjp2.lib
+
+# Uncomment for libxml2 support (for cpl_xml_validate.cpp routines, used optionaly by the GML driver)
+LIBXML2_INC = -Ic:\release-1500\include
+LIBXML2_LIB = c:\release-1500\lib\libxml2.lib
+
+FREEXL_CFLAGS = -Ic:\release-1500\include
+FREEXL_LIBS = c:\release-1500\lib\freexl_i.lib
+
+LIBKML_DIR=c:\release-1500
+LIBKML_INCLUDE=-Ic:\release-1500\include
+LIBKML_LIBS=c:\release-1500\lib\libkmlbase.lib c:\release-1500\lib\libkmlconvenience.lib c:\release-1500\lib\libkmldom.lib c:\release-1500\lib\libkmlengine.lib c:\release-1500\lib\libkmlregionator.lib c:\release-1500\lib\libkmlxsd.lib c:\release-1500\lib\libexpat.lib c:\release-1500\lib\zdll.lib
+
+PG_INC_DIR = c:\release-1500\include
+PG_LIB = c:\release-1500\lib\libpqdll.lib wsock32.lib
+
+MYSQL_INC_DIR=c:\release-1500\include
+MYSQL_LIB=c:\release-1500\lib\libmysql.lib advapi32.lib
