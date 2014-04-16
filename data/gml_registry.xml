@@ -23,4 +23,18 @@
                      gfsSchemaLocation="inspire_cp_CadastralZoning.gfs"/>
     </namespace>
 
+    <!-- Czech RUIAN (VFR) schema -->
+    <namespace prefix="vf"
+               uri="urn:cz:isvs:ruian:schemas:VymennyFormatTypy:v1 ../ruian/xsd/vymenny_format/VymennyFormatTypy.xsd"
+               useGlobalSRSName="true">
+        <featureType elementName="TypSouboru"
+                     elementValue="OB"
+                     gfsSchemaLocation="ruian_vf_ob_v1.gfs" />
+        <featureType elementName="TypSouboru"
+                     elementValue="ST_Z"
+                     gfsSchemaLocation="ruian_vf_ob_v1.gfs" />
+        <featureType elementName="TypSouboru"
+                     elementValue="ST"
+                     gfsSchemaLocation="ruian_vf_st_v1.gfs" />
+    </namespace>
 </gml_registry>
