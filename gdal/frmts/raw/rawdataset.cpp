@@ -281,8 +281,8 @@ CPLErr RawRasterBand::AccessLine( int iLine )
         if (poDS != NULL && poDS->GetAccess() == GA_ReadOnly)
         {
             CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to seek to scanline %d @ %d.\n",
-                  iLine, (int) (nImgOffset + (vsi_l_offset)iLine * nLineOffset) );
+                  "Failed to seek to scanline %d @ " CPL_FRMT_GUIB ".\n",
+                  iLine, nImgOffset + (vsi_l_offset)iLine * nLineOffset );
             return CE_Failure;
         }
         else
@@ -438,8 +438,8 @@ CPLErr RawRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     if( Seek( nWriteStart, SEEK_SET ) == -1 ) 
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to seek to scanline %d @ %d to write to file.\n",
-                  nBlockYOff, (int) (nImgOffset + nBlockYOff * nLineOffset) );
+                  "Failed to seek to scanline %d @ " CPL_FRMT_GUIB " to write to file.\n",
+                  nBlockYOff, nImgOffset + nBlockYOff * nLineOffset );
         
         eErr = CE_Failure;
     }
@@ -668,16 +668,14 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
              && nPixelSpace == nBufDataSize
              && nLineSpace == nPixelSpace * nXSize )
         {
-            if ( AccessBlock( nImgOffset
-                              + (vsi_l_offset)nYOff * nLineOffset + nXOff,
+            vsi_l_offset nOffset = nImgOffset
+                              + (vsi_l_offset)nYOff * nLineOffset + nXOff;
+            if ( AccessBlock( nOffset,
                               nXSize * nYSize * nBandDataSize, pData ) != CE_None )
             {
                 CPLError( CE_Failure, CPLE_FileIO,
-                          "Failed to read %d bytes at %lu.",
-                          nXSize * nYSize * nBandDataSize,
-                          (unsigned long)
-                          (nImgOffset + (vsi_l_offset)nYOff * nLineOffset
-                           + nXOff) );
+                          "Failed to read %d bytes at " CPL_FRMT_GUIB ".",
+                          nXSize * nYSize * nBandDataSize, nOffset);
             }
         }
 
@@ -698,19 +696,16 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
             for ( iLine = 0; iLine < nBufYSize; iLine++ )
             {
-                if ( AccessBlock( nImgOffset
+                vsi_l_offset nOffset = nImgOffset
                                   + ((vsi_l_offset)nYOff
-                                  + (int)(iLine * dfSrcYInc)) * nLineOffset
-                                  + nXOff * nPixelOffset,
+                                  + (vsi_l_offset)(iLine * dfSrcYInc)) * nLineOffset
+                                  + nXOff * nPixelOffset;
+                if ( AccessBlock( nOffset,
                                   nBytesToRW, pabyData ) != CE_None )
                 {
                     CPLError( CE_Failure, CPLE_FileIO,
-                              "Failed to read %d bytes at %lu.",
-                              nBytesToRW,
-                              (unsigned long)(nImgOffset
-                              + ((vsi_l_offset)nYOff
-                              + (int)(iLine * dfSrcYInc)) * nLineOffset
-                              + nXOff * nPixelOffset) );
+                              "Failed to read %d bytes at " CPL_FRMT_GUIB ".",
+                              nBytesToRW, nOffset );
                 }
 
 /* -------------------------------------------------------------------- */
@@ -720,7 +715,7 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 if ( nXSize == nBufXSize && nYSize == nBufYSize )
                 {
                     GDALCopyWords( pabyData, eDataType, nPixelOffset,
-                                   (GByte *)pData + iLine * nLineSpace,
+                                   (GByte *)pData + (vsi_l_offset)iLine * nLineSpace,
                                    eBufType, nPixelSpace, nXSize );
                 }
                 else
@@ -730,10 +725,10 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     for ( iPixel = 0; iPixel < nBufXSize; iPixel++ )
                     {
                         GDALCopyWords( pabyData +
-                                       (int)(iPixel * dfSrcXInc) * nPixelOffset,
-                                       eDataType, 0,
-                                       (GByte *)pData + iLine * nLineSpace +
-                                       iPixel * nPixelSpace,
+                                       (vsi_l_offset)(iPixel * dfSrcXInc) * nPixelOffset,
+                                       eDataType, nPixelOffset,
+                                       (GByte *)pData + (vsi_l_offset)iLine * nLineSpace +
+                                       (vsi_l_offset)iPixel * nPixelSpace,
                                        eBufType, nPixelSpace, 1 );
                     }
                 }
@@ -783,13 +778,12 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      Seek to the right block.                                        */
 /* -------------------------------------------------------------------- */
-            if( Seek( nImgOffset + (vsi_l_offset)nYOff * nLineOffset + nXOff,
-                      SEEK_SET) == -1 )
+            vsi_l_offset nOffset = nImgOffset + (vsi_l_offset)nYOff * nLineOffset + nXOff;
+            if( Seek( nOffset, SEEK_SET) == -1 )
             {
                 CPLError( CE_Failure, CPLE_FileIO,
-                          "Failed to seek to %lu to write data.\n",
-                          (unsigned long)(nImgOffset + (vsi_l_offset)nYOff
-                                          * nLineOffset + nXOff) );
+                          "Failed to seek to " CPL_FRMT_GUIB " to write data.\n",
+                          nOffset);
         
                 return CE_Failure;
             }
@@ -847,7 +841,7 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             for ( iLine = 0; iLine < nBufYSize; iLine++ )
             {
                 nBlockOff = nImgOffset
-                    + ((vsi_l_offset)nYOff + (int)(iLine*dfSrcYInc))*nLineOffset
+                    + ((vsi_l_offset)nYOff + (vsi_l_offset)(iLine*dfSrcYInc))*nLineOffset
                     + nXOff * nPixelOffset;
 
 /* -------------------------------------------------------------------- */
@@ -863,7 +857,7 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
                 if ( nXSize == nBufXSize && nYSize == nBufYSize )
                 {
-                    GDALCopyWords( (GByte *)pData + iLine * nLineSpace,
+                    GDALCopyWords( (GByte *)pData + (vsi_l_offset)iLine * nLineSpace,
                                    eBufType, nPixelSpace,
                                    pabyData, eDataType, nPixelOffset, nXSize );
                 }
@@ -873,12 +867,12 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
                     for ( iPixel = 0; iPixel < nBufXSize; iPixel++ )
                     {
-                        GDALCopyWords( (GByte *)pData+iLine*nLineSpace +
-                                       iPixel * nPixelSpace,
+                        GDALCopyWords( (GByte *)pData+(vsi_l_offset)iLine*nLineSpace +
+                                       (vsi_l_offset)iPixel * nPixelSpace,
                                        eBufType, nPixelSpace,
                                        pabyData +
-                                       (int)(iPixel * dfSrcXInc) * nPixelOffset,
-                                       eDataType, 0, 1 );
+                                       (vsi_l_offset)(iPixel * dfSrcXInc) * nPixelOffset,
+                                       eDataType, nPixelOffset, 1 );
                     }
                 }
 
@@ -907,8 +901,8 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 if( Seek( nBlockOff, SEEK_SET) == -1 )
                 {
                     CPLError( CE_Failure, CPLE_FileIO,
-                              "Failed to seek to %ld to read.\n",
-                              (long)nBlockOff );
+                              "Failed to seek to " CPL_FRMT_GUIB " to read.\n",
+                              nBlockOff );
 
                     return CE_Failure;
                 }
