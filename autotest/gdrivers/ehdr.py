@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -276,7 +277,60 @@ def ehdr_13():
     gdal.GetDriverByName('EHDR').Delete('/vsimem/byte.bil')
 
     return 'success'
-    
+
+###############################################################################
+# Test optimized RasterIO() (#5438)
+
+def ehdr_14():
+
+    src_ds = gdal.Open('data/byte.tif')
+    ds = gdal.GetDriverByName('EHDR').CreateCopy('/vsimem/byte.bil', src_ds)
+    src_ds = None
+
+    for space in [1, 2]:
+        out_ds = gdal.GetDriverByName('EHDR').Create('/vsimem/byte_reduced.bil', 10, 10)
+        gdal.SetConfigOption('GDAL_ONE_BIG_READ', 'YES')
+        data_ori = ds.GetRasterBand(1).ReadRaster(0,0,20,20,20,20,buf_pixel_space=space)
+        data = ds.GetRasterBand(1).ReadRaster(0,0,20,20,10,10,buf_pixel_space=space)
+        out_ds.GetRasterBand(1).WriteRaster(0,0,10,10, data,10,10,buf_pixel_space=space)
+        out_ds.FlushCache()
+        data2 = out_ds.ReadRaster(0,0,10,10,10,10,buf_pixel_space=space)
+        cs1 = out_ds.GetRasterBand(1).Checksum()
+        gdal.SetConfigOption('GDAL_ONE_BIG_READ', None)
+        out_ds.FlushCache()
+        cs2 = out_ds.GetRasterBand(1).Checksum()
+
+        if space == 1 and data != data2:
+            gdaltest.post_reason('fail')
+            print(space)
+            return 'fail'
+
+        if (cs1 != 1087 and cs1 != 1192) or (cs2 != 1087 and cs2 != 1192):
+            gdaltest.post_reason('fail')
+            print(space)
+            print(cs1)
+            print(cs2)
+            return 'fail'
+
+        gdal.SetConfigOption('GDAL_ONE_BIG_READ', 'YES')
+        out_ds.GetRasterBand(1).WriteRaster(0,0,10,10, data_ori,20,20,buf_pixel_space=space)
+        gdal.SetConfigOption('GDAL_ONE_BIG_READ', None)
+        out_ds.FlushCache()
+        cs3 = out_ds.GetRasterBand(1).Checksum()
+
+        if cs3 != 1087 and cs3 != 1192:
+            gdaltest.post_reason('fail')
+            print(space)
+            print(cs3)
+            return 'fail'
+
+    ds = None
+
+    gdal.GetDriverByName('EHDR').Delete('/vsimem/byte.bil')
+    gdal.GetDriverByName('EHDR').Delete('/vsimem/byte_reduced.bil')
+
+    return 'success'
+
 gdaltest_list = [
     ehdr_1,
     ehdr_2,
@@ -290,7 +344,8 @@ gdaltest_list = [
     ehdr_10,
     ehdr_11,
     ehdr_12,
-    ehdr_13 ]
+    ehdr_13,
+    ehdr_14 ]
 
 if __name__ == '__main__':
 

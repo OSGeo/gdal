@@ -1870,6 +1870,9 @@ GDALDataset *EHdrDataset::CreateCopy( const char * pszFilename,
                                            papszAdjustedOptions, 
                                            pfnProgress, pProgressData );
     CSLDestroy( papszAdjustedOptions );
+    
+    if( poOutDS != NULL )
+        poOutDS->FlushCache();
 
     return poOutDS;
 }
