@@ -1,4 +1,4 @@
-= GDAL/OGR 1.11.0 Release Notes (r25919 to r27121) =
+= GDAL/OGR 1.11.0 Release Notes (r25919 to r27200) =
 
 == In a nutshell... ==
 
@@ -6,7 +6,7 @@
     - KRO: read/write support for KRO KOKOR Raw format
  * New OGR drivers:
     - CartoDB : read/write support
-    - GME (Google Map Engine) : read-only support
+    - GME (Google Map Engine) : read/write support
     - GPKG (GeoPackage): read-write support (vector part of the spec.)
     - OpenFileGDB: read-only support (no external dependency)
     - SXF driver: read-only support
@@ -29,6 +29,8 @@
  * data/inspire_cp_BasicPropertyUnit.gfs
  * data/inspire_cp_CadastralBoundary.gfs
  * data/inspire_cp_CadastralZoning.gfs
+ * data/ruian_vf_ob_v1.gfs
+ * data/ruian_vf_st_v1.gfs
  * data/ogrvrt.xsd
 
 == Backward compatibility issues ==
@@ -50,12 +52,15 @@ Build(Unix):
  * PCIDSK: don't link against libjpeg if configured --without-jpeg
  * Update configure script to pick up ECW JP2 SDK 5.1 (#5390)
  * add a 'make install' target for the Java bindings  (#5424)
+ * add Vagrant configuration
 
 Build(Windows):
  * add option to generate VC project for x64 on makegdal_gen.bat
+ * nmake.opt: add WITH_PDB=1 option to optionaly generate .pdb file on Release builds (#5420)
  * add support for building the OGR SOSI driver as a plugin (#3638)
  * add support for building the HDF4 driver as plugin (#5294)
  * add support for MrSID v9
+ * Remove makegdalXX.bat generated files
 
 == GDAL 1.11.0 - Overview of Changes ==
 
@@ -96,6 +101,7 @@ Core:
  * GDALDefaultOverviews::HaveMaskFile(): avoid fetching .ovr file
  * JPEG2000: Fix reading georeferencing from some JPEG2000 files with duplicated GeoTIFF JP2Box (#5249)
  * Cleanup raster block mutex (#5296)
+ * Driver registration: move JPEG2000 (Jasper based) after MrSID JPEG2000 support
 
 Algorithms:
  * warper: fix regression with lanczos resampling when yradius > xradius (#5058)
@@ -108,6 +114,7 @@ Algorithms:
  * warper: GDALGenImgProjTransform(): don't set panSuccess[i] to 1 in the middle of the function, if an intermediate transform before has set the flag to 0
  * warper: fix cutline blending (#5343)
  * warper: Average/mode kernels: make them less sensitive to numerical precision issues (#5350)
+ * warper: Average/mode kernels: avoid 'holes' when the source coordinates are in a reversed order from the target coordinates (#5433)
  * warper: provide prototypes and work around strict compiler requirements on some opencl platforms (#5400) 
  * RPC: fix for computation of adfGTFromLL (#5395)
  * TPS: optimization for GCC x86_64 that make computation about twice faster with huge number of GCPs
@@ -150,6 +157,10 @@ Utilities:
  * gdalcompare.py: move to scripts
  * gdalcompare.py: ensure image dimensions match
  * gdal_ls.py: Fix issue with UTF-8 characters
+
+Multi driver changes:
+ * JPEG2000 drivers: take into account PixelIsPoint in GeoJP2 boxes, and expose AREA_OR_POINT=Point (#5437)
+ * JP2KAK, JP2ECW, JP2OpenJPEG, JPEG2000 CreateCopy(): take into account AREA_OR_POINT=Point if present to write GeoJP2 box (#5437)
 
 AAIGRID:
  * revert DECIMAL_PRECISION and add SIGNIFICANT_DIGITS to CreateCopy() (#3732)
@@ -241,6 +252,7 @@ Idrisi driver:
 
 IRIS driver:
  * add height information on bands; rename dataset metadata item CAPPI_HEIGHT --> CAPPI_BOTTOM_HEIGHT (#5104)
+ * IRIS: add support for two bytes data (#5431)
 
 JP2ECW driver:
  * fix problem with JP2 write with SDK v5
@@ -251,6 +263,7 @@ JP2KAK driver:
  * preliminary support for Kakadu V7.x
  * fix creation of unsigned int16 with reversible compression (#4050)
  * on Windows, use VSI cache for I/O by default, instead Kakadu own I/O layer
+ * remove extension from 12bit to 16bit (#5328)
 
 JP2OpenJPEG driver:
  * avoid 'Empty SOT marker detected: Psot=12.' warning to be repeated several times
@@ -345,6 +358,7 @@ Raw drivers:
  * implement GetVirtualMemAuto() (RFC 45)
  * IRasterIO(): add special behaviour to avoid going to block based IO when the dataset has INTERLEAVE=PIXEL and is elligible to direct I/O access pattern
  * allow direct I/O access even if a small proportion of scanlines are loaded (improve QGIS use case where the overview display will load sparse scanlines, which would prevent direct I/O at full resolution afterwards)
+ * fix optimized RasterIO() when doing sub-sampling with non standard buffer pixel offset (#5438)
 
 RMF driver:
  * fix decompression of 24-bit RMF DEM (#5268)
@@ -507,8 +521,10 @@ GML driver:
  * add support for multiple geometry columns (RFC 41)
  * add support for reading Finnish National Land Survey Topographic data (MTK GML)
  * add support for support Finnish NLS cadastral data and Inspire cadastral data.
+ * add support for Czech RUIAN VFR format
  * add data/gml_registry.xml file to associate feature types with schemas.
  * extend .gfs syntax to be able to fetch OGR fields from XML attributes.
+ * extend .gfs syntax to support multiple geometry columns, and define a geometry property name
  * autodiscover all XML attributes as OGR fields when creating .gfs file if GML_ATTRIBUTES_TO_OGR_FIELDS is set to YES (#5418)
  * allow the <ElementPath> in .gfs to have several components that give the full XML path
  * fix writing of .xsd file to avoid fid/gml_id being written as regular fields (#5142)
@@ -531,6 +547,7 @@ GML driver:
  * GML geometry: correctly deal with MultiSurface of Surface of PolygonPatch where a PolygonPatch has only interior ring(s) and no exterior ring (#5421)
  * GML geometry: accept formulations of 'MULTIPOINT EMPTY, MULTILINESTRING EMPTY, MULTIPOLYGON EMPTY and GEOMETRYCOLLECTION EMPTY that are valid GML 3 (and accepted by PostGIS)
  * GML geometry: make use of cs, ts and decimal attributes of (deprecated) gml:coordinates element
+ * GML geometry: accept XML header and comments
 
 GPX driver:
  * advertize OLCCreateField capability
@@ -596,6 +613,7 @@ ODBC driver:
 
 OSM driver:
  * support relations with more than 2000 members in a OSM XML file (#5055)
+ * make the driver work with PBF files produced by osmconvert.
  * osmconf.ini: report the waterway attribute for the lines layer (#5056)
  * add an option in osmconf.ini to enable creating a 'all_tags' field, combining both fields specificaly identified, and other tags
  * always use quoting of key/values in other_tags field (#5096)
