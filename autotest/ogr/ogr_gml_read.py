@@ -2915,6 +2915,51 @@ def ogr_gml_62():
     return 'success'
 
 ###############################################################################
+# Test reading RUIAN VFR files
+
+def ogr_gml_63():
+    
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    ### test ST file type
+    ds = ogr.Open('data/ruian_st_v1.xml.gz')
+
+    # check number of layers
+    nlayers = ds.GetLayerCount()
+    if nlayers != 14: 
+        return 'fail'
+
+    # check name of first layer
+    lyr = ds.GetLayer(0)
+    if lyr.GetName() != 'Staty':
+        return 'fail'
+    
+    # check geometry column name
+    if lyr.GetGeometryColumn() != 'DefinicniBod':
+        return 'fail'
+    
+    ds = None
+
+    ### test OB file type
+    ds = ogr.Open('data/ruian_ob_v1.xml.gz')
+    
+    # check number of layers
+    nlayers = ds.GetLayerCount()
+    if nlayers != 8: 
+        return 'fail'
+
+    # check number of features
+    nfeatures = 0
+    for i in range(nlayers):
+        lyr = ds.GetLayer(i)
+        nfeatures += lyr.GetFeatureCount()
+    if nfeatures != 7:
+        return 'fail'
+        
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -3108,6 +3153,7 @@ gdaltest_list = [
     ogr_gml_60,
     ogr_gml_61,
     ogr_gml_62,
+    ogr_gml_63,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':
