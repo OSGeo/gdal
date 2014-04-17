@@ -54,6 +54,7 @@ OGRGMELayer::OGRGMELayer(OGRGMEDataSource* poDS,
     bCreateTablePending = false;
     osTableId = pszTableId;
     bInTransaction = false;
+    m_poFilterGeom = NULL;
 }
 
 
@@ -366,10 +367,12 @@ OGRFeature *OGRGMELayer::GetNextRawFeature()
 /*      Handle gx_id.                                                   */
 /* -------------------------------------------------------------------- */
     const char *gx_id = OGRGMEGetJSONString(properties_obj, "gx_id");
-    CPLString gmeId(gx_id);
-    omnosIdToGMEKey[++m_nFeaturesRead] = gmeId;
-    poFeature->SetFID(m_nFeaturesRead);
-    CPLDebug("GME", "Mapping ids: \"%s\" to %d", gx_id, (int)m_nFeaturesRead);
+    if (gx_id) {
+        CPLString gmeId(gx_id);
+        omnosIdToGMEKey[++m_nFeaturesRead] = gmeId;
+        poFeature->SetFID(m_nFeaturesRead);
+        CPLDebug("GME", "Mapping ids: \"%s\" to %d", gx_id, (int)m_nFeaturesRead);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Handle geometry.                                                */
@@ -489,6 +492,11 @@ OGRErr OGRGMELayer::SetIgnoredFields(const char ** papszFields )
 
 void OGRGMELayer::SetSpatialFilter( OGRGeometry *poGeomIn)
 {
+    if (poGeomIn == NULL) {
+        osIntersects.clear();
+        OGRLayer::SetSpatialFilter( poGeomIn );
+        return;
+    }
     switch( poGeomIn->getGeometryType() )
     {
       case wkbPolygon:
