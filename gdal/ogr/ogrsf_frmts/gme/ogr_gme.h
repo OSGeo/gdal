@@ -50,7 +50,7 @@ class OGRGMELayer : public OGRLayer
     OGRGMEDataSource* poDS;
 
     OGRFeatureDefn*    poFeatureDefn;
-    OGRSpatialReference *poSRS;
+    OGRSpatialReference* poSRS;
 
     int                iGeometryField;
     int                iGxIdField;
@@ -65,6 +65,7 @@ class OGRGMELayer : public OGRLayer
 
     CPLString          osWhere;
     CPLString          osSelect;
+    CPLString          osIntersects;
 
     json_object*       current_feature_page;
     json_object*       current_features_array;
@@ -93,6 +94,7 @@ class OGRGMELayer : public OGRLayer
     OGRErr             BatchRequest(const char *osMethod, std::map<int, OGRFeature *> &omnpoFeatures);
     unsigned int       GetBatchPatchSize();
     bool               CreateTableIfNotCreated();
+    static OGRPolygon  *WindPolygonCCW( OGRPolygon *poPolygon );
 
   public:
     OGRGMELayer(OGRGMEDataSource* poDS, const char* pszTableId);
@@ -111,6 +113,8 @@ class OGRGMELayer : public OGRLayer
     virtual const char *GetGeometryColumn() { return osGeomColumnName; }
 
     virtual int         TestCapability( const char * );
+
+    virtual void        SetSpatialFilter( OGRGeometry * );
 
     virtual OGRErr      SetAttributeFilter( const char * pszWhere );
 
