@@ -1381,7 +1381,7 @@ static int MBTilesCurlReadCbk(VSILFILE* fp,
     const GByte abyPNGSig[] = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, /* PNG signature */
                                 0x00, 0x00, 0x00, 0x0D, /* IHDR length */
                                 0x49, 0x48, 0x44, 0x52  /* IHDR chunk */ };
-
+ 
     /* JPEG SOF0 (Start Of Frame 0) marker */
     const GByte abyJPEG1CompSig[] = { 0xFF, 0xC0, /* marker */
                                       0x00, 0x0B, /* data length = 8 + 1 * 3 */
@@ -1432,7 +1432,12 @@ static int MBTilesCurlReadCbk(VSILFILE* fp,
                 else if (nColorType == 2)
                     *pnBands = 3; /* RGB */
                 else if (nColorType == 3)
-                    *pnBands = 3; /* palette -> RGB */
+                {
+                    /* This might also be a color table with transparency */
+                    /* but we cannot tell ! */
+                    *pnBands = -1;
+                    return TRUE;
+                }
                 else if (nColorType == 4)
                     *pnBands = 2; /* Gray + alpha */
                 else if (nColorType == 6)
