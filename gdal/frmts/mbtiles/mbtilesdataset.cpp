@@ -1432,7 +1432,12 @@ static int MBTilesCurlReadCbk(VSILFILE* fp,
                 else if (nColorType == 2)
                     *pnBands = 3; /* RGB */
                 else if (nColorType == 3)
-                    *pnBands = 3; /* palette -> RGB */
+                {
+                    /* This might also be a color table with transparency */
+                    /* but we cannot tell ! */
+                    *pnBands = -1;
+                    return TRUE;
+                }
                 else if (nColorType == 4)
                     *pnBands = 2; /* Gray + alpha */
                 else if (nColorType == 6)
