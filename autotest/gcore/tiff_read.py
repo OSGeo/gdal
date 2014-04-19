@@ -1171,6 +1171,24 @@ def tiff_read_huge4GB():
 
     return 'success'
 
+###############################################################################
+# Test reading a (small) BigTIFF. Tests GTiffCacheOffsetOrCount8()
+
+def tiff_read_bigtiff():
+
+    md = gdal.GetDriverByName('GTiff').GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
+        return 'skip'
+
+    ds = gdal.Open('data/byte_bigtiff_strip5lines.tif')
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+
+    if cs != 4672:
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################################
 
 for item in init_list:
@@ -1222,6 +1240,7 @@ gdaltest_list.append( (tiff_jpeg_rgba_band_interleaved) )
 gdaltest_list.append( (tiff_read_online_1) )
 gdaltest_list.append( (tiff_read_online_2) )
 gdaltest_list.append( (tiff_read_huge4GB) )
+gdaltest_list.append( (tiff_read_bigtiff) )
 
 if __name__ == '__main__':
 
