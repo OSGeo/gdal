@@ -6698,13 +6698,14 @@ GDALDataset *GTiffDataset::OpenDir( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( !bAbsolute )
     {
+        toff_t nOffsetRequested = nOffset;
         while( nOffset > 1 )
         {
             if( TIFFReadDirectory( hTIFF ) == 0 )
             {
                 XTIFFClose( hTIFF );
                 CPLError( CE_Failure, CPLE_OpenFailed, 
-                          "Requested directory %lu not found.", (long unsigned int)nOffset );
+                          "Requested directory %lu not found.", (long unsigned int)nOffsetRequested );
                 return NULL;
             }
             nOffset--;
