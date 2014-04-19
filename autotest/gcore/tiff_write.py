@@ -4651,6 +4651,48 @@ def tiff_write_123():
     return 'success'
 
 ###############################################################################
+# Test error cases with palette creation
+
+def tiff_write_124():
+
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_124.tif', 1,1,3,gdal.GDT_Byte)
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    # Test "SetColorTable() can only be called on band 1"
+    ret = ds.GetRasterBand(2).SetColorTable(gdal.ColorTable())
+    gdal.PopErrorHandler()
+    if ret == 0:
+        return 'fail'
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    # Test "SetColorTable() not supported for multi-sample TIFF files"
+    ret = ds.GetRasterBand(1).SetColorTable(gdal.ColorTable())
+    gdal.PopErrorHandler()
+    if ret == 0:
+        return 'fail'
+
+    ds = None
+
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_124.tif', 1,1,1, gdal.GDT_UInt32)
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    # Test "SetColorTable() only supported for Byte or UInt16 bands in TIFF format."
+    ret = ds.GetRasterBand(1).SetColorTable(gdal.ColorTable())
+    gdal.PopErrorHandler()
+    if ret == 0:
+        return 'fail'
+    ds = None
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    # Test "SetColorTable() only supported for Byte or UInt16 bands in TIFF format."
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_124.tif', 1,1,1, gdal.GDT_UInt32, options = ['PHOTOMETRIC=PALETTE'])
+    gdal.PopErrorHandler()
+    ds = None
+
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_124.tif')
+
+    return 'success'
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 def tiff_write_api_proxy():
@@ -4802,6 +4844,7 @@ gdaltest_list = [
     tiff_write_121,
     tiff_write_122,
     tiff_write_123,
+    tiff_write_124,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 
