@@ -201,6 +201,10 @@ class gdal_ext(build_ext):
 extra_link_args = []
 extra_compile_args = []
 
+if sys.platform == 'darwin' and [int(x) for x in os.uname()[2].split('.')] >= [11, 0, 0]:
+    # since MacOS X 10.9, clang no longer accepts -mno-fused-madd
+    extra_compile_args.append('-Qunused-arguments')
+
 gdal_module = Extension('osgeo._gdal',
                         sources=['extensions/gdal_wrap.cpp'],
                         extra_compile_args = extra_compile_args,
