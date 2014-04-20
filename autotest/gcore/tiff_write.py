@@ -4693,6 +4693,32 @@ def tiff_write_124():
     return 'success'
 
 ###############################################################################
+# Test out-of-memory conditions with SplitBand and SplitBitmapBand
+
+def tiff_write_125():
+
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_125.tif', 2147000000, 5000, 65535, options = ['SPARSE_OK=YES', 'BLOCKYSIZE=5000', 'COMPRESS=LZW', 'BIGTIFF=NO'])
+    ds = None
+
+    ds = gdal.Open('/vsimem/tiff_write_125.tif')
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds.GetRasterBand(1).ReadBlock(0,0)
+    gdal.PopErrorHandler()
+
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_write_125.tif', 2147000000, 5000, 1, options = ['NBITS=1', 'SPARSE_OK=YES', 'BLOCKYSIZE=5000', 'COMPRESS=LZW', 'BIGTIFF=NO'])
+    ds = None
+
+    ds = gdal.Open('/vsimem/tiff_write_125.tif')
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds.GetRasterBand(1).ReadBlock(0,0)
+    gdal.PopErrorHandler()
+
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_125.tif')
+
+    return 'success'
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 def tiff_write_api_proxy():
@@ -4845,6 +4871,7 @@ gdaltest_list = [
     tiff_write_122,
     tiff_write_123,
     tiff_write_124,
+    tiff_write_125,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 
