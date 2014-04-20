@@ -2384,7 +2384,15 @@ CPLErr GTiffSplitBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         poGDS->nBands > 1)
     {
         if (poGDS->pabyBlockBuf == NULL)
-            poGDS->pabyBlockBuf = (GByte *) CPLMalloc(TIFFScanlineSize(poGDS->hTIFF));
+        {
+            poGDS->pabyBlockBuf = (GByte *) VSIMalloc(TIFFScanlineSize(poGDS->hTIFF));
+            if( poGDS->pabyBlockBuf == NULL )
+            {
+                CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate " CPL_FRMT_GUIB " bytes.",
+                         (GUIntBig)TIFFScanlineSize(poGDS->hTIFF));
+                return CE_Failure;
+            }
+        }
     }
     else
     {
@@ -3371,7 +3379,15 @@ CPLErr GTiffSplitBitmapBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return CE_Failure;
         
     if (poGDS->pabyBlockBuf == NULL)
-        poGDS->pabyBlockBuf = (GByte *) CPLMalloc(TIFFScanlineSize(poGDS->hTIFF));
+    {
+        poGDS->pabyBlockBuf = (GByte *) VSIMalloc(TIFFScanlineSize(poGDS->hTIFF));
+        if( poGDS->pabyBlockBuf == NULL )
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate " CPL_FRMT_GUIB " bytes.",
+                         (GUIntBig)TIFFScanlineSize(poGDS->hTIFF));
+            return CE_Failure;
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Read through to target scanline.                                */
