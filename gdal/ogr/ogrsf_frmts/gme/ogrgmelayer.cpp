@@ -55,6 +55,7 @@ OGRGMELayer::OGRGMELayer(OGRGMEDataSource* poDS,
     osTableId = pszTableId;
     bInTransaction = false;
     m_poFilterGeom = NULL;
+    iGxIdField = -1;
 }
 
 
@@ -75,6 +76,7 @@ OGRGMELayer::OGRGMELayer(OGRGMEDataSource* poDS,
     osProjectId = CSLFetchNameValue( papszOptions, "projectId" );
     osDraftACL = CSLFetchNameValueDef( papszOptions, "draftAccessList", "Map Editors" );
     osPublishedACL = CSLFetchNameValueDef( papszOptions, "publishedAccessList", "Map Viewers" );
+    iGxIdField = -1;
     // TODO: support tags and description
 }
 
@@ -738,10 +740,18 @@ OGRErr OGRGMELayer::CreateFeature( OGRFeature *poFeature )
             poFeature->SetField( iGxIdField, osGxId.c_str() );
         }
     }
-    omnosIdToGMEKey[poFeature->GetFID()] = osGxId;
-    omnpoInsertedFeatures[nFID] = poFeature->Clone();
 
     if (bInTransaction) {
+        unsigned int iBatchSize = GetBatchPatchSize();
+        if (omnpoInsertedFeatures.size() >= iBatchSize) {
+            CPLDebug("GME", "BatchInsert, reached BatchSize of %d", iBatchSize);
+            OGRErr iBatchInsertResult = BatchInsert();
+            if (iBatchInsertResult != OGRERR_NONE) {
+                return iBatchInsertResult;
+            }
+        }
+        omnosIdToGMEKey[poFeature->GetFID()] = osGxId;
+        omnpoInsertedFeatures[nFID] = poFeature->Clone();
         CPLDebug("GME", "In Transaction, added feature to memory only");
         bDirty = true;
         return OGRERR_NONE;
@@ -770,6 +780,14 @@ OGRErr OGRGMELayer::SetFeature( OGRFeature *poFeature )
             CPLDebug("GME", "Updated Feature %ld in Transaction", nFID);
         }
         else {
+            unsigned int iBatchSize = GetBatchPatchSize();
+            if (omnpoUpdatedFeatures.size() >= iBatchSize) {
+                CPLDebug("GME", "BatchPatch, reached BatchSize of %d", iBatchSize);
+                OGRErr iBatchInsertResult = BatchPatch();
+                if (iBatchInsertResult != OGRERR_NONE) {
+                    return iBatchInsertResult;
+                }
+            }
             CPLDebug("GME", "In Transaction, add update to Transaction");
             bDirty = true;
             omnpoUpdatedFeatures[nFID] = poFeature->Clone();
@@ -797,6 +815,14 @@ OGRErr OGRGMELayer::DeleteFeature( long nFID )
             CPLDebug("GME", "Found %ld in omnpoInsertedFeatures", nFID);
         }
         else {
+            unsigned int iBatchSize = GetBatchPatchSize();
+            if (oListOfDeletedFeatures.size() >= iBatchSize) {
+                CPLDebug("GME", "BatchDelete, reached BatchSize of %d", iBatchSize);
+                OGRErr iBatchResult = BatchDelete();
+                if (iBatchResult != OGRERR_NONE) {
+                    return iBatchResult;
+                }
+            }
             CPLDebug("GME", "In Transaction, adding feature to List");
             bDirty = true;
             oListOfDeletedFeatures.push_back(nFID); 
@@ -903,11 +929,16 @@ bool OGRGMELayer::CreateTableIfNotCreated()
 
     for (int iOGRField = 0; iOGRField < poFeatureDefn->GetFieldCount(); iOGRField++ )
     {
-        if (iOGRField == iGxIdField)
+        if ((iOGRField == iGxIdField) && (iGxIdField >= 0))
             continue; // don't create the gx_id field.
+        const char *pszFieldName = poFeatureDefn->GetFieldDefn(iOGRField)->GetNameRef();
+        if (EQUAL(pszFieldName, "gx_id")) {
+            iGxIdField = iOGRField;
+            continue;
+        }
         json_object *pjoColumn = json_object_new_object();
         json_object *pjoFieldName =
-            json_object_new_string( poFeatureDefn->GetFieldDefn(iOGRField)->GetNameRef() );
+            json_object_new_string( pszFieldName );
         json_object *pjoFieldType;
 
         switch(poFeatureDefn->GetFieldDefn(iOGRField)->GetType()) {
@@ -1014,7 +1045,7 @@ OGRErr OGRGMELayer::CommitTransaction()
 {
     if (!bInTransaction)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Should be in transaction");
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot commit, not in transaction");
         return OGRERR_FAILURE;
     }
     bInTransaction = FALSE;
@@ -1029,7 +1060,7 @@ OGRErr OGRGMELayer::RollbackTransaction()
 {
     if (!bInTransaction)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Should be in transaction");
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot rollback, not in transaction.");
         return OGRERR_FAILURE;
     }
     bInTransaction = FALSE;
