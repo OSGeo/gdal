@@ -110,6 +110,7 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
     if (*buf == NULL)
     {
         *buf = Py_None;
+        if( !bUseExceptions ) PyErr_Clear();
         CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
         return 0;
     }
@@ -126,6 +127,7 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
     *buf = (void *)PyString_FromStringAndSize( NULL, buf_size ); 
     if (*buf == NULL)
     {
+        if( !bUseExceptions ) PyErr_Clear();
         CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
         return 0;
     }
@@ -203,6 +205,7 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
     if (*buf == NULL)
     {
         *buf = Py_None;
+        if( !bUseExceptions ) PyErr_Clear();
         CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
         return CE_Failure;
     }
@@ -211,6 +214,7 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
     *buf = (void *)PyString_FromStringAndSize( NULL, buf_size ); 
     if (*buf == NULL)
     {
+        if( !bUseExceptions ) PyErr_Clear();
         CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
         return CE_Failure;
     }
@@ -243,6 +247,7 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
     if (*buf == NULL)
     {
         *buf = Py_None;
+        if( !bUseExceptions ) PyErr_Clear();
         CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
         return CE_Failure;
     }
@@ -251,6 +256,7 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
     *buf = (void *)PyString_FromStringAndSize( NULL, buf_size ); 
     if (*buf == NULL)
     {
+        if( !bUseExceptions ) PyErr_Clear();
         CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
         return CE_Failure;
     }
@@ -409,6 +415,7 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
     *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size ); 
     if (*buf == NULL)
     {
+        if( !bUseExceptions ) PyErr_Clear();
         CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
         return CE_Failure;
     }
@@ -417,6 +424,7 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
     *buf = (void *)PyString_FromStringAndSize( NULL, buf_size ); 
     if (*buf == NULL)
     {
+        if( !bUseExceptions ) PyErr_Clear();
         CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
         return CE_Failure;
     }
