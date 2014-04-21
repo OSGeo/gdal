@@ -4712,9 +4712,11 @@ def tiff_write_125():
     ds = None
 
     ds = gdal.Open('/vsimem/tiff_write_125.tif')
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds.GetRasterBand(1).ReadBlock(0,0)
-    gdal.PopErrorHandler()
+    # Will not open on 32-bit due to overflow
+    if ds is not None:
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
+        ds.GetRasterBand(1).ReadBlock(0,0)
+        gdal.PopErrorHandler()
 
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_125.tif')
 
