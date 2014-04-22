@@ -282,12 +282,18 @@ int GTIFF_CanCopyFromJPEG(GDALDataset* poSrcDS, char** &papszCreateOptions)
     if (!bCompatiblePhotometric)
         return FALSE;
 
+    const char* pszInterleave = CSLFetchNameValue(papszCreateOptions, "INTERLEAVE");
+    int bCompatibleInterleave = ( pszInterleave == NULL ||
+                                  (nBands == 3 && EQUAL(pszInterleave, "PIXEL")) ||
+                                  nBands == 1 );
+    if( !bCompatibleInterleave )
+        return FALSE;
+
     if ( (nBlockXSize == nXSize || (nBlockXSize % nMCUSize) == 0) &&
          (nBlockYSize == nYSize || (nBlockYSize % nMCUSize) == 0) &&
          poSrcDS->GetRasterBand(1)->GetRasterDataType() == GDT_Byte &&
          CSLFetchNameValue(papszCreateOptions, "NBITS") == NULL &&
-         CSLFetchNameValue(papszCreateOptions, "JPEG_QUALITY") == NULL &&
-         bCompatiblePhotometric )
+         CSLFetchNameValue(papszCreateOptions, "JPEG_QUALITY") == NULL )
     {
         if (nMCUSize == 16 && pszPhotometric == NULL)
             papszCreateOptions = CSLSetNameValue(papszCreateOptions, "PHOTOMETRIC", "YCBCR");

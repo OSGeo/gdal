@@ -4239,6 +4239,12 @@ def tiff_write_110():
 def tiff_write_111():
     return tiff_write_106(filename = '../gdrivers/data/albania.jpg' , options = ['COMPRESS=JPEG', 'BLOCKYSIZE=260'])
 
+def tiff_write_111_bis():
+    return tiff_write_106(filename = '../gdrivers/data/albania.jpg' , options = ['COMPRESS=JPEG', 'BLOCKYSIZE=260', 'INTERLEAVE=PIXEL'])
+
+def tiff_write_111_ter():
+    return tiff_write_106(filename = '../gdrivers/data/albania.jpg' , options = ['COMPRESS=JPEG', 'BLOCKYSIZE=260', 'INTERLEAVE=BAND'], check_cs = False)
+
 # Tiled organization of YCbCr does *NOT* give exact pixels w.r.t. original image
 def tiff_write_112():
     return tiff_write_106(filename = '../gdrivers/data/albania.jpg' , options = ['COMPRESS=JPEG', 'TILED=YES'], check_cs = False)
@@ -4862,6 +4868,8 @@ gdaltest_list = [
     tiff_write_109,
     tiff_write_110,
     tiff_write_111,
+    tiff_write_111_bis,
+    tiff_write_111_ter,
     tiff_write_112,
     tiff_write_113,
     tiff_write_114,
