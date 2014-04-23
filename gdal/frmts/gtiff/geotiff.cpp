@@ -543,7 +543,8 @@ GTiffJPEGOverviewDS::GTiffJPEGOverviewDS(GTiffDataset* poParentDS, int nOverview
     const GByte abyAdobeAPP14RGB[] = {
         0xFF, 0xEE, 0x00, 0x0E, 0x41, 0x64, 0x6F, 0x62, 0x65, 0x00,
         0x64, 0x00, 0x00, 0x00, 0x00, 0x00 };
-    int bAddAdobe = ( poParentDS->nPhotometric != PHOTOMETRIC_YCBCR && poParentDS->nBands == 3 );
+    int bAddAdobe = ( poParentDS->nPlanarConfig == PLANARCONFIG_CONTIG &&
+                      poParentDS->nPhotometric != PHOTOMETRIC_YCBCR && poParentDS->nBands == 3 );
     pabyJPEGTable = (GByte*) CPLMalloc(nJPEGTableSize + ((bAddAdobe) ? sizeof(abyAdobeAPP14RGB) : 0));
     memcpy(pabyJPEGTable, pJPEGTable, nJPEGTableSize);
     if( bAddAdobe )
@@ -2288,6 +2289,102 @@ const char *GTiffRasterBand::GetMetadataItem( const char * pszName,
                                               const char * pszDomain )
 
 {
+    if( pszName != NULL && pszDomain != NULL && EQUAL(pszDomain, "TIFF") )
+    {
+        int nBlockXOff, nBlockYOff;
+
+        if( EQUAL(pszName, "JPEGTABLES") )
+        {
+            if( !poGDS->SetDirectory() )
+                return NULL;
+
+            uint32 nJPEGTableSize = 0;
+            void* pJPEGTable = NULL;
+            if( TIFFGetField(poGDS->hTIFF, TIFFTAG_JPEGTABLES, &nJPEGTableSize, &pJPEGTable) != 1 ||
+                pJPEGTable == NULL || (int)nJPEGTableSize <= 0 )
+            {
+                return NULL;
+            }
+            char* pszHex = CPLBinaryToHex( nJPEGTableSize, (const GByte*)pJPEGTable );
+            const char* pszReturn = CPLSPrintf("%s", pszHex);
+            CPLFree(pszHex);
+            return pszReturn;
+        }
+        else if( sscanf(pszName, "BLOCK_OFFSET_%d_%d", &nBlockXOff, &nBlockYOff) == 2 )
+        {
+            if( !poGDS->SetDirectory() )
+                return NULL;
+
+            int nBlocksPerRow = DIV_ROUND_UP(poGDS->nRasterXSize, poGDS->nBlockXSize);
+            int nBlocksPerColumn = DIV_ROUND_UP(poGDS->nRasterYSize, poGDS->nBlockYSize);
+            if( nBlockXOff < 0 || nBlockXOff >= nBlocksPerRow ||
+                nBlockYOff < 0 || nBlockYOff >= nBlocksPerColumn )
+                return NULL;
+
+            int nBlockId = nBlockYOff * nBlocksPerRow + nBlockXOff;
+            if( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE )
+            {
+                nBlockId += (nBand-1) * poGDS->nBlocksPerBand;
+            }
+
+            if( !poGDS->IsBlockAvailable(nBlockId) )
+            {
+                return NULL;
+            }
+
+            toff_t *panOffsets = NULL;
+            TIFF* hTIFF = poGDS->hTIFF;
+            if( (( TIFFIsTiled( hTIFF ) 
+                && TIFFGetField( hTIFF, TIFFTAG_TILEOFFSETS, &panOffsets ) )
+                || ( !TIFFIsTiled( hTIFF ) 
+                && TIFFGetField( hTIFF, TIFFTAG_STRIPOFFSETS, &panOffsets ) )) &&
+                panOffsets != NULL )
+            {
+                return CPLSPrintf(CPL_FRMT_GUIB, panOffsets[nBlockId]);
+            }
+            else
+            {
+                return NULL;
+            }
+        }
+        else if( sscanf(pszName, "BLOCK_SIZE_%d_%d", &nBlockXOff, &nBlockYOff) == 2 )
+        {
+            if( !poGDS->SetDirectory() )
+                return NULL;
+
+            int nBlocksPerRow = DIV_ROUND_UP(poGDS->nRasterXSize, poGDS->nBlockXSize);
+            int nBlocksPerColumn = DIV_ROUND_UP(poGDS->nRasterYSize, poGDS->nBlockYSize);
+            if( nBlockXOff < 0 || nBlockXOff >= nBlocksPerRow ||
+                nBlockYOff < 0 || nBlockYOff >= nBlocksPerColumn )
+                return NULL;
+
+            int nBlockId = nBlockYOff * nBlocksPerRow + nBlockXOff;
+            if( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE )
+            {
+                nBlockId += (nBand-1) * poGDS->nBlocksPerBand;
+            }
+
+            if( !poGDS->IsBlockAvailable(nBlockId) )
+            {
+                return NULL;
+            }
+
+            toff_t *panByteCounts = NULL;
+            TIFF* hTIFF = poGDS->hTIFF;
+            if( (( TIFFIsTiled( hTIFF ) 
+                && TIFFGetField( hTIFF, TIFFTAG_TILEBYTECOUNTS, &panByteCounts ) )
+                || ( !TIFFIsTiled( hTIFF ) 
+                && TIFFGetField( hTIFF, TIFFTAG_STRIPBYTECOUNTS, &panByteCounts ) )) &&
+                panByteCounts != NULL )
+            {
+                return CPLSPrintf(CPL_FRMT_GUIB, panByteCounts[nBlockId]);
+            }
+            else
+            {
+                return NULL;
+            }
+        }
+    }
     return oGTiffMDMD.GetMetadataItem( pszName, pszDomain );
 }
 
