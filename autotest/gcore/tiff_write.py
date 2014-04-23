@@ -4850,6 +4850,31 @@ def tiff_write_126():
             return 'fail'
         ds = None
 
+        gdaltest.tiff_drv.Delete('/vsimem/tiff_write_126.tif')
+
+    # Test single-strip, opened as split band
+    src_ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_126_src.tif', 8, 2001)
+    src_ds.GetRasterBand(1).Fill(255)
+    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_126.tif', src_ds, options = ['COMPRESS=JPEG', 'BLOCKYSIZE=2001'])
+    src_ds = None
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_126_src.tif')
+    ds = None
+
+    ds = gdal.Open('/vsimem/tiff_write_126.tif')
+    if ds.GetRasterBand(1).GetBlockSize() != [8,1]:
+        print(ds.GetRasterBand(1).GetBlockSize())
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ovr_ds = ds.GetRasterBand(1).GetOverview(1).GetDataset()
+    ovr_1_data = ovr_ds.ReadRaster(0,0,ovr_ds.RasterXSize,ovr_ds.RasterYSize,1,1)
+    subsampled_data = ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize,1,1)
+    if ovr_1_data != subsampled_data:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_126.tif')
+
     return 'success'
 
 ###############################################################################
