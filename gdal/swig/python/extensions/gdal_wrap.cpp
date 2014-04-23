@@ -4448,6 +4448,9 @@ CPLErr WriteRaster_internal( GDALRasterBandShadow *obj,
 		        (void *) buffer, buf_xsize, buf_ysize, buf_type, pixel_space, line_space );
 }
 
+SWIGINTERN GDALDatasetShadow *GDALRasterBandShadow_GetDataset(GDALRasterBandShadow *self){
+    return (GDALDatasetShadow*) GDALGetBandDataset(self);
+  }
 SWIGINTERN int GDALRasterBandShadow_GetBand(GDALRasterBandShadow *self){
     return GDALGetBandNumber(self);
   }
@@ -14215,6 +14218,39 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_Band_GetDataset(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  GDALDatasetShadow *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:Band_GetDataset",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Band_GetDataset" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRasterBandShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (GDALDatasetShadow *)GDALRasterBandShadow_GetDataset(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_Band_GetBand(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
@@ -23255,6 +23291,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Band_XSize_get", _wrap_Band_XSize_get, METH_VARARGS, (char *)"Band_XSize_get(Band self) -> int"},
 	 { (char *)"Band_YSize_get", _wrap_Band_YSize_get, METH_VARARGS, (char *)"Band_YSize_get(Band self) -> int"},
 	 { (char *)"Band_DataType_get", _wrap_Band_DataType_get, METH_VARARGS, (char *)"Band_DataType_get(Band self) -> GDALDataType"},
+	 { (char *)"Band_GetDataset", _wrap_Band_GetDataset, METH_VARARGS, (char *)"Band_GetDataset(Band self) -> Dataset"},
 	 { (char *)"Band_GetBand", _wrap_Band_GetBand, METH_VARARGS, (char *)"Band_GetBand(Band self) -> int"},
 	 { (char *)"Band_GetBlockSize", _wrap_Band_GetBlockSize, METH_VARARGS, (char *)"Band_GetBlockSize(Band self)"},
 	 { (char *)"Band_GetColorInterpretation", _wrap_Band_GetColorInterpretation, METH_VARARGS, (char *)"Band_GetColorInterpretation(Band self) -> GDALColorInterp"},

@@ -991,6 +991,10 @@ class Band(MajorObject):
     if _newclass:YSize = _swig_property(_gdal.Band_YSize_get)
     __swig_getmethods__["DataType"] = _gdal.Band_DataType_get
     if _newclass:DataType = _swig_property(_gdal.Band_DataType_get)
+    def GetDataset(self, *args):
+        """GetDataset(self) -> Dataset"""
+        return _gdal.Band_GetDataset(self, *args)
+
     def GetBand(self, *args):
         """GetBand(self) -> int"""
         return _gdal.Band_GetBand(self, *args)
