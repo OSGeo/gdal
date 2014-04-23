@@ -1189,6 +1189,48 @@ def tiff_read_bigtiff():
 
     return 'success'
 
+###############################################################################
+# Test reading in TIFF metadata domain
+
+def tiff_read_tiff_metadata():
+
+    md = gdal.GetDriverByName('GTiff').GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
+        return 'skip'
+
+    ds = gdal.Open('data/stefan_full_rgba_jpeg_contig.tif')
+    if ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') != '254':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetMetadataItem('BLOCK_SIZE_0_0', 'TIFF') != '770':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetMetadataItem('JPEGTABLES', 'TIFF').find('FFD8') != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_100_0', 'TIFF') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_0_100', 'TIFF') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetMetadataItem('BLOCK_SIZE_100_0', 'TIFF') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetMetadataItem('BLOCK_SIZE_0_100', 'TIFF') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = gdal.Open('data/stefan_full_rgba_jpeg_separate.tif')
+    if ds.GetRasterBand(4).GetMetadataItem('BLOCK_OFFSET_0_2', 'TIFF') != '11071':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(4).GetMetadataItem('BLOCK_SIZE_0_2', 'TIFF') != '188':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################################
 
 for item in init_list:
@@ -1241,6 +1283,7 @@ gdaltest_list.append( (tiff_read_online_1) )
 gdaltest_list.append( (tiff_read_online_2) )
 gdaltest_list.append( (tiff_read_huge4GB) )
 gdaltest_list.append( (tiff_read_bigtiff) )
+gdaltest_list.append( (tiff_read_tiff_metadata) )
 
 if __name__ == '__main__':
 
