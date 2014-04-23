@@ -719,7 +719,7 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff, void *
         {
             /* If the previous file was opened as a /vsisparse/, we have to re-open */
             if( poGDS->poJPEGDS != NULL &&
-                strncmp(poGDS->poJPEGDS->GetDescription(), "/vsisparse/", strlen("/vsisparse"/)) == 0 )
+                strncmp(poGDS->poJPEGDS->GetDescription(), "/vsisparse/", strlen("/vsisparse/")) == 0 )
             {
                 GDALClose( (GDALDatasetH) poGDS->poJPEGDS );
                 poGDS->poJPEGDS = NULL;
