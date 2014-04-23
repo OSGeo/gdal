@@ -195,6 +195,12 @@ public:
   GDALDataType DataType;
 %mutable;
 
+  /* Interface method added for GDAL 1.12.0 */
+  GDALDatasetShadow* GetDataset()
+  {
+    return (GDALDatasetShadow*) GDALGetBandDataset(self);
+  }
+
   /* Interface method added for GDAL 1.7.0 */
   int GetBand()
   {
