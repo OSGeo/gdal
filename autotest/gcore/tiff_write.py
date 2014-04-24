@@ -4875,6 +4875,41 @@ def tiff_write_126():
 
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_126.tif')
 
+    # Test with completely sparse file
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_126.tif', 1024, 1024, options = ['COMPRESS=JPEG', 'SPARSE_OK=YES'])
+    ds = None
+
+    ds = gdal.Open('/vsimem/tiff_write_126.tif')
+    # We don't even have JPEGTABLES !
+    if ds.GetRasterBand(1).GetOverview(0) is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetMetadataItem('JPEGTABLES', 'TIFF') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetMetadataItem('BLOCK_SIZE_0_0', 'TIFF') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_126.tif')
+
+    # Test with partially sparse file
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_126.tif', 1024, 1024, 3, options = ['COMPRESS=JPEG', 'SPARSE_OK=YES', 'INTERLEAVE=BAND'])
+    ds.GetRasterBand(1).Fill(0)
+    ds = None
+
+    ds = gdal.Open('/vsimem/tiff_write_126.tif')
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    if cs != 0:
+        print(cs)
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_126.tif')
+
     return 'success'
 
 ###############################################################################
