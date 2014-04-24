@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -125,7 +126,7 @@ def http_3():
 ###############################################################################
 # Verify /vsicurl (ftp)
 
-def http_4():
+def http_4_old():
 
     try:
         drv = gdal.GetDriverByName( 'HTTP' )
@@ -159,6 +160,35 @@ def http_4():
     return 'success'
 
 ###############################################################################
+# Verify /vsicurl (ftp)
+
+def http_4():
+
+    try:
+        drv = gdal.GetDriverByName( 'HTTP' )
+    except:
+        drv = None
+
+    if drv is None:
+        return 'skip'
+
+    ds = gdal.Open('/vsicurl/ftp://ftp.remotesensing.org/gdal/data/gtiff/utm.tif')
+    if ds is None:
+        conn = gdaltest.gdalurlopen('ftp://ftp.remotesensing.org/gdal/data/gtiff/utm.tif')
+        if conn is None:
+            print('cannot open URL')
+            return 'skip'
+        conn.close()
+        return 'fail'
+
+    filelist = ds.GetFileList()
+    if '/vsicurl/ftp://ftp.remotesensing.org/gdal/data/gtiff/utm.tif' not in filelist:
+        print(filelist)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 
 def http_cleanup():
@@ -171,6 +201,7 @@ def http_cleanup():
 gdaltest_list = [ http_1,
                   http_2,
                   http_3,
+                  #http_4_old,
                   http_4,
                   http_cleanup ]
 
