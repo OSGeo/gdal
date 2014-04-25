@@ -4898,7 +4898,8 @@ def tiff_write_126():
 
     # Test with partially sparse file
     ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_126.tif', 1024, 1024, 3, options = ['COMPRESS=JPEG', 'SPARSE_OK=YES', 'INTERLEAVE=BAND'])
-    ds.GetRasterBand(1).Fill(0)
+    # Fill band 3, but let blocks of band 1 unwritten.
+    ds.GetRasterBand(3).Fill(0)
     ds = None
 
     ds = gdal.Open('/vsimem/tiff_write_126.tif')

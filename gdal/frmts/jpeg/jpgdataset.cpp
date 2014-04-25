@@ -1572,6 +1572,7 @@ void JPGDataset::Restart()
 
 {
     J_COLOR_SPACE colorSpace = sDInfo.out_color_space;
+    J_COLOR_SPACE jpegColorSpace = sDInfo.jpeg_color_space;
 
     jpeg_abort_decompress( &sDInfo );
     jpeg_destroy_decompress( &sDInfo );
@@ -1593,8 +1594,32 @@ void JPGDataset::Restart()
     sDInfo.out_color_space = colorSpace;
     nLoadedScanline = -1;
     SetScaleNumAndDenom();
-    jpeg_start_decompress( &sDInfo );
-    bHasDoneJpegStartDecompress = TRUE;
+
+    /* The following errors could happen when "recycling" an existing dataset */
+    /* particularly when triggered by the implicit overviews of JPEG-in-TIFF */
+    /* with a corrupted TIFF file */
+    if( nRasterXSize != (int)(sDInfo.image_width + nScaleFactor - 1) / nScaleFactor ||
+        nRasterYSize != (int)(sDInfo.image_height + nScaleFactor - 1) / nScaleFactor )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Unexpected image dimension (%d x %d), where as (%d x %d) was expected",
+                 (int)(sDInfo.image_width + nScaleFactor - 1) / nScaleFactor,
+                 (int)(sDInfo.image_height + nScaleFactor - 1) / nScaleFactor,
+                 nRasterXSize, nRasterYSize);
+        bHasDoneJpegStartDecompress = FALSE;
+    }
+    else if( jpegColorSpace != sDInfo.jpeg_color_space )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Unexpected jpeg color space : %d",
+                 sDInfo.jpeg_color_space);
+        bHasDoneJpegStartDecompress = FALSE;
+    }
+    else
+    {
+        jpeg_start_decompress( &sDInfo );
+        bHasDoneJpegStartDecompress = TRUE;
+    }
 }
 
 #if !defined(JPGDataset)
