@@ -1231,6 +1231,35 @@ def tiff_read_tiff_metadata():
 
     return 'success'
 
+###############################################################################
+# Test reading a JPEG-in-TIFF with tiles of irregular size (corrupted image)
+
+def tiff_read_irregular_tile_size_jpeg_in_tiff():
+
+    md = gdal.GetDriverByName('GTiff').GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
+        return 'skip'
+
+    ds = gdal.Open('data/irregular_tile_size_jpeg_in_tiff.tif')
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds.GetRasterBand(1).Checksum()
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorType() == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds.GetRasterBand(1).GetOverview(0).Checksum()
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorType() == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.ErrorReset()
+
+    return 'success'
+
 ###############################################################################################
 
 for item in init_list:
@@ -1284,6 +1313,7 @@ gdaltest_list.append( (tiff_read_online_2) )
 gdaltest_list.append( (tiff_read_huge4GB) )
 gdaltest_list.append( (tiff_read_bigtiff) )
 gdaltest_list.append( (tiff_read_tiff_metadata) )
+gdaltest_list.append( (tiff_read_irregular_tile_size_jpeg_in_tiff) )
 
 if __name__ == '__main__':
 

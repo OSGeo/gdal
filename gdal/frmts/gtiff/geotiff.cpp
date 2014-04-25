@@ -788,7 +788,14 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff, void *
         {
             /* Trick: we invalidate the JPEG dataset to force a reload */
             /* of the new content */
-            GDALFlushCache( poGDS->poJPEGDS );
+            CPLErrorReset();
+            poGDS->poJPEGDS->FlushCache();
+            if( CPLGetLastErrorNo() != 0 )
+            {
+                GDALClose( (GDALDatasetH) poGDS->poJPEGDS );
+                poGDS->poJPEGDS = NULL;
+                return CE_Failure;
+            }
             poGDS->nBlockId = nBlockId;
         }
     }
