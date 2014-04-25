@@ -20,27 +20,38 @@ With the usage of unified, documented geodata and the flexible exchange possibil
 <li>the contract-proof security and the availability of the software 
 </ul>
 
-OGR supports INTERLIS 1 and INTERLIS 2 (2.2 and 2.3).
+OGR supports INTERLIS 1 and INTERLIS 2 (2.2 and 2.3) with the following limitations:
+<ul>
+<li>Curves are converted to line segments
+<li>Embedded INTERLIS 2 structures are not supported yet
+<li>Incremental transfer is not supported
+<li>Transfer id (TID) is used as feature id
+</ul>
 
-<h2>Model</h2>
+<h2>Model support</h2>
 
-Data is read and written into transfer files which have different formats in INTERLIS 1 (.itf) and INTERLIS 2 (.xml).
-For using the INTERLIS model (.ili) a Java interpreter is needed at runtime and ili2c.jar (included in the 
-<a href="http://interlis.ch/interlis2/download23_e.php#outils">Compiler for INTERLIS 2</a>) must be in the Java path.
-The model file can be added to the transfer file seperated by a comma.<p>
+Data is read and written into transfer files which have different formats in INTERLIS 1 (.itf) and INTERLIS 2 (.xtf).
+
+Models are passed in IlisMeta format by using "a_filename.xtf,models.imd" as a connection string.<p>
+
+IlisMeta files can be be generated with the ili2c compiler. Command line example:
+<pre>
+java -jar ili2c.jar --ilidirs '%ILI_DIR;http://models.interlis.ch/;%JAR_DIR' -oIMD --out models.imd model1.ili [model2.ili ...]
+</pre>
+
 Some possible transformations using <a href="http://www.gdal.org/ogr/ogr2ogr.html">ogr2ogr</a>.<p>
 <ul>
 <li>
 Interlis 1 -> Shape:
 <pre>
-ogr2ogr -f "ESRI Shapefile" shpdir ili-bsp.itf,ili-bsp.ili
+ogr2ogr -f "ESRI Shapefile" shpdir ili-bsp.itf,Beispiel.imd
 </pre>
 </li>
 
 <li>
 Interlis 2 -> Shape:
 <pre>
-ogr2ogr -f "ESRI Shapefile" shpdir RoadsExdm2ien.xml,RoadsExdm2ben.ili,RoadsExdm2ien.ili
+ogr2ogr -f "ESRI Shapefile" shpdir RoadsExdm2ien.xml,RoadsExdm2ien.imd
 </pre>
 or without model:
 <pre>
@@ -49,24 +60,17 @@ ogr2ogr -f "ESRI Shapefile" shpdir RoadsExdm2ien.xml
 </li>
 
 <li>
-Shape -> Interlis 1:
-<pre>
-ogr2ogr -f "Interlis 1" ili-bsp.itf Bodenbedeckung__BoFlaechen_Form.shp
-</pre>
-</li>
-
-<li>
 Shape -> Interlis 2:
 <pre>
-ogr2ogr -f "Interlis 2" LandCover.xml,RoadsExdm2ben.ili RoadsExdm2ben_10.Roads.LandCover.shp
+ogr2ogr -f "Interlis 2" LandCover.xml,RoadsExdm2ien.imd RoadsExdm2ben.Roads.LandCover.shp
 </pre>
 </li>
 
 <li>
-Incremental import from Interlis 1 into PostGIS:
+Importing multiple Interlis 1 files into PostGIS:
 <pre>
-ogr2ogr -f PostgreSQL PG:dbname=warmerda av_fixpunkte_ohne_LFPNachfuehrung.itf,av.ili -lco OVERWRITE=yes
-ogr2ogr -f PostgreSQL PG:dbname=warmerda av_fixpunkte_mit_LFPNachfuehrung.itf,av.ili -append
+ogr2ogr -f PostgreSQL PG:dbname=warmerda av_fixpunkte_ohne_LFPNachfuehrung.itf,av.imd -lco OVERWRITE=yes
+ogr2ogr -f PostgreSQL PG:dbname=warmerda av_fixpunkte_mit_LFPNachfuehrung.itf,av.imd -append
 </pre>
 </li>
 </ul>
@@ -78,12 +82,18 @@ INTERLIS arc geometries are converted to polygons.<br></br>
 The interpolation angle can be changed with the environment variable ARC_DEGREES (Default: 1 degree).<br></br>
 
 
+<h3>OGR versions prior to 1.11</h3>
+
+For using the INTERLIS model (.ili) a Java interpreter is needed at runtime and ili2c.jar (included in the 
+<a href="http://interlis.ch/interlis2/download23_e.php#outils">Compiler for INTERLIS 2</a>) must be in the Java path.<p>
+
+
 <h2>Other Notes</h2>
 <ul>
-<li>More Information: <a href="http://giswiki.hsr.ch/OGR">http://giswiki.hsr.ch/OGR</a> (german)</li>
-<li> Development of the OGR INTERLIS driver was supported by 
+<li><a href="https://github.com/sourcepole/ogrtools">ogrtools</a> library includes extensions for the OGR Interlis driver</li>
+<li>Development of the OGR INTERLIS driver was supported by 
 <a href="http://www.kogis.ch/">Swiss Federal Administration</a>,  
-<a href="http://www.so.ch/de/pub/departemente/bjd/gis.htm">Canton Solothurn</a> and 
+<a href="http://www.sogis.ch/">Canton Solothurn</a> and 
 <a href="http://www.geoinformation.tg.ch/">Canton Thurgovia</a>.</li> 
 </ul>
 
