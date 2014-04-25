@@ -4742,7 +4742,7 @@ def tiff_write_126():
     options_list = [ (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR'], [48788], [61397], [29605], [10904]),
                      (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'TILED=YES'], [48788], [61397], [29605], [10904]),
                      (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'BLOCKYSIZE=800'], [48788], [61397], [29605], [10904]),
-                     (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'BLOCKYSIZE=32'], [48788], [61397], [29605], [10904]),
+                     (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'BLOCKYSIZE=64'], [48788], [61397], [29605], [10904]),
                      (['COMPRESS=JPEG'], [49887], [59311], [30829], [11664]),
                      (['COMPRESS=JPEG', 'INTERLEAVE=BAND'], [49887], [59311], [30829], [11664]),
                      (['COMPRESS=JPEG', 'INTERLEAVE=BAND', 'TILED=YES'], [49887], [59311], [30829], [11664]),
