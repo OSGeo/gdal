@@ -729,6 +729,7 @@ JPEGFixupTagsSubsampling(TIFF* tif)
         _TIFFFillStriles( tif );
         
         if( tif->tif_dir.td_stripbytecount == NULL
+            || tif->tif_dir.td_stripoffset == NULL
             || tif->tif_dir.td_stripbytecount[0] == 0 )
         {
             /* Do not even try to check if the first strip/tile does not
