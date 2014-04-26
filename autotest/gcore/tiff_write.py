@@ -2514,47 +2514,51 @@ def tiff_write_74():
         sys.stdout.write('(12bit jpeg not available) ... ')
         return 'skip'
 
-    drv = gdal.GetDriverByName('GTiff')
-    dst_ds = drv.CreateCopy( 'tmp/test_74.tif', ds,
-                             options = ['COMPRESS=JPEG', 'NBITS=12',
-                                        'JPEG_QUALITY=95',
-                                        'PHOTOMETRIC=YCBCR'] )
+    for photometric in ('YCBCR', 'RGB') :
 
-    ds = None
-    dst_ds = None
+        drv = gdal.GetDriverByName('GTiff')
+        dst_ds = drv.CreateCopy( 'tmp/test_74.tif', ds,
+                                options = ['COMPRESS=JPEG', 'NBITS=12',
+                                            'JPEG_QUALITY=95',
+                                            'PHOTOMETRIC=' + photometric] )
+        dst_ds = None
 
-    dst_ds = gdal.Open( 'tmp/test_74.tif' )
-    stats = dst_ds.GetRasterBand(1).GetStatistics( 0, 1 )
+        dst_ds = gdal.Open( 'tmp/test_74.tif' )
+        stats = dst_ds.GetRasterBand(1).GetStatistics( 0, 1 )
 
-    if stats[2] < 2150 or stats[2] > 2180:
-        gdaltest.post_reason( 'did not get expected mean for band1.')
-        print(stats)
-        return 'fail'
+        if stats[2] < 2150 or stats[2] > 2180:
+            gdaltest.post_reason( 'did not get expected mean for band1.')
+            print(stats)
+            print(photometric)
+            return 'fail'
 
-    try:
-        compression = dst_ds.GetMetadataItem('COMPRESSION','IMAGE_STRUCTURE')
-    except:
-        md = dst_ds.GetMetadata('IMAGE_STRUCTURE')
-        compression = md['COMPRESSION']
+        try:
+            compression = dst_ds.GetMetadataItem('COMPRESSION','IMAGE_STRUCTURE')
+        except:
+            md = dst_ds.GetMetadata('IMAGE_STRUCTURE')
+            compression = md['COMPRESSION']
 
-    if compression != 'YCbCr JPEG':
-        gdaltest.post_reason( 'did not get expected COMPRESSION value' )
-        print(('COMPRESSION="%s"' % compression))
-        return 'fail'
+        if (photometric == 'YCBCR' and compression != 'YCbCr JPEG') or \
+           (photometric == 'RGB' and compression != 'JPEG'):
+            gdaltest.post_reason( 'did not get expected COMPRESSION value' )
+            print(('COMPRESSION="%s"' % compression))
+            print(photometric)
+            return 'fail'
 
-    try:
-        nbits = dst_ds.GetRasterBand(3).GetMetadataItem('NBITS','IMAGE_STRUCTURE')
-    except:
-        md = dst_ds.GetRasterBand(3).GetMetadata('IMAGE_STRUCTURE')
-        nbits = md['NBITS']
+        try:
+            nbits = dst_ds.GetRasterBand(3).GetMetadataItem('NBITS','IMAGE_STRUCTURE')
+        except:
+            md = dst_ds.GetRasterBand(3).GetMetadata('IMAGE_STRUCTURE')
+            nbits = md['NBITS']
 
-    if nbits != '12':
-        gdaltest.post_reason( 'did not get expected NBITS value' )
-        return 'fail'
+        if nbits != '12':
+            gdaltest.post_reason( 'did not get expected NBITS value' )
+            print(photometric)
+            return 'fail'
 
-    dst_ds = None
+        dst_ds = None
 
-    gdaltest.tiff_drv.Delete( 'tmp/test_74.tif' )
+        gdaltest.tiff_drv.Delete( 'tmp/test_74.tif' )
 
     return 'success'
 
