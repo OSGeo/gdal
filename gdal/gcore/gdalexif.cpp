@@ -251,6 +251,7 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Could not read all directories");
+        CPLFree(poTIFFDir);
         return CE_Failure;
     }
 
