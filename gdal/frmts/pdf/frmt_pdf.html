@@ -18,7 +18,7 @@ also optionally be drawn on top of the raster layer (see OGR_* creation options 
 GDAL must be compiled with libpoppler support (GPL-licensed), and libpoppler itself must have been configured with
 --enable-xpdf-headers so that the xpdf C++ headers are available. Note: the poppler C++ API isn't
 stable, so the driver compilation may fail with too old or too recent poppler versions.
-Successfully tested versions are poppler &gt;= 0.12.X and &lt;= 0.24.0.
+Successfully tested versions are poppler &gt;= 0.12.X and &lt;= 0.26.0.
 <p>
 Starting with GDAL 1.9.0, as an alternative, the PDF driver can be compiled against libpodofo (LGPL-licensed)
 to avoid the libpoppler dependency. This is sufficient to get the georeferencing information. However, for
