@@ -193,7 +193,7 @@ def test_gdaltindex_4():
 
     ds = ogr.Open('tmp/tileindex.shp')
     if ds.GetLayer(0).GetFeatureCount() != 5:
-        gdaltest.post_reason( 'got %d features, expecting 4' %  ds.GetLayer(0).GetFeatureCount() )
+        gdaltest.post_reason( 'got %d features, expecting 5' %  ds.GetLayer(0).GetFeatureCount() )
         return 'fail'
     ds.Destroy()
 
