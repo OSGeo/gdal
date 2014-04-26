@@ -56,10 +56,10 @@ static int nPSTTargetOffset = -1;
 /* ==================================================================== */
 /************************************************************************/
 
-class kdu_cpl_error_message : public kdu_message 
+class jpipkak_kdu_cpl_error_message : public kdu_message 
 {
 public: // Member classes
-    kdu_cpl_error_message( CPLErr eErrClass ) 
+    jpipkak_kdu_cpl_error_message( CPLErr eErrClass ) 
     {
         m_eErrClass = eErrClass;
         m_pszError = NULL;
@@ -468,10 +468,10 @@ void JPIPKAKDataset::Deinitialize()
 int JPIPKAKDataset::Initialize(const char* pszDatasetName, int bReinitializing )
 {
     // set up message handlers
-    kdu_cpl_error_message oErrHandler( CE_Failure );
-    kdu_cpl_error_message oWarningHandler( CE_Warning );
-    kdu_customize_warnings(new kdu_cpl_error_message( CE_Warning ) );
-    kdu_customize_errors(new kdu_cpl_error_message( CE_Failure ) );
+    jpipkak_kdu_cpl_error_message oErrHandler( CE_Failure );
+    jpipkak_kdu_cpl_error_message oWarningHandler( CE_Warning );
+    kdu_customize_warnings(new jpipkak_kdu_cpl_error_message( CE_Warning ) );
+    kdu_customize_errors(new jpipkak_kdu_cpl_error_message( CE_Failure ) );
 
     // create necessary http headers
     CPLString osHeaders = "HEADERS=Accept: jpp-stream";
