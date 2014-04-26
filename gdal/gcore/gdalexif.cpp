@@ -95,8 +95,12 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
   case TIFF_SSHORT: {
     register GInt16 *wp = (GInt16*)data;
     for(;count>0;count--) {
-      sprintf(pszTemp, "%s%d", sep, *wp++), sep = " ";
-      strcat(pszData,pszTemp);
+      sprintf(pszTemp, "%s%d", sep, *wp++);
+      sep = " ";
+      if (strlen(pszTemp) + pszDataEnd - pszData >= MAXSTRINGLENGTH)
+          break;
+      strcat(pszDataEnd,pszTemp);
+      pszDataEnd += strlen(pszDataEnd);
     }
     break;
   }
@@ -124,10 +128,10 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
     break;
   }
   case TIFF_RATIONAL: {
-      register GUInt32 *lp = (GUInt32*)data;
+    register GUInt32 *lp = (GUInt32*)data;
       //      if(bSwabflag)
       //      TIFFSwabArrayOfLong((GUInt32*) data, 2*count);
-      for(;count>0;count--) {
+    for(;count>0;count--) {
       if( (lp[0]==0) && (lp[1] == 0) ) {
           sprintf(pszTemp,"%s(0)",sep);
       }
@@ -137,9 +141,12 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
       }
       sep = " ";
       lp += 2;
-      strcat(pszData,pszTemp);
-      }
-      break;
+      if (strlen(pszTemp) + pszDataEnd - pszData >= MAXSTRINGLENGTH)
+          break;
+      strcat(pszDataEnd,pszTemp);
+      pszDataEnd += strlen(pszDataEnd);
+    }
+    break;
   }
   case TIFF_SRATIONAL: {
     register GInt32 *lp = (GInt32*)data;
@@ -251,6 +258,7 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Could not read all directories");
+        CPLFree(poTIFFDir);
         return CE_Failure;
     }
 
