@@ -1279,7 +1279,6 @@ def nitf_46_jp2ecw():
 def nitf_46_jp2mrsid():
     return nitf_46('JP2MrSID')
 
-# untested yet
 def nitf_46_jp2kak():
     return nitf_46('JP2KAK')
 
@@ -2474,7 +2473,6 @@ def nitf_online_15_jp2ecw():
 def nitf_online_15_jp2mrsid():
     return nitf_online_15('JP2MrSID')
 
-# untested yet
 def nitf_online_15_jp2kak():
     return nitf_online_15('JP2KAK')
 
@@ -2514,7 +2512,6 @@ def nitf_online_16(driver_to_test):
     elif ds.RasterCount == 1 and \
        ds.GetRasterBand(1).Checksum() == 47664 and \
        ds.GetRasterBand(1).GetRasterColorTable() != None:
-        print('strange, this driver does not do table color expansion... thats ok though')
         ret = 'success'
     else:
         print(ds.RasterCount)
@@ -2534,14 +2531,12 @@ def nitf_online_16_jp2ecw():
 def nitf_online_16_jp2mrsid():
     return nitf_online_16('JP2MrSID')
 
-# untested yet
 def nitf_online_16_jp2kak():
     return nitf_online_16('JP2KAK')
 
 def nitf_online_16_jasper():
     return nitf_online_16('JPEG2000')
 
-# color table unsupported by OpenJPEG
 def nitf_online_16_openjpeg():
     return nitf_online_16('JP2OpenJPEG')
 
@@ -2587,14 +2582,12 @@ def nitf_online_17_jp2ecw():
 def nitf_online_17_jp2mrsid():
     return nitf_online_17('JP2MrSID')
 
-# untested yet
 def nitf_online_17_jp2kak():
     return nitf_online_17('JP2KAK')
 
 def nitf_online_17_jasper():
     return nitf_online_17('JPEG2000')
 
-# color table unsupported by OpenJPEG
 def nitf_online_17_openjpeg():
     return nitf_online_17('JP2OpenJPEG')
 
@@ -3116,12 +3109,12 @@ gdaltest_list = [
     nitf_online_16_jp2mrsid,
     nitf_online_16_jp2kak,
     nitf_online_16_jasper,
-    #nitf_online_16_openjpeg,
+    nitf_online_16_openjpeg,
     nitf_online_17_jp2ecw,
     nitf_online_17_jp2mrsid,
     nitf_online_17_jp2kak,
     nitf_online_17_jasper,
-    #nitf_online_17_openjpeg,
+    nitf_online_17_openjpeg,
     nitf_online_18,
     nitf_online_19,
     nitf_online_20,
