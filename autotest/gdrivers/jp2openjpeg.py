@@ -708,13 +708,13 @@ def jp2openjpeg_online_5():
 
     ds = gdal.Open('tmp/cache/file9.jp2')
     cs1 = ds.GetRasterBand(1).Checksum()
-    cs2 = ds.GetRasterBand(2).Checksum()
-    cs3 = ds.GetRasterBand(3).Checksum()
-    if cs1 != 48954 or cs2 != 4939 or cs3 != 17734:
-        print(cs1, cs2, cs3)
+    if cs1 != 47664:
         gdaltest.post_reason('Did not get expected checksums')
+        print(cs1)
         return 'fail'
-        
+    if ds.GetRasterBand(1).GetColorTable() is None:
+        gdaltest.post_reason('Did not get expected color table')
+        return 'fail'
     ds = None
 
     return 'success'
@@ -773,7 +773,7 @@ gdaltest_list = [
     jp2openjpeg_online_2,
     jp2openjpeg_online_3,
     jp2openjpeg_online_4,
-    #jp2openjpeg_online_5,
+    jp2openjpeg_online_5,
     jp2openjpeg_online_6,
     jp2openjpeg_cleanup ]
 

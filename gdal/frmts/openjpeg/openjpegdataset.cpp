@@ -91,12 +91,27 @@ static void JP2OpenJPEGDataset_InfoCallback(const char *pszMsg, void *unused)
 static OPJ_SIZE_T JP2OpenJPEGDataset_Read(void* pBuffer, OPJ_SIZE_T nBytes,
                                        void *pUserData)
 {
+    vsi_l_offset nOffsetBefore =  VSIFTellL((VSILFILE*)pUserData);
     int nRet = VSIFReadL(pBuffer, 1, nBytes, (VSILFILE*)pUserData);
 #ifdef DEBUG_IO
     CPLDebug("OPENJPEG", "JP2OpenJPEGDataset_Read(%d) = %d", (int)nBytes, nRet);
 #endif
     if (nRet == 0)
         nRet = -1;
+    else if( nOffsetBefore == 0 && nBytes >= 4 )
+    {
+        /* Nasty hack : opj_get_decoded_tile() currently ignores
+          OPJ_DPARAMETERS_IGNORE_PCLR_CMAP_CDEF_FLAG, so we "hide" the jp2 boxes
+          that advertize a color table... */
+        for(OPJ_SIZE_T i=0;i<nBytes-4;i++)
+        {
+            if( memcmp((GByte*)pBuffer + i, "pclr", 4)==0 ||
+                memcmp((GByte*)pBuffer + i, "cmap", 4)==0 )
+            {
+                memcpy((GByte*)pBuffer +i, "XXXX", 4);
+            }
+        }
+    }
     return nRet;
 }
 
@@ -212,7 +227,8 @@ class JP2OpenJPEGDataset : public GDALJP2AbstractDataset
 class JP2OpenJPEGRasterBand : public GDALPamRasterBand
 {
     friend class JP2OpenJPEGDataset;
-    int bPromoteTo8Bit;
+    int             bPromoteTo8Bit;
+    GDALColorTable* poCT;
 
   public:
 
@@ -230,6 +246,7 @@ class JP2OpenJPEGRasterBand : public GDALPamRasterBand
                                   int nPixelSpace, int nLineSpace );
 
     virtual GDALColorInterp GetColorInterpretation();
+    virtual GDALColorTable* GetColorTable() { return poCT; }
 
     virtual int             GetOverviewCount();
     virtual GDALRasterBand* GetOverview(int iOvrLevel);
@@ -254,6 +271,7 @@ JP2OpenJPEGRasterBand::JP2OpenJPEGRasterBand( JP2OpenJPEGDataset *poDS, int nBan
     this->nBlockXSize = nBlockXSize;
     this->nBlockYSize = nBlockYSize;
     this->bPromoteTo8Bit = bPromoteTo8Bit;
+    poCT = NULL;
 
     if( (nBits % 8) != 0 )
         SetMetadataItem("NBITS",
@@ -267,6 +285,7 @@ JP2OpenJPEGRasterBand::JP2OpenJPEGRasterBand( JP2OpenJPEGDataset *poDS, int nBan
 
 JP2OpenJPEGRasterBand::~JP2OpenJPEGRasterBand()
 {
+    delete poCT;
 }
 
 /************************************************************************/
@@ -795,6 +814,9 @@ GDALColorInterp JP2OpenJPEGRasterBand::GetColorInterpretation()
 {
     JP2OpenJPEGDataset *poGDS = (JP2OpenJPEGDataset *) poDS;
 
+    if( poCT )
+        return GCI_PaletteIndex;
+
     if (poGDS->eColorSpace == OPJ_CLRSPC_GRAY)
         return GCI_GrayIndex;
     else if (poGDS->nBands == 3 || poGDS->nBands == 4)
@@ -1101,6 +1123,8 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
+    JP2OpenJPEGRasterBand* poFirstBand = NULL;
+
     for( iBand = 1; iBand <= poDS->nBands; iBand++ )
     {
         int bPromoteTo8Bit = (
@@ -1111,10 +1135,77 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
             psImage->comps[3].prec == 1 && 
             CSLTestBoolean(CPLGetConfigOption("JP2OPENJPEG_PROMOTE_1BIT_ALPHA_AS_8BIT", "YES")) );
 
-        poDS->SetBand( iBand, new JP2OpenJPEGRasterBand( poDS, iBand, eDataType,
-                                                         bPromoteTo8Bit ? 8: psImage->comps[iBand-1].prec,
-                                                         bPromoteTo8Bit,
-                                                         nTileW, nTileH) );
+        JP2OpenJPEGRasterBand* poBand =
+            new JP2OpenJPEGRasterBand( poDS, iBand, eDataType,
+                                        bPromoteTo8Bit ? 8: psImage->comps[iBand-1].prec,
+                                        bPromoteTo8Bit,
+                                        nTileW, nTileH);
+        if( iBand == 1 )
+            poFirstBand = poBand;
+        poDS->SetBand( iBand, poBand );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Look for color table.                                           */
+/* -------------------------------------------------------------------- */
+    if( eDataType == GDT_Byte && poDS->nBands == 1 )
+    {
+        GDALJP2Box oBox( fp );
+        if( oBox.ReadFirst() )
+        {
+            while( strlen(oBox.GetType()) > 0 )
+            {
+                if( EQUAL(oBox.GetType(),"jp2h") )
+                {
+                    GDALJP2Box oSubBox( fp );
+
+                    for( oSubBox.ReadFirstChild( &oBox );
+                         strlen(oSubBox.GetType()) > 0;
+                         oSubBox.ReadNextChild( &oBox ) )
+                    {
+                        GIntBig nDataLength = oSubBox.GetDataLength();
+                        if( EQUAL(oSubBox.GetType(),"pclr") &&
+                            nDataLength >= 3 &&
+                            nDataLength <= 2 + 1 + 3 + 3 * 256 )
+                        {
+                            GByte* pabyCT = oSubBox.ReadBoxData();
+                            if( pabyCT != NULL )
+                            {
+                                int nEntries = (pabyCT[0] << 8) | pabyCT[1];
+                                int nComponents = pabyCT[2];
+                                /* CPLDebug("OPENJPEG", "Color table found"); */
+                                if( nEntries <= 256 && nComponents == 3 )
+                                {
+                                    /*CPLDebug("OPENJPEG", "resol[0] = %d", pabyCT[3]);
+                                    CPLDebug("OPENJPEG", "resol[1] = %d", pabyCT[4]);
+                                    CPLDebug("OPENJPEG", "resol[2] = %d", pabyCT[5]);*/
+                                    if( pabyCT[3] == 7 && pabyCT[4] == 7 && pabyCT[5] == 7 &&
+                                        nDataLength == 2 + 1 + 3 + 3 * nEntries )
+                                    {
+                                        GDALColorTable* poCT = new GDALColorTable();
+                                        for(int i=0;i<nEntries;i++)
+                                        {
+                                            GDALColorEntry sEntry;
+                                            sEntry.c1 = pabyCT[6 + 3 * i];
+                                            sEntry.c2 = pabyCT[6 + 3 * i + 1];
+                                            sEntry.c3 = pabyCT[6 + 3 * i + 2];
+                                            sEntry.c4 = 255;
+                                            poCT->SetColorEntry(i, &sEntry);
+                                        }
+                                        poFirstBand->poCT = poCT;
+                                    }
+                                }
+                                CPLFree(pabyCT);
+                            }
+                            break;
+                        }
+                    }
+                }
+
+                if (!oBox.ReadNext())
+                    break;
+            }
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -1912,4 +2003,3 @@ void GDALRegister_JP2OpenJPEG()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-
