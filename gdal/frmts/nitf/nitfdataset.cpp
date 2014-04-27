@@ -660,13 +660,13 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
                     bSetColorInterpretation = FALSE;
                 }
                 else if (poDS->poJ2KDataset->GetRasterCount() == 1 &&
-                         psImage->pasBandInfo[0].nSignificantLUTEntries > 0 &&
-                         poDS->poJ2KDataset->GetRasterBand(1)->GetColorTable() == NULL)
+                         psImage->pasBandInfo[0].nSignificantLUTEntries > 0)
                 {
 /* Test case : http://www.gwg.nga.mil/ntb/baseline/software/testfile/Jpeg2000/jp2_09/file9_j2c.ntf */
 /* 256-entry/LUT in Image Subheader, JP2 header completely removed */
 /* The JPEG2000 driver will decode it as a grey band */
 /* So we must set the color table on the wrapper band */
+/* or for file9_jp2_2places.ntf as well if the J2K driver does do RGB expension */
                     bSetColorTable = TRUE;
                 }
             }
