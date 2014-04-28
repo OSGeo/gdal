@@ -34,6 +34,11 @@
 #include <cassert>
 #include <sstream>
 #include <map>
+#include <iostream>
+
+#ifndef M_PI
+# define M_PI  3.1415926535897932384626433832795
+#endif
 
 /************************************************************************/
 /*                            OGRWAsPLayer()                             */
@@ -69,7 +74,9 @@ OGRWAsPLayer::OGRWAsPLayer( const char * pszName,
                             const CPLString & sSecondFieldParam,
                             const CPLString & sGeomFieldParam,
                             bool bMergeParam,
-                            double * pdfToleranceParam )
+                            double * pdfToleranceParam,
+                            double * pdfAdjacentPointToleranceParam,
+                            double * pdfPointToCircleRadiusParam )
     : bMerge( bMergeParam )
     , iFeatureCount(0)
     , sName( pszName )
@@ -85,7 +92,8 @@ OGRWAsPLayer::OGRWAsPLayer( const char * pszName,
     , iOffsetFeatureBegin( VSIFTellL( hFile ) ) /* avoids coverity warning */
     , eMode( WRITE_ONLY )
     , pdfTolerance( pdfToleranceParam )
-
+    , pdfAdjacentPointTolerance( pdfAdjacentPointToleranceParam )
+    , pdfPointToCircleRadius( pdfPointToCircleRadiusParam )
 {
     poLayerDefn->Reference();
     if (poSpatialReference) poSpatialReference->Reference();
@@ -255,29 +263,94 @@ OGRWAsPLayer::~OGRWAsPLayer()
 }
 
 /************************************************************************/
+/*                            Simplify()                                */
+/************************************************************************/
+OGRLineString * OGRWAsPLayer::Simplify( const OGRLineString & line ) const
+{
+    if ( !line.getNumPoints() ) 
+        return  static_cast<OGRLineString *>( line.clone() );
+
+    std::auto_ptr< OGRLineString > poLine( 
+        static_cast<OGRLineString *>(
+            pdfTolerance.get() 
+            ? line.Simplify( *pdfTolerance ) 
+            : line.clone() ) );
+
+    if ( pdfAdjacentPointTolerance.get() )
+    {
+        /* remove consecutive points that are too close */
+        std::auto_ptr< OGRLineString > newLine( new OGRLineString );
+        const double dist = *pdfAdjacentPointTolerance;
+        OGRPoint pt;
+        poLine->StartPoint( &pt );
+        newLine->addPoint( &pt );
+        const int iNumPoints= poLine->getNumPoints();
+        unsigned rem = 0;
+        for (int v=1; v<iNumPoints; v++)
+        {
+            if ( fabs(poLine->getX(v) - pt.getX()) > dist ||
+                 fabs(poLine->getY(v) - pt.getY()) > dist )
+            {
+                poLine->getPoint( v, &pt );
+                newLine->addPoint( &pt );
+            }
+            else
+            {
+                ++rem;
+            }
+        }
+
+        /* force closed loop if initially closed */
+        OGRPoint spt, ept;
+        poLine->StartPoint( &spt );
+        poLine->EndPoint( &spt );
+        if ( spt.Equals( &ept ) )
+            newLine->setPoint( newLine->getNumPoints() - 1, &spt );
+
+        poLine.reset( newLine.release() );
+    }
+
+    if ( pdfPointToCircleRadius.get() && 1 == poLine->getNumPoints() )
+    {
+        const double radius = *pdfPointToCircleRadius;
+        const int nbPt = 8;
+        const double cx = poLine->getX(0);
+        const double cy = poLine->getY(0);
+        poLine->setNumPoints( nbPt + 1 );
+        for ( int v = 0; v<=nbPt; v++ )
+        {
+            /* the % is necessary to make sure the ring */
+            /* is really closed and not open due to     */
+            /* roundoff error of cos(2pi) and sin(2pi)  */
+            poLine->setPoint(v, 
+                    cx + radius*cos((v%nbPt)*(2*M_PI/nbPt)), 
+                    cy + radius*sin((v%nbPt)*(2*M_PI/nbPt)) );
+        }
+    }
+
+    return poLine.release();
+}
+
+/************************************************************************/
 /*                            WriteElevation()                          */
 /************************************************************************/
 
 OGRErr OGRWAsPLayer::WriteElevation( OGRLineString * poGeom, const double & dfZ )
 
 {
-    OGRLineString * poLine = pdfTolerance.get() 
-        ? static_cast<OGRLineString *>(poGeom->Simplify( *pdfTolerance )) 
-        : poGeom; 
-
+    std::auto_ptr< OGRLineString > poLine( Simplify( *poGeom ) );
+    
     const int iNumPoints = poLine->getNumPoints();
     if ( !iNumPoints ) return OGRERR_NONE; /* empty geom */
 
-    VSIFPrintfL( hFile, "    %g %d", dfZ, iNumPoints );
+    VSIFPrintfL( hFile, "%11.3f %11d", dfZ, iNumPoints );
 
     for (int v=0; v<iNumPoints; v++)
     {
-        if (!(v%3)) VSIFPrintfL( hFile, "\n  " );
-        VSIFPrintfL( hFile, "%.16g %.16g ", poLine->getX(v), poLine->getY(v) );
+        if (!(v%3)) VSIFPrintfL( hFile, "\n" );
+        VSIFPrintfL( hFile, "%11.1f %11.1f ", poLine->getX(v), poLine->getY(v) );
     }
     VSIFPrintfL( hFile, "\n" );
-
-    if ( poLine != poGeom ) delete poLine;
 
     return OGRERR_NONE;
 }
@@ -439,23 +512,19 @@ OGRErr OGRWAsPLayer::WriteRoughness( OGRPolygon * poGeom, const double & dfZ )
 OGRErr OGRWAsPLayer::WriteRoughness( OGRLineString * poGeom, const double & dfZleft,  const double & dfZright )
 
 {
-    OGRLineString * poLine = pdfTolerance.get() 
-        ? static_cast<OGRLineString *>(poGeom->Simplify( *pdfTolerance ))
-        : poGeom; 
+    std::auto_ptr< OGRLineString > poLine( Simplify( *poGeom ) );
 
     const int iNumPoints = poLine->getNumPoints();
     if ( !iNumPoints ) return OGRERR_NONE; /* empty geom */
 
-    VSIFPrintfL( hFile, "    %g %g %d", dfZleft, dfZright, iNumPoints );
+    VSIFPrintfL( hFile, "%11.3f %11.3f %11d", dfZleft, dfZright, iNumPoints );
 
     for (int v=0; v<iNumPoints; v++)
     {
         if (!(v%3)) VSIFPrintfL( hFile, "\n  " );
-        VSIFPrintfL( hFile, "%.16g %.16g ", poLine->getX(v), poLine->getY(v) );
+        VSIFPrintfL( hFile, "%11.1f %11.1f ", poLine->getX(v), poLine->getY(v) );
     }
     VSIFPrintfL( hFile, "\n" );
-
-    if ( poGeom != poLine ) delete poLine;
 
     return OGRERR_NONE;
 }

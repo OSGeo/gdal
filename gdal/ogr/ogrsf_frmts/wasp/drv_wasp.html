@@ -17,7 +17,9 @@ This driver writes .map files to be used with WAsP. The only allowed geometries 
     <li>WASP_FIELDS : a coma separated list of fields. For elevation, the name of the height field. For rouhgness, the name of the left and right roughness fields resp.</li>
     <li>WASP_MERGE : this may be set to "NO". Used only when generating roughness from polygons. All polygon boundaries will be output (including those with the same left and righ roughness). This is usefull (along with option -skipfailures) for debugging incorect input geometries.</li>
     <li>WASP_GEOM_FIELD : in case input has several geometry columns and the first one (default) is not the right one.</li>
-    <li>WASP_TOLERANCE : specify a tolerance for line simplification of output.</li>
+    <li>WASP_TOLERANCE : specify a tolerance for line simplification of output (calls geos).</li>
+    <li>WASP_ADJ_TOLER : points that are less than tolerance appart from previous point on x and on y are ommited.</li>
+    <li>WASP_POINT_TO_CIRCLE_RADIUS : lines that became points du to simplification are replaces by 8 point circles (octogons).</li>
 </ul>
 
 <p>
