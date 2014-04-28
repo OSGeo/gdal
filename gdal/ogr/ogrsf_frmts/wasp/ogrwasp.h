@@ -90,6 +90,8 @@ class OGRWAsPLayer : public OGRLayer
     OpenMode              eMode;
 
     std::auto_ptr<double> pdfTolerance;
+    std::auto_ptr<double> pdfAdjacentPointTolerance;
+    std::auto_ptr<double> pdfPointToCircleRadius;
 
     OGRErr                WriteRoughness( OGRLineString *,
                                           const double & dfZleft,
@@ -107,6 +109,21 @@ class OGRWAsPLayer : public OGRLayer
     static double AvgZ( OGRPolygon * poGeom );
     static double AvgZ( OGRGeometryCollection * poGeom );
     static double AvgZ( OGRGeometry * poGeom );
+
+    /* return a simplified line (caller is responsible for resource )
+     *
+     * if pdfTolerance is not NULL, 
+     *     calls GEOS symplify
+     *
+     * if pdfAdjacentPointTolerance is not NULL, 
+     *     remove consecutive points that are less than torelance appart 
+     *     in x and y
+     *
+     * if pdfPointToCircleRadius is not NULL,
+     *     lines that have been simplified to a point are converted to a 8 pt circle
+     * */
+    OGRLineString * Simplify( const OGRLineString & line ) const;
+    
   public:
                         /* For writing */
                         /* Takes ownership of poTolerance */
@@ -117,7 +134,9 @@ class OGRWAsPLayer : public OGRLayer
                                       const CPLString & sSecondField,
                                       const CPLString & sGeomField,
                                       bool bMerge,
-                                      double * poTolerance );
+                                      double * pdfTolerance,
+                                      double * pdfAdjacentPointTolerance,
+                                      double * pdfPointToCircleRadius );
 
                         /* For reading */
                         OGRWAsPLayer( const char * pszName, 

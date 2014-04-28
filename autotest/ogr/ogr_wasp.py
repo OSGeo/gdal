@@ -102,7 +102,7 @@ def ogr_wasp_elevation_from_linestring_z():
                 gdaltest.post_reason( 'number of points sould be 3 and is %s' % n )
                 return 'fail'
 
-            if int(h) != j: 
+            if float(h) != j: 
                 gdaltest.post_reason( 'altitude should be %d and is %s' %(j,h) )
                 return 'fail'
 
@@ -167,7 +167,7 @@ def ogr_wasp_elevation_from_linestring_z_toler():
                     gdaltest.post_reason( 'number of points sould be 3 and is %s' % n )
                     return 'fail'
 
-            if int(h) != j: 
+            if float(h) != j: 
                 gdaltest.post_reason( 'altitude should be %d and is %s' %(j,h) )
                 return 'fail'
 
@@ -224,7 +224,7 @@ def ogr_wasp_elevation_from_linestring_field():
                 gdaltest.post_reason( 'number of points sould be 3 and is %s' % n )
                 return 'fail'
 
-            if int(h) != j: 
+            if float(h) != j: 
                 gdaltest.post_reason( 'altitude should be %d and is %s' %(j,h) )
                 return 'fail'
 
@@ -280,7 +280,7 @@ def ogr_wasp_roughness_from_linestring_fields():
                 gdaltest.post_reason( 'number of points sould be 3 and is %s' % n )
                 return 'fail'
 
-            if int(r) != j or int(l) != j-1: 
+            if float(r) != j or float(l) != j-1: 
                 gdaltest.post_reason( 'roughness should be %d and %d and is %s and %s' %(j-1,j,l,r) )
                 return 'fail'
 
@@ -338,12 +338,12 @@ def ogr_wasp_roughness_from_polygon_z():
     res = set()
     for line in f:
         if not i%2:
-            [l,r,n] = [int(v) for v in line.split()]
-            if n != 2:
-                gdaltest.post_reason( 'number of points sould be 2 and is %d' % n )
+            [l,r,n] = [v for v in line.split()]
+            if int(n) != 2:
+                gdaltest.post_reason( 'number of points sould be 2 and is %d' % int(n) )
                 return 'fail'
-            if r > l : res.add((l, r))
-            else   : res.add((r, l))
+            if float(r) > float(l) : res.add((float(l), float(r)))
+            else   : res.add((float(r), float(l)))
             j+=1
         i+=1
 
@@ -405,12 +405,12 @@ def ogr_wasp_roughness_from_polygon_field():
     res = set()
     for line in f:
         if not i%2:
-            [l,r,n] = [int(v) for v in line.split()]
-            if n != 2:
-                gdaltest.post_reason( 'number of points sould be 2 and is %d' % n )
+            [l,r,n] = [v for v in line.split()]
+            if int(n) != 2:
+                gdaltest.post_reason( 'number of points sould be 2 and is %d' % int(n) )
                 return 'fail'
-            if r > l : res.add((l, r))
-            else   : res.add((r, l))
+            if float(r) > float(l) : res.add((float(l), float(r)))
+            else   : res.add((float(r), float(l)))
             j+=1
         i+=1
 
@@ -472,12 +472,12 @@ def ogr_wasp_merge():
     res = [] 
     for line in f:
         if not i%2:
-            [l,r,n] = [int(v) for v in line.split()]
-            if n != 2:
-                gdaltest.post_reason( 'number of points sould be 2 and is %d (unwanted merge ?)' % n )
+            [l,r,n] = [v for v in line.split()]
+            if int(n) != 2:
+                gdaltest.post_reason( 'number of points sould be 2 and is %d (unwanted merge ?)' % int(n) )
                 return 'fail'
-            if r > l : res.append((l, r))
-            else   : res.append((r, l))
+            if float(r) > float(l) : res.append((float(l), float(r)))
+            else   : res.append((float(r), float(l)))
             j+=1
         i+=1
 

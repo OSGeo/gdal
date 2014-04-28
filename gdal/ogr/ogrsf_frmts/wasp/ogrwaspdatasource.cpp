@@ -245,26 +245,59 @@ OGRLayer *OGRWAsPDataSource::CreateLayer(const char *pszName,
 
     const bool bMerge = CSLTestBoolean(CSLFetchNameValueDef( papszOptions, "WASP_MERGE", "YES" ));
 
-    double * pdfTolerance = NULL;
-    const char *pszToler = CSLFetchNameValue( papszOptions, "WASP_TOLERANCE" );
-
-    if (pszToler)
+    std::auto_ptr<double> pdfTolerance;
     {
-        if ( !OGRGeometryFactory::haveGEOS() )
+        const char *pszToler = CSLFetchNameValue( papszOptions, "WASP_TOLERANCE" );
+
+        if (pszToler)
         {
-            CPLError( CE_Warning, 
-                    CPLE_IllegalArg, 
-                    "GEOS support not enabled, ignoring option WASP_TOLERANCE" );
-        }
-        else
-        {
-            pdfTolerance = new double;
-            if (!(std::istringstream( pszToler ) >> *pdfTolerance ))
+            if ( !OGRGeometryFactory::haveGEOS() )
             {
-                delete pdfTolerance;
+                CPLError( CE_Warning, 
+                        CPLE_IllegalArg, 
+                        "GEOS support not enabled, ignoring option WASP_TOLERANCE" );
+            }
+            else
+            {
+                pdfTolerance.reset( new double );
+                if (!(std::istringstream( pszToler ) >> *pdfTolerance ))
+                {
+                    CPLError( CE_Failure, 
+                            CPLE_IllegalArg, 
+                            "cannot set tolerance from %s", pszToler );
+                    return NULL;
+                }
+            }
+        }
+    }
+
+    std::auto_ptr<double> pdfAdjacentPointTolerance;
+    {
+        const char *pszAdjToler = CSLFetchNameValue( papszOptions, "WASP_ADJ_TOLER" );
+        if ( pszAdjToler )
+        {
+            pdfAdjacentPointTolerance.reset( new double );
+            if (!(std::istringstream( pszAdjToler ) >> *pdfAdjacentPointTolerance ))
+            {
                 CPLError( CE_Failure, 
                         CPLE_IllegalArg, 
-                        "cannot set tolerance from %s", pszToler );
+                        "cannot set tolerance from %s", pszAdjToler );
+                return NULL;
+            }
+        }
+    }
+
+    std::auto_ptr<double> pdfPointToCircleRadius;
+    {
+        const char *pszPtToCircRad = CSLFetchNameValue( papszOptions, "WASP_POINT_TO_CIRCLE_RADIUS" );
+        if ( pszPtToCircRad )
+        {
+            pdfPointToCircleRadius.reset( new double );
+            if (!(std::istringstream( pszPtToCircRad ) >> *pdfPointToCircleRadius ))
+            {
+                CPLError( CE_Failure, 
+                        CPLE_IllegalArg, 
+                        "cannot set tolerance from %s", pszPtToCircRad );
                 return NULL;
             }
         }
@@ -277,7 +310,9 @@ OGRLayer *OGRWAsPDataSource::CreateLayer(const char *pszName,
                                     sSecondField,
                                     sGeomField,
                                     bMerge,
-                                    pdfTolerance ) );
+                                    pdfTolerance.release(),
+                                    pdfAdjacentPointTolerance.release(),
+                                    pdfPointToCircleRadius.release() ) );
 
     char * ppszWktSpatialRef = NULL ;
     if ( poSpatialRef 
@@ -291,9 +326,9 @@ OGRLayer *OGRWAsPDataSource::CreateLayer(const char *pszName,
         VSIFPrintfL( hFile, "no spatial ref sys\n" );
     }
 
-    VSIFPrintfL( hFile, "    0.0 0.0 0.0 0.0\n" );
-    VSIFPrintfL( hFile, "    1.0 0.0 1.0 0.0\n" );
-    VSIFPrintfL( hFile, "    1.0 0.0\n" );
+    VSIFPrintfL( hFile, "  0.0 0.0 0.0 0.0\n" );
+    VSIFPrintfL( hFile, "  1.0 0.0 1.0 0.0\n" );
+    VSIFPrintfL( hFile, "  1.0 0.0\n" );
     return oLayer.get();
 }
 
