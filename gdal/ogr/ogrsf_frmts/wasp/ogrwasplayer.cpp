@@ -34,7 +34,6 @@
 #include <cassert>
 #include <sstream>
 #include <map>
-#include <iostream>
 
 #ifndef M_PI
 # define M_PI  3.1415926535897932384626433832795
@@ -272,11 +271,16 @@ OGRLineString * OGRWAsPLayer::Simplify( const OGRLineString & line ) const
 
     std::auto_ptr< OGRLineString > poLine( 
         static_cast<OGRLineString *>(
-            pdfTolerance.get() 
+            pdfTolerance.get() && *pdfTolerance > 0
             ? line.Simplify( *pdfTolerance ) 
             : line.clone() ) );
 
-    if ( pdfAdjacentPointTolerance.get() )
+    OGRPoint startPt, endPt;
+    poLine->StartPoint( &startPt );
+    poLine->EndPoint( &endPt );
+    const bool isRing = startPt.Equals( &endPt );
+
+    if ( pdfAdjacentPointTolerance.get() && *pdfAdjacentPointTolerance > 0)
     {
         /* remove consecutive points that are too close */
         std::auto_ptr< OGRLineString > newLine( new OGRLineString );
@@ -301,31 +305,67 @@ OGRLineString * OGRWAsPLayer::Simplify( const OGRLineString & line ) const
         }
 
         /* force closed loop if initially closed */
-        OGRPoint spt, ept;
-        poLine->StartPoint( &spt );
-        poLine->EndPoint( &spt );
-        if ( spt.Equals( &ept ) )
-            newLine->setPoint( newLine->getNumPoints() - 1, &spt );
+        if ( isRing )
+            newLine->setPoint( newLine->getNumPoints() - 1, &startPt );
 
         poLine.reset( newLine.release() );
     }
 
-    if ( pdfPointToCircleRadius.get() && 1 == poLine->getNumPoints() )
+    if ( pdfPointToCircleRadius.get() && *pdfPointToCircleRadius > 0 )
     {
         const double radius = *pdfPointToCircleRadius;
-        const int nbPt = 8;
-        const double cx = poLine->getX(0);
-        const double cy = poLine->getY(0);
-        poLine->setNumPoints( nbPt + 1 );
-        for ( int v = 0; v<=nbPt; v++ )
+
+#undef WASP_EXPERIMENTAL_CODE      
+#ifdef WASP_EXPERIMENTAL_CODE
+        if ( 3 == poLine->getNumPoints() && isRing )
         {
-            /* the % is necessary to make sure the ring */
-            /* is really closed and not open due to     */
-            /* roundoff error of cos(2pi) and sin(2pi)  */
-            poLine->setPoint(v, 
-                    cx + radius*cos((v%nbPt)*(2*M_PI/nbPt)), 
-                    cy + radius*sin((v%nbPt)*(2*M_PI/nbPt)) );
+            OGRPoint p0, p1;
+            poLine->getPoint( 0, &p0 );
+            poLine->getPoint( 1, &p1 );
+            const double dir[2] = { 
+                p1.getX() - p0.getX(),
+                p1.getY() - p0.getY() };
+            const double dirNrm = sqrt( dir[0]*dir[0] + dir[1]*dir[1] );
+            if ( dirNrm > radius )
+            { 
+                /* convert to rectangle by finding the direction */
+                /* and offsetting */
+                const double ortho[2] = {-radius*dir[1]/dirNrm, radius*dir[0]/dirNrm};
+                poLine->setNumPoints(5);
+                poLine->setPoint(0, p0.getX() - ortho[0], p0.getY() - ortho[1]);  
+                poLine->setPoint(1, p1.getX() - ortho[0], p1.getY() - ortho[1]);  
+                poLine->setPoint(2, p1.getX() + ortho[0], p1.getY() + ortho[1]);  
+                poLine->setPoint(3, p0.getX() + ortho[0], p0.getY() + ortho[1]);  
+                poLine->setPoint(4, p0.getX() - ortho[0], p0.getY() - ortho[1]);  
+            }
+            else
+            {
+                /* reduce to a point to be dealt with just after*/
+                poLine->setNumPoints(1);
+                poLine->setPoint(0, 
+                        0.5*(p0.getX()+p1.getX()),
+                        0.5*(p0.getY()+p1.getY()));
+            }
         }
+#endif
+
+        if ( 1 == poLine->getNumPoints() )
+        {
+            const int nbPt = 8;
+            const double cx = poLine->getX(0);
+            const double cy = poLine->getY(0);
+            poLine->setNumPoints( nbPt + 1 );
+            for ( int v = 0; v<=nbPt; v++ )
+            {
+                /* the % is necessary to make sure the ring */
+                /* is really closed and not open due to     */
+                /* roundoff error of cos(2pi) and sin(2pi)  */
+                poLine->setPoint(v, 
+                        cx + radius*cos((v%nbPt)*(2*M_PI/nbPt)), 
+                        cy + radius*sin((v%nbPt)*(2*M_PI/nbPt)) );
+            }
+        }
+
     }
 
     return poLine.release();
