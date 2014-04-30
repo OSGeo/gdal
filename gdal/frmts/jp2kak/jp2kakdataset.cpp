@@ -1896,11 +1896,12 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
 
     try
     {
-#if KAKADU_VERSION >= 700
-        allocator.finalize(oCodeStream);
-#else
+        // Does not compile without the change on >= v7_3_2.
+// #if KAKADU_VERSION >= 732
+        // allocator.finalize(oCodeStream);
+// #else
         allocator.finalize();
-#endif
+// #endif
 
         for (c=0; c < num_components; c++)
             lines[c].create();
