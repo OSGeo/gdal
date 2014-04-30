@@ -210,7 +210,7 @@ useful for datasets with huge amount of GCPs, such as L1B AVHRR or HDF4 MODIS
 which contain thousands of them.</dd>
 <dt> <b>-nomd</b></dt><dd> Suppress metadata printing. Some datasets may contain a lot
 of metadata strings.</dd>
-<dt> <b>-nrat</b></dt><dd> Suppress printing of raster attribute table.</dd>
+<dt> <b>-norat</b></dt><dd> Suppress printing of raster attribute table.</dd>
 <dt> <b>-noct</b></dt><dd> Suppress printing of color table.</dd>
 <dt> <b>-checksum</b></dt><dd> Force computation of the checksum for each band in the dataset.</dd>
 <dt> <b>-listmdd</b></dt><dd> (GDAL >= 1.11) List all metadata domains available for the dataset.</dd>
