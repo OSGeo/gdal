@@ -74,7 +74,7 @@ OGRErr OGRTopoJSONReader::Parse( const char* pszText )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "TopoJSON parsing error: %s (at offset %d)",
-            	      json_tokener_errors[jstok->err], jstok->char_offset);
+            	      json_tokener_error_desc(jstok->err), jstok->char_offset);
             
             json_tokener_free(jstok);
             return OGRERR_CORRUPT_DATA;
