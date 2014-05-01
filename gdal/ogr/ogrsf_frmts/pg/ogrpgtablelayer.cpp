@@ -614,7 +614,7 @@ int OGRPGTableLayer::ReadTableDefinition()
         {
             const char* pszType = PQgetvalue(hResult,0,0);
 
-            int nCoordDimension = MAX(2,MIN(3,atoi(PQgetvalue(hResult,0,1))));
+            int nCoordDimension = atoi(PQgetvalue(hResult,0,1));
 
             int nSRSId = atoi(PQgetvalue(hResult,0,2));
 

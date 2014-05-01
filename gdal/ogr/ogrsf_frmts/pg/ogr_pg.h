@@ -433,6 +433,13 @@ class OGRPGDataSource : public OGRDataSource
     CPLString           GetCurrentSchema();
 
     int                 nUndefinedSRID;
+    
+    char               *pszForcedTables;
+    char              **papszSchemaList;
+    int                 bHasLoadTables;
+    CPLString           osActiveSchema;
+    int                 bListAllTables;
+    void                LoadTables();
 
   public:
     PGver               sPostgreSQLVersion;
@@ -462,7 +469,7 @@ class OGRPGDataSource : public OGRDataSource
                                    int bUpdate, int bTestOpen );
 
     const char          *GetName() { return pszName; }
-    int                 GetLayerCount() { return nLayers; }
+    int                 GetLayerCount();
     OGRLayer            *GetLayer( int );
     OGRLayer            *GetLayerByName(const char * pszName);
 
