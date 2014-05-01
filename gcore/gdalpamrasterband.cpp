@@ -207,7 +207,11 @@ CPLXMLNode *GDALPamRasterBand::SerializeToXML( const char *pszUnused )
 /*      Raster Attribute Table                                          */
 /* -------------------------------------------------------------------- */
     if( psPam->poDefaultRAT != NULL )
-        CPLAddXMLChild( psTree, psPam->poDefaultRAT->Serialize() );
+    {
+        CPLXMLNode* psSerializedRAT = psPam->poDefaultRAT->Serialize();
+        if( psSerializedRAT != NULL )
+            CPLAddXMLChild( psTree, psSerializedRAT );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Metadata.                                                       */
