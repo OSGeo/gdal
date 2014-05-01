@@ -48,7 +48,7 @@ int DGNTestOpen( GByte *pabyHeader, int nByteCount )
 
 {
     if( nByteCount < 4 )
-        return TRUE;
+        return FALSE;
 
     // Is it a cell library?
     if( pabyHeader[0] == 0x08
