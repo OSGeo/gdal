@@ -504,7 +504,7 @@ json_object* OGRCARTODBDataSource::RunSQL(const char* pszUnescapedSQL)
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                     "JSON parsing error: %s (at offset %d)",
-                    json_tokener_errors[jstok->err], jstok->char_offset);
+                    json_tokener_error_desc(jstok->err), jstok->char_offset);
         json_tokener_free(jstok);
         CPLHTTPDestroyResult(psResult);
         return NULL;
