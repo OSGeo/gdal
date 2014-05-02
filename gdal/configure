@@ -18960,7 +18960,7 @@ _ACEOF
 if test "$am_func_iconv" = "yes"; then
     rm -f testiconv.*
     echo '#include <iconv.h>' > testiconv.cpp
-    echo 'int main(int argc, char** argv) { iconv_t cd; return iconv (cd, (const char **) 0, 0, 0, 0); } ' >> testiconv.cpp
+    echo 'int main(int argc, char** argv) { iconv_t cd = 0; return iconv (cd, (const char **) 0, 0, 0, 0); } ' >> testiconv.cpp
     if test -z "`${CXX} ${CPPFLAGS} testiconv.cpp -c 2>&1`" ; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: using ICONV_CPP_CONST=\"const\"" >&5
 $as_echo "using ICONV_CPP_CONST=\"const\"" >&6; }
