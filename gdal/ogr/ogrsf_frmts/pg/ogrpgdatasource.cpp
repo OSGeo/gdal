@@ -1766,10 +1766,24 @@ OGRLayer *OGRPGDataSource::GetLayerByName( const char *pszName )
     }
     else
     {
+        CPLString osTableName(pszTableName);
+        CPLString osTableNameLower(pszTableName);
+        osTableNameLower.tolower();
+        if( osTableName != osTableNameLower )
+            CPLPushErrorHandler(CPLQuietErrorHandler);
         poLayer = OpenTable( osCurrentSchema, pszTableName,
                              pszSchemaName,
                              pszGeomColumnName,
                              bDSUpdate, TRUE );
+        if( osTableName != osTableNameLower )
+            CPLPopErrorHandler();
+        if( poLayer == NULL && osTableName != osTableNameLower )
+        {
+            poLayer = OpenTable( osCurrentSchema, osTableNameLower,
+                                pszSchemaName,
+                                pszGeomColumnName,
+                                bDSUpdate, TRUE );
+        }
     }
 
     CPLFree(pszTableName);
