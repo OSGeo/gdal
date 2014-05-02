@@ -293,7 +293,7 @@ OGRErr OGROCIWritableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK 
                   "Can't create field %s with type %s on Oracle layers.  Creating as VARCHAR.",
                   oField.GetNameRef(),
                   OGRFieldDefn::GetFieldTypeName(oField.GetType()) );
-        strcpy( szFieldType, "VARCHAR(2047)" );
+        strcpy( szFieldType, "VARCHAR2(2047)" );
     }
     else
     {
