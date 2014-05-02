@@ -3396,6 +3396,13 @@ def ogr_pg_69():
         return 'fail'
     gdaltest.pg_ds.ReleaseResultSet(tmp_lyr)
 
+    # Test that we can find a layer with non lowercase
+    gdaltest.pg_ds = None
+    gdaltest.pg_ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
+    if gdaltest.pg_ds.GetLayerByName('TPOLY') is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
