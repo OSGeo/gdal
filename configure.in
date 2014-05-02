@@ -597,7 +597,7 @@ dnl ICONV_CONST when used from .cpp files.
 if test "$am_func_iconv" = "yes"; then
     rm -f testiconv.*
     echo '#include <iconv.h>' > testiconv.cpp
-    echo 'int main(int argc, char** argv) { iconv_t cd; return iconv (cd, (const char **) 0, 0, 0, 0); } ' >> testiconv.cpp
+    echo 'int main(int argc, char** argv) { iconv_t cd = 0; return iconv (cd, (const char **) 0, 0, 0, 0); } ' >> testiconv.cpp
     if test -z "`${CXX} ${CPPFLAGS} testiconv.cpp -c 2>&1`" ; then
         AC_MSG_RESULT([using ICONV_CPP_CONST="const"])
         ICONV_CPP_CONST="const"
