@@ -959,9 +959,15 @@ OGRErr OGROCITableLayer::UnboundCreateFeature( OGRFeature *poFeature )
         nOffset += strlen(pszCommand+nOffset);
 
         nFID = poFeature->GetFID();
-        if( nFID == -1 )
+        if( nFID == OGRNullFID )
+        {
+            if( iNextFIDToWrite < 0 )
+            {
+                iNextFIDToWrite = GetMaxFID() + 1;
+            }
             nFID = iNextFIDToWrite++;
-
+            poFeature->SetFID( nFID );
+        }
         sprintf( pszCommand+nOffset, "%ld", nFID );
     }
 
