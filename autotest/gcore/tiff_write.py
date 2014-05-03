@@ -4743,15 +4743,15 @@ def tiff_write_126():
 
     src_ds = gdal.Open('../gdrivers/data/small_world_400pct.vrt')
 
-    options_list = [ (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR'], [48788], [61397], [29605], [10904]),
-                     (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'TILED=YES'], [48788], [61397], [29605], [10904]),
-                     (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'BLOCKYSIZE=800'], [48788], [61397], [29605], [10904]),
-                     (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'BLOCKYSIZE=64'], [48788], [61397], [29605], [10904]),
-                     (['COMPRESS=JPEG'], [49887], [59311], [30829], [11664]),
-                     (['COMPRESS=JPEG', 'INTERLEAVE=BAND'], [49887], [59311], [30829], [11664]),
-                     (['COMPRESS=JPEG', 'INTERLEAVE=BAND', 'TILED=YES'], [49887], [59311], [30829], [11664]),
-                     (['COMPRESS=JPEG', 'INTERLEAVE=BAND', 'BLOCKYSIZE=800'], [49887], [59311], [30829], [11664]),
-                     (['COMPRESS=JPEG', 'INTERLEAVE=BAND', 'BLOCKYSIZE=32'], [49887], [59311], [30829], [11664]),
+    options_list = [ (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR'], [48788,56561], [61397,2463], [29605,33654], [10904,10453]),
+                     (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'TILED=YES'], [48788,56561], [61397,2463], [29605,33654], [10904,10453]),
+                     (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'BLOCKYSIZE=800'], [48788,56561], [61397,2463], [29605,33654], [10904,10453]),
+                     (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'BLOCKYSIZE=64'], [48788,56561], [61397,2463], [29605,33654], [10904,10453]),
+                     (['COMPRESS=JPEG'], [49887,58937], [59311,2826], [30829,34806], [11664,58937]),
+                     (['COMPRESS=JPEG', 'INTERLEAVE=BAND'], [49887,58937], [59311,2826], [30829,34806], [11664,58937]),
+                     (['COMPRESS=JPEG', 'INTERLEAVE=BAND', 'TILED=YES'], [49887,58937], [59311,2826], [30829,34806], [11664,58937]),
+                     (['COMPRESS=JPEG', 'INTERLEAVE=BAND', 'BLOCKYSIZE=800'], [49887,58937], [59311,2826], [30829,34806], [11664,58937]),
+                     (['COMPRESS=JPEG', 'INTERLEAVE=BAND', 'BLOCKYSIZE=32'], [49887,58937], [59311,2826], [30829,34806], [11664,58937]),
                    ]
 
     for (options, cs1, cs2, cs3, cs4) in options_list:
@@ -4810,10 +4810,10 @@ def tiff_write_126():
 
     src_ds = gdal.Open('../gdrivers/data/small_world_400pct_1band.vrt')
 
-    options_list = [ (['COMPRESS=JPEG'], [49887], [30829], [11664]),
-                     (['COMPRESS=JPEG', 'TILED=YES'], [49887],  [30829], [11664]),
-                     (['COMPRESS=JPEG', 'BLOCKYSIZE=800'], [49887], [30829], [11664]),
-                     (['COMPRESS=JPEG', 'BLOCKYSIZE=32'], [49887], [30829], [11664]),
+    options_list = [ (['COMPRESS=JPEG'], [49887,58937], [30829,34806], [11664,58937]),
+                     (['COMPRESS=JPEG', 'TILED=YES'], [49887,58937], [30829,34806], [11664,58937]),
+                     (['COMPRESS=JPEG', 'BLOCKYSIZE=800'], [49887,58937], [30829,34806], [11664,58937]),
+                     (['COMPRESS=JPEG', 'BLOCKYSIZE=32'], [49887,58937], [30829,34806], [11664,58937]),
                    ]
 
     for (options, cs1, cs3, cs4) in options_list:
