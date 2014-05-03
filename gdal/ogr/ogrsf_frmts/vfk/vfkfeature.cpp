@@ -245,7 +245,7 @@ bool VFKFeature::SetProperties(const char *pszLine)
     for (poChar = pszLine; *poChar != '\0' && *poChar != ';'; poChar++)
         /* skip data block name */
         ;
-    if (poChar == '\0')
+    if (*poChar == '\0')
         return FALSE; /* nothing to read */
 
     poChar++; /* skip ';' after data block name*/
