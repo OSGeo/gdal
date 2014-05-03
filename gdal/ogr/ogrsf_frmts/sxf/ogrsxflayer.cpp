@@ -438,29 +438,28 @@ GUInt32 OGRSXFLayer::TranslateXYH(const SXFRecordDescription& certifInfo,
         if( nBufLen < 4 )
             return 0;
         GInt16 x, y;
-        memcpy(&x, psBuff, 2);
-        CPL_LSBINT16PTR(&x);
-        memcpy(&y, psBuff + 2, 2);
+        memcpy(&y, psBuff, 2);
         CPL_LSBINT16PTR(&y);
-
+        memcpy(&x, psBuff + 2, 2);
+        CPL_LSBINT16PTR(&x);
 
         if (stSXFMapDescription.bIsRealCoordinates)
         {
-            *dfX = (double)y;
-            *dfY = (double)x;
+            *dfX = (double)x;
+            *dfY = (double)y;
         }
         else
         {
             if (m_nSXFFormatVer == 3)
             {
-                *dfX = stSXFMapDescription.dfXOr + (double)y * m_dfCoeff;
-                *dfY = stSXFMapDescription.dfYOr + (double)x * m_dfCoeff;
+                *dfX = stSXFMapDescription.dfXOr + (double)x * m_dfCoeff;
+                *dfY = stSXFMapDescription.dfYOr + (double)y * m_dfCoeff;
             }
             else if (m_nSXFFormatVer == 4)
             {
                 //TODO: check on real data
-                *dfX = stSXFMapDescription.dfXOr + (double)y * m_dfCoeff;
-                *dfY = stSXFMapDescription.dfYOr + (double)x * m_dfCoeff;
+                *dfX = stSXFMapDescription.dfXOr + (double)x * m_dfCoeff;
+                *dfY = stSXFMapDescription.dfYOr + (double)y * m_dfCoeff;
             }
         }
 
@@ -481,9 +480,9 @@ GUInt32 OGRSXFLayer::TranslateXYH(const SXFRecordDescription& certifInfo,
         break;
     case SXF_VT_FLOAT:
     {
-        float x, y;
         if( nBufLen < 8 )
             return 0;
+        float x, y;
         memcpy(&y, psBuff, 4);
         CPL_LSBPTR32(&y);
         memcpy(&x, psBuff + 4, 4);
@@ -491,8 +490,8 @@ GUInt32 OGRSXFLayer::TranslateXYH(const SXFRecordDescription& certifInfo,
 
         if (stSXFMapDescription.bIsRealCoordinates)
         {
-            *dfX = (double)y;
-            *dfY = (double)x;
+            *dfX = (double)x;
+            *dfY = (double)y;
         }
         else
         {
@@ -527,21 +526,21 @@ GUInt32 OGRSXFLayer::TranslateXYH(const SXFRecordDescription& certifInfo,
 
         if (stSXFMapDescription.bIsRealCoordinates)
         {
-            *dfX = (double)y;
-            *dfY = (double)x;
+            *dfX = (double)x;
+            *dfY = (double)y;
         }
         else
         {
             //TODO: check on real data
             if (m_nSXFFormatVer == 3)
             {
-                *dfX = stSXFMapDescription.dfXOr + (double)y * m_dfCoeff;
-                *dfY = stSXFMapDescription.dfYOr + (double)x * m_dfCoeff;
+                *dfX = stSXFMapDescription.dfXOr + (double)x * m_dfCoeff;
+                *dfY = stSXFMapDescription.dfYOr + (double)y * m_dfCoeff;
             }
             else if (m_nSXFFormatVer == 4)
             {
-                *dfX = stSXFMapDescription.dfXOr + (double)y * m_dfCoeff;
-                *dfY = stSXFMapDescription.dfYOr + (double)x * m_dfCoeff;
+                *dfX = stSXFMapDescription.dfXOr + (double)x * m_dfCoeff;
+                *dfY = stSXFMapDescription.dfYOr + (double)y * m_dfCoeff;
             }
         }
         offset += 8;
@@ -571,8 +570,8 @@ GUInt32 OGRSXFLayer::TranslateXYH(const SXFRecordDescription& certifInfo,
 
         if (stSXFMapDescription.bIsRealCoordinates)
         {
-            *dfY = y;
             *dfX = x;
+            *dfY = y;
         }
         else
         {
