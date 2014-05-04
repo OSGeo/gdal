@@ -58,7 +58,7 @@ static void Usage()
 {
     printf( 
         "Usage: gdal_rasterize [-b band]* [-i] [-at]\n"
-        "       [-burn value]* | [-a attribute_name] [-3d]\n"
+        "       [-burn value]* | [-a attribute_name] [-3d] [-add]\n"
         "       [-l layername]* [-where expression] [-sql select_statement]\n"
         "       [-of format] [-a_srs srs_def] [-co \"NAME=VALUE\"]*\n"
         "       [-a_nodata value] [-init value]*\n"
@@ -559,6 +559,17 @@ int main( int argc, char ** argv )
             b3D = TRUE;
             papszRasterizeOptions = 
                 CSLSetNameValue( papszRasterizeOptions, "BURN_VALUE_FROM", "Z");
+        }
+        else if( EQUAL(argv[i],"-add")  )
+        {
+            papszRasterizeOptions = 
+                CSLSetNameValue( papszRasterizeOptions, "MERGE_ALG", "ADD");
+        }
+        else if( EQUAL(argv[i],"-chunkysize") && i < argc-1 )
+        {
+            papszRasterizeOptions = 
+                CSLSetNameValue( papszRasterizeOptions, "CHUNKYSIZE", 
+                                 argv[++i] );
         }
         else if( EQUAL(argv[i],"-i")  )
         {

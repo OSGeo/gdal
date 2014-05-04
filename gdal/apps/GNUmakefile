@@ -4,13 +4,14 @@
 
 include ../GDALmake.opt
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) -I$(GDAL_ROOT)/frmts $(CPPFLAGS)
-LNK_FLAGS   :=  $(LDFLAGS)
-DEP_LIBS	=	$(EXE_DEP_LIBS) $(XTRAOBJ)
-BIN_LIST	=	gdalinfo$(EXE) gdalserver$(EXE) gdal_translate$(EXE) gdaladdo$(EXE) \
-			gdalwarp$(EXE) nearblack$(EXE) gdalmanage$(EXE) \
-			gdalenhance$(EXE) gdaltransform$(EXE) gdaldem$(EXE) \
-			gdallocationinfo$(EXE) gdalsrsinfo$(EXE) 
+CPPFLAGS :=	$(GDAL_INCLUDE) -I$(GDAL_ROOT)/frmts $(CPPFLAGS)
+LNK_FLAGS :=	$(LDFLAGS)
+DEP_LIBS =	$(EXE_DEP_LIBS) $(XTRAOBJ)
+
+BIN_LIST =	gdalinfo$(EXE) gdalserver$(EXE) gdal_translate$(EXE) \
+		gdaladdo$(EXE) gdalwarp$(EXE) nearblack$(EXE) gdalmanage$(EXE) \
+		gdalenhance$(EXE) gdaltransform$(EXE) gdaldem$(EXE) \
+		gdallocationinfo$(EXE) gdalsrsinfo$(EXE) 
 
 ifeq ($(OGR_ENABLED),yes)
 BIN_LIST += 	gdal_contour$(EXE) \
@@ -20,19 +21,19 @@ BIN_LIST += 	gdal_contour$(EXE) \
 		ogrinfo$(EXE) \
 		ogr2ogr$(EXE) \
 		ogrtindex$(EXE) \
-        ogrlineref$(EXE) \
+		ogrlineref$(EXE) \
 		testepsg$(EXE) \
 		gdalbuildvrt$(EXE)
 endif
 
 ifeq ($(HAVE_GEOS),yes)
-CPPFLAGS 	:=	-DHAVE_GEOS=1 $(GEOS_CFLAGS) $(CPPFLAGS)
+CPPFLAGS 	:=	$(CPPFLAGS) -DHAVE_GEOS=1 $(GEOS_CFLAGS)
 endif
 
-NON_DEFAULT_LIST = 	multireadtest$(EXE) \
-			dumpoverviews$(EXE) gdalwarpsimple$(EXE) gdalflattenmask$(EXE) \
-			gdaltorture$(EXE) gdal2ogr$(EXE) test_ogrsf$(EXE) \
-			gdalasyncread$(EXE) testreprojmulti$(EXE)
+NON_DEFAULT_LIST = 	multireadtest$(EXE) dumpoverviews$(EXE) \
+	gdalwarpsimple$(EXE) gdalflattenmask$(EXE) \
+	gdaltorture$(EXE) gdal2ogr$(EXE) test_ogrsf$(EXE) \
+	gdalasyncread$(EXE) testreprojmulti$(EXE)
 
 default:	gdal-config-inst gdal-config $(BIN_LIST)
 
