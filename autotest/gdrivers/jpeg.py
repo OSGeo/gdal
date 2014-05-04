@@ -797,6 +797,32 @@ def jpeg_20():
     return 'success'
 
 ###############################################################################
+# Test implicit and EXIF overviews
+
+def jpeg_21():
+
+    ds = gdal.Open('data/black_with_white_exif_ovr.jpg')
+    if ds.GetRasterBand(1).GetOverviewCount() != 3:
+        gdaltest.post_reason('failure')
+        print(ds.GetRasterBand(1).GetOverviewCount())
+        return 'fail'
+    expected_dim_cs = [ [512,512,0], [256,256,0], [196,196,12681] ]
+    i = 0
+    for (expected_w, expected_h, expected_cs) in expected_dim_cs:
+        ovr = ds.GetRasterBand(1).GetOverview(i)
+        cs = ovr.Checksum()
+        if ovr.XSize != expected_w or ovr.YSize != expected_h or cs != expected_cs:
+            gdaltest.post_reason('failure')
+            print(ovr.XSize)
+            print(ovr.YSize)
+            print(cs)
+            return 'fail'
+        i = i + 1
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def jpeg_cleanup():
@@ -833,6 +859,7 @@ gdaltest_list = [
     jpeg_18,
     jpeg_19,
     jpeg_20,
+    jpeg_21,
     jpeg_cleanup ]
 
 if __name__ == '__main__':
