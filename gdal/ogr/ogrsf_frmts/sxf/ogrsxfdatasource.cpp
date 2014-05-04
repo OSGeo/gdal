@@ -87,6 +87,7 @@ OGRSXFDataSource::OGRSXFDataSource()
     nLayers = 0;
 
     fpSXF = NULL;
+    hIOMutex = NULL;
 
     oSXFPassport.stMapDescription.pSpatRef = NULL;
 }
