@@ -111,7 +111,7 @@ class OGRSXFDataSource : public OGRDataSource
     size_t              nLayers;
 
     VSILFILE* fpSXF;    
-
+    void  *hIOMutex;
     void FillLayers(void);
     void CreateLayers();
     void CreateLayers(VSILFILE* fpRSC);
