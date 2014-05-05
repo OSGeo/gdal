@@ -508,7 +508,7 @@ def ogr_feature_cp_10():
     if not check( dst_feature, 'field_real', None ):
         return 'failure'
 
-    if not check( dst_feature, 'field_string', None ):
+    if not check( dst_feature, 'field_string', ['abc def'] ):
         return 'failure'
 
     if not check( dst_feature, 'field_binary', None ):
