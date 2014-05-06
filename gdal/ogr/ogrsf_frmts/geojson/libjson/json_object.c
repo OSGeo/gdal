@@ -601,7 +601,7 @@ double json_object_get_double(struct json_object *jso)
   case json_type_boolean:
     return jso->o.c_boolean;
   case json_type_string:
-    return CPLAtof(jso->o.c_string.str);
+    return CPLAtofM(jso->o.c_string.str);
   default:
     return 0.0;
   }
