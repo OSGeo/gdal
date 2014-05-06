@@ -193,8 +193,14 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
 
     poModule = new S57Reader( pszFilename );
 
-    papszReaderOptions = CSLSetNameValue(papszReaderOptions, 
+    if( GetOption(S57O_LNAM_REFS) == NULL )
+        papszReaderOptions = CSLSetNameValue(papszReaderOptions, 
                                          S57O_LNAM_REFS, "ON" );
+    else
+        papszReaderOptions = 
+            CSLSetNameValue( papszReaderOptions, S57O_LNAM_REFS, 
+                             GetOption(S57O_LNAM_REFS));
+
     if( GetOption(S57O_UPDATES) != NULL )
         papszReaderOptions = 
             CSLSetNameValue( papszReaderOptions, S57O_UPDATES, 
