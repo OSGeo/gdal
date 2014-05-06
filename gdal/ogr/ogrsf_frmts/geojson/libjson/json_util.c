@@ -61,6 +61,7 @@
 #include "json_tokener.h"
 #include "json_util.h"
 
+#include "cpl_conv.h"
 static int sscanf_is_broken = 0;
 static int sscanf_is_broken_testdone = 0;
 static void sscanf_is_broken_test(void);
@@ -148,7 +149,8 @@ int json_object_to_file(char *filename, struct json_object *obj)
 
 int json_parse_double(const char *buf, double *retval)
 {
-  return (sscanf(buf, "%lf", retval)==1 ? 0 : 1);
+    *retval = CPLStrtod(buf, 0);
+    return 0;
 }
 
 /*
