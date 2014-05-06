@@ -198,7 +198,7 @@ int OGRSXFDataSource::Open( const char * pszFilename, int bUpdateIn)
         oSXFPassport.version = stSXFFileHeader.nFormatVersion[1];
     }
 
-    if ( oSXFPassport.version == 0 )
+    if ( oSXFPassport.version < 3 )
     {
         CPLError(CE_Failure, CPLE_NotSupported , "SXF File version not supported");
         CloseFile();
