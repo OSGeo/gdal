@@ -1,5 +1,5 @@
-MIGRATION GUIDE FROM GDAL 1.X to GDAL 2.0
------------------------------------------
+MIGRATION GUIDE FROM GDAL 1.10 to GDAL 1.11
+-------------------------------------------
 
 This file documents backwards incompatible changes.
 
