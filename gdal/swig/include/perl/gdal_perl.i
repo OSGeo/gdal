@@ -30,7 +30,7 @@
   /* gdal_perl.i %init code */
   UseExceptions();
   if ( GDALGetDriverCount() == 0 ) {
-    GDALAllRegister();
+      GDALAllRegister();
   }
 %}
 
@@ -45,7 +45,6 @@
 
 %import destroy.i
 
-/*ALTERED_DESTROY(GDALRasterBandShadow, GDALc, delete_Band) !does not work! */
 ALTERED_DESTROY(GDALColorTableShadow, GDALc, delete_ColorTable)
 ALTERED_DESTROY(GDALConstShadow, GDALc, delete_Const)
 ALTERED_DESTROY(GDALDatasetShadow, GDALc, delete_Dataset)
@@ -292,7 +291,7 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
     package Geo::GDAL::Driver;
     use vars qw/@CAPABILITIES @DOMAINS/;
     use strict;
-    @CAPABILITIES = ('Create', 'CreateCopy');
+    @CAPABILITIES = qw/Create CreateCopy VirtualIO/;
     sub Domains {
         return @DOMAINS;
     }
@@ -367,10 +366,10 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
     package Geo::GDAL::Dataset;
     use strict;
     use vars qw/%BANDS @DOMAINS/;
-    @DOMAINS = ("IMAGE_STRUCTURE", "SUBDATASETS", "GEOLOCATION");
+    @DOMAINS = qw/IMAGE_STRUCTURE SUBDATASETS GEOLOCATION/;
     sub Domains {
         return @DOMAINS;
-    }
+    }   
     *GetDriver = *_GetDriver;
     sub Open {
         return Geo::GDAL::Open(@_);
@@ -429,6 +428,7 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 
     package Geo::GDAL::Band;
     use strict;
+    use POSIX;
     use Carp;
     use Scalar::Util 'blessed';
     use vars qw/
@@ -442,7 +442,7 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
         $COLOR_INTERPRETATION_STRING2INT{$string} = $int;
         $COLOR_INTERPRETATION_INT2STRING{$int} = $string;
     }
-    @DOMAINS = ("IMAGE_STRUCTURE", "RESAMPLING");
+    @DOMAINS = qw/IMAGE_STRUCTURE RESAMPLING/;
     sub Domains {
         return @DOMAINS;
     }
@@ -475,18 +475,28 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
     }
     sub NoDataValue {
         my $self = shift;
-        SetNoDataValue($self, $_[0]) if @_ > 0;
+        if (@_ > 0) {
+            if (defined $_[0]) {
+                SetNoDataValue($self, $_[0]);
+            } else {
+                SetNoDataValue($self, POSIX::FLT_MAX); # hopefully an "out of range" value
+            }
+        }
         GetNoDataValue($self);
     }
     sub Unit {
         my $self = shift;
-        SetUnitType($self, $_[0]) if @_ > 0;
+        if (@_ > 0) {
+            my $unit = shift;
+            $unit = '' unless defined $unit;
+            SetUnitType($self, $unit);
+        }
         GetUnitType($self);
     }
     sub ScaleAndOffset {
         my $self = shift;
-        SetScale($self, $_[0]) if @_ > 0;
-        SetOffset($self, $_[1]) if @_ > 1;
+        SetScale($self, $_[0]) if @_ > 0 and defined $_[0];
+        SetOffset($self, $_[1]) if @_ > 1 and defined $_[1];
         (GetScale($self), GetOffset($self));
     }
     sub ReadTile {
@@ -535,7 +545,7 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
     }
     sub ColorTable {
         my $self = shift;
-        SetRasterColorTable($self, $_[0]) if @_;
+        SetRasterColorTable($self, $_[0]) if @_ and defined $_[0];
         return unless defined wantarray;
         GetRasterColorTable($self);
     }
@@ -548,7 +558,7 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
     }
     sub AttributeTable {
         my $self = shift;
-        SetDefaultRAT($self, $_[0]) if @_;
+        SetDefaultRAT($self, $_[0]) if @_ and defined $_[0];
         return unless defined wantarray;
         my $r = GetDefaultRAT($self);
         $Geo::GDAL::RasterAttributeTable::BANDS{$r} = $self;

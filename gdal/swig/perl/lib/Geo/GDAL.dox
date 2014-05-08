@@ -792,16 +792,17 @@
 ## @method $NoDataValue($NoDataValue)
 # @note a.k.a. GetNoDataValue (get only), SetNoDataValue (set only)
 # @param NoDataValue [optional]
-# Get or set the no data value.
-# @note There does not exist a good way to clear the no data
-# value. $band->NoDataValue(undef) does not do what you want.
-# @return the nodata value.
+# Get or set the "no data" value.
+# @note $band->NoDataValue(undef) sets the "no data" value to the Posix
+# floating point maximum.
+# @return the "no data" value.
 
 ## @ignore GetUnitType
 ## @ignore SetUnitType
 
 ## @method Unit($type)
 # @param type [optional] the unit (a string).
+# @note $band->Unit(undef) sets the unit value to an empty string.
 # @return the unit (a string).
 # @since version 1.9 of the bindings.
 

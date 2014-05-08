@@ -281,7 +281,7 @@
 # deleted, if ambiguous use named parameter syntax (name or index).
 
 ## @method DeleteLayer(%param)
-# Deletes a layer from the data source. Note that if there are layers
+# Deletes a layer from the data source. Note that if there are layer
 # objects for the deleted layer, they become unusable.
 # @param param Named parameter (name or index) for the layer to be
 # deleted.
@@ -290,10 +290,13 @@
 # @param statement A SQL statement.
 # @param geom A Geo::OGR::Geometry object.
 # @param dialect
-# @return a new Geo::OGR::Layer object.
+# @return a new Geo::OGR::Layer object. The data source object will
+# exist as long as the layer object exists.
 
 ## @method ReleaseResultSet($layer)
 # @param layer A layer the has been created with ExecuteSQL.
+# @note There is no need to call this method. The result set layer is
+# released in the destructor of the layer that was created with SQL.
 
 ## @method Geo::OGR::Layer GetLayerByIndex($index = 0)
 # @param index A number.
