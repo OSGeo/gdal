@@ -427,7 +427,7 @@ VRTSourcedRasterBand::ComputeStatistics( int bApproxOK,
                                    void *pProgressData )
 
 {
-    if( nSources != 1 )
+    if( nSources != 1 || bNoDataValueSet )
         return GDALRasterBand::ComputeStatistics(  bApproxOK,  
                                               pdfMin, pdfMax, 
                                               pdfMean, pdfStdDev,
