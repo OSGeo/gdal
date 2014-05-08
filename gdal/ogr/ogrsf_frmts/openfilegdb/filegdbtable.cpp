@@ -667,7 +667,7 @@ int FileGDBTable::Open(const char* pszFilename)
 
     GUInt32 nRemaining = nFieldDescLength - 10;
     nBufferMaxSize = nRemaining;
-    pabyBuffer = (GByte*)VSIMalloc(nBufferMaxSize);
+    pabyBuffer = (GByte*)VSIMalloc(nBufferMaxSize + ZEROES_AFTER_END_OF_BUFFER);
     returnErrorIf(pabyBuffer == NULL );
     returnErrorIf(VSIFReadL(pabyBuffer, nRemaining, 1, fpTable) != 1 );
 
