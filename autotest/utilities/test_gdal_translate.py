@@ -689,7 +689,36 @@ def test_gdal_translate_25():
     ds = None
 
     return 'success'
-    
+
+###############################################################################
+# Test -a_nodata and -stats (#5463)
+
+def test_gdal_translate_26():
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    f = open('tmp/test_gdal_translate_26.xyz', 'wb')
+    f.write("""X Y Z
+0 0 -999
+1 0 10
+0 1 15
+1 1 20""")
+    f.close()
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -a_nodata -999 -stats tmp/test_gdal_translate_26.xyz tmp/test_gdal_translate_26.tif')
+
+    ds = gdal.Open('tmp/test_gdal_translate_26.tif')
+    if ds.GetRasterBand(1).GetMinimum() != 10:
+        gdaltest.post_reason('failure')
+        print(ds.GetRasterBand(1).GetMinimum())
+        return 'fail'
+    if ds.GetRasterBand(1).GetNoDataValue() != -999:
+        gdaltest.post_reason('failure')
+        print(ds.GetRasterBand(1).GetNoDataValue())
+        return 'fail'
+
+    ds = None
+
+    return 'success'
 ###############################################################################
 # Cleanup
 
@@ -763,6 +792,11 @@ def test_gdal_translate_cleanup():
         gdal.GetDriverByName('GTiff').Delete('tmp/test_gdal_translate_25.tif')
     except:
         pass
+    try:
+        gdal.GetDriverByName('XYZ').Delete('tmp/test_gdal_translate_26.xyz')
+        gdal.GetDriverByName('GTiff').Delete('tmp/test_gdal_translate_26.tif')
+    except:
+        pass
     return 'success'
 
 gdaltest_list = [
@@ -791,6 +825,7 @@ gdaltest_list = [
     test_gdal_translate_23,
     test_gdal_translate_24,
     test_gdal_translate_25,
+    test_gdal_translate_26,
     test_gdal_translate_cleanup
     ]
 
