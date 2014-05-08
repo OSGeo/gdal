@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #******************************************************************************
 #  $Id$
 # 
@@ -80,9 +81,13 @@ def trHandleCode(code, gen_dict_line, report_error, output_format):
         if output_format == '-proj4':
             out_string = prj_srs.ExportToProj4()
 
-            name = prj_srs.GetAttrValue('PROJCS')
+            name = prj_srs.GetAttrValue('COMPD_CS')
+            if name is None:
+                name = prj_srs.GetAttrValue('PROJCS')
             if name is None:
                 name = prj_srs.GetAttrValue('GEOGCS')
+            if name is None:
+                name = prj_srs.GetAttrValue('GEOCCS')
 
             if name is None:
                 name = 'Unknown'
@@ -95,9 +100,14 @@ def trHandleCode(code, gen_dict_line, report_error, output_format):
                 print('#')
 
         if output_format == '-postgis':
-            name = prj_srs.GetAttrValue('PROJCS')
+
+            name = prj_srs.GetAttrValue('COMPD_CS')
+            if name is None:
+                name = prj_srs.GetAttrValue('PROJCS')
             if name is None:
                 name = prj_srs.GetAttrValue('GEOGCS')
+            if name is None:
+                name = prj_srs.GetAttrValue('GEOCCS')
 
             try:
                 proj4text = prj_srs.ExportToProj4()
