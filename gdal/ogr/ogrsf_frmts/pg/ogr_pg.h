@@ -281,7 +281,7 @@ class OGRPGTableLayer : public OGRPGLayer
     int                 bCreateSpatialIndexFlag;
     int                 bInResetReading;
     
-    int                 bAutoFIDOnCreate;
+    int                 bAutoFIDOnCreateViaCopy;
     int                 bUseCopyByDefault;
 
     virtual CPLString   GetFromClauseForGetExtent() { return pszSqlTableName; }
