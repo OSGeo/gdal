@@ -1652,7 +1652,8 @@ void OGROSMDataSource::ProcessWaysBatch()
                         }
                     }
                 }
-                else if( panReqIds[nIdx] != psWayFeaturePairs->panNodeRefs[i] )
+                else if( nIdx >= 0 &&
+                         panReqIds[nIdx] != psWayFeaturePairs->panNodeRefs[i] )
                     nIdx = -1;
 
                 if (nIdx >= 0)
