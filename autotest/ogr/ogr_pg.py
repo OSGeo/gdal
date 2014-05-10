@@ -558,7 +558,7 @@ def ogr_pg_10():
     return 'fail'
 
 ###############################################################################
-# Create table from data/poly.shp in COPY mode.
+# Create table from data/poly.shp in INSERT mode.
 
 def ogr_pg_11():
 
@@ -569,7 +569,7 @@ def ogr_pg_11():
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:tpolycopy' )
     gdal.PopErrorHandler()
 
-    gdal.SetConfigOption( 'PG_USE_COPY', 'YES' )
+    gdal.SetConfigOption( 'PG_USE_COPY', 'NO' )
 
     ######################################################
     # Create Layer
@@ -606,7 +606,7 @@ def ogr_pg_11():
 
     dst_feat.Destroy()
         
-    gdal.SetConfigOption( 'PG_USE_COPY', 'NO' )
+    gdal.SetConfigOption( 'PG_USE_COPY', None )
     
     return 'success'
 
@@ -3043,9 +3043,11 @@ def ogr_pg_63():
     lyr.CreateField(ogr.FieldDefn('bar', ogr.OFTString))
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField('foo', '123')
+    lyr.StartTransaction()
     lyr.CreateFeature(feat)
+    lyr.CommitTransaction()
     feat = None
-    ds = None
+    lyr = None
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
     lyr = ds.GetLayerByName('ogr_pg_63')

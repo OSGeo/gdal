@@ -280,6 +280,9 @@ class OGRPGTableLayer : public OGRPGLayer
     int                 nForcedDimension;
     int                 bCreateSpatialIndexFlag;
     int                 bInResetReading;
+    
+    int                 bAutoFIDOnCreate;
+    int                 bUseCopyByDefault;
 
     virtual CPLString   GetFromClauseForGetExtent() { return pszSqlTableName; }
 
@@ -346,6 +349,8 @@ public:
                                 { nForcedDimension = nForcedDimensionIn; }
     void                SetCreateSpatialIndexFlag( int bFlag )
                                 { bCreateSpatialIndexFlag = bFlag; }
+    void                AllowAutoFIDOnCreateViaCopy() { bAutoFIDOnCreateViaCopy = TRUE; }
+    void                SetUseCopy() { bUseCopy = TRUE; bUseCopyByDefault = TRUE; }
 
     virtual void        ResolveSRID(OGRPGGeomFieldDefn* poGFldDefn);
 };

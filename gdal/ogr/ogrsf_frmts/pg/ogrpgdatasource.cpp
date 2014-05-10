@@ -1640,6 +1640,12 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
     const char* pszOverrideColumnTypes = CSLFetchNameValue( papszOptions, "COLUMN_TYPES" );
     poLayer->SetOverrideColumnTypes(pszOverrideColumnTypes);
 
+    poLayer->AllowAutoFIDOnCreateViaCopy();
+    if( CPLGetConfigOption("PG_USE_COPY", NULL) == NULL )
+    {
+        poLayer->SetUseCopy();
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
 /* -------------------------------------------------------------------- */

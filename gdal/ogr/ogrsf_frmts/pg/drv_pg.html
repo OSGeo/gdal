@@ -134,7 +134,8 @@ Options</a> which help control the behavior of this driver.<p>
 
 <ul>
 <li><b>PG_USE_COPY</b>: This may be "YES" for using COPY for inserting data to Postgresql.
-COPY is significantly faster than INSERT.</li><p>
+COPY is significantly faster than INSERT. Starting with GDAL 2.0, COPY is used by
+default when inserting from a table that has just been created.</li><p>
 <li><b>PGSQL_OGR_FID</b>: Set name of primary key instead of 'ogc_fid'. Only used when opening a layer whose primary key cannot be autodetected.
 Ignored by CreateLayer() that uses the FID creation option.</li><p>
 <!-- Little interest to advertize PG_USE_TEXT... Just to keep it mind it exists for example for debugging -->
