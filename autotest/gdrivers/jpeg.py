@@ -823,6 +823,80 @@ def jpeg_21():
     return 'success'
 
 ###############################################################################
+# Test generation of EXIF overviews
+
+def jpeg_22():
+
+    src_ds = gdal.GetDriverByName('Mem').Create('', 4096, 2048)
+    src_ds.GetRasterBand(1).Fill(255)
+    ds = gdal.GetDriverByName('JPEG').CreateCopy('/vsimem/jpeg_22.jpg', src_ds, options = ['EXIF_THUMBNAIL=YES'])
+    src_ds = None
+    if ds.GetRasterBand(1).GetOverviewCount() != 4:
+        gdaltest.post_reason('failure')
+        print(ds.GetRasterBand(1).GetOverviewCount())
+        return 'fail'
+    ovr = ds.GetRasterBand(1).GetOverview(3)
+    cs = ovr.Checksum()
+    if ovr.XSize != 128 or ovr.YSize != 64 or cs != 34957:
+        gdaltest.post_reason('failure')
+        print(ovr.XSize)
+        print(ovr.YSize)
+        print(cs)
+        return 'fail'
+    ds = None
+
+    src_ds = gdal.GetDriverByName('Mem').Create('', 2048, 4096)
+    src_ds.GetRasterBand(1).Fill(255)
+    ds = gdal.GetDriverByName('JPEG').CreateCopy('/vsimem/jpeg_22.jpg', src_ds, options = ['EXIF_THUMBNAIL=YES'])
+    src_ds = None
+    ovr = ds.GetRasterBand(1).GetOverview(3)
+    if ovr.XSize != 64 or ovr.YSize != 128:
+        gdaltest.post_reason('failure')
+        print(ovr.XSize)
+        print(ovr.YSize)
+        return 'fail'
+    ds = None
+
+    src_ds = gdal.GetDriverByName('Mem').Create('', 2048, 4096)
+    src_ds.GetRasterBand(1).Fill(255)
+    ds = gdal.GetDriverByName('JPEG').CreateCopy('/vsimem/jpeg_22.jpg', src_ds, options = ['EXIF_THUMBNAIL=YES', 'THUMBNAIL_WIDTH=40'])
+    src_ds = None
+    ovr = ds.GetRasterBand(1).GetOverview(3)
+    if ovr.XSize != 40 or ovr.YSize != 80:
+        gdaltest.post_reason('failure')
+        print(ovr.XSize)
+        print(ovr.YSize)
+        return 'fail'
+    ds = None
+
+    src_ds = gdal.GetDriverByName('Mem').Create('', 2048, 4096)
+    src_ds.GetRasterBand(1).Fill(255)
+    ds = gdal.GetDriverByName('JPEG').CreateCopy('/vsimem/jpeg_22.jpg', src_ds, options = ['EXIF_THUMBNAIL=YES', 'THUMBNAIL_HEIGHT=60'])
+    src_ds = None
+    ovr = ds.GetRasterBand(1).GetOverview(3)
+    if ovr.XSize != 30 or ovr.YSize != 60:
+        gdaltest.post_reason('failure')
+        print(ovr.XSize)
+        print(ovr.YSize)
+        return 'fail'
+    ds = None
+
+    src_ds = gdal.GetDriverByName('Mem').Create('', 2048, 4096)
+    src_ds.GetRasterBand(1).Fill(255)
+    ds = gdal.GetDriverByName('JPEG').CreateCopy('/vsimem/jpeg_22.jpg', src_ds, options = ['EXIF_THUMBNAIL=YES', 'THUMBNAIL_WIDTH=50', 'THUMBNAIL_HEIGHT=40'])
+    src_ds = None
+    ovr = ds.GetRasterBand(1).GetOverview(3)
+    if ovr.XSize != 50 or ovr.YSize != 40:
+        gdaltest.post_reason('failure')
+        print(ovr.XSize)
+        print(ovr.YSize)
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/jpeg_22.jpg')
+
+    return 'success'
+###############################################################################
 # Cleanup
 
 def jpeg_cleanup():
@@ -860,6 +934,7 @@ gdaltest_list = [
     jpeg_19,
     jpeg_20,
     jpeg_21,
+    jpeg_22,
     jpeg_cleanup ]
 
 if __name__ == '__main__':
