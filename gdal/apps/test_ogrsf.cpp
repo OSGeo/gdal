@@ -2105,6 +2105,13 @@ static int TestTransactions( OGRLayer *poLayer )
             return FALSE;
         }
 
+        if( nFID < 0 )
+        {
+            printf("WARNING: CreateFeature() returned featured without FID.\n");
+            poLayer->RollbackTransaction();
+            return FALSE;
+        }
+
         eErr = poLayer->CommitTransaction();
         if (eErr != OGRERR_NONE)
         {
