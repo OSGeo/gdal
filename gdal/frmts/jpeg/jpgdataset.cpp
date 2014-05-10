@@ -34,6 +34,7 @@
 #include "gdal_pam.h"
 #include "cpl_string.h"
 #include "gdalexif.h"
+#include "memdataset.h"
 
 #include <setjmp.h>
 
@@ -42,6 +43,11 @@
 #define TIFF_BIGENDIAN          0x4d4d
 #define TIFF_LITTLEENDIAN       0x4949
 
+#define JPEG_TIFF_IMAGEWIDTH        0x100
+#define JPEG_TIFF_IMAGEHEIGHT       0x101
+#define JPEG_TIFF_COMPRESSION       0x103
+#define JPEG_EXIF_JPEGIFOFSET       0x201
+#define JPEG_EXIF_JPEGIFBYTECOUNT   0x202
 /*
  * TIFF header.
  */
@@ -119,6 +125,15 @@ GDALRasterBand* JPGCreateBand(JPGDatasetCommon* poDS, int nBand);
 
 CPLErr JPGAppendMask( const char *pszJPGFilename, GDALRasterBand *poMask,
                       GDALProgressFunc pfnProgress, void * pProgressData );
+void   JPGAddEXIFOverview( GDALDataType eWorkDT,
+                           GDALDataset* poSrcDS, char** papszOptions,
+                           j_compress_ptr cinfo,
+                           void (*p_jpeg_write_m_header) (j_compress_ptr cinfo, int marker, unsigned int datalen),
+                           void (*p_jpeg_write_m_byte) (j_compress_ptr cinfo, int val),
+                           GDALDataset *(pCreateCopy)( const char *, GDALDataset *, 
+                                     int, char **,
+                                     GDALProgressFunc pfnProgress, 
+                                     void * pProgressData ) );
 
 /************************************************************************/
 /* ==================================================================== */
@@ -1270,11 +1285,6 @@ GDALDataset* JPGDatasetCommon::InitEXIFOverview()
 
     int nImageWidth = 0, nImageHeight = 0, nCompression = 6;
     GUInt32 nJpegIFOffset = 0, nJpegIFByteCount = 0;
-#define JPEG_TIFF_IMAGEWIDTH        0x100
-#define JPEG_TIFF_IMAGEHEIGHT       0x101
-#define JPEG_TIFF_COMPRESSION       0x103
-#define JPEG_EXIF_JPEGIFOFSET       0x201
-#define JPEG_EXIF_JPEGIFBYTECOUNT   0x202
     for( int i = 0; i < nEntryCount; i ++ )
     {
         TIFFDirEntry sEntry;
@@ -2814,6 +2824,226 @@ CPLErr JPGAppendMask( const char *pszJPGFilename, GDALRasterBand *poMask,
     return eErr;
 }
 
+/************************************************************************/
+/*                          JPGAddEXIFOverview()                        */
+/************************************************************************/
+
+void   JPGAddEXIFOverview( GDALDataType eWorkDT,
+                           GDALDataset* poSrcDS, char** papszOptions,
+                           j_compress_ptr cinfo,
+                           void (*p_jpeg_write_m_header) (j_compress_ptr cinfo, int marker, unsigned int datalen),
+                           void (*p_jpeg_write_m_byte) (j_compress_ptr cinfo, int val),
+                           GDALDataset *(pCreateCopy)( const char *, GDALDataset *, 
+                                     int, char **,
+                                     GDALProgressFunc pfnProgress, 
+                                     void * pProgressData ))
+{
+    int  nBands = poSrcDS->GetRasterCount();
+    int  nXSize = poSrcDS->GetRasterXSize();
+    int  nYSize = poSrcDS->GetRasterYSize();
+
+    int bGenerateEXIFThumbnail =
+        CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "EXIF_THUMBNAIL", "NO"));
+    const char* pszThumbnailWidth = CSLFetchNameValue(papszOptions, "THUMBNAIL_WIDTH");
+    const char* pszThumbnailHeight = CSLFetchNameValue(papszOptions, "THUMBNAIL_HEIGHT");
+    int nOvrWidth = 0, nOvrHeight = 0;
+    if( pszThumbnailWidth == NULL && pszThumbnailHeight == NULL )
+    {
+        if( nXSize >= nYSize )
+        {
+            nOvrWidth = 128;
+        }
+        else
+        {
+            nOvrHeight = 128;
+        }
+    }
+    if( pszThumbnailWidth != NULL )
+    {
+        nOvrWidth = atoi(pszThumbnailWidth);
+        if( nOvrWidth < 32 )
+            nOvrWidth = 32;
+        if( nOvrWidth > 1024 )
+            nOvrWidth = 1024;
+    }
+    if( pszThumbnailHeight != NULL )
+    {
+        nOvrHeight = atoi(pszThumbnailHeight);
+        if( nOvrHeight < 32 )
+            nOvrHeight = 32;
+        if( nOvrHeight > 1024 )
+            nOvrHeight = 1024;
+    }
+    if( nOvrWidth == 0 )
+    {
+        nOvrWidth = (int)((GIntBig)nOvrHeight * nXSize / nYSize);
+        if( nOvrWidth == 0 ) nOvrWidth = 1;
+    }
+    else if( nOvrHeight == 0 )
+    {
+        nOvrHeight = (int)((GIntBig)nOvrWidth * nYSize / nXSize);
+        if( nOvrHeight == 0 ) nOvrHeight = 1;
+    }
+
+    if( bGenerateEXIFThumbnail && nXSize > nOvrWidth && nYSize > nOvrHeight )
+    {
+        GDALDataset* poMemDS = MEMDataset::Create("", nOvrWidth, nOvrHeight, nBands, eWorkDT, NULL);
+        GDALRasterBand** papoSrcBands = (GDALRasterBand**)CPLMalloc(nBands * sizeof(GDALRasterBand*));
+        GDALRasterBand** papoOvrBands = (GDALRasterBand**)CPLMalloc(nBands * sizeof(GDALRasterBand*));
+        for(int i=0;i<nBands;i++)
+        {
+            papoSrcBands[i] = poSrcDS->GetRasterBand(i+1);
+            papoOvrBands[i] = poMemDS->GetRasterBand(i+1);
+        }
+        GDALRegenerateOverviewsMultiBand(nBands, papoSrcBands,
+                                        1, &papoOvrBands,
+                                        "AVERAGE", NULL, NULL);
+        CPLFree(papoSrcBands);
+        CPLFree(papoOvrBands);
+        CPLString osTmpFile(CPLSPrintf("/vsimem/ovrjpg%p",poMemDS));
+        GDALDataset* poOutDS = pCreateCopy(osTmpFile, poMemDS, 0, NULL, GDALDummyProgress, NULL);
+        delete poOutDS;
+        GDALClose(poMemDS);
+        vsi_l_offset nJPEGIfByteCount = 0;
+        GByte* pabyOvr = NULL;
+        if( poOutDS != NULL )
+            pabyOvr = VSIGetMemFileBuffer( osTmpFile, &nJPEGIfByteCount, TRUE );
+        VSIUnlink(osTmpFile);
+
+        unsigned int nMarkerSize = 6 + 16 + 5 * 12 + 4 + nJPEGIfByteCount;
+        if( pabyOvr == NULL )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined, "Could not generate EXIF overview");
+        }
+        else if( nMarkerSize < 65536 )
+        {
+            p_jpeg_write_m_header( cinfo, JPEG_APP0 + 1, nMarkerSize );
+            p_jpeg_write_m_byte( cinfo, 'E' ); /* EXIF signature */
+            p_jpeg_write_m_byte( cinfo, 'x' );
+            p_jpeg_write_m_byte( cinfo, 'i' );
+            p_jpeg_write_m_byte( cinfo, 'f' );
+            p_jpeg_write_m_byte( cinfo, '\0' );
+            p_jpeg_write_m_byte( cinfo, '\0' );
+
+            p_jpeg_write_m_byte( cinfo, TIFF_LITTLEENDIAN & 0xff ); /* TIFF little-endian signature */
+            p_jpeg_write_m_byte( cinfo, TIFF_LITTLEENDIAN >> 8 );
+            p_jpeg_write_m_byte( cinfo, TIFF_VERSION );
+            p_jpeg_write_m_byte( cinfo, 0x00 );
+
+            p_jpeg_write_m_byte( cinfo, 8 ); /* Offset of IFD0 */
+            p_jpeg_write_m_byte( cinfo, 0 );
+            p_jpeg_write_m_byte( cinfo, 0 );
+            p_jpeg_write_m_byte( cinfo, 0 );
+
+            p_jpeg_write_m_byte( cinfo, 0 ); /* Number of entries of IFD0 */
+            p_jpeg_write_m_byte( cinfo, 0 );
+
+            p_jpeg_write_m_byte( cinfo, 14 ); /* Offset of IFD1 */
+            p_jpeg_write_m_byte( cinfo, 0 );
+            p_jpeg_write_m_byte( cinfo, 0 );
+            p_jpeg_write_m_byte( cinfo, 0 );
+
+            p_jpeg_write_m_byte( cinfo, 5 ); /* Number of entries of IFD1 */
+            p_jpeg_write_m_byte( cinfo, 0 );
+
+            p_jpeg_write_m_byte( cinfo, JPEG_TIFF_IMAGEWIDTH & 0xff );
+            p_jpeg_write_m_byte( cinfo, (JPEG_TIFF_IMAGEWIDTH >> 8) & 0xff );
+
+            p_jpeg_write_m_byte( cinfo, TIFF_LONG );
+            p_jpeg_write_m_byte( cinfo, 0 );
+
+            p_jpeg_write_m_byte( cinfo, 1 ); /* 1 value */
+            p_jpeg_write_m_byte( cinfo, 0 );
+            p_jpeg_write_m_byte( cinfo, 0 );
+            p_jpeg_write_m_byte( cinfo, 0 );
+
+            p_jpeg_write_m_byte( cinfo, nOvrWidth & 0xff );
+            p_jpeg_write_m_byte( cinfo, nOvrWidth >> 8 );
+            p_jpeg_write_m_byte( cinfo, 0 );
+            p_jpeg_write_m_byte( cinfo, 0 );
+
+            p_jpeg_write_m_byte( cinfo, JPEG_TIFF_IMAGEHEIGHT & 0xff );
+            p_jpeg_write_m_byte( cinfo, JPEG_TIFF_IMAGEHEIGHT >> 8 );
+
+            p_jpeg_write_m_byte( cinfo, TIFF_LONG );
+            p_jpeg_write_m_byte( cinfo, 0 );
+
+            p_jpeg_write_m_byte( cinfo, 1 ); /* 1 value */
+            p_jpeg_write_m_byte( cinfo, 0 );
+            p_jpeg_write_m_byte( cinfo, 0 );
+            p_jpeg_write_m_byte( cinfo, 0 );
+
+            p_jpeg_write_m_byte( cinfo, nOvrHeight & 0xff );
+            p_jpeg_write_m_byte( cinfo, nOvrHeight >> 8 );
+            p_jpeg_write_m_byte( cinfo, 0 );
+            p_jpeg_write_m_byte( cinfo, 0 );
+
+            p_jpeg_write_m_byte( cinfo, JPEG_TIFF_COMPRESSION & 0xff );
+            p_jpeg_write_m_byte( cinfo, JPEG_TIFF_COMPRESSION >> 8 );
+
+            p_jpeg_write_m_byte( cinfo, TIFF_SHORT );
+            p_jpeg_write_m_byte( cinfo, 0 );
+
+            p_jpeg_write_m_byte( cinfo, 1 ); /* 1 value */
+            p_jpeg_write_m_byte( cinfo, 0 );
+            p_jpeg_write_m_byte( cinfo, 0 );
+            p_jpeg_write_m_byte( cinfo, 0 );
+
+            p_jpeg_write_m_byte( cinfo, 6 ); /* JPEG compression */
+            p_jpeg_write_m_byte( cinfo, 0 );
+            p_jpeg_write_m_byte( cinfo, 0 );
+            p_jpeg_write_m_byte( cinfo, 0 );
+
+            p_jpeg_write_m_byte( cinfo, JPEG_EXIF_JPEGIFOFSET & 0xff );
+            p_jpeg_write_m_byte( cinfo, JPEG_EXIF_JPEGIFOFSET >> 8 );
+
+            p_jpeg_write_m_byte( cinfo, TIFF_LONG );
+            p_jpeg_write_m_byte( cinfo, 0 );
+
+            p_jpeg_write_m_byte( cinfo, 1 ); /* 1 value */
+            p_jpeg_write_m_byte( cinfo, 0 );
+            p_jpeg_write_m_byte( cinfo, 0 );
+            p_jpeg_write_m_byte( cinfo, 0 );
+
+            const unsigned int nJPEGIfOffset = 16 + 5 * 12 + 4;
+            p_jpeg_write_m_byte( cinfo, nJPEGIfOffset & 0xff );
+            p_jpeg_write_m_byte( cinfo, nJPEGIfOffset >> 8 );
+            p_jpeg_write_m_byte( cinfo, 0 );
+            p_jpeg_write_m_byte( cinfo, 0 );
+
+            p_jpeg_write_m_byte( cinfo, JPEG_EXIF_JPEGIFBYTECOUNT & 0xff );
+            p_jpeg_write_m_byte( cinfo, JPEG_EXIF_JPEGIFBYTECOUNT >> 8 );
+
+            p_jpeg_write_m_byte( cinfo, TIFF_LONG );
+            p_jpeg_write_m_byte( cinfo, 0 );
+
+            p_jpeg_write_m_byte( cinfo, 1 ); /* 1 value */
+            p_jpeg_write_m_byte( cinfo, 0 );
+            p_jpeg_write_m_byte( cinfo, 0 );
+            p_jpeg_write_m_byte( cinfo, 0 );
+
+            p_jpeg_write_m_byte( cinfo, nJPEGIfByteCount & 0xff );
+            p_jpeg_write_m_byte( cinfo, nJPEGIfByteCount >> 8 );
+            p_jpeg_write_m_byte( cinfo, 0 );
+            p_jpeg_write_m_byte( cinfo, 0 );
+
+            p_jpeg_write_m_byte( cinfo, 0 ); /* Offset of IFD2 == 0 ==> end of TIFF directory */
+            p_jpeg_write_m_byte( cinfo, 0 );
+            p_jpeg_write_m_byte( cinfo, 0 );
+            p_jpeg_write_m_byte( cinfo, 0 );
+
+            for(int i=0; i<(int)nJPEGIfByteCount; i++)
+                p_jpeg_write_m_byte( cinfo, pabyOvr[i] );
+        }
+        else
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Cannot write EXIF thumbnail. The size of the EXIF segment exceeds 65536 bytes");
+        }
+        CPLFree(pabyOvr);
+    }
+}
+
 #endif // !defined(JPGDataset)
 
 /************************************************************************/
@@ -3020,6 +3250,10 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     jpeg_start_compress( &sCInfo, TRUE );
 
+    JPGAddEXIFOverview( eWorkDT, poSrcDS, papszOptions, 
+                        &sCInfo, jpeg_write_m_header, jpeg_write_m_byte,
+                        CreateCopy ); 
+
 /* -------------------------------------------------------------------- */
 /*      Save ICC profile if available                                   */
 /* -------------------------------------------------------------------- */
@@ -3203,11 +3437,11 @@ void GDALRegister_JPEG()
 #endif
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
 "<CreationOptionList>\n"
-"   <Option name='PROGRESSIVE' type='boolean' default='NO'/>\n"
+"   <Option name='PROGRESSIVE' type='boolean' description='whether to generate a progressive JPEG' default='NO'/>\n"
 "   <Option name='QUALITY' type='int' description='good=100, bad=0, default=75'/>\n"
-"   <Option name='WORLDFILE' type='boolean' default='NO'/>\n"
-"   <Option name='INTERNAL_MASK' type='boolean' default='YES'/>\n"
-"   <Option name='ARITHMETIC' type='boolean' default='NO'/>\n"
+"   <Option name='WORLDFILE' type='boolean' description='whether to geneate a worldfile' default='NO'/>\n"
+"   <Option name='INTERNAL_MASK' type='boolean' description='whether to generate a validity mask' default='YES'/>\n"
+"   <Option name='ARITHMETIC' type='boolean' description='whether to use arithmetic encoding' default='NO'/>\n"
 #if JPEG_LIB_VERSION_MAJOR >= 8 && \
       (JPEG_LIB_VERSION_MAJOR > 8 || JPEG_LIB_VERSION_MINOR >= 3)
 "   <Option name='BLOCK' type='int' description='between 1 and 16'/>\n"
@@ -3218,7 +3452,10 @@ void GDALRegister_JPEG()
 "       <Value>RGB1</Value>"
 "   </Option>"
 #endif
-"   <Option name='SOURCE_ICC_PROFILE' type='string'/>\n"
+"   <Option name='SOURCE_ICC_PROFILE' description='ICC profile encoded in Base64' type='string'/>\n"
+"   <Option name='EXIF_THUMBNAIL' type='boolean' description='whether to generate an EXIF thumbnail(overview). By default its max dimension will be 128' default='NO'/>\n"
+"   <Option name='THUMBNAIL_WIDTH' type='int' description='Forced thumbnail width' min='32' max='512'/>\n"
+"   <Option name='THUMBNAIL_HEIGHT' type='int' description='Forced thumbnail height' min='32' max='512'/>\n"
 "</CreationOptionList>\n" );
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );

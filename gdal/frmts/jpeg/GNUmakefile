@@ -33,9 +33,11 @@ OBJ :=	jcapimin12.o jcapistd12.o jccoefct12.o jccolor12.o jcdctmgr12.o jchuff12.
 	$(OBJ) jpgdataset_12.o 
 endif
 
-CPPFLAGS	:=	$(XTRA_OPT) $(GDAL_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:=	$(XTRA_OPT) $(GDAL_INCLUDE) $(CPPFLAGS) -I../mem
 
 default:	install-obj
+
+$(O_OBJ): jpgdataset.cpp
 
 clean:
 	rm -f *.o $(O_OBJ) libjpeg12/*.c libjpeg12/*.h
