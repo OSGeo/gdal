@@ -25,13 +25,14 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <ctime>
 #include "ogr_selafin.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "cpl_vsi_virtual.h"
 #include "cpl_vsi.h"
 #include "io_selafin.h"
+
+#include <ctime>
 
 /************************************************************************/
 /*                          Range                                       */

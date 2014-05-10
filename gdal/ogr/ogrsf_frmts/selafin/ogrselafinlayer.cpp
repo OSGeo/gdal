@@ -233,10 +233,10 @@ OGRErr OGRSelafinLayer::SetFeature(OGRFeature *poFeature) {
         poHeader->paadfCoords[1][nFID]=poPoint->getY();
         CPLDebug("Selafin","SetFeature(%li,%f,%f)",nFID,poHeader->paadfCoords[0][nFID],poHeader->paadfCoords[1][nFID]);
         if (VSIFSeekL(poHeader->fp,88+16+40*poHeader->nVar+48+((poHeader->panStartDate!=0)?32:0)+24+(poHeader->nElements*poHeader->nPointsPerElement+2)*4+(poHeader->nPoints+2)*4+4+nFID*4,SEEK_SET)!=0) return OGRERR_FAILURE;
-        CPLDebug("Selafin","Write_float(%llu,%f)",VSIFTellL(poHeader->fp),poHeader->paadfCoords[0][nFID]-poHeader->adfOrigin[0]);
+        CPLDebug("Selafin","Write_float(" CPL_FRMT_GUIB ",%f)",VSIFTellL(poHeader->fp),poHeader->paadfCoords[0][nFID]-poHeader->adfOrigin[0]);
         if (Selafin::write_float(poHeader->fp,poHeader->paadfCoords[0][nFID]-poHeader->adfOrigin[0])==0) return OGRERR_FAILURE;
         if (VSIFSeekL(poHeader->fp,88+16+40*poHeader->nVar+48+((poHeader->panStartDate!=0)?32:0)+24+(poHeader->nElements*poHeader->nPointsPerElement+2)*4+(poHeader->nPoints+2)*4+(poHeader->nPoints+2)*4+4+nFID*4,SEEK_SET)!=0) return OGRERR_FAILURE;
-        CPLDebug("Selafin","Write_float(%llu,%f)",VSIFTellL(poHeader->fp),poHeader->paadfCoords[1][nFID]-poHeader->adfOrigin[1]);
+        CPLDebug("Selafin","Write_float(" CPL_FRMT_GUIB ",%f)",VSIFTellL(poHeader->fp),poHeader->paadfCoords[1][nFID]-poHeader->adfOrigin[1]);
         if (Selafin::write_float(poHeader->fp,poHeader->paadfCoords[1][nFID]-poHeader->adfOrigin[1])==0) return OGRERR_FAILURE;
         for (long i=0;i<poHeader->nVar;++i) {
             double nData=poFeature->GetFieldAsDouble(i);
@@ -264,10 +264,10 @@ OGRErr OGRSelafinLayer::SetFeature(OGRFeature *poFeature) {
             poHeader->paadfCoords[0][nPointId]=poLinearRing->getX(i);
             poHeader->paadfCoords[1][nPointId]=poLinearRing->getY(i);
             if (VSIFSeekL(poHeader->fp,88+16+40*poHeader->nVar+48+((poHeader->panStartDate!=0)?32:0)+24+(poHeader->nElements*poHeader->nPointsPerElement+2)*4+(poHeader->nPoints+2)*4+4+nPointId*4,SEEK_SET)!=0) return OGRERR_FAILURE;
-            CPLDebug("Selafin","Write_float(%llu,%f)",VSIFTellL(poHeader->fp),poHeader->paadfCoords[0][nPointId]-poHeader->adfOrigin[0]);
+            CPLDebug("Selafin","Write_float(" CPL_FRMT_GUIB ",%f)",VSIFTellL(poHeader->fp),poHeader->paadfCoords[0][nPointId]-poHeader->adfOrigin[0]);
             if (Selafin::write_float(poHeader->fp,poHeader->paadfCoords[0][nPointId]-poHeader->adfOrigin[0])==0) return OGRERR_FAILURE;
             if (VSIFSeekL(poHeader->fp,88+16+40*poHeader->nVar+48+((poHeader->panStartDate!=0)?32:0)+24+(poHeader->nElements*poHeader->nPointsPerElement+2)*4+(poHeader->nPoints+2)*4+(poHeader->nPoints+2)*4+4+nPointId*4,SEEK_SET)!=0) return OGRERR_FAILURE;
-            CPLDebug("Selafin","Write_float(%llu,%f)",VSIFTellL(poHeader->fp),poHeader->paadfCoords[1][nPointId]-poHeader->adfOrigin[1]);
+            CPLDebug("Selafin","Write_float(" CPL_FRMT_GUIB ",%f)",VSIFTellL(poHeader->fp),poHeader->paadfCoords[1][nPointId]-poHeader->adfOrigin[1]);
             if (Selafin::write_float(poHeader->fp,poHeader->paadfCoords[1][nPointId]-poHeader->adfOrigin[1])==0) return OGRERR_FAILURE;
         }
     }
