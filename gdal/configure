@@ -17732,6 +17732,49 @@ fi
 
   if test -n "$THREAD_FLAG" ; then
       THREAD_LIB="-lpthread"
+  else
+    # For Android, pthread_create is in Bionic libc
+    unset ac_cv_lib_pthread_pthread_create
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for pthread_create in -lc" >&5
+$as_echo_n "checking for pthread_create in -lc... " >&6; }
+if ${ac_cv_lib_c_pthread_create+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lc  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char pthread_create ();
+int
+main ()
+{
+return pthread_create ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_c_pthread_create=yes
+else
+  ac_cv_lib_c_pthread_create=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_c_pthread_create" >&5
+$as_echo "$ac_cv_lib_c_pthread_create" >&6; }
+if test "x$ac_cv_lib_c_pthread_create" = xyes; then :
+  THREAD_FLAG=CPL_MULTIPROC_PTHREAD
+fi
+
   fi
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PTHREAD_MUTEX_RECURSIVE" >&5
@@ -17771,8 +17814,6 @@ $as_echo "no" >&6; }
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
-  PTHREAD_ENABLED="yes"
-
 elif test "$with_threads" != "no" ; then
 
   THREAD_FLAG=CPL_MULTIPROC_PTHREAD
@@ -17782,8 +17823,6 @@ elif test "$with_threads" != "no" ; then
 $as_echo "$as_me: checking whether we should include thread/mutex support......" >&6;}
   { $as_echo "$as_me:${as_lineno-$LINENO}: result:         using threads with link options \"$THREAD_LIB\"." >&5
 $as_echo "        using threads with link options \"$THREAD_LIB\"." >&6; }
-
-  PTHREAD_ENABLED="yes"
 
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we should include thread/mutex support......" >&5
@@ -17798,9 +17837,48 @@ cat >>confdefs.h <<_ACEOF
 #define CPL_MULTIPROC_PTHREAD 1
 _ACEOF
 
+  PTHREAD_ENABLED="yes"
 fi
 
 LIBS="$THREAD_LIB $LIBS"
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for 5 args mremap()" >&5
+$as_echo_n "checking for 5 args mremap()... " >&6; }
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#define _GNU_SOURCE
+#include <sys/mman.h>
+
+int
+main ()
+{
+
+return (mremap(0,0,0,0,0));
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_5ARGS_MREMAP 1
+_ACEOF
+
+
+else
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
 
 
