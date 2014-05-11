@@ -485,6 +485,10 @@ if test "$with_threads" = "yes" -o "$with_threads" = "" ; then
 
   if test -n "$THREAD_FLAG" ; then
       THREAD_LIB="-lpthread"
+  else
+    # For Android, pthread_create is in Bionic libc
+    unset ac_cv_lib_pthread_pthread_create
+    AC_CHECK_LIB(c,pthread_create,THREAD_FLAG=CPL_MULTIPROC_PTHREAD,,,)
   fi
 
   AC_MSG_CHECKING([for PTHREAD_MUTEX_RECURSIVE])
@@ -504,8 +508,6 @@ if test "$with_threads" = "yes" -o "$with_threads" = "" ; then
     AC_MSG_RESULT([no])
   ])
 
-  PTHREAD_ENABLED="yes"
-
 elif test "$with_threads" != "no" ; then
 
   THREAD_FLAG=CPL_MULTIPROC_PTHREAD
@@ -514,8 +516,6 @@ elif test "$with_threads" != "no" ; then
   AC_CHECKING(whether we should include thread/mutex support...)
   AC_MSG_RESULT([        using threads with link options "$THREAD_LIB".])
 
-  PTHREAD_ENABLED="yes"
-
 else
   AC_CHECKING(whether we should include thread/mutex support...)
   AC_MSG_RESULT([        thread safe support disabled.])
@@ -523,9 +523,31 @@ fi
 
 if test "$THREAD_FLAG" = "CPL_MULTIPROC_PTHREAD" ; then
   AC_DEFINE_UNQUOTED(CPL_MULTIPROC_PTHREAD,1, [Define if you want to use pthreads based multiprocessing support])
+  PTHREAD_ENABLED="yes"
 fi
 
 LIBS="$THREAD_LIB $LIBS" 
+
+dnl ---------------------------------------------------------------------------
+dnl Check if mremap() with 5 args is available
+dnl ---------------------------------------------------------------------------
+
+AC_MSG_CHECKING([for 5 args mremap()])
+
+AC_TRY_COMPILE(
+[
+#define _GNU_SOURCE
+#include <sys/mman.h>
+], [
+return (mremap(0,0,0,0,0));
+],
+[
+AC_MSG_RESULT([yes])
+AC_DEFINE_UNQUOTED(HAVE_5ARGS_MREMAP, 1,
+        [Define to 1 if you have the 5 args `mremap' function.])
+], [
+AC_MSG_RESULT([no])
+])
 
 dnl ---------------------------------------------------------------------------
 dnl Check if libz is available.

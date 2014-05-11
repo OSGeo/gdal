@@ -54,8 +54,6 @@
 #include <unistd.h>     /* read, write, close, pipe */
 #include <pthread.h>
 
-#define HAVE_5ARGS_MREMAP
-
 #ifndef HAVE_5ARGS_MREMAP
 #include "cpl_atomic_ops.h"
 #endif
