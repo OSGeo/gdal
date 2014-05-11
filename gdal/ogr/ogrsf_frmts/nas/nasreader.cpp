@@ -1021,8 +1021,7 @@ void NASReader::CheckForRelations( const char *pszElement,
         if( EQUALN(pszHRef,"urn:adv:oid:", 12 ) )
         {
             poFeature->AddOBProperty( pszElement, pszHRef );
-            if( ppszCurField && *ppszCurField )
-                CPLFree( *ppszCurField );
+            CPLFree( *ppszCurField );
             *ppszCurField = CPLStrdup( pszHRef + 12 );
         }
 
