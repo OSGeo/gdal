@@ -4252,13 +4252,13 @@ if test "$with_armadillo" = "yes" ; then
     rm -f testarmadillo
     echo '#include <armadillo>' > testarmadillo.cpp
     echo 'int main(int argc, char** argv) { arma::mat matInput(2,2); const arma::mat& matInv = arma::inv(matInput); return 0; } ' >> testarmadillo.cpp
-    if test -z "`${CXX} ${CPPFLAGS} testarmadillo.cpp -o testarmadillo -larmadillo ${LIBS} 2>&1`" ; then
+    if test -z "`${CXX} ${CPPFLAGS} testarmadillo.cpp -o testarmadillo -larmadillo 2>&1`" ; then
         HAVE_ARMADILLO=yes
         LIBS="-larmadillo ${LIBS}"
         AC_MSG_RESULT([yes])
     else
         dnl Try adding -llapack (#4923)
-        if test -z "`${CXX} ${CPPFLAGS} testarmadillo.cpp -o testarmadillo -larmadillo -llapack ${LIBS} 2>&1`" ; then
+        if test -z "`${CXX} ${CPPFLAGS} testarmadillo.cpp -o testarmadillo -larmadillo -llapack 2>&1`" ; then
             HAVE_ARMADILLO=yes
             LIBS="-larmadillo -llapack ${LIBS}"
             AC_MSG_RESULT([yes])
@@ -4275,14 +4275,14 @@ elif test -n "$with_armadillo" -a "$with_armadillo" != "no" ; then
     rm -f testarmadillo
     echo '#include <armadillo>' > testarmadillo.cpp
     echo 'int main(int argc, char** argv) { arma::mat matInput(2,2); const arma::mat& matInv = arma::inv(matInput); return 0; } ' >> testarmadillo.cpp
-    if test -z "`${CXX} ${CPPFLAGS} -I$with_armadillo/include testarmadillo.cpp -o testarmadillo -L$with_armadillo/lib -larmadillo ${LIBS} 2>&1`" ; then
+    if test -z "`${CXX} ${CPPFLAGS} -I$with_armadillo/include testarmadillo.cpp -o testarmadillo -L$with_armadillo/lib -larmadillo 2>&1`" ; then
         HAVE_ARMADILLO=yes
         LIBS="-L$with_armadillo/lib -larmadillo ${LIBS}"
         EXTRA_INCLUDES="-I$with_armadillo/include $EXTRA_INCLUDES"
         AC_MSG_RESULT([yes])
     else
         dnl Try adding -llapack (#4923)
-        if test -z "`${CXX} ${CPPFLAGS} -I$with_armadillo/include testarmadillo.cpp -o testarmadillo -L$with_armadillo/lib -larmadillo -llapack ${LIBS} 2>&1`" ; then
+        if test -z "`${CXX} ${CPPFLAGS} -I$with_armadillo/include testarmadillo.cpp -o testarmadillo -L$with_armadillo/lib -larmadillo -llapack 2>&1`" ; then
             HAVE_ARMADILLO=yes
             LIBS="-L$with_armadillo/lib -larmadillo -llapack ${LIBS}"
             EXTRA_INCLUDES="-I$with_armadillo/include $EXTRA_INCLUDES"
