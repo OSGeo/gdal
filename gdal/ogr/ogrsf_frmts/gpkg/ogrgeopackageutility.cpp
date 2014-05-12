@@ -38,13 +38,15 @@ OGRErr SQLCommand(sqlite3 * poDb, const char * pszSQL)
     CPLAssert( pszSQL != NULL );
 
     char *pszErrMsg = NULL;
+    //CPLDebug("GPKG", "exec(%s)", pszSQL);
     int rc = sqlite3_exec(poDb, pszSQL, NULL, NULL, &pszErrMsg);
     
     if ( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "sqlite3_exec(%s) failed: %s",
-                  pszSQL, pszErrMsg );
+                  pszSQL, pszErrMsg ? pszErrMsg : "" );
+        sqlite3_free( pszErrMsg );
         return OGRERR_FAILURE;
     }
     
@@ -215,7 +217,7 @@ OGRwkbGeometryType GPkgGeometryTypeToWKB(const char *pszGpkgType, int bHasZ)
     if ( (oType != wkbNone) && bHasZ )
     {
         unsigned int oi = oType;
-        oi &= wkb25DBit;
+        oi |= wkb25DBit;
         oType = (OGRwkbGeometryType)oi;
     }
 
