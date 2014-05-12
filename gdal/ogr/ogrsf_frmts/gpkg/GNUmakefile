@@ -1,7 +1,7 @@
 
 include ../../../GDALmake.opt
 
-OBJ	= ogrgeopackagedriver.o ogrgeopackagedatasource.o ogrgeopackagelayer.o ogrgeopackageutility.o
+OBJ	= ogrgeopackagedriver.o ogrgeopackagedatasource.o ogrgeopackagelayer.o ogrgeopackagetablelayer.o ogrgeopackageutility.o
 
 ifeq ($(SQLITE_HAS_COLUMN_METADATA),yes)
 CPPFLAGS +=  -DSQLITE_HAS_COLUMN_METADATA
