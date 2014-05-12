@@ -507,7 +507,7 @@ int OGRGeoPackageDataSource::Open(const char * pszFilename, int bUpdate )
                 CPLError(CE_Warning, CPLE_AppDefined, "unable to read table name for layer(%d)", i);            
                 continue;
             }
-            OGRGeoPackageLayer *poLayer = new OGRGeoPackageLayer(this, pszTableName);
+            OGRGeoPackageTableLayer *poLayer = new OGRGeoPackageTableLayer(this, pszTableName);
             if( OGRERR_NONE != poLayer->ReadTableDefinition() )
             {
                 delete poLayer;
@@ -864,7 +864,7 @@ OGRLayer* OGRGeoPackageDataSource::CreateLayer( const char * pszLayerName,
     
     /* The database is now all set up, so create a blank layer and read in the */
     /* info from the database. */
-    OGRGeoPackageLayer *poLayer = new OGRGeoPackageLayer(this, pszLayerName);
+    OGRGeoPackageTableLayer *poLayer = new OGRGeoPackageTableLayer(this, pszLayerName);
     
     if( OGRERR_NONE != poLayer->ReadTableDefinition() )
     {
