@@ -1155,7 +1155,10 @@ OGRErr OGRGeoPackageTableLayer::GetExtent(OGREnvelope *psExtent, int bForce)
         if ( err != OGRERR_NONE )
             return err;
     
-        *m_poExtent = *psExtent;
+        if ( ! m_poExtent )
+            m_poExtent = new OGREnvelope( *psExtent );
+        else
+            *m_poExtent = *psExtent;
         return SaveExtent();
     }
 
