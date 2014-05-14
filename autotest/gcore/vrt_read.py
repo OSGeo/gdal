@@ -273,6 +273,8 @@ def vrt_read_6():
     # Now compute source statistics
     mem_ds.GetRasterBand(1).ComputeStatistics(False)
 
+    gdal.SetConfigOption('VRT_MIN_MAX_FROM_SOURCES', 'YES')
+
     if vrt_ds.GetRasterBand(1).GetMinimum() != 74:
         gdaltest.post_reason('got bad minimum value')
         print(vrt_ds.GetRasterBand(1).GetMinimum())
@@ -281,6 +283,8 @@ def vrt_read_6():
         gdaltest.post_reason('got bad maximum value')
         print(vrt_ds.GetRasterBand(1).GetMaximum())
         return 'fail'
+
+    gdal.SetConfigOption('VRT_MIN_MAX_FROM_SOURCES', None)
 
     mem_ds = None
     vrt_ds = None
@@ -481,6 +485,40 @@ def vrt_read_13():
 
     return 'success'
 
+###############################################################################
+# Test ComputeStatistics() when the VRT is a subwindow of the source dataset (#5468)
+
+def vrt_read_14():
+
+    src_ds = gdal.Open('data/byte.tif')
+    mem_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/vrt_read_14.tif', src_ds)
+    mem_ds.FlushCache() # hum this should not be necessary ideally
+    vrt_ds = gdal.Open("""<VRTDataset rasterXSize="4" rasterYSize="4">
+  <VRTRasterBand dataType="Byte" band="1">
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">/vsimem/vrt_read_14.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="20" />
+      <SrcRect xOff="2" yOff="2" xSize="4" ySize="4" />
+      <DstRect xOff="0" yOff="0" xSize="4" ySize="4" />
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>""")
+
+    vrt_stats = vrt_ds.GetRasterBand(1).ComputeStatistics(False)
+
+    mem_ds = None
+    vrt_ds = None
+
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/vrt_read_14.tif')
+
+    if vrt_stats[0] != 115.0 or vrt_stats[1] != 173.0:
+        print(vrt_stats)
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
 for item in init_list:
     ut = gdaltest.GDALTest( 'VRT', item[0], item[1], item[2] )
     if ut is None:
@@ -501,6 +539,7 @@ gdaltest_list.append( vrt_read_10 )
 gdaltest_list.append( vrt_read_11 )
 gdaltest_list.append( vrt_read_12 )
 gdaltest_list.append( vrt_read_13 )
+gdaltest_list.append( vrt_read_14 )
 
 if __name__ == '__main__':
 
