@@ -552,7 +552,7 @@ def ogr_gpkg_13():
         return 'fail'
 
     gdaltest.gpkg_ds = None
-    gdaltest.gpkg_ds = ogr.Open('tmp/gpkg_test.gpkg')
+    gdaltest.gpkg_ds = ogr.Open('tmp/gpkg_test.gpkg', update = 1)
     if gdaltest.gpkg_ds.GetLayerCount() != 4:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -569,6 +569,44 @@ def ogr_gpkg_13():
         feat.DumpReadable()
         gdaltest.post_reason('fail')
         return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Add various geometries to test spatial filtering
+
+def ogr_gpkg_14():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    lyr = gdaltest.gpkg_ds.CreateLayer('point_no_spi', geom_type = ogr.wkbPoint, options = ['SPATIAL_INDEX=NO'] )
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(1000 30000000)'))
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(-1000 30000000)'))
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(1000 -30000000)'))
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(-1000 -30000000)'))
+    lyr.CreateFeature(feat)
+
+    lyr = gdaltest.gpkg_ds.CreateLayer('point_with_spi', geom_type = ogr.wkbPoint )
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(1000 30000000)'))
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(-1000 30000000)'))
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(1000 -30000000)'))
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(-1000 -30000000)'))
+    lyr.CreateFeature(feat)
 
     return 'success'
 
@@ -627,6 +665,7 @@ gdaltest_list = [
     ogr_gpkg_11,
     ogr_gpkg_12,
     ogr_gpkg_13,
+    ogr_gpkg_14,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]

@@ -499,7 +499,7 @@ OGRErr GPkgHeaderFromWKB(const GByte *pabyGpkg, GPkgHeader *poHeader)
     
     /* Envelope */
     double *padPtr = (double*)(pabyGpkg+8);
-    if ( poHeader->iDims == 2 )
+    if ( poHeader->iDims >= 2 )
     {
         poHeader->MinX = padPtr[0];
         poHeader->MaxX = padPtr[1];
@@ -530,7 +530,7 @@ OGRErr GPkgHeaderFromWKB(const GByte *pabyGpkg, GPkgHeader *poHeader)
     return OGRERR_NONE;
 }
 
-OGRGeometry* GPkgGeometryToOGR(GByte *pabyGpkg, size_t szGpkg, OGRSpatialReference *poSrs)
+OGRGeometry* GPkgGeometryToOGR(const GByte *pabyGpkg, size_t szGpkg, OGRSpatialReference *poSrs)
 {
     CPLAssert( pabyGpkg != NULL );
     
@@ -543,11 +543,11 @@ OGRGeometry* GPkgGeometryToOGR(GByte *pabyGpkg, size_t szGpkg, OGRSpatialReferen
         return NULL;
 
     /* WKB pointer */
-    GByte *pabyWkb = pabyGpkg + oHeader.szHeader;
+    const GByte *pabyWkb = pabyGpkg + oHeader.szHeader;
     size_t szWkb = szGpkg - oHeader.szHeader;
 
     /* Parse WKB */
-    err = OGRGeometryFactory::createFromWkb(pabyWkb, poSrs, &poGeom, szWkb);
+    err = OGRGeometryFactory::createFromWkb((GByte*)pabyWkb, poSrs, &poGeom, szWkb);
     if ( err != OGRERR_NONE )
         return NULL;
 

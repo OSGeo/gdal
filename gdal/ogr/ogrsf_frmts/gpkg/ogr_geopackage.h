@@ -91,6 +91,7 @@ class OGRGeoPackageDataSource : public OGRSQLiteBaseDataSource
                                        const char * pszColumnName, 
                                        const char * pszColumnType );
         OGRErr              CreateExtensionsTableIfNecessary();
+        int                 HasExtensionsTable();
 
     private:
     
@@ -98,7 +99,6 @@ class OGRGeoPackageDataSource : public OGRSQLiteBaseDataSource
         bool                CheckApplicationId(const char * pszFileName);
         OGRErr              SetApplicationId();
         int                 OpenOrCreateDB(int flags);
-        int                 HasExtensionsTable();
 };
 
 /************************************************************************/
@@ -155,6 +155,7 @@ class OGRGeoPackageTableLayer : public OGRGeoPackageLayer
     OGREnvelope*                m_poExtent;
     CPLString                   m_soColumns;
     CPLString                   m_soFilter;
+    CPLString                   osQuery;
     OGRBoolean                  m_bExtentChanged;
     sqlite3_stmt*               m_poUpdateStatement;
     sqlite3_stmt*               m_poInsertStatement;
@@ -163,6 +164,11 @@ class OGRGeoPackageTableLayer : public OGRGeoPackageLayer
 
     virtual OGRErr      ResetStatement();
     
+    void                BuildWhere(void);
+    
+    virtual CPLString    GetSpatialWhere(int iGeomCol,
+                                         OGRGeometry* poFilterGeom);
+
     public:
     
                         OGRGeoPackageTableLayer( OGRGeoPackageDataSource *poDS,
@@ -178,6 +184,7 @@ class OGRGeoPackageTableLayer : public OGRGeoPackageLayer
 	OGRErr				CreateFeature( OGRFeature *poFeater );
     OGRErr              SetFeature( OGRFeature *poFeature );
     OGRErr              DeleteFeature(long nFID);
+    virtual void        SetSpatialFilter( OGRGeometry * );
     OGRErr              SetAttributeFilter( const char *pszQuery );
     OGRErr              SyncToDisk();
     OGRFeature*         GetNextFeature();

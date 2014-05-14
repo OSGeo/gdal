@@ -708,9 +708,19 @@ OGRLayer* OGRGeoPackageDataSource::CreateLayer( const char * pszLayerName,
 {
     int iLayer;
     OGRErr err;
-    
+
+/* -------------------------------------------------------------------- */
+/*      Verify we are in update mode.                                   */
+/* -------------------------------------------------------------------- */
     if( !bUpdate )
+    {
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
+                  "Data source %s opened read-only.\n"
+                  "New layer %s cannot be created.\n",
+                  pszName, pszLayerName );
+
         return NULL;
+    }
 
     /* Read GEOMETRY_COLUMN option */
     const char* pszGeomColumnName = CSLFetchNameValue(papszOptions, "GEOMETRY_COLUMN");
@@ -1126,11 +1136,27 @@ static int OGRGeoPackageGetHeader(sqlite3_context* pContext,
     int nBLOBLen = sqlite3_value_bytes (argv[0]);
     const GByte* pabyBLOB = (const GByte *) sqlite3_value_blob (argv[0]);
     if( nBLOBLen < 4 ||
-        GPkgHeaderFromWKB(pabyBLOB, psHeader) != OGRERR_NONE ||
-        psHeader->iDims < 2 )
+        GPkgHeaderFromWKB(pabyBLOB, psHeader) != OGRERR_NONE )
     {
         sqlite3_result_null(pContext);
         return FALSE;
+    }
+    if( psHeader->iDims == 0 )
+    {
+        OGRGeometry *poGeom = GPkgGeometryToOGR(pabyBLOB, nBLOBLen, NULL);
+        if( poGeom == NULL || poGeom->IsEmpty() )
+        {
+            sqlite3_result_null(pContext);
+            delete poGeom;
+            return FALSE;
+        }
+        OGREnvelope sEnvelope;
+        poGeom->getEnvelope(&sEnvelope);
+        psHeader->MinX = sEnvelope.MinX;
+        psHeader->MaxX = sEnvelope.MaxX;
+        psHeader->MinY = sEnvelope.MinY;
+        psHeader->MaxY = sEnvelope.MaxY;
+        delete poGeom;
     }
     return TRUE;
 }
