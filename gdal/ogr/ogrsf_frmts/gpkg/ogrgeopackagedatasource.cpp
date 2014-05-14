@@ -235,7 +235,6 @@ int OGRGeoPackageDataSource::GetSrsId(const OGRSpatialReference * cpoSRS)
 
     OGRSpatialReference *poSRS = cpoSRS->Clone();
 
-    poSRS->morphFromESRI();
     pszAuthorityName = poSRS->GetAuthorityName(NULL);
 
     if ( pszAuthorityName == NULL || strlen(pszAuthorityName) == 0 )
@@ -287,6 +286,7 @@ int OGRGeoPackageDataSource::GetSrsId(const OGRSpatialReference * cpoSRS)
         // Yep, we can!
         if ( ! SQLGetInteger(hDB, pszSQL, &err) && err == OGRERR_NONE )
             bCanUseAuthorityCode = TRUE;
+        sqlite3_free(pszSQL);
     }
 
     // Translate SRS to WKT.                                           
@@ -473,12 +473,17 @@ int OGRGeoPackageDataSource::Open(const char * pszFilename, int bUpdateIn )
     }
         
     /* Load layer definitions for all tables in gpkg_contents & gpkg_geometry_columns */
+    /* and non-spatial tables as well */
     SQLResult oResult;
     std::string osSQL = 
-        "SELECT c.table_name, c.identifier, c.min_x, c.min_y, c.max_x, c.max_y "
+        "SELECT c.table_name, c.identifier, 1 as is_spatial, c.min_x, c.min_y, c.max_x, c.max_y "
         "FROM gpkg_geometry_columns g JOIN gpkg_contents c ON (g.table_name = c.table_name)"
-        "WHERE c.data_type = 'features'";
-        
+        "WHERE c.data_type = 'features' "
+        "UNION ALL "
+        "SELECT name, name AS identifier, 0 as is_spatial, 0 AS xmin, 0 AS ymin, 0 AS xmax, 0 AS ymax FROM sqlite_master "
+        "WHERE type = 'table' AND name NOT LIKE 'gpkg%' AND name NOT LIKE 'sqlite_%' "
+        "AND name NOT LIKE 'rtree_%' AND NAME NOT IN (SELECT identifier FROM gpkg_contents)";
+
     err = SQLQuery(hDB, osSQL.c_str(), &oResult);
     if  ( err != OGRERR_NONE )
     {
@@ -498,8 +503,9 @@ int OGRGeoPackageDataSource::Open(const char * pszFilename, int bUpdateIn )
                 CPLError(CE_Warning, CPLE_AppDefined, "unable to read table name for layer(%d)", i);            
                 continue;
             }
+            int bIsSpatial = SQLResultGetValueAsInteger(&oResult, 2, i);
             OGRGeoPackageTableLayer *poLayer = new OGRGeoPackageTableLayer(this, pszTableName);
-            if( OGRERR_NONE != poLayer->ReadTableDefinition() )
+            if( OGRERR_NONE != poLayer->ReadTableDefinition(bIsSpatial) )
             {
                 delete poLayer;
                 CPLError(CE_Warning, CPLE_AppDefined, "unable to read table definition for '%s'", pszTableName);            
@@ -844,7 +850,7 @@ OGRLayer* OGRGeoPackageDataSource::CreateLayer( const char * pszLayerName,
     /* info from the database. */
     OGRGeoPackageTableLayer *poLayer = new OGRGeoPackageTableLayer(this, pszLayerName);
     
-    if( OGRERR_NONE != poLayer->ReadTableDefinition() )
+    if( OGRERR_NONE != poLayer->ReadTableDefinition(eGType != wkbNone) )
     {
         delete poLayer;
         return NULL;
@@ -1024,8 +1030,8 @@ OGRLayer * OGRGeoPackageDataSource::ExecuteSQL( const char *pszSQLCommand,
                     sqlite3_free(pszSQL);
                     
                     pszSQL = sqlite3_mprintf(
-                            "UPDATE gpkg_contents SET table_name = '%s' WHERE table_name = '%s'",
-                            pszDstTableName, pszSrcTableName);
+                            "UPDATE gpkg_contents SET table_name = '%s', identifier = '%s' WHERE table_name = '%s'",
+                            pszDstTableName, pszDstTableName, pszSrcTableName);
 
                     SQLCommand(hDB, pszSQL);
                     sqlite3_free(pszSQL);
