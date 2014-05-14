@@ -271,3 +271,131 @@ int OGRGeoPackageLayer::TestCapability ( const char * pszCap )
     else
         return FALSE;
 }
+
+/************************************************************************/
+/*                          BuildFeatureDefn()                          */
+/*                                                                      */
+/*      Build feature definition from a set of column definitions       */
+/*      set on a statement.  Sift out geometry and FID fields.          */
+/************************************************************************/
+
+void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
+                                           sqlite3_stmt *hStmt )
+
+{
+    m_poFeatureDefn = new OGRSQLiteFeatureDefn( pszLayerName );
+    m_poFeatureDefn->SetGeomType(wkbNone);
+    m_poFeatureDefn->Reference();
+
+    int    nRawColumns = sqlite3_column_count( hStmt );
+
+    panFieldOrdinals = (int *) CPLMalloc( sizeof(int) * nRawColumns );
+
+    int iCol;
+    for( iCol = 0; iCol < nRawColumns; iCol++ )
+    {
+        OGRFieldDefn    oField( OGRSQLiteParamsUnquote(sqlite3_column_name( hStmt, iCol )),
+                                OFTString );
+
+        // In some cases, particularly when there is a real name for
+        // the primary key/_rowid_ column we will end up getting the
+        // primary key column appearing twice.  Ignore any repeated names.
+        if( m_poFeatureDefn->GetFieldIndex( oField.GetNameRef() ) != -1 )
+            continue;
+
+        if( EQUAL(oField.GetNameRef(), "FID") )
+        {
+            CPLFree(m_pszFidColumn);
+            m_pszFidColumn = CPLStrdup(oField.GetNameRef());
+            iFIDCol = iCol;
+        }
+
+        if( m_pszFidColumn != NULL && EQUAL(m_pszFidColumn, oField.GetNameRef()))
+            continue;
+
+        // The rowid is for internal use, not a real column.
+        if( EQUAL(oField.GetNameRef(),"_rowid_") )
+            continue;
+
+        int nColType = sqlite3_column_type( hStmt, iCol );
+        const char * pszDeclType = sqlite3_column_decltype(hStmt, iCol);
+
+        // Recognize a geometry column from trying to build the geometry
+        // Usefull for OGRSQLiteSelectLayer
+        if( nColType == SQLITE_BLOB && m_poFeatureDefn->GetGeomFieldCount() == 0 )
+        {
+            const int nBytes = sqlite3_column_bytes( hStmt, iCol );
+            if( nBytes > 4 )
+            {
+                const GByte* pabyGpkg = (const GByte*)sqlite3_column_blob( hStmt, iCol  );
+                GPkgHeader oHeader;
+                if( GPkgHeaderFromWKB(pabyGpkg, &oHeader) == OGRERR_NONE )
+                {
+                    OGRGeomFieldDefn oGeomField(oField.GetNameRef(), wkbUnknown);
+
+                    /* Read the SRS */
+                    OGRSpatialReference *poSRS = m_poDS->GetSpatialRef(oHeader.iSrsId);
+                    if ( poSRS )
+                    {
+                        oGeomField.SetSpatialRef(poSRS);
+                        poSRS->Dereference();
+                    }
+
+                    OGRwkbGeometryType eGeomType = wkbUnknown;
+                    if( pszDeclType != NULL )
+                    {
+                        eGeomType = GPkgGeometryTypeToWKB(pszDeclType, (oHeader.iDims == 3));
+                        if( eGeomType != wkbNone )
+                            oGeomField.SetType( eGeomType );
+                    }
+
+#ifdef SQLITE_HAS_COLUMN_METADATA
+                    const char* pszTableName = sqlite3_column_table_name( hStmt, iCol );
+                    if( oGeomField.GetType() == wkbUnknown && pszTableName != NULL )
+                    {
+                        OGRGeoPackageLayer* poLayer = (OGRGeoPackageLayer*)
+                                        m_poDS->GetLayerByName(pszTableName);
+                        if( poLayer != NULL && poLayer->GetLayerDefn()->GetGeomFieldCount() > 0)
+                        {
+                            oGeomField.SetType( poLayer->GetLayerDefn()->GetGeomFieldDefn(0)->GetType() );
+                        }
+                    }
+#endif
+
+                    m_poFeatureDefn->AddGeomFieldDefn(&oGeomField);
+                    iGeomCol = iCol;
+                    continue;
+                }
+            }
+        }
+
+        switch( nColType )
+        {
+          case SQLITE_INTEGER:
+            oField.SetType( OFTInteger );
+            break;
+
+          case SQLITE_FLOAT:
+            oField.SetType( OFTReal );
+            break;
+
+          case SQLITE_BLOB:
+            oField.SetType( OFTBinary );
+            break;
+
+          default:
+            /* leave it as OFTString */;
+        }
+
+        if (pszDeclType != NULL)
+        {
+            OGRFieldType eFieldType = GPkgFieldToOGR(pszDeclType);
+            if( (int)eFieldType <= OFTMaxType )
+                oField.SetType(eFieldType);
+        }
+
+        m_poFeatureDefn->AddFieldDefn( &oField );
+        panFieldOrdinals[m_poFeatureDefn->GetFieldCount() - 1] = iCol;
+    }
+
+}

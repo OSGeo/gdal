@@ -951,8 +951,7 @@ OGRLayer * OGRGeoPackageDataSource::ExecuteSQL( const char *pszSQLCommand,
                                           const char *pszDialect )
 
 {
-    if( EQUALN(pszSQLCommand, "SELECT ", 7) ||
-        (pszDialect != NULL && EQUAL(pszDialect,"OGRSQL")) )
+    if( pszDialect != NULL && EQUAL(pszDialect,"OGRSQL") )
         return OGRDataSource::ExecuteSQL( pszSQLCommand, 
                                           poSpatialFilter, 
                                           pszDialect );
@@ -965,7 +964,6 @@ OGRLayer * OGRGeoPackageDataSource::ExecuteSQL( const char *pszSQLCommand,
 
     CPLString osSQLCommand = pszSQLCommand;
 
-#if 0
     /* This will speed-up layer creation */
     /* ORDER BY are costly to evaluate and are not necessary to establish */
     /* the layer definition. */
@@ -984,7 +982,6 @@ OGRLayer * OGRGeoPackageDataSource::ExecuteSQL( const char *pszSQLCommand,
             bUseStatementForGetNextFeature = FALSE;
         }
     }
-#endif
 
     rc = sqlite3_prepare( m_poDb, osSQLCommand.c_str(), osSQLCommand.size(),
                           &hSQLStmt, NULL );
@@ -1064,31 +1061,24 @@ OGRLayer * OGRGeoPackageDataSource::ExecuteSQL( const char *pszSQLCommand,
             sqlite3_finalize( hSQLStmt );
             return NULL;
         }
-#if 0
+
         bUseStatementForGetNextFeature = FALSE;
         bEmptyLayer = TRUE;
-#endif
     }
 
 /* -------------------------------------------------------------------- */
 /*      Create layer.                                                   */
 /* -------------------------------------------------------------------- */
-#if 0
-    OGRSQLiteSelectLayer *poLayer = NULL;
-        
+    OGRLayer *poLayer = NULL;
+
     CPLString osSQL = pszSQLCommand;
-    poLayer = new OGRGeopackageSelectLayer( this, osSQL, hSQLStmt,
-                                        bUseStatementForGetNextFeature, bEmptyLayer, TRUE );
+    poLayer = new OGRGeoPackageSelectLayer( this, osSQL, hSQLStmt,
+                                        bUseStatementForGetNextFeature, bEmptyLayer );
 
     if( poSpatialFilter != NULL )
         poLayer->SetSpatialFilter( 0, poSpatialFilter );
-    
+
     return poLayer;
-#else
-    return OGRDataSource::ExecuteSQL( pszSQLCommand, 
-                                          poSpatialFilter, 
-                                          pszDialect );
-#endif
 }
 
 /************************************************************************/

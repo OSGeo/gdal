@@ -69,7 +69,6 @@ int                 SQLiteFieldFromOGR(OGRFieldType nType);
 OGRFieldType        GPkgFieldToOGR(const char *pszGpkgType);
 const char*         GPkgFieldFromOGR(OGRFieldType nType);
 OGRwkbGeometryType  GPkgGeometryTypeToWKB(const char *pszGpkgType, int bHasZ);
-const char*         GPkgGeometryTypeFromWKB(OGRwkbGeometryType oType);
 
 GByte*              GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId, size_t *szWkb);
 OGRGeometry*        GPkgGeometryToOGR(GByte *pabyGpkg, size_t szGpkg, OGRSpatialReference *poSrs);

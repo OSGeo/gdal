@@ -31,7 +31,7 @@
 #define _OGR_GEOPACKAGE_H_INCLUDED
 
 #include "ogrsf_frmts.h"
-#include "sqlite3.h"
+#include "ogr_sqlite.h"
 
 #define UNDEFINED_SRID 0
 
@@ -128,6 +128,9 @@ class OGRGeoPackageLayer : public OGRLayer
 
     void                ClearStatement();
     virtual OGRErr      ResetStatement() = 0;
+    
+    void                BuildFeatureDefn( const char *pszLayerName,
+                                           sqlite3_stmt *hStmt );
 
     OGRFeature*         TranslateFeature(sqlite3_stmt* hStmt);
 
@@ -142,6 +145,7 @@ class OGRGeoPackageLayer : public OGRLayer
     const char*         GetFIDColumn(); 
     void                ResetReading();
     int                 TestCapability( const char * );
+    OGRFeatureDefn*     GetLayerDefn() { return m_poFeatureDefn; }
 };
 
 /************************************************************************/
@@ -171,7 +175,6 @@ class OGRGeoPackageTableLayer : public OGRGeoPackageLayer
     /************************************************************************/
     /* OGR API methods */
                         
-    OGRFeatureDefn*     GetLayerDefn() { return m_poFeatureDefn; }
     int                 TestCapability( const char * );
     OGRErr              CreateField( OGRFieldDefn *poField, int bApproxOK = TRUE );
     void                ResetReading();
@@ -208,6 +211,30 @@ class OGRGeoPackageTableLayer : public OGRGeoPackageLayer
 
 };
 
+/************************************************************************/
+/*                         OGRGeoPackageSelectLayer                     */
+/************************************************************************/
+
+class OGRGeoPackageSelectLayer : public OGRGeoPackageLayer
+{
+    CPLString           osSQLBase;
+
+    int                 bEmptyLayer;
+
+    virtual OGRErr      ResetStatement();
+
+  public:
+                        OGRGeoPackageSelectLayer( OGRGeoPackageDataSource *, 
+                                              CPLString osSQL,
+                                              sqlite3_stmt *,
+                                              int bUseStatementForGetNextFeature,
+                                              int bEmptyLayer );
+
+    virtual void        ResetReading();
+
+    virtual OGRFeature *GetNextFeature();
+    virtual int         GetFeatureCount( int );
+};
 
 
 #endif /* _OGR_GEOPACKAGE_H_INCLUDED */

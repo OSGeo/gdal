@@ -467,6 +467,77 @@ def ogr_gpkg_11():
     return 'success'
 
 ###############################################################################
+# Test SELECT SQL commands
+
+def ogr_gpkg_12():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL('SELECT * FROM tbl_linestring_renamed')
+    if sql_lyr.GetFIDColumn() != 'fid':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if sql_lyr.GetGeomType() != ogr.wkbLineString:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if sql_lyr.GetGeometryColumn() != 'geom':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if sql_lyr.GetSpatialRef().ExportToWkt().find('4326') < 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetFID() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if sql_lyr.GetFeatureCount() != 11:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if sql_lyr.GetLayerDefn().GetFieldCount() != 3:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
+
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL('SELECT * FROM tbl_linestring_renamed WHERE 0=1')
+    feat = sql_lyr.GetNextFeature()
+    if feat is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
+
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL('SELECT * FROM tbl_linestring_renamed LIMIT 1')
+    feat = sql_lyr.GetNextFeature()
+    if feat is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = sql_lyr.GetNextFeature()
+    if feat is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if sql_lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL('SELECT sqlite_version()')
+    feat = sql_lyr.GetNextFeature()
+    if feat is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if sql_lyr.GetLayerDefn().GetFieldCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if sql_lyr.GetLayerDefn().GetGeomFieldCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
+    return 'success'
+
+###############################################################################
 # Remove the test db from the tmp directory
 
 def ogr_gpkg_cleanup():
@@ -498,6 +569,7 @@ gdaltest_list = [
     ogr_gpkg_9,
     ogr_gpkg_10,
     ogr_gpkg_11,
+    ogr_gpkg_12,
     ogr_gpkg_cleanup,
 ]
 

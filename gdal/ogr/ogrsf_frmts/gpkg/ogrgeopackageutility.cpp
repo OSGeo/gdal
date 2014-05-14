@@ -224,36 +224,6 @@ OGRwkbGeometryType GPkgGeometryTypeToWKB(const char *pszGpkgType, int bHasZ)
     return oType;
 }
 
-/* Requirement 20: A GeoPackage SHALL store feature table geometries */
-/* with the basic simple feature geometry types (Geometry, Point, */
-/* LineString, Polygon, MultiPoint, MultiLineString, MultiPolygon, */
-/* GeomCollection) */
-/* http://opengis.github.io/geopackage/#geometry_types */
-const char* GPkgGeometryTypeFromWKB(OGRwkbGeometryType oType)
-{
-    oType = wkbFlatten(oType);
-    
-    switch(oType)
-    {
-        case wkbPoint:
-            return "point";
-        case wkbLineString:
-            return "linestring";
-        case wkbPolygon:
-            return "polygon";
-        case wkbMultiPoint:
-            return "multipoint";
-        case wkbMultiLineString:
-            return "multilinestring";
-        case wkbMultiPolygon:
-            return "multipolygon";
-        case wkbGeometryCollection:
-            return "geometrycollection";
-        default:
-            return NULL;
-    }
-}
-
 /* Requirement 5: The columns of tables in a GeoPackage SHALL only be */
 /* declared using one of the data types specified in table GeoPackage */
 /* Data Types. */
