@@ -94,7 +94,7 @@ void VRTSourcedRasterBand::Initialize( int nXSize, int nYSize )
     nSources = 0;
     papoSources = NULL;
     bEqualAreas = FALSE;
-    bAntiRecursionFlag = FALSE;
+    nRecursionCounter = 0;
     papszSourceList = NULL;
 }
 
@@ -133,7 +133,9 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     /* When using GDALProxyPoolDataset for sources, the recusion will not be */
     /* detected at VRT opening but when doing RasterIO. As the proxy pool will */
     /* return the already opened dataset, we can just test a member variable. */
-    if ( bAntiRecursionFlag )
+    /* We allow 1, since IRasterIO() can be called from ComputeStatistics(), which */
+    /* itselfs increments the recursion counter */
+    if ( nRecursionCounter > 1 )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "VRTSourcedRasterBand::IRasterIO() called recursively on the same band. "
@@ -190,7 +192,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         }
     }
     
-    bAntiRecursionFlag = TRUE;
+    nRecursionCounter ++;
 
 /* -------------------------------------------------------------------- */
 /*      Overlay each source in turn over top this.                      */
@@ -203,7 +205,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                             eBufType, nPixelSpace, nLineSpace);
     }
     
-    bAntiRecursionFlag = FALSE;
+    nRecursionCounter --;
     
     return eErr;
 }
@@ -252,7 +254,7 @@ double VRTSourcedRasterBand::GetMinimum( int *pbSuccess )
         return CPLAtofM(pszValue);
     }
 
-    if ( bAntiRecursionFlag )
+    if ( nRecursionCounter > 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "VRTSourcedRasterBand::GetMinimum() called recursively on the same band. "
@@ -261,7 +263,7 @@ double VRTSourcedRasterBand::GetMinimum( int *pbSuccess )
             *pbSuccess = FALSE;
         return 0.0;
     }
-    bAntiRecursionFlag = TRUE;
+    nRecursionCounter ++;
 
     double dfMin = 0;
     for( int iSource = 0; iSource < nSources; iSource++ )
@@ -271,7 +273,7 @@ double VRTSourcedRasterBand::GetMinimum( int *pbSuccess )
         if (!bSuccess)
         {
             dfMin = GDALRasterBand::GetMinimum(pbSuccess);
-            bAntiRecursionFlag = FALSE;
+            nRecursionCounter --;
             return dfMin;
         }
 
@@ -279,7 +281,7 @@ double VRTSourcedRasterBand::GetMinimum( int *pbSuccess )
             dfMin = dfSourceMin;
     }
 
-    bAntiRecursionFlag = FALSE;
+    nRecursionCounter --;
 
     if( pbSuccess != NULL )
         *pbSuccess = TRUE;
@@ -303,7 +305,7 @@ double VRTSourcedRasterBand::GetMaximum(int *pbSuccess )
         return CPLAtofM(pszValue);
     }
 
-    if ( bAntiRecursionFlag )
+    if ( nRecursionCounter > 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "VRTSourcedRasterBand::GetMaximum() called recursively on the same band. "
@@ -312,7 +314,7 @@ double VRTSourcedRasterBand::GetMaximum(int *pbSuccess )
             *pbSuccess = FALSE;
         return 0.0;
     }
-    bAntiRecursionFlag = TRUE;
+    nRecursionCounter ++;
 
     double dfMax = 0;
     for( int iSource = 0; iSource < nSources; iSource++ )
@@ -322,7 +324,7 @@ double VRTSourcedRasterBand::GetMaximum(int *pbSuccess )
         if (!bSuccess)
         {
             dfMax = GDALRasterBand::GetMaximum(pbSuccess);
-            bAntiRecursionFlag = FALSE;
+            nRecursionCounter --;
             return dfMax;
         }
 
@@ -330,7 +332,7 @@ double VRTSourcedRasterBand::GetMaximum(int *pbSuccess )
             dfMax = dfSourceMax;
     }
 
-    bAntiRecursionFlag = FALSE;
+    nRecursionCounter --;
 
     if( pbSuccess != NULL )
         *pbSuccess = TRUE;
@@ -381,14 +383,14 @@ CPLErr VRTSourcedRasterBand::ComputeRasterMinMax( int bApproxOK, double* adfMinM
 /* -------------------------------------------------------------------- */
 /*      Try with source bands.                                          */
 /* -------------------------------------------------------------------- */
-    if ( bAntiRecursionFlag )
+    if ( nRecursionCounter > 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "VRTSourcedRasterBand::ComputeRasterMinMax() called recursively on the same band. "
                   "It looks like the VRT is referencing itself." );
         return CE_Failure;
     }
-    bAntiRecursionFlag = TRUE;
+    nRecursionCounter ++;
 
     adfMinMax[0] = 0.0;
     adfMinMax[1] = 0.0;
@@ -399,7 +401,7 @@ CPLErr VRTSourcedRasterBand::ComputeRasterMinMax( int bApproxOK, double* adfMinM
         if (eErr != CE_None)
         {
             eErr = GDALRasterBand::ComputeRasterMinMax(bApproxOK, adfMinMax);
-            bAntiRecursionFlag = FALSE;
+            nRecursionCounter --;
             return eErr;
         }
 
@@ -409,7 +411,7 @@ CPLErr VRTSourcedRasterBand::ComputeRasterMinMax( int bApproxOK, double* adfMinM
             adfMinMax[1] = adfSourceMinMax[1];
     }
 
-    bAntiRecursionFlag = FALSE;
+    nRecursionCounter --;
 
     return CE_None;
 }
@@ -426,7 +428,7 @@ VRTSourcedRasterBand::ComputeStatistics( int bApproxOK,
                                    void *pProgressData )
 
 {
-    if( nSources != 1 )
+    if( nSources != 1 || bNoDataValueSet )
         return GDALRasterBand::ComputeStatistics(  bApproxOK,  
                                               pdfMin, pdfMax, 
                                               pdfMean, pdfStdDev,
@@ -454,14 +456,14 @@ VRTSourcedRasterBand::ComputeStatistics( int bApproxOK,
 /* -------------------------------------------------------------------- */
 /*      Try with source bands.                                          */
 /* -------------------------------------------------------------------- */
-    if ( bAntiRecursionFlag )
+    if ( nRecursionCounter > 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "VRTSourcedRasterBand::ComputeStatistics() called recursively on the same band. "
                   "It looks like the VRT is referencing itself." );
         return CE_Failure;
     }
-    bAntiRecursionFlag = TRUE;
+    nRecursionCounter ++;
     
     double dfMin = 0.0, dfMax = 0.0, dfMean = 0.0, dfStdDev = 0.0;
 
@@ -475,11 +477,11 @@ VRTSourcedRasterBand::ComputeStatistics( int bApproxOK,
                                                  pdfMin, pdfMax, 
                                                  pdfMean, pdfStdDev,
                                                  pfnProgress, pProgressData);
-        bAntiRecursionFlag = FALSE;
+        nRecursionCounter --;
         return eErr;
     }
 
-    bAntiRecursionFlag = FALSE;
+    nRecursionCounter --;
 
     SetStatistics( dfMin, dfMax, dfMean, dfStdDev );
 
@@ -542,14 +544,14 @@ CPLErr VRTSourcedRasterBand::GetHistogram( double dfMin, double dfMax,
 /* -------------------------------------------------------------------- */
 /*      Try with source bands.                                          */
 /* -------------------------------------------------------------------- */
-    if ( bAntiRecursionFlag )
+    if ( nRecursionCounter > 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "VRTSourcedRasterBand::GetHistogram() called recursively on the same band. "
                   "It looks like the VRT is referencing itself." );
         return CE_Failure;
     }
-    bAntiRecursionFlag = TRUE;
+    nRecursionCounter ++;
 
     CPLErr eErr = papoSources[0]->GetHistogram(GetXSize(), GetYSize(), dfMin, dfMax, nBuckets,
                                                panHistogram,
@@ -561,11 +563,11 @@ CPLErr VRTSourcedRasterBand::GetHistogram( double dfMin, double dfMax,
                                                   nBuckets, panHistogram,
                                                   bIncludeOutOfRange, bApproxOK,
                                                   pfnProgress, pProgressData );
-        bAntiRecursionFlag = FALSE;
+        nRecursionCounter --;
         return eErr;
     }
 
-    bAntiRecursionFlag = FALSE;
+    nRecursionCounter --;
 
     return CE_None;
 }
