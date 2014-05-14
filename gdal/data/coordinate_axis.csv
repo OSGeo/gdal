@@ -31,6 +31,7 @@ coord_sys_code,coord_axis_name_code,coord_axis_orientation,coord_axis_abbreviati
 1038,9907,South along 75°W,Y,9001,2
 1039,9906,east,E,9002,1
 1039,9907,north,N,9002,2
+1043,9905,down,D,9003,1
 4400,9906,east,E,9001,1
 4400,9907,north,N,9001,2
 4401,9906,east,E,9062,1

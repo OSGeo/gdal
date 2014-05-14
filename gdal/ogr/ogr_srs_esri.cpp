@@ -1691,6 +1691,24 @@ OGRErr OGRSpatialReference::morphFromESRI()
                               (char **)papszDatumMapping+2, 3 );
 
 /* -------------------------------------------------------------------- */
+/*      Special case for Peru96 related SRS that should use the         */
+/*      Peru96 DATUM, but in ESRI world, both Peru96 and SIRGAS-Chile   */
+/*      are translated as D_SIRGAS-Chile.                               */
+/* -------------------------------------------------------------------- */
+    int bPeru96Datum = FALSE;
+    if( poDatum != NULL && EQUAL(poDatum->GetValue(), "SIRGAS_Chile") )
+    {
+        const char* pszSRSName = GetAttrValue("PROJCS");
+        if( pszSRSName == NULL )
+            pszSRSName = GetAttrValue("GEOGCS");
+        if( strstr(pszSRSName, "Peru96") )
+        {
+            bPeru96Datum = TRUE;
+            poDatum->SetValue( "Peru96" );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Fix TOWGS84, DATUM or GEOGCS                                    */
 /* -------------------------------------------------------------------- */
     /* TODO test more ESRI WKT; also add PROJCS */
@@ -1722,6 +1740,11 @@ OGRErr OGRSpatialReference::morphFromESRI()
                                                  DMGetEPSGCode(i), CC_Integer );
                 if ( papszRecord != NULL )
                 {
+                    /* skip the SIRGAS-Chile record for Peru96 related SRS */
+                    if( bPeru96Datum && EQUAL(CSLGetField( papszRecord,
+                                    CSVGetFileFieldId(pszFilename,"DATUM_NAME")), "SIRGAS-Chile") )
+                        continue;
+
                     /* make sure we got a valid EPSG code and it is not DEPRECATED */
                     int nGeogCS = atoi( CSLGetField( papszRecord,
                                                      CSVGetFileFieldId(pszFilename,"COORD_REF_SYS_CODE")) );
