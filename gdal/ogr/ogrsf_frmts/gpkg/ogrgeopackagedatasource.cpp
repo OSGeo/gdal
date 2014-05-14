@@ -1024,33 +1024,10 @@ OGRLayer * OGRGeoPackageDataSource::ExecuteSQL( const char *pszSQLCommand,
             {
                 const char* pszSrcTableName = papszTokens[2];
                 const char* pszDstTableName = papszTokens[5];
-                OGRLayer* poSrcLayer = GetLayerByName(pszSrcTableName);
+                OGRGeoPackageTableLayer* poSrcLayer = (OGRGeoPackageTableLayer*)GetLayerByName(pszSrcTableName);
                 if( poSrcLayer )
                 {
-                    /* We also need to update GeoPackage metadata tables */
-                    char* pszSQL;
-                    pszSQL = sqlite3_mprintf(
-                            "UPDATE gpkg_geometry_columns SET table_name = '%s' WHERE table_name = '%s'",
-                            pszDstTableName, pszSrcTableName);
-                    
-                    SQLCommand(hDB, pszSQL);
-                    sqlite3_free(pszSQL);
-                    
-                    pszSQL = sqlite3_mprintf(
-                            "UPDATE gpkg_contents SET table_name = '%s' WHERE table_name = '%s'",
-                            pszDstTableName, pszSrcTableName);
-
-                    SQLCommand(hDB, pszSQL);
-                    sqlite3_free(pszSQL);
-
-                    if( HasExtensionsTable() )
-                    {
-                        pszSQL = sqlite3_mprintf(
-                                "UPDATE gpkg_extensions SET table_name = '%s' WHERE table_name = '%s'",
-                                pszDstTableName, pszSrcTableName);
-                        SQLCommand(hDB, pszSQL);
-                        sqlite3_free(pszSQL);
-                    }
+                    poSrcLayer->RenameTo( pszDstTableName );
                 }
             }
             CSLDestroy(papszTokens);

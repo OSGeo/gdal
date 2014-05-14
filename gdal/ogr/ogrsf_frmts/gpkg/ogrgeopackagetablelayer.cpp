@@ -1505,3 +1505,39 @@ void OGRGeoPackageTableLayer::DropSpatialIndex()
 
     m_bHasSpatialIndex = FALSE;
 }
+
+/************************************************************************/
+/*                          RenameTo()                                  */
+/************************************************************************/
+
+void OGRGeoPackageTableLayer::RenameTo(const char* pszDstTableName)
+{
+    int bHasSpatialIndex = HasSpatialIndex();
+
+    if( bHasSpatialIndex )
+    {
+        DropSpatialIndex();
+    }
+
+    /* We also need to update GeoPackage metadata tables */
+    char* pszSQL;
+    pszSQL = sqlite3_mprintf(
+            "UPDATE gpkg_geometry_columns SET table_name = '%s' WHERE table_name = '%s'",
+            pszDstTableName, m_pszTableName);
+    SQLCommand(m_poDS->GetDB(), pszSQL);
+    sqlite3_free(pszSQL);
+    
+    pszSQL = sqlite3_mprintf(
+            "UPDATE gpkg_contents SET table_name = '%s' WHERE table_name = '%s'",
+            pszDstTableName, m_pszTableName);
+    SQLCommand(m_poDS->GetDB(), pszSQL);
+    sqlite3_free(pszSQL);
+
+    CPLFree(m_pszTableName);
+    m_pszTableName = CPLStrdup(pszDstTableName);
+
+    if( bHasSpatialIndex )
+    {
+        CreateSpatialIndex();
+    }
+}
