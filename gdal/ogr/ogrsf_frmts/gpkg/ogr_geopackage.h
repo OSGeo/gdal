@@ -196,6 +196,8 @@ class OGRGeoPackageTableLayer : public OGRGeoPackageLayer
     void                CreateSpatialIndexIfNecessary();
     void                DropSpatialIndex();
 
+    void                RenameTo(const char* pszDstTableName);
+
     /************************************************************************/
     /* GPKG methods */
     
