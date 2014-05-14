@@ -1,13 +1,14 @@
 
 include ../../../GDALmake.opt
 
-OBJ	= ogrgeopackagedriver.o ogrgeopackagedatasource.o ogrgeopackagelayer.o ogrgeopackagetablelayer.o ogrgeopackageutility.o
+OBJ	= ogrgeopackagedriver.o ogrgeopackagedatasource.o ogrgeopackagelayer.o \
+	ogrgeopackagetablelayer.o ogrgeopackageselectlayer.o ogrgeopackageutility.o
 
 ifeq ($(SQLITE_HAS_COLUMN_METADATA),yes)
 CPPFLAGS +=  -DSQLITE_HAS_COLUMN_METADATA
 endif
 
-CPPFLAGS := -I.. $(GDAL_INCLUDE) $(SQLITE_INC) $(CPPFLAGS)
+CPPFLAGS := -I.. $(GDAL_INCLUDE) $(SQLITE_INC) $(CPPFLAGS) -I../sqlite
 
 default: $(O_OBJ:.o=.$(OBJ_EXT))
 
