@@ -44,7 +44,7 @@ static const size_t szGpkgIdPos = 68;
 /* it is a very recent addition to SQLite. */
 bool OGRGeoPackageDataSource::CheckApplicationId(const char * pszFileName)
 {
-    CPLAssert( m_poDb == NULL );
+    CPLAssert( hDB == NULL );
     
     char aFileId[4];
 
@@ -75,17 +75,16 @@ bool OGRGeoPackageDataSource::CheckApplicationId(const char * pszFileName)
 /* once we close the SQLite connection */
 OGRErr OGRGeoPackageDataSource::SetApplicationId()
 {
-    CPLAssert( m_poDb != NULL );
-    CPLAssert( m_pszFileName != NULL );
+    CPLAssert( hDB != NULL );
+    CPLAssert( pszName != NULL );
 
     /* Have to flush the file before f***ing with the header */
-    sqlite3_close(m_poDb);
-    m_poDb = NULL;
+    CloseDB();
 
     size_t szWritten = 0;
 
     /* Open for modification, write to application id area */
-    VSILFILE *pfFile = VSIFOpenL( m_pszFileName, "rb+" );
+    VSILFILE *pfFile = VSIFOpenL( pszName, "rb+" );
     if( pfFile == NULL )
         return OGRERR_FAILURE;
     VSIFSeekL(pfFile, szGpkgIdPos, SEEK_SET);
@@ -100,7 +99,11 @@ OGRErr OGRGeoPackageDataSource::SetApplicationId()
     }
 
     /* And re-open the file */
-    if ( sqlite3_open(m_pszFileName, &m_poDb) != SQLITE_OK )
+#ifdef HAVE_SQLITE_VFS
+    if (!OpenOrCreateDB(SQLITE_OPEN_READWRITE) )
+#else
+    if (!OpenOrCreateDB(0))
+#endif
         return OGRERR_FAILURE;
 
     return OGRERR_NONE;
@@ -119,7 +122,7 @@ OGRErr OGRGeoPackageDataSource::PragmaCheck(const char * pszPragma, const char *
     char **papszResult;
 
     rc = sqlite3_get_table(
-        m_poDb,
+        hDB,
         CPLSPrintf("PRAGMA %s", pszPragma),
         &papszResult, &nRowCount, &nColCount, &pszErrMsg );
     
@@ -163,7 +166,7 @@ OGRSpatialReference* OGRGeoPackageDataSource::GetSpatialRef(int iSrsId)
     CPLString oSQL;
     oSQL.Printf("SELECT definition FROM gpkg_spatial_ref_sys WHERE srs_id = %d", iSrsId);
     
-    OGRErr err = SQLQuery(m_poDb, oSQL.c_str(), &oResult);
+    OGRErr err = SQLQuery(hDB, oSQL.c_str(), &oResult);
 
     if ( err != OGRERR_NONE || oResult.nRowCount != 1 )
     {
@@ -266,7 +269,7 @@ int OGRGeoPackageDataSource::GetSrsId(const OGRSpatialReference * cpoSRS)
                          "upper(organization) = upper('%q') AND organization_coordsys_id = %d",
                          pszAuthorityName, nAuthorityCode );
         
-        nSRSId = SQLGetInteger(m_poDb, pszSQL, &err);
+        nSRSId = SQLGetInteger(hDB, pszSQL, &err);
         sqlite3_free(pszSQL);
         
         // Got a match? Return it!
@@ -282,7 +285,7 @@ int OGRGeoPackageDataSource::GetSrsId(const OGRSpatialReference * cpoSRS)
                          "srs_id = %d", nAuthorityCode );
         
         // Yep, we can!
-        if ( ! SQLGetInteger(m_poDb, pszSQL, &err) && err == OGRERR_NONE )
+        if ( ! SQLGetInteger(hDB, pszSQL, &err) && err == OGRERR_NONE )
             bCanUseAuthorityCode = TRUE;
     }
 
@@ -303,7 +306,7 @@ int OGRGeoPackageDataSource::GetSrsId(const OGRSpatialReference * cpoSRS)
     else
     {
         // Get the current maximum srid in the srs table.                  
-        int nMaxSRSId = SQLGetInteger(m_poDb, "SELECT MAX(srs_id) FROM gpkg_spatial_ref_sys", &err);
+        int nMaxSRSId = SQLGetInteger(hDB, "SELECT MAX(srs_id) FROM gpkg_spatial_ref_sys", &err);
         if ( OGRERR_NONE != err )
         {
             CPLFree(pszWKT);
@@ -335,7 +338,7 @@ int OGRGeoPackageDataSource::GetSrsId(const OGRSpatialReference * cpoSRS)
     }
 
     // Add new row to gpkg_spatial_ref_sys
-    err = SQLCommand(m_poDb, pszSQL);
+    err = SQLCommand(hDB, pszSQL);
 
     // Free everything that was allocated.
     CPLFree(pszWKT);    
@@ -352,12 +355,9 @@ int OGRGeoPackageDataSource::GetSrsId(const OGRSpatialReference * cpoSRS)
 
 OGRGeoPackageDataSource::OGRGeoPackageDataSource()
 {
-    m_pszFileName = NULL;
     m_papoLayers = NULL;
     m_nLayers = 0;
     m_bUtf8 = FALSE;
-    m_poDb = NULL;
-    m_bUpdate = FALSE;
 }
 
 /************************************************************************/
@@ -368,28 +368,24 @@ OGRGeoPackageDataSource::~OGRGeoPackageDataSource()
 {
     for( int i = 0; i < m_nLayers; i++ )
         delete m_papoLayers[i];
-        
-    if ( m_poDb )
-        sqlite3_close(m_poDb);
 
     CPLFree( m_papoLayers );
-    CPLFree( m_pszFileName );
 }
 
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRGeoPackageDataSource::Open(const char * pszFilename, int bUpdate )
+int OGRGeoPackageDataSource::Open(const char * pszFilename, int bUpdateIn )
 {
     int i;
     OGRErr err;
 
     CPLAssert( m_nLayers == 0 );
-    CPLAssert( m_poDb == NULL );
-    CPLAssert( m_pszFileName == NULL );
+    CPLAssert( hDB == NULL );
 
-    m_bUpdate = bUpdate;
+    bUpdate = bUpdateIn;
+    pszName = CPLStrdup( pszFilename );
 
     /* Requirement 3: File name has to end in "gpkg" */
     /* http://opengis.github.io/geopackage/#_file_extension_name */
@@ -412,17 +408,12 @@ int OGRGeoPackageDataSource::Open(const char * pszFilename, int bUpdate )
     }
 
     /* See if we can open the SQLite database */
-    int rc = sqlite3_open( pszFilename, &m_poDb );
-    if ( rc != SQLITE_OK )
-    {
-        m_poDb = NULL;
-        CPLError( CE_Failure, CPLE_OpenFailed, "sqlite3_open(%s) failed: %s",
-                  pszFilename, sqlite3_errmsg( m_poDb ) );
+#ifdef HAVE_SQLITE_VFS
+    if (!OpenOrCreateDB((bUpdateIn) ? SQLITE_OPEN_READWRITE : SQLITE_OPEN_READONLY) )
+#else
+    if (!OpenOrCreateDB(0))
+#endif
         return FALSE;
-    }
-    
-    /* Filename is good, store it for future reference */
-    m_pszFileName = CPLStrdup( pszFilename );
 
     /* Requirement 6: The SQLite PRAGMA integrity_check SQL command SHALL return “ok” */
     /* http://opengis.github.io/geopackage/#_file_integrity */
@@ -465,7 +456,7 @@ int OGRGeoPackageDataSource::Open(const char * pszFilename, int bUpdate )
     {
         SQLResult oResult;
         char *pszSQL = sqlite3_mprintf("pragma table_info('%s')", aosGpkgTables[i].c_str());
-        err = SQLQuery(m_poDb, pszSQL, &oResult);
+        err = SQLQuery(hDB, pszSQL, &oResult);
         sqlite3_free(pszSQL);
         
         if  ( err != OGRERR_NONE )
@@ -488,7 +479,7 @@ int OGRGeoPackageDataSource::Open(const char * pszFilename, int bUpdate )
         "FROM gpkg_geometry_columns g JOIN gpkg_contents c ON (g.table_name = c.table_name)"
         "WHERE c.data_type = 'features'";
         
-    err = SQLQuery(m_poDb, osSQL.c_str(), &oResult);
+    err = SQLQuery(hDB, osSQL.c_str(), &oResult);
     if  ( err != OGRERR_NONE )
     {
         SQLResultFree(&oResult);
@@ -523,17 +514,6 @@ int OGRGeoPackageDataSource::Open(const char * pszFilename, int bUpdate )
     return TRUE;
 }
 
-
-
-/************************************************************************/
-/*                          GetDatabaseHandle()                         */
-/************************************************************************/
-
-sqlite3* OGRGeoPackageDataSource::GetDatabaseHandle()
-{
-    return m_poDb;
-}
-
 /************************************************************************/
 /*                                Create()                              */
 /************************************************************************/
@@ -543,29 +523,27 @@ int OGRGeoPackageDataSource::Create( const char * pszFilename, char **papszOptio
     CPLString osCommand;
     const char *pszSpatialRefSysRecord;
 
-	/* The OGRGeoPackageDriver has already confirmed that the pszFilename */
-	/* is not already in use, so try to create the file */
-    int rc = sqlite3_open( pszFilename, &m_poDb );
-    if ( rc != SQLITE_OK )
-    {
-        m_poDb = NULL;
-        CPLError( CE_Failure, CPLE_OpenFailed, "sqlite3_open(%s) failed: %s",
-                  pszFilename, sqlite3_errmsg( m_poDb ) );
-        return FALSE;
-    }
+    pszName = CPLStrdup(pszFilename);
+    bUpdate = TRUE;
 
-    m_pszFileName = CPLStrdup(pszFilename);
-    m_bUpdate = TRUE;
+    /* The OGRGeoPackageDriver has already confirmed that the pszFilename */
+    /* is not already in use, so try to create the file */
+#ifdef HAVE_SQLITE_VFS
+    if (!OpenOrCreateDB(SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE))
+#else
+    if (!OpenOrCreateDB(0))
+#endif
+        return FALSE;
 
     /* OGR UTF-8 support. If we set the UTF-8 Pragma early on, it */
     /* will be written into the main file and supported henceforth */
-    SQLCommand(m_poDb, "PRAGMA encoding = \"UTF-8\"");
+    SQLCommand(hDB, "PRAGMA encoding = \"UTF-8\"");
 
     /* Requirement 2: A GeoPackage SHALL contain 0x47503130 ("GP10" in ASCII) in the application id */
     /* http://opengis.github.io/geopackage/#_file_format */
     const char *pszPragma = CPLSPrintf("PRAGMA application_id = %d", GPKG_APPLICATION_ID);
     
-    if ( OGRERR_NONE != SQLCommand(m_poDb, pszPragma) )
+    if ( OGRERR_NONE != SQLCommand(hDB, pszPragma) )
         return FALSE;
         
     /* Requirement 10: A GeoPackage SHALL include a gpkg_spatial_ref_sys table */
@@ -580,7 +558,7 @@ int OGRGeoPackageDataSource::Create( const char * pszFilename, char **papszOptio
         "description TEXT"
         ")";
         
-    if ( OGRERR_NONE != SQLCommand(m_poDb, pszSpatialRefSys) )
+    if ( OGRERR_NONE != SQLCommand(hDB, pszSpatialRefSys) )
         return FALSE;
 
     /* Requirement 11: The gpkg_spatial_ref_sys table in a GeoPackage SHALL */
@@ -595,7 +573,7 @@ int OGRGeoPackageDataSource::Create( const char * pszFilename, char **papszOptio
         "', 'longitude/latitude coordinates in decimal degrees on the WGS 84 spheroid'"
         ")";  
           
-    if ( OGRERR_NONE != SQLCommand(m_poDb, pszSpatialRefSysRecord) )
+    if ( OGRERR_NONE != SQLCommand(hDB, pszSpatialRefSysRecord) )
         return FALSE;
 
     /* Requirement 11: The gpkg_spatial_ref_sys table in a GeoPackage SHALL */
@@ -610,7 +588,7 @@ int OGRGeoPackageDataSource::Create( const char * pszFilename, char **papszOptio
         "'Undefined cartesian SRS', -1, 'NONE', -1, 'undefined', 'undefined cartesian coordinate reference system'"
         ")"; 
            
-    if ( OGRERR_NONE != SQLCommand(m_poDb, pszSpatialRefSysRecord) )
+    if ( OGRERR_NONE != SQLCommand(hDB, pszSpatialRefSysRecord) )
         return FALSE;
 
     /* Requirement 11: The gpkg_spatial_ref_sys table in a GeoPackage SHALL */
@@ -625,7 +603,7 @@ int OGRGeoPackageDataSource::Create( const char * pszFilename, char **papszOptio
         "'Undefined geographic SRS', 0, 'NONE', 0, 'undefined', 'undefined geographic coordinate reference system'"
         ")"; 
            
-    if ( OGRERR_NONE != SQLCommand(m_poDb, pszSpatialRefSysRecord) )
+    if ( OGRERR_NONE != SQLCommand(hDB, pszSpatialRefSysRecord) )
         return FALSE;
     
     /* Requirement 13: A GeoPackage file SHALL include a gpkg_contents table */
@@ -643,7 +621,7 @@ int OGRGeoPackageDataSource::Create( const char * pszFilename, char **papszOptio
         "CONSTRAINT fk_gc_r_srs_id FOREIGN KEY (srs_id) REFERENCES gpkg_spatial_ref_sys(srs_id)"
         ")";
         
-    if ( OGRERR_NONE != SQLCommand(m_poDb, pszContents) )
+    if ( OGRERR_NONE != SQLCommand(hDB, pszContents) )
         return FALSE;
 
     /* Requirement 21: A GeoPackage with a gpkg_contents table row with a “features” */
@@ -663,7 +641,7 @@ int OGRGeoPackageDataSource::Create( const char * pszFilename, char **papszOptio
         "CONSTRAINT fk_gc_srs FOREIGN KEY (srs_id) REFERENCES gpkg_spatial_ref_sys (srs_id)"
         ")";
         
-    if ( OGRERR_NONE != SQLCommand(m_poDb, pszGeometryColumns) )
+    if ( OGRERR_NONE != SQLCommand(hDB, pszGeometryColumns) )
         return FALSE;
 
     /* Requirement 2: A GeoPackage SHALL contain 0x47503130 ("GP10" in ASCII) */
@@ -688,7 +666,7 @@ OGRErr OGRGeoPackageDataSource::AddColumn(const char *pszTableName, const char *
     pszSQL = sqlite3_mprintf("ALTER TABLE %s ADD COLUMN %s %s", 
                              pszTableName, pszColumnName, pszColumnType);
 
-    OGRErr err = SQLCommand(m_poDb, pszSQL);
+    OGRErr err = SQLCommand(hDB, pszSQL);
     sqlite3_free(pszSQL);
     
     return err;
@@ -725,7 +703,7 @@ OGRLayer* OGRGeoPackageDataSource::CreateLayer( const char * pszLayerName,
     int iLayer;
     OGRErr err;
     
-    if( !m_bUpdate )
+    if( !bUpdate )
         return NULL;
 
     /* Read GEOMETRY_COLUMN option */
@@ -813,7 +791,7 @@ OGRLayer* OGRGeoPackageDataSource::CreateLayer( const char * pszLayerName,
              pszLayerName, pszFIDColumnName);
     }
     
-    err = SQLCommand(m_poDb, pszSQL);
+    err = SQLCommand(hDB, pszSQL);
     sqlite3_free(pszSQL);
     if ( OGRERR_NONE != err )
         return NULL;
@@ -834,7 +812,7 @@ OGRLayer* OGRGeoPackageDataSource::CreateLayer( const char * pszLayerName,
             pszLayerName,pszGeomColumnName,pszGeometryType,
             nSRSId,bGeometryTypeHasZ,0);
     
-        err = SQLCommand(m_poDb, pszSQL);
+        err = SQLCommand(hDB, pszSQL);
         sqlite3_free(pszSQL);
         if ( err != OGRERR_NONE )
             return NULL;
@@ -847,7 +825,7 @@ OGRLayer* OGRGeoPackageDataSource::CreateLayer( const char * pszLayerName,
             "('%q','features','%q',strftime('%%Y-%%m-%%dT%%H:%%M:%%fZ',CURRENT_TIMESTAMP),%d)",
             pszLayerName, pszLayerName, nSRSId);
     
-        err = SQLCommand(m_poDb, pszSQL);
+        err = SQLCommand(hDB, pszSQL);
         sqlite3_free(pszSQL);
         if ( err != OGRERR_NONE )
             return NULL;
@@ -886,7 +864,7 @@ int OGRGeoPackageDataSource::DeleteLayer( int iLayer )
 {
     char *pszSQL;
 
-    if( !m_bUpdate || iLayer < 0 || iLayer >= m_nLayers )
+    if( !bUpdate || iLayer < 0 || iLayer >= m_nLayers )
         return OGRERR_FAILURE;
 
     CPLString osLayerName = m_papoLayers[iLayer]->GetLayerDefn()->GetName();
@@ -906,21 +884,21 @@ int OGRGeoPackageDataSource::DeleteLayer( int iLayer )
             "DROP TABLE %s",
              osLayerName.c_str());
     
-    SQLCommand(m_poDb, pszSQL);
+    SQLCommand(hDB, pszSQL);
     sqlite3_free(pszSQL);
 
     pszSQL = sqlite3_mprintf(
             "DELETE FROM gpkg_geometry_columns WHERE table_name = '%s'",
              osLayerName.c_str());
     
-    SQLCommand(m_poDb, pszSQL);
+    SQLCommand(hDB, pszSQL);
     sqlite3_free(pszSQL);
     
     pszSQL = sqlite3_mprintf(
              "DELETE FROM gpkg_contents WHERE table_name = '%s'",
               osLayerName.c_str());
 
-    SQLCommand(m_poDb, pszSQL);
+    SQLCommand(hDB, pszSQL);
     sqlite3_free(pszSQL);
 
     return OGRERR_NONE;
@@ -937,7 +915,7 @@ int OGRGeoPackageDataSource::TestCapability( const char * pszCap )
     if ( EQUAL(pszCap,ODsCCreateLayer) ||
          EQUAL(pszCap,ODsCDeleteLayer) )
     {
-         return m_bUpdate;
+         return bUpdate;
     }
     return FALSE;
 }
@@ -983,14 +961,14 @@ OGRLayer * OGRGeoPackageDataSource::ExecuteSQL( const char *pszSQLCommand,
         }
     }
 
-    rc = sqlite3_prepare( m_poDb, osSQLCommand.c_str(), osSQLCommand.size(),
+    rc = sqlite3_prepare( hDB, osSQLCommand.c_str(), osSQLCommand.size(),
                           &hSQLStmt, NULL );
 
     if( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                 "In ExecuteSQL(): sqlite3_prepare(%s):\n  %s", 
-                pszSQLCommand, sqlite3_errmsg(m_poDb) );
+                pszSQLCommand, sqlite3_errmsg(hDB) );
 
         if( hSQLStmt != NULL )
         {
@@ -1010,7 +988,7 @@ OGRLayer * OGRGeoPackageDataSource::ExecuteSQL( const char *pszSQLCommand,
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
                   "In ExecuteSQL(): sqlite3_step(%s):\n  %s", 
-                  pszSQLCommand, sqlite3_errmsg(m_poDb) );
+                  pszSQLCommand, sqlite3_errmsg(hDB) );
 
             sqlite3_finalize( hSQLStmt );
             return NULL;
@@ -1042,14 +1020,14 @@ OGRLayer * OGRGeoPackageDataSource::ExecuteSQL( const char *pszSQLCommand,
                             "UPDATE gpkg_geometry_columns SET table_name = '%s' WHERE table_name = '%s'",
                             pszDstTableName, pszSrcTableName);
                     
-                    SQLCommand(m_poDb, pszSQL);
+                    SQLCommand(hDB, pszSQL);
                     sqlite3_free(pszSQL);
                     
                     pszSQL = sqlite3_mprintf(
                             "UPDATE gpkg_contents SET table_name = '%s' WHERE table_name = '%s'",
                             pszDstTableName, pszSrcTableName);
 
-                    SQLCommand(m_poDb, pszSQL);
+                    SQLCommand(hDB, pszSQL);
                     sqlite3_free(pszSQL);
                 }
             }

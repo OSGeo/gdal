@@ -113,7 +113,7 @@ int OGRGeoPackageSelectLayer::GetFeatureCount( int bForce )
     int nRowCount, nColCount;
     int nResult = -1;
 
-    if( sqlite3_get_table( m_poDS->GetDatabaseHandle(), osFeatureCountSQL, &papszResult, 
+    if( sqlite3_get_table( m_poDS->GetDB(), osFeatureCountSQL, &papszResult, 
                            &nRowCount, &nColCount, &pszErrMsg ) != SQLITE_OK )
     {
         CPLDebug("GPKG", "Error: %s", pszErrMsg);
@@ -149,7 +149,7 @@ OGRErr OGRGeoPackageSelectLayer::ResetStatement()
     CPLDebug( "OGR_GPKG", "prepare(%s)", osSQLBase.c_str() );
 #endif
 
-    rc = sqlite3_prepare( m_poDS->GetDatabaseHandle(), osSQLBase, osSQLBase.size(),
+    rc = sqlite3_prepare( m_poDS->GetDB(), osSQLBase, osSQLBase.size(),
                           &m_poQueryStatement, NULL );
 
     if( rc == SQLITE_OK )
@@ -160,7 +160,7 @@ OGRErr OGRGeoPackageSelectLayer::ResetStatement()
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "In ResetStatement(): sqlite3_prepare(%s):\n  %s", 
-                  osSQLBase.c_str(), sqlite3_errmsg(m_poDS->GetDatabaseHandle()) );
+                  osSQLBase.c_str(), sqlite3_errmsg(m_poDS->GetDB()) );
         m_poQueryStatement = NULL;
         return OGRERR_FAILURE;
     }

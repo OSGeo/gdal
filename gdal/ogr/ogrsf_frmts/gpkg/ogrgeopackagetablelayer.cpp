@@ -39,10 +39,10 @@
 //
 OGRErr OGRGeoPackageTableLayer::SaveExtent()
 {
-    if ( !m_poDS->IsUpdatable() || ! m_bExtentChanged || ! m_poExtent ) 
+    if ( !m_poDS->GetUpdate() || ! m_bExtentChanged || ! m_poExtent ) 
         return OGRERR_NONE;
 
-    sqlite3* poDb = m_poDS->GetDatabaseHandle();
+    sqlite3* poDb = m_poDS->GetDB();
 
     if ( ! poDb ) return OGRERR_FAILURE;
 
@@ -373,7 +373,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
     SQLResult oResultGeomCols;
     char* pszSQL;
     OGRBoolean bReadExtent = FALSE;
-    sqlite3* poDb = m_poDS->GetDatabaseHandle();
+    sqlite3* poDb = m_poDS->GetDB();
 
     /* Check that the table name is registered in gpkg_contents */
     pszSQL = sqlite3_mprintf(
@@ -633,7 +633,7 @@ OGRGeoPackageTableLayer::~OGRGeoPackageTableLayer()
 
 OGRErr OGRGeoPackageTableLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
 {
-    if( !m_poDS->IsUpdatable() )
+    if( !m_poDS->GetUpdate() )
     {
         return OGRERR_FAILURE;
     }
@@ -664,7 +664,7 @@ OGRErr OGRGeoPackageTableLayer::CreateField( OGRFieldDefn *poField, int bApproxO
 
 OGRErr OGRGeoPackageTableLayer::CreateFeature( OGRFeature *poFeature )
 {
-    if( !m_poDS->IsUpdatable() )
+    if( !m_poDS->GetUpdate() )
     {
         return OGRERR_FAILURE;
     }
@@ -691,7 +691,7 @@ OGRErr OGRGeoPackageTableLayer::CreateFeature( OGRFeature *poFeature )
         CPLString osCommand = FeatureGenerateInsertSQL(poFeature);
         
         /* Prepare the SQL into a statement */
-        sqlite3 *poDb = m_poDS->GetDatabaseHandle();
+        sqlite3 *poDb = m_poDS->GetDB();
         int err = sqlite3_prepare_v2(poDb, osCommand, -1, &m_poInsertStatement, NULL);
         if ( err != SQLITE_OK )
         {
@@ -729,7 +729,7 @@ OGRErr OGRGeoPackageTableLayer::CreateFeature( OGRFeature *poFeature )
 
     /* Read the latest FID value */
     int iFid;
-    if ( (iFid = sqlite3_last_insert_rowid(m_poDS->GetDatabaseHandle())) )
+    if ( (iFid = sqlite3_last_insert_rowid(m_poDS->GetDB())) )
     {
         poFeature->SetFID(iFid);
     }
@@ -749,7 +749,7 @@ OGRErr OGRGeoPackageTableLayer::CreateFeature( OGRFeature *poFeature )
 
 OGRErr OGRGeoPackageTableLayer::SetFeature( OGRFeature *poFeature )
 {
-    if( !m_poDS->IsUpdatable() )
+    if( !m_poDS->GetUpdate() )
     {
         return OGRERR_FAILURE;
     }
@@ -784,7 +784,7 @@ OGRErr OGRGeoPackageTableLayer::SetFeature( OGRFeature *poFeature )
         CPLString osCommand = FeatureGenerateUpdateSQL(poFeature);
 
         /* Prepare the SQL into a statement */
-        int err = sqlite3_prepare_v2(m_poDS->GetDatabaseHandle(), osCommand, -1, &m_poUpdateStatement, NULL);
+        int err = sqlite3_prepare_v2(m_poDS->GetDB(), osCommand, -1, &m_poUpdateStatement, NULL);
         if ( err != SQLITE_OK )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -811,7 +811,7 @@ OGRErr OGRGeoPackageTableLayer::SetFeature( OGRFeature *poFeature )
     sqlite3_clear_bindings(m_poUpdateStatement);
 
     /* Only update the envelope if we changed something */
-    if (sqlite3_changes(m_poDS->GetDatabaseHandle()) )
+    if (sqlite3_changes(m_poDS->GetDB()) )
     {
         /* Update the layer extents with this new object */
         if ( IsGeomFieldSet(poFeature) )
@@ -894,7 +894,7 @@ OGRErr OGRGeoPackageTableLayer::ResetStatement()
     else
         soSQL.Printf("SELECT %s FROM %s ", m_soColumns.c_str(), m_pszTableName);
 
-    int err = sqlite3_prepare(m_poDS->GetDatabaseHandle(), soSQL.c_str(), -1, &m_poQueryStatement, NULL);
+    int err = sqlite3_prepare(m_poDS->GetDB(), soSQL.c_str(), -1, &m_poQueryStatement, NULL);
     if ( err != SQLITE_OK )
     {
         m_poQueryStatement = NULL;
@@ -923,7 +923,7 @@ OGRFeature* OGRGeoPackageTableLayer::GetFeature(long nFID)
     soSQL.Printf("SELECT %s FROM %s WHERE %s = %ld",
                  m_soColumns.c_str(), m_pszTableName, m_pszFidColumn, nFID);
 
-    int err = sqlite3_prepare(m_poDS->GetDatabaseHandle(), soSQL.c_str(), -1, &m_poQueryStatement, NULL);
+    int err = sqlite3_prepare(m_poDS->GetDB(), soSQL.c_str(), -1, &m_poQueryStatement, NULL);
     if ( err != SQLITE_OK )
     {
         m_poQueryStatement = NULL;
@@ -955,7 +955,7 @@ OGRFeature* OGRGeoPackageTableLayer::GetFeature(long nFID)
 
 OGRErr OGRGeoPackageTableLayer::DeleteFeature(long nFID) 
 {
-    if( !m_poDS->IsUpdatable() )
+    if( !m_poDS->GetUpdate() )
     {
         return OGRERR_FAILURE;
     }
@@ -976,7 +976,7 @@ OGRErr OGRGeoPackageTableLayer::DeleteFeature(long nFID)
                  m_pszTableName, m_pszFidColumn, nFID);
 
     
-    return SQLCommand(m_poDS->GetDatabaseHandle(), soSQL.c_str());
+    return SQLCommand(m_poDS->GetDB(), soSQL.c_str());
 }
 
 /************************************************************************/
@@ -995,7 +995,7 @@ OGRErr OGRGeoPackageTableLayer::SyncToDisk()
 
 OGRErr OGRGeoPackageTableLayer::StartTransaction()
 {
-    return SQLCommand(m_poDS->GetDatabaseHandle(), "BEGIN");
+    return SQLCommand(m_poDS->GetDB(), "BEGIN");
 }
 
 
@@ -1005,7 +1005,7 @@ OGRErr OGRGeoPackageTableLayer::StartTransaction()
 
 OGRErr OGRGeoPackageTableLayer::CommitTransaction()
 {
-    return SQLCommand(m_poDS->GetDatabaseHandle(), "COMMIT");
+    return SQLCommand(m_poDS->GetDB(), "COMMIT");
 }
 
 
@@ -1015,7 +1015,7 @@ OGRErr OGRGeoPackageTableLayer::CommitTransaction()
 
 OGRErr OGRGeoPackageTableLayer::RollbackTransaction()
 {
-    return SQLCommand(m_poDS->GetDatabaseHandle(), "ROLLBACK");
+    return SQLCommand(m_poDS->GetDB(), "ROLLBACK");
 }
 
 
@@ -1037,7 +1037,7 @@ int OGRGeoPackageTableLayer::GetFeatureCount( int bForce )
         soSQL.Printf("SELECT Count(*) FROM %s ", m_pszTableName);
 
     /* Just run the query directly and get back integer */
-    int iFeatureCount = SQLGetInteger(m_poDS->GetDatabaseHandle(), soSQL.c_str(), &err);
+    int iFeatureCount = SQLGetInteger(m_poDS->GetDB(), soSQL.c_str(), &err);
 
     /* Generic implementation uses -1 for error condition, so we will too */
     if ( err == OGRERR_NONE )
@@ -1092,7 +1092,7 @@ int OGRGeoPackageTableLayer::TestCapability ( const char * pszCap )
          EQUAL(pszCap, OLCDeleteFeature) ||
          EQUAL(pszCap, OLCRandomWrite) )
     {
-        return m_poDS->IsUpdatable();
+        return m_poDS->GetUpdate();
     }
     else if ( EQUAL(pszCap, OLCRandomRead) ||
               EQUAL(pszCap, OLCTransactions) )

@@ -55,21 +55,16 @@ class OGRGeoPackageDriver : public OGRSFDriver
 /*                           OGRGeoPackageDataSource                    */
 /************************************************************************/
 
-class OGRGeoPackageDataSource : public OGRDataSource
+class OGRGeoPackageDataSource : public OGRSQLiteBaseDataSource
 {
-    char*               m_pszFileName;
     OGRLayer**          m_papoLayers;
     int                 m_nLayers;
-    int                 m_bUpdate;
     int                 m_bUtf8;
-    sqlite3*            m_poDb;
-    
-    
+
     public:
                             OGRGeoPackageDataSource();
                             ~OGRGeoPackageDataSource();
 
-        virtual const char* GetName() { return m_pszFileName; }
         virtual int         GetLayerCount() { return m_nLayers; }
         int                 Open( const char * pszFilename, int bUpdate );
         int                 Create( const char * pszFilename, char **papszOptions );
@@ -86,11 +81,9 @@ class OGRGeoPackageDataSource : public OGRDataSource
                                         const char *pszDialect );
         virtual void        ReleaseResultSet( OGRLayer * poLayer );
 
-        int                 IsUpdatable() { return m_bUpdate; }
         int                 GetSrsId( const OGRSpatialReference * poSRS );
         const char*         GetSrsName( const OGRSpatialReference * poSRS );
         OGRSpatialReference* GetSpatialRef( int iSrsId );
-        sqlite3*            GetDatabaseHandle();
         virtual int         GetUTF8() { return m_bUtf8; }
         OGRErr              AddColumn( const char * pszTableName, 
                                        const char * pszColumnName, 
