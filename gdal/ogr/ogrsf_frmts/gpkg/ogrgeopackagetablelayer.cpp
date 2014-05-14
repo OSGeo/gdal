@@ -532,15 +532,15 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
             {
                 OGRwkbGeometryType oGeomTypeGeomCols = GPkgGeometryTypeToWKB(osGeomColsType.c_str(), bHasZ);
                 /* Enforce consistency between table and metadata */
+                if( wkbFlatten(oGeomType) == wkbUnknown )
+                    oGeomType = oGeomTypeGeomCols;
                 if ( oGeomType != oGeomTypeGeomCols )
                 {
-                    CPLError(CE_Failure, CPLE_AppDefined, 
+                    CPLError(CE_Warning, CPLE_AppDefined, 
                              "geometry column type in '%s.%s' is not consistent with type in gpkg_geometry_columns", 
                              m_pszTableName, pszName);
-                    SQLResultFree(&oResultTable);
-                    return OGRERR_FAILURE;
                 }
-                
+
                 if ( m_poFeatureDefn->GetGeomFieldCount() == 0 )
                 {
                     OGRGeomFieldDefn oGeomField(pszName, oGeomType);
@@ -912,12 +912,18 @@ OGRErr OGRGeoPackageTableLayer::SetFeature( OGRFeature *poFeature )
 OGRErr OGRGeoPackageTableLayer::SetAttributeFilter( const char *pszQuery )
 
 {
+    CPLFree(m_pszAttrQueryString);
+    m_pszAttrQueryString = (pszQuery) ? CPLStrdup(pszQuery) : NULL;
+
     if( pszQuery == NULL )
-        m_soFilter.Clear();
+        osQuery = "";
     else
-        m_soFilter = pszQuery;
+        osQuery = pszQuery;
+
+    BuildWhere();
 
     ResetReading();
+
     return OGRERR_NONE;
 }
 
@@ -1108,8 +1114,8 @@ OGRErr OGRGeoPackageTableLayer::RollbackTransaction()
 
 int OGRGeoPackageTableLayer::GetFeatureCount( int bForce )
 {
-    if( m_poFilterGeom != NULL )
-        return OGRLayer::GetFeatureCount(bForce);
+    if( m_poFilterGeom != NULL && !m_bFilterIsEnvelope )
+        return OGRGeoPackageLayer::GetFeatureCount();
 
     /* Ignore bForce, because we always do a full count on the database */
     OGRErr err;
@@ -1185,9 +1191,13 @@ int OGRGeoPackageTableLayer::TestCapability ( const char * pszCap )
     {
         return TRUE;
     }
+    else if ( EQUAL(pszCap, OLCFastSpatialFilter) )
+    {
+        return HasSpatialIndex();
+    }
     else if ( EQUAL(pszCap, OLCFastGetExtent) )
     {
-        if ( m_poExtent && ! m_poFilterGeom )
+        if ( m_poExtent )
             return TRUE;
         else
             return FALSE;
@@ -1436,7 +1446,8 @@ int OGRGeoPackageTableLayer::HasSpatialIndex()
         return m_bHasSpatialIndex;
     m_bHasSpatialIndex = FALSE;
 
-    if( m_poFeatureDefn->GetGeomFieldCount() == 0 )
+    if( m_poFeatureDefn->GetGeomFieldCount() == 0 ||
+        !m_poDS->HasExtensionsTable() )
         return FALSE;
 
     const char* pszT = m_pszTableName;
@@ -1542,5 +1553,104 @@ void OGRGeoPackageTableLayer::RenameTo(const char* pszDstTableName)
     if( bHasSpatialIndex )
     {
         CreateSpatialIndex();
+    }
+}
+
+/************************************************************************/
+/*                          SetSpatialFilter()                          */
+/************************************************************************/
+
+void OGRGeoPackageTableLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
+
+{
+    if( InstallFilter( poGeomIn ) )
+    {
+        BuildWhere();
+
+        ResetReading();
+    }
+}
+
+/************************************************************************/
+/*                           GetSpatialWhere()                          */
+/************************************************************************/
+
+CPLString OGRGeoPackageTableLayer::GetSpatialWhere(int iGeomCol,
+                                               OGRGeometry* poFilterGeom)
+{
+    CPLString osSpatialWHERE;
+
+    if( iGeomCol < 0 || iGeomCol >= m_poFeatureDefn->GetGeomFieldCount() )
+        return osSpatialWHERE;
+
+    const char* pszT = m_pszTableName;
+    const char* pszC = m_poFeatureDefn->GetGeomFieldDefn(iGeomCol)->GetNameRef();
+
+    if( poFilterGeom != NULL )
+    {
+        OGREnvelope  sEnvelope;
+
+        CPLLocaleC  oLocaleEnforcer;
+
+        poFilterGeom->getEnvelope( &sEnvelope );
+        
+        if( CPLIsInf(sEnvelope.MinX) || CPLIsInf(sEnvelope.MinY) ||
+            CPLIsInf(sEnvelope.MaxX) || CPLIsInf(sEnvelope.MaxY) )
+        {
+            return osSpatialWHERE;
+        }
+
+        if( HasSpatialIndex() )
+        {
+            osSpatialWHERE.Printf("ROWID IN ( SELECT id FROM 'rtree_%s_%s' WHERE "
+                            "maxx >= %.12f AND minx <= %.12f AND maxy >= %.12f AND miny <= %.12f)",
+                            pszT, pszC,
+                            sEnvelope.MinX - 1e-11, sEnvelope.MaxX + 1e-11,
+                            sEnvelope.MinY - 1e-11, sEnvelope.MaxY + 1e-11);
+        }
+        else
+        {
+            /* A bit inefficient but still faster than OGR filtering */
+            osSpatialWHERE.Printf("(ST_MaxX(%s) >= %.12f AND ST_MinX(%s) <= %.12f AND ST_MaxY(%s) >= %.12f AND ST_MinY(%s) <= %.12f)",
+                        pszC, sEnvelope.MinX - 1e-11,
+                        pszC, sEnvelope.MaxX + 1e-11,
+                        pszC, sEnvelope.MinY - 1e-11,
+                        pszC, sEnvelope.MaxY + 1e-11);
+        }
+    }
+
+    return osSpatialWHERE;
+}
+/************************************************************************/
+/*                             BuildWhere()                             */
+/*                                                                      */
+/*      Build the WHERE statement appropriate to the current set of     */
+/*      criteria (spatial and attribute queries).                       */
+/************************************************************************/
+
+void OGRGeoPackageTableLayer::BuildWhere()
+
+{
+    m_soFilter = "";
+
+    CPLString osSpatialWHERE = GetSpatialWhere(m_iGeomFieldFilter,
+                                               m_poFilterGeom);
+    if (osSpatialWHERE.size() != 0)
+    {
+        m_soFilter += osSpatialWHERE;
+    }
+
+    if( osQuery.size() > 0 )
+    {
+        if( m_soFilter.size() == 0 )
+        {
+            m_soFilter += osQuery;
+        }
+        else    
+        {
+            m_soFilter += " AND (";
+            m_soFilter += osQuery;
+            m_soFilter += ")";
+        }
     }
 }
