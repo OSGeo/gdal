@@ -328,7 +328,16 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
     {
         if (i > 0)
             osCommandLine += " ";
-        osCommandLine += papszArgv[i];
+        /* We need to quote arguments with spaces in them (if not already done) */
+        if( strchr(papszArgv[i], ' ') != NULL &&
+            papszArgv[i][0] != '"' )
+        {
+            osCommandLine += "\"";
+            osCommandLine += papszArgv[i];
+            osCommandLine += "\"";
+        }
+        else
+            osCommandLine += papszArgv[i];
     }
 
     if (!CreateProcess(NULL, 
