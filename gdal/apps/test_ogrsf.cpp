@@ -2075,7 +2075,6 @@ static int TestTransactions( OGRLayer *poLayer )
     if (poLayer->GetFeatureCount() != nInitialFeatureCount)
     {
         printf("ERROR: GetFeatureCount() should have returned its initial value after RollbackTransaction().\n");
-        poLayer->RollbackTransaction();
         return FALSE;
     }
 
@@ -2122,7 +2121,6 @@ static int TestTransactions( OGRLayer *poLayer )
         if (poLayer->GetFeatureCount() != nInitialFeatureCount + 1)
         {
             printf("ERROR: GetFeatureCount() should have returned its initial value + 1 after CommitTransaction().\n");
-            poLayer->RollbackTransaction();
             return FALSE;
         }
 
@@ -2136,7 +2134,6 @@ static int TestTransactions( OGRLayer *poLayer )
         if (poLayer->GetFeatureCount() != nInitialFeatureCount)
         {
             printf("ERROR: GetFeatureCount() should have returned its initial value after DeleteFeature().\n");
-            poLayer->RollbackTransaction();
             return FALSE;
         }
     }
@@ -2282,6 +2279,11 @@ static int TestLayerSQL( OGRDataSource* poDS, OGRLayer * poLayer )
     /* Test consistency between result layer and traditionnal layer */
     poLayer->ResetReading();
     poLayerFeat = poLayer->GetNextFeature();
+
+    /* Reset to avoid potentially a statement to be active which cause */
+    /* issue in the transaction test of the second layer, when testing */
+    /* multi-tables sqlite and gpkg databases */
+    poLayer->ResetReading();
 
     osSQL.Printf("SELECT * FROM %s", GetLayerNameForSQL(poDS, poLayer->GetName()));
     poSQLLyr = poDS->ExecuteSQL(osSQL.c_str(), NULL, NULL);
