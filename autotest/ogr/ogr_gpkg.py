@@ -349,7 +349,7 @@ def ogr_gpkg_8():
         gdaltest.post_reason('cannot insert empty')
         return 'fail'
         
-    feat.SetFID(2)
+    feat.SetFID(6)
     if lyr.SetFeature(feat) != 0:
         gdaltest.post_reason('cannot update with empty')
         return 'fail'
@@ -434,6 +434,7 @@ def ogr_gpkg_11():
     if gdaltest.gpkg_dr is None:
         return 'skip'
 
+    gdaltest.gpkg_ds = None
     gdaltest.gpkg_ds = ogr.Open('tmp/gpkg_test.gpkg', update = 1)
     gdaltest.gpkg_ds.ExecuteSQL('CREATE INDEX tbl_linestring_fld_integer_idx ON tbl_linestring(fld_integer)')
     gdaltest.gpkg_ds.ExecuteSQL('ALTER TABLE tbl_linestring RENAME TO tbl_linestring_renamed')
@@ -584,7 +585,7 @@ def ogr_gpkg_test_ogrsf():
         return 'skip'
 
     gdaltest.gpkg_ds = None
-
+    #sys.exit(0)
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/gpkg_test.gpkg --config OGR_SQLITE_SYNCHRONOUS OFF')
 
     if ret.find('INFO') == -1 or ret.find('ERROR') != -1:

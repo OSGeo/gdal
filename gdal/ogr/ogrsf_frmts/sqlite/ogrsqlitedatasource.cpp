@@ -477,12 +477,13 @@ void OGRSQLiteBaseDataSource::NotifyFileOpened(const char* pszFilename,
 /*                            OpenOrCreateDB()                          */
 /************************************************************************/
 
-int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flags)
+int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flags, int bRegisterOGR2SQLiteExtensions)
 {
     int rc;
     
 #ifdef HAVE_SQLITE_VFS
-    OGR2SQLITE_Register();
+    if( bRegisterOGR2SQLiteExtensions )
+        OGR2SQLITE_Register();
 
     int bUseOGRVFS = CSLTestBoolean(CPLGetConfigOption("SQLITE_USE_OGR_VFS", "NO"));
     if (bUseOGRVFS || strncmp(pszName, "/vsi", 4) == 0)
@@ -637,9 +638,9 @@ int OGRSQLiteDataSource::Create( const char * pszNameIn, char **papszOptions )
 /*      Create the database file.                                       */
 /* -------------------------------------------------------------------- */
 #ifdef HAVE_SQLITE_VFS
-    if (!OpenOrCreateDB(SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE))
+    if (!OpenOrCreateDB(SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, TRUE))
 #else
-    if (!OpenOrCreateDB(0))
+    if (!OpenOrCreateDB(0, TRUE))
 #endif
         return FALSE;
 
@@ -1020,9 +1021,9 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn )
 #endif
 
 #ifdef HAVE_SQLITE_VFS
-        if (!OpenOrCreateDB((bUpdateIn) ? SQLITE_OPEN_READWRITE : SQLITE_OPEN_READONLY) )
+        if (!OpenOrCreateDB((bUpdateIn) ? SQLITE_OPEN_READWRITE : SQLITE_OPEN_READONLY, TRUE) )
 #else
-        if (!OpenOrCreateDB(0))
+        if (!OpenOrCreateDB(0, TRUE))
 #endif
             return FALSE;
 

@@ -5,7 +5,7 @@ OBJ	= ogrgeopackagedriver.o ogrgeopackagedatasource.o ogrgeopackagelayer.o \
 	ogrgeopackagetablelayer.o ogrgeopackageselectlayer.o ogrgeopackageutility.o
 
 ifeq ($(SQLITE_HAS_COLUMN_METADATA),yes)
-CPPFLAGS +=  -DSQLITE_HAS_COLUMN_METADATA
+CPPFLAGS +=  -DaSQLITE_HAS_COLUMN_METADATA
 endif
 
 CPPFLAGS := -I.. $(GDAL_INCLUDE) $(SQLITE_INC) $(CPPFLAGS) -I../sqlite

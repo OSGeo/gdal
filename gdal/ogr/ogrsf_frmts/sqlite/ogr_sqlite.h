@@ -576,7 +576,7 @@ class OGRSQLiteBaseDataSource : public OGRDataSource
     VSILFILE*           fpMainFile; /* Set by the VFS layer when it opens the DB */
                                     /* Must *NOT* be closed by the datasource explicitely. */
 
-    int                 OpenOrCreateDB(int flags);
+    int                 OpenOrCreateDB(int flags, int bRegisterOGR2SQLiteExtensions);
     int                 SetSynchronous();
     int                 SetCacheSize();
 
