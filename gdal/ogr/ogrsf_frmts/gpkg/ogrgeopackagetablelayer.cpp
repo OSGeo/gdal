@@ -93,14 +93,19 @@ OGRErr OGRGeoPackageTableLayer::BuildColumns()
         return OGRERR_FAILURE;
     }
 
+    CPLFree(panFieldOrdinals);
+    panFieldOrdinals = (int *) CPLMalloc( sizeof(int) * m_poFeatureDefn->GetFieldCount() );
+
     /* Always start with a primary key */
     CPLString soColumns = m_pszFidColumn;
+    iFIDCol = 0;
 
     /* Add a geometry column if there is one (just one) */
     if ( m_poFeatureDefn->GetGeomFieldCount() )
     {
         soColumns += ", ";
         soColumns += m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
+        iGeomCol = 1;
     }
 
     /* Add all the attribute columns */
@@ -108,6 +113,7 @@ OGRErr OGRGeoPackageTableLayer::BuildColumns()
     {
         soColumns += ", ";
         soColumns += m_poFeatureDefn->GetFieldDefn(i)->GetNameRef();
+        panFieldOrdinals[i] = 1 + (iGeomCol >= 0) + i;
     }
 
     m_soColumns = soColumns;    
@@ -485,8 +491,6 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
     int iRecord;
     OGRBoolean bFidFound = FALSE;
 
-    panFieldOrdinals = (int *) CPLMalloc( sizeof(int) * oResultTable.nRowCount );
-
     for ( iRecord = 0; iRecord < oResultTable.nRowCount; iRecord++ )
     {
         const char *pszName = SQLResultGetValue(&oResultTable, 1, iRecord);
@@ -524,8 +528,6 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
                         m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
                         poSRS->Dereference();
                     }
-
-                    iGeomCol = iRecord;
                 }
                 else
                 {
@@ -553,12 +555,10 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
             {
                 bFidFound = TRUE;
                 m_pszFidColumn = CPLStrdup(pszName);
-                iFIDCol = iRecord;
             }
             else
             {
                 OGRFieldDefn oField(pszName, oType);
-                panFieldOrdinals[m_poFeatureDefn->GetFieldCount()] = iRecord;
                 m_poFeatureDefn->AddFieldDefn(&oField);
             }
         }
