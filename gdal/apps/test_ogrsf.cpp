@@ -2273,6 +2273,7 @@ static int TestLayerSQL( OGRDataSource* poDS, OGRLayer * poLayer )
     OGRLayer* poSQLLyr = NULL;
     OGRFeature* poLayerFeat = NULL;
     OGRFeature* poSQLFeat = NULL;
+    int bGotFeature = FALSE;
 
     CPLString osSQL;
 
@@ -2295,6 +2296,8 @@ static int TestLayerSQL( OGRDataSource* poDS, OGRLayer * poLayer )
     else
     {
         poSQLFeat = poSQLLyr->GetNextFeature();
+        if( poSQLFeat != NULL )
+            bGotFeature = TRUE;
         if( poLayerFeat == NULL && poSQLFeat != NULL )
         {
             printf( "ERROR: poLayerFeat == NULL && poSQLFeat != NULL.\n" );
@@ -2380,6 +2383,37 @@ static int TestLayerSQL( OGRDataSource* poDS, OGRLayer * poLayer )
     poLayerFeat = NULL;
     OGRFeature::DestroyFeature(poSQLFeat);
     poSQLFeat = NULL;
+    if( poSQLLyr )
+    {
+        poDS->ReleaseResultSet(poSQLLyr);
+        poSQLLyr = NULL;
+    }
+
+    /* Try ResetReading(), GetNextFeature(), ResetReading(), GetNextFeature() */
+    poSQLLyr = poDS->ExecuteSQL(osSQL.c_str(), NULL, NULL);
+
+    poSQLLyr->ResetReading();
+
+    poSQLFeat = poSQLLyr->GetNextFeature();
+    if( poSQLFeat == NULL && bGotFeature )
+    {
+        printf( "ERROR: Should have got feature (1)\n" );
+        bRet = FALSE;
+    }
+    OGRFeature::DestroyFeature(poSQLFeat);
+    poSQLFeat = NULL;
+
+    poSQLLyr->ResetReading();
+
+    poSQLFeat = poSQLLyr->GetNextFeature();
+    if( poSQLFeat == NULL && bGotFeature )
+    {
+        printf( "ERROR: Should have got feature (2)\n" );
+        bRet = FALSE;
+    }
+    OGRFeature::DestroyFeature(poSQLFeat);
+    poSQLFeat = NULL;
+
     if( poSQLLyr )
     {
         poDS->ReleaseResultSet(poSQLLyr);
