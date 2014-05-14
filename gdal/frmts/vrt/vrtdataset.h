@@ -354,7 +354,7 @@ class VRTSimpleSource;
 class CPL_DLL VRTSourcedRasterBand : public VRTRasterBand
 {
   private:
-    int            bAntiRecursionFlag;
+    int            nRecursionCounter;
     CPLString      osLastLocationInfo;
     char         **papszSourceList;
 
