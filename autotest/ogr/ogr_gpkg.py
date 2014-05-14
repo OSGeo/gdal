@@ -318,7 +318,8 @@ def ogr_gpkg_8():
         return 'skip'
 
     srs = osr.SpatialReference()
-    srs.ImportFromEPSG( 4326 )
+    # Test a non-default SRS
+    srs.ImportFromEPSG( 32631 )
 
     lyr = gdaltest.gpkg_ds.CreateLayer( 'tbl_linestring', geom_type = ogr.wkbLineString, srs = srs)
     if lyr is None:
@@ -426,28 +427,6 @@ def ogr_gpkg_9():
     return 'success'
 
 ###############################################################################
-# Run test_ogrsf
-
-def ogr_gpkg_10():
-
-    if gdaltest.gpkg_dr is None:
-        return 'skip'
-
-    import test_cli_utilities
-    if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
-
-    gdaltest.gpkg_ds = None
-
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/gpkg_test.gpkg --config OGR_SQLITE_SYNCHRONOUS OFF')
-
-    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
-        print(ret)
-        return 'fail'
-
-    return 'success'
-
-###############################################################################
 # Test non-SELECT SQL commands
 
 def ogr_gpkg_11():
@@ -489,7 +468,7 @@ def ogr_gpkg_12():
     if sql_lyr.GetGeometryColumn() != 'geom':
         gdaltest.post_reason('fail')
         return 'fail'
-    if sql_lyr.GetSpatialRef().ExportToWkt().find('4326') < 0:
+    if sql_lyr.GetSpatialRef().ExportToWkt().find('32631') < 0:
         gdaltest.post_reason('fail')
         return 'fail'
     feat = sql_lyr.GetNextFeature()
@@ -543,6 +522,78 @@ def ogr_gpkg_12():
     return 'success'
 
 ###############################################################################
+# Test non-spatial tables
+
+def ogr_gpkg_13():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    lyr = gdaltest.gpkg_ds.CreateLayer('non_spatial', geom_type = ogr.wkbNone )
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(feat)
+    feat = None
+    lyr.CreateField(ogr.FieldDefn('fld_integer', ogr.OFTInteger))
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField('fld_integer', 1)
+    lyr.CreateFeature(feat)
+    feat = None
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+    if feat.IsFieldSet('fld_integer'):
+        feat.DumpReadable()
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = lyr.GetNextFeature()
+    if feat.GetField('fld_integer') != 1:
+        feat.DumpReadable()
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdaltest.gpkg_ds = None
+    gdaltest.gpkg_ds = ogr.Open('tmp/gpkg_test.gpkg')
+    if gdaltest.gpkg_ds.GetLayerCount() != 4:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr = gdaltest.gpkg_ds.GetLayer('non_spatial')
+    if lyr.GetGeomType() != ogr.wkbNone:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = lyr.GetNextFeature()
+    if feat.IsFieldSet('fld_integer'):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = lyr.GetNextFeature()
+    if feat.GetField('fld_integer') != 1:
+        feat.DumpReadable()
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Run test_ogrsf
+
+def ogr_gpkg_test_ogrsf():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    import test_cli_utilities
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        return 'skip'
+
+    gdaltest.gpkg_ds = None
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/gpkg_test.gpkg --config OGR_SQLITE_SYNCHRONOUS OFF')
+
+    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+        print(ret)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Remove the test db from the tmp directory
 
 def ogr_gpkg_cleanup():
@@ -572,9 +623,10 @@ gdaltest_list = [
     ogr_gpkg_7,
     ogr_gpkg_8,
     ogr_gpkg_9,
-    ogr_gpkg_10,
     ogr_gpkg_11,
     ogr_gpkg_12,
+    ogr_gpkg_13,
+    ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]
 

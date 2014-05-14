@@ -155,8 +155,7 @@ class OGRGeoPackageTableLayer : public OGRGeoPackageLayer
     OGRBoolean                  m_bExtentChanged;
     sqlite3_stmt*               m_poUpdateStatement;
     sqlite3_stmt*               m_poInsertStatement;
-    sqlite3_stmt*               m_poFidStatement;    
-    
+
     virtual OGRErr      ResetStatement();
     
     public:
@@ -185,7 +184,7 @@ class OGRGeoPackageTableLayer : public OGRGeoPackageLayer
     
     // void                SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn );
 
-    OGRErr              ReadTableDefinition();
+    OGRErr              ReadTableDefinition(int bIsSpatial);
 
     /************************************************************************/
     /* GPKG methods */

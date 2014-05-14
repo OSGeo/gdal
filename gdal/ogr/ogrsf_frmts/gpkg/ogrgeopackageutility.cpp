@@ -174,6 +174,7 @@ int SQLGetInteger(sqlite3 * poDb, const char * pszSQL, OGRErr *err)
     if ( rc != SQLITE_ROW )
     {
         if ( err ) *err = OGRERR_FAILURE;
+        sqlite3_finalize(poStmt);
         return 0;
     }
     
