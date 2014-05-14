@@ -482,7 +482,7 @@ int OGRGeoPackageDataSource::Open(const char * pszFilename, int bUpdateIn )
         "UNION ALL "
         "SELECT name, name AS identifier, 0 as is_spatial, 0 AS xmin, 0 AS ymin, 0 AS xmax, 0 AS ymax FROM sqlite_master "
         "WHERE type = 'table' AND name NOT LIKE 'gpkg%' AND name NOT LIKE 'sqlite_%' "
-        "AND name NOT LIKE 'rtree_%' AND NAME NOT IN (SELECT identifier FROM gpkg_contents)";
+        "AND name NOT LIKE 'rtree_%' AND NAME NOT IN (SELECT table_name FROM gpkg_contents)";
 
     err = SQLQuery(hDB, osSQL.c_str(), &oResult);
     if  ( err != OGRERR_NONE )
@@ -493,7 +493,7 @@ int OGRGeoPackageDataSource::Open(const char * pszFilename, int bUpdateIn )
 
     if ( oResult.nRowCount > 0 )
     {
-        m_papoLayers = (OGRLayer**)CPLMalloc(sizeof(OGRGeoPackageLayer*) * oResult.nRowCount);
+        m_papoLayers = (OGRGeoPackageTableLayer**)CPLMalloc(sizeof(OGRGeoPackageTableLayer*) * oResult.nRowCount);
 
         for ( i = 0; i < oResult.nRowCount; i++ )
         {
@@ -838,14 +838,6 @@ OGRLayer* OGRGeoPackageDataSource::CreateLayer( const char * pszLayerName,
 
     }
 
-    /* This is where spatial index logic will go in the future */
-    const char *pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );
-    int bCreateSpatialIndex = ( pszSI == NULL || CSLTestBoolean(pszSI) );
-    if( eGType != wkbNone && bCreateSpatialIndex )
-    {
-        /* This is where spatial index logic will go in the future */
-    }
-    
     /* The database is now all set up, so create a blank layer and read in the */
     /* info from the database. */
     OGRGeoPackageTableLayer *poLayer = new OGRGeoPackageTableLayer(this, pszLayerName);
@@ -856,7 +848,15 @@ OGRLayer* OGRGeoPackageDataSource::CreateLayer( const char * pszLayerName,
         return NULL;
     }
 
-    m_papoLayers = (OGRLayer**)CPLRealloc(m_papoLayers,  sizeof(OGRGeoPackageLayer*) * (m_nLayers+1));
+    /* Should we create a spatial index ? */
+    const char *pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );
+    int bCreateSpatialIndex = ( pszSI == NULL || CSLTestBoolean(pszSI) );
+    if( eGType != wkbNone && bCreateSpatialIndex )
+    {
+        poLayer->SetDeferedSpatialIndexCreation(TRUE);
+    }
+
+    m_papoLayers = (OGRGeoPackageTableLayer**)CPLRealloc(m_papoLayers,  sizeof(OGRGeoPackageTableLayer*) * (m_nLayers+1));
     m_papoLayers[m_nLayers++] = poLayer;
     return poLayer;
 }
@@ -876,6 +876,8 @@ int OGRGeoPackageDataSource::DeleteLayer( int iLayer )
     CPLString osLayerName = m_papoLayers[iLayer]->GetLayerDefn()->GetName();
 
     CPLDebug( "GPKG", "DeleteLayer(%s)", osLayerName.c_str() );
+
+    m_papoLayers[iLayer]->DropSpatialIndex();
 
     /* Delete the layer object and remove the gap in the layers list */
     delete m_papoLayers[iLayer];
@@ -935,6 +937,11 @@ OGRLayer * OGRGeoPackageDataSource::ExecuteSQL( const char *pszSQLCommand,
                                           const char *pszDialect )
 
 {
+    for( int i = 0; i < m_nLayers; i++ )
+    {
+        m_papoLayers[i]->CreateSpatialIndexIfNecessary();
+    }
+
     if( pszDialect != NULL && EQUAL(pszDialect,"OGRSQL") )
         return OGRDataSource::ExecuteSQL( pszSQLCommand, 
                                           poSpatialFilter, 
@@ -1030,11 +1037,20 @@ OGRLayer * OGRGeoPackageDataSource::ExecuteSQL( const char *pszSQLCommand,
                     sqlite3_free(pszSQL);
                     
                     pszSQL = sqlite3_mprintf(
-                            "UPDATE gpkg_contents SET table_name = '%s', identifier = '%s' WHERE table_name = '%s'",
-                            pszDstTableName, pszDstTableName, pszSrcTableName);
+                            "UPDATE gpkg_contents SET table_name = '%s' WHERE table_name = '%s'",
+                            pszDstTableName, pszSrcTableName);
 
                     SQLCommand(hDB, pszSQL);
                     sqlite3_free(pszSQL);
+
+                    if( HasExtensionsTable() )
+                    {
+                        pszSQL = sqlite3_mprintf(
+                                "UPDATE gpkg_extensions SET table_name = '%s' WHERE table_name = '%s'",
+                                pszDstTableName, pszSrcTableName);
+                        SQLCommand(hDB, pszSQL);
+                        sqlite3_free(pszSQL);
+                    }
                 }
             }
             CSLDestroy(papszTokens);
@@ -1073,4 +1089,163 @@ void OGRGeoPackageDataSource::ReleaseResultSet( OGRLayer * poLayer )
 
 {
     delete poLayer;
+}
+
+/************************************************************************/
+/*                         HasExtensionsTable()                         */
+/************************************************************************/
+
+int OGRGeoPackageDataSource::HasExtensionsTable()
+{
+    SQLResult oResultTable;
+    OGRErr err = SQLQuery(hDB,
+        "SELECT * FROM sqlite_master WHERE name = 'gpkg_extensions' "
+        "AND type IN ('table', 'view')", &oResultTable);
+    int bHasExtensionsTable = ( err == OGRERR_NONE && oResultTable.nRowCount == 1 );
+    SQLResultFree(&oResultTable);
+    return bHasExtensionsTable;
+}
+
+/************************************************************************/
+/*                  CreateExtensionsTableIfNecessary()                  */
+/************************************************************************/
+
+OGRErr OGRGeoPackageDataSource::CreateExtensionsTableIfNecessary()
+{
+    /* Check if the table gpkg_extensions exists */
+    if( HasExtensionsTable() )
+        return OGRERR_NONE;
+
+    /* Requirement 79 : Every extension of a GeoPackage SHALL be registered */
+    /* in a corresponding row in the gpkg_extensions table. The absence of a */
+    /* gpkg_extensions table or the absence of rows in gpkg_extnsions table */
+    /* SHALL both indicate the absence of extensions to a GeoPackage. */
+    const char* pszCreateGpkgExtensions = 
+        "CREATE TABLE gpkg_extensions ("
+        "table_name TEXT,"
+        "column_name TEXT,"
+        "extension_name TEXT NOT NULL,"
+        "definition TEXT NOT NULL,"
+        "scope TEXT NOT NULL,"
+        "CONSTRAINT ge_tce UNIQUE (table_name, column_name, extension_name)"
+        ")";  
+
+    return SQLCommand(hDB, pszCreateGpkgExtensions);
+}
+
+/************************************************************************/
+/*                     OGRGeoPackageGetHeader()                         */
+/************************************************************************/
+
+static int OGRGeoPackageGetHeader(sqlite3_context* pContext,
+                                  int argc, sqlite3_value** argv,
+                                  GPkgHeader* psHeader)
+{
+    if( sqlite3_value_type (argv[0]) != SQLITE_BLOB )
+    {
+        sqlite3_result_null(pContext);
+        return FALSE;
+    }
+    int nBLOBLen = sqlite3_value_bytes (argv[0]);
+    const GByte* pabyBLOB = (const GByte *) sqlite3_value_blob (argv[0]);
+    if( nBLOBLen < 4 ||
+        GPkgHeaderFromWKB(pabyBLOB, psHeader) != OGRERR_NONE ||
+        psHeader->iDims < 2 )
+    {
+        sqlite3_result_null(pContext);
+        return FALSE;
+    }
+    return TRUE;
+}
+
+/************************************************************************/
+/*                      OGRGeoPackageSTMinX()                           */
+/************************************************************************/
+
+static
+void OGRGeoPackageSTMinX(sqlite3_context* pContext,
+                        int argc, sqlite3_value** argv)
+{
+    GPkgHeader sHeader;
+    if( !OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader) )
+        return;
+    sqlite3_result_double( pContext, sHeader.MinX );
+}
+
+/************************************************************************/
+/*                      OGRGeoPackageSTMinY()                           */
+/************************************************************************/
+
+static
+void OGRGeoPackageSTMinY(sqlite3_context* pContext,
+                        int argc, sqlite3_value** argv)
+{
+    GPkgHeader sHeader;
+    if( !OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader) )
+        return;
+    sqlite3_result_double( pContext, sHeader.MinY );
+}
+
+/************************************************************************/
+/*                      OGRGeoPackageSTMaxX()                           */
+/************************************************************************/
+
+static
+void OGRGeoPackageSTMaxX(sqlite3_context* pContext,
+                        int argc, sqlite3_value** argv)
+{
+    GPkgHeader sHeader;
+    if( !OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader) )
+        return;
+    sqlite3_result_double( pContext, sHeader.MaxX );
+}
+
+/************************************************************************/
+/*                      OGRGeoPackageSTMaxY()                           */
+/************************************************************************/
+
+static
+void OGRGeoPackageSTMaxY(sqlite3_context* pContext,
+                        int argc, sqlite3_value** argv)
+{
+    GPkgHeader sHeader;
+    if( !OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader) )
+        return;
+    sqlite3_result_double( pContext, sHeader.MaxY );
+}
+
+/************************************************************************/
+/*                     OGRGeoPackageSTIsEmpty()                         */
+/************************************************************************/
+
+static
+void OGRGeoPackageSTIsEmpty(sqlite3_context* pContext,
+                        int argc, sqlite3_value** argv)
+{
+    GPkgHeader sHeader;
+    if( !OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader) )
+        return;
+    sqlite3_result_int( pContext, sHeader.bEmpty );
+}
+
+/************************************************************************/
+/*                         OpenOrCreateDB()                             */
+/************************************************************************/
+
+int OGRGeoPackageDataSource::OpenOrCreateDB(int flags)
+{
+    int bSuccess = OGRSQLiteBaseDataSource::OpenOrCreateDB(flags, FALSE);
+    if( !bSuccess )
+        return FALSE;
+    sqlite3_create_function(hDB, "ST_MinX", 1, SQLITE_ANY, NULL,
+                            OGRGeoPackageSTMinX, NULL, NULL);
+    sqlite3_create_function(hDB, "ST_MinY", 1, SQLITE_ANY, NULL,
+                            OGRGeoPackageSTMinY, NULL, NULL);
+    sqlite3_create_function(hDB, "ST_MaxX", 1, SQLITE_ANY, NULL,
+                            OGRGeoPackageSTMaxX, NULL, NULL);
+    sqlite3_create_function(hDB, "ST_MaxY", 1, SQLITE_ANY, NULL,
+                            OGRGeoPackageSTMaxY, NULL, NULL);
+    sqlite3_create_function(hDB, "ST_IsEmpty", 1, SQLITE_ANY, NULL,
+                            OGRGeoPackageSTIsEmpty, NULL, NULL);
+    return TRUE;
 }
