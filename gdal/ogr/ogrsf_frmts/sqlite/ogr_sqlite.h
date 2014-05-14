@@ -557,18 +557,52 @@ class OGRSQLiteSingleFeatureLayer : public OGRLayer
 };
 
 /************************************************************************/
-/*                         OGRSQLiteDataSource                          */
+/*                       OGRSQLiteBaseDataSource                        */
 /************************************************************************/
 
-class OGRSQLiteDataSource : public OGRDataSource
+/* Used by both OGRSQLiteDataSource and OGRGeoPackageDataSource */
+class OGRSQLiteBaseDataSource : public OGRDataSource
 {
-    OGRSQLiteLayer    **papoLayers;
-    int                 nLayers;
-    
+  protected:
     char               *pszName;
 
     sqlite3             *hDB;
     int                 bUpdate;
+
+#ifdef HAVE_SQLITE_VFS
+    sqlite3_vfs*        pMyVFS;
+#endif
+
+    VSILFILE*           fpMainFile; /* Set by the VFS layer when it opens the DB */
+                                    /* Must *NOT* be closed by the datasource explicitely. */
+
+    int                 OpenOrCreateDB(int flags);
+    int                 SetSynchronous();
+    int                 SetCacheSize();
+
+    void                CloseDB();
+
+  public:
+                        OGRSQLiteBaseDataSource();
+                        ~OGRSQLiteBaseDataSource();
+
+    virtual const char *GetName() { return pszName; }
+
+    sqlite3            *GetDB() { return hDB; }
+    int                 GetUpdate() const { return bUpdate; }
+
+    void                NotifyFileOpened (const char* pszFilename,
+                                          VSILFILE* fp);
+};
+
+/************************************************************************/
+/*                         OGRSQLiteDataSource                          */
+/************************************************************************/
+
+class OGRSQLiteDataSource : public OGRSQLiteBaseDataSource
+{
+    OGRSQLiteLayer    **papoLayers;
+    int                 nLayers;
 
     int                 nSoftTransactionLevel;
 
@@ -595,19 +629,10 @@ class OGRSQLiteDataSource : public OGRDataSource
 
     const char*         GetSRTEXTColName();
 
-    int                 OpenOrCreateDB(int flags);
     int                 InitWithEPSG();
-    int                 SetSynchronous();
-    int                 SetCacheSize();
 
     int                 OpenVirtualTable(const char* pszName, const char* pszSQL);
 
-#ifdef HAVE_SQLITE_VFS
-    sqlite3_vfs*        pMyVFS;
-#endif
-
-    VSILFILE*           fpMainFile; /* Set by the VFS layer when it opens the DB */
-                                    /* Must *NOT* be closed by the datasource explicitely. */
     GIntBig             nFileTimestamp;
     int                 bLastSQLCommandIsUpdateLayerStatistics;
 
@@ -640,7 +665,6 @@ class OGRSQLiteDataSource : public OGRDataSource
                                    const char *pszTableName,
                                    const char *pszGeometryColumn);
 
-    virtual const char *GetName() { return pszName; }
     virtual int         GetLayerCount() { return nLayers; }
     virtual OGRLayer   *GetLayer( int );
     virtual OGRLayer   *GetLayerByName( const char* );
@@ -664,19 +688,13 @@ class OGRSQLiteDataSource : public OGRDataSource
     
     OGRErr              FlushSoftTransaction();
 
-    sqlite3            *GetDB() { return hDB; }
-
     char               *LaunderName( const char * );
     int                 FetchSRSId( OGRSpatialReference * poSRS );
     OGRSpatialReference*FetchSRS( int nSRID );
 
-    int                 GetUpdate() const { return bUpdate; }
     void                SetUpdate(int bUpdateIn) { bUpdate = bUpdateIn; }
 
     void                SetName(const char* pszNameIn);
-
-    void                NotifyFileOpened (const char* pszFilename,
-                                          VSILFILE* fp);
 
     const OGREnvelope*  GetEnvelopeFromSQL(const CPLString& osSQL);
     void                SetEnvelopeForSQL(const CPLString& osSQL, const OGREnvelope& oEnvelope);

@@ -137,13 +137,64 @@ int OGRSQLiteDataSource::GetSpatialiteVersionNumber()
 }
 
 /************************************************************************/
+/*                       OGRSQLiteBaseDataSource()                      */
+/************************************************************************/
+
+OGRSQLiteBaseDataSource::OGRSQLiteBaseDataSource()
+
+{
+    pszName = NULL;
+    hDB = NULL;
+
+#ifdef HAVE_SQLITE_VFS
+    pMyVFS = NULL;
+#endif
+
+    fpMainFile = NULL; /* Do not close ! The VFS layer will do it for us */
+}
+
+/************************************************************************/
+/*                      ~OGRSQLiteBaseDataSource()                      */
+/************************************************************************/
+
+OGRSQLiteBaseDataSource::~OGRSQLiteBaseDataSource()
+
+{
+    CloseDB();
+    CPLFree(pszName);
+
+}
+
+/************************************************************************/
+/*                               CloseDB()                              */
+/************************************************************************/
+
+void OGRSQLiteBaseDataSource::CloseDB()
+{
+    if( hDB != NULL )
+    {
+        sqlite3_close( hDB );
+        hDB = NULL;
+    }
+
+#ifdef HAVE_SQLITE_VFS
+    if (pMyVFS)
+    {
+        sqlite3_vfs_unregister(pMyVFS);
+        CPLFree(pMyVFS->pAppData);
+        CPLFree(pMyVFS);
+        pMyVFS = NULL;
+    }
+#endif
+}
+
+/************************************************************************/
 /*                        OGRSQLiteDataSource()                         */
 /************************************************************************/
 
 OGRSQLiteDataSource::OGRSQLiteDataSource()
 
 {
-    pszName = NULL;
     papoLayers = NULL;
     nLayers = 0;
 
@@ -164,13 +215,6 @@ OGRSQLiteDataSource::OGRSQLiteDataSource()
 
     nUndefinedSRID = -1; /* will be changed to 0 if Spatialite >= 4.0 detected */
 
-    hDB = NULL;
-
-#ifdef HAVE_SQLITE_VFS
-    pMyVFS = NULL;
-#endif
-
-    fpMainFile = NULL; /* Do not close ! The VFS layer will do it for us */
     nFileTimestamp = 0;
     bLastSQLCommandIsUpdateLayerStatistics = FALSE;
 }
@@ -195,8 +239,6 @@ OGRSQLiteDataSource::~OGRSQLiteDataSource()
 
     SaveStatistics();
 
-    CPLFree( pszName );
-
     for( i = 0; i < nLayers; i++ )
         delete papoLayers[i];
     
@@ -212,18 +254,6 @@ OGRSQLiteDataSource::~OGRSQLiteDataSource()
 
 #ifdef SPATIALITE_412_OR_LATER
     FinishNewSpatialite();
-#endif
-
-    if( hDB != NULL )
-        sqlite3_close( hDB );
-
-#ifdef HAVE_SQLITE_VFS
-    if (pMyVFS)
-    {
-        sqlite3_vfs_unregister(pMyVFS);
-        CPLFree(pMyVFS->pAppData);
-        CPLFree(pMyVFS);
-    }
 #endif
 }
 
@@ -324,7 +354,7 @@ void OGRSQLiteDataSource::SaveStatistics()
 /*                              SetSynchronous()                        */
 /************************************************************************/
 
-int OGRSQLiteDataSource::SetSynchronous()
+int OGRSQLiteBaseDataSource::SetSynchronous()
 {
     int rc;
     const char* pszSqliteSync = CPLGetConfigOption("OGR_SQLITE_SYNCHRONOUS", NULL);
@@ -362,7 +392,7 @@ int OGRSQLiteDataSource::SetSynchronous()
 /*                              SetCacheSize()                          */
 /************************************************************************/
 
-int OGRSQLiteDataSource::SetCacheSize()
+int OGRSQLiteBaseDataSource::SetCacheSize()
 {
     int rc;
     const char* pszSqliteCacheMB = CPLGetConfigOption("OGR_SQLITE_CACHE", NULL);
@@ -418,15 +448,15 @@ int OGRSQLiteDataSource::SetCacheSize()
 }
 
 /************************************************************************/
-/*                 OGRSQLiteDataSourceNotifyFileOpened()                */
+/*               OGRSQLiteBaseDataSourceNotifyFileOpened()              */
 /************************************************************************/
 
 static
-void OGRSQLiteDataSourceNotifyFileOpened (void* pfnUserData,
+void OGRSQLiteBaseDataSourceNotifyFileOpened (void* pfnUserData,
                                               const char* pszFilename,
                                               VSILFILE* fp)
 {
-    ((OGRSQLiteDataSource*)pfnUserData)->NotifyFileOpened(pszFilename, fp);
+    ((OGRSQLiteBaseDataSource*)pfnUserData)->NotifyFileOpened(pszFilename, fp);
 }
 
 
@@ -434,7 +464,7 @@ void OGRSQLiteDataSourceNotifyFileOpened (void* pfnUserData,
 /*                          NotifyFileOpened()                          */
 /************************************************************************/
 
-void OGRSQLiteDataSource::NotifyFileOpened(const char* pszFilename,
+void OGRSQLiteBaseDataSource::NotifyFileOpened(const char* pszFilename,
                                            VSILFILE* fp)
 {
     if (strcmp(pszFilename, pszName) == 0)
@@ -447,7 +477,7 @@ void OGRSQLiteDataSource::NotifyFileOpened(const char* pszFilename,
 /*                            OpenOrCreateDB()                          */
 /************************************************************************/
 
-int OGRSQLiteDataSource::OpenOrCreateDB(int flags)
+int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flags)
 {
     int rc;
     
@@ -457,7 +487,7 @@ int OGRSQLiteDataSource::OpenOrCreateDB(int flags)
     int bUseOGRVFS = CSLTestBoolean(CPLGetConfigOption("SQLITE_USE_OGR_VFS", "NO"));
     if (bUseOGRVFS || strncmp(pszName, "/vsi", 4) == 0)
     {
-        pMyVFS = OGRSQLiteCreateVFS(OGRSQLiteDataSourceNotifyFileOpened, this);
+        pMyVFS = OGRSQLiteCreateVFS(OGRSQLiteBaseDataSourceNotifyFileOpened, this);
         sqlite3_vfs_register(pMyVFS, 0);
         rc = sqlite3_open_v2( pszName, &hDB, flags, pMyVFS->zName );
     }

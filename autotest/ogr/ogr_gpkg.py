@@ -66,6 +66,11 @@ def ogr_gpkg_1():
     except:
         pass
 
+    # This is to speed-up the runtime of tests on EXT4 filesystems
+    # Do not use this for production environment if you care about data safety
+    # w.r.t system/OS crashes, unless you know what you are doing.
+    gdal.SetConfigOption('OGR_SQLITE_SYNCHRONOUS', 'OFF')
+
     gdaltest.gpkg_ds = gdaltest.gpkg_dr.CreateDataSource( 'tmp/gpkg_test.gpkg' )
 
     if gdaltest.gpkg_ds is not None:
@@ -434,7 +439,7 @@ def ogr_gpkg_10():
 
     gdaltest.gpkg_ds = None
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/gpkg_test.gpkg')
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/gpkg_test.gpkg --config OGR_SQLITE_SYNCHRONOUS OFF')
 
     if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
         print(ret)

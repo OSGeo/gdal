@@ -125,7 +125,7 @@ OGRFeature *OGRGeoPackageLayer::GetNextFeature()
                     sqlite3_reset(m_poQueryStatement);
                     CPLError( CE_Failure, CPLE_AppDefined,
                             "In GetNextRawFeature(): sqlite3_step() : %s",
-                            sqlite3_errmsg(m_poDS->GetDatabaseHandle()) );
+                            sqlite3_errmsg(m_poDS->GetDB()) );
                 }
 
                 ClearStatement();
