@@ -66,6 +66,15 @@
 #endif // HAVE_POPPLER
 
 #ifdef HAVE_PODOFO
+/*
+ * Some Windows header defines a GetObject macro that
+ * shadows a GetObject() method in PoDoFo. This
+ * workaround is documented in the PoDoFo source.
+ */ 
+#ifdef GetObject
+#undef GetObject
+#endif
+
 #include "podofo.h"
 #endif // HAVE_PODOFO
 
