@@ -30,6 +30,7 @@
 
 #include "ogr_geopackage.h"
 #include "ogrgeopackageutility.h"
+#include "ogr_p.h"
 
 /* 1.1.1: A GeoPackage SHALL contain 0x47503130 ("GP10" in ASCII) in the application id */
 /* http://opengis.github.io/geopackage/#_file_format */
@@ -394,8 +395,8 @@ int OGRGeoPackageDataSource::Open(const char * pszFilename, int bUpdateIn )
         return FALSE;
 
     /* Check that the filename exists and is a file */
-    VSIStatBuf stat;
-    if( CPLStat( pszFilename, &stat ) != 0 || !VSI_ISREG(stat.st_mode) )
+    VSIStatBufL stat;
+    if( VSIStatL( pszFilename, &stat ) != 0 || !VSI_ISREG(stat.st_mode) )
         return FALSE;
 
     /* Requirement 2: A GeoPackage SHALL contain 0x47503130 ("GP10" in ASCII) */
@@ -417,7 +418,8 @@ int OGRGeoPackageDataSource::Open(const char * pszFilename, int bUpdateIn )
 
     /* Requirement 6: The SQLite PRAGMA integrity_check SQL command SHALL return “ok” */
     /* http://opengis.github.io/geopackage/#_file_integrity */
-    if ( OGRERR_NONE != PragmaCheck("integrity_check", "ok", 1) )
+    if( strncmp(pszFilename, "/vsicurl/", strlen("/vsicurl/")) != 0 &&
+        OGRERR_NONE != PragmaCheck("integrity_check", "ok", 1) )
     {
         CPLError( CE_Failure, CPLE_AppDefined, "pragma integrity_check on '%s' failed", pszFilename);
         return FALSE;
@@ -1126,7 +1128,8 @@ OGRErr OGRGeoPackageDataSource::CreateExtensionsTableIfNecessary()
 
 static int OGRGeoPackageGetHeader(sqlite3_context* pContext,
                                   int argc, sqlite3_value** argv,
-                                  GPkgHeader* psHeader)
+                                  GPkgHeader* psHeader,
+                                  int bNeedExtent)
 {
     if( sqlite3_value_type (argv[0]) != SQLITE_BLOB )
     {
@@ -1141,7 +1144,7 @@ static int OGRGeoPackageGetHeader(sqlite3_context* pContext,
         sqlite3_result_null(pContext);
         return FALSE;
     }
-    if( psHeader->iDims == 0 )
+    if( psHeader->iDims == 0 && bNeedExtent )
     {
         OGRGeometry *poGeom = GPkgGeometryToOGR(pabyBLOB, nBLOBLen, NULL);
         if( poGeom == NULL || poGeom->IsEmpty() )
@@ -1170,7 +1173,7 @@ void OGRGeoPackageSTMinX(sqlite3_context* pContext,
                         int argc, sqlite3_value** argv)
 {
     GPkgHeader sHeader;
-    if( !OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader) )
+    if( !OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, TRUE) )
         return;
     sqlite3_result_double( pContext, sHeader.MinX );
 }
@@ -1184,7 +1187,7 @@ void OGRGeoPackageSTMinY(sqlite3_context* pContext,
                         int argc, sqlite3_value** argv)
 {
     GPkgHeader sHeader;
-    if( !OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader) )
+    if( !OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, TRUE) )
         return;
     sqlite3_result_double( pContext, sHeader.MinY );
 }
@@ -1198,7 +1201,7 @@ void OGRGeoPackageSTMaxX(sqlite3_context* pContext,
                         int argc, sqlite3_value** argv)
 {
     GPkgHeader sHeader;
-    if( !OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader) )
+    if( !OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, TRUE) )
         return;
     sqlite3_result_double( pContext, sHeader.MaxX );
 }
@@ -1212,7 +1215,7 @@ void OGRGeoPackageSTMaxY(sqlite3_context* pContext,
                         int argc, sqlite3_value** argv)
 {
     GPkgHeader sHeader;
-    if( !OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader) )
+    if( !OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, TRUE) )
         return;
     sqlite3_result_double( pContext, sHeader.MaxY );
 }
@@ -1226,9 +1229,83 @@ void OGRGeoPackageSTIsEmpty(sqlite3_context* pContext,
                         int argc, sqlite3_value** argv)
 {
     GPkgHeader sHeader;
-    if( !OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader) )
+    if( !OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, FALSE) )
         return;
     sqlite3_result_int( pContext, sHeader.bEmpty );
+}
+
+/************************************************************************/
+/*                    OGRGeoPackageSTGeometryType()                     */
+/************************************************************************/
+
+static
+void OGRGeoPackageSTGeometryType(sqlite3_context* pContext,
+                        int argc, sqlite3_value** argv)
+{
+    GPkgHeader sHeader;
+    if( !OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, FALSE) )
+        return;
+
+    int nBLOBLen = sqlite3_value_bytes (argv[0]);
+    const GByte* pabyBLOB = (const GByte *) sqlite3_value_blob (argv[0]);
+    OGRBoolean bIs3D;
+    OGRwkbGeometryType eGeometryType;
+    if( nBLOBLen <= (int)sHeader.szHeader )
+    {
+        sqlite3_result_null( pContext );
+        return;
+    }
+    OGRErr err = OGRReadWKBGeometryType( (GByte*)pabyBLOB + sHeader.szHeader, &eGeometryType, &bIs3D );
+    if( err != OGRERR_NONE )
+        sqlite3_result_null( pContext );
+    else
+        sqlite3_result_text( pContext, OGRToOGCGeomType(eGeometryType), -1, SQLITE_TRANSIENT );
+}
+
+/************************************************************************/
+/*                    OGRGeoPackageGPKGIsAssignable()                   */
+/************************************************************************/
+
+static
+void OGRGeoPackageGPKGIsAssignable(sqlite3_context* pContext,
+                        int argc, sqlite3_value** argv)
+{
+    if( sqlite3_value_type (argv[0]) != SQLITE_TEXT ||
+        sqlite3_value_type (argv[1]) != SQLITE_TEXT )
+    {
+        sqlite3_result_int( pContext, 0 );
+        return;
+    }
+
+    const char* pszExpected = (const char*)sqlite3_value_text(argv[0]);
+    const char* pszActual = (const char*)sqlite3_value_text(argv[1]);
+
+    if( EQUAL(pszExpected, pszActual) ||
+        EQUAL(pszExpected, "GEOMETRY") ||
+        (EQUAL(pszExpected, "GEOMETRYCOLLECTION") &&
+         (EQUAL(pszActual, "MULTIPOINT") ||
+          EQUAL(pszActual, "MULTILINESTRING") ||
+          EQUAL(pszActual, "MULTIPOLYGON"))) )
+    {
+        sqlite3_result_int( pContext, 1 );
+        return;
+    }
+    
+    sqlite3_result_int( pContext, 0 );
+}
+
+/************************************************************************/
+/*                     OGRGeoPackageSTSRID()                            */
+/************************************************************************/
+
+static
+void OGRGeoPackageSTSRID(sqlite3_context* pContext,
+                        int argc, sqlite3_value** argv)
+{
+    GPkgHeader sHeader;
+    if( !OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, FALSE) )
+        return;
+    sqlite3_result_int( pContext, sHeader.iSrsId );
 }
 
 /************************************************************************/
@@ -1240,6 +1317,8 @@ int OGRGeoPackageDataSource::OpenOrCreateDB(int flags)
     int bSuccess = OGRSQLiteBaseDataSource::OpenOrCreateDB(flags, FALSE);
     if( !bSuccess )
         return FALSE;
+
+    /* Used by RTree Spatial Index Extension */
     sqlite3_create_function(hDB, "ST_MinX", 1, SQLITE_ANY, NULL,
                             OGRGeoPackageSTMinX, NULL, NULL);
     sqlite3_create_function(hDB, "ST_MinY", 1, SQLITE_ANY, NULL,
@@ -1250,5 +1329,16 @@ int OGRGeoPackageDataSource::OpenOrCreateDB(int flags)
                             OGRGeoPackageSTMaxY, NULL, NULL);
     sqlite3_create_function(hDB, "ST_IsEmpty", 1, SQLITE_ANY, NULL,
                             OGRGeoPackageSTIsEmpty, NULL, NULL);
+
+    /* Used by Geometry Type Triggers Extension */
+    sqlite3_create_function(hDB, "ST_GeometryType", 1, SQLITE_ANY, NULL,
+                            OGRGeoPackageSTGeometryType, NULL, NULL);
+    sqlite3_create_function(hDB, "GPKG_IsAssignable", 2, SQLITE_ANY, NULL,
+                            OGRGeoPackageGPKGIsAssignable, NULL, NULL);
+
+    /* Used by Geometry SRS ID Triggers Extension */
+    sqlite3_create_function(hDB, "ST_SRID", 1, SQLITE_ANY, NULL,
+                            OGRGeoPackageSTSRID, NULL, NULL);
+
     return TRUE;
 }
