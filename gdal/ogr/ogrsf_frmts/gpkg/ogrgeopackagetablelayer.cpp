@@ -288,12 +288,13 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateInsertSQL( OGRFeature *poFeatu
     OGRFeatureDefn *poFeatureDefn = poFeature->GetDefnRef();
 
     if( poFeatureDefn->GetFieldCount() == 0 &&
-        poFeatureDefn->GetGeomFieldCount() == 0 )
-        return CPLSPrintf("INSERT INTO %s DEFAULT VALUES", m_pszTableName);
+        poFeatureDefn->GetGeomFieldCount() == 0 &&
+        !bAddFID )
+        return CPLSPrintf("INSERT INTO \"%s\" DEFAULT VALUES", m_pszTableName);
 
     /* Set up our SQL string basics */
     CPLString osSQLFront;
-    osSQLFront.Printf("INSERT INTO %s ( ", m_pszTableName);
+    osSQLFront.Printf("INSERT INTO \"%s\" ( ", m_pszTableName);
 
     CPLString osSQLBack;
     osSQLBack = ") VALUES (";
@@ -363,7 +364,7 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateUpdateSQL( OGRFeature *poFeatu
 
     /* Set up our SQL string basics */
     CPLString osUpdate;
-    osUpdate.Printf("UPDATE %s SET ", m_pszTableName);
+    osUpdate.Printf("UPDATE \"%s\" SET ", m_pszTableName);
     
     if ( poFeatureDefn->GetGeomFieldCount() > 0 )
     {
@@ -385,7 +386,7 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateUpdateSQL( OGRFeature *poFeatu
     }
     
     CPLString osWhere;
-    osWhere.Printf(" WHERE %s = ?", m_pszFidColumn);
+    osWhere.Printf(" WHERE \"%s\" = ?", m_pszFidColumn);
 
     return osUpdate + osWhere;
 }
@@ -967,9 +968,9 @@ OGRErr OGRGeoPackageTableLayer::ResetStatement()
     /* Append the attribute filter, if there is one */
     CPLString soSQL;
     if ( m_soFilter.length() > 0 )
-        soSQL.Printf("SELECT %s FROM %s WHERE %s", m_soColumns.c_str(), m_pszTableName, m_soFilter.c_str());
+        soSQL.Printf("SELECT %s FROM \"%s\" WHERE %s", m_soColumns.c_str(), m_pszTableName, m_soFilter.c_str());
     else
-        soSQL.Printf("SELECT %s FROM %s ", m_soColumns.c_str(), m_pszTableName);
+        soSQL.Printf("SELECT %s FROM \"%s\" ", m_soColumns.c_str(), m_pszTableName);
 
     int err = sqlite3_prepare(m_poDS->GetDB(), soSQL.c_str(), -1, &m_poQueryStatement, NULL);
     if ( err != SQLITE_OK )
@@ -1009,7 +1010,7 @@ OGRFeature* OGRGeoPackageTableLayer::GetFeature(long nFID)
 
     /* No filters apply, just use the FID */
     CPLString soSQL;
-    soSQL.Printf("SELECT %s FROM %s WHERE %s = %ld",
+    soSQL.Printf("SELECT %s FROM \"%s\" WHERE \"%s\" = %ld",
                  m_soColumns.c_str(), m_pszTableName, m_pszFidColumn, nFID);
 
     int err = sqlite3_prepare(m_poDS->GetDB(), soSQL.c_str(), -1, &m_poQueryStatement, NULL);
@@ -1061,7 +1062,7 @@ OGRErr OGRGeoPackageTableLayer::DeleteFeature(long nFID)
 
     /* No filters apply, just use the FID */
     CPLString soSQL;
-    soSQL.Printf("DELETE FROM %s WHERE %s = %ld",
+    soSQL.Printf("DELETE FROM \"%s\" WHERE \"%s\" = %ld",
                  m_pszTableName, m_pszFidColumn, nFID);
 
     
@@ -1121,9 +1122,9 @@ int OGRGeoPackageTableLayer::GetFeatureCount( int bForce )
     OGRErr err;
     CPLString soSQL;
     if ( m_soFilter.length() > 0 )
-        soSQL.Printf("SELECT Count(*) FROM %s WHERE %s", m_pszTableName, m_soFilter.c_str());
+        soSQL.Printf("SELECT Count(*) FROM \"%s\" WHERE %s", m_pszTableName, m_soFilter.c_str());
     else
-        soSQL.Printf("SELECT Count(*) FROM %s ", m_pszTableName);
+        soSQL.Printf("SELECT Count(*) FROM \"%s\" ", m_pszTableName);
 
     /* Just run the query directly and get back integer */
     int iFeatureCount = SQLGetInteger(m_poDS->GetDB(), soSQL.c_str(), &err);
@@ -1256,7 +1257,7 @@ void OGRGeoPackageTableLayer::CreateSpatialIndex()
 
     /* Create virtual table */
     pszSQL = sqlite3_mprintf(
-                 "CREATE VIRTUAL TABLE rtree_%s_%s USING rtree(id, minx, maxx, miny, maxy)",
+                 "CREATE VIRTUAL TABLE \"rtree_%s_%s\" USING rtree(id, minx, maxx, miny, maxy)",
                  pszT, pszC );
     err = SQLCommand(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);
@@ -1268,8 +1269,8 @@ void OGRGeoPackageTableLayer::CreateSpatialIndex()
 
     /* Populate the RTree */
     pszSQL = sqlite3_mprintf(
-                 "INSERT OR REPLACE INTO rtree_%s_%s "
-                 "SELECT %s, st_minx(%s), st_maxx(%s), st_miny(%s), st_maxy(%s) FROM %s",
+                 "INSERT OR REPLACE INTO \"rtree_%s_%s\" "
+                 "SELECT \"%s\", st_minx(\"%s\"), st_maxx(\"%s\"), st_miny(\"%s\"), st_maxy(\"%s\") FROM \"%s\"",
                  pszT, pszC, pszI, pszC, pszC, pszC, pszC, pszT );
     err = SQLCommand(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);
@@ -1284,13 +1285,13 @@ void OGRGeoPackageTableLayer::CreateSpatialIndex()
     /* Conditions: Insertion of non-empty geometry
        Actions   : Insert record into rtree */
     pszSQL = sqlite3_mprintf(
-                   "CREATE TRIGGER rtree_%s_%s_insert AFTER INSERT ON %s "
-                   "WHEN (new.%s NOT NULL AND NOT ST_IsEmpty(NEW.%s)) "
+                   "CREATE TRIGGER \"rtree_%s_%s_insert\" AFTER INSERT ON \"%s\" "
+                   "WHEN (new.\"%s\" NOT NULL AND NOT ST_IsEmpty(NEW.\"%s\")) "
                    "BEGIN "
-                   "INSERT OR REPLACE INTO rtree_%s_%s VALUES ("
-                   "NEW.%s,"
-                   "ST_MinX(NEW.%s), ST_MaxX(NEW.%s),"
-                   "ST_MinY(NEW.%s), ST_MaxY(NEW.%s)"
+                   "INSERT OR REPLACE INTO \"rtree_%s_%s\" VALUES ("
+                   "NEW.\"%s\","
+                   "ST_MinX(NEW.\"%s\"), ST_MaxX(NEW.\"%s\"),"
+                   "ST_MinY(NEW.\"%s\"), ST_MaxY(NEW.\"%s\")"
                    "); "
                    "END",
                    pszT, pszC, pszT,
@@ -1311,14 +1312,14 @@ void OGRGeoPackageTableLayer::CreateSpatialIndex()
                No row ID change
        Actions   : Update record in rtree */
     pszSQL = sqlite3_mprintf(
-                   "CREATE TRIGGER rtree_%s_%s_update1 AFTER UPDATE OF %s ON %s "
-                   "WHEN OLD.%s = NEW.%s AND "
-                   "(NEW.%s NOTNULL AND NOT ST_IsEmpty(NEW.%s)) "
+                   "CREATE TRIGGER \"rtree_%s_%s_update1\" AFTER UPDATE OF \"%s\" ON \"%s\" "
+                   "WHEN OLD.\"%s\" = NEW.\"%s\" AND "
+                   "(NEW.\"%s\" NOTNULL AND NOT ST_IsEmpty(NEW.\"%s\")) "
                    "BEGIN "
-                   "INSERT OR REPLACE INTO rtree_%s_%s VALUES ("
-                   "NEW.%s,"
-                   "ST_MinX(NEW.%s), ST_MaxX(NEW.%s),"
-                   "ST_MinY(NEW.%s), ST_MaxY(NEW.%s)"
+                   "INSERT OR REPLACE INTO \"rtree_%s_%s\" VALUES ("
+                   "NEW.\"%s\","
+                   "ST_MinX(NEW.\"%s\"), ST_MaxX(NEW.\"%s\"),"
+                   "ST_MinY(NEW.\"%s\"), ST_MaxY(NEW.\"%s\")"
                    "); "
                    "END",
                    pszT, pszC, pszC, pszT,
@@ -1340,11 +1341,11 @@ void OGRGeoPackageTableLayer::CreateSpatialIndex()
                No row ID change
        Actions   : Remove record from rtree */
     pszSQL = sqlite3_mprintf(
-                   "CREATE TRIGGER rtree_%s_%s_update2 AFTER UPDATE OF %s ON %s "
-                   "WHEN OLD.%s = NEW.%s AND "
-                   "(NEW.%s ISNULL OR ST_IsEmpty(NEW.%s)) "
+                   "CREATE TRIGGER \"rtree_%s_%s_update2\" AFTER UPDATE OF \"%s\" ON \"%s\" "
+                   "WHEN OLD.\"%s\" = NEW.\"%s\" AND "
+                   "(NEW.\"%s\" ISNULL OR ST_IsEmpty(NEW.\"%s\")) "
                    "BEGIN "
-                   "DELETE FROM rtree_%s_%s WHERE id = OLD.%s; "
+                   "DELETE FROM \"rtree_%s_%s\" WHERE id = OLD.\"%s\"; "
                    "END",
                    pszT, pszC, pszC, pszT,
                    pszI, pszI,
@@ -1364,15 +1365,15 @@ void OGRGeoPackageTableLayer::CreateSpatialIndex()
         Actions   : Remove record from rtree for old <i>
                     Insert record into rtree for new <i> */
     pszSQL = sqlite3_mprintf(
-                   "CREATE TRIGGER rtree_%s_%s_update3 AFTER UPDATE OF %s ON %s "
-                   "WHEN OLD.%s != NEW.%s AND "
-                   "(NEW.%s NOTNULL AND NOT ST_IsEmpty(NEW.%s)) "
+                   "CREATE TRIGGER \"rtree_%s_%s_update3\" AFTER UPDATE OF \"%s\" ON \"%s\" "
+                   "WHEN OLD.\"%s\" != NEW.\"%s\" AND "
+                   "(NEW.\"%s\" NOTNULL AND NOT ST_IsEmpty(NEW.\"%s\")) "
                    "BEGIN "
-                   "DELETE FROM rtree_%s_%s WHERE id = OLD.%s; "
-                   "INSERT OR REPLACE INTO rtree_%s_%s VALUES ("
-                   "NEW.%s,"
-                   "ST_MinX(NEW.%s), ST_MaxX(NEW.%s),"
-                   "ST_MinY(NEW.%s), ST_MaxY(NEW.%s)"
+                   "DELETE FROM \"rtree_%s_%s\" WHERE id = OLD.\"%s\"; "
+                   "INSERT OR REPLACE INTO \"rtree_%s_%s\" VALUES ("
+                   "NEW.\"%s\","
+                   "ST_MinX(NEW.\"%s\"), ST_MaxX(NEW.\"%s\"),"
+                   "ST_MinY(NEW.\"%s\"), ST_MaxY(NEW.\"%s\")"
                    "); "
                    "END",
                    pszT, pszC, pszC, pszT,
@@ -1396,11 +1397,11 @@ void OGRGeoPackageTableLayer::CreateSpatialIndex()
                     Empty geometry
         Actions   : Remove record from rtree for old and new <i> */
     pszSQL = sqlite3_mprintf(
-                   "CREATE TRIGGER rtree_%s_%s_update4 AFTER UPDATE ON %s "
-                   "WHEN OLD.%s != NEW.%s AND "
-                   "(NEW.%s ISNULL OR ST_IsEmpty(NEW.%s)) "
+                   "CREATE TRIGGER \"rtree_%s_%s_update4\" AFTER UPDATE ON \"%s\" "
+                   "WHEN OLD.\"%s\" != NEW.\"%s\" AND "
+                   "(NEW.\"%s\" ISNULL OR ST_IsEmpty(NEW.\"%s\")) "
                    "BEGIN "
-                   "DELETE FROM rtree_%s_%s WHERE id IN (OLD.%s, NEW.%s); "
+                   "DELETE FROM \"rtree_%s_%s\" WHERE id IN (OLD.\"%s\", NEW.\"%s\"); "
                    "END",
                    pszT, pszC, pszT,
                    pszI, pszI,
@@ -1417,10 +1418,10 @@ void OGRGeoPackageTableLayer::CreateSpatialIndex()
     /* Conditions: Row deleted
         Actions   : Remove record from rtree for old <i> */
     pszSQL = sqlite3_mprintf(
-                   "CREATE TRIGGER rtree_%s_%s_delete AFTER DELETE ON %s "
-                   "WHEN old.%s NOT NULL "
+                   "CREATE TRIGGER \"rtree_%s_%s_delete\" AFTER DELETE ON \"%s\" "
+                   "WHEN old.\"%s\" NOT NULL "
                    "BEGIN "
-                   "DELETE FROM rtree_%s_%s WHERE id = OLD.%s; "
+                   "DELETE FROM \"rtree_%s_%s\" WHERE id = OLD.\"%s\"; "
                    "END",
                    pszT, pszC, pszT,
                    pszC,
@@ -1489,31 +1490,31 @@ void OGRGeoPackageTableLayer::DropSpatialIndex()
     SQLCommand(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);
 
-    pszSQL = sqlite3_mprintf("DROP TABLE rtree_%s_%s", pszT, pszC);
+    pszSQL = sqlite3_mprintf("DROP TABLE \"rtree_%s_%s\"", pszT, pszC);
     SQLCommand(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);
 
-    pszSQL = sqlite3_mprintf("DROP TRIGGER rtree_%s_%s_insert", pszT, pszC);
+    pszSQL = sqlite3_mprintf("DROP TRIGGER \"rtree_%s_%s_insert\"", pszT, pszC);
     SQLCommand(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);
 
-    pszSQL = sqlite3_mprintf("DROP TRIGGER rtree_%s_%s_update1", pszT, pszC);
+    pszSQL = sqlite3_mprintf("DROP TRIGGER \"rtree_%s_%s_update1\"", pszT, pszC);
     SQLCommand(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);
 
-    pszSQL = sqlite3_mprintf("DROP TRIGGER rtree_%s_%s_update2", pszT, pszC);
+    pszSQL = sqlite3_mprintf("DROP TRIGGER \"rtree_%s_%s_update2\"", pszT, pszC);
     SQLCommand(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);
 
-    pszSQL = sqlite3_mprintf("DROP TRIGGER rtree_%s_%s_update3", pszT, pszC);
+    pszSQL = sqlite3_mprintf("DROP TRIGGER \"rtree_%s_%s_update3\"", pszT, pszC);
     SQLCommand(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);
 
-    pszSQL = sqlite3_mprintf("DROP TRIGGER rtree_%s_%s_update4", pszT, pszC);
+    pszSQL = sqlite3_mprintf("DROP TRIGGER \"rtree_%s_%s_update4\"", pszT, pszC);
     SQLCommand(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);
 
-    pszSQL = sqlite3_mprintf("DROP TRIGGER rtree_%s_%s_delete", pszT, pszC);
+    pszSQL = sqlite3_mprintf("DROP TRIGGER \"rtree_%s_%s_delete\"", pszT, pszC);
     SQLCommand(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);
 
@@ -1602,7 +1603,7 @@ CPLString OGRGeoPackageTableLayer::GetSpatialWhere(int iGeomCol,
 
         if( HasSpatialIndex() )
         {
-            osSpatialWHERE.Printf("ROWID IN ( SELECT id FROM 'rtree_%s_%s' WHERE "
+            osSpatialWHERE.Printf("ROWID IN ( SELECT id FROM \"rtree_%s_%s\" WHERE "
                             "maxx >= %.12f AND minx <= %.12f AND maxy >= %.12f AND miny <= %.12f)",
                             pszT, pszC,
                             sEnvelope.MinX - 1e-11, sEnvelope.MaxX + 1e-11,
@@ -1611,7 +1612,9 @@ CPLString OGRGeoPackageTableLayer::GetSpatialWhere(int iGeomCol,
         else
         {
             /* A bit inefficient but still faster than OGR filtering */
-            osSpatialWHERE.Printf("(ST_MaxX(%s) >= %.12f AND ST_MinX(%s) <= %.12f AND ST_MaxY(%s) >= %.12f AND ST_MinY(%s) <= %.12f)",
+            osSpatialWHERE.Printf(
+                        "(ST_MaxX(\"%s\") >= %.12f AND ST_MinX(\"%s\") <= %.12f AND "
+                        "ST_MaxY(\"%s\") >= %.12f AND ST_MinY(\"%s\") <= %.12f)",
                         pszC, sEnvelope.MinX - 1e-11,
                         pszC, sEnvelope.MaxX + 1e-11,
                         pszC, sEnvelope.MinY - 1e-11,

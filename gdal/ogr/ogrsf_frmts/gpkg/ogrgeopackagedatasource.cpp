@@ -324,7 +324,7 @@ int OGRGeoPackageDataSource::GetSrsId(const OGRSpatialReference * cpoSRS)
         pszSQL = sqlite3_mprintf(
                  "INSERT INTO gpkg_spatial_ref_sys "
                  "(srs_name,srs_id,organization,organization_coordsys_id,definition) "
-                 "VALUES ('%s', %d, upper('%s'), %d, '%q')",
+                 "VALUES ('%q', %d, upper('%q'), %d, '%q')",
                  GetSrsName(poSRS), nSRSId, pszAuthorityName, nAuthorityCode, pszWKT
                  );
     }
@@ -333,7 +333,7 @@ int OGRGeoPackageDataSource::GetSrsId(const OGRSpatialReference * cpoSRS)
         pszSQL = sqlite3_mprintf(
                  "INSERT INTO gpkg_spatial_ref_sys "
                  "(srs_name,srs_id,organization,organization_coordsys_id,definition) "
-                 "VALUES ('%s', %d, upper('%s'), %d, '%q')",
+                 "VALUES ('%q', %d, upper('%q'), %d, '%q')",
                  GetSrsName(poSRS), nSRSId, "NONE", nSRSId, pszWKT
                  );
     }
@@ -457,7 +457,7 @@ int OGRGeoPackageDataSource::Open(const char * pszFilename, int bUpdateIn )
     for ( i = 0; i < 3; i++ )
     {
         SQLResult oResult;
-        char *pszSQL = sqlite3_mprintf("pragma table_info('%s')", aosGpkgTables[i].c_str());
+        char *pszSQL = sqlite3_mprintf("pragma table_info('%q')", aosGpkgTables[i].c_str());
         err = SQLQuery(hDB, pszSQL, &oResult);
         sqlite3_free(pszSQL);
         
@@ -671,7 +671,7 @@ OGRErr OGRGeoPackageDataSource::AddColumn(const char *pszTableName, const char *
 {
     char *pszSQL;
     
-    pszSQL = sqlite3_mprintf("ALTER TABLE %s ADD COLUMN %s %s", 
+    pszSQL = sqlite3_mprintf("ALTER TABLE \"%s\" ADD COLUMN \"%s\" %s", 
                              pszTableName, pszColumnName, pszColumnType);
 
     OGRErr err = SQLCommand(hDB, pszSQL);
@@ -796,16 +796,16 @@ OGRLayer* OGRGeoPackageDataSource::CreateLayer( const char * pszLayerName,
     if ( eGType != wkbNone )
     {
         pszSQL = sqlite3_mprintf(
-            "CREATE TABLE %s ( "
-            "%s INTEGER PRIMARY KEY AUTOINCREMENT, "
-            "%s %s )",
+            "CREATE TABLE \"%s\" ( "
+            "\"%s\" INTEGER PRIMARY KEY AUTOINCREMENT, "
+            "\"%s\" %s )",
              pszLayerName, pszFIDColumnName, pszGeomColumnName, pszGeometryType);
     }
     else
     {
         pszSQL = sqlite3_mprintf(
-            "CREATE TABLE %s ( "
-            "%s INTEGER PRIMARY KEY AUTOINCREMENT )",
+            "CREATE TABLE \"%s\" ( "
+            "\"%s\" INTEGER PRIMARY KEY AUTOINCREMENT )",
              pszLayerName, pszFIDColumnName);
     }
     
@@ -901,21 +901,21 @@ int OGRGeoPackageDataSource::DeleteLayer( int iLayer )
         return OGRERR_NONE;
 
     pszSQL = sqlite3_mprintf(
-            "DROP TABLE %s",
+            "DROP TABLE \"%s\"",
              osLayerName.c_str());
     
     SQLCommand(hDB, pszSQL);
     sqlite3_free(pszSQL);
 
     pszSQL = sqlite3_mprintf(
-            "DELETE FROM gpkg_geometry_columns WHERE table_name = '%s'",
+            "DELETE FROM gpkg_geometry_columns WHERE table_name = '%q'",
              osLayerName.c_str());
     
     SQLCommand(hDB, pszSQL);
     sqlite3_free(pszSQL);
     
     pszSQL = sqlite3_mprintf(
-             "DELETE FROM gpkg_contents WHERE table_name = '%s'",
+             "DELETE FROM gpkg_contents WHERE table_name = '%q'",
               osLayerName.c_str());
 
     SQLCommand(hDB, pszSQL);

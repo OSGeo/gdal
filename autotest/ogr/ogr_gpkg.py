@@ -583,7 +583,7 @@ def ogr_gpkg_14():
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(32631)
 
-    lyr = gdaltest.gpkg_ds.CreateLayer('point_no_spi', geom_type = ogr.wkbPoint, options = ['SPATIAL_INDEX=NO'], srs = sr )
+    lyr = gdaltest.gpkg_ds.CreateLayer('point_no_spi-but-with-dashes', geom_type = ogr.wkbPoint, options = ['SPATIAL_INDEX=NO'], srs = sr )
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(1000 30000000)'))
     lyr.CreateFeature(feat)
@@ -597,7 +597,7 @@ def ogr_gpkg_14():
     feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(-1000 -30000000)'))
     lyr.CreateFeature(feat)
 
-    lyr = gdaltest.gpkg_ds.CreateLayer('point_with_spi', geom_type = ogr.wkbPoint )
+    lyr = gdaltest.gpkg_ds.CreateLayer('point-with-spi-and-dashes', geom_type = ogr.wkbPoint )
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(1000 30000000)'))
     lyr.CreateFeature(feat)
@@ -623,7 +623,7 @@ def ogr_gpkg_15():
 
     sql_lyr = gdaltest.gpkg_ds.ExecuteSQL(
         'SELECT ST_IsEmpty(geom), ST_SRID(geom), ST_GeometryType(geom), ' + \
-        'ST_MinX(geom), ST_MinY(geom), ST_MaxX(geom), ST_MaxY(geom) FROM point_no_spi WHERE fid = 1')
+        'ST_MinX(geom), ST_MinY(geom), ST_MaxX(geom), ST_MaxY(geom) FROM \"point_no_spi-but-with-dashes\" WHERE fid = 1')
     feat = sql_lyr.GetNextFeature()
     if feat.GetField(0) != 0 or feat.GetField(1) != 32631 or \
        feat.GetField(2) != 'POINT' or \
