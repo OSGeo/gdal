@@ -580,7 +580,10 @@ def ogr_gpkg_14():
     if gdaltest.gpkg_dr is None:
         return 'skip'
 
-    lyr = gdaltest.gpkg_ds.CreateLayer('point_no_spi', geom_type = ogr.wkbPoint, options = ['SPATIAL_INDEX=NO'] )
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(32631)
+
+    lyr = gdaltest.gpkg_ds.CreateLayer('point_no_spi', geom_type = ogr.wkbPoint, options = ['SPATIAL_INDEX=NO'], srs = sr )
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(1000 30000000)'))
     lyr.CreateFeature(feat)
@@ -607,6 +610,56 @@ def ogr_gpkg_14():
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(-1000 -30000000)'))
     lyr.CreateFeature(feat)
+
+    return 'success'
+
+###############################################################################
+# Test SQL functions
+
+def ogr_gpkg_15():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL(
+        'SELECT ST_IsEmpty(geom), ST_SRID(geom), ST_GeometryType(geom), ' + \
+        'ST_MinX(geom), ST_MinY(geom), ST_MaxX(geom), ST_MaxY(geom) FROM point_no_spi WHERE fid = 1')
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetField(0) != 0 or feat.GetField(1) != 32631 or \
+       feat.GetField(2) != 'POINT' or \
+       feat.GetField(3) != 1000 or feat.GetField(4) != 30000000 or \
+       feat.GetField(5) != 1000 or feat.GetField(6) != 30000000:
+        feat.DumpReadable()
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+    
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL(
+        'SELECT ST_IsEmpty(geom), ST_SRID(geom), ST_GeometryType(geom), ' + \
+        'ST_MinX(geom), ST_MinY(geom), ST_MaxX(geom), ST_MaxY(geom) FROM tbl_linestring_renamed WHERE geom IS NULL')
+    feat = sql_lyr.GetNextFeature()
+    if feat.IsFieldSet(0) or feat.IsFieldSet(1) or feat.IsFieldSet(2) or \
+       feat.IsFieldSet(3) or feat.IsFieldSet(4) or feat.IsFieldSet(5) or feat.IsFieldSet(6):
+        feat.DumpReadable()
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
+    for (expected_type, actual_type, expected_result) in [
+                ('POINT', 'POINT', 1),
+                ('LINESTRING', 'POINT', 0),
+                ('GEOMETRY', 'POINT', 1),
+                ('POINT', 'GEOMETRY', 0),
+                ('GEOMETRYCOLLECTION', 'MULTIPOINT', 1),
+                ('GEOMETRYCOLLECTION', 'POINT', 0) ]:
+        sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT GPKG_IsAssignable('%s', '%s')" % (expected_type, actual_type))
+        feat = sql_lyr.GetNextFeature()
+        got_result = feat.GetField(0)
+        gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+        if got_result != expected_result:
+            print("expected_type=%s actual_type=%s expected_result=%d got_result=%d" % (expected_type, actual_type, expected_result, got_result))
+            gdaltest.post_reason('fail')
+            return 'fail'
 
     return 'success'
 
@@ -666,6 +719,7 @@ gdaltest_list = [
     ogr_gpkg_12,
     ogr_gpkg_13,
     ogr_gpkg_14,
+    ogr_gpkg_15,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]
