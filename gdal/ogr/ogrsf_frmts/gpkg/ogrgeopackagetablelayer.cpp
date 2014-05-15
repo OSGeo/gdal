@@ -633,6 +633,7 @@ OGRGeoPackageTableLayer::OGRGeoPackageTableLayer(
     m_soFilter = "";
     bDeferedSpatialIndexCreation = FALSE;
     m_bHasSpatialIndex = -1;
+    bDropRTreeTable = FALSE;
 }
 
 
@@ -642,7 +643,19 @@ OGRGeoPackageTableLayer::OGRGeoPackageTableLayer(
 
 OGRGeoPackageTableLayer::~OGRGeoPackageTableLayer()
 {
-    CreateSpatialIndexIfNecessary();
+    if( bDropRTreeTable )
+    {
+        const char* pszT = m_pszTableName;
+        const char* pszC =m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
+        char* pszSQL;
+        pszSQL = sqlite3_mprintf("DROP TABLE \"rtree_%s_%s\"", pszT, pszC);
+        SQLCommand(m_poDS->GetDB(), pszSQL);
+        sqlite3_free(pszSQL);
+    }
+    else
+    {
+        CreateSpatialIndexIfNecessary();
+    }
 
     /* Save metadata back to the database */
     SaveExtent();
@@ -1217,7 +1230,6 @@ void OGRGeoPackageTableLayer::CreateSpatialIndexIfNecessary()
 {
     if( bDeferedSpatialIndexCreation )
     {
-        bDeferedSpatialIndexCreation = FALSE;
         CreateSpatialIndex();
     }
 }
@@ -1226,14 +1238,26 @@ void OGRGeoPackageTableLayer::CreateSpatialIndexIfNecessary()
 /*                       CreateSpatialIndex()                           */
 /************************************************************************/
 
-void OGRGeoPackageTableLayer::CreateSpatialIndex()
+int OGRGeoPackageTableLayer::CreateSpatialIndex()
 {
     char* pszSQL;
     OGRErr err;
+
+    bDeferedSpatialIndexCreation = FALSE;
+
+    if( HasSpatialIndex() )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Spatial index already existing");
+        return FALSE;
+    }
+
     if( m_poFeatureDefn->GetGeomFieldCount() == 0 )
-        return;
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Spatial index already existing");
+        return FALSE;
+    }
     if( m_poDS->CreateExtensionsTableIfNecessary() != OGRERR_NONE )
-        return;
+        return FALSE;
 
     const char* pszT = m_pszTableName;
     const char* pszC = m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
@@ -1252,20 +1276,24 @@ void OGRGeoPackageTableLayer::CreateSpatialIndex()
     if( err != OGRERR_NONE )
     {
         RollbackTransaction();
-        return;
+        return FALSE;
     }
 
     /* Create virtual table */
-    pszSQL = sqlite3_mprintf(
-                 "CREATE VIRTUAL TABLE \"rtree_%s_%s\" USING rtree(id, minx, maxx, miny, maxy)",
-                 pszT, pszC );
-    err = SQLCommand(m_poDS->GetDB(), pszSQL);
-    sqlite3_free(pszSQL);
-    if( err != OGRERR_NONE )
+    if( !bDropRTreeTable )
     {
-        RollbackTransaction();
-        return;
+        pszSQL = sqlite3_mprintf(
+                    "CREATE VIRTUAL TABLE \"rtree_%s_%s\" USING rtree(id, minx, maxx, miny, maxy)",
+                    pszT, pszC );
+        err = SQLCommand(m_poDS->GetDB(), pszSQL);
+        sqlite3_free(pszSQL);
+        if( err != OGRERR_NONE )
+        {
+            RollbackTransaction();
+            return FALSE;
+        }
     }
+    bDropRTreeTable = FALSE;
 
     /* Populate the RTree */
     pszSQL = sqlite3_mprintf(
@@ -1277,7 +1305,7 @@ void OGRGeoPackageTableLayer::CreateSpatialIndex()
     if( err != OGRERR_NONE )
     {
         RollbackTransaction();
-        return;
+        return FALSE;
     }
 
     /* Define Triggers to Maintain Spatial Index Values */
@@ -1305,7 +1333,7 @@ void OGRGeoPackageTableLayer::CreateSpatialIndex()
     if( err != OGRERR_NONE )
     {
         RollbackTransaction();
-        return;
+        return FALSE;
     }
 
     /* Conditions: Update of geometry column to non-empty geometry
@@ -1334,7 +1362,7 @@ void OGRGeoPackageTableLayer::CreateSpatialIndex()
     if( err != OGRERR_NONE )
     {
         RollbackTransaction();
-        return;
+        return FALSE;
     }
 
     /* Conditions: Update of geometry column to empty geometry
@@ -1356,7 +1384,7 @@ void OGRGeoPackageTableLayer::CreateSpatialIndex()
     if( err != OGRERR_NONE )
     {
         RollbackTransaction();
-        return;
+        return FALSE;
     }
 
     /* Conditions: Update of any column
@@ -1389,7 +1417,7 @@ void OGRGeoPackageTableLayer::CreateSpatialIndex()
     if( err != OGRERR_NONE )
     {
         RollbackTransaction();
-        return;
+        return FALSE;
     }
 
     /* Conditions: Update of any column
@@ -1412,7 +1440,7 @@ void OGRGeoPackageTableLayer::CreateSpatialIndex()
     if( err != OGRERR_NONE )
     {
         RollbackTransaction();
-        return;
+        return FALSE;
     }
 
     /* Conditions: Row deleted
@@ -1431,10 +1459,14 @@ void OGRGeoPackageTableLayer::CreateSpatialIndex()
     if( err != OGRERR_NONE )
     {
         RollbackTransaction();
-        return;
+        return FALSE;
     }
 
     CommitTransaction();
+
+    m_bHasSpatialIndex = TRUE;
+
+    return TRUE;
 }
 
 /************************************************************************/
@@ -1475,10 +1507,13 @@ int OGRGeoPackageTableLayer::HasSpatialIndex()
 /*                        DropSpatialIndex()                            */
 /************************************************************************/
 
-void OGRGeoPackageTableLayer::DropSpatialIndex()
+int OGRGeoPackageTableLayer::DropSpatialIndex(int bCalledFromSQLFunction)
 {
     if( !HasSpatialIndex() )
-        return;
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Spatial index not existing");
+        return FALSE;
+    }
 
     const char* pszT = m_pszTableName;
     const char* pszC =m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
@@ -1490,7 +1525,18 @@ void OGRGeoPackageTableLayer::DropSpatialIndex()
     SQLCommand(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);
 
-    pszSQL = sqlite3_mprintf("DROP TABLE \"rtree_%s_%s\"", pszT, pszC);
+    if( bCalledFromSQLFunction )
+    {
+        /* We cannot drop a table from a SQLite function call, so we just */
+        /* remove the content and memorize that we will have to delete the */
+        /* table later */
+        bDropRTreeTable = TRUE;
+        pszSQL = sqlite3_mprintf("DELETE FROM \"rtree_%s_%s\"", pszT, pszC);
+    }
+    else
+    {
+        pszSQL = sqlite3_mprintf("DROP TABLE \"rtree_%s_%s\"", pszT, pszC);
+    }
     SQLCommand(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);
 
@@ -1519,6 +1565,7 @@ void OGRGeoPackageTableLayer::DropSpatialIndex()
     sqlite3_free(pszSQL);
 
     m_bHasSpatialIndex = FALSE;
+    return TRUE;
 }
 
 /************************************************************************/

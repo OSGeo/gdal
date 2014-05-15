@@ -944,6 +944,12 @@ int OGRGeoPackageDataSource::TestCapability( const char * pszCap )
 /*                             ExecuteSQL()                             */
 /************************************************************************/
 
+static const char* apszFuncsWithSideEffects[] =
+{
+    "CreateSpatialIndex",
+    "DisableSpatialIndex",
+};
+
 OGRLayer * OGRGeoPackageDataSource::ExecuteSQL( const char *pszSQLCommand,
                                           OGRGeometry *poSpatialFilter,
                                           const char *pszDialect )
@@ -1053,6 +1059,33 @@ OGRLayer * OGRGeoPackageDataSource::ExecuteSQL( const char *pszSQLCommand,
 
         bUseStatementForGetNextFeature = FALSE;
         bEmptyLayer = TRUE;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Special case for some functions which must be run               */
+/*      only once                                                       */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(pszSQLCommand,"SELECT ",7) )
+    {
+        unsigned int i;
+        for(i=0;i<sizeof(apszFuncsWithSideEffects)/
+                  sizeof(apszFuncsWithSideEffects[0]);i++)
+        {
+            if( EQUALN(apszFuncsWithSideEffects[i], pszSQLCommand + 7,
+                       strlen(apszFuncsWithSideEffects[i])) )
+            {
+                if (sqlite3_column_count( hSQLStmt ) == 1 &&
+                    sqlite3_column_type( hSQLStmt, 0 ) == SQLITE_INTEGER )
+                {
+                    int ret = sqlite3_column_int( hSQLStmt, 0 );
+
+                    sqlite3_finalize( hSQLStmt );
+
+                    return new OGRSQLiteSingleFeatureLayer
+                                        ( apszFuncsWithSideEffects[i], ret );
+                }
+            }
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -1309,6 +1342,78 @@ void OGRGeoPackageSTSRID(sqlite3_context* pContext,
 }
 
 /************************************************************************/
+/*                  OGRGeoPackageCreateSpatialIndex()                   */
+/************************************************************************/
+
+static
+void OGRGeoPackageCreateSpatialIndex(sqlite3_context* pContext,
+                        int argc, sqlite3_value** argv)
+{
+    if( sqlite3_value_type (argv[0]) != SQLITE_TEXT ||
+        sqlite3_value_type (argv[1]) != SQLITE_TEXT )
+    {
+        sqlite3_result_int( pContext, 0 );
+        return;
+    }
+
+    const char* pszTableName = (const char*)sqlite3_value_text(argv[0]);
+    const char* pszGeomName = (const char*)sqlite3_value_text(argv[1]);
+    OGRGeoPackageDataSource* poDS = (OGRGeoPackageDataSource* )sqlite3_user_data(pContext);
+    
+    OGRGeoPackageTableLayer* poLyr = (OGRGeoPackageTableLayer*)poDS->GetLayerByName(pszTableName);
+    if( poLyr == NULL )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Unknown layer name");
+        sqlite3_result_int( pContext, 0 );
+        return;
+    }
+    if( !EQUAL(poLyr->GetGeometryColumn(), pszGeomName) )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Unknown geometry column name");
+        sqlite3_result_int( pContext, 0 );
+        return;
+    }
+
+    sqlite3_result_int( pContext, poLyr->CreateSpatialIndex() );
+}
+
+/************************************************************************/
+/*                  OGRGeoPackageDisableSpatialIndex()                  */
+/************************************************************************/
+
+static
+void OGRGeoPackageDisableSpatialIndex(sqlite3_context* pContext,
+                        int argc, sqlite3_value** argv)
+{
+    if( sqlite3_value_type (argv[0]) != SQLITE_TEXT ||
+        sqlite3_value_type (argv[1]) != SQLITE_TEXT )
+    {
+        sqlite3_result_int( pContext, 0 );
+        return;
+    }
+
+    const char* pszTableName = (const char*)sqlite3_value_text(argv[0]);
+    const char* pszGeomName = (const char*)sqlite3_value_text(argv[1]);
+    OGRGeoPackageDataSource* poDS = (OGRGeoPackageDataSource* )sqlite3_user_data(pContext);
+    
+    OGRGeoPackageTableLayer* poLyr = (OGRGeoPackageTableLayer*)poDS->GetLayerByName(pszTableName);
+    if( poLyr == NULL )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Unknown layer name");
+        sqlite3_result_int( pContext, 0 );
+        return;
+    }
+    if( !EQUAL(poLyr->GetGeometryColumn(), pszGeomName) )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Unknown geometry column name");
+        sqlite3_result_int( pContext, 0 );
+        return;
+    }
+
+    sqlite3_result_int( pContext, poLyr->DropSpatialIndex(TRUE) );
+}
+
+/************************************************************************/
 /*                         OpenOrCreateDB()                             */
 /************************************************************************/
 
@@ -1339,6 +1444,12 @@ int OGRGeoPackageDataSource::OpenOrCreateDB(int flags)
     /* Used by Geometry SRS ID Triggers Extension */
     sqlite3_create_function(hDB, "ST_SRID", 1, SQLITE_ANY, NULL,
                             OGRGeoPackageSTSRID, NULL, NULL);
+
+    /* Spatialite-like functions */
+    sqlite3_create_function(hDB, "CreateSpatialIndex", 2, SQLITE_ANY, this,
+                            OGRGeoPackageCreateSpatialIndex, NULL, NULL);
+    sqlite3_create_function(hDB, "DisableSpatialIndex", 2, SQLITE_ANY, this,
+                            OGRGeoPackageDisableSpatialIndex, NULL, NULL);
 
     return TRUE;
 }
