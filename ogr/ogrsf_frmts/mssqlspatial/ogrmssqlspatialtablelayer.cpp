@@ -244,18 +244,22 @@ CPLErr OGRMSSQLSpatialTableLayer::Initialize( const char *pszSchema,
 /*      schema is provided if there is a dot in the name, and that      */
 /*      it is in the form <schema>.<tablename>                          */
 /* -------------------------------------------------------------------- */
-    this->pszLayerName = CPLStrdup(pszLayerName);
     const char *pszDot = strstr(pszLayerName,".");
     if( pszDot != NULL )
     {
         pszTableName = CPLStrdup(pszDot + 1);
         pszSchemaName = CPLStrdup(pszLayerName);
         pszSchemaName[pszDot - pszLayerName] = '\0';
+        this->pszLayerName = CPLStrdup(pszLayerName);
     }
     else
     {
         pszTableName = CPLStrdup(pszLayerName);
         pszSchemaName = CPLStrdup(pszSchema);
+        if ( EQUAL(pszSchemaName, "dbo") )
+            this->pszLayerName = CPLStrdup(pszLayerName);
+        else
+            this->pszLayerName = CPLStrdup(CPLSPrintf("%s.%s", pszSchemaName, pszTableName));
     }
 
 /* -------------------------------------------------------------------- */
@@ -343,16 +347,16 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateSpatialIndex()
             return OGRERR_FAILURE;
         }
 
-        oStatement.Appendf("CREATE SPATIAL INDEX [ogr_%s_sidx] ON [dbo].[%s] ( [%s] ) "
+        oStatement.Appendf("CREATE SPATIAL INDEX [ogr_%s_sidx] ON [%s].[%s] ( [%s] ) "
             "USING GEOMETRY_GRID WITH (BOUNDING_BOX =(%.15g, %.15g, %.15g, %.15g))",
-                           pszGeomColumn, poFeatureDefn->GetName(), pszGeomColumn, 
+                           pszGeomColumn, pszSchemaName, pszTableName, pszGeomColumn, 
                            oExt.MinX, oExt.MinY, oExt.MaxX, oExt.MaxY );
     }
     else if (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
     {
-        oStatement.Appendf("CREATE SPATIAL INDEX [ogr_%s_sidx] ON [dbo].[%s] ( [%s] ) "
+        oStatement.Appendf("CREATE SPATIAL INDEX [ogr_%s_sidx] ON [%s].[%s] ( [%s] ) "
             "USING GEOGRAPHY_GRID",
-                           pszGeomColumn, poFeatureDefn->GetName(), pszGeomColumn );
+                           pszGeomColumn, pszSchemaName, pszTableName, pszGeomColumn );
     }
     else
     {
@@ -389,10 +393,10 @@ void OGRMSSQLSpatialTableLayer::DropSpatialIndex()
     CPLODBCStatement oStatement( poDS->GetSession() );
 
     oStatement.Appendf("IF  EXISTS (SELECT * FROM sys.indexes "
-        "WHERE object_id = OBJECT_ID(N'[dbo].[%s]') AND name = N'ogr_%s_sidx') "
-        "DROP INDEX [ogr_%s_sidx] ON [dbo].[%s]",
-                       poFeatureDefn->GetName(), pszGeomColumn, 
-                       pszGeomColumn, poFeatureDefn->GetName() );
+        "WHERE object_id = OBJECT_ID(N'[%s].[%s]') AND name = N'ogr_%s_sidx') "
+        "DROP INDEX [ogr_%s_sidx] ON [%s].[%s]",
+                       pszSchemaName, pszTableName, pszGeomColumn, 
+                       pszGeomColumn, pszSchemaName, pszTableName );
     
     //poDS->GetSession()->BeginTransaction();
 
