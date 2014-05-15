@@ -661,6 +661,35 @@ def ogr_gpkg_15():
             gdaltest.post_reason('fail')
             return 'fail'
 
+
+    for (sql, expected_result) in [
+            ("SELECT DisableSpatialIndex('point-with-spi-and-dashes', 'geom')", 1),
+            ("SELECT DisableSpatialIndex('point-with-spi-and-dashes', 'geom')", 0),
+            ("SELECT CreateSpatialIndex('point-with-spi-and-dashes', 'geom')", 1),
+            ("SELECT CreateSpatialIndex('point-with-spi-and-dashes', 'geom')", 0),
+            ("SELECT CreateSpatialIndex('point-with-spi-and-dashes', NULL)", 0),
+            ("SELECT CreateSpatialIndex(NULL, 'geom')", 0),
+            ("SELECT CreateSpatialIndex('bla', 'geom')", 0),
+            ("SELECT CreateSpatialIndex('point-with-spi-and-dashes', 'bla')", 0),
+            ("SELECT DisableSpatialIndex('point-with-spi-and-dashes', NULL)", 0),
+            ("SELECT DisableSpatialIndex(NULL, 'geom')", 0),
+            ("SELECT DisableSpatialIndex('bla', 'geom')", 0),
+            ("SELECT DisableSpatialIndex('point-with-spi-and-dashes', 'bla')", 0),
+            ("SELECT CreateSpatialIndex('non_spatial', '')", 0),
+            ]:
+        if expected_result == 0:
+            gdal.PushErrorHandler('CPLQuietErrorHandler')
+        sql_lyr = gdaltest.gpkg_ds.ExecuteSQL(sql)
+        if expected_result == 0:
+            gdal.PopErrorHandler()
+        feat = sql_lyr.GetNextFeature()
+        got_result = feat.GetField(0)
+        gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+        if got_result != expected_result:
+            print(sql)
+            gdaltest.post_reason('fail')
+            return 'fail'
+
     return 'success'
 
 ###############################################################################

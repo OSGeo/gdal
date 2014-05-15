@@ -161,6 +161,7 @@ class OGRGeoPackageTableLayer : public OGRGeoPackageLayer
     sqlite3_stmt*               m_poInsertStatement;
     int                         bDeferedSpatialIndexCreation;
     int                         m_bHasSpatialIndex;
+    int                         bDropRTreeTable;
 
     virtual OGRErr      ResetStatement();
     
@@ -200,8 +201,10 @@ class OGRGeoPackageTableLayer : public OGRGeoPackageLayer
     OGRErr              ReadTableDefinition(int bIsSpatial);
     void                SetDeferedSpatialIndexCreation( int bFlag )
                                 { bDeferedSpatialIndexCreation = bFlag; }
+
     void                CreateSpatialIndexIfNecessary();
-    void                DropSpatialIndex();
+    int                 CreateSpatialIndex();
+    int                 DropSpatialIndex(int bCalledFromSQLFunction = FALSE);
 
     void                RenameTo(const char* pszDstTableName);
 
@@ -220,7 +223,6 @@ class OGRGeoPackageTableLayer : public OGRGeoPackageLayer
     OGRErr              FeatureBindInsertParameters( OGRFeature *poFeature, sqlite3_stmt *poStmt, int bAddFID );
     OGRErr              FeatureBindParameters( OGRFeature *poFeature, sqlite3_stmt *poStmt, int *pnColCount, int bAddFID );
 
-    void                CreateSpatialIndex();
     int                 HasSpatialIndex();
 };
 
