@@ -347,16 +347,18 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateSpatialIndex()
             return OGRERR_FAILURE;
         }
 
-        oStatement.Appendf("CREATE SPATIAL INDEX [ogr_%s_sidx] ON [%s].[%s] ( [%s] ) "
+        oStatement.Appendf("CREATE SPATIAL INDEX [ogr_%s_%s_%s_sidx] ON [%s].[%s] ( [%s] ) "
             "USING GEOMETRY_GRID WITH (BOUNDING_BOX =(%.15g, %.15g, %.15g, %.15g))",
-                           pszGeomColumn, pszSchemaName, pszTableName, pszGeomColumn, 
+                           pszSchemaName, pszTableName, pszGeomColumn, 
+                           pszSchemaName, pszTableName, pszGeomColumn, 
                            oExt.MinX, oExt.MinY, oExt.MaxX, oExt.MaxY );
     }
     else if (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
     {
-        oStatement.Appendf("CREATE SPATIAL INDEX [ogr_%s_sidx] ON [%s].[%s] ( [%s] ) "
+        oStatement.Appendf("CREATE SPATIAL INDEX [ogr_%s_%s_%s_sidx] ON [%s].[%s] ( [%s] ) "
             "USING GEOGRAPHY_GRID",
-                           pszGeomColumn, pszSchemaName, pszTableName, pszGeomColumn );
+                           pszSchemaName, pszTableName, pszGeomColumn, 
+                           pszSchemaName, pszTableName, pszGeomColumn );
     }
     else
     {
@@ -393,10 +395,12 @@ void OGRMSSQLSpatialTableLayer::DropSpatialIndex()
     CPLODBCStatement oStatement( poDS->GetSession() );
 
     oStatement.Appendf("IF  EXISTS (SELECT * FROM sys.indexes "
-        "WHERE object_id = OBJECT_ID(N'[%s].[%s]') AND name = N'ogr_%s_sidx') "
-        "DROP INDEX [ogr_%s_sidx] ON [%s].[%s]",
+        "WHERE object_id = OBJECT_ID(N'[%s].[%s]') AND name = N'ogr_%s_%s_%s_sidx') "
+        "DROP INDEX [ogr_%s_%s_%s_sidx] ON [%s].[%s]",
+                       pszSchemaName, pszTableName, 
                        pszSchemaName, pszTableName, pszGeomColumn, 
-                       pszGeomColumn, pszSchemaName, pszTableName );
+                       pszSchemaName, pszTableName, pszGeomColumn, 
+                       pszSchemaName, pszTableName );
     
     //poDS->GetSession()->BeginTransaction();
 
