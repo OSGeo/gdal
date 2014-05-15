@@ -107,6 +107,51 @@ OGRLayer *OGRMSSQLSpatialDataSource::GetLayer( int iLayer )
 }
 
 /************************************************************************/
+/*                           GetLayerByName()                           */
+/************************************************************************/
+
+OGRLayer *OGRMSSQLSpatialDataSource::GetLayerByName( const char* pszLayerName )
+
+{
+    if (!pszLayerName)
+        return NULL;
+    
+    char *pszTableName = NULL;
+    char *pszSchemaName = NULL;
+
+    const char* pszDotPos = strstr(pszLayerName,".");
+    if ( pszDotPos != NULL )
+    {
+      int length = pszDotPos - pszLayerName;
+      pszSchemaName = (char*)CPLMalloc(length+1);
+      strncpy(pszSchemaName, pszLayerName, length);
+      pszSchemaName[length] = '\0';
+      pszTableName = CPLStrdup( pszDotPos + 1 ); //skip "."
+    }
+    else
+    {
+      pszSchemaName = CPLStrdup("dbo");
+      pszTableName = CPLStrdup( pszLayerName );
+    }
+    
+    for( int iLayer = 0; iLayer < nLayers; iLayer++ )
+    {
+        if( EQUAL(pszTableName,papoLayers[iLayer]->GetTableName()) && 
+            EQUAL(pszSchemaName,papoLayers[iLayer]->GetSchemaName()) )
+        {
+            CPLFree( pszSchemaName );
+            CPLFree( pszTableName );
+            return papoLayers[iLayer];
+        }
+    }
+
+    CPLFree( pszSchemaName );
+    CPLFree( pszTableName );
+
+    return NULL;
+}
+
+/************************************************************************/
 /*                            DeleteLayer()                             */
 /************************************************************************/
 
@@ -120,23 +165,23 @@ int OGRMSSQLSpatialDataSource::DeleteLayer( int iLayer )
 /*      Blow away our OGR structures related to the layer.  This is     */
 /*      pretty dangerous if anything has a reference to this layer!     */
 /* -------------------------------------------------------------------- */
-    const char* pszLayerName = papoLayers[iLayer]->GetTableName();
+    const char* pszTableName = papoLayers[iLayer]->GetTableName();
     const char* pszSchemaName = papoLayers[iLayer]->GetSchemaName();
 
     CPLODBCStatement oStmt( &oSession );
     if (bUseGeometryColumns)
         oStmt.Appendf( "DELETE FROM geometry_columns WHERE f_table_schema = '%s' AND f_table_name = '%s'\n", 
-            pszSchemaName, pszLayerName );
-    oStmt.Appendf("DROP TABLE [%s].[%s]", pszSchemaName, pszLayerName );
+            pszSchemaName, pszTableName );
+    oStmt.Appendf("DROP TABLE [%s].[%s]", pszSchemaName, pszTableName );
 
-    CPLDebug( "MSSQLSpatial", "DeleteLayer(%s)", pszLayerName );
+    CPLDebug( "MSSQLSpatial", "DeleteLayer(%s)", pszTableName );
 
     delete papoLayers[iLayer];
     memmove( papoLayers + iLayer, papoLayers + iLayer + 1,
              sizeof(void *) * (nLayers - iLayer - 1) );
     nLayers--;
 
-    if ( strlen(pszLayerName) == 0 )
+    if ( strlen(pszTableName) == 0 )
         return OGRERR_NONE;
 
 /* -------------------------------------------------------------------- */
@@ -225,7 +270,8 @@ OGRLayer * OGRMSSQLSpatialDataSource::CreateLayer( const char * pszLayerName,
 
     for( iLayer = 0; iLayer < nLayers; iLayer++ )
     {
-        if( EQUAL(pszLayerName,papoLayers[iLayer]->GetTableName()) )
+        if( EQUAL(pszTableName,papoLayers[iLayer]->GetTableName()) && 
+            EQUAL(pszSchemaName,papoLayers[iLayer]->GetSchemaName()) )
         {
             if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != NULL
                 && !EQUAL(CSLFetchNameValue(papszOptions,"OVERWRITE"),"NO") )
@@ -318,6 +364,12 @@ OGRLayer * OGRMSSQLSpatialDataSource::CreateLayer( const char * pszLayerName,
         oStmt.Appendf("INSERT INTO [geometry_columns] ([f_table_catalog], [f_table_schema] ,[f_table_name], "
             "[f_geometry_column],[coord_dimension],[srid],[geometry_type]) VALUES ('%s', '%s', '%s', '%s', %d, %d, '%s')\n", 
             pszCatalog, pszSchemaName, pszTableName, pszGeomColumn, nCoordDimension, nSRSId, pszGeometryType );
+    }
+
+    if (!EQUAL(pszSchemaName,"dbo"))
+    {
+        // creating the schema if not exists
+        oStmt.Appendf("IF NOT EXISTS (SELECT name from sys.schemas WHERE name = '%s') EXEC sp_executesql N'CREATE SCHEMA [%s]'\n", pszSchemaName, pszSchemaName);
     }
 
     if( eType == wkbNone ) 
@@ -679,19 +731,19 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
             while( oStmt.Fetch() )
             {
                 papszSchemaNames = 
-                        CSLAddString( papszSchemaNames, oStmt.GetColData(0) );
+                        CSLAddString( papszSchemaNames, oStmt.GetColData(0, "dbo") );
                 papszTableNames = 
                         CSLAddString( papszTableNames, oStmt.GetColData(1) );
                 papszGeomColumnNames = 
                         CSLAddString( papszGeomColumnNames, oStmt.GetColData(2) );
                 papszCoordDimensions = 
-                        CSLAddString( papszCoordDimensions, oStmt.GetColData(3) );
+                        CSLAddString( papszCoordDimensions, oStmt.GetColData(3, "2") );
                 papszSRIds = 
-                        CSLAddString( papszSRIds, oStmt.GetColData(4) );
+                        CSLAddString( papszSRIds, oStmt.GetColData(4, "0") );
                 papszSRTexts = 
-                        CSLAddString( papszSRTexts, oStmt.GetColData(5) );
+                    CSLAddString( papszSRTexts, oStmt.GetColData(5, "") );
                 papszTypes = 
-                        CSLAddString( papszTypes, oStmt.GetColData(6) );
+                        CSLAddString( papszTypes, oStmt.GetColData(6, "GEOMETRY") );
             }
         }
         else
@@ -795,10 +847,11 @@ OGRLayer * OGRMSSQLSpatialDataSource::ExecuteSQL( const char *pszSQLCommand,
         while( *pszLayerName == ' ' )
             pszLayerName++;
         
+        OGRLayer* poLayer = GetLayerByName(pszLayerName);
+        
         for( int iLayer = 0; iLayer < nLayers; iLayer++ )
         {
-            if( EQUAL(papoLayers[iLayer]->GetName(), 
-                      pszLayerName ))
+            if( papoLayers[iLayer] == poLayer )
             {
                 DeleteLayer( iLayer );
                 break;
