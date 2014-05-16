@@ -492,20 +492,22 @@ def ogr_gpkg_12():
         return 'fail'
     gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
 
-
-    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL('SELECT * FROM tbl_linestring_renamed LIMIT 1')
-    feat = sql_lyr.GetNextFeature()
-    if feat is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    feat = sql_lyr.GetNextFeature()
-    if feat is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if sql_lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+    for sql in [ 'SELECT * FROM tbl_linestring_renamed LIMIT 1',
+                 'SELECT * FROM tbl_linestring_renamed ORDER BY fld_integer LIMIT 1',
+                 'SELECT * FROM tbl_linestring_renamed UNION ALL SELECT * FROM tbl_linestring_renamed ORDER BY fld_integer LIMIT 1' ]:
+        sql_lyr = gdaltest.gpkg_ds.ExecuteSQL(sql)
+        feat = sql_lyr.GetNextFeature()
+        if feat is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        feat = sql_lyr.GetNextFeature()
+        if feat is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if sql_lyr.GetFeatureCount() != 1:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
 
     sql_lyr = gdaltest.gpkg_ds.ExecuteSQL('SELECT sqlite_version()')
     feat = sql_lyr.GetNextFeature()
