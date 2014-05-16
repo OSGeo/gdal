@@ -224,6 +224,7 @@ class OGRGeoPackageTableLayer : public OGRGeoPackageLayer
     OGRErr              FeatureBindParameters( OGRFeature *poFeature, sqlite3_stmt *poStmt, int *pnColCount, int bAddFID );
 
     int                 HasSpatialIndex();
+    void                CheckUnknownExtensions();
 };
 
 /************************************************************************/
