@@ -1523,8 +1523,8 @@ gdal2tiles temp.vrt""" % self.input )
       <Title>%(title)s</Title>
       <Abstract></Abstract>
       <SRS>%(srs)s</SRS>
-      <BoundingBox minx="%(south).14f" miny="%(west).14f" maxx="%(north).14f" maxy="%(east).14f"/>
-      <Origin x="%(south).14f" y="%(west).14f"/>
+      <BoundingBox minx="%(west).14f" miny="%(south).14f" maxx="%(east).14f" maxy="%(north).14f"/>
+      <Origin x="%(west).14f" y="%(south).14f"/>
       <TileFormat width="%(tilesize)d" height="%(tilesize)d" mime-type="image/%(tileformat)s" extension="%(tileformat)s"/>
       <TileSets profile="%(profile)s">
 """ % args
