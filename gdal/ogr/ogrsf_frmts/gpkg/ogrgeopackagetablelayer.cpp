@@ -609,6 +609,8 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
 
     /* Update the columns string */
     BuildColumns();
+    
+    CheckUnknownExtensions();
 
     return OGRERR_NONE;
 }
@@ -1467,6 +1469,68 @@ int OGRGeoPackageTableLayer::CreateSpatialIndex()
     m_bHasSpatialIndex = TRUE;
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                    CheckUnknownExtensions()                     */
+/************************************************************************/
+
+void OGRGeoPackageTableLayer::CheckUnknownExtensions()
+{
+    if( m_poFeatureDefn->GetGeomFieldCount() == 0 ||
+        !m_poDS->HasExtensionsTable() )
+        return;
+
+    const char* pszT = m_pszTableName;
+    const char* pszC = m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
+
+    /* We have only the SQL functions needed by the 3 following extensions */
+    /* anything else will likely cause troubles */
+    char* pszSQL = sqlite3_mprintf(
+                 "SELECT extension_name, definition, scope FROM gpkg_extensions WHERE table_name='%q' "
+                 "AND column_name='%q' AND extension_name NOT IN "
+                 "('gpkg_rtree_index', 'gpkg_geometry_type_trigger', 'gpkg_srs_id_trigger')",
+                 pszT, pszC );
+    SQLResult oResultTable;
+    OGRErr err = SQLQuery(m_poDS->GetDB(), pszSQL, &oResultTable);
+    sqlite3_free(pszSQL);
+    if ( err == OGRERR_NONE && oResultTable.nRowCount > 0 )
+    {
+        for(int i=0; i<oResultTable.nRowCount;i++)
+        {
+            const char* pszExtName = SQLResultGetValue(&oResultTable, 0, i);
+            const char* pszDefinition = SQLResultGetValue(&oResultTable, 1, i);
+            const char* pszScope = SQLResultGetValue(&oResultTable, 2, i);
+            if( pszExtName == NULL ) pszExtName = "(null)";
+            if( pszDefinition == NULL ) pszDefinition = "(null)";
+            if( pszScope == NULL ) pszScope = "(null)";
+            if( m_poDS->GetUpdate() && EQUAL(pszScope, "write-only") )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Layer %s relies on the '%s' (%s) extension that should "
+                         "be implemented for safe write-support, but is not currently. "
+                         "Update of that layer are strongly discouraged to avoid corruption.",
+                         GetName(), pszExtName, pszDefinition);
+            }
+            else if( m_poDS->GetUpdate() && EQUAL(pszScope, "read-write") )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Layer %s relies on the '%s' (%s) extension that should "
+                         "be implemented in order to read/write it safely, but is not currently. "
+                         "Some data may be missing while reading that layer, and updates are strongly discouraged.",
+                         GetName(), pszExtName, pszDefinition);
+            }
+            else if( EQUAL(pszScope, "read-write") )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Layer %s relies on the '%s' (%s) extension that should "
+                         "be implemented in order to read it safely, but is not currently. "
+                         "Some data may be missing while reading that layer.",
+                         GetName(), pszExtName, pszDefinition);
+            }
+        }
+    }
+    SQLResultFree(&oResultTable);
 }
 
 /************************************************************************/
