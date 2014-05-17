@@ -752,6 +752,14 @@ def ogr_gpkg_test_ogrsf():
     if gdaltest.gpkg_dr is None:
         return 'skip'
 
+    # Do integrity check first
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("PRAGMA integrity_check")
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetField(0) != 'ok':
+        gdaltest.post_reason('integrity check failed')
+        return 'fail'
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
         return 'skip'
