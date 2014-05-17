@@ -71,7 +71,7 @@ OGRDataSource *OGRSelafinDriver::CreateDataSource( const char * pszName, char **
     }
     // Parse options
     const char *pszTemp=CSLFetchNameValue(papszOptions,"TITLE");
-    char pszTitle[80];
+    char pszTitle[81];
     long pnDate[6]={-1,0};
     if (pszTemp!=0) strncpy(pszTitle,pszTemp,72); else memset(pszTitle,' ',72);
     pszTemp=CSLFetchNameValue(papszOptions,"DATE");
@@ -104,20 +104,27 @@ OGRDataSource *OGRSelafinDriver::CreateDataSource( const char * pszName, char **
         CPLError(CE_Failure, CPLE_AppDefined,"Unable to open %s with write access.",pszName);
         return NULL;
     }
-    strncpy(pszTitle+72,"SERAPHIN",8);
-    Selafin::write_string(fp,pszTitle,80);
+    strncpy(pszTitle+72,"SERAPHIN",9);
+    bool bError=false;
+    if (Selafin::write_string(fp,pszTitle,80)==0) bError=true;
     long pnTemp[10]={0};
-    Selafin::write_intarray(fp,pnTemp,2);
+    if (Selafin::write_intarray(fp,pnTemp,2)==0) bError=true;
     if (pnDate[0]>=0) pnTemp[9]=1;
-    Selafin::write_intarray(fp,pnTemp,10);
-    if (pnDate[0]>=0) Selafin::write_intarray(fp,pnTemp,6);
+    if (Selafin::write_intarray(fp,pnTemp,10)==0) bError=true;
+    if (pnDate[0]>=0) {
+        if (Selafin::write_intarray(fp,pnTemp,6)==0) bError=true;
+    }
     pnTemp[3]=1;
-    Selafin::write_intarray(fp,pnTemp,4);
-    Selafin::write_intarray(fp,pnTemp,0);
-    Selafin::write_intarray(fp,pnTemp,0);
-    Selafin::write_floatarray(fp,0,0);
-    Selafin::write_floatarray(fp,0,0);
+    if (Selafin::write_intarray(fp,pnTemp,4)==0) bError=true;
+    if (Selafin::write_intarray(fp,pnTemp,0)==0) bError=true;
+    if (Selafin::write_intarray(fp,pnTemp,0)==0) bError=true;
+    if (Selafin::write_floatarray(fp,0,0)==0) bError=true;
+    if (Selafin::write_floatarray(fp,0,0)==0) bError=true;
     VSIFCloseL(fp);
+    if (bError) {
+        CPLError(CE_Failure, CPLE_AppDefined,"Error writing to file %s.",pszName);
+        return NULL;
+    }
     // Force it to open as a datasource
     OGRSelafinDataSource *poDS = new OGRSelafinDataSource();
     if( !poDS->Open( pszName, TRUE) ) {
