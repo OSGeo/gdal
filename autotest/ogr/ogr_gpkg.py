@@ -695,6 +695,9 @@ def ogr_gpkg_15():
             ("SELECT DisableSpatialIndex('bla', 'geom')", 0),
             ("SELECT DisableSpatialIndex('point-with-spi-and-dashes', 'bla')", 0),
             ("SELECT CreateSpatialIndex('non_spatial', '')", 0),
+            ("SELECT CreateSpatialIndex('point_no_spi-but-with-dashes', 'geom')", 1),
+            # Final DisableSpatialIndex: will be effectively deleted at dataset closing
+            ("SELECT DisableSpatialIndex('point_no_spi-but-with-dashes', 'geom')", 1),
             ]:
         if expected_result == 0:
             gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -708,6 +711,9 @@ def ogr_gpkg_15():
             print(sql)
             gdaltest.post_reason('fail')
             return 'fail'
+
+    gdaltest.gpkg_ds = None
+    gdaltest.gpkg_ds = gdaltest.gpkg_dr.Open( 'tmp/gpkg_test.gpkg', update = 1 )
 
     return 'success'
 
