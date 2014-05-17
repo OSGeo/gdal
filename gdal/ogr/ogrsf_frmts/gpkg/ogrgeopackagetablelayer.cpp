@@ -213,6 +213,24 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
                 default:
                 {
                     const char *pszVal = poFeature->GetFieldAsString(i);
+                    char szVal[32];
+                    int nYear, nMonth, nDay, nHour, nMinute, nSecond, nTZFlag;
+                    if( poFieldDefn->GetType() == OFTDate )
+                    {
+                        poFeature->GetFieldAsDateTime(i, &nYear, &nMonth, &nDay, &nHour, &nMinute, &nSecond, &nTZFlag);
+                        snprintf(szVal, sizeof(szVal), "%04d-%02d-%02d", nYear, nMonth, nDay);
+                        pszVal = szVal;
+                    }
+                    else if( poFieldDefn->GetType() == OFTDateTime )
+                    {
+                        poFeature->GetFieldAsDateTime(i, &nYear, &nMonth, &nDay, &nHour, &nMinute, &nSecond, &nTZFlag);
+                        if( nTZFlag == 0 || nTZFlag == 100 )
+                        {
+                            snprintf(szVal, sizeof(szVal), "%04d-%02d-%02dT%02d:%02d:%02dZ",
+                                     nYear, nMonth, nDay, nHour, nMinute, nSecond);
+                            pszVal = szVal;
+                        }
+                    }
                     err = sqlite3_bind_text(poStmt, nColCount++, pszVal, strlen(pszVal), SQLITE_TRANSIENT);
                     break;
                 }            

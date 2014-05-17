@@ -329,6 +329,9 @@ def ogr_gpkg_8():
     ret = lyr.CreateField(ogr.FieldDefn('fld_integer', ogr.OFTInteger))
     ret = lyr.CreateField(ogr.FieldDefn('fld_string', ogr.OFTString))
     ret = lyr.CreateField(ogr.FieldDefn('fld_real', ogr.OFTReal))
+    ret = lyr.CreateField(ogr.FieldDefn('fld_date', ogr.OFTDate))
+    ret = lyr.CreateField(ogr.FieldDefn('fld_datetime', ogr.OFTDateTime))
+    ret = lyr.CreateField(ogr.FieldDefn('fld_binary', ogr.OFTBinary))
     
     geom = ogr.CreateGeometryFromWkt('LINESTRING(5 5,10 5,10 10,5 10)')
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -338,6 +341,9 @@ def ogr_gpkg_8():
         feat.SetField('fld_integer', 10 + i)
         feat.SetField('fld_real', 3.14159/(i+1) )
         feat.SetField('fld_string', 'test string %d test' % i)
+        feat.SetField('fld_date', '2014/05/17 ' )
+        feat.SetField('fld_datetime', '2014/05/17  12:34:56' )
+        feat.SetFieldBinaryFromHexString('fld_binary', 'fffe' )
     
         if lyr.CreateFeature(feat) != 0:
             gdaltest.post_reason('cannot create feature %d' % i)
@@ -352,6 +358,17 @@ def ogr_gpkg_8():
     feat.SetFID(6)
     if lyr.SetFeature(feat) != 0:
         gdaltest.post_reason('cannot update with empty')
+        return 'fail'
+
+    gdaltest.gpkg_ds = None
+    gdaltest.gpkg_ds = gdaltest.gpkg_dr.Open( 'tmp/gpkg_test.gpkg', update = 1 )
+    lyr = gdaltest.gpkg_ds.GetLayerByName('tbl_linestring')
+    feat = lyr.GetNextFeature()
+    if feat.GetField(0) != 10 or feat.GetField(1) != 'test string 0 test' or \
+       feat.GetField(2) != 3.14159  or feat.GetField(3) != '2014/05/17' or \
+       feat.GetField(4) != '2014/05/17 12:34:56' or feat.GetField(5) != 'FFFE':
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
         return 'fail'
 
     lyr = gdaltest.gpkg_ds.CreateLayer( 'tbl_polygon', geom_type = ogr.wkbPolygon, srs = srs)
@@ -479,7 +496,7 @@ def ogr_gpkg_12():
     if sql_lyr.GetFeatureCount() != 11:
         gdaltest.post_reason('fail')
         return 'fail'
-    if sql_lyr.GetLayerDefn().GetFieldCount() != 3:
+    if sql_lyr.GetLayerDefn().GetFieldCount() != 6:
         gdaltest.post_reason('fail')
         return 'fail'
     gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)

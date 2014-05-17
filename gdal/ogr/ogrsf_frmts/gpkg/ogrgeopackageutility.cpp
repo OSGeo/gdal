@@ -232,25 +232,23 @@ OGRwkbGeometryType GPkgGeometryTypeToWKB(const char *pszGpkgType, int bHasZ)
 OGRFieldType GPkgFieldToOGR(const char *pszGpkgType)
 {
     /* Integer types */
-    if ( STRNCASECMP("INTEGER", pszGpkgType, 7) == 0 )
+    if ( STRNCASECMP("INT", pszGpkgType, 3) == 0 )
         return OFTInteger;
-    else if ( STRNCASECMP("INT", pszGpkgType, 3) == 0 )
+    else if ( EQUAL("MEDIUMINT", pszGpkgType) )
         return OFTInteger;
-    else if ( STRNCASECMP("MEDIUMINT", pszGpkgType, 9) == 0 )
+    else if ( EQUAL("SMALLINT", pszGpkgType) )
         return OFTInteger;
-    else if ( STRNCASECMP("SMALLINT", pszGpkgType, 8) == 0 )
+    else if ( EQUAL("TINYINT", pszGpkgType) )
         return OFTInteger;
-    else if ( STRNCASECMP("TINYINT", pszGpkgType, 7) == 0 )
-        return OFTInteger;
-    else if ( STRNCASECMP("BOOLEAN", pszGpkgType, 7) == 0 )
+    else if ( EQUAL("BOOLEAN", pszGpkgType) )
         return OFTInteger;
 
     /* Real types */
-    else if ( STRNCASECMP("FLOAT", pszGpkgType, 5) == 0 )
+    else if ( EQUAL("FLOAT", pszGpkgType) )
         return OFTReal;
-    else if ( STRNCASECMP("DOUBLE", pszGpkgType, 6) == 0 )
+    else if ( EQUAL("DOUBLE", pszGpkgType) )
         return OFTReal;
-    else if ( STRNCASECMP("REAL", pszGpkgType, 4) == 0 )
+    else if ( EQUAL("REAL", pszGpkgType) )
         return OFTReal;
         
     /* String/binary types */
@@ -260,9 +258,9 @@ OGRFieldType GPkgFieldToOGR(const char *pszGpkgType)
         return OFTBinary;
         
     /* Date types */
-    else if ( STRNCASECMP("DATE", pszGpkgType, 4) == 0 )
+    else if ( EQUAL("DATE", pszGpkgType) )
         return OFTDate;
-    else if ( STRNCASECMP("DATETIME", pszGpkgType, 8) == 0 )
+    else if ( EQUAL("DATETIME", pszGpkgType) )
         return OFTDateTime;
 
     /* Illegal! */
