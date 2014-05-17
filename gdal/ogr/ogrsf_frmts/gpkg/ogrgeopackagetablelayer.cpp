@@ -705,13 +705,6 @@ OGRErr OGRGeoPackageTableLayer::CreateField( OGRFieldDefn *poField, int bApproxO
     {
         return OGRERR_FAILURE;
     }
-    
-    if ( ! m_poFeatureDefn || ! m_pszTableName )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, 
-                 "feature definition or table name is null");
-        return OGRERR_FAILURE;
-    }
 
     OGRErr err = m_poDS->AddColumn(m_pszTableName, 
                                    poField->GetNameRef(),
@@ -739,20 +732,6 @@ OGRErr OGRGeoPackageTableLayer::CreateFeature( OGRFeature *poFeature )
 {
     if( !m_poDS->GetUpdate() )
     {
-        return OGRERR_FAILURE;
-    }
-
-    if ( ! m_poFeatureDefn || ! m_pszTableName )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, 
-                 "feature definition or table name is null");
-        return OGRERR_FAILURE;
-    }
-
-    if( NULL == poFeature )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "NULL pointer to OGRFeature passed to CreateFeature()" );
         return OGRERR_FAILURE;
     }
 
@@ -824,20 +803,6 @@ OGRErr OGRGeoPackageTableLayer::SetFeature( OGRFeature *poFeature )
 {
     if( !m_poDS->GetUpdate() )
     {
-        return OGRERR_FAILURE;
-    }
-    
-    if ( ! m_poFeatureDefn || ! m_pszTableName )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, 
-                 "feature definition or table name is null");
-        return OGRERR_FAILURE;
-    }
-
-    if( NULL == poFeature )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "NULL pointer to OGRFeature passed to CreateFeature()" );
         return OGRERR_FAILURE;
     }
 
