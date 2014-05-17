@@ -418,7 +418,8 @@ int OGRGeoPackageDataSource::Open(const char * pszFilename, int bUpdateIn )
 
     /* Requirement 6: The SQLite PRAGMA integrity_check SQL command SHALL return “ok” */
     /* http://opengis.github.io/geopackage/#_file_integrity */
-    if( strncmp(pszFilename, "/vsicurl/", strlen("/vsicurl/")) != 0 &&
+    /* Disable integrity check by default, since it is expensive on big files */
+    if( CSLTestBoolean(CPLGetConfigOption("OGR_GPKG_INTEGRITY_CHECK", "NO")) &&
         OGRERR_NONE != PragmaCheck("integrity_check", "ok", 1) )
     {
         CPLError( CE_Failure, CPLE_AppDefined, "pragma integrity_check on '%s' failed", pszFilename);
@@ -1085,6 +1086,31 @@ OGRLayer * OGRGeoPackageDataSource::ExecuteSQL( const char *pszSQLCommand,
                                         ( apszFuncsWithSideEffects[i], ret );
                 }
             }
+        }
+    }
+    else if( EQUALN(pszSQLCommand,"PRAGMA ",7) )
+    {
+        if (sqlite3_column_count( hSQLStmt ) == 1 &&
+            sqlite3_column_type( hSQLStmt, 0 ) == SQLITE_INTEGER )
+        {
+            int ret = sqlite3_column_int( hSQLStmt, 0 );
+
+            sqlite3_finalize( hSQLStmt );
+
+            return new OGRSQLiteSingleFeatureLayer
+                                ( pszSQLCommand + 7, ret );
+        }
+        else if (sqlite3_column_count( hSQLStmt ) == 1 &&
+                 sqlite3_column_type( hSQLStmt, 0 ) == SQLITE_TEXT )
+        {
+            const char* pszRet = (const char*) sqlite3_column_text( hSQLStmt, 0 );
+
+            OGRLayer* poRet = new OGRSQLiteSingleFeatureLayer
+                                ( pszSQLCommand + 7, pszRet );
+
+            sqlite3_finalize( hSQLStmt );
+
+            return poRet;
         }
     }
 
