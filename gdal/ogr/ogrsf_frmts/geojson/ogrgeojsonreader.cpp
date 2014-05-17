@@ -979,7 +979,7 @@ OGRGeometry* OGRGeoJSONReadGeometry( json_object* poObj )
     // set it too.
     
     json_object* poObjSrs = OGRGeoJSONFindMemberByName( poObj, "crs" );
-    if (poObjSrs != NULL) {
+    if (poGeometry != NULL && poObjSrs != NULL) {
         OGRSpatialReference* poSRS = OGRGeoJSONReadSpatialReference(poObj);
         if (poSRS != NULL) {
             poGeometry->assignSpatialReference(poSRS);

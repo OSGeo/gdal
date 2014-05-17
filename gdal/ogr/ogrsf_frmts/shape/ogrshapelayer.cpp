@@ -88,6 +88,7 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
     bUpdateAccess = bUpdate;
 
     iNextShapeId = 0;
+    iMatchingFID = 0;
     panMatchingFIDs = NULL;
 
     nSpatialFIDCount = 0;
