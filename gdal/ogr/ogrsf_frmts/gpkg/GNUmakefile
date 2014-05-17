@@ -5,7 +5,7 @@ OBJ	= ogrgeopackagedriver.o ogrgeopackagedatasource.o ogrgeopackagelayer.o \
 	ogrgeopackagetablelayer.o ogrgeopackageselectlayer.o ogrgeopackageutility.o
 
 ifeq ($(SQLITE_HAS_COLUMN_METADATA),yes)
-CPPFLAGS +=  -DaSQLITE_HAS_COLUMN_METADATA
+CPPFLAGS +=  -DSQLITE_HAS_COLUMN_METADATA
 endif
 
 CPPFLAGS := -I.. $(GDAL_INCLUDE) $(SQLITE_INC) $(CPPFLAGS) -I../sqlite
@@ -17,6 +17,5 @@ clean:
 	rm -f *.o $(O_OBJ)
 
 $(O_OBJ): ogr_geopackage.h ogrgeopackageutility.h
-
 
 
