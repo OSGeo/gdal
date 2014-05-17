@@ -370,6 +370,11 @@ void ENVIDataset::FlushCache()
 
     CPLLocaleC  oLocaleEnforcer;
 
+    // If opening an existing file in Update mode (i.e. "r+") we need to make
+    // sure any existing content is cleared, otherwise the file may contain
+    // trailing content from the previous write.
+    VSIFTruncateL( fp, 0 ); 
+
     VSIFSeekL( fp, 0, SEEK_SET );
 /* -------------------------------------------------------------------- */
 /*      Rewrite out the header.                                           */
@@ -675,7 +680,7 @@ void ENVIDataset::WriteProjectionInfo()
             || adfGeoTransform[4] != 0.0 || adfGeoTransform[5] != 1.0 )
         {
             const char* pszHemisphere = "North";
-            VSIFPrintfL( fp, "map info = {Unknown, %s, %d, %s}\n",
+            VSIFPrintfL( fp, "map info = {Arbitrary, %s, %d, %s}\n",
                          osLocation.c_str(), 0, pszHemisphere);
         }
         return;
@@ -2503,6 +2508,10 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+
+    // SetMetadata() calls in Open() makes the header dirty. 
+    // Don't re-write the header if nothing external has changed the metadata 
+    poDS->bHeaderDirty = FALSE; 
 
     return( poDS );
 }
