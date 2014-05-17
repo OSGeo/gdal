@@ -34,7 +34,14 @@
 #include "cpl_minixml.h"
 #include "cpl_string.h"
 
+/* See #5459 */
+#ifdef isnan
+#define HAS_ISNAN_MACRO
+#endif
 #include <algorithm>
+#if defined(HAS_ISNAN_MACRO) and !defined(isnan)
+#define isnan std::isnan
+#endif
 
 CPL_CVSID("$Id$");
 
