@@ -223,7 +223,7 @@ namespace Selafin {
                 nMinyIndex=0;
                 for (long i=1;i<nPoints;++i) if (paadfCoords[1][i]<paadfCoords[1][nMinyIndex]) nMinyIndex=i;
             }
-            if (nIndex==nMaxxIndex) {
+            if (nIndex==nMaxyIndex) {
                 nMaxyIndex=0;
                 for (long i=1;i<nPoints;++i) if (paadfCoords[1][i]>paadfCoords[1][nMaxyIndex]) nMaxyIndex=i;
             }
@@ -417,12 +417,12 @@ namespace Selafin {
                 if (papadfData==0) return -1;
             }
             for (long i=0;i<nLength/4;++i) if (read_float(fp,(*papadfData)[i])==0) {
-                CPLFree(papadfData);
+                CPLFree(*papadfData);
                 CPLError(CE_Failure,CPLE_FileIO,"%s",SELAFIN_ERROR_MESSAGE);
                 return -1;
             }
             if (VSIFSeekL(fp,4,SEEK_CUR)!=0) {
-                if (papadfData!=0) CPLFree(papadfData);
+                if (*papadfData!=0) CPLFree(*papadfData);
                 CPLError(CE_Failure,CPLE_FileIO,"%s",SELAFIN_ERROR_MESSAGE);
                 return -1;
             }

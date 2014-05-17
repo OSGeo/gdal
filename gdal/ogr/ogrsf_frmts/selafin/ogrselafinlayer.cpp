@@ -148,8 +148,7 @@ OGRFeature* OGRSelafinLayer::GetFeature(long nFID) {
         poFeature->SetFID(nFID);
         for (int i=0;i<poHeader->nVar;++i) {
             VSIFSeekL(poHeader->fp,poHeader->getPosition(nStepNumber,nFID,i),SEEK_SET);
-            Selafin::read_float(poHeader->fp,nData);
-            poFeature->SetField(i,nData);
+            if (Selafin::read_float(poHeader->fp,nData)==1) poFeature->SetField(i,nData);
         }
         return poFeature;
     } else {
@@ -168,8 +167,7 @@ OGRFeature* OGRSelafinLayer::GetFeature(long nFID) {
             poLinearRing->addPoint(poHeader->paadfCoords[0][nPointNum],poHeader->paadfCoords[1][nPointNum]);
             for (long i=0;i<poHeader->nVar;++i) {
                 VSIFSeekL(poHeader->fp,poHeader->getPosition(nStepNumber,nPointNum,i),SEEK_SET);
-                Selafin::read_float(poHeader->fp,nData);
-                anData[i]+=nData;
+                if (Selafin::read_float(poHeader->fp,nData)==1) anData[i]+=nData;
             }
         }
         poPolygon->addRingDirectly(poLinearRing);
