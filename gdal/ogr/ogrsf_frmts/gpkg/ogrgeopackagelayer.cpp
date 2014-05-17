@@ -233,6 +233,27 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
                 break;
             }
 
+            case OFTDate:
+            {
+                const char* pszTxt = (const char*)sqlite3_column_text( hStmt, iRawField );
+                int nYear, nMonth, nDay;
+                if( sscanf(pszTxt, "%d-%d-%d", &nYear, &nMonth, &nDay) == 3 )
+                    poFeature->SetField(iField, nYear, nMonth, nDay, 0, 0, 0, 0);
+                break;
+            }
+
+            case OFTDateTime:
+            {
+                const char* pszTxt = (const char*)sqlite3_column_text( hStmt, iRawField );
+                int nYear, nMonth, nDay, nHour, nMinute;
+                float fSecond;
+                if( sscanf(pszTxt, "%d-%d-%dT%d:%d:%fZ", &nYear, &nMonth, &nDay,
+                                            &nHour, &nMinute, &fSecond) == 6 )
+                    poFeature->SetField(iField, nYear, nMonth, nDay,
+                                        nHour, nMinute, (int)(fSecond + 0.5), 0);
+                break;
+            }
+
             case OFTString:
                 poFeature->SetField( iField, 
                         (const char *) sqlite3_column_text( hStmt, iRawField ) );
