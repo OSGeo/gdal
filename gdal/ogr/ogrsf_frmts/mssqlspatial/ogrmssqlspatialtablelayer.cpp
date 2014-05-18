@@ -93,6 +93,8 @@ OGRMSSQLSpatialTableLayer::OGRMSSQLSpatialTableLayer( OGRMSSQLSpatialDataSource 
     pszTableName = NULL;
     pszLayerName = NULL;
     pszSchemaName = NULL;
+
+    eGeomType = wkbNone;
 }
 
 /************************************************************************/
@@ -164,7 +166,11 @@ OGRFeatureDefn* OGRMSSQLSpatialTableLayer::GetLayerDefn()
     if( eErr != CE_None )
         return NULL;
         
-    poFeatureDefn->SetGeomType(eGeomType);
+    if (eGeomType != wkbNone)
+        poFeatureDefn->SetGeomType(eGeomType);
+    
+    if ( GetSpatialRef() && poFeatureDefn->GetGeomFieldCount() == 1)
+        poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef( poSRS );
 
     if( poFeatureDefn->GetFieldCount() == 0 &&
         pszFIDColumn == NULL && pszGeomColumn == NULL )
@@ -267,11 +273,12 @@ CPLErr OGRMSSQLSpatialTableLayer::Initialize( const char *pszSchema,
 /* -------------------------------------------------------------------- */
     CPLFree( pszGeomColumn );
     if( pszGeomCol == NULL )
-        pszGeomColumn = NULL;
+        GetLayerDefn(); /* fetch geom colum if not specified */
     else
         pszGeomColumn = CPLStrdup( pszGeomCol );
 
-    eGeomType = eType;
+    if (eType != wkbNone)
+        eGeomType = eType;
 
 
 /* -------------------------------------------------------------------- */
