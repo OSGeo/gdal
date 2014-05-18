@@ -91,6 +91,9 @@ OGRMSSQLSpatialSelectLayer::OGRMSSQLSpatialSelectLayer( OGRMSSQLSpatialDataSourc
     }
 
     BuildFeatureDefn( "SELECT", poStmt );
+
+    if ( GetSpatialRef() && poFeatureDefn->GetGeomFieldCount() == 1)
+        poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef( poSRS );
 }
 
 /************************************************************************/
