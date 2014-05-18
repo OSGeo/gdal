@@ -1667,6 +1667,17 @@ void OGRGeoPackageTableLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 }
 
 /************************************************************************/
+/*                        HasFastSpatialFilter()                        */
+/************************************************************************/
+
+int OGRGeoPackageTableLayer::HasFastSpatialFilter(int iGeomCol)
+{
+    if( iGeomCol < 0 || iGeomCol >= m_poFeatureDefn->GetGeomFieldCount() )
+        return FALSE;
+    return HasSpatialIndex();
+}
+
+/************************************************************************/
 /*                           GetSpatialWhere()                          */
 /************************************************************************/
 

@@ -1479,3 +1479,14 @@ int OGRGeoPackageDataSource::OpenOrCreateDB(int flags)
 
     return TRUE;
 }
+
+/************************************************************************/
+/*                   GetLayerWithGetSpatialWhereByName()                */
+/************************************************************************/
+
+std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*>
+    OGRGeoPackageDataSource::GetLayerWithGetSpatialWhereByName( const char* pszName )
+{
+    OGRGeoPackageLayer* poRet = (OGRGeoPackageLayer*) GetLayerByName(pszName);
+    return std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*>(poRet, poRet);
+}

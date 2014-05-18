@@ -58,6 +58,7 @@ OGRSQLiteLayer::OGRSQLiteLayer()
     hStmt = NULL;
     bDoStep = TRUE;
 
+    poFeatureDefn = NULL;
     iNextShapeId = 0;
 
     panFieldOrdinals = NULL;
