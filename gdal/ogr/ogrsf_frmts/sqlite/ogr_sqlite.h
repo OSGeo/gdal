@@ -190,8 +190,16 @@ class OGRSQLiteFeatureDefn : public OGRFeatureDefn
 /************************************************************************/
 
 class OGRSQLiteDataSource;
-    
-class OGRSQLiteLayer : public OGRLayer
+
+class IOGRSQLiteGetSpatialWhere
+{
+  public:
+    virtual int           HasFastSpatialFilter(int iGeomCol) = 0;
+    virtual CPLString     GetSpatialWhere(int iGeomCol,
+                                          OGRGeometry* poFilterGeom) = 0;
+};
+
+class OGRSQLiteLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
 {
   private:
     static OGRErr       createFromSpatialiteInternal(const GByte *pabyData,
@@ -281,6 +289,7 @@ class OGRSQLiteLayer : public OGRLayer
 
     virtual int          HasSpatialIndex() { return bHasSpatialIndex; }
 
+    virtual int           HasFastSpatialFilter(int iGeomCol) { return FALSE; }
     virtual CPLString     GetSpatialWhere(int iGeomCol,
                                           OGRGeometry* poFilterGeom) { return ""; }
 
@@ -424,6 +433,7 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
 
     virtual int          HasSpatialIndex();
 
+    virtual int          HasFastSpatialFilter(int iGeomCol);
     virtual CPLString    GetSpatialWhere(int iGeomCol,
                                          OGRGeometry* poFilterGeom);
 };
@@ -490,23 +500,75 @@ class OGRSQLiteViewLayer : public OGRSQLiteLayer
 };
 
 /************************************************************************/
+/*                         IOGRSQLiteSelectLayer                        */
+/************************************************************************/
+
+class IOGRSQLiteSelectLayer
+{
+    public:
+        virtual char*&               GetAttrQueryString() = 0;
+        virtual OGRFeatureQuery*&    GetFeatureQuery() = 0;
+        virtual OGRGeometry*&        GetFilterGeom() = 0;
+        virtual int&                 GetIGeomFieldFilter() = 0;
+        virtual OGRSpatialReference* GetSpatialRef() = 0;
+        virtual OGRFeatureDefn      *GetLayerDefn() = 0;
+        virtual int                  InstallFilter( OGRGeometry * ) = 0;
+        virtual int                  HasReadFeature() = 0;
+        virtual void                 BaseResetReading() = 0;
+        virtual OGRFeature          *BaseGetNextFeature() = 0;
+        virtual OGRErr               BaseSetAttributeFilter(const char* pszQuery) = 0;
+        virtual int                  BaseGetFeatureCount(int bForce) = 0;
+        virtual int                  BaseTestCapability( const char * ) = 0;
+        virtual OGRErr               BaseGetExtent(OGREnvelope *psExtent, int bForce) = 0;
+        virtual OGRErr               BaseGetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) = 0;
+};
+
+/************************************************************************/
+/*                   OGRSQLiteSelectLayerCommonBehaviour                */
+/************************************************************************/
+
+class OGRSQLiteBaseDataSource;
+class OGRSQLiteSelectLayerCommonBehaviour
+{
+    OGRSQLiteBaseDataSource *poDS;
+    IOGRSQLiteSelectLayer   *poLayer;
+
+    CPLString           osSQLBase;
+
+    int                 bEmptyLayer;
+    int                 bAllowResetReadingEvenIfIndexAtZero;
+    int                 bSpatialFilterInSQL;
+
+    std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*> GetBaseLayer(size_t& i);
+    int                 BuildSQL();
+
+  public:
+
+    CPLString           osSQLCurrent;
+
+        OGRSQLiteSelectLayerCommonBehaviour(OGRSQLiteBaseDataSource* poDS,
+                                            IOGRSQLiteSelectLayer* poBaseLayer,
+                                            CPLString osSQL,
+                                            int bEmptyLayer);
+
+    void        ResetReading();
+    OGRFeature *GetNextFeature();
+    int         GetFeatureCount( int );
+    void        SetSpatialFilter( int iGeomField, OGRGeometry * );
+    OGRErr      SetAttributeFilter( const char * );
+    int         TestCapability( const char * );
+    OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce);
+};
+
+/************************************************************************/
 /*                         OGRSQLiteSelectLayer                         */
 /************************************************************************/
 
-class OGRSQLiteSelectLayer : public OGRSQLiteLayer
+class OGRSQLiteSelectLayer : public OGRSQLiteLayer, public IOGRSQLiteSelectLayer
 {
-    CPLString           osSQLBase;
-    CPLString           osSQLCurrent;
-
-    int                 bEmptyLayer;
-    int                 bSpatialFilterInSQL;
+    OGRSQLiteSelectLayerCommonBehaviour* poBehaviour;
 
     virtual OGRErr      ResetStatement();
-
-    OGRSQLiteLayer     *GetBaseLayer(size_t& i);
-    int                 BuildSQL();
-
-    int                 bAllowResetReadingEvenIfIndexAtZero;
  
   public:
                         OGRSQLiteSelectLayer( OGRSQLiteDataSource *, 
@@ -515,6 +577,7 @@ class OGRSQLiteSelectLayer : public OGRSQLiteLayer
                                               int bUseStatementForGetNextFeature,
                                               int bEmptyLayer,
                                               int bAllowMultipleGeomFields );
+                       ~OGRSQLiteSelectLayer();
 
     virtual void        ResetReading();
 
@@ -529,6 +592,22 @@ class OGRSQLiteSelectLayer : public OGRSQLiteLayer
 
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE) { return GetExtent(0, psExtent, bForce); }
     virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce = TRUE);
+
+    virtual OGRFeatureDefn *     GetLayerDefn() { return OGRSQLiteLayer::GetLayerDefn(); }
+    virtual char*&               GetAttrQueryString() { return m_pszAttrQueryString; }
+    virtual OGRFeatureQuery*&    GetFeatureQuery() { return m_poAttrQuery; }
+    virtual OGRGeometry*&        GetFilterGeom() { return m_poFilterGeom; }
+    virtual int&                 GetIGeomFieldFilter() { return m_iGeomFieldFilter; }
+    virtual OGRSpatialReference* GetSpatialRef() { return OGRSQLiteLayer::GetSpatialRef(); }
+    virtual int                  InstallFilter( OGRGeometry * poGeomIn ) { return OGRSQLiteLayer::InstallFilter(poGeomIn); }
+    virtual int                  HasReadFeature() { return iNextShapeId > 0; }
+    virtual void                 BaseResetReading() { OGRSQLiteLayer::ResetReading(); }
+    virtual OGRFeature          *BaseGetNextFeature() { return OGRSQLiteLayer::GetNextFeature(); }
+    virtual OGRErr               BaseSetAttributeFilter(const char* pszQuery) { return OGRSQLiteLayer::SetAttributeFilter(pszQuery); }
+    virtual int                  BaseGetFeatureCount(int bForce) { return OGRSQLiteLayer::GetFeatureCount(bForce); }
+    virtual int                  BaseTestCapability( const char *pszCap ) { return OGRSQLiteLayer::TestCapability(pszCap); }
+    virtual OGRErr               BaseGetExtent(OGREnvelope *psExtent, int bForce) { return OGRSQLiteLayer::GetExtent(psExtent, bForce); }
+    virtual OGRErr               BaseGetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) { return OGRSQLiteLayer::GetExtent(iGeomField, psExtent, bForce); }
 };
 
 /************************************************************************/
@@ -582,6 +661,8 @@ class OGRSQLiteBaseDataSource : public OGRDataSource
 
     void                CloseDB();
 
+    std::map<CPLString, OGREnvelope> oMapSQLEnvelope;
+
   public:
                         OGRSQLiteBaseDataSource();
                         ~OGRSQLiteBaseDataSource();
@@ -593,6 +674,11 @@ class OGRSQLiteBaseDataSource : public OGRDataSource
 
     void                NotifyFileOpened (const char* pszFilename,
                                           VSILFILE* fp);
+
+    const OGREnvelope*  GetEnvelopeFromSQL(const CPLString& osSQL);
+    void                SetEnvelopeForSQL(const CPLString& osSQL, const OGREnvelope& oEnvelope);
+
+    virtual std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*> GetLayerWithGetSpatialWhereByName( const char* pszName ) = 0;
 };
 
 /************************************************************************/
@@ -636,8 +722,6 @@ class OGRSQLiteDataSource : public OGRSQLiteBaseDataSource
     GIntBig             nFileTimestamp;
     int                 bLastSQLCommandIsUpdateLayerStatistics;
 
-    std::map<CPLString, OGREnvelope> oMapSQLEnvelope;
-
     std::map< CPLString, std::set<CPLString> > aoMapTableToSetOfGeomCols;
 
     void                SaveStatistics();
@@ -668,6 +752,7 @@ class OGRSQLiteDataSource : public OGRSQLiteBaseDataSource
     virtual int         GetLayerCount() { return nLayers; }
     virtual OGRLayer   *GetLayer( int );
     virtual OGRLayer   *GetLayerByName( const char* );
+    virtual std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*> GetLayerWithGetSpatialWhereByName( const char* pszName );
 
     virtual OGRLayer    *CreateLayer( const char *pszLayerName, 
                                       OGRSpatialReference *poSRS, 
@@ -695,9 +780,6 @@ class OGRSQLiteDataSource : public OGRSQLiteBaseDataSource
     void                SetUpdate(int bUpdateIn) { bUpdate = bUpdateIn; }
 
     void                SetName(const char* pszNameIn);
-
-    const OGREnvelope*  GetEnvelopeFromSQL(const CPLString& osSQL);
-    void                SetEnvelopeForSQL(const CPLString& osSQL, const OGREnvelope& oEnvelope);
 
     const std::set<CPLString>& GetGeomColsForTable(const char* pszTableName)
             { return aoMapTableToSetOfGeomCols[pszTableName]; }

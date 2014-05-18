@@ -589,6 +589,19 @@ int OGRSQLiteTableLayer::CheckSpatialIndexTable()
 }
 
 /************************************************************************/
+/*                         HasFastSpatialFilter()                       */
+/************************************************************************/
+
+int OGRSQLiteTableLayer::HasFastSpatialFilter(int iGeomCol)
+{
+    OGRPolygon oFakePoly;
+    const char* pszWKT = "POLYGON((0 0,0 1,1 1,1 0,0 0))";
+    oFakePoly.importFromWkt((char**) &pszWKT);
+    CPLString    osSpatialWhere = GetSpatialWhere(iGeomCol, &oFakePoly);
+    return osSpatialWhere.find("ROWID") == 0;
+}
+
+/************************************************************************/
 /*                           GetSpatialWhere()                          */
 /************************************************************************/
 

@@ -40,6 +40,7 @@ OGRGeoPackageSelectLayer::OGRGeoPackageSelectLayer( OGRGeoPackageDataSource *poD
                                             int bEmptyLayer ) : OGRGeoPackageLayer(poDS)
 
 {
+    poBehaviour = new OGRSQLiteSelectLayerCommonBehaviour(poDS, this, osSQLIn, bEmptyLayer);
     BuildFeatureDefn( "SELECT", hStmtIn );
 
     if( bUseStatementForGetNextFeature )
@@ -49,9 +50,15 @@ OGRGeoPackageSelectLayer::OGRGeoPackageSelectLayer( OGRGeoPackageDataSource *poD
     }
     else
         sqlite3_finalize( hStmtIn );
+}
 
-    osSQLBase = osSQLIn;
-    this->bEmptyLayer = bEmptyLayer;
+/************************************************************************/
+/*                       ~OGRGeoPackageSelectLayer()                    */
+/************************************************************************/
+
+OGRGeoPackageSelectLayer::~OGRGeoPackageSelectLayer()
+{
+    delete poBehaviour;
 }
 
 /************************************************************************/
@@ -59,12 +66,8 @@ OGRGeoPackageSelectLayer::OGRGeoPackageSelectLayer( OGRGeoPackageDataSource *poD
 /************************************************************************/
 
 void OGRGeoPackageSelectLayer::ResetReading()
-
 {
-    if( iNextShapeId > 0 )
-    {
-        OGRGeoPackageLayer::ResetReading();
-    }
+    poBehaviour->ResetReading();
 }
 
 /************************************************************************/
@@ -73,10 +76,7 @@ void OGRGeoPackageSelectLayer::ResetReading()
 
 OGRFeature *OGRGeoPackageSelectLayer::GetNextFeature()
 {
-    if( bEmptyLayer )
-        return NULL;
-
-    return OGRGeoPackageLayer::GetNextFeature();
+    return poBehaviour->GetNextFeature();
 }
 
 /************************************************************************/
@@ -85,50 +85,7 @@ OGRFeature *OGRGeoPackageSelectLayer::GetNextFeature()
 
 int OGRGeoPackageSelectLayer::GetFeatureCount( int bForce )
 {
-    if( bEmptyLayer )
-        return 0;
-
-    if( m_poAttrQuery == NULL &&
-        EQUALN(osSQLBase, "SELECT COUNT(*) FROM", strlen("SELECT COUNT(*) FROM")) &&
-        osSQLBase.ifind(" GROUP BY ") == std::string::npos &&
-        osSQLBase.ifind(" UNION ") == std::string::npos &&
-        osSQLBase.ifind(" INTERSECT ") == std::string::npos &&
-        osSQLBase.ifind(" EXCEPT ") == std::string::npos )
-        return 1;
-
-    if( m_poAttrQuery != NULL || m_poFilterGeom != NULL )
-        return OGRLayer::GetFeatureCount(bForce);
-
-    CPLString osFeatureCountSQL("SELECT COUNT(*) FROM (");
-    osFeatureCountSQL += osSQLBase;
-    osFeatureCountSQL += ")";
-
-    CPLDebug("GPKG", "Running %s", osFeatureCountSQL.c_str());
-
-/* -------------------------------------------------------------------- */
-/*      Execute.                                                        */
-/* -------------------------------------------------------------------- */
-    char *pszErrMsg = NULL;
-    char **papszResult;
-    int nRowCount, nColCount;
-    int nResult = -1;
-
-    if( sqlite3_get_table( m_poDS->GetDB(), osFeatureCountSQL, &papszResult, 
-                           &nRowCount, &nColCount, &pszErrMsg ) != SQLITE_OK )
-    {
-        CPLDebug("GPKG", "Error: %s", pszErrMsg);
-        sqlite3_free(pszErrMsg);
-        return OGRLayer::GetFeatureCount(bForce);
-    }
-
-    if( nRowCount == 1 && nColCount == 1 )
-    {
-        nResult = atoi(papszResult[1]);
-    }
-
-    sqlite3_free_table( papszResult );
-
-    return nResult;
+    return poBehaviour->GetFeatureCount(bForce);
 }
 
 /************************************************************************/
@@ -146,10 +103,10 @@ OGRErr OGRGeoPackageSelectLayer::ResetStatement()
     bDoStep = TRUE;
 
 #ifdef DEBUG
-    CPLDebug( "OGR_GPKG", "prepare(%s)", osSQLBase.c_str() );
+    CPLDebug( "OGR_GPKG", "prepare(%s)", poBehaviour->osSQLCurrent.c_str() );
 #endif
 
-    rc = sqlite3_prepare( m_poDS->GetDB(), osSQLBase, osSQLBase.size(),
+    rc = sqlite3_prepare( m_poDS->GetDB(), poBehaviour->osSQLCurrent, poBehaviour->osSQLCurrent.size(),
                           &m_poQueryStatement, NULL );
 
     if( rc == SQLITE_OK )
@@ -160,8 +117,45 @@ OGRErr OGRGeoPackageSelectLayer::ResetStatement()
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "In ResetStatement(): sqlite3_prepare(%s):\n  %s", 
-                  osSQLBase.c_str(), sqlite3_errmsg(m_poDS->GetDB()) );
+                  poBehaviour->osSQLCurrent.c_str(), sqlite3_errmsg(m_poDS->GetDB()) );
         m_poQueryStatement = NULL;
         return OGRERR_FAILURE;
     }
+}
+
+/************************************************************************/
+/*                         SetAttributeFilter()                         */
+/************************************************************************/
+
+OGRErr OGRGeoPackageSelectLayer::SetAttributeFilter( const char *pszQuery )
+{
+    return poBehaviour->SetAttributeFilter(pszQuery);
+}
+
+/************************************************************************/
+/*                          SetSpatialFilter()                          */
+/************************************************************************/
+
+void OGRGeoPackageSelectLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn )
+
+{
+    poBehaviour->SetSpatialFilter(iGeomField, poGeomIn);
+}
+
+/************************************************************************/
+/*                           TestCapability()                           */
+/************************************************************************/
+
+int OGRGeoPackageSelectLayer::TestCapability( const char * pszCap )
+{
+    return poBehaviour->TestCapability(pszCap);
+}
+
+/************************************************************************/
+/*                             GetExtent()                              */
+/************************************************************************/
+
+OGRErr OGRGeoPackageSelectLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+{
+    return poBehaviour->GetExtent(iGeomField, psExtent, bForce);
 }

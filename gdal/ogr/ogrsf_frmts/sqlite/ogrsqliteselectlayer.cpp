@@ -35,6 +35,22 @@
 #include "ogr_p.h"
 
 CPL_CVSID("$Id$");
+
+/************************************************************************/
+/*                   OGRSQLiteSelectLayerCommonBehaviour()              */
+/************************************************************************/
+
+OGRSQLiteSelectLayerCommonBehaviour::OGRSQLiteSelectLayerCommonBehaviour(OGRSQLiteBaseDataSource* poDS,
+                                            IOGRSQLiteSelectLayer* poLayer,
+                                            CPLString osSQL,
+                                            int bEmptyLayer) :
+            poDS(poDS), poLayer(poLayer), osSQLBase(osSQL),
+            bEmptyLayer(bEmptyLayer), osSQLCurrent(osSQL)
+{
+    bAllowResetReadingEvenIfIndexAtZero = FALSE;
+    bSpatialFilterInSQL = TRUE;
+}
+
 /************************************************************************/
 /*                        OGRSQLiteSelectLayer()                        */
 /************************************************************************/
@@ -47,11 +63,9 @@ OGRSQLiteSelectLayer::OGRSQLiteSelectLayer( OGRSQLiteDataSource *poDSIn,
                                             int bAllowMultipleGeomFields )
 
 {
+    poBehaviour = new OGRSQLiteSelectLayerCommonBehaviour(poDSIn, this, osSQLIn, bEmptyLayer);
     poDS = poDSIn;
 
-    iNextShapeId = 0;
-    poFeatureDefn = NULL;
-    bAllowResetReadingEvenIfIndexAtZero = FALSE;
     this->bAllowMultipleGeomFields = bAllowMultipleGeomFields;
 
     std::set<CPLString> aosEmpty;
@@ -125,11 +139,15 @@ OGRSQLiteSelectLayer::OGRSQLiteSelectLayer( OGRSQLiteDataSource *poDSIn,
     }
     else
         sqlite3_finalize( hStmtIn );
+}
 
-    osSQLBase = osSQLIn;
-    osSQLCurrent = osSQLIn;
-    this->bEmptyLayer = bEmptyLayer;
-    bSpatialFilterInSQL = TRUE;
+/************************************************************************/
+/*                       ~OGRSQLiteSelectLayer()                        */
+/************************************************************************/
+
+OGRSQLiteSelectLayer::~OGRSQLiteSelectLayer()
+{
+    delete poBehaviour;
 }
 
 /************************************************************************/
@@ -137,11 +155,15 @@ OGRSQLiteSelectLayer::OGRSQLiteSelectLayer( OGRSQLiteDataSource *poDSIn,
 /************************************************************************/
 
 void OGRSQLiteSelectLayer::ResetReading()
-
 {
-    if( iNextShapeId > 0 || bAllowResetReadingEvenIfIndexAtZero )
+    return poBehaviour->ResetReading();
+}
+
+void OGRSQLiteSelectLayerCommonBehaviour::ResetReading()
+{
+    if( poLayer->HasReadFeature() || bAllowResetReadingEvenIfIndexAtZero )
     {
-        OGRSQLiteLayer::ResetReading();
+        poLayer->BaseResetReading();
         bAllowResetReadingEvenIfIndexAtZero = FALSE;
     }
 }
@@ -152,10 +174,15 @@ void OGRSQLiteSelectLayer::ResetReading()
 
 OGRFeature *OGRSQLiteSelectLayer::GetNextFeature()
 {
+    return poBehaviour->GetNextFeature();
+}
+
+OGRFeature *OGRSQLiteSelectLayerCommonBehaviour::GetNextFeature()
+{
     if( bEmptyLayer )
         return NULL;
 
-    return OGRSQLiteLayer::GetNextFeature();
+    return poLayer->BaseGetNextFeature();
 }
 
 /************************************************************************/
@@ -189,13 +216,19 @@ int HasSpecialFields(swq_expr_node* expr, int nMinIndexForSpecialField)
 /************************************************************************/
 
 OGRErr OGRSQLiteSelectLayer::SetAttributeFilter( const char *pszQuery )
+{
+    return poBehaviour->SetAttributeFilter(pszQuery);
+}
+
+OGRErr OGRSQLiteSelectLayerCommonBehaviour::SetAttributeFilter( const char *pszQuery )
 
 {
-    if( m_pszAttrQueryString == NULL && pszQuery == NULL )
+    char*& m_pszAttrQuertyString = poLayer->GetAttrQueryString();
+    if( m_pszAttrQuertyString == NULL && pszQuery == NULL )
         return OGRERR_NONE;
 
-    CPLFree(m_pszAttrQueryString);
-    m_pszAttrQueryString = (pszQuery) ? CPLStrdup(pszQuery) : NULL;
+    CPLFree(m_pszAttrQuertyString);
+    m_pszAttrQuertyString = (pszQuery) ? CPLStrdup(pszQuery) : NULL;
 
     bAllowResetReadingEvenIfIndexAtZero = TRUE;
 
@@ -203,13 +236,13 @@ OGRErr OGRSQLiteSelectLayer::SetAttributeFilter( const char *pszQuery )
 
     CPLPushErrorHandler(CPLQuietErrorHandler);
     int bHasSpecialFields = (pszQuery != NULL && pszQuery[0] != '\0' &&
-        oQuery.Compile( GetLayerDefn(), pszQuery ) == OGRERR_NONE &&
-        HasSpecialFields((swq_expr_node*)oQuery.GetSWGExpr(), GetLayerDefn()->GetFieldCount()) );
+        oQuery.Compile( poLayer->GetLayerDefn(), pszQuery ) == OGRERR_NONE &&
+        HasSpecialFields((swq_expr_node*)oQuery.GetSWGExpr(), poLayer->GetLayerDefn()->GetFieldCount()) );
     CPLPopErrorHandler();
 
     if( bHasSpecialFields || !BuildSQL() )
     {
-        return OGRSQLiteLayer::SetAttributeFilter(pszQuery);
+        return poLayer->BaseSetAttributeFilter(pszQuery);
     }
 
     ResetReading();
@@ -223,10 +256,15 @@ OGRErr OGRSQLiteSelectLayer::SetAttributeFilter( const char *pszQuery )
 
 int OGRSQLiteSelectLayer::GetFeatureCount( int bForce )
 {
+    return poBehaviour->GetFeatureCount(bForce);
+}
+
+int OGRSQLiteSelectLayerCommonBehaviour::GetFeatureCount( int bForce )
+{
     if( bEmptyLayer )
         return 0;
 
-    if( m_poAttrQuery == NULL &&
+    if( poLayer->GetFeatureQuery() == NULL &&
         EQUALN(osSQLCurrent, "SELECT COUNT(*) FROM", strlen("SELECT COUNT(*) FROM")) &&
         osSQLCurrent.ifind(" GROUP BY ") == std::string::npos &&
         osSQLCurrent.ifind(" UNION ") == std::string::npos &&
@@ -234,8 +272,8 @@ int OGRSQLiteSelectLayer::GetFeatureCount( int bForce )
         osSQLCurrent.ifind(" EXCEPT ") == std::string::npos )
         return 1;
 
-    if( m_poAttrQuery != NULL || (m_poFilterGeom != NULL && !bSpatialFilterInSQL) )
-        return OGRLayer::GetFeatureCount(bForce);
+    if( poLayer->GetFeatureQuery() != NULL || (poLayer->GetFilterGeom() != NULL && !bSpatialFilterInSQL) )
+        return poLayer->BaseGetFeatureCount(bForce);
 
     CPLString osFeatureCountSQL("SELECT COUNT(*) FROM (");
     osFeatureCountSQL += osSQLCurrent;
@@ -256,7 +294,7 @@ int OGRSQLiteSelectLayer::GetFeatureCount( int bForce )
     {
         CPLDebug("SQLITE", "Error: %s", pszErrMsg);
         sqlite3_free(pszErrMsg);
-        return OGRLayer::GetFeatureCount(bForce);
+        return poLayer->BaseGetFeatureCount(bForce);
     }
 
     if( nRowCount == 1 && nColCount == 1 )
@@ -284,10 +322,10 @@ OGRErr OGRSQLiteSelectLayer::ResetStatement()
     bDoStep = TRUE;
 
 #ifdef DEBUG
-    CPLDebug( "OGR_SQLITE", "prepare(%s)", osSQLCurrent.c_str() );
+    CPLDebug( "OGR_SQLITE", "prepare(%s)", poBehaviour->osSQLCurrent.c_str() );
 #endif
 
-    rc = sqlite3_prepare( poDS->GetDB(), osSQLCurrent, osSQLCurrent.size(),
+    rc = sqlite3_prepare( poDS->GetDB(), poBehaviour->osSQLCurrent, poBehaviour->osSQLCurrent.size(),
                           &hStmt, NULL );
 
     if( rc == SQLITE_OK )
@@ -298,7 +336,7 @@ OGRErr OGRSQLiteSelectLayer::ResetStatement()
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "In ResetStatement(): sqlite3_prepare(%s):\n  %s", 
-                  osSQLCurrent.c_str(), sqlite3_errmsg(poDS->GetDB()) );
+                  poBehaviour->osSQLCurrent.c_str(), sqlite3_errmsg(poDS->GetDB()) );
         hStmt = NULL;
         return OGRERR_FAILURE;
     }
@@ -311,11 +349,17 @@ OGRErr OGRSQLiteSelectLayer::ResetStatement()
 void OGRSQLiteSelectLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn )
 
 {
-    if( iGeomField == 0 && poGeomIn == NULL && GetLayerDefn()->GetGeomFieldCount() == 0 )
+    poBehaviour->SetSpatialFilter(iGeomField, poGeomIn);
+}
+
+void OGRSQLiteSelectLayerCommonBehaviour::SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn )
+
+{
+    if( iGeomField == 0 && poGeomIn == NULL && poLayer->GetLayerDefn()->GetGeomFieldCount() == 0 )
     {
         /* do nothing */
     }
-    else if( iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount() )
+    else if( iGeomField < 0 || iGeomField >= poLayer->GetLayerDefn()->GetGeomFieldCount() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                     "Invalid geometry field index : %d", iGeomField);
@@ -324,8 +368,9 @@ void OGRSQLiteSelectLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeo
 
     bAllowResetReadingEvenIfIndexAtZero = TRUE;
 
+    int& m_iGeomFieldFilter = poLayer->GetIGeomFieldFilter();
     m_iGeomFieldFilter = iGeomField;
-    if( InstallFilter( poGeomIn ) )
+    if( poLayer->InstallFilter( poGeomIn ) )
     {
         BuildSQL();
 
@@ -337,7 +382,7 @@ void OGRSQLiteSelectLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeo
 /*                            GetBaseLayer()                            */
 /************************************************************************/
 
-OGRSQLiteLayer* OGRSQLiteSelectLayer::GetBaseLayer(size_t& i)
+std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*> OGRSQLiteSelectLayerCommonBehaviour::GetBaseLayer(size_t& i)
 {
     char** papszTokens = CSLTokenizeString(osSQLBase.c_str());
     int bCanInsertFilter = TRUE;
@@ -364,13 +409,13 @@ OGRSQLiteLayer* OGRSQLiteSelectLayer::GetBaseLayer(size_t& i)
     if (!(bCanInsertFilter && nCountSelect == 1 && nCountFrom == 1 && nCountWhere <= 1))
     {
         CPLDebug("SQLITE", "SQL expression too complex to analyse");
-        return NULL;
+        return std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*>(NULL, NULL);
     }
 
     size_t nFromPos = osSQLBase.ifind(" from ");
     if (nFromPos == std::string::npos)
     {
-        return NULL;
+        return std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*>(NULL, NULL);
     }
 
     char chQuote = osSQLBase[nFromPos + 6];
@@ -396,44 +441,44 @@ OGRSQLiteLayer* OGRSQLiteSelectLayer::GetBaseLayer(size_t& i)
             osBaseLayerName += osSQLBase[i];
     }
 
-    OGRSQLiteLayer* poUnderlyingLayer = NULL;
+    std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*> oPair;
     if( strchr(osBaseLayerName, '(') == NULL &&
-        poFeatureDefn->GetGeomFieldCount() != 0 )
+        poLayer->GetLayerDefn()->GetGeomFieldCount() != 0 )
     {
         CPLString osNewUnderlyingTableName;
         osNewUnderlyingTableName.Printf("%s(%s)",
                                         osBaseLayerName.c_str(),
-                                        poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef());
-        poUnderlyingLayer =
-            (OGRSQLiteLayer*) poDS->GetLayerByName(osNewUnderlyingTableName);
+                                        poLayer->GetLayerDefn()->GetGeomFieldDefn(0)->GetNameRef());
+        oPair = poDS->GetLayerWithGetSpatialWhereByName(osNewUnderlyingTableName);
     }
-    if( poUnderlyingLayer == NULL )
-        poUnderlyingLayer = (OGRSQLiteLayer*) poDS->GetLayerByName(osBaseLayerName);
+    if( oPair.first == NULL )
+        oPair = poDS->GetLayerWithGetSpatialWhereByName(osBaseLayerName);
 
-    if( poUnderlyingLayer != NULL && GetSpatialRef() != NULL &&
-        poUnderlyingLayer->GetSpatialRef() != NULL &&
-        GetSpatialRef() != poUnderlyingLayer->GetSpatialRef() &&
-        !GetSpatialRef()->IsSame(poUnderlyingLayer->GetSpatialRef()) )
+    if( oPair.first != NULL && poLayer->GetSpatialRef() != NULL &&
+        oPair.first->GetSpatialRef() != NULL &&
+        poLayer->GetSpatialRef() != oPair.first->GetSpatialRef() &&
+        !poLayer->GetSpatialRef()->IsSame(oPair.first->GetSpatialRef()) )
     {
         CPLDebug("SQLITE", "Result layer and base layer don't have the same SRS.");
-        return NULL;
+        return std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*>(NULL, NULL);
     }
 
-    return poUnderlyingLayer;
+    return oPair;
 }
 
 /************************************************************************/
 /*                             BuildSQL()                               */
 /************************************************************************/
 
-int OGRSQLiteSelectLayer::BuildSQL()
+int OGRSQLiteSelectLayerCommonBehaviour::BuildSQL()
 
 {
     osSQLCurrent = osSQLBase;
     bSpatialFilterInSQL = TRUE;
 
     size_t i = 0;
-    OGRSQLiteLayer* poBaseLayer = GetBaseLayer(i);
+    std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*> oPair = GetBaseLayer(i);
+    OGRLayer* poBaseLayer = oPair.first;
     if (poBaseLayer == NULL)
     {
         CPLDebug("SQLITE", "Cannot find base layer");
@@ -442,10 +487,10 @@ int OGRSQLiteSelectLayer::BuildSQL()
     }
 
     CPLString osSpatialWhere;
-    if (m_poFilterGeom != NULL)
+    if (poLayer->GetFilterGeom() != NULL)
     {
         const char* pszGeomCol =
-            poFeatureDefn->GetGeomFieldDefn(m_iGeomFieldFilter)->GetNameRef();
+            poLayer->GetLayerDefn()->GetGeomFieldDefn(poLayer->GetIGeomFieldFilter())->GetNameRef();
         int nIdx = poBaseLayer->GetLayerDefn()->GetGeomFieldIndex(pszGeomCol);
         if( nIdx < 0 )
         {
@@ -454,7 +499,7 @@ int OGRSQLiteSelectLayer::BuildSQL()
         }
         else
         {
-            osSpatialWhere = poBaseLayer->GetSpatialWhere(nIdx, m_poFilterGeom);
+            osSpatialWhere = oPair.second->GetSpatialWhere(nIdx, poLayer->GetFilterGeom());
             if (osSpatialWhere.size() == 0)
             {
                 CPLDebug("SQLITE", "Cannot get spatial where clause");
@@ -468,11 +513,11 @@ int OGRSQLiteSelectLayer::BuildSQL()
     {
         osCustomWhere = osSpatialWhere;
     }
-    if( m_pszAttrQueryString != NULL && m_pszAttrQueryString[0] != '\0' )
+    if( poLayer->GetAttrQueryString() != NULL && poLayer->GetAttrQueryString()[0] != '\0' )
     {
         if( osSpatialWhere.size() != 0)
             osCustomWhere += " AND (";
-        osCustomWhere += m_pszAttrQueryString;
+        osCustomWhere += poLayer->GetAttrQueryString();
         if( osSpatialWhere.size() != 0)
             osCustomWhere += ")";
     }
@@ -540,30 +585,27 @@ int OGRSQLiteSelectLayer::BuildSQL()
 /************************************************************************/
 
 int OGRSQLiteSelectLayer::TestCapability( const char * pszCap )
+{
+    return poBehaviour->TestCapability(pszCap);
+}
+
+int OGRSQLiteSelectLayerCommonBehaviour::TestCapability( const char * pszCap )
 
 {
     if (EQUAL(pszCap,OLCFastSpatialFilter))
     {
-        if (osSQLCurrent != osSQLBase)
-            return TRUE;
-
         size_t i = 0;
-        OGRSQLiteLayer* poBaseLayer = GetBaseLayer(i);
-        if (poBaseLayer == NULL)
+        std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*> oPair = GetBaseLayer(i);
+        if (oPair.first == NULL)
         {
             CPLDebug("SQLITE", "Cannot find base layer");
             return FALSE;
         }
 
-        OGRPolygon oFakePoly;
-        const char* pszWKT = "POLYGON((0 0,0 1,1 1,1 0,0 0))";
-        oFakePoly.importFromWkt((char**) &pszWKT);
-        CPLString    osSpatialWhere = poBaseLayer->GetSpatialWhere(0, &oFakePoly);
-
-        return osSpatialWhere.size() != 0;
+        return oPair.second->HasFastSpatialFilter(0);
     }
     else
-        return OGRSQLiteLayer::TestCapability( pszCap );
+        return poLayer->BaseTestCapability( pszCap );
 }
 
 /************************************************************************/
@@ -572,8 +614,13 @@ int OGRSQLiteSelectLayer::TestCapability( const char * pszCap )
 
 OGRErr OGRSQLiteSelectLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
 {
-    if( iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount() ||
-        GetLayerDefn()->GetGeomFieldDefn(iGeomField)->GetType() == wkbNone )
+    return poBehaviour->GetExtent(iGeomField, psExtent, bForce);
+}
+
+OGRErr OGRSQLiteSelectLayerCommonBehaviour::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+{
+    if( iGeomField < 0 || iGeomField >= poLayer->GetLayerDefn()->GetGeomFieldCount() ||
+        poLayer->GetLayerDefn()->GetGeomFieldDefn(iGeomField)->GetType() == wkbNone )
     {
         if( iGeomField != 0 )
         {
@@ -621,9 +668,9 @@ OGRErr OGRSQLiteSelectLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, in
 
     OGRErr eErr;
     if( iGeomField == 0 )
-        eErr = OGRSQLiteLayer::GetExtent(psExtent, bForce);
+        eErr = poLayer->BaseGetExtent(psExtent, bForce);
     else
-        eErr = OGRSQLiteLayer::GetExtent(iGeomField, psExtent, bForce);
+        eErr = poLayer->BaseGetExtent(iGeomField, psExtent, bForce);
     if (iGeomField == 0 && eErr == OGRERR_NONE && poDS->GetUpdate() == FALSE)
         poDS->SetEnvelopeForSQL(osSQLBase, *psExtent);
     return eErr;

@@ -1588,6 +1588,17 @@ OGRLayer *OGRSQLiteDataSource::GetLayerByName( const char* pszLayerName )
 }
 
 /************************************************************************/
+/*                   GetLayerWithGetSpatialWhereByName()                */
+/************************************************************************/
+
+std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*>
+    OGRSQLiteDataSource::GetLayerWithGetSpatialWhereByName( const char* pszName )
+{
+    OGRSQLiteLayer* poRet = (OGRSQLiteLayer*) GetLayerByName(pszName);
+    return std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*>(poRet, poRet);
+}
+
+/************************************************************************/
 /*                             ExecuteSQL()                             */
 /************************************************************************/
 
@@ -3244,7 +3255,7 @@ void OGRSQLiteDataSource::SetName(const char* pszNameIn)
 /*                       GetEnvelopeFromSQL()                           */
 /************************************************************************/
 
-const OGREnvelope* OGRSQLiteDataSource::GetEnvelopeFromSQL(const CPLString& osSQL)
+const OGREnvelope* OGRSQLiteBaseDataSource::GetEnvelopeFromSQL(const CPLString& osSQL)
 {
     std::map<CPLString, OGREnvelope>::iterator oIter = oMapSQLEnvelope.find(osSQL);
     if (oIter != oMapSQLEnvelope.end())
@@ -3257,7 +3268,7 @@ const OGREnvelope* OGRSQLiteDataSource::GetEnvelopeFromSQL(const CPLString& osSQ
 /*                         SetEnvelopeForSQL()                          */
 /************************************************************************/
 
-void OGRSQLiteDataSource::SetEnvelopeForSQL(const CPLString& osSQL,
+void OGRSQLiteBaseDataSource::SetEnvelopeForSQL(const CPLString& osSQL,
                                             const OGREnvelope& oEnvelope)
 {
     oMapSQLEnvelope[osSQL] = oEnvelope;

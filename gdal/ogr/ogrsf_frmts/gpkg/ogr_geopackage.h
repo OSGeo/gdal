@@ -77,6 +77,8 @@ class OGRGeoPackageDataSource : public OGRSQLiteBaseDataSource
                                          OGRwkbGeometryType eGType,
                                          char **papszOptions );
         int                 TestCapability( const char * );
+        
+        virtual std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*> GetLayerWithGetSpatialWhereByName( const char* pszName );
 
         virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
                                         OGRGeometry *poSpatialFilter,
@@ -105,7 +107,7 @@ class OGRGeoPackageDataSource : public OGRSQLiteBaseDataSource
 /*                           OGRGeoPackageLayer                         */
 /************************************************************************/
 
-class OGRGeoPackageLayer : public OGRLayer
+class OGRGeoPackageLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
 {
   protected:
     OGRGeoPackageDataSource *m_poDS;
@@ -142,6 +144,11 @@ class OGRGeoPackageLayer : public OGRLayer
     void                ResetReading();
     int                 TestCapability( const char * );
     OGRFeatureDefn*     GetLayerDefn() { return m_poFeatureDefn; }
+
+    virtual int          HasFastSpatialFilter(int iGeomCol) { return FALSE; }
+    virtual CPLString    GetSpatialWhere(int iGeomCol,
+                                         OGRGeometry* poFilterGeom) { return ""; }
+
 };
 
 /************************************************************************/
@@ -167,9 +174,6 @@ class OGRGeoPackageTableLayer : public OGRGeoPackageLayer
     
     void                BuildWhere(void);
     
-    virtual CPLString    GetSpatialWhere(int iGeomCol,
-                                         OGRGeometry* poFilterGeom);
-
     public:
     
                         OGRGeoPackageTableLayer( OGRGeoPackageDataSource *poDS,
@@ -208,6 +212,10 @@ class OGRGeoPackageTableLayer : public OGRGeoPackageLayer
 
     void                RenameTo(const char* pszDstTableName);
 
+    virtual int          HasFastSpatialFilter(int iGeomCol);
+    virtual CPLString    GetSpatialWhere(int iGeomCol,
+                                         OGRGeometry* poFilterGeom);
+
     /************************************************************************/
     /* GPKG methods */
     
@@ -231,11 +239,9 @@ class OGRGeoPackageTableLayer : public OGRGeoPackageLayer
 /*                         OGRGeoPackageSelectLayer                     */
 /************************************************************************/
 
-class OGRGeoPackageSelectLayer : public OGRGeoPackageLayer
+class OGRGeoPackageSelectLayer : public OGRGeoPackageLayer, public IOGRSQLiteSelectLayer
 {
-    CPLString           osSQLBase;
-
-    int                 bEmptyLayer;
+    OGRSQLiteSelectLayerCommonBehaviour* poBehaviour;
 
     virtual OGRErr      ResetStatement();
 
@@ -245,11 +251,37 @@ class OGRGeoPackageSelectLayer : public OGRGeoPackageLayer
                                               sqlite3_stmt *,
                                               int bUseStatementForGetNextFeature,
                                               int bEmptyLayer );
+                       ~OGRGeoPackageSelectLayer();
 
     virtual void        ResetReading();
 
     virtual OGRFeature *GetNextFeature();
     virtual int         GetFeatureCount( int );
+
+    virtual void        SetSpatialFilter( OGRGeometry * poGeom ) { SetSpatialFilter(0, poGeom); }
+    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry * );
+    virtual OGRErr      SetAttributeFilter( const char * );
+
+    virtual int         TestCapability( const char * );
+
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE) { return GetExtent(0, psExtent, bForce); }
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce = TRUE);
+
+    virtual OGRFeatureDefn *     GetLayerDefn() { return OGRGeoPackageLayer::GetLayerDefn(); }
+    virtual char*&               GetAttrQueryString() { return m_pszAttrQueryString; }
+    virtual OGRFeatureQuery*&    GetFeatureQuery() { return m_poAttrQuery; }
+    virtual OGRGeometry*&        GetFilterGeom() { return m_poFilterGeom; }
+    virtual int&                 GetIGeomFieldFilter() { return m_iGeomFieldFilter; }
+    virtual OGRSpatialReference* GetSpatialRef() { return OGRGeoPackageLayer::GetSpatialRef(); }
+    virtual int                  InstallFilter( OGRGeometry * poGeomIn ) { return OGRGeoPackageLayer::InstallFilter(poGeomIn); }
+    virtual int                  HasReadFeature() { return iNextShapeId > 0; }
+    virtual void                 BaseResetReading() { OGRGeoPackageLayer::ResetReading(); }
+    virtual OGRFeature          *BaseGetNextFeature() { return OGRGeoPackageLayer::GetNextFeature(); }
+    virtual OGRErr               BaseSetAttributeFilter(const char* pszQuery) { return OGRGeoPackageLayer::SetAttributeFilter(pszQuery); }
+    virtual int                  BaseGetFeatureCount(int bForce) { return OGRGeoPackageLayer::GetFeatureCount(bForce); }
+    virtual int                  BaseTestCapability( const char *pszCap ) { return OGRGeoPackageLayer::TestCapability(pszCap); }
+    virtual OGRErr               BaseGetExtent(OGREnvelope *psExtent, int bForce) { return OGRGeoPackageLayer::GetExtent(psExtent, bForce); }
+    virtual OGRErr               BaseGetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) { return OGRGeoPackageLayer::GetExtent(iGeomField, psExtent, bForce); }
 };
 
 
