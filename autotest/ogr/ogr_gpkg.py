@@ -792,6 +792,14 @@ def ogr_gpkg_test_ogrsf():
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/gpkg_test.gpkg --config OGR_SQLITE_SYNCHRONOUS OFF')
 
     if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+        gdaltest.post_reason('fail')
+        print(ret)
+        return 'fail'
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/gpkg_test.gpkg -sql "select * from tbl_linestring_renamed" --config OGR_SQLITE_SYNCHRONOUS OFF')
+
+    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+        gdaltest.post_reason('fail')
         print(ret)
         return 'fail'
 
