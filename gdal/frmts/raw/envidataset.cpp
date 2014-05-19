@@ -673,7 +673,8 @@ void ENVIDataset::WriteProjectionInfo()
 /*      Minimal case - write out simple geotransform if we have a       */
 /*      non-default geotransform.                                       */
 /* -------------------------------------------------------------------- */
-    if( pszProjection == NULL || strlen(pszProjection) == 0 )
+    if( pszProjection == NULL || strlen(pszProjection) == 0  ||
+        (strlen(pszProjection) >= 8 && strncmp(pszProjection, "LOCAL_CS", 8) == 0 ) )
     {
         if( adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0
             || adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0
