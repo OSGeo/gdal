@@ -409,13 +409,13 @@ std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*> OGRSQLiteSelectLayerCommonBehav
     if (!(bCanInsertFilter && nCountSelect == 1 && nCountFrom == 1 && nCountWhere <= 1))
     {
         CPLDebug("SQLITE", "SQL expression too complex to analyse");
-        return std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*>(NULL, NULL);
+        return std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*>((OGRLayer*)NULL, (IOGRSQLiteGetSpatialWhere*)NULL);
     }
 
     size_t nFromPos = osSQLBase.ifind(" from ");
     if (nFromPos == std::string::npos)
     {
-        return std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*>(NULL, NULL);
+        return std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*>((OGRLayer*)NULL, (IOGRSQLiteGetSpatialWhere*)NULL);
     }
 
     char chQuote = osSQLBase[nFromPos + 6];
@@ -460,7 +460,7 @@ std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*> OGRSQLiteSelectLayerCommonBehav
         !poLayer->GetSpatialRef()->IsSame(oPair.first->GetSpatialRef()) )
     {
         CPLDebug("SQLITE", "Result layer and base layer don't have the same SRS.");
-        return std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*>(NULL, NULL);
+        return std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*>((OGRLayer*)NULL, (IOGRSQLiteGetSpatialWhere*)NULL);
     }
 
     return oPair;
