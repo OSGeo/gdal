@@ -377,7 +377,7 @@ int OGRPGTableLayer::ReadTableDefinition()
         hResult = OGRPG_PQexec(hPGConn, "COMMIT");
         OGRPGClearResult( hResult );
 
-        CPLError( CE_Failure, CPLE_AppDefined,
+        CPLDebug( "PG",
                   "No field definitions found for '%s', is it a table?",
                   pszTableName );
         return bTableDefinitionValid;
