@@ -29,6 +29,7 @@
 
 #include "msgcommand.h"
 #include <cstdlib>
+#include <cstdio>
 using namespace std;
 
 #ifdef _WIN32
