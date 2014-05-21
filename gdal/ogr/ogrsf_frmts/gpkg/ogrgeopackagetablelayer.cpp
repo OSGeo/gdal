@@ -597,8 +597,16 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
             /* Is this the FID column? */
             if ( bFid )
             {
-                bFidFound = TRUE;
-                m_pszFidColumn = CPLStrdup(pszName);
+                if( bFidFound )
+                {
+                    CPLDebug("GPKG", "For table %s, a new FID column has been found (%s). Keeping previous one (%s)",
+                             m_pszTableName, pszName, m_pszFidColumn);
+                }
+                else
+                {
+                    bFidFound = TRUE;
+                    m_pszFidColumn = CPLStrdup(pszName);
+                }
             }
             else
             {
