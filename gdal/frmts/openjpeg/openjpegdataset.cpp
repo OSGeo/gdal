@@ -630,8 +630,10 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
     if (bUseSetDecodeArea)
     {
         if (!opj_set_decode_area(pCodec,psImage,
-                                nBlockXOff*nBlockXSize,nBlockYOff*nBlockYSize,
-                                (nBlockXOff+1)*nBlockXSize,(nBlockYOff+1)*nBlockYSize))
+                                 nBlockXOff*nBlockXSize,
+                                 nBlockYOff*nBlockYSize,
+                                 nBlockXOff*nBlockXSize+nWidthToRead,
+                                 nBlockYOff*nBlockYSize+nHeightToRead))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "opj_set_decode_area() failed");
             eErr = CE_Failure;
