@@ -581,6 +581,31 @@ def jp2openjpeg_17():
     return 'success'
 
 ###############################################################################
+# Test when using the decode_area API when one dimension of the dataset is not a
+# multiple of 1024 (#5480)
+
+def jp2openjpeg_18():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    src_ds = gdal.GetDriverByName('Mem').Create('',2000,2000)
+    ds = gdaltest.jp2openjpeg_drv.CreateCopy( '/vsimem/jp2openjpeg_18.jp2', src_ds, options = [ 'BLOCKXSIZE=2000', 'BLOCKYSIZE=2000' ])
+    ds = None
+    src_ds = None
+
+    ds = gdal.Open( '/vsimem/jp2openjpeg_18.jp2' )
+    ds.GetRasterBand(1).Checksum()
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.Unlink( '/vsimem/jp2openjpeg_18.jp2' )
+
+    return 'success'
+
+###############################################################################
 def jp2openjpeg_online_1():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -769,6 +794,7 @@ gdaltest_list = [
     jp2openjpeg_15,
     jp2openjpeg_16,
     jp2openjpeg_17,
+    jp2openjpeg_18,
     jp2openjpeg_online_1,
     jp2openjpeg_online_2,
     jp2openjpeg_online_3,
