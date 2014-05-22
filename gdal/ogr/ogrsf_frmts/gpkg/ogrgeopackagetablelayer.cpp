@@ -427,6 +427,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
     OGRBoolean bReadExtent = FALSE;
     sqlite3* poDb = m_poDS->GetDB();
     OGREnvelope oExtent;
+    CPLString osGeomColumnName;
     CPLString osGeomColsType;
     int bHasZ = FALSE;
 
@@ -499,6 +500,9 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
             return OGRERR_FAILURE;
         }
 
+        const char* pszGeomColName = SQLResultGetValue(&oResultGeomCols, 1, 0);
+        if( pszGeomColName != NULL )
+            osGeomColumnName = pszGeomColName;
         const char* pszGeomColsType = SQLResultGetValue(&oResultGeomCols, 2, 0);
         if( pszGeomColsType != NULL )
             osGeomColsType = pszGeomColsType;
@@ -543,10 +547,14 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
         OGRFieldType oType = GPkgFieldToOGR(pszType);
 
         /* Not a standard field type... */
-        if ( oType > OFTMaxType && osGeomColsType.size() )
+        if ( (oType > OFTMaxType && osGeomColsType.size()) || EQUAL(osGeomColumnName, pszName) )
         {
             /* Maybe it's a geometry type? */
-            OGRwkbGeometryType oGeomType = GPkgGeometryTypeToWKB(pszType, bHasZ);
+            OGRwkbGeometryType oGeomType;
+            if( oType > OFTMaxType )
+                oGeomType = GPkgGeometryTypeToWKB(pszType, bHasZ);
+            else
+                oGeomType = wkbUnknown;
             if ( oGeomType != wkbNone )
             {
                 OGRwkbGeometryType oGeomTypeGeomCols = GPkgGeometryTypeToWKB(osGeomColsType.c_str(), bHasZ);
