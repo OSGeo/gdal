@@ -210,7 +210,9 @@ OGRwkbGeometryType GPkgGeometryTypeToWKB(const char *pszGpkgType, int bHasZ)
         oType =  wkbMultiLineString;
     else if ( EQUAL("MultiPolygon", pszGpkgType) )
         oType =  wkbMultiPolygon;
-    else if ( EQUAL("GeometryCollection", pszGpkgType) )
+    /* The 1.0 spec is not completely clear on what should be used... */
+    else if ( EQUAL("GeomCollection", pszGpkgType) ||
+              EQUAL("GeometryCollection", pszGpkgType) )
         oType =  wkbGeometryCollection;
     else
         oType =  wkbNone;
