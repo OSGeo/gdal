@@ -2677,12 +2677,12 @@ void ECWDataset::WriteFileMetaData(NCSFileMetaData* pFileMetaDataCopy)
 /*                                                                      */
 /*      Set the dataset pszProjection string in OGC WKT format by       */
 /*      looking up the ECW (GDT) coordinate system info in              */
-/*      ecw_cs.dat support data file.                                   */
+/*      ecw_cs.wkt support data file.                                   */
 /*                                                                      */
 /*      This code is likely still broken in some circumstances.  For    */
 /*      instance, I haven't been careful about changing the linear      */
 /*      projection parameters (false easting/northing) if the units     */
-/*      is feet.  Lots of cases missing here, and in ecw_cs.dat.        */
+/*      is feet.  Lots of cases missing here, and in ecw_cs.wkt.        */
 /************************************************************************/
 
 void ECWDataset::ECW2WKTProjection()

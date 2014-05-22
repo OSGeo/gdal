@@ -203,7 +203,7 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Is our GEOGCS name already defined in ecw_cs.dat?               */
+/*      Is our GEOGCS name already defined in ecw_cs.wkt?               */
 /* -------------------------------------------------------------------- */
     OGRSpatialReference oSRSWork;
     const char *pszWKTDatum = GetAttrValue( "DATUM" );
@@ -302,7 +302,7 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Is our PROJCS name already defined in ecw_cs.dat?               */
+/*      Is our PROJCS name already defined in ecw_cs.wkt?               */
 /* -------------------------------------------------------------------- */
     else
     {
