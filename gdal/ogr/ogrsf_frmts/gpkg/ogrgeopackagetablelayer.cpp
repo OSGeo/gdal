@@ -88,7 +88,7 @@ OGRErr OGRGeoPackageTableLayer::UpdateExtent( const OGREnvelope *poExtent )
 //
 OGRErr OGRGeoPackageTableLayer::BuildColumns()
 {
-    if ( ! m_poFeatureDefn || ! m_pszFidColumn )
+    if ( ! m_poFeatureDefn )
     {
         return OGRERR_FAILURE;
     }
@@ -97,7 +97,7 @@ OGRErr OGRGeoPackageTableLayer::BuildColumns()
     panFieldOrdinals = (int *) CPLMalloc( sizeof(int) * m_poFeatureDefn->GetFieldCount() );
 
     /* Always start with a primary key */
-    CPLString soColumns = m_pszFidColumn;
+    CPLString soColumns = m_pszFidColumn ? m_pszFidColumn : "_rowid_";
     iFIDCol = 0;
 
     /* Add a geometry column if there is one (just one) */
@@ -603,7 +603,8 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
         else
         {
             /* Is this the FID column? */
-            if ( bFid )
+            /* FIXME: add OFTInteger64 when we support it ! */
+            if ( bFid && oType == OFTInteger )
             {
                 if( bFidFound )
                 {
@@ -624,14 +625,11 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
         }
     }
 
-    /* Wait, we didn't find a FID? */
-    /* Game over, all valid tables must have a FID */
+    /* Wait, we didn't find a FID? Some operations will not be possible */
     if ( ! bFidFound )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, 
-                 "no primary key defined for table '%s'", m_pszTableName);
-        return OGRERR_FAILURE;
-        
+        CPLDebug("GPKG", 
+                 "no integer primary key defined for table '%s'", m_pszTableName);
     }
 
     if ( bReadExtent )
@@ -817,7 +815,7 @@ OGRErr OGRGeoPackageTableLayer::CreateFeature( OGRFeature *poFeature )
 
 OGRErr OGRGeoPackageTableLayer::SetFeature( OGRFeature *poFeature )
 {
-    if( !m_poDS->GetUpdate() )
+    if( !m_poDS->GetUpdate() || m_pszFidColumn == NULL )
     {
         return OGRERR_FAILURE;
     }
@@ -1014,7 +1012,7 @@ OGRFeature* OGRGeoPackageTableLayer::GetNextFeature()
 OGRFeature* OGRGeoPackageTableLayer::GetFeature(long nFID)
 {
     /* No FID, no answer. */
-    if (nFID == OGRNullFID)
+    if (nFID == OGRNullFID || m_pszFidColumn == NULL )
         return NULL;
     
     CreateSpatialIndexIfNecessary();
@@ -1059,7 +1057,7 @@ OGRFeature* OGRGeoPackageTableLayer::GetFeature(long nFID)
 
 OGRErr OGRGeoPackageTableLayer::DeleteFeature(long nFID) 
 {
-    if( !m_poDS->GetUpdate() )
+    if( !m_poDS->GetUpdate() || m_pszFidColumn == NULL )
     {
         return OGRERR_FAILURE;
     }
@@ -1245,6 +1243,9 @@ int OGRGeoPackageTableLayer::CreateSpatialIndex()
     OGRErr err;
 
     bDeferedSpatialIndexCreation = FALSE;
+    
+    if( m_pszFidColumn == NULL )
+        return FALSE;
 
     if( HasSpatialIndex() )
     {
