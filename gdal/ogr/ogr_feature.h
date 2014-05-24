@@ -366,9 +366,7 @@ class CPL_DLL OGRFeature
     virtual void        SetStyleStringDirectly( char * );
     virtual OGRStyleTable *GetStyleTable() { return m_poStyleTable; }
     virtual void        SetStyleTable(OGRStyleTable *poStyleTable);
-    virtual void        SetStyleTableDirectly(OGRStyleTable *poStyleTable)
-                            { if ( m_poStyleTable ) delete m_poStyleTable;
-                              m_poStyleTable = poStyleTable; }
+    virtual void        SetStyleTableDirectly(OGRStyleTable *poStyleTable);
 
     static OGRFeature  *CreateFeature( OGRFeatureDefn * );
     static void         DestroyFeature( OGRFeature * );

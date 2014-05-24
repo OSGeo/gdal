@@ -3901,6 +3901,17 @@ void OGRFeature::SetStyleTable(OGRStyleTable *poStyleTable)
     m_poStyleTable = ( poStyleTable ) ? poStyleTable->Clone() : NULL;
 }
 
+//************************************************************************/
+/*                          SetStyleTableDirectly()                      */
+/************************************************************************/
+
+void OGRFeature::SetStyleTableDirectly(OGRStyleTable *poStyleTable)
+{
+    if ( m_poStyleTable )
+        delete m_poStyleTable;
+    m_poStyleTable = poStyleTable;
+}
+
 /************************************************************************/
 /*                            RemapFields()                             */
 /*                                                                      */

@@ -31,9 +31,12 @@
 #define _GDAL_PDF_H_INCLUDED
 
 #ifdef HAVE_POPPLER
+
 /* hack for PDF driver and poppler >= 0.15.0 that defines incompatible "typedef bool GBool" */
 /* in include/poppler/goo/gtypes.h with the one defined in cpl_port.h */
 #define CPL_GBOOL_DEFINED
+#define OGR_FEATURESTYLE_INCLUDE
+
 #include <goo/gtypes.h>
 #endif
 
