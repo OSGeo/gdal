@@ -3669,7 +3669,8 @@ def ogr_shape_74():
 def ogr_shape_75():
 
     ds = gdal.OpenEx('data/poly.shp')
-    if ds.GetFileList() != ['data/poly.shp', 'data/poly.shx', 'data/poly.dbf', 'data/poly.PRJ']:
+    if ds.GetFileList() != ['data/poly.shp', 'data/poly.shx', 'data/poly.dbf', 'data/poly.PRJ'] and \
+       ds.GetFileList() != ['data/poly.shp', 'data/poly.shx', 'data/poly.dbf', 'data/poly.prj']:
         gdaltest.post_reason('fail')
         print(ds.GetFileList())
         return 'failure'
