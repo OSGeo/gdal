@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -348,6 +349,32 @@ def stats_nodata_posinf_msvc():
     return stats_nodata_check('data/stats_nodata_posinf_msvc.tif', gdaltest.posinf())
 
 ###############################################################################
+# Test standard deviation computation on huge values
+
+def stats_stddev_huge_values():
+
+    gdal.FileFromMemBuffer('/vsimem/stats_stddev_huge_values.asc',
+"""ncols        4
+nrows        4
+xllcorner    0
+yllcorner    0
+cellsize     1
+ 100000000 100000002 100000000 100000002
+ 100000000 100000002 100000000 100000002
+ 100000000 100000002 100000000 100000002
+ 100000000 100000002 100000000 100000002""")
+    ds = gdal.Open('/vsimem/stats_stddev_huge_values.asc')
+    stats = ds.GetRasterBand(1).ComputeStatistics(0)
+    if stats != [100000000.0, 100000002.0, 100000001.0, 1.0]:
+        gdaltest.post_reason('did not get expected stats')
+        print(stats)
+        return 'fail'
+    ds = None
+    gdal.GetDriverByName('AAIGRID').Delete('/vsimem/stats_stddev_huge_values.asc')
+
+    return 'success'
+
+###############################################################################
 # Run tests
 
 gdaltest_list = [
@@ -366,7 +393,8 @@ gdaltest_list = [
     stats_nodata_neginf_linux,
     stats_nodata_neginf_msvc,
     stats_nodata_posinf_linux,
-    stats_nodata_posinf_msvc
+    stats_nodata_posinf_msvc,
+    stats_stddev_huge_values
     ]
 
 if __name__ == '__main__':

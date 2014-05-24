@@ -3512,7 +3512,12 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
 /* -------------------------------------------------------------------- */
     double      dfMin = 0.0, dfMax = 0.0;
     int         bGotNoDataValue, bFirstValue = TRUE;
-    double      dfNoDataValue, dfSum = 0.0, dfSum2 = 0.0;
+    /* Using Welford algorithm ( http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance ) */
+    /* to compute standard deviation in a more numerically robust way than */
+    /* the difference of the sum of square values with the square of the sum */
+    /* dfMean and dfM2 are updated at each sample */
+    /* dfM2 is the sum of square of differences to the current mean */
+    double      dfNoDataValue, dfMean = 0.0, dfM2 = 0.0;
     GIntBig     nSampleCount = 0;
 
     if( !pfnProgress( 0.0, "Compute Statistics", pProgressData ) )
@@ -3640,10 +3645,10 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                     dfMax = MAX(dfMax,dfValue);
                 }
 
-                dfSum += dfValue;
-                dfSum2 += dfValue * dfValue;
-
                 nSampleCount++;
+                double dfDelta = dfValue - dfMean;
+                dfMean += dfDelta / nSampleCount;
+                dfM2 += dfDelta * (dfValue - dfMean);
             }
         }
 
@@ -3775,10 +3780,10 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                         dfMax = MAX(dfMax,dfValue);
                     }
 
-                    dfSum += dfValue;
-                    dfSum2 += dfValue * dfValue;
-
                     nSampleCount++;
+                    double dfDelta = dfValue - dfMean;
+                    dfMean += dfDelta / nSampleCount;
+                    dfM2 += dfDelta * (dfValue - dfMean);
                 }
             }
 
@@ -3803,8 +3808,7 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
 /* -------------------------------------------------------------------- */
 /*      Save computed information.                                      */
 /* -------------------------------------------------------------------- */
-    double dfMean = dfSum / nSampleCount;
-    double dfStdDev = sqrt((dfSum2 / nSampleCount) - (dfMean * dfMean));
+    double dfStdDev = sqrt(dfM2 / nSampleCount);
 
     if( nSampleCount > 0 )
         SetStatistics( dfMin, dfMax, dfMean, dfStdDev );
