@@ -37,34 +37,27 @@ CPL_CVSID("$Id$");
 extern "C" void RegisterOGRWFS();
 
 /************************************************************************/
-/*                           ~OGRWFSDriver()                            */
-/************************************************************************/
-
-OGRWFSDriver::~OGRWFSDriver()
-
-{
-}
-
-/************************************************************************/
-/*                              GetName()                               */
-/************************************************************************/
-
-const char *OGRWFSDriver::GetName()
-
-{
-    return "WFS";
-}
-
-/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-OGRDataSource *OGRWFSDriver::Open( const char * pszFilename, int bUpdate )
+static GDALDataset *OGRWFSDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
+    if( !EQUALN(poOpenInfo->pszFilename, "WFS:", 4) )
+    {
+        if( poOpenInfo->fpL == NULL )
+            return NULL;
+        if( !EQUALN((const char*)poOpenInfo->pabyHeader,"<OGRWFSDataSource>",18) &&
+            strstr((const char*)poOpenInfo->pabyHeader,"<WFS_Capabilities") == NULL &&
+            strstr((const char*)poOpenInfo->pabyHeader,"<wfs:WFS_Capabilities") == NULL)
+        {
+            return NULL;
+        }
+    }
+
     OGRWFSDataSource   *poDS = new OGRWFSDataSource();
 
-    if( !poDS->Open( pszFilename, bUpdate ) )
+    if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update ) )
     {
         delete poDS;
         poDS = NULL;
@@ -74,22 +67,30 @@ OGRDataSource *OGRWFSDriver::Open( const char * pszFilename, int bUpdate )
 }
 
 /************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRWFSDriver::TestCapability( const char * pszCap )
-
-{
-    return FALSE;
-}
-
-/************************************************************************/
 /*                           RegisterOGRWFS()                           */
 /************************************************************************/
 
 void RegisterOGRWFS()
 
 {
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRWFSDriver );
+    GDALDriver  *poDriver;
+
+    if( GDALGetDriverByName( "WFS" ) == NULL )
+    {
+        poDriver = new GDALDriver();
+
+        poDriver->SetDescription( "WFS" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                                   "OGC WFS (Web Feature Service)" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                                   "drv_wfs.html" );
+
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
+        poDriver->pfnOpen = OGRWFSDriverOpen;
+
+        GetGDALDriverManager()->RegisterDriver( poDriver );
+    }
 }
 

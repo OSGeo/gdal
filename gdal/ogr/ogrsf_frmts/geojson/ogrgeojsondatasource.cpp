@@ -70,44 +70,21 @@ OGRGeoJSONDataSource::~OGRGeoJSONDataSource()
 /*                           Open()                                     */
 /************************************************************************/
 
-int OGRGeoJSONDataSource::Open( const char* pszName )
+int OGRGeoJSONDataSource::Open( GDALOpenInfo* poOpenInfo,
+                                GeoJSONSourceType nSrcType )
 {
-    CPLAssert( NULL != pszName );
-
-/* -------------------------------------------------------------------- */
-/*      Release resources allocated during previous request.            */
-/* -------------------------------------------------------------------- */
-    if( NULL != papoLayers_ )
-    {
-        CPLAssert( nLayers_ > 0 );
-        Clear();
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Determine type of data source: text file (.geojson, .json),     */
-/*      Web Service or text passed directly and load data.              */
-/* -------------------------------------------------------------------- */
-    GeoJSONSourceType nSrcType;
-    
-    VSILFILE* fp = NULL;
-
-    nSrcType = GeoJSONGetSourceType( pszName, &fp );
     if( eGeoJSONSourceService == nSrcType )
     {
-        if( (strstr(pszName, "SERVICE=WFS") || strstr(pszName, "service=WFS") ||
-             strstr(pszName, "service=wfs")) && !strstr(pszName, "json"))
-            return FALSE;
-
-        if( !ReadFromService( pszName ) )
+        if( !ReadFromService( poOpenInfo->pszFilename ) )
             return FALSE;
     }
     else if( eGeoJSONSourceText == nSrcType )
     {
-        pszGeoData_ = CPLStrdup( pszName );
+        pszGeoData_ = CPLStrdup( poOpenInfo->pszFilename );
     }
     else if( eGeoJSONSourceFile == nSrcType )
     {
-        if( !ReadFromFile( pszName, fp ) )
+        if( !ReadFromFile( poOpenInfo ) )
             return FALSE;
     }
     else
@@ -176,10 +153,10 @@ OGRLayer* OGRGeoJSONDataSource::GetLayer( int nLayer )
 }
 
 /************************************************************************/
-/*                            CreateLayer()                             */
+/*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer* OGRGeoJSONDataSource::CreateLayer( const char* pszName_,
+OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszName_,
                                              OGRSpatialReference* poSRS,
                                              OGRwkbGeometryType eGType,
                                              char** papszOptions )
@@ -369,20 +346,20 @@ void OGRGeoJSONDataSource::Clear()
 /*                           ReadFromFile()                             */
 /************************************************************************/
 
-int OGRGeoJSONDataSource::ReadFromFile( const char* pszSource, VSILFILE* fpIn )
+int OGRGeoJSONDataSource::ReadFromFile( GDALOpenInfo* poOpenInfo )
 {
     GByte* pabyOut = NULL;
-    if( !VSIIngestFile( fpIn, pszSource, &pabyOut, NULL, -1) )
+    if( poOpenInfo->fpL == NULL ||
+        !VSIIngestFile( poOpenInfo->fpL, poOpenInfo->pszFilename, &pabyOut, NULL, -1) )
     {
-        if( fpIn != NULL )
-            VSIFCloseL(fpIn);
         return FALSE;
     }
-    if( fpIn != NULL )
-        VSIFCloseL(fpIn);
+
+    VSIFCloseL(poOpenInfo->fpL);
+    poOpenInfo->fpL = NULL;
     pszGeoData_ = (char*) pabyOut;
 
-    pszName_ = CPLStrdup( pszSource );
+    pszName_ = CPLStrdup( poOpenInfo->pszFilename );
 
     CPLAssert( NULL != pszGeoData_ );
     return TRUE;

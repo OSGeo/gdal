@@ -35,6 +35,6 @@
 
 #include "tiffio.h"
 
-TIFF* VSI_TIFFOpen(const char* name, const char* mode);
+TIFF* VSI_TIFFOpen(const char* name, const char* mode, VSILFILE* fp);
 
 #endif // TIFVSI_H_INCLUDED

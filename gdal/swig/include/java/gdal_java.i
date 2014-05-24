@@ -17,6 +17,8 @@
  *
 */
 
+%include java_exceptions.i
+
 %pragma(java) jniclasscode=%{
   private static boolean available = false;
 
@@ -44,7 +46,26 @@
 
 /* This hacks turns the gdalJNI class into a package private class */
 %pragma(java) jniclassimports=%{
+import org.gdal.osr.SpatialReference;
+import org.gdal.ogr.Geometry;
+import org.gdal.ogr.StyleTable;
+import org.gdal.ogr.Layer;
 %}
+
+%pragma(java) moduleimports=%{
+import org.gdal.osr.SpatialReference;
+import org.gdal.ogr.Geometry;
+import org.gdal.ogr.StyleTable;
+import org.gdal.ogr.Layer;
+%}
+
+%typemap(javaimports) GDALDatasetShadow %{
+import org.gdal.osr.SpatialReference;
+import org.gdal.ogr.Geometry;
+import org.gdal.ogr.StyleTable;
+import org.gdal.ogr.Layer;
+%}
+
 
 %pragma(java) modulecode=%{
 
@@ -145,7 +166,6 @@ import org.gdal.gdalconst.gdalconstConstants;
 
 %}
 
-
 %typemap(javacode) GDALDatasetShadow %{
 
   // Preferred name to match C++ API
@@ -175,6 +195,16 @@ import org.gdal.gdalconst.gdalconstConstants;
       double adfGeoTransform[] = new double[6];
       GetGeoTransform(adfGeoTransform);
       return adfGeoTransform;
+  }
+
+  public Layer GetLayer(int index)
+  {
+      return GetLayerByIndex(index);
+  }
+
+  public Layer GetLayer(String layerName)
+  {
+      return GetLayerByName(layerName);
   }
 %}
 
@@ -859,6 +889,11 @@ import org.gdal.gdalconst.gdalconstConstants;
                   GDALRasterBandShadow* GetMaskBand,
                   GDALColorTableShadow* GetColorTable,
                   GDALColorTableShadow* GetRasterColorTable,
+                  OGRLayerShadow* CreateLayer,
+                  OGRLayerShadow* CopyLayer,
+                  OGRLayerShadow* GetLayerByIndex,
+                  OGRLayerShadow* GetLayerByName,
+                  OGRLayerShadow* ExecuteSQL,
                   CPLXMLNode* getChild,
                   CPLXMLNode* getNext,
                   CPLXMLNode* GetXMLNode,
@@ -911,21 +946,6 @@ import org.gdal.gdalconst.gdalconstConstants;
       return SetMetadata(metadata, null);
   }
 %}
-
-%typemap(in) (OGRLayerShadow*)
-{
-    if ($input != NULL)
-    {
-        const jclass klass = jenv->FindClass("org/gdal/ogr/Layer");
-        const jmethodID getCPtr = jenv->GetStaticMethodID(klass, "getCPtr", "(Lorg/gdal/ogr/Layer;)J");
-        $1 = (OGRLayerShadow*) jenv->CallStaticLongMethod(klass, getCPtr, $input);
-    }
-}
-
-%typemap(jni) (OGRLayerShadow*)  "jobject"
-%typemap(jtype) (OGRLayerShadow*)  "org.gdal.ogr.Layer"
-%typemap(jstype) (OGRLayerShadow*)  "org.gdal.ogr.Layer"
-%typemap(javain) (OGRLayerShadow*)  "$javainput"
 
 %include callback.i
 

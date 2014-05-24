@@ -62,9 +62,20 @@ const char *OGRIdrisiDriver::GetName()
 OGRDataSource *OGRIdrisiDriver::Open( const char * pszFilename, int bUpdate )
 
 {
+    if (bUpdate)
+    {
+        return NULL;
+    }
+
+// --------------------------------------------------------------------
+//      Does this appear to be a .vct file?
+// --------------------------------------------------------------------
+    if ( !EQUAL(CPLGetExtension(pszFilename), "vct") )
+        return NULL;
+
     OGRIdrisiDataSource   *poDS = new OGRIdrisiDataSource();
 
-    if( !poDS->Open( pszFilename, bUpdate ) )
+    if( !poDS->Open( pszFilename ) )
     {
         delete poDS;
         poDS = NULL;
@@ -90,6 +101,10 @@ int OGRIdrisiDriver::TestCapability( const char * pszCap )
 void RegisterOGRIdrisi()
 
 {
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRIdrisiDriver );
+    OGRSFDriver* poDriver = new OGRIdrisiDriver;
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                                   "Idrisi Vector (.vct)" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "vct" );
+    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }
 

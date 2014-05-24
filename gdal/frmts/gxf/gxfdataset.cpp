@@ -245,7 +245,7 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      least one "\n#keyword" type signature in the first chunk of     */
 /*      the file.                                                       */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->fp == NULL || poOpenInfo->nHeaderBytes < 50 )
+    if( poOpenInfo->nHeaderBytes < 50 )
         return NULL;
 
     bFoundKeyword = FALSE;
@@ -256,6 +256,12 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
              || poOpenInfo->pabyHeader[i] == 13)
             && poOpenInfo->pabyHeader[i+1] == '#' )
         {
+            if( strncmp((const char*)poOpenInfo->pabyHeader + i + 2, "include", strlen("include")) == 0 )
+                return NULL;
+            if( strncmp((const char*)poOpenInfo->pabyHeader + i + 2, "define", strlen("define")) == 0 )
+                return NULL;
+            if( strncmp((const char*)poOpenInfo->pabyHeader + i + 2, "ifdef", strlen("ifdef")) == 0 )
+                return NULL;
             bFoundKeyword = TRUE;
         }
         if( poOpenInfo->pabyHeader[i] == 0 )
@@ -372,7 +378,7 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check for external overviews.                                   */
 /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename, poOpenInfo->papszSiblingFiles );
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename, poOpenInfo->GetSiblingFiles() );
 
     return( poDS );
 }
@@ -391,6 +397,7 @@ void GDALRegister_GXF()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "GXF" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "GeoSoft Grid Exchange Format" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

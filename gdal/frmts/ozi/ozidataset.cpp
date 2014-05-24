@@ -683,6 +683,7 @@ void GDALRegister_OZI()
         poDriver = new GDALDriver();
 
         poDriver->SetDescription( "OZI" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                    "OziExplorer Image File" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,

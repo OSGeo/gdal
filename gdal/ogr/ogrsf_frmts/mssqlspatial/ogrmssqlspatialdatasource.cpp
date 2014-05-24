@@ -207,7 +207,7 @@ int OGRMSSQLSpatialDataSource::DeleteLayer( int iLayer )
 /*                            CreateLayer()                             */
 /************************************************************************/
 
-OGRLayer * OGRMSSQLSpatialDataSource::CreateLayer( const char * pszLayerName,
+OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
                                           OGRSpatialReference *poSRS,
                                           OGRwkbGeometryType eType,
                                           char ** papszOptions )

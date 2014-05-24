@@ -505,7 +505,7 @@ INGR_DecodeRunLengthPaletted( GByte *pabySrcData, GByte *pabyDstData,
 //    GeoTiff in memory helper
 //  ------------------------------------------------------------------
 
-TIFF* VSI_TIFFOpen(const char* name, const char* mode);
+#include "tifvsi.h"
 
 INGR_VirtualFile CPL_STDCALL INGR_CreateVirtualFile( const char *pszFilename,
                                                      INGR_Format eFormat,

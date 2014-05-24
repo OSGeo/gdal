@@ -1459,6 +1459,7 @@ void GDALRegister_JPIPKAK()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "JPIPKAK" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "JPIP (based on Kakadu)" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

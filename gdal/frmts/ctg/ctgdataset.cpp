@@ -372,7 +372,7 @@ int CTGDataset::Identify( GDALOpenInfo * poOpenInfo )
         osFilename += poOpenInfo->pszFilename;
         poOpenInfo = poOpenInfoToDelete =
                 new GDALOpenInfo(osFilename.c_str(), GA_ReadOnly,
-                                 poOpenInfo->papszSiblingFiles);
+                                 poOpenInfo->GetSiblingFiles());
     }
 
     if (poOpenInfo->nHeaderBytes < HEADER_LINE_COUNT * 80)
@@ -592,6 +592,7 @@ void GDALRegister_CTG()
         poDriver = new GDALDriver();
 
         poDriver->SetDescription( "CTG" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                    "USGS LULC Composite Theme Grid" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,

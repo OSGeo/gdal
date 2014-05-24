@@ -332,7 +332,7 @@ def test_ogrinfo_19():
         return 'skip'
 
     ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' --formats', check_memleak = False )
-    if ret.find('"ESRI Shapefile" (read/write)') < 0:
+    if ret.find('ESRI Shapefile -vector- (rw+v): ESRI Shapefile') < 0:
         print(ret)
         return 'fail'
 
@@ -346,7 +346,7 @@ def test_ogrinfo_20():
         return 'skip'
 
     ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' --help-general', check_memleak = False )
-    if ret.find('Generic GDAL/OGR utility command options') < 0:
+    if ret.find('Generic GDAL utility command options') < 0:
         print(ret)
         return 'fail'
 

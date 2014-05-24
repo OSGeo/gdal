@@ -87,14 +87,9 @@ OGRLayer *OGRSEGUKOOADataSource::GetLayer( int iLayer )
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRSEGUKOOADataSource::Open( const char * pszFilename, int bUpdateIn)
+int OGRSEGUKOOADataSource::Open( const char * pszFilename )
 
 {
-    if (bUpdateIn)
-    {
-        return FALSE;
-    }
-
     pszName = CPLStrdup( pszFilename );
 
     VSILFILE* fp = VSIFOpenL(pszFilename, "rb");

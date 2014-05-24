@@ -118,6 +118,11 @@ void RegisterOGROCI()
 {
     if (! GDAL_CHECK_VERSION("OCI driver"))
         return;
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGROCIDriver );
+    OGRSFDriver* poDriver = new OGROCIDriver;
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                                   "Oracle Spatial" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                                "drv_oci.html" );
+    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }
 

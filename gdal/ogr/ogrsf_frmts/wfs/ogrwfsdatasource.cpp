@@ -90,11 +90,11 @@ CPLXMLNode* WFSFindNode(CPLXMLNode* psXML, const char* pszRootName)
 
 class OGRWFSWrappedResultLayer : public OGRLayer
 {
-    OGRDataSource *poDS;
+    GDALDataset *poDS;
     OGRLayer      *poLayer;
 
     public:
-        OGRWFSWrappedResultLayer(OGRDataSource* poDS, OGRLayer* poLayer)
+        OGRWFSWrappedResultLayer(GDALDataset* poDS, OGRLayer* poLayer)
         {
             this->poDS = poDS;
             this->poLayer = poLayer;
@@ -263,14 +263,14 @@ OGRLayer* OGRWFSDataSource::GetLayerByName(const char* pszName)
         if (poLayerGetCapabilitiesLayer != NULL)
             return poLayerGetCapabilitiesLayer;
 
-        OGRSFDriver* poMEMDrv = OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName("Memory");
+        GDALDriver* poMEMDrv = OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName("Memory");
         if (poMEMDrv == NULL)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot load 'Memory' driver");
             return NULL;
         }
 
-        poLayerGetCapabilitiesDS = poMEMDrv->CreateDataSource("WFSGetCapabilities", NULL);
+        poLayerGetCapabilitiesDS = poMEMDrv->Create("WFSGetCapabilities", 0, 0, 0, GDT_Unknown, NULL);
         poLayerGetCapabilitiesLayer = poLayerGetCapabilitiesDS->CreateLayer("WFSGetCapabilities", NULL, wkbNone, NULL);
         OGRFieldDefn oFDefn("content", OFTString);
         poLayerGetCapabilitiesLayer->CreateField(&oFDefn);
@@ -1915,14 +1915,14 @@ OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
             return NULL;
         }
 
-        OGRSFDriver* poMEMDrv = OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName("Memory");
+        GDALDriver* poMEMDrv = OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName("Memory");
         if (poMEMDrv == NULL)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot load 'Memory' driver");
             return NULL;
         }
 
-        OGRDataSource* poMEMDS = poMEMDrv->CreateDataSource("dummy_name", NULL);
+        GDALDataset* poMEMDS = poMEMDrv->Create("dummy_name", 0, 0, 0, GDT_Unknown, NULL);
         OGRLayer* poMEMLayer = poMEMDS->CreateLayer("FID_LIST", NULL, wkbNone, NULL);
         OGRFieldDefn oFDefn("gml_id", OFTString);
         poMEMLayer->CreateField(&oFDefn);

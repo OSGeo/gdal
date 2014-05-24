@@ -52,6 +52,7 @@ OGRNTFFeatureClassLayer::OGRNTFFeatureClassLayer( OGRNTFDataSource *poDSIn )
 /*      Establish the schema.                                           */
 /* -------------------------------------------------------------------- */
     poFeatureDefn = new OGRFeatureDefn( "FEATURE_CLASSES" );
+    SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->SetGeomType( wkbNone );
     poFeatureDefn->Reference();
 

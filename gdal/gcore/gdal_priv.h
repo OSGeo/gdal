@@ -58,6 +58,8 @@ class GDALAsyncReader;
 #include "cpl_string.h"
 #include "cpl_minixml.h"
 #include <vector>
+#include <map>
+#include "ogr_core.h"
 
 #define GMO_VALID                0x0001
 #define GMO_IGNORE_UNIMPLEMENTED 0x0002
@@ -219,47 +221,51 @@ class CPL_DLL GDALDefaultOverviews
 
 class CPL_DLL GDALOpenInfo
 {
+    int         bHasGotSiblingFiles;
+    char        **papszSiblingFiles;
+    int         nHeaderBytesTried;
+
   public:
-                GDALOpenInfo( const char * pszFile, GDALAccess eAccessIn,
+                GDALOpenInfo( const char * pszFile, int nOpenFlagsIn,
                               char **papszSiblingFiles = NULL );
                 ~GDALOpenInfo( void );
 
     char        *pszFilename;
-    char        **papszSiblingFiles;
+    char**      papszOpenOptions;
 
     GDALAccess  eAccess;
+    int         nOpenFlags;
 
     int         bStatOK;
     int         bIsDirectory;
 
-    FILE        *fp;
+    VSILFILE   *fpL;
 
     int         nHeaderBytes;
     GByte       *pabyHeader;
 
+    int         TryToIngest(int nBytes);
+    char      **GetSiblingFiles();
 };
 
 /* ******************************************************************** */
 /*                             GDALDataset                              */
 /* ******************************************************************** */
 
-/* Internal method for now. Might be subject to later revisions */
-GDALDatasetH GDALOpenInternal( const char * pszFilename, GDALAccess eAccess,
-                               const char* const * papszAllowedDrivers);
-GDALDatasetH GDALOpenInternal( GDALOpenInfo& oOpenInfo,
-                               const char* const * papszAllowedDrivers);
+class OGRLayer;
+class OGRGeometry;
+class OGRSpatialReference;
+class OGRStyleTable;
 
 //! A set of associated raster bands, usually from one file.
 
 class CPL_DLL GDALDataset : public GDALMajorObject
 {
-    friend GDALDatasetH CPL_STDCALL GDALOpen( const char *, GDALAccess);
-    friend GDALDatasetH CPL_STDCALL GDALOpenShared( const char *, GDALAccess);
-
-    /* Internal method for now. Might be subject to later revisions */
-    friend GDALDatasetH GDALOpenInternal( const char *, GDALAccess, const char* const * papszAllowedDrivers);
-    friend GDALDatasetH GDALOpenInternal( GDALOpenInfo& oOpenInfo,
-                                          const char* const * papszAllowedDrivers);
+    friend GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
+                                 unsigned int nOpenFlags,
+                                 const char* const* papszAllowedDrivers,
+                                 const char* const* papszOpenOptions,
+                                 const char* const* papszSiblingFiles );
 
     friend class GDALDriver;
     friend class GDALDefaultOverviews;
@@ -269,7 +275,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
   protected:
     GDALDriver  *poDriver;
     GDALAccess  eAccess;
-    
+
     // Stored raster information.
     int         nRasterXSize;
     int         nRasterYSize;
@@ -307,6 +313,8 @@ class CPL_DLL GDALDataset : public GDALMajorObject
                                int nBandCount, int *panBandMap);
 
     virtual int         CloseDependentDatasets();
+    
+    int                 ValidateLayerCreationOptions( const char* const* papszLCO );
 
     friend class GDALRasterBand;
     
@@ -332,7 +340,9 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     virtual void *GetInternalHandle( const char * );
     virtual GDALDriver *GetDriver(void);
     virtual char      **GetFileList(void);
-
+    
+    virtual     const char* GetDriverName();
+    
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();
@@ -373,6 +383,64 @@ class CPL_DLL GDALDataset : public GDALMajorObject
                            int, int *, GDALProgressFunc, void * );
 
     void ReportError(CPLErr eErrClass, int err_no, const char *fmt, ...)  CPL_PRINT_FUNC_FORMAT (4, 5);
+
+private:
+    void        *m_hMutex;
+
+    OGRLayer*       BuildLayerFromSelectInfo(void* psSelectInfo,
+                                             OGRGeometry *poSpatialFilter,
+                                             const char *pszDialect);
+
+  public:
+
+    virtual int         GetLayerCount();
+    virtual OGRLayer    *GetLayer(int);
+    virtual OGRLayer    *GetLayerByName(const char *);
+    virtual OGRErr      DeleteLayer(int);
+
+    virtual int         TestCapability( const char * );
+
+    virtual OGRLayer   *CreateLayer( const char *pszName, 
+                                     OGRSpatialReference *poSpatialRef = NULL,
+                                     OGRwkbGeometryType eGType = wkbUnknown,
+                                     char ** papszOptions = NULL );
+    virtual OGRLayer   *CopyLayer( OGRLayer *poSrcLayer, 
+                                   const char *pszNewName, 
+                                   char **papszOptions = NULL );
+
+    virtual OGRStyleTable *GetStyleTable();
+    virtual void        SetStyleTableDirectly( OGRStyleTable *poStyleTable );
+                            
+    virtual void        SetStyleTable(OGRStyleTable *poStyleTable);
+
+    virtual OGRLayer *  ExecuteSQL( const char *pszStatement,
+                                    OGRGeometry *poSpatialFilter,
+                                    const char *pszDialect );
+    virtual void        ReleaseResultSet( OGRLayer * poResultsSet );
+
+    int                 GetRefCount() const;
+    int                 GetSummaryRefCount() const;
+    OGRErr              Release();
+
+    
+    static int          IsGenericSQLDialect(const char* pszDialect);
+
+  protected:
+
+    virtual OGRLayer   *ICreateLayer( const char *pszName, 
+                                     OGRSpatialReference *poSpatialRef = NULL,
+                                     OGRwkbGeometryType eGType = wkbUnknown,
+                                     char ** papszOptions = NULL );
+
+    OGRErr              ProcessSQLCreateIndex( const char * );
+    OGRErr              ProcessSQLDropIndex( const char * );
+    OGRErr              ProcessSQLDropTable( const char * );
+    OGRErr              ProcessSQLAlterTableAddColumn( const char * );
+    OGRErr              ProcessSQLAlterTableDropColumn( const char * );
+    OGRErr              ProcessSQLAlterTableAlterColumn( const char * );
+    OGRErr              ProcessSQLAlterTableRenameColumn( const char * );
+
+    OGRStyleTable      *m_poStyleTable;
 };
 
 /* ******************************************************************** */
@@ -702,6 +770,10 @@ class CPL_DLL GDALDriver : public GDALMajorObject
                         GDALDriver();
                         ~GDALDriver();
 
+    virtual CPLErr      SetMetadataItem( const char * pszName,
+                                 const char * pszValue,
+                                 const char * pszDomain = "" );
+
 /* -------------------------------------------------------------------- */
 /*      Public C++ methods.                                             */
 /* -------------------------------------------------------------------- */
@@ -719,7 +791,7 @@ class CPL_DLL GDALDriver : public GDALMajorObject
                                      int, char **,
                                      GDALProgressFunc pfnProgress, 
                                      void * pProgressData ) CPL_WARN_UNUSED_RESULT;
-    
+
 /* -------------------------------------------------------------------- */
 /*      The following are semiprivate, not intended to be accessed      */
 /*      by anyone but the formats instantiating and populating the      */
@@ -743,12 +815,24 @@ class CPL_DLL GDALDriver : public GDALMajorObject
 
     void                (*pfnUnloadDriver)(GDALDriver *);
 
+    /* Return 1 if the passed file is certainly recognized by the driver */
+    /* Return 0 if the passed file is certainly NOT recognized by the driver */
+    /* Return -1 if the passed file may be or may not be recognized by the driver,
+       and that a potentially costly test must be done with pfnOpen */
     int                 (*pfnIdentify)( GDALOpenInfo * );
 
     CPLErr              (*pfnRename)( const char * pszNewName,
                                       const char * pszOldName );
     CPLErr              (*pfnCopyFiles)( const char * pszNewName,
                                          const char * pszOldName );
+
+    /* For legacy OGR drivers */
+    GDALDataset         *(*pfnOpenWithDriverArg)( GDALDriver*, GDALOpenInfo * );
+    GDALDataset         *(*pfnCreateVectorOnly)( GDALDriver*,
+                                                 const char * pszName,
+                                                 char ** papszOptions );
+    CPLErr              (*pfnDeleteDataSource)( GDALDriver*,
+                                                 const char * pszName );
 
 /* -------------------------------------------------------------------- */
 /*      Helper methods.                                                 */
@@ -783,8 +867,7 @@ class CPL_DLL GDALDriverManager : public GDALMajorObject
 {
     int         nDrivers;
     GDALDriver  **papoDrivers;
-
-    char        *pszHome;
+    std::map<CPLString, GDALDriver*> oMapNameToDrivers;
     
  public:
                 GDALDriverManager();
@@ -795,14 +878,10 @@ class CPL_DLL GDALDriverManager : public GDALMajorObject
     GDALDriver  *GetDriverByName( const char * );
 
     int         RegisterDriver( GDALDriver * );
-    void        MoveDriver( GDALDriver *, int );
     void        DeregisterDriver( GDALDriver * );
 
     void        AutoLoadDrivers();
     void        AutoSkipDrivers();
-
-    const char *GetHome();
-    void        SetHome( const char * );
 };
 
 CPL_C_START
@@ -965,6 +1044,13 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
                            void *fpL, int nOffset,
                            int bSwabflag, int nTIFFHEADER,
                            int& nExifOffset, int& nInterOffset, int& nGPSOffset);
+
+int GDALValidateOpenOptions( GDALDriverH hDriver,
+                             const char* const* papszOptionOptions);
+int GDALValidateOptions( const char* pszOptionList,
+                         const char* const* papszOptionsToValidate,
+                         const char* pszErrorMessageOptionType,
+                         const char* pszErrorMessageContainerName);
 
 #define DIV_ROUND_UP(a, b) ( ((a) % (b)) == 0 ? ((a) / (b)) : (((a) / (b)) + 1) )
 

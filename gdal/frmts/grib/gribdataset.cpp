@@ -718,7 +718,7 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check for external overviews.                                   */
 /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename, poOpenInfo->papszSiblingFiles );
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename, poOpenInfo->GetSiblingFiles() );
     CPLAcquireMutex(hGRIBMutex, 1000.0);
 
     return( poDS );
@@ -918,6 +918,7 @@ void GDALRegister_GRIB()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "GRIB" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "GRIdded Binary (.grb)" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

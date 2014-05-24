@@ -68,7 +68,7 @@ class IDADataset : public RawDataset
     double      dfM;
     double      dfB;
 
-    FILE       *fpRaw;
+    VSILFILE   *fpRaw;
 
     char       *pszProjection;
     double      adfGeoTransform[6];
@@ -113,7 +113,7 @@ class IDARasterBand : public RawRasterBand
     GDALColorTable       *poColorTable;
 
   public:
-    		IDARasterBand( IDADataset *poDSIn, FILE *fpRaw, int nXSize );
+    		IDARasterBand( IDADataset *poDSIn, VSILFILE *fpRaw, int nXSize );
     virtual     ~IDARasterBand();
 
     virtual GDALRasterAttributeTable *GetDefaultRAT();
@@ -131,9 +131,9 @@ class IDARasterBand : public RawRasterBand
 /************************************************************************/
 
 IDARasterBand::IDARasterBand( IDADataset *poDSIn,
-                              FILE *fpRaw, int nXSize )
+                              VSILFILE *fpRaw, int nXSize )
         : RawRasterBand( poDSIn, 1, fpRaw, 512, 1, nXSize, 
-                         GDT_Byte, FALSE, FALSE )
+                         GDT_Byte, FALSE, TRUE )
 
 {
     poColorTable = NULL;
@@ -313,7 +313,7 @@ IDADataset::~IDADataset()
     FlushCache();
 
     if( fpRaw != NULL )
-        VSIFClose( fpRaw );
+        VSIFCloseL( fpRaw );
     CPLFree( pszProjection );
 }
 
@@ -392,8 +392,8 @@ void IDADataset::FlushCache()
     
     if( bHeaderDirty )
     {
-        VSIFSeek( fpRaw, 0, SEEK_SET );
-        VSIFWrite( abyHeader, 512, 1, fpRaw );
+        VSIFSeekL( fpRaw, 0, SEEK_SET );
+        VSIFWriteL( abyHeader, 512, 1, fpRaw );
         bHeaderDirty = FALSE;
     }
 }
@@ -687,7 +687,7 @@ GDALDataset *IDADataset::Open( GDALOpenInfo * poOpenInfo )
     int      nXSize, nYSize;
     GIntBig  nExpectedFileSize, nActualFileSize;
 
-    if( poOpenInfo->fp == NULL )
+    if( poOpenInfo->fpL == NULL )
         return NULL;
 
     if( poOpenInfo->nHeaderBytes < 512 )
@@ -713,9 +713,9 @@ GDALDataset *IDADataset::Open( GDALOpenInfo * poOpenInfo )
     // The file just be exactly the image size + header size in length.
     nExpectedFileSize = nXSize * nYSize + 512;
     
-    VSIFSeek( poOpenInfo->fp, 0, SEEK_END );
-    nActualFileSize = VSIFTell( poOpenInfo->fp );
-    VSIRewind( poOpenInfo->fp );
+    VSIFSeekL( poOpenInfo->fpL, 0, SEEK_END );
+    nActualFileSize = VSIFTellL( poOpenInfo->fpL );
+    VSIRewindL( poOpenInfo->fpL );
     
     if( nActualFileSize != nExpectedFileSize )
         return NULL;
@@ -896,12 +896,12 @@ CALCULATED =200
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->eAccess == GA_ReadOnly )
     {
-        poDS->fpRaw = poOpenInfo->fp;
-        poOpenInfo->fp = NULL;
+        poDS->fpRaw = poOpenInfo->fpL;
+        poOpenInfo->fpL = NULL;
     }
     else
     {
-        poDS->fpRaw = VSIFOpen( poOpenInfo->pszFilename, "rb+" );
+        poDS->fpRaw = VSIFOpenL( poOpenInfo->pszFilename, "rb+" );
         poDS->eAccess = GA_Update;
         if( poDS->fpRaw == NULL )
         {
@@ -1111,11 +1111,14 @@ void GDALRegister_IDA()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "IDA" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "Image Data and Analysis" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_various.html#IDA" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
+
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnOpen = IDADataset::Open;
         poDriver->pfnCreate = IDADataset::Create;

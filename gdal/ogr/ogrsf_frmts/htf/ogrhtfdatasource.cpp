@@ -106,14 +106,9 @@ OGRLayer* OGRHTFDataSource::GetLayerByName( const char* pszLayerName )
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRHTFDataSource::Open( const char * pszFilename, int bUpdateIn)
+int OGRHTFDataSource::Open( const char * pszFilename )
 
 {
-    if (bUpdateIn)
-    {
-        return FALSE;
-    }
-
     pszName = CPLStrdup( pszFilename );
 
 // -------------------------------------------------------------------- 
@@ -123,19 +118,6 @@ int OGRHTFDataSource::Open( const char * pszFilename, int bUpdateIn)
     VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
     if (fp == NULL)
         return FALSE;
-
-    char szBuffer[11];
-    int nbRead = (int)VSIFReadL(szBuffer, 1, sizeof(szBuffer) - 1, fp);
-    szBuffer[nbRead] = '\0';
-
-    int bIsHTF = strcmp(szBuffer, "HTF HEADER") == 0;
-    if (!bIsHTF)
-    {
-        VSIFCloseL(fp);
-        return FALSE;
-    }
-
-    VSIFSeekL(fp, 0, SEEK_SET);
 
     const char* pszLine;
     int bEndOfHTFHeader = FALSE;

@@ -33,11 +33,12 @@
 #include "jpgdataset.cpp"
 
 GDALDataset* JPEGDataset12Open(const char* pszFilename,
+                               VSILFILE* fpLin,
                                char** papszSiblingFiles,
                                int nScaleFactor,
                                int bIsInternal)
 {
-    return JPGDataset12::Open(pszFilename, papszSiblingFiles, nScaleFactor,
+    return JPGDataset12::Open(pszFilename, fpLin, papszSiblingFiles, nScaleFactor,
                               bIsInternal);
 }
 

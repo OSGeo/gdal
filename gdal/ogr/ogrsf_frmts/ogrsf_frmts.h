@@ -34,6 +34,7 @@
 #include "cpl_progress.h"
 #include "ogr_feature.h"
 #include "ogr_featurestyle.h"
+#include "gdal_priv.h"
 
 /**
  * \file ogrsf_frmts.h
@@ -56,7 +57,7 @@ class OGRSFDriver;
 /* Note: any virtual method added to this class must also be added in the */
 /* OGRLayerDecorator and OGRMutexedLayer classes. */
 
-class CPL_DLL OGRLayer
+class CPL_DLL OGRLayer : public GDALMajorObject
 {
   protected:
     int          m_bFilterIsEnvelope;
@@ -109,8 +110,6 @@ class CPL_DLL OGRLayer
                                   int bForce = TRUE);
 
     virtual int         TestCapability( const char * ) = 0;
-
-    virtual const char *GetInfo( const char * );
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
@@ -205,6 +204,8 @@ class CPL_DLL OGRLayer
 /************************************************************************/
 
 /**
+ * LEGACY class. Use GDALDataset in your new code !
+ * 
  * This class represents a data source.  A data source potentially
  * consists of many layers (OGRLayer).  A data source normally consists
  * of one, or a related set of files, though the name doesn't have to be
@@ -212,77 +213,18 @@ class CPL_DLL OGRLayer
  *
  * When an OGRDataSource is destroyed, all it's associated OGRLayers objects
  * are also destroyed.
+ *
+ * @deprecated
  */ 
 
-class CPL_DLL OGRDataSource
+class CPL_DLL OGRDataSource : public GDALDataset
 {
-    friend class OGRSFDriverRegistrar;
-
-    void        *m_hMutex;
-
-    OGRLayer*       BuildLayerFromSelectInfo(void* psSelectInfo,
-                                             OGRGeometry *poSpatialFilter,
-                                             const char *pszDialect);
-
-  public:
-
-    OGRDataSource();
-    virtual     ~OGRDataSource();
-    static void         DestroyDataSource( OGRDataSource * );
+public:
+                        OGRDataSource();
 
     virtual const char  *GetName() = 0;
 
-    virtual int         GetLayerCount() = 0;
-    virtual OGRLayer    *GetLayer(int) = 0;
-    virtual OGRLayer    *GetLayerByName(const char *);
-    virtual OGRErr      DeleteLayer(int);
-
-    virtual int         TestCapability( const char * ) = 0;
-
-    virtual OGRLayer   *CreateLayer( const char *pszName, 
-                                     OGRSpatialReference *poSpatialRef = NULL,
-                                     OGRwkbGeometryType eGType = wkbUnknown,
-                                     char ** papszOptions = NULL );
-    virtual OGRLayer   *CopyLayer( OGRLayer *poSrcLayer, 
-                                   const char *pszNewName, 
-                                   char **papszOptions = NULL );
-
-    virtual OGRStyleTable *GetStyleTable();
-    virtual void        SetStyleTableDirectly( OGRStyleTable *poStyleTable );
-                            
-    virtual void        SetStyleTable(OGRStyleTable *poStyleTable);
-
-    virtual OGRLayer *  ExecuteSQL( const char *pszStatement,
-                                    OGRGeometry *poSpatialFilter,
-                                    const char *pszDialect );
-    virtual void        ReleaseResultSet( OGRLayer * poResultsSet );
-
-    virtual OGRErr      SyncToDisk();
-
-    int                 Reference();
-    int                 Dereference();
-    int                 GetRefCount() const;
-    int                 GetSummaryRefCount() const;
-    OGRErr              Release();
-
-    OGRSFDriver        *GetDriver() const;
-    void                SetDriver( OGRSFDriver *poDriver );
-    
-    static int          IsGenericSQLDialect(const char* pszDialect);
-
-  protected:
-
-    OGRErr              ProcessSQLCreateIndex( const char * );
-    OGRErr              ProcessSQLDropIndex( const char * );
-    OGRErr              ProcessSQLDropTable( const char * );
-    OGRErr              ProcessSQLAlterTableAddColumn( const char * );
-    OGRErr              ProcessSQLAlterTableDropColumn( const char * );
-    OGRErr              ProcessSQLAlterTableAlterColumn( const char * );
-    OGRErr              ProcessSQLAlterTableRenameColumn( const char * );
-
-    OGRStyleTable      *m_poStyleTable;
-    int                 m_nRefCount;
-    OGRSFDriver        *m_poDriver;
+    static void         DestroyDataSource( OGRDataSource * );
 };
 
 /************************************************************************/
@@ -290,15 +232,19 @@ class CPL_DLL OGRDataSource
 /************************************************************************/
 
 /**
+ * LEGACY class. Use GDALDriver in your new code !
+ *
  * Represents an operational format driver.
  *
  * One OGRSFDriver derived class will normally exist for each file format
  * registered for use, regardless of whether a file has or will be opened.
  * The list of available drivers is normally managed by the
  * OGRSFDriverRegistrar.
+ *
+ * @deprecated
  */
 
-class CPL_DLL OGRSFDriver
+class CPL_DLL OGRSFDriver : public GDALDriver
 {
   public:
     virtual     ~OGRSFDriver();
@@ -306,16 +252,12 @@ class CPL_DLL OGRSFDriver
     virtual const char  *GetName() = 0;
 
     virtual OGRDataSource *Open( const char *pszName, int bUpdate=FALSE ) = 0;
-
-    virtual int         TestCapability( const char * ) = 0;
+    
+    virtual int            TestCapability( const char *pszCap ) = 0;
 
     virtual OGRDataSource *CreateDataSource( const char *pszName,
                                              char ** = NULL );
     virtual OGRErr      DeleteDataSource( const char *pszName );
-
-    virtual OGRDataSource *CopyDataSource( OGRDataSource *poSrcDS, 
-                                           const char *pszNewName, 
-                                           char **papszOptions = NULL );
 };
 
 
@@ -324,49 +266,43 @@ class CPL_DLL OGRSFDriver
 /************************************************************************/
 
 /**
+ * LEGACY class. Use GDALDriverManager in your new code !
+ *
  * Singleton manager for OGRSFDriver instances that will be used to try
  * and open datasources.  Normally the registrar is populated with 
  * standard drivers using the OGRRegisterAll() function and does not need
  * to be directly accessed.  The driver registrar and all registered drivers
  * may be cleaned up on shutdown using OGRCleanupAll().
+ *
+ * @deprecated
  */
 
 class CPL_DLL OGRSFDriverRegistrar
 {
-    int         nDrivers;
-    OGRSFDriver **papoDrivers;
 
                 OGRSFDriverRegistrar();
+                ~OGRSFDriverRegistrar();
 
-    int         nOpenDSCount;
-    char        **papszOpenDSRawName;
-    OGRDataSource **papoOpenDS;
-    OGRSFDriver **papoOpenDSDriver;
-    GIntBig     *panOpenDSPID;
+    static GDALDataset* OpenWithDriverArg(GDALDriver* poDriver,
+                                                 GDALOpenInfo* poOpenInfo);
+    static GDALDataset* CreateVectorOnly( GDALDriver* poDriver,
+                                          const char * pszName,
+                                          char ** papszOptions );
+    static CPLErr       DeleteDataSource( GDALDriver* poDriver,
+                                          const char * pszName );
 
   public:
 
-                ~OGRSFDriverRegistrar();
-
     static OGRSFDriverRegistrar *GetRegistrar();
-    static OGRDataSource *Open( const char *pszName, int bUpdate=FALSE,
-                                OGRSFDriver ** ppoDriver = NULL );
-
-    OGRDataSource *OpenShared( const char *pszName, int bUpdate=FALSE,
-                               OGRSFDriver ** ppoDriver = NULL );
-    OGRErr      ReleaseDataSource( OGRDataSource * );
 
     void        RegisterDriver( OGRSFDriver * poDriver );
-    void        DeregisterDriver( OGRSFDriver * poDriver );
 
     int         GetDriverCount( void );
-    OGRSFDriver *GetDriver( int iDriver );
-    OGRSFDriver *GetDriverByName( const char * );
+    GDALDriver *GetDriver( int iDriver );
+    GDALDriver *GetDriverByName( const char * );
 
-    int         GetOpenDSCount() { return nOpenDSCount; } 
+    int         GetOpenDSCount();
     OGRDataSource *GetOpenDS( int );
-
-    void        AutoLoadDrivers();
 };
 
 /* -------------------------------------------------------------------- */
@@ -374,6 +310,7 @@ class CPL_DLL OGRSFDriverRegistrar
 /* -------------------------------------------------------------------- */
 CPL_C_START
 void CPL_DLL OGRRegisterAll();
+void OGRRegisterAllInternal();
 
 void CPL_DLL RegisterOGRFileGDB();
 void CPL_DLL RegisterOGRShape();
@@ -418,7 +355,6 @@ void CPL_DLL RegisterOGRBNA();
 void CPL_DLL RegisterOGRGPX();
 void CPL_DLL RegisterOGRGeoconcept();
 void CPL_DLL RegisterOGRIngres();
-void CPL_DLL RegisterOGRPCIDSK();
 void CPL_DLL RegisterOGRXPlane();
 void CPL_DLL RegisterOGRNAS();
 void CPL_DLL RegisterOGRGeoRSS();
@@ -450,7 +386,6 @@ void CPL_DLL RegisterOGRODS();
 void CPL_DLL RegisterOGRXLSX();
 void CPL_DLL RegisterOGRElastic();
 void CPL_DLL RegisterOGRGeoPackage();
-void CPL_DLL RegisterOGRPDF();
 void CPL_DLL RegisterOGRWalk();
 void CPL_DLL RegisterOGRCartoDB();
 void CPL_DLL RegisterOGRSXF();

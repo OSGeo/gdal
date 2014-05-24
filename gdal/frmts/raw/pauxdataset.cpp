@@ -656,8 +656,9 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Do we have a .aux file?                                         */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->papszSiblingFiles != NULL
-        && CSLFindString( poOpenInfo->papszSiblingFiles, 
+    char** papszSiblingFiles = poOpenInfo->GetSiblingFiles();
+    if( papszSiblingFiles != NULL
+        && CSLFindString( papszSiblingFiles, 
                           CPLGetFilename(osAuxFilename) ) == -1 )
     {
         return NULL;
@@ -1112,6 +1113,7 @@ void GDALRegister_PAux()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "PAux" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "PCI .aux Labelled" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

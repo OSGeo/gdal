@@ -47,6 +47,7 @@ OGRSVGLayer::OGRSVGLayer( const char* pszFilename,
     this->poDS = poDS;
     this->svgGeomType = svgGeomType;
     osLayerName = pszLayerName;
+    SetDescription( pszLayerName );
 
     poFeatureDefn = NULL;
 

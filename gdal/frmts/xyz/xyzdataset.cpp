@@ -484,7 +484,7 @@ int XYZDataset::IdentifyEx( GDALOpenInfo * poOpenInfo,
         osFilename += poOpenInfo->pszFilename;
         poOpenInfo = poOpenInfoToDelete =
                 new GDALOpenInfo(osFilename.c_str(), GA_ReadOnly,
-                                 poOpenInfo->papszSiblingFiles);
+                                 poOpenInfo->GetSiblingFiles());
     }
 
     if (poOpenInfo->nHeaderBytes == 0)
@@ -1216,6 +1216,7 @@ void GDALRegister_XYZ()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "XYZ" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "ASCII Gridded XYZ" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

@@ -98,6 +98,7 @@ CPLErr OGRIDBLayer::BuildFeatureDefn( const char *pszLayerName,
 
 {
     poFeatureDefn = new OGRFeatureDefn( pszLayerName );
+    SetDescription( poFeatureDefn->GetName() );
     const ITTypeInfo * poInfo = poCurr->RowType();
     int    nRawColumns = poInfo->ColumnCount();
 

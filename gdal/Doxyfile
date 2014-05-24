@@ -385,6 +385,11 @@ INPUT                  = port \
                          frmts/vrt \
                          doc \
 			 apps \
+                         ogr \
+                         ogr/ogrsf_frmts \
+                         ogr/ogrsf_frmts/generic \
+                         ogr/ogrsf_frmts/geojson/ogrgeojsonwriter.cpp \
+                         ogr/ogrsf_frmts/kml/ogr2kmlgeometry.cpp \
 			 swig/python/scripts
 
 # If the value of the INPUT tag contains directories, you can use the 

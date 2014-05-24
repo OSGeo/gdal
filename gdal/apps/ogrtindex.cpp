@@ -116,10 +116,10 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Try to open as an existing dataset for update access.           */
 /* -------------------------------------------------------------------- */
-    OGRDataSource *poDstDS;
+    GDALDataset *poDstDS;
     OGRLayer *poDstLayer = NULL;
 
-    poDstDS = OGRSFDriverRegistrar::Open( pszOutputName, TRUE );
+    poDstDS = (GDALDataset*) OGROpen( pszOutputName, TRUE, NULL );
 
 /* -------------------------------------------------------------------- */
 /*      If that failed, find the driver so we can create the tile index.*/
@@ -127,14 +127,14 @@ int main( int nArgc, char ** papszArgv )
     if( poDstDS == NULL )
     {
         OGRSFDriverRegistrar     *poR = OGRSFDriverRegistrar::GetRegistrar();
-        OGRSFDriver              *poDriver = NULL;
+        GDALDriver              *poDriver = NULL;
         int                      iDriver;
 
         for( iDriver = 0;
              iDriver < poR->GetDriverCount() && poDriver == NULL;
              iDriver++ )
         {
-            if( EQUAL(poR->GetDriver(iDriver)->GetName(),pszFormat) )
+            if( EQUAL(poR->GetDriver(iDriver)->GetDescription(),pszFormat) )
             {
                 poDriver = poR->GetDriver(iDriver);
             }
@@ -147,12 +147,12 @@ int main( int nArgc, char ** papszArgv )
         
             for( iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++ )
             {
-                fprintf( stderr, "  -> `%s'\n", poR->GetDriver(iDriver)->GetName() );
+                fprintf( stderr, "  -> `%s'\n", poR->GetDriver(iDriver)->GetDescription() );
             }
             exit( 1 );
         }
 
-        if( !poDriver->TestCapability( ODrCCreateDataSource ) )
+        if( !CSLTestBoolean( CSLFetchNameValueDef(poDriver->GetMetadata(), GDAL_DCAP_CREATE, "FALSE") ) )
         {
             fprintf( stderr, "%s driver does not support data source creation.\n",
                     pszFormat );
@@ -163,7 +163,7 @@ int main( int nArgc, char ** papszArgv )
 /*      Now create it.                                                  */
 /* -------------------------------------------------------------------- */
         
-        poDstDS = poDriver->CreateDataSource( pszOutputName, NULL );
+        poDstDS = poDriver->Create( pszOutputName, 0, 0, 0, GDT_Unknown, NULL );
         if( poDstDS == NULL )
         {
             fprintf( stderr, "%s driver failed to create %s\n", 
@@ -187,9 +187,7 @@ int main( int nArgc, char ** papszArgv )
             /* Fetches the SRS of the first layer and use it when creating the tileindex layer */
             if (nFirstSourceDataset < nArgc)
             {
-                OGRDataSource* poDS = OGRSFDriverRegistrar::Open( papszArgv[nFirstSourceDataset], 
-                                           FALSE );
-                                           
+                GDALDataset* poDS = (GDALDataset*) OGROpen(papszArgv[nFirstSourceDataset], FALSE, NULL);
                 if (poDS)
                 {
                     int iLayer;
@@ -219,7 +217,7 @@ int main( int nArgc, char ** papszArgv )
                     }
                 }
                 
-                OGRDataSource::DestroyDataSource( poDS );
+                GDALClose( (GDALDatasetH)poDS );
             }
 
             poDstLayer = poDstDS->CreateLayer( "tileindex", poSrcSpatialRef );
@@ -268,7 +266,7 @@ int main( int nArgc, char ** papszArgv )
             existingLayersTab[i] = CPLStrdup(feature->GetFieldAsString( iTileIndexField));
             if (i == 0)
             {
-                OGRDataSource       *poDS;
+                GDALDataset       *poDS;
                 char* filename = CPLStrdup(existingLayersTab[i]);
                 int j;
                 for(j=strlen(filename)-1;j>=0;j--)
@@ -280,8 +278,7 @@ int main( int nArgc, char ** papszArgv )
                 {
                     int iLayer = atoi(filename + j + 1);
                     filename[j] = 0;
-                    poDS = OGRSFDriverRegistrar::Open(filename, 
-                                                    FALSE );
+                    poDS = (GDALDataset*) OGROpen(filename, FALSE, NULL);
                     if (poDS)
                     {
                         OGRLayer *poLayer = poDS->GetLayer(iLayer);
@@ -294,7 +291,7 @@ int main( int nArgc, char ** papszArgv )
                             if (poFeatureDefn == NULL)
                                 poFeatureDefn = poLayer->GetLayerDefn()->Clone();
                         }
-                        OGRDataSource::DestroyDataSource( poDS );
+                        GDALClose( (GDALDatasetH)poDS );
                     }
                 }
             }
@@ -319,7 +316,7 @@ int main( int nArgc, char ** papszArgv )
 	for(; nFirstSourceDataset < nArgc; nFirstSourceDataset++ )
     {
         int i;
-        OGRDataSource       *poDS;
+        GDALDataset       *poDS;
 
         if( papszArgv[nFirstSourceDataset][0] == '-' )
         {
@@ -340,8 +337,7 @@ int main( int nArgc, char ** papszArgv )
             fileNameToWrite = CPLStrdup(papszArgv[nFirstSourceDataset]);
         }
 
-        poDS = OGRSFDriverRegistrar::Open( papszArgv[nFirstSourceDataset], 
-                                           FALSE );
+        poDS = (GDALDataset*) OGROpen( papszArgv[nFirstSourceDataset], FALSE, NULL );
 
         if( poDS == NULL )
         {
@@ -514,7 +510,7 @@ int main( int nArgc, char ** papszArgv )
             if( poDstLayer->CreateFeature( &oTileFeat ) != OGRERR_NONE )
             {
                 fprintf( stderr, "Failed to create feature on tile index ... terminating." );
-                OGRDataSource::DestroyDataSource( poDstDS );
+                GDALClose( (GDALDatasetH) poDstDS );
                 exit( 1 );
             }
         }
@@ -523,13 +519,13 @@ int main( int nArgc, char ** papszArgv )
 /*      Cleanup this data source.                                       */
 /* -------------------------------------------------------------------- */
         CPLFree(fileNameToWrite);
-        OGRDataSource::DestroyDataSource( poDS );
+        GDALClose( (GDALDatasetH)poDS );
     }
 
 /* -------------------------------------------------------------------- */
 /*      Close tile index and clear buffers.                             */
 /* -------------------------------------------------------------------- */
-    OGRDataSource::DestroyDataSource( poDstDS );
+    GDALClose( (GDALDatasetH) poDstDS );
 	OGRFeatureDefn::DestroyFeatureDefn( poFeatureDefn );
   
     if (alreadyExistingSpatialRef != NULL)

@@ -260,7 +260,7 @@ OGRDataSourceH RasterliteCreateTables(OGRDataSourceH hDS, const char* pszTableNa
         /* Re-open the DB to take into account the new tables*/
         OGRReleaseDataSource(hDS);
         
-        hDS = OGROpen(osDBName.c_str(), TRUE, NULL);
+        hDS = RasterliteOpenSQLiteDB(osDBName.c_str(), GA_Update);
     }
     else
     {
@@ -292,7 +292,7 @@ OGRDataSourceH RasterliteCreateTables(OGRDataSourceH hDS, const char* pszTableNa
                     /* Re-open the DB to take into account the change of SRS */
                     OGRReleaseDataSource(hDS);
                     
-                    hDS = OGROpen(osDBName.c_str(), TRUE, NULL);
+                    hDS = RasterliteOpenSQLiteDB(osDBName.c_str(), GA_Update);
                 }
                 else
                 {
@@ -477,7 +477,7 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
     else
     {
-        hDS = OGROpen(osDBName.c_str(), TRUE, NULL);
+        hDS = RasterliteOpenSQLiteDB(osDBName.c_str(), GA_Update);
     }
     
     if (hDS == NULL)

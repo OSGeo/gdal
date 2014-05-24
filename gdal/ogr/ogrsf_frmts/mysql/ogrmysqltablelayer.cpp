@@ -58,6 +58,8 @@ OGRMySQLTableLayer::OGRMySQLTableLayer( OGRMySQLDataSource *poDSIn,
 
     poFeatureDefn = NULL;
     bLaunderColumnNames = TRUE;
+    
+    SetDescription( pszTableName );
 }
 
 /************************************************************************/

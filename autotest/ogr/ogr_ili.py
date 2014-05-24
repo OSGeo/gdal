@@ -931,6 +931,8 @@ def ogr_interlis_cleanup():
     if not gdaltest.have_ili_reader:
         return 'skip'
 
+    gdaltest.clean_tmp()
+
     return 'success'
 
 gdaltest_list = [ 

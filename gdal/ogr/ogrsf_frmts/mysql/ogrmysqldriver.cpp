@@ -33,37 +33,20 @@
 CPL_CVSID("$Id$");
 
 /************************************************************************/
-/*                          ~OGRMySQLDriver()                           */
-/************************************************************************/
-
-OGRMySQLDriver::~OGRMySQLDriver()
-
-{
-}
-
-/************************************************************************/
-/*                              GetName()                               */
-/************************************************************************/
-
-const char *OGRMySQLDriver::GetName()
-
-{
-    return "MySQL";
-}
-
-/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-OGRDataSource *OGRMySQLDriver::Open( const char * pszFilename,
-                                     int bUpdate )
+static GDALDataset *OGRMySQLDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     OGRMySQLDataSource     *poDS;
 
+    if( !EQUALN(poOpenInfo->pszFilename,"MYSQL:",6) )
+        return NULL;
+
     poDS = new OGRMySQLDataSource();
 
-    if( !poDS->Open( pszFilename, bUpdate, TRUE ) )
+    if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update ) )
     {
         delete poDS;
         return NULL;
@@ -74,11 +57,12 @@ OGRDataSource *OGRMySQLDriver::Open( const char * pszFilename,
 
 
 /************************************************************************/
-/*                          CreateDataSource()                          */
+/*                               Create()                               */
 /************************************************************************/
 
-OGRDataSource *OGRMySQLDriver::CreateDataSource( const char * pszName,
-                                              char ** /* papszOptions */ )
+static GDALDataset *OGRMySQLDriverCreate( const char * pszName,
+                                    int nBands, int nXSize, int nYSize, GDALDataType eDT,
+                                    char **papszOptions )
 
 {
     OGRMySQLDataSource     *poDS;
@@ -86,7 +70,7 @@ OGRDataSource *OGRMySQLDriver::CreateDataSource( const char * pszName,
     poDS = new OGRMySQLDataSource();
 
 
-    if( !poDS->Open( pszName, TRUE, TRUE ) )
+    if( !poDS->Open( pszName, TRUE ) )
     {
         delete poDS;
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -98,25 +82,6 @@ OGRDataSource *OGRMySQLDriver::CreateDataSource( const char * pszName,
     return poDS;
 }
 
-
-/************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRMySQLDriver::TestCapability( const char * pszCap )
-
-{
-
-    if( EQUAL(pszCap,ODsCCreateLayer) )
-        return TRUE;
-    if( EQUAL(pszCap,ODsCDeleteLayer) )
-        return TRUE;     
-    if( EQUAL(pszCap,ODrCCreateDataSource) )
-        return TRUE;
-        
-    return FALSE;
-}
-
 /************************************************************************/
 /*                          RegisterOGRMySQL()                          */
 /************************************************************************/
@@ -126,6 +91,23 @@ void RegisterOGRMySQL()
 {
     if (! GDAL_CHECK_VERSION("MySQL driver"))
         return;
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRMySQLDriver );
+    GDALDriver  *poDriver;
+
+    if( GDALGetDriverByName( "MySQL" ) == NULL )
+    {
+        poDriver = new GDALDriver();
+
+        poDriver->SetDescription( "MySQL" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                                   "MySQL" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                                   "drv_mysqls.html" );
+
+        poDriver->pfnOpen = OGRMySQLDriverOpen;
+        poDriver->pfnCreate = OGRMySQLDriverCreate;
+
+        GetGDALDriverManager()->RegisterDriver( poDriver );
+    }
 }
 

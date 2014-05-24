@@ -1182,6 +1182,7 @@ void GDALRegister_JPEG2000()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "JPEG2000" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "JPEG-2000 part 1 (ISO/IEC 15444-1)" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

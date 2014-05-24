@@ -27,7 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#ifndef FROM_GDAL_I
 %include "exception.i"
+#endif
 
 #ifdef PERL_CPAN_NAMESPACE
 %module "Geo::OGR"
@@ -37,9 +39,11 @@
 %module ogr
 #endif
 
+#ifndef FROM_GDAL_I
 %inline %{
 typedef char retStringAndCPLFree;
 %}
+#endif
 
 #ifdef SWIGCSHARP
 %include swig_csharp_extensions.i
@@ -126,6 +130,8 @@ using namespace std;
 #include "cpl_port.h"
 #include "cpl_string.h"
 #include "ogr_srs_api.h"
+
+typedef void GDALMajorObjectShadow;
 
 #ifdef DEBUG 
 typedef struct OGRSpatialReferenceHS OSRSpatialReferenceShadow;
@@ -307,7 +313,12 @@ typedef int OGRErr;
  * This was primarily a problem in the perl bindings because
  * perl names things differently when using -proxy (default) argument
  */
+#define FROM_OGR_I
 %import osr.i
+
+#ifndef FROM_GDAL_I
+%import MajorObject.i
+#endif
 
 /************************************************************************/
 /*                               OGREnvelope                            */
@@ -334,8 +345,6 @@ typedef struct
     double      MaxZ;
 } OGREnvelope3D;
 #endif
-
-#ifndef GDAL_BINDINGS
 
 /************************************************************************/
 /*                          OGRStyleTable                               */
@@ -396,9 +405,16 @@ public:
 /*                              OGRDriver                               */
 /************************************************************************/
 
+#ifndef FROM_GDAL_I
+
 %rename (Driver) OGRDriverShadow;
 
+#ifdef SWIGCSHARP
+/* Because of issue with CSharp to handle different inheritance from class in different namespaces  */
 class OGRDriverShadow {
+#else
+class OGRDriverShadow : public GDALMajorObjectShadow {
+#endif
   OGRDriverShadow();
   ~OGRDriverShadow();
 public:
@@ -479,8 +495,6 @@ public:
 
 } /* %extend */
 }; /* class OGRDriverShadow */
-#endif /* GDAL_BINDINGS */
-
 
 /************************************************************************/
 /*                            OGRDataSource                             */
@@ -489,7 +503,12 @@ public:
 
 %rename (DataSource) OGRDataSourceShadow;
 
+#ifdef SWIGCSHARP
+/* Because of issue with CSharp to handle different inheritance from class in different namespaces  */
 class OGRDataSourceShadow {
+#else
+class OGRDataSourceShadow : public GDALMajorObjectShadow {
+#endif
   OGRDataSourceShadow() {
   }
 public:
@@ -613,12 +632,19 @@ public:
 
 }; /* class OGRDataSourceShadow */
 
+#endif /* FROM_GDAL_I */
+
 /************************************************************************/
 /*                               OGRLayer                               */
 /************************************************************************/
 
 %rename (Layer) OGRLayerShadow;
+#ifdef SWIGCSHARP
+/* Because of issue with CSharp to handle different inheritance from class in different namespaces  */
 class OGRLayerShadow {
+#else
+class OGRLayerShadow : public GDALMajorObjectShadow {
+#endif
   OGRLayerShadow();
   ~OGRLayerShadow();
 public:
@@ -2452,6 +2478,8 @@ public:
 /*                        Other misc functions.                         */
 /************************************************************************/
 
+#ifndef FROM_GDAL_I
+
 %{
 char const *OGRDriverShadow_get_name( OGRDriverShadow *h ) {
   return OGR_Dr_GetName( h );
@@ -2470,9 +2498,9 @@ char const *OGRDataSourceShadow_name_get( OGRDataSourceShadow *h ) {
 }
 %}
 
-#ifndef GDAL_BINDINGS
 int OGRGetDriverCount();
-#endif
+
+#endif /* FROM_GDAL_I */
 
 int OGRGetOpenDSCount();
 
@@ -2492,6 +2520,8 @@ const char * OGR_GetFieldTypeName(OGRFieldType type);
     return layer;
   }
 %}
+
+#if !(defined(FROM_GDAL_I) && (defined(SWIGJAVA) || defined(SWIGPYTHON)))
 
 %newobject Open;
 #ifndef SWIGJAVA
@@ -2532,7 +2562,10 @@ const char * OGR_GetFieldTypeName(OGRFieldType type);
   }
 %}
 
-#ifndef GDAL_BINDINGS
+#endif /* !(defined(FROM_GDAL_I) && (defined(SWIGJAVA) || defined(SWIGPYTHON))) */
+
+#ifndef FROM_GDAL_I
+
 %inline %{
 OGRDriverShadow* GetDriverByName( char const *name ) {
   return (OGRDriverShadow*) OGRGetDriverByName( name );
@@ -2542,7 +2575,6 @@ OGRDriverShadow* GetDriver(int driver_number) {
   return (OGRDriverShadow*) OGRGetDriver(driver_number);
 }
 %}
-#endif
 
 #if defined(SWIGPYTHON) || defined(SWIGJAVA)
 /* FIXME: other bindings should also use those typemaps to avoid memory leaks */
@@ -2599,6 +2631,7 @@ OGRDriverShadow* GetDriver(int driver_number) {
 #endif
 %clear char **;
 
+#endif /* FROM_GDAL_I */
 
 #ifdef SWIGJAVA
 class FeatureNative {
@@ -2617,6 +2650,8 @@ class GeometryNative {
 /*                            TermProgress()                            */
 /************************************************************************/
 
+#ifndef FROM_GDAL_I
+
 #if !defined(SWIGCSHARP) && !defined(SWIGJAVA)
 %rename (TermProgress_nocb) GDALTermProgress_nocb;
 %feature( "kwargs" ) GDALTermProgress_nocb;
@@ -2631,6 +2666,8 @@ int GDALTermProgress_nocb( double dfProgress, const char * pszMessage=NULL, void
 int GDALTermProgress( double, const char *, void * );
 %nocallback;
 #endif
+
+#endif /* FROM_GDAL_I */
 
 //************************************************************************
 //

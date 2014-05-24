@@ -1039,6 +1039,7 @@ void GDALRegister_ECRGTOC()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "ECRGTOC" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "ECRG TOC format" );
         

@@ -892,6 +892,7 @@ void GDALRegister_INGR()
         poDriver = new GDALDriver();
 
         poDriver->SetDescription( "INGR" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Intergraph Raster" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_IntergraphRaster.html" );
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );

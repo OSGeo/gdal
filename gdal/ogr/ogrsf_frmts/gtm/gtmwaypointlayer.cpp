@@ -80,6 +80,7 @@ GTMWaypointLayer::GTMWaypointLayer( const char* pszName,
     nTotalFCount = poDS->getNWpts();
 
     poFeatureDefn = new OGRFeatureDefn( pszName );
+    SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType ( wkbPoint );
     poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);

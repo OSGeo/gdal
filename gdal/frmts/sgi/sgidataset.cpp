@@ -816,6 +816,7 @@ void GDALRegister_SGI()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription("SGI");
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, 
                                   "SGI Image File Format 1.0");
         poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "rgb");

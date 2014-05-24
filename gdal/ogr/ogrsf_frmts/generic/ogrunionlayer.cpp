@@ -86,6 +86,8 @@ OGRUnionLayer::OGRUnionLayer( const char* pszName,
                               int bTakeLayerOwnership )
 {
     CPLAssert(nSrcLayersIn > 0);
+    
+    SetDescription( pszName );
 
     osName = pszName;
     nSrcLayers = nSrcLayersIn;

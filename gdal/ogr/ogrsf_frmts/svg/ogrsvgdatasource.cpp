@@ -140,15 +140,9 @@ static void XMLCALL dataHandlerValidateCbk(void *pUserData, const char *data, in
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRSVGDataSource::Open( const char * pszFilename, int bUpdateIn)
+int OGRSVGDataSource::Open( const char * pszFilename )
 
 {
-    if (bUpdateIn)
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                    "OGR/SVG driver does not support opening a file in update mode");
-        return FALSE;
-    }
 #ifdef HAVE_EXPAT
     pszName = CPLStrdup( pszFilename );
 

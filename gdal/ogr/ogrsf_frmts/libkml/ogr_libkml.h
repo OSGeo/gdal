@@ -251,7 +251,7 @@ class OGRLIBKMLDataSource:public OGRDataSource
     OGRErr                    DeleteLayer ( int );
 
 
-    OGRLayer                 *CreateLayer ( const char *pszName,
+    OGRLayer                 *ICreateLayer( const char *pszName,
                                             OGRSpatialReference * poSpatialRef = NULL,
                                             OGRwkbGeometryType eGType = wkbUnknown,
                                             char **papszOptions = NULL );
@@ -265,7 +265,7 @@ class OGRLIBKMLDataSource:public OGRDataSource
     int                       Create ( const char *pszFilename,
                                        char **papszOptions );
 
-    OGRErr                    SyncToDisk (  );
+    void                      FlushCache (  );
     int                       TestCapability (const char * );
     
     KmlFactory               *GetKmlFactory() { return m_poKmlFactory; };
@@ -346,30 +346,6 @@ class OGRLIBKMLDataSource:public OGRDataSource
                                          int bNew,
                                          int bUpdate,
                                          int nGuess);
-};
-
-
-/******************************************************************************
-  driver class
-******************************************************************************/
-
-class OGRLIBKMLDriver:public OGRSFDriver
-{
-    KmlFactory               *m_poKmlFactory;
-    
-  public:
-    OGRLIBKMLDriver           (  );
-    ~OGRLIBKMLDriver          (  );
-
-    const char               *GetName (  );
-    OGRDataSource            *Open ( const char *pszFilename,
-                                     int bUpdate );
-    OGRDataSource            *CreateDataSource ( const char *pszFilename,
-                                                 char **papszOptions );
-
-    OGRErr                    DeleteDataSource ( const char *pszName );
-
-    int                       TestCapability ( const char * );
 };
 
 #endif

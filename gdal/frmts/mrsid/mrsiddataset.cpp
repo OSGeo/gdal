@@ -1446,10 +1446,10 @@ static GDALDataset* JP2Open( GDALOpenInfo *poOpenInfo )
 
 GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJP2 )
 {
-    if(poOpenInfo->fp)
+    if(poOpenInfo->fpL)
     {
-        VSIFClose( poOpenInfo->fp );
-        poOpenInfo->fp = NULL;
+        VSIFCloseL( poOpenInfo->fpL );
+        poOpenInfo->fpL = NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -3558,6 +3558,7 @@ void GDALRegister_MrSID()
         poDriver = new GDALDriver();
 
         poDriver->SetDescription( "MrSID" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                         "Multi-resolution Seamless Image Database (MrSID)" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_mrsid.html" );
@@ -3601,6 +3602,7 @@ void GDALRegister_MrSID()
         poDriver = new GDALDriver();
 
         poDriver->SetDescription( "JP2MrSID" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                         "MrSID JPEG2000" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_jp2mrsid.html" );

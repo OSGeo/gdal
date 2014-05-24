@@ -67,6 +67,7 @@ OGRDWGLayer::OGRDWGLayer( OGRDWGDataSource *poDS )
     iNextFID = 0;
 
     poFeatureDefn = new OGRFeatureDefn( "entities" );
+    SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
 
     poDS->AddStandardFields( poFeatureDefn );

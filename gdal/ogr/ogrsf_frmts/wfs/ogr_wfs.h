@@ -243,7 +243,7 @@ class OGRWFSDataSource : public OGRDataSource
     OGRLayer           *poLayerMetadataLayer;
 
     CPLString           osGetCapabilities;
-    OGRDataSource      *poLayerGetCapabilitiesDS;
+    GDALDataset        *poLayerGetCapabilitiesDS;
     OGRLayer           *poLayerGetCapabilitiesLayer;
 
     int                 bKeepLayerNamePrefix;
@@ -306,20 +306,5 @@ class OGRWFSDataSource : public OGRDataSource
 
     int                         GetKeepLayerNamePrefix() { return bKeepLayerNamePrefix; }
 };
-
-/************************************************************************/
-/*                             OGRWFSDriver                             */
-/************************************************************************/
-
-class OGRWFSDriver : public OGRSFDriver
-{
-  public:
-                ~OGRWFSDriver();
-
-    virtual const char*         GetName();
-    virtual OGRDataSource*      Open( const char *, int );
-    virtual int                 TestCapability( const char * );
-};
-
 
 #endif /* ndef _OGR_WFS_H_INCLUDED */

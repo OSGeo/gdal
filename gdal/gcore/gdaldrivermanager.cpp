@@ -101,7 +101,6 @@ GDALDriverManager::GDALDriverManager()
 {
     nDrivers = 0;
     papoDrivers = NULL;
-    pszHome = CPLStrdup("");
 
     CPLAssert( poDM == NULL );
 
@@ -214,7 +213,6 @@ GDALDriverManager::~GDALDriverManager()
 /*      Cleanup local memory.                                           */
 /* -------------------------------------------------------------------- */
     VSIFree( papoDrivers );
-    VSIFree( pszHome );
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup any Proxy related memory.                               */
@@ -435,6 +433,28 @@ int GDALDriverManager::RegisterDriver( GDALDriver * poDriver )
     if( poDriver->pfnCreateCopy != NULL )
         poDriver->SetMetadataItem( GDAL_DCAP_CREATECOPY, "YES" );
 
+    /* Backward compability for GDAL raster out-of-tree drivers: */
+    /* if a driver hasn't explicitely set a vector capability, assume it is */
+    /* a raster driver (legacy OGR drivers will have DCAP_VECTOR set before */
+    /* calling RegisterDriver() ) */
+    if( poDriver->GetMetadataItem( GDAL_DCAP_RASTER ) == NULL &&
+        poDriver->GetMetadataItem( GDAL_DCAP_VECTOR ) == NULL )
+    {
+        CPLDebug("GDAL", "Assuming DCAP_RASTER for driver %s. Please fix it.",
+                 poDriver->GetDescription() );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    }
+    
+    if( poDriver->GetMetadataItem( GDAL_DMD_OPENOPTIONLIST ) != NULL &&
+        poDriver->pfnIdentify == NULL )
+    {
+        CPLDebug("GDAL", "Driver %s that defines GDAL_DMD_OPENOPTIONLIST must also "
+                 "implement Identify(), so that it can be used",
+                 poDriver->GetDescription() );
+    }
+
+    oMapNameToDrivers[CPLString(poDriver->GetDescription()).toupper()] = poDriver;
+    
     int iResult = nDrivers - 1;
 
     return iResult;
@@ -488,6 +508,7 @@ void GDALDriverManager::DeregisterDriver( GDALDriver * poDriver )
     if( i == nDrivers )
         return;
 
+    oMapNameToDrivers.erase(CPLString(poDriver->GetDescription()).toupper());
     while( i < nDrivers-1 )
     {
         papoDrivers[i] = papoDrivers[i+1];
@@ -532,17 +553,9 @@ void CPL_STDCALL GDALDeregisterDriver( GDALDriverH hDriver )
 GDALDriver * GDALDriverManager::GetDriverByName( const char * pszName )
 
 {
-    int         i;
-
     CPLMutexHolderD( &hDMMutex );
 
-    for( i = 0; i < nDrivers; i++ )
-    {
-        if( EQUAL(papoDrivers[i]->GetDescription(), pszName) )
-            return papoDrivers[i];
-    }
-
-    return NULL;
+    return oMapNameToDrivers[CPLString(pszName).toupper()];
 }
 
 /************************************************************************/
@@ -564,69 +577,64 @@ GDALDriverH CPL_STDCALL GDALGetDriverByName( const char * pszName )
 }
 
 /************************************************************************/
-/*                              GetHome()                               */
-/************************************************************************/
-
-const char *GDALDriverManager::GetHome()
-
-{
-    return pszHome;
-}
-
-/************************************************************************/
-/*                              SetHome()                               */
-/************************************************************************/
-
-void GDALDriverManager::SetHome( const char * pszNewHome )
-
-{
-    CPLMutexHolderD( &hDMMutex );
-
-    CPLFree( pszHome );
-    pszHome = CPLStrdup(pszNewHome);
-}
-
-/************************************************************************/
 /*                          AutoSkipDrivers()                           */
 /************************************************************************/
 
 /**
  * \brief This method unload undesirable drivers.
  *
- * All drivers specified in the space delimited list in the GDAL_SKIP 
+ * All drivers specified in the comma delimited list in the GDAL_SKIP 
  * environment variable) will be deregistered and destroyed.  This method 
  * should normally be called after registration of standard drivers to allow 
  * the user a way of unloading undesired drivers.  The GDALAllRegister()
  * function already invokes AutoSkipDrivers() at the end, so if that functions
  * is called, it should not be necessary to call this method from application
  * code. 
+ *
+ * Note: space separator is also accepted for backward compatibility, but some
+ * vector formats have spaces in their names, so it is encouraged to use comma
+ * to avoid issues.
  */
 
 void GDALDriverManager::AutoSkipDrivers()
 
 {
-    if( CPLGetConfigOption( "GDAL_SKIP", NULL ) == NULL )
-        return;
-
-    char **papszList = CSLTokenizeString( CPLGetConfigOption("GDAL_SKIP","") );
-
-    for( int i = 0; i < CSLCount(papszList); i++ )
+    char **apapszList[2] = { NULL, NULL };
+    const char* pszGDAL_SKIP = CPLGetConfigOption( "GDAL_SKIP", NULL );
+    if( pszGDAL_SKIP != NULL )
     {
-        GDALDriver *poDriver = GetDriverByName( papszList[i] );
+        /* Favour comma as a separator. If not found, then use space */
+        const char* pszSep = (strchr(pszGDAL_SKIP, ',') != NULL) ? "," : " ";
+        apapszList[0] = CSLTokenizeStringComplex( pszGDAL_SKIP, pszSep, FALSE, FALSE);
+    }
+    const char* pszOGR_SKIP = CPLGetConfigOption( "OGR_SKIP", NULL );
+    if( pszOGR_SKIP != NULL )
+    {
+        /* OGR has always used comma as a separator */
+        apapszList[1] = CSLTokenizeStringComplex(pszOGR_SKIP, ",", FALSE, FALSE);
+    }
 
-        if( poDriver == NULL )
-            CPLError( CE_Warning, CPLE_AppDefined, 
-                      "Unable to find driver %s to unload from GDAL_SKIP environment variable.", 
-                      papszList[i] );
-        else
+    for( int j = 0; j < 2; j++ )
+    {
+        for( int i = 0; apapszList[j] != NULL &&  apapszList[j][i] != NULL; i++ )
         {
-            CPLDebug( "GDAL", "AutoSkipDriver(%s)", papszList[i] );
-            DeregisterDriver( poDriver );
-            delete poDriver;
+            GDALDriver *poDriver = GetDriverByName( apapszList[j][i] );
+
+            if( poDriver == NULL )
+                CPLError( CE_Warning, CPLE_AppDefined, 
+                        "Unable to find driver %s to unload from GDAL_SKIP environment variable.", 
+                        apapszList[j][i] );
+            else
+            {
+                CPLDebug( "GDAL", "AutoSkipDriver(%s)", apapszList[j][i] );
+                DeregisterDriver( poDriver );
+                delete poDriver;
+            }
         }
     }
 
-    CSLDestroy( papszList );
+    CSLDestroy( apapszList[0] );
+    CSLDestroy( apapszList[1] );
 }
 
 /************************************************************************/
@@ -660,6 +668,8 @@ void GDALDriverManager::AutoLoadDrivers()
     char     **papszSearchPath = NULL;
     const char *pszGDAL_DRIVER_PATH = 
         CPLGetConfigOption( "GDAL_DRIVER_PATH", NULL );
+    if( pszGDAL_DRIVER_PATH == NULL )
+        pszGDAL_DRIVER_PATH = CPLGetConfigOption( "OGR_DRIVER_PATH", NULL );
 
 /* -------------------------------------------------------------------- */
 /*      Allow applications to completely disable this search by         */
@@ -719,19 +729,6 @@ void GDALDriverManager::AutoLoadDrivers()
                                      num2str(GDAL_VERSION_MINOR) "/PlugIns" );
    #endif
 
-
-        if( strlen(GetHome()) > 0 )
-        {
-            papszSearchPath = CSLAddString( papszSearchPath, 
-                                  CPLFormFilename( GetHome(),
-    #ifdef MACOSX_FRAMEWORK 
-                                     "/Library/Application Support/GDAL/"
-                                     num2str(GDAL_VERSION_MAJOR) "."  
-                                     num2str(GDAL_VERSION_MINOR) "/PlugIns", NULL ) );
-    #else
-                                                    "lib/gdalplugins", NULL ) );
-    #endif                                           
-        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -755,15 +752,16 @@ void GDALDriverManager::AutoLoadDrivers()
             osABISpecificDir = papszSearchPath[iDir];
 
         papszFiles = CPLReadDir( osABISpecificDir );
+        int nFileCount = CSLCount(papszFiles);
 
-        for( int iFile = 0; iFile < CSLCount(papszFiles); iFile++ )
+        for( int iFile = 0; iFile < nFileCount; iFile++ )
         {
             char   *pszFuncName;
             const char *pszFilename;
             const char *pszExtension = CPLGetExtension( papszFiles[iFile] );
             void   *pRegister;
 
-            if( !EQUALN(papszFiles[iFile],"gdal_",5) )
+            if( !EQUALN(papszFiles[iFile],"gdal_",5) && !EQUALN(papszFiles[iFile],"ogr_",4) )
                 continue;
 
             if( !EQUAL(pszExtension,"dll") 

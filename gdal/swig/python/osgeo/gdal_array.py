@@ -66,6 +66,7 @@ except AttributeError:
     _newclass = 0
 
 
+import gdal
 class VirtualMem(_object):
     """Proxy of C++ CPLVirtualMemShadow class"""
     __swig_setmethods__ = {}

@@ -3368,7 +3368,7 @@ GDALDataset *NUMPYDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Is this a numpy dataset name?                                   */
 /* -------------------------------------------------------------------- */
     if( !EQUALN(poOpenInfo->pszFilename,"NUMPY:::",8) 
-        || poOpenInfo->fp != NULL )
+        || poOpenInfo->fpL != NULL )
         return NULL;
 
     psArray = NULL;

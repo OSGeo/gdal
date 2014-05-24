@@ -56,6 +56,7 @@ OGRPDSLayer::OGRPDSLayer(   CPLString osTableID,
     nLatitudeIndex = -1;
 
     poFeatureDefn = new OGRFeatureDefn( pszLayerName );
+    SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbNone );
 

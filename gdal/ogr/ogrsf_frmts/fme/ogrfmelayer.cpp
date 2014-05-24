@@ -105,6 +105,7 @@ int OGRFMELayer::Initialize( IFMEFeature * poSchemaFeature,
     poSchemaFeature->getFeatureType( *poFMEString );
 
     poFeatureDefn = new OGRFeatureDefn( poFMEString->data() );
+    SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
 
     poDS->GetFMESession()->destroyString( poFMEString );

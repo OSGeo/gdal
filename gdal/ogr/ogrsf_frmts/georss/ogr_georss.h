@@ -195,7 +195,7 @@ class OGRGeoRSSDataSource : public OGRDataSource
     int                 GetLayerCount() { return nLayers; }
     OGRLayer*           GetLayer( int );
     
-    OGRLayer *          CreateLayer( const char * pszLayerName,
+    OGRLayer *          ICreateLayer( const char * pszLayerName,
                                     OGRSpatialReference *poSRS,
                                     OGRwkbGeometryType eType,
                                     char ** papszOptions );
@@ -212,23 +212,5 @@ class OGRGeoRSSDataSource : public OGRDataSource
     void                dataHandlerValidateCbk(const char *data, int nLen);
 #endif
 };
-
-/************************************************************************/
-/*                             OGRGeoRSSDriver                             */
-/************************************************************************/
-
-class OGRGeoRSSDriver : public OGRSFDriver
-{
-  public:
-                ~OGRGeoRSSDriver();
-
-    const char*         GetName();
-    OGRDataSource*      Open( const char *, int );
-    OGRDataSource*      CreateDataSource( const char * pszName, char **papszOptions );
-    int                 DeleteDataSource( const char *pszFilename );
-    int                 TestCapability( const char * );
-    
-};
-
 
 #endif /* ndef _OGR_GeoRSS_H_INCLUDED */

@@ -2402,6 +2402,7 @@ void GDALRegister_WCS()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "WCS" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "OGC Web Coverage Service" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

@@ -192,6 +192,13 @@ int OGRXLSXDriver::TestCapability( const char * pszCap )
 void RegisterOGRXLSX()
 
 {
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRXLSXDriver );
+    OGRSFDriver* poDriver = new OGRXLSXDriver;
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                                "MS Office Open XML spreadsheet" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "xlsx" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                                "drv_xlsx.html" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }
 

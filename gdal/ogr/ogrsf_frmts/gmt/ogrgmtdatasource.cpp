@@ -106,11 +106,11 @@ int OGRGmtDataSource::Create( const char *pszDSName, char **papszOptions )
 }
 
 /************************************************************************/
-/*                            CreateLayer()                             */
+/*                           ICreateLayer()                             */
 /************************************************************************/
 
 OGRLayer *
-OGRGmtDataSource::CreateLayer( const char * pszLayerName,
+OGRGmtDataSource::ICreateLayer( const char * pszLayerName,
                                OGRSpatialReference *poSRS,
                                OGRwkbGeometryType eType,
                                char ** papszOptions )

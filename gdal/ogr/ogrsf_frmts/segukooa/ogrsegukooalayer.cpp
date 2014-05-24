@@ -123,6 +123,7 @@ OGRUKOOAP190Layer::OGRUKOOAP190Layer( const char* pszFilename,
     nYear = 0;
 
     poFeatureDefn = new OGRFeatureDefn( CPLGetBasename(pszFilename) );
+    SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbPoint );
 
@@ -480,6 +481,7 @@ OGRSEGP1Layer::OGRSEGP1Layer( const char* pszFilename,
     poSRS = NULL;
 
     poFeatureDefn = new OGRFeatureDefn( CPLGetBasename(pszFilename) );
+    SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbPoint );
 

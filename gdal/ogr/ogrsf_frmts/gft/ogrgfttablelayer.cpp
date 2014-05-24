@@ -51,6 +51,8 @@ OGRGFTTableLayer::OGRGFTTableLayer(OGRGFTDataSource* poDS,
 
     bFirstTokenIsFID = TRUE;
     eGTypeForCreation = wkbUnknown;
+    
+    SetDescription( osTableName );
 }
 
 /************************************************************************/

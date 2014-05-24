@@ -17,7 +17,9 @@
  *
 */
 
+#ifndef FROM_GDAL_I
 %include java_exceptions.i
+#endif
 
 %pragma(java) jniclasscode=%{
   private static boolean available = false;
@@ -58,17 +60,24 @@
 %pragma(java) jniclassimports=%{
 import org.gdal.osr.SpatialReference;
 import org.gdal.osr.CoordinateTransformation;
+import org.gdal.gdal.MajorObject;
 %}
  
 %pragma(java) moduleimports=%{
 import org.gdal.osr.SpatialReference;
+import org.gdal.gdal.MajorObject;
 %}
 
 %typemap(javaimports) OGRLayerShadow %{
 import org.gdal.osr.SpatialReference;
+import org.gdal.gdal.MajorObject;
 %}
 %typemap(javaimports) OGRDataSourceShadow %{
 import org.gdal.osr.SpatialReference;
+import org.gdal.gdal.MajorObject;
+%}
+%typemap(javaimports) OGRDriverShadow %{
+import org.gdal.gdal.MajorObject;
 %}
 %typemap(javaimports) OGRGeomFieldDefnShadow %{
 import org.gdal.osr.SpatialReference;
@@ -99,10 +108,41 @@ import org.gdal.osr.SpatialReference;
 
 %}
 
+%typemap(javabody_derived) OGRLayerShadow %{
+  private long swigCPtr;
+
+  public Layer(long cPtr, boolean cMemoryOwn) {
+    super(ogrJNI.SWIGLayerUpcast(cPtr), cMemoryOwn);
+    swigCPtr = cPtr;
+  }
+
+  public static long getCPtr(Layer obj) {
+    return (obj == null) ? 0 : obj.swigCPtr;
+  }
+%}
+
+
+%typemap(javabody) OGRStyleTableShadow %{
+  private boolean swigCMemOwn;
+  private long swigCPtr;
+
+  public $javaclassname(long cPtr, boolean cMemoryOwn) {
+    if (cPtr == 0)
+        throw new RuntimeException();
+    swigCMemOwn = cMemoryOwn;
+    swigCPtr = cPtr;
+  }
+
+  public static long getCPtr($javaclassname obj) {
+    return (obj == null) ? 0 : obj.swigCPtr;
+  }
+%}
+
 %typemap(javacode) OGRLayerShadow %{
   private Object parentReference;
 
-  protected static long getCPtrAndDisown($javaclassname obj) {
+
+  public static long getCPtrAndDisown($javaclassname obj) {
     if (obj != null)
     {
         obj.swigCMemOwn= false;
@@ -112,7 +152,7 @@ import org.gdal.osr.SpatialReference;
   }
 
   /* Ensure that the GC doesn't collect any parent instance set from Java */
-  protected void addReference(Object reference) {
+  public void addReference(Object reference) {
     parentReference = reference;
   }
 
@@ -405,7 +445,7 @@ class%}
   private long swigCPtr;
   private type ## Native nativeObject;
 
-  protected $javaclassname(long cPtr, boolean cMemoryOwn) {
+  public $javaclassname(long cPtr, boolean cMemoryOwn) {
     if (cPtr == 0)
         throw new RuntimeException();
     swigCPtr = cPtr;
@@ -413,7 +453,7 @@ class%}
         nativeObject = new type ## Native(this, cPtr);
   }
   
-  protected static long getCPtr($javaclassname obj) {
+  public static long getCPtr($javaclassname obj) {
     return (obj == null) ? 0 : obj.swigCPtr;
   }
 %}
@@ -462,6 +502,8 @@ SMART_FINALIZER(Geometry)
 /* End of smart finalizer mechanism                                  */
 /* ----------------------------------------------------------------- */
 
+#ifndef FROM_GDAL_I
 %include callback.i
+#endif
 
 %include typemaps_java.i

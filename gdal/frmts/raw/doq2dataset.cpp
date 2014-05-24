@@ -432,6 +432,7 @@ void GDALRegister_DOQ2()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "DOQ2" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "USGS DOQ (New Style)" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

@@ -162,21 +162,6 @@ class OGRAVCBinDataSource : public OGRAVCDataSource
     AVCE00ReadPtr       GetInfo() { return psAVC; }
 };
 
-/************************************************************************/
-/*                           OGRAVCBinDriver                            */
-/************************************************************************/
-
-class OGRAVCBinDriver : public OGRSFDriver
-{
-  public:
-    		~OGRAVCBinDriver();
-                
-    const char *GetName();
-    OGRDataSource *Open( const char *, int );
-
-    int                 TestCapability( const char * );
-};
-
 /* ==================================================================== */
 /*      E00 (ASCII) Coverage Classes                                    */
 /* ==================================================================== */
@@ -245,19 +230,5 @@ class OGRAVCE00DataSource : public OGRAVCDataSource
     virtual OGRSpatialReference *GetSpatialRef();
 };
 
-/************************************************************************/
-/*                           OGRAVCE00Driver                            */
-/************************************************************************/
-
-class OGRAVCE00Driver : public OGRSFDriver
-{
-  public:
-    		~OGRAVCE00Driver();
-                
-    const char *GetName();
-    OGRDataSource *Open( const char *, int );
-
-    int                 TestCapability( const char * );
-};
 
 #endif /* _OGR_AVC_H_INCLUDED */

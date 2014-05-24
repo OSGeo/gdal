@@ -48,6 +48,7 @@ OGROCISelectLayer::OGROCISelectLayer( OGROCIDataSource *poDSIn,
     iNextShapeId = 0;
 
     poFeatureDefn = ReadTableDefinition( poDescribedCommand );
+    SetDescription( poFeatureDefn->GetName() );
 
     pszQueryStatement = CPLStrdup(pszQuery);
     

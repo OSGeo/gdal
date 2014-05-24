@@ -230,6 +230,7 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
     nNextFID = 1;
 
     poFeatureDefn = new OGRFeatureDefn( pszLayerNameIn );
+    SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbNone );
 

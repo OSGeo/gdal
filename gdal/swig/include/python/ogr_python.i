@@ -7,6 +7,7 @@
 
 %feature("autodoc");
 
+#ifndef FROM_GDAL_I
 %init %{
 
   if ( OGRGetDriverCount() == 0 ) {
@@ -14,6 +15,7 @@
   }
   
 %}
+#endif
 
 /*%{
     
@@ -25,8 +27,10 @@
 */
 
 %include "ogr_layer_docs.i"
+#ifndef FROM_GDAL_I
 %include "ogr_datasource_docs.i"
 %include "ogr_driver_docs.i"
+#endif
 %include "ogr_feature_docs.i"
 %include "ogr_featuredef_docs.i"
 %include "ogr_fielddef_docs.i"
@@ -37,6 +41,7 @@
 %rename (SetGenerate_DB2_V72_BYTE_ORDER) OGRSetGenerate_DB2_V72_BYTE_ORDER;
 %rename (RegisterAll) OGRRegisterAll();
 
+#ifndef FROM_GDAL_I
 %include "python_exceptions.i"
 %include "python_strings.i"
 
@@ -109,6 +114,9 @@ ds[0:4] would return a list of the first four layers."""
             raise TypeError("Input %s is not of String or Int type" % type(value))
   }
 }
+
+#endif
+
 
 %extend OGRLayerShadow {
   %pythoncode {
@@ -459,4 +467,6 @@ layer[0:4] would return a list of the first four features."""
 
 %import typemaps_python.i
 
+#ifndef FROM_GDAL_I
 %include "callback.i"
+#endif

@@ -82,6 +82,8 @@ CPLErr OGRODBCTableLayer::Initialize( const char *pszLayerName,
 
     CPLFree( pszFIDColumn );
     pszFIDColumn = NULL;
+    
+    SetDescription( pszLayerName );
 
 /* -------------------------------------------------------------------- */
 /*      Parse out schema name if present in layer.  We assume a         */

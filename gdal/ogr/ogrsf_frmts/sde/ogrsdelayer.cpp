@@ -174,6 +174,7 @@ int OGRSDELayer::Initialize( const char *pszTableName,
     }
 
     poFeatureDefn = new OGRFeatureDefn( pszTableName );
+    SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
 
 /* -------------------------------------------------------------------- */

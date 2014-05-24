@@ -78,6 +78,8 @@ CPLErr OGRPGeoTableLayer::Initialize( const char *pszTableName,
 
 {
     CPLODBCSession *poSession = poDS->GetSession();
+    
+    SetDescription( pszTableName );
 
     CPLFree( pszGeomColumn );
     if( pszGeomCol == NULL )

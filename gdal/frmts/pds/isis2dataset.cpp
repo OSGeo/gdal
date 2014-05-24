@@ -1191,6 +1191,7 @@ int ISIS2Dataset::WriteLabel(
             poDriver = new GDALDriver();
         
             poDriver->SetDescription( "ISIS2" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
             poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                        "USGS Astrogeology ISIS cube (Version 2)" );
             poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_isis2.html" );

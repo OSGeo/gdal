@@ -62,6 +62,7 @@ OGRIdrisiLayer::OGRIdrisiLayer( const char* pszFilename,
         poSRS = NULL;
 
     poFeatureDefn = new OGRFeatureDefn( pszLayerName );
+    SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
     poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
     poFeatureDefn->SetGeomType( eGeomType );

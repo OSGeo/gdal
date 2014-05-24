@@ -1414,11 +1414,11 @@ int OGRGMLDataSource::Create( const char *pszFilename,
 }
 
 /************************************************************************/
-/*                            CreateLayer()                             */
+/*                           ICreateLayer()                             */
 /************************************************************************/
 
 OGRLayer *
-OGRGMLDataSource::CreateLayer( const char * pszLayerName,
+OGRGMLDataSource::ICreateLayer( const char * pszLayerName,
                                OGRSpatialReference *poSRS,
                                OGRwkbGeometryType eType,
                                char ** papszOptions )

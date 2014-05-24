@@ -87,6 +87,7 @@ OGRGRASSLayer::OGRGRASSLayer( int layerIndex,  struct Map_info * map )
     }
 
     poFeatureDefn = new OGRFeatureDefn( pszName );
+    SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
 
     // Get type definition

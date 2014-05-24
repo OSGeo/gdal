@@ -310,7 +310,7 @@ GIFDataset::GIFDataset()
 GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    if( !Identify( poOpenInfo ) )
+    if( !Identify( poOpenInfo ) || poOpenInfo->fpL == NULL )
         return NULL;
 
     if( poOpenInfo->eAccess == GA_Update )
@@ -322,15 +322,14 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Open the file and ingest.                                       */
+/*      Ingest.                                                         */
 /* -------------------------------------------------------------------- */
     GifFileType 	*hGifFile;
     VSILFILE                *fp;
     int                  nGifErr;
 
-    fp = VSIFOpenL( poOpenInfo->pszFilename, "r" );
-    if( fp == NULL )
-        return NULL;
+    fp = poOpenInfo->fpL;
+    poOpenInfo->fpL = NULL;
 
 #if defined(GIFLIB_MAJOR) && GIFLIB_MAJOR >= 5
     int nError;
@@ -387,7 +386,9 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
                       "Due to limitations of the GDAL GIF driver we deliberately avoid\n"
                       "opening large GIF files (larger than 100 megapixels).");
             DGifCloseFile( hGifFile );
-            VSIFCloseL( fp );
+            /* Reset poOpenInfo->fpL since BIGGIF may need it */
+            poOpenInfo->fpL = fp;
+            VSIFSeekL(fp, 0, SEEK_SET);
             return NULL;
         }
     }
@@ -479,12 +480,13 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( poOpenInfo->pszFilename );
-    poDS->TryLoadXML();
+    poDS->TryLoadXML( poOpenInfo->GetSiblingFiles() );
 
 /* -------------------------------------------------------------------- */
 /*      Support overviews.                                              */
 /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename,
+                                 poOpenInfo->GetSiblingFiles() );
 
     return poDS;
 }
@@ -874,6 +876,7 @@ void GDALRegister_GIF()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "GIF" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "Graphics Interchange Format (.gif)" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

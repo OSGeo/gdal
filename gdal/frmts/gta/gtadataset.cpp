@@ -1697,6 +1697,7 @@ void GDALRegister_GTA()
         poDriver = new GDALDriver();
 
         poDriver->SetDescription( "GTA" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                 "Generic Tagged Arrays (.gta)" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,

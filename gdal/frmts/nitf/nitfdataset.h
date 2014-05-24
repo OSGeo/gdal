@@ -110,7 +110,7 @@ class NITFDataset : public GDALPamDataset
     CPLString    osNITFFilename;
 
     CPLString    osRSetVRT;
-    int          CheckForRSets( const char *pszFilename );
+    int          CheckForRSets( const char *pszFilename, char** papszSiblingFiles );
 
     char       **papszTextMDToWrite;
     char       **papszCgmMDToWrite;

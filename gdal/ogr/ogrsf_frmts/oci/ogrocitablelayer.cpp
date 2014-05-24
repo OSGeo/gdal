@@ -68,6 +68,7 @@ OGROCITableLayer::OGROCITableLayer( OGROCIDataSource *poDSIn,
         bHaveSpatialIndex = HSI_UNKNOWN;
 
     poFeatureDefn = ReadTableDefinition( pszTableName );
+    SetDescription( poFeatureDefn->GetName() );
 
     nSRID = nSRIDIn;
     if( nSRID == -1 )

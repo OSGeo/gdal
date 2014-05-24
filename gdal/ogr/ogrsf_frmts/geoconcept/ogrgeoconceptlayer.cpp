@@ -88,6 +88,7 @@ OGRErr OGRGeoconceptLayer::Open( GCSubType* Subclass )
       pszln[511]='\0';
 
       _poFeatureDefn = new OGRFeatureDefn(pszln);
+      SetDescription( _poFeatureDefn->GetName() );
       _poFeatureDefn->Reference();
       _poFeatureDefn->SetGeomType(wkbUnknown);
 

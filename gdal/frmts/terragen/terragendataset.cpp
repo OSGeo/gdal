@@ -1143,6 +1143,7 @@ void GDALRegister_Terragen()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "Terragen" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, 
                                    "ter" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

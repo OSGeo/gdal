@@ -830,6 +830,7 @@ void GDALRegister_ARG()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "ARG" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "Azavea Raster Grid format" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

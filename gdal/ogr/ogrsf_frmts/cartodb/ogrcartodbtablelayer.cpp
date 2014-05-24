@@ -84,6 +84,7 @@ OGRCARTODBTableLayer::OGRCARTODBTableLayer(OGRCARTODBDataSource* poDS,
 
 {
     osName = pszName;
+    SetDescription( osName );
     bInTransaction = FALSE;
     nNextFID = -1;
 }

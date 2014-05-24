@@ -174,28 +174,13 @@ class OGRAeronavFAADataSource : public OGRDataSource
                         OGRAeronavFAADataSource();
                         ~OGRAeronavFAADataSource();
 
-    int                 Open( const char * pszFilename,
-                              int bUpdate );
+    int                 Open( const char * pszFilename );
 
     virtual const char*         GetName() { return pszName; }
 
     virtual int                 GetLayerCount() { return nLayers; }
     virtual OGRLayer*           GetLayer( int );
 
-    virtual int                 TestCapability( const char * );
-};
-
-/************************************************************************/
-/*                         OGRAeronavFAADriver                          */
-/************************************************************************/
-
-class OGRAeronavFAADriver : public OGRSFDriver
-{
-  public:
-                ~OGRAeronavFAADriver();
-
-    virtual const char*         GetName();
-    virtual OGRDataSource*      Open( const char *, int );
     virtual int                 TestCapability( const char * );
 };
 

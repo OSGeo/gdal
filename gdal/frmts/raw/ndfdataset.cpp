@@ -441,6 +441,7 @@ void GDALRegister_NDF()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "NDF" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "NLAPS Data Format" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

@@ -817,7 +817,8 @@ INGR_VirtualFile CPL_STDCALL INGR_CreateVirtualFile( const char *pszFilename,
     case CCITTGroup4:
         {
             REVERSEBITSBUFFER( pabyBuffer, nBufferSize );
-            TIFF *hTIFF = VSI_TIFFOpen( hVirtual.pszFileName, "w+" );
+            VSILFILE *fpL = VSIFOpenL( hVirtual.pszFileName, "w+" );
+            TIFF *hTIFF = VSI_TIFFOpen( hVirtual.pszFileName, "w+", fpL );
             TIFFSetField( hTIFF, TIFFTAG_IMAGEWIDTH,      nXSize );
             TIFFSetField( hTIFF, TIFFTAG_IMAGELENGTH,     nYSize );
             TIFFSetField( hTIFF, TIFFTAG_BITSPERSAMPLE,   1 );
@@ -831,6 +832,7 @@ INGR_VirtualFile CPL_STDCALL INGR_CreateVirtualFile( const char *pszFilename,
             TIFFWriteRawStrip( hTIFF, 0, pabyBuffer, nBufferSize );
             TIFFWriteDirectory( hTIFF );
             TIFFClose( hTIFF );
+            VSIFCloseL(fpL);
             break;
         }
     default:

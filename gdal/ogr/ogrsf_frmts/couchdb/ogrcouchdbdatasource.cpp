@@ -308,10 +308,10 @@ int OGRCouchDBDataSource::Open( const char * pszFilename, int bUpdateIn)
 
 
 /************************************************************************/
-/*                           CreateLayer()                              */
+/*                          ICreateLayer()                              */
 /************************************************************************/
 
-OGRLayer   *OGRCouchDBDataSource::CreateLayer( const char *pszName,
+OGRLayer   *OGRCouchDBDataSource::ICreateLayer( const char *pszName,
                                            OGRSpatialReference *poSpatialRef,
                                            OGRwkbGeometryType eGType,
                                            char ** papszOptions )

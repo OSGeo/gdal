@@ -108,6 +108,7 @@ CPLErr OGRMDBLayer::BuildFeatureDefn()
 
 {
     poFeatureDefn = new OGRFeatureDefn( poMDBTable->GetName() );
+    SetDescription( poFeatureDefn->GetName() );
 
     poFeatureDefn->Reference();
 

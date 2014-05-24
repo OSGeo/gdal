@@ -32,6 +32,17 @@
 #include "cpl_string.h"
 #include "cpl_hash_set.h"
 #include "cpl_multiproc.h"
+#include "ogr_featurestyle.h"
+#include "swq.h"
+#include "ogr_gensql.h"
+#include "ogr_attrind.h"
+#include "ogr_p.h"
+#include "ogrunionlayer.h"
+
+#ifdef SQLITE_ENABLED
+#include "../sqlite/ogrsqliteexecutesql.h"
+#endif
+
 #include <map>
 
 CPL_CVSID("$Id$");
@@ -60,25 +71,17 @@ typedef struct
     GDALDataset *poDS;
 } SharedDatasetCtxt;
 
-typedef struct
-{
-    GDALDataset *poDS;
-    /* In the case of a shared dataset, memorize the PID of the thread */
-    /* that marked the dataset as shared, so that we can remove it from */
-    /* the phSharedDatasetSet in the destructor of the dataset, even */
-    /* if GDALClose is called from a different thread */
-    /* Ideally, this should be stored in the GDALDataset object itself */
-    /* but this is inconvenient to change the object size at that time */
-    GIntBig      nPIDCreatorForShared; 
-} DatasetCtxt;
-
 /* Set of datasets opened as shared datasets (with GDALOpenShared) */
 /* The values in the set are of type SharedDatasetCtxt */
 static CPLHashSet* phSharedDatasetSet = NULL; 
 
 /* Set of all datasets created in the constructor of GDALDataset */
-/* The values in the set are of type DatasetCtxt */
-static CPLHashSet* phAllDatasetSet = NULL;
+/* In the case of a shared dataset, memorize the PID of the thread */
+/* that marked the dataset as shared, so that we can remove it from */
+/* the phSharedDatasetSet in the destructor of the dataset, even */
+/* if GDALClose is called from a different thread */
+static std::map<GDALDataset*, GIntBig>* poAllDatasetMap = NULL;
+
 static void *hDLMutex = NULL;
 
 /* Static array of all datasets. Used by GDALGetOpenDatasets */
@@ -104,25 +107,6 @@ static void GDALSharedDatasetFreeFunc(void* elt)
 {
     SharedDatasetCtxt* psStruct = (SharedDatasetCtxt*) elt;
     CPLFree(psStruct->pszDescription);
-    CPLFree(psStruct);
-}
-
-static unsigned long GDALDatasetHashFunc(const void* elt)
-{
-    DatasetCtxt* psStruct = (DatasetCtxt*) elt;
-    return (unsigned long)(GUIntBig) psStruct->poDS;
-}
-
-static int GDALDatasetEqualFunc(const void* elt1, const void* elt2)
-{
-    DatasetCtxt* psStruct1 = (DatasetCtxt*) elt1;
-    DatasetCtxt* psStruct2 = (DatasetCtxt*) elt2;
-    return psStruct1->poDS == psStruct2->poDS ;
-}
-
-static void GDALDatasetFreeFunc(void* elt)
-{
-    DatasetCtxt* psStruct = (DatasetCtxt*) elt;
     CPLFree(psStruct);
 }
 
@@ -199,12 +183,9 @@ GDALDataset::GDALDataset()
     {
         CPLMutexHolderD( &hDLMutex );
 
-        if (phAllDatasetSet == NULL)
-            phAllDatasetSet = CPLHashSetNew(GDALDatasetHashFunc, GDALDatasetEqualFunc, GDALDatasetFreeFunc);
-        DatasetCtxt* ctxt = (DatasetCtxt*)CPLMalloc(sizeof(DatasetCtxt));
-        ctxt->poDS = this;
-        ctxt->nPIDCreatorForShared = -1;
-        CPLHashSetInsert(phAllDatasetSet, ctxt);
+        if (poAllDatasetMap == NULL)
+            poAllDatasetMap = new std::map<GDALDataset*, GIntBig>;
+        (*poAllDatasetMap)[this] = -1;
     }
 
 /* -------------------------------------------------------------------- */
@@ -212,6 +193,9 @@ GDALDataset::GDALDataset()
 /* -------------------------------------------------------------------- */
     bForceCachedIO =  CSLTestBoolean( 
         CPLGetConfigOption( "GDAL_FORCE_CACHING", "NO") );
+    
+    m_poStyleTable = NULL;
+    m_hMutex = NULL;
 }
 
 
@@ -258,13 +242,12 @@ GDALDataset::~GDALDataset()
 /* -------------------------------------------------------------------- */
     {
         CPLMutexHolderD( &hDLMutex );
-        if( phAllDatasetSet )
+        if( poAllDatasetMap )
         {
-            DatasetCtxt sStruct;
-            sStruct.poDS = this;
-            DatasetCtxt* psStruct = (DatasetCtxt*) CPLHashSetLookup(phAllDatasetSet, &sStruct);
-            GIntBig nPIDCreatorForShared = psStruct->nPIDCreatorForShared;
-            CPLHashSetRemove(phAllDatasetSet, psStruct);
+            std::map<GDALDataset*, GIntBig>::iterator oIter = poAllDatasetMap->find(this);
+            CPLAssert(oIter != poAllDatasetMap->end());
+            GIntBig nPIDCreatorForShared = oIter->second;
+            poAllDatasetMap->erase(oIter);
 
             if (bShared && phSharedDatasetSet != NULL)
             {
@@ -284,10 +267,10 @@ GDALDataset::~GDALDataset()
                 }
             }
 
-            if (CPLHashSetSize(phAllDatasetSet) == 0)
+            if (poAllDatasetMap->size() == 0)
             {
-                CPLHashSetDestroy(phAllDatasetSet);
-                phAllDatasetSet = NULL;
+                delete poAllDatasetMap;
+                poAllDatasetMap = NULL;
                 if (phSharedDatasetSet)
                 {
                     CPLHashSetDestroy(phSharedDatasetSet);
@@ -309,6 +292,15 @@ GDALDataset::~GDALDataset()
     }
 
     CPLFree( papoBands );
+
+    if ( m_poStyleTable )
+    {
+        delete m_poStyleTable;
+        m_poStyleTable = NULL;
+    }
+
+    if( m_hMutex != NULL )
+        CPLDestroyMutex( m_hMutex );
 }
 
 /************************************************************************/
@@ -320,6 +312,12 @@ GDALDataset::~GDALDataset()
  *
  * Any raster (or other GDAL) data written via GDAL calls, but buffered
  * internally will be written to disk.
+ *
+ * The default implementation of this method just calls the FlushCache() method
+ * on each of the raster bands and the SyncToDisk() method
+ * on each of the layers.  Conceptionally, calling FlushCache() on a dataset
+ * should include any work that might be accomplished by calling SyncToDisk()
+ * on layers in that dataset.
  *
  * Using this method does not prevent use from calling GDALClose()
  * to properly close a dataset and ensure that important data not addressed
@@ -336,13 +334,28 @@ void GDALDataset::FlushCache()
     // This sometimes happens if a dataset is destroyed before completely
     // built. 
 
-    if( papoBands == NULL )
-        return;
-
-    for( i = 0; i < nBands; i++ )
+    if( papoBands != NULL )
     {
-        if( papoBands[i] != NULL )
-            papoBands[i]->FlushCache();
+        for( i = 0; i < nBands; i++ )
+        {
+            if( papoBands[i] != NULL )
+                papoBands[i]->FlushCache();
+        }
+    }
+
+    int nLayers = GetLayerCount();
+    if( nLayers > 0 )
+    {
+        CPLMutexHolderD( &m_hMutex );
+        for( i = 0; i < nLayers ; i++ )
+        {
+            OGRLayer *poLayer = GetLayer(i);
+
+            if( poLayer )
+            {
+                poLayer->SyncToDisk();
+            }
+        }
     }
 }
 
@@ -1137,10 +1150,7 @@ void GDALDataset::MarkAsShared()
     {
         CPLHashSetInsert(phSharedDatasetSet, psStruct);
 
-        DatasetCtxt sStruct;
-        sStruct.poDS = this;
-        DatasetCtxt* psStruct = (DatasetCtxt*) CPLHashSetLookup(phAllDatasetSet, &sStruct);
-        psStruct->nPIDCreatorForShared = nPID;
+        (*poAllDatasetMap)[this] = nPID;
     }
 }
 
@@ -1804,18 +1814,6 @@ GDALDatasetRasterIO( GDALDatasetH hDS, GDALRWFlag eRWFlag,
 /*                          GetOpenDatasets()                           */
 /************************************************************************/
 
-static int GDALGetOpenDatasetsForeach(void* elt, void* user_data)
-{
-    int* pnIndex = (int*) user_data;
-    DatasetCtxt* psStruct = (DatasetCtxt*) elt;
-
-    ppDatasets[*pnIndex] = psStruct->poDS;
-
-    (*pnIndex) ++;
-
-    return TRUE;
-}
-
 /**
  * \brief Fetch all open GDAL dataset handles.
  *
@@ -1835,12 +1833,14 @@ GDALDataset **GDALDataset::GetOpenDatasets( int *pnCount )
 {
     CPLMutexHolderD( &hDLMutex );
 
-    if (phAllDatasetSet != NULL)
+    if (poAllDatasetMap != NULL)
     {
-        int nIndex = 0;
-        *pnCount = CPLHashSetSize(phAllDatasetSet);
+        int i = 0;
+        *pnCount = poAllDatasetMap->size();
         ppDatasets = (GDALDataset**) CPLRealloc(ppDatasets, (*pnCount) * sizeof(GDALDataset*));
-        CPLHashSetForeach(phAllDatasetSet, GDALGetOpenDatasetsForeach, &nIndex);
+        std::map<GDALDataset*, GIntBig>::iterator oIter = poAllDatasetMap->begin();
+        for(; oIter != poAllDatasetMap->end(); ++oIter, i++ )
+            ppDatasets[i] = oIter->first;
         return ppDatasets;
     }
     else
@@ -1878,7 +1878,7 @@ void CPL_STDCALL GDALGetOpenDatasets( GDALDatasetH **ppahDSList, int *pnCount )
 /* the datasets of the parent at the child termination */
 void GDALNullifyOpenDatasetsList()
 {
-    phAllDatasetSet = NULL;
+    poAllDatasetMap = NULL;
     phSharedDatasetSet = NULL;
     ppDatasets = NULL;
     hDLMutex = NULL;
@@ -2238,6 +2238,7 @@ CPLErr CPL_STDCALL GDALCreateDatasetMaskBand( GDALDatasetH hDS, int nFlags )
  * process through the \ref gdal_api_proxy mechanism.
  *
  * \sa GDALOpenShared()
+ * \sa GDALOpenEx()
  *
  * @param pszFilename the name of the file to access.  In the case of
  * exotic drivers this may not refer to a physical file, but instead contain
@@ -2255,23 +2256,132 @@ GDALDatasetH CPL_STDCALL
 GDALOpen( const char * pszFilename, GDALAccess eAccess )
 
 {
-    return GDALOpenInternal(pszFilename, eAccess, NULL);
+    return GDALOpenEx( pszFilename,
+                       GDAL_OF_RASTER |
+                       (eAccess == GA_Update ? GDAL_OF_UPDATE : 0) |
+                       GDAL_OF_VERBOSE_ERROR,
+                       NULL, NULL, NULL );
 }
 
-/* The drivers listed in papszAllowedDrivers can be in any order */
-/* Only the order of registration will be taken into account */
-GDALDatasetH GDALOpenInternal( const char * pszFilename, GDALAccess eAccess,
-                               const char* const * papszAllowedDrivers)
-{
-    GDALOpenInfo oOpenInfo( pszFilename, eAccess );
-    return GDALOpenInternal(oOpenInfo, papszAllowedDrivers);
-}
 
-GDALDatasetH GDALOpenInternal( GDALOpenInfo& oOpenInfo,
-                               const char* const * papszAllowedDrivers)
-{
+/************************************************************************/
+/*                             GDALOpenEx()                             */
+/************************************************************************/
 
-    VALIDATE_POINTER1( oOpenInfo.pszFilename, "GDALOpen", NULL );
+/**
+ * \brief Open a raster or vector file as a GDALDataset.
+ *
+ * This function will try to open the passed file, or virtual dataset
+ * name by invoking the Open method of each registered GDALDriver in turn. 
+ * The first successful open will result in a returned dataset.  If all
+ * drivers fail then NULL is returned and an error is issued.
+ *
+ * Several recommendations :
+ * <ul>
+ * <li>If you open a dataset object with GDAL_OF_UPDATE access, it is not recommended
+ * to open a new dataset on the same underlying file.</li>
+ * <li>The returned dataset should only be accessed by one thread at a time. If you
+ * want to use it from different threads, you must add all necessary code (mutexes, etc.)
+ * to avoid concurrent use of the object. (Some drivers, such as GeoTIFF, maintain internal
+ * state variables that are updated each time a new block is read, thus preventing concurrent
+ * use.) </li>
+ * </ul>
+ *
+ * For drivers supporting the VSI virtual file API, it is possible to open
+ * a file in a .zip archive (see VSIInstallZipFileHandler()), in a .tar/.tar.gz/.tgz archive
+ * (see VSIInstallTarFileHandler()) or on a HTTP / FTP server (see VSIInstallCurlFileHandler())
+ *
+ * In some situations (dealing with unverified data), the datasets can be opened in another
+ * process through the \ref gdal_api_proxy mechanism.
+ *
+ * In order to reduce the need for searches through the operating system
+ * file system machinery, it is possible to give an optional list of files with
+ * the papszSiblingFiles parameter.
+ * This is the list of all files at the same level in the file system as the
+ * target file, including the target file. The filenames must not include any
+ * path components, are an essentially just the output of CPLReadDir() on the
+ * parent directory. If the target object does not have filesystem semantics
+ * then the file list should be NULL.
+ *
+ * @param pszFilename the name of the file to access.  In the case of
+ * exotic drivers this may not refer to a physical file, but instead contain
+ * information for the driver on how to access a dataset.  It should be in UTF-8
+ * encoding.
+ *
+ * @param nOpenFlags a combination of GDAL_OF_ flags that may be combined through
+ * logical or operator.
+ * <ul>
+ * <li>Driver kind: GDAL_OF_RASTER for raster drivers, GDAL_OF_VECTOR for vector drivers.
+ *     If none of the value is specified, both kinds are implied.</li>
+ * <li>Access mode: GDAL_OF_READONLY (exclusive)or GDAL_OF_UPDATE.</li>
+ * <li>Shared mode: GDAL_OF_SHARED. If set, it allows the sharing of
+ *  GDALDataset handles for a dataset with other callers that have set GDAL_OF_SHARED.
+ * In particular, GDALOpenEx() will first consult its list of currently
+ * open and shared GDALDataset's, and if the GetDescription() name for one
+ * exactly matches the pszFilename passed to GDALOpenEx() it will be
+ * referenced and returned, if GDALOpenEx() is called from the same thread.</li>
+ * <li>Verbose error: GDAL_OF_VERBOSE_ERROR. If set, a failed attempt to open the
+ * file will lead to an error message to be reported.</li>
+ * </ul>
+ *
+ * @param papszAllowedDrivers NULL to consider all candidate drivers, or a NULL
+ * terminated list of strings with the driver short names that must be considered.
+ *
+ * @param papszOpenOptions NULL, or a NULL terminated list of strings with open
+ * options passed to candidate drivers.
+  *
+ * @param papszSiblingFiles  NULL, or a NULL terminated list of strings that are
+ * filenames that are auxiliary to the main filename. If NULL is passed, a probing
+ * of the file system will be done.
+ *
+ * @return A GDALDatasetH handle or NULL on failure.  For C++ applications
+ * this handle can be cast to a GDALDataset *. 
+ *
+ * @since GDAL 2.0
+ */
+
+GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
+                                 unsigned int nOpenFlags,
+                                 const char* const* papszAllowedDrivers,
+                                 const char* const* papszOpenOptions,
+                                 const char* const* papszSiblingFiles )
+{
+    VALIDATE_POINTER1( pszFilename, "GDALOpen", NULL );
+
+/* -------------------------------------------------------------------- */
+/*      In case of shared dataset, first scan the existing list to see  */
+/*      if it could already contain the requested dataset.              */
+/* -------------------------------------------------------------------- */
+    if( nOpenFlags & GDAL_OF_SHARED )
+    {
+        CPLMutexHolderD( &hDLMutex );
+
+        if (phSharedDatasetSet != NULL)
+        {
+            GIntBig nThisPID = GDALGetResponsiblePIDForCurrentThread();
+            SharedDatasetCtxt* psStruct;
+            SharedDatasetCtxt sStruct;
+
+            sStruct.nPID = nThisPID;
+            sStruct.pszDescription = (char*) pszFilename;
+            sStruct.eAccess = (nOpenFlags & GDAL_OF_UPDATE) ? GA_Update : GA_ReadOnly;
+            psStruct = (SharedDatasetCtxt*) CPLHashSetLookup(phSharedDatasetSet, &sStruct);
+            if (psStruct == NULL && (nOpenFlags & GDAL_OF_UPDATE) == 0)
+            {
+                sStruct.eAccess = GA_Update;
+                psStruct = (SharedDatasetCtxt*) CPLHashSetLookup(phSharedDatasetSet, &sStruct);
+            }
+            if (psStruct)
+            {
+                psStruct->poDS->Reference();
+                return psStruct->poDS;
+            }
+        }
+    }
+
+    /* If no driver kind is specified, assume all are to be probed */
+    if( (nOpenFlags & GDAL_OF_KIND_MASK) == 0 )
+        nOpenFlags |= GDAL_OF_KIND_MASK;
 
     {
         int* pnRecCount = (int*)CPLGetTLS( CTLS_GDALDATASET_REC_PROTECT_MAP );
@@ -2297,6 +2407,13 @@ GDALDatasetH GDALOpenInternal( GDALOpenInfo& oOpenInfo,
     CPLErrorReset();
     CPLAssert( NULL != poDM );
 
+    /* Build GDALOpenInfo just now to avoid useless file stat'ing if a */
+    /* shared dataset was asked before */
+    GDALOpenInfo oOpenInfo(pszFilename,
+                           nOpenFlags,
+                           (char**) papszSiblingFiles);
+    oOpenInfo.papszOpenOptions = (char**) papszOpenOptions;
+
     for( iDriver = -1; iDriver < poDM->GetDriverCount(); iDriver++ )
     {
         GDALDriver      *poDriver;
@@ -2312,14 +2429,33 @@ GDALDatasetH GDALOpenInternal( GDALOpenInfo& oOpenInfo,
                 continue;
         }
 
-        if ( poDriver->pfnOpen == NULL )
+        if( (nOpenFlags & GDAL_OF_RASTER) != 0 &&
+            (nOpenFlags & GDAL_OF_VECTOR) == 0 &&
+            poDriver->GetMetadataItem(GDAL_DCAP_RASTER) == NULL )
+            continue;
+        if( (nOpenFlags & GDAL_OF_VECTOR) != 0 &&
+            (nOpenFlags & GDAL_OF_RASTER) == 0 &&
+            poDriver->GetMetadataItem(GDAL_DCAP_VECTOR) == NULL )
             continue;
 
-        poDS = poDriver->pfnOpen( &oOpenInfo );
+        if( poDriver->pfnIdentify && poDriver->pfnIdentify(&oOpenInfo) > 0 )
+            GDALValidateOpenOptions( poDriver, papszOpenOptions );
+
+        if ( poDriver->pfnOpen != NULL )
+        {
+            poDS = poDriver->pfnOpen( &oOpenInfo );
+        }
+        else if( poDriver->pfnOpenWithDriverArg != NULL )
+        {
+            poDS = poDriver->pfnOpenWithDriverArg( poDriver, &oOpenInfo );
+        }
+        else
+            continue;
+
         if( poDS != NULL )
         {
             if( strlen(poDS->GetDescription()) == 0 )
-                poDS->SetDescription( oOpenInfo.pszFilename );
+                poDS->SetDescription( pszFilename );
 
             if( poDS->poDriver == NULL )
                 poDS->poDriver = poDriver;
@@ -2327,15 +2463,30 @@ GDALDatasetH GDALOpenInternal( GDALOpenInfo& oOpenInfo,
 
             if( CPLGetPID() != GDALGetResponsiblePIDForCurrentThread() )
                 CPLDebug( "GDAL", "GDALOpen(%s, this=%p) succeeds as %s (pid=%d, responsiblePID=%d).",
-                          oOpenInfo.pszFilename, poDS, poDriver->GetDescription(),
+                          pszFilename, poDS, poDriver->GetDescription(),
                           (int)CPLGetPID(), (int)GDALGetResponsiblePIDForCurrentThread() );
             else
                 CPLDebug( "GDAL", "GDALOpen(%s, this=%p) succeeds as %s.",
-                          oOpenInfo.pszFilename, poDS, poDriver->GetDescription() );
+                          pszFilename, poDS, poDriver->GetDescription() );
 
             int* pnRecCount = (int*)CPLGetTLS( CTLS_GDALDATASET_REC_PROTECT_MAP );
             if( pnRecCount )
                 (*pnRecCount) --;
+
+            if( nOpenFlags & GDAL_OF_SHARED )
+            {
+                if (strcmp(pszFilename, poDS->GetDescription()) != 0)
+                {
+                    CPLError(CE_Warning, CPLE_NotSupported,
+                            "A dataset opened by GDALOpenShared should have the same filename (%s) "
+                            "and description (%s)",
+                            pszFilename, poDS->GetDescription());
+                }
+                else
+                {
+                    poDS->MarkAsShared();
+                }
+            }
 
             return (GDALDatasetH) poDS;
         }
@@ -2350,15 +2501,18 @@ GDALDatasetH GDALOpenInternal( GDALOpenInfo& oOpenInfo,
         }
     }
 
-    if( oOpenInfo.bStatOK )
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "`%s' not recognised as a supported file format.\n",
-                  oOpenInfo.pszFilename );
-    else
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "`%s' does not exist in the file system,\n"
-                  "and is not recognised as a supported dataset name.\n",
-                  oOpenInfo.pszFilename );
+    if( nOpenFlags & GDAL_OF_VERBOSE_ERROR )
+    {
+        if( oOpenInfo.bStatOK )
+            CPLError( CE_Failure, CPLE_OpenFailed,
+                    "`%s' not recognised as a supported file format.\n",
+                    pszFilename );
+        else
+            CPLError( CE_Failure, CPLE_OpenFailed,
+                    "`%s' does not exist in the file system,\n"
+                    "and is not recognised as a supported dataset name.\n",
+                    pszFilename );
+    }
 
     int* pnRecCount = (int*)CPLGetTLS( CTLS_GDALDATASET_REC_PROTECT_MAP );
     if( pnRecCount )
@@ -2395,6 +2549,7 @@ GDALDatasetH GDALOpenInternal( GDALOpenInfo& oOpenInfo,
  * process through the \ref gdal_api_proxy mechanism.
  *
  * \sa GDALOpen()
+ * \sa GDALOpenEx()
  *
  * @param pszFilename the name of the file to access.  In the case of
  * exotic drivers this may not refer to a physical file, but instead contain
@@ -2410,62 +2565,14 @@ GDALDatasetH GDALOpenInternal( GDALOpenInfo& oOpenInfo,
  
 GDALDatasetH CPL_STDCALL 
 GDALOpenShared( const char *pszFilename, GDALAccess eAccess )
-
 {
     VALIDATE_POINTER1( pszFilename, "GDALOpenShared", NULL );
-
-/* -------------------------------------------------------------------- */
-/*      First scan the existing list to see if it could already         */
-/*      contain the requested dataset.                                  */
-/* -------------------------------------------------------------------- */
-    {
-        CPLMutexHolderD( &hDLMutex );
-
-        if (phSharedDatasetSet != NULL)
-        {
-            GIntBig nThisPID = GDALGetResponsiblePIDForCurrentThread();
-            SharedDatasetCtxt* psStruct;
-            SharedDatasetCtxt sStruct;
-
-            sStruct.nPID = nThisPID;
-            sStruct.pszDescription = (char*) pszFilename;
-            sStruct.eAccess = eAccess;
-            psStruct = (SharedDatasetCtxt*) CPLHashSetLookup(phSharedDatasetSet, &sStruct);
-            if (psStruct == NULL && eAccess == GA_ReadOnly)
-            {
-                sStruct.eAccess = GA_Update;
-                psStruct = (SharedDatasetCtxt*) CPLHashSetLookup(phSharedDatasetSet, &sStruct);
-            }
-            if (psStruct)
-            {
-                psStruct->poDS->Reference();
-                return psStruct->poDS;
-            }
-        }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Try opening the the requested dataset.                          */
-/* -------------------------------------------------------------------- */
-    GDALDataset *poDataset;
-
-    poDataset = (GDALDataset *) GDALOpen( pszFilename, eAccess );
-    if( poDataset != NULL )
-    {
-        if (strcmp(pszFilename, poDataset->GetDescription()) != 0)
-        {
-            CPLError(CE_Warning, CPLE_NotSupported,
-                     "A dataset opened by GDALOpenShared should have the same filename (%s) "
-                     "and description (%s)",
-                     pszFilename, poDataset->GetDescription());
-        }
-        else
-        {
-            poDataset->MarkAsShared();
-        }
-    }
-    
-    return (GDALDatasetH) poDataset;
+    return GDALOpenEx( pszFilename,
+                       GDAL_OF_RASTER |
+                       (eAccess == GA_Update ? GDAL_OF_UPDATE : 0) |
+                       GDAL_OF_SHARED |
+                       GDAL_OF_VERBOSE_ERROR,
+                       NULL, NULL, NULL );
 }
 
 /************************************************************************/
@@ -2486,7 +2593,8 @@ GDALOpenShared( const char *pszFilename, GDALAccess eAccess )
 void CPL_STDCALL GDALClose( GDALDatasetH hDS )
 
 {
-    VALIDATE_POINTER0( hDS, "GDALClose" );
+    if( hDS == NULL )
+        return;
 
     GDALDataset *poDS = (GDALDataset *) hDS;
     CPLMutexHolderD( &hDLMutex );
@@ -2543,12 +2651,9 @@ static int GDALDumpOpenSharedDatasetsForeach(void* elt, void* user_data)
 }
 
 
-static int GDALDumpOpenDatasetsForeach(void* elt, void* user_data)
+static int GDALDumpOpenDatasetsForeach(GDALDataset* poDS, FILE *fp)
 {
-    DatasetCtxt* psStruct = (DatasetCtxt*) elt;
-    FILE *fp = (FILE*) user_data;
     const char *pszDriverName;
-    GDALDataset *poDS = psStruct->poDS;
 
     /* Don't list shared datasets. They have already been listed by */
     /* GDALDumpOpenSharedDatasetsForeach */
@@ -2591,15 +2696,19 @@ int CPL_STDCALL GDALDumpOpenDatasets( FILE *fp )
 
     CPLMutexHolderD( &hDLMutex );
 
-    if (phAllDatasetSet != NULL)
+    if (poAllDatasetMap != NULL)
     {
         VSIFPrintf( fp, "Open GDAL Datasets:\n" );
-        CPLHashSetForeach(phAllDatasetSet, GDALDumpOpenDatasetsForeach, fp);
+        std::map<GDALDataset*, GIntBig>::iterator oIter = poAllDatasetMap->begin();
+        for(; oIter != poAllDatasetMap->end(); ++oIter )
+        {
+            GDALDumpOpenDatasetsForeach(oIter->first, fp);
+        }
         if (phSharedDatasetSet != NULL)
         {
             CPLHashSetForeach(phSharedDatasetSet, GDALDumpOpenSharedDatasetsForeach, fp);
         }
-        return CPLHashSetSize(phAllDatasetSet);
+        return (int)poAllDatasetMap->size();
     }
     else
     {
@@ -2837,4 +2946,2335 @@ void GDALDataset::ReportError(CPLErr eErrClass, int err_no, const char *fmt, ...
         CPLErrorV( eErrClass, err_no, fmt, args );
     }
     va_end(args);
+}
+
+/************************************************************************/
+/*                            GetDriverName()                           */
+/************************************************************************/
+
+const char* GDALDataset::GetDriverName()
+{
+    if( poDriver )
+        return poDriver->GetDescription();
+    return "";
+}
+
+/************************************************************************/
+/*                     GDALDatasetReleaseResultSet()                    */
+/************************************************************************/
+
+/**
+ \brief Release results of ExecuteSQL().
+
+ This function should only be used to deallocate OGRLayers resulting from
+ an ExecuteSQL() call on the same GDALDataset.  Failure to deallocate a
+ results set before destroying the GDALDataset may cause errors. 
+
+ This function is the same as the C++ method GDALDataset::ReleaseResultSet()
+
+ @since GDAL 2.0
+
+ @param hDS the dataset handle.
+ @param poResultsSet the result of a previous ExecuteSQL() call.
+
+*/ 
+void GDALDatasetReleaseResultSet( GDALDatasetH hDS, OGRLayerH hLayer )
+
+{
+    VALIDATE_POINTER0( hDS, "GDALDatasetReleaseResultSet" );
+
+    ((GDALDataset *) hDS)->ReleaseResultSet( (OGRLayer *) hLayer );
+}
+
+/************************************************************************/
+/*                     GDALDatasetTestCapability()                      */
+/************************************************************************/
+
+/**
+ \brief Test if capability is available.
+
+ One of the following dataset capability names can be passed into this
+ function, and a TRUE or FALSE value will be returned indicating whether or not
+ the capability is available for this object.
+
+ <ul>
+  <li> <b>ODsCCreateLayer</b>: True if this datasource can create new layers.<p>
+  <li> <b>ODsCDeleteLayer</b>: True if this datasource can delete existing layers.<p>
+  <li> <b>ODsCCreateGeomFieldAfterCreateLayer</b>: True if the layers of this
+        datasource support CreateGeomField() just after layer creation.<p>
+ </ul>
+
+ The \#define macro forms of the capability names should be used in preference
+ to the strings themselves to avoid mispelling.
+
+ This function is the same as the C++ method GDALDataset::TestCapability()
+
+ @since GDAL 2.0
+
+ @param hDS the dataset handle.
+ @param pszCapability the capability to test.
+
+ @return TRUE if capability available otherwise FALSE.
+
+*/ 
+int GDALDatasetTestCapability( GDALDatasetH hDS, const char *pszCap )
+
+{
+    VALIDATE_POINTER1( hDS, "GDALDatasetTestCapability", 0 );
+    VALIDATE_POINTER1( pszCap, "GDALDatasetTestCapability", 0 );
+
+    return ((GDALDataset *) hDS)->TestCapability( pszCap );
+}
+
+/************************************************************************/
+/*                       GDALDatasetGetLayerCount()                     */
+/************************************************************************/
+
+/**
+ \brief Get the number of layers in this dataset.
+
+ This function is the same as the C++ method GDALDataset::GetLayerCount()
+ 
+ @since GDAL 2.0
+
+ @param hDS the dataset handle.
+ @return layer count.
+*/
+
+int GDALDatasetGetLayerCount( GDALDatasetH hDS )
+
+{
+    VALIDATE_POINTER1( hDS, "GDALDatasetH", 0 );
+
+    return ((GDALDataset *)hDS)->GetLayerCount();
+}
+
+/************************************************************************/
+/*                        GDALDatasetGetLayer()                         */
+/************************************************************************/
+
+/**
+ \brief Fetch a layer by index.
+
+ The returned layer remains owned by the 
+ GDALDataset and should not be deleted by the application.
+
+ This function is the same as the C++ method GDALDataset::GetLayer()
+ 
+ @since GDAL 2.0
+
+ @param hDS the dataset handle.
+ @param iLayer a layer number between 0 and GetLayerCount()-1.
+
+ @return the layer, or NULL if iLayer is out of range or an error occurs.
+*/
+
+OGRLayerH GDALDatasetGetLayer( GDALDatasetH hDS, int iLayer )
+
+{
+    VALIDATE_POINTER1( hDS, "GDALDatasetGetLayer", NULL );
+
+    return (OGRLayerH) ((GDALDataset*)hDS)->GetLayer( iLayer );
+}
+
+/************************************************************************/
+/*                     GDALDatasetGetLayerByName()                      */
+/************************************************************************/
+
+/**
+ \brief Fetch a layer by name.
+
+ The returned layer remains owned by the 
+ GDALDataset and should not be deleted by the application.
+
+ This function is the same as the C++ method GDALDataset::GetLayerByName()
+ 
+ @since GDAL 2.0
+
+ @param hDS the dataset handle.
+ @param pszLayerName the layer name of the layer to fetch.
+
+ @return the layer, or NULL if Layer is not found or an error occurs.
+*/
+
+OGRLayerH GDALDatasetGetLayerByName( GDALDatasetH hDS, const char *pszName )
+
+{
+    VALIDATE_POINTER1( hDS, "GDALDatasetGetLayerByName", NULL );
+
+    return (OGRLayerH) ((GDALDataset *) hDS)->GetLayerByName( pszName );
+}
+
+/************************************************************************/
+/*                        GDALDatasetDeleteLayer()                      */
+/************************************************************************/
+
+/**
+ \brief Delete the indicated layer from the datasource.
+
+ If this function is supported
+ the ODsCDeleteLayer capability will test TRUE on the GDALDataset.
+
+ This method is the same as the C++ method GDALDataset::DeleteLayer().
+ 
+ @since GDAL 2.0
+
+ @param hDS the dataset handle.
+ @param iLayer the index of the layer to delete. 
+
+ @return OGRERR_NONE on success, or OGRERR_UNSUPPORTED_OPERATION if deleting
+ layers is not supported for this datasource.
+
+*/
+OGRErr GDALDatasetDeleteLayer( GDALDatasetH hDS, int iLayer )
+
+{
+    VALIDATE_POINTER1( hDS, "GDALDatasetH", OGRERR_INVALID_HANDLE );
+
+    return ((GDALDataset *) hDS)->DeleteLayer( iLayer );
+}
+
+/************************************************************************/
+/*                            CreateLayer()                             */
+/************************************************************************/
+
+/**
+\brief This method attempts to create a new layer on the dataset with the indicated name, coordinate system, geometry type.
+
+The papszOptions argument
+can be used to control driver specific creation options.  These options are
+normally documented in the format specific documentation. 
+
+ In GDAL 2.0, drivers should extend the ICreateLayer() method and not CreateLayer().
+ CreateLayer() adds validation of layer creation options, before delegating the
+ actual work to ICreateLayer().
+
+ This method is the same as the C function GDALDatasetCreateLayer() and the
+ deprecated OGR_DS_CreateLayer(). 
+ 
+ In GDAL 1.X, this method used to be in the OGRDataSource class.
+
+ @param hDS the dataset handle
+ @param pszName the name for the new layer.  This should ideally not 
+match any existing layer on the datasource.
+ @param poSpatialRef the coordinate system to use for the new layer, or NULL if
+no coordinate system is available. 
+ @param eGType the geometry type for the layer.  Use wkbUnknown if there
+are no constraints on the types geometry to be written. 
+ @param papszOptions a StringList of name=value options.  Options are driver
+specific.
+
+ @return NULL is returned on failure, or a new OGRLayer handle on success. 
+
+<b>Example:</b>
+
+\code
+#include "gdal.h" 
+#include "cpl_string.h"
+
+...
+
+        OGRLayer *poLayer;
+        char     **papszOptions;
+
+        if( !poDS->TestCapability( ODsCCreateLayer ) )
+        {
+        ...
+        }
+
+        papszOptions = CSLSetNameValue( papszOptions, "DIM", "2" );
+        poLayer = poDS->CreateLayer( "NewLayer", NULL, wkbUnknown,
+                                     papszOptions );
+        CSLDestroy( papszOptions );
+
+        if( poLayer == NULL )
+        {
+            ...
+        }        
+\endcode
+*/
+
+OGRLayer *GDALDataset::CreateLayer( const char * pszName,
+                                      OGRSpatialReference * poSpatialRef,
+                                      OGRwkbGeometryType eGType,
+                                      char **papszOptions )
+
+{
+    ValidateLayerCreationOptions( papszOptions );
+    return ICreateLayer(pszName, poSpatialRef, eGType, papszOptions);
+}
+
+/************************************************************************/
+/*                         GDALDatasetCreateLayer()                     */
+/************************************************************************/
+
+/**
+\brief This function attempts to create a new layer on the dataset with the indicated name, coordinate system, geometry type.
+
+The papszOptions argument
+can be used to control driver specific creation options.  These options are
+normally documented in the format specific documentation. 
+
+ This method is the same as the C++ method GDALDataset::CreateLayer().
+ 
+ @since GDAL 2.0
+
+ @param hDS the dataset handle
+ @param pszName the name for the new layer.  This should ideally not 
+match any existing layer on the datasource.
+ @param poSpatialRef the coordinate system to use for the new layer, or NULL if
+no coordinate system is available. 
+ @param eGType the geometry type for the layer.  Use wkbUnknown if there
+are no constraints on the types geometry to be written. 
+ @param papszOptions a StringList of name=value options.  Options are driver
+specific.
+
+ @return NULL is returned on failure, or a new OGRLayer handle on success. 
+
+<b>Example:</b>
+
+\code
+#include "gdal.h" 
+#include "cpl_string.h"
+
+...
+
+        OGRLayer *poLayer;
+        char     **papszOptions;
+
+        if( !poDS->TestCapability( ODsCCreateLayer ) )
+        {
+        ...
+        }
+
+        papszOptions = CSLSetNameValue( papszOptions, "DIM", "2" );
+        poLayer = poDS->CreateLayer( "NewLayer", NULL, wkbUnknown,
+                                     papszOptions );
+        CSLDestroy( papszOptions );
+
+        if( poLayer == NULL )
+        {
+            ...
+        }        
+\endcode
+*/
+
+OGRLayerH GDALDatasetCreateLayer( GDALDatasetH hDS, 
+                              const char * pszName,
+                              OGRSpatialReferenceH hSpatialRef,
+                              OGRwkbGeometryType eType,
+                              char ** papszOptions )
+
+{
+    VALIDATE_POINTER1( hDS, "GDALDatasetCreateLayer", NULL );
+
+    if (pszName == NULL)
+    {
+        CPLError ( CE_Failure, CPLE_ObjectNull, "Name was NULL in GDALDatasetCreateLayer");
+        return 0;
+    }
+    return (OGRLayerH) ((GDALDataset *)hDS)->CreateLayer( 
+        pszName, (OGRSpatialReference *) hSpatialRef, eType, papszOptions );
+}
+
+
+/************************************************************************/
+/*                         GDALDatasetCopyLayer()                       */
+/************************************************************************/
+
+/**
+ \brief Duplicate an existing layer.
+
+ This function creates a new layer, duplicate the field definitions of the
+ source layer and then duplicate each features of the source layer.
+ The papszOptions argument
+ can be used to control driver specific creation options.  These options are
+ normally documented in the format specific documentation.
+ The source layer may come from another dataset.
+
+ This method is the same as the C++ method GDALDataset::CopyLayer()
+ 
+ @since GDAL 2.0
+
+ @param hDS the dataset handle. 
+ @param hSrcLayer source layer.
+ @param pszNewName the name of the layer to create.
+ @param papszOptions a StringList of name=value options.  Options are driver
+                     specific.
+
+ @return an handle to the layer, or NULL if an error occurs.
+*/
+OGRLayerH GDALDatasetCopyLayer( GDALDatasetH hDS, 
+                                OGRLayerH hSrcLayer, const char *pszNewName,
+                                char **papszOptions )
+
+{
+    VALIDATE_POINTER1( hDS, "OGR_DS_CopyGDALDatasetCopyLayerLayer", NULL );
+    VALIDATE_POINTER1( hSrcLayer, "GDALDatasetCopyLayer", NULL );
+    VALIDATE_POINTER1( pszNewName, "GDALDatasetCopyLayer", NULL );
+
+    return (OGRLayerH) 
+        ((GDALDataset *) hDS)->CopyLayer( (OGRLayer *) hSrcLayer, 
+                                            pszNewName, papszOptions );
+}
+
+/************************************************************************/
+/*                        GDALDatasetExecuteSQL()                       */
+/************************************************************************/
+
+/**
+ \brief Execute an SQL statement against the data store. 
+
+ The result of an SQL query is either NULL for statements that are in error,
+ or that have no results set, or an OGRLayer pointer representing a results
+ set from the query.  Note that this OGRLayer is in addition to the layers
+ in the data store and must be destroyed with 
+ ReleaseResultSet() before the dataset is closed
+ (destroyed).  
+
+ This method is the same as the C++ method GDALDataset::ExecuteSQL()
+
+ For more information on the SQL dialect supported internally by OGR
+ review the <a href="ogr_sql.html">OGR SQL</a> document.  Some drivers (ie.
+ Oracle and PostGIS) pass the SQL directly through to the underlying RDBMS.
+
+ Starting with OGR 1.10, the <a href="ogr_sql_sqlite.html">SQLITE dialect</a>
+ can also be used.
+ 
+ @since GDAL 2.0
+ 
+ @param hDS the dataset handle.
+ @param pszStatement the SQL statement to execute. 
+ @param hSpatialFilter geometry which represents a spatial filter. Can be NULL.
+ @param pszDialect allows control of the statement dialect. If set to NULL, the
+OGR SQL engine will be used, except for RDBMS drivers that will use their dedicated SQL engine,
+unless OGRSQL is explicitely passed as the dialect. Starting with OGR 1.10, the SQLITE dialect
+can also be used.
+
+ @return an OGRLayer containing the results of the query.  Deallocate with
+ ReleaseResultSet().
+
+*/
+
+OGRLayerH GDALDatasetExecuteSQL( GDALDatasetH hDS, 
+                             const char *pszStatement,
+                             OGRGeometryH hSpatialFilter,
+                             const char *pszDialect )
+
+{
+    VALIDATE_POINTER1( hDS, "GDALDatasetExecuteSQL", NULL );
+
+    return (OGRLayerH) 
+        ((GDALDataset *)hDS)->ExecuteSQL( pszStatement,
+                                            (OGRGeometry *) hSpatialFilter,
+                                            pszDialect );
+}
+
+/************************************************************************/
+/*                      GDALDatasetGetStyleTable()                      */
+/************************************************************************/
+
+/**
+ \brief Returns dataset style table.
+ 
+ This function is the same as the C++ method GDALDataset::GetStyleTable()
+ 
+ @since GDAL 2.0
+ 
+ @param hDS the dataset handle
+ @return handle to a style table which should not be modified or freed by the
+ caller.
+*/
+
+OGRStyleTableH GDALDatasetGetStyleTable( GDALDatasetH hDS )
+
+{
+    VALIDATE_POINTER1( hDS, "OGR_DS_GetStyleTable", NULL );
+    
+    return (OGRStyleTableH) ((GDALDataset *) hDS)->GetStyleTable( );
+}
+
+/************************************************************************/
+/*                    GDALDatasetSetStyleTableDirectly()                */
+/************************************************************************/
+
+/**
+ \brief Set dataset style table.
+ 
+ This function operate exactly as GDALDatasetSetStyleTable() except that it
+ assumes ownership of the passed table.
+ 
+ This function is the same as the C++ method GDALDataset::SetStyleTableDirectly()
+ 
+ @since GDAL 2.0
+ 
+ @param hDS the dataset handle
+ @param hStyleTable style table handle to set
+
+*/
+
+void GDALDatasetSetStyleTableDirectly( GDALDatasetH hDS,
+                                   OGRStyleTableH hStyleTable )
+
+{
+    VALIDATE_POINTER0( hDS, "OGR_DS_SetStyleTableDirectly" );
+    
+    ((GDALDataset *) hDS)->SetStyleTableDirectly( (OGRStyleTable *) hStyleTable);
+}
+
+/************************************************************************/
+/*                     GDALDatasetSetStyleTable()                       */
+/************************************************************************/
+
+/**
+ \brief Set dataset style table.
+ 
+ This function operate exactly as GDALDatasetSetStyleTableDirectly() except that it
+ assumes ownership of the passed table.
+ 
+ This function is the same as the C++ method GDALDataset::SetStyleTable()
+ 
+ @since GDAL 2.0
+ 
+ @param hDS the dataset handle
+ @param hStyleTable style table handle to set
+
+*/
+
+void GDALDatasetSetStyleTable( GDALDatasetH hDS, OGRStyleTableH hStyleTable )
+
+{
+    VALIDATE_POINTER0( hDS, "OGR_DS_SetStyleTable" );
+    VALIDATE_POINTER0( hStyleTable, "OGR_DS_SetStyleTable" );
+    
+    ((GDALDataset *) hDS)->SetStyleTable( (OGRStyleTable *) hStyleTable);
+}
+
+/************************************************************************/
+/*                    ValidateLayerCreationOptions()                    */
+/************************************************************************/
+
+int GDALDataset::ValidateLayerCreationOptions( const char* const* papszLCO )
+{
+    const char *pszOptionList = GetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST );
+    if( pszOptionList == NULL && poDriver != NULL )
+    {
+        pszOptionList = 
+             poDriver->GetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST );
+    }
+    CPLString osDataset;
+    osDataset.Printf("dataset %s", GetDescription());
+    return GDALValidateOptions( pszOptionList, papszLCO,
+                                "layer creation option",
+                                osDataset );
+}
+
+/************************************************************************/
+/*                              Release()                               */
+/************************************************************************/
+
+/**
+ \fn OGRErr OGRDataSource::Release();
+
+\brief Drop a reference to this dataset, and if the reference count drops to one close (destroy) the dataset.
+
+This method is the same as the C function OGRReleaseDataSource().
+
+@deprecated. In GDAL 2, use GDALClose() instead
+
+@return OGRERR_NONE on success or an error code. 
+*/
+
+OGRErr GDALDataset::Release()
+
+{
+    GDALClose( (GDALDatasetH) this );
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                            GetRefCount()                             */
+/************************************************************************/
+
+/**
+\brief Fetch reference count.
+
+This method is the same as the C function OGR_DS_GetRefCount().
+
+In GDAL 1.X, this method used to be in the OGRDataSource class.
+
+@return the current reference count for the datasource object itself.
+*/
+
+
+int GDALDataset::GetRefCount() const
+
+{
+    return nRefCount;
+}
+
+/************************************************************************/
+/*                         GetSummaryRefCount()                         */
+/************************************************************************/
+
+/**
+\brief Fetch reference count of datasource and all owned layers.
+
+This method is the same as the C function  OGR_DS_GetSummaryRefCount().
+
+In GDAL 1.X, this method used to be in the OGRDataSource class.
+
+@deprecated
+ 
+@return the current summary reference count for the datasource and its layers.
+*/
+
+int GDALDataset::GetSummaryRefCount() const
+
+{
+    CPLMutexHolderD( (void **) &m_hMutex );
+    int nSummaryCount = nRefCount;
+    int iLayer;
+    GDALDataset *poUseThis = (GDALDataset *) this;
+
+    for( iLayer=0; iLayer < poUseThis->GetLayerCount(); iLayer++ )
+        nSummaryCount += poUseThis->GetLayer( iLayer )->GetRefCount();
+
+    return nSummaryCount;
+}
+
+/************************************************************************/
+/*                           ICreateLayer()                             */
+/************************************************************************/
+
+/**
+\brief This method attempts to create a new layer on the dataset with the indicated name, coordinate system, geometry type.
+
+This method is reserved to implementation by drivers.
+
+The papszOptions argument
+can be used to control driver specific creation options.  These options are
+normally documented in the format specific documentation. 
+
+ @param pszName the name for the new layer.  This should ideally not 
+match any existing layer on the datasource.
+ @param poSpatialRef the coordinate system to use for the new layer, or NULL if
+no coordinate system is available. 
+ @param eGType the geometry type for the layer.  Use wkbUnknown if there
+are no constraints on the types geometry to be written. 
+ @param papszOptions a StringList of name=value options.  Options are driver
+specific.
+
+ @return NULL is returned on failure, or a new OGRLayer handle on success. 
+ 
+ @since GDAL 2.0
+*/
+
+OGRLayer *GDALDataset::ICreateLayer( const char * pszName,
+                                      OGRSpatialReference * poSpatialRef,
+                                      OGRwkbGeometryType eGType,
+                                      char **papszOptions )
+
+{
+    (void) eGType;
+    (void) poSpatialRef;
+    (void) pszName;
+    (void) papszOptions;
+
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "CreateLayer() not supported by this dataset." );
+              
+    return NULL;
+}
+
+/************************************************************************/
+/*                             CopyLayer()                              */
+/************************************************************************/
+
+/**
+ \brief Duplicate an existing layer.
+
+ This method creates a new layer, duplicate the field definitions of the
+ source layer and then duplicate each features of the source layer.
+ The papszOptions argument
+ can be used to control driver specific creation options.  These options are
+ normally documented in the format specific documentation.
+ The source layer may come from another dataset.
+
+ This method is the same as the C function GDALDatasetCopyLayer() and the
+ deprecated OGR_DS_CopyLayer().
+
+ In GDAL 1.X, this method used to be in the OGRDataSource class.
+ 
+ @param poSrcLayer source layer.
+ @param pszNewName the name of the layer to create.
+ @param papszOptions a StringList of name=value options.  Options are driver
+                     specific.
+
+ @return an handle to the layer, or NULL if an error occurs.
+*/
+
+OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer, 
+                                    const char *pszNewName, 
+                                    char **papszOptions )
+
+{
+    OGRFeatureDefn *poSrcDefn = poSrcLayer->GetLayerDefn();
+    OGRLayer *poDstLayer = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Create the layer.                                               */
+/* -------------------------------------------------------------------- */
+    if( !TestCapability( ODsCCreateLayer ) )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "This datasource does not support creation of layers." );
+        return NULL;
+    }
+
+    CPLErrorReset();
+    if( poSrcDefn->GetGeomFieldCount() > 1 &&
+        TestCapability(ODsCCreateGeomFieldAfterCreateLayer) )
+    {
+        poDstLayer =ICreateLayer( pszNewName, NULL, wkbNone, papszOptions );
+    }
+    else
+    {
+        poDstLayer =ICreateLayer( pszNewName, poSrcLayer->GetSpatialRef(),
+                                  poSrcDefn->GetGeomType(), papszOptions );
+    }
+    
+    if( poDstLayer == NULL )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Add fields.  Default to copy all fields, and make sure to       */
+/*      establish a mapping between indices, rather than names, in      */
+/*      case the target datasource has altered it (e.g. Shapefile       */
+/*      limited to 10 char field names).                                */
+/* -------------------------------------------------------------------- */
+    int         nSrcFieldCount = poSrcDefn->GetFieldCount();
+    int         nDstFieldCount = 0;
+    int         iField, *panMap;
+
+    // Initialize the index-to-index map to -1's
+    panMap = (int *) CPLMalloc( sizeof(int) * nSrcFieldCount );
+    for( iField=0; iField < nSrcFieldCount; iField++)
+        panMap[iField] = -1;
+
+    /* Caution : at the time of writing, the MapInfo driver */
+    /* returns NULL until a field has been added */
+    OGRFeatureDefn* poDstFDefn = poDstLayer->GetLayerDefn();
+    if (poDstFDefn)
+        nDstFieldCount = poDstFDefn->GetFieldCount();    
+    for( iField = 0; iField < nSrcFieldCount; iField++ )
+    {
+        OGRFieldDefn* poSrcFieldDefn = poSrcDefn->GetFieldDefn(iField);
+        OGRFieldDefn oFieldDefn( poSrcFieldDefn );
+
+        /* The field may have been already created at layer creation */
+        int iDstField = -1;
+        if (poDstFDefn)
+            iDstField = poDstFDefn->GetFieldIndex(oFieldDefn.GetNameRef());
+        if (iDstField >= 0)
+        {
+            panMap[iField] = iDstField;
+        }
+        else if (poDstLayer->CreateField( &oFieldDefn ) == OGRERR_NONE)
+        {
+            /* now that we've created a field, GetLayerDefn() won't return NULL */
+            if (poDstFDefn == NULL)
+                poDstFDefn = poDstLayer->GetLayerDefn();
+
+            /* Sanity check : if it fails, the driver is buggy */
+            if (poDstFDefn != NULL &&
+                poDstFDefn->GetFieldCount() != nDstFieldCount + 1)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "The output driver has claimed to have added the %s field, but it did not!",
+                         oFieldDefn.GetNameRef() );
+            }
+            else
+            {
+                panMap[iField] = nDstFieldCount;
+                nDstFieldCount ++;
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create geometry fields.                                         */
+/* -------------------------------------------------------------------- */
+    if( poSrcDefn->GetGeomFieldCount() > 1 &&
+        TestCapability(ODsCCreateGeomFieldAfterCreateLayer) )
+    {
+        int nSrcGeomFieldCount = poSrcDefn->GetGeomFieldCount();
+        for( iField = 0; iField < nSrcGeomFieldCount; iField++ )
+        {
+            poDstLayer->CreateGeomField( poSrcDefn->GetGeomFieldDefn(iField) );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Check if the destination layer supports transactions and set a  */
+/*      default number of features in a single transaction.             */
+/* -------------------------------------------------------------------- */
+    int nGroupTransactions = 0;
+    if( poDstLayer->TestCapability( OLCTransactions ) )
+        nGroupTransactions = 128;
+
+/* -------------------------------------------------------------------- */
+/*      Transfer features.                                              */
+/* -------------------------------------------------------------------- */
+    OGRFeature  *poFeature;
+
+    poSrcLayer->ResetReading();
+
+    if( nGroupTransactions <= 0 )
+    {
+      while( TRUE )
+      {
+        OGRFeature      *poDstFeature = NULL;
+
+        poFeature = poSrcLayer->GetNextFeature();
+        
+        if( poFeature == NULL )
+            break;
+
+        CPLErrorReset();
+        poDstFeature = OGRFeature::CreateFeature( poDstLayer->GetLayerDefn() );
+
+        if( poDstFeature->SetFrom( poFeature, panMap, TRUE ) != OGRERR_NONE )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Unable to translate feature %ld from layer %s.\n",
+                      poFeature->GetFID(), poSrcDefn->GetName() );
+            OGRFeature::DestroyFeature( poFeature );
+            CPLFree(panMap);
+            return poDstLayer;
+        }
+
+        poDstFeature->SetFID( poFeature->GetFID() );
+
+        OGRFeature::DestroyFeature( poFeature );
+
+        CPLErrorReset();
+        if( poDstLayer->CreateFeature( poDstFeature ) != OGRERR_NONE )
+        {
+            OGRFeature::DestroyFeature( poDstFeature );
+            CPLFree(panMap);
+            return poDstLayer;
+        }
+
+        OGRFeature::DestroyFeature( poDstFeature );
+      }
+    }
+    else
+    {
+      int i, bStopTransfer = FALSE, bStopTransaction = FALSE;
+      int nFeatCount = 0; // Number of features in the temporary array
+      int nFeaturesToAdd = 0;
+      OGRFeature **papoDstFeature =
+          (OGRFeature **)CPLCalloc(sizeof(OGRFeature *), nGroupTransactions);
+      while( !bStopTransfer )
+      {
+/* -------------------------------------------------------------------- */
+/*      Fill the array with features                                    */
+/* -------------------------------------------------------------------- */
+        for( nFeatCount = 0; nFeatCount < nGroupTransactions; nFeatCount++ )
+        {
+            poFeature = poSrcLayer->GetNextFeature();
+
+            if( poFeature == NULL )
+            {
+                bStopTransfer = 1;
+                break;
+            }
+
+            CPLErrorReset();
+            papoDstFeature[nFeatCount] =
+                        OGRFeature::CreateFeature( poDstLayer->GetLayerDefn() );
+
+            if( papoDstFeature[nFeatCount]->SetFrom( poFeature, panMap, TRUE ) != OGRERR_NONE )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Unable to translate feature %ld from layer %s.\n",
+                          poFeature->GetFID(), poSrcDefn->GetName() );
+                OGRFeature::DestroyFeature( poFeature );
+                bStopTransfer = TRUE;
+                break;
+            }
+
+            papoDstFeature[nFeatCount]->SetFID( poFeature->GetFID() );
+
+            OGRFeature::DestroyFeature( poFeature );
+        }
+        nFeaturesToAdd = nFeatCount;
+
+        CPLErrorReset();
+        bStopTransaction = FALSE;
+        while( !bStopTransaction )
+        {
+            bStopTransaction = TRUE;
+            poDstLayer->StartTransaction();
+            for( i = 0; i < nFeaturesToAdd; i++ )
+            {
+                if( poDstLayer->CreateFeature( papoDstFeature[i] ) != OGRERR_NONE )
+                {
+                    nFeaturesToAdd = i;
+                    bStopTransfer = TRUE;
+                    bStopTransaction = FALSE;
+                }
+            }
+            if( bStopTransaction )
+                poDstLayer->CommitTransaction();
+            else
+                poDstLayer->RollbackTransaction();
+        }
+
+        for( i = 0; i < nFeatCount; i++ )
+            OGRFeature::DestroyFeature( papoDstFeature[i] );
+      }
+      CPLFree(papoDstFeature);
+    }
+
+    CPLFree(panMap);
+
+    return poDstLayer;
+}
+
+/************************************************************************/
+/*                            DeleteLayer()                             */
+/************************************************************************/
+
+/**
+ \brief Delete the indicated layer from the datasource.
+
+ If this method is supported
+ the ODsCDeleteLayer capability will test TRUE on the GDALDataset.
+
+ This method is the same as the C function GDALDatasetDeleteLayer() and the
+ deprecated OGR_DS_DeleteLayer().
+ 
+ In GDAL 1.X, this method used to be in the OGRDataSource class.
+
+ @param iLayer the index of the layer to delete. 
+
+ @return OGRERR_NONE on success, or OGRERR_UNSUPPORTED_OPERATION if deleting
+ layers is not supported for this datasource.
+
+*/
+OGRErr GDALDataset::DeleteLayer( int iLayer )
+
+{
+    (void) iLayer;
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "DeleteLayer() not supported by this dataset." );
+              
+    return OGRERR_UNSUPPORTED_OPERATION;
+}
+
+/************************************************************************/
+/*                           GetLayerByName()                           */
+/************************************************************************/
+
+/**
+ \brief Fetch a layer by name.
+
+ The returned layer remains owned by the 
+ GDALDataset and should not be deleted by the application.
+
+ This method is the same as the C function GDALDatasetGetLayerByName() and the
+ deprecated OGR_DS_GetLayerByName().
+ 
+ In GDAL 1.X, this method used to be in the OGRDataSource class.
+
+ @param pszLayerName the layer name of the layer to fetch.
+
+ @return the layer, or NULL if Layer is not found or an error occurs.
+*/
+
+OGRLayer *GDALDataset::GetLayerByName( const char *pszName )
+
+{
+    CPLMutexHolderD( &m_hMutex );
+
+    if ( ! pszName )
+        return NULL;
+
+    int  i;
+
+    /* first a case sensitive check */
+    for( i = 0; i < GetLayerCount(); i++ )
+    {
+        OGRLayer *poLayer = GetLayer(i);
+
+        if( strcmp( pszName, poLayer->GetName() ) == 0 )
+            return poLayer;
+    }
+
+    /* then case insensitive */
+    for( i = 0; i < GetLayerCount(); i++ )
+    {
+        OGRLayer *poLayer = GetLayer(i);
+
+        if( EQUAL( pszName, poLayer->GetName() ) )
+            return poLayer;
+    }
+
+    return NULL;
+}
+
+/************************************************************************/
+/*                       ProcessSQLCreateIndex()                        */
+/*                                                                      */
+/*      The correct syntax for creating an index in our dialect of      */
+/*      SQL is:                                                         */
+/*                                                                      */
+/*        CREATE INDEX ON <layername> USING <columnname>                */
+/************************************************************************/
+
+OGRErr GDALDataset::ProcessSQLCreateIndex( const char *pszSQLCommand )
+
+{
+    char **papszTokens = CSLTokenizeString( pszSQLCommand );
+
+/* -------------------------------------------------------------------- */
+/*      Do some general syntax checking.                                */
+/* -------------------------------------------------------------------- */
+    if( CSLCount(papszTokens) != 6 
+        || !EQUAL(papszTokens[0],"CREATE")
+        || !EQUAL(papszTokens[1],"INDEX")
+        || !EQUAL(papszTokens[2],"ON")
+        || !EQUAL(papszTokens[4],"USING") )
+    {
+        CSLDestroy( papszTokens );
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Syntax error in CREATE INDEX command.\n"
+                  "Was '%s'\n"
+                  "Should be of form 'CREATE INDEX ON <table> USING <field>'",
+                  pszSQLCommand );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Find the named layer.                                           */
+/* -------------------------------------------------------------------- */
+    int  i;
+    OGRLayer *poLayer = NULL;
+
+    {
+        CPLMutexHolderD( &m_hMutex );
+
+        for( i = 0; i < GetLayerCount(); i++ )
+        {
+            poLayer = GetLayer(i);
+            
+            if( EQUAL(poLayer->GetName(),papszTokens[3]) )
+                break;
+        }
+        
+        if( i >= GetLayerCount() )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "CREATE INDEX ON failed, no such layer as `%s'.",
+                      papszTokens[3] );
+            CSLDestroy( papszTokens );
+            return OGRERR_FAILURE;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Does this layer even support attribute indexes?                 */
+/* -------------------------------------------------------------------- */
+    if( poLayer->GetIndex() == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "CREATE INDEX ON not supported by this driver." );
+        CSLDestroy( papszTokens );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Find the named field.                                           */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < poLayer->GetLayerDefn()->GetFieldCount(); i++ )
+    {
+        if( EQUAL(papszTokens[5],
+                  poLayer->GetLayerDefn()->GetFieldDefn(i)->GetNameRef()) )
+            break;
+    }
+
+    CSLDestroy( papszTokens );
+
+    if( i >= poLayer->GetLayerDefn()->GetFieldCount() )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "`%s' failed, field not found.",
+                  pszSQLCommand );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Attempt to create the index.                                    */
+/* -------------------------------------------------------------------- */
+    OGRErr eErr;
+
+    eErr = poLayer->GetIndex()->CreateIndex( i );
+    if( eErr == OGRERR_NONE )
+        eErr = poLayer->GetIndex()->IndexAllFeatures( i );
+    else
+    {
+        if( strlen(CPLGetLastErrorMsg()) == 0 )
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "Cannot '%s'", pszSQLCommand);
+    }
+
+    return eErr;
+}
+
+/************************************************************************/
+/*                        ProcessSQLDropIndex()                         */
+/*                                                                      */
+/*      The correct syntax for droping one or more indexes in           */
+/*      the OGR SQL dialect is:                                         */
+/*                                                                      */
+/*          DROP INDEX ON <layername> [USING <columnname>]              */
+/************************************************************************/
+
+OGRErr GDALDataset::ProcessSQLDropIndex( const char *pszSQLCommand )
+
+{
+    char **papszTokens = CSLTokenizeString( pszSQLCommand );
+
+/* -------------------------------------------------------------------- */
+/*      Do some general syntax checking.                                */
+/* -------------------------------------------------------------------- */
+    if( (CSLCount(papszTokens) != 4 && CSLCount(papszTokens) != 6)
+        || !EQUAL(papszTokens[0],"DROP")
+        || !EQUAL(papszTokens[1],"INDEX")
+        || !EQUAL(papszTokens[2],"ON") 
+        || (CSLCount(papszTokens) == 6 && !EQUAL(papszTokens[4],"USING")) )
+    {
+        CSLDestroy( papszTokens );
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Syntax error in DROP INDEX command.\n"
+                  "Was '%s'\n"
+                  "Should be of form 'DROP INDEX ON <table> [USING <field>]'",
+                  pszSQLCommand );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Find the named layer.                                           */
+/* -------------------------------------------------------------------- */
+    int  i;
+    OGRLayer *poLayer=NULL;
+
+    {
+        CPLMutexHolderD( &m_hMutex );
+
+        for( i = 0; i < GetLayerCount(); i++ )
+        {
+            poLayer = GetLayer(i);
+        
+            if( EQUAL(poLayer->GetName(),papszTokens[3]) )
+                break;
+        }
+
+        if( i >= GetLayerCount() )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "CREATE INDEX ON failed, no such layer as `%s'.",
+                      papszTokens[3] );
+            CSLDestroy( papszTokens );
+            return OGRERR_FAILURE;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Does this layer even support attribute indexes?                 */
+/* -------------------------------------------------------------------- */
+    if( poLayer->GetIndex() == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Indexes not supported by this driver." );
+        CSLDestroy( papszTokens );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If we weren't given a field name, drop all indexes.             */
+/* -------------------------------------------------------------------- */
+    OGRErr eErr;
+
+    if( CSLCount(papszTokens) == 4 )
+    {
+        for( i = 0; i < poLayer->GetLayerDefn()->GetFieldCount(); i++ )
+        {
+            OGRAttrIndex *poAttrIndex;
+
+            poAttrIndex = poLayer->GetIndex()->GetFieldIndex(i);
+            if( poAttrIndex != NULL )
+            {
+                eErr = poLayer->GetIndex()->DropIndex( i );
+                if( eErr != OGRERR_NONE )
+                {
+                    CSLDestroy(papszTokens);
+                    return eErr;
+                }
+            }
+        }
+
+        CSLDestroy(papszTokens);
+        return OGRERR_NONE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Find the named field.                                           */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < poLayer->GetLayerDefn()->GetFieldCount(); i++ )
+    {
+        if( EQUAL(papszTokens[5],
+                  poLayer->GetLayerDefn()->GetFieldDefn(i)->GetNameRef()) )
+            break;
+    }
+
+    CSLDestroy( papszTokens );
+
+    if( i >= poLayer->GetLayerDefn()->GetFieldCount() )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "`%s' failed, field not found.",
+                  pszSQLCommand );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Attempt to drop the index.                                      */
+/* -------------------------------------------------------------------- */
+    eErr = poLayer->GetIndex()->DropIndex( i );
+
+    return eErr;
+}
+
+/************************************************************************/
+/*                        ProcessSQLDropTable()                         */
+/*                                                                      */
+/*      The correct syntax for dropping a table (layer) in the OGR SQL  */
+/*      dialect is:                                                     */
+/*                                                                      */
+/*          DROP TABLE <layername>                                      */
+/************************************************************************/
+
+OGRErr GDALDataset::ProcessSQLDropTable( const char *pszSQLCommand )
+
+{
+    char **papszTokens = CSLTokenizeString( pszSQLCommand );
+
+/* -------------------------------------------------------------------- */
+/*      Do some general syntax checking.                                */
+/* -------------------------------------------------------------------- */
+    if( CSLCount(papszTokens) != 3
+        || !EQUAL(papszTokens[0],"DROP")
+        || !EQUAL(papszTokens[1],"TABLE") )
+    {
+        CSLDestroy( papszTokens );
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Syntax error in DROP TABLE command.\n"
+                  "Was '%s'\n"
+                  "Should be of form 'DROP TABLE <table>'",
+                  pszSQLCommand );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Find the named layer.                                           */
+/* -------------------------------------------------------------------- */
+    int  i;
+    OGRLayer *poLayer=NULL;
+
+    for( i = 0; i < GetLayerCount(); i++ )
+    {
+        poLayer = GetLayer(i);
+        
+        if( EQUAL(poLayer->GetName(),papszTokens[2]) )
+            break;
+    }
+    
+    if( i >= GetLayerCount() )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "DROP TABLE failed, no such layer as `%s'.",
+                  papszTokens[2] );
+        CSLDestroy( papszTokens );
+        return OGRERR_FAILURE;
+    }
+
+    CSLDestroy( papszTokens );
+
+/* -------------------------------------------------------------------- */
+/*      Delete it.                                                      */
+/* -------------------------------------------------------------------- */
+
+    return DeleteLayer( i );
+}
+
+/************************************************************************/
+/*                    GDALDatasetParseSQLType()                       */
+/************************************************************************/
+
+/* All arguments will be altered */
+static OGRFieldType GDALDatasetParseSQLType(char* pszType, int& nWidth, int &nPrecision)
+{
+    char* pszParenthesis = strchr(pszType, '(');
+    if (pszParenthesis)
+    {
+        nWidth = atoi(pszParenthesis + 1);
+        *pszParenthesis = '\0';
+        char* pszComma = strchr(pszParenthesis + 1, ',');
+        if (pszComma)
+            nPrecision = atoi(pszComma + 1);
+    }
+
+    OGRFieldType eType = OFTString;
+    if (EQUAL(pszType, "INTEGER"))
+        eType = OFTInteger;
+    else if (EQUAL(pszType, "INTEGER[]"))
+        eType = OFTIntegerList;
+    else if (EQUAL(pszType, "FLOAT") ||
+             EQUAL(pszType, "NUMERIC") ||
+             EQUAL(pszType, "DOUBLE") /* unofficial alias */ ||
+             EQUAL(pszType, "REAL") /* unofficial alias */)
+        eType = OFTReal;
+    else if (EQUAL(pszType, "FLOAT[]") ||
+             EQUAL(pszType, "NUMERIC[]") ||
+             EQUAL(pszType, "DOUBLE[]") /* unofficial alias */ ||
+             EQUAL(pszType, "REAL[]") /* unofficial alias */)
+        eType = OFTRealList;
+    else if (EQUAL(pszType, "CHARACTER") ||
+             EQUAL(pszType, "TEXT") /* unofficial alias */ ||
+             EQUAL(pszType, "STRING") /* unofficial alias */ ||
+             EQUAL(pszType, "VARCHAR") /* unofficial alias */)
+        eType = OFTString;
+    else if (EQUAL(pszType, "TEXT[]") ||
+             EQUAL(pszType, "STRING[]") /* unofficial alias */||
+             EQUAL(pszType, "VARCHAR[]") /* unofficial alias */)
+        eType = OFTStringList;
+    else if (EQUAL(pszType, "DATE"))
+        eType = OFTDate;
+    else if (EQUAL(pszType, "TIME"))
+        eType = OFTTime;
+    else if (EQUAL(pszType, "TIMESTAMP") ||
+             EQUAL(pszType, "DATETIME") /* unofficial alias */ )
+        eType = OFTDateTime;
+    else
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "Unsupported column type '%s'. Defaulting to VARCHAR",
+                 pszType);
+    }
+    return eType;
+}
+
+/************************************************************************/
+/*                    ProcessSQLAlterTableAddColumn()                   */
+/*                                                                      */
+/*      The correct syntax for adding a column in the OGR SQL           */
+/*      dialect is:                                                     */
+/*                                                                      */
+/*          ALTER TABLE <layername> ADD [COLUMN] <columnname> <columntype>*/
+/************************************************************************/
+
+OGRErr GDALDataset::ProcessSQLAlterTableAddColumn( const char *pszSQLCommand )
+
+{
+    char **papszTokens = CSLTokenizeString( pszSQLCommand );
+
+/* -------------------------------------------------------------------- */
+/*      Do some general syntax checking.                                */
+/* -------------------------------------------------------------------- */
+    const char* pszLayerName = NULL;
+    const char* pszColumnName = NULL;
+    char* pszType = NULL;
+    int iTypeIndex = 0;
+    int nTokens = CSLCount(papszTokens);
+
+    if( nTokens >= 7
+        && EQUAL(papszTokens[0],"ALTER")
+        && EQUAL(papszTokens[1],"TABLE")
+        && EQUAL(papszTokens[3],"ADD")
+        && EQUAL(papszTokens[4],"COLUMN"))
+    {
+        pszLayerName = papszTokens[2];
+        pszColumnName = papszTokens[5];
+        iTypeIndex = 6;
+    }
+    else if( nTokens >= 6
+             && EQUAL(papszTokens[0],"ALTER")
+             && EQUAL(papszTokens[1],"TABLE")
+             && EQUAL(papszTokens[3],"ADD"))
+    {
+        pszLayerName = papszTokens[2];
+        pszColumnName = papszTokens[4];
+        iTypeIndex = 5;
+    }
+    else
+    {
+        CSLDestroy( papszTokens );
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Syntax error in ALTER TABLE ADD COLUMN command.\n"
+                  "Was '%s'\n"
+                  "Should be of form 'ALTER TABLE <layername> ADD [COLUMN] <columnname> <columntype>'",
+                  pszSQLCommand );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Merge type components into a single string if there were split  */
+/*      with spaces                                                     */
+/* -------------------------------------------------------------------- */
+    CPLString osType;
+    for(int i=iTypeIndex;i<nTokens;i++)
+    {
+        osType += papszTokens[i];
+        CPLFree(papszTokens[i]);
+    }
+    pszType = papszTokens[iTypeIndex] = CPLStrdup(osType);
+    papszTokens[iTypeIndex + 1] = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Find the named layer.                                           */
+/* -------------------------------------------------------------------- */
+    OGRLayer *poLayer = GetLayerByName(pszLayerName);
+    if( poLayer == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s failed, no such layer as `%s'.",
+                  pszSQLCommand,
+                  pszLayerName );
+        CSLDestroy( papszTokens );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Add column.                                                     */
+/* -------------------------------------------------------------------- */
+
+    int nWidth = 0, nPrecision = 0;
+    OGRFieldType eType = GDALDatasetParseSQLType(pszType, nWidth, nPrecision);
+    OGRFieldDefn oFieldDefn(pszColumnName, eType);
+    oFieldDefn.SetWidth(nWidth);
+    oFieldDefn.SetPrecision(nPrecision);
+
+    CSLDestroy( papszTokens );
+
+    return poLayer->CreateField( &oFieldDefn );
+}
+
+/************************************************************************/
+/*                    ProcessSQLAlterTableDropColumn()                  */
+/*                                                                      */
+/*      The correct syntax for droping a column in the OGR SQL          */
+/*      dialect is:                                                     */
+/*                                                                      */
+/*          ALTER TABLE <layername> DROP [COLUMN] <columnname>          */
+/************************************************************************/
+
+OGRErr GDALDataset::ProcessSQLAlterTableDropColumn( const char *pszSQLCommand )
+
+{
+    char **papszTokens = CSLTokenizeString( pszSQLCommand );
+
+/* -------------------------------------------------------------------- */
+/*      Do some general syntax checking.                                */
+/* -------------------------------------------------------------------- */
+    const char* pszLayerName = NULL;
+    const char* pszColumnName = NULL;
+    if( CSLCount(papszTokens) == 6
+        && EQUAL(papszTokens[0],"ALTER")
+        && EQUAL(papszTokens[1],"TABLE")
+        && EQUAL(papszTokens[3],"DROP")
+        && EQUAL(papszTokens[4],"COLUMN"))
+    {
+        pszLayerName = papszTokens[2];
+        pszColumnName = papszTokens[5];
+    }
+    else if( CSLCount(papszTokens) == 5
+             && EQUAL(papszTokens[0],"ALTER")
+             && EQUAL(papszTokens[1],"TABLE")
+             && EQUAL(papszTokens[3],"DROP"))
+    {
+        pszLayerName = papszTokens[2];
+        pszColumnName = papszTokens[4];
+    }
+    else
+    {
+        CSLDestroy( papszTokens );
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Syntax error in ALTER TABLE DROP COLUMN command.\n"
+                  "Was '%s'\n"
+                  "Should be of form 'ALTER TABLE <layername> DROP [COLUMN] <columnname>'",
+                  pszSQLCommand );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Find the named layer.                                           */
+/* -------------------------------------------------------------------- */
+    OGRLayer *poLayer = GetLayerByName(pszLayerName);
+    if( poLayer == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s failed, no such layer as `%s'.",
+                  pszSQLCommand,
+                  pszLayerName );
+        CSLDestroy( papszTokens );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Find the field.                                                 */
+/* -------------------------------------------------------------------- */
+
+    int nFieldIndex = poLayer->GetLayerDefn()->GetFieldIndex(pszColumnName);
+    if( nFieldIndex < 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s failed, no such field as `%s'.",
+                  pszSQLCommand,
+                  pszColumnName );
+        CSLDestroy( papszTokens );
+        return OGRERR_FAILURE;
+    }
+
+
+/* -------------------------------------------------------------------- */
+/*      Remove it.                                                      */
+/* -------------------------------------------------------------------- */
+
+    CSLDestroy( papszTokens );
+
+    return poLayer->DeleteField( nFieldIndex );
+}
+
+/************************************************************************/
+/*                 ProcessSQLAlterTableRenameColumn()                   */
+/*                                                                      */
+/*      The correct syntax for renaming a column in the OGR SQL         */
+/*      dialect is:                                                     */
+/*                                                                      */
+/*       ALTER TABLE <layername> RENAME [COLUMN] <oldname> TO <newname> */
+/************************************************************************/
+
+OGRErr GDALDataset::ProcessSQLAlterTableRenameColumn( const char *pszSQLCommand )
+
+{
+    char **papszTokens = CSLTokenizeString( pszSQLCommand );
+
+/* -------------------------------------------------------------------- */
+/*      Do some general syntax checking.                                */
+/* -------------------------------------------------------------------- */
+    const char* pszLayerName = NULL;
+    const char* pszOldColName = NULL;
+    const char* pszNewColName = NULL;
+    if( CSLCount(papszTokens) == 8
+        && EQUAL(papszTokens[0],"ALTER")
+        && EQUAL(papszTokens[1],"TABLE")
+        && EQUAL(papszTokens[3],"RENAME")
+        && EQUAL(papszTokens[4],"COLUMN")
+        && EQUAL(papszTokens[6],"TO"))
+    {
+        pszLayerName = papszTokens[2];
+        pszOldColName = papszTokens[5];
+        pszNewColName = papszTokens[7];
+    }
+    else if( CSLCount(papszTokens) == 7
+             && EQUAL(papszTokens[0],"ALTER")
+             && EQUAL(papszTokens[1],"TABLE")
+             && EQUAL(papszTokens[3],"RENAME")
+             && EQUAL(papszTokens[5],"TO"))
+    {
+        pszLayerName = papszTokens[2];
+        pszOldColName = papszTokens[4];
+        pszNewColName = papszTokens[6];
+    }
+    else
+    {
+        CSLDestroy( papszTokens );
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Syntax error in ALTER TABLE RENAME COLUMN command.\n"
+                  "Was '%s'\n"
+                  "Should be of form 'ALTER TABLE <layername> RENAME [COLUMN] <columnname> TO <newname>'",
+                  pszSQLCommand );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Find the named layer.                                           */
+/* -------------------------------------------------------------------- */
+    OGRLayer *poLayer = GetLayerByName(pszLayerName);
+    if( poLayer == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s failed, no such layer as `%s'.",
+                  pszSQLCommand,
+                  pszLayerName );
+        CSLDestroy( papszTokens );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Find the field.                                                 */
+/* -------------------------------------------------------------------- */
+
+    int nFieldIndex = poLayer->GetLayerDefn()->GetFieldIndex(pszOldColName);
+    if( nFieldIndex < 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s failed, no such field as `%s'.",
+                  pszSQLCommand,
+                  pszOldColName );
+        CSLDestroy( papszTokens );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Rename column.                                                  */
+/* -------------------------------------------------------------------- */
+    OGRFieldDefn* poOldFieldDefn = poLayer->GetLayerDefn()->GetFieldDefn(nFieldIndex);
+    OGRFieldDefn oNewFieldDefn(poOldFieldDefn);
+    oNewFieldDefn.SetName(pszNewColName);
+
+    CSLDestroy( papszTokens );
+
+    return poLayer->AlterFieldDefn( nFieldIndex, &oNewFieldDefn, ALTER_NAME_FLAG );
+}
+
+/************************************************************************/
+/*                 ProcessSQLAlterTableAlterColumn()                    */
+/*                                                                      */
+/*      The correct syntax for altering the type of a column in the     */
+/*      OGR SQL dialect is:                                             */
+/*                                                                      */
+/*   ALTER TABLE <layername> ALTER [COLUMN] <columnname> TYPE <newtype> */
+/************************************************************************/
+
+OGRErr GDALDataset::ProcessSQLAlterTableAlterColumn( const char *pszSQLCommand )
+
+{
+    char **papszTokens = CSLTokenizeString( pszSQLCommand );
+
+/* -------------------------------------------------------------------- */
+/*      Do some general syntax checking.                                */
+/* -------------------------------------------------------------------- */
+    const char* pszLayerName = NULL;
+    const char* pszColumnName = NULL;
+    char* pszType = NULL;
+    int iTypeIndex = 0;
+    int nTokens = CSLCount(papszTokens);
+
+    if( nTokens >= 8
+        && EQUAL(papszTokens[0],"ALTER")
+        && EQUAL(papszTokens[1],"TABLE")
+        && EQUAL(papszTokens[3],"ALTER")
+        && EQUAL(papszTokens[4],"COLUMN")
+        && EQUAL(papszTokens[6],"TYPE"))
+    {
+        pszLayerName = papszTokens[2];
+        pszColumnName = papszTokens[5];
+        iTypeIndex = 7;
+    }
+    else if( nTokens >= 7
+             && EQUAL(papszTokens[0],"ALTER")
+             && EQUAL(papszTokens[1],"TABLE")
+             && EQUAL(papszTokens[3],"ALTER")
+             && EQUAL(papszTokens[5],"TYPE"))
+    {
+        pszLayerName = papszTokens[2];
+        pszColumnName = papszTokens[4];
+        iTypeIndex = 6;
+    }
+    else
+    {
+        CSLDestroy( papszTokens );
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Syntax error in ALTER TABLE ALTER COLUMN command.\n"
+                  "Was '%s'\n"
+                  "Should be of form 'ALTER TABLE <layername> ALTER [COLUMN] <columnname> TYPE <columntype>'",
+                  pszSQLCommand );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Merge type components into a single string if there were split  */
+/*      with spaces                                                     */
+/* -------------------------------------------------------------------- */
+    CPLString osType;
+    for(int i=iTypeIndex;i<nTokens;i++)
+    {
+        osType += papszTokens[i];
+        CPLFree(papszTokens[i]);
+    }
+    pszType = papszTokens[iTypeIndex] = CPLStrdup(osType);
+    papszTokens[iTypeIndex + 1] = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Find the named layer.                                           */
+/* -------------------------------------------------------------------- */
+    OGRLayer *poLayer = GetLayerByName(pszLayerName);
+    if( poLayer == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s failed, no such layer as `%s'.",
+                  pszSQLCommand,
+                  pszLayerName );
+        CSLDestroy( papszTokens );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Find the field.                                                 */
+/* -------------------------------------------------------------------- */
+
+    int nFieldIndex = poLayer->GetLayerDefn()->GetFieldIndex(pszColumnName);
+    if( nFieldIndex < 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s failed, no such field as `%s'.",
+                  pszSQLCommand,
+                  pszColumnName );
+        CSLDestroy( papszTokens );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Alter column.                                                   */
+/* -------------------------------------------------------------------- */
+
+    OGRFieldDefn* poOldFieldDefn = poLayer->GetLayerDefn()->GetFieldDefn(nFieldIndex);
+    OGRFieldDefn oNewFieldDefn(poOldFieldDefn);
+
+    int nWidth = 0, nPrecision = 0;
+    OGRFieldType eType = GDALDatasetParseSQLType(pszType, nWidth, nPrecision);
+    oNewFieldDefn.SetType(eType);
+    oNewFieldDefn.SetWidth(nWidth);
+    oNewFieldDefn.SetPrecision(nPrecision);
+
+    int nFlags = 0;
+    if (poOldFieldDefn->GetType() != oNewFieldDefn.GetType())
+        nFlags |= ALTER_TYPE_FLAG;
+    if (poOldFieldDefn->GetWidth() != oNewFieldDefn.GetWidth() ||
+        poOldFieldDefn->GetPrecision() != oNewFieldDefn.GetPrecision())
+        nFlags |= ALTER_WIDTH_PRECISION_FLAG;
+
+    CSLDestroy( papszTokens );
+
+    if (nFlags == 0)
+        return OGRERR_NONE;
+    else
+        return poLayer->AlterFieldDefn( nFieldIndex, &oNewFieldDefn, nFlags );
+}
+
+/************************************************************************/
+/*                             ExecuteSQL()                             */
+/************************************************************************/
+
+/**
+ \brief Execute an SQL statement against the data store. 
+
+ The result of an SQL query is either NULL for statements that are in error,
+ or that have no results set, or an OGRLayer pointer representing a results
+ set from the query.  Note that this OGRLayer is in addition to the layers
+ in the data store and must be destroyed with 
+ ReleaseResultSet() before the dataset is closed
+ (destroyed).  
+
+ This method is the same as the C function GDALDatasetExecuteSQL() and the
+ deprecated OGR_DS_ExecuteSQL().
+
+ For more information on the SQL dialect supported internally by OGR
+ review the <a href="ogr_sql.html">OGR SQL</a> document.  Some drivers (ie.
+ Oracle and PostGIS) pass the SQL directly through to the underlying RDBMS.
+
+ Starting with OGR 1.10, the <a href="ogr_sql_sqlite.html">SQLITE dialect</a>
+ can also be used.
+
+ In GDAL 1.X, this method used to be in the OGRDataSource class.
+ 
+ @param pszStatement the SQL statement to execute. 
+ @param poSpatialFilter geometry which represents a spatial filter. Can be NULL.
+ @param pszDialect allows control of the statement dialect. If set to NULL, the
+OGR SQL engine will be used, except for RDBMS drivers that will use their dedicated SQL engine,
+unless OGRSQL is explicitely passed as the dialect. Starting with OGR 1.10, the SQLITE dialect
+can also be used.
+
+ @return an OGRLayer containing the results of the query.  Deallocate with
+ ReleaseResultSet().
+
+*/
+
+OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
+                                      OGRGeometry *poSpatialFilter,
+                                      const char *pszDialect )
+
+{
+    swq_select *psSelectInfo = NULL;
+
+    if( pszDialect != NULL && EQUAL(pszDialect, "SQLite") )
+    {
+#ifdef SQLITE_ENABLED
+        return OGRSQLiteExecuteSQL( this, pszStatement, poSpatialFilter, pszDialect );
+#else
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "The SQLite driver needs to be compiled to support the SQLite SQL dialect");
+        return NULL;
+#endif
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Handle CREATE INDEX statements specially.                       */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(pszStatement,"CREATE INDEX",12) )
+    {
+        ProcessSQLCreateIndex( pszStatement );
+        return NULL;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Handle DROP INDEX statements specially.                         */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(pszStatement,"DROP INDEX",10) )
+    {
+        ProcessSQLDropIndex( pszStatement );
+        return NULL;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Handle DROP TABLE statements specially.                         */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(pszStatement,"DROP TABLE",10) )
+    {
+        ProcessSQLDropTable( pszStatement );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Handle ALTER TABLE statements specially.                        */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(pszStatement,"ALTER TABLE",11) )
+    {
+        char **papszTokens = CSLTokenizeString( pszStatement );
+        if( CSLCount(papszTokens) >= 4 &&
+            EQUAL(papszTokens[3],"ADD") )
+        {
+            ProcessSQLAlterTableAddColumn( pszStatement );
+            CSLDestroy(papszTokens);
+            return NULL;
+        }
+        else if( CSLCount(papszTokens) >= 4 &&
+                 EQUAL(papszTokens[3],"DROP") )
+        {
+            ProcessSQLAlterTableDropColumn( pszStatement );
+            CSLDestroy(papszTokens);
+            return NULL;
+        }
+        else if( CSLCount(papszTokens) >= 4 &&
+                 EQUAL(papszTokens[3],"RENAME") )
+        {
+            ProcessSQLAlterTableRenameColumn( pszStatement );
+            CSLDestroy(papszTokens);
+            return NULL;
+        }
+        else if( CSLCount(papszTokens) >= 4 &&
+                 EQUAL(papszTokens[3],"ALTER") )
+        {
+            ProcessSQLAlterTableAlterColumn( pszStatement );
+            CSLDestroy(papszTokens);
+            return NULL;
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Unsupported ALTER TABLE command : %s",
+                      pszStatement );
+            CSLDestroy(papszTokens);
+            return NULL;
+        }
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Preparse the SQL statement.                                     */
+/* -------------------------------------------------------------------- */
+    psSelectInfo = new swq_select();
+    if( psSelectInfo->preparse( pszStatement ) != CPLE_None )
+    {
+        delete psSelectInfo;
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If there is no UNION ALL, build result layer.                   */
+/* -------------------------------------------------------------------- */
+    if( psSelectInfo->poOtherSelect == NULL )
+    {
+        return BuildLayerFromSelectInfo(psSelectInfo,
+                                        poSpatialFilter,
+                                        pszDialect);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Build result union layer.                                       */
+/* -------------------------------------------------------------------- */
+    int nSrcLayers = 0;
+    OGRLayer** papoSrcLayers = NULL;
+
+    do
+    {
+        swq_select* psNextSelectInfo = psSelectInfo->poOtherSelect;
+        psSelectInfo->poOtherSelect = NULL;
+
+        OGRLayer* poLayer = BuildLayerFromSelectInfo(psSelectInfo,
+                                                     poSpatialFilter,
+                                                     pszDialect);
+        if( poLayer == NULL )
+        {
+            /* Each source layer owns an independant select info */
+            for(int i=0;i<nSrcLayers;i++)
+                delete papoSrcLayers[i];
+            CPLFree(papoSrcLayers);
+
+            /* So we just have to destroy the remaining select info */
+            delete psNextSelectInfo;
+
+            return NULL;
+        }
+        else
+        {
+            papoSrcLayers = (OGRLayer**) CPLRealloc(papoSrcLayers,
+                                sizeof(OGRLayer*) * (nSrcLayers + 1));
+            papoSrcLayers[nSrcLayers] = poLayer;
+            nSrcLayers ++;
+
+            psSelectInfo = psNextSelectInfo;
+        }
+    }
+    while( psSelectInfo != NULL );
+
+    return new OGRUnionLayer("SELECT",
+                                nSrcLayers,
+                                papoSrcLayers,
+                                TRUE);
+}
+
+/************************************************************************/
+/*                        BuildLayerFromSelectInfo()                    */
+/************************************************************************/
+
+OGRLayer* GDALDataset::BuildLayerFromSelectInfo(void* psSelectInfoIn,
+                                                  OGRGeometry *poSpatialFilter,
+                                                  const char *pszDialect)
+{
+    swq_select* psSelectInfo = (swq_select*) psSelectInfoIn;
+
+    swq_field_list sFieldList;
+    int            nFIDIndex = 0;
+    OGRGenSQLResultsLayer *poResults = NULL;
+    char *pszWHERE = NULL;
+
+    memset( &sFieldList, 0, sizeof(sFieldList) );
+
+/* -------------------------------------------------------------------- */
+/*      Validate that all the source tables are recognised, count       */
+/*      fields.                                                         */
+/* -------------------------------------------------------------------- */
+    int  nFieldCount = 0, iTable, iField;
+    int  iEDS;
+    int  nExtraDSCount = 0;
+    GDALDataset** papoExtraDS = NULL;
+
+    for( iTable = 0; iTable < psSelectInfo->table_count; iTable++ )
+    {
+        swq_table_def *psTableDef = psSelectInfo->table_defs + iTable;
+        OGRLayer *poSrcLayer;
+        GDALDataset *poTableDS = this;
+
+        if( psTableDef->data_source != NULL )
+        {
+            poTableDS = (GDALDataset *) 
+                OGROpenShared( psTableDef->data_source, FALSE, NULL );
+            if( poTableDS == NULL )
+            {
+                if( strlen(CPLGetLastErrorMsg()) == 0 )
+                    CPLError( CE_Failure, CPLE_AppDefined, 
+                              "Unable to open secondary datasource\n"
+                              "`%s' required by JOIN.",
+                              psTableDef->data_source );
+
+                delete psSelectInfo;
+                goto end;
+            }
+
+            /* Keep in an array to release at the end of this function */
+            papoExtraDS = (GDALDataset** )CPLRealloc(papoExtraDS,
+                               sizeof(GDALDataset*) * (nExtraDSCount + 1));
+            papoExtraDS[nExtraDSCount++] = poTableDS;
+        }
+
+        poSrcLayer = poTableDS->GetLayerByName( psTableDef->table_name );
+
+        if( poSrcLayer == NULL )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "SELECT from table %s failed, no such table/featureclass.",
+                      psTableDef->table_name );
+            delete psSelectInfo;
+            goto end;
+        }
+
+        nFieldCount += poSrcLayer->GetLayerDefn()->GetFieldCount();
+        if( iTable == 0 )
+            nFieldCount += poSrcLayer->GetLayerDefn()->GetGeomFieldCount();
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Build the field list for all indicated tables.                  */
+/* -------------------------------------------------------------------- */
+
+    sFieldList.table_count = psSelectInfo->table_count;
+    sFieldList.table_defs = psSelectInfo->table_defs;
+
+    sFieldList.count = 0;
+    sFieldList.names = (char **) CPLMalloc( sizeof(char *) * (nFieldCount+SPECIAL_FIELD_COUNT) );
+    sFieldList.types = (swq_field_type *)  
+        CPLMalloc( sizeof(swq_field_type) * (nFieldCount+SPECIAL_FIELD_COUNT) );
+    sFieldList.table_ids = (int *) 
+        CPLMalloc( sizeof(int) * (nFieldCount+SPECIAL_FIELD_COUNT) );
+    sFieldList.ids = (int *) 
+        CPLMalloc( sizeof(int) * (nFieldCount+SPECIAL_FIELD_COUNT) );
+    
+    for( iTable = 0; iTable < psSelectInfo->table_count; iTable++ )
+    {
+        swq_table_def *psTableDef = psSelectInfo->table_defs + iTable;
+        GDALDataset *poTableDS = this;
+        OGRLayer *poSrcLayer;
+        
+        if( psTableDef->data_source != NULL )
+        {
+            poTableDS = (GDALDataset *) 
+                OGROpenShared( psTableDef->data_source, FALSE, NULL );
+            CPLAssert( poTableDS != NULL );
+            poTableDS->Dereference();
+        }
+
+        poSrcLayer = poTableDS->GetLayerByName( psTableDef->table_name );
+
+        for( iField = 0; 
+             iField < poSrcLayer->GetLayerDefn()->GetFieldCount();
+             iField++ )
+        {
+            OGRFieldDefn *poFDefn=poSrcLayer->GetLayerDefn()->GetFieldDefn(iField);
+            int iOutField = sFieldList.count++;
+            sFieldList.names[iOutField] = (char *) poFDefn->GetNameRef();
+            if( poFDefn->GetType() == OFTInteger )
+                sFieldList.types[iOutField] = SWQ_INTEGER;
+            else if( poFDefn->GetType() == OFTReal )
+                sFieldList.types[iOutField] = SWQ_FLOAT;
+            else if( poFDefn->GetType() == OFTString )
+                sFieldList.types[iOutField] = SWQ_STRING;
+            else if( poFDefn->GetType() == OFTTime )
+                sFieldList.types[iOutField] = SWQ_TIME;
+            else if( poFDefn->GetType() == OFTDate )
+                sFieldList.types[iOutField] = SWQ_DATE;
+            else if( poFDefn->GetType() == OFTDateTime )
+                sFieldList.types[iOutField] = SWQ_TIMESTAMP;
+            else
+                sFieldList.types[iOutField] = SWQ_OTHER;
+
+            sFieldList.table_ids[iOutField] = iTable;
+            sFieldList.ids[iOutField] = iField;
+        }
+
+        if( iTable == 0 )
+        {
+            nFIDIndex = sFieldList.count;
+
+            for( iField = 0; 
+                 iField < poSrcLayer->GetLayerDefn()->GetGeomFieldCount();
+                 iField++ )
+            {
+                OGRGeomFieldDefn *poFDefn=poSrcLayer->GetLayerDefn()->GetGeomFieldDefn(iField);
+                int iOutField = sFieldList.count++;
+                sFieldList.names[iOutField] = (char *) poFDefn->GetNameRef();
+                if( *sFieldList.names[iOutField] == '\0' )
+                    sFieldList.names[iOutField] = (char*) OGR_GEOMETRY_DEFAULT_NON_EMPTY_NAME;
+                sFieldList.types[iOutField] = SWQ_GEOMETRY;
+
+                sFieldList.table_ids[iOutField] = iTable;
+                sFieldList.ids[iOutField] =
+                    GEOM_FIELD_INDEX_TO_ALL_FIELD_INDEX(poSrcLayer->GetLayerDefn(), iField);
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Expand '*' in 'SELECT *' now before we add the pseudo fields    */
+/* -------------------------------------------------------------------- */
+    if( psSelectInfo->expand_wildcard( &sFieldList )  != CE_None )
+    {
+        delete psSelectInfo;
+        goto end;
+    }
+
+    for (iField = 0; iField < SPECIAL_FIELD_COUNT; iField++)
+    {
+        sFieldList.names[sFieldList.count] = (char*) SpecialFieldNames[iField];
+        sFieldList.types[sFieldList.count] = SpecialFieldTypes[iField];
+        sFieldList.table_ids[sFieldList.count] = 0;
+        sFieldList.ids[sFieldList.count] = nFIDIndex + iField;
+        sFieldList.count++;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Finish the parse operation.                                     */
+/* -------------------------------------------------------------------- */
+    if( psSelectInfo->parse( &sFieldList, 0 ) != CE_None )
+    {
+        delete psSelectInfo;
+        goto end;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Extract the WHERE expression to use separately.                 */
+/* -------------------------------------------------------------------- */
+    if( psSelectInfo->where_expr != NULL )
+    {
+        if (EQUAL(GetDriverName(), "PostgreSQL") ||
+                EQUAL(GetDriverName(), "FileGDB" ) )
+            pszWHERE = psSelectInfo->where_expr->Unparse( &sFieldList, '"' );
+        else
+            pszWHERE = psSelectInfo->where_expr->Unparse( &sFieldList, '\'' );
+        //CPLDebug( "OGR", "Unparse() -> %s", pszWHERE );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Everything seems OK, try to instantiate a results layer.        */
+/* -------------------------------------------------------------------- */
+
+    poResults = new OGRGenSQLResultsLayer( this, psSelectInfo,
+                                           poSpatialFilter,
+                                           pszWHERE,
+                                           pszDialect );
+
+    CPLFree( pszWHERE );
+
+    // Eventually, we should keep track of layers to cleanup.
+
+end:
+    CPLFree( sFieldList.names );
+    CPLFree( sFieldList.types );
+    CPLFree( sFieldList.table_ids );
+    CPLFree( sFieldList.ids );
+
+    /* Release the datasets we have opened with OGROpenShared() */
+    /* It is safe to do that as the 'new OGRGenSQLResultsLayer' itself */
+    /* has taken a reference on them, which it will release in its */
+    /* destructor */
+    for(iEDS = 0; iEDS < nExtraDSCount; iEDS++)
+        GDALClose( (GDALDatasetH)papoExtraDS[iEDS] );
+    CPLFree(papoExtraDS);
+
+    return poResults;
+}
+
+/************************************************************************/
+/*                          ReleaseResultSet()                          */
+/************************************************************************/
+
+/**
+ \brief Release results of ExecuteSQL().
+
+ This method should only be used to deallocate OGRLayers resulting from
+ an ExecuteSQL() call on the same GDALDataset.  Failure to deallocate a
+ results set before destroying the GDALDataset may cause errors. 
+
+ This method is the same as the C function GDALDatasetReleaseResultSet() and the
+ deprecated OGR_DS_ReleaseResultSet().
+ 
+ In GDAL 1.X, this method used to be in the OGRDataSource class.
+ 
+ @param poResultsSet the result of a previous ExecuteSQL() call.
+
+*/ 
+void GDALDataset::ReleaseResultSet( OGRLayer * poResultsSet )
+
+{
+    delete poResultsSet;
+}
+
+/************************************************************************/
+/*                            GetStyleTable()                           */
+/************************************************************************/
+
+/**
+ \brief Returns dataset style table.
+ 
+ This method is the same as the C function GDALDatasetGetStyleTable() and the
+ deprecated OGR_DS_GetStyleTable().
+ 
+ In GDAL 1.X, this method used to be in the OGRDataSource class.
+ 
+ @return pointer to a style table which should not be modified or freed by the
+ caller.
+*/
+
+OGRStyleTable *GDALDataset::GetStyleTable()
+{
+    return m_poStyleTable;
+}
+
+/************************************************************************/
+/*                         SetStyleTableDirectly()                      */
+/************************************************************************/
+
+/**
+ \brief Set dataset style table.
+ 
+ This method operate exactly as SetStyleTable() except that it
+ assumes ownership of the passed table.
+ 
+ This method is the same as the C function GDALDatasetSetStyleTableDirectly() and
+ the deprecated OGR_DS_SetStyleTableDirectly().
+ 
+ In GDAL 1.X, this method used to be in the OGRDataSource class.
+ 
+ @param poStyleTable pointer to style table to set
+
+*/
+void GDALDataset::SetStyleTableDirectly( OGRStyleTable *poStyleTable )
+{
+    if ( m_poStyleTable )
+        delete m_poStyleTable;
+    m_poStyleTable = poStyleTable;
+}
+
+/************************************************************************/
+/*                            SetStyleTable()                           */
+/************************************************************************/
+
+/**
+ \brief Set dataset style table.
+ 
+ This method operate exactly as SetStyleTableDirectly() except
+ that it does not assume ownership of the passed table.
+ 
+ This method is the same as the C function GDALDatasetSetStyleTable() and the
+ deprecated OGR_DS_SetStyleTable().
+ 
+ In GDAL 1.X, this method used to be in the OGRDataSource class.
+ 
+ @param poStyleTable pointer to style table to set
+
+*/
+
+void GDALDataset::SetStyleTable(OGRStyleTable *poStyleTable)
+{
+    if ( m_poStyleTable )
+        delete m_poStyleTable;
+    if ( poStyleTable )
+        m_poStyleTable = poStyleTable->Clone();
+}
+
+/************************************************************************/
+/*                         IsGenericSQLDialect()                        */
+/************************************************************************/
+
+int GDALDataset::IsGenericSQLDialect(const char* pszDialect)
+{
+    return ( pszDialect != NULL && (EQUAL(pszDialect,"OGRSQL") ||
+                                    EQUAL(pszDialect,"SQLITE")) );
+
+}
+
+/************************************************************************/
+/*                            GetLayerCount()                           */
+/************************************************************************/
+
+/**
+ \brief Get the number of layers in this dataset.
+
+ This method is the same as the C function GDALDatasetGetLayerCount(),
+ and the deprecated OGR_DS_GetLayerCount().
+ 
+ In GDAL 1.X, this method used to be in the OGRDataSource class.
+
+ @return layer count.
+*/
+
+int GDALDataset::GetLayerCount()
+{
+    return 0;
+}
+
+/************************************************************************/
+/*                                GetLayer()                            */
+/************************************************************************/
+
+/**
+ \brief Fetch a layer by index.
+
+ The returned layer remains owned by the 
+ GDALDataset and should not be deleted by the application.
+
+ This method is the same as the C function GDALDatasetGetLayer() and the
+ deprecated OGR_DS_GetLayer().
+
+ In GDAL 1.X, this method used to be in the OGRDataSource class.
+
+ @param iLayer a layer number between 0 and GetLayerCount()-1.
+
+ @return the layer, or NULL if iLayer is out of range or an error occurs.
+*/
+
+OGRLayer* GDALDataset::GetLayer(int iLayer)
+{
+    return NULL;
+}
+
+/************************************************************************/
+/*                            TestCapability()                          */
+/************************************************************************/
+
+
+/**
+ \brief Test if capability is available.
+
+ One of the following dataset capability names can be passed into this
+ method, and a TRUE or FALSE value will be returned indicating whether or not
+ the capability is available for this object.
+
+ <ul>
+  <li> <b>ODsCCreateLayer</b>: True if this datasource can create new layers.<p>
+  <li> <b>ODsCDeleteLayer</b>: True if this datasource can delete existing layers.<p>
+  <li> <b>ODsCCreateGeomFieldAfterCreateLayer</b>: True if the layers of this
+        datasource support CreateGeomField() just after layer creation.<p>
+ </ul>
+
+ The \#define macro forms of the capability names should be used in preference
+ to the strings themselves to avoid mispelling.
+
+ This method is the same as the C function GDALDatasetTestCapability() and the
+ deprecated OGR_DS_TestCapability().
+
+ In GDAL 1.X, this method used to be in the OGRDataSource class.
+ 
+ @param pszCapability the capability to test.
+
+ @return TRUE if capability available otherwise FALSE.
+
+*/ 
+
+int GDALDataset::TestCapability( const char * pszCap )
+{
+    return FALSE;
 }

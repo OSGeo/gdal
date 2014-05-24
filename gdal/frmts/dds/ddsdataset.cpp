@@ -338,6 +338,7 @@ void GDALRegister_DDS()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription("DDS");
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, 
                                   "DirectDraw Surface");
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#DDS" );        

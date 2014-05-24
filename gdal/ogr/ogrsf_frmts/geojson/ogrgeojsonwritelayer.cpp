@@ -50,6 +50,7 @@ OGRGeoJSONWriteLayer::OGRGeoJSONWriteLayer( const char* pszName,
 
     poFeatureDefn_->Reference();
     poFeatureDefn_->SetGeomType( eGType );
+    SetDescription( poFeatureDefn_->GetName() );
 
     nCoordPrecision = atoi(CSLFetchNameValueDef(papszOptions, "COORDINATE_PRECISION", "-1"));
 }

@@ -78,8 +78,7 @@ class OGRSUADataSource : public OGRDataSource
                         OGRSUADataSource();
                         ~OGRSUADataSource();
 
-    int                 Open( const char * pszFilename,
-                              int bUpdate );
+    int                 Open( const char * pszFilename );
 
     virtual const char*         GetName() { return pszName; }
 
@@ -88,20 +87,5 @@ class OGRSUADataSource : public OGRDataSource
 
     virtual int                 TestCapability( const char * );
 };
-
-/************************************************************************/
-/*                             OGRSUADriver                             */
-/************************************************************************/
-
-class OGRSUADriver : public OGRSFDriver
-{
-  public:
-                ~OGRSUADriver();
-
-    virtual const char*         GetName();
-    virtual OGRDataSource*      Open( const char *, int );
-    virtual int                 TestCapability( const char * );
-};
-
 
 #endif /* ndef _OGR_SUA_H_INCLUDED */

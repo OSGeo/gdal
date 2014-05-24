@@ -19,7 +19,7 @@ GDAL_ROOT	=	..
 
 !INCLUDE ..\nmake.opt
 
-EXTRAFLAGS =	$(PAM_SETTING) -I..\frmts\gtiff
+EXTRAFLAGS =	$(PAM_SETTING) -I..\frmts\gtiff -I..\ogr\ogrsf_frmts\generic
 
 default:	$(OBJ) $(RES)
 
@@ -27,6 +27,6 @@ clean:
 	-del *.obj *.res
 
 Version.res:	
-	rc -fo Version.res -r -I..\port Version.rc
+	rc -fo Version.res -r -I..\port -I..\ogr Version.rc
 
 gdal_misc.obj:	gdal_misc.cpp gdal_version.h

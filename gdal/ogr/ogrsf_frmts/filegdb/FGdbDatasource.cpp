@@ -320,13 +320,13 @@ OGRLayer *FGdbDataSource::GetLayer( int iLayer )
 }
 
 /************************************************************************/
-/*                              CreateLayer()                           */
+/*                             ICreateLayer()                           */
 /*                                                                      */
 /* See FGdbLayer::Create for creation options                           */
 /************************************************************************/
 
 OGRLayer *
-FGdbDataSource::CreateLayer( const char * pszLayerName,
+FGdbDataSource::ICreateLayer( const char * pszLayerName,
                               OGRSpatialReference *poSRS,
                               OGRwkbGeometryType eType,
                               char ** papszOptions )
@@ -379,6 +379,7 @@ OGRFGdbSingleFeatureLayer::OGRFGdbSingleFeatureLayer(const char* pszLayerName,
                                                      const char *pszVal )
 {
     poFeatureDefn = new OGRFeatureDefn( pszLayerName );
+    SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
     OGRFieldDefn oField( "FIELD_1", OFTString );
     poFeatureDefn->AddFieldDefn( &oField );

@@ -65,7 +65,7 @@ class CPL_DLL OGRMutexedDataSource : public OGRDataSource
 
     virtual int         TestCapability( const char * );
 
-    virtual OGRLayer   *CreateLayer( const char *pszName, 
+    virtual OGRLayer   *ICreateLayer( const char *pszName, 
                                      OGRSpatialReference *poSpatialRef = NULL,
                                      OGRwkbGeometryType eGType = wkbUnknown,
                                      char ** papszOptions = NULL );
@@ -82,8 +82,8 @@ class CPL_DLL OGRMutexedDataSource : public OGRDataSource
                                     OGRGeometry *poSpatialFilter,
                                     const char *pszDialect );
     virtual void        ReleaseResultSet( OGRLayer * poResultsSet );
-
-    virtual OGRErr      SyncToDisk();
+    
+    virtual void        FlushCache();
 };
 
 #endif // _OGRMUTEXEDDATASOURCELAYER_H_INCLUDED

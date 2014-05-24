@@ -46,6 +46,7 @@ OGRNTFLayer::OGRNTFLayer( OGRNTFDataSource *poDSIn,
 {
     poDS = poDSIn;
     poFeatureDefn = poFeatureDefine;
+    SetDescription( poFeatureDefn->GetName() );
     pfnTranslator = pfnTranslatorIn;
 
     iCurrentReader = -1;

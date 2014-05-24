@@ -2602,8 +2602,11 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     HDF4ImageDataset    *poDS;
 
     poDS = new HDF4ImageDataset( );
-    poDS->fp = poOpenInfo->fp;
-    poOpenInfo->fp = NULL;
+    if( poOpenInfo->fpL != NULL )
+    {
+        VSIFCloseL(poOpenInfo->fpL);
+        poOpenInfo->fpL = NULL;
+    }
     
     CPLMutexHolderD(&hHDF4Mutex);
 
@@ -3807,6 +3810,7 @@ void GDALRegister_HDF4Image()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "HDF4Image" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "HDF4 Dataset" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

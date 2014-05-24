@@ -272,6 +272,32 @@ void RegisterOGRFileGDB()
 {
     if (! GDAL_CHECK_VERSION("OGR FGDB"))
         return;
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new FGdbDriver );
+    OGRSFDriver* poDriver = new FGdbDriver;
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                                "ESRI FileGDB" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gdb" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                                "drv_filegdb.html" );
+
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "<CreationOptionList/>" );
+
+    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+"<LayerCreationOptionList>"
+"  <Option name='FEATURE_DATASET' type='string' description='FeatureDataset folder into to put the new layer'/>"
+"  <Option name='GEOMETRY_NAME' type='string' description='Name of geometry column' default='SHAPE'/>"
+"  <Option name='OID_NAME' type='string' description='Name of OID column' default='OBJECTID'/>"
+"  <Option name='XYTOLERANCE' type='float' description='Snapping tolerance, used for advanced ArcGIS features like network and topology rules, on 2D coordinates, in the units of the CRS'/>"
+"  <Option name='ZTOLERANCE' type='float' description='Snapping tolerance, used for advanced ArcGIS features like network and topology rules, on Z coordinates, in the units of the CRS'/>"
+"  <Option name='XORIGIN' type='float' description='X origin of the coordinate precision grid'/>"
+"  <Option name='YORIGIN' type='float' description='Y origin of the coordinate precision grid'/>"
+"  <Option name='ZORIGIN' type='float' description='Z origin of the coordinate precision grid'/>"
+"  <Option name='XYSCALE' type='float' description='X,Y scale of the coordinate precision grid'/>"
+"  <Option name='ZSCALE' type='float' description='Z scale of the coordinate precision grid'/>"
+"  <Option name='XML_DEFINITION' type='string' description='XML definition to create the new table. The root node of such a XML definition must be a <esri:DataElement> element conformant to FileGDBAPI.xsd'/>"
+"  <Option name='CREATE_MULTIPATCH' type='boolean' description='Whether to write geometries of layers of type MultiPolygon as MultiPatch' default='NO'/>"
+"  <Option name='COLUMN_TYPES' type='string' description='A list of strings of format field_name=fgdb_filed_type (separated by comma) to force the FileGDB column type of fields to be created'/>"
+"</LayerCreationOptionList>");
+
+    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }
 

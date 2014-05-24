@@ -1350,21 +1350,10 @@ static int OGREDIGEOSortForQGIS(const void* a, const void* b)
 /*                                Open()                                */
 /************************************************************************/
 
-int OGREDIGEODataSource::Open( const char * pszFilename, int bUpdateIn)
+int OGREDIGEODataSource::Open( const char * pszFilename )
 
 {
-    if (bUpdateIn)
-    {
-        return FALSE;
-    }
-
     pszName = CPLStrdup( pszFilename );
-
-/* -------------------------------------------------------------------- */
-/*      Does this appear to be a .THF file?                             */
-/* -------------------------------------------------------------------- */
-    if( !EQUAL(CPLGetExtension(pszFilename), "thf") )
-        return FALSE;
 
     fpTHF = VSIFOpenL(pszFilename, "rb");
     if (fpTHF == NULL)

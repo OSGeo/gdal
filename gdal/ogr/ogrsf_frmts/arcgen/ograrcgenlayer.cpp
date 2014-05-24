@@ -53,6 +53,7 @@ OGRARCGENLayer::OGRARCGENLayer( const char* pszFilename,
 
     OGRFieldDefn    oField1( "ID", OFTInteger);
     poFeatureDefn->AddFieldDefn( &oField1 );
+    SetDescription( poFeatureDefn->GetName() );
 }
 
 /************************************************************************/

@@ -51,6 +51,7 @@ OGRSUALayer::OGRSUALayer( VSILFILE* fp )
     poSRS = new OGRSpatialReference(SRS_WKT_WGS84);
 
     poFeatureDefn = new OGRFeatureDefn( "layer" );
+    SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbPolygon );
     poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);

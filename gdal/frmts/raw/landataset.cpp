@@ -997,6 +997,7 @@ void GDALRegister_LAN()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "LAN" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "Erdas .LAN/.GIS" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

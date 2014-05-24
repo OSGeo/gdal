@@ -559,20 +559,6 @@ class OGRNTFDataSource : public OGRDataSource
 };
 
 /************************************************************************/
-/*                             OGRNTFDriver                             */
-/************************************************************************/
-
-class OGRNTFDriver : public OGRSFDriver
-{
-  public:
-                ~OGRNTFDriver();
-                
-    const char *GetName();
-    OGRDataSource *Open( const char *, int );
-    int                 TestCapability( const char * );
-};
-
-/************************************************************************/
 /*                          Support functions.                          */
 /************************************************************************/
 int NTFArcCenterFromEdgePoints( double x_c0, double y_c0,

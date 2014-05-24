@@ -6037,6 +6037,7 @@ GDALDriver* GDALGetAPIPROXYDriver()
         poAPIPROXYDriver = new GDALDriver();
 
         poAPIPROXYDriver->SetDescription( "API_PROXY" );
+        poAPIPROXYDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poAPIPROXYDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "API_PROXY" );
 

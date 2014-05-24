@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -239,6 +240,7 @@ def pcidsk_8():
 
 ###############################################################################
 # Test that we cannot open a vector only pcidsk
+# FIXME: test disabled because of unification
 
 def pcidsk_9():
 
@@ -381,6 +383,95 @@ def pcidsk_14():
     return 'success'
 
 ###############################################################################
+# Test mixed raster and vector
+
+def pcidsk_15():
+    if gdaltest.pcidsk_new == 0:
+        return 'skip'
+
+    # One raster band and vector layer
+    ds = gdal.GetDriverByName('PCIDSK').Create( '/vsimem/pcidsk_15.pix', 1, 1 )
+    ds.CreateLayer('foo')
+    ds = None
+
+    ds = gdal.Open('/vsimem/pcidsk_15.pix')
+    if ds.RasterCount != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetLayerCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds2 = gdal.GetDriverByName('PCIDSK').CreateCopy( '/vsimem/pcidsk_15_2.pix', ds)
+    ds2 = None
+    ds = None
+
+    ds = gdal.Open('/vsimem/pcidsk_15_2.pix')
+    if ds.RasterCount != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetLayerCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    # One vector layer only
+    ds = gdal.GetDriverByName('PCIDSK').Create( '/vsimem/pcidsk_15.pix', 0, 0, 0 )
+    ds.CreateLayer('foo')
+    ds = None
+
+    ds = gdal.OpenEx('/vsimem/pcidsk_15.pix')
+    if ds.RasterCount != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetLayerCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds2 = gdal.GetDriverByName('PCIDSK').CreateCopy( '/vsimem/pcidsk_15_2.pix', ds)
+    ds2 = None
+    ds = None
+
+    ds = gdal.OpenEx('/vsimem/pcidsk_15_2.pix')
+    if ds.RasterCount != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetLayerCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    # Zero raster band and vector layer
+    ds = gdal.GetDriverByName('PCIDSK').Create( '/vsimem/pcidsk_15.pix', 0, 0, 0 )
+    ds = None
+
+    ds = gdal.OpenEx('/vsimem/pcidsk_15.pix')
+    if ds.RasterCount != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetLayerCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds2 = gdal.GetDriverByName('PCIDSK').CreateCopy( '/vsimem/pcidsk_15_2.pix', ds)
+    ds2 = None
+    ds = None
+
+    ds = gdal.OpenEx('/vsimem/pcidsk_15_2.pix')
+    if ds.RasterCount != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetLayerCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.GetDriverByName('PCIDSK').Delete( '/vsimem/pcidsk_15.pix' )
+    gdal.GetDriverByName('PCIDSK').Delete( '/vsimem/pcidsk_15_2.pix' )
+
+    return 'success'
+
+###############################################################################
 # Check various items from a modern irvine.pix
 
 def pcidsk_online_1():
@@ -439,12 +530,13 @@ gdaltest_list = [
     pcidsk_6,
     pcidsk_7,
     pcidsk_8,
-    pcidsk_9,
+    #pcidsk_9,
     pcidsk_10,
     pcidsk_11,
     pcidsk_12,
     pcidsk_13,
     pcidsk_14,
+    pcidsk_15,
     pcidsk_online_1,
     pcidsk_cleanup ]
 

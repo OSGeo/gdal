@@ -31,8 +31,12 @@
 #define RASTERLITE_DATASET_INCLUDED
 
 #include "gdal_pam.h"
+#include "ogr_api.h"
 
 char** RasterliteGetTileDriverOptions(char** papszOptions);
+
+OGRDataSourceH RasterliteOpenSQLiteDB(const char* pszFilename,
+                                      GDALAccess eAccess);
 
 class RasterliteBand;
 

@@ -424,6 +424,8 @@ class Driver(MajorObject):
 Driver_swigregister = _gdal.Driver_swigregister
 Driver_swigregister(Driver)
 
+import ogr
+import osr
 class ColorEntry(_object):
     """Proxy of C++ GDALColorEntry class"""
     __swig_setmethods__ = {}
@@ -812,6 +814,53 @@ class Dataset(MajorObject):
         """
         return _gdal.Dataset_GetTiledVirtualMem(self, *args, **kwargs)
 
+    def CreateLayer(self, *args, **kwargs):
+        """
+        CreateLayer(self, char name, SpatialReference srs = None, OGRwkbGeometryType geom_type = wkbUnknown, 
+            char options = None) -> Layer
+        """
+        return _gdal.Dataset_CreateLayer(self, *args, **kwargs)
+
+    def CopyLayer(self, *args, **kwargs):
+        """CopyLayer(self, Layer src_layer, char new_name, char options = None) -> Layer"""
+        return _gdal.Dataset_CopyLayer(self, *args, **kwargs)
+
+    def DeleteLayer(self, *args):
+        """DeleteLayer(self, int index) -> OGRErr"""
+        return _gdal.Dataset_DeleteLayer(self, *args)
+
+    def GetLayerCount(self, *args):
+        """GetLayerCount(self) -> int"""
+        return _gdal.Dataset_GetLayerCount(self, *args)
+
+    def GetLayerByIndex(self, *args):
+        """GetLayerByIndex(self, int index = 0) -> Layer"""
+        return _gdal.Dataset_GetLayerByIndex(self, *args)
+
+    def GetLayerByName(self, *args):
+        """GetLayerByName(self, char layer_name) -> Layer"""
+        return _gdal.Dataset_GetLayerByName(self, *args)
+
+    def TestCapability(self, *args):
+        """TestCapability(self, char cap) -> bool"""
+        return _gdal.Dataset_TestCapability(self, *args)
+
+    def ExecuteSQL(self, *args, **kwargs):
+        """ExecuteSQL(self, char statement, Geometry spatialFilter = None, char dialect = "") -> Layer"""
+        return _gdal.Dataset_ExecuteSQL(self, *args, **kwargs)
+
+    def ReleaseResultSet(self, *args):
+        """ReleaseResultSet(self, Layer layer)"""
+        return _gdal.Dataset_ReleaseResultSet(self, *args)
+
+    def GetStyleTable(self, *args):
+        """GetStyleTable(self) -> StyleTable"""
+        return _gdal.Dataset_GetStyleTable(self, *args)
+
+    def SetStyleTable(self, *args):
+        """SetStyleTable(self, StyleTable table)"""
+        return _gdal.Dataset_SetStyleTable(self, *args)
+
     def ReadRaster1(self, *args, **kwargs):
         """
         ReadRaster1(self, int xoff, int yoff, int xsize, int ysize, int buf_xsize = None, 
@@ -971,6 +1020,28 @@ class Dataset(MajorObject):
             else:
                 buf_obj = ' ' * nRequiredSize
         return _gdal.Dataset_BeginAsyncReader(self, xoff, yoff, xsize, ysize, buf_obj, buf_xsize, buf_ysize, buf_type, band_list,  0, 0, 0, options)
+
+    def GetLayer(self,iLayer=0):
+        """Return the layer given an index or a name"""
+        if isinstance(iLayer, str):
+            return self.GetLayerByName(str(iLayer))
+        elif isinstance(iLayer, int):
+            return self.GetLayerByIndex(iLayer)
+        else:
+            raise TypeError("Input %s is not of String or Int type" % type(iLayer))
+
+    def DeleteLayer(self, value):
+        """Deletes the layer given an index or layer name"""
+        if isinstance(value, str):
+            for i in range(self.GetLayerCount()):
+                name = self.GetLayer(i).GetName()
+                if name == value:
+                    return _gdal.Dataset_DeleteLayer(self, i)
+            raise ValueError("Layer %s not found to delete" % value)
+        elif isinstance(value, int):
+            return _gdal.Dataset_DeleteLayer(self, value)
+        else:
+            raise TypeError("Input %s is not of String or Int type" % type(value))
 
 Dataset_swigregister = _gdal.Dataset_swigregister
 Dataset_swigregister(Dataset)
@@ -1511,18 +1582,18 @@ ComputeProximity = _gdal.ComputeProximity
 
 def RasterizeLayer(*args, **kwargs):
   """
-    RasterizeLayer(Dataset dataset, int bands, OGRLayerShadow layer, void pfnTransformer = None, 
+    RasterizeLayer(Dataset dataset, int bands, Layer layer, void pfnTransformer = None, 
         void pTransformArg = None, 
-        int burn_values = 0, char options = None, 
-        GDALProgressFunc callback = None, void callback_data = None) -> int
+        int burn_values = 0, char options = None, GDALProgressFunc callback = None, 
+        void callback_data = None) -> int
     """
   return _gdal.RasterizeLayer(*args, **kwargs)
 RasterizeLayer = _gdal.RasterizeLayer
 
 def Polygonize(*args, **kwargs):
   """
-    Polygonize(Band srcBand, Band maskBand, OGRLayerShadow outLayer, 
-        int iPixValField, char options = None, GDALProgressFunc callback = None, 
+    Polygonize(Band srcBand, Band maskBand, Layer outLayer, int iPixValField, 
+        char options = None, GDALProgressFunc callback = None, 
         void callback_data = None) -> int
     """
   return _gdal.Polygonize(*args, **kwargs)
@@ -1568,7 +1639,7 @@ def ContourGenerate(*args, **kwargs):
   """
     ContourGenerate(Band srcBand, double contourInterval, double contourBase, 
         int fixedLevelCount, int useNoData, double noDataValue, 
-        OGRLayerShadow dstLayer, int idField, 
+        Layer dstLayer, int idField, 
         int elevField, GDALProgressFunc callback = None, 
         void callback_data = None) -> int
     """
@@ -1734,6 +1805,15 @@ def Open(*args):
   """Open(char utf8_path, GDALAccess eAccess = GA_ReadOnly) -> Dataset"""
   return _gdal.Open(*args)
 Open = _gdal.Open
+
+def OpenEx(*args, **kwargs):
+  """
+    OpenEx(char utf8_path, unsigned int nOpenFlags = 0, char allowed_drivers = None, 
+        char open_options = None, 
+        char sibling_files = None) -> Dataset
+    """
+  return _gdal.OpenEx(*args, **kwargs)
+OpenEx = _gdal.OpenEx
 
 def OpenShared(*args):
   """OpenShared(char utf8_path, GDALAccess eAccess = GA_ReadOnly) -> Dataset"""

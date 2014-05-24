@@ -440,7 +440,7 @@ GDALDataset *NWT_GRDDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check for external overviews.                                   */
 /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename, poOpenInfo->papszSiblingFiles );
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename, poOpenInfo->GetSiblingFiles() );
 
     return (poDS);
 }
@@ -458,6 +458,7 @@ void GDALRegister_NWT_GRD()
         poDriver = new GDALDriver();
 
         poDriver->SetDescription( "NWT_GRD" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                  "Northwood Numeric Grid Format .grd/.tab" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#grd");

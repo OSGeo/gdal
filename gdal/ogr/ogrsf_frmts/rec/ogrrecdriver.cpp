@@ -33,50 +33,28 @@
 CPL_CVSID("$Id$");
 
 /************************************************************************/
-/*                           ~OGRRECDriver()                            */
-/************************************************************************/
-
-OGRRECDriver::~OGRRECDriver()
-
-{
-}
-
-/************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRRECDriver::TestCapability( const char * )
-
-{
-    return FALSE;
-}
-
-/************************************************************************/
-/*                              GetName()                               */
-/************************************************************************/
-
-const char *OGRRECDriver::GetName()
-
-{
-    return "REC";
-}
-
-/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-OGRDataSource *OGRRECDriver::Open( const char * pszFilename, int bUpdate )
+static GDALDataset *OGRRECDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    OGRRECDataSource   *poDS = new OGRRECDataSource();
+    OGRRECDataSource   *poDS;
 
-    if( !poDS->Open( pszFilename ) )
+    if( poOpenInfo->fpL == NULL ||
+        !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "REC") )
+    {
+        return NULL;
+    }
+
+    poDS = new OGRRECDataSource();
+    if( !poDS->Open( poOpenInfo->pszFilename ) )
     {
         delete poDS;
         poDS = NULL;
     }
 
-    if( poDS != NULL && bUpdate )
+    if( poDS != NULL && poOpenInfo->eAccess == GA_Update )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "REC Driver doesn't support update." );
@@ -94,6 +72,21 @@ OGRDataSource *OGRRECDriver::Open( const char * pszFilename, int bUpdate )
 void RegisterOGRREC()
 
 {
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRRECDriver );
+    GDALDriver  *poDriver;
+
+    if( GDALGetDriverByName( "REC" ) == NULL )
+    {
+        poDriver = new GDALDriver();
+
+        poDriver->SetDescription( "REC" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "rec" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                                   "EPIInfo .REC " );
+
+        poDriver->pfnOpen = OGRRECDriverOpen;
+
+        GetGDALDriverManager()->RegisterDriver( poDriver );
+    }
 }
 

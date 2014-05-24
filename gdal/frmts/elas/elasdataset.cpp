@@ -453,7 +453,7 @@ GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check for external overviews.                                   */
 /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename, poOpenInfo->papszSiblingFiles );
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename, poOpenInfo->GetSiblingFiles() );
 
     return( poDS );
 }
@@ -672,6 +672,7 @@ void GDALRegister_ELAS()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "ELAS" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "ELAS" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 

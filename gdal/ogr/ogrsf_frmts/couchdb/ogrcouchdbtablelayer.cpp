@@ -77,6 +77,8 @@ OGRCouchDBTableLayer::OGRCouchDBTableLayer(OGRCouchDBDataSource* poDS,
     dfMaxY = 0;
 
     nCoordPrecision = atoi(CPLGetConfigOption("OGR_COUCHDB_COORDINATE_PRECISION", "-1"));
+    
+    SetDescription( osName );
 }
 
 /************************************************************************/

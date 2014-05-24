@@ -7,8 +7,10 @@
 
 %feature("autodoc");
 
+#ifndef FROM_GDAL_I
 %include "python_exceptions.i"
 %include "python_strings.i"
+#endif
 
 %{
 static PyObject *

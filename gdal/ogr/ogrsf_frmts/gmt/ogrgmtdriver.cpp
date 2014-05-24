@@ -49,7 +49,7 @@ OGRGmtDriver::~OGRGmtDriver()
 const char *OGRGmtDriver::GetName()
 
 {
-    return "GMT";
+    return "OGR_GMT";
 }
 
 /************************************************************************/
@@ -112,6 +112,12 @@ int OGRGmtDriver::TestCapability( const char * pszCap )
 void RegisterOGRGMT()
 
 {
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRGmtDriver );
+    OGRSFDriver* poDriver = new OGRGmtDriver;
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                                "GMT ASCII Vectors (.gmt)" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gmt" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                                "drv_gmt.html" );
+    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }
 

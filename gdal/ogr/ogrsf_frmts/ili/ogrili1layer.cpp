@@ -47,6 +47,7 @@ OGRILI1Layer::OGRILI1Layer( OGRFeatureDefn* poFeatureDefnIn,
     poDS = poDSIn;
 
     poFeatureDefn = poFeatureDefnIn;
+    SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
     oGeomFieldInfos = oGeomFieldInfosIn;
 

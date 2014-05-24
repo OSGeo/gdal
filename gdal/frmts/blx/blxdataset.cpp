@@ -83,7 +83,7 @@ GDALDataset *BLXDataset::Open( GDALOpenInfo * poOpenInfo )
     // -------------------------------------------------------------------- 
     //      First that the header looks like a BLX header
     // -------------------------------------------------------------------- 
-    if( poOpenInfo->fp == NULL || poOpenInfo->nHeaderBytes < 102 )
+    if( poOpenInfo->fpL == NULL || poOpenInfo->nHeaderBytes < 102 )
         return NULL;
 
     if(!blx_checkheader((char *)poOpenInfo->pabyHeader))
@@ -437,6 +437,7 @@ void GDALRegister_BLX()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "BLX" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "Magellan topo (.blx)" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

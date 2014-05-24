@@ -54,6 +54,7 @@ OGRXLSLayer::OGRXLSLayer( OGRXLSDataSource* poDSIn,
     pszName = CPLStrdup(pszSheetname);
     nRows = nRowsIn;
     nCols = nColsIn;
+    SetDescription( pszName );
 }
 
 /************************************************************************/

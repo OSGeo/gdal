@@ -137,9 +137,6 @@ CPLString OGRCARTODBGetOptionValue(const char* pszFilename,
 int OGRCARTODBDataSource::Open( const char * pszFilename, int bUpdateIn)
 
 {
-    if (!EQUALN(pszFilename, "CARTODB:", strlen("CARTODB:")))
-        return FALSE;
-
     bReadWrite = bUpdateIn;
 
     pszName = CPLStrdup( pszFilename );
@@ -277,10 +274,10 @@ int OGRCARTODBDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 }
 
 /************************************************************************/
-/*                           CreateLayer()                              */
+/*                          ICreateLayer()                              */
 /************************************************************************/
 
-OGRLayer   *OGRCARTODBDataSource::CreateLayer( const char *pszName,
+OGRLayer   *OGRCARTODBDataSource::ICreateLayer( const char *pszName,
                                            OGRSpatialReference *poSpatialRef,
                                            OGRwkbGeometryType eGType,
                                            char ** papszOptions )

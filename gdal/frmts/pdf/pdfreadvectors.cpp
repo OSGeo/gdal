@@ -1,12 +1,12 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  PDF Translator
- * Purpose:  Implements OGRPDFDataSource class
- * Author:   Even Rouault, even dot rouault at mines dash paris dot org
+ * Project:  PDF driver
+ * Purpose:  GDALDataset driver for PDF dataset (read vector features)
+ * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
  *
  ******************************************************************************
- * Copyright (c) 2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2014, Even Rouault <even dot rouault at mines-paris dot org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,229 +27,74 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_pdf.h"
-#include "ogr_p.h"
-#include "cpl_conv.h"
-
-#include "pdfdataset.h"
-#include "pdfcreatecopy.h"
-
-#include "memdataset.h"
+#include "gdal_pdf.h"
 
 #define SQUARE(x) ((x)*(x))
 #define EPSILON 1e-5
 
 CPL_CVSID("$Id$");
 
+#if defined(HAVE_POPPLER) || defined(HAVE_PODOFO)
+
 /************************************************************************/
-/*                            OGRPDFLayer()                             */
+/*                        OpenVectorLayers()                            */
 /************************************************************************/
 
-OGRPDFLayer::OGRPDFLayer( OGRPDFDataSource* poDS,
-                          const char * pszName,
-                          OGRSpatialReference *poSRS,
-                          OGRwkbGeometryType eGeomType ) :
-                                OGRMemLayer(pszName, poSRS, eGeomType )
+int PDFDataset::OpenVectorLayers(GDALPDFDictionary* poPageDict)
 {
-    this->poDS = poDS;
-    bGeomTypeSet = FALSE;
-    bGeomTypeMixed = FALSE;
-}
+    GetCatalog();
+    if( poCatalogObject == NULL )
+        return FALSE;
 
-/************************************************************************/
-/*                            CreateFeature()                           */
-/************************************************************************/
+    GDALPDFObject* poContents = poPageDict->Get("Contents");
+    if (poContents == NULL)
+        return FALSE;
 
-OGRErr OGRPDFLayer::CreateFeature( OGRFeature *poFeature )
-{
-    OGRGeometry* poGeom = poFeature->GetGeometryRef();
-    if( !bGeomTypeMixed && poGeom != NULL )
+    if (poContents->GetType() != PDFObjectType_Dictionary &&
+        poContents->GetType() != PDFObjectType_Array)
+        return FALSE;
+
+    GDALPDFObject* poResources = poPageDict->Get("Resources");
+    if (poResources == NULL || poResources->GetType() != PDFObjectType_Dictionary)
+        return FALSE;
+
+    GDALPDFObject* poStructTreeRoot = poCatalogObject->GetDictionary()->Get("StructTreeRoot");
+    if (CSLTestBoolean(CPLGetConfigOption("OGR_PDF_READ_NON_STRUCTURED", "NO")) ||
+        poStructTreeRoot == NULL ||
+        poStructTreeRoot->GetType() != PDFObjectType_Dictionary)
     {
-        if (!bGeomTypeSet)
-        {
-            bGeomTypeSet = TRUE;
-            GetLayerDefn()->SetGeomType(poGeom->getGeometryType());
-        }
-        else if (GetLayerDefn()->GetGeomType() != poGeom->getGeometryType())
-        {
-            bGeomTypeMixed = TRUE;
-            GetLayerDefn()->SetGeomType(wkbUnknown);
-        }
+        ExploreContentsNonStructured(poContents, poResources);
     }
-
-    poDS->SetModified();
-    return OGRMemLayer::CreateFeature(poFeature);
-}
-
-/************************************************************************/
-/*                              Fill()                                  */
-/************************************************************************/
-
-void OGRPDFLayer::Fill( GDALPDFArray* poArray )
-{
-    for(int i=0;i<poArray->GetLength();i++)
-    {
-        GDALPDFObject* poFeatureObj = poArray->Get(i);
-        if (poFeatureObj->GetType() != PDFObjectType_Dictionary)
-            continue;
-
-        GDALPDFObject* poA = poFeatureObj->GetDictionary()->Get("A");
-        if (!(poA != NULL && poA->GetType() == PDFObjectType_Dictionary))
-            continue;
-
-        GDALPDFObject* poP = poA->GetDictionary()->Get("P");
-        if (!(poP != NULL && poP->GetType() == PDFObjectType_Array))
-            continue;
-
-        GDALPDFObject* poK = poFeatureObj->GetDictionary()->Get("K");
-        int nK = -1;
-        if (poK != NULL && poK->GetType() == PDFObjectType_Int)
-            nK = poK->GetInt();
-
-        GDALPDFArray* poPArray = poP->GetArray();
-        int j;
-        for(j = 0;j<poPArray->GetLength();j++)
-        {
-            GDALPDFObject* poKV = poPArray->Get(j);
-            if (poKV->GetType() == PDFObjectType_Dictionary)
-            {
-                GDALPDFObject* poN = poKV->GetDictionary()->Get("N");
-                GDALPDFObject* poV = poKV->GetDictionary()->Get("V");
-                if (poN != NULL && poN->GetType() == PDFObjectType_String &&
-                    poV != NULL)
-                {
-                    int nIdx = GetLayerDefn()->GetFieldIndex( poN->GetString().c_str() );
-                    OGRFieldType eType = OFTString;
-                    if (poV->GetType() == PDFObjectType_Int)
-                        eType = OFTInteger;
-                    else if (poV->GetType() == PDFObjectType_Real)
-                        eType = OFTReal;
-                    if (nIdx < 0)
-                    {
-                        OGRFieldDefn oField(poN->GetString().c_str(), eType);
-                        CreateField(&oField);
-                    }
-                    else if (GetLayerDefn()->GetFieldDefn(nIdx)->GetType() != eType &&
-                                GetLayerDefn()->GetFieldDefn(nIdx)->GetType() != OFTString)
-                    {
-                        OGRFieldDefn oField(poN->GetString().c_str(), OFTString);
-                        AlterFieldDefn( nIdx, &oField, ALTER_TYPE_FLAG );
-                    }
-                }
-            }
-        }
-
-        OGRFeature* poFeature = new OGRFeature(GetLayerDefn());
-        for(j = 0;j<poPArray->GetLength();j++)
-        {
-            GDALPDFObject* poKV = poPArray->Get(j);
-            if (poKV->GetType() == PDFObjectType_Dictionary)
-            {
-                GDALPDFObject* poN = poKV->GetDictionary()->Get("N");
-                GDALPDFObject* poV = poKV->GetDictionary()->Get("V");
-                if (poN != NULL && poN->GetType() == PDFObjectType_String &&
-                    poV != NULL)
-                {
-                    if (poV->GetType() == PDFObjectType_String)
-                        poFeature->SetField(poN->GetString().c_str(), poV->GetString().c_str());
-                    else if (poV->GetType() == PDFObjectType_Int)
-                        poFeature->SetField(poN->GetString().c_str(), poV->GetInt());
-                    else if (poV->GetType() == PDFObjectType_Real)
-                        poFeature->SetField(poN->GetString().c_str(), poV->GetReal());
-                }
-            }
-        }
-
-        if (nK >= 0)
-        {
-            OGRGeometry* poGeom = poDS->GetGeometryFromMCID(nK);
-            if (poGeom)
-            {
-                poGeom->assignSpatialReference(GetSpatialRef());
-                poFeature->SetGeometry(poGeom);
-            }
-        }
-
-        CreateFeature(poFeature);
-
-        delete poFeature;
-    }
-}
-
-/************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRPDFLayer::TestCapability( const char * pszCap )
-
-{
-    if( EQUAL(pszCap,OLCStringsAsUTF8) )
-        return TRUE;
     else
-        return OGRMemLayer::TestCapability(pszCap);
-}
-
-/************************************************************************/
-/*                          OGRPDFDataSource()                          */
-/************************************************************************/
-
-OGRPDFDataSource::OGRPDFDataSource()
-
-{
-    pszName = NULL;
-    papszOptions = NULL;
-
-    nLayers = 0;
-    papoLayers = NULL;
-
-    bModified = FALSE;
-    bWritable = FALSE;
-
-    poGDAL_DS = NULL;
-    poPageObj = NULL;
-    poCatalogObj = NULL;
-    dfPageWidth = dfPageHeight = 0;
-
-    bSetStyle = CSLTestBoolean(CPLGetConfigOption("OGR_PDF_SET_STYLE", "YES"));
-
-    InitMapOperators();
-}
-
-/************************************************************************/
-/*                         ~OGRPDFDataSource()                          */
-/************************************************************************/
-
-OGRPDFDataSource::~OGRPDFDataSource()
-
-{
-    SyncToDisk();
+    {
+        ExploreContents(poContents, poResources);
+        ExploreTree(poStructTreeRoot, 0);
+    }
 
     CleanupIntermediateResources();
 
-    CPLFree( pszName );
-    CSLDestroy( papszOptions );
-
+    int bEmptyDS = TRUE;
     for(int i=0;i<nLayers;i++)
-        delete papoLayers[i];
-    CPLFree( papoLayers );
+    {
+        if (papoLayers[i]->GetFeatureCount() != 0)
+        {
+            bEmptyDS = FALSE;
+            break;
+        }
+    }
+    return !bEmptyDS;
 }
 
 /************************************************************************/
 /*                   CleanupIntermediateResources()                     */
 /************************************************************************/
 
-void OGRPDFDataSource::CleanupIntermediateResources()
+void PDFDataset::CleanupIntermediateResources()
 {
     std::map<int,OGRGeometry*>::iterator oMapIter = oMapMCID.begin();
     for( ; oMapIter != oMapMCID.end(); ++oMapIter)
         delete oMapIter->second;
     oMapMCID.erase(oMapMCID.begin(), oMapMCID.end());
-
-    delete poGDAL_DS;
-    poGDAL_DS = NULL;
-
-    poPageObj = NULL;
-    poCatalogObj = NULL;
 }
 
 /************************************************************************/
@@ -339,7 +184,7 @@ static const PDFOperator asPDFOperators [] =
     // "
 };
 
-void OGRPDFDataSource::InitMapOperators()
+void PDFDataset::InitMapOperators()
 {
     for(size_t i=0;i<sizeof(asPDFOperators) / sizeof(asPDFOperators[0]); i++)
         oMapOperators[asPDFOperators[i].szOpName] = asPDFOperators[i].nArgs;
@@ -349,20 +194,17 @@ void OGRPDFDataSource::InitMapOperators()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRPDFDataSource::TestCapability( const char * pszCap )
+int PDFDataset::TestCapability( const char * pszCap )
 
 {
-    if( bWritable && EQUAL(pszCap,ODsCCreateLayer) )
-        return TRUE;
-    else
-        return FALSE;
+    return FALSE;
 }
 
 /************************************************************************/
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRPDFDataSource::GetLayer( int iLayer )
+OGRLayer *PDFDataset::GetLayer( int iLayer )
 
 {
     if (iLayer < 0 || iLayer >= nLayers)
@@ -375,7 +217,7 @@ OGRLayer *OGRPDFDataSource::GetLayer( int iLayer )
 /*                            GetLayerCount()                           */
 /************************************************************************/
 
-int OGRPDFDataSource::GetLayerCount()
+int PDFDataset::GetLayerCount()
 {
     return nLayers;
 }
@@ -384,7 +226,7 @@ int OGRPDFDataSource::GetLayerCount()
 /*                            ExploreTree()                             */
 /************************************************************************/
 
-void OGRPDFDataSource::ExploreTree(GDALPDFObject* poObj, int nRecLevel)
+void PDFDataset::ExploreTree(GDALPDFObject* poObj, int nRecLevel)
 {
     if (nRecLevel == 16)
         return;
@@ -431,7 +273,7 @@ void OGRPDFDataSource::ExploreTree(GDALPDFObject* poObj, int nRecLevel)
                     osLayerName = CPLSPrintf("Layer%d", nLayers + 1);
             }
 
-            const char* pszWKT = poGDAL_DS->GetProjectionRef();
+            const char* pszWKT = GetProjectionRef();
             OGRSpatialReference* poSRS = NULL;
             if (pszWKT && pszWKT[0] != '\0')
             {
@@ -466,7 +308,7 @@ void OGRPDFDataSource::ExploreTree(GDALPDFObject* poObj, int nRecLevel)
 /*                        GetGeometryFromMCID()                         */
 /************************************************************************/
 
-OGRGeometry* OGRPDFDataSource::GetGeometryFromMCID(int nMCID)
+OGRGeometry* PDFDataset::GetGeometryFromMCID(int nMCID)
 {
     std::map<int,OGRGeometry*>::iterator oMapIter = oMapMCID.find(nMCID);
     if (oMapIter != oMapMCID.end())
@@ -544,11 +386,11 @@ class GraphicState
 /*                         PDFCoordsToSRSCoords()                       */
 /************************************************************************/
 
-void OGRPDFDataSource::PDFCoordsToSRSCoords(double x, double y,
+void PDFDataset::PDFCoordsToSRSCoords(double x, double y,
                                             double& X, double &Y)
 {
-    x = x / dfPageWidth * nXSize;
-    y = (1 - y / dfPageHeight) * nYSize;
+    x = x / dfPageWidth * nRasterXSize;
+    y = (1 - y / dfPageHeight) * nRasterYSize;
 
     X = adfGeoTransform[0] + x * adfGeoTransform[1] + y * adfGeoTransform[2];
     Y = adfGeoTransform[3] + x * adfGeoTransform[4] + y * adfGeoTransform[5];
@@ -678,7 +520,7 @@ static OGRPoint* PDFGetStarCenter(OGRLineString* poLS)
 /*                            UnstackTokens()                           */
 /************************************************************************/
 
-int OGRPDFDataSource::UnstackTokens(const char* pszToken,
+int PDFDataset::UnstackTokens(const char* pszToken,
                                     int nRequiredArgs,
                                     char aszTokenStack[TOKEN_STACK_SIZE][MAX_TOKEN_SIZE],
                                     int& nTokenStackSize,
@@ -705,7 +547,7 @@ int OGRPDFDataSource::UnstackTokens(const char* pszToken,
 #define CLOSE_SUBPATH -98
 #define FILL_SUBPATH -97
 
-OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
+OGRGeometry* PDFDataset::ParseContent(const char* pszContent,
                                             GDALPDFObject* poResources,
                                             int bInitBDCStack,
                                             int bMatchQ,
@@ -1328,7 +1170,7 @@ OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
 /*                           BuildGeometry()                            */
 /************************************************************************/
 
-OGRGeometry* OGRPDFDataSource::BuildGeometry(std::vector<double>& oCoords,
+OGRGeometry* PDFDataset::BuildGeometry(std::vector<double>& oCoords,
                                              int bHasFoundFill,
                                              int bHasMultiPart)
 {
@@ -1590,7 +1432,7 @@ OGRGeometry* OGRPDFDataSource::BuildGeometry(std::vector<double>& oCoords,
 /*                          ExploreContents()                           */
 /************************************************************************/
 
-void OGRPDFDataSource::ExploreContents(GDALPDFObject* poObj,
+void PDFDataset::ExploreContents(GDALPDFObject* poObj,
                                        GDALPDFObject* poResources)
 {
     std::map<CPLString, OGRPDFLayer*> oMapPropertyToLayer;
@@ -1659,28 +1501,10 @@ void OGRPDFDataSource::ExploreContents(GDALPDFObject* poObj,
 }
 
 /************************************************************************/
-/*                           PDFSanitizeLayerName()                     */
-/************************************************************************/
-
-static
-CPLString PDFSanitizeLayerName(const char* pszName)
-{
-    CPLString osName;
-    for(int i=0; pszName[i] != '\0'; i++)
-    {
-        if (pszName[i] == ' ' || pszName[i] == '.' || pszName[i] == ',')
-            osName += "_";
-        else
-            osName += pszName[i];
-    }
-    return osName;
-}
-
-/************************************************************************/
 /*                   ExploreContentsNonStructured()                     */
 /************************************************************************/
 
-void OGRPDFDataSource::ExploreContentsNonStructuredInternal(GDALPDFObject* poContents,
+void PDFDataset::ExploreContentsNonStructuredInternal(GDALPDFObject* poContents,
                                                             GDALPDFObject* poResources,
                                                             std::map<CPLString, OGRPDFLayer*>& oMapPropertyToLayer)
 {
@@ -1732,7 +1556,7 @@ void OGRPDFDataSource::ExploreContentsNonStructuredInternal(GDALPDFObject* poCon
     CPLFree(pszStr);
 }
 
-void OGRPDFDataSource::ExploreContentsNonStructured(GDALPDFObject* poContents,
+void PDFDataset::ExploreContentsNonStructured(GDALPDFObject* poContents,
                                                     GDALPDFObject* poResources)
 {
     std::map<CPLString, OGRPDFLayer*> oMapPropertyToLayer;
@@ -1744,8 +1568,7 @@ void OGRPDFDataSource::ExploreContentsNonStructured(GDALPDFObject* poContents,
         if (poProperties != NULL &&
             poProperties->GetType() == PDFObjectType_Dictionary)
         {
-            CPLAssert(poGDAL_DS != NULL);
-            char** papszLayersWithRef = poGDAL_DS->GetMetadata("LAYERS_WITH_REF");
+            char** papszLayersWithRef = osLayerWithRefList.List();
             char** papszIter = papszLayersWithRef;
             std::map< std::pair<int, int>, OGRPDFLayer *> oMapNumGenToLayer;
             while(papszIter && *papszIter)
@@ -1768,7 +1591,7 @@ void OGRPDFDataSource::ExploreContentsNonStructured(GDALPDFObject* poContents,
                 OGRPDFLayer* poLayer = (OGRPDFLayer*) GetLayerByName(osSanitizedName.c_str());
                 if (poLayer == NULL)
                 {
-                    const char* pszWKT = poGDAL_DS->GetProjectionRef();
+                    const char* pszWKT = GetProjectionRef();
                     OGRSpatialReference* poSRS = NULL;
                     if (pszWKT && pszWKT[0] != '\0')
                     {
@@ -1841,319 +1664,4 @@ void OGRPDFDataSource::ExploreContentsNonStructured(GDALPDFObject* poContents,
     }
 }
 
-/************************************************************************/
-/*                               Open()                                 */
-/************************************************************************/
-
-int OGRPDFDataSource::Open( const char * pszName)
-{
-    this->pszName = CPLStrdup(pszName);
-
-    poGDAL_DS = GDALPDFOpen(pszName, GA_ReadOnly);
-    if (poGDAL_DS == NULL)
-        return FALSE;
-
-    const char* pszPageObj = poGDAL_DS->GetMetadataItem("PDF_PAGE_OBJECT");
-    if (pszPageObj)
-        sscanf(pszPageObj, "%p", &poPageObj);
-    if (poPageObj == NULL || poPageObj->GetType() != PDFObjectType_Dictionary)
-        return FALSE;
-
-    GDALPDFObject* poMediaBox = poPageObj->GetDictionary()->Get("MediaBox");
-    if (poMediaBox == NULL || poMediaBox->GetType() != PDFObjectType_Array ||
-        poMediaBox->GetArray()->GetLength() != 4)
-        return FALSE;
-
-    if (poMediaBox->GetArray()->Get(2)->GetType() == PDFObjectType_Real)
-        dfPageWidth = poMediaBox->GetArray()->Get(2)->GetReal();
-    else if (poMediaBox->GetArray()->Get(2)->GetType() == PDFObjectType_Int)
-        dfPageWidth = poMediaBox->GetArray()->Get(2)->GetInt();
-    else
-        return FALSE;
-
-    if (poMediaBox->GetArray()->Get(3)->GetType() == PDFObjectType_Real)
-        dfPageHeight = poMediaBox->GetArray()->Get(3)->GetReal();
-    else if (poMediaBox->GetArray()->Get(3)->GetType() == PDFObjectType_Int)
-        dfPageHeight = poMediaBox->GetArray()->Get(3)->GetInt();
-    else
-        return FALSE;
-
-    GDALPDFObject* poContents = poPageObj->GetDictionary()->Get("Contents");
-    if (poContents == NULL)
-        return FALSE;
-
-    if (poContents->GetType() != PDFObjectType_Dictionary &&
-        poContents->GetType() != PDFObjectType_Array)
-        return FALSE;
-
-    GDALPDFObject* poResources = poPageObj->GetDictionary()->Get("Resources");
-    if (poResources == NULL || poResources->GetType() != PDFObjectType_Dictionary)
-        return FALSE;
-    
-    const char* pszCatalog = poGDAL_DS->GetMetadataItem("PDF_CATALOG_OBJECT");
-    if (pszCatalog)
-        sscanf(pszCatalog, "%p", &poCatalogObj);
-    if (poCatalogObj == NULL || poCatalogObj->GetType() != PDFObjectType_Dictionary)
-        return FALSE;
-
-    nXSize = poGDAL_DS->GetRasterXSize();
-    nYSize = poGDAL_DS->GetRasterYSize();
-    poGDAL_DS->GetGeoTransform(adfGeoTransform);
-
-
-    GDALPDFObject* poStructTreeRoot = poCatalogObj->GetDictionary()->Get("StructTreeRoot");
-    if (CSLTestBoolean(CPLGetConfigOption("OGR_PDF_READ_NON_STRUCTURED", "NO")) ||
-        poStructTreeRoot == NULL ||
-        poStructTreeRoot->GetType() != PDFObjectType_Dictionary)
-    {
-        ExploreContentsNonStructured(poContents, poResources);
-    }
-    else
-    {
-        ExploreContents(poContents, poResources);
-        ExploreTree(poStructTreeRoot, 0);
-    }
-
-    CleanupIntermediateResources();
-
-    int bEmptyDS = TRUE;
-    for(int i=0;i<nLayers;i++)
-    {
-        if (papoLayers[i]->GetFeatureCount() != 0)
-        {
-            bEmptyDS = FALSE;
-            break;
-        }
-    }
-    if (bEmptyDS)
-        return FALSE;
-
-    return TRUE;
-}
-
-/************************************************************************/
-/*                               Create()                               */
-/************************************************************************/
-
-int OGRPDFDataSource::Create( const char * pszName, char **papszOptions )
-{
-    this->pszName = CPLStrdup(pszName);
-    this->papszOptions = CSLDuplicate(papszOptions);
-    bWritable = TRUE;
-
-    return TRUE;
-}
-
-/************************************************************************/
-/*                            CreateLayer()                             */
-/************************************************************************/
-
-OGRLayer *
-OGRPDFDataSource::CreateLayer( const char * pszLayerName,
-                                OGRSpatialReference *poSRS,
-                                OGRwkbGeometryType eType,
-                                char ** papszOptions )
-
-{
-/* -------------------------------------------------------------------- */
-/*      Create the layer object.                                        */
-/* -------------------------------------------------------------------- */
-    OGRLayer* poLayer = new OGRPDFLayer(this, pszLayerName, poSRS, eType);
-
-    papoLayers = (OGRLayer**)CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
-    papoLayers[nLayers] = poLayer;
-    nLayers ++;
-
-    return poLayer;
-}
-
-/************************************************************************/
-/*                            SyncToDisk()                              */
-/************************************************************************/
-
-OGRErr OGRPDFDataSource::SyncToDisk()
-{
-    if (nLayers == 0 || !bModified || !bWritable)
-        return OGRERR_NONE;
-
-    bModified = FALSE;
-
-    OGREnvelope sGlobalExtent;
-    int bHasExtent = FALSE;
-    for(int i=0;i<nLayers;i++)
-    {
-        OGREnvelope sExtent;
-        if (papoLayers[i]->GetExtent(&sExtent) == OGRERR_NONE)
-        {
-            bHasExtent = TRUE;
-            sGlobalExtent.Merge(sExtent);
-        }
-    }
-    if (!bHasExtent ||
-        sGlobalExtent.MinX == sGlobalExtent.MaxX ||
-        sGlobalExtent.MinY == sGlobalExtent.MaxY)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Cannot compute spatial extent of features");
-        return OGRERR_FAILURE;
-    }
-
-    PDFCompressMethod eStreamCompressMethod = COMPRESS_DEFLATE;
-    const char* pszStreamCompressMethod = CSLFetchNameValue(papszOptions, "STREAM_COMPRESS");
-    if (pszStreamCompressMethod)
-    {
-        if( EQUAL(pszStreamCompressMethod, "NONE") )
-            eStreamCompressMethod = COMPRESS_NONE;
-        else if( EQUAL(pszStreamCompressMethod, "DEFLATE") )
-            eStreamCompressMethod = COMPRESS_DEFLATE;
-        else
-        {
-            CPLError( CE_Warning, CPLE_NotSupported,
-                    "Unsupported value for STREAM_COMPRESS.");
-        }
-    }
-
-    const char* pszGEO_ENCODING =
-        CSLFetchNameValueDef(papszOptions, "GEO_ENCODING", "ISO32000");
-
-    double dfDPI = atof(CSLFetchNameValueDef(papszOptions, "DPI", "72"));
-    if (dfDPI < 72.0)
-        dfDPI = 72.0;
-
-    const char* pszNEATLINE = CSLFetchNameValue(papszOptions, "NEATLINE");
-
-    int nMargin = atoi(CSLFetchNameValueDef(papszOptions, "MARGIN", "0"));
-
-    PDFMargins sMargins;
-    sMargins.nLeft = nMargin;
-    sMargins.nRight = nMargin;
-    sMargins.nTop = nMargin;
-    sMargins.nBottom = nMargin;
-
-    const char* pszLeftMargin = CSLFetchNameValue(papszOptions, "LEFT_MARGIN");
-    if (pszLeftMargin) sMargins.nLeft = atoi(pszLeftMargin);
-
-    const char* pszRightMargin = CSLFetchNameValue(papszOptions, "RIGHT_MARGIN");
-    if (pszRightMargin) sMargins.nRight = atoi(pszRightMargin);
-
-    const char* pszTopMargin = CSLFetchNameValue(papszOptions, "TOP_MARGIN");
-    if (pszTopMargin) sMargins.nTop = atoi(pszTopMargin);
-
-    const char* pszBottomMargin = CSLFetchNameValue(papszOptions, "BOTTOM_MARGIN");
-    if (pszBottomMargin) sMargins.nBottom = atoi(pszBottomMargin);
-
-    const char* pszExtraImages = CSLFetchNameValue(papszOptions, "EXTRA_IMAGES");
-    const char* pszExtraStream = CSLFetchNameValue(papszOptions, "EXTRA_STREAM");
-    const char* pszExtraLayerName = CSLFetchNameValue(papszOptions, "EXTRA_LAYER_NAME");
-
-    const char* pszOGRDisplayField = CSLFetchNameValue(papszOptions, "OGR_DISPLAY_FIELD");
-    const char* pszOGRDisplayLayerNames = CSLFetchNameValue(papszOptions, "OGR_DISPLAY_LAYER_NAMES");
-    int bWriteOGRAttributes = CSLFetchBoolean(papszOptions, "OGR_WRITE_ATTRIBUTES", TRUE);
-    const char* pszOGRLinkField = CSLFetchNameValue(papszOptions, "OGR_LINK_FIELD");
-
-    const char* pszOffLayers = CSLFetchNameValue(papszOptions, "OFF_LAYERS");
-    const char* pszExclusiveLayers = CSLFetchNameValue(papszOptions, "EXCLUSIVE_LAYERS");
-
-    const char* pszJavascript = CSLFetchNameValue(papszOptions, "JAVASCRIPT");
-    const char* pszJavascriptFile = CSLFetchNameValue(papszOptions, "JAVASCRIPT_FILE");
-
-/* -------------------------------------------------------------------- */
-/*      Create file.                                                    */
-/* -------------------------------------------------------------------- */
-    VSILFILE* fp = VSIFOpenL(pszName, "wb");
-    if( fp == NULL )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Unable to create PDF file %s.\n",
-                  pszName );
-        return OGRERR_FAILURE;
-    }
-
-    GDALPDFWriter oWriter(fp);
-
-    double dfRatio = (sGlobalExtent.MaxY - sGlobalExtent.MinY) / (sGlobalExtent.MaxX - sGlobalExtent.MinX);
-
-    int nWidth, nHeight;
-
-    if (dfRatio < 1)
-    {
-        nWidth = 1024;
-        nHeight = nWidth * dfRatio;
-    }
-    else
-    {
-        nHeight = 1024;
-        nWidth = nHeight / dfRatio;
-    }
-
-    GDALDataset* poSrcDS = MEMDataset::Create( "MEM:::", nWidth, nHeight, 0, GDT_Byte, NULL );
-
-    double adfGeoTransform[6];
-    adfGeoTransform[0] = sGlobalExtent.MinX;
-    adfGeoTransform[1] = (sGlobalExtent.MaxX - sGlobalExtent.MinX) / nWidth;
-    adfGeoTransform[2] = 0;
-    adfGeoTransform[3] = sGlobalExtent.MaxY;
-    adfGeoTransform[4] = 0;
-    adfGeoTransform[5] = - (sGlobalExtent.MaxY - sGlobalExtent.MinY) / nHeight;
-
-    poSrcDS->SetGeoTransform(adfGeoTransform);
-
-    OGRSpatialReference* poSRS = papoLayers[0]->GetSpatialRef();
-    if (poSRS)
-    {
-        char* pszWKT = NULL;
-        poSRS->exportToWkt(&pszWKT);
-        poSrcDS->SetProjection(pszWKT);
-        CPLFree(pszWKT);
-    }
-
-    oWriter.SetInfo(poSrcDS, papszOptions);
-
-    oWriter.StartPage(poSrcDS,
-                      dfDPI,
-                      pszGEO_ENCODING,
-                      pszNEATLINE,
-                      &sMargins,
-                      eStreamCompressMethod,
-                      bWriteOGRAttributes);
-
-    int iObj = 0;
-    
-    char** papszLayerNames = CSLTokenizeString2(pszOGRDisplayLayerNames,",",0);
-
-    for(int i=0;i<nLayers;i++)
-    {
-        CPLString osLayerName;
-        if (CSLCount(papszLayerNames) < nLayers)
-            osLayerName = papoLayers[i]->GetName();
-        else
-            osLayerName = papszLayerNames[i];
-
-        oWriter.WriteOGRLayer((OGRDataSourceH)this,
-                              i,
-                              pszOGRDisplayField,
-                              pszOGRLinkField,
-                              osLayerName,
-                              bWriteOGRAttributes,
-                              iObj);
-    }
-
-    CSLDestroy(papszLayerNames);
-
-    oWriter.EndPage(pszExtraImages,
-                    pszExtraStream,
-                    pszExtraLayerName,
-                    pszOffLayers,
-                    pszExclusiveLayers);
-
-    if (pszJavascript)
-        oWriter.WriteJavascript(pszJavascript);
-    else if (pszJavascriptFile)
-        oWriter.WriteJavascriptFile(pszJavascriptFile);
-
-    oWriter.Close();
-
-    delete poSrcDS;
-
-    return OGRERR_NONE;
-}
+#endif /* defined(HAVE_POPPLER) || defined(HAVE_PODOFO) */

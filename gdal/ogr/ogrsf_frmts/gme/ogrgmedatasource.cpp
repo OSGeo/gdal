@@ -133,9 +133,6 @@ CPLString OGRGMEGetOptionValue(const char* pszFilename,
 int OGRGMEDataSource::Open( const char * pszFilename, int bUpdateIn)
 
 {
-    if (!EQUALN(pszFilename, "GME:", 4))
-        return FALSE;
-
     bReadWrite = bUpdateIn;
 
     pszName = CPLStrdup( pszFilename );
@@ -228,7 +225,7 @@ int OGRGMEDataSource::Open( const char * pszFilename, int bUpdateIn)
         return TRUE;
     }
     else if (osProjectId.size() != 0) {
-        CPLDebug("GME", "We have a projectId: %s. Use CreateLayer to create tables.",
+        CPLDebug("GME", "We have a projectId: %s. UseICreateLayer to create tables.",
                  osProjectId.c_str());
         return TRUE;
     }
@@ -237,10 +234,10 @@ int OGRGMEDataSource::Open( const char * pszFilename, int bUpdateIn)
 }
 
 /************************************************************************/
-/*                           CreateLayer()                              */
+/*                          ICreateLayer()                              */
 /************************************************************************/
 
-OGRLayer   *OGRGMEDataSource::CreateLayer( const char *pszName,
+OGRLayer   *OGRGMEDataSource::ICreateLayer( const char *pszName,
                                            OGRSpatialReference *poSpatialRef,
                                            OGRwkbGeometryType eGType,
                                            char ** papszOptions )

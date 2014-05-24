@@ -569,7 +569,7 @@ void OGRLIBKMLDataSource::WriteDir (
 
 ******************************************************************************/
 
-OGRErr OGRLIBKMLDataSource::SyncToDisk (
+void OGRLIBKMLDataSource::FlushCache (
      )
 {
 
@@ -592,8 +592,6 @@ OGRErr OGRLIBKMLDataSource::SyncToDisk (
 
         bUpdated = FALSE;
     }
-
-    return OGRERR_NONE;
 }
 
 /******************************************************************************
@@ -611,7 +609,7 @@ OGRLIBKMLDataSource::~OGRLIBKMLDataSource (  )
 
     /***** sync the DS to disk *****/
 
-    SyncToDisk (  );
+    FlushCache (  );
 
     CPLFree ( pszName );
 
@@ -2196,7 +2194,7 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKmz (
 }
 
 /******************************************************************************
- CreateLayer()
+ICreateLayer()
  
  Args:          pszLayerName    name of the layer to create
                 poOgrSRS        the SRS of the layer
@@ -2207,7 +2205,7 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKmz (
 
 ******************************************************************************/
 
-OGRLayer *OGRLIBKMLDataSource::CreateLayer (
+OGRLayer *OGRLIBKMLDataSource::ICreateLayer(
     const char *pszLayerName,
     OGRSpatialReference * poOgrSRS,
     OGRwkbGeometryType eGType,

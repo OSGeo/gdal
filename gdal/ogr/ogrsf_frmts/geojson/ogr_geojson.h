@@ -33,6 +33,7 @@
 #include <ogrsf_frmts.h>
 #include <cstdio>
 #include <vector> // used by OGRGeoJSONLayer
+#include "ogrgeojsonutils.h"
 
 #define SPACE_FOR_BBOX  80
 
@@ -137,11 +138,12 @@ public:
     //
     // OGRDataSource Interface
     //
-    int Open( const char* pszSource );
+    int Open( GDALOpenInfo* poOpenInfo,
+               GeoJSONSourceType nSrcType );
     const char* GetName();
     int GetLayerCount();
     OGRLayer* GetLayer( int nLayer );
-    OGRLayer* CreateLayer( const char* pszName,
+    OGRLayer* ICreateLayer( const char* pszName,
                            OGRSpatialReference* poSRS = NULL,
                            OGRwkbGeometryType eGType = wkbUnknown,
                            char** papszOptions = NULL );
@@ -198,40 +200,11 @@ private:
     // Priavte utility functions
     //
     void Clear();
-    int ReadFromFile( const char* pszSource, VSILFILE* fpIn );
+    int ReadFromFile( GDALOpenInfo* poOpenInfo );
     int ReadFromService( const char* pszSource );
     void LoadLayers();
 };
 
-
-/************************************************************************/
-/*                           OGRGeoJSONDriver                           */
-/************************************************************************/
-
-class OGRGeoJSONDriver : public OGRSFDriver
-{
-public:
-
-    OGRGeoJSONDriver();
-    ~OGRGeoJSONDriver();
-
-    //
-    // OGRSFDriver Interface
-    //
-    const char* GetName();
-    OGRDataSource* Open( const char* pszName, int bUpdate );
-    OGRDataSource* CreateDataSource( const char* pszName, char** papszOptions );
-    OGRErr DeleteDataSource( const char* pszName );
-    int TestCapability( const char* pszCap );
-
-    //
-    // OGRGeoJSONDriver Interface
-    //
-    // NOTE: New version of Open() based on Andrey's RFC 10.
-    OGRDataSource* Open( const char* pszName, int bUpdate,
-                         char** papszOptions );
-
-};
 
 #endif /* OGR_GEOJSON_H_INCLUDED */
 

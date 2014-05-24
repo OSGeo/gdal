@@ -128,10 +128,7 @@ OGRVRTLayer::~OGRVRTLayer()
         if( bSrcLayerFromSQL && poSrcLayer )
             poSrcDS->ReleaseResultSet( poSrcLayer );
 
-        if( bSrcDSShared )
-            OGRSFDriverRegistrar::GetRegistrar()->ReleaseDataSource( poSrcDS );
-        else
-            delete poSrcDS;
+        GDALClose( (GDALDatasetH) poSrcDS );
     }
 
     if( poFeatureDefn )
@@ -183,6 +180,7 @@ int OGRVRTLayer::FastInitialize( CPLXMLNode *psLTree, const char *pszVRTDirector
     }
 
     osName = pszLayerName;
+    SetDescription( pszLayerName );
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a fixed geometry type?  If so use it                 */
@@ -530,7 +528,6 @@ int OGRVRTLayer::FullInitialize()
 /*      Figure out the data source name.  It may be treated relative    */
 /*      to vrt filename, but normally it is used directly.              */
 /* -------------------------------------------------------------------- */
-    OGRSFDriverRegistrar *poReg = OGRSFDriverRegistrar::GetRegistrar();
     char *pszSrcDSName = (char *) CPLGetXMLValue(psLTree,"SrcDataSource",NULL);
 
     if( pszSrcDSName == NULL )
@@ -604,10 +601,10 @@ try_again:
     CPLErrorReset();
     if( EQUAL(pszSrcDSName,"@dummy@") )
     {
-        OGRSFDriver *poMemDriver = OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName("Memory");
+        GDALDriver *poMemDriver = OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName("Memory");
         if (poMemDriver != NULL)
         {
-            poSrcDS = poMemDriver->CreateDataSource( "@dummy@" );
+            poSrcDS = poMemDriver->Create( "@dummy@", 0, 0, 0, GDT_Unknown, NULL );
             poSrcDS->CreateLayer( "@dummy@" );
         }
     }
@@ -620,7 +617,7 @@ try_again:
         }
         else
         {
-            poSrcDS = poReg->OpenShared( pszSrcDSName, bUpdate, NULL );
+            poSrcDS = (GDALDataset*) OGROpenShared( pszSrcDSName, bUpdate, NULL );
             /* Is it a VRT datasource ? */
             if (poSrcDS != NULL && poSrcDS->GetDriver() == poDS->GetDriver())
             {
@@ -633,7 +630,7 @@ try_again:
     {
         if (poDS->GetCallLevel() < 32)
         {
-            poSrcDS = poReg->Open( pszSrcDSName, bUpdate, NULL );
+            poSrcDS = (GDALDataset*) OGROpen( pszSrcDSName, bUpdate, NULL );
             /* Is it a VRT datasource ? */
             if (poSrcDS != NULL && poSrcDS->GetDriver() == poDS->GetDriver())
             {
@@ -2363,4 +2360,15 @@ OGRErr OGRVRTLayer::SetIgnoredFields( const char **papszFields )
     CSLDestroy(papszFieldsSrc);
 
     return eErr;
+}
+
+/************************************************************************/
+/*                          GetSrcDataset()                             */
+/************************************************************************/
+
+GDALDataset* OGRVRTLayer::GetSrcDataset()
+{
+    if (!bHasFullInitialized) FullInitialize();
+    if (!poSrcLayer || poDS->GetRecursionDetected()) return NULL;
+    return poSrcDS;
 }

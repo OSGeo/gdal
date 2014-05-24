@@ -93,17 +93,19 @@ OGRwkbGeometryType OGRVRTGetGeometryType(const char* pszGType, int* pbError)
 /*                          OGRVRTDataSource()                          */
 /************************************************************************/
 
-OGRVRTDataSource::OGRVRTDataSource()
+OGRVRTDataSource::OGRVRTDataSource(GDALDriver* poDriver)
 
 {
     pszName = NULL;
     papoLayers = NULL;
+    paeLayerType = NULL;
     nLayers = 0;
     psTree = NULL;
     nCallLevel = 0;
     poLayerPool = NULL;
     poParentDS = NULL;
     bRecursionDetected = FALSE;
+    this->poDriver = poDriver;
 }
 
 /************************************************************************/
@@ -121,6 +123,7 @@ OGRVRTDataSource::~OGRVRTDataSource()
         delete papoLayers[i];
     
     CPLFree( papoLayers );
+    CPLFree( paeLayerType );
 
     if( psTree != NULL)
         CPLDestroyXMLNode( psTree );
@@ -858,9 +861,25 @@ int OGRVRTDataSource::Initialize( CPLXMLNode *psTree, const char *pszNewName,
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
 /* -------------------------------------------------------------------- */
+        nLayers ++;
         papoLayers = (OGRLayer **)
-            CPLRealloc( papoLayers,  sizeof(OGRLayer *) * (nLayers+1) );
-        papoLayers[nLayers++] = poLayer;
+            CPLRealloc( papoLayers,  sizeof(OGRLayer *) * nLayers );
+        papoLayers[nLayers-1] = poLayer;
+
+        paeLayerType = (OGRLayerType*)
+            CPLRealloc( paeLayerType,  sizeof(int) * nLayers );
+        if( poLayerPool != NULL && EQUAL(psLTree->pszValue,"OGRVRTLayer"))
+        {
+            paeLayerType[nLayers - 1] = OGR_VRT_PROXIED_LAYER;
+        }
+        else if( EQUAL(psLTree->pszValue,"OGRVRTLayer") )
+        {
+            paeLayerType[nLayers - 1] = OGR_VRT_LAYER;
+        }
+        else
+        {
+            paeLayerType[nLayers - 1] = OGR_VRT_OTHER_LAYER;
+        }
     }
 
     return TRUE;
@@ -905,4 +924,46 @@ void OGRVRTDataSource::AddForbiddenNames(const char* pszOtherDSName)
 int OGRVRTDataSource::IsInForbiddenNames(const char* pszOtherDSName)
 {
     return aosOtherDSNameSet.find(pszOtherDSName) != aosOtherDSNameSet.end();
+}
+
+/************************************************************************/
+/*                             GetFileList()                             */
+/************************************************************************/
+
+char **OGRVRTDataSource::GetFileList()
+{
+    CPLStringList oList;
+    oList.AddString( GetName() );
+    for(int i=0; i<nLayers; i++ )
+    {
+        OGRLayer* poLayer = papoLayers[i];
+        OGRVRTLayer* poVRTLayer = NULL;
+        switch( paeLayerType[nLayers - 1] )
+        {
+            case OGR_VRT_PROXIED_LAYER:
+                poVRTLayer = (OGRVRTLayer*) ((OGRProxiedLayer*)poLayer)->GetUnderlyingLayer();
+                break;
+            case OGR_VRT_LAYER:
+                poVRTLayer = (OGRVRTLayer*) poLayer;
+                break;
+            default:
+                break;
+        }
+        if( poVRTLayer != NULL )
+        {
+            GDALDataset* poSrcDS = poVRTLayer->GetSrcDataset();
+            if( poSrcDS != NULL )
+            {
+                char** papszFileList = poSrcDS->GetFileList();
+                char** papszIter = papszFileList;
+                for(; papszIter != NULL && *papszIter != NULL; papszIter++ )
+                {
+                    if( oList.FindString(*papszIter) < 0 )
+                        oList.AddString(*papszIter);
+                }
+                CSLDestroy(papszFileList);
+            }
+        }
+    }
+    return oList.StealList();
 }

@@ -88,20 +88,9 @@ OGRLayer *OGRIdrisiDataSource::GetLayer( int iLayer )
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRIdrisiDataSource::Open( const char * pszFilename, int bUpdateIn)
+int OGRIdrisiDataSource::Open( const char * pszFilename )
 
 {
-    if (bUpdateIn)
-    {
-        return FALSE;
-    }
-
-// --------------------------------------------------------------------
-//      Does this appear to be a .vct file?
-// --------------------------------------------------------------------
-    if ( !EQUAL(CPLGetExtension(pszFilename), "vct") )
-        return FALSE;
-
     pszName = CPLStrdup( pszFilename );
 
     VSILFILE* fpVCT = VSIFOpenL(pszFilename, "rb");

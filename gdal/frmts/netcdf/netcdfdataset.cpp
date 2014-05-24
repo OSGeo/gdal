@@ -5877,6 +5877,7 @@ void GDALRegister_netCDF()
 /*      Set the driver details.                                         */
 /* -------------------------------------------------------------------- */
         poDriver->SetDescription( "netCDF" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "Network Common Data Format" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

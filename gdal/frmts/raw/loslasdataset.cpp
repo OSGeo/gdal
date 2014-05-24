@@ -273,6 +273,7 @@ void GDALRegister_LOSLAS()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "LOSLAS" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "NADCON .los/.las Datum Grid Shift" );
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );

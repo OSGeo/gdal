@@ -43,6 +43,7 @@ OGRSOSILayer::OGRSOSILayer( OGRSOSIDataSource *poPar, OGRFeatureDefn *poFeatDefn
     nNextFID      = 0;
     poNextSerial  = NULL;
     
+    SetDescription( poFeatureDefn->GetName() );
     if( poFeatureDefn->GetGeomFieldCount() > 0 )
         poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poParent->poSRS);
 

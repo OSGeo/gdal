@@ -146,6 +146,12 @@ int OGRDWGDriver::TestCapability( const char * pszCap )
 void RegisterOGRDWG()
 
 {
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRDWGDriver );
+    OGRSFDriver* poDriver = new OGRDWGDriver;
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                                "AutoCAD DWG" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "dwg" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                                "drv_dwg.html" );
+    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
 }
 

@@ -867,6 +867,7 @@ void GDALRegister_NTv2()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "NTv2" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "NTv2 Datum Grid Shift" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gsb" );

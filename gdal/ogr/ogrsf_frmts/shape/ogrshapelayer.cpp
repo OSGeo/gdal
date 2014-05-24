@@ -45,27 +45,6 @@
 
 CPL_CVSID("$Id$");
 
-
-class OGRShapeGeomFieldDefn: public OGRGeomFieldDefn
-{
-    char* pszFullName;
-    int   bSRSSet;
-
-    public:
-        OGRShapeGeomFieldDefn(const char* pszFullNameIn, OGRwkbGeometryType eType,
-                              int bSRSSetIn, OGRSpatialReference *poSRSIn) :
-            OGRGeomFieldDefn("", eType),
-            pszFullName(CPLStrdup(pszFullNameIn)),
-            bSRSSet(bSRSSetIn)
-        {
-            poSRS = poSRSIn;
-        }
-
-        virtual ~OGRShapeGeomFieldDefn() { CPLFree(pszFullName); }
-
-        virtual OGRSpatialReference* GetSpatialRef();
-};
-
 /************************************************************************/
 /*                           OGRShapeLayer()                            */
 /************************************************************************/
@@ -137,8 +116,12 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
         osEncoding = ConvertCodePage( hDBF->pszCodePage );
     }
     
-    if( CPLGetConfigOption( "SHAPE_ENCODING", NULL ) != NULL )
-        osEncoding = CPLGetConfigOption( "SHAPE_ENCODING", "" );
+    const char* pszShapeEncoding = NULL;
+    pszShapeEncoding = CSLFetchNameValue(poDS->GetOpenOptions(), "ENCODING");
+    if( pszShapeEncoding == NULL )
+        pszShapeEncoding = CPLGetConfigOption( "SHAPE_ENCODING", NULL );
+    if( pszShapeEncoding != NULL )
+        osEncoding = pszShapeEncoding;
 
     if( osEncoding != "" )
     {
@@ -165,6 +148,7 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
     }
     else if( bSRSSetIn && poSRSIn != NULL )
         poSRSIn->Release();
+    SetDescription( poFeatureDefn->GetName() );
 }
 
 /************************************************************************/
@@ -1837,6 +1821,8 @@ OGRSpatialReference *OGRShapeGeomFieldDefn::GetSpatialRef()
 
     if( papszLines != NULL )
     {
+        osPrjFile = pszPrjFile;
+
         poSRS = new OGRSpatialReference();
         if( poSRS->importFromESRI( papszLines ) != OGRERR_NONE )
         {
@@ -2764,4 +2750,56 @@ void OGRShapeLayer::CloseUnderlyingLayer()
     bCheckedForSBN = FALSE;
 
     eFileDescriptorsState = FD_CLOSED;
+}
+
+/************************************************************************/
+/*                            AddToFileList()                           */
+/************************************************************************/
+
+void OGRShapeLayer::AddToFileList( CPLStringList& oFileList )
+{
+    if (!TouchLayer())
+        return;
+    if( hSHP )
+    {
+        const char* pszSHPFilename = VSI_SHP_GetFilename( hSHP->fpSHP );
+        oFileList.AddString(pszSHPFilename);
+        const char* pszSHPExt = CPLGetExtension(pszSHPFilename);
+        const char* pszSHXFilename = CPLResetExtension( pszSHPFilename,
+                                        (pszSHPExt[0] == 's') ? "shx" : "SHX" );
+        oFileList.AddString(pszSHXFilename);
+    }
+    if( hDBF )
+    {
+        const char* pszDBFFilename = VSI_SHP_GetFilename( hDBF->fp );
+        oFileList.AddString(pszDBFFilename);
+        if( hDBF->pszCodePage != NULL && hDBF->iLanguageDriver == 0 )
+        {
+            const char* pszDBFExt = CPLGetExtension(pszDBFFilename);
+            const char* pszCPGFilename = CPLResetExtension( pszDBFFilename,
+                                       (pszDBFExt[0] == 'd') ? "cpg" : "CPG"  );
+            oFileList.AddString(pszCPGFilename);
+        }
+    }
+    if( hSHP )
+    {
+        if( GetSpatialRef() != NULL )
+        {
+            OGRShapeGeomFieldDefn* poGeomFieldDefn =
+                (OGRShapeGeomFieldDefn*)GetLayerDefn()->GetGeomFieldDefn(0);
+            oFileList.AddString(poGeomFieldDefn->GetPrjFilename());
+        }
+        if( CheckForQIX() )
+        {
+            const char* pszQIXFilename = CPLResetExtension( pszFullName, "qix" );
+            oFileList.AddString(pszQIXFilename);
+        }
+        else if( CheckForSBN() )
+        {
+            const char* pszSBNFilename = CPLResetExtension( pszFullName, "sbn" );
+            oFileList.AddString(pszSBNFilename);
+            const char* pszSBXFilename = CPLResetExtension( pszFullName, "sbx" );
+            oFileList.AddString(pszSBXFilename);
+        }
+    }
 }

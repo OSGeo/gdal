@@ -996,25 +996,14 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Open a file handle using large file API.                        */
-/* -------------------------------------------------------------------- */
-    VSILFILE *fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
-    if( fp == NULL )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Unexpected failure of VSIFOpenL(%s) in PNG Open()", 
-                  poOpenInfo->pszFilename );
-        return NULL;
-    }
-
-/* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
     PNGDataset 	*poDS;
 
     poDS = new PNGDataset();
 
-    poDS->fpImage = fp;
+    poDS->fpImage = poOpenInfo->fpL;
+    poOpenInfo->fpL = NULL;
     poDS->eAccess = poOpenInfo->eAccess;
     
     poDS->hPNG = png_create_read_struct( PNG_LIBPNG_VER_STRING, poDS, 
@@ -1210,13 +1199,13 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( poOpenInfo->pszFilename );
-    poDS->TryLoadXML( poOpenInfo->papszSiblingFiles );
+    poDS->TryLoadXML( poOpenInfo->GetSiblingFiles() );
 
 /* -------------------------------------------------------------------- */
 /*      Open overviews.                                                 */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename,
-                                 poOpenInfo->papszSiblingFiles );
+                                 poOpenInfo->GetSiblingFiles() );
 
     return poDS;
 }
@@ -1726,9 +1715,8 @@ PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     /* a fake dataset to make the caller happy */
     if( CSLTestBoolean(CPLGetConfigOption("GDAL_OPEN_AFTER_COPY", "YES")) )
     {
-        GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
-
         CPLPushErrorHandler(CPLQuietErrorHandler);
+        GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
         PNGDataset *poDS = (PNGDataset*) PNGDataset::Open( &oOpenInfo );
         CPLPopErrorHandler();
         if( poDS )
@@ -1836,6 +1824,7 @@ void GDALRegister_PNG()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "PNG" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "Portable Network Graphics" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

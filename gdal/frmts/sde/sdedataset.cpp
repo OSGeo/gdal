@@ -526,6 +526,7 @@ void GDALRegister_SDE()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "SDE" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "ESRI ArcSDE" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

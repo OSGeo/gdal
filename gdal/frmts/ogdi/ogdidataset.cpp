@@ -975,6 +975,7 @@ void GDALRegister_OGDI()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "OGDI" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "OGDI Bridge" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

@@ -79,6 +79,7 @@ GTMTrackLayer::GTMTrackLayer( const char* pszName,
     nTotalFCount = poDS->getNTracks();
 
     poFeatureDefn = new OGRFeatureDefn( pszName );
+    SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType ( wkbLineString );
     poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);

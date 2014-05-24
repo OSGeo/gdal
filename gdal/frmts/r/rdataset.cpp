@@ -590,6 +590,7 @@ void GDALRegister_R()
         poDriver = new GDALDriver();
 
         poDriver->SetDescription( "R" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                    "R Object Data Store" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,

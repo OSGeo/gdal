@@ -772,8 +772,6 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 
  %}
 
-#define GDAL_BINDINGS
-%import ogr.i
 %{
 typedef void OGRLayerShadow;
 %}

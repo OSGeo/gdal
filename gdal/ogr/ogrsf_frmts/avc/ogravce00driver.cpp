@@ -2,7 +2,7 @@
  * $Id: ogravcbindriver.cpp 10645 2007-01-18 02:22:39Z warmerdam $
  *
  * Project:  OGR
- * Purpose:  OGRAVCE00Driver implementation (Arc/Info Binary Coverages)
+ * Purpose:  OGRAVCE00Driver implementation (Arc/Info E00ary Coverages)
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -32,40 +32,24 @@
 CPL_CVSID("$Id: ogravcbindriver.cpp 10645 2007-01-18 02:22:39Z warmerdam $");
 
 /************************************************************************/
-/*                          ~OGRAVCE00Driver()                          */
-/************************************************************************/
-
-OGRAVCE00Driver::~OGRAVCE00Driver()
-
-{
-}
-
-/************************************************************************/
-/*                              GetName()                               */
-/************************************************************************/
-
-const char *OGRAVCE00Driver::GetName()
-
-{
-    return "AVCE00";
-}
-
-/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-OGRDataSource *OGRAVCE00Driver::Open( const char * pszFilename,
-                                      int bUpdate )
+static GDALDataset *OGRAVCE00DriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     OGRAVCE00DataSource *poDSE00;
 
-    if( bUpdate )
+    if( poOpenInfo->eAccess == GA_Update )
+        return NULL;
+    if( !poOpenInfo->bStatOK )
+        return NULL;
+    if( !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "E00") )
         return NULL;
 
     poDSE00 = new OGRAVCE00DataSource();
 
-    if( poDSE00->Open( pszFilename, TRUE )
+    if( poDSE00->Open( poOpenInfo->pszFilename, TRUE )
         && poDSE00->GetLayerCount() > 0 )
     {
         return poDSE00;
@@ -76,22 +60,28 @@ OGRDataSource *OGRAVCE00Driver::Open( const char * pszFilename,
 }
 
 /************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRAVCE00Driver::TestCapability( const char * pszCap )
-
-{
-    return FALSE;
-}
-
-/************************************************************************/
 /*                           RegisterOGRAVC()                           */
 /************************************************************************/
 
 void RegisterOGRAVCE00()
 
 {
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( 
-        new OGRAVCE00Driver );
+    GDALDriver  *poDriver;
+
+    if( GDALGetDriverByName( "AVCE00" ) == NULL )
+    {
+        poDriver = new GDALDriver();
+
+        poDriver->SetDescription( "AVCE00" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                                   "Arc/Info E00 (ASCII) Coverage" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "e00" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                                   "drv_avce00.html" );
+
+        poDriver->pfnOpen = OGRAVCE00DriverOpen;
+
+        GetGDALDriverManager()->RegisterDriver( poDriver );
+    }
 }

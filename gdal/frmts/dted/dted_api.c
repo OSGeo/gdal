@@ -88,17 +88,8 @@ DTEDInfo * DTEDOpen( const char * pszFilename,
                      int bTestOpen )
 
 {
-    VSILFILE   *fp;
-    char        achRecord[DTED_UHL_SIZE];
-    DTEDInfo    *psDInfo = NULL;
-    double      dfLLOriginX, dfLLOriginY;
-    int deg = 0;
-    int min = 0;
-    int sec = 0;
-    int bSwapLatLong = FALSE;
-    char szResult[81];
-    int bIsWeirdDTED;
-    char chHemisphere;
+    VSILFILE* fp;
+
 /* -------------------------------------------------------------------- */
 /*      Open the physical file.                                         */
 /* -------------------------------------------------------------------- */
@@ -124,6 +115,30 @@ DTEDInfo * DTEDOpen( const char * pszFilename,
 
         return NULL;
     }
+
+    return DTEDOpenEx( fp, pszFilename, pszAccess, bTestOpen );
+}
+
+/************************************************************************/
+/*                             DTEDOpenEx()                             */
+/************************************************************************/
+
+DTEDInfo * DTEDOpenEx( VSILFILE   *fp,
+                       const char * pszFilename,
+                       const char * pszAccess,
+                       int bTestOpen )
+
+{
+    char        achRecord[DTED_UHL_SIZE];
+    DTEDInfo    *psDInfo = NULL;
+    double      dfLLOriginX, dfLLOriginY;
+    int deg = 0;
+    int min = 0;
+    int sec = 0;
+    int bSwapLatLong = FALSE;
+    char szResult[81];
+    int bIsWeirdDTED;
+    char chHemisphere;
 
 /* -------------------------------------------------------------------- */
 /*      Read, trying to find the UHL record.  Skip VOL or HDR           */

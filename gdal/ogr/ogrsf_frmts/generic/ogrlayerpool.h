@@ -107,6 +107,8 @@ class OGRProxiedLayer : public OGRAbstractProxiedLayer
                                         FreeUserDataFunc pfnFreeUserData,
                                         void* pUserData);
     virtual            ~OGRProxiedLayer();
+    
+    OGRLayer           *GetUnderlyingLayer();
 
     virtual OGRGeometry *GetSpatialFilter();
     virtual void        SetSpatialFilter( OGRGeometry * );
@@ -133,9 +135,6 @@ class OGRProxiedLayer : public OGRAbstractProxiedLayer
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
 
     virtual int         TestCapability( const char * );
-
-    /* Deprecated (and un-implemented method) --> we won't decorate it ! */
-    /* virtual const char *GetInfo( const char * ); */
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );

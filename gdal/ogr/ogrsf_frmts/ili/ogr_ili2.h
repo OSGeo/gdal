@@ -106,31 +106,13 @@ class OGRILI2DataSource : public OGRDataSource
     int         GetLayerCount() { return listLayer.size(); }
     OGRLayer   *GetLayer( int );
 
-    virtual OGRLayer *CreateLayer( const char *, 
+    virtual OGRLayer *ICreateLayer( const char *, 
                                       OGRSpatialReference * = NULL,
                                       OGRwkbGeometryType = wkbUnknown,
                                       char ** = NULL );
 
     VSILFILE *  GetOutputFP() { return fpOutput; }
     int         TestCapability( const char * );
-};
-
-/************************************************************************/
-/*                            OGRILI2Driver                             */
-/************************************************************************/
-
-class OGRILI2Driver : public OGRSFDriver
-{
-  public:
-                ~OGRILI2Driver();
-
-    const char *GetName();
-    OGRDataSource *Open( const char *, int );
-
-    virtual OGRDataSource *CreateDataSource( const char *pszName,
-                                             char ** = NULL );
-
-    int                 TestCapability( const char * );
 };
 
 #endif /* _OGR_ILI2_H_INCLUDED */

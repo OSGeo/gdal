@@ -2722,28 +2722,29 @@ SWIG_Python_MustGetPtr(PyObject *obj, swig_type_info *ty, int argnum, int flags)
 
 /* -------- TYPES TABLE (BEGIN) -------- */
 
-#define SWIGTYPE_p_GDALProgressFunc swig_types[0]
-#define SWIGTYPE_p_GIntBig swig_types[1]
-#define SWIGTYPE_p_OGRDataSourceShadow swig_types[2]
-#define SWIGTYPE_p_OGRDriverShadow swig_types[3]
-#define SWIGTYPE_p_OGRFeatureDefnShadow swig_types[4]
-#define SWIGTYPE_p_OGRFeatureShadow swig_types[5]
-#define SWIGTYPE_p_OGRFieldDefnShadow swig_types[6]
-#define SWIGTYPE_p_OGRGeomFieldDefnShadow swig_types[7]
-#define SWIGTYPE_p_OGRGeometryShadow swig_types[8]
-#define SWIGTYPE_p_OGRLayerShadow swig_types[9]
-#define SWIGTYPE_p_OGRStyleTableShadow swig_types[10]
-#define SWIGTYPE_p_OSRCoordinateTransformationShadow swig_types[11]
-#define SWIGTYPE_p_OSRSpatialReferenceShadow swig_types[12]
-#define SWIGTYPE_p_char swig_types[13]
-#define SWIGTYPE_p_double swig_types[14]
-#define SWIGTYPE_p_f_double_p_q_const__char_p_void__int swig_types[15]
-#define SWIGTYPE_p_int swig_types[16]
-#define SWIGTYPE_p_p_char swig_types[17]
-#define SWIGTYPE_p_p_double swig_types[18]
-#define SWIGTYPE_p_p_int swig_types[19]
-static swig_type_info *swig_types[21];
-static swig_module_info swig_module = {swig_types, 20, 0, 0, 0, 0};
+#define SWIGTYPE_p_GDALMajorObjectShadow swig_types[0]
+#define SWIGTYPE_p_GDALProgressFunc swig_types[1]
+#define SWIGTYPE_p_GIntBig swig_types[2]
+#define SWIGTYPE_p_OGRDataSourceShadow swig_types[3]
+#define SWIGTYPE_p_OGRDriverShadow swig_types[4]
+#define SWIGTYPE_p_OGRFeatureDefnShadow swig_types[5]
+#define SWIGTYPE_p_OGRFeatureShadow swig_types[6]
+#define SWIGTYPE_p_OGRFieldDefnShadow swig_types[7]
+#define SWIGTYPE_p_OGRGeomFieldDefnShadow swig_types[8]
+#define SWIGTYPE_p_OGRGeometryShadow swig_types[9]
+#define SWIGTYPE_p_OGRLayerShadow swig_types[10]
+#define SWIGTYPE_p_OGRStyleTableShadow swig_types[11]
+#define SWIGTYPE_p_OSRCoordinateTransformationShadow swig_types[12]
+#define SWIGTYPE_p_OSRSpatialReferenceShadow swig_types[13]
+#define SWIGTYPE_p_char swig_types[14]
+#define SWIGTYPE_p_double swig_types[15]
+#define SWIGTYPE_p_f_double_p_q_const__char_p_void__int swig_types[16]
+#define SWIGTYPE_p_int swig_types[17]
+#define SWIGTYPE_p_p_char swig_types[18]
+#define SWIGTYPE_p_p_double swig_types[19]
+#define SWIGTYPE_p_p_int swig_types[20]
+static swig_type_info *swig_types[22];
+static swig_module_info swig_module = {swig_types, 21, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -2852,6 +2853,8 @@ using namespace std;
 #include "cpl_port.h"
 #include "cpl_string.h"
 #include "ogr_srs_api.h"
+
+typedef void GDALMajorObjectShadow;
 
 #ifdef DEBUG 
 typedef struct OGRSpatialReferenceHS OSRSpatialReferenceShadow;
@@ -24303,6 +24306,16 @@ static PyMethodDef SwigMethods[] = {
 
 /* -------- TYPE CONVERSION AND EQUIVALENCE RULES (BEGIN) -------- */
 
+static void *_p_OGRDriverShadowTo_p_GDALMajorObjectShadow(void *x, int *SWIGUNUSEDPARM(newmemory)) {
+    return (void *)((GDALMajorObjectShadow *)  ((OGRDriverShadow *) x));
+}
+static void *_p_OGRLayerShadowTo_p_GDALMajorObjectShadow(void *x, int *SWIGUNUSEDPARM(newmemory)) {
+    return (void *)((GDALMajorObjectShadow *)  ((OGRLayerShadow *) x));
+}
+static void *_p_OGRDataSourceShadowTo_p_GDALMajorObjectShadow(void *x, int *SWIGUNUSEDPARM(newmemory)) {
+    return (void *)((GDALMajorObjectShadow *)  ((OGRDataSourceShadow *) x));
+}
+static swig_type_info _swigt__p_GDALMajorObjectShadow = {"_p_GDALMajorObjectShadow", "GDALMajorObjectShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALProgressFunc = {"_p_GDALProgressFunc", "GDALProgressFunc *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GIntBig = {"_p_GIntBig", "GIntBig *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_OGRDataSourceShadow = {"_p_OGRDataSourceShadow", "OGRDataSourceShadow *", 0, 0, (void*)0, 0};
@@ -24325,6 +24338,7 @@ static swig_type_info _swigt__p_p_double = {"_p_p_double", "double **", 0, 0, (v
 static swig_type_info _swigt__p_p_int = {"_p_p_int", "int **", 0, 0, (void*)0, 0};
 
 static swig_type_info *swig_type_initial[] = {
+  &_swigt__p_GDALMajorObjectShadow,
   &_swigt__p_GDALProgressFunc,
   &_swigt__p_GIntBig,
   &_swigt__p_OGRDataSourceShadow,
@@ -24347,6 +24361,7 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_p_int,
 };
 
+static swig_cast_info _swigc__p_GDALMajorObjectShadow[] = {  {&_swigt__p_GDALMajorObjectShadow, 0, 0, 0},  {&_swigt__p_OGRDriverShadow, _p_OGRDriverShadowTo_p_GDALMajorObjectShadow, 0, 0},  {&_swigt__p_OGRLayerShadow, _p_OGRLayerShadowTo_p_GDALMajorObjectShadow, 0, 0},  {&_swigt__p_OGRDataSourceShadow, _p_OGRDataSourceShadowTo_p_GDALMajorObjectShadow, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALProgressFunc[] = {  {&_swigt__p_GDALProgressFunc, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GIntBig[] = {  {&_swigt__p_GIntBig, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_OGRDataSourceShadow[] = {  {&_swigt__p_OGRDataSourceShadow, 0, 0, 0},{0, 0, 0, 0}};
@@ -24369,6 +24384,7 @@ static swig_cast_info _swigc__p_p_double[] = {  {&_swigt__p_p_double, 0, 0, 0},{
 static swig_cast_info _swigc__p_p_int[] = {  {&_swigt__p_p_int, 0, 0, 0},{0, 0, 0, 0}};
 
 static swig_cast_info *swig_cast_initial[] = {
+  _swigc__p_GDALMajorObjectShadow,
   _swigc__p_GDALProgressFunc,
   _swigc__p_GIntBig,
   _swigc__p_OGRDataSourceShadow,

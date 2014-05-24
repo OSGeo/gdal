@@ -647,6 +647,7 @@ void GDALRegister_PALSARJaxa() {
     if( GDALGetDriverByName( "JAXAPALSAR" ) == NULL ) {
         poDriver = new GDALDriver();
         poDriver->SetDescription( "JAXAPALSAR" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "JAXA PALSAR Product Reader (Level 1.1/1.5)" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

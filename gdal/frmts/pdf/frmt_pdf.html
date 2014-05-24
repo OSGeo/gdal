@@ -21,7 +21,7 @@ stable, so the driver compilation may fail with too old or too recent poppler ve
 Successfully tested versions are poppler &gt;= 0.12.X and &lt;= 0.26.0.
 <p>
 Starting with GDAL 1.9.0, as an alternative, the PDF driver can be compiled against libpodofo (LGPL-licensed)
-to avoid the libpoppler dependency. This is sufficient to get the georeferencing information. However, for
+to avoid the libpoppler dependency. This is sufficient to get the georeferencing and vector information. However, for
 getting the imagery, the pdftoppm utility that comes with the poppler distribution must be available in the system PATH.
 A temporary file will be generated in a directory determined by the following configuration options : CPL_TMPDIR,
 TMPDIR or TEMP (in that order). If none are defined, the current directory will be used.
@@ -41,6 +41,49 @@ stored as XML raw content in the xml:XMP metadata domain.
 Starting with GDAL 1.10.0, additional metadata, such as found in USGS Topo PDF can be extracted from the file, and will be
 stored as XML raw content in the EMBEDDED_METADATA metadata domain.
 <p>
+
+<h2>Vector support</h2>
+
+<p>
+Starting with GDAL 1.10, this driver can rean and write geospatial PDF with vector features.
+Vector read support requires linking to podofo or poppler libraries, but write support does not.
+
+The driver can read vector features encoded according to PDF's logical structure facilities (as described by "§10.6 - Logical Structure" of PDF spec),
+or retrieve only vector geometries for other vector PDF files.<p>
+
+<h2>Feature style support</h2>
+
+For write support, the driver has partial support for the style information attached to features,
+encoded according to the <a href="ogr_feature_style.html">OGR Feature Style Specification</a>.<p>
+
+The following tools are recognized :
+<ul>
+<li>For points, LABEL and SYMBOL.</li>
+<li>For lines, PEN.</li>
+<li>For polygons, PEN and BRUSH.</li>
+</ul>
+
+The supported attributes for each tool are summed up in the following table :<p>
+
+<table border="1">
+
+<tr>
+<th>Tool</th>
+<th>Supported attributes</th>
+<th>Example</th>
+</tr>
+
+<tr><td>PEN</td><td>color, width and dash pattern</td><td>PEN(c:#FF0000,w:5px)</td></tr>
+<tr><td>BRUSH</td><td>foreground color</td><td>BRUSH(fc:#0000FF)</td></tr>
+<tr><td>LABEL</td><td>text (limited to ASCII strings), foreground color, size, x and y offsets, and angle</td><td>LABEL(c:#000000,t:"Hello World!",s:5)</td></tr>
+<tr><td>SYMBOL</td><td>id (ogr-sym-0 to ogr-sym-9, and filenames for raster symbols), color and size</td>
+<td>SYMBOL(c:#00FF00,id:"ogr-sym-3",s:10)<br>SYMBOL(c:#00000080,id:"a_symbol.png")</td></tr>
+</table>
+<p>
+
+Alpha values are supported for colors to control the opacity. If not specified, for BRUSH, it is set at 50% opaque.<p>
+
+For SYMBOL with a bitmap name, only the alpha value of the color specified with 'c' is taken into account.<p>
 
 <h2>Configuration options</h2>
 
@@ -288,15 +331,10 @@ if (button == 4) app.launchURL('http://gdal.org/');
 
 <h2>See also</h2>
 
-Other drivers :
-<ul>
-<li><a href="../ogr/drv_pdf.html">OGR PDF driver</a></li>
-</ul>
-<p>
-
 Specifications :
 
 <ul>
+<li><a href="ogr/ogr_feature_style.html">OGR Feature Style Specification</a></li>
 <li><a href="http://portal.opengeospatial.org/files/?artifact_id=40537">OGC GeoPDF Encoding Best Practice Version 2.2 (08-139r3)</a></li>
 <li><a href="http://www.adobe.com/devnet/acrobat/pdfs/adobe_supplement_iso32000.pdf">Adobe Supplement to ISO 32000</a></li>
 <li><a href="http://www.adobe.com/devnet/acrobat/pdfs/pdf_reference_1-7.pdf">PDF Reference, version 1.7</a></li>

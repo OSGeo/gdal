@@ -119,30 +119,12 @@ class OGRILI1DataSource : public OGRDataSource
 
     FILE       *GetTransferFile() { return fpTransfer; }
 
-    virtual OGRLayer *CreateLayer( const char *,
+    virtual OGRLayer *ICreateLayer( const char *,
                                       OGRSpatialReference * = NULL,
                                       OGRwkbGeometryType = wkbUnknown,
                                       char ** = NULL );
 
     int         TestCapability( const char * );
-};
-
-/************************************************************************/
-/*                            OGRILI1Driver                             */
-/************************************************************************/
-
-class OGRILI1Driver : public OGRSFDriver
-{
-  public:
-                ~OGRILI1Driver();
-
-    const char *GetName();
-    OGRDataSource *Open( const char *, int );
-
-    virtual OGRDataSource *CreateDataSource( const char *pszName,
-                                             char ** = NULL );
-
-    int                 TestCapability( const char * );
 };
 
 #endif /* _OGR_ILI1_H_INCLUDED */

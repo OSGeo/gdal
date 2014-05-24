@@ -73,7 +73,9 @@ OGRShapeDataSource::OGRShapeDataSource()
     bSingleFileDataSource = FALSE;
     poPool = new OGRLayerPool();
     b2GBLimit = CSLTestBoolean(CPLGetConfigOption("SHAPE_2GB_LIMIT", "FALSE"));
+    papszOpenOptions = NULL;
 }
+
 
 /************************************************************************/
 /*                        ~OGRShapeDataSource()                         */
@@ -94,19 +96,24 @@ OGRShapeDataSource::~OGRShapeDataSource()
     delete poPool;
 
     CPLFree( papoLayers );
+    CSLDestroy( papszOpenOptions );
 }
 
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRShapeDataSource::Open( const char * pszNewName, int bUpdate,
+int OGRShapeDataSource::Open( GDALOpenInfo* poOpenInfo,
                               int bTestOpen, int bForceSingleFileDataSource )
 
 {
     VSIStatBufL  stat;
     
     CPLAssert( nLayers == 0 );
+    
+    const char * pszNewName = poOpenInfo->pszFilename;
+    int bUpdate = poOpenInfo->eAccess == GA_Update;
+    papszOpenOptions = CSLDuplicate( poOpenInfo->papszOpenOptions );
     
     pszName = CPLStrdup( pszNewName );
 
@@ -119,7 +126,7 @@ int OGRShapeDataSource::Open( const char * pszNewName, int bUpdate,
 /*      This is only utilized when the OGRShapeDriver::Create()         */
 /*      method wants to create a stub OGRShapeDataSource for a          */
 /*      single shapefile.  The driver will take care of creating the    */
-/*      file by calling CreateLayer().                                  */
+/*      file by callingICreateLayer().                                  */
 /* -------------------------------------------------------------------- */
     if( bSingleFileDataSource )
         return TRUE;
@@ -414,11 +421,11 @@ void OGRShapeDataSource::AddLayer(OGRShapeLayer* poLayer)
 }
 
 /************************************************************************/
-/*                            CreateLayer()                             */
+/*                           ICreateLayer()                             */
 /************************************************************************/
 
 OGRLayer *
-OGRShapeDataSource::CreateLayer( const char * pszLayerName,
+OGRShapeDataSource::ICreateLayer( const char * pszLayerName,
                                  OGRSpatialReference *poSRS,
                                  OGRwkbGeometryType eType,
                                  char ** papszOptions )
@@ -1077,4 +1084,20 @@ void OGRShapeDataSource::SetLastUsedLayer( OGRShapeLayer* poLayer )
         return;
 
     poPool->SetLastUsedLayer(poLayer);
+}
+
+/************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+
+char** OGRShapeDataSource::GetFileList()
+{
+    CPLStringList       oFileList;
+    GetLayerCount();
+    for(int i=0;i<nLayers;i++)
+    {
+        OGRShapeLayer* poLayer = papoLayers[i];
+        poLayer->AddToFileList(oFileList);
+    }
+    return oFileList.StealList();
 }

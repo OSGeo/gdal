@@ -476,6 +476,7 @@ GTIFFBuildOverviews( const char * pszFilename,
 /*      Create the file, if it does not already exist.                  */
 /* -------------------------------------------------------------------- */
     VSIStatBufL  sStatBuf;
+    VSILFILE* fpL = NULL;
 
     if( VSIStatExL( pszFilename, &sStatBuf, VSI_STAT_EXISTS_FLAG ) != 0 )
     {
@@ -562,7 +563,11 @@ GTIFFBuildOverviews( const char * pszFilename,
         if( bCreateBigTIFF )
             CPLDebug( "GTiff", "File being created as a BigTIFF." );
 
-        hOTIFF = VSI_TIFFOpen( pszFilename, (bCreateBigTIFF) ? "w+8" : "w+" );
+        fpL = VSIFOpenL( pszFilename, "w+" );
+        if( fpL == NULL )
+            hOTIFF = NULL;
+        else
+            hOTIFF = VSI_TIFFOpen( pszFilename, (bCreateBigTIFF) ? "w+8" : "w+", fpL );
         if( hOTIFF == NULL )
         {
             if( CPLGetLastErrorNo() == 0 )
@@ -570,7 +575,8 @@ GTIFFBuildOverviews( const char * pszFilename,
                           "Attempt to create new tiff file `%s'\n"
                           "failed in VSI_TIFFOpen().\n",
                           pszFilename );
-
+            if( fpL != NULL )
+                VSIFCloseL(fpL);
             return CE_Failure;
         }
     }
@@ -579,7 +585,11 @@ GTIFFBuildOverviews( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     else 
     {
-        hOTIFF = VSI_TIFFOpen( pszFilename, "r+" );
+        fpL = VSIFOpenL( pszFilename, "r+" );
+        if( fpL == NULL )
+            hOTIFF = NULL;
+        else
+            hOTIFF = VSI_TIFFOpen( pszFilename, "r+", fpL );
         if( hOTIFF == NULL )
         {
             if( CPLGetLastErrorNo() == 0 )
@@ -587,7 +597,8 @@ GTIFFBuildOverviews( const char * pszFilename,
                           "Attempt to create new tiff file `%s'\n"
                           "failed in VSI_TIFFOpen().\n",
                           pszFilename );
-
+            if( fpL != NULL )
+                VSIFCloseL(fpL);
             return CE_Failure;
         }
     }
@@ -668,6 +679,8 @@ GTIFFBuildOverviews( const char * pszFilename,
     }
 
     XTIFFClose( hOTIFF );
+    VSIFCloseL(fpL);
+    fpL = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Open the overview dataset so that we can get at the overview    */

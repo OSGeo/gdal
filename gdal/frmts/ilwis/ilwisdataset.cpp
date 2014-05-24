@@ -816,7 +816,7 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check for external overviews.                                   */
 /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename, poOpenInfo->papszSiblingFiles );
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename, poOpenInfo->GetSiblingFiles() );
 
     return( poDS );
 }
@@ -2045,6 +2045,7 @@ void GDALRegister_ILWIS()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "ILWIS" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "ILWIS Raster Map" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "mpr/mpl" );

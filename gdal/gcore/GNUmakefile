@@ -23,7 +23,7 @@ XTRA_OPT 	:=	$(XTRA_OPT) -DRENAME_INTERNAL_LIBTIFF_SYMBOLS
 endif
 endif
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) $(PAM_SETTING) $(XTRA_OPT) -I../frmts/gtiff
+CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) $(PAM_SETTING) $(XTRA_OPT) -I../frmts/gtiff -I../ogr -I../ogr/ogrsf_frmts/generic
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

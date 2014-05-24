@@ -274,14 +274,9 @@ int OGRPDSDataSource::LoadTable(const char* pszFilename,
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRPDSDataSource::Open( const char * pszFilename, int bUpdateIn)
+int OGRPDSDataSource::Open( const char * pszFilename )
 
 {
-    if (bUpdateIn)
-    {
-        return FALSE;
-    }
-
     pszName = CPLStrdup( pszFilename );
 
 // --------------------------------------------------------------------

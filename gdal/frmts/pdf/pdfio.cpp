@@ -27,11 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifdef HAVE_POPPLER
+#include "gdal_pdf.h"
 
-/* hack for PDF driver and poppler >= 0.15.0 that defines incompatible "typedef bool GBool" */
-/* in include/poppler/goo/gtypes.h with the one defined in cpl_port.h */
-#define CPL_GBOOL_DEFINED
+#ifdef HAVE_POPPLER
 
 #include "pdfio.h"
 

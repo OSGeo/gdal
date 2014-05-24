@@ -134,9 +134,9 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(GDALOpenInfo* poOpenInfo,
         bGeoTransformValid |=
             GDALReadWorldFile2( pszOverideFilename, NULL,
                                 adfGeoTransform,
-                                poOpenInfo->papszSiblingFiles, NULL )
+                                poOpenInfo->GetSiblingFiles(), NULL )
             || GDALReadWorldFile2( pszOverideFilename, ".wld",
                                    adfGeoTransform,
-                                   poOpenInfo->papszSiblingFiles, NULL );
+                                   poOpenInfo->GetSiblingFiles(), NULL );
     }
 }

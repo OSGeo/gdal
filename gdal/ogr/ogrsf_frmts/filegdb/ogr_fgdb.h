@@ -245,7 +245,7 @@ public:
 
   OGRLayer*   GetLayer( int );
 
-  virtual OGRLayer* CreateLayer( const char *, OGRSpatialReference* = NULL, OGRwkbGeometryType = wkbUnknown, char** = NULL );
+  virtual OGRLayer* ICreateLayer( const char *, OGRSpatialReference* = NULL, OGRwkbGeometryType = wkbUnknown, char** = NULL );
 
   virtual OGRErr DeleteLayer( int );
 

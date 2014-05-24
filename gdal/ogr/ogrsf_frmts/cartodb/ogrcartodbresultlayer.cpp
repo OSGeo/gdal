@@ -40,6 +40,7 @@ OGRCARTODBResultLayer::OGRCARTODBResultLayer( OGRCARTODBDataSource* poDS,
                                               OGRCARTODBLayer(poDS)
 {
     osBaseSQL = pszRawQueryIn;
+    SetDescription( "result" );
 }
 
 /************************************************************************/

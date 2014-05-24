@@ -42,6 +42,7 @@ FGdbResultLayer::FGdbResultLayer(FGdbDataSource* pParentDataSource,
                                  EnumRows* pEnumRows)
 {
     m_pFeatureDefn = new OGRFeatureDefn("result");
+    SetDescription( m_pFeatureDefn->GetName() );
     m_pFeatureDefn->Reference();
     m_pEnumRows = pEnumRows;
     m_pDS = pParentDataSource;

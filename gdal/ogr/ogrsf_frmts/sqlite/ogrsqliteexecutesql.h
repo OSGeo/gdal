@@ -34,7 +34,7 @@
 #include "ogrsf_frmts.h"
 #include <set>
 
-OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
+OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
                                 const char *pszStatement,
                                 OGRGeometry *poSpatialFilter,
                                 const char *pszDialect );

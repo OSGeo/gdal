@@ -243,11 +243,11 @@ static char *ExtractTopic(const char * pszLayerName)
 }
 
 /************************************************************************/
-/*                            CreateLayer()                             */
+/*                           ICreateLayer()                             */
 /************************************************************************/
 
 OGRLayer *
-OGRILI1DataSource::CreateLayer( const char * pszLayerName,
+OGRILI1DataSource::ICreateLayer( const char * pszLayerName,
                                OGRSpatialReference *poSRS,
                                OGRwkbGeometryType eType,
                                char ** papszOptions )

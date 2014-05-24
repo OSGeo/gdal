@@ -59,6 +59,7 @@ void MoveOverwrite(VSILFILE *fpDest,VSILFILE *fpSource) {
 OGRSelafinLayer::OGRSelafinLayer( const char *pszLayerNameP, int bUpdateP,OGRSpatialReference *poSpatialRefP,Selafin::Header *poHeaderP,int nStepNumberP,SelafinTypeDef eTypeP):eType(eTypeP),bUpdate(bUpdateP),nStepNumber(nStepNumberP),poHeader(poHeaderP),poSpatialRef(poSpatialRefP),nCurrentId(-1) {
     //CPLDebug("Selafin","Opening layer %s",pszLayerNameP);
     poFeatureDefn = new OGRFeatureDefn( CPLGetBasename( pszLayerNameP ) );
+    SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
     if (eType==POINTS) poFeatureDefn->SetGeomType( wkbPoint );
     else poFeatureDefn->SetGeomType(wkbPolygon);

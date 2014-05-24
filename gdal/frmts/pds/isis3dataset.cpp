@@ -911,6 +911,7 @@ void GDALRegister_ISIS3()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "ISIS3" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "USGS Astrogeology ISIS cube (Version 3)" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

@@ -49,7 +49,7 @@ OGROGDIDriver::~OGROGDIDriver()
 const char *OGROGDIDriver::GetName()
 
 {
-    return "OGDI";
+    return "OGR_OGDI";
 }
 
 /************************************************************************/
@@ -61,6 +61,9 @@ OGRDataSource *OGROGDIDriver::Open( const char * pszFilename,
 
 {
     OGROGDIDataSource   *poDS;
+
+    if( !EQUALN(pszFilename,"gltp:",5) )
+        return FALSE;
 
     poDS = new OGROGDIDataSource();
 
@@ -101,6 +104,11 @@ void RegisterOGROGDI()
 {
     if (! GDAL_CHECK_VERSION("OGR/OGDI driver"))
         return;
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGROGDIDriver );
+    OGRSFDriver* poDriver = new OGROGDIDriver;
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                                "OGDI Vectors (VPF, VMAP, DCW)" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                                "drv_ogdi.html" );
+    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }
 

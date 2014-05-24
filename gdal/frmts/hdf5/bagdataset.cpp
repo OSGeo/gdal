@@ -873,6 +873,7 @@ void GDALRegister_BAG( )
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "BAG" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "Bathymetry Attributed Grid" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

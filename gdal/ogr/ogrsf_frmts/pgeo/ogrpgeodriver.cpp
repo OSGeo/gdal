@@ -295,6 +295,12 @@ bool OGRODBCMDBDriver::LibraryExists(const char* pszLibPath)
 void RegisterOGRPGeo()
 
 {
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRPGeoDriver );
+    OGRSFDriver* poDriver = new OGRPGeoDriver;
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                                "ESRI Personal GeoDatabase" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "mdb" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                                "drv_pgeo.html" );
+    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }
 

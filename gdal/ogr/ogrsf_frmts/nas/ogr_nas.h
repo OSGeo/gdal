@@ -128,7 +128,7 @@ class OGRNASDataSource : public OGRDataSource
                         OGRNASDataSource();
                         ~OGRNASDataSource();
 
-    int                 Open( const char *, int bTestOpen );
+    int                 Open( const char * );
     int                 Create( const char *pszFile, char **papszOptions );
 
     const char          *GetName() { return pszName; }
@@ -142,21 +142,6 @@ class OGRNASDataSource : public OGRDataSource
     void                GrowExtents( OGREnvelope *psGeomBounds );
 
     void                PopulateRelations();
-};
-
-/************************************************************************/
-/*                             OGRNASDriver                             */
-/************************************************************************/
-
-class OGRNASDriver : public OGRSFDriver
-{
-  public:
-                ~OGRNASDriver();
-
-    const char *GetName();
-    OGRDataSource *Open( const char *, int );
-
-    int                 TestCapability( const char * );
 };
 
 #endif /* _OGR_NAS_H_INCLUDED */

@@ -167,7 +167,7 @@ class OGRGMLDataSource : public OGRDataSource
     int                 GetLayerCount() { return nLayers; }
     OGRLayer            *GetLayer( int );
 
-    virtual OGRLayer    *CreateLayer( const char *, 
+    virtual OGRLayer    *ICreateLayer( const char *, 
                                       OGRSpatialReference * = NULL,
                                       OGRwkbGeometryType = wkbUnknown,
                                       char ** = NULL );
@@ -209,24 +209,6 @@ class OGRGMLDataSource : public OGRDataSource
                                             OGRGeometry *poSpatialFilter,
                                             const char *pszDialect );
     virtual void                ReleaseResultSet( OGRLayer * poResultsSet );
-};
-
-/************************************************************************/
-/*                             OGRGMLDriver                             */
-/************************************************************************/
-
-class OGRGMLDriver : public OGRSFDriver
-{
-  public:
-                ~OGRGMLDriver();
-                
-    const char *GetName();
-    OGRDataSource *Open( const char *, int );
-
-    virtual OGRDataSource *CreateDataSource( const char *pszName,
-                                             char ** = NULL );
-    
-    int                 TestCapability( const char * );
 };
 
 #endif /* _OGR_GML_H_INCLUDED */

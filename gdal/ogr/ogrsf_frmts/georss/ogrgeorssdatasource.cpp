@@ -113,10 +113,10 @@ OGRLayer *OGRGeoRSSDataSource::GetLayer( int iLayer )
 }
 
 /************************************************************************/
-/*                            CreateLayer()                             */
+/*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer * OGRGeoRSSDataSource::CreateLayer( const char * pszLayerName,
+OGRLayer * OGRGeoRSSDataSource::ICreateLayer( const char * pszLayerName,
                                              OGRSpatialReference *poSRS,
                                              OGRwkbGeometryType eType,
                                              char ** papszOptions )

@@ -226,14 +226,14 @@ class OGRMySQLDataSource : public OGRDataSource
 
     OGRErr              InitializeMetadataTables();
 
-    int                 Open( const char *, int bUpdate, int bTestOpen );
-    int                 OpenTable( const char *, int bUpdate, int bTestOpen );
+    int                 Open( const char *, int bUpdate );
+    int                 OpenTable( const char *, int bUpdate );
 
     const char          *GetName() { return pszName; }
     int                 GetLayerCount() { return nLayers; }
     OGRLayer            *GetLayer( int );
 
-    virtual OGRLayer    *CreateLayer( const char *, 
+    virtual OGRLayer    *ICreateLayer( const char *, 
                                       OGRSpatialReference * = NULL,
                                       OGRwkbGeometryType = wkbUnknown,
                                       char ** = NULL );
@@ -255,23 +255,6 @@ class OGRMySQLDataSource : public OGRDataSource
     void                RequestLongResult( OGRMySQLLayer * );
     void                InterruptLongResult();
 };
-
-/************************************************************************/
-/*                            OGRMySQLDriver                            */
-/************************************************************************/
-
-class OGRMySQLDriver : public OGRSFDriver
-{
-  public:
-                ~OGRMySQLDriver();
-                
-    const char *GetName();
-    OGRDataSource *Open( const char *, int );
-    virtual OGRDataSource *CreateDataSource( const char *pszName,
-                                             char ** = NULL );
-    int                 TestCapability( const char * );
-};
-
 
 #endif /* ndef _OGR_MYSQL_H_INCLUDED */
 

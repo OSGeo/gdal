@@ -556,15 +556,16 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLString osName = CPLGetBasename( poOpenInfo->pszFilename );
     CPLString osHDRFilename;
 
-    if( poOpenInfo->papszSiblingFiles )
+    char** papszSiblingFiles = poOpenInfo->GetSiblingFiles();
+    if( papszSiblingFiles )
     {
-        int iFile = CSLFindString(poOpenInfo->papszSiblingFiles, 
+        int iFile = CSLFindString(papszSiblingFiles, 
                                   CPLFormFilename( NULL, osName, "hdr" ) );
         if( iFile < 0 ) // return if there is no corresponding .hdr file
             return NULL;
 
         osHDRFilename = 
-            CPLFormFilename( osPath, poOpenInfo->papszSiblingFiles[iFile],
+            CPLFormFilename( osPath, papszSiblingFiles[iFile],
                              NULL );
     }
     else
@@ -886,6 +887,7 @@ void GDALRegister_GenBin()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "GenBin" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "Generic Binary (.hdr Labelled)" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

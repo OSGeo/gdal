@@ -754,7 +754,7 @@ class OGRSQLiteDataSource : public OGRSQLiteBaseDataSource
     virtual OGRLayer   *GetLayerByName( const char* );
     virtual std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*> GetLayerWithGetSpatialWhereByName( const char* pszName );
 
-    virtual OGRLayer    *CreateLayer( const char *pszLayerName, 
+    virtual OGRLayer    *ICreateLayer( const char *pszLayerName, 
                                       OGRSpatialReference *poSRS, 
                                       OGRwkbGeometryType eType, 
                                       char **papszOptions );
@@ -795,25 +795,6 @@ class OGRSQLiteDataSource : public OGRSQLiteBaseDataSource
     int                 GetUndefinedSRID() const { return nUndefinedSRID; }
 
     void                ReloadLayers();
-};
-
-/************************************************************************/
-/*                           OGRSQLiteDriver                            */
-/************************************************************************/
-
-class OGRSQLiteDriver : public OGRSFDriver
-{
-  public:
-                ~OGRSQLiteDriver();
-                
-    const char *GetName();
-    OGRDataSource *Open( const char *, int );
-
-    virtual OGRDataSource *CreateDataSource( const char *pszName,
-                                             char ** = NULL );
-    virtual OGRErr      DeleteDataSource( const char *pszName );
-    
-    int                 TestCapability( const char * );
 };
 
 /* To escape literals. The returned string doesn't contain the surrounding single quotes */

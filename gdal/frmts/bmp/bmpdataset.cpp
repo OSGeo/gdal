@@ -1518,6 +1518,7 @@ void GDALRegister_BMP()
         poDriver = new GDALDriver();
 
         poDriver->SetDescription( "BMP" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                    "MS Windows Device Independent Bitmap" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,

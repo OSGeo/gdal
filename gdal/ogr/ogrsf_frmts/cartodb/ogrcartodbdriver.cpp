@@ -61,6 +61,9 @@ const char *OGRCARTODBDriver::GetName()
 OGRDataSource *OGRCARTODBDriver::Open( const char * pszFilename, int bUpdate )
 
 {
+    if (!EQUALN(pszFilename, "CARTODB:", strlen("CARTODB:")))
+        return FALSE;
+
     OGRCARTODBDataSource   *poDS = new OGRCARTODBDataSource();
 
     if( !poDS->Open( pszFilename, bUpdate ) )

@@ -61,6 +61,14 @@ const char *OGRCouchDBDriver::GetName()
 OGRDataSource *OGRCouchDBDriver::Open( const char * pszFilename, int bUpdate )
 
 {
+    if (strncmp(pszFilename, "http://", 7) == 0 ||
+        strncmp(pszFilename, "https://", 8) == 0)
+    {
+        /* ok */
+    }
+    else if (!EQUALN(pszFilename, "CouchDB:", 8))
+        return NULL;
+
     OGRCouchDBDataSource   *poDS = new OGRCouchDBDataSource();
 
     if( !poDS->Open( pszFilename, bUpdate ) )
@@ -112,6 +120,8 @@ int OGRCouchDBDriver::TestCapability( const char * pszCap )
 void RegisterOGRCouchDB()
 
 {
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRCouchDBDriver );
+    OGRSFDriver* poDriver = new OGRCouchDBDriver;
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "CouchDB / GeoCouch" );
+    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
 }
 

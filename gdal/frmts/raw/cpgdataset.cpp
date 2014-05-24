@@ -1689,6 +1689,7 @@ void GDALRegister_CPG()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "CPG" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "Convair PolGASP" );
 

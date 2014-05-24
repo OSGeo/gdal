@@ -51,6 +51,7 @@ OGROSMLayer::OGROSMLayer(OGROSMDataSource* poDS, int nIdxLayer, const char* pszN
     this->nIdxLayer = nIdxLayer;
 
     poFeatureDefn = new OGRFeatureDefn( pszName );
+    SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
 
     poSRS = new OGRSpatialReference();

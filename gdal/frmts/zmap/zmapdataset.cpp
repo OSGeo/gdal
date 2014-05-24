@@ -707,6 +707,7 @@ void GDALRegister_ZMap()
         poDriver = new GDALDriver();
 
         poDriver->SetDescription( "ZMap" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                    "ZMap Plus Grid" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,

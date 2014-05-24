@@ -1270,6 +1270,7 @@ void GDALRegister_RPFTOC()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "RPFTOC" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "Raster Product Format TOC format" );
         

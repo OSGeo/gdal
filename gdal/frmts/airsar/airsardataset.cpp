@@ -51,7 +51,7 @@ class AirSARDataset : public GDALPamDataset
 {
     friend class AirSARRasterBand;
 
-    FILE	*fp;
+    VSILFILE	*fp;
 
     int         nLoadedLine;
     GByte       *pabyCompressedLine;
@@ -62,7 +62,7 @@ class AirSARDataset : public GDALPamDataset
 
     CPLErr      LoadLine(int iLine);
 
-    static char  **ReadHeader( FILE * fp, int nFileOffset, 
+    static char  **ReadHeader( VSILFILE * fp, int nFileOffset, 
                                const char *pszPrefix, int nMaxLines );
 
   public:
@@ -299,7 +299,7 @@ AirSARDataset::~AirSARDataset()
 
     if( fp != NULL )
     {
-        VSIFClose( fp );
+        VSIFCloseL( fp );
         fp = NULL;
     }
 }
@@ -340,8 +340,8 @@ CPLErr AirSARDataset::LoadLine( int iLine )
 /* -------------------------------------------------------------------- */
 /*      Load raw compressed data.                                       */
 /* -------------------------------------------------------------------- */
-    if( VSIFSeek( fp, nDataStart + iLine * nRecordLength, SEEK_SET ) != 0 
-        || ((int) VSIFRead( pabyCompressedLine, 10, nRasterXSize, fp ))
+    if( VSIFSeekL( fp, nDataStart + iLine * nRecordLength, SEEK_SET ) != 0 
+        || ((int) VSIFReadL( pabyCompressedLine, 10, nRasterXSize, fp ))
                  != nRasterXSize )
     {
         CPLError( CE_Failure, CPLE_FileIO, 
@@ -387,7 +387,7 @@ CPLErr AirSARDataset::LoadLine( int iLine )
 /*      blank record or some zero bytes.                                */
 /************************************************************************/
 
-char ** AirSARDataset::ReadHeader( FILE * fp, int nFileOffset, 
+char ** AirSARDataset::ReadHeader( VSILFILE * fp, int nFileOffset, 
                                    const char *pszPrefix, int nMaxLines )
 
 {
@@ -395,7 +395,7 @@ char ** AirSARDataset::ReadHeader( FILE * fp, int nFileOffset,
     char szLine[51];
     int  iLine;
 
-    VSIFSeek( fp, nFileOffset, SEEK_SET );
+    VSIFSeekL( fp, nFileOffset, SEEK_SET );
 
 /* ==================================================================== */
 /*      Loop collecting one line at a time.                             */
@@ -405,7 +405,7 @@ char ** AirSARDataset::ReadHeader( FILE * fp, int nFileOffset,
 /* -------------------------------------------------------------------- */
 /*      Read a 50 byte header record.                                   */
 /* -------------------------------------------------------------------- */
-        if( VSIFRead( szLine, 1, 50, fp ) != 50 )
+        if( VSIFReadL( szLine, 1, 50, fp ) != 50 )
         {
             CPLError( CE_Failure, CPLE_FileIO,
                       "Read error collecting AirSAR header." );
@@ -522,7 +522,7 @@ char ** AirSARDataset::ReadHeader( FILE * fp, int nFileOffset,
 GDALDataset *AirSARDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    if( poOpenInfo->fp == NULL || poOpenInfo->nHeaderBytes < 800 )
+    if( poOpenInfo->fpL == NULL || poOpenInfo->nHeaderBytes < 800 )
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -540,7 +540,7 @@ GDALDataset *AirSARDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      keywords by converting spaces to underscores so they will be    */
 /*      "well behaved" as metadata keywords.                            */
 /* -------------------------------------------------------------------- */
-    char **papszMD = ReadHeader( poOpenInfo->fp, 0, "MH", 20 );
+    char **papszMD = ReadHeader( poOpenInfo->fpL, 0, "MH", 20 );
     
     if( papszMD == NULL )
         return NULL;
@@ -580,8 +580,8 @@ GDALDataset *AirSARDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Adopt the openinfo file pointer.                                */
 /* -------------------------------------------------------------------- */
-    poDS->fp = poOpenInfo->fp;
-    poOpenInfo->fp = NULL;
+    poDS->fp = poOpenInfo->fpL;
+    poOpenInfo->fpL = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Read and merge parameter header into metadata.  Prefix          */
@@ -659,9 +659,13 @@ void GDALRegister_AirSAR()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "AirSAR" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "AirSAR Polarimetric Image" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_airsar.html" );
+
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
         poDriver->pfnOpen = AirSARDataset::Open;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );

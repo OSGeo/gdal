@@ -112,15 +112,6 @@ int OGRGeoconceptDataSource::Open( const char* pszName, int bTestOpen, int bUpda
 
 {
 /* -------------------------------------------------------------------- */
-/*      We will only consider .gxt and .txt files.                      */
-/* -------------------------------------------------------------------- */
-    const char* pszExtension = CPLGetExtension(pszName);
-    if( !EQUAL(pszExtension,"gxt") && !EQUAL(pszExtension,"txt") )
-    {
-        return FALSE;
-    }
-
-/* -------------------------------------------------------------------- */
 /*      Is the given path a directory or a regular file?                */
 /* -------------------------------------------------------------------- */
     VSIStatBuf  stat;
@@ -309,7 +300,7 @@ int OGRGeoconceptDataSource::Create( const char *pszName, char** papszOptions )
 
 /* -------------------------------------------------------------------- */
 /*      Create a new single file.                                       */
-/*      OGRGeoconceptDriver::CreateLayer() will do the job.             */
+/*      OGRGeoconceptDriver::ICreateLayer() will do the job.             */
 /* -------------------------------------------------------------------- */
     _bSingleNewFile = TRUE;
 
@@ -326,13 +317,13 @@ int OGRGeoconceptDataSource::Create( const char *pszName, char** papszOptions )
 }
 
 /************************************************************************/
-/*                            CreateLayer()                             */
+/*                           ICreateLayer()                             */
 /*                                                                      */
 /* Options (-lco) :                                                     */
 /*   FEATURETYPE : TYPE.SUBTYPE                                         */
 /************************************************************************/
 
-OGRLayer *OGRGeoconceptDataSource::CreateLayer( const char * pszLayerName,
+OGRLayer *OGRGeoconceptDataSource::ICreateLayer( const char * pszLayerName,
                                                 OGRSpatialReference *poSRS /* = NULL */,
                                                 OGRwkbGeometryType eType /* = wkbUnknown */,
                                                 char ** papszOptions /* = NULL */ )

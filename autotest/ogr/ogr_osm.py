@@ -624,10 +624,13 @@ def ogr_osm_10():
 
     # Test million laugh pattern
     if ogrtest.osm_drv_parse_osm:
-        gdal.PushErrorHandler('CPLQuietErrorHandler')
         ds = ogr.Open('data/billionlaugh.osm')
+        lyr = ds.GetLayer(0)
+        gdal.ErrorReset()
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
+        feat = lyr.GetNextFeature()
         gdal.PopErrorHandler()
-        if ds is not None:
+        if feat is not None or gdal.GetLastErrorMsg() == '':
             gdaltest.post_reason('fail')
             return 'fail'
 

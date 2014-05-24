@@ -127,19 +127,4 @@ class OGRSelafinDataSource : public OGRDataSource {
         void SetDefaultSelafinName( const char *pszName ) { osDefaultSelafinName = pszName; }
 };
 
-/************************************************************************/
-/*                             OGRSelafinDriver                         */
-/************************************************************************/
-
-class OGRSelafinDriver : public OGRSFDriver {
-    public:
-        ~OGRSelafinDriver();
-        const char *GetName();
-        OGRDataSource *Open( const char *, int );
-        OGRDataSource *CreateDataSource( const char *, char ** );
-        int TestCapability( const char * );
-        virtual OGRErr DeleteDataSource( const char *pszName );
-};
-
-
 #endif /* ndef _OGR_SELAFIN_H_INCLUDED */

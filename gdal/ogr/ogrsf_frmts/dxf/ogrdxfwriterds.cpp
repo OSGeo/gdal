@@ -255,10 +255,10 @@ int OGRDXFWriterDS::Open( const char * pszFilename, char **papszOptions )
 }
 
 /************************************************************************/
-/*                            CreateLayer()                             */
+/*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRDXFWriterDS::CreateLayer( const char *pszName, 
+OGRLayer *OGRDXFWriterDS::ICreateLayer( const char *pszName, 
                                        OGRSpatialReference *, 
                                        OGRwkbGeometryType, 
                                        char ** )

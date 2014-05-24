@@ -33,40 +33,43 @@
 CPL_CVSID("$Id$");
 
 /************************************************************************/
-/*                           ~OGRNTFDriver()                            */
-/************************************************************************/
-
-OGRTigerDriver::~OGRTigerDriver()
-
-{
-}
-
-/************************************************************************/
-/*                              GetName()                               */
-/************************************************************************/
-
-const char *OGRTigerDriver::GetName()
-
-{
-    return "TIGER";
-}
-
-/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-OGRDataSource *OGRTigerDriver::Open( const char * pszFilename, int bUpdate )
+static GDALDataset *OGRTigerDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
+    if( !poOpenInfo->bStatOK )
+        return NULL;
+    char** papszSiblingFiles = poOpenInfo->GetSiblingFiles();
+    if( papszSiblingFiles != NULL )
+    {
+        int i;
+        int bFoundCompatibleFile = FALSE;
+        for( i = 0; papszSiblingFiles[i] != NULL; i++ )
+        {
+            int nLen = (int)strlen(papszSiblingFiles[i]);
+            if( nLen > 4 &&
+                papszSiblingFiles[i][nLen-4] == '.' &&
+                papszSiblingFiles[i][nLen-1] == '1' )
+            {
+                bFoundCompatibleFile = TRUE;
+                break;
+            }
+        }
+        if( !bFoundCompatibleFile )
+            return FALSE;
+    }
+ 
     OGRTigerDataSource  *poDS = new OGRTigerDataSource;
 
-    if( !poDS->Open( pszFilename, TRUE ) )
+    if( !poDS->Open( poOpenInfo->pszFilename, TRUE ) )
     {
         delete poDS;
         poDS = NULL;
     }
 
-    if( poDS != NULL && bUpdate )
+    if( poDS != NULL && poOpenInfo->eAccess == GA_Update )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Tiger Driver doesn't support update." );
@@ -78,24 +81,12 @@ OGRDataSource *OGRTigerDriver::Open( const char * pszFilename, int bUpdate )
 }
 
 /************************************************************************/
-/*                           TestCapability()                           */
+/*                              Create()                                */
 /************************************************************************/
 
-int OGRTigerDriver::TestCapability( const char *pszCap )
-
-{
-    if( EQUAL(pszCap,ODrCCreateDataSource) )
-        return TRUE;
-    else
-        return FALSE;
-}
-
-/************************************************************************/
-/*                          CreateDataSource()                          */
-/************************************************************************/
-
-OGRDataSource *OGRTigerDriver::CreateDataSource( const char *pszName,
-                                                 char **papszOptions )
+static GDALDataset *OGRTigerDriverCreate( const char * pszName,
+                                int nBands, int nXSize, int nYSize, GDALDataType eDT,
+                                char **papszOptions )
 
 {
     OGRTigerDataSource *poDS;
@@ -118,7 +109,26 @@ OGRDataSource *OGRTigerDriver::CreateDataSource( const char *pszName,
 void RegisterOGRTiger()
 
 {
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRTigerDriver );
+    GDALDriver  *poDriver;
+
+    if( GDALGetDriverByName( "TIGER" ) == NULL )
+    {
+        poDriver = new GDALDriver();
+
+        poDriver->SetDescription( "TIGER" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                                   "U.S. Census TIGER/Line" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                                   "drv_tiger.html" );
+
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
+        poDriver->pfnOpen = OGRTigerDriverOpen;
+        poDriver->pfnCreate = OGRTigerDriverCreate;
+
+        GetGDALDriverManager()->RegisterDriver( poDriver );
+    }
 }
 
 

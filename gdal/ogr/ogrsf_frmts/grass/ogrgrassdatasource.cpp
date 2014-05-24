@@ -227,10 +227,10 @@ int OGRGRASSDataSource::Open( const char * pszNewName, int bUpdate,
 }
 
 /************************************************************************/
-/*                            CreateLayer()                             */
+/*                           ICreateLayer()                             */
 /************************************************************************/
 OGRLayer *
-OGRGRASSDataSource::CreateLayer( const char * pszLayerName,
+OGRGRASSDataSource::ICreateLayer( const char * pszLayerName,
                                  OGRSpatialReference *poSRS,
                                  OGRwkbGeometryType eType,
                                  char ** papszOptions )

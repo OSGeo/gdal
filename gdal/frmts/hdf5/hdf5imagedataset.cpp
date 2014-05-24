@@ -648,6 +648,7 @@ void GDALRegister_HDF5Image( )
         poDriver = new GDALDriver( );
 
         poDriver->SetDescription( "HDF5Image" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                    "HDF5 Dataset" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,

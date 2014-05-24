@@ -3464,10 +3464,18 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "CPLE_AssertionFailed",SWIG_From_int((int)(CPLE_AssertionFailed)));
   SWIG_Python_SetConstant(d, "CPLE_NoWriteAccess",SWIG_From_int((int)(CPLE_NoWriteAccess)));
   SWIG_Python_SetConstant(d, "CPLE_UserInterrupt",SWIG_From_int((int)(CPLE_UserInterrupt)));
+  SWIG_Python_SetConstant(d, "OF_ALL",SWIG_From_int((int)(GDAL_OF_ALL)));
+  SWIG_Python_SetConstant(d, "OF_RASTER",SWIG_From_int((int)(GDAL_OF_RASTER)));
+  SWIG_Python_SetConstant(d, "OF_VECTOR",SWIG_From_int((int)(GDAL_OF_VECTOR)));
+  SWIG_Python_SetConstant(d, "OF_READONLY",SWIG_From_int((int)(GDAL_OF_READONLY)));
+  SWIG_Python_SetConstant(d, "OF_UPDATE",SWIG_From_int((int)(GDAL_OF_UPDATE)));
+  SWIG_Python_SetConstant(d, "OF_SHARED",SWIG_From_int((int)(GDAL_OF_SHARED)));
+  SWIG_Python_SetConstant(d, "OF_VERBOSE_ERROR",SWIG_From_int((int)(GDAL_OF_VERBOSE_ERROR)));
   SWIG_Python_SetConstant(d, "DMD_LONGNAME",SWIG_FromCharPtr(GDAL_DMD_LONGNAME));
   SWIG_Python_SetConstant(d, "DMD_HELPTOPIC",SWIG_FromCharPtr(GDAL_DMD_HELPTOPIC));
   SWIG_Python_SetConstant(d, "DMD_MIMETYPE",SWIG_FromCharPtr(GDAL_DMD_MIMETYPE));
   SWIG_Python_SetConstant(d, "DMD_EXTENSION",SWIG_FromCharPtr(GDAL_DMD_EXTENSION));
+  SWIG_Python_SetConstant(d, "DMD_EXTENSIONS",SWIG_FromCharPtr(GDAL_DMD_EXTENSIONS));
   SWIG_Python_SetConstant(d, "DMD_CREATIONOPTIONLIST",SWIG_FromCharPtr(GDAL_DMD_CREATIONOPTIONLIST));
   SWIG_Python_SetConstant(d, "DMD_CREATIONDATATYPES",SWIG_FromCharPtr(GDAL_DMD_CREATIONDATATYPES));
   SWIG_Python_SetConstant(d, "DMD_SUBDATASETS",SWIG_FromCharPtr(GDAL_DMD_SUBDATASETS));

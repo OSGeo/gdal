@@ -524,12 +524,12 @@ static OGRGeometryCollection* LoadGeometry( const char* pszDS,
                                             const char* pszLyr,
                                             const char* pszWhere )
 {
-    OGRDataSource       *poDS;
+    GDALDataset         *poDS;
     OGRLayer            *poLyr;
     OGRFeature          *poFeat;
     OGRGeometryCollection *poGeom = NULL;
         
-    poDS = OGRSFDriverRegistrar::Open( pszDS, FALSE );
+    poDS = (GDALDataset*) GDALOpen( pszDS, GA_ReadOnly );
     if ( poDS == NULL )
         return NULL;
 
@@ -544,7 +544,7 @@ static OGRGeometryCollection* LoadGeometry( const char* pszDS,
     {
         fprintf( stderr,
             "FAILURE: Failed to identify source layer from datasource.\n" );
-        OGRDataSource::DestroyDataSource( poDS );
+        GDALClose( (GDALDatasetH) poDS );
         return NULL;
     }
     
@@ -583,7 +583,7 @@ static OGRGeometryCollection* LoadGeometry( const char* pszDS,
                 OGRFeature::DestroyFeature( poFeat );
                 if ( pszSQL != NULL )
                     poDS->ReleaseResultSet( poLyr );
-                OGRDataSource::DestroyDataSource( poDS );
+                GDALClose( (GDALDatasetH) poDS );
                 return NULL;
             }
         }
@@ -593,7 +593,7 @@ static OGRGeometryCollection* LoadGeometry( const char* pszDS,
     
     if( pszSQL != NULL )
         poDS->ReleaseResultSet( poLyr );
-    OGRDataSource::DestroyDataSource( poDS );
+    GDALClose( (GDALDatasetH) poDS );
     
     return poGeom;
 }

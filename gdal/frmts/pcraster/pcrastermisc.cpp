@@ -61,19 +61,21 @@ void GDALRegister_PCRaster()
     if (! GDAL_CHECK_VERSION("PCRaster driver"))
         return;
 
-if(!GDALGetDriverByName("PCRaster")) {
+    if(!GDALGetDriverByName("PCRaster")) {
 
-    GDALDriver* driver = new GDALDriver();
+        GDALDriver* poDriver = new GDALDriver();
 
-    driver->SetDescription("PCRaster");
-    driver->SetMetadataItem(GDAL_DMD_LONGNAME, "PCRaster Raster File");
-    driver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES, "Byte Int32 Float32");
-    driver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_various.html#PCRaster");
-    driver->SetMetadataItem( GDAL_DMD_EXTENSION, "map" );
+        poDriver->SetDescription("PCRaster");
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
 
-    driver->pfnOpen = PCRasterDataset::open;
-    driver->pfnCreateCopy = PCRasterDataset::createCopy;
+        poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "PCRaster Raster File");
+        poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES, "Byte Int32 Float32");
+        poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_various.html#PCRaster");
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "map" );
 
-    GetGDALDriverManager()->RegisterDriver(driver);
-}
+        poDriver->pfnOpen = PCRasterDataset::open;
+        poDriver->pfnCreateCopy = PCRasterDataset::createCopy;
+
+        GetGDALDriverManager()->RegisterDriver(poDriver);
+    }
 }

@@ -176,10 +176,10 @@ OGRLayer *OGRWAsPDataSource::GetLayer( int iLayer )
 
 
 /************************************************************************/
-/*                              CreateLayer()                           */
+/*                             ICreateLayer()                           */
 /************************************************************************/
 
-OGRLayer *OGRWAsPDataSource::CreateLayer(const char *pszName, 
+OGRLayer *OGRWAsPDataSource::ICreateLayer(const char *pszName, 
                                      OGRSpatialReference *poSpatialRef,
                                      OGRwkbGeometryType eGType,
                                      char ** papszOptions)

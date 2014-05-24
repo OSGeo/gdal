@@ -158,8 +158,7 @@ class OGRHTFDataSource : public OGRDataSource
                         OGRHTFDataSource();
                         ~OGRHTFDataSource();
 
-    int                 Open( const char * pszFilename,
-                              int bUpdate );
+    int                 Open( const char * pszFilename );
 
     virtual const char*         GetName() { return pszName; }
 
@@ -169,20 +168,5 @@ class OGRHTFDataSource : public OGRDataSource
 
     virtual int                 TestCapability( const char * );
 };
-
-/************************************************************************/
-/*                             OGRHTFDriver                             */
-/************************************************************************/
-
-class OGRHTFDriver : public OGRSFDriver
-{
-  public:
-                ~OGRHTFDriver();
-
-    virtual const char*         GetName();
-    virtual OGRDataSource*      Open( const char *, int );
-    virtual int                 TestCapability( const char * );
-};
-
 
 #endif /* ndef _OGR_HTF_H_INCLUDED */

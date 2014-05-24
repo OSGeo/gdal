@@ -357,7 +357,7 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      least one "\n#keyword" type signature in the first chunk of     */
 /*      the file.                                                       */
 /* -------------------------------------------------------------------- */
-    if( open_info->fp == NULL || open_info->nHeaderBytes < 50 )
+    if( open_info->fpL == NULL || open_info->nHeaderBytes < 50 )
         return NULL;
 
     /* check if this is a "NATIVE" MSG format image */
@@ -382,11 +382,13 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
     MSGNDataset        *poDS;
+    FILE* fp = VSIFOpen( open_info->pszFilename, "rb" );
+    if( fp == NULL )
+        return NULL;
 
     poDS = new MSGNDataset();
 
-    poDS->fp = open_info->fp;
-    open_info->fp = NULL;
+    poDS->fp = fp;
 
 /* -------------------------------------------------------------------- */
 /*      Read the header.                                                */
@@ -529,6 +531,7 @@ void GDALRegister_MSGN()
         poDriver = new GDALDriver();
 
         poDriver->SetDescription( "MSGN" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                    "EUMETSAT Archive native (.nat)" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,

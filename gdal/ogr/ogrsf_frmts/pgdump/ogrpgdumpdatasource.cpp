@@ -151,11 +151,11 @@ char *OGRPGDumpDataSource::LaunderName( const char *pszSrcName )
 }
 
 /************************************************************************/
-/*                            CreateLayer()                             */
+/*                           ICreateLayer()                             */
 /************************************************************************/
 
 OGRLayer *
-OGRPGDumpDataSource::CreateLayer( const char * pszLayerName,
+OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
                                   OGRSpatialReference *poSRS,
                                   OGRwkbGeometryType eType,
                                   char ** papszOptions )

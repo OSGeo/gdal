@@ -56,6 +56,7 @@ OGRGMELayer::OGRGMELayer(OGRGMEDataSource* poDS,
     bInTransaction = false;
     m_poFilterGeom = NULL;
     iGxIdField = -1;
+    SetDescription( pszTableId );
 }
 
 
@@ -77,6 +78,7 @@ OGRGMELayer::OGRGMELayer(OGRGMEDataSource* poDS,
     osDraftACL = CSLFetchNameValueDef( papszOptions, "draftAccessList", "Map Editors" );
     osPublishedACL = CSLFetchNameValueDef( papszOptions, "publishedAccessList", "Map Viewers" );
     iGxIdField = -1;
+    SetDescription( pszTableName );
     // TODO: support tags and description
 }
 

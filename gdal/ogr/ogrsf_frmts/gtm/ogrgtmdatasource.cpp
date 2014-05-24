@@ -447,10 +447,10 @@ OGRLayer* OGRGTMDataSource::GetLayer( int iLayer )
 
 
 /************************************************************************/
-/*                            CreateLayer()                             */
+/*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer * OGRGTMDataSource::CreateLayer( const char * pszLayerName,
+OGRLayer * OGRGTMDataSource::ICreateLayer( const char * pszLayerName,
                                           OGRSpatialReference *poSRS,
                                           OGRwkbGeometryType eType,
                                           char ** papszOptions )

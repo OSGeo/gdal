@@ -2246,6 +2246,7 @@ void GDALRegister_ADRG()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "ADRG" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "ARC Digitized Raster Graphics" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

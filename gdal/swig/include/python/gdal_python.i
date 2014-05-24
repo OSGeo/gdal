@@ -597,6 +597,28 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
             else:
                 buf_obj = ' ' * nRequiredSize
         return _gdal.Dataset_BeginAsyncReader(self, xoff, yoff, xsize, ysize, buf_obj, buf_xsize, buf_ysize, buf_type, band_list,  0, 0, 0, options)
+
+    def GetLayer(self,iLayer=0):
+        """Return the layer given an index or a name"""
+        if isinstance(iLayer, str):
+            return self.GetLayerByName(str(iLayer))
+        elif isinstance(iLayer, int):
+            return self.GetLayerByIndex(iLayer)
+        else:
+            raise TypeError("Input %s is not of String or Int type" % type(iLayer))
+
+    def DeleteLayer(self, value):
+        """Deletes the layer given an index or layer name"""
+        if isinstance(value, str):
+            for i in range(self.GetLayerCount()):
+                name = self.GetLayer(i).GetName()
+                if name == value:
+                    return _gdal.Dataset_DeleteLayer(self, i)
+            raise ValueError("Layer %s not found to delete" % value)
+        elif isinstance(value, int):
+            return _gdal.Dataset_DeleteLayer(self, value)
+        else:
+            raise TypeError("Input %s is not of String or Int type" % type(value))
 }
 }
 

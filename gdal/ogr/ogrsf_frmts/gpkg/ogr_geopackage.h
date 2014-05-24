@@ -36,22 +36,6 @@
 #define UNDEFINED_SRID 0
 
 /************************************************************************/
-/*                           OGRGeoPackageDriver                        */
-/************************************************************************/
-
-class OGRGeoPackageDriver : public OGRSFDriver
-{
-    public:
-                            ~OGRGeoPackageDriver();
-        const char*         GetName();
-        OGRDataSource*      Open( const char *, int );
-        OGRDataSource*      CreateDataSource( const char * pszFilename, char **papszOptions );
-        OGRErr              DeleteDataSource( const char * pszFilename );
-        int                 TestCapability( const char * );
-};
-
-
-/************************************************************************/
 /*                           OGRGeoPackageDataSource                    */
 /************************************************************************/
 
@@ -72,7 +56,7 @@ class OGRGeoPackageDataSource : public OGRSQLiteBaseDataSource
         int                 Create( const char * pszFilename, char **papszOptions );
         OGRLayer*           GetLayer( int iLayer );
         int                 DeleteLayer( int iLayer );
-        OGRLayer*           CreateLayer( const char * pszLayerName,
+        OGRLayer*           ICreateLayer( const char * pszLayerName,
                                          OGRSpatialReference * poSpatialRef,
                                          OGRwkbGeometryType eGType,
                                          char **papszOptions );
@@ -98,7 +82,6 @@ class OGRGeoPackageDataSource : public OGRSQLiteBaseDataSource
     private:
     
         OGRErr              PragmaCheck(const char * pszPragma, const char * pszExpected, int nRowsExpected);
-        bool                CheckApplicationId(const char * pszFileName);
         OGRErr              SetApplicationId();
         int                 OpenOrCreateDB(int flags);
 };

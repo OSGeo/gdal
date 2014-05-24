@@ -692,7 +692,7 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      We assume the user is pointing to the header file.              */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 17 || poOpenInfo->fp == NULL )
+    if( poOpenInfo->nHeaderBytes < 17 || poOpenInfo->fpL == NULL )
         return NULL;
 
     if( !EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"hdr") )
@@ -1615,6 +1615,7 @@ void GDALRegister_MFF()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "MFF" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "Vexcel MFF Raster" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

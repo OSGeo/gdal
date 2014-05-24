@@ -394,6 +394,7 @@ void GDALRegister_GTX()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "GTX" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "NOAA Vertical Datum .GTX" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gtx" );
