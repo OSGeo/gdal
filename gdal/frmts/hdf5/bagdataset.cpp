@@ -224,12 +224,17 @@ bool BAGRasterBand::Initialize( hid_t hDatasetID, const char *pszName )
         && GH5_FetchAttribute( hDatasetID, "Minimum Elevation Value", 
                                dfMinimum ) )
         bMinMaxSet = true;
-    else if( EQUAL(pszName,"uncertainty") 
+    else if( EQUAL(pszName,"uncertainty")
              && GH5_FetchAttribute( hDatasetID, "Maximum Uncertainty Value", 
                                     dfMaximum ) 
              && GH5_FetchAttribute( hDatasetID, "Minimum Uncertainty Value", 
                                     dfMinimum ) )
-        bMinMaxSet = true;
+    {
+        /* Some products where uncertainty band is completely set to nodata */
+        /* wrongly declare minimum and maximum to 0.0 */
+        if( dfMinimum != 0.0 && dfMaximum != 0.0 )
+            bMinMaxSet = true;
+    }
     else if( EQUAL(pszName,"nominal_elevation") 
              && GH5_FetchAttribute( hDatasetID, "max_value", 
                                     dfMaximum ) 
@@ -286,13 +291,7 @@ double BAGRasterBand::GetNoDataValue( int * pbSuccess )
     if( EQUAL(GetDescription(),"elevation") )
         return  1000000.0;
     else if( EQUAL(GetDescription(),"uncertainty") )
-    {
-        /* See http://trac.osgeo.org/gdal/ticket/5482 for a discussion whether */
-        /* this should be 0.0 or 1000000.0. Real-world datasets tend do be */
-        /* 1000000.0 */
-        /* FIXME? Should we handle 0.0 in IReadBlock() as nodata as well ? */
         return 1000000.0;
-    }
     else if( EQUAL(GetDescription(),"nominal_elevation") )
         return 1000000.0;
     else
