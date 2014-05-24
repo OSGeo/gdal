@@ -960,6 +960,7 @@ void GDALRegister_IRIS()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "IRIS" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "IRIS data (.PPI, .CAPPi etc)" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

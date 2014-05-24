@@ -54,6 +54,7 @@ OGROCILoaderLayer::OGROCILoaderLayer( OGROCIDataSource *poDSIn,
     nLDRMode = LDRM_UNKNOWN;
 
     poFeatureDefn = new OGRFeatureDefn( pszTableName );
+    SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
     
     pszGeomName = CPLStrdup( pszGeomColIn );

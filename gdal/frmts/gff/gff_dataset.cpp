@@ -338,6 +338,7 @@ void GDALRegister_GFF(void)
     if ( GDALGetDriverByName("GFF") == NULL ) {
         poDriver = new GDALDriver();
         poDriver->SetDescription("GFF");
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, 
                                   "Ground-based SAR Applications Testbed File Format (.gff)");
         poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_various.html#GFF");

@@ -327,12 +327,12 @@ int GIFAbstractDataset::Identify( GDALOpenInfo * poOpenInfo )
 void GIFAbstractDataset::DetectGeoreferencing( GDALOpenInfo * poOpenInfo )
 {
     bGeoTransformValid =
-        GDALReadWorldFile( poOpenInfo->pszFilename, NULL,
-                           adfGeoTransform );
+        GDALReadWorldFile2( poOpenInfo->pszFilename, NULL,
+                           adfGeoTransform, poOpenInfo->GetSiblingFiles(), NULL );
     if ( !bGeoTransformValid )
     {
         bGeoTransformValid =
-            GDALReadWorldFile( poOpenInfo->pszFilename, ".wld",
-                               adfGeoTransform );
+            GDALReadWorldFile2( poOpenInfo->pszFilename, ".wld",
+                               adfGeoTransform, poOpenInfo->GetSiblingFiles(), NULL );
     }
 }

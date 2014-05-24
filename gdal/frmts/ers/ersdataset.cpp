@@ -1434,6 +1434,7 @@ void GDALRegister_ERS()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "ERS" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "ERMapper .ers Labelled" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

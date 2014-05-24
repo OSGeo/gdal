@@ -87,6 +87,7 @@ OGRVFKLayer::OGRVFKLayer(const char *pszName,
 
     /* feature definition */
     poFeatureDefn = new OGRFeatureDefn(pszName);
+    SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 
     poFeatureDefn->Reference();

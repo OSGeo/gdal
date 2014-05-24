@@ -706,7 +706,7 @@ int OGR2SQLITEDealWithSpatialColumn(OGRLayer* poLayer,
 /*                          OGRSQLiteExecuteSQL()                       */
 /************************************************************************/
 
-OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
+OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
                                 const char *pszStatement,
                                 OGRGeometry *poSpatialFilter,
                                 const char *pszDialect )

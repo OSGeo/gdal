@@ -1067,7 +1067,7 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check for external overviews.                                   */
 /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename, poOpenInfo->papszSiblingFiles );
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename, poOpenInfo->GetSiblingFiles() );
 
     return( poDS );
 
@@ -1752,6 +1752,7 @@ void GDALRegister_GSAG()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "GSAG" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "Golden Software ASCII Grid (.grd)" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

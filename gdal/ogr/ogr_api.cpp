@@ -1016,3 +1016,24 @@ double OGR_G_GetArea( OGRGeometryH hGeom )
 {
     return OGR_G_Area( hGeom );
 }
+
+#ifndef OGR_ENABLED
+OGRGeometryH OGR_G_CreateGeometryFromJson( const char* )
+{
+    return NULL;
+}
+
+char* OGR_G_ExportToKML( OGRGeometryH, const char* pszAltitudeMode )
+{
+    return NULL;
+}
+
+char* OGR_G_ExportToJson( OGRGeometryH )
+{
+    return NULL;
+}
+char* OGR_G_ExportToJsonEx( OGRGeometryH, char** papszOptions )
+{
+    return NULL;
+}
+#endif

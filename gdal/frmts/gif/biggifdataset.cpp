@@ -442,7 +442,7 @@ CPLErr BIGGIFDataset::ReOpen()
 GDALDataset *BIGGIFDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    if( !Identify( poOpenInfo ) )
+    if( !Identify( poOpenInfo ) || poOpenInfo->fpL == NULL )
         return NULL;
 
     if( poOpenInfo->eAccess == GA_Update )
@@ -454,22 +454,14 @@ GDALDataset *BIGGIFDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Open the file.                                                  */
-/* -------------------------------------------------------------------- */
-    VSILFILE                *fp;
-
-    fp = VSIFOpenL( poOpenInfo->pszFilename, "r" );
-    if( fp == NULL )
-        return NULL;
-
-/* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
     BIGGIFDataset 	*poDS;
 
     poDS = new BIGGIFDataset();
 
-    poDS->fp = fp;
+    poDS->fp = poOpenInfo->fpL;
+    poOpenInfo->fpL = NULL;
     poDS->eAccess = GA_ReadOnly;
     if( poDS->ReOpen() == CE_Failure )
     {
@@ -500,12 +492,13 @@ GDALDataset *BIGGIFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( poOpenInfo->pszFilename );
-    poDS->TryLoadXML();
+    poDS->TryLoadXML( poOpenInfo->GetSiblingFiles() );
 
 /* -------------------------------------------------------------------- */
 /*      Support overviews.                                              */
 /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename,
+                                 poOpenInfo->GetSiblingFiles() );
 
     return poDS;
 }
@@ -538,6 +531,7 @@ void GDALRegister_BIGGIF()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "BIGGIF" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "Graphics Interchange Format (.gif)" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

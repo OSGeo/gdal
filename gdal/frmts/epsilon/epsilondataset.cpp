@@ -992,6 +992,7 @@ void GDALRegister_EPSILON()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "EPSILON" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                    "Epsilon wavelets" );

@@ -217,6 +217,17 @@ void OGRProxiedLayer::CloseUnderlyingLayer()
 }
 
 /************************************************************************/
+/*                          GetUnderlyingLayer()                        */
+/************************************************************************/
+
+OGRLayer* OGRProxiedLayer::GetUnderlyingLayer()
+{
+    if( poUnderlyingLayer == NULL )
+        OpenUnderlyingLayer();
+    return poUnderlyingLayer;
+}
+
+/************************************************************************/
 /*                          GetSpatialFilter()                          */
 /************************************************************************/
 

@@ -65,7 +65,7 @@ class OGRGeoconceptDataSource : public OGRDataSource
 //    OGRErr         DeleteLayer( int iLayer );
     int            TestCapability( const char* pszCap );
 
-    OGRLayer*      CreateLayer( const char* pszName, 
+    OGRLayer*      ICreateLayer( const char* pszName, 
                                 OGRSpatialReference* poSpatialRef = NULL,
                                 OGRwkbGeometryType eGType = wkbUnknown,
                                 char** papszOptions = NULL );

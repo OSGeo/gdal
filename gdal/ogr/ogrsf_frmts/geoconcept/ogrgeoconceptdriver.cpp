@@ -64,6 +64,15 @@ OGRDataSource *OGRGeoconceptDriver::Open( const char* pszFilename,
 {
     OGRGeoconceptDataSource  *poDS;
 
+/* -------------------------------------------------------------------- */
+/*      We will only consider .gxt and .txt files.                      */
+/* -------------------------------------------------------------------- */
+    const char* pszExtension = CPLGetExtension(pszFilename);
+    if( !EQUAL(pszExtension,"gxt") && !EQUAL(pszExtension,"txt") )
+    {
+        return NULL;
+    }
+
     poDS = new OGRGeoconceptDataSource();
 
     if( !poDS->Open( pszFilename, TRUE, bUpdate ) )
@@ -236,5 +245,22 @@ int OGRGeoconceptDriver::TestCapability( const char * pszCap )
 void RegisterOGRGeoconcept()
 
 {
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRGeoconceptDriver );
+    OGRSFDriver* poDriver = new OGRGeoconceptDriver;
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "gxt txt" );
+
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+"<CreationOptionList>"
+"  <Option name='EXTENSION' type='string-select' description='indicates the GeoConcept export file extension. TXT was used by earlier releases of GeoConcept. GXT is currently used.' default='GXT'>"
+"    <Value>GXT</Value>"
+"    <Value>TXT</Value>"
+"  </Option>"
+"  <Option name='CONFIG' type='string' description='path to the GCT file that describes the GeoConcept types definitions.'/>"
+"</CreationOptionList>");
+
+        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+"<LayerCreationOptionList>"
+"  <Option name='FEATURETYPE' type='string' description='TYPE.SUBTYPE : defines the feature to be created. The TYPE corresponds to one of the Name found in the GCT file for a type section. The SUBTYPE corresponds to one of the Name found in the GCT file for a sub-type section within the previous type section'/>"
+"</LayerCreationOptionList>");
+
+    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
 }

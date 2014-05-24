@@ -439,7 +439,7 @@ class OGROSMDataSource : public OGRDataSource
     virtual void        ReleaseResultSet( OGRLayer * poLayer );
 
 
-    int                 Open ( const char* pszFilename, int bUpdateIn );
+    int                 Open ( const char* pszFilename );
 
     int                 ResetReading();
     int                 ParseNextChunk(int nIdxLayer);
@@ -458,23 +458,6 @@ class OGROSMDataSource : public OGRDataSource
     int                 IsFeatureCountEnabled() const { return bIsFeatureCountEnabled; }
 
     int                 DoesAttributeNameLaundering() const { return bAttributeNameLaundering; }
-};
-
-/************************************************************************/
-/*                            OGROSMDriver                              */
-/************************************************************************/
-
-class OGROSMDriver : public OGRSFDriver
-{
-  public:
-                ~OGROSMDriver();
-
-    virtual const char    *GetName();
-    virtual OGRDataSource *Open( const char *, int );
-    virtual OGRDataSource *CreateDataSource( const char * pszName,
-                                             char **papszOptions );
-
-    virtual int            TestCapability( const char * );
 };
 
 #endif /* ndef _OGR_OSM_H_INCLUDED */

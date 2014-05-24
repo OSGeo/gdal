@@ -35,34 +35,27 @@ CPL_CVSID("$Id$");
 extern "C" void RegisterOGRSUA();
 
 /************************************************************************/
-/*                           ~OGRSUADriver()                            */
-/************************************************************************/
-
-OGRSUADriver::~OGRSUADriver()
-
-{
-}
-
-/************************************************************************/
-/*                              GetName()                               */
-/************************************************************************/
-
-const char *OGRSUADriver::GetName()
-
-{
-    return "SUA";
-}
-
-/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-OGRDataSource *OGRSUADriver::Open( const char * pszFilename, int bUpdate )
+static GDALDataset *OGRSUADriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
+    if( poOpenInfo->eAccess == GA_Update ||
+        poOpenInfo->fpL == NULL ||
+        !poOpenInfo->TryToIngest(10000) )
+        return NULL;
+
+    int bIsSUA = ( strstr((const char*)poOpenInfo->pabyHeader, "\nTYPE=") != NULL &&
+            strstr((const char*)poOpenInfo->pabyHeader, "\nTITLE=") != NULL &&
+            (strstr((const char*)poOpenInfo->pabyHeader, "\nPOINT=") != NULL ||
+            strstr((const char*)poOpenInfo->pabyHeader, "\nCIRCLE ") != NULL));
+    if( !bIsSUA )
+        return NULL;
+
     OGRSUADataSource   *poDS = new OGRSUADataSource();
 
-    if( !poDS->Open( pszFilename, bUpdate ) )
+    if( !poDS->Open( poOpenInfo->pszFilename ) )
     {
         delete poDS;
         poDS = NULL;
@@ -72,22 +65,30 @@ OGRDataSource *OGRSUADriver::Open( const char * pszFilename, int bUpdate )
 }
 
 /************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRSUADriver::TestCapability( const char * pszCap )
-
-{
-    return FALSE;
-}
-
-/************************************************************************/
 /*                           RegisterOGRSUA()                           */
 /************************************************************************/
 
 void RegisterOGRSUA()
 
 {
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRSUADriver );
+    GDALDriver  *poDriver;
+
+    if( GDALGetDriverByName( "SUA" ) == NULL )
+    {
+        poDriver = new GDALDriver();
+
+        poDriver->SetDescription( "SUA" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                                   "Tim Newport-Peace's Special Use Airspace Format" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                                   "drv_sua.html" );
+
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
+        poDriver->pfnOpen = OGRSUADriverOpen;
+
+        GetGDALDriverManager()->RegisterDriver( poDriver );
+    }
 }
 

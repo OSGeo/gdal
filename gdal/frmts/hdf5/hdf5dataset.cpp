@@ -65,6 +65,7 @@ void GDALRegister_HDF5()
     {
         poDriver = new GDALDriver();
         poDriver->SetDescription("HDF5");
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
                                   "Hierarchical Data Format Release 5");
         poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,

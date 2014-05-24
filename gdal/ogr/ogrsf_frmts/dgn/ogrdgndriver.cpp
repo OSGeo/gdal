@@ -33,36 +33,32 @@
 CPL_CVSID("$Id$");
 
 /************************************************************************/
-/*                          ~OGRDGNDriver()                             */
+/*                                Open()                                */
 /************************************************************************/
 
-OGRDGNDriver::~OGRDGNDriver()
+static int OGRDGNDriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {
-}
-
-/************************************************************************/
-/*                              GetName()                               */
-/************************************************************************/
-
-const char *OGRDGNDriver::GetName()
-
-{
-    return "DGN";
+    return poOpenInfo->fpL != NULL &&
+           poOpenInfo->nHeaderBytes >= 512 &&
+           DGNTestOpen(poOpenInfo->pabyHeader, poOpenInfo->nHeaderBytes);
 }
 
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-OGRDataSource *OGRDGNDriver::Open( const char * pszFilename, int bUpdate )
+static GDALDataset *OGRDGNDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     OGRDGNDataSource    *poDS;
+    
+    if( !OGRDGNDriverIdentify(poOpenInfo) )
+        return NULL;
 
     poDS = new OGRDGNDataSource();
 
-    if( !poDS->Open( pszFilename, TRUE, bUpdate )
+    if( !poDS->Open( poOpenInfo->pszFilename, TRUE, (poOpenInfo->eAccess == GA_Update) )
         || poDS->GetLayerCount() == 0 )
     {
         delete poDS;
@@ -73,11 +69,12 @@ OGRDataSource *OGRDGNDriver::Open( const char * pszFilename, int bUpdate )
 }
 
 /************************************************************************/
-/*                          CreateDataSource()                          */
+/*                              Create()                                */
 /************************************************************************/
 
-OGRDataSource *OGRDGNDriver::CreateDataSource( const char * pszName,
-                                               char **papszOptions )
+static GDALDataset *OGRDGNDriverCreate( const char * pszName,
+                                int nBands, int nXSize, int nYSize, GDALDataType eDT,
+                                char **papszOptions )
 
 {
 /* -------------------------------------------------------------------- */
@@ -97,25 +94,48 @@ OGRDataSource *OGRDGNDriver::CreateDataSource( const char * pszName,
 }
 
 /************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRDGNDriver::TestCapability( const char * pszCap )
-
-{
-    if( EQUAL(pszCap,ODrCCreateDataSource) )
-        return TRUE;
-    else
-        return FALSE;
-}
-
-/************************************************************************/
 /*                          RegisterOGRDGN()                            */
 /************************************************************************/
 
 void RegisterOGRDGN()
 
 {
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRDGNDriver );
+    GDALDriver  *poDriver;
+
+    if( GDALGetDriverByName( "DGN" ) == NULL )
+    {
+        poDriver = new GDALDriver();
+
+        poDriver->SetDescription( "DGN" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                                   "Microstation DGN" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "dgn" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                                   "drv_dgn.html" );
+
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+"<CreationOptionList>"
+"  <Option name='3D' type='boolean' description='whether 2D (seed_2d.dgn) or 3D (seed_3d.dgn) seed file should be used. This option is ignored if the SEED option is provided'/>"
+"  <Option name='SEED' type='string' description='Filename of seed file to use'/>"
+"  <Option name='COPY_WHOLE_SEED_FILE' type='boolean' description='whether the whole seed file should be copied. If not, only the first three elements (and potentially the color table) will be copied.' default='NO'/>"
+"  <Option name='COPY_SEED_FILE_COLOR_TABLE' type='boolean' description='whether the color table should be copied from the seed file.' default='NO'/>"
+"  <Option name='MASTER_UNIT_NAME' type='string' description='Override the master unit name from the seed file with the provided one or two character unit name.'/>"
+"  <Option name='SUB_UNIT_NAME' type='string' description='Override the master unit name from the seed file with the provided one or two character unit name.'/>"
+"  <Option name='MASTER_UNIT_NAME' type='string' description='Override the master unit name from the seed file with the provided one or two character unit name.'/>"
+"  <Option name='SUB_UNIT_NAME' type='string' description='Override the sub unit name from the seed file with the provided one or two character unit name.'/>"
+"  <Option name='SUB_UNITS_PER_MASTER_UNIT' type='int' description='Override the number of subunits per master unit. By default the seed file value is used.'/>"
+"  <Option name='UOR_PER_SUB_UNIT' type='int' description='Override the number of UORs (Units of Resolution) per sub unit. By default the seed file value is used.'/>"
+"  <Option name='ORIGIN' type='string' description='Value as x,y,z. Override the origin of the design plane. By default the origin from the seed file is used.'/>"
+"</CreationOptionList>");
+
+        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST, "<LayerCreationOptionList/>" );
+
+        poDriver->pfnOpen = OGRDGNDriverOpen;
+        poDriver->pfnIdentify = OGRDGNDriverIdentify;
+        poDriver->pfnCreate = OGRDGNDriverCreate;
+
+        GetGDALDriverManager()->RegisterDriver( poDriver );
+    }
 }
 

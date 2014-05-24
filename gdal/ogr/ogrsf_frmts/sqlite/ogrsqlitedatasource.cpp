@@ -1850,11 +1850,11 @@ void OGRSQLiteDataSource::ReleaseResultSet( OGRLayer * poLayer )
 }
 
 /************************************************************************/
-/*                            CreateLayer()                             */
+/*                           ICreateLayer()                             */
 /************************************************************************/
 
 OGRLayer *
-OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
+OGRSQLiteDataSource::ICreateLayer( const char * pszLayerNameIn,
                                   OGRSpatialReference *poSRS,
                                   OGRwkbGeometryType eType,
                                   char ** papszOptions )

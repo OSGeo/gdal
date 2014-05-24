@@ -2269,7 +2269,9 @@ void GDALComposeGeoTransforms(const double *padfGT1, const double *padfGT2,
  *
  * @param nArgc number of values in the argument list.
  * @param ppapszArgv pointer to the argument list array (will be updated in place).
- * @param nOptions unused for now.
+ * @param nOptions a or-able combination of GDAL_OF_RASTER and GDAL_OF_VECTOR
+ *                 to determine which drivers should be displayed by --formats.
+ *                 If set to 0, GDAL_OF_RASTER is assumed.
  *
  * @return updated nArgc argument count.  Return of 0 requests terminate 
  * without error, return of -1 requests exit with error code.
@@ -2283,8 +2285,6 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
     int  iArg;
     char **papszArgv = *ppapszArgv;
 
-    (void) nOptions;
-    
 /* -------------------------------------------------------------------- */
 /*      Preserve the program name.                                      */
 /* -------------------------------------------------------------------- */
@@ -2475,34 +2475,55 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
         else if( EQUAL(papszArgv[iArg], "--formats") )
         {
             int iDr;
+            
+            if( nOptions == 0 )
+                nOptions = GDAL_OF_RASTER;
 
             printf( "Supported Formats:\n" );
             for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
             {
                 GDALDriverH hDriver = GDALGetDriver(iDr);
-                const char *pszRWFlag, *pszVirtualIO, *pszSubdatasets;
-                
-                if( GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) )
+
+                const char *pszRWFlag, *pszVirtualIO, *pszSubdatasets, *pszKind;
+                char** papszMD = GDALGetMetadata( hDriver, NULL );
+
+                if( nOptions == GDAL_OF_RASTER &&
+                    !CSLFetchBoolean( papszMD, GDAL_DCAP_RASTER, FALSE ) )
+                    continue;
+                if( nOptions == GDAL_OF_VECTOR &&
+                    !CSLFetchBoolean( papszMD, GDAL_DCAP_VECTOR, FALSE ) )
+                    continue;
+
+                if( CSLFetchBoolean( papszMD, GDAL_DCAP_CREATE, FALSE ) )
                     pszRWFlag = "rw+";
-                else if( GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY, 
-                                              NULL ) )
+                else if( CSLFetchBoolean( papszMD, GDAL_DCAP_CREATECOPY, FALSE ) )
                     pszRWFlag = "rw";
                 else
                     pszRWFlag = "ro";
                 
-                if( GDALGetMetadataItem( hDriver, GDAL_DCAP_VIRTUALIO, NULL) )
+                if( CSLFetchBoolean( papszMD, GDAL_DCAP_VIRTUALIO, FALSE ) )
                     pszVirtualIO = "v";
                 else
                     pszVirtualIO = "";
 
-                pszSubdatasets = GDALGetMetadataItem( hDriver, GDAL_DMD_SUBDATASETS, NULL );
-                if( pszSubdatasets && CSLTestBoolean( pszSubdatasets ) )
+                if( CSLFetchBoolean( papszMD, GDAL_DMD_SUBDATASETS, FALSE ) )
                     pszSubdatasets = "s";
                 else
                     pszSubdatasets = "";
 
-                printf( "  %s (%s%s%s): %s\n",
+                if( CSLFetchBoolean( papszMD, GDAL_DCAP_RASTER, FALSE ) &&
+                    CSLFetchBoolean( papszMD, GDAL_DCAP_VECTOR, FALSE ))
+                    pszKind = "raster,vector";
+                else if( CSLFetchBoolean( papszMD, GDAL_DCAP_RASTER, FALSE ) )
+                    pszKind = "raster";
+                else if( CSLFetchBoolean( papszMD, GDAL_DCAP_VECTOR, FALSE ) )
+                    pszKind = "vector";
+                else
+                    pszKind = "unknown kind";
+
+                printf( "  %s -%s- (%s%s%s): %s\n",
                         GDALGetDriverShortName( hDriver ),
+                        pszKind,
                         pszRWFlag, pszVirtualIO, pszSubdatasets,
                         GDALGetDriverLongName( hDriver ) );
             }
@@ -2544,10 +2565,16 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
             printf( "  Long Name: %s\n", GDALGetDriverLongName( hDriver ) );
 
             papszMD = GDALGetMetadata( hDriver, NULL );
+            if( CSLFetchBoolean( papszMD, GDAL_DCAP_RASTER, FALSE ) )
+                printf( "  Supports: Raster\n" );
+            if( CSLFetchBoolean( papszMD, GDAL_DCAP_VECTOR, FALSE ) )
+                printf( "  Supports: Vector\n" );
 
-            if( CSLFetchNameValue( papszMD, GDAL_DMD_EXTENSION ) )
-                printf( "  Extension: %s\n", 
-                        CSLFetchNameValue( papszMD, GDAL_DMD_EXTENSION ) );
+            const char* pszExt = CSLFetchNameValue( papszMD, GDAL_DMD_EXTENSIONS );
+            if( pszExt != NULL )
+                printf( "  Extension%s: %s\n", (strchr(pszExt, ' ') ? "s" : ""),
+                        pszExt );
+
             if( CSLFetchNameValue( papszMD, GDAL_DMD_MIMETYPE ) )
                 printf( "  Mime Type: %s\n", 
                         CSLFetchNameValue( papszMD, GDAL_DMD_MIMETYPE ) );
@@ -2578,6 +2605,34 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                 CPLDestroyXMLNode( psCOL );
                 
                 printf( "\n%s\n", pszFormattedXML );
+                CPLFree( pszFormattedXML );
+            }
+            if( CSLFetchNameValue( papszMD, GDAL_DS_LAYER_CREATIONOPTIONLIST ) )
+            {
+                CPLXMLNode *psCOL = 
+                    CPLParseXMLString( 
+                        CSLFetchNameValue( papszMD, 
+                                           GDAL_DS_LAYER_CREATIONOPTIONLIST ) );
+                char *pszFormattedXML = 
+                    CPLSerializeXMLTree( psCOL );
+
+                CPLDestroyXMLNode( psCOL );
+                
+                printf( "\n%s\n", pszFormattedXML );
+                CPLFree( pszFormattedXML );
+            }
+            if( CSLFetchNameValue( papszMD, GDAL_DMD_OPENOPTIONLIST ) )
+            {
+                CPLXMLNode *psCOL = 
+                    CPLParseXMLString( 
+                        CSLFetchNameValue( papszMD, 
+                                           GDAL_DMD_OPENOPTIONLIST ) );
+                char *pszFormattedXML = 
+                    CPLSerializeXMLTree( psCOL );
+
+                CPLDestroyXMLNode( psCOL );
+                
+                printf( "%s\n", pszFormattedXML );
                 CPLFree( pszFormattedXML );
             }
             return 0;

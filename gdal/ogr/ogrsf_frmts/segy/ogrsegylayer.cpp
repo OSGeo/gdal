@@ -805,14 +805,15 @@ static const FieldDesc SEGYHeaderFields[] =
 
 OGRSEGYHeaderLayer::OGRSEGYHeaderLayer( const char* pszLayerName,
                                         SEGYBinaryFileHeader* psBFH,
-                                        char* pszHeaderTextIn )
+                                        const char* pszHeaderTextIn )
 
 {
     bEOF = FALSE;
     memcpy(&sBFH, psBFH, sizeof(sBFH));
-    pszHeaderText = pszHeaderTextIn;
+    pszHeaderText = CPLStrdup(pszHeaderTextIn);
 
     poFeatureDefn = new OGRFeatureDefn( pszLayerName );
+    SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbNone );
 

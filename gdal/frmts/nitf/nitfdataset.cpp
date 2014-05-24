@@ -494,7 +494,14 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
 /* -------------------------------------------------------------------- */
     NITFFile *psFile;
 
-    psFile = NITFOpen( pszFilename, poOpenInfo->eAccess == GA_Update );
+    if( poOpenInfo->fpL )
+    {
+        VSILFILE* fpL = poOpenInfo->fpL;
+        poOpenInfo->fpL = NULL;
+        psFile = NITFOpenEx( fpL, pszFilename );
+    }
+    else
+        psFile = NITFOpen( pszFilename, poOpenInfo->eAccess == GA_Update );
     if( psFile == NULL )
     {
         return NULL;
@@ -612,7 +619,7 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
             static const char * const apszDrivers[] = { "JP2KAK", "JP2ECW", "JP2MRSID",
                                                         "JPEG2000", "JP2OPENJPEG", NULL };
             poDS->poJ2KDataset = (GDALPamDataset *)
-                GDALOpenInternal( osDSName, GA_ReadOnly, apszDrivers);
+                GDALOpenEx( osDSName, GDAL_OF_RASTER, apszDrivers, NULL, NULL);
 
             if( poDS->poJ2KDataset == NULL )
             {
@@ -896,8 +903,8 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
 /*      Try looking for a .nfw file.                                    */
 /* -------------------------------------------------------------------- */
     if( psImage
-        && GDALReadWorldFile( pszFilename, "nfw", 
-                              poDS->adfGeoTransform ) )
+        && GDALReadWorldFile2( pszFilename, "nfw", 
+                              poDS->adfGeoTransform, poOpenInfo->GetSiblingFiles(), NULL ) )
     {
         const char *pszHDR;
         VSILFILE *fpHDR;
@@ -1552,7 +1559,7 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
     }
 
     poDS->bInLoadXML = TRUE;
-    poDS->TryLoadXML();
+    poDS->TryLoadXML(poOpenInfo->GetSiblingFiles());
     poDS->bInLoadXML = FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -1564,7 +1571,7 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
 
     if( pszOverviewFile == NULL )
     {
-        if( poDS->CheckForRSets(pszFilename) )
+        if( poDS->CheckForRSets(pszFilename, poOpenInfo->GetSiblingFiles()) )
             pszOverviewFile = poDS->osRSetVRT;
     }        
 
@@ -1600,7 +1607,7 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
     if( !EQUAL(poOpenInfo->pszFilename,pszFilename) )
         poDS->oOvManager.Initialize( poDS, ":::VIRTUAL:::" );
     else
-        poDS->oOvManager.Initialize( poDS, pszFilename );
+        poDS->oOvManager.Initialize( poDS, pszFilename, poOpenInfo->GetSiblingFiles() );
 
     /* If there are PAM overviews, don't expose the underlying JPEG dataset */
     /* overviews (in case of monoblock C3) */
@@ -3145,7 +3152,8 @@ const GDAL_GCP *NITFDataset::GetGCPs()
 /*      overview file. (#3457)                                          */
 /************************************************************************/
 
-int NITFDataset::CheckForRSets( const char *pszNITFFilename )
+int NITFDataset::CheckForRSets( const char *pszNITFFilename,
+                                char** papszSiblingFiles )
 
 {
     bool isR0File = EQUAL(CPLGetExtension(pszNITFFilename),"r0");
@@ -3169,8 +3177,17 @@ int NITFDataset::CheckForRSets( const char *pszNITFFilename )
         else
           osTarget.Printf( "%s.r%d", pszNITFFilename, i );
 
-        if( VSIStatL( osTarget, &sStat ) != 0 )
-            break;
+        if( papszSiblingFiles == NULL )
+        {
+            if( VSIStatL( osTarget, &sStat ) != 0 )
+                break;
+        }
+        else
+        {
+            if( CSLFindStringCaseSensitive(papszSiblingFiles,
+                                           CPLGetFilename( osTarget )) < 0 )
+                break;
+        }
 
         aosRSetFilenames.push_back( osTarget );
     }
@@ -3635,13 +3652,29 @@ char **NITFDataset::AddFile(char **papszFileList, const char* EXTENSION, const c
 {
     VSIStatBufL sStatBuf;
     CPLString osTarget = CPLResetExtension( osNITFFilename, EXTENSION );
-    if( VSIStatL( osTarget, &sStatBuf ) == 0 )
-        papszFileList = CSLAddString( papszFileList, osTarget );
+    if( oOvManager.GetSiblingFiles() != NULL )
+    {
+        if( CSLFindStringCaseSensitive( oOvManager.GetSiblingFiles(), 
+                           CPLGetFilename(osTarget) ) >= 0 )
+            papszFileList = CSLAddString( papszFileList, osTarget );
+        else
+        {
+            osTarget = CPLResetExtension( osNITFFilename, extension );
+            if( CSLFindStringCaseSensitive( oOvManager.GetSiblingFiles(), 
+                           CPLGetFilename(osTarget) ) >= 0 )
+                papszFileList = CSLAddString( papszFileList, osTarget );
+        }
+    }
     else
     {
-        osTarget = CPLResetExtension( osNITFFilename, extension );
         if( VSIStatL( osTarget, &sStatBuf ) == 0 )
             papszFileList = CSLAddString( papszFileList, osTarget );
+        else
+        {
+            osTarget = CPLResetExtension( osNITFFilename, extension );
+            if( VSIStatL( osTarget, &sStatBuf ) == 0 )
+                papszFileList = CSLAddString( papszFileList, osTarget );
+        }
     }
 
     return papszFileList;
@@ -5699,6 +5732,7 @@ void GDALRegister_NITF()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "NITF" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "National Imagery Transmission Format" );
         

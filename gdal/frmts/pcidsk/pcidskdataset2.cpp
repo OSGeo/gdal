@@ -29,117 +29,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "pcidsk.h"
-#include "pcidsk_pct.h"
-#include "gdal_pam.h"
-#include "cpl_string.h"
-#include "ogr_spatialref.h"
+#include "pcidskdataset2.h"
 
 CPL_CVSID("$Id$");
 
-using namespace PCIDSK;
-
 const PCIDSK::PCIDSKInterfaces *PCIDSK2GetInterfaces(void);
-
-/************************************************************************/
-/*                              PCIDSK2Dataset                           */
-/************************************************************************/
-
-class PCIDSK2Dataset : public GDALPamDataset
-{
-    friend class PCIDSK2Band;
-
-    CPLString   osSRS;
-    CPLString   osLastMDValue;
-    char      **papszLastMDListValue;
-
-    PCIDSKFile  *poFile;
-
-    static GDALDataType  PCIDSKTypeToGDAL( eChanType eType );
-    void                 ProcessRPC();
-
-  public:
-                PCIDSK2Dataset();
-                ~PCIDSK2Dataset();
-
-    static int           Identify( GDALOpenInfo * );
-    static GDALDataset  *Open( GDALOpenInfo * );
-    static GDALDataset  *LLOpen( const char *pszFilename, PCIDSK::PCIDSKFile *,
-                                 GDALAccess eAccess );
-    static GDALDataset  *Create( const char * pszFilename,
-                                 int nXSize, int nYSize, int nBands,
-                                 GDALDataType eType,
-                                 char **papszParmList );
-
-    char              **GetFileList(void);
-    CPLErr              GetGeoTransform( double * padfTransform );
-    CPLErr              SetGeoTransform( double * );
-    const char         *GetProjectionRef();
-    CPLErr              SetProjection( const char * );
-
-    virtual char      **GetMetadataDomainList();
-    CPLErr              SetMetadata( char **, const char * );
-    char              **GetMetadata( const char* );
-    CPLErr              SetMetadataItem(const char*,const char*,const char*);
-    const char         *GetMetadataItem( const char*, const char*);
-
-    virtual void FlushCache(void);
-
-    virtual CPLErr IBuildOverviews( const char *, int, int *,
-                                    int, int *, GDALProgressFunc, void * );
-};
-
-/************************************************************************/
-/*                             PCIDSK2Band                              */
-/************************************************************************/
-
-class PCIDSK2Band : public GDALPamRasterBand
-{
-    friend class PCIDSK2Dataset;
-
-    PCIDSKChannel *poChannel;
-    PCIDSKFile    *poFile;
-
-    void        RefreshOverviewList();
-    std::vector<PCIDSK2Band*> apoOverviews;
-    
-    CPLString   osLastMDValue;
-    char      **papszLastMDListValue;
-
-    bool        CheckForColorTable();
-    GDALColorTable *poColorTable;
-    bool        bCheckedForColorTable;
-    int         nPCTSegNumber;
-
-    char      **papszCategoryNames;
-
-    void        Initialize();
-
-  public:
-                PCIDSK2Band( PCIDSK2Dataset *, PCIDSKFile *, int );
-                PCIDSK2Band( PCIDSKChannel * );
-                ~PCIDSK2Band();
-
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
-
-    virtual int        GetOverviewCount();
-    virtual GDALRasterBand *GetOverview(int);
-
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual GDALColorTable *GetColorTable();
-    virtual CPLErr SetColorTable( GDALColorTable * ); 
-
-    virtual void        SetDescription( const char * );
-
-    virtual char      **GetMetadataDomainList();
-    CPLErr              SetMetadata( char **, const char * );
-    char              **GetMetadata( const char* );
-    CPLErr              SetMetadataItem(const char*,const char*,const char*);
-    const char         *GetMetadataItem( const char*, const char*);
-
-    virtual char      **GetCategoryNames();
-};
 
 /************************************************************************/
 /* ==================================================================== */
@@ -899,6 +793,12 @@ PCIDSK2Dataset::PCIDSK2Dataset()
 PCIDSK2Dataset::~PCIDSK2Dataset()
 {
     FlushCache();
+
+    while( apoLayers.size() > 0 )
+    {
+        delete apoLayers.back();
+        apoLayers.pop_back();
+    }
 
     try {
         delete poFile;
@@ -1771,15 +1671,34 @@ GDALDataset *PCIDSK2Dataset::Open( GDALOpenInfo * poOpenInfo )
             return NULL;
         }
 
-        /* Check if this is a vector-only PCIDSK file */
-        if( poFile->GetChannels() == 0 &&
+        /* Check if this is a vector-only PCIDSK file and that we are */
+        /* opened in raster-only mode */
+        if( poOpenInfo->eAccess == GA_ReadOnly &&
+            (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 &&
+            (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) == 0 &&
+            poFile->GetChannels() == 0 &&
             poFile->GetSegment( PCIDSK::SEG_VEC, "" ) != NULL )
         {
+            CPLDebug("PCIDSK", "This is a vector-only PCIDSK dataset, "
+                     "but it has been opened in read-only in raster-only mode");
+            delete poFile;
+            return NULL;
+        }
+        /* Reverse test */
+        if( poOpenInfo->eAccess == GA_ReadOnly &&
+            (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) == 0 &&
+            (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0 &&
+            poFile->GetChannels() != 0 &&
+            poFile->GetSegment( PCIDSK::SEG_VEC, "" ) == NULL )
+        {
+            CPLDebug("PCIDSK", "This is a raster-only PCIDSK dataset, "
+                     "but it has been opened in read-only in vector-only mode");
             delete poFile;
             return NULL;
         }
 
-        return LLOpen( poOpenInfo->pszFilename, poFile, poOpenInfo->eAccess );
+        return LLOpen( poOpenInfo->pszFilename, poFile, poOpenInfo->eAccess,
+                       poOpenInfo->GetSiblingFiles() );
     }
 /* -------------------------------------------------------------------- */
 /*      Trap exceptions.                                                */
@@ -1807,7 +1726,8 @@ GDALDataset *PCIDSK2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
 GDALDataset *PCIDSK2Dataset::LLOpen( const char *pszFilename, 
                                      PCIDSK::PCIDSKFile *poFile,
-                                     GDALAccess eAccess )
+                                     GDALAccess eAccess,
+                                     char** papszSiblingFiles )
 
 {
     try {
@@ -1879,6 +1799,18 @@ GDALDataset *PCIDSK2Dataset::LLOpen( const char *pszFilename,
         }
 
 /* -------------------------------------------------------------------- */
+/*      Create vector layers from vector segments.                      */
+/* -------------------------------------------------------------------- */
+        PCIDSK::PCIDSKSegment *segobj;
+        for( segobj = poFile->GetSegment( PCIDSK::SEG_VEC, "" );
+             segobj != NULL;
+             segobj = poFile->GetSegment( PCIDSK::SEG_VEC, "",
+                                          segobj->GetSegmentNumber() ) )
+        {
+            poDS->apoLayers.push_back( new OGRPCIDSKLayer( segobj, eAccess == GA_Update ) );
+        }
+
+/* -------------------------------------------------------------------- */
 /*      Process RPC segment, if there is one.                           */
 /* -------------------------------------------------------------------- */
         poDS->ProcessRPC();
@@ -1887,12 +1819,12 @@ GDALDataset *PCIDSK2Dataset::LLOpen( const char *pszFilename,
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
         poDS->SetDescription( pszFilename );
-        poDS->TryLoadXML();
+        poDS->TryLoadXML( papszSiblingFiles );
 
 /* -------------------------------------------------------------------- */
 /*      Open overviews.                                                 */
 /* -------------------------------------------------------------------- */
-        poDS->oOvManager.Initialize( poDS, pszFilename );
+        poDS->oOvManager.Initialize( poDS, pszFilename, papszSiblingFiles );
         
         return( poDS );
     }
@@ -1975,6 +1907,8 @@ GDALDataset *PCIDSK2Dataset::Create( const char * pszFilename,
 /*      Try creation.                                                   */
 /* -------------------------------------------------------------------- */
     try {
+        if( nBands == 0 )
+            nXSize = nYSize = 512;
         poFile = PCIDSK::Create( pszFilename, nXSize, nYSize, nBands, 
                                  &(aeChanTypes[0]), osOptions, 
                                  PCIDSK2GetInterfaces() );
@@ -2017,6 +1951,148 @@ GDALDataset *PCIDSK2Dataset::Create( const char * pszFilename,
 }
 
 /************************************************************************/
+/*                           TestCapability()                           */
+/************************************************************************/
+
+int PCIDSK2Dataset::TestCapability( const char * pszCap )
+
+{
+    if( EQUAL(pszCap,ODsCCreateLayer) )
+        return eAccess == GA_Update;
+    else
+        return FALSE;
+}
+
+/************************************************************************/
+/*                              GetLayer()                              */
+/************************************************************************/
+
+OGRLayer *PCIDSK2Dataset::GetLayer( int iLayer )
+
+{
+    if( iLayer < 0 || iLayer >= (int) apoLayers.size() )
+        return NULL;
+    else
+        return apoLayers[iLayer];
+}
+
+/************************************************************************/
+/*                           ICreateLayer()                             */
+/************************************************************************/
+
+OGRLayer *
+PCIDSK2Dataset::ICreateLayer( const char * pszLayerName,
+                                  OGRSpatialReference *poSRS,
+                                  OGRwkbGeometryType eType,
+                                  char ** papszOptions )
+    
+{
+/* -------------------------------------------------------------------- */
+/*      Verify we are in update mode.                                   */
+/* -------------------------------------------------------------------- */
+    if( eAccess != GA_Update )
+    {
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
+                  "Data source %s opened read-only.\n"
+                  "New layer %s cannot be created.\n",
+                  GetDescription(), pszLayerName );
+        
+        return NULL;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Figure out what type of layer we need.                          */
+/* -------------------------------------------------------------------- */
+    std::string osLayerType;
+
+    switch( wkbFlatten(eType) )
+    {
+      case wkbPoint:
+        osLayerType = "POINTS";
+        break;
+    
+      case wkbLineString:
+        osLayerType = "ARCS";
+        break;
+
+      case wkbPolygon:
+        osLayerType = "WHOLE_POLYGONS";
+        break;
+        
+      case wkbNone:
+        osLayerType = "TABLE";
+        break;
+
+      default:
+        break;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create the segment.                                             */
+/* -------------------------------------------------------------------- */
+    int     nSegNum = poFile->CreateSegment( pszLayerName, "", 
+                                             PCIDSK::SEG_VEC, 0L );
+    PCIDSK::PCIDSKSegment *poSeg = poFile->GetSegment( nSegNum );
+    PCIDSK::PCIDSKVectorSegment *poVecSeg = 
+        dynamic_cast<PCIDSK::PCIDSKVectorSegment*>( poSeg );
+
+    if( osLayerType != "" )
+        poSeg->SetMetadataValue( "LAYER_TYPE", osLayerType );
+
+/* -------------------------------------------------------------------- */
+/*      Do we need to apply a coordinate system?                        */
+/* -------------------------------------------------------------------- */
+    char *pszGeosys = NULL;
+    char *pszUnits = NULL;
+    double *padfPrjParams = NULL;
+
+    if( poSRS != NULL 
+        && poSRS->exportToPCI( &pszGeosys, &pszUnits, 
+                               &padfPrjParams ) == OGRERR_NONE )
+    {
+        try
+        {
+            std::vector<double> adfPCIParameters;
+            int i;
+
+            for( i = 0; i < 17; i++ )
+                adfPCIParameters.push_back( padfPrjParams[i] );
+            
+            if( EQUALN(pszUnits,"FOOT",4) )
+                adfPCIParameters.push_back( 
+                    (double)(int) PCIDSK::UNIT_US_FOOT );
+            else if( EQUALN(pszUnits,"INTL FOOT",9) )
+                adfPCIParameters.push_back( 
+                    (double)(int) PCIDSK::UNIT_INTL_FOOT );
+            else if( EQUALN(pszUnits,"DEGREE",6) )
+                adfPCIParameters.push_back( 
+                    (double)(int) PCIDSK::UNIT_DEGREE );
+            else 
+                adfPCIParameters.push_back( 
+                    (double)(int) PCIDSK::UNIT_METER );
+            
+            poVecSeg->SetProjection( pszGeosys, adfPCIParameters );
+        }
+        catch( PCIDSK::PCIDSKException ex )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "%s", ex.what() );
+        }
+        
+        CPLFree( pszGeosys );
+        CPLFree( pszUnits );
+        CPLFree( padfPrjParams );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create the layer object.                                        */
+/* -------------------------------------------------------------------- */
+    apoLayers.push_back( new OGRPCIDSKLayer( poSeg, TRUE ) );
+
+    return apoLayers[apoLayers.size()-1];
+}
+
+/************************************************************************/
 /*                        GDALRegister_PCIDSK()                         */
 /************************************************************************/
 
@@ -2030,6 +2106,8 @@ void GDALRegister_PCIDSK()
         poDriver = new GDALDriver();
 
         poDriver->SetDescription( "PCIDSK" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                    "PCIDSK Database File" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
@@ -2052,6 +2130,7 @@ void GDALRegister_PCIDSK()
 "   </Option>"
 "   <Option name='TILESIZE' type='int' default='127' description='Tile Size (INTERLEAVING=TILED only)'/>"
 "</CreationOptionList>" ); 
+        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST, "<LayerCreationOptionList/>" );
 
         poDriver->pfnIdentify = PCIDSK2Dataset::Identify;
         poDriver->pfnOpen = PCIDSK2Dataset::Open;

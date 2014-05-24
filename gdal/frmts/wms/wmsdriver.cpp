@@ -812,7 +812,7 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         CPLDestroyXMLNode(config);
         CPLError( CE_Failure, CPLE_NotSupported, 
-                  "The WMS driver does not support update access to existing"
+                  "The WMS poDriver does not support update access to existing"
                   " datasets.\n" );
         return NULL;
     }
@@ -889,22 +889,23 @@ static void GDALDeregister_WMS( GDALDriver * )
 /************************************************************************/
 
 void GDALRegister_WMS() {
-    GDALDriver *driver;
+    GDALDriver *poDriver;
     if (GDALGetDriverByName("WMS") == NULL) {
-        driver = new GDALDriver();
+        poDriver = new GDALDriver();
 
-        driver->SetDescription("WMS");
-        driver->SetMetadataItem(GDAL_DMD_LONGNAME, "OGC Web Map Service");
-        driver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_wms.html");
-        driver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-        driver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
+        poDriver->SetDescription("WMS");
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+        poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "OGC Web Map Service");
+        poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_wms.html");
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+        poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
 
-        driver->pfnOpen = GDALWMSDataset::Open;
-        driver->pfnIdentify = GDALWMSDataset::Identify;
-        driver->pfnUnloadDriver = GDALDeregister_WMS;
-        driver->pfnCreateCopy = GDALWMSDataset::CreateCopy;
+        poDriver->pfnOpen = GDALWMSDataset::Open;
+        poDriver->pfnIdentify = GDALWMSDataset::Identify;
+        poDriver->pfnUnloadDriver = GDALDeregister_WMS;
+        poDriver->pfnCreateCopy = GDALWMSDataset::CreateCopy;
 
-        GetGDALDriverManager()->RegisterDriver(driver);
+        GetGDALDriverManager()->RegisterDriver(poDriver);
 
         GDALWMSMiniDriverManager *const mdm = GetGDALWMSMiniDriverManager();
         mdm->Register(new GDALWMSMiniDriverFactory_WMS());

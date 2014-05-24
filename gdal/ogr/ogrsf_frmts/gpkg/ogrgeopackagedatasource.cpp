@@ -41,33 +41,6 @@
 static const char aGpkgId[4] = {0x47, 0x50, 0x31, 0x30};
 static const size_t szGpkgIdPos = 68;
 
-/* Cannnot count on the "PRAGMA application_id" command existing */
-/* it is a very recent addition to SQLite. */
-bool OGRGeoPackageDataSource::CheckApplicationId(const char * pszFileName)
-{
-    CPLAssert( hDB == NULL );
-    
-    char aFileId[4];
-
-    VSILFILE *fp = VSIFOpenL( pszFileName, "rb" );
-
-    /* Should never happen (always called after existence check) but just in case */
-    if ( ! fp ) return FALSE;
-
-    /* application_id is 4 bytes at offset 68 in the header */
-    VSIFSeekL(fp, szGpkgIdPos, SEEK_SET);
-    VSIFReadL(aFileId, 4, 1, fp);
-
-    VSIFCloseL(fp);
-    
-    for ( int i = 0; i < 4; i++ )
-    {
-        if ( aFileId[i] != aGpkgId[i] )
-            return FALSE;
-    }
-    return TRUE;
-}
-
 /* Only recent versions of SQLite will let us muck with application_id */
 /* via a PRAGMA statement, so we have to write directly into the */
 /* file header here. */
@@ -388,26 +361,6 @@ int OGRGeoPackageDataSource::Open(const char * pszFilename, int bUpdateIn )
     bUpdate = bUpdateIn;
     pszName = CPLStrdup( pszFilename );
 
-    /* Requirement 3: File name has to end in "gpkg" */
-    /* http://opengis.github.io/geopackage/#_file_extension_name */
-    int nLen = strlen(pszFilename);
-    if(! (nLen >= 5 && EQUAL(pszFilename + nLen - 5, ".gpkg")) )
-        return FALSE;
-
-    /* Check that the filename exists and is a file */
-    VSIStatBufL stat;
-    if( VSIStatL( pszFilename, &stat ) != 0 || !VSI_ISREG(stat.st_mode) )
-        return FALSE;
-
-    /* Requirement 2: A GeoPackage SHALL contain 0x47503130 ("GP10" in ASCII) */
-    /* in the application id */
-    /* http://opengis.github.io/geopackage/#_file_format */
-    if ( ! CheckApplicationId(pszFilename) )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, "bad application_id on '%s'", pszFilename);
-        return FALSE;
-    }
-
     /* See if we can open the SQLite database */
 #ifdef HAVE_SQLITE_VFS
     if (!OpenOrCreateDB((bUpdateIn) ? SQLITE_OPEN_READWRITE : SQLITE_OPEN_READONLY) )
@@ -697,14 +650,14 @@ OGRLayer* OGRGeoPackageDataSource::GetLayer( int iLayer )
 
 
 /************************************************************************/
-/*                           CreateLayer()                              */
+/*                          ICreateLayer()                              */
 /* Options:                                                             */
 /*   FID = primary key name                                             */
 /*   OVERWRITE = YES|NO, overwrite existing layer?                      */
 /*   SPATIAL_INDEX = YES|NO, TBD                                        */
 /************************************************************************/
 
-OGRLayer* OGRGeoPackageDataSource::CreateLayer( const char * pszLayerName,
+OGRLayer* OGRGeoPackageDataSource::ICreateLayer( const char * pszLayerName,
                                       OGRSpatialReference * poSpatialRef,
                                       OGRwkbGeometryType eGType,
                                       char **papszOptions )

@@ -53,6 +53,8 @@ sublibs:
 else
 
 sublibs:
+	(cd ogrsf_frmts/mitab; $(MAKE))
+	(cd ogrsf_frmts/generic; $(MAKE))
 
 endif
 

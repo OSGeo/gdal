@@ -1810,6 +1810,7 @@ void GDALRegister_RMF()
         poDriver = new GDALDriver();
 
         poDriver->SetDescription( "RMF" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                    "Raster Matrix Format" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,

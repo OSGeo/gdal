@@ -38,7 +38,7 @@ CPL_C_START
 #include "tiffio.h"
 CPL_C_END
 
-TIFF* VSI_TIFFOpen(const char* name, const char* mode);
+#include "tifvsi.h"
 
 CPL_CVSID("$Id$");
 
@@ -60,9 +60,13 @@ int NITFUncompressBILEVEL( NITFImage *psImage,
 
     osFilename.Printf( "/vsimem/nitf-wrk-%ld.tif", (long) CPLGetPID() );
 
-    TIFF *hTIFF = VSI_TIFFOpen( osFilename, "w+" );
+    VSILFILE* fpL = VSIFOpenL(osFilename, "w+");
+    if( fpL == NULL )
+        return FALSE;
+    TIFF *hTIFF = VSI_TIFFOpen( osFilename, "w+", fpL );
     if (hTIFF == NULL)
     {
+        VSIFCloseL(fpL);
         return FALSE;
     }
 
@@ -91,9 +95,10 @@ int NITFUncompressBILEVEL( NITFImage *psImage,
 /* -------------------------------------------------------------------- */
     int bResult = TRUE;
 
-    hTIFF = VSI_TIFFOpen( osFilename, "r" );
+    hTIFF = VSI_TIFFOpen( osFilename, "r", fpL );
     if (hTIFF == NULL)
     {
+        VSIFCloseL(fpL);
         return FALSE;
     }
 
@@ -105,6 +110,7 @@ int NITFUncompressBILEVEL( NITFImage *psImage,
     }
 
     TIFFClose( hTIFF );
+    VSIFCloseL(fpL);
 
     VSIUnlink( osFilename );
 

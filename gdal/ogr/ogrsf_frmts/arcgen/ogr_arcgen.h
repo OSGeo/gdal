@@ -76,8 +76,7 @@ class OGRARCGENDataSource : public OGRDataSource
                         OGRARCGENDataSource();
                         ~OGRARCGENDataSource();
 
-    int                 Open( const char * pszFilename,
-                              int bUpdate );
+    int                 Open( const char * pszFilename );
 
     virtual const char*         GetName() { return pszName; }
 
@@ -86,20 +85,5 @@ class OGRARCGENDataSource : public OGRDataSource
 
     virtual int                 TestCapability( const char * );
 };
-
-/************************************************************************/
-/*                             OGRARCGENDriver                             */
-/************************************************************************/
-
-class OGRARCGENDriver : public OGRSFDriver
-{
-  public:
-                ~OGRARCGENDriver();
-
-    virtual const char*         GetName();
-    virtual OGRDataSource*      Open( const char *, int );
-    virtual int                 TestCapability( const char * );
-};
-
 
 #endif /* ndef _OGR_ARCGEN_H_INCLUDED */

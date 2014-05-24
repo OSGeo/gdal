@@ -661,7 +661,7 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
             /* Re-open the DB to take into account the new tables*/
             OGRReleaseDataSource(hDS);
             
-            hDS = OGROpen(osFileName.c_str(), TRUE, NULL);
+            hDS = RasterliteOpenSQLiteDB(osFileName.c_str(), GA_Update);
 
             hRasterPyramidsLyr = OGR_DS_GetLayerByName(hDS, "raster_pyramids");
             if (hRasterPyramidsLyr == NULL)

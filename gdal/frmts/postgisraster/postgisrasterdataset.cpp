@@ -2809,7 +2809,7 @@ GetConnection(const char * pszFilename, char ** ppszConnectionString,
 int PostGISRasterDataset::Identify(GDALOpenInfo* poOpenInfo)
 {
     if (poOpenInfo->pszFilename == NULL ||
-        poOpenInfo->fp != NULL ||
+        poOpenInfo->fpL != NULL ||
         !EQUALN(poOpenInfo->pszFilename, "PG:", 3))
     {
         return FALSE;
@@ -3518,7 +3518,7 @@ PostGISRasterDataset::Delete(const char* pszFilename)
     poConn = GetConnection(pszFilename, &pszConnectionString, 
         &pszSchema, &pszTable, &pszColumn, &pszWhere,
         &nMode, &bBrowseDatabase);
-    if (poConn == NULL) {
+    if (poConn == NULL || pszSchema == NULL || pszTable == NULL) {
         CPLFree(pszConnectionString);
         CPLFree(pszSchema);
         CPLFree(pszTable);
@@ -3678,6 +3678,7 @@ void GDALRegister_PostGISRaster() {
         poDriver = new PostGISRasterDriver();
 
         poDriver->SetDescription("PostGISRaster");
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
                 "PostGIS Raster driver");
         poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );

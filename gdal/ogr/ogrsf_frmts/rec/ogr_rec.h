@@ -104,19 +104,4 @@ class OGRRECDataSource : public OGRDataSource
     int                 TestCapability( const char * );
 };
 
-/************************************************************************/
-/*                             OGRRECDriver                             */
-/************************************************************************/
-
-class OGRRECDriver : public OGRSFDriver
-{
-  public:
-                ~OGRRECDriver();
-                
-    const char *GetName();
-    OGRDataSource *Open( const char *, int );
-    int         TestCapability( const char * );
-};
-
-
 #endif /* ndef _OGR_REC_H_INCLUDED */

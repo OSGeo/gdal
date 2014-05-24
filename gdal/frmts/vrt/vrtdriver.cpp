@@ -352,6 +352,7 @@ void GDALRegister_VRT()
         poDriver = new VRTDriver();
         
         poDriver->SetDescription( "VRT" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "Virtual Raster" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "vrt" );

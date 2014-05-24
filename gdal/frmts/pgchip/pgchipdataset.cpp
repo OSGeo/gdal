@@ -978,6 +978,7 @@ void GDALRegister_PGCHIP(){
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "PGCHIP" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "Postgis CHIP raster" );
                                    

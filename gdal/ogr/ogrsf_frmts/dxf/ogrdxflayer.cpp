@@ -63,6 +63,8 @@ OGRDXFLayer::OGRDXFLayer( OGRDXFDataSource *poDS )
         OGRFieldDefn  oBlockAngleField( "BlockAngle", OFTReal );
         poFeatureDefn->AddFieldDefn( &oBlockAngleField );
     }
+    
+    SetDescription( poFeatureDefn->GetName() );
 }
 
 /************************************************************************/

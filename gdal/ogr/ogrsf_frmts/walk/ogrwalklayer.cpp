@@ -87,6 +87,7 @@ CPLErr OGRWalkLayer::BuildFeatureDefn( const char *pszLayerName,
 
 {
     poFeatureDefn = new OGRFeatureDefn( pszLayerName );
+    SetDescription( poFeatureDefn->GetName() );
     int    nRawColumns = poStmt->GetColCount();
 
     poFeatureDefn->Reference();

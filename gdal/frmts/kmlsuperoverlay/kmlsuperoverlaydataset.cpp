@@ -2442,6 +2442,7 @@ void GDALRegister_KMLSUPEROVERLAY()
         poDriver = new GDALDriver();
       
         poDriver->SetDescription( "KMLSUPEROVERLAY" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "Kml Super Overlay" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 

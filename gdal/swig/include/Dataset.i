@@ -836,6 +836,95 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
 
 #endif /* PYTHON */
 
+#if defined(SWIGPYTHON) || defined(SWIGJAVA)
+
+  /* Note that datasources own their layers */
+#ifndef SWIGJAVA
+  %feature( "kwargs" ) CreateLayer;
+#endif
+  OGRLayerShadow *CreateLayer(const char* name, 
+              OSRSpatialReferenceShadow* srs=NULL,
+              OGRwkbGeometryType geom_type=wkbUnknown,
+              char** options=0) {
+    OGRLayerShadow* layer = (OGRLayerShadow*) GDALDatasetCreateLayer( self,
+                                  name,
+                                  srs,
+                                  geom_type,
+                                  options);
+    return layer;
+  }
+
+#ifndef SWIGJAVA
+  %feature( "kwargs" ) CopyLayer;
+#endif
+%apply Pointer NONNULL {OGRLayerShadow *src_layer};
+  OGRLayerShadow *CopyLayer(OGRLayerShadow *src_layer,
+            const char* new_name,
+            char** options=0) {
+    OGRLayerShadow* layer = (OGRLayerShadow*) GDALDatasetCopyLayer( self,
+                                                      src_layer,
+                                                      new_name,
+                                                      options);
+    return layer;
+  }
+
+  OGRErr DeleteLayer(int index){
+    return GDALDatasetDeleteLayer(self, index);
+  }
+
+  int GetLayerCount() {
+    return GDALDatasetGetLayerCount(self);
+  }
+
+#ifdef SWIGJAVA
+  OGRLayerShadow *GetLayerByIndex( int index ) {
+#else
+  OGRLayerShadow *GetLayerByIndex( int index=0) {
+#endif
+    OGRLayerShadow* layer = (OGRLayerShadow*) GDALDatasetGetLayer(self, index);
+    return layer;
+  }
+
+  OGRLayerShadow *GetLayerByName( const char* layer_name) {
+    OGRLayerShadow* layer = (OGRLayerShadow*) GDALDatasetGetLayerByName(self, layer_name);
+    return layer;
+  }
+
+  bool TestCapability(const char * cap) {
+    return (GDALDatasetTestCapability(self, cap) > 0);
+  }
+
+#ifndef SWIGJAVA
+  %feature( "kwargs" ) ExecuteSQL;
+#endif
+  %apply Pointer NONNULL {const char * statement};
+  OGRLayerShadow *ExecuteSQL(const char* statement,
+                        OGRGeometryShadow* spatialFilter=NULL,
+                        const char* dialect="") {
+    OGRLayerShadow* layer = (OGRLayerShadow*) GDALDatasetExecuteSQL(self,
+                                                      statement,
+                                                      spatialFilter,
+                                                      dialect);
+    return layer;
+  }
+  
+%apply SWIGTYPE *DISOWN {OGRLayerShadow *layer};
+  void ReleaseResultSet(OGRLayerShadow *layer){
+    GDALDatasetReleaseResultSet(self, layer);
+  }
+%clear OGRLayerShadow *layer;
+  
+  OGRStyleTableShadow *GetStyleTable() {
+    return (OGRStyleTableShadow*) GDALDatasetGetStyleTable(self);
+  }
+
+  void SetStyleTable(OGRStyleTableShadow* table) {
+    if( table != NULL )
+        GDALDatasetSetStyleTable(self, (OGRStyleTableH) table);
+  }
+
+#endif /* defined(SWIGPYTHON) || defined(SWIGJAVA) */
+
 } /* extend */
 }; /* GDALDatasetShadow */
 

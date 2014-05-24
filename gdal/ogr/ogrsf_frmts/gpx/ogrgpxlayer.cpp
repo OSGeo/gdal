@@ -84,6 +84,7 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
     int bShortNames  = CSLTestBoolean(CPLGetConfigOption("GPX_SHORT_NAMES", "NO"));
     
     poFeatureDefn = new OGRFeatureDefn( pszLayerName );
+    SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
     
     if (gpxGeomType == GPX_TRACK_POINT)

@@ -142,7 +142,7 @@ class OGRGRASSDataSource : public OGRDataSource
     int                 TestCapability( const char * );
 
     // Not implemented (returns NULL):
-    virtual OGRLayer    *CreateLayer( const char *, 
+    virtual OGRLayer    *ICreateLayer( const char *, 
                                       OGRSpatialReference * = NULL,
                                       OGRwkbGeometryType = wkbUnknown,
                                       char ** = NULL );

@@ -33,36 +33,31 @@
 CPL_CVSID("$Id$");
 
 /************************************************************************/
-/*                          ~OGRILI2Driver()                           */
-/************************************************************************/
-
-OGRILI2Driver::~OGRILI2Driver() {
-}
-
-/************************************************************************/
-/*                              GetName()                               */
-/************************************************************************/
-
-const char *OGRILI2Driver::GetName() {
-    return "Interlis 2";
-}
-
-/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-OGRDataSource *OGRILI2Driver::Open( const char * pszFilename,
-                                   int bUpdate )
+static GDALDataset *OGRILI2DriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     OGRILI2DataSource    *poDS;
 
-    if( bUpdate )
+    if( poOpenInfo->eAccess == GA_Update )
+        return NULL;
+
+    if( poOpenInfo->fpL != NULL )
+    {
+        if( poOpenInfo->pabyHeader[0] != '<' 
+            || strstr((const char*)poOpenInfo->pabyHeader,"interlis.ch/INTERLIS2") == NULL )
+        {
+            return NULL;
+        }
+    }
+    else if( poOpenInfo->bIsDirectory )
         return NULL;
 
     poDS = new OGRILI2DataSource();
 
-    if( !poDS->Open( pszFilename, TRUE )
+    if( !poDS->Open( poOpenInfo->pszFilename, TRUE )
         || poDS->GetLayerCount() == 0 )
     {
         delete poDS;
@@ -73,11 +68,12 @@ OGRDataSource *OGRILI2Driver::Open( const char * pszFilename,
 }
 
 /************************************************************************/
-/*                          CreateDataSource()                          */
+/*                               Create()                               */
 /************************************************************************/
 
-OGRDataSource *OGRILI2Driver::CreateDataSource( const char * pszName,
-                                               char **papszOptions )
+static GDALDataset *OGRILI2DriverCreate( const char * pszName,
+                                    int nBands, int nXSize, int nYSize, GDALDataType eDT,
+                                    char **papszOptions )
 
 {
     OGRILI2DataSource    *poDS = new OGRILI2DataSource();
@@ -92,24 +88,27 @@ OGRDataSource *OGRILI2Driver::CreateDataSource( const char * pszName,
 }
 
 /************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRILI2Driver::TestCapability( const char * pszCap ) {
-    if( EQUAL(pszCap,ODrCCreateDataSource) )
-        return TRUE;
-    else if( EQUAL(pszCap,ODrCDeleteDataSource) )
-        return FALSE;
-    else
-        return FALSE;
-}
-
-/************************************************************************/
 /*                           RegisterOGRILI2()                           */
 /************************************************************************/
 
-void RegisterOGRILI2()
-{
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRILI2Driver );
-}
+void RegisterOGRILI2() {
+    GDALDriver  *poDriver;
 
+    if( GDALGetDriverByName( "Interlis 2" ) == NULL )
+    {
+        poDriver = new GDALDriver();
+
+        poDriver->SetDescription( "Interlis 2" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                                   "Interlis 2" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                                   "drv_ili.html" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "itf xml ili" );
+
+        poDriver->pfnOpen = OGRILI2DriverOpen;
+        poDriver->pfnCreate = OGRILI2DriverCreate;
+
+        GetGDALDriverManager()->RegisterDriver( poDriver );
+    }
+}

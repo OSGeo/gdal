@@ -87,21 +87,14 @@ OGRLayer *OGRAeronavFAADataSource::GetLayer( int iLayer )
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRAeronavFAADataSource::Open( const char * pszFilename, int bUpdateIn)
+int OGRAeronavFAADataSource::Open( const char * pszFilename )
 
 {
-    if (bUpdateIn)
-    {
-        return FALSE;
-    }
-
     pszName = CPLStrdup( pszFilename );
 
 // --------------------------------------------------------------------
 //      Does this appear to be a .dat file?
 // --------------------------------------------------------------------
-    if( !EQUAL(CPLGetExtension(pszFilename), "dat") )
-        return FALSE;
 
     VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
     if (fp == NULL)

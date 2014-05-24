@@ -31,36 +31,38 @@
 #include "cpl_error.h"
 
 /************************************************************************/
-/*                          ~OGRGTMDriver()                           */
-/************************************************************************/
-
-OGRGTMDriver::~OGRGTMDriver()
-{
-}
-
-/************************************************************************/
-/*                              GetName()                               */
-/************************************************************************/
-
-const char *OGRGTMDriver::GetName()
-{
-    return "GPSTrackMaker";
-}
-
-/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-OGRDataSource *OGRGTMDriver::Open( const char * pszName, int bUpdate )
+static GDALDataset *OGRGTMDriverOpen( GDALOpenInfo* poOpenInfo )
 {
-    if (bUpdate)
-    {
+    if( poOpenInfo->eAccess == GA_Update ||
+        poOpenInfo->fpL == NULL ||
+        poOpenInfo->nHeaderBytes < 13)
         return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      If it looks like a GZip header, this may be a .gtz file, so     */
+/*      try opening with the /vsigzip/ prefix                           */
+/* -------------------------------------------------------------------- */
+    if (poOpenInfo->pabyHeader[0] == 0x1f && ((unsigned char*)poOpenInfo->pabyHeader)[1] == 0x8b &&
+        strncmp(poOpenInfo->pszFilename, "/vsigzip/", strlen("/vsigzip/")) != 0)
+    {
+        /* ok */
     }
-    
+    else
+    {
+        short version = CPL_LSBINT16PTR(poOpenInfo->pabyHeader);
+        if (version != 211 ||
+            strncmp((const char*)poOpenInfo->pabyHeader + 2, "TrackMaker", strlen("TrackMaker")) != 0 )
+        {
+            return NULL;
+        }
+    }
+
     OGRGTMDataSource *poDS = new OGRGTMDataSource();
 
-    if( !poDS->Open( pszName, bUpdate ) )
+    if( !poDS->Open( poOpenInfo->pszFilename, FALSE ) )
     {
         delete poDS;
         poDS = NULL;
@@ -69,11 +71,12 @@ OGRDataSource *OGRGTMDriver::Open( const char * pszName, int bUpdate )
 }
 
 /************************************************************************/
-/*                          CreateDataSource()                          */
+/*                               Create()                               */
 /************************************************************************/
 
-OGRDataSource *OGRGTMDriver::CreateDataSource( const char* pszName,
-                                               char** papszOptions )
+static GDALDataset *OGRGTMDriverCreate( const char * pszName,
+                                    int nBands, int nXSize, int nYSize, GDALDataType eDT,
+                                    char **papszOptions )
 {
     CPLAssert( NULL != pszName );
     CPLDebug( "GTM", "Attempt to create: %s", pszName );
@@ -90,24 +93,32 @@ OGRDataSource *OGRGTMDriver::CreateDataSource( const char* pszName,
 }
 
 /************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRGTMDriver::TestCapability( const char* pszCap )
-{
-    if( EQUAL(pszCap, ODrCCreateDataSource) )
-        return TRUE;
-    else
-        return FALSE;
-}
-
-/************************************************************************/
 /*                           RegisterOGRGTM()                           */
 /************************************************************************/
 
 void RegisterOGRGTM()
 {
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRGTMDriver );
+    GDALDriver  *poDriver;
+
+    if( GDALGetDriverByName( "GPSTrackMaker" ) == NULL )
+    {
+        poDriver = new GDALDriver();
+
+        poDriver->SetDescription( "GPSTrackMaker" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                                   "GPSTrackMaker" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "gtm gtz" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                                   "drv_gtm.html" );
+
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
+        poDriver->pfnOpen = OGRGTMDriverOpen;
+        poDriver->pfnCreate = OGRGTMDriverCreate;
+
+        GetGDALDriverManager()->RegisterDriver( poDriver );
+    }
 }
 
 

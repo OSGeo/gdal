@@ -500,6 +500,28 @@ void CPL_STDCALL CPLErrorReset()
     psCtx->eLastErrType = CE_None;
 }
 
+/**********************************************************************
+ *                       CPLErrorSetState()
+ **********************************************************************/
+
+/**
+ * Restore an error state, without emitting an error.
+ *
+ * Can be usefull if a routine might call CPLErrorReset() and one wants to
+ * preserve the previous error state.
+ *
+ * @since GDAL 2.0
+ */
+
+void CPL_DLL CPLErrorSetState( CPLErr eErrClass, int err_no, const char* pszMsg )
+{
+    CPLErrorContext *psCtx = CPLGetErrorContext();
+
+    psCtx->nLastErrNo = err_no;
+    strncpy(psCtx->szLastErrMsg, pszMsg, psCtx->nLastErrMsgMax);
+    psCtx->szLastErrMsg[MAX(psCtx->nLastErrMsgMax-1, (int)strlen(pszMsg))] = '\0';
+    psCtx->eLastErrType = eErrClass;
+}
 
 /**********************************************************************
  *                          CPLGetLastErrorNo()

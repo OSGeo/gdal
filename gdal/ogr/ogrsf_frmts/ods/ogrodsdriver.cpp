@@ -217,6 +217,13 @@ int OGRODSDriver::TestCapability( const char * pszCap )
 void RegisterOGRODS()
 
 {
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRODSDriver );
+    OGRSFDriver* poDriver = new OGRODSDriver;
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                                "Open Document/ LibreOffice / OpenOffice Spreadsheet " );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "ods" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                                "drv_ods.html" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }
 

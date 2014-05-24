@@ -43,6 +43,7 @@
 #include "cpl_error.h"
 #include "cpl_progress.h"
 #include "cpl_virtualmem.h"
+#include "ogr_api.h"
 #endif
 
 /* -------------------------------------------------------------------- */
@@ -167,11 +168,6 @@ typedef void *GDALRasterBandH;
 /** Opaque type used for the C bindings of the C++ GDALDriver class */
 typedef void *GDALDriverH;
 
-#ifndef DOXYGEN_SKIP
-/* Deprecated / unused */
-typedef void *GDALProjDefH;
-#endif
-
 /** Opaque type used for the C bindings of the C++ GDALColorTable class */
 typedef void *GDALColorTableH;
 
@@ -185,28 +181,24 @@ typedef void *GDALAsyncReaderH;
 /*      Registration/driver related.                                    */
 /* ==================================================================== */
 
-#ifndef DOXYGEN_SKIP
-/* Deprecated / unused */
-typedef struct {
-    char      *pszOptionName;
-    char      *pszValueType;   /* "boolean", "int", "float", "string", 
-                                  "string-select" */
-    char      *pszDescription;
-    char      **papszOptions;
-} GDALOptionDefinition;
-#endif
-
 #define GDAL_DMD_LONGNAME "DMD_LONGNAME"
 #define GDAL_DMD_HELPTOPIC "DMD_HELPTOPIC"
 #define GDAL_DMD_MIMETYPE "DMD_MIMETYPE"
 #define GDAL_DMD_EXTENSION "DMD_EXTENSION"
+#define GDAL_DMD_EXTENSIONS "DMD_EXTENSIONS"
 #define GDAL_DMD_CREATIONOPTIONLIST "DMD_CREATIONOPTIONLIST" 
+#define GDAL_DMD_OPENOPTIONLIST "DMD_OPENOPTIONLIST" 
 #define GDAL_DMD_CREATIONDATATYPES "DMD_CREATIONDATATYPES" 
 #define GDAL_DMD_SUBDATASETS "DMD_SUBDATASETS" 
 
 #define GDAL_DCAP_CREATE     "DCAP_CREATE"
 #define GDAL_DCAP_CREATECOPY "DCAP_CREATECOPY"
 #define GDAL_DCAP_VIRTUALIO  "DCAP_VIRTUALIO"
+
+/** Capability set by a driver having raster capability. */
+#define GDAL_DCAP_RASTER     "DCAP_RASTER"
+/** Capability set by a driver having vector capability. */
+#define GDAL_DCAP_VECTOR     "DCAP_VECTOR"
 
 void CPL_DLL CPL_STDCALL GDALAllRegister( void );
 
@@ -222,6 +214,42 @@ GDALDriverH CPL_DLL CPL_STDCALL GDALIdentifyDriver( const char * pszFilename,
 GDALDatasetH CPL_DLL CPL_STDCALL
 GDALOpen( const char *pszFilename, GDALAccess eAccess ) CPL_WARN_UNUSED_RESULT;
 GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenShared( const char *, GDALAccess ) CPL_WARN_UNUSED_RESULT;
+
+
+/* Note: we define GDAL_OF_READONLY and GDAL_OF_UPDATE to be on purpose */
+/* equals to GA_ReadOnly and GA_Update */
+
+/** Open in read-only mode. */
+#define     GDAL_OF_READONLY        0x00
+/** Open in update mode. */
+#define     GDAL_OF_UPDATE          0x01
+
+/** Allow raster and vector drivers. */
+#define     GDAL_OF_ALL             0x00
+
+/** Allow raster drivers. */
+#define     GDAL_OF_RASTER          0x02
+/** Allow vector drivers. */
+#define     GDAL_OF_VECTOR          0x04
+/* Some space for GDAL 3.0 new types ;-) */
+/*#define     GDAL_OF_OTHER_KIND1   0x08 */
+/*#define     GDAL_OF_OTHER_KIND2   0x10 */
+#ifndef DOXYGEN_SKIP
+#define     GDAL_OF_KIND_MASK       0x1E
+#endif
+
+/** Open in shared mode. */
+#define     GDAL_OF_SHARED          0x20
+
+/** Emit error message in case of failed open. */
+#define     GDAL_OF_VERBOSE_ERROR   0x40
+
+GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenEx( const char* pszFilename,
+                                             unsigned int nOpenFlags,
+                                             const char* const* papszAllowedDrivers,
+                                             const char* const* papszOpenOptions,
+                                             const char* const* papszSiblingFiles ) CPL_WARN_UNUSED_RESULT;
+
 int          CPL_DLL CPL_STDCALL GDALDumpOpenDatasets( FILE * );
 
 GDALDriverH CPL_DLL CPL_STDCALL GDALGetDriverByName( const char * );
@@ -311,6 +339,8 @@ void CPL_DLL CPL_STDCALL GDALSetDescription( GDALMajorObjectH, const char * );
 /*      GDALDataset class ... normally this represents one file.        */
 /* ==================================================================== */
 
+#define GDAL_DS_LAYER_CREATIONOPTIONLIST "DS_LAYER_CREATIONOPTIONLIST" 
+
 GDALDriverH CPL_DLL CPL_STDCALL GDALGetDatasetDriver( GDALDatasetH );
 char CPL_DLL ** CPL_STDCALL GDALGetFileList( GDALDatasetH );
 void CPL_DLL CPL_STDCALL   GDALClose( GDALDatasetH );
@@ -383,6 +413,24 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
                          int nOverviewCount, GDALRasterBandH *pahOverviewBands,
                          const char *pszResampling, 
                          GDALProgressFunc pfnProgress, void *pProgressData );
+
+int    CPL_DLL GDALDatasetGetLayerCount( GDALDatasetH );
+OGRLayerH CPL_DLL GDALDatasetGetLayer( GDALDatasetH, int );
+OGRLayerH CPL_DLL GDALDatasetGetLayerByName( GDALDatasetH, const char * );
+OGRErr    CPL_DLL GDALDatasetDeleteLayer( GDALDatasetH, int );
+OGRLayerH CPL_DLL GDALDatasetCreateLayer( GDALDatasetH, const char *, 
+                                      OGRSpatialReferenceH, OGRwkbGeometryType,
+                                      char ** );
+OGRLayerH CPL_DLL GDALDatasetCopyLayer( GDALDatasetH, OGRLayerH, const char *,
+                                        char ** );
+int    CPL_DLL GDALDatasetTestCapability( GDALDatasetH, const char * );
+OGRLayerH CPL_DLL GDALDatasetExecuteSQL( GDALDatasetH, const char *,
+                                     OGRGeometryH, const char * );
+void   CPL_DLL GDALDatasetReleaseResultSet( GDALDatasetH, OGRLayerH );
+OGRStyleTableH CPL_DLL GDALDatasetGetStyleTable( GDALDatasetH );
+void   CPL_DLL GDALDatasetSetStyleTableDirectly( GDALDatasetH, OGRStyleTableH );
+void   CPL_DLL GDALDatasetSetStyleTable( GDALDatasetH, OGRStyleTableH );
+
 
 /* ==================================================================== */
 /*      GDALRasterBand ... one band/channel in a dataset.               */

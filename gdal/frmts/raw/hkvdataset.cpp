@@ -1907,6 +1907,7 @@ void GDALRegister_HKV()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "MFF2" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "Vexcel MFF2 (HKV) Raster" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

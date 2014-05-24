@@ -1083,6 +1083,7 @@ void GDALRegister_AIGrid()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "AIG" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "Arc/Info Binary Grid" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

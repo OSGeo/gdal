@@ -450,11 +450,11 @@ void OGROCIDataSource::TruncateLayer( const char *pszLayerName )
 }
 
 /************************************************************************/
-/*                            CreateLayer()                             */
+/*                           ICreateLayer()                             */
 /************************************************************************/
 
 OGRLayer *
-OGROCIDataSource::CreateLayer( const char * pszLayerName,
+OGROCIDataSource::ICreateLayer( const char * pszLayerName,
                                OGRSpatialReference *poSRS,
                                OGRwkbGeometryType eType,
                                char ** papszOptions )
@@ -654,7 +654,7 @@ OGRLayer * OGROCIDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Ensure any pending stuff is flushed to the database.            */
 /* -------------------------------------------------------------------- */
-    SyncToDisk();
+    FlushCache();
 
     CPLDebug( "OCI", "ExecuteSQL(%s)", pszSQLCommand );
 

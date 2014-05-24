@@ -165,7 +165,7 @@ OGRLayer *OGRDGNDataSource::GetLayer( int iLayer )
 /*                                                                      */
 /*      Called by OGRDGNDriver::Create() method to setup a stub         */
 /*      OGRDataSource object without the associated file created        */
-/*      yet.  It will be created by the CreateLayer() call.             */
+/*      yet.  It will be created by theICreateLayer() call.             */
 /************************************************************************/
 
 int OGRDGNDataSource::PreCreate( const char *pszFilename, 
@@ -179,10 +179,10 @@ int OGRDGNDataSource::PreCreate( const char *pszFilename,
 }
 
 /************************************************************************/
-/*                            CreateLayer()                             */
+/*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRDGNDataSource::CreateLayer( const char *pszLayerName, 
+OGRLayer *OGRDGNDataSource::ICreateLayer( const char *pszLayerName, 
                                          OGRSpatialReference *poSRS, 
                                          OGRwkbGeometryType eGeomType, 
                                          char **papszExtraOptions )

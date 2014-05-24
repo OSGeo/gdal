@@ -52,7 +52,7 @@
 class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
 {
   private:
-    OGRDataSource *poSrcDS;
+    GDALDataset *poSrcDS;
     OGRLayer    *poSrcLayer;
     void        *pSelectInfo;
 
@@ -76,7 +76,7 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
     int         iFIDFieldIndex;
 
     int         nExtraDSCount;
-    OGRDataSource **papoExtraDS;
+    GDALDataset **papoExtraDS;
 
     OGRFeature *TranslateFeature( OGRFeature * );
     void        CreateOrderByIndex();
@@ -98,7 +98,7 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
     int         MustEvaluateSpatialFilterOnGenSQL();
 
   public:
-                OGRGenSQLResultsLayer( OGRDataSource *poSrcDS, 
+                OGRGenSQLResultsLayer( GDALDataset *poSrcDS, 
                                        void *pSelectInfo,
                                        OGRGeometry *poSpatFilter,
                                        const char *pszWHERE,

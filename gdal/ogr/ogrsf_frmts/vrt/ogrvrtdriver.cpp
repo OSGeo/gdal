@@ -34,25 +34,6 @@
 CPL_CVSID("$Id$");
 
 /************************************************************************/
-/*                            ~OGRVRTDriver()                            */
-/************************************************************************/
-
-OGRVRTDriver::~OGRVRTDriver()
-
-{
-}
-
-/************************************************************************/
-/*                              GetName()                               */
-/************************************************************************/
-
-const char *OGRVRTDriver::GetName()
-
-{
-    return "VRT";
-}
-
-/************************************************************************/
 /*                           OGRVRTErrorHandler()                       */
 /************************************************************************/
 
@@ -63,21 +44,50 @@ static void CPL_STDCALL OGRVRTErrorHandler(CPLErr eErr, int nType, const char* p
 }
 
 /************************************************************************/
+/*                         OGRVRTDriverIdentify()                       */
+/************************************************************************/
+
+static int OGRVRTDriverIdentify( GDALOpenInfo* poOpenInfo )
+{
+    if( !poOpenInfo->bStatOK )
+    {
+/* -------------------------------------------------------------------- */
+/*      Are we being passed the XML definition directly?                */
+/*      Skip any leading spaces/blanks.                                 */
+/* -------------------------------------------------------------------- */
+        const char *pszTestXML = poOpenInfo->pszFilename;
+        while( *pszTestXML != '\0' && isspace( (unsigned char)*pszTestXML ) )
+            pszTestXML++;
+        if( EQUALN(pszTestXML,"<OGRVRTDataSource>",18) )
+        {
+            return TRUE;
+        }
+        return FALSE;
+    }
+
+    return ( poOpenInfo->fpL != NULL &&
+             strstr((const char*)poOpenInfo->pabyHeader,"<OGRVRTDataSource") != NULL );
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-OGRDataSource *OGRVRTDriver::Open( const char * pszFilename,
-                                     int bUpdate )
+static GDALDataset *OGRVRTDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     OGRVRTDataSource     *poDS;
+
+    if( !OGRVRTDriverIdentify(poOpenInfo) )
+        return NULL;
+
     char *pszXML = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Are we being passed the XML definition directly?                */
 /*      Skip any leading spaces/blanks.                                 */
 /* -------------------------------------------------------------------- */
-    const char *pszTestXML = pszFilename;
+    const char *pszTestXML = poOpenInfo->pszFilename;
     while( *pszTestXML != '\0' && isspace( (unsigned char)*pszTestXML ) )
         pszTestXML++;
 
@@ -91,29 +101,11 @@ OGRDataSource *OGRVRTDriver::Open( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     else
     {
-        VSILFILE *fp;
-        char achHeader[512];
-
-        fp = VSIFOpenL( pszFilename, "rb" );
-
-        if( fp == NULL )
-            return NULL;
-
-        memset( achHeader, 0, sizeof(achHeader) );
-        VSIFReadL( achHeader, 1, sizeof(achHeader)-1, fp );
-
-        if( strstr(achHeader,"<OGRVRTDataSource") == NULL )
-        {
-            VSIFCloseL( fp );
-            return NULL;
-        }
-
         VSIStatBufL sStatBuf;
-        if ( VSIStatL( pszFilename, &sStatBuf ) != 0 ||
+        if ( VSIStatL( poOpenInfo->pszFilename, &sStatBuf ) != 0 ||
              sStatBuf.st_size > 1024 * 1024 )
         {
             CPLDebug( "VRT", "Unreasonable long file, not likely really VRT" );
-            VSIFCloseL( fp );
             return NULL;
         }
 
@@ -122,23 +114,19 @@ OGRDataSource *OGRVRTDriver::Open( const char * pszFilename,
 /* -------------------------------------------------------------------- */
         int nLen = (int) sStatBuf.st_size;
 
-        VSIFSeekL( fp, 0, SEEK_SET );
-
         pszXML = (char *) VSIMalloc(nLen+1);
         if (pszXML == NULL)
-        {
-            VSIFCloseL( fp );
             return NULL;
-        }
+
         pszXML[nLen] = '\0';
-        if( ((int) VSIFReadL( pszXML, 1, nLen, fp )) != nLen )
+        VSIFSeekL( poOpenInfo->fpL, 0, SEEK_SET );
+        if( ((int) VSIFReadL( pszXML, 1, nLen, poOpenInfo->fpL )) != nLen )
         {
             CPLFree( pszXML );
-            VSIFCloseL( fp );
-
             return NULL;
         }
-        VSIFCloseL( fp );
+        VSIFCloseL( poOpenInfo->fpL );
+        poOpenInfo->fpL = NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -183,10 +171,11 @@ OGRDataSource *OGRVRTDriver::Open( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Create a virtual datasource configured based on this XML input. */
 /* -------------------------------------------------------------------- */
-    poDS = new OGRVRTDataSource();
-    poDS->SetDriver(this);
+    poDS = new OGRVRTDataSource((GDALDriver*)GDALGetDriverByName( "OGR_VRT" ));
+
     /* psTree is owned by poDS */
-    if( !poDS->Initialize( psTree, pszFilename, bUpdate ) )
+    if( !poDS->Initialize( psTree, poOpenInfo->pszFilename,
+                           poOpenInfo->eAccess == GA_Update ) )
     {
         delete poDS;
         return NULL;
@@ -196,21 +185,31 @@ OGRDataSource *OGRVRTDriver::Open( const char * pszFilename,
 }
 
 /************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRVRTDriver::TestCapability( const char * pszCap )
-
-{
-    return FALSE;
-}
-
-/************************************************************************/
 /*                           RegisterOGRVRT()                           */
 /************************************************************************/
 
 void RegisterOGRVRT()
 
 {
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRVRTDriver );
+    GDALDriver  *poDriver;
+
+    if( GDALGetDriverByName( "OGR_VRT" ) == NULL )
+    {
+        poDriver = new GDALDriver();
+
+        poDriver->SetDescription( "OGR_VRT" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                                   "VRT - Virtual Datasource" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "vrt" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                                   "drv_vrt.html" );
+
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
+        poDriver->pfnOpen = OGRVRTDriverOpen;
+        poDriver->pfnIdentify = OGRVRTDriverIdentify;
+
+        GetGDALDriverManager()->RegisterDriver( poDriver );
+    }
 }

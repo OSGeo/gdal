@@ -75,41 +75,61 @@
 
 
 /************************************************************************/
-/*                           ~OGRTABDriver()                            */
+/*                  OGRTABDriverIdentify()                              */
 /************************************************************************/
 
-OGRTABDriver::~OGRTABDriver()
+static int OGRTABDriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {
-}
-
-/************************************************************************/
-/*                OGRTABDriver::GetName()                               */
-/************************************************************************/
-
-const char *OGRTABDriver::GetName()
-
-{
-    return "MapInfo File";
+    /* Files not ending with .tab, .mif or .mid are not handled by this driver */
+    if( !poOpenInfo->bStatOK )
+        return FALSE;
+    if( poOpenInfo->bIsDirectory )
+        return -1; /* unsure */
+    if( poOpenInfo->fpL == NULL )
+        return FALSE;
+    if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MIF") ||
+        EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MID") )
+    {
+        return TRUE;
+    }
+    if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "TAB") )
+    {
+        for( int i = 0; i < poOpenInfo->nHeaderBytes; i++)
+        {
+            const char* pszLine = (const char*)poOpenInfo->pabyHeader + i;
+            if (EQUALN(pszLine, "Fields", 6))
+                return TRUE;
+            else if (EQUALN(pszLine, "create view", 11))
+                return TRUE;
+            else if (EQUALN(pszLine, "\"\\IsSeamless\" = \"TRUE\"", 21))
+                return TRUE;
+        }
+    }
+    return FALSE;
 }
 
 /************************************************************************/
 /*                  OGRTABDriver::Open()                                */
 /************************************************************************/
 
-OGRDataSource *OGRTABDriver::Open( const char * pszFilename,
-                                   int bUpdate )
+static GDALDataset *OGRTABDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     OGRTABDataSource    *poDS;
-    
-    if( bUpdate )
+
+    if( OGRTABDriverIdentify(poOpenInfo) == FALSE )
+    {
+        return NULL;
+    }
+
+    if( poOpenInfo->eAccess == GA_Update )
     {
         return NULL;
     }
 
     poDS = new OGRTABDataSource();
-    if( poDS->Open( pszFilename, TRUE ) )
+    if( poDS->Open( poOpenInfo, TRUE ) )
         return poDS;
     else
     {
@@ -120,11 +140,12 @@ OGRDataSource *OGRTABDriver::Open( const char * pszFilename,
 
 
 /************************************************************************/
-/*                          CreateDataSource()                          */
+/*                              Create()                                */
 /************************************************************************/
 
-OGRDataSource *OGRTABDriver::CreateDataSource( const char * pszName,
-                                               char ** papszOptions )
+static GDALDataset *OGRTABDriverCreate( const char * pszName,
+                                   int nBands, int nXSize, int nYSize, GDALDataType eDT,
+                                   char **papszOptions )
 
 {
     OGRTABDataSource *poDS;
@@ -143,25 +164,10 @@ OGRDataSource *OGRTABDriver::CreateDataSource( const char * pszName,
 }
 
 /************************************************************************/
-/*                           TestCapability()                           */
+/*                              Delete()                                */
 /************************************************************************/
 
-int OGRTABDriver::TestCapability( const char * pszCap )
-
-{
-    if( EQUAL(pszCap,ODrCCreateDataSource) )
-        return TRUE;
-    else if( EQUAL(pszCap,ODrCDeleteDataSource) )
-        return TRUE;
-    else
-        return FALSE;
-}
-
-/************************************************************************/
-/*                          DeleteDataSource()                          */
-/************************************************************************/
-
-OGRErr OGRTABDriver::DeleteDataSource( const char *pszDataSource )
+static CPLErr OGRTABDriverDelete( const char *pszDataSource )
 
 {
     int iExt;
@@ -175,7 +181,7 @@ OGRErr OGRTABDriver::DeleteDataSource( const char *pszDataSource )
                   "%s does not appear to be a file or directory.",
                   pszDataSource );
 
-        return OGRERR_FAILURE;
+        return CE_Failure;
     }
 
     if( VSI_ISREG(sStatBuf.st_mode) 
@@ -214,7 +220,7 @@ OGRErr OGRTABDriver::DeleteDataSource( const char *pszDataSource )
         VSIRmdir( pszDataSource );
     }
 
-    return OGRERR_NONE;
+    return CE_None;
 }
 
 /************************************************************************/
@@ -227,7 +233,27 @@ extern "C"
 void RegisterOGRTAB()
 
 {
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRTABDriver );
+    GDALDriver  *poDriver;
+
+    if( GDALGetDriverByName( "MapInfo File" ) == NULL )
+    {
+        poDriver = new GDALDriver();
+
+        poDriver->SetDescription( "MapInfo File" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                                   "MapInfo File" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "tab mif mid" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                                   "drv_mitab.html" );
+
+        poDriver->pfnOpen = OGRTABDriverOpen;
+        poDriver->pfnIdentify = OGRTABDriverIdentify;
+        poDriver->pfnCreate = OGRTABDriverCreate;
+        poDriver->pfnDelete = OGRTABDriverDelete;
+
+        GetGDALDriverManager()->RegisterDriver( poDriver );
+    }
 }
 
 }

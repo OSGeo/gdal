@@ -36,6 +36,21 @@
 
 CPL_CVSID("$Id$");
 
+
+/************************************************************************/
+/*                        RasterliteOpenSQLiteDB()                      */
+/************************************************************************/
+
+OGRDataSourceH RasterliteOpenSQLiteDB(const char* pszFilename,
+                                      GDALAccess eAccess)
+{
+    const char* const apszAllowedDrivers[] = { "SQLITE", NULL };
+    return (OGRDataSourceH)GDALOpenEx(pszFilename,
+                                      GDAL_OF_VECTOR |
+                                      ((eAccess == GA_Update) ? GDAL_OF_UPDATE : 0),
+                                      apszAllowedDrivers, NULL, NULL);
+}
+
 /************************************************************************/
 /*                            RasterliteBand()                          */
 /************************************************************************/
@@ -978,7 +993,7 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
 /*      Open underlying OGR DB                                          */
 /* -------------------------------------------------------------------- */
 
-    OGRDataSourceH hDS = OGROpen(osFileName.c_str(), (poOpenInfo->eAccess == GA_Update) ? TRUE : FALSE, NULL);
+    OGRDataSourceH hDS = RasterliteOpenSQLiteDB(osFileName.c_str(), poOpenInfo->eAccess);
     CPLDebug("RASTERLITE", "SQLite DB Open");
     
     RasterliteDataset* poDS = NULL;
@@ -1349,6 +1364,7 @@ void GDALRegister_Rasterlite()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "Rasterlite" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "Rasterlite" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

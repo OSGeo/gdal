@@ -76,9 +76,9 @@ typedef struct
     TargetLayerInfo  *psInfo;
 } AssociatedLayers;
 
-static TargetLayerInfo* SetupTargetLayer( OGRDataSource *poSrcDS,
+static TargetLayerInfo* SetupTargetLayer( GDALDataset *poSrcDS,
                                                 OGRLayer * poSrcLayer,
-                                                OGRDataSource *poDstDS,
+                                                GDALDataset *poDstDS,
                                                 char **papszLCO,
                                                 const char *pszNewLayerName,
                                                 OGRSpatialReference *poOutputSRS,
@@ -98,9 +98,9 @@ static TargetLayerInfo* SetupTargetLayer( OGRDataSource *poSrcDS,
 static void FreeTargetLayerInfo(TargetLayerInfo* psInfo);
 
 static int TranslateLayer( TargetLayerInfo* psInfo,
-                           OGRDataSource *poSrcDS,
+                           GDALDataset *poSrcDS,
                            OGRLayer * poSrcLayer,
-                           OGRDataSource *poDstDS,
+                           GDALDataset *poDstDS,
                            int bTransform,
                            int bWrapDateline,
                            const char* pszDateLineOffset,
@@ -133,30 +133,8 @@ void CheckDestDataSourceNameConsistency(const char* pszDestFilename,
     int i;
     char* pszDestExtension = CPLStrdup(CPLGetExtension(pszDestFilename));
 
-    /* TODO: Would be good to have driver metadata like for GDAL drivers ! */
-    static const char* apszExtensions[][2] = { { "shp"    , "ESRI Shapefile" },
-                                               { "dbf"    , "ESRI Shapefile" },
-                                               { "sqlite" , "SQLite" },
-                                               { "db"     , "SQLite" },
-                                               { "mif"    , "MapInfo File" },
-                                               { "tab"    , "MapInfo File" },
-                                               { "s57"    , "S57" },
-                                               { "bna"    , "BNA" },
-                                               { "csv"    , "CSV" },
-                                               { "gml"    , "GML" },
-                                               { "kml"    , "KML/LIBKML" },
-                                               { "kmz"    , "LIBKML" },
-                                               { "json"   , "GeoJSON" },
-                                               { "geojson", "GeoJSON" },
-                                               { "dxf"    , "DXF" },
-                                               { "gdb"    , "FileGDB" },
-                                               { "pix"    , "PCIDSK" },
-                                               { "sql"    , "PGDump" },
-                                               { "gtm"    , "GPSTrackMaker" },
-                                               { "gmt"    , "GMT" },
-                                               { "pdf"    , "PDF" },
-                                               { NULL, NULL }
-                                              };
+    CheckExtensionConsistency(pszDestFilename, pszDriverName);
+
     static const char* apszBeginName[][2] =  { { "PG:"      , "PG" },
                                                { "MySQL:"   , "MySQL" },
                                                { "CouchDB:" , "CouchDB" },
@@ -168,20 +146,6 @@ void CheckDestDataSourceNameConsistency(const char* pszDestFilename,
                                                { "WFS:"     , "WFS" },
                                                { NULL, NULL }
                                              };
-
-    for(i=0; apszExtensions[i][0] != NULL; i++)
-    {
-        if (EQUAL(pszDestExtension, apszExtensions[i][0]) && !EQUAL(pszDriverName, apszExtensions[i][1]))
-        {
-            fprintf(stderr,
-                    "Warning: The target file has a '%s' extension, which is normally used by the %s driver,\n"
-                    "but the requested output driver is %s. Is it really what you want ?\n",
-                    pszDestExtension,
-                    apszExtensions[i][1],
-                    pszDriverName);
-            break;
-        }
-    }
 
     for(i=0; apszBeginName[i][0] != NULL; i++)
     {
@@ -222,12 +186,12 @@ static OGRGeometry* LoadGeometry( const char* pszDS,
                                   const char* pszLyr,
                                   const char* pszWhere)
 {
-    OGRDataSource       *poDS;
+    GDALDataset         *poDS;
     OGRLayer            *poLyr;
     OGRFeature          *poFeat;
     OGRGeometry         *poGeom = NULL;
         
-    poDS = OGRSFDriverRegistrar::Open( pszDS, FALSE );
+    poDS = (GDALDataset*) OGROpen( pszDS, FALSE, NULL );
     if (poDS == NULL)
         return NULL;
 
@@ -241,7 +205,7 @@ static OGRGeometry* LoadGeometry( const char* pszDS,
     if (poLyr == NULL)
     {
         fprintf( stderr, "Failed to identify source layer from datasource.\n" );
-        OGRDataSource::DestroyDataSource(poDS);
+        GDALClose(( GDALDatasetH) poDS);
         return NULL;
     }
     
@@ -278,7 +242,7 @@ static OGRGeometry* LoadGeometry( const char* pszDS,
                 OGRFeature::DestroyFeature(poFeat);
                 if( pszSQL != NULL )
                     poDS->ReleaseResultSet( poLyr );
-                OGRDataSource::DestroyDataSource(poDS);
+                GDALClose(( GDALDatasetH) poDS);
                 return NULL;
             }
         }
@@ -288,7 +252,7 @@ static OGRGeometry* LoadGeometry( const char* pszDS,
     
     if( pszSQL != NULL )
         poDS->ReleaseResultSet( poLyr );
-    OGRDataSource::DestroyDataSource(poDS);
+    GDALClose(( GDALDatasetH) poDS);
     
     return poGeom;
 }
@@ -907,6 +871,8 @@ int main( int nArgc, char ** papszArgv )
     const char  *pszFieldMap = NULL;
     char        **papszFieldMap = NULL;
     int          nCoordDim = -1;
+    char       **papszOpenOptions = NULL;
+    char       **papszDestOpenOptions = NULL;
  
     int          nGCPCount = 0;
     GDAL_GCP    *pasGCPs = NULL;
@@ -965,6 +931,16 @@ int main( int nArgc, char ** papszArgv )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             papszLCO = CSLAddString(papszLCO, papszArgv[++iArg] );
+        }
+        else if( EQUAL(papszArgv[iArg],"-oo") )
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            papszOpenOptions = CSLAddString(papszOpenOptions, papszArgv[++iArg] );
+        }
+        else if( EQUAL(papszArgv[iArg],"-doo") )
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            papszDestOpenOptions = CSLAddString(papszDestOpenOptions, papszArgv[++iArg] );
         }
         else if( EQUAL(papszArgv[iArg],"-preserve_fid") )
         {
@@ -1456,22 +1432,27 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Open data source.                                               */
 /* -------------------------------------------------------------------- */
-    OGRDataSource       *poDS;
-    OGRDataSource       *poODS = NULL;
-    OGRSFDriver         *poDriver = NULL;
+    GDALDataset         *poDS;
+    GDALDataset         *poODS = NULL;
+    GDALDriver          *poDriver = NULL;
     int                  bCloseODS = TRUE;
 
     /* Avoid opening twice the same datasource if it is both the input and output */
     /* Known to cause problems with at least FGdb and SQlite drivers. See #4270 */
     if (bUpdate && strcmp(pszDestDataSource, pszDataSource) == 0)
     {
-        poODS = poDS = OGRSFDriverRegistrar::Open( pszDataSource, TRUE, &poDriver );
+        poODS = poDS = (GDALDataset*) GDALOpenEx( pszDataSource,
+                GDAL_OF_UPDATE | GDAL_OF_VECTOR, NULL, papszOpenOptions, NULL );
+        if( poDS != NULL )
+            poDriver = poDS->GetDriver();
+
         /* Restrict to those 2 drivers. For example it is known to break with */
         /* the PG driver due to the way it manages transactions... */
-        if (poDS && !(EQUAL(poDriver->GetName(), "FileGDB") ||
-                      EQUAL(poDriver->GetName(), "SQLite")))
+        if (poDS && !(EQUAL(poDriver->GetDescription(), "FileGDB") ||
+                      EQUAL(poDriver->GetDescription(), "SQLite")))
         {
-            poDS = OGRSFDriverRegistrar::Open( pszDataSource, FALSE );
+            poDS = (GDALDataset*) GDALOpenEx( pszDataSource,
+                            GDAL_OF_VECTOR, NULL, papszOpenOptions, NULL );
         }
         else
             bCloseODS = FALSE;
@@ -1500,7 +1481,8 @@ int main( int nArgc, char ** papszArgv )
         }
     }
     else
-        poDS = OGRSFDriverRegistrar::Open( pszDataSource, FALSE );
+        poDS = (GDALDataset*) GDALOpenEx( pszDataSource,
+                            GDAL_OF_VECTOR, NULL, papszOpenOptions, NULL );
 
 /* -------------------------------------------------------------------- */
 /*      Report failure                                                  */
@@ -1515,7 +1497,7 @@ int main( int nArgc, char ** papszArgv )
 
         for( int iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++ )
         {
-            fprintf( stderr, "  -> %s\n", poR->GetDriver(iDriver)->GetName() );
+            fprintf( stderr, "  -> %s\n", poR->GetDriver(iDriver)->GetDescription() );
         }
 
         exit( 1 );
@@ -1527,13 +1509,17 @@ int main( int nArgc, char ** papszArgv )
 
     if( bUpdate && poODS == NULL )
     {
-        poODS = OGRSFDriverRegistrar::Open( pszDestDataSource, TRUE, &poDriver );
+        poODS = (GDALDataset*) GDALOpenEx( pszDestDataSource,
+                GDAL_OF_UPDATE | GDAL_OF_VECTOR, NULL, papszDestOpenOptions, NULL );
+        if( poODS != NULL )
+            poDriver = poODS->GetDriver();
 
         if( poODS == NULL )
         {
             if (bOverwrite || bAppend)
             {
-                poODS = OGRSFDriverRegistrar::Open( pszDestDataSource, FALSE, &poDriver );
+                poODS = (GDALDataset*) GDALOpenEx( pszDestDataSource,
+                            GDAL_OF_VECTOR, NULL, papszDestOpenOptions, NULL );
                 if (poODS == NULL)
                 {
                     /* ok the datasource doesn't exist at all */
@@ -1541,7 +1527,9 @@ int main( int nArgc, char ** papszArgv )
                 }
                 else
                 {
-                    OGRDataSource::DestroyDataSource(poODS);
+                    if( poODS != NULL )
+                        poDriver = poODS->GetDriver();
+                    GDALClose( (GDALDatasetH) poODS );
                     poODS = NULL;
                 }
             }
@@ -1580,12 +1568,12 @@ int main( int nArgc, char ** papszArgv )
         
             for( iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++ )
             {
-                fprintf( stderr,  "  -> `%s'\n", poR->GetDriver(iDriver)->GetName() );
+                fprintf( stderr,  "  -> `%s'\n", poR->GetDriver(iDriver)->GetDescription() );
             }
             exit( 1 );
         }
 
-        if( !poDriver->TestCapability( ODrCCreateDataSource ) )
+        if( !CSLTestBoolean( CSLFetchNameValueDef(poDriver->GetMetadata(), GDAL_DCAP_CREATE, "FALSE") ) )
         {
             fprintf( stderr,  "%s driver does not support data source creation.\n",
                     pszFormat );
@@ -1601,7 +1589,7 @@ int main( int nArgc, char ** papszArgv )
 /*      a directory instead.                                            */
 /* -------------------------------------------------------------------- */
         VSIStatBufL  sStat;
-        if (EQUAL(poDriver->GetName(), "ESRI Shapefile") &&
+        if (EQUAL(poDriver->GetDescription(), "ESRI Shapefile") &&
             pszSQLStatement == NULL &&
             (CSLCount(papszLayers) > 1 ||
              (CSLCount(papszLayers) == 0 && poDS->GetLayerCount() > 1)) &&
@@ -1622,7 +1610,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Create the output data source.                                  */
 /* -------------------------------------------------------------------- */
-        poODS = poDriver->CreateDataSource( pszDestDataSource, papszDSCO );
+        poODS = poDriver->Create( pszDestDataSource, 0, 0, 0, GDT_Unknown, papszDSCO );
         if( poODS == NULL )
         {
             fprintf( stderr,  "%s driver failed to create %s\n", 
@@ -1679,13 +1667,12 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      For OSM file.                                                   */
 /* -------------------------------------------------------------------- */
-    int         bSrcIsOSM = (poDS->GetDriver() != NULL &&
-                             strcmp(poDS->GetDriver()->GetName(), "OSM") == 0);
+    int         bSrcIsOSM = (strcmp(poDS->GetDriverName(), "OSM") == 0);
     vsi_l_offset nSrcFileSize = 0;
-    if( bSrcIsOSM && strcmp(poDS->GetName(), "/vsistdin/") != 0)
+    if( bSrcIsOSM && strcmp(poDS->GetDescription(), "/vsistdin/") != 0)
     {
         VSIStatBufL sStat;
-        if( VSIStatL(poDS->GetName(), &sStat) == 0 )
+        if( VSIStatL(poDS->GetDescription(), &sStat) == 0 )
             nSrcFileSize = sStat.st_size;
     }
 
@@ -1754,7 +1741,7 @@ int main( int nArgc, char ** papszArgv )
 /*      the layer name isn't specified                                  */
 /* -------------------------------------------------------------------- */
             VSIStatBufL  sStat;
-            if (EQUAL(poDriver->GetName(), "ESRI Shapefile") &&
+            if (EQUAL(poDriver->GetDescription(), "ESRI Shapefile") &&
                 pszNewLayerName == NULL &&
                 VSIStatL(pszDestDataSource, &sStat) == 0 && VSI_ISREG(sStat.st_mode))
             {
@@ -1841,7 +1828,7 @@ int main( int nArgc, char ** papszArgv )
 /*      the layer name isn't specified                                  */
 /* -------------------------------------------------------------------- */
         VSIStatBufL  sStat;
-        if (EQUAL(poDriver->GetName(), "ESRI Shapefile") &&
+        if (EQUAL(poDriver->GetDescription(), "ESRI Shapefile") &&
             (CSLCount(papszLayers) == 1 || nSrcLayerCount == 1) && pszNewLayerName == NULL &&
             VSIStatL(pszDestDataSource, &sStat) == 0 && VSI_ISREG(sStat.st_mode))
         {
@@ -2082,7 +2069,7 @@ int main( int nArgc, char ** papszArgv )
 /*      the layer name isn't specified                                  */
 /* -------------------------------------------------------------------- */
         VSIStatBufL  sStat;
-        if (EQUAL(poDriver->GetName(), "ESRI Shapefile") &&
+        if (EQUAL(poDriver->GetDescription(), "ESRI Shapefile") &&
             nLayerCount == 1 && pszNewLayerName == NULL &&
             VSIStatL(pszDestDataSource, &sStat) == 0 && VSI_ISREG(sStat.st_mode))
         {
@@ -2259,8 +2246,8 @@ int main( int nArgc, char ** papszArgv )
 /*      Close down.                                                     */
 /* -------------------------------------------------------------------- */
     if (bCloseODS)
-        OGRDataSource::DestroyDataSource(poODS);
-    OGRDataSource::DestroyDataSource(poDS);
+        GDALClose( (GDALDatasetH)poODS );
+    GDALClose( (GDALDatasetH)poDS );
     OGRGeometryFactory::destroyGeometry(poSpatialFilter);
     OGRGeometryFactory::destroyGeometry(poClipSrc);
     OGRGeometryFactory::destroyGeometry(poClipDst);
@@ -2282,6 +2269,8 @@ int main( int nArgc, char ** papszArgv )
     CSLDestroy( papszLayers );
     CSLDestroy( papszDSCO );
     CSLDestroy( papszLCO );
+    CSLDestroy( papszOpenOptions );
+    CSLDestroy( papszDestOpenOptions );
     CSLDestroy( papszFieldTypesToString );
     CPLFree( pszNewLayerName );
 
@@ -2321,6 +2310,7 @@ static void Usage(const char* pszAdditionalMsg, int bShort)
             "\n"
             "Advanced options :\n"
             "               [-gt n]\n"
+            "               [[-oo NAME=VALUE] ...] [[-doo NAME=VALUE] ...]\n"
             "               [-clipsrc [xmin ymin xmax ymax]|WKT|datasource|spat_extent]\n"
             "               [-clipsrcsql sql_statement] [-clipsrclayer layer]\n"
             "               [-clipsrcwhere expression]\n"
@@ -2349,10 +2339,10 @@ static void Usage(const char* pszAdditionalMsg, int bShort)
 
     for( int iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++ )
     {
-        OGRSFDriver *poDriver = poR->GetDriver(iDriver);
+        GDALDriver *poDriver = poR->GetDriver(iDriver);
 
-        if( poDriver->TestCapability( ODrCCreateDataSource ) )
-            printf( "     -f \"%s\"\n", poDriver->GetName() );
+        if( CSLTestBoolean( CSLFetchNameValueDef(poDriver->GetMetadata(), GDAL_DCAP_CREATE, "FALSE") ) )
+            printf( "     -f \"%s\"\n", poDriver->GetDescription() );
     }
 
     printf( " -append: Append to existing layer instead of creating new if it exists\n"
@@ -2378,6 +2368,8 @@ static void Usage(const char* pszAdditionalMsg, int bShort)
             "                       Used to create intermediate points\n"
             " -dsco NAME=VALUE: Dataset creation option (format specific)\n"
             " -lco  NAME=VALUE: Layer creation option (format specific)\n"
+            " -oo   NAME=VALUE: Input dataset open option (format specific)\n"
+            " -doo  NAME=VALUE: Destination dataset open option (format specific)\n"
             " -nln name: Assign an alternate name to the new layer\n"
             " -nlt type: Force a geometry type for new layer.  One of NONE, GEOMETRY,\n"
             "      POINT, LINESTRING, POLYGON, GEOMETRYCOLLECTION, MULTIPOINT,\n"
@@ -2479,9 +2471,9 @@ static int ForceCoordDimension(int eGType, int nCoordDim)
 /*                         SetupTargetLayer()                           */
 /************************************************************************/
 
-static TargetLayerInfo* SetupTargetLayer( OGRDataSource *poSrcDS,
+static TargetLayerInfo* SetupTargetLayer( GDALDataset *poSrcDS,
                                                 OGRLayer * poSrcLayer,
-                                                OGRDataSource *poDstDS,
+                                                GDALDataset *poDstDS,
                                                 char **papszLCO,
                                                 const char *pszNewLayerName,
                                                 OGRSpatialReference *poOutputSRS,
@@ -3249,9 +3241,9 @@ static int SetupCT( TargetLayerInfo* psInfo,
 /************************************************************************/
 
 static int TranslateLayer( TargetLayerInfo* psInfo,
-                           OGRDataSource *poSrcDS,
+                           GDALDataset *poSrcDS,
                            OGRLayer * poSrcLayer,
-                           OGRDataSource *poDstDS,
+                           GDALDataset *poDstDS,
                            int bTransform,
                            int bWrapDateline,
                            const char* pszDateLineOffset,

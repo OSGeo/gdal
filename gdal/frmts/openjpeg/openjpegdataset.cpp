@@ -1962,6 +1962,7 @@ void GDALRegister_JP2OpenJPEG()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "JP2OpenJPEG" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "JPEG-2000 driver based on OpenJPEG library" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

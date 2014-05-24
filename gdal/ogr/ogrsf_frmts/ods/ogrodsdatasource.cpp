@@ -93,7 +93,8 @@ void OGRODSLayer::SetUpdated(int bUpdatedIn)
 
 OGRErr OGRODSLayer::SyncToDisk()
 {
-    return poDS->SyncToDisk();
+    poDS->FlushCache();
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
@@ -196,7 +197,7 @@ OGRODSDataSource::OGRODSDataSource()
 OGRODSDataSource::~OGRODSDataSource()
 
 {
-    SyncToDisk();
+    FlushCache();
 
     CPLFree( pszName );
 
@@ -1203,11 +1204,11 @@ void OGRODSDataSource::AnalyseSettings()
 }
 
 /************************************************************************/
-/*                            CreateLayer()                             */
+/*                           ICreateLayer()                             */
 /************************************************************************/
 
 OGRLayer *
-OGRODSDataSource::CreateLayer( const char * pszLayerName,
+OGRODSDataSource::ICreateLayer( const char * pszLayerName,
                                 OGRSpatialReference *poSRS,
                                 OGRwkbGeometryType eType,
                                 char ** papszOptions )
@@ -1498,13 +1499,13 @@ static void WriteLayer(VSILFILE* fp, OGRLayer* poLayer)
 }
 
 /************************************************************************/
-/*                            SyncToDisk()                              */
+/*                            FlushCache()                              */
 /************************************************************************/
 
-OGRErr OGRODSDataSource::SyncToDisk()
+void OGRODSDataSource::FlushCache()
 {
     if (!bUpdated)
-        return OGRERR_NONE;
+        return;
 
     CPLAssert(fpSettings == NULL);
     CPLAssert(fpContent == NULL);
@@ -1516,7 +1517,7 @@ OGRErr OGRODSDataSource::SyncToDisk()
         {
             CPLError(CE_Failure, CPLE_FileIO,
                     "Cannot delete %s", pszName);
-            return OGRERR_FAILURE;
+            return;
         }
     }
 
@@ -1526,7 +1527,7 @@ OGRErr OGRODSDataSource::SyncToDisk()
     {
         CPLError(CE_Failure, CPLE_FileIO,
                  "Cannot create %s", pszName);
-        return OGRERR_FAILURE;
+        return;
     }
 
     /* Write uncopressed mimetype */
@@ -1544,7 +1545,7 @@ OGRErr OGRODSDataSource::SyncToDisk()
     /* Re-open with VSILFILE */
     VSILFILE* fpZIP = VSIFOpenL(CPLSPrintf("/vsizip/%s", pszName), "ab");
     if (fpZIP == NULL)
-        return OGRERR_FAILURE;
+        return;
 
     VSILFILE* fp;
     int i;
@@ -1713,7 +1714,7 @@ OGRErr OGRODSDataSource::SyncToDisk()
         ((OGRODSLayer*)papoLayers[i])->SetUpdated(FALSE);
     }
 
-    return OGRERR_NONE;
+    return;
 }
 
 /************************************************************************/

@@ -137,6 +137,7 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
     m_poOgrSRS->SetWellKnownGeogCS ( "WGS84" );
 
     m_poOgrFeatureDefn = new OGRFeatureDefn ( pszLayerName );
+    SetDescription( m_poOgrFeatureDefn->GetName() );
     m_poOgrFeatureDefn->Reference (  );
     m_poOgrFeatureDefn->SetGeomType ( eGType );
     if( m_poOgrFeatureDefn->GetGeomFieldCount() != 0 )

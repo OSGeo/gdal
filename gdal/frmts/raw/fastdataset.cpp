@@ -1131,6 +1131,7 @@ void GDALRegister_FAST()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "FAST" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "EOSAT FAST Format" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

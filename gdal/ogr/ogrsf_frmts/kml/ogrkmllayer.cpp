@@ -92,6 +92,7 @@ OGRKMLLayer::OGRKMLLayer( const char * pszName,
     poDS_ = poDSIn;
     
     poFeatureDefn_ = new OGRFeatureDefn( pszName );
+    SetDescription( poFeatureDefn_->GetName() );
     poFeatureDefn_->Reference();
     poFeatureDefn_->SetGeomType( eReqType );
     if( poFeatureDefn_->GetGeomFieldCount() != 0 )

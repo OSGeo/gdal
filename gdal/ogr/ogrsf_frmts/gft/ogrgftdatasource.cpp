@@ -174,9 +174,6 @@ CPLString OGRGFTGetOptionValue(const char* pszFilename,
 int OGRGFTDataSource::Open( const char * pszFilename, int bUpdateIn)
 
 {
-    if (!EQUALN(pszFilename, "GFT:", 4))
-        return FALSE;
-
     bReadWrite = bUpdateIn;
 
     pszName = CPLStrdup( pszFilename );
@@ -301,10 +298,10 @@ const char*  OGRGFTDataSource::GetAPIURL() const
 }
 
 /************************************************************************/
-/*                           CreateLayer()                              */
+/*                          ICreateLayer()                              */
 /************************************************************************/
 
-OGRLayer   *OGRGFTDataSource::CreateLayer( const char *pszName,
+OGRLayer   *OGRGFTDataSource::ICreateLayer( const char *pszName,
                                            OGRSpatialReference *poSpatialRef,
                                            OGRwkbGeometryType eGType,
                                            char ** papszOptions )

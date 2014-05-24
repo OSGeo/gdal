@@ -212,7 +212,7 @@ GDALDataset *GMTDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Does this file have the GMT magic number?                    */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->fp == NULL || poOpenInfo->nHeaderBytes < 50 )
+    if( poOpenInfo->fpL == NULL || poOpenInfo->nHeaderBytes < 50 )
         return NULL;
 
     if( poOpenInfo->pabyHeader[0] != 'C' 
@@ -373,7 +373,7 @@ GDALDataset *GMTDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check for external overviews.                                   */
 /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename, poOpenInfo->papszSiblingFiles );
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename, poOpenInfo->GetSiblingFiles() );
     CPLAcquireMutex(hNCMutex, 1000.0);
 
     return( poDS );
@@ -606,6 +606,7 @@ void GDALRegister_GMT()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "GMT" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "GMT NetCDF Grid Format" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

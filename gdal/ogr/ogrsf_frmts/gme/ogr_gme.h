@@ -175,7 +175,7 @@ class OGRGMEDataSource : public OGRDataSource
     virtual int         GetLayerCount() { return nLayers; }
     virtual OGRLayer*   GetLayer( int );
 
-    virtual OGRLayer   *CreateLayer( const char *pszName,
+    virtual OGRLayer   *ICreateLayer( const char *pszName,
                                      OGRSpatialReference *poSpatialRef = NULL,
                                      OGRwkbGeometryType eGType = wkbUnknown,
                                      char ** papszOptions = NULL );

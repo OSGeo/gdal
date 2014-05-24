@@ -84,7 +84,7 @@ int OGRGenSQLResultsLayerHasSpecialField(swq_expr_node* expr,
 /*                       OGRGenSQLResultsLayer()                        */
 /************************************************************************/
 
-OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
+OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( GDALDataset *poSrcDS,
                                               void *pSelectInfo, 
                                               OGRGeometry *poSpatFilter,
                                               const char *pszWHERE,
@@ -116,14 +116,12 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
     for( iTable = 0; iTable < psSelectInfo->table_count; iTable++ )
     {
         swq_table_def *psTableDef = psSelectInfo->table_defs + iTable;
-        OGRDataSource *poTableDS = poSrcDS;
+        GDALDataset *poTableDS = poSrcDS;
 
         if( psTableDef->data_source != NULL )
         {
-            OGRSFDriverRegistrar *poReg=OGRSFDriverRegistrar::GetRegistrar();
-
-            poTableDS = 
-                poReg->OpenShared( psTableDef->data_source, FALSE, NULL );
+            poTableDS = (GDALDataset*) GDALOpenEx( psTableDef->data_source,
+                            GDAL_OF_VECTOR | GDAL_OF_SHARED, NULL, NULL, NULL );
             if( poTableDS == NULL )
             {
                 if( strlen(CPLGetLastErrorMsg()) == 0 )
@@ -134,7 +132,7 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
                 return;
             }
 
-            papoExtraDS = (OGRDataSource **)
+            papoExtraDS = (GDALDataset **)
                 CPLRealloc( papoExtraDS, sizeof(void*) * ++nExtraDSCount );
 
             papoExtraDS[nExtraDSCount-1] = poTableDS;
@@ -180,6 +178,7 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
     OGRFeatureDefn *poSrcDefn = poSrcLayer->GetLayerDefn();
 
     poDefn = new OGRFeatureDefn( psSelectInfo->table_defs[0].table_alias );
+    SetDescription( poDefn->GetName() );
     poDefn->SetGeomType(wkbNone);
     poDefn->Reference();
 
@@ -483,10 +482,8 @@ OGRGenSQLResultsLayer::~OGRGenSQLResultsLayer()
 /* -------------------------------------------------------------------- */
 /*      Release any additional datasources being used in joins.         */
 /* -------------------------------------------------------------------- */
-    OGRSFDriverRegistrar *poReg=OGRSFDriverRegistrar::GetRegistrar();
-
     for( int iEDS = 0; iEDS < nExtraDSCount; iEDS++ )
-        poReg->ReleaseDataSource( papoExtraDS[iEDS] );
+        GDALClose( (GDALDatasetH)papoExtraDS[iEDS] );
 
     CPLFree( papoExtraDS );
     CPLFree( pszWHERE );

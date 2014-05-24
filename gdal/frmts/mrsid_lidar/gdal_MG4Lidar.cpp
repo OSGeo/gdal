@@ -695,7 +695,7 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
    CPLSetConfigOption( "CPL_LOG", "C:\\ArcGIS_GDAL\\jdem\\cpl.log" );
 #endif
 
-   if( poOpenInfo->fp == NULL || poOpenInfo->nHeaderBytes < 32 )
+   if( poOpenInfo->fpL == NULL || poOpenInfo->nHeaderBytes < 32 )
       return NULL;
 
    CPLXMLNode *pxmlPCView;
@@ -747,7 +747,7 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
    /*      Check that particular fields in the header are valid looking    */
    /*      dates.                                                          */
    /* -------------------------------------------------------------------- */
-   if( openinfo.fp == NULL || openinfo.nHeaderBytes < 50 )
+   if( openinfo.fpL == NULL || openinfo.nHeaderBytes < 50 )
    {
       CPLDestroyXMLNode(pxmlPCView);
       return NULL;
@@ -924,6 +924,7 @@ void GDALRegister_MG4Lidar()
       poDriver = new GDALDriver();
 
       poDriver->SetDescription( "MG4Lidar" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
       poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
          "MrSID Generation 4 / Lidar (.sid)" );
       // To do:  update this help file in gdal.org

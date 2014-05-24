@@ -60,6 +60,33 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                            int* pbTruncationWarningEmitted );
 
 /************************************************************************/
+/*                         OGRShapeGeomFieldDefn                        */
+/************************************************************************/
+
+class OGRShapeGeomFieldDefn: public OGRGeomFieldDefn
+{
+    char* pszFullName;
+    int   bSRSSet;
+    CPLString osPrjFile;
+
+    public:
+        OGRShapeGeomFieldDefn(const char* pszFullNameIn, OGRwkbGeometryType eType,
+                              int bSRSSetIn, OGRSpatialReference *poSRSIn) :
+            OGRGeomFieldDefn("", eType),
+            pszFullName(CPLStrdup(pszFullNameIn)),
+            bSRSSet(bSRSSetIn)
+        {
+            poSRS = poSRSIn;
+        }
+
+        virtual ~OGRShapeGeomFieldDefn() { CPLFree(pszFullName); }
+
+        virtual OGRSpatialReference* GetSpatialRef();
+
+        const CPLString& GetPrjFilename() { return osPrjFile; }
+};
+
+/************************************************************************/
 /*                            OGRShapeLayer                             */
 /************************************************************************/
 
@@ -176,6 +203,8 @@ class OGRShapeLayer : public OGRAbstractProxiedLayer
     virtual int         TestCapability( const char * );
     virtual void        SetSpatialFilter( OGRGeometry * );
     virtual OGRErr      SetAttributeFilter( const char * );
+    
+    void                AddToFileList( CPLStringList& oFileList );
 };
 
 /************************************************************************/
@@ -200,6 +229,8 @@ class OGRShapeDataSource : public OGRDataSource
     std::vector<CPLString> oVectorLayerName;
     
     int                 b2GBLimit;
+    
+    char              **papszOpenOptions;
 
   public:
                         OGRShapeDataSource();
@@ -207,7 +238,7 @@ class OGRShapeDataSource : public OGRDataSource
 
     OGRLayerPool       *GetPool() { return poPool; }
 
-    int                 Open( const char *, int bUpdate, int bTestOpen,
+    int                 Open( GDALOpenInfo* poOpenInfo, int bTestOpen,
                               int bForceSingleFileDataSource = FALSE );
     int                 OpenFile( const char *, int bUpdate, int bTestOpen );
 
@@ -217,7 +248,7 @@ class OGRShapeDataSource : public OGRDataSource
     virtual OGRLayer    *GetLayer( int );
     virtual OGRLayer    *GetLayerByName(const char *);
 
-    virtual OGRLayer    *CreateLayer( const char *, 
+    virtual OGRLayer    *ICreateLayer( const char *, 
                                       OGRSpatialReference * = NULL,
                                       OGRwkbGeometryType = wkbUnknown,
                                       char ** = NULL );
@@ -229,31 +260,14 @@ class OGRShapeDataSource : public OGRDataSource
     virtual int          TestCapability( const char * );
     virtual OGRErr       DeleteLayer( int iLayer );
 
+    virtual char      **GetFileList(void);
+
     void                 SetLastUsedLayer( OGRShapeLayer* poLayer );
     void                 UnchainLayer( OGRShapeLayer* poLayer );
 
     SHPHandle            DS_SHPOpen( const char * pszShapeFile, const char * pszAccess );
     DBFHandle            DS_DBFOpen( const char * pszDBFFile, const char * pszAccess );
+    char               **GetOpenOptions() { return papszOpenOptions; }
 };
-
-/************************************************************************/
-/*                            OGRShapeDriver                            */
-/************************************************************************/
-
-class OGRShapeDriver : public OGRSFDriver
-{
-  public:
-                ~OGRShapeDriver();
-                
-    const char *GetName();
-    OGRDataSource *Open( const char *, int );
-
-    virtual OGRDataSource *CreateDataSource( const char *pszName,
-                                             char ** = NULL );
-    OGRErr              DeleteDataSource( const char *pszDataSource );
-    
-    int                 TestCapability( const char * );
-};
-
 
 #endif /* ndef _OGRSHAPE_H_INCLUDED */

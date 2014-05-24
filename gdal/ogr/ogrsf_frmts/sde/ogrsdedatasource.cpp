@@ -820,11 +820,11 @@ void OGRSDEDataSource::CleanupLayerCreation(const char* pszLayerName)
 }
 
 /************************************************************************/
-/*                            CreateLayer()                             */
+/*                           ICreateLayer()                             */
 /************************************************************************/
 
 OGRLayer *
-OGRSDEDataSource::CreateLayer( const char * pszLayerName,
+OGRSDEDataSource::ICreateLayer( const char * pszLayerName,
                                OGRSpatialReference *poSRS,
                                OGRwkbGeometryType eType,
                                char ** papszOptions )
@@ -1333,7 +1333,7 @@ void OGRSDEDataSource::EnumerateSpatialTables()
 
     for( iTable = 0; iTable < nTableListCount; iTable++ )
     {
-        CreateLayerFromRegInfo( ahTableList[iTable] );
+       ICreateLayerFromRegInfo( ahTableList[iTable] );
     }
 
     SE_registration_free_info_list( nTableListCount, ahTableList );
@@ -1363,14 +1363,14 @@ void OGRSDEDataSource::OpenSpatialTable( const char* pszTableName )
     }
     else
     {
-        CreateLayerFromRegInfo( tableinfo );
+       ICreateLayerFromRegInfo( tableinfo );
     }
 
     SE_reginfo_free( tableinfo );
 }
 
 /************************************************************************/
-/*                       CreateLayerFromRegInfo()                       */
+/*                      ICreateLayerFromRegInfo()                       */
 /************************************************************************/
 
 void OGRSDEDataSource::CreateLayerFromRegInfo( SE_REGINFO& reginfo )

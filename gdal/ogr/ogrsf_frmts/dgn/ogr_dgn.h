@@ -104,7 +104,7 @@ class OGRDGNDataSource : public OGRDataSource
     int                 Open( const char *, int bTestOpen, int bUpdate );
     int                 PreCreate( const char *, char ** );
 
-    OGRLayer           *CreateLayer( const char *, 
+    OGRLayer           *ICreateLayer( const char *, 
                                      OGRSpatialReference * = NULL,
                                      OGRwkbGeometryType = wkbUnknown,
                                      char ** = NULL );
@@ -115,22 +115,5 @@ class OGRDGNDataSource : public OGRDataSource
 
     int                 TestCapability( const char * );
 };
-
-/************************************************************************/
-/*                            OGRDGNDriver                              */
-/************************************************************************/
-
-class OGRDGNDriver : public OGRSFDriver
-{
-  public:
-                ~OGRDGNDriver();
-                
-    const char *GetName();
-    OGRDataSource *Open( const char *, int );
-    OGRDataSource *CreateDataSource( const char *, char ** );
-
-    int                 TestCapability( const char * );
-};
-
 
 #endif /* ndef _OGR_DGN_H_INCLUDED */

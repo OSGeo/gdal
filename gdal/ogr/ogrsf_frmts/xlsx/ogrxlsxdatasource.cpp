@@ -88,7 +88,8 @@ void OGRXLSXLayer::SetUpdated(int bUpdatedIn)
 
 OGRErr OGRXLSXLayer::SyncToDisk()
 {
-    return poDS->SyncToDisk();
+    poDS->FlushCache();
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
@@ -189,7 +190,7 @@ OGRXLSXDataSource::OGRXLSXDataSource()
 OGRXLSXDataSource::~OGRXLSXDataSource()
 
 {
-    SyncToDisk();
+    FlushCache();
 
     CPLFree( pszName );
 
@@ -1363,11 +1364,11 @@ void OGRXLSXDataSource::AnalyseStyles(VSILFILE* fpStyles)
 }
 
 /************************************************************************/
-/*                            CreateLayer()                             */
+/*                           ICreateLayer()                             */
 /************************************************************************/
 
 OGRLayer *
-OGRXLSXDataSource::CreateLayer( const char * pszLayerName,
+OGRXLSXDataSource::ICreateLayer( const char * pszLayerName,
                                 OGRSpatialReference *poSRS,
                                 OGRwkbGeometryType eType,
                                 char ** papszOptions )
@@ -1916,15 +1917,15 @@ static void WriteDotRels(const char* pszName)
 }
 
 /************************************************************************/
-/*                            SyncToDisk()                              */
+/*                            FlushCache()                              */
 /************************************************************************/
 
-OGRErr OGRXLSXDataSource::SyncToDisk()
+void OGRXLSXDataSource::FlushCache()
 {
     int i;
 
     if (!bUpdated)
-        return OGRERR_NONE;
+        return;
 
     VSIStatBufL sStat;
     if (VSIStatL(pszName, &sStat) == 0)
@@ -1933,7 +1934,7 @@ OGRErr OGRXLSXDataSource::SyncToDisk()
         {
             CPLError(CE_Failure, CPLE_FileIO,
                     "Cannot delete %s", pszName);
-            return OGRERR_FAILURE;
+            return;
         }
     }
 
@@ -1949,7 +1950,7 @@ OGRErr OGRXLSXDataSource::SyncToDisk()
     {
         CPLError(CE_Failure, CPLE_FileIO,
                  "Cannot create %s", pszName);
-        return OGRERR_FAILURE;
+        return;
     }
 
     WriteContentTypes(pszName, nLayers);
@@ -1989,5 +1990,5 @@ OGRErr OGRXLSXDataSource::SyncToDisk()
         ((OGRXLSXLayer*)papoLayers[i])->SetUpdated(FALSE);
     }
 
-    return OGRERR_NONE;
+    return;
 }

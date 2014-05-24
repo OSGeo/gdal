@@ -126,8 +126,7 @@ class OGRPDSDataSource : public OGRDataSource
                         OGRPDSDataSource();
                         ~OGRPDSDataSource();
 
-    int                 Open( const char * pszFilename,
-                              int bUpdate );
+    int                 Open( const char * pszFilename );
 
     virtual const char*         GetName() { return pszName; }
 
@@ -138,20 +137,5 @@ class OGRPDSDataSource : public OGRDataSource
 
     static void         CleanString( CPLString &osInput );
 };
-
-/************************************************************************/
-/*                              OGRPDSDriver                            */
-/************************************************************************/
-
-class OGRPDSDriver : public OGRSFDriver
-{
-  public:
-                ~OGRPDSDriver();
-
-    virtual const char*         GetName();
-    virtual OGRDataSource*      Open( const char *, int );
-    virtual int                 TestCapability( const char * );
-};
-
 
 #endif /* ndef _OGR_PDS_H_INCLUDED */

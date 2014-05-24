@@ -493,6 +493,7 @@ void GDALRegister_MAP()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "MAP" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "OziExplorer .MAP" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

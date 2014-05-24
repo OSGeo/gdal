@@ -30,47 +30,44 @@
 #include <cpl_conv.h>
 
 /************************************************************************/
-/*                           OGRGeoJSONDriver()                         */
+/*                        OGRGeoJSONDriverIdentify()                    */
 /************************************************************************/
 
-OGRGeoJSONDriver::OGRGeoJSONDriver()
+static int OGRGeoJSONDriverIdentifyInternal( GDALOpenInfo* poOpenInfo,
+                                     GeoJSONSourceType& nSrcType )
 {
+/* -------------------------------------------------------------------- */
+/*      Determine type of data source: text file (.geojson, .json),     */
+/*      Web Service or text passed directly and load data.              */
+/* -------------------------------------------------------------------- */
+
+    nSrcType = GeoJSONGetSourceType( poOpenInfo );
+    if( nSrcType == eGeoJSONSourceUnknown )
+        return FALSE;
+    if( nSrcType == eGeoJSONSourceService )
+        return -1;
+    return TRUE;
 }
 
 /************************************************************************/
-/*                          ~OGRGeoJSONDriver()                         */
+/*                        OGRGeoJSONDriverIdentify()                    */
 /************************************************************************/
 
-OGRGeoJSONDriver::~OGRGeoJSONDriver()
+static int OGRGeoJSONDriverIdentify( GDALOpenInfo* poOpenInfo )
 {
-}
-
-/************************************************************************/
-/*                           GetName()                                  */
-/************************************************************************/
-
-const char* OGRGeoJSONDriver::GetName()
-{
-    return "GeoJSON";
-}
-
-/************************************************************************/
-/*                           Open()                                     */
-/************************************************************************/
-
-OGRDataSource* OGRGeoJSONDriver::Open( const char* pszName, int bUpdate )
-{
-    return Open( pszName, bUpdate, NULL );
+    GeoJSONSourceType nSrcType;
+    return OGRGeoJSONDriverIdentifyInternal(poOpenInfo, nSrcType);
 }
 
 /************************************************************************/
 /*                           Open()                                     */
 /************************************************************************/
 
-OGRDataSource* OGRGeoJSONDriver::Open( const char* pszName, int bUpdate,
-                                       char** papszOptions )
+static GDALDataset* OGRGeoJSONDriverOpen( GDALOpenInfo* poOpenInfo )
 {
-    UNREFERENCED_PARAM(papszOptions);
+    GeoJSONSourceType nSrcType;
+    if( OGRGeoJSONDriverIdentifyInternal(poOpenInfo, nSrcType) == FALSE )
+        return NULL;
 
     OGRGeoJSONDataSource* poDS = NULL;
     poDS = new OGRGeoJSONDataSource();
@@ -102,13 +99,13 @@ OGRDataSource* OGRGeoJSONDriver::Open( const char* pszName, int bUpdate,
 /* -------------------------------------------------------------------- */
 /*      Open and start processing GeoJSON datasoruce to OGR objects.    */
 /* -------------------------------------------------------------------- */
-    if( !poDS->Open( pszName ) )
+    if( !poDS->Open( poOpenInfo, nSrcType ) )
     {
         delete poDS;
         poDS= NULL;
     }
 
-    if( NULL != poDS && bUpdate )
+    if( NULL != poDS && poOpenInfo->eAccess == GA_Update )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "GeoJSON Driver doesn't support update." );
@@ -120,11 +117,12 @@ OGRDataSource* OGRGeoJSONDriver::Open( const char* pszName, int bUpdate,
 }
 
 /************************************************************************/
-/*                           CreateDataSource()                         */
+/*                               Create()                               */
 /************************************************************************/
 
-OGRDataSource* OGRGeoJSONDriver::CreateDataSource( const char* pszName,
-                                                   char** papszOptions )
+static GDALDataset *OGRGeoJSONDriverCreate( const char * pszName,
+                                    int nBands, int nXSize, int nYSize, GDALDataType eDT,
+                                    char **papszOptions )
 {
     OGRGeoJSONDataSource* poDS = new OGRGeoJSONDataSource();
 
@@ -138,33 +136,19 @@ OGRDataSource* OGRGeoJSONDriver::CreateDataSource( const char* pszName,
 }
 
 /************************************************************************/
-/*                           DeleteDataSource()                         */
+/*                               Delete()                               */
 /************************************************************************/
 
-OGRErr OGRGeoJSONDriver::DeleteDataSource( const char* pszName )
+static CPLErr OGRGeoJSONDriverDelete( const char *pszFilename )
 {
-    if( VSIUnlink( pszName ) == 0 )
+    if( VSIUnlink( pszFilename ) == 0 )
     {
-        return OGRERR_NONE;
+        return CE_None;
     }
     
-    CPLDebug( "GeoJSON", "Failed to delete \'%s\'", pszName);
+    CPLDebug( "GeoJSON", "Failed to delete \'%s\'", pszFilename);
 
-    return OGRERR_FAILURE;
-}
-
-/************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRGeoJSONDriver::TestCapability( const char* pszCap )
-{
-    if( EQUAL( pszCap, ODrCCreateDataSource ) )
-        return TRUE;
-    else if( EQUAL(pszCap, ODrCDeleteDataSource) )
-        return TRUE;
-    else
-        return FALSE;
+    return CE_Failure;
 }
 
 /************************************************************************/
@@ -173,10 +157,38 @@ int OGRGeoJSONDriver::TestCapability( const char* pszCap )
 
 void RegisterOGRGeoJSON()
 {
-    if( GDAL_CHECK_VERSION("OGR/GeoJSON driver") )
+    if( !GDAL_CHECK_VERSION("OGR/GeoJSON driver") )
+        return;
+
+    GDALDriver  *poDriver;
+
+    if( GDALGetDriverByName( "GeoJSON" ) == NULL )
     {
-        OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( 
-            new OGRGeoJSONDriver );
+        poDriver = new GDALDriver();
+
+        poDriver->SetDescription( "GeoJSON" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                                   "GeoJSON" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "json geojson topojson" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                                   "drv_geojson.html" );
+
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "<CreationOptionList/>");
+
+        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+"<LayerCreationOptionList>"
+"  <Option name='WRITE_BBOX' type='boolean' description='whether to write a bbox property with the bounding box of the geometries at the feature and feature collection level' default='NO'/>"
+"  <Option name='COORDINATE_PRECISION' type='int' description='Number of decimal for coordinates' default='10'/>"
+"</LayerCreationOptionList>");
+
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
+        poDriver->pfnOpen = OGRGeoJSONDriverOpen;
+        poDriver->pfnIdentify = OGRGeoJSONDriverIdentify;
+        poDriver->pfnCreate = OGRGeoJSONDriverCreate;
+        poDriver->pfnDelete = OGRGeoJSONDriverDelete;
+
+        GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-

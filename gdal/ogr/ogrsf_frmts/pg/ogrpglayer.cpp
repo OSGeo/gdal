@@ -1909,6 +1909,7 @@ int OGRPGLayer::ReadResultDefinition(PGresult *hInitialResultIn)
 /*      Parse the returned table information.                           */
 /* -------------------------------------------------------------------- */
     poFeatureDefn = new OGRPGFeatureDefn( "sql_statement" );
+    SetDescription( poFeatureDefn->GetName() );
     int            iRawField;
 
     poFeatureDefn->Reference();

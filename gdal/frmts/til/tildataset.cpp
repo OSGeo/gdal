@@ -234,7 +234,7 @@ GDALDataset *TILDataset::Open( GDALOpenInfo * poOpenInfo )
     char **papszIMD = NULL;
     CPLString osIMDFilename = 
         GDALFindAssociatedFile( poOpenInfo->pszFilename, "IMD", 
-                                poOpenInfo->papszSiblingFiles, 0 );
+                                poOpenInfo->GetSiblingFiles(), 0 );
 
     if( osIMDFilename != "" )
         papszIMD = GDALLoadIMDFile( osIMDFilename, NULL );
@@ -444,11 +444,11 @@ GDALDataset *TILDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->osRPBFilename = 
         GDALFindAssociatedFile( poOpenInfo->pszFilename, "RPB", 
-                                poOpenInfo->papszSiblingFiles, 0 );
+                                poOpenInfo->GetSiblingFiles(), 0 );
     if( poDS->osRPBFilename != "" )
     {
         char **papszRPCMD = GDALLoadRPBFile( poOpenInfo->pszFilename,
-                                             poOpenInfo->papszSiblingFiles );
+                                             poOpenInfo->GetSiblingFiles() );
         
         if( papszRPCMD != NULL )
         {
@@ -513,6 +513,7 @@ void GDALRegister_TIL()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "TIL" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "EarthWatch .TIL" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

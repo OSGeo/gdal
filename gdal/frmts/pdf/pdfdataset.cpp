@@ -27,14 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-/* hack for PDF driver and poppler >= 0.15.0 that defines incompatible "typedef bool GBool" */
-/* in include/poppler/goo/gtypes.h with the one defined in cpl_port.h */
-#define CPL_GBOOL_DEFINED
+#include "gdal_pdf.h"
 
-#include "pdfdataset.h"
 #include "cpl_vsi_virtual.h"
 #include "cpl_string.h"
-#include "gdal_pam.h"
 #include "ogr_spatialref.h"
 #include "ogr_geometry.h"
 #include "cpl_spawn.h"
@@ -45,11 +41,7 @@
 #include <goo/GooList.h>
 #endif
 
-#include "pdfobject.h"
 #include "pdfcreatecopy.h"
-
-#include <set>
-#include <map>
 
 #define GDAL_DEFAULT_DPI 150.0
 
@@ -60,6 +52,34 @@ CPL_CVSID("$Id$");
 CPL_C_START
 void    GDALRegister_PDF(void);
 CPL_C_END
+
+static const char* pszOpenOptionList =
+"<OpenOptionList>"
+"  <Option name='RENDERING_OPTIONS' type='string-select' description='Which graphical elements to render' default='RASTER,VECTOR,TEXT' alt_config_option='GDAL_PDF_RENDERING_OPTIONS'>"
+"     <Value>RASTER,VECTOR,TEXT</Value>\n"
+"     <Value>RASTER,VECTOR</Value>\n"
+"     <Value>RASTER,TEXT</Value>\n"
+"     <Value>RASTER</Value>\n"
+"     <Value>VECTOR,TEXT</Value>\n"
+"     <Value>VECTOR</Value>\n"
+"     <Value>TEXT</Value>\n"
+"  </Option>"
+"  <Option name='DPI' type='float' description='Resolution in Dot Per Inch' default='72' alt_config_option='GDAL_PDF_DPI'/>"
+"  <Option name='USER_PWD' type='string' description='Password' alt_config_option='PDF_USER_PWD'/>"
+#if defined(HAVE_POPPLER) && defined(HAVE_PODOFO)
+"  <Option name='PDF_LIB' type='string-select' description='Which underlying PDF library to use' default='POPPLER' alt_config_option='GDAL_PDF_LIB'>"
+"     <Value>POPPLER</Value>\n"
+"     <Value>PODOFO</Value>\n"
+"  </Option>"
+#endif
+"  <Option name='LAYERS' type='string' description='List of layers (comma separated) to turn ON (or ALL to turn all layers ON)' alt_config_option='GDAL_PDF_LAYERS'/>"
+"  <Option name='LAYERS_OFF' type='string' description='List of layers (comma separated) to turn OFF' alt_config_option='GDAL_PDF_LAYERS_OFF'/>"
+"  <Option name='BANDS' type='string-select' description='Number of raster bands' default='3' alt_config_option='GDAL_PDF_BANDS'>"
+"     <Value>3</Value>\n"
+"     <Value>4</Value>\n"
+"  </Option>"
+"  <Option name='NEATLINE' type='string' description='The name of the neatline to select' alt_config_option='GDAL_PDF_NEATLINE'/>"
+"</OpenOptionList>";
 
 #if defined(HAVE_POPPLER) || defined(HAVE_PODOFO)
 
@@ -495,174 +515,6 @@ void GDALPDFDumper::Dump(GDALPDFDictionary* poDict, int nDepth)
 }
 
 /************************************************************************/
-/*                            GDALPDFTileDesc                           */
-/************************************************************************/
-
-typedef struct
-{
-    GDALPDFObject* poImage;
-    double         adfCM[6];
-    double         dfWidth;
-    double         dfHeight;
-    int            nBands;
-} GDALPDFTileDesc;
-
-/************************************************************************/
-/* ==================================================================== */
-/*                              PDFDataset                              */
-/* ==================================================================== */
-/************************************************************************/
-
-class PDFRasterBand;
-class PDFImageRasterBand;
-
-class PDFDataset : public GDALPamDataset
-{
-    friend class PDFRasterBand;
-    friend class PDFImageRasterBand;
-
-    CPLString    osFilename;
-    CPLString    osUserPwd;
-    char        *pszWKT;
-    double       dfDPI;
-    int          bHasCTM;
-    double       adfCTM[6];
-    double       adfGeoTransform[6];
-    int          bGeoTransformValid;
-    int          nGCPCount;
-    GDAL_GCP    *pasGCPList;
-    int          bProjDirty;
-    int          bNeatLineDirty;
-
-    GDALMultiDomainMetadata oMDMD;
-    int          bInfoDirty;
-    int          bXMPDirty;
-
-    int          bUsePoppler;
-#ifdef HAVE_POPPLER
-    PDFDoc*      poDocPoppler;
-#endif
-#ifdef HAVE_PODOFO
-    PoDoFo::PdfMemDocument* poDocPodofo;
-    int          bPdfToPpmFailed;
-#endif
-    GDALPDFObject* poPageObj;
-
-    int          iPage;
-
-    GDALPDFObject *poImageObj;
-
-    double       dfMaxArea;
-    int          ParseLGIDictObject(GDALPDFObject* poLGIDict);
-    int          ParseLGIDictDictFirstPass(GDALPDFDictionary* poLGIDict, int* pbIsBestCandidate = NULL);
-    int          ParseLGIDictDictSecondPass(GDALPDFDictionary* poLGIDict);
-    int          ParseProjDict(GDALPDFDictionary* poProjDict);
-    int          ParseVP(GDALPDFObject* poVP, double dfMediaBoxWidth, double dfMediaBoxHeight);
-    int          ParseMeasure(GDALPDFObject* poMeasure,
-                              double dfMediaBoxWidth, double dfMediaBoxHeight,
-                              double dfULX, double dfULY, double dfLRX, double dfLRY);
-
-    int          bTried;
-    GByte       *pabyCachedData;
-    int          nLastBlockXOff, nLastBlockYOff;
-
-    OGRPolygon*  poNeatLine;
-
-    std::vector<GDALPDFTileDesc> asTiles; /* in the order of the PDF file */
-    std::vector<int> aiTiles; /* in the order of blocks */
-    int          nBlockXSize;
-    int          nBlockYSize;
-    int          CheckTiledRaster();
-
-    void         GuessDPI(GDALPDFDictionary* poPageDict, int* pnBands);
-    void         FindXMP(GDALPDFObject* poObj);
-    void         ParseInfo(GDALPDFObject* poObj);
-
-#ifdef HAVE_POPPLER
-    ObjectAutoFree* poCatalogObjectPoppler;
-#endif
-    GDALPDFObject* poCatalogObject;
-    GDALPDFObject* GetCatalog();
-
-#ifdef HAVE_POPPLER
-    void         AddLayer(const char* pszLayerName, OptionalContentGroup* ocg);
-    void         ExploreLayers(GDALPDFArray* poArray, int nRecLevel, CPLString osTopLayer = "");
-    void         FindLayers();
-    void         TurnLayersOnOff();
-    CPLStringList osLayerList;
-    std::map<CPLString, OptionalContentGroup*> oLayerOCGMap;
-#endif
-
-    CPLStringList osLayerWithRefList;
-    CPLString     FindLayerOCG(GDALPDFDictionary* poPageDict,
-                               const char* pszLayerName);
-    void          FindLayersGeneric(GDALPDFDictionary* poPageDict);
-
-    int          bUseOCG;
-
-  public:
-                 PDFDataset();
-    virtual     ~PDFDataset();
-
-    virtual const char* GetProjectionRef();
-    virtual CPLErr GetGeoTransform( double * );
-
-    virtual CPLErr      SetProjection(const char* pszWKTIn);
-    virtual CPLErr      SetGeoTransform(double* padfGeoTransform);
-
-    virtual char      **GetMetadataDomainList();
-    virtual char      **GetMetadata( const char * pszDomain = "" );
-    virtual CPLErr      SetMetadata( char ** papszMetadata,
-                                     const char * pszDomain = "" );
-    virtual const char *GetMetadataItem( const char * pszName,
-                                         const char * pszDomain = "" );
-    virtual CPLErr      SetMetadataItem( const char * pszName,
-                                         const char * pszValue,
-                                         const char * pszDomain = "" );
-
-    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
-                              void *, int, int, GDALDataType,
-                              int, int *, int, int, int );
-
-    virtual int    GetGCPCount();
-    virtual const char *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
-    virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
-                            const char *pszGCPProjection );
-
-    CPLErr ReadPixels( int nReqXOff, int nReqYOff,
-                       int nReqXSize, int nReqYSize,
-                       int nPixelSpace,
-                       int nLineSpace,
-                       int nBandSpace,
-                       GByte* pabyData );
-
-    static GDALDataset *Open( GDALOpenInfo * );
-    static int          Identify( GDALOpenInfo * );
-};
-
-/************************************************************************/
-/* ==================================================================== */
-/*                         PDFRasterBand                                */
-/* ==================================================================== */
-/************************************************************************/
-
-class PDFRasterBand : public GDALPamRasterBand
-{
-    friend class PDFDataset;
-
-    CPLErr IReadBlockFromTile( int, int, void * );
-
-  public:
-
-                PDFRasterBand( PDFDataset *, int );
-
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual GDALColorInterp GetColorInterpretation();
-};
-
-
-/************************************************************************/
 /*                         PDFRasterBand()                              */
 /************************************************************************/
 
@@ -982,6 +834,49 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
+/*                             GetOption()                              */
+/************************************************************************/
+
+const char* PDFDataset::GetOption(char** papszOpenOptions,
+                                  const char* pszOptionName,
+                                  const char* pszDefaultVal)
+{
+    CPLErr eLastErrType = CPLGetLastErrorType();
+    int nLastErrno = CPLGetLastErrorNo();
+    CPLString osLastErrorMsg(CPLGetLastErrorMsg());
+    CPLXMLNode* psNode = CPLParseXMLString(pszOpenOptionList);
+    CPLErrorSetState(eLastErrType, nLastErrno, osLastErrorMsg);
+    if( psNode == NULL ) return pszDefaultVal;
+    CPLXMLNode* psIter = psNode->psChild;
+    while( psIter != NULL )
+    {
+        if( EQUAL(CPLGetXMLValue( psIter, "name", "" ), pszOptionName) )
+        {
+            const char* pszVal = CSLFetchNameValue(papszOpenOptions, pszOptionName);
+            if( pszVal != NULL )
+            {
+                CPLDestroyXMLNode(psNode);
+                return pszVal;
+            }
+            const char* pszAltConfigOption = CPLGetXMLValue( psIter, "alt_config_option", NULL );
+            if( pszAltConfigOption != NULL )
+            {
+                pszVal = CPLGetConfigOption(pszAltConfigOption, pszDefaultVal);
+                CPLDestroyXMLNode(psNode);
+                return pszVal;
+            }
+            CPLDestroyXMLNode(psNode);
+            return pszDefaultVal;
+        }
+        psIter = psIter->psNext;
+    }
+    CPLError(CE_Failure, CPLE_AppDefined,
+             "Requesting an undocumented open option '%s'", pszOptionName);
+    CPLDestroyXMLNode(psNode);
+    return pszDefaultVal;
+}
+
+/************************************************************************/
 /*                             ReadPixels()                             */
 /************************************************************************/
 
@@ -991,7 +886,7 @@ CPLErr PDFDataset::ReadPixels( int nReqXOff, int nReqYOff,
                                GByte* pabyData )
 {
     CPLErr eErr = CE_None;
-    const char* pszRenderingOptions = CPLGetConfigOption("GDAL_PDF_RENDERING_OPTIONS", NULL);
+    const char* pszRenderingOptions = GetOption(papszOpenOptions, "RENDERING_OPTIONS", NULL);
 
 #ifdef HAVE_POPPLER
     if(bUsePoppler)
@@ -1359,6 +1254,16 @@ PDFDataset::PDFDataset()
 #endif
     nBlockXSize = 0;
     nBlockYSize = 0;
+    papszOpenOptions = NULL;
+    
+    nLayers = 0;
+    papoLayers = NULL;
+
+    dfPageWidth = dfPageHeight = 0;
+
+    bSetStyle = CSLTestBoolean(CPLGetConfigOption("OGR_PDF_SET_STYLE", "YES"));
+
+    InitMapOperators();
 }
 
 /************************************************************************/
@@ -1516,6 +1421,13 @@ PDFDataset::~PDFDataset()
     }
     CPLFree(pszWKT);
     pszWKT = NULL;
+    CSLDestroy(papszOpenOptions);
+
+    CleanupIntermediateResources();
+
+    for(int i=0;i<nLayers;i++)
+        delete papoLayers[i];
+    CPLFree( papoLayers );
 }
 
 
@@ -1990,7 +1902,7 @@ int PDFDataset::CheckTiledRaster()
 
 void PDFDataset::GuessDPI(GDALPDFDictionary* poPageDict, int* pnBands)
 {
-    const char* pszDPI = CPLGetConfigOption("GDAL_PDF_DPI", NULL);
+    const char* pszDPI = GetOption(papszOpenOptions, "DPI", NULL);
     if (pszDPI != NULL)
     {
         dfDPI = atof(pszDPI);
@@ -2329,24 +2241,6 @@ void PDFDataset::ParseInfo(GDALPDFObject* poInfoObj)
     }
 }
 
-/************************************************************************/
-/*                           PDFSanitizeLayerName()                     */
-/************************************************************************/
-
-static
-CPLString PDFSanitizeLayerName(const char* pszName)
-{
-    CPLString osName;
-    for(int i=0; pszName[i] != '\0'; i++)
-    {
-        if (pszName[i] == ' ' || pszName[i] == '.' || pszName[i] == ',')
-            osName += "_";
-        else if (pszName[i] != '"')
-            osName += pszName[i];
-    }
-    return osName;
-}
-
 #ifdef HAVE_POPPLER
 
 /************************************************************************/
@@ -2486,7 +2380,7 @@ void PDFDataset::TurnLayersOnOff()
         return;
 
     // Which layers to turn ON ?
-    const char* pszLayers = CPLGetConfigOption("GDAL_PDF_LAYERS", NULL);
+    const char* pszLayers = GetOption(papszOpenOptions, "LAYERS", NULL);
     if (pszLayers)
     {
         int i;
@@ -2576,7 +2470,7 @@ void PDFDataset::TurnLayersOnOff()
     }
 
     // Which layers to turn OFF ?
-    const char* pszLayersOFF = CPLGetConfigOption("GDAL_PDF_LAYERS_OFF", NULL);
+    const char* pszLayersOFF = GetOption(papszOpenOptions, "LAYERS_OFF", NULL);
     if (pszLayersOFF)
     {
         char** papszLayersOFF = CSLTokenizeString2(pszLayersOFF, ",", 0);
@@ -2712,7 +2606,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     if (!Identify(poOpenInfo))
         return NULL;
 
-    const char* pszUserPwd = CPLGetConfigOption("PDF_USER_PWD", NULL);
+    const char* pszUserPwd = GetOption(poOpenInfo->papszOpenOptions, "USER_PWD", NULL);
 
     int bOpenSubdataset = strncmp(poOpenInfo->pszFilename, "PDF:", 4) == 0;
     int bOpenSubdatasetImage = strncmp(poOpenInfo->pszFilename, "PDF_IMAGE:", 10) == 0;
@@ -2756,7 +2650,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
 #elif !defined(HAVE_POPPLER) && defined(HAVE_PODOFO)
     bUsePoppler = FALSE;
 #elif defined(HAVE_POPPLER) && defined(HAVE_PODOFO)
-    const char* pszPDFLib = CPLGetConfigOption("GDAL_PDF_LIB", "POPPLER");
+    const char* pszPDFLib = GetOption(poOpenInfo->papszOpenOptions, "PDF_LIB", "POPPLER");
     if (EQUAL(pszPDFLib, "POPPLER"))
         bUsePoppler = TRUE;
     else if (EQUAL(pszPDFLib, "PODOFO"))
@@ -3064,6 +2958,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     PDFDataset* poDS = new PDFDataset();
+    poDS->papszOpenOptions = CSLDuplicate(poOpenInfo->papszOpenOptions);
     poDS->bUsePoppler = bUsePoppler;
     poDS->osFilename = pszFilename;
     poDS->eAccess = poOpenInfo->eAccess;
@@ -3102,7 +2997,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else
     {
-        const char* pszDPI = CPLGetConfigOption("GDAL_PDF_DPI", NULL);
+        const char* pszDPI = GetOption(poOpenInfo->papszOpenOptions, "DPI", NULL);
         if (pszDPI != NULL)
         {
             poDS->dfDPI = atof(pszDPI);
@@ -3134,6 +3029,8 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
 #endif
 
     double dfUserUnit = poDS->dfDPI * USER_UNIT_IN_INCH;
+    poDS->dfPageWidth = dfX2 - dfX1;
+    poDS->dfPageHeight = dfY2 - dfY1;
     poDS->nRasterXSize = (int) floor((dfX2 - dfX1) * dfUserUnit+0.5);
     poDS->nRasterYSize = (int) floor((dfY2 - dfY1) * dfUserUnit+0.5);
 
@@ -3173,7 +3070,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     /* Check if the PDF is only made of regularly tiled images */
     /* (like some USGS GeoPDF production) */
     if( dfRotation == 0.0 && poDS->asTiles.size() &&
-        EQUAL(CPLGetConfigOption("GDAL_PDF_LAYERS", "ALL"), "ALL") )
+        EQUAL(GetOption(poOpenInfo->papszOpenOptions, "LAYERS", "ALL"), "ALL") )
     {
         poDS->CheckTiledRaster();
         if (poDS->aiTiles.size() )
@@ -3414,7 +3311,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     int nBands = 3;
     if( nBandsGuessed )
         nBands = nBandsGuessed;
-    const char* pszPDFBands = CPLGetConfigOption("GDAL_PDF_BANDS", NULL);
+    const char* pszPDFBands = GetOption(poOpenInfo->papszOpenOptions, "BANDS", NULL);
     if( pszPDFBands )
     {
         nBands = atoi(pszPDFBands);
@@ -3442,6 +3339,20 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->SetBand(iBand, new PDFImageRasterBand(poDS, iBand));
         else
             poDS->SetBand(iBand, new PDFRasterBand(poDS, iBand));
+    }
+
+    int bHasNonEmptyVectorLayers = poDS->OpenVectorLayers(poPageDict);
+
+    /* Check if this is a raster-only PCIDSK file and that we are */
+    /* opened in vector-only mode */
+    if( (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) == 0 &&
+        (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0 &&
+        !bHasNonEmptyVectorLayers )
+    {
+        CPLDebug("PCIDSK", "This is a raster-only PDF dataset, "
+                    "but it has been opened in vector-only mode");
+        delete poDS;
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -3652,7 +3563,7 @@ int PDFDataset::ParseLGIDictDictFirstPass(GDALPDFDictionary* poLGIDict,
     /* USGS PDF maps have several LGIDict. Keep the one whose description */
     /* is "Map Layers" by default */
     const char* pszNeatlineToSelect =
-        CPLGetConfigOption("GDAL_PDF_NEATLINE", "Map Layers");
+        GetOption(papszOpenOptions, "NEATLINE", "Map Layers");
 
 /* -------------------------------------------------------------------- */
 /*      Extract Neatline attribute                                      */
@@ -4984,7 +4895,7 @@ char **PDFDataset::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
                                    TRUE,
-                                   "xml:XMP", "LAYERS_WITH_REF", "EMBEDDED_METADATA", NULL);
+                                   "xml:XMP", "EMBEDDED_METADATA", NULL);
 }
 
 /************************************************************************/
@@ -4993,11 +4904,7 @@ char **PDFDataset::GetMetadataDomainList()
 
 char      **PDFDataset::GetMetadata( const char * pszDomain )
 {
-    if( pszDomain != NULL && EQUAL(pszDomain, "LAYERS_WITH_REF") )
-    {
-        return osLayerWithRefList.List(); /* Used by OGR driver */
-    }
-    else if( pszDomain != NULL && EQUAL(pszDomain, "EMBEDDED_METADATA") )
+    if( pszDomain != NULL && EQUAL(pszDomain, "EMBEDDED_METADATA") )
     {
         char** papszRet = oMDMD.GetMetadata(pszDomain);
         if( papszRet )
@@ -5055,15 +4962,6 @@ CPLErr      PDFDataset::SetMetadata( char ** papszMetadata,
 const char *PDFDataset::GetMetadataItem( const char * pszName,
                                          const char * pszDomain )
 {
-    if ( (pszDomain == NULL || EQUAL(pszDomain, "")) && EQUAL(pszName, "PDF_PAGE_OBJECT") )
-    {
-        return CPLSPrintf("%p", poPageObj);
-    }
-    if ( (pszDomain == NULL || EQUAL(pszDomain, "")) && EQUAL(pszName, "PDF_CATALOG_OBJECT") )
-    {
-        return CPLSPrintf("%p", GetCatalog());
-    }
-
     return oMDMD.GetMetadataItem(pszName, pszDomain);
 }
 
@@ -5162,7 +5060,6 @@ CPLErr PDFDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
 
 #endif // #if defined(HAVE_POPPLER) || defined(HAVE_PODOFO)
 
-
 /************************************************************************/
 /*                          GDALPDFOpen()                               */
 /************************************************************************/
@@ -5190,6 +5087,23 @@ static void GDALPDFUnloadDriver(GDALDriver * poDriver)
 }
 
 /************************************************************************/
+/*                           PDFSanitizeLayerName()                     */
+/************************************************************************/
+
+CPLString PDFSanitizeLayerName(const char* pszName)
+{
+    CPLString osName;
+    for(int i=0; pszName[i] != '\0'; i++)
+    {
+        if (pszName[i] == ' ' || pszName[i] == '.' || pszName[i] == ',')
+            osName += "_";
+        else if (pszName[i] != '"')
+            osName += pszName[i];
+    }
+    return osName;
+}
+
+/************************************************************************/
 /*                         GDALRegister_PDF()                           */
 /************************************************************************/
 
@@ -5206,6 +5120,8 @@ void GDALRegister_PDF()
         poDriver = new GDALDriver();
 
         poDriver->SetDescription( "PDF" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                    "Geospatial PDF" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
@@ -5280,12 +5196,14 @@ void GDALRegister_PDF()
 "</CreationOptionList>\n" );
 
 #if defined(HAVE_POPPLER) || defined(HAVE_PODOFO)
+        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, pszOpenOptionList );
         poDriver->pfnOpen = PDFDataset::Open;
         poDriver->pfnIdentify = PDFDataset::Identify;
         poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
 #endif
 
         poDriver->pfnCreateCopy = GDALPDFCreateCopy;
+        poDriver->pfnCreate = PDFWritableVectorDataset::Create;
         poDriver->pfnUnloadDriver = GDALPDFUnloadDriver;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );

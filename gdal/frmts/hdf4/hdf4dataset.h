@@ -73,7 +73,6 @@ class HDF4Dataset : public GDALPamDataset
      
   protected:
 
-    FILE	*fp;
     int32	hGR, hSD;
     int32	nImages;
     HDF4SubdatasetType iSubdatasetType;

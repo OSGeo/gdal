@@ -853,11 +853,11 @@ int OGRIngresDataSource::DeleteLayer( int iLayer)
 
 
 /************************************************************************/
-/*                            CreateLayer()                             */
+/*                           ICreateLayer()                             */
 /************************************************************************/
 
 OGRLayer *
-OGRIngresDataSource::CreateLayer( const char * pszLayerNameIn,
+OGRIngresDataSource::ICreateLayer( const char * pszLayerNameIn,
                               OGRSpatialReference *poSRS,
                               OGRwkbGeometryType eType,
                               char ** papszOptions )

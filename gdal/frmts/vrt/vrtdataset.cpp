@@ -627,10 +627,12 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     char        *pszXML;
 
-    VSILFILE        *fp = VSIFOpenL(poOpenInfo->pszFilename, "rb");
+    VSILFILE        *fp = poOpenInfo->fpL;
     if( fp != NULL )
     {
         unsigned int nLength;
+        
+        poOpenInfo->fpL = NULL;
      
         VSIFSeekL( fp, 0, SEEK_END );
         nLength = (int) VSIFTellL( fp );
@@ -732,7 +734,8 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Open overviews.                                                 */
 /* -------------------------------------------------------------------- */
     if( fp != NULL && poDS != NULL )
-        poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+        poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename,
+                                     poOpenInfo->GetSiblingFiles() );
 
     return poDS;
 }

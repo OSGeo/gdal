@@ -61,6 +61,7 @@ OGRGeoJSONLayer::OGRGeoJSONLayer( const char* pszName,
     poFeatureDefn_->SetGeomType( eGType );
     if( poFeatureDefn_->GetGeomFieldCount() != 0 )
         poFeatureDefn_->GetGeomFieldDefn(0)->SetSpatialRef(poSRSIn);
+    SetDescription( poFeatureDefn_->GetName() );
 }
 
 /************************************************************************/

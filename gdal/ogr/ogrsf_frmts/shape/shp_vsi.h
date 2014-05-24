@@ -39,6 +39,7 @@ CPL_C_START
 const SAHooks* VSI_SHP_GetHook(int b2GBLimit);
 
 VSILFILE* VSI_SHP_GetVSIL( SAFile file );
+const char* VSI_SHP_GetFilename( SAFile file );
 int VSI_SHP_WriteMoreDataOK( SAFile file, SAOffset nExtraBytes );
 
 CPL_C_END

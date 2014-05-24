@@ -239,6 +239,7 @@ OGRTigerDataSource::~OGRTigerDataSource()
 void OGRTigerDataSource::AddLayer( OGRTigerLayer * poNewLayer )
 
 {
+    poNewLayer->SetDescription( poNewLayer->GetName() );
     papoLayers = (OGRTigerLayer **)
         CPLRealloc( papoLayers, sizeof(void*) * ++nLayers );
     
@@ -810,10 +811,10 @@ int OGRTigerDataSource::Create( const char *pszNameIn, char **papszOptions )
 }
 
 /************************************************************************/
-/*                            CreateLayer()                             */
+/*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRTigerDataSource::CreateLayer( const char *pszLayerName, 
+OGRLayer *OGRTigerDataSource::ICreateLayer( const char *pszLayerName, 
                                            OGRSpatialReference *poSpatRef, 
                                            OGRwkbGeometryType eGType, 
                                            char **papszOptions )

@@ -228,8 +228,7 @@ class OGREDIGEODataSource : public OGRDataSource
                         OGREDIGEODataSource();
                         ~OGREDIGEODataSource();
 
-    int                 Open( const char * pszFilename,
-                              int bUpdate );
+    int                 Open( const char * pszFilename );
 
     virtual const char*         GetName() { return pszName; }
 
@@ -239,20 +238,6 @@ class OGREDIGEODataSource : public OGRDataSource
     virtual int                 TestCapability( const char * );
 
     int                         HasUTF8ContentOnly() { return bHasUTF8ContentOnly; }
-};
-
-/************************************************************************/
-/*                           OGREDIGEODriver                            */
-/************************************************************************/
-
-class OGREDIGEODriver : public OGRSFDriver
-{
-  public:
-                ~OGREDIGEODriver();
-
-    virtual const char*         GetName();
-    virtual OGRDataSource*      Open( const char *, int );
-    virtual int                 TestCapability( const char * );
 };
 
 

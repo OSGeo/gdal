@@ -141,6 +141,7 @@ def DontUseExceptions(*args):
   """DontUseExceptions()"""
   return _ogr.DontUseExceptions(*args)
 import osr
+import gdal
 class StyleTable(_object):
     """Proxy of C++ OGRStyleTableShadow class"""
     __swig_setmethods__ = {}
@@ -186,11 +187,13 @@ class StyleTable(_object):
 StyleTable_swigregister = _ogr.StyleTable_swigregister
 StyleTable_swigregister(StyleTable)
 
-class Driver(_object):
+class Driver(gdal.MajorObject):
     """Proxy of C++ OGRDriverShadow class"""
     __swig_setmethods__ = {}
+    for _s in [gdal.MajorObject]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
     __setattr__ = lambda self, name, value: _swig_setattr(self, Driver, name, value)
     __swig_getmethods__ = {}
+    for _s in [gdal.MajorObject]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
     __getattr__ = lambda self, name: _swig_getattr(self, Driver, name)
     def __init__(self, *args, **kwargs): raise AttributeError("No constructor defined")
     __repr__ = _swig_repr
@@ -397,11 +400,13 @@ class Driver(_object):
 Driver_swigregister = _ogr.Driver_swigregister
 Driver_swigregister(Driver)
 
-class DataSource(_object):
+class DataSource(gdal.MajorObject):
     """Proxy of C++ OGRDataSourceShadow class"""
     __swig_setmethods__ = {}
+    for _s in [gdal.MajorObject]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
     __setattr__ = lambda self, name, value: _swig_setattr(self, DataSource, name, value)
     __swig_getmethods__ = {}
+    for _s in [gdal.MajorObject]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
     __getattr__ = lambda self, name: _swig_getattr(self, DataSource, name)
     def __init__(self, *args, **kwargs): raise AttributeError("No constructor defined")
     __repr__ = _swig_repr
@@ -860,11 +865,13 @@ class DataSource(_object):
 DataSource_swigregister = _ogr.DataSource_swigregister
 DataSource_swigregister(DataSource)
 
-class Layer(_object):
+class Layer(gdal.MajorObject):
     """Proxy of C++ OGRLayerShadow class"""
     __swig_setmethods__ = {}
+    for _s in [gdal.MajorObject]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
     __setattr__ = lambda self, name, value: _swig_setattr(self, Layer, name, value)
     __swig_getmethods__ = {}
+    for _s in [gdal.MajorObject]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
     __getattr__ = lambda self, name: _swig_getattr(self, Layer, name)
     def __init__(self, *args, **kwargs): raise AttributeError("No constructor defined")
     __repr__ = _swig_repr

@@ -79,6 +79,7 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
 /*      Parse the returned table information.                           */
 /* -------------------------------------------------------------------- */
     OGRFeatureDefn *poDefn = new OGRFeatureDefn( "sql_statement" );
+    SetDescription( poDefn->GetName() );
     int            iRawField;
 
     poDefn->Reference();

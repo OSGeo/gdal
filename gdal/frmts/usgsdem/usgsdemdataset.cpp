@@ -845,6 +845,7 @@ void GDALRegister_USGSDEM()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "USGSDEM" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, 
                                    "dem" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 

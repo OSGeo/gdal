@@ -120,28 +120,13 @@ class OGROpenAirDataSource : public OGRDataSource
                         OGROpenAirDataSource();
                         ~OGROpenAirDataSource();
 
-    int                 Open( const char * pszFilename,
-                              int bUpdate );
+    int                 Open( const char * pszFilename );
 
     virtual const char*         GetName() { return pszName; }
 
     virtual int                 GetLayerCount() { return nLayers; }
     virtual OGRLayer*           GetLayer( int );
 
-    virtual int                 TestCapability( const char * );
-};
-
-/************************************************************************/
-/*                           OGROpenAirDriver                           */
-/************************************************************************/
-
-class OGROpenAirDriver : public OGRSFDriver
-{
-  public:
-                ~OGROpenAirDriver();
-
-    virtual const char*         GetName();
-    virtual OGRDataSource*      Open( const char *, int );
     virtual int                 TestCapability( const char * );
 };
 

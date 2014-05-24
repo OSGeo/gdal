@@ -179,6 +179,8 @@ int OGRAVCLayer::SetupFeatureDefinition( const char *pszName )
         poFeatureDefn = NULL;
         return FALSE;
     }
+
+    SetDescription( pszName );
 }
 
 /************************************************************************/

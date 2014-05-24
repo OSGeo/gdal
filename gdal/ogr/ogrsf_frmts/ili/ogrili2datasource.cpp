@@ -255,11 +255,11 @@ int OGRILI2DataSource::Create( const char *pszFilename,
 }
 
 /************************************************************************/
-/*                            CreateLayer()                             */
+/*                           ICreateLayer()                             */
 /************************************************************************/
 
 OGRLayer *
-OGRILI2DataSource::CreateLayer( const char * pszLayerName,
+OGRILI2DataSource::ICreateLayer( const char * pszLayerName,
                                OGRSpatialReference *poSRS,
                                OGRwkbGeometryType eType,
                                char ** papszOptions )

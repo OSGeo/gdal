@@ -512,7 +512,7 @@ GDALDataset* FITSDataset::Open(GDALOpenInfo* poOpenInfo) {
 /* -------------------------------------------------------------------- */
 /*      Check for external overviews.                                   */
 /* -------------------------------------------------------------------- */
-      dataset->oOvManager.Initialize( dataset, poOpenInfo->pszFilename, poOpenInfo->papszSiblingFiles );
+      dataset->oOvManager.Initialize( dataset, poOpenInfo->pszFilename, poOpenInfo->GetSiblingFiles() );
 
       return dataset;
   }
@@ -613,6 +613,7 @@ void GDALRegister_FITS() {
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "FITS" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "Flexible Image Transport System" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

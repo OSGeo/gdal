@@ -101,9 +101,6 @@ OGRLayer *OGRDXFDataSource::GetLayer( int iLayer )
 int OGRDXFDataSource::Open( const char * pszFilename, int bHeaderOnly )
 
 {
-    if( !EQUAL(CPLGetExtension(pszFilename),"dxf") )
-        return FALSE;
-
     osEncoding = CPL_ENC_ISO8859_1;
 
     osName = pszFilename;

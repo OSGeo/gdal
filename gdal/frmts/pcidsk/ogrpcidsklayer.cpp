@@ -28,9 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_pcidsk.h"
+#include "pcidskdataset2.h"
 
-CPL_CVSID("$Id: ogrcsvlayer.cpp 17496 2009-08-02 11:54:23Z rouault $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                           OGRPCIDSKLayer()                           */
@@ -46,6 +46,7 @@ OGRPCIDSKLayer::OGRPCIDSKLayer( PCIDSK::PCIDSKSegment *poSegIn,
     poVecSeg = dynamic_cast<PCIDSK::PCIDSKVectorSegment*>( poSeg );
 
     poFeatureDefn = new OGRFeatureDefn( poSeg->GetName().c_str() );
+    SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
 
     hLastShapeId = PCIDSK::NullShapeId;

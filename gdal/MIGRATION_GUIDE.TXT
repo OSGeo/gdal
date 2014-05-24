@@ -1,3 +1,45 @@
+MIGRATION GUIDE FROM GDAL 1.11 to GDAL 2.0
+------------------------------------------
+
+This file documents backwards incompatible changes. You are strongly encouraged
+to read RFC 46 for details and rationale for those changes.
+
+C++ API:
+
+  * The following methods from OGRSFDriverRegistrar are removed : Open(),
+    OpenShared(), ReleaseDataSource(), DeregisterDriver(), AutoLoadDrivers()
+
+  * OGRDataSource::CreateLayer() specialized implementations should be renamed
+    as ICreateLayer() to benefit from layer creation options validation.
+
+  * OGRLayer::GetInfo() has been removed.
+
+  * All methods of OGRDataSource have been transfered to GDALDataset, except
+    SyncToDisk() that should now be implemented as FlushCache() in drivers.
+
+  * GDALOpenInfo::papszSiblingFiles member is now private. Use the new
+    GetSiblingFiles() method instead.
+
+  * GDALOpenInfo::fp member is replaced by fpL member of type VSILFILE*.
+
+  * OGRSFDriver::CopyDataSource() has been removed.
+
+  * GDALDriverManager::GetHome() and SetHome() have been removed.
+
+Out-of-tree drivers :
+
+  * Read RFC 46 for the needed changes. Changes in GDALOpenInfo will impact GDAL
+    drivers. GDAL drivers should also declare SetMetadataItem( GDAL_DCAP_RASTER, "YES" ).
+    OGRDataSource::CreateLayer() and SyncToDisk() changes will affect OGR drivers.
+
+Behaviour changes :
+
+  * GDALDriverManager::GetDriverCount() and GetDriver() return both raster and
+    vector drivers. The nature of a driver can be tested with the GDAL_DCAP_RASTER
+    and GDAL_DCAP_VECTOR driver metadata item.
+
+  * GetRefCount() starts at 1 for OGRDataSource instead of 0.
+
 MIGRATION GUIDE FROM GDAL 1.10 to GDAL 1.11
 -------------------------------------------
 

@@ -86,10 +86,10 @@ OGRLayer *OGRElasticDataSource::GetLayer(int iLayer) {
 }
 
 /************************************************************************/
-/*                            CreateLayer()                             */
+/*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer * OGRElasticDataSource::CreateLayer(const char * pszLayerName,
+OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
         OGRSpatialReference *poSRS,
         OGRwkbGeometryType eType,
         char ** papszOptions) {

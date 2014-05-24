@@ -54,6 +54,16 @@ VSILFILE* VSI_SHP_GetVSIL( SAFile file )
 }
 
 /************************************************************************/
+/*                        VSI_SHP_GetFilename()                         */
+/************************************************************************/
+
+const char* VSI_SHP_GetFilename( SAFile file )
+{
+    OGRSHPDBFFile* pFile = (OGRSHPDBFFile*) file;
+    return pFile->pszFilename;
+}
+
+/************************************************************************/
 /*                         VSI_SHP_OpenInternal()                       */
 /************************************************************************/
 

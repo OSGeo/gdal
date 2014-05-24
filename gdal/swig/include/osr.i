@@ -59,9 +59,11 @@
 %javaconst(0);
 #endif
 
+#if !defined(FROM_GDAL_I) && !defined(FROM_OGR_I)
 %inline %{
 typedef char retStringAndCPLFree;
 %}
+#endif
 
 %{
 #include <iostream>

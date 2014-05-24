@@ -664,6 +664,7 @@ void GDALRegister_JPEGLS()
         poDriver = new GDALDriver();
 
         poDriver->SetDescription( "JPEGLS" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                    "JPEGLS" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,

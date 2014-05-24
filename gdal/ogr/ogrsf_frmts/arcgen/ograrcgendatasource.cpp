@@ -87,14 +87,9 @@ OGRLayer *OGRARCGENDataSource::GetLayer( int iLayer )
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRARCGENDataSource::Open( const char * pszFilename, int bUpdateIn)
+int OGRARCGENDataSource::Open( const char * pszFilename )
 
 {
-    if (bUpdateIn)
-    {
-        return FALSE;
-    }
-
     pszName = CPLStrdup( pszFilename );
 
 // -------------------------------------------------------------------- 
@@ -104,54 +99,6 @@ int OGRARCGENDataSource::Open( const char * pszFilename, int bUpdateIn)
     VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
     if (fp == NULL)
         return FALSE;
-
-    /* Check that the first line is compatible with a generate file */
-    /* and in particular contain >= 32 && <= 127 bytes */
-    char szFirstLine[256+1];
-    int nRet = VSIFReadL(szFirstLine, 1, 256, fp);
-    szFirstLine[nRet] = '\0';
-
-    int i;
-    int bFoundEOL = FALSE;
-    for(i=0;szFirstLine[i] != '\0';i++)
-    {
-        if (szFirstLine[i] == '\n' || szFirstLine[i] == '\r')
-        {
-            bFoundEOL = TRUE;
-            szFirstLine[i] = '\0';
-            break;
-        }
-        if (szFirstLine[i] < 32)
-        {
-            VSIFCloseL(fp);
-            return FALSE;
-        }
-    }
-
-    if (!bFoundEOL)
-    {
-        VSIFCloseL(fp);
-        return FALSE;
-    }
-
-    char** papszTokens = CSLTokenizeString2( szFirstLine, " ,", 0 );
-    int nTokens = CSLCount(papszTokens);
-    if (nTokens != 1 && nTokens != 3 && nTokens != 4)
-    {
-        VSIFCloseL(fp);
-        CSLDestroy(papszTokens);
-        return FALSE;
-    }
-    for(int i=0;i<nTokens;i++)
-    {
-        if( CPLGetValueType(papszTokens[i]) == CPL_VALUE_STRING )
-        {
-            VSIFCloseL(fp);
-            CSLDestroy(papszTokens);
-            return FALSE;
-        }
-    }
-    CSLDestroy(papszTokens);
 
     /* Go to end of file, and count the number of END keywords */
     /* If there's 1, it's a point layer */

@@ -35,10 +35,10 @@
 CPL_CVSID("$Id$");
 
 /************************************************************************/
-/*                          ~OGRGMLDriver()                           */
+/*                        OGRGMLDriverUnload()                          */
 /************************************************************************/
 
-OGRGMLDriver::~OGRGMLDriver()
+static void OGRGMLDriverUnload(GDALDriver* poDriver)
 
 {
     if( GMLReader::hMutex != NULL )
@@ -47,31 +47,95 @@ OGRGMLDriver::~OGRGMLDriver()
 }
 
 /************************************************************************/
-/*                              GetName()                               */
+/*                         OGRGMLDriverIdentify()                       */
 /************************************************************************/
 
-const char *OGRGMLDriver::GetName()
+static int OGRGMLDriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {
-    return "GML";
+    if( poOpenInfo->fpL == NULL )
+    {
+        if( strstr(poOpenInfo->pszFilename, "xsd=") != NULL )
+            return -1; /* must be later checked */
+        return FALSE;
+    }
+    /* Might be a OS-Mastermap gzipped GML, so let be nice and try to open */
+    /* it transparently with /vsigzip/ */
+    else
+    if ( poOpenInfo->pabyHeader[0] == 0x1f && poOpenInfo->pabyHeader[1] == 0x8b &&
+         EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "gz") &&
+         strncmp(poOpenInfo->pszFilename, "/vsigzip/", strlen("/vsigzip/")) != 0 )
+    {
+        return -1; /* must be later checked */
+    }
+    else
+    {
+        const char* szPtr = (const char*)poOpenInfo->pabyHeader;
+
+        if( ( (unsigned char)szPtr[0] == 0xEF )
+            && ( (unsigned char)szPtr[1] == 0xBB )
+            && ( (unsigned char)szPtr[2] == 0xBF) )
+        {
+            szPtr += 3;
+        }
+/* -------------------------------------------------------------------- */
+/*      Here, we expect the opening chevrons of GML tree root element   */
+/* -------------------------------------------------------------------- */
+        if( szPtr[0] != '<' )
+            return FALSE;
+
+        if( !poOpenInfo->TryToIngest(4096) )
+            return FALSE;
+
+        szPtr = (const char*)poOpenInfo->pabyHeader;
+
+        if( strstr(szPtr,"opengis.net/gml") == NULL )
+        {
+            return FALSE;
+        }
+
+        /* Ignore .xsd schemas */
+        if( strstr(szPtr, "<schema") != NULL
+            || strstr(szPtr, "<xs:schema") != NULL
+            || strstr(szPtr, "<xsd:schema") != NULL )
+        {
+            return FALSE;
+        }
+
+        /* Ignore GeoRSS documents. They will be recognized by the GeoRSS driver */
+        if( strstr(szPtr, "<rss") != NULL && strstr(szPtr, "xmlns:georss") != NULL )
+        {
+            return FALSE;
+        }
+
+        /* Ignore OGR WFS xml description files */
+        if( strstr(szPtr, "<OGRWFSDataSource>") != NULL )
+        {
+            return FALSE;
+        }
+
+        return TRUE;
+    }
 }
 
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-OGRDataSource *OGRGMLDriver::Open( const char * pszFilename,
-                                   int bUpdate )
+static GDALDataset *OGRGMLDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     OGRGMLDataSource    *poDS;
 
-    if( bUpdate )
+    if( poOpenInfo->eAccess == GA_Update )
+        return NULL;
+
+    if( OGRGMLDriverIdentify( poOpenInfo ) == FALSE )
         return NULL;
 
     poDS = new OGRGMLDataSource();
 
-    if( !poDS->Open( pszFilename ) )
+    if( !poDS->Open(  poOpenInfo->pszFilename ) )
     {
         delete poDS;
         return NULL;
@@ -81,11 +145,12 @@ OGRDataSource *OGRGMLDriver::Open( const char * pszFilename,
 }
 
 /************************************************************************/
-/*                          CreateDataSource()                          */
+/*                             Create()                                 */
 /************************************************************************/
 
-OGRDataSource *OGRGMLDriver::CreateDataSource( const char * pszName,
-                                               char **papszOptions )
+static GDALDataset *OGRGMLDriverCreate( const char * pszName,
+                                int nBands, int nXSize, int nYSize, GDALDataType eDT,
+                                char **papszOptions )
 
 {
     OGRGMLDataSource    *poDS = new OGRGMLDataSource();
@@ -100,25 +165,59 @@ OGRDataSource *OGRGMLDriver::CreateDataSource( const char * pszName,
 }
 
 /************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRGMLDriver::TestCapability( const char * pszCap )
-
-{
-    if( EQUAL(pszCap,ODrCCreateDataSource) )
-        return TRUE;
-    else
-        return FALSE;
-}
-
-/************************************************************************/
 /*                           RegisterOGRGML()                           */
 /************************************************************************/
 
 void RegisterOGRGML()
 
 {
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRGMLDriver );
+    GDALDriver  *poDriver;
+
+    if( GDALGetDriverByName( "GML" ) == NULL )
+    {
+        poDriver = new GDALDriver();
+
+        poDriver->SetDescription( "GML" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                                   "Geography Markup Language (GML)" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gml" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "gml xml" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                                   "drv_gml.html" );
+
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+"<CreationOptionList>"
+"  <Option name='XSISCHEMAURI' type='string' description='URI to be inserted as the schema location.'/>"
+"  <Option name='XSISCHEMA' type='string-select' description='where to write a .xsd application schema. INTERNAL should not normally be used' default='EXTERNAL'>"
+"    <Value>EXTERNAL</Value>"
+"    <Value>INTERNAL</Value>"
+"    <Value>OFF</Value>"
+"  </Option>"
+"  <Option name='PREFIX' type='string' description='Prefix for the application target namespace.' default='ogr'/>"
+"  <Option name='STRIP_PREFIX' type='boolean' description='Whether to avoid writing the prefix of the application target namespace in the GML file.' default='NO'/>"
+"  <Option name='TARGET_NAMESPACE' type='string' description='Application target namespace.' default='http://ogr.maptools.org/'/>"
+"  <Option name='FORMAT' type='string-select' description='Version of GML to use' default='GML2'>"
+"    <Value>GML2</Value>"
+"    <Value>GML3</Value>"
+"    <Value>GML3.2</Value>"
+"    <Value>GML3Deegree</Value>"
+"  </Option>"
+"  <Option name='GML3_LONGSRS' type='boolean' description='Whether to write SRS with \"urn:ogc:def:crs:EPSG::\" prefix with GML3* versions' default='YES'/>"
+"  <Option name='WRITE_FEATURE_BOUNDED_BY' type='boolean' description='Whether to write <gml:boundedBy> element for each feature with GML3* versions' default='YES'/>"
+"  <Option name='SPACE_INDENTATION' type='boolean' description='Whether to indentate the output for readability' default='YES'/>"
+"</CreationOptionList>");
+
+        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST, "<LayerCreationOptionList/>");
+
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
+        poDriver->pfnOpen = OGRGMLDriverOpen;
+        poDriver->pfnIdentify = OGRGMLDriverIdentify;
+        poDriver->pfnCreate = OGRGMLDriverCreate;
+        poDriver->pfnUnloadDriver = OGRGMLDriverUnload;
+
+        GetGDALDriverManager()->RegisterDriver( poDriver );
+    }
 }
 

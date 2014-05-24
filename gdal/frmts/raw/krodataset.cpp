@@ -301,6 +301,7 @@ void GDALRegister_KRO()
         poDriver = new GDALDriver();
 
         poDriver->SetDescription( "KRO" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "KOLOR Raw" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "kro" );

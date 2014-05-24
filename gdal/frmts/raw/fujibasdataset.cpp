@@ -90,7 +90,7 @@ GDALDataset *FujiBASDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      We assume the user is pointing to the header (.pcb) file.       */
 /*      Does this appear to be a pcb file?                              */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 80 || poOpenInfo->fp == NULL )
+    if( poOpenInfo->nHeaderBytes < 80 || poOpenInfo->fpL == NULL )
         return NULL;
 
     if( !EQUALN((const char *)poOpenInfo->pabyHeader,"[Raw data]",10)
@@ -239,6 +239,7 @@ void GDALRegister_FujiBAS()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "FujiBAS" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "Fuji BAS Scanner Image" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

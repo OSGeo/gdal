@@ -30,50 +30,39 @@
 
 #include "ogr_sosi.h"
 
-void RegisterOGRSOSI() {
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRSOSIDriver );
-}
-
-static int nFYBAInitCounter = 0;
+static int bFYBAInit = FALSE;
 
 /************************************************************************/
-/*                           OGRSOSIDriver()                           */
-/************************************************************************/
-OGRSOSIDriver::OGRSOSIDriver() {
-    if ( nFYBAInitCounter == 0 )
-    {
-        LC_Init();  /* Init FYBA */
-    }
-    nFYBAInitCounter++;
-}
-
-/************************************************************************/
-/*                           ~OGRSOSIDriver()                           */
+/*                        OGRSOSIDriverUnload()                         */
 /************************************************************************/
 
-OGRSOSIDriver::~OGRSOSIDriver() {
-    nFYBAInitCounter--;
-    if ( nFYBAInitCounter == 0 )
+static void OGRSOSIDriverUnload(GDALDriver* poDriver) {
+
+    if ( bFYBAInit )
     {
         LC_Close(); /* Close FYBA */
+        bFYBAInit = FALSE;
     }
-}
-
-/************************************************************************/
-/*                              GetName()                               */
-/************************************************************************/
-
-const char *OGRSOSIDriver::GetName() {
-    return "SOSI";
 }
 
 /************************************************************************/
 /*                              Open()                                  */
 /************************************************************************/
 
-OGRDataSource *OGRSOSIDriver::Open( const char * pszFilename, int bUpdate ) {
+static GDALDataset *OGRSOSIDriverOpen( GDALOpenInfo* poOpenInfo )
+{
+    if( poOpenInfo->fpL == NULL ||
+        strstr((const char*)poOpenInfo->pabyHeader, ".HODE") == NULL )
+        return NULL;
+
+    if ( !bFYBAInit )
+    {
+        LC_Init();  /* Init FYBA */
+        bFYBAInit = TRUE;
+    }
+
     OGRSOSIDataSource   *poDS = new OGRSOSIDataSource();
-    if ( !poDS->Open( pszFilename, 0 ) ) {
+    if ( !poDS->Open( poOpenInfo->pszFilename, 0 ) ) {
         delete poDS;
         return NULL;
     }
@@ -82,9 +71,19 @@ OGRDataSource *OGRSOSIDriver::Open( const char * pszFilename, int bUpdate ) {
 }
 
 /************************************************************************/
-/*                              CreateDataSource()                      */
+/*                              Create()                                */
 /************************************************************************/
-OGRDataSource *OGRSOSIDriver::CreateDataSource( const char *pszName, char **papszOptions) {
+
+static GDALDataset *OGRSOSIDriverCreate( const char * pszName,
+                                int nBands, int nXSize, int nYSize, GDALDataType eDT,
+                                char **papszOptions )
+{
+    
+    if ( !bFYBAInit )
+    {
+        LC_Init();  /* Init FYBA */
+        bFYBAInit = TRUE;
+    }
     OGRSOSIDataSource   *poDS = new OGRSOSIDataSource();
     if ( !poDS->Create( pszName ) ) {
         delete poDS;
@@ -93,16 +92,28 @@ OGRDataSource *OGRSOSIDriver::CreateDataSource( const char *pszName, char **paps
     return poDS;
 }
 
-
 /************************************************************************/
-/*                              TestCapability()                        */
+/*                         RegisterOGRSOSI()                            */
 /************************************************************************/
 
-int OGRSOSIDriver::TestCapability( const char * pszCap ) {
-    if (strcmp("CreateDataSource",pszCap) == 0) {
-        return TRUE; 
-    } else {
-        CPLDebug( "[TestCapability]","Capability %s not supported by SOSI driver", pszCap);
+void RegisterOGRSOSI() {
+    GDALDriver  *poDriver;
+
+    if( GDALGetDriverByName( "SOSI" ) == NULL )
+    {
+        poDriver = new GDALDriver();
+
+        poDriver->SetDescription( "SOSI" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                                   "Norwegian SOSI Standard" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                                   "drv_sosi.html" );
+
+        poDriver->pfnOpen = OGRSOSIDriverOpen;
+        poDriver->pfnCreate = OGRSOSIDriverCreate;
+        poDriver->pfnUnloadDriver = OGRSOSIDriverUnload;
+
+        GetGDALDriverManager()->RegisterDriver( poDriver );
     }
-    return FALSE;
 }

@@ -117,18 +117,4 @@ public:
     IVFKReader    *GetReader() const { return poReader; }
 };
 
-/************************************************************************/
-/*                            OGRVFKDriver                              */
-/************************************************************************/
-class OGRVFKDriver:public OGRSFDriver
-{
-public:
-    ~OGRVFKDriver();
-                
-    const char    *GetName();
-    OGRDataSource *Open(const char *, int);
-    
-    int            TestCapability(const char *);
-};
-
 #endif // GDAL_OGR_VFK_H_INCLUDED

@@ -99,7 +99,7 @@ class OGRVRTLayer : public OGRLayer
 
     OGRFeatureDefn      *poFeatureDefn;
 
-    OGRDataSource       *poSrcDS;
+    GDALDataset         *poSrcDS;
     OGRLayer            *poSrcLayer;
     OGRFeatureDefn      *poSrcFeatureDefn;
     int                 bNeedReset;
@@ -191,15 +191,25 @@ class OGRVRTLayer : public OGRLayer
     virtual OGRErr      RollbackTransaction();
 
     virtual OGRErr      SetIgnoredFields( const char **papszFields );
+
+    GDALDataset*        GetSrcDataset();
 };
 
 /************************************************************************/
 /*                           OGRVRTDataSource                            */
 /************************************************************************/
 
+typedef enum
+{
+    OGR_VRT_PROXIED_LAYER,
+    OGR_VRT_LAYER,
+    OGR_VRT_OTHER_LAYER,
+} OGRLayerType;
+
 class OGRVRTDataSource : public OGRDataSource
 {
     OGRLayer          **papoLayers;
+    OGRLayerType       *paeLayerType;
     int                 nLayers;
     
     char               *pszName;
@@ -225,7 +235,7 @@ class OGRVRTDataSource : public OGRDataSource
     int                 bRecursionDetected;
 
   public:
-                        OGRVRTDataSource();
+                        OGRVRTDataSource(GDALDriver* poDriver);
                         ~OGRVRTDataSource();
 
     OGRLayer*           InstanciateLayer(CPLXMLNode *psLTree,
@@ -247,6 +257,8 @@ class OGRVRTDataSource : public OGRDataSource
 
     int                 TestCapability( const char * );
 
+    virtual char      **GetFileList();
+
     /* Anti-recursion mechanism for standard Open */
     void                SetCallLevel(int nCallLevelIn) { nCallLevel = nCallLevelIn; }
     int                 GetCallLevel() { return nCallLevel; }
@@ -260,20 +272,6 @@ class OGRVRTDataSource : public OGRDataSource
     /* Anti-recursion mechanism for shared Open */
     void                AddForbiddenNames(const char* pszOtherDSName);
     int                 IsInForbiddenNames(const char* pszOtherDSName);
-};
-
-/************************************************************************/
-/*                             OGRVRTDriver                             */
-/************************************************************************/
-
-class OGRVRTDriver : public OGRSFDriver
-{
-  public:
-                ~OGRVRTDriver();
-                
-    const char *GetName();
-    OGRDataSource *Open( const char *, int );
-    int         TestCapability( const char * );
 };
 
 OGRwkbGeometryType OGRVRTGetGeometryType(const char* pszGType, int* pbError);

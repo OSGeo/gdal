@@ -177,6 +177,7 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
         osLayerName.Printf("%s(%s)", pszTableName, pszGeomCol);
     else
         osLayerName = pszTableName;
+    SetDescription( osLayerName );
 
     pszEscapedTableName = CPLStrdup(OGRSQLiteEscape(pszTableName));
 

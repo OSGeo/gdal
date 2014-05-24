@@ -160,6 +160,7 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdate )
 /*      known.                                                          */
 /* -------------------------------------------------------------------- */
     poFeatureDefn = new OGRFeatureDefn( CPLGetBasename(pszFilename) );
+    SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
     poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 

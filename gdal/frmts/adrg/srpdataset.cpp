@@ -1613,6 +1613,7 @@ void GDALRegister_SRP()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "SRP" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "Standard Raster Product (ASRP/USRP)" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

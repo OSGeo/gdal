@@ -59,6 +59,7 @@ OGRWAsPLayer::OGRWAsPLayer( const char * pszName,
     , eMode( READ_ONLY )
 
 {
+    SetDescription( poLayerDefn->GetName() );
     poLayerDefn->Reference();
     poLayerDefn->SetGeomType( wkbLineString25D );
     poLayerDefn->GetGeomFieldDefn(0)->SetType( wkbLineString25D );

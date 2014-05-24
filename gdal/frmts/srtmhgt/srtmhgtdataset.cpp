@@ -566,6 +566,7 @@ void GDALRegister_SRTMHGT()
   {
     poDriver = new GDALDriver();
     poDriver->SetDescription("SRTMHGT");
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "SRTMHGT File Format");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "hgt");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, 

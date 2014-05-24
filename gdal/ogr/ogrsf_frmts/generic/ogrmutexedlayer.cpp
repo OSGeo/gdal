@@ -37,6 +37,7 @@ OGRMutexedLayer::OGRMutexedLayer(OGRLayer* poDecoratedLayer,
                                  void* hMutex) :
         OGRLayerDecorator(poDecoratedLayer, bTakeOwnership), m_hMutex(hMutex)
 {
+    SetDescription( poDecoratedLayer->GetDescription() );
 }
 
 OGRMutexedLayer::~OGRMutexedLayer()

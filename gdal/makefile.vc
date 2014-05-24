@@ -26,16 +26,10 @@ OGR_BASE_INCLUDE = /INCLUDE:$(SYM_PREFIX)OGRFeatureStylePuller \
 		/INCLUDE:$(SYM_PREFIX)OGR_G_GetPointCount 
 
 
-!IFDEF INCLUDE_OGR_FRMTS
 CPPFLAGS = $(CPPFLAGS) -DOGR_ENABLED
 OGR_OBJ = ogr\ogrsf_frmts\ogrsf_frmts.lib ogr\ogr.lib
 OGR_INCLUDE = $(OGR_BASE_INCLUDE) \
 		/INCLUDE:$(SYM_PREFIX)OGRRegisterAll
-
-!ELSE
-OGR_OBJ = ogr\ogr.lib
-OGR_INCLUDE =	$(OGR_BASE_INCLUDE)
-!ENDIF
 
 !IF DEFINED(STDCALL) && !DEFINED(WIN64)
 
@@ -149,11 +143,7 @@ ogr_dir:      port_dir
 	cd ..\sdts
 	$(MAKE) /f makefile.vc
 	cd ..\..\ogr
-!IFDEF INCLUDE_OGR_FRMTS
 	$(MAKE) /f makefile.vc ogr.lib frmts
-!ELSE
-	$(MAKE) /f makefile.vc ogr.lib
-!ENDIF
 	cd ..
 
 lib_dist:	default

@@ -153,7 +153,7 @@ class OGRCSVDataSource : public OGRDataSource
     int                 GetLayerCount() { return nLayers; }
     OGRLayer            *GetLayer( int );
 
-    virtual OGRLayer   *CreateLayer( const char *pszName, 
+    virtual OGRLayer   *ICreateLayer( const char *pszName, 
                                      OGRSpatialReference *poSpatialRef = NULL,
                                      OGRwkbGeometryType eGType = wkbUnknown,
                                      char ** papszOptions = NULL );
@@ -169,24 +169,5 @@ class OGRCSVDataSource : public OGRDataSource
 
     static CPLString    GetRealExtension(CPLString osFilename);
 };
-
-/************************************************************************/
-/*                             OGRCSVDriver                             */
-/************************************************************************/
-
-class OGRCSVDriver : public OGRSFDriver
-{
-  public:
-                ~OGRCSVDriver();
-                
-    const char *GetName();
-    OGRDataSource *Open( const char *, int );
-    OGRDataSource *CreateDataSource( const char *, char ** );
-    int         TestCapability( const char * );
-
-    virtual OGRErr      DeleteDataSource( const char *pszName );
-    
-};
-
 
 #endif /* ndef _OGR_CSV_H_INCLUDED */

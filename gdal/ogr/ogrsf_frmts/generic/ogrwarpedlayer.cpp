@@ -47,6 +47,7 @@ OGRWarpedLayer::OGRWarpedLayer( OGRLayer* poDecoratedLayer,
                                       m_poReversedCT(poReversedCT)
 {
     CPLAssert(poCT != NULL);
+    SetDescription( poDecoratedLayer->GetDescription() );
 
     m_poFeatureDefn = NULL;
 

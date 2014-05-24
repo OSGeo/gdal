@@ -906,6 +906,7 @@ void GDALRegister_E00GRID()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "E00GRID" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "Arc/Info Export E00 GRID" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

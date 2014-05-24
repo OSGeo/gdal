@@ -305,6 +305,7 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
 
 {
     m_poFeatureDefn = new OGRSQLiteFeatureDefn( pszLayerName );
+    SetDescription( m_poFeatureDefn->GetName() );
     m_poFeatureDefn->SetGeomType(wkbNone);
     m_poFeatureDefn->Reference();
 

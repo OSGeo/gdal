@@ -636,7 +636,7 @@ char **CSLRemoveStrings(char **papszStrList, int nFirstLineToDelete,
 /************************************************************************/
 
 /**
- * Find a string within a string list.
+ * Find a string within a string list (case insensitive).
  *
  * Returns the index of the entry in the string list that contains the 
  * target string.  The string in the string list must be a full match for
@@ -659,6 +659,42 @@ int CSLFindString( char ** papszList, const char * pszTarget )
     for( i = 0; papszList[i] != NULL; i++ )
     {
         if( EQUAL(papszList[i],pszTarget) )
+            return i;
+    }
+
+    return -1;
+}
+
+/************************************************************************/
+/*                     CSLFindStringCaseSensitive()                     */
+/************************************************************************/
+
+/**
+ * Find a string within a string list(case sensitive)
+ *
+ * Returns the index of the entry in the string list that contains the 
+ * target string.  The string in the string list must be a full match for
+ * the target. 
+ * 
+ * @param papszList the string list to be searched.
+ * @param pszTarget the string to be searched for. 
+ * 
+ * @return the index of the string within the list or -1 on failure.
+ *
+ * @since GDAL 2.0
+ */
+
+int CSLFindStringCaseSensitive( char ** papszList, const char * pszTarget )
+
+{
+    int         i;
+
+    if( papszList == NULL )
+        return -1;
+
+    for( i = 0; papszList[i] != NULL; i++ )
+    {
+        if( strcmp(papszList[i],pszTarget) == 0 )
             return i;
     }
 

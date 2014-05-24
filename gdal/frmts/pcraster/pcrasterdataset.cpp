@@ -80,7 +80,7 @@ GDALDataset* PCRasterDataset::open(
 {
   PCRasterDataset* dataset = 0;
 
-  if(info->fp && info->nHeaderBytes >= static_cast<int>(CSF_SIZE_SIG) &&
+  if(info->fpL && info->nHeaderBytes >= static_cast<int>(CSF_SIZE_SIG) &&
          strncmp((char*)info->pabyHeader, CSF_SIG, CSF_SIZE_SIG) == 0) {
     MOPEN_PERM mode = info->eAccess == GA_Update
          ? M_READ_WRITE

@@ -31,26 +31,41 @@
 #include "io_selafin.h"
 
 /************************************************************************/
-/*                        ~OGRSelafinDriver()                           */
+/*                     OGRSelafinDriverIdentify()                       */
 /************************************************************************/
 
-OGRSelafinDriver::~OGRSelafinDriver() { }
+static int OGRSelafinDriverIdentify( GDALOpenInfo* poOpenInfo ) {
 
-/************************************************************************/
-/*                              GetName()                               */
-/************************************************************************/
+    if( poOpenInfo->fpL != NULL )
+    {
+        if( poOpenInfo->nHeaderBytes < 84 + 8 )
+            return FALSE;
+        if (poOpenInfo->pabyHeader[0]!=0 || poOpenInfo->pabyHeader[1]!=0 ||
+            poOpenInfo->pabyHeader[2]!=0 || poOpenInfo->pabyHeader[3]!=0x50)
+            return FALSE;
 
-const char *OGRSelafinDriver::GetName() {
-    return "Selafin";
+        if (poOpenInfo->pabyHeader[84+0]!=0 || poOpenInfo->pabyHeader[84+1]!=0 ||
+            poOpenInfo->pabyHeader[84+2]!=0 || poOpenInfo->pabyHeader[84+3]!=0x50 ||
+            poOpenInfo->pabyHeader[84+4]!=0 || poOpenInfo->pabyHeader[84+5]!=0 ||
+            poOpenInfo->pabyHeader[84+6]!=0 || poOpenInfo->pabyHeader[84+7]!=8)
+            return FALSE;
+
+        return TRUE;
+    }
+    return -1;
 }
 
 /************************************************************************/
-/*                                Open()                                */
+/*                      OGRSelafinDriverOpen()                          */
 /************************************************************************/
 
-OGRDataSource *OGRSelafinDriver::Open( const char * pszFilename, int bUpdate ) {
+static GDALDataset *OGRSelafinDriverOpen( GDALOpenInfo* poOpenInfo ) {
+
+    if( OGRSelafinDriverIdentify(poOpenInfo) == 0 )
+        return NULL;
+    
     OGRSelafinDataSource *poDS = new OGRSelafinDataSource();
-    if( !poDS->Open(pszFilename, bUpdate) ) {
+    if( !poDS->Open(poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update) ) {
         delete poDS;
         poDS = NULL;
     }
@@ -58,10 +73,11 @@ OGRDataSource *OGRSelafinDriver::Open( const char * pszFilename, int bUpdate ) {
 }
 
 /************************************************************************/
-/*                          CreateDataSource()                          */
+/*                       OGRSelafinDriverCreate()                       */
 /************************************************************************/
 
-OGRDataSource *OGRSelafinDriver::CreateDataSource( const char * pszName, char **papszOptions ) {
+static GDALDataset *OGRSelafinDriverCreate( const char * pszName, int nXSize, int nYSize,
+                                     int nBands, GDALDataType eDT, char **papszOptions ) {
     // First, ensure there isn't any such file yet.
     VSIStatBufL sStatBuf;
     if (strcmp(pszName, "/dev/stdout") == 0) pszName = "/vsistdout/";
@@ -135,27 +151,48 @@ OGRDataSource *OGRSelafinDriver::CreateDataSource( const char * pszName, char **
 }
 
 /************************************************************************/
-/*                           TestCapability()                           */
+/*                      OGRSelafinDriverDelete()                        */
 /************************************************************************/
-
-int OGRSelafinDriver::TestCapability( const char * pszCap ) {
-    if( EQUAL(pszCap,ODrCCreateDataSource) ) return TRUE;
-    else if( EQUAL(pszCap,ODrCDeleteDataSource) ) return TRUE;
-    else return FALSE;
-}
-
-/************************************************************************/
-/*                          DeleteDataSource()                          */
-/************************************************************************/
-OGRErr OGRSelafinDriver::DeleteDataSource( const char *pszFilename ) {
-    if( CPLUnlinkTree( pszFilename ) == 0 ) return OGRERR_NONE;
-    else return OGRERR_FAILURE;
+static CPLErr OGRSelafinDriverDelete( const char *pszFilename ) {
+    if( CPLUnlinkTree( pszFilename ) == 0 ) return CE_None;
+    else return CE_Failure;
 }
 
 /************************************************************************/
 /*                           RegisterOGRSelafin()                       */
 /************************************************************************/
 void RegisterOGRSelafin() {
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRSelafinDriver );
+    GDALDriver  *poDriver;
+
+    if( GDALGetDriverByName( "Selafin" ) == NULL )
+    {
+        poDriver = new GDALDriver();
+
+        poDriver->SetDescription( "Selafin" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "Selafin" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                                   "Selafin" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                                   "drv_selafin.html" );
+
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+"<CreationOptionList>"
+"  <Option name='TITLE' type='string' description='Title of the datasource, stored in the Selafin file. The title must not hold more than 72 characters.'/>"
+"  <Option name='DATE' type='string' description='Starting date of the simulation. Each layer in a Selafin file is characterized by a date, counted in seconds since a reference date. This option allows to provide the reference date. The format of this field must be YYYY-MM-DD_hh:mm:ss'/>"
+"</CreationOptionList>");
+        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+"<LayerCreationOptionList>"
+"  <Option name='DATE' type='float' description='Date of the time step, in seconds, relative to the starting date of the simulation.'/>"
+"</LayerCreationOptionList>");
+
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
+        poDriver->pfnOpen = OGRSelafinDriverOpen;
+        poDriver->pfnIdentify = OGRSelafinDriverIdentify;
+        poDriver->pfnCreate = OGRSelafinDriverCreate;
+        poDriver->pfnDelete = OGRSelafinDriverDelete;
+
+        GetGDALDriverManager()->RegisterDriver( poDriver );
+    }
 }
 

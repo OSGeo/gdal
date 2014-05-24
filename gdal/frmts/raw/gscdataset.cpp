@@ -230,6 +230,7 @@ void GDALRegister_GSC()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "GSC" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "GSC Geogrid" );
 //        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

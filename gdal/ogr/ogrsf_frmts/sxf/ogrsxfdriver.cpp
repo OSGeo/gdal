@@ -133,7 +133,12 @@ int OGRSXFDriver::TestCapability( const char * pszCap )
 /************************************************************************/
 void RegisterOGRSXF()
 {
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRSXFDriver );   
+    OGRSFDriver* poDriver = new OGRSXFDriver;
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                                "Storage and eXchange Format" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                                "drv_sxf.html" );
+    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }
 
 

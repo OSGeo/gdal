@@ -326,13 +326,16 @@ GDALDataset *DTEDDataset::Open( GDALOpenInfo * poOpenInfo )
     int         i;
     DTEDInfo    *psDTED;
 
-    if (!Identify(poOpenInfo))
+    if (!Identify(poOpenInfo) || poOpenInfo->fpL == NULL )
         return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
-    psDTED = DTEDOpen( poOpenInfo->pszFilename, (poOpenInfo->eAccess == GA_Update) ? "rb+" : "rb", TRUE );
+    VSILFILE* fp = poOpenInfo->fpL;
+    poOpenInfo->fpL = NULL;
+    psDTED = DTEDOpenEx( fp, poOpenInfo->pszFilename, 
+                         (poOpenInfo->eAccess == GA_Update) ? "rb+" : "rb", TRUE );
 
     if( psDTED == NULL )
         return( NULL );
@@ -470,30 +473,39 @@ GDALDataset *DTEDDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( poOpenInfo->pszFilename );
-    poDS->TryLoadXML();
+    poDS->TryLoadXML( poOpenInfo->GetSiblingFiles() );
 
     // if no SR in xml, try aux
     const char* pszPrj = poDS->GDALPamDataset::GetProjectionRef();
     if( !pszPrj || strlen(pszPrj) == 0 )
     {
-        GDALDataset* poAuxDS = GDALFindAssociatedAuxFile( poOpenInfo->pszFilename, GA_ReadOnly, poDS );
-        if( poAuxDS )
+        int bTryAux = TRUE;
+        if( poOpenInfo->GetSiblingFiles() != NULL &&
+            CSLFindString(poOpenInfo->GetSiblingFiles(), CPLResetExtension(CPLGetFilename(poOpenInfo->pszFilename), "aux")) < 0 &&
+            CSLFindString(poOpenInfo->GetSiblingFiles(), CPLSPrintf("%s.aux", CPLGetFilename(poOpenInfo->pszFilename))) < 0 )
+            bTryAux = FALSE;
+        if( bTryAux )
         {
-            pszPrj = poAuxDS->GetProjectionRef();
-            if( pszPrj && strlen(pszPrj) > 0 )
+            GDALDataset* poAuxDS = GDALFindAssociatedAuxFile( poOpenInfo->pszFilename, GA_ReadOnly, poDS );
+            if( poAuxDS )
             {
-                CPLFree( poDS->pszProjection );
-                poDS->pszProjection = CPLStrdup(pszPrj);
-            }
+                pszPrj = poAuxDS->GetProjectionRef();
+                if( pszPrj && strlen(pszPrj) > 0 )
+                {
+                    CPLFree( poDS->pszProjection );
+                    poDS->pszProjection = CPLStrdup(pszPrj);
+                }
 
-            GDALClose( poAuxDS );
+                GDALClose( poAuxDS );
+            }
         }
     }
 
 /* -------------------------------------------------------------------- */
 /*      Support overviews.                                              */
 /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename,
+                                 poOpenInfo->GetSiblingFiles() );
     return( poDS );
 }
 
@@ -905,6 +917,7 @@ void GDALRegister_DTED()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "DTED" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "DTED Elevation Raster" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

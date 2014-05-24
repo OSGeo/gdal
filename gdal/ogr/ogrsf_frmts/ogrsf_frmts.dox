@@ -33,56 +33,6 @@
 
 /**
  
-  \fn OGRDataSource *OGRSFDriverRegistrar::Open( const char *pszName, int bUpdate = FALSE, OGRSFDriver **ppoDriver=NULL);
-
-  \brief Open a file / data source with one of the registered drivers.
-
-  This method loops through all the drivers registered with the driver
-  manager trying each until one succeeds with the given data source.  This
-  method is static.  Applications don't normally need to use any other
-  OGRSFDriverRegistrar methods directly, nor do they normally need to have
-  a pointer to an OGRSFDriverRegistrar instance.
-
-  If this method fails, CPLGetLastErrorMsg() can be used to check if there
-  is an error message explaining why.
-
-  For drivers supporting the VSI virtual file API, it is possible to open
-  a file in a .zip archive (see VSIInstallZipFileHandler()), in a .tar/.tar.gz/.tgz archive
-  (see VSIInstallTarFileHandler()) or on a HTTP / FTP server (see VSIInstallCurlFileHandler())
- 
-  This method is the same as the C function OGROpen().
-
-  @param pszName the name of the file, or data source to open. UTF-8 encoded.
-  @param bUpdate FALSE for read-only access (the default) or TRUE for 
-         read-write access.
-  @param ppoDriver if non-NULL, this argument will be updated with a 
-         pointer to the driver which was used to open the data source.
-
-  @return NULL on error or if the pass name is not supported by this driver,
-  otherwise a pointer to an OGRDataSource.  This OGRDataSource should be
-  closed by deleting the object when it is no longer needed.
-
-  <b>Example:</b>
-
-  <pre>
-    OGRDataSource	*poDS;
-
-    poDS = OGRSFDriverRegistrar::Open( "polygon.shp" );
-    if( poDS == NULL )
-    {
-        return;
-    }
-
-    ... use the data source ...
-
-    OGRDataSource::DestroyDataSource(poDS);
-  </pre>
-
-*/
-
-
-/**
- 
   \fn OGRDataSourceH OGROpen( const char *pszName, int bUpdate,
                         OGRSFDriverH *pahDriverList );
 
@@ -101,7 +51,7 @@
   a file in a .zip archive (see VSIInstallZipFileHandler()), in a .tar/.tar.gz/.tgz archive
   (see VSIInstallTarFileHandler()) or on a HTTP / FTP server (see VSIInstallCurlFileHandler())
 
-  This function is the same as the C++ method OGRSFDriverRegistrar::Open().
+  @deprecated Use GDALOpenEx() in GDAL 2.0
 
   @param pszName the name of the file, or data source to open.
   @param bUpdate FALSE for read-only access (the default) or TRUE for 
@@ -133,109 +83,14 @@
 */
 
 /**
-  \fn OGRSFDriverRegistrar *OGRSFDriverRegistrar::GetRegistrar();
-
-  \brief Return the driver manager, creating one if none exist. 
-
-  @return the driver manager.
-
-*/
-
-/** 
-  \fn void OGRSFDriverRegistrar::RegisterDriver( OGRSFDriver * poDriver );
-  
-  \brief Add a driver to the list of registered drivers.
-
-  If the passed driver is already registered (based on pointer comparison) 
-  then the driver isn't registered.  New drivers are added at the end of
-  the list of registered drivers.
-
-  This method is the same as the C function OGRRegisterDriver().
-
-  @param poDriver the driver to add.
-
-*/
-
-
-/** 
-  \fn void OGRRegisterDriver( OGRSFDriverH hDriver );
-  
-  \brief Add a driver to the list of registered drivers.
-
-  If the passed driver is already registered (based on handle comparison) 
-  then the driver isn't registered.  New drivers are added at the end of
-  the list of registered drivers.
-
-  This function is the same as the C++ method 
-  OGRSFDriverRegistrar::RegisterDriver().
-
-  @param hDriver handle to the driver to add.
-
-*/
-
-
-/** 
-  \fn void OGRSFDriverRegistrar::DeregisterDriver( OGRSFDriver * poDriver );
-  
-  \brief Remove the passed driver from the list of registered drivers.
-
-  This method is the same as the C function OGRDeregisterDriver().
-
-  @param poDriver the driver to deregister.
-
-  @since GDAL 1.8.0
-*/
-
-
-/** 
-  \fn void OGRDeregisterDriver( OGRSFDriverH hDriver );
-  
-  \brief Remove the passed driver from the list of registered drivers.
-
-  This function is the same as the C++ method 
-  OGRSFDriverRegistrar::DeregisterDriver().
-
-  @param hDriver handle to the driver to deregister.
-
-  @since GDAL 1.8.0
-*/
-
-/**
-
-  \fn int OGRSFDriverRegistrar::GetDriverCount();
-
-  \brief Fetch the number of registered drivers.
-
-  This method is the same as the C function OGRGetDriverCount().
-
-  @return the drivers count.
-
-*/
-
-/**
 
   \fn int OGRGetDriverCount();
 
   \brief Fetch the number of registered drivers.
 
-  This function is the same as the C++ method 
-  OGRSFDriverRegistrar::GetDriverCount().
+  @deprecated Use GDALGetDriverCount() in GDAL 2.0
 
   @return the drivers count.
-
-*/
-
-/**
- 
-  \fn OGRSFDriver *OGRSFDriverRegistrar::GetDriver( int iDriver );
-
-  \brief Fetch the indicated driver.
-
-  This method is the same as the C function OGRGetDriver().
-
-  @param iDriver the driver index, from 0 to GetDriverCount()-1.
-
-  @return the driver, or NULL if iDriver is out of range.
 
 */
 
@@ -245,8 +100,7 @@
 
   \brief Fetch the indicated driver.
 
-  This function is the same as the C++ method 
-  OGRSFDriverRegistrar::GetDriver().
+  @deprecated Use GDALGetDriver() in GDAL 2.0
 
   @param iDriver the driver index, from 0 to GetDriverCount()-1.
 
@@ -255,67 +109,15 @@
 */
 
 /**
-  \fn OGRSFDriver *OGRSFDriverRegistrar::GetDriverByName( const char * pszName );
-
-  \brief Fetch the indicated driver.
-
-  This method is the same as the C function OGRGetDriverByName
-
-  @param pszName the driver name
-
-  @return the driver, or NULL if no driver with that name is found
-*/
-
-/**
   \fn OGRSFDriverH OGRGetDriverByName( const char *pszName );
 
   \brief Fetch the indicated driver.
 
-  This function is the same as the C++ method OGRSFDriverRegistrar::GetDriverByName()
+  @deprecated Use GDALGetDriverByName() in GDAL 2.0
 
   @param pszName the driver name
 
   @return the driver, or NULL if no driver with that name is found
-*/
-
-/**
-  \fn int OGRSFDriverRegistrar::GetOpenDSCount();
-
-  \brief Return the number of opened datasources.
-
-  This method is the same as the C function OGRGetOpenDSCount()
-
-  @return the number of opened datasources.
-*/
-
-/**
-  \fn int OGRGetOpenDSCount();
-
-  \brief Return the number of opened datasources.
-
-  This function is the same as the C++ method OGRSFDriverRegistrar::GetOpenDSCount()
-
-  @return the number of opened datasources.
-*/
-
-/**
-  \fn OGRDataSource *OGRSFDriverRegistrar::GetOpenDS( int iDS )
-
-  \brief Return the iDS th datasource opened.
-
-  This method is the same as the C function OGRGetOpenDS().
-
-  @param iDS the index of the dataset to return (between 0 and GetOpenDSCount() - 1)
-*/
-
-/**
-  \fn OGRDataSourceH OGRGetOpenDS( int iDS )
-
-  \brief Return the iDS th datasource opened.
-
-  This function is the same as the C++ method OGRSFDriverRegistrar::GetOpenDS.
-
-  @param iDS the index of the dataset to return (between 0 and GetOpenDSCount() - 1)
 */
 
 /**
@@ -324,28 +126,12 @@
 
   \brief Register all drivers.
 
+   @deprecated Use GDALAllRegister() in GDAL 2.0
 */
 
 /************************************************************************/
 /*                             OGRSFDriver                              */
 /************************************************************************/
-
-
-/** 
-
-  \fn const char *OGRSFDriver::GetName();
-
-  \brief Fetch name of driver (file format).
-  This name should be relatively short
-  (10-40 characters), and should reflect the underlying file format.  For
-  instance "ESRI Shapefile".
-
-  This method is the same as the C function OGR_Dr_GetName().
-
-  @return driver name.  This is an internal string and should not be modified
-  or freed. 
-*/
-
 
 /** 
 
@@ -365,44 +151,12 @@
 
 /**
 
-  \fn OGRDataSource *OGRSFDriver::Open( const char *pszName, int bUpdate );
-
-  \brief Attempt to open file with this driver. 
-
-  This method is what OGRSFDriverRegistrar uses to implement its Open() 
-  method.  See it for more details.
-
-  Note, drivers do not normally set their own m_poDriver value, so a direct
-  call to this method (instead of indirectly via OGRSFDriverRegistrar) will
-  usually result in a datasource that does not know what driver it relates to
-  if GetDriver() is called on the datasource.  The application may directly
-  call SetDriver() after opening with this method to avoid this problem.
-
-  For drivers supporting the VSI virtual file API, it is possible to open
-  a file in a .zip archive (see VSIInstallZipFileHandler()), in a .tar/.tar.gz/.tgz archive
-  (see VSIInstallTarFileHandler()) or on a HTTP / FTP server (see VSIInstallCurlFileHandler())
-
-  This method is the same as the C function OGR_Dr_Open().
-
-  @param pszName the name of the file, or data source to try and open.
-  @param bUpdate TRUE if update access is required, otherwise FALSE (the
-  default).
-
-  @return NULL on error or if the pass name is not supported by this driver,
-  otherwise a pointer to an OGRDataSource.  This OGRDataSource should be
-  closed by deleting the object when it is no longer needed.
-
-*/
-
-
-/**
-
   \fn OGRDataSourceH OGR_Dr_Open( OGRSFDriverH hDriver, const char *pszName, 
                             int bUpdate );
 
   \brief Attempt to open file with this driver. 
 
-  This function is the same as the C++ method OGRSFDriver::Open().
+  @deprecated Use GDALOpenEx() in GDAL 2.0
 
   @param hDriver handle to the driver that is used to open file.
   @param pszName the name of the file, or data source to try and open.
@@ -414,31 +168,6 @@
   closed by deleting the object when it is no longer needed.
 
 */
-
-/**
- \fn int OGRSFDriver::TestCapability( const char *pszCapability );
-
- \brief Test if capability is available.
-
- One of the following data source capability names can be passed into this
- method, and a TRUE or FALSE value will be returned indicating whether or not
- the capability is available for this object.
-
- <ul>
-  <li> <b>ODrCCreateDataSource</b>: True if this driver can support creating data sources.<p>
-  <li> <b>ODrCDeleteDataSource</b>: True if this driver supports deleting data sources.<p>
- </ul>
-
- The \#define macro forms of the capability names should be used in preference
- to the strings themselves to avoid mispelling.
-
- This method is the same as the C function OGR_Dr_TestCapability().
-
- @param pszCapability the capability to test.
-
- @return TRUE if capability available otherwise FALSE.
-*/ 
-
 
 /**
  \fn int OGR_Dr_TestCapability( OGRSFDriverH hDriver, const char *pszCap );
@@ -457,7 +186,7 @@
  The \#define macro forms of the capability names should be used in preference
  to the strings themselves to avoid mispelling.
 
- This function is the same as the C++ method OGRSFDriver::TestCapability().
+ @deprecated Use GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATE) in GDAL 2.0
 
  @param hDriver handle to the driver to test the capability against.
  @param pszCap the capability to test.
@@ -465,25 +194,6 @@
  @return TRUE if capability available otherwise FALSE.
 
 */ 
-
-/**
- \fn OGRErr OGRSFDriver::DeleteDataSource( const char *pszDataSource );
-
- \brief Delete a datasource.
-
- Delete (from the disk, in the database, ...) the named datasource.
- Normally it would be safest if the datasource was not open at the time. 
-
- Whether this is a supported operation on this driver case be tested
- using TestCapability() on ODrCDeleteDataSource.
-
- This method is the same as the C function OGR_Dr_DeleteDataSource().
-
- @param pszDataSource the name of the datasource to delete. 
-
- @return OGRERR_NONE on success, and OGRERR_UNSUPPORTED_OPERATION if this
- is not supported by this driver. 
-*/
 
 /**
  \fn OGRErr OGR_Dr_DeleteDataSource( OGRSFDriverH hDriver, 
@@ -497,7 +207,7 @@
  Whether this is a supported operation on this driver case be tested
  using TestCapability() on ODrCDeleteDataSource.
 
- This method is the same as the C++ method OGRSFDriver::DeleteDataSource().
+ @deprecated Use GDALDeleteDataset() in GDAL 2
 
  @param hDriver handle to the driver on which data source deletion is
 based.
@@ -507,36 +217,6 @@ based.
  @return OGRERR_NONE on success, and OGRERR_UNSUPPORTED_OPERATION if this
  is not supported by this driver. 
 
-*/
-
-/**
- \fn OGRDataSource *OGRSFDriver::CreateDataSource( const char *pszName, 
-                                        char ** papszOptions );
-
- \brief This method attempts to create a new data source based on the passed driver.
-
- The papszOptions argument can be used to control driver specific
- creation options.  These options are normally documented in the format
- specific documentation. 
-
- It is important to call OGRDataSource::DestroyDataSource() when the datasource is no longer
- used to ensure that all data has been properly flushed to disk.
-
- This method is the same as the C function OGR_Dr_CreateDataSource().
-
- \note This method does <strong>NOT</strong> attach driver instance to the 
- returned  data source, so caller should expect that OGRDataSource::GetDriver()
- will return NULL pointer. In order to attach driver to the returned data 
- source, it is required to use C function OGR_Dr_CreateDataSource.
- This behavior is related to fix of issue reported in <a href="http://trac.osgeo.org/gdal/ticket/1223">Ticket #1233</a>. 
-
- @param pszName the name for the new data source. UTF-8 encoded.
- @param papszOptions a StringList of name=value options.  Options are driver
-specific, and driver information can be found at the following url:  
-http://www.gdal.org/ogr/ogr_formats.html 
-
- @return NULL is returned on failure, or a new OGRDataSource on 
-success. 
 */
 
 /** 
@@ -554,35 +234,11 @@ success.
  It is important to call OGR_DS_Destroy() when the datasource is no longer
  used to ensure that all data has been properly flushed to disk.
 
- This function is the same as the C++ method OGRSFDriver::CreateDataSource().
+ @deprecated Use GDALCreate() in GDAL 2.0
 
  @param hDriver handle to the driver on which data source creation is
 based.
  @param pszName the name for the new data source. UTF-8 encoded.
- @param papszOptions a StringList of name=value options.  Options are driver
-specific, and driver information can be found at the following url:  
-http://www.gdal.org/ogr/ogr_formats.html 
-
- @return NULL is returned on failure, or a new OGRDataSource handle on 
-success. 
-*/
-
-
-/**
-
-   \fn OGRDataSource *OGRSFDriver::CopyDataSource( OGRDataSource *poSrcDS, 
-                                            const char *pszNewName,
-                                            char **papszOptions )
-
-   \brief This method creates a new datasource by copying all the layers from the source datasource.
-
-   It is important to call OGRDataSource::DestroyDataSource() when the datasource is no longer
-   used to ensure that all data has been properly flushed to disk.
-
-   This method is the same as the C function OGR_Dr_CopyDataSource().
-
- @param poSrcDS source datasource
- @param pszNewName the name for the new data source. UTF-8 encoded.
  @param papszOptions a StringList of name=value options.  Options are driver
 specific, and driver information can be found at the following url:  
 http://www.gdal.org/ogr/ogr_formats.html 
@@ -603,7 +259,7 @@ success.
    It is important to call OGR_DS_Destroy() when the datasource is no longer
    used to ensure that all data has been properly flushed to disk.
 
-   This function is the same as the C++ method OGRSFDriver::CopyDataSource().
+   @deprecated Use GDALCreateCopy() in GDAL 2.0
 
  @param hDriver handle to the driver on which data source creation is
 based.
@@ -628,24 +284,9 @@ success.
 
    This method is the same as the C++ method OGRDataSource::DestroyDataSource().
 
+  @deprecated Use GDALClose() in GDAL 2.0
+
   @param hDataSource handle to allocated datasource object.
-*/
-
-/** 
- \fn const char *OGRDataSource::GetName();
-
- \brief Returns the name of the data source.
-
- This string should be sufficient to
- open the data source if passed to the same OGRSFDriver that this data
- source was opened with, but it need not be exactly the same string that
- was used to open the data source.  Normally this is a filename. 
-
- This method is the same as the C function OGR_DS_GetName().
-
- @return pointer to an internal name string which should not be modified
- or freed by the caller.
-
 */
 
 /** 
@@ -658,22 +299,11 @@ success.
  source was opened with, but it need not be exactly the same string that
  was used to open the data source.  Normally this is a filename. 
 
- This function is the same as the C++ method OGRDataSource::GetName().
+ @deprecated Use GDALGetDescription() in GDAL 2.0
 
  @param hDS handle to the data source to get the name from.
  @return pointer to an internal name string which should not be modified
  or freed by the caller.
-
-*/
-
-/**
- \fn int OGRDataSource::GetLayerCount();
-
- \brief Get the number of layers in this data source.
-
- This method is the same as the C function OGR_DS_GetLayerCount().
-
- @return layer count.
 
 */
 
@@ -683,29 +313,12 @@ success.
 
  \brief Get the number of layers in this data source.
 
- This function is the same as the C++ method OGRDataSource::GetLayerCount().
+ @deprecated Use GDALDatasetGetLayerCount() in GDAL 2.0
 
  @param hDS handle to the data source from which to get the number of layers.
  @return layer count.
 
 */
-
-/**
- \fn OGRLayer *OGRDataSource::GetLayer(int iLayer);
-
- \brief Fetch a layer by index.
-
- The returned layer remains owned by the 
- OGRDataSource and should not be deleted by the application.
-
- This method is the same as the C function OGR_DS_GetLayer().
-
- @param iLayer a layer number between 0 and GetLayerCount()-1.
-
- @return the layer, or NULL if iLayer is out of range or an error occurs.
-
-*/
-
 
 /**
  \fn OGRLayerH OGR_DS_GetLayer( OGRDataSourceH hDS, int iLayer );
@@ -715,7 +328,7 @@ success.
  The returned layer remains owned by the 
  OGRDataSource and should not be deleted by the application.
 
- This function is the same as the C++ method OGRDataSource::GetLayer().
+ @deprecated Use GDALDatasetGetLayer() in GDAL 2.0
 
  @param hDS handle to the data source from which to get the layer.
  @param iLayer a layer number between 0 and OGR_DS_GetLayerCount()-1.
@@ -726,23 +339,6 @@ success.
 */
 
 /**
- \fn OGRLayer *OGRDataSource::GetLayerByName(const char *pszLayerName);
-
- \brief Fetch a layer by name.
-
- The returned layer remains owned by the 
- OGRDataSource and should not be deleted by the application.
-
- This method is the same as the C function OGR_DS_GetLayerByName().
-
- @param pszLayerName the layer name of the layer to fetch.
-
- @return the layer, or NULL if Layer is not found or an error occurs.
-
-*/
-
-
-/**
  \fn OGRLayerH OGR_DS_GetLayerByName(OGRDataSourceH hDS, 
                                      const char *pszLayerName );
 
@@ -751,7 +347,7 @@ success.
  The returned layer remains owned by the 
  OGRDataSource and should not be deleted by the application.
 
- This function is the same as the C++ method OGRDataSource::GetLayerByName().
+ @deprecated Use GDALDatasetGetLayerByName() in GDAL 2.0
 
  @param hDS handle to the data source from which to get the layer.
  @param pszLayerName Layer the layer name of the layer to fetch.
@@ -759,30 +355,6 @@ success.
  @return an handle to the layer, or NULL if the layer is not found
  or an error occurs.
 
-*/
-
-/**
- \fn OGRLayer *OGRDataSource::CopyLayer( OGRLayer *poSrcLayer, 
-                                    const char *pszNewName, 
-                                    char **papszOptions )
-
- \brief Duplicate an existing layer.
-
- This method creates a new layer, duplicate the field definitions of the
- source layer and then duplicate each features of the source layer.
- The papszOptions argument
- can be used to control driver specific creation options.  These options are
- normally documented in the format specific documentation.
- The source layer may come from another dataset.
-
- This method is the same as the C function OGR_DS_CopyLayer().
-
- @param poSrcLayer source layer.
- @param pszNewName the name of the layer to create.
- @param papszOptions a StringList of name=value options.  Options are driver
-                     specific.
-
- @return an handle to the layer, or NULL if an error occurs.
 */
 
 /**
@@ -799,7 +371,7 @@ success.
  normally documented in the format specific documentation.
  The source layer may come from another dataset.
 
- This function is the same as the C++ method OGRDataSource::CopyLayer
+ @deprecated Use GDALDatasetCopyLayer() in GDAL 2.0
 
  @param hDS handle to the data source where to create the new layer
  @param hSrcLayer handle to the source layer.
@@ -811,23 +383,6 @@ success.
 */
 
 /**
- \fn OGRErr OGRDataSource::DeleteLayer(int iLayer);
-
- \brief Delete the indicated layer from the datasource.
-
- If this method is supported
- the ODsCDeleteLayer capability will test TRUE on the OGRDataSource.
-
- This method is the same as the C function OGR_DS_DeleteLayer().
-
- @param iLayer the index of the layer to delete. 
-
- @return OGRERR_NONE on success, or OGRERR_UNSUPPORTED_OPERATION if deleting
- layers is not supported for this datasource.
-
-*/
-
-/**
  \fn OGRErr OGR_DS_DeleteLayer(OGRDataSourceH hDS, int iLayer);
 
  \brief Delete the indicated layer from the datasource.
@@ -835,7 +390,7 @@ success.
  If this method is supported
  the ODsCDeleteLayer capability will test TRUE on the OGRDataSource.
 
- This method is the same as the C++ method OGRDataSource::DeleteLayer().
+ @deprecated Use GDALDatasetDeleteLayer() in GDAL 2.0
 
  @param hDS handle to the datasource
  @param iLayer the index of the layer to delete. 
@@ -844,81 +399,6 @@ success.
  layers is not supported for this datasource.
 
 */
-
-/**
- \fn  void OGRDataSource::GetStyleTable();
-
- \brief Returns data source style table.
- 
- This method is the same as the C function OGR_DS_GetStyleTable().
- 
- @return pointer to a style table which should not be modified or freed by the
- caller.
-*/
-
-/**
- \fn  void OGRDataSource::SetStyleTable(OGRStyleTable *poStyleTable);
-
- \brief Set data source style table.
- 
- This method operate exactly as OGRDataSource::SetStyleTableDirectly() except
- that it does not assume ownership of the passed table.
- 
- This method is the same as the C function OGR_DS_SetStyleTable().
- 
- @param poStyleTable pointer to style table to set
-
-*/
-
-/**
- \fn  void OGRDataSource::SetStyleTableDirectly(OGRStyleTable *poStyleTable);
-
- \brief Set data source style table.
- 
- This method operate exactly as OGRDataSource::SetStyleTable() except that it
- assumes ownership of the passed table.
- 
- This method is the same as the C function OGR_DS_SetStyleTableDirectly().
- 
- @param poStyleTable pointer to style table to set
-
-*/
-
-/**
- \fn OGRLayer *OGRDataSource::ExecuteSQL(const char *pszStatement,
-				         OGRGeometry *poSpatialFilter, 
-				         const char *pszDialect );
-
- \brief Execute an SQL statement against the data store. 
-
- The result of an SQL query is either NULL for statements that are in error,
- or that have no results set, or an OGRLayer pointer representing a results
- set from the query.  Note that this OGRLayer is in addition to the layers
- in the data store and must be destroyed with 
- OGRDataSource::ReleaseResultSet() before the data source is closed
- (destroyed).  
-
- This method is the same as the C function OGR_DS_ExecuteSQL().
-
- For more information on the SQL dialect supported internally by OGR
- review the <a href="ogr_sql.html">OGR SQL</a> document.  Some drivers (ie.
- Oracle and PostGIS) pass the SQL directly through to the underlying RDBMS.
-
- Starting with OGR 1.10, the <a href="ogr_sql_sqlite.html">SQLITE dialect</a>
- can also be used.
-
- @param pszStatement the SQL statement to execute. 
- @param poSpatialFilter geometry which represents a spatial filter. Can be NULL.
- @param pszDialect allows control of the statement dialect. If set to NULL, the
-OGR SQL engine will be used, except for RDBMS drivers that will use their dedicated SQL engine,
-unless OGRSQL is explicitely passed as the dialect. Starting with OGR 1.10, the SQLITE dialect
-can also be used.
-
- @return an OGRLayer containing the results of the query.  Deallocate with
- ReleaseResultSet().
-
-*/
-
 
 /**
  \fn OGRLayerH OGR_DS_ExecuteSQL( OGRDataSourceH hDS, 
@@ -942,7 +422,7 @@ can also be used.
  Starting with OGR 1.10, the <a href="ogr_sql_sqlite.html">SQLITE dialect</a>
  can also be used.
 
- This function is the same as the C++ method OGRDataSource::ExecuteSQL();
+ @deprecated Use GDALDatasetExecuteSQL() in GDAL 2.0
 
  @param hDS handle to the data source on which the SQL query is executed.
  @param pszSQLCommand the SQL statement to execute. 
@@ -957,21 +437,6 @@ can also be used.
 
 */
 
-/**
- \fn void OGRDataSource::ReleaseResultSet(OGRLayer *poResultsSet);
-
- \brief Release results of ExecuteSQL().
-
- This method should only be used to deallocate OGRLayers resulting from
- an ExecuteSQL() call on the same OGRDataSource.  Failure to deallocate a
- results set before destroying the OGRDataSource may cause errors. 
-
- This method is the same as the C function OGR_L_ReleaseResultSet().
-
- @param poResultsSet the result of a previous ExecuteSQL() call.
-
-*/ 
-
 
 /**
  \fn void OGR_DS_ReleaseResultSet( OGRDataSourceH hDS, OGRLayerH hLayer );
@@ -983,43 +448,13 @@ can also be used.
  Failure to deallocate a results set before destroying the OGRDataSource 
  may cause errors. 
 
- This function is the same as the C++ method 
- OGRDataSource::ReleaseResultSet().
+ @deprecated Use GDALDatasetReleaseResultSet() in GDAL 2.0
 
  @param hDS an handle to the data source on which was executed an 
  SQL query.
  @param hLayer handle to the result of a previous OGR_DS_ExecuteSQL() call.
 
 */ 
-
-
-/**
- \fn int OGRDataSource::TestCapability( const char *pszCapability );
-
- \brief Test if capability is available.
-
- One of the following data source capability names can be passed into this
- method, and a TRUE or FALSE value will be returned indicating whether or not
- the capability is available for this object.
-
- <ul>
-  <li> <b>ODsCCreateLayer</b>: True if this datasource can create new layers.<p>
-  <li> <b>ODsCDeleteLayer</b>: True if this datasource can delete existing layers.<p>
-  <li> <b>ODsCCreateGeomFieldAfterCreateLayer</b>: True if the layers of this
-        datasource support CreateGeomField() just after layer creation.<p>
- </ul>
-
- The \#define macro forms of the capability names should be used in preference
- to the strings themselves to avoid mispelling.
-
- This method is the same as the C function OGR_DS_TestCapability().
-
- @param pszCapability the capability to test.
-
- @return TRUE if capability available otherwise FALSE.
-
-*/ 
-
 
 /**
  \fn int OGR_DS_TestCapability( OGRDataSourceH hDS, const char *pszCapability );
@@ -1041,7 +476,7 @@ can also be used.
  The \#define macro forms of the capability names should be used in preference
  to the strings themselves to avoid mispelling.
 
- This function is the same as the C++ method OGRDataSource::TestCapability().
+ @deprecated Use GDALDatasetTestCapability() in GDAL 2.0
 
  @param hDS handle to the data source against which to test the capability.
  @param pszCapability the capability to test.
@@ -1049,57 +484,6 @@ can also be used.
  @return TRUE if capability available otherwise FALSE.
 
 */ 
-
-/**
- \fn OGRLayer *OGRDataSource::CreateLayer( const char *pszName, 
-                                OGRSpatialReference *poSpatialRef = NULL,
-                                OGRwkbGeometryType eGType = wkbUnknown,
-                                char ** papszOptions = NULL );
-
-\brief This method attempts to create a new layer on the data source with the indicated name, coordinate system, geometry type.
-
-The papszOptions argument
-can be used to control driver specific creation options.  These options are
-normally documented in the format specific documentation. 
-
- @param pszName the name for the new layer.  This should ideally not 
-match any existing layer on the datasource.
- @param poSpatialRef the coordinate system to use for the new layer, or NULL if
-no coordinate system is available. 
- @param eGType the geometry type for the layer.  Use wkbUnknown if there
-are no constraints on the types geometry to be written. 
- @param papszOptions a StringList of name=value options.  Options are driver
-specific.
-
- @return NULL is returned on failure, or a new OGRLayer handle on success. 
-
-<b>Example:</b>
-
-\code
-#include "ogrsf_frmts.h" 
-#include "cpl_string.h"
-
-...
-
-        OGRLayer *poLayer;
-        char     **papszOptions;
-
-        if( !poDS->TestCapability( ODsCCreateLayer ) )
-        {
-        ...
-        }
-
-        papszOptions = CSLSetNameValue( papszOptions, "DIM", "2" );
-        poLayer = poDS->CreateLayer( "NewLayer", NULL, wkbUnknown,
-                                     papszOptions );
-        CSLDestroy( papszOptions );
-
-        if( poLayer == NULL )
-        {
-            ...
-        }        
-\endcode
-*/
 
 /**
  \fn OGRLayerH OGR_DS_CreateLayer( OGRDataSourceH hDS, 
@@ -1114,7 +498,7 @@ The papszOptions argument
 can be used to control driver specific creation options.  These options are
 normally documented in the format specific documentation. 
 
-This function is the same as the C++ method OGRDataSource::CreateLayer().
+@deprecated Use GDALDatasetCreateLayer() in GDAL 2.0
 
  @param hDS The dataset handle.
  @param pszName the name for the new layer.  This should ideally not 
@@ -1158,60 +542,6 @@ http://www.gdal.org/ogr/ogr_formats.html
 */
 
 /**
- \fn int OGRDataSource::Reference();
-
-\brief Increment datasource reference count.
-
-This method is the same as the C function OGR_DS_Reference().
-
-@return the reference count after incrementing.
-*/
-				         
-/**
- \fn int OGRDataSource::Dereference();
-
-\brief Decrement datasource reference count.
-
-This method is the same as the C function OGR_DS_Dereference().
-
-@return the reference count after decrementing.
-*/
-				         
-/**
- \fn int OGRDataSource::GetRefCount() const;
-
-\brief Fetch reference count.
-
-This method is the same as the C function OGR_DS_GetRefCount().
-
-@return the current reference count for the datasource object itself.
-*/
-				         
-/**
- \fn int OGRDataSource::GetSummaryRefCount() const;
-
-\brief Fetch reference count of datasource and all owned layers.
-
-This method is the same as the C function OGR_DS_GetSummaryRefCount().
-
-@return the current summary reference count for the datasource and its layers.
-*/
-
-/**
- \fn OGRErr OGRDataSource::Release();
-
-\brief Drop a reference to this datasource, and if the reference count drops to zero close (destroy) the datasource.
-
-Internally this actually calls
-the OGRSFDriverRegistrar::ReleaseDataSource() method.  This method is
-essentially a convenient alias. 
-
-This method is the same as the C function OGRReleaseDataSource().
-
-@return OGRERR_NONE on success or an error code. 
-*/
-
-/**
   \fn OGRErr OGRReleaseDataSource( OGRDataSourceH hDS )
 
 \brief Drop a reference to this datasource, and if the reference count drops to zero close (destroy) the datasource.
@@ -1220,7 +550,7 @@ Internally this actually calls
 the OGRSFDriverRegistrar::ReleaseDataSource() method.  This method is
 essentially a convenient alias. 
 
-This method is the same as the C++ method OGRDataSource::Release()
+@deprecated Use GDALClose() in GDAL 2.0
 
 @param hDS handle to the data source to release
 
@@ -1228,108 +558,15 @@ This method is the same as the C++ method OGRDataSource::Release()
 */
 
 /**
- \fn void OGRDataSource::DestroyDataSource(OGRDataSource* poDS);
-
- \brief Closes opened datasource and releases allocated resources.
-
- This static method will close and destroy a datasource.  It is
- equivelent to calling delete on the object, but it ensures that the
- deallocation is properly executed within the GDAL libraries heap on
- platforms where this can matter (win32).  
-
- This method is the same as the C function OGR_DS_Destroy().
-
-  @param poDS pointer to allocated datasource object.
-*/
-
-/**
- \fn OGRErr OGRDataSource::SyncToDisk();
-
-\brief Flush pending changes to disk.
-
-This call is intended to force the datasource to flush any pending writes to
-disk, and leave the disk file in a consistent state.  It would not normally
-have any effect on read-only datasources. 
-
-Some data sources do not implement this method, and will still return 
-OGRERR_NONE.  An error is only returned if an error occurs while attempting
-to flush to disk.  
-
-The default implementation of this method just calls the SyncToDisk() method
-on each of the layers.  Conceptionally, calling SyncToDisk() on a datasource
-should include any work that might be accomplished by calling SyncToDisk()
-on layers in that data source.
-
-In any event, you should always close any opened datasource with
-OGRDataSource::DestroyDataSource() that will ensure all data is correctly flushed.
-
-This method is the same as the C function OGR_DS_SyncToDisk().
-
-@return OGRERR_NONE if no error occurs (even if nothing is done) or an
-error code.
-*/
-
-/**
- \fn OGRErr OGR_DS_SyncToDisk(OGRDataSourceH hDS);
-
-\brief Flush pending changes to disk.
-
-This call is intended to force the datasource to flush any pending writes to
-disk, and leave the disk file in a consistent state.  It would not normally
-have any effect on read-only datasources. 
-
-Some data sources do not implement this method, and will still return 
-OGRERR_NONE.  An error is only returned if an error occurs while attempting
-to flush to disk.  
-
-The default implementation of this method just calls the SyncToDisk() method
-on each of the layers.  Conceptionally, calling SyncToDisk() on a datasource
-should include any work that might be accomplished by calling SyncToDisk()
-on layers in that data source.
-
-In any event, you should always close any opened datasource with
-OGR_DS_Destroy() that will ensure all data is correctly flushed.
-
-This method is the same as the C++ method OGRDataSource::SyncToDisk()
-
-@param hDS handle to the data source
-
-@return OGRERR_NONE if no error occurs (even if nothing is done) or an
-error code.
-*/
-
-/**
- \fn OGRSFDriver *OGRDataSource::GetDriver() const;
-
-\brief Returns the driver that the dataset was opened with. 
-
-This method is the same as the C function OGR_DS_GetDriver().
-
-@return NULL if driver info is not available, or pointer to a driver owned
-by the OGRSFDriverManager.
-*/
-
-/**
  \fn OGRSFDriverH OGR_DS_GetDriver( OGRDataSourceH hDS );
 
 \brief Returns the driver that the dataset was opened with. 
 
-This method is the same as the C++ method OGRDataSource::GetDriver() 
+@deprecated Use GDALGetDatasetDriver() in GDAL 2.0
 
 @param hDS handle to the datasource
 @return NULL if driver info is not available, or pointer to a driver owned
 by the OGRSFDriverManager.
-*/
-
-/**
- \fn void OGRDataSource::SetDriver( OGRSFDriver *poDriver );
-
-\brief Sets the driver that the dataset was created or opened with. 
-
-\note This method is not exposed as the OGR C API function.
- 
-@param poDriver pointer to driver instance associated with the data source.
-
 */
 
 /************************************************************************/
@@ -2521,29 +1758,6 @@ otherwise FALSE.<p>
 
  @return TRUE if the layer has the requested capability, or FALSE otherwise.
 OGRLayers will return FALSE for any unrecognised capabilities.<p>
-
-*/
-
-/**
- \fn const char *OGRLayer::GetInfo( const char *pszTag );
-
- \brief Fetch metadata from layer.
-
- This method can be used to fetch various kinds of metadata or layer 
- specific information encoded as a string.  It is anticipated that various
- tag values will be defined with well known semantics, while other tags will
- be used for driver/application specific purposes.  
-
- This method is deprecated and will be replaced with a more general 
- metadata model in the future. At this time no drivers return information
- via the GetInfo() call. 
-
- @param pszTag the tag for which information is being requested.
-
- @return the value of the requested tag, or NULL if that tag does not
- have a value, or is unknown.
-
- @deprecated
 
 */
 

@@ -2518,10 +2518,10 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
             poDS->bGeoTransformValid |= 
                 GDALReadWorldFile2( osFilename, NULL,
                                     poDS->adfGeoTransform,
-                                    poOpenInfo->papszSiblingFiles, NULL )
+                                    poOpenInfo->GetSiblingFiles(), NULL )
                 || GDALReadWorldFile2( osFilename, ".wld",
                                     poDS->adfGeoTransform,
-                                    poOpenInfo->papszSiblingFiles, NULL );
+                                    poOpenInfo->GetSiblingFiles(), NULL );
         }
     }
 
@@ -3136,6 +3136,7 @@ void GDALRegister_ECW()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "ECW" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
 
         CPLString osLongName = "ERDAS Compressed Wavelets (SDK ";
 
@@ -3235,6 +3236,7 @@ void GDALRegister_JP2ECW()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "JP2ECW" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
 
         CPLString osLongName = "ERDAS JPEG2000 (SDK ";
 

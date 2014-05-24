@@ -27,6 +27,14 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#ifdef PERL_CPAN_NAMESPACE
+%module "Geo::GDAL"
+#elif defined(SWIGCSHARP)
+%module Gdal
+#else
+%module gdal
+#endif
+
 %rename (MajorObject) GDALMajorObjectShadow;
 
 class GDALMajorObjectShadow {

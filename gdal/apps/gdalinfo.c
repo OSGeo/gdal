@@ -92,6 +92,7 @@ int main( int argc, char ** argv )
     const char  *pszProjection = NULL;
     OGRCoordinateTransformationH hTransform = NULL;
     int             bShowFileList = TRUE;
+    char              **papszOpenOptions = NULL;
 
     /* Check that we are running against at least GDAL 1.5 */
     /* Note to developers : if we use newer API, please change the requirement */
@@ -159,6 +160,12 @@ int main( int argc, char ** argv )
             papszExtraMDDomains = CSLAddString( papszExtraMDDomains,
                                                 argv[++i] );
         }
+        else if( EQUAL(argv[i], "-oo") )
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            papszOpenOptions = CSLAddString( papszOpenOptions,
+                                                argv[++i] );
+        }
         else if( EQUAL(argv[i], "-nofl") )
             bShowFileList = FALSE;
         else if( EQUAL(argv[i], "-sd") )
@@ -180,7 +187,8 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Open dataset.                                                   */
 /* -------------------------------------------------------------------- */
-    hDataset = GDALOpen( pszFilename, GA_ReadOnly );
+    hDataset = GDALOpenEx( pszFilename, GDAL_OF_READONLY | GDAL_OF_RASTER, NULL,
+                           (const char* const* )papszOpenOptions, NULL );
 
     if( hDataset == NULL )
     {
@@ -213,6 +221,7 @@ int main( int argc, char ** argv )
 
         CSLDestroy( argv );
         CSLDestroy( papszExtraMDDomains );
+        CSLDestroy( papszOpenOptions );
     
         GDALDumpOpenDatasets( stderr );
 
@@ -862,6 +871,7 @@ int main( int argc, char ** argv )
     GDALClose( hDataset );
     
     CSLDestroy( papszExtraMDDomains );
+    CSLDestroy( papszOpenOptions );
     CSLDestroy( argv );
     
     GDALDumpOpenDatasets( stderr );

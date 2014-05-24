@@ -65,6 +65,7 @@ OGRElasticLayer::OGRElasticLayer(const char* pszFilename,
     }
 
     poFeatureDefn = new OGRFeatureDefn(pszLayerName);
+    SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
 
     poSRS = poSRSIn;

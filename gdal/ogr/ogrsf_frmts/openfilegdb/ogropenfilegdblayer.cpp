@@ -132,6 +132,7 @@ OGROpenFileGDBLayer::OGROpenFileGDBLayer(const char* pszGDBFilename,
             m_nFilteredFeatureCount(-1)
 {
     m_poFeatureDefn = new OGROpenFileGDBFeatureDefn(this, pszName);
+    SetDescription( m_poFeatureDefn->GetName() );
     m_poFeatureDefn->SetGeomType(wkbNone);
     m_poFeatureDefn->Reference();
 

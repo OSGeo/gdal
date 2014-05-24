@@ -133,6 +133,8 @@ typedef struct {
 /* -------------------------------------------------------------------- */
 DTEDInfo *DTEDOpen( const char * pszFilename, const char * pszAccess,
                     int bTestOpen );
+DTEDInfo *DTEDOpenEx( VSILFILE* fp, const char * pszFilename,
+                      const char * pszAccess, int bTestOpen );
 
 /**     Read one single sample. The coordinates are given from the
         top-left corner of the file (contrary to the internal

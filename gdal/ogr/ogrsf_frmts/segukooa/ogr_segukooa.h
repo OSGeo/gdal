@@ -144,8 +144,7 @@ class OGRSEGUKOOADataSource : public OGRDataSource
                         OGRSEGUKOOADataSource();
                         ~OGRSEGUKOOADataSource();
 
-    int                 Open( const char * pszFilename,
-                              int bUpdate );
+    int                 Open( const char * pszFilename );
 
     virtual const char*         GetName() { return pszName; }
 
@@ -154,20 +153,5 @@ class OGRSEGUKOOADataSource : public OGRDataSource
 
     virtual int                 TestCapability( const char * );
 };
-
-/************************************************************************/
-/*                          OGRSEGUKOOADriver                           */
-/************************************************************************/
-
-class OGRSEGUKOOADriver : public OGRSFDriver
-{
-  public:
-                ~OGRSEGUKOOADriver();
-
-    virtual const char*         GetName();
-    virtual OGRDataSource*      Open( const char *, int );
-    virtual int                 TestCapability( const char * );
-};
-
 
 #endif /* ndef _OGR_SEGUKOOA_H_INCLUDED */

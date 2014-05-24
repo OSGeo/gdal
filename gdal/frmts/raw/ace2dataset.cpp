@@ -385,6 +385,7 @@ void GDALRegister_ACE2()
         poDriver = new GDALDriver();
 
         poDriver->SetDescription( "ACE2" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                    "ACE2" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,

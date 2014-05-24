@@ -553,6 +553,7 @@ void OGROGDILayer::BuildFeatureDefn()
                                                     pszGeomName ));
 
     m_poFeatureDefn = new OGRFeatureDefn(pszFeatureDefnName);
+    SetDescription( m_poFeatureDefn->GetName() );
     CPLFree(pszFeatureDefnName);
     pszFeatureDefnName = NULL;
     

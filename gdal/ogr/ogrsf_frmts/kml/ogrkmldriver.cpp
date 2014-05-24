@@ -33,39 +33,37 @@
 #include "cpl_error.h"
 
 /************************************************************************/
-/*                          ~OGRKMLDriver()                           */
+/*                         OGRKMLDriverIdentify()                       */
 /************************************************************************/
 
-OGRKMLDriver::~OGRKMLDriver()
+static int OGRKMLDriverIdentify( GDALOpenInfo* poOpenInfo )
+
 {
-}
+    if( poOpenInfo->fpL == NULL )
+        return NULL;
 
-/************************************************************************/
-/*                              GetName()                               */
-/************************************************************************/
-
-const char *OGRKMLDriver::GetName()
-{
-    return "KML";
+    return( strstr((const char*)poOpenInfo->pabyHeader, "<kml") != NULL );
 }
 
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-OGRDataSource *OGRKMLDriver::Open( const char * pszName, int bUpdate )
+static GDALDataset *OGRKMLDriverOpen( GDALOpenInfo* poOpenInfo )
+
 {
-    CPLAssert( NULL != pszName );
+    if( poOpenInfo->eAccess == GA_Update )
+        return NULL;
+
+    if( !OGRKMLDriverIdentify(poOpenInfo) )
+        return NULL;
 
     OGRKMLDataSource* poDS = NULL;
 
 #ifdef HAVE_EXPAT
-    if( bUpdate )
-        return NULL;
-
     poDS = new OGRKMLDataSource();
 
-    if( poDS->Open( pszName, TRUE ) )
+    if( poDS->Open( poOpenInfo->pszFilename, TRUE ) )
     {
         /*if( poDS->GetLayerCount() == 0 )
         {
@@ -87,11 +85,12 @@ OGRDataSource *OGRKMLDriver::Open( const char * pszName, int bUpdate )
 }
 
 /************************************************************************/
-/*                          CreateDataSource()                          */
+/*                               Create()                               */
 /************************************************************************/
 
-OGRDataSource *OGRKMLDriver::CreateDataSource( const char* pszName,
-                                               char** papszOptions )
+static GDALDataset *OGRKMLDriverCreate( const char * pszName,
+                                    int nBands, int nXSize, int nYSize, GDALDataType eDT,
+                                    char **papszOptions )
 {
     CPLAssert( NULL != pszName );
     CPLDebug( "KML", "Attempt to create: %s", pszName );
@@ -108,24 +107,47 @@ OGRDataSource *OGRKMLDriver::CreateDataSource( const char* pszName,
 }
 
 /************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRKMLDriver::TestCapability( const char* pszCap )
-{
-    if( EQUAL(pszCap, ODrCCreateDataSource) )
-        return TRUE;
-    else
-        return FALSE;
-}
-
-/************************************************************************/
 /*                           RegisterOGRKML()                           */
 /************************************************************************/
 
 void RegisterOGRKML()
 {
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRKMLDriver );
+    GDALDriver  *poDriver;
+
+    if( GDALGetDriverByName( "KML" ) == NULL )
+    {
+        poDriver = new GDALDriver();
+
+        poDriver->SetDescription( "KML" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                                   "Keyhole Markup Language (KML)" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "kml" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                                   "drv_kml.html" );
+
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+"<CreationOptionList>"
+"  <Option name='GPX_USE_EXTENSIONS' type='boolean' description='Whether to write non-GPX attributes in an <extensions> tag' default='NO'/>"
+"  <Option name='NameField' type='string' description='Field to use to fill the KML <name> element' default='Name'/>"
+"  <Option name='DescriptionField' type='string' description='Field to use to fill the KML <description> element' default='Description'/>"
+"  <Option name='AltitudeMode' type='string-select' description='Value of the <AltitudeMode> element for 3D geometries'>"
+"    <Value>clampToGround</Value>"
+"    <Value>relativeToGround</Value>"
+"    <Value>absolute</Value>"
+"  </Option>"
+"</CreationOptionList>");
+
+        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST, "<LayerCreationOptionList/>" );
+
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
+        poDriver->pfnOpen = OGRKMLDriverOpen;
+        poDriver->pfnIdentify = OGRKMLDriverIdentify;
+        poDriver->pfnCreate = OGRKMLDriverCreate;
+
+        GetGDALDriverManager()->RegisterDriver( poDriver );
+    }
 }
 
 

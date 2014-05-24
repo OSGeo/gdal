@@ -73,49 +73,22 @@ int GeoJSONIsObject( const char* pszText )
 /************************************************************************/
 
 static
-int GeoJSONFileIsObject( const char* pszSource, VSILFILE** pfp ) 
+int GeoJSONFileIsObject( GDALOpenInfo* poOpenInfo ) 
 { 
-    CPLAssert( NULL != pszSource ); 
- 
-    VSILFILE* fp = NULL; 
-    fp = VSIFOpenL( pszSource, "rb" ); 
-    if( NULL == fp ) 
-    { 
-        return FALSE; 
-    } 
-    
     // by default read first 6000 bytes 
     // 6000 was chosen as enough bytes to  
     // enable all current tests to pass 
-    vsi_l_offset nToReadLen = 6000; 
-    vsi_l_offset nDataLen = 0; 
 
-    char* pszGeoData = (char*)VSIMalloc((size_t)(nToReadLen + 1)); 
-    if( NULL == pszGeoData ) 
+    if( poOpenInfo->fpL == NULL ||
+        !poOpenInfo->TryToIngest(6000) ) 
     { 
-        VSIFCloseL(fp); 
         return FALSE; 
     } 
 
-    nDataLen = VSIFReadL( pszGeoData, 1, (size_t)nToReadLen, fp );
-    pszGeoData[nDataLen] = '\0'; 
-    if( nDataLen == 0 ) 
-    { 
-        VSIFCloseL( fp ); 
-        CPLFree( pszGeoData ); 
-        return FALSE; 
-    }
-
-    if( !GeoJSONIsObject(pszGeoData) )
+    if( !GeoJSONIsObject((const char*)poOpenInfo->pabyHeader) )
     {
-        CPLFree( pszGeoData ); 
-        VSIFCloseL( fp ); 
         return FALSE;
     }
-
-    *pfp = fp;
-
-    CPLFree( pszGeoData ); 
 
     return TRUE; 
 } 
@@ -124,33 +97,37 @@ int GeoJSONFileIsObject( const char* pszSource, VSILFILE** pfp )
 /*                           GeoJSONGetSourceType()                     */
 /************************************************************************/
 
-GeoJSONSourceType GeoJSONGetSourceType( const char* pszSource, VSILFILE** pfp )
+GeoJSONSourceType GeoJSONGetSourceType( GDALOpenInfo* poOpenInfo )
 {
     GeoJSONSourceType srcType = eGeoJSONSourceUnknown;
-
-    *pfp = NULL;
 
     // NOTE: Sometimes URL ends with .geojson token, for example
     //       http://example/path/2232.geojson
     //       It's important to test beginning of source first.
-    if ( eGeoJSONProtocolUnknown != GeoJSONGetProtocolType( pszSource ) )
+    if ( eGeoJSONProtocolUnknown != GeoJSONGetProtocolType( poOpenInfo->pszFilename ) )
     {
+        if( (strstr(poOpenInfo->pszFilename, "SERVICE=WFS") ||
+             strstr(poOpenInfo->pszFilename, "service=WFS") ||
+             strstr(poOpenInfo->pszFilename, "service=wfs")) &&
+             !strstr(poOpenInfo->pszFilename, "json") )
+            return srcType;
         srcType = eGeoJSONSourceService;
     }
-    else if( EQUAL( CPLGetExtension( pszSource ), "geojson" )
-             || EQUAL( CPLGetExtension( pszSource ), "json" )
-             || EQUAL( CPLGetExtension( pszSource ), "topojson" )
-             || ((EQUALN( pszSource, "/vsigzip/", 9) || EQUALN( pszSource, "/vsizip/", 8)) &&
-                 (strstr( pszSource, ".json") || strstr( pszSource, ".JSON") ||
-                  strstr( pszSource, ".geojson") || strstr( pszSource, ".GEOJSON")) ))
+    else if( EQUAL( CPLGetExtension( poOpenInfo->pszFilename ), "geojson" )
+             || EQUAL( CPLGetExtension( poOpenInfo->pszFilename ), "json" )
+             || EQUAL( CPLGetExtension( poOpenInfo->pszFilename ), "topojson" )
+             || ((EQUALN( poOpenInfo->pszFilename, "/vsigzip/", 9) || EQUALN( poOpenInfo->pszFilename, "/vsizip/", 8)) &&
+                 (strstr( poOpenInfo->pszFilename, ".json") || strstr( poOpenInfo->pszFilename, ".JSON") ||
+                  strstr( poOpenInfo->pszFilename, ".geojson") || strstr( poOpenInfo->pszFilename, ".GEOJSON")) ))
     {
-        srcType = eGeoJSONSourceFile;
+        if( poOpenInfo->fpL != NULL )
+            srcType = eGeoJSONSourceFile;
     }
-    else if( GeoJSONIsObject( pszSource ) )
+    else if( GeoJSONIsObject( poOpenInfo->pszFilename ) )
     {
         srcType = eGeoJSONSourceText;
     }
-    else if( GeoJSONFileIsObject( pszSource, pfp ) )
+    else if( GeoJSONFileIsObject( poOpenInfo ) )
     {
         srcType = eGeoJSONSourceFile;
     }

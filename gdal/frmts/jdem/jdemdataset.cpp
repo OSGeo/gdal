@@ -382,6 +382,7 @@ void GDALRegister_JDEM()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "JDEM" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "Japanese DEM (.mem)" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

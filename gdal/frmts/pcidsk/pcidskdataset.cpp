@@ -1617,6 +1617,7 @@ void GDALRegister_PCIDSK()
         poDriver = new GDALDriver();
 
         poDriver->SetDescription( "PCIDSK" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                    "PCIDSK Database File" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,

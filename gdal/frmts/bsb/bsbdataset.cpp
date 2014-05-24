@@ -1187,6 +1187,7 @@ void GDALRegister_BSB()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "BSB" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "Maptech BSB Nautical Charts" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

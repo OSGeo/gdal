@@ -1,5 +1,9 @@
 GDAL_ROOT	=	..\..
 
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+!IFDEF INCLUDE_OGR_FRMTS
+
 DIRLIST		=	generic geojson shape ntf sdts tiger s57 dgn mitab gml \
 			avc rec mem vrt csv gmt bna kml gpx \
 			geoconcept xplane georss gtm dxf pgdump gpsbabel \
@@ -9,7 +13,7 @@ DIRLIST		=	generic geojson shape ntf sdts tiger s57 dgn mitab gml \
 			$(OGDIDIR) $(FMEDIR) $(OCIDIR) $(PG_DIR) $(DWGDIR) \
 			$(ODBCDIR) $(SQLITE_DIR) $(MYSQL_DIR) $(ILI_DIR) \
 			$(SDE_DIR) $(IDB_DIR) $(NAS_DIR) $(DODSDIR) \
-			$(PCIDSK_DIR) $(LIBKMLDIR) $(WFSDIR) $(SOSIDIR) $(GFTDIR) \
+			$(LIBKMLDIR) $(WFSDIR) $(SOSIDIR) $(GFTDIR) \
 			$(COUCHDBDIR) $(FGDB_DIR) $(XLSDIR) $(ODSDIR) $(XLSXDIR) \
 			$(INGRESDIR) $(ELASTICDIR) $(OSMDIR) $(VFKDIR) $(CARTODBDIR) \
 			$(GMEDIR)
@@ -23,17 +27,6 @@ PLUGINDIRLIST	=	$(PLUGIN_ARCOBJECTS_DIR) \
 			$(PLUGIN_SDE_DIR) \
 			$(PLUGIN_INGRESDIR) \
 			$(PLUGIN_LIBKMLDIR)
-
-!INCLUDE $(GDAL_ROOT)\nmake.opt
-
-!IF "$(PCIDSK_SETTING)" == "EXTERNAL"
-PCIDSK_DIR	=	pcidsk
-PCIDSKOBJ	=	pcidsk\*.obj
-!ENDIF
-!IF "$(PCIDSK_SETTING)" == "INTERNAL"
-PCIDSK_DIR	=	pcidsk
-PCIDSKOBJ	=	pcidsk\*.obj
-!ENDIF
 
 !IFDEF OGDIDIR
 OGDIDIR	=	ogdi
@@ -215,6 +208,12 @@ GMEDIR = gme
 GME_OBJ = gme\*.obj
 !ENDIF
 
+!ELSE
+
+DIRLIST		=	generic mitab
+
+!ENDIF
+
 default:
 	for %d in ( $(DIRLIST) ) do \
 		cd %d \
@@ -237,7 +236,7 @@ default:
 				$(OGDIOBJ) $(ODBCOBJ) $(SQLITE_OBJ) \
 				$(FMEOBJ) $(OCIOBJ) $(PG_OBJ) $(MYSQL_OBJ) \
 				$(ILI_OBJ) $(DWG_OBJ) $(SDE_OBJ) $(FGDB_OBJ) $(ARCDRIVER_OBJ) $(IDB_OBJ) \
-				$(DODS_OBJ) $(NAS_OBJ) $(PCIDSKOBJ) $(LIBKMLOBJ) $(WFS_OBJ) \
+				$(DODS_OBJ) $(NAS_OBJ) $(LIBKMLOBJ) $(WFS_OBJ) \
 				$(SOSI_OBJ) $(GFT_OBJ) $(COUCHDB_OBJ) $(XLS_OBJ) $(ODS_OBJ) $(XLSX_OBJ)  \
 				$(INGRESOBJ) $(ELASTIC_OBJ) $(OSM_OBJ) $(VFK_OBJ) $(CARTODB_OBJ) $(GME_OBJ)
 	lib /out:ogrsf_frmts_sup.lib \

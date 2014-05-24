@@ -148,8 +148,7 @@ class OGRSVGDataSource : public OGRDataSource
                         OGRSVGDataSource();
                         ~OGRSVGDataSource();
 
-    int                 Open( const char * pszFilename,
-                              int bUpdate );
+    int                 Open( const char * pszFilename );
 
     virtual const char*         GetName() { return pszName; }
 
@@ -163,21 +162,6 @@ class OGRSVGDataSource : public OGRDataSource
     void                startElementValidateCbk(const char *pszName, const char **ppszAttr);
     void                dataHandlerValidateCbk(const char *data, int nLen);
 #endif
-};
-
-/************************************************************************/
-/*                             OGRSVGDriver                             */
-/************************************************************************/
-
-class OGRSVGDriver : public OGRSFDriver
-{
-  public:
-                ~OGRSVGDriver();
-
-    const char*         GetName();
-    OGRDataSource*      Open( const char *, int );
-
-    virtual int                 TestCapability( const char * );
 };
 
 #endif /* ndef _OGR_SVG_H_INCLUDED */

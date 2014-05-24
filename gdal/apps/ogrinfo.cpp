@@ -69,6 +69,7 @@ int main( int nArgc, char ** papszArgv )
     const char  *pszDialect = NULL;
     int          nRet = 0;
     const char* pszGeomField = NULL;
+    char      **papszOpenOptions = NULL;
     
     /* Check strict compilation and runtime library version as we use C++ API */
     if (! GDAL_CHECK_VERSION(papszArgv[0]))
@@ -171,6 +172,12 @@ int main( int nArgc, char ** papszArgv )
             papszOptions = CSLAddString(papszOptions, pszTemp);
             CPLFree(pszTemp);
         }
+        else if( EQUAL(papszArgv[iArg], "-oo") )
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            papszOpenOptions = CSLAddString( papszOpenOptions,
+                                                papszArgv[++iArg] );
+        }
         else if( papszArgv[iArg][0] == '-' )
         {
             Usage(CPLSPrintf("Unknown option name '%s'", papszArgv[iArg]));
@@ -190,19 +197,24 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Open data source.                                               */
 /* -------------------------------------------------------------------- */
-    OGRDataSource       *poDS = NULL;
-    OGRSFDriver         *poDriver = NULL;
+    GDALDataset        *poDS = NULL;
+    GDALDriver         *poDriver = NULL;
 
-    poDS = OGRSFDriverRegistrar::Open( pszDataSource, !bReadOnly, &poDriver );
+    poDS = (GDALDataset*) GDALOpenEx( pszDataSource,
+            (!bReadOnly ? GDAL_OF_UPDATE : GDAL_OF_READONLY) | GDAL_OF_VECTOR,
+            NULL, papszOpenOptions, NULL );
     if( poDS == NULL && !bReadOnly )
     {
-        poDS = OGRSFDriverRegistrar::Open( pszDataSource, FALSE, &poDriver );
+        poDS = (GDALDataset*) GDALOpenEx( pszDataSource,
+            GDAL_OF_READONLY | GDAL_OF_VECTOR, NULL, papszOpenOptions, NULL );
         if( poDS != NULL && bVerbose )
         {
             printf( "Had to open data source read-only.\n" );
             bReadOnly = TRUE;
         }
     }
+    if( poDS != NULL )
+        poDriver = poDS->GetDriver();
 
 /* -------------------------------------------------------------------- */
 /*      Report failure                                                  */
@@ -217,7 +229,7 @@ int main( int nArgc, char ** papszArgv )
 
         for( int iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++ )
         {
-            printf( "  -> %s\n", poR->GetDriver(iDriver)->GetName() );
+            printf( "  -> %s\n", poR->GetDriver(iDriver)->GetDescription() );
         }
 
         nRet = 1;
@@ -232,13 +244,13 @@ int main( int nArgc, char ** papszArgv )
     if( bVerbose )
         printf( "INFO: Open of `%s'\n"
                 "      using driver `%s' successful.\n",
-                pszDataSource, poDriver->GetName() );
+                pszDataSource, poDriver->GetDescription() );
 
-    if( bVerbose && !EQUAL(pszDataSource,poDS->GetName()) )
+    if( bVerbose && !EQUAL(pszDataSource,poDS->GetDescription()) )
     {
         printf( "INFO: Internal data source name `%s'\n"
                 "      different from user name `%s'.\n",
-                poDS->GetName(), pszDataSource );
+                poDS->GetDescription(), pszDataSource );
     }
 
 /* -------------------------------------------------------------------- */
@@ -367,7 +379,9 @@ end:
     CSLDestroy( papszArgv );
     CSLDestroy( papszLayers );
     CSLDestroy( papszOptions );
-    OGRDataSource::DestroyDataSource( poDS );
+    CSLDestroy( papszOpenOptions );
+    if( poDS != NULL )
+        GDALClose( (GDALDatasetH)poDS );
     if (poSpatialFilter)
         OGRGeometryFactory::destroyGeometry( poSpatialFilter );
 

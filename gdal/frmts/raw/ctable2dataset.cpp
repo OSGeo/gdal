@@ -443,6 +443,7 @@ void GDALRegister_CTable2()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "CTable2" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "CTable2 Datum Grid Shift" );
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );

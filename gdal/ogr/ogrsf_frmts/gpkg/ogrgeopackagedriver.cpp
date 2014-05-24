@@ -32,35 +32,51 @@
 // g++ -g -Wall -fPIC -shared -o ogr_geopackage.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/gpkg ogr/ogrsf_frmts/gpkg/*.c* -L. -lgdal 
 
 
+/* "GP10" in ASCII bytes */
+static const char aGpkgId[4] = {0x47, 0x50, 0x31, 0x30};
+static const size_t szGpkgIdPos = 68;
 
 /************************************************************************/
-/*                        ~OGRGeoPackageDriver()                         */
+/*                       OGRGeoPackageDriverIdentify()                  */
 /************************************************************************/
 
-OGRGeoPackageDriver::~OGRGeoPackageDriver()
+static int OGRGeoPackageDriverIdentify( GDALOpenInfo* poOpenInfo )
 {
-} 
+    /* Requirement 3: File name has to end in "gpkg" */
+    /* http://opengis.github.io/geopackage/#_file_extension_name */
+    if( !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "GPKG") )
+        return FALSE;
 
+    /* Check that the filename exists and is a file */
+    if( poOpenInfo->fpL == NULL)
+        return FALSE;
 
-/************************************************************************/
-/*                              GetName()                               */
-/************************************************************************/
+    /* Requirement 2: A GeoPackage SHALL contain 0x47503130 ("GP10" in ASCII) */
+    /* in the application id */
+    /* http://opengis.github.io/geopackage/#_file_format */
+    if( poOpenInfo->nHeaderBytes < 68 + 4 ||
+        memcmp(poOpenInfo->pabyHeader + 68, aGpkgId, 4) != 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "bad application_id on '%s'",
+                  poOpenInfo->pszFilename);
+        return FALSE;
+    }
 
-const char *OGRGeoPackageDriver::GetName()
-{
-    return "GPKG";
+    return TRUE;
 }
-
 
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-OGRDataSource *OGRGeoPackageDriver::Open( const char * pszFilename, int bUpdate )
+static GDALDataset *OGRGeoPackageDriverOpen( GDALOpenInfo* poOpenInfo )
 {
+    if( !OGRGeoPackageDriverIdentify(poOpenInfo) )
+        return NULL;
+
     OGRGeoPackageDataSource   *poDS = new OGRGeoPackageDataSource();
 
-    if( !poDS->Open( pszFilename, bUpdate ) )
+    if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update ) )
     {
         delete poDS;
         poDS = NULL;
@@ -69,12 +85,13 @@ OGRDataSource *OGRGeoPackageDriver::Open( const char * pszFilename, int bUpdate 
     return poDS;
 }
 
-
 /************************************************************************/
-/*                                CreateDataSource()                    */
+/*                               Create()                               */
 /************************************************************************/
 
-OGRDataSource *OGRGeoPackageDriver::CreateDataSource( const char * pszFilename, char **papszOptions )
+static GDALDataset *OGRGeoPackageDriverCreate( const char * pszFilename,
+                                    int nBands, int nXSize, int nYSize, GDALDataType eDT,
+                                    char **papszOptions )
 {
 	/* First, ensure there isn't any such file yet. */
     VSIStatBufL sStatBuf;
@@ -100,32 +117,17 @@ OGRDataSource *OGRGeoPackageDriver::CreateDataSource( const char * pszFilename, 
 }
 
 /************************************************************************/
-/*                         DeleteDataSource()                           */
+/*                               Delete()                               */
 /************************************************************************/
 
-OGRErr OGRGeoPackageDriver::DeleteDataSource( const char *pszFilename )
-{
-    if (VSIUnlink( pszFilename ) == 0)
-        return OGRERR_NONE;
-    else
-        return OGRERR_FAILURE;
-}
-
-/************************************************************************/
-/*                         TestCapability()                             */
-/************************************************************************/
-
-int OGRGeoPackageDriver::TestCapability( const char * pszCap )
+static CPLErr OGRGeoPackageDriverDelete( const char *pszFilename )
 
 {
-    if( EQUAL(pszCap,ODrCCreateDataSource) )
-        return TRUE;
-    else if( EQUAL(pszCap,ODrCDeleteDataSource) )
-        return TRUE;
+    if( VSIUnlink( pszFilename ) == 0 )
+        return CE_None;
     else
-        return FALSE;
+        return CE_Failure;
 }
-
 
 /************************************************************************/
 /*                         RegisterOGRGeoPackage()                       */
@@ -133,7 +135,39 @@ int OGRGeoPackageDriver::TestCapability( const char * pszCap )
 
 void RegisterOGRGeoPackage()
 {
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRGeoPackageDriver );
+    GDALDriver  *poDriver;
+
+    if( GDALGetDriverByName( "GPKG" ) == NULL )
+    {
+        poDriver = new GDALDriver();
+
+        poDriver->SetDescription( "GPKG" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                                   "GeoPackage" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gpkg" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                                   "drv_geopackage.html" );
+
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "<CreationOptionList/>");
+
+        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+"<LayerCreationOptionList>"
+"  <Option name='GEOMETRY_COLUMN' type='string' description='Name of geometry column.' default='geom'/>"
+"  <Option name='FID' type='string' description='Name of the FID column to create' default='fid'/>"
+"  <Option name='OVERWRITE' type='boolean' description='Whether to overwrite an existing table with the layer name to be created' default='NO'/>"
+"  <Option name='SPATIAL_INDEX' type='boolean' description='NOT IMPLEMENTED YEY. Whether to create a spatial index' default='YES'/>"
+"</LayerCreationOptionList>");
+
+        poDriver->pfnOpen = OGRGeoPackageDriverOpen;
+        poDriver->pfnIdentify = OGRGeoPackageDriverIdentify;
+        poDriver->pfnCreate = OGRGeoPackageDriverCreate;
+        poDriver->pfnDelete = OGRGeoPackageDriverDelete;
+
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
+        GetGDALDriverManager()->RegisterDriver( poDriver );
+    }
 }
 
 

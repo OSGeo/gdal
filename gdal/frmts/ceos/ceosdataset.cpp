@@ -243,6 +243,7 @@ void GDALRegister_CEOS()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "CEOS" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "CEOS Image" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

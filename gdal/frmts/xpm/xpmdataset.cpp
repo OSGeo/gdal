@@ -427,6 +427,7 @@ void GDALRegister_XPM()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "XPM" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "X11 PixMap Format" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

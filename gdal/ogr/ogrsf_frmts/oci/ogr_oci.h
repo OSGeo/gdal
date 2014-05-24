@@ -523,7 +523,7 @@ class OGROCIDataSource : public OGRDataSource
     OGRLayer            *GetLayerByName(const char * pszName);
 
     virtual OGRErr      DeleteLayer(int);
-    virtual OGRLayer    *CreateLayer( const char *, 
+    virtual OGRLayer    *ICreateLayer( const char *, 
                                       OGRSpatialReference * = NULL,
                                       OGRwkbGeometryType = wkbUnknown,
                                       char ** = NULL );

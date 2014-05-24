@@ -71,6 +71,8 @@ CPLErr OGRWalkTableLayer::Initialize( const char *pszLayerName,
                                       const char *pszMemo)
 
 {
+    SetDescription( pszLayerName );
+
     CPLODBCSession *poSession = poDS->GetSession();
 
     CPLFree( pszFIDColumn );

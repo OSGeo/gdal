@@ -60,13 +60,6 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
 
 {
     VSILFILE	*fp;
-    char        *pachHeader;
-    NITFFile    *psFile;
-    int         nHeaderLen, nOffset, nHeaderLenOffset;
-    GUIntBig    nNextData;
-    char        szTemp[128], achFSDWNG[6];
-    GIntBig     currentPos;
-    int         bTriedStreamingFileHeader = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
@@ -84,9 +77,28 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
         return NULL;
     }
 
+    return NITFOpenEx(fp, pszFilename);
+}
+
+/************************************************************************/
+/*                             NITFOpenEx()                             */
+/************************************************************************/
+
+NITFFile *NITFOpenEx(VSILFILE *fp, const char *pszFilename)
+
+{
+    char        *pachHeader;
+    NITFFile    *psFile;
+    int         nHeaderLen, nOffset, nHeaderLenOffset;
+    GUIntBig    nNextData;
+    char        szTemp[128], achFSDWNG[6];
+    GIntBig     currentPos;
+    int         bTriedStreamingFileHeader = FALSE;
+
 /* -------------------------------------------------------------------- */
 /*      Check file type.                                                */
 /* -------------------------------------------------------------------- */
+    VSIFSeekL( fp, 0, SEEK_SET );
     VSIFReadL( szTemp, 1, 9, fp );
 
     if( !EQUALN(szTemp,"NITF",4) && !EQUALN(szTemp,"NSIF",4) )

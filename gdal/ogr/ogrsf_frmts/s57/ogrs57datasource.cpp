@@ -38,7 +38,7 @@ CPL_CVSID("$Id$");
 /*                          OGRS57DataSource()                          */
 /************************************************************************/
 
-OGRS57DataSource::OGRS57DataSource()
+OGRS57DataSource::OGRS57DataSource(char** papszOpenOptions)
 
 {
     nLayers = 0;
@@ -60,22 +60,29 @@ OGRS57DataSource::OGRS57DataSource()
 /* -------------------------------------------------------------------- */
 /*      Allow initialization of options from the environment.           */
 /* -------------------------------------------------------------------- */
-    const char *pszOptString = CPLGetConfigOption( "OGR_S57_OPTIONS", NULL );
-    papszOptions = NULL;
-
-    if ( pszOptString )
+    if( papszOpenOptions != NULL )
     {
-        char    **papszCurOption;
+        papszOptions = CSLDuplicate(papszOpenOptions);
+    }
+    else
+    {
+        const char *pszOptString = CPLGetConfigOption( "OGR_S57_OPTIONS", NULL );
+        papszOptions = NULL;
 
-        papszOptions = 
-            CSLTokenizeStringComplex( pszOptString, ",", FALSE, FALSE );
-
-        if ( papszOptions && *papszOptions )
+        if ( pszOptString )
         {
-            CPLDebug( "S57", "The following S57 options are being set:" );
-            papszCurOption = papszOptions;
-            while( *papszCurOption )
-                CPLDebug( "S57", "    %s", *papszCurOption++ );
+            char    **papszCurOption;
+
+            papszOptions = 
+                CSLTokenizeStringComplex( pszOptString, ",", FALSE, FALSE );
+
+            if ( papszOptions && *papszOptions )
+            {
+                CPLDebug( "S57", "The following S57 options are being set:" );
+                papszCurOption = papszOptions;
+                while( *papszCurOption )
+                    CPLDebug( "S57", "    %s", *papszCurOption++ );
+            }
         }
     }
 }
@@ -147,43 +154,12 @@ int OGRS57DataSource::TestCapability( const char * )
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
+int OGRS57DataSource::Open( const char * pszFilename )
 
 {
     int         iModule;
     
     pszName = CPLStrdup( pszFilename );
-    
-/* -------------------------------------------------------------------- */
-/*      Check a few bits of the header to see if it looks like an       */
-/*      S57 file (really, if it looks like an ISO8211 file).            */
-/* -------------------------------------------------------------------- */
-    if( bTestOpen )
-    {
-        VSILFILE    *fp;
-        char    pachLeader[10];
-
-        VSIStatBufL sStatBuf;
-        if (VSIStatExL( pszFilename, &sStatBuf, VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG ) != 0 ||
-            VSI_ISDIR(sStatBuf.st_mode))
-            return FALSE;
-
-        fp = VSIFOpenL( pszFilename, "rb" );
-        if( fp == NULL )
-            return FALSE;
-        
-        if( VSIFReadL( pachLeader, 1, 10, fp ) != 10
-            || (pachLeader[5] != '1' && pachLeader[5] != '2'
-                && pachLeader[5] != '3' )
-            || pachLeader[6] != 'L'
-            || (pachLeader[8] != '1' && pachLeader[8] != ' ') )
-        {
-            VSIFCloseL( fp );
-            return FALSE;
-        }
-
-        VSIFCloseL( fp );
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Setup reader options.                                           */
@@ -241,8 +217,14 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
             CSLSetNameValue( papszReaderOptions, S57O_RECODE_BY_DSSI,
                              GetOption(S57O_RECODE_BY_DSSI) );
 
-    poModule->SetOptions( papszReaderOptions );
+    int bRet = poModule->SetOptions( papszReaderOptions );
     CSLDestroy( papszReaderOptions );
+    
+    if( !bRet )
+    {
+        delete poModule;
+        return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Try opening.                                                    */
@@ -250,7 +232,7 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
 /*      Eventually this should check for catalogs, and if found         */
 /*      instantiate a whole series of modules.                          */
 /* -------------------------------------------------------------------- */
-    if( !poModule->Open( bTestOpen ) )
+    if( !poModule->Open( TRUE ) )
     {
         delete poModule;
 

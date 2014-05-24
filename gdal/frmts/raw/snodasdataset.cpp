@@ -501,6 +501,7 @@ void GDALRegister_SNODAS()
         poDriver = new GDALDriver();
 
         poDriver->SetDescription( "SNODAS" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                    "Snow Data Assimilation System" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,

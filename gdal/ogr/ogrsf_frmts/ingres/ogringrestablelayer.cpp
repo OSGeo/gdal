@@ -119,6 +119,7 @@ OGRFeatureDefn *OGRIngresTableLayer::ReadTableDefinition( const char *pszTable )
 /*      Parse the returned table information.                           */
 /* -------------------------------------------------------------------- */
     OGRFeatureDefn *poDefn = new OGRFeatureDefn( pszTable );
+    SetDescription( poDefn->GetName() );
     char           **papszRow;
 
     poDefn->Reference();

@@ -73,6 +73,19 @@ typedef void GDALRasterAttributeTableShadow;
 typedef void GDALTransformerInfoShadow;
 typedef void GDALAsyncReaderShadow;
 
+#if defined(SWIGPYTHON) || defined(SWIGJAVA)
+#ifdef DEBUG 
+typedef struct OGRSpatialReferenceHS OSRSpatialReferenceShadow;
+typedef struct OGRLayerHS OGRLayerShadow;
+typedef struct OGRGeometryHS OGRGeometryShadow;
+#else
+typedef void OSRSpatialReferenceShadow;
+typedef void OGRLayerShadow;
+typedef void OGRGeometryShadow;
+#endif
+typedef struct OGRStyleTableHS OGRStyleTableShadow;
+#endif /* #if defined(SWIGPYTHON) || defined(SWIGJAVA) */
+
 /* use this to not return the int returned by GDAL */
 typedef int RETURN_NONE;
 
@@ -243,6 +256,16 @@ $1;
 //
 //************************************************************************
 %include "Driver.i"
+
+
+
+#if defined(SWIGPYTHON) || defined(SWIGJAVA) || defined(SWIGPERL)
+/*
+ * We need to import ogr.i and osr.i for OGRLayer and OSRSpatialRefrerence
+ */
+#define FROM_GDAL_I
+%import ogr.i
+#endif /* #if defined(SWIGPYTHON) || defined(SWIGJAVA) */
 
 
 //************************************************************************
@@ -694,6 +717,7 @@ GDALDatasetShadow* Open( char const* name ) {
   return Open( name, GA_ReadOnly );
 }
 %}
+
 #else
 %newobject Open;
 %inline %{
@@ -709,7 +733,35 @@ GDALDatasetShadow* Open( char const* utf8_path, GDALAccess eAccess = GA_ReadOnly
   return (GDALDatasetShadow*) ds;
 }
 %}
+
 #endif
+
+%newobject OpenEx;
+#ifndef SWIGJAVA
+%feature( "kwargs" ) OpenEx;
+#endif
+%apply (char **options) {char** allowed_drivers};
+%apply (char **options) {char** open_options};
+%apply (char **options) {char** sibling_files};
+%inline %{
+GDALDatasetShadow* OpenEx( char const* utf8_path, unsigned int nOpenFlags = 0,
+                           char** allowed_drivers = NULL, char** open_options = NULL,
+                           char** sibling_files = NULL ) {
+  CPLErrorReset();
+  GDALDatasetShadow *ds = GDALOpenEx( utf8_path, nOpenFlags, allowed_drivers,
+                                      open_options, sibling_files );
+  if( ds != NULL && CPLGetLastErrorType() == CE_Failure )
+  {
+      if ( GDALDereferenceDataset( ds ) <= 0 )
+          GDALClose(ds);
+      ds = NULL;
+  }
+  return (GDALDatasetShadow*) ds;
+}
+%}
+%clear char** allowed_drivers;
+%clear char** open_options;
+%clear char** sibling_files;
 
 %newobject OpenShared;
 %inline %{

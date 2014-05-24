@@ -1257,11 +1257,9 @@ def pdf_layers():
         return 'fail'
 
     # Turn another sublayer on
-    gdal.SetConfigOption('GDAL_PDF_LAYERS', 'Layers.Measured_Grid')
-    ds = gdal.Open('data/adobe_style_geospatial.pdf')
+    ds = gdal.OpenEx('data/adobe_style_geospatial.pdf', open_options=['LAYERS=Layers.Measured_Grid'])
     cs4 = ds.GetRasterBand(1).Checksum()
     ds = None
-    gdal.SetConfigOption('GDAL_PDF_LAYERS', None)
 
     if cs4 == cs1 or cs4 == cs2:
         gdaltest.post_reason('did not get expected checksum')
@@ -1439,8 +1437,7 @@ def pdf_write_ogr():
         ds = gdal.Open('tmp/pdf_write_ogr.pdf')
         cs_raster = ds.GetRasterBand(1).Checksum()
         ds = None
-        gdal.SetConfigOption('GDAL_PDF_RENDERING_OPTIONS', 'VECTOR')
-        ds = gdal.Open('tmp/pdf_write_ogr.pdf')
+        ds = gdal.OpenEx('tmp/pdf_write_ogr.pdf', open_options = ['RENDERING_OPTIONS=VECTOR'])
         cs_vector = ds.GetRasterBand(1).Checksum()
         ds = None
         gdal.SetConfigOption('GDAL_PDF_RENDERING_OPTIONS', 'RASTER,VECTOR,TEXT')

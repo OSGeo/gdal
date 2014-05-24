@@ -70,7 +70,7 @@ class OGR2SQLITEModule
 #endif
     sqlite3* hDB; /* *NOT* to be freed */
 
-    OGRDataSource* poDS; /* *NOT* to be freed */
+    GDALDataset* poDS; /* *NOT* to be freed */
     std::vector<OGRDataSource*> apoExtraDS; /* each datasource to be freed */
 
     OGRSQLiteDataSource* poSQLiteDS;  /* *NOT* to be freed, might be NULL */
@@ -83,11 +83,11 @@ class OGR2SQLITEModule
                                  OGR2SQLITEModule();
                                 ~OGR2SQLITEModule();
 
-    int                          Setup(OGRDataSource* poDS,
+    int                          Setup(GDALDataset* poDS,
                                        OGRSQLiteDataSource* poSQLiteDS);
     int                          Setup(sqlite3* hDB);
 
-    OGRDataSource*               GetDS() { return poDS; }
+    GDALDataset*               GetDS() { return poDS; }
 
     int                          AddExtraDS(OGRDataSource* poDS);
     OGRDataSource               *GetExtraDS(int nIndex);
@@ -165,7 +165,7 @@ OGRDataSource* OGR2SQLITEModule::GetExtraDS(int nIndex)
 /*                                Setup()                               */
 /************************************************************************/
 
-int OGR2SQLITEModule::Setup(OGRDataSource* poDSIn,
+int OGR2SQLITEModule::Setup(GDALDataset* poDSIn,
                             OGRSQLiteDataSource* poSQLiteDSIn)
 {
     CPLAssert(poDS == NULL);
@@ -273,7 +273,7 @@ typedef struct
     /* Extension fields */
     char                 *pszVTableName;
     OGR2SQLITEModule     *poModule;
-    OGRDataSource        *poDS;
+    GDALDataset          *poDS;
     int                   bCloseDS;
     OGRLayer             *poLayer;
     int                   nMyRef;
@@ -419,7 +419,7 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
 {
     OGR2SQLITEModule* poModule = (OGR2SQLITEModule*) pAux;
     OGRLayer* poLayer = NULL;
-    OGRDataSource* poDS = NULL;
+    GDALDataset* poDS = NULL;
     int bExposeOGR_STYLE = FALSE;
     int bCloseDS = FALSE;
     int bInternalUse = FALSE;
@@ -464,7 +464,7 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
         if( poLayer == NULL )
         {
             *pzErr = sqlite3_mprintf( "Cannot find layer '%s' in '%s'",
-                                      osLayerName.c_str(), poDS->GetName() );
+                                      osLayerName.c_str(), poDS->GetDescription() );
             return SQLITE_ERROR;
         }
 
@@ -810,7 +810,7 @@ int OGR2SQLITE_Open(sqlite3_vtab *pVTab, sqlite3_vtab_cursor **ppCursor)
     else
     {
         poDupDataSource =
-            (OGRDataSource*) OGROpen(pMyVTab->poDS->GetName(), FALSE, NULL);
+            (OGRDataSource*) OGROpen(pMyVTab->poDS->GetDescription(), FALSE, NULL);
         if( poDupDataSource == NULL )
             return SQLITE_ERROR;
         poLayer = poDupDataSource->GetLayerByName(
@@ -927,13 +927,13 @@ int OGR2SQLITE_Filter(sqlite3_vtab_cursor* pCursor,
             if( bNeedsQuoting )
             {
                 /* FIXME: we would need some virtual method */
-                OGRSFDriver* poDriver = pMyCursor->pVTab->poDS->GetDriver();
+                const char* pszDriverName = pMyCursor->pVTab->poDS->GetDriverName();
                 char chQuote;
 
-                if (poDriver && (
-                    EQUAL(poDriver->GetName(), "PostgreSQL") ||
-                    EQUAL(poDriver->GetName(), "SQLite") ||
-                    EQUAL(poDriver->GetName(), "FileGDB" )) )
+                if (pszDriverName != NULL && (
+                    EQUAL(pszDriverName, "PostgreSQL") ||
+                    EQUAL(pszDriverName, "SQLite") ||
+                    EQUAL(pszDriverName, "FileGDB" )) )
                     chQuote = '"';
                 else
                     chQuote = '\'';
@@ -2344,7 +2344,7 @@ int OGR2SQLITEModule::Setup(sqlite3* hDB)
 /*                        OGR2SQLITE_Setup()                            */
 /************************************************************************/
 
-OGR2SQLITEModule* OGR2SQLITE_Setup(OGRDataSource* poDS,
+OGR2SQLITEModule* OGR2SQLITE_Setup(GDALDataset* poDS,
                                    OGRSQLiteDataSource* poSQLiteDS)
 {
     OGR2SQLITEModule* poModule = new OGR2SQLITEModule();

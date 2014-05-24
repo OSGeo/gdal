@@ -35,41 +35,28 @@
 
 CPL_CVSID("$Id$");
 
-/************************************************************************/
-/*                          ~OGRVFKDriver()                             */
-/************************************************************************/
-OGRVFKDriver::~OGRVFKDriver()
+static int OGRVFKDriverIdentify(GDALOpenInfo* poOpenInfo)
 {
-}
-
-/************************************************************************/
-/*                              GetName()                               */
-/************************************************************************/
-const char *OGRVFKDriver::GetName()
-{
-    return "VFK";
+    return ( poOpenInfo->fpL != NULL &&
+             poOpenInfo->nHeaderBytes >= 2 &&
+             strncmp((const char*)poOpenInfo->pabyHeader, "&H", 2) == 0 );
 }
 
 /*
   \brief Open existing data source
-  
-  \param pszFilename data source name to be open
-  \param pUpdate non-zero for update, zero for read-only
-
-  \return pointer to OGRDataSource instance
   \return NULL on failure
 */
-OGRDataSource *OGRVFKDriver::Open(const char * pszFilename,
-                                  int bUpdate)
+static GDALDataset *OGRVFKDriverOpen(GDALOpenInfo* poOpenInfo)
 {
     OGRVFKDataSource *poDS;
 
-    if (bUpdate)
+    if( poOpenInfo->eAccess == GA_Update ||
+        !OGRVFKDriverIdentify(poOpenInfo) )
         return NULL;
-    
+
     poDS = new OGRVFKDataSource();
 
-    if(!poDS->Open(pszFilename, TRUE) || poDS->GetLayerCount() == 0) {
+    if(!poDS->Open(poOpenInfo->pszFilename, TRUE) || poDS->GetLayerCount() == 0) {
         delete poDS;
         return NULL;
     }
@@ -77,17 +64,6 @@ OGRDataSource *OGRVFKDriver::Open(const char * pszFilename,
         return poDS;
 }
 
-/*!
-  \brief Test driver capability
-
-  \param pszCap capability
-
-  \return TRUE on success or FALSE on failure
-*/
-int OGRVFKDriver::TestCapability(const char *pszCap)
-{
-    return FALSE;
-}
 
 /*!
   \brief Register VFK driver
@@ -96,5 +72,23 @@ void RegisterOGRVFK()
 {
     if (!GDAL_CHECK_VERSION("OGR/VFK driver"))
         return;
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(new OGRVFKDriver);
+    GDALDriver  *poDriver;
+
+    if( GDALGetDriverByName( "VFK" ) == NULL )
+    {
+        poDriver = new GDALDriver();
+
+        poDriver->SetDescription( "VFK" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                                   "Czech Cadastral Exchange Data Format" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "vfk" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                                   "drv_vfk.html" );
+
+        poDriver->pfnOpen = OGRVFKDriverOpen;
+        poDriver->pfnIdentify = OGRVFKDriverIdentify;
+
+        GetGDALDriverManager()->RegisterDriver( poDriver );
+    }
 }

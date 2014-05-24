@@ -181,7 +181,7 @@ public:
 
     OGRLayer* GetLayer( int );
 
-    OGRLayer* CreateLayer (const char *pszName, 
+    OGRLayer* ICreateLayer(const char *pszName, 
                            OGRSpatialReference *poSpatialRef=NULL, 
                            OGRwkbGeometryType eGType=wkbUnknown, 
                            char **papszOptions=NULL);
@@ -257,25 +257,6 @@ private:
 
     void AppendTemporaryFiles();
     void WriteWaypointStyles();
-};
-
-/************************************************************************/
-/*                             OGRGTMDriver                             */
-/************************************************************************/
-
-class OGRGTMDriver : public OGRSFDriver
-{
-public:
-    ~OGRGTMDriver();
-
-    //
-    // OGRSFDriver Interface
-    //
-    const char* GetName();
-    OGRDataSource* Open( const char * pszName_, int bUpdate );
-    OGRDataSource* CreateDataSource( const char *pszName_, char** papszOptions );
-
-    int TestCapability( const char* pszCap );
 };
 
 #endif //OGR_GTM_H_INCLUDED

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -215,7 +216,7 @@ def ogr_bna_write(creation_options):
 
 def ogr_bna_5():
 
-    return ogr_bna_write( ['ELLIPSES_AS_ELLIPES=YES'] )
+    return ogr_bna_write( ['ELLIPSES_AS_ELLIPSES=YES'] )
 
 def ogr_bna_6():
 

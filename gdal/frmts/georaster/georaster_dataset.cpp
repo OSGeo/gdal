@@ -120,7 +120,7 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
     //  It shouldn't have an open file pointer
     //  -------------------------------------------------------------------
 
-    if( poOpenInfo->fp != NULL )
+    if( poOpenInfo->fpL != NULL )
     {
         return NULL;
     }
@@ -2041,6 +2041,7 @@ void CPL_DLL GDALRegister_GEOR()
         poDriver = new GDALDriver();
 
         poDriver->SetDescription(  "GeoRaster" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                    "Oracle Spatial GeoRaster" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_georaster.html" );

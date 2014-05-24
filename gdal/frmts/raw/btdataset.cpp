@@ -942,6 +942,7 @@ void GDALRegister_BT()
         poDriver = new GDALDriver();
 
         poDriver->SetDescription( "BT" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                    "VTP .bt (Binary Terrain) 1.3 Format" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,

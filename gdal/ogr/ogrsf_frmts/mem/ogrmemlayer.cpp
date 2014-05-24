@@ -50,6 +50,7 @@ OGRMemLayer::OGRMemLayer( const char * pszName, OGRSpatialReference *poSRSIn,
     papoFeatures = NULL;
 
     poFeatureDefn = new OGRFeatureDefn( pszName );
+    SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->SetGeomType( eReqType );
     if( eReqType != wkbNone && poSRSIn != NULL )
     {

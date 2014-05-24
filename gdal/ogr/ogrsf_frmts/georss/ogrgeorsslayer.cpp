@@ -94,6 +94,7 @@ OGRGeoRSSLayer::OGRGeoRSSLayer( const char* pszFilename,
     eFormat = poDS->GetFormat();
 
     poFeatureDefn = new OGRFeatureDefn( pszLayerName );
+    SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
 
     poSRS = poSRSIn;

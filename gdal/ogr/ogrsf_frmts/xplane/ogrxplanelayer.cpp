@@ -48,6 +48,7 @@ OGRXPlaneLayer::OGRXPlaneLayer( const char* pszLayerName )
     poDS = NULL;
 
     poFeatureDefn = new OGRFeatureDefn( pszLayerName );
+    SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
 
     poSRS = new OGRSpatialReference();

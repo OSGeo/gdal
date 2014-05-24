@@ -48,6 +48,8 @@ OGRCouchDBRowsLayer::OGRCouchDBRowsLayer(OGRCouchDBDataSource* poDS) :
     OGRFieldDefn oFieldRev("_rev", OFTString);
     poFeatureDefn->AddFieldDefn(&oFieldRev);
 
+    SetDescription( poFeatureDefn->GetName() );
+
     bAllInOne = FALSE;
 }
 

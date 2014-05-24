@@ -51,6 +51,7 @@ OGRNASRelationLayer::OGRNASRelationLayer( OGRNASDataSource *poDSIn )
 /*      Establish the layer fields.                                     */
 /* -------------------------------------------------------------------- */
     poFeatureDefn = new OGRFeatureDefn( "ALKIS_beziehungen" );
+    SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbNone );
 

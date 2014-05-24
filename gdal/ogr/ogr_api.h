@@ -41,6 +41,7 @@
  */
 
 #include "cpl_progress.h"
+#include "cpl_minixml.h"
 #include "ogr_core.h"
 
 CPL_C_START
@@ -113,11 +114,9 @@ OGRGeometryH CPL_DLL OGR_G_CreateFromGML( const char * );
 char   CPL_DLL *OGR_G_ExportToGML( OGRGeometryH );
 char   CPL_DLL *OGR_G_ExportToGMLEx( OGRGeometryH, char** papszOptions );
 
-#if defined(_CPL_MINIXML_H_INCLUDED)
 OGRGeometryH CPL_DLL OGR_G_CreateFromGMLTree( const CPLXMLNode * );
 CPLXMLNode CPL_DLL *OGR_G_ExportToGMLTree( OGRGeometryH );
 CPLXMLNode CPL_DLL *OGR_G_ExportEnvelopeToGMLTree( OGRGeometryH );
-#endif
 
 char   CPL_DLL *OGR_G_ExportToKML( OGRGeometryH, const char* pszAltitudeMode );
 

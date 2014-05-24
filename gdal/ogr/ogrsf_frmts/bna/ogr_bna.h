@@ -145,30 +145,12 @@ class OGRBNADataSource : public OGRDataSource
     int                 GetLayerCount() { return nLayers; }
     OGRLayer*           GetLayer( int );
     
-    OGRLayer *          CreateLayer( const char * pszLayerName,
+    OGRLayer *          ICreateLayer( const char * pszLayerName,
                                     OGRSpatialReference *poSRS,
                                     OGRwkbGeometryType eType,
                                     char ** papszOptions );
 
     int                 TestCapability( const char * );
 };
-
-/************************************************************************/
-/*                             OGRBNADriver                             */
-/************************************************************************/
-
-class OGRBNADriver : public OGRSFDriver
-{
-  public:
-                ~OGRBNADriver();
-
-    const char*         GetName();
-    OGRDataSource*      Open( const char *, int );
-    OGRDataSource*      CreateDataSource( const char * pszName, char **papszOptions );
-    int                 DeleteDataSource( const char *pszFilename );
-    int                 TestCapability( const char * );
-    
-};
-
 
 #endif /* ndef _OGR_BNA_H_INCLUDED */

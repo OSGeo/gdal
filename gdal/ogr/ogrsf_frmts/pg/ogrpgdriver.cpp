@@ -61,6 +61,10 @@ OGRDataSource *OGRPGDriver::Open( const char * pszFilename,
 {
     OGRPGDataSource     *poDS;
 
+    if( !EQUALN(pszFilename,"PGB:",4) &&
+        !EQUALN(pszFilename,"PG:",3) )
+        return NULL;
+
     poDS = new OGRPGDataSource();
 
     if( !poDS->Open( pszFilename, bUpdate, TRUE ) )
@@ -119,6 +123,36 @@ void RegisterOGRPG()
 {
     if (! GDAL_CHECK_VERSION("PG driver"))
         return;
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRPGDriver );
+    OGRSFDriver* poDriver = new OGRPGDriver;
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                                "PostgreSQL/PostGIS" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                                "drv_pg.html" );
+
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "<CreationOptionList/>");
+
+    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+"<LayerCreationOptionList>"
+"  <Option name='GEOM_TYPE' type='string-select' description='Format of geometry columns' default='geometry'>"
+"    <Value>geometry</Value>"
+"    <Value>geography</Value>"
+"    <Value>BYTEA</Value>"
+"    <Value>OID</Value>"
+"  </Option>"
+"  <Option name='OVERWRITE' type='boolean' description='Whether to overwrite an existing table with the layer name to be created' default='NO'/>"
+"  <Option name='LAUNDER' type='boolean' description='Whether layer and field names will be laundered' default='YES'/>"
+"  <Option name='PRECISION' type='boolean' description='Whether fields created should keep the width and precision' default='YES'/>"
+"  <Option name='DIM' type='integer' description='Set to 2 to force the geometries to be 2D, or 3 to be 2.5D'/>"
+"  <Option name='GEOMETRY_NAME' type='string' description='Name of geometry column. Defaults to wkb_geometry for GEOM_TYPE=geometry or the_geog for GEOM_TYPE=geography'/>"
+"  <Option name='SCHEMA' type='string' description='Name of schema into which to create the new table'/>"
+"  <Option name='SPATIAL_INDEX' type='boolean' description='Whether to create a spatial index' default='YES'/>"
+"  <Option name='TEMPORARY' type='boolean' description='Whether to a temporary table instead of a permanent one' default='NO'/>"
+"  <Option name='NONE_AS_UNKNOWN' type='boolean' description='Whether to force non-spatial layers to be created as spatial tables' default='NO'/>"
+"  <Option name='FID' type='string' description='Name of the FID column to create' default='ogc_fid'/>"
+"  <Option name='EXTRACT_SCHEMA_FROM_LAYER_NAME' type='boolean' description='Whether a dot in a layer name should be considered as the separator for the schema and table name' default='YES'/>"
+"  <Option name='COLUMN_TYPES' type='string' description='A list of strings of format field_name=pg_field_type (separated by comma) to force the PG column type of fields to be created'/>"
+"</LayerCreationOptionList>");
+
+    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }
 

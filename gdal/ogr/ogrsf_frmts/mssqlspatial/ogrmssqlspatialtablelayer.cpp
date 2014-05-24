@@ -267,6 +267,7 @@ CPLErr OGRMSSQLSpatialTableLayer::Initialize( const char *pszSchema,
         else
             this->pszLayerName = CPLStrdup(CPLSPrintf("%s.%s", pszSchemaName, pszTableName));
     }
+    SetDescription( this->pszLayerName );
 
 /* -------------------------------------------------------------------- */
 /*      Have we been provided a geometry column?                        */

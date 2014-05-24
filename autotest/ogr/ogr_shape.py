@@ -3662,7 +3662,42 @@ def ogr_shape_74():
     ds = None
 
     return 'success'
-    
+
+###############################################################################
+# Test GetFileList()
+
+def ogr_shape_75():
+
+    ds = gdal.OpenEx('data/poly.shp')
+    if ds.GetFileList() != ['data/poly.shp', 'data/poly.shx', 'data/poly.dbf', 'data/poly.PRJ']:
+        gdaltest.post_reason('fail')
+        print(ds.GetFileList())
+        return 'failure'
+    ds = None
+
+    ds = gdal.OpenEx('data/idlink.dbf')
+    if ds.GetFileList() != ['data/idlink.dbf']:
+        gdaltest.post_reason('fail')
+        print(ds.GetFileList())
+        return 'failure'
+    ds = None
+
+    ds = gdal.OpenEx('data/testpoly.shp')
+    if ds.GetFileList() != ['data/testpoly.shp', 'data/testpoly.shx', 'data/testpoly.dbf', 'data/testpoly.qix']:
+        gdaltest.post_reason('fail')
+        print(ds.GetFileList())
+        return 'failure'
+    ds = None
+
+    ds = gdal.OpenEx('data/emptyshapefilewithsbn.shx')
+    if ds.GetFileList() != ['data/emptyshapefilewithsbn.shp', 'data/emptyshapefilewithsbn.shx', 'data/emptyshapefilewithsbn.sbn', 'data/emptyshapefilewithsbn.sbx']:
+        gdaltest.post_reason('fail')
+        print(ds.GetFileList())
+        return 'failure'
+    ds = None
+
+    return 'success'
+
 ###############################################################################
 # 
 
@@ -3773,6 +3808,7 @@ gdaltest_list = [
     ogr_shape_72,
     ogr_shape_73,
     ogr_shape_74,
+    ogr_shape_75,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':

@@ -23,7 +23,7 @@ JPEG_FLAGS =	-I..\jpeg\libjpeg -DJPEG_SUPPORTED
 JPEG12_FLAGS =  -DJPEG_DUAL_MODE_8_12
 !ENDIF
  	
-EXTRAFLAGS = -I..\gtiff\libtiff -I..\vrt $(JPEG_FLAGS) $(JPEG12_FLAGS)
+EXTRAFLAGS = -I..\gtiff -I..\gtiff\libtiff -I..\vrt $(JPEG_FLAGS) $(JPEG12_FLAGS)
 
 default:	$(OBJ)
 	xcopy /D  /Y *.obj ..\o

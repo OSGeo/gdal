@@ -1628,6 +1628,7 @@ bool FGdbLayer::Initialize(FGdbDataSource* pParentDataSource, Table* pTable,
     m_strName = WStringToString(wstrQueryName);
 
     m_pFeatureDefn = new OGRFeatureDefn(m_strName.c_str()); //TODO: Should I "new" an OGR smart pointer - sample says so, but it doesn't seem right
+    SetDescription( m_pFeatureDefn->GetName() );
     //as long as we use the same compiler & settings in both the ogr build and this
     //driver, we should be OK
     m_pFeatureDefn->Reference();

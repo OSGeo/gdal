@@ -214,13 +214,13 @@ class OGRXLSXDataSource : public OGRDataSource
 
     virtual int                 TestCapability( const char * );
 
-    virtual OGRLayer* CreateLayer( const char * pszLayerName,
+    virtual OGRLayer* ICreateLayer( const char * pszLayerName,
                                 OGRSpatialReference *poSRS,
                                 OGRwkbGeometryType eType,
                                 char ** papszOptions );
     virtual OGRErr      DeleteLayer(int iLayer);
 
-    virtual OGRErr      SyncToDisk();
+    virtual void        FlushCache();
 
     void                startElementCbk(const char *pszName, const char **ppszAttr);
     void                endElementCbk(const char *pszName);

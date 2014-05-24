@@ -80,6 +80,7 @@ typedef struct {
 /*      File level prototypes.                                          */
 /* -------------------------------------------------------------------- */
 NITFFile CPL_DLL *NITFOpen( const char *pszFilename, int bUpdatable );
+NITFFile *NITFOpenEx( VSILFILE *fp, const char *pszFilename );
 void     CPL_DLL  NITFClose( NITFFile * );
 
 int      CPL_DLL  NITFCreate( const char *pszFilename, 

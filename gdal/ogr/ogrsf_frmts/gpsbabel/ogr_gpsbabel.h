@@ -45,11 +45,13 @@ class OGRGPSBabelDataSource : public OGRDataSource
     char               *pszGPSBabelDriverName;
     char               *pszFilename;
     CPLString           osTmpFileName;
-    OGRDataSource      *poGPXDS;
+    GDALDataset        *poGPXDS;
 
   public:
                         OGRGPSBabelDataSource();
                         ~OGRGPSBabelDataSource();
+
+    virtual int         CloseDependentDatasets();
 
     virtual const char  *GetName() { return pszName; }
     virtual int         GetLayerCount() { return nLayers; }
@@ -57,7 +59,8 @@ class OGRGPSBabelDataSource : public OGRDataSource
 
     virtual int         TestCapability( const char * );
 
-    int                 Open ( const char* pszFilename, int bUpdateIn );
+    int                 Open ( const char* pszFilename,
+                               const char* pszGPSBabelDriverNameIn );
 
     static int          IsSpecialFile(const char* pszFilename);
     static int          IsValidDriverName(const char* pszGPSBabelDriverName);
@@ -74,7 +77,7 @@ class OGRGPSBabelWriteDataSource : public OGRDataSource
     char               *pszGPSBabelDriverName;
     char               *pszFilename;
     CPLString           osTmpFileName;
-    OGRDataSource      *poGPXDS;
+    GDALDataset        *poGPXDS;
 
     int                 Convert();
 
@@ -88,30 +91,12 @@ class OGRGPSBabelWriteDataSource : public OGRDataSource
 
     virtual int         TestCapability( const char * );
 
-    virtual OGRLayer   *CreateLayer( const char * pszLayerName,
+    virtual OGRLayer   *ICreateLayer( const char * pszLayerName,
                                      OGRSpatialReference *poSRS,
                                      OGRwkbGeometryType eType,
                                      char ** papszOptions );
 
     int                 Create ( const char* pszFilename, char **papszOptions );
-};
-
-/************************************************************************/
-/*                        OGRGPSBabelDriver                             */
-/************************************************************************/
-
-class OGRGPSBabelDriver : public OGRSFDriver
-{
-  public:
-                ~OGRGPSBabelDriver();
-
-    virtual const char    *GetName();
-    virtual OGRDataSource *Open( const char *, int );
-    virtual OGRDataSource *CreateDataSource( const char * pszName,
-                                             char **papszOptions );
-    virtual OGRErr         DeleteDataSource( const char *pszFilename );
-
-    virtual int            TestCapability( const char * );
 };
 
 #endif /* ndef _OGR_GPSBABEL_H_INCLUDED */

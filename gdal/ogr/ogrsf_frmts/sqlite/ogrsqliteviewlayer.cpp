@@ -80,6 +80,7 @@ CPLErr OGRSQLiteViewLayer::Initialize( const char *pszViewName,
 
 {
     this->pszViewName = CPLStrdup(pszViewName);
+    SetDescription( pszViewName );
 
     osGeomColumn = pszViewGeometry;
     eGeomFormat = OSGF_SpatiaLite;

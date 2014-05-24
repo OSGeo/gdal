@@ -571,6 +571,7 @@ void GDALRegister_EIR()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "EIR" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "Erdas Imagine Raw" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

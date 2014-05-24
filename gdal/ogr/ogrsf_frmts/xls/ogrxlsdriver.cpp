@@ -96,6 +96,12 @@ int OGRXLSDriver::TestCapability( const char * pszCap )
 void RegisterOGRXLS()
 
 {
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRXLSDriver );
+    OGRSFDriver* poDriver = new OGRXLSDriver;
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                                "MS Excel format" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "xls" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                                "drv_xls.html" );
+    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }
 

@@ -72,6 +72,7 @@ OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGN,
 /*      Create the feature definition.                                  */
 /* -------------------------------------------------------------------- */
     poFeatureDefn = new OGRFeatureDefn( pszName );
+    SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
     
     OGRFieldDefn        oField( "", OFTInteger );
