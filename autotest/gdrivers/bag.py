@@ -93,7 +93,7 @@ def bag_2():
         return 'fail'
 
     b2 = ds.GetRasterBand(2)
-    if abs(b2.GetNoDataValue()-0.0) > 0.1:
+    if abs(b2.GetNoDataValue()-1000000.0) > 0.1:
         gdaltest.post_reason( 'band 2 nodata wrong.' )
         return 'fail'
 
