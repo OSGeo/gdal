@@ -140,7 +140,7 @@ static unsigned int ReadVarUInt32(GByte** ppabyData)
 #define READ_SIZE(pabyData, pabyDataLimit, nSize) \
     { \
         READ_VARUINT32(pabyData, pabyDataLimit, nSize); \
-        if (CHECK_OOB && nSize > pabyDataLimit - pabyData) GOTO_END_ERROR; \
+        if (CHECK_OOB && nSize > (unsigned int)(pabyDataLimit - pabyData)) GOTO_END_ERROR; \
     }
 
 /************************************************************************/
