@@ -176,8 +176,9 @@ LDEBUG= /debug
 STDCALL=YES
 
 # Version number embedded in DLL name. 
+# If GDAL version is X.Y.Z, VERSION = X * 100 + Y
 !IFNDEF VERSION
-VERSION =	111
+VERSION =	200
 !ENDIF
 
 # Comment the following out if you want PAM supported disabled

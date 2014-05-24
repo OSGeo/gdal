@@ -108,15 +108,12 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
     # an increasing floating point number.  $GDAL_VERSION is the
     # version number of the GDAL that this module is a part of. It is
     # used in build time to check the version of GDAL against which we
-    # build.  For GDAL 1.9.2 and below $VERSION is made by dropping
-    # the second point.  Hoping that there will not be GDAL 1.9.10, we
-    # set the $VERSION of GDAL 1.10 to 1.991. Thus GDAL 1.10.1 would
-    # have $VERSION 1.9911 and GDAL 1.11 would have $VERSION 1.992
-    # etc.  GDAL 2.0 should then get VERSION 2.000 and 2.1 should get
-    # 2.001 etc.
+    # build.
+    # For GDAL 2.0 or above, GDAL X.Y.Z should then 
+    # VERSION = X + Y / 100.0 + Z / 10000.0
 
-    our $VERSION = '1.993';
-    our $GDAL_VERSION = '1.12.0';
+    our $VERSION = '2.0000';
+    our $GDAL_VERSION = '2.0.0';
     use vars qw/
         %TYPE_STRING2INT %TYPE_INT2STRING
         %ACCESS_STRING2INT %ACCESS_INT2STRING
