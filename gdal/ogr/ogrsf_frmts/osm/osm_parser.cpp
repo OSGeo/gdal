@@ -381,11 +381,11 @@ int ReadStringTable(GByte* pabyData, GByte* pabyDataLimit,
 
     psCtxt->pszStrBuf = pszStrBuf;
 
-    if (pabyDataLimit - pabyData > psCtxt->nStrAllocated)
+    if ((unsigned int)(pabyDataLimit - pabyData) > psCtxt->nStrAllocated)
     {
         int* panStrOffNew;
         psCtxt->nStrAllocated = MAX(psCtxt->nStrAllocated * 2,
-                                          pabyDataLimit - pabyData);
+                                          (unsigned int)(pabyDataLimit - pabyData));
         panStrOffNew = (int*) VSIRealloc(
             panStrOff, psCtxt->nStrAllocated * sizeof(int));
         if( panStrOffNew == NULL )
