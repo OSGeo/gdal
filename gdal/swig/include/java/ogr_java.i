@@ -108,6 +108,8 @@ import org.gdal.osr.SpatialReference;
 
 %}
 
+%#if SWIG_VERSION < 0x020000
+
 %typemap(javabody_derived) OGRLayerShadow %{
   private long swigCPtr;
 
@@ -121,6 +123,22 @@ import org.gdal.osr.SpatialReference;
   }
 %}
 
+%#else
+
+%typemap(javabody_derived) OGRLayerShadow %{
+  private long swigCPtr;
+
+  public Layer(long cPtr, boolean cMemoryOwn) {
+    super(ogrJNI.Layer_SWIGUpcast(cPtr), cMemoryOwn);
+    swigCPtr = cPtr;
+  }
+
+  public static long getCPtr(Layer obj) {
+    return (obj == null) ? 0 : obj.swigCPtr;
+  }
+%}
+
+%#endif
 
 %typemap(javabody) OGRStyleTableShadow %{
   private boolean swigCMemOwn;
