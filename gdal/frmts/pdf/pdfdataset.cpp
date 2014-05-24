@@ -42,6 +42,7 @@
 #endif
 
 #include "pdfcreatecopy.h"
+#include <set>
 
 #define GDAL_DEFAULT_DPI 150.0
 
