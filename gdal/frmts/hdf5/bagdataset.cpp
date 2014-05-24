@@ -286,7 +286,13 @@ double BAGRasterBand::GetNoDataValue( int * pbSuccess )
     if( EQUAL(GetDescription(),"elevation") )
         return  1000000.0;
     else if( EQUAL(GetDescription(),"uncertainty") )
-        return 0.0;
+    {
+        /* See http://trac.osgeo.org/gdal/ticket/5482 for a discussion whether */
+        /* this should be 0.0 or 1000000.0. Real-world datasets tend do be */
+        /* 1000000.0 */
+        /* FIXME? Should we handle 0.0 in IReadBlock() as nodata as well ? */
+        return 1000000.0;
+    }
     else if( EQUAL(GetDescription(),"nominal_elevation") )
         return 1000000.0;
     else
@@ -560,7 +566,7 @@ GDALDataset *BAGDataset::Open( GDALOpenInfo * poOpenInfo )
         delete poUBand;
 
 /* -------------------------------------------------------------------- */
-/*      Try to do the same for the uncertainty band.                    */
+/*      Try to do the same for the nominal_elevation band.              */
 /* -------------------------------------------------------------------- */
     hid_t hNominal = -1;
 
