@@ -146,7 +146,7 @@ CPLErr XYZRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     int nLineInFile = nBlockYOff * nBlockXSize; // only valid if bSameNumberOfValuesPerLine
     if ( (poGDS->bSameNumberOfValuesPerLine && poGDS->nDataLineNum > nLineInFile) ||
-         (!poGDS->bSameNumberOfValuesPerLine && (nLastYOff == -1 || nBlockYOff != nLastYOff + 1)) )
+         (!poGDS->bSameNumberOfValuesPerLine && nLastYOff == -1) )
     {
         poGDS->nDataLineNum = 0;
         VSIFSeekL(poGDS->fp, 0, SEEK_SET);
