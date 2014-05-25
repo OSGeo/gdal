@@ -1581,7 +1581,8 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
         {
             GDALDriverH hDriver = GDALGetDriver(iDr);
 
-            if( GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL) != NULL )
+            if( GDALGetMetadataItem( hDriver, GDAL_DCAP_RASTER, NULL) != NULL &&
+                GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL) != NULL )
             {
                 printf( "  %s: %s\n",
                         GDALGetDriverShortName( hDriver  ),
