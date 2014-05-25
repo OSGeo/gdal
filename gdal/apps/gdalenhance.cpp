@@ -252,9 +252,9 @@ int main( int argc, char ** argv )
         {
             GDALDriverH hDriver = GDALGetDriver(iDr);
 
-            if( GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) != NULL
-                || GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY,
-                                        NULL ) != NULL )
+            if( GDALGetMetadataItem( hDriver, GDAL_DCAP_RASTER, NULL) != NULL &&
+                (GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) != NULL
+                || GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY, NULL ) != NULL) )
             {
                 printf( "  %s: %s\n",
                         GDALGetDriverShortName( hDriver  ),
