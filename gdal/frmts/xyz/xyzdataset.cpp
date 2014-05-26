@@ -30,6 +30,8 @@
 #include "cpl_vsi_virtual.h"
 #include "cpl_string.h"
 #include "gdal_pam.h"
+#include <vector>
+#include <algorithm>
 
 CPL_CVSID("$Id$");
 
@@ -702,17 +704,17 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Parse data lines                                                */
 /* -------------------------------------------------------------------- */
 
-    int nXSize = 0, nYSize = 0;
     int nLineNum = 0;
     int nDataLineNum = 0;
     double dfX = 0, dfY = 0, dfZ = 0;
     double dfMinX = 0, dfMinY = 0, dfMaxX = 0, dfMaxY = 0;
     double dfMinZ = 0, dfMaxZ = 0;
     double dfLastX = 0, dfLastY = 0;
-    double dfStepX = 0, dfStepY = 0;
+    std::vector<double> adfStepX, adfStepY;
     GDALDataType eDT = GDT_Byte;
     int bSameNumberOfValuesPerLine = TRUE;
     char chDecimalSep = '\0';
+    int bStepYSign = 0;
     while((pszLine = CPLReadLine2L(fp, 100, NULL)) != NULL)
     {
         nLineNum ++;
@@ -830,94 +832,6 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
             return NULL;
         }
 
-        if (nDataLineNum == 2)
-        {
-            dfStepX = dfX - dfLastX;
-            if (dfStepX <= 0)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Ungridded dataset: At line %d, X spacing was %f. Expected >0 value",
-                         nLineNum, dfStepX);
-                VSIFCloseL(fp);
-                return NULL;
-            }
-        }
-        else if (nDataLineNum > 2)
-        {
-            //double dfNewStepX = dfX - dfLastX;
-            double dfNewStepY = dfY - dfLastY;
-            if (dfNewStepY != 0)
-            {
-                nYSize ++;
-                if (dfStepY == 0)
-                {
-                    nXSize = nDataLineNum - 1;
-                    double dfAdjustedStepX = (dfMaxX - dfMinX) / (nXSize - 1);
-                    if (fabs(dfStepX - dfAdjustedStepX) > 1e-8)
-                    {
-                        CPLDebug("XYZ", "Adjusting stepx from %f to %f", dfStepX, dfAdjustedStepX);
-                    }
-                    dfStepX = dfAdjustedStepX;
-                }
-                if (fabs(dfX - dfMinX) > 1e-8)
-                {
-                    if( dfX < dfMinX && fmod(dfMinX - dfX, dfStepX) < 1e-8 )
-                    {
-                        bSameNumberOfValuesPerLine = FALSE;
-                        //CPLDebug("XYZ", "Adjusting minx to %f", dfX);
-                        dfMinX = dfX;
-                        nXSize = 1 + (int)((dfMaxX - dfMinX) / dfStepX + 1e-5 );
-                    }
-                    else if( !(dfX > dfMinX && fmod(dfX - dfMinX, dfStepX) < 1e-8) )
-                    {
-                        CPLError(CE_Failure, CPLE_AppDefined,
-                                "Ungridded dataset: At line %d, X is %f, where as %f was expected (1)",
-                                nLineNum, dfX, dfMinX);
-                        VSIFCloseL(fp);
-                        return NULL;
-                    }
-                }
-                if (fabs(dfLastX - dfMaxX) > 1e-8)
-                {
-                    if( dfLastX > dfMaxX && fmod(dfLastX - dfMaxX, dfStepX) < 1e-8 )
-                    {
-                        bSameNumberOfValuesPerLine = FALSE;
-                        //CPLDebug("XYZ", "Adjusting maxx to %f", dfLastX);
-                        dfMaxX = dfLastX;
-                        nXSize = 1 + (int)((dfMaxX - dfMinX) / dfStepX + 1e-5 );
-                    }
-                    else if( !(dfLastX < dfMaxX && fmod(dfMaxX - dfLastX, dfStepX) < 1e-8) )
-                    {
-                        CPLError(CE_Failure, CPLE_AppDefined,
-                                "Ungridded dataset: At line %d, X is %f, where as %f was expected (2)",
-                                nLineNum - 1, dfLastX, dfMaxX);
-                        VSIFCloseL(fp);
-                        return NULL;
-                    }
-                }
-                /*if (dfStepY != 0 && fabs(dfNewStepY - dfStepY) > 1e-8)
-                {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "Ungridded dataset: At line %d, Y spacing was %f, whereas it was %f before",
-                             nLineNum, dfNewStepY, dfStepY);
-                    VSIFCloseL(fp);
-                    return NULL;
-                }*/
-                dfStepY = dfNewStepY;
-            }
-            //else if (dfNewStepX != 0)
-            //{
-                /*if (dfStepX != 0 && fabs(dfNewStepX - dfStepX) > 1e-8)
-                {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "At line %d, X spacing was %f, whereas it was %f before",
-                             nLineNum, dfNewStepX, dfStepX);
-                    VSIFCloseL(fp);
-                    return NULL;
-                }*/
-            //}
-        }
-
         if (nDataLineNum == 1)
         {
             dfMinX = dfMaxX = dfX;
@@ -925,8 +839,78 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         else
         {
-            if (dfStepY == 0 && dfX < dfMinX) dfMinX = dfX;
-            if (dfStepY == 0 && dfX > dfMaxX) dfMaxX = dfX;
+            double dfStepY = dfY - dfLastY;
+            if( dfStepY == 0.0 )
+            {
+                double dfStepX = dfX - dfLastX;
+                if( dfStepX <= 0 )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                         "Ungridded dataset: At line %d, X spacing was %f. Expected >0 value",
+                         nLineNum, dfStepX);
+                    VSIFCloseL(fp);
+                    return NULL;
+                }
+                if( std::find(adfStepX.begin(), adfStepX.end(), dfStepX) == adfStepX.end() )
+                {
+                    int bAddNewValue = TRUE;
+                    std::vector<double>::iterator oIter = adfStepX.begin();
+                    while( oIter != adfStepX.end() )
+                    {
+                        if( dfStepX < *oIter && fmod( *oIter, dfStepX ) < 1e-8 )
+                        {
+                            adfStepX.erase(oIter);
+                        }
+                        else if( dfStepX > *oIter && fmod( dfStepX, *oIter ) < 1e-8 )
+                        {
+                            bAddNewValue = FALSE;
+                            break;
+                        }
+                        else
+                        {
+                            ++ oIter;
+                        }
+                    }
+                    if( bAddNewValue )
+                    {
+                        adfStepX.push_back(dfStepX);
+                        if( adfStepX.size() == 10 )
+                        {
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                "Ungridded dataset: too many stepY values");
+                            VSIFCloseL(fp);
+                            return NULL;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                int bNewStepYSign = (dfStepY < 0.0) ? -1 : 1;
+                if( bStepYSign == 0 )
+                    bStepYSign = bNewStepYSign;
+                else if( bStepYSign != bNewStepYSign )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                         "Ungridded dataset: At line %d, change of Y direction",
+                         nLineNum);
+                    VSIFCloseL(fp);
+                    return NULL;
+                }
+                if( bNewStepYSign < 0 ) dfStepY = -dfStepY;
+                if( adfStepY.size() == 0 )
+                    adfStepY.push_back(dfStepY);
+                else if( adfStepY[0] != dfStepY )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                        "Ungridded dataset: At line %d, too many stepY values", nLineNum);
+                    VSIFCloseL(fp);
+                    return NULL;
+                }
+            }
+
+            if (dfX < dfMinX) dfMinX = dfX;
+            if (dfX > dfMaxX) dfMaxX = dfX;
             if (dfY < dfMinY) dfMinY = dfY;
             if (dfY > dfMaxY) dfMaxY = dfY;
         }
@@ -934,38 +918,32 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
         dfLastX = dfX;
         dfLastY = dfY;
     }
-    nYSize ++;
 
-    if (dfStepX == 0)
+    if (adfStepX.size() != 1)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Couldn't determine X spacing");
         VSIFCloseL(fp);
         return NULL;
     }
 
-    if (dfStepY == 0)
+    if (adfStepY.size() != 1)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Couldn't determine Y spacing");
         VSIFCloseL(fp);
         return NULL;
     }
 
-    double dfAdjustedStepY = ((dfStepY < 0) ? -1 : 1) * (dfMaxY - dfMinY) / (nYSize - 1);
-    if (fabs(dfStepY - dfAdjustedStepY) > 1e-8)
-    {
-        CPLDebug("XYZ", "Adjusting stepy from %f to %f", dfStepY, dfAdjustedStepY);
-    }
-    dfStepY = dfAdjustedStepY;
+    double dfStepX = adfStepX[0];
+    double dfStepY = adfStepY[0] * bStepYSign;
+    int nXSize = 1 + int((dfMaxX - dfMinX) / dfStepX + 0.5);
+    int nYSize = 1 + int((dfMaxY - dfMinY) / fabs(dfStepY) + 0.5);
 
     //CPLDebug("XYZ", "minx=%f maxx=%f stepx=%f", dfMinX, dfMaxX, dfStepX);
     //CPLDebug("XYZ", "miny=%f maxy=%f stepy=%f", dfMinY, dfMaxY, dfStepY);
 
-    if (bSameNumberOfValuesPerLine && nDataLineNum != nXSize * nYSize)
+    if (nDataLineNum != nXSize * nYSize)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Found %d lines. Expected %d",
-                 nDataLineNum,nXSize * nYSize);
-        VSIFCloseL(fp);
-        return NULL;
+        bSameNumberOfValuesPerLine = FALSE;
     }
     
     if (poOpenInfo->eAccess == GA_Update)
