@@ -146,13 +146,17 @@ CPLErr XYZRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     int nLineInFile = nBlockYOff * nBlockXSize; // only valid if bSameNumberOfValuesPerLine
     if ( (poGDS->bSameNumberOfValuesPerLine && poGDS->nDataLineNum > nLineInFile) ||
-         (!poGDS->bSameNumberOfValuesPerLine && nLastYOff == -1) )
+         (!poGDS->bSameNumberOfValuesPerLine && (nLastYOff == -1 || nBlockYOff == 0)) )
     {
         poGDS->nDataLineNum = 0;
+        poGDS->nLineNum = 0;
         VSIFSeekL(poGDS->fp, 0, SEEK_SET);
 
         for(int i=0;i<poGDS->nCommentLineCount;i++)
+        {
             CPLReadLine2L(poGDS->fp, 100, NULL);
+            poGDS->nLineNum ++;
+        }
 
         if (poGDS->bHasHeaderLine)
         {
