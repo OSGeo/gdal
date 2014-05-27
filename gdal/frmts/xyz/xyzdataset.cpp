@@ -789,7 +789,7 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
                         dfX = CPLAtofDelim(pszPtr, chLocalDecimalSep);
                     else if (nCol == nYIndex)
                         dfY = CPLAtofDelim(pszPtr, chLocalDecimalSep);
-                    else if (nCol == nZIndex && eDT != GDT_Float32)
+                    else if (nCol == nZIndex)
                     {
                         dfZ = CPLAtofDelim(pszPtr, chLocalDecimalSep);
                         if( nDataLineNum == 0 )
