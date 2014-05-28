@@ -25,6 +25,10 @@ endif
 
 CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) $(PAM_SETTING) $(XTRA_OPT) -I../frmts/gtiff -I../ogr -I../ogr/ogrsf_frmts/generic
 
+ifeq ($(HAVE_SQLITE),yes)
+CXXFLAGS :=	$(CXXFLAGS) -DSQLITE_ENABLED
+endif
+
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
 $(OBJ):	gdal_priv.h gdal_proxy.h
