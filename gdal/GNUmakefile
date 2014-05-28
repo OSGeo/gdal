@@ -149,9 +149,6 @@ install-man:
 web-update:	docs
 	$(INSTALL_DIR) $(INST_HTML)
 	cp html/*.* $(INST_HTML)
-	$(INSTALL_DIR) $(INST_HTML)/ogr
-	-rm $(INST_HTML)/ogr/*
-	cp doc/ogr_redirect.html $(INST_HTML)/ogr/index.html
 
 install:	default install-actions
 
