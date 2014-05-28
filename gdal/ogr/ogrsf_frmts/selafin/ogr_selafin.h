@@ -121,7 +121,7 @@ class OGRSelafinDataSource : public OGRDataSource {
         const char *GetName() { return pszName; }
         int GetLayerCount() { return nLayers; }
         OGRLayer *GetLayer( int );
-        virtual OGRLayer *CreateLayer( const char *pszName, OGRSpatialReference *poSpatialRefP = NULL, OGRwkbGeometryType eGType = wkbUnknown, char ** papszOptions = NULL );
+        virtual OGRLayer *ICreateLayer( const char *pszName, OGRSpatialReference *poSpatialRefP = NULL, OGRwkbGeometryType eGType = wkbUnknown, char ** papszOptions = NULL );
         virtual OGRErr DeleteLayer(int); 
         int TestCapability( const char * );
         void SetDefaultSelafinName( const char *pszName ) { osDefaultSelafinName = pszName; }

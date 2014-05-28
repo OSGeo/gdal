@@ -85,7 +85,7 @@ class OGRNULLDataSource : public OGRDataSource
     virtual int         GetLayerCount() { return nLayers; }
     virtual OGRLayer   *GetLayer( int );
 
-    virtual OGRLayer    *CreateLayer( const char *pszLayerName,
+    virtual OGRLayer    *ICreateLayer( const char *pszLayerName,
                                       OGRSpatialReference *poSRS,
                                       OGRwkbGeometryType eType,
                                       char **papszOptions );
