@@ -40,7 +40,7 @@ static int OGRKMLDriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {
     if( poOpenInfo->fpL == NULL )
-        return NULL;
+        return FALSE;
 
     return( strstr((const char*)poOpenInfo->pabyHeader, "<kml") != NULL );
 }
