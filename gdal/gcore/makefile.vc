@@ -19,7 +19,11 @@ GDAL_ROOT	=	..
 
 !INCLUDE ..\nmake.opt
 
-EXTRAFLAGS =	$(PAM_SETTING) -I..\frmts\gtiff -I..\ogr\ogrsf_frmts\generic
+EXTRAFLAGS =	$(PAM_SETTING) -I..\frmts\gtiff -I..\ogr\ogrsf_frmts\generic $(SQLITEDEF)
+
+!IFDEF SQLITE_LIB
+SQLITEDEF	=	-DSQLITE_ENABLED
+!ENDIF
 
 default:	$(OBJ) $(RES)
 
