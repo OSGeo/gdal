@@ -50,11 +50,18 @@ def ogr_sql_sqlite_available():
     if ogr.GetDriverByName('SQLite') is None:
         return False
 
+    # If we have SQLite VFS support, then SQLite dialect should be available
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_sql_sqlite_available.db')
+    if ds is None:
+        return False
+    ds = None
+    gdal.Unlink('/vsimem/ogr_sql_sqlite_available.db')
+
     ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
     sql_lyr = ds.ExecuteSQL( "SELECT * FROM sqlite_master", dialect = 'SQLite' )
     ds.ReleaseResultSet( sql_lyr )
     if sql_lyr is None:
-        return False
+        return 'fail'
     ogrtest.has_sqlite_dialect = True
     return True
 
@@ -63,7 +70,11 @@ def ogr_sql_sqlite_available():
 
 def ogr_sql_sqlite_1():
     
-    if not ogr_sql_sqlite_available():
+    ret = ogr_sql_sqlite_available()
+    if ret == 'fail':
+        gdaltest.post_reason('fail')
+        return ret
+    if not ret:
         return 'skip'
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
