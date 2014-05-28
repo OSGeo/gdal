@@ -477,10 +477,10 @@ int OGRSelafinDataSource::OpenTable(const char * pszFilename) {
 }
 
 /************************************************************************/
-/*                            CreateLayer()                             */
+/*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRSelafinDataSource::CreateLayer( const char *pszLayerName, OGRSpatialReference *poSpatialRefP, OGRwkbGeometryType eGType, char ** papszOptions  ) {
+OGRLayer *OGRSelafinDataSource::ICreateLayer( const char *pszLayerName, OGRSpatialReference *poSpatialRefP, OGRwkbGeometryType eGType, char ** papszOptions  ) {
     CPLDebug("Selafin","CreateLayer(%s,%s)",pszLayerName,(eGType==wkbPoint)?"wkbPoint":"wkbPolygon");
     // Verify we are in update mode.
     if (!bUpdate) {
