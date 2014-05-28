@@ -761,18 +761,26 @@ void GDALDriverManager::AutoLoadDrivers()
             const char *pszExtension = CPLGetExtension( papszFiles[iFile] );
             void   *pRegister;
 
-            if( !EQUALN(papszFiles[iFile],"gdal_",5) && !EQUALN(papszFiles[iFile],"ogr_",4) )
-                continue;
-
             if( !EQUAL(pszExtension,"dll") 
                 && !EQUAL(pszExtension,"so") 
                 && !EQUAL(pszExtension,"dylib") )
                 continue;
 
-            pszFuncName = (char *) CPLCalloc(strlen(papszFiles[iFile])+20,1);
-            sprintf( pszFuncName, "GDALRegister_%s", 
-                     CPLGetBasename(papszFiles[iFile]) + 5 );
-            
+            if( EQUALN(papszFiles[iFile],"gdal_",strlen("gdal_")) )
+            {
+                pszFuncName = (char *) CPLCalloc(strlen(papszFiles[iFile])+20,1);
+                sprintf( pszFuncName, "GDALRegister_%s", 
+                     CPLGetBasename(papszFiles[iFile]) + strlen("gdal_") );
+            }
+            else if ( EQUALN(papszFiles[iFile],"ogr_",strlen("ogr_")) )
+            {
+                pszFuncName = (char *) CPLCalloc(strlen(papszFiles[iFile])+20,1);
+                sprintf( pszFuncName, "RegisterOGR%s", 
+                     CPLGetBasename(papszFiles[iFile]) + strlen("ogr_") );
+            }
+            else
+                continue;
+
             pszFilename = 
                 CPLFormFilename( osABISpecificDir, 
                                  papszFiles[iFile], NULL );
