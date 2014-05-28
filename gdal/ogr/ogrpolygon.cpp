@@ -699,6 +699,7 @@ OGRErr OGRPolygon::importFromWkt( char ** ppszInput )
         if( pszInput == NULL || nPoints == 0 )
         {
             CPLFree( paoPoints );
+            CPLFree( padfZ );
             return OGRERR_CORRUPT_DATA;
         }
         
