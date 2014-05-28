@@ -9,8 +9,7 @@
 
 This driver reads VFK files, ie. data in the <em>Czech cadastral
 exchange data format</em>. The VFK file is recognized as an OGR
-datasource with zero or more OGR layers. The filenames must end with
-&quot;.vfk&quot; extension.
+datasource with zero or more OGR layers.
 
 <p>
 Note: starting with OGR 1.10, the driver is compiled only if GDAL
@@ -60,6 +59,10 @@ user.
 <h2>Datasource name</h2>
 
 Datasource name is a full path to the VFK file.
+
+<p>The driver supports reading files managed by VSI Virtual File
+System API, which include "regular" files, as well as files in the
+/vsizip/, /vsigzip/, and /vsicurl/ read-only domains.
 
 <h2>Layer names</h2>
 
