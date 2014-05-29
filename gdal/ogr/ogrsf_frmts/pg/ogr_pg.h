@@ -179,7 +179,6 @@ class OGRPGLayer : public OGRLayer
 
     int                 bWkbAsOid;
 
-    int                 bHasFid;
     char                *pszFIDColumn;
 
     int                 bCanUseBinaryCursor;
@@ -342,6 +341,12 @@ public:
 
     int                 ReadTableDefinition();
     int                 HasGeometryInformation() { return bGeometryInformationSet; }
+    void                SetTableDefinition(const char* pszFIDColumnName,
+                                           const char* pszGFldName,
+                                           OGRwkbGeometryType eType,
+                                           const char* pszGeomType,
+                                           int nSRSId,
+                                           int nCoordDimension);
 
     void                SetForcedSRSId( int nForcedSRSIdIn )
                                 { nForcedSRSId = nForcedSRSIdIn; }

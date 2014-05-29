@@ -400,7 +400,6 @@ int OGRPGTableLayer::ReadTableDefinition()
 
         if( EQUAL(oField.GetNameRef(),osPrimaryKey) )
         {
-            bHasFid = TRUE;
             pszFIDColumn = CPLStrdup(oField.GetNameRef());
             CPLDebug("PG","Using column '%s' as FID for table '%s'", pszFIDColumn, pszTableName );
             continue;
@@ -672,6 +671,54 @@ int OGRPGTableLayer::ReadTableDefinition()
 }
 
 /************************************************************************/
+/*                         SetTableDefinition()                         */
+/************************************************************************/
+
+void OGRPGTableLayer::SetTableDefinition(const char* pszFIDColumnName,
+                                           const char* pszGFldName,
+                                           OGRwkbGeometryType eType,
+                                           const char* pszGeomType,
+                                           int nSRSId,
+                                           int nCoordDimension)
+{
+    bTableDefinitionValid = TRUE;
+    bGeometryInformationSet = TRUE;
+    if( pszFIDColumnName[0] == '"' &&
+             pszFIDColumnName[strlen(pszFIDColumnName)-1] == '"')
+    {
+        pszFIDColumn = CPLStrdup(pszFIDColumnName + 1);
+        pszFIDColumn[strlen(pszFIDColumn)-1] = '\0';
+    }
+    else
+        pszFIDColumn = CPLStrdup(pszFIDColumnName);
+    poFeatureDefn->SetGeomType(wkbNone);
+    if( eType != wkbNone )
+    {
+        OGRPGGeomFieldDefn* poGeomFieldDefn = new OGRPGGeomFieldDefn(this, pszGFldName);
+        poGeomFieldDefn->SetType(eType);
+        poGeomFieldDefn->nCoordDimension = nCoordDimension;
+
+        if( EQUAL(pszGeomType,"geometry") )
+        {
+            poGeomFieldDefn->ePostgisType = GEOM_TYPE_GEOMETRY;
+            poGeomFieldDefn->nSRSId = nSRSId;
+        }
+        else if( EQUAL(pszGeomType,"geography") )
+        {
+            poGeomFieldDefn->ePostgisType = GEOM_TYPE_GEOGRAPHY;
+            poGeomFieldDefn->nSRSId = 4326;
+        }
+        else
+        {
+            poGeomFieldDefn->ePostgisType = GEOM_TYPE_WKB;
+            if( EQUAL(pszGeomType,"OID") )
+                bWkbAsOid = TRUE;
+        }
+        poFeatureDefn->AddGeomFieldDefn(poGeomFieldDefn, FALSE);
+    }
+}
+
+/************************************************************************/
 /*                          SetSpatialFilter()                          */
 /************************************************************************/
 
@@ -855,7 +902,7 @@ CPLString OGRPGTableLayer::BuildFields()
 
     poFeatureDefn->GetFieldCount();
 
-    if( bHasFid && poFeatureDefn->GetFieldIndex( pszFIDColumn ) == -1 )
+    if( pszFIDColumn != NULL && poFeatureDefn->GetFieldIndex( pszFIDColumn ) == -1 )
     {
         osFieldList += OGRPGEscapeColumnName(pszFIDColumn);
     }
@@ -1030,7 +1077,7 @@ OGRErr OGRPGTableLayer::DeleteFeature( long nFID )
 /*      We can only delete features if we have a well defined FID       */
 /*      column to target.                                               */
 /* -------------------------------------------------------------------- */
-    if( !bHasFid )
+    if( pszFIDColumn == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "DeleteFeature(%ld) failed.  Unable to delete features in tables without\n"
@@ -1264,7 +1311,7 @@ OGRErr OGRPGTableLayer::SetFeature( OGRFeature *poFeature )
         return eErr;
     }
 
-    if( !bHasFid )
+    if( pszFIDColumn == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to update features in tables without\n"
@@ -2171,14 +2218,14 @@ int OGRPGTableLayer::TestCapability( const char * pszCap )
                  EQUAL(pszCap,OLCDeleteFeature) )
         {
             GetLayerDefn()->GetFieldCount();
-            return bHasFid;
+            return pszFIDColumn != NULL;
         }
     }
 
     if( EQUAL(pszCap,OLCRandomRead) )
     {
         GetLayerDefn()->GetFieldCount();
-        return bHasFid;
+        return pszFIDColumn != NULL;
     }
 
     else if( EQUAL(pszCap,OLCFastFeatureCount) ||

@@ -88,7 +88,6 @@ OGRPGLayer::OGRPGLayer()
     bWkbAsOid = FALSE;
     pszQueryStatement = NULL;
 
-    bHasFid = FALSE;
     pszFIDColumn = NULL;
 
     iNextShapeId = 0;
@@ -588,7 +587,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
 /* -------------------------------------------------------------------- */
 /*      Handle FID.                                                     */
 /* -------------------------------------------------------------------- */
-        if( bHasFid && EQUAL(pszFieldName,pszFIDColumn) )
+        if( pszFIDColumn != NULL && EQUAL(pszFieldName,pszFIDColumn) )
         {
 #if !defined(PG_PRE74)
             if ( PQfformat( hCursorResult, iField ) == 1 ) // Binary data representation
@@ -1924,12 +1923,11 @@ int OGRPGLayer::ReadResultDefinition(PGresult *hInitialResultIn)
         int iGeomFuncPrefix;
         if( EQUAL(oField.GetNameRef(),"ogc_fid") )
         {
-            if (bHasFid)
+            if (pszFIDColumn)
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "More than one ogc_fid column was found in the result of the SQL request. Only last one will be used");
             }
-            bHasFid = TRUE;
             CPLFree(pszFIDColumn);
             pszFIDColumn = CPLStrdup(oField.GetNameRef());
             continue;
