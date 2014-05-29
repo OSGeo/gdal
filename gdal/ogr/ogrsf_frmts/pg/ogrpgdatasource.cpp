@@ -1233,7 +1233,7 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
     const char* pszFIDColumnName = CSLFetchNameValue(papszOptions, "FID");
     CPLString osFIDColumnName;
     if (pszFIDColumnName == NULL)
-        osFIDColumnName = "OGC_FID";
+        osFIDColumnName = "ogc_fid";
     else
     {
         if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
@@ -1445,13 +1445,15 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
     
     if( eType != wkbNone && !bHavePostGIS )
     {
+        pszGFldName = "wkb_geometry";
         osCommand.Printf(
                  "%s ( "
                  "    %s SERIAL, "
-                 "   WKB_GEOMETRY %s, "
+                 "   %s %s, "
                  "   PRIMARY KEY (%s) )",
                  osCreateTable.c_str(),
                  pszFIDColumnName,
+                 pszGFldName,
                  pszGeomType,
                  pszFIDColumnName);
     }
@@ -1618,14 +1620,8 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
 
     poLayer = new OGRPGTableLayer( this, osCurrentSchema, pszTableName,
                                    pszSchemaName, NULL, TRUE );
-    if( !(poLayer->ReadTableDefinition()) )
-    {
-        CPLFree( pszTableName );
-        CPLFree( pszSchemaName );
-        delete poLayer;
-        return NULL;
-    }
-
+    poLayer->SetTableDefinition(pszFIDColumnName, pszGFldName, eType,
+                                pszGeomType, nSRSId, nDimension);
     poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
     poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
     //poLayer->SetForcedSRSId(nForcedSRSId);
