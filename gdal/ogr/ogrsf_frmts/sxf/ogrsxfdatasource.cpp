@@ -778,10 +778,12 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXF, SXFPassport& pas
         SetVertCS(iVCS, passport);
         return eErr;
     }
-    else if (iEllips == 9 && iProjSys == 34) //Miller 54003
+    else if (iEllips == 9 && iProjSys == 34) //Miller 54003 on sphere wgs84
     {
-        passport.stMapDescription.pSpatRef = new OGRSpatialReference();
-        OGRErr eErr = passport.stMapDescription.pSpatRef->importFromEPSG(54003);
+        passport.stMapDescription.pSpatRef = new OGRSpatialReference("PROJCS[\"World_Miller_Cylindrical\",GEOGCS[\"GCS_GLOBE\", DATUM[\"GLOBE\", SPHEROID[\"GLOBE\", 6367444.6571, 0.0]],PRIMEM[\"Greenwich\",0],UNIT[\"Degree\",0.017453292519943295]],PROJECTION[\"Miller_Cylindrical\"],PARAMETER[\"False_Easting\",0],PARAMETER[\"False_Northing\",0],PARAMETER[\"Central_Meridian\",0],UNIT[\"Meter\",1],AUTHORITY[\"EPSG\",\"54003\"]]");
+        OGRErr eErr = OGRERR_NONE; //passport.stMapDescription.pSpatRef->importFromEPSG(3395);
+        //OGRErr eErr = passport.stMapDescription.pSpatRef->importFromEPSG(54003);
+
         SetVertCS(iVCS, passport);
         return eErr;
     }
