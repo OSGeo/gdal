@@ -43,7 +43,7 @@ Download:
 <li> <a href="gdal_datamodel.html">Raster</a> and <a href="ogr_arch.html">Vector</a> data models and architecture
 <li> <a href="http://trac.osgeo.org/gdal/wiki/GovernanceAndCommunity">GDAL/OGR Governance and Community Participation</a>
 <li> <a href="http://www.osgeo.org/search_profile?SET=1&MUL_TECH[0]=00013">GDAL Service Provider Listings</a> (not vetted)
-<li> <a href="credits.html">Sponsors, Acknowledgements and Credits</a>
+<li> <a href="credits.html">Acknowledgements and Credits</a>
 <li> <a href="http://trac.osgeo.org/gdal/wiki/SoftwareUsingGdal">Software Using GDAL</a>
 </ul>
 
