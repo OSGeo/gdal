@@ -3,7 +3,7 @@
 #endif /* DOXYGEN_SKIP */
 
 /*!
-\page credits Sponsors, Acknowledgements and Credits
+\page credits Acknowledgements and Credits
 
 There are too many people who have helped since GDAL/OGR was launched in 
 late 1998 for me to thank them all.  I have received moral support, 
@@ -13,117 +13,6 @@ out a few people and organizations who have supported GDAL over the
 years.  Forgive me for all those I left out.<p>
 
 <i>Frank Warmerdam</i><p>
-
-\section credits_sponsorship Sponsorship
-
-Sponsors help fund maintenance, development and promotion of GDAL/OGR. 
-If your organization depends on GDAL/OGR consider 
-<a href="sponsorship.html">becoming a sponsor</a>.
-
-\subsection silver_sponsors Silver Sponsors
-
-\htmlonly
-<table border="0" cellspacing="4" cellpadding="4">
-
-<tr><td><a href="http://www.cadcorp.com/"><center>
-<img src="cadcorp_logo.jpg" alt="" border="0" width="195" height="55">
-</center></a></td>
-
-<td><a href="http://www.cadcorp.com/">Cadcorp</a> 
-is a leading UK developer of digital mapping and GIS software.
-With offices in the UK and the USA, Cadcorp's distribution and VAR
-network stretches worldwide. Cadcorp also plays a pivotal technical role
-in the Open Geospatial Consortium, Inc.(r) (OGC(r)), and the Cadcorp SIS
-- Spatial Information System product family is OGC certified compliant
-for several specifications.</td></tr>
-
-<tr><td>
-
-<a href="http://www.safe.com/"><center>
-<img src="safe-logo.png" alt="" border="0" width="132" height="54">
-</center></a></td>
-
-<td><a href="http://www.safe.com/">Safe Software</a> is the leading developer of Spatial ETL (Extract, Transform, and Load) technology, providing spatial data transformation solutions and professional services. Safe's FME software delivers seamless translation of 160 GIS, CAD, raster, and database formats, and allows users to easily manage feature geometry and attribute restructuring, database loading, merging multiple data sources, web-based data distribution, and coordinate system conversion.
-</td></tr>
-
-<tr><td>
-<a href="http://www.extendthereach.com/"><center>
-<img src="src-logo.png" alt="" border="0" width="189" height="62">
-</center></a></td>
-
-<td><a href="http://www.extendthereach.com/">SRC</a>  
-delivers geographic business intelligence solutions that free
-organizations from limitations. Solving strategic to tactical business
-problems, SRC solutions are deployed by 190,000 global users. SRC is the
-only company to open source its geocoding tool, Explorer Geocoder. SRC
-promotes interoperability by providing solutions that are data, country,
-geography, and mapping independent to be deployed on the desktop or Web.
-</td></tr>
-
-<tr><td>
-<a href="http://www.actgate.com/"><center>
-<img src="act-logo.png" alt="" border="0" width="99" height="124">
-</center></a></td>
-
-<td>
-<a href="http://www.actgate.com/">Applied Coherent Technology Corporation</a> specializes in the automatic ingestion, processing, management, and analysis of geo-spatial data (satellite data streams or model data) in support of NASA planetary missions and Earth environmental satellites.   We have a suite of Network Centric tools to provide different levels of interactive access to the data, i.e. WIPE/PIPE/REACT.  
-</td></tr>
-
-<tr><td>
-<a href="http://www.i3.com/"><center>
-<img src="i3-logo.jpg" alt="" border="0" width="172" height="70">
-</center></a></td>
-
-<td>
-<a href="http://www.i3.com/">i-cubed</a> offers enterprise geospatial information solutions for commercial /
-government customers. Solutions leverage imagery of the Earth for
-visualization / engineering applications including, internet portals,
-wireless telecom and military planning. We offer a full range of products
-and services including imagery itself, image processing, analysis and
-distribution. Also provide image archive management and dissemination
-systems for customers with existing collections.
-</td></tr>
-
-<tr><td>
-<a href="http://www.waypointinfo.com/"><center>
-<img src="waypoint_logo.png" alt="" border="0" width="267" height="47">
-</center></a></td>
-
-<td>
-The <a href="http://www.waypointinfo.com/">Waypoint</a> 
-Panorama(tm) mapping platform delivers powerful online mapping 
-services for business and government organizations, including spatial 
-analysis, mobile asset tracking, web publishing, and Web Mapping Services.  
-Geospatial information can be easily managed, updated, and shared.  Waypoint 
-provides the IT hardware and software infrastructure, the extensive geographic 
-data, and the application software needed by our customers to meet their 
-objectives. 
-</td></tr>
-
-<tr><td>
-<a href="http://www.ingres.com/"><center>
-<img src="ingres-logo.png" alt="" border="0" width="255" height="48">
-</center></a></td>
-
-<td>
-<a href="http://www.ingres.com/">Ingres Corporation</a>
- is the premier provider of open source information
-management services to the enterprise with operations in 58 countries.
-Built on more than 25 years of relational database technology
-investment, Ingres provides the enterprise with proven mission-critical
-reliability coupled with the value and flexibility of open source.  
-</td></tr>
-
-
-
-</table>
-\endhtmlonly
-
-\subsection other_sponsors Other Sponsors
-
-<ul>
-<li> <a href="http://www.microimages.com/">MicroImages Inc.</a>
-</ul>
 
 \section credits_personal Personal
 
@@ -166,7 +55,8 @@ the earlier version by Martin Daly).<p>
 
 <li> <b><a href="http://www.actgate.com/">Applied Coherent 
 Technologies</a></b>: Supported implementation of the GDAL contour generator, 
-as well as various improvements to HDF drivers.
+as well as various improvements to HDF drivers. Has been a Silver sponsor
+of GDAL.
 <p>
 
 <li> <b><a href="http://www.atlantis-scientific.com/">Atlantis 
@@ -185,7 +75,8 @@ in GDAL.
 <p>
 
 <li> <b><a href="http://www.cadcorp.com">Cadcorp</a></b>: Supported 
-development of the Virtual Warped Raster capability.
+development of the Virtual Warped Raster capability. Has been a silver sponsor
+of GDAL.
 <p>
 
 <li> <b><a href="http://www.dmsolutions.ca/">DM Solutions Group</a></b>:
@@ -222,8 +113,15 @@ OGR Memory driver, Virtual Raster Filtering, and NITF RPC capabilities.
 <p>
 
 <li> <b><a href="http://www.i3.com">i-cubed</a></b>: Supported the MrSID 
-driver.
+driver. Has been a Silver sponsor of GDAL.
 <p>
+
+<li> <b><a href="http://www.ingres.com/">Ingres Corporation</a></b> :
+ is the premier provider of open source information
+management services to the enterprise with operations in 58 countries. Has
+been a Silver sponsor of GDAL.
+</td></tr>
+
 
 <li> <b><a href="http://www.intergraph.com">Intergraph</a></b>: Supported
 development of the Erdas Imagine driver.
@@ -231,6 +129,10 @@ development of the Erdas Imagine driver.
 
 <li> <b><a href="http://www.keyhole.com">Keyhole</a></b>: Supported development
 of Erdas Imagine driver, and the GDAL Warp API.
+<p>
+
+<li> <b><a href="http://www.microimages.com/">MicroImages Inc.</a></b> : Has been
+a Silver sponsor of GDAL.
 <p>
 
 <li> <b><a href="http://www.opendap.org">OPeNDAP</a></b>: Supported development
@@ -253,18 +155,27 @@ initial development of OGR as well as the OGR MapInfo integration.
 <p>
 
 <li> <b><a href="http://www.extendthereach.com/">SRC</a></b>: Supported
-development of the OGR OCI (Oracle Spatial) driver.
+development of the OGR OCI (Oracle Spatial) driver. Has been a Silver sponsor
+of GDAL.
 <p>
 
 <li> <b><a href="http://www.safe.com/">Safe Software</a></b>: Supported
 development of the OGR OLE DB provider, TIGER/Line driver, S-57 driver, 
-DTED driver, FMEObjects driver, SDTS driver and NTF driver. 
+DTED driver, FMEObjects driver, SDTS driver and NTF driver.  Has been a
+Silver sponsor of GDAL.
 <p>
 
 <li> <b><a href="http://www.environmentyukon.gov.yk.ca/">
 Yukon Department of the Environment</a></b>: Supported development of 
 CDED / USGS DEM Writer.
 <p>
+
+<li> <b><a href="http://www.waypointinfo.com/">Waypoint</a></b>:
+Panorama(tm) mapping platform delivers powerful online mapping 
+services for business and government organizations, including spatial 
+analysis, mobile asset tracking, web publishing, and Web Mapping Services. Has
+been a Silver sponsor of GDAL.
+</td></tr>
 
 </ul>
 
