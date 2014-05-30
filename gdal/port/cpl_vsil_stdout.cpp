@@ -39,6 +39,28 @@
 
 CPL_CVSID("$Id$");
 
+static VSIWriteFunction pWriteFunction = fwrite;
+static FILE* pWriteStream = stdout;
+
+/************************************************************************/
+/*                        VSIStdoutSetRedirection()                     */
+/************************************************************************/
+
+/** Set an alternative write function and output file handle instead of
+ *  fwrite() / stdout.
+ * 
+ * @param pFct Function with same signature as fwrite()
+ * @param stream File handle on which to output. Passed to pFct.
+ * 
+ * @since GDAL 2.0
+ */
+void VSIStdoutSetRedirection( VSIWriteFunction pFct, FILE* stream )
+{
+    pWriteFunction = pFct;
+    pWriteStream = stream;
+}
+
+
 /************************************************************************/
 /* ==================================================================== */
 /*                       VSIStdoutFilesystemHandler                     */
@@ -61,7 +83,10 @@ public:
 
 class VSIStdoutHandle : public VSIVirtualHandle
 {
+    vsi_l_offset      nOffset;
+
   public:
+                      VSIStdoutHandle() : nOffset(0) {}
 
     virtual int       Seek( vsi_l_offset nOffset, int nWhence );
     virtual vsi_l_offset Tell();
@@ -93,7 +118,7 @@ int VSIStdoutHandle::Seek( vsi_l_offset nOffset, int nWhence )
 
 vsi_l_offset VSIStdoutHandle::Tell()
 {
-    return ftell(stdout);
+    return nOffset;
 }
 
 /************************************************************************/
@@ -103,7 +128,10 @@ vsi_l_offset VSIStdoutHandle::Tell()
 int VSIStdoutHandle::Flush()
 
 {
-    return fflush( stdout );
+    if( pWriteStream == stdout )
+        return fflush( stdout );
+    else
+        return 0;
 }
 
 /************************************************************************/
@@ -125,7 +153,9 @@ size_t VSIStdoutHandle::Write( const void * pBuffer, size_t nSize,
                                   size_t nCount )
 
 {
-    return fwrite(pBuffer, nSize, nCount, stdout);
+    size_t nRet = pWriteFunction(pBuffer, nSize, nCount, pWriteStream);
+    nOffset += nSize * nRet;
+    return nRet;
 }
 
 /************************************************************************/
@@ -135,7 +165,7 @@ size_t VSIStdoutHandle::Write( const void * pBuffer, size_t nSize,
 int VSIStdoutHandle::Eof()
 
 {
-    return feof(stdout);
+    return 0;
 }
 
 /************************************************************************/
