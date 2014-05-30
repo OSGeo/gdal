@@ -240,6 +240,9 @@ GByte CPL_DLL *VSIGetMemFileBuffer( const char *pszFilename,
                                     vsi_l_offset *pnDataLength, 
                                     int bUnlinkAndSeize );
 
+typedef size_t (*VSIWriteFunction)(const void* ptr, size_t size, size_t nmemb, FILE* stream);
+void CPL_DLL VSIStdoutSetRedirection( VSIWriteFunction pFct, FILE* stream );
+
 /* ==================================================================== */
 /*      Time quering.                                                   */
 /* ==================================================================== */
