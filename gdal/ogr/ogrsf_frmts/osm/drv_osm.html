@@ -65,7 +65,7 @@ situations (non increasing node ids, or node ids not in expected range), it migh
 output an error message suggesting to relaunch by defining the OSM_USE_CUSTOM_INDEXING configuration option to NO.<p>
 
 When custom indexing is used (default case), the OSM_COMPRESS_NODES configuration option can be set to YES (the
-default is ON). This option might be turned on to improve performances when I/O access is the limiting factor (typically
+default is NO). This option might be turned on to improve performances when I/O access is the limiting factor (typically
 the case of rotational disk), and will be mostly efficient for country-sized OSM extracts where compression rate can
 go up to a factor of 3 or 4, and help keep the node DB to a size that fit in the OS I/O caches. For whole planet file, the
 effect of this option will be less efficient. This option consumes addionnal 60 MB of RAM.<p>
