@@ -38,7 +38,8 @@ Process :
 
 3) Update the VERSION file. 
 
-3.1) Update ./swig/python/setup.py version information. 
+3.1) Update ./swig/python/setup.py version information.
+     And the version of libgdal in ./swig/python/README.txt
 
 3.2) Update ./swig/include/perl/gdal_perl.i $VERSION and $GDAL_VERSION
 strings to current version. Kick Perl module maintainer to make a CPAN
@@ -128,4 +129,32 @@ http://trac.osgeo.org/gdal/wiki/NewsAndStatus .
 19) Update Trac to mark this release milestone as "Completed", and create
     a corresponding version.  Then create a new milestone for the next release.
 
+20) Upload the new Python bindings to Pypi (requires upload rights to
+the GDAL package by one of the current owners : HowardB/FrankW/EvenR)
+( procedure taken from http://peterdowns.com/posts/first-time-with-pypi.html )
 
+a) Create a $HOME/.pypirc file :
+
+[distutils] # this tells distutils what package indexes you can push to
+index-servers = pypi
+                pypitest
+
+[pypi] # authentication details for live PyPI
+repository: https://pypi.python.org/pypi
+username: yourlogin
+password: yourpassword
+
+[pypitest] # authentication details for test PyPI
+repository: https://testpypi.python.org/pypi
+username: yourlogin
+password: yourpassword
+
+b) cd swig/python
+
+c) For trial :
+    python setup.py register -r pypitest
+    python setup.py sdist upload -r pypitest
+
+d) For real :
+    python setup.py register -r pypi
+    python setup.py sdist upload -r pypi
