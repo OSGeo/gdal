@@ -16,7 +16,7 @@ reference documentation, but the `GDAL API Tutorial`_ includes Python examples.
 Dependencies
 ------------
  
- * libgdal (1.10.0 or greater) and header files (gdal-devel)
+ * libgdal (1.11.0 or greater) and header files (gdal-devel)
  * numpy (1.0.0 or greater) and header files (numpy-devel) (not explicitly 
    required, but many examples and utilities will not work without it)
 
@@ -208,7 +208,7 @@ the data are explicitly subsetted as part of the function call. For large
 data, this approach is expected to be prohibitively memory intensive.
 
 .. _GDAL API Tutorial: http://www.gdal.org/gdal_tutorial.html
-.. _GDAL Windows Binaries: http://vbkto.dyndns.org/sdk/
+.. _GDAL Windows Binaries: http://gisinternals.com/sdk/
 .. _Microsoft KnowledgeBase doc: http://support.microsoft.com/kb/310519
 .. _Python Cheeseshop: http://pypi.python.org/pypi/GDAL/
 .. _val_repl.py: http://trac.osgeo.org/gdal/browser/trunk/gdal/swig/python/samples/val_repl.py
