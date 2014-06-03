@@ -252,7 +252,7 @@ static CPLErr DatasetRasterIO( GDALDatasetH hDS, GDALRWFlag eRWFlag,
               "Buffer is too small");
       return CE_Failure;
   }
-  return  GDALDatasetRasterIO( hDS, GF_Read, xoff, yoff, xsize, ysize,
+  return  GDALDatasetRasterIO( hDS, eRWFlag, xoff, yoff, xsize, ysize,
                                 regularArray, buf_xsize, buf_ysize,
                                 buf_type, band_list, pband_list, nPixelSpace, nLineSpace, nBandSpace );
 
