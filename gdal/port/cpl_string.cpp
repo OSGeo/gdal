@@ -1008,7 +1008,11 @@ const char *CPLSPrintf(const char *fmt, ...)
 
     va_start(args, fmt);
 #if defined(HAVE_VSNPRINTF)
-    vsnprintf(pachBuffer, CPLSPrintf_BUF_SIZE-1, fmt, args);
+    int ret = vsnprintf(pachBuffer, CPLSPrintf_BUF_SIZE-1, fmt, args);
+    if( ret < 0 || ret >= CPLSPrintf_BUF_SIZE-1 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "CPLSPrintf() called with too big string. Output will be truncated !");
+    }
 #else
     vsprintf(pachBuffer, fmt, args);
 #endif
