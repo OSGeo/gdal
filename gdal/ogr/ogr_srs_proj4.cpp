@@ -409,6 +409,23 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     char *pszNormalized;
 
     pszNormalized = OCTProj4Normalize( pszCleanCopy );
+
+    /* Workaround proj.4 bug (#239) by manually re-adding no_off/no_uoff */
+    if( strstr(pszCleanCopy, "+no_off") != NULL && 
+        strstr(pszNormalized, "+no_off") == NULL )
+    {
+        char* pszTmp = CPLStrdup(CPLSPrintf("%s +no_off", pszNormalized));
+        CPLFree(pszNormalized);
+        pszNormalized = pszTmp;
+    }
+    else if( strstr(pszCleanCopy, "+no_uoff") != NULL && 
+        strstr(pszNormalized, "+no_uoff") == NULL )
+    {
+        char* pszTmp = CPLStrdup(CPLSPrintf("%s +no_uoff", pszNormalized));
+        CPLFree(pszNormalized);
+        pszNormalized = pszTmp;
+    }
+
     CPLFree( pszCleanCopy );
     
 /* -------------------------------------------------------------------- */
@@ -811,10 +828,17 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
         if( CSLFetchNameValue(papszNV,"no_uoff") != NULL
             || CSLFetchNameValue(papszNV,"no_off") != NULL )
         {
+            /* From PJ_omerc, when alpha is defined but not gamma */
+            /* the default gama value is alpha */
+            /*  if (alp || gam) {
+                    if (alp) {
+                        gamma0 = asin(sin(alpha_c) / D);
+                    if (!gam)
+                        gamma = alpha_c; */
             SetHOM( OSR_GDV( papszNV, "lat_0", 0.0 ), 
                     OSR_GDV( papszNV, "lonc", 0.0 ), 
                     OSR_GDV( papszNV, "alpha", 0.0 ), 
-                    OSR_GDV( papszNV, "gamma", 0.0 ), 
+                    OSR_GDV( papszNV, "gamma", OSR_GDV( papszNV, "alpha", 0.0 ) ), 
                     OSR_GDV( papszNV, "k", 1.0 ), 
                     OSR_GDV( papszNV, "x_0", 0.0 ), 
                     OSR_GDV( papszNV, "y_0", 0.0 ) );
@@ -824,7 +848,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
             SetHOMAC( OSR_GDV( papszNV, "lat_0", 0.0 ), 
                    OSR_GDV( papszNV, "lonc", 0.0 ), 
                    OSR_GDV( papszNV, "alpha", 0.0 ), 
-                   OSR_GDV( papszNV, "gamma", 0.0 ), 
+                   OSR_GDV( papszNV, "gamma", OSR_GDV( papszNV, "alpha", 0.0 ) ), 
                    OSR_GDV( papszNV, "k", 1.0 ), 
                    OSR_GDV( papszNV, "x_0", 0.0 ), 
                    OSR_GDV( papszNV, "y_0", 0.0 ) );
