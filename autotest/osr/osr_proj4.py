@@ -697,6 +697,29 @@ def osr_proj4_17():
             return 'fail'
     return 'success'
 
+###############################################################################
+# Test fix for #5511
+#
+def osr_proj4_18():
+
+    for p in [ 'no_off', 'no_uoff']:
+        srs = osr.SpatialReference()
+        srs.ImportFromProj4('+proj=omerc +lat_0=57 +lonc=-133 +alpha=-36 +k=0.9999 +x_0=5000000 +y_0=-5000000 +%s +datum=NAD83 +units=m +no_defs' % p)
+        if srs.Validate() != 0:
+            gdaltest.post_reason( 'does not validate' )
+            print(proj4str)
+            print(srs.ExportToPrettyWkt())
+            return 'fail'
+        out = srs.ExportToProj4()
+        proj4str = '+proj=omerc +lat_0=57 +lonc=-133 +alpha=-36 +k=0.9999 +x_0=5000000 +y_0=-5000000 +no_uoff +gamma=-36 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs '
+        if out != proj4str:
+            gdaltest.post_reason( 'round trip via PROJ.4 failed' )
+            print(p)
+            print(proj4str)
+            print(out)
+            return 'fail'
+
+    return 'success'
 
 gdaltest_list = [ 
     osr_proj4_1,
@@ -715,7 +738,8 @@ gdaltest_list = [
     osr_proj4_14,
     osr_proj4_15,
     osr_proj4_16,
-    osr_proj4_17]
+    osr_proj4_17,
+    osr_proj4_18 ]
 
 if __name__ == '__main__':
 
