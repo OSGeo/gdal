@@ -877,7 +877,7 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
                         if( adfStepX.size() == 10 )
                         {
                             CPLError(CE_Failure, CPLE_AppDefined,
-                                "Ungridded dataset: too many stepY values");
+                                "Ungridded dataset: too many stepX values");
                             VSIFCloseL(fp);
                             return NULL;
                         }
