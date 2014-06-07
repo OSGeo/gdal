@@ -47,6 +47,10 @@ CPL_CVSID("$Id$");
 #  define MUTEX_NONE
 #endif
 
+/* We don't want it to be publicly used since it solves rather tricky issues */
+/* that are better to remain hidden... */
+void CPLFinalizeTLS();
+
 /************************************************************************/
 /*                           CPLMutexHolder()                           */
 /************************************************************************/
@@ -542,6 +546,15 @@ static void **CPLGetTLSList()
     }
 
     return papTLSList;
+}
+
+/************************************************************************/
+/*                             CPLFinalizeTLS()                         */
+/************************************************************************/
+
+void CPLFinalizeTLS()
+{
+    CPLCleanupTLS();
 }
 
 /************************************************************************/
@@ -1046,6 +1059,15 @@ static void **CPLGetTLSList()
 }
 
 /************************************************************************/
+/*                             CPLFinalizeTLS()                         */
+/************************************************************************/
+
+void CPLFinalizeTLS()
+{
+    CPLCleanupTLS();
+}
+
+/************************************************************************/
 /*                           CPLCleanupTLS()                            */
 /************************************************************************/
 
@@ -1537,6 +1559,17 @@ static void CPLMake_key()
     {
         CPLError( CE_Fatal, CPLE_AppDefined, "pthread_key_create() failed!" );
     }
+}
+
+/************************************************************************/
+/*                             CPLFinalizeTLS()                         */
+/************************************************************************/
+
+void CPLFinalizeTLS()
+{
+    CPLCleanupTLS();
+    /* See #5509 for the explanation why this may be needed */
+    pthread_key_delete(oTLSKey);
 }
 
 /************************************************************************/
