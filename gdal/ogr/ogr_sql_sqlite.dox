@@ -171,6 +171,15 @@ from a blob compressed with the ZLib deflate algorithm.
 If the decompressed binary is a string, use
 CAST(ogr_inflate(compressed_blob) AS VARCHAR). See CPLZLibInflate().<p>
 
+\subsubsection ogr_sql_sqlite_other_functions Other functions
+
+Starting with OGR 2.0, the <i>hstore_get_value()</i> function can be used to extract
+a value associate to a key from a HSTORE string, formatted like "key=>value,other_key=>other_value,..."
+
+\code
+SELECT hstore_get_value('a => b, "key with space"=> "value with space"', 'key with space') --> 'value with space'
+\endcode
+
 \subsection ogr_sql_sqlite_ogr_geocode_function OGR geocoding functions
 
 The following SQL functions are available : <b>ogr_geocode(...)</b> and <b>ogr_geocode_reverse(...)</b>.<p>

@@ -55,6 +55,7 @@ static const swq_operation swq_apsOperations[] =
     { "%", SWQ_MODULUS , SWQGeneralEvaluator, SWQGeneralChecker },
     { "CONCAT", SWQ_CONCAT , SWQGeneralEvaluator, SWQGeneralChecker },
     { "SUBSTR", SWQ_SUBSTR , SWQGeneralEvaluator, SWQGeneralChecker },
+    { "HSTORE_GET_VALUE", SWQ_HSTORE_GET_VALUE , SWQGeneralEvaluator, SWQGeneralChecker },
 
     { "AVG", SWQ_AVG, SWQGeneralEvaluator, SWQColumnFuncChecker },
     { "MIN", SWQ_MIN, SWQGeneralEvaluator, SWQColumnFuncChecker },

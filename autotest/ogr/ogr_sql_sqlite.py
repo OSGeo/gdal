@@ -1614,7 +1614,54 @@ def ogr_sql_sqlite_27():
 
     return 'success'
 
-    
+###############################################################################
+# Test hstore_get_value()
+
+def ogr_sql_sqlite_28():
+
+    if not ogrtest.has_sqlite_dialect:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+
+    # Invalid parameters
+    for sql in ["SELECT hstore_get_value('a')"]:
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
+        sql_lyr = ds.ExecuteSQL( sql, dialect = 'SQLite' )
+        gdal.PopErrorHandler()
+        if sql_lyr is not None:
+            gdaltest.post_reason('fail')
+            print(sql)
+            return 'fail'
+
+    # Invalid hstore syntax or empty result
+    for sql in [ "SELECT hstore_get_value('a', null)",
+                 "SELECT hstore_get_value(null, 'a')",
+                 "SELECT hstore_get_value(1,'a')",
+                 "SELECT hstore_get_value('a',1)",
+                 "SELECT hstore_get_value('a=>b','c')" ]:
+        sql_lyr = ds.ExecuteSQL( sql, dialect = 'SQLite' )
+        f = sql_lyr.GetNextFeature()
+        if f.IsFieldSet(0):
+            gdaltest.post_reason('fail')
+            print(sql)
+            f.DumpReadable()
+            return 'fail'
+        ds.ReleaseResultSet( sql_lyr )
+
+    # Valid hstore syntax
+    for (sql, expected) in [ ("SELECT hstore_get_value('a=>b', 'a')", 'b'), ]:
+        sql_lyr = ds.ExecuteSQL( sql, dialect = 'SQLite' )
+        f = sql_lyr.GetNextFeature()
+        if f.GetField(0) != expected:
+            gdaltest.post_reason('fail')
+            print(sql)
+            f.DumpReadable()
+            return 'fail'
+        ds.ReleaseResultSet( sql_lyr )
+
+    return 'success'
+
 gdaltest_list = [
     ogr_sql_sqlite_1,
     ogr_sql_sqlite_2,
@@ -1644,7 +1691,8 @@ gdaltest_list = [
     ogr_sql_sqlite_24,
     ogr_sql_sqlite_25,
     ogr_sql_sqlite_26,
-    ogr_sql_sqlite_27
+    ogr_sql_sqlite_27,
+    ogr_sql_sqlite_28
 ]
 
 if __name__ == '__main__':
