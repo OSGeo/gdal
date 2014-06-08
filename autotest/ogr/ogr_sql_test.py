@@ -1276,6 +1276,23 @@ def ogr_sql_42():
 
     return 'success'
 
+###############################################################################
+# Test escape sequences
+
+def ogr_sql_43():
+
+    ret = 'success'
+    sql = "SELECT '\"' as a, '\\\'' as b, '\'\'' as c FROM poly"
+    sql_lyr = gdaltest.ds.ExecuteSQL( sql )
+
+    feat = sql_lyr.GetNextFeature()
+    if feat['a'] != '"' or feat['b'] != '\'' or feat['c'] != '\'':
+        ret = 'fail'
+
+    gdaltest.ds.ReleaseResultSet( sql_lyr )
+
+    return ret
+
 def ogr_sql_cleanup():
     gdaltest.lyr = None
     gdaltest.ds.Destroy()
@@ -1327,6 +1344,7 @@ gdaltest_list = [
     ogr_sql_40,
     ogr_sql_41,
     ogr_sql_42,
+    ogr_sql_43,
     ogr_sql_cleanup ]
 
 if __name__ == '__main__':

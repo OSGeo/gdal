@@ -106,11 +106,11 @@ int swqlex( YYSTYPE *ppNode, swq_parse_context *context )
 
         while( *pszInput != '\0' )
         {
-            if( *pszInput == '\\' && pszInput[1] == '"' )
+            if( chQuote == '"' && *pszInput == '\\' && pszInput[1] == '"' )
                 pszInput++;
-            else if( *pszInput == '\\' && pszInput[1] == '\'' )
+            else if( chQuote == '\'' && *pszInput == '\\' && pszInput[1] == '\'' )
                 pszInput++;
-            else if( *pszInput == '\'' && pszInput[1] == '\'' )
+            else if( chQuote == '\'' && *pszInput == '\'' && pszInput[1] == '\'' )
                 pszInput++;
             else if( *pszInput == chQuote )
             {
