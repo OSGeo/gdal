@@ -104,6 +104,144 @@ int swq_test_like( const char *input, const char *pattern, char chEscape )
 }
 
 /************************************************************************/
+/*                        OGRHStoreGetValue()                           */
+/************************************************************************/
+
+static char* OGRHStoreCheckEnd(char* pszIter, int bIsKey)
+{
+    pszIter ++;
+    for( ; *pszIter != '\0'; pszIter ++ )
+    {
+        if( bIsKey )
+        {
+            if( *pszIter == ' ' )
+                ;
+            else if( *pszIter == '=' && pszIter[1] == '>' )
+                return pszIter + 2;
+            else
+                return NULL;
+        }
+        else
+        {
+            if( *pszIter == ' ' )
+                ;
+            else if( *pszIter == ',' )
+                return pszIter + 1;
+            else
+                return NULL;
+        }
+    }
+    return pszIter;
+}
+
+static char* OGRHStoreGetNextString(char* pszIter,
+                                    char** ppszOut,
+                                    int bIsKey)
+{
+    char ch;
+    int bInString = FALSE;
+    char* pszOut = NULL;
+    *ppszOut = NULL;
+    for( ; (ch = *pszIter) != '\0'; pszIter ++ )
+    {
+        if( bInString )
+        {
+            if( ch == '"' )
+            {
+                *pszOut = '\0';
+                return OGRHStoreCheckEnd(pszIter, bIsKey);
+            }
+            else if( ch == '\\')
+            {
+                pszIter ++;
+                if( (ch = *pszIter) == '\0' )
+                    return NULL;
+            }
+            *pszOut = ch;
+            pszOut ++;
+        }
+        else
+        {
+            if( ch == ' ' )
+            {
+                if( pszOut != NULL )
+                {
+                    *pszIter = '\0';
+                    return OGRHStoreCheckEnd(pszIter, bIsKey);
+                }
+            }
+            else if( bIsKey && ch == '=' && pszIter[1] == '>' )
+            {
+                if( pszOut != NULL )
+                {
+                    *pszIter = '\0';
+                    return pszIter + 2;
+                }
+            }
+            else if( !bIsKey && ch == ',' )
+            {
+                if( pszOut != NULL )
+                {
+                    *pszIter = '\0';
+                    return pszIter + 1;
+                }
+            }
+            else if( ch == '"' )
+            {
+                pszOut = *ppszOut = pszIter + 1;
+                bInString = TRUE;
+            }
+            else if( pszOut == NULL )
+                pszOut = *ppszOut = pszIter;
+        }
+    }
+
+    if( !bInString && pszOut != NULL )
+    {
+        return pszIter;
+    }
+    return NULL;
+}
+
+static char* OGRHStoreGetNextKeyValue(char* pszHStore,
+                                      char** ppszKey,
+                                       char** ppszValue)
+{
+    char* pszNext = OGRHStoreGetNextString(pszHStore, ppszKey, TRUE);
+    if( pszNext == NULL || *pszNext == '\0' )
+        return NULL;
+    return OGRHStoreGetNextString(pszNext, ppszValue, FALSE);
+}
+
+char* OGRHStoreGetValue(const char* pszHStore, const char* pszSearchedKey)
+{
+    char* pszHStoreDup = CPLStrdup(pszHStore);
+    char* pszHStoreIter = pszHStoreDup;
+    char* pszRet = NULL;
+
+    while( TRUE )
+    {
+        char* pszKey, *pszValue;
+        pszHStoreIter = OGRHStoreGetNextKeyValue(pszHStoreIter, &pszKey, &pszValue);
+        if( pszHStoreIter == NULL )
+        {
+            break;
+        }
+        if( strcmp(pszKey, pszSearchedKey) == 0 )
+        {
+            pszRet = CPLStrdup(pszValue);
+            break;
+        }
+        if( *pszHStoreIter == '\0' )
+        {
+            break;
+        }
+    }
+    CPLFree(pszHStoreDup);
+    return pszRet;
+}
+
+/************************************************************************/
 /*                        SWQGeneralEvaluator()                         */
 /************************************************************************/
 
@@ -577,6 +715,16 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
               break;
           }
 
+          case SWQ_HSTORE_GET_VALUE:
+          {
+              const char *pszHStore = sub_node_values[0]->string_value;
+              const char *pszSearchedKey = sub_node_values[1]->string_value;
+              char* pszRet = OGRHStoreGetValue(pszHStore, pszSearchedKey);
+              poRet->string_value = pszRet ? pszRet : CPLStrdup("");
+              poRet->is_null = (pszRet == NULL);
+              break;
+          }
+
           default:
             CPLAssert( FALSE );
             delete poRet;
@@ -862,6 +1010,26 @@ swq_field_type SWQGeneralChecker( swq_expr_node *poNode )
         }
         break;
 
+      case SWQ_HSTORE_GET_VALUE:
+        if( !SWQCheckSubExprAreNotGeometries(poNode) )
+            return SWQ_ERROR;
+        eRetType = SWQ_STRING;
+        if( poNode->nSubExprCount != 2 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Expected 2 arguments to hstore_get_value(), but got %d.",
+                      poNode->nSubExprCount );
+            return SWQ_ERROR;
+        }
+        if( poNode->papoSubExpr[0]->field_type != SWQ_STRING 
+            || poNode->papoSubExpr[1]->field_type != SWQ_STRING )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Wrong argument type for hstore_get_value(), expected hstore_get_value(string,string)." );
+            return SWQ_ERROR;
+        }
+        break;
+        
       default:
       {
           const swq_operation *poOp = 

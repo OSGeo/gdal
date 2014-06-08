@@ -52,6 +52,7 @@ typedef enum {
     SWQ_MODULUS,
     SWQ_CONCAT,
     SWQ_SUBSTR,
+    SWQ_HSTORE_GET_VALUE,
     SWQ_AVG,
     SWQ_MIN,
     SWQ_MAX,
@@ -332,5 +333,7 @@ const char *swq_select_summarize( swq_select *select_info,
                                   const char *value );
 
 int swq_is_reserved_keyword(const char* pszStr);
+
+char* OGRHStoreGetValue(const char* pszHStore, const char* pszSearchedKey);
 
 #endif /* def _SWQ_H_INCLUDED_ */

@@ -153,6 +153,13 @@ SELECT SUBSTR('abcdef',4)   FROM xxx   --> 'def'
 SELECT SUBSTR('abcdef',-2)  FROM xxx   --> 'ef'
 \endcode
 
+Starting with OGR 2.0, the <i>hstore_get_value()</i> function can be used to extract
+a value associate to a key from a HSTORE string, formatted like "key=>value,other_key=>other_value,..."
+
+\code
+SELECT hstore_get_value('a => b, "key with space"=> "value with space"', 'key with space') FROM xxx --> 'value with space'
+\endcode
+
 \subsubsection ogr_sql_fname_alias Using the field name alias
 
 OGR SQL supports renaming the fields following the SQL92 specification by

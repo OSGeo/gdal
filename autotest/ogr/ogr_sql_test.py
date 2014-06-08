@@ -1293,6 +1293,67 @@ def ogr_sql_43():
 
     return ret
 
+###############################################################################
+# Test hstore_get_value()
+
+def ogr_sql_44():
+
+    # Invalid parameters
+    for sql in ["SELECT hstore_get_value('a') FROM poly",
+                "SELECT hstore_get_value(1, 1) FROM poly"]:
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
+        sql_lyr = gdaltest.ds.ExecuteSQL( sql )
+        gdal.PopErrorHandler()
+        if sql_lyr is not None:
+            gdaltest.post_reason('fail')
+            print(sql)
+            return 'fail'
+
+    # Invalid hstore syntax or empty result
+    for sql in [ "SELECT hstore_get_value('a', null) FROM poly",
+                 "SELECT hstore_get_value(null, 'a') FROM poly",
+                 "SELECT hstore_get_value('a', 'a') FROM poly",
+                 "SELECT hstore_get_value('a=>b', 'c') FROM poly",
+                 "SELECT hstore_get_value('a=>', 'a') FROM poly",
+                 "SELECT hstore_get_value(' a => ', 'a') FROM poly",
+                 "SELECT hstore_get_value('a=>b,z,c=>d', 'c') FROM poly",
+                 "SELECT hstore_get_value('\"a', 'a') FROM poly",
+                 "SELECT hstore_get_value('\"a\"', 'a') FROM poly",
+                 "SELECT hstore_get_value('\"a\"=', 'a') FROM poly",
+                 "SELECT hstore_get_value('\"a\" =>', 'a') FROM poly",
+                 "SELECT hstore_get_value('\"a\" => ', 'a') FROM poly",
+                 "SELECT hstore_get_value('\"a\" => \"', 'a') FROM poly",
+                 "SELECT hstore_get_value('\"a\" => \"\" z', 'a') FROM poly" ]:
+        sql_lyr = gdaltest.ds.ExecuteSQL( sql )
+        f = sql_lyr.GetNextFeature()
+        if f.IsFieldSet(0):
+            gdaltest.post_reason('fail')
+            print(sql)
+            f.DumpReadable()
+            return 'fail'
+        gdaltest.ds.ReleaseResultSet( sql_lyr )
+
+    # Valid hstore syntax
+    for (sql, expected) in [ ("SELECT hstore_get_value('a=>b', 'a') FROM poly", 'b'),
+                             ("SELECT hstore_get_value(' a => b ', 'a') FROM poly", 'b'),
+                             ("SELECT hstore_get_value('\"a\"=>b', 'a') FROM poly", 'b'),
+                             ("SELECT hstore_get_value(' \"a\" =>b', 'a') FROM poly", 'b'),
+                             ("SELECT hstore_get_value('a=>\"b\"', 'a') FROM poly", 'b'),
+                             ("SELECT hstore_get_value('a=> \"b\" ', 'a') FROM poly", 'b'),
+                             ("SELECT hstore_get_value('\"a\"=>\"b\"', 'a') FROM poly", 'b'),
+                             ("SELECT hstore_get_value(' \"a\" => \"b\" ', 'a') FROM poly", 'b'),
+                             ("SELECT hstore_get_value(' \"a\\\"b\" => \"b\" ', 'a\"b') FROM poly", 'b')]:
+        sql_lyr = gdaltest.ds.ExecuteSQL( sql )
+        f = sql_lyr.GetNextFeature()
+        if f.GetField(0) != expected:
+            gdaltest.post_reason('fail')
+            print(sql)
+            f.DumpReadable()
+            return 'fail'
+        gdaltest.ds.ReleaseResultSet( sql_lyr )
+
+    return 'success'
+
 def ogr_sql_cleanup():
     gdaltest.lyr = None
     gdaltest.ds.Destroy()
@@ -1345,6 +1406,7 @@ gdaltest_list = [
     ogr_sql_41,
     ogr_sql_42,
     ogr_sql_43,
+    ogr_sql_44,
     ogr_sql_cleanup ]
 
 if __name__ == '__main__':
