@@ -4,6 +4,10 @@ include ../../../GDALmake.opt
 OBJ	= ogrgeopackagedriver.o ogrgeopackagedatasource.o ogrgeopackagelayer.o \
 	ogrgeopackagetablelayer.o ogrgeopackageselectlayer.o ogrgeopackageutility.o
 
+ifeq ($(SPATIALITE_412_OR_LATER),yes)
+CPPFLAGS +=  -DSPATIALITE_412_OR_LATER
+endif
+
 ifeq ($(SQLITE_HAS_COLUMN_METADATA),yes)
 CPPFLAGS +=  -DSQLITE_HAS_COLUMN_METADATA
 endif

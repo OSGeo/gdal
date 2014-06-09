@@ -31,6 +31,7 @@
 #include "ogr_geopackage.h"
 #include "ogrgeopackageutility.h"
 #include "ogr_p.h"
+#include "swq.h"
 
 /* 1.1.1: A GeoPackage SHALL contain 0x47503130 ("GP10" in ASCII) in the application id */
 /* http://opengis.github.io/geopackage/#_file_format */
@@ -1393,6 +1394,30 @@ void OGRGeoPackageDisableSpatialIndex(sqlite3_context* pContext,
 }
 
 /************************************************************************/
+/*                       GPKG_hstore_get_value()                        */
+/************************************************************************/
+
+static
+void GPKG_hstore_get_value(sqlite3_context* pContext,
+                          int argc, sqlite3_value** argv)
+{
+    if( sqlite3_value_type (argv[0]) != SQLITE_TEXT ||
+        sqlite3_value_type (argv[1]) != SQLITE_TEXT )
+    {
+        sqlite3_result_null (pContext);
+        return;
+    }
+
+    const char* pszHStore = (const char*)sqlite3_value_text(argv[0]);
+    const char* pszSearchedKey = (const char*)sqlite3_value_text(argv[1]);
+    char* pszValue = OGRHStoreGetValue(pszHStore, pszSearchedKey);
+    if( pszValue != NULL )
+        sqlite3_result_text( pContext, pszValue, -1, CPLFree );
+    else
+        sqlite3_result_null( pContext );
+}
+
+/************************************************************************/
 /*                         OpenOrCreateDB()                             */
 /************************************************************************/
 
@@ -1401,6 +1426,10 @@ int OGRGeoPackageDataSource::OpenOrCreateDB(int flags)
     int bSuccess = OGRSQLiteBaseDataSource::OpenOrCreateDB(flags, FALSE);
     if( !bSuccess )
         return FALSE;
+
+#ifdef SPATIALITE_412_OR_LATER
+    InitNewSpatialite();
+#endif
 
     /* Used by RTree Spatial Index Extension */
     sqlite3_create_function(hDB, "ST_MinX", 1, SQLITE_ANY, NULL,
@@ -1429,6 +1458,10 @@ int OGRGeoPackageDataSource::OpenOrCreateDB(int flags)
                             OGRGeoPackageCreateSpatialIndex, NULL, NULL);
     sqlite3_create_function(hDB, "DisableSpatialIndex", 2, SQLITE_ANY, this,
                             OGRGeoPackageDisableSpatialIndex, NULL, NULL);
+
+    // HSTORE functions
+    sqlite3_create_function(hDB, "hstore_get_value", 2, SQLITE_ANY, NULL,
+                            GPKG_hstore_get_value, NULL, NULL);
 
     return TRUE;
 }

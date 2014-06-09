@@ -79,7 +79,7 @@ static int OGRSQLiteInitOldSpatialite()
 /*                          InitNewSpatialite()                         */
 /************************************************************************/
 
-int OGRSQLiteDataSource::InitNewSpatialite()
+int OGRSQLiteBaseDataSource::InitNewSpatialite()
 {
     if( CSLTestBoolean(CPLGetConfigOption("SPATIALITE_LOAD", "TRUE")) )
     {
@@ -97,7 +97,7 @@ int OGRSQLiteDataSource::InitNewSpatialite()
 /*                         FinishNewSpatialite()                        */
 /************************************************************************/
 
-void OGRSQLiteDataSource::FinishNewSpatialite()
+void OGRSQLiteBaseDataSource::FinishNewSpatialite()
 {
     if( hSpatialiteCtxt != NULL )
     {
@@ -151,6 +151,10 @@ OGRSQLiteBaseDataSource::OGRSQLiteBaseDataSource()
 #endif
 
     fpMainFile = NULL; /* Do not close ! The VFS layer will do it for us */
+
+#ifdef SPATIALITE_412_OR_LATER
+    hSpatialiteCtxt = NULL;
+#endif
 }
 
 /************************************************************************/
@@ -160,9 +164,12 @@ OGRSQLiteBaseDataSource::OGRSQLiteBaseDataSource()
 OGRSQLiteBaseDataSource::~OGRSQLiteBaseDataSource()
 
 {
+#ifdef SPATIALITE_412_OR_LATER
+    FinishNewSpatialite();
+#endif
+
     CloseDB();
     CPLFree(pszName);
-
 }
 
 /************************************************************************/
@@ -209,10 +216,6 @@ OGRSQLiteDataSource::OGRSQLiteDataSource()
     bSpatialite4Layout = FALSE;
     bUpdate = FALSE;
 
-#ifdef SPATIALITE_412_OR_LATER
-    hSpatialiteCtxt = NULL;
-#endif
-
     nUndefinedSRID = -1; /* will be changed to 0 if Spatialite >= 4.0 detected */
 
     nFileTimestamp = 0;
@@ -251,10 +254,6 @@ OGRSQLiteDataSource::~OGRSQLiteDataSource()
     }
     CPLFree( panSRID );
     CPLFree( papoSRS );
-
-#ifdef SPATIALITE_412_OR_LATER
-    FinishNewSpatialite();
-#endif
 }
 
 /************************************************************************/

@@ -1116,7 +1116,7 @@ void* OGRSQLiteRegisterSQLFunctions(sqlite3* hDB)
                             OGR2SQLITE_Transform, NULL, NULL);
 
     // HSTORE functions
-    sqlite3_create_function(hDB, "hstore_get_value", 2, SQLITE_ANY, pData,
+    sqlite3_create_function(hDB, "hstore_get_value", 2, SQLITE_ANY, NULL,
                             OGRSQLITE_hstore_get_value, NULL, NULL);
 
 #ifdef MINIMAL_SPATIAL_FUNCTIONS
