@@ -1086,6 +1086,15 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
         if( pszAuthName != NULL && EQUAL(pszAuthName,"epsg") )
         {
             nEPSGCode = atoi(oSRS.GetAuthorityCode( "GEOGCS" ));
+        }
+    }
+
+    // Determinte if we need to flix axis. Reimport from EPSG and make
+    // sure not to strip axis definitions to determine the axis order.
+    if( nEPSGCode != 0 && oSRS.importFromEPSGA(nEPSGCode) == OGRERR_NONE )
+    {
+        if( oSRS.EPSGTreatsAsLatLong() || oSRS.EPSGTreatsAsNorthingEasting() )
+        {
             bNeedAxisFlip = TRUE;
         }
     }
