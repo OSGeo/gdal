@@ -235,6 +235,7 @@ int GDALMultiDomainMetadata::XMLInit( CPLXMLNode *psTree, int bMerge )
             
             char *pszDoc = CPLSerializeXMLTree( psSubDoc );
 
+            poMDList->Clear();
             poMDList->AddStringDirectly( pszDoc );
         }
 
