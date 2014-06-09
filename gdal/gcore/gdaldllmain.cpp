@@ -64,12 +64,12 @@ void CPLFinalizeTLS();
  * @since GDAL 2.0
  */
 
+static int bGDALDestroyAlreadyCalled = FALSE;
 void GDALDestroy(void)
 {
-    static int bAlreadyCalled = FALSE;
-    if( bAlreadyCalled )
+    if( bGDALDestroyAlreadyCalled )
         return;
-    bAlreadyCalled = TRUE;
+    bGDALDestroyAlreadyCalled = TRUE;
 
     CPLDebug("GDAL", "In GDALDestroy - unloading GDAL shared library.");
     bInGDALGlobalDestructor = TRUE;
@@ -112,6 +112,8 @@ static void GDALInitialize(void)
 
 static void GDALDestructor(void)
 {
+    if( bGDALDestroyAlreadyCalled )
+        return;
     if( !CSLTestBoolean(CPLGetConfigOption("GDAL_DESTROY", "YES")) )
         return;
     GDALDestroy();
