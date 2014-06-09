@@ -55,6 +55,7 @@ class JDEMDataset : public GDALPamDataset
 		~JDEMDataset();
     
     static GDALDataset *Open( GDALOpenInfo * );
+    static int          Identify( GDALOpenInfo * );
 
     CPLErr 	GetGeoTransform( double * padfTransform );
     const char *GetProjectionRef();
@@ -75,22 +76,10 @@ GDALDataset *JDEMDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
 // -------------------------------------------------------------------- //
-//      Confirm that the header has what appears to be dates in the     //
-//      expected locations.  Sadly this is a relatively weak test.      //
+//      Confirm that the header is compatible with a JDEM dataset.      //
 // -------------------------------------------------------------------- //
-    if( poOpenInfo->nHeaderBytes < 50 )
+    if (!Identify(poOpenInfo))
         return NULL;
-
-    // check if century values seem reasonable //
-    if( (!EQUALN((char *)poOpenInfo->pabyHeader+11,"19",2)
-          && !EQUALN((char *)poOpenInfo->pabyHeader+11,"20",2))
-        || (!EQUALN((char *)poOpenInfo->pabyHeader+15,"19",2)
-             && !EQUALN((char *)poOpenInfo->pabyHeader+15,"20",2))
-        || (!EQUALN((char *)poOpenInfo->pabyHeader+19,"19",2)
-             && !EQUALN((char *)poOpenInfo->pabyHeader+19,"20",2)) )
-    {
-        return NULL;
-    }
     
 // -------------------------------------------------------------------- //
 //      Confirm the requested access is supported.                      //
@@ -103,6 +92,11 @@ GDALDataset *JDEMDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
+    /* Check that the file pointer from GDALOpenInfo* is available */
+    if( poOpenInfo->fpL == NULL )
+    {
+        return NULL;
+    }
 // -------------------------------------------------------------------- //
 //      Create a corresponding GDALDataset.                             //
 // -------------------------------------------------------------------- //
@@ -110,7 +104,9 @@ GDALDataset *JDEMDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new JDEMDataset();
 
-    poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
+    /* Borrow the file pointer from GDALOpenInfo* */
+    poDS->fp = poOpenInfo->fpL;
+    poOpenInfo->fpL = NULL;
     
 // -------------------------------------------------------------------- //
 //      Read the header.                                                //
@@ -159,18 +155,19 @@ GDALOpenInfo object.  The GDALOpenInfo includes the following public
 data members:
 
 \code
-    char	*pszFilename;
-    char        **papszSiblingFiles;
+    char        *pszFilename;
+    char**      papszOpenOptions;
 
-    GDALAccess	eAccess; // GA_ReadOnly or GA_Update
+    GDALAccess  eAccess;  // GA_ReadOnly or GA_Update
+    int         nOpenFlags;
 
-    int 	bStatOK;
+    int         bStatOK;
     int         bIsDirectory;
-    
-    FILE	*fp;
 
-    int		nHeaderBytes;
-    GByte	*pabyHeader;
+    VSILFILE   *fpL;
+
+    int         nHeaderBytes;
+    GByte       *pabyHeader;
 \endcode
 
 The driver can inspect these to establish if the file is supported.  If the
@@ -187,9 +184,22 @@ various date fields to ensure they have reasonable century values.  If the
 test fails, we quietly return NULL indicating this file isn't of our supported
 format. 
 
-\code
+The identification is in fact delegated to a Identify() static function :
+
+\verbatim
+/************************************************************************/
+/*                              Identify()                              */
+/************************************************************************/
+
+int JDEMDataset::Identify( GDALOpenInfo * poOpenInfo )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Confirm that the header has what appears to be dates in the     */
+/*      expected locations.  Sadly this is a relatively weak test.      */
+/* -------------------------------------------------------------------- */
     if( poOpenInfo->nHeaderBytes < 50 )
-        return NULL;
+        return FALSE;
 
     /* check if century values seem reasonable */
     if( (!EQUALN((char *)poOpenInfo->pabyHeader+11,"19",2)
@@ -199,9 +209,12 @@ format.
         || (!EQUALN((char *)poOpenInfo->pabyHeader+19,"19",2)
              && !EQUALN((char *)poOpenInfo->pabyHeader+19,"20",2)) )
     {
-        return NULL;
+        return FALSE;
     }
-\endcode
+
+    return TRUE;
+}
+\endverbatim
 
 It is important to make the <i>is this my format</i> test as stringent as
 possible.  In this particular case the test is weak, and a file that happened
@@ -226,15 +239,23 @@ Next we need to create an instance of the database class in which we will
 set various information of interest.
 
 \code
+    /* Check that the file pointer from GDALOpenInfo* is available */
+    if( poOpenInfo->fpL == NULL )
+    {
+        return NULL;
+    }
+
     JDEMDataset 	*poDS;
 
     poDS = new JDEMDataset();
 
-    poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
+    /* Borrow the file pointer from GDALOpenInfo* */
+    poDS->fp = poOpenInfo->fpL;
+    poOpenInfo->fpL = NULL;
 \endcode
 
-At this point we open the file, to acquire a file handle
-for the dataset.  Whenever possible, we try to use the VSI*L GDAL API to
+At this point we "borrow" the file handle that was held by GDALOpenInfo*.
+This file pointer uses the VSI*L GDAL API to
 access files on disk.  This virtualized POSIX-style API allows some 
 special capabilities like supporting large files, in-memory files 
 and zipped files. 
@@ -432,13 +453,16 @@ void GDALRegister_JDEM()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "JDEM" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "Japanese DEM (.mem)" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_various.html#JDEM" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "mem" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnOpen = JDEMDataset::Open;
+        poDriver->pfnIdentify = JDEMDataset::Identify;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
@@ -463,6 +487,9 @@ registering it with the GDALDriverManager().
 name for this format, often used to identity the driver in scripts and 
 commandline programs.  Normally 3-5 characters in length, and matching the 
 prefix of the format classes. (mandatory)
+
+<li> GDAL_DCAP_RASTER: set to YES to indicate that this driver handles
+raster data. (mandatory)
 
 <li> GDAL_DMD_LONGNAME: A longer descriptive name for the file format,
 but still no longer than 50-60 characters. (mandatory)
@@ -490,7 +517,17 @@ with a CreateCopy() method, and that always writes Float32 might also list
 Byte, Int16, and UInt16 since they can losslessly translated to Float32.  An
 example value might be "Byte Int16 UInt16". (required - if creation supported)
 
+<li> GDAL_DCAP_VIRTUALIO: set to YES to indicate that this driver can deal
+with files opened with the VSI*L GDAL API. Otherwise this metadata item should
+not be defined. (optional)
+
 <li> pfnOpen: The function to call to try opening files of this format. 
+(optional) 
+
+<li> pfnIdentify: The function to call to try identifying files of this format.
+A driver should return 1 if it recognizes the file as being of its format,
+0 if it recognizes the file as being NOT of its format, or -1 if it cannot
+reach to a firm conclusion by just examining the header bytes.
 (optional) 
 
 <li> pfnCreate: The function to call to create new updatable datasets of this
@@ -754,9 +791,9 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 // -------------------------------------------------------------------- 
 //      Create the dataset.                                             
 // -------------------------------------------------------------------- 
-    FILE	*fpImage;
+    VSILFILE	*fpImage;
 
-    fpImage = VSIFOpen( pszFilename, "wb" );
+    fpImage = VSIFOpenL( pszFilename, "wb" );
     if( fpImage == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -827,7 +864,7 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     jpeg_finish_compress( &sCInfo );
     jpeg_destroy_compress( &sCInfo );
 
-    VSIFClose( fpImage );
+    VSIFCloseL( fpImage );
 
     return (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
 }

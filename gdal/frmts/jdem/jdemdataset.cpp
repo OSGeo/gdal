@@ -305,6 +305,9 @@ int JDEMDataset::Identify( GDALOpenInfo * poOpenInfo )
 GDALDataset *JDEMDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
+/* -------------------------------------------------------------------- */
+/*      Confirm that the header is compatible with a JDEM dataset.      */
+/* -------------------------------------------------------------------- */
     if (!Identify(poOpenInfo))
         return NULL;
 
@@ -318,6 +321,12 @@ GDALDataset *JDEMDataset::Open( GDALOpenInfo * poOpenInfo )
                   " datasets.\n" );
         return NULL;
     }
+    
+    /* Check that the file pointer from GDALOpenInfo* is available */
+    if( poOpenInfo->fpL == NULL )
+    {
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
@@ -326,12 +335,9 @@ GDALDataset *JDEMDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new JDEMDataset();
 
-    poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
-    if (poDS->fp == NULL)
-    {
-        delete poDS;
-        return NULL;
-    }
+    /* Borrow the file pointer from GDALOpenInfo* */
+    poDS->fp = poOpenInfo->fpL;
+    poOpenInfo->fpL = NULL;
     
 /* -------------------------------------------------------------------- */
 /*      Read the header.                                                */
