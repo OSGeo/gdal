@@ -14,7 +14,7 @@ utility for dumping point layers from an OGR data source to stdout in
 comma-delimited format. 
 
 Initially it is necessary to register all the format drivers that are desired.
-This is normally accomplished by calling OGRRegisterAll() which registers
+This is normally accomplished by calling GDALAllRegister() which registers
 all format drivers built into GDAL/OGR.  
 
 In C++ :
@@ -24,54 +24,55 @@ In C++ :
 int main()
 
 {
-	OGRRegisterAll();
+    GDALAllRegister();
 \endcode
 
 In C :
 \code
-#include "ogr_api.h"
+#include "gdal.h"
 
 int main()
 
 {
-	OGRRegisterAll();
+    GDALAllRegister();
 \endcode
 
 Next we need to open the input OGR datasource.  Datasources can be files, 
 RDBMSes, directories full of files, or even remote web services depending on
 the driver being used.  However, the datasource name is always a single
 string.  In this case we are hardcoded to open a particular shapefile.
-The second argument (FALSE) tells the OGRSFDriverRegistrar::Open() method 
-that we don't require update access.  On failure NULL is returned, and
+The second argument (GDAL_OF_VECTOR) tells the OGROpen() method 
+that we want a vector driver to be use and that don't require update access.
+On failure NULL is returned, and
 we report an error. 
 
 In C++ :
 \code
-    OGRDataSource       *poDS;
+    GDALDataset       *poDS;
 
-    poDS = OGRSFDriverRegistrar::Open( "point.shp", FALSE );
+    poDS = (GDALDataset*) GDALOpenEx( "point.shp", GDAL_OF_VECTOR, NULL, NULL, NULL );
     if( poDS == NULL )
     {
-	printf( "Open failed.\n" );
-	exit( 1 );
+        printf( "Open failed.\n" );
+        exit( 1 );
     }
 \endcode
 
 In C :
 \code
-    OGRDataSourceH hDS;
+    GDALDatasetH hDS;
 
-    hDS = OGROpen( "point.shp", FALSE, NULL );
+    hDS = GDALOpenEx( "point.shp", GDAL_OF_VECTOR, NULL, NULL, NULL );
     if( hDS == NULL )
     {
-	printf( "Open failed.\n" );
-	exit( 1 );
+        printf( "Open failed.\n" );
+        exit( 1 );
     }
 \endcode
 
-An OGRDataSource can potentially have many layers associated with it.  The 
-number of layers available can be queried with OGRDataSource::GetLayerCount()
-and individual layers fetched by index using OGRDataSource::GetLayer().  
+A GDALDataset can potentially have many layers associated with it.  The 
+number of layers available can be queried with GDALDataset::GetLayerCount()
+and individual layers fetched by index using GDALDataset::GetLayer().  
 However, we will just fetch the layer by name. 
 
 In C++ :
@@ -85,7 +86,7 @@ In C :
 \code
     OGRLayerH hLayer;
 
-    hLayer = OGR_DS_GetLayerByName( hDS, "point" );
+    hLayer = GDALDatasetGetLayerByName( hDS, "point" );
 \endcode
 
 Now we want to start reading features from the layer.  Before we start we 
@@ -123,42 +124,42 @@ and fetch and report the attributes based on their type.
 
 In C++ :
 \code
-	OGRFeatureDefn *poFDefn = poLayer->GetLayerDefn();
-	int iField;
+    OGRFeatureDefn *poFDefn = poLayer->GetLayerDefn();
+    int iField;
 
-	for( iField = 0; iField < poFDefn->GetFieldCount(); iField++ )
-        {
-	    OGRFieldDefn *poFieldDefn = poFDefn->GetFieldDefn( iField );
+    for( iField = 0; iField < poFDefn->GetFieldCount(); iField++ )
+    {
+        OGRFieldDefn *poFieldDefn = poFDefn->GetFieldDefn( iField );
 
-	    if( poFieldDefn->GetType() == OFTInteger )
-		printf( "%d,", poFeature->GetFieldAsInteger( iField ) );
-	    else if( poFieldDefn->GetType() == OFTReal )
-		printf( "%.3f,", poFeature->GetFieldAsDouble(iField) );
-	    else if( poFieldDefn->GetType() == OFTString )
-		printf( "%s,", poFeature->GetFieldAsString(iField) );
-	    else
-		printf( "%s,", poFeature->GetFieldAsString(iField) );
-        }
+        if( poFieldDefn->GetType() == OFTInteger )
+            printf( "%d,", poFeature->GetFieldAsInteger( iField ) );
+        else if( poFieldDefn->GetType() == OFTReal )
+            printf( "%.3f,", poFeature->GetFieldAsDouble(iField) );
+        else if( poFieldDefn->GetType() == OFTString )
+            printf( "%s,", poFeature->GetFieldAsString(iField) );
+        else
+            printf( "%s,", poFeature->GetFieldAsString(iField) );
+    }
 \endcode
 
 In C :
 \code
-	OGRFeatureDefnH hFDefn = OGR_L_GetLayerDefn(hLayer);
-	int iField;
+    OGRFeatureDefnH hFDefn = OGR_L_GetLayerDefn(hLayer);
+    int iField;
 
-	for( iField = 0; iField < OGR_FD_GetFieldCount(hFDefn); iField++ )
-        {
-	    OGRFieldDefnH hFieldDefn = OGR_FD_GetFieldDefn( hFDefn, iField );
+    for( iField = 0; iField < OGR_FD_GetFieldCount(hFDefn); iField++ )
+    {
+        OGRFieldDefnH hFieldDefn = OGR_FD_GetFieldDefn( hFDefn, iField );
 
-	    if( OGR_Fld_GetType(hFieldDefn) == OFTInteger )
-		printf( "%d,", OGR_F_GetFieldAsInteger( hFeature, iField ) );
-	    else if( OGR_Fld_GetType(hFieldDefn) == OFTReal )
-		printf( "%.3f,", OGR_F_GetFieldAsDouble( hFeature, iField) );
-	    else if( OGR_Fld_GetType(hFieldDefn) == OFTString )
-		printf( "%s,", OGR_F_GetFieldAsString( hFeature, iField) );
-	    else
-		printf( "%s,", OGR_F_GetFieldAsString( hFeature, iField) );
-        }
+        if( OGR_Fld_GetType(hFieldDefn) == OFTInteger )
+            printf( "%d,", OGR_F_GetFieldAsInteger( hFeature, iField ) );
+        else if( OGR_Fld_GetType(hFieldDefn) == OFTReal )
+            printf( "%.3f,", OGR_F_GetFieldAsDouble( hFeature, iField) );
+        else if( OGR_Fld_GetType(hFieldDefn) == OFTString )
+            printf( "%s,", OGR_F_GetFieldAsString( hFeature, iField) );
+        else
+            printf( "%s,", OGR_F_GetFieldAsString( hFeature, iField) );
+    }
 \endcode
 
 There are a few more field types than those explicitly handled above, but
@@ -174,36 +175,36 @@ placeholders.
 
 In C++ :
 \code
-	OGRGeometry *poGeometry;
+    OGRGeometry *poGeometry;
 
-	poGeometry = poFeature->GetGeometryRef();
-	if( poGeometry != NULL 
+    poGeometry = poFeature->GetGeometryRef();
+    if( poGeometry != NULL 
             && wkbFlatten(poGeometry->getGeometryType()) == wkbPoint )
-        {
-	    OGRPoint *poPoint = (OGRPoint *) poGeometry;
+    {
+        OGRPoint *poPoint = (OGRPoint *) poGeometry;
 
-	    printf( "%.3f,%3.f\n", poPoint->getX(), poPoint->getY() );
-        }
-	else
-	{
-	    printf( "no point geometry\n" );
-	}	
+        printf( "%.3f,%3.f\n", poPoint->getX(), poPoint->getY() );
+    }
+    else
+    {
+        printf( "no point geometry\n" );
+    }
 \endcode
 
 In C :
 \code
-	OGRGeometryH hGeometry;
+    OGRGeometryH hGeometry;
 
-	hGeometry = OGR_F_GetGeometryRef(hFeature);
-	if( hGeometry != NULL 
+    hGeometry = OGR_F_GetGeometryRef(hFeature);
+    if( hGeometry != NULL 
             && wkbFlatten(OGR_G_GetGeometryType(hGeometry)) == wkbPoint )
-        {
-	    printf( "%.3f,%3.f\n", OGR_G_GetX(hGeometry, 0), OGR_G_GetY(hGeometry, 0) );
-        }
-	else
-	{
-	    printf( "no point geometry\n" );
-	}	
+    {
+        printf( "%.3f,%3.f\n", OGR_G_GetX(hGeometry, 0), OGR_G_GetY(hGeometry, 0) );
+    }
+    else
+    {
+        printf( "no point geometry\n" );
+    }
 \endcode
 
 The wkbFlatten() macro is used above to convert the type for a wkbPoint25D 
@@ -286,31 +287,25 @@ feature.
 
 In C++ :
 \code
-   	OGRFeature::DestroyFeature( poFeature );
+        OGRFeature::DestroyFeature( poFeature );
     }
 \endcode
 
 In C :
 \code
-   	OGR_F_Destroy( hFeature );
+        OGR_F_Destroy( hFeature );
     }
 \endcode
 
-The OGRLayer returned by OGRDataSource::GetLayerByName() is also a reference
+The OGRLayer returned by GDALDataset::GetLayerByName() is also a reference
 to an internal layer owned by the OGRDataSource so we don't need to delete
 it.  But we do need to delete the datasource in order to close the input file.
 Once again we do this with a custom delete method to avoid special win32 
 heap issus. 
 
-In C++ :
+In C/C++ :
 \code
-    OGRDataSource::DestroyDataSource( poDS );
-}
-\endcode
-
-In C :
-\code
-    OGR_DS_Destroy( hDS );
+    GDALClose( poDS );
 }
 \endcode
 
@@ -323,15 +318,15 @@ In C++ :
 int main()
 
 {
-    OGRRegisterAll();
+    GDALAllRegister();
 
-    OGRDataSource       *poDS;
+    GDALDataset       *poDS;
 
-    poDS = OGRSFDriverRegistrar::Open( "point.shp", FALSE );
+    poDS = (GDALDataset*) GDALOpenEx( "point.shp", GDAL_OF_VECTOR, NULL, NULL, NULL );
     if( poDS == NULL )
     {
-	printf( "Open failed.\n" );
-	exit( 1 );
+        printf( "Open failed.\n" );
+        exit( 1 );
     }
 
     OGRLayer  *poLayer;
@@ -343,65 +338,65 @@ int main()
     poLayer->ResetReading();
     while( (poFeature = poLayer->GetNextFeature()) != NULL )
     {
-	OGRFeatureDefn *poFDefn = poLayer->GetLayerDefn();
-	int iField;
+        OGRFeatureDefn *poFDefn = poLayer->GetLayerDefn();
+        int iField;
 
-	for( iField = 0; iField < poFDefn->GetFieldCount(); iField++ )
+        for( iField = 0; iField < poFDefn->GetFieldCount(); iField++ )
         {
-	    OGRFieldDefn *poFieldDefn = poFDefn->GetFieldDefn( iField );
+            OGRFieldDefn *poFieldDefn = poFDefn->GetFieldDefn( iField );
 
-	    if( poFieldDefn->GetType() == OFTInteger )
-		printf( "%d,", poFeature->GetFieldAsInteger( iField ) );
-	    else if( poFieldDefn->GetType() == OFTReal )
-		printf( "%.3f,", poFeature->GetFieldAsDouble(iField) );
-	    else if( poFieldDefn->GetType() == OFTString )
-		printf( "%s,", poFeature->GetFieldAsString(iField) );
-	    else
-		printf( "%s,", poFeature->GetFieldAsString(iField) );
+            if( poFieldDefn->GetType() == OFTInteger )
+                printf( "%d,", poFeature->GetFieldAsInteger( iField ) );
+            else if( poFieldDefn->GetType() == OFTReal )
+                printf( "%.3f,", poFeature->GetFieldAsDouble(iField) );
+            else if( poFieldDefn->GetType() == OFTString )
+                printf( "%s,", poFeature->GetFieldAsString(iField) );
+            else
+                printf( "%s,", poFeature->GetFieldAsString(iField) );
         }
 
-	OGRGeometry *poGeometry;
+        OGRGeometry *poGeometry;
 
-	poGeometry = poFeature->GetGeometryRef();
-	if( poGeometry != NULL 
-            && wkbFlatten(poGeometry->getGeometryType()) == wkbPoint )
+        poGeometry = poFeature->GetGeometryRef();
+        if( poGeometry != NULL 
+                && wkbFlatten(poGeometry->getGeometryType()) == wkbPoint )
         {
-	    OGRPoint *poPoint = (OGRPoint *) poGeometry;
+            OGRPoint *poPoint = (OGRPoint *) poGeometry;
 
-	    printf( "%.3f,%3.f\n", poPoint->getX(), poPoint->getY() );
+            printf( "%.3f,%3.f\n", poPoint->getX(), poPoint->getY() );
         }
-	else
-	{
-	    printf( "no point geometry\n" );
-	}	
-   	OGRFeature::DestroyFeature( poFeature );
+        else
+        {
+            printf( "no point geometry\n" );
+        }
+        OGRFeature::DestroyFeature( poFeature );
     }
 
-    OGRDataSource::DestroyDataSource( poDS );
+    GDALClose( poDS );
 }
 \endcode
 
 In C :
 \code
-#include "ogr_api.h"
+#include "gdal.h"
 
 int main()
 
 {
-    OGRRegisterAll();
+    GDALAllRegister();
 
-    OGRDataSourceH hDS;
+    GDALDatasetH hDS;
     OGRLayerH hLayer;
     OGRFeatureH hFeature;
 
-    hDS = OGROpen( "point.shp", FALSE, NULL );
+    hDS = GDALOpenEx( "point.shp", GDAL_OF_VECTOR, NULL, NULL, NULL );
     if( hDS == NULL )
     {
         printf( "Open failed.\n" );
         exit( 1 );
     }
 
-    hLayer = OGR_DS_GetLayerByName( hDS, "point" );
+    hLayer = GDALDatasetGetLayerByName( hDS, "point" );
 
     OGR_L_ResetReading(hLayer);
     while( (hFeature = OGR_L_GetNextFeature(hLayer)) != NULL )
@@ -440,16 +435,16 @@ int main()
         OGR_F_Destroy( hFeature );
     }
 
-    OGR_DS_Destroy( hDS );
+    GDALClose( hDS );
 }
 \endcode
 
 In Python:
 \code
 import sys
-import ogr
+from osgeo import gdal
 
-ds = ogr.Open( "point.shp" )
+ds = gdal.OpenEx( "point.shp", gdal.OF_VECTOR )
 if ds is None:
     print "Open failed.\n"
     sys.exit( 1 )
@@ -500,16 +495,15 @@ In C++ :
 int main()
 {
     const char *pszDriverName = "ESRI Shapefile";
-    OGRSFDriver *poDriver;
+    GDALDriver *poDriver;
 
-    OGRRegisterAll();
+    GDALAllRegister();
 
-    poDriver = OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName(
-		pszDriverName );
+    poDriver = GetGDALDriverManager()->GetDriverByName(pszDriverName );
     if( poDriver == NULL )
     {
-	printf( "%s driver not available.\n", pszDriverName );
-	exit( 1 );
+        printf( "%s driver not available.\n", pszDriverName );
+        exit( 1 );
     }
 \endcode
 
@@ -520,46 +514,48 @@ In C :
 int main()
 {
     const char *pszDriverName = "ESRI Shapefile";
-    OGRSFDriverH hDriver;
+    GDALDriver *poDriver;
 
-    OGRRegisterAll();
+    GDALAllRegister();
 
-    hDriver = OGRGetDriverByName( pszDriverName );
-    if( hDriver == NULL )
+    poDriver = (GDALDriver*) GDALGetDriverByName(pszDriverName );
+    if( poDriver == NULL )
     {
-	printf( "%s driver not available.\n", pszDriverName );
-	exit( 1 );
+        printf( "%s driver not available.\n", pszDriverName );
+        exit( 1 );
     }
 \endcode
 
 Next we create the datasource.  The ESRI Shapefile driver allows us to create
 a directory full of shapefiles, or a single shapefile as a datasource.  In
 this case we will explicitly create a single file by including the extension
-in the name.  Other drivers behave differently.  The second argument to 
+in the name.  Other drivers behave differently.
+The second, third, fourth and fifth argument are related to raster dimensions
+(in case the driver has raster capabilities). The last argument to 
 the call is a list of option values, but we will just be using defaults in
 this case.  Details of the options supported are also format specific. 
 
 In C ++ :
 \code
-    OGRDataSource *poDS;
+    GDALDataset *poDS;
 
-    poDS = poDriver->CreateDataSource( "point_out.shp", NULL );
+    poDS = poDriver->Create( "point_out.shp", 0, 0, 0, GDT_Unknown, NULL );
     if( poDS == NULL )
     {
-	printf( "Creation of output file failed.\n" );
-	exit( 1 );
+        printf( "Creation of output file failed.\n" );
+        exit( 1 );
     }
 \endcode
 
 In C :
 \code
-    OGRDataSourceH hDS;
+    GDALDatasetH hDS;
 
-    hDS = OGR_Dr_CreateDataSource( hDriver, "point_out.shp", NULL );
+    hDS = GDALCreate( hDriver, "point_out.shp", 0, 0, 0, GDT_Unknown, NULL );
     if( hDS == NULL )
     {
-	printf( "Creation of output file failed.\n" );
-	exit( 1 );
+        printf( "Creation of output file failed.\n" );
+        exit( 1 );
     }
 \endcode
 
@@ -575,8 +571,8 @@ In C++ :
     poLayer = poDS->CreateLayer( "point_out", NULL, wkbPoint, NULL );
     if( poLayer == NULL )
     {
-	printf( "Layer creation failed.\n" );
-	exit( 1 );
+        printf( "Layer creation failed.\n" );
+        exit( 1 );
     }
 \endcode
 
@@ -584,11 +580,11 @@ In C :
 \code
     OGRLayerH hLayer;
 
-    hLayer = OGR_DS_CreateLayer( hDS, "point_out", NULL, wkbPoint, NULL );
+    hLayer = GDALDatasetCreateLayer( hDS, "point_out", NULL, wkbPoint, NULL );
     if( hLayer == NULL )
     {
-	printf( "Layer creation failed.\n" );
-	exit( 1 );
+        printf( "Layer creation failed.\n" );
+        exit( 1 );
     }
 \endcode
 
@@ -611,7 +607,7 @@ In C++:
 
     if( poLayer->CreateField( &oField ) != OGRERR_NONE )
     {
-	printf( "Creating Name field failed.\n" );
+        printf( "Creating Name field failed.\n" );
         exit( 1 );
     }
 \endcode
@@ -626,7 +622,7 @@ In C:
 
     if( OGR_L_CreateField( hLayer, hFieldDefn, TRUE ) != OGRERR_NONE )
     {
-	printf( "Creating Name field failed.\n" );
+        printf( "Creating Name field failed.\n" );
         exit( 1 );
     }
 
@@ -653,18 +649,18 @@ associated with the layer it will be written to.
 
 In C++ :
 \code
-	OGRFeature *poFeature;
+        OGRFeature *poFeature;
 
-	poFeature = OGRFeature::CreateFeature( poLayer->GetLayerDefn() );
-	poFeature->SetField( "Name", szName );
+        poFeature = OGRFeature::CreateFeature( poLayer->GetLayerDefn() );
+        poFeature->SetField( "Name", szName );
 \endcode
 
 In C :
 \code
-	OGRFeatureH hFeature;
+        OGRFeatureH hFeature;
 
-	hFeature = OGR_F_Create( OGR_L_GetLayerDefn( hLayer ) );
-	OGR_F_SetFieldString( hFeature, OGR_F_GetFieldIndex(hFeature, "Name"), szName );
+        hFeature = OGR_F_Create( OGR_L_GetLayerDefn( hLayer ) );
+        OGR_F_SetFieldString( hFeature, OGR_F_GetFieldIndex(hFeature, "Name"), szName );
 \endcode
 
 We create a local geometry object, and assign its copy (indirectly) to the feature.
@@ -675,21 +671,21 @@ of the geometry.
 
 In C++ :
 \code
-	OGRPoint pt;
-	pt.setX( x );
-	pt.setY( y );
-	
-	poFeature->SetGeometry( &pt ); 
+        OGRPoint pt;
+        pt.setX( x );
+        pt.setY( y );
+        
+        poFeature->SetGeometry( &pt ); 
 \endcode
 
 In C :
 \code
-	OGRGeometryH hPt;
-	hPt = OGR_G_CreateGeometry(wkbPoint);
-	OGR_G_SetPoint_2D(hPt, 0, x, y);
-	
-	OGR_F_SetGeometry( hFeature, hPt ); 
-	OGR_G_DestroyGeometry(hPt);
+        OGRGeometryH hPt;
+        hPt = OGR_G_CreateGeometry(wkbPoint);
+        OGR_G_SetPoint_2D(hPt, 0, x, y);
+        
+        OGR_F_SetGeometry( hFeature, hPt ); 
+        OGR_G_DestroyGeometry(hPt);
 \endcode
 
 Now we create a feature in the file.  The OGRLayer::CreateFeature() does not
@@ -697,40 +693,34 @@ take ownership of our feature so we clean it up when done with it.
 
 In C++ :
 \code
-	if( poLayer->CreateFeature( poFeature ) != OGRERR_NONE )
+        if( poLayer->CreateFeature( poFeature ) != OGRERR_NONE )
         {
-	   printf( "Failed to create feature in shapefile.\n" );
+            printf( "Failed to create feature in shapefile.\n" );
            exit( 1 );
         }
-	
-	OGRFeature::DestroyFeature( poFeature );
+
+        OGRFeature::DestroyFeature( poFeature );
    }
 \endcode
 
 In C :
 \code
-	if( OGR_L_CreateFeature( hLayer, hFeature ) != OGRERR_NONE )
+        if( OGR_L_CreateFeature( hLayer, hFeature ) != OGRERR_NONE )
         {
-	   printf( "Failed to create feature in shapefile.\n" );
+            printf( "Failed to create feature in shapefile.\n" );
            exit( 1 );
         }
-	
-	OGR_F_Destroy( hFeature );
+
+        OGR_F_Destroy( hFeature );
    }
 \endcode
 
 Finally we need to close down the datasource in order to ensure headers
 are written out in an orderly way and all resources are recovered.
 
-In C++ :
+In C/C++ :
 \code
-    OGRDataSource::DestroyDataSource( poDS );
-}
-\endcode
-
-In C :
-\code
-    OGR_DS_Destroy( hDS );
+    GDALClose( poDS );
 }
 \endcode
 
@@ -743,25 +733,24 @@ In C++ :
 int main()
 {
     const char *pszDriverName = "ESRI Shapefile";
-    OGRSFDriver *poDriver;
+    GDALDriver *poDriver;
 
-    OGRRegisterAll();
+    GDALAllRegister();
 
-    poDriver = OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName(
-		pszDriverName );
+    poDriver = GetGDALDriverManager()->GetDriverByName(pszDriverName );
     if( poDriver == NULL )
     {
-	printf( "%s driver not available.\n", pszDriverName );
-	exit( 1 );
+        printf( "%s driver not available.\n", pszDriverName );
+        exit( 1 );
     }
 
     OGRDataSource *poDS;
 
-    poDS = poDriver->CreateDataSource( "point_out.shp", NULL );
+    poDS = poDriver->Create( "point_out.shp", 0, 0, 0, GDT_Unknown, NULL );
     if( poDS == NULL )
     {
-	printf( "Creation of output file failed.\n" );
-	exit( 1 );
+        printf( "Creation of output file failed.\n" );
+        exit( 1 );
     }
 
     OGRLayer *poLayer;
@@ -769,8 +758,8 @@ int main()
     poLayer = poDS->CreateLayer( "point_out", NULL, wkbPoint, NULL );
     if( poLayer == NULL )
     {
-	printf( "Layer creation failed.\n" );
-	exit( 1 );
+        printf( "Layer creation failed.\n" );
+        exit( 1 );
     }
 
     OGRFieldDefn oField( "Name", OFTString );
@@ -779,7 +768,7 @@ int main()
 
     if( poLayer->CreateField( &oField ) != OGRERR_NONE )
     {
-	printf( "Creating Name field failed.\n" );
+        printf( "Creating Name field failed.\n" );
         exit( 1 );
     }
 
@@ -789,62 +778,62 @@ int main()
     while( !feof(stdin) 
            && fscanf( stdin, "%lf,%lf,%32s", &x, &y, szName ) == 3 )
     {
-	OGRFeature *poFeature;
+        OGRFeature *poFeature;
 
-	poFeature = OGRFeature::CreateFeature( poLayer->GetLayerDefn() );
-	poFeature->SetField( "Name", szName );
+        poFeature = OGRFeature::CreateFeature( poLayer->GetLayerDefn() );
+        poFeature->SetField( "Name", szName );
 
-	OGRPoint pt;
-	
-  	pt.setX( x );
+        OGRPoint pt;
+        
+        pt.setX( x );
         pt.setY( y );
- 
+    
         poFeature->SetGeometry( &pt ); 
 
-	if( poLayer->CreateFeature( poFeature ) != OGRERR_NONE )
+        if( poLayer->CreateFeature( poFeature ) != OGRERR_NONE )
         {
-	   printf( "Failed to create feature in shapefile.\n" );
-           exit( 1 );
+            printf( "Failed to create feature in shapefile.\n" );
+            exit( 1 );
         }
 
-         OGRFeature::DestroyFeature( poFeature );
+        OGRFeature::DestroyFeature( poFeature );
     }
 
-    OGRDataSource::DestroyDataSource( poDS );
+    GDALClose( poDS );
 }
 \endcode
 
 In C :
 \code
-#include "ogr_api.h"
+#include "gdal.h"
 
 int main()
 {
     const char *pszDriverName = "ESRI Shapefile";
-    OGRSFDriverH hDriver;
-    OGRDataSourceH hDS;
+    GDALDriverH hDriver;
+    GDALDatasetH hDS;
     OGRLayerH hLayer;
     OGRFieldDefnH hFieldDefn;
     double x, y;
     char szName[33];
 
-    OGRRegisterAll();
+    GDALAllRegister();
 
-    hDriver = OGRGetDriverByName( pszDriverName );
+    hDriver = GDALGetDriverByName( pszDriverName );
     if( hDriver == NULL )
     {
         printf( "%s driver not available.\n", pszDriverName );
         exit( 1 );
     }
 
-    hDS = OGR_Dr_CreateDataSource( hDriver, "point_out.shp", NULL );
+    hDS = GDALCreate( hDriver, "point_out.shp", 0, 0, 0, GDT_Unknown, NULL );
     if( hDS == NULL )
     {
         printf( "Creation of output file failed.\n" );
         exit( 1 );
     }
 
-    hLayer = OGR_DS_CreateLayer( hDS, "point_out", NULL, wkbPoint, NULL );
+    hLayer = GDALDatasetCreateLayer( hDS, "point_out", NULL, wkbPoint, NULL );
     if( hLayer == NULL )
     {
         printf( "Layer creation failed.\n" );
@@ -887,23 +876,24 @@ int main()
         OGR_F_Destroy( hFeature );
    }
 
-   OGR_DS_Destroy( hDS );
+   GDALClose( hDS );
 }
 \endcode
 
 In Python :
 \code
 import sys
-import ogr
+from osgeo import gdal
+from osgeo import ogr
 import string
 
 driverName = "ESRI Shapefile"
-drv = ogr.GetDriverByName( driverName )
+drv = gdal.GetDriverByName( driverName )
 if drv is None:
     print "%s driver not available.\n" % driverName
     sys.exit( 1 )
 
-ds = drv.CreateDataSource( "point_out.shp" )
+ds = drv.Create( "point_out.shp", 0, 0, 0, gdal.GDT_Unknown )
 if ds is None:
     print "Creation of output file failed.\n"
     sys.exit( 1 )

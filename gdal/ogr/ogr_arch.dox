@@ -18,42 +18,42 @@ specifications.<p>
 \section ogr_arch_overview Class Overview
 
 <ul>
-<li> <b>Geometry</b> (<a href="ogr__geometry_8h-source.html">ogr_geometry.h</a>): 
+<li> <b>Geometry</b> (<a href="ogr__geometry_8h_source.html">ogr_geometry.h</a>): 
 The geometry classes (OGRGeometry, etc) encapsulate the OpenGIS model vector 
 data as well as providing some geometry operations, and translation to/from
 well known binary and text format.  A geometry includes a spatial reference
 system (projection).<p>
 
 <li> <b>Spatial Reference</b> 
-(<a href="ogr__spatialref_8h-source.html">ogr_spatialref.h</a>):
+(<a href="ogr__spatialref_8h_source.html">ogr_spatialref.h</a>):
 An OGRSpatialReference encapsulates the definition of a projection and 
 datum.<p>
 
-<li> <b>Feature</b> (<a href="ogr__feature_8h-source.html">ogr_feature.h</a>):
+<li> <b>Feature</b> (<a href="ogr__feature_8h_source.html">ogr_feature.h</a>):
 The OGRFeature encapsulates the definition of a whole feature, that is a 
 geometry and a set of attributes.<p>
 
 <li> <b>Feature Class Definition</b>
-(<a href="ogr__feature_8h-source.html">ogr_feature.h</a>): 
+(<a href="ogr__feature_8h_source.html">ogr_feature.h</a>): 
 The OGRFeatureDefn class captures the schema (set of field definitions) for
 a group of related features (normally a whole layer).<p>
 
 <li> <b>Layer</b>
-(<a href="ogrsf__frmts_8h-source.html">ogrsf_frmts.h</a>): 
+(<a href="ogrsf__frmts_8h_source.html">ogrsf_frmts.h</a>): 
 OGRLayer is an abstract base class represent a layer of features in an 
-OGRDataSource.<p>
+GDALDataset.<p>
 
-<li> <b>Data Source</b>
-(<a href="ogrsf__frmts_8h-source.html">ogrsf_frmts.h</a>): 
-An OGRDataSource is an abstract base class
+<li> <b>Dataset</b>
+(<a href="gdal__priv_8h_source.html">gdal_priv.h</a>): 
+A GDALDataset is an abstract base class
 representing a file or database containing one or more OGRLayer
 objects.<p>
 
 <li> <b>Drivers</b> 
-(<a href="ogrsf__frmts_8h-source.html">ogrsf_frmts.h</a>):
-An OGRSFDriver represents a translator for a specific
-format, opening OGRDataSource objects.  All available drivers are managed 
-by the OGRSFDriverRegistrar.<p>
+(<a href="gdal__priv_8h_source.html">gdal_priv.h</a>):
+A GDALDriver represents a translator for a specific
+format, opening GDALDataset objects.  All available drivers are managed 
+by the GDALDriverManager.<p>
 
 </ul>
 
@@ -196,50 +196,48 @@ SFCORBA support using OGR.
 
 The OGRLayer class is an abstract base class.  An implementation is 
 expected to be subclassed for each file format driver implemented. 
-OGRLayers are normally owned directly by their OGRDataSource, and aren't
+OGRLayers are normally owned directly by their GDALDataset, and aren't
 instantiated or destroyed directly.<p>
 
-\section ogr_arch_data_source Data Source
+\section ogr_arch_dataset Dataset
 
-An OGRDataSource represents a set of OGRLayer objects.  This usually 
-represents a single file, set of files, database or gateway.  An OGRDataSource
+A GDALDataset represents a set of OGRLayer objects.  This usually 
+represents a single file, set of files, database or gateway.  A GDALDataset
 has a list of OGRLayers which it owns but can return references to.<p>
 
-OGRDataSource is an abstract base class.  An implementation is 
+GDALDataset is an abstract base class.  An implementation is 
 expected to be subclassed for each file format driver implemented.
-OGRDataSource objects are not normally instantiated directly but rather with
-the assistance of an OGRSFDriver.  Deleting an OGRDataSource closes access
+GDALDataset objects are not normally instantiated directly but rather with
+the assistance of an GDALDriver.  Deleting an GDALDataset closes access
 to the underlying persistent data source, but does not normally result in 
 deletion of that file.<p>
 
-An OGRDataSource has a name (usually a filename) that can be used to reopen
-the data source with an OGRSFDriver.<p>
+A GDALDataset has a name (usually a filename) that can be used to reopen
+the data source with a GDALDriver.<p>
 
-The OGRDataSource also has support for executing a datasource specific
+The GDALDataset also has support for executing a datasource specific
 command, normally a form of SQL.   This is accomplished via the
-OGRDataSource::ExecuteSQL() method.  While some datasources (such as PostGIS
+GDALDataset::ExecuteSQL() method.  While some datasources (such as PostGIS
 and Oracle) pass the SQL through to an underlying database, OGR also includes
 support for evaluating a subset of the SQL SELECT statement against any
 datasource. <p>
 
 \section ogr_arch_drivers Drivers
 
-An OGRSFDriver object is instantiated for each file format supported.  
-The OGRSFDriver objects are registered with the OGRSFDriverRegistrar, a
-singleton class that is normally used to open new data sources.<p>
+A GDALDriver object is instantiated for each file format supported.  
+The GDALDriver objects are registered with the GDALDriverManager, a
+singleton class that is normally used to open new datasets.<p>
 
-It is intended that a new OGRSFDriver derived class be implemented for each
+It is intended that a new GDALDriver object is instanciated and define function
+pointers for operations like Identify(), Open() for each
 file format to be supported (along with a file format specific 
-OGRDataSource, and OGRLayer classes).<p>
+GDALDataset, and OGRLayer classes).<p>
 
 On application startup registration
 functions are normally called for each desired file format.  These functions
-instantiate the appropriate OGRSFDriver objects, and register them with the
-OGRSFDriverRegistrar.  When a data source is to be opened, the registrar
-will normally try each OGRSFDriver in turn, until one succeeds, returning
-an OGRDataSource object.<p>
-
-It is not intended that the OGRSFDriverRegistrar be 
-derived from.<p>
+instantiate the appropriate GDALDriver objects, and register them with the
+GDALDriverManager.  When a dataset is to be opened, the driver manager
+will normally try each GDALDataset in turn, until one succeeds, returning
+a GDALDataset object.<p>
 
 */
