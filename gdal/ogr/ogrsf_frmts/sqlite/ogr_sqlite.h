@@ -663,6 +663,12 @@ class OGRSQLiteBaseDataSource : public OGRDataSource
 
     std::map<CPLString, OGREnvelope> oMapSQLEnvelope;
 
+#ifdef SPATIALITE_412_OR_LATER
+    void               *hSpatialiteCtxt;
+    int                 InitNewSpatialite();
+    void                FinishNewSpatialite();
+#endif
+
   public:
                         OGRSQLiteBaseDataSource();
                         ~OGRSQLiteBaseDataSource();
@@ -702,12 +708,6 @@ class OGRSQLiteDataSource : public OGRSQLiteBaseDataSource
     int                 bHaveGeometryColumns;
     int                 bIsSpatiaLiteDB;
     int                 bSpatialite4Layout;
-
-#ifdef SPATIALITE_412_OR_LATER
-    void               *hSpatialiteCtxt;
-    int                 InitNewSpatialite();
-    void                FinishNewSpatialite();
-#endif
 
     int                 nUndefinedSRID;
 

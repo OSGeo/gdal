@@ -60,6 +60,16 @@ The following functions, with identical syntax and semantics as in Spatialite, a
 <li>DisableSpatialIndex(table_name <i>String</i>, geom_column_name <i>String</i>) : disable an existing spatial index (RTree) on the specified table/geometry column</li>
 </ul>
 
+<h3>Link with Spatialite</h3>
+
+Starting with GDAL 2.0, if it has been compiled against Spatialite 4.2 or later, it is also possible
+to use Spatialite SQL functions. Explicit transformation from GPKG geometry binary
+encoding to/from Spatialite geometry binary encoding must be done.
+
+<pre>
+ogrinfo poly.gpkg -sql "SELECT AsGPB(ST_Buffer(CastAutomagic(geom),5)) FROM poly"
+</pre>
+
 <h2>Creation Issues</h2>
 
 <p>When creating a new GeoPackage file, the driver will attempt to
