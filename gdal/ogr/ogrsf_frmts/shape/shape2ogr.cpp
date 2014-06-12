@@ -885,7 +885,7 @@ OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
          hDBF != NULL && iField < DBFGetFieldCount( hDBF ); 
          iField++ )
     {
-        char            szFieldName[20];
+        char            szFieldName[11] = {};
         int             nWidth, nPrecision;
         DBFFieldType    eDBFType;
         OGRFieldDefn    oField("", OFTInteger);
@@ -1134,7 +1134,7 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 static OGRErr GrowField(DBFHandle hDBF, int iField, OGRFieldDefn* poFieldDefn,
                         int nNewSize)
 {
-    char            szFieldName[20];
+    char            szFieldName[20] = {};
     int             nOriWidth, nPrecision;
     char            chNativeType;
     DBFFieldType    eDBFType;
