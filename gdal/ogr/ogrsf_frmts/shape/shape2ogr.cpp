@@ -885,7 +885,7 @@ OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
          hDBF != NULL && iField < DBFGetFieldCount( hDBF ); 
          iField++ )
     {
-        char            szFieldName[11] = {};
+        char            szFieldName[12] = {};
         int             nWidth, nPrecision;
         DBFFieldType    eDBFType;
         OGRFieldDefn    oField("", OFTInteger);
