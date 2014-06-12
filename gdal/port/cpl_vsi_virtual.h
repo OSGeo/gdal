@@ -113,7 +113,8 @@ public:
     static VSIFilesystemHandler *GetHandler( const char * );
     static void InstallHandler( const std::string& osPrefix, 
                                 VSIFilesystemHandler * );
-    static void RemoveHandler( const std::string& osPrefix );
+    /* RemoveHandler is never defined. */
+    /* static void RemoveHandler( const std::string& osPrefix ); */
 };
 
 
