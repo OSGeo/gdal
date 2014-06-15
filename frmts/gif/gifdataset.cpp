@@ -332,12 +332,7 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
     if( fp == NULL )
         return NULL;
 
-#if defined(GIFLIB_MAJOR) && GIFLIB_MAJOR >= 5
-    int nError;
-    hGifFile = DGifOpen( fp, VSIGIFReadFunc, &nError );
-#else
-    hGifFile = DGifOpen( fp, VSIGIFReadFunc );
-#endif
+    hGifFile = GIFAbstractDataset::myDGifOpen( fp, VSIGIFReadFunc );
     if( hGifFile == NULL )
     {
         VSIFCloseL( fp );
@@ -386,21 +381,17 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
             CPLDebug( "GIF",
                       "Due to limitations of the GDAL GIF driver we deliberately avoid\n"
                       "opening large GIF files (larger than 100 megapixels).");
-            DGifCloseFile( hGifFile );
+            GIFAbstractDataset::myDGifCloseFile( hGifFile );
             VSIFCloseL( fp );
             return NULL;
         }
     }
 
-    DGifCloseFile( hGifFile );
+    GIFAbstractDataset::myDGifCloseFile( hGifFile );
 
     VSIFSeekL( fp, 0, SEEK_SET);
 
-#if defined(GIFLIB_MAJOR) && GIFLIB_MAJOR >= 5
-    hGifFile = DGifOpen( fp, VSIGIFReadFunc, &nError );
-#else
-    hGifFile = DGifOpen( fp, VSIGIFReadFunc );
-#endif
+    hGifFile = GIFAbstractDataset::myDGifOpen( fp, VSIGIFReadFunc );
     if( hGifFile == NULL )
     {
         VSIFCloseL( fp );
@@ -417,7 +408,7 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
     if( nGifErr != GIF_OK || hGifFile->SavedImages == NULL )
     {
         VSIFCloseL( fp );
-        DGifCloseFile(hGifFile);
+        GIFAbstractDataset::myDGifCloseFile(hGifFile);
 
         if( nGifErr == D_GIF_ERR_DATA_TOO_BIG )
         {
@@ -649,7 +640,7 @@ GIFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         GifFreeMapObject(psGifCT);
         GDALPrintGifError(hGifFile, "Error writing gif file.");
-        EGifCloseFile(hGifFile);
+        GIFAbstractDataset::myEGifCloseFile(hGifFile);
         VSIFCloseL( fp );
         return NULL;
     }
@@ -673,7 +664,7 @@ GIFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if (EGifPutImageDesc(hGifFile, 0, 0, nXSize, nYSize, bInterlace, NULL) == GIF_ERROR )
     {
         GDALPrintGifError(hGifFile, "Error writing gif file.");
-        EGifCloseFile(hGifFile);
+        GIFAbstractDataset::myEGifCloseFile(hGifFile);
         VSIFCloseL( fp );
         return NULL;
     }
@@ -756,7 +747,7 @@ GIFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      cleanup                                                         */
 /* -------------------------------------------------------------------- */
-    if (EGifCloseFile(hGifFile) == GIF_ERROR)
+    if (GIFAbstractDataset::myEGifCloseFile(hGifFile) == GIF_ERROR)
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "EGifCloseFile() failed.\n" );
@@ -807,7 +798,7 @@ GIFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
 error:
     if (hGifFile)
-        EGifCloseFile(hGifFile);
+        GIFAbstractDataset::myEGifCloseFile(hGifFile);
     if (fp)
         VSIFCloseL( fp );
     if (pabyScanline)
