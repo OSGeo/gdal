@@ -339,7 +339,7 @@ CPLErr BIGGIFDataset::ReOpen()
 /*      If the file is already open, close it so we can restart.        */
 /* -------------------------------------------------------------------- */
     if( hGifFile != NULL )
-        DGifCloseFile( hGifFile );
+        GIFAbstractDataset::myDGifCloseFile( hGifFile );
 
 /* -------------------------------------------------------------------- */
 /*      If we are actually reopening, then we assume that access to     */
@@ -373,12 +373,7 @@ CPLErr BIGGIFDataset::ReOpen()
     VSIFSeekL( fp, 0, SEEK_SET );
 
     nLastLineRead = -1;
-#if defined(GIFLIB_MAJOR) && GIFLIB_MAJOR >= 5
-    int nError;
-    hGifFile = DGifOpen( fp, VSIGIFReadFunc, &nError );
-#else
-    hGifFile = DGifOpen( fp, VSIGIFReadFunc );
-#endif
+    hGifFile = GIFAbstractDataset::myDGifOpen( fp, VSIGIFReadFunc );
     if( hGifFile == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -413,7 +408,7 @@ CPLErr BIGGIFDataset::ReOpen()
 
     if( RecordType != IMAGE_DESC_RECORD_TYPE )
     {
-        DGifCloseFile( hGifFile );
+        GIFAbstractDataset::myDGifCloseFile( hGifFile );
         hGifFile = NULL;
 
         CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -423,7 +418,7 @@ CPLErr BIGGIFDataset::ReOpen()
     
     if (DGifGetImageDesc(hGifFile) == GIF_ERROR)
     {
-        DGifCloseFile( hGifFile );
+        GIFAbstractDataset::myDGifCloseFile( hGifFile );
         hGifFile = NULL;
 
         CPLError( CE_Failure, CPLE_OpenFailed, 
