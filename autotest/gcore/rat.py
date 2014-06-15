@@ -159,11 +159,24 @@ def rat_2():
 
     return 'success'
 
+###############################################################################
+# Save an empty RAT (#5451)
+
+def rat_3():
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/rat_3.tif', 1, 1 )
+    ds.GetRasterBand(1).SetDefaultRAT( gdal.RasterAttributeTable() )
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete( '/vsimem/rat_3.tif' )
+
+    return 'success'
 ##############################################################################
 
 gdaltest_list = [
     rat_1,
     rat_2,
+    rat_3,
     None ]
 
 if __name__ == '__main__':
