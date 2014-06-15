@@ -836,7 +836,6 @@ cl_kernel get_kernel(struct oclWarper *warper, char useVec,
                     "__global int *nDstValid,\n"
                     "const int bandNum)\n"
 "{\n"
-    "int i;\n"
     "float2  fSrc = getSrcCoords(srcCoords);\n"
     "if (!isValid(fUnifiedSrcDensity, nUnifiedSrcValid, fSrc))\n"
         "return;\n"
