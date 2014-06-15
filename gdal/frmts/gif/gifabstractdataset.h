@@ -75,6 +75,10 @@ class GIFAbstractDataset : public GDALPamDataset
     virtual char  **GetMetadata( const char * pszDomain = "" );
 
     static int          Identify( GDALOpenInfo * );
+
+    static GifFileType* myDGifOpen( void *userPtr, InputFunc readFunc );
+    static int          myDGifCloseFile( GifFileType *hGifFile );
+    static int          myEGifCloseFile( GifFileType *hGifFile );
 };
 
 
