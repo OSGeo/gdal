@@ -143,8 +143,8 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
     void        *pSymbol;
     UINT        uOldErrorMode;
 
-    /* Avoid error boxes to pop up (#5122) */
-    uOldErrorMode = SetErrorMode(SEM_NOOPENFILEERRORBOX);
+    /* Avoid error boxes to pop up (#5211, #5525) */
+    uOldErrorMode = SetErrorMode(SEM_NOOPENFILEERRORBOX | SEM_FAILCRITICALERRORS);
 
     pLibrary = LoadLibrary(pszLibrary);
 
