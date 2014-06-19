@@ -23,8 +23,7 @@ The GeoPackage standard uses a SQLite database file as a generic container, and 
 <ul>
 <li>GeoPackage only supports one geometry column per table.</li>
 <li>Before GDAL 2.0, the driver did not implement the GeoPackage spatial index extension.</li>
-<li>The GeoPackage specification does not currently support non-spatial tables, but starting with GDAL 2.0,
-the driver allows creating and reading such tables (they are not registered in gpkg_contents).</li>
+<li>The core GeoPackage specification does not currently support non-spatial tables, but starting with GDAL 2.0, the driver allows creating and reading such tables via the <a href="geopackage_aspatial.html">Aspatial Support</a> (<code>gdal_aspatial</code>) extension.</li>
 </ul>
 
 <h2>SQL</h2>

@@ -84,6 +84,8 @@ class OGRGeoPackageDataSource : public OGRSQLiteBaseDataSource
         OGRErr              PragmaCheck(const char * pszPragma, const char * pszExpected, int nRowsExpected);
         OGRErr              SetApplicationId();
         int                 OpenOrCreateDB(int flags);
+        int                 HasGDALAspatialExtension();
+        OGRErr              CreateGDALAspatialExtension();
 };
 
 /************************************************************************/
