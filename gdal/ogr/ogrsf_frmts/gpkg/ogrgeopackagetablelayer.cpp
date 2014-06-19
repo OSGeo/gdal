@@ -98,13 +98,15 @@ OGRErr OGRGeoPackageTableLayer::BuildColumns()
 
     /* Always start with a primary key */
     CPLString soColumns = m_pszFidColumn ? m_pszFidColumn : "_rowid_";
+    CPLString soColumn;
     iFIDCol = 0;
 
     /* Add a geometry column if there is one (just one) */
     if ( m_poFeatureDefn->GetGeomFieldCount() )
     {
         soColumns += ", ";
-        soColumns += m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
+        soColumn.Printf("\"%s\"", m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef());
+        soColumns += soColumn;
         iGeomCol = 1;
     }
 
@@ -112,7 +114,8 @@ OGRErr OGRGeoPackageTableLayer::BuildColumns()
     for( int i = 0; i < m_poFeatureDefn->GetFieldCount(); i++ )
     {
         soColumns += ", ";
-        soColumns += m_poFeatureDefn->GetFieldDefn(i)->GetNameRef();
+        soColumn.Printf("\"%s\"", m_poFeatureDefn->GetFieldDefn(i)->GetNameRef());
+        soColumns += soColumn;
         panFieldOrdinals[i] = 1 + (iGeomCol >= 0) + i;
     }
 
@@ -316,10 +319,13 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateInsertSQL( OGRFeature *poFeatu
 
     CPLString osSQLBack;
     osSQLBack = ") VALUES (";
+
+    CPLString osSQLColumn;
     
     if( bAddFID )
     {
-        osSQLFront += GetFIDColumn();
+        osSQLColumn.Printf("\"%s\"", GetFIDColumn());
+        osSQLFront += osSQLColumn;
         osSQLBack += "?";
         bNeedComma = TRUE;
     }
@@ -336,7 +342,8 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateInsertSQL( OGRFeature *poFeatu
             osSQLBack += ", ";
         }
 
-        osSQLFront += poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
+        osSQLColumn.Printf("\"%s\"", poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef());
+        osSQLFront += osSQLColumn;
         osSQLBack += "?";
         bNeedComma = TRUE;
     }
@@ -354,8 +361,9 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateInsertSQL( OGRFeature *poFeatu
             osSQLBack += ", ";
         }
 
-        osSQLFront += poFeatureDefn->GetFieldDefn(i)->GetNameRef();
-        osSQLBack += "?";        
+        osSQLColumn.Printf("\"%s\"", poFeatureDefn->GetFieldDefn(i)->GetNameRef());
+        osSQLFront += osSQLColumn;
+        osSQLBack += "?";
     }
     
     osSQLBack += ")";
@@ -383,10 +391,13 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateUpdateSQL( OGRFeature *poFeatu
     /* Set up our SQL string basics */
     CPLString osUpdate;
     osUpdate.Printf("UPDATE \"%s\" SET ", m_pszTableName);
+
+    CPLString osSQLColumn;
     
     if ( poFeatureDefn->GetGeomFieldCount() > 0 )
     {
-        osUpdate += poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
+        osSQLColumn.Printf("\"%s\"", poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef());
+        osUpdate += osSQLColumn;
         osUpdate += "=?";
         bNeedComma = TRUE;
     }
@@ -399,7 +410,8 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateUpdateSQL( OGRFeature *poFeatu
         else 
             osUpdate += ", ";
 
-        osUpdate += poFeatureDefn->GetFieldDefn(i)->GetNameRef();
+        osSQLColumn.Printf("\"%s\"", poFeatureDefn->GetFieldDefn(i)->GetNameRef());
+        osUpdate += osSQLColumn;
         osUpdate += "=?";
     }
     
