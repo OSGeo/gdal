@@ -858,12 +858,17 @@ void GRIBDataset::SetGribMetaData(grib_MetaData* meta)
           rMinY = meta->gds.lat1;
         }
 
-        if (meta->gds.lon1 > meta->gds.lon2)
+        if( meta->gds.Nx == 1 )
+          rPixelSizeX = meta->gds.Dx;
+        else if (meta->gds.lon1 > meta->gds.lon2)
           rPixelSizeX = (360.0 - (meta->gds.lon1 - meta->gds.lon2)) / (meta->gds.Nx - 1);
         else
           rPixelSizeX = (meta->gds.lon2 - meta->gds.lon1) / (meta->gds.Nx - 1);
 
-        rPixelSizeY = (rMaxY - rMinY) / (meta->gds.Ny - 1);
+        if( meta->gds.Ny == 1 )
+            rPixelSizeX = meta->gds.Dy;
+        else
+            rPixelSizeY = (rMaxY - rMinY) / (meta->gds.Ny - 1);
 
         // Do some sanity checks for cases that can't be handled by the above
         // pixel size corrections. GRIB1 has a minimum precision of 0.001
