@@ -2040,7 +2040,8 @@ GBool PostGISRasterDataset::SetRasterProperties
             "from (select srid, extent geom, num_bands nbband, "
             "scale_x, scale_y, blocksize_x, blocksize_y, same_alignment, regular_blocking from "
             "raster_columns where r_table_schema = '%s' and "
-            "r_table_name = '%s') foo", pszSchema, pszTable);
+            "r_table_name = '%s' and r_raster_column = '%s' ) foo",
+            pszSchema, pszTable, pszColumn);
             
 #ifdef DEBUG_QUERY
         CPLDebug("PostGIS_Raster", 
