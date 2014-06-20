@@ -151,7 +151,7 @@ def grib_5():
 ###############################################################################
 # Handle geotransform for 1xn or nx1 grids.  The geotransform was faulty when
 # grib files had one cell in either direction for geographic projections.  See
-# ticket #
+# ticket #5532
 
 def grib_6():
 
