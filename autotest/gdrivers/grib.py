@@ -148,12 +148,33 @@ def grib_5():
 
     return 'success'
 
+###############################################################################
+# Handle geotransform for 1xn or nx1 grids.  The geotransform was faulty when
+# grib files had one cell in either direction for geographic projections.  See
+# ticket #
+
+def grib_6():
+
+    if gdaltest.grib_drv is None:
+        return 'skip'
+
+    ds = gdal.Open('data/one_one.grib2')
+    egt = (245.750, 0.5, 0.0, 47.250, 0.0, -0.5)
+    gt = ds.GetGeoTransform()
+    ds = None
+    if gt != egt:
+        print(gt, '!=', egt)
+        gdaltest.post_reason('Invalid geotransform')
+        return 'fail'
+    return 'success'
+
 gdaltest_list = [
     grib_1,
     grib_2,
     grib_3,
     grib_4,
     grib_5,
+    grib_6
     ]
 
 if __name__ == '__main__':
