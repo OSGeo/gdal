@@ -365,7 +365,7 @@ int VSIRmdir( const char * pszDirname )
  * 
  * Fetches status information about a filesystem object (file, directory, etc).
  * The returned information is placed in the VSIStatBufL structure.   For
- * portability only the st_size (size in bytes), and st_mode (file type). 
+ * portability, only use the st_size (size in bytes) and st_mode (file type).
  * This method is similar to VSIStat(), but will work on large files on 
  * systems where this requires special calls. 
  * 
@@ -396,7 +396,7 @@ int VSIStatL( const char * pszFilename, VSIStatBufL *psStatBuf )
  *
  * Fetches status information about a filesystem object (file, directory, etc).
  * The returned information is placed in the VSIStatBufL structure.   For
- * portability only the st_size (size in bytes), and st_mode (file type).
+ * portability, only use the st_size (size in bytes) and st_mode (file type).
  * This method is similar to VSIStat(), but will work on large files on
  * systems where this requires special calls.
  *
