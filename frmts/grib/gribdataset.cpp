@@ -866,7 +866,7 @@ void GRIBDataset::SetGribMetaData(grib_MetaData* meta)
           rPixelSizeX = (meta->gds.lon2 - meta->gds.lon1) / (meta->gds.Nx - 1);
 
         if( meta->gds.Ny == 1 )
-            rPixelSizeX = meta->gds.Dy;
+            rPixelSizeY = meta->gds.Dy;
         else
             rPixelSizeY = (rMaxY - rMinY) / (meta->gds.Ny - 1);
 
