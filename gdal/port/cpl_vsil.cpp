@@ -130,6 +130,10 @@ char **VSIReadDirRecursive( const char *pszPathIn )
 
         for ( ; i < nCount; i++ )
         {
+            // Do not recurse up the tree.
+            if (EQUAL(".", papszFiles[i]) || EQUAL("..", papszFiles[i]))
+              continue;
+
             // build complete file name for stat
             osTemp1.clear();
             osTemp1.append( pszPath );
