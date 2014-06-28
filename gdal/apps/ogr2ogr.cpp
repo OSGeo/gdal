@@ -2476,7 +2476,7 @@ static TargetLayerInfo* SetupTargetLayer( GDALDataset *poSrcDS,
                                                 GDALDataset *poDstDS,
                                                 char **papszLCO,
                                                 const char *pszNewLayerName,
-                                                OGRSpatialReference *poOutputSRS,
+                                                OGRSpatialReference *poOutputSRSIn,
                                                 int bNullifyOutputSRS,
                                                 char **papszSelFields,
                                                 int bAppend, int bAddMissingFields, int eGType,
@@ -2546,6 +2546,7 @@ static TargetLayerInfo* SetupTargetLayer( GDALDataset *poSrcDS,
         }
     }
 
+    OGRSpatialReference* poOutputSRS = poOutputSRSIn;
     if( poOutputSRS == NULL && !bNullifyOutputSRS )
     {
         if( nSrcGeomFieldCount == 1 || anRequestedGeomFields.size() == 0 )
@@ -2707,8 +2708,8 @@ static TargetLayerInfo* SetupTargetLayer( GDALDataset *poSrcDS,
                 int iSrcGeomField = anRequestedGeomFields[i];
                 OGRGeomFieldDefn oGFldDefn
                     (poSrcFDefn->GetGeomFieldDefn(iSrcGeomField));
-                if( poOutputSRS != NULL )
-                    oGFldDefn.SetSpatialRef(poOutputSRS);
+                if( poOutputSRSIn != NULL )
+                    oGFldDefn.SetSpatialRef(poOutputSRSIn);
                 if( bForceGType )
                     oGFldDefn.SetType((OGRwkbGeometryType) eGType);
                 else
