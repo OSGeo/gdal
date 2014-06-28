@@ -44,6 +44,13 @@ GDALInfoReportCorner( GDALDatasetH hDataset,
                       const char * corner_name,
                       double x, double y );
 
+static void
+GDALInfoReportMetadata( GDALMajorObjectH hObject,
+                        int bListMDD,
+                        int bShowMetadata,
+                        char **papszExtraMDDomains,
+                        int bIsBand );
+
 /************************************************************************/
 /*                               Usage()                                */
 /************************************************************************/
@@ -78,10 +85,9 @@ int main( int argc, char ** argv )
     int			i, iBand;
     double		adfGeoTransform[6];
     GDALDriverH		hDriver;
-    char		**papszMetadata;
     int                 bComputeMinMax = FALSE, bSample = FALSE;
     int                 bShowGCPs = TRUE, bShowMetadata = TRUE, bShowRAT=TRUE;
-    int                 bStats = FALSE, bApproxStats = TRUE, iMDD;
+    int                 bStats = FALSE, bApproxStats = TRUE;
     int                 bShowColorTable = TRUE, bComputeChecksum = FALSE;
     int                 bReportHistograms = FALSE;
     int                 bReportProj4 = FALSE;
@@ -397,125 +403,8 @@ int main( int argc, char ** argv )
 /*      Report metadata.                                                */
 /* -------------------------------------------------------------------- */
 
-    if( bListMDD )
-    {
-        char** papszMDDList = GDALGetMetadataDomainList( hDataset );
-        char** papszIter = papszMDDList;
+    GDALInfoReportMetadata( hDataset, bListMDD, bShowMetadata, papszExtraMDDomains, FALSE);
 
-        if( papszMDDList != NULL )
-            printf( "Metadata domains:\n" );
-        while( papszIter != NULL && *papszIter != NULL )
-        {
-            if( EQUAL(*papszIter, "") )
-                printf( "  (default)\n");
-            else
-                printf( "  %s\n", *papszIter );
-            papszIter ++;
-        }
-        CSLDestroy(papszMDDList);
-    }
-
-    papszMetadata = (bShowMetadata) ? GDALGetMetadata( hDataset, NULL ) : NULL;
-    if( bShowMetadata && CSLCount(papszMetadata) > 0 )
-    {
-        printf( "Metadata:\n" );
-        for( i = 0; papszMetadata[i] != NULL; i++ )
-        {
-            printf( "  %s\n", papszMetadata[i] );
-        }
-    }
-
-    if( papszExtraMDDomains != NULL && EQUAL(papszExtraMDDomains[0], "all") &&
-        papszExtraMDDomains[1] == NULL )
-    {
-        char** papszMDDList = GDALGetMetadataDomainList( hDataset );
-        char** papszIter = papszMDDList;
-
-        CSLDestroy(papszExtraMDDomains);
-        papszExtraMDDomains = NULL;
-
-        while( papszIter != NULL && *papszIter != NULL )
-        {
-            if( !EQUAL(*papszIter, "") &&
-                !EQUAL(*papszIter, "IMAGE_STRUCTURE") &&
-                !EQUAL(*papszIter, "SUBDATASETS") &&
-                !EQUAL(*papszIter, "GEOLOCATION") &&
-                !EQUAL(*papszIter, "RPC") )
-            {
-                papszExtraMDDomains = CSLAddString(papszExtraMDDomains, *papszIter);
-            }
-            papszIter ++;
-        }
-        CSLDestroy(papszMDDList);
-    }
-
-    for( iMDD = 0; bShowMetadata && iMDD < CSLCount(papszExtraMDDomains); iMDD++ )
-    {
-        papszMetadata = GDALGetMetadata( hDataset, papszExtraMDDomains[iMDD] );
-        if( CSLCount(papszMetadata) > 0 )
-        {
-            printf( "Metadata (%s):\n", papszExtraMDDomains[iMDD]);
-            for( i = 0; papszMetadata[i] != NULL; i++ )
-            {
-                if (EQUALN(papszExtraMDDomains[iMDD], "xml:", 4))
-                    printf( "%s\n", papszMetadata[i] );
-                else
-                    printf( "  %s\n", papszMetadata[i] );
-            }
-        }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Report "IMAGE_STRUCTURE" metadata.                              */
-/* -------------------------------------------------------------------- */
-    papszMetadata = (bShowMetadata) ? GDALGetMetadata( hDataset, "IMAGE_STRUCTURE" ) : NULL;
-    if( bShowMetadata && CSLCount(papszMetadata) > 0 )
-    {
-        printf( "Image Structure Metadata:\n" );
-        for( i = 0; papszMetadata[i] != NULL; i++ )
-        {
-            printf( "  %s\n", papszMetadata[i] );
-        }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Report subdatasets.                                             */
-/* -------------------------------------------------------------------- */
-    papszMetadata = GDALGetMetadata( hDataset, "SUBDATASETS" );
-    if( CSLCount(papszMetadata) > 0 )
-    {
-        printf( "Subdatasets:\n" );
-        for( i = 0; papszMetadata[i] != NULL; i++ )
-        {
-            printf( "  %s\n", papszMetadata[i] );
-        }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Report geolocation.                                             */
-/* -------------------------------------------------------------------- */
-    papszMetadata = (bShowMetadata) ? GDALGetMetadata( hDataset, "GEOLOCATION" ) : NULL;
-    if( bShowMetadata && CSLCount(papszMetadata) > 0 )
-    {
-        printf( "Geolocation:\n" );
-        for( i = 0; papszMetadata[i] != NULL; i++ )
-        {
-            printf( "  %s\n", papszMetadata[i] );
-        }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Report RPCs                                                     */
-/* -------------------------------------------------------------------- */
-    papszMetadata = (bShowMetadata) ? GDALGetMetadata( hDataset, "RPC" ) : NULL;
-    if( bShowMetadata && CSLCount(papszMetadata) > 0 )
-    {
-        printf( "RPC Metadata:\n" );
-        for( i = 0; papszMetadata[i] != NULL; i++ )
-        {
-            printf( "  %s\n", papszMetadata[i] );
-        }
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Setup projected to lat/long transform if appropriate.           */
@@ -796,42 +685,7 @@ int main( int argc, char ** argv )
                     GDALGetRasterOffset( hBand, &bSuccess ),
                     GDALGetRasterScale( hBand, &bSuccess ) );
 
-        if( bListMDD )
-        {
-            char** papszMDDList = GDALGetMetadataDomainList( hBand );
-            char** papszIter = papszMDDList;
-            if( papszMDDList != NULL )
-                printf( "  Metadata domains:\n" );
-            while( papszIter != NULL && *papszIter != NULL )
-            {
-                if( EQUAL(*papszIter, "") )
-                    printf( "    (default)\n");
-                else
-                    printf( "    %s\n", *papszIter );
-                papszIter ++;
-            }
-            CSLDestroy(papszMDDList);
-        }
-
-        papszMetadata = (bShowMetadata) ? GDALGetMetadata( hBand, NULL ) : NULL;
-        if( bShowMetadata && CSLCount(papszMetadata) > 0 )
-        {
-            printf( "  Metadata:\n" );
-            for( i = 0; papszMetadata[i] != NULL; i++ )
-            {
-                printf( "    %s\n", papszMetadata[i] );
-            }
-        }
-
-        papszMetadata = (bShowMetadata) ? GDALGetMetadata( hBand, "IMAGE_STRUCTURE" ) : NULL;
-        if( bShowMetadata && CSLCount(papszMetadata) > 0 )
-        {
-            printf( "  Image Structure Metadata:\n" );
-            for( i = 0; papszMetadata[i] != NULL; i++ )
-            {
-                printf( "    %s\n", papszMetadata[i] );
-            }
-        }
+        GDALInfoReportMetadata( hBand, bListMDD, bShowMetadata, papszExtraMDDomains, TRUE);
 
         if( GDALGetRasterColorInterpretation(hBand) == GCI_PaletteIndex 
             && (hTable = GDALGetRasterColorTable( hBand )) != NULL )
@@ -943,4 +797,132 @@ GDALInfoReportCorner( GDALDatasetH hDataset,
     printf( "\n" );
 
     return TRUE;
+}
+
+
+/************************************************************************/
+/*                       GDALInfoPrintMetadata()                        */
+/************************************************************************/
+static void GDALInfoPrintMetadata( GDALMajorObjectH hObject,
+                                   const char *pszDomain,
+                                   const char *pszDisplayedname,
+                                   const char *pszIndent)
+{
+    int i;
+    char **papszMetadata;
+    int bIsxml = FALSE;
+
+    if (pszDomain != NULL && EQUALN(pszDomain, "xml:", 4))
+        bIsxml = TRUE;
+
+    papszMetadata = GDALGetMetadata( hObject, pszDomain );
+    if( CSLCount(papszMetadata) > 0 )
+    {
+        printf( "%s%s:\n", pszIndent, pszDisplayedname );
+        for( i = 0; papszMetadata[i] != NULL; i++ )
+        {
+            if (bIsxml)
+                printf( "%s%s\n", pszIndent, papszMetadata[i] );
+            else
+                printf( "%s  %s\n", pszIndent, papszMetadata[i] );
+        }
+    }
+}
+
+/************************************************************************/
+/*                       GDALInfoReportMetadata()                       */
+/************************************************************************/
+static void GDALInfoReportMetadata( GDALMajorObjectH hObject,
+                                    int bListMDD,
+                                    int bShowMetadata,
+                                    char **papszExtraMDDomains,
+                                    int bIsBand )
+{
+    const char* pszIndent = "";
+    if( bIsBand )
+        pszIndent = "  ";
+
+    /* -------------------------------------------------------------------- */
+    /*      Report list of Metadata domains                                 */
+    /* -------------------------------------------------------------------- */
+    if( bListMDD )
+    {
+        char** papszMDDList = GDALGetMetadataDomainList( hObject );
+        char** papszIter = papszMDDList;
+
+        if( papszMDDList != NULL )
+            printf( "%sMetadata domains:\n", pszIndent );
+        while( papszIter != NULL && *papszIter != NULL )
+        {
+            if( EQUAL(*papszIter, "") )
+                printf( "%s  (default)\n", pszIndent);
+            else
+                printf( "%s  %s\n", pszIndent, *papszIter );
+            papszIter ++;
+        }
+        CSLDestroy(papszMDDList);
+    }
+
+    if (!bShowMetadata)
+        return;
+
+    /* -------------------------------------------------------------------- */
+    /*      Report default Metadata domain.                                 */
+    /* -------------------------------------------------------------------- */
+    GDALInfoPrintMetadata( hObject, NULL, "Metadata", pszIndent );
+
+    /* -------------------------------------------------------------------- */
+    /*      Report extra Metadata domains                                   */
+    /* -------------------------------------------------------------------- */
+    if (papszExtraMDDomains != NULL) {
+        char **papszExtraMDDomainsExpanded = NULL;
+        int iMDD;
+
+        if( EQUAL(papszExtraMDDomains[0], "all") &&
+            papszExtraMDDomains[1] == NULL )
+        {
+            char** papszMDDList = GDALGetMetadataDomainList( hObject );
+            char** papszIter = papszMDDList;
+
+            while( papszIter != NULL && *papszIter != NULL )
+            {
+                if( !EQUAL(*papszIter, "") &&
+                    !EQUAL(*papszIter, "IMAGE_STRUCTURE") &&
+                    !EQUAL(*papszIter, "SUBDATASETS") &&
+                    !EQUAL(*papszIter, "GEOLOCATION") &&
+                    !EQUAL(*papszIter, "RPC") )
+                {
+                    papszExtraMDDomainsExpanded = CSLAddString(papszExtraMDDomainsExpanded, *papszIter);
+                }
+                papszIter ++;
+            }
+            CSLDestroy(papszMDDList);
+        }
+        else
+        {
+            papszExtraMDDomainsExpanded = CSLDuplicate(papszExtraMDDomains);
+        }
+
+        for( iMDD = 0; iMDD < CSLCount(papszExtraMDDomainsExpanded); iMDD++ )
+        {
+            char pszDisplayedname[256];
+            snprintf(pszDisplayedname, 256, "Metadata (%s)", papszExtraMDDomainsExpanded[iMDD]);
+            GDALInfoPrintMetadata( hObject, papszExtraMDDomainsExpanded[iMDD], pszDisplayedname, pszIndent );
+        }
+
+        CSLDestroy(papszExtraMDDomainsExpanded);
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      Report various named metadata domains.                          */
+    /* -------------------------------------------------------------------- */
+    GDALInfoPrintMetadata( hObject, "IMAGE_STRUCTURE", "Image Structure Metadata", pszIndent );
+
+    if (!bIsBand)
+    {
+        GDALInfoPrintMetadata( hObject, "SUBDATASETS", "Subdatasets", pszIndent );
+        GDALInfoPrintMetadata( hObject, "GEOLOCATION", "Geolocation", pszIndent );
+        GDALInfoPrintMetadata( hObject, "RPC", "RPC Metadata", pszIndent );
+    }
+
 }
