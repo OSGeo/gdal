@@ -3124,6 +3124,7 @@ def ogr_pg_65():
     if lyr.TestCapability(ogr.OLCCreateGeomField) == 0:
         gdaltest.post_reason('fail')
         return 'fail' 
+
     gfld_defn = ogr.GeomFieldDefn('geom1', ogr.wkbPoint)
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
@@ -3131,10 +3132,20 @@ def ogr_pg_65():
     if lyr.CreateGeomField(gfld_defn) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
+
     gfld_defn = ogr.GeomFieldDefn('geom2', ogr.wkbLineString25D)
     if lyr.CreateGeomField(gfld_defn) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
+
+    gfld_defn = ogr.GeomFieldDefn('geom3', ogr.wkbPoint)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32631)
+    gfld_defn.SetSpatialRef(srs)
+    if lyr.CreateGeomField(gfld_defn) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     lyr.CreateField(ogr.FieldDefn('intfield', ogr.OFTInteger))
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField('intfield', 123)
@@ -3187,6 +3198,9 @@ def ogr_pg_65():
         if lyr.GetLayerDefn().GetGeomFieldDefn(1).GetSpatialRef() is not None:
             gdaltest.post_reason('fail')
             return 'fail'
+        if i == 0 and lyr.GetLayerDefn().GetGeomFieldDefn(2).GetSpatialRef().ExportToWkt().find('32631') < 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
         feat = lyr.GetNextFeature()
         if feat.GetField('intfield') != 123 or \
         feat.GetGeomFieldRef('geom1').ExportToWkt() != 'POINT (1 2)' or \
@@ -3234,6 +3248,22 @@ def ogr_pg_65():
         feat.DumpReadable()
         gdaltest.post_reason('fail')
         return 'fail'
+
+    import test_cli_utilities
+    if test_cli_utilities.get_ogr2ogr_path() is not None:
+        gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -update "' + 'PG:' + gdaltest.pg_connection_string + '" "' + 'PG:' + gdaltest.pg_connection_string + '" ogr_pg_65 -nln ogr_pg_65_copied -overwrite')
+        ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
+        lyr = ds.GetLayerByName('ogr_pg_65_copied')
+        if lyr.GetLayerDefn().GetGeomFieldDefn(0).GetSpatialRef().ExportToWkt().find('4326') < 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if lyr.GetLayerDefn().GetGeomFieldDefn(1).GetSpatialRef() is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if lyr.GetLayerDefn().GetGeomFieldDefn(2).GetSpatialRef().ExportToWkt().find('32631') < 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
     return 'success' 
 
 ###############################################################################
@@ -3402,6 +3432,7 @@ def ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_61' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_63' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_65' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_65_copied' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_67' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_68' )
     
