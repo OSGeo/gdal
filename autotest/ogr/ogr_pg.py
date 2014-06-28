@@ -1656,6 +1656,8 @@ def ogr_pg_35():
 
     try:
         gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer( 'testoverflows', options = [ 'OVERWRITE=YES', 'GEOMETRY_NAME=' + ('0123456789' * 1000) ] )
+        # To trigger actual layer creation
+        gdaltest.pg_lyr.ResetReading()
     except:
         pass
 
@@ -3303,6 +3305,7 @@ def ogr_pg_67():
         return 'skip'
 
     lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_67')
+    lyr.ResetReading() # to trigger layer creation
     lyr = None
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update = 1)
@@ -3438,6 +3441,64 @@ def ogr_pg_69():
     return 'success'
 
 ###############################################################################
+# Test historical non-differet creation of tables (#5547)
+
+def ogr_pg_70():
+
+    gdal.SetConfigOption('OGR_PG_DIFFERED_CREATION', 'NO')
+    lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_70')
+    gdal.SetConfigOption('OGR_PG_DIFFERED_CREATION', None)
+
+    ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
+    lyr2 = ds.GetLayerByName('ogr_pg_70')
+    if lyr2 is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
+
+    ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
+    lyr2 = ds.GetLayerByName('ogr_pg_70')
+    if lyr2.GetLayerDefn().GetFieldCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gfld_defn = ogr.GeomFieldDefn('geom', ogr.wkbPoint)
+    lyr.CreateGeomField(gfld_defn)
+
+    ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
+    lyr2 = ds.GetLayerByName('ogr_pg_70')
+    if lyr2.GetLayerDefn().GetGeomFieldCount() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    if  gdaltest.pg_has_postgis and gdaltest.pg_ds.GetLayerByName('geography_columns') is not None:
+        print('Trying geography')
+
+        gdaltest.pg_ds.ExecuteSQL('DELLAYER:ogr_pg_70')
+
+        gdal.SetConfigOption('OGR_PG_DIFFERED_CREATION', 'NO')
+        lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_70', options = [ 'GEOM_TYPE=geography', 'GEOMETRY_NAME=my_geog' ] )
+        gdal.SetConfigOption('OGR_PG_DIFFERED_CREATION', None)
+
+        ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
+        lyr2 = ds.GetLayerByName('ogr_pg_70')
+        if lyr2.GetLayerDefn().GetGeomFieldCount() != 1:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        geography_columns_lyr = ds.ExecuteSQL("SELECT * FROM geography_columns WHERE f_table_name = 'ogr_pg_70' AND f_geography_column = 'my_geog'")
+        if geography_columns_lyr.GetFeatureCount() != 1:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        ds.ReleaseResultSet(geography_columns_lyr)
+        ds = None
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_pg_table_cleanup():
@@ -3481,6 +3542,7 @@ def ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_65_copied' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_67' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_68' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_70' )
     
     # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.tpoly' )
@@ -3582,6 +3644,7 @@ gdaltest_list_internal = [
     ogr_pg_67,
     ogr_pg_68,
     ogr_pg_69,
+    ogr_pg_70,
     ogr_pg_cleanup ]
 
 ###############################################################################

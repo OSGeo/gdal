@@ -282,8 +282,14 @@ class OGRPGTableLayer : public OGRPGLayer
     
     int                 bAutoFIDOnCreateViaCopy;
     int                 bUseCopyByDefault;
+    
+    int                 bDifferedCreation;
+    CPLString           osCreateTable;
 
     virtual CPLString   GetFromClauseForGetExtent() { return pszSqlTableName; }
+    
+    OGRErr              RunAddGeometryColumn( OGRPGGeomFieldDefn *poGeomField );
+    OGRErr              RunCreateSpatialIndex( OGRPGGeomFieldDefn *poGeomField );
 
 public:
                         OGRPGTableLayer( OGRPGDataSource *,
@@ -356,6 +362,9 @@ public:
                                 { bCreateSpatialIndexFlag = bFlag; }
     void                AllowAutoFIDOnCreateViaCopy() { bAutoFIDOnCreateViaCopy = TRUE; }
     void                SetUseCopy() { bUseCopy = TRUE; bUseCopyByDefault = TRUE; }
+
+    void                SetDifferedCreation(int bDifferedCreationIn, CPLString osCreateTable);
+    OGRErr              RunDifferedCreationIfNecessary();
 
     virtual void        ResolveSRID(OGRPGGeomFieldDefn* poGFldDefn);
 };

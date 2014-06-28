@@ -1378,16 +1378,32 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
         else
             pszGeomType = "bytea";
     }
-    
-    if( eType != wkbNone && EQUAL(pszGeomType, "geography") && !bHaveGeography )
+
+    const char *pszGFldName = NULL;
+    if( eType != wkbNone && EQUAL(pszGeomType, "geography") )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "GEOM_TYPE=geography is only supported in PostGIS >= 1.5.\n"
-                  "Creation of layer %s has failed.",
-                  pszLayerName );
-        CPLFree( pszTableName );
-        CPLFree( pszSchemaName );
-        return NULL;
+        if( !bHaveGeography )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "GEOM_TYPE=geography is only supported in PostGIS >= 1.5.\n"
+                    "Creation of layer %s has failed.",
+                    pszLayerName );
+            CPLFree( pszTableName );
+            CPLFree( pszSchemaName );
+            return NULL;
+        }
+
+        if( CSLFetchNameValue( papszOptions, "GEOMETRY_NAME") != NULL )
+            pszGFldName = CSLFetchNameValue( papszOptions, "GEOMETRY_NAME");
+        else
+            pszGFldName = "the_geog";
+    }
+    else if ( eType != wkbNone && bHavePostGIS && !EQUAL(pszGeomType, "geography") )
+    {
+        if( CSLFetchNameValue( papszOptions, "GEOMETRY_NAME") != NULL )
+            pszGFldName = CSLFetchNameValue( papszOptions, "GEOMETRY_NAME");
+        else
+            pszGFldName = "wkb_geometry";
     }
 
     if( eType != wkbNone && bHavePostGIS && !EQUAL(pszGeomType,"geometry") &&
@@ -1419,15 +1435,16 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
         nSRSId = FetchSRSId( poSRS );
         
     const char *pszGeometryType = OGRToOGCGeomType(eType);
+
+    int bDifferedCreation = CSLTestBoolean(CPLGetConfigOption( "OGR_PG_DIFFERED_CREATION", "YES" ));
+    if( !bHavePostGIS )
+        bDifferedCreation = FALSE;  /* to avoid unnecessary implementation and testing burden */
+    
 /* -------------------------------------------------------------------- */
 /*      Create a basic table with the FID.  Also include the            */
 /*      geometry if this is not a PostGIS enabled table.                */
 /* -------------------------------------------------------------------- */
-    hResult = OGRPG_PQexec(hPGConn, "BEGIN");
-    OGRPGClearResult( hResult );
-    
-    const char *pszGFldName = NULL;
-    
+
     CPLString osCreateTable;
     int bTemporary = CSLFetchNameValue( papszOptions, "TEMPORARY" ) != NULL &&
                      CSLTestBoolean(CSLFetchNameValue( papszOptions, "TEMPORARY" ));
@@ -1450,168 +1467,174 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
                  "%s ( "
                  "    %s SERIAL, "
                  "   %s %s, "
-                 "   PRIMARY KEY (%s) )",
+                 "   PRIMARY KEY (%s)",
                  osCreateTable.c_str(),
                  pszFIDColumnName,
                  pszGFldName,
                  pszGeomType,
                  pszFIDColumnName);
     }
-    else if ( eType != wkbNone && EQUAL(pszGeomType, "geography") )
+    else if ( !bDifferedCreation && eType != wkbNone && EQUAL(pszGeomType, "geography") )
     {
-        if( CSLFetchNameValue( papszOptions, "GEOMETRY_NAME") != NULL )
-            pszGFldName = CSLFetchNameValue( papszOptions, "GEOMETRY_NAME");
-        else
-            pszGFldName = "the_geog";
-        
-        if (nSRSId)
-            osCommand.Printf(
-                     "%s ( %s SERIAL, %s geography(%s%s,%d), PRIMARY KEY (%s) )",
-                     osCreateTable.c_str(),
-                     pszFIDColumnName,
-                     OGRPGEscapeColumnName(pszGFldName).c_str(), pszGeometryType,
-                     nDimension == 2 ? "" : "Z", nSRSId, 
-                     pszFIDColumnName);
-        else
-            osCommand.Printf(
-                     "%s ( %s SERIAL, %s geography(%s%s), PRIMARY KEY (%s) )",
-                     osCreateTable.c_str(),
-                     pszFIDColumnName,
-                     OGRPGEscapeColumnName(pszGFldName).c_str(), pszGeometryType,
-                     nDimension == 2 ? "" : "Z", 
-                     pszFIDColumnName);
+        osCommand.Printf(
+                    "%s ( %s SERIAL, %s geography(%s%s%s), PRIMARY KEY (%s)",
+                    osCreateTable.c_str(),
+                    pszFIDColumnName,
+                    OGRPGEscapeColumnName(pszGFldName).c_str(), pszGeometryType,
+                    nDimension == 2 ? "" : "Z",
+                    nSRSId ? CPLSPrintf(",%d", nSRSId) : "", 
+                    pszFIDColumnName);
+    }
+    else if ( !bDifferedCreation && eType != wkbNone && !EQUAL(pszGeomType, "geography") &&
+              sPostGISVersion.nMajor >= 2 )
+    {
+        osCommand.Printf(
+                    "%s ( %s SERIAL, %s geometry(%s%s%s), PRIMARY KEY (%s)",
+                    osCreateTable.c_str(),
+                    pszFIDColumnName,
+                    OGRPGEscapeColumnName(pszGFldName).c_str(), pszGeometryType,
+                    nDimension == 2 ? "" : "Z",
+                    nSRSId ? CPLSPrintf(",%d", nSRSId) : "", 
+                    pszFIDColumnName);
     }
     else
     {
         osCommand.Printf(
-                 "%s ( %s SERIAL, PRIMARY KEY (%s) )",
+                 "%s ( %s SERIAL, PRIMARY KEY (%s)",
                  osCreateTable.c_str(),
                  pszFIDColumnName,
                  pszFIDColumnName );
     }
+    osCreateTable = osCommand;
 
-    hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
-    if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "%s\n%s", osCommand.c_str(), PQerrorMessage(hPGConn) );
-        CPLFree( pszTableName );
-        CPLFree( pszSchemaName );
-
-        OGRPGClearResult( hResult );
-        hResult = OGRPG_PQexec( hPGConn, "ROLLBACK" );
-        OGRPGClearResult( hResult );
-        return NULL;
-    }
-
-    OGRPGClearResult( hResult );
+    const char *pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );
+    int bCreateSpatialIndex = ( pszSI == NULL || CSLTestBoolean(pszSI) );
 
     CPLString osEscapedTableNameSingleQuote = OGRPGEscapeString(hPGConn, pszTableName);
     const char* pszEscapedTableNameSingleQuote = osEscapedTableNameSingleQuote.c_str();
     CPLString osEscapedSchemaNameSingleQuote = OGRPGEscapeString(hPGConn, pszSchemaName);
     const char* pszEscapedSchemaNameSingleQuote = osEscapedSchemaNameSingleQuote.c_str();
 
-/* -------------------------------------------------------------------- */
-/*      Eventually we should be adding this table to a table of         */
-/*      "geometric layers", capturing the WKT projection, and           */
-/*      perhaps some other housekeeping.                                */
-/* -------------------------------------------------------------------- */
-    if( eType != wkbNone && bHavePostGIS && !EQUAL(pszGeomType, "geography"))
+    if( eType != wkbNone && bHavePostGIS && sPostGISVersion.nMajor <= 1 )
     {
-        if( CSLFetchNameValue( papszOptions, "GEOMETRY_NAME") != NULL )
-            pszGFldName = CSLFetchNameValue( papszOptions, "GEOMETRY_NAME");
-        else
-            pszGFldName = "wkb_geometry";
-
-        if (sPostGISVersion.nMajor <= 1)
-        {
-            /* Sometimes there is an old cruft entry in the geometry_columns
-            * table if things were not properly cleaned up before.  We make
-            * an effort to clean out such cruft.
-            * Note: PostGIS 2.0 defines geometry_columns as a view (no clean up is needed)
-            */
-            osCommand.Printf(
-                    "DELETE FROM geometry_columns WHERE f_table_name = %s AND f_table_schema = %s",
-                    pszEscapedTableNameSingleQuote, pszEscapedSchemaNameSingleQuote );
-
-            hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
-            OGRPGClearResult( hResult );
-        }
-
+        /* Sometimes there is an old cruft entry in the geometry_columns
+        * table if things were not properly cleaned up before.  We make
+        * an effort to clean out such cruft.
+        * Note: PostGIS 2.0 defines geometry_columns as a view (no clean up is needed)
+        */
         osCommand.Printf(
-                 "SELECT AddGeometryColumn(%s,%s,%s,%d,'%s',%d)",
-                 pszEscapedSchemaNameSingleQuote, pszEscapedTableNameSingleQuote,
-                 OGRPGEscapeString(hPGConn, pszGFldName).c_str(),
-                 nSRSId, pszGeometryType, nDimension );
+                "DELETE FROM geometry_columns WHERE f_table_name = %s AND f_table_schema = %s",
+                pszEscapedTableNameSingleQuote, pszEscapedSchemaNameSingleQuote );
 
         hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
-
-        if( !hResult
-            || PQresultStatus(hResult) != PGRES_TUPLES_OK )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "AddGeometryColumn failed for layer %s, layer creation has failed.",
-                      pszLayerName );
-
-            CPLFree( pszTableName );
-            CPLFree( pszSchemaName );
-
-            OGRPGClearResult( hResult );
-
-            hResult = OGRPG_PQexec(hPGConn, "ROLLBACK");
-            OGRPGClearResult( hResult );
-
-            return NULL;
-        }
-
         OGRPGClearResult( hResult );
     }
     
-    const char *pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );
-    int bCreateSpatialIndex = ( pszSI == NULL || CSLTestBoolean(pszSI) );
-    if( eType != wkbNone && bHavePostGIS && bCreateSpatialIndex )
+    if( !bDifferedCreation )
     {
-/* -------------------------------------------------------------------- */
-/*      Create the spatial index.                                       */
-/*                                                                      */
-/*      We're doing this before we add geometry and record to the table */
-/*      so this may not be exactly the best way to do it.               */
-/* -------------------------------------------------------------------- */
+        hResult = OGRPG_PQexec(hPGConn, "BEGIN");
+        OGRPGClearResult( hResult );
 
-        osCommand.Printf("CREATE INDEX %s ON %s.%s USING GIST (%s)",
-                         OGRPGEscapeColumnName(
-                            CPLSPrintf("%s_%s_geom_idx", pszTableName, pszGFldName)).c_str(),
-                         OGRPGEscapeColumnName(pszSchemaName).c_str(),
-                         OGRPGEscapeColumnName(pszTableName).c_str(),
-                         OGRPGEscapeColumnName(pszGFldName).c_str());
+        osCommand = osCreateTable;
+        osCommand += " )";
 
         hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
-
-        if( !hResult
-            || PQresultStatus(hResult) != PGRES_COMMAND_OK )
+        if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                    "'%s' failed for layer %s, index creation has failed.",
-                    osCommand.c_str(), pszLayerName );
-
+                    "%s\n%s", osCommand.c_str(), PQerrorMessage(hPGConn) );
             CPLFree( pszTableName );
             CPLFree( pszSchemaName );
 
             OGRPGClearResult( hResult );
-
-            hResult = OGRPG_PQexec(hPGConn, "ROLLBACK");
+            hResult = OGRPG_PQexec( hPGConn, "ROLLBACK" );
             OGRPGClearResult( hResult );
-
             return NULL;
         }
+
+        OGRPGClearResult( hResult );
+
+    /* -------------------------------------------------------------------- */
+    /*      Eventually we should be adding this table to a table of         */
+    /*      "geometric layers", capturing the WKT projection, and           */
+    /*      perhaps some other housekeeping.                                */
+    /* -------------------------------------------------------------------- */
+        if( eType != wkbNone && bHavePostGIS && !EQUAL(pszGeomType, "geography") &&
+            sPostGISVersion.nMajor <= 1 )
+        {
+            osCommand.Printf(
+                    "SELECT AddGeometryColumn(%s,%s,%s,%d,'%s',%d)",
+                    pszEscapedSchemaNameSingleQuote, pszEscapedTableNameSingleQuote,
+                    OGRPGEscapeString(hPGConn, pszGFldName).c_str(),
+                    nSRSId, pszGeometryType, nDimension );
+
+            hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
+
+            if( !hResult
+                || PQresultStatus(hResult) != PGRES_TUPLES_OK )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                        "AddGeometryColumn failed for layer %s, layer creation has failed.",
+                        pszLayerName );
+
+                CPLFree( pszTableName );
+                CPLFree( pszSchemaName );
+
+                OGRPGClearResult( hResult );
+
+                hResult = OGRPG_PQexec(hPGConn, "ROLLBACK");
+                OGRPGClearResult( hResult );
+
+                return NULL;
+            }
+
+            OGRPGClearResult( hResult );
+        }
+        
+        if( eType != wkbNone && bHavePostGIS && bCreateSpatialIndex )
+        {
+    /* -------------------------------------------------------------------- */
+    /*      Create the spatial index.                                       */
+    /*                                                                      */
+    /*      We're doing this before we add geometry and record to the table */
+    /*      so this may not be exactly the best way to do it.               */
+    /* -------------------------------------------------------------------- */
+
+            osCommand.Printf("CREATE INDEX %s ON %s.%s USING GIST (%s)",
+                            OGRPGEscapeColumnName(
+                                CPLSPrintf("%s_%s_geom_idx", pszTableName, pszGFldName)).c_str(),
+                            OGRPGEscapeColumnName(pszSchemaName).c_str(),
+                            OGRPGEscapeColumnName(pszTableName).c_str(),
+                            OGRPGEscapeColumnName(pszGFldName).c_str());
+
+            hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
+
+            if( !hResult
+                || PQresultStatus(hResult) != PGRES_COMMAND_OK )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                        "'%s' failed for layer %s, index creation has failed.",
+                        osCommand.c_str(), pszLayerName );
+
+                CPLFree( pszTableName );
+                CPLFree( pszSchemaName );
+
+                OGRPGClearResult( hResult );
+
+                hResult = OGRPG_PQexec(hPGConn, "ROLLBACK");
+                OGRPGClearResult( hResult );
+
+                return NULL;
+            }
+            OGRPGClearResult( hResult );
+        }
+
+    /* -------------------------------------------------------------------- */
+    /*      Complete, and commit the transaction.                           */
+    /* -------------------------------------------------------------------- */
+        hResult = OGRPG_PQexec(hPGConn, "COMMIT");
         OGRPGClearResult( hResult );
     }
-
-/* -------------------------------------------------------------------- */
-/*      Complete, and commit the transaction.                           */
-/* -------------------------------------------------------------------- */
-    hResult = OGRPG_PQexec(hPGConn, "COMMIT");
-    OGRPGClearResult( hResult );
 
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
@@ -1627,6 +1650,8 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
     //poLayer->SetForcedSRSId(nForcedSRSId);
     poLayer->SetForcedDimension(nForcedDimension);
     poLayer->SetCreateSpatialIndexFlag(bCreateSpatialIndex);
+    poLayer->SetDifferedCreation(bDifferedCreation, osCreateTable);
+    
 
     /* HSTORE_COLUMNS existed at a time during GDAL 1.10dev */
     const char* pszHSTOREColumns = CSLFetchNameValue( papszOptions, "HSTORE_COLUMNS" );
@@ -2339,6 +2364,11 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
                                         const char *pszDialect )
 
 {
+    for( int iLayer = 0; iLayer < nLayers; iLayer++ )
+    {
+        papoLayers[iLayer]->RunDifferedCreationIfNecessary();
+    }
+
     /* Skip leading spaces */
     while(*pszSQLCommand == ' ')
         pszSQLCommand ++;

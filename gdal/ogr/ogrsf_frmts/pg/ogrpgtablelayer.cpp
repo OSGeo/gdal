@@ -150,10 +150,8 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
     pszTableName = CPLStrdup( pszTableNameIn );
     if (pszSchemaNameIn)
         pszSchemaName = CPLStrdup( pszSchemaNameIn );
-    else if (strlen(osCurrentSchema))
-        pszSchemaName = CPLStrdup( osCurrentSchema );
     else
-        pszSchemaName = NULL;
+        pszSchemaName = CPLStrdup( osCurrentSchema );
     this->pszGeomColForced =
         pszGeomColForced ? CPLStrdup(pszGeomColForced) : NULL;
 
@@ -203,6 +201,8 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
     poFeatureDefn->Reference();
     
     bAutoFIDOnCreateViaCopy = FALSE;
+    
+    bDifferedCreation = FALSE;
 }
 
 //************************************************************************/
@@ -212,6 +212,7 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
 OGRPGTableLayer::~OGRPGTableLayer()
 
 {
+    if( bDifferedCreation ) RunDifferedCreationIfNecessary();
     if( bCopyActive ) EndCopy();
     CPLFree( pszSqlTableName );
     CPLFree( pszTableName );
@@ -271,8 +272,7 @@ int OGRPGTableLayer::ReadTableDefinition()
     poDS->FlushSoftTransaction();
 
     CPLString osSchemaClause;
-    if( pszSchemaName )
-        osSchemaClause.Printf("AND n.nspname=%s",
+    osSchemaClause.Printf("AND n.nspname=%s",
                               OGRPGEscapeString(hPGConn, pszSchemaName).c_str());
 
     const char* pszTypnameEqualsAnyClause;
@@ -603,11 +603,8 @@ int OGRPGTableLayer::ReadTableDefinition()
             (bHasPostGISGeometry) ? "f_geometry_column" : "f_geography_column",
             OGRPGEscapeString(hPGConn,poGeomFieldDefn->GetNameRef()).c_str());
 
-        if (pszSchemaName)
-        {
-            osCommand += CPLString().Printf(" AND f_table_schema = %s",
+        osCommand += CPLString().Printf(" AND f_table_schema = %s",
                                             OGRPGEscapeString(hPGConn,pszSchemaName).c_str());
-        }
 
         hResult = OGRPG_PQexec(hPGConn,osCommand);
 
@@ -632,21 +629,11 @@ int OGRPGTableLayer::ReadTableDefinition()
         else
         {
             /* Fetch the name of the parent table */
-            if (pszSchemaName)
-            {
-                osCommand.Printf("SELECT pg_class.relname FROM pg_class WHERE oid = "
-                                "(SELECT pg_inherits.inhparent FROM pg_inherits WHERE inhrelid = "
-                                "(SELECT c.oid FROM pg_class c, pg_namespace n WHERE c.relname = %s AND c.relnamespace=n.oid AND n.nspname = %s))",
-                                pszEscapedTableNameSingleQuote,
-                                OGRPGEscapeString(hPGConn, pszSchemaName).c_str() );
-            }
-            else
-            {
-                osCommand.Printf("SELECT pg_class.relname FROM pg_class WHERE oid = "
-                                "(SELECT pg_inherits.inhparent FROM pg_inherits WHERE inhrelid = "
-                                "(SELECT pg_class.oid FROM pg_class WHERE relname = %s))",
-                                pszEscapedTableNameSingleQuote );
-            }
+            osCommand.Printf("SELECT pg_class.relname FROM pg_class WHERE oid = "
+                            "(SELECT pg_inherits.inhparent FROM pg_inherits WHERE inhrelid = "
+                            "(SELECT c.oid FROM pg_class c, pg_namespace n WHERE c.relname = %s AND c.relnamespace=n.oid AND n.nspname = %s))",
+                            pszEscapedTableNameSingleQuote,
+                            OGRPGEscapeString(hPGConn, pszSchemaName).c_str() );
 
             OGRPGClearResult( hResult );
             hResult = OGRPG_PQexec(hPGConn, osCommand.c_str() );
@@ -840,6 +827,7 @@ void OGRPGTableLayer::ResetReading()
         return;
     bInResetReading = TRUE;
 
+    if( bDifferedCreation ) RunDifferedCreationIfNecessary();
     if( bCopyActive ) EndCopy();
     bUseCopyByDefault = FALSE;
 
@@ -857,6 +845,8 @@ void OGRPGTableLayer::ResetReading()
 OGRFeature *OGRPGTableLayer::GetNextFeature()
 
 {
+    if( bDifferedCreation && RunDifferedCreationIfNecessary() != OGRERR_NONE )
+        return NULL;
     if( bCopyActive ) EndCopy();
 
     OGRPGGeomFieldDefn* poGeomFieldDefn = NULL;
@@ -1070,6 +1060,8 @@ OGRErr OGRPGTableLayer::DeleteFeature( long nFID )
         return OGRERR_FAILURE;
     }
 
+    if( bDifferedCreation && RunDifferedCreationIfNecessary() != OGRERR_NONE )
+        return OGRERR_FAILURE;
     if( bCopyActive ) EndCopy();
     bAutoFIDOnCreateViaCopy = FALSE;
 
@@ -1295,6 +1287,8 @@ OGRErr OGRPGTableLayer::SetFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
     }
 
+    if( bDifferedCreation && RunDifferedCreationIfNecessary() != OGRERR_NONE )
+        return OGRERR_FAILURE;
     if( bCopyActive ) EndCopy();
 
     if( NULL == poFeature )
@@ -1507,6 +1501,9 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
                   "NULL pointer to OGRFeature passed to CreateFeature()." );
         return OGRERR_FAILURE;
     }
+
+    if( bDifferedCreation && RunDifferedCreationIfNecessary() != OGRERR_NONE )
+        return OGRERR_FAILURE;
 
     if( bFirstInsertion )
     {
@@ -2410,24 +2407,76 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
 /* -------------------------------------------------------------------- */
 /*      Create the new field.                                           */
 /* -------------------------------------------------------------------- */
-    poDS->FlushSoftTransaction();
-    hResult = OGRPG_PQexec(hPGConn, "BEGIN");
-    OGRPGClearResult( hResult );
-
-    osCommand.Printf( "ALTER TABLE %s ADD COLUMN %s %s",
-                      pszSqlTableName, OGRPGEscapeColumnName(oField.GetNameRef()).c_str(),
-                      osFieldType.c_str() );
-    hResult = OGRPG_PQexec(hPGConn, osCommand);
-    if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
+    if( bDifferedCreation )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "%s\n%s", 
-                  osCommand.c_str(), 
-                  PQerrorMessage(hPGConn) );
+        osCreateTable += ", ";
+        osCreateTable += OGRPGEscapeColumnName(oField.GetNameRef());
+        osCreateTable += " ";
+        osCreateTable += osFieldType;
+    }
+    else
+    {
+        poDS->FlushSoftTransaction();
+        hResult = OGRPG_PQexec(hPGConn, "BEGIN");
+        OGRPGClearResult( hResult );
+
+        osCommand.Printf( "ALTER TABLE %s ADD COLUMN %s %s",
+                        pszSqlTableName, OGRPGEscapeColumnName(oField.GetNameRef()).c_str(),
+                        osFieldType.c_str() );
+        hResult = OGRPG_PQexec(hPGConn, osCommand);
+        if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "%s\n%s", 
+                    osCommand.c_str(), 
+                    PQerrorMessage(hPGConn) );
+
+            OGRPGClearResult( hResult );
+
+            hResult = OGRPG_PQexec( hPGConn, "ROLLBACK" );
+            OGRPGClearResult( hResult );
+
+            return OGRERR_FAILURE;
+        }
 
         OGRPGClearResult( hResult );
 
-        hResult = OGRPG_PQexec( hPGConn, "ROLLBACK" );
+        hResult = OGRPG_PQexec(hPGConn, "COMMIT");
+        OGRPGClearResult( hResult );
+    }
+
+    poFeatureDefn->AddFieldDefn( &oField );
+
+    return OGRERR_NONE;
+}
+
+
+/************************************************************************/
+/*                        RunAddGeometryColumn()                        */
+/************************************************************************/
+
+OGRErr OGRPGTableLayer::RunAddGeometryColumn( OGRPGGeomFieldDefn *poGeomField )
+{
+    PGconn              *hPGConn = poDS->GetPGConn();
+    PGresult            *hResult;
+    CPLString            osCommand;
+
+    const char *pszGeometryType = OGRToOGCGeomType(poGeomField->GetType());
+    osCommand.Printf(
+            "SELECT AddGeometryColumn(%s,%s,%s,%d,'%s',%d)",
+            OGRPGEscapeString(hPGConn, pszSchemaName).c_str(),
+            OGRPGEscapeString(hPGConn, pszTableName).c_str(),
+            OGRPGEscapeString(hPGConn, poGeomField->GetNameRef()).c_str(),
+            poGeomField->nSRSId, pszGeometryType, poGeomField->nCoordDimension );
+
+    hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
+
+    if( !hResult
+        || PQresultStatus(hResult) != PGRES_TUPLES_OK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "AddGeometryColumn failed for layer %s.",
+                  GetName());
+
         OGRPGClearResult( hResult );
 
         return OGRERR_FAILURE;
@@ -2435,10 +2484,39 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
 
     OGRPGClearResult( hResult );
 
-    hResult = OGRPG_PQexec(hPGConn, "COMMIT");
-    OGRPGClearResult( hResult );
+    return OGRERR_NONE;
+}
 
-    poFeatureDefn->AddFieldDefn( &oField );
+
+/************************************************************************/
+/*                        RunCreateSpatialIndex()                       */
+/************************************************************************/
+
+OGRErr OGRPGTableLayer::RunCreateSpatialIndex( OGRPGGeomFieldDefn *poGeomField )
+{
+    PGconn              *hPGConn = poDS->GetPGConn();
+    PGresult            *hResult;
+    CPLString            osCommand;
+
+    osCommand.Printf("CREATE INDEX %s ON %s USING GIST (%s)",
+                    OGRPGEscapeColumnName(
+                        CPLSPrintf("%s_%s_geom_idx", pszTableName, poGeomField->GetNameRef())).c_str(),
+                    pszSqlTableName,
+                    OGRPGEscapeColumnName(poGeomField->GetNameRef()).c_str());
+
+    hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
+
+    if( !hResult
+        || PQresultStatus(hResult) != PGRES_COMMAND_OK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "CREATE INDEX failed for layer %s.", GetName());
+
+        OGRPGClearResult( hResult );
+
+        return OGRERR_FAILURE;
+    }
+
+    OGRPGClearResult( hResult );
 
     return OGRERR_NONE;
 }
@@ -2450,8 +2528,6 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
 OGRErr OGRPGTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
                                          int bApproxOK )
 {
-    PGconn              *hPGConn = poDS->GetPGConn();
-    PGresult            *hResult;
     OGRwkbGeometryType eType = poGeomFieldIn->GetType();
     if( eType == wkbNone )
     {
@@ -2460,7 +2536,6 @@ OGRErr OGRPGTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
         return OGRERR_FAILURE;
     }
     
-    CPLString               osCommand;
     OGRPGGeomFieldDefn *poGeomField =
         new OGRPGGeomFieldDefn( this, poGeomFieldIn->GetNameRef() );
     poGeomField->SetSpatialRef(poGeomFieldIn->GetSpatialRef());
@@ -2503,53 +2578,26 @@ OGRErr OGRPGTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
 /* -------------------------------------------------------------------- */
 /*      Create the new field.                                           */
 /* -------------------------------------------------------------------- */
-    poDS->FlushSoftTransaction();
-    
-    const char *pszGeometryType = OGRToOGCGeomType(poGeomField->GetType());
-    osCommand.Printf(
-            "SELECT AddGeometryColumn(%s,%s,%s,%d,'%s',%d)",
-            OGRPGEscapeString(hPGConn, pszSchemaName).c_str(),
-            OGRPGEscapeString(hPGConn, poFeatureDefn->GetName()).c_str(),
-            OGRPGEscapeString(hPGConn, poGeomField->GetNameRef()).c_str(),
-            nSRSId, pszGeometryType, nDimension );
-
-    hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
-
-    if( !hResult
-        || PQresultStatus(hResult) != PGRES_TUPLES_OK )
+    if( !bDifferedCreation )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "AddGeometryColumn failed." );
+        poDS->FlushSoftTransaction();
 
-        OGRPGClearResult( hResult );
-        delete poGeomField;
-
-        return OGRERR_FAILURE;
-    }
-
-    OGRPGClearResult( hResult );
-
-    if( bCreateSpatialIndexFlag )
-    {
-        osCommand.Printf("CREATE INDEX %s ON %s USING GIST (%s)",
-                        OGRPGEscapeColumnName(
-                            CPLSPrintf("%s_%s_geom_idx", GetName(), poGeomField->GetNameRef())).c_str(),
-                        pszSqlTableName,
-                        OGRPGEscapeColumnName(poGeomField->GetNameRef()).c_str());
-
-        hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
-
-        if( !hResult
-            || PQresultStatus(hResult) != PGRES_COMMAND_OK )
+        if( RunAddGeometryColumn(poGeomField) != OGRERR_NONE )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, "CREATE INDEX failed." );
-
-            OGRPGClearResult( hResult );
             delete poGeomField;
 
             return OGRERR_FAILURE;
         }
-        
-        OGRPGClearResult( hResult );
+
+        if( bCreateSpatialIndexFlag )
+        {
+            if( RunCreateSpatialIndex(poGeomField) != OGRERR_NONE )
+            {
+                delete poGeomField;
+
+                return OGRERR_FAILURE;
+            }
+        }
     }
 
     poFeatureDefn->AddGeomFieldDefn( poGeomField, FALSE );
@@ -2583,6 +2631,9 @@ OGRErr OGRPGTableLayer::DeleteField( int iField )
                   "Invalid field index");
         return OGRERR_FAILURE;
     }
+
+    if( bDifferedCreation && RunDifferedCreationIfNecessary() != OGRERR_NONE )
+        return OGRERR_FAILURE;
 
     poDS->FlushSoftTransaction();
 
@@ -2642,6 +2693,9 @@ OGRErr OGRPGTableLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn
                   "Invalid field index");
         return OGRERR_FAILURE;
     }
+
+    if( bDifferedCreation && RunDifferedCreationIfNecessary() != OGRERR_NONE )
+        return OGRERR_FAILURE;
 
     OGRFieldDefn       *poFieldDefn = poFeatureDefn->GetFieldDefn(iField);
     OGRFieldDefn        oField( poNewFieldDefn );
@@ -2849,6 +2903,8 @@ OGRFeature *OGRPGTableLayer::GetFeature( long nFeatureId )
 int OGRPGTableLayer::GetFeatureCount( int bForce )
 
 {
+    if( bDifferedCreation && RunDifferedCreationIfNecessary() != OGRERR_NONE )
+        return 0;
     if( bCopyActive ) EndCopy();
 
     if( TestCapability(OLCFastFeatureCount) == FALSE )
@@ -2899,11 +2955,8 @@ void OGRPGTableLayer::ResolveSRID(OGRPGGeomFieldDefn* poGFldDefn)
                 OGRPGEscapeString(hPGConn, pszTableName).c_str(),
                 OGRPGEscapeString(hPGConn, poGFldDefn->GetNameRef()).c_str());
 
-    if (pszSchemaName)
-    {
-        osCommand += CPLString().Printf(" AND f_table_schema = %s",
-                                        OGRPGEscapeString(hPGConn, pszSchemaName).c_str());
-    }
+    osCommand += CPLString().Printf(" AND f_table_schema = %s",
+                                    OGRPGEscapeString(hPGConn, pszSchemaName).c_str());
 
     hResult = OGRPG_PQexec(hPGConn, osCommand.c_str() );
 
@@ -3200,6 +3253,8 @@ OGRErr OGRPGTableLayer::GetExtent( int iGeomField, OGREnvelope *psExtent, int bF
         return OGRERR_FAILURE;
     }
 
+    if( bDifferedCreation && RunDifferedCreationIfNecessary() != OGRERR_NONE )
+        return OGRERR_FAILURE;
     if( bCopyActive ) EndCopy();
 
     OGRPGGeomFieldDefn* poGeomFieldDefn =
@@ -3234,4 +3289,98 @@ OGRErr OGRPGTableLayer::GetExtent( int iGeomField, OGREnvelope *psExtent, int bF
     }
 
     return OGRPGLayer::GetExtent( iGeomField, psExtent, bForce );
+}
+
+/************************************************************************/
+/*                        SetDifferedCreation()                         */
+/************************************************************************/
+
+void OGRPGTableLayer::SetDifferedCreation(int bDifferedCreationIn, CPLString osCreateTableIn)
+{
+    bDifferedCreation = bDifferedCreationIn;
+    osCreateTable = osCreateTableIn;
+}
+
+/************************************************************************/
+/*                      RunDifferedCreationIfNecessary()                */
+/************************************************************************/
+
+OGRErr OGRPGTableLayer::RunDifferedCreationIfNecessary()
+{
+    if( !bDifferedCreation )
+        return OGRERR_NONE;
+    bDifferedCreation = FALSE;
+
+    int i;
+
+    for( i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++ )
+    {
+        OGRPGGeomFieldDefn *poGeomField = (OGRPGGeomFieldDefn*) poFeatureDefn->GetGeomFieldDefn(i);
+
+        if (poDS->sPostGISVersion.nMajor >= 2 ||
+            poGeomField->ePostgisType == GEOM_TYPE_GEOGRAPHY)
+        {
+            const char *pszGeometryType = OGRToOGCGeomType(poGeomField->GetType());
+
+            osCreateTable += ", ";
+            osCreateTable += OGRPGEscapeColumnName(poGeomField->GetNameRef());
+            osCreateTable += " ";
+            if( poGeomField->ePostgisType == GEOM_TYPE_GEOMETRY )
+                osCreateTable += "geometry(";
+            else
+                osCreateTable += "geography(";
+            osCreateTable += pszGeometryType;
+            if( poGeomField->nCoordDimension == 3 )
+                osCreateTable += "Z";
+            if( poGeomField->nSRSId > 0 )
+                osCreateTable += CPLSPrintf(",%d", poGeomField->nSRSId);
+            osCreateTable += ")";
+        }
+    }
+
+    osCreateTable += " )";
+    CPLString osCommand(osCreateTable);
+    
+    PGresult            *hResult;
+    PGconn              *hPGConn = poDS->GetPGConn();
+    
+    hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
+    if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                "%s\n%s", osCommand.c_str(), PQerrorMessage(hPGConn) );
+
+        OGRPGClearResult( hResult );
+        return OGRERR_FAILURE;
+    }
+
+    OGRPGClearResult( hResult );
+
+    // For PostGIS 1.X, use AddGeometryColumn() to create geometry columns
+    if (poDS->sPostGISVersion.nMajor < 2)
+    {
+        for( i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++ )
+        {
+            OGRPGGeomFieldDefn *poGeomField = (OGRPGGeomFieldDefn*) poFeatureDefn->GetGeomFieldDefn(i);
+            if( poGeomField->ePostgisType == GEOM_TYPE_GEOMETRY &&
+                RunAddGeometryColumn(poGeomField) != OGRERR_NONE )
+            {
+                return OGRERR_FAILURE;
+            }
+        }
+    }
+    
+    if( bCreateSpatialIndexFlag )
+    {
+        for( i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++ )
+        {
+            OGRPGGeomFieldDefn *poGeomField = (OGRPGGeomFieldDefn*) poFeatureDefn->GetGeomFieldDefn(i);
+            if( RunCreateSpatialIndex(poGeomField) != OGRERR_NONE )
+            {
+                return OGRERR_FAILURE;
+            }
+        }
+    }
+
+    return OGRERR_NONE;
 }
