@@ -3259,11 +3259,10 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
         break;
 
       case EPRJ_HOTINE_OBLIQUE_MERCATOR_AZIMUTH_CENTER:
-        if( psPro->proParams[12] > 0.0 )
-            oSRS.SetHOMAC( psPro->proParams[5]*R2D, psPro->proParams[4]*R2D,
-                           psPro->proParams[3]*R2D, 0.0,
-                           psPro->proParams[2],
-                           psPro->proParams[6], psPro->proParams[7] );
+        oSRS.SetHOMAC( psPro->proParams[5]*R2D, psPro->proParams[4]*R2D,
+                        psPro->proParams[3]*R2D, 0.0,
+                        psPro->proParams[2],
+                        psPro->proParams[6], psPro->proParams[7] );
         break;
 
       case EPRJ_ROBINSON:
