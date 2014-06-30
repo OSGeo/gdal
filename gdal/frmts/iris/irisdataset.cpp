@@ -308,6 +308,21 @@ CPLErr IRISRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 fVal = poGDS->fNyquistVelocity * (fVal - 128)/127;
             ((float *) pImage)[i] = fVal;     
         }       
+    //SHEAR (1-Byte Shear)
+    //See point 3.3.23 at page 3.39 of the manual
+    } else if(poGDS->nDataTypeCode == 35){
+        float fVal;
+        for (i=0;i<nBlockXSize;i++){
+            fVal = (float) *(pszRecord+i*nDataLength);
+            if (fVal == 0.0)
+                fVal = -9998;
+            else if (fVal == 255.0)
+                fVal = -9999;
+            else
+                fVal = (fVal - 128) * 0.2;
+            ((float *) pImage)[i] = fVal;
+        }
+
     }
 
     return CE_None;
