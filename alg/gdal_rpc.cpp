@@ -768,14 +768,14 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
                 }
                 else
                 {
-                    if (!(dX >= 0 && dY >= 0 && dX <= nRasterXSize && dY <= nRasterYSize))
+                    if (!(dX >= 0 && dY >= 0 && dX < nRasterXSize && dY < nRasterYSize))
                     {
                         panSuccess[i] = FALSE;
                         continue;
                     }
                     CPLErr eErr = psTransform->poDS->RasterIO(GF_Read, dX, dY, 1, 1,
                                                               &dfDEMH, 1, 1,
-                                                              GDT_Int32, 1, bands, 0, 0, 0);
+                                                              GDT_Float64, 1, bands, 0, 0, 0);
                     if(eErr != CE_None)
                     {
                         panSuccess[i] = FALSE;
@@ -903,14 +903,14 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
             }
             else
             {
-                if (!(dX >= 0 && dY >= 0 && dX <= nRasterXSize && dY <= nRasterYSize))
+                if (!(dX >= 0 && dY >= 0 && dX < nRasterXSize && dY < nRasterYSize))
                 {
                     panSuccess[i] = FALSE;
                     continue;
                 }
                 CPLErr eErr = psTransform->poDS->RasterIO(GF_Read, dX, dY, 1, 1,
                                                           &dfDEMH, 1, 1,
-                                                          GDT_Int32, 1, bands, 0, 0, 0);
+                                                          GDT_Float64, 1, bands, 0, 0, 0);
                 if(eErr != CE_None)
                 {
                     panSuccess[i] = FALSE;
