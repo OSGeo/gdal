@@ -314,8 +314,8 @@ def transformer_5():
     (success,pnt) = tr.TransformPoint( 0, 20, 10, 0 )
 
     if not success \
-       or abs(pnt[0]-125.64830100509131) > 0.000001 \
-       or abs(pnt[1]-39.869433991997553) > 0.000001 :
+       or abs(pnt[0]-125.64828521503811) > 0.000001 \
+       or abs(pnt[1]-39.869345204874911) > 0.000001 :
         print(success, pnt)
         gdaltest.post_reason( 'got wrong forward transform result.(4)' )
         return 'fail'
