@@ -2484,7 +2484,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
             {
                 GDALDriverH hDriver = GDALGetDriver(iDr);
 
-                const char *pszRWFlag, *pszVirtualIO, *pszSubdatasets, *pszKind;
+                const char *pszRFlag = "", *pszWFlag, *pszVirtualIO, *pszSubdatasets, *pszKind;
                 char** papszMD = GDALGetMetadata( hDriver, NULL );
 
                 if( nOptions == GDAL_OF_RASTER &&
@@ -2494,13 +2494,16 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                     !CSLFetchBoolean( papszMD, GDAL_DCAP_VECTOR, FALSE ) )
                     continue;
 
+                if( CSLFetchBoolean( papszMD, GDAL_DCAP_OPEN, FALSE ) )
+                    pszRFlag = "r";
+
                 if( CSLFetchBoolean( papszMD, GDAL_DCAP_CREATE, FALSE ) )
-                    pszRWFlag = "rw+";
+                    pszWFlag = "w+";
                 else if( CSLFetchBoolean( papszMD, GDAL_DCAP_CREATECOPY, FALSE ) )
-                    pszRWFlag = "rw";
+                    pszWFlag = "w";
                 else
-                    pszRWFlag = "ro";
-                
+                    pszWFlag = "o";
+
                 if( CSLFetchBoolean( papszMD, GDAL_DCAP_VIRTUALIO, FALSE ) )
                     pszVirtualIO = "v";
                 else
@@ -2521,10 +2524,10 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                 else
                     pszKind = "unknown kind";
 
-                printf( "  %s -%s- (%s%s%s): %s\n",
+                printf( "  %s -%s- (%s%s%s%s): %s\n",
                         GDALGetDriverShortName( hDriver ),
                         pszKind,
-                        pszRWFlag, pszVirtualIO, pszSubdatasets,
+                        pszRFlag, pszWFlag, pszVirtualIO, pszSubdatasets,
                         GDALGetDriverLongName( hDriver ) );
             }
 
@@ -2584,6 +2587,8 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
             
             if( CSLFetchBoolean( papszMD, GDAL_DMD_SUBDATASETS, FALSE ) )
                 printf( "  Supports: Subdatasets\n" );
+            if( CSLFetchBoolean( papszMD, GDAL_DCAP_OPEN, FALSE ) )
+                printf( "  Supports: Open() - Open existing dataset.\n" );
             if( CSLFetchBoolean( papszMD, GDAL_DCAP_CREATE, FALSE ) )
                 printf( "  Supports: Create() - Create writeable dataset.\n" );
             if( CSLFetchBoolean( papszMD, GDAL_DCAP_CREATECOPY, FALSE ) )
