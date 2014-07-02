@@ -194,9 +194,10 @@ class gdal_ext(build_ext):
             return True
 
         self.gdaldir = self.get_gdal_config('prefix')
-        self.library_dirs.append(os.path.join(self.gdaldir,'lib'))
-        self.include_dirs.append(os.path.join(self.gdaldir,'include'))
-
+        libdirs = self.get_gdal_config('libs')
+        self.library_dirs.extend([x[2:] for x in libdirs.split() if x.startswith('-L')])
+        inc_dirs = self.get_gdal_config('cflags')
+        self.include_dirs.extend([x[2:] for x in inc_dirs.split() if x.startswith('-I')])
 
 extra_link_args = []
 extra_compile_args = []
