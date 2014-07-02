@@ -338,6 +338,8 @@ int OGRElasticLayer::TestCapability(const char * pszCap) {
 
     else if (EQUAL(pszCap, OLCSequentialWrite))
         return TRUE;
+    else if (EQUAL(pszCap, OLCCreateField))
+        return TRUE;
     else
         return FALSE;
 }

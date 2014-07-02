@@ -117,20 +117,5 @@ public:
     char* pszMapping;
 };
 
-/************************************************************************/
-/*                            OGRElasticDriver                          */
-/************************************************************************/
-
-class OGRElasticDriver : public OGRSFDriver {
-public:
-    ~OGRElasticDriver();
-
-    const char* GetName();
-    OGRDataSource* Open(const char *, int);
-    OGRDataSource* CreateDataSource(const char * pszName, char **papszOptions);
-    int TestCapability(const char *);
-
-};
-
 
 #endif /* ndef _OGR_Elastic_H_INCLUDED */
