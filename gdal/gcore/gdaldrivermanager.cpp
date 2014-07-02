@@ -427,6 +427,10 @@ int GDALDriverManager::RegisterDriver( GDALDriver * poDriver )
     papoDrivers[nDrivers] = poDriver;
     nDrivers++;
 
+    if( poDriver->pfnOpen != NULL ||
+        poDriver->pfnOpenWithDriverArg != NULL )
+        poDriver->SetMetadataItem( GDAL_DCAP_OPEN, "YES" );
+
     if( poDriver->pfnCreate != NULL )
         poDriver->SetMetadataItem( GDAL_DCAP_CREATE, "YES" );
     
