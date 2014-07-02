@@ -122,7 +122,7 @@ if dst_driver is None:
 
 ct = src_band.GetRasterColorTable()
 
-ct_size = max(256, ct.GetCount())
+ct_size = ct.GetCount()
 lookup = [Numeric.arrayrange(ct_size),
           Numeric.arrayrange(ct_size),
           Numeric.arrayrange(ct_size),
