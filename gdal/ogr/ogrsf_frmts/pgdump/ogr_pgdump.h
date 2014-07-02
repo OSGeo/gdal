@@ -170,23 +170,5 @@ class OGRPGDumpDataSource : public OGRDataSource
     OGRErr              EndCopy( );
 };
 
-/************************************************************************/
-/*                             OGRPGDriver                              */
-/************************************************************************/
-
-class OGRPGDumpDriver : public OGRSFDriver
-{
-  public:
-                ~OGRPGDumpDriver();
-
-    virtual const char    *GetName();
-    virtual OGRDataSource *Open( const char *, int );
-
-    virtual OGRDataSource *CreateDataSource( const char *pszName,
-                                             char ** = NULL );
-
-    virtual int            TestCapability( const char * );
-};
-
 #endif /* ndef _OGR_PGDUMP_H_INCLUDED */
 
