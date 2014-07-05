@@ -273,7 +273,9 @@ vsi_l_offset VSIWin32Handle::Tell()
 int VSIWin32Handle::Flush()
 
 {
-    FlushFileBuffers( hFile );
+    /* Nothing needed to offer the same guarantee as POSIX fflush() */
+    /* FlushFileBuffers() would be closer to fsync() */
+    /* See http://trac.osgeo.org/gdal/ticket/5556 */
     return 0;
 }
 
