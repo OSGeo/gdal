@@ -196,13 +196,20 @@ def vrtrawlink_5():
     ds = None
     xmlstring = open( 'tmp/rawlink.vrt' ).read()
 
-    node = gdal.ParseXMLString( xmlstring )
-    node = _xmlsearch(node, gdal.CXT_Element, 'VRTRasterBand')
+    root = gdal.ParseXMLString( xmlstring )
+    node = _xmlsearch(root, gdal.CXT_Element, 'VRTRasterBand')
     node = _xmlsearch(node, gdal.CXT_Element, 'SourceFilename')
     node = _xmlsearch(node, gdal.CXT_Attribute, 'relativeToVRT')
 
     if node is None or node[2][1] != "1":
         gdaltest.post_reason( 'incorrect relativeToVRT value' )
+        return 'fail'
+
+    if xmlstring.find('<ImageOffset>100</ImageOffset>') < 0 or \
+       xmlstring.find('<PixelOffset>3</PixelOffset>') < 0 or \
+       xmlstring.find('<LineOffset>93</LineOffset>') < 0 :
+        gdaltest.post_reason('fail')
+        print(xmlstring)
         return 'fail'
 
     return 'success'
