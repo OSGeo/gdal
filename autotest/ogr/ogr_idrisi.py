@@ -220,7 +220,7 @@ def ogr_idrisi_3():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    if lyr.GetFeatureCount() != 1:
+    if lyr.GetFeatureCount() != 2:
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -244,6 +244,17 @@ def ogr_idrisi_3():
         return 'fail'
 
     if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POLYGON ((400000 4000000,400000 5000000,600000 5000000,600000 4000000,400000 4000000),(450000 4250000,450000 4750000,550000 4750000,550000 4250000,450000 4250000))')) != 0:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+    if feat.GetFieldAsDouble(0) != 2.0:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POLYGON ((400000 4000000,400000 5000000,600000 5000000,600000 4000000,400000 4000000))')) != 0:
         gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'

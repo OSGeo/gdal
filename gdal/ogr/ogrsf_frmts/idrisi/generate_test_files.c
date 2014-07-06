@@ -129,7 +129,7 @@ int main(int argc, char* argv[])
     f = fopen("polygons.vct", "wb");
     c = 0x03;
     fwrite(&c, 1, 1, f);
-    nfeatures = 1;
+    nfeatures = 2;
     fwrite(&nfeatures, 1, sizeof(int), f);
     for(i=5;i<0x105;i++)
     {
@@ -154,30 +154,31 @@ int main(int argc, char* argv[])
 
     nodes = 5;
     fwrite(&nodes, 1, sizeof(int), f);
-    x = 400000;
-    y = 4000000;
-    fwrite(&x, 1, sizeof(double), f);
-    fwrite(&y, 1, sizeof(double), f);
-    x = 400000;
-    y = 5000000;
-    fwrite(&x, 1, sizeof(double), f);
-    fwrite(&y, 1, sizeof(double), f);
-    x = 600000;
-    y = 5000000;
-    fwrite(&x, 1, sizeof(double), f);
-    fwrite(&y, 1, sizeof(double), f);
-    x = 600000;
-    y = 4000000;
-    fwrite(&x, 1, sizeof(double), f);
-    fwrite(&y, 1, sizeof(double), f);
-    x = 400000;
-    y = 4000000;
-    fwrite(&x, 1, sizeof(double), f);
-    fwrite(&y, 1, sizeof(double), f);
-
 
     nodes = 5;
     fwrite(&nodes, 1, sizeof(int), f);
+
+    x = 400000;
+    y = 4000000;
+    fwrite(&x, 1, sizeof(double), f);
+    fwrite(&y, 1, sizeof(double), f);
+    x = 400000;
+    y = 5000000;
+    fwrite(&x, 1, sizeof(double), f);
+    fwrite(&y, 1, sizeof(double), f);
+    x = 600000;
+    y = 5000000;
+    fwrite(&x, 1, sizeof(double), f);
+    fwrite(&y, 1, sizeof(double), f);
+    x = 600000;
+    y = 4000000;
+    fwrite(&x, 1, sizeof(double), f);
+    fwrite(&y, 1, sizeof(double), f);
+    x = 400000;
+    y = 4000000;
+    fwrite(&x, 1, sizeof(double), f);
+    fwrite(&y, 1, sizeof(double), f);
+
     x = 450000;
     y = 4250000;
     fwrite(&x, 1, sizeof(double), f);
@@ -198,6 +199,48 @@ int main(int argc, char* argv[])
     y = 4250000;
     fwrite(&x, 1, sizeof(double), f);
     fwrite(&y, 1, sizeof(double), f);
+
+
+    
+    id = 2;
+    minx = 400000;
+    miny = 4000000;
+    maxx = 600000;
+    maxy = 5000000;
+    fwrite(&id, 1, sizeof(double), f);
+    fwrite(&minx, 1, sizeof(double), f);
+    fwrite(&miny, 1, sizeof(double), f);
+    fwrite(&maxx, 1, sizeof(double), f);
+    fwrite(&maxy, 1, sizeof(double), f);
+    nparts = 1;
+    fwrite(&nparts, 1, sizeof(int), f);
+    nodes = 5;
+    fwrite(&nodes, 1, sizeof(int), f);
+
+    nodes = 5;
+    fwrite(&nodes, 1, sizeof(int), f);
+
+    x = 400000;
+    y = 4000000;
+    fwrite(&x, 1, sizeof(double), f);
+    fwrite(&y, 1, sizeof(double), f);
+    x = 400000;
+    y = 5000000;
+    fwrite(&x, 1, sizeof(double), f);
+    fwrite(&y, 1, sizeof(double), f);
+    x = 600000;
+    y = 5000000;
+    fwrite(&x, 1, sizeof(double), f);
+    fwrite(&y, 1, sizeof(double), f);
+    x = 600000;
+    y = 4000000;
+    fwrite(&x, 1, sizeof(double), f);
+    fwrite(&y, 1, sizeof(double), f);
+    x = 400000;
+    y = 4000000;
+    fwrite(&x, 1, sizeof(double), f);
+    fwrite(&y, 1, sizeof(double), f);
+
 
     fclose(f);
 
