@@ -153,10 +153,12 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
             fmt = cCRNFmtDXT3;
         else if (EQUAL(pszFormat, "dxt5"))
             fmt = cCRNFmtDXT5;
+	else if (EQUAL(pszFormat, "etc1"))
+            fmt = cCRNFmtETC1;
         else
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "Illegal FORMAT value '%s', should be DXT1, DXT1A, DXT3 or DXT5.",
+                      "Illegal FORMAT value '%s', should be DXT1, DXT1A, DXT3, DXT5 or ETC1",
                       pszFormat );
             return NULL;
         }
@@ -351,7 +353,8 @@ void GDALRegister_DDS()
                                   "     <Value>DXT1</Value>\n"
                                   "     <Value>DXT1A</Value>\n"
                                   "     <Value>DXT3</Value>\n"
-                                  "     <Value>DXT5</Value>\n"                                                                    
+                                  "     <Value>DXT5</Value>\n" 
+                                  "     <Value>ETC1</Value>\n"                                                                     
                                   "   </Option>\n"
                                   "   <Option name='QUALITY' type='string-select' description='Compression Quality' default='NORMAL'>\n"
                                   "     <Value>SUPERFAST</Value>\n"
