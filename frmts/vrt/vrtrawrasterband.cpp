@@ -362,6 +362,17 @@ CPLErr VRTRawRasterBand::XMLInit( CPLXMLNode * psTree,
 }
 
 /************************************************************************/
+/*                           VRTRawStripSpace()                         */
+/************************************************************************/
+
+static const char* VRTRawStripSpace(const char* pszStr)
+{
+    while( *pszStr == ' ' )
+        pszStr ++;
+    return pszStr;
+}
+
+/************************************************************************/
 /*                           SerializeToXML()                           */
 /************************************************************************/
 
@@ -408,13 +419,16 @@ CPLXMLNode *VRTRawRasterBand::SerializeToXML( const char *pszVRTPath )
     char szOffset[22];
     
     CPLPrintUIntBig(szOffset, poRawRaster->GetImgOffset(), sizeof(szOffset)-1);
-    CPLCreateXMLElementAndValue(psTree, "ImageOffset", szOffset);
+    szOffset[sizeof(szOffset)-1] = '\0';
+    CPLCreateXMLElementAndValue(psTree, "ImageOffset", VRTRawStripSpace(szOffset));
     
     CPLPrintUIntBig(szOffset, poRawRaster->GetPixelOffset(),sizeof(szOffset)-1);
-    CPLCreateXMLElementAndValue(psTree, "PixelOffset", szOffset);
+    szOffset[sizeof(szOffset)-1] = '\0';
+    CPLCreateXMLElementAndValue(psTree, "PixelOffset", VRTRawStripSpace(szOffset));
     
     CPLPrintUIntBig(szOffset, poRawRaster->GetLineOffset(), sizeof(szOffset)-1);
-    CPLCreateXMLElementAndValue(psTree, "LineOffset", szOffset);
+    szOffset[sizeof(szOffset)-1] = '\0';
+    CPLCreateXMLElementAndValue(psTree, "LineOffset", VRTRawStripSpace(szOffset));
 
 #if CPL_IS_LSB == 1
     if( poRawRaster->GetNativeOrder() )
