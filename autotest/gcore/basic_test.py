@@ -394,7 +394,55 @@ def basic_test_12():
     ds = None
 
     return 'success'
-    
+
+###############################################################################
+# Test correct sorting of StringList / metadata (#5540, #5557)
+
+def basic_test_13():
+
+    ds = gdal.GetDriverByName('MEM').Create('',1,1)
+    for i in range(3):
+        if i == 0:
+            ds.SetMetadataItem("ScaleBounds","True")
+            ds.SetMetadataItem("ScaleBounds.MinScale","0")
+            ds.SetMetadataItem("ScaleBounds.MaxScale","2000000")
+        elif i == 1:
+            ds.SetMetadataItem("ScaleBounds.MaxScale","2000000")
+            ds.SetMetadataItem("ScaleBounds.MinScale","0")
+            ds.SetMetadataItem("ScaleBounds","True")
+        else:
+            ds.SetMetadataItem("ScaleBounds.MinScale","0")
+            ds.SetMetadataItem("ScaleBounds","True")
+            ds.SetMetadataItem("ScaleBounds.MaxScale","2000000")
+
+        if ds.GetMetadataItem('scalebounds') != 'True':
+            gdaltest.post_reason('failure')
+            return 'fail'
+        if ds.GetMetadataItem('ScaleBounds') != 'True':
+            gdaltest.post_reason('failure')
+            return 'fail'
+        if ds.GetMetadataItem('SCALEBOUNDS') != 'True':
+            gdaltest.post_reason('failure')
+            return 'fail'
+        if ds.GetMetadataItem('ScaleBounds.MinScale') != '0':
+            gdaltest.post_reason('failure')
+            return 'fail'
+        if ds.GetMetadataItem('ScaleBounds.MaxScale') != '2000000':
+            gdaltest.post_reason('failure')
+            return 'fail'
+    ds = None
+
+    ds = gdal.GetDriverByName('MEM').Create('',1,1)
+    for i in range(200):
+        ds.SetMetadataItem("FILENAME_%d" % i, "%d" % i)
+    for i in range(200):
+        if ds.GetMetadataItem("FILENAME_%d" % i) != '%d' % i:
+            gdaltest.post_reason('failure')
+            return 'fail'
+
+    return 'success'
+
+
 gdaltest_list = [ basic_test_1,
                   basic_test_2,
                   basic_test_3,
@@ -406,7 +454,8 @@ gdaltest_list = [ basic_test_1,
                   basic_test_9,
                   basic_test_10,
                   basic_test_11,
-                  basic_test_12 ]
+                  basic_test_12,
+                  basic_test_13 ]
 
 
 if __name__ == '__main__':

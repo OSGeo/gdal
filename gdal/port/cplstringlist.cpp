@@ -468,6 +468,39 @@ char **CPLStringList::StealList()
     return papszRetList;
 }
 
+
+static int CPLCompareKeyValueString(const char* pszKVa, const char* pszKVb)
+{
+    const char* pszItera = pszKVa;
+    const char* pszIterb = pszKVb;
+    while( TRUE )
+    {
+        char cha = *pszItera;
+        char chb = *pszIterb;
+        if( cha == '=' || cha == '\0' )
+        {
+            if( chb == '=' || chb == '\0' )
+                return 0;
+            else
+                return -1;
+        }
+        if( chb == '=' || chb == '\0' )
+        {
+            return 1;
+        }
+        if( cha >= 'a' && cha <= 'z' )
+            cha -= ('a' - 'A');
+        if( chb >= 'a' && chb <= 'z' )
+            chb -= ('a' - 'A');
+        if( cha < chb )
+            return -1;
+        else if( cha > chb )
+            return 1;
+        pszItera ++;
+        pszIterb ++;
+    }
+}
+
 /************************************************************************/
 /*                            llCompareStr()                            */
 /*                                                                      */
@@ -476,7 +509,7 @@ char **CPLStringList::StealList()
 /************************************************************************/
 static int llCompareStr(const void *a, const void *b)
 {
-	return STRCASECMP((*(const char **)a),(*(const char **)b));
+	return CPLCompareKeyValueString((*(const char **)a),(*(const char **)b));
 }
 
 /************************************************************************/
@@ -542,7 +575,7 @@ int CPLStringList::FindName( const char *pszKey ) const
             && (pszMiddle[nKeyLen] == '=' || pszMiddle[nKeyLen] == ':') )
             return iMiddle;
 
-        if( STRCASECMP(pszKey,pszMiddle) < 0 )
+        if( CPLCompareKeyValueString(pszKey,pszMiddle) < 0 )
             iEnd = iMiddle-1;
         else
             iStart = iMiddle+1;
@@ -722,7 +755,7 @@ int CPLStringList::FindSortedInsertionPoint( const char *pszLine )
         int iMiddle = (iEnd+iStart)/2;
         const char *pszMiddle = papszList[iMiddle];
 
-        if( STRCASECMP(pszLine,pszMiddle) < 0 )
+        if( CPLCompareKeyValueString(pszLine,pszMiddle) < 0 )
             iEnd = iMiddle-1;
         else
             iStart = iMiddle+1;
@@ -731,9 +764,9 @@ int CPLStringList::FindSortedInsertionPoint( const char *pszLine )
     iEnd++;
     CPLAssert( iEnd >= 0 && iEnd <= nCount );
     CPLAssert( iEnd == 0 
-               || STRCASECMP(pszLine,papszList[iEnd-1]) >= 0 );
+               || CPLCompareKeyValueString(pszLine,papszList[iEnd-1]) >= 0 );
     CPLAssert( iEnd == nCount
-               || STRCASECMP(pszLine,papszList[iEnd]) <= 0 );
+               || CPLCompareKeyValueString(pszLine,papszList[iEnd]) <= 0 );
     
     return iEnd;
 }
