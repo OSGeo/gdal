@@ -139,6 +139,7 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
     crn_dxt_quality dxt_quality = cCRNDXTQualityNormal;
     bool srgb_colorspace = true;    
     bool dxt1a_transparency = true;
+    bool generate_mipmaps = true;
     
     /* Check the texture format */
     const char *pszFormat = CSLFetchNameValue( papszOptions, "FORMAT" );
@@ -213,9 +214,10 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
     crnlib::DDSURFACEDESC2 ddsDesc;
     memset(&ddsDesc, 0, sizeof(ddsDesc));
     ddsDesc.dwSize = sizeof(ddsDesc);
-    ddsDesc.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT;
+    ddsDesc.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_MIPMAPCOUNT | DDSD_PIXELFORMAT | DDSD_DEPTH ;
     ddsDesc.dwWidth = nXSize;
     ddsDesc.dwHeight = nYSize;
+    ddsDesc.dwMipMapCount = 1;
     
     ddsDesc.ddpfPixelFormat.dwSize = sizeof(crnlib::DDPIXELFORMAT);
     ddsDesc.ddpfPixelFormat.dwFlags = DDPF_FOURCC;
