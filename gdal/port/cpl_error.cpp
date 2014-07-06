@@ -238,6 +238,21 @@ void    CPLErrorV(CPLErr eErrClass, int err_no, const char *fmt, va_list args )
 #endif
 
 /* -------------------------------------------------------------------- */
+/*      Obfuscate any password in error message                         */
+/* -------------------------------------------------------------------- */
+
+    char* pszPassword = strstr(psCtx->szLastErrMsg, "password=");
+    if( pszPassword != NULL )
+    {
+        char* pszIter = pszPassword + strlen("password=");
+        while( *pszIter != ' ' && *pszIter != '\0' )
+        {
+            *pszIter = 'X';
+            pszIter ++;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      If the user provided his own error handling function, then      */
 /*      call it, otherwise print the error to stderr and return.        */
 /* -------------------------------------------------------------------- */
@@ -464,6 +479,21 @@ void CPLDebug( const char * pszCategory, const char * pszFormat, ... )
     va_end(args);
 
 /* -------------------------------------------------------------------- */
+/*      Obfuscate any password in error message                         */
+/* -------------------------------------------------------------------- */
+
+    char* pszPassword = strstr(pszMessage, "password=");
+    if( pszPassword != NULL )
+    {
+        char* pszIter = pszPassword + strlen("password=");
+        while( *pszIter != ' ' && *pszIter != '\0' )
+        {
+            *pszIter = 'X';
+            pszIter ++;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Invoke the current error handler.                               */
 /* -------------------------------------------------------------------- */
     if( psCtx->psHandlerStack != NULL )
@@ -620,7 +650,10 @@ void CPL_STDCALL CPLDefaultErrorHandler( CPLErr eErrClass, int nError,
         fpLog = stderr;
         if( CPLGetConfigOption( "CPL_LOG", NULL ) != NULL )
         {
-            fpLog = fopen( CPLGetConfigOption("CPL_LOG",""), "wt" );
+            const char* pszAccess = "wt";
+            if( CPLGetConfigOption( "CPL_LOG_APPEND", NULL ) != NULL )
+                pszAccess = "at";
+            fpLog = fopen( CPLGetConfigOption("CPL_LOG",""), pszAccess );
             if( fpLog == NULL )
                 fpLog = stderr;
         }
