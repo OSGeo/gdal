@@ -793,7 +793,7 @@ class TABBinBlockManager
 class TABRawBinBlock
 {
   protected:
-    FILE        *m_fp;          /* Associated file handle               */
+    VSILFILE    *m_fp;          /* Associated file handle               */
     TABAccess   m_eAccess;      /* Read/Write access mode               */
 
     int         m_nBlockType;
@@ -815,15 +815,15 @@ class TABRawBinBlock
                    GBool bHardBlockSize = TRUE);
     virtual ~TABRawBinBlock();
 
-    virtual int ReadFromFile(FILE *fpSrc, int nOffset, int nSize = 512);
+    virtual int ReadFromFile(VSILFILE *fpSrc, int nOffset, int nSize = 512);
     virtual int CommitToFile();
     int         CommitAsDeleted(GInt32 nNextBlockPtr);
 
     virtual int InitBlockFromData(GByte *pabyBuf, 
                                   int nBlockSize, int nSizeUsed,
                                   GBool bMakeCopy = TRUE,
-                                  FILE *fpSrc = NULL, int nOffset = 0);
-    virtual int InitNewBlock(FILE *fpSrc, int nBlockSize, int nFileOffset=0);
+                                  VSILFILE *fpSrc = NULL, int nOffset = 0);
+    virtual int InitNewBlock(VSILFILE *fpSrc, int nBlockSize, int nFileOffset=0);
 
     int         GetBlockType();
     virtual int GetBlockClass() { return TAB_RAWBIN_BLOCK; };
@@ -889,8 +889,8 @@ class TABMAPHeaderBlock: public TABRawBinBlock
     virtual int InitBlockFromData(GByte *pabyBuf,
                                   int nBlockSize, int nSizeUsed,
                                   GBool bMakeCopy = TRUE,
-                                  FILE *fpSrc = NULL, int nOffset = 0);
-    virtual int InitNewBlock(FILE *fpSrc, int nBlockSize, int nFileOffset=0);
+                                  VSILFILE *fpSrc = NULL, int nOffset = 0);
+    virtual int InitNewBlock(VSILFILE *fpSrc, int nBlockSize, int nFileOffset=0);
 
     virtual int GetBlockClass() { return TABMAP_HEADER_BLOCK; };
 
@@ -996,8 +996,8 @@ class TABMAPIndexBlock: public TABRawBinBlock
     virtual int InitBlockFromData(GByte *pabyBuf,
                                   int nBlockSize, int nSizeUsed,
                                   GBool bMakeCopy = TRUE,
-                                  FILE *fpSrc = NULL, int nOffset = 0);
-    virtual int InitNewBlock(FILE *fpSrc, int nBlockSize, int nFileOffset=0);
+                                  VSILFILE *fpSrc = NULL, int nOffset = 0);
+    virtual int InitNewBlock(VSILFILE *fpSrc, int nBlockSize, int nFileOffset=0);
     virtual int CommitToFile();
 
     virtual int GetBlockClass() { return TABMAP_INDEX_BLOCK; };
@@ -1097,8 +1097,8 @@ class TABMAPObjectBlock: public TABRawBinBlock
     virtual int InitBlockFromData(GByte *pabyBuf,
                                   int nBlockSize, int nSizeUsed,
                                   GBool bMakeCopy = TRUE,
-                                  FILE *fpSrc = NULL, int nOffset = 0);
-    virtual int InitNewBlock(FILE *fpSrc, int nBlockSize, int nFileOffset=0);
+                                  VSILFILE *fpSrc = NULL, int nOffset = 0);
+    virtual int InitNewBlock(VSILFILE *fpSrc, int nBlockSize, int nFileOffset=0);
 
     virtual int GetBlockClass() { return TABMAP_OBJECT_BLOCK; };
 
@@ -1173,8 +1173,8 @@ class TABMAPCoordBlock: public TABRawBinBlock
     virtual int InitBlockFromData(GByte *pabyBuf,
                                   int nBlockSize, int nSizeUsed,
                                   GBool bMakeCopy = TRUE,
-                                  FILE *fpSrc = NULL, int nOffset = 0);
-    virtual int InitNewBlock(FILE *fpSrc, int nBlockSize, int nFileOffset=0);
+                                  VSILFILE *fpSrc = NULL, int nOffset = 0);
+    virtual int InitNewBlock(VSILFILE *fpSrc, int nBlockSize, int nFileOffset=0);
     virtual int CommitToFile();
 
     virtual int GetBlockClass() { return TABMAP_COORD_BLOCK; };
@@ -1240,8 +1240,8 @@ class TABMAPToolBlock: public TABRawBinBlock
     virtual int InitBlockFromData(GByte *pabyBuf,
                                   int nBlockSize, int nSizeUsed,
                                   GBool bMakeCopy = TRUE,
-                                  FILE *fpSrc = NULL, int nOffset = 0);
-    virtual int InitNewBlock(FILE *fpSrc, int nBlockSize, int nFileOffset=0);
+                                  VSILFILE *fpSrc = NULL, int nOffset = 0);
+    virtual int InitNewBlock(VSILFILE *fpSrc, int nBlockSize, int nFileOffset=0);
     virtual int CommitToFile();
 
     virtual int GetBlockClass() { return TABMAP_TOOL_BLOCK; };
@@ -1279,7 +1279,7 @@ class TABIDFile
 {
   private:
     char        *m_pszFname;
-    FILE        *m_fp;
+    VSILFILE    *m_fp;
     TABAccess   m_eAccessMode;
 
     TABRawBinBlock *m_poIDBlock;
@@ -1316,7 +1316,7 @@ class TABMAPFile
   private:
     int         m_nMinTABVersion;
     char        *m_pszFname;
-    FILE        *m_fp;
+    VSILFILE    *m_fp;
     TABAccess   m_eAccessMode;
 
     TABBinBlockManager m_oBlockManager;
@@ -1451,7 +1451,7 @@ class TABMAPFile
 class TABINDNode
 {
   private:
-    FILE        *m_fp;
+    VSILFILE    *m_fp;
     TABAccess   m_eAccessMode;
     TABINDNode *m_poCurChildNode;
     TABINDNode *m_poParentNodeRef;
@@ -1485,7 +1485,7 @@ class TABINDNode
     TABINDNode(TABAccess eAccessMode = TABRead);
     ~TABINDNode();
 
-    int         InitNode(FILE *fp, int nBlockPtr, 
+    int         InitNode(VSILFILE *fp, int nBlockPtr, 
                          int nKeyLength, int nSubTreeDepth, GBool bUnique,
                          TABBinBlockManager *poBlockMgr=NULL,
                          TABINDNode *poParentNode=NULL,
@@ -1543,7 +1543,7 @@ class TABINDFile
 {
   private:
     char        *m_pszFname;
-    FILE        *m_fp;
+    VSILFILE    *m_fp;
     TABAccess   m_eAccessMode;
 
     TABBinBlockManager m_oBlockManager;
@@ -1594,7 +1594,7 @@ class TABDATFile
 {
   private:
     char        *m_pszFname;
-    FILE        *m_fp;
+    VSILFILE    *m_fp;
     TABAccess   m_eAccessMode;
     TABTableType m_eTableType;
 
@@ -1805,7 +1805,7 @@ class MIDDATAFile
      GBool GetEof();
 
      private:
-       FILE *m_fp;
+       VSILFILE *m_fp;
        const char *m_pszDelimiter;
 
        // Set limit for the length of a line
@@ -1828,7 +1828,7 @@ class MIDDATAFile
                         Function prototypes
  =====================================================================*/
 
-TABRawBinBlock *TABCreateMAPBlockFromFile(FILE *fpSrc, int nOffset, 
+TABRawBinBlock *TABCreateMAPBlockFromFile(VSILFILE *fpSrc, int nOffset, 
                                           int nSize = 512, 
                                           GBool bHardBlockSize = TRUE,
                                           TABAccess eAccessMode = TABRead);

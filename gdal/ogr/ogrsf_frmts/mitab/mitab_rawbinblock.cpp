@@ -117,7 +117,7 @@ TABRawBinBlock::~TABRawBinBlock()
  * Returns 0 if succesful or -1 if an error happened, in which case 
  * CPLError() will have been called.
  **********************************************************************/
-int     TABRawBinBlock::ReadFromFile(FILE *fpSrc, int nOffset, 
+int     TABRawBinBlock::ReadFromFile(VSILFILE *fpSrc, int nOffset, 
                                      int nSize /*= 512*/)
 {
     GByte *pabyBuf;
@@ -142,8 +142,8 @@ int     TABRawBinBlock::ReadFromFile(FILE *fpSrc, int nOffset,
     /*----------------------------------------------------------------
      * Read from the file
      *---------------------------------------------------------------*/
-    if (VSIFSeek(fpSrc, nOffset, SEEK_SET) != 0 ||
-        (m_nSizeUsed = VSIFRead(pabyBuf, sizeof(GByte), nSize, fpSrc) ) == 0 ||
+    if (VSIFSeekL(fpSrc, nOffset, SEEK_SET) != 0 ||
+        (m_nSizeUsed = VSIFReadL(pabyBuf, sizeof(GByte), nSize, fpSrc) ) == 0 ||
         (m_bHardBlockSize && m_nSizeUsed != nSize ) )
     {
         CPLError(CE_Failure, CPLE_FileIO,
@@ -198,24 +198,24 @@ int     TABRawBinBlock::CommitToFile()
     /*----------------------------------------------------------------
      * Move the output file pointer to the right position... 
      *---------------------------------------------------------------*/
-    if (VSIFSeek(m_fp, m_nFileOffset, SEEK_SET) != 0)
+    if (VSIFSeekL(m_fp, m_nFileOffset, SEEK_SET) != 0)
     {
         /*------------------------------------------------------------
          * Moving pointer failed... we may need to pad with zeros if 
          * block destination is beyond current end of file.
          *-----------------------------------------------------------*/
         int nCurPos;
-        nCurPos = VSIFTell(m_fp);
+        nCurPos = (int)VSIFTellL(m_fp);
 
         if (nCurPos < m_nFileOffset &&
-            VSIFSeek(m_fp, 0L, SEEK_END) == 0 &&
-            (nCurPos = VSIFTell(m_fp)) < m_nFileOffset)
+            VSIFSeekL(m_fp, 0L, SEEK_END) == 0 &&
+            (nCurPos = (int)VSIFTellL(m_fp)) < m_nFileOffset)
         {
             GByte cZero = 0;
 
             while(nCurPos < m_nFileOffset && nStatus == 0)
             {
-                if (VSIFWrite(&cZero, 1, 1, m_fp) != 1)
+                if (VSIFWriteL(&cZero, 1, 1, m_fp) != 1)
                 {
                     CPLError(CE_Failure, CPLE_FileIO,
                              "Failed writing 1 byte at offset %d.", nCurPos);
@@ -240,7 +240,7 @@ int     TABRawBinBlock::CommitToFile()
     int numBytesToWrite = m_bHardBlockSize?m_nBlockSize:m_nSizeUsed;
 
     if (nStatus != 0 ||
-        VSIFWrite(m_pabyBuf,sizeof(GByte),
+        VSIFWriteL(m_pabyBuf,sizeof(GByte),
                     numBytesToWrite, m_fp) != (size_t)numBytesToWrite )
     {
         CPLError(CE_Failure, CPLE_FileIO,
@@ -249,7 +249,7 @@ int     TABRawBinBlock::CommitToFile()
         return -1;
     }
 
-    fflush(m_fp);
+    VSIFFlushL(m_fp);
 
     m_bModified = FALSE;
 
@@ -317,7 +317,7 @@ int     TABRawBinBlock::CommitAsDeleted(GInt32 nNextBlockPtr)
 int     TABRawBinBlock::InitBlockFromData(GByte *pabyBuf, 
                                           int nBlockSize, int nSizeUsed, 
                                           GBool bMakeCopy /* = TRUE */,
-                                          FILE *fpSrc /* = NULL */, 
+                                          VSILFILE *fpSrc /* = NULL */, 
                                           int nOffset /* = 0 */)
 {
     m_fp = fpSrc;
@@ -372,7 +372,7 @@ int     TABRawBinBlock::InitBlockFromData(GByte *pabyBuf,
  * Returns 0 if succesful or -1 if an error happened, in which case 
  * CPLError() will have been called.
  **********************************************************************/
-int     TABRawBinBlock::InitNewBlock(FILE *fpSrc, int nBlockSize, 
+int     TABRawBinBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize, 
                                      int nFileOffset /* = 0*/)
 {
     m_fp = fpSrc;
@@ -1028,7 +1028,7 @@ void TABRawBinBlock::DumpBytes(GInt32 nValue, int nOffset /*=0*/,
  * Returns the new object if succesful or NULL if an error happened, in 
  * which case CPLError() will have been called.
  **********************************************************************/
-TABRawBinBlock *TABCreateMAPBlockFromFile(FILE *fpSrc, int nOffset, 
+TABRawBinBlock *TABCreateMAPBlockFromFile(VSILFILE *fpSrc, int nOffset, 
                                           int nSize /*= 512*/, 
                                           GBool bHardBlockSize /*= TRUE */,
                                           TABAccess eAccessMode /*= TABRead*/)
@@ -1051,8 +1051,8 @@ TABRawBinBlock *TABCreateMAPBlockFromFile(FILE *fpSrc, int nOffset,
     /*----------------------------------------------------------------
      * Read from the file
      *---------------------------------------------------------------*/
-    if (VSIFSeek(fpSrc, nOffset, SEEK_SET) != 0 ||
-        VSIFRead(pabyBuf, sizeof(GByte), nSize, fpSrc)!=(unsigned int)nSize )
+    if (VSIFSeekL(fpSrc, nOffset, SEEK_SET) != 0 ||
+        VSIFReadL(pabyBuf, sizeof(GByte), nSize, fpSrc)!=(unsigned int)nSize )
     {
         CPLError(CE_Failure, CPLE_FileIO,
          "TABCreateMAPBlockFromFile() failed reading %d bytes at offset %d.",

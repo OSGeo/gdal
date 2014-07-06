@@ -147,7 +147,7 @@ TABMAPCoordBlock::~TABMAPCoordBlock()
 int     TABMAPCoordBlock::InitBlockFromData(GByte *pabyBuf,
                                             int nBlockSize, int nSizeUsed, 
                                             GBool bMakeCopy /* = TRUE */,
-                                            FILE *fpSrc /* = NULL */, 
+                                            VSILFILE *fpSrc /* = NULL */, 
                                             int nOffset /* = 0 */)
 {
     int nStatus;
@@ -254,7 +254,7 @@ int     TABMAPCoordBlock::CommitToFile()
  * Returns 0 if succesful or -1 if an error happened, in which case 
  * CPLError() will have been called.
  **********************************************************************/
-int     TABMAPCoordBlock::InitNewBlock(FILE *fpSrc, int nBlockSize, 
+int     TABMAPCoordBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize, 
                                         int nFileOffset /* = 0*/)
 {
     CPLErrorReset();

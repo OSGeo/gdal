@@ -215,7 +215,7 @@ GBool TABAdjustCaseSensitiveFilename(char *pszFname)
     /*-----------------------------------------------------------------
      * Unix case.
      *----------------------------------------------------------------*/
-    VSIStatBuf  sStatBuf;
+    VSIStatBufL  sStatBuf;
     char        *pszTmpPath = NULL;
     int         nTotalLen, iTmpPtr;
     GBool       bValidPath;
@@ -223,7 +223,7 @@ GBool TABAdjustCaseSensitiveFilename(char *pszFname)
     /*-----------------------------------------------------------------
      * First check if the filename is OK as is.
      *----------------------------------------------------------------*/
-    if (VSIStat(pszFname, &sStatBuf) == 0)
+    if (VSIStatL(pszFname, &sStatBuf) == 0)
     {
         return TRUE;
     }
@@ -248,7 +248,7 @@ GBool TABAdjustCaseSensitiveFilename(char *pszFname)
             pszTmpPath[--iTmpPtr] = '\0';
         }
 
-        if (iTmpPtr > 0 && VSIStat(pszTmpPath, &sStatBuf) == 0)
+        if (iTmpPtr > 0 && VSIStatL(pszTmpPath, &sStatBuf) == 0)
             bValidPath = TRUE;
     }
 
@@ -300,7 +300,7 @@ GBool TABAdjustCaseSensitiveFilename(char *pszFname)
             }
         }
 
-        if (iTmpPtr > 0 && VSIStat(pszTmpPath, &sStatBuf) != 0)
+        if (iTmpPtr > 0 && VSIStatL(pszTmpPath, &sStatBuf) != 0)
             bValidPath = FALSE;
 
         CSLDestroy(papszDir);
@@ -345,13 +345,13 @@ GBool TABAdjustCaseSensitiveFilename(char *pszFname)
  **********************************************************************/
 GBool TABAdjustFilenameExtension(char *pszFname)
 {
-    VSIStatBuf  sStatBuf;
+    VSIStatBufL  sStatBuf;
     int         i;
     
     /*-----------------------------------------------------------------
      * First try using filename as provided
      *----------------------------------------------------------------*/
-    if (VSIStat(pszFname, &sStatBuf) == 0)
+    if (VSIStatL(pszFname, &sStatBuf) == 0)
     {
         return TRUE;
     }     
@@ -364,7 +364,7 @@ GBool TABAdjustFilenameExtension(char *pszFname)
         pszFname[i] = (char)toupper(pszFname[i]);
     }
 
-    if (VSIStat(pszFname, &sStatBuf) == 0)
+    if (VSIStatL(pszFname, &sStatBuf) == 0)
     {
         return TRUE;
     }     
@@ -377,7 +377,7 @@ GBool TABAdjustFilenameExtension(char *pszFname)
         pszFname[i] = (char)tolower(pszFname[i]);
     }
 
-    if (VSIStat(pszFname, &sStatBuf) == 0)
+    if (VSIStatL(pszFname, &sStatBuf) == 0)
     {
         return TRUE;
     }     
@@ -442,27 +442,27 @@ char *TABGetBasename(const char *pszFname)
  *
  * Load a test file into a stringlist.
  *
- * Lines are limited in length by the size fo the CPLReadLine() buffer.
+ * Lines are limited in length by the size of the CPLReadLine() buffer.
  **********************************************************************/
 char **TAB_CSLLoad(const char *pszFname)
 {
-    FILE        *fp;
+    VSILFILE    *fp;
     const char  *pszLine;
     char        **papszStrList=NULL;
 
-    fp = VSIFOpen(pszFname, "rt");
+    fp = VSIFOpenL(pszFname, "rt");
 
     if (fp)
     {
-        while(!VSIFEof(fp))
+        while(!VSIFEofL(fp))
         {
-            if ( (pszLine = CPLReadLine(fp)) != NULL )
+            if ( (pszLine = CPLReadLineL(fp)) != NULL )
             {
                 papszStrList = CSLAddString(papszStrList, pszLine);
             }
         }
 
-        VSIFClose(fp);
+        VSIFCloseL(fp);
     }
 
     return papszStrList;

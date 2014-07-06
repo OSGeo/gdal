@@ -123,7 +123,7 @@ GBool TABMAPToolBlock::EndOfChain()
 int     TABMAPToolBlock::InitBlockFromData(GByte *pabyBuf,
                                            int nBlockSize, int nSizeUsed, 
                                            GBool bMakeCopy /* = TRUE */,
-                                           FILE *fpSrc /* = NULL */, 
+                                           VSILFILE *fpSrc /* = NULL */, 
                                            int nOffset /* = 0 */)
 {
     int nStatus;
@@ -224,7 +224,7 @@ int     TABMAPToolBlock::CommitToFile()
  * Returns 0 if succesful or -1 if an error happened, in which case 
  * CPLError() will have been called.
  **********************************************************************/
-int     TABMAPToolBlock::InitNewBlock(FILE *fpSrc, int nBlockSize, 
+int     TABMAPToolBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize, 
                                         int nFileOffset /* = 0*/)
 {
     /*-----------------------------------------------------------------

@@ -1158,12 +1158,12 @@ GBool MITABLookupCoordSysBounds(TABProjInfo *psCS,
  **********************************************************************/
 int MITABLoadCoordSysTable(const char *pszFname)
 {
-    FILE *fp;
+    VSILFILE *fp;
     int nStatus = 0, iLine = 0;
 
     MITABFreeCoordSysTable();
 
-    if ((fp = VSIFOpen(pszFname, "rt")) != NULL)
+    if ((fp = VSIFOpenL(pszFname, "rt")) != NULL)
     {
         const char *pszLine;
         int         iEntry=0, numEntries=100;
@@ -1172,7 +1172,7 @@ int MITABLoadCoordSysTable(const char *pszFname)
                                                   sizeof(MapInfoBoundsInfo *));
         gpapsExtBoundsList[0] = NULL;
 
-        while( (pszLine = CPLReadLine(fp)) != NULL)
+        while( (pszLine = CPLReadLineL(fp)) != NULL)
         {
             double dXMin, dYMin, dXMax, dYMax;
             TABProjInfo sProj;
@@ -1216,7 +1216,7 @@ int MITABLoadCoordSysTable(const char *pszFname)
             gpapsExtBoundsList[++iEntry] = NULL;
         }
 
-        VSIFClose(fp);
+        VSIFCloseL(fp);
     }
 
     return nStatus;
