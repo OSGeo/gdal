@@ -964,7 +964,7 @@ int TABFile::ParseTABFileFields()
  **********************************************************************/
 int TABFile::WriteTABFile()
 {
-    FILE *fp;
+    VSILFILE *fp;
 
     if (m_eAccessMode != TABWrite)
     {
@@ -973,12 +973,12 @@ int TABFile::WriteTABFile()
         return -1;
     }
 
-    if ( (fp = VSIFOpen(m_pszFname, "wt")) != NULL)
+    if ( (fp = VSIFOpenL(m_pszFname, "wt")) != NULL)
     {
-        fprintf(fp, "!table\n");
-        fprintf(fp, "!version %d\n", m_nVersion);
-        fprintf(fp, "!charset %s\n", m_pszCharset);
-        fprintf(fp, "\n");
+        VSIFPrintfL(fp, "!table\n");
+        VSIFPrintfL(fp, "!version %d\n", m_nVersion);
+        VSIFPrintfL(fp, "!charset %s\n", m_pszCharset);
+        VSIFPrintfL(fp, "\n");
 
         if (m_poDefn && m_poDefn->GetFieldCount() > 0)
         {
@@ -986,9 +986,9 @@ int TABFile::WriteTABFile()
             OGRFieldDefn *poFieldDefn;
             const char *pszFieldType;
 
-            fprintf(fp, "Definition Table\n");
-            fprintf(fp, "  Type NATIVE Charset \"%s\"\n", m_pszCharset);
-            fprintf(fp, "  Fields %d\n", m_poDefn->GetFieldCount());
+            VSIFPrintfL(fp, "Definition Table\n");
+            VSIFPrintfL(fp, "  Type NATIVE Charset \"%s\"\n", m_pszCharset);
+            VSIFPrintfL(fp, "  Fields %d\n", m_poDefn->GetFieldCount());
 
             for(iField=0; iField<m_poDefn->GetFieldCount(); iField++)
             {
@@ -1037,18 +1037,18 @@ int TABFile::WriteTABFile()
                     // Unsupported field type!!!  This should never happen.
                     CPLError(CE_Failure, CPLE_AssertionFailed,
                              "WriteTABFile(): Unsupported field type");
-                    VSIFClose(fp);
+                    VSIFCloseL(fp);
                     return -1;
                 }
 
                 if (GetFieldIndexNumber(iField) == 0)
                 {
-                    fprintf(fp, "    %s %s ;\n", poFieldDefn->GetNameRef(), 
+                    VSIFPrintfL(fp, "    %s %s ;\n", poFieldDefn->GetNameRef(), 
                             pszFieldType );
                 }
                 else
                 {
-                    fprintf(fp, "    %s %s Index %d ;\n", 
+                    VSIFPrintfL(fp, "    %s %s Index %d ;\n", 
                             poFieldDefn->GetNameRef(), pszFieldType,
                             GetFieldIndexNumber(iField) );
                 }
@@ -1057,13 +1057,13 @@ int TABFile::WriteTABFile()
         }
         else
         {
-            fprintf(fp, "Definition Table\n");
-            fprintf(fp, "  Type NATIVE Charset \"%s\"\n", m_pszCharset);
-            fprintf(fp, "  Fields 1\n");
-            fprintf(fp, "    FID Integer ;\n" );
+            VSIFPrintfL(fp, "Definition Table\n");
+            VSIFPrintfL(fp, "  Type NATIVE Charset \"%s\"\n", m_pszCharset);
+            VSIFPrintfL(fp, "  Fields 1\n");
+            VSIFPrintfL(fp, "    FID Integer ;\n" );
         }
 
-        VSIFClose(fp);
+        VSIFCloseL(fp);
     }
     else
     {

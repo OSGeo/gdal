@@ -662,7 +662,7 @@ int TABView::ParseTABFile(const char *pszDatasetPath,
  **********************************************************************/
 int TABView::WriteTABFile()
 {
-    FILE *fp;
+    VSILFILE *fp;
 
     CPLAssert(m_eAccessMode == TABWrite);
     CPLAssert(m_numTABFiles == 2);
@@ -672,37 +672,37 @@ int TABView::WriteTABFile()
     char *pszTable1 = TABGetBasename(m_papszTABFnames[0]);
     char *pszTable2 = TABGetBasename(m_papszTABFnames[1]);
 
-    if ( (fp = VSIFOpen(m_pszFname, "wt")) != NULL)
+    if ( (fp = VSIFOpenL(m_pszFname, "wt")) != NULL)
     {
         // Version is always 100, no matter what the sub-table's version is
-        fprintf(fp, "!Table\n");
-        fprintf(fp, "!Version 100\n");
+        VSIFPrintfL(fp, "!Table\n");
+        VSIFPrintfL(fp, "!Version 100\n");
 
-        fprintf(fp, "Open Table \"%s\" Hide\n", pszTable1);
-        fprintf(fp, "Open Table \"%s\" Hide\n", pszTable2);
-        fprintf(fp, "\n");
-        fprintf(fp, "Create View %s As\n", pszTable);
-        fprintf(fp, "Select ");
+        VSIFPrintfL(fp, "Open Table \"%s\" Hide\n", pszTable1);
+        VSIFPrintfL(fp, "Open Table \"%s\" Hide\n", pszTable2);
+        VSIFPrintfL(fp, "\n");
+        VSIFPrintfL(fp, "Create View %s As\n", pszTable);
+        VSIFPrintfL(fp, "Select ");
 
         OGRFeatureDefn *poDefn = GetLayerDefn();
         for(int iField=0; iField<poDefn->GetFieldCount(); iField++)
         {
             OGRFieldDefn *poFieldDefn = poDefn->GetFieldDefn(iField);
             if (iField == 0)
-                fprintf(fp, "%s", poFieldDefn->GetNameRef());
+                VSIFPrintfL(fp, "%s", poFieldDefn->GetNameRef());
             else
-                fprintf(fp, ",%s", poFieldDefn->GetNameRef());
+                VSIFPrintfL(fp, ",%s", poFieldDefn->GetNameRef());
         }
-        fprintf(fp, "\n");
+        VSIFPrintfL(fp, "\n");
 
-        fprintf(fp, "From %s, %s\n", pszTable2, pszTable1);
-        fprintf(fp, "Where %s.%s=%s.%s\n", pszTable2, 
+        VSIFPrintfL(fp, "From %s, %s\n", pszTable2, pszTable1);
+        VSIFPrintfL(fp, "Where %s.%s=%s.%s\n", pszTable2, 
                                            m_poRelation->GetRelFieldName(),
                                            pszTable1, 
                                            m_poRelation->GetMainFieldName());
 
 
-        VSIFClose(fp);
+        VSIFCloseL(fp);
     }
     else
     {

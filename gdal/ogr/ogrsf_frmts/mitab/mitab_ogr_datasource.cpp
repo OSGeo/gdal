@@ -128,7 +128,7 @@ OGRTABDataSource::~OGRTABDataSource()
 int OGRTABDataSource::Create( const char * pszName, char **papszOptions )
 
 {
-    VSIStatBuf  sStat;
+    VSIStatBufL  sStat;
     const char *pszOpt;
 
     CPLAssert( m_pszName == NULL );
@@ -152,7 +152,7 @@ int OGRTABDataSource::Create( const char * pszName, char **papszOptions )
 /* -------------------------------------------------------------------- */
     if( strlen(CPLGetExtension(pszName)) == 0 )
     {
-        if( VSIStat( pszName, &sStat ) == 0 )
+        if( VSIStatL( pszName, &sStat ) == 0 )
         {
             if( !VSI_ISDIR(sStat.st_mode) )
             {
@@ -215,8 +215,6 @@ int OGRTABDataSource::Create( const char * pszName, char **papszOptions )
 int OGRTABDataSource::Open( GDALOpenInfo* poOpenInfo, int bTestOpen )
 
 {
-    VSIStatBuf  stat;
-
     CPLAssert( m_pszName == NULL );
 
     m_pszName = CPLStrdup( poOpenInfo->pszFilename );

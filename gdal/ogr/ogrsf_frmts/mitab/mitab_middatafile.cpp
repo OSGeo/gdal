@@ -152,7 +152,7 @@ int MIDDATAFile::Open(const char *pszFname, const char *pszAccess)
      * Open file for reading
      *----------------------------------------------------------------*/
     m_pszFname = CPLStrdup(pszFname);
-    m_fp = VSIFOpen(m_pszFname, pszAccess);
+    m_fp = VSIFOpenL(m_pszFname, pszAccess);
 
     if (m_fp == NULL)
     {
@@ -161,7 +161,7 @@ int MIDDATAFile::Open(const char *pszFname, const char *pszAccess)
         return -1;
     }
 
-    SetEof(VSIFEof(m_fp));
+    SetEof(FALSE);
     return 0;
 }
 
@@ -172,8 +172,8 @@ int MIDDATAFile::Rewind()
 
     else
     {
-        VSIRewind(m_fp);
-        SetEof(VSIFEof(m_fp));
+        VSIRewindL(m_fp);
+        SetEof(FALSE);
     }
     return 0;
 }
@@ -184,11 +184,11 @@ int MIDDATAFile::Close()
         return 0;
    
     // Close file
-    VSIFClose(m_fp);
+    VSIFCloseL(m_fp);
     m_fp = NULL;
 
     // clear readline buffer.
-    CPLReadLine( NULL );
+    CPLReadLineL( NULL );
 
     CPLFree(m_pszFname);
     m_pszFname = NULL;
@@ -204,12 +204,11 @@ const char *MIDDATAFile::GetLine()
     if (m_eAccessMode == TABRead)
     {
         
-        pszLine = CPLReadLine(m_fp);
-
-        SetEof(VSIFEof(m_fp));
+        pszLine = CPLReadLineL(m_fp);
 
         if (pszLine == NULL)
         {
+            SetEof(TRUE);
             m_szLastRead[0] = '\0';
         }
         else
@@ -255,7 +254,9 @@ void MIDDATAFile::WriteLine(const char *pszFormat,...)
     if (m_eAccessMode == TABWrite  && m_fp)
     {
         va_start(args, pszFormat);
-         vfprintf( m_fp, pszFormat, args );
+        CPLString osStr;
+        osStr.vPrintf( pszFormat, args );
+        VSIFWriteL( osStr.c_str(), 1, osStr.size(), m_fp);
         va_end(args);
     } 
     else

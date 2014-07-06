@@ -202,7 +202,7 @@ int TABDATFile::Open(const char *pszFname, const char *pszAccess,
      * Open file for reading
      *----------------------------------------------------------------*/
     m_pszFname = CPLStrdup(pszFname);
-    m_fp = VSIFOpen(m_pszFname, pszAccess);
+    m_fp = VSIFOpenL(m_pszFname, pszAccess);
     m_eTableType = eTableType;
 
     if (m_fp == NULL)
@@ -311,8 +311,8 @@ int TABDATFile::Close()
         WriteHeader();
 
         char cEOF = 26;
-        if (VSIFSeek(m_fp, 0L, SEEK_END) == 0)
-            VSIFWrite(&cEOF, 1, 1, m_fp);
+        if (VSIFSeekL(m_fp, 0L, SEEK_END) == 0)
+            VSIFWriteL(&cEOF, 1, 1, m_fp);
     }
     
     // Delete all structures 
@@ -329,7 +329,7 @@ int TABDATFile::Close()
     }
 
     // Close file
-    VSIFClose(m_fp);
+    VSIFCloseL(m_fp);
     m_fp = NULL;
 
     CPLFree(m_pszFname);

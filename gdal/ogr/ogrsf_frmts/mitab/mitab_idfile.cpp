@@ -154,7 +154,7 @@ int TABIDFile::Open(const char *pszFname, const char *pszAccess)
     /*-----------------------------------------------------------------
      * Open file
      *----------------------------------------------------------------*/
-    m_fp = VSIFOpen(m_pszFname, pszAccess);
+    m_fp = VSIFOpenL(m_pszFname, pszAccess);
 
     if (m_fp == NULL)
     {
@@ -171,8 +171,8 @@ int TABIDFile::Open(const char *pszFname, const char *pszAccess)
          * READ access:
          * Establish the number of object IDs from the size of the file
          *------------------------------------------------------------*/
-        VSIStatBuf  sStatBuf;
-        if ( VSIStat(m_pszFname, &sStatBuf) == -1 )
+        VSIStatBufL  sStatBuf;
+        if ( VSIStatL(m_pszFname, &sStatBuf) == -1 )
         {
             CPLError(CE_Failure, CPLE_FileIO, 
                      "stat() failed for %s\n", m_pszFname);
@@ -242,7 +242,7 @@ int TABIDFile::Close()
     m_poIDBlock = NULL;
 
     // Close file
-    VSIFClose(m_fp);
+    VSIFCloseL(m_fp);
     m_fp = NULL;
 
     CPLFree(m_pszFname);

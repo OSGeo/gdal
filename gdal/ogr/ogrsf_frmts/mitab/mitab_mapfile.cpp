@@ -251,7 +251,7 @@ TABMAPFile::~TABMAPFile()
 int TABMAPFile::Open(const char *pszFname, const char *pszAccess,
                      GBool bNoErrorMsg /* = FALSE */)
 {
-    FILE        *fp=NULL;
+    VSILFILE    *fp=NULL;
     TABRawBinBlock *poBlock=NULL;
 
     if (m_fp)
@@ -291,7 +291,7 @@ int TABMAPFile::Open(const char *pszFname, const char *pszAccess,
     /*-----------------------------------------------------------------
      * Open file
      *----------------------------------------------------------------*/
-    fp = VSIFOpen(pszFname, pszAccess);
+    fp = VSIFOpenL(pszFname, pszAccess);
 
     // TODO: In Read/Write mode we should also preload the chain of deleted
     // blocks in the blockManager. Not needed for read-only or write-only.
@@ -319,7 +319,7 @@ int TABMAPFile::Open(const char *pszFname, const char *pszAccess,
             if (poBlock)
                 delete poBlock;
             poBlock = NULL;
-            VSIFClose(fp);
+            VSIFCloseL(fp);
             CPLError(CE_Failure, CPLE_FileIO,
                 "Open() failed: %s does not appear to be a valid .MAP file",
                      pszFname);
@@ -552,7 +552,7 @@ int TABMAPFile::Close()
 
     // Close file
     if (m_fp)
-        VSIFClose(m_fp);
+        VSIFCloseL(m_fp);
     m_fp = NULL;
 
     CPLFree(m_pszFname);
@@ -2204,8 +2204,8 @@ TABRawBinBlock *TABMAPFile::GetIndexObjectBlock( int nFileOffset )
      *---------------------------------------------------------------*/
     GByte abyData[512];
 
-    if (VSIFSeek(m_fp, nFileOffset, SEEK_SET) != 0 
-        || VSIFRead(abyData, sizeof(GByte), 512, m_fp) != 512 )
+    if (VSIFSeekL(m_fp, nFileOffset, SEEK_SET) != 0 
+        || VSIFReadL(abyData, sizeof(GByte), 512, m_fp) != 512 )
     {
         CPLError(CE_Failure, CPLE_FileIO,
                  "GetIndexBlock() failed reading %d bytes at offset %d.",

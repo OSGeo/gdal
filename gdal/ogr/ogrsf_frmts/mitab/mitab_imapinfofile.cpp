@@ -206,14 +206,14 @@ IMapInfoFile *IMapInfoFile::SmartOpen(const char *pszFname,
          * .TAB file ... is it a TABFileView or a TABFile?
          * We have to read the .tab header to find out.
          *------------------------------------------------------------*/
-        FILE *fp;
+        VSILFILE *fp;
         const char *pszLine;
         char *pszAdjFname = CPLStrdup(pszFname);
         GBool bFoundFields = FALSE, bFoundView=FALSE, bFoundSeamless=FALSE;
 
         TABAdjustFilenameExtension(pszAdjFname);
-        fp = VSIFOpen(pszAdjFname, "r");
-        while(fp && (pszLine = CPLReadLine(fp)) != NULL)
+        fp = VSIFOpenL(pszAdjFname, "r");
+        while(fp && (pszLine = CPLReadLineL(fp)) != NULL)
         {
             while (isspace((unsigned char)*pszLine))  pszLine++;
             if (EQUALN(pszLine, "Fields", 6))
@@ -232,7 +232,7 @@ IMapInfoFile *IMapInfoFile::SmartOpen(const char *pszFname,
             poFile = new TABFile;
 
         if (fp)
-            VSIFClose(fp);
+            VSIFCloseL(fp);
 
         CPLFree(pszAdjFname);
     }
