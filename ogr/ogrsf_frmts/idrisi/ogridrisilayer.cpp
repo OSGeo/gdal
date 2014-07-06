@@ -461,17 +461,7 @@ OGRFeature *OGRIdrisiLayer::GetNextRawFeature()
                  dfMaxYShape < m_sFilterEnvelope.MinY ||
                  dfMinYShape > m_sFilterEnvelope.MaxY))
             {
-                unsigned int iPart;
-                for(iPart = 0; iPart < nParts; iPart ++)
-                {
-                    unsigned int nNodes;
-                    if (VSIFReadL(&nNodes, sizeof(unsigned int), 1, fp) != 1)
-                        return NULL;
-                    CPL_LSBPTR32(&nNodes);
-                    if (nNodes > nTotalNodes)
-                        return NULL;
-                    VSIFSeekL(fp, sizeof(OGRRawPoint) * nNodes, SEEK_CUR);
-                }
+                VSIFSeekL(fp, sizeof(unsigned int) * nParts + sizeof(OGRRawPoint) * nTotalNodes, SEEK_CUR);
                 nNextFID ++;
                 continue;
             }
@@ -481,24 +471,49 @@ OGRFeature *OGRIdrisiLayer::GetNextRawFeature()
             {
                 return NULL;
             }
+            unsigned int* panNodesCount = NULL;
+            if( nParts > 1 )
+            {
+                panNodesCount = (unsigned int *)CPLMalloc(sizeof(unsigned int) * nParts);
+                if (VSIFReadL(panNodesCount, sizeof(unsigned int) * nParts, 1, fp) != 1)
+                {
+                    VSIFree(poRawPoints);
+                    VSIFree(panNodesCount);
+                    return NULL;
+                }
+#if defined(CPL_MSB)
+                for(unsigned int iPart=0; iPart < nParts; iPart ++)
+                {
+                    CPL_LSBPTR32(&panNodesCount[iPart]);
+                }
+#endif
+            }
+            else
+            {
+                unsigned int nNodes;
+                if (VSIFReadL(&nNodes, sizeof(unsigned int) * nParts, 1, fp) != 1)
+                {
+                    VSIFree(poRawPoints);
+                    return NULL;
+                }
+                CPL_LSBPTR32(&nNodes);
+                if( nNodes != nTotalNodes )
+                {
+                    VSIFree(poRawPoints);
+                    return NULL;
+                }
+            }
 
             unsigned int iPart;
             OGRPolygon* poGeom = new OGRPolygon();
             for(iPart = 0; iPart < nParts; iPart ++)
             {
-                unsigned int nNodes;
-                if (VSIFReadL(&nNodes, sizeof(unsigned int), 1, fp) != 1)
-                {
-                    VSIFree(poRawPoints);
-                    delete poGeom;
-                    return NULL;
-                }
-                CPL_LSBPTR32(&nNodes);
-
+                unsigned int nNodes = (nParts > 1) ? panNodesCount[iPart] : nTotalNodes;
                 if (nNodes > nTotalNodes ||
                     (unsigned int)VSIFReadL(poRawPoints, sizeof(OGRRawPoint), nNodes, fp) != nNodes)
                 {
                     VSIFree(poRawPoints);
+                    VSIFree(panNodesCount);
                     delete poGeom;
                     return NULL;
                 }
@@ -517,6 +532,7 @@ OGRFeature *OGRIdrisiLayer::GetNextRawFeature()
             }
 
             VSIFree(poRawPoints);
+            VSIFree(panNodesCount);
 
             if (poSRS)
                 poGeom->assignSpatialReference(poSRS);
