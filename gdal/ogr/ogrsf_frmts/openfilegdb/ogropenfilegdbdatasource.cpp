@@ -1163,5 +1163,6 @@ char** OGROpenFileGDBDataSource::GetFileList()
             continue;
         osStringList.AddString(CPLFormFilename(m_osDirName, *papszIter, NULL));
     }
+    CSLDestroy(papszFiles);
     return osStringList.StealList();
 }
