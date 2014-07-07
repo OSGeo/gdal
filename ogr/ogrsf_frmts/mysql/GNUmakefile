@@ -7,11 +7,6 @@ OBJ	=	ogrmysqldriver.o ogrmysqldatasource.o \
 
 CPPFLAGS	:=	-I.. -I../.. $(GDAL_INCLUDE) $(MYSQL_INC) $(CPPFLAGS)
 
-ifeq ($(MYSQL_NEEDS_LOAD_DEFAULTS_DECLARATION),yes)
-CPPFLAGS +=   -DMYSQL_NEEDS_LOAD_DEFAULTS_DECLARATION
-endif
-
-
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 
 clean:
