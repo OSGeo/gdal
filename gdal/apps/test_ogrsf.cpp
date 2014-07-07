@@ -2319,6 +2319,7 @@ static int TestLayerSQL( GDALDataset* poDS, OGRLayer * poLayer )
     {
         printf( "ERROR: ExecuteSQL(%s) failed.\n", osSQL.c_str() );
         bRet = FALSE;
+        return bRet;
     }
     else
     {
