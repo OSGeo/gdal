@@ -266,7 +266,7 @@ TABMAPHeaderBlock::~TABMAPHeaderBlock()
 int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf, 
                                              int nBlockSize, int nSizeUsed, 
                                              GBool bMakeCopy /* = TRUE */,
-                                             FILE *fpSrc /* = NULL */, 
+                                             VSILFILE *fpSrc /* = NULL */, 
                                              int nOffset /* = 0 */)
 {
     int i, nStatus;
@@ -909,7 +909,7 @@ int     TABMAPHeaderBlock::CommitToFile()
  * Returns 0 if succesful or -1 if an error happened, in which case 
  * CPLError() will have been called.
  **********************************************************************/
-int     TABMAPHeaderBlock::InitNewBlock(FILE *fpSrc, int nBlockSize, 
+int     TABMAPHeaderBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize, 
                                         int nFileOffset /* = 0*/)
 {
     int i;

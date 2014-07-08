@@ -29,8 +29,30 @@
 
 #include "ogr_mysql.h"
 #include "cpl_conv.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
+
+static void* hMutex = NULL;
+static int   bInitialized = FALSE;
+
+/************************************************************************/
+/*                        OGRMySQLDriverUnload()                        */
+/************************************************************************/
+
+static void OGRMySQLDriverUnload( GDALDriver* poDriver )
+{
+    if( bInitialized )
+    {
+        mysql_library_end();
+        bInitialized = FALSE;
+    }
+    if( hMutex != NULL )
+    {
+        CPLDestroyMutex(hMutex);
+        hMutex = NULL;
+    }
+}
 
 /************************************************************************/
 /*                                Open()                                */
@@ -43,6 +65,19 @@ static GDALDataset *OGRMySQLDriverOpen( GDALOpenInfo* poOpenInfo )
 
     if( !EQUALN(poOpenInfo->pszFilename,"MYSQL:",6) )
         return NULL;
+ 
+    {
+        CPLMutexHolderD(&hMutex);
+        if( !bInitialized )
+        {
+            if ( mysql_library_init( 0, NULL, NULL ) )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, "Could not initialize MySQL library" );
+                return NULL;
+            }
+            bInitialized = TRUE;
+        }
+    }
 
     poDS = new OGRMySQLDataSource();
 
@@ -91,6 +126,7 @@ void RegisterOGRMySQL()
 {
     if (! GDAL_CHECK_VERSION("MySQL driver"))
         return;
+  
     GDALDriver  *poDriver;
 
     if( GDALGetDriverByName( "MySQL" ) == NULL )
@@ -106,6 +142,7 @@ void RegisterOGRMySQL()
 
         poDriver->pfnOpen = OGRMySQLDriverOpen;
         poDriver->pfnCreate = OGRMySQLDriverCreate;
+        poDriver->pfnUnloadDriver = OGRMySQLDriverUnload;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }

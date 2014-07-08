@@ -203,6 +203,8 @@ int VSIUnixStdioHandle::Seek( vsi_l_offset nOffset, int nWhence )
 {
     GByte abyTemp[4096];
 
+    bAtEOF = FALSE;
+
     // seeks that do nothing are still surprisingly expensive with MSVCRT.
     // try and short circuit if possible.
     if( nWhence == SEEK_SET && nOffset == this->nOffset )
@@ -221,7 +223,6 @@ int VSIUnixStdioHandle::Seek( vsi_l_offset nOffset, int nWhence )
                 this->nOffset = nOffset;
                 bLastOpWrite = FALSE;
                 bLastOpRead = FALSE;
-                bAtEOF = FALSE;
                 return 0;
             }
         }
@@ -273,7 +274,6 @@ int VSIUnixStdioHandle::Seek( vsi_l_offset nOffset, int nWhence )
         
     bLastOpWrite = FALSE;
     bLastOpRead = FALSE;
-    bAtEOF = FALSE;
 
     errno = nError;
     return nResult;

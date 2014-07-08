@@ -723,7 +723,6 @@ INGRES_INC
 INGRES_LIB
 II_SYSTEM
 HAVE_INGRES
-MYSQL_NEEDS_LOAD_DEFAULTS_DECLARATION
 MYSQL_LIB
 MYSQL_INC
 HAVE_MYSQL
@@ -23416,33 +23415,6 @@ $as_echo "no, mysql is pre-4.x" >&6; }
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 
-      # Check if mysql headers declare load_defaults
-      { $as_echo "$as_me:${as_lineno-$LINENO}: checking load_defaults() in MySQL" >&5
-$as_echo_n "checking load_defaults() in MySQL... " >&6; }
-      rm -f testmysql.*
-      echo '#include "my_global.h"' > testmysql.cpp
-      echo '#include "my_sys.h"' >> testmysql.cpp
-      echo 'int main(int argc, char** argv) { load_defaults(0, 0, 0, 0); return 0; } ' >> testmysql.cpp
-      if test -z "`${CXX} ${CXXFLAGS} ${MYSQL_INC} -o testmysql testmysql.cpp ${MYSQL_LIB} 2>&1`" ; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes, found in my_sys.h" >&5
-$as_echo "yes, found in my_sys.h" >&6; }
-      else
-        echo 'extern "C" void load_defaults(const char *conf_file, const char **groups, int *argc, char ***argv);' > testmysql.cpp
-        echo 'int main(int argc, char** argv) { load_defaults(0, 0, 0, 0); return 0; } ' >> testmysql.cpp
-        if test -z "`${CXX} ${CXXFLAGS} ${MYSQL_INC} -o testmysql testmysql.cpp ${MYSQL_LIB} 2>&1`" ; then
-            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes, found in library but not in header" >&5
-$as_echo "yes, found in library but not in header" >&6; }
-            MYSQL_NEEDS_LOAD_DEFAULTS_DECLARATION=yes
-        else
-            HAVE_MYSQL=no
-            MYSQL_LIB=
-            MYSQL_INC=
-            as_fn_error $? "Cannot find load_defaults()" "$LINENO" 5
-        fi
-      fi
-      rm -f testmysql.*
-      rm -f testmysql
-
 	;;
   esac
 fi
@@ -23452,8 +23424,6 @@ HAVE_MYSQL=$HAVE_MYSQL
 MYSQL_INC=$MYSQL_INC
 
 MYSQL_LIB=$MYSQL_LIB
-
-MYSQL_NEEDS_LOAD_DEFAULTS_DECLARATION=$MYSQL_NEEDS_LOAD_DEFAULTS_DECLARATION
 
 
 

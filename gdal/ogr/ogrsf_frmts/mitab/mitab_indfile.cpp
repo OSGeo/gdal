@@ -185,7 +185,7 @@ int TABINDFile::Open(const char *pszFname, const char *pszAccess,
     /*-----------------------------------------------------------------
      * Open file
      *----------------------------------------------------------------*/
-    m_fp = VSIFOpen(m_pszFname, pszAccess);
+    m_fp = VSIFOpenL(m_pszFname, pszAccess);
 
     if (m_fp == NULL)
     {
@@ -282,7 +282,7 @@ int TABINDFile::Close()
     /*-----------------------------------------------------------------
      * Close file
      *----------------------------------------------------------------*/
-    VSIFClose(m_fp);
+    VSIFCloseL(m_fp);
     m_fp = NULL;
 
     CPLFree(m_pszFname);
@@ -309,8 +309,8 @@ int TABINDFile::ReadHeader()
     /*-----------------------------------------------------------------
      * In ReadWrite mode, we need to init BlockManager with file size
      *----------------------------------------------------------------*/
-    VSIStatBuf  sStatBuf;
-    if (m_eAccessMode == TABReadWrite && VSIStat(m_pszFname, &sStatBuf) != -1)
+    VSIStatBufL  sStatBuf;
+    if (m_eAccessMode == TABReadWrite && VSIStatL(m_pszFname, &sStatBuf) != -1)
     {
         m_oBlockManager.SetLastPtr(((sStatBuf.st_size-1)/512)*512);
     }
@@ -948,7 +948,7 @@ TABINDNode::~TABINDNode()
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABINDNode::InitNode(FILE *fp, int nBlockPtr, 
+int TABINDNode::InitNode(VSILFILE *fp, int nBlockPtr, 
                          int nKeyLength, int nSubTreeDepth, 
                          GBool bUnique,
                          TABBinBlockManager *poBlockMgr /*=NULL*/,

@@ -37,16 +37,6 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-/* Recent versions of mysql no longer declare load_defaults() in my_sys.h */
-/* but they still have it in the lib. Very fragile... */
-#ifdef MYSQL_NEEDS_LOAD_DEFAULTS_DECLARATION
-extern "C" {
-int load_defaults(const char *conf_file, const char **groups,
-                  int *argc, char ***argv);
-void free_defaults(char **argv);
-}
-#endif
-
 CPL_CVSID("$Id$");
 /************************************************************************/
 /*                         OGRMySQLDataSource()                         */
@@ -130,28 +120,6 @@ int OGRMySQLDataSource::Open( const char * pszNewName, int bUpdate )
     int nPort = 0, i;
     char **papszTableNames=NULL;
     std::string oHost, oPassword, oUser, oDB;
-    char *apszArgv[2] = { (char*) "org", NULL };
-    char **papszArgv = apszArgv;
-    int  nArgc = 1;
-    const char *client_groups[] = {"client", "ogr", NULL };
-
-    my_init(); // I hope there is no problem with calling this multiple times!
-    load_defaults( "my", client_groups, &nArgc, &papszArgv );
-
-    for( i = 0; i < nArgc; i++ )
-    {
-        if( EQUALN(papszArgv[i],"--user=",7) )
-            oUser = papszArgv[i] + 7;
-        else if( EQUALN(papszArgv[i],"--host=",7) )
-            oHost = papszArgv[i] + 7;
-        else if( EQUALN(papszArgv[i],"--password=",11) )
-            oPassword = papszArgv[i] + 11;
-        else if( EQUALN(papszArgv[i],"--port=",7) )
-            nPort = atoi(papszArgv[i] + 7);
-    }
-
-    // cleanup
-    free_defaults( papszArgv );
 
 /* -------------------------------------------------------------------- */
 /*      Parse out connection information.                               */

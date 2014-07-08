@@ -171,11 +171,11 @@ static CPLErr OGRTABDriverDelete( const char *pszDataSource )
 
 {
     int iExt;
-    VSIStatBuf sStatBuf;
+    VSIStatBufL sStatBuf;
     static const char *apszExtensions[] = 
         { "mif", "mid", "tab", "map", "ind", "dat", "id", NULL };
 
-    if( VSIStat( pszDataSource, &sStatBuf ) != 0 )
+    if( VSIStatL( pszDataSource, &sStatBuf ) != 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s does not appear to be a file or directory.",
@@ -193,7 +193,7 @@ static CPLErr OGRTABDriverDelete( const char *pszDataSource )
         {
             const char *pszFile = CPLResetExtension(pszDataSource,
                                                     apszExtensions[iExt] );
-            if( VSIStat( pszFile, &sStatBuf ) == 0 )
+            if( VSIStatL( pszFile, &sStatBuf ) == 0 )
                 VSIUnlink( pszFile );
         }
     }
@@ -246,6 +246,8 @@ void RegisterOGRTAB()
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "tab mif mid" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                    "drv_mitab.html" );
+
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnOpen = OGRTABDriverOpen;
         poDriver->pfnIdentify = OGRTABDriverIdentify;
