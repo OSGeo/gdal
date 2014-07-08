@@ -170,7 +170,6 @@ int CPL_STDCALL GDALGetCacheUsed()
         return INT_MAX;
     }
     return (int)nCacheUsed;
-    return GetGDALRasterBlockManager()->GetCacheUsed();
 }
 
 /************************************************************************/
