@@ -193,6 +193,17 @@ GDALDataset::GDALDataset()
 /* -------------------------------------------------------------------- */
     bForceCachedIO =  CSLTestBoolean( 
         CPLGetConfigOption( "GDAL_FORCE_CACHING", "NO") );
+    bDatasetCache =  CSLTestBoolean( 
+        CPLGetConfigOption( "GDAL_DATASET_CACHING", "NO") );
+    
+    if ( bDatasetCache ) 
+    {    
+        poRasterBlockManager = new GDALRasterBlockManager();
+    }
+    else
+    {   
+        poRasterBlockManager = GetGDALRasterBlockManager();
+    }
     
     m_poStyleTable = NULL;
     m_hMutex = NULL;

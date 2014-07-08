@@ -1002,7 +1002,7 @@ CPLErr GDALRasterBand::FlushBlock( int nXBlockOff, int nYBlockOff, int bWriteDir
     {
         nBlockIndex = nXBlockOff + nYBlockOff * nBlocksPerRow;
 
-        GDALRasterBlock::SafeLockBlock( papoBlocks + nBlockIndex );
+        poDS->poRasterBlockManager->SafeLockBlock( papoBlocks + nBlockIndex );
 
         poBlock = papoBlocks[nBlockIndex];
         papoBlocks[nBlockIndex] = NULL;
@@ -1028,7 +1028,7 @@ CPLErr GDALRasterBand::FlushBlock( int nXBlockOff, int nYBlockOff, int bWriteDir
         int nBlockInSubBlock = WITHIN_SUBBLOCK(nXBlockOff)
             + WITHIN_SUBBLOCK(nYBlockOff) * SUBBLOCK_SIZE;
         
-        GDALRasterBlock::SafeLockBlock( papoSubBlockGrid + nBlockInSubBlock );
+        poDS->poRasterBlockManager->SafeLockBlock( papoSubBlockGrid + nBlockInSubBlock );
 
         poBlock = papoSubBlockGrid[nBlockInSubBlock];
         papoSubBlockGrid[nBlockInSubBlock] = NULL;
@@ -1119,7 +1119,7 @@ GDALRasterBlock *GDALRasterBand::TryGetLockedBlockRef( int nXBlockOff,
     {
         nBlockIndex = nXBlockOff + nYBlockOff * nBlocksPerRow;
         
-        GDALRasterBlock::SafeLockBlock( papoBlocks + nBlockIndex );
+        poDS->poRasterBlockManager->SafeLockBlock( papoBlocks + nBlockIndex );
 
         return papoBlocks[nBlockIndex];
     }
@@ -1142,7 +1142,7 @@ GDALRasterBlock *GDALRasterBand::TryGetLockedBlockRef( int nXBlockOff,
     int nBlockInSubBlock = WITHIN_SUBBLOCK(nXBlockOff)
         + WITHIN_SUBBLOCK(nYBlockOff) * SUBBLOCK_SIZE;
 
-    GDALRasterBlock::SafeLockBlock( papoSubBlockGrid + nBlockInSubBlock );
+    poDS->poRasterBlockManager->SafeLockBlock( papoSubBlockGrid + nBlockInSubBlock );
 
     return papoSubBlockGrid[nBlockInSubBlock];
 }
@@ -1226,7 +1226,7 @@ GDALRasterBlock * GDALRasterBand::GetLockedBlockRef( int nXBlockOff,
             return( NULL );
         }
 
-        poBlock = new GDALRasterBlock( this, nXBlockOff, nYBlockOff );
+        poBlock = new GDALRasterBlock( this, nXBlockOff, nYBlockOff, poDS->poRasterBlockManager );
 
         poBlock->AddLock();
 
