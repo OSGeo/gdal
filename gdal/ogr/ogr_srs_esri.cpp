@@ -1129,26 +1129,26 @@ OGRErr OGRSpatialReference::morphToESRI()
 /* -------------------------------------------------------------------- */
 /*      Force Unnamed to Unknown for most common locations.             */
 /* -------------------------------------------------------------------- */
-    static const char *apszUnknownMapping[] = { 
-        "Unknown", "Unnamed",
-        NULL, NULL 
-    };
+        static const char *apszUnknownMapping[] = { 
+            "Unknown", "Unnamed",
+            NULL, NULL 
+        };
 
-    GetRoot()->applyRemapper( "PROJCS", 
-                              (char **)apszUnknownMapping+1,
-                              (char **)apszUnknownMapping+0, 2 );
-    GetRoot()->applyRemapper( "GEOGCS", 
-                              (char **)apszUnknownMapping+1,
-                              (char **)apszUnknownMapping+0, 2 );
-    GetRoot()->applyRemapper( "DATUM", 
-                              (char **)apszUnknownMapping+1,
-                              (char **)apszUnknownMapping+0, 2 );
-    GetRoot()->applyRemapper( "SPHEROID", 
-                              (char **)apszUnknownMapping+1,
-                              (char **)apszUnknownMapping+0, 2 );
-    GetRoot()->applyRemapper( "PRIMEM", 
-                              (char **)apszUnknownMapping+1,
-                              (char **)apszUnknownMapping+0, 2 );
+        GetRoot()->applyRemapper( "PROJCS", 
+                                  (char **)apszUnknownMapping+1,
+                                  (char **)apszUnknownMapping+0, 2 );
+        GetRoot()->applyRemapper( "GEOGCS", 
+                                  (char **)apszUnknownMapping+1,
+                                  (char **)apszUnknownMapping+0, 2 );
+        GetRoot()->applyRemapper( "DATUM", 
+                                  (char **)apszUnknownMapping+1,
+                                  (char **)apszUnknownMapping+0, 2 );
+        GetRoot()->applyRemapper( "SPHEROID", 
+                                  (char **)apszUnknownMapping+1,
+                                  (char **)apszUnknownMapping+0, 2 );
+        GetRoot()->applyRemapper( "PRIMEM", 
+                                  (char **)apszUnknownMapping+1,
+                                  (char **)apszUnknownMapping+0, 2 );
     
 /* -------------------------------------------------------------------- */
 /*      If the PROJCS name is unset, use the PROJECTION name in         */
