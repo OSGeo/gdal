@@ -148,12 +148,28 @@ def grib_5():
 
     return 'success'
 
+###############################################################################
+# This is more a /vsizip/ file test than a GRIB one, but couldn't easily
+# come up with a pure /vsizip/ test case, so here's a real world use case (#5530)
+
+def grib_7():
+
+    if gdaltest.grib_drv is None:
+        return 'skip'
+
+    ds = gdal.Open('/vsizip/data/gfs.t00z.mastergrb2f03.zip/gfs.t00z.mastergrb2f03')
+    if ds is None:
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     grib_1,
     grib_2,
     grib_3,
     grib_4,
     grib_5,
+    grib_7
     ]
 
 if __name__ == '__main__':
