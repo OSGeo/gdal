@@ -273,7 +273,6 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     friend class GDALDefaultOverviews;
     friend class GDALProxyDataset;
     friend class GDALDriverManager;
-    //friend class GDALRasterBand;
 
   protected:
     GDALDriver  *poDriver;
@@ -320,7 +319,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     virtual int         CloseDependentDatasets();
     
     int                 ValidateLayerCreationOptions( const char* const* papszLCO );
-
+    
     friend class GDALRasterBand;
     
   public:
