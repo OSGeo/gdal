@@ -117,6 +117,8 @@ GDALRasterBlockManager::~GDALRasterBlockManager()
 
 {
     DestroyRBMMutex();
+    poOldest = NULL;   
+    poNewest = NULL; 
 }
 
 /************************************************************************/
