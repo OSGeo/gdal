@@ -34,15 +34,6 @@
 
 CPL_CVSID("$Id$");
 
-static int bCacheMaxInitialized = FALSE;
-static GIntBig nCacheMax = 40 * 1024*1024;
-static volatile GIntBig nCacheUsed = 0;
-
-static volatile GDALRasterBlock *poOldest = NULL;    /* tail */
-static volatile GDALRasterBlock *poNewest = NULL;    /* head */
-
-static void *hRBMutex = NULL;
-
 /************************************************************************/
 /*                          GDALSetCacheMax()                           */
 /************************************************************************/
@@ -62,7 +53,7 @@ static void *hRBMutex = NULL;
 void CPL_STDCALL GDALSetCacheMax( int nNewSizeInBytes )
 
 {
-    GDALSetCacheMax64(nNewSizeInBytes);
+    GetGDALRasterBlockManager()->SetCacheMax(nNewSizeInBytes);
 }
 
 
@@ -89,22 +80,7 @@ void CPL_STDCALL GDALSetCacheMax( int nNewSizeInBytes )
 void CPL_STDCALL GDALSetCacheMax64( GIntBig nNewSizeInBytes )
 
 {
-    bCacheMaxInitialized = TRUE;
-    nCacheMax = nNewSizeInBytes;
-
-/* -------------------------------------------------------------------- */
-/*      Flush blocks till we are under the new limit or till we         */
-/*      can't seem to flush anymore.                                    */
-/* -------------------------------------------------------------------- */
-    while( nCacheUsed > nCacheMax )
-    {
-        GIntBig nOldCacheUsed = nCacheUsed;
-
-        GDALFlushCacheBlock();
-
-        if( nCacheUsed == nOldCacheUsed )
-            break;
-    }
+    GetGDALRasterBlockManager()->SetCacheMax64(nNewSizeInBytes);
 }
 
 /************************************************************************/
@@ -128,20 +104,7 @@ void CPL_STDCALL GDALSetCacheMax64( GIntBig nNewSizeInBytes )
 
 int CPL_STDCALL GDALGetCacheMax()
 {
-    GIntBig nRes = GDALGetCacheMax64();
-    if (nRes > INT_MAX)
-    {
-        static int bHasWarned = FALSE;
-        if (!bHasWarned)
-        {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "Cache max value doesn't fit on a 32 bit integer. "
-                     "Call GDALGetCacheMax64() instead");
-            bHasWarned = TRUE;
-        }
-        nRes = INT_MAX;
-    }
-    return (int)nRes;
+    return GetGDALRasterBlockManager()->GetCacheMax();
 }
 
 /************************************************************************/
@@ -164,28 +127,7 @@ int CPL_STDCALL GDALGetCacheMax()
 
 GIntBig CPL_STDCALL GDALGetCacheMax64()
 {
-    if( !bCacheMaxInitialized )
-    {
-        const char* pszCacheMax = CPLGetConfigOption("GDAL_CACHEMAX",NULL);
-        bCacheMaxInitialized = TRUE;
-        if( pszCacheMax != NULL )
-        {
-            GIntBig nNewCacheMax = (GIntBig)CPLScanUIntBig(pszCacheMax, strlen(pszCacheMax));
-            if( nNewCacheMax < 100000 )
-            {
-                if (nNewCacheMax < 0)
-                {
-                    CPLError(CE_Failure, CPLE_NotSupported,
-                             "Invalid value for GDAL_CACHEMAX. Using default value.");
-                    return nCacheMax;
-                }
-                nNewCacheMax *= 1024 * 1024;
-            }
-            nCacheMax = nNewCacheMax;
-        }
-    }
-
-    return nCacheMax;
+    return GetGDALRasterBlockManager()->GetCacheMax64();
 }
 
 /************************************************************************/
@@ -201,19 +143,7 @@ GIntBig CPL_STDCALL GDALGetCacheMax64()
 
 int CPL_STDCALL GDALGetCacheUsed()
 {
-    if (nCacheUsed > INT_MAX)
-    {
-        static int bHasWarned = FALSE;
-        if (!bHasWarned)
-        {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "Cache used value doesn't fit on a 32 bit integer. "
-                     "Call GDALGetCacheUsed64() instead");
-            bHasWarned = TRUE;
-        }
-        return INT_MAX;
-    }
-    return (int)nCacheUsed;
+    return GetGDALRasterBlockManager()->GetCacheUsed();
 }
 
 /************************************************************************/
@@ -231,7 +161,7 @@ int CPL_STDCALL GDALGetCacheUsed()
 
 GIntBig CPL_STDCALL GDALGetCacheUsed64()
 {
-    return nCacheUsed;
+    return GetGDALRasterBlockManager()->GetCacheUsed64();
 }
 
 /************************************************************************/
@@ -250,9 +180,8 @@ GIntBig CPL_STDCALL GDALGetCacheUsed64()
  *         or if they are currently locked.
  */
 int CPL_STDCALL GDALFlushCacheBlock()
-
 {
-    return GDALRasterBlock::FlushCacheBlock();
+    return GetGDALRasterBlockManager()->FlushCacheBlock();
 }
 
 /************************************************************************/
@@ -286,61 +215,6 @@ int CPL_STDCALL GDALFlushCacheBlock()
  */
 
 /************************************************************************/
-/*                          FlushCacheBlock()                           */
-/*                                                                      */
-/*      Note, if we have alot of blocks locked for a long time, this    */
-/*      method is going to get slow because it will have to traverse    */
-/*      the linked list a long ways looking for a flushing              */
-/*      candidate.   It might help to re-touch locked blocks to push    */
-/*      them to the top of the list.                                    */
-/************************************************************************/
-
-/**
- * \brief Attempt to flush at least one block from the cache.
- *
- * This static method is normally used to recover memory when a request
- * for a new cache block would put cache memory use over the established
- * limit.   
- *
- * C++ analog to the C function GDALFlushCacheBlock().
- * 
- * @return TRUE if successful or FALSE if no flushable block is found.
- */
-
-int GDALRasterBlock::FlushCacheBlock()
-
-{
-    int nXOff, nYOff;
-    GDALRasterBand *poBand;
-
-    {
-        CPLMutexHolderD( &hRBMutex );
-        GDALRasterBlock *poTarget = (GDALRasterBlock *) poOldest;
-
-        while( poTarget != NULL && poTarget->GetLockCount() > 0 ) 
-            poTarget = poTarget->poPrevious;
-        
-        if( poTarget == NULL )
-            return FALSE;
-
-        poTarget->Detach();
-
-        nXOff = poTarget->GetXOff();
-        nYOff = poTarget->GetYOff();
-        poBand = poTarget->GetBand();
-    }
-
-    CPLErr eErr = poBand->FlushBlock( nXOff, nYOff );
-    if (eErr != CE_None)
-    {
-        /* Save the error for later reporting */
-        poBand->SetFlushBlockErr(eErr);
-    }
-
-    return TRUE;
-}
-
-/************************************************************************/
 /*                          GDALRasterBlock()                           */
 /************************************************************************/
 
@@ -360,12 +234,14 @@ int GDALRasterBlock::FlushCacheBlock()
  */
 
 GDALRasterBlock::GDALRasterBlock( GDALRasterBand *poBandIn, 
-                                  int nXOffIn, int nYOffIn )
+                                  int nXOffIn, int nYOffIn,
+                                  GDALRasterBlockManager *poManagerIn )
 
 {
     CPLAssert( NULL != poBandIn );
 
     poBand = poBandIn;
+    poManager = poManagerIn;
 
     poBand->GetBlockSize( &nXSize, &nYSize );
     eType = poBand->GetRasterDataType();
@@ -403,15 +279,15 @@ GDALRasterBlock::~GDALRasterBlock()
         nSizeInBytes = (nXSize * nYSize * GDALGetDataTypeSize(eType)+7)/8;
 
         {
-            CPLMutexHolderD( &hRBMutex );
-            nCacheUsed -= nSizeInBytes;
+            CPLMutexHolderD( &(poManager->hRBMMutex) );
+            poManager->nCacheUsed -= nSizeInBytes;
         }
     }
 
     CPLAssert( nLockCount == 0 );
 
 #ifdef ENABLE_DEBUG
-    Verify();
+    poManager->Verify();
 #endif
 }
 
@@ -431,14 +307,14 @@ GDALRasterBlock::~GDALRasterBlock()
 void GDALRasterBlock::Detach()
 
 {
-    CPLMutexHolderD( &hRBMutex );
+    CPLMutexHolderD( &(poManager->hRBMMutex) );
 
-    if( poOldest == this )
-        poOldest = poPrevious;
+    if( poManager->poOldest == this )
+        poManager->poOldest = poPrevious;
 
-    if( poNewest == this )
+    if( poManager->poNewest == this )
     {
-        poNewest = poNext;
+        poManager->poNewest = poNext;
     }
 
     if( poPrevious != NULL )
@@ -449,45 +325,6 @@ void GDALRasterBlock::Detach()
 
     poPrevious = NULL;
     poNext = NULL;
-}
-
-/************************************************************************/
-/*                               Verify()                               */
-/************************************************************************/
-
-/**
- * Confirms (via assertions) that the block cache linked list is in a
- * consistent state. 
- */
-
-void GDALRasterBlock::Verify()
-
-{
-    CPLMutexHolderD( &hRBMutex );
-
-    CPLAssert( (poNewest == NULL && poOldest == NULL)
-               || (poNewest != NULL && poOldest != NULL) );
-
-    if( poNewest != NULL )
-    {
-        CPLAssert( poNewest->poPrevious == NULL );
-        CPLAssert( poOldest->poNext == NULL );
-        
-        for( GDALRasterBlock *poBlock = (GDALRasterBlock *) poNewest; 
-             poBlock != NULL;
-             poBlock = poBlock->poNext )
-        {
-            if( poBlock->poPrevious )
-            {
-                CPLAssert( poBlock->poPrevious->poNext == poBlock );
-            }
-
-            if( poBlock->poNext )
-            {
-                CPLAssert( poBlock->poNext->poPrevious == poBlock );
-            }
-        }
-    }
 }
 
 /************************************************************************/
@@ -535,13 +372,13 @@ CPLErr GDALRasterBlock::Write()
 void GDALRasterBlock::Touch()
 
 {
-    CPLMutexHolderD( &hRBMutex );
+    CPLMutexHolderD( &(poManager->hRBMMutex) );
 
-    if( poNewest == this )
+    if( poManager->poNewest == this )
         return;
 
-    if( poOldest == this )
-        poOldest = this->poPrevious;
+    if( poManager->poOldest == this )
+        poManager->poOldest = this->poPrevious;
     
     if( poPrevious != NULL )
         poPrevious->poNext = poNext;
@@ -550,22 +387,22 @@ void GDALRasterBlock::Touch()
         poNext->poPrevious = poPrevious;
 
     poPrevious = NULL;
-    poNext = (GDALRasterBlock *) poNewest;
+    poNext = (GDALRasterBlock *) poManager->poNewest;
 
-    if( poNewest != NULL )
+    if( poManager->poNewest != NULL )
     {
-        CPLAssert( poNewest->poPrevious == NULL );
-        poNewest->poPrevious = this;
+        CPLAssert( poManager->poNewest->poPrevious == NULL );
+        poManager->poNewest->poPrevious = this;
     }
-    poNewest = this;
+    poManager->poNewest = this;
     
-    if( poOldest == NULL )
+    if( poManager->poOldest == NULL )
     {
         CPLAssert( poPrevious == NULL && poNext == NULL );
-        poOldest = this;
+        poManager->poOldest = this;
     }
 #ifdef ENABLE_DEBUG
-    Verify();
+    poManager->Verify();
 #endif
 }
 
@@ -587,10 +424,10 @@ void GDALRasterBlock::Touch()
 CPLErr GDALRasterBlock::Internalize()
 
 {
-    CPLMutexHolderD( &hRBMutex );
+    CPLMutexHolderD( &(poManager->hRBMMutex) );
     void        *pNewData;
     int         nSizeInBytes;
-    GIntBig     nCurCacheMax = GDALGetCacheMax64();
+    GIntBig     nCurCacheMax = poManager->GetCacheMax64();
 
     /* No risk of overflow as it is checked in GDALRasterBand::InitBlockInfo() */
     nSizeInBytes = nXSize * nYSize * (GDALGetDataTypeSize(eType) / 8);
@@ -614,14 +451,14 @@ CPLErr GDALRasterBlock::Internalize()
 /* -------------------------------------------------------------------- */
     AddLock(); /* don't flush this block! */
 
-    nCacheUsed += nSizeInBytes;
-    while( nCacheUsed > nCurCacheMax )
+    poManager->nCacheUsed += nSizeInBytes;
+    while( poManager->nCacheUsed > nCurCacheMax )
     {
-        GIntBig nOldCacheUsed = nCacheUsed;
+        GIntBig nOldCacheUsed = poManager->nCacheUsed;
 
-        GDALFlushCacheBlock();
+        poManager->FlushCacheBlock();
 
-        if( nCacheUsed == nOldCacheUsed )
+        if( poManager->nCacheUsed == nOldCacheUsed )
             break;
     }
 
@@ -669,47 +506,3 @@ void GDALRasterBlock::MarkClean()
     bDirty = FALSE;
 }
 
-/************************************************************************/
-/*                           SafeLockBlock()                            */
-/************************************************************************/
-
-/**
- * \brief Safely lock block.
- *
- * This method locks a GDALRasterBlock (and touches it) in a thread-safe
- * manner.  The global block cache mutex is held while locking the block,
- * in order to avoid race conditions with other threads that might be
- * trying to expire the block at the same time.  The block pointer may be
- * safely NULL, in which case this method does nothing. 
- *
- * @param ppBlock Pointer to the block pointer to try and lock/touch.
- */
- 
-int GDALRasterBlock::SafeLockBlock( GDALRasterBlock ** ppBlock )
-
-{
-    CPLAssert( NULL != ppBlock );
-
-    CPLMutexHolderD( &hRBMutex );
-
-    if( *ppBlock != NULL )
-    {
-        (*ppBlock)->AddLock();
-        (*ppBlock)->Touch();
-        
-        return TRUE;
-    }
-    else
-        return FALSE;
-}
-
-/************************************************************************/
-/*                          DestroyRBMutex()                           */
-/************************************************************************/
-
-void GDALRasterBlock::DestroyRBMutex()
-{
-    if( hRBMutex != NULL )
-        CPLDestroyMutex(hRBMutex);
-    hRBMutex = NULL;
-}
