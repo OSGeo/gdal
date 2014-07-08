@@ -134,7 +134,7 @@ class VSIGZipHandle : public VSIVirtualHandle
     /* Fields from gz_stream structure */
     z_stream stream;
     int      z_err;   /* error code for last stream operation */
-    int      z_eof;   /* set if end of input file */
+    int      z_eof;   /* set if end of input file (but not necessarily of the uncompressed stream ! "in" must be null too ) */
     Byte     *inbuf;  /* input buffer */
     Byte     *outbuf; /* output buffer */
     uLong    crc;     /* crc32 of uncompressed data */
@@ -752,12 +752,14 @@ size_t VSIGZipHandle::Read( void *buf, size_t nSize, size_t nMemb )
     if  (z_err == Z_DATA_ERROR || z_err == Z_ERRNO)
     {
         z_eof = 1; /* to avoid infinite loop in reader code */
+        in = 0;
         CPL_VSIL_GZ_RETURN(0);
         return 0;
     }
-    if  (z_eof || z_err == Z_STREAM_END)
+    if  ((z_eof && in == 0) || z_err == Z_STREAM_END)
     {
         z_eof = 1;
+        in = 0;
         if (ENABLE_DEBUG) CPLDebug("GZIP", "Read: Eof");
         return 0;  /* EOF */
     }
@@ -896,6 +898,7 @@ size_t VSIGZipHandle::Read( void *buf, size_t nSize, size_t nMemb )
             (z_err == Z_DATA_ERROR || z_err == Z_ERRNO))
     {
         z_eof = 1;
+        in = 0;
         CPL_VSIL_GZ_RETURN(0);
         return 0;
     }
@@ -940,7 +943,7 @@ size_t VSIGZipHandle::Write( const void *pBuffer, size_t nSize, size_t nMemb )
 int VSIGZipHandle::Eof()
 {
     if (ENABLE_DEBUG) CPLDebug("GZIP", "Eof()");
-    return z_eof;
+    return z_eof && in == 0;
 }
 
 /************************************************************************/
