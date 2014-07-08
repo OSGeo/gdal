@@ -312,6 +312,17 @@ GDALDataset::~GDALDataset()
 
     if( m_hMutex != NULL )
         CPLDestroyMutex( m_hMutex );
+
+/* -------------------------------------------------------------------- */
+/*      Destroy the raster block manager if it is not global            */
+/* -------------------------------------------------------------------- */
+
+    if ( bDatasetCache )
+    {
+        delete poRasterBlockManager;
+    }
+    poRasterBlockManager = NULL;
+
 }
 
 /************************************************************************/
