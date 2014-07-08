@@ -969,6 +969,17 @@ CPLErr GDALRasterBand::FlushBlock( int nXBlockOff, int nYBlockOff, int bWriteDir
     int             nBlockIndex;
     GDALRasterBlock *poBlock = NULL;
 
+    GDALRasterBlockManager *poRBM;
+
+    if ( poDS == NULL ) 
+    {
+        poRBM = GetGDALRasterBlockManager();
+    }
+    else
+    {
+        poRBM = poDS->poRasterBlockManager;
+    }
+
     if( !papoBlocks )
         return CE_None;
     
@@ -1002,7 +1013,7 @@ CPLErr GDALRasterBand::FlushBlock( int nXBlockOff, int nYBlockOff, int bWriteDir
     {
         nBlockIndex = nXBlockOff + nYBlockOff * nBlocksPerRow;
 
-        poDS->poRasterBlockManager->SafeLockBlock( papoBlocks + nBlockIndex );
+        poRBM->SafeLockBlock( papoBlocks + nBlockIndex );
 
         poBlock = papoBlocks[nBlockIndex];
         papoBlocks[nBlockIndex] = NULL;
@@ -1028,7 +1039,7 @@ CPLErr GDALRasterBand::FlushBlock( int nXBlockOff, int nYBlockOff, int bWriteDir
         int nBlockInSubBlock = WITHIN_SUBBLOCK(nXBlockOff)
             + WITHIN_SUBBLOCK(nYBlockOff) * SUBBLOCK_SIZE;
         
-        poDS->poRasterBlockManager->SafeLockBlock( papoSubBlockGrid + nBlockInSubBlock );
+        poRBM->SafeLockBlock( papoSubBlockGrid + nBlockInSubBlock );
 
         poBlock = papoSubBlockGrid[nBlockInSubBlock];
         papoSubBlockGrid[nBlockInSubBlock] = NULL;
@@ -1086,6 +1097,17 @@ GDALRasterBlock *GDALRasterBand::TryGetLockedBlockRef( int nXBlockOff,
 {
     int             nBlockIndex = 0;
     
+    GDALRasterBlockManager *poRBM;
+
+    if ( poDS == NULL ) 
+    {
+        poRBM = GetGDALRasterBlockManager();
+    }
+    else
+    {
+        poRBM = poDS->poRasterBlockManager;
+    }
+    
     if( !InitBlockInfo() )
         return( NULL );
     
@@ -1118,8 +1140,8 @@ GDALRasterBlock *GDALRasterBand::TryGetLockedBlockRef( int nXBlockOff,
     if( !bSubBlockingActive )
     {
         nBlockIndex = nXBlockOff + nYBlockOff * nBlocksPerRow;
-        
-        poDS->poRasterBlockManager->SafeLockBlock( papoBlocks + nBlockIndex );
+            
+        poRBM->SafeLockBlock( papoBlocks + nBlockIndex );
 
         return papoBlocks[nBlockIndex];
     }
@@ -1142,7 +1164,7 @@ GDALRasterBlock *GDALRasterBand::TryGetLockedBlockRef( int nXBlockOff,
     int nBlockInSubBlock = WITHIN_SUBBLOCK(nXBlockOff)
         + WITHIN_SUBBLOCK(nYBlockOff) * SUBBLOCK_SIZE;
 
-    poDS->poRasterBlockManager->SafeLockBlock( papoSubBlockGrid + nBlockInSubBlock );
+    poRBM->SafeLockBlock( papoSubBlockGrid + nBlockInSubBlock );
 
     return papoSubBlockGrid[nBlockInSubBlock];
 }
@@ -1225,8 +1247,19 @@ GDALRasterBlock * GDALRasterBand::GetLockedBlockRef( int nXBlockOff,
 
             return( NULL );
         }
+        
+        GDALRasterBlockManager *poRBM;
 
-        poBlock = new GDALRasterBlock( this, nXBlockOff, nYBlockOff, poDS->poRasterBlockManager );
+        if ( poDS == NULL ) 
+        {
+            poRBM = GetGDALRasterBlockManager();
+        }
+        else
+        {
+            poRBM = poDS->poRasterBlockManager;
+        }
+        
+        poBlock = new GDALRasterBlock( this, nXBlockOff, nYBlockOff, poRBM );
 
         poBlock->AddLock();
 
