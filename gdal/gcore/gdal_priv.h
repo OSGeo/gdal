@@ -44,6 +44,8 @@ class GDALRasterAttributeTable;
 class GDALProxyDataset;
 class GDALProxyRasterBand;
 class GDALAsyncReader;
+class GDALRasterBlock;
+class GDALRasterBlockManager;
 
 /* -------------------------------------------------------------------- */
 /*      Pull in the public declarations.  This gets the C apis, and     */
@@ -271,10 +273,12 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     friend class GDALDefaultOverviews;
     friend class GDALProxyDataset;
     friend class GDALDriverManager;
+    //friend class GDALRasterBand;
 
   protected:
     GDALDriver  *poDriver;
     GDALAccess  eAccess;
+    GDALRasterBlockManager *poRasterBlockManager;
 
     // Stored raster information.
     int         nRasterXSize;
@@ -283,6 +287,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     GDALRasterBand **papoBands;
 
     int         bForceCachedIO;
+    int         bDatasetCache;
 
     int         nRefCount;
     int         bShared;
@@ -444,6 +449,57 @@ private:
 };
 
 /* ******************************************************************** */
+/*                       GDALRasterBlockManager                         */
+/* ******************************************************************** */
+
+//! The cache management for the rasterblock system
+
+class CPL_DLL GDALRasterBlockManager
+{
+    friend class GDALRasterBlock;
+    
+    int             bCacheMaxInitialized;
+    GIntBig         nCacheMax;
+    volatile GIntBig nCacheUsed;
+
+    volatile GDALRasterBlock *poOldest;    /* tail */
+    volatile GDALRasterBlock *poNewest;    /* head */
+
+    void            *hRBMMutex;
+
+  public:
+                GDALRasterBlockManager();
+    virtual     ~GDALRasterBlockManager();
+
+    /// @brief Accessor to tail GDALRasterBlock object.
+    /// @return source raster block
+    //GDALRasterBlock     *GetOldest() { return poOldest; }
+    //void                SetOldest(GDALRasterBlock *poBlock);
+    /// @brief Accessor to head GDALRasterBlock object.
+    /// @return source raster block
+    //GDALRasterBlock     *GetNewest() { return poNewest; }
+    //void                SetNewest(GDALRasterBlock *poBlock);
+
+    //void                **GetMutex() { return &hRBMMutex; } 
+
+    void        SetCacheMax( int nBytes );
+    int         GetCacheMax(void);
+    int         GetCacheUsed(void);
+    void        SetCacheMax64( GIntBig nBytes );
+    GIntBig     GetCacheMax64(void);
+    GIntBig     GetCacheUsed64(void);
+    int         FlushCacheBlock(void);
+    void        Verify();
+    int         SafeLockBlock( GDALRasterBlock ** );
+
+    void        DestroyRBMMutex();
+};
+
+CPL_C_START
+GDALRasterBlockManager CPL_DLL * GetGDALRasterBlockManager( void );
+CPL_C_END
+
+/* ******************************************************************** */
 /*                           GDALRasterBlock                            */
 /* ******************************************************************** */
 
@@ -465,12 +521,16 @@ class CPL_DLL GDALRasterBlock
     void                *pData;
 
     GDALRasterBand      *poBand;
+
+    GDALRasterBlockManager *poManager;
     
     GDALRasterBlock     *poNext;
     GDALRasterBlock     *poPrevious;
+    
+    friend class GDALRasterBlockManager;
 
   public:
-                GDALRasterBlock( GDALRasterBand *, int, int );
+                GDALRasterBlock( GDALRasterBand *, int, int, GDALRasterBlockManager * );
     virtual     ~GDALRasterBlock();
 
     CPLErr      Internalize( void );
@@ -497,13 +557,6 @@ class CPL_DLL GDALRasterBlock
     /// @return source raster band of the raster block.
     GDALRasterBand *GetBand() { return poBand; }
 
-    static int  FlushCacheBlock();
-    static void Verify();
-
-    static int  SafeLockBlock( GDALRasterBlock ** );
-    
-    /* Should only be called by GDALDestroyDriverManager() */
-    static void DestroyRBMutex();
 };
 
 /* ******************************************************************** */
@@ -548,6 +601,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     void           SetFlushBlockErr( CPLErr eErr );
 
     friend class GDALRasterBlock;
+    friend class GDALRasterBlockManager;
 
   protected:
     GDALDataset *poDS;

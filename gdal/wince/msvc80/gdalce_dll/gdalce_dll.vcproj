@@ -1053,6 +1053,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\gcore\gdalrasterblockmanager.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\gcore\overview.cpp"
 				>
 			</File>
