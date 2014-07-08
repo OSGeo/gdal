@@ -273,7 +273,6 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     friend class GDALDefaultOverviews;
     friend class GDALProxyDataset;
     friend class GDALDriverManager;
-    //friend class GDALRasterBand;
 
   protected:
     GDALDriver  *poDriver;
