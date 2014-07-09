@@ -386,8 +386,8 @@ void CPL_STDCALL GDALDestroyRasterBlockManager( void )
             delete poRBM;
         }
     }
-
-    CPLDestroyMutex(hRBMGlobalMutex);
+    if ( hRBMGlobalMutex != NULL )
+       CPLDestroyMutex(hRBMGlobalMutex);
     hRBMGlobalMutex = NULL;
 }
 
