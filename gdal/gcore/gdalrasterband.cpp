@@ -969,16 +969,7 @@ CPLErr GDALRasterBand::FlushBlock( int nXBlockOff, int nYBlockOff, int bWriteDir
     int             nBlockIndex;
     GDALRasterBlock *poBlock = NULL;
 
-    GDALRasterBlockManager *poRBM;
-
-    if ( poDS == NULL ) 
-    {
-        poRBM = GetGDALRasterBlockManager();
-    }
-    else
-    {
-        poRBM = poDS->poRasterBlockManager;
-    }
+    GDALRasterBlockManager *poRBM = GetRasterBlockManager();
 
     if( !papoBlocks )
         return CE_None;
@@ -1067,6 +1058,32 @@ CPLErr GDALRasterBand::FlushBlock( int nXBlockOff, int nYBlockOff, int bWriteDir
     return eErr;
 }
 
+
+/************************************************************************/
+/*                       GetRasterBlockManager()                        */
+/************************************************************************/
+
+/**
+ * \brief Get the raster block manager for the band. 
+ *
+ * @return Return the raster block manager used for the band.
+ */
+
+GDALRasterBlockManager *GDALRasterBand::GetRasterBlockManager()
+{
+    if ( poDS == NULL ) 
+    {
+        return GetGDALRasterBlockManager();
+    }
+    else
+    {
+        return poDS->poRasterBlockManager;
+    }
+}
+
+
+
+
 /************************************************************************/
 /*                        TryGetLockedBlockRef()                        */
 /************************************************************************/
@@ -1097,16 +1114,7 @@ GDALRasterBlock *GDALRasterBand::TryGetLockedBlockRef( int nXBlockOff,
 {
     int             nBlockIndex = 0;
     
-    GDALRasterBlockManager *poRBM;
-
-    if ( poDS == NULL ) 
-    {
-        poRBM = GetGDALRasterBlockManager();
-    }
-    else
-    {
-        poRBM = poDS->poRasterBlockManager;
-    }
+    GDALRasterBlockManager *poRBM = GetRasterBlockManager();
     
     if( !InitBlockInfo() )
         return( NULL );
@@ -1248,16 +1256,7 @@ GDALRasterBlock * GDALRasterBand::GetLockedBlockRef( int nXBlockOff,
             return( NULL );
         }
         
-        GDALRasterBlockManager *poRBM;
-
-        if ( poDS == NULL ) 
-        {
-            poRBM = GetGDALRasterBlockManager();
-        }
-        else
-        {
-            poRBM = poDS->poRasterBlockManager;
-        }
+        GDALRasterBlockManager *poRBM = GetRasterBlockManager();
         
         poBlock = new GDALRasterBlock( this, nXBlockOff, nYBlockOff, poRBM );
 
