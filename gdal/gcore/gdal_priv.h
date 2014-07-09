@@ -484,6 +484,7 @@ class CPL_DLL GDALRasterBlockManager
 
 CPL_C_START
 GDALRasterBlockManager CPL_DLL * GetGDALRasterBlockManager( void );
+void        CPL_DLL CPL_STDCALL GDALDestroyRasterBlockManager( void );
 CPL_C_END
 
 /* ******************************************************************** */
