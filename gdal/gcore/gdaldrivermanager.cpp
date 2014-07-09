@@ -264,9 +264,9 @@ GDALDriverManager::~GDALDriverManager()
     } 
 
 /* -------------------------------------------------------------------- */
-/*      Cleanup raster block mutex                                      */
+/*      Cleanup raster block manager and its mutex                      */
 /* -------------------------------------------------------------------- */
-    GetGDALRasterBlockManager()->DestroyRBMMutex();
+    GDALDestroyRasterBlockManager();
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup gdaltransformer.cpp mutex                               */
