@@ -329,7 +329,8 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     int         GetRasterYSize( void );
     int         GetRasterCount( void );
     GDALRasterBand *GetRasterBand( int );
-    GDALRasterBlockManager *GetRasterBlockManager() { return poRasterBlockManager }
+
+    GDALRasterBlockManager *GetRasterBlockManager() { return poRasterBlockManager; }
 
     virtual void FlushCache(void);
 

@@ -2691,6 +2691,7 @@ static void GDALCopyWholeRasterGetSwathSize(GDALRasterBand *poSrcPrototypeBand,
     /* greater than the block cache. */
     const char* pszSwathSize = CPLGetConfigOption("GDAL_SWATH_SIZE", NULL);
     int nTargetSwathSize;
+    GDALRasterBlockManager *poRBM = poSrcPrototypeBand->GetRasterBlockManager();
     if( pszSwathSize != NULL )
         nTargetSwathSize = atoi(pszSwathSize);
     else

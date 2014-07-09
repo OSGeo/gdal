@@ -1679,7 +1679,7 @@ CPLErr GTiffRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         GIntBig nRequiredMem = (GIntBig)poGDS->nBands * nXBlocks * nYBlocks *
                                 nBlockXSize * nBlockYSize *
                                (GDALGetDataTypeSize(eDataType) / 8);
-        if (nRequiredMem > poDS->poRasterBlockManager->GetCacheMax64())
+        if (nRequiredMem > poDS->GetRasterBlockManager()->GetCacheMax64())
         {
             if (!poGDS->bHasWarnedDisableAggressiveBandCaching)
             {
@@ -1961,7 +1961,7 @@ CPLErr GTiffRasterBand::FillCacheForOtherBands( int nBlockXOff, int nBlockYOff )
 /*      enough to accomodate the size of all the blocks, don't enter    */
 /* -------------------------------------------------------------------- */
     if( poGDS->nBands != 1 && !poGDS->bLoadingOtherBands &&
-        nBlockXSize * nBlockYSize * (GDALGetDataTypeSize(eDataType) / 8) < poDS->poRasterBlockManager->GetCacheMax64() / poGDS->nBands)
+        nBlockXSize * nBlockYSize * (GDALGetDataTypeSize(eDataType) / 8) < poDS->GetRasterBlockManager()->GetCacheMax64() / poGDS->nBands)
     {
         int iOtherBand;
 
