@@ -472,23 +472,9 @@ class CPL_DLL GDALRasterBlockManager
                 GDALRasterBlockManager();
     virtual     ~GDALRasterBlockManager();
 
-    /// @brief Accessor to tail GDALRasterBlock object.
-    /// @return source raster block
-    //GDALRasterBlock     *GetOldest() { return poOldest; }
-    //void                SetOldest(GDALRasterBlock *poBlock);
-    /// @brief Accessor to head GDALRasterBlock object.
-    /// @return source raster block
-    //GDALRasterBlock     *GetNewest() { return poNewest; }
-    //void                SetNewest(GDALRasterBlock *poBlock);
-
-    //void                **GetMutex() { return &hRBMMutex; } 
-
-    void        SetCacheMax( int nBytes );
-    int         GetCacheMax(void);
-    int         GetCacheUsed(void);
-    void        SetCacheMax64( GIntBig nBytes );
-    GIntBig     GetCacheMax64(void);
-    GIntBig     GetCacheUsed64(void);
+    void        SetCacheMax( GIntBig nBytes );
+    GIntBig     GetCacheMax(void);
+    GIntBig     GetCacheUsed(void);
     int         FlushCacheBlock(void);
     void        Verify();
     int         SafeLockBlock( GDALRasterBlock ** );
