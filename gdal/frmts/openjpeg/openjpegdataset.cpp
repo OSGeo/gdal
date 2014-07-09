@@ -464,7 +464,7 @@ int JP2OpenJPEGDataset::PreloadBlocks(JP2OpenJPEGRasterBand* poBand,
     int nMaxThreads = GetNumThreads();
     if( !bUseSetDecodeArea && nMaxThreads > 1 )
     {
-        if( nReqMem > GDALGetCacheMax64() / (nBandCount == 0 ? 1 : nBandCount) )
+        if( nReqMem > poRasterBlockManager->GetCacheMax64() / (nBandCount == 0 ? 1 : nBandCount) )
             return FALSE;
 
         int nBlocksToLoad = 0;
@@ -504,7 +504,7 @@ int JP2OpenJPEGDataset::PreloadBlocks(JP2OpenJPEGRasterBand* poBand,
             }
             else
             {
-                if( nReqMem <= GDALGetCacheMax64() / nBands )
+                if( nReqMem <= poRasterBlockManager->GetCacheMax64() / nBands )
                 {
                     oJob.nBandCount = nBands;
                     oJob.panBandMap = NULL;
