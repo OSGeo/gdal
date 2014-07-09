@@ -80,7 +80,7 @@ void CPL_STDCALL GDALSetCacheMax( int nNewSizeInBytes )
 void CPL_STDCALL GDALSetCacheMax64( GIntBig nNewSizeInBytes )
 
 {
-    GetGDALRasterBlockManager()->SetCacheMax64(nNewSizeInBytes);
+    GetGDALRasterBlockManager()->SetCacheMax(nNewSizeInBytes);
 }
 
 /************************************************************************/
@@ -104,7 +104,20 @@ void CPL_STDCALL GDALSetCacheMax64( GIntBig nNewSizeInBytes )
 
 int CPL_STDCALL GDALGetCacheMax()
 {
-    return GetGDALRasterBlockManager()->GetCacheMax();
+    GIntBig nRes = GetGDALRasterBlockManager()->GetCacheMax();
+    if (nRes > INT_MAX)
+    {
+        static int bHasWarned = FALSE;
+        if (!bHasWarned)
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Cache max value doesn't fit on a 32 bit integer. "
+                     "Call GDALGetCacheMax64() instead");
+            bHasWarned = TRUE;
+        }
+        nRes = INT_MAX;
+    }
+    return (int)nRes;
 }
 
 /************************************************************************/
@@ -127,7 +140,7 @@ int CPL_STDCALL GDALGetCacheMax()
 
 GIntBig CPL_STDCALL GDALGetCacheMax64()
 {
-    return GetGDALRasterBlockManager()->GetCacheMax64();
+    return GetGDALRasterBlockManager()->GetCacheMax();
 }
 
 /************************************************************************/
@@ -143,6 +156,20 @@ GIntBig CPL_STDCALL GDALGetCacheMax64()
 
 int CPL_STDCALL GDALGetCacheUsed()
 {
+    GIntBig nCacheUsed = GetGDALRasterBlockManager()->GetCacheUsed();
+    if (nCacheUsed > INT_MAX)
+    {
+        static int bHasWarned = FALSE;
+        if (!bHasWarned)
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Cache used value doesn't fit on a 32 bit integer. "
+                     "Call GDALGetCacheUsed64() instead");
+            bHasWarned = TRUE;
+        }
+        return INT_MAX;
+    }
+    return (int)nCacheUsed;
     return GetGDALRasterBlockManager()->GetCacheUsed();
 }
 
@@ -161,7 +188,7 @@ int CPL_STDCALL GDALGetCacheUsed()
 
 GIntBig CPL_STDCALL GDALGetCacheUsed64()
 {
-    return GetGDALRasterBlockManager()->GetCacheUsed64();
+    return GetGDALRasterBlockManager()->GetCacheUsed();
 }
 
 /************************************************************************/
@@ -427,7 +454,7 @@ CPLErr GDALRasterBlock::Internalize()
     CPLMutexHolderD( &(poManager->hRBMMutex) );
     void        *pNewData;
     int         nSizeInBytes;
-    GIntBig     nCurCacheMax = poManager->GetCacheMax64();
+    GIntBig     nCurCacheMax = poManager->GetCacheMax();
 
     /* No risk of overflow as it is checked in GDALRasterBand::InitBlockInfo() */
     nSizeInBytes = nXSize * nYSize * (GDALGetDataTypeSize(eType) / 8);

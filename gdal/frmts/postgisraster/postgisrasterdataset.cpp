@@ -1065,7 +1065,7 @@ GBool PostGISRasterDataset::LoadSources(int nXOff, int nYOff, int nXSize, int nY
         {
             GIntBig nMemoryRequiredForTiles = PQntuples(poResult) * nTileWidth * nTileHeight *
                 GDALGetDataTypeSize(GetRasterBand(nBand)->GetRasterDataType()) / 8;
-            GIntBig nCacheMax = (GIntBig) poRasterBlockManager->GetCacheMax64();
+            GIntBig nCacheMax = (GIntBig) poRasterBlockManager->GetCacheMax();
             if( nBands * nMemoryRequiredForTiles <= nCacheMax )
             {
                 bLoadRasters = TRUE;

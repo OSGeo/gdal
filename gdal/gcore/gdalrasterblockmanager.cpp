@@ -122,29 +122,7 @@ GDALRasterBlockManager::~GDALRasterBlockManager()
 }
 
 /************************************************************************/
-/*                          SetCacheMax()                               */
-/************************************************************************/
-
-/**
- * \brief Set maximum cache memory.
- *
- * This function sets the maximum amount of memory that GDAL is permitted
- * to use for GDALRasterBlock caching. The unit of the value is bytes.
- *
- * The maximum value is 2GB, due to the use of a signed 32 bit integer.
- * Use GDALSetCacheMax64() to be able to set a higher value.
- *
- * @param nNewSizeInBytes the maximum number of bytes for caching.
- */
-
-void GDALRasterBlockManager::SetCacheMax( int nNewSizeInBytes )
-
-{
-    SetCacheMax64(nNewSizeInBytes);
-}
-
-/************************************************************************/
-/*                        SetCacheMax64()                               */
+/*                        SetCacheMax()                                 */
 /************************************************************************/
 
 /**
@@ -163,7 +141,7 @@ void GDALRasterBlockManager::SetCacheMax( int nNewSizeInBytes )
  * @since GDAL 1.8.0
  */
 
-void GDALRasterBlockManager::SetCacheMax64( GIntBig nNewSizeInBytes )
+void GDALRasterBlockManager::SetCacheMax( GIntBig nNewSizeInBytes )
 
 {
     bCacheMaxInitialized = TRUE;
@@ -185,44 +163,7 @@ void GDALRasterBlockManager::SetCacheMax64( GIntBig nNewSizeInBytes )
 }
 
 /************************************************************************/
-/*                            GetCacheMax()                             */
-/************************************************************************/
-
-/**
- * \brief Get maximum cache memory.
- *
- * Gets the maximum amount of memory available to the GDALRasterBlock
- * caching system for caching GDAL read/write imagery.
- *
- * The first type this function is called, it will read the GDAL_CACHEMAX
- * configuation option to initialize the maximum cache memory.
- *
- * This function cannot return a value higher than 2 GB. Use
- * GDALGetCacheMax64() to get a non-truncated value.
- *
- * @return maximum in bytes. 
- */
-
-int GDALRasterBlockManager::GetCacheMax()
-{
-    GIntBig nRes = GetCacheMax64();
-    if (nRes > INT_MAX)
-    {
-        static int bHasWarned = FALSE;
-        if (!bHasWarned)
-        {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "Cache max value doesn't fit on a 32 bit integer. "
-                     "Call GDALGetCacheMax64() instead");
-            bHasWarned = TRUE;
-        }
-        nRes = INT_MAX;
-    }
-    return (int)nRes;
-}
-
-/************************************************************************/
-/*                         GDALGetCacheMax64()                          */
+/*                         GDALGetCacheMax()                            */
 /************************************************************************/
 
 /**
@@ -239,7 +180,7 @@ int GDALRasterBlockManager::GetCacheMax()
  * @since GDAL 1.8.0
  */
 
-GIntBig GDALRasterBlockManager::GetCacheMax64()
+GIntBig GDALRasterBlockManager::GetCacheMax()
 {
     if( !bCacheMaxInitialized )
     {
@@ -266,35 +207,7 @@ GIntBig GDALRasterBlockManager::GetCacheMax64()
 }
 
 /************************************************************************/
-/*                          GDALGetCacheUsed()                          */
-/************************************************************************/
-
-/**
- * \brief Get cache memory used.
- *
- * @return the number of bytes of memory currently in use by the 
- * GDALRasterBlock memory caching.
- */
-
-int GDALRasterBlockManager::GetCacheUsed()
-{
-    if (nCacheUsed > INT_MAX)
-    {
-        static int bHasWarned = FALSE;
-        if (!bHasWarned)
-        {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "Cache used value doesn't fit on a 32 bit integer. "
-                     "Call GDALGetCacheUsed64() instead");
-            bHasWarned = TRUE;
-        }
-        return INT_MAX;
-    }
-    return (int)nCacheUsed;
-}
-
-/************************************************************************/
-/*                        GDALGetCacheUsed64()                          */
+/*                         GDALGetCacheUsed()                           */
 /************************************************************************/
 
 /**
@@ -306,50 +219,10 @@ int GDALRasterBlockManager::GetCacheUsed()
  * @since GDAL 1.8.0
  */
 
-GIntBig GDALRasterBlockManager::GetCacheUsed64()
+GIntBig GDALRasterBlockManager::GetCacheUsed()
 {
     return nCacheUsed;
 }
-
-/************************************************************************/
-/*                            SetOldest()                               */
-/************************************************************************/
-
-/**
- * \brief Set the tail of the cache.
- *
- * @param poBlock The block to be set
- *
- * @return the pointer to the GDALRasterBlock
- *
- */
-
-/*
-void GDALRasterBlockManager::SetOldest( GDALRasterBlock *poBlock )
-{
-    poOldest = poBlock;
-}
-*/
-
-/************************************************************************/
-/*                            SetNewest()                               */
-/************************************************************************/
-
-/**
- * \brief Set the head of the cache.
- *
- * @param poBlock The block to be set
- *
- * @return the pointer to the GDALRasterBlock
- *
- */
-
-/*
-void GDALRasterBlockManager::SetNewest( GDALRasterBlock *poBlock )
-{
-    poNewest = poBlock;
-}
-*/
 
 /************************************************************************/
 /*                          FlushCacheBlock()                           */
