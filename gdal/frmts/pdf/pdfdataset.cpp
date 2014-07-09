@@ -4896,7 +4896,7 @@ char **PDFDataset::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
                                    TRUE,
-                                   "xml:XMP", "EMBEDDED_METADATA", NULL);
+                                   "xml:XMP", "LAYERS", "EMBEDDED_METADATA", NULL);
 }
 
 /************************************************************************/
