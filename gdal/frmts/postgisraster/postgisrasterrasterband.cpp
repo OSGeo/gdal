@@ -565,7 +565,7 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
     int bAllBandCaching = FALSE;
     if (nTilesToFetch > 0)
     {
-        GIntBig nCacheMax = (GIntBig) poDS->poRasterBlockManager->GetCacheMax64();
+        GIntBig nCacheMax = (GIntBig) GetRasterBlockManager()->GetCacheMax64();
         if( nMemoryRequiredForTiles > nCacheMax )
         {
             CPLDebug("PostGIS_Raster",
