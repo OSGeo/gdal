@@ -844,7 +844,7 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
         ;
     else
     {
-        GIntBig nYChunkSize64 = GDALGetCacheMax64() / nScanlineBytes;
+        GIntBig nYChunkSize64 = poDS->GetRasterBlockManager()->GetCacheMax64() / nScanlineBytes;
         if (nYChunkSize64 > INT_MAX)
             nYChunkSize = INT_MAX;
         else
