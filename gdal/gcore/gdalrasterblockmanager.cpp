@@ -380,7 +380,15 @@ void CPL_STDCALL GDALDestroyRasterBlockManager( void )
     // needs to be reacquired within the destructor during driver
     // deregistration.
     if( poRBM != NULL )
-        delete poRBM;
+    {
+        CPLMutexHolderD( &hRBMGlobalMutex );
+        if (poRBM != NULL ) {
+            delete poRBM;
+        }
+    }
+
+    CPLDestroyMutex(hRBMGlobalMutex);
+    hRBMGlobalMutex = NULL;
 }
 
 
