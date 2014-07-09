@@ -2691,12 +2691,13 @@ static void GDALCopyWholeRasterGetSwathSize(GDALRasterBand *poSrcPrototypeBand,
     /* greater than the block cache. */
     const char* pszSwathSize = CPLGetConfigOption("GDAL_SWATH_SIZE", NULL);
     int nTargetSwathSize;
+    GDALRasterBlockManager *poRBM = poSrcPrototypeBand->GetRasterBlockManager();
     if( pszSwathSize != NULL )
         nTargetSwathSize = atoi(pszSwathSize);
     else
     {
         /* As a default, take one 1/4 of the cache size */
-        nTargetSwathSize = MIN(INT_MAX, GDALGetCacheMax64() / 4);
+        nTargetSwathSize = MIN(INT_MAX, poRBM->GetCacheMax64() / 4);
 
         /* but if the minimum idal swath buf size is less, then go for it to */
         /* avoid unnecessarily abusing RAM usage */
@@ -2709,11 +2710,11 @@ static void GDALCopyWholeRasterGetSwathSize(GDALRasterBand *poSrcPrototypeBand,
         nTargetSwathSize = 1000000;
 
     /* But let's check that  */
-    if (bDstIsCompressed && bInterleave && nTargetSwathSize > GDALGetCacheMax64())
+    if (bDstIsCompressed && bInterleave && nTargetSwathSize > poRBM->GetCacheMax64())
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "When translating into a compressed interleave format, the block cache size (" CPL_FRMT_GIB ") "
-                 "should be at least the size of the swath (%d) (GDAL_SWATH_SIZE config. option)", GDALGetCacheMax64(), nTargetSwathSize);
+                 "should be at least the size of the swath (%d) (GDAL_SWATH_SIZE config. option)", poRBM->GetCacheMax64(), nTargetSwathSize);
     }
 
 #define IS_MULTIPLE_OF(x,y) ((y)%(x) == 0)

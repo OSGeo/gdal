@@ -329,6 +329,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     int         GetRasterYSize( void );
     int         GetRasterCount( void );
     GDALRasterBand *GetRasterBand( int );
+    GDALRasterBlockManager *GetRasterBlockManager() { return poRasterBlockManager; }
 
     virtual void FlushCache(void);
 
@@ -671,6 +672,9 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     GDALRasterBlock *GetLockedBlockRef( int nXBlockOff, int nYBlockOff, 
                                         int bJustInitialize = FALSE );
+
+    GDALRasterBlockManager *GetRasterBlockManager();
+
     CPLErr      FlushBlock( int = -1, int = -1, int bWriteDirtyBlock = TRUE );
 
     unsigned char*  GetIndexColorTranslationTo(/* const */ GDALRasterBand* poReferenceBand,
