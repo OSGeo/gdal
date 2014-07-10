@@ -1766,14 +1766,14 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
                             pabyX = pabyY = pabyZ = NULL;
                         }
                     }
-                    else
 #endif
 
 #ifdef HAVE_SSE_AT_COMPILE_TIME
 
 #define ALIGN16(x)  (((char*)(x)) + ((16 - (((size_t)(x)) % 16)) % 16))
 
-                    if( CSLTestBoolean(CPLGetConfigOption("GDAL_USE_SSE", "YES")) &&
+                    if( pafXAligned == NULL &&
+                        CSLTestBoolean(CPLGetConfigOption("GDAL_USE_SSE", "YES")) &&
                         CPLHaveRuntimeSSE() )
                     {
                         pabyX = (float*)VSIMalloc(sizeof(float) * nPoints + 15);
