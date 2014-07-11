@@ -319,6 +319,11 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
     if( VSI_ISREG(stat.st_mode) )
     {
         char       szModule[128];
+        
+        if( strlen(CPLGetFilename(pszFilename)) == 0 )
+        {
+            return FALSE;
+        }
 
         pszPath = CPLStrdup( CPLGetPath(pszFilename) );
 
