@@ -494,9 +494,9 @@ void CPLHTTPSetOptions(CURL *http_handle, char** papszOptions)
 
     /* NOSIGNAL should be set to true for timeout to work in multithread
      * environments on Unix, requires libcurl 7.10 or more recent.
-     * (this force avoiding the use of sgnal handlers)
+     * (this force avoiding the use of signal handlers)
      */
-#ifdef CURLOPT_NOSIGNAL
+#if LIBCURL_VERSION_NUM >= 0x070A00
     curl_easy_setopt(http_handle, CURLOPT_NOSIGNAL, 1 );
 #endif
 
