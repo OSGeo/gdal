@@ -681,7 +681,7 @@ class MIFFile: public IMapInfoFile
     // Private Read access specific stuff
     //
     int         ReadFeatureDefn();
-    int         ParseMIFHeader();
+    int         ParseMIFHeader(int* pbIsEmpty);
     void        PreParseFile();
     int         AddFields(const char *pszLine);
     int         GotoFeature(int nFeatureId);

@@ -522,9 +522,29 @@ def ogr_mitab_15():
     return 'success'
 
 ###############################################################################
-# Run test_ogrsf
+# Test empty .mif
 
 def ogr_mitab_16():
+
+    if gdaltest.mapinfo_drv is None:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('MapInfo File').CreateDataSource('tmp/empty.mif')
+    lyr = ds.CreateLayer('empty')
+    lyr.CreateField(ogr.FieldDefn('ID', ogr.OFTInteger))
+    ds = None
+
+    ds = ogr.Open('tmp/empty.mif')
+    if ds is None:
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Run test_ogrsf
+
+def ogr_mitab_17():
 
     if gdaltest.mapinfo_drv is None:
         return 'skip'
@@ -538,6 +558,11 @@ def ogr_mitab_16():
         return 'skip'
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp')
+    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+        print(ret)
+        return 'fail'
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/wrk.mif')
     if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
         print(ret)
         return 'fail'
@@ -575,6 +600,7 @@ gdaltest_list = [
     ogr_mitab_14,
     ogr_mitab_15,
     ogr_mitab_16,
+    ogr_mitab_17,
     ogr_mitab_cleanup
     ]
 
