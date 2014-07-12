@@ -1824,6 +1824,14 @@ OGRSpatialReference *OGRShapeGeomFieldDefn::GetSpatialRef()
         osPrjFile = pszPrjFile;
 
         poSRS = new OGRSpatialReference();
+        /* Remove UTF-8 BOM if found */
+        /* http://lists.osgeo.org/pipermail/gdal-dev/2014-July/039527.html */
+        if( ((unsigned char)papszLines[0][0] == 0xEF) &&
+            ((unsigned char)papszLines[0][1] == 0xBB) &&
+            ((unsigned char)papszLines[0][2] == 0xBF) )
+        {
+            memmove(papszLines[0], papszLines[0] + 3, strlen(papszLines[0] + 3) + 1);
+        }
         if( poSRS->importFromESRI( papszLines ) != OGRERR_NONE )
         {
             delete poSRS;
