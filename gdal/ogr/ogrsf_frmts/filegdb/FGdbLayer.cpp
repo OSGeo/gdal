@@ -1789,8 +1789,13 @@ bool FGdbLayer::ParseGeometryDef(CPLXMLNode* psRoot)
     if (wkid.length() > 0)
     {
         m_pSRS = new OGRSpatialReference();
-        if (m_pSRS->importFromEPSG(atoi(wkid.c_str())) != OGRERR_NONE)
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        OGRErr ogrerr = m_pSRS->importFromEPSG(atoi(wkid.c_str()));
+        CPLPopErrorHandler();
+        CPLErrorReset();
+        if (ogrerr != OGRERR_NONE)
         {
+            CPLDebug("FGDB", "Cannot import SRID %s", wkid.c_str());
             delete m_pSRS;
             m_pSRS = NULL;
         }

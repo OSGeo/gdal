@@ -213,11 +213,15 @@ int OGROpenFileGDBLayer::BuildGeometryColumnGDBv10()
         if( nWKID > 0 )
         {
             poSRS = new OGRSpatialReference();
+            CPLPushErrorHandler(CPLQuietErrorHandler);
             if( poSRS->importFromEPSG(nWKID) != OGRERR_NONE )
             {
+                CPLDebug("OpenFileGDB", "Cannot import SRID %d", nWKID);
                 delete poSRS;
                 poSRS = NULL;
             }
+            CPLPopErrorHandler();
+            CPLErrorReset();
         }
         if( poSRS == NULL && pszWKT != NULL && pszWKT[0] != '{' )
         {
