@@ -429,3 +429,68 @@ int OGRTABDataSource::TestCapability( const char * pszCap )
         return FALSE;
 }
 
+/************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+
+char **OGRTABDataSource::GetFileList()
+{
+    VSIStatBufL sStatBuf;
+    CPLStringList osList;
+
+    VSIStatL( m_pszName, &sStatBuf );
+    if( VSI_ISDIR(sStatBuf.st_mode) )
+    {
+        static const char *apszExtensions[] = 
+            { "mif", "mid", "tab", "map", "ind", "dat", "id", NULL };
+        char **papszDirEntries = CPLReadDir( m_pszName );
+        int  iFile;
+
+        for( iFile = 0; 
+             papszDirEntries != NULL && papszDirEntries[iFile] != NULL;
+             iFile++ )
+        {
+            if( CSLFindString( (char **) apszExtensions, 
+                               CPLGetExtension(papszDirEntries[iFile])) != -1)
+            {
+                osList.AddString( CPLFormFilename( m_pszName, 
+                                            papszDirEntries[iFile], 
+                                            NULL ) );
+            }
+        }
+
+        CSLDestroy( papszDirEntries );
+    }
+    else
+    {
+        static const char* apszMIFExtensions[] = { "mif", "mid", NULL };
+        static const char* apszTABExtensions[] = { "tab", "map", "ind", "dat", "id", NULL };
+        const char** papszExtensions;
+        if( EQUAL(CPLGetExtension(m_pszName), "mif") ||
+            EQUAL(CPLGetExtension(m_pszName), "mid") )
+        {
+            papszExtensions = apszMIFExtensions;
+        }
+        else
+        {
+            papszExtensions = apszTABExtensions;
+        }
+        const char** papszIter = papszExtensions;
+        while( *papszIter )
+        {
+            const char *pszFile = CPLResetExtension(m_pszName, *papszIter );
+            if( VSIStatL( pszFile, &sStatBuf ) != 0)
+            {
+                pszFile = CPLResetExtension(m_pszName, CPLString(*papszIter).toupper() );
+                if( VSIStatL( pszFile, &sStatBuf ) != 0)
+                {
+                    pszFile = NULL;
+                }
+            }
+            if( pszFile )
+                osList.AddString( pszFile );
+            papszIter ++;
+        }
+    }
+    return osList.StealList();
+}
