@@ -230,6 +230,8 @@ int OGRTABDataSource::Open( GDALOpenInfo* poOpenInfo, int bTestOpen )
         if( poFile == NULL )
             return FALSE;
 
+        poFile->SetDescription( poFile->GetName() );
+
         m_nLayerCount = 1;
         m_papoLayers = (IMapInfoFile **) CPLMalloc(sizeof(void*));
         m_papoLayers[0] = poFile;
