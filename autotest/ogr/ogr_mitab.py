@@ -489,12 +489,15 @@ def ogr_mitab_14():
 
     data = [['AREA',  ogr.OFTReal,   7, 4],
             ['VOLUME',ogr.OFTReal,   0, 0],
-            ['LENGTH',ogr.OFTInteger,10,0],
-            ['WIDTH', ogr.OFTInteger, 4,0]]
+            ['LENGTH',ogr.OFTInteger,254,0],
+            ['WIDTH', ogr.OFTInteger,254,0]]
 
     for field in data:
         fld = defn.GetFieldDefn(defn.GetFieldIndex(field[0]))
-        if fld.GetType() != field[1] or fld.GetWidth() != field[2] or fld.GetPrecision() != field[3]:
+        expected_with = field[2]
+        if fld.GetType() == ogr.OFTInteger:
+            expected_with = 0
+        if fld.GetType() != field[1] or fld.GetWidth() != expected_with or fld.GetPrecision() != field[3]:
             gdaltest.post_reason( field[0] + ' field definition wrong.' )
             return 'fail'
 
