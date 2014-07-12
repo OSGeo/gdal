@@ -1104,13 +1104,8 @@ int MIFFile::WriteMIFHeader()
         switch(m_paeFieldType[iField])
         {
           case TABFInteger:
-            if (poFieldDefn->GetWidth() == 0)
-                m_poMIFFile->WriteLine("  %s Integer\n",
-                                   poFieldDefn->GetNameRef());
-            else
-                m_poMIFFile->WriteLine("  %s Integer(%d)\n",
-                                   poFieldDefn->GetNameRef(),
-                                   poFieldDefn->GetWidth());
+            m_poMIFFile->WriteLine("  %s Integer\n",
+                                poFieldDefn->GetNameRef());
             break;
           case TABFSmallInt:
             m_poMIFFile->WriteLine("  %s SmallInt\n",
@@ -1778,7 +1773,7 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
      *----------------------------------------------------------------*/
     if (eMapInfoType == TABFDecimal && nWidth == 0)
         nWidth=20;
-    else if (nWidth == 0)
+    else if (eMapInfoType == TABFChar && nWidth == 0)
         nWidth=254; /* char fields */
 
     /*-----------------------------------------------------------------
