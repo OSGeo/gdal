@@ -1966,35 +1966,34 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
         }
     }
 /* -------------------------------------------------------------------- */
-/*      Check whether the EPSG authority code is already mapped to a    */
+/*      Check whether the authority name/code is already mapped to a    */
 /*      SRS ID.                                                         */
 /* -------------------------------------------------------------------- */
-    if( pszAuthorityName != NULL && EQUAL( pszAuthorityName, "EPSG" ) )
+    int nAuthorityCode = 0;
+    if( pszAuthorityName != NULL )
     {
-        int             nAuthorityCode;
-
-        /* For the root authority name 'EPSG', the authority code
-         * should always be integral
-         */
+        /* Check that the authority code is integral */
         nAuthorityCode = atoi( oSRS.GetAuthorityCode(NULL) );
-
-        osCommand.Printf("SELECT srid FROM spatial_ref_sys WHERE "
-                         "auth_name = '%s' AND auth_srid = %d",
-                         pszAuthorityName,
-                         nAuthorityCode );
-        hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
-
-        if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK
-            && PQntuples(hResult) > 0 )
+        if( nAuthorityCode > 0 )
         {
-            nSRSId = atoi(PQgetvalue( hResult, 0, 0 ));
+            osCommand.Printf("SELECT srid FROM spatial_ref_sys WHERE "
+                            "auth_name = '%s' AND auth_srid = %d",
+                            pszAuthorityName,
+                            nAuthorityCode );
+            hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
+
+            if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK
+                && PQntuples(hResult) > 0 )
+            {
+                nSRSId = atoi(PQgetvalue( hResult, 0, 0 ));
+
+                OGRPGClearResult( hResult );
+
+                return nSRSId;
+            }
 
             OGRPGClearResult( hResult );
-
-            return nSRSId;
         }
-
-        OGRPGClearResult( hResult );
     }
 
 /* -------------------------------------------------------------------- */
@@ -2086,10 +2085,8 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 
     CPLString osProj4 = OGRPGEscapeString(hPGConn, pszProj4, -1, "spatial_ref_sys", "proj4text");
 
-    if( pszAuthorityName != NULL && EQUAL(pszAuthorityName, "EPSG") )
+    if( pszAuthorityName != NULL && nAuthorityCode > 0)
     {
-        int             nAuthorityCode;
-
         nAuthorityCode = atoi( oSRS.GetAuthorityCode(NULL) );
 
         osCommand.Printf(
