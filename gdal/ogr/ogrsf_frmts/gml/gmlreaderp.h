@@ -381,10 +381,17 @@ public:
 /*                              GMLReader                               */
 /************************************************************************/
 
+typedef enum
+{
+    OGRGML_XERCES_UNINITIALIZED,
+    OGRGML_XERCES_INIT_FAILED,
+    OGRGML_XERCES_INIT_SUCCESSFUL
+} OGRGMLXercesState;
+
 class GMLReader : public IGMLReader 
 {
 private:
-    static int    m_bXercesInitialized;
+    static OGRGMLXercesState    m_eXercesInitState;
     static int    m_nInstanceCount;
     int           m_bClassListLocked;
 
