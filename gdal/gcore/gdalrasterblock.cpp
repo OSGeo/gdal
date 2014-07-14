@@ -400,7 +400,7 @@ GDALRasterBlock::~GDALRasterBlock()
 
         VSIFree( pData );
 
-        nSizeInBytes = (nXSize * nYSize * GDALGetDataTypeSize(eType)+7)/8;
+        nSizeInBytes = nXSize * nYSize * (GDALGetDataTypeSize(eType) / 8);
 
         {
             CPLMutexHolderD( &hRBMutex );
