@@ -326,6 +326,28 @@ GDALDataset::~GDALDataset()
 }
 
 /************************************************************************/
+/*                              SetCacheMax()                              */
+/************************************************************************/
+
+/**
+ * \brief Set the cache size for a dataset
+ *
+ * Sets the cache size for a raster dataset if GDAL_DATASET_CACHING is 
+ * enabled. If this is called with GDAL_DATASET_CACHING set to NO, then 
+ * this method will do nothing.
+ *
+ */
+
+void GDALDataset::SetCacheMax(GIntBig nCacheMax)
+{
+    if ( bDatasetCache )
+    {
+        poRasterBlockManager->SetCacheMax(nCacheMax);
+    }
+}
+
+
+/************************************************************************/
 /*                             FlushCache()                             */
 /************************************************************************/
 
