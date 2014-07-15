@@ -1925,4 +1925,30 @@
       <Width>18</Width>
     </PropertyDefn>
   </GMLFeatureClass>
+  <!-- Zaniklé prvky -->
+  <GMLFeatureClass>
+    <Name>ZaniklePrvky</Name>
+    <ElementPath>Data|ZaniklePrvky|ZaniklyPrvek</ElementPath>
+    <!-- Typ prvku -->
+    <PropertyDefn>
+      <Name>TypPrvkuKod</Name>
+      <ElementPath>TypPrvkuKod</ElementPath>
+      <Type>String</Type>
+      <Width>2</Width>
+    </PropertyDefn>
+    <!-- ID (kód) prvku -->
+    <PropertyDefn>
+      <Name>PrvekId</Name>
+      <ElementPath>PrvekId</ElementPath>
+      <Type>Integer</Type>
+      <Width>18</Width>
+    </PropertyDefn>
+    <!-- ID transakce v RUIAN -->
+    <PropertyDefn>
+      <Name>IdTransakce</Name>
+      <ElementPath>IdTransakce</ElementPath>
+      <Type>Integer</Type>
+      <Width>18</Width>
+    </PropertyDefn>
+  </GMLFeatureClass>
 </GMLFeatureClassList>
