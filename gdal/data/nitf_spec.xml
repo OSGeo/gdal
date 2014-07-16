@@ -290,12 +290,12 @@
             <if cond="ROT_FLAG=1">
                 <field name="ROT_ANGLE" length="8"/>
             </if>
-            <field name="PROJ_FLAG" length="1"/>
             <field name="ASYM_FLAG" length="1"/>
             <if cond="ASYM_FLAG=1">
                 <field name="ZOOMROW" length="7"/>
                 <field name="ZOOMCOL" length="7"/>
             </if>
+            <field name="PROJ_FLAG" length="1"/>
             <field name="SHARP_FLAG" length="1"/>
             <if cond="SHARP_FLAG=1">
                 <field name="SHARPFAM" length="2"/>
