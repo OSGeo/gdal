@@ -117,9 +117,9 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 if( poBlock == NULL )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined,
-            "GetBlockRef failed at X block offset %d, "
+                        "GetBlockRef failed at X block offset %d, "
                         "Y block offset %d", 0, nLBlockY );
-            return( CE_Failure );
+                    return( CE_Failure );
                 }
 
                 if( eRWFlag == GF_Write )
@@ -268,7 +268,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 if( !poBlock )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined,
-            "GetBlockRef failed at X block offset %d, "
+                        "GetBlockRef failed at X block offset %d, "
                         "Y block offset %d", nLBlockX, nLBlockY );
                     return( CE_Failure );
                 }

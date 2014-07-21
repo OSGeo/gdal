@@ -151,15 +151,7 @@ void GDALRasterBlockManager::SetCacheMax( GIntBig nNewSizeInBytes )
 /*      Flush blocks till we are under the new limit or till we         */
 /*      can't seem to flush anymore.                                    */
 /* -------------------------------------------------------------------- */
-    while( nCacheUsed > nCacheMax )
-    {
-        GIntBig nOldCacheUsed = nCacheUsed;
-
-        FlushCacheBlock();
-
-        if( nCacheUsed == nOldCacheUsed )
-            break;
-    }
+    FlushTillBelow();
 }
 
 /************************************************************************/
@@ -237,7 +229,7 @@ GIntBig GDALRasterBlockManager::GetCacheUsed()
 /**
  * \brief Attempt to flush at least one block from the cache.
  *
- * This static method is normally used to recover memory when a request
+ * This method is normally used to recover memory when a request
  * for a new cache block would put cache memory use over the established
  * limit.   
  *
@@ -249,6 +241,7 @@ GIntBig GDALRasterBlockManager::GetCacheUsed()
 int GDALRasterBlockManager::FlushCacheBlock()
 {
     int nXOff, nYOff;
+    int nSizeInBytes;
     GDALRasterBand *poBand;
 
     {
@@ -261,11 +254,10 @@ int GDALRasterBlockManager::FlushCacheBlock()
         if( poTarget == NULL )
             return FALSE;
 
-        poTarget->Detach();
-
         nXOff = poTarget->GetXOff();
         nYOff = poTarget->GetYOff();
         poBand = poTarget->GetBand();
+        poTarget->Detach();
     }
 
     CPLErr eErr = poBand->FlushBlock( nXOff, nYOff );
@@ -276,6 +268,27 @@ int GDALRasterBlockManager::FlushCacheBlock()
     }
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                          FlushTillBelow()                            */
+/************************************************************************/
+
+/**
+ * \brief Attempt to get below the maximum cache size.
+ */
+
+void GDALRasterBlockManager::FlushTillBelow()
+{
+    while( nCacheUsed > nCacheMax )
+    {
+        GIntBig nOldCacheUsed = nCacheUsed;
+
+        FlushCacheBlock();
+
+        if( nCacheUsed == nOldCacheUsed )
+            break;
+    }
 }
 
 /************************************************************************/
@@ -338,13 +351,9 @@ int GDALRasterBlockManager::SafeLockBlock( GDALRasterBlock ** ppBlock )
 {
     CPLAssert( NULL != ppBlock );
 
-    CPLMutexHolderD( &hRBMMutex );
-
     if( *ppBlock != NULL )
     {
         (*ppBlock)->AddLock();
-        (*ppBlock)->Touch();
-        
         return TRUE;
     }
     else

@@ -332,6 +332,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     GDALRasterBlockManager *GetRasterBlockManager() { return poRasterBlockManager; }
 
+    virtual void SetCacheMax( GIntBig );
     virtual void FlushCache(void);
 
     virtual const char *GetProjectionRef(void);
@@ -476,6 +477,7 @@ class CPL_DLL GDALRasterBlockManager
     GIntBig     GetCacheMax(void);
     GIntBig     GetCacheUsed(void);
     int         FlushCacheBlock(void);
+    void        FlushTillBelow();
     void        Verify();
     int         SafeLockBlock( GDALRasterBlock ** );
 
@@ -496,7 +498,9 @@ CPL_C_END
 class CPL_DLL GDALRasterBlock
 {
     GDALDataType        eType;
-    
+
+    int                 bAttached;    
+    int                 bDelete;    
     int                 bDirty;
     int                 nLockCount;
 
@@ -525,10 +529,11 @@ class CPL_DLL GDALRasterBlock
     void        Touch( void );      
     void        MarkDirty( void );  
     void        MarkClean( void );
-    void        AddLock( void ) { nLockCount++; }
-    void        DropLock( void ) { nLockCount--; }
+    void        AddLock( void ); //{ nLockCount++; }
+    void        DropLock( void ); //{ nLockCount--; }
+    void        Delete( void ) { bDelete = TRUE; }
     void        Detach();
-
+    
     CPLErr      Write();
 
     GDALDataType GetDataType() { return eType; }
@@ -602,6 +607,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     GDALAccess  eAccess;
 
     /* stuff related to blocking, and raster cache */
+    void        *hBandMutex;
     int         nBlockXSize;
     int         nBlockYSize;
     int         nBlocksPerRow;
