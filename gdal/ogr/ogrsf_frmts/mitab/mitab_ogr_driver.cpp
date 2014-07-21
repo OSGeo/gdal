@@ -170,53 +170,25 @@ static GDALDataset *OGRTABDriverCreate( const char * pszName,
 static CPLErr OGRTABDriverDelete( const char *pszDataSource )
 
 {
-    int iExt;
-    VSIStatBufL sStatBuf;
-    static const char *apszExtensions[] = 
-        { "mif", "mid", "tab", "map", "ind", "dat", "id", NULL };
-
-    if( VSIStatL( pszDataSource, &sStatBuf ) != 0 )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "%s does not appear to be a file or directory.",
-                  pszDataSource );
-
+    GDALOpenInfo oOpenInfo(pszDataSource, GA_ReadOnly);
+    GDALDataset* poDS = OGRTABDriverOpen(&oOpenInfo);
+    if( poDS == NULL )
         return CE_Failure;
-    }
+    char** papszFileList = poDS->GetFileList();
+    delete poDS;
 
-    if( VSI_ISREG(sStatBuf.st_mode) 
-        && (EQUAL(CPLGetExtension(pszDataSource),"mif")
-            || EQUAL(CPLGetExtension(pszDataSource),"mid")
-            || EQUAL(CPLGetExtension(pszDataSource),"tab")) )
+    char** papszIter = papszFileList;
+    while( papszIter && *papszIter )
     {
-        for( iExt=0; apszExtensions[iExt] != NULL; iExt++ )
-        {
-            const char *pszFile = CPLResetExtension(pszDataSource,
-                                                    apszExtensions[iExt] );
-            if( VSIStatL( pszFile, &sStatBuf ) == 0 )
-                VSIUnlink( pszFile );
-        }
+        VSIUnlink( *papszIter );
+        papszIter ++;
     }
-    else if( VSI_ISDIR(sStatBuf.st_mode) )
+    CSLDestroy(papszFileList);
+
+    VSIStatBufL sStatBuf;
+    if( VSIStatL( pszDataSource, &sStatBuf ) == 0 &&
+        VSI_ISDIR(sStatBuf.st_mode) )
     {
-        char **papszDirEntries = CPLReadDir( pszDataSource );
-        int  iFile;
-
-        for( iFile = 0; 
-             papszDirEntries != NULL && papszDirEntries[iFile] != NULL;
-             iFile++ )
-        {
-            if( CSLFindString( (char **) apszExtensions, 
-                               CPLGetExtension(papszDirEntries[iFile])) != -1)
-            {
-                VSIUnlink( CPLFormFilename( pszDataSource, 
-                                            papszDirEntries[iFile], 
-                                            NULL ) );
-            }
-        }
-
-        CSLDestroy( papszDirEntries );
-
         VSIRmdir( pszDataSource );
     }
 

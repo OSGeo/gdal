@@ -118,8 +118,8 @@
 #include "mitab.h"
 #include "mitab_utils.h"
 
-extern MapInfoDatumInfo asDatumInfoList[];
-extern MapInfoSpheroidInfo asSpheroidInfoList[];
+extern const MapInfoDatumInfo asDatumInfoList[];
+extern const MapInfoSpheroidInfo asSpheroidInfoList[];
 
 /************************************************************************/
 /*                             GetMIFParm()                             */
@@ -650,6 +650,17 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
                           GetMIFParm( papszNextField, 5, 0.0 )); // dfFalseNorthing
          break;
 
+     /*--------------------------------------------------------------
+      * Equidistant Cylindrical / Equirectangular
+      *-------------------------------------------------------------*/
+      case 33:
+        poSR->SetEquirectangular(
+            GetMIFParm( papszNextField, 1, 0.0 ),
+            GetMIFParm( papszNextField, 0, 0.0 ),
+            GetMIFParm( papszNextField, 2, 0.0 ),
+            GetMIFParm( papszNextField, 3, 0.0 ) );
+        break;
+
       default:
         break;
     }
@@ -683,7 +694,7 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
 /*      Find the datum, and collect it's parameters if possible.        */
 /* -------------------------------------------------------------------- */
     int         iDatum;
-    MapInfoDatumInfo *psDatumInfo = NULL;
+    const MapInfoDatumInfo *psDatumInfo = NULL;
     
     for( iDatum = 0; asDatumInfoList[iDatum].nMapInfoDatumID != -1; iDatum++ )
     {
@@ -786,7 +797,9 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
                      CPLAtof(SRS_UA_DEGREE_CONV) );
 
     poSR->SetTOWGS84( adfDatumParm[0], adfDatumParm[1], adfDatumParm[2],
-                      -adfDatumParm[3], -adfDatumParm[4], -adfDatumParm[5], 
+                      adfDatumParm[3] == 0.0 ? 0.0 : -adfDatumParm[3],
+                      adfDatumParm[4] == 0.0 ? 0.0 : -adfDatumParm[4],
+                      adfDatumParm[5] == 0.0 ? 0.0 : -adfDatumParm[5], 
                       adfDatumParm[6] );
 
     /*-----------------------------------------------------------------
@@ -798,6 +811,21 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
         poSR->SetNode( "PROJCS", "WGS 84 / Pseudo-Mercator" );
         poSR->SetExtension( "PROJCS", "PROJ4", "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs" );
     }
+
+    /*-----------------------------------------------------------------
+     * Special case for France Lambert-93
+     *----------------------------------------------------------------*/
+    if( nBaseProjection == 3
+        && nDatum == 33
+        && nEllipsoid == 0
+        && poSR->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0) == 3.0
+        && poSR->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0) == 46.5 )
+    {
+        poSR->SetNode( "PROJCS", "RGF93 / Lambert-93" );
+        poSR->SetNode( "PROJCS|GEOGCS", "RGF93");
+        poSR->SetNode( "PROJCS|GEOGCS|DATUM", "Reseau_Geodesique_Francais_1993");
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Report on translation.                                          */
 /* -------------------------------------------------------------------- */
@@ -1137,6 +1165,16 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
         parms[4] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
         parms[5] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
         nParmCount = 6;
+    }
+
+    else if( EQUAL(pszProjection,SRS_PT_EQUIRECTANGULAR) )
+    {
+        nProjection = 33;
+        parms[0] = poSR->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        parms[1] = poSR->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+        parms[2] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
+        parms[3] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
+        nParmCount = 4;
     }
 
     /* ==============================================================
@@ -1507,7 +1545,7 @@ int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
      * Find the datum, and collect it's parameters if possible.
      *----------------------------------------------------------------*/
         int         iDatum;
-        MapInfoDatumInfo *psDatumInfo = NULL;
+        const MapInfoDatumInfo *psDatumInfo = NULL;
         
         for(iDatum=0; asDatumInfoList[iDatum].nMapInfoDatumID != -1; iDatum++)
         {

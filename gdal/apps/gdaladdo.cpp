@@ -158,7 +158,13 @@ int main( int nArgc, char ** papszArgv )
         else if( pszFilename == NULL )
             pszFilename = papszArgv[iArg];
         else if( atoi(papszArgv[iArg]) > 0 )
+        {
             anLevels[nLevelCount++] = atoi(papszArgv[iArg]);
+            if( anLevels[nLevelCount-1] == 1 )
+            {
+                printf("Warning: Overview with subsampling factor of 1 requested. This will copy the full resolution dataset in the overview !\n");
+            }
+        }
         else
             Usage("Too many command options.");
     }

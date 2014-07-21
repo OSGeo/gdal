@@ -3700,6 +3700,19 @@ def ogr_shape_75():
     return 'success'
 
 ###############################################################################
+# Test opening shapefile whose .prj has a UTF-8 BOM marker
+
+def ogr_shape_76():
+
+    ds = ogr.Open('data/prjwithutf8bom.shp')
+    lyr = ds.GetLayer(0)
+    sr = lyr.GetSpatialRef()
+    if sr.ExportToWkt().find('GEOGCS["GCS_North_American_1983"') != 0:
+        return 'failure'
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_shape_cleanup():
@@ -3810,6 +3823,7 @@ gdaltest_list = [
     ogr_shape_73,
     ogr_shape_74,
     ogr_shape_75,
+    ogr_shape_76,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':

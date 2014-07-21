@@ -119,6 +119,8 @@ class OGRTABDataSource : public OGRDataSource
                              OGRSpatialReference * = NULL,
                              OGRwkbGeometryType = wkbUnknown,
                              char ** = NULL );
+
+    char        **GetFileList();
 };
 
 void CPL_DLL RegisterOGRTAB();

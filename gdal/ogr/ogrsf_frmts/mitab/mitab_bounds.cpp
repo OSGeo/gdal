@@ -69,7 +69,7 @@
  * bounds lookups
  *----------------------------------------------------------------*/
 static MapInfoBoundsInfo **gpapsExtBoundsList = NULL;
-static MapInfoBoundsInfo gasBoundsList[] = {
+static const MapInfoBoundsInfo gasBoundsList[] = {
 {{1, 0xff, 0xff, {0,0,0,0,0,0}, 0,0,0,0, {0,0,0,0,0}}, -1000, -1000, 1000, 1000},  /* Lat/Lon */
 
 {{2, 29, 0, {-85.5,13,0,0,0,0}, 0,0,0,0, {0,0,0,0,0}},  -18500.7190263237, -4067.43878447928, 30025.7571082958, 4067.43878447928},
@@ -1053,7 +1053,8 @@ GBool MITABLookupCoordSysBounds(TABProjInfo *psCS,
                                 double &dXMax, double &dYMax)
 {
     GBool bFound = FALSE;
-    MapInfoBoundsInfo *psList, **ppsList;
+    const MapInfoBoundsInfo *psList;
+    MapInfoBoundsInfo **ppsList;
 
     /*-----------------------------------------------------------------
      * Lookup table... 
@@ -1100,7 +1101,7 @@ GBool MITABLookupCoordSysBounds(TABProjInfo *psCS,
     psList = gasBoundsList;
     for( ; !bFound && psList->sProj.nProjId!=0xff; psList++)
     {
-        TABProjInfo *p = &(psList->sProj);
+        const TABProjInfo *p = &(psList->sProj);
 
         if (p->nProjId == psCS->nProjId &&
             (p->nUnitsId == 0xff || p->nUnitsId == psCS->nUnitsId) &&

@@ -32,7 +32,7 @@
                      gfsSchemaLocation="ruian_vf_ob_v1.gfs" />
         <featureType elementName="TypSouboru"
                      elementValue="ST_Z"
-                     gfsSchemaLocation="ruian_vf_ob_v1.gfs" />
+                     gfsSchemaLocation="ruian_vf_v1.gfs" />
         <featureType elementName="TypSouboru"
                      elementValue="ST"
                      gfsSchemaLocation="ruian_vf_st_v1.gfs" />

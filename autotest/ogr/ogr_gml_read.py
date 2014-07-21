@@ -2960,6 +2960,27 @@ def ogr_gml_63():
     return 'success'
 
 ###############################################################################
+# Test multiple instanciation of parser (#5571)
+
+def ogr_gml_64():
+    
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    for parser in ['XERCES', 'EXPAT']:
+        for i in range(2):
+            gdal.SetConfigOption('GML_PARSER', parser)
+            ds = ogr.Open( 'data/rnf_eg.gml' )
+            gdal.SetConfigOption('GML_PARSER', None)
+            lyr = ds.GetLayer(0)
+            feat = lyr.GetNextFeature()
+            if feat is None:
+                print(parser)
+                return 'fail'
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -3154,6 +3175,7 @@ gdaltest_list = [
     ogr_gml_61,
     ogr_gml_62,
     ogr_gml_63,
+    ogr_gml_64,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':
