@@ -273,8 +273,6 @@ def vrt_read_6():
     # Now compute source statistics
     mem_ds.GetRasterBand(1).ComputeStatistics(False)
 
-    gdal.SetConfigOption('VRT_MIN_MAX_FROM_SOURCES', 'YES')
-
     if vrt_ds.GetRasterBand(1).GetMinimum() != 74:
         gdaltest.post_reason('got bad minimum value')
         print(vrt_ds.GetRasterBand(1).GetMinimum())
@@ -283,8 +281,6 @@ def vrt_read_6():
         gdaltest.post_reason('got bad maximum value')
         print(vrt_ds.GetRasterBand(1).GetMaximum())
         return 'fail'
-
-    gdal.SetConfigOption('VRT_MIN_MAX_FROM_SOURCES', None)
 
     mem_ds = None
     vrt_ds = None
