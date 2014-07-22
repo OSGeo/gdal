@@ -471,7 +471,7 @@ int VizGeorefSpline2D::solve(void)
     
     if( _nof_eqs > INT_MAX / _nof_eqs )
     {
-        fprintf(stderr, "Too many coefficients. Computation aborted.\n");
+        CPLError(CE_Failure, CPLE_AppDefined, "Too many coefficients. Computation aborted.");
         return 0;
     }
 	
@@ -480,7 +480,7 @@ int VizGeorefSpline2D::solve(void)
     
     if( _AA == NULL || _Ainv == NULL )
     {
-        fprintf(stderr, "Out-of-memory while allocating temporary arrays. Computation aborted.\n");
+        CPLError(CE_Failure, CPLE_AppDefined, "Out-of-memory while allocating temporary arrays. Computation aborted.");
         VSIFree(_AA);
         VSIFree(_Ainv);
         return 0;
@@ -531,14 +531,22 @@ int VizGeorefSpline2D::solve(void)
         for(row = 0; row < _nof_eqs; row++)
             for(col = 0; col < _nof_vars; col++)
                 matRHS.at(row, col) = rhs[col][row];
-        arma::mat matCoefs(arma::solve(matA, matRHS));
-        for(row = 0; row < _nof_eqs; row++)
-            for(col = 0; col < _nof_vars; col++)
-                coef[col][row] = matCoefs.at(row, col);
+        arma::mat matCoefs(_nof_vars, _nof_eqs);
+        if( !arma::solve(matCoefs, matA, matRHS) )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "There is a problem to invert the interpolation matrix.");
+            ret = 0;
+        }
+        else
+        {
+            for(row = 0; row < _nof_eqs; row++)
+                for(col = 0; col < _nof_vars; col++)
+                    coef[col][row] = matCoefs.at(row, col);
+        }
     }
     catch(...)
     {
-        fprintf(stderr, "There is a problem to invert the interpolation matrix\n");
+        CPLError(CE_Failure, CPLE_AppDefined, "There is a problem to invert the interpolation matrix.");
         ret = 0;
     }
 #else
@@ -547,7 +555,7 @@ int VizGeorefSpline2D::solve(void)
 			
     if ( !status )
     {
-        fprintf(stderr, " There is a problem to invert the interpolation matrix\n");
+        CPLError(CE_Failure, CPLE_AppDefined, "There is a problem to invert the interpolation matrix.");
         ret = 0;
     }
     else
@@ -699,7 +707,7 @@ static int matrixInvert( int N, double input[], double output[] )
 	
     if (temp == 0) {
 		
-        fprintf(stderr, "matrixInvert(): ERROR - memory allocation failed.\n");
+        CPLError(CE_Failure, CPLE_AppDefined, "matrixInvert(): ERROR - memory allocation failed.");
         return false;
     }
 	
