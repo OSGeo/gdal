@@ -239,6 +239,64 @@ CPLErr VRTSourcedRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                       nPixelSize, nPixelSize * nBlockXSize );
 }
 
+
+/************************************************************************/
+/*                    CanUseSourcesMinMaxImplementations()              */
+/************************************************************************/
+
+int VRTSourcedRasterBand::CanUseSourcesMinMaxImplementations()
+{
+    const char* pszUseSources = CPLGetConfigOption("VRT_MIN_MAX_FROM_SOURCES", NULL);
+    if( pszUseSources )
+        return CSLTestBoolean(pszUseSources);
+
+    // Use heuristics to determine if we are going to use the source GetMinimum()
+    // or GetMaximum() implementation: all the sources must be "simple" sources
+    // with a dataset description that match a "regular" file on the filesystem,
+    // whose open time and GetMinimum()/GetMaximum() implementations we hope to
+    // be fast enough.
+    // In case of doubt return FALSE
+    for( int iSource = 0; iSource < nSources; iSource++ )
+    {
+        if( !(papoSources[iSource]->IsSimpleSource()) )
+            return FALSE;
+        VRTSimpleSource* poSimpleSource = (VRTSimpleSource*) papoSources[iSource];
+        GDALRasterBand* poBand = poSimpleSource->GetBand();
+        if( poBand == NULL )
+            return FALSE;
+        if( poBand->GetDataset() == NULL )
+            return FALSE;
+        const char* pszFilename = poBand->GetDataset()->GetDescription();
+        if( pszFilename == NULL )
+            return FALSE;
+        /* /vsimem/ should be fast */
+        if( strncmp(pszFilename, "/vsimem/", 8) == 0 )
+            continue;
+        /* but not other /vsi filesystems */
+        if( strncmp(pszFilename, "/vsi", 4) == 0 )
+            return FALSE;
+        int i = 0;
+        char ch;
+        /* We will assume that filenames that are only with ascii characters */
+        /* are real filenames and so we will not try to 'stat' them */
+        for( i = 0; (ch = pszFilename[i]) != '\0'; i++ )
+        {
+            if( !((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
+                  (ch >= '0' && ch <= '9') || ch == ':' || ch == '/' || ch == '\\' ||
+                  ch == ' ' || ch == '.') )
+                break;
+        }
+        if( ch != '\0' )
+        {
+            /* Otherwise do a real filesystem check */
+            VSIStatBuf sStat;
+            if( VSIStat(pszFilename, &sStat) != 0 )
+                return FALSE;
+        }
+    }
+    return TRUE;
+}
+
 /************************************************************************/
 /*                             GetMinimum()                             */
 /************************************************************************/
@@ -246,6 +304,9 @@ CPLErr VRTSourcedRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 double VRTSourcedRasterBand::GetMinimum( int *pbSuccess )
 {
     const char *pszValue = NULL;
+
+    if( !CanUseSourcesMinMaxImplementations() )
+        return GDALRasterBand::GetMinimum(pbSuccess);
 
     if( (pszValue = GetMetadataItem("STATISTICS_MINIMUM")) != NULL )
     {
@@ -297,6 +358,9 @@ double VRTSourcedRasterBand::GetMinimum( int *pbSuccess )
 double VRTSourcedRasterBand::GetMaximum(int *pbSuccess )
 {
     const char *pszValue = NULL;
+
+    if( !CanUseSourcesMinMaxImplementations() )
+        return GDALRasterBand::GetMaximum(pbSuccess);
 
     if( (pszValue = GetMetadataItem("STATISTICS_MAXIMUM")) != NULL )
     {
