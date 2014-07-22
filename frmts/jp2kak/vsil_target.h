@@ -81,7 +81,7 @@ public:
             if( file == NULL )
                 return false;
 
-            if( VSIFSeekL( file, SEEK_END, 0 ) != 0 )
+            if( VSIFSeekL( file, 0, SEEK_END ) != 0 )
                 return false;
             else
                 return true;
