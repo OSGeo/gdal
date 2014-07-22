@@ -206,7 +206,7 @@ void *GDALCreateTPSTransformerInt( int nGCPCount, const GDAL_GCP *pasGCPList,
 
     if( !psInfo->bForwardSolved || !psInfo->bReverseSolved )
     {
-        delete psInfo;
+        GDALDestroyTPSTransformer(psInfo);
         return NULL;
     }
 
