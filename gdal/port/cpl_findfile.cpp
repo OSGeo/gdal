@@ -128,7 +128,7 @@ void CPLFinderClean()
 }
 
 /************************************************************************/
-/*                         CPLDefaultFileFind()                         */
+/*                         CPLDefaultFindFile()                         */
 /************************************************************************/
 
 const char *CPLDefaultFindFile( const char *pszClass, 
