@@ -439,10 +439,9 @@ static void JP2OpenJPEGReadBlockInThread(void* userdata)
             poBlock->DropLock();
             break;
         }
-
+        
         poGDS->ReadBlock(nBand, fp, nBlockXOff, nBlockYOff, pDstBuffer,
                          nBandCount, panBandMap);
-
         poBlock->DropLock();
     }
 
@@ -716,7 +715,6 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
                 continue;
             }
         }
-
         if (bIs420)
         {
             CPLAssert((int)psImage->comps[0].w >= nWidthToRead);
@@ -729,6 +727,7 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
             OPJ_INT32* pSrcY = psImage->comps[0].data;
             OPJ_INT32* pSrcCb = psImage->comps[1].data;
             OPJ_INT32* pSrcCr = psImage->comps[2].data;
+            CPLMutexHolderD( &m_hMutex );
             GByte* pDst = (GByte*)pDstBuffer;
             for(int j=0;j<nHeightToRead;j++)
             {
@@ -761,6 +760,7 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
                     }
                 }
             }
+            CPLMutexHolderD( &m_hMutex );
 
             if ((int)psImage->comps[iBand-1].w == nBlockXSize &&
                 (int)psImage->comps[iBand-1].h == nBlockYSize)

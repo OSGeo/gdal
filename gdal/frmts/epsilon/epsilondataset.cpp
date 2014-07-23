@@ -337,11 +337,12 @@ CPLErr EpsilonRasterBand::IReadBlock( int nBlockXOff,
                     poBlock->DropLock();
                     break;
                 }
-
-                memcpy(pabySrcBlock,
-                       poGDS->pabyRGBData + (iOtherBand - 1) * nBlockXSize * nBlockYSize,
-                       nBlockXSize * nBlockYSize);
-
+                {
+                    CPLMutexHolderD( &(poGDS->GetRasterBand(iOtherBand)->GetRWMutex()) );
+                    memcpy(pabySrcBlock,
+                           poGDS->pabyRGBData + (iOtherBand - 1) * nBlockXSize * nBlockYSize,
+                           nBlockXSize * nBlockYSize);
+                }
                 poBlock->DropLock();
             }
         }

@@ -222,8 +222,7 @@ GIntBig GDALRasterBlockManager::GetCacheUsed()
 /*      Note, if we have alot of blocks locked for a long time, this    */
 /*      method is going to get slow because it will have to traverse    */
 /*      the linked list a long ways looking for a flushing              */
-/*      candidate.   It might help to re-touch locked blocks to push    */
-/*      them to the top of the list.                                    */
+/*      candidate.                                                      */
 /************************************************************************/
 
 /**
@@ -337,13 +336,13 @@ void GDALRasterBlockManager::Verify()
 /**
  * \brief Safely lock block.
  *
- * This method locks a GDALRasterBlock (and touches it) in a thread-safe
+ * This method locks a GDALRasterBlock in a thread-safe
  * manner.  The block cache mutex is held while locking the block,
  * in order to avoid race conditions with other threads that might be
  * trying to expire the block at the same time.  The block pointer may be
  * safely NULL, in which case this method does nothing. 
  *
- * @param ppBlock Pointer to the block pointer to try and lock/touch.
+ * @param ppBlock Pointer to the block pointer to try and lock.
  */
  
 int GDALRasterBlockManager::SafeLockBlock( GDALRasterBlock ** ppBlock )

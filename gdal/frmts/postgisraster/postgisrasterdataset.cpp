@@ -973,11 +973,13 @@ void PostGISRasterDataset::CacheTile(const char* pszMetadata,
         {
             GDALRasterBlock* poBlock = poRTB->GetLockedBlockRef(0, 0, TRUE);
             if( poBlock != NULL )
-            {
-                // Point block data ref to fetched data
-                memcpy(poBlock->GetDataRef(), (void *)pbyDataToRead, 
-                    nExpectedBandDataSize);
-
+            {   
+                {
+                    CPLMutexHolderD( &(poRTB->GetRWMutex()) );
+                    // Point block data ref to fetched data
+                    memcpy(poBlock->GetDataRef(), (void *)pbyDataToRead, 
+                        nExpectedBandDataSize);
+                }
                 poBlock->DropLock();
             }
         }

@@ -273,7 +273,8 @@ GDALRasterBlock::GDALRasterBlock( GDALRasterBand *poBandIn,
     eType = poBand->GetRasterDataType();
     pData = NULL;
     bDirty = FALSE;
-    bAttached = FALSE;
+    bAttachedToCache = FALSE;
+    bAttachedToBand = FALSE;
     bDelete = FALSE;
     nLockCount = 0;
 
@@ -333,11 +334,27 @@ void GDALRasterBlock::AddLock()
 void GDALRasterBlock::DropLock()
 
 {
-    CPLMutexHolderD( &(poBand->hBandMutex) );
-    nLockCount--;
-    CPLAssert( nLockCount >= 0 );
-    if ( nLockCount == 0 && bDelete )
+    int bDeleteNow = FALSE;
+    {
+        CPLMutexHolderD( &(poBand->hBandMutex) );
+        nLockCount--;
+        CPLAssert( nLockCount >= 0 );
+        if ( nLockCount == 0 && bDelete )
+        {
+            if ( bAttachedToCache )
+                Detach();
+            if ( bAttachedToBand )
+                poBand->UnadoptBlock(nXOff, nYOff);
+            bDeleteNow = TRUE;
+        }
+    }
+    if ( bDeleteNow ) 
+    {
+        if ( bDirty )
+            Write();
         delete this; 
+    }
+
 }
 
 /************************************************************************/
@@ -358,7 +375,7 @@ void GDALRasterBlock::Detach()
 {
     CPLMutexHolderD( &(poManager->hRBMMutex) );
     int nSizeInBytes;
-    if ( bAttached )
+    if ( bAttachedToCache )
     {
         nSizeInBytes = nXSize * nYSize * (GDALGetDataTypeSize(eType)/8);
         poManager->nCacheUsed -= nSizeInBytes;
@@ -368,7 +385,7 @@ void GDALRasterBlock::Detach()
         return;
     }
 
-    bAttached = FALSE;
+    bAttachedToCache = FALSE;
 
     if( poManager->poOldest == this )
         poManager->poOldest = poPrevious;
@@ -405,6 +422,7 @@ void GDALRasterBlock::Detach()
 CPLErr GDALRasterBlock::Write()
 
 {
+    CPLMutexHolderD( &(poBand->GetRWMutex()) );
     if( !GetDirty() )
         return CE_None;
 
@@ -438,11 +456,11 @@ void GDALRasterBlock::Touch()
     if ( bDelete )
         return;
     
-    if ( !bAttached )
+    if ( !bAttachedToCache )
     {
         nSizeInBytes = nXSize * nYSize * (GDALGetDataTypeSize(eType)/8);
         poManager->nCacheUsed += nSizeInBytes;
-        bAttached = TRUE;
+        bAttachedToCache = TRUE;
     }
 
     if( poManager->poNewest == this )
@@ -531,7 +549,7 @@ CPLErr GDALRasterBlock::Internalize()
 void GDALRasterBlock::MarkDirty()
 
 {
-    CPLMutexHolderD( &(poBand->hBandMutex) );
+    //CPLMutexHolderD( &(poBand->hBandMutex) );
     bDirty = TRUE;
 }
 
@@ -550,6 +568,7 @@ void GDALRasterBlock::MarkDirty()
 void GDALRasterBlock::MarkClean()
 
 {
+    //CPLMutexHolderD( &(poBand->hBandMutex) );
     bDirty = FALSE;
 }
 

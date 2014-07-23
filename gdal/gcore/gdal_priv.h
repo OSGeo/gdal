@@ -499,7 +499,8 @@ class CPL_DLL GDALRasterBlock
 {
     GDALDataType        eType;
 
-    int                 bAttached;    
+    int                 bAttachedToCache;    
+    int                 bAttachedToBand;    
     int                 bDelete;    
     int                 bDirty;
     int                 nLockCount;
@@ -529,9 +530,11 @@ class CPL_DLL GDALRasterBlock
     void        Touch( void );      
     void        MarkDirty( void );  
     void        MarkClean( void );
-    void        AddLock( void ); //{ nLockCount++; }
-    void        DropLock( void ); //{ nLockCount--; }
-    void        Delete( void ) { bDelete = TRUE; }
+    void        AddLock( void ); 
+    CPLErr      DropLock( void ); 
+    void        MarkForDeletion( void ) { bDelete = TRUE; }
+    void        AttachToBand( void ) { bAttachedToBand = TRUE; }
+    void        UnattachFromBand( void ) { bAttachedToBand = FALSE; }
     void        Detach();
     
     CPLErr      Write();
@@ -608,6 +611,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     /* stuff related to blocking, and raster cache */
     void        *hBandMutex;
+    void        *hRWMutex;
     int         nBlockXSize;
     int         nBlockYSize;
     int         nBlocksPerRow;
@@ -640,9 +644,9 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     int            InitBlockInfo();
 
-    CPLErr         AdoptBlock( int, int, GDALRasterBlock * );
+    GDALRasterBlock *AdoptBlock( int, int, GDALRasterBlock * );
     GDALRasterBlock *TryGetLockedBlockRef( int nXBlockOff, int nYBlockYOff );
-
+    
   public:
                 GDALRasterBand();
                 
@@ -653,6 +657,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     int         GetBand();
     GDALDataset*GetDataset();
 
+    void        *GetRWMutex();
     GDALDataType GetRasterDataType( void );
     void        GetBlockSize( int *, int * );
     GDALAccess  GetAccess();

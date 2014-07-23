@@ -293,11 +293,12 @@ CPLErr MBTilesBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage)
                         poBlock->DropLock();
                         break;
                     }
-
                     if (nTileBands == 3 && poGDS->nBands == 4 && iOtherBand == 4)
+                        CPLMutexHolderD( &(poGDS->GetRasterBand(iOtherBand)->GetRWMutex()) );
                         memset(pabySrcBlock, 255, nBlockXSize * nBlockYSize);
                     else if (nTileBands == 1 && (poGDS->nBands == 3 || poGDS->nBands == 4))
                     {
+                        CPLMutexHolderD( &(poGDS->GetRasterBand(iOtherBand)->GetRWMutex()) );
                         int i;
                         if (pSrcImage)
                         {
@@ -381,10 +382,11 @@ CPLErr MBTilesBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage)
                 poBlock->DropLock();
                 break;
             }
-
-            memset(pabySrcBlock, (iOtherBand == 4) ? 0 : 255,
-                   nBlockXSize * nBlockYSize);
-
+            {
+                CPLMutexHolderD( &(poGDS->GetRasterBand(iOtherBand)->GetRWMutex()) );
+                memset(pabySrcBlock, (iOtherBand == 4) ? 0 : 255,
+                       nBlockXSize * nBlockYSize);
+            }
             poBlock->DropLock();
         }
     }

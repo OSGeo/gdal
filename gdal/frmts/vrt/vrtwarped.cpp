@@ -1200,6 +1200,7 @@ CPLErr VRTWarpedDataset::ProcessBlock( int iBlockX, int iBlockY )
         {
             if ( poBlock->GetDataRef() != NULL )
             {
+                CPLMutexHolderD( &(poBand->GetRWMutex()) );
                 GDALCopyWords( pabyDstBuffer + iBand*nBlockXSize*nBlockYSize*nWordSize,
                             psWO->eWorkingDataType, nWordSize, 
                             poBlock->GetDataRef(), 
@@ -1292,6 +1293,7 @@ CPLErr VRTWarpedRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         int nDataBytes;
         nDataBytes = (GDALGetDataTypeSize(poBlock->GetDataType()) / 8)
             * poBlock->GetXSize() * poBlock->GetYSize();
+        CPLMutexHolderD( &(GetRWMutex()) );
         memcpy( pImage, poBlock->GetDataRef(), nDataBytes );
     }
 
