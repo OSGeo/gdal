@@ -299,8 +299,6 @@ GDALRasterBlock::~GDALRasterBlock()
 {
     if( pData != NULL )
     {
-        int nSizeInBytes;
-
         VSIFree( pData );
     }
 
@@ -422,7 +420,11 @@ void GDALRasterBlock::Detach()
 CPLErr GDALRasterBlock::Write()
 
 {
-    CPLMutexHolderD( &(poBand->GetRWMutex()) );
+    if ( !GetDirty() )
+        return CE_None;
+
+    CPLMutexHolderD( poBand->GetRWMutex() );
+    
     if( !GetDirty() )
         return CE_None;
 

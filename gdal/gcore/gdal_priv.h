@@ -284,6 +284,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     int         nRasterYSize;
     int         nBands;
     GDALRasterBand **papoBands;
+    void        *hRWMutex;
 
     int         bForceCachedIO;
     int         bDatasetCache;
@@ -531,7 +532,7 @@ class CPL_DLL GDALRasterBlock
     void        MarkDirty( void );  
     void        MarkClean( void );
     void        AddLock( void ); 
-    CPLErr      DropLock( void ); 
+    void        DropLock( void ); 
     void        MarkForDeletion( void ) { bDelete = TRUE; }
     void        AttachToBand( void ) { bAttachedToBand = TRUE; }
     void        UnattachFromBand( void ) { bAttachedToBand = FALSE; }
@@ -657,7 +658,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     int         GetBand();
     GDALDataset*GetDataset();
 
-    void        *GetRWMutex();
+    void        **GetRWMutex();
     GDALDataType GetRasterDataType( void );
     void        GetBlockSize( int *, int * );
     GDALAccess  GetAccess();
@@ -674,7 +675,8 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     GDALRasterBlockManager *GetRasterBlockManager();
 
-    CPLErr      FlushBlock( int = -1, int = -1, int bWriteDirtyBlock = TRUE );
+    GDALRasterBlock     *UnadoptBlock( int = -1, int = -1 );
+    CPLErr              FlushBlock( int = -1, int = -1 );
 
     unsigned char*  GetIndexColorTranslationTo(/* const */ GDALRasterBand* poReferenceBand,
                                                unsigned char* pTranslationTable = NULL,

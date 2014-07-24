@@ -30,6 +30,7 @@
  ****************************************************************************/
 
 #include "gdal_priv.h"
+#include "cpl_multiproc.h"
 
 // Define a list of "C++" compilers that have broken template support or
 // broken scoping so we can fall back on the legacy implementation of
@@ -133,7 +134,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             nSrcByteOffset = ((iSrcY-nLBlockY*nBlockYSize)*nBlockXSize + nXOff)
                 * nBandDataSize;
             {
-                CPLMutexHolderD( &(GetRWMutex()) );
+                CPLMutexHolderD( GetRWMutex() );
                 if( eRWFlag == GF_Write )
                     poBlock->MarkDirty();
                 
@@ -286,7 +287,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /*      Copy over this chunk of data.                                   */
 /* -------------------------------------------------------------------- */
                 {
-                    CPLMutexHolderD( &(GetRWMutex()) );
+                    CPLMutexHolderD( GetRWMutex() );
                     if( eRWFlag == GF_Write )
                         poBlock->MarkDirty();
                     
@@ -415,7 +416,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     /*      Copy over this pixel of data.                                   */
     /* -------------------------------------------------------------------- */
                 {
-                    CPLMutexHolderD( &(GetRWMutex()) );
+                    CPLMutexHolderD( GetRWMutex() );
                     poBlock->MarkDirty();
                     iDstOffset = ((size_t)iDstX - (size_t)nLBlockX*nBlockXSize
                         + ((size_t)iDstY - (size_t)nLBlockY*nBlockYSize) * nBlockXSize)*nBandDataSize;
@@ -507,7 +508,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     /* -------------------------------------------------------------------- */
                 iSrcOffset = ((size_t)nDiffX + iSrcOffsetCst)*nBandDataSize;
                 {
-                    CPLMutexHolderD( &(GetRWMutex()) );
+                    CPLMutexHolderD( GetRWMutex() );
 
                     if( bByteCopy )
                     {
@@ -2606,7 +2607,7 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
             iSrcOffset = (iSrcX - nLBlockX*nBlockXSize
                 + (iSrcY - nLBlockY*nBlockYSize) * nBlockXSize)*nBandDataSize;
             {
-                CPLMutexHolderD( &m_hMutex );
+                CPLMutexHolderD( &hRWMutex );
                 for( iBand = 0; iBand < nBandCount; iBand++ )
                 {
                     GByte *pabySrcBlock = papabySrcBlock[iBand];

@@ -240,13 +240,12 @@ GIntBig GDALRasterBlockManager::GetCacheUsed()
 int GDALRasterBlockManager::FlushCacheBlock()
 {
     int nXOff, nYOff;
-    int nSizeInBytes;
     GDALRasterBand *poBand;
+    GDALRasterBlock *poTarget = NULL;;
 
     {
         CPLMutexHolderD( &hRBMMutex );
-        GDALRasterBlock *poTarget = (GDALRasterBlock *) poOldest;
-
+        poTarget = (GDALRasterBlock *) poOldest;
         while( poTarget != NULL && poTarget->GetLockCount() > 0 ) 
             poTarget = poTarget->poPrevious;
         
@@ -258,8 +257,9 @@ int GDALRasterBlockManager::FlushCacheBlock()
         poBand = poTarget->GetBand();
         poTarget->Detach();
     }
-
+    
     CPLErr eErr = poBand->FlushBlock( nXOff, nYOff );
+
     if (eErr != CE_None)
     {
         /* Save the error for later reporting */

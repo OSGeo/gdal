@@ -727,7 +727,7 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
             OPJ_INT32* pSrcY = psImage->comps[0].data;
             OPJ_INT32* pSrcCb = psImage->comps[1].data;
             OPJ_INT32* pSrcCr = psImage->comps[2].data;
-            CPLMutexHolderD( &m_hMutex );
+            CPLMutexHolderD( &hRWMutex );
             GByte* pDst = (GByte*)pDstBuffer;
             for(int j=0;j<nHeightToRead;j++)
             {
@@ -760,7 +760,7 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
                     }
                 }
             }
-            CPLMutexHolderD( &m_hMutex );
+            CPLMutexHolderD( &hRWMutex );
 
             if ((int)psImage->comps[iBand-1].w == nBlockXSize &&
                 (int)psImage->comps[iBand-1].h == nBlockYSize)

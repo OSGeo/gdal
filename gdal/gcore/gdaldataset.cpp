@@ -207,6 +207,7 @@ GDALDataset::GDALDataset()
     
     m_poStyleTable = NULL;
     m_hMutex = NULL;
+    hRWMutex = NULL;
 }
 
 
@@ -312,6 +313,8 @@ GDALDataset::~GDALDataset()
 
     if( m_hMutex != NULL )
         CPLDestroyMutex( m_hMutex );
+    if( hRWMutex != NULL )
+        CPLDestroyMutex( hRWMutex );
 
 /* -------------------------------------------------------------------- */
 /*      Destroy the raster block manager if it is not global            */

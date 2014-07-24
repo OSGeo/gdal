@@ -31,6 +31,7 @@
 #include "vrtdataset.h"
 #include "cpl_minixml.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 #include "gdalwarper.h"
 #include "gdal_alg_priv.h"
 #include <cassert>
@@ -1200,7 +1201,7 @@ CPLErr VRTWarpedDataset::ProcessBlock( int iBlockX, int iBlockY )
         {
             if ( poBlock->GetDataRef() != NULL )
             {
-                CPLMutexHolderD( &(poBand->GetRWMutex()) );
+                CPLMutexHolderD( poBand->GetRWMutex() );
                 GDALCopyWords( pabyDstBuffer + iBand*nBlockXSize*nBlockYSize*nWordSize,
                             psWO->eWorkingDataType, nWordSize, 
                             poBlock->GetDataRef(), 
@@ -1293,7 +1294,7 @@ CPLErr VRTWarpedRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         int nDataBytes;
         nDataBytes = (GDALGetDataTypeSize(poBlock->GetDataType()) / 8)
             * poBlock->GetXSize() * poBlock->GetYSize();
-        CPLMutexHolderD( &(GetRWMutex()) );
+        CPLMutexHolderD( GetRWMutex() );
         memcpy( pImage, poBlock->GetDataRef(), nDataBytes );
     }
 
