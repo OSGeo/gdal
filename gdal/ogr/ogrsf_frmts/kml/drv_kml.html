@@ -31,10 +31,10 @@ are able to be represented in the Simple Features geometry model, you will not b
 many KML-specific attributes from within GDAL/OGR. Please try
 a few test files to get a sense of what is possible.</p>
 
-<p>When outputting KML, the OGR KML driver will translate each OGR Layer into a KML Folder.
+<p>When outputting KML, the OGR KML driver will translate each OGR Layer into a KML Folder
 (you may encounter unexpected behavior
 if you try to mix the geometry types of elements in a layer, e.g. <code>LINESTRING</code> and
-<code>POINT</code> data. </p>
+<code>POINT</code> data).</p>
 
 <p>The KML Driver will rename some layers, or source KML folder names, into new names
 it considers valid, for example '<code>Layer #0</code>', the default name of the first unnamed
