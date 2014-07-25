@@ -1639,8 +1639,13 @@ int FileGDBTable::GetFeatureExtent(const OGRField* psField,
             nToSkip = 1;
             break;
         }
-
         case SHPT_GENERALPOLYLINE:
+        case SHPT_GENERALPOLYGON:
+        {
+            nToSkip = 1 + ((nGeomType & 0x20000000) ? 1 : 0);
+            break;
+        }
+
         case SHPT_GENERALMULTIPATCH:
         case SHPT_MULTIPATCHM:
         case SHPT_MULTIPATCH:
