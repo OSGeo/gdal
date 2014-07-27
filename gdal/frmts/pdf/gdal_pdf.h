@@ -321,7 +321,7 @@ class PDFRasterBand : public GDALPamRasterBand
 
                 PDFRasterBand( PDFDataset *, int );
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
     virtual GDALColorInterp GetColorInterpretation();
 };
 

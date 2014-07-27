@@ -53,7 +53,7 @@ class MSGRasterBand : public GDALRasterBand
   public:
     MSGRasterBand( MSGDataset *, int );
     virtual ~MSGRasterBand();
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void **hMutex = NULL );
 
   private:
     double rRadiometricCorrection(unsigned int iDN, int iChannel, int iRow, int iCol, MSGDataset* poGDS);

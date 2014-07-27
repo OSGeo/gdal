@@ -430,7 +430,8 @@ class GDALClientDataset: public GDALPamDataset
                                void * pData, int nBufXSize, int nBufYSize,
                                GDALDataType eBufType, 
                                int nBandCount, int *panBandMap,
-                               int nPixelSpace, int nLineSpace, int nBandSpace);
+                               int nPixelSpace, int nLineSpace, int nBandSpace,
+                               void **hMutex = NULL);
     public:
                             GDALClientDataset(GDALPipe* p);
                             ~GDALClientDataset();
@@ -534,16 +535,16 @@ class GDALClientRasterBand : public GDALPamRasterBand
                                 int nXOff, int nYOff, int nXSize, int nYSize,
                                 void * pData, int nBufXSize, int nBufYSize,
                                 GDALDataType eBufType,
-                                int nPixelSpace, int nLineSpace );
+                                int nPixelSpace, int nLineSpace, void **hMutex = NULL );
     protected:
 
-        virtual CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void* pImage);
-        virtual CPLErr IWriteBlock(int nBlockXOff, int nBlockYOff, void* pImage);
+        virtual CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void* pImage, void **hMutex = NULL);
+        virtual CPLErr IWriteBlock(int nBlockXOff, int nBlockYOff, void* pImage, void **hMutex = NULL);
         virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
                                   int nXOff, int nYOff, int nXSize, int nYSize,
                                   void * pData, int nBufXSize, int nBufYSize,
                                   GDALDataType eBufType,
-                                  int nPixelSpace, int nLineSpace );
+                                  int nPixelSpace, int nLineSpace, void **hMutex = NULL);
 
     public:
         GDALClientRasterBand(GDALPipe* p, int iSrvBand,
@@ -3433,7 +3434,8 @@ CPLErr GDALClientDataset::IRasterIO( GDALRWFlag eRWFlag,
                                  void * pData, int nBufXSize, int nBufYSize,
                                  GDALDataType eBufType, 
                                  int nBandCount, int *panBandMap,
-                                 int nPixelSpace, int nLineSpace, int nBandSpace)
+                                 int nPixelSpace, int nLineSpace, int nBandSpace,
+                                 void ** hMutex )
 {
     if( !SupportsInstr(( eRWFlag == GF_Read ) ? INSTR_IRasterIO_Read : INSTR_IRasterIO_Write ) )
         return GDALPamDataset::IRasterIO( eRWFlag,
@@ -3441,7 +3443,7 @@ CPLErr GDALClientDataset::IRasterIO( GDALRWFlag eRWFlag,
                                           pData, nBufXSize, nBufYSize,
                                           eBufType, 
                                           nBandCount, panBandMap,
-                                          nPixelSpace, nLineSpace, nBandSpace );
+                                          nPixelSpace, nLineSpace, nBandSpace, hMutex );
 
     CLIENT_ENTER();
     CPLErr eRet = CE_Failure;
@@ -3500,6 +3502,7 @@ CPLErr GDALClientDataset::IRasterIO( GDALRWFlag eRWFlag,
             return CE_Failure;
     }
 
+    CPLMutexHolderD( hMutex );
     if( eRWFlag == GF_Read )
     {
         if( !GDALSkipUntilEndOfJunkMarker(p) )
@@ -4642,7 +4645,7 @@ CPLErr GDALClientRasterBand::SetDefaultHistogram( double dfMin, double dfMax,
 /*                            IReadBlock()                              */
 /************************************************************************/
 
-CPLErr GDALClientRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void* pImage)
+CPLErr GDALClientRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void* pImage, void **hMutex)
 {
     if( !SupportsInstr(INSTR_Band_IReadBlock) )
         return CE_Failure;
@@ -4662,6 +4665,7 @@ CPLErr GDALClientRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void* pI
     if( !GDALPipeRead(p, &eRet) )
         return eRet;
     int nSize;
+    CPLMutexHolderD( hMutex );
     if( !GDALPipeRead(p, &nSize) ||
         nSize != nBlockXSize * nBlockYSize * (GDALGetDataTypeSize(eDataType) / 8) ||
         !GDALPipeRead_nolength(p, nSize, pImage) )
@@ -4675,7 +4679,7 @@ CPLErr GDALClientRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void* pI
 /*                            IWriteBlock()                             */
 /************************************************************************/
 
-CPLErr GDALClientRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void* pImage)
+CPLErr GDALClientRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void* pImage, void **hMutex)
 {
     if( !SupportsInstr(INSTR_Band_IWriteBlock) )
         return CE_Failure;
@@ -4684,6 +4688,7 @@ CPLErr GDALClientRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void* p
 
     CLIENT_ENTER();
     int nSize = nBlockXSize * nBlockYSize * (GDALGetDataTypeSize(eDataType) / 8);
+    CPLMutexHolderD( hMutex );
     if( !WriteInstr(INSTR_Band_IWriteBlock) ||
         !GDALPipeWrite(p, nBlockXOff) ||
         !GDALPipeWrite(p, nBlockYOff) ||
@@ -4700,7 +4705,7 @@ CPLErr GDALClientRasterBand::IRasterIO_read_internal(
                                     int nXOff, int nYOff, int nXSize, int nYSize,
                                     void * pData, int nBufXSize, int nBufYSize,
                                     GDALDataType eBufType,
-                                    int nPixelSpace, int nLineSpace )
+                                    int nPixelSpace, int nLineSpace, void **hMutex )
 {
     CPLErr eRet = CE_Failure;
 
@@ -4726,6 +4731,7 @@ CPLErr GDALClientRasterBand::IRasterIO_read_internal(
     GIntBig nExpectedSize = (GIntBig)nBufXSize * nBufYSize * nDataTypeSize;
     if( nSize != nExpectedSize )
         return CE_Failure;
+    CPLMutexHolderD( hMutex );
     if( nPixelSpace == nDataTypeSize &&
         nLineSpace == nBufXSize * nDataTypeSize )
     {
@@ -4775,14 +4781,14 @@ CPLErr GDALClientRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                     int nXOff, int nYOff, int nXSize, int nYSize,
                                     void * pData, int nBufXSize, int nBufYSize,
                                     GDALDataType eBufType,
-                                    int nPixelSpace, int nLineSpace )
+                                    int nPixelSpace, int nLineSpace, void ** hMutex )
 {
     if( !SupportsInstr( (eRWFlag == GF_Read) ? INSTR_Band_IRasterIO_Read : INSTR_Band_IRasterIO_Write) )
         return GDALPamRasterBand::IRasterIO( eRWFlag,
                                              nXOff, nYOff, nXSize, nYSize,
                                              pData, nBufXSize, nBufYSize,
                                              eBufType, 
-                                             nPixelSpace, nLineSpace );
+                                             nPixelSpace, nLineSpace, hMutex );
 
     CLIENT_ENTER();
     CPLErr eRet = CE_Failure;
@@ -4810,6 +4816,7 @@ CPLErr GDALClientRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             {
                 nSuccessiveLinesRead ++;
 
+                CPLMutexHolderD( hMutex );
                 int nCachedBufTypeSize = GDALGetDataTypeSize(eCachedBufType) / 8;
                 GDALCopyWords(pabyCachedLines + (nYOff - nCachedYStart) * nXSize * nCachedBufTypeSize,
                               eCachedBufType, nCachedBufTypeSize,
@@ -4848,6 +4855,7 @@ CPLErr GDALClientRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                             nCachedYStart = nYOff;
 
                             int nCachedBufTypeSize = GDALGetDataTypeSize(eCachedBufType) / 8;
+                            CPLMutexHolderD( hMutex );
                             GDALCopyWords(pabyCachedLines + (nYOff - nCachedYStart) * nXSize * nCachedBufTypeSize,
                                         eCachedBufType, nCachedBufTypeSize,
                                         pData, eBufType, nPixelSpace,
@@ -4874,7 +4882,7 @@ CPLErr GDALClientRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         return IRasterIO_read_internal( nXOff, nYOff, nXSize, nYSize,
                                         pData, nBufXSize, nBufYSize,
                                         eBufType,
-                                        nPixelSpace, nLineSpace );
+                                        nPixelSpace, nLineSpace, hMutex );
     }
     else
     {
@@ -4895,6 +4903,7 @@ CPLErr GDALClientRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         int nSize = (int)nSizeBig;
         if( nSizeBig != nSize )
             return CE_Failure;
+        CPLMutexHolderD( hMutex );
         if( nPixelSpace == nDataTypeSize &&
             nLineSpace == nBufXSize * nDataTypeSize )
         {

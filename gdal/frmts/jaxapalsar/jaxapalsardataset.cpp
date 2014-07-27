@@ -31,6 +31,7 @@
  ****************************************************************************/
 
 #include "gdal_pam.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -210,7 +211,7 @@ public:
     PALSARJaxaRasterBand( PALSARJaxaDataset *poDS, int nBand, VSILFILE *fp );
     ~PALSARJaxaRasterBand();
 
-    CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage );
+    CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage, void ** hMutex = NULL);
 };
 
 /************************************************************************/
@@ -299,8 +300,9 @@ PALSARJaxaRasterBand::~PALSARJaxaRasterBand()
 /************************************************************************/
 
 CPLErr PALSARJaxaRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-	void *pImage )
+	void *pImage, void ** hMutex )
 {
+    CPLMutexHolderD( hMutex );
     int nNumBytes = 0;
     if (nFileType == level_11) {
         nNumBytes = 8;

@@ -29,6 +29,7 @@
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 #include "iso8211.h"
 
 CPL_CVSID("$Id$");
@@ -111,8 +112,8 @@ class ADRGRasterBand : public GDALPamRasterBand
                             ADRGRasterBand( ADRGDataset *, int );
 
     virtual GDALColorInterp GetColorInterpretation();
-    virtual CPLErr          IReadBlock( int, int, void * );
-    virtual CPLErr          IWriteBlock( int, int, void * );
+    virtual CPLErr          IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr          IWriteBlock( int, int, void *, void ** hMutex = NULL );
 
     virtual double          GetNoDataValue( int *pbSuccess = NULL );
 
@@ -211,9 +212,10 @@ GDALColorInterp ADRGRasterBand::GetColorInterpretation()
 /************************************************************************/
 
 CPLErr ADRGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                  void * pImage, void ** hMutex )
 
 {
+    CPLMutexHolderD( hMutex );
     ADRGDataset* poDS = (ADRGDataset*)this->poDS;
     int offset;
     int nBlock = nBlockYOff * poDS->NFC + nBlockXOff;
@@ -256,9 +258,10 @@ CPLErr ADRGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr ADRGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                  void * pImage, void ** hMutex )
 
 {
+    CPLMutexHolderD( hMutex );
     ADRGDataset* poDS = (ADRGDataset*)this->poDS;
     int offset;
     int nBlock = nBlockYOff * poDS->NFC + nBlockXOff;

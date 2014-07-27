@@ -174,21 +174,22 @@ retType GDALProxyRasterBand::methodName argList \
 }
 
 RB_PROXY_METHOD_WITH_RET_WITH_INIT_BLOCK(CPLErr, CE_Failure, IReadBlock,
-                                ( int nXBlockOff, int nYBlockOff, void* pImage), 
-                                (nXBlockOff, nYBlockOff, pImage) )
+                                ( int nXBlockOff, int nYBlockOff, void* pImage, void ** hMutex), 
+                                (nXBlockOff, nYBlockOff, pImage, hMutex) )
 RB_PROXY_METHOD_WITH_RET_WITH_INIT_BLOCK(CPLErr, CE_Failure, IWriteBlock,
-                                ( int nXBlockOff, int nYBlockOff, void* pImage), 
-                                (nXBlockOff, nYBlockOff, pImage) )
+                                ( int nXBlockOff, int nYBlockOff, void* pImage, void ** hMutex), 
+                                (nXBlockOff, nYBlockOff, pImage, hMutex) )
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, IRasterIO,
                         ( GDALRWFlag eRWFlag,
                                 int nXOff, int nYOff, int nXSize, int nYSize,
                                 void * pData, int nBufXSize, int nBufYSize,
                                 GDALDataType eBufType,
                                 int nPixelSpace,
-                                int nLineSpace ), 
+                                int nLineSpace,
+                                void ** hMutex ), 
                         (eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                 pData, nBufXSize, nBufYSize, eBufType,
-                                nPixelSpace, nLineSpace ) )
+                                nPixelSpace, nLineSpace, hMutex ) )
 
 RB_PROXY_METHOD_WITH_RET(char**, NULL, GetMetadataDomainList, (), ())
 RB_PROXY_METHOD_WITH_RET(char**, NULL, GetMetadata, (const char * pszDomain), (pszDomain))

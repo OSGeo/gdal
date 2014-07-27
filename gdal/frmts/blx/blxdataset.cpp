@@ -32,6 +32,7 @@
 
 #include "gdal_pam.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -74,7 +75,7 @@ class BLXRasterBand : public GDALPamRasterBand
     virtual int GetOverviewCount();
     virtual GDALRasterBand *GetOverview( int );
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex );
 };
 
 GDALDataset *BLXDataset::Open( GDALOpenInfo * poOpenInfo )
@@ -234,9 +235,10 @@ GDALRasterBand *BLXRasterBand::GetOverview( int i )
 }
 
 CPLErr BLXRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                  void * pImage, void **hMutex )
 
 {
+    CPLMutexHolderD( hMutex );
     BLXDataset *poGDS = (BLXDataset *) poDS;
 
     if(blx_readcell(poGDS->blxcontext, nBlockYOff, nBlockXOff, (short *)pImage, nBlockXSize*nBlockYSize*2, overviewLevel) == NULL) {

@@ -29,6 +29,7 @@
  ****************************************************************************/
 
 #include "gdal_priv.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -63,9 +64,10 @@ GDALAllValidMaskBand::~GDALAllValidMaskBand()
 /************************************************************************/
 
 CPLErr GDALAllValidMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
-                                         void * pImage )
+                                         void * pImage, void **hMutex )
 
 {
+    CPLMutexHolderD( hMutex );
     memset( pImage, 255, nBlockXSize * nBlockYSize );
 
     return CE_None;

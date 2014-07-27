@@ -31,6 +31,7 @@
 #include "vrtdataset.h"
 #include "cpl_minixml.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 #include "rawdataset.h"
 
 CPL_CVSID("$Id$");
@@ -80,7 +81,7 @@ CPLErr VRTRawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                  int nXOff, int nYOff, int nXSize, int nYSize,
                                  void * pData, int nBufXSize, int nBufYSize,
                                  GDALDataType eBufType,
-                                 int nPixelSpace, int nLineSpace )
+                                 int nPixelSpace, int nLineSpace, void ** hMutex )
 
 {
     if( poRawRaster == NULL )
@@ -108,7 +109,7 @@ CPLErr VRTRawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     {
         if( OverviewRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
                               pData, nBufXSize, nBufYSize, 
-                              eBufType, nPixelSpace, nLineSpace ) == CE_None )
+                              eBufType, nPixelSpace, nLineSpace, hMutex) == CE_None )
             return CE_None;
     }
     
@@ -116,7 +117,7 @@ CPLErr VRTRawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
     return poRawRaster->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
                                   pData, nBufXSize, nBufYSize, 
-                                  eBufType, nPixelSpace, nLineSpace );
+                                  eBufType, nPixelSpace, nLineSpace, hMutex );
 }
 
 /************************************************************************/
@@ -124,7 +125,7 @@ CPLErr VRTRawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /************************************************************************/
 
 CPLErr VRTRawRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                   void * pImage )
+                                   void * pImage, void ** hMutex )
 
 {
     if( poRawRaster == NULL )
@@ -134,7 +135,7 @@ CPLErr VRTRawRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return CE_Failure;
     }
 
-    return poRawRaster->ReadBlock( nBlockXOff, nBlockYOff, pImage );
+    return poRawRaster->ReadBlock( nBlockXOff, nBlockYOff, pImage, hMutex );
 }
 
 /************************************************************************/
@@ -142,7 +143,7 @@ CPLErr VRTRawRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr VRTRawRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-                                      void * pImage )
+                                      void * pImage, void ** hMutex )
 
 {
     if( poRawRaster == NULL )
@@ -154,7 +155,7 @@ CPLErr VRTRawRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     
     poRawRaster->SetAccess(eAccess);
     
-    return poRawRaster->WriteBlock( nBlockXOff, nBlockYOff, pImage );
+    return poRawRaster->WriteBlock( nBlockXOff, nBlockYOff, pImage, hMutex );
 }
 
 /************************************************************************/

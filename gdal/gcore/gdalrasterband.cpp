@@ -187,7 +187,8 @@ CPLErr GDALRasterBand::RasterIO( GDALRWFlag eRWFlag,
                                  void * pData, int nBufXSize, int nBufYSize,
                                  GDALDataType eBufType,
                                  int nPixelSpace,
-                                 int nLineSpace )
+                                 int nLineSpace,
+                                 void ** hMutex )
 
 {
 
@@ -268,11 +269,11 @@ CPLErr GDALRasterBand::RasterIO( GDALRWFlag eRWFlag,
     if( bForceCachedIO )
         return GDALRasterBand::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                          pData, nBufXSize, nBufYSize, eBufType,
-                                         nPixelSpace, nLineSpace );
+                                         nPixelSpace, nLineSpace, hMutex );
     else
         return IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                           pData, nBufXSize, nBufYSize, eBufType,
-                          nPixelSpace, nLineSpace ) ;
+                          nPixelSpace, nLineSpace, hMutex ) ;
 }
 
 /************************************************************************/
@@ -300,6 +301,33 @@ GDALRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
     return( poBand->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                               pData, nBufXSize, nBufYSize, eBufType,
                               nPixelSpace, nLineSpace ) );
+}
+
+/************************************************************************/
+/*                            GDALRasterIOMutex()                            */
+/************************************************************************/
+
+/**
+ * \brief Read/write a region of image data for this band. (with Mutex passed)
+ *
+ * @see GDALRasterBand::RasterIO()
+ */
+
+CPLErr CPL_STDCALL 
+GDALRasterIOMutex( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
+              int nXOff, int nYOff, int nXSize, int nYSize,
+              void * pData, int nBufXSize, int nBufYSize,
+              GDALDataType eBufType,
+              int nPixelSpace, int nLineSpace, void ** hMutex )
+    
+{
+    VALIDATE_POINTER1( hBand, "GDALRasterIO", CE_Failure );
+
+    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+
+    return( poBand->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                              pData, nBufXSize, nBufYSize, eBufType,
+                              nPixelSpace, nLineSpace, hMutex ) );
 }
                      
 /************************************************************************/
@@ -390,7 +418,7 @@ GDALRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
 
 
 CPLErr GDALRasterBand::ReadBlock( int nXBlockOff, int nYBlockOff,
-                                   void * pImage )
+                                   void * pImage, void **hMutex )
 
 {
 /* -------------------------------------------------------------------- */
@@ -424,8 +452,9 @@ CPLErr GDALRasterBand::ReadBlock( int nXBlockOff, int nYBlockOff,
 /* -------------------------------------------------------------------- */
 /*      Invoke underlying implementation method.                        */
 /* -------------------------------------------------------------------- */
-    CPLMutexHolderD( GetRWMutex() );
-    return( IReadBlock( nXBlockOff, nYBlockOff, pImage ) );
+    //if ( hMutex == NULL )
+    //    hMutex = GetRWMutex();
+    return( IReadBlock( nXBlockOff, nYBlockOff, pImage, hMutex ) );
 }
 
 /************************************************************************/
@@ -455,7 +484,7 @@ CPLErr CPL_STDCALL GDALReadBlock( GDALRasterBandH hBand, int nXOff, int nYOff,
 /*      subclasses that support writing.                                */
 /************************************************************************/
 
-CPLErr GDALRasterBand::IWriteBlock( int, int, void * )
+CPLErr GDALRasterBand::IWriteBlock( int, int, void *, void ** )
 
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
@@ -494,7 +523,7 @@ CPLErr GDALRasterBand::IWriteBlock( int, int, void * )
  */
 
 CPLErr GDALRasterBand::WriteBlock( int nXBlockOff, int nYBlockOff,
-                                   void * pImage )
+                                   void * pImage, void ** hMutex )
 
 {
 /* -------------------------------------------------------------------- */
@@ -546,8 +575,7 @@ CPLErr GDALRasterBand::WriteBlock( int nXBlockOff, int nYBlockOff,
 /* -------------------------------------------------------------------- */
 /*      Invoke underlying implementation method.                        */
 /* -------------------------------------------------------------------- */
-    CPLMutexHolderD( GetRWMutex() );
-    return( IWriteBlock( nXBlockOff, nYBlockOff, pImage ) );
+    return( IWriteBlock( nXBlockOff, nYBlockOff, pImage, hMutex ) );
 }
 
 /************************************************************************/
@@ -900,7 +928,6 @@ CPLErr GDALRasterBand::FlushCache()
     GDALRasterBlock *poBlock = NULL;
     // We must aquire both the RW Mutex first, followed by the band mutex
     // order is very important here in order to avoid any deadlock situations.
-    CPLMutexHolder oHolderRW(GetRWMutex(),1000.0,__FILE__,__LINE__);
     CPLMutexHolderD( &hBandMutex );
 /* -------------------------------------------------------------------- */
 /*      Flush all blocks in memory ... this case is without subblocking.*/
@@ -1021,12 +1048,7 @@ CPLErr GDALRasterBand::FlushBlock( int nXBlockOff, int nYBlockOff )
 
 {
     GDALRasterBlock *poBlock = NULL;
-    {
-        // Now aquire the band mutex
-        CPLMutexHolderD( &hBandMutex );
-        poBlock = UnadoptBlock( nXBlockOff, nYBlockOff );
-        poBlock->AddLock();
-    }
+    poBlock = UnadoptBlock( nXBlockOff, nYBlockOff, TRUE );
     CPLErr eErr = poBlock->Write();
     poBlock->DropLock();
     
@@ -1041,7 +1063,7 @@ CPLErr GDALRasterBand::FlushBlock( int nXBlockOff, int nYBlockOff )
 /*      Protected method.                                               */
 /************************************************************************/
 
-GDALRasterBlock  *GDALRasterBand::UnadoptBlock( int nXBlockOff, int nYBlockOff )
+GDALRasterBlock  *GDALRasterBand::UnadoptBlock( int nXBlockOff, int nYBlockOff, int bAdopt )
 
 {
     int             nBlockIndex;
@@ -1118,6 +1140,9 @@ GDALRasterBlock  *GDALRasterBand::UnadoptBlock( int nXBlockOff, int nYBlockOff )
         poBlock->UnattachFromBand();
 
         poBlock->MarkForDeletion();
+        
+        if ( bAdopt == TRUE )
+            poBlock->AddLock();   
     }
     
     return poBlock;
@@ -1179,7 +1204,7 @@ GDALRasterBlock *GDALRasterBand::TryGetLockedBlockRef( int nXBlockOff,
 {
     int             nBlockIndex = 0;
     
-    GDALRasterBlockManager *poRBM = GetRasterBlockManager();
+    //GDALRasterBlockManager *poRBM = GetRasterBlockManager();
     GDALRasterBlock *poBlock;
     if( !InitBlockInfo() )
         return( NULL );
@@ -1218,9 +1243,13 @@ GDALRasterBlock *GDALRasterBand::TryGetLockedBlockRef( int nXBlockOff,
         {
             nBlockIndex = nXBlockOff + nYBlockOff * nBlocksPerRow;
                 
-            poRBM->SafeLockBlock( papoBlocks + nBlockIndex );
+            //poRBM->SafeLockBlock( papoBlocks + nBlockIndex );
 
             poBlock = papoBlocks[nBlockIndex];
+            if ( NULL == poBlock)
+                return NULL;
+            poBlock->AddLock();
+            
         }
         else
         {
@@ -1243,13 +1272,15 @@ GDALRasterBlock *GDALRasterBand::TryGetLockedBlockRef( int nXBlockOff,
             int nBlockInSubBlock = WITHIN_SUBBLOCK(nXBlockOff)
                 + WITHIN_SUBBLOCK(nYBlockOff) * SUBBLOCK_SIZE;
 
-            poRBM->SafeLockBlock( papoSubBlockGrid + nBlockInSubBlock );
+            //poRBM->SafeLockBlock( papoSubBlockGrid + nBlockInSubBlock );
 
             poBlock = papoSubBlockGrid[nBlockInSubBlock];
+            if ( NULL == poBlock)
+                return NULL;
+            poBlock->AddLock();
         }
     }
-    if ( NULL != poBlock )
-        poBlock->Touch();
+    poBlock->Touch();
     return poBlock;
 }
 
@@ -1373,10 +1404,9 @@ GDALRasterBlock * GDALRasterBand::GetLockedBlockRef( int nXBlockOff,
         
         if ( !bJustInitialize )
         {   
-            // Set the RW Mutex
-            CPLMutexHolderD( GetRWMutex() );
-            
-            if( IReadBlock(nXBlockOff,nYBlockOff,poBlock->GetDataRef()) != CE_None)
+            CPLErr eErr = CE_None;
+            eErr = IReadBlock(nXBlockOff,nYBlockOff,poBlock->GetDataRef(), poBlock->GetRWMutex());
+            if( eErr != CE_None)
             {
                 UnadoptBlock( nXBlockOff, nYBlockOff );
                 poBlock->DropLock();
@@ -1465,31 +1495,29 @@ CPLErr GDALRasterBand::Fill(double dfRealValue, double dfImaginaryValue) {
 	    memcpy(blockPtr, srcBlock, elementSize);
     }
 
-    // Obtain RW Mutex
-    {
-        CPLMutexHolderD( GetRWMutex() );
-
-        // Write block to block cache
-        for (int j = 0; j < nBlocksPerColumn; ++j) {
-            for (int i = 0; i < nBlocksPerRow; ++i) {
-                GDALRasterBlock* destBlock = GetLockedBlockRef(i, j, TRUE);
-                if (destBlock == NULL) {
-                    ReportError(CE_Failure, CPLE_OutOfMemory,
-                         "GDALRasterBand::Fill(): Error "
-                         "while retrieving cache block.\n");
-                    VSIFree(srcBlock);
-                    return CE_Failure;
-                }
-                if (destBlock->GetDataRef() == NULL)
-                {
-                    destBlock->DropLock();
-                    VSIFree(srcBlock);
-                    return CE_Failure;
-                }
-                memcpy(destBlock->GetDataRef(), srcBlock, blockByteSize);
-                destBlock->MarkDirty();
-                destBlock->DropLock();
+    // Write block to block cache
+    for (int j = 0; j < nBlocksPerColumn; ++j) {
+        for (int i = 0; i < nBlocksPerRow; ++i) {
+            GDALRasterBlock* destBlock = GetLockedBlockRef(i, j, TRUE);
+            if (destBlock == NULL) {
+                ReportError(CE_Failure, CPLE_OutOfMemory,
+                     "GDALRasterBand::Fill(): Error "
+                     "while retrieving cache block.\n");
+                VSIFree(srcBlock);
+                return CE_Failure;
             }
+            if (destBlock->GetDataRef() == NULL)
+            {
+                destBlock->DropLock();
+                VSIFree(srcBlock);
+                return CE_Failure;
+            }
+            {
+                CPLMutexHolderD( destBlock->GetRWMutex() );
+                memcpy(destBlock->GetDataRef(), srcBlock, blockByteSize);
+            }
+            destBlock->MarkDirty();
+            destBlock->DropLock();
         }
     }
 
@@ -2916,9 +2944,6 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
     const char* pszPixelType = GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
     int bSignedByte = (pszPixelType != NULL && EQUAL(pszPixelType, "SIGNEDBYTE"));
 
-    // Set the RW Mutex
-    CPLMutexHolderD( GetRWMutex() );
-
     if ( bApproxOK && HasArbitraryOverviews() )
     {
 /* -------------------------------------------------------------------- */
@@ -3123,134 +3148,135 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
                 nYCheck = GetYSize() - iYBlock * nBlockYSize;
             else
                 nYCheck = nBlockYSize;
-
-            /* this is a special case for a common situation */
-            if( eDataType == GDT_Byte && !bSignedByte
-                && dfScale == 1.0 && (dfMin >= -0.5 && dfMin <= 0.5)
-                && nYCheck == nBlockYSize && nXCheck == nBlockXSize
-                && nBuckets == 256 )
             {
-                int    nPixels = nXCheck * nYCheck;
-                GByte  *pabyData = (GByte *) pData;
-                
-                for( int i = 0; i < nPixels; i++ )
-                    if (! (bGotNoDataValue && (pabyData[i] == (GByte)dfNoDataValue)))
-                    {
-                        panHistogram[pabyData[i]]++;
-                    }
-
-                poBlock->DropLock();
-                continue; /* to next sample block */
-            }
-
-            /* this isn't the fastest way to do this, but is easier for now */
-            for( int iY = 0; iY < nYCheck; iY++ )
-            {
-                for( int iX = 0; iX < nXCheck; iX++ )
+                CPLMutexHolderD( poBlock->GetRWMutex());
+                /* this is a special case for a common situation */
+                if( eDataType == GDT_Byte && !bSignedByte
+                    && dfScale == 1.0 && (dfMin >= -0.5 && dfMin <= 0.5)
+                    && nYCheck == nBlockYSize && nXCheck == nBlockXSize
+                    && nBuckets == 256 )
                 {
-                    int    iOffset = iX + iY * nBlockXSize;
-                    int    nIndex;
-                    double dfValue = 0.0;
-
-                    switch( eDataType )
-                    {
-                      case GDT_Byte:
-                      {
-                        if (bSignedByte)
-                            dfValue = ((signed char *) pData)[iOffset];
-                        else
-                            dfValue = ((GByte *) pData)[iOffset];
-                        break;
-                      }
-                      case GDT_UInt16:
-                        dfValue = ((GUInt16 *) pData)[iOffset];
-                        break;
-                      case GDT_Int16:
-                        dfValue = ((GInt16 *) pData)[iOffset];
-                        break;
-                      case GDT_UInt32:
-                        dfValue = ((GUInt32 *) pData)[iOffset];
-                        break;
-                      case GDT_Int32:
-                        dfValue = ((GInt32 *) pData)[iOffset];
-                        break;
-                      case GDT_Float32:
-                        dfValue = ((float *) pData)[iOffset];
-                        if (CPLIsNan(dfValue))
-                            continue;
-                        break;
-                      case GDT_Float64:
-                        dfValue = ((double *) pData)[iOffset];
-                        if (CPLIsNan(dfValue))
-                            continue;
-                        break;
-                      case GDT_CInt16:
-                        {
-                            double  dfReal =
-                                ((GInt16 *) pData)[iOffset*2];
-                            double  dfImag =
-                                ((GInt16 *) pData)[iOffset*2+1];
-                            dfValue = sqrt( dfReal * dfReal + dfImag * dfImag );
-                        }
-                        break;
-                      case GDT_CInt32:
-                        {
-                            double  dfReal =
-                                ((GInt32 *) pData)[iOffset*2];
-                            double  dfImag =
-                                ((GInt32 *) pData)[iOffset*2+1];
-                            dfValue = sqrt( dfReal * dfReal + dfImag * dfImag );
-                        }
-                        break;
-                      case GDT_CFloat32:
-                        {
-                            double  dfReal =
-                                ((float *) pData)[iOffset*2];
-                            double  dfImag =
-                                ((float *) pData)[iOffset*2+1];
-                            if ( CPLIsNan(dfReal) || CPLIsNan(dfImag) )
-                                continue;
-                            dfValue = sqrt( dfReal * dfReal + dfImag * dfImag );
-                        }
-                        break;
-                      case GDT_CFloat64:
-                        {
-                            double  dfReal =
-                                ((double *) pData)[iOffset*2];
-                            double  dfImag =
-                                ((double *) pData)[iOffset*2+1];
-                            if ( CPLIsNan(dfReal) || CPLIsNan(dfImag) )
-                                continue;
-                            dfValue = sqrt( dfReal * dfReal + dfImag * dfImag );
-                        }
-                        break;
-                      default:
-                        CPLAssert( FALSE );
-                        return CE_Failure;
-                    }
+                    int    nPixels = nXCheck * nYCheck;
+                    GByte  *pabyData = (GByte *) pData;
                     
-                    if( bGotNoDataValue && ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
-                        continue;
+                    for( int i = 0; i < nPixels; i++ )
+                        if (! (bGotNoDataValue && (pabyData[i] == (GByte)dfNoDataValue)))
+                        {
+                            panHistogram[pabyData[i]]++;
+                        }
 
-                    nIndex = (int) floor((dfValue - dfMin) * dfScale);
+                    poBlock->DropLock();
+                    continue; /* to next sample block */
+                }
 
-                    if( nIndex < 0 )
+                /* this isn't the fastest way to do this, but is easier for now */
+                for( int iY = 0; iY < nYCheck; iY++ )
+                {
+                    for( int iX = 0; iX < nXCheck; iX++ )
                     {
-                        if( bIncludeOutOfRange )
-                            panHistogram[0]++;
-                    }
-                    else if( nIndex >= nBuckets )
-                    {
-                        if( bIncludeOutOfRange )
-                            panHistogram[nBuckets-1]++;
-                    }
-                    else
-                    {
-                        panHistogram[nIndex]++;
+                        int    iOffset = iX + iY * nBlockXSize;
+                        int    nIndex;
+                        double dfValue = 0.0;
+
+                        switch( eDataType )
+                        {
+                          case GDT_Byte:
+                          {
+                            if (bSignedByte)
+                                dfValue = ((signed char *) pData)[iOffset];
+                            else
+                                dfValue = ((GByte *) pData)[iOffset];
+                            break;
+                          }
+                          case GDT_UInt16:
+                            dfValue = ((GUInt16 *) pData)[iOffset];
+                            break;
+                          case GDT_Int16:
+                            dfValue = ((GInt16 *) pData)[iOffset];
+                            break;
+                          case GDT_UInt32:
+                            dfValue = ((GUInt32 *) pData)[iOffset];
+                            break;
+                          case GDT_Int32:
+                            dfValue = ((GInt32 *) pData)[iOffset];
+                            break;
+                          case GDT_Float32:
+                            dfValue = ((float *) pData)[iOffset];
+                            if (CPLIsNan(dfValue))
+                                continue;
+                            break;
+                          case GDT_Float64:
+                            dfValue = ((double *) pData)[iOffset];
+                            if (CPLIsNan(dfValue))
+                                continue;
+                            break;
+                          case GDT_CInt16:
+                            {
+                                double  dfReal =
+                                    ((GInt16 *) pData)[iOffset*2];
+                                double  dfImag =
+                                    ((GInt16 *) pData)[iOffset*2+1];
+                                dfValue = sqrt( dfReal * dfReal + dfImag * dfImag );
+                            }
+                            break;
+                          case GDT_CInt32:
+                            {
+                                double  dfReal =
+                                    ((GInt32 *) pData)[iOffset*2];
+                                double  dfImag =
+                                    ((GInt32 *) pData)[iOffset*2+1];
+                                dfValue = sqrt( dfReal * dfReal + dfImag * dfImag );
+                            }
+                            break;
+                          case GDT_CFloat32:
+                            {
+                                double  dfReal =
+                                    ((float *) pData)[iOffset*2];
+                                double  dfImag =
+                                    ((float *) pData)[iOffset*2+1];
+                                if ( CPLIsNan(dfReal) || CPLIsNan(dfImag) )
+                                    continue;
+                                dfValue = sqrt( dfReal * dfReal + dfImag * dfImag );
+                            }
+                            break;
+                          case GDT_CFloat64:
+                            {
+                                double  dfReal =
+                                    ((double *) pData)[iOffset*2];
+                                double  dfImag =
+                                    ((double *) pData)[iOffset*2+1];
+                                if ( CPLIsNan(dfReal) || CPLIsNan(dfImag) )
+                                    continue;
+                                dfValue = sqrt( dfReal * dfReal + dfImag * dfImag );
+                            }
+                            break;
+                          default:
+                            CPLAssert( FALSE );
+                            return CE_Failure;
+                        }
+                        
+                        if( bGotNoDataValue && ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
+                            continue;
+
+                        nIndex = (int) floor((dfValue - dfMin) * dfScale);
+
+                        if( nIndex < 0 )
+                        {
+                            if( bIncludeOutOfRange )
+                                panHistogram[0]++;
+                        }
+                        else if( nIndex >= nBuckets )
+                        {
+                            if( bIncludeOutOfRange )
+                                panHistogram[nBuckets-1]++;
+                        }
+                        else
+                        {
+                            panHistogram[nIndex]++;
+                        }
                     }
                 }
             }
-
             poBlock->DropLock();
         }
     }
@@ -3686,9 +3712,6 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
     const char* pszPixelType = GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
     int bSignedByte = (pszPixelType != NULL && EQUAL(pszPixelType, "SIGNEDBYTE"));
     
-    // Set the RW Mutex
-    CPLMutexHolderD( GetRWMutex() );
-    
     if ( bApproxOK && HasArbitraryOverviews() )
     {
 /* -------------------------------------------------------------------- */
@@ -3864,83 +3887,86 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                 nYCheck = nBlockYSize;
 
             /* this isn't the fastest way to do this, but is easier for now */
-            for( int iY = 0; iY < nYCheck; iY++ )
             {
-                for( int iX = 0; iX < nXCheck; iX++ )
+                CPLMutexHolderD( poBlock->GetRWMutex() );
+                for( int iY = 0; iY < nYCheck; iY++ )
                 {
-                    int    iOffset = iX + iY * nBlockXSize;
-                    double dfValue = 0.0;
-
-                    switch( eDataType )
+                    for( int iX = 0; iX < nXCheck; iX++ )
                     {
-                      case GDT_Byte:
-                      {
-                        if (bSignedByte)
-                            dfValue = ((signed char *)pData)[iOffset];
+                        int    iOffset = iX + iY * nBlockXSize;
+                        double dfValue = 0.0;
+
+                        switch( eDataType )
+                        {
+                          case GDT_Byte:
+                          {
+                            if (bSignedByte)
+                                dfValue = ((signed char *)pData)[iOffset];
+                            else
+                                dfValue = ((GByte *)pData)[iOffset];
+                            break;
+                          }
+                          case GDT_UInt16:
+                            dfValue = ((GUInt16 *)pData)[iOffset];
+                            break;
+                          case GDT_Int16:
+                            dfValue = ((GInt16 *)pData)[iOffset];
+                            break;
+                          case GDT_UInt32:
+                            dfValue = ((GUInt32 *)pData)[iOffset];
+                            break;
+                          case GDT_Int32:
+                            dfValue = ((GInt32 *)pData)[iOffset];
+                            break;
+                          case GDT_Float32:
+                            dfValue = ((float *)pData)[iOffset];
+                            if (CPLIsNan(dfValue))
+                                continue;
+                            break;
+                          case GDT_Float64:
+                            dfValue = ((double *)pData)[iOffset];
+                            if (CPLIsNan(dfValue))
+                                continue;
+                            break;
+                          case GDT_CInt16:
+                            dfValue = ((GInt16 *)pData)[iOffset*2];
+                            break;
+                          case GDT_CInt32:
+                            dfValue = ((GInt32 *)pData)[iOffset*2];
+                            break;
+                          case GDT_CFloat32:
+                            dfValue = ((float *)pData)[iOffset*2];
+                            if( CPLIsNan(dfValue) )
+                                continue;
+                            break;
+                          case GDT_CFloat64:
+                            dfValue = ((double *)pData)[iOffset*2];
+                            if( CPLIsNan(dfValue) )
+                                continue;
+                            break;
+                          default:
+                            CPLAssert( FALSE );
+                        }
+
+                        if( bGotNoDataValue && ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
+                            continue;
+
+                        if( bFirstValue )
+                        {
+                            dfMin = dfMax = dfValue;
+                            bFirstValue = FALSE;
+                        }
                         else
-                            dfValue = ((GByte *)pData)[iOffset];
-                        break;
-                      }
-                      case GDT_UInt16:
-                        dfValue = ((GUInt16 *)pData)[iOffset];
-                        break;
-                      case GDT_Int16:
-                        dfValue = ((GInt16 *)pData)[iOffset];
-                        break;
-                      case GDT_UInt32:
-                        dfValue = ((GUInt32 *)pData)[iOffset];
-                        break;
-                      case GDT_Int32:
-                        dfValue = ((GInt32 *)pData)[iOffset];
-                        break;
-                      case GDT_Float32:
-                        dfValue = ((float *)pData)[iOffset];
-                        if (CPLIsNan(dfValue))
-                            continue;
-                        break;
-                      case GDT_Float64:
-                        dfValue = ((double *)pData)[iOffset];
-                        if (CPLIsNan(dfValue))
-                            continue;
-                        break;
-                      case GDT_CInt16:
-                        dfValue = ((GInt16 *)pData)[iOffset*2];
-                        break;
-                      case GDT_CInt32:
-                        dfValue = ((GInt32 *)pData)[iOffset*2];
-                        break;
-                      case GDT_CFloat32:
-                        dfValue = ((float *)pData)[iOffset*2];
-                        if( CPLIsNan(dfValue) )
-                            continue;
-                        break;
-                      case GDT_CFloat64:
-                        dfValue = ((double *)pData)[iOffset*2];
-                        if( CPLIsNan(dfValue) )
-                            continue;
-                        break;
-                      default:
-                        CPLAssert( FALSE );
-                    }
+                        {
+                            dfMin = MIN(dfMin,dfValue);
+                            dfMax = MAX(dfMax,dfValue);
+                        }
 
-                    if( bGotNoDataValue && ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
-                        continue;
-
-                    if( bFirstValue )
-                    {
-                        dfMin = dfMax = dfValue;
-                        bFirstValue = FALSE;
+                        nSampleCount++;
+                        double dfDelta = dfValue - dfMean;
+                        dfMean += dfDelta / nSampleCount;
+                        dfM2 += dfDelta * (dfValue - dfMean);
                     }
-                    else
-                    {
-                        dfMin = MIN(dfMin,dfValue);
-                        dfMax = MAX(dfMax,dfValue);
-                    }
-
-                    nSampleCount++;
-                    double dfDelta = dfValue - dfMean;
-                    dfMean += dfDelta / nSampleCount;
-                    dfM2 += dfDelta * (dfValue - dfMean);
                 }
             }
 
@@ -4164,9 +4190,6 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
     const char* pszPixelType = GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
     int bSignedByte = (pszPixelType != NULL && EQUAL(pszPixelType, "SIGNEDBYTE"));
     
-    // Set the RW Mutex
-    CPLMutexHolderD( GetRWMutex() );
-    
     if ( bApproxOK && HasArbitraryOverviews() )
     {
 /* -------------------------------------------------------------------- */
@@ -4335,83 +4358,85 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
                 nYCheck = GetYSize() - iYBlock * nBlockYSize;
             else
                 nYCheck = nBlockYSize;
-                
-            /* this isn't the fastest way to do this, but is easier for now */
-            for( int iY = 0; iY < nYCheck; iY++ )
+            
             {
-                for( int iX = 0; iX < nXCheck; iX++ )
+                CPLMutexHolderD( poBlock->GetRWMutex() );
+                /* this isn't the fastest way to do this, but is easier for now */
+                for( int iY = 0; iY < nYCheck; iY++ )
                 {
-                    int    iOffset = iX + iY * nBlockXSize;
-                    double dfValue = 0.0;
-
-                    switch( eDataType )
+                    for( int iX = 0; iX < nXCheck; iX++ )
                     {
-                      case GDT_Byte:
-                      {
-                        if (bSignedByte)
-                            dfValue = ((signed char *) pData)[iOffset];
+                        int    iOffset = iX + iY * nBlockXSize;
+                        double dfValue = 0.0;
+
+                        switch( eDataType )
+                        {
+                          case GDT_Byte:
+                          {
+                            if (bSignedByte)
+                                dfValue = ((signed char *) pData)[iOffset];
+                            else
+                                dfValue = ((GByte *) pData)[iOffset];
+                            break;
+                          }
+                          case GDT_UInt16:
+                            dfValue = ((GUInt16 *) pData)[iOffset];
+                            break;
+                          case GDT_Int16:
+                            dfValue = ((GInt16 *) pData)[iOffset];
+                            break;
+                          case GDT_UInt32:
+                            dfValue = ((GUInt32 *) pData)[iOffset];
+                            break;
+                          case GDT_Int32:
+                            dfValue = ((GInt32 *) pData)[iOffset];
+                            break;
+                          case GDT_Float32:
+                            dfValue = ((float *) pData)[iOffset];
+                            if( CPLIsNan(dfValue) )
+                                continue;
+                            break;
+                          case GDT_Float64:
+                            dfValue = ((double *) pData)[iOffset];
+                            if( CPLIsNan(dfValue) )
+                                continue;
+                            break;
+                          case GDT_CInt16:
+                            dfValue = ((GInt16 *) pData)[iOffset*2];
+                            break;
+                          case GDT_CInt32:
+                            dfValue = ((GInt32 *) pData)[iOffset*2];
+                            break;
+                          case GDT_CFloat32:
+                            dfValue = ((float *) pData)[iOffset*2];
+                            if( CPLIsNan(dfValue) )
+                                continue;
+                            break;
+                          case GDT_CFloat64:
+                            dfValue = ((double *) pData)[iOffset*2];
+                            if( CPLIsNan(dfValue) )
+                                continue;
+                            break;
+                          default:
+                            CPLAssert( FALSE );
+                        }
+                        
+                        if( bGotNoDataValue && ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
+                            continue;
+
+                        if( bFirstValue )
+                        {
+                            dfMin = dfMax = dfValue;
+                            bFirstValue = FALSE;
+                        }
                         else
-                            dfValue = ((GByte *) pData)[iOffset];
-                        break;
-                      }
-                      case GDT_UInt16:
-                        dfValue = ((GUInt16 *) pData)[iOffset];
-                        break;
-                      case GDT_Int16:
-                        dfValue = ((GInt16 *) pData)[iOffset];
-                        break;
-                      case GDT_UInt32:
-                        dfValue = ((GUInt32 *) pData)[iOffset];
-                        break;
-                      case GDT_Int32:
-                        dfValue = ((GInt32 *) pData)[iOffset];
-                        break;
-                      case GDT_Float32:
-                        dfValue = ((float *) pData)[iOffset];
-                        if( CPLIsNan(dfValue) )
-                            continue;
-                        break;
-                      case GDT_Float64:
-                        dfValue = ((double *) pData)[iOffset];
-                        if( CPLIsNan(dfValue) )
-                            continue;
-                        break;
-                      case GDT_CInt16:
-                        dfValue = ((GInt16 *) pData)[iOffset*2];
-                        break;
-                      case GDT_CInt32:
-                        dfValue = ((GInt32 *) pData)[iOffset*2];
-                        break;
-                      case GDT_CFloat32:
-                        dfValue = ((float *) pData)[iOffset*2];
-                        if( CPLIsNan(dfValue) )
-                            continue;
-                        break;
-                      case GDT_CFloat64:
-                        dfValue = ((double *) pData)[iOffset*2];
-                        if( CPLIsNan(dfValue) )
-                            continue;
-                        break;
-                      default:
-                        CPLAssert( FALSE );
-                    }
-                    
-                    if( bGotNoDataValue && ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
-                        continue;
-
-                    if( bFirstValue )
-                    {
-                        dfMin = dfMax = dfValue;
-                        bFirstValue = FALSE;
-                    }
-                    else
-                    {
-                        dfMin = MIN(dfMin,dfValue);
-                        dfMax = MAX(dfMax,dfValue);
+                        {
+                            dfMin = MIN(dfMin,dfValue);
+                            dfMax = MAX(dfMax,dfValue);
+                        }
                     }
                 }
             }
-
             poBlock->DropLock();
         }
     }

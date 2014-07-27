@@ -29,6 +29,7 @@
 
 #include "gdal_pam.h"
 #include "zlib.h"
+#include "cpl_multiproc.h"
 
 /* g++ -fPIC -g -Wall frmts/ozi/ozidataset.cpp -shared -o gdal_OZI.so -Iport -Igcore -Iogr -L. -lgdal  */
 
@@ -90,7 +91,7 @@ class OZIRasterBand : public GDALPamRasterBand
                                GDALColorTable* poColorTable);
     virtual    ~OZIRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
 
@@ -217,9 +218,10 @@ GDALColorTable* OZIRasterBand::GetColorTable()
 /************************************************************************/
 
 CPLErr OZIRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                  void * pImage, void ** hMutex )
 
 {
+    CPLMutexHolderD( hMutex );
     OZIDataset *poGDS = (OZIDataset *) poDS;
 
     int nBlock = nBlockYOff * nXBlocks + nBlockXOff;

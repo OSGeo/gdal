@@ -34,6 +34,7 @@
  * SOFTWARE.
  **********************************************************************/
 #include "postgisraster.h"
+#include "cpl_multiproc.h"
 #include <math.h>
 
 #ifdef _WIN32
@@ -975,7 +976,7 @@ void PostGISRasterDataset::CacheTile(const char* pszMetadata,
             if( poBlock != NULL )
             {   
                 {
-                    CPLMutexHolderD( &(poRTB->GetRWMutex()) );
+                    CPLMutexHolderD( poBlock->GetRWMutex() );
                     // Point block data ref to fetched data
                     memcpy(poBlock->GetDataRef(), (void *)pbyDataToRead, 
                         nExpectedBandDataSize);

@@ -32,6 +32,7 @@
 #include "cpl_string.h"
 #include "cpl_conv.h"
 #include "cpl_vsi.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -84,7 +85,7 @@ class AirSARRasterBand : public GDALPamRasterBand
     		AirSARRasterBand( AirSARDataset *, int );
     virtual     ~AirSARRasterBand();
     
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
 };
 
 /* locations of stokes matrix values within padfMatrix ... same order as they
@@ -174,9 +175,10 @@ AirSARRasterBand::~AirSARRasterBand()
 /************************************************************************/
 
 CPLErr AirSARRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                      void * pImage )
+                                      void * pImage, void ** hMutex )
 
 {
+    CPLMutexHolderD( hMutex );
     CPLErr eErr;
     float *pafLine = (float *) pImage;
     int iPixel;

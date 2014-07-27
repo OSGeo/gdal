@@ -28,6 +28,7 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************/
 
+#include "cpl_multiproc.h"
 #include "msgdataset.h"
 #include "prologue.h"
 #include "xritheaderparser.h"
@@ -472,9 +473,10 @@ MSGRasterBand::~MSGRasterBand()
 /*                             IReadBlock()                             */
 /************************************************************************/
 CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                  void * pImage, void **hMutex )
 
 {
+    CPLMutexHolderD( hMutex );
         
     MSGDataset  *poGDS = (MSGDataset *) poDS;
 

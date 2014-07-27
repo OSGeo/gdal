@@ -35,6 +35,7 @@
 #include "gdal_pam.h"
 #include "gdal_priv.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 #include "hdf5dataset.h"
 #include "ogr_spatialref.h"
 
@@ -245,7 +246,7 @@ public:
     HDF5ImageRasterBand( HDF5ImageDataset *, int, GDALDataType );
     ~HDF5ImageRasterBand();
 
-    virtual CPLErr      IReadBlock( int, int, void * );
+    virtual CPLErr      IReadBlock( int, int, void *, void ** hMutex = NULL );
     virtual double      GetNoDataValue( int * );
     virtual CPLErr      SetNoDataValue( double );
     /*  virtual CPLErr          IWriteBlock( int, int, void * ); */
@@ -348,8 +349,9 @@ CPLErr HDF5ImageRasterBand::SetNoDataValue( double dfNoData )
 /*                             IReadBlock()                             */
 /************************************************************************/
 CPLErr HDF5ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                        void * pImage )
+                                        void * pImage, void ** hMutex )
 {
+    CPLMutexHolderD( hMutex );
     herr_t      status;
     hsize_t     count[3];
     H5OFFSET_TYPE offset[3];

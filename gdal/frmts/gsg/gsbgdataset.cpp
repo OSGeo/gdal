@@ -30,6 +30,7 @@
  ****************************************************************************/
 
 #include "cpl_conv.h"
+#include "cpl_multiproc.h"
 
 #include <float.h>
 #include <limits.h>
@@ -143,8 +144,8 @@ class GSBGRasterBand : public GDALPamRasterBand
     		GSBGRasterBand( GSBGDataset *, int );
 		~GSBGRasterBand();
     
-    CPLErr IReadBlock( int, int, void * );
-    CPLErr IWriteBlock( int, int, void * );
+    CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
+    CPLErr IWriteBlock( int, int, void *, void ** hMutex = NULL );
 
     double GetNoDataValue( int *pbSuccess = NULL );
     double GetMinimum( int *pbSuccess = NULL );
@@ -277,9 +278,10 @@ CPLErr GSBGRasterBand::ScanForMinMaxZ()
 /************************************************************************/
 
 CPLErr GSBGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-				   void * pImage )
+				   void * pImage, void ** hMutex )
 
 {
+    CPLMutexHolderD( hMutex );
     if( nBlockYOff < 0 || nBlockYOff > nRasterYSize - 1 || nBlockXOff != 0 )
 	return CE_Failure;
 
@@ -315,9 +317,10 @@ CPLErr GSBGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr GSBGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-				    void *pImage )
+				    void *pImage, void ** hMutex )
 
 {
+    CPLMutexHolderD( hMutex );
     if( eAccess == GA_ReadOnly )
     {
 	CPLError( CE_Failure, CPLE_NoWriteAccess,

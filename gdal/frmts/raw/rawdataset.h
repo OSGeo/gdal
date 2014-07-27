@@ -108,7 +108,7 @@ protected:
 
     virtual CPLErr  IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int );
+                              int, int, void ** hMutex = NULL );
 
     int         CanUseDirectIO(int nXOff, int nYOff, int nXSize, int nYSize,
                                GDALDataType eBufType);
@@ -131,8 +131,8 @@ public:
 
     // should override RasterIO eventually.
     
-    virtual CPLErr  IReadBlock( int, int, void * );
-    virtual CPLErr  IWriteBlock( int, int, void * );
+    virtual CPLErr  IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr  IWriteBlock( int, int, void *, void ** hMutex = NULL );
 
     virtual GDALColorTable *GetColorTable();
     virtual GDALColorInterp GetColorInterpretation();

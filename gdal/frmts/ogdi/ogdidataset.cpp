@@ -34,6 +34,7 @@
 #include "gdal_priv.h"
 #include "cpl_string.h"
 #include "ogr_spatialref.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -106,7 +107,7 @@ class OGDIRasterBand : public GDALRasterBand
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int );
+                              int, int, void ** hMutex = NULL);
 
     CPLErr         EstablishAccess( int nXOff, int nYOff, 
                                     int nXSize, int nYSize,
@@ -118,7 +119,7 @@ class OGDIRasterBand : public GDALRasterBand
                                    ecs_Family, int );
                    ~OGDIRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
     virtual int    HasArbitraryOverviews();
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
@@ -229,12 +230,12 @@ OGDIRasterBand::~OGDIRasterBand()
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr OGDIRasterBand::IReadBlock( int, int nBlockYOff, void * pImage )
+CPLErr OGDIRasterBand::IReadBlock( int, int nBlockYOff, void * pImage, void **hMutex )
 
 {
     return IRasterIO( GF_Read, 0, nBlockYOff, nBlockXSize, 1, 
                       pImage, nBlockXSize, 1, eDataType, 
-                      GDALGetDataTypeSize(eDataType)/8, 0 );
+                      GDALGetDataTypeSize(eDataType)/8, 0, hMutex );
 }
 
 /************************************************************************/
@@ -245,9 +246,10 @@ CPLErr OGDIRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                   int nXOff, int nYOff, int nXSize, int nYSize,
                                   void * pData, int nBufXSize, int nBufYSize,
                                   GDALDataType eBufType,
-                                  int nPixelSpace, int nLineSpace )
+                                  int nPixelSpace, int nLineSpace, void ** hMutex )
 
 {
+    CPLMutexHolderD( hMutex );
     OGDIDataset	*poODS = (OGDIDataset *) poDS;
     CPLErr    eErr;
 #ifdef notdef

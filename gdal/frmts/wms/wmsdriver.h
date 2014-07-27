@@ -409,8 +409,8 @@ public:
 
     virtual GDALColorInterp GetColorInterpretation();
     virtual CPLErr SetColorInterpretation( GDALColorInterp );
-    virtual CPLErr IReadBlock(int x, int y, void *buffer);
-    virtual CPLErr IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy, void *buffer, int bsx, int bsy, GDALDataType bdt, int pixel_space, int line_space);
+    virtual CPLErr IReadBlock(int x, int y, void *buffer, void ** hMutex = NULL);
+    virtual CPLErr IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy, void *buffer, int bsx, int bsy, GDALDataType bdt, int pixel_space, int line_space, void **hMutex = NULL);
     virtual int HasArbitraryOverviews();
     virtual int GetOverviewCount();
     virtual GDALRasterBand *GetOverview(int n);

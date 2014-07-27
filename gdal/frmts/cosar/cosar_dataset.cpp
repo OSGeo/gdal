@@ -26,6 +26,7 @@
 #include "cpl_conv.h"
 #include "cpl_vsi.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 #include <string.h>
 
 /* Various offsets, in bytes */
@@ -63,7 +64,7 @@ class COSARRasterBand : public GDALRasterBand
 	int nBurstNumber;
 public:
 	COSARRasterBand(COSARDataset *, unsigned long nRTNB);
-	virtual CPLErr IReadBlock(int, int, void *);
+	virtual CPLErr IReadBlock(int, int, void *, void ** hMutex);
 };
 
 /*****************************************************************************
@@ -79,8 +80,9 @@ COSARRasterBand::COSARRasterBand(COSARDataset *pDS, unsigned long nRTNB) {
 }
 
 CPLErr COSARRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, 
-	void *pImage) {
+	void *pImage, void ** hMutex) {
 
+    CPLMutexHolderD( hMutex );
     unsigned long nRSFV = 0;
     unsigned long nRSLV = 0;
     COSARDataset *pCDS = (COSARDataset *) poDS;

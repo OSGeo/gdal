@@ -152,8 +152,8 @@ class netCDFRasterBand : public GDALPamRasterBand
     virtual CPLErr SetOffset( double );
     virtual double GetScale( int * );
     virtual CPLErr SetScale( double );
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr IWriteBlock( int, int, void *, void ** hMutex = NULL );
 
 };
 
@@ -1140,7 +1140,7 @@ void  netCDFRasterBand::CheckData ( void * pImage,
 /************************************************************************/
 
 CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                     void * pImage )
+                                     void * pImage, void ** hMutex )
 
 {
     size_t start[ MAX_NC_DIMS ];
@@ -1151,7 +1151,8 @@ CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     int    Taken=-1;
     int    nd=0;
 
-    CPLMutexHolderD(&hNCMutex);
+    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD2(&hNCMutex);
 
     *pszName='\0';
     memset( start, 0, sizeof( start ) );
@@ -1327,7 +1328,7 @@ CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr netCDFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-                                      void * pImage )
+                                      void * pImage, void ** hMutex )
 
 {
     size_t start[ MAX_NC_DIMS];
@@ -1338,7 +1339,8 @@ CPLErr netCDFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     int    Taken=-1;
     int    nd;
 
-    CPLMutexHolderD(&hNCMutex);
+    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD2(&hNCMutex);
 
 #ifdef NCDF_DEBUG
     if ( (nBlockYOff == 0) || (nBlockYOff == nRasterYSize-1) )

@@ -30,6 +30,7 @@
 
 #include "gdal_pam.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 #include "gifabstractdataset.h"
 
 CPL_CVSID("$Id$");
@@ -104,7 +105,7 @@ class GIFRasterBand : public GDALPamRasterBand
                    GIFRasterBand( GIFDataset *, int, SavedImage *, int );
     virtual       ~GIFRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
 
     virtual double GetNoDataValue( int *pbSuccess = NULL );
     virtual GDALColorInterp GetColorInterpretation();
@@ -235,9 +236,10 @@ GIFRasterBand::~GIFRasterBand()
 /************************************************************************/
 
 CPLErr GIFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                  void * pImage, void ** hMutex )
 
 {
+    CPLMutexHolderD( hMutex );
     CPLAssert( nBlockXOff == 0 );
 
     if (psImage == NULL)

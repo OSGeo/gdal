@@ -32,6 +32,7 @@
 #include "adsrange.hpp"
 #include "rawdataset.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 #include "ogr_srs_api.h"
 
 CPL_CVSID("$Id$");
@@ -55,7 +56,7 @@ class MerisL2FlagBand : public GDALPamRasterBand
   public:
     MerisL2FlagBand( GDALDataset *, int, VSILFILE*, off_t, off_t );
     virtual ~MerisL2FlagBand();
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
 
   private:
     off_t nImgOffset;
@@ -106,10 +107,11 @@ MerisL2FlagBand::~MerisL2FlagBand()
 /*                             IReadBlock()                             */
 /************************************************************************/
 CPLErr MerisL2FlagBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                    void * pImage )
+                                    void * pImage, void ** hMutex )
 {
     CPLAssert( nBlockXOff == 0 );
     CPLAssert( pReadBuf != NULL );
+    CPLMutexHolderD( hMutex );
 
     off_t nOffset = nImgOffset + nPrefixBytes +
                     nBlockYOff * nBlockYSize * nRecordSize;

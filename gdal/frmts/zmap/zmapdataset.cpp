@@ -29,6 +29,7 @@
 
 #include "cpl_vsi_virtual.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 #include "gdal_pam.h"
 
 CPL_CVSID("$Id$");
@@ -85,7 +86,7 @@ class ZMapRasterBand : public GDALPamRasterBand
 
                 ZMapRasterBand( ZMapDataset * );
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
 
     virtual double GetNoDataValue( int *pbSuccess = NULL );
 };
@@ -112,7 +113,7 @@ ZMapRasterBand::ZMapRasterBand( ZMapDataset *poDS )
 /************************************************************************/
 
 CPLErr ZMapRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                  void * pImage, void ** hMutex )
 
 {
     int i;
@@ -131,7 +132,7 @@ CPLErr ZMapRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     {
         for(i=poGDS->nColNum + 1;i<nBlockXOff;i++)
         {
-            if (IReadBlock(i,0,pImage) != CE_None)
+            if (IReadBlock(i,0,pImage, hMutex) != CE_None)
                 return CE_Failure;
         }
     }
@@ -139,6 +140,7 @@ CPLErr ZMapRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     char* pszLine;
     i = 0;
     double dfExp = pow(10.0, poGDS->nDecimalCount);
+    CPLMutexHolderD( hMutex );
     while(i<nRasterYSize)
     {
         pszLine = (char*)CPLReadLineL(poGDS->fp);

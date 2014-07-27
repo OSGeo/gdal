@@ -30,6 +30,7 @@
 
 #include "rawdataset.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 #include <ctype.h>
 #include "ogr_spatialref.h"
 #include "atlsci_spheroid.h"
@@ -114,7 +115,7 @@ class MFFTiledBand : public GDALRasterBand
                                  GDALDataType, int );
                    ~MFFTiledBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
 };
 
 
@@ -156,9 +157,10 @@ MFFTiledBand::~MFFTiledBand()
 /************************************************************************/
 
 CPLErr MFFTiledBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                 void * pImage )
+                                 void * pImage, void ** hMutex )
 
 {
+    CPLMutexHolderD( hMutex );
     long    nOffset;
     int     nTilesPerRow;
     int     nWordSize, nBlockSize;

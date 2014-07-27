@@ -30,6 +30,7 @@
  ****************************************************************************/
 
 #include "gdal_pam.h"
+#include "cpl_multiproc.h"
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
@@ -265,8 +266,8 @@ class BMPRasterBand : public GDALPamRasterBand
                 BMPRasterBand( BMPDataset *, int );
                 ~BMPRasterBand();
 
-    virtual CPLErr          IReadBlock( int, int, void * );
-    virtual CPLErr          IWriteBlock( int, int, void * );
+    virtual CPLErr          IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr          IWriteBlock( int, int, void *, void ** hMutex = NULL );
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable  *GetColorTable();
     CPLErr                  SetColorTable( GDALColorTable * );
@@ -320,8 +321,9 @@ BMPRasterBand::~BMPRasterBand()
 /************************************************************************/
 
 CPLErr BMPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                  void * pImage, void ** hMutex )
 {
+    CPLMutexHolderD( hMutex );
     BMPDataset  *poGDS = (BMPDataset *) poDS;
     GUInt32     iScanOffset;
     int         i;
@@ -523,8 +525,9 @@ CPLErr BMPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr BMPRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-                                   void * pImage )
+                                   void * pImage, void ** hMutex )
 {
+    CPLMutexHolderD( hMutex );
     BMPDataset  *poGDS = (BMPDataset *)poDS;
     int         iInPixel, iOutPixel;
     GUInt32     iScanOffset;
@@ -679,7 +682,7 @@ class BMPComprRasterBand : public BMPRasterBand
                 BMPComprRasterBand( BMPDataset *, int );
                 ~BMPComprRasterBand();
 
-    virtual CPLErr          IReadBlock( int, int, void * );
+    virtual CPLErr          IReadBlock( int, int, void *, void ** hMutex = NULL );
 //    virtual CPLErr        IWriteBlock( int, int, void * );
 };
 
@@ -859,8 +862,9 @@ BMPComprRasterBand::~BMPComprRasterBand()
 /************************************************************************/
 
 CPLErr BMPComprRasterBand::
-    IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage )
+    IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage, void **hMutex )
 {
+    CPLMutexHolderD( hMutex );
     memcpy( pImage, pabyUncomprBuf +
             (poDS->GetRasterYSize() - nBlockYOff - 1) * poDS->GetRasterXSize(),
             nBlockXSize );

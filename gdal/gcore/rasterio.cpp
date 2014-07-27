@@ -63,7 +63,8 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                   int nXOff, int nYOff, int nXSize, int nYSize,
                                   void * pData, int nBufXSize, int nBufYSize,
                                   GDALDataType eBufType,
-                                  int nPixelSpace, int nLineSpace )
+                                  int nPixelSpace, int nLineSpace, 
+                                  void **hMutex )
 
 {
     int         nBandDataSize = GDALGetDataTypeSize( eDataType ) / 8;
@@ -134,7 +135,8 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             nSrcByteOffset = ((iSrcY-nLBlockY*nBlockYSize)*nBlockXSize + nXOff)
                 * nBandDataSize;
             {
-                CPLMutexHolderD( GetRWMutex() );
+                CPLMutexHolderD2( hMutex );
+                CPLMutexHolderD( poBlock->GetRWMutex() );
                 if( eRWFlag == GF_Write )
                     poBlock->MarkDirty();
                 
@@ -193,7 +195,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
             return poOverviewBand->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                             pData, nBufXSize, nBufYSize, eBufType,
-                                            nPixelSpace, nLineSpace );
+                                            nPixelSpace, nLineSpace, hMutex );
         }
     }
     
@@ -204,6 +206,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         nLineSpace == nPixelSpace * nBufXSize &&
         CSLTestBoolean(CPLGetConfigOption("GDAL_NO_COSTLY_OVERVIEW", "NO")) )
     {
+        CPLMutexHolderD( hMutex );
         memset(pData, 0, nLineSpace * nBufYSize);
         return CE_None;
     }
@@ -287,7 +290,8 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /*      Copy over this chunk of data.                                   */
 /* -------------------------------------------------------------------- */
                 {
-                    CPLMutexHolderD( GetRWMutex() );
+                    CPLMutexHolderD( hMutex );
+                    CPLMutexHolderD2( poBlock->GetRWMutex() );
                     if( eRWFlag == GF_Write )
                         poBlock->MarkDirty();
                     
@@ -416,7 +420,8 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     /*      Copy over this pixel of data.                                   */
     /* -------------------------------------------------------------------- */
                 {
-                    CPLMutexHolderD( GetRWMutex() );
+                    CPLMutexHolderD( hMutex );
+                    CPLMutexHolderD2( poBlock->GetRWMutex() );
                     poBlock->MarkDirty();
                     iDstOffset = ((size_t)iDstX - (size_t)nLBlockX*nBlockXSize
                         + ((size_t)iDstY - (size_t)nLBlockY*nBlockYSize) * nBlockXSize)*nBandDataSize;
@@ -508,7 +513,8 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     /* -------------------------------------------------------------------- */
                 iSrcOffset = ((size_t)nDiffX + iSrcOffsetCst)*nBandDataSize;
                 {
-                    CPLMutexHolderD( GetRWMutex() );
+                    CPLMutexHolderD( hMutex );
+                    CPLMutexHolderD2( poBlock->GetRWMutex() );
 
                     if( bByteCopy )
                     {
@@ -2236,7 +2242,8 @@ CPLErr GDALRasterBand::OverviewRasterIO( GDALRWFlag eRWFlag,
                                 int nXOff, int nYOff, int nXSize, int nYSize,
                                 void * pData, int nBufXSize, int nBufYSize,
                                 GDALDataType eBufType,
-                                int nPixelSpace, int nLineSpace )
+                                int nPixelSpace, int nLineSpace,
+                                void **hMutex )
 
 
 {
@@ -2257,7 +2264,7 @@ CPLErr GDALRasterBand::OverviewRasterIO( GDALRWFlag eRWFlag,
 
     return poOverviewBand->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                      pData, nBufXSize, nBufYSize, eBufType,
-                                     nPixelSpace, nLineSpace );
+                                     nPixelSpace, nLineSpace, hMutex );
 }
 
 /************************************************************************/
@@ -2374,7 +2381,8 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
                                  void * pData, int nBufXSize, int nBufYSize,
                                  GDALDataType eBufType,
                                  int nBandCount, int *panBandMap,
-                                 int nPixelSpace, int nLineSpace,int nBandSpace)
+                                 int nPixelSpace, int nLineSpace,int nBandSpace, 
+                                 void ** hMutex )
     
 {
     GByte      **papabySrcBlock = NULL;
@@ -2416,7 +2424,7 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
                                                eBufType, 
                                                nBandCount, panBandMap,
                                                nPixelSpace, nLineSpace, 
-                                               nBandSpace );
+                                               nBandSpace, hMutex );
             }
 
             if( eDataType != poBand->GetRasterDataType() 
@@ -2431,7 +2439,7 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
                                                eBufType, 
                                                nBandCount, panBandMap,
                                                nPixelSpace, nLineSpace, 
-                                               nBandSpace );
+                                               nBandSpace, hMutex );
             }
         }
     }
@@ -2482,7 +2490,7 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
                             nChunkXSize, nChunkYSize, 
                             pabyChunkData + iBand * nBandSpace, 
                             nChunkXSize, nChunkYSize, eBufType, 
-                            nPixelSpace, nLineSpace );
+                            nPixelSpace, nLineSpace, hMutex );
                     if( eErr != CE_None )
                         return eErr;
                 }
@@ -2502,7 +2510,7 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
                                        eBufType, 
                                        nBandCount, panBandMap,
                                        nPixelSpace, nLineSpace, 
-                                       nBandSpace );
+                                       nBandSpace , hMutex);
     }
 
 /* ==================================================================== */
@@ -2606,40 +2614,39 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
             iSrcOffset = (iSrcX - nLBlockX*nBlockXSize
                 + (iSrcY - nLBlockY*nBlockYSize) * nBlockXSize)*nBandDataSize;
+            for( iBand = 0; iBand < nBandCount; iBand++ )
             {
-                CPLMutexHolderD( &hRWMutex );
-                for( iBand = 0; iBand < nBandCount; iBand++ )
-                {
-                    GByte *pabySrcBlock = papabySrcBlock[iBand];
-                    int iBandBufOffset = iBufOffset + iBand * nBandSpace;
-                    
-                    if( eRWFlag == GF_Write )
-                        papoBlocks[iBand]->MarkDirty();
+                GByte *pabySrcBlock = papabySrcBlock[iBand];
+                int iBandBufOffset = iBufOffset + iBand * nBandSpace;
+                CPLMutexHolderD( hMutex );
+                CPLMutexHolderD2( papoBlocks[iBand]->GetRWMutex() );
+                
+                if( eRWFlag == GF_Write )
+                    papoBlocks[iBand]->MarkDirty();
 
-                    if( eDataType == eBufType )
-                    {
-                        if( eRWFlag == GF_Read )
-                            memcpy( ((GByte *) pData) + iBandBufOffset,
-                                    pabySrcBlock + iSrcOffset, nBandDataSize );
+                if( eDataType == eBufType )
+                {
+                    if( eRWFlag == GF_Read )
+                        memcpy( ((GByte *) pData) + iBandBufOffset,
+                                pabySrcBlock + iSrcOffset, nBandDataSize );
+                else
+                    memcpy( pabySrcBlock + iSrcOffset, 
+                            ((GByte *)pData) + iBandBufOffset, nBandDataSize );
+                }
+                else
+                {
+                    /* type to type conversion ... ouch, this is expensive way
+                       of handling single words */
+                    
+                    if( eRWFlag == GF_Read )
+                        GDALCopyWords( pabySrcBlock + iSrcOffset, eDataType, 0,
+                                       ((GByte *) pData) + iBandBufOffset, 
+                                       eBufType, 0, 1 );
                     else
-                        memcpy( pabySrcBlock + iSrcOffset, 
-                                ((GByte *)pData) + iBandBufOffset, nBandDataSize );
-                    }
-                    else
-                    {
-                        /* type to type conversion ... ouch, this is expensive way
-                           of handling single words */
-                        
-                        if( eRWFlag == GF_Read )
-                            GDALCopyWords( pabySrcBlock + iSrcOffset, eDataType, 0,
-                                           ((GByte *) pData) + iBandBufOffset, 
-                                           eBufType, 0, 1 );
-                        else
-                            GDALCopyWords( ((GByte *) pData) + iBandBufOffset, 
-                                           eBufType, 0,
-                                           pabySrcBlock + iSrcOffset, eDataType, 0,
-                                           1 );
-                    }
+                        GDALCopyWords( ((GByte *) pData) + iBandBufOffset, 
+                                       eBufType, 0,
+                                       pabySrcBlock + iSrcOffset, eDataType, 0,
+                                       1 );
                 }
             }
 

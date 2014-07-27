@@ -28,6 +28,7 @@
  ****************************************************************************/
 
 #include "gdal_pcidsk.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -281,7 +282,7 @@ int PCIDSKTiledRasterBand::BuildTileMap()
 /************************************************************************/
 
 CPLErr PCIDSKTiledRasterBand::IReadBlock( int nBlockX, int nBlockY, 
-                                          void *pData )
+                                          void *pData, void **hMutex )
 
 {
     int iTile;
@@ -301,6 +302,7 @@ CPLErr PCIDSKTiledRasterBand::IReadBlock( int nBlockX, int nBlockY,
 
     iTile = nBlockX + nBlockY * nBPR;
 
+    CPLMutexHolderD( hMutex );
     if( panTileOffset[iTile] == (vsi_l_offset) -1 )
     {
         int   nWordSize = GDALGetDataTypeSize( eDataType ) / 8;

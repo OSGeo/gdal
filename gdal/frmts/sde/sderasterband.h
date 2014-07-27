@@ -47,7 +47,7 @@ class SDERasterBand : public GDALRasterBand
         ~SDERasterBand( void );
     
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
     virtual CPLErr GetStatistics( int bApproxOK, int bForce,
                                   double *pdfMin, double *pdfMax, 
                                   double *pdfMean, double *pdfStdDev );

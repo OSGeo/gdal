@@ -33,6 +33,7 @@
 #include "cpl_minixml.h"
 #include "cpl_http.h"
 #include "ogr_spatialref.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -143,7 +144,7 @@ class WCSRasterBand : public GDALPamRasterBand
     virtual int GetOverviewCount();
     virtual GDALRasterBand *GetOverview(int);
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex );
 };
 
 /************************************************************************/
@@ -250,7 +251,7 @@ WCSRasterBand::~WCSRasterBand()
 /************************************************************************/
 
 CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                  void * pImage, void ** hMutex )
 
 {
     CPLErr eErr;
@@ -320,7 +321,7 @@ CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             eErr = poTileBand->RasterIO( GF_Read, 
                                          0, 0, nBlockXSize, nBlockYSize, 
                                          pImage, nBlockXSize, nBlockYSize, 
-                                         eDataType, 0, 0 );
+                                         eDataType, 0, 0, hMutex );
         }
         else
         {
@@ -338,7 +339,8 @@ CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                             0, 0, nBlockXSize, nBlockYSize,
                                             poBlock->GetDataRef(),
                                             nBlockXSize, nBlockYSize,
-                                            eDataType, 0, 0 );
+                                            eDataType, 0, 0,
+                                            poBlock->GetRWMuteX() );
                 poBlock->DropLock();
             }
             else

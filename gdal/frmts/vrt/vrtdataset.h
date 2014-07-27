@@ -80,7 +80,8 @@ public:
     virtual CPLErr  RasterIO( int nXOff, int nYOff, int nXSize, int nYSize, 
                               void *pData, int nBufXSize, int nBufYSize, 
                               GDALDataType eBufType, 
-                              int nPixelSpace, int nLineSpace ) = 0;
+                              int nPixelSpace, int nLineSpace,
+                              void ** hMutex ) = 0;
 
     virtual double GetMinimum( int nXSize, int nYSize, int *pbSuccess ) = 0;
     virtual double GetMaximum( int nXSize, int nYSize, int *pbSuccess ) = 0;
@@ -179,7 +180,8 @@ class CPL_DLL VRTDataset : public GDALDataset
                                void * pData, int nBufXSize, int nBufYSize,
                                GDALDataType eBufType,
                                int nBandCount, int *panBandMap,
-                               int nPixelSpace, int nLineSpace, int nBandSpace);
+                               int nPixelSpace, int nLineSpace, int nBandSpace,
+                               void **hMutex = NULL);
 
     virtual CPLXMLNode *SerializeToXML( const char *pszVRTPath);
     virtual CPLErr      XMLInit( CPLXMLNode *, const char * );
@@ -375,7 +377,7 @@ class CPL_DLL VRTSourcedRasterBand : public VRTRasterBand
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int );
+                              int, int, void **hMutex = NULL );
 
     virtual char      **GetMetadataDomainList();
     virtual const char *GetMetadataItem( const char * pszName,
@@ -437,7 +439,7 @@ class CPL_DLL VRTSourcedRasterBand : public VRTRasterBand
                                            int nDstXOff, int nDstYOff,
                                            int nDstXSize, int nDstYSize);
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
     
     virtual void   GetFileList(char*** ppapszFileList, int *pnSize,
                                int *pnMaxSize, CPLHashSet* hSetFiles);
@@ -461,8 +463,8 @@ class CPL_DLL VRTWarpedRasterBand : public VRTRasterBand
     virtual CPLErr         XMLInit( CPLXMLNode *, const char * );
     virtual CPLXMLNode *   SerializeToXML( const char *pszVRTPath );
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr IWriteBlock( int, int, void *, void ** hMutex = NULL );
 
     virtual int GetOverviewCount();
     virtual GDALRasterBand *GetOverview(int);
@@ -486,7 +488,7 @@ class CPL_DLL VRTDerivedRasterBand : public VRTSourcedRasterBand
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int );
+                              int, int, void ** hMutex = NULL );
 
     static CPLErr AddPixelFunction
         (const char *pszFuncName, GDALDerivedPixelFunc pfnPixelFunc);
@@ -523,10 +525,10 @@ class CPL_DLL VRTRawRasterBand : public VRTRasterBand
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int );
+                              int, int, void **hMutex = NULL );
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void **hMutex = NULL );
+    virtual CPLErr IWriteBlock( int, int, void *, void **hMutex = NULL );
 
     CPLErr         SetRawLink( const char *pszFilename, 
                                const char *pszVRTPath,
@@ -611,7 +613,8 @@ public:
     virtual CPLErr  RasterIO( int nXOff, int nYOff, int nXSize, int nYSize, 
                               void *pData, int nBufXSize, int nBufYSize, 
                               GDALDataType eBufType, 
-                              int nPixelSpace, int nLineSpace );
+                              int nPixelSpace, int nLineSpace,
+                              void ** hMutex = NULL );
 
     virtual double GetMinimum( int nXSize, int nYSize, int *pbSuccess );
     virtual double GetMaximum( int nXSize, int nYSize, int *pbSuccess );
@@ -645,7 +648,8 @@ public:
                                void * pData, int nBufXSize, int nBufYSize,
                                GDALDataType eBufType,
                                int nBandCount, int *panBandMap,
-                               int nPixelSpace, int nLineSpace, int nBandSpace);
+                               int nPixelSpace, int nLineSpace, int nBandSpace,
+                               void ** hMutex);
 };
 
 /************************************************************************/
@@ -843,7 +847,8 @@ public:
     virtual CPLErr  RasterIO( int nXOff, int nYOff, int nXSize, int nYSize, 
                               void *pData, int nBufXSize, int nBufYSize, 
                               GDALDataType eBufType, 
-                              int nPixelSpace, int nLineSpace );
+                              int nPixelSpace, int nLineSpace,
+                              void ** hMutex = NULL);
 
     virtual double GetMinimum( int nXSize, int nYSize, int *pbSuccess );
     virtual double GetMaximum( int nXSize, int nYSize, int *pbSuccess );

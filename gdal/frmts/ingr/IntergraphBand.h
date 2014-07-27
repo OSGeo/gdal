@@ -72,8 +72,8 @@ public:
     virtual double GetMaximum( int *pbSuccess = NULL );    
     virtual GDALColorTable *GetColorTable();
     virtual GDALColorInterp GetColorInterpretation();
-    virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage );
-    virtual CPLErr IWriteBlock( int nBlockXOff, int nBlockYOff, void *pImage );
+    virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage, void **hMutex = NULL );
+    virtual CPLErr IWriteBlock( int nBlockXOff, int nBlockYOff, void *pImage, void **hMutex = NULL );
     virtual CPLErr SetColorTable( GDALColorTable *poColorTable ); 
     virtual CPLErr SetStatistics( double dfMin, double dfMax, double dfMean, double dfStdDev );
 
@@ -97,7 +97,7 @@ public:
         int nBandOffset,
         int nRGorB );
 
-    virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage );
+    virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage, void **hMutex = NULL );
 };
 
 //  ----------------------------------------------------------------------------
@@ -121,7 +121,7 @@ public:
         int nRGorB = 1 );
     ~IntergraphBitmapBand();
 
-    virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage );
+    virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage, void **hMutex = NULL );
     virtual GDALColorInterp GetColorInterpretation();
 };
 
@@ -146,5 +146,5 @@ public:
         int nRGorB = 0);
     ~IntergraphRLEBand();
 
-    virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage );
+    virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage, void **hMutex = NULL );
 };

@@ -36,6 +36,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "cpl_csv.h"
+#include "cpl_multiproc.h"
 #include "ogr_spatialref.h"
 #include "gdal_pam.h"
 #include "gdal_alg.h"
@@ -503,8 +504,8 @@ public:
     virtual double GetNoDataValue( int *pbSuccess = NULL );
     virtual double GetMinimum( int *pbSuccess = NULL );
     virtual double GetMaximum( int *pbSuccess = NULL );
-    virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage );
-    virtual CPLErr IWriteBlock( int nBlockXOff, int nBlockYOff, void *pImage );
+    virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage, void ** hMutex = NULL );
+    virtual CPLErr IWriteBlock( int nBlockXOff, int nBlockYOff, void *pImage, void ** hMutex = NULL );
     virtual GDALColorTable *GetColorTable();
     virtual GDALColorInterp GetColorInterpretation();
     virtual char **GetCategoryNames();
@@ -1514,8 +1515,10 @@ IdrisiRasterBand::~IdrisiRasterBand()
 
 CPLErr IdrisiRasterBand::IReadBlock( int nBlockXOff, 
                                      int nBlockYOff,
-                                     void *pImage )
+                                     void *pImage,
+                                     void ** hMutex )
 {
+    CPLMutexHolderD( hMutex );
     IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
 
     if( VSIFSeekL( poGDS->fp, 
@@ -1562,8 +1565,10 @@ CPLErr IdrisiRasterBand::IReadBlock( int nBlockXOff,
 
 CPLErr IdrisiRasterBand::IWriteBlock( int nBlockXOff, 
                                       int nBlockYOff,
-                                      void *pImage )
+                                      void *pImage,
+                                      void **hMutex )
 {
+    CPLMutexHolderD( hMutex );
     IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
 
 #ifdef CPL_MSB    

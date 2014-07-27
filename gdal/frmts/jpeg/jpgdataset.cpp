@@ -33,6 +33,7 @@
 
 #include "gdal_pam.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 #include "gdalexif.h"
 #include "memdataset.h"
 
@@ -311,7 +312,7 @@ class JPGRasterBand : public GDALPamRasterBand
 
                    JPGRasterBand( JPGDatasetCommon *, int );
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void **hMutex = NULL);
     virtual GDALColorInterp GetColorInterpretation();
 
     virtual GDALRasterBand *GetMaskBand();
@@ -332,7 +333,7 @@ class JPGRasterBand : public GDALPamRasterBand
 class JPGMaskBand : public GDALRasterBand
 {
   protected:
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void **hMutex = NULL );
 
   public:
 		JPGMaskBand( JPGDataset *poDS );
@@ -785,9 +786,11 @@ JPGMaskBand::JPGMaskBand( JPGDataset *poDS )
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr JPGMaskBand::IReadBlock( int nBlockX, int nBlockY, void *pImage )
+CPLErr JPGMaskBand::IReadBlock( int nBlockX, int nBlockY, 
+                void *pImage, void **hMutex )
 
 {
+    CPLMutexHolderD( hMutex );
     JPGDataset *poJDS = (JPGDataset *) poDS;
 
 /* -------------------------------------------------------------------- */
@@ -864,7 +867,7 @@ GDALRasterBand* JPGCreateBand(JPGDatasetCommon* poDS, int nBand)
 /************************************************************************/
 
 CPLErr JPGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                  void * pImage, void **hMutex )
 
 {
     CPLErr      eErr;
@@ -872,82 +875,85 @@ CPLErr JPGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     int         nWordSize = GDALGetDataTypeSize(eDataType) / 8;
     
     CPLAssert( nBlockXOff == 0 );
-
-    if (poGDS->fpImage == NULL)
     {
-        memset( pImage, 0, nXSize * nWordSize );
-        return CE_None;
-    }
+        CPLMutexHolderD( hMutex );
 
-/* -------------------------------------------------------------------- */
-/*      Load the desired scanline into the working buffer.              */
-/* -------------------------------------------------------------------- */
-    eErr = poGDS->LoadScanline( nBlockYOff );
-    if( eErr != CE_None )
-        return eErr;
-
-/* -------------------------------------------------------------------- */
-/*      Transfer between the working buffer the the callers buffer.     */
-/* -------------------------------------------------------------------- */
-    if( poGDS->GetRasterCount() == 1 )
-    {
-#ifdef JPEG_LIB_MK1_OR_12BIT
-        GDALCopyWords( poGDS->pabyScanline, GDT_UInt16, 2, 
-                       pImage, eDataType, nWordSize, 
-                       nXSize );
-#else
-        memcpy( pImage, poGDS->pabyScanline, nXSize * nWordSize );
-#endif
-    }
-    else
-    {
-#ifdef JPEG_LIB_MK1_OR_12BIT
-        GDALCopyWords( poGDS->pabyScanline + (nBand-1) * 2, 
-                       GDT_UInt16, 6, 
-                       pImage, eDataType, nWordSize, 
-                       nXSize );
-#else
-        if (poGDS->eGDALColorSpace == JCS_RGB &&
-            poGDS->GetOutColorSpace() == JCS_CMYK)
+        if (poGDS->fpImage == NULL)
         {
-            CPLAssert(eDataType == GDT_Byte);
-            int i;
-            if (nBand == 1)
-            {
-                for(i=0;i<nXSize;i++)
-                {
-                    int C = poGDS->pabyScanline[i * 4 + 0];
-                    int K = poGDS->pabyScanline[i * 4 + 3];
-                    ((GByte*)pImage)[i] = (GByte) ((C * K) / 255);
-                }
-            }
-            else  if (nBand == 2)
-            {
-                for(i=0;i<nXSize;i++)
-                {
-                    int M = poGDS->pabyScanline[i * 4 + 1];
-                    int K = poGDS->pabyScanline[i * 4 + 3];
-                    ((GByte*)pImage)[i] = (GByte) ((M * K) / 255);
-                }
-            }
-            else if (nBand == 3)
-            {
-                for(i=0;i<nXSize;i++)
-                {
-                    int Y = poGDS->pabyScanline[i * 4 + 2];
-                    int K = poGDS->pabyScanline[i * 4 + 3];
-                    ((GByte*)pImage)[i] = (GByte) ((Y * K) / 255);
-                }
-            }
+            memset( pImage, 0, nXSize * nWordSize );
+            return CE_None;
+        }
+
+    /* -------------------------------------------------------------------- */
+    /*      Load the desired scanline into the working buffer.              */
+    /* -------------------------------------------------------------------- */
+        eErr = poGDS->LoadScanline( nBlockYOff );
+        if( eErr != CE_None )
+            return eErr;
+
+    /* -------------------------------------------------------------------- */
+    /*      Transfer between the working buffer the the callers buffer.     */
+    /* -------------------------------------------------------------------- */
+        if( poGDS->GetRasterCount() == 1 )
+        {
+#ifdef JPEG_LIB_MK1_OR_12BIT
+            GDALCopyWords( poGDS->pabyScanline, GDT_UInt16, 2, 
+                           pImage, eDataType, nWordSize, 
+                           nXSize );
+#else
+            memcpy( pImage, poGDS->pabyScanline, nXSize * nWordSize );
+#endif
         }
         else
         {
-            GDALCopyWords( poGDS->pabyScanline + (nBand-1) * nWordSize, 
-                        eDataType, nWordSize * poGDS->GetRasterCount(), 
-                        pImage, eDataType, nWordSize, 
-                        nXSize );
-        }
+#ifdef JPEG_LIB_MK1_OR_12BIT
+            GDALCopyWords( poGDS->pabyScanline + (nBand-1) * 2, 
+                           GDT_UInt16, 6, 
+                           pImage, eDataType, nWordSize, 
+                           nXSize );
+#else
+            if (poGDS->eGDALColorSpace == JCS_RGB &&
+                poGDS->GetOutColorSpace() == JCS_CMYK)
+            {
+                CPLAssert(eDataType == GDT_Byte);
+                int i;
+                if (nBand == 1)
+                {
+                    for(i=0;i<nXSize;i++)
+                    {
+                        int C = poGDS->pabyScanline[i * 4 + 0];
+                        int K = poGDS->pabyScanline[i * 4 + 3];
+                        ((GByte*)pImage)[i] = (GByte) ((C * K) / 255);
+                    }
+                }
+                else  if (nBand == 2)
+                {
+                    for(i=0;i<nXSize;i++)
+                    {
+                        int M = poGDS->pabyScanline[i * 4 + 1];
+                        int K = poGDS->pabyScanline[i * 4 + 3];
+                        ((GByte*)pImage)[i] = (GByte) ((M * K) / 255);
+                    }
+                }
+                else if (nBand == 3)
+                {
+                    for(i=0;i<nXSize;i++)
+                    {
+                        int Y = poGDS->pabyScanline[i * 4 + 2];
+                        int K = poGDS->pabyScanline[i * 4 + 3];
+                        ((GByte*)pImage)[i] = (GByte) ((Y * K) / 255);
+                    }
+                }
+            }
+            else
+            {
+                GDALCopyWords( poGDS->pabyScanline + (nBand-1) * nWordSize, 
+                            eDataType, nWordSize * poGDS->GetRasterCount(), 
+                            pImage, eDataType, nWordSize, 
+                            nXSize );
+            }
 #endif
+        }
     }
 
 /* -------------------------------------------------------------------- */

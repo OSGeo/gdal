@@ -29,6 +29,7 @@
 
 #include "cpl_vsi_virtual.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 #include "gdal_pam.h"
 #include <vector>
 #include <algorithm>
@@ -97,7 +98,7 @@ class XYZRasterBand : public GDALPamRasterBand
 
                 XYZRasterBand( XYZDataset *, int, GDALDataType );
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
     virtual double GetMinimum( int *pbSuccess = NULL );
     virtual double GetMaximum( int *pbSuccess = NULL );
     virtual double GetNoDataValue( int *pbSuccess = NULL );
@@ -127,9 +128,10 @@ XYZRasterBand::XYZRasterBand( XYZDataset *poDS, int nBand, GDALDataType eDT )
 /************************************************************************/
 
 CPLErr XYZRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                  void * pImage, void ** hMutex )
 
 {
+    CPLMutexHolderD( hMutex );
     XYZDataset *poGDS = (XYZDataset *) poDS;
     
     if (poGDS->fp == NULL)

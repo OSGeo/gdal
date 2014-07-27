@@ -65,8 +65,9 @@ PGCHIPRasterBand::PGCHIPRasterBand( PGCHIPDataset *poDS, int nBand ){
 /************************************************************************/
 
 CPLErr PGCHIPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage ){
+                                  void * pImage, void ** hMutex ){
 
+    CPLMutexHolderD( hMutex );
     PGCHIPDataset *poGDS = (PGCHIPDataset *) poDS;
         
     int        chipDataSize;

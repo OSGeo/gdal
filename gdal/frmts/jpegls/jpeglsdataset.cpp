@@ -29,6 +29,7 @@
 
 #include "gdal_pam.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 
 /* CharLS header */
 #include <interface.h>
@@ -85,7 +86,7 @@ class JPEGLSRasterBand : public GDALPamRasterBand
                 JPEGLSRasterBand( JPEGLSDataset * poDS, int nBand);
                 ~JPEGLSRasterBand();
 
-    virtual CPLErr          IReadBlock( int, int, void * );
+    virtual CPLErr          IReadBlock( int, int, void *, void ** hMutex = NULL );
     virtual GDALColorInterp GetColorInterpretation();
 };
 
@@ -139,8 +140,9 @@ static const char* JPEGLSGetErrorAsString(JLS_ERROR eCode)
 /************************************************************************/
 
 CPLErr JPEGLSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                      void * pImage )
+                                      void * pImage, void ** hMutex )
 {
+    CPLMutexHolderD( hMutex );
     JPEGLSDataset *poGDS = (JPEGLSDataset *) poDS;
 
     if (!poGDS->bHasUncompressed)

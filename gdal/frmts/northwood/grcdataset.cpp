@@ -30,6 +30,7 @@
 
 #include "gdal_pam.h"
 #include "northwood.h"
+#include "cpl_multiproc.h"
 
 #ifdef OGR_ENABLED
 #ifdef MSVC
@@ -92,7 +93,7 @@ class NWT_GRCRasterBand : public GDALPamRasterBand
     NWT_GRCRasterBand( NWT_GRCDataset *, int );
     virtual ~NWT_GRCRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
     virtual double GetNoDataValue( int *pbSuccess );
 
     virtual double GetOffset( int *pbSuccess = NULL );
@@ -229,8 +230,9 @@ GDALColorInterp NWT_GRCRasterBand::GetColorInterpretation()
 /*                             IReadBlock()                             */
 /************************************************************************/
 CPLErr NWT_GRCRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                        void *pImage )
+                                      void *pImage, void ** hMutex )
 {
+    CPLMutexHolderD( hMutex );
     NWT_GRCDataset *poGDS =(NWT_GRCDataset *) poDS;
     int nRecordSize = nBlockXSize *( poGDS->pGrd->nBitsPerPixel / 8 );
 

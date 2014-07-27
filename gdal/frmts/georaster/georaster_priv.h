@@ -248,9 +248,9 @@ public:
     virtual GDALColorInterp   
                         GetColorInterpretation();
     virtual CPLErr      IReadBlock( int nBlockXOff, int nBlockYOff, 
-                            void *pImage );
+                            void *pImage, void ** hMutex = NULL );
     virtual CPLErr      IWriteBlock( int nBlockXOff, int nBlockYOff, 
-                            void *pImage );
+                            void *pImage, void ** hMutex = NULL );
     virtual CPLErr      SetStatistics( double dfMin, double dfMax, 
                             double dfMean, double dfStdDev );
     virtual CPLErr      GetStatistics( int bApproxOK, int bForce,

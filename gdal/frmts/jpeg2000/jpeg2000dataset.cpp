@@ -31,6 +31,7 @@
 #include "gdaljp2abstractdataset.h"
 #include "gdaljp2metadata.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 
 #include <jasper/jasper.h>
 #include "jpeg2000_vsil_io.h"
@@ -210,7 +211,7 @@ class JPEG2000RasterBand : public GDALPamRasterBand
                 JPEG2000RasterBand( JPEG2000Dataset *, int, int, int );
                 ~JPEG2000RasterBand();
                 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void **hMutex = NULL );
     virtual GDALColorInterp GetColorInterpretation();
 };
 
@@ -275,7 +276,7 @@ JPEG2000RasterBand::~JPEG2000RasterBand()
 /************************************************************************/
 
 CPLErr JPEG2000RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                      void * pImage )
+                                      void * pImage, void ** hMutex )
 {
     int             i, j;
 
@@ -285,6 +286,7 @@ CPLErr JPEG2000RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return CE_Failure;
     }
 
+    CPLMutexHolderD( hMutex );
     // Now we can calculate the pixel offset of the top left by multiplying
     // block offset with the block size.
 

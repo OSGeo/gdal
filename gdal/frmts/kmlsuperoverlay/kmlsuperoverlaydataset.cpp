@@ -42,6 +42,7 @@
 #include "cpl_string.h"
 #include "cpl_conv.h"
 #include "cpl_vsi.h"
+#include "cpl_multiproc.h"
 #include "ogr_spatialref.h"
 #include "../vrt/gdal_vrt.h"
 #include "../vrt/vrtdataset.h"
@@ -999,7 +1000,7 @@ KmlSuperOverlayRasterBand::KmlSuperOverlayRasterBand(KmlSuperOverlayReadDataset*
 /*                               IReadBlock()                           */
 /************************************************************************/
 
-CPLErr KmlSuperOverlayRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, void *pData )
+CPLErr KmlSuperOverlayRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, void *pData, void ** hMutex )
 {
     int nXOff = nBlockXOff * nBlockXSize;
     int nYOff = nBlockYOff * nBlockYSize;
@@ -1019,7 +1020,8 @@ CPLErr KmlSuperOverlayRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, vo
                       nYSize,
                       eDataType,
                       1,
-                      nBlockXSize );
+                      nBlockXSize,
+                      hMutex );
 }
 
 /************************************************************************/
@@ -1039,14 +1041,14 @@ CPLErr KmlSuperOverlayRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                              int nXOff, int nYOff, int nXSize, int nYSize,
                                              void * pData, int nBufXSize, int nBufYSize,
                                              GDALDataType eBufType,
-                                             int nPixelSpace, int nLineSpace )
+                                             int nPixelSpace, int nLineSpace, void ** hMutex )
 {
     KmlSuperOverlayReadDataset* poGDS = (KmlSuperOverlayReadDataset* )poDS;
 
     return poGDS->IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
                             pData, nBufXSize, nBufYSize, eBufType,
                             1, &nBand,
-                            nPixelSpace, nLineSpace, 0 );
+                            nPixelSpace, nLineSpace, 0, hMutex );
 }
 
 /************************************************************************/
@@ -1117,7 +1119,8 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO( GDALRWFlag eRWFlag,
                                void * pData, int nBufXSize, int nBufYSize,
                                GDALDataType eBufType, 
                                int nBandCount, int *panBandMap,
-                               int nPixelSpace, int nLineSpace, int nBandSpace)
+                               int nPixelSpace, int nLineSpace, int nBandSpace, 
+                               void ** hMutex)
 {
     if( eRWFlag == GF_Write )
         return CE_Failure;
@@ -1131,7 +1134,8 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO( GDALRWFlag eRWFlag,
                                     pData, nBufXSize, nBufYSize,
                                     eBufType, 
                                     nBandCount, panBandMap,
-                                    nPixelSpace, nLineSpace, nBandSpace);
+                                    nPixelSpace, nLineSpace, nBandSpace,
+                                    hMutex);
     
     double dfXOff = 1.0 * nXOff / nFactor;
     double dfYOff = 1.0 * nYOff / nFactor;
@@ -1378,7 +1382,7 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO( GDALRWFlag eRWFlag,
                                              nReqYSize,
                                              pData, nBufXSize, nBufYSize, eBufType,
                                              nBandCount, panBandMap,
-                                             nPixelSpace, nLineSpace, nBandSpace );
+                                             nPixelSpace, nLineSpace, nBandSpace, hMutex );
 
             for(i=0; i < (int)aosImages.size(); i++)
             {
@@ -1397,6 +1401,7 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO( GDALRWFlag eRWFlag,
 
         if( (nIconCount > 1 || nBand == 4) && nBand > nIconCount )
         {
+            CPLMutexHolderD( hMutex );
             GByte nVal = (nBand == 4) ? 255 : 0;
             for(int j = 0; j < nBufYSize; j ++ )
             {
@@ -1425,7 +1430,8 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO( GDALRWFlag eRWFlag,
                                                       nReqYSize,
                                                       ((GByte*) pData) + nBandSpace * iBandIdx,
                                                       nBufXSize, nBufYSize, eBufType,
-                                                      nPixelSpace, nLineSpace );
+                                                      nPixelSpace, nLineSpace,
+                                                      hMutex );
     }
 
     return CE_None;
@@ -1728,7 +1734,7 @@ class KmlSingleDocRasterRasterBand: public GDALRasterBand
         KmlSingleDocRasterRasterBand(KmlSingleDocRasterDataset* poDS,
                                      int nBand);
 
-        virtual CPLErr IReadBlock( int, int, void * );
+        virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
         virtual GDALColorInterp GetColorInterpretation();
 
         virtual int GetOverviewCount();
@@ -1897,7 +1903,7 @@ KmlSingleDocRasterRasterBand::KmlSingleDocRasterRasterBand(KmlSingleDocRasterDat
 /************************************************************************/
 
 CPLErr KmlSingleDocRasterRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                                 void * pImage )
+                                                 void * pImage, void ** hMutex )
 {
     KmlSingleDocRasterDataset* poGDS = (KmlSingleDocRasterDataset*) poDS;
     const char* pszImageFilename = CPLFormFilename( poGDS->osDirname,
@@ -1914,6 +1920,7 @@ CPLErr KmlSingleDocRasterRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     GDALDataset* poImageDS = poGDS->poCurTileDS;
     if( poImageDS == NULL )
     {
+        CPLMutexHolderD( hMutex );
         memset( pImage, 0, nBlockXSize * nBlockYSize );
         return CE_None;
     }
@@ -1941,6 +1948,7 @@ CPLErr KmlSingleDocRasterRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         if( nBand == 4 && poColorTable == NULL )
         {
             /* Add fake alpha band */
+            CPLMutexHolderD( hMutex );
             memset( pImage, 255, nBlockXSize * nBlockYSize );
             eErr = CE_None;
         }
@@ -1950,11 +1958,13 @@ CPLErr KmlSingleDocRasterRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                                     0, 0, nXSize, nYSize,
                                                     pImage,
                                                     nXSize, nYSize,
-                                                    GDT_Byte, 1, nBlockXSize);
+                                                    GDT_Byte, 1, nBlockXSize,
+                                                    hMutex);
 
             /* Expand color table */
             if( eErr == CE_None && poColorTable != NULL )
             {
+                CPLMutexHolderD( hMutex );
                 int j, i;
                 for(j = 0; j < nReqYSize; j++ )
                 {
@@ -1984,11 +1994,13 @@ CPLErr KmlSingleDocRasterRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                                 0, 0, nXSize, nYSize,
                                                 pImage,
                                                 nXSize, nYSize,
-                                                GDT_Byte, 1, nBlockXSize);
+                                                GDT_Byte, 1, nBlockXSize,
+                                                hMutex);
     }
     else if( nBand == 4 && poImageDS->GetRasterCount() == 3 )
     {
         /* Add fake alpha band */
+        CPLMutexHolderD( hMutex );
         memset( pImage, 255, nBlockXSize * nBlockYSize );
         eErr = CE_None;
     }

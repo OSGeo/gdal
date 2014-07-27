@@ -34,6 +34,7 @@
  * SOFTWARE.
  **********************************************************************/
 #include "postgisraster.h"
+#include "cpl_multiproc.h"
 
 /**
  * \brief Constructor.
@@ -326,7 +327,7 @@ static int SortTilesByPKID(const void* a, const void* b)
 CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, 
     int nYOff, int nXSize, int nYSize, void * pData, int nBufXSize, 
     int nBufYSize, GDALDataType eBufType, int nPixelSpace, 
-    int nLineSpace)
+    int nLineSpace, void ** hMutex)
 {
     /**
      * TODO: Write support not implemented yet
@@ -347,7 +348,7 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
     {
         if(OverviewRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize, 
             pData, nBufXSize, nBufYSize, eBufType, nPixelSpace, 
-            nLineSpace) == CE_None)
+            nLineSpace, hMutex) == CE_None)
                 
         return CE_None;
     }
@@ -416,7 +417,7 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
         
         return GDALRasterBand::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, 
             nYSize, pData, nBufXSize, nBufYSize, eBufType, nPixelSpace, 
-            nLineSpace);
+            nLineSpace, hMutex);
     }
 #endif    
     
@@ -456,9 +457,10 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
             "Could not read metadata index.");
         return CE_Failure; 
     }
-
-    NullBuffer(pData, nBufXSize, nBufYSize, eBufType, nPixelSpace, nLineSpace);
-
+    {
+        CPLMutexHolderD( hMutex );
+        NullBuffer(pData, nBufXSize, nBufYSize, eBufType, nPixelSpace, nLineSpace);
+    }
     if( poRDS->bBuildQuadTreeDynamically && !bSameWindowAsOtherBand )
     {
         if( !(poRDS->LoadSources(nXOff, nYOff, nXSize, nYSize, nBand)) )
@@ -745,7 +747,7 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
         eErr = 
             poTileBand->poSource->RasterIO( nXOff, nYOff, nXSize, nYSize, 
                                             pData, nBufXSize, nBufYSize, 
-                                            eBufType, nPixelSpace, nLineSpace);
+                                            eBufType, nPixelSpace, nLineSpace, hMutex);
     }
     
     // Free the object that holds pointers to matching tiles
@@ -820,8 +822,9 @@ GDALRasterBand * PostGISRasterRasterBand::GetOverview(int i)
  * \brief Read a natural block of raster band data
  *****************************************************/
 CPLErr PostGISRasterRasterBand::IReadBlock(int nBlockXOff, 
-        int nBlockYOff, void * pImage)
+        int nBlockYOff, void * pImage, void ** hMutex)
 {
+    CPLMutexHolderD( hMutex );
     PGresult * poResult = NULL;
     CPLString osCommand;
     int nXOff = 0;

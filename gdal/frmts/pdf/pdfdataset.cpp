@@ -31,6 +31,7 @@
 
 #include "cpl_vsi_virtual.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 #include "ogr_spatialref.h"
 #include "ogr_geometry.h"
 #include "cpl_spawn.h"
@@ -738,9 +739,10 @@ CPLErr PDFRasterBand::IReadBlockFromTile( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                  void * pImage, void **hMutex )
 
 {
+    CPLMutexHolderD( hMutex );
     PDFDataset *poGDS = (PDFDataset *) poDS;
 
     if (poGDS->aiTiles.size() )

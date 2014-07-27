@@ -29,6 +29,7 @@
  ****************************************************************************/
 
 #include "gdal_pam.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -126,8 +127,8 @@ class ELASRasterBand : public GDALPamRasterBand
 
     // should override RasterIO eventually.
     
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * ); 
+    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL);
+    virtual CPLErr IWriteBlock( int, int, void *, void ** hMutex = NULL); 
 };
 
 
@@ -154,9 +155,10 @@ ELASRasterBand::ELASRasterBand( ELASDataset *poDS, int nBand )
 /************************************************************************/
 
 CPLErr ELASRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                   void * pImage )
+                                   void * pImage, void ** hMutex )
 
 {
+    CPLMutexHolderD( hMutex );
     ELASDataset	*poGDS = (ELASDataset *) poDS;
     CPLErr		eErr = CE_None;
     long		nOffset;
@@ -189,9 +191,10 @@ CPLErr ELASRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr ELASRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-                                     void * pImage )
+                                     void * pImage, void **hMutex )
 
 {
+    CPLMutexHolderD( hMutex );
     ELASDataset	*poGDS = (ELASDataset *) poDS;
     CPLErr		eErr = CE_None;
     long		nOffset;

@@ -33,6 +33,7 @@
  ****************************************************************************/
 
 #include "gdal_pam.h"
+#include "cpl_multiproc.h"
 #include "cpl_port.h"
 #include "cpl_string.h"
 
@@ -232,8 +233,8 @@ class SGIRasterBand : public GDALPamRasterBand
 public:
     SGIRasterBand(SGIDataset*, int);
 
-    virtual CPLErr IReadBlock(int, int, void*);
-    virtual CPLErr IWriteBlock(int, int, void*);
+    virtual CPLErr IReadBlock(int, int, void*, void ** hMutex = NULL);
+    virtual CPLErr IWriteBlock(int, int, void*, void ** hMutex = NULL);
     virtual GDALColorInterp GetColorInterpretation();
 };
 
@@ -267,9 +268,10 @@ SGIRasterBand::SGIRasterBand(SGIDataset* poDS, int nBand)
 /************************************************************************/
 
 CPLErr SGIRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
-				 void*  pImage)
+				 void*  pImage, void **hMutex)
 
 {
+    CPLMutexHolderD( hMutex );
     SGIDataset* poGDS = (SGIDataset*) poDS;
     
     CPLAssert(nBlockXOff == 0);
@@ -285,9 +287,10 @@ CPLErr SGIRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr SGIRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
-                                  void*  pImage)
+                                  void*  pImage, void **hMutex)
 
 {
+    CPLMutexHolderD( hMutex );
     SGIDataset* poGDS = (SGIDataset*) poDS;
     ImageRec *image = &(poGDS->image);
     

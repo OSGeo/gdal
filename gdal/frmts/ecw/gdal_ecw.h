@@ -630,14 +630,14 @@ class ECWRasterBand : public GDALPamRasterBand
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int );
+                              int, int, void ** hMutex = NULL );
 
   public:
 
                    ECWRasterBand( ECWDataset *, int, int = -1 );
                    ~ECWRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
     virtual int    HasArbitraryOverviews() { return apoOverviews.size() == 0; }
     virtual int    GetOverviewCount() { return (int)apoOverviews.size(); }
     virtual GDALRasterBand *GetOverview(int);

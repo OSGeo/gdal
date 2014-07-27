@@ -303,11 +303,11 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int *, int, int, int );
+                              int, int *, int, int, int, void ** hMutex = NULL );
 
     CPLErr BlockBasedRasterIO( GDALRWFlag, int, int, int, int,
                                void *, int, int, GDALDataType,
-                               int, int *, int, int, int );
+                               int, int *, int, int, int, void ** hMutex = NULL );
     void   BlockBasedFlushCache();
 
     CPLErr ValidateRasterIOOrAdviseReadParameters(
@@ -376,7 +376,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     CPLErr      RasterIO( GDALRWFlag, int, int, int, int,
                           void *, int, int, GDALDataType,
-                          int, int *, int, int, int );
+                          int, int *, int, int, int, void ** hMutex = NULL );
 
     int           Reference();
     int           Dereference();
@@ -513,7 +513,7 @@ class CPL_DLL GDALRasterBlock
     int                 nYSize;
     
     void                *pData;
-
+    void                *hRWMutex;
     GDALRasterBand      *poBand;
 
     GDALRasterBlockManager *poManager;
@@ -527,6 +527,7 @@ class CPL_DLL GDALRasterBlock
                 GDALRasterBlock( GDALRasterBand *, int, int, GDALRasterBlockManager * );
     virtual     ~GDALRasterBlock();
 
+    void        **GetRWMutex();
     CPLErr      Internalize( void );
     void        Touch( void );      
     void        MarkDirty( void );  
@@ -634,14 +635,14 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     friend class GDALProxyRasterBand;
 
   protected:
-    virtual CPLErr IReadBlock( int, int, void * ) = 0;
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** ) = 0;
+    virtual CPLErr IWriteBlock( int, int, void *, void ** hMutex = NULL );
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int );
+                              int, int, void ** hMutex = NULL );
     CPLErr         OverviewRasterIO( GDALRWFlag, int, int, int, int,
                                      void *, int, int, GDALDataType,
-                                     int, int );
+                                     int, int, void ** hMutex = NULL );
 
     int            InitBlockInfo();
 
@@ -665,17 +666,17 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     
     CPLErr      RasterIO( GDALRWFlag, int, int, int, int,
                           void *, int, int, GDALDataType,
-                          int, int );
-    CPLErr      ReadBlock( int, int, void * );
+                          int, int, void ** hMutex = NULL );
+    CPLErr      ReadBlock( int, int, void *, void ** hMutex = NULL );
 
-    CPLErr      WriteBlock( int, int, void * );
+    CPLErr      WriteBlock( int, int, void *, void ** hMutex = NULL );
 
     GDALRasterBlock *GetLockedBlockRef( int nXBlockOff, int nYBlockOff, 
                                         int bJustInitialize = FALSE );
 
     GDALRasterBlockManager *GetRasterBlockManager();
 
-    GDALRasterBlock     *UnadoptBlock( int = -1, int = -1 );
+    GDALRasterBlock     *UnadoptBlock( int = -1, int = -1, int = FALSE );
     CPLErr              FlushBlock( int = -1, int = -1 );
 
     unsigned char*  GetIndexColorTranslationTo(/* const */ GDALRasterBand* poReferenceBand,
@@ -760,7 +761,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 class CPL_DLL GDALAllValidMaskBand : public GDALRasterBand
 {
   protected:
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
 
   public:
                 GDALAllValidMaskBand( GDALRasterBand * );
@@ -780,10 +781,10 @@ class CPL_DLL GDALNoDataMaskBand : public GDALRasterBand
     GDALRasterBand *poParent;
 
   protected:
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int );
+                              int, int, void ** hMutex = NULL);
 
   public:
                 GDALNoDataMaskBand( GDALRasterBand * );
@@ -799,7 +800,7 @@ class CPL_DLL GDALNoDataValuesMaskBand : public GDALRasterBand
     double      *padfNodataValues;
 
   protected:
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
 
   public:
                 GDALNoDataValuesMaskBand( GDALDataset * );

@@ -30,6 +30,7 @@
 
 #include "gdal_priv.h"
 #include "ogr_spatialref.h"
+#include "cpl_multiproc.h"
 
 #include "msg_reader_core.h"
 using namespace msg_native_format;
@@ -107,7 +108,7 @@ class MSGNRasterBand : public GDALRasterBand
 
         MSGNRasterBand( MSGNDataset *, int , open_mode_type mode, int orig_band_no, int band_in_file);
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void **hMutex = NULL );
     virtual double GetMinimum( int *pbSuccess = NULL );
     virtual double GetMaximum(int *pbSuccess = NULL );
     virtual const char* GetDescription() const { return band_description; }
@@ -156,9 +157,10 @@ MSGNRasterBand::MSGNRasterBand( MSGNDataset *poDS, int nBand , open_mode_type mo
 /************************************************************************/
 
 CPLErr MSGNRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                  void * pImage, void **hMutex )
 
 {
+    CPLMutexHolderD( hMutex );
     MSGNDataset *poGDS = (MSGNDataset *) poDS;
 
     // invert y position

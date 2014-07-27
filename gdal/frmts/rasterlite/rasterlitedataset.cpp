@@ -29,6 +29,7 @@
 
 #include "gdal_frmts.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 #include "ogr_api.h"
 #include "ogr_srs_api.h"
 
@@ -72,7 +73,7 @@ RasterliteBand::RasterliteBand(RasterliteDataset* poDS, int nBand,
 
 //#define RASTERLITE_DEBUG
 
-CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage)
+CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage, void **hMutex)
 {
     RasterliteDataset* poGDS = (RasterliteDataset*) poDS;
     
@@ -113,6 +114,7 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
     OGRLayerH hSQLLyr = OGR_DS_ExecuteSQL(poGDS->hDS, osSQL.c_str(), NULL, NULL);
     if (hSQLLyr == NULL)
     {
+        CPLMutexHolderD( hMutex );
         memset(pImage, 0, nBlockXSize * nBlockYSize * nDataTypeSize);
         return CE_None;
     }
@@ -257,6 +259,7 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
                       nReqXSize == nBlockXSize && nReqYSize == nBlockYSize) &&
                     !bHasMemsetTile)
                 {
+                    CPLMutexHolderD( hMutex );
                     memset(pImage, 0, nBlockXSize * nBlockYSize * nDataTypeSize);
                     bHasMemsetTile = TRUE;
                     bHasJustMemsetTileBand1 = TRUE;
@@ -275,14 +278,15 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
 /* -------------------------------------------------------------------- */
 /*      Read tile data                                                  */
 /* -------------------------------------------------------------------- */
-                GDALRasterIO(GDALGetRasterBand(hDSTile, nReqBand), GF_Read,
+                GDALRasterIOMutex(GDALGetRasterBand(hDSTile, nReqBand), GF_Read,
                              nSrcXOff, nSrcYOff, nReqXSize, nReqYSize,
                              ((char*) pImage) + (nDstXOff + nDstYOff * nBlockXSize) * nDataTypeSize,
                              nReqXSize, nReqYSize,
-                             eDataType, nDataTypeSize, nBlockXSize * nDataTypeSize);
+                             eDataType, nDataTypeSize, nBlockXSize * nDataTypeSize, hMutex);
 
                 if (eDataType == GDT_Byte && pabyTranslationTable)
                 {
+                    CPLMutexHolderD( hMutex );
 /* -------------------------------------------------------------------- */
 /*      Convert from tile CT to band CT                                 */
 /* -------------------------------------------------------------------- */
@@ -320,6 +324,7 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
                     for(;i<256;i++)
                         abyCT[i] = 0;
                     
+                    CPLMutexHolderD( hMutex );
                     for(j=nDstYOff;j<nDstYOff + nReqYSize;j++)
                     {
                         for(i=nDstXOff;i<nDstXOff + nReqXSize;i++)
@@ -359,18 +364,21 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
                             nReqBand = iOtherBand;
 
                         if (bHasJustMemsetTileBand1)
+                        {
+                            CPLMutexHolderD( poBlock->GetRWMutex() );
                             memset(pabySrcBlock, 0,
                                    nBlockXSize * nBlockYSize * nDataTypeSize);
-            
+                        }
 /* -------------------------------------------------------------------- */
 /*      Read tile data                                                  */
 /* -------------------------------------------------------------------- */
-                        GDALRasterIO(GDALGetRasterBand(hDSTile, nReqBand), GF_Read,
+                        GDALRasterIOMutex(GDALGetRasterBand(hDSTile, nReqBand), GF_Read,
                                      nSrcXOff, nSrcYOff, nReqXSize, nReqYSize,
                                      ((char*) pabySrcBlock) +
                                      (nDstXOff + nDstYOff * nBlockXSize) * nDataTypeSize,
                                      nReqXSize, nReqYSize,
-                                     eDataType, nDataTypeSize, nBlockXSize * nDataTypeSize);
+                                     eDataType, nDataTypeSize, nBlockXSize * nDataTypeSize,
+                                     poBlock->GetRWMutex() );
                         
                         if (eDataType == GDT_Byte && nTileBands == 1 &&
                             poGDS->nBands == 3 && poTileCT != NULL)
@@ -395,6 +403,7 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
                             for(;i<256;i++)
                                 abyCT[i] = 0;
                             
+                            CPLMutexHolderD( poBlock->GetRWMutex() );
                             for(j=nDstYOff;j<nDstYOff + nReqYSize;j++)
                             {
                                 for(i=nDstXOff;i<nDstXOff + nReqXSize;i++)
@@ -429,6 +438,7 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
     
     if (!bHasFoundTile)
     {
+        CPLMutexHolderD( hMutex );
         memset(pImage, 0, nBlockXSize * nBlockYSize * nDataTypeSize);
     }
             

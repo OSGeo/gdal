@@ -32,6 +32,7 @@
 
 #include "gdal_pam.h"
 #include "gdal_priv.h"
+#include "cpl_multiproc.h"
 #include "ogr_spatialref.h"
 #include "cpl_string.h"
 
@@ -103,7 +104,7 @@ public:
 
     bool                    Initialize( hid_t hDataset, const char *pszName );
 
-    virtual CPLErr          IReadBlock( int, int, void * );
+    virtual CPLErr          IReadBlock( int, int, void *, void ** hMutex = NULL );
     virtual double	    GetNoDataValue( int * ); 
 
     virtual double GetMinimum( int *pbSuccess = NULL );
@@ -302,8 +303,9 @@ double BAGRasterBand::GetNoDataValue( int * pbSuccess )
 /*                             IReadBlock()                             */
 /************************************************************************/
 CPLErr BAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                  void * pImage, void ** hMutex )
 {
+    CPLMutexHolderD( hMutex );
     herr_t      status;
     hsize_t     count[3];
     H5OFFSET_TYPE offset[3];

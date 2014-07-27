@@ -87,6 +87,7 @@
 
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 #include "gdal.h"
 #include "gdal_priv.h"
 #include "commonutils.h"
@@ -1244,7 +1245,7 @@ class GDALColorReliefRasterBand : public GDALRasterBand
   public:
                  GDALColorReliefRasterBand( GDALColorReliefDataset *, int );
     
-    virtual CPLErr          IReadBlock( int, int, void * );
+    virtual CPLErr          IReadBlock( int, int, void *, void ** hMutex = NULL );
     virtual GDALColorInterp GetColorInterpretation();
 };
 
@@ -1322,7 +1323,8 @@ GDALColorReliefRasterBand::GDALColorReliefRasterBand(
 
 CPLErr GDALColorReliefRasterBand::IReadBlock( int nBlockXOff,
                                               int nBlockYOff,
-                                              void *pImage )
+                                              void *pImage,
+                                              void ** hMutex )
 {
     GDALColorReliefDataset * poGDS = (GDALColorReliefDataset *) poDS;
     int nReqXSize, nReqYSize;
@@ -1356,11 +1358,13 @@ CPLErr GDALColorReliefRasterBand::IReadBlock( int nBlockXOff,
                             0, 0);
         if (eErr != CE_None)
         {
+            CPLMutexHolderD( hMutex );
             memset(pImage, 0, nBlockXSize * nBlockYSize);
             return eErr;
         }
     }
 
+    CPLMutexHolderD( hMutex );
     int x, y, j = 0;
     if (poGDS->panSourceBuf)
     {
@@ -1835,7 +1839,7 @@ class GDALGeneric3x3RasterBand : public GDALRasterBand
                  GDALGeneric3x3RasterBand( GDALGeneric3x3Dataset *poDS,
                                            GDALDataType eDstDataType );
     
-    virtual CPLErr          IReadBlock( int, int, void * );
+    virtual CPLErr          IReadBlock( int, int, void *, void ** hMutex = NULL );
     virtual double          GetNoDataValue( int* pbHasNoData );
 };
 
@@ -1920,7 +1924,8 @@ void   GDALGeneric3x3RasterBand::InitWidthNoData(void* pImage)
 
 CPLErr GDALGeneric3x3RasterBand::IReadBlock( int nBlockXOff,
                                              int nBlockYOff,
-                                             void *pImage )
+                                             void *pImage ,
+                                             void **hMutex)
 {
     int i, j;
     float fVal;
@@ -1941,12 +1946,14 @@ CPLErr GDALGeneric3x3RasterBand::IReadBlock( int nBlockXOff,
                                     0, 0);
                 if (eErr != CE_None)
                 {
+                    CPLMutexHolderD( hMutex );
                     InitWidthNoData(pImage);
                     return eErr;
                 }
             }
             poGDS->nCurLine = 0;
 
+            CPLMutexHolderD( hMutex );
             for (j = 0; j < nRasterXSize; j++)
             {
                 float afWin[9];
@@ -1997,6 +2004,7 @@ CPLErr GDALGeneric3x3RasterBand::IReadBlock( int nBlockXOff,
                     }
                 }
             }
+            CPLMutexHolderD( hMutex );
 
             for (j = 0; j < nRasterXSize; j++)
             {
@@ -2031,6 +2039,7 @@ CPLErr GDALGeneric3x3RasterBand::IReadBlock( int nBlockXOff,
     }
     else if ( nBlockYOff == 0 || nBlockYOff == nRasterYSize - 1)
     {
+        CPLMutexHolderD( hMutex );
         InitWidthNoData(pImage);
         return CE_None;
     }
@@ -2054,6 +2063,7 @@ CPLErr GDALGeneric3x3RasterBand::IReadBlock( int nBlockXOff,
 
             if (eErr != CE_None)
             {
+                CPLMutexHolderD( hMutex );
                 InitWidthNoData(pImage);
                 return eErr;
             }
@@ -2071,6 +2081,7 @@ CPLErr GDALGeneric3x3RasterBand::IReadBlock( int nBlockXOff,
                                     0, 0);
                 if (eErr != CE_None)
                 {
+                    CPLMutexHolderD( hMutex );
                     InitWidthNoData(pImage);
                     return eErr;
                 }
@@ -2080,6 +2091,7 @@ CPLErr GDALGeneric3x3RasterBand::IReadBlock( int nBlockXOff,
         poGDS->nCurLine = nBlockYOff;
     }
 
+    CPLMutexHolderD( hMutex );
     if (poGDS->bComputeAtEdges && nRasterXSize >= 2)
     {
         float afWin[9];

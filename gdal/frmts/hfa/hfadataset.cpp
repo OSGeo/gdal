@@ -33,6 +33,7 @@
 #include "gdal_rat.h"
 #include "hfa_p.h"
 #include "ogr_spatialref.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -368,8 +369,8 @@ class HFARasterBand : public GDALPamRasterBand
                    HFARasterBand( HFADataset *, int, int );
     virtual        ~HFARasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void **hMutex = NULL );
+    virtual CPLErr IWriteBlock( int, int, void *, void **hMutex = NULL );
 
     virtual const char *GetDescription() const;
     virtual void        SetDescription( const char * );
@@ -2504,9 +2505,10 @@ GDALRasterBand *HFARasterBand::GetOverview( int i )
 /************************************************************************/
 
 CPLErr HFARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                  void * pImage, void **hMutex )
 
 {
+    CPLMutexHolderD( hMutex );
     CPLErr	eErr;
 
     if( nThisOverview == -1 )
@@ -2566,9 +2568,10 @@ CPLErr HFARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr HFARasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-                                   void * pImage )
+                                   void * pImage, void **hMutex )
 
 {
+    CPLMutexHolderD( hMutex );
     GByte *pabyOutBuf = (GByte *) pImage;
 
 /* -------------------------------------------------------------------- */

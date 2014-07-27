@@ -102,11 +102,11 @@ class CPL_DLL GDALProxyRasterBand : public GDALRasterBand
         virtual GDALRasterBand* RefUnderlyingRasterBand() = 0;
         virtual void UnrefUnderlyingRasterBand(GDALRasterBand* poUnderlyingRasterBand);
 
-        virtual CPLErr IReadBlock( int, int, void * );
-        virtual CPLErr IWriteBlock( int, int, void * );
+        virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
+        virtual CPLErr IWriteBlock( int, int, void *, void ** hMutex = NULL );
         virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                                 void *, int, int, GDALDataType,
-                                int, int );
+                                int, int, void ** hMutex = NULL );
 
     public:
 

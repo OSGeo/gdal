@@ -32,6 +32,7 @@
 
 #include "gdal_pam.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 #include "gifabstractdataset.h"
 
 CPL_CVSID("$Id$");
@@ -92,7 +93,7 @@ class BIGGifRasterBand : public GDALPamRasterBand
                    BIGGifRasterBand( BIGGIFDataset *, int );
     virtual       ~BIGGifRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
 
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
@@ -191,7 +192,7 @@ BIGGifRasterBand::~BIGGifRasterBand()
 /************************************************************************/
 
 CPLErr BIGGifRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                  void * pImage, void ** hMutex )
 
 {
     BIGGIFDataset *poGDS = (BIGGIFDataset *) poDS;
@@ -209,7 +210,7 @@ CPLErr BIGGifRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return poGDS->poWorkDS->
             RasterIO( GF_Read, 0, nBlockYOff, nBlockXSize, 1, 
                       pImage, nBlockXSize, 1, GDT_Byte, 
-                      1, NULL, 0, 0, 0 );
+                      1, NULL, 0, 0, 0, hMutex );
     }
 
 /* -------------------------------------------------------------------- */
@@ -241,7 +242,7 @@ CPLErr BIGGifRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             poGDS->poWorkDS->RasterIO( GF_Write, 
                                        0, poGDS->nLastLineRead, nBlockXSize, 1, 
                                        pImage, nBlockXSize, 1, GDT_Byte, 
-                                       1, NULL, 0, 0, 0 );
+                                       1, NULL, 0, 0, 0, hMutex );
         }
     }
 

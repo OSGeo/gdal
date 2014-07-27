@@ -33,6 +33,7 @@
 #include "gdal_proxy.h"
 #include "cpl_minixml.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 
 /* See #5459 */
 #ifdef isnan
@@ -881,7 +882,8 @@ CPLErr
 VRTSimpleSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                            void *pData, int nBufXSize, int nBufYSize, 
                            GDALDataType eBufType, 
-                           int nPixelSpace, int nLineSpace )
+                           int nPixelSpace, int nLineSpace,
+                           void ** hMutex )
 
 {
     // The window we will actually request from the source raster band.
@@ -910,7 +912,8 @@ VRTSimpleSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                                 + nOutXOff * nPixelSpace
                                 + nOutYOff * nLineSpace, 
                                 nOutXSize, nOutYSize, 
-                                eBufType, nPixelSpace, nLineSpace );
+                                eBufType, nPixelSpace, nLineSpace,
+                                hMutex );
 
     return eErr;
 }
@@ -1069,7 +1072,8 @@ CPLErr VRTSimpleSource::DatasetRasterIO(
                                void * pData, int nBufXSize, int nBufYSize,
                                GDALDataType eBufType,
                                int nBandCount, int *panBandMap,
-                               int nPixelSpace, int nLineSpace, int nBandSpace)
+                               int nPixelSpace, int nLineSpace, int nBandSpace,
+                               void ** hMutex)
 {
     if (!EQUAL(GetType(), "SimpleSource"))
     {
@@ -1103,7 +1107,8 @@ CPLErr VRTSimpleSource::DatasetRasterIO(
                            + nOutYOff * nLineSpace,
                            nOutXSize, nOutYSize,
                            eBufType, nBandCount, panBandMap,
-                           nPixelSpace, nLineSpace, nBandSpace );
+                           nPixelSpace, nLineSpace, nBandSpace,
+                           hMutex );
 }
 
 /************************************************************************/
@@ -2018,9 +2023,11 @@ CPLErr
 VRTFuncSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                          void *pData, int nBufXSize, int nBufYSize, 
                          GDALDataType eBufType, 
-                         int nPixelSpace, int nLineSpace )
+                         int nPixelSpace, int nLineSpace,
+                         void ** hMutex )
 
 {
+    CPLMutexHolderD( hMutex );
     if( nPixelSpace*8 == GDALGetDataTypeSize( eBufType )
         && nLineSpace == nPixelSpace * nXSize 
         && nBufXSize == nXSize && nBufYSize == nYSize 

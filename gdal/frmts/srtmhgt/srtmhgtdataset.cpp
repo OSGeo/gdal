@@ -34,6 +34,7 @@
 #include "gdal_pam.h"
 #include "cpl_port.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 #include "ogr_spatialref.h"
 
 #define SRTMHG_NODATA_VALUE -32768
@@ -91,8 +92,8 @@ class SRTMHGTRasterBand : public GDALPamRasterBand
   public:
     SRTMHGTRasterBand(SRTMHGTDataset*, int);
 
-    virtual CPLErr IReadBlock(int, int, void*);
-    virtual CPLErr IWriteBlock(int nBlockXOff, int nBlockYOff, void* pImage);
+    virtual CPLErr IReadBlock(int, int, void*, void ** hMutex = NULL);
+    virtual CPLErr IWriteBlock(int nBlockXOff, int nBlockYOff, void* pImage, void ** hMutex = NULL);
 
     virtual GDALColorInterp GetColorInterpretation();
 
@@ -121,7 +122,7 @@ SRTMHGTRasterBand::SRTMHGTRasterBand(SRTMHGTDataset* poDS, int nBand)
 /************************************************************************/
 
 CPLErr SRTMHGTRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
-                                     void* pImage)
+                                     void* pImage, void ** hMutex)
 {
   SRTMHGTDataset* poGDS = (SRTMHGTDataset*) poDS;
 
@@ -136,6 +137,7 @@ CPLErr SRTMHGTRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
   if((poGDS == NULL) || (poGDS->fpImage == NULL))
     return CE_Failure;
 
+  CPLMutexHolderD( hMutex );
 /* -------------------------------------------------------------------- */
 /*      Load the desired data into the working buffer.                  */
 /* -------------------------------------------------------------------- */
@@ -152,7 +154,8 @@ CPLErr SRTMHGTRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 /*                             IWriteBlock()                            */
 /************************************************************************/
 
-CPLErr SRTMHGTRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void* pImage)
+CPLErr SRTMHGTRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, 
+                                      void* pImage, void ** hMutex)
 {
     SRTMHGTDataset* poGDS = (SRTMHGTDataset*) poDS;
 
@@ -166,6 +169,7 @@ CPLErr SRTMHGTRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void* pIma
     if((poGDS == NULL) || (poGDS->fpImage == NULL) || (poGDS->eAccess != GA_Update))
         return CE_Failure;
 
+    CPLMutexHolderD( hMutex );
     VSIFSeekL(poGDS->fpImage, nBlockYOff*nBlockXSize*2, SEEK_SET);
 
 #ifdef CPL_LSB

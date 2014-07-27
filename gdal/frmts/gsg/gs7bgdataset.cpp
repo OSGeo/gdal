@@ -36,6 +36,7 @@
 #include <assert.h>
 
 #include "gdal_pam.h"
+#include "cpl_multiproc.h"
 
 #ifndef DBL_MAX
 # ifdef __DBL_MAX__
@@ -151,8 +152,8 @@ class GS7BGRasterBand : public GDALPamRasterBand
     GS7BGRasterBand( GS7BGDataset *, int );
     ~GS7BGRasterBand();
 
-    CPLErr IReadBlock( int, int, void * );
-    CPLErr IWriteBlock( int, int, void * );
+    CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
+    CPLErr IWriteBlock( int, int, void *, void ** hMutex = NULL );
     double GetMinimum( int *pbSuccess = NULL );
     double GetMaximum( int *pbSuccess = NULL );
 
@@ -285,9 +286,10 @@ CPLErr GS7BGRasterBand::ScanForMinMaxZ()
 /************************************************************************/
 
 CPLErr GS7BGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-        void * pImage )
+        void * pImage, void ** hMutex )
 
 {
+    CPLMutexHolderD( hMutex );
     if( nBlockYOff < 0 || nBlockYOff > nRasterYSize - 1 || nBlockXOff != 0 )
         return CE_Failure;
 
@@ -324,9 +326,10 @@ CPLErr GS7BGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr GS7BGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-                    void *pImage )
+                    void *pImage, void ** hMutex )
 
 {
+    CPLMutexHolderD( hMutex );
     if( eAccess == GA_ReadOnly )
     {
         CPLError( CE_Failure, CPLE_NoWriteAccess,

@@ -31,6 +31,7 @@
 #include <float.h>
 #include <zlib.h>
 #include "gdal_pam.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -160,7 +161,7 @@ class RIKRasterBand : public GDALPamRasterBand
 
     RIKRasterBand( RIKDataset *, int );
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
 };
@@ -275,9 +276,10 @@ static void OutputPixel( GByte pixel,
 /************************************************************************/
 
 CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                  void * pImage, void ** hMutex )
 
 {
+    CPLMutexHolderD( hMutex );
     RIKDataset *poRDS = (RIKDataset *) poDS;
     GByte *blockData;
     GUInt32 blocks;

@@ -33,6 +33,7 @@
 #include "ogr_spatialref.h"
 #include "ogr_api.h"
 #include "ogr_geometry.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -827,7 +828,7 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                  int nXOff, int nYOff, int nXSize, int nYSize,
                                  void * pData, int nBufXSize, int nBufYSize,
                                  GDALDataType eBufType,
-                                 int nPixelSpace, int nLineSpace )
+                                 int nPixelSpace, int nLineSpace, void ** hMutex )
 {
     if( eRWFlag == GF_Write )
         return CE_Failure;
@@ -848,6 +849,7 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 #if !defined(SDK_CAN_DO_SUPERSAMPLING)
     if( poGDS->bUseOldBandRasterIOImplementation )
     {
+        CPLMutexHolderD( hMutex );
         return OldIRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
                             pData, nBufXSize, nBufYSize,
                             eBufType,
@@ -865,14 +867,15 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                             (nYSize == nRasterYSize) ? poGDS->nRasterYSize : nYSize * nResFactor,
                             pData, nBufXSize, nBufYSize,
                             eBufType, 1, &nBand,
-                            nPixelSpace, nLineSpace, nLineSpace*nBufYSize);
+                            nPixelSpace, nLineSpace, nLineSpace*nBufYSize,
+                            hMutex);
 }
 
 /************************************************************************/
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr ECWRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage )
+CPLErr ECWRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage, void ** hMutex )
 
 {
     int nXOff = nBlockXOff * nBlockXSize,
@@ -890,7 +893,7 @@ CPLErr ECWRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage 
     return IRasterIO( GF_Read,
                       nXOff, nYOff, nXSize, nYSize,
                       pImage, nXSize, nYSize,
-                      eDataType, nPixelSpace, nLineSpace );
+                      eDataType, nPixelSpace, nLineSpace, hMutex );
 }
 
 /************************************************************************/

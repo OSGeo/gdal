@@ -31,6 +31,7 @@
 #include "gdal_pam.h"
 #include "bsb_read.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 #include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
@@ -95,7 +96,7 @@ class BSBRasterBand : public GDALPamRasterBand
   public:
     		BSBRasterBand( BSBDataset * );
     
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
     virtual GDALColorTable *GetColorTable();
     virtual GDALColorInterp GetColorInterpretation();
 };
@@ -136,11 +137,12 @@ BSBRasterBand::BSBRasterBand( BSBDataset *poDS )
 /************************************************************************/
 
 CPLErr BSBRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                      void * pImage )
+                                  void * pImage, void ** hMutex )
 
 {
-    BSBDataset *poGDS = (BSBDataset *) poDS;
+    BSBDataset *poGDS = (BSBDataset *) poDS;  
     GByte *pabyScanline = (GByte*) pImage;
+    CPLMutexHolderD( hMutex );
 
     if( BSBReadScanline( poGDS->psInfo, nBlockYOff, pabyScanline ) )
     {

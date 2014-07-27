@@ -29,6 +29,7 @@
 
 #include "gdal_pam.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 
 #include "webp/decode.h"
 #include "webp/encode.h"
@@ -93,7 +94,7 @@ class WEBPRasterBand : public GDALPamRasterBand
 
                    WEBPRasterBand( WEBPDataset *, int );
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
     virtual GDALColorInterp GetColorInterpretation();
 };
 
@@ -117,9 +118,10 @@ WEBPRasterBand::WEBPRasterBand( WEBPDataset *poDS, int nBand )
 /************************************************************************/
 
 CPLErr WEBPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                  void * pImage, void ** hMutex )
 
 {
+    CPLMutexHolderD( hMutex );
     WEBPDataset* poGDS = (WEBPDataset*) poDS;
 
     if( poGDS->Uncompress() != CE_None )

@@ -268,6 +268,8 @@ GDALRasterBlock::GDALRasterBlock( GDALRasterBand *poBandIn,
 
     poBand = poBandIn;
     poManager = poManagerIn;
+    
+    hRWMutex = NULL;
 
     poBand->GetBlockSize( &nXSize, &nYSize );
     eType = poBand->GetRasterDataType();
@@ -297,6 +299,8 @@ GDALRasterBlock::GDALRasterBlock( GDALRasterBand *poBandIn,
 GDALRasterBlock::~GDALRasterBlock()
 
 {
+    if( hRWMutex != NULL )
+        CPLDestroyMutex( hRWMutex );
     if( pData != NULL )
     {
         VSIFree( pData );
@@ -304,6 +308,22 @@ GDALRasterBlock::~GDALRasterBlock()
 
     CPLAssert( nLockCount == 0 );
 
+}
+
+/************************************************************************/
+/*                             GetRWMutex()                             */
+/************************************************************************/
+
+/**
+ * \brief Fetch the mutex to protect against multiple readwrites against
+ * the block at once.
+ *
+ * @return the pointer to the Mutex
+ */
+
+void **GDALRasterBlock::GetRWMutex()
+{
+    return &hRWMutex;
 }
 
 /************************************************************************/
@@ -317,7 +337,8 @@ GDALRasterBlock::~GDALRasterBlock()
 void GDALRasterBlock::AddLock()
 
 {
-    CPLMutexHolderD( &(poBand->hBandMutex) );
+    //CPLMutexHolderD( &(poBand->hBandMutex) );
+    CPLMutexHolderD( &hRWMutex );
     nLockCount++;
 }
 
@@ -334,20 +355,20 @@ void GDALRasterBlock::DropLock()
 {
     int bDeleteNow = FALSE;
     {
-        CPLMutexHolderD( &(poBand->hBandMutex) );
+        CPLMutexHolderD( &hRWMutex );
         nLockCount--;
-        CPLAssert( nLockCount >= 0 );
+        //CPLAssert( nLockCount >= 0 );
         if ( nLockCount == 0 && bDelete )
         {
-            if ( bAttachedToCache )
-                Detach();
-            if ( bAttachedToBand )
-                poBand->UnadoptBlock(nXOff, nYOff);
             bDeleteNow = TRUE;
         }
     }
     if ( bDeleteNow ) 
     {
+        if ( bAttachedToCache )
+            Detach();
+        if ( bAttachedToBand )
+            poBand->UnadoptBlock(nXOff, nYOff);
         if ( bDirty )
             Write();
         delete this; 
@@ -420,11 +441,6 @@ void GDALRasterBlock::Detach()
 CPLErr GDALRasterBlock::Write()
 
 {
-    if ( !GetDirty() )
-        return CE_None;
-
-    CPLMutexHolderD( poBand->GetRWMutex() );
-    
     if( !GetDirty() )
         return CE_None;
 
@@ -434,7 +450,7 @@ CPLErr GDALRasterBlock::Write()
     MarkClean();
 
     if (poBand->eFlushBlockErr == CE_None)
-        return poBand->IWriteBlock( nXOff, nYOff, pData );
+        return poBand->IWriteBlock( nXOff, nYOff, pData, GetRWMutex() );
     else
         return poBand->eFlushBlockErr;
 }

@@ -32,6 +32,7 @@
 
 #include "gdal_pam.h"
 #include "cpl_minixml.h"
+#include "cpl_multiproc.h"
 #include "ogr_spatialref.h"
 
 #define MAX_GCPS 5000    //this should be more than enough ground control points
@@ -127,7 +128,7 @@ public:
         ePolarization ePol, GDALDataset *poBand );
     virtual ~TSXRasterBand();
 
-    virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage );
+    virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage, void ** hMutex = NULL );
 
     static GDALDataset *Open( GDALOpenInfo *poOpenInfo );
 };
@@ -180,13 +181,14 @@ TSXRasterBand::~TSXRasterBand() {
 /************************************************************************/
 
 CPLErr TSXRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                  void * pImage, void ** hMutex )
 {
     int nRequestYSize;
 
     /* Check if the last strip is partial so we can avoid over-requesting */
     if ( (nBlockYOff + 1) * nBlockYSize > nRasterYSize ) {
         nRequestYSize = nRasterYSize - nBlockYOff * nBlockYSize;
+        CPLMutexHolderD( hMutex );
         memset( pImage, 0, (GDALGetDataTypeSize( eDataType ) / 8) *
             nBlockXSize * nBlockYSize);
     }
@@ -199,13 +201,13 @@ CPLErr TSXRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return poBand->RasterIO( GF_Read, nBlockXOff * nBlockXSize,
             nBlockYOff * nBlockYSize, nBlockXSize, nRequestYSize,
             pImage, nBlockXSize, nRequestYSize, GDT_CInt16, 1, NULL, 4,
-            nBlockXSize * 4, 0 );
+            nBlockXSize * 4, 0, hMutex );
     }
     else { /* Detected Product */
         return poBand->RasterIO( GF_Read, nBlockXOff * nBlockXSize,
             nBlockYOff * nBlockYSize, nBlockXSize, nRequestYSize,
             pImage, nBlockXSize, nRequestYSize, GDT_UInt16, 1, NULL, 2,
-            nBlockXSize * 2, 0 );
+            nBlockXSize * 2, 0, hMutex );
     }
 }
 

@@ -35,6 +35,7 @@
 #include "cpl_conv.h"
 #include "cpl_vsi.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -97,7 +98,7 @@ class GFFRasterBand : public GDALPamRasterBand {
     int nSampleSize;
 public:
     GFFRasterBand( GFFDataset *, int, GDALDataType );
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void **hMutex = NULL );
 };
 
 /************************************************************************/
@@ -138,8 +139,9 @@ GFFRasterBand::GFFRasterBand( GFFDataset *poDS, int nBand,
 /************************************************************************/
 
 CPLErr GFFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-				void *pImage ) 
+				void *pImage, void **hMutex ) 
 {
+    CPLMutexHolderD( hMutex );
     GFFDataset *poGDS = (GFFDataset *)poDS;
     long nOffset = poGDS->nLength;
 

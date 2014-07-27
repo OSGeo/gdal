@@ -307,7 +307,7 @@ class RPFTOCProxyRasterBandRGBA : public GDALPamRasterBand
 
     protected:
         virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff,
-                                   void * pImage );
+                                   void * pImage, void ** hMutex = NULL );
 };
 
 /************************************************************************/
@@ -346,7 +346,7 @@ void  RPFTOCProxyRasterBandRGBA::Expand(void* pImage, const void* srcImage)
 /************************************************************************/
 
 CPLErr RPFTOCProxyRasterBandRGBA::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                         void * pImage )
+                                         void * pImage, void ** hMutex )
 {
     CPLErr ret;
     RPFTOCProxyRasterDataSet* proxyDS = (RPFTOCProxyRasterDataSet*)poDS;
@@ -394,9 +394,10 @@ CPLErr RPFTOCProxyRasterBandRGBA::IReadBlock( int nBlockXOff, int nBlockYOff,
         {
             CPLDebug("RPFTOC", "Read (%d, %d) of band %d, of file %s",
                      nBlockXOff, nBlockYOff, nBand, GetDescription());
-            ret = srcBand->ReadBlock(nBlockXOff, nBlockYOff, pImage);
+            ret = srcBand->ReadBlock(nBlockXOff, nBlockYOff, pImage, hMutex);
             if (ret == CE_None)
             {
+                CPLMutexHolderD( hMutex );
                 proxyDS->GetSubDataset()->SetCachedTile
                         (GetDescription(), nBlockXOff, nBlockYOff, pImage, blockByteSize);
                 Expand(pImage, pImage);
@@ -427,6 +428,7 @@ CPLErr RPFTOCProxyRasterBandRGBA::IReadBlock( int nBlockXOff, int nBlockYOff,
         }
         else
         {
+            CPLMutexHolderD( hMutex );
             Expand(pImage, cachedImage);
             ret = CE_None;
         }
@@ -485,7 +487,7 @@ class RPFTOCProxyRasterBandPalette : public GDALPamRasterBand
 
     protected:
         virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff,
-                                   void * pImage );
+                                   void * pImage, void **hMutex = NULL );
 };
 
 /************************************************************************/
@@ -493,7 +495,7 @@ class RPFTOCProxyRasterBandPalette : public GDALPamRasterBand
 /************************************************************************/
 
 CPLErr RPFTOCProxyRasterBandPalette::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                                 void * pImage )
+                                                 void * pImage, void **hMutex )
 {
     CPLErr ret;
     RPFTOCProxyRasterDataSet* proxyDS = (RPFTOCProxyRasterDataSet*)poDS;
@@ -507,7 +509,7 @@ CPLErr RPFTOCProxyRasterBandPalette::IReadBlock( int nBlockXOff, int nBlockYOff,
         }
 
         GDALRasterBand* srcBand = ds->GetRasterBand(1);
-        ret = srcBand->ReadBlock(nBlockXOff, nBlockYOff, pImage);
+        ret = srcBand->ReadBlock(nBlockXOff, nBlockYOff, pImage, hMutex);
         
         if (initDone == FALSE)
         {
@@ -532,6 +534,7 @@ CPLErr RPFTOCProxyRasterBandPalette::IReadBlock( int nBlockXOff, int nBlockYOff,
 
         if (samePalette == FALSE)
         {
+            CPLMutexHolderD( hMutex );
             unsigned char* data = (unsigned char*)pImage;
             int i;
             for(i=0;i<blockByteSize;i++)

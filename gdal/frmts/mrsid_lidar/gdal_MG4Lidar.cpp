@@ -38,6 +38,7 @@
 #include "lidar/FileIO.h"
 #include "lidar/Error.h"
 #include "lidar/Version.h"
+#include "cpl_multiproc.h"
 #include <float.h>
 LT_USE_LIDAR_NAMESPACE
 
@@ -114,7 +115,7 @@ public:
    virtual CPLErr GetStatistics( int bApproxOK, int bForce, double *pdfMin, double *pdfMax, double *pdfMean, double *padfStdDev );
    virtual int GetOverviewCount();
    virtual GDALRasterBand * GetOverview( int i );
-   virtual CPLErr IReadBlock( int, int, void * );
+   virtual CPLErr IReadBlock( int, int, void *, void ** h Mutex = NULL );
    virtual double GetNoDataValue( int *pbSuccess = NULL );
 
    protected:
@@ -467,8 +468,9 @@ double MG4LidarRasterBand::getMaxValue()
 /************************************************************************/
 
 CPLErr MG4LidarRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                      void * pImage )
+                                      void * pImage, void ** hMutex )
 {
+   CPLMutexHolderD( hMutex );
    CPLErr eErr;
    switch(eDataType)
    {

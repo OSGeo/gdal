@@ -32,6 +32,7 @@
  * SOFTWARE.
  **********************************************************************/
 #include "postgisraster.h"
+#include "cpl_multiproc.h"
 
 /************************
  * \brief Constructor
@@ -87,8 +88,9 @@ GBool PostGISRasterTileRasterBand::IsCached()
  * \brief Read a natural block of raster band data
  *****************************************************/
 CPLErr PostGISRasterTileRasterBand::IReadBlock(int nBlockXOff, 
-    int nBlockYOff, void * pImage)
+    int nBlockYOff, void * pImage, void ** hMutex)
 {
+    CPLMutexHolderD( hMutex );
     CPLString osCommand;
     PGresult * poResult = NULL;
     int nWKBLength = 0;

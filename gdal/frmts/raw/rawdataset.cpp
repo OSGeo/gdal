@@ -31,6 +31,7 @@
 #include "rawdataset.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -349,9 +350,10 @@ CPLErr RawRasterBand::AccessLine( int iLine )
 /************************************************************************/
 
 CPLErr RawRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                  void * pImage, void ** hMutex )
 
 {
+    CPLMutexHolderD( hMutex );
     CPLErr		eErr;
 
     CPLAssert( nBlockXOff == 0 );
@@ -376,9 +378,10 @@ CPLErr RawRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr RawRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-                                   void * pImage )
+                                   void * pImage, void ** hMutex )
 
 {
+    CPLMutexHolderD( hMutex );
     CPLErr		eErr = CE_None;
 
     CPLAssert( nBlockXOff == 0 );
@@ -620,7 +623,8 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                  int nXOff, int nYOff, int nXSize, int nYSize,
                                  void * pData, int nBufXSize, int nBufYSize,
                                  GDALDataType eBufType,
-                                 int nPixelSpace, int nLineSpace )
+                                 int nPixelSpace, int nLineSpace, 
+                                 void ** hMutex )
 
 {
     int         nBandDataSize = GDALGetDataTypeSize(eDataType) / 8;
@@ -633,7 +637,7 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                           nXSize, nYSize,
                                           pData, nBufXSize, nBufYSize,
                                           eBufType,
-                                          nPixelSpace, nLineSpace );
+                                          nPixelSpace, nLineSpace, hMutex );
     }
 
     CPLDebug("RAW", "Using direct IO implementation");
@@ -652,7 +656,7 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         {
             if( OverviewRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
                                   pData, nBufXSize, nBufYSize, 
-                                  eBufType, nPixelSpace, nLineSpace ) == CE_None )
+                                  eBufType, nPixelSpace, nLineSpace, hMutex ) == CE_None )
                 return CE_None;
         }
 
@@ -670,6 +674,7 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         {
             vsi_l_offset nOffset = nImgOffset
                               + (vsi_l_offset)nYOff * nLineOffset + nXOff;
+            CPLMutexHolderD( hMutex );
             if ( AccessBlock( nOffset,
                               nXSize * nYSize * nBandDataSize, pData ) != CE_None )
             {
@@ -694,6 +699,7 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
             pabyData = (GByte *) CPLMalloc( nBytesToRW );
 
+            CPLMutexHolderD( hMutex );
             for ( iLine = 0; iLine < nBufYSize; iLine++ )
             {
                 vsi_l_offset nOffset = nImgOffset
@@ -745,6 +751,7 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     {
         int nBytesActuallyWritten;
 
+        CPLMutexHolderD( hMutex );
 /* ==================================================================== */
 /*   1. Simplest case when we should write contiguous block             */
 /*   of uninterleaved pixels.                                           */

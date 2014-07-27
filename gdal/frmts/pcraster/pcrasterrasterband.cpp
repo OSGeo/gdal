@@ -49,7 +49,7 @@
 #define INCLUDED_PCRASTERUTIL
 #endif
 
-
+#include "cpl_multiproc.h"
 
 /*!
   \file
@@ -250,8 +250,10 @@ double PCRasterRasterBand::GetMaximum(
 CPLErr PCRasterRasterBand::IReadBlock(
          int nBlockXoff,
          int nBlockYoff,
-         void* buffer)
+         void* buffer,
+         void ** hMutex)
 {
+  CPLMutexHolderD( hMutex );
   size_t nrCellsRead = RgetRow(d_dataset->map(), nBlockYoff, buffer);
 
   // Now we have raw values, missing values are set according to the CSF

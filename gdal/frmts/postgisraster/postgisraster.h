@@ -334,9 +334,9 @@ public:
     virtual double GetNoDataValue(int *pbSuccess = NULL);
     virtual CPLErr SetNoDataValue(double);
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, 
-		int, int, GDALDataType, int, int);
+		int, int, GDALDataType, int, int, void ** hMutex = NULL);
 #ifdef notdef
-    virtual CPLErr IReadBlock(int, int, void *);
+    virtual CPLErr IReadBlock(int, int, void *, void **hMutex = NULL);
 #endif
     virtual int GetOverviewCount();
     virtual GDALRasterBand * GetOverview(int);
@@ -394,7 +394,7 @@ public:
         GDALDataType eDataType,
         GBool bIsOffline = false);
 	~PostGISRasterTileRasterBand();
-	virtual CPLErr IReadBlock(int, int, void *);
+	virtual CPLErr IReadBlock(int, int, void *, void ** hMutex = NULL);
 };
 
 #endif // POSTGISRASTER_H_INCLUDED

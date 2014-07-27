@@ -29,6 +29,7 @@
  ****************************************************************************/
 
 #include "gdal_pam.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -119,7 +120,7 @@ class JDEMRasterBand : public GDALPamRasterBand
     		JDEMRasterBand( JDEMDataset *, int );
                 ~JDEMRasterBand();
     
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
 };
 
 
@@ -158,9 +159,10 @@ JDEMRasterBand::~JDEMRasterBand()
 /************************************************************************/
 
 CPLErr JDEMRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                  void * pImage, void ** hMutex )
 
 {
+    CPLMutexHolderD( hMutex );
     JDEMDataset *poGDS = (JDEMDataset *) poDS;
     int		i;
     

@@ -1201,7 +1201,7 @@ CPLErr VRTWarpedDataset::ProcessBlock( int iBlockX, int iBlockY )
         {
             if ( poBlock->GetDataRef() != NULL )
             {
-                CPLMutexHolderD( poBand->GetRWMutex() );
+                CPLMutexHolderD( poBlock->GetRWMutex() );
                 GDALCopyWords( pabyDstBuffer + iBand*nBlockXSize*nBlockYSize*nWordSize,
                             psWO->eWorkingDataType, nWordSize, 
                             poBlock->GetDataRef(), 
@@ -1276,7 +1276,7 @@ VRTWarpedRasterBand::~VRTWarpedRasterBand()
 /************************************************************************/
 
 CPLErr VRTWarpedRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                     void * pImage )
+                                     void * pImage, void **hMutex )
 
 {
     CPLErr eErr;
@@ -1294,7 +1294,8 @@ CPLErr VRTWarpedRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         int nDataBytes;
         nDataBytes = (GDALGetDataTypeSize(poBlock->GetDataType()) / 8)
             * poBlock->GetXSize() * poBlock->GetYSize();
-        CPLMutexHolderD( GetRWMutex() );
+        CPLMutexHolderD( hMutex );
+        CPLMutexHolderD2( poBlock->GetRWMutex() );
         memcpy( pImage, poBlock->GetDataRef(), nDataBytes );
     }
 
@@ -1308,7 +1309,7 @@ CPLErr VRTWarpedRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr VRTWarpedRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-                                     void * pImage )
+                                     void * pImage, void ** hMutex )
 
 {
     CPLErr eErr;
@@ -1326,7 +1327,7 @@ CPLErr VRTWarpedRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     else
     {
         /* Otherwise, call the superclass method, that will fail of course */
-        eErr = VRTRasterBand::IWriteBlock(nBlockXOff, nBlockYOff, pImage);
+        eErr = VRTRasterBand::IWriteBlock(nBlockXOff, nBlockYOff, pImage, hMutex);
     }
 
     return eErr;

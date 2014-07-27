@@ -88,6 +88,7 @@ CPL_C_END
 
 /* Instanciates the mutex if not already done */
 #define CPLMutexHolderD(x)  CPLMutexHolder oHolder(x,1000.0,__FILE__,__LINE__);
+#define CPLMutexHolderD2(x)  CPLMutexHolder oHolder2(x,1000.0,__FILE__,__LINE__);
 
 /* This variant assumes the the mutex has already been created. If not, it will */
 /* be a no-op */

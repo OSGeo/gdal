@@ -160,7 +160,7 @@ class PCIDSKTiledRasterBand : public GDALPamRasterBand
                 PCIDSKTiledRasterBand( PCIDSKDataset *, int, int );
                 ~PCIDSKTiledRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL);
 
     int         SysRead( vsi_l_offset nOffset, int nSize, void * );
 

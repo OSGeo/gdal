@@ -228,10 +228,10 @@ public:
                        JPIPKAKDataset * );
     ~JPIPKAKRasterBand();
     
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex );
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int );
+                              int, int, void ** hMutex );
 
     virtual int    GetOverviewCount();
     virtual GDALRasterBand *GetOverview( int );

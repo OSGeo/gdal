@@ -96,7 +96,8 @@ class KmlSuperOverlayReadDataset : public GDALDataset
                                void * pData, int nBufXSize, int nBufYSize,
                                GDALDataType eBufType, 
                                int nBandCount, int *panBandMap,
-                               int nPixelSpace, int nLineSpace, int nBandSpace);
+                               int nPixelSpace, int nLineSpace, int nBandSpace,
+                               void ** hMutex = NULL);
 };
 
 /************************************************************************/
@@ -109,10 +110,10 @@ class KmlSuperOverlayRasterBand: public GDALRasterBand
                     KmlSuperOverlayRasterBand(KmlSuperOverlayReadDataset* poDS, int nBand);
   protected:
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL);
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int );
+                              int, int, void ** hMutex = NULL );
     virtual GDALColorInterp GetColorInterpretation();
 
     virtual int GetOverviewCount();
