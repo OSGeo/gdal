@@ -115,7 +115,7 @@ public:
    virtual CPLErr GetStatistics( int bApproxOK, int bForce, double *pdfMin, double *pdfMax, double *pdfMean, double *padfStdDev );
    virtual int GetOverviewCount();
    virtual GDALRasterBand * GetOverview( int i );
-   virtual CPLErr IReadBlock( int, int, void *, void ** h Mutex = NULL );
+   virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
    virtual double GetNoDataValue( int *pbSuccess = NULL );
 
    protected:
