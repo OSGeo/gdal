@@ -1163,7 +1163,7 @@ CPLErr RawDataset::IRasterIO( GDALRWFlag eRWFlag,
                               GDALDataType eBufType,
                               int nBandCount, int *panBandMap, 
                               int nPixelSpace, int nLineSpace, int nBandSpace,
-                              void ** hMutex = NULL )
+                              void ** hMutex )
 
 {
     const char* pszInterleave;
