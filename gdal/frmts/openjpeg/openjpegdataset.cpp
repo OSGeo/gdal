@@ -333,7 +333,7 @@ CPLErr JP2OpenJPEGRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                          int nXOff, int nYOff, int nXSize, int nYSize,
                                          void * pData, int nBufXSize, int nBufYSize,
                                          GDALDataType eBufType,
-                                         int nPixelSpace, int nLineSpace )
+                                         int nPixelSpace, int nLineSpace, void ** hMutex )
 {
     JP2OpenJPEGDataset *poGDS = (JP2OpenJPEGDataset *) poDS;
 
@@ -360,7 +360,7 @@ CPLErr JP2OpenJPEGRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
             return poOverviewBand->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                             pData, nBufXSize, nBufYSize, eBufType,
-                                            nPixelSpace, nLineSpace );
+                                            nPixelSpace, nLineSpace, hMutex );
         }
     }
 
@@ -368,7 +368,7 @@ CPLErr JP2OpenJPEGRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
     CPLErr eErr = GDALPamRasterBand::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                          pData, nBufXSize, nBufYSize, eBufType,
-                                         nPixelSpace, nLineSpace );
+                                         nPixelSpace, nLineSpace, hMutex );
 
     poGDS->bEnoughMemoryToLoadOtherBands = TRUE;
     return eErr;
@@ -543,7 +543,8 @@ CPLErr  JP2OpenJPEGDataset::IRasterIO( GDALRWFlag eRWFlag,
                                void * pData, int nBufXSize, int nBufYSize,
                                GDALDataType eBufType, 
                                int nBandCount, int *panBandMap,
-                               int nPixelSpace, int nLineSpace, int nBandSpace)
+                               int nPixelSpace, int nLineSpace, int nBandSpace,
+                               void ** hMutex)
 {
     if( eRWFlag != GF_Read )
         return CE_Failure;
@@ -571,7 +572,8 @@ CPLErr  JP2OpenJPEGDataset::IRasterIO( GDALRWFlag eRWFlag,
             return papoOverviewDS[nOverview]->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                                         pData, nBufXSize, nBufYSize, eBufType,
                                                         nBandCount, panBandMap,
-                                                        nPixelSpace, nLineSpace, nBandSpace );
+                                                        nPixelSpace, nLineSpace, nBandSpace,
+                                                        hMutex );
         }
     }
 
@@ -582,7 +584,8 @@ CPLErr  JP2OpenJPEGDataset::IRasterIO( GDALRWFlag eRWFlag,
                                         pData, nBufXSize, nBufYSize,
                                         eBufType, 
                                         nBandCount, panBandMap,
-                                        nPixelSpace, nLineSpace, nBandSpace );
+                                        nPixelSpace, nLineSpace, nBandSpace,
+                                        hMutex );
 
     bEnoughMemoryToLoadOtherBands = TRUE;
     return eErr;
@@ -694,8 +697,10 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
         int bPromoteTo8Bit = ((JP2OpenJPEGRasterBand*)GetRasterBand(iBand))->bPromoteTo8Bit;
 
         if (iBand == nBand)
+        {
             pDstBuffer = pImage;
             hThisMutex = hMutex;
+        }
         else
         {
             poBlock = ((JP2OpenJPEGRasterBand*)GetRasterBand(iBand))->
