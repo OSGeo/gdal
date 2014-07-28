@@ -1541,7 +1541,8 @@ class CPL_DLL ECWWriteDataset : public GDALDataset
                               void * pData, int nBufXSize, int nBufYSize,
                               GDALDataType eBufType, 
                               int nBandCount, int *panBandMap,
-                              int nPixelSpace, int nLineSpace, int nBandSpace);
+                              int nPixelSpace, int nLineSpace, int nBandSpace,
+                              void ** hMutex = NULL);
 #endif
 };
 
@@ -1818,7 +1819,8 @@ CPLErr ECWWriteDataset::IRasterIO( GDALRWFlag eRWFlag,
                               void * pData, int nBufXSize, int nBufYSize,
                               GDALDataType eBufType, 
                               int nBandCount, int *panBandMap,
-                              int nPixelSpace, int nLineSpace, int nBandSpace)
+                              int nPixelSpace, int nLineSpace, int nBandSpace,
+                              void ** hMutex)
 {
     ECWWriteRasterBand* po4thBand = NULL;
     IRasterIORequest* poIORequest = NULL;
@@ -1858,13 +1860,13 @@ CPLErr ECWWriteDataset::IRasterIO( GDALRWFlag eRWFlag,
             for(int iBand = 0; iBand < nBandCount; iBand ++)
             {
                 GetRasterBand(panBandMap[iBand])->WriteBlock(0, iY + nYOff,
-                    pabyData + iY * nLineSpace + iBand * nBandSpace);
+                    pabyData + iY * nLineSpace + iBand * nBandSpace, hMutex);
             }
 
             if( poIORequest != NULL )
             {
                 po4thBand->WriteBlock(0, iY + nYOff,
-                    poIORequest->pabyData + iY * nDataTypeSize * nXSize);
+                    poIORequest->pabyData + iY * nDataTypeSize * nXSize, hMutex);
             }
         }
 
@@ -1882,7 +1884,8 @@ CPLErr ECWWriteDataset::IRasterIO( GDALRWFlag eRWFlag,
                               pData, nBufXSize, nBufYSize,
                               eBufType, 
                               nBandCount, panBandMap,
-                              nPixelSpace, nLineSpace, nBandSpace);
+                              nPixelSpace, nLineSpace, nBandSpace,
+                              hMutex);
 }
 #endif
 
