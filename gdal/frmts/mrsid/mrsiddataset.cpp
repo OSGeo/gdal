@@ -261,7 +261,7 @@ class MrSIDDataset : public GDALJP2AbstractDataset
 
     virtual CPLErr      IRasterIO( GDALRWFlag, int, int, int, int, void *,
                                    int, int, GDALDataType, int, int *,int,
-                                   int, int );
+                                   int, int, void ** hMutex = NULL );
 
   protected:
     virtual int         CloseDependentDatasets();
@@ -825,7 +825,8 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
                                 void * pData, int nBufXSize, int nBufYSize,
                                 GDALDataType eBufType, 
                                 int nBandCount, int *panBandMap,
-                                int nPixelSpace, int nLineSpace, int nBandSpace )
+                                int nPixelSpace, int nLineSpace, int nBandSpace,
+                                void ** hMutex )
 
 {
 /* -------------------------------------------------------------------- */
@@ -846,7 +847,8 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
         return GDALDataset::BlockBasedRasterIO( 
             eRWFlag, nXOff, nYOff, nXSize, nYSize,
             pData, nBufXSize, nBufYSize, eBufType, 
-            nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace );
+            nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace,
+            hMutex );
     CPLDebug( "MrSID", "RasterIO() - using optimized dataset level IO." );
     
 /* -------------------------------------------------------------------- */
@@ -958,7 +960,7 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
 /*      do a more direct copy without subsampling.                      */
 /* -------------------------------------------------------------------- */
     int         iBufLine, iBufPixel;
-
+    CPLMutexHolderD( hMutex );
     if( nBufXSize == sceneWidth && nBufYSize == sceneHeight )
     {
         for( int iBand = 0; iBand < nBandCount; iBand++ )

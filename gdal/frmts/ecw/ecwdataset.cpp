@@ -1765,7 +1765,8 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
                               void * pData, int nBufXSize, int nBufYSize,
                               GDALDataType eBufType, 
                               int nBandCount, int *panBandMap,
-                              int nPixelSpace, int nLineSpace, int nBandSpace)
+                              int nPixelSpace, int nLineSpace, int nBandSpace,
+                              void ** hMutex)
     
 {
     if( eRWFlag == GF_Write )
@@ -1813,7 +1814,8 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
                                     pData, nBufXSize, nBufYSize,
                                     eBufType, 
                                     nBandCount, panBandMap,
-                                    nPixelSpace, nLineSpace, nBandSpace);
+                                    nPixelSpace, nLineSpace, nBandSpace,
+                                    hMutex);
         }
     }
 #endif
@@ -1836,6 +1838,7 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
         if( sCachedMultiBandIO.bEnabled &&
             sCachedMultiBandIO.pabyData != NULL )
         {
+            CPLMutexHolderD( hMutex );
             int j;
             int nDataTypeSize = GDALGetDataTypeSize(eBufType) / 8;
             for(j = 0; j < nBufYSize; j++)
@@ -1862,12 +1865,14 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      Try to do it based on existing "advised" access.                */
 /* -------------------------------------------------------------------- */
-    if( TryWinRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
-                        (GByte *) pData, nBufXSize, nBufYSize, 
-                        eBufType, nBandCount, panBandMap,
-                        nPixelSpace, nLineSpace, nBandSpace ) )
-        return CE_None;
-
+    {
+        CPLMutexHolderD( hMutex );
+        if( TryWinRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
+                            (GByte *) pData, nBufXSize, nBufYSize, 
+                            eBufType, nBandCount, panBandMap,
+                            nPixelSpace, nLineSpace, nBandSpace ) )
+            return CE_None;
+    }
 /* -------------------------------------------------------------------- */
 /*      If we are requesting a single line at 1:1, we do a multi-band   */
 /*      AdviseRead() and then TryWinRasterIO() again.                   */
@@ -1893,7 +1898,8 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
                                     pData, nBufXSize, nBufYSize,
                                     eBufType, 
                                     nBandCount, panBandMap,
-                                    nPixelSpace, nLineSpace, nBandSpace);
+                                    nPixelSpace, nLineSpace, nBandSpace,
+                                    hMutex);
         bUseOldBandRasterIOImplementation = FALSE;
         return eErr;
     }
@@ -1906,7 +1912,7 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
         //ERO; indeed, the logic could be improved to detect successive pattern of single line reading
         //before doing an AdviseRead.
         CPLErr eErr;
-
+        CPLMutexHolderD( hMutex );
         eErr = AdviseRead( nXOff, nYOff, nXSize, GetRasterYSize() - nYOff,
                            nBufXSize, (nRasterYSize - nYOff) / nYSize, eBufType, 
                            nBandCount, panBandMap, NULL );
@@ -1934,6 +1940,7 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
         anBandIndices[i] = panBandMap[i] - 1;
 
     CleanupWindow();
+    CPLMutexHolderD( hMutex );
 
 /* -------------------------------------------------------------------- */
 /*      Cache data in the context of a multi-band reading pattern.      */
