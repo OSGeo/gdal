@@ -1137,7 +1137,7 @@ class PDFImageRasterBand : public PDFRasterBand
 
                 PDFImageRasterBand( PDFDataset *, int );
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void **hMutex = NULL );
 };
 
 
@@ -1155,9 +1155,10 @@ PDFImageRasterBand::PDFImageRasterBand( PDFDataset *poDS, int nBand ) : PDFRaste
 /************************************************************************/
 
 CPLErr PDFImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                  void * pImage, void ** hMutex )
 
 {
+    CPLMutexHolderD( hMutex );
     PDFDataset *poGDS = (PDFDataset *) poDS;
     CPLAssert(poGDS->poImageObj != NULL);
 
