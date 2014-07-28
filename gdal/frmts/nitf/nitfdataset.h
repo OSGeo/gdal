@@ -135,7 +135,7 @@ class NITFDataset : public GDALPamDataset
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int *, int, int, int );
+                              int, int *, int, int, int, void ** hMutex = NULL );
 
     virtual const char *GetProjectionRef(void);
     virtual CPLErr SetProjection( const char * );

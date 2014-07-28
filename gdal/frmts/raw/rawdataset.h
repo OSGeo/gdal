@@ -52,7 +52,7 @@ class CPL_DLL RawDataset : public GDALPamDataset
   protected:
     virtual CPLErr      IRasterIO( GDALRWFlag, int, int, int, int,
                                    void *, int, int, GDALDataType,
-                                   int, int *, int, int, int );
+                                   int, int *, int, int, int, void ** hMutex = NULL );
   public:
                  RawDataset();
                  ~RawDataset() = 0;

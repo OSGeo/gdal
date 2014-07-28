@@ -1162,7 +1162,8 @@ CPLErr RawDataset::IRasterIO( GDALRWFlag eRWFlag,
                               void *pData, int nBufXSize, int nBufYSize, 
                               GDALDataType eBufType,
                               int nBandCount, int *panBandMap, 
-                              int nPixelSpace, int nLineSpace, int nBandSpace )
+                              int nPixelSpace, int nLineSpace, int nBandSpace,
+                              void ** hMutex = NULL )
 
 {
     const char* pszInterleave;
@@ -1204,7 +1205,7 @@ CPLErr RawDataset::IRasterIO( GDALRWFlag eRWFlag,
                 
                 eErr = poBand->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
                                         (void *) pabyBandData, nBufXSize, nBufYSize,
-                                        eBufType, nPixelSpace, nLineSpace );
+                                        eBufType, nPixelSpace, nLineSpace, hMutex );
             }
 
             return eErr;
@@ -1214,7 +1215,7 @@ CPLErr RawDataset::IRasterIO( GDALRWFlag eRWFlag,
     return  GDALDataset::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                     pData, nBufXSize, nBufYSize, eBufType, 
                                     nBandCount, panBandMap, 
-                                    nPixelSpace, nLineSpace, nBandSpace );
+                                    nPixelSpace, nLineSpace, nBandSpace, hMutex );
 }
 
 

@@ -66,7 +66,7 @@ class WEBPDataset : public GDALPamDataset
 
     virtual CPLErr      IRasterIO( GDALRWFlag, int, int, int, int,
                                    void *, int, int, GDALDataType,
-                                   int, int *, int, int, int );
+                                   int, int *, int, int, int, void ** hMutex );
 
     virtual char      **GetMetadataDomainList();
     virtual char  **GetMetadata( const char * pszDomain = "" );
@@ -330,7 +330,8 @@ CPLErr WEBPDataset::IRasterIO( GDALRWFlag eRWFlag,
                               void *pData, int nBufXSize, int nBufYSize,
                               GDALDataType eBufType,
                               int nBandCount, int *panBandMap,
-                              int nPixelSpace, int nLineSpace, int nBandSpace )
+                              int nPixelSpace, int nLineSpace, int nBandSpace,
+                              void ** hMutex )
 
 {
     if((eRWFlag == GF_Read) &&
@@ -346,6 +347,7 @@ CPLErr WEBPDataset::IRasterIO( GDALRWFlag eRWFlag,
        (panBandMap != NULL) &&
        (panBandMap[0] == 1) && (panBandMap[1] == 2) && (panBandMap[2] == 3) && (nBands == 3 || panBandMap[3] == 4))
     {
+        CPLMutexHolderD( hMutex );
         Uncompress();
         memcpy(pData, pabyUncompressed, nBands * nXSize * nYSize);
         return CE_None;
@@ -354,7 +356,8 @@ CPLErr WEBPDataset::IRasterIO( GDALRWFlag eRWFlag,
     return GDALPamDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                      pData, nBufXSize, nBufYSize, eBufType,
                                      nBandCount, panBandMap,
-                                     nPixelSpace, nLineSpace, nBandSpace);
+                                     nPixelSpace, nLineSpace, nBandSpace,
+                                     hMutex );
 }
 
 /************************************************************************/
