@@ -663,7 +663,7 @@ public:
     virtual CPLErr  RasterIO( int nXOff, int nYOff, int nXSize, int nYSize, 
                               void *pData, int nBufXSize, int nBufYSize, 
                               GDALDataType eBufType, 
-                              int nPixelSpace, int nLineSpace );
+                              int nPixelSpace, int nLineSpace, void ** hMutex = NULL);
 
     virtual double GetMinimum( int nXSize, int nYSize, int *pbSuccess );
     virtual double GetMaximum( int nXSize, int nYSize, int *pbSuccess );
@@ -724,7 +724,7 @@ public:
     virtual CPLErr RasterIO( int nXOff, int nYOff, int nXSize, int nYSize, 
                              void *pData, int nBufXSize, int nBufYSize, 
                              GDALDataType eBufType, 
-                             int nPixelSpace, int nLineSpace );
+                             int nPixelSpace, int nLineSpace, void ** hMutex );
 
     virtual double GetMinimum( int nXSize, int nYSize, int *pbSuccess );
     virtual double GetMaximum( int nXSize, int nYSize, int *pbSuccess );
@@ -788,7 +788,7 @@ public:
     virtual CPLErr  RasterIO( int nXOff, int nYOff, int nXSize, int nYSize, 
                               void *pData, int nBufXSize, int nBufYSize, 
                               GDALDataType eBufType, 
-                              int nPixelSpace, int nLineSpace );
+                              int nPixelSpace, int nLineSpace, void **hMutex = NULL );
 };
 
 /************************************************************************/

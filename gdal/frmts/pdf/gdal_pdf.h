@@ -279,7 +279,7 @@ class PDFDataset : public GDALPamDataset
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int *, int, int, int );
+                              int, int *, int, int, int, void ** hMutex = NULL );
 
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();

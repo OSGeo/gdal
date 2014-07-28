@@ -60,11 +60,11 @@ D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, IRasterIO,
                         void * pData, int nBufXSize, int nBufYSize,
                         GDALDataType eBufType, 
                         int nBandCount, int *panBandMap,
-                        int nPixelSpace, int nLineSpace, int nBandSpace),
+                        int nPixelSpace, int nLineSpace, int nBandSpace, void ** hMutex),
                         ( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
                         pData, nBufXSize, nBufYSize,
                         eBufType, nBandCount, panBandMap,
-                        nPixelSpace, nLineSpace, nBandSpace ))
+                        nPixelSpace, nLineSpace, nBandSpace, hMutex ))
 
 
 D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, IBuildOverviews,

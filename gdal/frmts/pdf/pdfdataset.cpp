@@ -1443,7 +1443,8 @@ CPLErr PDFDataset::IRasterIO( GDALRWFlag eRWFlag,
                               void * pData, int nBufXSize, int nBufYSize,
                               GDALDataType eBufType, 
                               int nBandCount, int *panBandMap,
-                              int nPixelSpace, int nLineSpace, int nBandSpace )
+                              int nPixelSpace, int nLineSpace, int nBandSpace,
+                              void ** hMutex )
 {
     int nBandBlockXSize, nBandBlockYSize;
     GetRasterBand(1)->GetBlockSize(&nBandBlockXSize, &nBandBlockYSize);
@@ -1462,8 +1463,11 @@ CPLErr PDFDataset::IRasterIO( GDALRWFlag eRWFlag,
         }
 #endif
         if( bReadPixels )
+        {
+            CPLMutexHolderD( hMutex );
             return ReadPixels(nXOff, nYOff, nXSize, nYSize,
                               nPixelSpace, nLineSpace, nBandSpace, (GByte*)pData);
+        }
     }
 
     return GDALPamDataset::IRasterIO( eRWFlag,
@@ -1471,7 +1475,7 @@ CPLErr PDFDataset::IRasterIO( GDALRWFlag eRWFlag,
                                         pData, nBufXSize, nBufYSize,
                                         eBufType, 
                                         nBandCount, panBandMap,
-                                        nPixelSpace, nLineSpace, nBandSpace );
+                                        nPixelSpace, nLineSpace, nBandSpace, hMutex );
 }
 
 /************************************************************************/

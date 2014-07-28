@@ -300,7 +300,7 @@ GDALRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
 
     return( poBand->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                               pData, nBufXSize, nBufYSize, eBufType,
-                              nPixelSpace, nLineSpace ) );
+                              nPixelSpace, nLineSpace, NULL ) );
 }
 
 /************************************************************************/

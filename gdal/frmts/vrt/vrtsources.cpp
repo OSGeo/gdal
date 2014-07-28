@@ -1151,7 +1151,7 @@ CPLErr
 VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                            void *pData, int nBufXSize, int nBufYSize, 
                            GDALDataType eBufType, 
-                           int nPixelSpace, int nLineSpace )
+                           int nPixelSpace, int nLineSpace, void **hMutex )
 
 {
     // The window we will actually request from the source raster band.
@@ -1198,6 +1198,7 @@ VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
 /*      Do the averaging.                                               */
 /* -------------------------------------------------------------------- */
+    CPLMutexHolderD( hMutex );
     for( int iBufLine = nOutYOff; iBufLine < nOutYOff + nOutYSize; iBufLine++ )
     {
         double  dfYDst;
@@ -1663,7 +1664,7 @@ CPLErr
 VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                             void *pData, int nBufXSize, int nBufYSize, 
                             GDALDataType eBufType, 
-                            int nPixelSpace, int nLineSpace )
+                            int nPixelSpace, int nLineSpace, void ** hMutex )
     
 {
     // The window we will actually request from the source raster band.
@@ -1677,6 +1678,7 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                           &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize ) )
         return CE_None;
 
+    CPLMutexHolderD( hMutex );
     return RasterIOInternal(nReqXOff, nReqYOff, nReqXSize, nReqYSize,
                        ((GByte *)pData)
                             + nPixelSpace * nOutXOff

@@ -51,7 +51,7 @@ class CPL_DLL GDALProxyDataset : public GDALDataset
                                     int, int *, GDALProgressFunc, void * );
         virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                                 void *, int, int, GDALDataType,
-                                int, int *, int, int, int );
+                                int, int *, int, int, int, void ** hMutex = NULL );
     public:
 
         virtual char      **GetMetadataDomainList();
