@@ -74,8 +74,11 @@ CPLMutexHolder::CPLMutexHolder( void **phMutex, double dfWaitInSeconds,
              "CPLMutexHolder: Request %p for pid %ld at %d/%s.\n", 
              *phMutex, (long) CPLGetPID(), nLine, pszFile );
 #endif
-
-    if( !CPLCreateOrAcquireMutex( phMutex, dfWaitInSeconds ) )
+    if ( NULL == phMutex )
+    {
+        hMutex = NULL;
+    }
+    else if( !CPLCreateOrAcquireMutex( phMutex, dfWaitInSeconds ) )
     {
         fprintf( stderr, "CPLMutexHolder: Failed to acquire mutex!\n" );
         hMutex = NULL;
