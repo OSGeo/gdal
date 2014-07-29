@@ -29,6 +29,7 @@
 
 #include "epsilon.h"
 #include "gdal_pam.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
