@@ -34,6 +34,7 @@
  * SOFTWARE.
  **********************************************************************/
 #include "postgisraster.h"
+#include "cpl_multiproc.h"
 #include <math.h>
 
 #ifdef _WIN32

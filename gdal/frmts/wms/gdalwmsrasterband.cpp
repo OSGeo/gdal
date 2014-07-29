@@ -29,6 +29,7 @@
  ****************************************************************************/
 
 #include "wmsdriver.h"
+#include "cpl_multiproc.h"
 
 GDALWMSRasterBand::GDALWMSRasterBand(GDALWMSDataset *parent_dataset, int band, double scale) {
     //	printf("[%p] GDALWMSRasterBand::GDALWMSRasterBand(%p, %d, %f)\n", this, parent_dataset, band, scale);
