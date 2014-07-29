@@ -1127,6 +1127,11 @@ static void *CPLCreateMutexInternal(int bAlreadyInGlobalLock);
 int CPLCreateOrAcquireMutex( void **phMutex, double dfWaitInSeconds )
 
 {
+    // Check before going into the global lock, otherwise
+    // we risk using the global lock too often.
+    if ( NULL != *phMutex )
+        return CPLAcquireMutex( *phMutex, dfWaitInSeconds );
+
     int bSuccess = FALSE;
 
     pthread_mutex_lock(&global_mutex);
