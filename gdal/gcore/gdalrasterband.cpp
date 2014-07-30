@@ -1138,11 +1138,12 @@ GDALRasterBlock  *GDALRasterBand::UnadoptBlock( int nXBlockOff, int nYBlockOff, 
         if( poBlock == NULL )
             return NULL;
         poBlock->UnattachFromBand();
-
-        poBlock->MarkForDeletion();
         
         if ( bAdopt == TRUE )
             poBlock->AddLock();   
+
+        poBlock->MarkForDeletion();
+        
     }
     
     return poBlock;
