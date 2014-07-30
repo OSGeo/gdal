@@ -1248,9 +1248,9 @@ int CPLAcquireMutex( void *hMutexIn, double dfWaitInSeconds )
     if( err != 0 )
     {
         if( err == EDEADLK )
-            fprintf(stderr, "CPLAcquireMutex: Error = %d/EDEADLK", err );
+            fprintf(stderr, "CPLAcquireMutex: Error = %d/EDEADLK\n", err );
         else
-            fprintf(stderr, "CPLAcquireMutex: Error = %d", err );
+            fprintf(stderr, "CPLAcquireMutex: Error = %d\n", err );
 
         return FALSE;
     }
