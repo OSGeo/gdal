@@ -33,6 +33,7 @@
 #include "gdal_rat.h"
 #include "cpl_string.h"
 #include "cpl_multiproc.h"
+#include "cpl_atomic_ops.h"
 
 #define SUBBLOCK_SIZE 64
 #define TO_SUBBLOCK(x) ((x) >> 6)
@@ -1379,6 +1380,29 @@ GDALRasterBlock * GDALRasterBand::GetLockedBlockRef( int nXBlockOff,
                 "Internalize Failure!");
             return( NULL );
         }
+        if ( !bJustInitialize )
+        {   
+            CPLErr eErr = CE_None;
+            eErr = IReadBlock(nXBlockOff,nYBlockOff,poBlock->GetDataRef(), poBlock->GetRWMutex());
+            if( eErr != CE_None)
+            {
+                poBlock->MarkForDeletion();
+                //UnadoptBlock( nXBlockOff, nYBlockOff );
+                poBlock->DropLock();
+                ReportError( CE_Failure, CPLE_AppDefined,
+                    "IReadBlock failed at X offset %d, Y offset %d",
+                    nXBlockOff, nYBlockOff );
+                return( NULL );
+            }
+            
+            CPLAtomicInc(&nBlockReads);
+            if( nBlockReads == nBlocksPerRow * nBlocksPerColumn + 1 
+                && nBand == 1 && poDS != NULL )
+            {
+                CPLDebug( "GDAL", "Potential thrashing on band %d of %s.",
+                          nBand, poDS->GetDescription() );
+            }
+        }
         GDALRasterBlock *poAdopt = AdoptBlock( nXBlockOff, nYBlockOff, poBlock );
         if ( poAdopt == NULL )
         {
@@ -1403,28 +1427,6 @@ GDALRasterBlock * GDALRasterBand::GetLockedBlockRef( int nXBlockOff,
             poRBM->FlushTillBelow();
         }
         
-        if ( !bJustInitialize )
-        {   
-            CPLErr eErr = CE_None;
-            eErr = IReadBlock(nXBlockOff,nYBlockOff,poBlock->GetDataRef(), poBlock->GetRWMutex());
-            if( eErr != CE_None)
-            {
-                UnadoptBlock( nXBlockOff, nYBlockOff );
-                poBlock->DropLock();
-                ReportError( CE_Failure, CPLE_AppDefined,
-                    "IReadBlock failed at X offset %d, Y offset %d",
-                    nXBlockOff, nYBlockOff );
-                return( NULL );
-            }
-            
-            nBlockReads++;
-            if( nBlockReads == nBlocksPerRow * nBlocksPerColumn + 1 
-                && nBand == 1 && poDS != NULL )
-            {
-                CPLDebug( "GDAL", "Potential thrashing on band %d of %s.",
-                          nBand, poDS->GetDescription() );
-            }
-        }
     }
     return poBlock;
 }
