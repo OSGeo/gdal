@@ -1619,6 +1619,16 @@ CPLSetConfigOption( const char *pszKey, const char *pszValue )
 }
 
 /************************************************************************/
+/*                   CPLSetThreadLocalTLSFreeFunc()                     */
+/************************************************************************/
+
+/* non-stdcall wrapper function for CSLDestroy() (#5590) */
+static void CPLSetThreadLocalTLSFreeFunc( void* pData )
+{
+    CSLDestroy( (char**) pData );
+}
+
+/************************************************************************/
 /*                   CPLSetThreadLocalConfigOption()                    */
 /************************************************************************/
 
@@ -1653,7 +1663,8 @@ CPLSetThreadLocalConfigOption( const char *pszKey, const char *pszValue )
     papszTLConfigOptions = 
         CSLSetNameValue( papszTLConfigOptions, pszKey, pszValue );
 
-    CPLSetTLSWithFreeFunc( CTLS_CONFIGOPTIONS, papszTLConfigOptions, (CPLTLSFreeFunc)CSLDestroy );
+    CPLSetTLSWithFreeFunc( CTLS_CONFIGOPTIONS, papszTLConfigOptions,
+                           CPLSetThreadLocalTLSFreeFunc );
 }
 
 /************************************************************************/

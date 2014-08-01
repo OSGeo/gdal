@@ -362,6 +362,8 @@ class CPL_DLL VRTSourcedRasterBand : public VRTRasterBand
 
     void           Initialize( int nXSize, int nYSize );
 
+    int            CanUseSourcesMinMaxImplementations();
+
   public:
     int            nSources;
     VRTSource    **papoSources;
