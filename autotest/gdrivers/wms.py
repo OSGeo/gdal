@@ -321,20 +321,78 @@ def wms_8():
         gdaltest.post_reason( 'open failed.' )
         return 'fail'
 
-    ds.GetRasterBand(1).GetOverview(18).ReadRaster(0, 0, 512, 256)
+    data = ds.GetRasterBand(1).GetOverview(18).ReadRaster(0, 0, 512, 256)
 
     ds = None
 
-    try:
-        os.stat('tmp/gdalwmscache')
-    except:
-        gdaltest.post_reason( 'tmp/gdalwmscache should exist')
-        return 'fail'
+    expected_files = [ 'tmp/gdalwmscache/d/b/dbbfe17f22c9d54f2c45ec7dc5042bc8',
+                       'tmp/gdalwmscache/5/4/548f0e98b56a8c104cfe2df9f7ef8685' ]
+    for expected_file in expected_files:
+        try:
+            os.stat(expected_file)
+        except:
+            gdaltest.post_reason( '%s should exist' % expected_file)
+            return 'fail'
 
     # Now, we should read from the cache
     ds = gdal.Open( tms )
-    ds.GetRasterBand(1).GetOverview(18).ReadRaster(0, 0, 512, 256)
+    cached_data = ds.GetRasterBand(1).GetOverview(18).ReadRaster(0, 0, 512, 256)
     ds = None
+
+    if data != cached_data:
+        gdaltest.post_reason( 'data != cached_data' )
+        return 'fail'
+
+    # Replace the cache with fake data
+    for expected_file in expected_files:
+
+        ds = gdal.GetDriverByName('GTiff').Create(expected_file, 256, 256, 4)
+        ds.GetRasterBand(1).Fill(0)
+        ds.GetRasterBand(2).Fill(0)
+        ds.GetRasterBand(3).Fill(0)
+        ds.GetRasterBand(4).Fill(255)
+        ds = None
+
+    # Read again from the cache, and check that it is actually used
+    ds = gdal.Open( tms )
+    cs = ds.GetRasterBand(1).GetOverview(18).Checksum()
+    ds = None
+    if cs != 0:
+        gdaltest.post_reason( 'cs != 0' )
+        return 'fail'
+
+    # Test with GDAL_DEFAULT_WMS_CACHE_PATH
+    tms_nocache = """<GDAL_WMS>
+    <Service name="TMS">
+        <ServerUrl>http://tilecache.osgeo.org/wms-c/Basic.py</ServerUrl>
+        <Layer>basic</Layer>
+        <Format>png</Format>
+    </Service>
+    <DataWindow>
+        <UpperLeftX>-180.0</UpperLeftX>
+        <UpperLeftY>90.0</UpperLeftY>
+        <LowerRightX>180.0</LowerRightX>
+        <LowerRightY>-90.0</LowerRightY>
+        <TileLevel>19</TileLevel>
+        <TileCountX>2</TileCountX>
+        <TileCountY>1</TileCountY>
+    </DataWindow>
+    <Projection>EPSG:4326</Projection>
+    <BlockSizeX>256</BlockSizeX>
+    <BlockSizeY>256</BlockSizeY>
+    <BandsCount>3</BandsCount>
+    <Cache/> <!-- this is needed for GDAL_DEFAULT_WMS_CACHE_PATH to be triggered -->
+</GDAL_WMS>"""
+
+    # Now, we should read from the cache
+    gdal.SetConfigOption("GDAL_DEFAULT_WMS_CACHE_PATH", "./tmp/gdalwmscache")
+    ds = gdal.Open( tms_nocache )
+    cs = ds.GetRasterBand(1).GetOverview(18).Checksum()
+    ds = None
+    gdal.SetConfigOption("GDAL_DEFAULT_WMS_CACHE_PATH", None)
+    if cs != 0:
+        gdaltest.post_reason( 'cs != 0' )
+        return 'fail'
 
     return 'success'
 
