@@ -58,9 +58,6 @@ CPLErr GDALWMSCache::Initialize(CPLXMLNode *config) {
         }
     }
 
-    const char *cache_path = CPLGetXMLValue(config, "Path", "./gdalwmscache");
-    m_cache_path = cache_path;
-
     const char *cache_depth = CPLGetXMLValue(config, "Depth", "2");
     m_cache_depth = atoi(cache_depth);
 
