@@ -300,7 +300,7 @@ def main():
     # hack to limit the number of input file options close to required number
     for myAlpha in AlphaList[0:len(sys.argv)-1]:
         eval('parser.add_option("-%s", dest="%s", help="input gdal raster file, note you can use any letter A-Z")' %(myAlpha, myAlpha))
-        eval('parser.add_option("--%s_band", dest="%s_band", default=0, type=int, help="number of raster band for file %s (default 0)")' %(myAlpha, myAlpha, myAlpha))
+        eval('parser.add_option("--%s_band", dest="%s_band", default=1, type=int, help="number of raster band for file %s (default 1)")' %(myAlpha, myAlpha, myAlpha))
 
     parser.add_option("--outfile", dest="outF", default='gdal_calc.tif', help="output file to generate or fill")
     parser.add_option("--NoDataValue", dest="NoDataValue", type=float, help="set output nodata value (Defaults to datatype specific value)")
