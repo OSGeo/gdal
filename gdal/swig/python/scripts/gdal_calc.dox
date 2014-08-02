@@ -14,7 +14,7 @@ Options:
                         numpy array functions (i.e. logical_and())
   -A A                  input gdal raster file, note you can use any letter
                         A-Z
-  --A_band=A_BAND       number of raster band for file A (default 0)
+  --A_band=A_BAND       number of raster band for file A (default 1)
   --outfile=OUTF        output file to generate or fill
   --NoDataValue=NODATAVALUE
                         set output nodata value (Defaults to datatype specific
