@@ -719,6 +719,57 @@ def test_gdal_translate_26():
     ds = None
 
     return 'success'
+
+###############################################################################
+# Test that we don't preserve statistics when we ought not.
+
+def test_gdal_translate_27():
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+    if test_cli_utilities.get_gdalinfo_path() is None:
+        return 'skip'
+
+    f = open('tmp/test_gdal_translate_27.asc', 'wb')
+    f.write("""ncols        2
+nrows        2
+xllcorner    440720.000000000000
+yllcorner    3750120.000000000000
+cellsize     60.000000000000
+ 0 256
+ 0 0""")
+    f.close()
+
+    gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -stats tmp/test_gdal_translate_27.asc')
+
+    # Translate to an output type that accepts 256 as maximum
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' tmp/test_gdal_translate_27.asc tmp/test_gdal_translate_27.tif -ot UInt16')
+
+    ds = gdal.Open('tmp/test_gdal_translate_27.tif')
+    if ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MINIMUM') is None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    ds = None
+
+    # Translate to an output type that accepts 256 as maximum
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' tmp/test_gdal_translate_27.asc tmp/test_gdal_translate_27.tif -ot Float64')
+
+    ds = gdal.Open('tmp/test_gdal_translate_27.tif')
+    if ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MINIMUM') is None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    ds = None
+
+    # Translate to an output type that doesn't accept 256 as maximum
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' tmp/test_gdal_translate_27.asc tmp/test_gdal_translate_27.tif -ot Byte')
+
+    ds = gdal.Open('tmp/test_gdal_translate_27.tif')
+    if ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MINIMUM') is not None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    ds = None
+
+    return 'success'
+    
 ###############################################################################
 # Cleanup
 
@@ -797,6 +848,11 @@ def test_gdal_translate_cleanup():
         gdal.GetDriverByName('GTiff').Delete('tmp/test_gdal_translate_26.tif')
     except:
         pass
+    try:
+        gdal.GetDriverByName('AAIGRID').Delete('tmp/test_gdal_translate_27.asc')
+        gdal.GetDriverByName('GTiff').Delete('tmp/test_gdal_translate_27.tif')
+    except:
+        pass
     return 'success'
 
 gdaltest_list = [
@@ -826,6 +882,7 @@ gdaltest_list = [
     test_gdal_translate_24,
     test_gdal_translate_25,
     test_gdal_translate_26,
+    test_gdal_translate_27,
     test_gdal_translate_cleanup
     ]
 
