@@ -21,6 +21,8 @@ default:	$(O_OBJ:.o=.$(OBJ_EXT))
 clean:
 	rm -f *.o $(O_OBJ)
 
+$(O_OBJ):       mitab.h mitab_priv.h
+
 update:
 	copymatch.sh ~/pkg/mitab *.TXT
 	copymatch.sh ~/pkg/mitab/mitab *.cpp *.h
