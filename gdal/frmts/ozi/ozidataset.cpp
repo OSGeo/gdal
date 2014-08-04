@@ -378,10 +378,6 @@ int OZIDataset::Identify( GDALOpenInfo * poOpenInfo )
     if (poOpenInfo->nHeaderBytes < 14)
         return FALSE;
 
-    if (EQUALN((const char*)poOpenInfo->pabyHeader,
-        "OziExplorer Map Data File Version ", 34) )
-        return TRUE;
-
     if (poOpenInfo->pabyHeader[0] == 0x80 &&
         poOpenInfo->pabyHeader[1] == 0x77)
         return TRUE;
