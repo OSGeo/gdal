@@ -170,8 +170,13 @@ static GDALDataset *OGRTABDriverCreate( const char * pszName,
 static CPLErr OGRTABDriverDelete( const char *pszDataSource )
 
 {
-    GDALOpenInfo oOpenInfo(pszDataSource, GA_ReadOnly);
-    GDALDataset* poDS = OGRTABDriverOpen(&oOpenInfo);
+    GDALDataset* poDS;
+    {
+        // Make sure that the file opened by GDALOpenInfo is closed
+        // when the object goes out of scope
+        GDALOpenInfo oOpenInfo(pszDataSource, GA_ReadOnly);
+        poDS = OGRTABDriverOpen(&oOpenInfo);
+    }
     if( poDS == NULL )
         return CE_Failure;
     char** papszFileList = poDS->GetFileList();
