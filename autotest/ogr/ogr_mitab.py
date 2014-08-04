@@ -595,6 +595,7 @@ def ogr_mitab_18():
         wkt = sr_got.ExportToWkt()
         if wkt.find('2154') < 0:
             gdaltest.post_reason('failure')
+            print(filename)
             print(sr_got)
             return 'fail'
         proj4 = sr_got.ExportToProj4()
@@ -607,6 +608,26 @@ def ogr_mitab_18():
     ogr.GetDriverByName('MapInfo File').DeleteDataSource('/vsimem/ogr_mitab_18.tab')
 
     return 'success'
+
+###############################################################################
+# Check that we correctly round coordinate to the appropriate precision
+# (https://github.com/mapgears/mitab/issues/2)
+
+def ogr_mitab_19():
+
+    if gdaltest.mapinfo_drv is None:
+        return 'skip'
+
+    ds = ogr.Open('data/utm31.TAB')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    # Strict text comparison to check precision
+    if feat.GetGeometryRef().ExportToWkt() != 'POINT (485248.12 2261.45)':
+        feat.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 #
 
@@ -640,6 +661,7 @@ gdaltest_list = [
     ogr_mitab_16,
     ogr_mitab_17,
     ogr_mitab_18,
+    ogr_mitab_19,
     ogr_mitab_cleanup
     ]
 

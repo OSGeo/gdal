@@ -877,6 +877,9 @@ class TABRawBinBlock
 
 class TABMAPHeaderBlock: public TABRawBinBlock
 {
+    void        InitMembersWithDefaultValues();
+    void        UpdatePrecision();
+
   protected:
     TABProjInfo m_sProj;
 
@@ -955,7 +958,8 @@ class TABMAPHeaderBlock: public TABRawBinBlock
     double      m_YScale;
     double      m_XDispl;
     double      m_YDispl;
-    
+    double      m_XPrecision; // maximum achievable precision along X axis depending on bounds extent
+    double      m_YPrecision; // maximum achievable precision along Y axis depending on bounds extent
 };
 
 /*---------------------------------------------------------------------
