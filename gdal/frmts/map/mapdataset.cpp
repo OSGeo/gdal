@@ -247,12 +247,12 @@ GDALDataset *MAPDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLString osPath = CPLGetPath(poOpenInfo->pszFilename);
         if (CPLIsFilenameRelative(poDS->osImgFilename))
         {
-            poDS->osImgFilename = CPLFormFilename(osPath, poDS->osImgFilename, NULL);
+            poDS->osImgFilename = CPLFormCIFilename(osPath, poDS->osImgFilename, NULL);
         }
         else
         {
             poDS->osImgFilename = CPLGetFilename(poDS->osImgFilename);
-            poDS->osImgFilename = CPLFormFilename(osPath, poDS->osImgFilename, NULL);
+            poDS->osImgFilename = CPLFormCIFilename(osPath, poDS->osImgFilename, NULL);
         }
     }
 
