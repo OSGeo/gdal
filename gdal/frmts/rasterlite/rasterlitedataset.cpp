@@ -351,7 +351,7 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
                         if (poBlock == NULL)
                             break;
                             
-                        GByte* pabySrcBlock = (GByte *) poBlock->GetDataRef();
+                        GByte* pabySrcBlock = (GByte *) poBlock->GetDataRef( TRUE );
                         if( pabySrcBlock == NULL )
                         {
                             poBlock->DropLock();

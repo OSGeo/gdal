@@ -978,7 +978,7 @@ void PostGISRasterDataset::CacheTile(const char* pszMetadata,
                 {
                     CPLMutexHolderD( poBlock->GetRWMutex() );
                     // Point block data ref to fetched data
-                    memcpy(poBlock->GetDataRef(), (void *)pbyDataToRead, 
+                    memcpy(poBlock->GetDataRef(TRUE), (void *)pbyDataToRead, 
                         nExpectedBandDataSize);
                 }
                 poBlock->DropLock();

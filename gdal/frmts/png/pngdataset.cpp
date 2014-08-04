@@ -314,9 +314,7 @@ CPLErr PNGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     for(iBand = 1; iBand < poGDS->GetRasterCount(); iBand++)
     {
         GDALRasterBlock *poBlock;
-
-        poBlock = 
-            poGDS->GetRasterBand(iBand+1)->GetLockedBlockRef(nBlockXOff,nBlockYOff);
+        poBlock = poGDS->GetRasterBand(iBand+1)->GetLockedBlockRef(nBlockXOff,nBlockYOff);
         if( poBlock != NULL )
             poBlock->DropLock();
     }

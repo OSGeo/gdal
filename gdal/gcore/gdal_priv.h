@@ -504,6 +504,7 @@ class CPL_DLL GDALRasterBlock
     int                 bAttachedToBand;    
     int                 bDelete;    
     int                 bDirty;
+    int                 bBlockRead;
     int                 nLockCount;
 
     int                 nXOff;
@@ -533,7 +534,8 @@ class CPL_DLL GDALRasterBlock
     void        MarkDirty( void );  
     void        MarkClean( void );
     void        AddLock( void ); 
-    void        DropLock( void ); 
+    void        DropLock( void );
+    void        MarkBlockRead( void ) { bBlockRead = TRUE; }
     void        MarkForDeletion( void ) { bDelete = TRUE; }
     void        AttachToBand( void ) { bAttachedToBand = TRUE; }
     void        UnattachFromBand( void ) { bAttachedToBand = FALSE; }
@@ -549,7 +551,7 @@ class CPL_DLL GDALRasterBlock
     int         GetDirty() { return bDirty; }
     int         GetLockCount() { return nLockCount; }
 
-    void        *GetDataRef( void ) { return pData; }
+    void        *GetDataRef( int bSkipRead = FALSE ); //{ return pData; }
 
     /// @brief Accessor to source GDALRasterBand object.
     /// @return source raster band of the raster block.

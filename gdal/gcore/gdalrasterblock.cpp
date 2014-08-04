@@ -31,6 +31,7 @@
 
 #include "gdal_priv.h"
 #include "cpl_multiproc.h"
+#include "cpl_atomic_ops.h"
 
 CPL_CVSID("$Id$");
 
@@ -278,6 +279,7 @@ GDALRasterBlock::GDALRasterBlock( GDALRasterBand *poBandIn,
     bAttachedToCache = FALSE;
     bAttachedToBand = FALSE;
     bDelete = FALSE;
+    bBlockRead = FALSE;
     nLockCount = 0;
 
     poNext = poPrevious = NULL;
@@ -327,6 +329,47 @@ void **GDALRasterBlock::GetRWMutex()
 }
 
 /************************************************************************/
+/*                             GetDataRef()                             */
+/************************************************************************/
+
+/**
+ * Add a usage lock to the block.
+ */
+
+void *GDALRasterBlock::GetDataRef( int bSkipRead )
+
+{
+    if ( TRUE == bSkipRead || TRUE == bBlockRead ) 
+        return pData;
+    
+    // Block hasn't been read so lets read it.
+    // Race condition is possible here, but the passed mutex
+    // should protect the underlying pData even though
+    // it might be read twice.
+
+    if( poBand->IReadBlock( nXOff, nYOff, pData, &hRWMutex ) != CE_None)
+    {
+        MarkForDeletion();
+        CPLError( CE_Failure, CPLE_AppDefined,
+            "IReadBlock failed at X offset %d, Y offset %d",
+            nXOff, nYOff );
+        return( NULL );
+    }
+    
+    bBlockRead = TRUE;
+    
+    CPLAtomicInc(&(poBand->nBlockReads));
+    if( poBand->nBlockReads == poBand->nBlocksPerRow * poBand->nBlocksPerColumn + 1 
+        && poBand->nBand == 1 && poBand->poDS != NULL )
+    {
+        CPLDebug( "GDAL", "Potential thrashing on band %d of %s.",
+                  poBand->nBand, poBand->poDS->GetDescription() );
+    }
+
+    return pData;    
+}
+
+/************************************************************************/
 /*                              AddLock()                               */
 /************************************************************************/
 
@@ -337,7 +380,6 @@ void **GDALRasterBlock::GetRWMutex()
 void GDALRasterBlock::AddLock()
 
 {
-    //CPLMutexHolderD( &(poBand->hBandMutex) );
     CPLMutexHolderD( &hRWMutex );
     nLockCount++;
 }
@@ -357,7 +399,7 @@ void GDALRasterBlock::DropLock()
     {
         CPLMutexHolderD( &hRWMutex );
         nLockCount--;
-        //CPLAssert( nLockCount >= 0 );
+        CPLAssert( nLockCount >= 0 );
         if ( nLockCount == 0 && bDelete )
         {
             bDeleteNow = TRUE;
@@ -367,10 +409,21 @@ void GDALRasterBlock::DropLock()
     {
         if ( bAttachedToCache )
             Detach();
-        if ( bAttachedToBand )
-            poBand->UnadoptBlock(nXOff, nYOff);
         if ( bDirty )
             Write();
+        if ( bAttachedToBand )
+        {
+            poBand->UnadoptBlock(nXOff, nYOff);
+            // Because this block was not already unadopted
+            // from the band another thread might be accessing it
+            // in this event we need to see if another block
+            // checked it out in this period.
+            {
+                CPLMutexHolderD( &hRWMutex );
+                if ( nLockCount > 0 )
+                    return;
+            }
+        }
         delete this; 
     }
 

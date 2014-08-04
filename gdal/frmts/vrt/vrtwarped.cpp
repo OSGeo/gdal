@@ -1199,12 +1199,12 @@ CPLErr VRTWarpedDataset::ProcessBlock( int iBlockX, int iBlockY )
 
         if( poBlock != NULL )
         {
-            if ( poBlock->GetDataRef() != NULL )
+            if ( poBlock->GetDataRef( TRUE ) != NULL )
             {
                 CPLMutexHolderD( poBlock->GetRWMutex() );
                 GDALCopyWords( pabyDstBuffer + iBand*nBlockXSize*nBlockYSize*nWordSize,
                             psWO->eWorkingDataType, nWordSize, 
-                            poBlock->GetDataRef(), 
+                            poBlock->GetDataRef( TRUE ), 
                             poBlock->GetDataType(), 
                             GDALGetDataTypeSize(poBlock->GetDataType())/8,
                             nBlockXSize * nBlockYSize );
@@ -1286,17 +1286,20 @@ CPLErr VRTWarpedRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     poBlock = GetLockedBlockRef( nBlockXOff, nBlockYOff, TRUE );
     if( poBlock == NULL )
         return CE_Failure;
+    // This marks the block such that it has already been read from
+    // otherwise this will result in a stack overflow. 
+    //poBlock->MarkBlockRead(); 
 
     eErr = poWDS->ProcessBlock( nBlockXOff, nBlockYOff );
 
-    if( eErr == CE_None && pImage != poBlock->GetDataRef() )
+    if( eErr == CE_None && pImage != poBlock->GetDataRef( TRUE ) )
     {
         int nDataBytes;
         nDataBytes = (GDALGetDataTypeSize(poBlock->GetDataType()) / 8)
             * poBlock->GetXSize() * poBlock->GetYSize();
         CPLMutexHolderD( hMutex );
         CPLMutexHolderD2( poBlock->GetRWMutex() );
-        memcpy( pImage, poBlock->GetDataRef(), nDataBytes );
+        memcpy( pImage, poBlock->GetDataRef( TRUE ), nDataBytes );
     }
 
     poBlock->DropLock();

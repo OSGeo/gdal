@@ -436,7 +436,7 @@ static void JP2OpenJPEGReadBlockInThread(void* userdata)
         if (poBlock == NULL)
             break;
 
-        void* pDstBuffer = poBlock->GetDataRef();
+        void* pDstBuffer = poBlock->GetDataRef(TRUE);
         if (!pDstBuffer)
         {
             poBlock->DropLock();
@@ -718,7 +718,7 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
                 continue;
             }
 
-            pDstBuffer = poBlock->GetDataRef();
+            pDstBuffer = poBlock->GetDataRef(TRUE);
             if (!pDstBuffer)
             {
                 poBlock->DropLock();

@@ -150,7 +150,7 @@ CPLMutexHolder::~CPLMutexHolder()
 static void *hCOAMutex = NULL;
 #endif
 
-int CPLCreateOrAcquireMutex( void **phMutex, double dfWaitInSeconds )
+int CPLCreateOrAcquireMutex( void ** volatile phMutex, double dfWaitInSeconds )
 
 {
     int bSuccess = FALSE;
@@ -1127,7 +1127,7 @@ int CPLGetNumCPUs()
 static pthread_mutex_t global_mutex = PTHREAD_MUTEX_INITIALIZER;
 static void *CPLCreateMutexInternal(int bAlreadyInGlobalLock);
 
-int CPLCreateOrAcquireMutex( void **phMutex, double dfWaitInSeconds )
+int CPLCreateOrAcquireMutex( void ** volatile phMutex, double dfWaitInSeconds )
 
 {
     // Check before going into the global lock, otherwise
@@ -1140,8 +1140,9 @@ int CPLCreateOrAcquireMutex( void **phMutex, double dfWaitInSeconds )
     pthread_mutex_lock(&global_mutex);
     if( *phMutex == NULL )
     {
-        *phMutex = CPLCreateMutexInternal(TRUE);
-        bSuccess = *phMutex != NULL;
+        void * volatile hNewMutex = CPLCreateMutexInternal(TRUE);
+        bSuccess = hNewMutex != NULL;
+        *phMutex = hNewMutex;
         pthread_mutex_unlock(&global_mutex);
     }
     else
@@ -1236,7 +1237,7 @@ void *CPLCreateMutex()
 /*                          CPLAcquireMutex()                           */
 /************************************************************************/
 
-int CPLAcquireMutex( void *hMutexIn, double dfWaitInSeconds )
+int CPLAcquireMutex( void * hMutexIn, double dfWaitInSeconds )
 
 {
     int err;

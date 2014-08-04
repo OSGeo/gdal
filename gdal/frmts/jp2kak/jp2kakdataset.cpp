@@ -623,7 +623,7 @@ CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 {
                     {
                         CPLMutexHolderD( poBlock->GetRWMutex() );
-                        memcpy( poBlock->GetDataRef(), pabyWrkBuffer + nBandStart, 
+                        memcpy( poBlock->GetDataRef( TRUE ), pabyWrkBuffer + nBandStart, 
                                 nWordSize * nBlockXSize * nBlockYSize );
                     }
                     poBlock->DropLock();

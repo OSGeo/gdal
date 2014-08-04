@@ -60,8 +60,8 @@ void CPL_DLL *CPLLockFile( const char *pszPath, double dfWaitInSeconds );
 void  CPL_DLL CPLUnlockFile( void *hLock );
 
 void CPL_DLL *CPLCreateMutex( void );
-int   CPL_DLL CPLCreateOrAcquireMutex( void **, double dfWaitInSeconds );
-int   CPL_DLL CPLAcquireMutex( void *hMutex, double dfWaitInSeconds );
+int   CPL_DLL CPLCreateOrAcquireMutex( void ** volatile, double dfWaitInSeconds );
+int   CPL_DLL CPLAcquireMutex( void * hMutex, double dfWaitInSeconds );
 void  CPL_DLL CPLReleaseMutex( void *hMutex );
 void  CPL_DLL CPLDestroyMutex( void *hMutex );
 void  CPL_DLL CPLCleanupMasterMutex( void );

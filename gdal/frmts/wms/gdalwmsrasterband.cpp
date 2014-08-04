@@ -661,7 +661,7 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
                         if (!band->IsBlockInCache(x, y)) {
                             b = band->GetLockedBlockRef(x, y, true);
                             if (b != NULL) {
-                                p = b->GetDataRef();
+                                p = b->GetDataRef(true);
                                 hThisMutex = b->GetRWMutex();
                                 if (p == NULL) {
                                   CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: GetDataRef returned NULL.");
@@ -767,7 +767,7 @@ CPLErr GDALWMSRasterBand::ZeroBlock(int x, int y, int to_buffer_band, void *buff
                 if (!band->IsBlockInCache(x, y)) {
                     b = band->GetLockedBlockRef(x, y, true);
                     if (b != NULL) {
-                        p = b->GetDataRef();
+                        p = b->GetDataRef(true);
                         hThisMutex = b->GetRWMutex();
                         if (p == NULL) {
                           CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: GetDataRef returned NULL.");

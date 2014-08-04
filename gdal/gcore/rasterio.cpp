@@ -124,7 +124,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     return( CE_Failure );
                 }
                 
-                pabySrcBlock = (GByte *) poBlock->GetDataRef();
+                pabySrcBlock = (GByte *) poBlock->GetDataRef(bJustInitialize);
                 if( pabySrcBlock == NULL )
                 {
                     poBlock->DropLock();
@@ -279,7 +279,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     return( CE_Failure );
                 }
 
-                pabySrcBlock = (GByte *) poBlock->GetDataRef();
+                pabySrcBlock = (GByte *) poBlock->GetDataRef(bJustInitialize);
                 if( pabySrcBlock == NULL )
                 {
                     poBlock->DropLock();
@@ -408,7 +408,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                         return( CE_Failure );
                     }
 
-                    pabyDstBlock = (GByte *) poBlock->GetDataRef();
+                    pabyDstBlock = (GByte *) poBlock->GetDataRef(bJustInitialize);
                     if( pabyDstBlock == NULL )
                     {
                         poBlock->DropLock();
@@ -2600,7 +2600,7 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
                 
                     papoBlocks[iBand] = poBlock;
 
-                    papabySrcBlock[iBand] = (GByte *) poBlock->GetDataRef();
+                    papabySrcBlock[iBand] = (GByte *) poBlock->GetDataRef(bJustInitialize);
                     if( papabySrcBlock[iBand] == NULL )
                     {
                         eErr = CE_Failure; 

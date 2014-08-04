@@ -292,7 +292,7 @@ CPLErr MBTilesBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage, v
                     if (poBlock == NULL)
                         break;
 
-                    GByte* pabySrcBlock = (GByte *) poBlock->GetDataRef();
+                    GByte* pabySrcBlock = (GByte *) poBlock->GetDataRef(TRUE);
                     if( pabySrcBlock == NULL )
                     {
                         poBlock->DropLock();
@@ -389,7 +389,7 @@ CPLErr MBTilesBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage, v
             if (poBlock == NULL)
                 break;
 
-            GByte* pabySrcBlock = (GByte *) poBlock->GetDataRef();
+            GByte* pabySrcBlock = (GByte *) poBlock->GetDataRef(TRUE);
             if( pabySrcBlock == NULL )
             {
                 poBlock->DropLock();
