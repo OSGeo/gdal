@@ -500,7 +500,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                         return( CE_Failure );
                     }
 
-                    pabySrcBlock = (GByte *) poBlock->GetDataRef();
+                    pabySrcBlock = (GByte *) poBlock->GetDataRef( FALSE );
                     if( pabySrcBlock == NULL )
                     {
                         poBlock->DropLock();

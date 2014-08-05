@@ -1517,7 +1517,7 @@ CPLErr GDALRasterBand::Fill(double dfRealValue, double dfImaginaryValue) {
             }
             {
                 CPLMutexHolderD( destBlock->GetRWMutex() );
-                memcpy(destBlock->GetDataRef(), srcBlock, blockByteSize);
+                memcpy(destBlock->GetDataRef(TRUE), srcBlock, blockByteSize);
             }
             destBlock->MarkDirty();
             destBlock->DropLock();

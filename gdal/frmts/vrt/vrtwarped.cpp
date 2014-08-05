@@ -1288,7 +1288,7 @@ CPLErr VRTWarpedRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return CE_Failure;
     // This marks the block such that it has already been read from
     // otherwise this will result in a stack overflow. 
-    //poBlock->MarkBlockRead(); 
+    poBlock->MarkBlockRead(); 
 
     eErr = poWDS->ProcessBlock( nBlockXOff, nBlockYOff );
 

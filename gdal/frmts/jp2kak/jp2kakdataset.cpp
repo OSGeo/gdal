@@ -532,21 +532,23 @@ CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
 
     if( nXSize != nBlockXSize || nYSize != nBlockYSize )
+    {
         CPLMutexHolderD( hMutex );
         memset( pImage, 0, nBlockXSize * nBlockYSize * nWordSize );
-
+    }
 /* -------------------------------------------------------------------- */
 /*      By default we invoke just for the requested band, directly      */
 /*      into the target buffer.                                         */
 /* -------------------------------------------------------------------- */
     if( !poBaseDS->bUseYCC )
+    {
         CPLMutexHolderD( hMutex );
         return poBaseDS->DirectRasterIO( GF_Read, 
                                          nWXOff, nWYOff, nWXSize, nWYSize,
                                          pImage, nXSize, nYSize,
                                          eDataType, 1, &nBand, 
                                          nWordSize, nWordSize*nBlockXSize, 0 );
-
+    }
 /* -------------------------------------------------------------------- */
 /*      But for YCC or possible other effectively pixel interleaved     */
 /*      products, we read all bands into a single buffer, fetch out     */
