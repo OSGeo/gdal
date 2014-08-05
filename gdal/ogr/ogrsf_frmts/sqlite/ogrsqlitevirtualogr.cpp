@@ -978,7 +978,7 @@ int OGR2SQLITE_Filter(sqlite3_vtab_cursor* pCursor,
         else if (sqlite3_value_type (argv[i]) == SQLITE_FLOAT)
         { // Insure that only Decimal.Points are used, never local settings such as Decimal.Comma.
             osAttributeFilter +=
-                CPLString().FormatC(sqlite3_value_double (argv[i]),".18g").c_str();
+                CPLString().FormatC(sqlite3_value_double (argv[i]),"%.18g").c_str();
         }
         else if (sqlite3_value_type (argv[i]) == SQLITE_TEXT)
         {
