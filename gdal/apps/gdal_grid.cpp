@@ -634,6 +634,8 @@ int main( int argc, char ** argv )
     const char      *pszClipSrcSQL = NULL;
     const char      *pszClipSrcLayer = NULL;
     const char      *pszClipSrcWhere = NULL;
+    int              bNoDataSet = FALSE;
+    double           dfNoDataValue = 0;
 
     /* Check strict compilation and runtime library version as we use C++ API */
     if (! GDAL_CHECK_VERSION(argv[0]))
@@ -866,13 +868,23 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-a") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            if ( ParseAlgorithmAndOptions( argv[++i], &eAlgorithm, &pOptions )
+            const char* pszAlgorithm = argv[++i];
+            if ( ParseAlgorithmAndOptions( pszAlgorithm, &eAlgorithm, &pOptions )
                  != CE_None )
             {
                 fprintf( stderr,
                          "Failed to process algorithm name and parameters.\n" );
                 exit( 1 );
             }
+            
+            char **papszParms = CSLTokenizeString2( pszAlgorithm, ":", FALSE );
+            const char* pszNoDataValue = CSLFetchNameValue( papszParms, "nodata" );
+            if( pszNoDataValue != NULL )
+            {
+                bNoDataSet = TRUE;
+                dfNoDataValue = CPLAtofM(pszNoDataValue);
+            }
+            CSLDestroy(papszParms);
         }
 
         else if( argv[i][0] == '-' )
@@ -1020,6 +1032,15 @@ int main( int argc, char ** argv )
                  pszDest );
         fprintf( stderr, "%s\n", CPLGetLastErrorMsg() );
         exit( 3 );
+    }
+    
+    if( bNoDataSet )
+    {
+        for( i = 1; i <= nBands; i++ )
+        {
+            GDALRasterBandH hBand = GDALGetRasterBand( hDstDS, i );
+            GDALSetRasterNoDataValue( hBand, dfNoDataValue );
+        }
     }
 
 /* -------------------------------------------------------------------- */
