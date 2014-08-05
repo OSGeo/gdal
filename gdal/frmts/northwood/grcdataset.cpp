@@ -93,7 +93,7 @@ class NWT_GRCRasterBand : public GDALPamRasterBand
     NWT_GRCRasterBand( NWT_GRCDataset *, int );
     virtual ~NWT_GRCRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
     virtual double GetNoDataValue( int *pbSuccess );
 
     virtual double GetOffset( int *pbSuccess = NULL );
@@ -230,9 +230,9 @@ GDALColorInterp NWT_GRCRasterBand::GetColorInterpretation()
 /*                             IReadBlock()                             */
 /************************************************************************/
 CPLErr NWT_GRCRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                      void *pImage, void ** hMutex )
+                                      void *pImage, void ** phMutex )
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     NWT_GRCDataset *poGDS =(NWT_GRCDataset *) poDS;
     int nRecordSize = nBlockXSize *( poGDS->pGrd->nBitsPerPixel / 8 );
 

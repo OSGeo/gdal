@@ -112,8 +112,8 @@ class ADRGRasterBand : public GDALPamRasterBand
                             ADRGRasterBand( ADRGDataset *, int );
 
     virtual GDALColorInterp GetColorInterpretation();
-    virtual CPLErr          IReadBlock( int, int, void *, void ** hMutex = NULL );
-    virtual CPLErr          IWriteBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr          IReadBlock( int, int, void *, void ** phMutex = NULL );
+    virtual CPLErr          IWriteBlock( int, int, void *, void ** phMutex = NULL );
 
     virtual double          GetNoDataValue( int *pbSuccess = NULL );
 
@@ -212,10 +212,10 @@ GDALColorInterp ADRGRasterBand::GetColorInterpretation()
 /************************************************************************/
 
 CPLErr ADRGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage, void ** hMutex )
+                                  void * pImage, void ** phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     ADRGDataset* poDS = (ADRGDataset*)this->poDS;
     int offset;
     int nBlock = nBlockYOff * poDS->NFC + nBlockXOff;
@@ -258,10 +258,10 @@ CPLErr ADRGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr ADRGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage, void ** hMutex )
+                                  void * pImage, void ** phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     ADRGDataset* poDS = (ADRGDataset*)this->poDS;
     int offset;
     int nBlock = nBlockYOff * poDS->NFC + nBlockXOff;

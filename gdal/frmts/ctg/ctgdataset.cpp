@@ -158,7 +158,7 @@ class CTGRasterBand : public GDALPamRasterBand
                 CTGRasterBand( CTGDataset *, int );
                ~CTGRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
     virtual double GetNoDataValue( int *pbSuccess = NULL );
     virtual char **GetCategoryNames();
 };
@@ -196,10 +196,10 @@ CTGRasterBand::~CTGRasterBand()
 /************************************************************************/
 
 CPLErr CTGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage, void ** hMutex )
+                                  void * pImage, void ** phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     CTGDataset* poGDS = (CTGDataset* ) poDS;
 
     poGDS->ReadImagery();

@@ -288,7 +288,7 @@ class CPL_DLL HFADataset : public GDALPamDataset
   protected:
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int *, int, int, int, void ** hMutex = NULL);
+                              int, int *, int, int, int, void ** phMutex = NULL);
 
   public:
                 HFADataset();
@@ -369,8 +369,8 @@ class HFARasterBand : public GDALPamRasterBand
                    HFARasterBand( HFADataset *, int, int );
     virtual        ~HFARasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void *, void **hMutex = NULL );
-    virtual CPLErr IWriteBlock( int, int, void *, void **hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void **phMutex = NULL );
+    virtual CPLErr IWriteBlock( int, int, void *, void **phMutex = NULL );
 
     virtual const char *GetDescription() const;
     virtual void        SetDescription( const char * );
@@ -2505,10 +2505,10 @@ GDALRasterBand *HFARasterBand::GetOverview( int i )
 /************************************************************************/
 
 CPLErr HFARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage, void **hMutex )
+                                  void * pImage, void **phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     CPLErr	eErr;
 
     if( nThisOverview == -1 )
@@ -2568,10 +2568,10 @@ CPLErr HFARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr HFARasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-                                   void * pImage, void **hMutex )
+                                   void * pImage, void **phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     GByte *pabyOutBuf = (GByte *) pImage;
 
 /* -------------------------------------------------------------------- */
@@ -5386,7 +5386,7 @@ CPLErr HFADataset::IRasterIO( GDALRWFlag eRWFlag,
                               GDALDataType eBufType,
                               int nBandCount, int *panBandMap, 
                               int nPixelSpace, int nLineSpace, int nBandSpace,
-                              void ** hMutex )
+                              void ** phMutex )
 
 {
     if( hHFA->papoBand[panBandMap[0]-1]->fpExternal != NULL 
@@ -5394,13 +5394,13 @@ CPLErr HFADataset::IRasterIO( GDALRWFlag eRWFlag,
         return GDALDataset::BlockBasedRasterIO( 
             eRWFlag, nXOff, nYOff, nXSize, nYSize,
             pData, nBufXSize, nBufYSize, eBufType, 
-            nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace, hMutex );
+            nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace, phMutex );
     else
         return 
             GDALDataset::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                     pData, nBufXSize, nBufYSize, eBufType, 
                                     nBandCount, panBandMap, 
-                                    nPixelSpace, nLineSpace, nBandSpace, hMutex );
+                                    nPixelSpace, nLineSpace, nBandSpace, phMutex );
 }
 
 /************************************************************************/

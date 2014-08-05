@@ -182,7 +182,7 @@ class CCPRasterBand : public GDALPamRasterBand
   public:
                    CCPRasterBand( SAR_CEOSDataset *, int, GDALDataType );
 
-    virtual CPLErr IReadBlock( int, int, void *, void **hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void **phMutex = NULL );
 };
 
 /************************************************************************/
@@ -198,7 +198,7 @@ class PALSARRasterBand : public GDALPamRasterBand
   public:
                    PALSARRasterBand( SAR_CEOSDataset *, int );
 
-    virtual CPLErr IReadBlock( int, int, void *, void **hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void **phMutex = NULL );
 };
 
 /************************************************************************/
@@ -214,7 +214,7 @@ class SAR_CEOSRasterBand : public GDALPamRasterBand
   public:
                    SAR_CEOSRasterBand( SAR_CEOSDataset *, int, GDALDataType );
 
-    virtual CPLErr IReadBlock( int, int, void *, void **hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void **phMutex = NULL );
 };
 
 /************************************************************************/
@@ -239,10 +239,10 @@ SAR_CEOSRasterBand::SAR_CEOSRasterBand( SAR_CEOSDataset *poGDS, int nBand,
 /************************************************************************/
 
 CPLErr SAR_CEOSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                       void * pImage, void **hMutex )
+                                       void * pImage, void **phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     struct CeosSARImageDesc *ImageDesc;
     int	   offset;
     GByte  *pabyRecord;
@@ -374,10 +374,10 @@ Im(SVV) = byte(10) ysca/127
 */
 
 CPLErr CCPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage, void ** hMutex )
+                                  void * pImage, void ** phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     struct CeosSARImageDesc *ImageDesc;
     int	   offset;
     GByte  *pabyRecord;
@@ -521,10 +521,10 @@ PALSARRasterBand::PALSARRasterBand( SAR_CEOSDataset *poGDS, int nBand )
 /************************************************************************/
 
 CPLErr PALSARRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                     void * pImage, void **hMutex )
+                                     void * pImage, void **phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     struct CeosSARImageDesc *ImageDesc;
     int	   offset;
     GByte  *pabyRecord;

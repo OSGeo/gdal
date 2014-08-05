@@ -233,7 +233,7 @@ protected:
 
     virtual CPLErr      IRasterIO( GDALRWFlag, int, int, int, int,
                                    void *, int, int, GDALDataType,
-                                   int, int *, int, int, int );
+                                   int, int *, int, int, int, void ** phMutex = NULL );
 
     virtual CPLErr GetGeoTransform( double * );
 
@@ -312,7 +312,7 @@ class JPGRasterBand : public GDALPamRasterBand
 
                    JPGRasterBand( JPGDatasetCommon *, int );
 
-    virtual CPLErr IReadBlock( int, int, void *, void **hMutex = NULL);
+    virtual CPLErr IReadBlock( int, int, void *, void **phMutex = NULL);
     virtual GDALColorInterp GetColorInterpretation();
 
     virtual GDALRasterBand *GetMaskBand();
@@ -333,7 +333,7 @@ class JPGRasterBand : public GDALPamRasterBand
 class JPGMaskBand : public GDALRasterBand
 {
   protected:
-    virtual CPLErr IReadBlock( int, int, void *, void **hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void **phMutex = NULL );
 
   public:
 		JPGMaskBand( JPGDataset *poDS );
@@ -787,10 +787,10 @@ JPGMaskBand::JPGMaskBand( JPGDataset *poDS )
 /************************************************************************/
 
 CPLErr JPGMaskBand::IReadBlock( int nBlockX, int nBlockY, 
-                void *pImage, void **hMutex )
+                void *pImage, void **phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     JPGDataset *poJDS = (JPGDataset *) poDS;
 
 /* -------------------------------------------------------------------- */
@@ -867,7 +867,7 @@ GDALRasterBand* JPGCreateBand(JPGDatasetCommon* poDS, int nBand)
 /************************************************************************/
 
 CPLErr JPGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage, void **hMutex )
+                                  void * pImage, void **phMutex )
 
 {
     CPLErr      eErr;
@@ -876,7 +876,7 @@ CPLErr JPGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     
     CPLAssert( nBlockXOff == 0 );
     {
-        CPLMutexHolderD( hMutex );
+        CPLMutexHolderD( phMutex );
 
         if (poGDS->fpImage == NULL)
         {
@@ -1923,7 +1923,8 @@ CPLErr JPGDatasetCommon::IRasterIO( GDALRWFlag eRWFlag,
                               void *pData, int nBufXSize, int nBufYSize, 
                               GDALDataType eBufType,
                               int nBandCount, int *panBandMap, 
-                              int nPixelSpace, int nLineSpace, int nBandSpace )
+                              int nPixelSpace, int nLineSpace, int nBandSpace,
+                              void ** phMutex )
 
 {
     if((eRWFlag == GF_Read) &&
@@ -1940,6 +1941,7 @@ CPLErr JPGDatasetCommon::IRasterIO( GDALRWFlag eRWFlag,
        (panBandMap != NULL) &&
        (panBandMap[0] == 1) && (panBandMap[1] == 2) && (panBandMap[2] == 3))
     {
+        CPLMutexHolderD( phMutex );
         Restart();
         int y;
         CPLErr tmpError;
@@ -1966,7 +1968,8 @@ CPLErr JPGDatasetCommon::IRasterIO( GDALRWFlag eRWFlag,
     return GDALPamDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                      pData, nBufXSize, nBufYSize, eBufType, 
                                      nBandCount, panBandMap, 
-                                     nPixelSpace, nLineSpace, nBandSpace);
+                                     nPixelSpace, nLineSpace, nBandSpace,
+                                     phMutex);
 }
 
 #if JPEG_LIB_VERSION_MAJOR < 9

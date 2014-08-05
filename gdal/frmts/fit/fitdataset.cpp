@@ -102,7 +102,7 @@ public:
     
     // should override RasterIO eventually.
     
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
 //     virtual CPLErr WriteBlock( int, int, void * ); 
     virtual double GetMinimum( int *pbSuccess );
     virtual double GetMaximum( int *pbSuccess );
@@ -193,10 +193,10 @@ FITRasterBand::~FITRasterBand()
     }
 
 CPLErr FITRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage, void ** hMutex )
+                                  void * pImage, void ** phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     FITDataset	*poFIT_DS = (FITDataset *) poDS;
 
     uint64 tilenum = 0;

@@ -1463,9 +1463,9 @@ CPLErr ILWISRasterBand::GetILWISInfo(string pszFileName)
 /*                             IReadBlock()                             */
 /************************************************************************/
 CPLErr ILWISRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage, void ** hMutex )
+                                  void * pImage, void ** phMutex )
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     // pImage is empty; this function fills it with data from fpRaw
     // (ILWIS data to foreign data)
 
@@ -1656,9 +1656,9 @@ void ILWISRasterBand::FillWithNoData(void * pImage)
 /************************************************************************/
 
 CPLErr ILWISRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
-				   void* pImage, void ** hMutex)
+				   void* pImage, void ** phMutex)
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     // pImage has data; this function reads this data and stores it to fpRaw
     // (foreign data to ILWIS data)
 

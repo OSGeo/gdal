@@ -233,8 +233,8 @@ class SGIRasterBand : public GDALPamRasterBand
 public:
     SGIRasterBand(SGIDataset*, int);
 
-    virtual CPLErr IReadBlock(int, int, void*, void ** hMutex = NULL);
-    virtual CPLErr IWriteBlock(int, int, void*, void ** hMutex = NULL);
+    virtual CPLErr IReadBlock(int, int, void*, void ** phMutex = NULL);
+    virtual CPLErr IWriteBlock(int, int, void*, void ** phMutex = NULL);
     virtual GDALColorInterp GetColorInterpretation();
 };
 
@@ -268,10 +268,10 @@ SGIRasterBand::SGIRasterBand(SGIDataset* poDS, int nBand)
 /************************************************************************/
 
 CPLErr SGIRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
-				 void*  pImage, void **hMutex)
+				 void*  pImage, void **phMutex)
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     SGIDataset* poGDS = (SGIDataset*) poDS;
     
     CPLAssert(nBlockXOff == 0);
@@ -287,10 +287,10 @@ CPLErr SGIRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr SGIRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
-                                  void*  pImage, void **hMutex)
+                                  void*  pImage, void **phMutex)
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     SGIDataset* poGDS = (SGIDataset*) poDS;
     ImageRec *image = &(poGDS->image);
     

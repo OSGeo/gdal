@@ -1515,7 +1515,7 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
                                GDALDataType eBufType, 
                                int nBandCount, int *panBandMap,
                                int nPixelSpace, int nLineSpace, int nBandSpace,
-                               void ** hMutex)
+                               void ** phMutex)
     
 {
     int iBandIndex; 
@@ -1531,7 +1531,7 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
         return BlockBasedRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
                                    pData, nBufXSize, nBufYSize,
                                    eBufType, nBandCount, panBandMap,
-                                   nPixelSpace, nLineSpace, nBandSpace, hMutex );
+                                   nPixelSpace, nLineSpace, nBandSpace, phMutex );
     }
 
     for( iBandIndex = 0; 
@@ -1551,7 +1551,7 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
         
         eErr = poBand->IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
                                   (void *) pabyBandData, nBufXSize, nBufYSize,
-                                  eBufType, nPixelSpace, nLineSpace, hMutex );
+                                  eBufType, nPixelSpace, nLineSpace, phMutex );
     }
 
     return eErr;
@@ -1714,7 +1714,7 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
                               GDALDataType eBufType, 
                               int nBandCount, int *panBandMap,
                               int nPixelSpace, int nLineSpace, int nBandSpace,
-                              void ** hMutex )
+                              void ** phMutex )
 
 {
     int i = 0;
@@ -1807,7 +1807,7 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
                                 pData, nBufXSize, nBufYSize, eBufType,
                                 nBandCount, panBandMap,
                                 nPixelSpace, nLineSpace, nBandSpace,
-                                hMutex );
+                                phMutex );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1820,7 +1820,7 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
                        pData, nBufXSize, nBufYSize, eBufType,
                        nBandCount, panBandMap,
                        nPixelSpace, nLineSpace, nBandSpace,
-                       hMutex );
+                       phMutex );
     }
 
 /* -------------------------------------------------------------------- */

@@ -91,7 +91,7 @@ class HF2RasterBand : public GDALPamRasterBand
                 HF2RasterBand( HF2Dataset *, int, GDALDataType );
                ~HF2RasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void *, void **hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void **phMutex = NULL );
 };
 
 
@@ -128,10 +128,10 @@ HF2RasterBand::~HF2RasterBand()
 /************************************************************************/
 
 CPLErr HF2RasterBand::IReadBlock( int nBlockXOff, int nLineYOff,
-                                  void * pImage, void **hMutex )
+                                  void * pImage, void **phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     HF2Dataset *poGDS = (HF2Dataset *) poDS;
 
     int nXBlocks = (nRasterXSize + nBlockXSize - 1) / nBlockXSize;

@@ -91,7 +91,7 @@ class OZIRasterBand : public GDALPamRasterBand
                                GDALColorTable* poColorTable);
     virtual    ~OZIRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
 
@@ -218,10 +218,10 @@ GDALColorTable* OZIRasterBand::GetColorTable()
 /************************************************************************/
 
 CPLErr OZIRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage, void ** hMutex )
+                                  void * pImage, void ** phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     OZIDataset *poGDS = (OZIDataset *) poDS;
 
     int nBlock = nBlockYOff * nXBlocks + nBlockXOff;

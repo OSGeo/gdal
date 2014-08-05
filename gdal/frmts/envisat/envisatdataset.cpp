@@ -56,7 +56,7 @@ class MerisL2FlagBand : public GDALPamRasterBand
   public:
     MerisL2FlagBand( GDALDataset *, int, VSILFILE*, off_t, off_t );
     virtual ~MerisL2FlagBand();
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
 
   private:
     off_t nImgOffset;
@@ -107,11 +107,11 @@ MerisL2FlagBand::~MerisL2FlagBand()
 /*                             IReadBlock()                             */
 /************************************************************************/
 CPLErr MerisL2FlagBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                    void * pImage, void ** hMutex )
+                                    void * pImage, void ** phMutex )
 {
     CPLAssert( nBlockXOff == 0 );
     CPLAssert( pReadBuf != NULL );
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
 
     off_t nOffset = nImgOffset + nPrefixBytes +
                     nBlockYOff * nBlockYSize * nRecordSize;

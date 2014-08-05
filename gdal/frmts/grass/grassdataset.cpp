@@ -109,7 +109,7 @@ class GRASSRasterBand : public GDALRasterBand
                                     const char *, const char * );
     virtual        ~GRASSRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
     virtual double GetMinimum( int *pbSuccess = NULL );
@@ -260,10 +260,10 @@ GRASSRasterBand::~GRASSRasterBand()
 /************************************************************************/
 
 CPLErr GRASSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage, void ** hMutex )
+                                  void * pImage, void ** phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     char *pachNullBuf;
     
     pachNullBuf = (char *) CPLMalloc(nBlockXSize);

@@ -89,7 +89,7 @@ class NWT_GRDRasterBand:public GDALPamRasterBand
 
     NWT_GRDRasterBand( NWT_GRDDataset *, int );
 
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
     virtual double GetNoDataValue( int *pbSuccess );
 
     /* FIXME. I don't believe it is correct to advertize offset and */
@@ -175,9 +175,9 @@ GDALColorInterp NWT_GRDRasterBand::GetColorInterpretation()
 /*                             IReadBlock()                             */
 /************************************************************************/
 CPLErr NWT_GRDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, 
-                                      void *pImage, void ** hMutex )
+                                      void *pImage, void ** phMutex )
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     NWT_GRDDataset *poGDS = (NWT_GRDDataset *) poDS;
     char *pszRecord;
     int nRecordSize = nBlockXSize * 2;

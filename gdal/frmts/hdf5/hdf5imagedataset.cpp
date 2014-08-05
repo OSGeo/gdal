@@ -246,7 +246,7 @@ public:
     HDF5ImageRasterBand( HDF5ImageDataset *, int, GDALDataType );
     ~HDF5ImageRasterBand();
 
-    virtual CPLErr      IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr      IReadBlock( int, int, void *, void ** phMutex = NULL );
     virtual double      GetNoDataValue( int * );
     virtual CPLErr      SetNoDataValue( double );
     /*  virtual CPLErr          IWriteBlock( int, int, void * ); */
@@ -349,9 +349,9 @@ CPLErr HDF5ImageRasterBand::SetNoDataValue( double dfNoData )
 /*                             IReadBlock()                             */
 /************************************************************************/
 CPLErr HDF5ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                        void * pImage, void ** hMutex )
+                                        void * pImage, void ** phMutex )
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     herr_t      status;
     hsize_t     count[3];
     H5OFFSET_TYPE offset[3];

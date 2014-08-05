@@ -191,7 +191,7 @@ class PNGRasterBand : public GDALPamRasterBand
 
                    PNGRasterBand( PNGDataset *, int );
 
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
 
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
@@ -204,7 +204,7 @@ class PNGRasterBand : public GDALPamRasterBand
 
 #ifdef SUPPORT_CREATE
     virtual CPLErr SetColorTable(GDALColorTable*);
-    virtual CPLErr IWriteBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr IWriteBlock( int, int, void *, void ** phMutex = NULL );
 
   protected:
 	int m_bBandProvided[5];
@@ -250,7 +250,7 @@ PNGRasterBand::PNGRasterBand( PNGDataset *poDS, int nBand )
 /************************************************************************/
 
 CPLErr PNGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage, void ** hMutex )
+                                  void * pImage, void ** phMutex )
 
 {
     PNGDataset	*poGDS = (PNGDataset *) poDS;
@@ -260,7 +260,7 @@ CPLErr PNGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     CPLAssert( nBlockXOff == 0 );
     {
-        CPLMutexHolderD( hMutex );
+        CPLMutexHolderD( phMutex );
 
         if( poGDS->nBitDepth == 16 )
             nPixelSize = 2;
@@ -1866,11 +1866,11 @@ void GDALRegister_PNG()
 /*                         IWriteBlock()                                */
 /************************************************************************/
 
-CPLErr PNGRasterBand::IWriteBlock(int x, int y, void* pvData, void **hMutex)
+CPLErr PNGRasterBand::IWriteBlock(int x, int y, void* pvData, void **phMutex)
 {
     // rcg, added to support Create().
 
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     PNGDataset& ds = *(PNGDataset*)poDS;
 
 

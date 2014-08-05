@@ -163,9 +163,9 @@ CPLErr RMFRasterBand::ReadBuffer( GByte *pabyBuf, GUInt32 nBytes ) const
 /************************************************************************/
 
 CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage, void ** hMutex )
+                                  void * pImage, void ** phMutex )
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     RMFDataset  *poGDS = (RMFDataset *) poDS;
     GUInt32     nTile = nBlockYOff * poGDS->nXTiles + nBlockXOff;
     GUInt32     nTileBytes;
@@ -471,9 +471,9 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-                                   void * pImage, void ** hMutex )
+                                   void * pImage, void ** phMutex )
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     RMFDataset  *poGDS = (RMFDataset *)poDS;
     GUInt32     nTile = nBlockYOff * poGDS->nXTiles + nBlockXOff;
     GUInt32     nTileBytes = nDataSize * poGDS->nBands;

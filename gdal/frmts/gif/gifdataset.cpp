@@ -105,7 +105,7 @@ class GIFRasterBand : public GDALPamRasterBand
                    GIFRasterBand( GIFDataset *, int, SavedImage *, int );
     virtual       ~GIFRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
 
     virtual double GetNoDataValue( int *pbSuccess = NULL );
     virtual GDALColorInterp GetColorInterpretation();
@@ -236,10 +236,10 @@ GIFRasterBand::~GIFRasterBand()
 /************************************************************************/
 
 CPLErr GIFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage, void ** hMutex )
+                                  void * pImage, void ** phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     CPLAssert( nBlockXOff == 0 );
 
     if (psImage == NULL)

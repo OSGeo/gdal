@@ -135,8 +135,8 @@ class GSAGRasterBand : public GDALPamRasterBand
     		GSAGRasterBand( GSAGDataset *, int, vsi_l_offset );
     		~GSAGRasterBand();
     
-    CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
-    CPLErr IWriteBlock( int, int, void *, void ** hMutex = NULL );
+    CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
+    CPLErr IWriteBlock( int, int, void *, void ** phMutex = NULL );
 
     double GetNoDataValue( int *pbSuccess = NULL );
     double GetMinimum( int *pbSuccess = NULL );
@@ -299,7 +299,7 @@ CPLErr GSAGRasterBand::ScanForMinMaxZ()
 /************************************************************************/
 
 CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-				   void * pImage, void ** hMutex )
+				   void * pImage, void ** phMutex )
 {
     static size_t nMaxLineSize = 128;
     double *pdfImage = (double *)pImage;
@@ -315,12 +315,12 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         // Discover the last read block
         for ( int iFoundLine = nLastReadLine - 1; iFoundLine > nBlockYOff; iFoundLine--)
         {
-            if( IReadBlock( nBlockXOff, iFoundLine, NULL, hMutex) != CE_None )
+            if( IReadBlock( nBlockXOff, iFoundLine, NULL, phMutex) != CE_None )
                 return CE_Failure;
         }
     }
 
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     if( panLineOffset[nBlockYOff] == 0 )
         return CE_Failure;
     if( VSIFSeekL( poGDS->fp, panLineOffset[nBlockYOff], SEEK_SET ) != 0 )
@@ -553,10 +553,10 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr GSAGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-				    void * pImage, void ** hMutex )
+				    void * pImage, void ** phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     if( eAccess == GA_ReadOnly )
     {
 	CPLError( CE_Failure, CPLE_NoWriteAccess,

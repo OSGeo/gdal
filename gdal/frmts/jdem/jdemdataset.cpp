@@ -120,7 +120,7 @@ class JDEMRasterBand : public GDALPamRasterBand
     		JDEMRasterBand( JDEMDataset *, int );
                 ~JDEMRasterBand();
     
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
 };
 
 
@@ -159,10 +159,10 @@ JDEMRasterBand::~JDEMRasterBand()
 /************************************************************************/
 
 CPLErr JDEMRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage, void ** hMutex )
+                                  void * pImage, void ** phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     JDEMDataset *poGDS = (JDEMDataset *) poDS;
     int		i;
     

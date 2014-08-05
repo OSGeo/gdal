@@ -279,7 +279,7 @@ class COASPRasterBand : public GDALRasterBand {
 public:
 	COASPRasterBand( COASPDataset *poDS, GDALDataType eDataType, int ePol, VSILFILE *fp );
 	virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, 
-		void *pImage, void **hMutex);
+		void *pImage, void **phMutex);
 };
 
 COASPRasterBand::COASPRasterBand( COASPDataset *poDS, GDALDataType eDataType,
@@ -294,14 +294,14 @@ COASPRasterBand::COASPRasterBand( COASPDataset *poDS, GDALDataType eDataType,
 }
 
 CPLErr COASPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, 
-	void *pImage, void **hMutex )
+	void *pImage, void **phMutex )
 {
 	if (this->fp == NULL) {
 		CPLError(CE_Fatal, 1, "file pointer freed unexpectedly\n");
 		return CE_Fatal;
 	}
 
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
 	/* 8 bytes per pixel: 4 bytes I, 4 bytes Q */
 	unsigned long nByteNum = poDS->GetRasterXSize() * 8 * nBlockYOff;
 

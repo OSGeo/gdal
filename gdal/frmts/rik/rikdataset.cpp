@@ -161,7 +161,7 @@ class RIKRasterBand : public GDALPamRasterBand
 
     RIKRasterBand( RIKDataset *, int );
 
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
 };
@@ -276,10 +276,10 @@ static void OutputPixel( GByte pixel,
 /************************************************************************/
 
 CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage, void ** hMutex )
+                                  void * pImage, void ** phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     RIKDataset *poRDS = (RIKDataset *) poDS;
     GByte *blockData;
     GUInt32 blocks;

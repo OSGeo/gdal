@@ -181,8 +181,8 @@ class GRASSRasterBand : public GDALRasterBand
                                     const char *, const char * );
     virtual        ~GRASSRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
-    virtual CPLErr IRasterIO ( GDALRWFlag, int, int, int, int, void *, int, int, GDALDataType, int, int, void ** hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
+    virtual CPLErr IRasterIO ( GDALRWFlag, int, int, int, int, void *, int, int, GDALDataType, int, int, void ** phMutex = NULL );
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
     virtual double GetMinimum( int *pbSuccess = NULL );
@@ -480,10 +480,10 @@ CPLErr GRASSRasterBand::ResetReading ( struct Cell_head *sNewWindow )
 /*                                                                      */
 /************************************************************************/
 
-CPLErr GRASSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage, void ** hMutex )
+CPLErr GRASSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage, void ** phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     if ( ! this->valid ) return CE_Failure;
 
     // Reset window because IRasterIO could be previosly called
@@ -529,9 +529,9 @@ CPLErr GRASSRasterBand::IRasterIO ( GDALRWFlag eRWFlag,
 	                           int nXOff, int nYOff, int nXSize, int nYSize,
 				   void * pData, int nBufXSize, int nBufYSize,
 				   GDALDataType eBufType,
-				   int nPixelSpace, int nLineSpace, void ** hMutex )
+				   int nPixelSpace, int nLineSpace, void ** phMutex )
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     /* GRASS library does that, we have only calculate and reset the region in map units
      * and if the region has changed, reopen the raster */
     

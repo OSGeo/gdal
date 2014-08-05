@@ -83,7 +83,7 @@ class ISISTiledBand : public GDALPamRasterBand
                                int bNativeOrder );
     virtual     ~ISISTiledBand() {}
 
-    virtual CPLErr          IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr          IReadBlock( int, int, void *, void ** phMutex = NULL );
 };
 
 /************************************************************************/
@@ -129,10 +129,10 @@ ISISTiledBand::ISISTiledBand( GDALDataset *poDS, VSILFILE *fpVSIL,
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr ISISTiledBand::IReadBlock( int nXBlock, int nYBlock, void *pImage, void ** hMutex )
+CPLErr ISISTiledBand::IReadBlock( int nXBlock, int nYBlock, void *pImage, void ** phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     GIntBig  nOffset = nFirstTileOffset + 
         nXBlock * nXTileOffset + nYBlock * nYTileOffset;
     size_t nBlockSize = 

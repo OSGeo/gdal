@@ -349,10 +349,10 @@ double SDERasterBand::GetMaximum(int *pbSuccess)
 CPLErr SDERasterBand::IReadBlock( int nBlockXOff, 
                                   int nBlockYOff,
                                   void * pImage,
-                                  void ** hMutex )
+                                  void ** phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     // grab our Dataset to limit the casting we have to do.
     SDEDataset *poGDS = (SDEDataset *) poDS;
 

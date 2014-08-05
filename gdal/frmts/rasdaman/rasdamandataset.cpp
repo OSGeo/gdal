@@ -313,7 +313,7 @@ public:
   RasdamanRasterBand( RasdamanDataset *, int, GDALDataType type, int offset, int size, int nBlockXSize, int nBlockYSize );
   ~RasdamanRasterBand();
 
-  virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
+  virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
 };
 
 /************************************************************************/
@@ -365,9 +365,9 @@ RasdamanRasterBand::~RasdamanRasterBand()
 /************************************************************************/
 
 CPLErr RasdamanRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                       void * pImage, void ** hMutex )
+                                       void * pImage, void ** phMutex )
 {
-  CPLMutexHolderD( hMutex );
+  CPLMutexHolderD( phMutex );
   RasdamanDataset *poGDS = (RasdamanDataset *) poDS;
 
   memset(pImage, 0, nRecordSize);

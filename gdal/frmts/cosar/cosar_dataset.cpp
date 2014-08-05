@@ -64,7 +64,7 @@ class COSARRasterBand : public GDALRasterBand
 	int nBurstNumber;
 public:
 	COSARRasterBand(COSARDataset *, unsigned long nRTNB);
-	virtual CPLErr IReadBlock(int, int, void *, void ** hMutex);
+	virtual CPLErr IReadBlock(int, int, void *, void ** phMutex);
 };
 
 /*****************************************************************************
@@ -80,9 +80,9 @@ COSARRasterBand::COSARRasterBand(COSARDataset *pDS, unsigned long nRTNB) {
 }
 
 CPLErr COSARRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, 
-	void *pImage, void ** hMutex) {
+	void *pImage, void ** phMutex) {
 
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     unsigned long nRSFV = 0;
     unsigned long nRSLV = 0;
     COSARDataset *pCDS = (COSARDataset *) poDS;

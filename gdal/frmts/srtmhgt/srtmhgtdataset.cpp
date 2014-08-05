@@ -92,8 +92,8 @@ class SRTMHGTRasterBand : public GDALPamRasterBand
   public:
     SRTMHGTRasterBand(SRTMHGTDataset*, int);
 
-    virtual CPLErr IReadBlock(int, int, void*, void ** hMutex = NULL);
-    virtual CPLErr IWriteBlock(int nBlockXOff, int nBlockYOff, void* pImage, void ** hMutex = NULL);
+    virtual CPLErr IReadBlock(int, int, void*, void ** phMutex = NULL);
+    virtual CPLErr IWriteBlock(int nBlockXOff, int nBlockYOff, void* pImage, void ** phMutex = NULL);
 
     virtual GDALColorInterp GetColorInterpretation();
 
@@ -122,7 +122,7 @@ SRTMHGTRasterBand::SRTMHGTRasterBand(SRTMHGTDataset* poDS, int nBand)
 /************************************************************************/
 
 CPLErr SRTMHGTRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
-                                     void* pImage, void ** hMutex)
+                                     void* pImage, void ** phMutex)
 {
   SRTMHGTDataset* poGDS = (SRTMHGTDataset*) poDS;
 
@@ -137,7 +137,7 @@ CPLErr SRTMHGTRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
   if((poGDS == NULL) || (poGDS->fpImage == NULL))
     return CE_Failure;
 
-  CPLMutexHolderD( hMutex );
+  CPLMutexHolderD( phMutex );
 /* -------------------------------------------------------------------- */
 /*      Load the desired data into the working buffer.                  */
 /* -------------------------------------------------------------------- */
@@ -155,7 +155,7 @@ CPLErr SRTMHGTRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr SRTMHGTRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, 
-                                      void* pImage, void ** hMutex)
+                                      void* pImage, void ** phMutex)
 {
     SRTMHGTDataset* poGDS = (SRTMHGTDataset*) poDS;
 
@@ -169,7 +169,7 @@ CPLErr SRTMHGTRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
     if((poGDS == NULL) || (poGDS->fpImage == NULL) || (poGDS->eAccess != GA_Update))
         return CE_Failure;
 
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     VSIFSeekL(poGDS->fpImage, nBlockYOff*nBlockXSize*2, SEEK_SET);
 
 #ifdef CPL_LSB

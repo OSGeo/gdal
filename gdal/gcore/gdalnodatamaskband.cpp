@@ -68,7 +68,7 @@ GDALNoDataMaskBand::~GDALNoDataMaskBand()
 /************************************************************************/
 
 CPLErr GDALNoDataMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
-                                         void * pImage, void **hMutex )
+                                         void * pImage, void **phMutex )
 
 {
     GDALDataType eWrkDT;
@@ -156,7 +156,7 @@ CPLErr GDALNoDataMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
 /*      Process different cases.                                        */
 /* -------------------------------------------------------------------- */
     int i;
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     switch( eWrkDT )
     {
       case GDT_Byte:
@@ -251,7 +251,7 @@ CPLErr GDALNoDataMaskBand::IRasterIO( GDALRWFlag eRWFlag,
                                       int nXOff, int nYOff, int nXSize, int nYSize,
                                       void * pData, int nBufXSize, int nBufYSize,
                                       GDALDataType eBufType,
-                                      int nPixelSpace, int nLineSpace, void ** hMutex )
+                                      int nPixelSpace, int nLineSpace, void ** phMutex )
 {
     /* Optimization in common use case (#4488) */
     /* This avoids triggering the block cache on this band, which helps */
@@ -264,13 +264,13 @@ CPLErr GDALNoDataMaskBand::IRasterIO( GDALRWFlag eRWFlag,
         CPLErr eErr = poParent->RasterIO( GF_Read, nXOff, nYOff, nXSize, nYSize,
                                           pData, nBufXSize, nBufYSize,
                                           eBufType,
-                                          nPixelSpace, nLineSpace, hMutex );
+                                          nPixelSpace, nLineSpace, phMutex );
         if (eErr != CE_None)
             return eErr;
 
         GByte* pabyData = (GByte*) pData;
         GByte byNoData = (GByte) dfNoDataValue;
-        CPLMutexHolderD( hMutex );
+        CPLMutexHolderD( phMutex );
         for( int i = nBufXSize * nBufYSize - 1; i >= 0; i-- )
         {
             if( pabyData[i] == byNoData )
@@ -284,5 +284,5 @@ CPLErr GDALNoDataMaskBand::IRasterIO( GDALRWFlag eRWFlag,
     return GDALRasterBand::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                       pData, nBufXSize, nBufYSize,
                                       eBufType,
-                                      nPixelSpace, nLineSpace, hMutex );
+                                      nPixelSpace, nLineSpace, phMutex );
 }

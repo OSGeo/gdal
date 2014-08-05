@@ -141,7 +141,7 @@ class MBTilesBand: public GDALPamRasterBand
     virtual int             GetOverviewCount();
     virtual GDALRasterBand* GetOverview(int nLevel);
 
-    virtual CPLErr          IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr          IReadBlock( int, int, void *, void ** phMutex = NULL );
 
     virtual char      **GetMetadataDomainList();
     virtual const char *GetMetadataItem( const char * pszName,
@@ -167,7 +167,7 @@ MBTilesBand::MBTilesBand(MBTilesDataset* poDS, int nBand,
 /*                            IReadBlock()                              */
 /************************************************************************/
 
-CPLErr MBTilesBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage, void ** hMutex)
+CPLErr MBTilesBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage, void ** phMutex)
 {
     MBTilesDataset* poGDS = (MBTilesDataset*) poDS;
 
@@ -230,19 +230,19 @@ CPLErr MBTilesBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage, v
 
                 if (nTileBands == 3 && poGDS->nBands == 4 && iBand == 4)
                 {
-                    CPLMutexHolderD( hMutex );
+                    CPLMutexHolderD( phMutex );
                     memset(pImage, 255, nBlockXSize * nBlockYSize);
                 }
                 else
                 {
                     GDALRasterIOMutex(GDALGetRasterBand(hDSTile, iBand), GF_Read,
                                 0, 0, nBlockXSize, nBlockYSize,
-                                pImage, nBlockXSize, nBlockYSize, eDataType, 0, 0, hMutex);
+                                pImage, nBlockXSize, nBlockYSize, eDataType, 0, 0, phMutex);
                 }
 
                 if (pSrcImage != NULL && hCT != NULL)
                 {
-                    CPLMutexHolderD( hMutex );
+                    CPLMutexHolderD( phMutex );
                     int i;
                     memcpy(pSrcImage, pImage, nBlockXSize * nBlockYSize);
 
@@ -317,7 +317,7 @@ CPLErr MBTilesBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage, v
                         }
                         else
                         {
-                            CPLMutexHolderD2( hMutex );
+                            CPLMutexHolderD2( phMutex );
                             memcpy(pabySrcBlock, pImage, nBlockXSize * nBlockYSize);
                         }
                     }
@@ -344,7 +344,7 @@ CPLErr MBTilesBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage, v
                                     0, 0, nBlockXSize, nBlockYSize,
                                     pabyRGBImage, nBlockXSize, nBlockYSize, eDataType,
                                     3, NULL, 3, 3 * nBlockXSize, 1);
-                CPLMutexHolderD( hMutex );
+                CPLMutexHolderD( phMutex );
                 for(int i=0;i<nBlockXSize*nBlockYSize;i++)
                 {
                     int R = pabyRGBImage[3*i];
@@ -374,7 +374,7 @@ CPLErr MBTilesBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage, v
     if (!bGotTile)
     {
         {
-            CPLMutexHolderD( hMutex );
+            CPLMutexHolderD( phMutex );
             memset(pImage, (nBand == 4) ? 0 : 255, nBlockXSize * nBlockYSize);
         }
         for(int iOtherBand=1;iOtherBand<=poGDS->nBands;iOtherBand++)

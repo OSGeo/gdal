@@ -60,11 +60,11 @@ D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, IRasterIO,
                         void * pData, int nBufXSize, int nBufYSize,
                         GDALDataType eBufType, 
                         int nBandCount, int *panBandMap,
-                        int nPixelSpace, int nLineSpace, int nBandSpace, void ** hMutex),
+                        int nPixelSpace, int nLineSpace, int nBandSpace, void ** phMutex),
                         ( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
                         pData, nBufXSize, nBufYSize,
                         eBufType, nBandCount, panBandMap,
-                        nPixelSpace, nLineSpace, nBandSpace, hMutex ))
+                        nPixelSpace, nLineSpace, nBandSpace, phMutex ))
 
 
 D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, IBuildOverviews,
@@ -174,11 +174,11 @@ retType GDALProxyRasterBand::methodName argList \
 }
 
 RB_PROXY_METHOD_WITH_RET_WITH_INIT_BLOCK(CPLErr, CE_Failure, IReadBlock,
-                                ( int nXBlockOff, int nYBlockOff, void* pImage, void ** hMutex), 
-                                (nXBlockOff, nYBlockOff, pImage, hMutex) )
+                                ( int nXBlockOff, int nYBlockOff, void* pImage, void ** phMutex), 
+                                (nXBlockOff, nYBlockOff, pImage, phMutex) )
 RB_PROXY_METHOD_WITH_RET_WITH_INIT_BLOCK(CPLErr, CE_Failure, IWriteBlock,
-                                ( int nXBlockOff, int nYBlockOff, void* pImage, void ** hMutex), 
-                                (nXBlockOff, nYBlockOff, pImage, hMutex) )
+                                ( int nXBlockOff, int nYBlockOff, void* pImage, void ** phMutex), 
+                                (nXBlockOff, nYBlockOff, pImage, phMutex) )
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, IRasterIO,
                         ( GDALRWFlag eRWFlag,
                                 int nXOff, int nYOff, int nXSize, int nYSize,
@@ -186,10 +186,10 @@ RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, IRasterIO,
                                 GDALDataType eBufType,
                                 int nPixelSpace,
                                 int nLineSpace,
-                                void ** hMutex ), 
+                                void ** phMutex ), 
                         (eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                 pData, nBufXSize, nBufYSize, eBufType,
-                                nPixelSpace, nLineSpace, hMutex ) )
+                                nPixelSpace, nLineSpace, phMutex ) )
 
 RB_PROXY_METHOD_WITH_RET(char**, NULL, GetMetadataDomainList, (), ())
 RB_PROXY_METHOD_WITH_RET(char**, NULL, GetMetadata, (const char * pszDomain), (pszDomain))

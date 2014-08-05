@@ -98,7 +98,7 @@ class GFFRasterBand : public GDALPamRasterBand {
     int nSampleSize;
 public:
     GFFRasterBand( GFFDataset *, int, GDALDataType );
-    virtual CPLErr IReadBlock( int, int, void *, void **hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void **phMutex = NULL );
 };
 
 /************************************************************************/
@@ -139,9 +139,9 @@ GFFRasterBand::GFFRasterBand( GFFDataset *poDS, int nBand,
 /************************************************************************/
 
 CPLErr GFFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-				void *pImage, void **hMutex ) 
+				void *pImage, void **phMutex ) 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     GFFDataset *poGDS = (GFFDataset *)poDS;
     long nOffset = poGDS->nLength;
 

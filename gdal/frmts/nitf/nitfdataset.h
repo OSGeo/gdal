@@ -135,7 +135,7 @@ class NITFDataset : public GDALPamDataset
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int *, int, int, int, void ** hMutex = NULL );
+                              int, int *, int, int, int, void ** phMutex = NULL );
 
     virtual const char *GetProjectionRef(void);
     virtual CPLErr SetProjection( const char * );
@@ -194,8 +194,8 @@ class NITFRasterBand : public GDALPamRasterBand
                    NITFRasterBand( NITFDataset *, int );
                   ~NITFRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
-    virtual CPLErr IWriteBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
+    virtual CPLErr IWriteBlock( int, int, void *, void ** phMutex = NULL );
 
     virtual GDALColorInterp GetColorInterpretation();
     virtual CPLErr SetColorInterpretation( GDALColorInterp );
@@ -226,11 +226,11 @@ class NITFProxyPamRasterBand : public GDALPamRasterBand
         virtual GDALRasterBand* RefUnderlyingRasterBand() = 0;
         virtual void UnrefUnderlyingRasterBand(GDALRasterBand* poUnderlyingRasterBand);
 
-        virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
-        virtual CPLErr IWriteBlock( int, int, void *, void ** hMutex = NULL );
+        virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
+        virtual CPLErr IWriteBlock( int, int, void *, void ** phMutex = NULL );
         virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                                 void *, int, int, GDALDataType,
-                                int, int, void ** hMutex = NULL );
+                                int, int, void ** phMutex = NULL );
 
     public:
                          ~NITFProxyPamRasterBand();

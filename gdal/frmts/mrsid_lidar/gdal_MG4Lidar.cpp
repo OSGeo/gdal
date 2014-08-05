@@ -115,7 +115,7 @@ public:
    virtual CPLErr GetStatistics( int bApproxOK, int bForce, double *pdfMin, double *pdfMax, double *pdfMean, double *padfStdDev );
    virtual int GetOverviewCount();
    virtual GDALRasterBand * GetOverview( int i );
-   virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
+   virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
    virtual double GetNoDataValue( int *pbSuccess = NULL );
 
    protected:
@@ -468,9 +468,9 @@ double MG4LidarRasterBand::getMaxValue()
 /************************************************************************/
 
 CPLErr MG4LidarRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                      void * pImage, void ** hMutex )
+                                      void * pImage, void ** phMutex )
 {
-   CPLMutexHolderD( hMutex );
+   CPLMutexHolderD( phMutex );
    CPLErr eErr;
    switch(eDataType)
    {

@@ -517,12 +517,12 @@ void PCIDSK2Band::RefreshOverviewList()
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr PCIDSK2Band::IReadBlock( int iBlockX, int iBlockY, void *pData, void **hMutex )
+CPLErr PCIDSK2Band::IReadBlock( int iBlockX, int iBlockY, void *pData, void **phMutex )
 
 {
     try 
     {
-        CPLMutexHolderD( hMutex );
+        CPLMutexHolderD( phMutex );
         poChannel->ReadBlock( iBlockX + iBlockY * nBlocksPerRow,
                               pData );
 
@@ -554,12 +554,12 @@ CPLErr PCIDSK2Band::IReadBlock( int iBlockX, int iBlockY, void *pData, void **hM
 /*                             IWriteBlock()                            */
 /************************************************************************/
 
-CPLErr PCIDSK2Band::IWriteBlock( int iBlockX, int iBlockY, void *pData, void **hMutex )
+CPLErr PCIDSK2Band::IWriteBlock( int iBlockX, int iBlockY, void *pData, void **phMutex )
 
 {
     try 
     {
-        CPLMutexHolderD( hMutex );
+        CPLMutexHolderD( phMutex );
         poChannel->WriteBlock( iBlockX + iBlockY * nBlocksPerRow,
                                pData );
         return CE_None;

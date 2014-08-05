@@ -130,8 +130,8 @@ public:
     SAGARasterBand( SAGADataset *, int );
     ~SAGARasterBand();
     
-    CPLErr		IReadBlock( int, int, void *, void **hMutex = NULL );
-    CPLErr		IWriteBlock( int, int, void *, void **hMutex = NULL );
+    CPLErr		IReadBlock( int, int, void *, void **phMutex = NULL );
+    CPLErr		IWriteBlock( int, int, void *, void **phMutex = NULL );
 
     double		GetNoDataValue( int *pbSuccess = NULL );
 };
@@ -220,10 +220,10 @@ void SAGARasterBand::SwapBuffer(void* pImage)
 /************************************************************************/
 
 CPLErr SAGARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-				   void * pImage, void **hMutex )
+				   void * pImage, void **phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     if( nBlockYOff < 0 || nBlockYOff > nRasterYSize - 1 || nBlockXOff != 0 )
 		return CE_Failure;
 
@@ -254,10 +254,10 @@ CPLErr SAGARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr SAGARasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-				    void *pImage, void **hMutex )
+				    void *pImage, void **phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     if( eAccess == GA_ReadOnly )
     {
 		CPLError( CE_Failure, CPLE_NoWriteAccess,

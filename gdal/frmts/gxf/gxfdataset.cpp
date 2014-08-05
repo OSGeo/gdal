@@ -85,7 +85,7 @@ class GXFRasterBand : public GDALPamRasterBand
     		GXFRasterBand( GXFDataset *, int );
     double      GetNoDataValue(int* bGotNoDataValue);
 
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
 };
 
 
@@ -126,10 +126,10 @@ double GXFRasterBand::GetNoDataValue(int* bGotNoDataValue)
 /************************************************************************/
 
 CPLErr GXFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage, void ** hMutex )
+                                  void * pImage, void ** phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     GXFDataset	*poGXF_DS = (GXFDataset *) poDS;
     double	*padfBuffer;
     float	*pafBuffer = (float *) pImage;

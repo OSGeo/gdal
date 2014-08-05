@@ -104,7 +104,7 @@ public:
 
     bool                    Initialize( hid_t hDataset, const char *pszName );
 
-    virtual CPLErr          IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr          IReadBlock( int, int, void *, void ** phMutex = NULL );
     virtual double	    GetNoDataValue( int * ); 
 
     virtual double GetMinimum( int *pbSuccess = NULL );
@@ -303,9 +303,9 @@ double BAGRasterBand::GetNoDataValue( int * pbSuccess )
 /*                             IReadBlock()                             */
 /************************************************************************/
 CPLErr BAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage, void ** hMutex )
+                                  void * pImage, void ** phMutex )
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     herr_t      status;
     hsize_t     count[3];
     H5OFFSET_TYPE offset[3];

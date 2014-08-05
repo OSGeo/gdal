@@ -75,7 +75,7 @@ class BLXRasterBand : public GDALPamRasterBand
     virtual int GetOverviewCount();
     virtual GDALRasterBand *GetOverview( int );
 
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex );
 };
 
 GDALDataset *BLXDataset::Open( GDALOpenInfo * poOpenInfo )
@@ -235,10 +235,10 @@ GDALRasterBand *BLXRasterBand::GetOverview( int i )
 }
 
 CPLErr BLXRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage, void **hMutex )
+                                  void * pImage, void **phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     BLXDataset *poGDS = (BLXDataset *) poDS;
 
     if(blx_readcell(poGDS->blxcontext, nBlockYOff, nBlockXOff, (short *)pImage, nBlockXSize*nBlockYSize*2, overviewLevel) == NULL) {

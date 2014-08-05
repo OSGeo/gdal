@@ -282,7 +282,7 @@ int PCIDSKTiledRasterBand::BuildTileMap()
 /************************************************************************/
 
 CPLErr PCIDSKTiledRasterBand::IReadBlock( int nBlockX, int nBlockY, 
-                                          void *pData, void **hMutex )
+                                          void *pData, void **phMutex )
 
 {
     int iTile;
@@ -302,7 +302,7 @@ CPLErr PCIDSKTiledRasterBand::IReadBlock( int nBlockX, int nBlockY,
 
     iTile = nBlockX + nBlockY * nBPR;
 
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     if( panTileOffset[iTile] == (vsi_l_offset) -1 )
     {
         int   nWordSize = GDALGetDataTypeSize( eDataType ) / 8;

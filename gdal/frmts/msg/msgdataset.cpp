@@ -473,10 +473,10 @@ MSGRasterBand::~MSGRasterBand()
 /*                             IReadBlock()                             */
 /************************************************************************/
 CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage, void **hMutex )
+                                  void * pImage, void **phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
         
     MSGDataset  *poGDS = (MSGDataset *) poDS;
 

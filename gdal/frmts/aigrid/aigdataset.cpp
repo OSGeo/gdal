@@ -98,7 +98,7 @@ class AIGRasterBand : public GDALPamRasterBand
 
                    AIGRasterBand( AIGDataset *, int );
 
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
     virtual double GetMinimum( int *pbSuccess );
     virtual double GetMaximum( int *pbSuccess );
     virtual double GetNoDataValue( int *pbSuccess );
@@ -146,10 +146,10 @@ AIGRasterBand::AIGRasterBand( AIGDataset *poDS, int nBand )
 /************************************************************************/
 
 CPLErr AIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage, void ** hMutex )
+                                  void * pImage, void ** phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     AIGDataset	*poODS = (AIGDataset *) poDS;
     GInt32	*panGridRaster;
     int		i;

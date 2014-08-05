@@ -127,8 +127,8 @@ class ELASRasterBand : public GDALPamRasterBand
 
     // should override RasterIO eventually.
     
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL);
-    virtual CPLErr IWriteBlock( int, int, void *, void ** hMutex = NULL); 
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL);
+    virtual CPLErr IWriteBlock( int, int, void *, void ** phMutex = NULL); 
 };
 
 
@@ -155,10 +155,10 @@ ELASRasterBand::ELASRasterBand( ELASDataset *poDS, int nBand )
 /************************************************************************/
 
 CPLErr ELASRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                   void * pImage, void ** hMutex )
+                                   void * pImage, void ** phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     ELASDataset	*poGDS = (ELASDataset *) poDS;
     CPLErr		eErr = CE_None;
     long		nOffset;
@@ -191,10 +191,10 @@ CPLErr ELASRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr ELASRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-                                     void * pImage, void **hMutex )
+                                     void * pImage, void **phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     ELASDataset	*poGDS = (ELASDataset *) poDS;
     CPLErr		eErr = CE_None;
     long		nOffset;

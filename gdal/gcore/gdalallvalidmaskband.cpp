@@ -64,10 +64,10 @@ GDALAllValidMaskBand::~GDALAllValidMaskBand()
 /************************************************************************/
 
 CPLErr GDALAllValidMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
-                                         void * pImage, void **hMutex )
+                                         void * pImage, void **phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     memset( pImage, 255, nBlockXSize * nBlockYSize );
 
     return CE_None;

@@ -231,7 +231,7 @@ class GenBinBitRasterBand : public GDALPamRasterBand
   public:
     GenBinBitRasterBand( GenBinDataset *poDS, int nBits );
 
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
 };
 
 /************************************************************************/
@@ -259,10 +259,10 @@ GenBinBitRasterBand::GenBinBitRasterBand( GenBinDataset *poDS, int nBitsIn )
 /************************************************************************/
 
 CPLErr GenBinBitRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                        void * pImage, void ** hMutex )
+                                        void * pImage, void ** phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     GenBinDataset *poGDS = (GenBinDataset *) poDS;
     vsi_l_offset   nLineStart;
     unsigned int   nLineBytes;

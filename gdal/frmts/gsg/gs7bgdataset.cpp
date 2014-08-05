@@ -152,8 +152,8 @@ class GS7BGRasterBand : public GDALPamRasterBand
     GS7BGRasterBand( GS7BGDataset *, int );
     ~GS7BGRasterBand();
 
-    CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
-    CPLErr IWriteBlock( int, int, void *, void ** hMutex = NULL );
+    CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
+    CPLErr IWriteBlock( int, int, void *, void ** phMutex = NULL );
     double GetMinimum( int *pbSuccess = NULL );
     double GetMaximum( int *pbSuccess = NULL );
 
@@ -286,10 +286,10 @@ CPLErr GS7BGRasterBand::ScanForMinMaxZ()
 /************************************************************************/
 
 CPLErr GS7BGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-        void * pImage, void ** hMutex )
+        void * pImage, void ** phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     if( nBlockYOff < 0 || nBlockYOff > nRasterYSize - 1 || nBlockXOff != 0 )
         return CE_Failure;
 
@@ -326,10 +326,10 @@ CPLErr GS7BGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr GS7BGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-                    void *pImage, void ** hMutex )
+                    void *pImage, void ** phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     if( eAccess == GA_ReadOnly )
     {
         CPLError( CE_Failure, CPLE_NoWriteAccess,

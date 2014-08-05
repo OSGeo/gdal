@@ -739,10 +739,10 @@ CPLErr PDFRasterBand::IReadBlockFromTile( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage, void **hMutex )
+                                  void * pImage, void **phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     PDFDataset *poGDS = (PDFDataset *) poDS;
 
     if (poGDS->aiTiles.size() )
@@ -1137,7 +1137,7 @@ class PDFImageRasterBand : public PDFRasterBand
 
                 PDFImageRasterBand( PDFDataset *, int );
 
-    virtual CPLErr IReadBlock( int, int, void *, void **hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void **phMutex = NULL );
 };
 
 
@@ -1155,10 +1155,10 @@ PDFImageRasterBand::PDFImageRasterBand( PDFDataset *poDS, int nBand ) : PDFRaste
 /************************************************************************/
 
 CPLErr PDFImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage, void ** hMutex )
+                                  void * pImage, void ** phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     PDFDataset *poGDS = (PDFDataset *) poDS;
     CPLAssert(poGDS->poImageObj != NULL);
 
@@ -1445,7 +1445,7 @@ CPLErr PDFDataset::IRasterIO( GDALRWFlag eRWFlag,
                               GDALDataType eBufType, 
                               int nBandCount, int *panBandMap,
                               int nPixelSpace, int nLineSpace, int nBandSpace,
-                              void ** hMutex )
+                              void ** phMutex )
 {
     int nBandBlockXSize, nBandBlockYSize;
     GetRasterBand(1)->GetBlockSize(&nBandBlockXSize, &nBandBlockYSize);
@@ -1465,7 +1465,7 @@ CPLErr PDFDataset::IRasterIO( GDALRWFlag eRWFlag,
 #endif
         if( bReadPixels )
         {
-            CPLMutexHolderD( hMutex );
+            CPLMutexHolderD( phMutex );
             return ReadPixels(nXOff, nYOff, nXSize, nYSize,
                               nPixelSpace, nLineSpace, nBandSpace, (GByte*)pData);
         }
@@ -1476,7 +1476,7 @@ CPLErr PDFDataset::IRasterIO( GDALRWFlag eRWFlag,
                                         pData, nBufXSize, nBufYSize,
                                         eBufType, 
                                         nBandCount, panBandMap,
-                                        nPixelSpace, nLineSpace, nBandSpace, hMutex );
+                                        nPixelSpace, nLineSpace, nBandSpace, phMutex );
 }
 
 /************************************************************************/

@@ -113,7 +113,7 @@ class PGCHIPRasterBand : public GDALRasterBand{
 
     PGCHIPRasterBand( PGCHIPDataset *, int );
     
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
             

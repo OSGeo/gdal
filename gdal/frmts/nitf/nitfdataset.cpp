@@ -1946,7 +1946,7 @@ CPLErr NITFDataset::IRasterIO( GDALRWFlag eRWFlag,
                                GDALDataType eBufType, 
                                int nBandCount, int *panBandMap,
                                int nPixelSpace, int nLineSpace, int nBandSpace,
-                               void ** hMutex)
+                               void ** phMutex)
     
 {
     if( poJ2KDataset != NULL )
@@ -1954,19 +1954,19 @@ CPLErr NITFDataset::IRasterIO( GDALRWFlag eRWFlag,
                                        pData, nBufXSize, nBufYSize, eBufType,
                                        nBandCount, panBandMap, 
                                        nPixelSpace, nLineSpace, nBandSpace,
-                                       hMutex );
+                                       phMutex );
     else if( poJPEGDataset != NULL )
         return poJPEGDataset->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                         pData, nBufXSize, nBufYSize, eBufType,
                                         nBandCount, panBandMap, 
                                         nPixelSpace, nLineSpace, nBandSpace,
-                                        hMutex );
+                                        phMutex );
     else 
         return GDALDataset::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                        pData, nBufXSize, nBufYSize, eBufType,
                                        nBandCount, panBandMap, 
                                        nPixelSpace, nLineSpace, nBandSpace,
-                                       hMutex );
+                                       phMutex );
 }
 
 

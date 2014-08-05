@@ -88,7 +88,7 @@ class NGSGEOIDRasterBand : public GDALPamRasterBand
 
                 NGSGEOIDRasterBand( NGSGEOIDDataset * );
 
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
 
     virtual const char* GetUnitType() { return "m"; }
 };
@@ -115,10 +115,10 @@ NGSGEOIDRasterBand::NGSGEOIDRasterBand( NGSGEOIDDataset *poDS )
 /************************************************************************/
 
 CPLErr NGSGEOIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                       void * pImage, void ** hMutex )
+                                       void * pImage, void ** phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     NGSGEOIDDataset *poGDS = (NGSGEOIDDataset *) poDS;
 
     /* First values in the file corresponds to the south-most line of the imagery */

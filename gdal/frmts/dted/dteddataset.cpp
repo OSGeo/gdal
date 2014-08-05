@@ -88,8 +88,8 @@ class DTEDRasterBand : public GDALPamRasterBand
 
                 DTEDRasterBand( DTEDDataset *, int );
     
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex );
-    virtual CPLErr IWriteBlock( int, int, void *, void ** hMutex );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex );
+    virtual CPLErr IWriteBlock( int, int, void *, void ** phMutex );
 
     virtual double  GetNoDataValue( int *pbSuccess = NULL );
 
@@ -127,10 +127,10 @@ DTEDRasterBand::DTEDRasterBand( DTEDDataset *poDS, int nBand )
 /************************************************************************/
 
 CPLErr DTEDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage, void ** hMutex )
+                                  void * pImage, void ** phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     DTEDDataset *poDTED_DS = (DTEDDataset *) poDS;
     int         nYSize = poDTED_DS->psDTED->nYSize;
     GInt16      *panData;
@@ -190,10 +190,10 @@ CPLErr DTEDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr DTEDRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage, void ** hMutex )
+                                  void * pImage, void ** phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     DTEDDataset *poDTED_DS = (DTEDDataset *) poDS;
     GInt16      *panData;
 

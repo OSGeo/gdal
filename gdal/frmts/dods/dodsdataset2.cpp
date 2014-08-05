@@ -295,7 +295,7 @@ public:
 
     virtual int    GetOverviewCount();
     virtual GDALRasterBand *GetOverview( int );
-    virtual CPLErr IReadBlock(int, int, void *, void ** hMutex = NULL);
+    virtual CPLErr IReadBlock(int, int, void *, void ** phMutex = NULL);
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
 		virtual CPLErr          SetNoDataValue( double );
@@ -1431,9 +1431,9 @@ void DODSRasterBand::HarvestDAS()
 /************************************************************************/
 
 CPLErr 
-DODSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage, void **hMutex)
+DODSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage, void **phMutex)
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     DODSDataset *poDODS = dynamic_cast<DODSDataset *>(poDS);
     int nBytesPerPixel = GDALGetDataTypeSize(eDataType) / 8;
 

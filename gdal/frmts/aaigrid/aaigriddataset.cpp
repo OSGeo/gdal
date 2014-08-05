@@ -145,7 +145,7 @@ class AAIGRasterBand : public GDALPamRasterBand
 
     virtual double GetNoDataValue( int * );
     virtual CPLErr SetNoDataValue( double );
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
 };
 
 /************************************************************************/
@@ -190,10 +190,10 @@ AAIGRasterBand::~AAIGRasterBand()
 /************************************************************************/
 
 CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage, void ** hMutex )
+                                  void * pImage, void ** phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     AAIGDataset *poODS = (AAIGDataset *) poDS;
     int         iPixel;
 

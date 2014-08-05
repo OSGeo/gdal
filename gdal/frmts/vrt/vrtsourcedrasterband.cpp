@@ -119,7 +119,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                  int nXOff, int nYOff, int nXSize, int nYSize,
                                  void * pData, int nBufXSize, int nBufYSize,
                                  GDALDataType eBufType,
-                                 int nPixelSpace, int nLineSpace, void ** hMutex )
+                                 int nPixelSpace, int nLineSpace, void ** phMutex )
 
 {
     int         iSource;
@@ -154,7 +154,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     {
         if( OverviewRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
                               pData, nBufXSize, nBufYSize, 
-                              eBufType, nPixelSpace, nLineSpace, hMutex ) == CE_None )
+                              eBufType, nPixelSpace, nLineSpace, phMutex ) == CE_None )
             return CE_None;
     }
 
@@ -165,7 +165,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     if ( nPixelSpace == GDALGetDataTypeSize(eBufType)/8 &&
          (!bNoDataValueSet || (!CPLIsNan(dfNoDataValue) && dfNoDataValue == 0)) )
     {
-        CPLMutexHolderD( hMutex );
+        CPLMutexHolderD( phMutex );
         if (nLineSpace == nBufXSize * nPixelSpace)
         {
             memset( pData, 0, (GIntBig)nBufYSize * nLineSpace );
@@ -187,7 +187,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         if( bNoDataValueSet )
             dfWriteValue = dfNoDataValue;
         
-        CPLMutexHolderD( hMutex );
+        CPLMutexHolderD( phMutex );
         for( iLine = 0; iLine < nBufYSize; iLine++ )
         {
             GDALCopyWords( &dfWriteValue, GDT_Float64, 0, 
@@ -207,7 +207,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             papoSources[iSource]->RasterIO( nXOff, nYOff, nXSize, nYSize, 
                                             pData, nBufXSize, nBufYSize, 
                                             eBufType, nPixelSpace, nLineSpace,
-                                            hMutex);
+                                            phMutex);
     }
     
     nRecursionCounter --;
@@ -220,7 +220,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /************************************************************************/
 
 CPLErr VRTSourcedRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                   void * pImage, void ** hMutex )
+                                   void * pImage, void ** phMutex )
 
 {
     int nPixelSize = GDALGetDataTypeSize(eDataType)/8;
@@ -240,7 +240,7 @@ CPLErr VRTSourcedRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                       nBlockXOff * nBlockXSize, nBlockYOff * nBlockYSize, 
                       nReadXSize, nReadYSize, 
                       pImage, nReadXSize, nReadYSize, eDataType, 
-                      nPixelSize, nPixelSize * nBlockXSize, hMutex );
+                      nPixelSize, nPixelSize * nBlockXSize, phMutex );
 }
 
 

@@ -883,7 +883,7 @@ VRTSimpleSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                            void *pData, int nBufXSize, int nBufYSize, 
                            GDALDataType eBufType, 
                            int nPixelSpace, int nLineSpace,
-                           void ** hMutex )
+                           void ** phMutex )
 
 {
     // The window we will actually request from the source raster band.
@@ -913,7 +913,7 @@ VRTSimpleSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                                 + nOutYOff * nLineSpace, 
                                 nOutXSize, nOutYSize, 
                                 eBufType, nPixelSpace, nLineSpace,
-                                hMutex );
+                                phMutex );
 
     return eErr;
 }
@@ -1073,7 +1073,7 @@ CPLErr VRTSimpleSource::DatasetRasterIO(
                                GDALDataType eBufType,
                                int nBandCount, int *panBandMap,
                                int nPixelSpace, int nLineSpace, int nBandSpace,
-                               void ** hMutex)
+                               void ** phMutex)
 {
     if (!EQUAL(GetType(), "SimpleSource"))
     {
@@ -1108,7 +1108,7 @@ CPLErr VRTSimpleSource::DatasetRasterIO(
                            nOutXSize, nOutYSize,
                            eBufType, nBandCount, panBandMap,
                            nPixelSpace, nLineSpace, nBandSpace,
-                           hMutex );
+                           phMutex );
 }
 
 /************************************************************************/
@@ -1151,7 +1151,7 @@ CPLErr
 VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                            void *pData, int nBufXSize, int nBufYSize, 
                            GDALDataType eBufType, 
-                           int nPixelSpace, int nLineSpace, void **hMutex )
+                           int nPixelSpace, int nLineSpace, void **phMutex )
 
 {
     // The window we will actually request from the source raster band.
@@ -1198,7 +1198,7 @@ VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
 /*      Do the averaging.                                               */
 /* -------------------------------------------------------------------- */
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     for( int iBufLine = nOutYOff; iBufLine < nOutYOff + nOutYSize; iBufLine++ )
     {
         double  dfYDst;
@@ -1664,7 +1664,7 @@ CPLErr
 VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                             void *pData, int nBufXSize, int nBufYSize, 
                             GDALDataType eBufType, 
-                            int nPixelSpace, int nLineSpace, void ** hMutex )
+                            int nPixelSpace, int nLineSpace, void ** phMutex )
     
 {
     // The window we will actually request from the source raster band.
@@ -1678,7 +1678,7 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                           &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize ) )
         return CE_None;
 
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     return RasterIOInternal(nReqXOff, nReqYOff, nReqXSize, nReqYSize,
                        ((GByte *)pData)
                             + nPixelSpace * nOutXOff
@@ -2026,10 +2026,10 @@ VRTFuncSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                          void *pData, int nBufXSize, int nBufYSize, 
                          GDALDataType eBufType, 
                          int nPixelSpace, int nLineSpace,
-                         void ** hMutex )
+                         void ** phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     if( nPixelSpace*8 == GDALGetDataTypeSize( eBufType )
         && nLineSpace == nPixelSpace * nXSize 
         && nBufXSize == nXSize && nBufYSize == nYSize 

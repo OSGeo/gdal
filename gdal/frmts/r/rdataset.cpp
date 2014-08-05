@@ -99,7 +99,7 @@ class RRasterBand : public GDALPamRasterBand
                 RRasterBand( RDataset *, int, const double * );
                 ~RRasterBand();
 
-    virtual CPLErr          IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr          IReadBlock( int, int, void *, void ** phMutex = NULL );
 };
 
 /************************************************************************/
@@ -132,9 +132,9 @@ RRasterBand::~RRasterBand()
 /************************************************************************/
 
 CPLErr RRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                void * pImage, void **hMutex )
+                                void * pImage, void **phMutex )
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     memcpy( pImage, padfMatrixValues + nBlockYOff * nBlockXSize,
             nBlockXSize * 8 );
     return CE_None;

@@ -211,7 +211,7 @@ public:
     PALSARJaxaRasterBand( PALSARJaxaDataset *poDS, int nBand, VSILFILE *fp );
     ~PALSARJaxaRasterBand();
 
-    CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage, void ** hMutex = NULL);
+    CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage, void ** phMutex = NULL);
 };
 
 /************************************************************************/
@@ -300,9 +300,9 @@ PALSARJaxaRasterBand::~PALSARJaxaRasterBand()
 /************************************************************************/
 
 CPLErr PALSARJaxaRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-	void *pImage, void ** hMutex )
+	void *pImage, void ** phMutex )
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     int nNumBytes = 0;
     if (nFileType == level_11) {
         nNumBytes = 8;

@@ -86,7 +86,7 @@ class ZMapRasterBand : public GDALPamRasterBand
 
                 ZMapRasterBand( ZMapDataset * );
 
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
 
     virtual double GetNoDataValue( int *pbSuccess = NULL );
 };
@@ -113,7 +113,7 @@ ZMapRasterBand::ZMapRasterBand( ZMapDataset *poDS )
 /************************************************************************/
 
 CPLErr ZMapRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage, void ** hMutex )
+                                  void * pImage, void ** phMutex )
 
 {
     int i;
@@ -132,7 +132,7 @@ CPLErr ZMapRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     {
         for(i=poGDS->nColNum + 1;i<nBlockXOff;i++)
         {
-            if (IReadBlock(i,0,pImage, hMutex) != CE_None)
+            if (IReadBlock(i,0,pImage, phMutex) != CE_None)
                 return CE_Failure;
         }
     }
@@ -140,7 +140,7 @@ CPLErr ZMapRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     char* pszLine;
     i = 0;
     double dfExp = pow(10.0, poGDS->nDecimalCount);
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     while(i<nRasterYSize)
     {
         pszLine = (char*)CPLReadLineL(poGDS->fp);

@@ -317,7 +317,7 @@ class L1BRasterBand : public GDALPamRasterBand
                 L1BRasterBand( L1BDataset *, int );
     
 //    virtual double GetNoDataValue( int *pbSuccess = NULL );
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
 };
 
 
@@ -341,9 +341,9 @@ L1BRasterBand::L1BRasterBand( L1BDataset *poDS, int nBand )
 /************************************************************************/
 
 CPLErr L1BRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage, void ** hMutex )
+                                  void * pImage, void ** phMutex )
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     L1BDataset  *poGDS = (L1BDataset *) poDS;
 
 /* -------------------------------------------------------------------- */
@@ -2106,7 +2106,7 @@ class L1BGeolocRasterBand: public GDALRasterBand
     public:
             L1BGeolocRasterBand(L1BGeolocDataset* poDS, int nBand);
 
-            virtual CPLErr IReadBlock(int, int, void*, void ** hMutex = NULL);
+            virtual CPLErr IReadBlock(int, int, void*, void ** phMutex = NULL);
             virtual double GetNoDataValue( int *pbSuccess = NULL );
 };
 
@@ -2271,9 +2271,9 @@ L1BInterpol(double vals[],
 /************************************************************************/
 
 CPLErr L1BGeolocRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, 
-                                       void* pData, void ** hMutex)
+                                       void* pData, void ** phMutex)
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     L1BGeolocDataset* poGDS = (L1BGeolocDataset*)poDS;
     L1BDataset* poL1BDS = poGDS->poL1BDS;
     GDAL_GCP* pasGCPList = (GDAL_GCP *)CPLCalloc( poL1BDS->nGCPsPerLine,
@@ -2408,7 +2408,7 @@ class L1BSolarZenithAnglesRasterBand: public GDALRasterBand
     public:
             L1BSolarZenithAnglesRasterBand(L1BSolarZenithAnglesDataset* poDS, int nBand);
 
-            virtual CPLErr IReadBlock(int, int, void*, void ** hMutex = NULL);
+            virtual CPLErr IReadBlock(int, int, void*, void ** phMutex = NULL);
             virtual double GetNoDataValue( int *pbSuccess = NULL );
 };
 
@@ -2452,9 +2452,9 @@ L1BSolarZenithAnglesRasterBand::L1BSolarZenithAnglesRasterBand(L1BSolarZenithAng
 /************************************************************************/
 
 CPLErr L1BSolarZenithAnglesRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, 
-                                                  void* pData, void ** hMutex)
+                                                  void* pData, void ** phMutex)
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     L1BSolarZenithAnglesDataset* poGDS = (L1BSolarZenithAnglesDataset*)poDS;
     L1BDataset* poL1BDS = poGDS->poL1BDS;
     int i;
@@ -2598,7 +2598,7 @@ class L1BNOAA15AnglesRasterBand: public GDALRasterBand
     public:
             L1BNOAA15AnglesRasterBand(L1BNOAA15AnglesDataset* poDS, int nBand);
 
-            virtual CPLErr IReadBlock(int, int, void*, void ** hMutex = NULL);
+            virtual CPLErr IReadBlock(int, int, void*, void ** phMutex = NULL);
 };
 
 /************************************************************************/
@@ -2647,9 +2647,9 @@ L1BNOAA15AnglesRasterBand::L1BNOAA15AnglesRasterBand(L1BNOAA15AnglesDataset* poD
 /************************************************************************/
 
 CPLErr L1BNOAA15AnglesRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, 
-                                             void* pData, void ** hMutex)
+                                             void* pData, void ** phMutex)
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     L1BNOAA15AnglesDataset* poGDS = (L1BNOAA15AnglesDataset*)poDS;
     L1BDataset* poL1BDS = poGDS->poL1BDS;
     int i;
@@ -2732,7 +2732,7 @@ class L1BCloudsRasterBand: public GDALRasterBand
     public:
             L1BCloudsRasterBand(L1BCloudsDataset* poDS, int nBand);
 
-            virtual CPLErr IReadBlock(int, int, void*, void **hMutex = NULL);
+            virtual CPLErr IReadBlock(int, int, void*, void **phMutex = NULL);
 };
 
 /************************************************************************/
@@ -2775,9 +2775,9 @@ L1BCloudsRasterBand::L1BCloudsRasterBand(L1BCloudsDataset* poDS, int nBand)
 /************************************************************************/
 
 CPLErr L1BCloudsRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, 
-                                       void* pData, void ** hMutex)
+                                       void* pData, void ** phMutex)
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     L1BCloudsDataset* poGDS = (L1BCloudsDataset*)poDS;
     L1BDataset* poL1BDS = poGDS->poL1BDS;
     int i;

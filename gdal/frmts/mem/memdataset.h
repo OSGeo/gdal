@@ -119,8 +119,8 @@ class CPL_DLL MEMRasterBand : public GDALPamRasterBand
 
     // should override RasterIO eventually.
 
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
-    virtual CPLErr IWriteBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
+    virtual CPLErr IWriteBlock( int, int, void *, void ** phMutex = NULL );
 
     virtual double GetNoDataValue( int *pbSuccess = NULL );
     virtual CPLErr SetNoDataValue( double );

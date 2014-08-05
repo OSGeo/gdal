@@ -96,7 +96,7 @@ class BSBRasterBand : public GDALPamRasterBand
   public:
     		BSBRasterBand( BSBDataset * );
     
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
     virtual GDALColorTable *GetColorTable();
     virtual GDALColorInterp GetColorInterpretation();
 };
@@ -137,12 +137,12 @@ BSBRasterBand::BSBRasterBand( BSBDataset *poDS )
 /************************************************************************/
 
 CPLErr BSBRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage, void ** hMutex )
+                                  void * pImage, void ** phMutex )
 
 {
     BSBDataset *poGDS = (BSBDataset *) poDS;  
     GByte *pabyScanline = (GByte*) pImage;
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
 
     if( BSBReadScanline( poGDS->psInfo, nBlockYOff, pabyScanline ) )
     {

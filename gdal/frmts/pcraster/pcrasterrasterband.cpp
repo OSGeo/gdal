@@ -251,9 +251,9 @@ CPLErr PCRasterRasterBand::IReadBlock(
          int nBlockXoff,
          int nBlockYoff,
          void* buffer,
-         void ** hMutex)
+         void ** phMutex)
 {
-  CPLMutexHolderD( hMutex );
+  CPLMutexHolderD( phMutex );
   size_t nrCellsRead = RgetRow(d_dataset->map(), nBlockYoff, buffer);
 
   // Now we have raw values, missing values are set according to the CSF

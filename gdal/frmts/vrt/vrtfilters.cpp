@@ -118,7 +118,7 @@ CPLErr
 VRTFilteredSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize, 
                              void *pData, int nBufXSize, int nBufYSize, 
                              GDALDataType eBufType, 
-                             int nPixelSpace, int nLineSpace, void **hMutex )
+                             int nPixelSpace, int nLineSpace, void **phMutex )
 
 {
 /* -------------------------------------------------------------------- */
@@ -131,7 +131,7 @@ VRTFilteredSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
         return VRTComplexSource::RasterIO( nXOff, nYOff, nXSize, nYSize, 
                                            pData, nBufXSize, nBufYSize, 
                                            eBufType, nPixelSpace, nLineSpace,
-                                           hMutex );
+                                           phMutex );
     }
 
     // The window we will actually request from the source raster band.
@@ -145,7 +145,7 @@ VRTFilteredSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                         &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize ) )
         return CE_None;
 
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     pData = ((GByte *)pData)
                             + nPixelSpace * nOutXOff
                             + nLineSpace * nOutYOff;

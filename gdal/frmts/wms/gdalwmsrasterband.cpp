@@ -88,7 +88,7 @@ char** GDALWMSRasterBand::BuildHTTPRequestOpts()
    return http_request_opts;
 }
 
-CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by0, int bx1, int by1, int advise_read, void ** hMutex) {
+CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by0, int bx1, int by1, int advise_read, void ** phMutex) {
     CPLErr ret = CE_None;
     int i;
 
@@ -131,13 +131,13 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
                         need_this_block = false;
                     } else {
                         void *p = 0;
-                        void **hThisMutex = NULL;
+                        void **phThisMutex = NULL;
                         if ((ix == x) && (iy == y))
                         {
                             p = buffer;
-                            hThisMutex = hMutex;
+                            phThisMutex = phMutex;
                         }
-                        if (ReadBlockFromFile(ix, iy, file_name.c_str(), nBand, p, 0, hThisMutex) == CE_None) need_this_block = false;
+                        if (ReadBlockFromFile(ix, iy, file_name.c_str(), nBand, p, 0, phThisMutex) == CE_None) need_this_block = false;
                     }
                 }
             }
@@ -145,13 +145,13 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
                 if (m_parent_dataset->m_offline_mode) {
                     if (!advise_read) {
                         void *p = 0;
-                        void **hThisMutex = NULL;
+                        void **phThisMutex = NULL;
                         if ((ix == x) && (iy == y))
                         {
-                            hThisMutex = hMutex;
+                            phThisMutex = phMutex;
                             p = buffer;
                         }
-                        if (ZeroBlock(ix, iy, nBand, p, hThisMutex) != CE_None) {
+                        if (ZeroBlock(ix, iy, nBand, p, phThisMutex) != CE_None) {
                             CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: ZeroBlock failed.");
                             ret = CE_Failure;
                         }
@@ -211,13 +211,13 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
                             }
                         } else {
                             void *p = 0;
-                            void **hThisMutex = NULL;
+                            void **phThisMutex = NULL;
                             if ((download_blocks[i].x == x) && (download_blocks[i].y == y))
                             {
                                 p = buffer;
-                                hThisMutex = hMutex;
+                                phThisMutex = phMutex;
                             }
-                            if (ReadBlockFromFile(download_blocks[i].x, download_blocks[i].y, file_name.c_str(), nBand, p, advise_read, hThisMutex) == CE_None) {
+                            if (ReadBlockFromFile(download_blocks[i].x, download_blocks[i].y, file_name.c_str(), nBand, p, advise_read, phThisMutex) == CE_None) {
                                 if (cache != NULL) {
                                     cache->Write(download_requests[i].pszURL, file_name);
                                 }
@@ -229,13 +229,13 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
                         }
                     } else if( wms_exception && m_parent_dataset->m_zeroblock_on_serverexceptions ) {
                          void *p = 0;
-                         void **hThisMutex = NULL;
+                         void **phThisMutex = NULL;
                          if ((download_blocks[i].x == x) && (download_blocks[i].y == y))
                          { 
-                             hThisMutex = hMutex;
+                             phThisMutex = phMutex;
                              p = buffer;
                          }
-                         if (ZeroBlock(download_blocks[i].x, download_blocks[i].y, nBand, p, hThisMutex) != CE_None) {
+                         if (ZeroBlock(download_blocks[i].x, download_blocks[i].y, nBand, p, phThisMutex) != CE_None) {
                              CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: ZeroBlock failed.");
                          } else {
                              ret = CE_None;
@@ -252,13 +252,13 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
                if ( zero_it != m_parent_dataset->m_http_zeroblock_codes.end() ) {
                     if (!advise_read) {
                         void *p = 0;
-                        void **hThisMutex = NULL;
+                        void **phThisMutex = NULL;
                         if ((download_blocks[i].x == x) && (download_blocks[i].y == y))
                         {
                             p = buffer;
-                            hThisMutex = hMutex;
+                            phThisMutex = phMutex;
                         }
-                        if (ZeroBlock(download_blocks[i].x, download_blocks[i].y, nBand, p, hThisMutex) != CE_None) {
+                        if (ZeroBlock(download_blocks[i].x, download_blocks[i].y, nBand, p, phThisMutex) != CE_None) {
                             CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: ZeroBlock failed.");
                             ret = CE_Failure;
                         }
@@ -281,7 +281,7 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
     return ret;
 }
 
-CPLErr GDALWMSRasterBand::IReadBlock(int x, int y, void *buffer, void **hMutex) {
+CPLErr GDALWMSRasterBand::IReadBlock(int x, int y, void *buffer, void **phMutex) {
     int bx0 = x;
     int by0 = y;
     int bx1 = x;
@@ -300,7 +300,7 @@ CPLErr GDALWMSRasterBand::IReadBlock(int x, int y, void *buffer, void **hMutex) 
         }
     }
 
-    CPLErr eErr = ReadBlocks(x, y, buffer, bx0, by0, bx1, by1, 0, hMutex);
+    CPLErr eErr = ReadBlocks(x, y, buffer, bx0, by0, bx1, by1, 0, phMutex);
 
     if ((m_parent_dataset->m_hint.m_valid) && (m_parent_dataset->m_hint.m_overview == m_overview))
     {
@@ -310,10 +310,10 @@ CPLErr GDALWMSRasterBand::IReadBlock(int x, int y, void *buffer, void **hMutex) 
     return eErr;
 }
 
-CPLErr GDALWMSRasterBand::IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy, void *buffer, int bsx, int bsy, GDALDataType bdt, int pixel_space, int line_space, void **hMutex) {
+CPLErr GDALWMSRasterBand::IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy, void *buffer, int bsx, int bsy, GDALDataType bdt, int pixel_space, int line_space, void **phMutex) {
     CPLErr ret;
 
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     if (rw != GF_Read) return CE_Failure;
     if (buffer == NULL) return CE_Failure;
     if ((sx == 0) || (sy == 0) || (bsx == 0) || (bsy == 0)) return CE_None;
@@ -573,7 +573,7 @@ const char *GDALWMSRasterBand::GetMetadataItem( const char * pszName,
     return GDALPamRasterBand::GetMetadataItem(pszName, pszDomain);
 }
 
-CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name, int to_buffer_band, void *buffer, int advise_read, void ** hMutex) {
+CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name, int to_buffer_band, void *buffer, int advise_read, void ** phMutex) {
     CPLErr ret = CE_None;
     GDALDataset *ds = 0;
     GByte *color_table = NULL;
@@ -650,11 +650,11 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
             for (int ib = 1; ib <= m_parent_dataset->nBands; ++ib) {
                 if (ret == CE_None) {
                     void *p = NULL;
-                    void **hThisMutex = NULL;
+                    void **phThisMutex = NULL;
                     GDALRasterBlock *b = NULL;
                     if ((buffer != NULL) && (ib == to_buffer_band)) {
                         p = buffer;
-                        hThisMutex = hMutex;
+                        phThisMutex = phMutex;
                     } else {
                         GDALWMSRasterBand *band = static_cast<GDALWMSRasterBand *>(m_parent_dataset->GetRasterBand(ib));
                         if (m_overview >= 0) band = static_cast<GDALWMSRasterBand *>(band->GetOverview(m_overview));
@@ -662,7 +662,7 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
                             b = band->GetLockedBlockRef(x, y, true);
                             if (b != NULL) {
                                 p = b->GetDataRef(true);
-                                hThisMutex = b->GetRWMutex();
+                                phThisMutex = b->GetRWMutex();
                                 if (p == NULL) {
                                   CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: GetDataRef returned NULL.");
                                   ret = CE_Failure;
@@ -684,7 +684,7 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
                                 // TODO: This hack is from #3493 - not sure it really belongs here.
 				if ((GDT_Int16==dt)&&(GDT_UInt16==ds->GetRasterBand(ib)->GetRasterDataType()))
 				    dt=GDT_UInt16;
-				if (ds->RasterIO(GF_Read, 0, 0, sx, sy, p, sx, sy, dt, 1, &ib, pixel_space, line_space, 0, hThisMutex) != CE_None) {
+				if (ds->RasterIO(GF_Read, 0, 0, sx, sy, p, sx, sy, dt, 1, &ib, pixel_space, line_space, 0, phThisMutex) != CE_None) {
 				    CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: RasterIO failed on downloaded block.");
 				    ret = CE_Failure;
 				}
@@ -694,7 +694,7 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
                                if (accepted_as_no_alpha)
                                {
                                   // the file had 3 bands and we are reading band 4 (Alpha) so fill with 255 (no alpha)
-                                  CPLMutexHolderD( hThisMutex );
+                                  CPLMutexHolderD( phThisMutex );
                                   GByte *byte_buffer = reinterpret_cast<GByte *>(p);
                                   for (int y = 0; y < sy; ++y) {
                                      for (int x = 0; x < sx; ++x) {
@@ -711,13 +711,13 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
                                }     
                             }
                         } else if (ib <= 4) {
-                            if (ds->RasterIO(GF_Read, 0, 0, sx, sy, p, sx, sy, eDataType, 1, NULL, pixel_space, line_space, 0, hThisMutex) != CE_None) {
+                            if (ds->RasterIO(GF_Read, 0, 0, sx, sy, p, sx, sy, eDataType, 1, NULL, pixel_space, line_space, 0, phThisMutex) != CE_None) {
                                 CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: RasterIO failed on downloaded block.");
                                 ret = CE_Failure;
                             }
                             if (ret == CE_None) {
                                 GByte *band_color_table = color_table + 256 * (ib - 1);
-                                CPLMutexHolderD( hThisMutex );
+                                CPLMutexHolderD( phThisMutex );
                                 GByte *byte_buffer = reinterpret_cast<GByte *>(p);
                                 for (int y = 0; y < sy; ++y) {
                                     for (int x = 0; x < sx; ++x) {
@@ -750,17 +750,17 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
     return ret;
 }
 
-CPLErr GDALWMSRasterBand::ZeroBlock(int x, int y, int to_buffer_band, void *buffer, void **hMutex) {
+CPLErr GDALWMSRasterBand::ZeroBlock(int x, int y, int to_buffer_band, void *buffer, void **phMutex) {
     CPLErr ret = CE_None;
 
     for (int ib = 1; ib <= m_parent_dataset->nBands; ++ib) {
         if (ret == CE_None) {
             void *p = NULL;
-            void **hThisMutex = NULL;
+            void **phThisMutex = NULL;
             GDALRasterBlock *b = NULL;
             if ((buffer != NULL) && (ib == to_buffer_band)) {
                 p = buffer;
-                hThisMutex = hMutex;
+                phThisMutex = phMutex;
             } else {
                 GDALWMSRasterBand *band = static_cast<GDALWMSRasterBand *>(m_parent_dataset->GetRasterBand(ib));
                 if (m_overview >= 0) band = static_cast<GDALWMSRasterBand *>(band->GetOverview(m_overview));
@@ -768,7 +768,7 @@ CPLErr GDALWMSRasterBand::ZeroBlock(int x, int y, int to_buffer_band, void *buff
                     b = band->GetLockedBlockRef(x, y, true);
                     if (b != NULL) {
                         p = b->GetDataRef(true);
-                        hThisMutex = b->GetRWMutex();
+                        phThisMutex = b->GetRWMutex();
                         if (p == NULL) {
                           CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: GetDataRef returned NULL.");
                           ret = CE_Failure;
@@ -777,7 +777,7 @@ CPLErr GDALWMSRasterBand::ZeroBlock(int x, int y, int to_buffer_band, void *buff
                 }
             }
             if (p != NULL) {
-                CPLMutexHolderD( hThisMutex );
+                CPLMutexHolderD( phThisMutex );
                 unsigned char *b = reinterpret_cast<unsigned char *>(p);
                 int block_size = nBlockXSize * nBlockYSize * (GDALGetDataTypeSize(eDataType) / 8);
                 for (int i = 0; i < block_size; ++i) b[i] = 0;

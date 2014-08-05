@@ -85,7 +85,7 @@ class AirSARRasterBand : public GDALPamRasterBand
     		AirSARRasterBand( AirSARDataset *, int );
     virtual     ~AirSARRasterBand();
     
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
 };
 
 /* locations of stokes matrix values within padfMatrix ... same order as they
@@ -175,10 +175,10 @@ AirSARRasterBand::~AirSARRasterBand()
 /************************************************************************/
 
 CPLErr AirSARRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                      void * pImage, void ** hMutex )
+                                      void * pImage, void ** phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     CPLErr eErr;
     float *pafLine = (float *) pImage;
     int iPixel;

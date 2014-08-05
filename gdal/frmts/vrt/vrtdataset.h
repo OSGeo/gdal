@@ -81,7 +81,7 @@ public:
                               void *pData, int nBufXSize, int nBufYSize, 
                               GDALDataType eBufType, 
                               int nPixelSpace, int nLineSpace,
-                              void ** hMutex ) = 0;
+                              void ** phMutex ) = 0;
 
     virtual double GetMinimum( int nXSize, int nYSize, int *pbSuccess ) = 0;
     virtual double GetMaximum( int nXSize, int nYSize, int *pbSuccess ) = 0;
@@ -181,7 +181,7 @@ class CPL_DLL VRTDataset : public GDALDataset
                                GDALDataType eBufType,
                                int nBandCount, int *panBandMap,
                                int nPixelSpace, int nLineSpace, int nBandSpace,
-                               void **hMutex = NULL);
+                               void **phMutex = NULL);
 
     virtual CPLXMLNode *SerializeToXML( const char *pszVRTPath);
     virtual CPLErr      XMLInit( CPLXMLNode *, const char * );
@@ -379,7 +379,7 @@ class CPL_DLL VRTSourcedRasterBand : public VRTRasterBand
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int, void **hMutex = NULL );
+                              int, int, void **phMutex = NULL );
 
     virtual char      **GetMetadataDomainList();
     virtual const char *GetMetadataItem( const char * pszName,
@@ -441,7 +441,7 @@ class CPL_DLL VRTSourcedRasterBand : public VRTRasterBand
                                            int nDstXOff, int nDstYOff,
                                            int nDstXSize, int nDstYSize);
 
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
     
     virtual void   GetFileList(char*** ppapszFileList, int *pnSize,
                                int *pnMaxSize, CPLHashSet* hSetFiles);
@@ -465,8 +465,8 @@ class CPL_DLL VRTWarpedRasterBand : public VRTRasterBand
     virtual CPLErr         XMLInit( CPLXMLNode *, const char * );
     virtual CPLXMLNode *   SerializeToXML( const char *pszVRTPath );
 
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
-    virtual CPLErr IWriteBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
+    virtual CPLErr IWriteBlock( int, int, void *, void ** phMutex = NULL );
 
     virtual int GetOverviewCount();
     virtual GDALRasterBand *GetOverview(int);
@@ -490,7 +490,7 @@ class CPL_DLL VRTDerivedRasterBand : public VRTSourcedRasterBand
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int, void ** hMutex = NULL );
+                              int, int, void ** phMutex = NULL );
 
     static CPLErr AddPixelFunction
         (const char *pszFuncName, GDALDerivedPixelFunc pfnPixelFunc);
@@ -527,10 +527,10 @@ class CPL_DLL VRTRawRasterBand : public VRTRasterBand
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int, void **hMutex = NULL );
+                              int, int, void **phMutex = NULL );
 
-    virtual CPLErr IReadBlock( int, int, void *, void **hMutex = NULL );
-    virtual CPLErr IWriteBlock( int, int, void *, void **hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void **phMutex = NULL );
+    virtual CPLErr IWriteBlock( int, int, void *, void **phMutex = NULL );
 
     CPLErr         SetRawLink( const char *pszFilename, 
                                const char *pszVRTPath,
@@ -616,7 +616,7 @@ public:
                               void *pData, int nBufXSize, int nBufYSize, 
                               GDALDataType eBufType, 
                               int nPixelSpace, int nLineSpace,
-                              void ** hMutex = NULL );
+                              void ** phMutex = NULL );
 
     virtual double GetMinimum( int nXSize, int nYSize, int *pbSuccess );
     virtual double GetMaximum( int nXSize, int nYSize, int *pbSuccess );
@@ -651,7 +651,7 @@ public:
                                GDALDataType eBufType,
                                int nBandCount, int *panBandMap,
                                int nPixelSpace, int nLineSpace, int nBandSpace,
-                               void ** hMutex);
+                               void ** phMutex);
 };
 
 /************************************************************************/
@@ -665,7 +665,7 @@ public:
     virtual CPLErr  RasterIO( int nXOff, int nYOff, int nXSize, int nYSize, 
                               void *pData, int nBufXSize, int nBufYSize, 
                               GDALDataType eBufType, 
-                              int nPixelSpace, int nLineSpace, void ** hMutex = NULL);
+                              int nPixelSpace, int nLineSpace, void ** phMutex = NULL);
 
     virtual double GetMinimum( int nXSize, int nYSize, int *pbSuccess );
     virtual double GetMaximum( int nXSize, int nYSize, int *pbSuccess );
@@ -726,7 +726,7 @@ public:
     virtual CPLErr RasterIO( int nXOff, int nYOff, int nXSize, int nYSize, 
                              void *pData, int nBufXSize, int nBufYSize, 
                              GDALDataType eBufType, 
-                             int nPixelSpace, int nLineSpace, void ** hMutex );
+                             int nPixelSpace, int nLineSpace, void ** phMutex );
 
     virtual double GetMinimum( int nXSize, int nYSize, int *pbSuccess );
     virtual double GetMaximum( int nXSize, int nYSize, int *pbSuccess );
@@ -790,7 +790,7 @@ public:
     virtual CPLErr  RasterIO( int nXOff, int nYOff, int nXSize, int nYSize, 
                               void *pData, int nBufXSize, int nBufYSize, 
                               GDALDataType eBufType, 
-                              int nPixelSpace, int nLineSpace, void **hMutex = NULL );
+                              int nPixelSpace, int nLineSpace, void **phMutex = NULL );
 };
 
 /************************************************************************/
@@ -850,7 +850,7 @@ public:
                               void *pData, int nBufXSize, int nBufYSize, 
                               GDALDataType eBufType, 
                               int nPixelSpace, int nLineSpace,
-                              void ** hMutex = NULL);
+                              void ** phMutex = NULL);
 
     virtual double GetMinimum( int nXSize, int nYSize, int *pbSuccess );
     virtual double GetMaximum( int nXSize, int nYSize, int *pbSuccess );

@@ -88,9 +88,9 @@ GBool PostGISRasterTileRasterBand::IsCached()
  * \brief Read a natural block of raster band data
  *****************************************************/
 CPLErr PostGISRasterTileRasterBand::IReadBlock(int nBlockXOff, 
-    int nBlockYOff, void * pImage, void ** hMutex)
+    int nBlockYOff, void * pImage, void ** phMutex)
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     CPLString osCommand;
     PGresult * poResult = NULL;
     int nWKBLength = 0;

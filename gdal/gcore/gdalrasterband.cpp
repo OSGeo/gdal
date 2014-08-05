@@ -189,7 +189,7 @@ CPLErr GDALRasterBand::RasterIO( GDALRWFlag eRWFlag,
                                  GDALDataType eBufType,
                                  int nPixelSpace,
                                  int nLineSpace,
-                                 void ** hMutex )
+                                 void ** phMutex )
 
 {
 
@@ -270,11 +270,11 @@ CPLErr GDALRasterBand::RasterIO( GDALRWFlag eRWFlag,
     if( bForceCachedIO )
         return GDALRasterBand::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                          pData, nBufXSize, nBufYSize, eBufType,
-                                         nPixelSpace, nLineSpace, hMutex );
+                                         nPixelSpace, nLineSpace, phMutex );
     else
         return IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                           pData, nBufXSize, nBufYSize, eBufType,
-                          nPixelSpace, nLineSpace, hMutex ) ;
+                          nPixelSpace, nLineSpace, phMutex ) ;
 }
 
 /************************************************************************/
@@ -319,7 +319,7 @@ GDALRasterIOMutex( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
               int nXOff, int nYOff, int nXSize, int nYSize,
               void * pData, int nBufXSize, int nBufYSize,
               GDALDataType eBufType,
-              int nPixelSpace, int nLineSpace, void ** hMutex )
+              int nPixelSpace, int nLineSpace, void ** phMutex )
     
 {
     VALIDATE_POINTER1( hBand, "GDALRasterIO", CE_Failure );
@@ -328,7 +328,7 @@ GDALRasterIOMutex( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
 
     return( poBand->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                               pData, nBufXSize, nBufYSize, eBufType,
-                              nPixelSpace, nLineSpace, hMutex ) );
+                              nPixelSpace, nLineSpace, phMutex ) );
 }
                      
 /************************************************************************/
@@ -419,7 +419,7 @@ GDALRasterIOMutex( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
 
 
 CPLErr GDALRasterBand::ReadBlock( int nXBlockOff, int nYBlockOff,
-                                   void * pImage, void **hMutex )
+                                   void * pImage, void **phMutex )
 
 {
 /* -------------------------------------------------------------------- */
@@ -453,9 +453,7 @@ CPLErr GDALRasterBand::ReadBlock( int nXBlockOff, int nYBlockOff,
 /* -------------------------------------------------------------------- */
 /*      Invoke underlying implementation method.                        */
 /* -------------------------------------------------------------------- */
-    //if ( hMutex == NULL )
-    //    hMutex = GetRWMutex();
-    return( IReadBlock( nXBlockOff, nYBlockOff, pImage, hMutex ) );
+    return( IReadBlock( nXBlockOff, nYBlockOff, pImage, phMutex ) );
 }
 
 /************************************************************************/
@@ -524,7 +522,7 @@ CPLErr GDALRasterBand::IWriteBlock( int, int, void *, void ** )
  */
 
 CPLErr GDALRasterBand::WriteBlock( int nXBlockOff, int nYBlockOff,
-                                   void * pImage, void ** hMutex )
+                                   void * pImage, void ** phMutex )
 
 {
 /* -------------------------------------------------------------------- */
@@ -576,7 +574,7 @@ CPLErr GDALRasterBand::WriteBlock( int nXBlockOff, int nYBlockOff,
 /* -------------------------------------------------------------------- */
 /*      Invoke underlying implementation method.                        */
 /* -------------------------------------------------------------------- */
-    return( IWriteBlock( nXBlockOff, nYBlockOff, pImage, hMutex ) );
+    return( IWriteBlock( nXBlockOff, nYBlockOff, pImage, phMutex ) );
 }
 
 /************************************************************************/

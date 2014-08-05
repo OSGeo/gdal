@@ -115,7 +115,7 @@ class MFFTiledBand : public GDALRasterBand
                                  GDALDataType, int );
                    ~MFFTiledBand();
 
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
 };
 
 
@@ -157,10 +157,10 @@ MFFTiledBand::~MFFTiledBand()
 /************************************************************************/
 
 CPLErr MFFTiledBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                 void * pImage, void ** hMutex )
+                                 void * pImage, void ** phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     long    nOffset;
     int     nTilesPerRow;
     int     nWordSize, nBlockSize;

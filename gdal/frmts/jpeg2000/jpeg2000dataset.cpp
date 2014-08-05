@@ -211,7 +211,7 @@ class JPEG2000RasterBand : public GDALPamRasterBand
                 JPEG2000RasterBand( JPEG2000Dataset *, int, int, int );
                 ~JPEG2000RasterBand();
                 
-    virtual CPLErr IReadBlock( int, int, void *, void **hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void **phMutex = NULL );
     virtual GDALColorInterp GetColorInterpretation();
 };
 
@@ -276,7 +276,7 @@ JPEG2000RasterBand::~JPEG2000RasterBand()
 /************************************************************************/
 
 CPLErr JPEG2000RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                      void * pImage, void ** hMutex )
+                                      void * pImage, void ** phMutex )
 {
     int             i, j;
 
@@ -286,7 +286,7 @@ CPLErr JPEG2000RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return CE_Failure;
     }
 
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     // Now we can calculate the pixel offset of the top left by multiplying
     // block offset with the block size.
 

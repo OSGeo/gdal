@@ -79,7 +79,7 @@ GDALNoDataValuesMaskBand::~GDALNoDataValuesMaskBand()
 /************************************************************************/
 
 CPLErr GDALNoDataValuesMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
-                                         void * pImage, void ** hMutex )
+                                         void * pImage, void ** phMutex )
 
 {
     int iBand;
@@ -169,7 +169,7 @@ CPLErr GDALNoDataValuesMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
 /*      Process different cases.                                        */
 /* -------------------------------------------------------------------- */
     int i;
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     switch( eWrkDT )
     {
       case GDT_Byte:

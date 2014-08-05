@@ -362,9 +362,9 @@ CPLErr IntergraphRasterBand::SetStatistics( double dfMin,
 CPLErr IntergraphRasterBand::IReadBlock( int nBlockXOff, 
                                          int nBlockYOff,
                                          void *pImage,
-                                         void **hMutex )
+                                         void **phMutex )
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     // --------------------------------------------------------------------
     // Load Block Buffer
     // --------------------------------------------------------------------
@@ -478,16 +478,16 @@ IntergraphRGBBand::IntergraphRGBBand( IntergraphDataset *poDS,
 CPLErr IntergraphRGBBand::IReadBlock( int nBlockXOff, 
                                       int nBlockYOff,
                                       void *pImage,
-                                      void **hMutex )
+                                      void **phMutex )
 {
     if( IntergraphRasterBand::IReadBlock( nBlockXOff, 
                                           nBlockYOff, 
                                           pImage, 
-                                          hMutex ) != CE_None )
+                                          phMutex ) != CE_None )
     {
         return CE_Failure;
     }
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
 
     // --------------------------------------------------------------------
     // Extract the band of interest from the block buffer
@@ -619,9 +619,9 @@ IntergraphRLEBand::~IntergraphRLEBand()
 CPLErr IntergraphRLEBand::IReadBlock( int nBlockXOff, 
                                       int nBlockYOff,
                                       void *pImage,
-                                      void **hMutex )
+                                      void **phMutex )
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     // --------------------------------------------------------------------
     // Load Block Buffer
     // --------------------------------------------------------------------
@@ -891,9 +891,9 @@ GDALColorInterp IntergraphBitmapBand::GetColorInterpretation()
 CPLErr IntergraphBitmapBand::IReadBlock( int nBlockXOff, 
                                          int nBlockYOff,
                                          void *pImage,
-                                         void **hMutex )
+                                         void **phMutex )
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     IntergraphDataset *poGDS = ( IntergraphDataset * ) poDS;
 
     // ----------------------------------------------------------------
@@ -1091,9 +1091,9 @@ void IntergraphRasterBand::ReshapeBlock( int nBlockXOff,
 CPLErr IntergraphRasterBand::IWriteBlock( int nBlockXOff, 
                                           int nBlockYOff,
                                           void *pImage,
-                                          void **hMutex )
+                                          void **phMutex )
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     uint32 nBlockSize = nBlockBufSize;
     uint32 nBlockOffset = nBlockBufSize * nBlockYOff;
 

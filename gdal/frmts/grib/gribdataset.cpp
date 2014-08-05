@@ -97,7 +97,7 @@ class GRIBRasterBand : public GDALPamRasterBand
 public:
     GRIBRasterBand( GRIBDataset*, int, inventoryType* );
     virtual ~GRIBRasterBand();
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex );
     virtual const char *GetDescription() const;
 
     virtual double GetNoDataValue( int *pbSuccess = NULL );
@@ -340,14 +340,14 @@ CPLErr GRIBRasterBand::LoadData()
 /************************************************************************/
 
 CPLErr GRIBRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                   void * pImage, void **hMutex )
+                                   void * pImage, void **phMutex )
 
 {
     CPLErr eErr = LoadData();
     if (eErr != CE_None)
         return eErr;
 
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
 /* -------------------------------------------------------------------- */
 /*      The image as read is always upside down to our normal           */
 /*      orientation so we need to effectively flip it at this           */

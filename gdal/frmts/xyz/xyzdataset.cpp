@@ -98,7 +98,7 @@ class XYZRasterBand : public GDALPamRasterBand
 
                 XYZRasterBand( XYZDataset *, int, GDALDataType );
 
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
     virtual double GetMinimum( int *pbSuccess = NULL );
     virtual double GetMaximum( int *pbSuccess = NULL );
     virtual double GetNoDataValue( int *pbSuccess = NULL );
@@ -128,10 +128,10 @@ XYZRasterBand::XYZRasterBand( XYZDataset *poDS, int nBand, GDALDataType eDT )
 /************************************************************************/
 
 CPLErr XYZRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage, void ** hMutex )
+                                  void * pImage, void ** phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     XYZDataset *poGDS = (XYZDataset *) poDS;
     
     if (poGDS->fp == NULL)

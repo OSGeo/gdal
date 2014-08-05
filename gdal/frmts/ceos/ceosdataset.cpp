@@ -72,7 +72,7 @@ class CEOSRasterBand : public GDALPamRasterBand
 
     		CEOSRasterBand( CEOSDataset *, int );
     
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
 };
 
 
@@ -97,10 +97,10 @@ CEOSRasterBand::CEOSRasterBand( CEOSDataset *poDS, int nBand )
 /************************************************************************/
 
 CPLErr CEOSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage, void ** hMutex )
+                                  void * pImage, void ** phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     CEOSDataset	*poCEOS_DS = (CEOSDataset *) poDS;
 
     CPLAssert( nBlockXOff == 0 );

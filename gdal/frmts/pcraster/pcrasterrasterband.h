@@ -99,7 +99,7 @@ public:
   CPLErr           IReadBlock          (int nBlockXoff,
                                         int nBlockYoff,
                                         void* buffer,
-                                        void ** hMutex = NULL);
+                                        void ** phMutex = NULL);
 
 };
 

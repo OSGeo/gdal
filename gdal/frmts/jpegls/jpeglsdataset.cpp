@@ -86,7 +86,7 @@ class JPEGLSRasterBand : public GDALPamRasterBand
                 JPEGLSRasterBand( JPEGLSDataset * poDS, int nBand);
                 ~JPEGLSRasterBand();
 
-    virtual CPLErr          IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr          IReadBlock( int, int, void *, void ** phMutex = NULL );
     virtual GDALColorInterp GetColorInterpretation();
 };
 
@@ -140,9 +140,9 @@ static const char* JPEGLSGetErrorAsString(JLS_ERROR eCode)
 /************************************************************************/
 
 CPLErr JPEGLSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                      void * pImage, void ** hMutex )
+                                      void * pImage, void ** phMutex )
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     JPEGLSDataset *poGDS = (JPEGLSDataset *) poDS;
 
     if (!poGDS->bHasUncompressed)

@@ -92,8 +92,8 @@ public:
   FITSRasterBand(FITSDataset*, int);
   ~FITSRasterBand();
 
-  virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
-  virtual CPLErr IWriteBlock( int, int, void *, void ** hMutex = NULL ); 
+  virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
+  virtual CPLErr IWriteBlock( int, int, void *, void ** phMutex = NULL ); 
 };
 
 
@@ -123,9 +123,9 @@ FITSRasterBand::~FITSRasterBand() {
 /************************************************************************/
 
 CPLErr FITSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
-                                  void* pImage, void ** hMutex ) {
+                                  void* pImage, void ** phMutex ) {
  
-  CPLMutexHolderD( hMutex );
+  CPLMutexHolderD( phMutex );
   // A FITS block is one row (we assume BSQ formatted data)
   FITSDataset* dataset = (FITSDataset*) poDS;
   fitsfile* hFITS = dataset->hFITS;
@@ -169,9 +169,9 @@ CPLErr FITSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr FITSRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
-				   void* pImage, void ** hMutex) {
+				   void* pImage, void ** phMutex) {
 
-  CPLMutexHolderD( hMutex );
+  CPLMutexHolderD( phMutex );
   FITSDataset* dataset = (FITSDataset*) poDS;
   fitsfile* hFITS = dataset->hFITS;
   int status = 0;

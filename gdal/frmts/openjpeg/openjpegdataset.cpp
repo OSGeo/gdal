@@ -210,14 +210,14 @@ class JP2OpenJPEGDataset : public GDALJP2AbstractDataset
                                GDALDataType eBufType, 
                                int nBandCount, int *panBandMap,
                                int nPixelSpace, int nLineSpace, int nBandSpace,
-                               void ** hMutex = NULL);
+                               void ** phMutex = NULL);
 
     static void         WriteBox(VSILFILE* fp, GDALJP2Box* poBox);
 
     CPLErr      ReadBlock( int nBand, VSILFILE* fp,
                            int nBlockXOff, int nBlockYOff, void * pImage,
                            int nBandCount, int *panBandMap,
-                           void ** hMutex = NULL );
+                           void ** phMutex = NULL );
 
     int         PreloadBlocks( JP2OpenJPEGRasterBand* poBand,
                                int nXOff, int nYOff, int nXSize, int nYSize,
@@ -244,13 +244,13 @@ class JP2OpenJPEGRasterBand : public GDALPamRasterBand
                                        int nBlockXSize, int nBlockYSize );
                 ~JP2OpenJPEGRasterBand();
 
-    virtual CPLErr          IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr          IReadBlock( int, int, void *, void ** phMutex = NULL );
     virtual CPLErr          IRasterIO( GDALRWFlag eRWFlag,
                                   int nXOff, int nYOff, int nXSize, int nYSize,
                                   void * pData, int nBufXSize, int nBufYSize,
                                   GDALDataType eBufType,
                                   int nPixelSpace, int nLineSpace,
-                                  void ** hMutex = NULL );
+                                  void ** phMutex = NULL );
 
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable* GetColorTable() { return poCT; }
@@ -314,15 +314,15 @@ static CPL_INLINE GByte CLAMP_0_255(int val)
 /************************************************************************/
 
 CPLErr JP2OpenJPEGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                          void * pImage, void ** hMutex )
+                                          void * pImage, void ** phMutex )
 {
     JP2OpenJPEGDataset *poGDS = (JP2OpenJPEGDataset *) poDS;
     if ( poGDS->bEnoughMemoryToLoadOtherBands )
         return poGDS->ReadBlock(nBand, poGDS->fp, nBlockXOff, nBlockYOff, pImage,
-                                poGDS->nBands, NULL, hMutex);
+                                poGDS->nBands, NULL, phMutex);
     else
         return poGDS->ReadBlock(nBand, poGDS->fp, nBlockXOff, nBlockYOff, pImage,
-                                1, &nBand, hMutex);
+                                1, &nBand, phMutex);
 }
 
 /************************************************************************/
@@ -333,7 +333,7 @@ CPLErr JP2OpenJPEGRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                          int nXOff, int nYOff, int nXSize, int nYSize,
                                          void * pData, int nBufXSize, int nBufYSize,
                                          GDALDataType eBufType,
-                                         int nPixelSpace, int nLineSpace, void ** hMutex )
+                                         int nPixelSpace, int nLineSpace, void ** phMutex )
 {
     JP2OpenJPEGDataset *poGDS = (JP2OpenJPEGDataset *) poDS;
 
@@ -360,7 +360,7 @@ CPLErr JP2OpenJPEGRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
             return poOverviewBand->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                             pData, nBufXSize, nBufYSize, eBufType,
-                                            nPixelSpace, nLineSpace, hMutex );
+                                            nPixelSpace, nLineSpace, phMutex );
         }
     }
 
@@ -368,7 +368,7 @@ CPLErr JP2OpenJPEGRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
     CPLErr eErr = GDALPamRasterBand::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                          pData, nBufXSize, nBufYSize, eBufType,
-                                         nPixelSpace, nLineSpace, hMutex );
+                                         nPixelSpace, nLineSpace, phMutex );
 
     poGDS->bEnoughMemoryToLoadOtherBands = TRUE;
     return eErr;
@@ -544,7 +544,7 @@ CPLErr  JP2OpenJPEGDataset::IRasterIO( GDALRWFlag eRWFlag,
                                GDALDataType eBufType, 
                                int nBandCount, int *panBandMap,
                                int nPixelSpace, int nLineSpace, int nBandSpace,
-                               void ** hMutex)
+                               void ** phMutex)
 {
     if( eRWFlag != GF_Read )
         return CE_Failure;
@@ -573,7 +573,7 @@ CPLErr  JP2OpenJPEGDataset::IRasterIO( GDALRWFlag eRWFlag,
                                                         pData, nBufXSize, nBufYSize, eBufType,
                                                         nBandCount, panBandMap,
                                                         nPixelSpace, nLineSpace, nBandSpace,
-                                                        hMutex );
+                                                        phMutex );
         }
     }
 
@@ -585,7 +585,7 @@ CPLErr  JP2OpenJPEGDataset::IRasterIO( GDALRWFlag eRWFlag,
                                         eBufType, 
                                         nBandCount, panBandMap,
                                         nPixelSpace, nLineSpace, nBandSpace,
-                                        hMutex );
+                                        phMutex );
 
     bEnoughMemoryToLoadOtherBands = TRUE;
     return eErr;
@@ -597,7 +597,7 @@ CPLErr  JP2OpenJPEGDataset::IRasterIO( GDALRWFlag eRWFlag,
 
 CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
                                       int nBlockXOff, int nBlockYOff, void * pImage,
-                                      int nBandCount, int* panBandMap, void ** hMutex )
+                                      int nBandCount, int* panBandMap, void ** phMutex )
 {
     CPLErr          eErr = CE_None;
     opj_codec_t*    pCodec;
@@ -691,7 +691,7 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
     for(int xBand = 0; xBand < nBandCount; xBand ++)
     {
         void* pDstBuffer;
-        void ** hThisMutex = NULL;
+        void ** phThisMutex = NULL;
         GDALRasterBlock *poBlock = NULL;
         int iBand = (panBandMap) ? panBandMap[xBand] : xBand + 1;
         int bPromoteTo8Bit = ((JP2OpenJPEGRasterBand*)GetRasterBand(iBand))->bPromoteTo8Bit;
@@ -699,7 +699,7 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
         if (iBand == nBand)
         {
             pDstBuffer = pImage;
-            hThisMutex = hMutex;
+            phThisMutex = phMutex;
         }
         else
         {
@@ -737,7 +737,7 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
             OPJ_INT32* pSrcY = psImage->comps[0].data;
             OPJ_INT32* pSrcCb = psImage->comps[1].data;
             OPJ_INT32* pSrcCr = psImage->comps[2].data;
-            CPLMutexHolderD( hThisMutex );
+            CPLMutexHolderD( phThisMutex );
             GByte* pDst = (GByte*)pDstBuffer;
             for(int j=0;j<nHeightToRead;j++)
             {
@@ -770,7 +770,7 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
                     }
                 }
             }
-            CPLMutexHolderD( hThisMutex );
+            CPLMutexHolderD( phThisMutex );
 
             if ((int)psImage->comps[iBand-1].w == nBlockXSize &&
                 (int)psImage->comps[iBand-1].h == nBlockYSize)

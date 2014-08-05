@@ -263,7 +263,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
 				       int nYSize, void * pData, int nBufXSize,
 				       int nBufYSize, GDALDataType eBufType,
 				       int nPixelSpace, int nLineSpace,
-                       void ** hMutex )
+                       void ** phMutex )
 {
     GDALDerivedPixelFunc pfnPixelFunc;
     void **pBuffers;
@@ -292,7 +292,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
     if ( nPixelSpace == typesize &&
          (!bNoDataValueSet || dfNoDataValue == 0) ) {
-        CPLMutexHolderD( hMutex );
+        CPLMutexHolderD( phMutex );
         memset( pData, 0, nBufXSize * nBufYSize * nPixelSpace );
     }
     else if ( !bEqualAreas || bNoDataValueSet )
@@ -300,7 +300,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
         double dfWriteValue = 0.0;
         int    iLine;
 
-        CPLMutexHolderD( hMutex );
+        CPLMutexHolderD( phMutex );
         if( bNoDataValueSet )
             dfWriteValue = dfNoDataValue;
 
@@ -321,7 +321,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
     {
         if( OverviewRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
                               pData, nBufXSize, nBufYSize, 
-                              eBufType, nPixelSpace, nLineSpace, hMutex ) == CE_None )
+                              eBufType, nPixelSpace, nLineSpace, phMutex ) == CE_None )
             return CE_None;
     }
 
@@ -384,12 +384,12 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
 	     pBuffers[iSource], nBufXSize, nBufYSize, 
 	     eSrcType, GDALGetDataTypeSize( eSrcType ) / 8,
              (GDALGetDataTypeSize( eSrcType ) / 8) * nBufXSize,
-             hMutex);
+             phMutex);
     }
 
     /* ---- Apply pixel function ---- */
     if (eErr == CE_None) {
-        CPLMutexHolderD( hMutex );
+        CPLMutexHolderD( phMutex );
         eErr = pfnPixelFunc((void **)pBuffers, nSources,
 			    pData, nBufXSize, nBufYSize,
 			    eSrcType, eBufType, nPixelSpace, nLineSpace);

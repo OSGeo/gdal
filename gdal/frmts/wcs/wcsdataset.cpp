@@ -71,7 +71,7 @@ class CPL_DLL WCSDataset : public GDALPamDataset
     int         TestUseBlockIO( int, int, int, int, int, int );
     CPLErr      DirectRasterIO( GDALRWFlag, int, int, int, int,
                                 void *, int, int, GDALDataType,
-                                int, int *, int, int, int, void ** hMutex = NULL );
+                                int, int *, int, int, int, void ** phMutex = NULL );
     CPLErr      GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
                              int nBufXSize, int nBufYSize, 
                              int nBandCount, int *panBandList,
@@ -79,7 +79,7 @@ class CPL_DLL WCSDataset : public GDALPamDataset
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int *, int, int, int, void ** hMutex = NULL );
+                              int, int *, int, int, int, void ** phMutex = NULL );
 
     int		DescribeCoverage();
     int         ExtractGridInfo100();
@@ -132,7 +132,7 @@ class WCSRasterBand : public GDALPamRasterBand
     
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int, void ** hMutex = NULL );
+                              int, int, void ** phMutex = NULL );
 
   public:
 
@@ -144,7 +144,7 @@ class WCSRasterBand : public GDALPamRasterBand
     virtual int GetOverviewCount();
     virtual GDALRasterBand *GetOverview(int);
 
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL);
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL);
 };
 
 /************************************************************************/
@@ -251,7 +251,7 @@ WCSRasterBand::~WCSRasterBand()
 /************************************************************************/
 
 CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage, void ** hMutex )
+                                  void * pImage, void ** phMutex )
 
 {
     CPLErr eErr;
@@ -321,7 +321,7 @@ CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             eErr = poTileBand->RasterIO( GF_Read, 
                                          0, 0, nBlockXSize, nBlockYSize, 
                                          pImage, nBlockXSize, nBlockYSize, 
-                                         eDataType, 0, 0, hMutex );
+                                         eDataType, 0, 0, phMutex );
         }
         else
         {
@@ -366,7 +366,7 @@ CPLErr WCSRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                  int nXOff, int nYOff, int nXSize, int nYSize,
                                  void * pData, int nBufXSize, int nBufYSize,
                                  GDALDataType eBufType,
-                                 int nPixelSpace, int nLineSpace, void ** hMutex )
+                                 int nPixelSpace, int nLineSpace, void ** phMutex )
     
 {
     if( (poODS->nMaxCols > 0 && poODS->nMaxCols < nBufXSize)
@@ -378,14 +378,14 @@ CPLErr WCSRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         return GDALPamRasterBand::IRasterIO( 
             eRWFlag, nXOff, nYOff, nXSize, nYSize,
             pData, nBufXSize, nBufYSize, eBufType, 
-            nPixelSpace, nLineSpace, hMutex );
+            nPixelSpace, nLineSpace, phMutex );
     else
         return poODS->DirectRasterIO( 
             eRWFlag, 
             nXOff * nResFactor, nYOff * nResFactor, 
             nXSize * nResFactor, nYSize * nResFactor,
             pData, nBufXSize, nBufYSize, eBufType, 
-            1, &nBand, nPixelSpace, nLineSpace, 0, hMutex );
+            1, &nBand, nPixelSpace, nLineSpace, 0, phMutex );
 }
 
 /************************************************************************/
@@ -531,7 +531,7 @@ CPLErr WCSDataset::IRasterIO( GDALRWFlag eRWFlag,
                               GDALDataType eBufType, 
                               int nBandCount, int *panBandMap,
                               int nPixelSpace, int nLineSpace, int nBandSpace,
-                              void ** hMutex)
+                              void ** phMutex)
 
 {
     if( (nMaxCols > 0 && nMaxCols < nBufXSize)
@@ -546,13 +546,13 @@ CPLErr WCSDataset::IRasterIO( GDALRWFlag eRWFlag,
             eRWFlag, nXOff, nYOff, nXSize, nYSize,
             pData, nBufXSize, nBufYSize, eBufType, 
             nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace,
-            hMutex );
+            phMutex );
     else
         return DirectRasterIO( 
             eRWFlag, nXOff, nYOff, nXSize, nYSize,
             pData, nBufXSize, nBufYSize, eBufType, 
             nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace,
-            hMutex );
+            phMutex );
 }
 
 /************************************************************************/
@@ -568,7 +568,7 @@ WCSDataset::DirectRasterIO( GDALRWFlag eRWFlag,
                             GDALDataType eBufType, 
                             int nBandCount, int *panBandMap,
                             int nPixelSpace, int nLineSpace, int nBandSpace,
-                            void ** hMutex)
+                            void ** phMutex)
 
 {
     CPLDebug( "WCS", "DirectRasterIO(%d,%d,%d,%d) -> (%d,%d) (%d bands)\n", 
@@ -645,7 +645,7 @@ WCSDataset::DirectRasterIO( GDALRWFlag eRWFlag,
                                      0, 0, nBufXSize, nBufYSize,
                                      ((GByte *) pData) + 
                                      iBand * nBandSpace, nBufXSize, nBufYSize, 
-                                     eBufType, nPixelSpace, nLineSpace, hMutex );
+                                     eBufType, nPixelSpace, nLineSpace, phMutex );
     }
     
 /* -------------------------------------------------------------------- */

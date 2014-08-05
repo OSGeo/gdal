@@ -285,8 +285,8 @@ class GTARasterBand : public GDALPamRasterBand
                 GTARasterBand( GTADataset *, int );
                 ~GTARasterBand( );
 
-    CPLErr      IReadBlock( int, int, void *, void ** hMutex = NULL );
-    CPLErr      IWriteBlock( int, int, void *, void ** hMutex = NULL );
+    CPLErr      IReadBlock( int, int, void *, void ** phMutex = NULL );
+    CPLErr      IWriteBlock( int, int, void *, void ** phMutex = NULL );
 
     char      **GetCategoryNames( );
     CPLErr      SetCategoryNames( char ** );
@@ -684,10 +684,10 @@ CPLErr GTARasterBand::SetColorInterpretation( GDALColorInterp )
 /************************************************************************/
 
 CPLErr GTARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage, void ** hMutex )
+                                  void * pImage, void ** phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     GTADataset *poGDS = (GTADataset *) poDS;
 
     // Read and cache block containing all bands at once
@@ -721,10 +721,10 @@ CPLErr GTARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr GTARasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage, void ** hMutex )
+                                  void * pImage, void ** phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     GTADataset *poGDS = (GTADataset *) poDS;
 
     if( poGDS->oHeader.compression() != gta::none )

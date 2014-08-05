@@ -122,7 +122,7 @@ class LAN4BitRasterBand : public GDALPamRasterBand
     virtual CPLErr SetColorTable( GDALColorTable * ); 
     virtual CPLErr SetColorInterpretation( GDALColorInterp );
 
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex );
 };
 
 /************************************************************************/
@@ -202,13 +202,13 @@ LAN4BitRasterBand::~LAN4BitRasterBand()
 /************************************************************************/
 
 CPLErr LAN4BitRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                      void * pImage, void ** hMutex )
+                                      void * pImage, void ** phMutex )
 
 {
     LANDataset *poLAN_DS = (LANDataset *) poDS;
     CPLAssert( nBlockXOff == 0  );
     
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
 /* -------------------------------------------------------------------- */
 /*      Seek to profile.                                                */
 /* -------------------------------------------------------------------- */

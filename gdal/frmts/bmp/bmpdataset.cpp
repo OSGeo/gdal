@@ -229,7 +229,7 @@ class BMPDataset : public GDALPamDataset
   protected:
     virtual CPLErr      IRasterIO( GDALRWFlag, int, int, int, int,
                                    void *, int, int, GDALDataType,
-                                   int, int *, int, int, int, void ** hMutex = NULL );
+                                   int, int *, int, int, int, void ** phMutex = NULL );
 
   public:
                 BMPDataset();
@@ -266,8 +266,8 @@ class BMPRasterBand : public GDALPamRasterBand
                 BMPRasterBand( BMPDataset *, int );
                 ~BMPRasterBand();
 
-    virtual CPLErr          IReadBlock( int, int, void *, void ** hMutex = NULL );
-    virtual CPLErr          IWriteBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr          IReadBlock( int, int, void *, void ** phMutex = NULL );
+    virtual CPLErr          IWriteBlock( int, int, void *, void ** phMutex = NULL );
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable  *GetColorTable();
     CPLErr                  SetColorTable( GDALColorTable * );
@@ -321,9 +321,9 @@ BMPRasterBand::~BMPRasterBand()
 /************************************************************************/
 
 CPLErr BMPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage, void ** hMutex )
+                                  void * pImage, void ** phMutex )
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     BMPDataset  *poGDS = (BMPDataset *) poDS;
     GUInt32     iScanOffset;
     int         i;
@@ -525,9 +525,9 @@ CPLErr BMPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr BMPRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-                                   void * pImage, void ** hMutex )
+                                   void * pImage, void ** phMutex )
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     BMPDataset  *poGDS = (BMPDataset *)poDS;
     int         iInPixel, iOutPixel;
     GUInt32     iScanOffset;
@@ -682,7 +682,7 @@ class BMPComprRasterBand : public BMPRasterBand
                 BMPComprRasterBand( BMPDataset *, int );
                 ~BMPComprRasterBand();
 
-    virtual CPLErr          IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr          IReadBlock( int, int, void *, void ** phMutex = NULL );
 //    virtual CPLErr        IWriteBlock( int, int, void * );
 };
 
@@ -862,9 +862,9 @@ BMPComprRasterBand::~BMPComprRasterBand()
 /************************************************************************/
 
 CPLErr BMPComprRasterBand::
-    IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage, void **hMutex )
+    IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage, void **phMutex )
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     memcpy( pImage, pabyUncomprBuf +
             (poDS->GetRasterYSize() - nBlockYOff - 1) * poDS->GetRasterXSize(),
             nBlockXSize );
@@ -977,7 +977,7 @@ CPLErr BMPDataset::IRasterIO( GDALRWFlag eRWFlag,
                               GDALDataType eBufType,
                               int nBandCount, int *panBandMap, 
                               int nPixelSpace, int nLineSpace, int nBandSpace,
-                              void ** hMutex )
+                              void ** phMutex )
 
 {
     if( nBandCount > 1 )
@@ -985,14 +985,14 @@ CPLErr BMPDataset::IRasterIO( GDALRWFlag eRWFlag,
             eRWFlag, nXOff, nYOff, nXSize, nYSize,
             pData, nBufXSize, nBufYSize, eBufType, 
             nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace,
-            hMutex );
+            phMutex );
     else
         return 
             GDALDataset::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                     pData, nBufXSize, nBufYSize, eBufType, 
                                     nBandCount, panBandMap, 
                                     nPixelSpace, nLineSpace, nBandSpace,
-                                    hMutex );
+                                    phMutex );
 }
 
 /************************************************************************/

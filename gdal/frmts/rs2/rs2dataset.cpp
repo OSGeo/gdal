@@ -133,7 +133,7 @@ class RS2RasterBand : public GDALPamRasterBand
                                GDALDataset *poBandFile );
     virtual     ~RS2RasterBand();
     
-    virtual CPLErr IReadBlock( int, int, void *, void **hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void **phMutex = NULL );
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -180,7 +180,7 @@ RS2RasterBand::~RS2RasterBand()
 /************************************************************************/
 
 CPLErr RS2RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage, void ** hMutex )
+                                  void * pImage, void ** phMutex )
 
 {
     int nRequestYSize;
@@ -193,7 +193,7 @@ CPLErr RS2RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     if( (nBlockYOff + 1) * nBlockYSize > nRasterYSize )
     {
-        CPLMutexHolderD( hMutex );
+        CPLMutexHolderD( phMutex );
         nRequestYSize = nRasterYSize - nBlockYOff * nBlockYSize;
         memset( pImage, 0, (GDALGetDataTypeSize( eDataType ) / 8) * 
             nBlockXSize * nBlockYSize );
@@ -209,7 +209,7 @@ CPLErr RS2RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* ------------------------------------------------------------------- */
     if( (nBlockXOff + 1) * nBlockXSize > nRasterXSize )
     {
-        CPLMutexHolderD( hMutex );
+        CPLMutexHolderD( phMutex );
         nRequestXSize = nRasterXSize - nBlockXOff * nBlockXSize;
         memset( pImage, 0, (GDALGetDataTypeSize( eDataType ) / 8) * 
             nBlockXSize * nBlockYSize );
@@ -226,7 +226,7 @@ CPLErr RS2RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   nRequestXSize, nRequestYSize,
                                   pImage, nRequestXSize, nRequestYSize, 
                                   GDT_Int16,
-                                  2, NULL, 4, nBlockXSize * 4, 2, hMutex );
+                                  2, NULL, 4, nBlockXSize * 4, 2, phMutex );
 
 /* -------------------------------------------------------------------- */
 /*      File has one sample marked as sample format void, a 32bits.     */
@@ -242,10 +242,10 @@ CPLErr RS2RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   nRequestXSize, nRequestYSize, 
                                   pImage, nRequestXSize, nRequestYSize, 
                                   GDT_UInt32,
-                                  1, NULL, 4, nBlockXSize * 4, 0, hMutex );
+                                  1, NULL, 4, nBlockXSize * 4, 0, phMutex );
 
 #ifdef CPL_LS
-        CPLMutexHolderD( hMutex );
+        CPLMutexHolderD( phMutex );
         /* First, undo the 32bit swap. */
         GDALSwapWords( pImage, 4, nBlockXSize * nBlockYSize, 4 );
 
@@ -268,7 +268,7 @@ CPLErr RS2RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   nRequestXSize, nRequestYSize, 
                                   pImage, nRequestXSize, nRequestYSize,
                                   GDT_UInt16,
-                                  1, NULL, 2, nBlockXSize * 2, 0, hMutex );
+                                  1, NULL, 2, nBlockXSize * 2, 0, phMutex );
     else if ( eDataType == GDT_Byte ) 
         /* Ticket #2104: Support for ScanSAR products */
         return
@@ -278,7 +278,7 @@ CPLErr RS2RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   nRequestXSize, nRequestYSize,
                                   pImage, nRequestXSize, nRequestYSize,
                                   GDT_Byte,
-                                  1, NULL, 1, nBlockXSize, 0, hMutex );
+                                  1, NULL, 1, nBlockXSize, 0, phMutex );
     else
     {
         CPLAssert( FALSE );
@@ -312,7 +312,7 @@ public:
         const char *pszLUT);
     ~RS2CalibRasterBand();
 
-    CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage, void **hMutex);
+    CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage, void **phMutex);
 };
 
 /************************************************************************/
@@ -399,11 +399,11 @@ RS2CalibRasterBand::~RS2CalibRasterBand() {
 /************************************************************************/
 
 CPLErr RS2CalibRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-    void *pImage, void **hMutex )
+    void *pImage, void **phMutex )
 {
     CPLErr eErr;
     int nRequestYSize;
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
 /* -------------------------------------------------------------------- */
 /*      If the last strip is partial, we need to avoid                  */
 /*      over-requesting.  We also need to initialize the extra part     */

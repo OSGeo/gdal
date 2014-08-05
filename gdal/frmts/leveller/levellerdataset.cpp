@@ -418,8 +418,8 @@ public:
     virtual double GetScale(int* pbSuccess = NULL);
     virtual double GetOffset(int* pbSuccess = NULL);
 
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
-    virtual CPLErr IWriteBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
+    virtual CPLErr IWriteBlock( int, int, void *, void ** phMutex = NULL );
 	virtual CPLErr SetUnitType( const char* );
 };
 
@@ -460,14 +460,14 @@ CPLErr LevellerRasterBand::IWriteBlock
 	int nBlockXOff, 
 	int nBlockYOff,
     void* pImage,
-    void ** hMutex
+    void ** phMutex
 )
 {
     CPLAssert( nBlockXOff == 0  );
     CPLAssert( pImage != NULL );
 	CPLAssert( m_pLine != NULL );
 
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
 /*	#define sgn(_n) ((_n) < 0 ? -1 : ((_n) > 0 ? 1 : 0) )
 	#define sround(_f)	\
 		(int)((_f) + (0.5 * sgn(_f)))
@@ -525,14 +525,14 @@ CPLErr LevellerRasterBand::SetUnitType( const char* psz )
 /************************************************************************/
 
 CPLErr LevellerRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                       void* pImage, void ** hMutex )
+                                       void* pImage, void ** phMutex )
 
 {
     CPLAssert( sizeof(float) == sizeof(GInt32) );
     CPLAssert( nBlockXOff == 0  );
     CPLAssert( pImage != NULL );
 
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     LevellerDataset *poGDS = (LevellerDataset *) poDS;
 
 /* -------------------------------------------------------------------- */

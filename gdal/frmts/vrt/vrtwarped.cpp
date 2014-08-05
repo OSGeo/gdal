@@ -1172,6 +1172,29 @@ CPLErr VRTWarpedDataset::ProcessBlock( int iBlockX, int iBlockY )
 /* -------------------------------------------------------------------- */
 /*      Warp into this buffer.                                          */
 /* -------------------------------------------------------------------- */
+    GDALRasterBand *poAlphaBand;
+    GDALRasterBlock *poAlphaBlock;
+    poAlphaBand = GetRasterBand(psWO->nDstAlphaBand);
+    poAlphaBlock = poAlphaBand->GetLockedBlockRef( iBlockX, iBlockY, TRUE );
+    if (poAlphaBlock != NULL )
+    {
+        poAlphaBlock->MarkBlockRead();
+        poAlphaBlock->DropLock();
+    }
+    /*for( iBand = 0; iBand < MIN(nBands, psWO->nBandCount); iBand++ )
+    {
+        GDALRasterBand *poBand;
+        GDALRasterBlock *poBlock;
+
+        poBand = GetRasterBand(iBand+1);
+        poBlock = poBand->GetLockedBlockRef( iBlockX, iBlockY, TRUE );
+
+        if( poBlock != NULL )
+        {
+            poBlock->MarkBlockRead();
+            poBlock->DropLock();
+        }
+    }*/
     CPLErr eErr;
 
     eErr = 
@@ -1276,7 +1299,7 @@ VRTWarpedRasterBand::~VRTWarpedRasterBand()
 /************************************************************************/
 
 CPLErr VRTWarpedRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                     void * pImage, void **hMutex )
+                                     void * pImage, void **phMutex )
 
 {
     CPLErr eErr;
@@ -1288,7 +1311,7 @@ CPLErr VRTWarpedRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return CE_Failure;
     // This marks the block such that it has already been read from
     // otherwise this will result in a stack overflow. 
-    poBlock->MarkBlockRead(); 
+    //poBlock->MarkBlockRead(); 
 
     eErr = poWDS->ProcessBlock( nBlockXOff, nBlockYOff );
 
@@ -1297,7 +1320,7 @@ CPLErr VRTWarpedRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         int nDataBytes;
         nDataBytes = (GDALGetDataTypeSize(poBlock->GetDataType()) / 8)
             * poBlock->GetXSize() * poBlock->GetYSize();
-        CPLMutexHolderD( hMutex );
+        CPLMutexHolderD( phMutex );
         CPLMutexHolderD2( poBlock->GetRWMutex() );
         memcpy( pImage, poBlock->GetDataRef( TRUE ), nDataBytes );
     }
@@ -1312,7 +1335,7 @@ CPLErr VRTWarpedRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr VRTWarpedRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-                                     void * pImage, void ** hMutex )
+                                     void * pImage, void ** phMutex )
 
 {
     CPLErr eErr;
@@ -1330,7 +1353,7 @@ CPLErr VRTWarpedRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     else
     {
         /* Otherwise, call the superclass method, that will fail of course */
-        eErr = VRTRasterBand::IWriteBlock(nBlockXOff, nBlockYOff, pImage, hMutex);
+        eErr = VRTRasterBand::IWriteBlock(nBlockXOff, nBlockYOff, pImage, phMutex);
     }
 
     return eErr;

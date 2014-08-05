@@ -303,11 +303,11 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int *, int, int, int, void ** hMutex = NULL );
+                              int, int *, int, int, int, void ** phMutex = NULL );
 
     CPLErr BlockBasedRasterIO( GDALRWFlag, int, int, int, int,
                                void *, int, int, GDALDataType,
-                               int, int *, int, int, int, void ** hMutex = NULL );
+                               int, int *, int, int, int, void ** phMutex = NULL );
     void   BlockBasedFlushCache();
 
     CPLErr ValidateRasterIOOrAdviseReadParameters(
@@ -376,7 +376,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     CPLErr      RasterIO( GDALRWFlag, int, int, int, int,
                           void *, int, int, GDALDataType,
-                          int, int *, int, int, int, void ** hMutex = NULL );
+                          int, int *, int, int, int, void ** phMutex = NULL );
 
     int           Reference();
     int           Dereference();
@@ -638,13 +638,13 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
   protected:
     virtual CPLErr IReadBlock( int, int, void *, void ** ) = 0;
-    virtual CPLErr IWriteBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr IWriteBlock( int, int, void *, void ** phMutex = NULL );
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int, void ** hMutex = NULL );
+                              int, int, void ** phMutex = NULL );
     CPLErr         OverviewRasterIO( GDALRWFlag, int, int, int, int,
                                      void *, int, int, GDALDataType,
-                                     int, int, void ** hMutex = NULL );
+                                     int, int, void ** phMutex = NULL );
 
     int            InitBlockInfo();
 
@@ -668,10 +668,10 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     
     CPLErr      RasterIO( GDALRWFlag, int, int, int, int,
                           void *, int, int, GDALDataType,
-                          int, int, void ** hMutex = NULL );
-    CPLErr      ReadBlock( int, int, void *, void ** hMutex = NULL );
+                          int, int, void ** phMutex = NULL );
+    CPLErr      ReadBlock( int, int, void *, void ** phMutex = NULL );
 
-    CPLErr      WriteBlock( int, int, void *, void ** hMutex = NULL );
+    CPLErr      WriteBlock( int, int, void *, void ** phMutex = NULL );
 
     GDALRasterBlock *GetLockedBlockRef( int nXBlockOff, int nYBlockOff, 
                                         int bJustInitialize = FALSE );
@@ -763,7 +763,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 class CPL_DLL GDALAllValidMaskBand : public GDALRasterBand
 {
   protected:
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
 
   public:
                 GDALAllValidMaskBand( GDALRasterBand * );
@@ -783,10 +783,10 @@ class CPL_DLL GDALNoDataMaskBand : public GDALRasterBand
     GDALRasterBand *poParent;
 
   protected:
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int, void ** hMutex = NULL);
+                              int, int, void ** phMutex = NULL);
 
   public:
                 GDALNoDataMaskBand( GDALRasterBand * );
@@ -802,7 +802,7 @@ class CPL_DLL GDALNoDataValuesMaskBand : public GDALRasterBand
     double      *padfNodataValues;
 
   protected:
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
 
   public:
                 GDALNoDataValuesMaskBand( GDALDataset * );

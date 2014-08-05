@@ -134,8 +134,8 @@ class PCIDSK2Band : public GDALPamRasterBand
                 PCIDSK2Band( PCIDSKChannel * );
                 ~PCIDSK2Band();
 
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
-    virtual CPLErr IWriteBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
+    virtual CPLErr IWriteBlock( int, int, void *, void ** phMutex = NULL );
 
     virtual int        GetOverviewCount();
     virtual GDALRasterBand *GetOverview(int);

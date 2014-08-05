@@ -64,7 +64,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                   void * pData, int nBufXSize, int nBufYSize,
                                   GDALDataType eBufType,
                                   int nPixelSpace, int nLineSpace, 
-                                  void **hMutex )
+                                  void **phMutex )
 
 {
     int         nBandDataSize = GDALGetDataTypeSize( eDataType ) / 8;
@@ -135,7 +135,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             nSrcByteOffset = ((iSrcY-nLBlockY*nBlockYSize)*nBlockXSize + nXOff)
                 * nBandDataSize;
             {
-                CPLMutexHolderD2( hMutex );
+                CPLMutexHolderD2( phMutex );
                 CPLMutexHolderD( poBlock->GetRWMutex() );
                 if( eRWFlag == GF_Write )
                     poBlock->MarkDirty();
@@ -195,7 +195,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
             return poOverviewBand->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                             pData, nBufXSize, nBufYSize, eBufType,
-                                            nPixelSpace, nLineSpace, hMutex );
+                                            nPixelSpace, nLineSpace, phMutex );
         }
     }
     
@@ -206,7 +206,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         nLineSpace == nPixelSpace * nBufXSize &&
         CSLTestBoolean(CPLGetConfigOption("GDAL_NO_COSTLY_OVERVIEW", "NO")) )
     {
-        CPLMutexHolderD( hMutex );
+        CPLMutexHolderD( phMutex );
         memset(pData, 0, nLineSpace * nBufYSize);
         return CE_None;
     }
@@ -290,7 +290,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /*      Copy over this chunk of data.                                   */
 /* -------------------------------------------------------------------- */
                 {
-                    CPLMutexHolderD( hMutex );
+                    CPLMutexHolderD( phMutex );
                     CPLMutexHolderD2( poBlock->GetRWMutex() );
                     if( eRWFlag == GF_Write )
                         poBlock->MarkDirty();
@@ -420,7 +420,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     /*      Copy over this pixel of data.                                   */
     /* -------------------------------------------------------------------- */
                 {
-                    CPLMutexHolderD( hMutex );
+                    CPLMutexHolderD( phMutex );
                     CPLMutexHolderD2( poBlock->GetRWMutex() );
                     poBlock->MarkDirty();
                     iDstOffset = ((size_t)iDstX - (size_t)nLBlockX*nBlockXSize
@@ -513,7 +513,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     /* -------------------------------------------------------------------- */
                 iSrcOffset = ((size_t)nDiffX + iSrcOffsetCst)*nBandDataSize;
                 {
-                    CPLMutexHolderD( hMutex );
+                    CPLMutexHolderD( phMutex );
                     CPLMutexHolderD2( poBlock->GetRWMutex() );
 
                     if( bByteCopy )
@@ -2243,7 +2243,7 @@ CPLErr GDALRasterBand::OverviewRasterIO( GDALRWFlag eRWFlag,
                                 void * pData, int nBufXSize, int nBufYSize,
                                 GDALDataType eBufType,
                                 int nPixelSpace, int nLineSpace,
-                                void **hMutex )
+                                void **phMutex )
 
 
 {
@@ -2264,7 +2264,7 @@ CPLErr GDALRasterBand::OverviewRasterIO( GDALRWFlag eRWFlag,
 
     return poOverviewBand->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                      pData, nBufXSize, nBufYSize, eBufType,
-                                     nPixelSpace, nLineSpace, hMutex );
+                                     nPixelSpace, nLineSpace, phMutex );
 }
 
 /************************************************************************/
@@ -2382,7 +2382,7 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
                                  GDALDataType eBufType,
                                  int nBandCount, int *panBandMap,
                                  int nPixelSpace, int nLineSpace,int nBandSpace, 
-                                 void ** hMutex )
+                                 void ** phMutex )
     
 {
     GByte      **papabySrcBlock = NULL;
@@ -2424,7 +2424,7 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
                                                eBufType, 
                                                nBandCount, panBandMap,
                                                nPixelSpace, nLineSpace, 
-                                               nBandSpace, hMutex );
+                                               nBandSpace, phMutex );
             }
 
             if( eDataType != poBand->GetRasterDataType() 
@@ -2439,7 +2439,7 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
                                                eBufType, 
                                                nBandCount, panBandMap,
                                                nPixelSpace, nLineSpace, 
-                                               nBandSpace, hMutex );
+                                               nBandSpace, phMutex );
             }
         }
     }
@@ -2490,7 +2490,7 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
                             nChunkXSize, nChunkYSize, 
                             pabyChunkData + iBand * nBandSpace, 
                             nChunkXSize, nChunkYSize, eBufType, 
-                            nPixelSpace, nLineSpace, hMutex );
+                            nPixelSpace, nLineSpace, phMutex );
                     if( eErr != CE_None )
                         return eErr;
                 }
@@ -2510,7 +2510,7 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
                                        eBufType, 
                                        nBandCount, panBandMap,
                                        nPixelSpace, nLineSpace, 
-                                       nBandSpace , hMutex);
+                                       nBandSpace , phMutex);
     }
 
 /* ==================================================================== */
@@ -2618,7 +2618,7 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
             {
                 GByte *pabySrcBlock = papabySrcBlock[iBand];
                 int iBandBufOffset = iBufOffset + iBand * nBandSpace;
-                CPLMutexHolderD( hMutex );
+                CPLMutexHolderD( phMutex );
                 CPLMutexHolderD2( papoBlocks[iBand]->GetRWMutex() );
                 
                 if( eRWFlag == GF_Write )

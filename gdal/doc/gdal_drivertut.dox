@@ -318,7 +318,7 @@ class JDEMRasterBand : public GDALPamRasterBand
 {
   public:
     		JDEMRasterBand( JDEMDataset *, int );
-    virtual CPLErr IReadBlock( int, int, void *, void ** hMutex = NULL );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
 };
 \endcode
 
@@ -364,10 +364,10 @@ data, IReadBlock().
 
 \code
 CPLErr JDEMRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage, void ** hMutex )
+                                  void * pImage, void ** phMutex )
 
 {
-    CPLMutexHolderD( hMutex );
+    CPLMutexHolderD( phMutex );
     JDEMDataset *poGDS = (JDEMDataset *) poDS;
     char	*pszRecord;
     int		nRecordSize = nBlockXSize*5 + 9 + 2;
@@ -421,7 +421,7 @@ is the size declared in nBlockXSize and nBlockYSize for the raster band.  The
 type of the data within pImage should match the type declared in 
 eDataType in the raster band object. 
 
-<li> The hMutex is used to protect the pImage and should be utilized as needed.
+<li> The phMutex is used to protect the pImage and should be utilized as needed.
 
 <li> The nBlockXOff and nBlockYOff are block offsets, so with 128x128 tiled 
 datasets values of 1 and 1 would indicate the block going from (128,128) to 
