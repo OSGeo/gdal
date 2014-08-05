@@ -2551,6 +2551,29 @@ def ogr_sqlite_35():
     return 'success'
 
 ###############################################################################
+# Test spatial filters with point extent
+
+def ogr_spatialite_9():
+
+    if gdaltest.has_spatialite == False:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_spatialite_9.sqlite', options = [ 'SPATIALITE=YES'] )
+    lyr = ds.CreateLayer('point', geom_type = ogr.wkbPoint)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(1 2)'))
+    lyr.CreateFeature(feat)
+    lyr.SetSpatialFilterRect(1,2,1,2)
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+    if feat is None:
+        return 'fail'
+    ds = None
+    ogr.GetDriverByName('SQLite').DeleteDataSource('/vsimem/ogr_spatialite_9.sqlite')
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_sqlite_cleanup():
@@ -2707,6 +2730,7 @@ gdaltest_list = [
     ogr_sqlite_33,
     ogr_sqlite_34,
     ogr_sqlite_35,
+    ogr_spatialite_9,
     ogr_sqlite_cleanup,
     ogr_sqlite_without_spatialite,
 ]

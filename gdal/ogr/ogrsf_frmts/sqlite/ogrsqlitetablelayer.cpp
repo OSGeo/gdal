@@ -609,46 +609,25 @@ int OGRSQLiteTableLayer::HasFastSpatialFilter(int iGeomCol)
 CPLString OGRSQLiteTableLayer::GetSpatialWhere(int iGeomCol,
                                                OGRGeometry* poFilterGeom)
 {
-    CPLString osSpatialWHERE;
-
     if( !poDS->IsSpatialiteDB() || poFeatureDefn == NULL ||
         iGeomCol < 0 || iGeomCol >= poFeatureDefn->GetGeomFieldCount() )
-        return osSpatialWHERE;
+        return "";
 
     if( poFilterGeom != NULL && CheckSpatialIndexTable() )
     {
-        OGREnvelope  sEnvelope;
-
-        CPLLocaleC  oLocaleEnforcer;
-
-        poFilterGeom->getEnvelope( &sEnvelope );
-
-        osSpatialWHERE.Printf("ROWID IN ( SELECT pkid FROM 'idx_%s_%s' WHERE "
-                        "xmax >= %.12f AND xmin <= %.12f AND ymax >= %.12f AND ymin <= %.12f)",
-                        pszEscapedTableName,
-                        OGRSQLiteEscape(poFeatureDefn->GetGeomFieldDefn(iGeomCol)->GetNameRef()).c_str(),
-                        sEnvelope.MinX - 1e-11, sEnvelope.MaxX + 1e-11,
-                        sEnvelope.MinY - 1e-11, sEnvelope.MaxY + 1e-11);
+        return FormatSpatialFilterFromRTree(poFilterGeom, "ROWID",
+            pszEscapedTableName,
+            OGRSQLiteEscape(poFeatureDefn->GetGeomFieldDefn(iGeomCol)->GetNameRef()).c_str());
     }
 
     if( poFilterGeom != NULL &&
         poDS->IsSpatialiteLoaded() && !bHasSpatialIndex )
     {
-        OGREnvelope  sEnvelope;
-
-        CPLLocaleC  oLocaleEnforcer;
-
-        poFilterGeom->getEnvelope( &sEnvelope );
-
-        /* A bit inefficient but still faster than OGR filtering */
-        osSpatialWHERE.Printf("MBRIntersects(\"%s\", BuildMBR(%.12f, %.12f, %.12f, %.12f, %d))",
-                       OGRSQLiteEscapeName(poFeatureDefn->GetGeomFieldDefn(iGeomCol)->GetNameRef()).c_str(),
-                       sEnvelope.MinX - 1e-11, sEnvelope.MinY - 1e-11,
-                       sEnvelope.MaxX + 1e-11, sEnvelope.MaxY + 1e-11,
-                       nSRSId);
+        return FormatSpatialFilterFromMBR(poFilterGeom,
+            OGRSQLiteEscapeName(poFeatureDefn->GetGeomFieldDefn(iGeomCol)->GetNameRef()).c_str());
     }
 
-    return osSpatialWHERE;
+    return "";
 }
 
 /************************************************************************/
@@ -765,10 +744,13 @@ int OGRSQLiteTableLayer::GetFeatureCount( int bForce )
 
         m_poFilterGeom->getEnvelope( &sEnvelope );
         pszSQL = CPLSPrintf("SELECT count(*) FROM 'idx_%s_%s' WHERE "
-                            "xmax >= %.12f AND xmin <= %.12f AND ymax >= %.12f AND ymin <= %.12f",
+                            "xmax >= %s AND xmin <= %s AND ymax >= %s AND ymin <= %s",
                             pszEscapedTableName, OGRSQLiteEscape(pszGeomCol).c_str(),
-                            sEnvelope.MinX - 1e-11, sEnvelope.MaxX + 1e-11,
-                            sEnvelope.MinY - 1e-11, sEnvelope.MaxY + 1e-11);
+                            // Insure that only Decimal.Points are used, never local settings such as Decimal.Comma.
+                            CPLString().FormatC(sEnvelope.MinX - 1e-11,"%.12f").c_str(),
+                            CPLString().FormatC(sEnvelope.MaxX + 1e-11,"%.12f").c_str(),
+                            CPLString().FormatC(sEnvelope.MinY - 1e-11,"%.12f").c_str(),
+                            CPLString().FormatC(sEnvelope.MaxY + 1e-11,"%.12f").c_str());
     }
     else
     {
@@ -2582,11 +2564,14 @@ int OGRSQLiteTableLayer::SaveStatistics()
             osSQL.Printf("INSERT OR REPLACE INTO layer_statistics (raster_layer, "
                             "table_name, geometry_column, row_count, extent_min_x, "
                             "extent_min_y, extent_max_x, extent_max_y) VALUES ("
-                            "0, '%s', '%s', " CPL_FRMT_GIB ", %.18g, %.18g, %.18g, %.18g)",
+                            "0, '%s', '%s', " CPL_FRMT_GIB ", %s, %s, %s, %s)",
                             pszEscapedTableName, OGRSQLiteEscape(pszGeomCol).c_str(),
                             nFeatureCount,
-                            oCachedExtent.MinX, oCachedExtent.MinY,
-                            oCachedExtent.MaxX, oCachedExtent.MaxY);
+                            // Insure that only Decimal.Points are used, never local settings such as Decimal.Comma.
+                            CPLString().FormatC(oCachedExtent.MinX,"%.18g").c_str(),
+                            CPLString().FormatC(oCachedExtent.MinY,"%.18g").c_str(),
+                            CPLString().FormatC(oCachedExtent.MaxX,"%.18g").c_str(),
+                            CPLString().FormatC(oCachedExtent.MaxY,"%.18g").c_str());
         }
         else
         {
