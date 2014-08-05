@@ -52,6 +52,43 @@ OGRDataSourceH RasterliteOpenSQLiteDB(const char* pszFilename,
 }
 
 /************************************************************************/
+/*                       RasterliteGetPixelSizeCond()                   */
+/************************************************************************/
+
+CPLString RasterliteGetPixelSizeCond(double dfPixelXSize,
+                                     double dfPixelYSize,
+                                     const char* pszTablePrefixWithDot)
+{
+    CPLString osCond;
+    osCond.Printf("((%spixel_x_size >= %s AND %spixel_x_size <= %s) AND "
+                   "(%spixel_y_size >= %s AND %spixel_y_size <= %s))",
+                  pszTablePrefixWithDot,
+                  CPLString().FormatC(dfPixelXSize - 1e-15,"%.15f").c_str(),
+                  pszTablePrefixWithDot,
+                  CPLString().FormatC(dfPixelXSize + 1e-15,"%.15f").c_str(),
+                  pszTablePrefixWithDot,
+                  CPLString().FormatC(dfPixelYSize - 1e-15,"%.15f").c_str(),
+                  pszTablePrefixWithDot,
+                  CPLString().FormatC(dfPixelYSize + 1e-15,"%.15f").c_str());
+    return osCond;
+}
+/************************************************************************/
+/*                     RasterliteGetSpatialFilterCond()                 */
+/************************************************************************/
+
+CPLString RasterliteGetSpatialFilterCond(double minx, double miny,
+                                         double maxx, double maxy)
+{
+    CPLString osCond;
+    osCond.Printf("(xmin < %s AND xmax > %s AND ymin < %s AND ymax > %s)",
+                  CPLString().FormatC(maxx,"%.15f").c_str(),
+                  CPLString().FormatC(minx,"%.15f").c_str(),
+                  CPLString().FormatC(maxy,"%.15f").c_str(),
+                  CPLString().FormatC(miny,"%.15f").c_str());
+    return osCond;
+}
+
+/************************************************************************/
 /*                            RasterliteBand()                          */
 /************************************************************************/
 
@@ -99,16 +136,12 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
     osSQL.Printf("SELECT m.geometry, r.raster, m.id, m.width, m.height FROM \"%s_metadata\" AS m, "
                  "\"%s_rasters\" AS r WHERE m.rowid IN "
                  "(SELECT pkid FROM \"idx_%s_metadata_geometry\" "
-                  "WHERE xmin < %.15f AND xmax > %.15f "
-                  "AND ymin < %.15f  AND ymax > %.15f) "
-                 "AND m.pixel_x_size >= %.15f AND m.pixel_x_size <= %.15f AND "
-                 "m.pixel_y_size >= %.15f AND m.pixel_y_size <= %.15f AND r.id = m.id",
-                  poGDS->osTableName.c_str(),
-                  poGDS->osTableName.c_str(),
-                  poGDS->osTableName.c_str(),
-                  maxx, minx, maxy, miny,
-                  poGDS->adfGeoTransform[1] - 1e-15, poGDS->adfGeoTransform[1] + 1e-15,
-                  - poGDS->adfGeoTransform[5] - 1e-15, - poGDS->adfGeoTransform[5] + 1e-15);
+                  "WHERE %s) AND %s AND r.id = m.id",
+                 poGDS->osTableName.c_str(),
+                 poGDS->osTableName.c_str(),
+                 poGDS->osTableName.c_str(),
+                 RasterliteGetSpatialFilterCond(minx, miny, maxx, maxy).c_str(),
+                 RasterliteGetPixelSizeCond(poGDS->adfGeoTransform[1], -poGDS->adfGeoTransform[5], "m.").c_str());
     
     OGRLayerH hSQLLyr = OGR_DS_ExecuteSQL(poGDS->hDS, osSQL.c_str(), NULL, NULL);
     if (hSQLLyr == NULL)
@@ -777,11 +810,9 @@ int RasterliteDataset::GetBlockParams(OGRLayerH hRasterLyr, int nLevel,
     
     osSQL.Printf("SELECT m.geometry, r.raster, m.id "
                  "FROM \"%s_metadata\" AS m, \"%s_rasters\" AS r "
-                 "WHERE m.pixel_x_size >= %.15f AND m.pixel_x_size <= %.15f AND "
-                 "m.pixel_y_size >= %.15f AND m.pixel_y_size <= %.15f AND r.id = m.id",
+                 "WHERE %s AND r.id = m.id",
                  osTableName.c_str(), osTableName.c_str(),
-                 padfXResolutions[nLevel] - 1e-15, padfXResolutions[nLevel] + 1e-15,
-                 padfYResolutions[nLevel] - 1e-15, padfYResolutions[nLevel] + 1e-15);
+                 RasterliteGetPixelSizeCond(padfXResolutions[nLevel],padfYResolutions[nLevel], "m.").c_str());
     
     OGRLayerH hSQLLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
     if (hSQLLyr == NULL)

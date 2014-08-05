@@ -526,15 +526,11 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     osSQL.Printf("SELECT COUNT(geometry) FROM \"%s\" "
                  "WHERE rowid IN "
                  "(SELECT pkid FROM \"idx_%s_metadata_geometry\" "
-                  "WHERE xmin < %.15f AND xmax > %.15f "
-                  "AND ymin < %.15f  AND ymax > %.15f) "
-                 "AND pixel_x_size >= %.15f AND pixel_x_size <= %.15f AND "
-                 "pixel_y_size >= %.15f AND pixel_y_size <= %.15f",
+                  "WHERE %s) AND %s",
                   osMetatadataLayer.c_str(),
                   osTableName.c_str(),
-                  maxx, minx, maxy, miny,
-                  adfGeoTransform[1] - 1e-15, adfGeoTransform[1] + 1e-15,
-                  - adfGeoTransform[5] - 1e-15, - adfGeoTransform[5] + 1e-15);
+                  RasterliteGetSpatialFilterCond(minx, miny, maxx, maxy).c_str(),
+                  RasterliteGetPixelSizeCond(adfGeoTransform[1], -adfGeoTransform[5]).c_str());
     
     int nOverlappingGeoms = 0;
     OGRLayerH hCountLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);

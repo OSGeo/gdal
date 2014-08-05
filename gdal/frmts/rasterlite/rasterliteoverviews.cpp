@@ -181,13 +181,9 @@ CPLErr RasterliteDataset::CleanOverviews()
     osSQL.Printf("BEGIN");
     OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
     
-    CPLString osResolutionCond;
-    osResolutionCond.Printf(
-                 "(pixel_x_size < %.15f OR pixel_x_size > %.15f) AND "
-                 "(pixel_y_size < %.15f OR pixel_y_size > %.15f)",
-                 padfXResolutions[0] - 1e-15, padfXResolutions[0] + 1e-15,
-                 padfYResolutions[0] - 1e-15, padfYResolutions[0] + 1e-15);
-    
+    CPLString osResolutionCond =
+        "NOT " + RasterliteGetPixelSizeCond(padfXResolutions[0], padfYResolutions[0]);
+
     osSQL.Printf("DELETE FROM \"%s_rasters\" WHERE id "
                  "IN(SELECT id FROM \"%s_metadata\" WHERE %s)",
                   osTableName.c_str(), osTableName.c_str(),
@@ -251,12 +247,8 @@ CPLErr RasterliteDataset::CleanOverviewLevel(int nOvrFactor)
     osSQL.Printf("BEGIN");
     OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
     
-    CPLString osResolutionCond;
-    osResolutionCond.Printf(
-                 "pixel_x_size >= %.15f AND pixel_x_size <= %.15f AND "
-                 "pixel_y_size >= %.15f AND pixel_y_size <= %.15f",
-                 padfXResolutions[iLev] - 1e-15, padfXResolutions[iLev] + 1e-15,
-                 padfYResolutions[iLev] - 1e-15, padfYResolutions[iLev] + 1e-15);
+    CPLString osResolutionCond =
+        RasterliteGetPixelSizeCond(padfXResolutions[iLev], padfYResolutions[iLev]);
     
     osSQL.Printf("DELETE FROM \"%s_rasters\" WHERE id "
                  "IN(SELECT id FROM \"%s_metadata\" WHERE %s)",
@@ -373,11 +365,9 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
     CPLString osSourceName = "unknown";
     
     osSQL.Printf("SELECT source_name FROM \"%s\" WHERE "
-                 "pixel_x_size >= %.15f AND pixel_x_size <= %.15f AND "
-                 "pixel_y_size >= %.15f AND pixel_y_size <= %.15f LIMIT 1",
+                 "%s LIMIT 1",
                  osMetatadataLayer.c_str(),
-                 padfXResolutions[0] - 1e-15, padfXResolutions[0] + 1e-15,
-                 padfYResolutions[0] - 1e-15, padfYResolutions[0] + 1e-15);
+                 RasterliteGetPixelSizeCond(padfXResolutions[0], padfYResolutions[0]).c_str());
     OGRLayerH hSQLLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
     if (hSQLLyr)
     {
@@ -672,11 +662,9 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
         /* Insert base resolution into raster_pyramids if not already done */
         int bHasBaseResolution = FALSE;
         osSQL.Printf("SELECT * FROM raster_pyramids WHERE "
-                     "table_prefix = '%s' AND pixel_x_size >= %.15f AND pixel_x_size <= %.15f AND "
-                     "pixel_y_size >= %.15f AND pixel_y_size <= %.15f",
+                     "table_prefix = '%s' AND %s",
                      osTableName.c_str(),
-                     padfXResolutions[0] - 1e-15, padfXResolutions[0] + 1e-15,
-                     padfYResolutions[0] - 1e-15, padfYResolutions[0] + 1e-15);
+                     RasterliteGetPixelSizeCond(padfXResolutions[0], padfYResolutions[0]).c_str());
         hSQLLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
         if (hSQLLyr)
         {
@@ -691,12 +679,9 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
 
         if (!bHasBaseResolution)
         {
-            osSQL.Printf("SELECT COUNT(*) FROM \"%s\" WHERE "
-                          "pixel_x_size >= %.15f AND pixel_x_size <= %.15f AND "
-                          "pixel_y_size >= %.15f AND pixel_y_size <= %.15f",
+            osSQL.Printf("SELECT COUNT(*) FROM \"%s\" WHERE %s",
                           osMetatadataLayer.c_str(),
-                          padfXResolutions[0] - 1e-15, padfXResolutions[0] + 1e-15,
-                          padfYResolutions[0] - 1e-15, padfYResolutions[0] + 1e-15);
+                          RasterliteGetPixelSizeCond(padfXResolutions[0], padfYResolutions[0]).c_str());
 
             int nBlocksMainRes = 0;
 

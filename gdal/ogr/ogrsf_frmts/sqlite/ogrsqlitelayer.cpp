@@ -3150,3 +3150,55 @@ int OGRSQLITEStringToDateTimeField( OGRFeature* poFeature, int iField,
 
     return FALSE;
 }
+
+/************************************************************************/
+/*                     FormatSpatialFilterFromRTree()                   */
+/************************************************************************/
+
+CPLString OGRSQLiteLayer::FormatSpatialFilterFromRTree(OGRGeometry* poFilterGeom,
+                                                       const char* pszRowIDName,
+                                                       const char* pszEscapedTable,
+                                                       const char* pszEscapedGeomCol)
+{
+    CPLString osSpatialWHERE;
+    OGREnvelope  sEnvelope;
+
+    poFilterGeom->getEnvelope( &sEnvelope );
+
+    osSpatialWHERE.Printf("%s IN ( SELECT pkid FROM 'idx_%s_%s' WHERE "
+                    "xmax >= %s AND xmin <= %s AND ymax >= %s AND ymin <= %s)",
+                    pszRowIDName,
+                    pszEscapedTable,
+                    pszEscapedGeomCol,
+                    // Insure that only Decimal.Points are used, never local settings such as Decimal.Comma.
+                    CPLString().FormatC(sEnvelope.MinX - 1e-11,"%.12f").c_str(),
+                    CPLString().FormatC(sEnvelope.MaxX + 1e-11,"%.12f").c_str(),
+                    CPLString().FormatC(sEnvelope.MinY - 1e-11,"%.12f").c_str(),
+                    CPLString().FormatC(sEnvelope.MaxY + 1e-11,"%.12f").c_str());
+
+    return osSpatialWHERE;
+}
+
+/************************************************************************/
+/*                     FormatSpatialFilterFromMBR()                     */
+/************************************************************************/
+
+CPLString OGRSQLiteLayer::FormatSpatialFilterFromMBR(OGRGeometry* poFilterGeom,
+                                                     const char* pszEscapedGeomColName)
+{
+    CPLString osSpatialWHERE;
+    OGREnvelope  sEnvelope;
+
+    poFilterGeom->getEnvelope( &sEnvelope );
+
+    /* A bit inefficient but still faster than OGR filtering */
+    osSpatialWHERE.Printf("MBRIntersects(\"%s\", BuildMBR(%s, %s, %s, %s))",
+                    pszEscapedGeomColName,
+                    // Insure that only Decimal.Points are used, never local settings such as Decimal.Comma.
+                    CPLString().FormatC(sEnvelope.MinX - 1e-11,"%.12f").c_str(),
+                    CPLString().FormatC(sEnvelope.MinY - 1e-11,"%.12f").c_str(),
+                    CPLString().FormatC(sEnvelope.MaxX + 1e-11,"%.12f").c_str(),
+                    CPLString().FormatC(sEnvelope.MaxY + 1e-11,"%.12f").c_str());
+
+    return osSpatialWHERE;
+}

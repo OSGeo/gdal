@@ -37,6 +37,11 @@ char** RasterliteGetTileDriverOptions(char** papszOptions);
 
 OGRDataSourceH RasterliteOpenSQLiteDB(const char* pszFilename,
                                       GDALAccess eAccess);
+CPLString RasterliteGetPixelSizeCond(double dfPixelXSize,
+                                     double dfPixelYSize,
+                                     const char* pszTablePrefixWithDot = "");
+CPLString RasterliteGetSpatialFilterCond(double minx, double miny,
+                                         double maxx, double maxy);
 
 class RasterliteBand;
 
