@@ -201,6 +201,15 @@ static CPLErr OGRTABDriverDelete( const char *pszDataSource )
 }
 
 /************************************************************************/
+/*                          OGRTABDriverUnload()                        */
+/************************************************************************/
+
+static void OGRTABDriverUnload(GDALDriver* poDriver)
+{
+    MITABFreeCoordSysTable();
+}
+
+/************************************************************************/
 /*              RegisterOGRTAB()                                        */
 /************************************************************************/
 
@@ -230,6 +239,7 @@ void RegisterOGRTAB()
         poDriver->pfnIdentify = OGRTABDriverIdentify;
         poDriver->pfnCreate = OGRTABDriverCreate;
         poDriver->pfnDelete = OGRTABDriverDelete;
+        poDriver->pfnUnloadDriver = OGRTABDriverUnload;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }

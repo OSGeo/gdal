@@ -1595,6 +1595,8 @@ int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
         psProj->adProjParams[iParam] = atof(papszNextField[0]);
         papszNextField++;         
     }
+    
+    CSLDestroy(papszFields);
 
     return 0;
 }
