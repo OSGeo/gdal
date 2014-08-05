@@ -59,10 +59,26 @@ default bounds when a new layer is created:
   <li>For any other projection: BOUNDS (-30000000, -15000000) (30000000, 15000000)</li>
 </ul>
 
+<p>
+Starting with GDAL 2.0, it is possible to specify a user-defined file that contain
+projection definitions with bounds.
+The name of this file must be specified with the MITAB_BOUNDS_FILE configuration
+option.
+This allows users to override the
+default bounds for existing projections, and to define bounds for new projections
+not listed in the hard-coded table in the driver.
+The format of the file is a simple text file with one CoordSys string
+per line.  The CoordSys lines should follow the MIF specs, and MUST 
+include the optional Bounds definition at the end of the line, e.g.
+<pre>
+# Lambert 93 French bounds
+CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49, 700000, 6600000 Bounds (75000, 6000000) (1275000, 7200000)
+</pre>
+</p>
 
 <p>
 If no coordinate system is provided when creating a layer, the projection
-case is used, not geographic which can result in very low precision if
+case is used, not geographic, which can result in very low precision if
 the coordinates really are geographic.  You can add "-a_srs WGS84" to the
 <b>ogr2ogr</b> commandline during a translation to force geographic mode.
 </p>

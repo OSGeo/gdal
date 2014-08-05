@@ -574,6 +574,7 @@ def ogr_mitab_17():
 
 ###############################################################################
 # Test EPSG:2154
+# (https://github.com/mapgears/mitab/issues/1)
 
 def ogr_mitab_18():
 
@@ -595,6 +596,7 @@ def ogr_mitab_18():
         wkt = sr_got.ExportToWkt()
         if wkt.find('2154') < 0:
             gdaltest.post_reason('failure')
+            print(filename)
             print(sr_got)
             return 'fail'
         proj4 = sr_got.ExportToProj4()
@@ -607,6 +609,75 @@ def ogr_mitab_18():
     ogr.GetDriverByName('MapInfo File').DeleteDataSource('/vsimem/ogr_mitab_18.tab')
 
     return 'success'
+
+###############################################################################
+# Check that we correctly round coordinate to the appropriate precision
+# (https://github.com/mapgears/mitab/issues/2)
+
+def ogr_mitab_19():
+
+    if gdaltest.mapinfo_drv is None:
+        return 'skip'
+
+    ds = ogr.Open('data/utm31.TAB')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    # Strict text comparison to check precision
+    if feat.GetGeometryRef().ExportToWkt() != 'POINT (485248.12 2261.45)':
+        feat.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
+# Check that we take into account the user defined bound file
+# (https://github.com/mapgears/mitab/issues/3)
+
+def ogr_mitab_20():
+
+    if gdaltest.mapinfo_drv is None:
+        return 'skip'
+
+    # Pass i==0: without MITAB_BOUNDS_FILE
+    # Pass i==1: with MITAB_BOUNDS_FILE : first load
+    # Pass i==2: with MITAB_BOUNDS_FILE : should use already loaded file
+    # Pass i==3: without MITAB_BOUNDS_FILE : should unload the file
+    for i in range(4):
+        if i == 1 or i == 2:
+            gdal.SetConfigOption('MITAB_BOUNDS_FILE', 'data/mitab_bounds.txt')
+        ds = ogr.GetDriverByName('MapInfo File').CreateDataSource('/vsimem/ogr_mitab_20.tab')
+        sr = osr.SpatialReference()
+        sr.ImportFromEPSG(2154)
+        lyr = ds.CreateLayer('test', srs = sr)
+        lyr.CreateField(ogr.FieldDefn('ID', ogr.OFTInteger))
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (700000.001 6600000.001)"))
+        lyr.CreateFeature(feat)
+        ds = None
+        gdal.SetConfigOption('MITAB_BOUNDS_FILE', None)
+        
+        ds = ogr.Open('/vsimem/ogr_mitab_20.tab')
+        lyr = ds.GetLayer(0)
+        feat = lyr.GetNextFeature()
+        # Strict text comparison to check precision
+        if i == 1 or i == 2:
+            if feat.GetGeometryRef().ExportToWkt() != 'POINT (700000.001 6600000.001)':
+                print(i)
+                feat.DumpReadable()
+                return 'fail'
+        else:
+            if feat.GetGeometryRef().ExportToWkt() == 'POINT (700000.001 6600000.001)':
+                print(i)
+                feat.DumpReadable()
+                return 'fail'
+
+        ds = None
+
+        ogr.GetDriverByName('MapInfo File').DeleteDataSource('/vsimem/ogr_mitab_20.tab')
+
+    return 'success'
+
 ###############################################################################
 #
 
@@ -640,6 +711,8 @@ gdaltest_list = [
     ogr_mitab_16,
     ogr_mitab_17,
     ogr_mitab_18,
+    ogr_mitab_19,
+    ogr_mitab_20,
     ogr_mitab_cleanup
     ]
 

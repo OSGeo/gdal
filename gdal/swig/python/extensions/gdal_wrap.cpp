@@ -2874,7 +2874,7 @@ typedef void GDALRasterAttributeTableShadow;
 typedef void GDALTransformerInfoShadow;
 typedef void GDALAsyncReaderShadow;
 
-#if defined(SWIGPYTHON) || defined(SWIGJAVA)
+
 #ifdef DEBUG 
 typedef struct OGRSpatialReferenceHS OSRSpatialReferenceShadow;
 typedef struct OGRLayerHS OGRLayerShadow;
@@ -2885,7 +2885,7 @@ typedef void OGRLayerShadow;
 typedef void OGRGeometryShadow;
 #endif
 typedef struct OGRStyleTableHS OGRStyleTableShadow;
-#endif /* #if defined(SWIGPYTHON) || defined(SWIGJAVA) */
+
 
 /* use this to not return the int returned by GDAL */
 typedef int RETURN_NONE;

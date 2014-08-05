@@ -1289,6 +1289,7 @@ static int ProxyMain( int argc, char ** argv )
         }
     }
 
+    // Can be set to TRUE in the band loop too
     int bFilterOutStatsMetadata =
         (nScaleRepeat > 0 || bUnscale || !bSpatialArrangementPreserved || nRGBExpand != 0);
 
@@ -1324,7 +1325,70 @@ static int ProxyMain( int argc, char ** argv )
         if( eOutputType == GDT_Unknown )
             eBandType = poSrcBand->GetRasterDataType();
         else
+        {
             eBandType = eOutputType;
+            
+            // Check that we can copy existing statistics
+            GDALDataType eSrcBandType = poSrcBand->GetRasterDataType();
+            const char* pszMin = poSrcBand->GetMetadataItem("STATISTICS_MINIMUM");
+            const char* pszMax = poSrcBand->GetMetadataItem("STATISTICS_MAXIMUM");
+            if( !bFilterOutStatsMetadata && eBandType != eSrcBandType &&
+                pszMin != NULL && pszMax != NULL )
+            {
+                int bSrcIsInteger = ( eSrcBandType == GDT_Byte ||
+                                      eSrcBandType == GDT_Int16 ||
+                                      eSrcBandType == GDT_UInt16 ||
+                                      eSrcBandType == GDT_Int32 ||
+                                      eSrcBandType == GDT_UInt32 );
+                int bDstIsInteger = ( eBandType == GDT_Byte ||
+                                      eBandType == GDT_Int16 ||
+                                      eBandType == GDT_UInt16 ||
+                                      eBandType == GDT_Int32 ||
+                                      eBandType == GDT_UInt32 );
+                if( bSrcIsInteger && bDstIsInteger )
+                {
+                    GInt32 nDstMin;
+                    GUInt32 nDstMax;
+                    switch( eBandType )
+                    {
+                        case GDT_Byte:
+                            nDstMin = 0;
+                            nDstMax = 255;
+                            break;
+                        case GDT_UInt16:
+                            nDstMin = 0;
+                            nDstMax = 65535;
+                            break;
+                        case GDT_Int16:
+                            nDstMin = -32768;
+                            nDstMax = 32767;
+                            break;
+                        case GDT_UInt32:
+                            nDstMin = 0;
+                            nDstMax = 0xFFFFFFFFU;
+                            break;
+                        case GDT_Int32:
+                            nDstMin = 0x80000000;
+                            nDstMax = 0x7FFFFFFF;
+                            break;
+                        default:
+                            CPLAssert(FALSE);
+                            break;
+                    }
+
+                    GInt32 nMin = atoi(pszMin);
+                    GUInt32 nMax = (GUInt32)strtoul(pszMax, NULL, 10);
+                    if( nMin < nDstMin || nMax > nDstMax )
+                        bFilterOutStatsMetadata = TRUE;
+                }
+                // Float64 is large enough to hold all integer <= 32 bit or float32 values
+                // there might be other OK cases, but ere on safe side for now
+                else if( !((bSrcIsInteger || eSrcBandType == GDT_Float32) && eBandType == GDT_Float64) )
+                {
+                    bFilterOutStatsMetadata = TRUE;
+                }
+            }
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Create this band.                                               */

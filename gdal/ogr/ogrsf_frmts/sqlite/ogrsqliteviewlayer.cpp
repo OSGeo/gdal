@@ -404,8 +404,6 @@ void OGRSQLiteViewLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 CPLString OGRSQLiteViewLayer::GetSpatialWhere(int iGeomCol,
                                               OGRGeometry* poFilterGeom)
 {
-    CPLString osSpatialWHERE;
-
     if (HasLayerDefnError() || poFeatureDefn == NULL ||
         iGeomCol < 0 || iGeomCol >= poFeatureDefn->GetGeomFieldCount())
         return "";
@@ -454,13 +452,10 @@ CPLString OGRSQLiteViewLayer::GetSpatialWhere(int iGeomCol,
 
         if (bHasSpatialIndex)
         {
-            osSpatialWHERE.Printf("\"%s\" IN ( SELECT pkid FROM 'idx_%s_%s' WHERE "
-                           "xmax > %.12f AND xmin < %.12f AND ymax > %.12f AND ymin < %.12f)",
-                            OGRSQLiteEscapeName(pszFIDColumn).c_str(),
-                            pszEscapedUnderlyingTableName,
-                            OGRSQLiteEscape(osUnderlyingGeometryColumn).c_str(),
-                            sEnvelope.MinX - 1e-11, sEnvelope.MaxX + 1e-11,
-                            sEnvelope.MinY - 1e-11, sEnvelope.MaxY + 1e-11);
+            return FormatSpatialFilterFromRTree(poFilterGeom,
+                CPLSPrintf("\"%s\"", OGRSQLiteEscapeName(pszFIDColumn).c_str()),
+                pszEscapedUnderlyingTableName,
+                OGRSQLiteEscape(osUnderlyingGeometryColumn).c_str());
         }
         else
         {
@@ -470,20 +465,13 @@ CPLString OGRSQLiteViewLayer::GetSpatialWhere(int iGeomCol,
 
     }
 
-    if( poFilterGeom != NULL && poDS->IsSpatialiteLoaded() && !bHasSpatialIndex )
+    if( poFilterGeom != NULL && poDS->IsSpatialiteLoaded() )
     {
-        OGREnvelope  sEnvelope;
-
-        poFilterGeom->getEnvelope( &sEnvelope );
-
-        /* A bit inefficient but still faster than OGR filtering */
-        osSpatialWHERE.Printf("MBRIntersects(\"%s\", BuildMBR(%.12f, %.12f, %.12f, %.12f))",
-                       OGRSQLiteEscapeName(poFeatureDefn->GetGeomFieldDefn(iGeomCol)->GetNameRef()).c_str(),
-                       sEnvelope.MinX - 1e-11, sEnvelope.MinY - 1e-11,
-                       sEnvelope.MaxX + 1e-11, sEnvelope.MaxY + 1e-11);
+        return FormatSpatialFilterFromMBR(poFilterGeom,
+            OGRSQLiteEscapeName(poFeatureDefn->GetGeomFieldDefn(iGeomCol)->GetNameRef()).c_str());
     }
 
-    return osSpatialWHERE;
+    return "";
 }
 
 /************************************************************************/
