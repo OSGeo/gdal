@@ -1040,6 +1040,7 @@ static const MapInfoBoundsInfo gasBoundsList[] = {
 
 #define TAB_EQUAL(a, b) (((a)<(b) ? ((b)-(a)) : ((a)-(b))) < 1e-6)
 
+static char szPreviousMitabBoundsFile[2048] = { 0 };
 
 /**********************************************************************
  *                     MITABLookupCoordSysBounds()
@@ -1055,6 +1056,25 @@ GBool MITABLookupCoordSysBounds(TABProjInfo *psCS,
     GBool bFound = FALSE;
     const MapInfoBoundsInfo *psList;
     MapInfoBoundsInfo **ppsList;
+
+    /*-----------------------------------------------------------------
+    * Try to load the user defined table if not loaded yet .
+    *----------------------------------------------------------------*/
+    const char * pszMitabBoundsFile = CPLGetConfigOption("MITAB_BOUNDS_FILE", NULL);
+    if (pszMitabBoundsFile != NULL && pszMitabBoundsFile[0] != '\0' )
+    {
+        if( strcmp(pszMitabBoundsFile, szPreviousMitabBoundsFile) != 0)
+        {
+            CPLStrlcpy(szPreviousMitabBoundsFile, pszMitabBoundsFile,
+                       sizeof(szPreviousMitabBoundsFile));
+            MITABLoadCoordSysTable(pszMitabBoundsFile);
+        }
+    }
+    else if ( szPreviousMitabBoundsFile[0] != '\0' )
+    {
+        MITABFreeCoordSysTable();
+        strcpy(szPreviousMitabBoundsFile, "");
+    }
 
     /*-----------------------------------------------------------------
      * Lookup table... 
