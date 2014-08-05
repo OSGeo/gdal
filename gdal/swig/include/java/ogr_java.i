@@ -108,7 +108,7 @@ import org.gdal.osr.SpatialReference;
 
 %}
 
-%#if SWIG_VERSION < 0x020000
+#if SWIG_VERSION < 0x020000
 
 %typemap(javabody_derived) OGRLayerShadow %{
   private long swigCPtr;
@@ -123,7 +123,7 @@ import org.gdal.osr.SpatialReference;
   }
 %}
 
-%#else
+#else
 
 %typemap(javabody_derived) OGRLayerShadow %{
   private long swigCPtr;
@@ -138,7 +138,7 @@ import org.gdal.osr.SpatialReference;
   }
 %}
 
-%#endif
+#endif
 
 %typemap(javabody) OGRStyleTableShadow %{
   private boolean swigCMemOwn;
