@@ -38,9 +38,26 @@
 #include <gdal_alg.h>
 #include <gdal_priv.h>
 #include <cpl_string.h>
+#include <cpl_multiproc.h>
 #include <sstream> // C++
 #include <string>
 #include <vector>
+
+struct threadData 
+{
+    GDALDatasetH dsSrc;
+    GDALDatasetH dsDst;
+    threadData(GDALDatasetH s, GDALDatasetH d)
+        : dsSrc(s), dsDst(d)
+    {}
+};
+
+void copyInThread (void * data)
+{
+        threadData* input = (struct threadData*)data;
+        GDALDriverH drv = GDALGetDriverByName("Mem");
+        input->dsDst = GDALCreateCopy(drv, "memoryds", input->dsSrc, FALSE, NULL, NULL, NULL);
+}
 
 namespace tut
 {
@@ -265,6 +282,76 @@ namespace tut
         ensure_equals("Computed wrong min", expect[0], minmax[0]);
         ensure_equals("Computed wrong max", expect[1], minmax[1]);
 
+        GDALClose(ds);
+    }
+
+    // Test multithreaded gtiff
+    template<>
+    template<>
+    void object::test<8>()
+    {
+                // Index of test file being copied
+        const std::size_t fileIdx = 10;
+        void* apThreads[10];
+        threadData* tdata[10];
+        int i; 
+        std::string src(data_ + SEP);
+        src += rasters_.at(fileIdx).file_;
+        GDALDatasetH ds = GDALOpen(src.c_str(), GA_ReadOnly);
+        ensure("Can't open dataset: " + src, NULL != ds);
+        GDALDriverH drvMem = GDALGetDriverByName("Mem");
+        GDALDriverH dsSrc = GDALCreateCopy(drvMem, "original", ds, FALSE, NULL, NULL, NULL);
+        GDALRasterBandH bandSrc = GDALGetRasterBand(dsSrc, rasters_.at(fileIdx).band_);
+        ensure("Can't get raster band", NULL != bandSrc);
+
+        double expectSrc[2] = { 74.0, 255.0 };
+        double minmaxSrc[2] = { 0 };
+        GDALComputeRasterMinMax(bandSrc, TRUE, minmaxSrc);
+
+        ensure_equals("Computed src wrong min", expectSrc[0], minmaxSrc[0]);
+        ensure_equals("Computed src wrong max", expectSrc[1], minmaxSrc[1]);
+
+        const int xsizeSrc = GDALGetRasterXSize(dsSrc);
+        const int ysizeSrc = GDALGetRasterYSize(dsSrc);
+        const int checksumSrc = GDALChecksumImage(bandSrc, 0, 0, xsizeSrc, ysizeSrc);
+
+        std::stringstream os;
+        os << "Src Checksums not equal";
+        ensure_equals(os.str().c_str(), rasters_.at(fileIdx).checksum_, checksumSrc);
+        for(i = 0; i < 10;i++)
+        {
+            tdata[i] = new threadData(dsSrc, NULL);
+            apThreads[i] = CPLCreateJoinableThread(copyInThread, tdata[i]);
+        }
+        for(i = 0; i < 10;i++)
+        {
+            CPLJoinThread(apThreads[i]);
+        }
+        
+        for(i = 0; i < 10;i++)
+        {
+            GDALRasterBandH band = GDALGetRasterBand(tdata[i]->dsDst, rasters_.at(fileIdx).band_);
+            ensure("Can't get raster band", NULL != band);
+
+            double expect[2] = { 74.0, 255.0 };
+            double minmax[2] = { 0 };
+            GDALComputeRasterMinMax(band, TRUE, minmax);
+
+            ensure_equals("Computed wrong min", expect[0], minmax[0]);
+            ensure_equals("Computed wrong max", expect[1], minmax[1]);
+
+            const int xsize = GDALGetRasterXSize(tdata[i]->dsDst);
+            const int ysize = GDALGetRasterYSize(tdata[i]->dsDst);
+            const int checksum = GDALChecksumImage(band, 0, 0, xsize, ysize);
+
+            std::stringstream os;
+            os << "Checksums not equal";
+            ensure_equals(os.str().c_str(), rasters_.at(fileIdx).checksum_, checksum);
+            GDALClose(tdata[i]->dsDst);
+            delete tdata[i];
+        }
+
+        GDALClose(dsSrc);
         GDALClose(ds);
     }
 
