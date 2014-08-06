@@ -2098,7 +2098,7 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                 continue;
             }
 
-            pabyThisImage = (GByte *) poBlock->GetDataRef();
+            pabyThisImage = (GByte *) poBlock->GetDataRef(TRUE);
             phThisMutex = poBlock->GetRWMutex();
         }
 
@@ -3453,7 +3453,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                 continue;
             }
 
-            pabyThisImage = (GByte *) poBlock->GetDataRef();
+            pabyThisImage = (GByte *) poBlock->GetDataRef(TRUE);
             phThisMutex = poBlock->GetRWMutex();
         }
 

@@ -1378,6 +1378,8 @@ GDALRasterBlock * GDALRasterBand::GetLockedBlockRef( int nXBlockOff,
                 "Internalize Failure!");
             return( NULL );
         }
+        if ( bJustInitialize )
+            poBlock->MarkBlockRead();
         GDALRasterBlock *poAdopt = AdoptBlock( nXBlockOff, nYBlockOff, poBlock );
         if ( poAdopt == NULL )
         {
@@ -1401,7 +1403,16 @@ GDALRasterBlock * GDALRasterBand::GetLockedBlockRef( int nXBlockOff,
             poBlock->Touch();
             poRBM->FlushTillBelow();
         }
-
+        
+        if ( NULL == poBlock->GetDataRef( bJustInitialize ))
+        {
+            poBlock->DropLock();
+            ReportError( CE_Failure, CPLE_AppDefined,
+                "IReadBlock failed at X offset %d, Y offset %d",
+                nXBlockOff, nYBlockOff );
+            return( NULL );
+        }
+        /*
         if ( !bJustInitialize )
         {   
             CPLErr eErr = CE_None;
@@ -1424,7 +1435,7 @@ GDALRasterBlock * GDALRasterBand::GetLockedBlockRef( int nXBlockOff,
                           nBand, poDS->GetDescription() );
             }
         }
-        
+        */
     }
     return poBlock;
 }
