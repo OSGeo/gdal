@@ -335,36 +335,45 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId, bool bUpdate 
     double dfULy = 0.0;
     double dfLLy = 0.0;
     double dfLRy = 0.0;
-    char szWKText[2 * OWTEXT];
+    char szWKText[3 * OWTEXT];
     char szAuthority[OWTEXT];
     char szMLC[OWTEXT];
 
+    szOwner[0]     = '\0';
+    szTable[0]     = '\0';
+    szColumn[0]    = '\0';
+    szDataTable[0] = '\0';
+    szWhere[0]     = '\0';
+    szWKText[0]    = '\0';
+    szAuthority[0] = '\0';
+    szMLC[0]       = '\0';
+
     if( ! poGRW->sOwner.empty() )
+    {
       strcpy( szOwner, poGRW->sOwner.c_str() );
-    else
-      szOwner[0] = '\0';
+    }
 
     if( ! poGRW->sTable.empty() )
+    {
       strcpy( szTable, poGRW->sTable.c_str() );
-    else
-      szTable[0] = '\0';
+    }
 
     if( ! poGRW->sColumn.empty() )
+    {
       strcpy( szColumn, poGRW->sColumn.c_str() );
-    else
-      szColumn[0] = '\0';
+    }
 
     if( ! poGRW->sDataTable.empty() )
+    {
       strcpy( szDataTable, poGRW->sDataTable.c_str() );
-    else
-      szDataTable[0] = '\0';
+    }
 
     nRasterId = poGRW->nRasterId;
 
     if( ! poGRW->sWhere.empty() )
+    {
       strcpy( szWhere, poGRW->sWhere.c_str() );
-    else
-      szWhere[0] = '\0';
+    }
 
     OWStatement* poStmt = poGRW->poConnection->CreateStatement(
       "DECLARE\n"
