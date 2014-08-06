@@ -103,6 +103,9 @@ OGROCISession::~OGROCISession()
 
         if( hSession )
             OCIHandleFree((dvoid *) hSession, (ub4) OCI_HTYPE_SESSION);
+
+        if( hEnv )
+            OCIHandleFree((dvoid *) hEnv, (ub4) OCI_HTYPE_ENV);
     }
 
     CPLFree( pszUserid );
