@@ -1269,6 +1269,8 @@ const char* GeoRasterDataset::GetProjectionRef( void )
     // Check if the SRID is a valid EPSG code
     // --------------------------------------------------------------------
 
+    CPLPushErrorHandler( CPLQuietErrorHandler );
+
     if( oSRS.importFromEPSG( poGeoRaster->nSRID ) == OGRERR_NONE )
     {
         /*
@@ -1279,9 +1281,13 @@ const char* GeoRasterDataset::GetProjectionRef( void )
 
         if( oSRS.exportToWkt( &pszProjection ) == OGRERR_NONE )
         {
+            CPLPopErrorHandler();
+
             return pszProjection;
         }
     }
+
+    CPLPopErrorHandler();
 
     // --------------------------------------------------------------------
     // Try to interpreter the WKT text
@@ -1295,10 +1301,10 @@ const char* GeoRasterDataset::GetProjectionRef( void )
     }
 
     // ----------------------------------------------------------------
-    // Decorate with EPSG Authority codes
+    // Decorate with ORACLE Authority codes
     // ----------------------------------------------------------------
 
-    oSRS.SetAuthority( oSRS.GetRoot()->GetValue(), "EPSG", poGeoRaster->nSRID );
+    oSRS.SetAuthority(oSRS.GetRoot()->GetValue(), "ORACLE", poGeoRaster->nSRID);
 
     int nSpher = OWParseEPSG( oSRS.GetAttrValue("GEOGCS|DATUM|SPHEROID") );
 
@@ -1426,7 +1432,7 @@ CPLErr GeoRasterDataset::SetGeoTransform( double *padfTransform )
     poGeoRaster->dfYCoefficient[2] = adfGeoTransform[3];
 
     bGeoTransform = true;
-    
+
     return CE_None;
 }
 
@@ -1468,7 +1474,7 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
 
     if( pszAuthName != NULL && pszAuthCode != NULL )
     {
-        if( EQUAL( pszAuthName, "Oracle" ) || 
+        if( EQUAL( pszAuthName, "ORACLE" ) || 
             EQUAL( pszAuthName, "EPSG" ) )
         {
             poGeoRaster->SetGeoReference( atoi( pszAuthCode ) );
