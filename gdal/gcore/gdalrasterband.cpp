@@ -1412,30 +1412,6 @@ GDALRasterBlock * GDALRasterBand::GetLockedBlockRef( int nXBlockOff,
                 nXBlockOff, nYBlockOff );
             return( NULL );
         }
-        /*
-        if ( !bJustInitialize )
-        {   
-            CPLErr eErr = CE_None;
-            eErr = IReadBlock(nXBlockOff,nYBlockOff, poBlock->GetDataRef(TRUE), poBlock->GetRWMutex());
-            if( eErr != CE_None)
-            {
-                poBlock->MarkForDeletion();
-                poBlock->DropLock();
-                ReportError( CE_Failure, CPLE_AppDefined,
-                    "IReadBlock failed at X offset %d, Y offset %d",
-                    nXBlockOff, nYBlockOff );
-                return( NULL );
-            }
-            poBlock->MarkBlockRead(); 
-            CPLAtomicInc(&nBlockReads);
-            if( nBlockReads == nBlocksPerRow * nBlocksPerColumn + 1 
-                && nBand == 1 && poDS != NULL )
-            {
-                CPLDebug( "GDAL", "Potential thrashing on band %d of %s.",
-                          nBand, poDS->GetDescription() );
-            }
-        }
-        */
     }
     return poBlock;
 }
