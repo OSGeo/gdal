@@ -1487,6 +1487,33 @@ def gml_with_xml_header_and_comments():
     return 'success'
 
 ###############################################################################
+# Test srsDimension attribute on top-level geometry and not on posList (#5606)
+
+def gml_srsDimension_topgeometry():
+ 
+    gml = """<gml:Surface srsName="EPSG:25832" srsDimension="3">
+    <gml:patches>
+        <gml:PolygonPatch>
+            <gml:exterior>
+                <gml:LinearRing>
+                    <gml:posList>
+                        0 0 10 0 1 10 1 1 10 1 0 10 0 0 10
+                    </gml:posList>
+                </gml:LinearRing>
+            </gml:exterior>
+        </gml:PolygonPatch>
+    </gml:patches>
+</gml:Surface>"""
+
+    geom = ogr.CreateGeometryFromGML( gml )
+
+    if geom.ExportToWkt() != 'POLYGON ((0 0 10,0 1 10,1 1 10,1 0 10,0 0 10))':
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # When imported build a list of units based on the files available.
 
 #print 'hit enter'
@@ -1546,6 +1573,7 @@ gdaltest_list.append( gml_CompositeSurface_in_surfaceMembers )
 gdaltest_list.append( gml_MultiSurfaceOfSurfaceOfPolygonPatchWithInteriorRing )
 gdaltest_list.append( gml_Coordinates_ts_cs_decimal )
 gdaltest_list.append( gml_with_xml_header_and_comments )
+gdaltest_list.append( gml_srsDimension_topgeometry )
 
 if __name__ == '__main__':
 
