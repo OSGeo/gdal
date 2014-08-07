@@ -1677,6 +1677,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
     SHPObject           *psShape;
     char                 szErrorMsg[128];
     int                  nSHPType;
+    int                  nBytesRead;
 
 /* -------------------------------------------------------------------- */
 /*      Validate the record/entity number.                              */
@@ -1733,7 +1734,32 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
         return NULL;
     }
 
-    if( psSHP->sHooks.FRead( psSHP->pabyRec, nEntitySize, 1, psSHP->fpSHP ) != 1 )
+    nBytesRead = psSHP->sHooks.FRead( psSHP->pabyRec, 1, nEntitySize, psSHP->fpSHP );
+
+    /* Special case for a shapefile whose .shx content length field is not equal */
+    /* to the content length field of the .shp, which is a violation of "The */
+    /* content length stored in the index record is the same as the value stored in the main */
+    /* file record header." (http://www.esri.com/library/whitepapers/pdfs/shapefile.pdf, page 24) */
+    /* Actually in that case the .shx content length is equal to the .shp content length + */
+    /* 4 (16 bit words), representing the 8 bytes of the record header... */
+    if( nBytesRead == nEntitySize - 8 )
+    {
+        /* Do a sanity check */
+        int nSHPContentLength;
+        memcpy( &nSHPContentLength, psSHP->pabyRec + 4, 4 );
+        if( !bBigEndian ) SwapWord( 4, &(nSHPContentLength) );
+        if( 2 * nSHPContentLength + 8 != nBytesRead )
+        {
+            char str[128];
+            sprintf( str,
+                    "Sanity check failed when trying to recover from inconsistant .shx/.shp with shape %d",
+                    hEntity );
+
+            psSHP->sHooks.Error( str );
+            return NULL;
+        }
+    }
+    else if( nBytesRead != nEntitySize )
     {
         /*
          * TODO - mloskot: Consider detailed diagnostics of shape file,

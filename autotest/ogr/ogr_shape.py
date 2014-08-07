@@ -3713,6 +3713,20 @@ def ogr_shape_76():
     return 'success'
 
 ###############################################################################
+# Test opening shapefile whose .shx doesn't follow the official shapefile spec (#5608)
+
+def ogr_shape_77():
+
+    ds = ogr.Open('data/nonconformant_shx_ticket5608.shp')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+    if geom.ExportToWkt() != 'LINESTRING (0 1,2 3)':
+        return 'failure'
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_shape_cleanup():
@@ -3824,6 +3838,7 @@ gdaltest_list = [
     ogr_shape_74,
     ogr_shape_75,
     ogr_shape_76,
+    ogr_shape_77,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':
