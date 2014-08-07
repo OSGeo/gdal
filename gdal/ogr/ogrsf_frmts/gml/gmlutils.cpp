@@ -200,7 +200,7 @@ OGRGeometry* GML_BuildOGRGeometryFromList(const CPLXMLNode* const * papsGeometry
     {
         OGRGeometry* poSubGeom = GML2OGRGeometry_XMLNode( papsGeometry[i],
                                                           bGetSecondaryGeometryOption,
-                                                          0, FALSE, TRUE,
+                                                          0, 0, FALSE, TRUE,
                                                           bFaceHoleNegative );
         if (poSubGeom)
         {
