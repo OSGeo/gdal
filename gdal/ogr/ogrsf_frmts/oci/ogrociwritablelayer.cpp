@@ -288,6 +288,11 @@ OGRErr OGROCIWritableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK 
         else
             sprintf( szFieldType, "VARCHAR2(%d)", oField.GetWidth() );
     }
+    else if ( oField.GetType() == OFTDate ||
+              oField.GetType() == OFTDateTime )
+    {
+        sprintf( szFieldType, "DATE" );
+    }
     else if( bApproxOK )
     {
         CPLError( CE_Warning, CPLE_NotSupported,
