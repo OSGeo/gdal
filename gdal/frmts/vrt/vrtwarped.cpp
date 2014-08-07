@@ -1172,29 +1172,6 @@ CPLErr VRTWarpedDataset::ProcessBlock( int iBlockX, int iBlockY )
 /* -------------------------------------------------------------------- */
 /*      Warp into this buffer.                                          */
 /* -------------------------------------------------------------------- */
-    /*GDALRasterBand *poAlphaBand;
-    GDALRasterBlock *poAlphaBlock;
-    poAlphaBand = GetRasterBand(psWO->nDstAlphaBand);
-    poAlphaBlock = poAlphaBand->GetLockedBlockRef( iBlockX, iBlockY, TRUE );
-    if (poAlphaBlock != NULL )
-    {
-        poAlphaBlock->MarkBlockRead();
-        poAlphaBlock->DropLock();
-    }*/
-    /*for( iBand = 0; iBand < MIN(nBands, psWO->nBandCount); iBand++ )
-    {
-        GDALRasterBand *poBand;
-        GDALRasterBlock *poBlock;
-
-        poBand = GetRasterBand(iBand+1);
-        poBlock = poBand->GetLockedBlockRef( iBlockX, iBlockY, TRUE );
-
-        if( poBlock != NULL )
-        {
-            poBlock->MarkBlockRead();
-            poBlock->DropLock();
-        }
-    }*/
     CPLErr eErr;
 
     eErr = 
