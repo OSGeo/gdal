@@ -388,6 +388,11 @@ In the case, if the SRS is a geographic SRS without explicit AXIS order, but tha
 imported with ImportFromEPSGA() should be treated as lat/long, then the function will take care of coordinate order swapping.
 If set to NO, SRS with EPSG authority will be written with the "EPSG:" prefix, even if they are in lat/long order.<p>
 
+<li> <b>SRSDIMENSION_LOC</b>=POSLIST/GEOMETRY/GEOMETRY,POSLIST. (Only valid for FORMAT=GML3, GDAL &gt;= 2.0) Default to POSLIST.
+For 2.5D geometries, define the location where to attach the srsDimension attribute.
+There are diverging implementations. Some put in on the &lt;gml:posList&gt; element, other
+on the top geometry element.<p>
+
 <li> <b>WRITE_FEATURE_BOUNDED_BY</b>=YES/NO. (OGR &gt;= 1.11, only valid when FORMAT=GML3/GML3Degree/GML3.2) Default to YES.
 If set to NO, the &lt;gml:boundedBy&gt; element will not be written for each feature.<p>
 

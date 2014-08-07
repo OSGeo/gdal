@@ -206,6 +206,11 @@ void RegisterOGRGML()
 "  <Option name='GML3_LONGSRS' type='boolean' description='Whether to write SRS with \"urn:ogc:def:crs:EPSG::\" prefix with GML3* versions' default='YES'/>"
 "  <Option name='WRITE_FEATURE_BOUNDED_BY' type='boolean' description='Whether to write <gml:boundedBy> element for each feature with GML3* versions' default='YES'/>"
 "  <Option name='SPACE_INDENTATION' type='boolean' description='Whether to indentate the output for readability' default='YES'/>"
+"  <Option name='SRSDIMENSION_LOC' type='string-select' description='(only valid for FORMAT=GML3xx) Location where to put srsDimension attribute' default='POSLIST'>"
+"    <Value>POSLIST</Value>"
+"    <Value>GEOMETRY</Value>"
+"    <Value>GEOMETRY,POSLIST</Value>"
+"  </Option>"
 "</CreationOptionList>");
 
         poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST, "<LayerCreationOptionList/>");

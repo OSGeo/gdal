@@ -204,6 +204,7 @@ class OGRGMLDataSource : public OGRDataSource
     const char         *GetAppPrefix();
     int                 RemoveAppPrefix();
     int                 WriteFeatureBoundedBy();
+    const char         *GetSRSDimensionLoc();
 
     virtual OGRLayer *          ExecuteSQL( const char *pszSQLCommand,
                                             OGRGeometry *poSpatialFilter,
