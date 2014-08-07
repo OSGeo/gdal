@@ -2350,3 +2350,12 @@ int OGRGMLDataSource::WriteFeatureBoundedBy()
     return CSLTestBoolean(CSLFetchNameValueDef(
                     papszCreateOptions, "WRITE_FEATURE_BOUNDED_BY", "TRUE"));
 }
+
+/************************************************************************/
+/*                          GetSRSDimensionLoc()                        */
+/************************************************************************/
+
+const char* OGRGMLDataSource::GetSRSDimensionLoc()
+{
+    return CSLFetchNameValue(papszCreateOptions, "SRSDIMENSION_LOC");
+}

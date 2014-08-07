@@ -2981,6 +2981,47 @@ def ogr_gml_64():
     return 'success'
 
 ###############################################################################
+# Test SRSDIMENSION_LOC=GEOMETRY option (#5606)
+
+def ogr_gml_65():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    option_expected_list = [ ['SRSDIMENSION_LOC=GEOMETRY', '<ogr:geometryProperty><gml:MultiSurface srsDimension="3"><gml:surfaceMember><gml:Polygon><gml:exterior><gml:LinearRing><gml:posList>0 1 2 3 4 5 6 7 8 0 1 2</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon></gml:surfaceMember></gml:MultiSurface></ogr:geometryProperty>'],
+                             ['SRSDIMENSION_LOC=POSLIST', '<ogr:geometryProperty><gml:MultiSurface><gml:surfaceMember><gml:Polygon><gml:exterior><gml:LinearRing><gml:posList srsDimension="3">0 1 2 3 4 5 6 7 8 0 1 2</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon></gml:surfaceMember></gml:MultiSurface></ogr:geometryProperty>'],
+                             ['SRSDIMENSION_LOC=GEOMETRY,POSLIST', '<ogr:geometryProperty><gml:MultiSurface srsDimension="3"><gml:surfaceMember><gml:Polygon><gml:exterior><gml:LinearRing><gml:posList srsDimension="3">0 1 2 3 4 5 6 7 8 0 1 2</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon></gml:surfaceMember></gml:MultiSurface></ogr:geometryProperty>'],
+                           ]
+    for (option, expected) in option_expected_list:
+        ds = ogr.GetDriverByName('GML').CreateDataSource('/vsimem/ogr_gml_65.gml', options = ['FORMAT=GML3',option])
+        lyr = ds.CreateLayer('lyr')
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetGeometry(ogr.CreateGeometryFromWkt("MULTIPOLYGON (((0 1 2,3 4 5,6 7 8,0 1 2)))"))
+        lyr.CreateFeature(feat)
+        ds = None
+
+        f = gdal.VSIFOpenL('/vsimem/ogr_gml_65.gml', 'rb')
+        data = gdal.VSIFReadL(1, 10000, f)
+        gdal.VSIFCloseL(f)
+
+        if data.find(expected) < 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        ds = ogr.Open('/vsimem/ogr_gml_65.gml')
+        lyr = ds.GetLayer(0)
+        feat = lyr.GetNextFeature()
+        if feat.GetGeometryRef().ExportToWkt() != "MULTIPOLYGON (((0 1 2,3 4 5,6 7 8,0 1 2)))":
+            gdaltest.post_reason('fail')
+            return 'fail'
+        ds = None
+
+        gdal.Unlink('/vsimem/ogr_gml_65.gml')
+        gdal.Unlink('/vsimem/ogr_gml_65.xsd')
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -3176,6 +3217,7 @@ gdaltest_list = [
     ogr_gml_62,
     ogr_gml_63,
     ogr_gml_64,
+    ogr_gml_65,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':

@@ -748,6 +748,9 @@ OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
             char** papszOptions = (bIsGML3Output) ? CSLAddString(NULL, "FORMAT=GML3") : NULL;
             if (bIsGML3Output && !poDS->IsLongSRSRequired())
                 papszOptions = CSLAddString(papszOptions, "GML3_LONGSRS=NO");
+            const char* pszSRSDimensionLoc = poDS->GetSRSDimensionLoc();
+            if( pszSRSDimensionLoc != NULL )
+                papszOptions = CSLSetNameValue(papszOptions, "SRSDIMENSION_LOC", pszSRSDimensionLoc);
             if (poDS->IsGML32Output())
             {
                 if( poFeatureDefn->GetGeomFieldCount() > 1 )
