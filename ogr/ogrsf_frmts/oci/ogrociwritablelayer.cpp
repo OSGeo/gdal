@@ -247,6 +247,7 @@ OGRErr OGROCIWritableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK 
 {
     OGROCISession      *poSession = poDS->GetSession();
     char                szFieldType[256];
+	char                szFieldName[30];     // specify at most 30 characters, see ORA-00972
     OGRFieldDefn        oField( poFieldIn );
 
 /* -------------------------------------------------------------------- */
@@ -320,8 +321,18 @@ OGRErr OGROCIWritableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK 
                           + strlen(oField.GetNameRef())
                           + strlen(szFieldType) );
 
+	snprintf( szFieldName, sizeof( szFieldName ), oField.GetNameRef());
+	szFieldName[sizeof( szFieldName )] = '\0';
+	if ( strlen(oField.GetNameRef()) > sizeof ( szFieldName ) )
+	{
+		szFieldName[sizeof( szFieldName ) - 1] = '_';
+		CPLError( CE_Warning, CPLE_AppDefined, 
+                  "Column %s is too long (at most 30 characters). Using %s.", 
+                  oField.GetNameRef(), szFieldName );
+		oField.SetName(szFieldName);
+	}
     sprintf( oCommand.GetString(), "ALTER TABLE %s ADD \"%s\" %s", 
-             poFeatureDefn->GetName(), oField.GetNameRef(), szFieldType );
+             poFeatureDefn->GetName(), szFieldName, szFieldType );
     if( oAddField.Execute( oCommand.GetString() ) != CE_None )
         return OGRERR_FAILURE;
 
