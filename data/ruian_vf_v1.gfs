@@ -1478,4 +1478,624 @@
       <Type>Integer</Type>
     </PropertyDefn>
   </GMLFeatureClass>
+  <!-- Ulice -->
+  <GMLFeatureClass>
+    <Name>Ulice</Name>
+    <ElementPath>Data|Ulice|Ulice</ElementPath>
+    <SRSName>urn:ogc:def:crs:EPSG::5514</SRSName>
+    <!-- Geometrie definiční čáry ulice -->
+    <GeomPropertyDefn>
+      <Name>DefinicniCara</Name> 
+      <ElementPath>Geometrie|DefinicniCara</ElementPath> 
+      <Type>MultiLineString</Type>
+    </GeomPropertyDefn>
+    <!-- Kód ulice -->
+    <PropertyDefn>
+      <Name>Kod</Name>
+      <ElementPath>Kod</ElementPath>
+      <Type>Integer</Type>
+    </PropertyDefn>
+    <!-- Název ulice -->
+    <PropertyDefn>
+      <Name>Nazev</Name>
+      <ElementPath>Nazev</ElementPath>
+      <Type>String</Type>
+      <Width>48</Width>
+    </PropertyDefn>
+    <!-- Identifikátor nesprávnosti na prvku (?) -->
+    <PropertyDefn>
+      <Name>Nespravny</Name>
+      <ElementPath>Nespravny</ElementPath>
+      <Type>String</Type>
+      <Width>5</Width>
+    </PropertyDefn>
+    <!-- Nadřazená obec -->
+    <PropertyDefn>
+      <Name>ObecKod</Name>
+      <ElementPath>Obec|Kod</ElementPath>
+      <Type>Integer</Type>
+    </PropertyDefn>
+    <!-- Začátek platnosti -->
+    <PropertyDefn>
+      <Name>PlatiOd</Name>
+      <ElementPath>PlatiOd</ElementPath>
+      <Type>String</Type>
+      <Width>19</Width>
+    </PropertyDefn>
+    <!-- Konec platnosti -->
+    <PropertyDefn>
+      <Name>PlatiDo</Name>
+      <ElementPath>PlatiDo</ElementPath>
+      <Type>String</Type>
+      <Width>19</Width>
+    </PropertyDefn>
+    <!-- ID transakce v RUIAN -->
+    <PropertyDefn>
+      <Name>IdTransakce</Name>
+      <ElementPath>IdTransakce</ElementPath>
+      <!-- OGR integers are only 32 bit wide for now, see http://trac.osgeo.org/gdal/wiki/rfc31_ogr_64
+      <Type>Integer</Type>
+      -->
+      <Type>String</Type>
+      <Width>18</Width>
+    </PropertyDefn>
+    <!-- ID návrhu změn v ISUI -->
+    <PropertyDefn>
+      <Name>GlobalniIdNavrhuZmeny</Name>
+      <ElementPath>GlobalniIdNavrhuZmeny</ElementPath>
+      <!-- OGR integers are only 32 bit wide for now, see http://trac.osgeo.org/gdal/wiki/rfc31_ogr_64
+      <Type>Integer</Type>
+      -->
+      <Type>String</Type>
+      <Width>18</Width>
+    </PropertyDefn>
+  </GMLFeatureClass>
+  <!-- Parcely -->
+  <GMLFeatureClass>
+    <Name>Parcely</Name>
+    <ElementPath>Data|Parcely|Parcela</ElementPath>
+    <SRSName>urn:ogc:def:crs:EPSG::5514</SRSName>
+    <!-- Geometrie definičního bodu parcely -->
+    <GeomPropertyDefn>
+      <Name>DefinicniBod</Name> 
+      <ElementPath>Geometrie|DefinicniBod</ElementPath> 
+      <Type>Point</Type>
+    </GeomPropertyDefn>
+    <!-- Originální geometrie hranice parcely ? -->
+    <GeomPropertyDefn>
+      <Name>OriginalniHranice</Name> 
+      <ElementPath>Geometrie|OriginalniHranice</ElementPath> 
+      <Type>Polygon</Type>
+    </GeomPropertyDefn>
+    <!-- Jednoznační identifikátor parcely -->
+    <PropertyDefn>
+      <Name>Id</Name>
+      <ElementPath>Id</ElementPath>
+      <!-- OGR integers are only 32 bit wide for now, see http://trac.osgeo.org/gdal/wiki/rfc31_ogr_64
+      <Type>Integer</Type>
+      -->
+      <Type>String</Type>
+      <Width>18</Width>
+    </PropertyDefn>
+    <!-- Identifikátor nesprávnosti na prvku (?) -->
+    <PropertyDefn>
+      <Name>Nespravny</Name>
+      <ElementPath>Nespravny</ElementPath>
+      <Type>String</Type>
+      <Width>5</Width>
+    </PropertyDefn>
+    <!-- Kmenové parcelní číslo -->
+    <PropertyDefn>
+      <Name>KmenoveCislo</Name>
+      <ElementPath>KmenoveCislo</ElementPath>
+      <Type>Integer</Type>
+    </PropertyDefn>
+    <!-- Poddělení čísla parcely -->
+    <PropertyDefn>
+      <Name>PododdeleniCisla</Name>
+      <ElementPath>PododdeleniCisla</ElementPath>
+      <Type>Integer</Type>
+    </PropertyDefn>
+    <!-- Výměra parcely -->
+    <PropertyDefn>
+      <Name>VymeraParcely</Name>
+      <ElementPath>VymeraParcely</ElementPath>
+      <!-- OGR integers are only 32 bit wide for now, see http://trac.osgeo.org/gdal/wiki/rfc31_ogr_64
+      <Type>Integer</Type>
+      -->
+      <Type>String</Type>
+      <Width>18</Width>
+    </PropertyDefn>
+    <!-- Způsob využití pozemku -->
+    <PropertyDefn>
+      <Name>ZpusobyVyuzitiPozemku</Name>
+      <ElementPath>ZpusobyVyuzitiPozemku</ElementPath>
+      <Type>Integer</Type>
+    </PropertyDefn>
+    <!-- Rozlišení druhu číslování parcely -->
+    <PropertyDefn>
+      <Name>DruhCislovaniKod</Name>
+      <ElementPath>DruhCislovaniKod</ElementPath>
+      <Type>Integer</Type>
+    </PropertyDefn>
+    <!-- Kód druhu pozemku -->
+    <PropertyDefn>
+      <Name>DruhPozemkuKod</Name>
+      <ElementPath>DruhPozemkuKod</ElementPath>
+      <Type>Integer</Type>
+    </PropertyDefn>
+    <!-- Nadřazené katastrální území -->
+    <PropertyDefn>
+      <Name>KatastralniUzemiKod</Name>
+      <ElementPath>KatastralniUzemi|Kod</ElementPath>
+      <Type>Integer</Type>
+    </PropertyDefn>
+    <!-- Začátek platnosti -->
+    <PropertyDefn>
+      <Name>PlatiOd</Name>
+      <ElementPath>PlatiOd</ElementPath>
+      <Type>String</Type>
+      <Width>19</Width>
+    </PropertyDefn>
+    <!-- Konec platnosti -->
+    <PropertyDefn>
+      <Name>PlatiDo</Name>
+      <ElementPath>PlatiDo</ElementPath>
+      <Type>String</Type>
+      <Width>19</Width>
+    </PropertyDefn>
+    <!-- ID transakce v RUIAN -->
+    <PropertyDefn>
+      <Name>IdTransakce</Name>
+      <ElementPath>IdTransakce</ElementPath>
+      <!-- OGR integers are only 32 bit wide for now, see http://trac.osgeo.org/gdal/wiki/rfc31_ogr_64
+      <Type>Integer</Type>
+      -->
+      <Type>String</Type>
+      <Width>18</Width>
+    </PropertyDefn>
+    <!-- ID řízení v ISKN -->
+    <PropertyDefn>
+      <Name>RizeniId</Name>
+      <ElementPath>RizeniId</ElementPath>
+      <!-- OGR integers are only 32 bit wide for now, see http://trac.osgeo.org/gdal/wiki/rfc31_ogr_64
+      <Type>Integer</Type>
+      -->
+      <Type>String</Type>
+      <Width>18</Width>
+    </PropertyDefn>
+    <!-- Bonitované díly parcely - výměra v metrech čtverečných -->
+    <PropertyDefn>
+      <Name>BonitovanyDilVymera</Name>
+      <ElementPath>BonitovaneDily|BonitovanyDil|Vymera</ElementPath>
+      <Type>IntegerList</Type>
+    </PropertyDefn>
+    <!-- Kód bonitovaných půdně ekologických jednotek -->
+    <PropertyDefn>
+      <Name>BonitovanyDilBonitovanaJednotkaKod</Name>
+      <ElementPath>BonitovaneDily|BonitovanyDil|BonitovanaJednotkaKod</ElementPath>
+      <Type>IntegerList</Type>
+    </PropertyDefn>
+    <!-- Bonitované díly parcely - ID transakce v RUIAN -->
+    <PropertyDefn>
+      <Name>BonitovanyDilIdTranskace</Name>
+      <ElementPath>BonitovaneDily|BonitovanyDil|IdTranskace</ElementPath>
+      <!-- OGR integers are only 32 bit wide for now, see http://trac.osgeo.org/gdal/wiki/rfc31_ogr_64
+      <Type>IntegerList</Type>
+      -->
+      <Type>StringList</Type>
+      <Width>18</Width>
+    </PropertyDefn>
+    <!-- Bonitované díly parcely - ID řízení v ISKN -->
+    <PropertyDefn>
+      <Name>BonitovaneDilRizeniId</Name>
+      <ElementPath>BonitovaneDily|BonitovanyDil|RizeniId</ElementPath>
+      <!-- OGR integers are only 32 bit wide for now, see http://trac.osgeo.org/gdal/wiki/rfc31_ogr_64
+      <Type>IntegerList</Type>
+      -->
+      <Type>StringList</Type>
+      <Width>18</Width>
+    </PropertyDefn>
+    <!-- Způsob ochrany pozemku - kód ochrany -->
+    <PropertyDefn>
+      <Name>ZpusobOchranyKod</Name>
+      <ElementPath>ZpusobyOchranyPozemku|ZpusobOchrany|Kod</ElementPath>
+      <Type>Integer</Type>
+    </PropertyDefn>
+    <!-- Způsob ochrany pozemku - typ ochrany -->
+    <PropertyDefn>
+      <Name>ZpusobOchranyTypOchranyKod</Name>
+      <ElementPath>ZpusobyOchranyPozemku|ZpusobOchrany|TypOchranyKod</ElementPath>
+      <Type>Integer</Type>
+    </PropertyDefn>
+        <!-- Způsob ochrany pozemku - ID transakce v RUIAN -->
+    <PropertyDefn>
+      <Name>ZpusobOchranyIdTransakce</Name>
+      <ElementPath>ZpusobyOchranyPozemku|ZpusobOchrany|IdTransakce</ElementPath>
+      <Type>Integer</Type>
+    </PropertyDefn>
+    <!-- Způsob ochrany pozemku - ID řízení v ISKN -->
+    <PropertyDefn>
+      <Name>ZpusobOchranyRizeniId</Name>
+      <ElementPath>ZpusobyOchranyPozemku|ZpusobOchrany|RizeniId</ElementPath>
+      <!-- OGR integers are only 32 bit wide for now, see http://trac.osgeo.org/gdal/wiki/rfc31_ogr_64
+      <Type>Integer</Type>
+      -->
+      <Type>String</Type>
+      <Width>18</Width>
+    </PropertyDefn>
+  </GMLFeatureClass>
+  <!-- Stavební objekty -->
+  <GMLFeatureClass>
+    <Name>StavebniObjekty</Name>
+    <ElementPath>Data|StavebniObjekty|StavebniObjekt</ElementPath>
+    <SRSName>urn:ogc:def:crs:EPSG::5514</SRSName>
+    <!-- Geometrie definičního bodu stavebního objektu -->
+    <GeomPropertyDefn>
+      <Name>DefinicniBod</Name> 
+      <ElementPath>Geometrie|DefinicniBod</ElementPath> 
+      <Type>Point</Type>
+    </GeomPropertyDefn>
+    <!-- Originální geometrie hranice stavebního objektu ? -->
+    <GeomPropertyDefn>
+      <Name>OriginalniHranice</Name> 
+      <ElementPath>Geometrie|OriginalniHranice</ElementPath> 
+      <Type>MultiPolygon</Type>
+    </GeomPropertyDefn>
+    <!-- Kód stavebního objektu -->
+    <PropertyDefn>
+      <Name>Kod</Name>
+      <ElementPath>Kod</ElementPath>
+      <Type>Integer</Type>
+    </PropertyDefn>
+    <!-- Identifikátor nesprávnosti na prvku (?) -->
+    <PropertyDefn>
+      <Name>Nespravny</Name>
+      <ElementPath>Nespravny</ElementPath>
+      <Type>String</Type>
+      <Width>5</Width>
+    </PropertyDefn>
+    <!-- Seznam čísel domovních stavebního objektu -->
+    <PropertyDefn>
+      <Name>CisloDomovni</Name>
+      <ElementPath>CislaDomovni|CisloDomovni</ElementPath>
+      <Type>Integer</Type>
+    </PropertyDefn>
+    <!-- Jedna z parcel, na nichž je stavební objekt postaven, zvolená
+         pro identifikaci objektu (tzv. definiční parcela) -->
+    <PropertyDefn>
+      <Name>IdentifikacniParcelaId</Name>
+      <ElementPath>IdentifikacniParcela|Id</ElementPath>
+      <!-- OGR integers are only 32 bit wide for now, see http://trac.osgeo.org/gdal/wiki/rfc31_ogr_64
+      <Type>Integer</Type>
+      -->
+      <Type>String</Type>
+      <Width>18</Width>
+    </PropertyDefn>
+    <!-- Typ stavebního objektu -->
+    <PropertyDefn>
+      <Name>TypStavebnihoObjektuKod</Name>
+      <ElementPath>TypStavebnihoObjektuKod</ElementPath>
+      <Type>Integer</Type>
+    </PropertyDefn>
+    <!-- Způsob využití -->
+    <PropertyDefn>
+      <Name>ZpusobVyuzitiKod</Name>
+      <ElementPath>ZpusobVyuzitiKod</ElementPath>
+      <Type>Integer</Type>
+    </PropertyDefn>
+    <!-- Nadřazená část obce -->
+    <PropertyDefn>
+      <Name>CastObceKod</Name>
+      <ElementPath>CastObce|Kod</ElementPath>
+      <Type>Integer</Type>
+    </PropertyDefn>
+    <!-- Nadřazený MOMC -->
+    <PropertyDefn>
+      <Name>MomcKod</Name>
+      <ElementPath>Momc|Kod</ElementPath>
+      <Type>Integer</Type>
+    </PropertyDefn>
+    <!-- Začátek platnosti -->
+    <PropertyDefn>
+      <Name>PlatiOd</Name>
+      <ElementPath>PlatiOd</ElementPath>
+      <Type>String</Type>
+      <Width>19</Width>
+    </PropertyDefn>
+    <!-- Konec platnosti -->
+    <PropertyDefn>
+      <Name>PlatiDo</Name>
+      <ElementPath>PlatiDo</ElementPath>
+      <Type>String</Type>
+      <Width>19</Width>
+    </PropertyDefn>
+    <!-- ID transakce v RUIAN -->
+    <PropertyDefn>
+      <Name>IdTransakce</Name>
+      <ElementPath>IdTransakce</ElementPath>
+      <!-- OGR integers are only 32 bit wide for now, see http://trac.osgeo.org/gdal/wiki/rfc31_ogr_64
+      <Type>Integer</Type>
+      -->
+      <Type>String</Type>
+      <Width>18</Width>
+    </PropertyDefn>
+    <!-- ID návrhu změn v ISUI -->
+    <PropertyDefn>
+      <Name>GlobalniIdNavrhuZmeny</Name>
+      <ElementPath>GlobalniIdNavrhuZmeny</ElementPath>
+      <!-- OGR integers are only 32 bit wide for now, see http://trac.osgeo.org/gdal/wiki/rfc31_ogr_64
+      <Type>Integer</Type>
+      -->
+      <Type>String</Type>
+      <Width>18</Width>
+    </PropertyDefn>
+    <!-- ID budovy v ISKN -->
+    <PropertyDefn>
+      <Name>IsknBudovaId</Name>
+      <ElementPath>IsknBudovaId</ElementPath>
+      <!-- OGR integers are only 32 bit wide for now, see http://trac.osgeo.org/gdal/wiki/rfc31_ogr_64
+      <Type>Integer</Type>
+      -->
+      <Type>String</Type>
+      <Width>18</Width>
+    </PropertyDefn>
+    <!-- Datum dokončení stavebního objektu -->
+    <PropertyDefn>
+      <Name>Dokonceni</Name>
+      <ElementPath>Dokonceni</ElementPath>
+      <Type>String</Type>
+      <Width>19</Width>
+    </PropertyDefn>
+    <!-- Druh svislé nosné konstrukce -->
+    <PropertyDefn>
+      <Name>DruhKonstrukceKod</Name>
+      <ElementPath>DruhKonstrukceKod</ElementPath>
+      <Type>Integer</Type>
+    </PropertyDefn>
+    <!-- Obestavěný prostor v m3 -->
+    <PropertyDefn>
+      <Name>ObestavenyProstor</Name>
+      <ElementPath>ObestavenyProstor</ElementPath>
+      <Type>Integer</Type>
+    </PropertyDefn>
+    <!-- Počet bytů u stavebního objektu s byty -->
+    <PropertyDefn>
+      <Name>PocetBytu</Name>
+      <ElementPath>PocetBytu</ElementPath>
+      <Type>Integer</Type>
+    </PropertyDefn>
+    <!-- Počet nadzemních a podzemních podlaží -->
+    <PropertyDefn>
+      <Name>PocetPodlazi</Name>
+      <ElementPath>PocetPodlazi</ElementPath>
+      <Type>Integer</Type>
+    </PropertyDefn>
+    <!-- Podlahová plocha v m2 -->
+    <PropertyDefn>
+      <Name>PodlahovaPlocha</Name>
+      <ElementPath>PodlahovaPlocha</ElementPath>
+      <Type>Integer</Type>
+    </PropertyDefn>
+    <!-- Připojení na kanalizační síť -->
+    <PropertyDefn>
+      <Name>PripojeniKanalizaceKod</Name>
+      <ElementPath>PripojeniKanalizaceKod</ElementPath>
+      <Type>Integer</Type>
+    </PropertyDefn>
+    <!-- Připojení na rozvod plynu -->
+    <PropertyDefn>
+      <Name>PripojeniPlynKod</Name>
+      <ElementPath>PripojeniPlynKod</ElementPath>
+      <Type>Integer</Type>
+    </PropertyDefn>
+    <!-- Připojení na vodovod -->
+    <PropertyDefn>
+      <Name>PripojeniVodovodKod</Name>
+      <ElementPath>PripojeniVodovodKod</ElementPath>
+      <Type>Integer</Type>
+    </PropertyDefn>
+    <!-- Vybavení výtahem -->
+    <PropertyDefn>
+      <Name>VybaveniVytahemKod</Name>
+      <ElementPath>VybaveniVytahemKod</ElementPath>
+      <Type>Integer</Type>
+    </PropertyDefn>
+    <!-- Zastavěná plocha v m2 -->
+    <PropertyDefn>
+      <Name>ZastavenaPlocha</Name>
+      <ElementPath>ZastavenaPlocha</ElementPath>
+      <Type>Integer</Type>
+    </PropertyDefn>
+    <!-- Způsob vytápění -->
+    <PropertyDefn>
+      <Name>ZpusobVytapeniKod</Name>
+      <ElementPath>ZpusobVytapeniKod</ElementPath>
+      <Type>Integer</Type>
+    </PropertyDefn>
+    <!-- Způsob ochrany stavebního objektu - kód ochrany -->
+    <PropertyDefn>
+      <Name>ZpusobOchranyKod</Name>
+      <ElementPath>ZpusobyOchranyPozemku|ZpusobOchrany|Kod</ElementPath>
+      <Type>Integer</Type>
+    </PropertyDefn>
+    <!-- Způsob ochrany stavebního objektu - typ ochrany -->
+    <PropertyDefn>
+      <Name>ZpusobOchranyTypOchranyKod</Name>
+      <ElementPath>ZpusobyOchrany|TypOchranyKod</ElementPath>
+      <Type>Integer</Type>
+    </PropertyDefn>
+    <!-- Způsob ochrany stavebního objektu - ID transakce v RUIAN -->
+    <PropertyDefn>
+      <Name>ZpusobOchranyIdTransakce</Name>
+      <ElementPath>ZpusobyOchrany|IdTransakce</ElementPath>
+      <Type>Integer</Type>
+    </PropertyDefn>
+    <!-- Způsob ochrany stavebního objektu - ID řízení v ISKN -->
+    <PropertyDefn>
+      <Name>ZpusobOchranyRizeniId</Name>
+      <ElementPath>ZpusobyOchrany|RizeniId</ElementPath>
+      <!-- OGR integers are only 32 bit wide for now, see http://trac.osgeo.org/gdal/wiki/rfc31_ogr_64
+      <Type>Integer</Type>
+      -->
+      <Type>String</Type>
+      <Width>18</Width>
+    </PropertyDefn>
+    <!-- Detailní tecnicko-ekonomické atributy (TEA) (?) -->
+    <PropertyDefn>
+      <Name>DetailniTEAKod</Name>
+      <ElementPath>DetailniTEA|Kod</ElementPath>
+      <Type>IntegerList</Type>
+    </PropertyDefn>
+  </GMLFeatureClass>
+  <!-- Adresní místa -->
+  <GMLFeatureClass>
+    <Name>AdresniMista</Name>
+    <ElementPath>Data|AdresniMista|AdresniMisto</ElementPath>
+    <SRSName>urn:ogc:def:crs:EPSG::5514</SRSName>
+    <!-- Definiční bod typu Adresní bod -->
+    <GeomPropertyDefn>
+      <Name>AdresniBod</Name>
+      <ElementPath>Geometrie|DefinicniBod|AdresniBod</ElementPath>
+      <Type>Point</Type>
+    </GeomPropertyDefn>
+    <!-- Definiční bod typu Přístup pro záchrannou službu -->
+    <GeomPropertyDefn>
+      <Name>Zachranka</Name>
+      <ElementPath>Geometrie|DefinicniBod|Zachranka</ElementPath>
+      <Type>Point</Type>
+    </GeomPropertyDefn>
+    <!-- Definiční bod typu Přístup pro hasiče -->
+    <GeomPropertyDefn>
+      <Name>Hasici</Name>
+      <ElementPath>Geometrie|DefinicniBod|Hasici</ElementPath>
+      <Type>Point</Type>
+    </GeomPropertyDefn>
+    <!-- Kód adresního místa -->
+    <PropertyDefn>
+      <Name>Kod</Name>
+      <ElementPath>Kod</ElementPath>
+      <Type>Integer</Type>
+    </PropertyDefn>
+    <!-- Identifikátor nesprávnosti na prvku (?) -->
+    <PropertyDefn>
+      <Name>Nespravny</Name>
+      <ElementPath>Nespravny</ElementPath>
+      <Type>String</Type>
+      <Width>5</Width>
+    </PropertyDefn>
+    <!-- Číslo domovní -->
+    <PropertyDefn>
+      <Name>CisloDomovni</Name>
+      <ElementPath>CisloDomovni</ElementPath>
+      <Type>Integer</Type>
+    </PropertyDefn>
+    <!-- Číselná část čísla orientačního -->
+    <PropertyDefn>
+      <Name>CisloOrientacni</Name>
+      <ElementPath>CisloOrientacni</ElementPath>
+      <Type>Integer</Type>
+    </PropertyDefn>
+    <!-- Koncové písmeno čísla orientačního -->
+    <PropertyDefn>
+      <Name>CisloOrientacniPismeno</Name>
+      <ElementPath>CisloOrientacniPismeno</ElementPath>
+      <Type>String</Type>
+      <Width>1</Width>
+    </PropertyDefn>
+    <!-- PSČ adresní pošty -->
+    <PropertyDefn>
+      <Name>Psc</Name>
+      <ElementPath>Psc</ElementPath>
+      <Type>Integer</Type>
+    </PropertyDefn>
+    <!-- Nadřazený stavební objekt -->
+    <PropertyDefn>
+      <Name>StavebniObjektKod</Name>
+      <ElementPath>StavebniObjekt|Kod</ElementPath>
+      <Type>Integer</Type>
+    </PropertyDefn>
+    <!-- Nadřazená ulice -->
+    <PropertyDefn>
+      <Name>UliceKod</Name>
+      <ElementPath>Ulice|Kod</ElementPath>
+      <Type>Integer</Type>
+    </PropertyDefn>
+    <!-- Začátek platnosti -->
+    <PropertyDefn>
+      <Name>PlatiOd</Name>
+      <ElementPath>PlatiOd</ElementPath>
+      <Type>String</Type>
+      <Width>19</Width>
+    </PropertyDefn>
+    <!-- Konec platnosti -->
+    <PropertyDefn>
+      <Name>PlatiDo</Name>
+      <ElementPath>PlatiDo</ElementPath>
+      <Type>String</Type>
+      <Width>19</Width>
+    </PropertyDefn>
+    <!-- ID transakce v RUIAN -->
+    <PropertyDefn>
+      <Name>IdTransakce</Name>
+      <ElementPath>IdTransakce</ElementPath>
+      <!-- OGR integers are only 32 bit wide for now, see http://trac.osgeo.org/gdal/wiki/rfc31_ogr_64
+      <Type>Integer</Type>
+      -->
+      <Type>String</Type>
+      <Width>18</Width>
+    </PropertyDefn>
+    <!-- ID návrhu změn v ISUI -->
+    <PropertyDefn>
+      <Name>GlobalniIdNavrhuZmeny</Name>
+      <ElementPath>GlobalniIdNavrhuZmeny</ElementPath>
+      <!-- OGR integers are only 32 bit wide for now, see http://trac.osgeo.org/gdal/wiki/rfc31_ogr_64
+      <Type>Integer</Type>
+      -->
+      <Type>String</Type>
+      <Width>18</Width>
+    </PropertyDefn>
+    <!-- ID budovy v ISKN -->
+    <PropertyDefn>
+      <Name>IsknBudovaId</Name>
+      <ElementPath>IsknBudovaId</ElementPath>
+      <!-- OGR integers are only 32 bit wide for now, see http://trac.osgeo.org/gdal/wiki/rfc31_ogr_64
+      <Type>Integer</Type>
+      -->
+      <Type>String</Type>
+      <Width>18</Width>
+    </PropertyDefn>
+  </GMLFeatureClass>
+  <!-- Zaniklé prvky -->
+  <GMLFeatureClass>
+    <Name>ZaniklePrvky</Name>
+    <ElementPath>Data|ZaniklePrvky|ZaniklyPrvek</ElementPath>
+    <!-- Typ prvku -->
+    <PropertyDefn>
+      <Name>TypPrvkuKod</Name>
+      <ElementPath>TypPrvkuKod</ElementPath>
+      <Type>String</Type>
+      <Width>2</Width>
+    </PropertyDefn>
+    <!-- ID (kód) prvku -->
+    <PropertyDefn>
+      <Name>PrvekId</Name>
+      <ElementPath>PrvekId</ElementPath>
+      <!-- OGR integers are only 32 bit wide for now, see http://trac.osgeo.org/gdal/wiki/rfc31_ogr_64
+      <Type>Integer</Type>
+      -->
+      <Type>String</Type>
+      <Width>18</Width>
+    </PropertyDefn>
+    <!-- ID transakce v RUIAN -->
+    <PropertyDefn>
+      <Name>IdTransakce</Name>
+      <ElementPath>IdTransakce</ElementPath>
+      <!-- OGR integers are only 32 bit wide for now, see http://trac.osgeo.org/gdal/wiki/rfc31_ogr_64
+      <Type>Integer</Type>
+      -->
+      <Type>String</Type>
+      <Width>18</Width>
+    </PropertyDefn>
+  </GMLFeatureClass>
 </GMLFeatureClassList>
