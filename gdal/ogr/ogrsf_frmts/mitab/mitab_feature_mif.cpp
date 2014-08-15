@@ -1083,6 +1083,8 @@ int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                 papszToken = NULL;
             }   
         }
+        
+        poRing->closeRings();
 
         tabPolygons[iSection]->addRingDirectly(poRing);
 
