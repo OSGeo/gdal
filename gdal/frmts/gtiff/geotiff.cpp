@@ -6824,6 +6824,29 @@ int GTiffDataset::Identify( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
+/*                            GTIFFErrorHandler()                       */
+/************************************************************************/
+
+class GTIFFErrorStruct
+{
+public:
+    CPLErr type;
+    int    no;
+    CPLString msg;
+    
+        GTIFFErrorStruct() {}
+        GTIFFErrorStruct(CPLErr eErr, int no, const char* msg) :
+            type(eErr), no(no), msg(msg) {}
+};
+
+static void GTIFFErrorHandler(CPLErr eErr, int no, const char* msg)
+{
+    std::vector<GTIFFErrorStruct>* paoErrors =
+        (std::vector<GTIFFErrorStruct>*) CPLGetErrorHandlerUserData();
+    paoErrors->push_back(GTIFFErrorStruct(eErr, no, msg));
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -6867,8 +6890,13 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
         if( poOpenInfo->fpL == NULL )
             return NULL;
     }
+    
+    /* Store errors/warnings and emit them later */
+    std::vector<GTIFFErrorStruct> aoErrors;
+    CPLPushErrorHandlerEx(GTIFFErrorHandler, &aoErrors);
     hTIFF = VSI_TIFFOpen( pszFilename, ( poOpenInfo->eAccess == GA_ReadOnly ) ? "rc" : "r+c",
                           poOpenInfo->fpL );
+    CPLPopErrorHandler();
 #if SIZEOF_VOIDP == 4
     if( hTIFF == NULL )
     {
@@ -6878,24 +6906,28 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
             hTIFF = VSI_TIFFOpen( pszFilename, ( poOpenInfo->eAccess == GA_ReadOnly ) ? "r" : "r+",
                                   poOpenInfo->fpL );
             bGlobalStripIntegerOverflow = FALSE;
-            if( hTIFF == NULL )
-            {
-                return( NULL );
-            }
-        }
-        else
-        {
-            return( NULL );
         }
     }
     else
     {
         bGlobalStripIntegerOverflow = FALSE;
     }
-#else
+#endif
+
+    /* Now emit errors and change their criticality if needed */
+    /* We only emit failures if we didn't manage to open the file */
+    /* Otherwise it make Python bindings unhappy (#5616) */
+    for(size_t iError=0;iError<aoErrors.size();iError++)
+    {
+        CPLError( (hTIFF == NULL && aoErrors[iError].type == CE_Failure) ? CE_Failure : CE_Warning,
+                  aoErrors[iError].no,
+                  "%s",
+                  aoErrors[iError].msg.c_str() );
+    }
+    aoErrors.resize(0);
+
     if( hTIFF == NULL )
         return( NULL );
-#endif
 
     uint32  nXSize, nYSize;
     uint16  nPlanarConfig;
