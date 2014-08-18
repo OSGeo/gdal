@@ -186,12 +186,12 @@ OGRStyleTable *OGRLayerDecorator::GetStyleTable()
 
 void        OGRLayerDecorator::SetStyleTableDirectly( OGRStyleTable *poStyleTable )
 {
-    return m_poDecoratedLayer->SetStyleTableDirectly(poStyleTable);
+    m_poDecoratedLayer->SetStyleTableDirectly(poStyleTable);
 }
 
 void        OGRLayerDecorator::SetStyleTable(OGRStyleTable *poStyleTable)
 {
-    return m_poDecoratedLayer->SetStyleTable(poStyleTable);
+    m_poDecoratedLayer->SetStyleTable(poStyleTable);
 }
 
 OGRErr      OGRLayerDecorator::StartTransaction()
