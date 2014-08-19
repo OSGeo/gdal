@@ -754,6 +754,7 @@ def tiff_write_19():
 ###############################################################################
 # Test write and read of some TIFF tags
 # Expected to fail (properly) with older libtiff versions (<=3.8.2 for sure)
+# Also test unsetting those tags (#5619)
 
 def tiff_write_20():
 
@@ -769,6 +770,8 @@ def tiff_write_20():
                ('TIFFTAG_XRESOLUTION'     , '100'),
                ('TIFFTAG_YRESOLUTION'     , '101'),
                ('TIFFTAG_RESOLUTIONUNIT'  , '2 (pixels/inch)'),
+               ('TIFFTAG_MINSAMPLEVALUE'  , '1' ),
+               ('TIFFTAG_MAXSAMPLEVALUE'  , '2' ),
              ]
 
     dict = {}
@@ -779,6 +782,13 @@ def tiff_write_20():
     new_ds = None
 
     # hopefully it's closed now!
+    
+    try:
+        os.stat( 'tmp/tags.tif.aux.xml' )
+        gdaltest.post_reason('did not expected .aux.xml file')
+        return 'fail'
+    except:
+        pass
 
     new_ds = gdal.Open( 'tmp/tags.tif' )
     md = new_ds.GetMetadata()
@@ -793,6 +803,41 @@ def tiff_write_20():
 
     new_ds = None
     src_ds = None
+
+    # Test just unsetting once, but leaving other unchanged
+    ds = gdal.Open( 'tmp/tags.tif', gdal.GA_Update )
+    ds.SetMetadataItem( 'TIFFTAG_SOFTWARE', None)
+    ds = None
+
+    try:
+        os.stat( 'tmp/tags.tif.aux.xml' )
+        gdaltest.post_reason('did not expected .aux.xml file')
+        return 'fail'
+    except:
+        pass
+
+    ds = gdal.Open( 'tmp/tags.tif' )
+    if ds.GetMetadataItem('TIFFTAG_SOFTWARE') is not None:
+        gdaltest.post_reason('expected unset TIFFTAG_SOFTWARE but got %s' % ds.GetMetadataItem('TIFFTAG_SOFTWARE'))
+        return 'fail'
+    if ds.GetMetadataItem('TIFFTAG_DOCUMENTNAME') is None:
+        gdaltest.post_reason('expected set TIFFTAG_DOCUMENTNAME but got None')
+        return 'fail'
+    ds = None
+
+    # Test unsetting all the remaining items
+    ds = gdal.Open( 'tmp/tags.tif', gdal.GA_Update )
+    ds.SetMetadata( {} )
+    ds = None
+    
+    ds = gdal.Open( 'tmp/tags.tif' )
+    got_md = ds.GetMetadata()
+    ds = None
+    
+    if got_md != {}:
+        gdaltest.post_reason('expected empty metadata list, but got some')
+        print(got_md)
+        return 'fail'
 
     gdaltest.tiff_drv.Delete( 'tmp/tags.tif' )
 

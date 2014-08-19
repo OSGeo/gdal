@@ -66,6 +66,36 @@ CPL_CVSID("$Id$");
 static int bGlobalStripIntegerOverflow = FALSE;
 #endif
 
+typedef enum
+{
+    GTIFFTAGTYPE_STRING,
+    GTIFFTAGTYPE_SHORT,
+    GTIFFTAGTYPE_FLOAT
+} GTIFFTagTypes;
+
+typedef struct
+{
+    const char    *pszTagName;
+    int            nTagVal;
+    GTIFFTagTypes  eType;
+} GTIFFTags;
+
+static const GTIFFTags asTIFFTags[] =
+{
+    { "TIFFTAG_DOCUMENTNAME", TIFFTAG_DOCUMENTNAME, GTIFFTAGTYPE_STRING },
+    { "TIFFTAG_IMAGEDESCRIPTION", TIFFTAG_IMAGEDESCRIPTION, GTIFFTAGTYPE_STRING },
+    { "TIFFTAG_SOFTWARE", TIFFTAG_SOFTWARE, GTIFFTAGTYPE_STRING },
+    { "TIFFTAG_DATETIME", TIFFTAG_DATETIME, GTIFFTAGTYPE_STRING },
+    { "TIFFTAG_ARTIST", TIFFTAG_ARTIST, GTIFFTAGTYPE_STRING },
+    { "TIFFTAG_HOSTCOMPUTER", TIFFTAG_HOSTCOMPUTER, GTIFFTAGTYPE_STRING },
+    { "TIFFTAG_COPYRIGHT", TIFFTAG_COPYRIGHT, GTIFFTAGTYPE_STRING },
+    { "TIFFTAG_XRESOLUTION", TIFFTAG_XRESOLUTION, GTIFFTAGTYPE_FLOAT },
+    { "TIFFTAG_YRESOLUTION", TIFFTAG_YRESOLUTION, GTIFFTAGTYPE_FLOAT },
+    { "TIFFTAG_RESOLUTIONUNIT", TIFFTAG_RESOLUTIONUNIT, GTIFFTAGTYPE_SHORT }, /* dealt as special case */
+    { "TIFFTAG_MINSAMPLEVALUE", TIFFTAG_MINSAMPLEVALUE, GTIFFTAGTYPE_SHORT },
+    { "TIFFTAG_MAXSAMPLEVALUE", TIFFTAG_MAXSAMPLEVALUE, GTIFFTAGTYPE_SHORT },
+};
+
 /************************************************************************/
 /* ==================================================================== */
 /*                                GDALOverviewDS                        */
@@ -5597,39 +5627,37 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
             if( strlen(papszDomainList[iDomain]) == 0
                 && nBand == 0 && EQUALN(pszItemName,"TIFFTAG_",8) )
             {
-                if( EQUAL(pszItemName,"TIFFTAG_DOCUMENTNAME") )
-                    TIFFSetField( hTIFF, TIFFTAG_DOCUMENTNAME, pszItemValue );
-                else if( EQUAL(pszItemName,"TIFFTAG_IMAGEDESCRIPTION") )
-                    TIFFSetField( hTIFF, TIFFTAG_IMAGEDESCRIPTION, pszItemValue );
-                else if( EQUAL(pszItemName,"TIFFTAG_SOFTWARE") )
-                    TIFFSetField( hTIFF, TIFFTAG_SOFTWARE, pszItemValue );
-                else if( EQUAL(pszItemName,"TIFFTAG_DATETIME") )
-                    TIFFSetField( hTIFF, TIFFTAG_DATETIME, pszItemValue );
-                else if( EQUAL(pszItemName,"TIFFTAG_ARTIST") )
-                    TIFFSetField( hTIFF, TIFFTAG_ARTIST, pszItemValue );
-                else if( EQUAL(pszItemName,"TIFFTAG_HOSTCOMPUTER") )
-                    TIFFSetField( hTIFF, TIFFTAG_HOSTCOMPUTER, pszItemValue );
-                else if( EQUAL(pszItemName,"TIFFTAG_COPYRIGHT") )
-                    TIFFSetField( hTIFF, TIFFTAG_COPYRIGHT, pszItemValue );
-                else if( EQUAL(pszItemName,"TIFFTAG_XRESOLUTION") )
-                    TIFFSetField( hTIFF, TIFFTAG_XRESOLUTION, CPLAtof(pszItemValue) );
-                else if( EQUAL(pszItemName,"TIFFTAG_YRESOLUTION") )
-                    TIFFSetField( hTIFF, TIFFTAG_YRESOLUTION, CPLAtof(pszItemValue) );
-                else if( EQUAL(pszItemName,"TIFFTAG_RESOLUTIONUNIT") ) {
+                if( EQUAL(pszItemName,"TIFFTAG_RESOLUTIONUNIT") ) {
                     /* ResolutionUnit can't be 0, which is the default if atoi() fails.
                        Set to 1=Unknown */
                     int v = atoi(pszItemValue);
                     if (!v) v = RESUNIT_NONE;
                     TIFFSetField( hTIFF, TIFFTAG_RESOLUTIONUNIT, v);
                 }
-                else if( EQUAL(pszItemName,"TIFFTAG_MINSAMPLEVALUE") )
-                    TIFFSetField( hTIFF, TIFFTAG_MINSAMPLEVALUE, atoi(pszItemValue) );
-                else if( EQUAL(pszItemName,"TIFFTAG_MAXSAMPLEVALUE") )
-                    TIFFSetField( hTIFF, TIFFTAG_MAXSAMPLEVALUE, atoi(pszItemValue) );
                 else
-                    CPLError(CE_Warning, CPLE_NotSupported,
-                             "%s metadata item is unhandled and will not be written",
-                             pszItemName);
+                {
+                    int bFoundTag = FALSE;
+                    size_t iTag;
+                    for(iTag=0;iTag<sizeof(asTIFFTags)/sizeof(asTIFFTags[0]);iTag++)
+                    {
+                        if( EQUAL(pszItemName, asTIFFTags[iTag].pszTagName) )
+                        {
+                            bFoundTag = TRUE;
+                            break;
+                        }
+                    }
+
+                    if( bFoundTag && asTIFFTags[iTag].eType == GTIFFTAGTYPE_STRING )
+                        TIFFSetField( hTIFF, asTIFFTags[iTag].nTagVal, pszItemValue );
+                    else if( bFoundTag && asTIFFTags[iTag].eType == GTIFFTAGTYPE_FLOAT )
+                        TIFFSetField( hTIFF, asTIFFTags[iTag].nTagVal, CPLAtof(pszItemValue) );
+                    else if( bFoundTag && asTIFFTags[iTag].eType == GTIFFTAGTYPE_SHORT )
+                        TIFFSetField( hTIFF, asTIFFTags[iTag].nTagVal, atoi(pszItemValue) );
+                    else
+                        CPLError(CE_Warning, CPLE_NotSupported,
+                                "%s metadata item is unhandled and will not be written",
+                                pszItemName);
+                }
             }
             else if( nBand == 0 && EQUAL(pszItemName,GDALMD_AREA_OR_POINT) )
                 /* do nothing, handled elsewhere */;
@@ -5640,6 +5668,37 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
 
             CPLFree( pszItemName );
         }
+
+/* -------------------------------------------------------------------- */
+/*      Remove TIFFTAG_xxxxxx that are already set but no longer in     */
+/*      the metadata list (#5619)                                       */
+/* -------------------------------------------------------------------- */
+        if( strlen(papszDomainList[iDomain]) == 0 && nBand == 0 )
+        {
+            size_t iTag;
+            for(iTag=0;iTag<sizeof(asTIFFTags)/sizeof(asTIFFTags[0]);iTag++)
+            {
+                char* pszText = NULL;
+                int16 nVal = 0;
+                float fVal = 0.0f;
+                const char* pszVal = CSLFetchNameValue(papszMD, asTIFFTags[iTag].pszTagName);
+                if( pszVal == NULL &&
+                    ((asTIFFTags[iTag].eType == GTIFFTAGTYPE_STRING && TIFFGetField( hTIFF, asTIFFTags[iTag].nTagVal, &pszText )) ||
+                     (asTIFFTags[iTag].eType == GTIFFTAGTYPE_SHORT && TIFFGetField( hTIFF, asTIFFTags[iTag].nTagVal, &nVal )) ||
+                     (asTIFFTags[iTag].eType == GTIFFTAGTYPE_FLOAT && TIFFGetField( hTIFF, asTIFFTags[iTag].nTagVal, &fVal ))) )
+                {
+#ifdef HAVE_UNSETFIELD
+                    TIFFUnsetField( hTIFF, asTIFFTags[iTag].nTagVal );
+#else
+                    if( asTIFFTags[iTag].eType == GTIFFTAGTYPE_STRING )
+                    {
+                        TIFFSetField( hTIFF, asTIFFTags[iTag].nTagVal, "" );
+                    }
+#endif
+                }
+            }
+        }
+
     }
 }
 
@@ -7628,52 +7687,34 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 /*      Capture some other potentially interesting information.         */
 /* -------------------------------------------------------------------- */
     char	*pszText, szWorkMDI[200];
-    float   fResolution;
     uint16  nShort;
 
-    if( TIFFGetField( hTIFF, TIFFTAG_DOCUMENTNAME, &pszText ) )
-        SetMetadataItem( "TIFFTAG_DOCUMENTNAME",  pszText );
-
-    if( TIFFGetField( hTIFF, TIFFTAG_IMAGEDESCRIPTION, &pszText ) )
-        SetMetadataItem( "TIFFTAG_IMAGEDESCRIPTION", pszText );
-
-    if( TIFFGetField( hTIFF, TIFFTAG_SOFTWARE, &pszText ) )
-        SetMetadataItem( "TIFFTAG_SOFTWARE", pszText );
-
-    if( TIFFGetField( hTIFF, TIFFTAG_DATETIME, &pszText ) )
-        SetMetadataItem( "TIFFTAG_DATETIME", pszText );
-
-    if( TIFFGetField( hTIFF, TIFFTAG_ARTIST, &pszText ) )
-        SetMetadataItem( "TIFFTAG_ARTIST", pszText );
-
-    if( TIFFGetField( hTIFF, TIFFTAG_HOSTCOMPUTER, &pszText ) )
-        SetMetadataItem( "TIFFTAG_HOSTCOMPUTER", pszText );
-
-    if( TIFFGetField( hTIFF, TIFFTAG_COPYRIGHT, &pszText ) )
-        SetMetadataItem( "TIFFTAG_COPYRIGHT", pszText );
-
-    if( TIFFGetField( hTIFF, TIFFTAG_XRESOLUTION, &fResolution ) )
+    size_t iTag;
+    for(iTag=0;iTag<sizeof(asTIFFTags)/sizeof(asTIFFTags[0]);iTag++)
     {
-        sprintf( szWorkMDI, "%.8g", fResolution );
-        SetMetadataItem( "TIFFTAG_XRESOLUTION", szWorkMDI );
-    }
-
-    if( TIFFGetField( hTIFF, TIFFTAG_YRESOLUTION, &fResolution ) )
-    {
-        sprintf( szWorkMDI, "%.8g", fResolution );
-        SetMetadataItem( "TIFFTAG_YRESOLUTION", szWorkMDI );
-    }
-
-    if( TIFFGetField( hTIFF, TIFFTAG_MINSAMPLEVALUE, &nShort ) )
-    {
-        sprintf( szWorkMDI, "%d", nShort );
-        SetMetadataItem( "TIFFTAG_MINSAMPLEVALUE", szWorkMDI );
-    }
-
-    if( TIFFGetField( hTIFF, TIFFTAG_MAXSAMPLEVALUE, &nShort ) )
-    {
-        sprintf( szWorkMDI, "%d", nShort );
-        SetMetadataItem( "TIFFTAG_MAXSAMPLEVALUE", szWorkMDI );
+        if( asTIFFTags[iTag].eType == GTIFFTAGTYPE_STRING )
+        {
+            if( TIFFGetField( hTIFF, asTIFFTags[iTag].nTagVal, &pszText ) )
+                SetMetadataItem( asTIFFTags[iTag].pszTagName,  pszText );
+        }
+        else if( asTIFFTags[iTag].eType == GTIFFTAGTYPE_FLOAT )
+        {
+            float   fVal;
+            if( TIFFGetField( hTIFF, asTIFFTags[iTag].nTagVal, &fVal ) )
+            {
+                sprintf( szWorkMDI, "%.8g", fVal );
+                SetMetadataItem( asTIFFTags[iTag].pszTagName, szWorkMDI );
+            }
+        }
+        else if( asTIFFTags[iTag].eType == GTIFFTAGTYPE_SHORT &&
+                 asTIFFTags[iTag].nTagVal != TIFFTAG_RESOLUTIONUNIT )
+        {
+            if( TIFFGetField( hTIFF, asTIFFTags[iTag].nTagVal, &nShort ) )
+            {
+                sprintf( szWorkMDI, "%d", nShort );
+                SetMetadataItem( asTIFFTags[iTag].pszTagName, szWorkMDI );
+            }
+        }
     }
 
     if( TIFFGetField( hTIFF, TIFFTAG_RESOLUTIONUNIT, &nShort ) )
