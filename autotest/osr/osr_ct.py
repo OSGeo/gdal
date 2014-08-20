@@ -4,13 +4,14 @@
 # $Id$
 #
 # Project:  GDAL/OGR Test Suite
-# Purpose:  Test coordinate transformations. 
+# Purpose:  Test coordinate transformations.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+# Copyright (c) 2014, Google
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -20,7 +21,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -43,13 +44,13 @@ from osgeo import ogr
 
 
 ###############################################################################
-# Verify that we have PROJ.4 available. 
+# Verify that we have PROJ.4 available.
 
 def osr_ct_1():
 
-    
+
     gdaltest.have_proj4 = 0
-    
+
     utm_srs = osr.SpatialReference()
     utm_srs.SetUTM( 11 )
     utm_srs.SetWellKnownGeogCS( 'WGS84' )
@@ -82,7 +83,7 @@ def osr_ct_1():
     return 'success'
 
 ###############################################################################
-# Actually perform a simple LL to UTM conversion. 
+# Actually perform a simple LL to UTM conversion.
 
 def osr_ct_2():
 
@@ -143,7 +144,7 @@ def osr_ct_3():
     return 'success'
 
 ###############################################################################
-# Actually perform a simple LL to UTM conversion. 
+# Actually perform a simple LL to UTM conversion.
 # Works for both OG and NG bindings
 
 def osr_ct_4():
@@ -243,6 +244,47 @@ def osr_ct_6():
     return 'success'
 
 ###############################################################################
+# Actually perform a simple Pseudo Mercator to LL conversion.
+
+def osr_ct_7():
+
+    if gdaltest.have_proj4 == 0:
+        return 'skip'
+
+    pm_srs = osr.SpatialReference()
+    pm_srs.ImportFromEPSG( 3857 )
+
+    ll_srs = osr.SpatialReference()
+    ll_srs.SetWellKnownGeogCS( 'WGS84' )
+
+    gdaltest.ct = osr.CoordinateTransformation( pm_srs, ll_srs )
+
+    (x, y, z) = gdaltest.ct.TransformPoint( 7000000, 7000000, 0 )
+    (exp_x, exp_y, exp_z) = (62.8820698884, 53.0918187696, 0.0)
+    if (abs(exp_x - x) > 0.00001 or
+        abs(exp_y - y) > 0.00001 or
+        abs(exp_z - z) > 0.00001):
+        gdaltest.post_reason( 'Wrong LL for Pseudo Mercator result' )
+        print('Got:      (%f, %f, %f)' % (x, y, z))
+        print('Expected: (%f, %f, %f)' % (exp_x, exp_y, exp_z))
+        return 'fail'
+
+    pnt = ogr.CreateGeometryFromWkt( 'POINT(%g %g)' % (7000000, 7000000),
+                                     pm_srs )
+    expected_pnt = ogr.CreateGeometryFromWkt( 'POINT(%.10f %.10f)' % (exp_x, exp_y),
+                                     ll_srs )
+    result = pnt.Transform( gdaltest.ct )
+    if (abs(expected_pnt.GetX() - pnt.GetX()) > 0.00001 or
+        abs(expected_pnt.GetY() - pnt.GetY()) > 0.00001 or
+        abs(expected_pnt.GetZ() - pnt.GetZ()) > 0.00001):
+        gdaltest.post_reason( 'Failed to transform from Pseudo Mercator to LL')
+        print('Got:      %s' % pnt.ExportToWkt())
+        print('Expected: %s' % expected_pnt.ExportToWkt())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def osr_ct_cleanup():
@@ -254,13 +296,14 @@ def osr_ct_cleanup():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     osr_ct_1,
     osr_ct_2,
     osr_ct_3,
     osr_ct_4,
     osr_ct_5,
     osr_ct_6,
+    osr_ct_7,
     osr_ct_cleanup,
     None ]
 
@@ -271,4 +314,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
