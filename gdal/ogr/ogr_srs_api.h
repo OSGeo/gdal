@@ -136,6 +136,9 @@ typedef enum {
                                 "Lambert_Azimuthal_Equal_Area"
 #define SRS_PT_MERCATOR_1SP     "Mercator_1SP"
 #define SRS_PT_MERCATOR_2SP     "Mercator_2SP"
+// Mercator_Auxilary_Sphere is used used by ESRI to mean EPSG:3875
+#define SRS_PT_MERCATOR_AUXILARY_SPHERE                                 \
+                                "Mercator_Auxiliary_Sphere"
 #define SRS_PT_MILLER_CYLINDRICAL "Miller_Cylindrical"
 #define SRS_PT_MOLLWEIDE        "Mollweide"
 #define SRS_PT_NEW_ZEALAND_MAP_GRID                                     \
