@@ -282,7 +282,7 @@ OGRFeatureDefnH OGR_F_GetDefnRef( OGRFeatureH hFeat )
  *
  * This method updates the features geometry, and operate exactly as
  * SetGeometry(), except that this method assumes ownership of the
- * passed geometry.
+ * passed geometry (even in case of failure of that function).
  *
  * This method is the same as the C function OGR_F_SetGeometryDirectly().
  *
@@ -301,7 +301,10 @@ OGRErr OGRFeature::SetGeometryDirectly( OGRGeometry * poGeomIn )
     if( GetGeomFieldCount() > 0 )
         return SetGeomFieldDirectly(0, poGeomIn);
     else
+    {
+        delete poGeomIn;
         return OGRERR_FAILURE;
+    }
 }
 
 /************************************************************************/
@@ -313,7 +316,7 @@ OGRErr OGRFeature::SetGeometryDirectly( OGRGeometry * poGeomIn )
  *
  * This function updates the features geometry, and operate exactly as
  * SetGeometry(), except that this function assumes ownership of the
- * passed geometry.
+ * passed geometry (even in case of failure of that function).
  *
  * This function is the same as the C++ method 
  * OGRFeature::SetGeometryDirectly.
@@ -594,7 +597,7 @@ OGRGeometryH OGR_F_GetGeomFieldRef( OGRFeatureH hFeat, int iField )
  *
  * This method updates the features geometry, and operate exactly as
  * SetGeomField(), except that this method assumes ownership of the
- * passed geometry.
+ * passed geometry (even in case of failure of that function).
  *
  * This method is the same as the C function OGR_F_SetGeomFieldDirectly().
  *
@@ -614,7 +617,10 @@ OGRErr OGRFeature::SetGeomFieldDirectly( int iField, OGRGeometry * poGeomIn )
 
 {
     if( iField < 0 || iField >= GetGeomFieldCount() )
+    {
+        delete poGeomIn;
         return OGRERR_FAILURE;
+    }
 
     delete papoGeometries[iField];
     papoGeometries[iField] = poGeomIn;
@@ -633,7 +639,7 @@ OGRErr OGRFeature::SetGeomFieldDirectly( int iField, OGRGeometry * poGeomIn )
  *
  * This function updates the features geometry, and operate exactly as
  * SetGeomField(), except that this function assumes ownership of the
- * passed geometry.
+ * passed geometry (even in case of failure of that function).
  *
  * This function is the same as the C++ method 
  * OGRFeature::SetGeomFieldDirectly.
