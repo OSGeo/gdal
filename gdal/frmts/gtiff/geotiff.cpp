@@ -6898,7 +6898,7 @@ public:
             type(eErr), no(no), msg(msg) {}
 };
 
-static void GTIFFErrorHandler(CPLErr eErr, int no, const char* msg)
+static void CPL_STDCALL GTIFFErrorHandler(CPLErr eErr, int no, const char* msg)
 {
     std::vector<GTIFFErrorStruct>* paoErrors =
         (std::vector<GTIFFErrorStruct>*) CPLGetErrorHandlerUserData();
