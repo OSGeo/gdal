@@ -65,7 +65,7 @@ static GDALDataset *OGRSelafinDriverOpen( GDALOpenInfo* poOpenInfo ) {
         return NULL;
     
     OGRSelafinDataSource *poDS = new OGRSelafinDataSource();
-    if( !poDS->Open(poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update) ) {
+    if( !poDS->Open(poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update, FALSE) ) {
         delete poDS;
         poDS = NULL;
     }
@@ -143,7 +143,7 @@ static GDALDataset *OGRSelafinDriverCreate( const char * pszName, int nXSize, in
     }
     // Force it to open as a datasource
     OGRSelafinDataSource *poDS = new OGRSelafinDataSource();
-    if( !poDS->Open( pszName, TRUE) ) {
+    if( !poDS->Open( pszName, TRUE, TRUE ) ) {
         delete poDS;
         return NULL;
     }

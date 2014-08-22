@@ -258,7 +258,7 @@ OGRLayer *OGRSelafinDataSource::GetLayer( int iLayer ) {
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
-int OGRSelafinDataSource::Open(const char * pszFilename, int bUpdateIn) {
+int OGRSelafinDataSource::Open(const char * pszFilename, int bUpdateIn, int bCreate) {
     // Check if a range is set and extract it and the filename
     const char *pszc=pszFilename;
     if (*pszFilename==0) return FALSE;
@@ -272,9 +272,9 @@ int OGRSelafinDataSource::Open(const char * pszFilename, int bUpdateIn) {
     pszName = CPLStrdup( pszFilename );
     pszName[pszc-pszFilename]=0;
     bUpdate = bUpdateIn;
-    if (bUpdate && EQUAL(pszName, "/vsistdout/")) return TRUE;
+    if (bCreate && EQUAL(pszName, "/vsistdout/")) return TRUE;
     /* For writable /vsizip/, do nothing more */
-    if (bUpdate && strncmp(pszName, "/vsizip/", 8) == 0) return TRUE;
+    if (bCreate && strncmp(pszName, "/vsizip/", 8) == 0) return TRUE;
     CPLString osFilename(pszName);
     CPLString osBaseFilename = CPLGetFilename(pszName);
     // Determine what sort of object this is.
