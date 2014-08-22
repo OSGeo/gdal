@@ -48,7 +48,7 @@ OGRDODSDriver::~OGRDODSDriver()
 const char *OGRDODSDriver::GetName()
 
 {
-    return "DODS";
+    return "OGR_DODS";
 }
 
 /************************************************************************/
