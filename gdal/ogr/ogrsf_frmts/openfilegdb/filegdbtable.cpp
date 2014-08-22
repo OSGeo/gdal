@@ -265,8 +265,8 @@ static void ReadVarUInt64NoCheck(GByte*& pabyIter, GUIntBig& nOutVal)
 /*                      IsLikelyFeatureAtOffset()                       */
 /************************************************************************/
 
-int FileGDBTable::IsLikelyFeatureAtOffset(GUInt32 nFileSize,
-                                          GUInt32 nOffset,
+int FileGDBTable::IsLikelyFeatureAtOffset(vsi_l_offset nFileSize,
+                                          vsi_l_offset nOffset,
                                           GUInt32* pnSize,
                                           int* pbDeletedRecord)
 {
@@ -446,11 +446,11 @@ int FileGDBTable::IsLikelyFeatureAtOffset(GUInt32 nFileSize,
 
 int FileGDBTable::GuessFeatureLocations()
 {
-    GUInt32 nFileSize;
+    vsi_l_offset nFileSize;
     VSIFSeekL(fpTable, 0, SEEK_END);
-    nFileSize = (GUInt32) MIN(~((GUInt32)0), VSIFTellL(fpTable));
+    nFileSize = VSIFTellL(fpTable);
 
-    GUInt32 nOffset = 40 + nFieldDescLength;
+    vsi_l_offset nOffset = 40 + nFieldDescLength;
     
     if( nOffsetFieldDesc != 40 )
     {
@@ -990,7 +990,7 @@ static void ReadVarIntAndAddNoCheck(GByte*& pabyIter, GIntBig& nOutVal)
 /*                       GetOffsetInTableForRow()                       */
 /************************************************************************/
 
-GUInt32 FileGDBTable::GetOffsetInTableForRow(int iRow)
+vsi_l_offset FileGDBTable::GetOffsetInTableForRow(int iRow)
 {
     const int errorRetValue = 0;
     returnErrorIf(iRow < 0 || iRow >= nTotalRecordCount );
@@ -1017,15 +1017,15 @@ GUInt32 FileGDBTable::GetOffsetInTableForRow(int iRow)
         VSIFSeekL(fpTableX, 16 + 5 * iRow, SEEK_SET);
     }
 
-    GByte abyBuffer[4];
-    bError = VSIFReadL(abyBuffer, 4, 1, fpTableX) != 1;
+    GByte abyBuffer[5];
+    bError = VSIFReadL(abyBuffer, 5, 1, fpTableX) != 1;
     returnErrorIf(bError );
-    GUInt32 nOffset = GetUInt32(abyBuffer, 0);
+    vsi_l_offset nOffset = GetUInt32(abyBuffer, 0) | (((vsi_l_offset)abyBuffer[4]) << 32);
 
 #ifdef DEBUG_VERBOSE
     if( iRow == 0 && nOffset != 0 &&
         nOffset != nOffsetHeaderEnd && nOffset != nOffsetHeaderEnd + 4 )
-        CPLDebug("OpenFileGDB", "%s: first feature offset = %d. Expected %d",
+        CPLDebug("OpenFileGDB", "%s: first feature offset = " CPL_FRMT_GUIB ". Expected %d",
                  osFilename.c_str(), nOffset, nOffsetHeaderEnd);
 #endif
 
@@ -1043,7 +1043,7 @@ int FileGDBTable::SelectRow(int iRow)
 
     if( nCurRow != iRow )
     {
-        GUInt32 nOffsetTable = GetOffsetInTableForRow(iRow);
+        vsi_l_offset nOffsetTable = GetOffsetInTableForRow(iRow);
         if( nOffsetTable == 0 )
         {
             nCurRow = -1;
