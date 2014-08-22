@@ -116,7 +116,7 @@ class OGRSelafinDataSource : public OGRDataSource {
     public:
         OGRSelafinDataSource();
         ~OGRSelafinDataSource();
-        int Open(const char * pszFilename, int bUpdate);
+        int Open(const char * pszFilename, int bUpdate, int bCreate);
         int OpenTable(const char * pszFilename);
         const char *GetName() { return pszName; }
         int GetLayerCount() { return nLayers; }
