@@ -45,7 +45,7 @@ OGRGRASSDriver::~OGRGRASSDriver()
 /************************************************************************/
 const char *OGRGRASSDriver::GetName()
 {
-    return "GRASS";
+    return "OGR_GRASS";
 }
 
 /************************************************************************/
