@@ -6,6 +6,7 @@
      - Add support for ZIP64
      - Recode filename to UTF-8 if GP 11 is unset
      - Use Info-ZIP Unicode Path Extra Field (0x7075) to get UTF-8 filenames
+     - ZIP64: accept number_disk == 0 in unzlocal_SearchCentralDir64()
 
  * Copyright (c) 2008-2014, Even Rouault <even dot rouault at mines-paris dot org>
 
@@ -536,7 +537,8 @@ local uLong64 unzlocal_SearchCentralDir64(const zlib_filefunc_def* pzlib_filefun
     /* total number of disks */
     if (unzlocal_getLong(pzlib_filefunc_def,filestream,&uL)!=UNZ_OK)
         return 0;
-    if (uL != 1)
+    /* Some .zip declare 0 disks, such as in http://trac.osgeo.org/gdal/ticket/5615 */
+    if (uL != 1 && uL != 0)
         return 0;
 
     /* Goto end of central directory record */
