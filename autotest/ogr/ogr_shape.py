@@ -3664,6 +3664,69 @@ def ogr_shape_74():
     return 'success'
     
 ###############################################################################
+# Test writing integer values through double fields, and cases of truncation or
+# loss of precision (#5625)
+
+def ogr_shape_78():
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_78.dbf')
+    lyr = ds.CreateLayer('ogr_shape_78')
+
+    fd = ogr.FieldDefn('dblfield', ogr.OFTReal)
+    fd.SetWidth(20)
+    lyr.CreateField(fd)
+    
+    fd = ogr.FieldDefn('dblfield2', ogr.OFTReal)
+    fd.SetWidth(20)
+    fd.SetPrecision(1)
+    lyr.CreateField(fd)
+
+    # Integer values up to 2^53 can be exactly tansported into a double.
+    gdal.ErrorReset()
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField('dblfield', (2**53) * 1.0)
+    lyr.CreateFeature(f)
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('got unexpected error/warning')
+        return 'fail'
+
+    # Field width too small
+    gdal.ErrorReset()
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField('dblfield2', 1e21)
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    lyr.CreateFeature(f)
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('did not get expected error/warning')
+        return 'fail'
+
+    # Likely precision loss
+    gdal.ErrorReset()
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField('dblfield', (2**53) * 1.0 + 2)  # 2^53+1 == 2^53 !
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    lyr.CreateFeature(f)
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('did not get expected error/warning')
+        return 'fail'
+
+    gdal.ErrorReset()
+    ds = None
+    
+    ds = ogr.Open('/vsimem/ogr_shape_78.dbf')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f.GetField('dblfield') != 9007199254740992.:
+        gdaltest.post_reason('did not get expected value')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_shape_cleanup():
@@ -3693,6 +3756,7 @@ def ogr_shape_cleanup():
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_62' )
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_73.shp' )
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_74.shp' )
+    shape_drv.DeleteDataSource( '/vsimem/ogr_shape_78.dbf' )
 
     return 'success'
 
@@ -3773,6 +3837,7 @@ gdaltest_list = [
     ogr_shape_72,
     ogr_shape_73,
     ogr_shape_74,
+    ogr_shape_78,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':
