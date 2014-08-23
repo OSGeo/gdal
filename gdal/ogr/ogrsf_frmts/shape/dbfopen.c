@@ -1324,43 +1324,24 @@ static int DBFWriteAttribute(DBFHandle psDBF, int hEntity, int iField,
       case 'D':
       case 'N':
       case 'F':
-	if( psDBF->panFieldDecimals[iField] == 0 )
-	{
-            int		nWidth = psDBF->panFieldSize[iField];
+      {
+        int		nWidth = psDBF->panFieldSize[iField];
 
-            if( (int) sizeof(szSField)-2 < nWidth )
-                nWidth = sizeof(szSField)-2;
+        if( (int) sizeof(szSField)-2 < nWidth )
+            nWidth = sizeof(szSField)-2;
 
-	    sprintf( szFormat, "%%%dd", nWidth );
-	    sprintf(szSField, szFormat, (int) *((double *) pValue) );
-	    if( (int)strlen(szSField) > psDBF->panFieldSize[iField] )
-            {
-	        szSField[psDBF->panFieldSize[iField]] = '\0';
-                nRetResult = FALSE;
-            }
-
-	    strncpy((char *) (pabyRec+psDBF->panFieldOffset[iField]),
-		    szSField, strlen(szSField) );
-	}
-	else
-	{
-            int		nWidth = psDBF->panFieldSize[iField];
-
-            if( (int) sizeof(szSField)-2 < nWidth )
-                nWidth = sizeof(szSField)-2;
-
-	    sprintf( szFormat, "%%%d.%df", 
-                     nWidth, psDBF->panFieldDecimals[iField] );
-	    sprintf(szSField, szFormat, *((double *) pValue) );
-	    if( (int) strlen(szSField) > psDBF->panFieldSize[iField] )
-            {
-	        szSField[psDBF->panFieldSize[iField]] = '\0';
-                nRetResult = FALSE;
-            }
-	    strncpy((char *) (pabyRec+psDBF->panFieldOffset[iField]),
-		    szSField, strlen(szSField) );
-	}
-	break;
+        sprintf( szFormat, "%%%d.%df", 
+                    nWidth, psDBF->panFieldDecimals[iField] );
+        sprintf(szSField, szFormat, *((double *) pValue) );
+        if( (int) strlen(szSField) > psDBF->panFieldSize[iField] )
+        {
+            szSField[psDBF->panFieldSize[iField]] = '\0';
+            nRetResult = FALSE;
+        }
+        strncpy((char *) (pabyRec+psDBF->panFieldOffset[iField]),
+            szSField, strlen(szSField) );
+        break;
+      }
 
       case 'L':
         if (psDBF->panFieldSize[iField] >= 1  && 
