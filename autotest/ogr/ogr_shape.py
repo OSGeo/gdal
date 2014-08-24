@@ -1811,7 +1811,7 @@ def ogr_shape_41():
     shutil.copy('data/poly.shx', 'tmp/poly.shx')
     shutil.copy('data/poly.dbf', 'tmp/poly.dbf')
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/poly.shp')
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -fsf tmp/poly.shp')
 
     os.remove('tmp/poly.shp')
     os.remove('tmp/poly.shx')
