@@ -150,6 +150,43 @@ def test_gdal_edit_py_3():
     return 'success'
 
 ###############################################################################
+# Test -unsetstats
+
+def test_gdal_edit_py_4():
+
+    script_path = test_py_scripts.get_py_script('gdal_edit')
+    if script_path is None:
+        return 'skip'
+
+    shutil.copy('../gcore/data/byte.tif', 'tmp/test_gdal_edit_py.tif')
+    ds = gdal.Open( 'tmp/test_gdal_edit_py.tif', gdal.GA_Update )
+    ds.GetRasterBand(1).ComputeStatistics(False)
+    ds = None
+
+    ds = gdal.Open('tmp/test_gdal_edit_py.tif')
+    if ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MINIMUM') is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    
+    test_py_scripts.run_py_script(script_path, 'gdal_edit', "tmp/test_gdal_edit_py.tif -unsetstats")
+
+    ds = gdal.Open('tmp/test_gdal_edit_py.tif')
+    if ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MINIMUM') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    
+    try:
+        os.stat('tmp/test_gdal_edit_py.tif.aux.xml')
+        gdaltest.post_reason('fail')
+        return 'fail'
+    except:
+        pass
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdal_edit_py_cleanup():
@@ -165,6 +202,7 @@ gdaltest_list = [
     test_gdal_edit_py_1,
     test_gdal_edit_py_2,
     test_gdal_edit_py_3,
+    test_gdal_edit_py_4,
     test_gdal_edit_py_cleanup,
     ]
 

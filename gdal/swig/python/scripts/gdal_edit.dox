@@ -7,7 +7,7 @@ Edit in place various information of an existing GDAL dataset
 
 \verbatim
 gdal_edit [--help-general] [-ro] [-a_srs srs_def] [-a_ullr ulx uly lrx lry]
-          [-tr xres yres] [-unsetgt] [-a_nodata value]
+          [-tr xres yres] [-unsetgt] [-unsetstats] [-a_nodata value]
           [-gcp pixel line easting northing [elevation]]*
           [-mo "META-TAG=VALUE"]*  datasetname
 \endverbatim
@@ -45,6 +45,9 @@ Both must be positive values.</dd>
 
 <dt> <b>-unsetgt</b></dt>:<dd>
 Remove the georeference information.</dd>
+
+<dt> <b>-unsetstats</b></dt>:<dd> (GDAL >= 2.0)
+Remove band statistics information.</dd>
 
 <dt> <b>-a_nodata</b> <i>value</i>:</dt><dd>
 Assign a specified nodata value to output bands.</dd>
