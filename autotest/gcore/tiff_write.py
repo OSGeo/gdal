@@ -4963,6 +4963,73 @@ def tiff_write_126():
     return 'success'
 
 ###############################################################################
+# Test setting/unsetting metadata in update mode (#5628)
+
+def tiff_write_127():
+
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_127.tif', 1, 1)
+    ds = None
+
+    for i in range(2):
+
+        ds = gdal.Open('/vsimem/tiff_write_127.tif',gdal.GA_Update)
+        obj = ds if i == 0 else ds.GetRasterBand(1)
+        obj.SetMetadata({'key' : 'value'})
+        obj = None
+        ds = None
+        
+        ds = gdal.Open('/vsimem/tiff_write_127.tif',gdal.GA_Update)
+        obj = ds if i == 0 else ds.GetRasterBand(1)
+        if obj.GetMetadataItem('key') != 'value':
+            gdaltest.post_reason('fail')
+            print(i)
+            print(obj.GetMetadata())
+            return 'fail'
+        obj.SetMetadata({})
+        obj = None
+        ds = None
+        
+        ds = gdal.Open('/vsimem/tiff_write_127.tif',gdal.GA_Update)
+        obj = ds if i == 0 else ds.GetRasterBand(1)
+        if len(obj.GetMetadata()) != 0:
+            gdaltest.post_reason('fail')
+            print(i)
+            return 'fail'
+        obj.SetMetadataItem('key', 'value')
+        obj = None
+        ds = None
+        
+        ds = gdal.Open('/vsimem/tiff_write_127.tif',gdal.GA_Update)
+        obj = ds if i == 0 else ds.GetRasterBand(1)
+        if obj.GetMetadataItem('key') != 'value':
+            gdaltest.post_reason('fail')
+            print(i)
+            return 'fail'
+        obj.SetMetadataItem('key', None)
+        obj = None
+        ds = None
+        
+        ds = gdal.Open('/vsimem/tiff_write_127.tif',gdal.GA_Update)
+        obj = ds if i == 0 else ds.GetRasterBand(1)
+        if len(obj.GetMetadata()) != 0:
+            gdaltest.post_reason('fail')
+            print(i)
+            return 'fail'
+        obj = None
+        ds = None
+        
+        statBuf = gdal.VSIStatL('/vsimem/tiff_write_127.tif.aux.xml')
+        if statBuf is not None:
+            gdaltest.post_reason('unexpected PAM file')
+            print(i)
+            return 'fail'
+
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_127.tif')
+
+    return 'success'
+    
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 def tiff_write_api_proxy():
@@ -5119,6 +5186,7 @@ gdaltest_list = [
     tiff_write_124,
     tiff_write_125,
     tiff_write_126,
+    tiff_write_127,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 
