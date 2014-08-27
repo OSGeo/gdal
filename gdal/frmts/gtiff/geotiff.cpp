@@ -1882,7 +1882,7 @@ CPLErr GTiffRasterBand::SetMetadata( char ** papszMD, const char *pszDomain )
 {
     if( pszDomain == NULL || !EQUAL(pszDomain,"_temporary_") )
     {
-        if( papszMD != NULL )
+        if( papszMD != NULL || GetMetadata(pszDomain) != NULL )
             poGDS->bMetadataChanged = TRUE;
     }
 
