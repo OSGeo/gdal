@@ -593,7 +593,7 @@ OGRErr  OGRGeometryCollection::exportToWkb( OGRwkbByteOrder eByteOrder,
 /* ==================================================================== */
     for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
     {
-        papoGeoms[iGeom]->exportToWkb( eByteOrder, pabyData + nOffset );
+        papoGeoms[iGeom]->exportToWkb( eByteOrder, pabyData + nOffset, eWkbVariant );
 
         nOffset += papoGeoms[iGeom]->WkbSize();
     }
