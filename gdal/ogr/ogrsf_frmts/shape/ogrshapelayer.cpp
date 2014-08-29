@@ -1595,6 +1595,12 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
         return OGRERR_FAILURE;
     }
 
+    /* Suppress the dummy FID field if we have created it just before */
+    if( DBFGetFieldCount( hDBF ) == 1 && poFeatureDefn->GetFieldCount() == 0 )
+    {
+        DBFDeleteField( hDBF, 0 );
+    }
+
     iNewField =
         DBFAddNativeFieldType( hDBF, szNewFieldName,
                                chType, nWidth, nDecimals );
