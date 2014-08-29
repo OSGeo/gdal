@@ -3790,6 +3790,39 @@ def ogr_shape_78():
     return 'success'
 
 ###############################################################################
+# Test adding a field after creating features with 0 field
+
+def ogr_shape_79():
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_79.dbf')
+    lyr = ds.CreateLayer('ogr_shape_79')
+
+    # This will create a (for now) invisible 'FID' field
+    lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
+
+    # This will delete the implicit field
+    fd = ogr.FieldDefn('field1', ogr.OFTReal)
+    lyr.CreateField(fd)
+    fd = ogr.FieldDefn('field2', ogr.OFTReal)
+    lyr.CreateField(fd)
+
+    # If the implicit field isn't deleted, this will cause crash
+    lyr.ReorderField(0,1)
+
+    lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
+
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_shape_79.dbf')
+    lyr = ds.GetLayer(0)
+    if lyr.GetLayerDefn().GetFieldCount() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_shape_cleanup():
@@ -3820,6 +3853,7 @@ def ogr_shape_cleanup():
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_73.shp' )
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_74.shp' )
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_78.dbf' )
+    shape_drv.DeleteDataSource( '/vsimem/ogr_shape_79.shp' )
 
     return 'success'
 
@@ -3904,6 +3938,7 @@ gdaltest_list = [
     ogr_shape_76,
     ogr_shape_77,
     ogr_shape_78,
+    ogr_shape_79,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':
