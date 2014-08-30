@@ -435,7 +435,7 @@ void VFKReader::AddInfo(const char *pszLine)
 {
     int         i, iKeyLength, iValueLength;
     int         nSkip;
-    char       *pszKey, *pszValue;
+    char       *pszKey, *pszValue, *pszValueEnc;
     const char *poChar, *poKey;
     CPLString   key, value;
     
@@ -478,15 +478,21 @@ void VFKReader::AddInfo(const char *pszLine)
 
     pszValue[iValueLength] = '\0';
 
-    poInfo[pszKey] = pszValue;
 
+    /* recode values, assuming Latin2 */
     if (EQUAL(pszKey, "CODEPAGE")) {
         if (!EQUAL(pszValue, "WE8ISO8859P2"))
             m_bLatin2 = FALSE;
     }
 
+    pszValueEnc = CPLRecode(pszValue,
+                            m_bLatin2 ? CPLStrdup("ISO-8859-2") : CPLStrdup("WINDOWS-1250"),
+                            CPL_ENC_UTF8);
+    poInfo[pszKey] = pszValueEnc;
+        
     CPLFree(pszKey);
     CPLFree(pszValue);
+    CPLFree(pszValueEnc);
 }
 
 /*!
