@@ -59,16 +59,10 @@ sublibs:
 endif
 
 docs:
-	rm -rf html/*
-	doxygen
-	cp ogrsf_frmts/*/drv_*.html html
-	cp ogrsf_frmts/ogr_formats.html html
-	cp ogr_feature_style.html html
+	echo "This target does not exist anymore. Use top-level"
 
 install-docs:
-	$(INSTALL_DIR) $(DESTDIR)$(INST_DOCS)/ogr
-	cp html/* $(DESTDIR)$(INST_DOCS)/ogr
-	cp ../doc/ogr/*.gif $(DESTDIR)$(INST_DOCS)/ogr
+	echo "This target does not exist anymore. Use top-level"
 
 gdalso:	$(GDAL_SLIB)
 
@@ -76,11 +70,7 @@ $(GDAL_SLIB):
 	(cd ..; $(MAKE) check-lib)
 
 web-update:	docs
-	$(INSTALL_DIR) $(INST_HTML)/ogr
-	cp html/* $(INST_HTML)/ogr
-	cp ogrsf_frmts/*/drv_*.html $(INST_HTML)/ogr
-	cp ogrsf_frmts/ogr_formats.html $(INST_HTML)/ogr
-	cp ../doc/ogr/*.gif $(INST_HTML)/ogr
+	echo "This target does not exist anymore. Use top-level"
 
 install:
 	for f in $(INST_H_FILES) ; \
