@@ -42,6 +42,11 @@ int GeoJSONIsObject( const char* pszText )
     if( NULL == pszText )
         return FALSE;
 
+    /* Skip UTF-8 BOM (#5630) */
+    const GByte* pabyData = (const GByte*)pszText;
+    if( pabyData[0] == 0xEF && pabyData[1] == 0xBB && pabyData[2] == 0xBF )
+        pszText += 3;
+
 /* -------------------------------------------------------------------- */
 /*      This is a primitive test, but we need to perform it fast.       */
 /* -------------------------------------------------------------------- */
