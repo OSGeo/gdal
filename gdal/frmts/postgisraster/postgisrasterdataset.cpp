@@ -806,7 +806,7 @@ GBool PostGISRasterDataset::AddComplexSource(PostGISRasterTileDataset* poRTDS)
         "Tile bounding box from (%d, %d) of size (%d, %d) will "
         "cover raster bounding box from (%d, %d) of size "
         "(%d, %d)", 0, 0, 
-        poRTDS>GetRasterXSize(), 
+        poRTDS->GetRasterXSize(), 
         poRTDS->GetRasterYSize(),
         nDstXOff, nDstYOff, nDstXSize, nDstYSize);
 #endif
@@ -1406,12 +1406,6 @@ PostGISRasterTileDataset* PostGISRasterDataset::BuildRasterTileDataset(const cha
 
         return NULL;
     }
-
-#ifdef DEBUG_VERBOSE
-    CPLDebug("PostGIS_Raster", "PostGISRasterDataset::"
-            "Tile pixel size = (%f, %f)", tilePixelSizeX, 
-            tilePixelSizeY);
-#endif
 
     int nTileWidth = atoi(papszParams[POS_WIDTH]);
     int nTileHeight = atoi(papszParams[POS_HEIGHT]);
