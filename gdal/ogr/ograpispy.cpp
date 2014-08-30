@@ -27,6 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+
 #include <stdio.h>
 #include <map>
 #include <set>
