@@ -30,6 +30,7 @@
 
 #include "ogrsf_frmts.h"
 #include "ogr_api.h"
+#include "ograpispy.h"
 
 CPL_CVSID("$Id$");
 
@@ -94,11 +95,20 @@ OGRDataSourceH OGROpen( const char *pszName, int bUpdate,
 
 {
     VALIDATE_POINTER1( pszName, "OGROpen", NULL );
-    
+
+#ifdef OGRAPISPY_ENABLED
+    int iSnapshot = OGRAPISpyOpenTakeSnapshot(pszName, bUpdate);
+#endif
+
     GDALDatasetH hDS = GDALOpenEx(pszName, GDAL_OF_VECTOR |
                             ((bUpdate) ? GDAL_OF_UPDATE: 0), NULL, NULL, NULL);
     if( hDS != NULL && pahDriverList != NULL )
         *pahDriverList = (OGRSFDriverH) GDALGetDatasetDriver(hDS);
+
+#ifdef OGRAPISPY_ENABLED
+    OGRAPISpyOpen(pszName, bUpdate, iSnapshot, &hDS);
+#endif
+
     return (OGRDataSourceH) hDS;
 }
 
@@ -127,6 +137,11 @@ OGRErr OGRReleaseDataSource( OGRDataSourceH hDS )
 
 {
     VALIDATE_POINTER1( hDS, "OGRReleaseDataSource", OGRERR_INVALID_HANDLE );
+
+#ifdef OGRAPISPY_ENABLED
+    if( bOGRAPISpyEnabled )
+        OGRAPISpyClose(hDS);
+#endif
 
     GDALClose( (GDALDatasetH) hDS );
     return OGRERR_NONE;
