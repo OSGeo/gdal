@@ -901,12 +901,8 @@ def ogr_geojson_20():
             print(data.decode('LATIN1'))
             gdaltest.post_reason('Failed to open datasource') 
             return 'fail' 
+        ds = None
 
-        lyr = ds.GetLayerByName('OGRGeoJSON') 
-        if lyr is None: 
-            gdaltest.post_reason('Missing layer called OGRGeoJSON') 
-            return 'fail' 
-            
         gdal.Unlink('/vsimem/testgj')
 
     return 'success' 
