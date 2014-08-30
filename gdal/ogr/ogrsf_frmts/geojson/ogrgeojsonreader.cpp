@@ -71,6 +71,14 @@ OGRErr OGRGeoJSONReader::Parse( const char* pszText )
         json_tokener* jstok = NULL;
         json_object* jsobj = NULL;
 
+        /* Skip UTF-8 BOM (#5630) */
+        const GByte* pabyData = (const GByte*)pszText;
+        if( pabyData[0] == 0xEF && pabyData[1] == 0xBB && pabyData[2] == 0xBF )
+        {
+            CPLDebug("GeoJSON", "Skip UTF-8 BOM");
+            pszText += 3;
+        }
+
         jstok = json_tokener_new();
         jsobj = json_tokener_parse_ex(jstok, pszText, -1);
         if( jstok->err != json_tokener_success)

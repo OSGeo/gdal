@@ -1720,6 +1720,22 @@ def ogr_geojson_cleanup():
 
     return 'success'
 
+###############################################################################
+# Test reading file with UTF-8 BOM (which is supposed to be illegal in JSON...) (#5630)
+
+def ogr_geojson_36():
+
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    ds = ogr.Open('data/point_with_utf8bom.json')
+    if ds is None:
+        gdaltest.post_reason('Failed to open datasource')
+        return 'fail'
+    ds = None
+
+    return 'success'
+
 gdaltest_list = [ 
     ogr_geojson_1,
     ogr_geojson_2,
@@ -1756,6 +1772,7 @@ gdaltest_list = [
     ogr_geojson_33,
     ogr_geojson_34,
     ogr_geojson_35,
+    ogr_geojson_36,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':
