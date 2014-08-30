@@ -34,7 +34,7 @@ OBJ_OGR	=	ogrgeometryfactory.obj ogrpoint.obj ogrcurve.obj ogr_api.obj \
 		swq.obj swq_parser.obj swq_select.obj swq_op_registrar.obj \
 		swq_op_general.obj swq_expr_node.obj ogrpgeogeometry.obj \
 		ogrgeomediageometry.obj ogr_geocoding.obj osr_cs_wkt.obj \
-		osr_cs_wkt_parser.obj ogrgeomfielddefn.obj
+		osr_cs_wkt_parser.obj ogrgeomfielddefn.obj ograpispy.obj
 
 default:        ogr.lib 
 

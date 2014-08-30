@@ -30,6 +30,7 @@
 
 #include "ogrsf_frmts.h"
 #include "ogr_api.h"
+#include "ograpispy.h"
 
 CPL_CVSID("$Id$");
 
@@ -60,6 +61,10 @@ void OGR_DS_Destroy( OGRDataSourceH hDS )
 
 {
     VALIDATE_POINTER0( hDS, "OGR_DS_Destroy" );
+#ifdef OGRAPISPY_ENABLED
+    if( bOGRAPISpyEnabled )
+        OGRAPISpyClose(hDS);
+#endif
     delete (GDALDataset *) hDS;
 }
 
@@ -129,8 +134,15 @@ OGRLayerH OGR_DS_CreateLayer( OGRDataSourceH hDS,
         CPLError ( CE_Failure, CPLE_ObjectNull, "Name was NULL in OGR_DS_CreateLayer");
         return 0;
     }
-    return (OGRLayerH) ((GDALDataset *)hDS)->CreateLayer( 
+    OGRLayerH hLayer = (OGRLayerH) ((GDALDataset *)hDS)->CreateLayer( 
         pszName, (OGRSpatialReference *) hSpatialRef, eType, papszOptions );
+
+#ifdef OGRAPISPY_ENABLED
+    if( bOGRAPISpyEnabled )
+        OGRAPISpy_DS_CreateLayer(hDS, pszName, hSpatialRef, eType, papszOptions, hLayer);
+#endif
+
+    return hLayer;
 }
 
 /************************************************************************/
@@ -160,7 +172,14 @@ OGRErr OGR_DS_DeleteLayer( OGRDataSourceH hDS, int iLayer )
 {
     VALIDATE_POINTER1( hDS, "OGR_DS_DeleteLayer", OGRERR_INVALID_HANDLE );
 
-    return ((GDALDataset *) hDS)->DeleteLayer( iLayer );
+    OGRErr eErr = ((GDALDataset *) hDS)->DeleteLayer( iLayer );
+
+#ifdef OGRAPISPY_ENABLED
+    if( bOGRAPISpyEnabled )
+        OGRAPISpy_DS_DeleteLayer(hDS, iLayer, eErr);
+#endif
+
+    return eErr;
 }
 
 /************************************************************************/
@@ -172,7 +191,14 @@ OGRLayerH OGR_DS_GetLayerByName( OGRDataSourceH hDS, const char *pszName )
 {
     VALIDATE_POINTER1( hDS, "OGR_DS_GetLayerByName", NULL );
 
-    return (OGRLayerH) ((GDALDataset *) hDS)->GetLayerByName( pszName );
+    OGRLayerH hLayer = (OGRLayerH) ((GDALDataset *) hDS)->GetLayerByName( pszName );
+
+#ifdef OGRAPISPY_ENABLED
+    if( bOGRAPISpyEnabled )
+        OGRAPISpy_DS_GetLayerByName(hDS, pszName, hLayer);
+#endif
+
+    return hLayer;
 }
 
 /************************************************************************/
@@ -187,10 +213,17 @@ OGRLayerH OGR_DS_ExecuteSQL( OGRDataSourceH hDS,
 {
     VALIDATE_POINTER1( hDS, "OGR_DS_ExecuteSQL", NULL );
 
-    return (OGRLayerH) 
+    OGRLayerH hLayer = (OGRLayerH) 
         ((GDALDataset *)hDS)->ExecuteSQL( pszStatement,
                                             (OGRGeometry *) hSpatialFilter,
                                             pszDialect );
+
+#ifdef OGRAPISPY_ENABLED
+    if( bOGRAPISpyEnabled )
+        OGRAPISpy_DS_ExecuteSQL(hDS, pszStatement, hSpatialFilter, pszDialect, hLayer);
+#endif
+
+    return hLayer;
 }
 
 /************************************************************************/
@@ -201,6 +234,11 @@ void OGR_DS_ReleaseResultSet( OGRDataSourceH hDS, OGRLayerH hLayer )
 
 {
     VALIDATE_POINTER0( hDS, "OGR_DS_ReleaseResultSet" );
+
+#ifdef OGRAPISPY_ENABLED
+    if( bOGRAPISpyEnabled )
+        OGRAPISpy_DS_ReleaseResultSet(hDS, hLayer);
+#endif
 
     ((GDALDataset *) hDS)->ReleaseResultSet( (OGRLayer *) hLayer );
 }
@@ -227,6 +265,11 @@ int OGR_DS_GetLayerCount( OGRDataSourceH hDS )
 {
     VALIDATE_POINTER1( hDS, "OGR_DS_GetLayerCount", 0 );
 
+#ifdef OGRAPISPY_ENABLED
+    if( bOGRAPISpyEnabled )
+        OGRAPISpy_DS_GetLayerCount(hDS);
+#endif
+
     return ((GDALDataset *)hDS)->GetLayerCount();
 }
 
@@ -239,7 +282,14 @@ OGRLayerH OGR_DS_GetLayer( OGRDataSourceH hDS, int iLayer )
 {
     VALIDATE_POINTER1( hDS, "OGR_DS_GetLayer", NULL );
 
-    return (OGRLayerH) ((GDALDataset*)hDS)->GetLayer( iLayer );
+    OGRLayerH hLayer = (OGRLayerH) ((GDALDataset*)hDS)->GetLayer( iLayer );
+
+#ifdef OGRAPISPY_ENABLED
+    if( bOGRAPISpyEnabled )
+        OGRAPISpy_DS_GetLayer(hDS, iLayer, hLayer);
+#endif
+
+    return hLayer;
 }
 
 /************************************************************************/

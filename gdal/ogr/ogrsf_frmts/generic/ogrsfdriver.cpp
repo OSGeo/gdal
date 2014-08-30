@@ -31,6 +31,7 @@
 #include "ogrsf_frmts.h"
 #include "ogr_api.h"
 #include "ogr_p.h"
+#include "ograpispy.h"
 
 CPL_CVSID("$Id$");
 
@@ -69,7 +70,13 @@ OGRDataSourceH OGR_Dr_CreateDataSource( OGRSFDriverH hDriver,
 
     GDALDriver* poDriver = (GDALDriver*)hDriver;
 
-    return (OGRDataSourceH) poDriver->Create( pszName, 0, 0, 0, GDT_Unknown, papszOptions );
+    OGRDataSourceH hDS = (OGRDataSourceH) poDriver->Create( pszName, 0, 0, 0, GDT_Unknown, papszOptions );
+
+#ifdef OGRAPISPY_ENABLED
+    OGRAPISpyCreateDataSource(hDriver, pszName, papszOptions, (OGRDataSourceH) hDS);
+#endif
+
+    return hDS;
 }
 
 /************************************************************************/
@@ -96,6 +103,10 @@ OGRErr OGR_Dr_DeleteDataSource( OGRSFDriverH hDriver,
 {
     VALIDATE_POINTER1( hDriver, "OGR_Dr_DeleteDataSource",
                        OGRERR_INVALID_HANDLE );
+
+#ifdef OGRAPISPY_ENABLED
+    OGRAPISpyDeleteDataSource(hDriver, pszDataSource);
+#endif
 
     return ((GDALDriver *) hDriver)->Delete( pszDataSource );
 }
@@ -124,10 +135,21 @@ OGRDataSourceH OGR_Dr_Open( OGRSFDriverH hDriver, const char *pszName,
 
     const char* const apszDrivers[] = { ((GDALDriver*)hDriver)->GetDescription(),
                                    NULL };
-    return (OGRDataSourceH)GDALOpenEx(pszName,
+
+#ifdef OGRAPISPY_ENABLED
+    int iSnapshot = OGRAPISpyOpenTakeSnapshot(pszName, bUpdate);
+#endif
+
+    GDALDatasetH hDS = GDALOpenEx(pszName,
                                       GDAL_OF_VECTOR |
                                       ((bUpdate) ? GDAL_OF_UPDATE: 0),
                                       apszDrivers, NULL, NULL);
+
+#ifdef OGRAPISPY_ENABLED
+    OGRAPISpyOpen(pszName, bUpdate, iSnapshot, &hDS);
+#endif
+
+    return (OGRDataSourceH) hDS;
 }
 
 /************************************************************************/
