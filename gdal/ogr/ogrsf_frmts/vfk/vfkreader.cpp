@@ -154,18 +154,20 @@ char *VFKReader::ReadLine(bool bRecode)
 int VFKReader::ReadDataBlocks()
 {
     char       *pszLine, *pszBlockName;
-
+    bool        bProcessKatuze;
+    
     IVFKDataBlock *poNewDataBlock;
     
     CPLAssert(NULL != m_pszFilename);
 
     VSIFSeek(m_poFD, 0, SEEK_SET);
+    bProcessKatuze = FALSE;
     while ((pszLine = ReadLine()) != NULL) {
-        if (strlen(pszLine) < 2 || pszLine[0] != '&')
-        {
+        if (strlen(pszLine) < 2 || pszLine[0] != '&') {
             CPLFree(pszLine);
             continue;
         }
+
         if (pszLine[1] == 'B') {
             pszBlockName = GetDataBlockName(pszLine);
             if (pszBlockName == NULL) { 
@@ -183,12 +185,24 @@ int VFKReader::ReadDataBlocks()
         else if (pszLine[1] == 'H') {
             /* header - metadata */
             AddInfo(pszLine);
+            if (EQUALN(pszLine, "&HKATUZE", 8)) {
+                bProcessKatuze = TRUE;
+                CPLFree(pszLine);
+                continue;
+            }
         }
         else if (pszLine[1] == 'K' && strlen(pszLine) == 2) {
             /* end of file */
             CPLFree(pszLine);
             break;
         }
+        
+        if (bProcessKatuze) {
+            bProcessKatuze = FALSE;
+            if (EQUALN(pszLine, "&DKATUZE", 8))
+                AddInfo(pszLine);
+        }
+        
         CPLFree(pszLine);
     }
     
@@ -212,6 +226,7 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
     CPLString   osBlockNameLast;
     int         nLength, iLine, nSkipped, nDupl, nRecords;
     int         iDataBlock;
+    bool        bSkipKatuze;
     
     IVFKDataBlock *poDataBlockCurrent;
     
@@ -235,14 +250,33 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
     
     VSIFSeek(m_poFD, 0, SEEK_SET);
     iLine = nSkipped = nDupl = nRecords = 0;
+    bSkipKatuze = FALSE;
     while ((pszLine = ReadLine()) != NULL) {
         iLine++;
         nLength = strlen(pszLine);
-        if (nLength < 2)
+        if (nLength < 2) {
+            CPLFree(pszLine);
             continue;
+        }
+
+        /* assuming header section (&H) in the beginning of the file */
+        if (iLine < 20 && EQUALN(pszLine, "&HKATUZE", 8)) {
+            bSkipKatuze = TRUE;
+            CPLFree(pszLine);
+            continue;
+        }
         
         if (pszLine[1] == 'D') {
             pszBlockName = GetDataBlockName(pszLine);
+            
+            if (bSkipKatuze) {
+                bSkipKatuze = FALSE; /* do not skip next KATUZE line */
+                if (pszBlockName && EQUAL(pszBlockName, "KATUZE")) {
+                    AddInfo(pszLine);
+                    CPLFree(pszLine);
+                    continue; /* skip KATUZE from header */
+                }
+            }
             if (pszBlockName && (!pszName || EQUAL(pszBlockName, pszName))) {
                 /* merge lines if needed */
                 if (pszLine[nLength - 2] == '\302' &&
@@ -315,6 +349,10 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
             CPLFree(pszLine);
             break;
         }
+
+        if (bSkipKatuze)
+            bSkipKatuze = FALSE;
+        
         CPLFree(pszLine);
     }
 
@@ -434,12 +472,17 @@ int VFKReader::LoadGeometry()
 void VFKReader::AddInfo(const char *pszLine)
 {
     int         i, iKeyLength, iValueLength;
-    int         nSkip;
+    int         nSkip, nOffset;
     char       *pszKey, *pszValue, *pszValueEnc;
     const char *poChar, *poKey;
     CPLString   key, value;
     
-    poChar = poKey = pszLine + 2; /* &H */
+    if (pszLine[1] == 'H')
+        nOffset = 2;
+    else
+        nOffset = 1; /* &DKATUZE */
+    
+    poChar = poKey = pszLine + nOffset; /* &H */
     iKeyLength = 0;
     while (*poChar != '\0' && *poChar != ';') {
         iKeyLength++;
