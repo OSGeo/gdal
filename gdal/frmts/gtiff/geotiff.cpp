@@ -766,7 +766,7 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff, void *
             memcpy(pabyBuffer, poGDS->pabyJPEGTable, poGDS->nJPEGTableSize);
             VSILFILE* fpTIF = (VSILFILE*) TIFFClientdata( hTIFF );
             VSIFSeekL(fpTIF, nOffset, SEEK_SET);
-            VSIFReadL(pabyBuffer + poGDS->nJPEGTableSize, 1, nByteCount, fpTIF);
+            VSIFReadL(pabyBuffer + poGDS->nJPEGTableSize, 1, (size_t)nByteCount, fpTIF);
         }
         else
         {
@@ -2462,7 +2462,7 @@ GDALColorInterp GTiffRasterBand::GetColorInterpretation()
  /* Note: was EXTRASAMPLE_ASSOCALPHA in GDAL < 1.10 */
 #define DEFAULT_ALPHA_TYPE              EXTRASAMPLE_UNASSALPHA
 
-static int GTiffGetAlphaValue(const char* pszValue, int nDefault)
+static uint16 GTiffGetAlphaValue(const char* pszValue, uint16 nDefault)
 {
     if (pszValue == NULL)
         return nDefault;
@@ -4840,8 +4840,8 @@ void GTiffCacheOffsetOrCount4(VSILFILE* fp,
     if( nOffset + sizeof(val) > nOffsetEndPage )
         nOffsetEndPage += IO_CACHE_PAGE_SIZE;
     VSIFSeekL(fp, nOffsetStartPage, SEEK_SET);
-    VSIFReadL(buffer, 1, nOffsetEndPage - nOffsetStartPage, fp);
-    iStartBefore = - ((nOffset - nOffsetStartPage) / sizeof(val));
+    VSIFReadL(buffer, 1, (size_t)(nOffsetEndPage - nOffsetStartPage), fp);
+    iStartBefore = - (int)((nOffset - nOffsetStartPage) / sizeof(val));
     if( nBlockId + iStartBefore < 0 )
         iStartBefore = -nBlockId;
     for(i=iStartBefore; (uint32)(nBlockId + i) < nstrips &&
@@ -4874,8 +4874,8 @@ void GTiffCacheOffsetOrCount8(VSILFILE* fp,
     if( nOffset + sizeof(val) > nOffsetEndPage )
         nOffsetEndPage += IO_CACHE_PAGE_SIZE;
     VSIFSeekL(fp, nOffsetStartPage, SEEK_SET);
-    VSIFReadL(buffer, 1, nOffsetEndPage - nOffsetStartPage, fp);
-    iStartBefore = - ((nOffset - nOffsetStartPage) / sizeof(val));
+    VSIFReadL(buffer, 1, (size_t)(nOffsetEndPage - nOffsetStartPage), fp);
+    iStartBefore = - (int)((nOffset - nOffsetStartPage) / sizeof(val));
     if( nBlockId + iStartBefore < 0 )
         iStartBefore = -nBlockId;
     for(i=iStartBefore; (uint32)(nBlockId + i) < nstrips &&
