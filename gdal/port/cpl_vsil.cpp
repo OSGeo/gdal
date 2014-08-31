@@ -926,7 +926,7 @@ int VSIIngestFile( VSILFILE* fp,
                         VSIFCloseL( fp );
                     return FALSE;
                 }
-                GByte* pabyNew = (GByte*)VSIRealloc(*ppabyRet, nDataAlloc);
+                GByte* pabyNew = (GByte*)VSIRealloc(*ppabyRet, (size_t)nDataAlloc);
                 if( pabyNew == NULL )
                 {
                     CPLError( CE_Failure, CPLE_OutOfMemory,

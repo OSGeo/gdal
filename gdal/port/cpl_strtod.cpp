@@ -68,6 +68,14 @@ static float CPLNaN(void)
         return 1.0 / ZERO; /* MSVC doesn't like 1.0 / 0.0 */
     }
     #define INFINITY CPLInfinity()
+    static CPL_INLINE double CPLNegInfinity(void)
+    {
+        static double ZERO = 0;
+        return -1.0 / ZERO; /* MSVC doesn't like -1.0 / 0.0 */
+    }
+    #define NEG_INFINITY CPLNegInfinity()
+#else
+    #define NEG_INFINITY (-INFINITY)
 #endif
 
 /************************************************************************/
@@ -257,7 +265,7 @@ double CPLStrtodDelim(const char *nptr, char **endptr, char point)
 
         if (strcmp(nptr,"-inf") == 0 ||
             strcmp(nptr,"-1.#INF") == 0)
-            return -INFINITY;
+            return NEG_INFINITY;
     }
     else if (nptr[0] == '1')
     {
