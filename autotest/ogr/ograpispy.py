@@ -140,7 +140,16 @@ def ograpispy_cleanup():
     except:
         pass
     try:
+        os.unlink('tmp/ograpispy_2.pyc')
+    except:
+        pass
+    try:
         shutil.rmtree('tmp/snapshot_1')
+    except:
+        pass
+    try:
+        os.stat('tmp/ograpispy_2.shp')
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/ograpispy_2.shp')
     except:
         pass
 
