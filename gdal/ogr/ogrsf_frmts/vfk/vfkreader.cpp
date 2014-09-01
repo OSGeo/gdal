@@ -517,7 +517,7 @@ void VFKReader::AddInfo(const char *pszLine)
     }
 
     pszValueEnc = CPLRecode(pszValue,
-                            m_bLatin2 ? CPLStrdup("ISO-8859-2") : CPLStrdup("WINDOWS-1250"),
+                            m_bLatin2 ? "ISO-8859-2" : "WINDOWS-1250",
                             CPL_ENC_UTF8);
     if (poInfo.find(pszKey) == poInfo.end() ) {
         poInfo[pszKey] = pszValueEnc;
