@@ -527,7 +527,7 @@ void VFKReader::AddInfo(const char *pszLine)
         size_t iFound;
         char *pszKeyUniq;
         
-        /* max. number of duplicated keys can be 102 */
+        /* max. number of duplicated keys can be 101 */
         pszKeyUniq = (char *) CPLMalloc(strlen(pszKey) + 4); 
 
         nCount = 1; /* assuming at least one match */
