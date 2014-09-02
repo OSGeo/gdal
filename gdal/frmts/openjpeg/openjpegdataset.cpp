@@ -1006,6 +1006,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     nTileH = pCodeStreamInfo->tdy;
     nTilesX = pCodeStreamInfo->tw;
     nTilesY = pCodeStreamInfo->th;
+    int mct = pCodeStreamInfo->m_default_tile_info.mct;
     int numResolutions = pCodeStreamInfo->m_default_tile_info.tccp_info[0].numresolutions;
     opj_destroy_cstr_info(&pCodeStreamInfo);
 
@@ -1024,6 +1025,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLDebug("OPENJPEG", "nY0 = %d", nY0);
     CPLDebug("OPENJPEG", "nTileW = %d", nTileW);
     CPLDebug("OPENJPEG", "nTileH = %d", nTileH);
+    CPLDebug("OPENJPEG", "mct = %d", mct);
     CPLDebug("OPENJPEG", "psImage->x0 = %d", psImage->x0);
     CPLDebug("OPENJPEG", "psImage->y0 = %d", psImage->y0);
     CPLDebug("OPENJPEG", "psImage->x1 = %d", psImage->x1);
@@ -1480,14 +1482,27 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     
     int bSOP = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "SOP", "FALSE"));
     int bEPH = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "EPH", "FALSE"));
-    
-    int bResample = nBands == 3 && eDataType == GDT_Byte &&
-            CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "YCBCR420", "FALSE"));
+
+    int bResample = (nBands == 3 && eDataType == GDT_Byte &&
+            CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "YCBCR420", "FALSE")));
     if (bResample && !((nXSize % 2) == 0 && (nYSize % 2) == 0 && (nBlockXSize % 2) == 0 && (nBlockYSize % 2) == 0))
     {
         CPLError(CE_Warning, CPLE_NotSupported,
                  "YCBCR420 unsupported when image size and/or tile size are not multiple of 2");
         bResample = FALSE;
+    }
+
+    const char* pszYCC = CSLFetchNameValue(papszOptions, "YCC");
+    int bYCC = (nBands == 3 && eDataType == GDT_Byte &&
+            CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "YCC", "TRUE")));
+    if( bResample && bYCC )
+    {
+        if( pszYCC != NULL )
+        {
+            CPLError(CE_Warning, CPLE_NotSupported,
+                    "YCC unsupported when YCbCr requesting");
+        }
+        bYCC = FALSE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1511,6 +1526,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     parameters.irreversible = bIsIrreversible;
     parameters.numresolution = nNumResolutions;
     parameters.prog_order = eProgOrder;
+    parameters.tcp_mct = bYCC;
 
     opj_image_cmptparm_t* pasBandParams =
             (opj_image_cmptparm_t*)CPLMalloc(nBands * sizeof(opj_image_cmptparm_t));
@@ -2011,6 +2027,7 @@ void GDALRegister_JP2OpenJPEG()
 "   <Option name='SOP' type='boolean' description='True to insert SOP markers' default='false'/>"
 "   <Option name='EPH' type='boolean' description='True to insert EPH markers' default='false'/>"
 "   <Option name='YCBCR420' type='boolean' description='if RGB must be resampled to YCbCr 4:2:0' default='false'/>"
+"   <Option name='YCC' type='boolean' description='if RGB must be transformed to YCC color space' default='true'/>"
 "</CreationOptionList>"  );
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
