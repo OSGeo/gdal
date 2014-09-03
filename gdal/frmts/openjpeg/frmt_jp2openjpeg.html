@@ -32,16 +32,24 @@ automatically from the file extension. If it's neither JP2 nor J2K, J2K codec is
 <li> <b>GeoJP2=YES/NO</b>: (Starting with GDAL 1.10) Indicates whether a UUID/GeoTIFF box conforming to the GeoJP2 (GeoTIFF in JPEG2000) specification should be included in the file.  Defaults to YES.<p>
 
 <li><p><b>QUALITY</b> : Percentage between 0 and 100. A value of 50 means the file will be half-size in comparison to uncompressed data, 33 means 1/3, etc.. Defaults to 25</li>
-<li><p><b>REVERSIBLE=YES/NO</b> : YES means lossless compression. Defaults to NO.</p></li>
+<li><p><b>REVERSIBLE=YES/NO</b> : YES means use of 5x3 integer-only filter, NO use of the irreversible DWT 9-7. Defaults to NO.</p></li>
 <li><p><b>RESOLUTIONS</b> : Number of resolution levels. Between 1 and 7. Defaults to 6.</p></li>
 <li><p><b>BLOCKXSIZE</b> : Tile width. Defaults to 1024.</p></li>
 <li><p><b>BLOCKYSIZE</b> : Tile height. Defaults to 1024.</p></li>
 <li><p><b>PROGRESSION</b> : Progession order : LRCP, RLCP, RPCL, PCRL or CPRL. Defaults to LRCP.</p></li>
 <li><p><b>SOP=YES/NO</b> : YES means generate SOP marker segments. Defaults to NO.</p></li>
 <li><p><b>EPH=YES/NO</b> : YES means generate EPH marker segments. Defaults to NO.</p></li>
-<li><p><b>EPH=YES/NO</b> : YES means generate EPH marker segments. Defaults to NO.</p></li>
 <li><p><b>YCBCR420=YES/NO</b> : (GDAL &gt;= 1.11) YES if RGB must be resampled to YCbCr 4:2:0. Defaults to NO.</p></li>
-<li><p><b>YCC=YES/NO</b> : (GDAL &gt;= 2.0) YES if RGB must be transformed to YCC color space. Defaults to YES.</p></li>
+<li><p><b>YCC=YES/NO</b> : (GDAL &gt;= 2.0) YES if RGB must be transformed to YCC color space (internal transform, without visual degration). Defaults to YES.</p></li>
+</ul>
+
+<h3>Lossless compression</h3>
+
+Lossless compression can be achieved if ALL the following creation options are defined :
+<ul>
+<li>QUALITY=100</li>
+<li>REVERSIBLE=YES</li>
+<li>YCBCR420=NO (which is the default)</li>
 </ul>
 
 <h2>See Also:</h2>
