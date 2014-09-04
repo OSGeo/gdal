@@ -69,7 +69,7 @@ Historical and Current:
 In gdal/data we have several coordinate system dictionary files derived in one fashion or another from other source (via translation scripts):
 
 * gdal/data/cubewerx_extra.wkt: derived from definitions distributed by Cubewerx, rights unclear. See http://trac.osgeo.org/gdal/ticket/2165
-* gdal/data/ecw_cs.dat: Derived via much processing from ERMapper GDT definitions, rights unclear.  See http://trac.osgeo.org/gdal/ticket/2162
+* gdal/data/ecw_cs.wkt: Derived via much processing from ERMapper GDT definitions, rights unclear.  See http://trac.osgeo.org/gdal/ticket/2162
 * gdal/data/esri_extra.wkt: Derived with some processing from projections definitions in ArcGIS, rights unclear. See http://trac.osgeo.org/gdal/ticket/2163
 
 == Included Libraries ==
@@ -125,7 +125,7 @@ Note: all the following are build options, not required.
 
 * Contains various data files without copyright messages embedded.
 * cubewerx_extra.wkt: derived from definitions distributed by Cubewerx, rights unclear. See http://trac.osgeo.org/gdal/ticket/2165
-* ecw_cs.dat: Derived via much processing from ERMapper GDT definitions, rights unclear. See http://trac.osgeo.org/gdal/ticket/2162
+* ecw_cs.wkt: Derived via much processing from ERMapper GDT definitions, rights unclear. See http://trac.osgeo.org/gdal/ticket/2162
 * esri_extra.wkt: Derived with some processing from projections definitions in ArcGIS, rights unclear. See http://trac.osgeo.org/gdal/ticket/2163
 * ellipsoid.csv, gcs.csv, gdal_datum.csv, pcs.csv, prime_meridian.csv, projop_wparm.csv, unit_of_measure.csv: Derived from EPSG.  Modifications to EPSG data violate the EPSG use agreement (if we are to still attribute it to EPSG) so I have segregated changes into override files (ie. gcs.override.csv). 
 * seed_2d.dgn, seed_3d.dgn: Exact source of these files is unclear.  The files contain no substantial creative content since all but the header elements were stripped.  Judged to acceptable use. 
