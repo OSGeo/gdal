@@ -1,24 +1,24 @@
 #******************************************************************************
 #  $Id$
-# 
+#
 #  Project:  GDAL ECW Driver
 #  Purpose:  Script to lookup ECW (GDT) coordinate systems and translate
-#            into OGC WKT for storage in $GDAL_HOME/data/ecw_cs.dat.
+#            into OGC WKT for storage in $GDAL_HOME/data/ecw_cs.wkt.
 #  Author:   Frank Warmerdam, warmerdam@pobox.com
-# 
+#
 #******************************************************************************
 #  Copyright (c) 2003, Frank Warmerdam
-# 
+#
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
 #  to deal in the Software without restriction, including without limitation
 #  the rights to use, copy, modify, merge, publish, distribute, sublicense,
 #  and/or sell copies of the Software, and to permit persons to whom the
 #  Software is furnished to do so, subject to the following conditions:
-# 
+#
 #  The above copyright notice and this permission notice shall be included
 #  in all copies or substantial portions of the Software.
-# 
+#
 #  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 #  OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 #  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -27,17 +27,6 @@
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
 #******************************************************************************
-# 
-# $Log$
-# Revision 1.3  2006/09/05 01:23:38  fwarmerdam
-# do not alter linear projection parameter units (bug 1280)
-#
-# Revision 1.2  2006/04/03 01:46:18  fwarmerdam
-# Added somenew projections
-#
-# Revision 1.1  2003/06/19 17:53:34  warmerda
-# New
-#
 
 import string
 import sys
