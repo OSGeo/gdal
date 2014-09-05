@@ -546,7 +546,6 @@ int FileGDBTable::ReadTableXHeader()
 
         /* GUInt32 nMagic2 = GetUInt32(abyTrailer + 12, 0); */
 
-        returnErrorIf(nMagic != 0 && nMagic != 32 );
         if( nMagic == 0 )
         {
             returnErrorIf(nBitsForBlockMap != n1024Blocks );
