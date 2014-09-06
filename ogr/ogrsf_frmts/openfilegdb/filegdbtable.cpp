@@ -712,19 +712,23 @@ int FileGDBTable::Open(const char* pszFilename)
         {
             GByte flags = 0;
             int nMaxWidth = 0;
-            GByte defaultValueLength = 0;
+            GUInt32 defaultValueLength = 0;
 
             switch( eType )
             {
                 case FGFT_STRING:
+                {
                     returnErrorIf(nRemaining < 6 );
                     nMaxWidth = GetInt32(pabyIter, 0);
                     returnErrorIf(nMaxWidth < 0);
                     flags = pabyIter[4];
-                    defaultValueLength = pabyIter[5];
-                    pabyIter += 6;
-                    nRemaining -= 6;
+                    pabyIter += 5;
+                    nRemaining -= 5;
+                    GByte* pabyIterBefore = pabyIter;
+                    returnErrorIf(!ReadVarUInt32(pabyIter, pabyIter + nRemaining, defaultValueLength));
+                    nRemaining -= (pabyIter - pabyIterBefore);
                     break;
+                }
 
                 case FGFT_OBJECTID:
                 case FGFT_BINARY:
