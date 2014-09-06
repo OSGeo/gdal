@@ -834,40 +834,44 @@ int FileGDBTable::Open(const char* pszFilename)
             nRemaining --;
             poField->bHasM = (abyGeomFlags & 2) != 0;
             poField->bHasZ = (abyGeomFlags & 4) != 0;
-            returnErrorIf(
-                    nRemaining < (GUInt32)(sizeof(double) * ( 8 + (poField->bHasM + poField->bHasZ) * 3 )) );
 
-#define READ_DOUBLE(field) do { \
-    field = GetFloat64(pabyIter, 0); \
-    pabyIter += sizeof(double); \
-    nRemaining -= sizeof(double); } while(0)
-
-            READ_DOUBLE(poField->dfXOrigin);
-            READ_DOUBLE(poField->dfYOrigin);
-            READ_DOUBLE(poField->dfXYScale);
-
-            if( poField->bHasM )
+            if( eType == FGFT_GEOMETRY || abyGeomFlags > 0 )
             {
-                READ_DOUBLE(poField->dfMOrigin);
-                READ_DOUBLE(poField->dfMScale);
-            }
+                returnErrorIf(
+                        nRemaining < (GUInt32)(sizeof(double) * ( 4 + (( eType == FGFT_GEOMETRY ) ? 4 : 0) + (poField->bHasM + poField->bHasZ) * 3 )) );
 
-            if( poField->bHasZ )
-            {
-                READ_DOUBLE(poField->dfZOrigin);
-                READ_DOUBLE(poField->dfZScale);
-            }
+    #define READ_DOUBLE(field) do { \
+        field = GetFloat64(pabyIter, 0); \
+        pabyIter += sizeof(double); \
+        nRemaining -= sizeof(double); } while(0)
 
-            READ_DOUBLE(poField->dfXYTolerance);
+                READ_DOUBLE(poField->dfXOrigin);
+                READ_DOUBLE(poField->dfYOrigin);
+                READ_DOUBLE(poField->dfXYScale);
 
-            if( poField->bHasM )
-            {
-                READ_DOUBLE(poField->dfMTolerance);
-            }
+                if( poField->bHasM )
+                {
+                    READ_DOUBLE(poField->dfMOrigin);
+                    READ_DOUBLE(poField->dfMScale);
+                }
 
-            if( poField->bHasZ )
-            {
-                READ_DOUBLE(poField->dfZTolerance);
+                if( poField->bHasZ )
+                {
+                    READ_DOUBLE(poField->dfZOrigin);
+                    READ_DOUBLE(poField->dfZScale);
+                }
+
+                READ_DOUBLE(poField->dfXYTolerance);
+
+                if( poField->bHasM )
+                {
+                    READ_DOUBLE(poField->dfMTolerance);
+                }
+
+                if( poField->bHasZ )
+                {
+                    READ_DOUBLE(poField->dfZTolerance);
+                }
             }
 
             if( eType == FGFT_RASTER )
