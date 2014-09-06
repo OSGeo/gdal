@@ -296,6 +296,15 @@ void RegisterOGRFileGDB()
 "  <Option name='XML_DEFINITION' type='string' description='XML definition to create the new table. The root node of such a XML definition must be a <esri:DataElement> element conformant to FileGDBAPI.xsd'/>"
 "  <Option name='CREATE_MULTIPATCH' type='boolean' description='Whether to write geometries of layers of type MultiPolygon as MultiPatch' default='NO'/>"
 "  <Option name='COLUMN_TYPES' type='string' description='A list of strings of format field_name=fgdb_filed_type (separated by comma) to force the FileGDB column type of fields to be created'/>"
+"  <Option name='CONFIGURATION_KEYWORD' type='string-select' description='Customize how data is stored. By default text in UTF-8 and data up to 1TB'>"
+"    <Value>DEFAULTS</Value>"
+"    <Value>TEXT_UTF16</Value>"
+"    <Value>MAX_FILE_SIZE_4GB</Value>"
+"    <Value>MAX_FILE_SIZE_256TB</Value>"
+"    <Value>GEOMETRY_OUTOFLINE</Value>"
+"    <Value>BLOB_OUTOFLINE</Value>"
+"    <Value>GEOMETRY_AND_BLOB_OUTOFLINE</Value>"
+"  </Option>"
 "</LayerCreationOptionList>");
 
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);

@@ -1467,6 +1467,10 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
     CPLCreateXMLElementAndValue(defn_xml,"Versioned", "false");
     CPLCreateXMLElementAndValue(defn_xml,"CanVersion", "false");
 
+    if ( CSLFetchNameValue( papszOptions, "CONFIGURATION_KEYWORD") != NULL )
+        CPLCreateXMLElementAndValue(defn_xml,"ConfigurationKeyword",
+                                    CSLFetchNameValue( papszOptions, "CONFIGURATION_KEYWORD"));
+
     /* We might need to make OID optional later, but OGR likes to have a FID */
     CPLCreateXMLElementAndValue(defn_xml,"HasOID", "true");
     CPLCreateXMLElementAndValue(defn_xml,"OIDFieldName", fid_name.c_str());
