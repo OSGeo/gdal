@@ -32,6 +32,7 @@ import os
 import sys
 import string
 import array
+import shutil
 from osgeo import gdal
 
 sys.path.append( '../pymod' )
@@ -39,25 +40,24 @@ sys.path.append( '../pymod' )
 import gdaltest
 
 ###############################################################################
-# Do a simple checksum on our test file (with a faked imagery.tif).
-
-def dimap_1():
-
-    tst = gdaltest.GDALTest( 'DIMAP', 'METADATA.DIM', 1, 21586,
-                             xoff = 0, yoff = 0, xsize = 100, ysize = 100 )
-    return tst.testOpen()
-
-###############################################################################
 # Open and verify a the GCPs and metadata.
 
-def dimap_2():
+def dimap_1():
+    
+    shutil.copy('data/METADATA.DIM', 'tmp')
+    shutil.copy('data/IMAGERY.TIF', 'tmp')
+    shutil.copy('data/rgbsmall.tif', 'tmp')
 
-    ds = gdal.Open( 'data/METADATA.DIM' )
+    ds = gdal.Open( 'tmp/METADATA.DIM' )
 
     if ds.RasterCount != 1 \
        or ds.RasterXSize != 6000 \
        or ds.RasterYSize != 6000:
         gdaltest.post_reason ( 'wrong size or bands' )
+        return 'fail'
+        
+    if ds.GetRasterBand(1).Checksum(0,0,100,100) != 21586:
+        gdaltest.post_reason ( 'wrong checksum' )
         return 'fail'
 
     md = ds.GetMetadata()
@@ -89,12 +89,16 @@ def dimap_2():
         print(len(gcps))
         print(gcps[0])
         return 'fail'
-    
+
+    ds = None
+    os.unlink('tmp/METADATA.DIM')
+    os.unlink('tmp/IMAGERY.TIF')
+    os.unlink('tmp/rgbsmall.tif')
+
     return 'success'
 
 gdaltest_list = [
-    dimap_1,
-    dimap_2 ]
+    dimap_1 ]
 
 if __name__ == '__main__':
 
