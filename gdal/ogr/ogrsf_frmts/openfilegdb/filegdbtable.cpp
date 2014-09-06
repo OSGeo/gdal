@@ -113,6 +113,7 @@ void FileGDBTable::Init()
     bHasReadGDBIndexes = FALSE;
     nOffsetFieldDesc = 0;
     nFieldDescLength = 0;
+    nTablxOffsetSize = 0;
     anFeatureOffsets.resize(0);
     nOffsetHeaderEnd = 0;
 }
@@ -529,11 +530,14 @@ int FileGDBTable::ReadTableXHeader()
     else
         returnErrorIf(nTotalRecordCount < 0 );
 
+    nTablxOffsetSize = GetUInt32(abyHeader + 12, 0);
+    returnErrorIf(nTablxOffsetSize < 4 || nTablxOffsetSize > 6);
+
     if( n1024Blocks != 0 )
     {
         GByte abyTrailer[16];
 
-        VSIFSeekL( fpTableX, 5 * 1024 * (vsi_l_offset)n1024Blocks + 16, SEEK_SET );
+        VSIFSeekL( fpTableX, nTablxOffsetSize * 1024 * (vsi_l_offset)n1024Blocks + 16, SEEK_SET );
         returnErrorIf(VSIFReadL( abyTrailer, 16, 1, fpTableX ) != 1 );
 
         GUInt32 nMagic = GetUInt32(abyTrailer, 0);
@@ -1017,17 +1021,24 @@ vsi_l_offset FileGDBTable::GetOffsetInTableForRow(int iRow)
         for(int i=0;i<iBlock;i++)
             nCountBlocksBefore += TEST_BIT(pabyTablXBlockMap, i) != 0;
         int iCorrectedRow = nCountBlocksBefore * 1024 + (iRow % 1024);
-        VSIFSeekL(fpTableX, 16 + 5 * iCorrectedRow, SEEK_SET);
+        VSIFSeekL(fpTableX, 16 + nTablxOffsetSize * iCorrectedRow, SEEK_SET);
     }
     else
     {
-        VSIFSeekL(fpTableX, 16 + 5 * iRow, SEEK_SET);
+        VSIFSeekL(fpTableX, 16 + nTablxOffsetSize * iRow, SEEK_SET);
     }
 
-    GByte abyBuffer[5];
-    bError = VSIFReadL(abyBuffer, 5, 1, fpTableX) != 1;
+    GByte abyBuffer[6];
+    bError = VSIFReadL(abyBuffer, nTablxOffsetSize, 1, fpTableX) != 1;
     returnErrorIf(bError );
-    vsi_l_offset nOffset = GetUInt32(abyBuffer, 0) | (((vsi_l_offset)abyBuffer[4]) << 32);
+    vsi_l_offset nOffset;
+
+    if( nTablxOffsetSize == 4 )
+        nOffset = GetUInt32(abyBuffer, 0);
+    else if( nTablxOffsetSize == 5 )
+        nOffset = GetUInt32(abyBuffer, 0) | (((vsi_l_offset)abyBuffer[4]) << 32);
+    else
+        nOffset = GetUInt32(abyBuffer, 0) | (((vsi_l_offset)abyBuffer[4]) << 32) | (((vsi_l_offset)abyBuffer[5]) << 40);
 
 #ifdef DEBUG_VERBOSE
     if( iRow == 0 && nOffset != 0 &&
