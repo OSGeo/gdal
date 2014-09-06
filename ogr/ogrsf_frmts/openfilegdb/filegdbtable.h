@@ -223,6 +223,7 @@ class FileGDBTable
         GUInt32                     nOffsetFieldDesc;
         GUInt32                     nFieldDescLength;
 
+        GUInt32                     nTablxOffsetSize;
         std::vector<vsi_l_offset>   anFeatureOffsets;
 
         GByte*                      pabyTablXBlockMap;
