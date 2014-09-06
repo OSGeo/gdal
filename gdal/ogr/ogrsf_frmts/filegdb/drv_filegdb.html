@@ -59,6 +59,7 @@ respectively the definition and metadata of a FileGDB table as XML content.
 			<li>For projected coordinate systems: XYSCALE=10000 for the default XYTOLERANCE of 0.001m. XORIGIN and YORIGIN change based on the coordinate system, but the OGR default of -2147483647 is suitable with the default XYSCALE for all coordinate systems.</li></ul></p></li>
 	<li><b>XML_DEFINITION</b> : (GDAL &gt;= 1.10) When this option is set, its value will be used as the XML definition to create the new table. The root node of such a XML definition must be a &lt;esri:DataElement&gt; element conformant to FileGDBAPI.xsd</li>
     <li><b>CREATE_MULTIPATCH</b>=YES : (GDAL &gt;= 1.11) When this option is set, geometries of layers of type MultiPolygon will be written as MultiPatch</li>
+    <li><b>CONFIGURATION_KEYWORD</b>=DEFAULTS/TEXT_UTF16/MAX_FILE_SIZE_4GB/MAX_FILE_SIZE_256TB/GEOMETRY_OUTOFLINE/BLOB_OUTOFLINE/GEOMETRY_AND_BLOB_OUTOFLINE : (GDAL &gt;= 2.0) Customize how data is stored. By default text in UTF-8 and data up to 1TB</li>
 </ul>
 
 <h2>Examples</h2>
