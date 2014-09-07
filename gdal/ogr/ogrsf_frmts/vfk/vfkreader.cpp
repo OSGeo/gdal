@@ -154,19 +154,24 @@ char *VFKReader::ReadLine(bool bRecode)
 int VFKReader::ReadDataBlocks()
 {
     char       *pszLine, *pszBlockName;
-
+    bool        bInHeader;
+    
     IVFKDataBlock *poNewDataBlock;
     
     CPLAssert(NULL != m_pszFilename);
 
     VSIFSeek(m_poFD, 0, SEEK_SET);
+    bInHeader = TRUE;
     while ((pszLine = ReadLine()) != NULL) {
-        if (strlen(pszLine) < 2 || pszLine[0] != '&')
-        {
+        if (strlen(pszLine) < 2 || pszLine[0] != '&') {
             CPLFree(pszLine);
             continue;
         }
+
         if (pszLine[1] == 'B') {
+            if (bInHeader)
+                bInHeader = FALSE; /* 'B' record closes the header section */
+
             pszBlockName = GetDataBlockName(pszLine);
             if (pszBlockName == NULL) { 
                 CPLError(CE_Failure, CPLE_NotSupported, 
@@ -189,6 +194,11 @@ int VFKReader::ReadDataBlocks()
             CPLFree(pszLine);
             break;
         }
+        else if (bInHeader && pszLine[1] == 'D') {
+            /* process 'D' records in the header section */
+            AddInfo(pszLine);
+        }
+        
         CPLFree(pszLine);
     }
     
@@ -212,6 +222,7 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
     CPLString   osBlockNameLast;
     int         nLength, iLine, nSkipped, nDupl, nRecords;
     int         iDataBlock;
+    bool        bInHeader;
     
     IVFKDataBlock *poDataBlockCurrent;
     
@@ -235,14 +246,28 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
     
     VSIFSeek(m_poFD, 0, SEEK_SET);
     iLine = nSkipped = nDupl = nRecords = 0;
+    bInHeader = TRUE;
     while ((pszLine = ReadLine()) != NULL) {
         iLine++;
         nLength = strlen(pszLine);
-        if (nLength < 2)
+        if (nLength < 2) {
+            CPLFree(pszLine);
             continue;
+        }
+        
+        if (bInHeader && pszLine[1] == 'B')
+            bInHeader = FALSE; /* 'B' record closes the header section */
         
         if (pszLine[1] == 'D') {
+            if (bInHeader) {
+                /* skip 'D' records from the header section, already
+                 * processed as metadata */
+                CPLFree(pszLine);
+                continue;
+            }
+
             pszBlockName = GetDataBlockName(pszLine);
+            
             if (pszBlockName && (!pszName || EQUAL(pszBlockName, pszName))) {
                 /* merge lines if needed */
                 if (pszLine[nLength - 2] == '\302' &&
@@ -315,6 +340,7 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
             CPLFree(pszLine);
             break;
         }
+
         CPLFree(pszLine);
     }
 
@@ -434,12 +460,17 @@ int VFKReader::LoadGeometry()
 void VFKReader::AddInfo(const char *pszLine)
 {
     int         i, iKeyLength, iValueLength;
-    int         nSkip;
+    int         nSkip, nOffset;
     char       *pszKey, *pszValue, *pszValueEnc;
     const char *poChar, *poKey;
     CPLString   key, value;
     
-    poChar = poKey = pszLine + 2; /* &H */
+    if (pszLine[1] == 'H')
+        nOffset = 2;
+    else
+        nOffset = 1; /* &DKATUZE */
+    
+    poChar = poKey = pszLine + nOffset; /* &H */
     iKeyLength = 0;
     while (*poChar != '\0' && *poChar != ';') {
         iKeyLength++;
@@ -488,8 +519,30 @@ void VFKReader::AddInfo(const char *pszLine)
     pszValueEnc = CPLRecode(pszValue,
                             m_bLatin2 ? "ISO-8859-2" : "WINDOWS-1250",
                             CPL_ENC_UTF8);
-    poInfo[pszKey] = pszValueEnc;
+    if (poInfo.find(pszKey) == poInfo.end() ) {
+        poInfo[pszKey] = pszValueEnc;
+    }
+    else {
+        int nCount;
+        size_t iFound;
+        char *pszKeyUniq;
         
+        /* max. number of duplicated keys can be 101 */
+        pszKeyUniq = (char *) CPLMalloc(strlen(pszKey) + 5); 
+
+        nCount = 1; /* assuming at least one match */
+        for(std::map<CPLString, CPLString>::iterator i = poInfo.begin();
+            i != poInfo.end(); ++i) {
+            iFound = i->first.find("_");
+            if (iFound != std::string::npos &&
+                EQUALN(pszKey, i->first.c_str(), iFound))
+                nCount += 1;
+        }
+        
+        sprintf(pszKeyUniq, "%s_%d", pszKey, nCount);
+        poInfo[pszKeyUniq] = pszValueEnc;
+    }
+
     CPLFree(pszKey);
     CPLFree(pszValue);
     CPLFree(pszValueEnc);
