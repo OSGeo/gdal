@@ -439,10 +439,9 @@ static void JP2OpenJPEGReadBlockInThread(void* userdata)
             poBlock->DropLock();
             break;
         }
-
+        
         poGDS->ReadBlock(nBand, fp, nBlockXOff, nBlockYOff, pDstBuffer,
                          nBandCount, panBandMap);
-
         poBlock->DropLock();
     }
 
@@ -468,7 +467,7 @@ int JP2OpenJPEGDataset::PreloadBlocks(JP2OpenJPEGRasterBand* poBand,
     int nMaxThreads = GetNumThreads();
     if( !bUseSetDecodeArea && nMaxThreads > 1 )
     {
-        if( nReqMem > GDALGetCacheMax64() / (nBandCount == 0 ? 1 : nBandCount) )
+        if( nReqMem > poRasterBlockManager->GetCacheMax() / (nBandCount == 0 ? 1 : nBandCount) )
             return FALSE;
 
         int nBlocksToLoad = 0;
@@ -508,7 +507,7 @@ int JP2OpenJPEGDataset::PreloadBlocks(JP2OpenJPEGRasterBand* poBand,
             }
             else
             {
-                if( nReqMem <= GDALGetCacheMax64() / nBands )
+                if( nReqMem <= poRasterBlockManager->GetCacheMax() / nBands )
                 {
                     oJob.nBandCount = nBands;
                     oJob.panBandMap = NULL;
@@ -716,7 +715,6 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
                 continue;
             }
         }
-
         if (bIs420)
         {
             CPLAssert((int)psImage->comps[0].w >= nWidthToRead);
@@ -729,6 +727,7 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
             OPJ_INT32* pSrcY = psImage->comps[0].data;
             OPJ_INT32* pSrcCb = psImage->comps[1].data;
             OPJ_INT32* pSrcCr = psImage->comps[2].data;
+            CPLMutexHolderD( &hRWMutex );
             GByte* pDst = (GByte*)pDstBuffer;
             for(int j=0;j<nHeightToRead;j++)
             {
@@ -761,6 +760,7 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
                     }
                 }
             }
+            CPLMutexHolderD( &hRWMutex );
 
             if ((int)psImage->comps[iBand-1].w == nBlockXSize &&
                 (int)psImage->comps[iBand-1].h == nBlockYSize)

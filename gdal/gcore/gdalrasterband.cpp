@@ -32,6 +32,7 @@
 #include "gdal_priv.h"
 #include "gdal_rat.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 
 #define SUBBLOCK_SIZE 64
 #define TO_SUBBLOCK(x) ((x) >> 6)
@@ -49,6 +50,8 @@ GDALRasterBand::GDALRasterBand()
 
 {
     poDS = NULL;
+    hBandMutex = NULL;
+    hRWMutex = NULL;
     nBand = 0;
     nRasterXSize = nRasterYSize = 0;
 
@@ -102,6 +105,12 @@ GDALRasterBand::~GDALRasterBand()
         nMaskFlags = 0;
         bOwnMask = false;
     }
+    if( hBandMutex != NULL )
+        CPLDestroyMutex(hBandMutex);
+    hBandMutex = NULL;
+    if( hRWMutex != NULL )
+        CPLDestroyMutex(hRWMutex);
+    hRWMutex = NULL;
 }
 
 /************************************************************************/
@@ -415,6 +424,7 @@ CPLErr GDALRasterBand::ReadBlock( int nXBlockOff, int nYBlockOff,
 /* -------------------------------------------------------------------- */
 /*      Invoke underlying implementation method.                        */
 /* -------------------------------------------------------------------- */
+    CPLMutexHolderD( GetRWMutex() );
     return( IReadBlock( nXBlockOff, nYBlockOff, pImage ) );
 }
 
@@ -536,6 +546,7 @@ CPLErr GDALRasterBand::WriteBlock( int nXBlockOff, int nYBlockOff,
 /* -------------------------------------------------------------------- */
 /*      Invoke underlying implementation method.                        */
 /* -------------------------------------------------------------------- */
+    CPLMutexHolderD( GetRWMutex() );
     return( IWriteBlock( nXBlockOff, nYBlockOff, pImage ) );
 }
 
@@ -675,6 +686,10 @@ int GDALRasterBand::InitBlockInfo()
     if( papoBlocks != NULL )
         return TRUE;
 
+    CPLMutexHolderD( &hBandMutex );
+    
+    if( papoBlocks != NULL )
+        return TRUE;
     /* Do some validation of raster and block dimensions in case the driver */
     /* would have neglected to do it itself */
     if( nBlockXSize <= 0 || nBlockYSize <= 0 )
@@ -762,21 +777,23 @@ int GDALRasterBand::InitBlockInfo()
 /*                             AdoptBlock()                             */
 /*                                                                      */
 /*      Add a block to the raster band's block matrix.  If this         */
-/*      exceeds our maximum blocks for this layer, flush the oldest     */
-/*      block out.                                                      */
+/*      block already exists then return that block, otherwise          */
+/*      return the block passed in                                      */
 /*                                                                      */
 /*      This method is protected.                                       */
 /************************************************************************/
 
-CPLErr GDALRasterBand::AdoptBlock( int nXBlockOff, int nYBlockOff,
+GDALRasterBlock *GDALRasterBand::AdoptBlock( int nXBlockOff, int nYBlockOff,
                                    GDALRasterBlock * poBlock )
 
 {
     int         nBlockIndex;
     
     if( !InitBlockInfo() )
-        return CE_Failure;
+        return NULL;
     
+    // Now aquire the band mutex
+    CPLMutexHolderD( &hBandMutex );
 /* -------------------------------------------------------------------- */
 /*      Simple case without subblocking.                                */
 /* -------------------------------------------------------------------- */
@@ -785,15 +802,21 @@ CPLErr GDALRasterBand::AdoptBlock( int nXBlockOff, int nYBlockOff,
         nBlockIndex = nXBlockOff + nYBlockOff * nBlocksPerRow;
 
         if( papoBlocks[nBlockIndex] == poBlock )
-            return( CE_None );
+            return poBlock;
 
+        // Something else has already assigned it to the block. Lets get
+        // that block instead.
         if( papoBlocks[nBlockIndex] != NULL )
-            FlushBlock( nXBlockOff, nYBlockOff );
+        {
+            GDALRasterBlock *poExistingBlock = papoBlocks[nBlockIndex];
+            poExistingBlock->AddLock();
+            return poExistingBlock;
+        }
 
         papoBlocks[nBlockIndex] = poBlock;
-        poBlock->Touch();
+        poBlock->AttachToBand();
 
-        return( CE_None );
+        return poBlock;
     }
 
 /* -------------------------------------------------------------------- */
@@ -813,7 +836,7 @@ CPLErr GDALRasterBand::AdoptBlock( int nXBlockOff, int nYBlockOff,
         {
             ReportError( CE_Failure, CPLE_OutOfMemory,
                       "Out of memory in AdoptBlock()." );
-            return CE_Failure;
+            return NULL;
         }
     }
 
@@ -827,15 +850,20 @@ CPLErr GDALRasterBand::AdoptBlock( int nXBlockOff, int nYBlockOff,
         + WITHIN_SUBBLOCK(nYBlockOff) * SUBBLOCK_SIZE;
 
     if( papoSubBlockGrid[nBlockInSubBlock] == poBlock )
-        return CE_None;
-
+        return NULL;
+    
+    // Something assigned something to this block already, lets use it.
     if( papoSubBlockGrid[nBlockInSubBlock] != NULL )
-        FlushBlock( nXBlockOff, nYBlockOff );
+    {
+        GDALRasterBlock *poExistingBlock = papoSubBlockGrid[nBlockInSubBlock];
+        poExistingBlock->AddLock();
+        return poExistingBlock;
+    }
 
     papoSubBlockGrid[nBlockInSubBlock] = poBlock;
-    poBlock->Touch();
+    poBlock->AttachToBand();
 
-    return CE_None;
+    return poBlock;
 }
 
 /************************************************************************/
@@ -865,9 +893,15 @@ CPLErr GDALRasterBand::FlushCache()
         eFlushBlockErr = CE_None;
     }
 
+    
     if (papoBlocks == NULL)
         return eGlobalErr;
 
+    GDALRasterBlock *poBlock = NULL;
+    // We must aquire both the RW Mutex first, followed by the band mutex
+    // order is very important here in order to avoid any deadlock situations.
+    CPLMutexHolder oHolderRW(GetRWMutex(),1000.0,__FILE__,__LINE__);
+    CPLMutexHolderD( &hBandMutex );
 /* -------------------------------------------------------------------- */
 /*      Flush all blocks in memory ... this case is without subblocking.*/
 /* -------------------------------------------------------------------- */
@@ -877,14 +911,24 @@ CPLErr GDALRasterBand::FlushCache()
         {
             for( int iX = 0; iX < nBlocksPerRow; iX++ )
             {
-                if( papoBlocks[iX + iY*nBlocksPerRow] != NULL )
+                poBlock = papoBlocks[iX + iY*nBlocksPerRow];
+                if ( poBlock != NULL )
                 {
-                    CPLErr    eErr;
-
-                    eErr = FlushBlock( iX, iY, eGlobalErr == CE_None );
-
-                    if( eErr != CE_None )
-                        eGlobalErr = eErr;
+                    poBlock->AddLock();
+                    UnadoptBlock( iX, iY );
+                    if (eGlobalErr == CE_None)
+                    {
+                        CPLErr    eErr;
+                        eErr = poBlock->Write();
+                    
+                        if( eErr != CE_None )
+                            eGlobalErr = eErr;
+                    }
+                    else
+                    {
+                        poBlock->MarkClean();
+                    }
+                    poBlock->DropLock();
                 }
             }
         }
@@ -912,15 +956,25 @@ CPLErr GDALRasterBand::FlushCache()
             {
                 for( int iX = 0; iX < SUBBLOCK_SIZE; iX++ )
                 {
-                    if( papoSubBlockGrid[iX + iY * SUBBLOCK_SIZE] != NULL )
+                    poBlock = papoSubBlockGrid[iX + iY * SUBBLOCK_SIZE];
+                    if ( poBlock != NULL)
                     {
-                        CPLErr eErr;
-
-                        eErr = FlushBlock( iX + iSBX * SUBBLOCK_SIZE, 
-                                           iY + iSBY * SUBBLOCK_SIZE,
-                                           eGlobalErr == CE_None );
-                        if( eErr != CE_None )
-                            eGlobalErr = eErr;
+                        poBlock->AddLock();
+                        UnadoptBlock( iX + iSBX * SUBBLOCK_SIZE, 
+                                      iY + iSBY * SUBBLOCK_SIZE);
+                        if (eGlobalErr == CE_None)
+                        {
+                            CPLErr    eErr;
+                            eErr = poBlock->Write();
+                        
+                            if( eErr != CE_None )
+                                eGlobalErr = eErr;
+                        }
+                        else
+                        {
+                            poBlock->MarkClean();
+                        }
+                        poBlock->DropLock();
                     }
                 }
             }
@@ -954,7 +1008,7 @@ CPLErr CPL_STDCALL GDALFlushRasterCache( GDALRasterBandH hBand )
 }
 
 /************************************************************************/
-/*                             FlushBlock()                             */
+/*                             FlushBlock()                           */
 /*                                                                      */
 /*      Flush a block out of the block cache.  If it has been           */
 /*      modified write it to disk.  If no specific tile is              */
@@ -963,14 +1017,38 @@ CPLErr CPL_STDCALL GDALFlushRasterCache( GDALRasterBandH hBand )
 /*      Protected method.                                               */
 /************************************************************************/
 
-CPLErr GDALRasterBand::FlushBlock( int nXBlockOff, int nYBlockOff, int bWriteDirtyBlock )
+CPLErr GDALRasterBand::FlushBlock( int nXBlockOff, int nYBlockOff )
+
+{
+    GDALRasterBlock *poBlock = NULL;
+    {
+        // Now aquire the band mutex
+        CPLMutexHolderD( &hBandMutex );
+        poBlock = UnadoptBlock( nXBlockOff, nYBlockOff );
+        poBlock->AddLock();
+    }
+    CPLErr eErr = poBlock->Write();
+    poBlock->DropLock();
+    
+    return eErr;
+}
+
+/************************************************************************/
+/*                             UnadoptBlock()                           */
+/*                                                                      */
+/*      Remove a block out of the block array.                          */
+/*                                                                      */
+/*      Protected method.                                               */
+/************************************************************************/
+
+GDALRasterBlock  *GDALRasterBand::UnadoptBlock( int nXBlockOff, int nYBlockOff )
 
 {
     int             nBlockIndex;
     GDALRasterBlock *poBlock = NULL;
 
     if( !papoBlocks )
-        return CE_None;
+        return NULL;
     
 /* -------------------------------------------------------------------- */
 /*      Validate the request                                            */
@@ -979,82 +1057,97 @@ CPLErr GDALRasterBand::FlushBlock( int nXBlockOff, int nYBlockOff, int bWriteDir
     {
         ReportError( CE_Failure, CPLE_IllegalArg,
                   "Illegal nBlockXOff value (%d) in "
-                        "GDALRasterBand::FlushBlock()\n",
+                        "GDALRasterBand::UnadoptBlock()\n",
                   nXBlockOff );
 
-        return( CE_Failure );
+        return( NULL );
     }
 
     if( nYBlockOff < 0 || nYBlockOff >= nBlocksPerColumn )
     {
         ReportError( CE_Failure, CPLE_IllegalArg,
                   "Illegal nBlockYOff value (%d) in "
-                        "GDALRasterBand::FlushBlock()\n",
+                        "GDALRasterBand::UnadoptBlock()\n",
                   nYBlockOff );
 
-        return( CE_Failure );
+        return( NULL );
     }
+
+    {
+        // Now aquire the band mutex
+        CPLMutexHolderD( &hBandMutex );
 
 /* -------------------------------------------------------------------- */
 /*      Simple case for single level caches.                            */
 /* -------------------------------------------------------------------- */
-    if( !bSubBlockingActive )
-    {
-        nBlockIndex = nXBlockOff + nYBlockOff * nBlocksPerRow;
+        if( !bSubBlockingActive )
+        {
+            nBlockIndex = nXBlockOff + nYBlockOff * nBlocksPerRow;
 
-        GDALRasterBlock::SafeLockBlock( papoBlocks + nBlockIndex );
 
-        poBlock = papoBlocks[nBlockIndex];
-        papoBlocks[nBlockIndex] = NULL;
-    }
+            poBlock = papoBlocks[nBlockIndex];
+            papoBlocks[nBlockIndex] = NULL;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Identify our subblock.                                          */
 /* -------------------------------------------------------------------- */
-    else
-    {
-        int nSubBlock = TO_SUBBLOCK(nXBlockOff) 
-            + TO_SUBBLOCK(nYBlockOff) * nSubBlocksPerRow;
-        
-        if( papoBlocks[nSubBlock] == NULL )
-            return CE_None;
+        else
+        {
+            int nSubBlock = TO_SUBBLOCK(nXBlockOff) 
+                + TO_SUBBLOCK(nYBlockOff) * nSubBlocksPerRow;
+            
+            if( papoBlocks[nSubBlock] == NULL )
+                return NULL;
         
 /* -------------------------------------------------------------------- */
 /*      Check within subblock.                                          */
 /* -------------------------------------------------------------------- */
-        GDALRasterBlock **papoSubBlockGrid = 
-            (GDALRasterBlock **) papoBlocks[nSubBlock];
-        
-        int nBlockInSubBlock = WITHIN_SUBBLOCK(nXBlockOff)
-            + WITHIN_SUBBLOCK(nYBlockOff) * SUBBLOCK_SIZE;
-        
-        GDALRasterBlock::SafeLockBlock( papoSubBlockGrid + nBlockInSubBlock );
+            GDALRasterBlock **papoSubBlockGrid = 
+                (GDALRasterBlock **) papoBlocks[nSubBlock];
+            
+            int nBlockInSubBlock = WITHIN_SUBBLOCK(nXBlockOff)
+                + WITHIN_SUBBLOCK(nYBlockOff) * SUBBLOCK_SIZE;
+            
+            poBlock = papoSubBlockGrid[nBlockInSubBlock];
+            papoSubBlockGrid[nBlockInSubBlock] = NULL;
+        }
 
-        poBlock = papoSubBlockGrid[nBlockInSubBlock];
-        papoSubBlockGrid[nBlockInSubBlock] = NULL;
+        if( poBlock == NULL )
+            return NULL;
+        poBlock->UnattachFromBand();
+
+        poBlock->MarkForDeletion();
     }
-
-/* -------------------------------------------------------------------- */
-/*      Is the target block dirty?  If so we need to write it.          */
-/* -------------------------------------------------------------------- */
-    CPLErr eErr = CE_None;
-
-    if( poBlock == NULL )
-        return CE_None;
-
-    poBlock->Detach();
-
-    if( bWriteDirtyBlock && poBlock->GetDirty() )
-        eErr = poBlock->Write();
-
-/* -------------------------------------------------------------------- */
-/*      Deallocate the block;                                           */
-/* -------------------------------------------------------------------- */
-    poBlock->DropLock();
-    delete poBlock;
-
-    return eErr;
+    
+    return poBlock;
 }
+
+
+/************************************************************************/
+/*                       GetRasterBlockManager()                        */
+/************************************************************************/
+
+/**
+ * \brief Get the raster block manager for the band. 
+ *
+ * @return Return the raster block manager used for the band.
+ */
+
+GDALRasterBlockManager *GDALRasterBand::GetRasterBlockManager()
+{
+    if ( poDS == NULL ) 
+    {
+        return GetGDALRasterBlockManager();
+    }
+    else
+    {
+        return poDS->poRasterBlockManager;
+    }
+}
+
+
+
 
 /************************************************************************/
 /*                        TryGetLockedBlockRef()                        */
@@ -1086,6 +1179,8 @@ GDALRasterBlock *GDALRasterBand::TryGetLockedBlockRef( int nXBlockOff,
 {
     int             nBlockIndex = 0;
     
+    GDALRasterBlockManager *poRBM = GetRasterBlockManager();
+    GDALRasterBlock *poBlock;
     if( !InitBlockInfo() )
         return( NULL );
     
@@ -1112,39 +1207,50 @@ GDALRasterBlock *GDALRasterBand::TryGetLockedBlockRef( int nXBlockOff,
         return( NULL );
     }
 
+    {
+        // Now aquire the band mutex
+        CPLMutexHolderD( &hBandMutex );
+
 /* -------------------------------------------------------------------- */
 /*      Simple case for single level caches.                            */
 /* -------------------------------------------------------------------- */
-    if( !bSubBlockingActive )
-    {
-        nBlockIndex = nXBlockOff + nYBlockOff * nBlocksPerRow;
-        
-        GDALRasterBlock::SafeLockBlock( papoBlocks + nBlockIndex );
+        if( !bSubBlockingActive )
+        {
+            nBlockIndex = nXBlockOff + nYBlockOff * nBlocksPerRow;
+                
+            poRBM->SafeLockBlock( papoBlocks + nBlockIndex );
 
-        return papoBlocks[nBlockIndex];
-    }
+            poBlock = papoBlocks[nBlockIndex];
+        }
+        else
+        {
 
 /* -------------------------------------------------------------------- */
 /*      Identify our subblock.                                          */
 /* -------------------------------------------------------------------- */
-    int nSubBlock = TO_SUBBLOCK(nXBlockOff) 
-        + TO_SUBBLOCK(nYBlockOff) * nSubBlocksPerRow;
+            int nSubBlock = TO_SUBBLOCK(nXBlockOff) 
+                + TO_SUBBLOCK(nYBlockOff) * nSubBlocksPerRow;
 
-    if( papoBlocks[nSubBlock] == NULL )
-        return NULL;
+            if( papoBlocks[nSubBlock] == NULL )
+                return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Check within subblock.                                          */
 /* -------------------------------------------------------------------- */
-    GDALRasterBlock **papoSubBlockGrid = 
-        (GDALRasterBlock **) papoBlocks[nSubBlock];
+            GDALRasterBlock **papoSubBlockGrid = 
+                (GDALRasterBlock **) papoBlocks[nSubBlock];
 
-    int nBlockInSubBlock = WITHIN_SUBBLOCK(nXBlockOff)
-        + WITHIN_SUBBLOCK(nYBlockOff) * SUBBLOCK_SIZE;
+            int nBlockInSubBlock = WITHIN_SUBBLOCK(nXBlockOff)
+                + WITHIN_SUBBLOCK(nYBlockOff) * SUBBLOCK_SIZE;
 
-    GDALRasterBlock::SafeLockBlock( papoSubBlockGrid + nBlockInSubBlock );
+            poRBM->SafeLockBlock( papoSubBlockGrid + nBlockInSubBlock );
 
-    return papoSubBlockGrid[nBlockInSubBlock];
+            poBlock = papoSubBlockGrid[nBlockInSubBlock];
+        }
+    }
+    if ( NULL != poBlock )
+        poBlock->Touch();
+    return poBlock;
 }
 
 /************************************************************************/
@@ -1187,6 +1293,7 @@ GDALRasterBlock * GDALRasterBand::GetLockedBlockRef( int nXBlockOff,
 
 {
     GDALRasterBlock *poBlock = NULL;
+    GDALRasterBlockManager *poRBM = GetRasterBlockManager();
 
 /* -------------------------------------------------------------------- */
 /*      Try and fetch from cache.                                       */
@@ -1203,9 +1310,9 @@ GDALRasterBlock * GDALRasterBand::GetLockedBlockRef( int nXBlockOff,
         if( !InitBlockInfo() )
             return( NULL );
 
-    /* -------------------------------------------------------------------- */
-    /*      Validate the request                                            */
-    /* -------------------------------------------------------------------- */
+/* -------------------------------------------------------------------- */
+/*      Validate the request                                            */
+/* -------------------------------------------------------------------- */
         if( nXBlockOff < 0 || nXBlockOff >= nBlocksPerRow )
         {
             ReportError( CE_Failure, CPLE_IllegalArg,
@@ -1225,39 +1332,60 @@ GDALRasterBlock * GDALRasterBand::GetLockedBlockRef( int nXBlockOff,
 
             return( NULL );
         }
-
-        poBlock = new GDALRasterBlock( this, nXBlockOff, nYBlockOff );
+        
+        
+        poBlock = new GDALRasterBlock( this, nXBlockOff, nYBlockOff, poRBM );
 
         poBlock->AddLock();
 
         /* allocate data space */
         if( poBlock->Internalize() != CE_None )
         {
+            poBlock->MarkForDeletion();
             poBlock->DropLock();
-            delete poBlock;
+            CPLError( CE_Failure, CPLE_AppDefined,
+                "Internalize Failure!");
             return( NULL );
         }
-
-        if ( AdoptBlock( nXBlockOff, nYBlockOff, poBlock ) != CE_None )
+        GDALRasterBlock *poAdopt = AdoptBlock( nXBlockOff, nYBlockOff, poBlock );
+        if ( poAdopt == NULL )
         {
+            poBlock->MarkForDeletion();
             poBlock->DropLock();
-            delete poBlock;
+            CPLError( CE_Failure, CPLE_AppDefined,
+                "AdoptBlock Failure!");
             return( NULL );
         }
-
-        if( !bJustInitialize
-         && IReadBlock(nXBlockOff,nYBlockOff,poBlock->GetDataRef()) != CE_None)
+        
+        if ( poAdopt != poBlock )
         {
+            // There was already an existing block, delete one we just created.
+            poBlock->MarkForDeletion();
             poBlock->DropLock();
-            FlushBlock( nXBlockOff, nYBlockOff );
-            ReportError( CE_Failure, CPLE_AppDefined,
-                "IReadBlock failed at X offset %d, Y offset %d",
-                nXBlockOff, nYBlockOff );
-            return( NULL );
+            poBlock = poAdopt;
+            poBlock->Touch();
         }
-
-        if( !bJustInitialize )
-        {
+        else
+        {    
+            poBlock->Touch();
+            poRBM->FlushTillBelow();
+        }
+        
+        if ( !bJustInitialize )
+        {   
+            // Set the RW Mutex
+            CPLMutexHolderD( GetRWMutex() );
+            
+            if( IReadBlock(nXBlockOff,nYBlockOff,poBlock->GetDataRef()) != CE_None)
+            {
+                UnadoptBlock( nXBlockOff, nYBlockOff );
+                poBlock->DropLock();
+                ReportError( CE_Failure, CPLE_AppDefined,
+                    "IReadBlock failed at X offset %d, Y offset %d",
+                    nXBlockOff, nYBlockOff );
+                return( NULL );
+            }
+            
             nBlockReads++;
             if( nBlockReads == nBlocksPerRow * nBlocksPerColumn + 1 
                 && nBand == 1 && poDS != NULL )
@@ -1267,7 +1395,6 @@ GDALRasterBlock * GDALRasterBand::GetLockedBlockRef( int nXBlockOff,
             }
         }
     }
-
     return poBlock;
 }
 
@@ -1334,31 +1461,36 @@ CPLErr GDALRasterBand::Fill(double dfRealValue, double dfImaginaryValue) {
 
     // Copy first element to the rest of the block
     for (unsigned char* blockPtr = srcBlock + elementSize; 
-	 blockPtr < srcBlock + blockByteSize; blockPtr += elementSize) {
-	memcpy(blockPtr, srcBlock, elementSize);
+     blockPtr < srcBlock + blockByteSize; blockPtr += elementSize) {
+	    memcpy(blockPtr, srcBlock, elementSize);
     }
 
-    // Write block to block cache
-    for (int j = 0; j < nBlocksPerColumn; ++j) {
-	for (int i = 0; i < nBlocksPerRow; ++i) {
-	    GDALRasterBlock* destBlock = GetLockedBlockRef(i, j, TRUE);
-	    if (destBlock == NULL) {
-            ReportError(CE_Failure, CPLE_OutOfMemory,
-			 "GDALRasterBand::Fill(): Error "
-			 "while retrieving cache block.\n");
-                VSIFree(srcBlock);
-		return CE_Failure;
-	    }
-            if (destBlock->GetDataRef() == NULL)
-            {
+    // Obtain RW Mutex
+    {
+        CPLMutexHolderD( GetRWMutex() );
+
+        // Write block to block cache
+        for (int j = 0; j < nBlocksPerColumn; ++j) {
+            for (int i = 0; i < nBlocksPerRow; ++i) {
+                GDALRasterBlock* destBlock = GetLockedBlockRef(i, j, TRUE);
+                if (destBlock == NULL) {
+                    ReportError(CE_Failure, CPLE_OutOfMemory,
+                         "GDALRasterBand::Fill(): Error "
+                         "while retrieving cache block.\n");
+                    VSIFree(srcBlock);
+                    return CE_Failure;
+                }
+                if (destBlock->GetDataRef() == NULL)
+                {
+                    destBlock->DropLock();
+                    VSIFree(srcBlock);
+                    return CE_Failure;
+                }
+                memcpy(destBlock->GetDataRef(), srcBlock, blockByteSize);
+                destBlock->MarkDirty();
                 destBlock->DropLock();
-                VSIFree(srcBlock);
-                return CE_Failure;
             }
-	    memcpy(destBlock->GetDataRef(), srcBlock, blockByteSize);
-	    destBlock->MarkDirty();
-            destBlock->DropLock();
-	}
+        }
     }
 
     // Free up the source block
@@ -2648,6 +2780,25 @@ GDALDataset *GDALRasterBand::GetDataset()
 }
 
 /************************************************************************/
+/*                             GetRWMutex()                             */
+/************************************************************************/
+
+/**
+ * \brief Fetch the mutex to protect against multiple readwrites against
+ * the band at once.
+ *
+ * @return the pointer to the Mutex
+ */
+
+void **GDALRasterBand::GetRWMutex()
+{
+    if (NULL == poDS)
+        return &hRWMutex;
+    else
+        return &(poDS->hRWMutex);
+}
+
+/************************************************************************/
 /*                         GDALGetBandDataset()                         */
 /************************************************************************/
 
@@ -2764,6 +2915,9 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
 
     const char* pszPixelType = GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
     int bSignedByte = (pszPixelType != NULL && EQUAL(pszPixelType, "SIGNEDBYTE"));
+
+    // Set the RW Mutex
+    CPLMutexHolderD( GetRWMutex() );
 
     if ( bApproxOK && HasArbitraryOverviews() )
     {
@@ -3532,6 +3686,9 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
     const char* pszPixelType = GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
     int bSignedByte = (pszPixelType != NULL && EQUAL(pszPixelType, "SIGNEDBYTE"));
     
+    // Set the RW Mutex
+    CPLMutexHolderD( GetRWMutex() );
+    
     if ( bApproxOK && HasArbitraryOverviews() )
     {
 /* -------------------------------------------------------------------- */
@@ -4006,6 +4163,9 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
 
     const char* pszPixelType = GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
     int bSignedByte = (pszPixelType != NULL && EQUAL(pszPixelType, "SIGNEDBYTE"));
+    
+    // Set the RW Mutex
+    CPLMutexHolderD( GetRWMutex() );
     
     if ( bApproxOK && HasArbitraryOverviews() )
     {

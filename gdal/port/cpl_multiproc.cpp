@@ -74,8 +74,11 @@ CPLMutexHolder::CPLMutexHolder( void **phMutex, double dfWaitInSeconds,
              "CPLMutexHolder: Request %p for pid %ld at %d/%s.\n", 
              *phMutex, (long) CPLGetPID(), nLine, pszFile );
 #endif
-
-    if( !CPLCreateOrAcquireMutex( phMutex, dfWaitInSeconds ) )
+    if ( NULL == phMutex )
+    {
+        hMutex = NULL;
+    }
+    else if( !CPLCreateOrAcquireMutex( phMutex, dfWaitInSeconds ) )
     {
         fprintf( stderr, "CPLMutexHolder: Failed to acquire mutex!\n" );
         hMutex = NULL;
@@ -1127,6 +1130,11 @@ static void *CPLCreateMutexInternal(int bAlreadyInGlobalLock);
 int CPLCreateOrAcquireMutex( void **phMutex, double dfWaitInSeconds )
 
 {
+    // Check before going into the global lock, otherwise
+    // we risk using the global lock too often.
+    if ( NULL != *phMutex )
+        return CPLAcquireMutex( *phMutex, dfWaitInSeconds );
+
     int bSuccess = FALSE;
 
     pthread_mutex_lock(&global_mutex);
@@ -1240,9 +1248,9 @@ int CPLAcquireMutex( void *hMutexIn, double dfWaitInSeconds )
     if( err != 0 )
     {
         if( err == EDEADLK )
-            fprintf(stderr, "CPLAcquireMutex: Error = %d/EDEADLK", err );
+            fprintf(stderr, "CPLAcquireMutex: Error = %d/EDEADLK\n", err );
         else
-            fprintf(stderr, "CPLAcquireMutex: Error = %d", err );
+            fprintf(stderr, "CPLAcquireMutex: Error = %d\n", err );
 
         return FALSE;
     }

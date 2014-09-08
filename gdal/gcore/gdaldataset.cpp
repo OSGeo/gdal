@@ -193,9 +193,21 @@ GDALDataset::GDALDataset()
 /* -------------------------------------------------------------------- */
     bForceCachedIO =  CSLTestBoolean( 
         CPLGetConfigOption( "GDAL_FORCE_CACHING", "NO") );
+    bDatasetCache =  CSLTestBoolean( 
+        CPLGetConfigOption( "GDAL_DATASET_CACHING", "NO") );
+    
+    if ( bDatasetCache ) 
+    {    
+        poRasterBlockManager = new GDALRasterBlockManager();
+    }
+    else
+    {   
+        poRasterBlockManager = GetGDALRasterBlockManager();
+    }
     
     m_poStyleTable = NULL;
     m_hMutex = NULL;
+    hRWMutex = NULL;
 }
 
 
@@ -301,7 +313,42 @@ GDALDataset::~GDALDataset()
 
     if( m_hMutex != NULL )
         CPLDestroyMutex( m_hMutex );
+    if( hRWMutex != NULL )
+        CPLDestroyMutex( hRWMutex );
+
+/* -------------------------------------------------------------------- */
+/*      Destroy the raster block manager if it is not global            */
+/* -------------------------------------------------------------------- */
+
+    if ( bDatasetCache )
+    {
+        delete poRasterBlockManager;
+    }
+    poRasterBlockManager = NULL;
+
 }
+
+/************************************************************************/
+/*                              SetCacheMax()                              */
+/************************************************************************/
+
+/**
+ * \brief Set the cache size for a dataset
+ *
+ * Sets the cache size for a raster dataset if GDAL_DATASET_CACHING is 
+ * enabled. If this is called with GDAL_DATASET_CACHING set to NO, then 
+ * this method will do nothing.
+ *
+ */
+
+void GDALDataset::SetCacheMax(GIntBig nCacheMax)
+{
+    if ( bDatasetCache )
+    {
+        poRasterBlockManager->SetCacheMax(nCacheMax);
+    }
+}
+
 
 /************************************************************************/
 /*                             FlushCache()                             */

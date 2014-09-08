@@ -29,6 +29,7 @@
  ****************************************************************************/
 
 #include "wmsdriver.h"
+#include "cpl_multiproc.h"
 
 GDALWMSRasterBand::GDALWMSRasterBand(GDALWMSDataset *parent_dataset, int band, double scale) {
     //	printf("[%p] GDALWMSRasterBand::GDALWMSRasterBand(%p, %d, %f)\n", this, parent_dataset, band, scale);
@@ -623,11 +624,14 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
             for (int ib = 1; ib <= m_parent_dataset->nBands; ++ib) {
                 if (ret == CE_None) {
                     void *p = NULL;
+                    void ** hThisMutex = NULL;
                     GDALRasterBlock *b = NULL;
                     if ((buffer != NULL) && (ib == to_buffer_band)) {
                         p = buffer;
+                        hThisMutex = NULL;
                     } else {
                         GDALWMSRasterBand *band = static_cast<GDALWMSRasterBand *>(m_parent_dataset->GetRasterBand(ib));
+                        hThisMutex = band->GetRWMutex();
                         if (m_overview >= 0) band = static_cast<GDALWMSRasterBand *>(band->GetOverview(m_overview));
                         if (!band->IsBlockInCache(x, y)) {
                             b = band->GetLockedBlockRef(x, y, true);
@@ -664,6 +668,7 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
                                if (accepted_as_no_alpha)
                                {
                                   // the file had 3 bands and we are reading band 4 (Alpha) so fill with 255 (no alpha)
+                                  CPLMutexHolderD( hThisMutex );
                                   GByte *byte_buffer = reinterpret_cast<GByte *>(p);
                                   for (int y = 0; y < sy; ++y) {
                                      for (int x = 0; x < sx; ++x) {
@@ -686,6 +691,7 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
                             }
                             if (ret == CE_None) {
                                 GByte *band_color_table = color_table + 256 * (ib - 1);
+                                CPLMutexHolderD( hThisMutex );
                                 GByte *byte_buffer = reinterpret_cast<GByte *>(p);
                                 for (int y = 0; y < sy; ++y) {
                                     for (int x = 0; x < sx; ++x) {
@@ -724,11 +730,14 @@ CPLErr GDALWMSRasterBand::ZeroBlock(int x, int y, int to_buffer_band, void *buff
     for (int ib = 1; ib <= m_parent_dataset->nBands; ++ib) {
         if (ret == CE_None) {
             void *p = NULL;
+            void **hThisMutex = NULL;
             GDALRasterBlock *b = NULL;
             if ((buffer != NULL) && (ib == to_buffer_band)) {
                 p = buffer;
+                hThisMutex = NULL;
             } else {
                 GDALWMSRasterBand *band = static_cast<GDALWMSRasterBand *>(m_parent_dataset->GetRasterBand(ib));
+                hThisMutex = band->GetRWMutex();
                 if (m_overview >= 0) band = static_cast<GDALWMSRasterBand *>(band->GetOverview(m_overview));
                 if (!band->IsBlockInCache(x, y)) {
                     b = band->GetLockedBlockRef(x, y, true);
@@ -742,6 +751,7 @@ CPLErr GDALWMSRasterBand::ZeroBlock(int x, int y, int to_buffer_band, void *buff
                 }
             }
             if (p != NULL) {
+                CPLMutexHolderD( hThisMutex );
                 unsigned char *b = reinterpret_cast<unsigned char *>(p);
                 int block_size = nBlockXSize * nBlockYSize * (GDALGetDataTypeSize(eDataType) / 8);
                 for (int i = 0; i < block_size; ++i) b[i] = 0;
