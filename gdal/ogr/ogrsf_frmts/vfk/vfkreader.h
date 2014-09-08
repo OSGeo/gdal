@@ -310,6 +310,10 @@ public:
 class CPL_DLL VFKDataBlockSQLite : public IVFKDataBlock
 {
 private:
+    bool                 SetGeometryLineString(VFKFeatureSQLite *, OGRLineString *,
+                                               bool&, const char *,
+                                               std::vector<int>&, int&);
+
     int                  LoadGeometryPoint();
     int                  LoadGeometryLineStringSBP();
     int                  LoadGeometryLineStringHP();
