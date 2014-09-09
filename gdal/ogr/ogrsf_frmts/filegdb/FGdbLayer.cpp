@@ -1729,7 +1729,7 @@ bool FGdbLayer::ParseGeometryDef(CPLXMLNode* psRoot)
 
     string geometryType;
     bool hasZ = false;
-    string wkt, wkid;
+    string wkt, wkid, latestwkid;
 
     for (psGeometryDefItem = psRoot->psChild;
         psGeometryDefItem != NULL;
@@ -1752,7 +1752,7 @@ bool FGdbLayer::ParseGeometryDef(CPLXMLNode* psRoot)
             }
             else if (EQUAL(psGeometryDefItem->pszValue,"SpatialReference"))
             {
-                ParseSpatialReference(psGeometryDefItem, &wkt, &wkid); // we don't check for success because it
+                ParseSpatialReference(psGeometryDefItem, &wkt, &wkid, &latestwkid); // we don't check for success because it
                                                                 // may not be there
             }
             /* No M support in OGR yet
@@ -1790,16 +1790,37 @@ bool FGdbLayer::ParseGeometryDef(CPLXMLNode* psRoot)
         wkbFlatten(ogrGeoType) == wkbMultiPoint)
         m_forceMulti = true;
 
-    if (wkid.length() > 0)
+    if (latestwkid.length() > 0 || wkid.length() > 0)
     {
+        int bSuccess = FALSE;
         m_pSRS = new OGRSpatialReference();
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        OGRErr ogrerr = m_pSRS->importFromEPSG(atoi(wkid.c_str()));
+        if( latestwkid.length() > 0 )
+        {
+            if( m_pSRS->importFromEPSG(atoi(latestwkid.c_str())) == OGRERR_NONE )
+            {
+                bSuccess = TRUE;
+            }
+            else
+            {
+                CPLDebug("FGDB", "Cannot import SRID %s", latestwkid.c_str());
+            }
+        }
+        if( !bSuccess && wkid.length() > 0 )
+        {
+            if( m_pSRS->importFromEPSG(atoi(wkid.c_str())) == OGRERR_NONE )
+            {
+                bSuccess = TRUE;
+            }
+            else
+            {
+                CPLDebug("OpenFileGDB", "Cannot import SRID %s", wkid.c_str());
+            }
+        }
         CPLPopErrorHandler();
         CPLErrorReset();
-        if (ogrerr != OGRERR_NONE)
+        if( !bSuccess )
         {
-            CPLDebug("FGDB", "Cannot import SRID %s", wkid.c_str());
             delete m_pSRS;
             m_pSRS = NULL;
         }
@@ -1830,7 +1851,7 @@ bool FGdbLayer::ParseGeometryDef(CPLXMLNode* psRoot)
 /************************************************************************/
 
 bool FGdbLayer::ParseSpatialReference(CPLXMLNode* psSpatialRefNode,
-                                      string* pOutWkt, string* pOutWKID)
+                                      string* pOutWkt, string* pOutWKID, string* pOutLatestWKID)
 {
     *pOutWkt = "";
     *pOutWKID = "";
@@ -1849,6 +1870,15 @@ bool FGdbLayer::ParseSpatialReference(CPLXMLNode* psSpatialRefNode,
         {
             char* pszUnescaped = CPLUnescapeString(psSRItemNode->psChild->pszValue, NULL, CPLES_XML);
             *pOutWKID = pszUnescaped;
+            CPLFree(pszUnescaped);
+        }
+        /* The concept of LatestWKID is explained in http://resources.arcgis.com/en/help/arcgis-rest-api/index.html#//02r3000000n1000000 */
+        else if( psSRItemNode->eType == CXT_Element &&
+            psSRItemNode->psChild != NULL &&
+            EQUAL(psSRItemNode->pszValue,"LatestWKID") )
+        {
+            char* pszUnescaped = CPLUnescapeString(psSRItemNode->psChild->pszValue, NULL, CPLES_XML);
+            *pOutLatestWKID = pszUnescaped;
             CPLFree(pszUnescaped);
         }
         /* The WKT well-known text can be converted by OGR */

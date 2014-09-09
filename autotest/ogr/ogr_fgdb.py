@@ -797,6 +797,33 @@ def ogr_fgdb_14():
     return 'success'
 
 ###############################################################################
+# Test opening a FGDB with both SRID and LatestSRID set (#5638)
+
+def ogr_fgdb_15():
+    if ogrtest.fgdb_drv is None:
+        return 'skip'
+
+    try:
+        shutil.rmtree('tmp/test3005.gdb')
+    except:
+        pass
+    gdaltest.unzip( 'tmp', 'data/test3005.gdb.zip')
+    ds = ogr.Open('tmp/test3005.gdb')
+    lyr = ds.GetLayer(0)
+    got_wkt = lyr.GetSpatialRef().ExportToWkt()
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(3005)
+    expected_wkt = sr.ExportToWkt()
+    if got_wkt != expected_wkt:
+        gdaltest.post_reason('fail')
+        print(got_wkt)
+        print(expected_wkt)
+        return 'fail'
+    ds = None
+
+    return 'success'
+    
+###############################################################################
 # Cleanup
 
 def ogr_fgdb_cleanup():
@@ -810,6 +837,10 @@ def ogr_fgdb_cleanup():
 
     try:
         shutil.rmtree("tmp/poly.gdb")
+    except:
+        pass
+    try:
+        shutil.rmtree('tmp/test3005.gdb')
     except:
         pass
 
@@ -838,6 +869,7 @@ gdaltest_list = [
     ogr_fgdb_12,
     ogr_fgdb_13,
     ogr_fgdb_14,
+    ogr_fgdb_15,
     ogr_fgdb_cleanup,
     ]
 

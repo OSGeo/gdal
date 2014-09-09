@@ -205,18 +205,43 @@ int OGROpenFileGDBLayer::BuildGeometryColumnGDBv10()
 
         const char* pszWKT = CPLGetXMLValue( psInfo, "SpatialReference.WKT", NULL );
         int nWKID = atoi(CPLGetXMLValue( psInfo, "SpatialReference.WKID", "0" ));
+        /* The concept of LatestWKID is explained in http://resources.arcgis.com/en/help/arcgis-rest-api/index.html#//02r3000000n1000000 */
+        int nLatestWKID = atoi(CPLGetXMLValue( psInfo, "SpatialReference.LatestWKID", "0" ));
 
         OGROpenFileGDBGeomFieldDefn* poGeomFieldDefn =
             new OGROpenFileGDBGeomFieldDefn(NULL, pszShapeFieldName, m_eGeomType);
 
         OGRSpatialReference* poSRS = NULL;
-        if( nWKID > 0 )
+        if( nWKID > 0 || nLatestWKID > 0 )
         {
+            int bSuccess = FALSE;
             poSRS = new OGRSpatialReference();
             CPLPushErrorHandler(CPLQuietErrorHandler);
-            if( poSRS->importFromEPSG(nWKID) != OGRERR_NONE )
+            /* Try first with nLatestWKID as there's a higher chance it is a EPSG code and not an ESRI one */
+            if( nLatestWKID > 0 )
             {
-                CPLDebug("OpenFileGDB", "Cannot import SRID %d", nWKID);
+                if( poSRS->importFromEPSG(nLatestWKID) == OGRERR_NONE )
+                {
+                    bSuccess = TRUE;
+                }
+                else
+                {
+                    CPLDebug("OpenFileGDB", "Cannot import SRID %d", nLatestWKID);
+                }
+            }
+            if( !bSuccess && nWKID > 0 )
+            {
+                if( poSRS->importFromEPSG(nWKID) == OGRERR_NONE )
+                {
+                    bSuccess = TRUE;
+                }
+                else
+                {
+                    CPLDebug("OpenFileGDB", "Cannot import SRID %d", nWKID);
+                }
+            }
+            if( !bSuccess )
+            {
                 delete poSRS;
                 poSRS = NULL;
             }

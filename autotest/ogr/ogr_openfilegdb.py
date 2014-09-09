@@ -1142,6 +1142,26 @@ def ogr_openfilegdb_11():
     return 'success'
 
 ###############################################################################
+# Test opening a FGDB with both SRID and LatestSRID set (#5638)
+
+def ogr_openfilegdb_12():
+
+    ds = ogr.Open('/vsizip/data/test3005.gdb.zip')
+    lyr = ds.GetLayer(0)
+    got_wkt = lyr.GetSpatialRef().ExportToWkt()
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(3005)
+    expected_wkt = sr.ExportToWkt()
+    if got_wkt != expected_wkt:
+        gdaltest.post_reason('fail')
+        print(got_wkt)
+        print(expected_wkt)
+        return 'fail'
+    ds = None
+
+    return 'success'
+    
+###############################################################################
 # Cleanup
 
 def ogr_openfilegdb_cleanup():
@@ -1179,6 +1199,7 @@ gdaltest_list = [
     ogr_openfilegdb_9,
     ogr_openfilegdb_10,
     ogr_openfilegdb_11,
+    ogr_openfilegdb_12,
     ogr_openfilegdb_cleanup,
     ]
 
