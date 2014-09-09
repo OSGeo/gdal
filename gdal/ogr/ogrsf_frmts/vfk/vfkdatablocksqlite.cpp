@@ -222,9 +222,6 @@ int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
     
     poDataBlockPoints->LoadGeometry();
 
-    /* reset feature count */
-    SetFeatureCount(0); 
-
     if (LoadGeometryFromDB()) /* try to load geometry from DB */
 	return 0;
 
@@ -891,7 +888,7 @@ bool VFKDataBlockSQLite::LoadGeometryFromDB()
 {
     int nInvalid, nGeometries, nGeometriesCount, nBytes, rowId;
     long iFID;
-    bool bAddFeature, bSkipInvalid;
+    bool bSkipInvalid;
     
     CPLString osSQL;
     
@@ -918,7 +915,6 @@ bool VFKDataBlockSQLite::LoadGeometryFromDB()
     if (nGeometries < 1)
 	return FALSE;
     
-    bAddFeature = EQUAL(m_pszName, "SBP");
     bSkipInvalid = EQUAL(m_pszName, "OB") || EQUAL(m_pszName, "OP") || EQUAL(m_pszName, "OBBP");
     
     /* load geometry from DB */
@@ -931,18 +927,12 @@ bool VFKDataBlockSQLite::LoadGeometryFromDB()
     osSQL += FID_COLUMN;
     hStmt = poReader->PrepareStatement(osSQL.c_str());
 
+    rowId = 0;
     while(poReader->ExecuteSQL(hStmt) == OGRERR_NONE) {
-        rowId = sqlite3_column_int(hStmt, 1);
+        rowId++; // =sqlite3_column_int(hStmt, 1);
         iFID = sqlite3_column_double(hStmt, 2);
 
-        if (bAddFeature) {
-            /* add feature to the array */
-            poFeature = new VFKFeatureSQLite(this, rowId, iFID);
-            AddFeature(poFeature);
-        }
-        else {
-            poFeature = (VFKFeatureSQLite *) GetFeatureByIndex(rowId - 1);
-        }
+        poFeature = (VFKFeatureSQLite *) GetFeatureByIndex(rowId - 1);
         CPLAssert(NULL != poFeature && poFeature->GetFID() == iFID);
         
         // read geometry from DB
