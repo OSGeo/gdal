@@ -253,7 +253,7 @@ def ogr_vfk_cleanup():
     gdaltest.vfk_ds = None
 
     try:
-        os.remove('data/bylany.vfk.db')
+        os.remove('data/bylany.db')
     except:
         pass
 
