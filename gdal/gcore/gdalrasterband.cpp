@@ -95,13 +95,7 @@ GDALRasterBand::~GDALRasterBand()
                   poDS->GetDescription() );
     }
 
-    if( bOwnMask )
-    {
-        delete poMask;
-        poMask = NULL;
-        nMaskFlags = 0;
-        bOwnMask = false;
-    }
+    InvalidateMaskBand();
 }
 
 /************************************************************************/
@@ -4687,6 +4681,19 @@ int CPL_STDCALL GDALGetMaskFlags( GDALRasterBandH hBand )
 }
 
 /************************************************************************/
+/*                         InvalidateMaskBand()                         */
+/************************************************************************/
+
+void GDALRasterBand::InvalidateMaskBand()
+{
+    if (bOwnMask)
+        delete poMask;
+    bOwnMask = false;
+    nMaskFlags = 0;
+    poMask = NULL;
+}
+
+/************************************************************************/
 /*                           CreateMaskBand()                           */
 /************************************************************************/
 
@@ -4724,11 +4731,7 @@ CPLErr GDALRasterBand::CreateMaskBand( int nFlags )
         if (eErr != CE_None)
             return eErr;
 
-        /* Invalidate existing raster band mask */
-        if (bOwnMask)
-            delete poMask;
-        bOwnMask = false;
-        poMask = NULL;
+        InvalidateMaskBand();
 
         return CE_None;
     }
