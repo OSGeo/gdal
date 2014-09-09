@@ -188,8 +188,8 @@ class RMFRasterBand : public GDALRasterBand
                 RMFRasterBand( RMFDataset *, int, GDALDataType );
                 ~RMFRasterBand();
 
-    virtual CPLErr          IReadBlock( int, int, void * );
-    virtual CPLErr          IWriteBlock( int, int, void * );
+    virtual CPLErr          IReadBlock( int, int, void *, void ** phMutex = NULL );
+    virtual CPLErr          IWriteBlock( int, int, void *, void ** phMutex = NULL );
     virtual const char      *GetUnitType();
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable  *GetColorTable();

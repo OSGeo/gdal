@@ -30,6 +30,7 @@
 
 #include "gxfopen.h"
 #include "gdal_pam.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -84,7 +85,7 @@ class GXFRasterBand : public GDALPamRasterBand
     		GXFRasterBand( GXFDataset *, int );
     double      GetNoDataValue(int* bGotNoDataValue);
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
 };
 
 
@@ -125,9 +126,10 @@ double GXFRasterBand::GetNoDataValue(int* bGotNoDataValue)
 /************************************************************************/
 
 CPLErr GXFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                  void * pImage, void ** phMutex )
 
 {
+    CPLMutexHolderD( phMutex );
     GXFDataset	*poGXF_DS = (GXFDataset *) poDS;
     double	*padfBuffer;
     float	*pafBuffer = (float *) pImage;

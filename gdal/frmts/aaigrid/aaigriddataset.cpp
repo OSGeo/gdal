@@ -33,6 +33,7 @@
 #include <ctype.h>
 #include <limits.h>
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 #include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
@@ -144,7 +145,7 @@ class AAIGRasterBand : public GDALPamRasterBand
 
     virtual double GetNoDataValue( int * );
     virtual CPLErr SetNoDataValue( double );
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
 };
 
 /************************************************************************/
@@ -189,9 +190,10 @@ AAIGRasterBand::~AAIGRasterBand()
 /************************************************************************/
 
 CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                  void * pImage, void ** phMutex )
 
 {
+    CPLMutexHolderD( phMutex );
     AAIGDataset *poODS = (AAIGDataset *) poDS;
     int         iPixel;
 

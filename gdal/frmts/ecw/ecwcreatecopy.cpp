@@ -31,6 +31,7 @@
 #include "gdal_ecw.h"
 #include "gdaljp2metadata.h"
 #include "ogr_spatialref.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -1540,7 +1541,8 @@ class CPL_DLL ECWWriteDataset : public GDALDataset
                               void * pData, int nBufXSize, int nBufYSize,
                               GDALDataType eBufType, 
                               int nBandCount, int *panBandMap,
-                              int nPixelSpace, int nLineSpace, int nBandSpace);
+                              int nPixelSpace, int nLineSpace, int nBandSpace,
+                              void ** phMutex = NULL);
 #endif
 };
 
@@ -1577,15 +1579,15 @@ class ECWWriteRasterBand : public GDALRasterBand
     virtual GDALColorInterp GetColorInterpretation() 
         { return eInterp; }
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
+    virtual CPLErr IWriteBlock( int, int, void *, void ** phMutex = NULL );
 
 #ifdef OPTIMIZED_FOR_GDALWARP
     virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
                               int nXOff, int nYOff, int nXSize, int nYSize,
                               void * pData, int nBufXSize, int nBufYSize,
                               GDALDataType eBufType, 
-                              int nPixelSpace, int nLineSpace);
+                              int nPixelSpace, int nLineSpace, void **phMutex = NULL);
 #endif
 };
 
@@ -1817,7 +1819,8 @@ CPLErr ECWWriteDataset::IRasterIO( GDALRWFlag eRWFlag,
                               void * pData, int nBufXSize, int nBufYSize,
                               GDALDataType eBufType, 
                               int nBandCount, int *panBandMap,
-                              int nPixelSpace, int nLineSpace, int nBandSpace)
+                              int nPixelSpace, int nLineSpace, int nBandSpace,
+                              void ** phMutex)
 {
     ECWWriteRasterBand* po4thBand = NULL;
     IRasterIORequest* poIORequest = NULL;
@@ -1857,13 +1860,13 @@ CPLErr ECWWriteDataset::IRasterIO( GDALRWFlag eRWFlag,
             for(int iBand = 0; iBand < nBandCount; iBand ++)
             {
                 GetRasterBand(panBandMap[iBand])->WriteBlock(0, iY + nYOff,
-                    pabyData + iY * nLineSpace + iBand * nBandSpace);
+                    pabyData + iY * nLineSpace + iBand * nBandSpace, phMutex);
             }
 
             if( poIORequest != NULL )
             {
                 po4thBand->WriteBlock(0, iY + nYOff,
-                    poIORequest->pabyData + iY * nDataTypeSize * nXSize);
+                    poIORequest->pabyData + iY * nDataTypeSize * nXSize, phMutex);
             }
         }
 
@@ -1881,7 +1884,8 @@ CPLErr ECWWriteDataset::IRasterIO( GDALRWFlag eRWFlag,
                               pData, nBufXSize, nBufYSize,
                               eBufType, 
                               nBandCount, panBandMap,
-                              nPixelSpace, nLineSpace, nBandSpace);
+                              nPixelSpace, nLineSpace, nBandSpace,
+                              phMutex);
 }
 #endif
 
@@ -1928,9 +1932,10 @@ ECWWriteRasterBand::~ECWWriteRasterBand()
 /************************************************************************/
 
 CPLErr ECWWriteRasterBand::IReadBlock( int nBlockX, int nBlockY, 
-                                       void *pBuffer )
+                                       void *pBuffer, void **phMutex )
 
 {
+    CPLMutexHolderD( phMutex );
     int nWordSize = GDALGetDataTypeSize( eDataType ) / 8;
 
     // We zero stuff out here, but we can't really read stuff from
@@ -1950,11 +1955,12 @@ CPLErr ECWWriteRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                               int nXOff, int nYOff, int nXSize, int nYSize,
                               void * pData, int nBufXSize, int nBufYSize,
                               GDALDataType eBufType, 
-                              int nPixelSpace, int nLineSpace)
+                              int nPixelSpace, int nLineSpace, void ** phMutex)
 {
     if( eRWFlag == GF_Write && nBand == 4 && poGDS->nBands == 4 &&
         poGDS->nPrevIRasterIOBand < 0 )
     {
+        CPLMutexHolderD( phMutex );
         /* Triggered when gdalwarp outputs an alpha band */
         /* It is called before GDALDatasetRasterIO() on the 3 first bands */
         if( poIORequest != NULL )
@@ -1972,7 +1978,7 @@ CPLErr ECWWriteRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                               nXOff, nYOff, nXSize, nYSize,
                               pData, nBufXSize, nBufYSize,
                               eBufType, 
-                              nPixelSpace, nLineSpace );
+                              nPixelSpace, nLineSpace, phMutex );
 }
 #endif
 
@@ -1981,9 +1987,10 @@ CPLErr ECWWriteRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /************************************************************************/
 
 CPLErr ECWWriteRasterBand::IWriteBlock( int nBlockX, int nBlockY, 
-                                        void *pBuffer )
+                                        void *pBuffer, void ** phMutex )
 
 {
+    CPLMutexHolderD( phMutex );
     int nWordSize = GDALGetDataTypeSize( eDataType ) / 8;
     CPLErr eErr;
     

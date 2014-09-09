@@ -45,6 +45,7 @@ extern "C" {
 #include <grass/version.h>
 #include <grass/gprojects.h>
 #include <grass/gis.h>
+#include "cpl_multiproc.h"
 
 #if GRASS_VERSION_MAJOR  >= 7
 char *GPJ_grass_to_wkt(const struct Key_Value *,
@@ -180,8 +181,8 @@ class GRASSRasterBand : public GDALRasterBand
                                     const char *, const char * );
     virtual        ~GRASSRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IRasterIO ( GDALRWFlag, int, int, int, int, void *, int, int, GDALDataType, int, int );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
+    virtual CPLErr IRasterIO ( GDALRWFlag, int, int, int, int, void *, int, int, GDALDataType, int, int, void ** phMutex = NULL );
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
     virtual double GetMinimum( int *pbSuccess = NULL );
@@ -479,9 +480,10 @@ CPLErr GRASSRasterBand::ResetReading ( struct Cell_head *sNewWindow )
 /*                                                                      */
 /************************************************************************/
 
-CPLErr GRASSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage )
+CPLErr GRASSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage, void ** phMutex )
 
 {
+    CPLMutexHolderD( phMutex );
     if ( ! this->valid ) return CE_Failure;
 
     // Reset window because IRasterIO could be previosly called
@@ -527,8 +529,9 @@ CPLErr GRASSRasterBand::IRasterIO ( GDALRWFlag eRWFlag,
 	                           int nXOff, int nYOff, int nXSize, int nYSize,
 				   void * pData, int nBufXSize, int nBufYSize,
 				   GDALDataType eBufType,
-				   int nPixelSpace, int nLineSpace )
+				   int nPixelSpace, int nLineSpace, void ** phMutex )
 {
+    CPLMutexHolderD( phMutex );
     /* GRASS library does that, we have only calculate and reset the region in map units
      * and if the region has changed, reopen the raster */
     

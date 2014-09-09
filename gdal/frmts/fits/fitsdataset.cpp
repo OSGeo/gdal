@@ -32,6 +32,7 @@
 
 #include "gdal_pam.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 #include <string.h>
 
 CPL_CVSID("$Id$");
@@ -91,8 +92,8 @@ public:
   FITSRasterBand(FITSDataset*, int);
   ~FITSRasterBand();
 
-  virtual CPLErr IReadBlock( int, int, void * );
-  virtual CPLErr IWriteBlock( int, int, void * ); 
+  virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
+  virtual CPLErr IWriteBlock( int, int, void *, void ** phMutex = NULL ); 
 };
 
 
@@ -122,8 +123,9 @@ FITSRasterBand::~FITSRasterBand() {
 /************************************************************************/
 
 CPLErr FITSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
-                                  void* pImage ) {
+                                  void* pImage, void ** phMutex ) {
  
+  CPLMutexHolderD( phMutex );
   // A FITS block is one row (we assume BSQ formatted data)
   FITSDataset* dataset = (FITSDataset*) poDS;
   fitsfile* hFITS = dataset->hFITS;
@@ -167,8 +169,9 @@ CPLErr FITSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr FITSRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
-				   void* pImage) {
+				   void* pImage, void ** phMutex) {
 
+  CPLMutexHolderD( phMutex );
   FITSDataset* dataset = (FITSDataset*) poDS;
   fitsfile* hFITS = dataset->hFITS;
   int status = 0;

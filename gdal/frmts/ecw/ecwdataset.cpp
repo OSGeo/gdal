@@ -33,6 +33,7 @@
 #include "ogr_spatialref.h"
 #include "ogr_api.h"
 #include "ogr_geometry.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -827,7 +828,7 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                  int nXOff, int nYOff, int nXSize, int nYSize,
                                  void * pData, int nBufXSize, int nBufYSize,
                                  GDALDataType eBufType,
-                                 int nPixelSpace, int nLineSpace )
+                                 int nPixelSpace, int nLineSpace, void ** phMutex )
 {
     if( eRWFlag == GF_Write )
         return CE_Failure;
@@ -848,6 +849,7 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 #if !defined(SDK_CAN_DO_SUPERSAMPLING)
     if( poGDS->bUseOldBandRasterIOImplementation )
     {
+        CPLMutexHolderD( phMutex );
         return OldIRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
                             pData, nBufXSize, nBufYSize,
                             eBufType,
@@ -865,14 +867,15 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                             (nYSize == nRasterYSize) ? poGDS->nRasterYSize : nYSize * nResFactor,
                             pData, nBufXSize, nBufYSize,
                             eBufType, 1, &nBand,
-                            nPixelSpace, nLineSpace, nLineSpace*nBufYSize);
+                            nPixelSpace, nLineSpace, nLineSpace*nBufYSize,
+                            phMutex);
 }
 
 /************************************************************************/
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr ECWRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage )
+CPLErr ECWRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage, void ** phMutex )
 
 {
     int nXOff = nBlockXOff * nBlockXSize,
@@ -890,7 +893,7 @@ CPLErr ECWRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage 
     return IRasterIO( GF_Read,
                       nXOff, nYOff, nXSize, nYSize,
                       pImage, nXSize, nYSize,
-                      eDataType, nPixelSpace, nLineSpace );
+                      eDataType, nPixelSpace, nLineSpace, phMutex );
 }
 
 /************************************************************************/
@@ -1762,7 +1765,8 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
                               void * pData, int nBufXSize, int nBufYSize,
                               GDALDataType eBufType, 
                               int nBandCount, int *panBandMap,
-                              int nPixelSpace, int nLineSpace, int nBandSpace)
+                              int nPixelSpace, int nLineSpace, int nBandSpace,
+                              void ** phMutex)
     
 {
     if( eRWFlag == GF_Write )
@@ -1810,7 +1814,8 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
                                     pData, nBufXSize, nBufYSize,
                                     eBufType, 
                                     nBandCount, panBandMap,
-                                    nPixelSpace, nLineSpace, nBandSpace);
+                                    nPixelSpace, nLineSpace, nBandSpace,
+                                    phMutex);
         }
     }
 #endif
@@ -1833,6 +1838,7 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
         if( sCachedMultiBandIO.bEnabled &&
             sCachedMultiBandIO.pabyData != NULL )
         {
+            CPLMutexHolderD( phMutex );
             int j;
             int nDataTypeSize = GDALGetDataTypeSize(eBufType) / 8;
             for(j = 0; j < nBufYSize; j++)
@@ -1859,12 +1865,14 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      Try to do it based on existing "advised" access.                */
 /* -------------------------------------------------------------------- */
-    if( TryWinRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
-                        (GByte *) pData, nBufXSize, nBufYSize, 
-                        eBufType, nBandCount, panBandMap,
-                        nPixelSpace, nLineSpace, nBandSpace ) )
-        return CE_None;
-
+    {
+        CPLMutexHolderD( phMutex );
+        if( TryWinRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
+                            (GByte *) pData, nBufXSize, nBufYSize, 
+                            eBufType, nBandCount, panBandMap,
+                            nPixelSpace, nLineSpace, nBandSpace ) )
+            return CE_None;
+    }
 /* -------------------------------------------------------------------- */
 /*      If we are requesting a single line at 1:1, we do a multi-band   */
 /*      AdviseRead() and then TryWinRasterIO() again.                   */
@@ -1890,7 +1898,8 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
                                     pData, nBufXSize, nBufYSize,
                                     eBufType, 
                                     nBandCount, panBandMap,
-                                    nPixelSpace, nLineSpace, nBandSpace);
+                                    nPixelSpace, nLineSpace, nBandSpace,
+                                    phMutex);
         bUseOldBandRasterIOImplementation = FALSE;
         return eErr;
     }
@@ -1903,7 +1912,7 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
         //ERO; indeed, the logic could be improved to detect successive pattern of single line reading
         //before doing an AdviseRead.
         CPLErr eErr;
-
+        CPLMutexHolderD( phMutex );
         eErr = AdviseRead( nXOff, nYOff, nXSize, GetRasterYSize() - nYOff,
                            nBufXSize, (nRasterYSize - nYOff) / nYSize, eBufType, 
                            nBandCount, panBandMap, NULL );
@@ -1931,6 +1940,7 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
         anBandIndices[i] = panBandMap[i] - 1;
 
     CleanupWindow();
+    CPLMutexHolderD( phMutex );
 
 /* -------------------------------------------------------------------- */
 /*      Cache data in the context of a multi-band reading pattern.      */

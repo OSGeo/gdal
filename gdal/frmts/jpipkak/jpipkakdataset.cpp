@@ -238,8 +238,9 @@ GDALRasterBand *JPIPKAKRasterBand::GetOverview( int iOverviewIndex )
 /************************************************************************/
 
 CPLErr JPIPKAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                      void * pImage )
+                                      void * pImage, void ** phMutex )
 {
+    CPLMutexHolderD( phMutex );
     CPLDebug( "JPIPKAK", "IReadBlock(%d,%d) on band %d.", 
               nBlockXOff, nBlockYOff, nBand );
 
@@ -322,7 +323,7 @@ JPIPKAKRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                               int nXOff, int nYOff, int nXSize, int nYSize,
                               void * pData, int nBufXSize, int nBufYSize,
                               GDALDataType eBufType, 
-                              int nPixelSpace,int nLineSpace )
+                              int nPixelSpace,int nLineSpace, void **phMutex )
     
 {
 /* -------------------------------------------------------------------- */
@@ -334,11 +335,12 @@ JPIPKAKRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         return GDALPamRasterBand::IRasterIO( 
             eRWFlag, nXOff, nYOff, nXSize, nYSize,
             pData, nBufXSize, nBufYSize, eBufType, 
-            nPixelSpace, nLineSpace );
+            nPixelSpace, nLineSpace, phMutex );
 
 /* -------------------------------------------------------------------- */
 /*      Otherwise do this as a single uncached async rasterio.          */
 /* -------------------------------------------------------------------- */
+    CPLMutexHolderD( phMutex );
     GDALAsyncReader* ario = 
         poBaseDS->BeginAsyncReader(nXOff, nYOff, nXSize, nYSize,
                                    pData, nBufXSize, nBufYSize, eBufType, 

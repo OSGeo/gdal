@@ -485,6 +485,11 @@ GDALRasterIO( GDALRasterBandH hRBand, GDALRWFlag eRWFlag,
               int nDSXOff, int nDSYOff, int nDSXSize, int nDSYSize,
               void * pBuffer, int nBXSize, int nBYSize,GDALDataType eBDataType,
               int nPixelSpace, int nLineSpace );
+CPLErr CPL_DLL CPL_STDCALL 
+GDALRasterIOMutex( GDALRasterBandH hRBand, GDALRWFlag eRWFlag,
+              int nDSXOff, int nDSYOff, int nDSXSize, int nDSYSize,
+              void * pBuffer, int nBXSize, int nBYSize,GDALDataType eBDataType,
+              int nPixelSpace, int nLineSpace, void ** phMutex );
 CPLErr CPL_DLL CPL_STDCALL GDALReadBlock( GDALRasterBandH, int, int, void * );
 CPLErr CPL_DLL CPL_STDCALL GDALWriteBlock( GDALRasterBandH, int, int, void * );
 int CPL_DLL CPL_STDCALL GDALGetRasterBandXSize( GDALRasterBandH );

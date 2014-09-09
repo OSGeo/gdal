@@ -31,6 +31,7 @@
 #include "rawdataset.h"
 #include "ogr_spatialref.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id: ehdrdataset.cpp 12350 2007-10-08 17:41:32Z rouault $");
 
@@ -230,7 +231,7 @@ class GenBinBitRasterBand : public GDALPamRasterBand
   public:
     GenBinBitRasterBand( GenBinDataset *poDS, int nBits );
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
 };
 
 /************************************************************************/
@@ -258,9 +259,10 @@ GenBinBitRasterBand::GenBinBitRasterBand( GenBinDataset *poDS, int nBitsIn )
 /************************************************************************/
 
 CPLErr GenBinBitRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                        void * pImage )
+                                        void * pImage, void ** phMutex )
 
 {
+    CPLMutexHolderD( phMutex );
     GenBinDataset *poGDS = (GenBinDataset *) poDS;
     vsi_l_offset   nLineStart;
     unsigned int   nLineBytes;

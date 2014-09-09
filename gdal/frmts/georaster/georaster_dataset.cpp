@@ -1183,7 +1183,8 @@ CPLErr GeoRasterDataset::IRasterIO( GDALRWFlag eRWFlag,
                                     void *pData, int nBufXSize, int nBufYSize,
                                     GDALDataType eBufType,
                                     int nBandCount, int *panBandMap,
-                                    int nPixelSpace, int nLineSpace, int nBandSpace )
+                                    int nPixelSpace, int nLineSpace, int nBandSpace,
+                                    void ** phMutex )
 
 {
     if( poGeoRaster->nBandBlockSize > 1 )
@@ -1192,7 +1193,7 @@ CPLErr GeoRasterDataset::IRasterIO( GDALRWFlag eRWFlag,
             nXOff, nYOff, nXSize, nYSize,
             pData, nBufXSize, nBufYSize, eBufType,
             nBandCount, panBandMap, nPixelSpace,
-            nLineSpace, nBandSpace );
+            nLineSpace, nBandSpace, phMutex );
     }
     else
     {
@@ -1200,7 +1201,8 @@ CPLErr GeoRasterDataset::IRasterIO( GDALRWFlag eRWFlag,
             nXOff, nYOff, nXSize, nYSize,
             pData, nBufXSize, nBufYSize, eBufType,
             nBandCount, panBandMap,
-            nPixelSpace, nLineSpace, nBandSpace );
+            nPixelSpace, nLineSpace, nBandSpace,
+            phMutex );
     }
 }
 

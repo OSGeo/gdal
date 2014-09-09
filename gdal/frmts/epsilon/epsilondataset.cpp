@@ -29,6 +29,7 @@
 
 #include "epsilon.h"
 #include "gdal_pam.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -112,7 +113,7 @@ class EpsilonRasterBand : public GDALPamRasterBand
   public:
                             EpsilonRasterBand(EpsilonDataset* poDS, int nBand);
                  
-    virtual CPLErr          IReadBlock( int, int, void * );
+    virtual CPLErr          IReadBlock( int, int, void *, void ** phMutex = NULL );
     virtual GDALColorInterp GetColorInterpretation();
 };
 
@@ -198,7 +199,7 @@ GDALColorInterp EpsilonRasterBand::GetColorInterpretation()
 /************************************************************************/
 
 CPLErr EpsilonRasterBand::IReadBlock( int nBlockXOff,
-                                      int nBlockYOff, void * pImage)
+                                      int nBlockYOff, void * pImage, void **phMutex)
 {
     EpsilonDataset* poGDS = (EpsilonDataset*) poDS;
     
@@ -223,6 +224,7 @@ CPLErr EpsilonRasterBand::IReadBlock( int nBlockXOff,
         
     if (!poGDS->GetNextBlockData())
     {
+        CPLMutexHolderD( phMutex );
         memset(pImage, 0, nBlockXSize * nBlockYSize);
         return CE_Failure;
     }
@@ -231,6 +233,7 @@ CPLErr EpsilonRasterBand::IReadBlock( int nBlockXOff,
     if (eps_read_block_header (poGDS->pabyBlockData,
                                poGDS->nBlockDataSize, &hdr) != EPS_OK)
     {
+        CPLMutexHolderD( phMutex );
         CPLError(CE_Warning, CPLE_AppDefined, "cannot read block header");
         memset(pImage, 0, nBlockXSize * nBlockYSize);
         return CE_Failure;
@@ -239,6 +242,7 @@ CPLErr EpsilonRasterBand::IReadBlock( int nBlockXOff,
     if (hdr.chk_flag == EPS_BAD_CRC ||
         hdr.crc_flag == EPS_BAD_CRC)
     {
+        CPLMutexHolderD( phMutex );
         CPLError(CE_Warning, CPLE_AppDefined, "bad CRC");
         memset(pImage, 0, nBlockXSize * nBlockYSize);
         return CE_Failure;
@@ -250,6 +254,7 @@ CPLErr EpsilonRasterBand::IReadBlock( int nBlockXOff,
 
     if (poGDS->nBands == 1)
     {
+        CPLMutexHolderD( phMutex );
         unsigned char ** pTempData =
             (unsigned char **) CPLMalloc(h * sizeof(unsigned char*));        
         for(i=0;i<h;i++)
@@ -275,6 +280,7 @@ CPLErr EpsilonRasterBand::IReadBlock( int nBlockXOff,
                             (GByte*) VSIMalloc3(nBlockXSize, nBlockYSize, 3);
             if (poGDS->pabyRGBData == NULL)
             {
+                CPLMutexHolderD( phMutex );
                 memset(pImage, 0, nBlockXSize * nBlockYSize);
                 return CE_Failure;
             }
@@ -282,6 +288,7 @@ CPLErr EpsilonRasterBand::IReadBlock( int nBlockXOff,
             
         if (poGDS->nBufferedBlock == nBlock)
         {
+            CPLMutexHolderD( phMutex );
             memcpy(pImage,
                    poGDS->pabyRGBData + (nBand - 1) * nBlockXSize * nBlockYSize,
                    nBlockXSize * nBlockYSize);
@@ -305,6 +312,7 @@ CPLErr EpsilonRasterBand::IReadBlock( int nBlockXOff,
         if (eps_decode_truecolor_block (pTempData[0], pTempData[1], pTempData[2],
                                         poGDS->pabyBlockData, &hdr) != EPS_OK)
         {
+            CPLMutexHolderD( phMutex );
             for(iBand=0;iBand<poGDS->nBands;iBand++)
                 CPLFree(pTempData[iBand]);
             memset(pImage, 0, nBlockXSize * nBlockYSize);
@@ -315,10 +323,12 @@ CPLErr EpsilonRasterBand::IReadBlock( int nBlockXOff,
             CPLFree(pTempData[iBand]);
             
         poGDS->nBufferedBlock = nBlock;
-        memcpy(pImage,
-               poGDS->pabyRGBData + (nBand - 1) * nBlockXSize * nBlockYSize,
-               nBlockXSize * nBlockYSize);
-                   
+        {
+            CPLMutexHolderD( phMutex );
+            memcpy(pImage,
+                   poGDS->pabyRGBData + (nBand - 1) * nBlockXSize * nBlockYSize,
+                   nBlockXSize * nBlockYSize);
+        }
         if (nBand == 1)
         {
             int iOtherBand;
@@ -331,17 +341,18 @@ CPLErr EpsilonRasterBand::IReadBlock( int nBlockXOff,
                 if (poBlock == NULL)
                     break;
                     
-                GByte* pabySrcBlock = (GByte *) poBlock->GetDataRef();
+                GByte* pabySrcBlock = (GByte *) poBlock->GetDataRef(TRUE);
                 if( pabySrcBlock == NULL )
                 {
                     poBlock->DropLock();
                     break;
                 }
-
-                memcpy(pabySrcBlock,
-                       poGDS->pabyRGBData + (iOtherBand - 1) * nBlockXSize * nBlockYSize,
-                       nBlockXSize * nBlockYSize);
-
+                {
+                    CPLMutexHolderD( poBlock->GetRWMutex() );
+                    memcpy(pabySrcBlock,
+                           poGDS->pabyRGBData + (iOtherBand - 1) * nBlockXSize * nBlockYSize,
+                           nBlockXSize * nBlockYSize);
+                }
                 poBlock->DropLock();
             }
         }

@@ -28,6 +28,7 @@
  ****************************************************************************/
 
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 
@@ -90,7 +91,7 @@ class HF2RasterBand : public GDALPamRasterBand
                 HF2RasterBand( HF2Dataset *, int, GDALDataType );
                ~HF2RasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void **phMutex = NULL );
 };
 
 
@@ -127,9 +128,10 @@ HF2RasterBand::~HF2RasterBand()
 /************************************************************************/
 
 CPLErr HF2RasterBand::IReadBlock( int nBlockXOff, int nLineYOff,
-                                  void * pImage )
+                                  void * pImage, void **phMutex )
 
 {
+    CPLMutexHolderD( phMutex );
     HF2Dataset *poGDS = (HF2Dataset *) poDS;
 
     int nXBlocks = (nRasterXSize + nBlockXSize - 1) / nBlockXSize;

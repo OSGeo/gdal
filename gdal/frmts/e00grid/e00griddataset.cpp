@@ -29,6 +29,7 @@
 
 #include "cpl_vsi_virtual.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 #include "ogr_spatialref.h"
 #include "gdal_pam.h"
 
@@ -131,7 +132,7 @@ class E00GRIDRasterBand : public GDALPamRasterBand
 
                 E00GRIDRasterBand( E00GRIDDataset *, int, GDALDataType );
 
-    virtual CPLErr      IReadBlock( int, int, void * );
+    virtual CPLErr      IReadBlock( int, int, void *, void ** phMutex = NULL );
 
     virtual double      GetNoDataValue( int *pbSuccess = NULL );
     virtual const char *GetUnitType();
@@ -165,7 +166,7 @@ E00GRIDRasterBand::E00GRIDRasterBand( E00GRIDDataset *poDS, int nBand,
 /************************************************************************/
 
 CPLErr E00GRIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                      void * pImage )
+                                      void * pImage, void ** phMutex )
 
 {
     E00GRIDDataset *poGDS = (E00GRIDDataset *) poDS;
@@ -208,7 +209,7 @@ CPLErr E00GRIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         {
             //CPLDebug("E00GRID", "Forward skip to %d from %d", nBlockYOff, poGDS->nLastYOff);
             for(i=poGDS->nLastYOff + 1; i < nBlockYOff;i++)
-                IReadBlock(0, i, pImage);
+                IReadBlock(0, i, pImage, phMutex);
         }
 
         if (nBlockYOff > poGDS->nMaxYOffset)
@@ -218,6 +219,7 @@ CPLErr E00GRIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             poGDS->nMaxYOffset = nBlockYOff;
         }
 
+        CPLMutexHolderD( phMutex );
         const char* pszLine = NULL;
         for(i=0;i<nBlockXSize;i++)
         {
@@ -251,6 +253,7 @@ CPLErr E00GRIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     vsi_l_offset nPos = poGDS->nDataStart + nLinesToSkip * nBytesPerLine;
     VSIFSeekL(poGDS->fp, nPos, SEEK_SET);
 
+    CPLMutexHolderD( phMutex );
     for(i=0;i<nBlockXSize;i++)
     {
         if (VSIFReadL(szVal, E00_FLOAT_SIZE, 1, poGDS->fp) != 1)

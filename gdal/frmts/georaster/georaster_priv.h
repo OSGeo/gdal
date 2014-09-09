@@ -177,7 +177,8 @@ public:
                             void *pData, int nBufXSize, int nBufYSize, 
                             GDALDataType eBufType,
                             int nBandCount, int *panBandMap, 
-                            int nPixelSpace, int nLineSpace, int nBandSpace );
+                            int nPixelSpace, int nLineSpace, int nBandSpace,
+                            void ** phMutex = NULL );
     virtual int         GetGCPCount() { return nGCPCount; }
     virtual const char* GetGCPProjection();
     virtual const GDAL_GCP*
@@ -248,9 +249,9 @@ public:
     virtual GDALColorInterp   
                         GetColorInterpretation();
     virtual CPLErr      IReadBlock( int nBlockXOff, int nBlockYOff, 
-                            void *pImage );
+                            void *pImage, void ** phMutex = NULL );
     virtual CPLErr      IWriteBlock( int nBlockXOff, int nBlockYOff, 
-                            void *pImage );
+                            void *pImage, void ** phMutex = NULL );
     virtual CPLErr      SetStatistics( double dfMin, double dfMax, 
                             double dfMean, double dfStdDev );
     virtual CPLErr      GetStatistics( int bApproxOK, int bForce,

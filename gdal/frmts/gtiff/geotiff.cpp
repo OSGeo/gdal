@@ -463,7 +463,8 @@ class GTiffDataset : public GDALPamDataset
                                void * pData, int nBufXSize, int nBufYSize,
                                GDALDataType eBufType, 
                                int nBandCount, int *panBandMap,
-                               int nPixelSpace, int nLineSpace, int nBandSpace);
+                               int nPixelSpace, int nLineSpace, int nBandSpace,
+                               void ** phMutex = NULL);
     virtual char **GetFileList(void);
 
     virtual CPLErr IBuildOverviews( const char *, int, int *, int, int *, 
@@ -546,7 +547,8 @@ class GTiffJPEGOverviewDS : public GDALDataset
                                void * pData, int nBufXSize, int nBufYSize,
                                GDALDataType eBufType, 
                                int nBandCount, int *panBandMap,
-                               int nPixelSpace, int nLineSpace, int nBandSpace);
+                               int nPixelSpace, int nLineSpace, int nBandSpace, 
+                               void **phMutex = NULL);
 };
 
 class GTiffJPEGOverviewBand : public GDALRasterBand
@@ -554,7 +556,7 @@ class GTiffJPEGOverviewBand : public GDALRasterBand
     public:
         GTiffJPEGOverviewBand(GTiffJPEGOverviewDS* poDS, int nBand);
 
-        virtual CPLErr IReadBlock( int, int, void * );
+        virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
 };
 
 /************************************************************************/
@@ -623,7 +625,8 @@ CPLErr GTiffJPEGOverviewDS::IRasterIO( GDALRWFlag eRWFlag,
                                void * pData, int nBufXSize, int nBufYSize,
                                GDALDataType eBufType, 
                                int nBandCount, int *panBandMap,
-                               int nPixelSpace, int nLineSpace, int nBandSpace)
+                               int nPixelSpace, int nLineSpace, int nBandSpace,
+                               void ** phMutex)
 
 {
     /* For non-single strip JPEG-IN-TIFF, the block based strategy will */
@@ -636,14 +639,15 @@ CPLErr GTiffJPEGOverviewDS::IRasterIO( GDALRWFlag eRWFlag,
         return BlockBasedRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
                                    pData, nBufXSize, nBufYSize,
                                    eBufType, nBandCount, panBandMap,
-                                   nPixelSpace, nLineSpace, nBandSpace );
+                                   nPixelSpace, nLineSpace, nBandSpace,
+                                   phMutex );
     }
     else
     {
         return GDALDataset::IRasterIO(
                 eRWFlag, nXOff, nYOff, nXSize, nYSize,
                 pData, nBufXSize, nBufYSize, eBufType,
-                nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace);
+                nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace, phMutex);
     }
 
 }
@@ -670,7 +674,7 @@ GTiffJPEGOverviewBand::GTiffJPEGOverviewBand(GTiffJPEGOverviewDS* poDS, int nBan
 /*                          IReadBlock()                                */
 /************************************************************************/
 
-CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage )
+CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage, void **phMutex )
 {
     GTiffJPEGOverviewDS* poGDS = (GTiffJPEGOverviewDS*)poDS;
 
@@ -697,6 +701,7 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff, void *
     int nDataTypeSize = GDALGetDataTypeSize(eDataType)/8;
     if( !poGDS->poParentDS->IsBlockAvailable(nBlockId) )
     {
+        CPLMutexHolderD( phMutex );
         memset(pImage, 0, nBlockXSize * nBlockYSize * nDataTypeSize );
         return CE_None;
     }
@@ -875,7 +880,7 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff, void *
                                  nReqXOff, nReqYOff, nReqXSize, nReqYSize,
                                  pImage,
                                  nBufXSize, nBufYSize, eDataType,
-                                 0, nBlockXSize * nDataTypeSize );
+                                 0, nBlockXSize * nDataTypeSize, phMutex );
         }
     }
 
@@ -924,7 +929,8 @@ class GTiffRasterBand : public GDALPamRasterBand
                                   int nXOff, int nYOff, int nXSize, int nYSize,
                                   void * pData, int nBufXSize, int nBufYSize,
                                   GDALDataType eBufType,
-                                  int nPixelSpace, int nLineSpace );
+                                  int nPixelSpace, int nLineSpace,
+                                  void ** phMutex = NULL );
 
     std::set<GTiffRasterBand **> aSetPSelf;
     static void     DropReferenceVirtualMem(void* pUserData);
@@ -946,14 +952,14 @@ public:
                    GTiffRasterBand( GTiffDataset *, int );
                   ~GTiffRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
+    virtual CPLErr IWriteBlock( int, int, void *, void ** phMutex = NULL );
 
     virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
                                   int nXOff, int nYOff, int nXSize, int nYSize,
                                   void * pData, int nBufXSize, int nBufYSize,
                                   GDALDataType eBufType,
-                                  int nPixelSpace, int nLineSpace );
+                                  int nPixelSpace, int nLineSpace, void ** phMutex = NULL );
 
     virtual const char *GetDescription() const;
     virtual void        SetDescription( const char * );
@@ -1168,7 +1174,8 @@ CPLErr GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
                                   int nXOff, int nYOff, int nXSize, int nYSize,
                                   void * pData, int nBufXSize, int nBufYSize,
                                   GDALDataType eBufType,
-                                  int nPixelSpace, int nLineSpace )
+                                  int nPixelSpace, int nLineSpace,
+                                  void ** phMutex )
 {
     if( !(eRWFlag == GF_Read &&
           poGDS->nCompression == COMPRESSION_NONE &&
@@ -1207,7 +1214,7 @@ CPLErr GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
 
             return poOverviewBand->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                             pData, nBufXSize, nBufYSize, eBufType,
-                                            nPixelSpace, nLineSpace );
+                                            nPixelSpace, nLineSpace, phMutex );
         }
     }
 
@@ -1251,34 +1258,37 @@ CPLErr GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
     }
 
     /* Prepare data extraction */
-    for(iLine=0;eErr == CE_None && iLine<nReqYSize;iLine++)
     {
-        if (pTmpBuffer == NULL)
-            ppData[iLine] = ((GByte*)pData) + iLine * nLineSpace;
-        else
-            ppData[iLine] = ((GByte*)pTmpBuffer) + iLine * nReqXSize * ePixelSize;
-        int nSrcLine;
-        if (nBufYSize < nYSize) /* Sub-sampling in y */
-            nSrcLine = nYOff + (int)((iLine + 0.5) * nYSize / nBufYSize);
-        else
-            nSrcLine = nYOff + iLine;
-
-        int nBlockXOff = 0;
-        int nBlockYOff = nSrcLine / nBlockYSize;
-        int nYOffsetInBlock = nSrcLine % nBlockYSize;
-        int nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
-        int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
-        if( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE )
+        CPLMutexHolderD( phMutex );
+        for(iLine=0;eErr == CE_None && iLine<nReqYSize;iLine++)
         {
-            nBlockId += (nBand-1) * poGDS->nBlocksPerBand;
+            if (pTmpBuffer == NULL)
+                ppData[iLine] = ((GByte*)pData) + iLine * nLineSpace;
+            else
+                ppData[iLine] = ((GByte*)pTmpBuffer) + iLine * nReqXSize * ePixelSize;
+            int nSrcLine;
+            if (nBufYSize < nYSize) /* Sub-sampling in y */
+                nSrcLine = nYOff + (int)((iLine + 0.5) * nYSize / nBufYSize);
+            else
+                nSrcLine = nYOff + iLine;
+
+            int nBlockXOff = 0;
+            int nBlockYOff = nSrcLine / nBlockYSize;
+            int nYOffsetInBlock = nSrcLine % nBlockYSize;
+            int nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
+            int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
+            if( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE )
+            {
+                nBlockId += (nBand-1) * poGDS->nBlocksPerBand;
+            }
+
+            panOffsets[iLine] = panTIFFOffsets[nBlockId];
+            if (panOffsets[iLine] == 0) /* We don't support sparse files */
+                eErr = CE_Failure;
+
+            panOffsets[iLine] += (nXOff + nYOffsetInBlock * nBlockXSize) * ePixelSize;
+            panSizes[iLine] = nReqXSize * ePixelSize;
         }
-
-        panOffsets[iLine] = panTIFFOffsets[nBlockId];
-        if (panOffsets[iLine] == 0) /* We don't support sparse files */
-            eErr = CE_Failure;
-
-        panOffsets[iLine] += (nXOff + nYOffsetInBlock * nBlockXSize) * ePixelSize;
-        panSizes[iLine] = nReqXSize * ePixelSize;
     }
 
     /* Extract data from the file */
@@ -1632,7 +1642,8 @@ CPLErr GTiffDataset::IRasterIO( GDALRWFlag eRWFlag,
                                void * pData, int nBufXSize, int nBufYSize,
                                GDALDataType eBufType, 
                                int nBandCount, int *panBandMap,
-                               int nPixelSpace, int nLineSpace, int nBandSpace)
+                               int nPixelSpace, int nLineSpace, int nBandSpace,
+                               void ** phMutex)
 
 {
     CPLErr eErr;
@@ -1654,7 +1665,8 @@ CPLErr GTiffDataset::IRasterIO( GDALRWFlag eRWFlag,
             eErr = papoBands[0]->GetOverview(iOvrLevel)->GetDataset()->RasterIO(
                 eRWFlag, nXOffMod, nYOffMod, nXSizeMod, nYSizeMod,
                 pData, nBufXSize, nBufYSize, eBufType,
-                nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace);
+                nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace, 
+                phMutex );
             nJPEGOverviewVisibilityFlag --;
             return eErr;
         }
@@ -1664,7 +1676,8 @@ CPLErr GTiffDataset::IRasterIO( GDALRWFlag eRWFlag,
     eErr =  GDALPamDataset::IRasterIO(
                 eRWFlag, nXOff, nYOff, nXSize, nYSize,
                 pData, nBufXSize, nBufYSize, eBufType,
-                nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace);
+                nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace,
+                phMutex );
     nJPEGOverviewVisibilityFlag --;
     return eErr;
 }
@@ -1677,7 +1690,7 @@ CPLErr GTiffRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                   int nXOff, int nYOff, int nXSize, int nYSize,
                                   void * pData, int nBufXSize, int nBufYSize,
                                   GDALDataType eBufType,
-                                  int nPixelSpace, int nLineSpace )
+                                  int nPixelSpace, int nLineSpace, void ** phMutex )
 {
     CPLErr eErr;
 
@@ -1689,7 +1702,7 @@ CPLErr GTiffRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         poGDS->nJPEGOverviewVisibilityFlag ++;
         eErr = DirectIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
                         pData, nBufXSize, nBufYSize, eBufType,
-                        nPixelSpace, nLineSpace);
+                        nPixelSpace, nLineSpace, phMutex);
         poGDS->nJPEGOverviewVisibilityFlag --;
         if (eErr == CE_None)
             return eErr;
@@ -1709,7 +1722,7 @@ CPLErr GTiffRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         GIntBig nRequiredMem = (GIntBig)poGDS->nBands * nXBlocks * nYBlocks *
                                 nBlockXSize * nBlockYSize *
                                (GDALGetDataTypeSize(eDataType) / 8);
-        if (nRequiredMem > GDALGetCacheMax64())
+        if (nRequiredMem > poDS->GetRasterBlockManager()->GetCacheMax())
         {
             if (!poGDS->bHasWarnedDisableAggressiveBandCaching)
             {
@@ -1724,7 +1737,7 @@ CPLErr GTiffRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     poGDS->nJPEGOverviewVisibilityFlag ++;
     eErr = GDALPamRasterBand::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                         pData, nBufXSize, nBufYSize, eBufType,
-                                        nPixelSpace, nLineSpace);
+                                        nPixelSpace, nLineSpace, phMutex);
     poGDS->nJPEGOverviewVisibilityFlag --;
 
     poGDS->bLoadingOtherBands = FALSE;
@@ -1737,7 +1750,7 @@ CPLErr GTiffRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /************************************************************************/
 
 CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                    void * pImage )
+                                    void * pImage, void ** phMutex )
 
 {
     int			nBlockBufSize, nBlockId, nBlockIdBand0;
@@ -1780,6 +1793,7 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     if( !poGDS->IsBlockAvailable(nBlockId) )
     {
+        CPLMutexHolderD( phMutex );
         NullBlock( pImage );
         return CE_None;
     }
@@ -1790,6 +1804,7 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( poGDS->nBands == 1
         || poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE )
     {
+        CPLMutexHolderD( phMutex );
         if( nBlockReqSize < nBlockBufSize )
             memset( pImage, 0, nBlockBufSize );
 
@@ -1829,6 +1844,7 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     eErr = poGDS->LoadBlockBuf( nBlockId );
     if( eErr != CE_None )
     {
+        CPLMutexHolderD( phMutex );
         memset( pImage, 0,
                 nBlockXSize * nBlockYSize
                 * (GDALGetDataTypeSize(eDataType) / 8) );
@@ -1844,12 +1860,13 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
          ||  eBandInterp == GCI_YCbCr_CrBand)
         && poGDS->nBitsPerSample == 8 )
     {
-	uint16 hs, vs;
+        uint16 hs, vs;
         int iX, iY;
 
-	TIFFGetFieldDefaulted( poGDS->hTIFF, TIFFTAG_YCBCRSUBSAMPLING, 
+        TIFFGetFieldDefaulted( poGDS->hTIFF, TIFFTAG_YCBCRSUBSAMPLING, 
                                &hs, &vs);
         
+        CPLMutexHolderD( phMutex );
         for( iY = 0; iY < nBlockYSize; iY++ )
         {
             for( iX = 0; iX < nBlockXSize; iX++ )
@@ -1879,6 +1896,7 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     if( poGDS->nBitsPerSample == 8 )
     {
+        CPLMutexHolderD( phMutex );
         int	i, nBlockPixels;
         GByte	*pabyImage;
         GByte   *pabyImageDest = (GByte*)pImage;
@@ -1949,6 +1967,7 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         pabyImage = poGDS->pabyBlockBuf + (nBand - 1) * nWordBytes;
 
         nBlockPixels = nBlockXSize * nBlockYSize;
+        CPLMutexHolderD( phMutex );
         for( i = 0; i < nBlockPixels; i++ )
         {
             for( int j = 0; j < nWordBytes; j++ )
@@ -1991,7 +2010,7 @@ CPLErr GTiffRasterBand::FillCacheForOtherBands( int nBlockXOff, int nBlockYOff )
 /*      enough to accomodate the size of all the blocks, don't enter    */
 /* -------------------------------------------------------------------- */
     if( poGDS->nBands != 1 && !poGDS->bLoadingOtherBands &&
-        nBlockXSize * nBlockYSize * (GDALGetDataTypeSize(eDataType) / 8) < GDALGetCacheMax64() / poGDS->nBands)
+        nBlockXSize * nBlockYSize * (GDALGetDataTypeSize(eDataType) / 8) < poDS->GetRasterBlockManager()->GetCacheMax() / poGDS->nBands)
     {
         int iOtherBand;
 
@@ -2025,7 +2044,7 @@ CPLErr GTiffRasterBand::FillCacheForOtherBands( int nBlockXOff, int nBlockYOff )
 /************************************************************************/
 
 CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-                                     void * pImage )
+                                     void * pImage, void ** phMutex )
 
 {
     int		nBlockId;
@@ -2059,7 +2078,8 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     {
         nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow
             + (nBand-1) * poGDS->nBlocksPerBand;
-
+        
+        CPLMutexHolderD( phMutex );
         eErr = poGDS->WriteEncodedTileOrStrip(nBlockId, pImage, TRUE);
 
         return eErr;
@@ -2086,10 +2106,14 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     for( iBand = 0; iBand < nBands; iBand++ )
     {
         const GByte *pabyThisImage = NULL;
+        void ** phThisMutex = NULL;
         GDALRasterBlock *poBlock = NULL;
 
         if( iBand+1 == nBand )
+        {
             pabyThisImage = (GByte *) pImage;
+            phThisMutex = phMutex;
+        }
         else
         {
             poBlock = ((GTiffRasterBand *)poGDS->GetRasterBand( iBand+1 ))
@@ -2104,15 +2128,16 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                 continue;
             }
 
-            pabyThisImage = (GByte *) poBlock->GetDataRef();
+            pabyThisImage = (GByte *) poBlock->GetDataRef(TRUE);
+            phThisMutex = poBlock->GetRWMutex();
         }
 
         int i, nBlockPixels = nBlockXSize * nBlockYSize;
         GByte *pabyOut = poGDS->pabyBlockBuf + iBand*nWordBytes;
-
+        
         if (nWordBytes == 1)
         {
-
+            CPLMutexHolderD( phThisMutex );
 /* ==================================================================== */
 /*     Optimization for high number of words to transfer and some       */
 /*     typical band numbers : we unroll the loop.                       */
@@ -2166,6 +2191,7 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         }
         else
         {
+            CPLMutexHolderD( phThisMutex );
             for( i = 0; i < nBlockPixels; i++ )
             {
                 memcpy( pabyOut, pabyThisImage, nWordBytes );
@@ -2922,8 +2948,8 @@ class GTiffSplitBand : public GTiffRasterBand
                    GTiffSplitBand( GTiffDataset *, int );
     virtual       ~GTiffSplitBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL);
+    virtual CPLErr IWriteBlock( int, int, void *, void ** phMutex = NULL);
 };
 
 /************************************************************************/
@@ -2951,7 +2977,7 @@ GTiffSplitBand::~GTiffSplitBand()
 /************************************************************************/
 
 CPLErr GTiffSplitBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                   void * pImage )
+                                   void * pImage, void **phMutex )
 
 {
     (void) nBlockXOff;
@@ -3000,17 +3026,20 @@ CPLErr GTiffSplitBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         poGDS->nLastBandRead = nBand;
     }
     
-    while( poGDS->nLastLineRead < nBlockYOff )
     {
-        if( TIFFReadScanline( poGDS->hTIFF,
-                              poGDS->pabyBlockBuf ? poGDS->pabyBlockBuf : pImage,
-                              ++poGDS->nLastLineRead,
-                              (poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE) ? (uint16) (nBand-1) : 0 ) == -1
-            && !poGDS->bIgnoreReadErrors )
+        CPLMutexHolderD( phMutex );
+        while( poGDS->nLastLineRead < nBlockYOff )
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "TIFFReadScanline() failed." );
-            return CE_Failure;
+            if( TIFFReadScanline( poGDS->hTIFF,
+                                  poGDS->pabyBlockBuf ? poGDS->pabyBlockBuf : pImage,
+                                  ++poGDS->nLastLineRead,
+                                  (poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE) ? (uint16) (nBand-1) : 0 ) == -1
+                && !poGDS->bIgnoreReadErrors )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "TIFFReadScanline() failed." );
+                return CE_Failure;
+            }
         }
     }
     
@@ -3021,6 +3050,7 @@ extract_band_data:
     if ( poGDS->pabyBlockBuf != NULL )
     {
         int	  iPixel, iSrcOffset= nBand - 1, iDstOffset=0;
+        CPLMutexHolderD( phMutex );
 
         for( iPixel = 0; iPixel < nBlockXSize; iPixel++, iSrcOffset+=poGDS->nBands, iDstOffset++ )
         {
@@ -3036,12 +3066,13 @@ extract_band_data:
 /************************************************************************/
 
 CPLErr GTiffSplitBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-                                    void * pImage )
+                                    void * pImage, void ** phMutex )
 
 {
     (void) nBlockXOff;
     (void) nBlockYOff;
     (void) pImage;
+    (void) phMutex;
 
     CPLError( CE_Failure, CPLE_AppDefined, 
               "Split bands are read-only." );
@@ -3062,8 +3093,8 @@ class GTiffRGBABand : public GTiffRasterBand
 
                    GTiffRGBABand( GTiffDataset *, int );
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
+    virtual CPLErr IWriteBlock( int, int, void *, void ** phMutex = NULL );
 
     virtual GDALColorInterp GetColorInterpretation();
 };
@@ -3084,7 +3115,7 @@ GTiffRGBABand::GTiffRGBABand( GTiffDataset *poDS, int nBand )
 /*                            IWriteBlock()                             */
 /************************************************************************/
 
-CPLErr GTiffRGBABand::IWriteBlock( int, int, void * )
+CPLErr GTiffRGBABand::IWriteBlock( int, int, void *, void ** )
 
 {
     CPLError( CE_Failure, CPLE_AppDefined, 
@@ -3097,7 +3128,7 @@ CPLErr GTiffRGBABand::IWriteBlock( int, int, void * )
 /************************************************************************/
 
 CPLErr GTiffRGBABand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                    void * pImage )
+                                    void * pImage, void ** phMutex )
 
 {
     int			nBlockBufSize, nBlockId;
@@ -3180,15 +3211,18 @@ CPLErr GTiffRGBABand::IReadBlock( int nBlockXOff, int nBlockYOff,
     nBO = 4 - nBand;
 #endif
 
-    for( iDestLine = 0; iDestLine < nThisBlockYSize; iDestLine++ )
     {
-        int	nSrcOffset;
+        CPLMutexHolderD( phMutex );
+        for( iDestLine = 0; iDestLine < nThisBlockYSize; iDestLine++ )
+        {
+            int	nSrcOffset;
 
-        nSrcOffset = (nThisBlockYSize - iDestLine - 1) * nBlockXSize * 4;
+            nSrcOffset = (nThisBlockYSize - iDestLine - 1) * nBlockXSize * 4;
 
-        GDALCopyWords( poGDS->pabyBlockBuf + nBO + nSrcOffset, GDT_Byte, 4,
-                       ((GByte *) pImage)+iDestLine*nBlockXSize, GDT_Byte, 1, 
-                       nBlockXSize );
+            GDALCopyWords( poGDS->pabyBlockBuf + nBO + nSrcOffset, GDT_Byte, 4,
+                           ((GByte *) pImage)+iDestLine*nBlockXSize, GDT_Byte, 1, 
+                           nBlockXSize );
+        }
     }
 
     if (eErr == CE_None)
@@ -3228,8 +3262,8 @@ class GTiffOddBitsBand : public GTiffRasterBand
                    GTiffOddBitsBand( GTiffDataset *, int );
     virtual       ~GTiffOddBitsBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
+    virtual CPLErr IWriteBlock( int, int, void *, void ** phMutex = NULL );
 };
 
 
@@ -3264,7 +3298,7 @@ GTiffOddBitsBand::~GTiffOddBitsBand()
 /************************************************************************/
 
 CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff, 
-                                      void *pImage )
+                                      void *pImage, void ** phMutex )
 
 {
     int		nBlockId;
@@ -3333,6 +3367,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         for( iY = 0; iY < nBlockYSize; iY++ )
         {
             iBitOffset = iY * nBitsPerLine;
+            CPLMutexHolderD( phMutex );
 
             /* Small optimization in 1 bit case */
             if (poGDS->nBitsPerSample == 1)
@@ -3424,12 +3459,16 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     for( iBand = 0; iBand < poGDS->nBands; iBand++ )
     {
         const GByte *pabyThisImage = NULL;
+        void ** phThisMutex = NULL;
         GDALRasterBlock *poBlock = NULL;
         int	iBit, iPixel, iBitOffset = 0;
         int     iPixelBitSkip, iBandBitOffset, iX, iY, nBitsPerLine;
 
         if( iBand+1 == nBand )
+        {
             pabyThisImage = (GByte *) pImage;
+            phThisMutex = phMutex;
+        }
         else
         {
             poBlock = ((GTiffOddBitsBand *)poGDS->GetRasterBand( iBand+1 ))
@@ -3444,7 +3483,8 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                 continue;
             }
 
-            pabyThisImage = (GByte *) poBlock->GetDataRef();
+            pabyThisImage = (GByte *) poBlock->GetDataRef(TRUE);
+            phThisMutex = poBlock->GetRWMutex();
         }
 
         iPixelBitSkip = poGDS->nBitsPerSample * poGDS->nBands;
@@ -3454,75 +3494,78 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         nBitsPerLine = nBlockXSize * iPixelBitSkip;
         if( (nBitsPerLine & 7) != 0 )
             nBitsPerLine = (nBitsPerLine + 7) & (~7);
-
+    
         iPixel = 0;
-        for( iY = 0; iY < nBlockYSize; iY++ )
         {
-            iBitOffset = iBandBitOffset + iY * nBitsPerLine;
-
-            for( iX = 0; iX < nBlockXSize; iX++ )
+            CPLMutexHolderD( phThisMutex );
+            for( iY = 0; iY < nBlockYSize; iY++ )
             {
-                GUInt32  nInWord = 0;
-                if( eDataType == GDT_Byte )
-                    nInWord = ((GByte *) pabyThisImage)[iPixel++];
-                else if( eDataType == GDT_UInt16 )
-                    nInWord = ((GUInt16 *) pabyThisImage)[iPixel++];
-                else if( eDataType == GDT_UInt32 )
-                    nInWord = ((GUInt32 *) pabyThisImage)[iPixel++];
-                else
-                    CPLAssert(0);
+                iBitOffset = iBandBitOffset + iY * nBitsPerLine;
 
-                if (nInWord > nMaxVal)
+                for( iX = 0; iX < nBlockXSize; iX++ )
                 {
-                    nInWord = nMaxVal;
-                    if( !poGDS->bClipWarn )
+                    GUInt32  nInWord = 0;
+                    if( eDataType == GDT_Byte )
+                        nInWord = ((GByte *) pabyThisImage)[iPixel++];
+                    else if( eDataType == GDT_UInt16 )
+                        nInWord = ((GUInt16 *) pabyThisImage)[iPixel++];
+                    else if( eDataType == GDT_UInt32 )
+                        nInWord = ((GUInt32 *) pabyThisImage)[iPixel++];
+                    else
+                        CPLAssert(0);
+
+                    if (nInWord > nMaxVal)
                     {
-                        poGDS->bClipWarn = TRUE;
-                        CPLError( CE_Warning, CPLE_AppDefined,
-                                  "One or more pixels clipped to fit %d bit domain.", poGDS->nBitsPerSample );
+                        nInWord = nMaxVal;
+                        if( !poGDS->bClipWarn )
+                        {
+                            poGDS->bClipWarn = TRUE;
+                            CPLError( CE_Warning, CPLE_AppDefined,
+                                      "One or more pixels clipped to fit %d bit domain.", poGDS->nBitsPerSample );
+                        }
                     }
-                }
 
-                if (poGDS->nBitsPerSample == 24)
-                {
+                    if (poGDS->nBitsPerSample == 24)
+                    {
 /* -------------------------------------------------------------------- */
 /*      Special case for 24bit data which is pre-byteswapped since      */
 /*      the size falls on a byte boundary ... ugg (#2361).              */
 /* -------------------------------------------------------------------- */
 #ifdef CPL_MSB
-                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 0] = 
-                        (GByte) nInWord;
-                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 1] = 
-                        (GByte) (nInWord >> 8);
-                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 2] = 
-                        (GByte) (nInWord >> 16);
+                        poGDS->pabyBlockBuf[(iBitOffset>>3) + 0] = 
+                            (GByte) nInWord;
+                        poGDS->pabyBlockBuf[(iBitOffset>>3) + 1] = 
+                            (GByte) (nInWord >> 8);
+                        poGDS->pabyBlockBuf[(iBitOffset>>3) + 2] = 
+                            (GByte) (nInWord >> 16);
 #else
-                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 0] = 
-                        (GByte) (nInWord >> 16);
-                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 1] = 
-                        (GByte) (nInWord >> 8);
-                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 2] = 
-                        (GByte) nInWord;
+                        poGDS->pabyBlockBuf[(iBitOffset>>3) + 0] = 
+                            (GByte) (nInWord >> 16);
+                        poGDS->pabyBlockBuf[(iBitOffset>>3) + 1] = 
+                            (GByte) (nInWord >> 8);
+                        poGDS->pabyBlockBuf[(iBitOffset>>3) + 2] = 
+                            (GByte) nInWord;
 #endif
-                    iBitOffset += 24;
-                }
-                else
-                {
-                    for( iBit = 0; iBit < poGDS->nBitsPerSample; iBit++ )
-                    {
-                        if (nInWord & (1 << (poGDS->nBitsPerSample - 1 - iBit)))
-                            poGDS->pabyBlockBuf[iBitOffset>>3] |= (0x80 >>(iBitOffset & 7));
-                        else
-                        {
-                            /* We must explictly unset the bit as we may update an existing block */
-                            poGDS->pabyBlockBuf[iBitOffset>>3] &= ~(0x80 >>(iBitOffset & 7));
-                        }
-
-                        iBitOffset++;
+                        iBitOffset += 24;
                     }
-                } 
+                    else
+                    {
+                        for( iBit = 0; iBit < poGDS->nBitsPerSample; iBit++ )
+                        {
+                            if (nInWord & (1 << (poGDS->nBitsPerSample - 1 - iBit)))
+                                poGDS->pabyBlockBuf[iBitOffset>>3] |= (0x80 >>(iBitOffset & 7));
+                            else
+                            {
+                                /* We must explictly unset the bit as we may update an existing block */
+                                poGDS->pabyBlockBuf[iBitOffset>>3] &= ~(0x80 >>(iBitOffset & 7));
+                            }
 
-                iBitOffset= iBitOffset + iPixelBitSkip - poGDS->nBitsPerSample;
+                            iBitOffset++;
+                        }
+                    } 
+
+                    iBitOffset= iBitOffset + iPixelBitSkip - poGDS->nBitsPerSample;
+                }
             }
         }
 
@@ -3543,7 +3586,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                    void * pImage )
+                                    void * pImage, void ** phMutex )
 
 {
     int			nBlockId;
@@ -3565,6 +3608,7 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     if( !poGDS->IsBlockAvailable(nBlockId) )
     {
+        CPLMutexHolderD( phMutex );
         NullBlock( pImage );
         return CE_None;
     }
@@ -3583,7 +3627,8 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
         int	  iDstOffset=0, iLine;
         register GByte *pabyBlockBuf = poGDS->pabyBlockBuf;
-
+        
+        CPLMutexHolderD( phMutex );
         for( iLine = 0; iLine < nBlockYSize; iLine++ )
         {
             int iSrcOffset, iPixel;
@@ -3616,6 +3661,7 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             nWordBytes : poGDS->nBands * nWordBytes;
 
         nBlockPixels = nBlockXSize * nBlockYSize;
+        CPLMutexHolderD( phMutex );
         if ( poGDS->nBitsPerSample == 16 )
         {
             for( i = 0; i < nBlockPixels; i++ )
@@ -3670,6 +3716,7 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             nBitsPerLine = (nBitsPerLine + 7) & (~7);
 
         iPixel = 0;
+        CPLMutexHolderD( phMutex );
         for( iY = 0; iY < nBlockYSize; iY++ )
         {
             iBitOffset = iBandBitOffset + iY * nBitsPerLine;
@@ -3722,6 +3769,7 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         nBytesPerLine = nBlockXSize * iPixelByteSkip;
 
         iPixel = 0;
+        CPLMutexHolderD( phMutex );
         for( iY = 0; iY < nBlockYSize; iY++ )
         {
             GByte *pabyImage = 
@@ -3772,6 +3820,7 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         register GByte *pabyBlockBuf = poGDS->pabyBlockBuf;
         iPixel = 0;
 
+        CPLMutexHolderD( phMutex );
         for( iY = 0; iY < nBlockYSize; iY++ )
         {
             iBitOffset = iBandBitOffset + iY * nBitsPerLine;
@@ -3924,8 +3973,8 @@ class GTiffSplitBitmapBand : public GTiffBitmapBand
                    GTiffSplitBitmapBand( GTiffDataset *, int );
     virtual       ~GTiffSplitBitmapBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
+    virtual CPLErr IWriteBlock( int, int, void *, void ** phMutex = NULL );
 };
 
 
@@ -3956,7 +4005,7 @@ GTiffSplitBitmapBand::~GTiffSplitBitmapBand()
 /************************************************************************/
 
 CPLErr GTiffSplitBitmapBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                         void * pImage )
+                                         void * pImage, void **phMutex )
 
 {
     (void) nBlockXOff;
@@ -3997,6 +4046,7 @@ CPLErr GTiffSplitBitmapBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     int	  iPixel, iSrcOffset=0, iDstOffset=0;
 
+    CPLMutexHolderD( phMutex );
     for( iPixel = 0; iPixel < nBlockXSize; iPixel++, iSrcOffset++ )
     {
         if( poGDS->pabyBlockBuf[iSrcOffset >>3] & (0x80 >> (iSrcOffset & 0x7)) )
@@ -4013,12 +4063,13 @@ CPLErr GTiffSplitBitmapBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr GTiffSplitBitmapBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-                                          void * pImage )
+                                          void * pImage, void **phMutex )
 
 {
     (void) nBlockXOff;
     (void) nBlockYOff;
     (void) pImage;
+    (void) phMutex;
 
     CPLError( CE_Failure, CPLE_AppDefined, 
               "Split bitmap bands are read-only." );

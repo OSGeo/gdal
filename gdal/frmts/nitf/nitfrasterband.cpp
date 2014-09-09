@@ -34,6 +34,7 @@
 #include "nitfdataset.h"
 #include "cpl_string.h"
 #include "cpl_csv.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -299,21 +300,22 @@ RB_PROXY_METHOD_GET_DBL_WITH_SUCCESS(GetMinimum)
 RB_PROXY_METHOD_GET_DBL_WITH_SUCCESS(GetMaximum)
 
 RB_PROXY_METHOD_WITH_RET_AND_CALL_OTHER_METHOD(CPLErr, CE_Failure, IReadBlock, ReadBlock,
-                                ( int nXBlockOff, int nYBlockOff, void* pImage),
-                                (nXBlockOff, nYBlockOff, pImage) )
+                                ( int nXBlockOff, int nYBlockOff, void* pImage, void **phMutex),
+                                (nXBlockOff, nYBlockOff, pImage, phMutex) )
 RB_PROXY_METHOD_WITH_RET_AND_CALL_OTHER_METHOD(CPLErr, CE_Failure, IWriteBlock, WriteBlock,
-                                ( int nXBlockOff, int nYBlockOff, void* pImage),
-                                (nXBlockOff, nYBlockOff, pImage) )
+                                ( int nXBlockOff, int nYBlockOff, void* pImage, void **phMutex),
+                                (nXBlockOff, nYBlockOff, pImage, phMutex) )
 RB_PROXY_METHOD_WITH_RET_AND_CALL_OTHER_METHOD(CPLErr, CE_Failure, IRasterIO, RasterIO,
                         ( GDALRWFlag eRWFlag,
                                 int nXOff, int nYOff, int nXSize, int nYSize,
                                 void * pData, int nBufXSize, int nBufYSize,
                                 GDALDataType eBufType,
                                 int nPixelSpace,
-                                int nLineSpace ),
+                                int nLineSpace,
+                                void **phMutex ),
                         (eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                 pData, nBufXSize, nBufYSize, eBufType,
-                                nPixelSpace, nLineSpace ) )
+                                nPixelSpace, nLineSpace, phMutex ) )
 
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, FlushCache, (), ())
 
@@ -485,9 +487,10 @@ NITFRasterBand::~NITFRasterBand()
 /************************************************************************/
 
 CPLErr NITFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                   void * pImage )
+                                   void * pImage, void **phMutex )
 
 {
+    CPLMutexHolderD( phMutex );
     int  nBlockResult;
     NITFDataset *poGDS = (NITFDataset *) poDS;
 
@@ -555,9 +558,10 @@ CPLErr NITFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr NITFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-                                    void * pImage )
+                                    void * pImage, void ** phMutex )
     
 {
+    CPLMutexHolderD( phMutex );
     int  nBlockResult;
 
 /* -------------------------------------------------------------------- */

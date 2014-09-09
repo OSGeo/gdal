@@ -29,6 +29,7 @@
 
 
 #include "ilwisdataset.h"
+#include "cpl_multiproc.h"
 #include <float.h>
 #include <limits.h>
 
@@ -1462,8 +1463,9 @@ CPLErr ILWISRasterBand::GetILWISInfo(string pszFileName)
 /*                             IReadBlock()                             */
 /************************************************************************/
 CPLErr ILWISRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                  void * pImage, void ** phMutex )
 {
+    CPLMutexHolderD( phMutex );
     // pImage is empty; this function fills it with data from fpRaw
     // (ILWIS data to foreign data)
 
@@ -1654,8 +1656,9 @@ void ILWISRasterBand::FillWithNoData(void * pImage)
 /************************************************************************/
 
 CPLErr ILWISRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
-				   void* pImage)
+				   void* pImage, void ** phMutex)
 {
+    CPLMutexHolderD( phMutex );
     // pImage has data; this function reads this data and stores it to fpRaw
     // (foreign data to ILWIS data)
 

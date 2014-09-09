@@ -172,7 +172,7 @@ class JP2KAKRasterBand : public GDALPamRasterBand
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int );
+                              int, int, void ** phMutex = NULL );
 
     int            HasExternalOverviews() 
                    { return GDALPamRasterBand::GetOverviewCount() != 0; }
@@ -183,7 +183,7 @@ class JP2KAKRasterBand : public GDALPamRasterBand
                                   jp2_channels, JP2KAKDataset * );
     		~JP2KAKRasterBand();
     
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
 
     virtual int    GetOverviewCount();
     virtual GDALRasterBand *GetOverview( int );
@@ -489,7 +489,7 @@ GDALRasterBand *JP2KAKRasterBand::GetOverview( int iOverviewIndex )
 /************************************************************************/
 
 CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                      void * pImage )
+                                      void * pImage, void ** phMutex )
 {
     int  nWordSize = GDALGetDataTypeSize( eDataType ) / 8;
     int nOvMult = 1, nLevelsLeft = nDiscardLevels;
@@ -532,19 +532,23 @@ CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
 
     if( nXSize != nBlockXSize || nYSize != nBlockYSize )
+    {
+        CPLMutexHolderD( phMutex );
         memset( pImage, 0, nBlockXSize * nBlockYSize * nWordSize );
-
+    }
 /* -------------------------------------------------------------------- */
 /*      By default we invoke just for the requested band, directly      */
 /*      into the target buffer.                                         */
 /* -------------------------------------------------------------------- */
     if( !poBaseDS->bUseYCC )
+    {
+        CPLMutexHolderD( phMutex );
         return poBaseDS->DirectRasterIO( GF_Read, 
                                          nWXOff, nWYOff, nWXSize, nWYSize,
                                          pImage, nXSize, nYSize,
                                          eDataType, 1, &nBand, 
                                          nWordSize, nWordSize*nBlockXSize, 0 );
-
+    }
 /* -------------------------------------------------------------------- */
 /*      But for YCC or possible other effectively pixel interleaved     */
 /*      products, we read all bands into a single buffer, fetch out     */
@@ -582,6 +586,7 @@ CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             if( anBands[iBand] == nBand )
             {
                 // application requested band.
+                CPLMutexHolderD( phMutex );
                 memcpy( pImage, pabyWrkBuffer + nBandStart, 
                         nWordSize * nBlockXSize * nBlockYSize );
             }
@@ -618,8 +623,11 @@ CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
                 if( poBlock )
                 {
-                    memcpy( poBlock->GetDataRef(), pabyWrkBuffer + nBandStart, 
-                            nWordSize * nBlockXSize * nBlockYSize );
+                    {
+                        CPLMutexHolderD( poBlock->GetRWMutex() );
+                        memcpy( poBlock->GetDataRef( TRUE ), pabyWrkBuffer + nBandStart, 
+                                nWordSize * nBlockXSize * nBlockYSize );
+                    }
                     poBlock->DropLock();
                 }
             }
@@ -641,7 +649,7 @@ JP2KAKRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                              int nXOff, int nYOff, int nXSize, int nYSize,
                              void * pData, int nBufXSize, int nBufYSize,
                              GDALDataType eBufType, 
-                             int nPixelSpace,int nLineSpace )
+                             int nPixelSpace,int nLineSpace, void **phMutex )
 
 {
 /* -------------------------------------------------------------------- */
@@ -653,7 +661,7 @@ JP2KAKRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         return GDALPamRasterBand::IRasterIO( 
             eRWFlag, nXOff, nYOff, nXSize, nYSize,
             pData, nBufXSize, nBufYSize, eBufType, 
-            nPixelSpace, nLineSpace );
+            nPixelSpace, nLineSpace, phMutex );
     else
     {
         int nOverviewDiscard = nDiscardLevels;
@@ -668,6 +676,7 @@ JP2KAKRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             nOverviewDiscard--;
         }
 
+        CPLMutexHolderD( phMutex );
         return poBaseDS->DirectRasterIO( 
             eRWFlag, nXOff, nYOff, nXSize, nYSize,
             pData, nBufXSize, nBufYSize, eBufType, 

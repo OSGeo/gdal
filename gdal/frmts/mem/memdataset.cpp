@@ -30,6 +30,7 @@
 
 #include "memdataset.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -128,9 +129,10 @@ MEMRasterBand::~MEMRasterBand()
 /************************************************************************/
 
 CPLErr MEMRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                   void * pImage )
+                                   void * pImage, void ** phMutex )
 
 {
+    CPLMutexHolderD( phMutex );
     int     nWordSize = GDALGetDataTypeSize( eDataType ) / 8;
     CPLAssert( nBlockXOff == 0 );
 
@@ -160,9 +162,10 @@ CPLErr MEMRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr MEMRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-                                     void * pImage )
+                                     void * pImage, void ** phMutex )
 
 {
+    CPLMutexHolderD( phMutex );
     int     nWordSize = GDALGetDataTypeSize( eDataType ) / 8;
     CPLAssert( nBlockXOff == 0 );
 

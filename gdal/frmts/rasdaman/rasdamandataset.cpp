@@ -30,6 +30,7 @@
 
 #include "gdal_pam.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 #include "regex.h"
 #include <string>
 #include <memory>
@@ -312,7 +313,7 @@ public:
   RasdamanRasterBand( RasdamanDataset *, int, GDALDataType type, int offset, int size, int nBlockXSize, int nBlockYSize );
   ~RasdamanRasterBand();
 
-  virtual CPLErr IReadBlock( int, int, void * );
+  virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
 };
 
 /************************************************************************/
@@ -364,8 +365,9 @@ RasdamanRasterBand::~RasdamanRasterBand()
 /************************************************************************/
 
 CPLErr RasdamanRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                       void * pImage )
+                                       void * pImage, void ** phMutex )
 {
+  CPLMutexHolderD( phMutex );
   RasdamanDataset *poGDS = (RasdamanDataset *) poDS;
 
   memset(pImage, 0, nRecordSize);

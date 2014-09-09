@@ -31,6 +31,7 @@
 #include "dted_api.h"
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
+#include "cpl_multiproc.h"
 #include <algorithm>
 
 CPL_CVSID("$Id$");
@@ -87,8 +88,8 @@ class DTEDRasterBand : public GDALPamRasterBand
 
                 DTEDRasterBand( DTEDDataset *, int );
     
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex );
+    virtual CPLErr IWriteBlock( int, int, void *, void ** phMutex );
 
     virtual double  GetNoDataValue( int *pbSuccess = NULL );
 
@@ -126,9 +127,10 @@ DTEDRasterBand::DTEDRasterBand( DTEDDataset *poDS, int nBand )
 /************************************************************************/
 
 CPLErr DTEDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                  void * pImage, void ** phMutex )
 
 {
+    CPLMutexHolderD( phMutex );
     DTEDDataset *poDTED_DS = (DTEDDataset *) poDS;
     int         nYSize = poDTED_DS->psDTED->nYSize;
     GInt16      *panData;
@@ -188,9 +190,10 @@ CPLErr DTEDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr DTEDRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                  void * pImage, void ** phMutex )
 
 {
+    CPLMutexHolderD( phMutex );
     DTEDDataset *poDTED_DS = (DTEDDataset *) poDS;
     GInt16      *panData;
 

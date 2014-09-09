@@ -31,6 +31,7 @@
  ****************************************************************************/
 
 #include "gdal_priv.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -78,7 +79,7 @@ GDALNoDataValuesMaskBand::~GDALNoDataValuesMaskBand()
 /************************************************************************/
 
 CPLErr GDALNoDataValuesMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
-                                         void * pImage )
+                                         void * pImage, void ** phMutex )
 
 {
     int iBand;
@@ -168,6 +169,7 @@ CPLErr GDALNoDataValuesMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
 /*      Process different cases.                                        */
 /* -------------------------------------------------------------------- */
     int i;
+    CPLMutexHolderD( phMutex );
     switch( eWrkDT )
     {
       case GDT_Byte:

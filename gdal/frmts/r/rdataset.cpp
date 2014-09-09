@@ -30,6 +30,7 @@
 
 #include "gdal_pam.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 #include "../raw/rawdataset.h"
 
 CPL_CVSID("$Id$");
@@ -98,7 +99,7 @@ class RRasterBand : public GDALPamRasterBand
                 RRasterBand( RDataset *, int, const double * );
                 ~RRasterBand();
 
-    virtual CPLErr          IReadBlock( int, int, void * );
+    virtual CPLErr          IReadBlock( int, int, void *, void ** phMutex = NULL );
 };
 
 /************************************************************************/
@@ -131,8 +132,9 @@ RRasterBand::~RRasterBand()
 /************************************************************************/
 
 CPLErr RRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                void * pImage )
+                                void * pImage, void **phMutex )
 {
+    CPLMutexHolderD( phMutex );
     memcpy( pImage, padfMatrixValues + nBlockYOff * nBlockXSize,
             nBlockXSize * 8 );
     return CE_None;

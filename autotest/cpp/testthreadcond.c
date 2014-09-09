@@ -33,6 +33,13 @@ void* hCond = NULL;
 void* hCondJobFinished = NULL;
 void* hClientMutex = NULL;
 
+void ** phNull = NULL;
+void * hMutexA = NULL;
+void * hMutexB = NULL;
+void * hMutexC = NULL;
+void * hMutexD = NULL;
+void * hMutexE = NULL;
+
 struct _JobItem
 {
     int nJobNumber;
@@ -122,6 +129,33 @@ void ConsumerThread(void* pIndex)
     }
 }
 
+void MutexSpammer(void*)
+{
+    int c = 0;
+    while ( c < 1000 )
+    {
+        {
+            CPLMutexHolderD( phNull );
+        }
+        {
+            CPLMutexHolderD( &hMutexA );
+        }
+        {
+            CPLMutexHolderD( &hMutexB );
+        }
+        {
+            CPLMutexHolderD( &hMutexC );
+        }
+        {
+            CPLMutexHolderD( &hMutexD );
+        }
+        {
+            CPLMutexHolderD( &hMutexE );
+        }
+        c++;
+    }
+}
+
 int main(int argc, char* argv[])
 {
     int i;
@@ -156,5 +190,20 @@ int main(int argc, char* argv[])
     CPLDestroyCond(hCond);
     CPLDestroyCond(hCondJobFinished);
     CPLDestroyMutex(hClientMutex);
+    
+    for(i = 0; i < 10;i++)
+    {
+        apThreads[i] = CPLCreateJoinableThread(MutexSpammer, NULL);
+    }
+
+    for(i = 0; i < 10;i++)
+    {
+        CPLJoinThread(apThreads[i]);
+    }
+    CPLDestroyMutex(hMutexA);
+    CPLDestroyMutex(hMutexB);
+    CPLDestroyMutex(hMutexC);
+    CPLDestroyMutex(hMutexD);
+    CPLDestroyMutex(hMutexE);
     return 0;
 }

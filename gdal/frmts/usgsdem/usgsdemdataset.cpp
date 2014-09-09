@@ -33,6 +33,7 @@
 
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -302,7 +303,7 @@ class USGSDEMRasterBand : public GDALPamRasterBand
     
     virtual const char *GetUnitType();
     virtual double GetNoDataValue( int *pbSuccess = NULL );
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
 };
 
 
@@ -328,9 +329,10 @@ USGSDEMRasterBand::USGSDEMRasterBand( USGSDEMDataset *poDS )
 /************************************************************************/
 
 CPLErr USGSDEMRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                      void * pImage )
+                                      void * pImage, void ** phMutex )
 
 {
+    CPLMutexHolderD( phMutex );
     double	dfYMin;
     int		bad = FALSE;
     USGSDEMDataset *poGDS = (USGSDEMDataset *) poDS;

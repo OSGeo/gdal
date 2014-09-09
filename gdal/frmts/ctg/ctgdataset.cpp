@@ -29,6 +29,7 @@
 
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -157,7 +158,7 @@ class CTGRasterBand : public GDALPamRasterBand
                 CTGRasterBand( CTGDataset *, int );
                ~CTGRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
     virtual double GetNoDataValue( int *pbSuccess = NULL );
     virtual char **GetCategoryNames();
 };
@@ -195,9 +196,10 @@ CTGRasterBand::~CTGRasterBand()
 /************************************************************************/
 
 CPLErr CTGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                  void * pImage, void ** phMutex )
 
 {
+    CPLMutexHolderD( phMutex );
     CTGDataset* poGDS = (CTGDataset* ) poDS;
 
     poGDS->ReadImagery();

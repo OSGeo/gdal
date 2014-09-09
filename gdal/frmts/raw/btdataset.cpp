@@ -31,6 +31,7 @@
 
 #include "rawdataset.h"
 #include "ogr_spatialref.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -95,8 +96,8 @@ class BTRasterBand : public GDALPamRasterBand
                    BTRasterBand( GDALDataset * poDS, VSILFILE * fp,
                                  GDALDataType eType );
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
+    virtual CPLErr IWriteBlock( int, int, void *, void ** phMutex = NULL );
 
     virtual const char* GetUnitType();
     virtual CPLErr SetUnitType(const char*);
@@ -126,9 +127,10 @@ BTRasterBand::BTRasterBand( GDALDataset *poDS, VSILFILE *fp, GDALDataType eType 
 /************************************************************************/
 
 CPLErr BTRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                  void * pImage, void ** phMutex )
 
 {
+    CPLMutexHolderD( phMutex );
     int nDataSize = GDALGetDataTypeSize( eDataType ) / 8;
     int i;
 
@@ -188,9 +190,10 @@ CPLErr BTRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr BTRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                  void * pImage, void ** phMutex )
 
 {
+    CPLMutexHolderD( phMutex );
     int nDataSize = GDALGetDataTypeSize( eDataType ) / 8;
     GByte *pabyWrkBlock;
     int i;

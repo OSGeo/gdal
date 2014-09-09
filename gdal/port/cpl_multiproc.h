@@ -60,8 +60,8 @@ void CPL_DLL *CPLLockFile( const char *pszPath, double dfWaitInSeconds );
 void  CPL_DLL CPLUnlockFile( void *hLock );
 
 void CPL_DLL *CPLCreateMutex( void );
-int   CPL_DLL CPLCreateOrAcquireMutex( void **, double dfWaitInSeconds );
-int   CPL_DLL CPLAcquireMutex( void *hMutex, double dfWaitInSeconds );
+int   CPL_DLL CPLCreateOrAcquireMutex( void ** volatile, double dfWaitInSeconds );
+int   CPL_DLL CPLAcquireMutex( void * hMutex, double dfWaitInSeconds );
 void  CPL_DLL CPLReleaseMutex( void *hMutex );
 void  CPL_DLL CPLDestroyMutex( void *hMutex );
 void  CPL_DLL CPLCleanupMasterMutex( void );
@@ -88,6 +88,7 @@ CPL_C_END
 
 /* Instanciates the mutex if not already done */
 #define CPLMutexHolderD(x)  CPLMutexHolder oHolder(x,1000.0,__FILE__,__LINE__);
+#define CPLMutexHolderD2(x)  CPLMutexHolder oHolder2(x,1000.0,__FILE__,__LINE__);
 
 /* This variant assumes the the mutex has already been created. If not, it will */
 /* be a no-op */

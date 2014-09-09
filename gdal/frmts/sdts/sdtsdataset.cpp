@@ -30,6 +30,7 @@
 
 #include "sdts_al.h"
 #include "gdal_pam.h"
+#include "cpl_multiproc.h"
 #include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
@@ -80,7 +81,7 @@ class SDTSRasterBand : public GDALPamRasterBand
 
                 SDTSRasterBand( SDTSDataset *, int, SDTSRasterReader * );
     
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL);
 
     virtual double GetNoDataValue( int *pbSuccess );
     virtual const char *GetUnitType();
@@ -349,9 +350,10 @@ SDTSRasterBand::SDTSRasterBand( SDTSDataset *poDS, int nBand,
 /************************************************************************/
 
 CPLErr SDTSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                  void * pImage, void ** phMutex )
 
 {
+    CPLMutexHolderD( phMutex );
     if( poRL->GetBlock( nBlockXOff, nBlockYOff, pImage ) )
         return CE_None;
     else

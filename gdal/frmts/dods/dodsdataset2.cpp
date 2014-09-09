@@ -68,6 +68,7 @@
 #include "gdal_priv.h"		// GDAL
 #include "ogr_spatialref.h"
 #include "cpl_string.h"
+#include "cpl_multproc.h"
 
 using namespace libdap;
 
@@ -294,7 +295,7 @@ public:
 
     virtual int    GetOverviewCount();
     virtual GDALRasterBand *GetOverview( int );
-    virtual CPLErr IReadBlock(int, int, void *);
+    virtual CPLErr IReadBlock(int, int, void *, void ** phMutex = NULL);
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
 		virtual CPLErr          SetNoDataValue( double );
@@ -1430,8 +1431,9 @@ void DODSRasterBand::HarvestDAS()
 /************************************************************************/
 
 CPLErr 
-DODSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
+DODSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage, void **phMutex)
 {
+    CPLMutexHolderD( phMutex );
     DODSDataset *poDODS = dynamic_cast<DODSDataset *>(poDS);
     int nBytesPerPixel = GDALGetDataTypeSize(eDataType) / 8;
 

@@ -74,8 +74,11 @@ CPLMutexHolder::CPLMutexHolder( void **phMutex, double dfWaitInSeconds,
              "CPLMutexHolder: Request %p for pid %ld at %d/%s.\n", 
              *phMutex, (long) CPLGetPID(), nLine, pszFile );
 #endif
-
-    if( !CPLCreateOrAcquireMutex( phMutex, dfWaitInSeconds ) )
+    if ( NULL == phMutex )
+    {
+        hMutex = NULL;
+    }
+    else if( !CPLCreateOrAcquireMutex( phMutex, dfWaitInSeconds ) )
     {
         fprintf( stderr, "CPLMutexHolder: Failed to acquire mutex!\n" );
         hMutex = NULL;
@@ -147,7 +150,7 @@ CPLMutexHolder::~CPLMutexHolder()
 static void *hCOAMutex = NULL;
 #endif
 
-int CPLCreateOrAcquireMutex( void **phMutex, double dfWaitInSeconds )
+int CPLCreateOrAcquireMutex( void ** volatile phMutex, double dfWaitInSeconds )
 
 {
     int bSuccess = FALSE;
@@ -1124,16 +1127,22 @@ int CPLGetNumCPUs()
 static pthread_mutex_t global_mutex = PTHREAD_MUTEX_INITIALIZER;
 static void *CPLCreateMutexInternal(int bAlreadyInGlobalLock);
 
-int CPLCreateOrAcquireMutex( void **phMutex, double dfWaitInSeconds )
+int CPLCreateOrAcquireMutex( void ** volatile phMutex, double dfWaitInSeconds )
 
 {
+    // Check before going into the global lock, otherwise
+    // we risk using the global lock too often.
+    if ( NULL != *phMutex )
+        return CPLAcquireMutex( *phMutex, dfWaitInSeconds );
+    
     int bSuccess = FALSE;
 
     pthread_mutex_lock(&global_mutex);
     if( *phMutex == NULL )
     {
-        *phMutex = CPLCreateMutexInternal(TRUE);
-        bSuccess = *phMutex != NULL;
+        void * volatile hNewMutex = CPLCreateMutexInternal(TRUE);
+        bSuccess = hNewMutex != NULL;
+        *phMutex = hNewMutex;
         pthread_mutex_unlock(&global_mutex);
     }
     else
@@ -1228,7 +1237,7 @@ void *CPLCreateMutex()
 /*                          CPLAcquireMutex()                           */
 /************************************************************************/
 
-int CPLAcquireMutex( void *hMutexIn, double dfWaitInSeconds )
+int CPLAcquireMutex( void * hMutexIn, double dfWaitInSeconds )
 
 {
     int err;
@@ -1240,9 +1249,9 @@ int CPLAcquireMutex( void *hMutexIn, double dfWaitInSeconds )
     if( err != 0 )
     {
         if( err == EDEADLK )
-            fprintf(stderr, "CPLAcquireMutex: Error = %d/EDEADLK", err );
+            fprintf(stderr, "CPLAcquireMutex: Error = %d/EDEADLK\n", err );
         else
-            fprintf(stderr, "CPLAcquireMutex: Error = %d", err );
+            fprintf(stderr, "CPLAcquireMutex: Error = %d\n", err );
 
         return FALSE;
     }

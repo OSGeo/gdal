@@ -105,6 +105,7 @@
 #include "cpl_string.h"
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
+#include "cpl_multiproc.h"
 
 // CPL_CVSID("$Id$");
 
@@ -235,12 +236,12 @@ public:
 	}
     
     // Geomeasure support.
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
     virtual const char* GetUnitType();
     virtual double GetOffset(int* pbSuccess = NULL);
     virtual double GetScale(int* pbSuccess = NULL);
 
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual CPLErr IWriteBlock( int, int, void *, void ** phMutex = NULL );
 	virtual CPLErr SetUnitType( const char* );
 };
 
@@ -271,9 +272,10 @@ TerragenRasterBand::TerragenRasterBand( TerragenDataset *poDS )
 /************************************************************************/
 
 CPLErr TerragenRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                       void* pImage )
+                                       void* pImage, void ** phMutex )
 
 {
+    CPLMutexHolderD( phMutex );
     //CPLAssert( sizeof(float) == sizeof(GInt32) );
     CPLAssert( nBlockXOff == 0  );
     CPLAssert( pImage != NULL );
@@ -369,12 +371,14 @@ CPLErr TerragenRasterBand::IWriteBlock
 ( 
 	int nBlockXOff, 
 	int nBlockYOff,
-    void* pImage
+    void* pImage,
+    void ** phMutex
 )
 {
     CPLAssert( nBlockXOff == 0  );
     CPLAssert( pImage != NULL );
 	CPLAssert( m_pvLine != NULL );
+    CPLMutexHolderD( phMutex );
 
 	#define sgn(_n) ((_n) < 0 ? -1 : ((_n) > 0 ? 1 : 0) )
 	#define sround(_f)	\

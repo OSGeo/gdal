@@ -40,6 +40,7 @@
 
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
+#include "cpl_multiproc.h"
 #include <sstream>
 
 
@@ -158,7 +159,7 @@ class IRISRasterBand : public GDALPamRasterBand
         IRISRasterBand( IRISDataset *, int );
         ~IRISRasterBand();
     
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
 
     virtual double          GetNoDataValue( int * );
     virtual CPLErr          SetNoDataValue( double );
@@ -190,9 +191,10 @@ IRISRasterBand::~IRISRasterBand()
 /************************************************************************/
 
 CPLErr IRISRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                   void * pImage )
+                                   void * pImage, void **phMutex )
 
 {
+    CPLMutexHolderD( phMutex );
     IRISDataset *poGDS = (IRISDataset *) poDS;
 
     //Every product type has it's own size. TODO: Move it like dataType

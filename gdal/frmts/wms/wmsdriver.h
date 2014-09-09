@@ -346,7 +346,7 @@ public:
                                     void * pProgressData );
 
 protected:
-    virtual CPLErr IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy, void *buffer, int bsx, int bsy, GDALDataType bdt, int band_count, int *band_map, int pixel_space, int line_space, int band_space);
+    virtual CPLErr IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy, void *buffer, int bsx, int bsy, GDALDataType bdt, int band_count, int *band_map, int pixel_space, int line_space, int band_space, void ** phMutex = NULL);
     CPLErr Initialize(CPLXMLNode *config);
 
     GDALWMSDataWindow m_data_window;
@@ -409,8 +409,8 @@ public:
 
     virtual GDALColorInterp GetColorInterpretation();
     virtual CPLErr SetColorInterpretation( GDALColorInterp );
-    virtual CPLErr IReadBlock(int x, int y, void *buffer);
-    virtual CPLErr IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy, void *buffer, int bsx, int bsy, GDALDataType bdt, int pixel_space, int line_space);
+    virtual CPLErr IReadBlock(int x, int y, void *buffer, void ** phMutex = NULL);
+    virtual CPLErr IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy, void *buffer, int bsx, int bsy, GDALDataType bdt, int pixel_space, int line_space, void **phMutex = NULL);
     virtual int HasArbitraryOverviews();
     virtual int GetOverviewCount();
     virtual GDALRasterBand *GetOverview(int n);
@@ -420,11 +420,11 @@ public:
                                          const char * pszDomain = "" );
 
 protected:
-    CPLErr ReadBlocks(int x, int y, void *buffer, int bx0, int by0, int bx1, int by1, int advise_read);
+    CPLErr ReadBlocks(int x, int y, void *buffer, int bx0, int by0, int bx1, int by1, int advise_read, void ** phMutex = NULL);
     bool IsBlockInCache(int x, int y);
     void AskMiniDriverForBlock(CPLString *url, int x, int y);
-    CPLErr ReadBlockFromFile(int x, int y, const char *file_name, int to_buffer_band, void *buffer, int advise_read);
-    CPLErr ZeroBlock(int x, int y, int to_buffer_band, void *buffer);
+    CPLErr ReadBlockFromFile(int x, int y, const char *file_name, int to_buffer_band, void *buffer, int advise_read, void ** phMutex = NULL);
+    CPLErr ZeroBlock(int x, int y, int to_buffer_band, void *buffer, void ** phMutex = NULL);
     CPLErr ReportWMSException(const char *file_name);
 
 protected:

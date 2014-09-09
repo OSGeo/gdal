@@ -35,6 +35,7 @@
 #include "gdal_priv.h"
 #include "libpq-fe.h"
 #include "liblwgeom.h"
+#include "cpl_multiproc.h"
 
 // External functions (what's again the reason for using explicit hex form ?)
 extern void pgch_deparse_hex(unsigned char in, unsigned char *out);
@@ -112,7 +113,7 @@ class PGCHIPRasterBand : public GDALRasterBand{
 
     PGCHIPRasterBand( PGCHIPDataset *, int );
     
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
             

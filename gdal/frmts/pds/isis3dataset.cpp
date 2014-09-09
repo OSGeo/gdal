@@ -47,6 +47,7 @@
 #include "rawdataset.h"
 #include "ogr_spatialref.h"
 #include "cpl_string.h" 
+#include "cpl_multiproc.h"
 #include "nasakeywordhandler.h"
 
 CPL_CVSID("$Id: isis3dataset.cpp 10646 2007-09-18 02:38:10Z xxxx $");
@@ -82,7 +83,7 @@ class ISISTiledBand : public GDALPamRasterBand
                                int bNativeOrder );
     virtual     ~ISISTiledBand() {}
 
-    virtual CPLErr          IReadBlock( int, int, void * );
+    virtual CPLErr          IReadBlock( int, int, void *, void ** phMutex = NULL );
 };
 
 /************************************************************************/
@@ -128,9 +129,10 @@ ISISTiledBand::ISISTiledBand( GDALDataset *poDS, VSILFILE *fpVSIL,
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr ISISTiledBand::IReadBlock( int nXBlock, int nYBlock, void *pImage )
+CPLErr ISISTiledBand::IReadBlock( int nXBlock, int nYBlock, void *pImage, void ** phMutex )
 
 {
+    CPLMutexHolderD( phMutex );
     GIntBig  nOffset = nFirstTileOffset + 
         nXBlock * nXTileOffset + nYBlock * nYTileOffset;
     size_t nBlockSize = 

@@ -31,6 +31,7 @@
 #include "rawdataset.h"
 #include "ogr_spatialref.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -160,7 +161,7 @@ class SIRC_QSLCRasterBand : public GDALRasterBand
   public:
                    SIRC_QSLCRasterBand( CPGDataset *, int, GDALDataType );
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
 };
 
 #define M11 0
@@ -199,7 +200,7 @@ class CPG_STOKESRasterBand : public GDALRasterBand
                                          int bNativeOrder );
     virtual ~CPG_STOKESRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
 };
 
 /************************************************************************/
@@ -1265,9 +1266,10 @@ Im(SVV) = byte(10) ysca/127
 */
 
 CPLErr SIRC_QSLCRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                  void * pImage, void ** phMutex )
 
 {
+    CPLMutexHolderD( phMutex );
     int	   offset, nBytesPerSample=10;
     GByte  *pabyRecord;
     CPGDataset *poGDS = (CPGDataset *) poDS;
@@ -1418,7 +1420,7 @@ CPG_STOKESRasterBand::~CPG_STOKESRasterBand()
 /* Convert from Stokes to Covariance representation */
 
 CPLErr CPG_STOKESRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                  void * pImage, void **phMutex )
 
 {
     int iPixel;

@@ -75,7 +75,7 @@ class GMTRasterBand : public GDALPamRasterBand
 
     		GMTRasterBand( GMTDataset *poDS, int nZId, int nBand );
     
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
 };
 
 
@@ -129,14 +129,15 @@ GMTRasterBand::GMTRasterBand( GMTDataset *poDS, int nZId, int nBand )
 /************************************************************************/
 
 CPLErr GMTRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                  void * pImage, void ** phMutex )
 
 {
+    CPLMutexHolderD( phMutex );
     size_t start[2], edge[2];
     int    nErr = NC_NOERR;
     int    cdfid = ((GMTDataset *) poDS)->cdfid;
     
-    CPLMutexHolderD(&hNCMutex);
+    CPLMutexHolderD2(&hNCMutex);
 
     start[0] = nBlockYOff * nBlockXSize;
     edge[0] = nBlockXSize;

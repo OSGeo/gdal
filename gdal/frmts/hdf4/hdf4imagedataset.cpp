@@ -176,8 +176,8 @@ class HDF4ImageRasterBand : public GDALPamRasterBand
 
                 HDF4ImageRasterBand( HDF4ImageDataset *, int, GDALDataType );
 
-    virtual CPLErr          IReadBlock( int, int, void * );
-    virtual CPLErr          IWriteBlock( int, int, void * );
+    virtual CPLErr          IReadBlock( int, int, void *, void ** phMutex = NULL );
+    virtual CPLErr          IWriteBlock( int, int, void *, void ** phMutex = NULL );
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
     virtual double	    GetNoDataValue( int * );
@@ -259,12 +259,13 @@ HDF4ImageRasterBand::HDF4ImageRasterBand( HDF4ImageDataset *poDS, int nBand,
 /************************************************************************/
 
 CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                        void * pImage )
+                                        void * pImage, void ** phMutex )
 {
     HDF4ImageDataset    *poGDS = (HDF4ImageDataset *) poDS;
     int32               aiStart[H4_MAX_NC_DIMS], aiEdges[H4_MAX_NC_DIMS];
     CPLErr              eErr = CE_None;
 
+    CPLMutexHolderD2( phMutex );
     CPLMutexHolderD(&hHDF4Mutex);
 
     if( poGDS->eAccess == GA_Update )
@@ -530,11 +531,12 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr HDF4ImageRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-                                         void * pImage )
+                                         void * pImage, void ** phMutex )
 {
     HDF4ImageDataset    *poGDS = (HDF4ImageDataset *)poDS;
     int32               aiStart[H4_MAX_NC_DIMS], aiEdges[H4_MAX_NC_DIMS];
     CPLErr              eErr = CE_None;
+    CPLMutexHolderD2( phMutex );
     
     CPLMutexHolderD(&hHDF4Mutex);
 

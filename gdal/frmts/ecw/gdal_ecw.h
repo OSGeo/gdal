@@ -552,7 +552,7 @@ class CPL_DLL ECWDataset : public GDALJP2AbstractDataset
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int *, int, int, int );
+                              int, int *, int, int, int, void ** phMutex = NULL );
 
     virtual char      **GetMetadataDomainList();
     virtual const char *GetMetadataItem( const char * pszName,
@@ -630,14 +630,14 @@ class ECWRasterBand : public GDALPamRasterBand
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int );
+                              int, int, void ** phMutex = NULL );
 
   public:
 
                    ECWRasterBand( ECWDataset *, int, int = -1 );
                    ~ECWRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
     virtual int    HasArbitraryOverviews() { return apoOverviews.size() == 0; }
     virtual int    GetOverviewCount() { return (int)apoOverviews.size(); }
     virtual GDALRasterBand *GetOverview(int);

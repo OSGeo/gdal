@@ -30,6 +30,7 @@
  ****************************************************************************/
 
 #include "pcidskdataset2.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -516,11 +517,12 @@ void PCIDSK2Band::RefreshOverviewList()
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr PCIDSK2Band::IReadBlock( int iBlockX, int iBlockY, void *pData )
+CPLErr PCIDSK2Band::IReadBlock( int iBlockX, int iBlockY, void *pData, void **phMutex )
 
 {
     try 
     {
+        CPLMutexHolderD( phMutex );
         poChannel->ReadBlock( iBlockX + iBlockY * nBlocksPerRow,
                               pData );
 
@@ -528,7 +530,7 @@ CPLErr PCIDSK2Band::IReadBlock( int iBlockX, int iBlockY, void *pData )
         if( poChannel->GetType() == CHN_BIT )
         {
             GByte	*pabyData = (GByte *) pData;
-
+            
             for( int ii = nBlockXSize * nBlockYSize - 1; ii >= 0; ii-- )
             {
                 if( (pabyData[ii>>3] & (0x80 >> (ii & 0x7))) )
@@ -552,11 +554,12 @@ CPLErr PCIDSK2Band::IReadBlock( int iBlockX, int iBlockY, void *pData )
 /*                             IWriteBlock()                            */
 /************************************************************************/
 
-CPLErr PCIDSK2Band::IWriteBlock( int iBlockX, int iBlockY, void *pData )
+CPLErr PCIDSK2Band::IWriteBlock( int iBlockX, int iBlockY, void *pData, void **phMutex )
 
 {
     try 
     {
+        CPLMutexHolderD( phMutex );
         poChannel->WriteBlock( iBlockX + iBlockY * nBlocksPerRow,
                                pData );
         return CE_None;

@@ -279,7 +279,7 @@ class PDFDataset : public GDALPamDataset
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int *, int, int, int );
+                              int, int *, int, int, int, void ** phMutex = NULL );
 
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();
@@ -321,7 +321,7 @@ class PDFRasterBand : public GDALPamRasterBand
 
                 PDFRasterBand( PDFDataset *, int );
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
     virtual GDALColorInterp GetColorInterpretation();
 };
 

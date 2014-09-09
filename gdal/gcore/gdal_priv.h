@@ -44,6 +44,8 @@ class GDALRasterAttributeTable;
 class GDALProxyDataset;
 class GDALProxyRasterBand;
 class GDALAsyncReader;
+class GDALRasterBlock;
+class GDALRasterBlockManager;
 
 /* -------------------------------------------------------------------- */
 /*      Pull in the public declarations.  This gets the C apis, and     */
@@ -275,14 +277,17 @@ class CPL_DLL GDALDataset : public GDALMajorObject
   protected:
     GDALDriver  *poDriver;
     GDALAccess  eAccess;
+    GDALRasterBlockManager *poRasterBlockManager;
 
     // Stored raster information.
     int         nRasterXSize;
     int         nRasterYSize;
     int         nBands;
     GDALRasterBand **papoBands;
+    void        *hRWMutex;
 
     int         bForceCachedIO;
+    int         bDatasetCache;
 
     int         nRefCount;
     int         bShared;
@@ -298,11 +303,11 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int *, int, int, int );
+                              int, int *, int, int, int, void ** phMutex = NULL );
 
     CPLErr BlockBasedRasterIO( GDALRWFlag, int, int, int, int,
                                void *, int, int, GDALDataType,
-                               int, int *, int, int, int );
+                               int, int *, int, int, int, void ** phMutex = NULL );
     void   BlockBasedFlushCache();
 
     CPLErr ValidateRasterIOOrAdviseReadParameters(
@@ -315,7 +320,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     virtual int         CloseDependentDatasets();
     
     int                 ValidateLayerCreationOptions( const char* const* papszLCO );
-
+    
     friend class GDALRasterBand;
     
   public:
@@ -326,6 +331,9 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     int         GetRasterCount( void );
     GDALRasterBand *GetRasterBand( int );
 
+    GDALRasterBlockManager *GetRasterBlockManager() { return poRasterBlockManager; }
+
+    virtual void SetCacheMax( GIntBig );
     virtual void FlushCache(void);
 
     virtual const char *GetProjectionRef(void);
@@ -368,7 +376,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     CPLErr      RasterIO( GDALRWFlag, int, int, int, int,
                           void *, int, int, GDALDataType,
-                          int, int *, int, int, int );
+                          int, int *, int, int, int, void ** phMutex = NULL );
 
     int           Reference();
     int           Dereference();
@@ -444,6 +452,45 @@ private:
 };
 
 /* ******************************************************************** */
+/*                       GDALRasterBlockManager                         */
+/* ******************************************************************** */
+
+//! The cache management for the rasterblock system
+
+class CPL_DLL GDALRasterBlockManager
+{
+    friend class GDALRasterBlock;
+    
+    int             bCacheMaxInitialized;
+    GIntBig         nCacheMax;
+    volatile GIntBig nCacheUsed;
+
+    volatile GDALRasterBlock *poOldest;    /* tail */
+    volatile GDALRasterBlock *poNewest;    /* head */
+
+    void            *hRBMMutex;
+
+  public:
+                GDALRasterBlockManager();
+    virtual     ~GDALRasterBlockManager();
+
+    void        SetCacheMax( GIntBig nBytes );
+    GIntBig     GetCacheMax(void);
+    GIntBig     GetCacheUsed(void);
+    int         FlushCacheBlock(void);
+    void        FlushTillBelow();
+    void        Verify();
+    int         SafeLockBlock( GDALRasterBlock ** );
+
+    void        DestroyRBMMutex();
+};
+
+CPL_C_START
+GDALRasterBlockManager CPL_DLL * GetGDALRasterBlockManager( void );
+void        CPL_DLL CPL_STDCALL GDALDestroyRasterBlockManager( void );
+CPL_C_END
+
+/* ******************************************************************** */
 /*                           GDALRasterBlock                            */
 /* ******************************************************************** */
 
@@ -452,8 +499,12 @@ private:
 class CPL_DLL GDALRasterBlock
 {
     GDALDataType        eType;
-    
+
+    int                 bAttachedToCache;    
+    int                 bAttachedToBand;    
+    int                 bDelete;    
     int                 bDirty;
+    int                 bBlockRead;
     int                 nLockCount;
 
     int                 nXOff;
@@ -463,24 +514,33 @@ class CPL_DLL GDALRasterBlock
     int                 nYSize;
     
     void                *pData;
-
+    void                *hRWMutex;
     GDALRasterBand      *poBand;
+
+    GDALRasterBlockManager *poManager;
     
     GDALRasterBlock     *poNext;
     GDALRasterBlock     *poPrevious;
+    
+    friend class GDALRasterBlockManager;
 
   public:
-                GDALRasterBlock( GDALRasterBand *, int, int );
+                GDALRasterBlock( GDALRasterBand *, int, int, GDALRasterBlockManager * );
     virtual     ~GDALRasterBlock();
 
+    void        **GetRWMutex();
     CPLErr      Internalize( void );
     void        Touch( void );      
     void        MarkDirty( void );  
     void        MarkClean( void );
-    void        AddLock( void ) { nLockCount++; }
-    void        DropLock( void ) { nLockCount--; }
+    void        AddLock( void ); 
+    void        DropLock( void );
+    void        MarkBlockRead( void ) { bBlockRead = TRUE; }
+    void        MarkForDeletion( void ) { bDelete = TRUE; }
+    void        AttachToBand( void ) { bAttachedToBand = TRUE; }
+    void        UnattachFromBand( void ) { bAttachedToBand = FALSE; }
     void        Detach();
-
+    
     CPLErr      Write();
 
     GDALDataType GetDataType() { return eType; }
@@ -491,19 +551,12 @@ class CPL_DLL GDALRasterBlock
     int         GetDirty() { return bDirty; }
     int         GetLockCount() { return nLockCount; }
 
-    void        *GetDataRef( void ) { return pData; }
+    void        *GetDataRef( int bSkipRead = FALSE ); //{ return pData; }
 
     /// @brief Accessor to source GDALRasterBand object.
     /// @return source raster band of the raster block.
     GDALRasterBand *GetBand() { return poBand; }
 
-    static int  FlushCacheBlock();
-    static void Verify();
-
-    static int  SafeLockBlock( GDALRasterBlock ** );
-    
-    /* Should only be called by GDALDestroyDriverManager() */
-    static void DestroyRBMutex();
 };
 
 /* ******************************************************************** */
@@ -548,6 +601,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     void           SetFlushBlockErr( CPLErr eErr );
 
     friend class GDALRasterBlock;
+    friend class GDALRasterBlockManager;
 
   protected:
     GDALDataset *poDS;
@@ -560,6 +614,8 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     GDALAccess  eAccess;
 
     /* stuff related to blocking, and raster cache */
+    void        *hBandMutex;
+    void        *hRWMutex;
     int         nBlockXSize;
     int         nBlockYSize;
     int         nBlocksPerRow;
@@ -581,20 +637,20 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     friend class GDALProxyRasterBand;
 
   protected:
-    virtual CPLErr IReadBlock( int, int, void * ) = 0;
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** ) = 0;
+    virtual CPLErr IWriteBlock( int, int, void *, void ** phMutex = NULL );
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int );
+                              int, int, void ** phMutex = NULL );
     CPLErr         OverviewRasterIO( GDALRWFlag, int, int, int, int,
                                      void *, int, int, GDALDataType,
-                                     int, int );
+                                     int, int, void ** phMutex = NULL );
 
     int            InitBlockInfo();
 
-    CPLErr         AdoptBlock( int, int, GDALRasterBlock * );
+    GDALRasterBlock *AdoptBlock( int, int, GDALRasterBlock * );
     GDALRasterBlock *TryGetLockedBlockRef( int nXBlockOff, int nYBlockYOff );
-
+    
   public:
                 GDALRasterBand();
                 
@@ -605,20 +661,25 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     int         GetBand();
     GDALDataset*GetDataset();
 
+    void        **GetRWMutex();
     GDALDataType GetRasterDataType( void );
     void        GetBlockSize( int *, int * );
     GDALAccess  GetAccess();
     
     CPLErr      RasterIO( GDALRWFlag, int, int, int, int,
                           void *, int, int, GDALDataType,
-                          int, int );
-    CPLErr      ReadBlock( int, int, void * );
+                          int, int, void ** phMutex = NULL );
+    CPLErr      ReadBlock( int, int, void *, void ** phMutex = NULL );
 
-    CPLErr      WriteBlock( int, int, void * );
+    CPLErr      WriteBlock( int, int, void *, void ** phMutex = NULL );
 
     GDALRasterBlock *GetLockedBlockRef( int nXBlockOff, int nYBlockOff, 
                                         int bJustInitialize = FALSE );
-    CPLErr      FlushBlock( int = -1, int = -1, int bWriteDirtyBlock = TRUE );
+
+    GDALRasterBlockManager *GetRasterBlockManager();
+
+    GDALRasterBlock     *UnadoptBlock( int = -1, int = -1, int = FALSE );
+    CPLErr              FlushBlock( int = -1, int = -1 );
 
     unsigned char*  GetIndexColorTranslationTo(/* const */ GDALRasterBand* poReferenceBand,
                                                unsigned char* pTranslationTable = NULL,
@@ -702,7 +763,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 class CPL_DLL GDALAllValidMaskBand : public GDALRasterBand
 {
   protected:
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
 
   public:
                 GDALAllValidMaskBand( GDALRasterBand * );
@@ -722,10 +783,10 @@ class CPL_DLL GDALNoDataMaskBand : public GDALRasterBand
     GDALRasterBand *poParent;
 
   protected:
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int );
+                              int, int, void ** phMutex = NULL);
 
   public:
                 GDALNoDataMaskBand( GDALRasterBand * );
@@ -741,7 +802,7 @@ class CPL_DLL GDALNoDataValuesMaskBand : public GDALRasterBand
     double      *padfNodataValues;
 
   protected:
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
 
   public:
                 GDALNoDataValuesMaskBand( GDALDataset * );

@@ -32,6 +32,7 @@
 
 #include "gdal_priv.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 #include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
@@ -108,7 +109,7 @@ class GRASSRasterBand : public GDALRasterBand
                                     const char *, const char * );
     virtual        ~GRASSRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
     virtual double GetMinimum( int *pbSuccess = NULL );
@@ -259,9 +260,10 @@ GRASSRasterBand::~GRASSRasterBand()
 /************************************************************************/
 
 CPLErr GRASSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                  void * pImage, void ** phMutex )
 
 {
+    CPLMutexHolderD( phMutex );
     char *pachNullBuf;
     
     pachNullBuf = (char *) CPLMalloc(nBlockXSize);

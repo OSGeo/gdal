@@ -1,4 +1,5 @@
 *.pyc
+*.o
 ogr/tmp
 ogr/data/delete_nas.gfs
 ogr/data/replace_nas.gfs
@@ -15,3 +16,9 @@ gdrivers/data/byte.jp2.gz.properties
 gdrivers/data/utm.json
 gdrivers/tmp
 osr/tmp
+cpp/gdal_unit_test
+cpp/test_virtualmem
+cpp/testclosedondestroydm
+cpp/testcopywords
+cpp/testperfcopywords
+cpp/testthreadcond

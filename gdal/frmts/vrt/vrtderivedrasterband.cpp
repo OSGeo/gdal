@@ -31,6 +31,7 @@
 #include "vrtdataset.h"
 #include "cpl_minixml.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 #include <map>
 
 static std::map<CPLString, GDALDerivedPixelFunc> osMapPixelFunction;
@@ -261,7 +262,8 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
 				       int nXOff, int nYOff, int nXSize, 
 				       int nYSize, void * pData, int nBufXSize,
 				       int nBufYSize, GDALDataType eBufType,
-				       int nPixelSpace, int nLineSpace )
+				       int nPixelSpace, int nLineSpace,
+                       void ** phMutex )
 {
     GDALDerivedPixelFunc pfnPixelFunc;
     void **pBuffers;
@@ -290,6 +292,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
     if ( nPixelSpace == typesize &&
          (!bNoDataValueSet || dfNoDataValue == 0) ) {
+        CPLMutexHolderD( phMutex );
         memset( pData, 0, nBufXSize * nBufYSize * nPixelSpace );
     }
     else if ( !bEqualAreas || bNoDataValueSet )
@@ -297,6 +300,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
         double dfWriteValue = 0.0;
         int    iLine;
 
+        CPLMutexHolderD( phMutex );
         if( bNoDataValueSet )
             dfWriteValue = dfNoDataValue;
 
@@ -317,7 +321,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
     {
         if( OverviewRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
                               pData, nBufXSize, nBufYSize, 
-                              eBufType, nPixelSpace, nLineSpace ) == CE_None )
+                              eBufType, nPixelSpace, nLineSpace, phMutex ) == CE_None )
             return CE_None;
     }
 
@@ -379,12 +383,14 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
 	    (nXOff, nYOff, nXSize, nYSize, 
 	     pBuffers[iSource], nBufXSize, nBufYSize, 
 	     eSrcType, GDALGetDataTypeSize( eSrcType ) / 8,
-             (GDALGetDataTypeSize( eSrcType ) / 8) * nBufXSize);
+             (GDALGetDataTypeSize( eSrcType ) / 8) * nBufXSize,
+             phMutex);
     }
 
     /* ---- Apply pixel function ---- */
     if (eErr == CE_None) {
-	eErr = pfnPixelFunc((void **)pBuffers, nSources,
+        CPLMutexHolderD( phMutex );
+        eErr = pfnPixelFunc((void **)pBuffers, nSources,
 			    pData, nBufXSize, nBufYSize,
 			    eSrcType, eBufType, nPixelSpace, nLineSpace);
     }

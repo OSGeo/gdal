@@ -145,7 +145,7 @@ class RasterliteBand: public GDALPamRasterBand
     virtual int             GetOverviewCount();
     virtual GDALRasterBand* GetOverview(int nLevel);
 
-    virtual CPLErr          IReadBlock( int, int, void * );
+    virtual CPLErr          IReadBlock( int, int, void *, void ** phMutex = NULL );
 };
 
 GDALDataset *

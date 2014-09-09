@@ -29,6 +29,7 @@
 
 #include "gdal_pam.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 
 #include "webp/decode.h"
 #include "webp/encode.h"
@@ -65,7 +66,7 @@ class WEBPDataset : public GDALPamDataset
 
     virtual CPLErr      IRasterIO( GDALRWFlag, int, int, int, int,
                                    void *, int, int, GDALDataType,
-                                   int, int *, int, int, int );
+                                   int, int *, int, int, int, void ** phMutex );
 
     virtual char      **GetMetadataDomainList();
     virtual char  **GetMetadata( const char * pszDomain = "" );
@@ -93,7 +94,7 @@ class WEBPRasterBand : public GDALPamRasterBand
 
                    WEBPRasterBand( WEBPDataset *, int );
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
     virtual GDALColorInterp GetColorInterpretation();
 };
 
@@ -117,9 +118,10 @@ WEBPRasterBand::WEBPRasterBand( WEBPDataset *poDS, int nBand )
 /************************************************************************/
 
 CPLErr WEBPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                  void * pImage, void ** phMutex )
 
 {
+    CPLMutexHolderD( phMutex );
     WEBPDataset* poGDS = (WEBPDataset*) poDS;
 
     if( poGDS->Uncompress() != CE_None )
@@ -328,7 +330,8 @@ CPLErr WEBPDataset::IRasterIO( GDALRWFlag eRWFlag,
                               void *pData, int nBufXSize, int nBufYSize,
                               GDALDataType eBufType,
                               int nBandCount, int *panBandMap,
-                              int nPixelSpace, int nLineSpace, int nBandSpace )
+                              int nPixelSpace, int nLineSpace, int nBandSpace,
+                              void ** phMutex )
 
 {
     if((eRWFlag == GF_Read) &&
@@ -344,6 +347,7 @@ CPLErr WEBPDataset::IRasterIO( GDALRWFlag eRWFlag,
        (panBandMap != NULL) &&
        (panBandMap[0] == 1) && (panBandMap[1] == 2) && (panBandMap[2] == 3) && (nBands == 3 || panBandMap[3] == 4))
     {
+        CPLMutexHolderD( phMutex );
         Uncompress();
         memcpy(pData, pabyUncompressed, nBands * nXSize * nYSize);
         return CE_None;
@@ -352,7 +356,8 @@ CPLErr WEBPDataset::IRasterIO( GDALRWFlag eRWFlag,
     return GDALPamDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                      pData, nBufXSize, nBufYSize, eBufType,
                                      nBandCount, panBandMap,
-                                     nPixelSpace, nLineSpace, nBandSpace);
+                                     nPixelSpace, nLineSpace, nBandSpace,
+                                     phMutex );
 }
 
 /************************************************************************/

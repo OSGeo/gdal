@@ -31,6 +31,7 @@
 #include "rawdataset.h"
 #include "cpl_string.h"
 #include "ogr_spatialref.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -121,7 +122,7 @@ class LAN4BitRasterBand : public GDALPamRasterBand
     virtual CPLErr SetColorTable( GDALColorTable * ); 
     virtual CPLErr SetColorInterpretation( GDALColorInterp );
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex );
 };
 
 /************************************************************************/
@@ -201,12 +202,13 @@ LAN4BitRasterBand::~LAN4BitRasterBand()
 /************************************************************************/
 
 CPLErr LAN4BitRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                      void * pImage )
+                                      void * pImage, void ** phMutex )
 
 {
     LANDataset *poLAN_DS = (LANDataset *) poDS;
     CPLAssert( nBlockXOff == 0  );
     
+    CPLMutexHolderD( phMutex );
 /* -------------------------------------------------------------------- */
 /*      Seek to profile.                                                */
 /* -------------------------------------------------------------------- */

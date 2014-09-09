@@ -31,6 +31,7 @@
 #include "cpl_string.h"
 #include "gdal_pam.h"
 #include "ogr_srs_api.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -87,7 +88,7 @@ class NGSGEOIDRasterBand : public GDALPamRasterBand
 
                 NGSGEOIDRasterBand( NGSGEOIDDataset * );
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
 
     virtual const char* GetUnitType() { return "m"; }
 };
@@ -114,9 +115,10 @@ NGSGEOIDRasterBand::NGSGEOIDRasterBand( NGSGEOIDDataset *poDS )
 /************************************************************************/
 
 CPLErr NGSGEOIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                       void * pImage )
+                                       void * pImage, void ** phMutex )
 
 {
+    CPLMutexHolderD( phMutex );
     NGSGEOIDDataset *poGDS = (NGSGEOIDDataset *) poDS;
 
     /* First values in the file corresponds to the south-most line of the imagery */

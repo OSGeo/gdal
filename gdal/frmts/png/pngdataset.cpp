@@ -48,6 +48,7 @@
 #include "gdal_pam.h"
 #include "png.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 #include <setjmp.h>
 
 CPL_CVSID("$Id$");
@@ -190,7 +191,7 @@ class PNGRasterBand : public GDALPamRasterBand
 
                    PNGRasterBand( PNGDataset *, int );
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
 
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
@@ -203,7 +204,7 @@ class PNGRasterBand : public GDALPamRasterBand
 
 #ifdef SUPPORT_CREATE
     virtual CPLErr SetColorTable(GDALColorTable*);
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual CPLErr IWriteBlock( int, int, void *, void ** phMutex = NULL );
 
   protected:
 	int m_bBandProvided[5];
@@ -249,7 +250,7 @@ PNGRasterBand::PNGRasterBand( PNGDataset *poDS, int nBand )
 /************************************************************************/
 
 CPLErr PNGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                  void * pImage, void ** phMutex )
 
 {
     PNGDataset	*poGDS = (PNGDataset *) poDS;
@@ -258,52 +259,54 @@ CPLErr PNGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     int         i, nPixelSize, nPixelOffset, nXSize = GetXSize();
 
     CPLAssert( nBlockXOff == 0 );
-
-    if( poGDS->nBitDepth == 16 )
-        nPixelSize = 2;
-    else
-        nPixelSize = 1;
-
-
-    if (poGDS->fpImage == NULL)
     {
-        memset( pImage, 0, nPixelSize * nXSize );
-        return CE_None;
-    }
+        CPLMutexHolderD( phMutex );
 
-    nPixelOffset = poGDS->nBands * nPixelSize;
+        if( poGDS->nBitDepth == 16 )
+            nPixelSize = 2;
+        else
+            nPixelSize = 1;
+
+
+        if (poGDS->fpImage == NULL)
+        {
+            memset( pImage, 0, nPixelSize * nXSize );
+            return CE_None;
+        }
+
+        nPixelOffset = poGDS->nBands * nPixelSize;
 
 /* -------------------------------------------------------------------- */
 /*      Load the desired scanline into the working buffer.              */
 /* -------------------------------------------------------------------- */
-    eErr = poGDS->LoadScanline( nBlockYOff );
-    if( eErr != CE_None )
-        return eErr;
+        eErr = poGDS->LoadScanline( nBlockYOff );
+        if( eErr != CE_None )
+            return eErr;
 
-    pabyScanline = poGDS->pabyBuffer 
-        + (nBlockYOff - poGDS->nBufferStartLine) * nPixelOffset * nXSize
-        + nPixelSize * (nBand - 1);
+        pabyScanline = poGDS->pabyBuffer 
+            + (nBlockYOff - poGDS->nBufferStartLine) * nPixelOffset * nXSize
+            + nPixelSize * (nBand - 1);
 
 /* -------------------------------------------------------------------- */
 /*      Transfer between the working buffer the the callers buffer.     */
 /* -------------------------------------------------------------------- */
-    if( nPixelSize == nPixelOffset )
-        memcpy( pImage, pabyScanline, nPixelSize * nXSize );
-    else if( nPixelSize == 1 )
-    {
-        for( i = 0; i < nXSize; i++ )
-            ((GByte *) pImage)[i] = pabyScanline[i*nPixelOffset];
-    }
-    else 
-    {
-        CPLAssert( nPixelSize == 2 );
-        for( i = 0; i < nXSize; i++ )
+        if( nPixelSize == nPixelOffset )
+            memcpy( pImage, pabyScanline, nPixelSize * nXSize );
+        else if( nPixelSize == 1 )
         {
-            ((GUInt16 *) pImage)[i] = 
-                *((GUInt16 *) (pabyScanline+i*nPixelOffset));
+            for( i = 0; i < nXSize; i++ )
+                ((GByte *) pImage)[i] = pabyScanline[i*nPixelOffset];
+        }
+        else 
+        {
+            CPLAssert( nPixelSize == 2 );
+            for( i = 0; i < nXSize; i++ )
+            {
+                ((GUInt16 *) pImage)[i] = 
+                    *((GUInt16 *) (pabyScanline+i*nPixelOffset));
+            }
         }
     }
-
 /* -------------------------------------------------------------------- */
 /*      Forceably load the other bands associated with this scanline.   */
 /* -------------------------------------------------------------------- */
@@ -311,9 +314,7 @@ CPLErr PNGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     for(iBand = 1; iBand < poGDS->GetRasterCount(); iBand++)
     {
         GDALRasterBlock *poBlock;
-
-        poBlock = 
-            poGDS->GetRasterBand(iBand+1)->GetLockedBlockRef(nBlockXOff,nBlockYOff);
+        poBlock = poGDS->GetRasterBand(iBand+1)->GetLockedBlockRef(nBlockXOff,nBlockYOff);
         if( poBlock != NULL )
             poBlock->DropLock();
     }
@@ -1865,10 +1866,11 @@ void GDALRegister_PNG()
 /*                         IWriteBlock()                                */
 /************************************************************************/
 
-CPLErr PNGRasterBand::IWriteBlock(int x, int y, void* pvData)
+CPLErr PNGRasterBand::IWriteBlock(int x, int y, void* pvData, void **phMutex)
 {
     // rcg, added to support Create().
 
+    CPLMutexHolderD( phMutex );
     PNGDataset& ds = *(PNGDataset*)poDS;
 
 

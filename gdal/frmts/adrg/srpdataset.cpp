@@ -31,6 +31,7 @@
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 #include "iso8211.h"
 
 // Uncomment to recognize also .gen files in addition to .img files
@@ -108,7 +109,7 @@ class SRPRasterBand : public GDALPamRasterBand
   public:
                             SRPRasterBand( SRPDataset *, int );
 
-    virtual CPLErr          IReadBlock( int, int, void * );
+    virtual CPLErr          IReadBlock( int, int, void *, void ** phMutex = NULL );
 
     virtual double          GetNoDataValue( int *pbSuccess = NULL );
 
@@ -180,9 +181,10 @@ GDALColorTable *SRPRasterBand::GetColorTable()
 /************************************************************************/
 
 CPLErr SRPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                   void * pImage )
+                                   void * pImage, void ** phMutex )
 
 {
+    CPLMutexHolderD( phMutex );
     SRPDataset* poDS = (SRPDataset*)this->poDS;
     int offset;
     int nBlock = nBlockYOff * poDS->NFC + nBlockXOff;

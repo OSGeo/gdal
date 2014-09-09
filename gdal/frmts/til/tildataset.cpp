@@ -33,7 +33,6 @@
 #include "ogr_spatialref.h"
 #include "cpl_string.h"
 #include "vrtdataset.h"
-#include "cpl_multiproc.h"
 #include "cplkeywordparser.h"
 
 CPL_CVSID("$Id$");
@@ -81,10 +80,10 @@ class TILRasterBand : public GDALPamRasterBand
                    TILRasterBand( TILDataset *, int, VRTSourcedRasterBand * );
     virtual       ~TILRasterBand() {};
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int );
+                              int, int, void ** phMutex = NULL );
 };
 
 /************************************************************************/
@@ -107,10 +106,10 @@ TILRasterBand::TILRasterBand( TILDataset *poTILDS, int nBand,
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr TILRasterBand::IReadBlock( int iBlockX, int iBlockY, void *pBuffer )
+CPLErr TILRasterBand::IReadBlock( int iBlockX, int iBlockY, void *pBuffer, void **phMutex )
 
 {
-    return poVRTBand->ReadBlock( iBlockX, iBlockY, pBuffer );
+    return poVRTBand->ReadBlock( iBlockX, iBlockY, pBuffer, phMutex );
 }
 
 /************************************************************************/
@@ -121,20 +120,20 @@ CPLErr TILRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                  int nXOff, int nYOff, int nXSize, int nYSize,
                                  void * pData, int nBufXSize, int nBufYSize,
                                  GDALDataType eBufType,
-                                 int nPixelSpace, int nLineSpace )
+                                 int nPixelSpace, int nLineSpace, void ** phMutex )
 
 {
     if(GetOverviewCount() > 0)
     {
         return GDALPamRasterBand::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                  pData, nBufXSize, nBufYSize, eBufType,
-                                 nPixelSpace, nLineSpace );
+                                 nPixelSpace, nLineSpace, phMutex );
     }
     else //if not exist TIL overviews, try to use band source overviews
     {
         return poVRTBand->IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                  pData, nBufXSize, nBufYSize, eBufType,
-                                 nPixelSpace, nLineSpace );
+                                 nPixelSpace, nLineSpace, phMutex );
     }
 }
 

@@ -35,6 +35,7 @@
 #include "georaster_priv.h"
 #include "cpl_vsi.h"
 #include "cpl_error.h"
+#include "cpl_multiproc.h"
 
 //  ---------------------------------------------------------------------------
 //                                                        GeoRasterRasterBand()
@@ -204,8 +205,10 @@ GeoRasterRasterBand::~GeoRasterRasterBand()
 
 CPLErr GeoRasterRasterBand::IReadBlock( int nBlockXOff,
                                         int nBlockYOff,
-                                        void *pImage )
+                                        void *pImage,
+                                        void **phMutex )
 {
+    CPLMutexHolderD( phMutex );
     if( poGeoRaster->GetDataBlock( nBand,
                                    nOverviewLevel,
                                    nBlockXOff,
@@ -235,8 +238,10 @@ CPLErr GeoRasterRasterBand::IReadBlock( int nBlockXOff,
 
 CPLErr GeoRasterRasterBand::IWriteBlock( int nBlockXOff,
                                          int nBlockYOff,
-                                         void *pImage )
+                                         void *pImage,
+                                         void **phMutex )
 {
+    CPLMutexHolderD( phMutex );
     if( poGeoRaster->SetDataBlock( nBand,
                                    nOverviewLevel,
                                    nBlockXOff,

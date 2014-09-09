@@ -31,6 +31,7 @@
 #include "rawdataset.h"
 #include "ogr_spatialref.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -125,7 +126,7 @@ class EHdrRasterBand : public RawRasterBand
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int );
+                              int, int, void ** phMutex = NULL );
 
   public:
     EHdrRasterBand( GDALDataset *poDS, int nBand, VSILFILE * fpRaw,
@@ -134,8 +135,8 @@ class EHdrRasterBand : public RawRasterBand
                     GDALDataType eDataType, int bNativeOrder,
                     int nBits);
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void **phMutex = NULL );
+    virtual CPLErr IWriteBlock( int, int, void *, void **phMutex = NULL );
 
     virtual double GetNoDataValue( int *pbSuccess = NULL );
     virtual double GetMinimum( int *pbSuccess = NULL );
@@ -206,12 +207,13 @@ EHdrRasterBand::EHdrRasterBand( GDALDataset *poDS,
 /************************************************************************/
 
 CPLErr EHdrRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                   void * pImage )
+                                   void * pImage, void **phMutex )
 
 {
     if (nBits >= 8)
-      return RawRasterBand::IReadBlock(nBlockXOff, nBlockYOff, pImage);
+      return RawRasterBand::IReadBlock(nBlockXOff, nBlockYOff, pImage, phMutex);
 
+    CPLMutexHolderD( phMutex );
     vsi_l_offset   nLineStart;
     unsigned int   nLineBytes;
     int            iBitOffset;
@@ -272,12 +274,13 @@ CPLErr EHdrRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr EHdrRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-                                   void * pImage )
+                                   void * pImage, void **phMutex )
 
 {
     if (nBits >= 8)
-      return RawRasterBand::IWriteBlock(nBlockXOff, nBlockYOff, pImage);
+      return RawRasterBand::IWriteBlock(nBlockXOff, nBlockYOff, pImage, phMutex);
 
+    CPLMutexHolderD( phMutex );
     vsi_l_offset   nLineStart;
     unsigned int   nLineBytes;
     int            iBitOffset;
@@ -357,7 +360,8 @@ CPLErr EHdrRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                   int nXOff, int nYOff, int nXSize, int nYSize,
                                   void * pData, int nBufXSize, int nBufYSize,
                                   GDALDataType eBufType,
-                                  int nPixelSpace, int nLineSpace )
+                                  int nPixelSpace, int nLineSpace,
+                                  void ** phMutex )
 
 {
     // Defer to RawRasterBand
@@ -365,14 +369,16 @@ CPLErr EHdrRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         return RawRasterBand::IRasterIO( eRWFlag, 
                                          nXOff, nYOff, nXSize, nYSize,
                                          pData, nBufXSize, nBufYSize, 
-                                         eBufType, nPixelSpace, nLineSpace );
+                                         eBufType, nPixelSpace, nLineSpace,
+                                         phMutex );
 
     // Force use of IReadBlock() and IWriteBlock()
     else
         return GDALRasterBand::IRasterIO( eRWFlag, 
                                           nXOff, nYOff, nXSize, nYSize,
                                           pData, nBufXSize, nBufYSize, 
-                                          eBufType, nPixelSpace, nLineSpace );
+                                          eBufType, nPixelSpace, nLineSpace,
+                                          phMutex );
 }
 
 /************************************************************************/

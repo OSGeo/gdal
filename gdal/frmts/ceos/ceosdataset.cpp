@@ -30,6 +30,7 @@
 
 #include "ceosopen.h"
 #include "gdal_pam.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -71,7 +72,7 @@ class CEOSRasterBand : public GDALPamRasterBand
 
     		CEOSRasterBand( CEOSDataset *, int );
     
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void *, void ** phMutex = NULL );
 };
 
 
@@ -96,9 +97,10 @@ CEOSRasterBand::CEOSRasterBand( CEOSDataset *poDS, int nBand )
 /************************************************************************/
 
 CPLErr CEOSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                  void * pImage, void ** phMutex )
 
 {
+    CPLMutexHolderD( phMutex );
     CEOSDataset	*poCEOS_DS = (CEOSDataset *) poDS;
 
     CPLAssert( nBlockXOff == 0 );

@@ -34,6 +34,7 @@
  * SOFTWARE.
  **********************************************************************/
 #include "postgisraster.h"
+#include "cpl_multiproc.h"
 #include <math.h>
 
 #ifdef _WIN32
@@ -973,11 +974,13 @@ void PostGISRasterDataset::CacheTile(const char* pszMetadata,
         {
             GDALRasterBlock* poBlock = poRTB->GetLockedBlockRef(0, 0, TRUE);
             if( poBlock != NULL )
-            {
-                // Point block data ref to fetched data
-                memcpy(poBlock->GetDataRef(), (void *)pbyDataToRead, 
-                    nExpectedBandDataSize);
-
+            {   
+                {
+                    CPLMutexHolderD( poBlock->GetRWMutex() );
+                    // Point block data ref to fetched data
+                    memcpy(poBlock->GetDataRef(TRUE), (void *)pbyDataToRead, 
+                        nExpectedBandDataSize);
+                }
                 poBlock->DropLock();
             }
         }
@@ -1065,7 +1068,7 @@ GBool PostGISRasterDataset::LoadSources(int nXOff, int nYOff, int nXSize, int nY
         {
             GIntBig nMemoryRequiredForTiles = PQntuples(poResult) * nTileWidth * nTileHeight *
                 GDALGetDataTypeSize(GetRasterBand(nBand)->GetRasterDataType()) / 8;
-            GIntBig nCacheMax = (GIntBig) GDALGetCacheMax64();
+            GIntBig nCacheMax = (GIntBig) poRasterBlockManager->GetCacheMax();
             if( nBands * nMemoryRequiredForTiles <= nCacheMax )
             {
                 bLoadRasters = TRUE;

@@ -1278,7 +1278,8 @@ CPLErr VRTDataset::IRasterIO( GDALRWFlag eRWFlag,
                                void * pData, int nBufXSize, int nBufYSize,
                                GDALDataType eBufType,
                                int nBandCount, int *panBandMap,
-                               int nPixelSpace, int nLineSpace, int nBandSpace)
+                               int nPixelSpace, int nLineSpace, int nBandSpace,
+                               void ** phMutex)
 {
     if (bCompatibleForDatasetIO < 0)
     {
@@ -1300,7 +1301,8 @@ CPLErr VRTDataset::IRasterIO( GDALRWFlag eRWFlag,
             poBand->IRasterIO(GF_Read, nXOff, nYOff, nXSize, nYSize,
                                 pabyBandData, nBufXSize, nBufYSize,
                                 eBufType,
-                                nPixelSpace, nLineSpace);
+                                nPixelSpace, nLineSpace,
+                                phMutex);
 
             poBand->nSources = nSavedSources;
         }
@@ -1316,7 +1318,8 @@ CPLErr VRTDataset::IRasterIO( GDALRWFlag eRWFlag,
                                               pData, nBufXSize, nBufYSize,
                                               eBufType,
                                               nBandCount, panBandMap,
-                                              nPixelSpace, nLineSpace, nBandSpace);
+                                              nPixelSpace, nLineSpace, nBandSpace,
+                                              phMutex);
         }
         return eErr;
     }
@@ -1325,5 +1328,6 @@ CPLErr VRTDataset::IRasterIO( GDALRWFlag eRWFlag,
                                   pData, nBufXSize, nBufYSize,
                                   eBufType,
                                   nBandCount, panBandMap,
-                                  nPixelSpace, nLineSpace, nBandSpace);
+                                  nPixelSpace, nLineSpace, nBandSpace,
+                                  phMutex);
 }
