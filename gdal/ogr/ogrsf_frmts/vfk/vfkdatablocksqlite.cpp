@@ -221,7 +221,10 @@ int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
     }
     
     poDataBlockPoints->LoadGeometry();
-    
+
+    /* reset feature count */
+    SetFeatureCount(0); 
+
     if (LoadGeometryFromDB()) /* try to load geometry from DB */
 	return 0;
 
@@ -982,18 +985,27 @@ bool VFKDataBlockSQLite::LoadGeometryFromDB()
   \param nGeometries number of geometries to update
 */
 void VFKDataBlockSQLite::UpdateVfkBlocks(int nGeometries) {
+    int nFeatCount;
     CPLString osSQL;
     
     VFKReaderSQLite  *poReader;
     
     poReader = (VFKReaderSQLite*) m_poReader;
 
+    /* update number of features in VFK_DB_TABLE table */    
+    nFeatCount = GetFeatureCount();
+    if (nFeatCount > 0) {
+        osSQL.Printf("UPDATE %s SET num_features = %d WHERE table_name = '%s'",
+                     VFK_DB_TABLE, nFeatCount, m_pszName);
+        poReader->ExecuteSQL(osSQL.c_str());
+    }
+
+    /* update number of geometries in VFK_DB_TABLE table */    
     if (nGeometries > 0) {
         CPLDebug("OGR-VFK", 
                  "VFKDataBlockSQLite::UpdateVfkBlocks(): name=%s -> "
                  "%d geometries saved to internal DB", m_pszName, nGeometries);
         
-	/* update number of geometries in VFK_DB_TABLE table */
 	osSQL.Printf("UPDATE %s SET num_geometries = %d WHERE table_name = '%s'",
 		     VFK_DB_TABLE, nGeometries, m_pszName);
 	poReader->ExecuteSQL(osSQL.c_str());

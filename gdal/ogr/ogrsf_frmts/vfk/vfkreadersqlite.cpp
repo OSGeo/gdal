@@ -121,7 +121,8 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFilename) : VFKReader(pszFilenam
     if (m_bNewDb) {
         /* new DB, create support metadata tables */
         osCommand.Printf("CREATE TABLE %s (file_name text, table_name text, num_records integer, "
-                         "num_geometries integer, table_defn text)", VFK_DB_TABLE);
+                         "num_features integer, num_geometries integer, table_defn text)",
+                         VFK_DB_TABLE);
         ExecuteSQL(osCommand.c_str());
 
         /* header table */
@@ -260,6 +261,13 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
             
             pszName = poDataBlockCurrent->GetName();
             if (pszName && EQUAL(pszName, "SBP")) {
+                osSQL.Printf("SELECT num_features FROM %s WHERE table_name = '%s'",
+                             VFK_DB_TABLE, pszName);
+                hStmt = PrepareStatement(osSQL.c_str());
+                if (ExecuteSQL(hStmt) == OGRERR_NONE) {
+                    poDataBlockCurrent->SetFeatureCount(sqlite3_column_int(hStmt, 0));  
+                }
+                sqlite3_finalize(hStmt);
                 continue; /* see LoadGeometry() */
             }
             
@@ -271,6 +279,21 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
                 poNewFeature = new VFKFeatureSQLite(poDataBlockCurrent, nDataRecords++, iFID);
                 poDataBlockCurrent->AddFeature(poNewFeature);
             }
+
+            /* check DB consistency */
+            osSQL.Printf("SELECT num_features FROM %s WHERE table_name = '%s'",
+                         VFK_DB_TABLE, pszName);
+            hStmt = PrepareStatement(osSQL.c_str());
+            if (ExecuteSQL(hStmt) == OGRERR_NONE) {
+                int nFeatDB;
+
+                nFeatDB = sqlite3_column_int(hStmt, 0);
+                if (nFeatDB > 0 && nFeatDB != poDataBlockCurrent->GetFeatureCount())
+                    CPLError(CE_Failure, CPLE_AppDefined, 
+                             "%s: Invalid number of features %d (should be %d)",
+                             pszName, poDataBlockCurrent->GetFeatureCount(), nFeatDB);
+            }
+            sqlite3_finalize(hStmt);
         }
     }
     else {                          /* read from VFK file and insert records into DB */
@@ -446,8 +469,8 @@ void VFKReaderSQLite::AddDataBlock(IVFKDataBlock *poDataBlock, const char *pszDe
         
         /* update VFK_DB_TABLE meta-table */
         osCommand.Printf("INSERT INTO %s (file_name, table_name, "
-                         "num_records, num_geometries, table_defn) VALUES "
-			 "('%s', '%s', -1, 0, '%s')",
+                         "num_records, num_features, num_geometries, table_defn) VALUES "
+			 "('%s', '%s', -1, 0, 0, '%s')",
 			 VFK_DB_TABLE, m_pszFilename, pszBlockName, pszDefn);
 	
         ExecuteSQL(osCommand.c_str());

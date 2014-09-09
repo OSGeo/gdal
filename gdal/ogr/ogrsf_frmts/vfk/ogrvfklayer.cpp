@@ -159,10 +159,12 @@ int OGRVFKLayer::GetFeatureCount(int bForce)
 {
     int nfeatures;
 
-    if (m_poFilterGeom || m_poAttrQuery || bForce)
-        nfeatures = OGRLayer::GetFeatureCount(bForce);
-    else
-        nfeatures = poDataBlock->GetFeatureCount();
+    /* note that 'nfeatures' is 0 when data are not read from DB */
+    nfeatures = poDataBlock->GetFeatureCount();
+    if (m_poFilterGeom || m_poAttrQuery || nfeatures < 1) {
+        /* force real feature count */
+        nfeatures = OGRLayer::GetFeatureCount();
+    }
     
     CPLDebug("OGR-VFK", "OGRVFKLayer::GetFeatureCount(): name=%s -> n=%d",
              GetName(), nfeatures);
