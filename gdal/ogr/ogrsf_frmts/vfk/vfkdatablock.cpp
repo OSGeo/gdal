@@ -186,6 +186,11 @@ int IVFKDataBlock::AddProperty(const char *pszName, const char *pszType)
     return m_nPropertyCount;
 }
 
+/*!
+  \brief Get number of features for given data block
+  
+  \return number of features
+*/
 int IVFKDataBlock::GetFeatureCount()
 {
     if (m_nFeatureCount < 0) {
