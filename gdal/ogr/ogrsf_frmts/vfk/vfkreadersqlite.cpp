@@ -260,18 +260,14 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
             poDataBlockCurrent->SetFeatureCount(0); /* avoid recursive call */
             
             pszName = poDataBlockCurrent->GetName();
-            if (pszName && EQUAL(pszName, "SBP")) {
-                osSQL.Printf("SELECT num_features FROM %s WHERE table_name = '%s'",
-                             VFK_DB_TABLE, pszName);
-                hStmt = PrepareStatement(osSQL.c_str());
-                if (ExecuteSQL(hStmt) == OGRERR_NONE) {
-                    poDataBlockCurrent->SetFeatureCount(sqlite3_column_int(hStmt, 0));  
-                }
-                sqlite3_finalize(hStmt);
-                continue; /* see LoadGeometry() */
-            }
-            
-            osSQL.Printf("SELECT %s FROM %s", FID_COLUMN, pszName);
+            CPLAssert(NULL != pszName);
+
+            osSQL.Printf("SELECT %s FROM %s ",
+                         FID_COLUMN, pszName);
+            if (EQUAL(pszName, "SBP"))
+              osSQL += "WHERE PORADOVE_CISLO_BODU = 1 ";
+            osSQL += "ORDER BY ";
+            osSQL += FID_COLUMN;
             hStmt = PrepareStatement(osSQL.c_str());
             nDataRecords = 1;
             while (ExecuteSQL(hStmt) == OGRERR_NONE) {
