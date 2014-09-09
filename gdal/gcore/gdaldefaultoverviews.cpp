@@ -769,7 +769,18 @@ GDALDefaultOverviews::BuildOverviews(
             CPLSetThreadLocalConfigOption("PHOTOMETRIC_OVERVIEW", "YCBCR");
 
         if( bOwnMaskDS )
+        {
+            /* Reset the poMask member of main dataset bands, since it */
+            /* will become invalid after poMaskDS closing */
+            for( int iBand = 1; iBand <= poDS->GetRasterCount(); iBand ++ )
+            {
+                GDALRasterBand *poBand = poDS->GetRasterBand(iBand);
+                if( poBand != NULL )
+                    poBand->InvalidateMaskBand();
+            }
+
             GDALClose( poMaskDS );
+        }
 
         // force next request to reread mask file.
         poMaskDS = NULL;
