@@ -181,7 +181,8 @@ protected:
 
   bool GDBToOGRFields(CPLXMLNode* psFields);  
   bool ParseGeometryDef(CPLXMLNode* psGeometryDef);
-  bool ParseSpatialReference(CPLXMLNode* psSpatialRefNode, std::string* pOutWkt, std::string* pOutWKID);
+  bool ParseSpatialReference(CPLXMLNode* psSpatialRefNode, std::string* pOutWkt,
+                             std::string* pOutWKID, std::string* pOutLatestWKID);
 
   FGdbDataSource* m_pDS;
   Table* m_pTable;
