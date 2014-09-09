@@ -576,9 +576,12 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     GDALRasterBand *poMask;
     bool        bOwnMask;
     int         nMaskFlags;
+    
+    void        InvalidateMaskBand();
 
     friend class GDALDataset;
     friend class GDALProxyRasterBand;
+    friend class GDALDefaultOverviews;
 
   protected:
     virtual CPLErr IReadBlock( int, int, void * ) = 0;

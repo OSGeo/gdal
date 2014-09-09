@@ -1600,8 +1600,28 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
 
     /* If we have a nodata mask and we are doing something more complicated */
     /* than nearest neighbouring, we have to fetch to nodata mask */ 
-    int bUseNoDataMask = (!EQUALN(pszResampling,"NEAR",4) &&
-                          (poSrcBand->GetMaskFlags() & GMF_ALL_VALID) == 0);
+
+    GDALRasterBand* poMaskBand = NULL;
+    int nMaskFlags = 0;
+    int bUseNoDataMask = FALSE;
+    if( !EQUALN(pszResampling,"NEAR",4) )
+    {
+        /* Special case if we are the alpha band. We want it to be considered */
+        /* as the mask band to avoid alpha=0 to be taken into account in average */
+        /* computation */
+        if( poSrcBand->GetColorInterpretation() == GCI_AlphaBand )
+        {
+            poMaskBand = poSrcBand;
+            nMaskFlags = GMF_ALPHA | GMF_PER_DATASET;
+        }
+        else
+        {
+            poMaskBand = poSrcBand->GetMaskBand();
+            nMaskFlags = poSrcBand->GetMaskFlags();
+        }
+
+        bUseNoDataMask = ((nMaskFlags & GMF_ALL_VALID) == 0);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      If we are operating on multiple overviews, and using            */
@@ -1613,7 +1633,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
     /* we can't use cascaded generation, as the computation of the overviews */
     /* of the band used for the mask band may not have yet occured (#3033) */
     if( (EQUALN(pszResampling,"AVER",4) || EQUALN(pszResampling,"GAUSS",5)) && nOverviewCount > 1
-         && !(bUseNoDataMask && poSrcBand->GetMaskFlags() != GMF_NODATA))
+         && !(bUseNoDataMask && nMaskFlags != GMF_NODATA))
         return GDALRegenerateCascadingOverviews( poSrcBand, 
                                                  nOverviewCount, papoOvrBands,
                                                  pszResampling, 
@@ -1685,7 +1705,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
                                 pChunk, nWidth, nFullResYChunk, eType,
                                 0, 0 );
         if (eErr == CE_None && bUseNoDataMask)
-            eErr = poSrcBand->GetMaskBand()->RasterIO( GF_Read, 0, nChunkYOff, nWidth, nFullResYChunk, 
+            eErr = poMaskBand->RasterIO( GF_Read, 0, nChunkYOff, nWidth, nFullResYChunk, 
                                 pabyChunkNodataMask, nWidth, nFullResYChunk, GDT_Byte,
                                 0, 0 );
 
