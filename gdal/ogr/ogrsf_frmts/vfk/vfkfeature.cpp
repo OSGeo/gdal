@@ -177,7 +177,6 @@ OGRGeometry *IVFKFeature::GetGeometry()
 bool IVFKFeature::LoadGeometry()
 {
     const char *pszName;
-    CPLString osSQL;
     
     if (m_bGeometry)
         return TRUE;
