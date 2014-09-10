@@ -193,8 +193,8 @@ bool VFKDataBlockSQLite::SetGeometryLineString(VFKFeatureSQLite *poLine, OGRLine
 */
 int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
 {
-    int      nInvalid, nGeometries, rowId;
-    const char *ftype;
+    int       nInvalid, nGeometries, rowId;
+    CPLString szFType;
     
     long int iFID;
     GUIntBig id, ipcb;
@@ -251,7 +251,7 @@ int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
             // read values
             id    = sqlite3_column_double(hStmt, 0);
             ipcb  = sqlite3_column_double(hStmt, 1);
-            ftype = (const char *) sqlite3_column_text(hStmt, 2);
+            szFType = (char *) sqlite3_column_text(hStmt, 2);
             rowId = sqlite3_column_int(hStmt, 3);
 
             if (ipcb == 1) {
@@ -262,7 +262,7 @@ int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
                 
                 /* set geometry & reset */
                 if (poLine && !SetGeometryLineString(poLine, &oOGRLine,
-                                                     bValid, ftype, rowIdFeat, nGeometries)) {
+                                                     bValid, szFType.c_str(), rowIdFeat, nGeometries)) {
                     nInvalid++;
                 }
                 
@@ -296,7 +296,7 @@ int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
 
         /* add last line */
         if (poLine && !SetGeometryLineString(poLine, &oOGRLine,
-                                             bValid, ftype, rowIdFeat, nGeometries)) {
+                                             bValid, szFType.c_str(), rowIdFeat, nGeometries)) {
             nInvalid++;
         }
 	poLine = NULL;
