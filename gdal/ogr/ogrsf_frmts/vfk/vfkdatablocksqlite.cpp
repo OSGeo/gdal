@@ -255,10 +255,9 @@ int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
             rowId = sqlite3_column_int(hStmt, 3);
 
             if (ipcb == 1) {
-                /* add feature to the array */
-                poFeature = new VFKFeatureSQLite(this, rowId, iFID);
-                CPLAssert(NULL != poFeature && poFeature->GetFID() == iFID);
-                AddFeature(poFeature);
+                poFeature = (VFKFeatureSQLite *) GetFeatureByIndex(iFID - 1);
+                CPLAssert(NULL != poFeature);
+                poFeature->SetFID(iFID);
                 
                 /* set geometry & reset */
                 if (poLine && !SetGeometryLineString(poLine, &oOGRLine,

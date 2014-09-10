@@ -248,6 +248,7 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
     if (nDataRecords > -1) {        /* read records from DB */
         /* read from  DB */
         long iFID;
+        int  iRowId;
         VFKFeatureSQLite *poNewFeature = NULL;
 
         poDataBlockCurrent = NULL;
@@ -262,18 +263,20 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
             pszName = poDataBlockCurrent->GetName();
             CPLAssert(NULL != pszName);
 
-            osSQL.Printf("SELECT %s FROM %s ",
+            osSQL.Printf("SELECT %s,_rowid_ FROM %s ",
                          FID_COLUMN, pszName);
             if (EQUAL(pszName, "SBP"))
               osSQL += "WHERE PORADOVE_CISLO_BODU = 1 ";
             osSQL += "ORDER BY ";
             osSQL += FID_COLUMN;
             hStmt = PrepareStatement(osSQL.c_str());
-            nDataRecords = 1;
+            nDataRecords = 0;
             while (ExecuteSQL(hStmt) == OGRERR_NONE) {
                 iFID = sqlite3_column_int(hStmt, 0);
-                poNewFeature = new VFKFeatureSQLite(poDataBlockCurrent, nDataRecords++, iFID);
+                iRowId = sqlite3_column_int(hStmt, 1);
+                poNewFeature = new VFKFeatureSQLite(poDataBlockCurrent, iRowId, iFID);
                 poDataBlockCurrent->AddFeature(poNewFeature);
+                nDataRecords++;
             }
 
             /* check DB consistency */
@@ -586,6 +589,8 @@ OGRErr VFKReaderSQLite::AddFeature(IVFKDataBlock *poDataBlock, VFKFeature *poFea
 
     const VFKProperty *poProperty;
 
+    VFKFeatureSQLite *poNewFeature;
+    
     pszBlockName = poDataBlock->GetName();
     osCommand.Printf("INSERT INTO '%s' VALUES(", pszBlockName);
     
@@ -627,13 +632,16 @@ OGRErr VFKReaderSQLite::AddFeature(IVFKDataBlock *poDataBlock, VFKFeature *poFea
     if (ExecuteSQL(osCommand.c_str(), TRUE) != OGRERR_NONE)
         return OGRERR_FAILURE;
     
-    if (!EQUAL(pszBlockName, "SBP")) { /* SBP features are added when building geometry */
-        VFKFeatureSQLite *poNewFeature;
-        
-        poNewFeature = new VFKFeatureSQLite(poDataBlock, poDataBlock->GetFeatureCount() + 1,
-                                            poFeature->GetFID());
-        poDataBlock->AddFeature(poNewFeature);
+    if (EQUAL(pszBlockName, "SBP")) {
+        poProperty = poFeature->GetProperty("PORADOVE_CISLO_BODU");
+        CPLAssert(NULL != poProperty);
+        if (!EQUAL(poProperty->GetValueS(), "1"))
+            return OGRERR_NONE;
     }
+        
+    poNewFeature = new VFKFeatureSQLite(poDataBlock, poDataBlock->GetFeatureCount() + 1,
+                                        poFeature->GetFID());
+    poDataBlock->AddFeature(poNewFeature);
     
     return OGRERR_NONE;
 }
