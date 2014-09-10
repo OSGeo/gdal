@@ -142,7 +142,8 @@ bool VFKDataBlockSQLite::SetGeometryLineString(VFKFeatureSQLite *poLine, OGRLine
             bValid = FALSE;
             if (bPrintErr)
                 CPLError(CE_Warning, CPLE_NotSupported,
-                         "Invalid geometry - curves, circles or arcs are not currently supported");
+                         "Invalid geometry ('%s') - curves, circles or arcs are not currently supported",
+                         ftype);
             bPrintErr = FALSE;
         }
 
