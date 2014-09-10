@@ -213,6 +213,9 @@ def mask_5():
         gdaltest.post_reason( 'Failed to open test dataset.' )
         return 'fail'
 
+    # so that we instanciate the mask band before
+    ds.GetRasterBand(1).GetMaskFlags()
+
     ds.BuildOverviews( overviewlist = [2,4] )
 
     # confirm mask flags on overview.

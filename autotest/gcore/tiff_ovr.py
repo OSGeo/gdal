@@ -1827,6 +1827,25 @@ def tiff_ovr_47():
     return 'success'
 
 ###############################################################################
+# Test that we don't average 0's in alpha band
+
+def tiff_ovr_48():
+    
+    shutil.copy('data/rgba_with_alpha_0_and_255.tif', 'tmp')
+    ds = gdal.Open('tmp/rgba_with_alpha_0_and_255.tif')
+    ds.BuildOverviews('AVERAGE', [2])
+    ds = None
+    
+    ds = gdal.Open('tmp/rgba_with_alpha_0_and_255.tif.ovr')
+    for i in range(4):
+        cs = ds.GetRasterBand(i+1).Checksum()
+        if cs != 3:
+            print(i)
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def tiff_ovr_cleanup():
@@ -1864,6 +1883,7 @@ def tiff_ovr_cleanup():
     gdaltest.tiff_drv.Delete( 'tmp/ovr40.tif' )
     gdaltest.tiff_drv.Delete( 'tmp/ovr41.tif' )
     gdaltest.tiff_drv.Delete( 'tmp/ovr42.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/rgba_with_alpha_0_and_255.tif' )
     gdaltest.tiff_drv = None
 
     return 'success'
@@ -1917,6 +1937,7 @@ gdaltest_list_internal = [
     tiff_ovr_45,
     tiff_ovr_46,
     tiff_ovr_47,
+    tiff_ovr_48,
     tiff_ovr_cleanup ]
 
 def tiff_ovr_invert_endianness():
