@@ -36,6 +36,7 @@
 
 #include "gdal_pam.h"
 #include "cpl_string.h"
+#include "ogr_srs_api.h"
 
 CPL_CVSID("$Id$");
 
@@ -156,14 +157,25 @@ static const char *apszBandDesc[] =
 #define L1B_NOAA9_HDR_REC_PROD_OFF  1   // Data type offset
 #define L1B_NOAA9_HDR_REC_DSTAT_OFF 34  // DACS status offset
 
+/* See http://www.ncdc.noaa.gov/oa/pod-guide/ncdc/docs/klm/html/c8/sec83132-2.htm */
 #define L1B_NOAA15_HDR_REC_SIZE     992 // Length of header record
                                         // filled with the data
 #define L1B_NOAA15_HDR_REC_SITE_OFF 0   // Dataset creation site ID offset
+#define L1B_NOAA15_HDR_REC_FORMAT_VERSION_OFF      4  // NOAA Level 1b Format Version Number
+#define L1B_NOAA15_HDR_REC_FORMAT_VERSION_YEAR_OFF 6  // Level 1b Format Version Year (e.g., 1999)
+#define L1B_NOAA15_HDR_REC_FORMAT_VERSION_DAY_OFF  8  // Level 1b Format Version Day of Year (e.g., 365)
+#define L1B_NOAA15_HDR_REC_LOGICAL_REC_LENGTH_OFF  10 // Logical Record Length of source Level 1b data set prior to processing
+#define L1B_NOAA15_HDR_REC_BLOCK_SIZE_OFF          12 // Block Size of source Level 1b data set prior to processing
+#define L1B_NOAA15_HDR_REC_HDR_REC_COUNT_OFF       14 // Count of Header Records in this Data Set
 #define L1B_NOAA15_HDR_REC_NAME_OFF 22  // Dataset name
 #define L1B_NOAA15_HDR_REC_ID_OFF   72  // Spacecraft ID offset
 #define L1B_NOAA15_HDR_REC_PROD_OFF 76  // Data type offset
 #define L1B_NOAA15_HDR_REC_STAT_OFF 116 // Instrument status offset
+#define L1B_NOAA15_HDR_REC_DATA_RECORD_COUNT_OFF 128
+#define L1B_NOAA15_HDR_REC_CALIBRATED_SCANLINE_COUNT_OFF 130
+#define L1B_NOAA15_HDR_REC_MISSING_SCANLINE_COUNT_OFF 132
 #define L1B_NOAA15_HDR_REC_SRC_OFF  154 // Receiving station name offset
+#define L1B_NOAA15_HDR_REC_ELLIPSOID_OFF 328
 
 /* This only apply if L1B_HIGH_GCP_DENSITY is explicitely set to NO */
 /* otherwise we will report more GCPs */
@@ -230,6 +242,7 @@ class L1BCloudsRasterBand;
 class L1BDataset : public GDALPamDataset
 {
     friend class L1BRasterBand;
+    friend class L1BMaskBand;
     friend class L1BGeolocDataset;
     friend class L1BGeolocRasterBand;
     friend class L1BSolarZenithAnglesDataset;
@@ -263,6 +276,7 @@ class L1BDataset : public GDALPamDataset
     int         nRecordDataEnd;
     int         nDataStartOffset;
     int         nRecordSize;
+    int         nRecordSizeFromHeader;
     GUInt32     iInstrumentStatus;
     GUInt32     iChannelsMask;
 
@@ -273,10 +287,15 @@ class L1BDataset : public GDALPamDataset
     int         bFetchGeolocation;
     int         bGuessDataFormat;
 
+    int         bByteSwap;
+    
+    int             bExposeMaskBand;
+    GDALRasterBand* poMaskBand;
+
     void        ProcessRecordHeaders();
     int         FetchGCPs( GDAL_GCP *, GByte *, int );
     void        FetchNOAA9TimeCode(TimeCode *, const GByte *, int *);
-    void        FetchNOAA15TimeCode(TimeCode *, const GUInt16 *, int *);
+    void        FetchNOAA15TimeCode(TimeCode *, const GByte *, int *);
     void        FetchTimeCode( TimeCode *psTime, const void *pRecordHeader,
                                int *peLocationIndicator );
     CPLErr      ProcessDatasetHeader(const char* pszFilename);
@@ -284,7 +303,14 @@ class L1BDataset : public GDALPamDataset
     
     void        FetchMetadata();
     void        FetchMetadataNOAA15();
-    
+
+    vsi_l_offset GetLineOffset(int nBlockYOff);
+
+    GUInt16     GetUInt16(const void* pabyData);
+    GInt16      GetInt16(const void* pabyData);
+    GUInt32     GetUInt32(const void* pabyData);
+    GInt32      GetInt32(const void* pabyData);
+
     static L1BFileFormat  DetectFormat( const char* pszFilename,
                               const GByte* pabyHeader, int nHeaderBytes );
 
@@ -317,8 +343,67 @@ class L1BRasterBand : public GDALPamRasterBand
     
 //    virtual double GetNoDataValue( int *pbSuccess = NULL );
     virtual CPLErr IReadBlock( int, int, void * );
+    virtual GDALRasterBand *GetMaskBand();
+    virtual int             GetMaskFlags();
 };
 
+/************************************************************************/
+/* ==================================================================== */
+/*                            L1BMaskBand                               */
+/* ==================================================================== */
+/************************************************************************/
+
+class L1BMaskBand: public GDALPamRasterBand
+{
+    friend class L1BDataset;
+
+  public:
+
+                L1BMaskBand( L1BDataset * );
+    
+    virtual CPLErr IReadBlock( int, int, void * );
+};
+
+/************************************************************************/
+/*                            L1BMaskBand()                             */
+/************************************************************************/
+
+L1BMaskBand::L1BMaskBand( L1BDataset *poDS )
+{
+    CPLAssert(poDS->eL1BFormat == L1B_NOAA15 ||
+              poDS->eL1BFormat == L1B_NOAA15_NOHDR);
+
+    this->poDS = poDS;
+    eDataType = GDT_Byte;
+
+    nRasterXSize = poDS->GetRasterXSize();
+    nRasterYSize = poDS->GetRasterYSize();
+    nBlockXSize = poDS->GetRasterXSize();
+    nBlockYSize = 1;
+}
+
+/************************************************************************/
+/*                             IReadBlock()                             */
+/************************************************************************/
+
+CPLErr L1BMaskBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+                                  void * pImage )
+{
+    L1BDataset  *poGDS = (L1BDataset *) poDS;
+
+    VSIFSeekL( poGDS->fp, poGDS->GetLineOffset(nBlockYOff) + 24, SEEK_SET );
+
+    GByte abyData[4];
+    VSIFReadL( abyData, 1, 4, poGDS->fp );
+    GUInt32 n32 = poGDS->GetUInt32(abyData);
+
+    if( (n32 >> 31) != 0 ) /* fatal flag */
+        memset(pImage, 0, nBlockXSize);
+    else
+        memset(pImage, 255, nBlockXSize);
+
+    return CE_None;
+}
 
 /************************************************************************/
 /*                           L1BRasterBand()                            */
@@ -336,6 +421,30 @@ L1BRasterBand::L1BRasterBand( L1BDataset *poDS, int nBand )
 }
 
 /************************************************************************/
+/*                           GetMaskBand()                              */
+/************************************************************************/
+
+GDALRasterBand *L1BRasterBand::GetMaskBand()
+{
+    L1BDataset  *poGDS = (L1BDataset *) poDS;
+    if( poGDS->poMaskBand )
+        return poGDS->poMaskBand;
+    return GDALPamRasterBand::GetMaskBand();
+}
+
+/************************************************************************/
+/*                           GetMaskFlags()                             */
+/************************************************************************/
+
+int L1BRasterBand::GetMaskFlags()
+{
+    L1BDataset  *poGDS = (L1BDataset *) poDS;
+    if( poGDS->poMaskBand )
+        return GMF_PER_DATASET;
+    return GDALPamRasterBand::GetMaskFlags();
+}
+
+/************************************************************************/
 /*                             IReadBlock()                             */
 /************************************************************************/
 
@@ -347,11 +456,7 @@ CPLErr L1BRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 /*      Seek to data.                                                   */
 /* -------------------------------------------------------------------- */
-    int iDataOffset = (poGDS->eLocationIndicator == DESCEND) ?
-        poGDS->nDataStartOffset + nBlockYOff * poGDS->nRecordSize :
-        poGDS->nDataStartOffset +
-            (nRasterYSize - nBlockYOff - 1) * poGDS->nRecordSize;
-    VSIFSeekL( poGDS->fp, iDataOffset, SEEK_SET );
+    VSIFSeekL( poGDS->fp, poGDS->GetLineOffset(nBlockYOff), SEEK_SET );
 
 /* -------------------------------------------------------------------- */
 /*      Read data into the buffer.                                      */
@@ -372,7 +477,7 @@ CPLErr L1BRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 for(i = poGDS->nRecordDataStart / (int)sizeof(iRawScan[0]);
                     i < poGDS->nRecordDataEnd / (int)sizeof(iRawScan[0]); i++)
                 {
-                    GUInt32 iWord1 = CPL_MSBWORD32( iRawScan[i] );
+                    GUInt32 iWord1 = poGDS->GetUInt32( &iRawScan[i] );
                     GUInt32 iWord2 = iWord1 & 0x3FF00000;
 
                     iScan[j++] = (GUInt16) (iWord2 >> 20);
@@ -393,7 +498,7 @@ CPLErr L1BRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                              * poGDS->nBands * sizeof(GUInt16));
                 for (i = 0; i < poGDS->GetRasterXSize() * poGDS->nBands; i++)
                 {
-                    iScan[i] = CPL_MSBWORD16( iRawScan[poGDS->nRecordDataStart
+                    iScan[i] = poGDS->GetUInt16( &iRawScan[poGDS->nRecordDataStart
                         / (int)sizeof(iRawScan[0]) + i] );
                 }
                 CPLFree(iRawScan);
@@ -469,12 +574,16 @@ L1BDataset::L1BDataset( L1BFileFormat eL1BFormat )
     nRecordDataEnd = 0;
     nDataStartOffset = 0;
     nRecordSize = 0;
+    nRecordSizeFromHeader = 0;
     iInstrumentStatus = 0;
     iChannelsMask = 0;
     pszGCPProjection = CPLStrdup( "GEOGCS[\"WGS 72\",DATUM[\"WGS_1972\",SPHEROID[\"WGS 72\",6378135,298.26,AUTHORITY[\"EPSG\",7043]],TOWGS84[0,0,4.5,0,0,0.554,0.2263],AUTHORITY[\"EPSG\",6322]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",8901]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",9108]],AUTHORITY[\"EPSG\",4322]]" );
     fp = NULL;
     bFetchGeolocation = FALSE;
     bGuessDataFormat = FALSE;
+    bByteSwap = CPL_IS_LSB; /* L1B is normally big-endian ordered, so byte-swap on little-endian CPU */
+    bExposeMaskBand = FALSE;
+    poMaskBand = NULL;
 }
 
 /************************************************************************/
@@ -495,6 +604,19 @@ L1BDataset::~L1BDataset()
         CPLFree( pszGCPProjection );
     if( fp != NULL )
         VSIFCloseL( fp );
+    delete poMaskBand;
+}
+
+/************************************************************************/
+/*                          GetLineOffset()                             */
+/************************************************************************/
+
+vsi_l_offset L1BDataset::GetLineOffset(int nBlockYOff)
+{
+    return (eLocationIndicator == DESCEND) ?
+        nDataStartOffset + nBlockYOff * nRecordSize :
+        nDataStartOffset +
+            (nRasterYSize - nBlockYOff - 1) * nRecordSize;
 }
 
 /************************************************************************/
@@ -530,6 +652,47 @@ const GDAL_GCP *L1BDataset::GetGCPs()
 }
 
 /************************************************************************/
+/*      Byte swapping helpers                                           */
+/************************************************************************/
+
+GUInt16 L1BDataset::GetUInt16(const void* pabyData)
+{
+    GUInt16 iTemp;
+    memcpy(&iTemp, pabyData, 2);
+    if( bByteSwap )
+        return CPL_SWAP16(iTemp);
+    return iTemp;
+}
+
+GInt16 L1BDataset::GetInt16(const void* pabyData)
+{
+    GInt16 iTemp;
+    memcpy(&iTemp, pabyData, 2);
+    if( bByteSwap )
+        return CPL_SWAP16(iTemp);
+    return iTemp;
+}
+
+GUInt32 L1BDataset::GetUInt32(const void* pabyData)
+{
+    GUInt32 lTemp;
+    memcpy(&lTemp, pabyData, 4);
+    if( bByteSwap )
+        return CPL_SWAP32(lTemp);
+    return lTemp;
+}
+
+GInt32 L1BDataset::GetInt32(const void* pabyData)
+{
+    GInt32 lTemp;
+    memcpy(&lTemp, pabyData, 4);
+    if( bByteSwap )
+        return CPL_SWAP32(lTemp);
+    return lTemp;
+
+}
+
+/************************************************************************/
 /*      Fetch timecode from the record header (NOAA9-NOAA14 version)    */
 /************************************************************************/
 
@@ -560,24 +723,17 @@ void L1BDataset::FetchNOAA9TimeCode( TimeCode *psTime,
 /************************************************************************/
 
 void L1BDataset::FetchNOAA15TimeCode( TimeCode *psTime,
-                                      const GUInt16 *piRecordHeader,
+                                      const GByte *pabyRecordHeader,
                                       int *peLocationIndicator )
 {
-    GUInt16 iTemp;
-    GUInt32 lTemp;
-
-    iTemp = piRecordHeader[1];
-    psTime->SetYear(CPL_MSBWORD16(iTemp));
-    iTemp = piRecordHeader[2];
-    psTime->SetDay(CPL_MSBWORD16(iTemp));
-    lTemp = (GUInt32)CPL_MSBWORD16(piRecordHeader[4]) << 16 |
-        (GUInt32)CPL_MSBWORD16(piRecordHeader[5]);
-    psTime->SetMillisecond(lTemp);
+    psTime->SetYear(GetUInt16(pabyRecordHeader + 2));
+    psTime->SetDay(GetUInt16(pabyRecordHeader + 4));
+    psTime->SetMillisecond(GetUInt32(pabyRecordHeader+8));
     if ( peLocationIndicator )
     {
         // FIXME: hemisphere
         *peLocationIndicator =
-            ((CPL_MSBWORD16(piRecordHeader[6]) & 0x8000) == 0) ? ASCEND : DESCEND;
+            ((GetUInt16(pabyRecordHeader + 12) & 0x8000) == 0) ? ASCEND : DESCEND;
     }
 }
 /************************************************************************/
@@ -595,7 +751,7 @@ void L1BDataset::FetchTimeCode( TimeCode *psTime,
     }
     else
     {
-        FetchNOAA15TimeCode( psTime, (const GUInt16 *) pRecordHeader,
+        FetchNOAA15TimeCode( psTime, (const GByte *) pRecordHeader,
                              peLocationIndicator );
     }
 }
@@ -635,9 +791,9 @@ int L1BDataset::FetchGCPs( GDAL_GCP *pasGCPListRow,
     {
         if ( eSpacecraftID <= NOAA14 )
         {
-            GInt16  nRawY = CPL_MSBWORD16( *(GInt16*)pabyRecordHeader );
+            GInt16  nRawY = GetInt16( pabyRecordHeader );
             pabyRecordHeader += sizeof(GInt16);
-            GInt16  nRawX = CPL_MSBWORD16( *(GInt16*)pabyRecordHeader );
+            GInt16  nRawX = GetInt16( pabyRecordHeader );
             pabyRecordHeader += sizeof(GInt16);
 
             pasGCPListRow[nGCPCountRow].dfGCPY = nRawY / L1B_NOAA9_GCP_SCALE;
@@ -645,9 +801,9 @@ int L1BDataset::FetchGCPs( GDAL_GCP *pasGCPListRow,
         }
         else
         {
-            GInt32  nRawY = CPL_MSBWORD32( *(GInt32*)pabyRecordHeader );
+            GInt32  nRawY = GetInt32( pabyRecordHeader );
             pabyRecordHeader += sizeof(GInt32);
-            GInt32  nRawX = CPL_MSBWORD32( *(GInt32*)pabyRecordHeader );
+            GInt32  nRawX = GetInt32( pabyRecordHeader );
             pabyRecordHeader += sizeof(GInt32);
 
             pasGCPListRow[nGCPCountRow].dfGCPY = nRawY / L1B_NOAA15_GCP_SCALE;
@@ -876,17 +1032,11 @@ void L1BDataset::FetchMetadata()
 /* -------------------------------------------------------------------- */
 /*      Seek to data.                                                   */
 /* -------------------------------------------------------------------- */
-        int iDataOffset = (eLocationIndicator == DESCEND) ?
-            nDataStartOffset + nBlockYOff * nRecordSize :
-            nDataStartOffset +
-                (nRasterYSize - nBlockYOff - 1) * nRecordSize;
-        VSIFSeekL( fp, iDataOffset, SEEK_SET );
+        VSIFSeekL( fp, GetLineOffset(nBlockYOff), SEEK_SET );
 
         VSIFReadL( pabyRecordHeader, 1, nRecordDataStart, fp );
 
-        GUInt16 nScanlineNumber;
-        memcpy(&nScanlineNumber, pabyRecordHeader, 2);
-        CPL_MSBPTR16(&nScanlineNumber);
+        GUInt16 nScanlineNumber = GetUInt16(pabyRecordHeader);
 
         TimeCode timeCode;
         FetchTimeCode( &timeCode, pabyRecordHeader, NULL );
@@ -929,8 +1079,7 @@ void L1BDataset::FetchMetadata()
         GInt32 i32;
         for(int i=0;i<10;i++)
         {
-            memcpy(&i32, pabyRecordHeader + 12 + 4 *i, 4);
-            CPL_MSBPTR32(&i32);
+            i32 = GetInt32(pabyRecordHeader + 12 + 4 *i);
             /* Scales : http://www.ncdc.noaa.gov/oa/pod-guide/ncdc/docs/podug/html/c3/sec3-3.htm */
             if( (i % 2) == 0 )
                 VSIFPrintfL(fpCSV, "%f,", i32 / pow(2.0, 30.0));
@@ -1030,24 +1179,19 @@ void L1BDataset::FetchMetadataNOAA15()
 /* -------------------------------------------------------------------- */
 /*      Seek to data.                                                   */
 /* -------------------------------------------------------------------- */
-        int iDataOffset = (eLocationIndicator == DESCEND) ?
-            nDataStartOffset + nBlockYOff * nRecordSize :
-            nDataStartOffset +
-                (nRasterYSize - nBlockYOff - 1) * nRecordSize;
-        VSIFSeekL( fp, iDataOffset, SEEK_SET );
+        VSIFSeekL( fp, GetLineOffset(nBlockYOff), SEEK_SET );
 
         VSIFReadL( pabyRecordHeader, 1, nRecordDataStart, fp );
 
-        GUInt16 nScanlineNumber;
-        memcpy(&nScanlineNumber, pabyRecordHeader, 2);
-        CPL_MSBPTR16(&nScanlineNumber);
+        GUInt16 nScanlineNumber = GetUInt16(pabyRecordHeader);
 
         TimeCode timeCode;
         FetchTimeCode( &timeCode, pabyRecordHeader, NULL );
 
         /* Clock drift delta */
-        memcpy(&i16, pabyRecordHeader + 6, 2);
-        CPL_MSBPTR16(&i16);
+        i16 = GetInt16(pabyRecordHeader + 6);
+        /* Scanline bit field */
+        n16 = GetInt16(pabyRecordHeader + 12);
 
         VSIFPrintfL(fpCSV,
                     "%d,%d,%d,%d,%d,%d,%d,%d,%d,",
@@ -1057,12 +1201,11 @@ void L1BDataset::FetchMetadataNOAA15()
                     (int)timeCode.GetDay(),
                     (int)timeCode.GetMillisecond(),
                     i16,
-                    (pabyRecordHeader[12] >> 7) & 1,
-                    (pabyRecordHeader[12] >> 6) & 1,
-                    (pabyRecordHeader[12] >> 0) & 3);
+                    (n16 >> 15) & 1,
+                    (n16 >> 14) & 1,
+                    (n16) & 3);
 
-        memcpy(&n32, pabyRecordHeader + 24, 4);
-        CPL_MSBPTR32(&n32);
+        n32 = GetUInt32(pabyRecordHeader + 24);
         VSIFPrintfL(fpCSV,"%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,",
                     (n32 >> 31) & 1,
                     (n32 >> 30) & 1,
@@ -1083,8 +1226,7 @@ void L1BDataset::FetchMetadataNOAA15()
                     (n32 >> 1) & 1,
                     (n32 >> 0) & 1);
 
-        memcpy(&n32, pabyRecordHeader + 28, 4);
-        CPL_MSBPTR32(&n32);
+        n32 = GetUInt32(pabyRecordHeader + 28);
         VSIFPrintfL(fpCSV,"%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,",
                     (n32 >> 23) & 1,
                     (n32 >> 22) & 1,
@@ -1102,8 +1244,7 @@ void L1BDataset::FetchMetadataNOAA15()
 
         for(i=0;i<3;i++)
         {
-            memcpy(&n16, pabyRecordHeader + 32 + 2 * i, 2);
-            CPL_MSBPTR16(&n16);
+            n16 = GetUInt16(pabyRecordHeader + 32 + 2 * i);
             VSIFPrintfL(fpCSV,"%d,%d,%d,%d,%d,%d,",
                     (n32 >> 7) & 1,
                     (n32 >> 6) & 1,
@@ -1114,8 +1255,7 @@ void L1BDataset::FetchMetadataNOAA15()
         }
 
         /* Bit errors */
-        memcpy(&n16, pabyRecordHeader + 38, 2);
-        CPL_MSBPTR16(&n16);
+        n16 = GetUInt16(pabyRecordHeader + 38);
         VSIFPrintfL(fpCSV, "%d,", n16);
 
         int nOffset = 48;
@@ -1123,38 +1263,31 @@ void L1BDataset::FetchMetadataNOAA15()
         {
             for(j=0;j<3;j++)
             {
-                memcpy(&i32, pabyRecordHeader + nOffset, 4);
-                CPL_MSBPTR32(&i32);
+                i32 = GetInt32(pabyRecordHeader + nOffset);
                 nOffset += 4;
                 VSIFPrintfL(fpCSV, "%f,", i32 / pow(10.0, 7.0));
-                memcpy(&i32, pabyRecordHeader + nOffset, 4);
-                CPL_MSBPTR32(&i32);
+                i32 = GetInt32(pabyRecordHeader + nOffset);
                 nOffset += 4;
                 VSIFPrintfL(fpCSV, "%f,", i32 / pow(10.0, 6.0));
-                memcpy(&i32, pabyRecordHeader + nOffset, 4);
-                CPL_MSBPTR32(&i32);
+                i32 = GetInt32(pabyRecordHeader + nOffset);
                 nOffset += 4;
                 VSIFPrintfL(fpCSV, "%f,", i32 / pow(10.0, 7.0));
-                memcpy(&i32, pabyRecordHeader + nOffset, 4);
-                CPL_MSBPTR32(&i32);
+                i32 = GetInt32(pabyRecordHeader + nOffset);
                 nOffset += 4;
                 VSIFPrintfL(fpCSV, "%f,", i32 / pow(10.0, 6.0));
-                memcpy(&i32, pabyRecordHeader + nOffset, 4);
-                CPL_MSBPTR32(&i32);
+                i32 = GetInt32(pabyRecordHeader + nOffset);
                 nOffset += 4;
                 VSIFPrintfL(fpCSV, "%d,", i32);
             }
         }
         for(i=0;i<18;i++)
         {
-            memcpy(&i32, pabyRecordHeader + nOffset, 4);
-            CPL_MSBPTR32(&i32);
+            i32 = GetInt32(pabyRecordHeader + nOffset);
             nOffset += 4;
             VSIFPrintfL(fpCSV, "%f,", i32 / pow(10.0, 6.0));
         }
 
-        memcpy(&n32, pabyRecordHeader + 312, 4);
-        CPL_MSBPTR32(&n32);
+        n32 = GetUInt32(pabyRecordHeader + 312);
         VSIFPrintfL(fpCSV,"%d,%d,%d,%d,%d,",
                     (n32 >> 16) & 1,
                     (n32 >> 12) & 15,
@@ -1162,19 +1295,16 @@ void L1BDataset::FetchMetadataNOAA15()
                     (n32 >> 4) & 15,
                     (n32 >> 0) & 15);
 
-        memcpy(&n32, pabyRecordHeader + 316, 4);
-        CPL_MSBPTR32(&n32);
+        n32 = GetUInt32(pabyRecordHeader + 316);
         VSIFPrintfL(fpCSV,"%d,",n32);
 
         for(i=0;i<3;i++)
         {
-            memcpy(&i16, pabyRecordHeader + 320 + 2 * i, 2);
-            CPL_MSBPTR16(&i16);
+            i16 = GetUInt16(pabyRecordHeader + 320 + 2 * i);
             VSIFPrintfL(fpCSV,"%f,",i16 / pow(10.0,3.0));
         }
 
-        memcpy(&n16, pabyRecordHeader + 326, 2);
-        CPL_MSBPTR16(&n16);
+        n16 = GetUInt16(pabyRecordHeader + 326);
         VSIFPrintfL(fpCSV,"%f",n16 / pow(10.0,1.0));
 
         VSIFPrintfL(fpCSV, "\n");
@@ -1503,10 +1633,69 @@ CPLErr L1BDataset::ProcessDatasetHeader(const char* pszFilename)
         else
              eProcCenter = UNKNOWN_CENTER;
 
+        int nFormatVersionYear, nFormatVersionDayOfYear, nHeaderRecCount;
+
+        /* Some products from NOAA-18 and NOAA-19 coming from 'ess' processing station */
+        /* have little-endian ordering. Try to detect it with some consistency checks */
+        for(int i=0;i<=2;i++)
+        {
+            nFormatVersionYear = GetUInt16(abyRecHeader + L1B_NOAA15_HDR_REC_FORMAT_VERSION_YEAR_OFF);
+            nFormatVersionDayOfYear = GetUInt16(abyRecHeader + L1B_NOAA15_HDR_REC_FORMAT_VERSION_DAY_OFF);
+            nHeaderRecCount = GetUInt16(abyRecHeader + L1B_NOAA15_HDR_REC_HDR_REC_COUNT_OFF);
+            if( i == 2 )
+                break;
+            if( !(nFormatVersionYear >= 1980 && nFormatVersionYear <= 2100) &&
+                !(nFormatVersionDayOfYear <= 366) &&
+                !(nHeaderRecCount == 1) )
+            {
+                if( i == 0 )
+                    CPLDebug("L1B", "Trying little-endian ordering");
+                else
+                    CPLDebug("L1B", "Not completely convincing... Returning to big-endian order");
+                bByteSwap = !bByteSwap;
+            }
+            else
+                break;
+        }
+        nRecordSizeFromHeader = GetUInt16(abyRecHeader + L1B_NOAA15_HDR_REC_LOGICAL_REC_LENGTH_OFF);
+        int nFormatVersion = GetUInt16(abyRecHeader + L1B_NOAA15_HDR_REC_FORMAT_VERSION_OFF);
+        CPLDebug("L1B", "NOAA Level 1b Format Version Number = %d", nFormatVersion);
+        CPLDebug("L1B", "Level 1b Format Version Year = %d", nFormatVersionYear);
+        CPLDebug("L1B", "Level 1b Format Version Day of Year = %d", nFormatVersionDayOfYear);
+        CPLDebug("L1B", "Logical Record Length of source Level 1b data set prior to processing = %d", nRecordSizeFromHeader);
+        int nBlockSize = GetUInt16(abyRecHeader + L1B_NOAA15_HDR_REC_BLOCK_SIZE_OFF);
+        CPLDebug("L1B", "Block Size of source Level 1b data set prior to processing = %d", nBlockSize);
+        CPLDebug("L1B", "Count of Header Records in this Data Set = %d", nHeaderRecCount);
+        
+        int nDataRecordCount = GetUInt16(abyRecHeader + L1B_NOAA15_HDR_REC_DATA_RECORD_COUNT_OFF);
+        CPLDebug("L1B", "Count of Data Records = %d", nDataRecordCount);
+        
+        int nCalibratedScanlineCount = GetUInt16(abyRecHeader + L1B_NOAA15_HDR_REC_CALIBRATED_SCANLINE_COUNT_OFF);
+        CPLDebug("L1B", "Count of Calibrated, Earth Located Scan Lines = %d", nCalibratedScanlineCount);
+        
+        int nMissingScanlineCount = GetUInt16(abyRecHeader + L1B_NOAA15_HDR_REC_MISSING_SCANLINE_COUNT_OFF);
+        CPLDebug("L1B", "Count of Missing Scan Lines = %d", nMissingScanlineCount);
+        if( nMissingScanlineCount != 0 )
+            bExposeMaskBand = TRUE;
+
+        char szEllipsoid[8+1];
+        memcpy(szEllipsoid, abyRecHeader + L1B_NOAA15_HDR_REC_ELLIPSOID_OFF, 8);
+        szEllipsoid[8] = '\0';
+        CPLDebug("L1B", "Reference Ellipsoid Model ID = '%s'", szEllipsoid);
+        if( EQUAL(szEllipsoid, "WGS-84  ") )
+        {
+            CPLFree(pszGCPProjection);
+            pszGCPProjection = CPLStrdup(SRS_WKT_WGS84);
+        }
+        else if( EQUAL(szEllipsoid, "  GRS 80") )
+        {
+            CPLFree(pszGCPProjection);
+            pszGCPProjection = CPLStrdup("GEOGCS[\"GRS 1980(IUGG, 1980)\",DATUM[\"unknown\",SPHEROID[\"GRS80\",6378137,298.257222101],TOWGS84[0,0,0,0,0,0,0]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]]");
+        }
+
         // Determine the spacecraft name
 		// See http://www.ncdc.noaa.gov/oa/pod-guide/ncdc/docs/klm/html/c8/sec83132-2.htm
-        int iWord = CPL_MSBWORD16( *(GUInt16 *)
-            (abyRecHeader + L1B_NOAA15_HDR_REC_ID_OFF) );
+        int iWord = GetUInt16(abyRecHeader + L1B_NOAA15_HDR_REC_ID_OFF);
         switch ( iWord )
         {
             case 2:
@@ -1545,8 +1734,7 @@ CPLErr L1BDataset::ProcessDatasetHeader(const char* pszFilename)
         }
 
         // Determine the product data type
-        iWord = CPL_MSBWORD16( *(GUInt16 *)
-            (abyRecHeader + L1B_NOAA15_HDR_REC_PROD_OFF) );
+        iWord = GetUInt16(abyRecHeader + L1B_NOAA15_HDR_REC_PROD_OFF);
         switch ( iWord )
         {
             case 1:
@@ -1571,12 +1759,10 @@ CPLErr L1BDataset::ProcessDatasetHeader(const char* pszFilename)
 
         // Fetch hinstrument status. Helps to determine whether we have
         // 3A or 3B channel in the dataset.
-        iInstrumentStatus = CPL_MSBWORD32( *(GUInt32 *)
-            (abyRecHeader + L1B_NOAA15_HDR_REC_STAT_OFF) );
+        iInstrumentStatus = GetUInt32(abyRecHeader + L1B_NOAA15_HDR_REC_STAT_OFF);
 
         // Determine receiving station name
-        iWord = CPL_MSBWORD16( *(GUInt16 *)
-            (abyRecHeader + L1B_NOAA15_HDR_REC_SRC_OFF) );
+        iWord = GetUInt16(abyRecHeader + L1B_NOAA15_HDR_REC_SRC_OFF);
         switch( iWord )
         {
             case 1:
@@ -2282,11 +2468,7 @@ CPLErr L1BGeolocRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void* pDa
 /* -------------------------------------------------------------------- */
 /*      Seek to data.                                                   */
 /* -------------------------------------------------------------------- */
-    int iDataOffset = (poL1BDS->eLocationIndicator == DESCEND) ?
-        poL1BDS->nDataStartOffset + nBlockYOff * poL1BDS->nRecordSize :
-        poL1BDS->nDataStartOffset +
-            (nRasterYSize - nBlockYOff - 1) * poL1BDS->nRecordSize;
-    VSIFSeekL( poL1BDS->fp, iDataOffset, SEEK_SET );
+    VSIFSeekL( poL1BDS->fp, poL1BDS->GetLineOffset(nBlockYOff), SEEK_SET );
 
     VSIFReadL( pabyRecordHeader, 1, poL1BDS->nRecordDataStart, poL1BDS->fp );
 
@@ -2458,11 +2640,7 @@ CPLErr L1BSolarZenithAnglesRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff
 /* -------------------------------------------------------------------- */
 /*      Seek to data.                                                   */
 /* -------------------------------------------------------------------- */
-    int iDataOffset = (poL1BDS->eLocationIndicator == DESCEND) ?
-        poL1BDS->nDataStartOffset + nBlockYOff * poL1BDS->nRecordSize :
-        poL1BDS->nDataStartOffset +
-            (nRasterYSize - nBlockYOff - 1) * poL1BDS->nRecordSize;
-    VSIFSeekL( poL1BDS->fp, iDataOffset, SEEK_SET );
+    VSIFSeekL( poL1BDS->fp, poL1BDS->GetLineOffset(nBlockYOff), SEEK_SET );
 
     VSIFReadL( pabyRecordHeader, 1, poL1BDS->nRecordSize, poL1BDS->fp );
 
@@ -2651,11 +2829,7 @@ CPLErr L1BNOAA15AnglesRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, voi
 /* -------------------------------------------------------------------- */
 /*      Seek to data.                                                   */
 /* -------------------------------------------------------------------- */
-    int iDataOffset = (poL1BDS->eLocationIndicator == DESCEND) ?
-        poL1BDS->nDataStartOffset + nBlockYOff * poL1BDS->nRecordSize :
-        poL1BDS->nDataStartOffset +
-            (nRasterYSize - nBlockYOff - 1) * poL1BDS->nRecordSize;
-    VSIFSeekL( poL1BDS->fp, iDataOffset, SEEK_SET );
+    VSIFSeekL( poL1BDS->fp, poL1BDS->GetLineOffset(nBlockYOff), SEEK_SET );
 
     VSIFReadL( pabyRecordHeader, 1, poL1BDS->nRecordSize, poL1BDS->fp );
 
@@ -2663,9 +2837,7 @@ CPLErr L1BNOAA15AnglesRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, voi
 
     for(i=0;i<nRasterXSize;i++)
     {
-        GInt16 i16;
-        memcpy(&i16, pabyRecordHeader + 328 + 6 * i + 2 * (nBand - 1), 2);
-        CPL_MSBPTR16(&i16);
+        GInt16 i16 = poL1BDS->GetInt16(pabyRecordHeader + 328 + 6 * i + 2 * (nBand - 1));
         pafData[i] = i16 / 100.0;
     }
 
@@ -2777,11 +2949,7 @@ CPLErr L1BCloudsRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void* pDa
 /* -------------------------------------------------------------------- */
 /*      Seek to data.                                                   */
 /* -------------------------------------------------------------------- */
-    int iDataOffset = (poL1BDS->eLocationIndicator == DESCEND) ?
-        poL1BDS->nDataStartOffset + nBlockYOff * poL1BDS->nRecordSize :
-        poL1BDS->nDataStartOffset +
-            (nRasterYSize - nBlockYOff - 1) * poL1BDS->nRecordSize;
-    VSIFSeekL( poL1BDS->fp, iDataOffset, SEEK_SET );
+    VSIFSeekL( poL1BDS->fp, poL1BDS->GetLineOffset(nBlockYOff), SEEK_SET );
 
     VSIFReadL( pabyRecordHeader, 1, poL1BDS->nRecordSize, poL1BDS->fp );
 
@@ -3040,7 +3208,17 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 
     VSIStatL(osFilename, &sStat);
 
-    if ( poDS->bGuessDataFormat )
+    if( poDS->eL1BFormat == L1B_NOAA15_NOHDR &&
+        poDS->nRecordSizeFromHeader == 22016 &&
+        (sStat.st_size % poDS->nRecordSizeFromHeader) == 0 )
+    {
+        poDS->iDataFormat = UNPACKED16BIT;
+        poDS->ComputeFileOffsets();
+        poDS->nDataStartOffset = poDS->nRecordSizeFromHeader;
+        poDS->nRecordSize = poDS->nRecordSizeFromHeader;
+        poDS->iCLAVRStart = 0;
+    }
+    else if ( poDS->bGuessDataFormat )
     {
         int nTempYSize;
         GUInt16 nScanlineNumber;
@@ -3069,7 +3247,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 
                 VSIFSeekL(poDS->fp, poDS->nDataStartOffset + i * poDS->nRecordSize, SEEK_SET);
                 VSIFReadL(&nScanlineNumber, 1, 2, poDS->fp);
-                CPL_MSBPTR16( &nScanlineNumber );
+                nScanlineNumber = poDS->GetUInt16(&nScanlineNumber);
 
                 if (i == 1)
                 {
@@ -3106,6 +3284,12 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
         if (!poDS->ComputeFileOffsets())
             goto bad;
     }
+
+    CPLDebug("L1B", "nRecordDataStart = %d", poDS->nRecordDataStart);
+    CPLDebug("L1B", "nRecordDataEnd = %d", poDS->nRecordDataEnd);
+    CPLDebug("L1B", "nDataStartOffset = %d", poDS->nDataStartOffset);
+    CPLDebug("L1B", "iCLAVRStart = %d", poDS->iCLAVRStart);
+    CPLDebug("L1B", "nRecordSize = %d", poDS->nRecordSize);
 
     // Compute number of lines dinamycally, so we can read partially
     // downloaded files
@@ -3279,6 +3463,9 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
             }
         }
     }
+    
+    if( poDS->bExposeMaskBand )
+        poDS->poMaskBand = new L1BMaskBand(poDS);
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
