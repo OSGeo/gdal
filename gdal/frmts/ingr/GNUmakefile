@@ -10,7 +10,7 @@ ifeq ($(TIFF_SETTING),internal)
 ifeq ($(RENAME_INTERNAL_LIBTIFF_SYMBOLS),yes)
 CPPFLAGS 	:=	$(CPPFLAGS) -DRENAME_INTERNAL_LIBTIFF_SYMBOLS
 endif
-CPPFLAGS	:=	$(CPPFLAGS) -I../gtiff/libtiff
+CPPFLAGS	:=	-I../gtiff/libtiff $(CPPFLAGS)
 endif
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
