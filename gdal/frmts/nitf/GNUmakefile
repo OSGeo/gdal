@@ -13,7 +13,7 @@ ifeq ($(TIFF_SETTING),internal)
 ifeq ($(RENAME_INTERNAL_LIBTIFF_SYMBOLS),yes)
 CPPFLAGS 	:=	$(CPPFLAGS) -DRENAME_INTERNAL_LIBTIFF_SYMBOLS
 endif
-CPPFLAGS	:=	$(CPPFLAGS) -I../gtiff/libtiff
+CPPFLAGS	:=	-I../gtiff/libtiff $(CPPFLAGS)
 endif
 
 ifneq ($(JPEG_SETTING),no)
@@ -21,7 +21,7 @@ CPPFLAGS	:=	$(CPPFLAGS) -DJPEG_SUPPORTED
 endif
 
 ifeq ($(JPEG_SETTING),internal)
-CPPFLAGS	:=	$(CPPFLAGS) -I../jpeg/libjpeg
+CPPFLAGS	:=	-I../jpeg/libjpeg $(CPPFLAGS)
 endif
 
 ifeq ($(JPEG12_ENABLED),yes)
