@@ -122,6 +122,15 @@ NOAA &gt;=15 datasets advertize a L1B_CLOUDS:"l1b_dataset_name"
 subdataset that contains a band of same dimensions as bands of the main L1B
 dataset. The values of each pixel are 0 = unknown; 1 = clear; 2 = cloudy; 3 = partly cloudy.<p>
 
+<h2>Nodata mask</h2>
+
+(Starting with GDAL 2.0)<p>
+
+NOAA &gt;=15 datasets that report in their header to have missing scan lines
+will expose a per-dataset mask band (following
+<a href="https://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask">RFC 15: Band Masks</a>)
+to indicate such scan lines. 
+
 <h2>See Also:</h2>
 
 <ul>

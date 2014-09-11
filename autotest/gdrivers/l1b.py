@@ -260,6 +260,28 @@ def l1b_metadata_after_noaa_15():
 
     return 'success'
 
+###############################################################################
+# 
+def l1b_little_endian():
+
+    ds = gdal.Open('/vsizip/data/hrpt_little_endian.l1b.zip')
+    if ds.GetGCPProjection().find('GRS80') < 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).Checksum() != 14145:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_PER_DATASET:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetMaskBand().Checksum() != 25115:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+
 gdaltest_list = []
 
 l1b_list = [ ('http://download.osgeo.org/gdal/data/l1b', 'n12gac8bit.l1b', 51754, -1, 1938),
@@ -269,12 +291,12 @@ l1b_list = [ ('http://download.osgeo.org/gdal/data/l1b', 'n12gac8bit.l1b', 51754
              ('http://download.osgeo.org/gdal/data/l1b', 'n15gac8bit.l1b', 55772, -1, 2091),
              ('http://download.osgeo.org/gdal/data/l1b', 'n16gac10bit.l1b', 6749, -1, 2142),
              ('http://download.osgeo.org/gdal/data/l1b', 'n17gac16bit.l1b', 61561, -1, 2040),
-             ('http://www2.ncdc.noaa.gov/docs/podug/data/avhrr', 'frang.1b', 33700, 30000, 357),  # 10 bit guess
-             ('http://www2.ncdc.noaa.gov/docs/podug/data/avhrr', 'franh.1b', 56702, 100000, 255), # 10 bit guess
-             ('http://www2.ncdc.noaa.gov/docs/podug/data/avhrr', 'calfirel.1b', 55071, 30000, 255), # 16 bit guess
-             ('http://www2.ncdc.noaa.gov/docs/podug/data/avhrr', 'rapnzg.1b', 58084, 30000, 612), # 16 bit guess
-             ('ftp://ftp.sat.dundee.ac.uk/misc/testdata/new_noaa/new_klm_format', 'noaa18.n1b', 50229, 50000, 102),
-             ('ftp://ftp.sat.dundee.ac.uk/misc/testdata/metop', 'noaa1b', 62411, 150000, 408)
+             ('http://www.ncdc.noaa.gov/oa/pod-guide/ncdc/docs/podug/data/avhrr', 'frang.1b', 33700, 30000, 357),  # 10 bit guess
+             ('http://www.ncdc.noaa.gov/oa/pod-guide/ncdc/docs/podug/data/avhrr', 'franh.1b', 56702, 100000, 255), # 10 bit guess
+             ('http://www.ncdc.noaa.gov/oa/pod-guide/ncdc/docs/podug/data/avhrr', 'calfirel.1b', 55071, 30000, 255), # 16 bit guess
+             ('http://www.ncdc.noaa.gov/oa/pod-guide/ncdc/docs/podug/data/avhrr', 'rapnzg.1b', 58084, 30000, 612), # 16 bit guess
+             ('http://www.sat.dundee.ac.uk/testdata/new_noaa/new_klm_format/', 'noaa18.n1b', 50229, 50000, 102),
+             ('http://www.sat.dundee.ac.uk/testdata/metop', 'noaa1b', 62411, 150000, 408)
            ]
 
 for item in l1b_list:
@@ -287,6 +309,8 @@ gdaltest_list.append(l1b_metadata_before_noaa_15)
 gdaltest_list.append(l1b_angles_after_noaa_15)
 gdaltest_list.append(l1b_clouds_after_noaa_15)
 gdaltest_list.append(l1b_metadata_after_noaa_15)
+gdaltest_list.append(l1b_little_endian)
+
 if __name__ == '__main__':
 
     gdaltest.setup_run( 'l1b' )
