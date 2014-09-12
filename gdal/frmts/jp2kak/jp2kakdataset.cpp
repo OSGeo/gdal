@@ -2737,6 +2737,7 @@ void GDALRegister_JP2KAK()
 "   <Option name='LAYERS' type='integer'/>"
 "   <Option name='ROI' type='string'/>"
 "   <Option name='COMSEG' type='boolean' />"
+"   <Option name='FLUSH' type='boolean' />"
 "   <Option name='NBITS' type='int' description='BITS (precision) for sub-byte files (1-7), sub-uint16 (9-15)'/>"
 "   <Option name='Corder' type='string'/>"
 "   <Option name='Cprecincts' type='string'/>"
