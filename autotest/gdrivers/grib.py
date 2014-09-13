@@ -183,6 +183,36 @@ def grib_7():
 
     return 'success'
 
+###############################################################################
+# Write PDS numbers to all bands
+
+def grib_8():
+
+    if gdaltest.grib_drv is None:
+        return 'skip'
+    ds = gdal.Open('/vsizip/data/gfs.t00z.mastergrb2f03.zip/gfs.t00z.mastergrb2f03')
+    if ds is None:
+        return 'Fail'
+    band = ds.GetRasterBand(2)
+    md = band.GetMetadataItem('GRIB_PDS_TEMPLATE_NUMBERS')
+    ds = None
+    if md is None:
+        gdaltest.post_reason('Failed to fetch pds numbers (#5144)')
+        return 'fail'
+
+    gdal.SetConfigOption('GRIB_PDS_ALL_BANDS', 'OFF')
+    ds = gdal.Open('/vsizip/data/gfs.t00z.mastergrb2f03.zip/gfs.t00z.mastergrb2f03')
+    if ds is None:
+        return 'fail'
+    band = ds.GetRasterBand(2)
+    md = band.GetMetadataItem('GRIB_PDS_TEMPLATE_NUMBERS')
+    ds = None
+
+    if md is not None:
+        gdaltest.post_reason('Got pds numbers, when disabled (#5144)')
+        return 'fail'
+    return 'success'
+
 gdaltest_list = [
     grib_1,
     grib_2,
@@ -190,7 +220,8 @@ gdaltest_list = [
     grib_4,
     grib_5,
     grib_6,
-    grib_7
+    grib_7,
+    grib_8
     ]
 
 if __name__ == '__main__':
