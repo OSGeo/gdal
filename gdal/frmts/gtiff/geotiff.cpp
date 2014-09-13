@@ -2382,7 +2382,7 @@ const char *GTiffRasterBand::GetMetadataItem( const char * pszName,
                 && TIFFGetField( hTIFF, TIFFTAG_STRIPOFFSETS, &panOffsets ) )) &&
                 panOffsets != NULL )
             {
-                return CPLSPrintf(CPL_FRMT_GUIB, panOffsets[nBlockId]);
+                return CPLSPrintf(CPL_FRMT_GUIB, (GUIntBig)panOffsets[nBlockId]);
             }
             else
             {
@@ -2419,7 +2419,7 @@ const char *GTiffRasterBand::GetMetadataItem( const char * pszName,
                 && TIFFGetField( hTIFF, TIFFTAG_STRIPBYTECOUNTS, &panByteCounts ) )) &&
                 panByteCounts != NULL )
             {
-                return CPLSPrintf(CPL_FRMT_GUIB, panByteCounts[nBlockId]);
+                return CPLSPrintf(CPL_FRMT_GUIB, (GUIntBig)panByteCounts[nBlockId]);
             }
             else
             {
