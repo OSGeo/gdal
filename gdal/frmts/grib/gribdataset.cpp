@@ -671,6 +671,7 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band objects.                                            */
 /* -------------------------------------------------------------------- */
+    GRIBRasterBand *gribBand;
     for (uInt4 i = 0; i < LenInv; ++i)
     {
         uInt4 bandNr = i+1;
@@ -692,17 +693,24 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
             }
 
             poDS->SetGribMetaData(metaData); // set the DataSet's x,y size, georeference and projection from the first GRIB band
-            GRIBRasterBand* gribBand = new GRIBRasterBand( poDS, bandNr, Inv+i);
+            gribBand = new GRIBRasterBand( poDS, bandNr, Inv+i);
 
             if( Inv->GribVersion == 2 )
                 gribBand->FindPDSTemplate();
 
             gribBand->m_Grib_Data = data;
             gribBand->m_Grib_MetaData = metaData;
-            poDS->SetBand( bandNr, gribBand);
         }
         else
-            poDS->SetBand( bandNr, new GRIBRasterBand( poDS, bandNr, Inv+i ));
+        {
+            gribBand = new GRIBRasterBand( poDS, bandNr, Inv+i );
+            if( CSLTestBoolean( CPLGetConfigOption( "GRIB_PDS_ALL_BANDS", "ON" ) ) )
+            {
+                if( Inv->GribVersion == 2 )
+                    gribBand->FindPDSTemplate();
+            }
+        }
+        poDS->SetBand( bandNr, gribBand);
         GRIB2InventoryFree (Inv + i);
     }
     free (Inv);
