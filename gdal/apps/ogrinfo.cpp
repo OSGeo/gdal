@@ -194,6 +194,9 @@ int main( int nArgc, char ** papszArgv )
     if( pszDataSource == NULL )
         Usage("No datasource specified.");
 
+    if( pszDialect != NULL && pszWHERE != NULL && pszSQLStatement == NULL )
+        printf("Warning: -dialect is ignored with -where. Use -sql instead");
+
 /* -------------------------------------------------------------------- */
 /*      Open data source.                                               */
 /* -------------------------------------------------------------------- */
@@ -400,7 +403,7 @@ static void Usage(const char* pszErrorMsg)
     printf( "Usage: ogrinfo [--help-general] [-ro] [-q] [-where restricted_where]\n"
             "               [-spat xmin ymin xmax ymax] [-geomfield field] [-fid fid]\n"
             "               [-sql statement] [-dialect sql_dialect] [-al] [-so] [-fields={YES/NO}]\n"
-            "               [-geom={YES/NO/SUMMARY}][--formats]\n"
+            "               [-geom={YES/NO/SUMMARY}] [-formats] [[-oo NAME=VALUE] ...]\n"
             "               datasource_name [layer [layer ...]]\n");
 
     if( pszErrorMsg != NULL )
