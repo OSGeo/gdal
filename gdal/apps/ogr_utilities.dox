@@ -26,7 +26,7 @@ Usage:
 ogrinfo [--help-general] [-ro] [-q] [-where restricted_where]
         [-spat xmin ymin xmax ymax] [-geomfield field] [-fid fid]
         [-sql statement] [-dialect dialect] [-al] [-so] [-fields={YES/NO}]
-        [-geom={YES/NO/SUMMARY}][--formats]
+        [-geom={YES/NO/SUMMARY}] [-formats] [[-oo NAME=VALUE] ...]
         datasource_name [layer [layer ...]]
 
 \endverbatim
@@ -67,6 +67,7 @@ the feature dump will not display field values. Default value is YES.</dd>
 the feature dump will not display the geometry. If set to SUMMARY, only a
 summary of the geometry will be displayed. If set to YES, the geometry will be reported in full OGC WKT format.
 Default value is YES.</dd>
+<dt> <b>-oo</b> <em>NAME=VALUE</em>:</dt><dd>(starting with GDAL 2.0) Dataset open option (format specific)</dd>
 <dt> <b>--formats</b>:</dt><dd> List the format drivers that are
 enabled.</dd>
 <dt> <i>datasource_name</i>:</dt><dd> The data source to open.  May be a filename, 
@@ -182,6 +183,7 @@ Usage: ogr2ogr [--help-general] [-skipfailures] [-append] [-update]
 
 Advanced options :
                [-gt n]
+               [[-oo NAME=VALUE] ...] [[-doo NAME=VALUE] ...]
                [-clipsrc [xmin ymin xmax ymax]|WKT|datasource|spat_extent]
                [-clipsrcsql sql_statement] [-clipsrclayer layer]
                [-clipsrcwhere expression]
@@ -270,6 +272,8 @@ known definition (ie. EPSG:4326) or a file with a WKT definition.
 Advanced options :
 
 <dl>
+<dt> <b>-oo</b> <em>NAME=VALUE</em>:</dt><dd>(starting with GDAL 2.0) Input dataset open option (format specific)</dd>
+<dt> <b>-doo</b> <em>NAME=VALUE</em>:</dt><dd>(starting with GDAL 2.0) Destination dataset open option (format specific), only valid in -update mode</dd>
 <dt> <b>-gt</b> <em>n</em>:</dt><dd> group <em>n</em> features per transaction (default 20000 in OGR 1.11, 200 in previous releases). Increase the value
 for better performance when writing into DBMS drivers that have transaction support.</dd>
 <dt> <b>-clipsrc</b><em> [xmin ymin xmax ymax]|WKT|datasource|spat_extent</em>:
