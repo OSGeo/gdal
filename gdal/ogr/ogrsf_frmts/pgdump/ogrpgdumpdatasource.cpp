@@ -198,7 +198,7 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
 
     int bCreateTable = CSLFetchBoolean(papszOptions,"CREATE_TABLE", TRUE);
     int bCreateSchema = CSLFetchBoolean(papszOptions,"CREATE_SCHEMA", TRUE);
-    const char* pszDropTable = CSLFetchNameValueDef(papszOptions,"DROP_TABLE", "YES");
+    const char* pszDropTable = CSLFetchNameValueDef(papszOptions,"DROP_TABLE", "IF_EXISTS");
 
     if( wkbFlatten(eType) == eType )
         nDimension = 2;

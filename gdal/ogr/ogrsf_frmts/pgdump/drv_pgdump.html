@@ -66,8 +66,8 @@ to speed up queries. Set to OFF to disable. (Has effect only when PostGIS is ava
 <li> <b>WRITE_EWKT_GEOM</b>: Set to OFF by default. Turn to ON to write EWKT geometries instead of HEX geometries.
 This option will have no effect if PG_USE_COPY environment variable is to YES.<p>
 <li> <b>CREATE_TABLE</b>: Set to ON by default so that tables are recreated if necessary. Turn to OFF to disable this and use existing table structure.<p>
-<li> <b>DROP_TABLE</b>: (OGR >= 1.8.1) Set to ON by default so that tables are destroyed before being recreated.
-Set to OFF to prevent DROP TABLE from being emitted. Set to IF_EXISTS in order DROP TABLE IF EXISTS to be emitted (needs PostgreSQL >= 8.2)<p>
+<li> <b>DROP_TABLE</b>=ON/OFF/IF_EXISTS: (OGR >= 1.8.1) Set to ON so that tables are destroyed before being recreated.
+Set to OFF to prevent DROP TABLE from being emitted. Set to IF_EXISTS (default in GDAL 2.0) in order DROP TABLE IF EXISTS to be emitted (needs PostgreSQL >= 8.2)<p>
 <li> <b>SRID</b>: Set the SRID of the geometry. Defaults to -1, unless a SRS is associated with the layer. In the case, if the EPSG code is mentionned, it will be used as the SRID. (Note: the spatial_ref_sys table must be correctly populated with the specified SRID) <p>
 <li> <b>NONE_AS_UNKNOWN</b>: (From GDAL 1.9.0) Can bet set to TRUE to force non-spatial layers (wkbNone) to be created as
 spatial tables of type GEOMETRY (wkbUnknown), which was the behaviour prior to GDAL 1.8.0. Defaults to NO, in which case

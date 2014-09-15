@@ -91,7 +91,7 @@ def ogr_pgdump_1():
     f.close()
     
     
-    if sql.find("""DROP TABLE "public"."tpoly" CASCADE;""") == -1 or \
+    if sql.find("""DROP TABLE IF EXISTS "public"."tpoly" CASCADE;""") == -1 or \
        sql.find("""DELETE FROM geometry_columns WHERE f_table_name = 'tpoly' AND f_table_schema = 'public';""") == -1 or \
        sql.find("""BEGIN;""") == -1 or \
        sql.find("""CREATE TABLE "public"."tpoly" ( OGC_FID SERIAL, CONSTRAINT "tpoly_pk" PRIMARY KEY (OGC_FID) );""") == -1 or \
@@ -162,7 +162,7 @@ def ogr_pgdump_2():
     sql = f.read()
     f.close()
     
-    if sql.find("""DROP TABLE "another_schema"."tpoly" CASCADE;""") == -1 or \
+    if sql.find("""DROP TABLE IF EXISTS "another_schema"."tpoly" CASCADE;""") == -1 or \
        sql.find("""DELETE FROM geometry_columns WHERE f_table_name = 'tpoly' AND f_table_schema = 'another_schema';""") == -1 or \
        sql.find("""BEGIN;""") == -1 or \
        sql.find("""CREATE TABLE "another_schema"."tpoly" ( OGC_FID SERIAL, CONSTRAINT "tpoly_pk" PRIMARY KEY (OGC_FID) );""") == -1 or \
@@ -247,7 +247,7 @@ def ogr_pgdump_3():
     sql = f.read()
     f.close()
     
-    if sql.find("""DROP TABLE "another_schema"."tpoly" CASCADE;""") == -1 or \
+    if sql.find("""DROP TABLE IF EXISTS "another_schema"."tpoly" CASCADE;""") == -1 or \
        sql.find("""DELETE FROM geometry_columns""") != -1 or \
        sql.find("""BEGIN;""") == -1 or \
        sql.find("""CREATE TABLE "another_schema"."tpoly" (    OGC_FID SERIAL,    CONSTRAINT "tpoly_pk" PRIMARY KEY (OGC_FID) );""") == -1 or \
