@@ -91,6 +91,9 @@ produce better compression than lossy compression. <P>
 <li> <b>BLOCKYSIZE=n</b>: Set the tile height to use.  Defaults to image height.
 <p>
 
+<li> <b>FLUSH=TRUE/FALSE</b>: Enable/Disable incremental flushing when writing files.  Required to be FALSE for RLPC and LRPC Corder.  May use a lot of memory when FALSE while writing large images.  Defaults to TRUE.
+<p>
+
 <li> <b>GMLJP2=YES/NO</b>: Indicates whether a GML box conforming to the OGC GML in JPEG2000 specification should be included in the file.  Defaults to YES.<p>
 
 <li> <b>GeoJP2=YES/NO</b>: Indicates whether a UUID/GeoTIFF box conforming to the GeoJP2 (GeoTIFF in JPEG2000) specification should be included in the file.  Defaults to YES.<p>
