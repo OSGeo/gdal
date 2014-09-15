@@ -614,9 +614,9 @@ L1BDataset::~L1BDataset()
 vsi_l_offset L1BDataset::GetLineOffset(int nBlockYOff)
 {
     return (eLocationIndicator == DESCEND) ?
-        nDataStartOffset + nBlockYOff * nRecordSize :
+        nDataStartOffset + (vsi_l_offset)nBlockYOff * nRecordSize :
         nDataStartOffset +
-            (nRasterYSize - nBlockYOff - 1) * nRecordSize;
+            (vsi_l_offset)(nRasterYSize - nBlockYOff - 1) * nRecordSize;
 }
 
 /************************************************************************/
