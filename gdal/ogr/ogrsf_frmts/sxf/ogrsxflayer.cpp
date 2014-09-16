@@ -977,16 +977,35 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
                 }
                 case SXF_RAT_UNICODE:
                 {
-                    unsigned nLen = unsigned(stAttInfo.nScale) + 1;
-                    if( nLen > nSemanticsSize || nSemanticsSize - nLen < offset )
+                    unsigned nLen = (unsigned(stAttInfo.nScale) + 1) * 2;
+                    if(nLen < 2 || nLen > nSemanticsSize || nSemanticsSize - nLen < offset )
                     {
                         nSemanticsSize = 0;
                         break;
                     }
-                    char * value = (char*)CPLMalloc(nLen);
+                    char* value = (char*)CPLMalloc(nLen);
                     memcpy(value, psSemanticsdBuf + offset, nLen);
                     value[nLen-1] = 0;
-                    poFeature->SetField(oFieldName, value);
+                    value[nLen-2] = 0;
+                    char* dst = (char*)CPLMalloc(nLen);
+                    int nCount = 0;
+                    for(int i = 0; i < nLen; i += 2)
+                    {
+                         unsigned char ucs = value[i];
+
+                         if (ucs < 0x80U)
+                         {
+                             dst[nCount++] = ucs;
+                         }
+                         else
+                         {
+                             dst[nCount++] = 0xc0 | (ucs >> 6);
+                             dst[nCount++] = 0x80 | (ucs & 0x3F);
+                         }
+                    }
+
+                    poFeature->SetField(oFieldName, dst);
+                    CPLFree(dst);
                     CPLFree(value);
 
                     offset += nLen;
