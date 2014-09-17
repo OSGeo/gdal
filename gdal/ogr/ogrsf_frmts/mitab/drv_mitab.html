@@ -45,14 +45,12 @@ MapInfo coordinate system information is supported for reading and writing.
 
 <p>
 The TAB File format requires that the bounds (geographical extents) of a new
-file be set before writing the first feature.  However, there is currently
-no clean mechanism to set the default bounds of a new file through the 
-OGRDataSource interface.
+file be set before writing the first feature.
 </p>
 
 <p>
-We should fix the driver at some point to set valid default bounds for 
-each projection, but for the time being, the MapInfo driver sets the following
+There is currently no automated setting of valid default bounds for 
+each spatial reference system, so for the time being, the MapInfo driver sets the following
 default bounds when a new layer is created:
 </p>
 <ul>
@@ -61,8 +59,10 @@ default bounds when a new layer is created:
 </ul>
 
 <p>
-Starting with GDAL 2.0, it is possible to specify a user-defined file that contain
-projection definitions with bounds.
+Starting with GDAL 2.0, it is possible to override those bounds through two
+mechanisms.
+<ul>
+<li> specify a user-defined file that contain projection definitions with bounds.
 The name of this file must be specified with the MITAB_BOUNDS_FILE configuration
 option.
 This allows users to override the
@@ -75,6 +75,9 @@ include the optional Bounds definition at the end of the line, e.g.
 # Lambert 93 French bounds
 CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49, 700000, 6600000 Bounds (75000, 6000000) (1275000, 7200000)
 </pre>
+</li>
+<li>use the BOUNDS layer creation option (see below)</li>
+</ul>
 </p>
 
 <p>
@@ -100,11 +103,6 @@ truncated</li>
 
 <ul>
 <li><b>FORMAT=MIF</b>: To create MIF/MID instead of TAB files (TAB is the default).</li>
-</ul>
-
-<H3>Layer Creation Options</h3>
-
-<ul>
 <li><b>SPATIAL_INDEX_MODE=QUICK</b>: Use this to turn on "quick spatial index
 mode". The default behavior of MITAB since GDAL v1.5.0 is to generate an
 optimized spatial index, but this results in slower write speed than what we
@@ -114,6 +112,14 @@ file can use this option to require the creation of a non-optimal spatial index
 (actually emulating the type of spatial index produced by OGR's TAB driver
 before GDAL 1.5.0). In this mode writing files can be about 5 times faster, but
 spatial queries can be up to 30 times slower.</li>
+</ul>
+
+<h3>Layer Creation Options</h3>
+
+<ul>
+<li><b>BOUNDS=xmin,ymin,xmax,ymax</b>: (GDAL &gt;=2.0) Define custom layer bounds
+to increase the accuracy of the coordinates. Note: the geometry of written features
+must be within the defined box.</li>
 </ul>
 
 <h3>Compatability</h3>

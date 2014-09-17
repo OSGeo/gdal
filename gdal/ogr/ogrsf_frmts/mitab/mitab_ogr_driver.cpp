@@ -238,7 +238,10 @@ void RegisterOGRTAB()
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST, "<LayerCreationOptionList/>" );
+        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+"<LayerCreationOptionList>"
+"  <Option name='BOUNDS' type='string' description='Custom bounds. Expect format is xmin,ymin,xmax,ymax'/>"
+"</LayerCreationOptionList>");
 
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"

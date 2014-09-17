@@ -340,11 +340,12 @@ OGRLayer *
 OGRTABDataSource::ICreateLayer( const char * pszLayerName,
                                OGRSpatialReference *poSRSIn,
                                OGRwkbGeometryType /* eGeomTypeIn */,
-                               char ** /* papszOptions */ )
+                               char ** papszOptions )
 
 {
     IMapInfoFile        *poFile;
     char                *pszFullFilename;
+    const char          *pszOpt = NULL;
 
     if( !m_bUpdate )
     {
@@ -415,6 +416,23 @@ OGRTABDataSource::ICreateLayer( const char * pszLayerName,
         poFile->SetSpatialRef( poSRSIn );
         // SetSpatialRef() has cloned the passed geometry
         poFile->GetLayerDefn()->GetGeomFieldDefn(0)->SetSpatialRef(poFile->GetSpatialRef());
+    }
+
+    // Pull out the bounds if supplied
+    if( !m_bCreateMIF && (pszOpt=CSLFetchNameValue(papszOptions, "BOUNDS")) != NULL ) {
+        double dfBounds[4];
+        if( sscanf(pszOpt, "%lf,%lf,%lf,%lf", &dfBounds[0], 
+                                          &dfBounds[1], 
+                                          &dfBounds[2], 
+                                          &dfBounds[3]) != 4 )
+        {
+            CPLError( CE_Failure, CPLE_IllegalArg,
+                        "Invalid BOUNDS parameter, expected min_x,min_y,max_x,max_y\n" );
+        }
+        else
+        {
+            poFile->SetBounds( dfBounds[0], dfBounds[1], dfBounds[2], dfBounds[3] );
+        }
     }
 
     if( !poFile->IsBoundsSet() && !m_bCreateMIF )
