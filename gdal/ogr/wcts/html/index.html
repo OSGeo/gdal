@@ -6,6 +6,9 @@
 
 <h1>OGR WCTS Implementation</h1>				
 
+<b>Deprecated: See <a href="#security">Security Concern</a> section below.</b>
+<p>
+
 As a part of a project to implement a Coordinate Transformations Server for
 <a href="http://www.dmsolutions.ca/">DM Solutions Group</a> I am implementing
 a WCTS (Web Coordinate Transformation Server) attempting to conform to the
@@ -61,6 +64,41 @@ PUT the XML request data to utilize the transform operator.<p>
 An <a href="client.html">HTML form</a>
 based client (backed by a cgi-bin program) has been implemented
 for user interface to WCTS services and testing.<p>
+
+<h2><a id="security">Security Concern</a></h2>
+
+The OGR WCTS server has been moved to "spike" due to lack of maintenance
+and a non-trivial SSRF security bug.  In light of this problem, it is advised 
+that this service only be used with caution.  Robert Coup describes it this way:
+<p>
+
+<i>
+If the WCTS stuff is compiled with -DHAVE_CURL, then the ogrwcts process is
+vulnerable to SSRF. The wctsclient process (which looks to me like a cgi
+server) is always vulnerable, since it doesn't care about -DHAVE_CURL.<p>
+
+(a) Either passing in a user-supplied URL which isn't validated before
+requesting it - this leaves "internal" http services which should only be
+readable to the server readable to any client.<p>
+
+(b) Using a redirect to the gopher protocol a client can send HTTP POST
+requests or other payloads to any host accessible to the server. *Why* curl
+enables the gopher protocol is beyond me, but it does.<p>
+
+We can protect against (b) by disabling redirect-following
+(CURLOPT_FOLLOWLOCATION=0). But we can't really protect against (a) at all
+without adding some black/whitelist of IP addresses.<p>
+
+Steps to reproduce:<p>
+
+Overview:
+<ol>
+<li> send evil request to wctsclient or ogrwcts services
+<li> wcts requests client-specified http url (via <FileUrl> in ogrwcts, or
+WCTSServer/GMLURL in wctsclient)
+<li> either that reveals private inf
+</ol>
+</i>
 
 <h2>Other WCTS Implementations</h2>
 
