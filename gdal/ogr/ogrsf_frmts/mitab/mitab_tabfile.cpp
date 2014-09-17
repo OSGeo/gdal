@@ -1687,6 +1687,16 @@ OGRErr TABFile::SetFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
     }
 
+    OGRGeometry* poGeom = poFeature->GetGeometryRef();
+    if( poGeom != NULL &&
+        ((wkbFlatten(poGeom->getGeometryType()) == wkbMultiPoint) ||
+         (wkbFlatten(poGeom->getGeometryType()) == wkbGeometryCollection)) )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "SetFeature() failed: setting MultiPoint or GeometryCollection not supported");
+        return OGRERR_FAILURE;
+    }
+
     TABFeature* poTABFeature = CreateTABFeature(poFeature);
     if( poTABFeature == NULL )
         return OGRERR_FAILURE;

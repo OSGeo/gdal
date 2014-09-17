@@ -398,6 +398,7 @@ TABFeature* IMapInfoFile::CreateTABFeature(OGRFeature *poFeature)
 
           for (i=0; eStatus==OGRERR_NONE && i<poColl->getNumGeometries(); i++)
           {
+              poTmpFeature->SetFID(OGRNullFID);
               poTmpFeature->SetGeometry(poColl->getGeometryRef(i));
               eStatus = CreateFeature(poTmpFeature);
           }
@@ -439,8 +440,8 @@ OGRErr     IMapInfoFile::CreateFeature(OGRFeature *poFeature)
     OGRErr  eErr;
 
     poTABFeature = CreateTABFeature(poFeature);
-    if( poTABFeature == NULL )
-        return OGRERR_FAILURE;
+    if( poTABFeature == NULL ) /* MultiGeometry */
+        return OGRERR_NONE;
 
     eErr = CreateFeature(poTABFeature);
     if( eErr == OGRERR_NONE )

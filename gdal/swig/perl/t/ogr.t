@@ -483,13 +483,8 @@ sub ogr_tests {
 		
 		if ($name ne 'Memory') {
 		    eval {
-			if ($name eq 'MapInfo File') {
-			    $datasource = Geo::OGR::Open("$dir/$type.tab");
-			    $layer = $datasource->GetLayerByIndex;
-			} else {
-			    $datasource = $driver->CreateDataSource($dir);
+			    $datasource = Geo::OGR::Open($dir, 1);
 			    $layer = $datasource->GetLayerByName($type);
-			}
 		    };
 		    
 		    mytest($layer,'no message',$name,$type,"layer $type open");
