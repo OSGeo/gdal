@@ -585,7 +585,9 @@ static void OGRAPISpyDumpFeature( OGRLayerH hLayer, OGRFeatureH hFeat )
 {
     OGRLayer* poLayer = (OGRLayer*) hLayer;
     OGRFeature* poFeature = (OGRFeature*) hFeat;
-    CPLAssert(poFeature->GetDefnRef() == poLayer->GetLayerDefn());
+    /* Do not check pointer equality, since the Perl bindings can */
+    /* build features with a OGRFeatureDefn that is a copy of the layer defn */
+    CPLAssert(poFeature->GetDefnRef()->IsSame(poLayer->GetLayerDefn()));
     fprintf(fpSpyFile, "f = ogr.Feature(%s_defn)\n",
             OGRAPISpyGetLayerVar(hLayer).c_str());
     if( poFeature->GetFID() != -1 )
