@@ -646,10 +646,10 @@ GInt32  TABMAPIndexBlock::ChooseLeafForInsert(GInt32 nXMin, GInt32 nYMin,
     // Prevent error message if referred block not committed yet.
     CPLPushErrorHandler(CPLQuietErrorHandler);
 
-    if ((poBlock = TABCreateMAPBlockFromFile(m_fp, 
+    poBlock = TABCreateMAPBlockFromFile(m_fp, 
                                     m_asEntries[nBestCandidate].nBlockPtr,
-                                    512, TRUE, TABReadWrite)) &&
-        poBlock->GetBlockClass() == TABMAP_INDEX_BLOCK)
+                                    512, TRUE, TABReadWrite);
+    if (poBlock != NULL && poBlock->GetBlockClass() == TABMAP_INDEX_BLOCK)
     {
         m_poCurChild = (TABMAPIndexBlock*)poBlock;
         poBlock = NULL;
@@ -853,10 +853,10 @@ int     TABMAPIndexBlock::AddEntry(GInt32 nXMin, GInt32 nYMin,
             // Prevent error message if referred block not committed yet.
             CPLPushErrorHandler(CPLQuietErrorHandler);
 
-            if ((poBlock = TABCreateMAPBlockFromFile(m_fp, 
+            poBlock = TABCreateMAPBlockFromFile(m_fp, 
                                        m_asEntries[nBestCandidate].nBlockPtr,
-                                       512, TRUE, TABReadWrite)) &&
-                poBlock->GetBlockClass() == TABMAP_INDEX_BLOCK)
+                                       512, TRUE, TABReadWrite);
+            if (poBlock != NULL && poBlock->GetBlockClass() == TABMAP_INDEX_BLOCK)
             {
                 m_poCurChild = (TABMAPIndexBlock*)poBlock;
                 poBlock = NULL;

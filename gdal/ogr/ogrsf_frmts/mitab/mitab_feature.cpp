@@ -6753,8 +6753,6 @@ int TABMultiPoint::GetNumPoints()
                  "TABMultiPoint: Missing or Invalid Geometry!");
         return 0;
     }
-
-    return 0;
 }
 
 
@@ -7510,7 +7508,7 @@ int TABCollection::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
 
         // Update count of objects by type in header
         if (!bCoordBlockDataOnly)
-            poMapFile->UpdateMapHeaderInfo((GByte)m_poRegion->GetMapInfoType());
+            poMapFile->UpdateMapHeaderInfo(m_poRegion->GetMapInfoType());
 
         // Write a placeholder for centroid/label point and MBR mini-header
         // and we'll come back later to write the real values.
@@ -7610,7 +7608,7 @@ int TABCollection::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
 
         // Update count of objects by type in header
         if (!bCoordBlockDataOnly)
-            poMapFile->UpdateMapHeaderInfo((GByte)m_poPline->GetMapInfoType());
+            poMapFile->UpdateMapHeaderInfo(m_poPline->GetMapInfoType());
 
         // Write a placeholder for centroid/label point and MBR mini-header
         // and we'll come back later to write the real values.
@@ -7708,7 +7706,7 @@ int TABCollection::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
 
         // Update count of objects by type in header
         if (!bCoordBlockDataOnly)
-            poMapFile->UpdateMapHeaderInfo((GByte)m_poMpoint->GetMapInfoType());
+            poMapFile->UpdateMapHeaderInfo(m_poMpoint->GetMapInfoType());
 
         // Write a placeholder for centroid/label point and MBR mini-header
         // and we'll come back later to write the real values.
@@ -8387,7 +8385,7 @@ const char *ITABFeaturePen::GetPenStyleString()
 void  ITABFeaturePen::SetPenFromStyleString(const char *pszStyleString)
 {
     int numParts, i;
-    GBool bIsNull;
+    GBool bIsNull = 0;
 
     const char *pszPenName, *pszPenPattern;
 
@@ -8397,7 +8395,7 @@ void  ITABFeaturePen::SetPenFromStyleString(const char *pszStyleString)
     const char *pszPenColor;
 
     int   nPenId;
-    char* pszPenId;
+    const char* pszPenId;
 
     // Use the Style Manager to retreive all the information we need.
     OGRStyleMgr *poStyleMgr = new OGRStyleMgr(NULL);
@@ -8472,17 +8470,22 @@ void  ITABFeaturePen::SetPenFromStyleString(const char *pszStyleString)
     if(pszPenName && 
        (strstr(pszPenName, "mapinfo-pen-") || strstr(pszPenName, "ogr-pen-")) )
     {
-        if((pszPenId = (char *) strstr(pszPenName, "mapinfo-pen-")))
+        pszPenId = strstr(pszPenName, "mapinfo-pen-");
+        if( pszPenId != NULL )
         {
             nPenId = atoi(pszPenId+12);
             SetPenPattern((GByte)nPenId);
         }
-        else if((pszPenId = (char *) strstr(pszPenName, "ogr-pen-")))
+        else
         {
-            nPenId = atoi(pszPenId+8);
-            if(nPenId == 0)
-                nPenId = 2;
-            SetPenPattern((GByte)nPenId);
+            pszPenId = strstr(pszPenName, "ogr-pen-");
+            if( pszPenId != NULL )
+            {
+                nPenId = atoi(pszPenId+8);
+                if(nPenId == 0)
+                    nPenId = 2;
+                SetPenPattern((GByte)nPenId);
+            }
         }
     }
     else
@@ -8646,7 +8649,7 @@ const char *ITABFeatureBrush::GetBrushStyleString()
 void  ITABFeatureBrush::SetBrushFromStyleString(const char *pszStyleString)
 {
     int numParts, i;
-    GBool bIsNull;
+    GBool bIsNull = 0;
 
     const char *pszBrushId;
     int nBrushId;
@@ -8914,7 +8917,7 @@ const char *ITABFeatureSymbol::GetSymbolStyleString(double dfAngle)
 void ITABFeatureSymbol::SetSymbolFromStyleString(const char *pszStyleString)
 {
     int numParts, i;
-    GBool bIsNull;
+    GBool bIsNull = 0;
 
     const char *pszSymbolId;
     int nSymbolId;
