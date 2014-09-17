@@ -208,7 +208,7 @@ int TABIDFile::Open(const char *pszFname, TABAccess eAccess)
             return -1;
         }
 
-        m_nMaxId = sStatBuf.st_size/4;
+        m_nMaxId = (int)(sStatBuf.st_size/4);
         m_nBlockSize = MIN(1024, m_nMaxId*4);
 
         /*-------------------------------------------------------------

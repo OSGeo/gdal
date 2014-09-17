@@ -1488,7 +1488,7 @@ class TABMAPFile
 
     GInt32      GetMaxObjId();
     int         MoveToObjId(int nObjId);
-    void        UpdateMapHeaderInfo(GByte nObjType);
+    void        UpdateMapHeaderInfo(TABGeomType nObjType);
     int         PrepareNewObj(TABMAPObjHdr *poObjHdr);
     int         PrepareNewObjViaSpatialIndex(TABMAPObjHdr *poObjHdr);
     int         PrepareNewObjViaObjBlock(TABMAPObjHdr *poObjHdr);

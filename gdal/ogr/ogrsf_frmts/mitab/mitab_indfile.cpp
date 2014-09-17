@@ -314,7 +314,7 @@ int TABINDFile::ReadHeader()
     VSIStatBufL  sStatBuf;
     if (m_eAccessMode == TABReadWrite && VSIStatL(m_pszFname, &sStatBuf) != -1)
     {
-        m_oBlockManager.SetLastPtr(((sStatBuf.st_size-1)/512)*512);
+        m_oBlockManager.SetLastPtr((int)(((sStatBuf.st_size-1)/512)*512));
     }
 
     /*-----------------------------------------------------------------

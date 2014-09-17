@@ -477,7 +477,7 @@ int TABMAPFile::Open(const char *pszFname, TABAccess eAccess,
     {
         VSIStatBufL sStatBuf;
         VSIStatL(m_pszFname, &sStatBuf);
-        m_oBlockManager.SetLastPtr(((sStatBuf.st_size-1)/512)*512);
+        m_oBlockManager.SetLastPtr((int)(((sStatBuf.st_size-1)/512)*512));
 
         /* Read chain of garbage blocks */
         if( m_poHeader->m_nFirstGarbageBlock != 0 )
@@ -1235,7 +1235,7 @@ int TABMAPFile::MarkAsDeleted()
  *
  * Called only by PrepareNewObj() and by the TABCollection class.
  **********************************************************************/
-void  TABMAPFile::UpdateMapHeaderInfo(GByte nObjType)
+void  TABMAPFile::UpdateMapHeaderInfo(TABGeomType nObjType)
 {
     /*-----------------------------------------------------------------
      * Update count of objects by type in the header block
@@ -1932,9 +1932,10 @@ int TABMAPFile::LoadObjAndCoordBlocks(GInt32 nBlockPtr)
     /*-----------------------------------------------------------------
      * Load Obj Block
      *----------------------------------------------------------------*/
-    if ((poBlock = TABCreateMAPBlockFromFile(m_fp, 
+    poBlock = TABCreateMAPBlockFromFile(m_fp, 
                                              nBlockPtr,
-                                             512, TRUE, TABReadWrite)) &&
+                                             512, TRUE, TABReadWrite);
+    if (poBlock != NULL &&
         poBlock->GetBlockClass() == TABMAP_OBJECT_BLOCK)
     {
         m_poCurObjBlock = (TABMAPObjectBlock*)poBlock;
@@ -1954,11 +1955,13 @@ int TABMAPFile::LoadObjAndCoordBlocks(GInt32 nBlockPtr)
     if (m_poCurObjBlock->GetLastCoordBlockAddress() == 0)
     {
         m_poCurCoordBlock = NULL;
+        return 0;
     }
-    else if ((poBlock = TABCreateMAPBlockFromFile(m_fp, 
+
+    poBlock = TABCreateMAPBlockFromFile(m_fp, 
                                    m_poCurObjBlock->GetLastCoordBlockAddress(),
-                                                  512, TRUE, TABReadWrite)) &&
-             poBlock->GetBlockClass() == TABMAP_COORD_BLOCK)
+                                                  512, TRUE, TABReadWrite);
+    if (poBlock != NULL && poBlock->GetBlockClass() == TABMAP_COORD_BLOCK)
     {
         m_poCurCoordBlock = (TABMAPCoordBlock*)poBlock;
         m_poCurCoordBlock->SetMAPBlockManagerRef(&m_oBlockManager);
