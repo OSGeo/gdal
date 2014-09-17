@@ -10,6 +10,7 @@
  *
  **********************************************************************
  * Copyright (c) 1999-2001, Daniel Morissette
+ * Copyright (c) 2014, Even Rouault <even.rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -126,6 +127,7 @@
 TABMAPObjectBlock::TABMAPObjectBlock(TABAccess eAccessMode /*= TABRead*/):
     TABRawBinBlock(eAccessMode, TRUE)
 {
+    m_bLockCenter = FALSE;
 }
 
 /**********************************************************************
@@ -197,7 +199,7 @@ int     TABMAPObjectBlock::InitBlockFromData(GByte *pabyBuf,
 
     m_nCurObjectOffset = -1;
     m_nCurObjectId = -1;
-    m_nCurObjectType = -1;
+    m_nCurObjectType = TAB_GEOM_UNSET;
 
     /*-----------------------------------------------------------------
      * Set real value for m_nSizeUsed to allow random update
@@ -208,6 +210,52 @@ int     TABMAPObjectBlock::InitBlockFromData(GByte *pabyBuf,
     return 0;
 }
 
+/************************************************************************
+ *                       ClearObjects()
+ *
+ * Cleans existing objects from the block. This method is used when
+ * compacting a page that has deleted records.
+ ************************************************************************/
+void TABMAPObjectBlock::ClearObjects()
+{
+    GotoByteInBlock(MAP_OBJECT_HEADER_SIZE);
+    WriteZeros(m_nBlockSize - MAP_OBJECT_HEADER_SIZE);
+    GotoByteInBlock(MAP_OBJECT_HEADER_SIZE);
+    m_nSizeUsed = MAP_OBJECT_HEADER_SIZE;
+    m_nMinX = 1000000000;
+    m_nMaxX = -1000000000;
+    m_nMinY = 1000000000;
+    m_nMaxY = -1000000000;
+    m_bModified = TRUE;
+}
+
+/************************************************************************
+ *                         LockCenter()
+ *
+ * Prevents the m_nCenterX and m_nCenterY to be adjusted by other methods.
+ * Useful when editing pages that have compressed geometries.
+ * This is a bit band-aid. Proper support of compressed geometries should
+ * handle center moves.
+ ************************************************************************/
+void TABMAPObjectBlock::LockCenter()
+{
+    m_bLockCenter = TRUE;
+}
+
+/************************************************************************
+ *                       SetCenterFromOtherBlock()
+ *
+ * Sets the m_nCenterX and m_nCenterY from the one of another block and
+ * lock them. See LockCenter() as well.
+ * Used when splitting a page.
+ ************************************************************************/
+void TABMAPObjectBlock::SetCenterFromOtherBlock(TABMAPObjectBlock* poOtherObjBlock)
+{
+    m_nCenterX = poOtherObjBlock->m_nCenterX;
+    m_nCenterY = poOtherObjBlock->m_nCenterY;
+    LockCenter();
+}
+
 /************************************************************************/
 /*                        Rewind()                                      */
 /************************************************************************/
@@ -215,7 +263,7 @@ void TABMAPObjectBlock::Rewind( )
 {
     m_nCurObjectId = -1;
     m_nCurObjectOffset = -1;
-    m_nCurObjectType = -1;
+    m_nCurObjectType = TAB_GEOM_UNSET;
 }
 
 /************************************************************************/
@@ -239,16 +287,16 @@ int TABMAPObjectBlock::AdvanceToNextObject( TABMAPHeaderBlock *poHeader )
     if( m_nCurObjectOffset + 5 < m_numDataBytes + 20 )
     {
         GotoByteInBlock( m_nCurObjectOffset );
-        m_nCurObjectType = ReadByte();
+        m_nCurObjectType = (TABGeomType)ReadByte();
     }
     else
     {
-        m_nCurObjectType = -1;
+        m_nCurObjectType = TAB_GEOM_UNSET;
     }
 
     if( m_nCurObjectType <= 0 || m_nCurObjectType >= 0x80 )
     {
-        m_nCurObjectType = -1;
+        m_nCurObjectType = TAB_GEOM_UNSET;
         m_nCurObjectId = -1;
         m_nCurObjectOffset = -1;
     }
@@ -294,6 +342,12 @@ int     TABMAPObjectBlock::CommitToFile()
     }
 
     /*-----------------------------------------------------------------
+     * Nothing to do here if block has not been modified
+     *----------------------------------------------------------------*/
+    if (!m_bModified)
+        return 0;
+
+    /*-----------------------------------------------------------------
      * Make sure 20 bytes block header is up to date.
      *----------------------------------------------------------------*/
     GotoByteInBlock(0x000);
@@ -315,7 +369,12 @@ int     TABMAPObjectBlock::CommitToFile()
      * Call the base class to write the block to disk.
      *----------------------------------------------------------------*/
     if (nStatus == 0)
+    {
+#ifdef DEBUG_VERBOSE
+        CPLDebug("MITAB", "Commiting OBJECT block to offset %d", m_nFileOffset);
+#endif
         nStatus = TABRawBinBlock::CommitToFile();
+    }
 
     return nStatus;
 }
@@ -357,14 +416,14 @@ int     TABMAPObjectBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
     // Reset current object refs
     m_nCurObjectId = -1;
     m_nCurObjectOffset = -1;
-    m_nCurObjectType = -1;
+    m_nCurObjectType = TAB_GEOM_UNSET;
 
     m_numDataBytes = 0;       /* Data size excluding header */
     m_nCenterX = m_nCenterY = 0;
     m_nFirstCoordBlock = 0;
     m_nLastCoordBlock = 0;
 
-    if (m_eAccess != TABRead)
+    if (m_eAccess != TABRead && nFileOffset != 0)
     {
         GotoByteInBlock(0x000);
 
@@ -502,8 +561,11 @@ int     TABMAPObjectBlock::UpdateMBR(GInt32 nX, GInt32 nY)
     if (nY > m_nMaxY)
         m_nMaxY = nY;
     
-    m_nCenterX = (m_nMinX + m_nMaxX) /2;
-    m_nCenterY = (m_nMinY + m_nMaxY) /2;
+    if( !m_bLockCenter )
+    {
+        m_nCenterX = (m_nMinX + m_nMaxX) /2;
+        m_nCenterY = (m_nMinY + m_nMaxY) /2;
+    }
     
     return 0;
 }
@@ -525,6 +587,7 @@ void     TABMAPObjectBlock::AddCoordBlockRef(GInt32 nNewBlockAddress)
         m_nFirstCoordBlock = nNewBlockAddress;
 
     m_nLastCoordBlock = nNewBlockAddress;
+    m_bModified = TRUE;
 }
 
 /**********************************************************************
@@ -540,8 +603,11 @@ void TABMAPObjectBlock::SetMBR(GInt32 nXMin, GInt32 nYMin,
     m_nMaxX = nXMax;
     m_nMaxY = nYMax; 
 
-    m_nCenterX = (m_nMinX + m_nMaxX) /2;
-    m_nCenterY = (m_nMinY + m_nMaxY) /2;
+    if( !m_bLockCenter )
+    {
+        m_nCenterX = (m_nMinX + m_nMaxX) /2;
+        m_nCenterY = (m_nMinY + m_nMaxY) /2;
+    }
 }
 
 /**********************************************************************
@@ -716,7 +782,7 @@ void TABMAPObjectBlock::Dump(FILE *fpOut, GBool bDetails)
  * Alloc a new object of specified type or NULL for NONE types or if type 
  * is not supported.
  **********************************************************************/
-TABMAPObjHdr *TABMAPObjHdr::NewObj(GByte nNewObjType, GInt32 nId /*=0*/)
+TABMAPObjHdr *TABMAPObjHdr::NewObj(TABGeomType nNewObjType, GInt32 nId /*=0*/)
 {
     TABMAPObjHdr *poObj = NULL;
 
@@ -816,7 +882,7 @@ TABMAPObjHdr *TABMAPObjHdr::ReadNextObj(TABMAPObjectBlock *poObjBlock,
 
     if (poObjBlock->AdvanceToNextObject(poHeader) != -1)
     {
-        poObjHdr=TABMAPObjHdr::NewObj((GByte)poObjBlock->GetCurObjectType());
+        poObjHdr=TABMAPObjHdr::NewObj(poObjBlock->GetCurObjectType());
         if (poObjHdr &&
             ((poObjHdr->m_nId = poObjBlock->GetCurObjectId()) == -1 ||
              poObjHdr->ReadObj(poObjBlock) != 0 ) )
@@ -852,7 +918,7 @@ GBool TABMAPObjHdr::IsCompressedType()
  **********************************************************************/
 int TABMAPObjHdr::WriteObjTypeAndId(TABMAPObjectBlock *poObjBlock)
 {
-    poObjBlock->WriteByte(m_nType);
+    poObjBlock->WriteByte((GByte)m_nType);
     return poObjBlock->WriteInt32(m_nId);
 }
 

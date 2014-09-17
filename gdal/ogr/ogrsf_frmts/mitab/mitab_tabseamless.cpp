@@ -10,6 +10,7 @@
  *
  **********************************************************************
  * Copyright (c) 1999-2004, Daniel Morissette
+ * Copyright (c) 2014, Even Rouault <even.rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -153,7 +154,7 @@ void TABSeamless::ResetReading()
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABSeamless::Open(const char *pszFname, const char *pszAccess,
+int TABSeamless::Open(const char *pszFname, TABAccess eAccess,
                       GBool bTestOpenNoError /*= FALSE*/ )
 {
     char nStatus = 0;
@@ -168,7 +169,7 @@ int TABSeamless::Open(const char *pszFname, const char *pszAccess,
     /*-----------------------------------------------------------------
      * Validate access mode and call the right open method
      *----------------------------------------------------------------*/
-    if (EQUALN(pszAccess, "r", 1))
+    if (eAccess == TABRead)
     {
         m_eAccessMode = TABRead;
         nStatus = (char)OpenForRead(pszFname, bTestOpenNoError);
@@ -176,7 +177,7 @@ int TABSeamless::Open(const char *pszFname, const char *pszAccess,
     else
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "Open() failed: access mode \"%s\" not supported", pszAccess);
+                 "Open() failed: access mode \"%d\" not supported", eAccess);
         return -1;
     }
 
@@ -283,7 +284,7 @@ int TABSeamless::OpenForRead(const char *pszFname,
      * should contain the path to the base table for each rectangle MBR
      *----------------------------------------------------------------*/
     m_poIndexTable = new TABFile;
-    if (m_poIndexTable->Open(m_pszFname, "rb", bTestOpenNoError) != 0)
+    if (m_poIndexTable->Open(m_pszFname, m_eAccessMode, bTestOpenNoError) != 0)
     {
         // Open Failed... an error has already been reported, just return.
         if (bTestOpenNoError)
@@ -422,7 +423,7 @@ int TABSeamless::OpenBaseTable(TABFeature *poIndexFeature,
 #endif
 
     m_poCurBaseTable = new TABFile;
-    if (m_poCurBaseTable->Open(pszFname, "rb", bTestOpenNoError) != 0)
+    if (m_poCurBaseTable->Open(pszFname, m_eAccessMode, bTestOpenNoError) != 0)
     {
         // Open Failed... an error has already been reported, just return.
         if (bTestOpenNoError)
@@ -598,7 +599,7 @@ int TABSeamless::ExtractBaseFeatureId(int nEncodedFeatureId)
     if (nEncodedFeatureId == -1)
         return -1;
 
-    return (nEncodedFeatureId & (1<<m_nIndexTableFIDMask)-1);
+    return (nEncodedFeatureId & ((1<<m_nIndexTableFIDMask)-1));
 }
 
 /**********************************************************************

@@ -11,6 +11,7 @@
  *
  **********************************************************************
  * Copyright (c) 1999-2003, Daniel Morissette
+ * Copyright (c) 2014, Even Rouault <even.rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -137,6 +138,10 @@ TABFile::TABFile()
 
     m_panMatchingFIDs = NULL; 
     m_iMatchingFID = 0; 
+    
+    m_bNeedTABRewrite = FALSE;
+    m_bLastOpWasRead = FALSE;
+    m_bLastOpWasWrite = FALSE;
 }
 
 /**********************************************************************
@@ -211,6 +216,9 @@ void TABFile::ResetReading()
             }
         }
     }
+
+    m_bLastOpWasRead = FALSE;
+    m_bLastOpWasWrite = FALSE;
 }
 
 /**********************************************************************
@@ -219,7 +227,8 @@ void TABFile::ResetReading()
  * Open a .TAB dataset and the associated files, and initialize the 
  * structures to be ready to read features from (or write to) it.
  *
- * Supported access modes are "r" (read-only) and "w" (create new dataset).
+ * Supported access modes are "r" (read-only) and "w" (create new dataset or
+ * update).
  *
  * Set bTestOpenNoError=TRUE to silently return -1 with no error message
  * if the file cannot be opened.  This is intended to be used in the
@@ -235,7 +244,7 @@ void TABFile::ResetReading()
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABFile::Open(const char *pszFname, const char *pszAccess,
+int TABFile::Open(const char *pszFname, TABAccess eAccess,
                   GBool bTestOpenNoError /*=FALSE*/ )
 {
     char *pszTmpFname = NULL;
@@ -250,30 +259,8 @@ int TABFile::Open(const char *pszFname, const char *pszAccess,
 
         return -1;
     }
-
-    /*-----------------------------------------------------------------
-     * Validate access mode
-     *----------------------------------------------------------------*/
-    if (EQUALN(pszAccess, "r", 1))
-    {
-        m_eAccessMode = TABRead;
-        pszAccess = "rb";
-    }
-    else if (EQUALN(pszAccess, "w", 1))
-    {
-        m_eAccessMode = TABWrite;
-        pszAccess = "wb";
-    }
-    else
-    {
-        if (!bTestOpenNoError)
-            CPLError(CE_Failure, CPLE_FileIO,
-                 "Open() failed: access mode \"%s\" not supported", pszAccess);
-        else
-            CPLErrorReset();
-
-        return -1;
-    }
+    
+    m_eAccessMode = eAccess;
 
     /*-----------------------------------------------------------------
      * Make sure filename has a .TAB extension... 
@@ -318,7 +305,7 @@ int TABFile::Open(const char *pszFname, const char *pszAccess,
     /*-----------------------------------------------------------------
      * Handle .TAB file... depends on access mode.
      *----------------------------------------------------------------*/
-    if (m_eAccessMode == TABRead)
+    if (m_eAccessMode == TABRead || m_eAccessMode == TABReadWrite )
     {
         /*-------------------------------------------------------------
          * Open .TAB file... since it's a small text file, we will just load
@@ -404,7 +391,7 @@ int TABFile::Open(const char *pszFname, const char *pszAccess,
 
     m_poDATFile = new TABDATFile;
    
-    if ( m_poDATFile->Open(pszTmpFname, pszAccess, m_eTableType) != 0)
+    if ( m_poDATFile->Open(pszTmpFname, eAccess, m_eTableType) != 0)
     {
         // Open Failed... an error has already been reported, just return.
         CPLFree(pszTmpFname);
@@ -421,7 +408,7 @@ int TABFile::Open(const char *pszFname, const char *pszAccess,
     /*-----------------------------------------------------------------
      * Parse .TAB file field defs and build FeatureDefn (only in read access)
      *----------------------------------------------------------------*/
-    if (m_eAccessMode == TABRead && ParseTABFileFields() != 0)
+    if ( (m_eAccessMode == TABRead || m_eAccessMode == TABReadWrite) && ParseTABFileFields() != 0)
     {
         // Failed... an error has already been reported, just return.
         CPLFree(pszTmpFname);
@@ -449,13 +436,13 @@ int TABFile::Open(const char *pszFname, const char *pszAccess,
 #endif
 
     m_poMAPFile = new TABMAPFile;
-    if (m_eAccessMode == TABRead)
+    if (m_eAccessMode == TABRead || m_eAccessMode == TABReadWrite)
     {
         /*-------------------------------------------------------------
          * Read access: .MAP/.ID are optional... try to open but return
          * no error if files do not exist.
          *------------------------------------------------------------*/
-        if (m_poMAPFile->Open(pszTmpFname, pszAccess, TRUE) < 0)
+        if (m_poMAPFile->Open(pszTmpFname, eAccess, TRUE) < 0)
         {
             // File exists, but Open Failed... 
             // we have to produce an error message
@@ -485,7 +472,7 @@ int TABFile::Open(const char *pszFname, const char *pszAccess,
         else
             /* we leave it unknown indicating a mixture */;
     }
-    else if (m_poMAPFile->Open(pszTmpFname, pszAccess) != 0)
+    else if (m_poMAPFile->Open(pszTmpFname, eAccess) != 0)
     {
         // Open Failed for write... 
         // an error has already been reported, just return.
@@ -531,11 +518,8 @@ int TABFile::Open(const char *pszFname, const char *pszAccess,
     CPLFree(pszTmpFname);
     pszTmpFname = NULL;
 
-    /*-----------------------------------------------------------------
-     * __TODO__ we could probably call GetSpatialRef() here to force
-     * parsing the projection information... this would allow us to 
-     * assignSpatialReference() on the geometries that we return.
-     *----------------------------------------------------------------*/
+    if( m_poDefn != NULL && m_eAccessMode != TABWrite )
+        m_poDefn->GetGeomFieldDefn(0)->SetSpatialRef(GetSpatialRef());
 
     return 0;
 }
@@ -557,7 +541,7 @@ int TABFile::ParseTABFileFirstPass(GBool bTestOpenNoError)
     char        **papszTok=NULL;
     GBool       bInsideTableDef = FALSE, bFoundTableFields=FALSE;
 
-    if (m_eAccessMode != TABRead)
+    if (m_eAccessMode == TABWrite)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "ParseTABFile() can be used only with Read access.");
@@ -694,7 +678,7 @@ int TABFile::ParseTABFileFields()
     char        **papszTok=NULL;
     OGRFieldDefn *poFieldDefn;
 
-    if (m_eAccessMode != TABRead)
+    if (m_eAccessMode == TABWrite)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "ParseTABFile() can be used only with Read access.");
@@ -966,11 +950,15 @@ int TABFile::WriteTABFile()
 {
     VSILFILE *fp;
 
-    if (m_eAccessMode != TABWrite)
+    if (m_eAccessMode == TABRead)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "WriteTABFile() can be used only with Write access.");
         return -1;
+    }
+    if (m_eAccessMode == TABReadWrite && !m_bNeedTABRewrite )
+    {
+        return 0;
     }
 
     if ( (fp = VSIFOpenL(m_pszFname, "wt")) != NULL)
@@ -1084,10 +1072,12 @@ int TABFile::WriteTABFile()
  **********************************************************************/
 int TABFile::Close()
 {
+    CPLErrorReset();
+
     // Commit the latest changes to the file...
     
     // In Write access, it's time to write the .TAB file.
-    if (m_eAccessMode == TABWrite && m_poMAPFile)
+    if (m_eAccessMode != TABRead && m_poMAPFile)
     {
         // First update file version number...
         int nMapObjVersion = m_poMAPFile->GetMinTABFileVersion();
@@ -1123,23 +1113,12 @@ int TABFile::Close()
         m_poCurFeature = NULL;
     }
 
-    /*-----------------------------------------------------------------
-     * Note: we have to check the reference count before deleting 
-     * m_poSpatialRef and m_poDefn
-     *----------------------------------------------------------------*/
     if (m_poDefn )
-    {
-        int nRefCount = m_poDefn->Dereference();
-
-        CPLAssert( nRefCount >= 0 );
-
-        if( nRefCount == 0 )
-            delete m_poDefn;
-        m_poDefn = NULL;
-    }
+        m_poDefn->Release();
+    m_poDefn = NULL;
     
-    if (m_poSpatialRef && m_poSpatialRef->Dereference() == 0)
-        delete m_poSpatialRef;
+    if (m_poSpatialRef)
+        m_poSpatialRef->Release();
     m_poSpatialRef = NULL;
     
     CSLDestroy(m_papszTABFile);
@@ -1200,12 +1179,9 @@ int TABFile::SetQuickSpatialIndexMode(GBool bQuickSpatialIndexMode/*=TRUE*/)
  **********************************************************************/
 int TABFile::GetNextFeatureId(int nPrevId)
 {
-    if (m_eAccessMode != TABRead)
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "GetNextFeatureId() can be used only with Read access.");
-        return -1;
-    }
+    if( m_bLastOpWasWrite )
+        ResetReading();
+    m_bLastOpWasRead = TRUE;
 
     /*-----------------------------------------------------------------
      * Are we using spatial rather than .ID based traversal?
@@ -1330,13 +1306,6 @@ TABFeature *TABFile::GetFeatureRef(int nFeatureId)
 {
     CPLErrorReset();
 
-    if (m_eAccessMode != TABRead)
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "GetFeatureRef() can be used only with Read access.");
-        return NULL;
-    }
-
     /*-----------------------------------------------------------------
      * Make sure file is opened and Validate feature id by positioning
      * the read pointers for the .MAP and .DAT files to this feature id.
@@ -1348,6 +1317,9 @@ TABFeature *TABFile::GetFeatureRef(int nFeatureId)
         return NULL;
     }
 
+    if( m_bLastOpWasWrite )
+        ResetReading();
+    m_bLastOpWasRead = TRUE;
 
     if (nFeatureId <= 0 || nFeatureId > m_nLastFeatureId ||
         m_poMAPFile->MoveToObjId(nFeatureId) != 0 ||
@@ -1356,6 +1328,17 @@ TABFeature *TABFile::GetFeatureRef(int nFeatureId)
         //     CPLError(CE_Failure, CPLE_IllegalArg,
         //    "GetFeatureRef() failed: invalid feature id %d", 
         //    nFeatureId);
+        return NULL;
+    }
+    
+    if( m_poDATFile->IsCurrentRecordDeleted() )
+    {
+        if( m_poMAPFile->GetCurObjType() != TAB_GEOM_NONE )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "Valid .MAP record %d found, but .DAT is marked as deleted. File likely corrupt",
+                    nFeatureId);
+        }
         return NULL;
     }
     
@@ -1393,7 +1376,7 @@ TABFeature *TABFile::GetFeatureRef(int nFeatureId)
      * MoveToObjId() has already been called above...
      *----------------------------------------------------------------*/
     TABMAPObjHdr *poObjHdr = 
-        TABMAPObjHdr::NewObj((GByte)m_poMAPFile->GetCurObjType(), 
+        TABMAPObjHdr::NewObj(m_poMAPFile->GetCurObjType(), 
                              m_poMAPFile->GetCurObjId());
     // Note that poObjHdr==NULL is a valid case if geometry type is NONE
 
@@ -1418,33 +1401,79 @@ TABFeature *TABFile::GetFeatureRef(int nFeatureId)
 }
 
 /**********************************************************************
+ *                   TABFile::DeleteFeature()
+ *
+ * Standard OGR DeleteFeature implementation.
+ **********************************************************************/
+OGRErr TABFile::DeleteFeature(long nFeatureId)
+{
+    CPLErrorReset();
+
+    if (m_eAccessMode == TABRead)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "DeleteFeature() cannot be used in read-only access.");
+        return OGRERR_FAILURE;
+    }
+
+    /*-----------------------------------------------------------------
+     * Make sure file is opened and establish new feature id.
+     *----------------------------------------------------------------*/
+    if (m_poMAPFile == NULL)
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "DeleteFeature() failed: file is not opened!");
+        return OGRERR_FAILURE;
+    }
+
+    if( m_bLastOpWasWrite )
+        ResetReading();
+
+    if (nFeatureId <= 0 || nFeatureId > m_nLastFeatureId ||
+        m_poMAPFile->MoveToObjId(nFeatureId) != 0 ||
+        m_poDATFile->GetRecordBlock(nFeatureId) == NULL )
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "DeleteFeature() failed: invalid feature id %ld", 
+                 nFeatureId);
+        return OGRERR_FAILURE;
+    }
+    
+    if( m_poDATFile->IsCurrentRecordDeleted() )
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "DeleteFeature() failed: record is already deleted!");
+        return OGRERR_FAILURE;
+    }
+
+    if (m_poCurFeature)
+    {
+        delete m_poCurFeature;
+        m_poCurFeature = NULL;
+    }
+    
+    if( m_poMAPFile->MarkAsDeleted() != 0 ||
+        m_poDATFile->MarkAsDeleted() != 0 )
+    {
+        return OGRERR_FAILURE;
+    }
+
+    return OGRERR_NONE;
+}
+
+/**********************************************************************
  *                   TABFile::WriteFeature()
  *
  * Write a feature to this dataset.  
  *
- * For now only sequential writes are supported (i.e. with nFeatureId=-1)
- * but eventually we should be able to do random access by specifying
- * a value through nFeatureId.
- *
- * Returns the new featureId (> 0) on success, or -1 if an
- * error happened in which case, CPLError() will have been called to
+ * Returns 0 on success, or -1 if an error happened in which case,
+ * CPLError() will have been called to
  * report the reason of the failure.
  **********************************************************************/
-int TABFile::WriteFeature(TABFeature *poFeature, int nFeatureId /*=-1*/)
+int TABFile::WriteFeature(TABFeature *poFeature)
 {
-    if (m_eAccessMode != TABWrite)
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "WriteFeature() can be used only with Write access.");
-        return -1;
-    }
 
-    if (nFeatureId != -1)
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "WriteFeature(): random access not implemented yet.");
-        return -1;
-    }
+    m_bLastOpWasWrite = TRUE;
 
     /*-----------------------------------------------------------------
      * Make sure file is opened and establish new feature id.
@@ -1456,15 +1485,13 @@ int TABFile::WriteFeature(TABFeature *poFeature, int nFeatureId /*=-1*/)
         return -1;
     }
 
-    if (m_nLastFeatureId < 1)
+    int nFeatureId;
+    if ( poFeature->GetFID() >= 0 )
     {
-        /*-------------------------------------------------------------
-         * OK, this is the first feature in the dataset... make sure the
-         * .DAT schema has been initialized.
-         *------------------------------------------------------------*/
-        if (m_poDefn == NULL)
-            SetFeatureDefn(poFeature->GetDefnRef(), NULL);
-
+        nFeatureId = poFeature->GetFID();
+    }
+    else if (m_nLastFeatureId < 1)
+    {
         /*-------------------------------------------------------------
          * Special hack to write out at least one field if none are in 
          * OGRFeatureDefn.
@@ -1473,22 +1500,24 @@ int TABFile::WriteFeature(TABFeature *poFeature, int nFeatureId /*=-1*/)
         {
             CPLError(CE_Warning, CPLE_IllegalArg,
                      "MapInfo tables must contain at least 1 column, adding dummy FID column.");
+            CPLErrorReset();
             m_poDATFile->AddField("FID", TABFInteger, 10, 0 );
         }
 
-        nFeatureId = m_nLastFeatureId = 1;
+        nFeatureId = 1;
     }
     else
     {
-        nFeatureId = ++ m_nLastFeatureId;
+        nFeatureId = m_nLastFeatureId + 1;
     }
+
+    poFeature->SetFID(nFeatureId);
 
 
     /*-----------------------------------------------------------------
      * Write fields to the .DAT file and update .IND if necessary
      *----------------------------------------------------------------*/
-    if (m_poDATFile == NULL ||
-        m_poDATFile->GetRecordBlock(nFeatureId) == NULL ||
+    if (m_poDATFile->GetRecordBlock(nFeatureId) == NULL ||
         poFeature->WriteRecordToDATFile(m_poDATFile, m_poINDFile,
                                         m_panIndexNo) != 0 )
     {
@@ -1503,7 +1532,7 @@ int TABFile::WriteFeature(TABFeature *poFeature, int nFeatureId /*=-1*/)
      * The call to PrepareNewObj() takes care of the .ID file.
      *----------------------------------------------------------------*/
     TABMAPObjHdr *poObjHdr = 
-        TABMAPObjHdr::NewObj((GByte)poFeature->ValidateMapInfoType(m_poMAPFile),
+        TABMAPObjHdr::NewObj(poFeature->ValidateMapInfoType(m_poMAPFile),
                              nFeatureId);
     
     /*-----------------------------------------------------------------
@@ -1531,8 +1560,23 @@ int TABFile::WriteFeature(TABFeature *poFeature, int nFeatureId /*=-1*/)
                              poObjHdr->m_nMaxX, poObjHdr->m_nMaxY);
     }
 
-    if ( poObjHdr == NULL || m_poMAPFile == NULL ||
-         m_poMAPFile->PrepareNewObj(poObjHdr) != 0 ||
+    if ( poObjHdr == NULL || m_poMAPFile == NULL )
+    {
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Failed writing geometry for feature id %d in %s",
+                 nFeatureId, m_pszFname);
+        if (poObjHdr)
+            delete poObjHdr;
+        return -1;
+    }
+/*
+    if( m_nCurFeatureId < m_nLastFeatureId )
+    {
+        delete GetFeatureRef(m_nLastFeatureId);
+        m_poCurFeature = NULL;
+    }*/
+
+    if ( m_poMAPFile->PrepareNewObj(poObjHdr) != 0 ||
          poFeature->WriteGeometryToMAPFile(m_poMAPFile, poObjHdr) != 0 ||
          m_poMAPFile->CommitNewObj(poObjHdr) != 0 )
     {
@@ -1543,10 +1587,13 @@ int TABFile::WriteFeature(TABFeature *poFeature, int nFeatureId /*=-1*/)
             delete poObjHdr;
         return -1;
     }
+    
+    m_nLastFeatureId = MAX(m_nLastFeatureId, nFeatureId);
+    m_nCurFeatureId = nFeatureId;
 
     delete poObjHdr;
 
-    return nFeatureId;
+    return 0;
 }
 
 
@@ -1562,14 +1609,38 @@ int TABFile::WriteFeature(TABFeature *poFeature, int nFeatureId /*=-1*/)
  **********************************************************************/
 OGRErr TABFile::CreateFeature(TABFeature *poFeature)
 {
-    int nFeatureId = -1;
+    CPLErrorReset();
 
-    nFeatureId = WriteFeature(poFeature, -1);
-
-    if (nFeatureId == -1)
+    if (m_eAccessMode == TABRead)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "CreateFeature() cannot be used in read-only access.");
         return OGRERR_FAILURE;
+    }
 
-    poFeature->SetFID(nFeatureId);
+    long nFeatureId = poFeature->GetFID();
+    if (nFeatureId != OGRNullFID )
+    {
+        if (nFeatureId <= 0 || nFeatureId > m_nLastFeatureId )
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "CreateFeature() failed: invalid feature id %ld", 
+                      nFeatureId);
+            return OGRERR_FAILURE;
+        }
+
+        if( m_poDATFile->GetRecordBlock(nFeatureId) == NULL ||
+            !m_poDATFile->IsCurrentRecordDeleted() )
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                    "CreateFeature() failed: cannot re-write already existing feature %ld", 
+                    nFeatureId);
+            return OGRERR_FAILURE;
+        }
+    }
+
+    if (WriteFeature(poFeature) < 0)
+        return OGRERR_FAILURE;
 
     return OGRERR_NONE;
 }
@@ -1577,16 +1648,124 @@ OGRErr TABFile::CreateFeature(TABFeature *poFeature)
 /**********************************************************************
  *                   TABFile::SetFeature()
  *
- * Implementation of OGRLayer's SetFeature(), enabled only for
- * random write access   
+ * Implementation of OGRLayer's SetFeature()
  **********************************************************************/
 OGRErr TABFile::SetFeature( OGRFeature *poFeature )
 
 {
-//TODO: See CreateFeature()
-// Need to convert OGRFeature to TABFeature, extract FID and then forward
-// forward call to SetFeature(TABFeature, fid)
-    return OGRERR_UNSUPPORTED_OPERATION;
+    CPLErrorReset();
+
+    if (m_eAccessMode == TABRead)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "SetFeature() cannot be used in read-only access.");
+        return -1;
+    }
+
+    /*-----------------------------------------------------------------
+     * Make sure file is opened.
+     *----------------------------------------------------------------*/
+    if (m_poMAPFile == NULL)
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "SetFeature() failed: file is not opened!");
+        return OGRERR_FAILURE;
+    }
+    
+    long nFeatureId = poFeature->GetFID();
+    if (nFeatureId == OGRNullFID )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "SetFeature() must be used on a feature with a FID.");
+        return OGRERR_FAILURE;
+    }
+    if (nFeatureId <= 0 || nFeatureId > m_nLastFeatureId )
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                    "SetFeature() failed: invalid feature id %ld", 
+                    nFeatureId);
+        return OGRERR_FAILURE;
+    }
+
+    TABFeature* poTABFeature = CreateTABFeature(poFeature);
+    if( poTABFeature == NULL )
+        return OGRERR_FAILURE;
+
+    if( m_bLastOpWasWrite )
+        ResetReading();
+
+    if (m_poDATFile->GetRecordBlock(nFeatureId) == NULL )
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "SetFeature() failed: invalid feature id %ld", 
+                 nFeatureId);
+        delete poTABFeature;
+        return OGRERR_FAILURE;
+    }
+
+    /* If the object is not already deleted, delete it */
+    if( !(m_poDATFile->IsCurrentRecordDeleted()) )
+    {
+        OGRFeature* poOldFeature = GetFeature(nFeatureId);
+        if( poOldFeature != NULL )
+        {
+            /* Optimization: if old and new features are the same, do nothing */
+            if( poOldFeature->Equal(poFeature) )
+            {
+                CPLDebug("MITAB", "Un-modified object %ld", nFeatureId);
+                delete poTABFeature;
+                delete poOldFeature;
+                return OGRERR_NONE;
+            }
+
+            /* Optimization: if old and new geometries are the same, just */
+            /* rewrite the attributes */
+            OGRGeometry* poOldGeom = poOldFeature->GetGeometryRef();
+            OGRGeometry* poNewGeom = poFeature->GetGeometryRef();
+            if( (poOldGeom == NULL && poNewGeom == NULL ) ||
+                (poOldGeom != NULL && poNewGeom != NULL && poOldGeom->Equals(poNewGeom)) )
+            {
+                const char* pszOldStyle = poOldFeature->GetStyleString();
+                const char* pszNewStyle = poFeature->GetStyleString();
+                if( (pszOldStyle == NULL && pszNewStyle == NULL) ||
+                    (pszOldStyle != NULL && pszNewStyle != NULL && EQUAL(pszOldStyle, pszNewStyle)) )
+                {
+                    CPLDebug("MITAB", "Rewrite only attributes for object %ld", nFeatureId);
+                    if (poTABFeature->WriteRecordToDATFile(m_poDATFile, m_poINDFile,
+                                                        m_panIndexNo) != 0 )
+                    {
+                        CPLError(CE_Failure, CPLE_FileIO,
+                                "Failed writing attributes for feature id %ld in %s",
+                                nFeatureId, m_pszFname);
+                        delete poTABFeature;
+                        delete poOldFeature;
+                        return OGRERR_FAILURE;
+                    }
+
+                    delete poTABFeature;
+                    delete poOldFeature;
+                    return OGRERR_NONE;
+                }
+            }
+
+            delete poOldFeature;
+        }
+
+        if (DeleteFeature(nFeatureId) != OGRERR_NONE)
+        {
+            delete poTABFeature;
+            return OGRERR_FAILURE;
+        }
+    }
+
+    int nStatus = WriteFeature(poTABFeature);
+    
+    delete poTABFeature;
+    
+    if (nStatus < 0)
+        return OGRERR_FAILURE;
+
+    return OGRERR_NONE;
 }
 
 
@@ -1755,6 +1934,8 @@ int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
         return -1;
     }
 
+    m_bNeedTABRewrite = TRUE;
+
     /*-----------------------------------------------------------------
      * Check that call happens at the right time in dataset's life.
      *----------------------------------------------------------------*/
@@ -1765,18 +1946,6 @@ int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
                  "AddFieldNative() must be called after opening a new "
                  "dataset, but before writing the first feature to it.");
         return -1;
-    }
-
-    /*-----------------------------------------------------------------
-     * Create new OGRFeatureDefn if not done yet...
-     *----------------------------------------------------------------*/
-    if (m_poDefn== NULL)
-    {
-        char *pszFeatureClassName = TABGetBasename(m_pszFname);
-        m_poDefn = new OGRFeatureDefn(pszFeatureClassName);
-        CPLFree(pszFeatureClassName);
-        // Ref count defaults to 0... set it to 1
-        m_poDefn->Reference();
     }
 
     /*-----------------------------------------------------------------
@@ -2443,10 +2612,13 @@ int TABFile::TestCapability( const char * pszCap )
         return TRUE;
 
     else if( EQUAL(pszCap,OLCSequentialWrite) )
-        return m_eAccessMode == TABWrite;
+        return m_eAccessMode != TABRead;
 
     else if( EQUAL(pszCap,OLCRandomWrite) )
-        return FALSE;
+        return m_eAccessMode != TABRead;
+
+    else if( EQUAL(pszCap,OLCDeleteFeature) )
+        return m_eAccessMode != TABRead;
 
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
         return m_poFilterGeom == NULL
@@ -2459,7 +2631,7 @@ int TABFile::TestCapability( const char * pszCap )
         return TRUE;
 
     else if( EQUAL(pszCap,OLCCreateField) )
-        return TRUE;
+        return m_eAccessMode != TABRead;
 
     else 
         return FALSE;

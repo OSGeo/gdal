@@ -9,6 +9,7 @@
  *
  **********************************************************************
  * Copyright (c) 1999-2003, Daniel Morissette
+ * Copyright (c) 2014, Even Rouault <even.rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -195,7 +196,7 @@ typedef enum
 {
     TABRead,
     TABWrite,
-    TABReadWrite  /* ReadWrite not implemented yet */
+    TABReadWrite
 } TABAccess;
 
 /*---------------------------------------------------------------------
@@ -235,6 +236,67 @@ typedef enum
 #define TAB_REGION_PLINE_REQUIRES_V800(numSegments, numVerticesTotal) \
     ((numSegments) > TAB_REGION_PLINE_450_MAX_SEGMENTS || \
      ((numSegments)*3 + numVerticesTotal) > TAB_REGION_PLINE_450_MAX_VERTICES )
+
+
+/*---------------------------------------------------------------------
+ * Codes for the known MapInfo Geometry types
+ *--------------------------------------------------------------------*/
+typedef enum
+{
+    TAB_GEOM_UNSET          = -1,
+
+    TAB_GEOM_NONE           = 0,
+    TAB_GEOM_SYMBOL_C       = 0x01,
+    TAB_GEOM_SYMBOL         = 0x02,
+    TAB_GEOM_LINE_C         = 0x04,
+    TAB_GEOM_LINE           = 0x05,
+    TAB_GEOM_PLINE_C        = 0x07,
+    TAB_GEOM_PLINE          = 0x08,
+    TAB_GEOM_ARC_C          = 0x0a,
+    TAB_GEOM_ARC            = 0x0b,
+    TAB_GEOM_REGION_C       = 0x0d,
+    TAB_GEOM_REGION         = 0x0e,
+    TAB_GEOM_TEXT_C         = 0x10,
+    TAB_GEOM_TEXT           = 0x11,
+    TAB_GEOM_RECT_C         = 0x13,
+    TAB_GEOM_RECT           = 0x14,
+    TAB_GEOM_ROUNDRECT_C    = 0x16,
+    TAB_GEOM_ROUNDRECT      = 0x17,
+    TAB_GEOM_ELLIPSE_C      = 0x19,
+    TAB_GEOM_ELLIPSE        = 0x1a,
+    TAB_GEOM_MULTIPLINE_C   = 0x25,
+    TAB_GEOM_MULTIPLINE     = 0x26,
+    TAB_GEOM_FONTSYMBOL_C   = 0x28, 
+    TAB_GEOM_FONTSYMBOL     = 0x29,
+    TAB_GEOM_CUSTOMSYMBOL_C = 0x2b,
+    TAB_GEOM_CUSTOMSYMBOL   = 0x2c,
+/* Version 450 object types: */
+    TAB_GEOM_V450_REGION_C  = 0x2e,
+    TAB_GEOM_V450_REGION    = 0x2f,
+    TAB_GEOM_V450_MULTIPLINE_C = 0x31,
+    TAB_GEOM_V450_MULTIPLINE   = 0x32,
+/* Version 650 object types: */
+    TAB_GEOM_MULTIPOINT_C   = 0x34,
+    TAB_GEOM_MULTIPOINT     = 0x35,
+    TAB_GEOM_COLLECTION_C   = 0x37,
+    TAB_GEOM_COLLECTION     = 0x38,
+/* Version 800 object types: */
+    TAB_GEOM_UNKNOWN1_C     = 0x3a,    // ???
+    TAB_GEOM_UNKNOWN1       = 0x3b,    // ???
+    TAB_GEOM_V800_REGION_C  = 0x3d,
+    TAB_GEOM_V800_REGION    = 0x3e,
+    TAB_GEOM_V800_MULTIPLINE_C = 0x40,
+    TAB_GEOM_V800_MULTIPLINE   = 0x41,
+    TAB_GEOM_V800_MULTIPOINT_C = 0x43,
+    TAB_GEOM_V800_MULTIPOINT   = 0x44,
+    TAB_GEOM_V800_COLLECTION_C = 0x46,
+    TAB_GEOM_V800_COLLECTION   = 0x47,
+} TABGeomType;
+
+#define TAB_GEOM_GET_VERSION(nGeomType)                     \
+    (((nGeomType) < TAB_GEOM_V450_REGION_C)  ? 300:         \
+     ((nGeomType) < TAB_GEOM_MULTIPOINT_C)   ? 450:         \
+     ((nGeomType) < TAB_GEOM_UNKNOWN1_C)     ? 650: 800 )
 
 
 /*---------------------------------------------------------------------
@@ -482,7 +544,7 @@ class TABMAPHeaderBlock;
 class TABMAPObjHdr
 {
   public:
-    GByte       m_nType;
+    TABGeomType m_nType;
     GInt32      m_nId;
     GInt32      m_nMinX;  /* Object MBR */
     GInt32      m_nMinY;
@@ -492,7 +554,7 @@ class TABMAPObjHdr
     TABMAPObjHdr() {};
     virtual ~TABMAPObjHdr() {};
 
-    static TABMAPObjHdr *NewObj(GByte nNewObjType, GInt32 nId=0);
+    static TABMAPObjHdr *NewObj(TABGeomType nNewObjType, GInt32 nId=0);
     static TABMAPObjHdr *ReadNextObj(TABMAPObjectBlock *poObjBlock,
                                      TABMAPHeaderBlock *poHeader);
 
@@ -754,6 +816,7 @@ class TABMAPObjCollection: public TABMAPObjHdrWithCoord
 typedef struct TABBlockRef_t
 {
     GInt32                nBlockPtr;
+    struct TABBlockRef_t *psPrev;
     struct TABBlockRef_t *psNext;
 } TABBlockRef;
 
@@ -768,19 +831,24 @@ class TABBinBlockManager
   protected:
     int         m_nBlockSize;
     GInt32      m_nLastAllocatedBlock;
-    TABBlockRef *m_psGarbageBlocks;
+    TABBlockRef *m_psGarbageBlocksFirst;
+    TABBlockRef *m_psGarbageBlocksLast;
+    char        m_szName[32]; /* for debug purposes */
 
   public:
     TABBinBlockManager(int nBlockSize=512);
     ~TABBinBlockManager();
 
-    GInt32      AllocNewBlock();
+    GInt32      AllocNewBlock(const char* pszReason = "");
     void        Reset();
     void        SetLastPtr(int nBlockPtr) {m_nLastAllocatedBlock=nBlockPtr; };
 
-    void        PushGarbageBlock(GInt32 nBlockPtr);
+    void        PushGarbageBlockAsFirst(GInt32 nBlockPtr);
+    void        PushGarbageBlockAsLast(GInt32 nBlockPtr);
     GInt32      GetFirstGarbageBlock();
     GInt32      PopGarbageBlock();
+    
+    void        SetName(const char* pszName);
 };
 
 /*---------------------------------------------------------------------
@@ -807,6 +875,7 @@ class TABRawBinBlock
     int         m_nCurPos;      /* Next byte to read from m_pabyBuf[]    */
     int         m_nFirstBlockPtr;/* Size of file header when different from */
                                  /* block size (used by GotoByteInFile())   */
+    int         m_nFileSize;
 
     int         m_bModified;     /* Used only to detect changes        */
 
@@ -1006,6 +1075,8 @@ class TABMAPIndexBlock: public TABRawBinBlock
 
     virtual int GetBlockClass() { return TABMAP_INDEX_BLOCK; };
 
+    void        UnsetCurChild();
+
     int         GetNumFreeEntries();
     int         GetNumEntries()         {return m_numEntries;};
     TABMAPIndexEntry *GetEntry( int iIndex );
@@ -1016,6 +1087,9 @@ class TABMAPIndexBlock: public TABRawBinBlock
     int         GetCurMaxDepth();
     void        GetMBR(GInt32 &nXMin, GInt32 &nYMin, 
                        GInt32 &nXMax, GInt32 &nYMax);
+    void        SetMBR(GInt32 nXMin, GInt32 nYMin, 
+                       GInt32 nXMax, GInt32 nYMax);
+
     GInt32      GetNodeBlockPtr() { return GetStartAddress();};
 
     void        SetMAPBlockManagerRef(TABBinBlockManager *poBlockMgr);
@@ -1091,7 +1165,9 @@ class TABMAPObjectBlock: public TABRawBinBlock
     // Keep track of current object either in read or read/write mode
     int         m_nCurObjectOffset; // -1 if there is no current object.
     int         m_nCurObjectId;     // -1 if there is no current object.
-    int         m_nCurObjectType;   // -1 if there is no current object.
+    TABGeomType m_nCurObjectType;   // TAB_GEOM_UNSET if there is no current object.
+    
+    int         m_bLockCenter;
 
   public:
     TABMAPObjectBlock(TABAccess eAccessMode = TABRead);
@@ -1126,10 +1202,13 @@ class TABMAPObjectBlock: public TABRawBinBlock
                        GInt32 nXMax, GInt32 nYMax);
 
     void        Rewind();
+    void        ClearObjects();
+    void        LockCenter();
+    void        SetCenterFromOtherBlock(TABMAPObjectBlock* poOtherObjBlock);
     int         AdvanceToNextObject( TABMAPHeaderBlock * );
     int         GetCurObjectOffset() { return m_nCurObjectOffset; }
     int         GetCurObjectId() { return m_nCurObjectId; }
-    int         GetCurObjectType() { return m_nCurObjectType; }
+    TABGeomType GetCurObjectType() { return m_nCurObjectType; }
 
 #ifdef DEBUG
     virtual void Dump(FILE *fpOut = NULL) { Dump(fpOut, FALSE); };
@@ -1294,7 +1373,8 @@ class TABIDFile
     TABIDFile();
     ~TABIDFile();
 
-    int         Open(const char *pszFname, const char *pszAccess);
+    int         Open(const char *pszFname, const char* pszAccess);
+    int         Open(const char *pszFname, TABAccess eAccess);
     int         Close();
 
     GInt32      GetObjPtr(GInt32 nObjId);
@@ -1339,7 +1419,7 @@ class TABMAPFile
     // Current object data block.
     TABMAPObjectBlock *m_poCurObjBlock;
     int         m_nCurObjPtr;
-    int         m_nCurObjType;
+    TABGeomType m_nCurObjType;
     int         m_nCurObjId;
     TABMAPCoordBlock *m_poCurCoordBlock;
 
@@ -1353,6 +1433,10 @@ class TABMAPFile
     GInt32      m_YMinFilter;
     GInt32      m_XMaxFilter;
     GInt32      m_YMaxFilter;
+    
+    int         m_bUpdated;
+    int         m_bLastOpWasRead;
+    int         m_bLastOpWasWrite;
 
     int         CommitObjAndCoordBlocks(GBool bDeleteObjects =FALSE);
     int         LoadObjAndCoordBlocks(GInt32 nBlockPtr);
@@ -1377,11 +1461,15 @@ class TABMAPFile
     int         LoadNextMatchingObjectBlock(int bFirstObject);
     TABRawBinBlock *PushBlock( int nFileOffset );
     
+    int         ReOpenReadWrite();
+    
   public:
     TABMAPFile();
     ~TABMAPFile();
 
-    int         Open(const char *pszFname, const char *pszAccess,
+    int         Open(const char *pszFname, const char* pszAccess,
+                     GBool bNoErrorMsg = FALSE );
+    int         Open(const char *pszFname, TABAccess eAccess,
                      GBool bNoErrorMsg = FALSE );
     int         Close();
 
@@ -1409,7 +1497,9 @@ class TABMAPFile
     void        ResetReading();
     int         GetNextFeatureId( int nPrevId );
 
-    int         GetCurObjType();
+    int         MarkAsDeleted();
+
+    TABGeomType GetCurObjType();
     int         GetCurObjId();
     TABMAPObjectBlock *GetCurObjBlock();
     TABMAPCoordBlock  *GetCurCoordBlock();
@@ -1615,6 +1705,9 @@ class TABDATFile
     GInt32      m_numRecords;
     GInt32      m_nFirstRecordPtr;
     GBool       m_bWriteHeaderInitialized;
+    GBool       m_bWriteEOF;
+    
+    int         m_bUpdated;
 
     int         InitWriteHeader();
     int         WriteHeader();
@@ -1627,7 +1720,9 @@ class TABDATFile
     TABDATFile();
     ~TABDATFile();
 
-    int         Open(const char *pszFname, const char *pszAccess,
+    int         Open(const char *pszFname, const char* pszAccess,
+                     TABTableType eTableType =TABTableNative);
+    int         Open(const char *pszFname, TABAccess eAccess,
                      TABTableType eTableType =TABTableNative);
     int         Close();
 
@@ -1646,6 +1741,9 @@ class TABDATFile
     TABRawBinBlock *GetRecordBlock(int nRecordId);
     GBool       IsCurrentRecordDeleted() { return m_bCurRecordDeletedFlag;};
     int         CommitRecordToFile();
+    
+    int         MarkAsDeleted();
+    int         MarkRecordAsExisting();
 
     const char  *ReadCharField(int nWidth);
     GInt32      ReadIntegerField(int nWidth);

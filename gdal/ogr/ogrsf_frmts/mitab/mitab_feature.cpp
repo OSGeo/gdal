@@ -9,6 +9,7 @@
  *
  **********************************************************************
  * Copyright (c) 1999-2002, Daniel Morissette
+ * Copyright (c) 2014, Even Rouault <even.rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -573,6 +574,8 @@ int TABFeature::WriteRecordToDATFile(TABDATFile *poDATFile,
 
     numFields = poDATFile->GetNumFields();
 
+    poDATFile->MarkRecordAsExisting();
+
     for(iField=0; nStatus == 0 && iField<numFields; iField++)
     {
         // Hack for "extra" introduced field.
@@ -793,9 +796,9 @@ GBool TABFeature::ValidateCoordType(TABMAPFile * poMapFile)
      * Adjust native type
      *------------------------------------------------------------*/
     if (bCompr && ((m_nMapInfoType%3) == 2))
-        m_nMapInfoType--;  // compr = 1, 4, 7, ...
+        m_nMapInfoType = (TABGeomType)(m_nMapInfoType - 1);  // compr = 1, 4, 7, ...
     else if (!bCompr && ((m_nMapInfoType%3) == 1))
-        m_nMapInfoType++;  // non-compr = 2, 5, 8, ...
+        m_nMapInfoType = (TABGeomType)(m_nMapInfoType + 1);  // non-compr = 2, 5, 8, ...
 
     return bCompr;
 }
@@ -808,7 +811,7 @@ GBool TABFeature::ValidateCoordType(TABMAPFile * poMapFile)
  * to be the same. (A replacement for ValidateCoordType() for this 
  * specific case)
  **********************************************************************/
-void TABFeature::ForceCoordTypeAndOrigin(int nMapInfoType, GBool bCompr,
+void TABFeature::ForceCoordTypeAndOrigin(TABGeomType nMapInfoType, GBool bCompr,
                                          GInt32 nComprOrgX, GInt32 nComprOrgY,
                                          GInt32 nXMin, GInt32 nYMin, 
                                          GInt32 nXMax, GInt32 nYMax)
@@ -822,9 +825,9 @@ void TABFeature::ForceCoordTypeAndOrigin(int nMapInfoType, GBool bCompr,
     m_nMapInfoType = nMapInfoType;
 
     if (bCompr && ((m_nMapInfoType%3) == 2))
-        m_nMapInfoType--;  // compr = 1, 4, 7, ...
+        m_nMapInfoType = (TABGeomType)(m_nMapInfoType - 1);  // compr = 1, 4, 7, ...
     else if (!bCompr && ((m_nMapInfoType%3) == 1))
-        m_nMapInfoType++;  // non-compr = 2, 5, 8, ...
+        m_nMapInfoType = (TABGeomType)(m_nMapInfoType + 1);  // non-compr = 2, 5, 8, ...
 
     m_nXMin = nXMin;
     m_nYMin = nYMin;
@@ -976,7 +979,7 @@ TABFeature *TABPoint::CloneTABFeature(OGRFeatureDefn *poNewDefn /*=NULL*/)
  * Returns TAB_GEOM_NONE if the geometry is not compatible with what
  * is expected for this object class.
  **********************************************************************/
-int  TABPoint::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
+TABGeomType TABPoint::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
 {
     OGRGeometry *poGeom;
 
@@ -1952,7 +1955,7 @@ OGRLineString *TABPolyline::GetPartRef(int nPartIndex)
  * Returns TAB_GEOM_NONE if the geometry is not compatible with what
  * is expected for this object class.
  **********************************************************************/
-int  TABPolyline::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
+TABGeomType TABPolyline::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
 {
     OGRGeometry   *poGeom;
     OGRMultiLineString *poMultiLine = NULL;
@@ -2941,7 +2944,7 @@ TABFeature *TABRegion::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
  * Returns TAB_GEOM_NONE if the geometry is not compatible with what
  * is expected for this object class.
  **********************************************************************/
-int  TABRegion::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
+TABGeomType TABRegion::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
 {
     OGRGeometry *poGeom;
 
@@ -3924,7 +3927,7 @@ TABFeature *TABRectangle::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
  * Returns TAB_GEOM_NONE if the geometry is not compatible with what
  * is expected for this object class.
  **********************************************************************/
-int  TABRectangle::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
+TABGeomType TABRectangle::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
 {
     OGRGeometry *poGeom;
 
@@ -4383,7 +4386,7 @@ TABFeature *TABEllipse::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
  * Returns TAB_GEOM_NONE if the geometry is not compatible with what
  * is expected for this object class.
  **********************************************************************/
-int  TABEllipse::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
+TABGeomType TABEllipse::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
 {
     OGRGeometry *poGeom;
 
@@ -4797,7 +4800,7 @@ TABFeature *TABArc::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
  * Returns TAB_GEOM_NONE if the geometry is not compatible with what
  * is expected for this object class.
  **********************************************************************/
-int  TABArc::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
+TABGeomType TABArc::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
 {
     OGRGeometry *poGeom;
 
@@ -5335,7 +5338,7 @@ TABFeature *TABText::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
  * Returns TAB_GEOM_NONE if the geometry is not compatible with what
  * is expected for this object class.
  **********************************************************************/
-int  TABText::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
+TABGeomType TABText::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
 {
     OGRGeometry *poGeom;
 
@@ -6403,7 +6406,7 @@ TABFeature *TABMultiPoint::CloneTABFeature(OGRFeatureDefn *poNewDefn /*=NULL*/)
  * Returns TAB_GEOM_NONE if the geometry is not compatible with what
  * is expected for this object class.
  **********************************************************************/
-int  TABMultiPoint::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
+TABGeomType TABMultiPoint::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
 {
     OGRGeometry *poGeom;
 
@@ -6972,7 +6975,7 @@ TABFeature *TABCollection::CloneTABFeature(OGRFeatureDefn *poNewDefn /*=NULL*/)
  * Returns TAB_GEOM_NONE if the geometry is not compatible with what
  * is expected for this object class.
  **********************************************************************/
-int  TABCollection::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
+TABGeomType TABCollection::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
 {
     OGRGeometry *poGeom;
     int nRegionType=TAB_GEOM_NONE, nPLineType=TAB_GEOM_NONE, 
@@ -7278,7 +7281,7 @@ int TABCollection::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         else
             oRegionHdr.m_nType = TAB_GEOM_V450_REGION;
         if (nVersion == 800)
-            oRegionHdr.m_nType += (TAB_GEOM_V800_REGION - TAB_GEOM_V450_REGION);
+            oRegionHdr.m_nType = (TABGeomType)(oRegionHdr.m_nType + (TAB_GEOM_V800_REGION - TAB_GEOM_V450_REGION));
 
         oRegionHdr.m_numLineSections = poCollHdr->m_nNumRegSections;
         oRegionHdr.m_nPenId = poCollHdr->m_nRegionPenId;
@@ -7341,8 +7344,8 @@ int TABCollection::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         else
             oPLineHdr.m_nType = TAB_GEOM_V450_MULTIPLINE;
         if (nVersion == 800)
-            oPLineHdr.m_nType += (TAB_GEOM_V800_MULTIPLINE - 
-                                  TAB_GEOM_V450_MULTIPLINE);
+            oPLineHdr.m_nType = (TABGeomType) (oPLineHdr.m_nType + (TAB_GEOM_V800_MULTIPLINE - 
+                                  TAB_GEOM_V450_MULTIPLINE));
 
         oPLineHdr.m_numLineSections = poCollHdr->m_nNumPLineSections;
         oPLineHdr.m_nPenId = poCollHdr->m_nPolylinePenId;
@@ -7394,8 +7397,8 @@ int TABCollection::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         else
             oMPointHdr.m_nType = TAB_GEOM_MULTIPOINT;
         if (nVersion == 800)
-            oMPointHdr.m_nType += (TAB_GEOM_V800_MULTIPOINT - 
-                                   TAB_GEOM_MULTIPOINT);
+            oMPointHdr.m_nType = (TABGeomType) (oMPointHdr.m_nType + (TAB_GEOM_V800_MULTIPOINT - 
+                                  TAB_GEOM_MULTIPOINT));
 
         oMPointHdr.m_nNumPoints = poCollHdr->m_nNumMultiPoints;
         oMPointHdr.m_nSymbolId = poCollHdr->m_nMultiPointSymbolId;
@@ -7503,7 +7506,7 @@ int TABCollection::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
                   m_poRegion->GetMapInfoType() == TAB_GEOM_V800_REGION_C );
 
         TABMAPObjPLine *poRegionHdr = (TABMAPObjPLine *)
-            TABMAPObjHdr::NewObj((GByte)m_poRegion->GetMapInfoType(), -1);
+            TABMAPObjHdr::NewObj(m_poRegion->GetMapInfoType(), -1);
 
         // Update count of objects by type in header
         if (!bCoordBlockDataOnly)
@@ -7603,7 +7606,7 @@ int TABCollection::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
                   m_poPline->GetMapInfoType() == TAB_GEOM_V800_MULTIPLINE_C );
 
         TABMAPObjPLine *poPlineHdr = (TABMAPObjPLine *)
-            TABMAPObjHdr::NewObj((GByte)m_poPline->GetMapInfoType(), -1);
+            TABMAPObjHdr::NewObj(m_poPline->GetMapInfoType(), -1);
 
         // Update count of objects by type in header
         if (!bCoordBlockDataOnly)
@@ -7701,7 +7704,7 @@ int TABCollection::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
                   m_poMpoint->GetMapInfoType() == TAB_GEOM_V800_MULTIPOINT_C );
 
         TABMAPObjMultiPoint *poMpointHdr = (TABMAPObjMultiPoint *)
-            TABMAPObjHdr::NewObj((GByte)m_poMpoint->GetMapInfoType(), -1);
+            TABMAPObjHdr::NewObj(m_poMpoint->GetMapInfoType(), -1);
 
         // Update count of objects by type in header
         if (!bCoordBlockDataOnly)

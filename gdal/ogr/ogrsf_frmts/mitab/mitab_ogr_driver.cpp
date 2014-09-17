@@ -10,6 +10,7 @@
  *
  **********************************************************************
  * Copyright (c) 1999, 2000, Stephane Villeneuve
+ * Copyright (c) 2014, Even Rouault <even.rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -123,9 +124,11 @@ static GDALDataset *OGRTABDriverOpen( GDALOpenInfo* poOpenInfo )
         return NULL;
     }
 
-    if( poOpenInfo->eAccess == GA_Update )
+    if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MIF") ||
+        EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MID") )
     {
-        return NULL;
+        if( poOpenInfo->eAccess == GA_Update )
+            return NULL;
     }
 
     poDS = new OGRTABDataSource();
@@ -234,6 +237,20 @@ void RegisterOGRTAB()
                                    "drv_mitab.html" );
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
+        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST, "<LayerCreationOptionList/>" );
+
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+"<CreationOptionList>"
+"  <Option name='FORMAT' type='string-select' description='type of MapInfo format'>"
+"    <Value>MIF</Value>"
+"    <Value>TAB</Value>"
+"  </Option>"
+"  <Option name='SPATIAL_INDEX_MODE' type='string-select' description='type of spatial index' default='QUICK'>"
+"    <Value>QUICK</Value>"
+"    <Value>OPTIMIZED</Value>"
+"  </Option>"
+"</CreationOptionList>");
 
         poDriver->pfnOpen = OGRTABDriverOpen;
         poDriver->pfnIdentify = OGRTABDriverIdentify;

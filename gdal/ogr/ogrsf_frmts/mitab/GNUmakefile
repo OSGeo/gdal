@@ -21,7 +21,7 @@ default:	$(O_OBJ:.o=.$(OBJ_EXT))
 clean:
 	rm -f *.o $(O_OBJ)
 
-$(O_OBJ):       mitab.h mitab_priv.h
+$(O_OBJ):       mitab.h mitab_priv.h mitab_ogr_driver.h
 
 update:
 	copymatch.sh ~/pkg/mitab *.TXT

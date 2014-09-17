@@ -10,6 +10,7 @@
  *
  **********************************************************************
  * Copyright (c) 1999, 2000, Stephane Villeneuve
+ * Copyright (c) 2014, Even Rouault <even.rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -99,7 +100,8 @@ OGRTABDataSource::OGRTABDataSource()
     m_bCreateMIF = FALSE;
     m_bSingleFile = FALSE;
     m_bSingleLayerAlreadyCreated = FALSE;
-    m_bQuickSpatialIndexMode = FALSE;
+    m_bQuickSpatialIndexMode = -1;
+    m_bUpdate = FALSE;
 }
 
 /************************************************************************/
@@ -135,6 +137,7 @@ int OGRTABDataSource::Create( const char * pszName, char **papszOptions )
     
     m_pszName = CPLStrdup( pszName );
     m_papszOptions = CSLDuplicate( papszOptions );
+    m_bUpdate = TRUE;
 
     if( (pszOpt=CSLFetchNameValue(papszOptions,"FORMAT")) != NULL 
         && EQUAL(pszOpt, "MIF") )
@@ -143,9 +146,13 @@ int OGRTABDataSource::Create( const char * pszName, char **papszOptions )
              || EQUAL(CPLGetExtension(pszName),"mid") )
         m_bCreateMIF = TRUE;
 
-    if( (pszOpt=CSLFetchNameValue(papszOptions,"SPATIAL_INDEX_MODE")) != NULL 
-        && EQUAL(pszOpt, "QUICK") )
-        m_bQuickSpatialIndexMode = TRUE;
+    if( (pszOpt=CSLFetchNameValue(papszOptions,"SPATIAL_INDEX_MODE")) != NULL )
+    {
+        if ( EQUAL(pszOpt, "QUICK") )
+            m_bQuickSpatialIndexMode = TRUE;
+        else if ( EQUAL(pszOpt, "OPTIMIZED") )
+            m_bQuickSpatialIndexMode = FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create a new empty directory.                                   */
@@ -189,7 +196,7 @@ int OGRTABDataSource::Create( const char * pszName, char **papszOptions )
         else
             poFile = new TABFile;
 
-        if( poFile->Open( pszName, "wb", FALSE ) != 0 )
+        if( poFile->Open( m_pszName, TABWrite, FALSE ) != 0 )
         {
             delete poFile;
             return FALSE;
@@ -218,6 +225,7 @@ int OGRTABDataSource::Open( GDALOpenInfo* poOpenInfo, int bTestOpen )
     CPLAssert( m_pszName == NULL );
 
     m_pszName = CPLStrdup( poOpenInfo->pszFilename );
+    m_bUpdate = (poOpenInfo->eAccess == GA_Update );
 
 /* -------------------------------------------------------------------- */
 /*      If it is a file, try to open as a Mapinfo file.                 */
@@ -226,7 +234,7 @@ int OGRTABDataSource::Open( GDALOpenInfo* poOpenInfo, int bTestOpen )
     {
         IMapInfoFile    *poFile;
 
-        poFile = IMapInfoFile::SmartOpen( m_pszName, bTestOpen );
+        poFile = IMapInfoFile::SmartOpen( m_pszName, m_bUpdate, bTestOpen );
         if( poFile == NULL )
             return FALSE;
 
@@ -237,6 +245,9 @@ int OGRTABDataSource::Open( GDALOpenInfo* poOpenInfo, int bTestOpen )
         m_papoLayers[0] = poFile;
 
         m_pszDirectory = CPLStrdup( CPLGetPath(m_pszName) );
+
+        m_bSingleFile = TRUE;
+        m_bSingleLayerAlreadyCreated = TRUE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -263,7 +274,7 @@ int OGRTABDataSource::Open( GDALOpenInfo* poOpenInfo, int bTestOpen )
             pszSubFilename = CPLStrdup(
                 CPLFormFilename( m_pszDirectory, papszFileList[iFile], NULL ));
 
-            poFile = IMapInfoFile::SmartOpen( pszSubFilename, bTestOpen );
+            poFile = IMapInfoFile::SmartOpen( pszSubFilename, m_bUpdate, bTestOpen );
             CPLFree( pszSubFilename );
             
             if( poFile == NULL )
@@ -335,6 +346,13 @@ OGRTABDataSource::ICreateLayer( const char * pszLayerName,
     IMapInfoFile        *poFile;
     char                *pszFullFilename;
 
+    if( !m_bUpdate )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                    "Cannot create layer on read-only dataset.");
+        return NULL;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      If it's a single file mode file, then we may have already       */
 /*      instantiated the low level layer.   We would just need to       */
@@ -354,9 +372,6 @@ OGRTABDataSource::ICreateLayer( const char * pszLayerName,
         poFile = (IMapInfoFile *) m_papoLayers[0];
     }
 
-/* -------------------------------------------------------------------- */
-/*      We need to initially create the file, and add it as a layer.    */
-/* -------------------------------------------------------------------- */
     else
     {
         if( m_bCreateMIF )
@@ -374,14 +389,12 @@ OGRTABDataSource::ICreateLayer( const char * pszLayerName,
             poFile = new TABFile;
         }
         
-        if( poFile->Open( pszFullFilename, "wb", FALSE ) != 0 )
+        if( poFile->Open( pszFullFilename, TABWrite, FALSE ) != 0 )
         {
             CPLFree( pszFullFilename );
             delete poFile;
             return FALSE;
         }
-        
-        poFile->SetDescription( poFile->GetName() );
 
         m_nLayerCount++;
         m_papoLayers = (IMapInfoFile **)
@@ -391,12 +404,18 @@ OGRTABDataSource::ICreateLayer( const char * pszLayerName,
         CPLFree( pszFullFilename );
     }
 
+    poFile->SetDescription( poFile->GetName() );
+
 /* -------------------------------------------------------------------- */
 /*      Assign the coordinate system (if provided) and set              */
 /*      reasonable bounds.                                              */
 /* -------------------------------------------------------------------- */
     if( poSRSIn != NULL )
+    {
         poFile->SetSpatialRef( poSRSIn );
+        // SetSpatialRef() has cloned the passed geometry
+        poFile->GetLayerDefn()->GetGeomFieldDefn(0)->SetSpatialRef(poFile->GetSpatialRef());
+    }
 
     if( !poFile->IsBoundsSet() && !m_bCreateMIF )
     {
@@ -407,10 +426,15 @@ OGRTABDataSource::ICreateLayer( const char * pszLayerName,
             poFile->SetBounds( -30000000, -15000000, 30000000, 15000000 );
     }
 
-    if (m_bQuickSpatialIndexMode && poFile->SetQuickSpatialIndexMode() != 0)
+    if (m_bQuickSpatialIndexMode == TRUE && poFile->SetQuickSpatialIndexMode(TRUE) != 0)
     {
         CPLError( CE_Warning, CPLE_AppDefined, 
                   "Setting Quick Spatial Index Mode failed.");
+    }
+    else if (m_bQuickSpatialIndexMode == FALSE && poFile->SetQuickSpatialIndexMode(FALSE) != 0)
+    {
+        CPLError( CE_Warning, CPLE_AppDefined, 
+                  "Setting Normal Spatial Index Mode failed.");
     }
 
     return poFile;
@@ -424,7 +448,7 @@ int OGRTABDataSource::TestCapability( const char * pszCap )
 
 {
     if( EQUAL(pszCap,ODsCCreateLayer) )
-        return !m_bSingleFile || !m_bSingleLayerAlreadyCreated;
+        return m_bUpdate && (!m_bSingleFile || !m_bSingleLayerAlreadyCreated);
     else
         return FALSE;
 }
