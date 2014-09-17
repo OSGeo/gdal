@@ -4655,6 +4655,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     if( !bTreatAsSubdataset ) // nCount must be 1!
     {
         char szVarName[NC_MAX_NAME];
+        szVarName[0] = '\0';
         nc_inq_varname( cdfid, nVarID, szVarName);
         osSubdatasetName = szVarName;
     }
