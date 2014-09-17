@@ -10,6 +10,7 @@
  *
  **********************************************************************
  * Copyright (c) 1999, 2000, Daniel Morissette
+ * Copyright (c) 2014, Even Rouault <even.rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -190,6 +191,12 @@ int     TABMAPToolBlock::CommitToFile()
     }
 
     /*-----------------------------------------------------------------
+     * Nothing to do here if block has not been modified
+     *----------------------------------------------------------------*/
+    if (!m_bModified)
+        return 0;
+
+    /*-----------------------------------------------------------------
      * Make sure 8 bytes block header is up to date.
      *----------------------------------------------------------------*/
     GotoByteInBlock(0x000);
@@ -204,7 +211,12 @@ int     TABMAPToolBlock::CommitToFile()
      * OK, call the base class to write the block to disk.
      *----------------------------------------------------------------*/
     if (nStatus == 0)
+    {
+#ifdef DEBUG_VERBOSE
+        CPLDebug("MITAB", "Commiting TOOL block to offset %d", m_nFileOffset);
+#endif
         nStatus = TABRawBinBlock::CommitToFile();
+    }
 
     return nStatus;
 }
@@ -227,6 +239,10 @@ int     TABMAPToolBlock::CommitToFile()
 int     TABMAPToolBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize, 
                                         int nFileOffset /* = 0*/)
 {
+#ifdef DEBUG_VERBOSE
+    CPLDebug("MITAB", "Instanciating new TOOL block at offset %d", nFileOffset);
+#endif
+
     /*-----------------------------------------------------------------
      * Start with the default initialisation
      *----------------------------------------------------------------*/
@@ -342,7 +358,7 @@ int  TABMAPToolBlock::WriteBytes(int nBytesToWrite, GByte *pabySrcBuf)
     if (m_eAccess == TABWrite && m_poBlockManagerRef &&
         (m_nBlockSize - m_nCurPos) < nBytesToWrite)
     {
-        int nNewBlockOffset = m_poBlockManagerRef->AllocNewBlock();
+        int nNewBlockOffset = m_poBlockManagerRef->AllocNewBlock("TOOL");
         SetNextToolBlock(nNewBlockOffset);
 
         if (CommitToFile() != 0 ||
@@ -392,7 +408,7 @@ int  TABMAPToolBlock::CheckAvailableSpace(int nToolType)
 
     if (GetNumUnusedBytes() < nBytesToWrite)
     {
-        int nNewBlockOffset = m_poBlockManagerRef->AllocNewBlock();
+        int nNewBlockOffset = m_poBlockManagerRef->AllocNewBlock("TOOL");
         SetNextToolBlock(nNewBlockOffset);
 
         if (CommitToFile() != 0 ||
@@ -430,7 +446,7 @@ void TABMAPToolBlock::Dump(FILE *fpOut /*=NULL*/)
     }
     else
     {
-        fprintf(fpOut,"Coordinate Block (type %d) at offset %d.\n", 
+        fprintf(fpOut,"Tool Block (type %d) at offset %d.\n", 
                                                  m_nBlockType, m_nFileOffset);
         fprintf(fpOut,"  m_numDataBytes        = %d\n", m_numDataBytes);
         fprintf(fpOut,"  m_nNextToolBlock     = %d\n", m_nNextToolBlock);

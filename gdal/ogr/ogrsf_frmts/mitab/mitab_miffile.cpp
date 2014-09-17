@@ -12,6 +12,7 @@
  **********************************************************************
  * Copyright (c) 1999-2003, Stephane Villeneuve
  * Copyright (c) 2011-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2014, Even Rouault <even.rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -263,7 +264,7 @@ MIFFile::~MIFFile()
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int MIFFile::Open(const char *pszFname, const char *pszAccess,
+int MIFFile::Open(const char *pszFname, TABAccess eAccess,
                   GBool bTestOpenNoError /*=FALSE*/ )
 {
     char *pszTmpFname = NULL;
@@ -282,12 +283,13 @@ int MIFFile::Open(const char *pszFname, const char *pszAccess,
     /*-----------------------------------------------------------------
      * Validate access mode
      *----------------------------------------------------------------*/
-    if (EQUALN(pszAccess, "r", 1))
+    const char* pszAccess = NULL;
+    if (eAccess == TABRead)
     {
         m_eAccessMode = TABRead;
         pszAccess = "rt";
     }
-    else if (EQUALN(pszAccess, "w", 1))
+    else if (eAccess == TABWrite)
     {
         m_eAccessMode = TABWrite;
         pszAccess = "wt";
@@ -300,7 +302,7 @@ int MIFFile::Open(const char *pszFname, const char *pszAccess,
     {
         if (!bTestOpenNoError)
             CPLError(CE_Failure, CPLE_FileIO,
-                 "Open() failed: access mode \"%s\" not supported", pszAccess);
+                 "Open() failed: access mode \"%d\" not supported", eAccess);
         else
             CPLErrorReset();
 

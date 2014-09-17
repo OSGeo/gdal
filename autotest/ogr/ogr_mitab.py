@@ -9,7 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
-# Copyright (c) 2012-2013, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2012-2014, Even Rouault <even dot rouault at mines-paris dot org>
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
@@ -28,8 +28,10 @@
 ###############################################################################
 
 import os
+import random
 import sys
 import string
+import shutil
 
 sys.path.append( '../pymod' )
 
@@ -679,6 +681,643 @@ def ogr_mitab_20():
     return 'success'
 
 ###############################################################################
+# Create .tab without explicit field
+
+def ogr_mitab_21():
+
+    if gdaltest.mapinfo_drv is None:
+        return 'skip'
+        
+    ds = ogr.GetDriverByName('MapInfo File').CreateDataSource('/vsimem/ogr_mitab_21.tab')
+    lyr = ds.CreateLayer('test')
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (0 0)"))
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    lyr.CreateFeature(feat)
+    gdal.PopErrorHandler()
+    ds = None
+    
+    ds = ogr.Open('/vsimem/ogr_mitab_21.tab')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    if feat.GetField('FID') != 1:
+        feat.DumpReadable()
+        return 'fail'
+    ds = None
+
+    ogr.GetDriverByName('MapInfo File').DeleteDataSource('/vsimem/ogr_mitab_21.tab')
+
+    return 'success'
+
+###############################################################################
+# Test append in update mode
+
+def ogr_mitab_22():
+    
+    filename = '/vsimem/ogr_mitab_22.tab'
+    for nb_features in (2, 1000):
+        if nb_features == 2:
+            nb_runs = 2
+        else:
+            nb_runs = 1
+
+        # When doing 2 runs, in the second one, we create an empty
+        # .tab and then open it for update. This can trigger specific bugs
+        for j in range(nb_runs):
+            ds = ogr.GetDriverByName('MapInfo File').CreateDataSource(filename)
+            lyr = ds.CreateLayer('test')
+            lyr.CreateField(ogr.FieldDefn('ID', ogr.OFTInteger))
+            if j == 0:
+                i = 0
+                feat = ogr.Feature(lyr.GetLayerDefn())
+                feat.SetField('ID', i+1)
+                feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (%d %d)" % (i, i)))
+                if lyr.CreateFeature(feat) != 0:
+                    print(i)
+                    print(nb_features)
+                    gdaltest.post_reason('fail')
+                    return 'fail'
+            ds = None
+
+            for i in range(nb_features - (1-j)):
+                ds = ogr.Open(filename, update = 1)
+                lyr = ds.GetLayer(0)
+                feat = ogr.Feature(lyr.GetLayerDefn())
+                feat.SetField('ID', i+1+(1-j))
+                feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (%d %d)" % (i+(1-j), i+(1-j))))
+                if lyr.CreateFeature(feat) != 0:
+                    print(i)
+                    print(nb_features)
+                    gdaltest.post_reason('fail')
+                    return 'fail'
+                ds = None
+
+            ds = ogr.Open(filename)
+            lyr = ds.GetLayer(0)
+            for i in range(nb_features):
+                f = lyr.GetNextFeature()
+                if f is None or f.GetField('ID') != i+1:
+                    print(nb_features)
+                    print(i)
+                    gdaltest.post_reason('fail')
+                    return 'fail'
+            ds = None
+
+    return 'success'
+
+###############################################################################
+# Test creating features then reading
+
+def ogr_mitab_23():
+
+    filename = '/vsimem/ogr_mitab_23.tab'
+
+    for nb_features in (0, 1, 2, 100, 1000):
+        ds = ogr.GetDriverByName('MapInfo File').CreateDataSource(filename)
+        lyr = ds.CreateLayer('test')
+        lyr.CreateField(ogr.FieldDefn('ID', ogr.OFTInteger))
+        for i in range(nb_features):
+            feat = ogr.Feature(lyr.GetLayerDefn())
+            feat.SetField('ID', i+1)
+            feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (0 0)"))
+            lyr.CreateFeature(feat)
+
+        lyr.ResetReading()
+        for i in range(nb_features):
+            f = lyr.GetNextFeature()
+            if f is None or f.GetField('ID') != i+1:
+                print(nb_features)
+                print(i)
+                gdaltest.post_reason('fail')
+                return 'fail'
+        f = lyr.GetNextFeature()
+        if f is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        ds = None
+        
+        ogr.GetDriverByName('MapInfo File').DeleteDataSource(filename)
+
+
+    return 'success'
+
+###############################################################################
+# Test creating features then reading then creating again then reading
+
+def ogr_mitab_24():
+
+    filename = '/vsimem/ogr_mitab_24.tab'
+
+    for nb_features in (2, 100, 1000):
+        ds = ogr.GetDriverByName('MapInfo File').CreateDataSource(filename)
+        lyr = ds.CreateLayer('test')
+        lyr.CreateField(ogr.FieldDefn('ID', ogr.OFTInteger))
+        for i in range(nb_features/2):
+            feat = ogr.Feature(lyr.GetLayerDefn())
+            feat.SetField('ID', i+1)
+            feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (0 0)"))
+            lyr.CreateFeature(feat)
+
+        lyr.ResetReading()
+        for i in range(nb_features/2):
+            f = lyr.GetNextFeature()
+            if f is None or f.GetField('ID') != i+1:
+                print(nb_features)
+                print(i)
+                gdaltest.post_reason('fail')
+                return 'fail'
+        f = lyr.GetNextFeature()
+        if f is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        for i in range(nb_features/2):
+            feat = ogr.Feature(lyr.GetLayerDefn())
+            feat.SetField('ID', nb_features / 2 + i+1)
+            feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (0 0)"))
+            lyr.CreateFeature(feat)
+            
+        lyr.ResetReading()
+        for i in range(nb_features):
+            f = lyr.GetNextFeature()
+            if f is None or f.GetField('ID') != i+1:
+                print(nb_features)
+                print(i)
+                gdaltest.post_reason('fail')
+                return 'fail'
+        f = lyr.GetNextFeature()
+        if f is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        ds = None
+        
+        ogr.GetDriverByName('MapInfo File').DeleteDataSource(filename)
+
+
+    return 'success'
+
+###############################################################################
+# Test that opening in update mode without doing any change does not alter
+# file
+
+def ogr_mitab_25():
+
+    filename = 'tmp/ogr_mitab_25.tab'
+
+    for nb_features in (2, 1000):
+        ds = ogr.GetDriverByName('MapInfo File').CreateDataSource(filename)
+        lyr = ds.CreateLayer('test')
+        lyr.CreateField(ogr.FieldDefn('ID', ogr.OFTInteger))
+        for i in range(nb_features/2):
+            feat = ogr.Feature(lyr.GetLayerDefn())
+            feat.SetField('ID', i+1)
+            feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (%d %d)" % (i, i)))
+            lyr.CreateFeature(feat)
+        ds = None
+
+        mtime_dict = {}
+        for ext in ('map', 'tab', 'dat', 'id'):
+            mtime_dict[ext] = os.stat(filename[0:-3] + ext).st_mtime
+
+        import time
+        time.sleep(1)
+
+        # Try without doing anything
+        ds = ogr.Open(filename, update = 1)
+        ds = None
+        for ext in ('map', 'tab', 'dat', 'id'):
+            mtime = os.stat(filename[0:-3] + ext).st_mtime
+            if mtime_dict[ext] != mtime:
+                print('mtime of .%s has changed !' % ext)
+                gdaltest.post_reason('fail')
+                return 'fail'
+
+        # Try by reading all features
+        ds = ogr.Open(filename, update = 1)
+        lyr = ds.GetLayer(0)
+        lyr.GetFeatureCount(1)
+        ds = None
+        for ext in ('map', 'tab', 'dat', 'id'):
+            mtime = os.stat(filename[0:-3] + ext).st_mtime
+            if mtime_dict[ext] != mtime:
+                print('mtime of .%s has changed !' % ext)
+                gdaltest.post_reason('fail')
+                return 'fail'
+
+        # Try by reading all features with a spatial index
+        ds = ogr.Open(filename, update = 1)
+        lyr = ds.GetLayer(0)
+        lyr.SetSpatialFilterRect(0.5, 0.5, 1.5, 1.5)
+        lyr.GetFeatureCount(1)
+        ds = None
+        for ext in ('map', 'tab', 'dat', 'id'):
+            mtime = os.stat(filename[0:-3] + ext).st_mtime
+            if mtime_dict[ext] != mtime:
+                print('mtime of .%s has changed !' % ext)
+                gdaltest.post_reason('fail')
+                return 'fail'
+                
+        import test_cli_utilities
+        if test_cli_utilities.get_test_ogrsf_path() is not None:
+            ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro -fsf ' + filename)
+            if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+                print(ret)
+                return 'fail'
+
+        ogr.GetDriverByName('MapInfo File').DeleteDataSource(filename)
+
+    return 'success'
+
+###############################################################################
+# Test DeleteFeature()
+
+def ogr_mitab_26():
+
+    filename = '/vsimem/ogr_mitab_26.tab'
+
+    for nb_features in (2, 1000):
+        if nb_features == 2:
+            nb_runs = 2
+        else:
+            nb_runs = 1
+        for j in range(nb_runs):
+            ds = ogr.GetDriverByName('MapInfo File').CreateDataSource(filename)
+            lyr = ds.CreateLayer('test')
+            lyr.CreateField(ogr.FieldDefn('ID', ogr.OFTInteger))
+            for i in range(nb_features):
+                feat = ogr.Feature(lyr.GetLayerDefn())
+                feat.SetField('ID', i+1)
+                feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (%d %d)" % (i, i)))
+                lyr.CreateFeature(feat)
+
+            if nb_features == 2:
+                if lyr.DeleteFeature(nb_features/2) != 0:
+                    print(j)
+                    print(nb_features)
+                    gdaltest.post_reason('fail')
+                    return 'fail'
+            else:
+                for k in range(nb_features/2):
+                    if lyr.DeleteFeature(nb_features/4 + k) != 0:
+                        print(j)
+                        print(k)
+                        print(nb_features)
+                        gdaltest.post_reason('fail')
+                        return 'fail'
+
+            if j == 1:
+                # Expected failure : already deleted feature
+                gdal.ErrorReset()
+                gdal.PushErrorHandler('CPLQuietErrorHandler')
+                ret = lyr.DeleteFeature(nb_features/2)
+                gdal.PopErrorHandler()
+                if ret == 0 or gdal.GetLastErrorMsg() == '':
+                    print(j)
+                    print(nb_features)
+                    gdaltest.post_reason('fail')
+                    return 'fail'
+
+                feat = lyr.GetFeature(nb_features/2)
+                if feat is not None:
+                    print(j)
+                    print(nb_features)
+                    gdaltest.post_reason('fail')
+                    return 'fail'
+
+                # Expected failure : illegal feature id
+                gdal.PushErrorHandler('CPLQuietErrorHandler')
+                ret = lyr.DeleteFeature(nb_features+1)
+                gdal.PopErrorHandler()
+                if ret == 0 or gdal.GetLastErrorMsg() == '':
+                    print(j)
+                    print(nb_features)
+                    gdaltest.post_reason('fail')
+                    return 'fail'
+
+            ds = None
+
+            ds = ogr.Open(filename)
+            lyr = ds.GetLayer(0)
+            if lyr.GetFeatureCount() != nb_features / 2:
+                print(nb_features)
+                gdaltest.post_reason('fail')
+                return 'fail'
+            ds = None
+
+            # This used to trigger a bug in DAT record deletion during implementation...
+            if nb_features == 1000:
+                ds = ogr.Open(filename, update = 1)
+                lyr = ds.GetLayer(0)
+                lyr.DeleteFeature(245)
+                ds = None
+
+                ds = ogr.Open(filename)
+                lyr = ds.GetLayer(0)
+                if lyr.GetFeatureCount() != nb_features / 2 - 1:
+                    print(nb_features)
+                    gdaltest.post_reason('fail')
+                    return 'fail'
+                ds = None
+
+            ogr.GetDriverByName('MapInfo File').DeleteDataSource(filename)
+
+    return 'success'
+
+###############################################################################
+# Test SetFeature()
+
+def ogr_mitab_27():
+
+    filename = '/vsimem/ogr_mitab_27.tab'
+    
+    ds = ogr.GetDriverByName('MapInfo File').CreateDataSource(filename)
+    lyr = ds.CreateLayer('test')
+    lyr.CreateField(ogr.FieldDefn('intfield', ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn('realfield', ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn('stringfield', ogr.OFTString))
+    
+    # Invalid call : feature without FID
+    f = ogr.Feature(lyr.GetLayerDefn())
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = lyr.SetFeature(f)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Invalid call : feature with FID <= 0
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(0)
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = lyr.SetFeature(f)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField('intfield', 1)
+    f.SetField('realfield', 2.34)
+    f.SetField('stringfield', "foo")
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (1 2)'))
+    lyr.CreateFeature(f)
+    fid = f.GetFID()
+
+    # Invalid call : feature with FID > feature_count
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(2)
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = lyr.SetFeature(f)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Update previously created object with blank feature
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(fid)
+    lyr.SetFeature(f)
+
+    ds = None
+    
+    ds = ogr.Open(filename, update = 1)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f.GetField('intfield') != 0 or f.GetField('realfield') != 0 or f.GetField('stringfield') != '' or \
+       f.GetGeometryRef() is not None:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    f.SetField('intfield', 1)
+    f.SetField('realfield', 2.34)
+    f.SetField('stringfield', "foo")
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (2 3)'))
+    lyr.SetFeature(f)
+    ds = None
+    
+    ds = ogr.Open(filename, update = 1)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f.GetField('intfield') != 1 or f.GetField('realfield') != 2.34 or f.GetField('stringfield') != 'foo' or \
+       f.GetGeometryRef() is None:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    lyr.DeleteFeature(f.GetFID())
+    ds = None
+    
+    ds = ogr.Open(filename, update = 1)
+    lyr = ds.GetLayer(0)
+    # SetFeature() on a deleted feature
+    lyr.SetFeature(f)
+
+    f = lyr.GetFeature(1)
+    if f.GetField('intfield') != 1 or f.GetField('realfield') != 2.34 or f.GetField('stringfield') != 'foo' or \
+       f.GetGeometryRef() is None:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    ds = ogr.Open(filename, update = 1)
+    lyr = ds.GetLayer(0)
+
+    f = lyr.GetFeature(1)
+    # SetFeature() with identical feature : no-op
+    if lyr.SetFeature(f) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    stat = gdal.VSIStatL(filename[0:-3]+"map")
+    old_size = stat.size
+
+    # This used to trigger a bug: when using SetFeature() repeatly, we
+    # can create object blocks in the .map that are made only of deleted
+    # objects.
+    ds = ogr.Open(filename, update = 1)
+    lyr = ds.GetLayer(0)
+
+    f = lyr.GetFeature(1)
+    for i in range(100):
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (2 3)'))
+        if lyr.SetFeature(f) != 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+    ds = None
+
+    stat = gdal.VSIStatL(filename[0:-3]+"map")
+    if stat.size != old_size:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    
+    ds = ogr.Open(filename, update = 1)
+    lyr = ds.GetLayer(0)
+
+    f = lyr.GetFeature(1)
+    # SetFeature() with identical geometry : rewrite only attributes
+    f.SetField('intfield', -1)
+    if lyr.SetFeature(f) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    f = lyr.GetFeature(1)
+    if f.GetField('intfield') != -1 or f.GetField('realfield') != 2.34 or f.GetField('stringfield') != 'foo' or \
+       f.GetGeometryRef() is None:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    ds = None
+
+    ogr.GetDriverByName('MapInfo File').DeleteDataSource(filename)
+
+    return 'success'
+
+###############################################################################
+def generate_permutation(n):
+    tab = [ i for i in range(n) ]
+    for i in range(10*n):
+        ind = random.randint(0,n-1)
+        tmp = tab[0]
+        tab[0] = tab[ind]
+        tab[ind] = tmp
+    return tab
+
+###############################################################################
+# Test updating object blocks with deleted objects
+
+def ogr_mitab_28():
+
+    filename = '/vsimem/ogr_mitab_28.tab'
+
+    ds = ogr.GetDriverByName('MapInfo File').CreateDataSource(filename)
+    lyr = ds.CreateLayer('test')
+    lyr.CreateField(ogr.FieldDefn('ID', ogr.OFTInteger))
+    ds = None
+
+    ds = ogr.Open(filename, update = 1)
+    lyr = ds.GetLayer(0)
+    # Generate 10x10 grid
+    N2 = 10
+    N = N2*N2
+    for n in generate_permutation(N):
+        x = int(n / N2)
+        y = n % N2
+        f = ogr.Feature(lyr.GetLayerDefn())
+        #f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(%d %d)' % (x,y)))
+        f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(%d %d,%f %f,%f %f)' % (x,y,x+0.1,y,x+0.2,y)))
+        lyr.CreateFeature(f)
+
+    # Delete all features
+    for i in range(N):
+        lyr.DeleteFeature(i+1)
+
+    # Set deleted features
+    i = 0
+    permutation = generate_permutation(N)
+    for n in permutation:
+        x = int(n / N2)
+        y = n % N2
+        f = ogr.Feature(lyr.GetLayerDefn())
+        #f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(%d %d)' % (x,y)))
+        f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(%d %d,%f %f,%f %f)' % (x,y,x+0.1,y,x+0.2,y)))
+        f.SetFID(i+1)
+        i = i + 1
+        lyr.SetFeature(f)
+        
+    ds = None
+    
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    i = 0
+    # Check sequential enumeration
+    for f in lyr:
+        g = f.GetGeometryRef()
+        (x, y, z) = g.GetPoint(0)
+        n = permutation[i]
+        x_ref = int(n / N2)
+        y_ref = n % N2
+        if abs(x - x_ref) + abs(y - y_ref) > 0.1:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        i = i + 1
+
+    # Check spatial index integrity
+    for n in range(N):
+        x = int(n / N2)
+        y = n % N2
+        lyr.SetSpatialFilterRect(x-0.5,y-0.5,x+0.5,y+0.5)
+        if lyr.GetFeatureCount() != 1:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    ds = None
+
+    ogr.GetDriverByName('MapInfo File').DeleteDataSource(filename)
+
+    return 'success'
+
+
+###############################################################################
+# Test updating a file with compressed geometries.
+
+def ogr_mitab_29():
+    try:
+        os.stat('tmp/cache/compr_symb_deleted_records.tab')
+    except:
+        try:
+            gdaltest.unzip( 'tmp/cache', 'data/compr_symb_deleted_records.zip')
+            try:
+                os.stat('tmp/cache/compr_symb_deleted_records.tab')
+            except:
+                return 'skip'
+        except:
+            return 'skip'
+
+    shutil.copy('tmp/cache/compr_symb_deleted_records.tab', 'tmp')
+    shutil.copy('tmp/cache/compr_symb_deleted_records.dat', 'tmp')
+    shutil.copy('tmp/cache/compr_symb_deleted_records.id', 'tmp')
+    shutil.copy('tmp/cache/compr_symb_deleted_records.map', 'tmp')
+
+    # Is a 100x100 point grid with only the 4 edge lines left (compressed points)
+    ds = ogr.Open('tmp/compr_symb_deleted_records.tab', update = 1)
+    lyr = ds.GetLayer(0)
+    # Re-add the 98x98 interior points
+    i = 0
+    N2 = 98
+    N = N2 * N2
+    permutation = generate_permutation(N)
+    for n in permutation:
+        x = 1 + int(n / N2)
+        y = 1 + n % N2
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(%d %d)' % (x,y)))
+        lyr.CreateFeature(f)
+    ds = None
+
+    # Check grid integrity that after reopening
+    ds = ogr.Open('tmp/compr_symb_deleted_records.tab')
+    lyr = ds.GetLayer(0)
+    N2 = 100
+    N = N2 * N2
+    for n in range(N):
+        x = int(n / N2)
+        y = n % N2
+        lyr.SetSpatialFilterRect(x-0.01,y-0.01,x+0.01,y+0.01)
+        if lyr.GetFeatureCount() != 1:
+            gdaltest.post_reason('fail')
+            return 'fail'
+    ds = None
+
+    ogr.GetDriverByName('MapInfo File').DeleteDataSource('tmp/compr_symb_deleted_records.tab')
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_mitab_cleanup():
@@ -713,8 +1352,18 @@ gdaltest_list = [
     ogr_mitab_18,
     ogr_mitab_19,
     ogr_mitab_20,
+    ogr_mitab_21,
+    ogr_mitab_22,
+    ogr_mitab_23,
+    ogr_mitab_24,
+    ogr_mitab_25,
+    ogr_mitab_26,
+    ogr_mitab_27,
+    ogr_mitab_28,
+    ogr_mitab_29,
     ogr_mitab_cleanup
     ]
+#gdaltest_list = [ ogr_mitab_1, ogr_mitab_27, ogr_mitab_28, ogr_mitab_cleanup ]
 
 if __name__ == '__main__':
 

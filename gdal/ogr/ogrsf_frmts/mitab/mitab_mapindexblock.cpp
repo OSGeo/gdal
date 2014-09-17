@@ -10,6 +10,7 @@
  *
  **********************************************************************
  * Copyright (c) 1999, 2000, Daniel Morissette
+ * Copyright (c) 2014, Even Rouault <even.rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -117,12 +118,23 @@ TABMAPIndexBlock::TABMAPIndexBlock(TABAccess eAccessMode /*= TABRead*/):
  **********************************************************************/
 TABMAPIndexBlock::~TABMAPIndexBlock()
 {
+    UnsetCurChild();
+}
+
+/**********************************************************************
+ *                   TABMAPIndexBlock::UnsetCurChild()
+ **********************************************************************/
+
+void TABMAPIndexBlock::UnsetCurChild()
+{
     if (m_poCurChild)
     {
         if (m_eAccess == TABWrite || m_eAccess == TABReadWrite)
             m_poCurChild->CommitToFile();
         delete m_poCurChild;
+        m_poCurChild = NULL;
     }
+    m_nCurChildIndex = -1;
 }
 
 /**********************************************************************
@@ -242,7 +254,12 @@ int     TABMAPIndexBlock::CommitToFile()
      * OK, call the base class to write the block to disk.
      *----------------------------------------------------------------*/
     if (nStatus == 0)
+    {
+#ifdef DEBUG_VERBOSE
+        CPLDebug("MITAB", "Commiting INDEX block to offset %d", m_nFileOffset);
+#endif
         nStatus = TABRawBinBlock::CommitToFile();
+    }
 
     return nStatus;
 }
@@ -282,7 +299,7 @@ int     TABMAPIndexBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
     m_nMaxX = -1000000000;
     m_nMaxY = -1000000000;
 
-    if (m_eAccess != TABRead)
+    if (m_eAccess != TABRead && nFileOffset != 0)
     {
         GotoByteInBlock(0x000);
 
@@ -436,6 +453,19 @@ void TABMAPIndexBlock::GetMBR(GInt32 &nXMin, GInt32 &nYMin,
     nYMin = m_nMinY;
     nXMax = m_nMaxX;
     nYMax = m_nMaxY; 
+}
+
+/**********************************************************************
+ *                   TABMAPIndexBlock::SetMBR()
+ *
+ **********************************************************************/
+void TABMAPIndexBlock::SetMBR(GInt32 nXMin, GInt32 nYMin, 
+                              GInt32 nXMax, GInt32 nYMax)
+{
+    m_nMinX = nXMin;
+    m_nMinY = nYMin;
+    m_nMaxX = nXMax;
+    m_nMaxY = nYMax; 
 }
 
 /**********************************************************************
@@ -1138,7 +1168,7 @@ int     TABMAPIndexBlock::SplitNode(GInt32 nNewEntryXMin, GInt32 nNewEntryYMin,
      *----------------------------------------------------------------*/
     TABMAPIndexBlock *poNewNode = new TABMAPIndexBlock(m_eAccess);
     if (poNewNode->InitNewBlock(m_fp, 512, 
-                                m_poBlockManagerRef->AllocNewBlock()) != 0)
+                                m_poBlockManagerRef->AllocNewBlock("INDEX")) != 0)
     {
         return -1;
     }
@@ -1321,7 +1351,7 @@ int TABMAPIndexBlock::SplitRootNode(GInt32 nNewEntryXMin, GInt32 nNewEntryYMin,
     TABMAPIndexBlock *poNewNode = new TABMAPIndexBlock(m_eAccess);
 
     if (poNewNode->InitNewBlock(m_fp, 512, 
-                                m_poBlockManagerRef->AllocNewBlock()) != 0)
+                                m_poBlockManagerRef->AllocNewBlock("INDEX")) != 0)
     {
         return -1;
     }

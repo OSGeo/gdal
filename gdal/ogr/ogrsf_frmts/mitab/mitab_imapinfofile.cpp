@@ -10,6 +10,7 @@
  *
  **********************************************************************
  * Copyright (c) 1999-2008, Daniel Morissette
+ * Copyright (c) 2014, Even Rouault <even.rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -172,6 +173,28 @@ IMapInfoFile::~IMapInfoFile()
 }
 
 /**********************************************************************
+ *                   IMapInfoFile::Open()
+ *
+ * Compatibility layer with new interface.
+ * Return 0 on success, -1 in case of failure.
+ **********************************************************************/
+
+int IMapInfoFile::Open(const char *pszFname, const char* pszAccess,
+                       GBool bTestOpenNoError)
+{
+    if( EQUALN(pszAccess, "r", 1) )
+        return Open(pszFname, TABRead, bTestOpenNoError);
+    else if( EQUALN(pszAccess, "w", 1) )
+        return Open(pszFname, TABWrite, bTestOpenNoError);
+    else
+    {
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Open() failed: access mode \"%s\" not supported", pszAccess);
+        return -1;
+    }
+}
+
+/**********************************************************************
  *                   IMapInfoFile::SmartOpen()
  *
  * Use this static method to automatically open any flavour of MapInfo
@@ -184,6 +207,7 @@ IMapInfoFile::~IMapInfoFile()
  * Returns the new object ptr. , or NULL if the open failed.
  **********************************************************************/
 IMapInfoFile *IMapInfoFile::SmartOpen(const char *pszFname,
+                                      GBool bUpdate,
                                       GBool bTestOpenNoError /*=FALSE*/)
 {
     IMapInfoFile *poFile = NULL;
@@ -240,7 +264,7 @@ IMapInfoFile *IMapInfoFile::SmartOpen(const char *pszFname,
     /*-----------------------------------------------------------------
      * Perform the open() call
      *----------------------------------------------------------------*/
-    if (poFile && poFile->Open(pszFname, "r", bTestOpenNoError) != 0)
+    if (poFile && poFile->Open(pszFname, bUpdate ? TABReadWrite : TABRead, bTestOpenNoError) != 0)
     {
         delete poFile;
         poFile = NULL;
@@ -283,6 +307,8 @@ OGRFeature *IMapInfoFile::GetNextFeature()
             // Avoid cloning feature... return the copy owned by the class
             CPLAssert(poFeatureRef == m_poCurFeature);
             m_poCurFeature = NULL;  
+            if( poFeatureRef->GetGeometryRef() != NULL )
+                poFeatureRef->GetGeometryRef()->assignSpatialReference(GetSpatialRef());
             return poFeatureRef;
         }
     }
@@ -290,17 +316,16 @@ OGRFeature *IMapInfoFile::GetNextFeature()
 }
 
 /**********************************************************************
- *                   IMapInfoFile::CreateFeature()
+ *                   IMapInfoFile::CreateTABFeature()
  *
- * Standard OGR CreateFeature implementation.  This method is used
- * to create a new feature in current dataset 
+ * Instanciate a TABFeature* from a OGRFeature* (or NULL on error)
  **********************************************************************/
-OGRErr     IMapInfoFile::CreateFeature(OGRFeature *poFeature)
+
+TABFeature* IMapInfoFile::CreateTABFeature(OGRFeature *poFeature)
 {
     TABFeature *poTABFeature;
     OGRGeometry   *poGeom;
     OGRwkbGeometryType eGType;
-    OGRErr  eErr;
     TABPoint *poTABPointFeature = NULL;
     TABRegion *poTABRegionFeature = NULL;
     TABPolyline *poTABPolylineFeature = NULL;
@@ -377,7 +402,7 @@ OGRErr     IMapInfoFile::CreateFeature(OGRFeature *poFeature)
               eStatus = CreateFeature(poTmpFeature);
           }
           delete poTmpFeature;
-          return eStatus;
+          return NULL;
         }
         break;
       /*-------------------------------------------------------------
@@ -397,8 +422,29 @@ OGRErr     IMapInfoFile::CreateFeature(OGRFeature *poFeature)
         poTABFeature->SetField(i,poFeature->GetRawFieldRef( i ));
     }
     
+    poTABFeature->SetFID(poFeature->GetFID());
+    
+    return poTABFeature;
+}
+
+/**********************************************************************
+ *                   IMapInfoFile::CreateFeature()
+ *
+ * Standard OGR CreateFeature implementation.  This method is used
+ * to create a new feature in current dataset 
+ **********************************************************************/
+OGRErr     IMapInfoFile::CreateFeature(OGRFeature *poFeature)
+{
+    TABFeature *poTABFeature;
+    OGRErr  eErr;
+
+    poTABFeature = CreateTABFeature(poFeature);
+    if( poTABFeature == NULL )
+        return OGRERR_FAILURE;
 
     eErr = CreateFeature(poTABFeature);
+    if( eErr == OGRERR_NONE )
+        poFeature->SetFID(poTABFeature->GetFID());
 
     delete poTABFeature;
     
@@ -415,6 +461,8 @@ OGRErr     IMapInfoFile::CreateFeature(OGRFeature *poFeature)
 OGRFeature *IMapInfoFile::GetFeature(long nFeatureId)
 {
     OGRFeature *poFeatureRef;
+    
+    /*fprintf(stderr, "GetFeature(%ld)\n", nFeatureId);*/
 
     poFeatureRef = GetFeatureRef(nFeatureId);
     if (poFeatureRef)

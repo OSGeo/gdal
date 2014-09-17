@@ -9,6 +9,7 @@
  *
  **********************************************************************
  * Copyright (c) 1999, 2000, Stephane Villeneuve
+ * Copyright (c) 2014, Even Rouault <even.rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -102,6 +103,7 @@ class OGRTABDataSource : public OGRDataSource
     int                 m_bSingleFile;
     int                 m_bSingleLayerAlreadyCreated;
     GBool               m_bQuickSpatialIndexMode;
+    int                 m_bUpdate;
 
   public:
                 OGRTABDataSource();

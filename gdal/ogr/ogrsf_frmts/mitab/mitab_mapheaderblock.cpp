@@ -10,6 +10,7 @@
  *
  **********************************************************************
  * Copyright (c) 1999-2002, Daniel Morissette
+ * Copyright (c) 2014, Even Rouault <even.rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -333,6 +334,11 @@ int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf,
     m_nYMin = ReadInt32();
     m_nXMax = ReadInt32();
     m_nYMax = ReadInt32();
+    if( m_nXMin > m_nXMax || m_nYMin > m_nYMax )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined, "Reading corrupted MBR from .map header");
+        CPLErrorReset();
+    }
 
     GotoByteInBlock(0x130);     // Skip 16 unknown bytes 
 
@@ -853,6 +859,10 @@ int     TABMAPHeaderBlock::CommitToFile()
     WriteInt32(m_nYMin);
     WriteInt32(m_nXMax);
     WriteInt32(m_nYMax);
+    if( m_nXMin > m_nXMax || m_nYMin > m_nYMax )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined, "Writing corrupted MBR into .map header");
+    }
 
     WriteZeros(16);     // ???
 
@@ -919,7 +929,12 @@ int     TABMAPHeaderBlock::CommitToFile()
      * OK, call the base class to write the block to disk.
      *----------------------------------------------------------------*/
     if (nStatus == 0)
+    {
+#ifdef DEBUG_VERBOSE
+        CPLDebug("MITAB", "Commiting HEADER block to offset %d", m_nFileOffset);
+#endif
         nStatus = TABRawBinBlock::CommitToFile();
+    }
 
     return nStatus;
 }

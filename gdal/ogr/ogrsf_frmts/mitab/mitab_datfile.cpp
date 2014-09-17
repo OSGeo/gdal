@@ -10,6 +10,7 @@
  *
  **********************************************************************
  * Copyright (c) 1999-2001, Daniel Morissette
+ * Copyright (c) 2014, Even Rouault <even.rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -142,6 +143,9 @@ TABDATFile::TABDATFile()
     m_nCurRecordId = -1;
     m_bCurRecordDeletedFlag = FALSE;
     m_bWriteHeaderInitialized = FALSE;
+    m_bWriteEOF = FALSE;
+    
+    m_bUpdated = FALSE;
 }
 
 /**********************************************************************
@@ -157,6 +161,27 @@ TABDATFile::~TABDATFile()
 /**********************************************************************
  *                   TABDATFile::Open()
  *
+ * Compatibility layer with new interface.
+ * Return 0 on success, -1 in case of failure.
+ **********************************************************************/
+
+int TABDATFile::Open(const char *pszFname, const char* pszAccess, TABTableType eTableType)
+{
+    if( EQUALN(pszAccess, "r", 1) )
+        return Open(pszFname, TABRead, eTableType);
+    else if( EQUALN(pszAccess, "w", 1) )
+        return Open(pszFname, TABWrite, eTableType);
+    else
+    {
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Open() failed: access mode \"%s\" not supported", pszAccess);
+        return -1;
+    }
+}
+
+/**********************************************************************
+ *                   TABDATFile::Open()
+ *
  * Open a .DAT file, and initialize the structures to be ready to read
  * records from it.
  *
@@ -165,7 +190,7 @@ TABDATFile::~TABDATFile()
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABDATFile::Open(const char *pszFname, const char *pszAccess,
+int TABDATFile::Open(const char *pszFname, TABAccess eAccess,
                      TABTableType eTableType /*=TABNativeTable*/)
 {
     int i;
@@ -180,23 +205,28 @@ int TABDATFile::Open(const char *pszFname, const char *pszAccess,
     /*-----------------------------------------------------------------
      * Validate access mode and make sure we use binary access.
      *----------------------------------------------------------------*/
-    if (EQUALN(pszAccess, "r", 1) && (eTableType==TABTableNative ||
+    const char* pszAccess = NULL;
+    if (eAccess == TABRead && (eTableType==TABTableNative ||
                                       eTableType==TABTableDBF)  )
     {
-        m_eAccessMode = TABRead;
         pszAccess = "rb";
     }
-    else if (EQUALN(pszAccess, "w", 1) && eTableType==TABTableNative)
+    else if (eAccess == TABWrite && eTableType==TABTableNative)
     {
-        m_eAccessMode = TABWrite;
-        pszAccess = "wb";
+        pszAccess = "wb+";
+    }
+    else if (eAccess == TABReadWrite && eTableType==TABTableNative)
+    {
+        pszAccess = "rb+";
     }
     else
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Open() failed: access mode \"%s\" not supported", pszAccess);
+                 "Open() failed: access mode \"%d\" not supported with eTableType=%d",
+                 eAccess, eTableType);
         return -1;
     }
+    m_eAccessMode = eAccess;
 
     /*-----------------------------------------------------------------
      * Open file for reading
@@ -214,7 +244,7 @@ int TABDATFile::Open(const char *pszFname, const char *pszAccess,
         return -1;
     }
 
-    if (m_eAccessMode == TABRead)
+    if (m_eAccessMode == TABRead || m_eAccessMode == TABReadWrite)
     {
         /*------------------------------------------------------------
          * READ ACCESS:
@@ -268,6 +298,8 @@ int TABDATFile::Open(const char *pszFname, const char *pszAccess,
         m_poRecordBlock = new TABRawBinBlock(m_eAccessMode, FALSE);
         m_poRecordBlock->InitNewBlock(m_fp, m_nBlockSize);
         m_poRecordBlock->SetFirstBlockPtr(m_nFirstRecordPtr);
+        
+        m_bWriteHeaderInitialized = TRUE;
     }
     else
     {
@@ -306,15 +338,11 @@ int TABDATFile::Close()
      * Write access: Update the header with number of records, etc.
      * and add a CTRL-Z char at the end of the file.
      *---------------------------------------------------------------*/
-    if (m_eAccessMode == TABWrite)
+    if (m_eAccessMode == TABWrite || (m_eAccessMode == TABReadWrite && m_bUpdated) )
     {
         WriteHeader();
-
-        char cEOF = 26;
-        if (VSIFSeekL(m_fp, 0L, SEEK_END) == 0)
-            VSIFWriteL(&cEOF, 1, 1, m_fp);
     }
-    
+
     // Delete all structures 
     if (m_poHeaderBlock)
     {
@@ -362,7 +390,7 @@ int  TABDATFile::InitWriteHeader()
 {
     int i;
 
-    if (m_eAccessMode != TABWrite || m_bWriteHeaderInitialized)
+    if (m_eAccessMode == TABRead || m_bWriteHeaderInitialized)
         return 0;
 
     /*------------------------------------------------------------
@@ -382,7 +410,7 @@ int  TABDATFile::InitWriteHeader()
     m_nBlockSize = m_nRecordSize;
 
     CPLAssert( m_poRecordBlock == NULL );
-    m_poRecordBlock = new TABRawBinBlock(m_eAccessMode, FALSE);
+    m_poRecordBlock = new TABRawBinBlock(TABReadWrite, FALSE);
     m_poRecordBlock->InitNewBlock(m_fp, m_nBlockSize);
     m_poRecordBlock->SetFirstBlockPtr(m_nFirstRecordPtr);
 
@@ -406,7 +434,7 @@ int  TABDATFile::WriteHeader()
 {
     int i;
 
-    if (m_eAccessMode != TABWrite)
+    if (m_eAccessMode == TABRead)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "WriteHeader() can be used only with Write access.");
@@ -514,8 +542,9 @@ int  TABDATFile::GetNumRecords()
 TABRawBinBlock *TABDATFile::GetRecordBlock(int nRecordId)
 {
     m_bCurRecordDeletedFlag = FALSE;
+    m_bWriteEOF = FALSE;
 
-    if (m_eAccessMode == TABRead)
+    if (m_eAccessMode == TABRead || nRecordId <= m_numRecords)
     {
         /*-------------------------------------------------------------
          * READ ACCESS
@@ -549,7 +578,7 @@ TABRawBinBlock *TABDATFile::GetRecordBlock(int nRecordId)
             m_bCurRecordDeletedFlag = TRUE;
         }
     }
-    else if (m_eAccessMode == TABWrite && nRecordId > 0)
+    else if (nRecordId > 0)
     {
         /*-------------------------------------------------------------
          * WRITE ACCESS
@@ -565,8 +594,12 @@ TABRawBinBlock *TABDATFile::GetRecordBlock(int nRecordId)
         {
             WriteHeader();
         }
+        
+        m_bUpdated = TRUE;
 
         m_numRecords = MAX(nRecordId, m_numRecords);
+        if( nRecordId == m_numRecords )
+            m_bWriteEOF = TRUE;
 
         nFileOffset = m_nFirstRecordPtr+(nRecordId-1)*m_nRecordSize;
 
@@ -597,10 +630,73 @@ TABRawBinBlock *TABDATFile::GetRecordBlock(int nRecordId)
  **********************************************************************/
 int  TABDATFile::CommitRecordToFile()
 {
-    if (m_eAccessMode != TABWrite || m_poRecordBlock == NULL)
+    if (m_eAccessMode == TABRead || m_poRecordBlock == NULL)
         return -1;
 
-    return m_poRecordBlock->CommitToFile();
+    if (m_poRecordBlock->CommitToFile() != 0)
+        return -1;
+    
+    /* If this is the end of file, write EOF character */
+    if (m_bWriteEOF)
+    {
+        m_bWriteEOF = FALSE;
+        char cEOF = 26;
+        if (VSIFSeekL(m_fp, 0L, SEEK_END) == 0)
+            VSIFWriteL(&cEOF, 1, 1, m_fp);
+    }
+    
+    return 0;
+}
+
+/**********************************************************************
+ *                   TABDATFile::MarkAsDeleted()
+ 
+ * Returns 0 on success, -1 on error.
+ **********************************************************************/
+int TABDATFile::MarkAsDeleted()
+{
+    if (m_eAccessMode == TABRead || m_poRecordBlock == NULL)
+        return -1;
+
+    int nFileOffset;
+    nFileOffset = m_nFirstRecordPtr+(m_nCurRecordId-1)*m_nRecordSize;
+
+    if (m_poRecordBlock->GotoByteInFile(nFileOffset) != 0)
+        return -1;
+
+    m_poRecordBlock->WriteByte('*');
+
+    if (m_poRecordBlock->CommitToFile() != 0)
+        return -1;
+    
+    m_bCurRecordDeletedFlag = TRUE;
+    m_bUpdated = TRUE;
+    
+    return 0;
+}
+
+/**********************************************************************
+ *                   TABDATFile::MarkRecordAsExisting()
+ 
+ * Returns 0 on success, -1 on error.
+ **********************************************************************/
+int TABDATFile::MarkRecordAsExisting()
+{
+    if (m_eAccessMode == TABRead || m_poRecordBlock == NULL)
+        return -1;
+
+    int nFileOffset;
+    nFileOffset = m_nFirstRecordPtr+(m_nCurRecordId-1)*m_nRecordSize;
+
+    if (m_poRecordBlock->GotoByteInFile(nFileOffset) != 0)
+        return -1;
+
+    m_poRecordBlock->WriteByte(' ');
+
+    m_bCurRecordDeletedFlag = FALSE;
+    m_bUpdated = TRUE;
+    
+    return 0;
 }
 
 
@@ -628,8 +724,6 @@ int  TABDATFile::ValidateFieldInfoFromTAB(int iField, const char *pszName,
                                           int nWidth, int nPrecision)
 {
     int i = iField;  // Just to make things shorter
-
-    CPLAssert(m_pasFieldDef);
 
     if (m_pasFieldDef == NULL || iField < 0 || iField >= m_numFields)
     {

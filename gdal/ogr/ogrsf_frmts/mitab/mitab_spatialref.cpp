@@ -9,6 +9,7 @@
  *
  **********************************************************************
  * Copyright (c) 1999-2001, Frank Warmerdam
+ * Copyright (c) 2014, Even Rouault <even.rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -807,13 +808,6 @@ static const MapInfoLCCSRS asMapInfoLCCSRSList[] = {
  **********************************************************************/
 OGRSpatialReference *TABFile::GetSpatialRef()
 {
-    if (m_eAccessMode != TABRead)
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "GetSpatialRef() can be used only with Read access.");
-        return NULL;
-    }
- 
     if (m_poMAPFile == NULL )
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
