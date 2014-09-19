@@ -739,7 +739,7 @@ static CPLString OGRPGDumpEscapeStringList(
         osStr += "ARRAY[";
     else
         osStr += "{";
-    while(*papszItems)
+    while(papszItems && *papszItems)
     {
         if (!bFirstItem)
         {
@@ -774,7 +774,11 @@ static CPLString OGRPGDumpEscapeStringList(
         papszItems++;
     }
     if (bForInsertOrUpdate)
+    {
         osStr += "]";
+        if( papszItems == NULL )
+            osStr += "::varchar[]";
+    }
     else
         osStr += "}";
     return osStr;
