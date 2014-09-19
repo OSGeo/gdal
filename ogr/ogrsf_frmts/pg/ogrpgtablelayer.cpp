@@ -1590,7 +1590,7 @@ static CPLString OGRPGEscapeStringList(PGconn *hPGConn,
         osStr += "ARRAY[";
     else
         osStr += "{";
-    while(*papszItems)
+    while(papszItems && *papszItems)
     {
         if (!bFirstItem)
         {
@@ -1625,7 +1625,11 @@ static CPLString OGRPGEscapeStringList(PGconn *hPGConn,
         papszItems++;
     }
     if (bForInsertOrUpdate)
+    {
         osStr += "]";
+        if( papszItems == NULL )
+            osStr += "::varchar[]";
+    }
     else
         osStr += "}";
     return osStr;
