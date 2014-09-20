@@ -70,6 +70,10 @@ OGRDataSourceH OGR_Dr_CreateDataSource( OGRSFDriverH hDriver,
 
     GDALDriver* poDriver = (GDALDriver*)hDriver;
 
+    /* MapServer had the bad habit of calling with NULL name for a memory datasource */
+    if( pszName == NULL )
+        pszName = "";
+
     OGRDataSourceH hDS = (OGRDataSourceH) poDriver->Create( pszName, 0, 0, 0, GDT_Unknown, papszOptions );
 
 #ifdef OGRAPISPY_ENABLED
