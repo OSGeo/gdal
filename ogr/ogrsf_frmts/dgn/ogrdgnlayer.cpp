@@ -1143,7 +1143,7 @@ OGRErr OGRDGNLayer::CreateFeatureWithGeom( OGRFeature *poFeature,
     nColor = MAX(0,MIN(255,nColor));
     nWeight = MAX(0,MIN(31,nWeight));
     nStyle = MAX(0,MIN(7,nStyle));
-    nMSLink = MAX(0,MIN(4294967295,nMSLink));
+    nMSLink = MAX(0,nMSLink);
 
     DGNUpdateElemCore( hDGN, papsGroup[0], nLevel, nGraphicGroup, nColor, 
                        nWeight, nStyle );
