@@ -1192,8 +1192,9 @@ CPLErr GSAGDataset::ShiftFileContents( VSILFILE *fp, vsi_l_offset nShiftStart,
 	return CE_None;
 
     /* make sure start location is sane */
-    if( nShiftStart < 0
-	|| (nShiftSize < 0
+/* Tautology is always false.  nShiftStart is unsigned. */
+    if( /* nShiftStart < 0
+           || */ (nShiftSize < 0
 	    && nShiftStart < static_cast<vsi_l_offset>(-nShiftSize)) )
 	nShiftStart = (nShiftSize > 0) ? 0 : -nShiftSize;
 
