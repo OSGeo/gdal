@@ -33,7 +33,7 @@
 #include "geoconcept_syscoord.h"
 #include "cpl_string.h"
 
-GCSRS_CVSID("$Id: geoconcept_syscoord.c,v 1.0.0 2007-12-24 15:40:28 drichard Exp $")
+CPL_CVSID("$Id: geoconcept_syscoord.c,v 1.0.0 2007-12-24 15:40:28 drichard Exp $")
 
 #ifndef PI
 #define PI 3.14159265358979323846
