@@ -228,7 +228,7 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
     int dotFound = 0;
     int numChar = 0;
     const char* detailedErrorMsg = NULL;
-    BNAFeatureType currentFeatureType = (BNAFeatureType) -1;
+    BNAFeatureType currentFeatureType = BNA_UNKNOWN;
     int nbExtraId = 0;
     char tmpBuffer[NB_MAX_BNA_IDS][TMP_BUFFER_SIZE+1];
     int  tmpBufferLength[NB_MAX_BNA_IDS] = {0, 0, 0};
@@ -496,7 +496,7 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
           {
             inQuotes = TRUE;
           }
-          else if (numField >= NB_MIN_BNA_IDS && currentFeatureType == -1)
+          else if (numField >= NB_MIN_BNA_IDS && currentFeatureType == BNA_UNKNOWN)
           {
             if (ptrBeginningOfNumber == NULL)
             {
