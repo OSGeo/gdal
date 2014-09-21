@@ -15,16 +15,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
@@ -48,7 +48,7 @@ CPL_C_END
 /************************************************************************/
 /*                              NASHandler                              */
 /************************************************************************/
-class NASHandler : public DefaultHandler 
+class NASHandler : public DefaultHandler
 {
     NASReader  *m_poReader;
 
@@ -64,17 +64,23 @@ class NASHandler : public DefaultHandler
     int        m_nDepth;
     int        m_nDepthFeature;
     int        m_bIgnoreFeature;
+    int        m_bInUpdate;
+    int        m_bInUpdateProperty;
     int        m_nDepthElement;
     CPLString  m_osIgnoredElement;
 
     CPLString  m_osLastTypeName;
     CPLString  m_osLastReplacingFID;
     CPLString  m_osLastSafeToIgnore;
+    CPLString  m_osLastPropertyName;
+    CPLString  m_osLastPropertyValue;
+    CPLString  m_osLastEnded;
+    CPLString  m_osLastOccasion;
 
 public:
     NASHandler( NASReader *poReader );
     virtual ~NASHandler();
-    
+
     void startElement(
         const   XMLCh* const    uri,
         const   XMLCh* const    localname,
@@ -104,7 +110,7 @@ public:
 /************************************************************************/
 
 // for now, use existing gmlreadstate.
-#ifdef notdef 
+#ifdef notdef
 class GMLReadState
 {
     void        RebuildPath();
@@ -134,7 +140,7 @@ public:
 /*                              NASReader                               */
 /************************************************************************/
 
-class NASReader : public IGMLReader 
+class NASReader : public IGMLReader
 {
 private:
     int           m_bClassListLocked;
@@ -196,7 +202,7 @@ public:
                                        int bSqliteIsTempFile,
                                        int iSqliteCacheMB );
 
-// --- 
+// ---
 
     GMLReadState     *GetState() const { return m_poState; }
     void             PopState();
@@ -205,7 +211,7 @@ public:
     int         IsFeatureElement( const char *pszElement );
     int         IsAttributeElement( const char *pszElement );
 
-    void        PushFeature( const char *pszElement, 
+    void        PushFeature( const char *pszElement,
                              const Attributes &attrs );
 
     void        SetFeaturePropertyDirectly( const char *pszElement,
@@ -214,8 +220,9 @@ public:
     int         HasStoppedParsing() { return FALSE; }
 
     void        CheckForFID( const Attributes &attrs, char **ppszCurField );
-    void        CheckForRelations( const char *pszElement, 
-                                   const Attributes &attrs );
+    void        CheckForRelations( const char *pszElement,
+                                   const Attributes &attrs,
+                                   char **ppszCurField );
 
     virtual const char* GetGlobalSRSName() { return NULL; }
 
