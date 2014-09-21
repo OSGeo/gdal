@@ -51,10 +51,10 @@ const OGRwkbGeometryType OGRGeoJSONLayer::DefaultGeometryType = wkbUnknown;
 OGRGeoJSONLayer::OGRGeoJSONLayer( const char* pszName,
                                   OGRSpatialReference* poSRSIn,
                                   OGRwkbGeometryType eGType,
-                                  OGRGeoJSONDataSource* poDS )
-    : iterCurrent_( seqFeatures_.end() ), poDS_( poDS ), poFeatureDefn_(new OGRFeatureDefn( pszName ) )
+                                  CPL_UNUSED OGRGeoJSONDataSource* poDS )
+  : iterCurrent_( seqFeatures_.end() ), /* poDS_( poDS ), */ poFeatureDefn_(new OGRFeatureDefn( pszName ) )
 {
-    CPLAssert( NULL != poDS_ );
+    /* CPLAssert( NULL != poDS_ ); */
     CPLAssert( NULL != poFeatureDefn_ );
     
     poFeatureDefn_->Reference();
