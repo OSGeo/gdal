@@ -594,7 +594,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXF, SXFPassport& pas
     long iEllips = anData[0];
     long iVCS = anData[1];
     long iProjSys = anData[2];
-    long iDatum = anData[3];
+    /* long iDatum = anData[3]; Unused. */
     double dfProjScale = 1;
 
     double adfPrjParams[8] = { 0 };
