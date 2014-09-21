@@ -33,8 +33,9 @@
 #include <string.h>
 #include <time.h>
 #include "zlib.h"
-#include "cpl_minizip_zip.h"
 #include "cpl_conv.h"
+#include "cpl_minizip_zip.h"
+#include "cpl_port.h"
 #include "cpl_string.h"
 
 #ifdef STDC
@@ -98,7 +99,8 @@
 #  define DEF_MEM_LEVEL  MAX_MEM_LEVEL
 #endif
 #endif
-const char zip_copyright[] =
+
+CPL_UNUSED const char zip_copyright[] =
    " zip 1.01 Copyright 1998-2004 Gilles Vollant - http://www.winimage.com/zLibDll";
 
 
