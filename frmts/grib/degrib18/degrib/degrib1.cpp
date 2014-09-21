@@ -1240,6 +1240,7 @@ static int ReadGrib1Sect3 (uChar *bms, uInt4 gribLen, uInt4 *curLoc,
    return 0;
 }
 
+#ifdef DEBUG
 static int UnpackCmplx (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
                         short int DSF, double *data, grib_MetaData *meta,
                         char f_bms, uChar *bitmap, double unitM,
@@ -1336,6 +1337,7 @@ static int UnpackCmplx (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
    return -2;
 
 }
+#endif /* DEBUG */
 
 /*****************************************************************************
  * ReadGrib1Sect4() --
@@ -1770,7 +1772,7 @@ int ReadGrib1Record (DataSource &fp, sChar f_unit, double **Grib_Data,
    }
    meta->pds1.gridID = gridID;
    /* Allow data originating from NCEP to be 6371.2 by default. */
-   if ((meta->center == NMC)) {
+   if (meta->center == NMC) {
       if (meta->gds.majEarth == 6367.47) {
          meta->gds.f_sphere = 1;
          meta->gds.majEarth = 6371.2;
