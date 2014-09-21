@@ -666,7 +666,7 @@ void strTrim (char *str)
 
    /* Remove the trailing white space before working on the leading ones. */
    len = strlen (str);
-   for (i = len - 1; ((i >= 0) && (isspace ((unsigned char)str[i]))); i--) {
+   for (i = len - 1; (/* (i >= 0) && */ (isspace ((unsigned char)str[i]))); i--) {
    }
    len = i + 1;
    str[len] = '\0';
@@ -715,7 +715,7 @@ void strTrimRight (char *str, char c)
    }
 
    for (i = strlen (str) - 1;
-        ((i >= 0) && ((isspace ((unsigned char)str[i])) || (str[i] == c))); i--) {
+        (/* (i >= 0) && */ ((isspace ((unsigned char)str[i])) || (str[i] == c))); i--) {
    }
    str[i + 1] = '\0';
 }
