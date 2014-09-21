@@ -120,7 +120,9 @@ size_t GS7BGDataset::nData_Position = 0;
 const long  nHEADER_TAG = 0x42525344;
 const long  nGRID_TAG = 0x44495247;
 const long  nDATA_TAG = 0x41544144;
+#if 0 /* Unused */
 const long  nFAULT_TAG = 0x49544c46;
+#endif
 
 /************************************************************************/
 /* ==================================================================== */
