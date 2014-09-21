@@ -30,7 +30,9 @@
 #ifndef OGR_GEOJSON_H_INCLUDED
 #define OGR_GEOJSON_H_INCLUDED
 
+#include "cpl_port.h"
 #include <ogrsf_frmts.h>
+
 #include <cstdio>
 #include <vector> // used by OGRGeoJSONLayer
 
@@ -80,7 +82,8 @@ private:
     FeaturesSeq seqFeatures_;
     FeaturesSeq::iterator iterCurrent_;
 
-    OGRGeoJSONDataSource* poDS_;
+    /* poDS_ retained for ABI compatibility. */
+    CPL_UNUSED OGRGeoJSONDataSource* poDS_;
     OGRFeatureDefn* poFeatureDefn_;
     CPLString sFIDColumn_;
 };
