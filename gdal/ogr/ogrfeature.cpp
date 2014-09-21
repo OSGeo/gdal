@@ -2405,6 +2405,14 @@ void OGRFeature::SetField( int iField, const char * pszValue )
 
         CSLDestroy(papszValueList);
     }
+    else if ( poFDefn->GetType() == OFTStringList )
+    {
+        if( pszValue && *pszValue )
+        {
+            const char *papszValues[2] = { pszValue, 0 };
+            SetField( iField, (char **) papszValues );
+        }
+    }
     else
         /* do nothing for other field types */;
 }
