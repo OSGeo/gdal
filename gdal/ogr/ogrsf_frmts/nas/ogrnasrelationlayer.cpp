@@ -175,7 +175,7 @@ int OGRNASRelationLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCStringsAsUTF8) )
         return TRUE;
 
-    else 
+    else
         return FALSE;
 }
 
@@ -190,7 +190,7 @@ void OGRNASRelationLayer::AddRelation( const char *pszFromID,
 {
     int nMergedLen = strlen(pszFromID) + strlen(pszType) + strlen(pszToID) + 3;
     char *pszMerged = (char *) CPLMalloc(nMergedLen);
-    
+
     strcpy( pszMerged, pszFromID );
     strcpy( pszMerged + strlen(pszFromID) + 1, pszType );
     strcpy( pszMerged + strlen(pszFromID) + strlen(pszType) + 2, pszToID );
