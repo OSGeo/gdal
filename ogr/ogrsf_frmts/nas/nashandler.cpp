@@ -15,16 +15,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
@@ -34,6 +34,42 @@
 #include "cpl_string.h"
 
 #define MAX_TOKEN_SIZE  1000
+
+/*
+  Update modes:
+
+       <geaenderteObjekte>
+                <wfs:Transaction version="1.0.0" service="WFS">
+                        <wfs:Delete typeName="AX_BesondereFlurstuecksgrenze">
+                                <ogc:Filter>
+                                        <ogc:FeatureId fid="DENW18AL0000nANA20120117T130819Z" />
+                                </ogc:Filter>
+                        </wfs:Delete>
+                        <wfsext:Replace vendorId="AdV" safeToIgnore="false">
+                                <AP_PTO gml:id="DENW18AL0000pewY20131011T071138Z">
+                                       [...]
+                                </AP_PTO>
+                                <ogc:Filter>
+                                        <ogc:FeatureId fid="DENW18AL0000pewY20120117T143330Z" />
+                                </ogc:Filter>
+                        </wfsext:Replace>
+                        <wfs:Update typeName="AX_KommunalesGebiet">
+                                <wfs:Property>
+                                        <wfs:Name>adv:lebenszeitintervall/adv:AA_Lebenszeitintervall/adv:endet</wfs:Name>
+                                        <wfs:Value>2012-08-14T12:32:30Z</wfs:Value>
+                                </wfs:Property>
+                                <wfs:Property>
+                                        <wfs:Name>adv:anlass</wfs:Name>
+                                        <wfs:Value>000000</wfs:Value>
+                                </wfs:Property>
+                                <ogc:Filter>
+                                        <ogc:FeatureId fid="DENW11AL000062WD20111016T122010Z" />
+                                </ogc:Filter>
+                        </wfs:Update>
+                </wfs:Transaction>
+        </geaenderteObjekte>
+*/
+
 
 /************************************************************************/
 /*                             NASHandler()                             */
@@ -48,6 +84,8 @@ NASHandler::NASHandler( NASReader *poReader )
     m_nGeomAlloc = m_nGeomLen = 0;
     m_nDepthFeature = m_nDepthElement = m_nDepth = 0;
     m_bIgnoreFeature = FALSE;
+    m_bInUpdate = FALSE;
+    m_bInUpdateProperty = FALSE;
 }
 
 /************************************************************************/
@@ -178,13 +216,13 @@ void NASHandler::startElement(const XMLCh* const    uri,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Is this the ogc:Filter element in a wfs:Delete or               */
-/*      wfsext:Replace operation?  If so we translate it as a           */
+/*      Is this the ogc:Filter element in a update operation            */
+/*      (wfs:Delete, wfsext:Replace or wfs:Update)?                     */
 /*      specialized sort of feature.                                    */
 /* -------------------------------------------------------------------- */
     else if( EQUAL(szElementName,"Filter")
              && (pszLast = m_poReader->GetState()->GetLastComponent()) != NULL
-             && (EQUAL(pszLast,"Delete") || EQUAL(pszLast,"Replace")) )
+             && (EQUAL(pszLast,"Delete") || EQUAL(pszLast,"Replace") || EQUAL(pszLast,"Update")) )
     {
         const char* pszFilteredClassName = m_poReader->GetFilteredClassName();
         if ( pszFilteredClassName != NULL &&
@@ -214,6 +252,15 @@ void NASHandler::startElement(const XMLCh* const    uri,
             CPLAssert( m_osLastSafeToIgnore != "" );
             m_poReader->SetFeaturePropertyDirectly( "replacedBy", CPLStrdup(m_osLastReplacingFID) );
             m_poReader->SetFeaturePropertyDirectly( "safeToIgnore", CPLStrdup(m_osLastSafeToIgnore) );
+        }
+        else if( EQUAL( pszLast, "Update" ) )
+        {
+            CPLAssert( m_osLastEnded != "" );
+            CPLAssert( m_osLastOccasion != "" );
+            m_poReader->SetFeaturePropertyDirectly( "endet", CPLStrdup(m_osLastEnded) );
+            m_poReader->SetFeaturePropertyDirectly( "anlass", CPLStrdup(m_osLastOccasion) );
+            m_osLastEnded = "";
+            m_osLastOccasion = "";
         }
 
         return;
@@ -272,11 +319,11 @@ void NASHandler::startElement(const XMLCh* const    uri,
     }
 
 /* -------------------------------------------------------------------- */
-/*      If it is the wfs:Delete element, then remember the typeName     */
-/*      attribute so we can assign it to the feature that will be       */
-/*      produced when we process the Filter element.                    */
+/*      If it is the wfs:Delete or wfs:Update element, then remember    */
+/*      the typeName attribute so we can assign it to the feature that  */
+/*      will be produced when we process the Filter element.            */
 /* -------------------------------------------------------------------- */
-    else if( EQUAL(szElementName,"Delete") )
+    else if( EQUAL(szElementName,"Delete") || EQUAL(szElementName,"Update") )
     {
         int nIndex;
         XMLCh  Name[100];
@@ -293,6 +340,23 @@ void NASHandler::startElement(const XMLCh* const    uri,
 
         m_osLastSafeToIgnore = "";
         m_osLastReplacingFID = "";
+
+        if( EQUAL(szElementName,"Update") )
+        {
+            m_bInUpdate = TRUE;
+        }
+    }
+
+    else if ( m_bInUpdate && EQUAL(szElementName, "Property") )
+    {
+        m_bInUpdateProperty = TRUE;
+    }
+
+    else if ( m_bInUpdateProperty && ( EQUAL(szElementName, "Name" ) || EQUAL(szElementName, "Value" ) ) )
+    {
+        // collect attribute name or value
+        CPLFree( m_pszCurField );
+        m_pszCurField = CPLStrdup("");
     }
 
 /* -------------------------------------------------------------------- */
@@ -333,7 +397,7 @@ void NASHandler::startElement(const XMLCh* const    uri,
         m_pszCurField = CPLStrdup("");
 
         // Capture href as OB property.
-        m_poReader->CheckForRelations( szElementName, attrs );
+        m_poReader->CheckForRelations( szElementName, attrs, &m_pszCurField );
 
         // Capture "fid" attribute as part of the property value -
         // primarily this is for wfs:Delete operation's FeatureId attribute.
@@ -359,6 +423,7 @@ void NASHandler::endElement(const   XMLCh* const    uri,
 {
     char        szElementName[MAX_TOKEN_SIZE];
     GMLReadState *poState = m_poReader->GetState();
+    const char  *pszLast;
 
     tr_strcpy( szElementName, localname );
 
@@ -393,6 +458,54 @@ void NASHandler::endElement(const   XMLCh* const    uri,
               poState->m_poFeature ? poState->m_poFeature->GetClass()->GetElementName() : "(no feature)"
             );
 #endif
+
+   if( m_bInUpdateProperty )
+   {
+       if( EQUAL( szElementName, "Name" ) )
+       {
+           CPLAssert( m_osLastPropertyName == "" );
+           m_osLastPropertyName = m_pszCurField;
+           m_pszCurField = NULL;
+       }
+       else if( EQUAL( szElementName, "Value" ) )
+       {
+           CPLAssert( m_osLastPropertyValue == "" );
+           m_osLastPropertyValue = m_pszCurField;
+           m_pszCurField = NULL;
+       }
+       else if( EQUAL( szElementName, "Property" ) )
+       {
+           if( EQUAL( m_osLastPropertyName, "adv:lebenszeitintervall/adv:AA_Lebenszeitintervall/adv:endet" ) )
+           {
+               CPLAssert( m_osLastPropertyValue != "" );
+               m_osLastEnded = m_osLastPropertyValue;
+           }
+           else if( EQUAL( m_osLastPropertyName, "adv:anlass" ) )
+           {
+               CPLAssert( m_osLastPropertyValue != "" );
+               m_osLastOccasion = m_osLastPropertyValue;
+           }
+           else
+           {
+               CPLError( CE_Warning, CPLE_AppDefined,
+                         "NAS: Expected property name or value instead of %s",
+                         m_osLastPropertyName.c_str() );
+           }
+
+           m_osLastPropertyName = "";
+           m_osLastPropertyValue = "";
+           m_bInUpdateProperty = FALSE;
+       }
+
+       poState->PopPath();
+
+       return;
+   }
+
+   if ( m_bInUpdate && EQUAL( szElementName, "Update" ) )
+   {
+       m_bInUpdate = FALSE;
+   }
 
 /* -------------------------------------------------------------------- */
 /*      Is this closing off an attribute value?  We assume so if        */
@@ -437,7 +550,7 @@ void NASHandler::endElement(const   XMLCh* const    uri,
                 CPLXMLNode* psNode = CPLParseXMLString(m_pszGeometry);
                 if (psNode)
                 {
-                    /* workaround common malformed gml:pos with just a
+                    /* workaround for common malformed gml:pos with just a
                      * elevation value instead of a full 3D coordinate:
                      *
                      * <gml:Point gml:id="BII2H">
@@ -468,7 +581,7 @@ void NASHandler::endElement(const   XMLCh* const    uri,
 
                         CPLFree( pszOldGeom );
 #else
-            		CPLError( CE_Warning, CPLE_AppDefined, "NAS: Overwriting other geometry (%s)",
+                        CPLError( CE_Warning, CPLE_AppDefined, "NAS: Overwriting other geometry (%s)",
                                  poIdProp && poIdProp->nSubProperties>0 && poIdProp->papszSubProperties[0] ? poIdProp->papszSubProperties[0] : "(null)" );
 #endif
                     }
@@ -501,14 +614,14 @@ void NASHandler::endElement(const   XMLCh* const    uri,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Ends of a wfs:Delete should be triggered on the close of the    */
-/*      <Filter> element.                                               */
+/*      Ends of a wfs:Delete or wfs:Update should be triggered on the   */
+/*      close of the <Filter> element.                                  */
 /* -------------------------------------------------------------------- */
     else if( m_nDepth == m_nDepthFeature
              && poState->m_poFeature != NULL
              && EQUAL(szElementName,"Filter")
-             && EQUAL(poState->m_poFeature->GetClass()->GetElementName(),
-                      "Delete") )
+             && (pszLast=poState->m_poFeature->GetClass()->GetElementName()) != NULL
+             && ( EQUAL(pszLast, "Delete") || EQUAL(pszLast, "Update") ) )
     {
         m_nDepthFeature = 0;
         m_poReader->PopState();
@@ -632,3 +745,5 @@ int NASHandler::IsGeometryElement( const char *pszElement )
         || strcmp(pszElement,"PolygonPatch") == 0
         || strcmp(pszElement,"LineString") == 0;
 }
+
+// vim: set sw=4 expandtab :
