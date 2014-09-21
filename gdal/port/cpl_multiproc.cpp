@@ -1206,8 +1206,7 @@ void *CPLCreateMutex()
 /*                          CPLAcquireMutex()                           */
 /************************************************************************/
 
-int CPLAcquireMutex( void *hMutexIn, double dfWaitInSeconds )
-
+int CPLAcquireMutex( void *hMutexIn, CPL_UNUSED double dfWaitInSeconds )
 {
     int err;
 
