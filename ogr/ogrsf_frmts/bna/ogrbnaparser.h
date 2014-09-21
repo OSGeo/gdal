@@ -40,6 +40,7 @@ extern "C"
 
 typedef enum
 {
+  BNA_UNKNOWN = -1,
   BNA_POINT,
   BNA_POLYGON,
   BNA_POLYLINE,
