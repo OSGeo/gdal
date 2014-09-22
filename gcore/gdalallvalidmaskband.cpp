@@ -62,10 +62,10 @@ GDALAllValidMaskBand::~GDALAllValidMaskBand()
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr GDALAllValidMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
+CPLErr GDALAllValidMaskBand::IReadBlock( CPL_UNUSED int nXBlockOff, CPL_UNUSED int nYBlockOff,
                                          void * pImage )
-
 {
+    // TODO: Suspicious that the offsets are not uses.
     memset( pImage, 255, nBlockXSize * nBlockYSize );
 
     return CE_None;
