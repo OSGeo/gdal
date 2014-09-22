@@ -291,8 +291,7 @@ size_t VSISparseFileHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
 /*                               Write()                                */
 /************************************************************************/
 
-size_t VSISparseFileHandle::Write( const void * pBuffer, size_t nSize, size_t nCount )
-
+size_t VSISparseFileHandle::Write( CPL_UNUSED const void * pBuffer, CPL_UNUSED size_t nSize, CPL_UNUSED size_t nCount )
 {
     errno = EBADF;
     return 0;
@@ -472,8 +471,7 @@ int VSISparseFileFilesystemHandler::Stat( const char * pszFilename,
 /*                               Unlink()                               */
 /************************************************************************/
 
-int VSISparseFileFilesystemHandler::Unlink( const char * pszFilename )
-
+int VSISparseFileFilesystemHandler::Unlink( CPL_UNUSED const char * pszFilename )
 {
     errno = EACCES;
     return -1;
@@ -483,9 +481,8 @@ int VSISparseFileFilesystemHandler::Unlink( const char * pszFilename )
 /*                               Mkdir()                                */
 /************************************************************************/
 
-int VSISparseFileFilesystemHandler::Mkdir( const char * pszPathname,
-                                    long nMode )
-
+int VSISparseFileFilesystemHandler::Mkdir( CPL_UNUSED const char * pszPathname,
+                                           CPL_UNUSED long nMode )
 {
     errno = EACCES;
     return -1;
@@ -495,8 +492,7 @@ int VSISparseFileFilesystemHandler::Mkdir( const char * pszPathname,
 /*                               Rmdir()                                */
 /************************************************************************/
 
-int VSISparseFileFilesystemHandler::Rmdir( const char * pszPathname )
-
+int VSISparseFileFilesystemHandler::Rmdir( CPL_UNUSED const char * pszPathname )
 {
     errno = EACCES;
     return -1;
@@ -506,8 +502,7 @@ int VSISparseFileFilesystemHandler::Rmdir( const char * pszPathname )
 /*                              ReadDir()                               */
 /************************************************************************/
 
-char **VSISparseFileFilesystemHandler::ReadDir( const char *pszPath )
-
+char **VSISparseFileFilesystemHandler::ReadDir( CPL_UNUSED const char *pszPath )
 {
     errno = EACCES;
     return NULL;

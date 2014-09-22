@@ -71,7 +71,7 @@ int ZCALLBACK ferror_file_func OF((
    voidpf stream));
 
 static
-voidpf ZCALLBACK fopen_file_func (voidpf opaque, const char* filename, int mode)
+voidpf ZCALLBACK fopen_file_func (CPL_UNUSED voidpf opaque, const char* filename, int mode)
 {
     VSILFILE* file = NULL;
     const char* mode_fopen = NULL;
@@ -90,7 +90,7 @@ voidpf ZCALLBACK fopen_file_func (voidpf opaque, const char* filename, int mode)
 }
 
 static
-uLong ZCALLBACK fread_file_func (voidpf opaque, voidpf stream, void* buf, uLong size)
+uLong ZCALLBACK fread_file_func (CPL_UNUSED voidpf opaque, voidpf stream, void* buf, uLong size)
 {
     uLong ret;
     ret = (uLong)VSIFReadL(buf, 1, (size_t)size, (VSILFILE *)stream);
@@ -98,7 +98,7 @@ uLong ZCALLBACK fread_file_func (voidpf opaque, voidpf stream, void* buf, uLong 
 }
 
 static
-uLong ZCALLBACK fwrite_file_func (voidpf opaque, voidpf stream, const void* buf, uLong size)
+uLong ZCALLBACK fwrite_file_func (CPL_UNUSED voidpf opaque, voidpf stream, const void* buf, uLong size)
 {
     uLong ret;
     ret = (uLong)VSIFWriteL(buf, 1, (size_t)size, (VSILFILE *)stream);
@@ -106,7 +106,7 @@ uLong ZCALLBACK fwrite_file_func (voidpf opaque, voidpf stream, const void* buf,
 }
 
 static
-uLong64 ZCALLBACK ftell_file_func (voidpf opaque, voidpf stream)
+uLong64 ZCALLBACK ftell_file_func (CPL_UNUSED voidpf opaque, voidpf stream)
 {
     uLong64 ret;
     ret = VSIFTellL((VSILFILE *)stream);
@@ -114,7 +114,7 @@ uLong64 ZCALLBACK ftell_file_func (voidpf opaque, voidpf stream)
 }
 
 static
-long ZCALLBACK fseek_file_func (voidpf  opaque, voidpf stream, uLong64 offset, int origin)
+long ZCALLBACK fseek_file_func (CPL_UNUSED voidpf  opaque, voidpf stream, uLong64 offset, int origin)
 {
     int fseek_origin=0;
     long ret;
@@ -137,7 +137,7 @@ long ZCALLBACK fseek_file_func (voidpf  opaque, voidpf stream, uLong64 offset, i
 }
 
 static
-int ZCALLBACK fclose_file_func (voidpf opaque, voidpf stream)
+int ZCALLBACK fclose_file_func (CPL_UNUSED voidpf opaque, voidpf stream)
 {
     int ret;
     ret = VSIFCloseL((VSILFILE *)stream);
@@ -145,7 +145,7 @@ int ZCALLBACK fclose_file_func (voidpf opaque, voidpf stream)
 }
 
 static
-int ZCALLBACK ferror_file_func (voidpf opaque, voidpf stream)
+int ZCALLBACK ferror_file_func (CPL_UNUSED voidpf opaque, CPL_UNUSED voidpf stream)
 {
     int ret;
     ret = 0; // FIXME

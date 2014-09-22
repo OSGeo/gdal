@@ -1265,7 +1265,7 @@ void  VSICurlStreamingHandle::AddRegion( vsi_l_offset    nFileOffsetStart,
 /*                               Write()                                */
 /************************************************************************/
 
-size_t VSICurlStreamingHandle::Write( const void *pBuffer, size_t nSize, size_t nMemb )
+size_t VSICurlStreamingHandle::Write( CPL_UNUSED const void *pBuffer, CPL_UNUSED size_t nSize, CPL_UNUSED size_t nMemb )
 {
     return 0;
 }

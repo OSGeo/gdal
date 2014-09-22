@@ -319,7 +319,7 @@ local void ziplocal_putValue_inmemory (void *dest, uLong x, int nbByte)
 /****************************************************************************/
 
 
-local uLong ziplocal_TmzDateToDosDate(const tm_zip*ptm,uLong dosDate)
+local uLong ziplocal_TmzDateToDosDate(const tm_zip*ptm, CPL_UNUSED uLong dosDate)
 {
     uLong year = (uLong)ptm->tm_year;
     if (year>1980)
@@ -699,7 +699,7 @@ extern int ZEXPORT cpl_zipOpenNewFileInZip3 (
     int memLevel,
     int strategy,
     const char* password,
-    uLong crcForCrypting )
+    CPL_UNUSED uLong crcForCrypting )
 {
     zip_internal* zi;
     uInt size_filename;

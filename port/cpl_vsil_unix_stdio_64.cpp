@@ -169,7 +169,11 @@ class VSIUnixStdioHandle : public VSIVirtualHandle
 /*                       VSIUnixStdioHandle()                           */
 /************************************************************************/
 
-VSIUnixStdioHandle::VSIUnixStdioHandle(VSIUnixStdioFilesystemHandler *poFSIn,
+VSIUnixStdioHandle::VSIUnixStdioHandle(
+#ifndef VSI_COUNT_BYTES_READ
+CPL_UNUSED
+#endif
+                                       VSIUnixStdioFilesystemHandler *poFSIn,
                                        FILE* fpIn, int bReadOnlyIn) :
     fp(fpIn), nOffset(0), bReadOnly(bReadOnlyIn), bLastOpWrite(FALSE), bLastOpRead(FALSE), bAtEOF(FALSE)
 #ifdef VSI_COUNT_BYTES_READ
@@ -504,7 +508,7 @@ VSIUnixStdioFilesystemHandler::Open( const char *pszFilename,
 
 int VSIUnixStdioFilesystemHandler::Stat( const char * pszFilename, 
                                          VSIStatBufL * pStatBuf,
-                                         int nFlags)
+                                         CPL_UNUSED int nFlags)
 
 {
     return( VSI_STAT64( pszFilename, pStatBuf ) );

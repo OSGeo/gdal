@@ -653,7 +653,7 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
                                  int bCreateInputPipe,
                                  int bCreateOutputPipe,
                                  int bCreateErrorPipe,
-                                 char** papszOptions)
+                                 CPL_UNUSED char** papszOptions)
 {
     pid_t pid;
     int pipe_in[2] = { -1, -1 };
@@ -887,7 +887,7 @@ CPL_PID CPLSpawnAsyncGetChildProcessId(CPLSpawnedProcess* p)
  *
  * @since GDAL 1.10.0
  */
-int CPLSpawnAsyncFinish(CPLSpawnedProcess* p, int bWait, int bKill)
+int CPLSpawnAsyncFinish(CPLSpawnedProcess* p, int bWait, CPL_UNUSED int bKill)
 {
     int status = 0;
 
