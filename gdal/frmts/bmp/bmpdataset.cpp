@@ -164,7 +164,9 @@ typedef struct
 
 // Info header size in bytes:
 const unsigned int  BIH_WIN4SIZE = 40; // for BMPT_WIN4
+#if 0  /* Unused */
 const unsigned int  BIH_WIN5SIZE = 57; // for BMPT_WIN5
+#endif
 const unsigned int  BIH_OS21SIZE = 12; // for BMPT_OS21
 const unsigned int  BIH_OS22SIZE = 64; // for BMPT_OS22
 
