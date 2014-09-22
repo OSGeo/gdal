@@ -48,10 +48,12 @@ namespace
      * 
      * @return The minimum value of the two specified values.
      */
-    int MinFunction(int a,int b) 
+#if 0  /* Unused */
+    int MinFunction(int a,int b)
     {
         return (a<b)?a:b;
     }
+#endif
 }
 
 CPCIDSKToutinModelSegment::CPCIDSKToutinModelSegment(PCIDSKFile *file, 

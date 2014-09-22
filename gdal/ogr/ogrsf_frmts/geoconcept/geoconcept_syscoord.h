@@ -47,17 +47,6 @@
 #  define GCSRSAPI_CALL1(x) x GCSRSAPI_CALL
 #endif
 
-/* -------------------------------------------------------------------- */
-/*      Macros for controlling CVSID and ensuring they don't appear     */
-/*      as unreferenced variables resulting in lots of warnings.        */
-/* -------------------------------------------------------------------- */
-#ifndef DISABLE_CVSID
-#  define GCSRS_CVSID(string)     static char gcsrs_cvsid[] = string; \
-static char *cvsid_aw() { return( cvsid_aw() ? ((char *) NULL) : gcsrs_cvsid ); }
-#else
-#  define GCSRS_CVSID(string)
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif

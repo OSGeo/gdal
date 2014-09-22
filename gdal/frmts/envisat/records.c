@@ -199,6 +199,7 @@ static const EnvisatFieldDescr ASAR_DOP_CENTROID_COEFFS_ADSR[] = {
     {NULL,                                                 0, EDT_Unknown,     0}
 };
 
+#if 0  /* Unused */
 static const EnvisatFieldDescr ASAR_GEOLOCATION_GRID_ADSR[] = {
     {"FIRST_ZERO_DOPPLER_TIME",                            0, EDT_MJD,         1},
     {"ATTACH_FLAG",                                       12, EDT_UByte,       1},
@@ -220,6 +221,7 @@ static const EnvisatFieldDescr ASAR_GEOLOCATION_GRID_ADSR[] = {
     /*{"SPARE_2",                                        499, EDT_UByte,      22},*/
     {NULL,                                                 0, EDT_Unknown,     0}
 };
+#endif  /* Unused */
 
 static const EnvisatFieldDescr ASAR_MAIN_PROCESSING_PARAMS_ADSR[] = {
     {"FIRST_ZERO_DOPPLER_TIME",                            0, EDT_MJD,         1},
@@ -564,6 +566,7 @@ static const EnvisatFieldDescr ASAR_SR_GR_ADSR[] = {
     {NULL,                                                 0, EDT_Unknown,     0}
 };
 
+#if 0  /* Unused */
 static const EnvisatFieldDescr ASAR_GEOLOCATION_ADSR[] = {
     {"ZERO_DOPPLER_TIME",                                  0, EDT_MJD,         1},
     {"ATTACH_FLAG",                                       12, EDT_UByte,       1},
@@ -572,6 +575,7 @@ static const EnvisatFieldDescr ASAR_GEOLOCATION_ADSR[] = {
     /*{"SPARE_1",                                         21, EDT_UByte,       4},*/
     {NULL,                                                 0, EDT_Unknown,     0}
 };
+#endif  /* Unused */
 
 static const EnvisatFieldDescr ASAR_PROCESSING_PARAMS_ADSR[] = {
     {"FIRST_ZERO_DOPPLER_TIME",                            0, EDT_MJD,         1},
