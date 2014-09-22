@@ -201,7 +201,7 @@ size_t VSIBufferedReaderHandle::Read( void *pBuffer, size_t nSize, size_t nMemb 
 /*                              Write()                                 */
 /************************************************************************/
 
-size_t VSIBufferedReaderHandle::Write( const void *pBuffer, size_t nSize, size_t nMemb )
+size_t VSIBufferedReaderHandle::Write( CPL_UNUSED const void *pBuffer, CPL_UNUSED size_t nSize, CPL_UNUSED size_t nMemb )
 {
     CPLError(CE_Failure, CPLE_NotSupported,
              "VSIFWriteL is not supported on buffer reader streams\n");

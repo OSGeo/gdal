@@ -45,9 +45,8 @@ CPL_CVSID("$Id: gdal_misc.cpp 25494 2013-01-13 12:55:17Z etourigny $");
  * to use one of the other progress functions that actually do something.
  */
 
-int CPL_STDCALL GDALDummyProgress( double dfComplete, const char *pszMessage,
-                                   void *pData )
-
+int CPL_STDCALL GDALDummyProgress( CPL_UNUSED double dfComplete, CPL_UNUSED const char *pszMessage,
+                                   CPL_UNUSED void *pData )
 {
     return TRUE;
 }
@@ -200,9 +199,8 @@ void CPL_STDCALL GDALDestroyScaledProgress( void * pData )
  * @return Always returns TRUE indicating the process should continue.
  */
 
-int CPL_STDCALL GDALTermProgress( double dfComplete, const char *pszMessage,
-                      void * pProgressArg )
-
+int CPL_STDCALL GDALTermProgress( double dfComplete, CPL_UNUSED const char *pszMessage,
+                                  void * pProgressArg )
 {
     static int nLastTick = -1;
     int nThisTick = (int) (dfComplete * 40.0);

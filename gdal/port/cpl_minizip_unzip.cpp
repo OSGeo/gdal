@@ -810,15 +810,15 @@ local int unzlocal_GetCurrentFileInfoInternal OF((unzFile file,
                                                   uLong commentBufferSize));
 
 local int unzlocal_GetCurrentFileInfoInternal (unzFile file,
-                                                  unz_file_info *pfile_info,
-                                                  unz_file_info_internal
-                                                  *pfile_info_internal,
-                                                  char *szFileName,
-                                                  uLong fileNameBufferSize,
-                                                  void *extraField,
-                                                  uLong extraFieldBufferSize,
-                                                  char *szComment,
-                                                  uLong commentBufferSize)
+                                               unz_file_info *pfile_info,
+                                               unz_file_info_internal
+                                               *pfile_info_internal,
+                                               char *szFileName,
+                                               uLong fileNameBufferSize,
+                                               CPL_UNUSED void *extraField,
+                                               CPL_UNUSED uLong extraFieldBufferSize,
+                                               CPL_UNUSED char *szComment,
+                                               CPL_UNUSED uLong commentBufferSize)
 {
     unz_s* s;
     unz_file_info file_info;
