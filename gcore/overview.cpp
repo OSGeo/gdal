@@ -52,16 +52,16 @@ typedef CPLErr (*GDALDownsampleFunction)
 template <class T>
 static CPLErr
 GDALDownsampleChunk32R_NearT( int nSrcWidth, int nSrcHeight,
-                        GDALDataType eWrkDataType,
-                        T * pChunk,
-                        GByte * pabyChunkNodataMask_unused,
-                        int nChunkXOff, int nChunkXSize,
-                        int nChunkYOff, int nChunkYSize,
-                        GDALRasterBand * poOverview,
-                        const char * pszResampling_unused,
-                        int bHasNoData_unused, float fNoDataValue_unused,
-                        GDALColorTable* poColorTable_unused,
-                        GDALDataType eSrcDataType)
+                              GDALDataType eWrkDataType,
+                              T * pChunk,
+                              CPL_UNUSED GByte * pabyChunkNodataMask_unused,
+                              int nChunkXOff, int nChunkXSize,
+                              int nChunkYOff, int nChunkYSize,
+                              GDALRasterBand * poOverview,
+                              CPL_UNUSED const char * pszResampling_unused,
+                              CPL_UNUSED int bHasNoData_unused, CPL_UNUSED float fNoDataValue_unused,
+                              CPL_UNUSED GDALColorTable* poColorTable_unused,
+                              CPL_UNUSED GDALDataType eSrcDataType)
 
 {
     CPLErr eErr = CE_None;
@@ -211,16 +211,16 @@ GDALDownsampleChunk32R_Near( int nSrcWidth, int nSrcHeight,
 template <class T, class Tsum>
 static CPLErr
 GDALDownsampleChunk32R_AverageT( int nSrcWidth, int nSrcHeight,
-                        GDALDataType eWrkDataType,
-                        T* pChunk,
-                        GByte * pabyChunkNodataMask,
-                        int nChunkXOff, int nChunkXSize,
-                        int nChunkYOff, int nChunkYSize,
-                        GDALRasterBand * poOverview,
-                        const char * pszResampling,
-                        int bHasNoData, float fNoDataValue,
-                        GDALColorTable* poColorTable,
-                        GDALDataType eSrcDataType)
+                                 GDALDataType eWrkDataType,
+                                 T* pChunk,
+                                 GByte * pabyChunkNodataMask,
+                                 int nChunkXOff, int nChunkXSize,
+                                 int nChunkYOff, int nChunkYSize,
+                                 GDALRasterBand * poOverview,
+                                 const char * pszResampling,
+                                 int bHasNoData, float fNoDataValue,
+                                 GDALColorTable* poColorTable,
+                                 CPL_UNUSED GDALDataType eSrcDataType)
 
 {
     CPLErr eErr = CE_None;
@@ -517,16 +517,16 @@ GDALDownsampleChunk32R_Average( int nSrcWidth, int nSrcHeight,
 
 static CPLErr
 GDALDownsampleChunk32R_Gauss( int nSrcWidth, int nSrcHeight,
-                        GDALDataType eWrkDataType,
-                        void * pChunk,
-                        GByte * pabyChunkNodataMask,
-                        int nChunkXOff, int nChunkXSize,
-                        int nChunkYOff, int nChunkYSize,
-                        GDALRasterBand * poOverview,
-                        const char * pszResampling,
-                        int bHasNoData, float fNoDataValue,
-                        GDALColorTable* poColorTable,
-                        GDALDataType eSrcDataType)
+                              CPL_UNUSED GDALDataType eWrkDataType,
+                              void * pChunk,
+                              GByte * pabyChunkNodataMask,
+                              int nChunkXOff, int nChunkXSize,
+                              int nChunkYOff, int nChunkYSize,
+                              GDALRasterBand * poOverview,
+                              CPL_UNUSED const char * pszResampling,
+                              int bHasNoData, float fNoDataValue,
+                              GDALColorTable* poColorTable,
+                              CPL_UNUSED GDALDataType eSrcDataType)
 
 {
     CPLErr eErr = CE_None;
@@ -799,17 +799,16 @@ GDALDownsampleChunk32R_Gauss( int nSrcWidth, int nSrcHeight,
 
 static CPLErr
 GDALDownsampleChunk32R_Mode( int nSrcWidth, int nSrcHeight,
-                        GDALDataType eWrkDataType,
-                        void * pChunk,
-                        GByte * pabyChunkNodataMask,
-                        int nChunkXOff, int nChunkXSize,
-                        int nChunkYOff, int nChunkYSize,
-                        GDALRasterBand * poOverview,
-                        const char * pszResampling,
-                        int bHasNoData, float fNoDataValue,
-                        GDALColorTable* poColorTable,
-                        GDALDataType eSrcDataType)
-
+                             CPL_UNUSED GDALDataType eWrkDataType,
+                             void * pChunk,
+                             GByte * pabyChunkNodataMask,
+                             int nChunkXOff, int nChunkXSize,
+                             int nChunkYOff, int nChunkYSize,
+                             GDALRasterBand * poOverview,
+                             CPL_UNUSED const char * pszResampling,
+                             int bHasNoData, float fNoDataValue,
+                             GDALColorTable* poColorTable,
+                             GDALDataType eSrcDataType)
 {
     CPLErr eErr = CE_None;
 
@@ -1031,17 +1030,16 @@ GDALDownsampleChunk32R_Mode( int nSrcWidth, int nSrcHeight,
 
 static CPLErr
 GDALDownsampleChunk32R_Cubic( int nSrcWidth, int nSrcHeight,
-                        GDALDataType eWrkDataType,
-                        void * pChunk,
-                        GByte * pabyChunkNodataMask,
-                        int nChunkXOff, int nChunkXSize,
-                        int nChunkYOff, int nChunkYSize,
-                        GDALRasterBand * poOverview,
-                        const char * pszResampling,
-                        int bHasNoData, float fNoDataValue,
-                        GDALColorTable* poColorTable,
-                        GDALDataType eSrcDataType)
-
+                              CPL_UNUSED GDALDataType eWrkDataType,
+                              void * pChunk,
+                              GByte * pabyChunkNodataMask,
+                              int nChunkXOff, int nChunkXSize,
+                              int nChunkYOff, int nChunkYSize,
+                              GDALRasterBand * poOverview,
+                              CPL_UNUSED const char * pszResampling,
+                              CPL_UNUSED int bHasNoData, CPL_UNUSED float fNoDataValue,
+                              GDALColorTable* poColorTable,
+                              CPL_UNUSED GDALDataType eSrcDataType)
 {
 
     CPLErr eErr = CE_None;

@@ -600,7 +600,7 @@ GDALDataset* GDALProxyPoolDataset::RefUnderlyingDataset()
 /*                    UnrefUnderlyingDataset()                        */
 /************************************************************************/
 
-void GDALProxyPoolDataset::UnrefUnderlyingDataset(GDALDataset* poUnderlyingDataset)
+void GDALProxyPoolDataset::UnrefUnderlyingDataset(CPL_UNUSED GDALDataset* poUnderlyingDataset)
 {
     if (cacheEntry != NULL)
     {
@@ -1109,7 +1109,7 @@ GDALRasterBand *GDALProxyPoolRasterBand::GetOverview(int nOverviewBand)
 /*                     GetRasterSampleOverview()                        */
 /* ******************************************************************** */
 
-GDALRasterBand *GDALProxyPoolRasterBand::GetRasterSampleOverview( int nDesiredSamples)
+GDALRasterBand *GDALProxyPoolRasterBand::GetRasterSampleOverview( CPL_UNUSED int nDesiredSamples)
 {
     CPLError(CE_Failure, CPLE_AppDefined,
              "GDALProxyPoolRasterBand::GetRasterSampleOverview : not implemented yet");
@@ -1185,7 +1185,7 @@ GDALRasterBand* GDALProxyPoolOverviewRasterBand::RefUnderlyingRasterBand()
 /*                  UnrefUnderlyingRasterBand()                         */
 /* ******************************************************************** */
 
-void GDALProxyPoolOverviewRasterBand::UnrefUnderlyingRasterBand(GDALRasterBand* poUnderlyingRasterBand)
+void GDALProxyPoolOverviewRasterBand::UnrefUnderlyingRasterBand(CPL_UNUSED GDALRasterBand* poUnderlyingRasterBand)
 {
     poMainBand->UnrefUnderlyingRasterBand(poUnderlyingMainRasterBand);
     nRefCountUnderlyingMainRasterBand --;
@@ -1250,7 +1250,7 @@ GDALRasterBand* GDALProxyPoolMaskBand::RefUnderlyingRasterBand()
 /*                  UnrefUnderlyingRasterBand()                         */
 /* ******************************************************************** */
 
-void GDALProxyPoolMaskBand::UnrefUnderlyingRasterBand(GDALRasterBand* poUnderlyingRasterBand)
+void GDALProxyPoolMaskBand::UnrefUnderlyingRasterBand(CPL_UNUSED GDALRasterBand* poUnderlyingRasterBand)
 {
     poMainBand->UnrefUnderlyingRasterBand(poUnderlyingMainRasterBand);
     nRefCountUnderlyingMainRasterBand --;

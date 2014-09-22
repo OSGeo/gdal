@@ -104,14 +104,14 @@ public:
 
 GDALVirtualMem::GDALVirtualMem( GDALDatasetH hDS,
                                 GDALRasterBandH hBand,
-                          int nXOff, int nYOff,
-                          int nXSize, int nYSize,
-                          int nBufXSize, int nBufYSize,
-                          GDALDataType eBufType,
-                          int nBandCount, const int* panBandMapIn,
-                          int nPixelSpace,
-                          GIntBig nLineSpace,
-                          GIntBig nBandSpace ) :
+                                int nXOff, int nYOff,
+                                CPL_UNUSED int nXSize, CPL_UNUSED int nYSize,
+                                int nBufXSize, int nBufYSize,
+                                GDALDataType eBufType,
+                                int nBandCount, const int* panBandMapIn,
+                                int nPixelSpace,
+                                GIntBig nLineSpace,
+                                GIntBig nBandSpace ) :
     hDS(hDS), hBand(hBand), nXOff(nXOff), nYOff(nYOff), /*nXSize(nXSize), nYSize(nYSize),*/
     nBufXSize(nBufXSize), nBufYSize(nBufYSize), eBufType(eBufType),
     nBandCount(nBandCount), nPixelSpace(nPixelSpace), nLineSpace(nLineSpace),
