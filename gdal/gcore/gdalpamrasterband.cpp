@@ -61,7 +61,7 @@ GDALPamRasterBand::~GDALPamRasterBand()
 /*                           SerializeToXML()                           */
 /************************************************************************/
 
-CPLXMLNode *GDALPamRasterBand::SerializeToXML( const char *pszUnused )
+CPLXMLNode *GDALPamRasterBand::SerializeToXML( CPL_UNUSED const char *pszUnused )
 
 {
     if( psPam == NULL )
@@ -309,7 +309,7 @@ void GDALPamRasterBand::PamClear()
 /*                              XMLInit()                               */
 /************************************************************************/
 
-CPLErr GDALPamRasterBand::XMLInit( CPLXMLNode *psTree, const char *pszUnused )
+CPLErr GDALPamRasterBand::XMLInit( CPLXMLNode *psTree, CPL_UNUSED const char *pszUnused )
 
 {
     PamInitialize();
@@ -979,8 +979,7 @@ int
 PamParseHistogram( CPLXMLNode *psHistItem, 
                    double *pdfMin, double *pdfMax, 
                    int *pnBuckets, int **ppanHistogram, 
-                   int *pbIncludeOutOfRange, int *pbApproxOK )
-
+                   CPL_UNUSED int *pbIncludeOutOfRange, CPL_UNUSED int *pbApproxOK )
 {
     if( psHistItem == NULL )
         return FALSE;
