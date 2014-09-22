@@ -1482,8 +1482,7 @@ char ** CPL_STDCALL GDALGetRasterCategoryNames( GDALRasterBandH hBand )
  * by the driver CE_Failure is returned, but no error message is reported.
  */
 
-CPLErr GDALRasterBand::SetCategoryNames( char ** papszNames )
-
+CPLErr GDALRasterBand::SetCategoryNames( CPL_UNUSED char ** papszNames )
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
         ReportError( CE_Failure, CPLE_NotSupported,
@@ -1580,8 +1579,7 @@ GDALGetRasterNoDataValue( GDALRasterBandH hBand, int *pbSuccess )
  * been emitted.
  */
 
-CPLErr GDALRasterBand::SetNoDataValue( double dfNoData )
-
+CPLErr GDALRasterBand::SetNoDataValue( CPL_UNUSED double dfNoData )
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
         ReportError( CE_Failure, CPLE_NotSupported,
@@ -2282,8 +2280,7 @@ double CPL_STDCALL GDALGetRasterOffset( GDALRasterBandH hBand, int *pbSuccess )
  * @return CE_None or success or CE_Failure on failure. 
  */
 
-CPLErr GDALRasterBand::SetOffset( double dfNewOffset )
-
+CPLErr GDALRasterBand::SetOffset( CPL_UNUSED double dfNewOffset )
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
         ReportError( CE_Failure, CPLE_NotSupported,
@@ -2382,8 +2379,7 @@ double CPL_STDCALL GDALGetRasterScale( GDALRasterBandH hBand, int *pbSuccess )
  * @return CE_None or success or CE_Failure on failure. 
  */
 
-CPLErr GDALRasterBand::SetScale( double dfNewScale )
-
+CPLErr GDALRasterBand::SetScale( CPL_UNUSED double dfNewScale )
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
         ReportError( CE_Failure, CPLE_NotSupported,
@@ -2473,7 +2469,7 @@ const char * CPL_STDCALL GDALGetRasterUnitType( GDALRasterBandH hBand )
  * unsupported.
  */
 
-CPLErr GDALRasterBand::SetUnitType( const char *pszNewValue )
+CPLErr GDALRasterBand::SetUnitType( CPL_UNUSED const char *pszNewValue )
 
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
@@ -3282,9 +3278,8 @@ CPLErr CPL_STDCALL GDALGetDefaultHistogram( GDALRasterBandH hBand,
  */
 
 CPLErr GDALRasterBand::AdviseRead( 
-    int nXOff, int nYOff, int nXSize, int nYSize,
-    int nBufXSize, int nBufYSize, GDALDataType eBufType, char **papszOptions )
-
+    CPL_UNUSED int nXOff, CPL_UNUSED int nYOff, CPL_UNUSED int nXSize, CPL_UNUSED int nYSize,
+    CPL_UNUSED int nBufXSize, CPL_UNUSED int nBufYSize, CPL_UNUSED GDALDataType eBufType, CPL_UNUSED char **papszOptions )
 {
     return CE_None;
 }
@@ -4292,9 +4287,8 @@ GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK,
  *
  * This method is the same as the C function GDALSetDefaultHistogram().
  */
-CPLErr GDALRasterBand::SetDefaultHistogram( double dfMin, double dfMax, 
-                                            int nBuckets, int *panHistogram )
-
+CPLErr GDALRasterBand::SetDefaultHistogram( CPL_UNUSED double dfMin, CPL_UNUSED double dfMax, 
+                                            CPL_UNUSED int nBuckets, CPL_UNUSED int *panHistogram )
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
         ReportError( CE_Failure, CPLE_NotSupported,
@@ -4384,8 +4378,7 @@ GDALRasterAttributeTableH CPL_STDCALL GDALGetDefaultRAT( GDALRasterBandH hBand)
  * failing.
  */
 
-CPLErr GDALRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT )
-
+CPLErr GDALRasterBand::SetDefaultRAT( CPL_UNUSED const GDALRasterAttributeTable *poRAT )
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
         ReportError( CE_Failure, CPLE_NotSupported,

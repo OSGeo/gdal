@@ -368,7 +368,12 @@ class EnterObject
 /*                            MyChdir()                                 */
 /************************************************************************/
 
-static void MyChdir(const char* pszCWD)
+static void MyChdir(
+#ifndef WIN32
+CPL_UNUSED
+#endif
+                    const char* pszCWD
+                    )
 {
 #ifdef WIN32
     SetCurrentDirectory(pszCWD);
@@ -5988,7 +5993,7 @@ CPLErr GDALClientDataset::Delete( const char * pszFilename )
 /************************************************************************/
 static GDALDriver* poAPIPROXYDriver = NULL;
 
-static void GDALUnloadAPIPROXYDriver(GDALDriver* poDriver)
+static void GDALUnloadAPIPROXYDriver(CPL_UNUSED GDALDriver* poDriver)
 {
     if( bRecycleChild )
     {
