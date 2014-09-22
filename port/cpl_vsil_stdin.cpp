@@ -264,9 +264,8 @@ size_t VSIStdinHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
 /*                               Write()                                */
 /************************************************************************/
 
-size_t VSIStdinHandle::Write( const void * pBuffer, size_t nSize, 
-                                  size_t nCount )
-
+size_t VSIStdinHandle::Write( CPL_UNUSED const void * pBuffer, CPL_UNUSED size_t nSize, 
+                              CPL_UNUSED size_t nCount )
 {
     CPLError(CE_Failure, CPLE_NotSupported,
              "Write() unsupported on /vsistdin");
