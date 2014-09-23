@@ -48,6 +48,7 @@ apps/gdalwarp
 apps/nearblack
 apps/ogr2ogr
 apps/ogrinfo
+apps/ogrlineref
 apps/ogrtindex
 apps/testepsg
 apps/gdalserver
