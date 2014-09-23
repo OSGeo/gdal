@@ -656,7 +656,7 @@ int FileGDBTable::Open(const char* pszFilename)
 
     nOffsetHeaderEnd = nOffsetFieldDesc + nFieldDescLength;
 
-    returnErrorIf(nFieldDescLength > 1024 * 1024 || nFieldDescLength < 10 );
+    returnErrorIf(nFieldDescLength > 10 * 1024 * 1024 || nFieldDescLength < 10 );
     GByte byTableGeomType = abyHeader[8];
     if( IS_VALID_LAYER_GEOM_TYPE(byTableGeomType) )
         eTableGeomType = (FileGDBTableGeometryType) byTableGeomType;
