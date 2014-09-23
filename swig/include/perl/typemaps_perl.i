@@ -946,7 +946,7 @@ static AV *XMLTreeToAV( CPLXMLNode *psTree )
 %define IF_UNDEF_SET_EMPTY_STRING(type, param)
 %typemap(default) type param {
     /* %typemap(default) type param */
-    $1 = (type)"";
+    $1 = (char *)"";
 }
 %enddef
 
