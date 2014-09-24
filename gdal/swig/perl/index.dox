@@ -136,6 +136,6 @@ This documentation is generated from files within the GDAL
 distribution (directory swig/perl) with a tweaked version of <a
 href="http://www.bigsister.ch/doxygenfilter/">Perl Doxygen Filter</a>
 with Doxygen. The modified version is available <a
-href="https://geoinformatics.aalto.fi/svn/doxygenfilter/">here</a>.
+href="https://ajolma.net/svn/doxygenfilter/trunk/">here</a>.
 
 */
