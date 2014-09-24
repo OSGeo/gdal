@@ -479,13 +479,14 @@ OGRFeature *IMapInfoFile::GetFeature(long nFeatureId)
 }
 
 /************************************************************************/
-/*                            CreateField()                             */
+/*                            GetTABType()                              */
 /*                                                                      */
 /*      Create a native field based on a generic OGR definition.        */
 /************************************************************************/
 
-OGRErr IMapInfoFile::CreateField( OGRFieldDefn *poField, int bApproxOK )
-
+int IMapInfoFile::GetTABType( OGRFieldDefn *poField,
+                              TABFieldType* peTABType,
+                              int *pnWidth)
 {
     TABFieldType        eTABType;
     int                 nWidth = poField->GetWidth();
@@ -542,8 +543,29 @@ OGRErr IMapInfoFile::CreateField( OGRFieldDefn *poField, int bApproxOK )
                   "Note that Mapinfo files don't support list field types.\n",
                   poField->GetType() );
 
-        return OGRERR_FAILURE;
+        return -1;
     }
+
+    *peTABType = eTABType;
+    *pnWidth = nWidth;
+
+    return 0;
+}
+
+/************************************************************************/
+/*                            CreateField()                             */
+/*                                                                      */
+/*      Create a native field based on a generic OGR definition.        */
+/************************************************************************/
+
+OGRErr IMapInfoFile::CreateField( OGRFieldDefn *poField, int bApproxOK )
+
+{
+    TABFieldType        eTABType;
+    int                 nWidth;
+
+    if( GetTABType( poField, &eTABType, &nWidth ) < 0 )
+        return OGRERR_FAILURE;
 
     if( AddFieldNative( poField->GetNameRef(), eTABType,
                         nWidth, poField->GetPrecision(), FALSE, FALSE, bApproxOK ) > -1 )

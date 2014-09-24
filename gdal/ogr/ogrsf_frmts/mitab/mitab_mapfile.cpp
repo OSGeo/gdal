@@ -1119,7 +1119,7 @@ int   TABMAPFile::MoveToObjId(int nObjId)
         return 0;
     }
 
-    if (m_poIdIndex == NULL || m_poCurObjBlock == NULL)
+    if (m_poIdIndex == NULL)
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
                  "MoveToObjId(): file not opened!");
@@ -1136,6 +1136,15 @@ int   TABMAPFile::MoveToObjId(int nObjId)
         nFileOffset = m_nCurObjPtr;
     else
         nFileOffset = m_poIdIndex->GetObjPtr(nObjId);
+
+    if (nFileOffset != 0 && m_poCurObjBlock == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AssertionFailed,
+                 "MoveToObjId(): no current object block!");
+        m_nCurObjPtr = m_nCurObjId = -1;
+        m_nCurObjType = TAB_GEOM_UNSET;
+        return -1;
+    }
 
     if (nFileOffset == 0)
     {

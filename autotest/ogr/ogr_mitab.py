@@ -1368,7 +1368,7 @@ gdaltest_list = [
     ogr_mitab_29,
     ogr_mitab_cleanup
     ]
-#gdaltest_list = [ ogr_mitab_1, ogr_mitab_27, ogr_mitab_28, ogr_mitab_cleanup ]
+
 
 if __name__ == '__main__':
 
