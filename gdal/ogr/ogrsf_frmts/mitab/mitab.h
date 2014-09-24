@@ -258,6 +258,9 @@ class IMapInfoFile : public OGRLayer
     virtual int  GetProjInfo(TABProjInfo *poPI) = 0;
     virtual int  SetProjInfo(TABProjInfo *poPI) = 0;
     virtual int  SetMIFCoordSys(const char *pszMIFCoordSys) = 0;
+    
+    static int GetTABType( OGRFieldDefn *poField, TABFieldType* peTABType,
+                           int *pnWidth);
 
 #ifdef DEBUG
     virtual void Dump(FILE *fpOut = NULL) = 0;
@@ -335,6 +338,9 @@ class TABFile: public IMapInfoFile
     virtual OGRErr      SetFeature( OGRFeature * );
     virtual OGRErr      DeleteFeature(long nFeatureId);
 
+    virtual OGRErr      DeleteField( int iField );
+    virtual OGRErr      ReorderFields( int* panMap );
+    virtual OGRErr      AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags );
     ///////////////
     // Read access specific stuff
     //

@@ -103,8 +103,11 @@
 #include "mitab.h"
 #include "mitab_utils.h"
 #include "cpl_minixml.h"
+#include "ogr_p.h"
 
 #include <ctype.h>      /* isspace() */
+
+#define UNSUPPORTED_OP_READ_ONLY "%s : unsupported operation on a read-only datasource."
 
 /*=====================================================================
  *                      class TABFile
@@ -1915,8 +1918,7 @@ int TABFile::SetFeatureDefn(OGRFeatureDefn *poFeatureDefn,
  *
  * Create a new field using a native mapinfo data type... this is an 
  * alternative to defining fields through the OGR interface.
- * This function should be called after creating a new dataset, but before 
- * writing the first feature.
+ * This function should be called after creating a new dataset.
  *
  * This function will build/update the OGRFeatureDefn that will have to be
  * used when writing features to this dataset.
@@ -1937,26 +1939,14 @@ int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
     char szNewFieldName[31+1]; /* 31 is the max characters for a field name*/
     int nRenameNum = 1;
 
-    if (m_eAccessMode != TABWrite)
+    if (m_eAccessMode == TABRead || m_poDATFile == NULL)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "AddFieldNative() can be used only with Write access.");
+                 "AddFieldNative() cannot be used only with Read access.");
         return -1;
     }
 
     m_bNeedTABRewrite = TRUE;
-
-    /*-----------------------------------------------------------------
-     * Check that call happens at the right time in dataset's life.
-     *----------------------------------------------------------------*/
-    if (m_eAccessMode != TABWrite || 
-        m_nLastFeatureId > 0 || m_poDATFile == NULL)
-    {
-        CPLError(CE_Failure, CPLE_AssertionFailed,
-                 "AddFieldNative() must be called after opening a new "
-                 "dataset, but before writing the first feature to it.");
-        return -1;
-    }
 
     /*-----------------------------------------------------------------
      * Validate field width... must be <= 254
@@ -2612,6 +2602,128 @@ int TABFile::SetProjInfo(TABProjInfo *poPI)
 
 
 /************************************************************************/
+/*                            DeleteField()                             */
+/************************************************************************/
+
+OGRErr TABFile::DeleteField( int iField )
+{
+    if( m_poDATFile == NULL || !TestCapability(OLCDeleteField) )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  UNSUPPORTED_OP_READ_ONLY,
+                  "DeleteField");
+        return OGRERR_FAILURE;
+    }
+
+    if (iField < 0 || iField >= m_poDefn->GetFieldCount())
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Invalid field index");
+        return OGRERR_FAILURE;
+    }
+
+    if ( m_poDATFile->DeleteField( iField ) == 0 )
+    {
+        m_bNeedTABRewrite = TRUE;
+
+        /* Delete from the array of indexed fields */
+        if( iField < m_poDefn->GetFieldCount() - 1 )
+        {
+            memmove(m_panIndexNo + iField, m_panIndexNo + iField + 1,
+                    (m_poDefn->GetFieldCount() - 1 - iField) * sizeof(int));
+        }
+    
+        return m_poDefn->DeleteFieldDefn( iField );
+    }
+    else
+        return OGRERR_FAILURE;
+}
+
+/************************************************************************/
+/*                           ReorderFields()                            */
+/************************************************************************/
+
+OGRErr TABFile::ReorderFields( int* panMap )
+{
+    if( m_poDATFile == NULL || !TestCapability(OLCDeleteField) )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  UNSUPPORTED_OP_READ_ONLY,
+                  "ReorderFields");
+        return OGRERR_FAILURE;
+    }
+    if (m_poDefn->GetFieldCount() == 0)
+        return OGRERR_NONE;
+
+    OGRErr eErr = OGRCheckPermutation(panMap, m_poDefn->GetFieldCount());
+    if (eErr != OGRERR_NONE)
+        return eErr;
+
+    if ( m_poDATFile->ReorderFields( panMap ) == 0 )
+    {
+        m_bNeedTABRewrite = TRUE;
+
+        int* panNewIndexedField = (int*) CPLMalloc(sizeof(int)*m_poDefn->GetFieldCount());
+        for(int i=0;i<m_poDefn->GetFieldCount();i++)
+        {
+            panNewIndexedField[i] = m_panIndexNo[panMap[i]];
+        }
+        CPLFree(m_panIndexNo);
+        m_panIndexNo = panNewIndexedField;
+
+        return m_poDefn->ReorderFieldDefns( panMap );
+    }
+    else
+        return OGRERR_FAILURE;
+}
+
+/************************************************************************/
+/*                           AlterFieldDefn()                           */
+/************************************************************************/
+
+OGRErr TABFile::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags )
+{
+    if( m_poDATFile == NULL || !TestCapability(OLCDeleteField) )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  UNSUPPORTED_OP_READ_ONLY,
+                  "AlterFieldDefn");
+        return OGRERR_FAILURE;
+    }
+
+    if (iField < 0 || iField >= m_poDefn->GetFieldCount())
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Invalid field index");
+        return OGRERR_FAILURE;
+    }
+
+    if ( m_poDATFile->AlterFieldDefn( iField, poNewFieldDefn, nFlags ) == 0 )
+    {
+        m_bNeedTABRewrite = TRUE;
+
+        OGRFieldDefn* poFieldDefn = m_poDefn->GetFieldDefn(iField);
+        if ((nFlags & ALTER_TYPE_FLAG) &&
+            poNewFieldDefn->GetType() != poFieldDefn->GetType())
+        {
+            poFieldDefn->SetType(poNewFieldDefn->GetType());
+            if( (nFlags & ALTER_WIDTH_PRECISION_FLAG) == 0 )
+                poFieldDefn->SetWidth(254);
+        }
+        if (nFlags & ALTER_NAME_FLAG)
+            poFieldDefn->SetName(poNewFieldDefn->GetNameRef());
+        if ((nFlags & ALTER_WIDTH_PRECISION_FLAG) &&
+            poFieldDefn->GetType() == OFTString)
+        {
+            poFieldDefn->SetWidth(m_poDATFile->GetFieldWidth(iField));
+        }
+        return OGRERR_NONE;
+    }
+    else
+        return OGRERR_FAILURE;
+}
+
+/************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
 
@@ -2641,6 +2753,15 @@ int TABFile::TestCapability( const char * pszCap )
         return TRUE;
 
     else if( EQUAL(pszCap,OLCCreateField) )
+        return m_eAccessMode != TABRead;
+
+    else if( EQUAL(pszCap,OLCDeleteField) )
+        return m_eAccessMode != TABRead;
+
+    else if( EQUAL(pszCap,OLCReorderFields) )
+        return m_eAccessMode != TABRead;
+
+    else if( EQUAL(pszCap,OLCAlterFieldDefn) )
         return m_eAccessMode != TABRead;
 
     else 

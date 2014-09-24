@@ -1737,6 +1737,10 @@ class TABDATFile
     int         AddField(const char *pszName, TABFieldType eType,
                          int nWidth, int nPrecision=0);
 
+    int         DeleteField( int iField );
+    int         ReorderFields( int* panMap );
+    int         AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags );
+
     GInt32      GetNumRecords();
     TABRawBinBlock *GetRecordBlock(int nRecordId);
     GBool       IsCurrentRecordDeleted() { return m_bCurRecordDeletedFlag;};
