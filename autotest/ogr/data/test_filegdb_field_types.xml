@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<esri:DataElement xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                  xmlns:esri="http://www.esri.com/schemas/ArcGIS/10.1"
+                  xsi:type="esri:DETable">
+    <CatalogPath>\test</CatalogPath>
+    <Name>test</Name>
+    <ChildrenExpanded>false</ChildrenExpanded>
+    <DatasetType>esriDTTable</DatasetType>
+    <Versioned>false</Versioned>
+    <CanVersion>false</CanVersion>
+    <HasOID>true</HasOID>
+    <OIDFieldName>OBJECTID</OIDFieldName>
+    <Fields xsi:type="esri:Fields">
+        <FieldArray xsi:type="esri:ArrayOfField">
+            <Field xsi:type="esri:Field">
+                <Name>OBJECTID</Name>
+                <Type>esriFieldTypeOID</Type>
+                <IsNullable>false</IsNullable>
+                <Length>12</Length>
+                <Precision>0</Precision>
+                <Scale>0</Scale>
+                <Required>true</Required>
+            </Field>
+            <Field xsi:type="esri:Field">
+                <Name>esriFieldTypeSmallInteger</Name>
+                <Type>esriFieldTypeSmallInteger</Type>
+                <IsNullable>true</IsNullable>
+                <Length>2</Length>
+                <Precision>0</Precision>
+                <Scale>0</Scale>
+            </Field>
+            <Field xsi:type="esri:Field">
+                <Name>esriFieldTypeInteger</Name>
+                <Type>esriFieldTypeInteger</Type>
+                <IsNullable>true</IsNullable>
+                <Length>12</Length>
+                <Precision>0</Precision>
+                <Scale>0</Scale>
+            </Field>
+            <Field xsi:type="esri:Field">
+                <Name>esriFieldTypeSingle</Name>
+                <Type>esriFieldTypeSingle</Type>
+                <IsNullable>true</IsNullable>
+                <Length>12</Length>
+                <Precision>5</Precision>
+                <Scale>0</Scale>
+            </Field>
+            <Field xsi:type="esri:Field">
+                <Name>esriFieldTypeDouble</Name>
+                <Type>esriFieldTypeDouble</Type>
+                <IsNullable>true</IsNullable>
+                <Length>24</Length>
+                <Precision>15</Precision>
+                <Scale>0</Scale>
+            </Field>
+            <Field xsi:type="esri:Field">
+                <Name>esriFieldTypeDate</Name>
+                <Type>esriFieldTypeDate</Type>
+                <IsNullable>true</IsNullable>
+                <Length>8</Length>
+                <Precision>0</Precision>
+                <Scale>0</Scale>
+            </Field>
+            <Field xsi:type="esri:Field">
+                <Name>esriFieldTypeGUID</Name>
+                <Type>esriFieldTypeGUID</Type>
+                <IsNullable>true</IsNullable>
+                <Length>38</Length>
+                <Precision>0</Precision>
+                <Scale>0</Scale>
+            </Field>
+            <Field xsi:type="esri:Field">
+                <Name>esriFieldTypeBlob</Name>
+                <Type>esriFieldTypeBlob</Type>
+                <IsNullable>true</IsNullable>
+                <Length>0</Length>
+                <Precision>0</Precision>
+                <Scale>0</Scale>
+            </Field>
+            <Field xsi:type="esri:Field">
+                <Name>esriFieldTypeString</Name>
+                <Type>esriFieldTypeString</Type>
+                <IsNullable>true</IsNullable>
+                <Length>80</Length>
+                <Precision>0</Precision>
+                <Scale>0</Scale>
+            </Field>
+            <Field xsi:type="esri:Field">
+                <Name>esriFieldTypeGlobalID</Name>
+                <Type>esriFieldTypeGlobalID</Type>
+                <IsNullable>true</IsNullable>
+                <Length>38</Length>
+                <Precision>0</Precision>
+                <Scale>0</Scale>
+                <Editable>true</Editable>
+            </Field>
+        </FieldArray>
+    </Fields>
+    <Indexes xsi:type="esri:Indexes">
+        <IndexArray xsi:type="esri:ArrayOfIndex"/>
+    </Indexes>
+    <CLSID>{7A566981-C114-11D2-8A28-006097AFF44E}</CLSID>
+    <EXTCLSID/>
+    <HasGlobalID>true</HasGlobalID>
+    <GlobalIDFieldName>esriFieldTypeGlobalID</GlobalIDFieldName>
+</esri:DataElement>

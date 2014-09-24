@@ -1,0 +1,95 @@
+PDS_VERSION_ID            = "PDS3"
+
+/*** GENERAL DATA DESCRIPTION PARAMETERS ***/
+PRODUCT_VERSION_ID        = "V1.04"
+DATA_SET_ID               = "LRO-L-LOLA-4-GDR-V1.0"
+PRODUCT_ID                = "LDEM_4"
+INSTRUMENT_HOST_NAME      = "LUNAR RECONNAISSANCE ORBITER"
+INSTRUMENT_NAME           = "LUNAR ORBITER LASER ALTIMETER"
+INSTRUMENT_ID             = "LOLA"
+MISSION_PHASE_NAME        = {"COMMISSIONING","NOMINAL MISSION"}
+TARGET_NAME               = MOON
+START_TIME                = 2009-07-13T17:33:17.246
+STOP_TIME                 = 2010-09-16T19:15:57.239
+PRODUCT_CREATION_TIME     = 2010-12-15T00:00:00
+PRODUCER_ID               = LRO_LOLA_TEAM
+PRODUCER_FULL_NAME        = "DAVID E. SMITH"
+PRODUCER_INSTITUTION_NAME = "GODDARD SPACE FLIGHT CENTER"
+DESCRIPTION               = "This data product is a shape map (radius)
+   of the Moon at a resolution of 4 pix/deg by 4 pix/deg,
+   based on altimetry data acquired through mission phase LRO_NO_13
+   by the LOLA instrument. The preliminary LOLA data are the source for
+   this data set. The ground tracks were interpolated using the Generic
+   Mapping Tools programs 'surface' and 'grdblend'.  The map is in
+   the form of a binary table with one row for each
+   0.25 degrees of latitude, pixel registered.  Map values
+   are relative to a radius of 1737.4 km.
+
+   This label describes an IMG file in the form of a binary resampling
+   to pixel registration.
+"
+
+OBJECT                    = UNCOMPRESSED_FILE
+FILE_NAME                 = "LDEM_4.IMG"
+RECORD_TYPE               = FIXED_LENGTH
+FILE_RECORDS              = 720
+RECORD_BYTES              = 2880
+^IMAGE                    = "LDEM_4.IMG"
+
+
+  OBJECT                  = IMAGE
+    NAME                  = HEIGHT
+    DESCRIPTION           = "Each sample represents height relative to a
+      reference radius (OFFSET) and is generated using preliminary LOLA data
+      produced by the LOLA team."
+    LINES                 = 720
+    LINE_SAMPLES          = 1440
+    SAMPLE_TYPE           = LSB_INTEGER
+    SAMPLE_BITS           = 16
+    UNIT                  = METER
+    SCALING_FACTOR        = 0.5
+    OFFSET                = 1737400.
+
+/* NOTE:                                                                   */
+/* Conversion from Digital Number to HEIGHT, i.e. elevation in meters, is: */
+/* HEIGHT = (DN * SCALING_FACTOR).                                         */
+/* The conversion from Digital Number to PLANETARY_RADIUS in meters is:    */
+/* PLANETARY_RADIUS = (DN * SCALING_FACTOR) + OFFSET                       */
+/* where OFFSET is the radius of a reference sphere.                       */
+/* The planetopotential TOPOGRAPHY is PLANETARY_RADIUS - GEOID_RADIUS,     */
+/* where GEOID_RADIUS is derived from a gravitational equipotential model. */
+/* By convention, the average GEOID_RADIUS at the equator is OFFSET.       */
+
+  END_OBJECT              = IMAGE
+END_OBJECT                = UNCOMPRESSED_FILE
+OBJECT                    = IMAGE_MAP_PROJECTION
+ ^DATA_SET_MAP_PROJECTION     = "DSMAP.CAT"
+ MAP_PROJECTION_TYPE          = "SIMPLE CYLINDRICAL"
+ MAP_RESOLUTION               = 4 <pix/deg>
+ A_AXIS_RADIUS                = 1737.4 <km>
+ B_AXIS_RADIUS                = 1737.4 <km>
+ C_AXIS_RADIUS                = 1737.4 <km>
+ FIRST_STANDARD_PARALLEL      = 'N/A'
+ SECOND_STANDARD_PARALLEL     = 'N/A'
+ POSITIVE_LONGITUDE_DIRECTION = "EAST"
+ CENTER_LATITUDE              = 0. <deg>
+ CENTER_LONGITUDE             = 180. <deg>
+ REFERENCE_LATITUDE           = 'N/A'
+ REFERENCE_LONGITUDE          = 'N/A'
+ LINE_FIRST_PIXEL             = 1
+ LINE_LAST_PIXEL              = 720
+ SAMPLE_FIRST_PIXEL           = 1
+ SAMPLE_LAST_PIXEL            = 1440
+ MAP_PROJECTION_ROTATION      = 0.0
+ MAP_SCALE                    = 7.5808376060 <km/pix>
+ MAXIMUM_LATITUDE             = 90 <deg>
+ MINIMUM_LATITUDE             = -90 <deg>
+ WESTERNMOST_LONGITUDE        = 0 <deg>
+ EASTERNMOST_LONGITUDE        = 360 <deg>
+ LINE_PROJECTION_OFFSET       = 359.5 <pix>
+ SAMPLE_PROJECTION_OFFSET     = 719.5 <pix>
+ COORDINATE_SYSTEM_TYPE       = "BODY-FIXED ROTATING"
+ COORDINATE_SYSTEM_NAME       = "MEAN EARTH/POLAR AXIS OF DE421"
+END_OBJECT                    = IMAGE_MAP_PROJECTION
+
+END

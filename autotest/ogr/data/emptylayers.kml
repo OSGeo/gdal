@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:kml="http://www.opengis.net/kml/2.2">
+    <Document> 
+        <name>Test</name>
+        <Folder id="Layer1">
+            <name>Layer1</name>
+            <Placemark>
+                <name>Placemark1</name>
+            </Placemark>
+        </Folder>
+        <Folder id="Layer2">
+            <name>Layer2</name>
+        </Folder>
+    </Document>
+</kml>

@@ -1,0 +1,46 @@
+001362L 1 0600049   22040000210000012921DQHL37500000;&1107DQHL.DDF0100;&DDF RECORD IDENTIFER1600;&LineageMODN!RCID!COMT(A,I,A)01754 D 1   00043   4104000100080DQHL170380000001DQHL1CONVERSION TO SDTS: This DEM was converted to SDTS Raster Profile as
+part ofa mass conversion of US Geological Survey Digital Elevation
+model archive to SDTS.  The data organization was changed from a
+southwest origin with south to north scans to a northwest origin with
+west to east scans.  The x,y grid positions were not altered -- i.e.,
+the data was not resampled.  The UTM gridded DEMs are ragged in their
+native form.  A fill value was used too make the DEM grid rectangular
+in this transfer.
+
+
+GENERAL NOTES: A number of factors affect gridding processes and the
+accuracy of the final DEM product: 1) A dependency exists between the
+scale of the source materials and the level of detail or grid
+refinement that is possible from a given source.  2) During the
+process of changing scale, from large to small, some source data may
+be generalized or dropped out and, therefore, some features would not
+be available for formation of, or incorporation into, a grid at that
+scale.  3) The process of forming a grid with regular spacing requires
+the transfer of precise point or vector data to generalized grid
+square corners using a process similar to taking a simple weighted
+average.  This process may alter the apparent position upon display of
+point or vector source data, reducing the ability to recover positions
+of specific features whose dimensions are less than the internal grid
+cell spacing.  For all DEM's, the grid spacing and spatial resolution
+results in data intervals that span terrain discontinuities, such as
+benches, tops, and drainage.  Some features can be appropriately
+captured at a given grid spacing while other, smaller features are
+subdued or filtered out altogether.00087 D 1   00039   21040001080DQHL4080000002DQHL2DEM CELL NAME: ALANSON, MI-2400000117 D 1   00039   21040001080DQHL7080000003DQHL3PROCESS CODE 5: DLG/hypsography LINETRACE, LT4X complex linear00070 D 1   00039   21040001080DQHL2380000004DQHL4DEM PRODUCER:  00066 D 1   00039   21040001080DQHL1980000005DQHL5DEM LEVEL-200436 D 1   00041   310400010080DQHL38780000006DQHL6DEM LEVEL 2 means: DEM created from digital line graph (DLG) contours or equivalent, or from any USGS map series up to 1:100,00 scale using stable base contour separate or equivalent.  DEM data derived from hyposgraphic and hydrographic data digitizing, either photogrammetrically or from existing maps, are entered into the Level 2 category after review on a DEM editing system.00105 D 1   00039   21040001080DQHL5880000007DQHL7SOURCE DATE OF PUBLISHED MAP OR PHOTOGRAPHY:  198300094 D 1   00039   21040001080DQHL4780000008DQHL8DATA INSPECTION OR REVISION DATE:  199800145 D 1   00039   21040001080DQHL9880000009DQHL9INSPECTION FLAG: Iindicates all process of part three quality control have been performed.00152 D 1   00041   310400010080DQHL10380000010DQHL10DATA VALIDATION FLAG: Level 2 and 3 DEMs reviewed and edited.  RSME computed from test points.00085 D 1   00039   21040001080DQHL3880000011DQHL11DATA EDITION: 1: USGS default00111 D 1   00039   21040001080DQHL6480000012DQHL12GRID RESOLUTION: 30.000000 METERS X, 30.000000 METERS Y01326 D 1   00043   4104000100080DQHL127580000013DQHL13VISUAL VERIFICATION: Because of practical limitations
+inherent in all collection systems, there will always be some artifacts
+such as benches, striations, patches, or some other anomaly that
+imparts some signature of the collection system in the data set.  Some
+of these artifacts, although falling within normal DEM vertical error
+tolerances, can coalesce with valid surface features. All DEM's are
+viewed and edited so corrective actions can be taken to minimize these
+artifacts. For example, 1) Isolated tops are depicted with their
+approximate size and shape; 2) Flat trending surfaces are depicted as
+generally flat trending without confusing patterns or striations; and,
+3) Water bodies are flat, lower than the surrounding terrain, and have
+shorelines clearly delineated.  Additional testing is performed using
+a DEM Editing System (DES) to aid in the identification of blunders
+such as irregularly gridded data, mistagging of tops and depressions,
+and spikes.  These blunders are generally identified by displaying the
+DEM with the aid of DES options, which include color banding of
+elevation gradients, stereoscopic viewing using anaglyphic filters,
+and shaded-relief enhancement.  An elevation matrix is analyzed in
+suspect areas and corrected as required.

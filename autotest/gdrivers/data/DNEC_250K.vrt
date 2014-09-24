@@ -1,0 +1,41 @@
+<VRTDataset rasterXSize="1024" rasterYSize="682">
+  <SRS>PROJCS[&quot;NAD83 / NRCan LCC Canada&quot;,GEOGCS[&quot;NAD83&quot;,DATUM[&quot;North_American_Datum_1983&quot;,SPHEROID[&quot;GRS_1980&quot;,6378137,298.257222101]],PRIMEM[&quot;Greenwich&quot;,0],UNIT[&quot;Decimal_Degree&quot;,0.0174532925199433]],PROJECTION[&quot;Lambert_Conformal_Conic_2SP&quot;],PARAMETER[&quot;central_meridian&quot;,-95.0],PARAMETER[&quot;latitude_of_origin&quot;,49.0],PARAMETER[&quot;standard_parallel_1&quot;,49.0],PARAMETER[&quot;standard_parallel_2&quot;,77.0],PARAMETER[&quot;false_easting&quot;,0.0],PARAMETER[&quot;false_northing&quot;,0.0],UNIT[&quot;Meter&quot;,1],AUTHORITY[&quot;EPSG&quot;,&quot;42304&quot;]]</SRS>
+  <GeoTransform> -3.0000000000000000e+06,  8.7890625000000000e+03,  0.0000000000000000e+00,  4.5000000000000000e+06,  0.0000000000000000e+00, -8.7976539589442818e+03</GeoTransform>
+  <Metadata />
+  <Metadata domain="IMAGE_STRUCTURE">
+    <MDI key="INTERLEAVE">PIXEL</MDI>
+  </Metadata>
+  <VRTRasterBand dataType="Byte" band="1">
+    <Metadata />
+    <ColorInterp>Red</ColorInterp>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">WMS:http://wms.geobase.ca/wms-bin/cubeserv.cgi?SERVICE=WMS&amp;VERSION=1.1.1&amp;REQUEST=GetMap&amp;LAYERS=DNEC_250K:ELEVATION/ELEVATION&amp;SRS=EPSG:42304&amp;BBOX=-3000000,-1500000,6000000,4500000</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="1073741824" RasterYSize="715128832" DataType="Byte" BlockXSize="1024" BlockYSize="1024" />
+      <SrcRect xOff="0" yOff="0" xSize="1073741824" ySize="715128832" />
+      <DstRect xOff="0" yOff="0" xSize="1024" ySize="682" />
+    </SimpleSource>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="2">
+    <Metadata />
+    <ColorInterp>Green</ColorInterp>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">WMS:http://wms.geobase.ca/wms-bin/cubeserv.cgi?SERVICE=WMS&amp;VERSION=1.1.1&amp;REQUEST=GetMap&amp;LAYERS=DNEC_250K:ELEVATION/ELEVATION&amp;SRS=EPSG:42304&amp;BBOX=-3000000,-1500000,6000000,4500000</SourceFilename>
+      <SourceBand>2</SourceBand>
+      <SourceProperties RasterXSize="1073741824" RasterYSize="715128832" DataType="Byte" BlockXSize="1024" BlockYSize="1024" />
+      <SrcRect xOff="0" yOff="0" xSize="1073741824" ySize="715128832" />
+      <DstRect xOff="0" yOff="0" xSize="1024" ySize="682" />
+    </SimpleSource>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="3">
+    <Metadata />
+    <ColorInterp>Blue</ColorInterp>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">WMS:http://wms.geobase.ca/wms-bin/cubeserv.cgi?SERVICE=WMS&amp;VERSION=1.1.1&amp;REQUEST=GetMap&amp;LAYERS=DNEC_250K:ELEVATION/ELEVATION&amp;SRS=EPSG:42304&amp;BBOX=-3000000,-1500000,6000000,4500000</SourceFilename>
+      <SourceBand>3</SourceBand>
+      <SourceProperties RasterXSize="1073741824" RasterYSize="715128832" DataType="Byte" BlockXSize="1024" BlockYSize="1024" />
+      <SrcRect xOff="0" yOff="0" xSize="1073741824" ySize="715128832" />
+      <DstRect xOff="0" yOff="0" xSize="1024" ySize="682" />
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>
