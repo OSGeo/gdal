@@ -534,7 +534,7 @@ int lutcmp(const void *aa, const void *bb) {
 }
 
 
-int blx_encode_celldata(blxcontext_t *ctx, blxdata *indata, int side, unsigned char *outbuf, int outbufsize) {
+int blx_encode_celldata(blxcontext_t *ctx, blxdata *indata, int side, unsigned char *outbuf, CPL_UNUSED int outbufsize) {
     unsigned char *p=outbuf, *tmpdata, *coutstart, *cout=NULL;
     int level, cn, coutsize, zeros;
     blxdata *vdec=NULL, *vdiff=NULL, *c[4], *tc1, *clut, *indata_scaled;

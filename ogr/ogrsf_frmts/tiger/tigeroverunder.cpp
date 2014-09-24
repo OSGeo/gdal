@@ -60,7 +60,8 @@ static const TigerRecordInfo rtU_info =
 /************************************************************************/
 
 TigerOverUnder::TigerOverUnder( OGRTigerDataSource * poDSIn,
-                              const char * pszPrototypeModule ) : TigerPoint(TRUE, &rtU_info, FILE_CODE)
+                                CPL_UNUSED const char * pszPrototypeModule )
+  : TigerPoint(TRUE, &rtU_info, FILE_CODE)
 {
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "OverUnder" );

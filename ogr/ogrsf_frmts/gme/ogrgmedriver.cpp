@@ -77,8 +77,7 @@ OGRDataSource *OGRGMEDriver::Open( const char * pszFilename, int bUpdate )
 /************************************************************************/
 
 OGRDataSource *OGRGMEDriver::CreateDataSource( const char * pszName,
-                                               char **papszOptions )
-
+                                               CPL_UNUSED char **papszOptions )
 {
     OGRGMEDataSource   *poDS = new OGRGMEDataSource();
 

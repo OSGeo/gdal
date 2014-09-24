@@ -124,7 +124,7 @@ double GXFRasterBand::GetNoDataValue(int* bGotNoDataValue)
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr GXFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr GXFRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                   void * pImage )
 
 {

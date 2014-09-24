@@ -827,8 +827,7 @@ CPLErr swq_select::expand_wildcard( swq_field_list *field_list )
 /************************************************************************/
 
 CPLErr swq_select::parse( swq_field_list *field_list,
-                          int parse_flags )
-
+                          CPL_UNUSED int parse_flags )
 {
     int  i;
     CPLErr eError;

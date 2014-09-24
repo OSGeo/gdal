@@ -44,6 +44,8 @@
 #include <cstdio>
 #include <cstdlib>
 
+#include "cpl_port.h"
+
 using namespace PCIDSK;
 
 /************************************************************************/
@@ -52,7 +54,7 @@ using namespace PCIDSK;
 
 CBandInterleavedChannel::CBandInterleavedChannel( PCIDSKBuffer &image_header, 
                                                   uint64 ih_offset, 
-                                                  PCIDSKBuffer &file_header,
+                                                  CPL_UNUSED PCIDSKBuffer &file_header,
                                                   int channelnum,
                                                   CPCIDSKFile *file,
                                                   uint64 image_offset,

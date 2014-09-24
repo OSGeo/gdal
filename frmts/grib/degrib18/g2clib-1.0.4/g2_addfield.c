@@ -345,7 +345,7 @@ g2int g2_addfield(unsigned char *cgrib,g2int ipdsnum,g2int *ipdstmpl,
               width=ndpts;
               height=1;
            }
-           else if ( width==allones || height==allones ) {
+           else if ( (unsigned int)width==allones || (unsigned int)height==allones ) {
               width=ndpts;
               height=1;
            }

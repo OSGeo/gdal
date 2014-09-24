@@ -108,7 +108,11 @@ void *GMLReader::hMutex = NULL;
 /*                             GMLReader()                              */
 /************************************************************************/
 
-GMLReader::GMLReader(int bUseExpatParserPreferably,
+GMLReader::GMLReader(
+#ifndef HAVE_XERCES
+CPL_UNUSED
+#endif
+                     int bUseExpatParserPreferably,
                      int bInvertAxisOrderIfLatLong,
                      int bConsiderEPSGAsURN,
                      int bGetSecondaryGeometryOption)
@@ -118,10 +122,10 @@ GMLReader::GMLReader(int bUseExpatParserPreferably,
     bUseExpatReader = TRUE;
 #else
     bUseExpatReader = FALSE;
-#ifdef HAVE_EXPAT
+#  ifdef HAVE_EXPAT
     if(bUseExpatParserPreferably)
         bUseExpatReader = TRUE;
-#endif
+#  endif
 #endif
 
 #if defined(HAVE_EXPAT) && defined(HAVE_XERCES)

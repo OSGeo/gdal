@@ -32,7 +32,7 @@
 
 GTMTrackLayer::GTMTrackLayer( const char* pszName,
                               OGRSpatialReference* poSRSIn,
-                              int bWriterIn,
+                              CPL_UNUSED int bWriterIn,
                               OGRGTMDataSource* poDSIn )
 {
     poCT = NULL;

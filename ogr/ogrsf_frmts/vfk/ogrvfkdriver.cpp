@@ -84,7 +84,7 @@ OGRDataSource *OGRVFKDriver::Open(const char * pszFilename,
 
   \return TRUE on success or FALSE on failure
 */
-int OGRVFKDriver::TestCapability(const char *pszCap)
+int OGRVFKDriver::TestCapability(CPL_UNUSED const char *pszCap)
 {
     return FALSE;
 }

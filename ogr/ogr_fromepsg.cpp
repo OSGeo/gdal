@@ -1325,7 +1325,7 @@ static OGRErr SetEPSGGeogCS( OGRSpatialReference * poSRS, int nGeogCS )
 /************************************************************************/
 
 static double OGR_FetchParm( double *padfProjParms, int *panParmIds, 
-                             int nTargetId, double dfFromGreenwich )
+                             int nTargetId, CPL_UNUSED double dfFromGreenwich )
 
 {
     int i;

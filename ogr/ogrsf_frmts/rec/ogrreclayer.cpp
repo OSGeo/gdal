@@ -301,8 +301,7 @@ OGRFeature *OGRRECLayer::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRRECLayer::TestCapability( const char * pszCap )
-
+int OGRRECLayer::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }

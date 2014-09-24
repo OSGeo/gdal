@@ -1255,8 +1255,8 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
 /* -------------------------------------------------------------------- */
 /*      Can we do a direct read into our buffer?                        */
 /* -------------------------------------------------------------------- */
-    if( psImage->nWordSize == psImage->nPixelOffset
-        && (psImage->nBitsPerSample * psImage->nBlockWidth + 7) / 8
+    if( (GUIntBig)psImage->nWordSize == psImage->nPixelOffset
+        && (GUIntBig)((psImage->nBitsPerSample * psImage->nBlockWidth + 7) / 8)
            == psImage->nLineOffset 
         && psImage->szIC[0] != 'C' && psImage->szIC[0] != 'M'
         && psImage->chIMODE != 'P' )
@@ -1558,8 +1558,8 @@ int NITFWriteImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
 /* -------------------------------------------------------------------- */
 /*      Can we do a direct read into our buffer?                        */
 /* -------------------------------------------------------------------- */
-    if( psImage->nWordSize == psImage->nPixelOffset
-        && psImage->nWordSize * psImage->nBlockWidth == psImage->nLineOffset 
+    if( (GUIntBig)psImage->nWordSize == psImage->nPixelOffset
+        && (GUIntBig)(psImage->nWordSize * psImage->nBlockWidth) == psImage->nLineOffset 
         && psImage->szIC[0] != 'C' && psImage->szIC[0] != 'M' )
     {
 #ifdef CPL_LSB
@@ -1653,8 +1653,8 @@ int NITFReadImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
 /*      Can we do a direct read into our buffer.                        */
 /* -------------------------------------------------------------------- */
     if( (psImage->nBitsPerSample % 8) != 0 ||
-        (psImage->nWordSize == psImage->nPixelOffset
-        && psImage->nWordSize * psImage->nBlockWidth == psImage->nLineOffset) )
+        ((GUIntBig)psImage->nWordSize == psImage->nPixelOffset
+         && (GUIntBig)(psImage->nWordSize * psImage->nBlockWidth) == psImage->nLineOffset) )
     {
         if( VSIFReadL( pData, 1, nLineSize, psImage->psFile->fp ) !=  
             nLineSize )
@@ -1769,8 +1769,8 @@ int NITFWriteImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
 /* -------------------------------------------------------------------- */
 /*      Can we do a direct write into our buffer.                       */
 /* -------------------------------------------------------------------- */
-    if( psImage->nWordSize == psImage->nPixelOffset
-        && psImage->nWordSize * psImage->nBlockWidth == psImage->nLineOffset )
+    if( (GUIntBig)psImage->nWordSize == psImage->nPixelOffset
+        && (GUIntBig)(psImage->nWordSize * psImage->nBlockWidth) == psImage->nLineOffset )
     {
 #ifdef CPL_LSB
         NITFSwapWords( psImage, pData, psImage->nBlockWidth );
@@ -2819,7 +2819,7 @@ static void NITFLoadAttributeSection( NITFImage *psImage )
 /*      hold the offset table (otherwise NITFFetchAttribute coud        */
 /*      read out of the buffer)                                         */
 /* -------------------------------------------------------------------- */
-    if (nASSSize < 8 * nAttrCount)
+    if (nASSSize < (GUIntBig)(8 * nAttrCount))
     {
         CPLError( CE_Warning, CPLE_AppDefined,
                   "Attribute subsection not large enough (%d bytes) to contain %d attributes.",
@@ -3388,7 +3388,7 @@ static int NITFLoadVQTables( NITFImage *psImage, int bTryGuessingOffset )
         if (!bTryGuessingOffset)
             return FALSE;
 
-        for( i = 0; i < sizeof(abyTestChunk) - sizeof(abySignature); i++ )
+        for( i = 0; (size_t)i < sizeof(abyTestChunk) - sizeof(abySignature); i++ )
         {
             if( memcmp(abyTestChunk+i,abySignature,sizeof(abySignature)) == 0 )
             {

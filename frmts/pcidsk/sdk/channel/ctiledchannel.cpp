@@ -41,6 +41,8 @@
 #include <cstdlib>
 #include <cstring>
 
+#include "cpl_port.h"
+
 using namespace PCIDSK;
 
 /************************************************************************/
@@ -49,7 +51,7 @@ using namespace PCIDSK;
 
 CTiledChannel::CTiledChannel( PCIDSKBuffer &image_header, 
                               uint64 ih_offset,
-                              PCIDSKBuffer &file_header,
+                              CPL_UNUSED PCIDSKBuffer &file_header,
                               int channelnum,
                               CPCIDSKFile *file,
                               eChanType pixel_type )

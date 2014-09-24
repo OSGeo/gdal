@@ -428,7 +428,7 @@ void OGRSVGLayer::startElementCbk(const char *pszName, const char **ppszAttr)
 /*                           endElementCbk()                            */
 /************************************************************************/
 
-void OGRSVGLayer::endElementCbk(const char *pszName)
+void OGRSVGLayer::endElementCbk(CPL_UNUSED const char *pszName)
 {
     if (bStopParsing) return;
 
@@ -758,7 +758,7 @@ void OGRSVGLayer::startElementLoadSchemaCbk(const char *pszName,
 /*                   endElementLoadSchemaCbk()                           */
 /************************************************************************/
 
-void OGRSVGLayer::endElementLoadSchemaCbk(const char *pszName)
+void OGRSVGLayer::endElementLoadSchemaCbk(CPL_UNUSED const char *pszName)
 {
     if (bStopParsing) return;
 
@@ -777,7 +777,7 @@ void OGRSVGLayer::endElementLoadSchemaCbk(const char *pszName)
 /*                   dataHandlerLoadSchemaCbk()                         */
 /************************************************************************/
 
-void OGRSVGLayer::dataHandlerLoadSchemaCbk(const char *data, int nLen)
+void OGRSVGLayer::dataHandlerLoadSchemaCbk(CPL_UNUSED const char *data, CPL_UNUSED int nLen)
 {
     if (bStopParsing) return;
 

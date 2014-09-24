@@ -157,12 +157,10 @@ JDEMRasterBand::~JDEMRasterBand()
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr JDEMRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr JDEMRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                   void * pImage )
-
 {
     JDEMDataset *poGDS = (JDEMDataset *) poDS;
-    int		i;
     
     if (pszRecord == NULL)
     {
@@ -199,7 +197,7 @@ CPLErr JDEMRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return CE_Failure;
     }
 
-    for( i = 0; i < nBlockXSize; i++ )
+    for( int i = 0; i < nBlockXSize; i++ )
         ((float *) pImage)[i] = (float)
             (JDEMGetField( pszRecord + 9 + 5 * i, 5) * 0.1);
 

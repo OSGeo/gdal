@@ -727,7 +727,8 @@ OGRGeoPackageLayer::~OGRGeoPackageLayer()
 /*                      CreateField()                                   */
 /************************************************************************/
 
-OGRErr OGRGeoPackageLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
+OGRErr OGRGeoPackageLayer::CreateField( OGRFieldDefn *poField,
+                                        CPL_UNUSED int bApproxOK )
 {
     if( !m_poDS->IsUpdatable() )
     {

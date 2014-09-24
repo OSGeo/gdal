@@ -820,8 +820,8 @@ int OGRTigerDataSource::Create( const char *pszNameIn, char **papszOptions )
 
 OGRLayer *OGRTigerDataSource::CreateLayer( const char *pszLayerName, 
                                            OGRSpatialReference *poSpatRef, 
-                                           OGRwkbGeometryType eGType, 
-                                           char **papszOptions )
+                                           CPL_UNUSED OGRwkbGeometryType eGType, 
+                                           CPL_UNUSED char **papszOptions )
 
 {
     OGRTigerLayer       *poLayer = NULL;

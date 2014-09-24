@@ -361,8 +361,7 @@ OGRFeature *OGRSUALayer::GetNextRawFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRSUALayer::TestCapability( const char * pszCap )
-
+int OGRSUALayer::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }

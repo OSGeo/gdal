@@ -159,8 +159,7 @@ int OGRAVCBinDataSource::Open( const char * pszNewName, int bTestOpen )
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRAVCBinDataSource::TestCapability( const char * pszCap )
-
+int OGRAVCBinDataSource::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }

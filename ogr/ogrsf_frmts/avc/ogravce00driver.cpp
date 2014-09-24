@@ -79,8 +79,7 @@ OGRDataSource *OGRAVCE00Driver::Open( const char * pszFilename,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRAVCE00Driver::TestCapability( const char * pszCap )
-
+int OGRAVCE00Driver::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }

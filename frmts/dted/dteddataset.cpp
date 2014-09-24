@@ -125,7 +125,7 @@ DTEDRasterBand::DTEDRasterBand( DTEDDataset *poDS, int nBand )
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr DTEDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr DTEDRasterBand::IReadBlock( int nBlockXOff, CPL_UNUSED int nBlockYOff,
                                   void * pImage )
 
 {
@@ -187,7 +187,7 @@ CPLErr DTEDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr DTEDRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
+CPLErr DTEDRasterBand::IWriteBlock( int nBlockXOff, CPL_UNUSED int nBlockYOff,
                                   void * pImage )
 
 {

@@ -60,8 +60,7 @@ static const TigerRecordInfo rtH_info =
 /************************************************************************/
 
 TigerIDHistory::TigerIDHistory( OGRTigerDataSource * poDSIn,
-                            const char * pszPrototypeModule ) : TigerFileBase(&rtH_info, FILE_CODE)
-
+                                CPL_UNUSED const char * pszPrototypeModule ) : TigerFileBase(&rtH_info, FILE_CODE)
 {
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "IDHistory" );

@@ -226,6 +226,7 @@ static void SkipVarInt(GByte** ppabyData)
 /*                         SkipUnknownField()                           */
 /************************************************************************/
 
+/* TODO: Move static function into the cpp file where it is used. */
 #define SKIP_UNKNOWN_FIELD_INLINE(pabyData, pabyDataLimit, verbose) \
         int nWireType = GET_WIRETYPE(nKey); \
         if (verbose) \

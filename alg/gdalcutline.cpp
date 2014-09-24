@@ -229,13 +229,12 @@ BlendMaskGenerator( int nXOff, int nYOff, int nXSize, int nYSize,
 
 static int CutlineTransformer( void *pTransformArg, int bDstToSrc, 
                                int nPointCount, 
-                               double *x, double *y, double *z, 
-                               int *panSuccess )
+                               double *x, double *y, CPL_UNUSED double *z, 
+                               CPL_UNUSED int *panSuccess )
 
 {
     int nXOff = ((int *) pTransformArg)[0];
     int nYOff = ((int *) pTransformArg)[1];				
-    int i;
 
     if( bDstToSrc )
     {
@@ -243,7 +242,7 @@ static int CutlineTransformer( void *pTransformArg, int bDstToSrc,
         nYOff *= -1;
     }
 
-    for( i = 0; i < nPointCount; i++ )
+    for( int i = 0; i < nPointCount; i++ )
     {
         x[i] -= nXOff;
         y[i] -= nYOff;
@@ -261,7 +260,7 @@ static int CutlineTransformer( void *pTransformArg, int bDstToSrc,
 /************************************************************************/
 
 CPLErr 
-GDALWarpCutlineMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
+GDALWarpCutlineMasker( void *pMaskFuncArg, CPL_UNUSED int nBandCount, CPL_UNUSED GDALDataType eType,
                        int nXOff, int nYOff, int nXSize, int nYSize,
                        GByte ** /*ppImageData */,
                        int bMaskIsFloat, void *pValidityMask )

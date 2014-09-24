@@ -1269,8 +1269,7 @@ static int USGSDEMProductSetup_DEFAULT( USGSDEMWriteInfo *psWInfo )
 /************************************************************************/
 
 static int USGSDEMLoadRaster( USGSDEMWriteInfo *psWInfo,
-                              GDALRasterBand *poSrcBand )
-
+                              CPL_UNUSED GDALRasterBand *poSrcBand )
 {
     CPLErr eErr;
     int i;
@@ -1397,8 +1396,7 @@ static int USGSDEMLoadRaster( USGSDEMWriteInfo *psWInfo,
 GDALDataset *
 USGSDEMCreateCopy( const char *pszFilename, GDALDataset *poSrcDS, 
                    int bStrict, char **papszOptions,
-                   GDALProgressFunc pfnProgress, void * pProgressData )
-
+                   CPL_UNUSED GDALProgressFunc pfnProgress, CPL_UNUSED void * pProgressData )
 {
     USGSDEMWriteInfo sWInfo;
 

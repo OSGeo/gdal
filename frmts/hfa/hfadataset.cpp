@@ -3048,7 +3048,7 @@ GDALRasterAttributeTable *HFARasterBand::GetDefaultRAT()
 /*                            WriteNamedRAT()                            */
 /************************************************************************/
  
-CPLErr HFARasterBand::WriteNamedRAT( const char *pszName, const GDALRasterAttributeTable *poRAT )
+CPLErr HFARasterBand::WriteNamedRAT( CPL_UNUSED const char *pszName, const GDALRasterAttributeTable *poRAT )
 {
 /* -------------------------------------------------------------------- */
 /*      Find the requested table.                                       */
@@ -5815,7 +5815,7 @@ CPLErr HFADataset::CopyFiles( const char *pszNewName, const char *pszOldName )
 
 GDALDataset *
 HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
-                        int bStrict, char ** papszOptions,
+                        CPL_UNUSED int bStrict, char ** papszOptions,
                         GDALProgressFunc pfnProgress, void * pProgressData )
 
 {

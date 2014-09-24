@@ -252,8 +252,8 @@ HFAEntry* HFAEntry::BuildEntryFromMIFObject( HFAEntry *poContainer, const char *
 /*      Create a pseudo-HFAEntry wrapping a MIFObject.                  */
 /************************************************************************/
 
-HFAEntry::HFAEntry( HFAEntry * poContainer,
-                    const char *pszMIFObjectPath,
+HFAEntry::HFAEntry( CPL_UNUSED HFAEntry * poContainer,
+                    CPL_UNUSED const char *pszMIFObjectPath,
                     const char * pszDictionnary, 
                     const char * pszTypeName,
                     int nDataSizeIn,
@@ -710,7 +710,7 @@ int HFAEntry::GetFieldValue( const char * pszFieldPath,
 /*                           GetFieldCount()                            */
 /************************************************************************/
 
-int HFAEntry::GetFieldCount( const char * pszFieldPath, CPLErr *peErr )
+int HFAEntry::GetFieldCount( const char * pszFieldPath, CPL_UNUSED CPLErr *peErr )
 
 {
     HFAEntry	*poEntry = this;

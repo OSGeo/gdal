@@ -21,6 +21,8 @@
 #include "myassert.h"
 #include "myutil.h"
 
+#include "cpl_port.h"
+
 const char *centerLookup (unsigned short int center)
 {
    /* see:
@@ -1483,8 +1485,8 @@ static GRIB2LocalTable *Choose_LocalParmTable (unsigned short int center,
  */
 /* Deal with probability templates 2/16/2006 */
 static void ElemNameProb (uShort2 center, uShort2 subcenter, int prodType,
-                          int templat, uChar cat, uChar subcat, sInt4 lenTime,
-                          uChar timeIncrType, uChar genID, uChar probType,
+                          CPL_UNUSED int templat, uChar cat, uChar subcat, sInt4 lenTime,
+                          uChar timeIncrType, CPL_UNUSED uChar genID, uChar probType,
                           double lowerProb, double upperProb, char **name,
                           char **comment, char **unit, int *convert)
 {
@@ -1658,7 +1660,7 @@ static void ElemNameProb (uShort2 center, uShort2 subcenter, int prodType,
 
 /* Deal with percentile templates 5/1/2006 */
 static void ElemNamePerc (uShort2 center, uShort2 subcenter, int prodType,
-                          int templat, uChar cat, uChar subcat, sInt4 lenTime,
+                          CPL_UNUSED int templat, uChar cat, uChar subcat, sInt4 lenTime,
                           sChar percentile, char **name, char **comment,
                           char **unit, int *convert)
 {
@@ -1746,8 +1748,8 @@ static void ElemNamePerc (uShort2 center, uShort2 subcenter, int prodType,
 /* Deal with non-prob templates 2/16/2006 */
 static void ElemNameNorm (uShort2 center, uShort2 subcenter, int prodType,
                           int templat, uChar cat, uChar subcat, sInt4 lenTime,
-                          uChar timeIncrType, uChar genID, uChar probType,
-                          double lowerProb, double upperProb, char **name,
+                          CPL_UNUSED uChar timeIncrType, CPL_UNUSED uChar genID, CPL_UNUSED uChar probType,
+                          CPL_UNUSED double lowerProb, CPL_UNUSED double upperProb, char **name,
                           char **comment, char **unit, int *convert)
 {
    GRIB2ParmTable *table;
@@ -2389,7 +2391,7 @@ GRIB2LocalSurface NCEP_Surface[] = {
  *****************************************************************************
  */
 GRIB2SurfTable Table45Index (int i, int *f_reserved, uShort2 center,
-                             uShort2 subcenter)
+                             CPL_UNUSED uShort2 subcenter)
 {
    size_t j;
 

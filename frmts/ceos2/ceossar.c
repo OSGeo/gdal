@@ -94,17 +94,20 @@ void CalcCeosSARImageFilePosition(CeosSARVolume_t *volume, int channel, int line
     }
 }
 
-int32 GetCeosSARImageData(CeosSARVolume_t *volume, CeosRecord_t *processed_data_record, int channel, int xoff, int xsize, int bufsize, uchar *buffer)
+int32 GetCeosSARImageData(CPL_UNUSED CeosSARVolume_t *volume,
+                          CPL_UNUSED CeosRecord_t *processed_data_record,
+                          CPL_UNUSED int channel, CPL_UNUSED int xoff, CPL_UNUSED int xsize,
+                          CPL_UNUSED int bufsize, CPL_UNUSED uchar *buffer)
 {
     return 0;
 }
 
-void DetermineCeosSARPixelOrder( CeosSARVolume_t *volume, CeosRecord_t *record )
+void DetermineCeosSARPixelOrder( CPL_UNUSED CeosSARVolume_t *volume, CPL_UNUSED CeosRecord_t *record )
 {
 
 }
 
-void GetCeosSAREmbeddedInfo(CeosSARVolume_t *volume, CeosRecord_t *processed_data_record, CeosSAREmbeddedInfo_t *info)
+void GetCeosSAREmbeddedInfo(CPL_UNUSED CeosSARVolume_t *volume, CPL_UNUSED CeosRecord_t *processed_data_record, CPL_UNUSED CeosSAREmbeddedInfo_t *info)
 {
 }
 

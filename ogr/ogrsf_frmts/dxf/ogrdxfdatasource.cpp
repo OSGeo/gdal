@@ -74,8 +74,7 @@ OGRDXFDataSource::~OGRDXFDataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRDXFDataSource::TestCapability( const char * pszCap )
-
+int OGRDXFDataSource::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }

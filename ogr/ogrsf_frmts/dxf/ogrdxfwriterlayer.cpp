@@ -519,9 +519,8 @@ OGRErr OGRDXFWriterLayer::WriteTEXT( OGRFeature *poFeature )
 /*                     PrepareLineTypeDefinition()                      */
 /************************************************************************/
 CPLString 
-OGRDXFWriterLayer::PrepareLineTypeDefinition( OGRFeature *poFeature, 
+OGRDXFWriterLayer::PrepareLineTypeDefinition( CPL_UNUSED OGRFeature *poFeature,
                                               OGRStyleTool *poTool )
-
 {
     CPLString osDef;
     OGRStylePen *poPen = (OGRStylePen *) poTool;

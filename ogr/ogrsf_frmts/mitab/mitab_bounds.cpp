@@ -69,6 +69,8 @@
  * bounds lookups
  *----------------------------------------------------------------*/
 static MapInfoBoundsInfo **gpapsExtBoundsList = NULL;
+
+/* TODO: Clean up the initializers! */
 static MapInfoBoundsInfo gasBoundsList[] = {
 {{1, 0xff, 0xff, {0,0,0,0,0,0}, 0,0,0,0, {0,0,0,0,0}}, -1000, -1000, 1000, 1000},  /* Lat/Lon */
 

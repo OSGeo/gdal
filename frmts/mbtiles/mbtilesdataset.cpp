@@ -1275,7 +1275,7 @@ int MBTilesGetMinMaxZoomLevel(OGRDataSourceH hDS, int bHasMap,
 /************************************************************************/
 
 static
-int MBTilesGetBounds(OGRDataSourceH hDS, int nMinLevel, int nMaxLevel,
+int MBTilesGetBounds(OGRDataSourceH hDS, CPL_UNUSED int nMinLevel, int nMaxLevel,
                      int& nMinTileRow, int& nMaxTileRow,
                      int& nMinTileCol, int &nMaxTileCol)
 {
@@ -1374,7 +1374,7 @@ int MBTilesGetBounds(OGRDataSourceH hDS, int nMinLevel, int nMaxLevel,
 /* to get a first tile to see its characteristics. We just need the header */
 /* to determine that, so let's make VSICurl stop reading after we have found it */
 
-static int MBTilesCurlReadCbk(VSILFILE* fp,
+static int MBTilesCurlReadCbk(CPL_UNUSED VSILFILE* fp,
                               void *pabyBuffer, size_t nBufferSize,
                               void* pfnUserData)
 {
@@ -1480,7 +1480,7 @@ static int MBTilesCurlReadCbk(VSILFILE* fp,
 /************************************************************************/
 
 static
-int MBTilesGetBandCount(OGRDataSourceH &hDS, int nMinLevel, int nMaxLevel,
+int MBTilesGetBandCount(OGRDataSourceH &hDS, CPL_UNUSED int nMinLevel, int nMaxLevel,
                         int nMinTileRow, int nMaxTileRow,
                         int nMinTileCol, int nMaxTileCol)
 {

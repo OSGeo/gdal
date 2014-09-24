@@ -187,7 +187,7 @@ static int DTEDPtStreamNewTile( DTEDPtStream *psStream,
 /*                           DTEDWritePtLL()                            */
 /************************************************************************/
 
-static int DTEDWritePtLL( DTEDPtStream *psStream, 
+static int DTEDWritePtLL( CPL_UNUSED DTEDPtStream *psStream, 
                           DTEDCachedFile *psCF, 
                           double dfLong, double dfLat, double dfElev )
 

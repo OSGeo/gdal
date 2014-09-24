@@ -802,8 +802,7 @@ int OGRDGNLayer::GetFeatureCount( int bForce )
 /*                             GetExtent()                              */
 /************************************************************************/
 
-OGRErr OGRDGNLayer::GetExtent( OGREnvelope *psExtent, int bForce )
-
+OGRErr OGRDGNLayer::GetExtent( OGREnvelope *psExtent, CPL_UNUSED int bForce )
 {
     double      adfExtents[6];
 

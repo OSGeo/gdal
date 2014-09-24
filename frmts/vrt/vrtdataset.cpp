@@ -1106,7 +1106,7 @@ CPLErr VRTDataset::Delete( const char * pszFilename )
 /*                          CreateMaskBand()                            */
 /************************************************************************/
 
-CPLErr VRTDataset::CreateMaskBand( int nFlags )
+CPLErr VRTDataset::CreateMaskBand( CPL_UNUSED int nFlags )
 {
     if (poMaskBand != NULL)
     {

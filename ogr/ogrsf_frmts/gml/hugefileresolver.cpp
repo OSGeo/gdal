@@ -1057,7 +1057,7 @@ static int gmlHugeFindGmlId( const CPLXMLNode *psNode, CPLString **gmlId )
 
 static void gmlHugeFileNodeCoords( struct huge_tag *pItem,
                                    const CPLXMLNode * psNode,
-                                   CPLString **nodeSrs )
+                                   CPL_UNUSED CPLString **nodeSrs )
 {
 /* 
 / this function attempts to set coordinates for <Node> items
@@ -1461,7 +1461,7 @@ static int gmlHugeSetChild( struct huge_parent *pParent,
 }
 
 static int gmlHugeResolveEdges( struct huge_helper *helper,
-                                CPLXMLNode *psNode, sqlite3 *hDB )
+                                CPL_UNUSED CPLXMLNode *psNode, sqlite3 *hDB )
 {
 /* resolving GML <Edge> xlink:href */
     CPLString      osCommand;

@@ -81,9 +81,8 @@ OGRDataSource *OGROSMDriver::Open( const char * pszFilename,
 /*                          CreateDataSource()                          */
 /************************************************************************/
 
-OGRDataSource *OGROSMDriver::CreateDataSource( const char * pszName,
-                                               char **papszOptions )
-
+OGRDataSource *OGROSMDriver::CreateDataSource( CPL_UNUSED const char * pszName,
+                                               CPL_UNUSED char **papszOptions )
 {
     return NULL;
 }
@@ -92,8 +91,7 @@ OGRDataSource *OGROSMDriver::CreateDataSource( const char * pszName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGROSMDriver::TestCapability( const char * pszCap )
-
+int OGROSMDriver::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }

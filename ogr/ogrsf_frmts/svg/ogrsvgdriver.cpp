@@ -84,7 +84,7 @@ OGRDataSource *OGRSVGDriver::Open( const char * pszFilename, int bUpdate )
 /*                            TestCapability()                          */
 /************************************************************************/
 
-int OGRSVGDriver::TestCapability( const char *pszCap )
+int OGRSVGDriver::TestCapability( CPL_UNUSED const char *pszCap )
 {
     return FALSE;
 }

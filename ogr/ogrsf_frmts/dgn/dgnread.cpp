@@ -1463,8 +1463,7 @@ static DGNElemCore *DGNParseTCB( DGNInfo * psDGN )
  * @param psElement the element structure returned by DGNReadElement().
  */
 
-void DGNFreeElement( DGNHandle hDGN, DGNElemCore *psElement )
-
+void DGNFreeElement( CPL_UNUSED DGNHandle hDGN, DGNElemCore *psElement )
 {
     if( psElement->attr_data != NULL )
         VSIFree( psElement->attr_data );

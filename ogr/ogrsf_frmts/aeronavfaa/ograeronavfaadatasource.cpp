@@ -64,8 +64,7 @@ OGRAeronavFAADataSource::~OGRAeronavFAADataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRAeronavFAADataSource::TestCapability( const char * pszCap )
-
+int OGRAeronavFAADataSource::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }

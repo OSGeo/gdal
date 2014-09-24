@@ -377,8 +377,7 @@ int OGRGPSBabelDataSource::Open( const char * pszDatasourceName, int bUpdateIn)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGPSBabelDataSource::TestCapability( const char * pszCap )
-
+int OGRGPSBabelDataSource::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }

@@ -106,10 +106,9 @@ OGRLayer *OGRBNADataSource::GetLayer( int iLayer )
 /************************************************************************/
 
 OGRLayer * OGRBNADataSource::CreateLayer( const char * pszLayerName,
-                                          OGRSpatialReference *poSRS,
+                                          CPL_UNUSED OGRSpatialReference *poSRS,
                                           OGRwkbGeometryType eType,
-                                          char ** papszOptions )
-
+                                          CPL_UNUSED char ** papszOptions )
 {
     BNAFeatureType bnaFeatureType;
     

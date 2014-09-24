@@ -226,8 +226,7 @@ OGRErr OGRCARTODBTableLayer::RollbackTransaction()
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRCARTODBTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
-
+OGRErr OGRCARTODBTableLayer::CreateField( OGRFieldDefn *poFieldIn, CPL_UNUSED int bApproxOK )
 {
     GetLayerDefn();
 

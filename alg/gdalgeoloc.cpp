@@ -896,7 +896,7 @@ void GDALDestroyGeoLocTransformer( void *pTransformAlg )
 
 int GDALGeoLocTransform( void *pTransformArg, int bDstToSrc, 
                          int nPointCount, 
-                         double *padfX, double *padfY, double *padfZ,
+                         double *padfX, double *padfY, CPL_UNUSED double *padfZ,
                          int *panSuccess )
 
 {

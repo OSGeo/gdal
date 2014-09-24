@@ -70,8 +70,7 @@ static const TigerRecordInfo rtB_info =
 /************************************************************************/
 
 TigerPolygonCorrections::TigerPolygonCorrections( OGRTigerDataSource * poDSIn,
-                              const char * pszPrototypeModule ) : TigerFileBase(&rtB_info, FILE_CODE)
-
+                                                  CPL_UNUSED const char * pszPrototypeModule ) : TigerFileBase(&rtB_info, FILE_CODE)
 {
     OGRFieldDefn        oField("",OFTInteger);
 
