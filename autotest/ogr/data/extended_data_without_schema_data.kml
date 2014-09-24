@@ -1,0 +1,33 @@
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Document>
+  <name>layer_name</name>
+  <Placemark>
+    <name>feature1</name>
+    <ExtendedData>
+      <Data name="field1">
+        <value>1_1</value>
+      </Data>
+      <Data name="field2">
+        <value>1_2</value>
+      </Data>
+    </ExtendedData>
+    <Point>
+      <coordinates>2,48</coordinates>
+    </Point>
+  </Placemark>
+  <Placemark>
+    <name>feature2</name>
+    <ExtendedData>
+      <Data name="field1">
+        <value>2_1</value>
+      </Data>
+      <Data name="field3">
+        <value>2_3</value>
+      </Data>
+    </ExtendedData>
+    <Point>
+      <coordinates>3,49</coordinates>
+    </Point>
+  </Placemark>
+</Document>
+</kml>

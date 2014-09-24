@@ -1,0 +1,15 @@
+<VRTDataset rasterXSize="20" rasterYSize="20">
+  <VRTRasterBand dataType="Byte" band="1">
+    <NoDataValue>0.00000000000000E+00</NoDataValue>
+    <KernelFilteredSource>
+      <SourceFilename>./data/test_vrt_filter_nodata.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="20" ySize="20"/>
+      <DstRect xOff="0" yOff="0" xSize="20" ySize="20"/>
+      <Kernel normalized="1">
+        <Size>3</Size>
+        <Coefs>0.111111 0.111111 0.111111 0.111111 0.111111 0.111111 0.111111 0.111111 0.111111</Coefs>
+      </Kernel>
+    </KernelFilteredSource>
+  </VRTRasterBand>
+</VRTDataset>

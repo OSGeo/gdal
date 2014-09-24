@@ -1,0 +1,9 @@
+name: Universe Transverse Mercator
+datum: nad83
+towgs84: 0.000,0.000,0.000
+proj: utm
+ellps: grs80
+a: 6378137.0000000000
+es: 0.0066943800
+f: 298.2572221010
+zone: 18

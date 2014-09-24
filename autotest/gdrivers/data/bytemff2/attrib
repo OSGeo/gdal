@@ -1,0 +1,9 @@
+channel.enumeration = 1
+channel.interleave = { *pixel tile sequential }
+extent.cols = 20
+extent.rows = 20
+pixel.encoding = { *unsigned twos-complement ieee-754 }
+pixel.size = 8
+pixel.field = { *real complex }
+pixel.order = { *lsbf msbf }
+version = 1.1

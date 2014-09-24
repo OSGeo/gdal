@@ -1,0 +1,35 @@
+<rte>
+  <name>ROUTE_NAME</name>
+  <rtept lat="49.0" lon="2.0">
+  </rtept>
+  <rtept lat="50.0" lon="3.0">
+  </rtept>
+</rte>
+<rte>
+  <name>ROUTE_NAME2</name>
+  <rtept lat="51.0" lon="3.0">
+  </rtept>
+  <rtept lat="49.0" lon="3.0">
+  </rtept>
+</rte>
+<trk>
+  <name>TRACK_NAME</name>
+  <trkseg>
+    <trkpt lat="49.0" lon="2.0">
+    </trkpt>
+    <trkpt lat="50.0" lon="3.0">
+    </trkpt>
+  </trkseg>
+  <trkseg>
+    <trkpt lat="51.0" lon="3.0">
+    </trkpt>
+  </trkseg>
+</trk>
+<trk>
+  <name>TRACK_NAME2</name>
+  <trkseg>
+    <trkpt lat="49.0" lon="3.0">
+    </trkpt>
+  </trkseg>
+</trk>
+</gpx>

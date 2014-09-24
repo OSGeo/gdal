@@ -1,0 +1,39 @@
+{
+  "objectIdFieldName" : "objectid",
+  "globalIdFieldName" : "",
+  "geometryType" : "esriGeometryPolygon",
+  "fields" : [
+  ],
+  "features" : [
+    {
+      "geometry" : {
+        "rings" : [
+          [
+            [
+              2,
+              49
+            ],
+            [
+              2,
+              50
+            ],
+            [
+              3,
+              50
+            ],
+            [
+              3,
+              49
+            ],
+            [
+              2,
+              49
+            ]
+          ]
+        ]
+      },
+      "attributes" : {
+      }
+    }
+  ]
+}

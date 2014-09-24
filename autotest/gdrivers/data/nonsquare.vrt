@@ -1,0 +1,12 @@
+<VRTDataset rasterXSize="31" rasterYSize="35">
+  <!-- This file has a non-square pixel size (60x50) useful for testing -->
+  <GeoTransform>  4.4072000000000000e+05,  6.0000000000000000e+01,  0.0000000000000000e+00,  3.7513200000000000e+06,  0.0000000000000000e+00, -5.0000000000000000e+01</GeoTransform>
+  <VRTRasterBand dataType="Byte" band="1" subClass="VRTRawRasterBand">
+    <ColorInterp>Gray</ColorInterp>
+    <SourceFilename relativetoVRT="1">small.raw</SourceFilename>
+    <ImageOffset>0</ImageOffset>
+    <PixelOffset>1</PixelOffset>
+    <LineOffset>31</LineOffset>
+    <ByteOrder>LSB</ByteOrder>
+  </VRTRasterBand>
+</VRTDataset>

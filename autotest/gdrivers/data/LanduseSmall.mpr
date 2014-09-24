@@ -1,0 +1,48 @@
+[BaseMap]
+AttributeTable=LanduseSmall.tbt
+CoordBounds=795479.99999999988 8089020 796979.99999999988 8090520
+CoordSystem=LanduseSmall.csy
+Domain=LanduseSmall.dom
+DomainInfo=LanduseSmall.dom;Byte;class;12;;
+Proximity=63.700000
+Type=Map
+
+[Ilwis]
+Class=Raster Map
+Description=MapSubMap(Landuse.mpr,1,1,75,75)
+Time=1201538962
+Type=BaseMap
+Version=3.1
+GeoRefChangeable=Yes
+
+[IlwisObjectVirtual]
+DefOnlyPossible=Yes
+Expression=MapSubMap(Landuse.mpr,1,1,75,75)
+
+[Map]
+GeoRef=LanduseSmall.grf
+Size=75 75
+Type=MapStore
+
+[MapFromMap]
+Map=Landuse.mpr
+Type=MapSubMap
+
+[MapStore]
+Data=LanduseSmall.mp#
+PixelInterLeaved=No
+RowLength=75
+StartOffset=0
+StoreTime=1201538962
+Structure=Line
+SwapBytes=No
+Type=Byte
+UseAs=No
+
+[MapSubMap]
+Corners=No
+Offset=0 0
+
+[MapVirtual]
+Expression=MapSubMap(Landuse.mpr,1,1,75,75)
+Type=MapFromMap

@@ -1,0 +1,22 @@
+<VRTDataset rasterXSize="20" rasterYSize="20">
+  <SRS>GEOGCS[&quot;WGS 84&quot;,DATUM[&quot;WGS_1984&quot;,SPHEROID[&quot;WGS 84&quot;,6378137,298.257223563,AUTHORITY[&quot;EPSG&quot;,&quot;7030&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6326&quot;]],PRIMEM[&quot;Greenwich&quot;,0],UNIT[&quot;degree&quot;,0.0174532925199433],AUTHORITY[&quot;EPSG&quot;,&quot;4326&quot;]]</SRS>
+  <GeoTransform>  2.0000000000000000e+00,  1.0000000000000001e-01,  0.0000000000000000e+00,  4.9000000000000000e+01,  0.0000000000000000e+00, -1.0000000000000001e-01</GeoTransform>
+  <VRTRasterBand dataType="Byte" band="1">
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">idontexist.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="10" RasterYSize="10" DataType="Byte" BlockXSize="10" BlockYSize="10"/>
+      <SrcRect xOff="0" yOff="0" xSize="10" ySize="10"/>
+      <DstRect xOff="0" yOff="0" xSize="10" ySize="10"/>
+    </SimpleSource>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="2">
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">idontexist2.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="10" RasterYSize="10" DataType="Byte" BlockXSize="10" BlockYSize="10"/>
+      <SrcRect xOff="0" yOff="0" xSize="10" ySize="10"/>
+      <DstRect xOff="0" yOff="0" xSize="10" ySize="10"/>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>
