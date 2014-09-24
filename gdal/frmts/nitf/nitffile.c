@@ -475,6 +475,7 @@ void NITFClose( NITFFile *psFile )
 
 static void NITFGotoOffset(VSILFILE* fp, GUIntBig nLocation)
 {
+    GUIntBig iFill;
     GUIntBig nCurrentLocation = VSIFTellL(fp);
     if (nLocation > nCurrentLocation)
     {
@@ -485,7 +486,7 @@ static void NITFGotoOffset(VSILFILE* fp, GUIntBig nLocation)
         nFileSize = VSIFTellL(fp);
         if (nLocation > nFileSize)
         {
-            for(GUIntBig iFill = 0; iFill < nLocation - nFileSize; iFill++)
+            for(iFill = 0; iFill < nLocation - nFileSize; iFill++)
                 VSIFWriteL(&cSpace, 1, 1, fp);
         }
         else
