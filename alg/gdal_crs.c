@@ -326,7 +326,7 @@ void GDALDestroyGCPTransformer( void *pTransformArg )
 
 int GDALGCPTransform( void *pTransformArg, int bDstToSrc, 
                       int nPointCount, 
-                      double *x, double *y, double *z, 
+                      double *x, double *y, CPL_UNUSED double *z, 
                       int *panSuccess )
 
 {

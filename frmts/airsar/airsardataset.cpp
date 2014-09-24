@@ -173,7 +173,7 @@ AirSARRasterBand::~AirSARRasterBand()
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr AirSARRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr AirSARRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                       void * pImage )
 
 {

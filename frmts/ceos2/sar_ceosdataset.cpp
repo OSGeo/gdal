@@ -237,7 +237,7 @@ SAR_CEOSRasterBand::SAR_CEOSRasterBand( SAR_CEOSDataset *poGDS, int nBand,
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr SAR_CEOSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr SAR_CEOSRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                        void * pImage )
 
 {
@@ -371,7 +371,7 @@ Im(SVV) = byte(10) ysca/127
 
 */
 
-CPLErr CCPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr CCPRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                   void * pImage )
 
 {
@@ -517,7 +517,7 @@ PALSARRasterBand::PALSARRasterBand( SAR_CEOSDataset *poGDS, int nBand )
 /*      Based on ERSDAC-VX-CEOS-004                                     */
 /************************************************************************/
 
-CPLErr PALSARRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr PALSARRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                      void * pImage )
 
 {
@@ -2161,7 +2161,8 @@ ProcessData( VSILFILE *fp, int fileid, CeosSARVolume_t *sar, int max_records,
             max_records--;
         if(max_bytes > 0)
         {
-            if( record->Length <= max_bytes )
+            // TODO: Make sure that this cast is safe.
+            if( (vsi_l_offset)record->Length <= max_bytes )
                 max_bytes -= record->Length;
             else {
                 CPLDebug( "SAR_CEOS", "Partial record found.  %d > " CPL_FRMT_GUIB,

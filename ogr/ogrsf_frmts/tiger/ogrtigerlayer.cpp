@@ -245,11 +245,9 @@ OGRFeatureDefn *OGRTigerLayer::GetLayerDefn()
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRTigerLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
-
+OGRErr OGRTigerLayer::CreateField( CPL_UNUSED OGRFieldDefn *poField, CPL_UNUSED int bApproxOK )
 {
     /* notdef/TODO: I should add some checking here eventually. */
-
     return OGRERR_NONE;
 }
 

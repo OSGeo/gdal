@@ -967,7 +967,7 @@ OGRFeatureDefn *TABView::GetLayerDefn()
  * properly, so this function can be used only with an empty feature defn.
  **********************************************************************/
 int TABView::SetFeatureDefn(OGRFeatureDefn *poFeatureDefn,
-                         TABFieldType *paeMapInfoNativeFieldTypes /* =NULL */)
+                            CPL_UNUSED TABFieldType *paeMapInfoNativeFieldTypes /* =NULL */)
 {
     if (m_poRelation)
         return m_poRelation->SetFeatureDefn(poFeatureDefn);
@@ -2088,7 +2088,7 @@ int TABRelation::WriteFeature(TABFeature *poFeature, int nFeatureId /*=-1*/)
  * Returns 0 on success, -1 on error.
  **********************************************************************/
 int TABRelation::SetFeatureDefn(OGRFeatureDefn *poFeatureDefn,
-                         TABFieldType *paeMapInfoNativeFieldTypes /* =NULL */)
+                                CPL_UNUSED TABFieldType *paeMapInfoNativeFieldTypes /* =NULL */)
 {
     if (m_poDefn && m_poDefn->GetFieldCount() > 0)
     {

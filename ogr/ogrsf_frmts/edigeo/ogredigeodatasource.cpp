@@ -94,8 +94,7 @@ OGREDIGEODataSource::~OGREDIGEODataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGREDIGEODataSource::TestCapability( const char * pszCap )
-
+int OGREDIGEODataSource::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }

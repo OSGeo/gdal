@@ -118,9 +118,8 @@ OGRLayer *OGRGeoRSSDataSource::GetLayer( int iLayer )
 
 OGRLayer * OGRGeoRSSDataSource::CreateLayer( const char * pszLayerName,
                                              OGRSpatialReference *poSRS,
-                                             OGRwkbGeometryType eType,
-                                             char ** papszOptions )
-
+                                             CPL_UNUSED OGRwkbGeometryType eType,
+                                             CPL_UNUSED char ** papszOptions )
 {
     if (fpOutput == NULL)
         return NULL;
@@ -188,7 +187,8 @@ void OGRGeoRSSDataSource::startElementValidateCbk(const char *pszName, const cha
 /*                      dataHandlerValidateCbk()                        */
 /************************************************************************/
 
-void OGRGeoRSSDataSource::dataHandlerValidateCbk(const char *data, int nLen)
+void OGRGeoRSSDataSource::dataHandlerValidateCbk(CPL_UNUSED const char *data,
+                                                 CPL_UNUSED int nLen)
 {
     nDataHandlerCounter ++;
     if (nDataHandlerCounter >= BUFSIZ)

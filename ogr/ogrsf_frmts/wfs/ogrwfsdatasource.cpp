@@ -213,8 +213,7 @@ OGRWFSDataSource::~OGRWFSDataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRWFSDataSource::TestCapability( const char * pszCap )
-
+int OGRWFSDataSource::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }

@@ -911,13 +911,13 @@ SHPSearchDiskTreeNode( SHPTreeDiskHandle hDiskTree, double *padfBoundsMin, doubl
 /* -------------------------------------------------------------------- */
     if(numshapes > 0) 
     {
-        if( *pnResultCount + numshapes > *pnBufferMax )
+        if( (int)(*pnResultCount + numshapes) > *pnBufferMax )
         {
             int* pNewBuffer;
 
             *pnBufferMax = (*pnResultCount + numshapes + 100) * 5 / 4;
 
-            if( *pnBufferMax > INT_MAX / sizeof(int) )
+            if( (unsigned int)*pnBufferMax > INT_MAX / sizeof(int) )
                 *pnBufferMax = *pnResultCount + numshapes;
 
             pNewBuffer = (int *)

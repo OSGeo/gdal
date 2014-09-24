@@ -606,7 +606,7 @@ static OGRLayerH OGRGeocodeMakeRawLayer(const char* pszContent)
 /************************************************************************/
 
 static OGRLayerH OGRGeocodeBuildLayerNominatim(CPLXMLNode* psSearchResults,
-                                               const char* pszContent,
+                                               CPL_UNUSED const char* pszContent,
                                                int bAddRawFeature)
 {
     OGRMemLayer* poLayer = new OGRMemLayer( "place", NULL, wkbUnknown );
@@ -868,7 +868,7 @@ static OGRLayerH OGRGeocodeReverseBuildLayerNominatim(CPLXMLNode* psReverseGeoco
 /************************************************************************/
 
 static OGRLayerH OGRGeocodeBuildLayerYahoo(CPLXMLNode* psResultSet,
-                                           const char* pszContent,
+                                           CPL_UNUSED const char* pszContent,
                                            int bAddRawFeature)
 {
     OGRMemLayer* poLayer = new OGRMemLayer( "place", NULL, wkbPoint );
@@ -999,7 +999,7 @@ static OGRLayerH OGRGeocodeBuildLayerYahoo(CPLXMLNode* psResultSet,
 /************************************************************************/
 
 static OGRLayerH OGRGeocodeBuildLayerBing (CPLXMLNode* psResponse,
-                                           const char* pszContent,
+                                           CPL_UNUSED const char* pszContent,
                                            int bAddRawFeature)
 {
     CPLXMLNode* psResources = CPLGetXMLNode(psResponse, "ResourceSets.ResourceSet.Resources");

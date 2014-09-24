@@ -69,7 +69,7 @@ OGRDataSource *OGRXPlaneDriver::Open( const char * pszFilename, int bUpdate )
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRXPlaneDriver::TestCapability( const char * pszCap )
+int OGRXPlaneDriver::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }

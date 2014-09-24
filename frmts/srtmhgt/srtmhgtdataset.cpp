@@ -386,7 +386,7 @@ GDALDataset* SRTMHGTDataset::Open(GDALOpenInfo* poOpenInfo)
 /************************************************************************/
 
 GDALDataset * SRTMHGTDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
-                                          int bStrict, char ** papszOptions, 
+                                          int bStrict, CPL_UNUSED char ** papszOptions, 
                                           GDALProgressFunc pfnProgress, void * pProgressData )
 
 {

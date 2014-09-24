@@ -54,8 +54,8 @@ static const TigerRecordInfo rtZ_info =
 /************************************************************************/
 
 TigerZipPlus4::TigerZipPlus4( OGRTigerDataSource * poDSIn,
-                              const char * pszPrototypeModule ) : TigerFileBase(&rtZ_info, FILE_CODE)
-
+                              CPL_UNUSED const char * pszPrototypeModule )
+  : TigerFileBase(&rtZ_info, FILE_CODE)
 {
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "ZipPlus4" );

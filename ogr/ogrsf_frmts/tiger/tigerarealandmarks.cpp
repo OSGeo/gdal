@@ -57,8 +57,7 @@ static const TigerRecordInfo rt8_info =
 /************************************************************************/
 
 TigerAreaLandmarks::TigerAreaLandmarks( OGRTigerDataSource * poDSIn,
-                                  const char * pszPrototypeModule ) : TigerFileBase(&rt8_info, FILE_CODE)
-
+                                        CPL_UNUSED const char * pszPrototypeModule ) : TigerFileBase(&rt8_info, FILE_CODE)
 {
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "AreaLandmarks" );

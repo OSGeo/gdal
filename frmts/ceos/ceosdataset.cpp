@@ -95,7 +95,7 @@ CEOSRasterBand::CEOSRasterBand( CEOSDataset *poDS, int nBand )
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr CEOSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr CEOSRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                   void * pImage )
 
 {

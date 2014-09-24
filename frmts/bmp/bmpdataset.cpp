@@ -321,7 +321,7 @@ BMPRasterBand::~BMPRasterBand()
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr BMPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr BMPRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                   void * pImage )
 {
     BMPDataset  *poGDS = (BMPDataset *) poDS;
@@ -861,7 +861,7 @@ BMPComprRasterBand::~BMPComprRasterBand()
 /************************************************************************/
 
 CPLErr BMPComprRasterBand::
-    IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage )
+    IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff, void * pImage )
 {
     memcpy( pImage, pabyUncomprBuf +
             (poDS->GetRasterYSize() - nBlockYOff - 1) * poDS->GetRasterXSize(),

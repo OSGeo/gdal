@@ -220,10 +220,9 @@ GDALDataset *KRODataset::Open( GDALOpenInfo * poOpenInfo )
 /************************************************************************/
 
 GDALDataset *KRODataset::Create( const char * pszFilename,
-                                  int nXSize, int nYSize, int nBands,
-                                  GDALDataType eType,
-                                  char ** papszOptions )
-
+                                 int nXSize, int nYSize, int nBands,
+                                 GDALDataType eType,
+                                 CPL_UNUSED char ** papszOptions )
 {
     if( eType != GDT_Byte && eType != GDT_UInt16 && eType != GDT_Float32 )
     {

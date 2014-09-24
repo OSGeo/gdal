@@ -55,8 +55,8 @@ const char *OGRPGDumpDriver::GetName()
 /*                                Open()                                */
 /************************************************************************/
 
-OGRDataSource *OGRPGDumpDriver::Open( const char * pszFilename,
-                                     int bUpdate )
+OGRDataSource *OGRPGDumpDriver::Open( CPL_UNUSED const char * pszFilename,
+                                      CPL_UNUSED int bUpdate )
 
 {
     return NULL;

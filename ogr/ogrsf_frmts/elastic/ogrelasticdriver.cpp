@@ -51,7 +51,8 @@ const char *OGRElasticDriver::GetName() {
 /*                                Open()                                */
 /************************************************************************/
 
-OGRDataSource *OGRElasticDriver::Open(const char * pszFilename, int bUpdate) {
+OGRDataSource *OGRElasticDriver::Open(CPL_UNUSED const char * pszFilename,
+                                      CPL_UNUSED int bUpdate) {
     return NULL;
 }
 

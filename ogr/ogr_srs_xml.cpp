@@ -714,8 +714,7 @@ static CPLXMLNode *exportProjCSToXML( const OGRSpatialReference *poSRS )
  */
 
 OGRErr OGRSpatialReference::exportToXML( char **ppszRawXML, 
-                                         const char * pszDialect ) const
-
+                                         CPL_UNUSED const char * pszDialect ) const
 {
     CPLXMLNode *psXMLTree = NULL;
 

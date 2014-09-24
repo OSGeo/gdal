@@ -78,8 +78,7 @@ OGRDataSource *OGRCouchDBDriver::Open( const char * pszFilename, int bUpdate )
 /************************************************************************/
 
 OGRDataSource *OGRCouchDBDriver::CreateDataSource( const char * pszName,
-                                               char **papszOptions )
-
+                                                   CPL_UNUSED char **papszOptions )
 {
     OGRCouchDBDataSource   *poDS = new OGRCouchDBDataSource();
 

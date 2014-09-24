@@ -77,8 +77,7 @@ OGRDataSource *OGREDIGEODriver::Open( const char * pszFilename, int bUpdate )
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGREDIGEODriver::TestCapability( const char * pszCap )
-
+int OGREDIGEODriver::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }

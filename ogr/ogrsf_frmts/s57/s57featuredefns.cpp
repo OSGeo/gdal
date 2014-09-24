@@ -220,8 +220,7 @@ OGRFeatureDefn *S57GenerateGeomFeatureDefn( OGRwkbGeometryType eGType,
 /************************************************************************/
 
 OGRFeatureDefn *
-S57GenerateVectorPrimitiveFeatureDefn( int nRCNM, int nOptionFlags )
-
+S57GenerateVectorPrimitiveFeatureDefn( int nRCNM, CPL_UNUSED int nOptionFlags )
 {
     OGRFeatureDefn      *poFDefn = NULL;
  

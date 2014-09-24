@@ -55,8 +55,7 @@ const char *OGRDXFDriver::GetName()
 /*                                Open()                                */
 /************************************************************************/
 
-OGRDataSource *OGRDXFDriver::Open( const char * pszFilename, int bUpdate )
-
+OGRDataSource *OGRDXFDriver::Open( const char * pszFilename, CPL_UNUSED int bUpdate )
 {
     OGRDXFDataSource   *poDS = new OGRDXFDataSource();
 

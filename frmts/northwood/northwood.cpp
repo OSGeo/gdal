@@ -480,9 +480,8 @@ void nwtCloseGrid( NWT_GRID * pGrd )
         return;
 }
 
-void nwtGetRow( NWT_GRID * pGrd )
+void nwtGetRow( CPL_UNUSED NWT_GRID * pGrd )
 {
-
 }
 
 void nwtPrintGridHeader( NWT_GRID * pGrd )

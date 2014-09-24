@@ -11,6 +11,8 @@
 #include "memwatch.h"
 #endif
 
+#include "cpl_port.h"
+
 /* Take a look at the options in:
  * http://www.unet.univie.ac.at/aix/cmds/aixcmds2/date.htm#A270961
  */
@@ -1392,7 +1394,7 @@ int Clock_ScanMonth (char *ptr)
  * NOTES
  *****************************************************************************
  */
-void Clock_PrintMonth3 (int mon, char *buffer, int buffLen)
+void Clock_PrintMonth3 (int mon, char *buffer, CPL_UNUSED int buffLen)
 {
    static char *MonthName[] = {
       "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT",
@@ -1420,7 +1422,7 @@ void Clock_PrintMonth3 (int mon, char *buffer, int buffLen)
  * NOTES
  *****************************************************************************
  */
-void Clock_PrintMonth (int mon, char *buffer, int buffLen)
+void Clock_PrintMonth (int mon, char *buffer, CPL_UNUSED int buffLen)
 {
    static char *MonthName[] = {
       "January", "February", "March", "April", "May", "June", "July",

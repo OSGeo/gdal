@@ -72,7 +72,7 @@ static void ComputePointOnArc2D( double dfPrimary, double dfSecondary,
  * @return TRUE on success or FALSE on failure.
  */
 
-int DGNStrokeArc( DGNHandle hFile, DGNElemArc *psArc, 
+int DGNStrokeArc( CPL_UNUSED DGNHandle hFile, DGNElemArc *psArc, 
                   int nPoints, DGNPoint * pasPoints )
 
 {
@@ -127,7 +127,7 @@ int DGNStrokeArc( DGNHandle hFile, DGNElemArc *psArc,
  * @return TRUE on success or FALSE on failure.
  */
 
-int DGNStrokeCurve( DGNHandle hFile, DGNElemMultiPoint *psCurve, 
+int DGNStrokeCurve( CPL_UNUSED DGNHandle hFile, DGNElemMultiPoint *psCurve, 
                     int nPoints, DGNPoint * pasPoints )
 
 {

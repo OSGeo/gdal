@@ -145,7 +145,7 @@ int JPGHLP_HeaderMaker( GByte *pabyBuffer,
                         const int nCols, 
                         const int nRows, 
                         const int nComponents, 
-                        const int nRestart,
+                        CPL_UNUSED const int nRestart,
                         const int nQuality )
 {
     int i;

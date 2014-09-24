@@ -75,8 +75,7 @@ OGRDataSource *OGRPDSDriver::Open( const char * pszFilename, int bUpdate )
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRPDSDriver::TestCapability( const char * pszCap )
-
+int OGRPDSDriver::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }

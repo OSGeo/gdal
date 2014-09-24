@@ -327,7 +327,7 @@ USGSDEMRasterBand::USGSDEMRasterBand( USGSDEMDataset *poDS )
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr USGSDEMRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr USGSDEMRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, CPL_UNUSED int nBlockYOff,
                                       void * pImage )
 
 {

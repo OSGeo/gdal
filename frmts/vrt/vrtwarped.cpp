@@ -653,9 +653,9 @@ int VRTWarpedOverviewTransform( void *pTransformArg, int bDstToSrc,
 /************************************************************************/
 
 CPLErr 
-VRTWarpedDataset::IBuildOverviews( const char *pszResampling, 
+VRTWarpedDataset::IBuildOverviews( CPL_UNUSED const char *pszResampling, 
                                    int nOverviews, int *panOverviewList, 
-                                   int nListBands, int *panBandList,
+                                   CPL_UNUSED int nListBands, CPL_UNUSED int *panBandList,
                                    GDALProgressFunc pfnProgress, 
                                    void * pProgressData )
     

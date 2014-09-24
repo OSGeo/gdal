@@ -592,7 +592,7 @@ int OGRGeometry::getIsoGeometryType() const
  * @param dfMaxLength the maximum distance between 2 points after segmentization
  */
 
-void OGRGeometry::segmentize( double dfMaxLength )
+void OGRGeometry::segmentize( CPL_UNUSED double dfMaxLength )
 {
     /* Do nothing */
 }

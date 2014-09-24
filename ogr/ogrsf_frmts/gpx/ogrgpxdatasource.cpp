@@ -145,7 +145,7 @@ OGRLayer *OGRGPXDataSource::GetLayer( int iLayer )
 /************************************************************************/
 
 OGRLayer * OGRGPXDataSource::CreateLayer( const char * pszLayerName,
-                                          OGRSpatialReference *poSRS,
+                                          CPL_UNUSED OGRSpatialReference *poSRS,
                                           OGRwkbGeometryType eType,
                                           char ** papszOptions )
 
@@ -239,7 +239,7 @@ void OGRGPXDataSource::startElementValidateCbk(const char *pszName, const char *
 /*                      dataHandlerValidateCbk()                        */
 /************************************************************************/
 
-void OGRGPXDataSource::dataHandlerValidateCbk(const char *data, int nLen)
+void OGRGPXDataSource::dataHandlerValidateCbk(CPL_UNUSED const char *data, CPL_UNUSED int nLen)
 {
     nDataHandlerCounter ++;
     if (nDataHandlerCounter >= BUFSIZ)

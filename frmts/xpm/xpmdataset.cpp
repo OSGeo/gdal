@@ -201,13 +201,12 @@ GDALDataset *XPMDataset::Open( GDALOpenInfo * poOpenInfo )
 
 static GDALDataset *
 XPMCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
-               int bStrict, char ** papszOptions, 
-               GDALProgressFunc pfnProgress, void * pProgressData )
-
+               int bStrict, CPL_UNUSED char ** papszOptions, 
+               CPL_UNUSED GDALProgressFunc pfnProgress, CPL_UNUSED void * pProgressData )
 {
-    int  nBands = poSrcDS->GetRasterCount();
-    int  nXSize = poSrcDS->GetRasterXSize();
-    int  nYSize = poSrcDS->GetRasterYSize();
+    const int  nBands = poSrcDS->GetRasterCount();
+    const int  nXSize = poSrcDS->GetRasterXSize();
+    const int  nYSize = poSrcDS->GetRasterYSize();
     GDALColorTable *poCT;
 
 /* -------------------------------------------------------------------- */

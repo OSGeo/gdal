@@ -1221,7 +1221,7 @@ GDALDataset *MFFDataset::Create( const char * pszFilenameIn,
 
 GDALDataset *
 MFFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
-                        int bStrict, char ** papszOptions, 
+                        CPL_UNUSED int bStrict, char ** papszOptions, 
                         GDALProgressFunc pfnProgress, void * pProgressData )
 
 {

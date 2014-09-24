@@ -135,7 +135,7 @@ BSBRasterBand::BSBRasterBand( BSBDataset *poDS )
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr BSBRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr BSBRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                       void * pImage )
 
 {

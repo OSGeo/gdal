@@ -189,7 +189,7 @@ IRISRasterBand::~IRISRasterBand()
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr IRISRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr IRISRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                    void * pImage )
 
 {

@@ -54,8 +54,8 @@ static const TigerRecordInfo rtT_info =
 /************************************************************************/
 
 TigerZeroCellID::TigerZeroCellID( OGRTigerDataSource * poDSIn,
-                              const char * pszPrototypeModule ) : TigerFileBase(&rtT_info, FILE_CODE)
-
+                                  CPL_UNUSED const char * pszPrototypeModule )
+  : TigerFileBase(&rtT_info, FILE_CODE)
 {
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "ZeroCellID" );

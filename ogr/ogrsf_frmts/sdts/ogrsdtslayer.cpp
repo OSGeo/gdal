@@ -219,9 +219,8 @@ void OGRSDTSLayer::ResetReading()
 /************************************************************************/
 
 static void
-AssignAttrRecordToFeature( OGRFeature * poFeature, SDTSTransfer * poTransfer, 
+AssignAttrRecordToFeature( OGRFeature * poFeature, CPL_UNUSED SDTSTransfer * poTransfer,
                            DDFField * poSR )
-
 {
 /* -------------------------------------------------------------------- */
 /*      Process each subfield in the record.                            */

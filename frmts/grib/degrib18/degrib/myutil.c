@@ -24,6 +24,8 @@
 #include "myutil.h"
 #include "myassert.h"
 
+#include "cpl_port.h"
+
 /* Android compat */
 #ifndef S_IREAD
 #define S_IREAD S_IRUSR
@@ -456,8 +458,8 @@ static int FileMatch (const char *filename, const char *filter)
 }
 **/
 
-int myGlob (const char *dirName, const char *filter, size_t *Argc,
-            char ***Argv)
+int myGlob (CPL_UNUSED const char *dirName, CPL_UNUSED const char *filter, CPL_UNUSED size_t *Argc,
+            CPL_UNUSED char ***Argv)
 {
 return 0; // TODO: reimplement for Win32
 /*

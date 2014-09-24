@@ -70,7 +70,8 @@ void GDALWMSMiniDriver_WorldWind::GetCapabilities(GDALWMSMiniDriverCapabilities 
     caps->m_max_overview_count = 32;
 }
 
-void GDALWMSMiniDriver_WorldWind::ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri) {
+void GDALWMSMiniDriver_WorldWind::ImageRequest(CPL_UNUSED CPLString *url,
+                                               CPL_UNUSED const GDALWMSImageRequestInfo &iri) {
 }
 
 void GDALWMSMiniDriver_WorldWind::TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri) {

@@ -339,7 +339,7 @@ CPLErr GRIBRasterBand::LoadData()
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr GRIBRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr GRIBRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                    void * pImage )
 
 {

@@ -125,9 +125,9 @@ BTRasterBand::BTRasterBand( GDALDataset *poDS, VSILFILE *fp, GDALDataType eType 
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr BTRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
-
+CPLErr BTRasterBand::IReadBlock( int nBlockXOff,
+                                 CPL_UNUSED int nBlockYOff,
+                                 void * pImage )
 {
     int nDataSize = GDALGetDataTypeSize( eDataType ) / 8;
     int i;
@@ -187,9 +187,9 @@ CPLErr BTRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*                            IWriteBlock()                             */
 /************************************************************************/
 
-CPLErr BTRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
+CPLErr BTRasterBand::IWriteBlock( int nBlockXOff, 
+                                  CPL_UNUSED int nBlockYOff,
                                   void * pImage )
-
 {
     int nDataSize = GDALGetDataTypeSize( eDataType ) / 8;
     GByte *pabyWrkBlock;
@@ -807,9 +807,9 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
 /************************************************************************/
 
 GDALDataset *BTDataset::Create( const char * pszFilename,
-                                 int nXSize, int nYSize, int nBands,
-                                 GDALDataType eType,
-                                 char ** papszOptions )
+                                int nXSize, int nYSize, int nBands,
+                                GDALDataType eType,
+                                CPL_UNUSED char ** papszOptions )
 
 {
 

@@ -445,8 +445,7 @@ int OGRGeoconceptLayer::GetFeatureCount( int bForce )
 /*                             GetExtent()                              */
 /************************************************************************/
 
-OGRErr OGRGeoconceptLayer::GetExtent( OGREnvelope* psExtent, int bForce )
-
+OGRErr OGRGeoconceptLayer::GetExtent( OGREnvelope* psExtent, CPL_UNUSED int bForce )
 {
     GCExtent* theExtent;
 
@@ -501,8 +500,7 @@ int OGRGeoconceptLayer::TestCapability( const char* pszCap )
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRGeoconceptLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
-
+OGRErr OGRGeoconceptLayer::CreateField( OGRFieldDefn *poField, CPL_UNUSED int bApproxOK )
 {
     if( GetGCMode_GCIO(GetSubTypeGCHandle_GCIO(_gcFeature))==vReadAccess_GCIO )
     {

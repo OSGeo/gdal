@@ -1580,8 +1580,7 @@ OGRErr TABFile::CreateFeature(TABFeature *poFeature)
  * Implementation of OGRLayer's SetFeature(), enabled only for
  * random write access   
  **********************************************************************/
-OGRErr TABFile::SetFeature( OGRFeature *poFeature )
-
+OGRErr TABFile::SetFeature( CPL_UNUSED OGRFeature *poFeature )
 {
 //TODO: See CreateFeature()
 // Need to convert OGRFeature to TABFeature, extract FID and then forward
@@ -2242,7 +2241,7 @@ int TABFile::GetBounds(double &dXMin, double &dYMin,
  *
  * Returns OGRERR_NONE/OGRRERR_FAILURE.
  **********************************************************************/
-OGRErr TABFile::GetExtent (OGREnvelope *psExtent, int bForce)
+OGRErr TABFile::GetExtent (OGREnvelope *psExtent, CPL_UNUSED int bForce)
 {
     TABMAPHeaderBlock *poHeader;
 
