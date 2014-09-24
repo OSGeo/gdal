@@ -155,9 +155,8 @@ MSGNRasterBand::MSGNRasterBand( MSGNDataset *poDS, int nBand , open_mode_type mo
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr MSGNRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
-
+CPLErr MSGNRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
+                                   void * pImage )
 {
     MSGNDataset *poGDS = (MSGNDataset *) poDS;
 

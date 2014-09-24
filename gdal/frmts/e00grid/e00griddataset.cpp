@@ -164,7 +164,7 @@ E00GRIDRasterBand::E00GRIDRasterBand( E00GRIDDataset *poDS, int nBand,
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr E00GRIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr E00GRIDRasterBand::IReadBlock( int CPL_UNUSED nBlockXOff, int nBlockYOff,
                                       void * pImage )
 
 {

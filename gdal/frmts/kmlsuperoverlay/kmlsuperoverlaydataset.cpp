@@ -52,8 +52,8 @@ using namespace std;
 /*                           GenerateTiles()                            */
 /************************************************************************/
 void GenerateTiles(std::string filename, 
-                   int zoom, int rxsize, 
-                   int rysize, int ix, int iy, 
+                   CPL_UNUSED int zoom, int rxsize, 
+                   int rysize, CPL_UNUSED int ix, CPL_UNUSED int iy, 
                    int rx, int ry, int dxsize, 
                    int dysize, int bands,
                    GDALDataset* poSrcDs,
@@ -508,7 +508,8 @@ class KmlSuperOverlayDummyDataset: public GDALDataset
 
 static
 GDALDataset *KmlSuperOverlayCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
-                                        int bStrict, char ** papszOptions, GDALProgressFunc pfnProgress, void * pProgressData)
+                                        CPL_UNUSED int bStrict, char ** papszOptions,
+                                        GDALProgressFunc pfnProgress, void * pProgressData)
 {
     bool isKmz = false;
     
@@ -991,7 +992,7 @@ CPLErr KmlSuperOverlayReadDataset::GetGeoTransform( double * padfGeoTransform )
 /*                        KmlSuperOverlayRasterBand()                   */
 /************************************************************************/
 
-KmlSuperOverlayRasterBand::KmlSuperOverlayRasterBand(KmlSuperOverlayReadDataset* poDS, int nBand)
+KmlSuperOverlayRasterBand::KmlSuperOverlayRasterBand(KmlSuperOverlayReadDataset* poDS, CPL_UNUSED int nBand)
 {
     nRasterXSize = poDS->nRasterXSize;
     nRasterYSize = poDS->nRasterYSize;
@@ -2427,7 +2428,7 @@ GDALDataset *KmlSuperOverlayReadDataset::Open(const char* pszFilename,
 /*                    KmlSuperOverlayDatasetDelete()                    */
 /************************************************************************/
 
-static CPLErr KmlSuperOverlayDatasetDelete(const char* fileName)
+static CPLErr KmlSuperOverlayDatasetDelete(CPL_UNUSED const char* fileName)
 {
     /* Null implementation, so that people can Delete("MEM:::") */
     return CE_None;

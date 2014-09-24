@@ -466,7 +466,7 @@ int OGRCSVDataSource::OpenTable( const char * pszFilename,
 
 OGRLayer *
 OGRCSVDataSource::CreateLayer( const char *pszLayerName, 
-                               OGRSpatialReference *poSpatialRef,
+                               CPL_UNUSED OGRSpatialReference *poSpatialRef,
                                OGRwkbGeometryType eGType,
                                char ** papszOptions  )
 

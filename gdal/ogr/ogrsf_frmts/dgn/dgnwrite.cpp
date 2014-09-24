@@ -451,9 +451,8 @@ DGNHandle
  * the source element suitable to write to hDGNDst. 
  */
 
-DGNElemCore *DGNCloneElement( DGNHandle hDGNSrc, DGNHandle hDGNDst, 
+DGNElemCore *DGNCloneElement( CPL_UNUSED DGNHandle hDGNSrc, DGNHandle hDGNDst, 
                               DGNElemCore *psSrcElement )
-
 {
     DGNElemCore *psClone = NULL;
 
@@ -760,8 +759,7 @@ int DGNUpdateElemCore( DGNHandle hDGN, DGNElemCore *psElement,
  */
 
 
-int DGNUpdateElemCoreExtended( DGNHandle hDGN, DGNElemCore *psElement )
-
+int DGNUpdateElemCoreExtended( CPL_UNUSED DGNHandle hDGN, DGNElemCore *psElement )
 {
     GByte *rd = psElement->raw_data;
     int   nWords = (psElement->raw_bytes / 2) - 2;
@@ -818,8 +816,7 @@ int DGNUpdateElemCoreExtended( DGNHandle hDGN, DGNElemCore *psElement )
 /*                         DGNInitializeElemCore()                      */
 /************************************************************************/
 
-static void DGNInitializeElemCore( DGNHandle hDGN, DGNElemCore *psElement )
-
+static void DGNInitializeElemCore( CPL_UNUSED DGNHandle hDGN, DGNElemCore *psElement )
 {
     memset( psElement, 0, sizeof(DGNElemCore) );
 

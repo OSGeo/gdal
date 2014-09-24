@@ -180,7 +180,7 @@ static void PrintKey(GeoKey *key, GTIFPrintMethod print, void *aux)
                   message[out_char++] = ch;
 
               /* flush message if buffer full */
-              if( out_char >= sizeof(message)-3 )
+              if( (size_t)out_char >= sizeof(message)-3 )
               {
                   message[out_char] = '\0';
                   print(message,aux);

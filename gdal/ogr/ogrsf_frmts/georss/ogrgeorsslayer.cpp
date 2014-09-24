@@ -1634,8 +1634,7 @@ OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRGeoRSSLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
-
+OGRErr OGRGeoRSSLayer::CreateField( OGRFieldDefn *poFieldDefn, CPL_UNUSED int bApproxOK )
 {
     const char* pszName = poFieldDefn->GetNameRef();
     if (((eFormat == GEORSS_RSS && strcmp(pszName, "pubDate") == 0) ||

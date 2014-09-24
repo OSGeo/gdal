@@ -234,7 +234,7 @@ GIFRasterBand::~GIFRasterBand()
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr GIFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr GIFRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                   void * pImage )
 
 {
@@ -484,7 +484,11 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*                        GDALPrintGifError()                           */
 /************************************************************************/
 
-static void GDALPrintGifError(GifFileType *hGifFile, const char* pszMsg)
+static void GDALPrintGifError(
+#if GIFLIB_MAJOR < 5
+CPL_UNUSED 
+#endif
+GifFileType *hGifFile, const char* pszMsg)
 {
 /* GIFLIB_MAJOR is only defined in libgif >= 4.2.0 */
 /* libgif 4.2.0 has retired PrintGifError() and added GifErrorString() */

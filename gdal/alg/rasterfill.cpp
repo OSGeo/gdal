@@ -389,9 +389,9 @@ CPLErr CPL_STDCALL
 GDALFillNodata( GDALRasterBandH hTargetBand, 
                 GDALRasterBandH hMaskBand,
                 double dfMaxSearchDist, 
-                int bDeprecatedOption,
+                CPL_UNUSED int bDeprecatedOption,
                 int nSmoothingIterations,
-                char **papszOptions,
+                CPL_UNUSED char **papszOptions,
                 GDALProgressFunc pfnProgress, 
                 void * pProgressArg )
 

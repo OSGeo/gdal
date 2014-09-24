@@ -1713,7 +1713,7 @@ CPLErr HKVDataset::Delete( const char * pszName )
 
 GDALDataset *
 HKVDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
-                        int bStrict, char ** papszOptions, 
+                        CPL_UNUSED int bStrict, char ** papszOptions, 
                         GDALProgressFunc pfnProgress, void * pProgressData )
 
 {

@@ -1264,7 +1264,7 @@ Im(SVV) = byte(10) ysca/127
 
 */
 
-CPLErr SIRC_QSLCRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr SIRC_QSLCRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                   void * pImage )
 
 {
@@ -1417,7 +1417,7 @@ CPG_STOKESRasterBand::~CPG_STOKESRasterBand()
 
 /* Convert from Stokes to Covariance representation */
 
-CPLErr CPG_STOKESRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr CPG_STOKESRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                   void * pImage )
 
 {

@@ -67,7 +67,7 @@ GDALTransformGeolocations( GDALRasterBandH hXBand,
                            void *pTransformArg, 
                            GDALProgressFunc pfnProgress, 
                            void *pProgressArg,
-                           char **papszOptions )
+                           CPL_UNUSED char **papszOptions )
 
 {
     VALIDATE_POINTER1( hXBand, "GDALTransformGeolocations", CE_Failure );

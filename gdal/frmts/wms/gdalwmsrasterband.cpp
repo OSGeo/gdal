@@ -802,8 +802,10 @@ CPLErr GDALWMSRasterBand::ReportWMSException(const char *file_name) {
 }
 
 
-CPLErr GDALWMSRasterBand::AdviseRead(int x0, int y0, int sx, int sy, int bsx, int bsy, GDALDataType bdt, char **options) {
-//    printf("AdviseRead(%d, %d, %d, %d)\n", x0, y0, sx, sy);
+CPLErr GDALWMSRasterBand::AdviseRead(int x0, int y0,
+                                     int sx, int sy,
+                                     CPL_UNUSED int bsx, CPL_UNUSED int bsy,
+                                     CPL_UNUSED GDALDataType bdt, CPL_UNUSED char **options) {
     if (m_parent_dataset->m_offline_mode || !m_parent_dataset->m_use_advise_read) return CE_None;
     if (m_parent_dataset->m_cache == NULL) return CE_Failure;
 

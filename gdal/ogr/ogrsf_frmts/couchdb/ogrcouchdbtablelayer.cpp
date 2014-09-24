@@ -1034,7 +1034,7 @@ int OGRCouchDBTableLayer::GetTotalFeatureCount()
 /************************************************************************/
 
 OGRErr OGRCouchDBTableLayer::CreateField( OGRFieldDefn *poField,
-                                 int bApproxOK )
+                                          CPL_UNUSED int bApproxOK )
 {
 
     if (!poDS->IsReadWrite())

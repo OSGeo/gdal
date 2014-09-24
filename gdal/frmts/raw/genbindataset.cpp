@@ -257,7 +257,7 @@ GenBinBitRasterBand::GenBinBitRasterBand( GenBinDataset *poDS, int nBitsIn )
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr GenBinBitRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr GenBinBitRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                         void * pImage )
 
 {

@@ -281,8 +281,8 @@ class OGRSQLiteLayer : public OGRLayer
 
     virtual int          HasSpatialIndex() { return bHasSpatialIndex; }
 
-    virtual CPLString     GetSpatialWhere(int iGeomCol,
-                                          OGRGeometry* poFilterGeom) { return ""; }
+    virtual CPLString     GetSpatialWhere(CPL_UNUSED int iGeomCol,
+                                          CPL_UNUSED OGRGeometry* poFilterGeom) { return ""; }
 
     static OGRErr       ImportSpatiaLiteGeometry( const GByte *, int,
                                                   OGRGeometry ** );

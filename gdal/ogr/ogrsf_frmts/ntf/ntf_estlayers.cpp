@@ -312,7 +312,7 @@ static OGRFeature *TranslateOscarRouteLine( NTFFileReader *poReader,
 /*                       TranslateOscarComment()                        */
 /************************************************************************/
 
-static OGRFeature *TranslateOscarComment( NTFFileReader *poReader,
+static OGRFeature *TranslateOscarComment( CPL_UNUSED NTFFileReader *poReader,
                                           OGRNTFLayer *poLayer,
                                           NTFRecord **papoGroup )
 
@@ -1144,7 +1144,7 @@ static OGRFeature *TranslateMeridian2Line( NTFFileReader *poReader,
 /*      Also used for Meridian, Oscar and BaseData.GB nodes.            */
 /************************************************************************/
 
-static OGRFeature *TranslateStrategiNode( NTFFileReader *poReader,
+static OGRFeature *TranslateStrategiNode( CPL_UNUSED NTFFileReader *poReader,
                                           OGRNTFLayer *poLayer,
                                           NTFRecord **papoGroup )
 

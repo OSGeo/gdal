@@ -73,8 +73,7 @@ OGRDataSource *OGRSEGYDriver::Open( const char * pszFilename, int bUpdate )
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRSEGYDriver::TestCapability( const char * pszCap )
-
+int OGRSEGYDriver::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }

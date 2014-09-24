@@ -78,8 +78,8 @@ static const TigerRecordInfo rtR_info =
 /************************************************************************/
 
 TigerTLIDRange::TigerTLIDRange( OGRTigerDataSource * poDSIn,
-                            const char * pszPrototypeModule ) : TigerFileBase(NULL, FILE_CODE)
-
+                                CPL_UNUSED const char * pszPrototypeModule )
+  : TigerFileBase(NULL, FILE_CODE)
 {
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "TLIDRange" );

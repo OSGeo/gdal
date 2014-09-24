@@ -2041,7 +2041,7 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
                 int bCreateCompressed, int bCreateLargeRaster, 
                 int bDependentLayer,
                 int nXSize, int nYSize, int nDataType, 
-                char **papszOptions,
+                CPL_UNUSED char **papszOptions,
                 
                 // these are only related to external (large) files
                 GIntBig nStackValidFlagsOffset, 

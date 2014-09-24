@@ -77,8 +77,7 @@ OGRDataSource *OGRAeronavFAADriver::Open( const char * pszFilename, int bUpdate 
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRAeronavFAADriver::TestCapability( const char * pszCap )
-
+int OGRAeronavFAADriver::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }

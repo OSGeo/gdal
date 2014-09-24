@@ -163,8 +163,7 @@ OGRLayer *
 OGRPCIDSKDataSource::CreateLayer( const char * pszLayerName,
                                   OGRSpatialReference *poSRS,
                                   OGRwkbGeometryType eType,
-                                  char ** papszOptions )
-    
+                                  CPL_UNUSED char ** papszOptions )
 {
 /* -------------------------------------------------------------------- */
 /*      Verify we are in update mode.                                   */

@@ -347,7 +347,7 @@ char *AVCAdjustCaseSensitiveFilename(char *pszFname)
      * If we get to a point where a path component does not exist then
      * we simply return the rest of the path as is.
      *----------------------------------------------------------------*/
-    while(bValidPath && strlen(pszTmpPath) < nTotalLen)
+    while(bValidPath && strlen(pszTmpPath) < (unsigned long)nTotalLen)
     {
         char    **papszDir=NULL;
         int     iEntry, iLastPartStart;

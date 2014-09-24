@@ -811,8 +811,7 @@ int OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
  * @return TRUE if apparently successful or FALSE on failure.
  */
 
-int OGRParseDate( const char *pszInput, OGRField *psField, int nOptions )
-
+int OGRParseDate( const char *pszInput, OGRField *psField, CPL_UNUSED int nOptions )
 {
     int bGotSomething = FALSE;
 

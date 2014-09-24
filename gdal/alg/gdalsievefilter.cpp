@@ -183,7 +183,7 @@ CPLErr CPL_STDCALL
 GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
                  GDALRasterBandH hDstBand,
                  int nSizeThreshold, int nConnectedness,
-                 char **papszOptions,
+                 CPL_UNUSED char **papszOptions,
                  GDALProgressFunc pfnProgress, 
                  void * pProgressArg )
 

@@ -228,7 +228,7 @@ GDALColorInterp NWT_GRCRasterBand::GetColorInterpretation()
 /************************************************************************/
 /*                             IReadBlock()                             */
 /************************************************************************/
-CPLErr NWT_GRCRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr NWT_GRCRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                         void *pImage )
 {
     NWT_GRCDataset *poGDS =(NWT_GRCDataset *) poDS;

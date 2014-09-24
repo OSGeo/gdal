@@ -912,8 +912,7 @@ CPLString OGRSQLiteTableLayer::FieldDefnToSQliteFieldDefn( OGRFieldDefn* poField
 /************************************************************************/
 
 OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn, 
-                                         int bApproxOK )
-
+                                         CPL_UNUSED int bApproxOK )
 {
     OGRFieldDefn        oField( poFieldIn );
 

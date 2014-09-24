@@ -454,11 +454,10 @@ LevellerRasterBand::~LevellerRasterBand()
 /*                             IWriteBlock()                            */
 /************************************************************************/
 
-CPLErr LevellerRasterBand::IWriteBlock
-( 
-	int nBlockXOff, 
+CPLErr LevellerRasterBand::IWriteBlock ( 
+	CPL_UNUSED int nBlockXOff, 
 	int nBlockYOff,
-    void* pImage
+        void* pImage
 )
 {
     CPLAssert( nBlockXOff == 0  );
@@ -521,7 +520,7 @@ CPLErr LevellerRasterBand::SetUnitType( const char* psz )
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr LevellerRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr LevellerRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                        void* pImage )
 
 {

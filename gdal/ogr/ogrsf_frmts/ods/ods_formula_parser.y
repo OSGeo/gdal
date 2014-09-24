@@ -43,7 +43,7 @@
 /* it appears to be a non documented feature of Bison */ 
 #define YYSTYPE_IS_TRIVIAL 1
 
-static void ods_formulaerror( ods_formula_parse_context *context, const char *msg )
+static void ods_formulaerror( CPL_UNUSED ods_formula_parse_context *context, const char *msg )
 {
     CPLError( CE_Failure, CPLE_AppDefined, 
               "Formula Parsing Error: %s", msg );

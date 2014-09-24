@@ -962,7 +962,11 @@ GDALDataset *ISIS2Dataset::Create(const char* pszFilename,
 /*                            WriteRaster()                             */
 /************************************************************************/
 
-int ISIS2Dataset::WriteRaster(CPLString osFilename, bool includeLabel, GUIntBig iRecords, GUIntBig iLabelRecords, GDALDataType eType, const char * pszInterleaving) {
+int ISIS2Dataset::WriteRaster(CPLString osFilename,
+                              bool includeLabel,
+                              GUIntBig iRecords,
+                              GUIntBig iLabelRecords,
+                              CPL_UNUSED GDALDataType eType, CPL_UNUSED const char * pszInterleaving) {
     GUIntBig nSize;
     GByte byZero(0);
     CPLString pszAccess("wb");
@@ -1092,7 +1096,7 @@ int ISIS2Dataset::WriteLabel(
     unsigned int nXSize, unsigned int nYSize, unsigned int nBands, 
     GDALDataType eType,
     GUIntBig iRecords, const char * pszInterleaving, 
-    GUIntBig &iLabelRecords, bool bRelaunch)
+    GUIntBig &iLabelRecords, CPL_UNUSED bool bRelaunch)
 
 {
     CPLDebug("ISIS2", "Write Label filename = %s, rasterfile = %s",osFilename.c_str(),osRasterFile.c_str());

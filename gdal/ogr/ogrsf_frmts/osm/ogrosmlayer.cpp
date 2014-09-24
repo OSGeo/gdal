@@ -400,7 +400,7 @@ int  OGROSMLayer::AddFeature(OGRFeature* poFeature,
 /*                             GetExtent()                              */
 /************************************************************************/
 
-OGRErr OGROSMLayer::GetExtent( OGREnvelope *psExtent, int bForce )
+OGRErr OGROSMLayer::GetExtent( OGREnvelope *psExtent, CPL_UNUSED int bForce )
 {
     if (poDS->GetExtent(psExtent) == OGRERR_NONE)
         return OGRERR_NONE;

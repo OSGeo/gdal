@@ -382,8 +382,7 @@ static const TigerRecordInfo rtS_info =
 /************************************************************************/
 
 TigerPolygon::TigerPolygon( OGRTigerDataSource * poDSIn,
-                                  const char * pszPrototypeModule )
-
+                            CPL_UNUSED const char * pszPrototypeModule )
 {
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "Polygon" );

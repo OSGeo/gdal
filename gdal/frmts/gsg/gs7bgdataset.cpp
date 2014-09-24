@@ -1106,9 +1106,9 @@ CPLErr GS7BGDataset::WriteHeader( VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
 /************************************************************************/
 
 GDALDataset *GS7BGDataset::Create( const char * pszFilename,
-                  int nXSize, int nYSize, int nBands,
-                  GDALDataType eType,
-                  char **papszParmList )
+                                   int nXSize, int nYSize, int nBands,
+                                   GDALDataType eType,
+                                   CPL_UNUSED char **papszParmList )
 
 {
     if( nXSize <= 0 || nYSize <= 0 )
@@ -1183,10 +1183,10 @@ GDALDataset *GS7BGDataset::Create( const char * pszFilename,
 /************************************************************************/
 
 GDALDataset *GS7BGDataset::CreateCopy( const char *pszFilename,
-                      GDALDataset *poSrcDS,
-                      int bStrict, char **papszOptions,
-                      GDALProgressFunc pfnProgress,
-                      void *pProgressData )
+                                       GDALDataset *poSrcDS,
+                                       int bStrict, CPL_UNUSED char **papszOptions,
+                                       GDALProgressFunc pfnProgress,
+                                       void *pProgressData )
 {
     if( pfnProgress == NULL )
         pfnProgress = GDALDummyProgress;

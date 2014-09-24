@@ -75,8 +75,7 @@ OGRDataSource *OGRARCGENDriver::Open( const char * pszFilename, int bUpdate )
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRARCGENDriver::TestCapability( const char * pszCap )
-
+int OGRARCGENDriver::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }

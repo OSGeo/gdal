@@ -125,8 +125,8 @@ GDALDataset* PCRasterDataset::open(
 GDALDataset* PCRasterDataset::createCopy(
          char const* filename,
          GDALDataset* source,
-         int strict,
-         char** options,
+         CPL_UNUSED int strict,
+         CPL_UNUSED char** options,
          GDALProgressFunc progress,
          void* progressData)
 {

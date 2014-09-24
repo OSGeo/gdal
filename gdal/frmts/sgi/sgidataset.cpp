@@ -266,7 +266,7 @@ SGIRasterBand::SGIRasterBand(SGIDataset* poDS, int nBand)
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr SGIRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
+CPLErr SGIRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 				 void*  pImage)
 
 {
@@ -284,7 +284,7 @@ CPLErr SGIRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 /*                             IWritelock()                             */
 /************************************************************************/
 
-CPLErr SGIRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
+CPLErr SGIRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                   void*  pImage)
 
 {
@@ -686,7 +686,7 @@ GDALDataset* SGIDataset::Open(GDALOpenInfo* poOpenInfo)
 
 GDALDataset *SGIDataset::Create( const char * pszFilename,
                                  int nXSize, int nYSize, int nBands,
-                                 GDALDataType eType, char **papszOptions )
+                                 GDALDataType eType, CPL_UNUSED char **papszOptions )
 
 {
     if( eType != GDT_Byte )

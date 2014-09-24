@@ -500,7 +500,7 @@ WCSDataset::~WCSDataset()
 /*      (FALSE) for a given request configuration and environment.      */
 /************************************************************************/
 
-int WCSDataset::TestUseBlockIO( int nXOff, int nYOff, int nXSize, int nYSize,
+int WCSDataset::TestUseBlockIO( CPL_UNUSED int nXOff, CPL_UNUSED int nYOff, int nXSize, int nYSize,
                                 int nBufXSize, int nBufYSize )
 
 {
@@ -557,7 +557,7 @@ CPLErr WCSDataset::IRasterIO( GDALRWFlag eRWFlag,
 /************************************************************************/
 
 CPLErr 
-WCSDataset::DirectRasterIO( GDALRWFlag eRWFlag,
+WCSDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
                             int nXOff, int nYOff, int nXSize, int nYSize,
                             void * pData, int nBufXSize, int nBufYSize,
                             GDALDataType eBufType, 

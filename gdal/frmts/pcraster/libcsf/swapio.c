@@ -52,7 +52,7 @@ int CsfValidSize(size_t size)
 #endif
 
 /* ARGSUSED */
-static void Swap1(unsigned char * buf,  size_t n)
+static void Swap1(CPL_UNUSED unsigned char * buf,  CPL_UNUSED size_t n)
 {
 	/* do nothing */
 }

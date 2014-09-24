@@ -76,8 +76,7 @@ OGRDataSource *OGRPCIDSKDriver::Open( const char * pszFilename, int bUpdate )
 /************************************************************************/
 
 OGRDataSource *OGRPCIDSKDriver::CreateDataSource( const char * pszName,
-                                                  char **papszOptions )
-
+                                                  CPL_UNUSED char **papszOptions )
 {
 /* -------------------------------------------------------------------- */
 /*      Try creation.                                                   */

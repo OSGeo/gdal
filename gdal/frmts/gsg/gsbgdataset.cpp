@@ -880,9 +880,9 @@ CPLErr GSBGDataset::WriteHeader( VSILFILE *fp, GInt16 nXSize, GInt16 nYSize,
 /************************************************************************/
 
 GDALDataset *GSBGDataset::Create( const char * pszFilename,
-				  int nXSize, int nYSize, int nBands,
+				  int nXSize, int nYSize, CPL_UNUSED int nBands,
 				  GDALDataType eType,
-				  char **papszParmList )
+				  CPL_UNUSED char **papszParmList )
 
 {
     if( nXSize <= 0 || nYSize <= 0 )
@@ -960,7 +960,7 @@ GDALDataset *GSBGDataset::Create( const char * pszFilename,
 
 GDALDataset *GSBGDataset::CreateCopy( const char *pszFilename,
 				      GDALDataset *poSrcDS,
-				      int bStrict, char **papszOptions,
+				      int bStrict, CPL_UNUSED char **papszOptions,
 				      GDALProgressFunc pfnProgress,
 				      void *pProgressData )
 {

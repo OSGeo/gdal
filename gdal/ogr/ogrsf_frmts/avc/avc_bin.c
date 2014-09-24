@@ -1556,7 +1556,7 @@ AVCTxt *AVCBinReadNextTxt(AVCBinFile *psFile)
  * Returns 0 on success or -1 on error.
  **********************************************************************/
 int _AVCBinReadNextRxp(AVCRawBinFile *psFile, AVCRxp *psRxp, 
-                       int nPrecision)
+                       CPL_UNUSED int nPrecision)
 {
 
     psRxp->n1  = AVCRawBinReadInt32(psFile);

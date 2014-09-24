@@ -184,8 +184,7 @@ OGRFeature *OGROpenAirLabelLayer::GetNextRawFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGROpenAirLabelLayer::TestCapability( const char * pszCap )
-
+int OGROpenAirLabelLayer::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }

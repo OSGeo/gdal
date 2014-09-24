@@ -5167,7 +5167,16 @@ CPLErr PDFDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
 /*                          GDALPDFOpen()                               */
 /************************************************************************/
 
-GDALDataset* GDALPDFOpen(const char* pszFilename, GDALAccess eAccess)
+GDALDataset* GDALPDFOpen(
+#if !defined(HAVE_POPPLER) && !defined(HAVE_PODOFO)
+CPL_UNUSED
+#endif
+                         const char* pszFilename,
+#if !defined(HAVE_POPPLER) && !defined(HAVE_PODOFO)
+CPL_UNUSED
+#endif
+                         GDALAccess eAccess
+                         )
 {
 #if defined(HAVE_POPPLER) || defined(HAVE_PODOFO)
     GDALOpenInfo oOpenInfo(pszFilename, eAccess);
@@ -5181,7 +5190,12 @@ GDALDataset* GDALPDFOpen(const char* pszFilename, GDALAccess eAccess)
 /*                       GDALPDFUnloadDriver()                          */
 /************************************************************************/
 
-static void GDALPDFUnloadDriver(GDALDriver * poDriver)
+static void GDALPDFUnloadDriver(
+#ifndef HAVE_POPPLER
+CPL_UNUSED
+#endif
+                                GDALDriver * poDriver
+)
 {
 #ifdef HAVE_POPPLER
     if( hGlobalParamsMutex != NULL )

@@ -348,7 +348,7 @@ CPLErr RawRasterBand::AccessLine( int iLine )
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr RawRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr RawRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                   void * pImage )
 
 {
@@ -375,7 +375,7 @@ CPLErr RawRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*                            IWriteBlock()                             */
 /************************************************************************/
 
-CPLErr RawRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
+CPLErr RawRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                    void * pImage )
 
 {
@@ -574,8 +574,8 @@ int RawRasterBand::IsSignificantNumberOfLinesLoaded( int nLineOff, int nLines )
 /*                           CanUseDirectIO()                           */
 /************************************************************************/
 
-int RawRasterBand::CanUseDirectIO(int nXOff, int nYOff, int nXSize, int nYSize,
-                                  GDALDataType eBufType)
+int RawRasterBand::CanUseDirectIO(CPL_UNUSED int nXOff, int nYOff, int nXSize, int nYSize,
+                                  CPL_UNUSED GDALDataType eBufType)
 {
 
 /* -------------------------------------------------------------------- */

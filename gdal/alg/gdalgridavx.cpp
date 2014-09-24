@@ -85,9 +85,9 @@ CPLErr
 GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
                                         const void *poOptions,
                                         GUInt32 nPoints,
-                                        const double *unused_padfX,
-                                        const double *unused_padfY,
-                                        const double *unused_padfZ,
+                                        CPL_UNUSED const double *unused_padfX,
+                                        CPL_UNUSED const double *unused_padfY,
+                                        CPL_UNUSED const double *unused_padfZ,
                                         double dfXPoint, double dfYPoint,
                                         double *pdfValue,
                                         void* hExtraParamsIn )

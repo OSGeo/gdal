@@ -298,7 +298,7 @@ PALSARJaxaRasterBand::~PALSARJaxaRasterBand()
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr PALSARJaxaRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr PALSARJaxaRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
 	void *pImage )
 {
     int nNumBytes = 0;

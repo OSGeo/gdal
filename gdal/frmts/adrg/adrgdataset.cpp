@@ -1569,7 +1569,7 @@ GDALDataset *ADRGDataset::Open( GDALOpenInfo * poOpenInfo )
 /************************************************************************/
 
 GDALDataset *ADRGDataset::Create(const char* pszFilename, int nXSize, int nYSize,
-                                 int nBands, GDALDataType eType, char **papszOptions)
+                                 int nBands, GDALDataType eType, CPL_UNUSED char **papszOptions)
 {
     int i;
 

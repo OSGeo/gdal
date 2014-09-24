@@ -78,8 +78,7 @@ OGRDataSource *OGRShapeDriver::Open( const char * pszFilename,
 /************************************************************************/
 
 OGRDataSource *OGRShapeDriver::CreateDataSource( const char * pszName,
-                                                 char **papszOptions )
-
+                                                 CPL_UNUSED char **papszOptions )
 {
     VSIStatBuf  stat;
     int         bSingleNewFile = FALSE;

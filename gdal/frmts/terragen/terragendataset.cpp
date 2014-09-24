@@ -270,7 +270,7 @@ TerragenRasterBand::TerragenRasterBand( TerragenDataset *poDS )
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr TerragenRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr TerragenRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                        void* pImage )
 
 {
@@ -367,7 +367,7 @@ double TerragenRasterBand::GetOffset(int* pbSuccess)
 
 CPLErr TerragenRasterBand::IWriteBlock
 ( 
-	int nBlockXOff, 
+	CPL_UNUSED int nBlockXOff, 
 	int nBlockYOff,
     void* pImage
 )

@@ -952,7 +952,7 @@ const char *AAIGDataset::GetProjectionRef()
 
 GDALDataset * AAIGDataset::CreateCopy(
                 const char * pszFilename, GDALDataset *poSrcDS,
-                int bStrict, char ** papszOptions, 
+                CPL_UNUSED int bStrict, char ** papszOptions, 
                 GDALProgressFunc pfnProgress, void * pProgressData )
 
 {

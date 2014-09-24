@@ -1176,7 +1176,7 @@ int _AVCBinWriteTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
  * Returns 0 on success or -1 on error.
  **********************************************************************/
 int _AVCBinWritePCCoverageTxt(AVCRawBinFile *psFile, AVCTxt *psTxt, 
-                              int nPrecision, AVCRawBinFile *psIndexFile)
+                              CPL_UNUSED int nPrecision, AVCRawBinFile *psIndexFile)
 {
     int i, nRecSize, nCurPos, nStrLen, numVertices;
 
@@ -1303,7 +1303,7 @@ int AVCBinWriteTxt(AVCBinFile *psFile, AVCTxt *psTxt)
  * Returns 0 on success or -1 on error.
  **********************************************************************/
 int _AVCBinWriteRxp(AVCRawBinFile *psFile, AVCRxp *psRxp, 
-                    int nPrecision)
+                    CPL_UNUSED int nPrecision)
 {
 
     AVCRawBinWriteInt32(psFile, psRxp->n1);
@@ -1913,7 +1913,7 @@ AVCBinFile *_AVCBinWriteCreateDBFTable(const char *pszPath,
                                        const char *pszCoverName,
                                        AVCTableDef *psSrcTableDef,
                                        AVCCoverType eCoverType,
-                                       int nPrecision, AVCDBCSInfo *psDBCSInfo)
+                                       int nPrecision, CPL_UNUSED AVCDBCSInfo *psDBCSInfo)
 {
     AVCBinFile    *psFile;
     AVCTableDef   *psTableDef = NULL;
