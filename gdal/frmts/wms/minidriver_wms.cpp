@@ -176,14 +176,16 @@ void GDALWMSMiniDriver_WMS::ImageRequest(CPLString *url, const GDALWMSImageReque
     CPLDebug("WMS", "URL = %s", url->c_str());
 }
 
-void GDALWMSMiniDriver_WMS::TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri) {
+void GDALWMSMiniDriver_WMS::TiledImageRequest(CPLString *url,
+                                              const GDALWMSImageRequestInfo &iri,
+                                              CPL_UNUSED const GDALWMSTiledImageRequestInfo &tiri) {
     ImageRequest(url, iri);
 }
 
 
 void GDALWMSMiniDriver_WMS::GetTiledImageInfo(CPLString *url,
                                               const GDALWMSImageRequestInfo &iri,
-                                              const GDALWMSTiledImageRequestInfo &tiri,
+                                              CPL_UNUSED const GDALWMSTiledImageRequestInfo &tiri,
                                               int nXInBlock,
                                               int nYInBlock)
 {

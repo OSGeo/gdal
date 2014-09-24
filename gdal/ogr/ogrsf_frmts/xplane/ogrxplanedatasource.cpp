@@ -164,8 +164,7 @@ int OGRXPlaneDataSource::Open( const char * pszFilename, int bReadWholeFile )
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRXPlaneDataSource::TestCapability( const char * pszCap )
-
+int OGRXPlaneDataSource::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }

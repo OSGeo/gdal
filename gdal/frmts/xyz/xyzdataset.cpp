@@ -124,7 +124,7 @@ XYZRasterBand::XYZRasterBand( XYZDataset *poDS, int nBand, GDALDataType eDT )
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr XYZRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr XYZRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                   void * pImage )
 
 {

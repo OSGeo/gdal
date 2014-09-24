@@ -429,7 +429,7 @@ int   NITFDESGetTRE( NITFDES* psDES,
     psSegInfo = psDES->psFile->pasSegmentInfo + psDES->iSegment;
     fp = psDES->psFile->fp;
 
-    if (nOffset >= psSegInfo->nSegmentSize)
+    if ((GUIntBig)nOffset >= psSegInfo->nSegmentSize)
         return FALSE;
 
     VSIFSeekL(fp, psSegInfo->nSegmentStart + nOffset, SEEK_SET);
@@ -460,7 +460,7 @@ int   NITFDESGetTRE( NITFDES* psDES,
                  nTRESize, szTRETempName);
         return FALSE;
     }
-    if (nOffset + 11 + nTRESize > psSegInfo->nSegmentSize)
+    if ((GUIntBig)(nOffset + 11 + nTRESize) > psSegInfo->nSegmentSize)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot read %s TRE. Not enough bytes : remaining %d, expected %d",
@@ -565,7 +565,7 @@ int NITFDESExtractShapefile(NITFDES* psDES, const char* pszRadixFileName)
         }
 
         VSIFSeekL(psDES->psFile->fp, psSegInfo->nSegmentStart + anOffset[iShpFile], SEEK_SET);
-        if (VSIFReadL(pabyBuffer, 1, nSize, psDES->psFile->fp) != nSize)
+        if (VSIFReadL(pabyBuffer, 1, nSize, psDES->psFile->fp) != (size_t)nSize)
         {
             VSIFree(pabyBuffer);
             VSIFree(pszFilename);

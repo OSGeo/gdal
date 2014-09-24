@@ -342,7 +342,7 @@ OGRLayer *
 OGRKMLDataSource::CreateLayer( const char * pszLayerName,
                                OGRSpatialReference *poSRS,
                                OGRwkbGeometryType eType,
-                               char ** papszOptions )
+                               CPL_UNUSED char ** papszOptions )
 {
     CPLAssert( NULL != pszLayerName);
 

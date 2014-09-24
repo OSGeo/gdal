@@ -577,8 +577,11 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*                          CreateCopy()                                */
 /************************************************************************/
 GDALDataset * ARGDataset::CreateCopy( const char * pszFilename, 
-    GDALDataset * poSrcDS, int bStrict, char ** papszOptions, 
-    GDALProgressFunc pfnProgress, void * pProgressData ) 
+                                      GDALDataset * poSrcDS,
+                                      CPL_UNUSED int bStrict,
+                                      CPL_UNUSED char ** papszOptions, 
+                                      CPL_UNUSED GDALProgressFunc pfnProgress,
+                                      CPL_UNUSED void * pProgressData ) 
 {
     int nBands = poSrcDS->GetRasterCount();
     int nXSize = poSrcDS->GetRasterXSize();

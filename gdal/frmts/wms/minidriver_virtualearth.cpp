@@ -83,7 +83,7 @@ void GDALWMSMiniDriver_VirtualEarth::GetCapabilities(GDALWMSMiniDriverCapabiliti
 }
 
 void GDALWMSMiniDriver_VirtualEarth::TiledImageRequest(CPLString *url,
-                                                       const GDALWMSImageRequestInfo &iri,
+                                                       CPL_UNUSED const GDALWMSImageRequestInfo &iri,
                                                        const GDALWMSTiledImageRequestInfo &tiri)
 {
 

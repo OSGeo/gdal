@@ -470,8 +470,8 @@ json_object* json_object_new_gme_double(double dfVal)
 
 static int json_gme_double_to_string(json_object *pjo,
                                      printbuf *pb,
-                                     int level,
-                                     int flags)
+                                     CPL_UNUSED int level,
+                                     CPL_UNUSED int flags)
 {
   char buf[128], *p, *q;
   int size;

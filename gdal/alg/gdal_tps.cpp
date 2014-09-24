@@ -273,7 +273,7 @@ void GDALDestroyTPSTransformer( void *pTransformArg )
 
 int GDALTPSTransform( void *pTransformArg, int bDstToSrc, 
                       int nPointCount, 
-                      double *x, double *y, double *z, 
+                      double *x, double *y, CPL_UNUSED double *z,
                       int *panSuccess )
 
 {

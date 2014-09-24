@@ -77,8 +77,7 @@ OGRDataSource *OGRWFSDriver::Open( const char * pszFilename, int bUpdate )
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRWFSDriver::TestCapability( const char * pszCap )
-
+int OGRWFSDriver::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }

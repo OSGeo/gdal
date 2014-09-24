@@ -66,8 +66,7 @@ OGRHTFDataSource::~OGRHTFDataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRHTFDataSource::TestCapability( const char * pszCap )
-
+int OGRHTFDataSource::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }

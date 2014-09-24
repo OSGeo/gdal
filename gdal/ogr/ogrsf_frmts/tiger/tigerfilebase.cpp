@@ -394,9 +394,8 @@ int TigerFileBase::WriteRecord( char *pachRecord, int nRecLen,
 /*      Setup our access to be to the module indicated in the feature.  */
 /************************************************************************/
 
-int TigerFileBase::SetWriteModule( const char *pszExtension, int nRecLen,
+int TigerFileBase::SetWriteModule( const char *pszExtension, CPL_UNUSED int nRecLen,
                                    OGRFeature *poFeature )
-
 {
 /* -------------------------------------------------------------------- */
 /*      Work out what module we should be writing to.                   */

@@ -796,8 +796,8 @@ static int ReadTDLPSect2 (uChar *gds, sInt4 tdlpLen, sInt4 *curLoc,
  * NOTES
  *****************************************************************************
  */
-static int ReadTDLPSect3 (uChar *bms, sInt4 tdlpLen, sInt4 *curLoc,
-                          uChar *bitmap, sInt4 NxNy)
+static int ReadTDLPSect3 (CPL_UNUSED uChar *bms, CPL_UNUSED sInt4 tdlpLen, CPL_UNUSED sInt4 *curLoc,
+                          CPL_UNUSED uChar *bitmap, CPL_UNUSED sInt4 NxNy)
 {
    errSprintf ("Bitmap data is Not Supported\n");
    return -1;
@@ -847,7 +847,7 @@ static int ReadTDLPSect3 (uChar *bms, sInt4 tdlpLen, sInt4 *curLoc,
  */
 static int ReadTDLPSect4 (uChar *bds, sInt4 tdlpLen, sInt4 *curLoc,
                           short int DSF, short int BSF, double *data,
-                          grib_MetaData *meta, double unitM, double unitB)
+                          grib_MetaData *meta, CPL_UNUSED double unitM, CPL_UNUSED double unitB)
 {
    uInt4 sectLen;       /* Length in bytes of the current section. */
    uChar f_notGridPnt;  /* Not Grid point data? */
@@ -2862,7 +2862,7 @@ static void shiftGroup0 (sInt4 *Data, int start1, int start2, int bit,
  * NOTES
  *****************************************************************************
  */
-static void doSplit (sInt4 *Data, int numData, TDLGroupType * G,
+static void doSplit (sInt4 *Data, CPL_UNUSED int numData, TDLGroupType * G,
                      TDLGroupType ** lclGroup, int *numLclGroup,
                      char f_primMiss, sInt4 li_primMiss,
                      char f_secMiss, sInt4 li_secMiss, int xFactor)
@@ -3001,7 +3001,7 @@ static void doSplit (sInt4 *Data, int numData, TDLGroupType * G,
  * NOTES
  *****************************************************************************
  */
-static void doSplitRight (sInt4 *Data, int numData, TDLGroupType * G,
+static void doSplitRight (sInt4 *Data, CPL_UNUSED int numData, TDLGroupType * G,
                           TDLGroupType * G1, TDLGroupType * G2,
                           char f_primMiss, sInt4 li_primMiss,
                           char f_secMiss, sInt4 li_secMiss)
@@ -3355,7 +3355,7 @@ static int splitGroup (sInt4 *Data, int numData, TDLGroupType * group,
  * NOTES
  *****************************************************************************
  */
-static void shiftGroup (sInt4 *Data, int numData, TDLGroupType ** Group,
+static void shiftGroup (sInt4 *Data, CPL_UNUSED int numData, TDLGroupType ** Group,
                         size_t *NumGroup, char f_primMiss, sInt4 li_primMiss,
                         char f_secMiss, sInt4 li_secMiss, int xFactor)
 {

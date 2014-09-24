@@ -285,7 +285,7 @@ HFAType::SetInstValue( const char * pszFieldPath,
 
 int
 HFAType::GetInstCount( const char * pszFieldPath,
-                       GByte *pabyData, GUInt32 nDataOffset, int nDataSize )
+                       GByte *pabyData, CPL_UNUSED GUInt32 nDataOffset, int nDataSize )
 
 {
     int		nArrayIndex = 0, nNameLen, iField, nByteOffset;

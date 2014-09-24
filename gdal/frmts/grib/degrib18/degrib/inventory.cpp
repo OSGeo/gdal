@@ -31,6 +31,8 @@
 #include "metaname.h"
 #include "filedatasource.h"
 
+#include "cpl_port.h"
+
 #define SECT0LEN_BYTE 16
 
 typedef union {
@@ -242,7 +244,7 @@ static int InventoryParseTime (char *is, double *AnsTime)
  *   May want to put this in degrib2.c
  *****************************************************************************
  */
-static int GRIB2SectToBuffer (DataSource &fp, uInt4 gribLen, sChar *sect,
+static int GRIB2SectToBuffer (DataSource &fp, CPL_UNUSED uInt4 gribLen, sChar *sect,
                               uInt4 *secLen, uInt4 *buffLen, char **buff)
 {
    char *buffer = *buff; /* Local ptr to buff to reduce ptr confusion. */
@@ -314,7 +316,7 @@ static int GRIB2SectToBuffer (DataSource &fp, uInt4 gribLen, sChar *sect,
  *   May want to put this in degrib2.c
  *****************************************************************************
  */
-static int GRIB2SectJump (DataSource &fp, sInt4 gribLen, sChar *sect, uInt4 *secLen)
+static int GRIB2SectJump (DataSource &fp, CPL_UNUSED sInt4 gribLen, sChar *sect, uInt4 *secLen)
 {
    char sectNum;        /* Validates that we are on the correct section. */
    int c;               /* Check that the fseek is still inside the file. */

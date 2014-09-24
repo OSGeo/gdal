@@ -165,8 +165,7 @@ void GMLFeature::SetPropertyDirectly( int iIndex, char *pszValue )
 /*                                Dump()                                */
 /************************************************************************/
 
-void GMLFeature::Dump( FILE * fp )
-
+void GMLFeature::Dump( CPL_UNUSED FILE * fp )
 {
     printf( "GMLFeature(%s):\n", m_poClass->GetName() );
     

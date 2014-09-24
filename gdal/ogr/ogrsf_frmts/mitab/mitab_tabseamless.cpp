@@ -799,9 +799,9 @@ OGRErr TABSeamless::GetExtent (OGREnvelope *psExtent, int bForce)
  * Returns 0 on success, or silently returns -1 (with no error) if this
  * information is not available.
  **********************************************************************/
-int TABSeamless::GetFeatureCountByType(int &numPoints, int &numLines,
-                                   int &numRegions, int &numTexts,
-                                   GBool bForce /*= TRUE*/)
+int TABSeamless::GetFeatureCountByType(CPL_UNUSED int &numPoints, CPL_UNUSED int &numLines,
+                                       CPL_UNUSED int &numRegions, CPL_UNUSED int &numTexts,
+                                       CPL_UNUSED GBool bForce /*= TRUE*/)
 {
     /*-----------------------------------------------------------------
      * __TODO__  This should be implemented to return -1 if force=false,

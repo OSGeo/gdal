@@ -1816,7 +1816,7 @@ static void png_gdal_error( png_structp png_ptr, const char *error_message )
 /*                          png_gdal_warning()                          */
 /************************************************************************/
 
-static void png_gdal_warning( png_structp png_ptr, const char *error_message )
+static void png_gdal_warning( CPL_UNUSED png_structp png_ptr, const char *error_message )
 {
     CPLError( CE_Warning, CPLE_AppDefined, 
               "libpng: %s", error_message );

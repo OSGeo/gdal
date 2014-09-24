@@ -241,7 +241,7 @@ int OGRGMEDataSource::Open( const char * pszFilename, int bUpdateIn)
 /************************************************************************/
 
 OGRLayer   *OGRGMEDataSource::CreateLayer( const char *pszName,
-                                           OGRSpatialReference *poSpatialRef,
+                                           CPL_UNUSED OGRSpatialReference *poSpatialRef,
                                            OGRwkbGeometryType eGType,
                                            char ** papszOptions )
 {

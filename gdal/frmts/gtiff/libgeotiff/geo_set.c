@@ -160,8 +160,9 @@ int GTIFKeySet(GTIF *gtif, geokey_t keyID, tagtype_t type, int count,...)
         key->gk_type = type;
         key->gk_count = count;
         key->gk_size = _gtiff_size[ type ];
-        if (gtif->gt_keymin > keyID)  gtif->gt_keymin=keyID;
-        if (gtif->gt_keymax < keyID)  gtif->gt_keymax=keyID;
+        /* TODO: Make sure that the following two casts are safe. */
+        if ((geokey_t)gtif->gt_keymin > keyID) gtif->gt_keymin=keyID;
+        if ((geokey_t)gtif->gt_keymax < keyID) gtif->gt_keymax=keyID;
         newvalues = 1;
     }
 

@@ -75,8 +75,7 @@ OGRDataSource *OGRSEGUKOOADriver::Open( const char * pszFilename, int bUpdate )
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRSEGUKOOADriver::TestCapability( const char * pszCap )
-
+int OGRSEGUKOOADriver::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }

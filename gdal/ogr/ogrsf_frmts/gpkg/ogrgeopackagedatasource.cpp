@@ -538,7 +538,8 @@ sqlite3* OGRGeoPackageDataSource::GetDatabaseHandle()
 /*                                Create()                              */
 /************************************************************************/
 
-int OGRGeoPackageDataSource::Create( const char * pszFilename, char **papszOptions )
+int OGRGeoPackageDataSource::Create( const char * pszFilename,
+                                     CPL_UNUSED char **papszOptions )
 {
     CPLString osCommand;
     const char *pszSpatialRefSysRecord;

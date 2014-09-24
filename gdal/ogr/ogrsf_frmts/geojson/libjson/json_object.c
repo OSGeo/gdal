@@ -429,8 +429,8 @@ void json_object_object_del(struct json_object* jso, const char *key)
 
 static int json_object_boolean_to_json_string(struct json_object* jso,
 					      struct printbuf *pb,
-					      int level,
-						  int flags)
+					      CPL_UNUSED int level,
+                                              CPL_UNUSED int flags)
 {
   if(jso->o.c_boolean) return sprintbuf(pb, "true");
   else return sprintbuf(pb, "false");
@@ -467,8 +467,8 @@ json_bool json_object_get_boolean(struct json_object *jso)
 
 static int json_object_int_to_json_string(struct json_object* jso,
 					  struct printbuf *pb,
-					  int level,
-					  int flags)
+					  CPL_UNUSED int level,
+					  CPL_UNUSED int flags)
 {
   return sprintbuf(pb, "%"PRId64, jso->o.c_int64);
 }
@@ -554,8 +554,8 @@ int64_t json_object_get_int64(struct json_object *jso)
 
 static int json_object_double_to_json_string(struct json_object* jso,
 					     struct printbuf *pb,
-					     int level,
-						 int flags)
+					     CPL_UNUSED int level,
+                                             int flags)
 {
   char buf[128], *p, *q;
   int size;
@@ -612,8 +612,8 @@ double json_object_get_double(struct json_object *jso)
 
 static int json_object_string_to_json_string(struct json_object* jso,
 					     struct printbuf *pb,
-					     int level,
-						 int flags)
+					     CPL_UNUSED int level,
+                                             CPL_UNUSED int flags)
 {
   sprintbuf(pb, "\"");
   json_escape_str(pb, jso->o.c_string.str, jso->o.c_string.len);

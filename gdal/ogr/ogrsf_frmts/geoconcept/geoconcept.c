@@ -4718,8 +4718,8 @@ GCField GCIOAPI_CALL1(*) FindFeatureField_GCIO (
 
 /* -------------------------------------------------------------------- */
 static char GCIOAPI_CALL1(*) _escapeString_GCIO (
-                                                  GCExportFileH* H,
-                                                  const char *theString
+                                                 CPL_UNUSED GCExportFileH* H,
+                                                 const char *theString
                                                 )
 {
   int l, i, o;

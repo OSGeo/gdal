@@ -861,7 +861,7 @@ void OGROSMDataSource::NotifyNodes(unsigned int nNodes, OSMNode* pasNodes)
 }
 
 static void OGROSMNotifyNodes (unsigned int nNodes, OSMNode* pasNodes,
-                               OSMContext* psOSMContext, void* user_data)
+                               CPL_UNUSED OSMContext* psOSMContext, void* user_data)
 {
     ((OGROSMDataSource*) user_data)->NotifyNodes(nNodes, pasNodes);
 }
@@ -2070,7 +2070,7 @@ void OGROSMDataSource::NotifyWay (OSMWay* psWay)
     nUnsortedReqIds += (psWay->nRefs - bIsArea);
 }
 
-static void OGROSMNotifyWay (OSMWay* psWay, OSMContext* psOSMContext, void* user_data)
+static void OGROSMNotifyWay (OSMWay* psWay, CPL_UNUSED OSMContext* psOSMContext, void* user_data)
 {
     ((OGROSMDataSource*) user_data)->NotifyWay(psWay);
 }
@@ -2519,7 +2519,7 @@ void OGROSMDataSource::NotifyRelation (OSMRelation* psRelation)
 }
 
 static void OGROSMNotifyRelation (OSMRelation* psRelation,
-                                  OSMContext* psOSMContext, void* user_data)
+                                  CPL_UNUSED OSMContext* psOSMContext, void* user_data)
 {
     ((OGROSMDataSource*) user_data)->NotifyRelation(psRelation);
 }
@@ -2639,7 +2639,7 @@ void OGROSMDataSource::NotifyBounds (double dfXMin, double dfYMin,
 
 static void OGROSMNotifyBounds( double dfXMin, double dfYMin,
                                 double dfXMax, double dfYMax,
-                                OSMContext* psCtxt, void* user_data )
+                                CPL_UNUSED OSMContext* psCtxt, void* user_data )
 {
     ((OGROSMDataSource*) user_data)->NotifyBounds(dfXMin, dfYMin,
                                                   dfXMax, dfYMax);
@@ -3786,8 +3786,7 @@ int OGROSMDataSource::TransferToDiskIfNecesserary()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGROSMDataSource::TestCapability( const char * pszCap )
-
+int OGROSMDataSource::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }

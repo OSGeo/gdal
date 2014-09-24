@@ -307,7 +307,7 @@ void XMLCALL GMLExpatHandler::startElementCbk(void *pUserData, const char *pszNa
 /************************************************************************/
 /*                            endElementCbk()                           */
 /************************************************************************/
-void XMLCALL GMLExpatHandler::endElementCbk(void *pUserData, const char* pszName )
+void XMLCALL GMLExpatHandler::endElementCbk(void *pUserData, CPL_UNUSED const char* pszName )
 
 {
     GMLExpatHandler* pThis = ((GMLExpatHandler*)pUserData);
@@ -639,7 +639,7 @@ OGRErr GMLHandler::dataHandler(const char *data, int nLen)
 /*                       startElementBoundedBy()                        */
 /************************************************************************/
 
-OGRErr GMLHandler::startElementBoundedBy(const char *pszName, int nLenName, void* attr )
+OGRErr GMLHandler::startElementBoundedBy(const char *pszName, CPL_UNUSED int nLenName, void* attr )
 {
     if ( m_nDepth == 2 && strcmp(pszName, "Envelope") == 0 )
     {
@@ -729,7 +729,9 @@ OGRErr GMLHandler::startElementGeometry(const char *pszName, int nLenName, void*
 /*                    startElementCityGMLGenericAttr()                  */
 /************************************************************************/
 
-OGRErr GMLHandler::startElementCityGMLGenericAttr(const char *pszName, int nLenName, void* attr )
+OGRErr GMLHandler::startElementCityGMLGenericAttr(const char *pszName,
+                                                  CPL_UNUSED int nLenName,
+                                                  CPL_UNUSED void* attr )
 {
     if( strcmp(pszName, "value") == 0 )
     {
@@ -1187,8 +1189,7 @@ OGRErr GMLHandler::startElementFeatureAttribute(const char *pszName, int nLenNam
 /*                         startElementTop()                            */
 /************************************************************************/
 
-OGRErr GMLHandler::startElementTop(const char *pszName, int nLenName, void* attr )
-
+OGRErr GMLHandler::startElementTop(const char *pszName, CPL_UNUSED int nLenName, void* attr )
 {
     if (strcmp(pszName, "CityModel") == 0 )
     {
@@ -1588,7 +1589,9 @@ OGRErr GMLHandler::endElementAttribute()
 /*                    startElementFeatureProperty()                     */
 /************************************************************************/
 
-OGRErr GMLHandler::startElementFeatureProperty(const char *pszName, int nLenName, void* attr )
+OGRErr GMLHandler::startElementFeatureProperty(CPL_UNUSED const char *pszName,
+                                               CPL_UNUSED int nLenName,
+                                               void* attr )
 {
     if (m_nDepth == m_nAttributeDepth + 1)
     {

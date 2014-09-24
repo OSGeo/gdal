@@ -813,7 +813,7 @@ OGRErr OGRGMELayer::DeleteFeature( long nFID )
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRGMELayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
+OGRErr OGRGMELayer::CreateField( OGRFieldDefn *poField, CPL_UNUSED int bApproxOK )
 {
     CPLDebug("GME", "create field %s of type %s, pending = %d",
              poField->GetNameRef(), OGRFieldDefn::GetFieldTypeName(poField->GetType()),

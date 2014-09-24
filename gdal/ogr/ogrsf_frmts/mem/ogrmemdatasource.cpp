@@ -38,8 +38,7 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRMemDataSource::OGRMemDataSource( const char *pszFilename, 
-                                    char **papszOptions)
-
+                                    CPL_UNUSED char **papszOptions)
 {
     pszName = CPLStrdup(pszFilename);
     papoLayers = NULL;
@@ -67,10 +66,9 @@ OGRMemDataSource::~OGRMemDataSource()
 
 OGRLayer *
 OGRMemDataSource::CreateLayer( const char * pszLayerName,
-                                 OGRSpatialReference *poSRS,
-                                 OGRwkbGeometryType eType,
-                                 char ** papszOptions )
-
+                               OGRSpatialReference *poSRS,
+                               OGRwkbGeometryType eType,
+                               CPL_UNUSED char ** papszOptions )
 {
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */

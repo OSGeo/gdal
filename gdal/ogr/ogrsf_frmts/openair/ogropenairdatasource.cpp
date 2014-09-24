@@ -64,8 +64,7 @@ OGROpenAirDataSource::~OGROpenAirDataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGROpenAirDataSource::TestCapability( const char * pszCap )
-
+int OGROpenAirDataSource::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }
