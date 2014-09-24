@@ -467,7 +467,7 @@ static void OGR2SQLITEGetPotentialLayerNames(const char *pszSQLCommand,
 /*               OGR2SQLITE_IgnoreAllFieldsExceptGeometry()             */
 /************************************************************************/
 
-#if defined(HAVE_SPATIALITE) && defined(ENABLE_VIRTUAL_OGR_SPATIAL_INDEX)
+#if defined(HAVE_SPATIALITE)
 static
 void OGR2SQLITE_IgnoreAllFieldsExceptGeometry(OGRLayer* poLayer)
 {
@@ -482,7 +482,7 @@ void OGR2SQLITE_IgnoreAllFieldsExceptGeometry(OGRLayer* poLayer)
     poLayer->SetIgnoredFields((const char**)papszIgnored);
     CSLDestroy(papszIgnored);
 }
-#endif  // HAVE_SPATIALITE and ENABLE_VIRTUAL_OGR_SPATIAL_INDEX
+#endif  // HAVE_SPATIALITE
 
 
 /************************************************************************/
