@@ -101,8 +101,7 @@ class WEBPRasterBand : public GDALPamRasterBand
 /*                          WEBPRasterBand()                            */
 /************************************************************************/
 
-WEBPRasterBand::WEBPRasterBand( WEBPDataset *poDS, int nBand )
-
+WEBPRasterBand::WEBPRasterBand( WEBPDataset *poDS, CPL_UNUSED int nBand )
 {
     this->poDS = poDS;
 
@@ -116,9 +115,8 @@ WEBPRasterBand::WEBPRasterBand( WEBPDataset *poDS, int nBand )
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr WEBPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
-
+CPLErr WEBPRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
+                                   void * pImage )
 {
     WEBPDataset* poGDS = (WEBPDataset*) poDS;
 

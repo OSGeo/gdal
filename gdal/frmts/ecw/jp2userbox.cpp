@@ -94,15 +94,15 @@ void JP2UserBox::UpdateXLBox()
 /************************************************************************/
 
 #if ECWSDK_VERSION >= 40
-CNCSError JP2UserBox::Parse( NCS::SDK::CFileBase &JP2File, 
-                             NCS::CIOStream &Stream )
+CNCSError JP2UserBox::Parse( CPL_UNUSED NCS::SDK::CFileBase &JP2File,
+                             CPL_UNUSED NCS::CIOStream &Stream )
 #else
-CNCSError JP2UserBox::Parse( class CNCSJP2File &JP2File, 
-                             CNCSJPCIOStream &Stream )
+CNCSError JP2UserBox::Parse( CPL_UNUSED class CNCSJP2File &JP2File,
+                             CPL_UNUSED CNCSJPCIOStream &Stream )
 #endif
 {
     CNCSError Error = NCS_SUCCESS;
-    
+
     return Error;
 }
 

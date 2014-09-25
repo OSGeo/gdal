@@ -288,7 +288,8 @@ HFAType::GetInstCount( const char * pszFieldPath,
                        GByte *pabyData, CPL_UNUSED GUInt32 nDataOffset, int nDataSize )
 
 {
-    int		nArrayIndex = 0, nNameLen, iField, nByteOffset;
+    /* int		nArrayIndex = 0; */
+    int		nNameLen, iField, nByteOffset;
     const char	*pszRemainder;
 
 /* -------------------------------------------------------------------- */
@@ -298,8 +299,8 @@ HFAType::GetInstCount( const char * pszFieldPath,
     if( strchr(pszFieldPath,'[') != NULL )
     {
         const char	*pszEnd = strchr(pszFieldPath,'[');
-        
-        nArrayIndex = atoi(pszEnd+1);
+
+        /* nArrayIndex = atoi(pszEnd+1); */
         nNameLen = pszEnd - pszFieldPath;
 
         pszRemainder = strchr(pszFieldPath,'.');
@@ -310,7 +311,7 @@ HFAType::GetInstCount( const char * pszFieldPath,
     else if( strchr(pszFieldPath,'.') != NULL )
     {
         const char	*pszEnd = strchr(pszFieldPath,'.');
-        
+
         nNameLen = pszEnd - pszFieldPath;
 
         pszRemainder = pszEnd + 1;
@@ -321,7 +322,7 @@ HFAType::GetInstCount( const char * pszFieldPath,
         nNameLen = strlen(pszFieldPath);
         pszRemainder = NULL;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Find this field within this type, if possible.                  */
 /* -------------------------------------------------------------------- */

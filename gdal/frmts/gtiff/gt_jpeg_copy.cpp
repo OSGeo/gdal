@@ -752,12 +752,12 @@ CPLErr GTIFF_CopyFromJPEG(GDALDataset* poDS, GDALDataset* poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Get raster and block dimensions                                 */
 /* -------------------------------------------------------------------- */
-    int nXSize, nYSize, nBands;
+    int nXSize, nYSize /* , nBands */;
     int nBlockXSize, nBlockYSize;
 
     nXSize = poDS->GetRasterXSize();
     nYSize = poDS->GetRasterYSize();
-    nBands = poDS->GetRasterCount();
+    /* nBands = poDS->GetRasterCount(); */
 
     /* We don't use the GDAL block dimensions because of the split-band */
     /* mechanism that can expose a pseudo one-line-strip whereas the */

@@ -9,7 +9,7 @@ void seekgb(FILE *lugb,g2int iseek,g2int mseek,g2int *lskip,g2int *lgrib)
 //   PRGMMR: Gilbert          ORG: W/NP11      DATE: 2002-10-28
 //
 // ABSTRACT: This subprogram searches a file for the next GRIB Message.
-//   The search is done starting at byte offset iseek of the file referenced 
+//   The search is done starting at byte offset iseek of the file referenced
 //   by lugb for mseek bytes at a time.
 //   If found, the starting position and length of the message are returned
 //   in lskip and lgrib, respectively.
@@ -34,7 +34,7 @@ void seekgb(FILE *lugb,g2int iseek,g2int mseek,g2int *lskip,g2int *lgrib)
 //
 //$$$
 {
-      g2int  ret;
+      // g2int  ret;
       g2int k,k4,ipos,nread,lim,start,vers,end,lengrib;
       unsigned char *cbuf;
 
@@ -51,7 +51,7 @@ void seekgb(FILE *lugb,g2int iseek,g2int mseek,g2int *lskip,g2int *lgrib)
 
 //  READ PARTIAL SECTION
 
-        ret=fseek(lugb,ipos,SEEK_SET);
+        /* ret= */ fseek(lugb,ipos,SEEK_SET);
         nread=fread(cbuf,sizeof(unsigned char),mseek,lugb);
         lim=nread-8;
 
@@ -64,7 +64,7 @@ void seekgb(FILE *lugb,g2int iseek,g2int mseek,g2int *lskip,g2int *lgrib)
 //  LOOK FOR '7777' AT END OF GRIB MESSAGE
             if (vers == 1) gbit(cbuf,&lengrib,(k+4)*8,3*8);
             if (vers == 2) gbit(cbuf,&lengrib,(k+12)*8,4*8);
-            ret=fseek(lugb,ipos+k+lengrib-4,SEEK_SET);
+            /* ret= */ fseek(lugb,ipos+k+lengrib-4,SEEK_SET);
             k4=fread(&end,sizeof(g2int),1,lugb);
             if (k4 == 1 && end == 926365495) {      //GRIB message found
                 *lskip=ipos+k;

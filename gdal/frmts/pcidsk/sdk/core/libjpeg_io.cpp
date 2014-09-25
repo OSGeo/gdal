@@ -3,7 +3,7 @@
  * Purpose:  Implementation of the JPEG compression/decompression based
  *           on libjpeg.  This implements functions suitable for use
  *           as jpeg interfaces in the PCIDSKInterfaces class.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
  * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
@@ -33,6 +33,8 @@
 #include "pcidsk_exception.h"
 #include <cassert>
 #include <cstdio>
+
+#include "cpl_port.h"
 
 using namespace PCIDSK;
 
@@ -66,9 +68,8 @@ static void JpegError(j_common_ptr cinfo)
 /************************************************************************/
 
 void PCIDSK::LibJPEG_DecompressBlock(
-    uint8 *src_data, int src_bytes, uint8 *dst_data, int dst_bytes,
-    int xsize, int ysize, eChanType pixel_type )
-
+    uint8 *src_data, int src_bytes, uint8 *dst_data, CPL_UNUSED int dst_bytes,
+    int xsize, int ysize, eChanType CPL_UNUSED pixel_type )
 {
     struct jpeg_decompress_struct sJCompInfo;
     struct jpeg_source_mgr	sSrcMgr;
@@ -91,7 +92,7 @@ void PCIDSK::LibJPEG_DecompressBlock(
 
     sSrcMgr.next_input_byte = src_data;
     sSrcMgr.bytes_in_buffer = src_bytes;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Setup JPEG Decompression                                        */
 /* -------------------------------------------------------------------- */
@@ -115,16 +116,14 @@ void PCIDSK::LibJPEG_DecompressBlock(
     }
 
     sJCompInfo.out_color_space = JCS_GRAYSCALE;
-
     jpeg_start_decompress(&sJCompInfo);
-    
+
 /* -------------------------------------------------------------------- */
 /*	Read each of the scanlines.					*/
 /* -------------------------------------------------------------------- */
     for( i = 0; i < ysize; i++ )
     {
         uint8	*line_data = dst_data + i*xsize;
-        
         jpeg_read_scanlines( &sJCompInfo, (JSAMPARRAY) &line_data, 1 );
     }
 
@@ -140,9 +139,8 @@ void PCIDSK::LibJPEG_DecompressBlock(
 /************************************************************************/
 
 void PCIDSK::LibJPEG_CompressBlock(
-    uint8 *src_data, int src_bytes, uint8 *dst_data, int &dst_bytes,
-    int xsize, int ysize, eChanType pixel_type, int quality )
-
+    uint8 *src_data, CPL_UNUSED int src_bytes, uint8 *dst_data, int &dst_bytes,
+    int xsize, int ysize, CPL_UNUSED eChanType pixel_type, int quality )
 {
     struct jpeg_compress_struct	sJCompInfo;
     struct jpeg_destination_mgr	sDstMgr;
@@ -159,7 +157,7 @@ void PCIDSK::LibJPEG_CompressBlock(
     sDstMgr.empty_output_buffer = (boolean (*)(j_compress_ptr))
         						_DummyMgrMethod;
     sDstMgr.term_destination = _DummyMgrMethod;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Setup JPEG Compression                                          */
 /* -------------------------------------------------------------------- */
