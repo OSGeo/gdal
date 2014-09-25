@@ -82,13 +82,13 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
         default_channel_types.resize( channel_count+1, CHN_8U );
         channel_types = &(default_channel_types[0]);
     }
-   
+
 /* -------------------------------------------------------------------- */
 /*      Validate parameters.                                            */
 /* -------------------------------------------------------------------- */
     const char *interleaving = NULL;
     std::string compression = "NONE";
-    bool nozero = false;
+    /* bool nozero = false; */
     bool nocreate = false;
     bool externallink = false;
     int  blocksize = 127;
@@ -116,11 +116,12 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
         interleaving = "FILE";
     }
     else
-        ThrowPCIDSKException( "PCIDSK::Create() options '%s' not recognised.", 
+        ThrowPCIDSKException( "PCIDSK::Create() options '%s' not recognised.",
                               options.c_str() );
-
+#if 0
     if( strstr(options.c_str(),"NOZERO") != NULL )
         nozero = true;
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Validate the channel types.                                     */

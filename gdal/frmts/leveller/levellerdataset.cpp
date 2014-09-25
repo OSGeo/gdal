@@ -1345,6 +1345,7 @@ bool LevellerDataset::load_from_file(VSILFILE* file, const char* pszFilename)
 			{
 				UNITLABEL unitcode;
 				//char szLocalUnits[8];
+                                // TODO: Fix strict aliasing issue.
 				if(!this->get((int&)unitcode, file, "coordsys_units"))
 					unitcode = UNITLABEL_M;
 

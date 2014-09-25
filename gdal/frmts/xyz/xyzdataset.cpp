@@ -358,9 +358,10 @@ CPLErr XYZRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
         if( idx + 1 == nRasterXSize )
             break;
     }
-    
-    if( poGDS->bSameNumberOfValuesPerLine )
+
+    if( poGDS->bSameNumberOfValuesPerLine ) {
         CPLAssert(poGDS->nDataLineNum == (nBlockYOff + 1) * nBlockXSize);
+    }
 
     nLastYOff = nBlockYOff;
 
@@ -1240,4 +1241,3 @@ void GDALRegister_XYZ()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-

@@ -896,9 +896,6 @@ void CTiledChannel::JPEGDecompressBlock( PCIDSKBuffer &oCompressedData,
 
 void CTiledChannel::JPEGCompressBlock( PCIDSKBuffer &oDecompressedData,
                                        PCIDSKBuffer &oCompressedData )
-                                       
-
-                               
 {
     if( file->GetInterfaces()->JPEGCompressBlock == NULL )
         ThrowPCIDSKException( "JPEG compression not enabled in the PCIDSKInterfaces of this build." );
@@ -906,11 +903,13 @@ void CTiledChannel::JPEGCompressBlock( PCIDSKBuffer &oDecompressedData,
 /* -------------------------------------------------------------------- */
 /*      What quality should we be using?                                */
 /* -------------------------------------------------------------------- */
+#if 0
     int quality = 75;
 
-    if( compression.c_str()[4] >= '1' 
+    if( compression.c_str()[4] >= '1'
         && compression.c_str()[4] <= '0' )
         quality = atoi(compression.c_str() + 4);
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Make the output buffer plent big to hold any conceivable        */
@@ -921,9 +920,8 @@ void CTiledChannel::JPEGCompressBlock( PCIDSKBuffer &oDecompressedData,
 /* -------------------------------------------------------------------- */
 /*      invoke.                                                         */
 /* -------------------------------------------------------------------- */
-    file->GetInterfaces()->JPEGCompressBlock( 
+    file->GetInterfaces()->JPEGCompressBlock(
         (uint8 *) oDecompressedData.buffer, oDecompressedData.buffer_size,
         (uint8 *) oCompressedData.buffer, oCompressedData.buffer_size,
         GetBlockWidth(), GetBlockHeight(), GetType(), 75 );
 }
-

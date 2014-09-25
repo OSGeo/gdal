@@ -1032,7 +1032,7 @@ static CPLErr
 GDALDownsampleChunk32R_Cubic( int nSrcWidth, int nSrcHeight,
                               CPL_UNUSED GDALDataType eWrkDataType,
                               void * pChunk,
-                              GByte * pabyChunkNodataMask,
+                              CPL_UNUSED GByte * pabyChunkNodataMask,
                               int nChunkXOff, int nChunkXSize,
                               int nChunkYOff, int nChunkYSize,
                               GDALRasterBand * poOverview,
@@ -1110,7 +1110,7 @@ GDALDownsampleChunk32R_Cubic( int nSrcWidth, int nSrcHeight,
     for( int iDstLine = nDstYOff; iDstLine < nDstYOff2 && eErr == CE_None; iDstLine++ )
     {
         float *pafSrcScanline;
-        GByte *pabySrcScanlineNodataMask;
+        // GByte *pabySrcScanlineNodataMask;
         int   nSrcYOff, nSrcYOff2 = 0, iDstPixel;
 
         nSrcYOff = (int) floor(((iDstLine+0.5)/(double)nOYSize) * nSrcHeight - 0.5)-1;
@@ -1126,10 +1126,13 @@ GDALDownsampleChunk32R_Cubic( int nSrcWidth, int nSrcHeight,
             nSrcYOff2 = nChunkYOff + nChunkYSize;
 
         pafSrcScanline = pafChunk + ((nSrcYOff-nChunkYOff) * nChunkXSize);
+#if 0
+        // pabySrcScanlineNodataMask is unused.
         if (pabyChunkNodataMask != NULL)
             pabySrcScanlineNodataMask = pabyChunkNodataMask + ((nSrcYOff-nChunkYOff) * nChunkXSize);
         else
             pabySrcScanlineNodataMask = NULL;
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Loop over destination pixels                                    */
@@ -1730,8 +1733,9 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
                         pabyChunk[i] = 255;
                 }
             }
-            else
+            else {
                 CPLAssert(0);
+            }
         }
         else if( EQUAL(pszResampling,"AVERAGE_BIT2GRAYSCALE_MINISWHITE") )
         {
@@ -1759,10 +1763,11 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
                         pabyChunk[i] = 255;
                 }
             }
-            else
+            else {
                 CPLAssert(0);
+            }
         }
-        
+
         for( int iOverview = 0; iOverview < nOverviewCount && eErr == CE_None; iOverview++ )
         {
             if( eType == GDT_Byte || eType == GDT_Float32 )
