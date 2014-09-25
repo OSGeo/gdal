@@ -73,13 +73,13 @@ CPL_CVSID("$Id$");
  * @return CE_None on success or CE_Failure if something goes wrong.
  */
 
-CPLErr CPL_STDCALL 
-GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT, 
+CPLErr CPL_STDCALL
+GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT,
                     GDALDatasetH hDstDS, const char *pszDstWKT,
-                    GDALResampleAlg eResampleAlg, 
-                    CPL_UNUSED double dfWarpMemoryLimit, 
+                    GDALResampleAlg eResampleAlg,
+                    CPL_UNUSED double dfWarpMemoryLimit,
                     double dfMaxError,
-                    GDALProgressFunc pfnProgress, void *pProgressArg, 
+                    GDALProgressFunc pfnProgress, void *pProgressArg,
                     GDALWarpOptions *psOptions )
 
 {

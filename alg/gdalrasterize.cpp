@@ -112,8 +112,9 @@ void gvBurnScanline( void *pCBData, int nY, int nXStart, int nXEnd,
             }
         }
     }
-    else
+    else {
         CPLAssert(0);
+    }
 }
 
 /************************************************************************/
@@ -167,8 +168,9 @@ void gvBurnPoint( void *pCBData, int nY, int nX, double dfVariant )
             }
         }
     }
-    else
+    else {
         CPLAssert(0);
+    }
 }
 
 /************************************************************************/
@@ -176,9 +178,9 @@ void gvBurnPoint( void *pCBData, int nY, int nX, double dfVariant )
 /************************************************************************/
 
 static void GDALCollectRingsFromGeometry(
-    OGRGeometry *poShape, 
-    std::vector<double> &aPointX, std::vector<double> &aPointY, 
-    std::vector<double> &aPointVariant, 
+    OGRGeometry *poShape,
+    std::vector<double> &aPointX, std::vector<double> &aPointY,
+    std::vector<double> &aPointVariant,
     std::vector<int> &aPartSize, GDALBurnValueSrc eBurnValueSrc)
 
 {
@@ -1319,4 +1321,3 @@ CPLErr GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
     return eErr;
 #endif /* def OGR_ENABLED */
 }
-

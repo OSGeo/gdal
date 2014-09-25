@@ -268,8 +268,15 @@ bool GDALECWCompressor::WriteCancel()
 /*                         PrepareCoverageBox()                         */
 /************************************************************************/
 
-CPLErr  GDALECWCompressor::PrepareCoverageBox( const char *pszWKT, 
-                                               double *padfGeoTransform )
+CPLErr  GDALECWCompressor::PrepareCoverageBox(
+#ifndef ECW_FW
+    CPL_UNUSED
+#endif
+    const char *pszWKT,
+#ifndef ECW_FW
+    CPL_UNUSED
+#endif
+    double *padfGeoTransform )
 
 {
 #ifndef ECW_FW
@@ -1927,14 +1934,14 @@ ECWWriteRasterBand::~ECWWriteRasterBand()
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr ECWWriteRasterBand::IReadBlock( int nBlockX, int nBlockY, 
+CPLErr ECWWriteRasterBand::IReadBlock( CPL_UNUSED int nBlockX,
+                                       CPL_UNUSED int nBlockY,
                                        void *pBuffer )
-
 {
     int nWordSize = GDALGetDataTypeSize( eDataType ) / 8;
 
     // We zero stuff out here, but we can't really read stuff from
-    // a write only stream. 
+    // a write only stream.
 
     memset( pBuffer, 0, nBlockXSize * nWordSize );
 
@@ -1980,13 +1987,13 @@ CPLErr ECWWriteRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /*                            IWriteBlock()                             */
 /************************************************************************/
 
-CPLErr ECWWriteRasterBand::IWriteBlock( int nBlockX, int nBlockY, 
+CPLErr ECWWriteRasterBand::IWriteBlock( CPL_UNUSED int nBlockX,
+                                        int nBlockY,
                                         void *pBuffer )
-
 {
     int nWordSize = GDALGetDataTypeSize( eDataType ) / 8;
     CPLErr eErr;
-    
+
     if( poGDS->bOutOfOrderWriteOccured )
         return CE_Failure;
 

@@ -53,10 +53,10 @@ bool WriteElement(string sSection, string sEntry, string fn, double dValue);
 
 static const IlwisDatums iwDatums[] =
 {
-    { "Adindan", "Adindan", 4201 },								
-    { "Afgooye", "Afgooye", 4205 },								
+    { "Adindan", "Adindan", 4201 },
+    { "Afgooye", "Afgooye", 4205 },
 		//AGREF --- skipped
-    { "Ain el Abd 1970", "Ain_el_Abd_1970", 4204 },				
+    { "Ain el Abd 1970", "Ain_el_Abd_1970", 4204 },
 		{ "American Samoa 1962", "American_Samoa_1962", 4169 },    
 		//Anna 1 Astro 1965 --- skipped
 		{ "Antigua Island Astro 1943", "Antigua_1943", 4601 },    
@@ -1034,7 +1034,7 @@ CPLErr ILWISDataset::WriteProjection()
     if( poGeogSRS )
     {
         csy = pszBaseName + ".csy";
-				
+
         WriteElement("Ilwis", "Type", csFileName, "CoordSystem");
         pszDatum = poGeogSRS->GetAttrValue( "GEOGCS|DATUM" );
 
@@ -1049,10 +1049,10 @@ CPLErr ILWISDataset::WriteProjection()
             piwDatum++;
         } //end of searchong for matching datum
         WriteElement("CoordSystem", "Width", csFileName, 28);
-        double a, b, f;
+        double a, /* b, */f;
         pszEllips = poGeogSRS->GetAttrValue( "GEOGCS|DATUM|SPHEROID" );
         a = poGeogSRS->GetSemiMajor();
-        b = poGeogSRS->GetSemiMinor();
+        /* b = */ poGeogSRS->GetSemiMinor();
         f = poGeogSRS->GetInvFlattening();
         WriteElement("CoordSystem", "Ellipsoid", csFileName, "User Defined");
         WriteElement("Ellipsoid", "a", csFileName, a);
@@ -1190,4 +1190,3 @@ CPLErr ILWISDataset::WriteProjection()
 
     return CE_None;
 }
-

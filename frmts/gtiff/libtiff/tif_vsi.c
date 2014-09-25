@@ -70,7 +70,7 @@ _tiffSizeProc(thandle_t fd)
 
     old_off = VSIFTellL( (VSILFILE *) fd );
     VSIFSeekL( (VSILFILE *) fd, 0, SEEK_END );
-    
+
     file_size = (toff_t) VSIFTellL( (VSILFILE *) fd );
     VSIFSeekL( (VSILFILE *) fd, old_off, SEEK_SET );
 
@@ -94,7 +94,7 @@ _tiffUnmapProc(thandle_t fd, tdata_t base, toff_t size)
  * Open a TIFF file descriptor for read/writing.
  */
 TIFF*
-TIFFFdOpen(int fd, const char* name, const char* mode)
+TIFFFdOpen(CPL_UNUSED int fd, CPL_UNUSED const char* name, CPL_UNUSED const char* mode)
 {
 	return NULL;
 }
@@ -126,7 +126,7 @@ TIFFOpen(const char* name, const char* mode)
         }
 
         strcat( access, "b" );
-                    
+
         fp = VSIFOpenL( name, access );
 	if (fp == NULL) {
             if( errno >= 0 )

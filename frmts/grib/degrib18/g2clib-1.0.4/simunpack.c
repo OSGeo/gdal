@@ -33,28 +33,27 @@ g2int simunpack(unsigned char *cpack,g2int *idrstmpl,g2int ndpts,g2float *fld)
 //
 // ATTRIBUTES:
 //   LANGUAGE: C
-//   MACHINE:  
+//   MACHINE:
 //
 //$$$//
 {
 
       g2int  *ifld;
-      g2int  j,nbits,itype;
+      g2int  j,nbits /* ,itype */;
       g2float ref,bscale,dscale;
 
-      
       rdieee(idrstmpl+0,&ref,1);
       bscale = int_power(2.0,idrstmpl[1]);
       dscale = int_power(10.0,-idrstmpl[2]);
       nbits = idrstmpl[3];
-      itype = idrstmpl[4];
+      /* itype = idrstmpl[4]; */
 
       ifld=(g2int *)calloc(ndpts,sizeof(g2int));
       if ( ifld == 0 ) {
          fprintf(stderr,"Could not allocate space in simunpack.\n  Data field NOT upacked.\n");
          return(1);
       }
-      
+
 //
 //  if nbits equals 0, we have a constant field where the reference value
 //  is the data value at each gridpoint

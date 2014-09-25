@@ -1630,7 +1630,7 @@ void unpk_grib2 (sInt4 * kfildo, float * ain, sInt4 * iain, sInt4 * nd2x3,
    sInt4 pdsTmpl;
    sInt4 drsTmpl;
    sInt4 numGrps;
-      char f_useMDL = 0;   /* Instructed 3/8/2005 10:30 to not use MDL. */
+   /* char f_useMDL = 0; */   /* Instructed 3/8/2005 10:30 to not use MDL. */
    uChar f_noBitmap;    /* 0 if bitmap, else no bitmap. */
    sInt4 orderDiff;
 
@@ -1643,23 +1643,23 @@ void unpk_grib2 (sInt4 * kfildo, float * ain, sInt4 * iain, sInt4 * nd2x3,
    if ((gdsTmpl != 0) && (gdsTmpl != 10) && (gdsTmpl != 20) &&
        (gdsTmpl != 30) && (gdsTmpl != 90) && (gdsTmpl != 110) &&
        (gdsTmpl != 120)) {
-      f_useMDL = 0;
+       /* f_useMDL = 0; */
    }
    if ((pdsTmpl != 0) && (pdsTmpl != 1) && (pdsTmpl != 2) &&
        (pdsTmpl != 8) && (pdsTmpl != 9) && (pdsTmpl != 20) &&
        (pdsTmpl != 30)) {
-      f_useMDL = 0;
+       /* f_useMDL = 0; */
    }
    if ((drsTmpl != 0) && (drsTmpl != 2) && (drsTmpl != 3)) {
-      f_useMDL = 0;
+       /* f_useMDL = 0; */
    }
    /* MDL GRIB2 lib does not support drsTmpl 2 or 3 if there is a bitmap. */
    if ((!f_noBitmap) && ((drsTmpl == 2) || (drsTmpl == 3))) {
-      f_useMDL = 0;
+       /* f_useMDL = 0; */
    }
    /* MDL GRIB2 lib does not support anything but second order differencing. */
    if ((drsTmpl == 3) && (orderDiff != 2) && (orderDiff != 0)) {
-      f_useMDL = 0;
+       /* f_useMDL = 0; */
    }
 
 #ifdef _FORTRAN

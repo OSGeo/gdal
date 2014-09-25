@@ -1366,7 +1366,7 @@ static int NITFWriteBLOCKA( VSILFILE* fp, vsi_l_offset nOffsetUDIDL,
             int  iSize = atoi(apszFields[iField*3+2]);
             const char *pszValue;
 
-            sprintf( szFullFieldName, "BLOCKA_%s_%02d", 
+            sprintf( szFullFieldName, "BLOCKA_%s_%02d",
                      apszFields[iField*3 + 0], iBlock );
 
             pszValue = CSLFetchNameValue( papszOptions, szFullFieldName );
@@ -1383,11 +1383,13 @@ static int NITFWriteBLOCKA( VSILFILE* fp, vsi_l_offset nOffsetUDIDL,
 
             /* Right align value and left pad with spaces */
             memset( szBLOCKA + iStart, ' ', iSize );
-            memcpy( szBLOCKA + iStart + MAX((size_t)0,iSize-strlen(pszValue)),
+            /* unsigned is always >= 0 */
+            /* memcpy( szBLOCKA + iStart + MAX((size_t)0,iSize-strlen(pszValue)), */
+            memcpy( szBLOCKA + iStart + iSize-strlen(pszValue),
                     pszValue, strlen(pszValue) );
         }
 
-        // required field - semantics unknown. 
+        // required field - semantics unknown.
         memcpy( szBLOCKA + 118, "010.0", 5);
 
         if( !NITFWriteTRE( fp,
@@ -1396,10 +1398,10 @@ static int NITFWriteBLOCKA( VSILFILE* fp, vsi_l_offset nOffsetUDIDL,
                            "BLOCKA", szBLOCKA, 123 ) )
             return FALSE;
     }
-    
+
     return TRUE;
 }
-                      
+
 /************************************************************************/
 /*                       NITFCollectSegmentInfo()                       */
 /*                                                                      */
@@ -2587,7 +2589,7 @@ char **NITFGenericMetadataReadTRE(char **papszMD,
                                   int nTRESize,
                                   CPLXMLNode* psTreNode)
 {
-    int nTreLength, nTreMinLength = -1, nTreMaxLength = -1;
+    int nTreLength, nTreMinLength = -1 /*, nTreMaxLength = -1 */;
     int bError = FALSE;
     int nTreOffset = 0;
     const char* pszMDPrefix;
@@ -2595,7 +2597,7 @@ char **NITFGenericMetadataReadTRE(char **papszMD,
 
     nTreLength = atoi(CPLGetXMLValue(psTreNode, "length", "-1"));
     nTreMinLength = atoi(CPLGetXMLValue(psTreNode, "minlength", "-1"));
-    nTreMaxLength = atoi(CPLGetXMLValue(psTreNode, "maxlength", "-1"));
+    /* nTreMaxLength = atoi(CPLGetXMLValue(psTreNode, "maxlength", "-1")); */
 
     if( (nTreLength > 0 && nTRESize != nTreLength) ||
         (nTreMinLength > 0 && nTRESize < nTreMinLength) )
@@ -2711,7 +2713,7 @@ CPLXMLNode* NITFCreateXMLTre(NITFFile* psFile,
                              const char *pachTRE,
                              int nTRESize)
 {
-    int nTreLength, nTreMinLength = -1, nTreMaxLength = -1;
+    int nTreLength, nTreMinLength = -1 /* , nTreMaxLength = -1 */;
     int bError = FALSE;
     int nTreOffset = 0;
     CPLXMLNode* psTreNode;
@@ -2731,7 +2733,7 @@ CPLXMLNode* NITFCreateXMLTre(NITFFile* psFile,
 
     nTreLength = atoi(CPLGetXMLValue(psTreNode, "length", "-1"));
     nTreMinLength = atoi(CPLGetXMLValue(psTreNode, "minlength", "-1"));
-    nTreMaxLength = atoi(CPLGetXMLValue(psTreNode, "maxlength", "-1"));
+    /* nTreMaxLength = atoi(CPLGetXMLValue(psTreNode, "maxlength", "-1")); */
 
     if( (nTreLength > 0 && nTRESize != nTreLength) ||
         (nTreMinLength > 0 && nTRESize < nTreMinLength) )

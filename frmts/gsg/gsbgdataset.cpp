@@ -302,10 +302,12 @@ CPLErr GSBGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 	return CE_Failure;
     }
 
-    float *pfImage;
-    pfImage = (float *)pImage;
-    for( int iPixel=0; iPixel<nBlockXSize; iPixel++ )
+#ifdef CPL_MSB
+    float *pfImage = (float *)pImage;
+    for( int iPixel=0; iPixel<nBlockXSize; iPixel++ ) {
 	CPL_LSBPTR32( pfImage+iPixel );
+    }
+#endif
 
     return CE_None;
 }
