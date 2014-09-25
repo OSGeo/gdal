@@ -451,15 +451,14 @@ static const char *_UncompressNextLine(E00ReadPtr psInfo)
     int     bEOL = 0;   /* Set to 1 when End of Line reached */
     int     iOutBufPtr = 0, i, n;
     int     iDecimalPoint, bOddNumDigits, iCurDigit;
-    char    *pszExp;
+    char    const *pszExp;
     int     bPreviousCodeWasNumeric = 0;
 
     while(!bEOL && (c=_GetNextSourceChar(psInfo)) != '\0')
     {
         if (c != '~')
         {
-            /* Normal character... just copy it 
-             */
+            /* Normal character... just copy it */
             psInfo->szOutBuf[iOutBufPtr++] = c;
             bPreviousCodeWasNumeric = 0;
         }
@@ -495,7 +494,7 @@ static const char *_UncompressNextLine(E00ReadPtr psInfo)
                 /* If the previous code was numeric, then the only valid code
                  * sequences are the ones above: "~ " and "~}".  If we end up
                  * here, it is because the number was followed by a '~' but
-                 * this '~' was not a code, it only marked the end of a 
+                 * this '~' was not a code, it only marked the end of a
                  * number that was not followed by any space.
                  *
                  * We should simply ignore the '~' and return the character
@@ -522,10 +521,10 @@ static const char *_UncompressNextLine(E00ReadPtr psInfo)
              *                of the number (decimal position, exponent, 
              *                and even or odd number of digits)
              *
-             *  c1 c2 ... cn  each of these characters represent a pair of 
+             *  c1 c2 ... cn  each of these characters represent a pair of
              *                digits of the encoded value with '!' == 00
              *                values 92..99 are encoded on 2 chars that
-             *                must be added to each other 
+             *                must be added to each other
              *                (i.e. 92 == }!, 93 == }", ...)
              *
              *  The sequence ends with a ' ' or a '~' character
@@ -545,14 +544,14 @@ static const char *_UncompressNextLine(E00ReadPtr psInfo)
                     pszExp = "E+";
                 else if (n % 3 == 2 )
                     pszExp = "E-";
-                else 
+                else
                     pszExp = NULL;
 
                 /* Decode the c1 c2 ... cn value and apply the format.
                  * Read characters until we encounter a ' ' or a '~'
                  */
                 iCurDigit = 0;
-                while((c=_GetNextSourceChar(psInfo)) != '\0' && 
+                while((c=_GetNextSourceChar(psInfo)) != '\0' &&
                       c != ' ' && c != '~')
                 {
                     n = c - '!';
@@ -588,7 +587,7 @@ static const char *_UncompressNextLine(E00ReadPtr psInfo)
                 {
                     for(i=0; i<2;i++)
                     {
-                        psInfo->szOutBuf[iOutBufPtr] = 
+                        psInfo->szOutBuf[iOutBufPtr] =
                                    psInfo->szOutBuf[iOutBufPtr-2];
                         psInfo->szOutBuf[iOutBufPtr-2] = pszExp[i];
                         iOutBufPtr++;
@@ -598,7 +597,7 @@ static const char *_UncompressNextLine(E00ReadPtr psInfo)
             else
             {
                 /* Unsupported code sequence... this is a possibility
-                 * given the fact that this library was written by 
+                 * given the fact that this library was written by
                  * reverse-engineering the format!
                  *
                  * Send an error to the user and abort.
@@ -642,5 +641,3 @@ static const char *_UncompressNextLine(E00ReadPtr psInfo)
 
     return psInfo->szOutBuf;
 }
-
-

@@ -109,9 +109,10 @@ void CPCIDSK_ARRAY::Load()
     {
         nElements *= moSizes[i];
     }
-    
+
     for( unsigned int i = 0; i < nElements; i++ )
     {
+        /* TODO: Deal with strict-aliasing issue. */
         const double* pdValue = (const double*)seg_data.Get(i*8,8);
         char uValue[8];
         std::memcpy(uValue,pdValue,8);
@@ -122,10 +123,10 @@ void CPCIDSK_ARRAY::Load()
 
     //PCIDSK doesn't have support for headers.
 
-    // We've now loaded the structure up with data. Mark it as being loaded 
+    // We've now loaded the structure up with data. Mark it as being loaded
     // properly.
     loaded_ = true;
-    
+
 }
 
 /**
@@ -331,4 +332,3 @@ void CPCIDSK_ARRAY::SetHeaders(const std::vector<std::string>& oHeaders)
     moHeaders = oHeaders;
     mbModified = true;
 }
-

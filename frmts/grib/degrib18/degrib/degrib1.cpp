@@ -1391,7 +1391,9 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
    uChar numUnusedBit;  /* # of extra bits at end of record. */
    uChar f_spherHarm;   /* Flag if data contains Spherical Harmonics. */
    uChar f_cmplxPack;   /* Flag if complex packing was used. */
+#ifdef DEBUG
    uChar f_octet14;     /* Flag if octet 14 was used. */
+#endif
    uChar bufLoc;        /* Keeps track of where to start getting more data
                          * out of the packed data stream. */
    uChar f_convert;     /* Determine if scan mode implies that we have to do
@@ -1428,7 +1430,9 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
    f_spherHarm = (*bds) & GRIB2BIT_1;
    f_cmplxPack = (*bds) & GRIB2BIT_2;
    meta->gridAttrib.fieldType = (*bds) & GRIB2BIT_3;
+#ifdef DEBUG
    f_octet14 = (*bds) & GRIB2BIT_4;
+#endif
 
    numUnusedBit = (*bds) & 0x0f;
 #ifdef DEBUG

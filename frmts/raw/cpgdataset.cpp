@@ -465,7 +465,7 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( const char *pszFilename )
     int nLines = 0, nSamples = 0;
     int nError = 0;
     int nNameLen = 0;
-    
+
     /* Parameters required for pseudo-geocoding.  GCPs map */
     /* slant range to ground range at 16 points.           */
     int iGeoParamsFound = 0, itransposed = 0;
@@ -473,7 +473,7 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( const char *pszFilename )
     double dfsample_size = 0.0, dfsample_size_az = 0.0;
 
     /* Parameters in geogratis geocoded images */
-    int iUTMParamsFound = 0, iUTMZone=0, iCorner=0;
+    int iUTMParamsFound = 0, iUTMZone=0 /* , iCorner=0 */;
     double dfnorth = 0.0, dfeast = 0.0;
 
     char* pszWorkname = CPLStrdup(pszFilename);
@@ -520,7 +520,7 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( const char *pszFilename )
                EQUAL(papszTokens[1],"corner") &&
                EQUALN(papszTokens[2],"Upper_Left",10) )
         {
-            iCorner = 0;
+            /* iCorner = 0; */
             iUTMParamsFound++;
         }  
         else if( EQUAL(papszTokens[0],"number_lines") )
@@ -1422,7 +1422,7 @@ CPLErr CPG_STOKESRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYO
 
 {
     int iPixel;
-    int m11, m12, m13, m14, m21, m22, m23, m24, step;
+    int m11, /* m12, */ m13, m14, /* m21, */ m22, m23, m24, step;
     int m31, m32, m33, m34, m41, m42, m43, m44;
     CPGDataset *poGDS = (CPGDataset *) poDS;
     float *M;
@@ -1434,7 +1434,7 @@ CPLErr CPG_STOKESRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYO
     eErr = poGDS->LoadStokesLine(nBlockYOff, bNativeOrder);
     if( eErr != CE_None )
         return eErr;
-    
+
     M = poGDS->padfStokesMatrix;
     pafLine = ( float * ) pImage;
 
@@ -1442,10 +1442,10 @@ CPLErr CPG_STOKESRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYO
     {
         step = 16;
         m11 = M11;
-        m12 = M12;
+        // m12 = M12;
         m13 = M13;
         m14 = M14;
-        m21 = M21;
+        // m21 = M21;
         m22 = M22;
         m23 = M23;
         m24 = M24;
@@ -1462,10 +1462,10 @@ CPLErr CPG_STOKESRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYO
     {
         step = 1;
         m11=0;
-        m12=nRasterXSize;
+        // m12=nRasterXSize;
         m13=nRasterXSize*2;
         m14=nRasterXSize*3;
-        m21=nRasterXSize*4;
+        // m21=nRasterXSize*4;
         m22=nRasterXSize*5;
         m23=nRasterXSize*6;
         m24=nRasterXSize*7;
@@ -1697,4 +1697,3 @@ void GDALRegister_CPG()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-

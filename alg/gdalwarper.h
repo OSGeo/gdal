@@ -339,8 +339,8 @@ private:
                                       const char *pszType );
 
     /* Unused kept to preserve binary ABI */
-    CPL_UNUSED void            *unused1;
-    CPL_UNUSED void            *unused2;
+    /* CPL_UNUSED */ void            *unused1;
+    /* CPL_UNUSED */ void            *unused2;
     void            *hIOMutex;
     void            *hWarpMutex;
 

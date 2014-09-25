@@ -36,7 +36,7 @@ void mkieee(g2float *a,g2int *rieee,g2int num)
 {
 
       g2int  j,n,ieee,iexp,imant;
-      double  alog2,atemp;
+      double  /* alog2, */ atemp;
 
       static double  two23,two126;
       static g2int test=0;
@@ -50,7 +50,7 @@ void mkieee(g2float *a,g2int *rieee,g2int num)
          test=1;
       }
 
-      alog2=0.69314718;       //  ln(2.0)
+      // alog2=0.69314718;       //  ln(2.0)
 
       for (j=0;j<num;j++) {
       

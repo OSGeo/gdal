@@ -4018,10 +4018,13 @@ int WriteTDLPRecord (FILE * fp, double *Data, sInt4 DataLen, int DSF,
    sInt4 *Scaled;       /* The scaled data. */
    TDLGroupType *group; /* The groups used to pack the data. */
    size_t numGroup;     /* Number of groups. */
-   char f_grid = 1;     /* Flag if this is gridded data. In theory can handle 
+   char f_grid = 1;     /* Flag if this is gridded data. In theory can handle
                          * vector data, but haven't tested it. */
    char f_sndOrder;     /* Flag if we should try second order packing. */
+
+   /* TODO: Trace overallMin to figure out how it could be used uninitialized */
    sInt4 overallMin;    /* Overall min value of the scaled data. */
+
    sInt4 a1;            /* 2nd order difference: 1st value. */
    sInt4 b2;            /* 2nd order difference: 1st 1st order difference */
    sInt4 li_primMiss;   /* Scaled primary missing value. */
@@ -4174,7 +4177,10 @@ int WriteTDLPRecord (FILE * fp, double *Data, sInt4 DataLen, int DSF,
 
    /* --- Start Writing record. --- */
    /* First write FORTRAN record information */
-   fread(&(recSize), sizeof (sInt4), 1, fp);
+   const size_t read_size = fread(&(recSize), sizeof (sInt4), 1, fp);
+   if (read_size != 1) {
+     fprintf(stderr, "WARNING: tdlpack.cpp read of recSize failed.\n");
+   }
    li_temp = 0;
    FWRITE_BIG (&(li_temp), sizeof (sInt4), 1, fp);
    li_temp = recSize - 8; /* FORTRAN rec length. */

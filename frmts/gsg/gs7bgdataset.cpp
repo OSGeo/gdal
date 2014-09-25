@@ -313,10 +313,11 @@ CPLErr GS7BGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return CE_Failure;
     }
 
-    double *pfImage;
-    pfImage = (double *)pImage;
+#ifdef CPL_MSB
+    double *pfImage = (double *)pImage;
     for( int iPixel=0; iPixel<nBlockXSize; iPixel++ )
         CPL_LSBPTR64( pfImage + iPixel );
+#endif
 
     return CE_None;
 }
@@ -1371,4 +1372,3 @@ void GDALRegister_GS7BG()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-

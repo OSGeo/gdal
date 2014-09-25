@@ -308,7 +308,7 @@ CPLErr GenBinBitRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOf
     {
         for( iX = 0; iX < nBlockXSize; iX++, iBitOffset += nBits )
         {
-            ((GByte *) pImage)[iX] = 
+            ((GByte *) pImage)[iX] =
                 ((pabyBuffer[iBitOffset>>3]) >> (6-(iBitOffset&0x7)) & 0x3);
         }
     }
@@ -322,8 +322,9 @@ CPLErr GenBinBitRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOf
                 ((GByte *) pImage)[iX] = (pabyBuffer[iBitOffset>>3]) & 0xf;
         }
     }
-    else
+    else {
         CPLAssert( FALSE );
+    }
 
     CPLFree( pabyBuffer );
 
