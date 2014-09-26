@@ -62,6 +62,14 @@ stored as XML raw content in the xml:XMP metadata domain.<p>
 
 <p>This metadata tag can be used as creation options.</p>
 
+<h2>Error management</h2>
+
+While decoding, libjpeg has resiliency towards some errors in the JPEG datastream and will
+try to recover from them as much of possible. Starting with GDAL 1.11.2, 
+such errors will be reported as GDAL Warnings, but can optionaly be considered
+as true Errors by setting the GDAL_ERROR_ON_LIBJPEG_WARNING configuration option
+to TRUE.
+
 <h2>Creation Options</h2>
 
 JPEG files are created using the "JPEG" driver code.  Only Byte band types

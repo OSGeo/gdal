@@ -37,6 +37,8 @@ CPPFLAGS	:=	$(XTRA_OPT) $(GDAL_INCLUDE) $(CPPFLAGS)
 
 default:	install-obj
 
+$(O_OBJ): jpgdataset.cpp
+
 clean:
 	rm -f *.o $(O_OBJ) libjpeg12/*.c libjpeg12/*.h
 
