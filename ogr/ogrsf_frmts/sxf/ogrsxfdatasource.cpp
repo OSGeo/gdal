@@ -287,13 +287,13 @@ int OGRSXFDataSource::Open( const char * pszFilename, int bUpdateIn)
 
 OGRErr OGRSXFDataSource::ReadSXFDescription(VSILFILE* fpSXF, SXFPassport& passport)
 {
-    int nObjectsRead;
+    /* int nObjectsRead; */
 
     if (passport.version == 3)
     {
         //78
         GByte buff[62];
-        nObjectsRead = VSIFReadL(&buff, 62, 1, fpSXF);
+        /* nObjectsRead = */ VSIFReadL(&buff, 62, 1, fpSXF);
         char date[3] = { 0 };
 
         //read year
@@ -332,7 +332,7 @@ OGRErr OGRSXFDataSource::ReadSXFDescription(VSILFILE* fpSXF, SXFPassport& passpo
     {
         //96
         GByte buff[80];
-        nObjectsRead = VSIFReadL(&buff, 80, 1, fpSXF);
+        /* nObjectsRead = */ VSIFReadL(&buff, 80, 1, fpSXF);
         char date[5] = { 0 };
 
         //read year
@@ -369,9 +369,9 @@ OGRErr OGRSXFDataSource::ReadSXFDescription(VSILFILE* fpSXF, SXFPassport& passpo
 
 OGRErr OGRSXFDataSource::ReadSXFInformationFlags(VSILFILE* fpSXF, SXFPassport& passport)
 {
-    int nObjectsRead;
+    /* int nObjectsRead; */
     GByte val[4];
-    nObjectsRead = VSIFReadL(&val, 4, 1, fpSXF);
+    /* nObjectsRead = */ VSIFReadL(&val, 4, 1, fpSXF);
 
     if (!(CHECK_BIT(val[0], 0) && CHECK_BIT(val[0], 1)))
     {
@@ -467,14 +467,14 @@ void OGRSXFDataSource::SetVertCS(const long iVCS, SXFPassport& passport)
     if (eImportFromEPSGErr != OGRERR_NONE)
     {
         CPLError( CE_Warning, CPLE_None,
-                  CPLString().Printf("SXF. Vertical coordinate system (SXF index %ld, EPSG %d) import from EPSG error", iVCS, nEPSG) );
+                  CPLString().Printf("SXF. Vertical coordinate system (SXF index %ld, EPSG %ld) import from EPSG error", iVCS, nEPSG) );
         return;
     }
 
     if (sr->IsVertical() != 1)
     {
         CPLError( CE_Warning, CPLE_None,
-                  CPLString().Printf("SXF. Coordinate system (SXF index %ld, EPSG %d) is not Vertical", iVCS, nEPSG) );
+                  CPLString().Printf("SXF. Coordinate system (SXF index %ld, EPSG %ld) is not Vertical", iVCS, nEPSG) );
         return;
     }
 
@@ -483,13 +483,13 @@ void OGRSXFDataSource::SetVertCS(const long iVCS, SXFPassport& passport)
     if (eSetVertCSErr != OGRERR_NONE)
     {
         CPLError( CE_Warning, CPLE_None,
-                  CPLString().Printf("SXF. Vertical coordinate system (SXF index %ld, EPSG %d) set error", iVCS, nEPSG) );
+                  CPLString().Printf("SXF. Vertical coordinate system (SXF index %ld, EPSG %ld) set error", iVCS, nEPSG) );
         return;
     }
 }
 OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXF, SXFPassport& passport)
 {
-    int nObjectsRead;
+    /* int nObjectsRead; */
     int i;
     passport.stMapDescription.Env.MaxX = -100000000;
     passport.stMapDescription.Env.MinX = 100000000;
@@ -502,15 +502,15 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXF, SXFPassport& pas
     if (passport.version == 3)
     {
         short nNoObjClass, nNoSemClass;
-        nObjectsRead = VSIFReadL(&nNoObjClass, 2, 1, fpSXF);
-        nObjectsRead = VSIFReadL(&nNoSemClass, 2, 1, fpSXF);
+        /* nObjectsRead = */ VSIFReadL(&nNoObjClass, 2, 1, fpSXF);
+        /* nObjectsRead = */ VSIFReadL(&nNoSemClass, 2, 1, fpSXF);
         GByte baMask[8];
-        nObjectsRead = VSIFReadL(&baMask, 8, 1, fpSXF);
+        /* nObjectsRead = */ VSIFReadL(&baMask, 8, 1, fpSXF);
 
         int nCorners[8];
 
         //get projected corner coords
-        nObjectsRead = VSIFReadL(&nCorners, 32, 1, fpSXF);
+        /* nObjectsRead = */ VSIFReadL(&nCorners, 32, 1, fpSXF);
 
         for (i = 0; i < 8; i++)
         {
@@ -532,7 +532,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXF, SXFPassport& pas
             bIsX = !bIsX;
         }
         //get geographic corner coords
-        nObjectsRead = VSIFReadL(&nCorners, 32, 1, fpSXF);
+        /* nObjectsRead = */ VSIFReadL(&nCorners, 32, 1, fpSXF);
 
         for (i = 0; i < 8; i++)
         {
@@ -542,7 +542,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXF, SXFPassport& pas
     else if (passport.version == 4)
     {
         int nEPSG;
-        nObjectsRead = VSIFReadL(&nEPSG, 4, 1, fpSXF);
+        /* nObjectsRead = */ VSIFReadL(&nEPSG, 4, 1, fpSXF);
 
         if (nEPSG != 0)
         {
@@ -551,7 +551,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXF, SXFPassport& pas
         }
 
         double dfCorners[8];
-        nObjectsRead = VSIFReadL(&dfCorners, 64, 1, fpSXF);
+        /* nObjectsRead = */ VSIFReadL(&dfCorners, 64, 1, fpSXF);
 
         for (i = 0; i < 8; i++)
         {
@@ -574,7 +574,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXF, SXFPassport& pas
 
         }
         //get geographic corner coords
-        nObjectsRead = VSIFReadL(&dfCorners, 64, 1, fpSXF);
+        /* nObjectsRead = */ VSIFReadL(&dfCorners, 64, 1, fpSXF);
 
         for (i = 0; i < 8; i++)
         {
@@ -589,7 +589,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXF, SXFPassport& pas
     }
 
     GByte anData[8] = { 0 };
-    nObjectsRead = VSIFReadL(&anData, 8, 1, fpSXF);
+    /* nObjectsRead = */ VSIFReadL(&anData, 8, 1, fpSXF);
     long iEllips = anData[0];
     long iVCS = anData[1];
     long iProjSys = anData[2];
@@ -629,14 +629,14 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXF, SXFPassport& pas
             GInt16 anFrame[8];
             GUInt32 nFrameCode;
         } buff;
-        nObjectsRead = VSIFReadL(&buff, 20, 1, fpSXF);
+        /* nObjectsRead = */ VSIFReadL(&buff, 20, 1, fpSXF);
         passport.stMapDescription.nResolution = buff.nRes; //resolution
 
         for (i = 0; i < 8; i++)
             passport.stMapDescription.stFrameCoords[i] = buff.anFrame[i];
 
         int anParams[5];
-        nObjectsRead = VSIFReadL(&anParams, 20, 1, fpSXF);
+        /* nObjectsRead = */ VSIFReadL(&anParams, 20, 1, fpSXF);
 
         if (anParams[0] != -1)
             dfProjScale = double(anParams[0]) / 100000000.0;
@@ -682,14 +682,14 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXF, SXFPassport& pas
 
         VSIFSeekL(fpSXF, 312, SEEK_SET);
         GUInt32 buff[10];
-        nObjectsRead = VSIFReadL(&buff, 40, 1, fpSXF);
+        /* nObjectsRead = */ VSIFReadL(&buff, 40, 1, fpSXF);
 
         passport.stMapDescription.nResolution = buff[0]; //resolution
         for (i = 0; i < 8; i++)
             passport.stMapDescription.stFrameCoords[i] = buff[1 + i];
 
         double adfParams[6];
-        nObjectsRead = VSIFReadL(&adfParams, 48, 1, fpSXF);
+        /* nObjectsRead = */ VSIFReadL(&adfParams, 48, 1, fpSXF);
 
         if (adfParams[1] != -1)
             dfProjScale = adfParams[1];
@@ -819,9 +819,9 @@ void OGRSXFDataSource::FillLayers()
 
     //2. Read all records (only classify code and offset) and add this to correspondence layer
     long nFID;
-    int nObjectsRead;
+    int nObjectsRead = 0;
     size_t i;
-    vsi_l_offset nOffset, nOffsetSemantic;
+    vsi_l_offset nOffset = 0, nOffsetSemantic;
     int nDeletedLayerIndex;
 
     //get record count
@@ -838,6 +838,7 @@ void OGRSXFDataSource::FillLayers()
         nObjectsRead = VSIFReadL(&nRecordCountMax, 4, 1, fpSXF);
         nOffset = 452;
     }
+    /* else nOffset and nObjectsRead will be 0 */
 
     if (nObjectsRead != 1)
     {

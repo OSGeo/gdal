@@ -234,13 +234,12 @@ OGRFeatureDefn* OGRMSSQLSpatialTableLayer::GetLayerDefn()
 /************************************************************************/
 
 CPLErr OGRMSSQLSpatialTableLayer::Initialize( const char *pszSchema,
-                                              const char *pszLayerName, 
+                                              const char *pszLayerName,
                                               const char *pszGeomCol,
-                                              int nCoordDimension, 
+                                              CPL_UNUSED int nCoordDimension,
                                               int nSRId,
                                               const char *pszSRText,
                                               OGRwkbGeometryType eType )
-
 {
     CPLFree( pszFIDColumn );
     pszFIDColumn = NULL;
@@ -1246,4 +1245,3 @@ void OGRMSSQLSpatialTableLayer::AppendFieldValue(CPLODBCStatement *poStatement,
         poStatement->Append( pszStrValue );
     }
 }
-

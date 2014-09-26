@@ -12,6 +12,7 @@
 #include "jinclude.h"
 #include "jpeglib.h"
 
+#include "cpl_port.h"
 
 typedef enum {			/* JPEG marker codes */
   M_SOF0  = 0xc0,
@@ -212,14 +213,14 @@ emit_dht (j_compress_ptr cinfo, int index, boolean is_ac)
     
     for (i = 0; i < length; i++)
       emit_byte(cinfo, htbl->huffval[i]);
-    
+
     htbl->sent_table = TRUE;
   }
 }
 
 
 LOCAL(void)
-emit_dac (j_compress_ptr cinfo)
+emit_dac (CPL_UNUSED j_compress_ptr cinfo)
 /* Emit a DAC marker */
 /* Since the useful info is so small, we want to emit all the tables in */
 /* one DAC marker.  Therefore this routine does its own scan of the table. */
@@ -229,7 +230,7 @@ emit_dac (j_compress_ptr cinfo)
   char ac_in_use[NUM_ARITH_TBLS];
   int length, i;
   jpeg_component_info *compptr;
-  
+
   for (i = 0; i < NUM_ARITH_TBLS; i++)
     dc_in_use[i] = ac_in_use[i] = 0;
   

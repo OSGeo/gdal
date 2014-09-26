@@ -1592,7 +1592,7 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
              || nSHPType == SHPT_POINTZ
              || nSHPType == SHPT_POINTZM )
     {
-        int nOffset;
+        /* int nOffset; */
         double  dfX, dfY, dfZ = 0;
 
         int bHasZ = (nSHPType == SHPT_POINTZ || nSHPType == SHPT_POINTZM);
@@ -1609,7 +1609,7 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
 
         CPL_LSBPTR64( &dfX );
         CPL_LSBPTR64( &dfY );
-        nOffset = 20 + 8;
+        /* nOffset = 20 + 8; */
 
         if( bHasZ )
         {
@@ -1624,7 +1624,7 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
     }
 
     CPLError(CE_Failure, CPLE_AppDefined,
-             "Unsupported geometry type: %d", 
+             "Unsupported geometry type: %d",
               nSHPType );
 
     return OGRERR_FAILURE;

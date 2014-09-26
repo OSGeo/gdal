@@ -128,9 +128,9 @@ CPLString NASHandler::GetAttributes(const Attributes* attrs)
 /*                            startElement()                            */
 /************************************************************************/
 
-void NASHandler::startElement(const XMLCh* const    uri,
-                              const XMLCh* const    localname,
-                              const XMLCh* const    qname,
+void NASHandler::startElement(CPL_UNUSED const XMLCh* const uri,
+                              const XMLCh* const localname,
+                              CPL_UNUSED const XMLCh* const qname,
                               const Attributes& attrs )
 
 {
@@ -416,9 +416,9 @@ void NASHandler::startElement(const XMLCh* const    uri,
 /************************************************************************/
 /*                             endElement()                             */
 /************************************************************************/
-void NASHandler::endElement(const   XMLCh* const    uri,
-                            const   XMLCh* const    localname,
-                            const   XMLCh* const    qname )
+void NASHandler::endElement(CPL_UNUSED const XMLCh* const uri,
+                            const XMLCh* const localname,
+                            CPL_UNUSED const XMLCh* const qname )
 
 {
     char        szElementName[MAX_TOKEN_SIZE];
@@ -648,12 +648,11 @@ void NASHandler::endElement(const   XMLCh* const    uri,
 
 #if XERCES_VERSION_MAJOR >= 3
 void NASHandler::characters( const XMLCh *const chars_in,
-                             const XMLSize_t length )
+                             CPL_UNUSED const XMLSize_t length )
 #else
-void NASHandler::characters(const XMLCh* const chars_in,
-                            const unsigned int length )
+void NASHandler::characters( const XMLCh* const chars_in,
+                             CPL_UNUSED const unsigned int length )
 #endif
-
 {
     const XMLCh *chars = chars_in;
 

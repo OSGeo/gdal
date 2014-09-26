@@ -448,9 +448,9 @@ int S57Writer::WriteDSID( const char *pszDSNM, const char *pszISDT,
 /*      Add the DSID field.                                             */
 /* -------------------------------------------------------------------- */
     DDFRecord *poRec = MakeRecord();
-    DDFField *poField;
+    /* DDFField *poField; */
 
-    poField = poRec->AddField( poModule->FindFieldDefn( "DSID" ) );
+    /* poField = */ poRec->AddField( poModule->FindFieldDefn( "DSID" ) );
 
     poRec->SetIntSubfield   ( "DSID", 0, "RCNM", 0, 10 );
     poRec->SetIntSubfield   ( "DSID", 0, "RCID", 0, 1 );
@@ -473,7 +473,7 @@ int S57Writer::WriteDSID( const char *pszDSNM, const char *pszISDT,
 /*      Add the DSSI record.  Eventually we will need to return and     */
 /*      correct these when we are finished writing.                     */
 /* -------------------------------------------------------------------- */
-    poField = poRec->AddField( poModule->FindFieldDefn( "DSSI" ) );
+    /* poField = */ poRec->AddField( poModule->FindFieldDefn( "DSSI" ) );
 
     poRec->SetIntSubfield   ( "DSSI", 0, "DSTR", 0, 2 );
     poRec->SetIntSubfield   ( "DSSI", 0, "AALL", 0, 1 );
@@ -510,9 +510,9 @@ int S57Writer::WriteDSPM( int nScale )
 /*      Add the DSID field.                                             */
 /* -------------------------------------------------------------------- */
     DDFRecord *poRec = MakeRecord();
-    DDFField *poField;
+    /* DDFField *poField; */
 
-    poField = poRec->AddField( poModule->FindFieldDefn( "DSPM" ) );
+    /* poField = */ poRec->AddField( poModule->FindFieldDefn( "DSPM" ) );
 
     poRec->SetIntSubfield   ( "DSPM", 0, "RCNM", 0, 20 );
     poRec->SetIntSubfield   ( "DSPM", 0, "RCID", 0, 1 );
@@ -625,18 +625,18 @@ int S57Writer::WritePrimitive( OGRFeature *poFeature )
 
 {
     DDFRecord *poRec = MakeRecord();
-    DDFField *poField;
+    /* DDFField *poField; */
     OGRGeometry *poGeom = poFeature->GetGeometryRef();
 
 /* -------------------------------------------------------------------- */
 /*      Add the VRID field.                                             */
 /* -------------------------------------------------------------------- */
 
-    poField = poRec->AddField( poModule->FindFieldDefn( "VRID" ) );
+    /* poField = */ poRec->AddField( poModule->FindFieldDefn( "VRID" ) );
 
-    poRec->SetIntSubfield   ( "VRID", 0, "RCNM", 0, 
+    poRec->SetIntSubfield   ( "VRID", 0, "RCNM", 0,
                               poFeature->GetFieldAsInteger( "RCNM") );
-    poRec->SetIntSubfield   ( "VRID", 0, "RCID", 0, 
+    poRec->SetIntSubfield   ( "VRID", 0, "RCID", 0,
                               poFeature->GetFieldAsInteger( "RCID") );
     poRec->SetIntSubfield   ( "VRID", 0, "RVER", 0, 1 );
     poRec->SetIntSubfield   ( "VRID", 0, "RUIN", 0, 1 );
@@ -719,7 +719,7 @@ int S57Writer::WritePrimitive( OGRFeature *poFeature )
 
         CPLFree( padfX );
         CPLFree( padfY );
-        
+
     }
 
 /* -------------------------------------------------------------------- */
@@ -727,14 +727,14 @@ int S57Writer::WritePrimitive( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
     if( poFeature->GetDefnRef()->GetFieldIndex( "NAME_RCNM_0" ) >= 0 )
     {
-        DDFField *poField;
+        /* DDFField *poField; */
         char     szName[5];
         int      nRCID;
 
         CPLAssert( poFeature->GetFieldAsInteger( "NAME_RCNM_0") == RCNM_VC );
 
-        poField = poRec->AddField( poModule->FindFieldDefn( "VRPT" ) );
-        
+        /* poField = */ poRec->AddField( poModule->FindFieldDefn( "VRPT" ) );
+
         nRCID = poFeature->GetFieldAsInteger( "NAME_RCID_0");
         szName[0] = RCNM_VC;
         szName[1] = nRCID & 0xff;
@@ -1052,5 +1052,3 @@ int S57Writer::WriteATTF( DDFRecord *poRec, OGRFeature *poFeature )
 
     return poRec->SetFieldRaw( poField, 0, achRawData, nRawSize );
 }
-
-

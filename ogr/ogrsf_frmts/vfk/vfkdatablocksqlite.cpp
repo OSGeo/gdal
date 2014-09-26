@@ -47,21 +47,21 @@ int VFKDataBlockSQLite::LoadGeometryPoint()
 {
     int   nInvalid, rowId, nGeometries;
     bool  bSkipInvalid;
-    long iFID;
+    /* long iFID; */
     double x, y;
 
     CPLString     osSQL;
     sqlite3_stmt *hStmt;
-    
+
     VFKFeatureSQLite *poFeature;
     VFKReaderSQLite  *poReader;
-    
+
     nInvalid  = nGeometries = 0;
     poReader  = (VFKReaderSQLite*) m_poReader;
 
     if (LoadGeometryFromDB()) /* try to load geometry from DB */
 	return 0;
-    
+
     bSkipInvalid = EQUAL(m_pszName, "OB") || EQUAL(m_pszName, "OP") || EQUAL(m_pszName, "OBBP");
     osSQL.Printf("SELECT SOURADNICE_Y,SOURADNICE_X,%s,rowid FROM %s",
                  FID_COLUMN, m_pszName);
@@ -74,19 +74,21 @@ int VFKDataBlockSQLite::LoadGeometryPoint()
         /* read values */
         x = -1.0 * sqlite3_column_double(hStmt, 0); /* S-JTSK coordinate system expected */
         y = -1.0 * sqlite3_column_double(hStmt, 1);
-	iFID = sqlite3_column_double(hStmt, 2);
+#ifdef DEBUG
+	const long iFID = sqlite3_column_double(hStmt, 2);
+#endif
 	rowId = sqlite3_column_int(hStmt, 3);
 
         poFeature = (VFKFeatureSQLite *) GetFeatureByIndex(rowId - 1);
         CPLAssert(NULL != poFeature && poFeature->GetFID() == iFID);
-        
+
         /* create geometry */
 	OGRPoint pt(x, y);
         if (!poFeature->SetGeometry(&pt)) {
             nInvalid++;
             continue;
         }
-        
+
 	/* store also geometry in DB */
 	if (poReader->IsSpatial() &&
 	    SaveGeometryToDB(&pt, rowId) != OGRERR_FAILURE)

@@ -2207,7 +2207,7 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
          *============================================================*/
         int     i, iSection;
         GInt32  nCoordBlockPtr, numLineSections;
-        GInt32  nCoordDataSize, numPointsTotal, *panXY;
+        GInt32  /* nCoordDataSize, */ numPointsTotal, *panXY;
         OGRMultiLineString      *poMultiLine;
         TABMAPCoordSecHdr       *pasSecHdrs;
         int nVersion = TAB_GEOM_GET_VERSION(m_nMapInfoType);
@@ -2218,7 +2218,7 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         TABMAPObjPLine *poPLineHdr = (TABMAPObjPLine *)poObjHdr;
 
         nCoordBlockPtr  = poPLineHdr->m_nCoordBlockPtr;
-        nCoordDataSize  = poPLineHdr->m_nCoordDataSize;
+        /* nCoordDataSize  = poPLineHdr->m_nCoordDataSize; */
         numLineSections = poPLineHdr->m_numLineSections;
         m_bSmooth       = poPLineHdr->m_bSmooth;
 
@@ -3021,7 +3021,7 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
          *============================================================*/
         int     i, iSection;
         GInt32  nCoordBlockPtr, numLineSections;
-        GInt32  nCoordDataSize, numPointsTotal, *panXY;
+        GInt32  /* nCoordDataSize, */ numPointsTotal, *panXY;
         OGRMultiPolygon         *poMultiPolygon = NULL;
         OGRPolygon              *poPolygon = NULL;
         TABMAPCoordSecHdr       *pasSecHdrs;
@@ -3034,12 +3034,12 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         TABMAPObjPLine *poPLineHdr = (TABMAPObjPLine *)poObjHdr;
 
         nCoordBlockPtr  = poPLineHdr->m_nCoordBlockPtr;
-        nCoordDataSize  = poPLineHdr->m_nCoordDataSize;
+        /* nCoordDataSize  = poPLineHdr->m_nCoordDataSize; */
         numLineSections = poPLineHdr->m_numLineSections;
         m_bSmooth       = poPLineHdr->m_bSmooth;
 
         // Centroid/label point
-        poMapFile->Int2Coordsys(poPLineHdr->m_nLabelX, poPLineHdr->m_nLabelY, 
+        poMapFile->Int2Coordsys(poPLineHdr->m_nLabelX, poPLineHdr->m_nLabelY,
                                 dX, dY);
         SetCenter(dX, dY);
 
@@ -6159,12 +6159,11 @@ const char *TABText::GetLabelStyleString()
     int nStringLen = strlen(GetTextString());
     // ALL Caps, Extpanded need to modify the string value
     char *pszTextString = (char*)CPLMalloc((nStringLen+1)*sizeof(char));
-    char szPattern[20];
+    /* char szPattern[20]; */
     int nJustification = 1;
-    
+
     strcpy(pszTextString, GetTextString());
-    szPattern[0] = '\0';
-    
+    /* szPattern[0] = '\0'; */
 
     switch(GetTextJustification())
     {
@@ -7259,9 +7258,9 @@ int TABCollection::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         // In V800 the mini-header starts with a copy of num_parts
         if (nVersion >= 800)
         {
-            int numParts;
-            numParts = poCoordBlock->ReadInt32();
-            CPLAssert(numParts == poCollHdr->m_nNumRegSections);
+            /* int numParts; */
+            /* numParts = poCoordBlock->ReadInt32(); */
+            CPLAssert(poCoordBlock->ReadInt32() == poCollHdr->m_nNumRegSections);
         }
 
         ReadLabelAndMBR(poCoordBlock, bComprCoord,
@@ -7322,9 +7321,9 @@ int TABCollection::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         // In V800 the mini-header starts with a copy of num_parts
         if (nVersion >= 800)
         {
-            int numParts;
-            numParts = poCoordBlock->ReadInt32();
-            CPLAssert(numParts == poCollHdr->m_nNumPLineSections);
+            /* int numParts; */
+            /* numParts = poCoordBlock->ReadInt32(); */
+            CPLAssert(poCoordBlock->ReadInt32() == poCollHdr->m_nNumPLineSections);
         }
 
         ReadLabelAndMBR(poCoordBlock, bComprCoord,
@@ -8594,10 +8593,9 @@ const char *ITABFeatureBrush::GetBrushStyleString()
 {
     const char *pszStyle = NULL;
     int    nOGRStyle  = 0;
-    char szPattern[20];
-    
-    szPattern[0] = '\0';
-    
+    /* char szPattern[20]; */
+    //* szPattern[0] = '\0'; */
+
     if (m_sBrushDef.nFillPattern == 1)
       nOGRStyle = 1;
     else if (m_sBrushDef.nFillPattern == 3)
@@ -8836,11 +8834,10 @@ const char *ITABFeatureSymbol::GetSymbolStyleString(double dfAngle)
 {
     const char *pszStyle = NULL;
     int    nOGRStyle  = 1;
-    char szPattern[20];
+    /* char szPattern[20]; */
     int nAngle = 0;
-    
-    szPattern[0] = '\0';
-    
+    /* szPattern[0] = '\0'; */
+
     if (m_sSymbolDef.nSymbolNo == 31)
       nOGRStyle = 0;
     else if (m_sSymbolDef.nSymbolNo == 32)

@@ -83,10 +83,13 @@ CPLString OGRLIBKMLGetSanitizedNCName(const char* pszName)
         {
             /* ok */
         }
+#if 0
+        /* Always false. */
         else if ( ch > 127 )
         {
             /* ok : this is an approximation */
         }
+#endif
         else
             osName[i] = '_';
     }
@@ -752,18 +755,17 @@ OGRErr OGRLIBKMLLayer::GetExtent (
  Method to create a field on a layer
 
  Args:          poField     pointer to the Field Definition to add
-                bApproxOK   no effect as of now 
+                bApproxOK   no effect as of now
 
  Returns:       OGRERR_NONE on success or OGRERR_UNSUPPORTED_OPERATION if the
                 layer is not writeable
-                
+
 ******************************************************************************/
 
 OGRErr OGRLIBKMLLayer::CreateField (
     OGRFieldDefn * poField,
-    int bApproxOK )
+    CPL_UNUSED int bApproxOK )
 {
-
     if ( !bUpdate )
         return OGRERR_UNSUPPORTED_OPERATION;
 

@@ -310,9 +310,7 @@ int OGRMySQLResultLayer::GetFeatureCount( int bForce )
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRMySQLResultLayer::TestCapability( const char * pszCap )
-
+int OGRMySQLResultLayer::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }
-

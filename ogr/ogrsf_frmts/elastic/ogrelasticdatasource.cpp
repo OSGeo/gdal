@@ -176,7 +176,10 @@ int OGRElasticDataSource::Create(const char *pszFilename,
             fdata = (char *) malloc(fsize + 1);
 
             fseek(fp, 0, SEEK_SET);
-            fread(fdata, fsize, 1, fp);
+            if (0 == fread(fdata, fsize, 1, fp)) {
+                CPLError(CE_Failure, CPLE_FileIO,
+                         "OGRElasticDataSource::Create read failed.");
+            }
             fdata[fsize] = 0;
             this->pszMapping = fdata;
             fclose(fp);

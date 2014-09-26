@@ -124,7 +124,7 @@ OGRErr OGRLIBKMLDriver::DeleteDataSource (
 
     /***** dir *****/
 
-    VSIStatBufL sStatBuf = { };
+    VSIStatBufL sStatBuf;
     if ( !VSIStatL ( pszName, &sStatBuf ) && VSI_ISDIR ( sStatBuf.st_mode ) ) {
 
         char **papszDirList = NULL;
