@@ -440,9 +440,11 @@ int OGRGmtLayer::NextIsFeature()
 OGRFeature *OGRGmtLayer::GetNextRawFeature()
 
 {
-    int  bMultiVertex = 
+#if 0
+    int  bMultiVertex =
         poFeatureDefn->GetGeomType() != wkbPoint
         && poFeatureDefn->GetGeomType() != wkbUnknown;
+#endif
     CPLString osFieldData;
     OGRGeometry *poGeom = NULL;
 
@@ -502,13 +504,13 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
             else if( poFeatureDefn->GetGeomType() == wkbUnknown )
             {
                 poFeatureDefn->SetGeomType( wkbLineString );
-                bMultiVertex = TRUE;
+                /* bMultiVertex = TRUE; */
             }
         }
         else if( osLine[0] == '#' )
         {
             int i;
-            for( i = 0; 
+            for( i = 0;
                  papszKeyedValues != NULL && papszKeyedValues[i] != NULL; 
                  i++ )
             {

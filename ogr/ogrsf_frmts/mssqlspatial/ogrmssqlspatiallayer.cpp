@@ -396,8 +396,7 @@ OGRFeature *OGRMSSQLSpatialLayer::GetFeature( long nFeatureId )
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRMSSQLSpatialLayer::TestCapability( const char * pszCap )
-
+int OGRMSSQLSpatialLayer::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }
@@ -513,4 +512,3 @@ char* OGRMSSQLSpatialLayer::GByteArrayToHexString( const GByte* pabyData, int nL
 
     return pszTextBuf;
 }
-

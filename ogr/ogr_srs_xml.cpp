@@ -231,28 +231,26 @@ static CPLXMLNode *addAuthorityIDBlock( CPLXMLNode *psTarget,
 
     return psElement;
 }
-    
 
 /************************************************************************/
 /*                              addGMLId()                              */
 /************************************************************************/
 
 static void addGMLId( CPLXMLNode *psParent )
-
 {
     static void *hGMLIdMutex = NULL;
     CPLMutexHolderD( &hGMLIdMutex );
 
-    CPLXMLNode *psId;
+    /* CPLXMLNode *psId; */
     static int nNextGMLId = 1;
     char   szIdText[40];
 
     sprintf( szIdText, "ogrcrs%d", nNextGMLId++ );
-    
-    psId = 
-        CPLCreateXMLNode( 
-            CPLCreateXMLNode( psParent, CXT_Attribute, "gml:id" ),
-            CXT_Text, szIdText );
+
+    /* psId =  */
+    CPLCreateXMLNode(
+        CPLCreateXMLNode( psParent, CXT_Attribute, "gml:id" ),
+        CXT_Text, szIdText );
 }
 
 /************************************************************************/

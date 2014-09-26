@@ -845,9 +845,9 @@ void ILWISDataset::FlushCache()
 /************************************************************************/
 
 GDALDataset *ILWISDataset::Create(const char* pszFilename,
-                                  int nXSize, int nYSize, 
+                                  int nXSize, int nYSize,
                                   int nBands, GDALDataType eType,
-                                  char** papszParmList) 
+                                  CPL_UNUSED char** papszParmList)
 {
     ILWISDataset	*poDS;
     int 		iBand;
@@ -1451,7 +1451,7 @@ CPLErr ILWISRasterBand::GetILWISInfo(string pszFileName)
 }
 
 /** This driver defines a Block to be the entire raster; The method reads
-    each line as a block. it reads the data into pImage.  
+    each line as a block. it reads the data into pImage.
 
     @param nBlockXOff This must be zero for this driver
     @param pImage Dump the data here
@@ -1461,20 +1461,20 @@ CPLErr ILWISRasterBand::GetILWISInfo(string pszFileName)
 /************************************************************************/
 /*                             IReadBlock()                             */
 /************************************************************************/
-CPLErr ILWISRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+CPLErr ILWISRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
+                                    void * pImage )
 {
     // pImage is empty; this function fills it with data from fpRaw
     // (ILWIS data to foreign data)
 
     // If the x block offset is non-zero, something is wrong.
     CPLAssert( nBlockXOff == 0 );
-		
+
     int nBlockSize =  nBlockXSize * nBlockYSize * nSizePerPixel;
     if( fpRaw == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Failed to open ILWIS data file.");  
+                  "Failed to open ILWIS data file.");
         return( CE_Failure );
     }
 
@@ -1653,8 +1653,8 @@ void ILWISRasterBand::FillWithNoData(void * pImage)
 /*                                                                      */
 /************************************************************************/
 
-CPLErr ILWISRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
-				   void* pImage)
+CPLErr ILWISRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
+                                    void* pImage)
 {
     // pImage has data; this function reads this data and stores it to fpRaw
     // (foreign data to ILWIS data)

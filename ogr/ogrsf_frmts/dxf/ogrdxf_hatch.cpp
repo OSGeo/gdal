@@ -39,7 +39,7 @@ CPL_CVSID("$Id$");
 
 #ifndef PI
 #define PI  3.14159265358979323846
-#endif 
+#endif
 
 /************************************************************************/
 /*                           TranslateHATCH()                           */
@@ -57,7 +57,7 @@ OGRFeature *OGRDXFLayer::TranslateHATCH()
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
 
     CPLString osHatchPattern;
-    int nFillFlag = 0;
+    /* int nFillFlag = 0; */
     OGRGeometryCollection oGC;
 
     while( (nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf))) > 0 )
@@ -65,7 +65,7 @@ OGRFeature *OGRDXFLayer::TranslateHATCH()
         switch( nCode )
         {
           case 70:
-            nFillFlag = atoi(szLineBuf);
+            /* nFillFlag = atoi(szLineBuf); */
             break;
 
           case 2:

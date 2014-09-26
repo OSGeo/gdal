@@ -137,7 +137,7 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
     const char* pszLine;
     CPLString osCLASS, osNAME, osFLOOR, osCEILING;
     OGRLinearRing oLR;
-    double dfLastLat = 0, dfLastLon = 0;
+    /* double dfLastLat = 0, dfLastLon = 0; */
     int bFirst = TRUE;
     int bClockWise = TRUE;
     double dfCenterLat = 0, dfCenterLon = 0;
@@ -272,8 +272,8 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
                 continue;
 
             oLR.addPoint(dfLon, dfLat);
-            dfLastLat = dfLat;
-            dfLastLon = dfLon;
+            /* dfLastLat = dfLat; */
+            /* dfLastLon = dfLon; */
         }
         else if (EQUALN(pszLine, "DA ", 3))
         {
@@ -314,8 +314,8 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
                                          dfEndDistance, dfEndAngle, &dfLat, &dfLon);
                 oLR.addPoint(dfLon, dfLat);
 
-                dfLastLat = oLR.getY(oLR.getNumPoints() - 1);
-                dfLastLon = oLR.getX(oLR.getNumPoints() - 1);
+                /* dfLastLat = oLR.getY(oLR.getNumPoints() - 1); */
+                /* dfLastLon = oLR.getX(oLR.getNumPoints() - 1); */
             }
             CSLDestroy(papszTokens);
         }
@@ -363,8 +363,8 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
                 }
                 oLR.addPoint(dfSecondLon, dfSecondLat);
 
-                dfLastLat = oLR.getY(oLR.getNumPoints() - 1);
-                dfLastLon = oLR.getX(oLR.getNumPoints() - 1);
+                /* dfLastLat = oLR.getY(oLR.getNumPoints() - 1); */
+                /* dfLastLon = oLR.getX(oLR.getNumPoints() - 1); */
             }
             CSLDestroy(papszTokens);
         }
@@ -394,8 +394,8 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
                                          dfRADIUS, 0, &dfLat, &dfLon);
                 oLR.addPoint(dfLon, dfLat);
 
-                dfLastLat = oLR.getY(oLR.getNumPoints() - 1);
-                dfLastLon = oLR.getX(oLR.getNumPoints() - 1);
+                /* dfLastLat = oLR.getY(oLR.getNumPoints() - 1); */
+                /* dfLastLon = oLR.getX(oLR.getNumPoints() - 1); */
             }
         }
         else if (EQUALN(pszLine, "V X=", 4))
@@ -469,4 +469,3 @@ int OGROpenAirLayer::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }
-

@@ -85,13 +85,13 @@ MAP  *Mopen(
  	M_ERROR(OPENFAILED);
  	goto error_notOpen;
  }
- 
- /*  check if file could be C.S.F.-file 
-  *   (at least 256 bytes long) 
+
+ /*  check if file could be C.S.F.-file
+  *   (at least 256 bytes long)
   *  otherwise the signature comparison will
   *  fail
   */
- 
+
  (void)fseek(m->fp,0L, SEEK_END);
  if (ftell(m->fp) < (long)ADDR_DATA)
  {
@@ -100,7 +100,10 @@ MAP  *Mopen(
  }
 
  (void)fseek(m->fp, 14+CSF_SIG_SPACE, SEEK_SET);
- (void)fread((void *)&s, sizeof(UINT4),(size_t)1,m->fp);
+ if (1 != fread((void *)&s, sizeof(UINT4),(size_t)1,m->fp))
+ {
+     fprintf(stderr, "WARNING: Unable to read ORD_OK in CSF.\n");
+ }
  if (s != ORD_OK) {
 	m->write = CsfWriteSwapped;
 	m->read  = CsfReadSwapped;
@@ -130,8 +133,14 @@ MAP  *Mopen(
  m->read((void *)&(m->raster.valueScale), sizeof(UINT2),(size_t)1,m->fp);
  m->read((void *)&(m->raster.cellRepr), sizeof(UINT2),(size_t)1,m->fp);
 
- (void)fread((void *)&(m->raster.minVal), sizeof(CSF_VAR_TYPE),(size_t)1,m->fp);
- (void)fread((void *)&(m->raster.maxVal), sizeof(CSF_VAR_TYPE),(size_t)1,m->fp);
+ if (0 != fread((void *)&(m->raster.minVal), sizeof(CSF_VAR_TYPE),(size_t)1,m->fp))
+ {
+     fprintf(stderr, "WARNING: Unable to read min val in CSF.\n");
+ }
+ if (0 != fread((void *)&(m->raster.maxVal), sizeof(CSF_VAR_TYPE),(size_t)1,m->fp))
+ {
+     fprintf(stderr, "WARNING: Unable to read max val in CSF.\n");
+ }
  if (s != ORD_OK) {
   CsfSwap((void *)&(m->raster.minVal), CELLSIZE(m->raster.cellRepr),(size_t)1);
   CsfSwap((void *)&(m->raster.maxVal), CELLSIZE(m->raster.cellRepr),(size_t)1);

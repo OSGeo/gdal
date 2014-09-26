@@ -86,7 +86,7 @@ OGRDataSource *OGRGeoconceptDriver::CreateDataSource( const char* pszName,
 
 {
     VSIStatBuf  stat;
-    int         bSingleNewFile = FALSE;
+    /* int bSingleNewFile = FALSE; */
 
     if( pszName==NULL || strlen(pszName)==0 )
     {
@@ -118,7 +118,7 @@ OGRDataSource *OGRGeoconceptDriver::CreateDataSource( const char* pszName,
              EQUAL(CPLGetExtension(pszName),"txt")
            )
     {
-        bSingleNewFile = TRUE;
+        /* bSingleNewFile = TRUE; */
     }
 
 /* -------------------------------------------------------------------- */

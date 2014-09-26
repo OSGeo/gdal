@@ -190,14 +190,13 @@ void TABFile::ResetReading()
         {
             OGREnvelope  sEnvelope;
             TABVertex sMin, sMax;
-            TABMAPHeaderBlock *poHeader;
-    
-            poHeader = m_poMAPFile->GetHeaderBlock();
+            /* TABMAPHeaderBlock *poHeader; */
+            /* poHeader = m_poMAPFile->GetHeaderBlock(); */
 
             m_poFilterGeom->getEnvelope( &sEnvelope );
             m_poMAPFile->GetCoordFilter( sMin, sMax );
 
-            if( sEnvelope.MinX > sMin.x 
+            if( sEnvelope.MinX > sMin.x
                 || sEnvelope.MinY > sMin.y
                 || sEnvelope.MaxX < sMax.x
                 || sEnvelope.MaxY < sMax.y )
@@ -482,8 +481,9 @@ int TABFile::Open(const char *pszFname, const char *pszAccess,
             m_poDefn->SetGeomType( wkbPoint );
         else if( numPoints == 0 && numLines > 0 && numRegions == 0 )
             m_poDefn->SetGeomType( wkbLineString );
-        else
-            /* we leave it unknown indicating a mixture */;
+        else {
+            /* we leave it unknown indicating a mixture */
+        }
     }
     else if (m_poMAPFile->Open(pszTmpFname, pszAccess) != 0)
     {

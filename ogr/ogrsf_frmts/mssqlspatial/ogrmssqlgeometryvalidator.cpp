@@ -57,7 +57,7 @@ OGRMSSQLGeometryValidator::~OGRMSSQLGeometryValidator()
 /*                         ValidatePoint()                              */
 /************************************************************************/
 
-int OGRMSSQLGeometryValidator::ValidatePoint(OGRPoint* poGeom)
+int OGRMSSQLGeometryValidator::ValidatePoint(CPL_UNUSED OGRPoint* poGeom)
 {
     return TRUE;
 }
@@ -66,7 +66,7 @@ int OGRMSSQLGeometryValidator::ValidatePoint(OGRPoint* poGeom)
 /*                     ValidateMultiPoint()                             */
 /************************************************************************/
 
-int OGRMSSQLGeometryValidator::ValidateMultiPoint(OGRMultiPoint* poGeom)
+int OGRMSSQLGeometryValidator::ValidateMultiPoint(CPL_UNUSED OGRMultiPoint* poGeom)
 {
     return TRUE;
 }
@@ -491,5 +491,3 @@ OGRGeometry* OGRMSSQLGeometryValidator::GetValidGeometryRef()
 
     return poValidGeometry;
 }
-
-

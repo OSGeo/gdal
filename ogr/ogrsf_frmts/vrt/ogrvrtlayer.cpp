@@ -1482,7 +1482,9 @@ retry:
                                 poSrcFeat->GetFieldAsDouble( apoGeomFieldProps[i]->iGeomYField ) ) );
         }
         else
-            /* add other options here. */;
+        {
+            /* add other options here. */
+        }
 
         /* In the non direct case, we need to check that the geometry intersects the source */
         /* region before an optionnal clipping */
@@ -1733,7 +1735,9 @@ OGRFeature* OGRVRTLayer::TranslateVRTFeatureToSrcFeature( OGRFeature* poVRTFeatu
             }
         }
         else
-            /* add other options here. */;
+        {
+            /* add other options here. */
+        }
 
         OGRGeometry* poGeom = poSrcFeat->GetGeomFieldRef(i);
         if ( poGeom != NULL && apoGeomFieldProps[i]->poSRS != NULL )

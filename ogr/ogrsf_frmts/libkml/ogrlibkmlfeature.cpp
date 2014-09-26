@@ -748,8 +748,8 @@ OGRFeature *kml2feat (
 
 OGRFeature *kmlgroundoverlay2feat (
     GroundOverlayPtr poKmlOverlay,
-    OGRLIBKMLDataSource * poOgrDS,
-    OGRLayer * poOgrLayer,
+    CPL_UNUSED OGRLIBKMLDataSource * poOgrDS,
+    CPL_UNUSED OGRLayer * poOgrLayer,
     OGRFeatureDefn * poOgrFeatDefn,
     OGRSpatialReference *poOgrSRS)
 {

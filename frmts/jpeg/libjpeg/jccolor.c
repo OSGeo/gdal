@@ -12,6 +12,7 @@
 #include "jinclude.h"
 #include "jpeglib.h"
 
+#include "cpl_port.h"
 
 /* Private subobject */
 
@@ -338,7 +339,7 @@ null_convert (j_compress_ptr cinfo,
  */
 
 METHODDEF(void)
-null_method (j_compress_ptr cinfo)
+null_method (CPL_UNUSED j_compress_ptr cinfo)
 {
   /* no work needed */
 }

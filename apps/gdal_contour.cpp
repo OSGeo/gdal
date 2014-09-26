@@ -292,16 +292,15 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Invoke.                                                         */
 /* -------------------------------------------------------------------- */
-    CPLErr eErr;
-    
-    eErr = GDALContourGenerate( hBand, dfInterval, dfOffset, 
+    /* CPLErr eErr = */
+    GDALContourGenerate( hBand, dfInterval, dfOffset,
                          nFixedLevelCount, adfFixedLevels,
-                         bNoDataSet, dfNoData, hLayer, 
-                         OGR_FD_GetFieldIndex( OGR_L_GetLayerDefn( hLayer ), 
-                                               "ID" ), 
+                         bNoDataSet, dfNoData, hLayer,
+                         OGR_FD_GetFieldIndex( OGR_L_GetLayerDefn( hLayer ),
+                                               "ID" ),
                          (pszElevAttrib == NULL) ? -1 :
-                                 OGR_FD_GetFieldIndex( OGR_L_GetLayerDefn( hLayer ), 
-                                                       pszElevAttrib ), 
+                         OGR_FD_GetFieldIndex( OGR_L_GetLayerDefn( hLayer ),
+                                               pszElevAttrib ),
                          pfnProgress, NULL );
 
     OGR_DS_Destroy( hDS );

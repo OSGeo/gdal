@@ -268,6 +268,7 @@ static
 int SkipUnknownField(int nKey, GByte* pabyData, GByte* pabyDataLimit, int verbose) CPL_NO_INLINE;
 
 static
+/* CPL_UNUSED */
 int SkipUnknownField(int nKey, GByte* pabyData, GByte* pabyDataLimit, int verbose)
 {
     GByte* pabyDataBefore = pabyData;

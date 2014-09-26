@@ -39,17 +39,16 @@ CPL_CVSID("$Id$");
 /*                         OGRMySQLTableLayer()                         */
 /************************************************************************/
 
-OGRMySQLTableLayer::OGRMySQLTableLayer( OGRMySQLDataSource *poDSIn, 
-                                  const char * pszTableName,
-                                  int bUpdate, int nSRSIdIn )
-
+OGRMySQLTableLayer::OGRMySQLTableLayer( OGRMySQLDataSource *poDSIn,
+                                        CPL_UNUSED const char * pszTableName,
+                                        int bUpdate, int nSRSIdIn )
 {
     poDS = poDSIn;
 
     pszQuery = NULL;
     pszWHERE = CPLStrdup( "" );
     pszQueryStatement = NULL;
-    
+
     bUpdateAccess = bUpdate;
 
     iNextShapeId = 0;
@@ -1069,14 +1068,13 @@ OGRFeature *OGRMySQLTableLayer::GetFeature( long nFeatureId )
 /*      way of counting features matching a spatial query.              */
 /************************************************************************/
 
-int OGRMySQLTableLayer::GetFeatureCount( int bForce )
-
+int OGRMySQLTableLayer::GetFeatureCount( CPL_UNUSED int bForce )
 {
 /* -------------------------------------------------------------------- */
 /*      Ensure any active long result is interrupted.                   */
 /* -------------------------------------------------------------------- */
     poDS->InterruptLongResult();
-    
+
 /* -------------------------------------------------------------------- */
 /*      Issue the appropriate select command.                           */
 /* -------------------------------------------------------------------- */
@@ -1123,8 +1121,7 @@ int OGRMySQLTableLayer::GetFeatureCount( int bForce )
 /*      like PostgreSQL.						*/
 /************************************************************************/
 
-OGRErr OGRMySQLTableLayer::GetExtent(OGREnvelope *psExtent, int bForce )
-
+OGRErr OGRMySQLTableLayer::GetExtent(OGREnvelope *psExtent, CPL_UNUSED int bForce )
 {
 	if( GetLayerDefn()->GetGeomType() == wkbNone )
     {
@@ -1132,7 +1129,7 @@ OGRErr OGRMySQLTableLayer::GetExtent(OGREnvelope *psExtent, int bForce )
         psExtent->MaxX = 0.0;
         psExtent->MinY = 0.0;
         psExtent->MaxY = 0.0;
-        
+
         return OGRERR_FAILURE;
     }
 

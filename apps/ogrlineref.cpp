@@ -409,7 +409,12 @@ OGRErr AddFeature(OGRLayer* const poOutLayer, OGRLineString* pPart, double dfFro
 //------------------------------------------------------------------------
 // CreateSubline
 //------------------------------------------------------------------------
-OGRErr CreateSubline(OGRLayer* const poPkLayer, double dfPosBeg, double dfPosEnd, OGRLayer* const poOutLayer, int bDisplayProgress, int bQuiet)
+OGRErr CreateSubline(OGRLayer* const poPkLayer,
+                     double dfPosBeg,
+                     double dfPosEnd,
+                     OGRLayer* const poOutLayer,
+                     CPL_UNUSED int bDisplayProgress,
+                     int bQuiet)
 {
     OGRFeature* pFeature = NULL;
     double dfBeg, dfEnd, dfStep;
@@ -715,9 +720,9 @@ OGRErr CreatePartsFromLineString(OGRLineString* pPathGeom, OGRLayer* const poPkL
     int nCount = 2;
     dfDistance1 = dfDistance2;
     dfPosition = IT->first;
-    ++IT;//get third point    
+    ++IT; // get third point
 
-    double dfEndPosition;
+    double dfEndPosition = 0.0;
     while (IT != moRepers.end())
     {
         if (bDisplayProgress)
@@ -1001,7 +1006,11 @@ OGRErr CreatePartsMultiple(OGRLayer* const poLnLayer, const char* pszLineSepFiel
 //------------------------------------------------------------------------
 // GetPosition
 //------------------------------------------------------------------------
-OGRErr GetPosition(OGRLayer* const poPkLayer, double dfX, double dfY, int bDisplayProgress, int bQuiet)
+OGRErr GetPosition(OGRLayer* const poPkLayer,
+                   double dfX,
+                   double dfY,
+                   CPL_UNUSED int bDisplayProgress,
+                   int bQuiet)
 {
     //create point
     OGRPoint pt;
@@ -1058,7 +1067,10 @@ OGRErr GetPosition(OGRLayer* const poPkLayer, double dfX, double dfY, int bDispl
 //------------------------------------------------------------------------
 // GetCoordinates
 //------------------------------------------------------------------------
-OGRErr GetCoordinates(OGRLayer* const poPkLayer, double dfPos, int bDisplayProgress, int bQuiet)
+OGRErr GetCoordinates(OGRLayer* const poPkLayer,
+                      double dfPos,
+                      CPL_UNUSED int bDisplayProgress,
+                      int bQuiet)
 {
     CPLString szAttributeFilter;
     szAttributeFilter.Printf("%s < %f AND %s > %f", FIELD_START, dfPos, FIELD_FINISH, dfPos);
@@ -1730,4 +1742,3 @@ int main( int nArgc, char ** papszArgv )
     
     return eErr == OGRERR_NONE ? 0 : 1;
 }
-

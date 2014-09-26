@@ -83,7 +83,7 @@ private:
     FeaturesSeq::iterator iterCurrent_;
 
     /* poDS_ retained for ABI compatibility. */
-    CPL_UNUSED OGRGeoJSONDataSource* poDS_;
+    /* CPL_UNUSED */ OGRGeoJSONDataSource* poDS_;
     OGRFeatureDefn* poFeatureDefn_;
     CPLString sFIDColumn_;
 };
@@ -237,4 +237,3 @@ public:
 };
 
 #endif /* OGR_GEOJSON_H_INCLUDED */
-
