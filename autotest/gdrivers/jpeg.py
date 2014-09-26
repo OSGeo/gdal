@@ -622,16 +622,39 @@ def jpeg_17():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = gdal.Open('data/bogus.jpg')
     gdal.PopErrorHandler()
-    if ds is not None or gdal.GetLastErrorMsg() == '':
+    if ds is not None or gdal.GetLastErrorType() != gdal.CE_Failure or gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.ErrorReset()
     ds = gdal.Open('data/byte_corrupted.jpg')
     gdal.PushErrorHandler('CPLQuietErrorHandler')
+    # ERROR 1: libjpeg: Huffman table 0x00 was not defined
     ds.GetRasterBand(1).Checksum()
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg() == '':
+    if gdal.GetLastErrorType() != gdal.CE_Failure or gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.ErrorReset()
+    ds = gdal.Open('data/byte_corrupted2.jpg')
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    # Warning 1: libjpeg: Corrupt JPEG data: found marker 0x00 instead of RST63
+    ds.GetRasterBand(1).Checksum()
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorType() != gdal.CE_Warning or gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.ErrorReset()
+    ds = gdal.Open('data/byte_corrupted2.jpg')
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    gdal.SetConfigOption('GDAL_ERROR_ON_LIBJPEG_WARNING', 'TRUE')
+    # ERROR 1: libjpeg: Corrupt JPEG data: found marker 0x00 instead of RST63
+    ds.GetRasterBand(1).Checksum()
+    gdal.SetConfigOption('GDAL_ERROR_ON_LIBJPEG_WARNING', None)
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorType() != gdal.CE_Failure or gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail')
         return 'fail'
 
