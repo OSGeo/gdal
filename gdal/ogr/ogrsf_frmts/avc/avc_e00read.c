@@ -826,7 +826,7 @@ static int _AVCE00ReadAddJabberwockySection(AVCE00ReadPtr psInfo,
 static void *_AVCE00ReadNextLineE00(AVCE00ReadE00Ptr psRead,
         const char *pszLine)
 {
-    int nStatus = 0;
+    /* int nStatus = 0; */
     void *psObj = 0;
 
     AVCE00ParseInfo *psInfo = psRead->hParseInfo;
@@ -946,8 +946,10 @@ static void *_AVCE00ReadNextLineE00(AVCE00ReadE00Ptr psRead,
         }
     }
 
+#if 0
     if (CPLGetLastErrorNo() != 0)
         nStatus = -1;
+#endif
 
     return psObj;
 }
@@ -2039,7 +2041,7 @@ static int _AVCE00ReadSeekE00(AVCE00ReadE00Ptr psRead, int nOffset,
         int nWhence)
 {
     const char *pszLine;
-    void       *obj;
+    /* void       *obj; */
 
     switch (nWhence)
     {
@@ -2059,7 +2061,8 @@ static int _AVCE00ReadSeekE00(AVCE00ReadE00Ptr psRead, int nOffset,
             CPLGetLastErrorNo() == 0 &&
             (pszLine = CPLReadLine(psRead->hFile) ) != NULL )
     {
-        obj = _AVCE00ReadNextLineE00(psRead, pszLine);
+        /* obj = */
+        _AVCE00ReadNextLineE00(psRead, pszLine);
     }
 
     return nOffset ? -1 : 0;

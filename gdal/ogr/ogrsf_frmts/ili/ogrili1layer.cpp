@@ -376,15 +376,15 @@ OGRErr OGRILI1Layer::CreateFeature( OGRFeature *poFeature ) {
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRILI1Layer::TestCapability( const char * pszCap ) {
-        return FALSE;
+int OGRILI1Layer::TestCapability( CPL_UNUSED const char * pszCap ) {
+    return FALSE;
 }
 
 /************************************************************************/
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRILI1Layer::CreateField( OGRFieldDefn *poField, int bApproxOK ) {
+OGRErr OGRILI1Layer::CreateField( OGRFieldDefn *poField, CPL_UNUSED int bApproxOK ) {
     poFeatureDefn->AddFieldDefn( poField );
 
     return OGRERR_NONE;

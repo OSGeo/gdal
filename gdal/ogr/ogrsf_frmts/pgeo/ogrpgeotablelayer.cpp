@@ -374,8 +374,7 @@ int OGRPGeoTableLayer::GetFeatureCount( int bForce )
 /*                             GetExtent()                              */
 /************************************************************************/
 
-OGRErr OGRPGeoTableLayer::GetExtent( OGREnvelope *psExtent, int bForce )
-
+OGRErr OGRPGeoTableLayer::GetExtent( OGREnvelope *psExtent, CPL_UNUSED int bForce )
 {
     *psExtent = sExtent;
     return OGRERR_NONE;

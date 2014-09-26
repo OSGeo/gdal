@@ -709,7 +709,7 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
     }
     stCertInfo.nSubObjectCount = stRecordHeader.nSubObjectCount;
 
-    bool bFloatType, bBigType;
+    bool bFloatType = 0, bBigType = 0;
     bool b3D(true);
     if (m_nSXFFormatVer == 3)
     {
@@ -725,6 +725,7 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
         bBigType = CHECK_BIT(stRecordHeader.nRef[1], 2);
         stCertInfo.bHasTextSign = CHECK_BIT(stRecordHeader.nRef[2], 3);
     }
+    // Else trouble.
 
     if (b3D) //xххххх1х
         stCertInfo.bDim = 1;
@@ -1426,4 +1427,3 @@ const char* OGRSXFLayer::GetFIDColumn()
 {
     return sFIDColumn_.c_str();
 }
-

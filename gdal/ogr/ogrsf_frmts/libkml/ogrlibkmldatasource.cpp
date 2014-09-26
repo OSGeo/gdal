@@ -1453,7 +1453,7 @@ int OGRLIBKMLDataSource::Open (
 
     /***** dir *****/
 
-    VSIStatBufL sStatBuf = { };
+    VSIStatBufL sStatBuf;
     if ( !VSIStatExL ( pszFilename, &sStatBuf, VSI_STAT_NATURE_FLAG ) &&
          VSI_ISDIR ( sStatBuf.st_mode ) )
         return OpenDir ( pszFilename, bUpdate );
@@ -1727,16 +1727,16 @@ void OGRLIBKMLDataSource::ParseDocumentOptions(KmlPtr poKml,
 
 /******************************************************************************
  method to create a single file .kml ds
- 
+
  Args:          pszFilename     the datasource to create
                 papszOptions    datasource creation options
- 
+
  Returns:       True on success, false on failure
 
 ******************************************************************************/
 
 int OGRLIBKMLDataSource::CreateKml (
-    const char *pszFilename,
+    CPL_UNUSED const char *pszFilename,
     char **papszOptions )
 {
     m_poKmlDSKml = OGRLIBKMLCreateOGCKml22(m_poKmlFactory, papszOptions);
@@ -1755,20 +1755,18 @@ int OGRLIBKMLDataSource::CreateKml (
 
 /******************************************************************************
  method to create a .kmz ds
- 
+
  Args:          pszFilename     the datasource to create
                 papszOptions    datasource creation options
- 
+
  Returns:       True on success, false on failure
 
 ******************************************************************************/
 
 int OGRLIBKMLDataSource::CreateKmz (
-    const char *pszFilename,
-    char **papszOptions )
+    CPL_UNUSED const char *pszFilename,
+    CPL_UNUSED char **papszOptions )
 {
-
-
     /***** create the doc.kml  *****/
     if( osUpdateTargetHref.size() == 0 )
     {
@@ -1790,19 +1788,18 @@ int OGRLIBKMLDataSource::CreateKmz (
 
 /******************************************************************************
  Method to create a dir datasource
- 
+
  Args:          pszFilename     the datasource to create
                 papszOptions    datasource creation options
- 
+
  Returns:       True on success, false on failure
 
 ******************************************************************************/
 
 int OGRLIBKMLDataSource::CreateDir (
     const char *pszFilename,
-    char **papszOptions )
+    CPL_UNUSED char **papszOptions )
 {
-
     if ( VSIMkdir ( pszFilename, 0755 ) ) {
         CPLError ( CE_Failure, CPLE_AppDefined,
                    "ERROR Creating dir: %s for KML datasource", pszFilename );
@@ -2059,7 +2056,7 @@ OGRErr OGRLIBKMLDataSource::DeleteLayer (
         const char *pszFilePath =
             CPLFormFilename ( pszName, papoLayers[iLayer]->GetFileName (  ),
                               NULL );
-        VSIStatBufL oStatBufL = { };
+        VSIStatBufL oStatBufL;
         if ( !VSIStatL ( pszFilePath, &oStatBufL ) ) {
             if ( VSIUnlink ( pszFilePath ) ) {
                 CPLError ( CE_Failure, CPLE_AppDefined,
@@ -2130,12 +2127,12 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKml (
 
 /******************************************************************************
  method to create a layer in a .kmz or dir
- 
+
  Args:          pszLayerName    name of the layer to create
                 poOgrSRS        the SRS of the layer
                 eGType          the layers geometry type
                 papszOptions    layer creation options
- 
+
  Returns:       return a pointer to the new layer or NULL on failure
 
 ******************************************************************************/
@@ -2144,11 +2141,11 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKmz (
     const char *pszLayerName,
     OGRSpatialReference * poOgrSRS,
     OGRwkbGeometryType eGType,
-    char **papszOptions )
+    CPL_UNUSED char **papszOptions )
 {
     OGRLIBKMLLayer *poOgrLayer = NULL;
     DocumentPtr poKmlDocument = NULL;
-    
+
     if( m_poKmlUpdate == NULL )
     {
         /***** add a network link to doc.kml *****/

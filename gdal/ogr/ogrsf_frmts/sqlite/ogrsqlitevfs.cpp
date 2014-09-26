@@ -247,7 +247,7 @@ static const sqlite3_io_methods OGRSQLiteIOMethods =
     OGRSQLiteIODeviceCharacteristics
 #if 0
     // TODO: These are in sqlite3.
-    0, // xShmMap
+    , 0, // xShmMap
     0, // xShmLock
     0, // xShmBarrier
     0, // xShmUnmap

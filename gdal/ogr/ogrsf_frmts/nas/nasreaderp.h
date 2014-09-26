@@ -191,7 +191,7 @@ public:
     int              PrescanForTemplate( void );
     void             ResetReading();
 
-    int              ParseXSD( const char *pszFile ) { return FALSE; }
+    int              ParseXSD( CPL_UNUSED const char *pszFile ) { return FALSE; }
 
     int              ResolveXlinks( const char *pszFile,
                                     int* pbOutIsTempFile,

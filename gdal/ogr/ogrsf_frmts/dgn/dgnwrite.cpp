@@ -645,14 +645,14 @@ DGNElemCore *DGNCloneElement( CPL_UNUSED DGNHandle hDGNSrc, DGNHandle hDGNDst,
     }
     else if( psSrcElement->stype == DGNST_KNOT_WEIGHT )
     {
-        DGNElemKnotWeight *psArray, *psSrcArray;
+        DGNElemKnotWeight *psArray /* , *psSrcArray*/;
         int               nSize, numelems;
 
         // FIXME: Is it OK to assume that the # of elements corresponds
         // directly to the element size? kintel 20051218.
         numelems = (psSrcElement->size - 36 - psSrcElement->attr_bytes)/4;
 
-        psSrcArray = (DGNElemKnotWeight *) psSrcElement;
+        /* psSrcArray = (DGNElemKnotWeight *) psSrcElement; */
 
         nSize = sizeof(DGNElemKnotWeight) + sizeof(long) * (numelems-1);
 
@@ -2184,7 +2184,7 @@ DGNCreateCellHeaderFromGroup( DGNHandle hDGN, const char *pszName,
 
 {
     int         nTotalLength;
-    int         i, nLevel;
+    int         i /* , nLevel */;
     DGNElemCore *psCH;
     DGNPoint    sMin={0.0,0.0,0.0}, sMax={0.0,0.0,0.0};
     unsigned char abyLevelsOccuring[8] = {0,0,0,0,0,0,0,0};
@@ -2207,7 +2207,7 @@ DGNCreateCellHeaderFromGroup( DGNHandle hDGN, const char *pszName,
 /* -------------------------------------------------------------------- */
 /*      Collect the total size, and bounds.                             */
 /* -------------------------------------------------------------------- */
-    nLevel = papsElems[0]->level;
+    /* nLevel = papsElems[0]->level; */
 
     for( i = 0; i < nNumElems; i++ )
     {
@@ -2406,17 +2406,18 @@ int DGNAddRawAttrLink( DGNHandle hDGN, DGNElemCore *psElement,
     
     memcpy( psElement->attr_data + (psElement->attr_bytes-nLinkSize), 
             pabyRawLinkData, nLinkSize );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Grow the raw data, if we have rawdata.                          */
 /* -------------------------------------------------------------------- */
+    /* TODO: operation on raw_bytes may be undefined. */
     psElement->raw_bytes = psElement->raw_bytes += nLinkSize;
-    psElement->raw_data = (unsigned char *) 
+    psElement->raw_data = (unsigned char *)
         CPLRealloc( psElement->raw_data, psElement->raw_bytes );
-    
-    memcpy( psElement->raw_data + (psElement->raw_bytes-nLinkSize), 
+
+    memcpy( psElement->raw_data + (psElement->raw_bytes-nLinkSize),
             pabyRawLinkData, nLinkSize );
-    
+
 /* -------------------------------------------------------------------- */
 /*      If the element is a shape or chain complex header, then we      */
 /*      need to increase the total complex group size appropriately.    */

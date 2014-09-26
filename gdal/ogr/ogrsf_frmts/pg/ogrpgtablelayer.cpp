@@ -2388,7 +2388,7 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
 /************************************************************************/
 
 OGRErr OGRPGTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
-                                         int bApproxOK )
+                                         CPL_UNUSED int bApproxOK )
 {
     PGconn              *hPGConn = poDS->GetPGConn();
     PGresult            *hResult;

@@ -2334,17 +2334,18 @@ AVCBinFile *_AVCBinReadOpenDBFTable(const char *pszDBFFilename,
     for(iField=0; iField< psTableDef->numFields; iField++)
     {
         int nWidth, nDecimals;
-        DBFFieldType eDBFType;
+        /* DBFFieldType eDBFType; */
         char         cNativeType;
 
         /*-------------------------------------------------------------
-         * Fetch DBF Field info and convert to Arc/Info type... 
-         * Note that since DBF fields names are limited to 10 chars, 
+         * Fetch DBF Field info and convert to Arc/Info type...
+         * Note that since DBF fields names are limited to 10 chars,
          * we do not have to worry about field name length in the process.
          *------------------------------------------------------------*/
-        eDBFType = DBFGetFieldInfo(hDBFFile, iField, 
-                                   pasFieldDef[iField].szName,
-                                   &nWidth, &nDecimals);
+        /* eDBFType = */
+        DBFGetFieldInfo(hDBFFile, iField,
+                        pasFieldDef[iField].szName,
+                        &nWidth, &nDecimals);
         cNativeType = DBFGetNativeFieldType(hDBFFile, iField);
 
         pasFieldDef[iField].nFmtWidth = (GInt16)nWidth;
@@ -2594,6 +2595,3 @@ void _AVCBinReadRepairDBFFieldName(char *pszFieldName)
         *pszTmp = '-';
 
 }
-
-
-

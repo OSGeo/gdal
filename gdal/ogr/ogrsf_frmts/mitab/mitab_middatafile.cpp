@@ -225,8 +225,9 @@ const char *MIDDATAFile::GetLine()
         return pszLine;
     }
     else
+    {
       CPLAssert(FALSE);
-    
+    }
     return NULL;
 }
 

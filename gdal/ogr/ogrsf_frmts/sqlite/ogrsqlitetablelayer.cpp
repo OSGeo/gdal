@@ -139,11 +139,10 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
                                         OGRSpatialReference *poSRS,
                                         int nSRSId,
                                         int bHasSpatialIndex,
-                                        int bHasM, 
+                                        int bHasM,
                                         int bIsVirtualShapeIn )
-
 {
-    int rc;
+    /* int rc; */
     sqlite3 *hDB = poDS->GetDB();
 
     if( pszGeomFormat )
@@ -180,22 +179,22 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
 
     pszEscapedTableName = CPLStrdup(OGRSQLiteEscape(pszTableName));
 
-    sqlite3_stmt *hColStmt = NULL;
+    // sqlite3_stmt *hColStmt = NULL;
     const char *pszSQL;
 
     if ( eGeomFormat == OSGF_SpatiaLite &&
-         poDS->IsSpatialiteLoaded() && 
+         poDS->IsSpatialiteLoaded() &&
          poDS->GetSpatialiteVersionNumber() < 24 && poDS->GetUpdate() )
     {
-    // we need to test version required by Spatialite TRIGGERs 
-        hColStmt = NULL;
+        // we need to test version required by Spatialite TRIGGERs
+        // hColStmt = NULL;
         pszSQL = CPLSPrintf( "SELECT sql FROM sqlite_master WHERE type = 'trigger' AND tbl_name = '%s' AND sql LIKE '%%RTreeAlign%%'",
             pszEscapedTableName );
 
         int nRowTriggerCount, nColTriggerCount;
         char **papszTriggerResult, *pszErrMsg;
 
-        rc = sqlite3_get_table( hDB, pszSQL, &papszTriggerResult,
+        /* rc = */ sqlite3_get_table( hDB, pszSQL, &papszTriggerResult,
             &nRowTriggerCount, &nColTriggerCount, &pszErrMsg );
         if( nRowTriggerCount >= 1 )
         {
@@ -207,7 +206,7 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
 
         sqlite3_free_table( papszTriggerResult );
     }
-	
+
     if( poSRS )
         poSRS->Reference();
 

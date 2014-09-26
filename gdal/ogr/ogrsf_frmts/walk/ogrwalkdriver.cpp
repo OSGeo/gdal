@@ -105,14 +105,13 @@ OGRDataSource *OGRWalkDriver::Open( const char * pszFilename, int bUpdate )
 /************************************************************************/
 
 OGRDataSource *OGRWalkDriver::CreateDataSource( const char * pszName,
-                                                 char **papszOptions )
-
+                                                CPL_UNUSED char **papszOptions )
 {
     //if( !EQUAL(CPLGetExtension(pszName), "MDB") )
     //    return NULL;
 
     OGRWalkDataSource  *poDS = new OGRWalkDataSource();
-    
+
     if( !poDS->Open( pszName, TRUE ) )
     {
         delete poDS;
@@ -129,8 +128,7 @@ OGRDataSource *OGRWalkDriver::CreateDataSource( const char * pszName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRWalkDriver::TestCapability( const char * pszCap )
-
+int OGRWalkDriver::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }
@@ -144,4 +142,3 @@ void RegisterOGRWalk()
 {
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRWalkDriver );
 }
-

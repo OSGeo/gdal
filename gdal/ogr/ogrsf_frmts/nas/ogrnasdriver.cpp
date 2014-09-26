@@ -86,8 +86,7 @@ OGRDataSource *OGRNASDriver::Open( const char * pszFilename,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRNASDriver::TestCapability( const char * pszCap )
-
+int OGRNASDriver::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }
@@ -101,4 +100,3 @@ void RegisterOGRNAS()
 {
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRNASDriver );
 }
-

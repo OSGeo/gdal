@@ -1241,10 +1241,10 @@ static int ReadGrib1Sect3 (uChar *bms, uInt4 gribLen, uInt4 *curLoc,
 }
 
 #ifdef DEBUG
-static int UnpackCmplx (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
-                        short int DSF, double *data, grib_MetaData *meta,
-                        char f_bms, uChar *bitmap, double unitM,
-                        double unitB, short int ESF, double refVal,
+static int UnpackCmplx (uChar *bds, CPL_UNUSED uInt4 gribLen, CPL_UNUSED uInt4 *curLoc,
+                        CPL_UNUSED short int DSF, CPL_UNUSED double *data, CPL_UNUSED grib_MetaData *meta,
+                        CPL_UNUSED char f_bms, CPL_UNUSED uChar *bitmap, CPL_UNUSED double unitM,
+                        CPL_UNUSED double unitB, CPL_UNUSED short int ESF, CPL_UNUSED double refVal,
                         uChar numBits, uChar f_octet14)
 {
    uInt4 secLen;

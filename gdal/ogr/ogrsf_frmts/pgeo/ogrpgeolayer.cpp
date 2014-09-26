@@ -324,8 +324,7 @@ OGRFeature *OGRPGeoLayer::GetFeature( long nFeatureId )
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRPGeoLayer::TestCapability( const char * pszCap )
-
+int OGRPGeoLayer::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }

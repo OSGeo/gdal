@@ -598,7 +598,7 @@ int TABSeamless::ExtractBaseFeatureId(int nEncodedFeatureId)
     if (nEncodedFeatureId == -1)
         return -1;
 
-    return (nEncodedFeatureId & (1<<m_nIndexTableFIDMask)-1);
+    return (nEncodedFeatureId & ((1<<m_nIndexTableFIDMask) -1 ));
 }
 
 /**********************************************************************
@@ -925,5 +925,3 @@ void TABSeamless::Dump(FILE *fpOut /*=NULL*/)
 }
 
 #endif // DEBUG
-
-

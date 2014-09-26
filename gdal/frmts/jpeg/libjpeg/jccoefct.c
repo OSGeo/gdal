@@ -14,6 +14,7 @@
 #include "jinclude.h"
 #include "jpeglib.h"
 
+#include "cpl_port.h"
 
 /* We use a full-image coefficient buffer when doing Huffman optimization,
  * and also for writing multiple-scan JPEG files.  In all cases, the DCT
@@ -338,7 +339,7 @@ compress_first_pass (j_compress_ptr cinfo, JSAMPIMAGE input_buf)
  */
 
 METHODDEF(boolean)
-compress_output (j_compress_ptr cinfo, JSAMPIMAGE input_buf)
+compress_output (j_compress_ptr cinfo, CPL_UNUSED JSAMPIMAGE input_buf)
 {
   my_coef_ptr coef = (my_coef_ptr) cinfo->coef;
   JDIMENSION MCU_col_num;	/* index of current MCU within row */

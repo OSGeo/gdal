@@ -138,7 +138,7 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
 
     int bIgnoreExtension = EQUALN(osFilename, "CSV:", 4);
     int bUSGeonamesFile = FALSE;
-    int bGeonamesOrgFile = FALSE;
+    /* int bGeonamesOrgFile = FALSE; */
     if (bIgnoreExtension)
     {
         osFilename = osFilename + 4;
@@ -186,7 +186,7 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
         if (bUpdateIn)
             return FALSE;
         bIgnoreExtension = TRUE;
-        bGeonamesOrgFile = TRUE;
+        /* bGeonamesOrgFile = TRUE; */
 
         if (EQUAL(osExt, "zip") &&
             strstr(osFilename, "/vsizip/") == NULL )

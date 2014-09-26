@@ -68,7 +68,7 @@ typedef struct {
 /************************************************************************/
 
 static
-void OGRSQLiteREGEXPFunction(sqlite3_context *ctx, int argc, sqlite3_value **argv)
+void OGRSQLiteREGEXPFunction(sqlite3_context *ctx, CPL_UNUSED int argc, sqlite3_value **argv)
 {
     const char *re, *str;
     pcre *p;

@@ -2866,10 +2866,14 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
         {
             /*if (osLabelText[i] == '\n')
                 VSIFPrintfL(fp, ") Tj T* (");
-            else */if (osLabelText[i] >= 32 && osLabelText[i] <= 127)
-                VSIFPrintfL(fp, "%c", osLabelText[i]);
-            else
-                VSIFPrintfL(fp, "_");
+            else */
+
+            /* Tautology.  Always true. */
+            /* if (osLabelText[i] >= 32 && osLabelText[i] <= 127) { */
+            VSIFPrintfL(fp, "%c", osLabelText[i]);
+            /* } else {
+                   VSIFPrintfL(fp, "_");
+            } */
         }
         VSIFPrintfL(fp, ") Tj\n");
         VSIFPrintfL(fp, "ET\n");
@@ -3421,17 +3425,19 @@ int GDALPDFWriter::WriteMask(GDALDataset* poSrcDS,
 
     int bOnly0or255 = TRUE;
     int bOnly255 = TRUE;
-    int bOnly0 = TRUE;
+    /* int bOnly0 = TRUE; */
     int i;
     for(i=0;i<nReqXSize * nReqYSize;i++)
     {
         if (pabyMask[i] == 0)
             bOnly255 = FALSE;
         else if (pabyMask[i] == 255)
-            bOnly0 = FALSE;
+        {
+            /* bOnly0 = FALSE; */
+        }
         else
         {
-            bOnly0 = FALSE;
+            /* bOnly0 = FALSE; */
             bOnly255 = FALSE;
             bOnly0or255 = FALSE;
             break;

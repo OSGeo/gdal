@@ -93,7 +93,7 @@ string ltrim(string tmpstr) {
 string rtrim(string tmpstr) {
   if (tmpstr.length() == 0) return tmpstr;
   unsigned int i = tmpstr.length() - 1;
-  while (i >= 0 && (tmpstr[i] == ' ' || tmpstr[i] == '\t' || tmpstr[i] == '\r' || tmpstr[i] == '\n')) --i;
+  while (tmpstr[i] == ' ' || tmpstr[i] == '\t' || tmpstr[i] == '\r' || tmpstr[i] == '\n') --i;
   return i < tmpstr.length() - 1 ? tmpstr.substr(0, i+1) : tmpstr;
 }
 
@@ -176,7 +176,7 @@ OGRLineString *ILI2Reader::getArc(DOMElement *elem) {
   OGRPoint *ptEnd = new OGRPoint();
   // point on the arc
   OGRPoint *ptOnArc = new OGRPoint();
-  double radius = 0; // radius
+  // double radius = 0; // radius
 
   DOMElement *arcElem = (DOMElement *)elem->getFirstChild();
   while (arcElem != NULL) {
@@ -194,8 +194,9 @@ OGRLineString *ILI2Reader::getArc(DOMElement *elem) {
       ptOnArc->setY(atof(pszObjValue));
     else if (cmpStr("A3", pszTagName) == 0)
       ptOnArc->setZ(atof(pszObjValue));
-    else if (cmpStr("R", pszTagName) == 0)
-      radius = atof(pszObjValue);
+    else if (cmpStr("R", pszTagName) == 0) {
+      // radius = atof(pszObjValue);
+    }
     CPLFree(pszObjValue);
     XMLString::release(&pszTagName);
     arcElem = (DOMElement *)arcElem->getNextSibling();
@@ -232,7 +233,7 @@ OGRLineString *getLineString(DOMElement *elem, int bAsLinearRing) {
       // point on the arc
       OGRPoint *ptOnArc = new OGRPoint();
       // radius
-      double radius = 0;
+      // double radius = 0;
 
       DOMElement *arcElem = (DOMElement *)lineElem->getFirstChild();
       while (arcElem != NULL) {
@@ -250,8 +251,9 @@ OGRLineString *getLineString(DOMElement *elem, int bAsLinearRing) {
           ptOnArc->setY(atof(pszObjValue));
         else if (cmpStr("A3", pszTagName) == 0)
           ptOnArc->setZ(atof(pszObjValue));
-        else if (cmpStr("R", pszTagName) == 0)
-          radius = atof(pszObjValue);
+        else if (cmpStr("R", pszTagName) == 0) {
+          // radius = atof(pszObjValue);
+        }
         CPLFree(pszObjValue);
         XMLString::release(&pszTagName);
 

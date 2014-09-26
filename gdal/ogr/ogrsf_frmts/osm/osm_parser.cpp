@@ -338,6 +338,7 @@ int ReadOSMHeader(GByte* pabyData, GByte* pabyDataLimit,
         }
         else if (nKey == MAKE_KEY(OSMHEADER_IDX_OSMOSIS_REPLICATION_TIMESTAMP, WT_VARINT))
         {
+            /* TODO: Do something with nVal or change this to a seek forward. */
             GIntBig nVal;
             READ_VARINT64(pabyData, pabyDataLimit, nVal);
         }
