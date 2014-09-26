@@ -118,6 +118,13 @@ GDALRasterBand* JPGCreateBand(JPGDatasetCommon* poDS, int nBand);
 CPLErr JPGAppendMask( const char *pszJPGFilename, GDALRasterBand *poMask,
                       GDALProgressFunc pfnProgress, void * pProgressData );
 
+typedef struct
+{
+    jmp_buf     setjmp_buffer;
+    int         bNonFatalErrorEncountered;
+    void      (*p_previous_emit_message)(j_common_ptr cinfo, int msg_level);
+} GDALJPEGErrorStruct;
+
 /************************************************************************/
 /* ==================================================================== */
 /*                         JPGDatasetCommon                             */
@@ -133,7 +140,8 @@ protected:
     friend class JPGRasterBand;
     friend class JPGMaskBand;
 
-    jmp_buf setjmp_buffer;
+    GDALJPEGErrorStruct sErrorStruct;
+    int           ErrorOutOnNonFatalError();
 
     int           nScaleFactor;
     int           bHasInitInternalOverviews;
@@ -265,6 +273,7 @@ class JPGDataset : public JPGDatasetCommon
                                     void * pProgressData );
 
     static void ErrorExit(j_common_ptr cinfo);
+    static void EmitMessage(j_common_ptr cinfo, int msg_level);
 };
 
 /************************************************************************/
@@ -1125,6 +1134,9 @@ JPGDatasetCommon::JPGDatasetCommon()
 
     bIsSubfile = FALSE;
     bHasTriedLoadWorldFileOrTab = FALSE;
+
+    sErrorStruct.bNonFatalErrorEncountered = FALSE;
+    sErrorStruct.p_previous_emit_message = NULL;
 }
 
 /************************************************************************/
@@ -1253,6 +1265,21 @@ CPLErr JPGDatasetCommon::IBuildOverviews( const char *pszResampling,
     return eErr;
 }
 
+/************************************************************************/
+/*                      ErrorOutOnNonFatalError()                       */
+/************************************************************************/
+
+int JPGDatasetCommon::ErrorOutOnNonFatalError()
+{
+    if( sErrorStruct.bNonFatalErrorEncountered )
+    {
+        sErrorStruct.bNonFatalErrorEncountered = FALSE;
+        return TRUE;
+    }
+    return FALSE;
+}
+
+
 #endif // !defined(JPGDataset)
 
 /************************************************************************/
@@ -1295,7 +1322,7 @@ CPLErr JPGDataset::LoadScanline( int iLine )
         return CE_None;
 
     // setup to trap a fatal error.
-    if (setjmp(setjmp_buffer)) 
+    if (setjmp(sErrorStruct.setjmp_buffer)) 
         return CE_Failure;
 
     if (!bHasDoneJpegStartDecompress)
@@ -1338,6 +1365,8 @@ CPLErr JPGDataset::LoadScanline( int iLine )
             
         ppSamples = (JSAMPLE *) pabyScanline;
         jpeg_read_scanlines( &sDInfo, &ppSamples, 1 );
+        if( ErrorOutOnNonFatalError() )
+            return CE_Failure;
         nLoadedScanline++;
     }
 
@@ -1920,7 +1949,7 @@ GDALDataset *JPGDataset::Open( const char* pszFilename, char** papszSiblingFiles
     poDS->eAccess = GA_ReadOnly;
 
     /* Will detect mismatch between compile-time and run-time libjpeg versions */
-    if (setjmp(poDS->setjmp_buffer)) 
+    if (setjmp(poDS->sErrorStruct.setjmp_buffer)) 
     {
         delete poDS;
         return NULL;
@@ -1928,7 +1957,9 @@ GDALDataset *JPGDataset::Open( const char* pszFilename, char** papszSiblingFiles
 
     poDS->sDInfo.err = jpeg_std_error( &(poDS->sJErr) );
     poDS->sJErr.error_exit = JPGDataset::ErrorExit;
-    poDS->sDInfo.client_data = (void *) &(poDS->setjmp_buffer);
+    poDS->sErrorStruct.p_previous_emit_message = poDS->sJErr.emit_message;
+    poDS->sJErr.emit_message = JPGDataset::EmitMessage;
+    poDS->sDInfo.client_data = (void *) &(poDS->sErrorStruct);
 
     jpeg_create_decompress( &(poDS->sDInfo) );
     poDS->bHasDoneJpegCreateDecompress = TRUE;
@@ -1953,7 +1984,7 @@ GDALDataset *JPGDataset::Open( const char* pszFilename, char** papszSiblingFiles
 /* -------------------------------------------------------------------- */
 /*      If a fatal error occurs after this, we will return NULL         */
 /* -------------------------------------------------------------------- */
-    if (setjmp(poDS->setjmp_buffer)) 
+    if (setjmp(poDS->sErrorStruct.setjmp_buffer)) 
     {
 #if defined(JPEG_DUAL_MODE_8_12) && !defined(JPGDataset)
         if (poDS->sDInfo.data_precision == 12)
@@ -2342,7 +2373,7 @@ void JPGDatasetCommon::DecompressMask()
 
 void JPGDataset::ErrorExit(j_common_ptr cinfo)
 {
-    jmp_buf *setjmp_buffer = (jmp_buf *) cinfo->client_data;
+    GDALJPEGErrorStruct* psErrorStruct = (GDALJPEGErrorStruct* ) cinfo->client_data;
     char buffer[JMSG_LENGTH_MAX];
 
     /* Create the message */
@@ -2358,7 +2389,49 @@ void JPGDataset::ErrorExit(j_common_ptr cinfo)
               "libjpeg: %s", buffer );
 
     /* Return control to the setjmp point */
-    longjmp(*setjmp_buffer, 1);
+    longjmp(psErrorStruct->setjmp_buffer, 1);
+}
+
+/************************************************************************/
+/*                             EmitMessage()                            */
+/************************************************************************/
+
+void JPGDataset::EmitMessage(j_common_ptr cinfo, int msg_level)
+{
+    GDALJPEGErrorStruct* psErrorStruct = (GDALJPEGErrorStruct* ) cinfo->client_data;
+    if( msg_level >= 0 ) /* Trace message */
+    {
+        if( psErrorStruct->p_previous_emit_message != NULL )
+            psErrorStruct->p_previous_emit_message(cinfo, msg_level);
+    }
+    else /* Warning : libjpeg will try to recover but the image will be likely corrupted */
+    {
+        struct jpeg_error_mgr * err = cinfo->err;
+        /* It's a warning message.  Since corrupt files may generate many warnings,
+        * the policy implemented here is to show only the first warning,
+        * unless trace_level >= 3.
+        */
+        if (err->num_warnings == 0 || err->trace_level >= 3)
+        {
+            char buffer[JMSG_LENGTH_MAX];
+
+            /* Create the message */
+            (*cinfo->err->format_message) (cinfo, buffer);
+
+            if( CSLTestBoolean(CPLGetConfigOption("GDAL_ERROR_ON_LIBJPEG_WARNING", "NO")) )
+            {
+                psErrorStruct->bNonFatalErrorEncountered = TRUE;
+                CPLError( CE_Failure, CPLE_AppDefined, "libjpeg: %s", buffer );
+            }
+            else
+            {
+                CPLError( CE_Warning, CPLE_AppDefined, "libjpeg: %s (this warning can be turned as an error by setting GDAL_ERROR_ON_LIBJPEG_WARNING to TRUE)", buffer );
+            }
+        }
+
+        /* Always count warnings in num_warnings. */
+        err->num_warnings++;
+    }
 }
 
 /************************************************************************/
@@ -2692,9 +2765,10 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     struct jpeg_compress_struct sCInfo;
     struct jpeg_error_mgr sJErr;
-    jmp_buf setjmp_buffer;
+    GDALJPEGErrorStruct sErrorStruct;
+    sErrorStruct.bNonFatalErrorEncountered = FALSE;
     
-    if (setjmp(setjmp_buffer)) 
+    if (setjmp(sErrorStruct.setjmp_buffer)) 
     {
         VSIFCloseL( fpImage );
         return NULL;
@@ -2702,7 +2776,9 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     sCInfo.err = jpeg_std_error( &sJErr );
     sJErr.error_exit = JPGDataset::ErrorExit;
-    sCInfo.client_data = (void *) &(setjmp_buffer);
+    sErrorStruct.p_previous_emit_message = sJErr.emit_message;
+    sJErr.emit_message = JPGDataset::EmitMessage;
+    sCInfo.client_data = (void *) &(sErrorStruct);
 
     jpeg_create_compress( &sCInfo );
     
