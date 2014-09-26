@@ -1007,7 +1007,7 @@ int TABDATFile::DeleteField( int iField )
         if( iField < m_numFields-1 )
         {
             memmove(m_pasFieldDef + iField, m_pasFieldDef + iField + 1,
-                    sizeof((m_numFields-1-iField)*sizeof(TABDATFieldDef)));
+                    (m_numFields-1-iField)*sizeof(TABDATFieldDef));
         }
         m_numFields --;
         return 0;

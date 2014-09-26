@@ -1537,7 +1537,17 @@ int TABFile::WriteFeature(TABFeature *poFeature)
     TABMAPObjHdr *poObjHdr = 
         TABMAPObjHdr::NewObj(poFeature->ValidateMapInfoType(m_poMAPFile),
                              nFeatureId);
-    
+
+    if ( poObjHdr == NULL || m_poMAPFile == NULL )
+    {
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Failed writing geometry for feature id %d in %s",
+                 nFeatureId, m_pszFname);
+        if (poObjHdr)
+            delete poObjHdr;
+        return -1;
+    }
+
     /*-----------------------------------------------------------------
      * ValidateMapInfoType() may have returned TAB_GEOM_NONE if feature
      * contained an invalid geometry for its class. Need to catch that
@@ -1563,15 +1573,6 @@ int TABFile::WriteFeature(TABFeature *poFeature)
                              poObjHdr->m_nMaxX, poObjHdr->m_nMaxY);
     }
 
-    if ( poObjHdr == NULL || m_poMAPFile == NULL )
-    {
-        CPLError(CE_Failure, CPLE_FileIO,
-                 "Failed writing geometry for feature id %d in %s",
-                 nFeatureId, m_pszFname);
-        if (poObjHdr)
-            delete poObjHdr;
-        return -1;
-    }
 /*
     if( m_nCurFeatureId < m_nLastFeatureId )
     {
