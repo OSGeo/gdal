@@ -52,11 +52,10 @@ GMLXercesHandler::GMLXercesHandler( GMLReader *poReader ) : GMLHandler(poReader)
 /*                            startElement()                            */
 /************************************************************************/
 
-void GMLXercesHandler::startElement(const XMLCh* const    uri,
-                                    const XMLCh* const    localname,
-                                    const XMLCh* const    qname,
+void GMLXercesHandler::startElement(CPL_UNUSED const XMLCh* const uri,
+                                    const XMLCh* const localname,
+                                    CPL_UNUSED const XMLCh* const qname,
                                     const Attributes& attrs )
-
 {
     char        szElementName[MAX_TOKEN_SIZE];
 
@@ -89,10 +88,9 @@ void GMLXercesHandler::startElement(const XMLCh* const    uri,
 /************************************************************************/
 /*                             endElement()                             */
 /************************************************************************/
-void GMLXercesHandler::endElement(const   XMLCh* const    uri,
-                                  const   XMLCh* const    localname,
-                                  const   XMLCh* const    qname )
-
+void GMLXercesHandler::endElement(CPL_UNUSED const XMLCh* const uri,
+                                  CPL_UNUSED const XMLCh* const localname,
+                                  CPL_UNUSED const XMLCh* const qname )
 {
     m_nEntityCounter = 0;
 
@@ -107,6 +105,7 @@ void GMLXercesHandler::endElement(const   XMLCh* const    uri,
 /************************************************************************/
 
 void GMLXercesHandler::characters(const XMLCh* const chars_in,
+                                  CPL_UNUSED
 #if XERCES_VERSION_MAJOR >= 3
                                   const XMLSize_t length
 #else
@@ -146,7 +145,7 @@ void GMLXercesHandler::fatalError( const SAXParseException &exception)
 /*                             startEntity()                            */
 /************************************************************************/
 
-void GMLXercesHandler::startEntity (const XMLCh *const name)
+void GMLXercesHandler::startEntity (CPL_UNUSED const XMLCh *const name)
 {
     m_nEntityCounter ++;
     if (m_nEntityCounter > 1000 && !m_poReader->HasStoppedParsing())
@@ -765,7 +764,7 @@ void GMLHandler::DealWithAttributes(const char *pszName, int nLenName, void* att
         if( pszAttrVal == NULL )
             break;
 
-        int nAttrIndex;
+        int nAttrIndex = 0;
         const char* pszAttrKeyNoNS = strchr(pszAttrKey, ':');
         if( pszAttrKeyNoNS != NULL )
             pszAttrKeyNoNS ++;

@@ -36,6 +36,8 @@
 #include "jinclude.h"
 #include "jpeglib.h"
 
+#include "cpl_port.h"
+
 #ifdef UPSAMPLE_MERGING_SUPPORTED
 
 
@@ -143,7 +145,7 @@ start_pass_merged_upsample (j_decompress_ptr cinfo)
 METHODDEF(void)
 merged_2v_upsample (j_decompress_ptr cinfo,
 		    JSAMPIMAGE input_buf, JDIMENSION *in_row_group_ctr,
-		    JDIMENSION in_row_groups_avail,
+		    CPL_UNUSED JDIMENSION in_row_groups_avail,
 		    JSAMPARRAY output_buf, JDIMENSION *out_row_ctr,
 		    JDIMENSION out_rows_avail)
 /* 2:1 vertical sampling case: may need a spare row. */
@@ -192,9 +194,9 @@ merged_2v_upsample (j_decompress_ptr cinfo,
 METHODDEF(void)
 merged_1v_upsample (j_decompress_ptr cinfo,
 		    JSAMPIMAGE input_buf, JDIMENSION *in_row_group_ctr,
-		    JDIMENSION in_row_groups_avail,
+		    CPL_UNUSED JDIMENSION in_row_groups_avail,
 		    JSAMPARRAY output_buf, JDIMENSION *out_row_ctr,
-		    JDIMENSION out_rows_avail)
+		    CPL_UNUSED JDIMENSION out_rows_avail)
 /* 1:1 vertical sampling case: much easier, never need a spare row. */
 {
   my_upsample_ptr upsample = (my_upsample_ptr) cinfo->upsample;

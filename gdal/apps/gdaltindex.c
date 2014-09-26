@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
     const char *index_filename = NULL;
     const char *tile_index = "location";
     const char* pszDriverName = "ESRI Shapefile";
-    int nMaxFieldSize = 254;
+    size_t nMaxFieldSize = 254;
     int		i_arg, ti_field;
     OGRDataSourceH hTileIndexDS;
     OGRLayerH hLayer = NULL;

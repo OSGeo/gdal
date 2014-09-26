@@ -247,7 +247,7 @@ int ILI1Reader::AddIliGeom(OGRFeature *feature, int iField, long fpos)
 }
 
 
-int ILI1Reader::ReadTable(const char *layername) {
+int ILI1Reader::ReadTable(CPL_UNUSED const char *layername) {
     char **tokens = NULL;
     const char *firsttok = NULL;
     int ret = TRUE;

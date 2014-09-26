@@ -22,6 +22,7 @@
 #include "jinclude.h"
 #include "jpeglib.h"
 
+#include "cpl_port.h"
 
 /* Pointer to routine to upsample a single component */
 typedef JMETHOD(void, upsample1_ptr,
@@ -88,7 +89,7 @@ start_pass_upsample (j_decompress_ptr cinfo)
 METHODDEF(void)
 sep_upsample (j_decompress_ptr cinfo,
 	      JSAMPIMAGE input_buf, JDIMENSION *in_row_group_ctr,
-	      JDIMENSION in_row_groups_avail,
+	      CPL_UNUSED JDIMENSION in_row_groups_avail,
 	      JSAMPARRAY output_buf, JDIMENSION *out_row_ctr,
 	      JDIMENSION out_rows_avail)
 {
@@ -154,7 +155,7 @@ sep_upsample (j_decompress_ptr cinfo,
  */
 
 METHODDEF(void)
-fullsize_upsample (j_decompress_ptr cinfo, jpeg_component_info * compptr,
+fullsize_upsample (CPL_UNUSED j_decompress_ptr cinfo, CPL_UNUSED jpeg_component_info * compptr,
 		   JSAMPARRAY input_data, JSAMPARRAY * output_data_ptr)
 {
   *output_data_ptr = input_data;
@@ -167,8 +168,8 @@ fullsize_upsample (j_decompress_ptr cinfo, jpeg_component_info * compptr,
  */
 
 METHODDEF(void)
-noop_upsample (j_decompress_ptr cinfo, jpeg_component_info * compptr,
-	       JSAMPARRAY input_data, JSAMPARRAY * output_data_ptr)
+noop_upsample (CPL_UNUSED j_decompress_ptr cinfo, CPL_UNUSED jpeg_component_info * compptr,
+	       CPL_UNUSED JSAMPARRAY input_data, JSAMPARRAY * output_data_ptr)
 {
   *output_data_ptr = NULL;	/* safety check */
 }
@@ -230,7 +231,7 @@ int_upsample (j_decompress_ptr cinfo, jpeg_component_info * compptr,
  */
 
 METHODDEF(void)
-h2v1_upsample (j_decompress_ptr cinfo, jpeg_component_info * compptr,
+h2v1_upsample (j_decompress_ptr cinfo, CPL_UNUSED jpeg_component_info * compptr,
 	       JSAMPARRAY input_data, JSAMPARRAY * output_data_ptr)
 {
   JSAMPARRAY output_data = *output_data_ptr;
@@ -258,7 +259,7 @@ h2v1_upsample (j_decompress_ptr cinfo, jpeg_component_info * compptr,
  */
 
 METHODDEF(void)
-h2v2_upsample (j_decompress_ptr cinfo, jpeg_component_info * compptr,
+h2v2_upsample (j_decompress_ptr cinfo, CPL_UNUSED jpeg_component_info * compptr,
 	       JSAMPARRAY input_data, JSAMPARRAY * output_data_ptr)
 {
   JSAMPARRAY output_data = *output_data_ptr;

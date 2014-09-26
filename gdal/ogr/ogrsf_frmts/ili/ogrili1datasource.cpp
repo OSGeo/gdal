@@ -181,8 +181,7 @@ int OGRILI1DataSource::Open( const char * pszNewName, int bTestOpen )
 /************************************************************************/
 
 int OGRILI1DataSource::Create( const char *pszFilename,
-                              char **papszOptions )
-
+                               CPL_UNUSED char **papszOptions )
 {
     std::string osBasename, osModelFilename;
     char **filenames = CSLTokenizeString2( pszFilename, ",", 0 );
@@ -248,10 +247,9 @@ static char *ExtractTopic(const char * pszLayerName)
 
 OGRLayer *
 OGRILI1DataSource::CreateLayer( const char * pszLayerName,
-                               OGRSpatialReference *poSRS,
-                               OGRwkbGeometryType eType,
-                               char ** papszOptions )
-
+                                CPL_UNUSED OGRSpatialReference *poSRS,
+                                OGRwkbGeometryType eType,
+                                CPL_UNUSED char ** papszOptions )
 {
     FeatureDefnInfo featureDefnInfo = poImdReader->GetFeatureDefnInfo(pszLayerName);
     const char *table = pszLayerName;

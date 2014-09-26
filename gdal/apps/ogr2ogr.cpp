@@ -2479,24 +2479,24 @@ static int ForceCoordDimension(int eGType, int nCoordDim)
 /*                         SetupTargetLayer()                           */
 /************************************************************************/
 
-static TargetLayerInfo* SetupTargetLayer( OGRDataSource *poSrcDS,
-                                                OGRLayer * poSrcLayer,
-                                                OGRDataSource *poDstDS,
-                                                char **papszLCO,
-                                                const char *pszNewLayerName,
-                                                OGRSpatialReference *poOutputSRSIn,
-                                                int bNullifyOutputSRS,
-                                                char **papszSelFields,
-                                                int bAppend, int bAddMissingFields, int eGType,
-                                                int bPromoteToMulti,
-                                                int nCoordDim, int bOverwrite,
-                                                char** papszFieldTypesToString,
-                                                int bUnsetFieldWidth,
-                                                int bExplodeCollections,
-                                                const char* pszZField,
-                                                char **papszFieldMap,
-                                                const char* pszWHERE,
-                                                int bExactFieldNameMatch )
+static TargetLayerInfo* SetupTargetLayer( CPL_UNUSED OGRDataSource *poSrcDS,
+                                          OGRLayer * poSrcLayer,
+                                          OGRDataSource *poDstDS,
+                                          char **papszLCO,
+                                          const char *pszNewLayerName,
+                                          OGRSpatialReference *poOutputSRSIn,
+                                          int bNullifyOutputSRS,
+                                          char **papszSelFields,
+                                          int bAppend, int bAddMissingFields, int eGType,
+                                          int bPromoteToMulti,
+                                          int nCoordDim, int bOverwrite,
+                                          char** papszFieldTypesToString,
+                                          int bUnsetFieldWidth,
+                                          int bExplodeCollections,
+                                          const char* pszZField,
+                                          char **papszFieldMap,
+                                          const char* pszWHERE,
+                                          int bExactFieldNameMatch )
 {
     OGRLayer    *poDstLayer;
     OGRFeatureDefn *poSrcFDefn;
@@ -3252,7 +3252,7 @@ static int SetupCT( TargetLayerInfo* psInfo,
 static int TranslateLayer( TargetLayerInfo* psInfo,
                            OGRDataSource *poSrcDS,
                            OGRLayer * poSrcLayer,
-                           OGRDataSource *poDstDS,
+                           CPL_UNUSED OGRDataSource *poDstDS,
                            int bTransform,
                            int bWrapDateline,
                            const char* pszDateLineOffset,
@@ -3633,4 +3633,3 @@ end_loop:
 
     return TRUE;
 }
-

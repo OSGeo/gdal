@@ -99,8 +99,7 @@ static int CheckDSNStringTemplate(const char* pszStr)
 /************************************************************************/
 
 int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
-                              int bTestOpen )
-
+                             CPL_UNUSED int bTestOpen )
 {
     CPLAssert( nLayers == 0 );
 
@@ -216,8 +215,7 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRPGeoDataSource::TestCapability( const char * pszCap )
-
+int OGRPGeoDataSource::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }

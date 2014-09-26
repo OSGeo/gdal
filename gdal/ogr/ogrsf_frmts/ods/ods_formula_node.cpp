@@ -512,8 +512,9 @@ int ods_formula_node::EvaluateIF(IODSCellEvaluator* poEvaluator)
     CPLAssert(papoSubExpr[0]->eNodeType == SNT_CONSTANT );
     CPLAssert(papoSubExpr[1]->eNodeType == SNT_CONSTANT );
     if (nSubExprCount == 3)
+    {
         CPLAssert(papoSubExpr[2]->eNodeType == SNT_CONSTANT );
-
+    }
     int bCond = FALSE;
     if (papoSubExpr[0]->field_type == ODS_FIELD_TYPE_INTEGER)
     {

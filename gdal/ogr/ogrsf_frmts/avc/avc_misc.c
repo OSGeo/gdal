@@ -490,7 +490,7 @@ int  AVCPrintRealValue(char *pszBuf, int nPrecision, AVCFileType eType,
     {
         int n;
         n = strlen(pszBuf);
-        
+
         pszBuf[n - numExpDigits]    = pszBuf[n-2];
         pszBuf[n - numExpDigits +1] = pszBuf[n-1];
         pszBuf[n - numExpDigits +2] = '\0';
@@ -498,9 +498,7 @@ int  AVCPrintRealValue(char *pszBuf, int nPrecision, AVCFileType eType,
 
     /* Just make sure that the actual output length is what we expected.
      */
-    CPLAssert(strlen(pszBuf) == nLen);
+    CPLAssert(strlen(pszBuf) == (size_t)nLen);
 
     return nLen;
 }
-
-

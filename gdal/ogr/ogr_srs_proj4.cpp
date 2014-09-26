@@ -473,7 +473,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 /* -------------------------------------------------------------------- */
     const char *pszPM = CSLFetchNameValue( papszNV, "pm" );
     double dfFromGreenwich = 0.0;
-    int    nPMCode = -1;
+    /* int    nPMCode = -1; */
 
     if( pszPM != NULL )
     {
@@ -482,7 +482,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
         {
             dfFromGreenwich = CPLDMSToDec(psProj4PM->pszFromGreenwich);
             pszPM = psProj4PM->pszWKTPMName;
-            nPMCode = psProj4PM->nPMCode;
+            /* nPMCode = psProj4PM->nPMCode; */
         }
         else
         {
@@ -2564,4 +2564,3 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     return OGRERR_NONE;
 }
-

@@ -3145,10 +3145,13 @@ char **PostGISRasterDataset::GetFileList()
 /********************************************************
  * \brief Create a copy of a PostGIS Raster dataset.
  ********************************************************/
-GDALDataset * 
-PostGISRasterDataset::CreateCopy( const char * pszFilename,
-    GDALDataset *poGSrcDS, int bStrict, char ** papszOptions, 
-    GDALProgressFunc pfnProgress, void * pProgressData ) 
+GDALDataset *
+PostGISRasterDataset::CreateCopy( CPL_UNUSED const char * pszFilename,
+                                  GDALDataset *poGSrcDS,
+                                  CPL_UNUSED int bStrict,
+                                  CPL_UNUSED char ** papszOptions,
+                                  CPL_UNUSED GDALProgressFunc pfnProgress,
+                                  CPL_UNUSED void * pProgressData )
 {
     char* pszSchema = NULL;
     char* pszTable = NULL;
@@ -3162,10 +3165,10 @@ PostGISRasterDataset::CreateCopy( const char * pszFilename,
     PGresult * poResult = NULL;
     CPLString osCommand;
     GBool bInsertSuccess;
-    
+
     if( poGSrcDS->GetDriver() != GDALGetDriverByName("PostGISRaster") )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
             "PostGISRasterDataset::CreateCopy() only works on source "
             "datasets that are PostGISRaster" );
         return NULL;
@@ -3691,4 +3694,3 @@ void GDALRegister_PostGISRaster() {
         GetGDALDriverManager()->RegisterDriver(poDriver);
     }
 }
-

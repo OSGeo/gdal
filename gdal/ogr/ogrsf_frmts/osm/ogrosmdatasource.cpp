@@ -2611,8 +2611,9 @@ void OGROSMDataSource::ProcessPolygonsStandalone()
                 bFeatureAdded = TRUE;
 
         }
-        else
+        else {
             CPLAssert(FALSE);
+        }
 
         sqlite3_reset(pahSelectWayStmt[0]);
 

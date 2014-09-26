@@ -61,10 +61,10 @@ POSSIBILITY OF SUCH DAMAGE.
 static void knotu(int n,int c,int x[])
 
 {
-    int nplusc,nplus2,i;
+  int nplusc, /* nplus2, */i;
 
     nplusc = n + c;
-    nplus2 = n + 2;
+    /* nplus2 = n + 2; */
 
     x[1] = 0;
     for (i = 2; i <= nplusc; i++){
@@ -423,4 +423,3 @@ void rbsplinu(int npts,int k,int p1,double b[],double h[], double p[])
         t = t + step;
     }
 }
-
