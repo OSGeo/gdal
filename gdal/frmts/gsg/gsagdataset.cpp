@@ -1505,7 +1505,8 @@ CPLErr GSAGDataset::UpdateHeader()
 
 GDALDataset *GSAGDataset::CreateCopy( const char *pszFilename,
 				      GDALDataset *poSrcDS,
-				      int bStrict, char **papszOptions,
+				      int bStrict,
+                                      CPL_UNUSED char **papszOptions,
 				      GDALProgressFunc pfnProgress,
 				      void *pProgressData )
 {

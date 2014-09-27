@@ -75,9 +75,10 @@ CPLODBCDriverInstaller::CPLODBCDriverInstaller()
 /************************************************************************/
 
 int CPLODBCDriverInstaller::InstallDriver( const char* pszDriver,
-        const char* pszPathIn, WORD fRequest )
+                                           CPL_UNUSED const char* pszPathIn,
+                                           WORD fRequest )
 {
-    CPLAssert( NULL != pszDriver ); 
+    CPLAssert( NULL != pszDriver );
 
     // Try to install driver to system-wide location
     if ( FALSE == SQLInstallDriverEx( pszDriver, NULL, m_szPathOut,
@@ -85,11 +86,11 @@ int CPLODBCDriverInstaller::InstallDriver( const char* pszDriver,
                     &m_nUsageCount ) )
     {
         const WORD nErrorNum = 1; // TODO - a function param?
-        RETCODE cRet = SQL_ERROR;
-        
+        CPL_UNUSED RETCODE cRet = SQL_ERROR;
+
         // Failure is likely related to no write permissions to
         // system-wide default location, so try to install to HOME
-       
+
         static char* pszEnvIni = NULL;
         if (pszEnvIni == NULL)
         {

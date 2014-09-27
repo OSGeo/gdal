@@ -65,8 +65,7 @@ OGRIdrisiDataSource::~OGRIdrisiDataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRIdrisiDataSource::TestCapability( const char * pszCap )
-
+int OGRIdrisiDataSource::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }

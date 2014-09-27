@@ -600,11 +600,12 @@ int OGRKMLLayer::TestCapability( const char * pszCap )
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRKMLLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
+OGRErr OGRKMLLayer::CreateField( OGRFieldDefn *poField,
+                                 CPL_UNUSED int bApproxOK )
 {
     if( !bWriter_ || iNextKMLId_ != 0 )
         return OGRERR_FAILURE;
-		  
+
 	OGRFieldDefn oCleanCopy( poField );
     poFeatureDefn_->AddFieldDefn( &oCleanCopy );
 
@@ -619,4 +620,3 @@ void OGRKMLLayer::SetLayerNumber( int nLayer )
 {
     nLayerNumber_ = nLayer;
 }
-

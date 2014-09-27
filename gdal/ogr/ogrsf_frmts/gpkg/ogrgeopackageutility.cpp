@@ -555,11 +555,13 @@ OGRGeometry* GPkgGeometryToOGR(const GByte *pabyGpkg, size_t szGpkg, OGRSpatialR
 }
 
 
-OGRErr GPkgEnvelopeToOGR(GByte *pabyGpkg, size_t szGpkg, OGREnvelope *poEnv)
+OGRErr GPkgEnvelopeToOGR(GByte *pabyGpkg,
+                         CPL_UNUSED size_t szGpkg,
+                         OGREnvelope *poEnv)
 {
     CPLAssert( poEnv != NULL );
     CPLAssert( pabyGpkg != NULL );
-    
+
     GPkgHeader oHeader;
 
     /* Read header */

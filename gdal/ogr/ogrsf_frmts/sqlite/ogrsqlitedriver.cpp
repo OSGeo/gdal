@@ -48,8 +48,7 @@ CPL_CVSID("$Id$");
 /*                          OGRSQLiteDriverUnload()                     */
 /************************************************************************/
 
-static void OGRSQLiteDriverUnload(GDALDriver* poDriver)
-
+static void OGRSQLiteDriverUnload(CPL_UNUSED GDALDriver* poDriver)
 {
 #ifdef SPATIALITE_412_OR_LATER
     spatialite_shutdown();
@@ -160,9 +159,11 @@ static GDALDataset *OGRSQLiteDriverOpen( GDALOpenInfo* poOpenInfo )
 /************************************************************************/
 
 static GDALDataset *OGRSQLiteDriverCreate( const char * pszName,
-                                        int nBands, int nXSize, int nYSize, GDALDataType eDT,
-                                        char **papszOptions )
-
+                                           CPL_UNUSED int nBands,
+                                           CPL_UNUSED int nXSize,
+                                           CPL_UNUSED int nYSize,
+                                           CPL_UNUSED GDALDataType eDT,
+                                           char **papszOptions )
 {
 /* -------------------------------------------------------------------- */
 /*      First, ensure there isn't any such file yet.                    */
@@ -268,4 +269,3 @@ void RegisterOGRSQLite()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-

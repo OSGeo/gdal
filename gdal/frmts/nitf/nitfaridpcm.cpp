@@ -199,11 +199,15 @@ get_bits( unsigned char *buffer, int first_bit, int num_bits )
 /*      Compute the delta value for a particular (i,j) location.        */
 /************************************************************************/
 static int
-get_delta( unsigned char *srcdata, 
+get_delta( unsigned char *srcdata,
            int nInputBytes,
-           int busy_code, int comrat,
-           int block_offset, int block_size, 
-           int i, int j, int *pbError )
+           int busy_code,
+           CPL_UNUSED int comrat,
+           int block_offset,
+           CPL_UNUSED int block_size,
+           int i,
+           int j,
+           int *pbError )
 
 {
     CPLAssert( comrat == CR075 );

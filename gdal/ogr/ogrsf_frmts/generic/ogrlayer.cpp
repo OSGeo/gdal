@@ -969,7 +969,7 @@ int OGR_L_FindFieldIndex( OGRLayerH hLayer, const char *pszFieldName, int bExact
 /*                           FindFieldIndex()                           */
 /************************************************************************/
 
-int OGRLayer::FindFieldIndex( const char *pszFieldName, int bExactMatch )
+int OGRLayer::FindFieldIndex( const char *pszFieldName, CPL_UNUSED int bExactMatch )
 {
     return GetLayerDefn()->GetFieldIndex( pszFieldName );
 }
@@ -1481,8 +1481,7 @@ OGRErr OGR_L_SyncToDisk( OGRLayerH hLayer )
 /*                           DeleteFeature()                            */
 /************************************************************************/
 
-OGRErr OGRLayer::DeleteFeature( long nFID )
-
+OGRErr OGRLayer::DeleteFeature( CPL_UNUSED long nFID )
 {
     return OGRERR_UNSUPPORTED_OPERATION;
 }

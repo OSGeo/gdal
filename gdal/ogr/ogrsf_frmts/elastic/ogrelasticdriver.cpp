@@ -36,9 +36,11 @@ CPL_CVSID("$Id$");
 /*                     OGRElasticSearchDriverCreate()                   */
 /************************************************************************/
 static GDALDataset* OGRElasticSearchDriverCreate( const char * pszName,
-                                           int nXSize, int nYSize, int nBands,
-                                           GDALDataType eDT,
-                                           char ** papszOptions )
+                                                  CPL_UNUSED int nXSize,
+                                                  CPL_UNUSED int nYSize,
+                                                  CPL_UNUSED int nBands,
+                                                  CPL_UNUSED GDALDataType eDT,
+                                                  char ** papszOptions )
 {
     OGRElasticDataSource *poDS = new OGRElasticDataSource();
 
@@ -81,4 +83,3 @@ void RegisterOGRElastic() {
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-

@@ -53,10 +53,10 @@ bool WriteElement(string sSection, string sEntry, string fn, double dValue);
 
 static const IlwisDatums iwDatums[] =
 {
-    { "Adindan", "Adindan", 4201 },								
-    { "Afgooye", "Afgooye", 4205 },								
+    { "Adindan", "Adindan", 4201 },
+    { "Afgooye", "Afgooye", 4205 },
 		//AGREF --- skipped
-    { "Ain el Abd 1970", "Ain_el_Abd_1970", 4204 },				
+    { "Ain el Abd 1970", "Ain_el_Abd_1970", 4204 },
 		{ "American Samoa 1962", "American_Samoa_1962", 4169 },    
 		//Anna 1 Astro 1965 --- skipped
 		{ "Antigua Island Astro 1943", "Antigua_1943", 4601 },    
@@ -192,44 +192,44 @@ static const IlwisDatums iwDatums[] =
 
 static const IlwisEllips iwEllips[] =
 {
-    { "Sphere", 7035, 6371007, 0.0  },	//rad 6370997 m (normal sphere)   
-    { "Airy 1830", 7031, 6377563.396, 299.3249646 },   
-    { "Modified Airy", 7002, 6377340.189, 299.3249646 },   
-    { "ATS77", 7204, 6378135.0, 298.257000006 },   
-    { "Australian National", 7003, 6378160, 298.249997276 },   
-    { "Bessel 1841", 7042, 6377397.155, 299.1528128},   
-		{ "Bessel 1841 (Japan By Law)", 7046 , 6377397.155, 299.152815351 }, 
-    { "Bessel 1841 (Namibia)", 7006, 6377483.865, 299.1528128 },   
-    { "Clarke 1866", 7008, 6378206.4, 294.9786982 },   
-    { "Clarke 1880", 7034, 6378249.145, 293.465 },   
-    { "Clarke 1880 (IGN)", 7011, 6378249.2, 293.466  },   
+    { "Sphere", 7035, 6371007, 0.0  },	//rad 6370997 m (normal sphere)
+    { "Airy 1830", 7031, 6377563.396, 299.3249646 },
+    { "Modified Airy", 7002, 6377340.189, 299.3249646 },
+    { "ATS77", 7204, 6378135.0, 298.257000006 },
+    { "Australian National", 7003, 6378160, 298.249997276 },
+    { "Bessel 1841", 7042, 6377397.155, 299.1528128},
+		{ "Bessel 1841 (Japan By Law)", 7046 , 6377397.155, 299.152815351 },
+    { "Bessel 1841 (Namibia)", 7006, 6377483.865, 299.1528128 },
+    { "Clarke 1866", 7008, 6378206.4, 294.9786982 },
+    { "Clarke 1880", 7034, 6378249.145, 293.465 },
+    { "Clarke 1880 (IGN)", 7011, 6378249.2, 293.466 },
     // FIXME: D-PAF (Orbits) --- skipped
     // FIXME: Du Plessis Modified --- skipped
     // FIXME: Du Plessis Reconstituted --- skipped
     { "Everest (India 1830)", 7015, 6377276.345, 300.8017 },
     // Everest (India 1956) --- skipped
 		// Everest (Malaysia 1969) --- skipped
-    { "Everest (E. Malaysia and Brunei)", 7016, 6377298.556, 300.8017 },   
-    { "Everest (Malay. and Singapore 1948)", 7018, 6377304.063, 300.8017 },   
-		{ "Everest (Pakistan)", 7044, 6377309.613, 300.8017 }, 
+    { "Everest (E. Malaysia and Brunei)", 7016, 6377298.556, 300.8017 },
+    { "Everest (Malay. and Singapore 1948)", 7018, 6377304.063, 300.8017 },
+		{ "Everest (Pakistan)", 7044, 6377309.613, 300.8017 },
 		// Everest (Sabah Sarawak) --- skipped
 		// Fischer 1960 --- skipped
 		// Fischer 1960 (Modified) --- skipped
 		// Fischer 1968 --- skipped
-		{ "GRS 80", 7019, 6378137, 298.257222101  },   
-		{ "Helmert 1906", 7020, 6378200, 298.3 }, 
+		{ "GRS 80", 7019, 6378137, 298.257222101  },
+		{ "Helmert 1906", 7020, 6378200, 298.3 },
 		// Hough 1960 --- skipped
-		{ "Indonesian 1974", 7021, 6378160, 298.247 }, 
-		{ "International 1924", 7022, 6378388, 297 }, 
-		{ "Krassovsky 1940", 7024, 6378245, 298.3 }, 
+		{ "Indonesian 1974", 7021, 6378160, 298.247 },
+		{ "International 1924", 7022, 6378388, 297 },
+		{ "Krassovsky 1940", 7024, 6378245, 298.3 },
 		// New_International 1967
-		// SGS 85 
+		// SGS 85
 		// South American 1969
 		// WGS 60
 		// WGS 66
-		{ "WGS 72", 7020, 6378135.0, 298.259998590  }, 
-		{ "WGS 84", 7030, 6378137, 298.257223563 }, 
-    { NULL, 0 }
+		{ "WGS 72", 7020, 6378135.0, 298.259998590  },
+		{ "WGS 84", 7030, 6378137, 298.257223563 },
+    { NULL, 0, 0.0, 0.0 }
 };
 
 #ifndef PI
@@ -1034,7 +1034,7 @@ CPLErr ILWISDataset::WriteProjection()
     if( poGeogSRS )
     {
         csy = pszBaseName + ".csy";
-				
+
         WriteElement("Ilwis", "Type", csFileName, "CoordSystem");
         pszDatum = poGeogSRS->GetAttrValue( "GEOGCS|DATUM" );
 
@@ -1049,10 +1049,10 @@ CPLErr ILWISDataset::WriteProjection()
             piwDatum++;
         } //end of searchong for matching datum
         WriteElement("CoordSystem", "Width", csFileName, 28);
-        double a, b, f;
+        double a, /* b, */f;
         pszEllips = poGeogSRS->GetAttrValue( "GEOGCS|DATUM|SPHEROID" );
         a = poGeogSRS->GetSemiMajor();
-        b = poGeogSRS->GetSemiMinor();
+        /* b = */ poGeogSRS->GetSemiMinor();
         f = poGeogSRS->GetInvFlattening();
         WriteElement("CoordSystem", "Ellipsoid", csFileName, "User Defined");
         WriteElement("Ellipsoid", "a", csFileName, a);
@@ -1190,4 +1190,3 @@ CPLErr ILWISDataset::WriteProjection()
 
     return CE_None;
 }
-

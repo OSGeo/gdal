@@ -118,8 +118,7 @@ OGRFeature *OGRAeronavFAALayer::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRAeronavFAALayer::TestCapability( const char * pszCap )
-
+int OGRAeronavFAALayer::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }
@@ -752,4 +751,3 @@ void OGRAeronavFAAIAPLayer::ResetReading()
     osAPTName = "";
     osAPTId = "";
 }
-

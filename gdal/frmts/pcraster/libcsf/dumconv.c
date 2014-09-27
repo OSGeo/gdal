@@ -63,8 +63,8 @@
  * does nothing
  */
 void CsfDummyConversion(
-	size_t  nrCells,  
-	void   *buf )
+    CPL_UNUSED size_t  nrCells,
+    CPL_UNUSED void   *buf )
 {
 	/* nothing */
 }

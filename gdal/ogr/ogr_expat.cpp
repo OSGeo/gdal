@@ -152,7 +152,7 @@ static void FillISO885915(XML_Encoding *info)
 /*                  OGRExpatUnknownEncodingHandler()                    */
 /************************************************************************/
 
-static int OGRExpatUnknownEncodingHandler (void *unused_encodingHandlerData,
+static int OGRExpatUnknownEncodingHandler (CPL_UNUSED void *unused_encodingHandlerData,
                                            const XML_Char *name,
                                            XML_Encoding *info)
 {

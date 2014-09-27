@@ -248,9 +248,9 @@ double PCRasterRasterBand::GetMaximum(
 
 
 CPLErr PCRasterRasterBand::IReadBlock(
-         int nBlockXoff,
-         int nBlockYoff,
-         void* buffer)
+    CPL_UNUSED int nBlockXoff,
+    int nBlockYoff,
+    void* buffer)
 {
   size_t nrCellsRead = RgetRow(d_dataset->map(), nBlockYoff, buffer);
 
@@ -277,6 +277,3 @@ CPLErr PCRasterRasterBand::IReadBlock(
 //------------------------------------------------------------------------------
 // DEFINITION OF FREE FUNCTIONS
 //------------------------------------------------------------------------------
-
-
-

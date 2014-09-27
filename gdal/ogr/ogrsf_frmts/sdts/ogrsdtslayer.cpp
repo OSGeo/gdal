@@ -220,15 +220,15 @@ void OGRSDTSLayer::ResetReading()
 /************************************************************************/
 
 static void
-AssignAttrRecordToFeature( OGRFeature * poFeature, SDTSTransfer * poTransfer, 
+AssignAttrRecordToFeature( OGRFeature * poFeature,
+                           CPL_UNUSED SDTSTransfer * poTransfer,
                            DDFField * poSR )
-
 {
 /* -------------------------------------------------------------------- */
 /*      Process each subfield in the record.                            */
 /* -------------------------------------------------------------------- */
     DDFFieldDefn        *poFDefn = poSR->GetFieldDefn();
-        
+
     for( int iSF=0; iSF < poFDefn->GetSubfieldCount(); iSF++ )
     {
         DDFSubfieldDefn *poSFDefn = poFDefn->GetSubfield( iSF );

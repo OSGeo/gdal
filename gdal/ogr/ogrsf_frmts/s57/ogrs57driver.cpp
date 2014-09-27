@@ -121,8 +121,11 @@ GDALDataset *OGRS57Driver::Open( GDALOpenInfo* poOpenInfo )
 /************************************************************************/
 
 GDALDataset *OGRS57Driver::Create( const char * pszName,
-                                int nBands, int nXSize, int nYSize, GDALDataType eDT,
-                                char **papszOptions )
+                                   CPL_UNUSED int nBands,
+                                   CPL_UNUSED int nXSize,
+                                   CPL_UNUSED int nYSize,
+                                   CPL_UNUSED GDALDataType eDT,
+                                   char **papszOptions )
 {
     OGRS57DataSource *poDS = new OGRS57DataSource();
 

@@ -40,7 +40,7 @@ static int   bInitialized = FALSE;
 /*                        OGRMySQLDriverUnload()                        */
 /************************************************************************/
 
-static void OGRMySQLDriverUnload( GDALDriver* poDriver )
+static void OGRMySQLDriverUnload( CPL_UNUSED GDALDriver* poDriver )
 {
     if( bInitialized )
     {
@@ -96,9 +96,11 @@ static GDALDataset *OGRMySQLDriverOpen( GDALOpenInfo* poOpenInfo )
 /************************************************************************/
 
 static GDALDataset *OGRMySQLDriverCreate( const char * pszName,
-                                    int nBands, int nXSize, int nYSize, GDALDataType eDT,
-                                    char **papszOptions )
-
+                                          CPL_UNUSED int nBands,
+                                          CPL_UNUSED int nXSize,
+                                          CPL_UNUSED int nYSize,
+                                          CPL_UNUSED GDALDataType eDT,
+                                          CPL_UNUSED char **papszOptions )
 {
     OGRMySQLDataSource     *poDS;
 
@@ -147,4 +149,3 @@ void RegisterOGRMySQL()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-

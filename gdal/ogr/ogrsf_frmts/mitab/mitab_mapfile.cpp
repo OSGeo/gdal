@@ -828,8 +828,9 @@ int TABMAPFile::LoadNextMatchingObjectBlock( int bFirstObject )
             return FALSE;
         else if( poBlock->GetBlockType() == TABMAP_OBJECT_BLOCK )
             return TRUE;
-        else
-            /* continue processing new index block */;
+        else {
+            /* continue processing new index block */
+        }
     }
 
     return m_poSpIndexLeaf != NULL;

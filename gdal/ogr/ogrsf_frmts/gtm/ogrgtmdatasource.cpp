@@ -324,7 +324,8 @@ int OGRGTMDataSource::Open(const char* pszFilename, int bUpdate)
 /*                               Create()                               */
 /************************************************************************/
 
-int OGRGTMDataSource::Create( const char* pszFilename, char** papszOptions )
+int OGRGTMDataSource::Create( const char* pszFilename,
+                              CPL_UNUSED char** papszOptions )
 {
     CPLAssert( NULL != pszFilename );
 
@@ -451,10 +452,9 @@ OGRLayer* OGRGTMDataSource::GetLayer( int iLayer )
 /************************************************************************/
 
 OGRLayer * OGRGTMDataSource::ICreateLayer( const char * pszLayerName,
-                                          OGRSpatialReference *poSRS,
-                                          OGRwkbGeometryType eType,
-                                          char ** papszOptions )
-
+                                           OGRSpatialReference *poSRS,
+                                           OGRwkbGeometryType eType,
+                                           CPL_UNUSED char ** papszOptions )
 {
     if (eType == wkbPoint || eType == wkbPoint25D)
     {
@@ -641,4 +641,3 @@ void OGRGTMDataSource::rewindTrack()
 
     poGTMFile->rewindTrack();
 }
-

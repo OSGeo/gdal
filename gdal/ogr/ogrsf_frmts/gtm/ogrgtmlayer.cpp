@@ -132,8 +132,8 @@ OGRErr OGRGTMLayer::CheckAndFixCoordinatesValidity( double& pdfLatitude, double&
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRGTMLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
-
+OGRErr OGRGTMLayer::CreateField( OGRFieldDefn *poField,
+                                 CPL_UNUSED int bApproxOK )
 {
     for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {

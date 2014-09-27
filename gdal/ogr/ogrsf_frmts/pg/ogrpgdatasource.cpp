@@ -1825,8 +1825,7 @@ OGRLayer *OGRPGDataSource::GetLayerByName( const char *pszName )
 /*                        OGRPGNoticeProcessor()                        */
 /************************************************************************/
 
-static void OGRPGNoticeProcessor( void *arg, const char * pszMessage )
-
+static void OGRPGNoticeProcessor( CPL_UNUSED void *arg, const char * pszMessage )
 {
     CPLDebug( "OGR_PG_NOTICE", "%s", pszMessage );
 }

@@ -210,4 +210,3 @@ private:
 
 
 #endif /* OGR_GEOJSON_H_INCLUDED */
-

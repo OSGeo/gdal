@@ -889,8 +889,7 @@ int OGRVRTDataSource::Initialize( CPLXMLNode *psTree, const char *pszNewName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRVRTDataSource::TestCapability( const char * pszCap )
-
+int OGRVRTDataSource::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }

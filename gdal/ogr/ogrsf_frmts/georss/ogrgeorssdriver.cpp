@@ -62,8 +62,11 @@ static GDALDataset *OGRGeoRSSDriverOpen( GDALOpenInfo* poOpenInfo )
 /************************************************************************/
 
 static GDALDataset *OGRGeoRSSDriverCreate( const char * pszName,
-                                    int nBands, int nXSize, int nYSize, GDALDataType eDT,
-                                    char **papszOptions )
+                                           CPL_UNUSED int nBands,
+                                           CPL_UNUSED int nXSize,
+                                           CPL_UNUSED int nYSize,
+                                           CPL_UNUSED GDALDataType eDT,
+                                           char **papszOptions )
 {
     OGRGeoRSSDataSource   *poDS = new OGRGeoRSSDataSource();
 
@@ -143,4 +146,3 @@ void RegisterOGRGeoRSS()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-

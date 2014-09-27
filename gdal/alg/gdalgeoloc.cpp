@@ -894,13 +894,14 @@ void GDALDestroyGeoLocTransformer( void *pTransformAlg )
 /*                        GDALGeoLocTransform()                         */
 /************************************************************************/
 
-int GDALGeoLocTransform( void *pTransformArg, int bDstToSrc, 
-                         int nPointCount, 
-                         double *padfX, double *padfY, double *padfZ,
+int GDALGeoLocTransform( void *pTransformArg,
+                         int bDstToSrc,
+                         int nPointCount,
+                         double *padfX, double *padfY,
+                         CPL_UNUSED double *padfZ,
                          int *panSuccess )
-
 {
-    GDALGeoLocTransformInfo *psTransform = 
+    GDALGeoLocTransformInfo *psTransform =
         (GDALGeoLocTransformInfo *) pTransformArg;
 
     if( psTransform->bReversed )

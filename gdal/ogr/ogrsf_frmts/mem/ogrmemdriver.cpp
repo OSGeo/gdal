@@ -56,8 +56,7 @@ const char *OGRMemDriver::GetName()
 /*                                Open()                                */
 /************************************************************************/
 
-OGRDataSource *OGRMemDriver::Open( const char * pszFilename, int )
-
+OGRDataSource *OGRMemDriver::Open( CPL_UNUSED const char * pszFilename, int )
 {
     return NULL;
 }
@@ -95,4 +94,3 @@ void RegisterOGRMEM()
 {
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRMemDriver );
 }
-

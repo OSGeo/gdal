@@ -274,7 +274,8 @@ int OGRXLSXDataSource::Open( const char * pszFilename,
 /*                             Create()                                 */
 /************************************************************************/
 
-int OGRXLSXDataSource::Create( const char * pszFilename, char **papszOptions )
+int OGRXLSXDataSource::Create( const char * pszFilename,
+                               CPL_UNUSED char **papszOptions )
 {
     bUpdated = TRUE;
     bUpdatable = TRUE;
@@ -561,7 +562,7 @@ void OGRXLSXDataSource::DetectHeaderLine()
 /************************************************************************/
 
 void OGRXLSXDataSource::startElementDefault(const char *pszName,
-                                           const char **ppszAttr)
+                                            CPL_UNUSED const char **ppszAttr)
 {
     if (strcmp(pszName, "sheetData") == 0)
     {
@@ -602,7 +603,7 @@ void OGRXLSXDataSource::startElementTable(const char *pszName,
 /*                           endElementTable()                          */
 /************************************************************************/
 
-void OGRXLSXDataSource::endElementTable(const char *pszName)
+void OGRXLSXDataSource::endElementTable(CPL_UNUSED const char *pszName)
 {
     if (stateStack[nStackDepth].nBeginDepth == nDepth)
     {
@@ -707,7 +708,7 @@ void OGRXLSXDataSource::startElementRow(const char *pszName,
 /*                            endElementRow()                           */
 /************************************************************************/
 
-void OGRXLSXDataSource::endElementRow(const char *pszName)
+void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszName)
 {
     if (stateStack[nStackDepth].nBeginDepth == nDepth)
     {
@@ -860,7 +861,7 @@ void OGRXLSXDataSource::endElementRow(const char *pszName)
 /************************************************************************/
 
 void OGRXLSXDataSource::startElementCell(const char *pszName,
-                                        const char **ppszAttr)
+                                         CPL_UNUSED const char **ppszAttr)
 {
     if (osValue.size() == 0 && strcmp(pszName, "v") == 0)
     {
@@ -876,7 +877,7 @@ void OGRXLSXDataSource::startElementCell(const char *pszName,
 /*                            endElementCell()                          */
 /************************************************************************/
 
-void OGRXLSXDataSource::endElementCell(const char *pszName)
+void OGRXLSXDataSource::endElementCell(CPL_UNUSED const char *pszName)
 {
     if (stateStack[nStackDepth].nBeginDepth == nDepth)
     {
@@ -987,7 +988,7 @@ static void XMLCALL startElementSSCbk(void *pUserData, const char *pszName,
 }
 
 void OGRXLSXDataSource::startElementSSCbk(const char *pszName,
-                                       const char **ppszAttr)
+                                          CPL_UNUSED const char **ppszAttr)
 {
     if (bStopParsing) return;
 
@@ -1018,7 +1019,7 @@ static void XMLCALL endElementSSCbk(void *pUserData, const char *pszName)
     ((OGRXLSXDataSource*)pUserData)->endElementSSCbk(pszName);
 }
 
-void OGRXLSXDataSource::endElementSSCbk(const char *pszName)
+void OGRXLSXDataSource::endElementSSCbk(CPL_UNUSED const char *pszName)
 {
     if (bStopParsing) return;
 
@@ -1369,9 +1370,9 @@ void OGRXLSXDataSource::AnalyseStyles(VSILFILE* fpStyles)
 
 OGRLayer *
 OGRXLSXDataSource::ICreateLayer( const char * pszLayerName,
-                                OGRSpatialReference *poSRS,
-                                OGRwkbGeometryType eType,
-                                char ** papszOptions )
+                                 CPL_UNUSED OGRSpatialReference *poSRS,
+                                 CPL_UNUSED OGRwkbGeometryType eType,
+                                 char ** papszOptions )
 
 {
 /* -------------------------------------------------------------------- */
@@ -1798,8 +1799,8 @@ static void WriteLayer(const char* pszName, OGRLayer* poLayer, int iLayer,
 /************************************************************************/
 
 static void WriteSharedStrings(const char* pszName,
-                       std::map<std::string,int>& oStringMap,
-                       std::vector<std::string>& oStringList)
+                               CPL_UNUSED std::map<std::string,int>& oStringMap,
+                               std::vector<std::string>& oStringList)
 {
     VSILFILE* fp;
 

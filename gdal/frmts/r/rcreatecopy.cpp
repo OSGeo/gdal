@@ -84,10 +84,12 @@ static void RWriteString( VSILFILE *fp, int bASCII, const char *pszValue )
 /************************************************************************/
 
 GDALDataset *
-RCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
-             int bStrict, char ** papszOptions, 
-             GDALProgressFunc pfnProgress, void * pProgressData )
-
+RCreateCopy( const char * pszFilename,
+             GDALDataset *poSrcDS,
+             CPL_UNUSED int bStrict,
+             char ** papszOptions,
+             GDALProgressFunc pfnProgress,
+             void * pProgressData )
 {
     int  nBands = poSrcDS->GetRasterCount();
     int  nXSize = poSrcDS->GetRasterXSize();
@@ -253,4 +255,3 @@ RCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     return poDS;
 }
-

@@ -1923,14 +1923,14 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
             return NULL;
         }
 
-        for( i = 0; i < nParts; i++ )
+        for( i = 0; (int32)i < nParts; i++ )
             psShape->panPartType[i] = SHPP_RING;
 
 /* -------------------------------------------------------------------- */
 /*      Copy out the part array from the record.                        */
 /* -------------------------------------------------------------------- */
         memcpy( psShape->panPartStart, psSHP->pabyRec + 44 + 8, 4 * nParts );
-        for( i = 0; i < nParts; i++ )
+        for( i = 0; (int32)i < nParts; i++ )
         {
             if( bBigEndian ) SwapWord( 4, psShape->panPartStart+i );
 
@@ -1965,18 +1965,18 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
         if( psShape->nSHPType == SHPT_MULTIPATCH )
         {
             memcpy( psShape->panPartType, psSHP->pabyRec + nOffset, 4*nParts );
-            for( i = 0; i < nParts; i++ )
+            for( i = 0; (int32)i < nParts; i++ )
             {
                 if( bBigEndian ) SwapWord( 4, psShape->panPartType+i );
             }
 
             nOffset += 4*nParts;
         }
-        
+
 /* -------------------------------------------------------------------- */
 /*      Copy out the vertices from the record.                          */
 /* -------------------------------------------------------------------- */
-        for( i = 0; i < nPoints; i++ )
+        for( i = 0; (int32)i < nPoints; i++ )
         {
             memcpy(psShape->padfX + i,
                    psSHP->pabyRec + nOffset + i * 16,
@@ -2001,11 +2001,11 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
         {
             memcpy( &(psShape->dfZMin), psSHP->pabyRec + nOffset, 8 );
             memcpy( &(psShape->dfZMax), psSHP->pabyRec + nOffset + 8, 8 );
-            
+
             if( bBigEndian ) SwapWord( 8, &(psShape->dfZMin) );
             if( bBigEndian ) SwapWord( 8, &(psShape->dfZMax) );
-            
-            for( i = 0; i < nPoints; i++ )
+
+            for( i = 0; (int32)i < nPoints; i++ )
             {
                 memcpy( psShape->padfZ + i,
                         psSHP->pabyRec + nOffset + 16 + i*8, 8 );
@@ -2025,15 +2025,15 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 /*      big enough, but really it will only occur for the Z shapes      */
 /*      (options), and the M shapes.                                    */
 /* -------------------------------------------------------------------- */
-        if( nEntitySize >= nOffset + 16 + 8*nPoints )
+        if( nEntitySize >= (int)(nOffset + 16 + 8*nPoints) )
         {
             memcpy( &(psShape->dfMMin), psSHP->pabyRec + nOffset, 8 );
             memcpy( &(psShape->dfMMax), psSHP->pabyRec + nOffset + 8, 8 );
-            
+
             if( bBigEndian ) SwapWord( 8, &(psShape->dfMMin) );
             if( bBigEndian ) SwapWord( 8, &(psShape->dfMMax) );
-            
-            for( i = 0; i < nPoints; i++ )
+
+            for( i = 0; (int32)i < nPoints; i++ )
             {
                 memcpy( psShape->padfM + i,
                         psSHP->pabyRec + nOffset + 16 + i*8, 8 );
@@ -2125,7 +2125,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
             return NULL;
         }
 
-        for( i = 0; i < nPoints; i++ )
+        for( i = 0; (int32)i < nPoints; i++ )
         {
             memcpy(psShape->padfX+i, psSHP->pabyRec + 48 + 16 * i, 8 );
             memcpy(psShape->padfY+i, psSHP->pabyRec + 48 + 16 * i + 8, 8 );
@@ -2135,7 +2135,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
         }
 
         nOffset = 48 + 16*nPoints;
-        
+
 /* -------------------------------------------------------------------- */
 /*	Get the X/Y bounds.						*/
 /* -------------------------------------------------------------------- */
@@ -2156,11 +2156,11 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
         {
             memcpy( &(psShape->dfZMin), psSHP->pabyRec + nOffset, 8 );
             memcpy( &(psShape->dfZMax), psSHP->pabyRec + nOffset + 8, 8 );
-            
+
             if( bBigEndian ) SwapWord( 8, &(psShape->dfZMin) );
             if( bBigEndian ) SwapWord( 8, &(psShape->dfZMax) );
-            
-            for( i = 0; i < nPoints; i++ )
+
+            for( i = 0; (int32)i < nPoints; i++ )
             {
                 memcpy( psShape->padfZ + i,
                         psSHP->pabyRec + nOffset + 16 + i*8, 8 );
@@ -2178,15 +2178,15 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 /*      big enough, but really it will only occur for the Z shapes      */
 /*      (options), and the M shapes.                                    */
 /* -------------------------------------------------------------------- */
-        if( nEntitySize >= nOffset + 16 + 8*nPoints )
+        if( nEntitySize >= (int)(nOffset + 16 + 8*nPoints) )
         {
             memcpy( &(psShape->dfMMin), psSHP->pabyRec + nOffset, 8 );
             memcpy( &(psShape->dfMMax), psSHP->pabyRec + nOffset + 8, 8 );
-            
+
             if( bBigEndian ) SwapWord( 8, &(psShape->dfMMin) );
             if( bBigEndian ) SwapWord( 8, &(psShape->dfMMax) );
-            
-            for( i = 0; i < nPoints; i++ )
+
+            for( i = 0; (int32)i < nPoints; i++ )
             {
                 memcpy( psShape->padfM + i,
                         psSHP->pabyRec + nOffset + 16 + i*8, 8 );
@@ -2413,8 +2413,8 @@ SHPDestroyObject( SHPObject * psShape )
 /************************************************************************/
 
 int SHPAPI_CALL
-SHPRewindObject( SHPHandle hSHP, SHPObject * psObject )
-
+SHPRewindObject( CPL_UNUSED SHPHandle hSHP,
+                 SHPObject * psObject )
 {
     int  iOpRing, bAltered = 0;
 

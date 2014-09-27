@@ -312,15 +312,15 @@ static OGRFeature *TranslateOscarRouteLine( NTFFileReader *poReader,
 /*                       TranslateOscarComment()                        */
 /************************************************************************/
 
-static OGRFeature *TranslateOscarComment( NTFFileReader *poReader,
+static OGRFeature *TranslateOscarComment( CPL_UNUSED NTFFileReader *poReader,
                                           OGRNTFLayer *poLayer,
                                           NTFRecord **papoGroup )
 
 {
-    if( CSLCount((char **) papoGroup) != 1 
+    if( CSLCount((char **) papoGroup) != 1
         || papoGroup[0]->GetType() != NRT_COMMENT )
         return NULL;
-        
+
     OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // RECORD_TYPE
@@ -1144,15 +1144,15 @@ static OGRFeature *TranslateMeridian2Line( NTFFileReader *poReader,
 /*      Also used for Meridian, Oscar and BaseData.GB nodes.            */
 /************************************************************************/
 
-static OGRFeature *TranslateStrategiNode( NTFFileReader *poReader,
+static OGRFeature *TranslateStrategiNode( CPL_UNUSED NTFFileReader *poReader,
                                           OGRNTFLayer *poLayer,
                                           NTFRecord **papoGroup )
 
 {
-    if( CSLCount((char **) papoGroup) != 1 
+    if( CSLCount((char **) papoGroup) != 1
         || papoGroup[0]->GetType() != NRT_NODEREC )
         return NULL;
-        
+
     OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // NODE_ID

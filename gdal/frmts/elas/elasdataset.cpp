@@ -153,9 +153,9 @@ ELASRasterBand::ELASRasterBand( ELASDataset *poDS, int nBand )
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr ELASRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr ELASRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
+                                   int nBlockYOff,
                                    void * pImage )
-
 {
     ELASDataset	*poGDS = (ELASDataset *) poDS;
     CPLErr		eErr = CE_None;
@@ -188,9 +188,9 @@ CPLErr ELASRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*                            IWriteBlock()                             */
 /************************************************************************/
 
-CPLErr ELASRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-                                     void * pImage )
-
+CPLErr ELASRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
+                                    int nBlockYOff,
+                                    void * pImage )
 {
     ELASDataset	*poGDS = (ELASDataset *) poDS;
     CPLErr		eErr = CE_None;

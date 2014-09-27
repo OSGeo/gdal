@@ -812,18 +812,20 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
     *ppadfPrjParams = (double *)CPLMalloc( 17 * sizeof(double) );
     for ( i = 0; i < 17; i++ )
         (*ppadfPrjParams)[i] = 0.0;
-   
+
 /* -------------------------------------------------------------------- */
 /*      Get the prime meridian info.                                    */
 /* -------------------------------------------------------------------- */
+#if 0
     const OGR_SRSNode *poPRIMEM = GetAttrNode( "PRIMEM" );
     double dfFromGreenwich = 0.0;
 
-    if( poPRIMEM != NULL && poPRIMEM->GetChildCount() >= 2 
+    if( poPRIMEM != NULL && poPRIMEM->GetChildCount() >= 2
         && atof(poPRIMEM->GetChild(1)->GetValue()) != 0.0 )
     {
         dfFromGreenwich = atof(poPRIMEM->GetChild(1)->GetValue());
     }
+#endif
 
 /* ==================================================================== */
 /*      Handle the projection definition.                               */
@@ -1347,4 +1349,3 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
 
     return OGRERR_NONE;
 }
-

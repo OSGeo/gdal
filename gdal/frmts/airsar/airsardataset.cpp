@@ -173,9 +173,9 @@ AirSARRasterBand::~AirSARRasterBand()
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr AirSARRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                      void * pImage )
-
+CPLErr AirSARRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
+                                     int nBlockYOff,
+                                     void * pImage )
 {
     CPLErr eErr;
     float *pafLine = (float *) pImage;

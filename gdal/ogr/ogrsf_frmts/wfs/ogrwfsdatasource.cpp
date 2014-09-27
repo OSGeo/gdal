@@ -213,8 +213,7 @@ OGRWFSDataSource::~OGRWFSDataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRWFSDataSource::TestCapability( const char * pszCap )
-
+int OGRWFSDataSource::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }
@@ -1217,7 +1216,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
 
                 CPLXMLNode* psBBox = NULL;
                 CPLXMLNode* psLatLongBBox = NULL;
-                int bFoundBBox = FALSE;
+                /* int bFoundBBox = FALSE; */
                 double dfMinX = 0, dfMinY = 0, dfMaxX = 0, dfMaxY = 0;
                 if ((psBBox = CPLGetXMLNode(psChildIter, "WGS84BoundingBox")) != NULL)
                 {
@@ -1233,7 +1232,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
                                             osConcat, " ,", FALSE, FALSE );
                         if (CSLCount(papszTokens) == 4)
                         {
-                            bFoundBBox = TRUE;
+                            /* bFoundBBox = TRUE; */
                             dfMinX = CPLAtof(papszTokens[0]);
                             dfMinY = CPLAtof(papszTokens[1]);
                             dfMaxX = CPLAtof(papszTokens[2]);
@@ -1256,7 +1255,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
                     if (pszMinX != NULL && pszMinY != NULL &&
                         pszMaxX != NULL && pszMaxY != NULL)
                     {
-                        bFoundBBox = TRUE;
+                        /* bFoundBBox = TRUE; */
                         dfMinX = CPLAtof(pszMinX);
                         dfMinY = CPLAtof(pszMinY);
                         dfMaxX = CPLAtof(pszMaxX);

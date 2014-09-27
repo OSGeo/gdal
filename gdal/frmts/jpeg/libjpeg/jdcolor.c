@@ -12,6 +12,7 @@
 #include "jinclude.h"
 #include "jpeglib.h"
 
+#include "cpl_port.h"
 
 /* Private subobject */
 
@@ -290,7 +291,7 @@ ycck_cmyk_convert (j_decompress_ptr cinfo,
  */
 
 METHODDEF(void)
-start_pass_dcolor (j_decompress_ptr cinfo)
+start_pass_dcolor (CPL_UNUSED j_decompress_ptr cinfo)
 {
   /* no work needed */
 }

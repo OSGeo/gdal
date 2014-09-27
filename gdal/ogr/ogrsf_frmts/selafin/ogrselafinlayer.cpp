@@ -202,7 +202,8 @@ int OGRSelafinLayer::GetFeatureCount(int bForce) {
 /************************************************************************/
 /*                             GetExtent()                              */
 /************************************************************************/
-OGRErr OGRSelafinLayer::GetExtent(OGREnvelope *psExtent,int bForce) {
+OGRErr OGRSelafinLayer::GetExtent(OGREnvelope *psExtent,
+                                  CPL_UNUSED int bForce) {
     //CPLDebug("Selafin","GetExtent(%i)",bForce);
     if (poHeader->nPoints==0) return OGRERR_NONE;
     CPLRectObj *poObj=poHeader->getBoundingBox();
@@ -418,7 +419,8 @@ OGRErr OGRSelafinLayer::CreateFeature(OGRFeature *poFeature) {
 /************************************************************************/
 /*                           CreateField()                              */
 /************************************************************************/
-OGRErr OGRSelafinLayer::CreateField(OGRFieldDefn *poField,int bApproxOK) {
+OGRErr OGRSelafinLayer::CreateField(OGRFieldDefn *poField,
+                                    CPL_UNUSED int bApproxOK) {
     CPLDebug("Selafin","CreateField(%s,%s)",poField->GetNameRef(),OGRFieldDefn::GetFieldTypeName(poField->GetType()));
     // Test if the field does not exist yet
     if (poFeatureDefn->GetFieldIndex(poField->GetNameRef())!=-1) {
@@ -625,7 +627,9 @@ OGRErr OGRSelafinLayer::ReorderFields(int *panMap) {
 /************************************************************************/
 /*                         AlterFieldDefn()                             */
 /************************************************************************/
-OGRErr OGRSelafinLayer::AlterFieldDefn(int iField,OGRFieldDefn *poNewFieldDefn,int nFlags) {
+OGRErr OGRSelafinLayer::AlterFieldDefn(int iField,
+                                       OGRFieldDefn *poNewFieldDefn,
+                                       CPL_UNUSED int nFlags) {
     CPLDebug("Selafin","AlterFieldDefn(%i,%s,%s)",iField,poNewFieldDefn->GetNameRef(),OGRFieldDefn::GetFieldTypeName(poNewFieldDefn->GetType()));
     // Test if the field type is legal (only double precision values are allowed)
     if (poNewFieldDefn->GetType()!=OFTReal) {

@@ -64,8 +64,7 @@ OGRSUADataSource::~OGRSUADataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRSUADataSource::TestCapability( const char * pszCap )
-
+int OGRSUADataSource::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }

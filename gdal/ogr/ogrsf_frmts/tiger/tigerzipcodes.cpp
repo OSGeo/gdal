@@ -62,7 +62,8 @@ static const TigerRecordInfo rt6_info =
 /************************************************************************/
 
 TigerZipCodes::TigerZipCodes( OGRTigerDataSource * poDSIn,
-                                  const char * pszPrototypeModule ) : TigerFileBase(&rt6_info, FILE_CODE)
+                              CPL_UNUSED const char * pszPrototypeModule ) :
+    TigerFileBase(&rt6_info, FILE_CODE)
 
 {
     poDS = poDSIn;

@@ -60,14 +60,14 @@ CPL_CVSID("$Id$");
  */
 
 CPLErr
-GDALTransformGeolocations( GDALRasterBandH hXBand, 
-                           GDALRasterBandH hYBand, 
+GDALTransformGeolocations( GDALRasterBandH hXBand,
+                           GDALRasterBandH hYBand,
                            GDALRasterBandH hZBand,
-                           GDALTransformerFunc pfnTransformer, 
-                           void *pTransformArg, 
-                           GDALProgressFunc pfnProgress, 
+                           GDALTransformerFunc pfnTransformer,
+                           void *pTransformArg,
+                           GDALProgressFunc pfnProgress,
                            void *pProgressArg,
-                           char **papszOptions )
+                           CPL_UNUSED char **papszOptions )
 
 {
     VALIDATE_POINTER1( hXBand, "GDALTransformGeolocations", CE_Failure );

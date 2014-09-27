@@ -69,9 +69,11 @@ static GDALDataset *OGRDXFDriverOpen( GDALOpenInfo* poOpenInfo )
 /************************************************************************/
 
 static GDALDataset *OGRDXFDriverCreate( const char * pszName,
-                                int nBands, int nXSize, int nYSize, GDALDataType eDT,
-                                char **papszOptions )
-
+                                        CPL_UNUSED int nBands,
+                                        CPL_UNUSED int nXSize,
+                                        CPL_UNUSED int nYSize,
+                                        CPL_UNUSED GDALDataType eDT,
+                                        char **papszOptions )
 {
     OGRDXFWriterDS *poDS = new OGRDXFWriterDS();
 
@@ -124,4 +126,3 @@ void RegisterOGRDXF()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-

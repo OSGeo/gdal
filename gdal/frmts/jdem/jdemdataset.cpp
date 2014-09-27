@@ -157,8 +157,9 @@ JDEMRasterBand::~JDEMRasterBand()
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr JDEMRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+CPLErr JDEMRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
+                                   int nBlockYOff,
+                                   void * pImage )
 
 {
     JDEMDataset *poGDS = (JDEMDataset *) poDS;

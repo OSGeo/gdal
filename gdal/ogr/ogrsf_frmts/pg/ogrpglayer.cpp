@@ -1816,7 +1816,8 @@ OGRErr OGRPGLayer::GetExtent( int iGeomField, OGREnvelope *psExtent, int bForce 
 /*                             GetExtent()                              */
 /************************************************************************/
 
-OGRErr OGRPGLayer::RunGetExtentRequest( OGREnvelope *psExtent, int bForce,
+OGRErr OGRPGLayer::RunGetExtentRequest( OGREnvelope *psExtent,
+                                        CPL_UNUSED int bForce,
                                         CPLString osCommand)
 {
     if ( psExtent == NULL )

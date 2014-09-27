@@ -137,8 +137,9 @@ GFFRasterBand::GFFRasterBand( GFFDataset *poDS, int nBand,
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr GFFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-				void *pImage ) 
+CPLErr GFFRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
+                                  int nBlockYOff,
+                                  void *pImage )
 {
     GFFDataset *poGDS = (GFFDataset *)poDS;
     long nOffset = poGDS->nLength;

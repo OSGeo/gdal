@@ -73,9 +73,11 @@ static GDALDataset *OGRDGNDriverOpen( GDALOpenInfo* poOpenInfo )
 /************************************************************************/
 
 static GDALDataset *OGRDGNDriverCreate( const char * pszName,
-                                int nBands, int nXSize, int nYSize, GDALDataType eDT,
-                                char **papszOptions )
-
+                                        CPL_UNUSED int nBands,
+                                        CPL_UNUSED int nXSize,
+                                        CPL_UNUSED int nYSize,
+                                        CPL_UNUSED GDALDataType eDT,
+                                        char **papszOptions )
 {
 /* -------------------------------------------------------------------- */
 /*      Return a new OGRDataSource()                                    */
@@ -83,7 +85,7 @@ static GDALDataset *OGRDGNDriverCreate( const char * pszName,
     OGRDGNDataSource    *poDS = NULL;
 
     poDS = new OGRDGNDataSource();
-    
+
     if( !poDS->PreCreate( pszName, papszOptions ) )
     {
         delete poDS;
@@ -138,4 +140,3 @@ void RegisterOGRDGN()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-

@@ -292,8 +292,9 @@ COASPRasterBand::COASPRasterBand( COASPDataset *poDS, GDALDataType eDataType,
 	this->nBlockYSize = 1;
 }
 
-CPLErr COASPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, 
-	void *pImage )
+CPLErr COASPRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
+                                    int nBlockYOff,
+                                    void *pImage )
 {
 	if (this->fp == NULL) {
 		CPLError(CE_Fatal, 1, "file pointer freed unexpectedly\n");

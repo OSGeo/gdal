@@ -234,9 +234,9 @@ GIFRasterBand::~GIFRasterBand()
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr GIFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr GIFRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
+                                  int nBlockYOff,
                                   void * pImage )
-
 {
     CPLAssert( nBlockXOff == 0 );
 
@@ -486,7 +486,7 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*                        GDALPrintGifError()                           */
 /************************************************************************/
 
-static void GDALPrintGifError(GifFileType *hGifFile, const char* pszMsg)
+static void GDALPrintGifError(CPL_UNUSED GifFileType *hGifFile, const char* pszMsg)
 {
 /* GIFLIB_MAJOR is only defined in libgif >= 4.2.0 */
 /* libgif 4.2.0 has retired PrintGifError() and added GifErrorString() */
@@ -892,4 +892,3 @@ void GDALRegister_GIF()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-

@@ -338,6 +338,7 @@ int ReadOSMHeader(GByte* pabyData, GByte* pabyDataLimit,
         }
         else if (nKey == MAKE_KEY(OSMHEADER_IDX_OSMOSIS_REPLICATION_TIMESTAMP, WT_VARINT))
         {
+            /* TODO: Do something with nVal or change this to a seek forward. */
             GIntBig nVal;
             READ_VARINT64(pabyData, pabyDataLimit, nVal);
         }
@@ -1587,8 +1588,10 @@ end_error:
 /*                        EmptyNotifyNodesFunc()                        */
 /************************************************************************/
 
-static void EmptyNotifyNodesFunc(unsigned int nNodes, OSMNode* pasNodes,
-                                 OSMContext* psCtxt, void* user_data)
+static void EmptyNotifyNodesFunc(CPL_UNUSED unsigned int nNodes,
+                                 CPL_UNUSED OSMNode* pasNodes,
+                                 CPL_UNUSED OSMContext* psCtxt,
+                                 CPL_UNUSED void* user_data)
 {
 }
 
@@ -1597,8 +1600,9 @@ static void EmptyNotifyNodesFunc(unsigned int nNodes, OSMNode* pasNodes,
 /*                         EmptyNotifyWayFunc()                         */
 /************************************************************************/
 
-static void EmptyNotifyWayFunc(OSMWay* psWay,
-                               OSMContext* psCtxt, void* user_data)
+static void EmptyNotifyWayFunc(CPL_UNUSED OSMWay* psWay,
+                               CPL_UNUSED OSMContext* psCtxt,
+                               CPL_UNUSED void* user_data)
 {
 }
 
@@ -1606,8 +1610,9 @@ static void EmptyNotifyWayFunc(OSMWay* psWay,
 /*                       EmptyNotifyRelationFunc()                      */
 /************************************************************************/
 
-static void EmptyNotifyRelationFunc(OSMRelation* psRelation,
-                                    OSMContext* psCtxt, void* user_data)
+static void EmptyNotifyRelationFunc(CPL_UNUSED OSMRelation* psRelation,
+                                    CPL_UNUSED OSMContext* psCtxt,
+                                    CPL_UNUSED void* user_data)
 {
 }
 
@@ -1615,9 +1620,12 @@ static void EmptyNotifyRelationFunc(OSMRelation* psRelation,
 /*                         EmptyNotifyBoundsFunc()                      */
 /************************************************************************/
 
-static void EmptyNotifyBoundsFunc( double dfXMin, double dfYMin,
-                                   double dfXMax, double dfYMax,
-                                   OSMContext* psCtxt, void* user_data )
+static void EmptyNotifyBoundsFunc( CPL_UNUSED double dfXMin,
+                                   CPL_UNUSED double dfYMin,
+                                   CPL_UNUSED double dfXMax,
+                                   CPL_UNUSED double dfYMax,
+                                   CPL_UNUSED OSMContext* psCtxt,
+                                   CPL_UNUSED void* user_data )
 {
 }
 
@@ -2063,7 +2071,9 @@ static void XMLCALL OSM_XML_endElementCbk(void *pUserData, const char *pszName)
 /*                           dataHandlerCbk()                           */
 /************************************************************************/
 
-static void XMLCALL OSM_XML_dataHandlerCbk(void *pUserData, const char *data, int nLen)
+static void XMLCALL OSM_XML_dataHandlerCbk(void *pUserData,
+                                           CPL_UNUSED const char *data,
+                                           CPL_UNUSED int nLen)
 {
     OSMContext* psCtxt = (OSMContext*) pUserData;
 

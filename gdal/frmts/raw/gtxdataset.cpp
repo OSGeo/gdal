@@ -314,10 +314,11 @@ const char *GTXDataset::GetProjectionRef()
 /************************************************************************/
 
 GDALDataset *GTXDataset::Create( const char * pszFilename,
-                                 int nXSize, int nYSize, int nBands,
+                                 int nXSize,
+                                 int nYSize,
+                                 CPL_UNUSED int nBands,
                                  GDALDataType eType,
-                                 char ** papszOptions )
-
+                                 CPL_UNUSED char ** papszOptions )
 {
     if( eType != GDT_Float32 )
     {

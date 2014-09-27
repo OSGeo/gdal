@@ -450,7 +450,7 @@ int MIFFile::Open(const char *pszFname, TABAccess eAccess,
      *------------------------------------------------------------*/
     int numPoints=0, numRegions=0, numTexts=0, numLines=0;
 
-    if( GetFeatureCountByType( numPoints, numLines, numRegions, numTexts, 
+    if( GetFeatureCountByType( numPoints, numLines, numRegions, numTexts,
                                FALSE ) == 0 )
     {
         numPoints += numTexts;
@@ -459,7 +459,9 @@ int MIFFile::Open(const char *pszFname, TABAccess eAccess,
         else if( numPoints == 0 && numLines > 0 && numRegions == 0 )
             m_poDefn->SetGeomType( wkbLineString );
         else
-            /* we leave it unknown indicating a mixture */;
+        {
+            /* we leave it unknown indicating a mixture */
+        }
     }
 
     /* A newly created layer should have OGRFeatureDefn */

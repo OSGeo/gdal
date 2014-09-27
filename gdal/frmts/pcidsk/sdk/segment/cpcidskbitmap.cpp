@@ -35,6 +35,8 @@
 #include <cstdio>
 #include <cctype>
 
+#include "cpl_port.h"
+
 using namespace PCIDSK;
 
 /************************************************************************/
@@ -315,10 +317,10 @@ int CPCIDSKBitmap::WriteBlock( int block_index, void *buffer )
     else
     {
         uint64 short_block_size;
-        
-        short_block_size = 
+
+        short_block_size =
             ((height - block_index*block_height) * block_width + 7) / 8;
-        
+
         WriteToFile( buffer, block_size * block_index, short_block_size );
     }
 
@@ -330,7 +332,6 @@ int CPCIDSKBitmap::WriteBlock( int block_index, void *buffer )
 /************************************************************************/
 
 int CPCIDSKBitmap::GetOverviewCount()
-
 {
     return 0;
 }
@@ -339,10 +340,10 @@ int CPCIDSKBitmap::GetOverviewCount()
 /*                            GetOverview()                             */
 /************************************************************************/
 
-PCIDSKChannel *CPCIDSKBitmap::GetOverview( int i )
-
+PCIDSKChannel *CPCIDSKBitmap::GetOverview( CPL_UNUSED int i )
 {
-    ThrowPCIDSKException("Non-existant overview %d requested on bitmap segment."); 
+    // The %d is ignored in the exception.
+    ThrowPCIDSKException("Non-existant overview %d requested on bitmap segment.");
     return NULL;
 }
 
@@ -350,8 +351,7 @@ PCIDSKChannel *CPCIDSKBitmap::GetOverview( int i )
 /*                          IsOverviewValid()                           */
 /************************************************************************/
 
-bool CPCIDSKBitmap::IsOverviewValid( int i )
-
+bool CPCIDSKBitmap::IsOverviewValid( CPL_UNUSED int i )
 {
     return false;
 }
@@ -360,8 +360,7 @@ bool CPCIDSKBitmap::IsOverviewValid( int i )
 /*                       GetOverviewResampling()                        */
 /************************************************************************/
 
-std::string CPCIDSKBitmap::GetOverviewResampling( int i )
-
+std::string CPCIDSKBitmap::GetOverviewResampling( CPL_UNUSED int i )
 {
     return "";
 }
@@ -370,8 +369,7 @@ std::string CPCIDSKBitmap::GetOverviewResampling( int i )
 /*                        SetOverviewValidity()                         */
 /************************************************************************/
 
-void CPCIDSKBitmap::SetOverviewValidity( int i, bool validity )
-
+void CPCIDSKBitmap::SetOverviewValidity( CPL_UNUSED int i, CPL_UNUSED bool validity )
 {
 }
 
@@ -498,10 +496,9 @@ void CPCIDSKBitmap::GetChanInfo( std::string &filename, uint64 &image_offset,
 /*                            SetChanInfo()                             */
 /************************************************************************/
 
-void CPCIDSKBitmap::SetChanInfo( std::string filename, uint64 image_offset, 
-                                  uint64 pixel_offset, uint64 line_offset, 
-                                  bool little_endian )
-
+void CPCIDSKBitmap::SetChanInfo( CPL_UNUSED std::string filename, CPL_UNUSED uint64 image_offset,
+                                 CPL_UNUSED uint64 pixel_offset, CPL_UNUSED uint64 line_offset,
+                                 CPL_UNUSED bool little_endian )
 {
     ThrowPCIDSKException( "Attempt to SetChanInfo() on a bitmap." );
 }
@@ -510,9 +507,8 @@ void CPCIDSKBitmap::SetChanInfo( std::string filename, uint64 image_offset,
 /*                            GetEChanInfo()                            */
 /************************************************************************/
 void CPCIDSKBitmap::GetEChanInfo( std::string &filename, int &echannel,
-                                  int &exoff, int &eyoff, 
+                                  int &exoff, int &eyoff,
                                   int &exsize, int &eysize ) const
-    
 {
     echannel = 0;
     exoff = 0;
@@ -526,10 +522,9 @@ void CPCIDSKBitmap::GetEChanInfo( std::string &filename, int &echannel,
 /*                            SetEChanInfo()                            */
 /************************************************************************/
 
-void CPCIDSKBitmap::SetEChanInfo( std::string filename, int echannel,
-                                  int exoff, int eyoff, 
-                                  int exsize, int eysize )
-
+void CPCIDSKBitmap::SetEChanInfo( CPL_UNUSED std::string filename, CPL_UNUSED int echannel,
+                                  CPL_UNUSED int exoff, CPL_UNUSED int eyoff,
+                                  CPL_UNUSED int exsize, CPL_UNUSED int eysize )
 {
     ThrowPCIDSKException( "Attempt to SetEChanInfo() on a bitmap." );
 }

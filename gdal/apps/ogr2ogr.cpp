@@ -2471,24 +2471,24 @@ static int ForceCoordDimension(int eGType, int nCoordDim)
 /*                         SetupTargetLayer()                           */
 /************************************************************************/
 
-static TargetLayerInfo* SetupTargetLayer( GDALDataset *poSrcDS,
-                                                OGRLayer * poSrcLayer,
-                                                GDALDataset *poDstDS,
-                                                char **papszLCO,
-                                                const char *pszNewLayerName,
-                                                OGRSpatialReference *poOutputSRSIn,
-                                                int bNullifyOutputSRS,
-                                                char **papszSelFields,
-                                                int bAppend, int bAddMissingFields, int eGType,
-                                                int bPromoteToMulti,
-                                                int nCoordDim, int bOverwrite,
-                                                char** papszFieldTypesToString,
-                                                int bUnsetFieldWidth,
-                                                int bExplodeCollections,
-                                                const char* pszZField,
-                                                char **papszFieldMap,
-                                                const char* pszWHERE,
-                                                int bExactFieldNameMatch )
+static TargetLayerInfo* SetupTargetLayer( CPL_UNUSED GDALDataset *poSrcDS,
+                                          OGRLayer * poSrcLayer,
+                                          GDALDataset *poDstDS,
+                                          char **papszLCO,
+                                          const char *pszNewLayerName,
+                                          OGRSpatialReference *poOutputSRSIn,
+                                          int bNullifyOutputSRS,
+                                          char **papszSelFields,
+                                          int bAppend, int bAddMissingFields, int eGType,
+                                          int bPromoteToMulti,
+                                          int nCoordDim, int bOverwrite,
+                                          char** papszFieldTypesToString,
+                                          int bUnsetFieldWidth,
+                                          int bExplodeCollections,
+                                          const char* pszZField,
+                                          char **papszFieldMap,
+                                          const char* pszWHERE,
+                                          int bExactFieldNameMatch )
 {
     OGRLayer    *poDstLayer;
     OGRFeatureDefn *poSrcFDefn;
@@ -3244,7 +3244,7 @@ static int SetupCT( TargetLayerInfo* psInfo,
 static int TranslateLayer( TargetLayerInfo* psInfo,
                            GDALDataset *poSrcDS,
                            OGRLayer * poSrcLayer,
-                           GDALDataset *poDstDS,
+                           CPL_UNUSED GDALDataset *poDstDS,
                            int bTransform,
                            int bWrapDateline,
                            const char* pszDateLineOffset,
@@ -3265,7 +3265,6 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
                            GIntBig* pnReadFeatureCount,
                            GDALProgressFunc pfnProgress,
                            void *pProgressArg )
-
 {
     OGRLayer    *poDstLayer;
     int         bForceToPolygon = FALSE;
@@ -3625,4 +3624,3 @@ end_loop:
 
     return TRUE;
 }
-

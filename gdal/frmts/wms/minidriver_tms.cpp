@@ -74,7 +74,8 @@ void GDALWMSMiniDriver_TMS::GetCapabilities(GDALWMSMiniDriverCapabilities *caps)
     caps->m_max_overview_count = 32;
 }
 
-void GDALWMSMiniDriver_TMS::ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri) {
+void GDALWMSMiniDriver_TMS::ImageRequest(CPL_UNUSED CPLString *url,
+                                         CPL_UNUSED const GDALWMSImageRequestInfo &iri) {
 }
 
 void GDALWMSMiniDriver_TMS::TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri) {

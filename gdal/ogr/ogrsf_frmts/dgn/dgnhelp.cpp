@@ -512,7 +512,8 @@ void DGNAsciiToRad50( const char *str, unsigned short *pRad50 )
 /*      The got name is stored in psLine.                               */
 /************************************************************************/
 
-int DGNGetLineStyleName(DGNInfo *psDGN, DGNElemMultiPoint *psLine,
+int DGNGetLineStyleName(CPL_UNUSED DGNInfo *psDGN,
+                        DGNElemMultiPoint *psLine,
                         char szLineStyle[65] )
 {
     if (psLine->core.attr_bytes > 0 &&
@@ -1200,9 +1201,9 @@ const char *DGNTypeToName( int nType )
  * @return size of linkage in bytes, or zero. 
  */
 
-int DGNGetAttrLinkSize( DGNHandle hDGN, DGNElemCore *psElement, 
+int DGNGetAttrLinkSize( CPL_UNUSED DGNHandle hDGN,
+                        DGNElemCore *psElement,
                         int nOffset )
-
 {
     if( psElement->attr_bytes < nOffset + 4 )
         return 0;
@@ -1367,9 +1368,10 @@ void DGNQuaternionToMatrix( int *quat, float *mat )
 /*                  DGNTransformPointWithQuaternion()                   */
 /************************************************************************/
 
-void DGNTransformPointWithQuaternionVertex( int *quat, DGNPoint *v1, DGNPoint *v2 )
+void DGNTransformPointWithQuaternionVertex( CPL_UNUSED int *quat,
+                                            CPL_UNUSED DGNPoint *v1,
+                                            CPL_UNUSED DGNPoint *v2 )
 {
-
 /* ==================================================================== */
 /*      Original code provided by kintel 20030819, but assumed to be    */
 /*      incomplete.                                                     */

@@ -145,10 +145,9 @@ OGRLayer *OGRGPXDataSource::GetLayer( int iLayer )
 /************************************************************************/
 
 OGRLayer * OGRGPXDataSource::ICreateLayer( const char * pszLayerName,
-                                          OGRSpatialReference *poSRS,
-                                          OGRwkbGeometryType eType,
-                                          char ** papszOptions )
-
+                                           CPL_UNUSED OGRSpatialReference *poSRS,
+                                           OGRwkbGeometryType eType,
+                                           char ** papszOptions )
 {
     GPXGeometryType gpxGeomType;
     if (eType == wkbPoint || eType == wkbPoint25D)
@@ -239,7 +238,8 @@ void OGRGPXDataSource::startElementValidateCbk(const char *pszName, const char *
 /*                      dataHandlerValidateCbk()                        */
 /************************************************************************/
 
-void OGRGPXDataSource::dataHandlerValidateCbk(const char *data, int nLen)
+void OGRGPXDataSource::dataHandlerValidateCbk(CPL_UNUSED const char *data,
+                                              CPL_UNUSED int nLen)
 {
     nDataHandlerCounter ++;
     if (nDataHandlerCounter >= BUFSIZ)

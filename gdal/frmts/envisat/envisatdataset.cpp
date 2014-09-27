@@ -105,7 +105,8 @@ MerisL2FlagBand::~MerisL2FlagBand()
 /************************************************************************/
 /*                             IReadBlock()                             */
 /************************************************************************/
-CPLErr MerisL2FlagBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr MerisL2FlagBand::IReadBlock( CPL_UNUSED int nBlockXOff,
+                                    int nBlockYOff,
                                     void * pImage )
 {
     CPLAssert( nBlockXOff == 0 );
@@ -1195,4 +1196,3 @@ void GDALRegister_Envisat()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-

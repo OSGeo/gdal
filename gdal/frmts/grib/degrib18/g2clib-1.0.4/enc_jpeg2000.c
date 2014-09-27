@@ -1,8 +1,18 @@
 #include "grib2.h"
+
+#include "cpl_port.h"
+
 #ifndef USE_JPEG2000
-int enc_jpeg2000(unsigned char *cin,g2int width,g2int height,g2int nbits,
-                 g2int ltype, g2int ratio, g2int retry, char *outjpc, 
-				 g2int jpclen){return 0;}
+int enc_jpeg2000(CPL_UNUSED unsigned char *cin,
+                 CPL_UNUSED g2int width,
+                 CPL_UNUSED g2int height,
+                 CPL_UNUSED g2int nbits,
+                 CPL_UNUSED g2int ltype,
+                 CPL_UNUSED g2int ratio,
+                 CPL_UNUSED g2int retry,
+                 CPL_UNUSED char *outjpc,
+                 CPL_UNUSED g2int jpclen) { return 0; }
+
 #else   /* USE_JPEG2000 */
 
 #include <stdio.h>

@@ -106,13 +106,12 @@ OGRLayer *OGRBNADataSource::GetLayer( int iLayer )
 /************************************************************************/
 
 OGRLayer * OGRBNADataSource::ICreateLayer( const char * pszLayerName,
-                                          OGRSpatialReference *poSRS,
-                                          OGRwkbGeometryType eType,
-                                          char ** papszOptions )
-
+                                           CPL_UNUSED OGRSpatialReference *poSRS,
+                                           OGRwkbGeometryType eType,
+                                           CPL_UNUSED char ** papszOptions )
 {
     BNAFeatureType bnaFeatureType;
-    
+
     switch(eType)
     {
         case wkbPolygon:

@@ -126,12 +126,12 @@ XYZRasterBand::XYZRasterBand( XYZDataset *poDS, int nBand, GDALDataType eDT )
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr XYZRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr XYZRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
+                                  int nBlockYOff,
                                   void * pImage )
-
 {
     XYZDataset *poGDS = (XYZDataset *) poDS;
-    
+
     if (poGDS->fp == NULL)
         return CE_Failure;
 
@@ -360,9 +360,10 @@ CPLErr XYZRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         if( idx + 1 == nRasterXSize )
             break;
     }
-    
-    if( poGDS->bSameNumberOfValuesPerLine )
+
+    if( poGDS->bSameNumberOfValuesPerLine ) {
         CPLAssert(poGDS->nDataLineNum == (nBlockYOff + 1) * nBlockXSize);
+    }
 
     nLastYOff = nBlockYOff;
 
@@ -1219,4 +1220,3 @@ void GDALRegister_XYZ()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-

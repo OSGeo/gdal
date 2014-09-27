@@ -252,13 +252,12 @@ HFAEntry* HFAEntry::BuildEntryFromMIFObject( HFAEntry *poContainer, const char *
 /*      Create a pseudo-HFAEntry wrapping a MIFObject.                  */
 /************************************************************************/
 
-HFAEntry::HFAEntry( HFAEntry * poContainer,
-                    const char *pszMIFObjectPath,
-                    const char * pszDictionnary, 
+HFAEntry::HFAEntry( CPL_UNUSED HFAEntry * poContainer,
+                    CPL_UNUSED const char *pszMIFObjectPath,
+                    const char * pszDictionnary,
                     const char * pszTypeName,
                     int nDataSizeIn,
                     GByte* pabyDataIn )
-
 {
 /* -------------------------------------------------------------------- */
 /*      Initialize Entry                                                */
@@ -710,11 +709,10 @@ int HFAEntry::GetFieldValue( const char * pszFieldPath,
 /*                           GetFieldCount()                            */
 /************************************************************************/
 
-int HFAEntry::GetFieldCount( const char * pszFieldPath, CPLErr *peErr )
-
+int HFAEntry::GetFieldCount( const char * pszFieldPath, CPL_UNUSED CPLErr *peErr )
 {
     HFAEntry	*poEntry = this;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Is there a node path in this string?                            */
 /* -------------------------------------------------------------------- */
@@ -1102,4 +1100,3 @@ void HFAEntry::MarkDirty()
     bDirty = TRUE;
     psHFA->bTreeDirty = TRUE;
 }
-

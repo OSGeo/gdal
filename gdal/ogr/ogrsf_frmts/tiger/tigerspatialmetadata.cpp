@@ -58,7 +58,8 @@ static const TigerRecordInfo rtM_info =
 /************************************************************************/
 
 TigerSpatialMetadata::TigerSpatialMetadata( OGRTigerDataSource * poDSIn,
-                            const char * pszPrototypeModule ) : TigerFileBase(&rtM_info, FILE_CODE)
+                                            CPL_UNUSED const char * pszPrototypeModule ) :
+    TigerFileBase(&rtM_info, FILE_CODE)
 
 {
     poDS = poDSIn;

@@ -88,8 +88,7 @@ OGRDataSource *OGRIdrisiDriver::Open( const char * pszFilename, int bUpdate )
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRIdrisiDriver::TestCapability( const char * pszCap )
-
+int OGRIdrisiDriver::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }
@@ -108,4 +107,3 @@ void RegisterOGRIdrisi()
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }
-

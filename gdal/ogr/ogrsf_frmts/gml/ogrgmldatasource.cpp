@@ -1419,10 +1419,9 @@ int OGRGMLDataSource::Create( const char *pszFilename,
 
 OGRLayer *
 OGRGMLDataSource::ICreateLayer( const char * pszLayerName,
-                               OGRSpatialReference *poSRS,
-                               OGRwkbGeometryType eType,
-                               char ** papszOptions )
-
+                                OGRSpatialReference *poSRS,
+                                OGRwkbGeometryType eType,
+                                CPL_UNUSED char ** papszOptions )
 {
 /* -------------------------------------------------------------------- */
 /*      Verify we are in update mode.                                   */

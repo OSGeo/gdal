@@ -2184,11 +2184,13 @@ void OGRFeature::SetField( int iField, int nValue )
 
         if( IsFieldSet( iField) )
             CPLFree( pauFields[iField].String );
-        
+
         pauFields[iField].String = CPLStrdup( szTempBuffer );
     }
     else
-        /* do nothing for other field types */;
+    {
+        /* do nothing for other field types */
+    }
 }
 
 /************************************************************************/
@@ -2274,7 +2276,9 @@ void OGRFeature::SetField( int iField, double dfValue )
         pauFields[iField].String = CPLStrdup( szTempBuffer );
     }
     else
-        /* do nothing for other field types */;
+    {
+        /* do nothing for other field types */
+    }
 }
 
 /************************************************************************/
@@ -2414,7 +2418,9 @@ void OGRFeature::SetField( int iField, const char * pszValue )
         }
     }
     else
+    {
         /* do nothing for other field types */;
+    }
 }
 
 /************************************************************************/
@@ -2934,15 +2940,17 @@ void OGRFeature::SetField( int iField, OGRField * puValue )
         else
         {
             pauFields[iField].Binary.nCount = puValue->Binary.nCount;
-            pauFields[iField].Binary.paData = 
+            pauFields[iField].Binary.paData =
                 (GByte *) CPLMalloc(puValue->Binary.nCount);
-            memcpy( pauFields[iField].Binary.paData, 
-                    puValue->Binary.paData, 
+            memcpy( pauFields[iField].Binary.paData,
+                    puValue->Binary.paData,
                     puValue->Binary.nCount );
         }
     }
     else
-        /* do nothing for other field types */;
+    {
+        /* do nothing for other field types */
+    }
 }
 
 /************************************************************************/

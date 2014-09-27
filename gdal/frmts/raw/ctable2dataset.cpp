@@ -326,10 +326,11 @@ const char *CTable2Dataset::GetProjectionRef()
 /************************************************************************/
 
 GDALDataset *CTable2Dataset::Create( const char * pszFilename,
-                                     int nXSize, int nYSize, int nBands,
+                                     int nXSize,
+                                     int nYSize,
+                                     CPL_UNUSED int nBands,
                                      GDALDataType eType,
                                      char ** papszOptions )
-
 {
     if( eType != GDT_Float32 )
     {
@@ -458,4 +459,3 @@ void GDALRegister_CTable2()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-

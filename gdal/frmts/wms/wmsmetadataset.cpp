@@ -235,16 +235,15 @@ char **GDALWMSMetaDataset::GetMetadata( const char *pszDomain )
 /************************************************************************/
 
 void GDALWMSMetaDataset::AddSubDataset( const char* pszLayerName,
-                                          const char* pszTitle,
-                                          const char* pszAbstract,
-                                          const char* pszSRS,
-                                          const char* pszMinX,
-                                          const char* pszMinY,
-                                          const char* pszMaxX,
-                                          const char* pszMaxY,
-                                          CPLString osFormat,
-                                          CPLString osTransparent)
-
+                                        const char* pszTitle,
+                                        CPL_UNUSED const char* pszAbstract,
+                                        const char* pszSRS,
+                                        const char* pszMinX,
+                                        const char* pszMinY,
+                                        const char* pszMaxX,
+                                        const char* pszMaxY,
+                                        CPLString osFormat,
+                                        CPLString osTransparent)
 {
     CPLString osSubdatasetName = "WMS:";
     osSubdatasetName += osGetURL;
@@ -760,4 +759,3 @@ GDALDataset* GDALWMSMetaDataset::AnalyzeTileMapService(CPLXMLNode* psXML)
 
     return poDS;
 }
-

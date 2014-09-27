@@ -1152,9 +1152,8 @@ PDFImageRasterBand::PDFImageRasterBand( PDFDataset *poDS, int nBand ) : PDFRaste
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr PDFImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
-
+CPLErr PDFImageRasterBand::IReadBlock( int CPL_UNUSED nBlockXOff, int nBlockYOff,
+                                       void * pImage )
 {
     PDFDataset *poGDS = (PDFDataset *) poDS;
     CPLAssert(poGDS->poImageObj != NULL);
@@ -1510,7 +1509,7 @@ static void PDFDatasetErrorFunctionCommon(const CPLString& osError)
 }
 
 #ifdef POPPLER_0_20_OR_LATER
-static void PDFDatasetErrorFunction(void* userData, ErrorCategory eErrCatagory,
+static void PDFDatasetErrorFunction(CPL_UNUSED void* userData, CPL_UNUSED ErrorCategory eErrCatagory,
 #ifdef POPPLER_0_23_OR_LATER
                                     Goffset nPos,
 #else
@@ -2722,7 +2721,10 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
                 if (pszUserPwd && EQUAL(pszUserPwd, "ASK_INTERACTIVE"))
                 {
                     printf( "Enter password (will be echo'ed in the console): " );
-                    fgets( szPassword, sizeof(szPassword), stdin );
+                    if (0 == fgets( szPassword, sizeof(szPassword), stdin ))
+                    {
+                      fprintf(stderr, "WARNING: Error getting password.\n");
+                    }
                     szPassword[sizeof(szPassword)-1] = 0;
                     char* sz10 = strchr(szPassword, '\n');
                     if (sz10)
@@ -3820,7 +3822,7 @@ int PDFDataset::ParseProjDict(GDALPDFDictionary* poProjDict)
 /* -------------------------------------------------------------------- */
     int bIsWGS84 = FALSE;
     int bIsNAD83 = FALSE;
-    int bIsNAD27 = FALSE;
+    /* int bIsNAD27 = FALSE; */
 
     GDALPDFObject* poDatum;
     if ((poDatum = poProjDict->Get("Datum")) != NULL)
@@ -3841,7 +3843,7 @@ int PDFDataset::ParseProjDict(GDALPDFDictionary* poProjDict)
             }
             else if (EQUAL(pszDatum, "NAS") || EQUALN(pszDatum, "NAS-", 4))
             {
-                bIsNAD27 = TRUE;
+                /* bIsNAD27 = TRUE; */
                 oSRS.SetWellKnownGeogCS("NAD27");
             }
             else if (EQUAL(pszDatum, "HEN")) /* HERAT North, Afghanistan */
@@ -5079,7 +5081,7 @@ GDALDataset* GDALPDFOpen(const char* pszFilename, GDALAccess eAccess)
 /*                       GDALPDFUnloadDriver()                          */
 /************************************************************************/
 
-static void GDALPDFUnloadDriver(GDALDriver * poDriver)
+static void GDALPDFUnloadDriver(CPL_UNUSED GDALDriver * poDriver)
 {
 #ifdef HAVE_POPPLER
     if( hGlobalParamsMutex != NULL )
@@ -5210,4 +5212,3 @@ void GDALRegister_PDF()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-

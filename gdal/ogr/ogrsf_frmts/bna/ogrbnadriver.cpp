@@ -66,9 +66,11 @@ static GDALDataset *OGRBNADriverOpen( GDALOpenInfo* poOpenInfo )
 /************************************************************************/
 
 static GDALDataset *OGRBNADriverCreate( const char * pszName,
-                                    int nBands, int nXSize, int nYSize, GDALDataType eDT,
-                                    char **papszOptions )
-
+                                        CPL_UNUSED int nBands,
+                                        CPL_UNUSED int nXSize,
+                                        CPL_UNUSED int nYSize,
+                                        CPL_UNUSED GDALDataType eDT,
+                                        char **papszOptions )
 {
     OGRBNADataSource   *poDS = new OGRBNADataSource();
 
@@ -147,4 +149,3 @@ void RegisterOGRBNA()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-

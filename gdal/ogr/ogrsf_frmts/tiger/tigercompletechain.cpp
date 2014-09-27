@@ -215,8 +215,7 @@ static const TigerRecordInfo rt3_info =
 /************************************************************************/
 
 TigerCompleteChain::TigerCompleteChain( OGRTigerDataSource * poDSIn,
-                                        const char * pszPrototypeModule )
-
+                                        CPL_UNUSED const char * pszPrototypeModule )
 {
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "CompleteChain" );
@@ -483,8 +482,8 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
 /************************************************************************/
 
 int TigerCompleteChain::AddShapePoints( int nTLID, int nRecordId,
-                                        OGRLineString * poLine, int nSeqNum ) 
-
+                                        OGRLineString * poLine,
+                                        CPL_UNUSED int nSeqNum )
 {
     int         nShapeRecId;
 

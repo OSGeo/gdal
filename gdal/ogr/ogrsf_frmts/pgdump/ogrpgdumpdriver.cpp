@@ -37,10 +37,11 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 static GDALDataset* OGRPGDumpDriverCreate( const char * pszName,
-                                           int nXSize, int nYSize, int nBands,
-                                           GDALDataType eDT,
+                                           CPL_UNUSED int nXSize,
+                                           CPL_UNUSED int nYSize,
+                                           CPL_UNUSED int nBands,
+                                           CPL_UNUSED GDALDataType eDT,
                                            char ** papszOptions )
-
 {
     OGRPGDumpDataSource     *poDS;
 
@@ -125,4 +126,3 @@ void RegisterOGRPGDump()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-

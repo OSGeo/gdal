@@ -43,12 +43,12 @@ void specpack(g2float *fld,g2int ndpts,g2int JJ,g2int KK,g2int MM,
 {
 
       g2int    *ifld,tmplsim[5];
-      g2float  bscale,dscale,*unpk,*tfld;
+      g2float  /* bscale, dscale, */ *unpk,*tfld;
       g2float  *pscale,tscale;
       g2int    Js,Ks,Ms,Ts,Ns,inc,incu,incp,n,Nm,m,ipos;
 
-      bscale = int_power(2.0,-idrstmpl[1]);
-      dscale = int_power(10.0,idrstmpl[2]);
+      /* bscale = int_power(2.0,-idrstmpl[1]); */
+      /* dscale = int_power(10.0,idrstmpl[2]); */
       Js=idrstmpl[5];
       Ks=idrstmpl[6];
       Ms=idrstmpl[7];

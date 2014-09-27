@@ -62,9 +62,9 @@ GDALAllValidMaskBand::~GDALAllValidMaskBand()
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr GDALAllValidMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
+CPLErr GDALAllValidMaskBand::IReadBlock( CPL_UNUSED int nXBlockOff,
+                                         CPL_UNUSED int nYBlockOff,
                                          void * pImage )
-
 {
     memset( pImage, 255, nBlockXSize * nBlockYSize );
 

@@ -32,11 +32,11 @@
 
 GTMTrackLayer::GTMTrackLayer( const char* pszName,
                               OGRSpatialReference* poSRSIn,
-                              int bWriterIn,
+                              CPL_UNUSED int bWriterIn,
                               OGRGTMDataSource* poDSIn )
 {
     poCT = NULL;
-  
+
     /* We are implementing just WGS84, although GTM supports other datum
        formats. */
     if( poSRSIn != NULL )
@@ -363,4 +363,3 @@ void GTMTrackLayer::ResetReading()
     nNextFID = 0;
     poDS->rewindTrack();
 }
-

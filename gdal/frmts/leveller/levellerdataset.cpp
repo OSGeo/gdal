@@ -455,9 +455,9 @@ LevellerRasterBand::~LevellerRasterBand()
 /************************************************************************/
 
 CPLErr LevellerRasterBand::IWriteBlock
-( 
-	int nBlockXOff, 
-	int nBlockYOff,
+(
+    CPL_UNUSED int nBlockXOff,
+    int nBlockYOff,
     void* pImage
 )
 {
@@ -521,7 +521,8 @@ CPLErr LevellerRasterBand::SetUnitType( const char* psz )
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr LevellerRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr LevellerRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
+                                       int nBlockYOff,
                                        void* pImage )
 
 {
@@ -1346,6 +1347,7 @@ bool LevellerDataset::load_from_file(VSILFILE* file, const char* pszFilename)
 			{
 				UNITLABEL unitcode;
 				//char szLocalUnits[8];
+                                // TODO: Fix strict aliasing issue.
 				if(!this->get((int&)unitcode, file, "coordsys_units"))
 					unitcode = UNITLABEL_M;
 

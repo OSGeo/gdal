@@ -681,7 +681,8 @@ void GDALWMSMiniDriver_TiledWMS::GetCapabilities(GDALWMSMiniDriverCapabilities *
 
 
 // not called
-void GDALWMSMiniDriver_TiledWMS::ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri) {
+void GDALWMSMiniDriver_TiledWMS::ImageRequest(CPL_UNUSED CPLString *url,
+                                              CPL_UNUSED const GDALWMSImageRequestInfo &iri) {
 }
 
 void GDALWMSMiniDriver_TiledWMS::TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri) {
@@ -695,4 +696,3 @@ void GDALWMSMiniDriver_TiledWMS::TiledImageRequest(CPLString *url, const GDALWMS
 const char *GDALWMSMiniDriver_TiledWMS::GetProjectionInWKT() {
     return m_projection_wkt.c_str();
 }
-

@@ -39,8 +39,7 @@ CPL_CVSID("$Id$");
 /*                       OGRNASDriverUnload()                           */
 /************************************************************************/
 
-static void OGRNASDriverUnload(GDALDriver* poDriver)
-
+static void OGRNASDriverUnload(CPL_UNUSED GDALDriver* poDriver)
 {
     if( NASReader::hMutex != NULL )
         CPLDestroyMutex( NASReader::hMutex );
@@ -150,4 +149,3 @@ void RegisterOGRNAS()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-

@@ -64,8 +64,7 @@ OGRSEGYDataSource::~OGRSEGYDataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRSEGYDataSource::TestCapability( const char * pszCap )
-
+int OGRSEGYDataSource::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }

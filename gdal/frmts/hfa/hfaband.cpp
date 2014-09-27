@@ -703,7 +703,7 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
                  nNumRuns, nDataOffset);
         return CE_Failure;
     }
-    
+
     if (nNumBits > INT_MAX / nNumRuns ||
         nNumBits * nNumRuns > INT_MAX - 7 ||
         (nNumBits * nNumRuns + 7)/8 > INT_MAX - nDataOffset)

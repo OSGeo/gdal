@@ -84,8 +84,8 @@ static const TigerRecordInfo rtE_info =
 /************************************************************************/
 
 TigerPolygonEconomic::TigerPolygonEconomic( OGRTigerDataSource * poDSIn,
-                              const char * pszPrototypeModule ) : TigerFileBase(&rtE_info, FILE_CODE)
-
+                                            CPL_UNUSED const char * pszPrototypeModule ) :
+    TigerFileBase(&rtE_info, FILE_CODE)
 {
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "PolygonEconomic" );

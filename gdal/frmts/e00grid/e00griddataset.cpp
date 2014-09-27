@@ -164,9 +164,9 @@ E00GRIDRasterBand::E00GRIDRasterBand( E00GRIDDataset *poDS, int nBand,
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr E00GRIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr E00GRIDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
+                                      int nBlockYOff,
                                       void * pImage )
-
 {
     E00GRIDDataset *poGDS = (E00GRIDDataset *) poDS;
 
@@ -922,4 +922,3 @@ void GDALRegister_E00GRID()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-

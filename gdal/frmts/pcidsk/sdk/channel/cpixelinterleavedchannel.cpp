@@ -32,15 +32,17 @@
 #include <cassert>
 #include <cstring>
 
+#include "cpl_port.h"
+
 using namespace PCIDSK;
 
 /************************************************************************/
 /*                      CPixelInterleavedChannel()                      */
 /************************************************************************/
 
-CPixelInterleavedChannel::CPixelInterleavedChannel( PCIDSKBuffer &image_header, 
+CPixelInterleavedChannel::CPixelInterleavedChannel( PCIDSKBuffer &image_header,
                                                     uint64 ih_offset,
-                                                    PCIDSKBuffer &file_header,
+                                                    CPL_UNUSED PCIDSKBuffer &file_header,
                                                     int channelnum,
                                                     CPCIDSKFile *file,
                                                     int image_offset,
@@ -257,4 +259,3 @@ int CPixelInterleavedChannel::WriteBlock( int block_index, void *buffer )
 
     return 1;
 }
-

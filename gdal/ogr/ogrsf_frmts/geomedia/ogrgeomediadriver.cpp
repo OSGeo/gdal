@@ -141,8 +141,7 @@ OGRDataSource *OGRGeomediaDriver::Open( const char * pszFilename,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGeomediaDriver::TestCapability( const char * pszCap )
-
+int OGRGeomediaDriver::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }
@@ -162,4 +161,3 @@ void RegisterOGRGeomedia()
                                 "drv_geomedia.html" );
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }
-

@@ -2034,17 +2034,17 @@ CPLErr HFAFlush( HFAHandle hHFA )
 /*      Suitable for use with primary layers, and overviews.            */
 /************************************************************************/
 
-int 
+int
 HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
                 const char *pszLayerName,
-                int bOverview, int nBlockSize, 
-                int bCreateCompressed, int bCreateLargeRaster, 
+                int bOverview, int nBlockSize,
+                int bCreateCompressed, int bCreateLargeRaster,
                 int bDependentLayer,
-                int nXSize, int nYSize, int nDataType, 
-                char **papszOptions,
-                
+                int nXSize, int nYSize, int nDataType,
+                CPL_UNUSED char **papszOptions,
+
                 // these are only related to external (large) files
-                GIntBig nStackValidFlagsOffset, 
+                GIntBig nStackValidFlagsOffset,
                 GIntBig nStackDataOffset,
                 int nStackCount, int nStackIndex )
 
@@ -3061,12 +3061,12 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
         fpVSIL = VSIFOpenL( pszFullFilename, "w+" );
         if( fpVSIL == NULL )
         {
-            CPLError( CE_Failure, CPLE_OpenFailed, 
+            CPLError( CE_Failure, CPLE_OpenFailed,
                       "Failed to create spill file %s.\n%s",
                       psInfo->pszIGEFilename, VSIStrerror( errno ) );
             return FALSE;
         }
-        
+
         VSIFWriteL( (void *) pszMagick, 1, strlen(pszMagick)+1, fpVSIL );
     }
 
@@ -3075,18 +3075,18 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
 /*      Work out some details about the tiling scheme.                  */
 /* -------------------------------------------------------------------- */
-    int	nBlocksPerRow, nBlocksPerColumn, nBlocks, nBytesPerBlock;
-    int	nBytesPerRow, nBlockMapSize, iFlagsSize;
+    int	nBlocksPerRow, nBlocksPerColumn, /* nBlocks, */ nBytesPerBlock;
+    int	nBytesPerRow, nBlockMapSize /* , iFlagsSize */;
 
     nBlocksPerRow = (nXSize + nBlockSize - 1) / nBlockSize;
     nBlocksPerColumn = (nYSize + nBlockSize - 1) / nBlockSize;
-    nBlocks = nBlocksPerRow * nBlocksPerColumn;
+    /* nBlocks = nBlocksPerRow * nBlocksPerColumn; */
     nBytesPerBlock = (nBlockSize * nBlockSize
                       * HFAGetDataTypeBits(nDataType) + 7) / 8;
 
     nBytesPerRow = ( nBlocksPerRow + 7 ) / 8;
     nBlockMapSize = nBytesPerRow * nBlocksPerColumn;
-    iFlagsSize = nBlockMapSize + 20;
+    /* iFlagsSize = nBlockMapSize + 20; */
 
 /* -------------------------------------------------------------------- */
 /*      Write stack prefix information.                                 */

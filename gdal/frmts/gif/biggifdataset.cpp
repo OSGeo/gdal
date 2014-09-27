@@ -190,9 +190,9 @@ BIGGifRasterBand::~BIGGifRasterBand()
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr BIGGifRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
-
+CPLErr BIGGifRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
+                                     int nBlockYOff,
+                                     void * pImage )
 {
     BIGGIFDataset *poGDS = (BIGGIFDataset *) poDS;
 
@@ -541,4 +541,3 @@ void GDALRegister_BIGGIF()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-

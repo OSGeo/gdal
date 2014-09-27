@@ -22,6 +22,8 @@
 
 #include "json_object_iterator.h"
 
+#include "cpl_port.h"
+
 /**
  * How It Works
  *
@@ -84,7 +86,7 @@ json_object_iter_begin(struct json_object* obj)
  * ****************************************************************************
  */
 struct json_object_iterator
-json_object_iter_end(const struct json_object* obj)
+json_object_iter_end( CPL_UNUSED const struct json_object* obj )
 {
     struct json_object_iterator iter;
 

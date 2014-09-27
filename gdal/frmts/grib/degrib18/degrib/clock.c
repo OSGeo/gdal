@@ -11,6 +11,8 @@
 #include "memwatch.h"
 #endif
 
+#include "cpl_port.h"
+
 /* Take a look at the options in:
  * http://www.unet.univie.ac.at/aix/cmds/aixcmds2/date.htm#A270961
  */
@@ -1392,7 +1394,7 @@ int Clock_ScanMonth (char *ptr)
  * NOTES
  *****************************************************************************
  */
-void Clock_PrintMonth3 (int mon, char *buffer, int buffLen)
+void Clock_PrintMonth3 (int mon, char *buffer, CPL_UNUSED int buffLen)
 {
    static char *MonthName[] = {
       "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT",
@@ -1420,7 +1422,7 @@ void Clock_PrintMonth3 (int mon, char *buffer, int buffLen)
  * NOTES
  *****************************************************************************
  */
-void Clock_PrintMonth (int mon, char *buffer, int buffLen)
+void Clock_PrintMonth (int mon, char *buffer, CPL_UNUSED int buffLen)
 {
    static char *MonthName[] = {
       "January", "February", "March", "April", "May", "June", "July",
@@ -2002,7 +2004,7 @@ int Clock_Scan (double *clock, char *buffer, char f_gmt)
    sChar TimeZone = Clock_GetTimeZone ();
    /* hours to add to local time to get UTC. */
    char f_dayLight = 0;
-   int month;
+   int month = 0;
    int day;
    sInt4 year;
    char f_year = 0;
@@ -2022,7 +2024,7 @@ int Clock_Scan (double *clock, char *buffer, char f_gmt)
    sChar f_ampm = -1;
    char f_timeZone = 0;
    char f_time = 0;
-   char f_date = 0;
+   /* char f_date = 0; */
    char f_slashWord = 0;
    char f_dateWord = 0;
    char f_monthWord = 0;
@@ -2039,7 +2041,7 @@ int Clock_Scan (double *clock, char *buffer, char f_gmt)
       return 0;
 
    f_time = 0;
-   f_date = 0;
+   /* f_date = 0; */
    lastWordType = WT_NONE;
    curTime = 0;
    while (Clock_GetWord (&ptr, &ptr2, word, &wordType) == 0) {

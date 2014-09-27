@@ -64,8 +64,7 @@ OGRSEGUKOOADataSource::~OGRSEGUKOOADataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRSEGUKOOADataSource::TestCapability( const char * pszCap )
-
+int OGRSEGUKOOADataSource::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }

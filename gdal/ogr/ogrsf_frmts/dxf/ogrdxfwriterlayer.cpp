@@ -518,16 +518,15 @@ OGRErr OGRDXFWriterLayer::WriteTEXT( OGRFeature *poFeature )
 /************************************************************************/
 /*                     PrepareLineTypeDefinition()                      */
 /************************************************************************/
-CPLString 
-OGRDXFWriterLayer::PrepareLineTypeDefinition( OGRFeature *poFeature, 
+CPLString
+OGRDXFWriterLayer::PrepareLineTypeDefinition( CPL_UNUSED OGRFeature *poFeature,
                                               OGRStyleTool *poTool )
-
 {
     CPLString osDef;
     OGRStylePen *poPen = (OGRStylePen *) poTool;
     GBool  bDefault;
     const char *pszPattern;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Fetch pattern.                                                  */
 /* -------------------------------------------------------------------- */

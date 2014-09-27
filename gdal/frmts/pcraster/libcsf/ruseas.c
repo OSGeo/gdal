@@ -432,7 +432,7 @@ static int HasInFileCellReprType2(CSF_CR cr)
 int RuseAs(
 	MAP *m,          /* map handle */
 	CSF_CR useType)   /* CR_UINT1,CR_INT4, CR_REAL4, CR_REAL8, VS_BOOLEAN or VS_LDD */
-{ 
+{
 
   CSF_CR inFileCR = RgetCellRepr(m);
   CSF_VS inFileVS = RgetValueScale(m);

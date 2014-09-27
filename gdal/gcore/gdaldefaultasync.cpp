@@ -140,8 +140,7 @@ GDALARGetNextUpdatedRegion(GDALAsyncReaderH hARIO, double timeout,
  * @return TRUE if successful, or FALSE on an error.
  */
 
-int GDALAsyncReader::LockBuffer( double dfTimeout )
-
+int GDALAsyncReader::LockBuffer( CPL_UNUSED double dfTimeout )
 {
     return TRUE;
 }
@@ -293,18 +292,17 @@ GDALDefaultAsyncReader::~GDALDefaultAsyncReader()
 /************************************************************************/
 
 GDALAsyncStatusType
-GDALDefaultAsyncReader::GetNextUpdatedRegion(double dfTimeout,
+GDALDefaultAsyncReader::GetNextUpdatedRegion(CPL_UNUSED double dfTimeout,
                                              int* pnBufXOff,
                                              int* pnBufYOff,
                                              int* pnBufXSize,
                                              int* pnBufYSize )
-
 {
     CPLErr eErr;
 
-    eErr = poDS->RasterIO( GF_Read, nXOff, nYOff, nXSize, nYSize, 
-                           pBuf, nBufXSize, nBufYSize, eBufType, 
-                           nBandCount, panBandMap, 
+    eErr = poDS->RasterIO( GF_Read, nXOff, nYOff, nXSize, nYSize,
+                           pBuf, nBufXSize, nBufYSize, eBufType,
+                           nBandCount, panBandMap,
                            nPixelSpace, nLineSpace, nBandSpace );
 
     *pnBufXOff = 0;
@@ -317,4 +315,3 @@ GDALDefaultAsyncReader::GetNextUpdatedRegion(double dfTimeout,
     else
         return GARIO_ERROR;
 }
-

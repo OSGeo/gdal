@@ -130,7 +130,8 @@ RRasterBand::~RRasterBand()
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr RRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr RRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
+                                int nBlockYOff,
                                 void * pImage )
 {
     memcpy( pImage, padfMatrixValues + nBlockYOff * nBlockXSize,
@@ -612,4 +613,3 @@ void GDALRegister_R()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-

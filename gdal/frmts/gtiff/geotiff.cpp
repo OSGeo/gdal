@@ -3356,8 +3356,9 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                     nInWord = ((GUInt16 *) pImage)[iPixel++];
                 else if( eDataType == GDT_UInt32 )
                     nInWord = ((GUInt32 *) pImage)[iPixel++];
-                else
+                else {
                     CPLAssert(0);
+                }
 
                 if (nInWord > nMaxVal)
                 {
@@ -3469,8 +3470,9 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                     nInWord = ((GUInt16 *) pabyThisImage)[iPixel++];
                 else if( eDataType == GDT_UInt32 )
                     nInWord = ((GUInt32 *) pabyThisImage)[iPixel++];
-                else
+                else {
                     CPLAssert(0);
+                }
 
                 if (nInWord > nMaxVal)
                 {
@@ -3782,22 +3784,23 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
                 for( iBit = 0; iBit < poGDS->nBitsPerSample; iBit++ )
                 {
-                    if( pabyBlockBuf[iBitOffset>>3] 
+                    if( pabyBlockBuf[iBitOffset>>3]
                         & (0x80 >>(iBitOffset & 7)) )
                         nOutWord |= (1 << (poGDS->nBitsPerSample - 1 - iBit));
                     iBitOffset++;
-                } 
+                }
 
                 iBitOffset= iBitOffset + iPixelBitSkip - poGDS->nBitsPerSample;
-                
+
                 if( eDataType == GDT_Byte )
                     ((GByte *) pImage)[iPixel++] = (GByte) nOutWord;
                 else if( eDataType == GDT_UInt16 )
                     ((GUInt16 *) pImage)[iPixel++] = (GUInt16) nOutWord;
                 else if( eDataType == GDT_UInt32 )
                     ((GUInt32 *) pImage)[iPixel++] = nOutWord;
-                else
+                else {
                     CPLAssert(0);
+                }
             }
         }
     }
@@ -11823,4 +11826,3 @@ void GDALRegister_GTiff()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-

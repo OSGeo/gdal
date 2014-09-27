@@ -154,10 +154,12 @@ VRTSource *VRTDriver::ParseSource( CPLXMLNode *psSrc, const char *pszVRTPath )
 /************************************************************************/
 
 static GDALDataset *
-VRTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
-               int bStrict, char ** papszOptions, 
-               GDALProgressFunc pfnProgress, void * pProgressData )
-
+VRTCreateCopy( const char * pszFilename,
+               GDALDataset *poSrcDS,
+               int bStrict,
+               char ** papszOptions,
+               CPL_UNUSED GDALProgressFunc pfnProgress,
+               CPL_UNUSED void * pProgressData )
 {
     VRTDataset *poVRTDS = NULL;
 
@@ -381,4 +383,3 @@ void GDALRegister_VRT()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-

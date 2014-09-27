@@ -105,8 +105,7 @@ static int CheckDSNStringTemplate(const char* pszStr)
 /************************************************************************/
 
 int OGRGeomediaDataSource::Open( const char * pszNewName, int bUpdate,
-                              int bTestOpen )
-
+                                 CPL_UNUSED int bTestOpen )
 {
     CPLAssert( nLayers == 0 );
 
@@ -323,8 +322,7 @@ OGRSpatialReference* OGRGeomediaDataSource::GetGeomediaSRS(const char* pszGCoord
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGeomediaDataSource::TestCapability( const char * pszCap )
-
+int OGRGeomediaDataSource::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }

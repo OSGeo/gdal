@@ -1982,10 +1982,9 @@ OGRLayer *PCIDSK2Dataset::GetLayer( int iLayer )
 
 OGRLayer *
 PCIDSK2Dataset::ICreateLayer( const char * pszLayerName,
-                                  OGRSpatialReference *poSRS,
-                                  OGRwkbGeometryType eType,
-                                  char ** papszOptions )
-    
+                              OGRSpatialReference *poSRS,
+                              OGRwkbGeometryType eType,
+                              CPL_UNUSED char ** papszOptions )
 {
 /* -------------------------------------------------------------------- */
 /*      Verify we are in update mode.                                   */
@@ -2139,5 +2138,3 @@ void GDALRegister_PCIDSK()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-
-

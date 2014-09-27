@@ -18,6 +18,8 @@
 #include "jinclude.h"
 #include "jpeglib.h"
 
+#include "cpl_port.h"
+
 /* Block smoothing is only applicable for progressive JPEG, so: */
 #ifndef D_PROGRESSIVE_SUPPORTED
 #undef BLOCK_SMOOTHING_SUPPORTED
@@ -225,7 +227,7 @@ decompress_onepass (j_decompress_ptr cinfo, JSAMPIMAGE output_buf)
  */
 
 METHODDEF(int)
-dummy_consume_data (j_decompress_ptr cinfo)
+dummy_consume_data (CPL_UNUSED j_decompress_ptr cinfo)
 {
   return JPEG_SUSPENDED;	/* Always indicate nothing was done */
 }

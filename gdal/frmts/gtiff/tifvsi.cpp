@@ -84,7 +84,7 @@ _tiffSeekProc(thandle_t fd, toff_t off, int whence)
 }
 
 static int
-_tiffCloseProc(thandle_t fd)
+_tiffCloseProc(CPL_UNUSED thandle_t fd)
 {
     return 0;
 }

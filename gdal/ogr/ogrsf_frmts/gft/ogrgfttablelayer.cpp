@@ -473,7 +473,7 @@ OGRFeatureDefn * OGRGFTTableLayer::GetLayerDefn()
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-int OGRGFTTableLayer::GetFeatureCount(int bForce)
+int OGRGFTTableLayer::GetFeatureCount(CPL_UNUSED int bForce)
 {
     GetLayerDefn();
 
@@ -524,9 +524,8 @@ int OGRGFTTableLayer::GetFeatureCount(int bForce)
 /************************************************************************/
 
 OGRErr OGRGFTTableLayer::CreateField( OGRFieldDefn *poField,
-                                 int bApproxOK )
+                                      CPL_UNUSED int bApproxOK )
 {
-
     if (!poDS->IsReadWrite())
     {
         CPLError(CE_Failure, CPLE_AppDefined,

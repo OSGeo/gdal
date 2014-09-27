@@ -25,6 +25,8 @@
 #include "pdstemplates.h"
 #include "drstemplates.h"
 
+#include "cpl_port.h"
+
 //#include "config.h" /*config.h created by configure - ADT mod*/
 
 /* Declare the external FORTRAN routine
@@ -131,7 +133,7 @@ static int mdl_LocalUnpack (unsigned char *local, sInt4 locallen,
    idat[0] = 0;
    rdat[0] = 0;
 
-   for (i = 0; i < numGroup; i++) {
+   for (i = 0; (unsigned int)i < numGroup; i++) {
       if (locallen < BytesUsed + 12) {
 #ifdef DEBUG
          printf ("Locallen is too small.\n");
@@ -268,7 +270,7 @@ static int fillOutSectLen (unsigned char *c_ipack, int lenCpack,
    }
    /* assert that we start with data in either section 2 or 3. */
    myAssert ((c_ipack[4] == 2) || (c_ipack[4] == 3));
-   while (gNum <= subgNum) {
+   while (gNum <= (unsigned int)subgNum) {
       if (lenCpack < offset + 5) {
 #ifdef DEBUG
          printf ("Cpack is not large enough.\n");
@@ -738,15 +740,15 @@ is required for each GRIB2 message.
  * gfld->num_coord = number of values in array gfld->coord_list[].
  *****************************************************************************
  */
-void unpk_g2ncep (sInt4 * kfildo, float * ain, sInt4 * iain, sInt4 * nd2x3,
+void unpk_g2ncep (CPL_UNUSED sInt4 * kfildo, float * ain, sInt4 * iain, sInt4 * nd2x3,
                   sInt4 * idat, sInt4 * nidat, float * rdat, sInt4 * nrdat,
-                  sInt4 * is0, sInt4 * ns0, sInt4 * is1, sInt4 * ns1,
-                  sInt4 * is2, sInt4 * ns2, sInt4 * is3, sInt4 * ns3,
-                  sInt4 * is4, sInt4 * ns4, sInt4 * is5, sInt4 * ns5,
-                  sInt4 * is6, sInt4 * ns6, sInt4 * is7, sInt4 * ns7,
+                  sInt4 * is0, CPL_UNUSED sInt4 * ns0, sInt4 * is1, CPL_UNUSED sInt4 * ns1,
+                  sInt4 * is2, sInt4 * ns2, sInt4 * is3, CPL_UNUSED sInt4 * ns3,
+                  sInt4 * is4, CPL_UNUSED sInt4 * ns4, sInt4 * is5, CPL_UNUSED sInt4 * ns5,
+                  sInt4 * is6, CPL_UNUSED sInt4 * ns6, sInt4 * is7, CPL_UNUSED sInt4 * ns7,
                   sInt4 * ib, sInt4 * ibitmap, unsigned char *c_ipack,
                   sInt4 * nd5, float * xmissp, float * xmisss,
-                  sInt4 * inew, sInt4 * iclean, sInt4 * l3264b,
+                  sInt4 * inew, sInt4 * iclean, CPL_UNUSED sInt4 * l3264b,
                   sInt4 * iendpk, sInt4 * jer, sInt4 * ndjer, sInt4 * kjer)
 {
    int i;               /* A counter used for a number of purposes. */
@@ -805,7 +807,7 @@ void unpk_g2ncep (sInt4 * kfildo, float * ain, sInt4 * iain, sInt4 * nd2x3,
          return;
       }
    } else {
-      if (subgNum + 1 >= numfields) {
+      if (subgNum + 1 >= (unsigned int)numfields) {
          /* Field request error. */
          jer[0 + *ndjer] = 2;
          *kjer = 1;
@@ -1069,7 +1071,7 @@ void unpk_g2ncep (sInt4 * kfildo, float * ain, sInt4 * iain, sInt4 * nd2x3,
    is6[5] = gfld->ibmap;
    is7[4] = 7;
 
-   if (subgNum + 1 == numfields) {
+   if ((subgNum + 1) == (unsigned int)numfields) {
       *iendpk = 1;
    } else {
       *iendpk = 0;
@@ -1380,7 +1382,7 @@ static void clear (float * ain, sInt4 * iain, sInt4 * nd2x3, sInt4 * idat,
  * NOTES
  *****************************************************************************
  */
-static void BigByteCpy (sInt4 * dst, sInt4 * ipack, sInt4 nd5,
+static void BigByteCpy (sInt4 * dst, sInt4 * ipack, CPL_UNUSED sInt4 nd5,
                         unsigned int startInt, unsigned int startByte,
                         int numByte)
 {
@@ -1453,7 +1455,7 @@ static int FindTemplateIDs (sInt4 * ipack, sInt4 nd5, int subgNum,
 
    /* Jump over section 0. */
    offset = 16;
-   while (gNum <= subgNum) {
+   while (gNum <= (unsigned int)subgNum) {
       BigByteCpy (&sectLen, ipack, nd5, (offset / 4), (offset % 4), 4);
       /* Check if we just read section 8.  If so, then it is "7777" =
        * 926365495 regardless of endian'ness. */
@@ -1628,7 +1630,7 @@ void unpk_grib2 (sInt4 * kfildo, float * ain, sInt4 * iain, sInt4 * nd2x3,
    sInt4 pdsTmpl;
    sInt4 drsTmpl;
    sInt4 numGrps;
-      char f_useMDL = 0;   /* Instructed 3/8/2005 10:30 to not use MDL. */
+   /* char f_useMDL = 0; */   /* Instructed 3/8/2005 10:30 to not use MDL. */
    uChar f_noBitmap;    /* 0 if bitmap, else no bitmap. */
    sInt4 orderDiff;
 
@@ -1641,23 +1643,23 @@ void unpk_grib2 (sInt4 * kfildo, float * ain, sInt4 * iain, sInt4 * nd2x3,
    if ((gdsTmpl != 0) && (gdsTmpl != 10) && (gdsTmpl != 20) &&
        (gdsTmpl != 30) && (gdsTmpl != 90) && (gdsTmpl != 110) &&
        (gdsTmpl != 120)) {
-      f_useMDL = 0;
+       /* f_useMDL = 0; */
    }
    if ((pdsTmpl != 0) && (pdsTmpl != 1) && (pdsTmpl != 2) &&
        (pdsTmpl != 8) && (pdsTmpl != 9) && (pdsTmpl != 20) &&
        (pdsTmpl != 30)) {
-      f_useMDL = 0;
+       /* f_useMDL = 0; */
    }
    if ((drsTmpl != 0) && (drsTmpl != 2) && (drsTmpl != 3)) {
-      f_useMDL = 0;
+       /* f_useMDL = 0; */
    }
    /* MDL GRIB2 lib does not support drsTmpl 2 or 3 if there is a bitmap. */
    if ((!f_noBitmap) && ((drsTmpl == 2) || (drsTmpl == 3))) {
-      f_useMDL = 0;
+       /* f_useMDL = 0; */
    }
    /* MDL GRIB2 lib does not support anything but second order differencing. */
    if ((drsTmpl == 3) && (orderDiff != 2) && (orderDiff != 0)) {
-      f_useMDL = 0;
+       /* f_useMDL = 0; */
    }
 
 #ifdef _FORTRAN
@@ -1987,16 +1989,26 @@ int C_pkGrib2 (unsigned char *cgrib, sInt4 *sec0, sInt4 *sec1,
  *
  *****************************************************************************
  */
-void pk_grib2 (sInt4 * kfildo, float * ain, sInt4 * iain, sInt4 * nx,
-               sInt4 * ny, sInt4 * idat, sInt4 * nidat, float * rdat,
-               sInt4 * nrdat, sInt4 * is0, sInt4 * ns0, sInt4 * is1,
-               sInt4 * ns1, sInt4 * is3, sInt4 * ns3, sInt4 * is4,
-               sInt4 * ns4, sInt4 * is5, sInt4 * ns5, sInt4 * is6,
-               sInt4 * ns6, sInt4 * is7, sInt4 * ns7, sInt4 * ib,
-               sInt4 * ibitmap, sInt4 * ipack, sInt4 * nd5, sInt4 * missp,
-               float * xmissp, sInt4 * misss, float * xmisss, sInt4 * inew,
-               sInt4 * minpk, sInt4 * iclean, sInt4 * l3264b, sInt4 * jer,
-               sInt4 * ndjer, sInt4 * kjer)
+/* TODO: Make a better ifdef */
+void pk_grib2 (CPL_UNUSED sInt4 * kfildo, CPL_UNUSED float * ain,
+               CPL_UNUSED sInt4 * iain, CPL_UNUSED sInt4 * nx,
+               CPL_UNUSED sInt4 * ny, CPL_UNUSED sInt4 * idat,
+               CPL_UNUSED sInt4 * nidat, CPL_UNUSED float * rdat,
+               CPL_UNUSED sInt4 * nrdat, CPL_UNUSED sInt4 * is0,
+               CPL_UNUSED sInt4 * ns0, CPL_UNUSED sInt4 * is1,
+               CPL_UNUSED sInt4 * ns1, CPL_UNUSED sInt4 * is3, 
+               CPL_UNUSED sInt4 * ns3, CPL_UNUSED sInt4 * is4,
+               CPL_UNUSED sInt4 * ns4, CPL_UNUSED sInt4 * is5,
+               CPL_UNUSED sInt4 * ns5, CPL_UNUSED sInt4 * is6,
+               CPL_UNUSED sInt4 * ns6, CPL_UNUSED sInt4 * is7,
+               CPL_UNUSED sInt4 * ns7, CPL_UNUSED sInt4 * ib,
+               CPL_UNUSED sInt4 * ibitmap, CPL_UNUSED sInt4 * ipack,
+               CPL_UNUSED sInt4 * nd5, CPL_UNUSED sInt4 * missp,
+               CPL_UNUSED float * xmissp, CPL_UNUSED sInt4 * misss,
+               CPL_UNUSED float * xmisss, CPL_UNUSED sInt4 * inew,
+               CPL_UNUSED sInt4 * minpk, CPL_UNUSED sInt4 * iclean,
+               CPL_UNUSED sInt4 * l3264b, CPL_UNUSED sInt4 * jer,
+               CPL_UNUSED sInt4 * ndjer, CPL_UNUSED sInt4 * kjer)
 {
 #ifndef _FORTRAN
    

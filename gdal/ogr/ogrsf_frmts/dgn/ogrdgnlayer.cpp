@@ -803,19 +803,18 @@ int OGRDGNLayer::GetFeatureCount( int bForce )
 /*                             GetExtent()                              */
 /************************************************************************/
 
-OGRErr OGRDGNLayer::GetExtent( OGREnvelope *psExtent, int bForce )
-
+OGRErr OGRDGNLayer::GetExtent( OGREnvelope *psExtent, CPL_UNUSED int bForce )
 {
     double      adfExtents[6];
 
     if( !DGNGetExtents( hDGN, adfExtents ) )
         return OGRERR_FAILURE;
-    
+
     psExtent->MinX = adfExtents[0];
     psExtent->MinY = adfExtents[1];
     psExtent->MaxX = adfExtents[3];
     psExtent->MaxY = adfExtents[4];
-    
+
     return OGRERR_NONE;
 }
 

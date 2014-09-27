@@ -200,7 +200,8 @@ LAN4BitRasterBand::~LAN4BitRasterBand()
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr LAN4BitRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr LAN4BitRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
+                                      int nBlockYOff,
                                       void * pImage )
 
 {
@@ -848,10 +849,11 @@ void LANDataset::CheckForStatistics()
 /************************************************************************/
 
 GDALDataset *LANDataset::Create( const char * pszFilename,
-                                 int nXSize, int nYSize, int nBands,
+                                 int nXSize,
+                                 int nYSize,
+                                 int nBands,
                                  GDALDataType eType,
-                                 char ** papszOptions )
-
+                                 CPL_UNUSED char ** papszOptions )
 {
     if( eType != GDT_Byte && eType != GDT_Int16 )
     {
@@ -1012,4 +1014,3 @@ void GDALRegister_LAN()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-

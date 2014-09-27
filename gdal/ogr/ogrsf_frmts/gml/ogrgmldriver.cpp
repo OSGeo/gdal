@@ -38,8 +38,7 @@ CPL_CVSID("$Id$");
 /*                        OGRGMLDriverUnload()                          */
 /************************************************************************/
 
-static void OGRGMLDriverUnload(GDALDriver* poDriver)
-
+static void OGRGMLDriverUnload(CPL_UNUSED GDALDriver* poDriver)
 {
     if( GMLReader::hMutex != NULL )
         CPLDestroyMutex( GMLReader::hMutex );
@@ -149,9 +148,11 @@ static GDALDataset *OGRGMLDriverOpen( GDALOpenInfo* poOpenInfo )
 /************************************************************************/
 
 static GDALDataset *OGRGMLDriverCreate( const char * pszName,
-                                int nBands, int nXSize, int nYSize, GDALDataType eDT,
-                                char **papszOptions )
-
+                                        CPL_UNUSED int nBands,
+                                        CPL_UNUSED int nXSize,
+                                        CPL_UNUSED int nYSize,
+                                        CPL_UNUSED GDALDataType eDT,
+                                        char **papszOptions )
 {
     OGRGMLDataSource    *poDS = new OGRGMLDataSource();
 
@@ -225,4 +226,3 @@ void RegisterOGRGML()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-

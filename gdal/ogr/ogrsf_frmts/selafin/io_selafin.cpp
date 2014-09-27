@@ -49,7 +49,8 @@ namespace Selafin {
         poBounds->maxy=poPoint->poHeader->paadfCoords[1][poPoint->nIndex];
     }
 
-    int DumpFeatures(void *pElt,void *pUserData) {
+    int DumpFeatures(void *pElt,
+                     CPL_UNUSED void *pUserData) {
         Point *poPoint=(Point*)pElt;
         delete poPoint;
         return TRUE;

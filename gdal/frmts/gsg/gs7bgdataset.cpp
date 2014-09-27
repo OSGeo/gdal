@@ -313,10 +313,11 @@ CPLErr GS7BGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return CE_Failure;
     }
 
-    double *pfImage;
-    pfImage = (double *)pImage;
+#ifdef CPL_MSB
+    double *pfImage = (double *)pImage;
     for( int iPixel=0; iPixel<nBlockXSize; iPixel++ )
         CPL_LSBPTR64( pfImage + iPixel );
+#endif
 
     return CE_None;
 }
@@ -1106,9 +1107,11 @@ CPLErr GS7BGDataset::WriteHeader( VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
 /************************************************************************/
 
 GDALDataset *GS7BGDataset::Create( const char * pszFilename,
-                  int nXSize, int nYSize, int nBands,
-                  GDALDataType eType,
-                  char **papszParmList )
+                                   int nXSize,
+                                   int nYSize,
+                                   int nBands,
+                                   GDALDataType eType,
+                                   CPL_UNUSED char **papszParmList )
 
 {
     if( nXSize <= 0 || nYSize <= 0 )
@@ -1183,10 +1186,11 @@ GDALDataset *GS7BGDataset::Create( const char * pszFilename,
 /************************************************************************/
 
 GDALDataset *GS7BGDataset::CreateCopy( const char *pszFilename,
-                      GDALDataset *poSrcDS,
-                      int bStrict, char **papszOptions,
-                      GDALProgressFunc pfnProgress,
-                      void *pProgressData )
+                                       GDALDataset *poSrcDS,
+                                       int bStrict,
+                                       CPL_UNUSED char **papszOptions,
+                                       GDALProgressFunc pfnProgress,
+                                       void *pProgressData )
 {
     if( pfnProgress == NULL )
         pfnProgress = GDALDummyProgress;
@@ -1372,4 +1376,3 @@ void GDALRegister_GS7BG()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-

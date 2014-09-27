@@ -561,8 +561,8 @@ OGRErr OGRBNALayer::CreateFeature( OGRFeature *poFeature )
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRBNALayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
-
+OGRErr OGRBNALayer::CreateField( OGRFieldDefn *poField,
+                                 CPL_UNUSED int bApproxOK )
 {
     if( !bWriter || nFeatures != 0)
         return OGRERR_FAILURE;
@@ -870,4 +870,3 @@ int OGRBNALayer::TestCapability( const char * pszCap )
     else
         return FALSE;
 }
-

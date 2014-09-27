@@ -1175,8 +1175,9 @@ int _AVCBinWriteTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
-int _AVCBinWritePCCoverageTxt(AVCRawBinFile *psFile, AVCTxt *psTxt, 
-                              int nPrecision, AVCRawBinFile *psIndexFile)
+int _AVCBinWritePCCoverageTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
+                              CPL_UNUSED int nPrecision,
+                              AVCRawBinFile *psIndexFile)
 {
     int i, nRecSize, nCurPos, nStrLen, numVertices;
 
@@ -1302,8 +1303,9 @@ int AVCBinWriteTxt(AVCBinFile *psFile, AVCTxt *psTxt)
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
-int _AVCBinWriteRxp(AVCRawBinFile *psFile, AVCRxp *psRxp, 
-                    int nPrecision)
+int _AVCBinWriteRxp(AVCRawBinFile *psFile,
+                    AVCRxp *psRxp,
+                    CPL_UNUSED int nPrecision)
 {
 
     AVCRawBinWriteInt32(psFile, psRxp->n1);
@@ -1909,11 +1911,12 @@ AVCBinFile *AVCBinWriteCreateTable(const char *pszInfoPath,
  * AVCBinClose() will eventually have to be called to release the 
  * resources used by the AVCBinFile structure.
  **********************************************************************/
-AVCBinFile *_AVCBinWriteCreateDBFTable(const char *pszPath, 
+AVCBinFile *_AVCBinWriteCreateDBFTable(const char *pszPath,
                                        const char *pszCoverName,
                                        AVCTableDef *psSrcTableDef,
                                        AVCCoverType eCoverType,
-                                       int nPrecision, AVCDBCSInfo *psDBCSInfo)
+                                       int nPrecision,
+                                       CPL_UNUSED AVCDBCSInfo *psDBCSInfo)
 {
     AVCBinFile    *psFile;
     AVCTableDef   *psTableDef = NULL;
@@ -2336,4 +2339,3 @@ int AVCBinWriteTableRec(AVCBinFile *psFile, AVCField *pasFields)
                                     psFile->hdr.psTableDef->nRecSize,
                                     psFile->pszFilename);
 }
-

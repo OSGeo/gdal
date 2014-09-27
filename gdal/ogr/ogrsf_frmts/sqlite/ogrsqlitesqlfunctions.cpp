@@ -70,7 +70,7 @@ class OGRSQLiteExtensionData
 /*                     OGRSQLiteExtensionData()                         */
 /************************************************************************/
 
-OGRSQLiteExtensionData::OGRSQLiteExtensionData(sqlite3* hDB) :
+OGRSQLiteExtensionData::OGRSQLiteExtensionData(CPL_UNUSED sqlite3* hDB) :
         hRegExpCache(NULL), hGeocodingSession(NULL)
 {
 #ifdef DEBUG
@@ -439,8 +439,9 @@ static double OGR2SQLITE_GetValAsDouble(sqlite3_value* val, int* pbGotVal)
 /*                      OGR2SQLITE_GetGeom()                            */
 /************************************************************************/
 
-static OGRGeometry* OGR2SQLITE_GetGeom(sqlite3_context* pContext,
-                                       int argc, sqlite3_value** argv,
+static OGRGeometry* OGR2SQLITE_GetGeom(CPL_UNUSED sqlite3_context* pContext,
+                                       CPL_UNUSED int argc,
+                                       sqlite3_value** argv,
                                        int* pnSRSId)
 {
     if( sqlite3_value_type (argv[0]) != SQLITE_BLOB )
@@ -1046,7 +1047,8 @@ void OGR2SQLITE_ST_MakePoint(sqlite3_context* pContext,
 
 static
 void OGRSQLITE_hstore_get_value(sqlite3_context* pContext,
-                          int argc, sqlite3_value** argv)
+                                CPL_UNUSED int argc,
+                                sqlite3_value** argv)
 {
     if( sqlite3_value_type (argv[0]) != SQLITE_TEXT ||
         sqlite3_value_type (argv[1]) != SQLITE_TEXT )

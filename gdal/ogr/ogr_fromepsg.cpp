@@ -1324,9 +1324,10 @@ static OGRErr SetEPSGGeogCS( OGRSpatialReference * poSRS, int nGeogCS )
 /*      parameter code.                                                 */
 /************************************************************************/
 
-static double OGR_FetchParm( double *padfProjParms, int *panParmIds, 
-                             int nTargetId, double dfFromGreenwich )
-
+static double OGR_FetchParm( double *padfProjParms,
+                             int *panParmIds,
+                             int nTargetId,
+                             CPL_UNUSED double dfFromGreenwich )
 {
     int i;
     double dfResult;
@@ -1341,7 +1342,7 @@ static double OGR_FetchParm( double *padfProjParms, int *panParmIds,
       case PseudoStdParallelScaleFactor:
         dfResult = 1.0;
         break;
-        
+
       case AngleRectifiedToSkewedGrid:
         dfResult = 90.0;
         break;
@@ -2768,4 +2769,3 @@ int OSREPSGTreatsAsNorthingEasting( OGRSpatialReferenceH hSRS )
 
     return ((OGRSpatialReference *) hSRS)->EPSGTreatsAsNorthingEasting();
 }
-

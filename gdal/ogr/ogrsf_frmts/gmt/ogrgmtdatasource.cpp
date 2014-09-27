@@ -111,10 +111,9 @@ int OGRGmtDataSource::Create( const char *pszDSName, char **papszOptions )
 
 OGRLayer *
 OGRGmtDataSource::ICreateLayer( const char * pszLayerName,
-                               OGRSpatialReference *poSRS,
-                               OGRwkbGeometryType eType,
-                               char ** papszOptions )
-
+                                OGRSpatialReference *poSRS,
+                                OGRwkbGeometryType eType,
+                                CPL_UNUSED char ** papszOptions )
 {
 /* -------------------------------------------------------------------- */
 /*      Establish the geometry type.  Note this logic                   */
@@ -257,4 +256,3 @@ OGRLayer *OGRGmtDataSource::GetLayer( int iLayer )
     else
         return papoLayers[iLayer];
 }
-

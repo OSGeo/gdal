@@ -89,12 +89,15 @@ static GDALDataset *OGRKMLDriverOpen( GDALOpenInfo* poOpenInfo )
 /************************************************************************/
 
 static GDALDataset *OGRKMLDriverCreate( const char * pszName,
-                                    int nBands, int nXSize, int nYSize, GDALDataType eDT,
-                                    char **papszOptions )
+                                        CPL_UNUSED int nBands,
+                                        CPL_UNUSED int nXSize,
+                                        CPL_UNUSED int nYSize,
+                                        CPL_UNUSED GDALDataType eDT,
+                                        char **papszOptions )
 {
     CPLAssert( NULL != pszName );
     CPLDebug( "KML", "Attempt to create: %s", pszName );
-    
+
     OGRKMLDataSource *poDS = new OGRKMLDataSource();
 
     if( !poDS->Create( pszName, papszOptions ) )
@@ -149,5 +152,3 @@ void RegisterOGRKML()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-
-

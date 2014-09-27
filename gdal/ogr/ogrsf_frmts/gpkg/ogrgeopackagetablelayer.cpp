@@ -726,20 +726,21 @@ OGRGeoPackageTableLayer::~OGRGeoPackageTableLayer()
 /*                      CreateField()                                   */
 /************************************************************************/
 
-OGRErr OGRGeoPackageTableLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
+OGRErr OGRGeoPackageTableLayer::CreateField( OGRFieldDefn *poField,
+                                             CPL_UNUSED int bApproxOK )
 {
     if( !m_poDS->GetUpdate() )
     {
         return OGRERR_FAILURE;
     }
 
-    OGRErr err = m_poDS->AddColumn(m_pszTableName, 
+    OGRErr err = m_poDS->AddColumn(m_pszTableName,
                                    poField->GetNameRef(),
                                    GPkgFieldFromOGR(poField->GetType()));
 
     if ( err != OGRERR_NONE )
         return err;
-    
+
     m_poFeatureDefn->AddFieldDefn( poField );
     panFieldOrdinals = (int *) CPLRealloc( panFieldOrdinals,
                                            sizeof(int) * m_poFeatureDefn->GetFieldCount() );
@@ -1138,7 +1139,7 @@ OGRErr OGRGeoPackageTableLayer::RollbackTransaction()
 /*                        GetFeatureCount()                             */
 /************************************************************************/
 
-int OGRGeoPackageTableLayer::GetFeatureCount( int bForce )
+int OGRGeoPackageTableLayer::GetFeatureCount( CPL_UNUSED int bForce )
 {
     if( m_poFilterGeom != NULL && !m_bFilterIsEnvelope )
         return OGRGeoPackageLayer::GetFeatureCount();

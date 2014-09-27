@@ -116,16 +116,16 @@
 
 #define YYSTYPE  ods_formula_node*
 
-/* Defining YYSTYPE_IS_TRIVIAL is needed because the parser is generated as a C++ file. */ 
-/* See http://www.gnu.org/s/bison/manual/html_node/Memory-Management.html that suggests */ 
-/* increase YYINITDEPTH instead, but this will consume memory. */ 
-/* Setting YYSTYPE_IS_TRIVIAL overcomes this limitation, but might be fragile because */ 
-/* it appears to be a non documented feature of Bison */ 
+/* Defining YYSTYPE_IS_TRIVIAL is needed because the parser is generated as a C++ file. */
+/* See http://www.gnu.org/s/bison/manual/html_node/Memory-Management.html that suggests */
+/* increase YYINITDEPTH instead, but this will consume memory. */
+/* Setting YYSTYPE_IS_TRIVIAL overcomes this limitation, but might be fragile because */
+/* it appears to be a non documented feature of Bison */
 #define YYSTYPE_IS_TRIVIAL 1
 
-static void ods_formulaerror( ods_formula_parse_context *context, const char *msg )
+static void ods_formulaerror( CPL_UNUSED ods_formula_parse_context *context, const char *msg )
 {
-    CPLError( CE_Failure, CPLE_AppDefined, 
+    CPLError( CE_Failure, CPLE_AppDefined,
               "Formula Parsing Error: %s", msg );
 }
 
@@ -2238,6 +2238,3 @@ yyreturn:
   /* Make sure YYID is used.  */
   return YYID (yyresult);
 }
-
-
-

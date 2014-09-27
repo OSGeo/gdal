@@ -188,7 +188,7 @@ class IMapInfoFile : public OGRLayer
                      GBool bTestOpenNoError = FALSE ) = 0;
     virtual int Close() = 0;
 
-    virtual int SetQuickSpatialIndexMode(GBool bQuickSpatialIndexMode=TRUE) {return -1;}
+    virtual int SetQuickSpatialIndexMode(CPL_UNUSED GBool bQuickSpatialIndexMode=TRUE) {return -1;}
 
     virtual const char *GetTableName() = 0;
 
@@ -616,31 +616,32 @@ class TABSeamless: public IMapInfoFile
     ///////////////
     // Write access specific stuff
     //
-    virtual int SetBounds(double dXMin, double dYMin, 
-                          double dXMax, double dYMax)   {return -1;}
-    virtual int SetFeatureDefn(OGRFeatureDefn *poFeatureDefn,
-                               TABFieldType *paeMapInfoNativeFieldTypes=NULL)
+    virtual int SetBounds(CPL_UNUSED double dXMin, CPL_UNUSED double dYMin,
+                          CPL_UNUSED double dXMax, CPL_UNUSED double dYMax)   {return -1;}
+    virtual int SetFeatureDefn(CPL_UNUSED OGRFeatureDefn *poFeatureDefn,
+                               CPL_UNUSED TABFieldType *paeMapInfoNativeFieldTypes=NULL)
                                                         {return -1;}
-    virtual int AddFieldNative(const char *pszName,
-                               TABFieldType eMapInfoType,
-                               int nWidth=0, int nPrecision=0,
-                               GBool bIndexed=FALSE, 
-                               GBool bUnique=FALSE, 
-                               int bApproxOK = TRUE)     {return -1;}
+    virtual int AddFieldNative(CPL_UNUSED const char *pszName,
+                               CPL_UNUSED TABFieldType eMapInfoType,
+                               CPL_UNUSED int nWidth=0,
+                               CPL_UNUSED int nPrecision=0,
+                               CPL_UNUSED GBool bIndexed=FALSE,
+                               CPL_UNUSED GBool bUnique=FALSE,
+                               CPL_UNUSED int bApproxOK = TRUE) {return -1;}
 
-    virtual int SetSpatialRef(OGRSpatialReference *poSpatialRef) {return -1;}
+    virtual int SetSpatialRef(CPL_UNUSED OGRSpatialReference *poSpatialRef) {return -1;}
 
-    virtual OGRErr CreateFeature(TABFeature *poFeature) 
+    virtual OGRErr CreateFeature(CPL_UNUSED TABFeature *poFeature)
                                         {return OGRERR_UNSUPPORTED_OPERATION;}
 
-    virtual int SetFieldIndexed(int nFieldId)   {return -1;}
+    virtual int SetFieldIndexed(CPL_UNUSED int nFieldId) {return -1;}
 
     ///////////////
     // semi-private.
     virtual int  GetProjInfo(TABProjInfo *poPI)
             { return m_poIndexTable?m_poIndexTable->GetProjInfo(poPI):-1; }
-    virtual int  SetProjInfo(TABProjInfo *poPI)         { return -1; }
-    virtual int  SetMIFCoordSys(const char * /*pszMIFCoordSys*/) {return -1;};
+    virtual int SetProjInfo(CPL_UNUSED TABProjInfo *poPI)         { return -1; }
+    virtual int SetMIFCoordSys(const char * /*pszMIFCoordSys*/) {return -1;};
 
 #ifdef DEBUG
     virtual void Dump(FILE *fpOut = NULL);
@@ -1044,7 +1045,7 @@ class TABFeature: public OGRFeature
     virtual TABFeature     *CloneTABFeature(OGRFeatureDefn *pNewDefn = NULL);
     virtual TABFeatureClass GetFeatureClass() { return TABFCNoGeomFeature; };
     virtual TABGeomType     GetMapInfoType()  { return m_nMapInfoType; };
-    virtual TABGeomType     ValidateMapInfoType(TABMAPFile *poMapFile = NULL)
+    virtual TABGeomType     ValidateMapInfoType(CPL_UNUSED TABMAPFile *poMapFile = NULL)
                                                 {m_nMapInfoType=TAB_GEOM_NONE;
                                                  return m_nMapInfoType;};
     GBool       IsRecordDeleted() { return m_bDeletedFlag; };
@@ -1907,5 +1908,3 @@ void    MITABFreeCoordSysTable();
 GBool   MITABCoordSysTableLoaded();
 
 #endif /* _MITAB_H_INCLUDED_ */
-
-

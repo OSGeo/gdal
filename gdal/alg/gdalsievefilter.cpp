@@ -183,10 +183,9 @@ CPLErr CPL_STDCALL
 GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
                  GDALRasterBandH hDstBand,
                  int nSizeThreshold, int nConnectedness,
-                 char **papszOptions,
-                 GDALProgressFunc pfnProgress, 
+                 CPL_UNUSED char **papszOptions,
+                 GDALProgressFunc pfnProgress,
                  void * pProgressArg )
-
 {
     VALIDATE_POINTER1( hSrcBand, "GDALSieveFilter", CE_Failure );
     VALIDATE_POINTER1( hDstBand, "GDALSieveFilter", CE_Failure );
@@ -577,4 +576,3 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
 
     return eErr;
 }
-

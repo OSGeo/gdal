@@ -2404,8 +2404,4 @@ int TABDebugFeature::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 /**********************************************************************
  *
  **********************************************************************/
-int TABDebugFeature::WriteGeometryToMIFFile(MIDDATAFile *fp){ return -1; }
-
-
-
-
+int TABDebugFeature::WriteGeometryToMIFFile(CPL_UNUSED MIDDATAFile *fp){ return -1; }

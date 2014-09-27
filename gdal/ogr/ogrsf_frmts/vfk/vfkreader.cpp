@@ -380,10 +380,11 @@ IVFKDataBlock *VFKReader::CreateDataBlock(const char *pszBlockName)
   \param poNewDataBlock pointer to VFKDataBlock instance
   \param pszDefn unused (FIXME ?)
 */
-void VFKReader::AddDataBlock(IVFKDataBlock *poNewDataBlock, const char *pszDefn)
+void VFKReader::AddDataBlock(IVFKDataBlock *poNewDataBlock,
+                             CPL_UNUSED const char *pszDefn)
 {
     m_nDataBlockCount++;
-    
+
     m_papoDataBlock = (IVFKDataBlock **)
         CPLRealloc(m_papoDataBlock, sizeof (IVFKDataBlock *) * m_nDataBlockCount);
     m_papoDataBlock[m_nDataBlockCount-1] = poNewDataBlock;

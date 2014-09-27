@@ -78,8 +78,9 @@ COSARRasterBand::COSARRasterBand(COSARDataset *pDS, unsigned long nRTNB) {
 	eDataType = GDT_CInt16;
 }
 
-CPLErr COSARRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, 
-	void *pImage) {
+CPLErr COSARRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
+                                   int nBlockYOff,
+                                   void *pImage) {
 
     unsigned long nRSFV = 0;
     unsigned long nRSLV = 0;
@@ -217,4 +218,3 @@ void GDALRegister_COSAR() {
 		GetGDALDriverManager()->RegisterDriver(poDriver);
 	}
 }
-

@@ -51,19 +51,22 @@ using namespace std;
 /************************************************************************/
 /*                           GenerateTiles()                            */
 /************************************************************************/
-void GenerateTiles(std::string filename, 
-                   int zoom, int rxsize, 
-                   int rysize, int ix, int iy, 
-                   int rx, int ry, int dxsize, 
+void GenerateTiles(std::string filename,
+                   CPL_UNUSED int zoom,
+                   int rxsize,
+                   int rysize,
+                   CPL_UNUSED int ix,
+                   CPL_UNUSED int iy,
+                   int rx, int ry, int dxsize,
                    int dysize, int bands,
                    GDALDataset* poSrcDs,
-                   GDALDriver* poOutputTileDriver, 
+                   GDALDriver* poOutputTileDriver,
                    GDALDriver* poMemDriver,
                    bool isJpegDriver)
 {
     GDALDataset* poTmpDataset = NULL;
     GDALRasterBand* alphaBand = NULL;
-   
+
     GByte* pafScanline = new GByte[dxsize];
     bool* hadnoData = new bool[dxsize];
 
@@ -502,11 +505,15 @@ class KmlSuperOverlayDummyDataset: public GDALDataset
 };
 
 static
-GDALDataset *KmlSuperOverlayCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
-                                        int bStrict, char ** papszOptions, GDALProgressFunc pfnProgress, void * pProgressData)
+GDALDataset *KmlSuperOverlayCreateCopy( const char * pszFilename,
+                                        GDALDataset *poSrcDS,
+                                        CPL_UNUSED int bStrict,
+                                        char ** papszOptions,
+                                        GDALProgressFunc pfnProgress,
+                                        void * pProgressData)
 {
     bool isKmz = false;
-    
+
     if( pfnProgress == NULL )
         pfnProgress = GDALDummyProgress;
 
@@ -986,7 +993,8 @@ CPLErr KmlSuperOverlayReadDataset::GetGeoTransform( double * padfGeoTransform )
 /*                        KmlSuperOverlayRasterBand()                   */
 /************************************************************************/
 
-KmlSuperOverlayRasterBand::KmlSuperOverlayRasterBand(KmlSuperOverlayReadDataset* poDS, int nBand)
+KmlSuperOverlayRasterBand::KmlSuperOverlayRasterBand(KmlSuperOverlayReadDataset* poDS,
+                                                     CPL_UNUSED int nBand)
 {
     nRasterXSize = poDS->nRasterXSize;
     nRasterYSize = poDS->nRasterYSize;
@@ -2422,7 +2430,7 @@ GDALDataset *KmlSuperOverlayReadDataset::Open(const char* pszFilename,
 /*                    KmlSuperOverlayDatasetDelete()                    */
 /************************************************************************/
 
-static CPLErr KmlSuperOverlayDatasetDelete(const char* fileName)
+static CPLErr KmlSuperOverlayDatasetDelete(CPL_UNUSED const char* fileName)
 {
     /* Null implementation, so that people can Delete("MEM:::") */
     return CE_None;
@@ -2476,4 +2484,3 @@ void GDALRegister_KMLSUPEROVERLAY()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-

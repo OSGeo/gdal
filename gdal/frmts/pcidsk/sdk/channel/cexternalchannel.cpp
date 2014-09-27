@@ -44,15 +44,17 @@
 #include <cstdio>
 #include <cstdlib>
 
+#include "cpl_port.h"
+
 using namespace PCIDSK;
 
 /************************************************************************/
 /*                          CExternalChannel()                          */
 /************************************************************************/
 
-CExternalChannel::CExternalChannel( PCIDSKBuffer &image_header, 
-                                    uint64 ih_offset, 
-                                    PCIDSKBuffer &file_header,
+CExternalChannel::CExternalChannel( PCIDSKBuffer &image_header,
+                                    uint64 ih_offset,
+                                    CPL_UNUSED PCIDSKBuffer &file_header,
                                     std::string filename,
                                     int channelnum,
                                     CPCIDSKFile *file,

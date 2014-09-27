@@ -64,8 +64,7 @@ OGRPDSDataSource::~OGRPDSDataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRPDSDataSource::TestCapability( const char * pszCap )
-
+int OGRPDSDataSource::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }

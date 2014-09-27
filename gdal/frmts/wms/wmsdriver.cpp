@@ -843,9 +843,10 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
 
 GDALDataset *GDALWMSDataset::CreateCopy( const char * pszFilename,
                                          GDALDataset *poSrcDS,
-                                         int bStrict, char ** papszOptions,
-                                         GDALProgressFunc pfnProgress,
-                                         void * pProgressData )
+                                         CPL_UNUSED int bStrict,
+                                         CPL_UNUSED char ** papszOptions,
+                                         CPL_UNUSED GDALProgressFunc pfnProgress,
+                                         CPL_UNUSED void * pProgressData )
 {
     if (poSrcDS->GetDriver() == NULL ||
         !EQUAL(poSrcDS->GetDriver()->GetDescription(), "WMS"))

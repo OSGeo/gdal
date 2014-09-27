@@ -44,15 +44,17 @@
 #include <cstdio>
 #include <cstdlib>
 
+#include "cpl_port.h"
+
 using namespace PCIDSK;
 
 /************************************************************************/
 /*                      CBandInterleavedChannel()                       */
 /************************************************************************/
 
-CBandInterleavedChannel::CBandInterleavedChannel( PCIDSKBuffer &image_header, 
-                                                  uint64 ih_offset, 
-                                                  PCIDSKBuffer &file_header,
+CBandInterleavedChannel::CBandInterleavedChannel( PCIDSKBuffer &image_header,
+                                                  uint64 ih_offset,
+                                                  CPL_UNUSED PCIDSKBuffer &file_header,
                                                   int channelnum,
                                                   CPCIDSKFile *file,
                                                   uint64 image_offset,
@@ -472,4 +474,3 @@ std::string CBandInterleavedChannel::MassageLink( std::string filename_in ) cons
 
     return filename_in;
 }
-

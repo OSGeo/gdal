@@ -215,23 +215,24 @@ static int ReadKey(GTIF* gt, TempKeyData* tempData,
                    KeyEntry* entptr, GeoKey* keyptr)
 {
     int offset,count;
-	
+
     keyptr->gk_key = entptr->ent_key;
     keyptr->gk_count = entptr->ent_count;
     count = entptr->ent_count;
     offset = entptr->ent_val_offset;
     if (gt->gt_keymin > keyptr->gk_key)  gt->gt_keymin=keyptr->gk_key;
     if (gt->gt_keymax < keyptr->gk_key)  gt->gt_keymax=keyptr->gk_key;
-	
+
     if (entptr->ent_location)
         keyptr->gk_type = (gt->gt_methods.type)(gt->gt_tif,entptr->ent_location);
     else
         keyptr->gk_type = (gt->gt_methods.type)(gt->gt_tif,GTIFF_GEOKEYDIRECTORY);
-	  
+
     switch (entptr->ent_location)
     {
         case GTIFF_LOCAL:
             /* store value into data value */
+            /* TODO: Fix strict-aliasing issue. */
             *(pinfo_t *)(&keyptr->gk_data) = entptr->ent_val_offset;
             break;
         case GTIFF_GEOKEYDIRECTORY:
