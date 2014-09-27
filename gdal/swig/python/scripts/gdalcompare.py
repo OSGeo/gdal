@@ -113,7 +113,7 @@ def compare_band(golden_band, new_band, id, options=[]):
     found_diff += 1
   else:
     for i in range(golden_band.GetOverviewCount()):
-      compare_band(golden_band.GetOverview(i),
+      found_diff += compare_band(golden_band.GetOverview(i),
                    new_band.GetOverview(i),
                    id + ' overview ' + str(i), 
                    options)
