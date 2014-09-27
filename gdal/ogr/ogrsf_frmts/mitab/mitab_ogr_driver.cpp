@@ -147,9 +147,11 @@ static GDALDataset *OGRTABDriverOpen( GDALOpenInfo* poOpenInfo )
 /************************************************************************/
 
 static GDALDataset *OGRTABDriverCreate( const char * pszName,
-                                   int nBands, int nXSize, int nYSize, GDALDataType eDT,
-                                   char **papszOptions )
-
+                                        CPL_UNUSED int nBands,
+                                        CPL_UNUSED int nXSize,
+                                        CPL_UNUSED int nYSize,
+                                        CPL_UNUSED GDALDataType eDT,
+                                        char **papszOptions )
 {
     OGRTABDataSource *poDS;
 
@@ -207,7 +209,7 @@ static CPLErr OGRTABDriverDelete( const char *pszDataSource )
 /*                          OGRTABDriverUnload()                        */
 /************************************************************************/
 
-static void OGRTABDriverUnload(GDALDriver* poDriver)
+static void OGRTABDriverUnload(CPL_UNUSED GDALDriver* poDriver)
 {
     MITABFreeCoordSysTable();
 }

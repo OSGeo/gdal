@@ -500,9 +500,12 @@ WCSDataset::~WCSDataset()
 /*      (FALSE) for a given request configuration and environment.      */
 /************************************************************************/
 
-int WCSDataset::TestUseBlockIO( int nXOff, int nYOff, int nXSize, int nYSize,
-                                int nBufXSize, int nBufYSize )
-
+int WCSDataset::TestUseBlockIO( CPL_UNUSED int nXOff,
+                                CPL_UNUSED int nYOff,
+                                int nXSize,
+                                int nYSize,
+                                int nBufXSize,
+                                int nBufYSize )
 {
     int bUseBlockedIO = bForceCachedIO;
 
@@ -556,17 +559,24 @@ CPLErr WCSDataset::IRasterIO( GDALRWFlag eRWFlag,
 /*      Make exactly one request to the server for this data.           */
 /************************************************************************/
 
-CPLErr 
-WCSDataset::DirectRasterIO( GDALRWFlag eRWFlag,
-                            int nXOff, int nYOff, int nXSize, int nYSize,
-                            void * pData, int nBufXSize, int nBufYSize,
-                            GDALDataType eBufType, 
-                            int nBandCount, int *panBandMap,
-                            int nPixelSpace, int nLineSpace, int nBandSpace)
-
+CPLErr
+WCSDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
+                            int nXOff,
+                            int nYOff,
+                            int nXSize,
+                            int nYSize,
+                            void * pData,
+                            int nBufXSize,
+                            int nBufYSize,
+                            GDALDataType eBufType,
+                            int nBandCount,
+                            int *panBandMap,
+                            int nPixelSpace,
+                            int nLineSpace,
+                            int nBandSpace)
 {
-    CPLDebug( "WCS", "DirectRasterIO(%d,%d,%d,%d) -> (%d,%d) (%d bands)\n", 
-              nXOff, nYOff, nXSize, nYSize, 
+    CPLDebug( "WCS", "DirectRasterIO(%d,%d,%d,%d) -> (%d,%d) (%d bands)\n",
+              nXOff, nYOff, nXSize, nYSize,
               nBufXSize, nBufYSize, nBandCount );
 
 /* -------------------------------------------------------------------- */

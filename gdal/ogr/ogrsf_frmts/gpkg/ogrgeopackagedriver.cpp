@@ -90,15 +90,18 @@ static GDALDataset *OGRGeoPackageDriverOpen( GDALOpenInfo* poOpenInfo )
 /************************************************************************/
 
 static GDALDataset *OGRGeoPackageDriverCreate( const char * pszFilename,
-                                    int nBands, int nXSize, int nYSize, GDALDataType eDT,
-                                    char **papszOptions )
+                                               CPL_UNUSED int nBands,
+                                               CPL_UNUSED int nXSize,
+                                               CPL_UNUSED int nYSize,
+                                               CPL_UNUSED GDALDataType eDT,
+                                               char **papszOptions )
 {
 	/* First, ensure there isn't any such file yet. */
     VSIStatBufL sStatBuf;
 
     if( VSIStatL( pszFilename, &sStatBuf ) == 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "A file system object called '%s' already exists.",
                   pszFilename );
 
@@ -169,5 +172,3 @@ void RegisterOGRGeoPackage()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-
-

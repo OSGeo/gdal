@@ -282,15 +282,15 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
             }
             else if( psImage->chICORDS == 'G' || psImage->chICORDS == 'C' )
             {
-                pdfXY[1] = 
-                    atof(NITFGetField( szTemp, pszCoordPair, 0, 2 )) 
+                pdfXY[1] =
+                    atof(NITFGetField( szTemp, pszCoordPair, 0, 2 ))
                   + atof(NITFGetField( szTemp, pszCoordPair, 2, 2 )) / 60.0
                   + atof(NITFGetField( szTemp, pszCoordPair, 4, 2 )) / 3600.0;
                 if( pszCoordPair[6] == 's' || pszCoordPair[6] == 'S' )
                     pdfXY[1] *= -1;
 
-                pdfXY[0] = 
-                    atof(NITFGetField( szTemp, pszCoordPair, 7, 3 )) 
+                pdfXY[0] =
+                    atof(NITFGetField( szTemp, pszCoordPair, 7, 3 ))
                   + atof(NITFGetField( szTemp, pszCoordPair,10, 2 )) / 60.0
                   + atof(NITFGetField( szTemp, pszCoordPair,12, 2 )) / 3600.0;
 
@@ -301,17 +301,17 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
             {  /* 'D' is Decimal Degrees */
                 pdfXY[1] = atof(NITFGetField( szTemp, pszCoordPair, 0, 7 ));
                 pdfXY[0] = atof(NITFGetField( szTemp, pszCoordPair, 7, 8 ));
-            }      
+            }
             else if( psImage->chICORDS == 'U' )
             {
-                int err;
+                /* int err; */
                 long nZone;
                 char chHemisphere;
                 NITFGetField( szTemp, pszCoordPair, 0, 15 );
-                
+
                 CPLDebug( "NITF", "IGEOLO = %15.15s", pszCoordPair );
-                err = Convert_MGRS_To_UTM( szTemp, &nZone, &chHemisphere,
-                                           pdfXY+0, pdfXY+1 );
+                /* err = */ Convert_MGRS_To_UTM( szTemp, &nZone, &chHemisphere,
+                                                 pdfXY+0, pdfXY+1 );
 
                 if( chHemisphere == 'S' )
                     nZone = -1 * nZone;
@@ -1255,9 +1255,9 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
 /* -------------------------------------------------------------------- */
 /*      Can we do a direct read into our buffer?                        */
 /* -------------------------------------------------------------------- */
-    if( psImage->nWordSize == psImage->nPixelOffset
-        && (psImage->nBitsPerSample * psImage->nBlockWidth + 7) / 8
-           == psImage->nLineOffset 
+    if( (size_t)psImage->nWordSize == psImage->nPixelOffset
+        && (size_t)((psImage->nBitsPerSample * psImage->nBlockWidth + 7) / 8)
+           == psImage->nLineOffset
         && psImage->szIC[0] != 'C' && psImage->szIC[0] != 'M'
         && psImage->chIMODE != 'P' )
     {
@@ -1558,8 +1558,8 @@ int NITFWriteImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
 /* -------------------------------------------------------------------- */
 /*      Can we do a direct read into our buffer?                        */
 /* -------------------------------------------------------------------- */
-    if( psImage->nWordSize == psImage->nPixelOffset
-        && psImage->nWordSize * psImage->nBlockWidth == psImage->nLineOffset 
+    if( (size_t)psImage->nWordSize == psImage->nPixelOffset
+        && (size_t)(psImage->nWordSize * psImage->nBlockWidth) == psImage->nLineOffset
         && psImage->szIC[0] != 'C' && psImage->szIC[0] != 'M' )
     {
 #ifdef CPL_LSB
@@ -1653,8 +1653,8 @@ int NITFReadImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
 /*      Can we do a direct read into our buffer.                        */
 /* -------------------------------------------------------------------- */
     if( (psImage->nBitsPerSample % 8) != 0 ||
-        (psImage->nWordSize == psImage->nPixelOffset
-        && psImage->nWordSize * psImage->nBlockWidth == psImage->nLineOffset) )
+        ((size_t)psImage->nWordSize == psImage->nPixelOffset
+         && (size_t)(psImage->nWordSize * psImage->nBlockWidth) == psImage->nLineOffset) )
     {
         if( VSIFReadL( pData, 1, nLineSize, psImage->psFile->fp ) !=  
             nLineSize )
@@ -1769,8 +1769,8 @@ int NITFWriteImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
 /* -------------------------------------------------------------------- */
 /*      Can we do a direct write into our buffer.                       */
 /* -------------------------------------------------------------------- */
-    if( psImage->nWordSize == psImage->nPixelOffset
-        && psImage->nWordSize * psImage->nBlockWidth == psImage->nLineOffset )
+    if( (size_t)psImage->nWordSize == psImage->nPixelOffset
+        && (size_t)(psImage->nWordSize * psImage->nBlockWidth) == psImage->nLineOffset )
     {
 #ifdef CPL_LSB
         NITFSwapWords( psImage, pData, psImage->nBlockWidth );
@@ -2751,7 +2751,7 @@ static void NITFLoadAttributeSection( NITFImage *psImage )
 
 {
     int i;
-    GUInt32 nASHOffset=0, nASHSize=0, nASSOffset=0, nASSSize=0, nNextOffset=0;
+    GUInt32 nASHOffset=0, /* nASHSize=0, */ nASSOffset=0, nASSSize=0, nNextOffset=0;
     GInt16 nAttrCount;
     GByte *pabyAttributeSubsection;
     GByte abyBuffer[128];
@@ -2761,7 +2761,7 @@ static void NITFLoadAttributeSection( NITFImage *psImage )
         if( psImage->pasLocations[i].nLocId == LID_AttributeSectionSubheader )
         {
             nASHOffset = psImage->pasLocations[i].nLocOffset;
-            nASHSize = psImage->pasLocations[i].nLocSize;
+            /* nASHSize = psImage->pasLocations[i].nLocSize; */
         }
         else if( psImage->pasLocations[i].nLocId == LID_AttributeSubsection )
         {
@@ -2781,7 +2781,6 @@ static void NITFLoadAttributeSection( NITFImage *psImage )
 
     CPL_MSBPTR16( &nAttrCount );
 
-    
 /* -------------------------------------------------------------------- */
 /*      nASSSize Hack                                                   */
 /* -------------------------------------------------------------------- */
@@ -2819,7 +2818,7 @@ static void NITFLoadAttributeSection( NITFImage *psImage )
 /*      hold the offset table (otherwise NITFFetchAttribute coud        */
 /*      read out of the buffer)                                         */
 /* -------------------------------------------------------------------- */
-    if (nASSSize < 8 * nAttrCount)
+    if (nASSSize < (size_t)(8 * nAttrCount))
     {
         CPLError( CE_Warning, CPLE_AppDefined,
                   "Attribute subsection not large enough (%d bytes) to contain %d attributes.",
@@ -2888,45 +2887,43 @@ static void NITFLoadColormapSubSection( NITFImage *psImage )
 {
     int nLocBaseColorGrayscaleSection = 0;
     int nLocBaseColormapSubSection = 0;
-    int colorGrayscaleSectionSize = 0;
-    int colormapSubSectionSize = 0;
+    /* int colorGrayscaleSectionSize = 0; */
+    /* int colormapSubSectionSize = 0; */
     NITFFile *psFile = psImage->psFile;
     unsigned int i, j;
     unsigned char nOffsetRecs;
     NITFColormapRecord* colormapRecords;
     unsigned int colormapOffsetTableOffset;
     unsigned short offsetRecLen;
-    
+
     NITFBandInfo *psBandInfo = psImage->pasBandInfo;
-  
+
     for( i = 0; (int)i < psImage->nLocCount; i++ )
     {
         if( psImage->pasLocations[i].nLocId == LID_ColorGrayscaleSectionSubheader )
         {
             nLocBaseColorGrayscaleSection = psImage->pasLocations[i].nLocOffset;
-            colorGrayscaleSectionSize = psImage->pasLocations[i].nLocSize;
+            /* colorGrayscaleSectionSize = psImage->pasLocations[i].nLocSize; */
         }
         else if( psImage->pasLocations[i].nLocId == LID_ColormapSubsection )
         {
             nLocBaseColormapSubSection = psImage->pasLocations[i].nLocOffset;
-            colormapSubSectionSize = psImage->pasLocations[i].nLocSize;
+            /* colormapSubSectionSize = psImage->pasLocations[i].nLocSize; */
         }
     }
     if (nLocBaseColorGrayscaleSection == 0)
     {
-        //fprintf(stderr, "nLocBaseColorGrayscaleSection == 0\n");
         return;
     }
     if (nLocBaseColormapSubSection == 0)
     {
-        //fprintf(stderr, "nLocBaseColormapSubSection == 0\n");
         return;
     }
-    
-    if( VSIFSeekL( psFile->fp, nLocBaseColorGrayscaleSection, 
+
+    if( VSIFSeekL( psFile->fp, nLocBaseColorGrayscaleSection,
                   SEEK_SET ) != 0 )
     {
-        CPLError( CE_Failure, CPLE_FileIO, 
+        CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to seek to %d.",
                   nLocBaseColorGrayscaleSection );
         return;
@@ -3134,12 +3131,12 @@ static GUInt32 NITFReadMSBGUInt32(VSILFILE* fp, int* pbSuccess)
 
 NITFLocation* NITFReadRPFLocationTable(VSILFILE* fp, int* pnLocCount)
 {
-    GUInt16 nLocSectionLength;
+    /* GUInt16 nLocSectionLength; */
     GUInt32 nLocSectionOffset;
     GUInt16 iLoc;
     GUInt16 nLocCount;
     GUInt16 nLocRecordLength;
-    GUInt32 nLocComponentAggregateLength;
+    /* GUInt32 nLocComponentAggregateLength; */
     NITFLocation* pasLocations = NULL;
     int bSuccess;
     GUIntBig nCurOffset;
@@ -3152,7 +3149,7 @@ NITFLocation* NITFReadRPFLocationTable(VSILFILE* fp, int* pnLocCount)
     nCurOffset = VSIFTellL(fp);
 
     bSuccess = TRUE;
-    nLocSectionLength = NITFReadMSBGUInt16(fp, &bSuccess);
+    /* nLocSectionLength = */ NITFReadMSBGUInt16(fp, &bSuccess);
     nLocSectionOffset = NITFReadMSBGUInt32(fp, &bSuccess);
     if (nLocSectionOffset != 14)
     {
@@ -3174,7 +3171,7 @@ NITFLocation* NITFReadRPFLocationTable(VSILFILE* fp, int* pnLocCount)
         return NULL;
     }
 
-    nLocComponentAggregateLength = NITFReadMSBGUInt32(fp, &bSuccess);
+    /* nLocComponentAggregateLength = */ NITFReadMSBGUInt32(fp, &bSuccess);
 
     VSIFSeekL(fp, nCurOffset + nLocSectionOffset, SEEK_SET);
 
@@ -3344,7 +3341,7 @@ static int NITFLoadVQTables( NITFImage *psImage, int bTryGuessingOffset )
 
 {
     int     i;
-    GUInt32 nVQOffset=0, nVQSize=0;
+    GUInt32 nVQOffset=0 /*, nVQSize=0 */;
     GByte abyTestChunk[1000];
     GByte abySignature[6];
 
@@ -3362,7 +3359,7 @@ static int NITFLoadVQTables( NITFImage *psImage, int bTryGuessingOffset )
         if( psImage->pasLocations[i].nLocId == LID_CompressionLookupSubsection)
         {
             nVQOffset = psImage->pasLocations[i].nLocOffset;
-            nVQSize = psImage->pasLocations[i].nLocSize;
+            /* nVQSize = psImage->pasLocations[i].nLocSize; */
         }
     }
 
@@ -3388,13 +3385,13 @@ static int NITFLoadVQTables( NITFImage *psImage, int bTryGuessingOffset )
         if (!bTryGuessingOffset)
             return FALSE;
 
-        for( i = 0; i < sizeof(abyTestChunk) - sizeof(abySignature); i++ )
+        for( i = 0; (size_t)i < sizeof(abyTestChunk) - sizeof(abySignature); i++ )
         {
             if( memcmp(abyTestChunk+i,abySignature,sizeof(abySignature)) == 0 )
             {
                 bFoundSignature = TRUE;
-                nVQOffset += i; 
-                CPLDebug( "NITF", 
+                nVQOffset += i;
+                CPLDebug( "NITF",
                           "VQ CompressionLookupSubsection offsets off by %d bytes, adjusting accordingly.",
                           i );
                 break;
@@ -3656,12 +3653,12 @@ static int NITFDoLinesIntersect( double dfL1X1, double dfL1Y1,
         dfL2M = 1e10;
         dfL2B = 0.0;
     }
-    else 
+    else
     {
         dfL2M = (dfL2Y2 - dfL2Y1 ) / (dfL2X2 - dfL2X1);
         dfL2B = dfL2Y2 - dfL2M * dfL2X2;
     }
-    
+
     if( dfL2M == dfL1M )
     {
         // parallel .. no meaningful intersection.
@@ -3669,12 +3666,12 @@ static int NITFDoLinesIntersect( double dfL1X1, double dfL1Y1,
     }
     else
     {
-        double dfX, dfY;
-        
-        dfX = (dfL2B - dfL1B) / (dfL1M-dfL2M);
-        dfY = dfL2M * dfX + dfL2B;
+        double dfX /*, dfY*/;
 
-        /* 
+        dfX = (dfL2B - dfL1B) / (dfL1M-dfL2M);
+        /* dfY = dfL2M * dfX + dfL2B; */
+
+        /*
         ** Is this intersection on the line between
         ** our corner points or "out somewhere" else?
         */

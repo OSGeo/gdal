@@ -715,17 +715,16 @@ CPLErr ECWRasterBand::OldIRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      Establish access at the desired resolution.                     */
 /* -------------------------------------------------------------------- */
-    CNCSError oErr;
-
     poGDS->CleanupWindow();
 
     iBand = nBand-1;
     poGDS->nBandIndexToPromoteTo8Bit = ( bPromoteTo8Bit ) ? 0 : -1;
-    oErr = poGDS->poFileView->SetView( 1, (unsigned int *) (&iBand),
-                                       nXOff, nYOff, 
-                                       nXOff + nXSize - 1, 
-                                       nYOff + nYSize - 1,
-                                       nNewXSize, nNewYSize );
+    // TODO: Fix writable strings issue.
+    CNCSError oErr = poGDS->poFileView->SetView( 1, (unsigned int *) (&iBand),
+                                                 nXOff, nYOff,
+                                                 nXOff + nXSize - 1,
+                                                 nYOff + nYSize - 1,
+                                                 nNewXSize, nNewYSize );
     if( oErr.GetErrorNumber() != NCS_SUCCESS )
     {
         CPLFree( pabyWorkBuffer );
@@ -1461,11 +1460,10 @@ void ECWDataset::WriteHeader()
 /************************************************************************/
 
 CPLErr ECWDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
-                               int nBufXSize, int nBufYSize, 
-                               GDALDataType eDT, 
+                               int nBufXSize, int nBufYSize,
+                               CPL_UNUSED GDALDataType eDT,
                                int nBandCount, int *panBandList,
-                               char **papszOptions )
-
+                               CPL_UNUSED char **papszOptions )
 {
     int *panAdjustedBandList = NULL;
 
@@ -1476,10 +1474,10 @@ CPLErr ECWDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
 #if !defined(SDK_CAN_DO_SUPERSAMPLING)
     if( nBufXSize > nXSize || nBufYSize > nYSize )
     {
-        CPLError( CE_Warning, CPLE_AppDefined, 
+        CPLError( CE_Warning, CPLE_AppDefined,
                   "Supersampling not directly supported by ECW toolkit,\n"
                   "ignoring AdviseRead() request." );
-        return CE_Warning; 
+        return CE_Warning;
     }
 #endif
 
@@ -1586,14 +1584,13 @@ CPLErr ECWDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
 /*      another way (not report an error).                              */
 /************************************************************************/
 
-int ECWDataset::TryWinRasterIO( GDALRWFlag eFlag, 
+int ECWDataset::TryWinRasterIO( CPL_UNUSED GDALRWFlag eFlag,
                                 int nXOff, int nYOff, int nXSize, int nYSize,
-                                GByte *pabyData, int nBufXSize, int nBufYSize, 
+                                GByte *pabyData, int nBufXSize, int nBufYSize,
                                 GDALDataType eDT,
-                                int nBandCount, int *panBandList, 
-                                int nPixelSpace, int nLineSpace, 
+                                int nBandCount, int *panBandList,
+                                int nPixelSpace, int nLineSpace,
                                 int nBandSpace )
-
 {
     int iBand, i;
 
@@ -2042,17 +2039,17 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
 /************************************************************************/
 
 CPLErr ECWDataset::ReadBandsDirectly(void * pData, int nBufXSize, int nBufYSize,
-                                     GDALDataType eBufType, 
+                                     CPL_UNUSED GDALDataType eBufType,
                                      int nBandCount,
-                                     int nPixelSpace, int nLineSpace, int nBandSpace)
+                                     CPL_UNUSED int nPixelSpace, int nLineSpace, int nBandSpace)
 {
-    CPLDebug( "ECW", 
-              "ReadBandsDirectly(-> %dx%d) - reading lines directly.", 
+    CPLDebug( "ECW",
+              "ReadBandsDirectly(-> %dx%d) - reading lines directly.",
               nBufXSize, nBufYSize);
 
     UINT8 **pBIL = (UINT8**)NCSMalloc(nBandCount * sizeof(UINT8*), FALSE);
-    
-    for(int nB = 0; nB < nBandCount; nB++) 
+
+    for(int nB = 0; nB < nBandCount; nB++)
     {
         pBIL[nB] = ((UINT8*)pData) + (nBandSpace*nB);//for any bit depth
     }
@@ -2242,8 +2239,8 @@ GDALDataset *ECWDataset::OpenECW( GDALOpenInfo * poOpenInfo )
 
 CNCSJP2FileView *ECWDataset::OpenFileView( const char *pszDatasetName,
                                            bool bProgressive,
-                                           int &bUsingCustomStream, bool bWrite )
-
+                                           int &bUsingCustomStream,
+                                           CPL_UNUSED bool bWrite )
 {
 /* -------------------------------------------------------------------- */
 /*      First we try to open it as a normal CNCSFile, letting the       */
@@ -2256,7 +2253,7 @@ CNCSJP2FileView *ECWDataset::OpenFileView( const char *pszDatasetName,
 
     bUsingCustomStream = FALSE;
     poFileView = new CNCSFile();
-    //we always open in read only mode. This should be improved in the future. 
+    //we always open in read only mode. This should be improved in the future.
     oErr = poFileView->Open( (char *) pszDatasetName, bProgressive, false );
     eErr = oErr.GetErrorNumber();
 

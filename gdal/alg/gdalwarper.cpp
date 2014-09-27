@@ -73,13 +73,13 @@ CPL_CVSID("$Id$");
  * @return CE_None on success or CE_Failure if something goes wrong.
  */
 
-CPLErr CPL_STDCALL 
-GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT, 
+CPLErr CPL_STDCALL
+GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT,
                     GDALDatasetH hDstDS, const char *pszDstWKT,
-                    GDALResampleAlg eResampleAlg, 
-                    double dfWarpMemoryLimit, 
+                    GDALResampleAlg eResampleAlg,
+                    CPL_UNUSED double dfWarpMemoryLimit,
                     double dfMaxError,
-                    GDALProgressFunc pfnProgress, void *pProgressArg, 
+                    GDALProgressFunc pfnProgress, void *pProgressArg,
                     GDALWarpOptions *psOptions )
 
 {
@@ -509,7 +509,9 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
 /************************************************************************/
 
 CPLErr 
-GDALWarpSrcAlphaMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType, 
+GDALWarpSrcAlphaMasker( void *pMaskFuncArg,
+                        CPL_UNUSED int nBandCount,
+                        CPL_UNUSED GDALDataType eType,
                         int nXOff, int nYOff, int nXSize, int nYSize,
                         GByte ** /*ppImageData */,
                         int bMaskIsFloat, void *pValidityMask )
@@ -567,8 +569,10 @@ GDALWarpSrcAlphaMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
 /*      information and building a one bit validity mask.               */
 /************************************************************************/
 
-CPLErr 
-GDALWarpSrcMaskMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType, 
+CPLErr
+GDALWarpSrcMaskMasker( void *pMaskFuncArg,
+                       CPL_UNUSED int nBandCount,
+                       CPL_UNUSED GDALDataType eType,
                        int nXOff, int nYOff, int nXSize, int nYSize,
                        GByte ** /*ppImageData */,
                        int bMaskIsFloat, void *pValidityMask )
@@ -639,7 +643,7 @@ GDALWarpSrcMaskMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
 /*      Pack into 1 bit per pixel for validity.                         */
 /* -------------------------------------------------------------------- */
     for( int iPixel = nXSize * nYSize - 1; iPixel >= 0; iPixel-- )
-    {                                    
+    {
         if( pabySrcMask[iPixel] == 0 )
             panMask[iPixel>>5] &= ~(0x01 << (iPixel & 0x1f));
     }
@@ -658,12 +662,12 @@ GDALWarpSrcMaskMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
 /*      negative bandcount.                                             */
 /************************************************************************/
 
-CPLErr 
-GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
+CPLErr
+GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
+                        CPL_UNUSED GDALDataType eType,
                         int nXOff, int nYOff, int nXSize, int nYSize,
                         GByte ** /*ppImageData */,
                         int bMaskIsFloat, void *pValidityMask )
-
 {
     GDALWarpOptions *psWO = (GDALWarpOptions *) pMaskFuncArg;
     float *pafMask = (float *) pValidityMask;

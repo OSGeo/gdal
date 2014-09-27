@@ -1209,20 +1209,20 @@ int EnvisatFile_GetDatasetIndex( EnvisatFile *self, const char *ds_name )
     int		i;
     char	padded_ds_name[100];
 
-    /* 
+    /*
      * Padd the name.  While the normal product spec says the DS_NAME will
      * be 28 characters, I try to pad more than this incase the specification
-     * is changed. 
+     * is changed.
      */
     strncpy( padded_ds_name, ds_name, sizeof(padded_ds_name) );
     padded_ds_name[sizeof(padded_ds_name)-1] = 0;
-    for( i = strlen(padded_ds_name); i < sizeof(padded_ds_name)-1; i++ )
+    for( i = strlen(padded_ds_name); (size_t)i < sizeof(padded_ds_name)-1; i++ )
     {
         padded_ds_name[i] = ' ';
     }
     padded_ds_name[i] = '\0';
 
-    /* 
+    /*
      * Compare only for the full length of DS_NAME we have saved.
      */
     for( i = 0; i < self->ds_count; i++ )
@@ -1739,7 +1739,7 @@ int S_NameValueList_Parse( const char *text, int text_offset,
         line_offset = (int) (next_text - text) + text_offset;
         while( *next_text != '\0' && *next_text != '\n' )
         {
-            if( line_len > sizeof(line)-1 )
+          if( line_len > ((int)sizeof(line) - 1) )
             {
                 SendError( "S_NameValueList_Parse(): "
                            "Corrupt line, longer than 1024 characters." );
@@ -1935,4 +1935,3 @@ void S_NameValueList_Destroy( int *entry_count,
 }
 
 /* EOF */
-

@@ -355,8 +355,7 @@ int OGRWalkTableLayer::GetFeatureCount( int bForce )
 /*                             GetExtent()                              */
 /************************************************************************/
 
-OGRErr OGRWalkTableLayer::GetExtent( OGREnvelope *psExtent, int bForce )
-
+OGRErr OGRWalkTableLayer::GetExtent( OGREnvelope *psExtent, CPL_UNUSED int bForce )
 {
     *psExtent = sExtent;
     return OGRERR_NONE;

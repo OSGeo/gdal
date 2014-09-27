@@ -58,8 +58,8 @@ static const TigerRecordInfo rt4_info =
 /************************************************************************/
 
 TigerAltName::TigerAltName( OGRTigerDataSource * poDSIn,
-                            const char * pszPrototypeModule ) : TigerFileBase(&rt4_info, FILE_CODE)
-
+                            CPL_UNUSED const char * pszPrototypeModule ) :
+    TigerFileBase(&rt4_info, FILE_CODE)
 {
     OGRFieldDefn        oField("",OFTInteger);
 

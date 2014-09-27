@@ -381,18 +381,18 @@ if( quad_value != nNoDataVal ) 						\
  * supported at this time - just pass NULL).
  * @param pfnProgress the progress function to report completion.
  * @param pProgressArg callback data for progress function.
- * 
- * @return CE_None on success or CE_Failure if something goes wrong. 
+ *
+ * @return CE_None on success or CE_Failure if something goes wrong.
  */
 
 CPLErr CPL_STDCALL
-GDALFillNodata( GDALRasterBandH hTargetBand, 
+GDALFillNodata( GDALRasterBandH hTargetBand,
                 GDALRasterBandH hMaskBand,
-                double dfMaxSearchDist, 
-                int bDeprecatedOption,
+                double dfMaxSearchDist,
+                CPL_UNUSED int bDeprecatedOption,
                 int nSmoothingIterations,
-                char **papszOptions,
-                GDALProgressFunc pfnProgress, 
+                CPL_UNUSED char **papszOptions,
+                GDALProgressFunc pfnProgress,
                 void * pProgressArg )
 
 {

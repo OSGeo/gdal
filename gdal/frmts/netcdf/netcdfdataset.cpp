@@ -833,8 +833,7 @@ CPLErr netCDFRasterBand::SetNoDataValue( double dfNoData )
 /*                           SerializeToXML()                           */
 /************************************************************************/
 
-CPLXMLNode *netCDFRasterBand::SerializeToXML( const char *pszUnused )
-
+CPLXMLNode *netCDFRasterBand::SerializeToXML( CPL_UNUSED const char *pszUnused )
 {
 /* -------------------------------------------------------------------- */
 /*      Overriden from GDALPamDataset to add only band histogram        */
@@ -1326,9 +1325,9 @@ CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*                             IWriteBlock()                            */
 /************************************************************************/
 
-CPLErr netCDFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
+CPLErr netCDFRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
+                                      int nBlockYOff,
                                       void * pImage )
-
 {
     size_t start[ MAX_NC_DIMS];
     size_t edge[ MAX_NC_DIMS ];
@@ -3115,12 +3114,12 @@ CPLErr netCDFDataset::Set1DGeolocation( int nVarId, const char *szDimName )
     SetMetadataItem( szTemp, pszVarValues, "GEOLOCATION2" );
 
     CPLFree( pszVarValues );
-    
+
     return CE_None;
 }
 
 
-double *netCDFDataset::Get1DGeolocation( const char *szDimName, int &nVarLen )
+double *netCDFDataset::Get1DGeolocation( CPL_UNUSED const char *szDimName, int &nVarLen )
 {
     char   **papszValues = NULL;
     char   *pszTemp = NULL;
@@ -5085,12 +5084,12 @@ void CopyMetadata( void  *poDS, int fpImage, int CDFVarID,
 
 netCDFDataset *
 netCDFDataset::CreateLL( const char * pszFilename,
-                         int nXSize, int nYSize, int nBands,
+                         int nXSize, int nYSize, CPL_UNUSED int nBands,
                          char ** papszOptions )
 {
     int status = NC_NOERR;
     netCDFDataset *poDS;
-    
+
     CPLReleaseMutex(hNCMutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
     poDS = new netCDFDataset();
     CPLAcquireMutex(hNCMutex, 1000.0);
@@ -5263,8 +5262,8 @@ CPLErr  NCDFCopyBand( GDALRasterBand *poSrcBand, GDALRasterBand *poDstBand,
 /************************************************************************/
 
 GDALDataset*
-netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
-                           int bStrict, char ** papszOptions, 
+netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
+                           CPL_UNUSED int bStrict, char ** papszOptions,
                            GDALProgressFunc pfnProgress, void * pProgressData )
 {
     netCDFDataset *poDS;
@@ -5806,7 +5805,7 @@ int netCDFDataset::DefVarDeflate( int nVarId, int bChunkingArg )
 /*                           NCDFUnloadDriver()                         */
 /************************************************************************/
 
-static void NCDFUnloadDriver(GDALDriver* poDriver)
+static void NCDFUnloadDriver(CPL_UNUSED GDALDriver* poDriver)
 {
     if( hNCMutex != NULL )
         CPLDestroyMutex(hNCMutex);
@@ -7038,4 +7037,3 @@ char **NCDFTokenizeArray( const char *pszValue )
     
     return papszValues;
 }
-

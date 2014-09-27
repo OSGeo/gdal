@@ -71,9 +71,11 @@ static GDALDataset *OGRILI1DriverOpen( GDALOpenInfo* poOpenInfo )
 /************************************************************************/
 
 static GDALDataset *OGRILI1DriverCreate( const char * pszName,
-                                    int nBands, int nXSize, int nYSize, GDALDataType eDT,
-                                    char **papszOptions )
-
+                                         CPL_UNUSED int nBands,
+                                         CPL_UNUSED int nXSize,
+                                         CPL_UNUSED int nYSize,
+                                         CPL_UNUSED GDALDataType eDT,
+                                         char **papszOptions )
 {
     OGRILI1DataSource    *poDS = new OGRILI1DataSource();
 
@@ -111,4 +113,3 @@ void RegisterOGRILI1() {
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-

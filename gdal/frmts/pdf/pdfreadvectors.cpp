@@ -194,8 +194,7 @@ void PDFDataset::InitMapOperators()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int PDFDataset::TestCapability( const char * pszCap )
-
+int PDFDataset::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }

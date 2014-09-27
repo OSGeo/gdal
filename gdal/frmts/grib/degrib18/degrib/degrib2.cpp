@@ -815,7 +815,8 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
                      uInt4 *grib_DataLen, grib_MetaData *meta,
                      IS_dataType *IS, int subgNum, double majEarth,
                      double minEarth, int simpVer, sInt4 *f_endMsg,
-                     LatLon *lwlf, LatLon *uprt)
+                     CPL_UNUSED LatLon *lwlf,
+                     CPL_UNUSED LatLon *uprt)
 {
    sInt4 l3264b;        /* Number of bits in a sInt4.  Needed by FORTRAN
                          * unpack library to determine if system has a 4

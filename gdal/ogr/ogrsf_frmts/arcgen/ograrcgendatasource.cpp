@@ -64,8 +64,7 @@ OGRARCGENDataSource::~OGRARCGENDataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRARCGENDataSource::TestCapability( const char * pszCap )
-
+int OGRARCGENDataSource::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }

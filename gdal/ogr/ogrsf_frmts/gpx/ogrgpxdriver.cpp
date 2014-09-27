@@ -61,9 +61,11 @@ static GDALDataset *OGRGPXDriverOpen( GDALOpenInfo* poOpenInfo )
 /************************************************************************/
 
 static GDALDataset *OGRGPXDriverCreate( const char * pszName,
-                                    int nBands, int nXSize, int nYSize, GDALDataType eDT,
-                                    char **papszOptions )
-
+                                        CPL_UNUSED int nBands,
+                                        CPL_UNUSED int nXSize,
+                                        CPL_UNUSED int nYSize,
+                                        CPL_UNUSED GDALDataType eDT,
+                                        CPL_UNUSED char **papszOptions )
 {
     OGRGPXDataSource   *poDS = new OGRGPXDataSource();
 

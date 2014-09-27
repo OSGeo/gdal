@@ -83,8 +83,7 @@ OGRDataSource *OGRGFTDriver::Open( const char * pszFilename, int bUpdate )
 /************************************************************************/
 
 OGRDataSource *OGRGFTDriver::CreateDataSource( const char * pszName,
-                                               char **papszOptions )
-
+                                               CPL_UNUSED char **papszOptions )
 {
     OGRGFTDataSource   *poDS = new OGRGFTDataSource();
 
@@ -124,4 +123,3 @@ void RegisterOGRGFT()
                                    "drv_gft.html" );
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }
-

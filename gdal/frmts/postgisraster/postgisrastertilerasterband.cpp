@@ -86,16 +86,17 @@ GBool PostGISRasterTileRasterBand::IsCached()
 /*****************************************************
  * \brief Read a natural block of raster band data
  *****************************************************/
-CPLErr PostGISRasterTileRasterBand::IReadBlock(int nBlockXOff, 
-    int nBlockYOff, void * pImage)
+CPLErr PostGISRasterTileRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
+                                               CPL_UNUSED int nBlockYOff,
+                                               void * pImage)
 {
     CPLString osCommand;
     PGresult * poResult = NULL;
     int nWKBLength = 0;
-    
+
     int nPixelSize = GDALGetDataTypeSize(eDataType)/8;
-    
-    PostGISRasterTileDataset * poRTDS = 
+
+    PostGISRasterTileDataset * poRTDS =
         (PostGISRasterTileDataset *)poDS;
         
     // Get by PKID
@@ -191,4 +192,3 @@ CPLErr PostGISRasterTileRasterBand::IReadBlock(int nBlockXOff,
 
     return eRet;
 }
-

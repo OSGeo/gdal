@@ -310,8 +310,7 @@ OGRLayer *OGRNASDataSource::GetLayer( int iLayer )
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRNASDataSource::TestCapability( const char * pszCap )
-
+int OGRNASDataSource::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }

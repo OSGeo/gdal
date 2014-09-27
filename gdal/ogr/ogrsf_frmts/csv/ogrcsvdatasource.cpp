@@ -138,7 +138,7 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
 
     int bIgnoreExtension = EQUALN(osFilename, "CSV:", 4);
     int bUSGeonamesFile = FALSE;
-    int bGeonamesOrgFile = FALSE;
+    /* int bGeonamesOrgFile = FALSE; */
     if (bIgnoreExtension)
     {
         osFilename = osFilename + 4;
@@ -186,7 +186,7 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
         if (bUpdateIn)
             return FALSE;
         bIgnoreExtension = TRUE;
-        bGeonamesOrgFile = TRUE;
+        /* bGeonamesOrgFile = TRUE; */
 
         if (EQUAL(osExt, "zip") &&
             strstr(osFilename, "/vsizip/") == NULL )
@@ -465,11 +465,10 @@ int OGRCSVDataSource::OpenTable( const char * pszFilename,
 /************************************************************************/
 
 OGRLayer *
-OGRCSVDataSource::ICreateLayer( const char *pszLayerName, 
-                               OGRSpatialReference *poSpatialRef,
-                               OGRwkbGeometryType eGType,
-                               char ** papszOptions  )
-
+OGRCSVDataSource::ICreateLayer( const char *pszLayerName,
+                                CPL_UNUSED OGRSpatialReference *poSpatialRef,
+                                OGRwkbGeometryType eGType,
+                                char ** papszOptions  )
 {
 /* -------------------------------------------------------------------- */
 /*      Verify we are in update mode.                                   */

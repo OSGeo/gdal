@@ -64,8 +64,11 @@ PDFWritableVectorDataset::~PDFWritableVectorDataset()
 /************************************************************************/
 
 GDALDataset* PDFWritableVectorDataset::Create( const char * pszName,
-                                 int nXSize, int nYSize, int nBands,
-                                 GDALDataType eType, char ** papszOptions ) 
+                                               CPL_UNUSED int nXSize,
+                                               CPL_UNUSED int nYSize,
+                                               int nBands,
+                                               CPL_UNUSED GDALDataType eType,
+                                               char ** papszOptions )
 {
     if( nBands != 0 )
     {
@@ -75,7 +78,7 @@ GDALDataset* PDFWritableVectorDataset::Create( const char * pszName,
         return NULL;
     }
     PDFWritableVectorDataset* poDataset = new PDFWritableVectorDataset();
-    
+
     poDataset->SetDescription(pszName);
     poDataset->papszOptions = CSLDuplicate(papszOptions);
 
@@ -88,10 +91,9 @@ GDALDataset* PDFWritableVectorDataset::Create( const char * pszName,
 
 OGRLayer *
 PDFWritableVectorDataset::ICreateLayer( const char * pszLayerName,
-                                OGRSpatialReference *poSRS,
-                                OGRwkbGeometryType eType,
-                                char ** papszOptions )
-
+                                        OGRSpatialReference *poSRS,
+                                        OGRwkbGeometryType eType,
+                                        CPL_UNUSED char ** papszOptions )
 {
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */

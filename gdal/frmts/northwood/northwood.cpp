@@ -40,7 +40,7 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
 {
     int i;
     unsigned short usTmp;
-    double dfTmp;
+    /* double dfTmp; */
     unsigned char cTmp[256];
 
     if( nwtHeader[4] == '1' )
@@ -88,7 +88,7 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
     CPL_LSBPTR64(&pGrd->dfMaxY);
 
     pGrd->dfStepSize = (pGrd->dfMaxX - pGrd->dfMinX) / (pGrd->nXSide - 1);
-    dfTmp = (pGrd->dfMaxY - pGrd->dfMinY) / (pGrd->nYSide - 1);
+    /* dfTmp = (pGrd->dfMaxY - pGrd->dfMinY) / (pGrd->nYSide - 1); */
 
     memcpy( (void *) &pGrd->fZMin, (void *) &nwtHeader[45],
             sizeof(pGrd->fZMin) );
@@ -480,9 +480,8 @@ void nwtCloseGrid( NWT_GRID * pGrd )
         return;
 }
 
-void nwtGetRow( NWT_GRID * pGrd )
+void nwtGetRow( CPL_UNUSED NWT_GRID * pGrd )
 {
-
 }
 
 void nwtPrintGridHeader( NWT_GRID * pGrd )

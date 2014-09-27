@@ -277,7 +277,7 @@ CPLErr CPL_STDCALL GDALRATValuesIOAsString( GDALRasterAttributeTableH hRAT, GDAL
  * @param nNewCount the new number of rows.
  */
 
-void GDALRasterAttributeTable::SetRowCount( int nNewCount )
+void GDALRasterAttributeTable::SetRowCount( CPL_UNUSED int nNewCount )
 {
 }
 
@@ -317,7 +317,7 @@ GDALRATSetRowCount( GDALRasterAttributeTableH hRAT, int nNewCount )
  * @return the row index or -1 if no row is appropriate. 
  */
 
-int GDALRasterAttributeTable::GetRowOfValue( double dfValue ) const
+int GDALRasterAttributeTable::GetRowOfValue( CPL_UNUSED double dfValue ) const
 {
     return -1;
 }
@@ -374,10 +374,9 @@ int GDALRasterAttributeTable::GetRowOfValue( int nValue ) const
  * @return CE_None on success or CE_Failure if something goes wrong.
  */
 
-CPLErr GDALRasterAttributeTable::CreateColumn( const char *pszFieldName, 
-                                               GDALRATFieldType eFieldType,
-                                               GDALRATFieldUsage eFieldUsage )
-
+CPLErr GDALRasterAttributeTable::CreateColumn( CPL_UNUSED const char *pszFieldName,
+                                               CPL_UNUSED GDALRATFieldType eFieldType,
+                                               CPL_UNUSED GDALRATFieldUsage eFieldUsage )
 {
     return CE_Failure;
 }
@@ -423,9 +422,8 @@ CPLErr CPL_STDCALL GDALRATCreateColumn( GDALRasterAttributeTableH hRAT,
  * @return CE_None on success or CE_Failure on failure.
  */
 
-CPLErr GDALRasterAttributeTable::SetLinearBinning( double dfRow0MinIn, 
-                                                   double dfBinSizeIn )
-
+CPLErr GDALRasterAttributeTable::SetLinearBinning( CPL_UNUSED double dfRow0MinIn,
+                                                   CPL_UNUSED double dfBinSizeIn )
 {
     return CE_Failure;
 }
@@ -467,8 +465,8 @@ GDALRATSetLinearBinning( GDALRasterAttributeTableH hRAT,
  * @return TRUE if linear binning information exists or FALSE if there is none.
  */
 
-int GDALRasterAttributeTable::GetLinearBinning( double *pdfRow0Min,
-                                                double *pdfBinSize ) const
+int GDALRasterAttributeTable::GetLinearBinning( CPL_UNUSED double *pdfRow0Min,
+                                                CPL_UNUSED double *pdfBinSize ) const
 {
     return FALSE;
 }

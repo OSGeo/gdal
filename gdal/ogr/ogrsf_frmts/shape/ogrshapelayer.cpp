@@ -1725,11 +1725,11 @@ OGRErr OGRShapeLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, 
     char            szFieldName[20];
     int             nWidth, nPrecision;
     OGRFieldType    eType = poFieldDefn->GetType();
-    DBFFieldType    eDBFType;
+    /* DBFFieldType    eDBFType; */
 
     chNativeType = DBFGetNativeFieldType( hDBF, iField );
-    eDBFType = DBFGetFieldInfo( hDBF, iField, szFieldName,
-                                &nWidth, &nPrecision );
+    /* eDBFType = */ DBFGetFieldInfo( hDBF, iField, szFieldName,
+                                      &nWidth, &nPrecision );
 
     if ((nFlags & ALTER_TYPE_FLAG) &&
         poNewFieldDefn->GetType() != poFieldDefn->GetType())
@@ -2527,11 +2527,11 @@ OGRErr OGRShapeLayer::ResizeDBF()
         char            szFieldName[20];
         int             nOriWidth, nPrecision;
         char            chNativeType;
-        DBFFieldType    eDBFType;
+        /* DBFFieldType    eDBFType; */
 
         chNativeType = DBFGetNativeFieldType( hDBF, iField );
-        eDBFType = DBFGetFieldInfo( hDBF, iField, szFieldName,
-                                    &nOriWidth, &nPrecision );
+        /* eDBFType = */ DBFGetFieldInfo( hDBF, iField, szFieldName,
+                                          &nOriWidth, &nPrecision );
 
         if (panBestWidth[j] < nOriWidth)
         {

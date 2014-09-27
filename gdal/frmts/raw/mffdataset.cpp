@@ -1220,10 +1220,12 @@ GDALDataset *MFFDataset::Create( const char * pszFilenameIn,
 /************************************************************************/
 
 GDALDataset *
-MFFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
-                        int bStrict, char ** papszOptions, 
-                        GDALProgressFunc pfnProgress, void * pProgressData )
-
+MFFDataset::CreateCopy( const char * pszFilename,
+                        GDALDataset *poSrcDS,
+                        CPL_UNUSED int bStrict,
+                        char ** papszOptions,
+                        GDALProgressFunc pfnProgress,
+                        void * pProgressData )
 {
     MFFDataset	*poDS;
     GDALDataType eType;
@@ -1631,4 +1633,3 @@ void GDALRegister_MFF()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-

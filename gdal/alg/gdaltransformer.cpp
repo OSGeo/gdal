@@ -166,11 +166,13 @@ GDALSuggestedWarpOutput( GDALDatasetH hSrcDS,
 }
 
 
- static int GDALSuggestedWarpOutput2_MustAdjustForRightBorder(
-                     GDALTransformerFunc pfnTransformer, void *pTransformArg,
-                     double* padfExtent, int nPixels, int nLines,
-                     double dfPixelSizeX, double dfPixelSizeY)
- {
+static int GDALSuggestedWarpOutput2_MustAdjustForRightBorder(
+    GDALTransformerFunc pfnTransformer, void *pTransformArg,
+    double* padfExtent,
+    CPL_UNUSED int nPixels,
+    int nLines,
+    double dfPixelSizeX, double dfPixelSizeY)
+{
     int nSamplePoints;
     double dfRatio;
     int bErr;
@@ -228,11 +230,12 @@ GDALSuggestedWarpOutput( GDALDatasetH hSrcDS,
 }
 
 
- static int GDALSuggestedWarpOutput2_MustAdjustForBottomBorder(
-                     GDALTransformerFunc pfnTransformer, void *pTransformArg,
-                     double* padfExtent, int nPixels, int nLines,
-                     double dfPixelSizeX, double dfPixelSizeY)
- {
+static int GDALSuggestedWarpOutput2_MustAdjustForBottomBorder(
+     GDALTransformerFunc pfnTransformer, void *pTransformArg,
+     double* padfExtent, int nPixels,
+     CPL_UNUSED int nLines,
+     double dfPixelSizeX, double dfPixelSizeY)
+{
     int nSamplePoints;
     double dfRatio;
     int bErr;
@@ -334,13 +337,13 @@ GDALSuggestedWarpOutput( GDALDatasetH hSrcDS,
  */
 
 CPLErr CPL_STDCALL
-GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS, 
-                          GDALTransformerFunc pfnTransformer, 
-                          void *pTransformArg, 
-                          double *padfGeoTransformOut, 
+GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
+                          GDALTransformerFunc pfnTransformer,
+                          void *pTransformArg,
+                          double *padfGeoTransformOut,
                           int *pnPixels, int *pnLines,
-                          double *padfExtent, int nOptions )
-
+                          double *padfExtent,
+                          CPL_UNUSED int nOptions )
 {
     VALIDATE_POINTER1( hSrcDS, "GDALSuggestedWarpOutput2", CE_Failure );
 
@@ -921,9 +924,9 @@ void* GDALCloneGenImgProjTransformer( void *hTransformArg )
 void *
 GDALCreateGenImgProjTransformer( GDALDatasetH hSrcDS, const char *pszSrcWKT,
                                  GDALDatasetH hDstDS, const char *pszDstWKT,
-                                 int bGCPUseOK, double dfGCPErrorThreshold,
+                                 int bGCPUseOK,
+                                 CPL_UNUSED double dfGCPErrorThreshold,
                                  int nOrder )
-
 {
     char **papszOptions = NULL;
     void *pRet;
@@ -2877,9 +2880,8 @@ int CPL_STDCALL GDALInvGeoTransform( double *gt_in, double *gt_out )
 /*                      GDALSerializeTransformer()                      */
 /************************************************************************/
 
-CPLXMLNode *GDALSerializeTransformer( GDALTransformerFunc pfnFunc,
+CPLXMLNode *GDALSerializeTransformer( CPL_UNUSED GDALTransformerFunc pfnFunc,
                                       void *pTransformArg )
-
 {
     VALIDATE_POINTER1( pTransformArg, "GDALSerializeTransformer", NULL );
 

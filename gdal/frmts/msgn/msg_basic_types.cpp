@@ -76,12 +76,13 @@ void to_native(IMAGE_DESCRIPTION_RECORD& r) {
     r.referencegrid_visir.numberOfColumns = CPL_MSBWORD32(r.referencegrid_visir.numberOfColumns);
     // should floats be swapped too?
     unsigned int t;
-    
+
     // convert float using CPL_MSBWORD32
+    // TODO: Fix strict aliasing issue
     t = *(unsigned int *)&r.referencegrid_visir.lineDirGridStep;
     t = CPL_MSBWORD32(t);
     r.referencegrid_visir.lineDirGridStep = *(float *)&t;
-    
+
     // convert float using CPL_MSBWORD32
     t = *(unsigned int *)&r.referencegrid_visir.columnDirGridStep;
     t = CPL_MSBWORD32(t);
@@ -221,5 +222,3 @@ void Conversions::convert_geo_to_pixel(double longitude, double latitude,unsigne
 }
 
 } // namespace msg_native_format
-
-

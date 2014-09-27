@@ -226,9 +226,7 @@ OGRFeature *OGRARCGENLayer::GetNextRawFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRARCGENLayer::TestCapability( const char * pszCap )
-
+int OGRARCGENLayer::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }
-

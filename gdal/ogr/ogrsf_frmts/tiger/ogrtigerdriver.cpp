@@ -76,7 +76,7 @@ static GDALDataset *OGRTigerDriverOpen( GDALOpenInfo* poOpenInfo )
         delete poDS;
         poDS = NULL;
     }
-    
+
     return poDS;
 }
 
@@ -85,9 +85,11 @@ static GDALDataset *OGRTigerDriverOpen( GDALOpenInfo* poOpenInfo )
 /************************************************************************/
 
 static GDALDataset *OGRTigerDriverCreate( const char * pszName,
-                                int nBands, int nXSize, int nYSize, GDALDataType eDT,
-                                char **papszOptions )
-
+                                          CPL_UNUSED int nBands,
+                                          CPL_UNUSED int nXSize,
+                                          CPL_UNUSED int nYSize,
+                                          CPL_UNUSED GDALDataType eDT,
+                                          char **papszOptions )
 {
     OGRTigerDataSource *poDS;
 
@@ -130,5 +132,3 @@ void RegisterOGRTiger()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-
-

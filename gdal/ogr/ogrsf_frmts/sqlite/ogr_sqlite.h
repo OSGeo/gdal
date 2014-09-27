@@ -297,9 +297,9 @@ class OGRSQLiteLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
 
     virtual int          HasSpatialIndex() { return bHasSpatialIndex; }
 
-    virtual int           HasFastSpatialFilter(int iGeomCol) { return FALSE; }
-    virtual CPLString     GetSpatialWhere(int iGeomCol,
-                                          OGRGeometry* poFilterGeom) { return ""; }
+    virtual int           HasFastSpatialFilter(CPL_UNUSED int iGeomCol) { return FALSE; }
+    virtual CPLString     GetSpatialWhere(CPL_UNUSED int iGeomCol,
+                                          CPL_UNUSED OGRGeometry* poFilterGeom) { return ""; }
 
     static OGRErr       ImportSpatiaLiteGeometry( const GByte *, int,
                                                   OGRGeometry ** );
@@ -826,5 +826,3 @@ sqlite3_vfs* OGRSQLiteCreateVFS(pfnNotifyFileOpenedType pfn, void* pfnUserData);
 void OGRSQLiteRegisterInflateDeflate(sqlite3* hDB);
 
 #endif /* ndef _OGR_SQLITE_H_INCLUDED */
-
-

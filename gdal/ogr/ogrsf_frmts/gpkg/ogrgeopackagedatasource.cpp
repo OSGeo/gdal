@@ -485,7 +485,8 @@ int OGRGeoPackageDataSource::Open(const char * pszFilename, int bUpdateIn )
 /*                                Create()                              */
 /************************************************************************/
 
-int OGRGeoPackageDataSource::Create( const char * pszFilename, char **papszOptions )
+int OGRGeoPackageDataSource::Create( const char * pszFilename,
+                                     CPL_UNUSED char **papszOptions )
 {
     CPLString osCommand;
     const char *pszSpatialRefSysRecord;
@@ -1187,7 +1188,7 @@ OGRErr OGRGeoPackageDataSource::CreateExtensionsTableIfNecessary()
         "definition TEXT NOT NULL,"
         "scope TEXT NOT NULL,"
         "CONSTRAINT ge_tce UNIQUE (table_name, column_name, extension_name)"
-        ")";  
+        ")";
 
     return SQLCommand(hDB, pszCreateGpkgExtensions);
 }
@@ -1197,7 +1198,8 @@ OGRErr OGRGeoPackageDataSource::CreateExtensionsTableIfNecessary()
 /************************************************************************/
 
 static int OGRGeoPackageGetHeader(sqlite3_context* pContext,
-                                  int argc, sqlite3_value** argv,
+                                  CPL_UNUSED int argc,
+                                  sqlite3_value** argv,
                                   GPkgHeader* psHeader,
                                   int bNeedExtent)
 {
@@ -1338,7 +1340,8 @@ void OGRGeoPackageSTGeometryType(sqlite3_context* pContext,
 
 static
 void OGRGeoPackageGPKGIsAssignable(sqlite3_context* pContext,
-                        int argc, sqlite3_value** argv)
+                                   CPL_UNUSED int argc,
+                                   sqlite3_value** argv)
 {
     if( sqlite3_value_type (argv[0]) != SQLITE_TEXT ||
         sqlite3_value_type (argv[1]) != SQLITE_TEXT )
@@ -1384,7 +1387,8 @@ void OGRGeoPackageSTSRID(sqlite3_context* pContext,
 
 static
 void OGRGeoPackageCreateSpatialIndex(sqlite3_context* pContext,
-                        int argc, sqlite3_value** argv)
+                                     CPL_UNUSED int argc,
+                                     sqlite3_value** argv)
 {
     if( sqlite3_value_type (argv[0]) != SQLITE_TEXT ||
         sqlite3_value_type (argv[1]) != SQLITE_TEXT )
@@ -1420,7 +1424,8 @@ void OGRGeoPackageCreateSpatialIndex(sqlite3_context* pContext,
 
 static
 void OGRGeoPackageDisableSpatialIndex(sqlite3_context* pContext,
-                        int argc, sqlite3_value** argv)
+                                      CPL_UNUSED int argc,
+                                      sqlite3_value** argv)
 {
     if( sqlite3_value_type (argv[0]) != SQLITE_TEXT ||
         sqlite3_value_type (argv[1]) != SQLITE_TEXT )
@@ -1456,7 +1461,8 @@ void OGRGeoPackageDisableSpatialIndex(sqlite3_context* pContext,
 
 static
 void GPKG_hstore_get_value(sqlite3_context* pContext,
-                          int argc, sqlite3_value** argv)
+                           CPL_UNUSED int argc,
+                           sqlite3_value** argv)
 {
     if( sqlite3_value_type (argv[0]) != SQLITE_TEXT ||
         sqlite3_value_type (argv[1]) != SQLITE_TEXT )

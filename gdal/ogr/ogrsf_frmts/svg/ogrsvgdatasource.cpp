@@ -110,7 +110,8 @@ void OGRSVGDataSource::startElementValidateCbk(const char *pszName,
 /*                      dataHandlerValidateCbk()                        */
 /************************************************************************/
 
-void OGRSVGDataSource::dataHandlerValidateCbk(const char *data, int nLen)
+void OGRSVGDataSource::dataHandlerValidateCbk(CPL_UNUSED const char *data,
+                                              CPL_UNUSED int nLen)
 {
     nDataHandlerCounter ++;
     if (nDataHandlerCounter >= BUFSIZ)
@@ -266,7 +267,7 @@ int OGRSVGDataSource::Open( const char * pszFilename )
 /*                            TestCapability()                          */
 /************************************************************************/
 
-int OGRSVGDataSource::TestCapability( const char *pszCap )
+int OGRSVGDataSource::TestCapability( CPL_UNUSED const char *pszCap )
 {
     return FALSE;
 }

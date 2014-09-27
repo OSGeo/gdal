@@ -391,7 +391,7 @@ int RunNewConnection()
 /*                             RunServer()                              */
 /************************************************************************/
 
-int RunServer(const char* pszApplication,
+int RunServer(CPL_UNUSED const char* pszApplication,
               const char* pszService,
               const char* pszUnixSocketFilename)
 {

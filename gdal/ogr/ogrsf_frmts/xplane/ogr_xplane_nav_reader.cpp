@@ -351,7 +351,7 @@ void    OGRXPlaneNavReader::ParseRecord(int nType)
 
         if (EQUAL(papszTokens[nTokens-1], "DME-ILS"))
         {
-            char* pszAptICAO, * pszRwyNum, * pszSubType;
+            char* pszAptICAO, * pszRwyNum /* , * pszSubType */;
             if (nTokens != 11)
             {
                 CPLDebug("XPlane", "Line %d : not enough columns : %d",
@@ -361,7 +361,7 @@ void    OGRXPlaneNavReader::ParseRecord(int nType)
 
             pszAptICAO = papszTokens[8];
             pszRwyNum = papszTokens[9];
-            pszSubType = papszTokens[10];
+            /* pszSubType = papszTokens[10]; */
 
             if (poDMEILSLayer)
                 poDMEILSLayer->AddFeature(pszNavaidId, pszAptICAO, pszRwyNum,
@@ -378,7 +378,7 @@ void    OGRXPlaneNavReader::ParseRecord(int nType)
                     EQUAL(papszTokens[nTokens-1], "TACAN") ||
                     EQUAL(papszTokens[nTokens-1], "NDB-DME"))
                 {
-                    pszSubType = papszTokens[nTokens-1];
+                    /* pszSubType = papszTokens[nTokens-1]; */
                     nTokens--;
                 }
             }

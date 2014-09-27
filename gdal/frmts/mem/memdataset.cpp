@@ -127,9 +127,9 @@ MEMRasterBand::~MEMRasterBand()
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr MEMRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                   void * pImage )
-
+CPLErr MEMRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
+                                  int nBlockYOff,
+                                  void * pImage )
 {
     int     nWordSize = GDALGetDataTypeSize( eDataType ) / 8;
     CPLAssert( nBlockXOff == 0 );
@@ -159,9 +159,9 @@ CPLErr MEMRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*                            IWriteBlock()                             */
 /************************************************************************/
 
-CPLErr MEMRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-                                     void * pImage )
-
+CPLErr MEMRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
+                                   int nBlockYOff,
+                                   void * pImage )
 {
     int     nWordSize = GDALGetDataTypeSize( eDataType ) / 8;
     CPLAssert( nBlockXOff == 0 );
@@ -848,11 +848,12 @@ GDALDataset *MEMDataset::Open( GDALOpenInfo * poOpenInfo )
 /*                               Create()                               */
 /************************************************************************/
 
-GDALDataset *MEMDataset::Create( const char * pszFilename,
-                                 int nXSize, int nYSize, int nBands,
+GDALDataset *MEMDataset::Create( CPL_UNUSED const char * pszFilename,
+                                 int nXSize,
+                                 int nYSize,
+                                 int nBands,
                                  GDALDataType eType,
                                  char **papszOptions )
-
 {
 
 /* -------------------------------------------------------------------- */
@@ -982,7 +983,7 @@ static int MEMDatasetIdentify( GDALOpenInfo * poOpenInfo )
 /*                       MEMDatasetDelete()                             */
 /************************************************************************/
 
-static CPLErr MEMDatasetDelete(const char* fileName)
+static CPLErr MEMDatasetDelete(CPL_UNUSED const char* fileName)
 {
     /* Null implementation, so that people can Delete("MEM:::") */
     return CE_None;
@@ -1030,4 +1031,3 @@ void GDALRegister_MEM()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-

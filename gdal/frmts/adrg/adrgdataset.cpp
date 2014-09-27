@@ -1568,8 +1568,12 @@ GDALDataset *ADRGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*                               Create()                               */
 /************************************************************************/
 
-GDALDataset *ADRGDataset::Create(const char* pszFilename, int nXSize, int nYSize,
-                                 int nBands, GDALDataType eType, char **papszOptions)
+GDALDataset *ADRGDataset::Create(const char* pszFilename,
+                                 int nXSize,
+                                 int nYSize,
+                                 int nBands,
+                                 GDALDataType eType,
+                                 CPL_UNUSED char **papszOptions)
 {
     int i;
 
@@ -2263,4 +2267,3 @@ void GDALRegister_ADRG()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-

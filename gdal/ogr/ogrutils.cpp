@@ -551,17 +551,18 @@ int OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
  * a reasonable default form of processing.
  *
  * The value of psField will be indeterminate if the function fails (returns
- * FALSE).  
+ * FALSE).
  *
  * @param pszInput the input date string.
  * @param psField the OGRField that will be updated with the parsed result.
- * @param nOptions parsing options, for now always 0. 
+ * @param nOptions parsing options, for now always 0.
  *
  * @return TRUE if apparently successful or FALSE on failure.
  */
 
-int OGRParseDate( const char *pszInput, OGRField *psField, int nOptions )
-
+int OGRParseDate( const char *pszInput,
+                  OGRField *psField,
+                  CPL_UNUSED int nOptions )
 {
     int bGotSomething = FALSE;
 
@@ -572,7 +573,7 @@ int OGRParseDate( const char *pszInput, OGRField *psField, int nOptions )
     psField->Date.Minute = 0;
     psField->Date.Second = 0;
     psField->Date.TZFlag = 0;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Do we have a date?                                              */
 /* -------------------------------------------------------------------- */

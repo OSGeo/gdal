@@ -1137,11 +1137,11 @@ static OGRErr GrowField(DBFHandle hDBF, int iField, OGRFieldDefn* poFieldDefn,
     char            szFieldName[20] = {};
     int             nOriWidth, nPrecision;
     char            chNativeType;
-    DBFFieldType    eDBFType;
+    /* DBFFieldType    eDBFType; */
 
     chNativeType = DBFGetNativeFieldType( hDBF, iField );
-    eDBFType = DBFGetFieldInfo( hDBF, iField, szFieldName,
-                                &nOriWidth, &nPrecision );
+    /* eDBFType = */ DBFGetFieldInfo( hDBF, iField, szFieldName,
+                                      &nOriWidth, &nPrecision );
 
     CPLDebug("SHAPE", "Extending field %d (%s) from %d to %d characters",
                 iField, poFieldDefn->GetNameRef(), nOriWidth, nNewSize);
@@ -1382,4 +1382,3 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 
     return OGRERR_NONE;
 }
-

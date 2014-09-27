@@ -270,9 +270,9 @@ TerragenRasterBand::TerragenRasterBand( TerragenDataset *poDS )
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr TerragenRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr TerragenRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
+                                       int nBlockYOff,
                                        void* pImage )
-
 {
     //CPLAssert( sizeof(float) == sizeof(GInt32) );
     CPLAssert( nBlockXOff == 0  );
@@ -366,9 +366,9 @@ double TerragenRasterBand::GetOffset(int* pbSuccess)
 /************************************************************************/
 
 CPLErr TerragenRasterBand::IWriteBlock
-( 
-	int nBlockXOff, 
-	int nBlockYOff,
+(
+    CPL_UNUSED int nBlockXOff,
+    int nBlockYOff,
     void* pImage
 )
 {
@@ -1163,5 +1163,3 @@ void GDALRegister_Terragen()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-
-

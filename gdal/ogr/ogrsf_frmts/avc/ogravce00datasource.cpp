@@ -196,8 +196,7 @@ int OGRAVCE00DataSource::CheckAddTable( AVCE00Section *psTblSection )
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRAVCE00DataSource::TestCapability( const char * pszCap )
-
+int OGRAVCE00DataSource::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }

@@ -467,11 +467,11 @@ typedef struct
            cos(az * degreesToRadians - M_PI/2 - aspect);
 */
 
-float GDALHillshadeAlg (float* afWin, float fDstNoDataValue, void* pData)
+float GDALHillshadeAlg (float* afWin, CPL_UNUSED float fDstNoDataValue, void* pData)
 {
     GDALHillshadeAlgData* psData = (GDALHillshadeAlgData*)pData;
     double x, y, aspect, xx_plus_yy, cang;
-    
+
     // First Slope ...
     x = ((afWin[0] + afWin[3] + afWin[3] + afWin[6]) -
         (afWin[2] + afWin[5] + afWin[5] + afWin[8])) / psData->ewres;
@@ -490,19 +490,19 @@ float GDALHillshadeAlg (float* afWin, float fDstNoDataValue, void* pData)
            sin(aspect - psData->azRadians)) /
            sqrt(1 + psData->square_z_scale_factor * xx_plus_yy);
 
-    if (cang <= 0.0) 
+    if (cang <= 0.0)
         cang = 1.0;
     else
         cang = 1.0 + (254.0 * cang);
-        
+
     return (float) cang;
 }
 
-float GDALHillshadeCombinedAlg (float* afWin, float fDstNoDataValue, void* pData)
+float GDALHillshadeCombinedAlg (float* afWin, CPL_UNUSED float fDstNoDataValue, void* pData)
 {
     GDALHillshadeAlgData* psData = (GDALHillshadeAlgData*)pData;
     double x, y, aspect, xx_plus_yy, cang;
-    
+
     // First Slope ...
     x = ((afWin[0] + afWin[3] + afWin[3] + afWin[6]) -
         (afWin[2] + afWin[5] + afWin[5] + afWin[8])) / psData->ewres;
@@ -525,19 +525,19 @@ float GDALHillshadeCombinedAlg (float* afWin, float fDstNoDataValue, void* pData
     // combined shading
     cang = 1 - cang * atan(sqrt(slope)) / psData->square_M_PI_2;
 
-    if (cang <= 0.0) 
+    if (cang <= 0.0)
         cang = 1.0;
     else
         cang = 1.0 + (254.0 * cang);
-        
+
     return (float) cang;
 }
 
-float GDALHillshadeZevenbergenThorneAlg (float* afWin, float fDstNoDataValue, void* pData)
+float GDALHillshadeZevenbergenThorneAlg (float* afWin, CPL_UNUSED float fDstNoDataValue, void* pData)
 {
     GDALHillshadeAlgData* psData = (GDALHillshadeAlgData*)pData;
     double x, y, aspect, xx_plus_yy, cang;
-    
+
     // First Slope ...
     x = (afWin[3] - afWin[5]) / psData->ewres;
 
@@ -554,19 +554,19 @@ float GDALHillshadeZevenbergenThorneAlg (float* afWin, float fDstNoDataValue, vo
            sin(aspect - psData->azRadians)) /
            sqrt(1 + psData->square_z_scale_factor * xx_plus_yy);
 
-    if (cang <= 0.0) 
+    if (cang <= 0.0)
         cang = 1.0;
     else
         cang = 1.0 + (254.0 * cang);
-        
+
     return (float) cang;
 }
 
-float GDALHillshadeZevenbergenThorneCombinedAlg (float* afWin, float fDstNoDataValue, void* pData)
+float GDALHillshadeZevenbergenThorneCombinedAlg (float* afWin, CPL_UNUSED float fDstNoDataValue, void* pData)
 {
     GDALHillshadeAlgData* psData = (GDALHillshadeAlgData*)pData;
     double x, y, aspect, xx_plus_yy, cang;
-    
+
     // First Slope ...
     x = (afWin[3] - afWin[5]) / psData->ewres;
 
@@ -630,39 +630,39 @@ typedef struct
     int    slopeFormat;
 } GDALSlopeAlgData;
 
-float GDALSlopeHornAlg (float* afWin, float fDstNoDataValue, void* pData)
+float GDALSlopeHornAlg (float* afWin, CPL_UNUSED float fDstNoDataValue, void* pData)
 {
     const double radiansToDegrees = 180.0 / M_PI;
     GDALSlopeAlgData* psData = (GDALSlopeAlgData*)pData;
     double dx, dy, key;
-    
-    dx = ((afWin[0] + afWin[3] + afWin[3] + afWin[6]) - 
+
+    dx = ((afWin[0] + afWin[3] + afWin[3] + afWin[6]) -
           (afWin[2] + afWin[5] + afWin[5] + afWin[8]))/psData->ewres;
 
-    dy = ((afWin[6] + afWin[7] + afWin[7] + afWin[8]) - 
+    dy = ((afWin[6] + afWin[7] + afWin[7] + afWin[8]) -
           (afWin[0] + afWin[1] + afWin[1] + afWin[2]))/psData->nsres;
 
     key = (dx * dx + dy * dy);
 
-    if (psData->slopeFormat == 1) 
+    if (psData->slopeFormat == 1)
         return (float) (atan(sqrt(key) / (8*psData->scale)) * radiansToDegrees);
     else
         return (float) (100*(sqrt(key) / (8*psData->scale)));
 }
 
-float GDALSlopeZevenbergenThorneAlg (float* afWin, float fDstNoDataValue, void* pData)
+float GDALSlopeZevenbergenThorneAlg (float* afWin, CPL_UNUSED float fDstNoDataValue, void* pData)
 {
     const double radiansToDegrees = 180.0 / M_PI;
     GDALSlopeAlgData* psData = (GDALSlopeAlgData*)pData;
     double dx, dy, key;
-    
+
     dx = (afWin[3] - afWin[5])/psData->ewres;
 
     dy = (afWin[7] - afWin[1])/psData->nsres;
 
     key = (dx * dx + dy * dy);
 
-    if (psData->slopeFormat == 1) 
+    if (psData->slopeFormat == 1)
         return (float) (atan(sqrt(key) / (2*psData->scale)) * radiansToDegrees);
     else
         return (float) (100*(sqrt(key) / (2*psData->scale)));
@@ -1721,7 +1721,9 @@ CPLErr GDALGenerateVRTColorRelief(const char* pszDstFilename,
 /*                         GDALTRIAlg()                                 */
 /************************************************************************/
 
-float GDALTRIAlg (float* afWin, float fDstNoDataValue, void* pData)
+float GDALTRIAlg (float* afWin,
+                  CPL_UNUSED float fDstNoDataValue,
+                  CPL_UNUSED void* pData)
 {
     // Terrain Ruggedness is average difference in height
     return (fabs(afWin[0]-afWin[4]) +
@@ -1739,11 +1741,13 @@ float GDALTRIAlg (float* afWin, float fDstNoDataValue, void* pData)
 /*                         GDALTPIAlg()                                 */
 /************************************************************************/
 
-float GDALTPIAlg (float* afWin, float fDstNoDataValue, void* pData)
+float GDALTPIAlg (float* afWin,
+                  CPL_UNUSED float fDstNoDataValue,
+                  CPL_UNUSED void* pData)
 {
     // Terrain Position is the difference between
     // The central cell and the mean of the surrounding cells
-    return afWin[4] - 
+    return afWin[4] -
             ((afWin[0]+
               afWin[1]+
               afWin[2]+
@@ -1758,7 +1762,7 @@ float GDALTPIAlg (float* afWin, float fDstNoDataValue, void* pData)
 /*                     GDALRoughnessAlg()                               */
 /************************************************************************/
 
-float GDALRoughnessAlg (float* afWin, float fDstNoDataValue, void* pData)
+float GDALRoughnessAlg (float* afWin, CPL_UNUSED float fDstNoDataValue, CPL_UNUSED void* pData)
 {
     // Roughness is the largest difference
     //  between any two cells
@@ -1918,7 +1922,7 @@ void   GDALGeneric3x3RasterBand::InitWidthNoData(void* pImage)
     }
 }
 
-CPLErr GDALGeneric3x3RasterBand::IReadBlock( int nBlockXOff,
+CPLErr GDALGeneric3x3RasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                                              int nBlockYOff,
                                              void *pImage )
 {
@@ -2732,4 +2736,3 @@ int main( int argc, char ** argv )
 
     return 0;
 }
-

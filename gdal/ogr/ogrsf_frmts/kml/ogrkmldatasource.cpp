@@ -340,9 +340,9 @@ int OGRKMLDataSource::Create( const char* pszName, char** papszOptions )
 
 OGRLayer *
 OGRKMLDataSource::ICreateLayer( const char * pszLayerName,
-                               OGRSpatialReference *poSRS,
-                               OGRwkbGeometryType eType,
-                               char ** papszOptions )
+                                OGRSpatialReference *poSRS,
+                                OGRwkbGeometryType eType,
+                                CPL_UNUSED char ** papszOptions )
 {
     CPLAssert( NULL != pszLayerName);
 

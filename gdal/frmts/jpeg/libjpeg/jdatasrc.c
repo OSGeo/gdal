@@ -19,6 +19,7 @@
 #include "jpeglib.h"
 #include "jerror.h"
 
+#include "cpl_port.h"
 
 /* Expanded data source object for stdio input */
 
@@ -166,7 +167,7 @@ skip_input_data (j_decompress_ptr cinfo, long num_bytes)
  */
 
 METHODDEF(void)
-term_source (j_decompress_ptr cinfo)
+term_source (CPL_UNUSED j_decompress_ptr cinfo)
 {
   /* no work necessary here */
 }

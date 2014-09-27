@@ -1290,7 +1290,9 @@ int MBTilesGetMinMaxZoomLevel(OGRDataSourceH hDS, int bHasMap,
 /************************************************************************/
 
 static
-int MBTilesGetBounds(OGRDataSourceH hDS, int nMinLevel, int nMaxLevel,
+int MBTilesGetBounds(OGRDataSourceH hDS,
+                     CPL_UNUSED int nMinLevel,
+                     int nMaxLevel,
                      int& nMinTileRow, int& nMaxTileRow,
                      int& nMinTileCol, int &nMaxTileCol)
 {
@@ -1389,14 +1391,14 @@ int MBTilesGetBounds(OGRDataSourceH hDS, int nMinLevel, int nMaxLevel,
 /* to get a first tile to see its characteristics. We just need the header */
 /* to determine that, so let's make VSICurl stop reading after we have found it */
 
-static int MBTilesCurlReadCbk(VSILFILE* fp,
+static int MBTilesCurlReadCbk(CPL_UNUSED VSILFILE* fp,
                               void *pabyBuffer, size_t nBufferSize,
                               void* pfnUserData)
 {
     const GByte abyPNGSig[] = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, /* PNG signature */
                                 0x00, 0x00, 0x00, 0x0D, /* IHDR length */
                                 0x49, 0x48, 0x44, 0x52  /* IHDR chunk */ };
- 
+
     /* JPEG SOF0 (Start Of Frame 0) marker */
     const GByte abyJPEG1CompSig[] = { 0xFF, 0xC0, /* marker */
                                       0x00, 0x0B, /* data length = 8 + 1 * 3 */
@@ -1495,7 +1497,9 @@ static int MBTilesCurlReadCbk(VSILFILE* fp,
 /************************************************************************/
 
 static
-int MBTilesGetBandCount(OGRDataSourceH &hDS, int nMinLevel, int nMaxLevel,
+int MBTilesGetBandCount(OGRDataSourceH &hDS,
+                        CPL_UNUSED int nMinLevel,
+                        int nMaxLevel,
                         int nMinTileRow, int nMaxTileRow,
                         int nMinTileCol, int nMaxTileCol)
 {

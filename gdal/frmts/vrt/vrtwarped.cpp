@@ -652,13 +652,14 @@ int VRTWarpedOverviewTransform( void *pTransformArg, int bDstToSrc,
 /*      accomplish downsampling by the desired factor.                  */
 /************************************************************************/
 
-CPLErr 
-VRTWarpedDataset::IBuildOverviews( const char *pszResampling, 
-                                   int nOverviews, int *panOverviewList, 
-                                   int nListBands, int *panBandList,
-                                   GDALProgressFunc pfnProgress, 
+CPLErr
+VRTWarpedDataset::IBuildOverviews( CPL_UNUSED const char *pszResampling,
+                                   int nOverviews,
+                                   int *panOverviewList,
+                                   CPL_UNUSED int nListBands,
+                                   CPL_UNUSED int *panBandList,
+                                   GDALProgressFunc pfnProgress,
                                    void * pProgressData )
-    
 {
 /* -------------------------------------------------------------------- */
 /*      Initial progress result.                                        */
@@ -1385,4 +1386,3 @@ GDALRasterBand *VRTWarpedRasterBand::GetOverview( int iOverview )
     else
         return poWDS->papoOverviews[iOverview]->GetRasterBand( nBand );
 }
-

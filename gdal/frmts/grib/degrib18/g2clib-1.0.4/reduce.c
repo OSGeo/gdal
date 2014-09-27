@@ -13,12 +13,15 @@
 /*#include "f2c.h"*/
 #include <stdlib.h>
 #include "grib2.h"
+
+#include "cpl_port.h"
+
 typedef g2int integer;
 typedef g2float real;
 
-/* Subroutine */ int reduce(integer *kfildo, integer *jmin, integer *jmax, 
+/* Subroutine */ int reduce(CPL_UNUSED integer *kfildo, integer *jmin, integer *jmax,
 	integer *lbit, integer *nov, integer *lx, integer *ndg, integer *ibit,
-	 integer *jbit, integer *kbit, integer *novref, integer *ibxx2, 
+	 integer *jbit, integer *kbit, integer *novref, integer *ibxx2,
 	integer *ier)
 {
     /* Initialized data */
@@ -33,8 +36,8 @@ typedef g2float real;
     static real pimp;
     static integer move, novl;
     static char cfeed[1];
-    static integer nboxj[31], lxnkp, iorigb, ibxx2m1, movmin,
-	     ntotbt[31], ntotpr, newboxt;
+    static integer /* nboxj[31], */ lxnkp, iorigb, ibxx2m1, movmin,
+        ntotbt[31], ntotpr, newboxt;
     integer *newbox, *newboxp;
 
 
@@ -143,7 +146,7 @@ typedef g2float real;
 
     for (j = 1; j <= 31; ++j) {
 	ntotbt[j - 1] = 999999999;
-	nboxj[j - 1] = 0;
+	/* nboxj[j - 1] = 0; */
 /* L112: */
     }
 
@@ -217,7 +220,7 @@ L190:
 	    ;
 	}
 
-	nboxj[j - 1] = newboxt;
+	/* nboxj[j - 1] = newboxt; */
 	ntotpr = ntotbt[j];
 	ntotbt[j - 1] = (*ibit + *jbit) * (*lx + newboxt) + j * (*lx + 
 		newboxt);
@@ -407,4 +410,3 @@ L410:
     if ( newboxp != 0 ) free(newboxp);
     return 0;
 } /* reduce_ */
-

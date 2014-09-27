@@ -603,13 +603,13 @@ char* OGR_G_ExportToJsonEx( OGRGeometryH hGeometry, char** papszOptions )
 
 static int OGR_json_double_with_precision_to_string(struct json_object *jso,
                                                     struct printbuf *pb,
-                                                    int level,
-                                                    int flags)
+                                                    CPL_UNUSED int level,
+                                                    CPL_UNUSED int flags)
 {
-    char szBuffer[75]; 
+    char szBuffer[75];
     int nPrecision = (int) (size_t) jso->_userdata;
-    OGRFormatDouble( szBuffer, sizeof(szBuffer), jso->o.c_double, '.', 
-                     (nPrecision < 0) ? 15 : nPrecision ); 
+    OGRFormatDouble( szBuffer, sizeof(szBuffer), jso->o.c_double, '.',
+                     (nPrecision < 0) ? 15 : nPrecision );
     if( szBuffer[0] == 't' /*oobig */ )
     {
         snprintf(szBuffer, sizeof(szBuffer), "%.18g", jso->o.c_double);

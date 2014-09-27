@@ -1268,9 +1268,8 @@ static int USGSDEMProductSetup_DEFAULT( USGSDEMWriteInfo *psWInfo )
 /*      made to translate it properly into the USGS nodata value.       */
 /************************************************************************/
 
-static int USGSDEMLoadRaster( USGSDEMWriteInfo *psWInfo,
-                              GDALRasterBand *poSrcBand )
-
+static int USGSDEMLoadRaster( CPL_UNUSED USGSDEMWriteInfo *psWInfo,
+                              CPL_UNUSED GDALRasterBand *poSrcBand )
 {
     CPLErr eErr;
     int i;
@@ -1395,10 +1394,12 @@ static int USGSDEMLoadRaster( USGSDEMWriteInfo *psWInfo,
 /************************************************************************/
 
 GDALDataset *
-USGSDEMCreateCopy( const char *pszFilename, GDALDataset *poSrcDS, 
-                   int bStrict, char **papszOptions,
-                   GDALProgressFunc pfnProgress, void * pProgressData )
-
+USGSDEMCreateCopy( const char *pszFilename,
+                   GDALDataset *poSrcDS,
+                   int bStrict,
+                   char **papszOptions,
+                   CPL_UNUSED GDALProgressFunc pfnProgress,
+                   CPL_UNUSED void * pProgressData )
 {
     USGSDEMWriteInfo sWInfo;
 

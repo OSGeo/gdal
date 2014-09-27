@@ -327,12 +327,13 @@ USGSDEMRasterBand::USGSDEMRasterBand( USGSDEMDataset *poDS )
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr USGSDEMRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr USGSDEMRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
+                                      CPL_UNUSED int nBlockYOff,
                                       void * pImage )
 
 {
     double	dfYMin;
-    int		bad = FALSE;
+    /* int		bad = FALSE; */
     USGSDEMDataset *poGDS = (USGSDEMDataset *) poDS;
 
 /* -------------------------------------------------------------------- */
@@ -367,23 +368,23 @@ CPLErr USGSDEMRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     for( int i = 0; i < GetXSize(); i++)
     {
-        int	njunk, nCPoints, lygap;
-        double	djunk, dxStart, dyStart, dfElevOffset;
+        int	/* njunk, */ nCPoints, lygap;
+        double	/* djunk, dxStart, */ dyStart, dfElevOffset;
 
-        njunk = USGSDEMReadIntFromBuffer(&sBuffer);
-        njunk = USGSDEMReadIntFromBuffer(&sBuffer);
+        /* njunk = */ USGSDEMReadIntFromBuffer(&sBuffer);
+        /* njunk = */ USGSDEMReadIntFromBuffer(&sBuffer);
         nCPoints = USGSDEMReadIntFromBuffer(&sBuffer);
-        njunk = USGSDEMReadIntFromBuffer(&sBuffer);
+        /* njunk = */ USGSDEMReadIntFromBuffer(&sBuffer);
 
-        dxStart = USGSDEMReadDoubleFromBuffer(&sBuffer, 24);
+        /* dxStart = */ USGSDEMReadDoubleFromBuffer(&sBuffer, 24);
         dyStart = USGSDEMReadDoubleFromBuffer(&sBuffer, 24);
         dfElevOffset = USGSDEMReadDoubleFromBuffer(&sBuffer, 24);
-        djunk = USGSDEMReadDoubleFromBuffer(&sBuffer, 24);
-        djunk = USGSDEMReadDoubleFromBuffer(&sBuffer, 24);
+        /* djunk = */ USGSDEMReadDoubleFromBuffer(&sBuffer, 24);
+        /* djunk = */ USGSDEMReadDoubleFromBuffer(&sBuffer, 24);
 
         if( EQUALN(poGDS->pszProjection,"GEOGCS",6) )
             dyStart = dyStart / 3600.0;
-        
+
         lygap = (int)((dfYMin - dyStart)/poGDS->adfGeoTransform[5]+ 0.5);
 
         for (int j=lygap; j < (nCPoints+(int)lygap); j++)
@@ -398,19 +399,19 @@ CPLErr USGSDEMRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 CPLFree(sBuffer.buffer);
                 return CE_Failure;
             }
-            
-            if (iY < 0 || iY >= GetYSize() )
-                bad = TRUE;
-            else if( nElev == USGSDEM_NODATA )
+
+            if (iY < 0 || iY >= GetYSize() ) {
+                /* bad = TRUE; */
+            } else if( nElev == USGSDEM_NODATA )
                 /* leave in output buffer as nodata */;
             else
             {
-                float fComputedElev = 
+                float fComputedElev =
                     (float)(nElev * poGDS->fVRes + dfElevOffset);
 
                 if( GetRasterDataType() == GDT_Int16 )
                 {
-                    ((GInt16 *) pImage)[i + iY*GetXSize()] = 
+                    ((GInt16 *) pImage)[i + iY*GetXSize()] =
                         (GInt16) fComputedElev;
                 }
                 else
@@ -495,7 +496,7 @@ int USGSDEMDataset::LoadFromFile(VSILFILE *InDem)
     int		nRow, nColumn;
     int		nVUnit, nGUnit;
     double 	dxdelta, dydelta;
-    double	dElevMax, dElevMin;
+    /* double	dElevMax, dElevMin; */
     int 	bNewFormat;
     int		nCoordSystem;
     int		nProfiles;
@@ -572,15 +573,15 @@ int USGSDEMDataset::LoadFromFile(VSILFILE *InDem)
         corners[i].x = DConvert(InDem, 24);
         corners[i].y = DConvert(InDem, 24);
     }
-    
+
     // find absolute extents of raw vales
     extent_min.x = MIN(corners[0].x, corners[1].x);
     extent_max.x = MAX(corners[2].x, corners[3].x);
     extent_min.y = MIN(corners[0].y, corners[3].y);
     extent_max.y = MAX(corners[1].y, corners[2].y);
 
-    dElevMin = DConvert(InDem, 48);
-    dElevMax = DConvert(InDem, 48);
+    /* dElevMin = */ DConvert(InDem, 48);
+    /* dElevMax = */ DConvert(InDem, 48);
 
     VSIFSeekL(InDem, 858, 0);
     nProfiles = ReadInt(InDem);
@@ -670,7 +671,7 @@ int USGSDEMDataset::LoadFromFile(VSILFILE *InDem)
         || nCoordSystem == 2 	   // State Plane
         || nCoordSystem == -9999 ) // unknown
     {
-        int	njunk;
+        /* int	njunk; */
         double  dxStart;
 
         // expand extents modulus the pixel size.
@@ -679,12 +680,12 @@ int USGSDEMDataset::LoadFromFile(VSILFILE *InDem)
 
         // Forceably compute X extents based on first profile and pixelsize.
         VSIFSeekL(InDem, nDataStartOffset, 0);
-        njunk = ReadInt(InDem);
-        njunk = ReadInt(InDem);
-        njunk = ReadInt(InDem);
-        njunk = ReadInt(InDem);
+        /* njunk = */ ReadInt(InDem);
+        /* njunk = */ ReadInt(InDem);
+        /* njunk = */ ReadInt(InDem);
+        /* njunk = */ ReadInt(InDem);
         dxStart = DConvert(InDem, 24);
-        
+
         nRasterYSize = (int) ((extent_max.y - extent_min.y)/dydelta + 1.5);
         nRasterXSize = nProfiles;
 

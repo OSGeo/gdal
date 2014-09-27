@@ -1198,11 +1198,11 @@ void TABBinBlockManager::SetName(const char* pszName)
 /**********************************************************************
  *                   TABBinBlockManager::AllocNewBlock()
  *
- * Returns and reserves the address of the next available block, either a 
- * brand new block at end of file, or recycle a garbage block if one is 
+ * Returns and reserves the address of the next available block, either a
+ * brand new block at end of file, or recycle a garbage block if one is
  * available.
  **********************************************************************/
-GInt32  TABBinBlockManager::AllocNewBlock(const char* pszReason)
+GInt32  TABBinBlockManager::AllocNewBlock(CPL_UNUSED const char* pszReason)
 {
     // Try to reuse garbage blocks first
     if (GetFirstGarbageBlock() > 0)
@@ -1323,4 +1323,3 @@ GInt32 TABBinBlockManager::PopGarbageBlock()
 
     return nBlockPtr;
 }
-

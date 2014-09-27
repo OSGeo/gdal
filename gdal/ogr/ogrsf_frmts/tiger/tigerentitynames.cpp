@@ -120,8 +120,8 @@ static const TigerRecordInfo rtC_info =
 /************************************************************************/
 
 TigerEntityNames::TigerEntityNames( OGRTigerDataSource * poDSIn,
-                            const char * pszPrototypeModule ) : TigerFileBase(NULL, FILE_CODE)
-
+                                    CPL_UNUSED const char * pszPrototypeModule ) :
+    TigerFileBase(NULL, FILE_CODE)
 {
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "EntityNames" );

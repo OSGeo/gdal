@@ -270,8 +270,8 @@ char CPL_DLL *GOA2GetRefreshToken( const char *pszAuthToken,
  * @return access token, to be freed with CPLFree(), null on failure.
  */
 
-char *GOA2GetAccessToken( const char *pszRefreshToken, 
-                          const char *pszScope )
+char *GOA2GetAccessToken( const char *pszRefreshToken,
+                          CPL_UNUSED const char *pszScope )
 {
 /* -------------------------------------------------------------------- */
 /*      Prepare request.                                                */
@@ -345,6 +345,3 @@ char *GOA2GetAccessToken( const char *pszRefreshToken,
     else 
         return CPLStrdup(osAccessToken);
 }
-
-
-

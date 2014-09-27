@@ -1226,35 +1226,36 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         }
    
         if ( psMapProjection != NULL ) {
-            const char *pszProj = CPLGetXMLValue( 
+            const char *pszProj = CPLGetXMLValue(
                 psMapProjection, "mapProjectionDescriptor", "" );
             bool bUseProjInfo = FALSE;
 
-            CPLXMLNode *psUtmParams = 
+            CPLXMLNode *psUtmParams =
                 CPLGetXMLNode( psMapProjection,
                                "utmProjectionParameters" );
 
-            CPLXMLNode *psNspParams = 
+            CPLXMLNode *psNspParams =
                 CPLGetXMLNode( psMapProjection,
                                "nspProjectionParameters" );
-            
+
             if ((psUtmParams != NULL) && poDS->bHaveGeoTransform ) {
                 const char *pszHemisphere;
                 int utmZone;
-                double origEasting, origNorthing;
+                /* double origEasting, origNorthing; */
                 bool bNorth = TRUE;
 
                 utmZone = atoi(CPLGetXMLValue( psUtmParams, "utmZone", "" ));
                 pszHemisphere = CPLGetXMLValue( psUtmParams,
                                                 "hemisphere", "" );
-                origEasting = strtod(CPLGetXMLValue( psUtmParams, 
+#if 0
+                origEasting = strtod(CPLGetXMLValue( psUtmParams,
                                                      "mapOriginFalseEasting", "0.0" ), NULL);
-                origNorthing = strtod(CPLGetXMLValue( psUtmParams, 
+                origNorthing = strtod(CPLGetXMLValue( psUtmParams,
                                                       "mapOriginFalseNorthing", "0.0" ), NULL);
-
+#endif
                 if ( EQUALN(pszHemisphere,"southern",8) )
                     bNorth = FALSE;
-                
+
                 if (EQUALN(pszProj,"UTM",3)) {
                     oPrj.SetUTM(utmZone, bNorth);
                     bUseProjInfo = TRUE;
@@ -1531,4 +1532,3 @@ void GDALRegister_RS2()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-

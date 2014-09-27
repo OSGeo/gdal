@@ -796,8 +796,11 @@ static int ReadTDLPSect2 (uChar *gds, sInt4 tdlpLen, sInt4 *curLoc,
  * NOTES
  *****************************************************************************
  */
-static int ReadTDLPSect3 (uChar *bms, sInt4 tdlpLen, sInt4 *curLoc,
-                          uChar *bitmap, sInt4 NxNy)
+static int ReadTDLPSect3 (CPL_UNUSED uChar *bms,
+                          CPL_UNUSED sInt4 tdlpLen,
+                          CPL_UNUSED sInt4 *curLoc,
+                          CPL_UNUSED uChar *bitmap,
+                          CPL_UNUSED sInt4 NxNy)
 {
    errSprintf ("Bitmap data is Not Supported\n");
    return -1;
@@ -847,7 +850,9 @@ static int ReadTDLPSect3 (uChar *bms, sInt4 tdlpLen, sInt4 *curLoc,
  */
 static int ReadTDLPSect4 (uChar *bds, sInt4 tdlpLen, sInt4 *curLoc,
                           short int DSF, short int BSF, double *data,
-                          grib_MetaData *meta, double unitM, double unitB)
+                          grib_MetaData *meta,
+                          CPL_UNUSED double unitM,
+                          CPL_UNUSED double unitB)
 {
    uInt4 sectLen;       /* Length in bytes of the current section. */
    uChar f_notGridPnt;  /* Not Grid point data? */
@@ -2862,7 +2867,9 @@ static void shiftGroup0 (sInt4 *Data, int start1, int start2, int bit,
  * NOTES
  *****************************************************************************
  */
-static void doSplit (sInt4 *Data, int numData, TDLGroupType * G,
+static void doSplit (sInt4 *Data,
+                     CPL_UNUSED int numData,
+                     TDLGroupType * G,
                      TDLGroupType ** lclGroup, int *numLclGroup,
                      char f_primMiss, sInt4 li_primMiss,
                      char f_secMiss, sInt4 li_secMiss, int xFactor)
@@ -3001,7 +3008,9 @@ static void doSplit (sInt4 *Data, int numData, TDLGroupType * G,
  * NOTES
  *****************************************************************************
  */
-static void doSplitRight (sInt4 *Data, int numData, TDLGroupType * G,
+static void doSplitRight (sInt4 *Data,
+                          CPL_UNUSED int numData,
+                          TDLGroupType * G,
                           TDLGroupType * G1, TDLGroupType * G2,
                           char f_primMiss, sInt4 li_primMiss,
                           char f_secMiss, sInt4 li_secMiss)
@@ -3355,7 +3364,9 @@ static int splitGroup (sInt4 *Data, int numData, TDLGroupType * group,
  * NOTES
  *****************************************************************************
  */
-static void shiftGroup (sInt4 *Data, int numData, TDLGroupType ** Group,
+static void shiftGroup (sInt4 *Data,
+                        CPL_UNUSED int numData,
+                        TDLGroupType ** Group,
                         size_t *NumGroup, char f_primMiss, sInt4 li_primMiss,
                         char f_secMiss, sInt4 li_secMiss, int xFactor)
 {
@@ -4018,10 +4029,13 @@ int WriteTDLPRecord (FILE * fp, double *Data, sInt4 DataLen, int DSF,
    sInt4 *Scaled;       /* The scaled data. */
    TDLGroupType *group; /* The groups used to pack the data. */
    size_t numGroup;     /* Number of groups. */
-   char f_grid = 1;     /* Flag if this is gridded data. In theory can handle 
+   char f_grid = 1;     /* Flag if this is gridded data. In theory can handle
                          * vector data, but haven't tested it. */
    char f_sndOrder;     /* Flag if we should try second order packing. */
+
+   /* TODO: Trace overallMin to figure out how it could be used uninitialized */
    sInt4 overallMin;    /* Overall min value of the scaled data. */
+
    sInt4 a1;            /* 2nd order difference: 1st value. */
    sInt4 b2;            /* 2nd order difference: 1st 1st order difference */
    sInt4 li_primMiss;   /* Scaled primary missing value. */
@@ -4174,7 +4188,10 @@ int WriteTDLPRecord (FILE * fp, double *Data, sInt4 DataLen, int DSF,
 
    /* --- Start Writing record. --- */
    /* First write FORTRAN record information */
-   fread(&(recSize), sizeof (sInt4), 1, fp);
+   const size_t read_size = fread(&(recSize), sizeof (sInt4), 1, fp);
+   if (read_size != 1) {
+     fprintf(stderr, "WARNING: tdlpack.cpp read of recSize failed.\n");
+   }
    li_temp = 0;
    FWRITE_BIG (&(li_temp), sizeof (sInt4), 1, fp);
    li_temp = recSize - 8; /* FORTRAN rec length. */

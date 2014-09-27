@@ -322,9 +322,10 @@ OGRDataSourceH RasterliteCreateTables(OGRDataSourceH hDS, const char* pszTableNa
 /************************************************************************/
 
 GDALDataset *
-RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
-                       int bStrict, char ** papszOptions, 
-                       GDALProgressFunc pfnProgress, void * pProgressData )
+RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
+                      CPL_UNUSED int bStrict,
+                      char ** papszOptions,
+                      GDALProgressFunc pfnProgress, void * pProgressData )
 {
     int nBands = poSrcDS->GetRasterCount();
     if (nBands == 0)
@@ -723,7 +724,7 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*                         RasterliteDelete ()                          */
 /************************************************************************/
 
-CPLErr RasterliteDelete(const char* pszFilename)
+CPLErr RasterliteDelete(CPL_UNUSED const char* pszFilename)
 {
     return CE_None;
 }

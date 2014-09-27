@@ -75,12 +75,15 @@ static GDALDataset *OGRGTMDriverOpen( GDALOpenInfo* poOpenInfo )
 /************************************************************************/
 
 static GDALDataset *OGRGTMDriverCreate( const char * pszName,
-                                    int nBands, int nXSize, int nYSize, GDALDataType eDT,
-                                    char **papszOptions )
+                                        CPL_UNUSED int nBands,
+                                        CPL_UNUSED int nXSize,
+                                        CPL_UNUSED int nYSize,
+                                        CPL_UNUSED GDALDataType eDT,
+                                        char **papszOptions )
 {
     CPLAssert( NULL != pszName );
     CPLDebug( "GTM", "Attempt to create: %s", pszName );
-    
+
     OGRGTMDataSource *poDS = new OGRGTMDataSource();
 
     if( !poDS->Create( pszName, papszOptions ) )
@@ -120,5 +123,3 @@ void RegisterOGRGTM()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-
-

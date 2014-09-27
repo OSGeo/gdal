@@ -156,7 +156,7 @@ char* ImagineCitationTranslation(char* psCitation, geokey_t keyID)
                 if(p1[0] == '\0' || p1[0] == '\n' || p1[0] == ' ')
                     p1 --;
                 p2 = p1 - 1;
-                while( p2>0 && (p2[0] == ' ' || p2[0] == '\0' || p2[0] == '\n') )
+                while( p2 != 0 && (p2[0] == ' ' || p2[0] == '\0' || p2[0] == '\n') )
                     p2--;
                 if(p2 != p1 - 1)
                     p1 = p2;
@@ -199,7 +199,7 @@ char* ImagineCitationTranslation(char* psCitation, geokey_t keyID)
                 if(p1[0] == '\0' || p1[0] == '\n' || p1[0] == ' ')
                     p1 --;
                 char* p2 = p1 - 1;
-                while( p2>0 && (p2[0] == ' ' || p2[0] == '\0' || p2[0] == '\n') )
+                while( p2 != 0 && (p2[0] == ' ' || p2[0] == '\0' || p2[0] == '\n') )
                     p2--;
                 if(p2 != p1 - 1)
                     p1 = p2;

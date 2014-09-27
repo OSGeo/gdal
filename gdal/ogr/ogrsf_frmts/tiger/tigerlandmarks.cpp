@@ -76,7 +76,7 @@ static const TigerRecordInfo rt7_info =
 /************************************************************************/
 
 TigerLandmarks::TigerLandmarks( OGRTigerDataSource * poDSIn,
-                                const char * pszPrototypeModule )
+                                CPL_UNUSED const char * pszPrototypeModule )
   : TigerPoint(FALSE, NULL, FILE_CODE)
 {
     poDS = poDSIn;

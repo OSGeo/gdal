@@ -179,8 +179,8 @@ int OGRILI2DataSource::Open( const char * pszNewName, int bTestOpen )
 /*                               Create()                               */
 /************************************************************************/
 
-int OGRILI2DataSource::Create( const char *pszFilename, 
-                              char **papszOptions )
+int OGRILI2DataSource::Create( const char *pszFilename,
+                               CPL_UNUSED char **papszOptions )
 
 {
     char **filenames = CSLTokenizeString2( pszFilename, ",", 0 );
@@ -260,10 +260,9 @@ int OGRILI2DataSource::Create( const char *pszFilename,
 
 OGRLayer *
 OGRILI2DataSource::ICreateLayer( const char * pszLayerName,
-                               OGRSpatialReference *poSRS,
-                               OGRwkbGeometryType eType,
-                               char ** papszOptions )
-
+                                 CPL_UNUSED OGRSpatialReference *poSRS,
+                                 OGRwkbGeometryType eType,
+                                 CPL_UNUSED char ** papszOptions )
 {
     if (fpOutput == NULL)
         return NULL;

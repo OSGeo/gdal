@@ -995,7 +995,7 @@ GDALDataset *SAGADataset::Create( const char * pszFilename,
 
 GDALDataset *SAGADataset::CreateCopy( const char *pszFilename,
 				      GDALDataset *poSrcDS,
-				      int bStrict, char **papszOptions,
+				      int bStrict, CPL_UNUSED char **papszOptions,
 				      GDALProgressFunc pfnProgress,
 				      void *pProgressData )
 {

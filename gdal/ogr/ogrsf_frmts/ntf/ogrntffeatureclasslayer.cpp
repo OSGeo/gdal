@@ -156,8 +156,7 @@ OGRFeature *OGRNTFFeatureClassLayer::GetFeature( long nFeatureId )
 /*      way of counting features matching a spatial query.              */
 /************************************************************************/
 
-int OGRNTFFeatureClassLayer::GetFeatureCount( int bForce )
-
+int OGRNTFFeatureClassLayer::GetFeatureCount( CPL_UNUSED int bForce )
 {
     return poDS->GetFCCount();
 }
@@ -185,4 +184,3 @@ int OGRNTFFeatureClassLayer::TestCapability( const char * pszCap )
     else 
         return FALSE;
 }
-

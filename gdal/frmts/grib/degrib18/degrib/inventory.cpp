@@ -242,7 +242,9 @@ static int InventoryParseTime (char *is, double *AnsTime)
  *   May want to put this in degrib2.c
  *****************************************************************************
  */
-static int GRIB2SectToBuffer (DataSource &fp, uInt4 gribLen, sChar *sect,
+static int GRIB2SectToBuffer (DataSource &fp,
+                              CPL_UNUSED uInt4 gribLen,
+                              sChar *sect,
                               uInt4 *secLen, uInt4 *buffLen, char **buff)
 {
    char *buffer = *buff; /* Local ptr to buff to reduce ptr confusion. */
@@ -314,7 +316,8 @@ static int GRIB2SectToBuffer (DataSource &fp, uInt4 gribLen, sChar *sect,
  *   May want to put this in degrib2.c
  *****************************************************************************
  */
-static int GRIB2SectJump (DataSource &fp, sInt4 gribLen, sChar *sect, uInt4 *secLen)
+static int GRIB2SectJump (DataSource &fp,
+                          CPL_UNUSED sInt4 gribLen, sChar *sect, uInt4 *secLen)
 {
    char sectNum;        /* Validates that we are on the correct section. */
    int c;               /* Check that the fseek is still inside the file. */
@@ -1068,11 +1071,11 @@ int GRIB2RefTime (char *filename, double *refTime)
    sInt4 sect0[SECT0LEN_WORD]; /* Holds the current Section 0. */
    char *buffer = NULL; /* Holds a given section. */
    uInt4 bufferLen = 0; /* Size of buffer. */
-   wordType word;       /* Used to parse the prodType out of Sect 0. */
+   /* wordType word; */       /* Used to parse the prodType out of Sect 0. */
    int ans;             /* The return error code of ReadSect0. */
    char *msg;           /* Used to pop messages off the error Stack. */
    int version;         /* Which version of GRIB is in this message. */
-   uChar prodType;      /* Which GRIB2 type of product, 0 is meteo, 1 is
+   /* uChar prodType; */      /* Which GRIB2 type of product, 0 is meteo, 1 is
                          * hydro, 2 is land, 3 is space, 10 is oceanographic. 
                          */
    int grib_limit;      /* How many bytes to look for before the first "GRIB" 
@@ -1158,8 +1161,8 @@ int GRIB2RefTime (char *filename, double *refTime)
             return -13;
          }
       } else {
-         word.li = sect0[1];
-         prodType = word.buffer[2];
+          /* word.li = sect0[1]; */
+         /* prodType = word.buffer[2]; */
 
          /* Read section 1 into buffer. */
          sectNum = 1;

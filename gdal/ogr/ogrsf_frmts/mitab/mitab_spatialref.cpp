@@ -839,9 +839,9 @@ OGRSpatialReference *TABFile::GetSpatialRef()
     /*-----------------------------------------------------------------
      * Get the units name, and translation factor.
      *----------------------------------------------------------------*/
-    const char *pszUnitsName; 
+    const char *pszUnitsName;
     const char *pszUnitsConv;
-    double      dfConv = 1.0;
+    /* double      dfConv = 1.0; */
 
     switch( sTABProj.nUnitsId )
     {
@@ -909,14 +909,14 @@ OGRSpatialReference *TABFile::GetSpatialRef()
         pszUnitsName = SRS_UL_ROD;
         pszUnitsConv = SRS_UL_ROD_CONV;
         break;
-            
+
       default:
         pszUnitsName = SRS_UL_METER;
         pszUnitsConv = "1.0";
         break;
     }
 
-    dfConv = CPLAtof(pszUnitsConv);
+    /* dfConv = CPLAtof(pszUnitsConv); */
 
     /*-----------------------------------------------------------------
      * Transform them into an OGRSpatialReference.
@@ -2044,4 +2044,3 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
 
     return 0;
 }
-

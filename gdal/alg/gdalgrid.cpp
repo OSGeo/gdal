@@ -193,7 +193,7 @@ GDALGridInverseDistanceToAPower( const void *poOptions, GUInt32 nPoints,
                                  const double *padfZ,
                                  double dfXPoint, double dfYPoint,
                                  double *pdfValue,
-                                 void* hExtraParamsIn )
+                                 CPL_UNUSED void* hExtraParamsIn )
 {
     // TODO: For optimization purposes pre-computed parameters should be moved
     // out of this routine to the calling function.
@@ -301,7 +301,7 @@ GDALGridInverseDistanceToAPowerNoSearch( const void *poOptions, GUInt32 nPoints,
                                          const double *padfZ,
                                          double dfXPoint, double dfYPoint,
                                          double *pdfValue,
-                                         void* hExtraParamsIn )
+                                         CPL_UNUSED void* hExtraParamsIn )
 {
     const double    dfPowerDiv2 =
         ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->dfPower / 2;
@@ -403,9 +403,9 @@ static CPLErr
 GDALGridInverseDistanceToAPower2NoSmoothingNoSearchSSE(
                                         const void *poOptions,
                                         GUInt32 nPoints,
-                                        const double *unused_padfX,
-                                        const double *unused_padfY,
-                                        const double *unused_padfZ,
+                                        CPL_UNUSED const double *unused_padfX,
+                                        CPL_UNUSED const double *unused_padfY,
+                                        CPL_UNUSED const double *unused_padfZ,
                                         double dfXPoint, double dfYPoint,
                                         double *pdfValue,
                                         void* hExtraParamsIn )
@@ -581,7 +581,7 @@ GDALGridMovingAverage( const void *poOptions, GUInt32 nPoints,
                        const double *padfX, const double *padfY,
                        const double *padfZ,
                        double dfXPoint, double dfYPoint, double *pdfValue,
-                       void* hExtraParamsIn )
+                       CPL_UNUSED void* hExtraParamsIn )
 {
     // TODO: For optimization purposes pre-computed parameters should be moved
     // out of this routine to the calling function.
@@ -835,7 +835,7 @@ GDALGridDataMetricMinimum( const void *poOptions, GUInt32 nPoints,
                            const double *padfX, const double *padfY,
                            const double *padfZ,
                            double dfXPoint, double dfYPoint, double *pdfValue,
-                           void* hExtraParamsIn )
+                           CPL_UNUSED void* hExtraParamsIn )
 {
     // TODO: For optimization purposes pre-computed parameters should be moved
     // out of this routine to the calling function.
@@ -947,7 +947,7 @@ GDALGridDataMetricMaximum( const void *poOptions, GUInt32 nPoints,
                            const double *padfX, const double *padfY,
                            const double *padfZ,
                            double dfXPoint, double dfYPoint, double *pdfValue,
-                           void* hExtraParamsIn )
+                           CPL_UNUSED void* hExtraParamsIn )
 {
     // TODO: For optimization purposes pre-computed parameters should be moved
     // out of this routine to the calling function.
@@ -1060,7 +1060,7 @@ GDALGridDataMetricRange( const void *poOptions, GUInt32 nPoints,
                          const double *padfX, const double *padfY,
                          const double *padfZ,
                          double dfXPoint, double dfYPoint, double *pdfValue,
-                         void* hExtraParamsIn )
+                         CPL_UNUSED void* hExtraParamsIn )
 {
     // TODO: For optimization purposes pre-computed parameters should be moved
     // out of this routine to the calling function.
@@ -1170,9 +1170,9 @@ GDALGridDataMetricRange( const void *poOptions, GUInt32 nPoints,
 CPLErr
 GDALGridDataMetricCount( const void *poOptions, GUInt32 nPoints,
                          const double *padfX, const double *padfY,
-                         const double *padfZ,
+                         CPL_UNUSED const double *padfZ,
                          double dfXPoint, double dfYPoint, double *pdfValue,
-                         void* hExtraParamsIn )
+                         CPL_UNUSED void* hExtraParamsIn )
 {
     // TODO: For optimization purposes pre-computed parameters should be moved
     // out of this routine to the calling function.
@@ -1273,10 +1273,10 @@ GDALGridDataMetricCount( const void *poOptions, GUInt32 nPoints,
 CPLErr
 GDALGridDataMetricAverageDistance( const void *poOptions, GUInt32 nPoints,
                                    const double *padfX, const double *padfY,
-                                   const double *padfZ,
+                                   CPL_UNUSED const double *padfZ,
                                    double dfXPoint, double dfYPoint,
                                    double *pdfValue,
-                                   void* hExtraParamsIn )
+                                   CPL_UNUSED void* hExtraParamsIn )
 {
     // TODO: For optimization purposes pre-computed parameters should be moved
     // out of this routine to the calling function.
@@ -1384,10 +1384,10 @@ GDALGridDataMetricAverageDistance( const void *poOptions, GUInt32 nPoints,
 CPLErr
 GDALGridDataMetricAverageDistancePts( const void *poOptions, GUInt32 nPoints,
                                       const double *padfX, const double *padfY,
-                                      const double *padfZ,
+                                      CPL_UNUSED const double *padfZ,
                                       double dfXPoint, double dfYPoint,
                                       double *pdfValue,
-                                      void* hExtraParamsIn )
+                                      CPL_UNUSED void* hExtraParamsIn )
 {
     // TODO: For optimization purposes pre-computed parameters should be moved
     // out of this routine to the calling function.
@@ -2212,4 +2212,3 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgoritm,
     CSLDestroy( papszParms );
     return CE_None;
 }
-

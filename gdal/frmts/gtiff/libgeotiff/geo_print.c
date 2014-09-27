@@ -180,7 +180,7 @@ static void PrintKey(GeoKey *key, GTIFPrintMethod print, void *aux)
                   message[out_char++] = ch;
 
               /* flush message if buffer full */
-              if( out_char >= sizeof(message)-3 )
+              if( (size_t)out_char >= sizeof(message)-3 )
               {
                   message[out_char] = '\0';
                   print(message,aux);
@@ -475,11 +475,11 @@ static int ReadKey(GTIF *gt, GTIFReadMethod scan, void *aux)
                     vptr = message;
                 }
             }
-            GTIFKeySet(gt,key,ktype,outcount,sptr);			
+            GTIFKeySet(gt,key,ktype,outcount,sptr);
         }
         break;
-        
-      default: 
+
+      default:
         return -1;
     }
     return 1;
@@ -488,7 +488,10 @@ static int ReadKey(GTIF *gt, GTIFReadMethod scan, void *aux)
 
 static void DefaultRead(char *string, void *aux)
 {
-	/* Pretty boring */
-	fscanf((FILE *)aux,"%[^\n]\n",string);
+    /* Pretty boring */
+    int num_read;
+    num_read = fscanf((FILE *)aux, "%[^\n]\n", string);
+    if (num_read != 0) {
+      fprintf(stderr, "geo_print.c DefaultRead failed to read anything.\n");
+    }
 }
-

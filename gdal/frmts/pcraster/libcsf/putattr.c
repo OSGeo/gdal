@@ -179,7 +179,7 @@ CSF_FADDR CsfSeekAttrSpace(
 						endBlock = b.next;
 					else
 						endBlock = b.attrs[i+1].attrOffset;
-					if (( endBlock - b.attrs[i].attrOffset)
+					if ( (size_t)( endBlock - b.attrs[i].attrOffset)
 						>= size)
 						/* this position can
 							hold the attr */

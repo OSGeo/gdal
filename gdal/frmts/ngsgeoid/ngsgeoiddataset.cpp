@@ -113,7 +113,8 @@ NGSGEOIDRasterBand::NGSGEOIDRasterBand( NGSGEOIDDataset *poDS )
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr NGSGEOIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr NGSGEOIDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
+                                       int nBlockYOff,
                                        void * pImage )
 
 {
@@ -426,4 +427,3 @@ void GDALRegister_NGSGEOID()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-

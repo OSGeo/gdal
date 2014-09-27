@@ -348,9 +348,9 @@ CPLErr RawRasterBand::AccessLine( int iLine )
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr RawRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr RawRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
+                                  int nBlockYOff,
                                   void * pImage )
-
 {
     CPLErr		eErr;
 
@@ -360,7 +360,7 @@ CPLErr RawRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return CE_Failure;
 
     eErr = AccessLine( nBlockYOff );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Copy data from disk buffer to user block buffer.                */
 /* -------------------------------------------------------------------- */
@@ -375,9 +375,9 @@ CPLErr RawRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*                            IWriteBlock()                             */
 /************************************************************************/
 
-CPLErr RawRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
+CPLErr RawRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
+                                   int nBlockYOff,
                                    void * pImage )
-
 {
     CPLErr		eErr = CE_None;
 
@@ -574,8 +574,11 @@ int RawRasterBand::IsSignificantNumberOfLinesLoaded( int nLineOff, int nLines )
 /*                           CanUseDirectIO()                           */
 /************************************************************************/
 
-int RawRasterBand::CanUseDirectIO(int nXOff, int nYOff, int nXSize, int nYSize,
-                                  GDALDataType eBufType)
+int RawRasterBand::CanUseDirectIO(CPL_UNUSED int nXOff,
+                                  int nYOff,
+                                  int nXSize,
+                                  int nYSize,
+                                  CPL_UNUSED GDALDataType eBufType)
 {
 
 /* -------------------------------------------------------------------- */
@@ -590,7 +593,7 @@ int RawRasterBand::CanUseDirectIO(int nXOff, int nYOff, int nXSize, int nYSize,
 /* and no significant number of requested scanlines are already in the  */
 /* cache.                                                               */
 /* -------------------------------------------------------------------- */
-    if( nPixelOffset < 0 ) 
+    if( nPixelOffset < 0 )
     {
         return FALSE;
     }
@@ -1209,5 +1212,3 @@ CPLErr RawDataset::IRasterIO( GDALRWFlag eRWFlag,
                                     nBandCount, panBandMap, 
                                     nPixelSpace, nLineSpace, nBandSpace );
 }
-
-

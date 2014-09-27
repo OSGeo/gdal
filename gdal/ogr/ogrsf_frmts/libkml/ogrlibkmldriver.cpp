@@ -42,7 +42,7 @@ static KmlFactory* m_poKmlFactory = NULL;
  OGRLIBKMLDriverUnload()
 ******************************************************************************/
 
-static void OGRLIBKMLDriverUnload ( GDALDriver* poDriver )
+static void OGRLIBKMLDriverUnload ( CPL_UNUSED GDALDriver* poDriver )
 {
     if( hMutex != NULL )
         CPLDestroyMutex(hMutex);
@@ -99,8 +99,11 @@ static GDALDataset *OGRLIBKMLDriverOpen ( GDALOpenInfo* poOpenInfo )
 /************************************************************************/
 
 static GDALDataset *OGRLIBKMLDriverCreate( const char * pszName,
-                                    int nBands, int nXSize, int nYSize, GDALDataType eDT,
-                                    char **papszOptions )
+                                           CPL_UNUSED int nBands,
+                                           CPL_UNUSED int nXSize,
+                                           CPL_UNUSED int nYSize,
+                                           CPL_UNUSED GDALDataType eDT,
+                                           char **papszOptions )
 {
     CPLAssert ( NULL != pszName );
     CPLDebug ( "LIBKML", "Attempt to create: %s", pszName );
@@ -135,7 +138,7 @@ static CPLErr OGRLIBKMLDriverDelete( const char *pszName )
 
     /***** dir *****/
 
-    VSIStatBufL sStatBuf = { };
+    VSIStatBufL sStatBuf;
     if ( !VSIStatL ( pszName, &sStatBuf ) && VSI_ISDIR ( sStatBuf.st_mode ) ) {
 
         char **papszDirList = NULL;

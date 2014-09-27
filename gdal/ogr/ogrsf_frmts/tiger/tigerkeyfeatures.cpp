@@ -63,8 +63,8 @@ static const TigerRecordInfo rt9_info =
 /************************************************************************/
 
 TigerKeyFeatures::TigerKeyFeatures( OGRTigerDataSource * poDSIn,
-                                  const char * pszPrototypeModule ) : TigerFileBase(&rt9_info, FILE_CODE)
-
+                                    CPL_UNUSED const char * pszPrototypeModule ) :
+    TigerFileBase(&rt9_info, FILE_CODE)
 {
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "KeyFeatures" );

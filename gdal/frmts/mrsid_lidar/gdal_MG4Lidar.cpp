@@ -447,7 +447,7 @@ double MG4LidarRasterBand::getMaxValue()
       #define DO_CASE(gdt, largestvalue)  case (gdt):\
          retval = static_cast<double>(largestvalue); \
          break;
-         
+
       DO_CASE (GDT_Float64, DBL_MAX);
       DO_CASE (GDT_Float32, FLT_MAX);
       DO_CASE (GDT_Int32, INT_MAX);
@@ -455,7 +455,7 @@ double MG4LidarRasterBand::getMaxValue()
       DO_CASE (GDT_Int16, SHRT_MAX);
       DO_CASE (GDT_UInt16, USHRT_MAX);
       DO_CASE (GDT_Byte, UCHAR_MAX);
-      #undef DO_CASE 
+      #undef DO_CASE
        default:
            retval = 0;
            break;
@@ -469,11 +469,11 @@ double MG4LidarRasterBand::getMaxValue()
 CPLErr MG4LidarRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                       void * pImage )
 {
-   CPLErr eErr;
+   // CPLErr eErr;
    switch(eDataType)
    {
 #define DO_CASE(gdt, nativedt)  case (gdt):\
-   eErr = doReadBlock<nativedt>(nBlockXOff, nBlockYOff, pImage); \
+     /* eErr = */doReadBlock<nativedt>(nBlockXOff, nBlockYOff, pImage); \
    break;
 
       DO_CASE (GDT_Float64, double);
@@ -483,7 +483,7 @@ CPLErr MG4LidarRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
       DO_CASE (GDT_Int16, short);
       DO_CASE (GDT_UInt16, unsigned short);
       DO_CASE (GDT_Byte, char);
-#undef DO_CASE 
+#undef DO_CASE
       default:
            return CE_Failure;
            break;

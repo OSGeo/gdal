@@ -36,6 +36,8 @@
 
 #include "osr_cs_wkt.h"
 
+#include "cpl_port.h"
+
 /************************************************************************/
 /*                        osr_cs_wkt_error()                            */
 /************************************************************************/
@@ -99,7 +101,8 @@ static const osr_cs_wkt_tokens tokens[] =
 /*                         osr_cs_wkt_lex()                             */
 /************************************************************************/
 
-int osr_cs_wkt_lex(YYSTYPE* pNode, osr_cs_wkt_parse_context *context)
+int osr_cs_wkt_lex(CPL_UNUSED YYSTYPE* pNode,
+                   osr_cs_wkt_parse_context *context)
 {
     size_t i;
     const char *pszInput = context->pszNext;

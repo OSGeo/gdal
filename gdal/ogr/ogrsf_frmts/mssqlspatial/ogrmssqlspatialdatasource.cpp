@@ -441,10 +441,10 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
 /*                             OpenTable()                              */
 /************************************************************************/
 
-int OGRMSSQLSpatialDataSource::OpenTable( const char *pszSchemaName, const char *pszTableName, 
-                    const char *pszGeomCol, int nCoordDimension,
-                    int nSRID, const char *pszSRText, OGRwkbGeometryType eType, int bUpdate )
-
+int OGRMSSQLSpatialDataSource::OpenTable( const char *pszSchemaName, const char *pszTableName,
+                                          const char *pszGeomCol, int nCoordDimension,
+                                          int nSRID, const char *pszSRText, OGRwkbGeometryType eType,
+                                          CPL_UNUSED int bUpdate )
 {
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
@@ -1278,4 +1278,3 @@ int OGRMSSQLSpatialDataSource::FetchSRSId( OGRSpatialReference * poSRS)
 
     return nSRSId;
 }
-

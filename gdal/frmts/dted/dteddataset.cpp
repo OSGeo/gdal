@@ -125,9 +125,9 @@ DTEDRasterBand::DTEDRasterBand( DTEDDataset *poDS, int nBand )
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr DTEDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
-
+CPLErr DTEDRasterBand::IReadBlock( int nBlockXOff,
+                                   CPL_UNUSED int nBlockYOff,
+                                   void * pImage )
 {
     DTEDDataset *poDTED_DS = (DTEDDataset *) poDS;
     int         nYSize = poDTED_DS->psDTED->nYSize;
@@ -187,9 +187,9 @@ CPLErr DTEDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr DTEDRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
-
+CPLErr DTEDRasterBand::IWriteBlock( int nBlockXOff,
+                                    CPL_UNUSED int nBlockYOff,
+                                    void * pImage )
 {
     DTEDDataset *poDTED_DS = (DTEDDataset *) poDS;
     GInt16      *panData;
@@ -934,4 +934,3 @@ void GDALRegister_DTED()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-

@@ -72,8 +72,7 @@ OGRAVCLayer::~OGRAVCLayer()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRAVCLayer::TestCapability( const char * pszCap )
-
+int OGRAVCLayer::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }
@@ -593,9 +592,3 @@ int OGRAVCLayer::TranslateTableFields( OGRFeature *poFeature,
 
     return TRUE;
 }
-
-
-
-
-
-

@@ -123,12 +123,12 @@ GDALDataset* PCRasterDataset::open(
   cell representations.
 */
 GDALDataset* PCRasterDataset::createCopy(
-         char const* filename,
-         GDALDataset* source,
-         int strict,
-         char** options,
-         GDALProgressFunc progress,
-         void* progressData)
+    char const* filename,
+    GDALDataset* source,
+    CPL_UNUSED int strict,
+    CPL_UNUSED char** options,
+    GDALProgressFunc progress,
+    void* progressData)
 {
   // Checks.
   int nrBands = source->GetRasterCount();
@@ -429,6 +429,3 @@ double PCRasterDataset::missingValue() const
 //------------------------------------------------------------------------------
 // DEFINITION OF FREE FUNCTIONS
 //------------------------------------------------------------------------------
-
-
-

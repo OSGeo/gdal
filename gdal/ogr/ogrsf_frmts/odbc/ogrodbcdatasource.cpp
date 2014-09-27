@@ -181,8 +181,7 @@ int OGRODBCDataSource::OpenMDB( const char * pszNewName, int bUpdate )
 /************************************************************************/
 
 int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
-                             int bTestOpen )
-
+                             CPL_UNUSED int bTestOpen )
 {
     CPLAssert( nLayers == 0 );
 
@@ -482,10 +481,9 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
 /*                             OpenTable()                              */
 /************************************************************************/
 
-int OGRODBCDataSource::OpenTable( const char *pszNewName, 
+int OGRODBCDataSource::OpenTable( const char *pszNewName,
                                   const char *pszGeomCol,
-                                  int bUpdate )
-
+                                  CPL_UNUSED int bUpdate )
 {
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
@@ -514,8 +512,7 @@ int OGRODBCDataSource::OpenTable( const char *pszNewName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRODBCDataSource::TestCapability( const char * pszCap )
-
+int OGRODBCDataSource::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }

@@ -94,8 +94,11 @@ static GDALDataset *OGRGPSBabelDriverOpen( GDALOpenInfo* poOpenInfo )
 /************************************************************************/
 
 static GDALDataset *OGRGPSBabelDriverCreate( const char * pszName,
-                                    int nBands, int nXSize, int nYSize, GDALDataType eDT,
-                                    char **papszOptions )
+                                             CPL_UNUSED int nBands,
+                                             CPL_UNUSED int nXSize,
+                                             CPL_UNUSED int nYSize,
+                                             CPL_UNUSED GDALDataType eDT,
+                                             char **papszOptions )
 {
     OGRGPSBabelWriteDataSource   *poDS = new OGRGPSBabelWriteDataSource();
 
@@ -150,4 +153,3 @@ void RegisterOGRGPSBabel()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-

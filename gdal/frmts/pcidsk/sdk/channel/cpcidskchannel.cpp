@@ -39,6 +39,8 @@
 #include <cstring>
 #include <cstdio>
 
+#include "cpl_port.h"
+
 using namespace PCIDSK;
 
 /************************************************************************/
@@ -480,10 +482,11 @@ void CPCIDSKChannel::GetChanInfo( std::string &filename, uint64 &image_offset,
 /*                            SetChanInfo()                             */
 /************************************************************************/
 
-void CPCIDSKChannel::SetChanInfo( std::string filename, uint64 image_offset, 
-                                  uint64 pixel_offset, uint64 line_offset, 
-                                  bool little_endian )
-
+void CPCIDSKChannel::SetChanInfo( CPL_UNUSED std::string filename,
+                                  CPL_UNUSED uint64 image_offset,
+                                  CPL_UNUSED uint64 pixel_offset,
+                                  CPL_UNUSED uint64 line_offset,
+                                  CPL_UNUSED bool little_endian )
 {
     ThrowPCIDSKException( "Attempt to SetChanInfo() on a channel that is not FILE interleaved." );
 }
@@ -508,10 +511,12 @@ void CPCIDSKChannel::GetEChanInfo( std::string &filename, int &echannel,
 /*                            SetEChanInfo()                            */
 /************************************************************************/
 
-void CPCIDSKChannel::SetEChanInfo( std::string filename, int echannel,
-                                   int exoff, int eyoff, 
-                                   int exsize, int eysize )
-
+void CPCIDSKChannel::SetEChanInfo( CPL_UNUSED std::string filename,
+                                   CPL_UNUSED int echannel,
+                                   CPL_UNUSED int exoff,
+                                   CPL_UNUSED int eyoff,
+                                   CPL_UNUSED int exsize,
+                                   CPL_UNUSED int eysize )
 {
     ThrowPCIDSKException( "Attempt to SetEChanInfo() on a channel that is not FILE interleaved." );
 }

@@ -189,7 +189,8 @@ IRISRasterBand::~IRISRasterBand()
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr IRISRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr IRISRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
+                                   int nBlockYOff,
                                    void * pImage )
 
 {
@@ -551,24 +552,24 @@ std::pair <double,double> IRISDataset::GeodesicCalculation(float fLat, float fLo
     double dfAlpha1 = DEG2RAD * fAngle;
     double dfSinAlpha1 = sin(dfAlpha1);
     double dfCosAlpha1 = cos(dfAlpha1);
-    
+
     double dfTanU1 = (1-fFlattening) * tan(fLat*DEG2RAD);
     double dfCosU1 = 1 / sqrt((1 + dfTanU1*dfTanU1));
     double dfSinU1 = dfTanU1*dfCosU1;
-    
+
     double dfSigma1 = atan2(dfTanU1, dfCosAlpha1);
     double dfSinAlpha = dfCosU1 * dfSinAlpha1;
     double dfCosSqAlpha = 1 - dfSinAlpha*dfSinAlpha;
     double dfUSq = dfCosSqAlpha * (fEquatorialRadius*fEquatorialRadius - fPolarRadius*fPolarRadius) / (fPolarRadius*fPolarRadius);
     double dfA = 1 + dfUSq/16384*(4096+dfUSq*(-768+dfUSq*(320-175*dfUSq)));
     double dfB = dfUSq/1024 * (256+dfUSq*(-128+dfUSq*(74-47*dfUSq)));
-    
+
     double dfSigma = fDist / (fPolarRadius*dfA);
     double dfSigmaP = 2*M_PI;
-    
-    double dfSinSigma;
-    double dfCosSigma;
-    double dfCos2SigmaM; 
+
+    double dfSinSigma = 0.0;
+    double dfCosSigma = 0.0;
+    double dfCos2SigmaM = 0.0;
     double dfDeltaSigma;
 
     while (fabs(dfSigma-dfSigmaP) > 1e-12) {
@@ -579,10 +580,10 @@ std::pair <double,double> IRISDataset::GeodesicCalculation(float fLat, float fLo
           dfB/6*dfCos2SigmaM*(-3+4*dfSinSigma*dfSinSigma)*(-3+4*dfCos2SigmaM*dfCos2SigmaM)));
         dfSigmaP = dfSigma;
         dfSigma = fDist / (fPolarRadius*dfA) + dfDeltaSigma;
-    }    
-    
+    }
+
     double dfTmp = dfSinU1*dfSinSigma - dfCosU1*dfCosSigma*dfCosAlpha1;
-    double dfLat2 = atan2(dfSinU1*dfCosSigma + dfCosU1*dfSinSigma*dfCosAlpha1, 
+    double dfLat2 = atan2(dfSinU1*dfCosSigma + dfCosU1*dfSinSigma*dfCosAlpha1,
       (1-fFlattening)*sqrt(dfSinAlpha*dfSinAlpha + dfTmp*dfTmp));
     double dfLambda = atan2(dfSinSigma*dfSinAlpha1, dfCosU1*dfCosSigma - dfSinU1*dfSinSigma*dfCosAlpha1);
     double dfC = fFlattening/16*dfCosSqAlpha*(4+fFlattening*(4-3*dfCosSqAlpha));
@@ -595,7 +596,7 @@ std::pair <double,double> IRISDataset::GeodesicCalculation(float fLat, float fLo
         dfLon2 = dfLon2 + 2*M_PI;
     oOutput.first = dfLon2*RAD2DEG;
     oOutput.second = dfLat2*RAD2DEG;
-    
+
     return oOutput;
 }
 

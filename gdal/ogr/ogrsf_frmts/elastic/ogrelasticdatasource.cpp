@@ -28,7 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#pragma warning( disable : 4251 )
+// What was this supposed to do?
+// #pragma warning( disable : 4251 )
 
 #include "ogr_elastic.h"
 #include "cpl_conv.h"
@@ -90,9 +91,9 @@ OGRLayer *OGRElasticDataSource::GetLayer(int iLayer) {
 /************************************************************************/
 
 OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
-        OGRSpatialReference *poSRS,
-        OGRwkbGeometryType eType,
-        char ** papszOptions) {
+                                              OGRSpatialReference *poSRS,
+                                              CPL_UNUSED OGRwkbGeometryType eType,
+                                              CPL_UNUSED char ** papszOptions) {
     nLayers++;
     papoLayers = (OGRElasticLayer **) CPLRealloc(papoLayers, nLayers * sizeof (OGRElasticLayer*));
     papoLayers[nLayers - 1] = new OGRElasticLayer(pszName, pszLayerName, this, poSRS, TRUE);
@@ -104,7 +105,8 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRElasticDataSource::Open(const char * pszFilename, int bUpdateIn) {
+int OGRElasticDataSource::Open(CPL_UNUSED const char * pszFilename,
+                               CPL_UNUSED int bUpdateIn) {
     CPLError(CE_Failure, CPLE_NotSupported,
             "OGR/Elastic driver does not support opening a file");
     return FALSE;
@@ -147,8 +149,7 @@ void OGRElasticDataSource::UploadFile(const CPLString &url, const CPLString &dat
 /************************************************************************/
 
 int OGRElasticDataSource::Create(const char *pszFilename,
-        char **papszOptions) {
-
+                                 CPL_UNUSED char **papszOptions) {
     this->pszName = CPLStrdup(pszFilename);
 
     const char* pszMetaFile = CPLGetConfigOption("ES_META", NULL);
@@ -175,7 +176,10 @@ int OGRElasticDataSource::Create(const char *pszFilename,
             fdata = (char *) malloc(fsize + 1);
 
             fseek(fp, 0, SEEK_SET);
-            fread(fdata, fsize, 1, fp);
+            if (0 == fread(fdata, fsize, 1, fp)) {
+                CPLError(CE_Failure, CPLE_FileIO,
+                         "OGRElasticDataSource::Create read failed.");
+            }
             fdata[fsize] = 0;
             this->pszMapping = fdata;
             fclose(fp);

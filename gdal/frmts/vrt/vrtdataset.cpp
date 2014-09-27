@@ -64,7 +64,7 @@ VRTDataset::VRTDataset( int nXSize, int nYSize )
     pszVRTPath = NULL;
 
     poMaskBand = NULL;
-    
+
     GDALRegister_VRT();
     poDriver = (GDALDriver *) GDALGetDriverByName( "VRT" );
 
@@ -631,20 +631,19 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
     if( fp != NULL )
     {
         unsigned int nLength;
-        
+
         poOpenInfo->fpL = NULL;
-     
+
         VSIFSeekL( fp, 0, SEEK_END );
         nLength = (int) VSIFTellL( fp );
         VSIFSeekL( fp, 0, SEEK_SET );
-        
-        nLength = MAX(0,nLength);
+
         pszXML = (char *) VSIMalloc(nLength+1);
-        
+
         if( pszXML == NULL )
         {
             VSIFCloseL(fp);
-            CPLError( CE_Failure, CPLE_OutOfMemory, 
+            CPLError( CE_Failure, CPLE_OutOfMemory,
                       "Failed to allocate %d byte buffer to hold VRT xml file.",
                       nLength );
             return NULL;
@@ -659,7 +658,7 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
                       nLength );
             return NULL;
         }
-        
+
         pszXML[nLength] = '\0';
 
         char* pszCurDir = CPLGetCurrentDir();
@@ -1109,7 +1108,7 @@ CPLErr VRTDataset::Delete( const char * pszFilename )
 /*                          CreateMaskBand()                            */
 /************************************************************************/
 
-CPLErr VRTDataset::CreateMaskBand( int nFlags )
+CPLErr VRTDataset::CreateMaskBand( CPL_UNUSED int nFlags )
 {
     if (poMaskBand != NULL)
     {

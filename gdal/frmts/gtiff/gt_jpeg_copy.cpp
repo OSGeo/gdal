@@ -475,7 +475,8 @@ CPLErr GTIFF_CopyFromJPEG_WriteAdditionalTags(TIFF* hTIFF,
 static CPLErr GTIFF_CopyBlockFromJPEG(TIFF* hTIFF,
                                       jpeg_decompress_struct& sDInfo,
                                       int iX, int iY,
-                                      int nXBlocks, int nYBlocks,
+                                      int nXBlocks,
+                                      CPL_UNUSED int nYBlocks,
                                       int nXSize, int nYSize,
                                       int nBlockXSize, int nBlockYSize,
                                       int iMCU_sample_width, int iMCU_sample_height,
@@ -758,12 +759,12 @@ CPLErr GTIFF_CopyFromJPEG(GDALDataset* poDS, GDALDataset* poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Get raster and block dimensions                                 */
 /* -------------------------------------------------------------------- */
-    int nXSize, nYSize, nBands;
+    int nXSize, nYSize /* , nBands */;
     int nBlockXSize, nBlockYSize;
 
     nXSize = poDS->GetRasterXSize();
     nYSize = poDS->GetRasterYSize();
-    nBands = poDS->GetRasterCount();
+    /* nBands = poDS->GetRasterCount(); */
 
     /* We don't use the GDAL block dimensions because of the split-band */
     /* mechanism that can expose a pseudo one-line-strip whereas the */

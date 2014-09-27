@@ -328,7 +328,7 @@ int OGRSelafinDataSource::Open(const char * pszFilename, int bUpdateIn, int bCre
 /************************************************************************/
 /*                              TakeLock()                              */
 /************************************************************************/
-int OGRSelafinDataSource::TakeLock(const char *pszFilename) {
+int OGRSelafinDataSource::TakeLock(CPL_UNUSED const char *pszFilename) {
 #ifdef notdef
     // Ideally, we should implement a locking mechanism for Selafin layers because different layers share the same header and file on disk. If two layers are modified at the same time,
     // this would most likely result in data corruption. However, locking the data source causes other problems in QGis which always tries to open the datasource twice, a first time

@@ -271,11 +271,11 @@ void GDALDestroyTPSTransformer( void *pTransformArg )
  * @return TRUE.
  */
 
-int GDALTPSTransform( void *pTransformArg, int bDstToSrc, 
-                      int nPointCount, 
-                      double *x, double *y, double *z, 
+int GDALTPSTransform( void *pTransformArg, int bDstToSrc,
+                      int nPointCount,
+                      double *x, double *y,
+                      CPL_UNUSED double *z,
                       int *panSuccess )
-
 {
     VALIDATE_POINTER1( pTransformArg, "GDALTPSTransform", 0 );
 

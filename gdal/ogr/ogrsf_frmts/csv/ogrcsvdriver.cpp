@@ -126,9 +126,11 @@ static GDALDataset *OGRCSVDriverOpen( GDALOpenInfo* poOpenInfo )
 /************************************************************************/
 
 static GDALDataset *OGRCSVDriverCreate( const char * pszName,
-                                    int nBands, int nXSize, int nYSize, GDALDataType eDT,
-                                    char **papszOptions )
-
+                                        CPL_UNUSED int nBands,
+                                        CPL_UNUSED int nXSize,
+                                        CPL_UNUSED int nYSize,
+                                        CPL_UNUSED GDALDataType eDT,
+                                        char **papszOptions )
 {
 /* -------------------------------------------------------------------- */
 /*      First, ensure there isn't any such file yet.                    */
@@ -140,7 +142,7 @@ static GDALDataset *OGRCSVDriverCreate( const char * pszName,
 
     if( VSIStatL( pszName, &sStatBuf ) == 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "It seems a file system object called '%s' already exists.",
                   pszName );
 
@@ -278,4 +280,3 @@ void RegisterOGRCSV()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-

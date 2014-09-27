@@ -304,12 +304,12 @@ HDF5ImageRasterBand::HDF5ImageRasterBand( HDF5ImageDataset *poDS, int nBand,
         if(H5Pget_layout(listid) == H5D_CHUNKED)
         {
             hsize_t panChunkDims[3];
-            int nDimSize = H5Pget_chunk(listid, 3, panChunkDims);
+            CPL_UNUSED int nDimSize = H5Pget_chunk(listid, 3, panChunkDims);
             CPLAssert(nDimSize == poDS->ndims);
             nBlockXSize   = (int) panChunkDims[poDS->GetXIndex()];
             nBlockYSize   = (int) panChunkDims[poDS->GetYIndex()];
         }
-        
+
         H5Pclose(listid);
     }
 
@@ -757,11 +757,11 @@ CPLErr HDF5ImageDataset::CreateProjections()
             if(EQUALN(osMissionLevel,"GTC",3))
                 productType  = PROD_CSK_L1D;
         }
-            
+
         CaptureCSKGeoTransform(productType);
         CaptureCSKGeolocation(productType);
         CaptureCSKGCPs(productType);
-        
+
         break;
     }
     case UNKNOWN_PRODUCT:
@@ -771,8 +771,8 @@ CPLErr HDF5ImageDataset::CreateProjections()
 
     hid_t LatitudeDatasetID  = -1;
     hid_t LongitudeDatasetID = -1;
-    hid_t LatitudeDataspaceID;
-    hid_t LongitudeDataspaceID;
+    // hid_t LatitudeDataspaceID;
+    // hid_t LongitudeDataspaceID;
     float* Latitude;
     float* Longitude;
     int    i,j;
@@ -806,11 +806,11 @@ CPLErr HDF5ImageDataset::CreateProjections()
     /*      Retrieve HDF5 data information                                  */
     /* -------------------------------------------------------------------- */
     LatitudeDatasetID   = H5Dopen( hHDF5,poH5Objects->pszPath );
-    LatitudeDataspaceID = H5Dget_space( dataset_id );
+    // LatitudeDataspaceID = H5Dget_space( dataset_id );
 
     poH5Objects=HDF5FindDatasetObjects( poH5RootGroup, "Longitude" );
     LongitudeDatasetID   = H5Dopen( hHDF5,poH5Objects->pszPath );
-    LongitudeDataspaceID = H5Dget_space( dataset_id );
+    // LongitudeDataspaceID = H5Dget_space( dataset_id );
 
     if( ( LatitudeDatasetID > 0 ) && ( LongitudeDatasetID > 0) ) {
 
@@ -1258,4 +1258,3 @@ void HDF5ImageDataset::CaptureCSKGCPs(int iProductType)
         }
     }
 }
-

@@ -347,7 +347,7 @@ char *AVCAdjustCaseSensitiveFilename(char *pszFname)
      * If we get to a point where a path component does not exist then
      * we simply return the rest of the path as is.
      *----------------------------------------------------------------*/
-    while(bValidPath && strlen(pszTmpPath) < nTotalLen)
+    while(bValidPath && strlen(pszTmpPath) < (size_t)nTotalLen)
     {
         char    **papszDir=NULL;
         int     iEntry, iLastPartStart;
@@ -490,7 +490,7 @@ int  AVCPrintRealValue(char *pszBuf, int nPrecision, AVCFileType eType,
     {
         int n;
         n = strlen(pszBuf);
-        
+
         pszBuf[n - numExpDigits]    = pszBuf[n-2];
         pszBuf[n - numExpDigits +1] = pszBuf[n-1];
         pszBuf[n - numExpDigits +2] = '\0';
@@ -498,9 +498,7 @@ int  AVCPrintRealValue(char *pszBuf, int nPrecision, AVCFileType eType,
 
     /* Just make sure that the actual output length is what we expected.
      */
-    CPLAssert(strlen(pszBuf) == nLen);
+    CPLAssert(strlen(pszBuf) == (size_t)nLen);
 
     return nLen;
 }
-
-

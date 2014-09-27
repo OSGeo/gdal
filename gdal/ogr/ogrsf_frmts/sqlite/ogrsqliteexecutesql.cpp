@@ -709,7 +709,7 @@ int OGR2SQLITEDealWithSpatialColumn(OGRLayer* poLayer,
 OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
                                 const char *pszStatement,
                                 OGRGeometry *poSpatialFilter,
-                                const char *pszDialect )
+                                CPL_UNUSED const char *pszDialect )
 {
     char* pszTmpDBName = (char*) CPLMalloc(256);
     sprintf(pszTmpDBName, "/vsimem/ogr2sqlite/temp_%p.db", pszTmpDBName);

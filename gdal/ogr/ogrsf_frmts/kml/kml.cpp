@@ -319,7 +319,9 @@ void XMLCALL KML::startElementValidate(void* pUserData, const char* pszName, con
     }
 }
 
-void XMLCALL KML::dataHandlerValidate(void * pUserData, const char * pszData, int nLen)
+void XMLCALL KML::dataHandlerValidate(void * pUserData,
+                                      CPL_UNUSED const char * pszData,
+                                      CPL_UNUSED int nLen)
 {
     KML* poKML = (KML*) pUserData;
 
@@ -533,32 +535,32 @@ bool KML::isHandled(std::string const& elem) const
     return false;
 }
 
-bool KML::isLeaf(std::string const& elem) const
+bool KML::isLeaf(CPL_UNUSED std::string const& elem) const
 {
     return false;
 };
 
-bool KML::isFeature(std::string const& elem) const
+bool KML::isFeature(CPL_UNUSED std::string const& elem) const
 {
     return false;
 };
 
-bool KML::isFeatureContainer(std::string const& elem) const
+bool KML::isFeatureContainer(CPL_UNUSED std::string const& elem) const
 {
     return false;
 };
 
-bool KML::isContainer(std::string const& elem) const
+bool KML::isContainer(CPL_UNUSED std::string const& elem) const
 {
     return false;
 };
 
-bool KML::isRest(std::string const& elem) const
+bool KML::isRest(CPL_UNUSED std::string const& elem) const
 {
     return false;
 };
 
-void KML::findLayers(KMLNode* poNode, int bKeepEmptyContainers)
+void KML::findLayers(CPL_UNUSED KMLNode* poNode, CPL_UNUSED int bKeepEmptyContainers)
 {
     // idle
 };

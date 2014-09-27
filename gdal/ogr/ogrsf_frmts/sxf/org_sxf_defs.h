@@ -227,6 +227,7 @@ enum SXFCoordinateType
  */
 enum SXFGeometryType
 {
+    SXF_GT_Unknown = -1,
     SXF_GT_Line    = 0,     /* MultiLineString geometric object                  */
     SXF_GT_Polygon = 1,     /* Polygon geometric object                          */
     SXF_GT_Point = 2,       /* MultiPoint geometric object                       */

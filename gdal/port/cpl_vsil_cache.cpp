@@ -478,8 +478,9 @@ size_t VSICachedFile::Read( void * pBuffer, size_t nSize, size_t nCount )
 /*                               Write()                                */
 /************************************************************************/
 
-size_t VSICachedFile::Write( const void * pBuffer, size_t nSize, size_t nCount )
-
+size_t VSICachedFile::Write( CPL_UNUSED const void * pBuffer,
+                             CPL_UNUSED size_t nSize,
+                             CPL_UNUSED size_t nCount )
 {
     return 0;
 }

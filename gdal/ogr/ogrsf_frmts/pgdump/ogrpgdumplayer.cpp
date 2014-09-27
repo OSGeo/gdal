@@ -1093,7 +1093,7 @@ OGRErr OGRPGDumpLayer::CreateField( OGRFieldDefn *poFieldIn,
 /************************************************************************/
 
 OGRErr OGRPGDumpLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
-                                        int bApproxOK )
+                                        CPL_UNUSED int bApproxOK )
 {
     OGRwkbGeometryType eType = poGeomFieldIn->GetType();
     if( eType == wkbNone )
@@ -1102,7 +1102,7 @@ OGRErr OGRPGDumpLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
                  "Cannot create geometry field of type wkbNone");
         return OGRERR_FAILURE;
     }
-    
+
     CPLString               osCommand;
     OGRPGDumpGeomFieldDefn *poGeomField =
         new OGRPGDumpGeomFieldDefn( poGeomFieldIn );

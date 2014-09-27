@@ -962,7 +962,7 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
         }
 
         poFldDefn = poFeature->GetDefnRef()->GetFieldDefn( iField );
-        if( poFldDefn->GetType() == OFTInteger 
+        if( poFldDefn->GetType() == OFTInteger
             || poFldDefn->GetType() == OFTReal )
         {
             if( strlen(pszValue) == 0 )
@@ -970,7 +970,9 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
                 if( nOptionFlags & S57M_PRESERVE_EMPTY_NUMBERS )
                     poFeature->SetField( iField, EMPTY_NUMBER_MARKER );
                 else
-                    /* leave as null if value was empty string */;
+                {
+                    /* leave as null if value was empty string */
+                }
             }
             else
                 poFeature->SetField( iField, pszValue );
@@ -980,7 +982,7 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
 
         CPLFree(pszValueToFree);
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      NATF (national) attributes                                      */
 /* -------------------------------------------------------------------- */
@@ -2176,11 +2178,13 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
                 poLine->addPoint( dfX, dfY );
             }
             else
-                /* omit point, already present */;
+            {
+                /* omit point, already present */
+            }
 
             // remember the coordinates of the last point
             dlastfX = dfX; dlastfY = dfY;
-        
+
 /* -------------------------------------------------------------------- */
 /*      Collect the vertices.                                           */
 /*      Iterate over all the SG2D fields in the Spatial record          */
@@ -3454,4 +3458,3 @@ OGRErr S57Reader::GetExtent( OGREnvelope *psExtent, int bForce )
         return OGRERR_NONE;
     }
 }
-

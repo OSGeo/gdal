@@ -400,7 +400,7 @@ OGRESRIJSONReader::ReadFeatureCollection( json_object* poObj )
 
     if( json_type_array == json_object_get_type( poObjFeatures ) )
     {
-        bool bAdded = false;
+        /* bool bAdded = false; */
         OGRFeature* poFeature = NULL;
         json_object* poObjFeature = NULL;
 
@@ -412,7 +412,7 @@ OGRESRIJSONReader::ReadFeatureCollection( json_object* poObj )
                 json_object_get_type(poObjFeature) == json_type_object)
             {
                 poFeature = OGRESRIJSONReader::ReadFeature( poObjFeature );
-                bAdded = AddFeature( poFeature );
+                /* bAdded = */ AddFeature( poFeature );
             }
             //CPLAssert( bAdded );
         }

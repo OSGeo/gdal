@@ -105,15 +105,12 @@ No known bug
     double dx2, dy2;
     double dy;
     double intersect;
-    
 
     int ind1, ind2;
     int ints, n, part;
-    int *polyInts, polyAllocated;
+    int *polyInts;
 
-  
     int horizontal_x1, horizontal_x2;
-
 
     if (!nPartCount) {
         return;
@@ -122,10 +119,9 @@ No known bug
     n = 0;
     for( part = 0; part < nPartCount; part++ )
         n += panPartSize[part];
-    
+
     polyInts = (int *) malloc(sizeof(int) * n);
-    polyAllocated = n;
-    
+
     dminy = padfY[0];
     dmaxy = padfY[0];
     for (i=1; (i < n); i++) {
@@ -253,13 +249,14 @@ No known bug
 /*                         GDALdllImagePoint()                          */
 /************************************************************************/
 
-void GDALdllImagePoint( int nRasterXSize, int nRasterYSize, 
-                        int nPartCount, int *panPartSize,
+void GDALdllImagePoint( int nRasterXSize, int nRasterYSize,
+                        int nPartCount,
+                        CPL_UNUSED int *panPartSize,
                         double *padfX, double *padfY, double *padfVariant,
                         llPointFunc pfnPointFunc, void *pCBData )
 {
-    int     i;
- 
+    int i;
+
     for ( i = 0; i < nPartCount; i++ )
     {
         int nX = (int)floor( padfX[i] );
@@ -607,4 +604,3 @@ GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize,
         } // next segment
     } // next part
 }
-

@@ -172,8 +172,7 @@ int OGRGetOpenDSCount()
 /*                             GetOpenDS()                              */
 /************************************************************************/
 
-OGRDataSource *OGRSFDriverRegistrar::GetOpenDS( int iDS )
-
+OGRDataSource *OGRSFDriverRegistrar::GetOpenDS( CPL_UNUSED int iDS )
 {
     CPLError(CE_Failure, CPLE_AppDefined, "Stub implementation in GDAL 2.0");
     return NULL;

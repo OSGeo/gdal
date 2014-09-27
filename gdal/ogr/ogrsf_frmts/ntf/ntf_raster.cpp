@@ -401,8 +401,7 @@ OGRFeature *OGRNTFRasterLayer::GetFeature( long nFeatureId )
 /*      way of counting features matching a spatial query.              */
 /************************************************************************/
 
-int OGRNTFRasterLayer::GetFeatureCount( int bForce )
-
+int OGRNTFRasterLayer::GetFeatureCount( CPL_UNUSED int bForce )
 {
     return nFeatureCount;
 }
@@ -430,5 +429,3 @@ int OGRNTFRasterLayer::TestCapability( const char * pszCap )
     else 
         return FALSE;
 }
-
-

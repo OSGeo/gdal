@@ -319,8 +319,7 @@ OGRFeature *OGRGeomediaLayer::GetFeature( long nFeatureId )
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGeomediaLayer::TestCapability( const char * pszCap )
-
+int OGRGeomediaLayer::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }

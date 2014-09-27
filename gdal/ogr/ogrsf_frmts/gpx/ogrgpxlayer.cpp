@@ -1769,8 +1769,8 @@ OGRErr OGRGPXLayer::CreateFeature( OGRFeature *poFeature )
 /************************************************************************/
 
 
-OGRErr OGRGPXLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
-
+OGRErr OGRGPXLayer::CreateField( OGRFieldDefn *poField,
+                                 CPL_UNUSED int bApproxOK )
 {
     for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {
@@ -1895,7 +1895,8 @@ void OGRGPXLayer::LoadExtensionsSchema()
 /************************************************************************/
 
 
-void OGRGPXLayer::startElementLoadSchemaCbk(const char *pszName, const char **ppszAttr)
+void OGRGPXLayer::startElementLoadSchemaCbk(const char *pszName,
+                                            CPL_UNUSED const char **ppszAttr)
 {
     if (bStopParsing) return;
 

@@ -794,8 +794,7 @@ JPGMaskBand::JPGMaskBand( JPGDataset *poDS )
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr JPGMaskBand::IReadBlock( int nBlockX, int nBlockY, void *pImage )
-
+CPLErr JPGMaskBand::IReadBlock( CPL_UNUSED int nBlockX, int nBlockY, void *pImage )
 {
     JPGDataset *poJDS = (JPGDataset *) poDS;
 

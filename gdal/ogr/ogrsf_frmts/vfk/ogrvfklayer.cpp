@@ -149,13 +149,13 @@ OGRGeometry *OGRVFKLayer::CreateGeometry(IVFKFeature * poVfkFeature)
 /*!
   \brief Get feature count
 
-  This method overwrites OGRLayer::GetFeatureCount(), 
+  This method overwrites OGRLayer::GetFeatureCount(),
 
   \param bForce skip (return -1)
 
   \return number of features
 */
-int OGRVFKLayer::GetFeatureCount(int bForce)
+int OGRVFKLayer::GetFeatureCount(CPL_UNUSED int bForce)
 {
     int nfeatures;
 
@@ -165,10 +165,10 @@ int OGRVFKLayer::GetFeatureCount(int bForce)
         /* force real feature count */
         nfeatures = OGRLayer::GetFeatureCount();
     }
-    
+
     CPLDebug("OGR-VFK", "OGRVFKLayer::GetFeatureCount(): name=%s -> n=%d",
              GetName(), nfeatures);
-    
+
     return nfeatures;
 }
 

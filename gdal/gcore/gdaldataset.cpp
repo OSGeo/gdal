@@ -795,15 +795,14 @@ const char * CPL_STDCALL GDALGetProjectionRef( GDALDatasetH hDS )
  * is not writable, or because the dataset does not support the indicated
  * projection.  Many formats do not support writing projections.
  *
- * This method is the same as the C GDALSetProjection() function. 
+ * This method is the same as the C GDALSetProjection() function.
  *
  * @param pszProjection projection reference string.
  *
  * @return CE_Failure if an error occurs, otherwise CE_None.
  */
 
-CPLErr GDALDataset::SetProjection( const char * pszProjection )
-
+CPLErr GDALDataset::SetProjection( CPL_UNUSED const char * pszProjection )
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
         ReportError( CE_Failure, CPLE_NotSupported,
@@ -913,13 +912,13 @@ CPLErr CPL_STDCALL GDALGetGeoTransform( GDALDatasetH hDS, double * padfTransform
  * written.
  */
 
-CPLErr GDALDataset::SetGeoTransform( double * padfTransform )
+CPLErr GDALDataset::SetGeoTransform( CPL_UNUSED double * padfTransform )
 
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
         ReportError( CE_Failure, CPLE_NotSupported,
                   "SetGeoTransform() not supported for this dataset." );
-    
+
     return( CE_Failure );
 }
 
@@ -957,7 +956,7 @@ GDALSetGeoTransform( GDALDatasetH hDS, double * padfTransform )
  * @return the desired handle value, or NULL if not recognised/supported.
  */
 
-void *GDALDataset::GetInternalHandle( const char * pszHandleName )
+void *GDALDataset::GetInternalHandle( CPL_UNUSED const char * pszHandleName )
 
 {
     return( NULL );
@@ -5236,7 +5235,7 @@ int GDALDataset::GetLayerCount()
  @return the layer, or NULL if iLayer is out of range or an error occurs.
 */
 
-OGRLayer* GDALDataset::GetLayer(int iLayer)
+OGRLayer* GDALDataset::GetLayer(CPL_UNUSED int iLayer)
 {
     return NULL;
 }
@@ -5267,14 +5266,14 @@ OGRLayer* GDALDataset::GetLayer(int iLayer)
  deprecated OGR_DS_TestCapability().
 
  In GDAL 1.X, this method used to be in the OGRDataSource class.
- 
+
  @param pszCapability the capability to test.
 
  @return TRUE if capability available otherwise FALSE.
 
-*/ 
+*/
 
-int GDALDataset::TestCapability( const char * pszCap )
+int GDALDataset::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
 }

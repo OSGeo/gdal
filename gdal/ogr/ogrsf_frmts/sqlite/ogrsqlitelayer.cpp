@@ -129,8 +129,9 @@ void OGRSQLiteLayer::Finalize()
 /************************************************************************/
 
 static
-int OGRIsBinaryGeomCol( sqlite3_stmt *hStmt, int iCol,
-                        OGRFieldDefn& oField,
+int OGRIsBinaryGeomCol( sqlite3_stmt *hStmt,
+                        int iCol,
+                        CPL_UNUSED OGRFieldDefn& oField,
                         OGRSQLiteGeomFormat& eGeomFormat )
 {
     OGRGeometry* poGeometry = NULL;

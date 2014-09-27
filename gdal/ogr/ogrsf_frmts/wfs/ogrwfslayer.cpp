@@ -191,7 +191,7 @@ OGRWFSLayer::~OGRWFSLayer()
 /*                    GetDescribeFeatureTypeURL()                       */
 /************************************************************************/
 
-CPLString OGRWFSLayer::GetDescribeFeatureTypeURL(int bWithNS)
+CPLString OGRWFSLayer::GetDescribeFeatureTypeURL(CPL_UNUSED int bWithNS)
 {
     CPLString osURL(pszBaseURL);
     osURL = CPLURLAddKVP(osURL, "SERVICE", "WFS");

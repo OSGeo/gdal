@@ -1459,7 +1459,7 @@ void TABMAPIndexBlock::RecomputeMBR()
  **********************************************************************/
 void TABMAPIndexBlock::UpdateCurChildMBR(GInt32 nXMin, GInt32 nYMin,
                                          GInt32 nXMax, GInt32 nYMax,
-                                         GInt32 nBlockPtr)
+                                         CPL_UNUSED GInt32 nBlockPtr)
 {
     CPLAssert(m_poCurChild);
     CPLAssert(m_asEntries[m_nCurChildIndex].nBlockPtr == nBlockPtr);
@@ -1580,5 +1580,3 @@ void TABMAPIndexBlock::Dump(FILE *fpOut /*=NULL*/)
     fflush(fpOut);
 }
 #endif // DEBUG
-
-
