@@ -112,7 +112,8 @@ static GDALDataset *OGRCSVDriverOpen( GDALOpenInfo* poOpenInfo )
 
     OGRCSVDataSource   *poDS = new OGRCSVDataSource();
 
-    if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update, FALSE ) )
+    if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update, FALSE,
+                     poOpenInfo->papszOpenOptions ) )
     {
         delete poDS;
         poDS = NULL;
@@ -269,6 +270,18 @@ void RegisterOGRCSV()
 "  <Option name='CREATE_CSVT' type='boolean' description='whether to create a .csvt file' default='NO'/>"
 "  <Option name='WRITE_BOM' type='boolean' description='whether to write a UTF-8 BOM prefix' default='NO'/>"
 "</LayerCreationOptionList>");
+
+        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+"<OpenOptionList>"
+"  <Option name='AUTODETECT_TYPE' type='boolean' description='whether to guess data type from first bytes of the file' default='NO'/>"
+"  <Option name='KEEP_SOURCE_COLUMNS' type='boolean' description='whether to add original columns whose guessed data type is not String. Only used if AUTODETECT_TYPE=YES' default='NO'/>"
+"  <Option name='AUTODETECT_WIDTH' type='string-select' description='whether to auto-detect width/precision. Only used if AUTODETECT_TYPE=YES' default='NO'>"
+"    <Value>YES</Value>"
+"    <Value>NO</Value>"
+"    <Value>STRING_ONLY</Value>"
+"  </Option>"
+"  <Option name='AUTODETECT_SIZE_LIMIT' type='int' description='number of bytes to inspect for auto-detection of data type. Only used if AUTODETECT_TYPE=YES' default='1000000'/>"
+"</OpenOptionList>");
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
