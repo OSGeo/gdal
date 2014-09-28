@@ -190,6 +190,7 @@ class OGRMSSQLSpatialTableLayer : public OGRMSSQLSpatialLayer
     int                 bUpdateAccess;
     int                 bLaunderColumnNames;
     int                 bPreservePrecision;
+    int                 bNeedSpatialIndex;
 
     char                *pszQuery;
 
@@ -249,6 +250,8 @@ class OGRMSSQLSpatialTableLayer : public OGRMSSQLSpatialLayer
                                 { bLaunderColumnNames = bFlag; }
     void                SetPrecisionFlag( int bFlag )
                                 { bPreservePrecision = bFlag; }
+    void                SetSpatialIndexFlag( int bFlag )
+                                { bNeedSpatialIndex = bFlag; }
     void                AppendFieldValue(CPLODBCStatement *poStatement,
                                        OGRFeature* poFeature, int i, int *bind_num, void **bind_buffer);
 

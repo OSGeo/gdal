@@ -95,6 +95,8 @@ OGRMSSQLSpatialTableLayer::OGRMSSQLSpatialTableLayer( OGRMSSQLSpatialDataSource 
     pszSchemaName = NULL;
 
     eGeomType = wkbNone;
+
+    bNeedSpatialIndex = FALSE;
 }
 
 /************************************************************************/
@@ -104,6 +106,12 @@ OGRMSSQLSpatialTableLayer::OGRMSSQLSpatialTableLayer( OGRMSSQLSpatialDataSource 
 OGRMSSQLSpatialTableLayer::~OGRMSSQLSpatialTableLayer()
 
 {
+    if ( bNeedSpatialIndex )
+    {
+        DropSpatialIndex();
+        CreateSpatialIndex();
+    }
+    
     CPLFree( pszTableName );
     CPLFree( pszLayerName );
     CPLFree( pszSchemaName );
@@ -353,6 +361,9 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateSpatialIndex()
                           "Failed to get extent for spatial index." );
             return OGRERR_FAILURE;
         }
+
+        if (oExt.MinX == oExt.MaxX || oExt.MinY == oExt.MaxY)
+            return OGRERR_NONE; /* skip creating index */
 
         oStatement.Appendf("CREATE SPATIAL INDEX [ogr_%s_%s_%s_sidx] ON [%s].[%s] ( [%s] ) "
             "USING GEOMETRY_GRID WITH (BOUNDING_BOX =(%.15g, %.15g, %.15g, %.15g))",
