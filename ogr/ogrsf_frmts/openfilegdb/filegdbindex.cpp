@@ -74,7 +74,7 @@ class FileGDBTrivialIterator : public FileGDBIterator
         virtual                     ~FileGDBTrivialIterator() { delete poParentIter; }
 
         virtual FileGDBTable        *GetTable() { return poTable; }
-        virtual void                 Reset() { iRow = 0; }
+        virtual void                 Reset() { iRow = 0; poParentIter->Reset(); }
         virtual int                  GetNextRowSortedByFID();
         virtual int                  GetRowCount()
                 { return poTable->GetTotalRecordCount(); }
