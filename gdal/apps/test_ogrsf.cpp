@@ -45,6 +45,7 @@ const char  *pszSQLStatement = NULL;
 const char  *pszDialect = NULL;
 int nLoops = 1;
 int     bFullSpatialFilter = FALSE;
+char  **papszOpenOptions = NULL;
 
 typedef struct
 {
@@ -116,6 +117,11 @@ int main( int nArgc, char ** papszArgv )
         }
         else if( EQUAL(papszArgv[iArg],"-fsf") )
             bFullSpatialFilter = TRUE;
+        else if( EQUAL(papszArgv[iArg], "-oo") && iArg + 1 < nArgc)
+        {
+            papszOpenOptions = CSLAddString( papszOpenOptions,
+                                                papszArgv[++iArg] );
+        }
         else if( papszArgv[iArg][0] == '-' )
         {
             Usage();
@@ -161,6 +167,7 @@ int main( int nArgc, char ** papszArgv )
 
     CSLDestroy(papszLayers);
     CSLDestroy(papszArgv);
+    CSLDestroy(papszOpenOptions);
     
 #ifdef DBMALLOC
     malloc_dump(1);
@@ -199,10 +206,13 @@ static void ThreadFunctionInternal( ThreadContext* psContext )
     GDALDataset        *poDS;
     GDALDriver         *poDriver;
 
-    poDS = (GDALDataset*) OGROpen( pszDataSource, !bReadOnly, NULL );
+    poDS = (GDALDataset*) GDALOpenEx( pszDataSource,
+            (!bReadOnly ? GDAL_OF_UPDATE : GDAL_OF_READONLY) | GDAL_OF_VECTOR,
+            NULL, papszOpenOptions, NULL );
     if( poDS == NULL && !bReadOnly )
     {
-        poDS = (GDALDataset*) OGROpen( pszDataSource, FALSE, NULL );
+        poDS = (GDALDataset*) GDALOpenEx( pszDataSource, GDAL_OF_VECTOR,
+                                          NULL, papszOpenOptions, NULL );
         if( poDS != NULL && bVerbose )
         {
             printf( "Had to open data source read-only.\n" );
@@ -375,7 +385,8 @@ static void Usage()
 
 {
     printf( "Usage: test_ogrsf [-ro] [-q] [-threads N] [-loops M] [-fsf] datasource_name \n"
-            "                  [[layer1_name, layer2_name, ...] | [-sql statement] [-dialect dialect]]\n" );
+            "                  [[layer1_name, layer2_name, ...] | [-sql statement] [-dialect dialect]]\n"
+            "                   [[-oo NAME=VALUE] ...]\n");
     printf( "\n");
     printf( "-fsf : full spatial filter testing (slow)\n");
     exit( 1 );
@@ -2718,7 +2729,8 @@ static int TestInterleavedReading( const char* pszDataSource, char** papszLayers
     OGRFeature* poFeature22 = NULL;
 
     /* Check that we have 2 layers with at least 2 features */
-    poDS = (GDALDataset*) OGROpen( pszDataSource, FALSE, NULL );
+    poDS = (GDALDataset*) GDALOpenEx( pszDataSource,
+                            GDAL_OF_VECTOR, NULL, papszOpenOptions, NULL );
     if (poDS == NULL)
     {
         if( bVerbose )
@@ -2742,8 +2754,10 @@ static int TestInterleavedReading( const char* pszDataSource, char** papszLayers
 
     /* Test normal reading */
     GDALClose( (GDALDatasetH)poDS );
-    poDS = (GDALDataset*) OGROpen( pszDataSource, FALSE, NULL );
-    poDS2 = (GDALDataset*) OGROpen( pszDataSource, FALSE, NULL );
+    poDS = (GDALDataset*) GDALOpenEx( pszDataSource,
+                                GDAL_OF_VECTOR, NULL, papszOpenOptions, NULL );
+    poDS2 = (GDALDataset*) GDALOpenEx( pszDataSource,
+                                GDAL_OF_VECTOR, NULL, papszOpenOptions, NULL );
     if (poDS == NULL || poDS2 == NULL)
     {
         if( bVerbose )
