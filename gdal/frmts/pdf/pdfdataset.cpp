@@ -39,7 +39,7 @@
 #include "cpl_multiproc.h"
 #include "pdfio.h"
 #include <goo/GooList.h>
-#endif
+#endif // HAVE_POPPLER
 
 #include "pdfcreatecopy.h"
 #include <set>
@@ -54,6 +54,7 @@ CPL_C_START
 void    GDALRegister_PDF(void);
 CPL_C_END
 
+#if defined(HAVE_POPPLER) || defined(HAVE_PODOFO)
 static const char* pszOpenOptionList =
 "<OpenOptionList>"
 "  <Option name='RENDERING_OPTIONS' type='string-select' description='Which graphical elements to render' default='RASTER,VECTOR,TEXT' alt_config_option='GDAL_PDF_RENDERING_OPTIONS'>"
@@ -72,7 +73,7 @@ static const char* pszOpenOptionList =
 "     <Value>POPPLER</Value>\n"
 "     <Value>PODOFO</Value>\n"
 "  </Option>"
-#endif
+#endif // HAVE_POPPLER && HAVE_PODOFO
 "  <Option name='LAYERS' type='string' description='List of layers (comma separated) to turn ON (or ALL to turn all layers ON)' alt_config_option='GDAL_PDF_LAYERS'/>"
 "  <Option name='LAYERS_OFF' type='string' description='List of layers (comma separated) to turn OFF' alt_config_option='GDAL_PDF_LAYERS_OFF'/>"
 "  <Option name='BANDS' type='string-select' description='Number of raster bands' default='3' alt_config_option='GDAL_PDF_BANDS'>"
@@ -81,8 +82,6 @@ static const char* pszOpenOptionList =
 "  </Option>"
 "  <Option name='NEATLINE' type='string' description='The name of the neatline to select' alt_config_option='GDAL_PDF_NEATLINE'/>"
 "</OpenOptionList>";
-
-#if defined(HAVE_POPPLER) || defined(HAVE_PODOFO)
 
 static double Get(GDALPDFObject* poObj, int nIndice = -1);
 
@@ -1052,7 +1051,7 @@ CPLErr PDFDataset::ReadPixels( int nReqXOff, int nReqYOff,
             nRet = CPLSystem(NULL, osCmd.c_str());
         }
         else
-#endif
+#endif // notdef
         {
             char** papszArgs = NULL;
             papszArgs = CSLAddString(papszArgs, "pdftoppm");
@@ -1955,7 +1954,7 @@ void PDFDataset::GuessDPI(GDALPDFDictionary* poPageDict, int* pnBands)
                                 VSIFCloseL(fpDump);
                             }
                         }
-#endif
+#endif // DEBUG
                         osForm = GDALPDFParseStreamContentOnlyDrawForm(pszContent);
                         if (osForm.size() == 0)
                         {
@@ -5067,7 +5066,15 @@ CPLErr PDFDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
 /*                          GDALPDFOpen()                               */
 /************************************************************************/
 
-GDALDataset* GDALPDFOpen(const char* pszFilename, GDALAccess eAccess)
+GDALDataset* GDALPDFOpen(
+#if defined(HAVE_POPPLER) || defined(HAVE_PODOFO)
+                         const char* pszFilename,
+                         GDALAccess eAccess
+#else
+                         CPL_UNUSED const char* pszFilename,
+                         CPL_UNUSED GDALAccess eAccess
+#endif
+                         )
 {
 #if defined(HAVE_POPPLER) || defined(HAVE_PODOFO)
     GDALOpenInfo oOpenInfo(pszFilename, eAccess);
@@ -5135,10 +5142,10 @@ void GDALRegister_PDF()
 #ifdef HAVE_POPPLER
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
         poDriver->SetMetadataItem( "HAVE_POPPLER", "YES" );
-#endif
+#endif // HAVE_POPPLER
 #ifdef HAVE_PODOFO
         poDriver->SetMetadataItem( "HAVE_PODOFO", "YES" );
-#endif
+#endif // HAVE_PODOFO
 
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>\n"
@@ -5203,7 +5210,7 @@ void GDALRegister_PDF()
         poDriver->pfnOpen = PDFDataset::Open;
         poDriver->pfnIdentify = PDFDataset::Identify;
         poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
-#endif
+#endif // HAVE_POPPLER || HAVE_PODOFO
 
         poDriver->pfnCreateCopy = GDALPDFCreateCopy;
         poDriver->pfnCreate = PDFWritableVectorDataset::Create;
