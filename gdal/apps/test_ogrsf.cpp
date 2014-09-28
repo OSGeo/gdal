@@ -822,6 +822,23 @@ static int TestOGRLayerRandomRead( OGRLayer *poLayer )
         goto end;
     }
 
+    OGRFeature::DestroyFeature(poFeature);
+
+/* -------------------------------------------------------------------- */
+/*      Test feature 2 again                                            */
+/* -------------------------------------------------------------------- */
+    poFeature = poLayer->GetFeature( papoFeatures[2]->GetFID() );
+    if( poFeature == NULL || !poFeature->Equal( papoFeatures[2] ) )
+    {
+        bRet = FALSE;
+        printf( "ERROR: Attempt to randomly read feature %ld appears to\n"
+                "       have returned a different feature than sequential\n"
+                "       reading indicates should have happened.\n",
+                papoFeatures[4]->GetFID() );
+
+        goto end;
+    }
+
     if( bVerbose )
         printf( "INFO: Random read test passed.\n" );
 
@@ -2643,19 +2660,13 @@ static int TestOGRLayer( GDALDataset* poDS, OGRLayer * poLayer, int bIsSQLLayer 
 /* -------------------------------------------------------------------- */
 /*      Test random reading.                                            */
 /* -------------------------------------------------------------------- */
-    if( poLayer->TestCapability( OLCRandomRead ) )
-    {
-        bRet &= TestOGRLayerRandomRead( poLayer );
-    }
+    bRet &= TestOGRLayerRandomRead( poLayer );
     
 /* -------------------------------------------------------------------- */
 /*      Test SetNextByIndex.                                            */
 /* -------------------------------------------------------------------- */
-    if( poLayer->TestCapability( OLCFastSetNextByIndex ) )
-    {
-        bRet &= TestOGRLayerSetNextByIndex( poLayer );
-    }
-    
+    bRet &= TestOGRLayerSetNextByIndex( poLayer );
+
 /* -------------------------------------------------------------------- */
 /*      Test delete feature.                                            */
 /* -------------------------------------------------------------------- */
