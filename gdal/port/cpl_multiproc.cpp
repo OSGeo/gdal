@@ -293,8 +293,8 @@ void *CPLCreateMutex()
 /*                          CPLAcquireMutex()                           */
 /************************************************************************/
 
-int CPLAcquireMutex( void *hMutex, double dfWaitInSeconds )
-
+int CPLAcquireMutex( void *hMutex,
+                     CPL_UNUSED double dfWaitInSeconds )
 {
 #ifndef MUTEX_NONE
     unsigned char *pabyMutex = (unsigned char *) hMutex;
@@ -362,7 +362,7 @@ void  *CPLCreateCond()
 /*                            CPLCondWait()                             */
 /************************************************************************/
 
-void  CPLCondWait( void *hCond, void* hMutex )
+void  CPLCondWait( CPL_UNUSED void *hCond, CPL_UNUSED void* hMutex )
 {
 }
 
@@ -370,7 +370,7 @@ void  CPLCondWait( void *hCond, void* hMutex )
 /*                            CPLCondSignal()                           */
 /************************************************************************/
 
-void  CPLCondSignal( void *hCond )
+void  CPLCondSignal( CPL_UNUSED void *hCond )
 {
 }
 
@@ -378,7 +378,7 @@ void  CPLCondSignal( void *hCond )
 /*                           CPLCondBroadcast()                         */
 /************************************************************************/
 
-void  CPLCondBroadcast( void *hCond )
+void  CPLCondBroadcast( CPL_UNUSED void *hCond )
 {
 }
 
@@ -386,7 +386,7 @@ void  CPLCondBroadcast( void *hCond )
 /*                            CPLDestroyCond()                          */
 /************************************************************************/
 
-void  CPLDestroyCond( void *hCond )
+void  CPLDestroyCond( CPL_UNUSED void *hCond )
 {
 }
 
@@ -481,8 +481,7 @@ GIntBig CPLGetPID()
 /*                          CPLCreateThread();                          */
 /************************************************************************/
 
-int CPLCreateThread( CPLThreadFunc pfnMain, void *pArg )
-
+int CPLCreateThread( CPL_UNUSED CPLThreadFunc pfnMain, CPL_UNUSED void *pArg )
 {
     CPLDebug( "CPLCreateThread", "Fails to dummy implementation" );
 
@@ -493,8 +492,7 @@ int CPLCreateThread( CPLThreadFunc pfnMain, void *pArg )
 /*                      CPLCreateJoinableThread()                       */
 /************************************************************************/
 
-void* CPLCreateJoinableThread( CPLThreadFunc pfnMain, void *pThreadArg )
-
+void* CPLCreateJoinableThread( CPL_UNUSED CPLThreadFunc pfnMain, CPL_UNUSED void *pThreadArg )
 {
     CPLDebug( "CPLCreateJoinableThread", "Fails to dummy implementation" );
 
@@ -505,7 +503,7 @@ void* CPLCreateJoinableThread( CPLThreadFunc pfnMain, void *pThreadArg )
 /*                          CPLJoinThread()                             */
 /************************************************************************/
 
-void CPLJoinThread(void* hJoinableThread)
+void CPLJoinThread(CPL_UNUSED void* hJoinableThread)
 {
 }
 
@@ -514,7 +512,6 @@ void CPLJoinThread(void* hJoinableThread)
 /************************************************************************/
 
 void CPLSleep( double dfWaitInSeconds )
-
 {
     time_t  ltime;
     time_t  ttime;
