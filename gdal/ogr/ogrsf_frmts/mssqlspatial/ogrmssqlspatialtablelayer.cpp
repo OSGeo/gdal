@@ -783,9 +783,9 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateField( OGRFieldDefn *poFieldIn,
     else if( oField.GetType() == OFTString )
     {
         if( oField.GetWidth() == 0 || !bPreservePrecision )
-            strcpy( szFieldType, "varchar(MAX)" );
+            strcpy( szFieldType, "nvarchar(MAX)" );
         else
-            sprintf( szFieldType, "varchar(%d)", oField.GetWidth() );
+            sprintf( szFieldType, "nvarchar(%d)", oField.GetWidth() );
     }
     else if( oField.GetType() == OFTDate )
     {
@@ -937,6 +937,8 @@ OGRErr OGRMSSQLSpatialTableLayer::SetFeature( OGRFeature *poFeature )
 
     int nFieldCount = poFeatureDefn->GetFieldCount();
     int i;
+    int bind_num = 0;
+    void** bind_buffer = (void**)CPLMalloc(sizeof(void*) * nFieldCount);
     for( i = 0; i < nFieldCount; i++ )
     {
         if (bNeedComma)
@@ -950,7 +952,7 @@ OGRErr OGRMSSQLSpatialTableLayer::SetFeature( OGRFeature *poFeature )
         if( !poFeature->IsFieldSet( i ) )
             oStmt.Append( "null" );
         else
-            AppendFieldValue(&oStmt, poFeature, i);
+            AppendFieldValue(&oStmt, poFeature, i, &bind_num, bind_buffer);
     }
 
     /* Add the WHERE clause */
@@ -966,8 +968,16 @@ OGRErr OGRMSSQLSpatialTableLayer::SetFeature( OGRFeature *poFeature )
             "Error updating feature with FID:%ld, %s", poFeature->GetFID(), 
                     poDS->GetSession()->GetLastError() );
 
+        for( i = 0; i < bind_num; i++ )
+            CPLFree(bind_buffer[i]);
+        CPLFree(bind_buffer);
+        
         return OGRERR_FAILURE;
     }
+
+    for( i = 0; i < bind_num; i++ )
+            CPLFree(bind_buffer[i]);
+    CPLFree(bind_buffer);
     
     return OGRERR_NONE;
 }
@@ -1138,6 +1148,8 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeature( OGRFeature *poFeature )
         }
     }
 
+    int bind_num = 0;
+    void** bind_buffer = (void**)CPLMalloc(sizeof(void*) * nFieldCount);
     for( i = 0; i < nFieldCount; i++ )
     {
         if( !poFeature->IsFieldSet( i ) )
@@ -1148,7 +1160,7 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeature( OGRFeature *poFeature )
         else
             bNeedComma = TRUE;
 
-        AppendFieldValue(&oStatement, poFeature, i);
+        AppendFieldValue(&oStatement, poFeature, i, &bind_num, bind_buffer);
     }
 
     oStatement.Append( ");" );
@@ -1166,8 +1178,16 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeature( OGRFeature *poFeature )
                   "INSERT command for new feature failed. %s", 
                    poDS->GetSession()->GetLastError() );
 
+        for( i = 0; i < bind_num; i++ )
+            CPLFree(bind_buffer[i]);
+        CPLFree(bind_buffer);
+
         return OGRERR_FAILURE;
     }
+
+    for( i = 0; i < bind_num; i++ )
+            CPLFree(bind_buffer[i]);
+    CPLFree(bind_buffer);
 
     return OGRERR_NONE;
 }
@@ -1180,7 +1200,7 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeature( OGRFeature *poFeature )
 /************************************************************************/
 
 void OGRMSSQLSpatialTableLayer::AppendFieldValue(CPLODBCStatement *poStatement,
-                                       OGRFeature* poFeature, int i)
+                                       OGRFeature* poFeature, int i, int *bind_num, void **bind_buffer)
 {
     int nOGRFieldType = poFeatureDefn->GetFieldDefn(i)->GetType();
 
@@ -1244,7 +1264,27 @@ void OGRMSSQLSpatialTableLayer::AppendFieldValue(CPLODBCStatement *poStatement,
     if( nOGRFieldType != OFTInteger && nOGRFieldType != OFTReal
         && !bIsDateNull )
     {
-        OGRMSSQLAppendEscaped(poStatement, pszStrValue);
+        if (nOGRFieldType == OFTString)
+        {
+            // bind UTF8 as unicode parameter
+            wchar_t* buffer = CPLRecodeToWChar( pszStrValue, CPL_ENC_UTF8, CPL_ENC_UCS2);
+            int nRetCode = SQLBindParameter(poStatement->GetStatement(), (SQLUSMALLINT)((*bind_num) + 1), 
+                SQL_PARAM_INPUT, SQL_C_WCHAR, SQL_WVARCHAR, 
+                wcslen(buffer) + 1, NULL, (SQLPOINTER)buffer, 0, NULL);
+            if ( nRetCode == SQL_SUCCESS || nRetCode == SQL_SUCCESS_WITH_INFO )
+            {
+                poStatement->Append( "?" );
+                bind_buffer[*bind_num] = buffer;
+                ++(*bind_num);
+            }
+            else
+            {
+                OGRMSSQLAppendEscaped(poStatement, pszStrValue);
+                CPLFree(buffer);
+            }
+        }
+        else
+            OGRMSSQLAppendEscaped(poStatement, pszStrValue);
     }
     else
     {
