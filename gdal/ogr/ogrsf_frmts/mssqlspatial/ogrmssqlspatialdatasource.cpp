@@ -63,13 +63,13 @@ OGRMSSQLSpatialDataSource::~OGRMSSQLSpatialDataSource()
 {
     int         i;
 
-    CPLFree( pszName );
-    CPLFree( pszCatalog );
-
     for( i = 0; i < nLayers; i++ )
         delete papoLayers[i];
     
     CPLFree( papoLayers );
+
+    CPLFree( pszName );
+    CPLFree( pszCatalog );
 
     for( i = 0; i < nKnownSRID; i++ )
     {
@@ -405,6 +405,10 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
 
     poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
     poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
+
+    const char *pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );
+    int bCreateSpatialIndex = ( pszSI == NULL || CSLTestBoolean(pszSI) );
+    poLayer->SetSpatialIndexFlag( bCreateSpatialIndex );
 
     char *pszWKT = NULL;
     if( poSRS && poSRS->exportToWkt( &pszWKT ) != OGRERR_NONE )

@@ -87,7 +87,7 @@ The default value is "YES".  If enabled the table (layer) name will also be laun
 <li> <b>PRECISION</b>: This may be "YES" to force new fields created on this
 layer to try and represent the width and precision information, if available
 using numeric(width,precision) or char(width) types.  If "NO" then the types
-float, int and varchar will be used instead.  The default is "YES".
+float, int and varchar will be used instead.  The default is "YES".</li>
 <li> <b>DIM={2,3}</b>: Control the dimension of the layer.  Defaults to 3.</li>
 <li> <b>GEOM_NAME</b>: Set the name of geometry column in the new table.  If 
 omitted it defaults to <i>ogr_geometry</i>.</li>
@@ -95,6 +95,7 @@ omitted it defaults to <i>ogr_geometry</i>.</li>
 If this parameter is not supported the default schema "<i>dbo"</i> is used.</li>
 <li> <b>SRID</b>: Set the spatial reference id of the new table explicitly.
 The corresponding entry should already be added to the spatial_ref_sys metadata table. If this parameter is not set the SRID is derived from the authority code of source layer SRS.</li>
+<li> <b>SPATIAL_INDEX</b>: (From GDAL 2.0.0) Enable/disable the automatic creation of a spatial index on the newly created layers (enabled by default).</li>
 </ul>
 
 <h3>Spatial Index Creation</h3>
