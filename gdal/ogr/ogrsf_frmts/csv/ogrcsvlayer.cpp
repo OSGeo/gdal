@@ -332,6 +332,12 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
 
     if( !bNew && !bHasFieldNames )
         VSIRewindL( fpCSV );
+    
+    panGeomFieldIndex = (int*) CPLCalloc(nFieldCount, sizeof(int));
+    for( iField = 0; iField < nFieldCount; iField++ )
+    {
+        panGeomFieldIndex[iField] = -1;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Check for geonames.org tables                                   */
@@ -404,12 +410,6 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
             papszFieldTypes = OGRCSVReadParseLineL(fpCSVT, ',', FALSE);
             VSIFCloseL(fpCSVT);
         }
-    }
-    
-    panGeomFieldIndex = (int*) CPLCalloc(nFieldCount, sizeof(int));
-    for( iField = 0; iField < nFieldCount; iField++ )
-    {
-        panGeomFieldIndex[iField] = -1;
     }
 
 /* -------------------------------------------------------------------- */
