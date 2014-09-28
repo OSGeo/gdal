@@ -291,6 +291,7 @@ typedef enum
     TAB_GEOM_V800_MULTIPOINT   = 0x44,
     TAB_GEOM_V800_COLLECTION_C = 0x46,
     TAB_GEOM_V800_COLLECTION   = 0x47,
+    TAB_GEOM_MAX_TYPE /* TODo: Does this need to be 0x80? */
 } TABGeomType;
 
 #define TAB_GEOM_GET_VERSION(nGeomType)                     \

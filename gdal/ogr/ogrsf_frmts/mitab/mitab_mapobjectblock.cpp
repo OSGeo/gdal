@@ -294,7 +294,7 @@ int TABMAPObjectBlock::AdvanceToNextObject( TABMAPHeaderBlock *poHeader )
         m_nCurObjectType = TAB_GEOM_UNSET;
     }
 
-    if( m_nCurObjectType <= 0 || m_nCurObjectType >= 0x80 )
+    if( m_nCurObjectType <= 0 || m_nCurObjectType >= TAB_GEOM_MAX_TYPE )
     {
         m_nCurObjectType = TAB_GEOM_UNSET;
         m_nCurObjectId = -1;
@@ -998,7 +998,7 @@ int TABMAPObjLine::WriteObj(TABMAPObjectBlock *poObjBlock)
 /**********************************************************************
  *                   TABMAPObjPLine::ReadObj()
  *
- * Read Object information starting after the object id which should 
+ * Read Object information starting after the object id which should
  * have been read by TABMAPObjHdr::ReadNextObj() already.
  * This function should be called only by TABMAPObjHdr::ReadNextObj().
  *
