@@ -2055,9 +2055,9 @@ int GMLReader::HugeFileResolver( const char *pszFile,
 /*    simply output an error message              */
 /**************************************************/
 
-int GMLReader::HugeFileResolver( const char *pszFile,
-                                 int bSqliteIsTempFile,
-                                 int iSqliteCacheMB )
+int GMLReader::HugeFileResolver( CPL_UNUSED const char *pszFile,
+                                 CPL_UNUSED int bSqliteIsTempFile,
+                                 CPL_UNUSED int iSqliteCacheMB )
 
 {
     CPLError( CE_Failure, CPLE_NotSupported,
@@ -2066,9 +2066,9 @@ int GMLReader::HugeFileResolver( const char *pszFile,
     return FALSE;
 }
 
-int GMLReader::ParseXMLHugeFile( const char *pszOutputFilename,
-                                 const int bSqliteIsTempFile,
-                                 const int iSqliteCacheMB )
+int GMLReader::ParseXMLHugeFile( CPL_UNUSED const char *pszOutputFilename,
+                                 CPL_UNUSED const int bSqliteIsTempFile,
+                                 CPL_UNUSED const int iSqliteCacheMB )
 {
     CPLError( CE_Failure, CPLE_NotSupported,
               "OGR was built without SQLite3 support\n"
