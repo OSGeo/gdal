@@ -1446,16 +1446,17 @@ GDALDataset *PCIDSKDataset::Create( const char * pszFilename,
 }
 
 
-
 /************************************************************************/
 /*                             CreateCopy()                             */
 /************************************************************************/
 
 GDALDataset *
-PCIDSKDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
-                        int bStrict, char ** papszOptions, 
-                        GDALProgressFunc pfnProgress, void * pProgressData )
-
+PCIDSKDataset::CreateCopy( const char * pszFilename,
+                           GDALDataset *poSrcDS,
+                           CPL_UNUSED int bStrict,
+                           char ** papszOptions,
+                           GDALProgressFunc pfnProgress,
+                           void * pProgressData )
 {
     PCIDSKDataset	*poDS;
     GDALDataType eType;
