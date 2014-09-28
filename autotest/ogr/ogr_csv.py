@@ -1310,6 +1310,30 @@ def ogr_csv_32():
             f.DumpReadable()
             return 'fail'
 
+    # We limit to the first "1.5" line
+    ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR, \
+        open_options = ['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=300'])
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    col_type = [ ogr.OFTString, ogr.OFTReal, ogr.OFTInteger, ogr.OFTReal, ogr.OFTInteger, ogr.OFTString,
+                 ogr.OFTDateTime, ogr.OFTDate, ogr.OFTDateTime, ogr.OFTDate, ogr.OFTTime,
+                 ogr.OFTString, ogr.OFTString, ogr.OFTString, ogr.OFTInteger, ogr.OFTReal, ogr.OFTDateTime, ogr.OFTDate, ogr.OFTTime ]
+    col_values = [ '', 1.5, 1, 1.5, 2, '', '2014/09/27 19:01:00', '2014/09/27', '2014/09/27 20:00:00',
+                   '2014/09/27', '12:34:56', 'a', 'a', '1', 1, 1.5, '2014/09/27 19:01:00', '2014/09/27', '19:01:00' ]
+    for i in range(lyr.GetLayerDefn().GetFieldCount()):
+        if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != col_type[i] or \
+           lyr.GetLayerDefn().GetFieldDefn(i).GetWidth() != 0:
+            gdaltest.post_reason('fail')
+            print(i)
+            print(lyr.GetLayerDefn().GetFieldDefn(i).GetType())
+            print(lyr.GetLayerDefn().GetFieldDefn(i).GetWidth())
+            return 'fail'
+        if f.GetField(i) != col_values[i]:
+            gdaltest.post_reason('fail')
+            print(i)
+            f.DumpReadable()
+            return 'fail'
+            
     # We limit to the first 2 lines
     ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR, \
         open_options = ['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=324'])

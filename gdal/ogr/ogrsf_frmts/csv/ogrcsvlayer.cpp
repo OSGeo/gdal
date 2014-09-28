@@ -668,8 +668,6 @@ char** OGRCSVLayer::AutodetectFieldTypes(char** papszOpenOptions, int nFieldCoun
     /* caching */
     int nBytes = atoi(CSLFetchNameValueDef(papszOpenOptions,
                                             "AUTODETECT_SIZE_LIMIT", "1000000"));
-    if( nBytes < 0 || (vsi_l_offset)nBytes < VSIFTellL(fpCSV) )
-        nBytes = 1000000;
     if( nBytes == 0 )
     {
         vsi_l_offset nCurPos = VSIFTellL(fpCSV);
@@ -681,6 +679,8 @@ char** OGRCSVLayer::AutodetectFieldTypes(char** papszOpenOptions, int nFieldCoun
         else
             nBytes = INT_MAX;
     }
+    else if( nBytes < 0 || (vsi_l_offset)nBytes < VSIFTellL(fpCSV) )
+        nBytes = 1000000;
 
     const char* pszAutodetectWidth = CSLFetchNameValueDef(papszOpenOptions,
                                                           "AUTODETECT_WIDTH", "NO");
