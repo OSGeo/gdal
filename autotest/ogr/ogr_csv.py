@@ -1251,6 +1251,21 @@ def ogr_csv_30():
     return 'success'
 
 ###############################################################################
+# Read geonames.org allCountries.txt
+
+def ogr_csv_31():
+
+    ds = ogr.Open('data/allCountries.txt')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f.GetField('GEONAMEID') != '3038814' or f.GetField('LATITUDE') != 42.5 or \
+       f.GetGeometryRef().ExportToWkt() != 'POINT (1.48333 42.5)':
+           f.DumpReadable()
+           return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_csv_cleanup():
@@ -1317,6 +1332,7 @@ gdaltest_list = [
     ogr_csv_28,
     ogr_csv_29,
     ogr_csv_30,
+    ogr_csv_31,
     ogr_csv_cleanup ]
 
 if __name__ == '__main__':
