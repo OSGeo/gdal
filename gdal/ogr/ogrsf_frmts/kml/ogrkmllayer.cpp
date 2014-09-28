@@ -216,7 +216,12 @@ OGRFeature *OGRKMLLayer::GetNextFeature()
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-int OGRKMLLayer::GetFeatureCount( int bForce )
+int OGRKMLLayer::GetFeatureCount(
+#ifndef HAVE_EXPAT
+CPL_UNUSED
+#endif
+                                 int bForce
+                                 )
 {
     int nCount = 0;
 
