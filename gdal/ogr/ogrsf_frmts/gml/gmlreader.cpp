@@ -63,11 +63,10 @@ IGMLReader::~IGMLReader()
 /*                          CreateGMLReader()                           */
 /************************************************************************/
 
-IGMLReader *CreateGMLReader(int bUseExpatParserPreferably,
-                            int bInvertAxisOrderIfLatLong,
-                            int bConsiderEPSGAsURN,
-                            int bGetSecondaryGeometryOption)
-
+IGMLReader *CreateGMLReader(CPL_UNUSED int bUseExpatParserPreferably,
+                            CPL_UNUSED int bInvertAxisOrderIfLatLong,
+                            CPL_UNUSED int bConsiderEPSGAsURN,
+                            CPL_UNUSED int bGetSecondaryGeometryOption)
 {
     CPLError( CE_Failure, CPLE_AppDefined,
               "Unable to create Xerces C++ or Expat based GML reader, Xerces or Expat support\n"
@@ -108,11 +107,14 @@ void *GMLReader::hMutex = NULL;
 /*                             GMLReader()                              */
 /************************************************************************/
 
-GMLReader::GMLReader(int bUseExpatParserPreferably,
+GMLReader::GMLReader(
+#ifndef HAVE_EXPAT
+CPL_UNUSED
+#endif
+                     int bUseExpatParserPreferably,
                      int bInvertAxisOrderIfLatLong,
                      int bConsiderEPSGAsURN,
                      int bGetSecondaryGeometryOption)
-
 {
 #ifndef HAVE_XERCES
     bUseExpatReader = TRUE;
