@@ -51,6 +51,7 @@ OGRMSSQLSpatialSelectLayer::OGRMSSQLSpatialSelectLayer( OGRMSSQLSpatialDataSourc
 
     /* identify the geometry column */
     pszGeomColumn = NULL;
+    int iImageCol = -1;
     for ( int iColumn = 0; iColumn < poStmt->GetColCount(); iColumn++ )
     {
         if ( EQUAL(poStmt->GetColTypeName( iColumn ), "image") )
@@ -75,6 +76,8 @@ OGRMSSQLSpatialSelectLayer::OGRMSSQLSpatialSelectLayer( OGRMSSQLSpatialDataSourc
                     break;
                 }
             }
+            else if (iImageCol == -1)
+                iImageCol = iColumn;
         }
         else if ( EQUAL(poStmt->GetColTypeName( iColumn ), "geometry") )
         {
@@ -88,6 +91,13 @@ OGRMSSQLSpatialSelectLayer::OGRMSSQLSpatialSelectLayer( OGRMSSQLSpatialDataSourc
             pszGeomColumn = CPLStrdup(poStmt->GetColName(iColumn));
             break;
         }
+    }
+
+    if (pszGeomColumn == NULL && iImageCol >= 0)
+    {
+        /* set the image col as geometry column as the last resort */
+        nGeomColumnType = MSSQLCOLTYPE_BINARY;
+        pszGeomColumn = CPLStrdup(poStmt->GetColName(iImageCol));
     }
 
     BuildFeatureDefn( "SELECT", poStmt );
