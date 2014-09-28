@@ -118,7 +118,7 @@ CPLString OGRCSVDataSource::GetRealExtension(CPLString osFilename)
 /************************************************************************/
 
 int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
-                            int bForceOpen )
+                            int bForceOpen, char** papszOpenOptions )
 
 {
     pszName = CPLStrdup( pszFilename );
@@ -211,14 +211,14 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
     {
         if (EQUAL(CPLGetFilename(osFilename), "NfdcFacilities.xls"))
         {
-            return OpenTable( osFilename, "ARP");
+            return OpenTable( osFilename, papszOpenOptions, "ARP");
         }
         else if (EQUAL(CPLGetFilename(osFilename), "NfdcRunways.xls"))
         {
-            OpenTable( osFilename, "BaseEndPhysical");
-            OpenTable( osFilename, "BaseEndDisplaced");
-            OpenTable( osFilename, "ReciprocalEndPhysical");
-            OpenTable( osFilename, "ReciprocalEndDisplaced");
+            OpenTable( osFilename, papszOpenOptions, "BaseEndPhysical");
+            OpenTable( osFilename, papszOpenOptions, "BaseEndDisplaced");
+            OpenTable( osFilename, papszOpenOptions, "ReciprocalEndPhysical");
+            OpenTable( osFilename, papszOpenOptions, "ReciprocalEndDisplaced");
             return nLayers != 0;
         }
         else if (bUSGeonamesFile)
@@ -229,22 +229,22 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
                 EQUALN(osBaseFilename, "ANTARCTICA_", 11) ||
                 (strlen(osBaseFilename) > 2 && EQUALN(osBaseFilename+2, "_FedCodes_", 10)))
             {
-                OpenTable( osFilename, NULL, "PRIMARY");
+                OpenTable( osFilename, papszOpenOptions, NULL, "PRIMARY");
             }
             else if (EQUALN(osBaseFilename, "GOVT_UNITS_", 11) ||
                      EQUALN(osBaseFilename, "Feature_Description_History_", 28))
             {
-                OpenTable( osFilename, NULL, "");
+                OpenTable( osFilename, papszOpenOptions, NULL, "");
             }
             else
             {
-                OpenTable( osFilename, NULL, "PRIM");
-                OpenTable( osFilename, NULL, "SOURCE");
+                OpenTable( osFilename, papszOpenOptions, NULL, "PRIM");
+                OpenTable( osFilename, papszOpenOptions, NULL, "SOURCE");
             }
             return nLayers != 0;
         }
 
-        return OpenTable( osFilename );
+        return OpenTable( osFilename, papszOpenOptions );
     }
 
 /* -------------------------------------------------------------------- */
@@ -263,7 +263,7 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
         }
         osFilename = CPLFormFilename(osFilename, papszFiles[0], NULL);
         CSLDestroy(papszFiles);
-        return OpenTable( osFilename );
+        return OpenTable( osFilename, papszOpenOptions );
     }
 
 /* -------------------------------------------------------------------- */
@@ -298,7 +298,7 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
 
         if (EQUAL(CPLGetExtension(oSubFilename),"csv"))
         {
-            if( !OpenTable( oSubFilename ) )
+            if( !OpenTable( oSubFilename, papszOpenOptions ) )
             {
                 CPLDebug("CSV", "Cannot open %s", oSubFilename.c_str());
                 nNotCSVCount++;
@@ -311,8 +311,8 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
                   EQUALN(papszNames[i]+2, "_Features_", 10) &&
                   EQUAL(CPLGetExtension(papszNames[i]), "txt") )
         {
-            int bRet = OpenTable( oSubFilename, NULL, "PRIM");
-            bRet |= OpenTable( oSubFilename, NULL, "SOURCE");
+            int bRet = OpenTable( oSubFilename, papszOpenOptions, NULL, "PRIM");
+            bRet |= OpenTable( oSubFilename, papszOpenOptions, NULL, "SOURCE");
             if ( !bRet )
             {
                 CPLDebug("CSV", "Cannot open %s", oSubFilename.c_str());
@@ -325,7 +325,7 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
                   EQUALN(papszNames[i]+2, "_FedCodes_", 10) &&
                   EQUAL(CPLGetExtension(papszNames[i]), "txt") )
         {
-            if ( !OpenTable( oSubFilename, NULL, "PRIMARY") )
+            if ( !OpenTable( oSubFilename, papszOpenOptions, NULL, "PRIMARY") )
             {
                 CPLDebug("CSV", "Cannot open %s", oSubFilename.c_str());
                 nNotCSVCount++;
@@ -353,6 +353,7 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
 /************************************************************************/
 
 int OGRCSVDataSource::OpenTable( const char * pszFilename,
+                                 char** papszOpenOptions,
                                  const char* pszNfdcRunwaysGeomField,
                                  const char* pszGeonamesGeomFieldPrefix)
 
@@ -455,8 +456,10 @@ int OGRCSVDataSource::OpenTable( const char * pszFilename,
         osLayerName = "layer";
     papoLayers[nLayers-1] = 
         new OGRCSVLayer( osLayerName, fp, pszFilename, FALSE, bUpdate,
-                         chDelimiter, pszNfdcRunwaysGeomField, pszGeonamesGeomFieldPrefix );
-
+                         chDelimiter  );
+    papoLayers[nLayers-1]->BuildFeatureDefn( pszNfdcRunwaysGeomField,
+                                             pszGeonamesGeomFieldPrefix,
+                                             papszOpenOptions );
     return TRUE;
 }
 
@@ -557,7 +560,8 @@ OGRCSVDataSource::ICreateLayer( const char *pszLayerName,
                                              sizeof(void*) * nLayers);
     
     papoLayers[nLayers-1] = new OGRCSVLayer( pszLayerName, NULL, osFilename,
-                                             TRUE, TRUE, chDelimiter, NULL, NULL );
+                                             TRUE, TRUE, chDelimiter );
+    papoLayers[nLayers-1]->BuildFeatureDefn();
 
 /* -------------------------------------------------------------------- */
 /*      Was a partiuclar CRLF order requested?                          */

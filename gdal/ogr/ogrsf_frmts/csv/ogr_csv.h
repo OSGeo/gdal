@@ -44,7 +44,9 @@ typedef enum
 
 class OGRCSVDataSource;
 
-char **OGRCSVReadParseLineL( VSILFILE * fp, char chDelimiter, int bDontHonourStrings );
+char **OGRCSVReadParseLineL( VSILFILE * fp, char chDelimiter,
+                             int bDontHonourStrings = FALSE,
+                             int bKeepLeadingAndClosingQuotes = FALSE);
 
 /************************************************************************/
 /*                             OGRCSVLayer                              */
@@ -73,6 +75,7 @@ class OGRCSVLayer : public OGRLayer
     int                 bWriteBOM;
     char                chDelimiter;
 
+    int                 nCSVFieldCount;
     int*                panGeomFieldIndex;
     int                 bFirstFeatureAppendedDuringSession;
     int                 bHiddenWKTColumn;
@@ -89,15 +92,25 @@ class OGRCSVLayer : public OGRLayer
 
     int                 nTotalFeatures;
 
+    char              **AutodetectFieldTypes(char** papszOpenOptions, int nFieldCount);
+    
+    int                 bWarningBadTypeOrWidth;
+    int                 bKeepSourceColumns;
+    
+    char              **GetNextLineTokens();
+
   public:
     OGRCSVLayer( const char *pszName, VSILFILE *fp, const char *pszFilename,
-                 int bNew, int bInWriteMode, char chDelimiter,
-                 const char* pszNfdcRunwaysGeomField,
-                 const char* pszGeonamesGeomFieldPrefix );
-  ~OGRCSVLayer();
+                 int bNew, int bInWriteMode, char chDelimiter );
+   ~OGRCSVLayer();
+  
+    void                BuildFeatureDefn( const char* pszNfdcGeomField = NULL,
+                                          const char* pszGeonamesGeomFieldPrefix = NULL,
+                                          char** papszOpenOptions = NULL );
 
     void                ResetReading();
     OGRFeature *        GetNextFeature();
+    virtual OGRFeature* GetFeature( long nFID );
 
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
@@ -143,8 +156,10 @@ class OGRCSVDataSource : public OGRDataSource
                         ~OGRCSVDataSource();
 
     int                 Open( const char * pszFilename,
-                              int bUpdate, int bForceAccept );
+                              int bUpdate, int bForceAccept,
+                              char** papszOpenOptions = NULL );
     int                 OpenTable( const char * pszFilename,
+                                   char** papszOpenOptions,
                                    const char* pszNfdcRunwaysGeomField = NULL,
                                    const char* pszGeonamesGeomFieldPrefix = NULL);
     

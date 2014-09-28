@@ -40,6 +40,9 @@ be comma separated (e.g., "Integer","String"). It is also possible to specify
 explicitly the width and precision of each column, e.g. "Integer(5)","Real(10.7)","String(15)".
 The driver will then use these types as specified for the csv columns.</p>
 
+<p>Starting with GDAL 2.0, automatic field type guessing can also be done if
+specifying the open options described in the below "Open options" section.</p>
+
 <h2>Format</h2>
 
 <p>CSV files have one line for each feature (record) in the layer (table).  
@@ -136,6 +139,33 @@ OGRFeature(test):3
   Name (String) = Third point
   POINT (0.75 47.5 0)
 </pre>
+
+<h2>Open options</h2>
+
+Starting with GDAL 2.0, the following open options can be specified
+(typically with the -oo name=value parameters of ogrinfo or ogr2ogr):
+<ul>
+<li><b>AUTODETECT_TYPE</b>=YES/NO (defaults to NO). Setting it to YES will
+enable auto-detection of field data types. If while reading the records
+(beyond the records used for autodetection), a value is found to not correspond
+to the autodetected data type, a warning will be emitted and the field will be
+emptied.</li>
+<li><b>KEEP_SOURCE_COLUMNS</b>=YES/NO (default NO) keep a copy of the original
+columns where the guessing is active, and the guessed type is different from
+string. The name of the original columns will be suffixed with "_original".
+This flag should be used only when AUTODETECT_TYPE=YES.</li>
+<li><b>AUTODETECT_WIDTH</b>=YES/NO/STRING_ONLY (defaults to NO). Setting it to
+YES to detect the width of string and integer fields, and the width and precision
+of real fields. Setting it to STRING_ONLY restricts to string fields. Setting it
+to NO select default size and width. If while reading the records (beyond the
+records used for autodetection), a value is found to not correspond to the
+autodetected width/precision, a warning will be emitted and the field will be
+emptied.</li>
+<li><b>AUTODETECT_SIZE_LIMIT</b>=size to specify the number of bytes to inspect
+to determine the data type and width/precision. The default will be 100000.
+Setting 0 means inspecting the whole file.  Note : specifying a value over 1 MB
+(or 0 if the file is larger than 1MB) will prevent reading from standard input.</li>
+</ul>
 
 <h2>Creation Issues</h2>
 

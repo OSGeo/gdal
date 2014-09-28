@@ -47,7 +47,8 @@ CPL_CVSID("$Id$");
 /*      semantics.                                                      */
 /************************************************************************/
 
-static char **CSVSplitLine( const char *pszString, char chDelimiter )
+static char **CSVSplitLine( const char *pszString, char chDelimiter,
+                            int bKeepLeadingAndClosingQuotes )
 
 {
     char        **papszRetList = NULL;
@@ -79,7 +80,8 @@ static char **CSVSplitLine( const char *pszString, char chDelimiter )
                 if( !bInString || pszString[1] != '"' )
                 {
                     bInString = !bInString;
-                    continue;
+                    if( !bKeepLeadingAndClosingQuotes )
+                        continue;
                 }
                 else  /* doubled quotes in string resolve to one quote */
                 {
@@ -124,7 +126,9 @@ static char **CSVSplitLine( const char *pszString, char chDelimiter )
 /*      result is a stringlist, in the sense of the CSL functions.      */
 /************************************************************************/
 
-char **OGRCSVReadParseLineL( VSILFILE * fp, char chDelimiter, int bDontHonourStrings )
+char **OGRCSVReadParseLineL( VSILFILE * fp, char chDelimiter,
+                             int bDontHonourStrings,
+                             int bKeepLeadingAndClosingQuotes )
 
 {
     const char  *pszLine;
@@ -151,7 +155,7 @@ char **OGRCSVReadParseLineL( VSILFILE * fp, char chDelimiter, int bDontHonourStr
 /*      Parse, and return tokens.                                       */
 /* -------------------------------------------------------------------- */
     if( strchr(pszLine,'\"') == NULL )
-        return CSVSplitLine( pszLine, chDelimiter );
+        return CSVSplitLine( pszLine, chDelimiter, bKeepLeadingAndClosingQuotes );
 
 /* -------------------------------------------------------------------- */
 /*      We must now count the quotes in our working string, and as      */
@@ -191,7 +195,7 @@ char **OGRCSVReadParseLineL( VSILFILE * fp, char chDelimiter, int bDontHonourStr
         nWorkLineLength += nLineLen + 1;
     }
 
-    papszReturn = CSVSplitLine( pszWorkLine, chDelimiter );
+    papszReturn = CSVSplitLine( pszWorkLine, chDelimiter, bKeepLeadingAndClosingQuotes );
 
     CPLFree( pszWorkLine );
 
@@ -206,16 +210,18 @@ char **OGRCSVReadParseLineL( VSILFILE * fp, char chDelimiter, int bDontHonourStr
 /************************************************************************/
 
 OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn, 
-                          VSILFILE * fp, const char *pszFilename, int bNew, int bInWriteMode,
-                          char chDelimiter, const char* pszNfdcGeomField,
-                          const char* pszGeonamesGeomFieldPrefix)
+                          VSILFILE * fp, const char *pszFilename,
+                          int bNew, int bInWriteMode,
+                          char chDelimiter )
 
 {
     fpCSV = fp;
 
+    nCSVFieldCount = 0;
     panGeomFieldIndex = NULL;
     iNfdcLatitudeS = iNfdcLongitudeS = -1;
     iLatitudeField = iLongitudeField = -1;
+    bHasFieldNames = FALSE;
     this->bInWriteMode = bInWriteMode;
     this->bNew = bNew;
     this->pszFilename = CPLStrdup(pszFilename);
@@ -242,6 +248,18 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
     nEurostatDims = 0;
 
     nTotalFeatures = -1;
+    bWarningBadTypeOrWidth = FALSE;
+    bKeepSourceColumns = FALSE;
+}
+
+/************************************************************************/
+/*                      BuildFeatureDefn()                              */
+/************************************************************************/
+
+void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
+                                    const char* pszGeonamesGeomFieldPrefix,
+                                    char** papszOpenOptions )
+{
 
 /* -------------------------------------------------------------------- */
 /*      If this is not a new file, read ahead to establish if it is     */
@@ -271,7 +289,6 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
 /* -------------------------------------------------------------------- */
     char **papszTokens = NULL;
     int nFieldCount=0, iField;
-    CPLValueType eType;
 
     if( !bNew )
     {
@@ -291,7 +308,7 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
             }
 
             /* tokenize the strings and preserve quotes, so we can separate string from numeric */
-            /* this is only used in the test for bHasFeldNames (bug #4361) */
+            /* this is only used in the test for bHasFieldNames (bug #4361) */
             papszTokens = CSLTokenizeString2( pszLine, szDelimiter, 
                                               (CSLT_HONOURSTRINGS |
                                                CSLT_ALLOWEMPTYTOKENS |
@@ -301,7 +318,7 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
 
             for( iField = 0; iField < nFieldCount && bHasFieldNames; iField++ )
             {
-                eType = CPLGetValueType(papszTokens[iField]);
+                CPLValueType eType = CPLGetValueType(papszTokens[iField]);
                 if ( (eType == CPL_VALUE_INTEGER ||
                       eType == CPL_VALUE_REAL) ) {
                     /* we have a numeric field, therefore do not consider the first line as field names */
@@ -331,8 +348,10 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
     else
         bHasFieldNames = FALSE;
 
-    if( !bNew && !bHasFieldNames )
-        VSIRewindL( fpCSV );
+    if( !bNew )
+        ResetReading();
+ 
+    nCSVFieldCount = nFieldCount;
     
     panGeomFieldIndex = (int*) CPLCalloc(nFieldCount, sizeof(int));
     for( iField = 0; iField < nFieldCount; iField++ )
@@ -414,6 +433,21 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Optionaly auto-detect types                                     */
+/* -------------------------------------------------------------------- */
+    if( !bNew && papszFieldTypes == NULL &&
+        CSLTestBoolean(CSLFetchNameValueDef(papszOpenOptions,
+                                                     "AUTODETECT_TYPE", "NO")) )
+    {
+        papszFieldTypes = AutodetectFieldTypes(papszOpenOptions, nFieldCount);
+        if( papszFieldTypes != NULL )
+        {
+            bKeepSourceColumns = CSLTestBoolean(CSLFetchNameValueDef(papszOpenOptions,
+                                                     "KEEP_SOURCE_COLUMNS", "NO"));
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Build field definitions.                                        */
 /* -------------------------------------------------------------------- */
     for( iField = 0; !bIsEurostatTSV && iField < nFieldCount; iField++ )
@@ -443,7 +477,7 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
             /* in the header line */
             if( iField == 1 && nFieldCount == 2 && papszTokens[1][0] == '\0' )
             {
-                nFieldCount = 1;
+                nCSVFieldCount = nFieldCount = 1;
                 break;
             }
             pszFieldName = szFieldNameBuffer;
@@ -562,6 +596,11 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
 
         poFeatureDefn->AddFieldDefn( &oField );
 
+        if( bKeepSourceColumns && oField.GetType() != OFTString )
+        {
+            OGRFieldDefn oFieldOriginal( CPLSPrintf("%s_original", oField.GetNameRef()), OFTString);
+            poFeatureDefn->AddFieldDefn( &oFieldOriginal );
+        }
     }
 
     if ( iNfdcLatitudeS != -1 && iNfdcLongitudeS != -1 )
@@ -617,6 +656,266 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
 }
 
 /************************************************************************/
+/*                        AutodetectFieldTypes()                        */
+/************************************************************************/
+
+char** OGRCSVLayer::AutodetectFieldTypes(char** papszOpenOptions, int nFieldCount)
+{
+    int iField;
+    char** papszFieldTypes = NULL;
+
+    /* Use 1000000 as default maximum distance to be compatible with /vsistdin/ */
+    /* caching */
+    int nBytes = atoi(CSLFetchNameValueDef(papszOpenOptions,
+                                            "AUTODETECT_SIZE_LIMIT", "1000000"));
+    if( nBytes < 0 || (vsi_l_offset)nBytes < VSIFTellL(fpCSV) )
+        nBytes = 1000000;
+    if( nBytes == 0 )
+    {
+        vsi_l_offset nCurPos = VSIFTellL(fpCSV);
+        VSIFSeekL(fpCSV, 0, SEEK_END);
+        vsi_l_offset nFileSize = VSIFTellL(fpCSV);
+        VSIFSeekL(fpCSV, nCurPos, SEEK_SET);
+        if( nFileSize < INT_MAX )
+            nBytes = (int)nFileSize;
+        else
+            nBytes = INT_MAX;
+    }
+
+    const char* pszAutodetectWidth = CSLFetchNameValueDef(papszOpenOptions,
+                                                          "AUTODETECT_WIDTH", "NO");
+    int bAutodetectWidth = FALSE;
+    int bAutodetectWidthForIntOrReal = FALSE;
+    if( EQUAL(pszAutodetectWidth, "YES") )
+        bAutodetectWidth = bAutodetectWidthForIntOrReal = TRUE;
+    else if( EQUAL(pszAutodetectWidth, "STRING_ONLY") )
+        bAutodetectWidth = TRUE;
+
+    char* pszData = (char*) VSIMalloc( nBytes );
+    if( pszData != NULL && (vsi_l_offset)nBytes > VSIFTellL(fpCSV) )
+    {
+        int nRequested = nBytes - 1 - (int)VSIFTellL(fpCSV);
+        int nRead = VSIFReadL(pszData, 1, nRequested, fpCSV);
+        pszData[nRead] = 0;
+
+        CPLString osTmpMemFile(CPLSPrintf("/vsimem/tmp%p", this));
+        VSILFILE* fpMem = VSIFileFromMemBuffer( osTmpMemFile,
+                                                (GByte*)pszData,
+                                                nRead,
+                                                FALSE );
+
+        std::vector<OGRFieldType> aeFieldType;
+        std::vector<int> abFieldSet;
+        std::vector<int> anFieldWidth;
+        std::vector<int> anFieldPrecision;
+        aeFieldType.resize(nFieldCount);
+        abFieldSet.resize(nFieldCount);
+        anFieldWidth.resize(nFieldCount);
+        anFieldPrecision.resize(nFieldCount);
+        int nStringFieldCount = 0;
+
+        while( !VSIFEofL(fpMem) )
+        {
+            char** papszTokens = OGRCSVReadParseLineL( fpMem, chDelimiter, FALSE, TRUE );
+
+            /* Ignore last line if it is truncated */
+            if( VSIFEofL(fpMem) && nRead == nRequested &&
+                pszData[nRead-1] != 13 && pszData[nRead-1] != 10 )
+            {
+                CSLDestroy(papszTokens);
+                break;
+            }
+
+            for( iField = 0; papszTokens[iField] != NULL &&
+                             iField < nFieldCount; iField++ )
+            {
+                int nFieldWidth = 0, nFieldPrecision = 0;
+
+                if( papszTokens[iField][0] == 0 )
+                    continue;
+                if (chDelimiter == ';')
+                {
+                    char* chComma = strchr(papszTokens[iField], ',');
+                    if (chComma)
+                        *chComma = '.';
+                }
+                CPLValueType eType = CPLGetValueType(papszTokens[iField]);
+
+                if( bAutodetectWidth )
+                {
+                    nFieldWidth = strlen(papszTokens[iField]);
+                    if( papszTokens[iField][0] == '"' && 
+                        papszTokens[iField][nFieldWidth-1] == '"' )
+                    {
+                        nFieldWidth -= 2;
+                    }
+                    if( eType == CPL_VALUE_REAL && bAutodetectWidthForIntOrReal )
+                    {
+                        const char* pszDot = strchr(papszTokens[iField], '.');
+                        if( pszDot != NULL )
+                            nFieldPrecision = strlen(pszDot + 1);
+                    }
+                }
+
+                OGRFieldType eOGRFieldType;
+                if( eType == CPL_VALUE_INTEGER )
+                {
+                    eOGRFieldType = OFTInteger;
+                }
+                else if( eType == CPL_VALUE_REAL )
+                {
+                    eOGRFieldType = OFTReal;
+                }
+                else if( abFieldSet[iField] && aeFieldType[iField] == OFTString )
+                {
+                    eOGRFieldType = OFTString;
+                }
+                else
+                {
+                    OGRField sWrkField;
+                    CPLPushErrorHandler(CPLQuietErrorHandler);
+                    int bSuccess = OGRParseDate( papszTokens[iField], &sWrkField, 0 );
+                    CPLPopErrorHandler();
+                    CPLErrorReset();
+                    if( bSuccess )
+                    {
+                        if( sWrkField.Date.Year == 0 &&
+                            sWrkField.Date.Month == 0 &&
+                            sWrkField.Date.Day == 0 )
+                        {
+                            eOGRFieldType = OFTTime;
+                        }
+                        else if( sWrkField.Date.Hour == 0 &&
+                                 sWrkField.Date.Minute == 0 &&
+                                 sWrkField.Date.Second == 0 )
+                        {
+                            eOGRFieldType = OFTDate;
+                        }
+                        else
+                            eOGRFieldType = OFTDateTime;
+                    }
+                    else
+                        eOGRFieldType = OFTString;
+                }
+
+                if( !abFieldSet[iField] )
+                {
+                    aeFieldType[iField] = eOGRFieldType;
+                    abFieldSet[iField] = TRUE;
+                    if( eOGRFieldType == OFTString )
+                        nStringFieldCount ++;
+                }
+                else if( aeFieldType[iField] != eOGRFieldType )
+                {
+                    /* Promotion rules */
+                    if( aeFieldType[iField] == OFTInteger )
+                    {
+                        if( eOGRFieldType == OFTReal )
+                            aeFieldType[iField] = OFTReal;
+                        else
+                        {
+                            aeFieldType[iField] = OFTString;
+                            nStringFieldCount ++;
+                        }
+                    }
+                    else if ( aeFieldType[iField] == OFTReal )
+                    {
+                        if( eOGRFieldType != OFTInteger &&
+                            eOGRFieldType != OFTReal )
+                        {
+                            aeFieldType[iField] = OFTString;
+                            nStringFieldCount ++;
+                        }
+                    }
+                    else if( aeFieldType[iField] == OFTDate )
+                    {
+                        if( eOGRFieldType == OFTDateTime )
+                            aeFieldType[iField] = OFTDateTime;
+                        else
+                        {
+                            aeFieldType[iField] = OFTString;
+                            nStringFieldCount ++;
+                        }
+                    }
+                    else if( aeFieldType[iField] == OFTDateTime )
+                    {
+                        if( eOGRFieldType != OFTDate &&
+                            eOGRFieldType != OFTDateTime )
+                        {
+                            aeFieldType[iField] = OFTString;
+                            nStringFieldCount ++;
+                        }
+                    }
+                    else if( aeFieldType[iField] == OFTTime )
+                    {
+                        aeFieldType[iField] = OFTString;
+                        nStringFieldCount ++;
+                    }
+                }
+
+                if( nFieldWidth > anFieldWidth[iField] )
+                    anFieldWidth[iField] = nFieldWidth;
+                if( nFieldPrecision > anFieldPrecision[iField] )
+                    anFieldPrecision[iField] = nFieldPrecision;
+            }
+
+            CSLDestroy(papszTokens);
+
+            /* If all fields are String and we don't need to compute width, */
+            /* just stop auto-detection now */
+            if( nStringFieldCount == nFieldCount && bAutodetectWidth )
+                break;
+        }
+
+        papszFieldTypes = (char**) CPLCalloc( nFieldCount + 1, sizeof(char*) );
+        for(iField = 0; iField < nFieldCount; iField ++ )
+        {
+            CPLString osFieldType;
+            if( !abFieldSet[iField] )
+                osFieldType = "String";
+            else if( aeFieldType[iField] == OFTInteger )
+                osFieldType = "Integer";
+            else if( aeFieldType[iField] == OFTReal )
+                osFieldType = "Real";
+            else if( aeFieldType[iField] == OFTDateTime  )
+                osFieldType = "DateTime";
+            else if( aeFieldType[iField] == OFTDate  )
+                osFieldType = "Date";
+            else if( aeFieldType[iField] == OFTTime  )
+                osFieldType = "Time";
+            else
+                osFieldType = "String";
+
+            if( anFieldWidth[iField] > 0 &&
+                (aeFieldType[iField] == OFTString ||
+                 (bAutodetectWidthForIntOrReal && aeFieldType[iField] == OFTInteger)) )
+            {
+                osFieldType += CPLSPrintf(" (%d)", anFieldWidth[iField]);
+            }
+            else if ( anFieldWidth[iField] > 0 &&
+                      bAutodetectWidthForIntOrReal &&
+                      aeFieldType[iField] == OFTReal )
+            {
+                osFieldType += CPLSPrintf(" (%d.%d)", anFieldWidth[iField],
+                                          anFieldPrecision[iField]);
+            }
+
+            papszFieldTypes[iField] = CPLStrdup(osFieldType);
+        }
+
+        VSIFCloseL(fpMem);
+        VSIUnlink(osTmpMemFile);
+
+    }
+    VSIFree(pszData);
+
+    ResetReading();
+
+    return papszFieldTypes;
+}
+
+
+/************************************************************************/
 /*                            ~OGRCSVLayer()                            */
 /************************************************************************/
 
@@ -662,15 +961,11 @@ void OGRCSVLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                      GetNextUnfilteredFeature()                      */
+/*                        GetNextLineTokens()                           */
 /************************************************************************/
 
-OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
-
+char** OGRCSVLayer::GetNextLineTokens()
 {
-    if (fpCSV == NULL)
-        return NULL;
-    
 /* -------------------------------------------------------------------- */
 /*      Read the CSV record.                                            */
 /* -------------------------------------------------------------------- */
@@ -687,6 +982,46 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
 
         CSLDestroy(papszTokens);
     }
+    return papszTokens;
+}
+
+/************************************************************************/
+/*                             GetFeature()                             */
+/************************************************************************/
+
+OGRFeature* OGRCSVLayer::GetFeature(long nFID)
+{
+    if( nFID < 1 || fpCSV == NULL )
+        return NULL;
+    if( nFID < nNextFID || bNeedRewindBeforeRead )
+        ResetReading();
+    while( nNextFID < nFID )
+    {
+        char **papszTokens = GetNextLineTokens();
+        if( papszTokens == NULL )
+            return NULL;
+        CSLDestroy(papszTokens);
+        nNextFID ++;
+    }
+    return GetNextUnfilteredFeature();
+}
+
+/************************************************************************/
+/*                      GetNextUnfilteredFeature()                      */
+/************************************************************************/
+
+OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
+
+{
+    if (fpCSV == NULL)
+        return NULL;
+    
+/* -------------------------------------------------------------------- */
+/*      Read the CSV record.                                            */
+/* -------------------------------------------------------------------- */
+    char **papszTokens = GetNextLineTokens();
+    if( papszTokens == NULL )
+        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Create the OGR feature.                                         */
@@ -699,11 +1034,11 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
 /*      Set attributes for any indicated attribute records.             */
 /* -------------------------------------------------------------------- */
     int         iAttr;
-    int         nAttrCount = MIN(CSLCount(papszTokens),
-                                 poFeatureDefn->GetFieldCount() );
+    int         iOGRField = 0;
+    int         nAttrCount = MIN(CSLCount(papszTokens), nCSVFieldCount );
     CPLValueType eType;
     
-    for( iAttr = 0; !bIsEurostatTSV && iAttr < nAttrCount; iAttr++)
+    for( iAttr = 0; !bIsEurostatTSV && iAttr < nAttrCount; iAttr++, iOGRField++)
     {
         int iGeom = panGeomFieldIndex[iAttr];
         if( iGeom >= 0 && papszTokens[iAttr][0] != '\0'&&
@@ -721,33 +1056,111 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
             }
         }
 
-        if( poFeatureDefn->GetFieldDefn(iAttr)->IsIgnored() )
-            continue;
-        OGRFieldType eFieldType = poFeatureDefn->GetFieldDefn(iAttr)->GetType();
+        OGRFieldDefn* poFieldDefn = poFeatureDefn->GetFieldDefn(iOGRField);
+        OGRFieldType eFieldType = poFieldDefn->GetType();
         if ( eFieldType == OFTReal || eFieldType == OFTInteger )
         {
-            if (chDelimiter == ';' && eFieldType == OFTReal)
+            if (papszTokens[iAttr][0] != '\0' && !poFieldDefn->IsIgnored() )
             {
-                char* chComma = strchr(papszTokens[iAttr], ',');
-                if (chComma)
-                    *chComma = '.';
-            }
-            eType = CPLGetValueType(papszTokens[iAttr]);
-            if ( (papszTokens[iAttr][0] != '\0')  &&
-                 ( eType == CPL_VALUE_INTEGER ||
-                   eType == CPL_VALUE_REAL ) )
-            {
-                poFeature->SetField( iAttr, papszTokens[iAttr] );
+                if (chDelimiter == ';' && eFieldType == OFTReal)
+                {
+                    char* chComma = strchr(papszTokens[iAttr], ',');
+                    if (chComma)
+                        *chComma = '.';
+                }
+                eType = CPLGetValueType(papszTokens[iAttr]);
+                if ( eType == CPL_VALUE_INTEGER || eType == CPL_VALUE_REAL )
+                {
+                    poFeature->SetField( iOGRField, papszTokens[iAttr] );
+                    if( !bWarningBadTypeOrWidth &&
+                        eFieldType == OFTInteger && eType == CPL_VALUE_REAL )
+                    {
+                        bWarningBadTypeOrWidth = TRUE;
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Invalid value type found in record %d for field %s. "
+                                 "This warning will no longer be emitted",
+                                 nNextFID, poFieldDefn->GetNameRef());
+                    }
+                    else if( !bWarningBadTypeOrWidth && poFieldDefn->GetWidth() > 0 &&
+                             (int)strlen(papszTokens[iAttr]) > poFieldDefn->GetWidth() )
+                    {
+                        bWarningBadTypeOrWidth = TRUE;
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Value with a width greater than field width found in record %d for field %s. "
+                                 "This warning will no longer be emitted",
+                                 nNextFID, poFieldDefn->GetNameRef());
+                    }
+                    else if( !bWarningBadTypeOrWidth && eType == CPL_VALUE_REAL &&
+                             poFieldDefn->GetWidth() > 0)
+                    {
+                        const char* pszDot = strchr(papszTokens[iAttr], '.');
+                        int nPrecision = 0;
+                        if( pszDot != NULL )
+                            nPrecision = strlen(pszDot + 1);
+                        if( nPrecision > poFieldDefn->GetPrecision() )
+                        {
+                             bWarningBadTypeOrWidth = TRUE;
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                     "Value with a precision greater than field precision found in record %d for field %s. "
+                                     "This warning will no longer be emitted",
+                                     nNextFID, poFieldDefn->GetNameRef());
+                        }
+                    }
+                }
+                else
+                {
+                    if( !bWarningBadTypeOrWidth )
+                    {
+                        bWarningBadTypeOrWidth = TRUE;
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                    "Invalid value type found in record %d for field %s. "
+                                    "This warning will no longer be emitted",
+                                    nNextFID, poFieldDefn->GetNameRef());
+                    }
+                }
             }
         }
         else if (eFieldType != OFTString)
         {
-            if (papszTokens[iAttr][0] != '\0')
-                poFeature->SetField( iAttr, papszTokens[iAttr] );
+            if (papszTokens[iAttr][0] != '\0' && !poFieldDefn->IsIgnored())
+            {
+                poFeature->SetField( iOGRField, papszTokens[iAttr] );
+                if( !bWarningBadTypeOrWidth && !poFeature->IsFieldSet(iOGRField) )
+                {
+                    bWarningBadTypeOrWidth = TRUE;
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Invalid value type found in record %d for field %s. "
+                             "This warning will no longer be emitted",
+                             nNextFID, poFieldDefn->GetNameRef());
+                }
+            }
         }
         else
-            poFeature->SetField( iAttr, papszTokens[iAttr] );
+        {
+            if( !poFieldDefn->IsIgnored() )
+            {
+                poFeature->SetField( iOGRField, papszTokens[iAttr] );
+                if( !bWarningBadTypeOrWidth && poFieldDefn->GetWidth() > 0 &&
+                    (int)strlen(papszTokens[iAttr]) > poFieldDefn->GetWidth() )
+                {
+                    bWarningBadTypeOrWidth = TRUE;
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                                "Value with a width greater than field width found in record %d for field %s. "
+                                "This warning will no longer be emitted",
+                                nNextFID, poFieldDefn->GetNameRef());
+                }
+            }
+        }
 
+        if( bKeepSourceColumns && eFieldType != OFTString )
+        {
+            iOGRField ++;
+            if( papszTokens[iAttr][0] != '\0' &&
+                !poFeatureDefn->GetFieldDefn(iOGRField)->IsIgnored() )
+            {
+                poFeature->SetField( iOGRField, papszTokens[iAttr] );
+            }
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -890,7 +1303,7 @@ int OGRCSVLayer::TestCapability( const char * pszCap )
 
 {
     if( EQUAL(pszCap,OLCSequentialWrite) )
-        return bInWriteMode;
+        return bInWriteMode && !bKeepSourceColumns;
     else if( EQUAL(pszCap,OLCCreateField) )
         return bNew && !bHasFieldNames;
     else if( EQUAL(pszCap,OLCCreateGeomField) )
@@ -970,6 +1383,7 @@ OGRErr OGRCSVLayer::CreateField( OGRFieldDefn *poNewField, int bApproxOK )
 /*      Seems ok, add to field list.                                    */
 /* -------------------------------------------------------------------- */
     poFeatureDefn->AddFieldDefn( poNewField );
+    nCSVFieldCount ++;
 
     panGeomFieldIndex = (int*) CPLRealloc(panGeomFieldIndex,
                                 sizeof(int) * poFeatureDefn->GetFieldCount());
@@ -1003,6 +1417,7 @@ OGRErr OGRCSVLayer::CreateGeomField( OGRGeomFieldDefn *poGeomField,
 
     OGRFieldDefn oRegularFieldDefn( pszName, OFTString );
     poFeatureDefn->AddFieldDefn( &oRegularFieldDefn );
+    nCSVFieldCount ++;
 
     panGeomFieldIndex = (int*) CPLRealloc(panGeomFieldIndex,
                                 sizeof(int) * poFeatureDefn->GetFieldCount());
@@ -1420,12 +1835,11 @@ int OGRCSVLayer::GetFeatureCount( int bForce )
     nTotalFeatures = 0;
     while(TRUE)
     {
-        papszTokens = OGRCSVReadParseLineL( fpCSV, chDelimiter, bDontHonourStrings );
+        papszTokens = GetNextLineTokens();
         if( papszTokens == NULL )
             break;
 
-        if( papszTokens[0] != NULL )
-            nTotalFeatures ++;
+        nTotalFeatures ++;
 
         CSLDestroy(papszTokens);
     }

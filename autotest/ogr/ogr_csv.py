@@ -1266,6 +1266,170 @@ def ogr_csv_31():
     return 'success'
 
 ###############################################################################
+# Test AUTODETECT_TYPE=YES
+
+def ogr_csv_32():
+
+    # Without limit, everything will be detected as string
+    ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR, \
+        open_options = ['AUTODETECT_TYPE=YES'])
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    col_values = [ '', '1.5', '1', '1.5', '2', '', '2014-09-27 19:01:00', '2014-09-27', '2014-09-27 20:00:00',
+                   '2014-09-27', '12:34:56', 'a', 'a', '1', '1', '1.5', '2014-09-27 19:01:00', '2014-09-27', '19:01:00' ]
+    for i in range(lyr.GetLayerDefn().GetFieldCount()):
+        if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != ogr.OFTString or \
+           lyr.GetLayerDefn().GetFieldDefn(i).GetWidth() != 0:
+            gdaltest.post_reason('fail')
+            print(i)
+            print(lyr.GetLayerDefn().GetFieldDefn(i).GetType())
+            print(lyr.GetLayerDefn().GetFieldDefn(i).GetWidth())
+            return 'fail'
+        if f.GetField(i) != col_values[i]:
+            gdaltest.post_reason('fail')
+            print(i)
+            f.DumpReadable()
+            return 'fail'
+
+    # Without limit, everything will be detected as string
+    ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR, \
+        open_options = ['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=0'])
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    for i in range(lyr.GetLayerDefn().GetFieldCount()):
+        if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != ogr.OFTString or \
+           lyr.GetLayerDefn().GetFieldDefn(i).GetWidth() != 0:
+            gdaltest.post_reason('fail')
+            print(i)
+            print(lyr.GetLayerDefn().GetFieldDefn(i).GetType())
+            print(lyr.GetLayerDefn().GetFieldDefn(i).GetWidth())
+            return 'fail'
+        if f.GetField(i) != col_values[i]:
+            gdaltest.post_reason('fail')
+            print(i)
+            f.DumpReadable()
+            return 'fail'
+
+    # We limit to the first 2 lines
+    ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR, \
+        open_options = ['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=324'])
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    col_type = [ ogr.OFTString, ogr.OFTReal, ogr.OFTReal, ogr.OFTReal, ogr.OFTInteger, ogr.OFTInteger,
+                 ogr.OFTDateTime, ogr.OFTDateTime, ogr.OFTDateTime, ogr.OFTDate, ogr.OFTTime,
+                 ogr.OFTString, ogr.OFTString, ogr.OFTString, ogr.OFTString, ogr.OFTString, ogr.OFTString, ogr.OFTString, ogr.OFTString ]
+    col_values = [ '', 1.5, 1, 1.5, 2, None, '2014/09/27 19:01:00', '2014/09/27 00:00:00', '2014/09/27 20:00:00',
+                   '2014/09/27', '12:34:56', 'a', 'a', '1', '1', '1.5', '2014-09-27 19:01:00', '2014-09-27', '19:01:00' ]
+    for i in range(lyr.GetLayerDefn().GetFieldCount()):
+        if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != col_type[i] or \
+           lyr.GetLayerDefn().GetFieldDefn(i).GetWidth() != 0:
+            gdaltest.post_reason('fail')
+            print(i)
+            print(lyr.GetLayerDefn().GetFieldDefn(i).GetType())
+            print(lyr.GetLayerDefn().GetFieldDefn(i).GetWidth())
+            return 'fail'
+        if f.GetField(i) != col_values[i]:
+            gdaltest.post_reason('fail')
+            print(i)
+            f.DumpReadable()
+            return 'fail'
+
+    # Test AUTODETECT_WIDTH=YES
+    ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR, \
+        open_options = ['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=324', 'AUTODETECT_WIDTH=YES'])
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    col_width = [ 0, 3, 3, 3, 1, 1, 0, 0, 0, 0, 0, 1, 2 , 1, 1, 3, 19, 10, 8 ]
+    col_precision = [ 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]
+
+    for i in range(lyr.GetLayerDefn().GetFieldCount()):
+        if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != col_type[i] or \
+           lyr.GetLayerDefn().GetFieldDefn(i).GetWidth() != col_width[i] or \
+           lyr.GetLayerDefn().GetFieldDefn(i).GetPrecision() != col_precision[i]:
+            gdaltest.post_reason('fail')
+            print(i)
+            print(lyr.GetLayerDefn().GetFieldDefn(i).GetType())
+            print(lyr.GetLayerDefn().GetFieldDefn(i).GetWidth())
+            print(lyr.GetLayerDefn().GetFieldDefn(i).GetPrecision())
+            return 'fail'
+        if f.GetField(i) != col_values[i]:
+            gdaltest.post_reason('fail')
+            print(i)
+            f.DumpReadable()
+            return 'fail'
+
+    # Test AUTODETECT_WIDTH=STRING_ONLY
+    ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR, \
+        open_options = ['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=324', 'AUTODETECT_WIDTH=STRING_ONLY'])
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    col_width = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2 , 1, 1, 3, 19, 10, 8 ]
+    col_precision = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]
+
+    for i in range(lyr.GetLayerDefn().GetFieldCount()):
+        if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != col_type[i] or \
+           lyr.GetLayerDefn().GetFieldDefn(i).GetWidth() != col_width[i] or \
+           lyr.GetLayerDefn().GetFieldDefn(i).GetPrecision() != col_precision[i]:
+            gdaltest.post_reason('fail')
+            print(i)
+            print(lyr.GetLayerDefn().GetFieldDefn(i).GetType())
+            print(lyr.GetLayerDefn().GetFieldDefn(i).GetWidth())
+            print(lyr.GetLayerDefn().GetFieldDefn(i).GetPrecision())
+            return 'fail'
+        if f.GetField(i) != col_values[i]:
+            gdaltest.post_reason('fail')
+            print(i)
+            f.DumpReadable()
+            return 'fail'
+
+    # Test KEEP_SOURCE_COLUMNS=YES
+    ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR, \
+        open_options = ['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=324', 'KEEP_SOURCE_COLUMNS=YES'])
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    col_values = [ '', 1.5, '1.5', 1, '1', 1.5, '1.5', 2, '2', None, None, \
+                   '2014/09/27 19:01:00', '2014-09-27 19:01:00', '2014/09/27 00:00:00', '2014-09-27', '2014/09/27 20:00:00', '2014-09-27 20:00:00',
+                   '2014/09/27', '2014-09-27', '12:34:56', '12:34:56', 'a', 'a', '1', '1', '1.5', '2014-09-27 19:01:00', '2014-09-27', '19:01:00' ]
+
+    for i in range(lyr.GetLayerDefn().GetFieldCount()):
+        if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != ogr.OFTString and \
+           lyr.GetLayerDefn().GetFieldDefn(i+1).GetNameRef() != lyr.GetLayerDefn().GetFieldDefn(i).GetNameRef() + '_original':
+            gdaltest.post_reason('fail')
+            print(i)
+            print(lyr.GetLayerDefn().GetFieldDefn(i).GetNameRef())
+            print(lyr.GetLayerDefn().GetFieldDefn(i+1).GetNameRef())
+            return 'fail'
+        if f.GetField(i) != col_values[i]:
+            gdaltest.post_reason('fail')
+            print(i)
+            f.DumpReadable()
+            return 'fail'
+
+    # Test warnings
+    for fid in [ 3, # string in real field
+                 4, # string in int field
+                 5, # real in int field
+                 6, # string in datetime field
+                 7, # Value with a width greater than field width found in record 7 for field int1
+                 8, # Value with a width greater than field width found in record 8 for field str1
+                 9, # Value with a precision greater than field precision found in record 9 for field real1
+               ]:
+        ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR, \
+            open_options = ['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=324', 'AUTODETECT_WIDTH=YES'])
+        lyr = ds.GetLayer(0)
+        gdal.ErrorReset()
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
+        feat = lyr.GetFeature(fid)
+        gdal.PopErrorHandler()
+        if gdal.GetLastErrorType() != gdal.CE_Warning:
+            gdaltest.post_reason('fail')
+            print(fid)
+            f.DumpReadable()
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_csv_cleanup():
@@ -1333,6 +1497,7 @@ gdaltest_list = [
     ogr_csv_29,
     ogr_csv_30,
     ogr_csv_31,
+    ogr_csv_32,
     ogr_csv_cleanup ]
 
 if __name__ == '__main__':
