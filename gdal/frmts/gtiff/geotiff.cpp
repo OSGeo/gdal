@@ -9864,8 +9864,12 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Should we use optimized way of copying from an input JPEG       */
 /*      dataset ?                                                       */
 /* -------------------------------------------------------------------- */
+#if defined(HAVE_LIBJPEG)
     int bCopyFromJPEG = FALSE;
+#endif
+#if defined(HAVE_LIBJPEG) || defined(JPEG_DIRECT_COPY)
     int bDirectCopyFromJPEG = FALSE;
+#endif
 
     /* Note: JPEG_DIRECT_COPY is not defined by default, because it is mainly */
     /* usefull for debugging purposes */
