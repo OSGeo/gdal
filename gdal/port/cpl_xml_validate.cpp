@@ -1126,9 +1126,9 @@ int CPLValidateXML(const char* pszXMLFilename,
 /*                          CPLValidateXML()                            */
 /************************************************************************/
 
-int CPLValidateXML(const char* pszXMLFilename,
-                   const char* pszXSDFilename,
-                   char** papszOptions)
+int CPLValidateXML(CPL_UNUSED const char* pszXMLFilename,
+                   CPL_UNUSED const char* pszXSDFilename,
+                   CPL_UNUSED char** papszOptions)
 {
     CPLError(CE_Failure, CPLE_NotSupported,
              "%s not implemented due to missing libxml2 support",

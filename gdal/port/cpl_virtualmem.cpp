@@ -1960,15 +1960,15 @@ size_t CPLGetPageSize(void)
     return 0;
 }
 
-CPLVirtualMem *CPLVirtualMemNew(size_t nSize,
-                                size_t nCacheSize,
-                                size_t nPageSizeHint,
-                                int bSingleThreadUsage,
-                                CPLVirtualMemAccessMode eAccessMode,
-                                CPLVirtualMemCachePageCbk pfnCachePage,
-                                CPLVirtualMemUnCachePageCbk pfnUnCachePage,
-                                CPLVirtualMemFreeUserData pfnFreeUserData,
-                                void *pCbkUserData)
+CPLVirtualMem *CPLVirtualMemNew(CPL_UNUSED size_t nSize,
+                                CPL_UNUSED size_t nCacheSize,
+                                CPL_UNUSED size_t nPageSizeHint,
+                                CPL_UNUSED int bSingleThreadUsage,
+                                CPL_UNUSED CPLVirtualMemAccessMode eAccessMode,
+                                CPL_UNUSED CPLVirtualMemCachePageCbk pfnCachePage,
+                                CPL_UNUSED CPLVirtualMemUnCachePageCbk pfnUnCachePage,
+                                CPL_UNUSED CPLVirtualMemFreeUserData pfnFreeUserData,
+                                CPL_UNUSED void *pCbkUserData)
 {
     CPLError(CE_Failure, CPLE_NotSupported,
              "CPLVirtualMemNew() unsupported on this operating system / configuration");
@@ -1980,73 +1980,75 @@ int CPLIsVirtualMemFileMapAvailable(void)
     return FALSE;
 }
 
-CPLVirtualMem *CPLVirtualMemFileMapNew(VSILFILE* fp,
-                                    vsi_l_offset nOffset,
-                                    vsi_l_offset nLength,
-                                    CPLVirtualMemAccessMode eAccessMode,
-                                    CPLVirtualMemFreeUserData pfnFreeUserData,
-                                    void *pCbkUserData)
+CPLVirtualMem *CPLVirtualMemFileMapNew(CPL_UNUSED VSILFILE* fp,
+                                       CPL_UNUSED vsi_l_offset nOffset,
+                                       CPL_UNUSED vsi_l_offset nLength,
+                                       CPL_UNUSED CPLVirtualMemAccessMode eAccessMode,
+                                       CPL_UNUSED CPLVirtualMemFreeUserData pfnFreeUserData,
+                                       CPL_UNUSED void *pCbkUserData)
 {
     CPLError(CE_Failure, CPLE_NotSupported,
              "CPLVirtualMemFileMapNew() unsupported on this operating system / configuration");
     return NULL;
 }
 
-CPLVirtualMem *CPLVirtualMemDerivedNew(CPLVirtualMem* pVMemBase,
-                                       vsi_l_offset nOffset,
-                                       vsi_l_offset nSize,
-                                       CPLVirtualMemFreeUserData pfnFreeUserData,
-                                       void *pCbkUserData)
+CPLVirtualMem *CPLVirtualMemDerivedNew(CPL_UNUSED CPLVirtualMem* pVMemBase,
+                                       CPL_UNUSED vsi_l_offset nOffset,
+                                       CPL_UNUSED vsi_l_offset nSize,
+                                       CPL_UNUSED CPLVirtualMemFreeUserData pfnFreeUserData,
+                                       CPL_UNUSED void *pCbkUserData)
 {
     CPLError(CE_Failure, CPLE_NotSupported,
              "CPLVirtualMemDerivedNew() unsupported on this operating system / configuration");
     return NULL;
 }
 
-void CPLVirtualMemFree(CPLVirtualMem* ctxt)
+void CPLVirtualMemFree(CPL_UNUSED CPLVirtualMem* ctxt)
 {
 }
 
-void* CPLVirtualMemGetAddr(CPLVirtualMem* ctxt)
+void* CPLVirtualMemGetAddr(CPL_UNUSED CPLVirtualMem* ctxt)
 {
     return NULL;
 }
 
-size_t CPLVirtualMemGetSize(CPLVirtualMem* ctxt)
+size_t CPLVirtualMemGetSize(CPL_UNUSED CPLVirtualMem* ctxt)
 {
     return 0;
 }
 
-int CPLVirtualMemIsFileMapping(CPLVirtualMem* ctxt)
+int CPLVirtualMemIsFileMapping(CPL_UNUSED CPLVirtualMem* ctxt)
 {
     return FALSE;
 }
 
-CPLVirtualMemAccessMode CPLVirtualMemGetAccessMode(CPLVirtualMem* ctxt)
+CPLVirtualMemAccessMode CPLVirtualMemGetAccessMode(CPL_UNUSED CPLVirtualMem* ctxt)
 {
     return VIRTUALMEM_READONLY;
 }
 
-size_t CPLVirtualMemGetPageSize(CPLVirtualMem* ctxt)
+size_t CPLVirtualMemGetPageSize(CPL_UNUSED CPLVirtualMem* ctxt)
 {
     return 0;
 }
 
-int CPLVirtualMemIsAccessThreadSafe(CPLVirtualMem* ctxt)
+int CPLVirtualMemIsAccessThreadSafe(CPL_UNUSED CPLVirtualMem* ctxt)
 {
     return FALSE;
 }
 
-void CPLVirtualMemDeclareThread(CPLVirtualMem* ctxt)
+void CPLVirtualMemDeclareThread(CPL_UNUSED CPLVirtualMem* ctxt)
 {
 }
 
-void CPLVirtualMemUnDeclareThread(CPLVirtualMem* ctxt)
+void CPLVirtualMemUnDeclareThread(CPL_UNUSED CPLVirtualMem* ctxt)
 {
 }
 
-void CPLVirtualMemPin(CPLVirtualMem* ctxt,
-                      void* pAddr, size_t nSize, int bWriteOp)
+void CPLVirtualMemPin(CPL_UNUSED CPLVirtualMem* ctxt,
+                      CPL_UNUSED void* pAddr,
+                      CPL_UNUSED size_t nSize,
+                      CPL_UNUSED int bWriteOp)
 {
 }
 

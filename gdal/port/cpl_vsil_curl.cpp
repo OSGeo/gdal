@@ -47,10 +47,10 @@ void VSIInstallCurlFileHandler(void)
 /*                      VSICurlInstallReadCbk()                         */
 /************************************************************************/
 
-int VSICurlInstallReadCbk (VSILFILE* fp,
-                           VSICurlReadCbkFunc pfnReadCbk,
-                           void* pfnUserData,
-                           int bStopOnInterrruptUntilUninstall)
+int VSICurlInstallReadCbk (CPL_UNUSED VSILFILE* fp,
+                           CPL_UNUSED VSICurlReadCbkFunc pfnReadCbk,
+                           CPL_UNUSED void* pfnUserData,
+                           CPL_UNUSED int bStopOnInterrruptUntilUninstall)
 {
     return FALSE;
 }
@@ -60,7 +60,7 @@ int VSICurlInstallReadCbk (VSILFILE* fp,
 /*                    VSICurlUninstallReadCbk()                         */
 /************************************************************************/
 
-int VSICurlUninstallReadCbk(VSILFILE* fp)
+int VSICurlUninstallReadCbk(CPL_UNUSED VSILFILE* fp)
 {
     return FALSE;
 }
