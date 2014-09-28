@@ -250,7 +250,7 @@ class OGRMSSQLSpatialTableLayer : public OGRMSSQLSpatialLayer
     void                SetPrecisionFlag( int bFlag )
                                 { bPreservePrecision = bFlag; }
     void                AppendFieldValue(CPLODBCStatement *poStatement,
-                                       OGRFeature* poFeature, int i);
+                                       OGRFeature* poFeature, int i, int *bind_num, void **bind_buffer);
 
     int                 FetchSRSId();
 };
