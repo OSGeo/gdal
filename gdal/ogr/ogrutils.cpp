@@ -540,6 +540,7 @@ int OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
  * speaking this function is expecting values like:
  * 
  *   YYYY-MM-DD HH:MM:SS+nn
+ *   or YYYY-MM-DDTHH:MM:SSZ (ISO 8601 format)
  *
  * The seconds may also have a decimal portion (which is ignored).  And
  * just dates (YYYY-MM-DD) or just times (HH:MM:SS) are also supported. 
@@ -621,6 +622,10 @@ int OGRParseDate( const char *pszInput,
             pszInput++;
 
         bGotSomething = TRUE;
+        
+        /* If ISO 8601 format */
+        if( *pszInput == 'T' )
+            pszInput ++;
     }
 
 /* -------------------------------------------------------------------- */
@@ -660,6 +665,12 @@ int OGRParseDate( const char *pszInput,
         while( (*pszInput >= '0' && *pszInput <= '9')
                || *pszInput == '.' )
             pszInput++;
+
+        /* If ISO 8601 format */
+        if( *pszInput == 'Z' )
+        {
+            psField->Date.TZFlag = 100;
+        }
 
         bGotSomething = TRUE;
     }

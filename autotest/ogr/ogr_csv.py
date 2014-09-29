@@ -1276,7 +1276,7 @@ def ogr_csv_32():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     col_values = [ '', '1.5', '1', '1.5', '2', '', '2014-09-27 19:01:00', '2014-09-27', '2014-09-27 20:00:00',
-                   '2014-09-27', '12:34:56', 'a', 'a', '1', '1', '1.5', '2014-09-27 19:01:00', '2014-09-27', '19:01:00' ]
+                   '2014-09-27', '12:34:56', 'a', 'a', '1', '1', '1.5', '2014-09-27 19:01:00', '2014-09-27', '19:01:00', '2014-09-27T00:00:00Z' ]
     for i in range(lyr.GetLayerDefn().GetFieldCount()):
         if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != ogr.OFTString or \
            lyr.GetLayerDefn().GetFieldDefn(i).GetWidth() != 0:
@@ -1317,9 +1317,9 @@ def ogr_csv_32():
     f = lyr.GetNextFeature()
     col_type = [ ogr.OFTString, ogr.OFTReal, ogr.OFTInteger, ogr.OFTReal, ogr.OFTInteger, ogr.OFTString,
                  ogr.OFTDateTime, ogr.OFTDate, ogr.OFTDateTime, ogr.OFTDate, ogr.OFTTime,
-                 ogr.OFTString, ogr.OFTString, ogr.OFTString, ogr.OFTInteger, ogr.OFTReal, ogr.OFTDateTime, ogr.OFTDate, ogr.OFTTime ]
+                 ogr.OFTString, ogr.OFTString, ogr.OFTString, ogr.OFTInteger, ogr.OFTReal, ogr.OFTDateTime, ogr.OFTDate, ogr.OFTTime, ogr.OFTDateTime ]
     col_values = [ '', 1.5, 1, 1.5, 2, '', '2014/09/27 19:01:00', '2014/09/27', '2014/09/27 20:00:00',
-                   '2014/09/27', '12:34:56', 'a', 'a', '1', 1, 1.5, '2014/09/27 19:01:00', '2014/09/27', '19:01:00' ]
+                   '2014/09/27', '12:34:56', 'a', 'a', '1', 1, 1.5, '2014/09/27 19:01:00', '2014/09/27', '19:01:00', '2014/09/27 00:00:00+00' ]
     for i in range(lyr.GetLayerDefn().GetFieldCount()):
         if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != col_type[i] or \
            lyr.GetLayerDefn().GetFieldDefn(i).GetWidth() != 0:
@@ -1336,14 +1336,14 @@ def ogr_csv_32():
             
     # We limit to the first 2 lines
     ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR, \
-        open_options = ['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=324'])
+        open_options = ['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=350'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     col_type = [ ogr.OFTString, ogr.OFTReal, ogr.OFTReal, ogr.OFTReal, ogr.OFTInteger, ogr.OFTInteger,
                  ogr.OFTDateTime, ogr.OFTDateTime, ogr.OFTDateTime, ogr.OFTDate, ogr.OFTTime,
-                 ogr.OFTString, ogr.OFTString, ogr.OFTString, ogr.OFTString, ogr.OFTString, ogr.OFTString, ogr.OFTString, ogr.OFTString ]
+                 ogr.OFTString, ogr.OFTString, ogr.OFTString, ogr.OFTString, ogr.OFTString, ogr.OFTString, ogr.OFTString, ogr.OFTString, ogr.OFTDateTime ]
     col_values = [ '', 1.5, 1, 1.5, 2, None, '2014/09/27 19:01:00', '2014/09/27 00:00:00', '2014/09/27 20:00:00',
-                   '2014/09/27', '12:34:56', 'a', 'a', '1', '1', '1.5', '2014-09-27 19:01:00', '2014-09-27', '19:01:00' ]
+                   '2014/09/27', '12:34:56', 'a', 'a', '1', '1', '1.5', '2014-09-27 19:01:00', '2014-09-27', '19:01:00', '2014/09/27 00:00:00+00' ]
     for i in range(lyr.GetLayerDefn().GetFieldCount()):
         if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != col_type[i] or \
            lyr.GetLayerDefn().GetFieldDefn(i).GetWidth() != 0:
@@ -1360,11 +1360,11 @@ def ogr_csv_32():
 
     # Test AUTODETECT_WIDTH=YES
     ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR, \
-        open_options = ['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=324', 'AUTODETECT_WIDTH=YES'])
+        open_options = ['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=350', 'AUTODETECT_WIDTH=YES'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    col_width = [ 0, 3, 3, 3, 1, 1, 0, 0, 0, 0, 0, 1, 2 , 1, 1, 3, 19, 10, 8 ]
-    col_precision = [ 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]
+    col_width = [ 0, 3, 3, 3, 1, 1, 0, 0, 0, 0, 0, 1, 2 , 1, 1, 3, 19, 10, 8, 0 ]
+    col_precision = [ 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]
 
     for i in range(lyr.GetLayerDefn().GetFieldCount()):
         if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != col_type[i] or \
@@ -1384,11 +1384,11 @@ def ogr_csv_32():
 
     # Test AUTODETECT_WIDTH=STRING_ONLY
     ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR, \
-        open_options = ['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=324', 'AUTODETECT_WIDTH=STRING_ONLY'])
+        open_options = ['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=350', 'AUTODETECT_WIDTH=STRING_ONLY'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    col_width = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2 , 1, 1, 3, 19, 10, 8 ]
-    col_precision = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]
+    col_width = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2 , 1, 1, 3, 19, 10, 8, 0 ]
+    col_precision = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]
 
     for i in range(lyr.GetLayerDefn().GetFieldCount()):
         if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != col_type[i] or \
@@ -1408,12 +1408,13 @@ def ogr_csv_32():
 
     # Test KEEP_SOURCE_COLUMNS=YES
     ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR, \
-        open_options = ['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=324', 'KEEP_SOURCE_COLUMNS=YES'])
+        open_options = ['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=350', 'KEEP_SOURCE_COLUMNS=YES'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     col_values = [ '', 1.5, '1.5', 1, '1', 1.5, '1.5', 2, '2', None, None, \
                    '2014/09/27 19:01:00', '2014-09-27 19:01:00', '2014/09/27 00:00:00', '2014-09-27', '2014/09/27 20:00:00', '2014-09-27 20:00:00',
-                   '2014/09/27', '2014-09-27', '12:34:56', '12:34:56', 'a', 'a', '1', '1', '1.5', '2014-09-27 19:01:00', '2014-09-27', '19:01:00' ]
+                   '2014/09/27', '2014-09-27', '12:34:56', '12:34:56', 'a', 'a', '1', '1', '1.5', '2014-09-27 19:01:00', '2014-09-27', '19:01:00',
+                   '2014/09/27 00:00:00+00', '2014-09-27T00:00:00Z' ]
 
     for i in range(lyr.GetLayerDefn().GetFieldCount()):
         if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != ogr.OFTString and \
@@ -1439,7 +1440,7 @@ def ogr_csv_32():
                  9, # Value with a precision greater than field precision found in record 9 for field real1
                ]:
         ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR, \
-            open_options = ['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=324', 'AUTODETECT_WIDTH=YES'])
+            open_options = ['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=350', 'AUTODETECT_WIDTH=YES'])
         lyr = ds.GetLayer(0)
         gdal.ErrorReset()
         gdal.PushErrorHandler('CPLQuietErrorHandler')

@@ -779,20 +779,15 @@ char** OGRCSVLayer::AutodetectFieldTypes(char** papszOpenOptions, int nFieldCoun
                     CPLErrorReset();
                     if( bSuccess )
                     {
-                        if( sWrkField.Date.Year == 0 &&
-                            sWrkField.Date.Month == 0 &&
-                            sWrkField.Date.Day == 0 )
-                        {
-                            eOGRFieldType = OFTTime;
-                        }
-                        else if( sWrkField.Date.Hour == 0 &&
-                                 sWrkField.Date.Minute == 0 &&
-                                 sWrkField.Date.Second == 0 )
-                        {
-                            eOGRFieldType = OFTDate;
-                        }
-                        else
+                        int bHasDate = strchr( papszTokens[iField], '/' ) != NULL ||
+                                       strchr( papszTokens[iField], '-' ) != NULL;
+                        int bHasTime = strchr( papszTokens[iField], ':' ) != NULL;
+                        if( bHasDate && bHasTime )
                             eOGRFieldType = OFTDateTime;
+                        else if( bHasDate )
+                            eOGRFieldType = OFTDate;
+                        else
+                            eOGRFieldType = OFTTime;
                     }
                     else
                         eOGRFieldType = OFTString;
