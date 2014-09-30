@@ -1767,7 +1767,7 @@ OGRErr OGRSQLiteTableLayer::BindValues( OGRFeature *poFeature,
                     poFeature->GetFieldAsDateTime(iField, &nYear, &nMonth, &nDay,
                                                 &nHour, &nMinute, &nSecond, &nTZ);
                     char szBuffer[64];
-                    sprintf(szBuffer, "%04d-%02d-%02dT", nYear, nMonth, nDay);
+                    sprintf(szBuffer, "%04d-%02d-%02d", nYear, nMonth, nDay);
                     rc = sqlite3_bind_text(hStmt, nBindField++,
                                            szBuffer, -1, SQLITE_TRANSIENT);
                     break;
