@@ -262,6 +262,55 @@ int OGROpenFileGDBDataSource::Open( const char* pszFilename )
 }
 
 /***********************************************************************/
+/*                             AddLayer()                              */
+/***********************************************************************/
+
+void OGROpenFileGDBDataSource::AddLayer( const CPLString& osName,
+                                         int nInterestTable,
+                                         int& nCandidateLayers,
+                                         int& nLayersSDC,
+                                         const CPLString& osDefinition,
+                                         const CPLString& osDocumentation,
+                                         const char* pszGeomName,
+                                         OGRwkbGeometryType eGeomType )
+{
+    std::map<std::string, int>::const_iterator oIter =
+                                    m_osMapNameToIdx.find(osName);
+    int idx = 0;
+    if( oIter != m_osMapNameToIdx.end() )
+        idx = oIter->second;
+    if( idx > 0 && (nInterestTable < 0 || nInterestTable == idx) )
+    {
+        const char* pszFilename = CPLFormFilename(
+            m_osDirName, CPLSPrintf("a%08x", idx), "gdbtable");
+        if( FileExists(pszFilename) )
+        {
+            nCandidateLayers ++;
+
+            if( m_papszFiles != NULL )
+            {
+                const char* pszSDC = CPLResetExtension(pszFilename, "gdbtable.sdc");
+                if( FileExists(pszSDC) )
+                {
+                    nLayersSDC ++;
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                            "%s layer has a %s file whose format is unhandled",
+                            osName.c_str(), pszSDC);
+                    return;
+                }
+            }
+
+            m_apoLayers.push_back(
+                new OGROpenFileGDBLayer(pszFilename,
+                                        osName,
+                                        osDefinition,
+                                        osDocumentation,
+                                        pszGeomName, eGeomType));
+        }
+    }
+}
+
+/***********************************************************************/
 /*                         OpenFileGDBv10()                            */
 /***********************************************************************/
 
@@ -313,39 +362,9 @@ int OGROpenFileGDBDataSource::OpenFileGDBv10(int iGDBItems,
             psField = oTable.GetFieldValue(iName);
             if( psField != NULL )
             {
-                std::map<std::string, int>::const_iterator oIter =
-                                            m_osMapNameToIdx.find(psField->String);
-                int idx = 0;
-                if( oIter != m_osMapNameToIdx.end() )
-                    idx = oIter->second;
-                if( idx > 0 && (nInterestTable < 0 || nInterestTable == idx) )
-                {
-                    const char* pszFilename = CPLFormFilename(
-                        m_osDirName, CPLSPrintf("a%08x", idx), "gdbtable");
-                    if( FileExists(pszFilename) )
-                    {
-                        nCandidateLayers ++;
-
-                        if( m_papszFiles != NULL )
-                        {
-                            const char* pszSDC = CPLResetExtension(pszFilename, "gdbtable.sdc");
-                            if( FileExists(pszSDC) )
-                            {
-                                nLayersSDC ++;
-                                CPLError(CE_Warning, CPLE_AppDefined,
-                                        "%s layer has a %s file whose format is unhandled",
-                                        psField->String, pszSDC);
-                                continue;
-                            }
-                        }
-
-                        m_apoLayers.push_back(
-                            new OGROpenFileGDBLayer(pszFilename,
-                                                    psField->String,
-                                                    osDefinition,
-                                                    osDocumentation));
-                    }
-                }
+                AddLayer( psField->String, nInterestTable, nCandidateLayers, nLayersSDC,
+                          osDefinition, osDocumentation,
+                          NULL, wkbUnknown );
             }
         }
     }
@@ -376,33 +395,51 @@ int OGROpenFileGDBDataSource::OpenFileGDBv9(int iGDBFeatureClasses,
         return FALSE;
 
     int iName = oTable.GetFieldIdx("Name");
-    if( iName < 0 ||
-        oTable.GetField(iName)->GetType() != FGFT_STRING )
+    int iCLSID = oTable.GetFieldIdx("CLSID");
+    if( iName < 0 || oTable.GetField(iName)->GetType() != FGFT_STRING ||
+        iCLSID < 0 || oTable.GetField(iCLSID)->GetType() != FGFT_STRING )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                     "Wrong structure for GDB_ObjectClasses table");
         return FALSE;
     }
-    std::vector<std::string> aosNames;
+    
+    std::vector< std::string > aosName;
+    int nCandidateLayers = 0, nLayersSDC = 0;
     for(i=0;i<oTable.GetTotalRecordCount();i++)
     {
         if( !oTable.SelectRow(i) )
         {
             if( oTable.HasGotError() )
                 break;
-            aosNames.push_back("");
+            aosName.push_back( "" );
             continue;
         }
 
         const OGRField* psField = oTable.GetFieldValue(iName);
         if( psField != NULL )
         {
-            aosNames.push_back(psField->String);
+            std::string osName(psField->String);
+            psField = oTable.GetFieldValue(iCLSID);
+            if( psField != NULL )
+            {
+                /* Is it a non-spatial table ? */
+                if( strcmp(psField->String, "{7A566981-C114-11D2-8A28-006097AFF44E}") == 0 )
+                {
+                    AddLayer( osName, nInterestTable, nCandidateLayers, nLayersSDC,
+                              "", "", NULL, wkbNone );
+                }
+                else
+                {
+                    /* We should perhaps also check that the CLSID is the one of a spatial table */
+                    aosName.push_back( osName );
+                }
+            }
         }
     }
     oTable.Close();
 
-    /* Find tables that are layers */
+    /* Find tables that are spatial layers */
     if( !oTable.Open(CPLFormFilename(m_osDirName,
             CPLSPrintf("a%08x", iGDBFeatureClasses + 1), "gdbtable")) )
         return FALSE;
@@ -420,7 +457,6 @@ int OGROpenFileGDBDataSource::OpenFileGDBv9(int iGDBFeatureClasses,
         return FALSE;
     }
 
-    int nCandidateLayers = 0, nLayersSDC = 0;
     for(i=0;i<oTable.GetTotalRecordCount();i++)
     {
         if( !oTable.SelectRow(i) )
@@ -457,42 +493,12 @@ int OGROpenFileGDBDataSource::OpenFileGDBv9(int iGDBFeatureClasses,
             continue;
 
         int idx = psField->Integer;
-        if( psField != NULL && idx > 0 && idx <= (int)aosNames.size() &&
-            aosNames[idx-1].size() > 0 )
+        if( psField != NULL && idx > 0 && idx <= (int)aosName.size() &&
+            aosName[idx-1].size() > 0 )
         {
-            const std::string osName(aosNames[idx-1]);
-            std::map<std::string, int>::const_iterator oIter =
-                                                m_osMapNameToIdx.find(osName);
-            idx = 0;
-            if( oIter != m_osMapNameToIdx.end() )
-                idx = oIter->second;
-
-            if( idx > 0 && ( nInterestTable < 0 || nInterestTable == idx) )
-            {
-                const char* pszFilename = CPLFormFilename(
-                            m_osDirName, CPLSPrintf("a%08x", idx), "gdbtable");
-                if( FileExists(pszFilename) )
-                {
-                    nCandidateLayers ++;
-
-                    if( m_papszFiles != NULL )
-                    {
-                        const char* pszSDC = CPLResetExtension(pszFilename, "gdbtable.sdc");
-                        if( FileExists(pszSDC) )
-                        {
-                            nLayersSDC ++;
-                            CPLError(CE_Warning, CPLE_AppDefined,
-                                    "%s layer has a %s file whose format is unhandled",
-                                    osName.c_str(), pszSDC);
-                            continue;
-                        }
-                    }
-
-                    m_apoLayers.push_back(new OGROpenFileGDBLayer(
-                        pszFilename, osName.c_str(), "", "",
-                        osGeomFieldName.c_str(), eGeomType));
-                }
-            }
+            const std::string osName(aosName[idx-1]);
+            AddLayer( osName, nInterestTable, nCandidateLayers, nLayersSDC,
+                      "", "", osGeomFieldName.c_str(), eGeomType);
         }
     }
 
