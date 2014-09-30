@@ -165,6 +165,14 @@ class OGROpenFileGDBDataSource : public OGRDataSource
                                      int nInterestTable);
 
   int                 FileExists(const char* pszFilename);
+  void                AddLayer( const CPLString& osName,
+                                int nInterestTable,
+                                int& nCandidateLayers,
+                                int& nLayersSDC,
+                                const CPLString& osDefinition,
+                                const CPLString& osDocumentation,
+                                const char* pszGeomName,
+                                OGRwkbGeometryType eGeomType );
 
 public:
            OGROpenFileGDBDataSource();
