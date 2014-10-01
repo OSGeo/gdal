@@ -2632,7 +2632,16 @@ int main( int argc, char ** argv )
         }
     }
     
-    if( GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) == NULL &&
+    // We might actually want to always go through the intermediate dataset
+    int bForceUseIntermediateDataset = FALSE;
+    if( EQUAL(pszFormat, "GTiff") &&
+        !EQUAL(CSLFetchNameValueDef(papszCreateOptions, "COMPRESS", "NONE"), "NONE") &&
+        CSLTestBoolean(CSLFetchNameValueDef(papszCreateOptions, "TILED", "NO")) )
+    {
+        bForceUseIntermediateDataset = TRUE;
+    }
+
+    if( (bForceUseIntermediateDataset || GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) == NULL) &&
         GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY, NULL ) != NULL)
     {
         GDALDatasetH hIntermediateDataset;
