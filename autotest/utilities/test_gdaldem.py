@@ -85,6 +85,41 @@ def test_gdaldem_hillshade():
     return 'success'
 
 ###############################################################################
+# Test gdaldem hillshade
+
+def test_gdaldem_hillshade_compressed_tiled_output():
+    if test_cli_utilities.get_gdaldem_path() is None:
+        return 'skip'
+
+    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaldem_path() + ' hillshade -s 111120 -z 30 ../gdrivers/data/n43.dt0 tmp/n43_hillshade_compressed_tiled.tif -co TILED=YES -co COMPRESS=DEFLATE --config GDAL_CACHEMAX 0')
+    if not (err is None or err == '') :
+        gdaltest.post_reason('got error/warning')
+        print(err)
+        return 'fail'
+
+    src_ds = gdal.Open('../gdrivers/data/n43.dt0')
+    ds = gdal.Open('tmp/n43_hillshade_compressed_tiled.tif')
+    if ds is None:
+        return 'fail'
+
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 45587:
+        gdaltest.post_reason('Bad checksum')
+        print(cs)
+        return 'fail'
+
+    src_ds = None
+    ds = None
+
+    stat_uncompressed = os.stat('tmp/n43_hillshade.tif')
+    stat_compressed = os.stat('tmp/n43_hillshade_compressed_tiled.tif')
+    if stat_uncompressed.st_size < stat_compressed.st_size:
+        gdaltest.post_reason('failure: compressed size greater than uncompressed one')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test gdaldem hillshade -combined
 
 def test_gdaldem_hillshade_combined():
@@ -605,6 +640,10 @@ def test_gdaldem_cleanup():
     except:
         pass
     try:
+        os.remove('tmp/n43_hillshade_compressed_tiled.tif')
+    except:
+        pass
+    try:
         os.remove('tmp/n43_hillshade_combined.tif')
     except:
         pass
@@ -674,6 +713,7 @@ def test_gdaldem_cleanup():
 
 gdaltest_list = [
     test_gdaldem_hillshade,
+    test_gdaldem_hillshade_compressed_tiled_output,
     test_gdaldem_hillshade_combined,
     test_gdaldem_hillshade_compute_edges,
     test_gdaldem_hillshade_azimuth,
