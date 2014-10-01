@@ -1413,6 +1413,13 @@ int main( int argc, char ** argv )
                 }
             }
 
+            if( bInitDestSetForFirst && iSrc == 0 )
+            {
+                /* As we didn't know at the beginning if there was source nodata */
+                /* we have initialized INIT_DEST=0. Override this with NO_DATA now */
+                psWO->papszWarpOptions = CSLSetNameValue(psWO->papszWarpOptions,
+                                                   "INIT_DEST", "NO_DATA" );
+            }
         }
 
 /* -------------------------------------------------------------------- */

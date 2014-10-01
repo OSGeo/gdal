@@ -1061,6 +1061,26 @@ def test_gdalwarp_37():
     return 'success'
 
 ###############################################################################
+# Test implicit nodata setting (#5675)
+
+def test_gdalwarp_38():
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' data/withnodata.asc tmp/testgdalwarp38.tif')
+    
+    ds = gdal.Open('tmp/testgdalwarp38.tif')
+    if ds.GetRasterBand(1).Checksum() != 65531:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    if ds.GetRasterBand(1).GetNoDataValue() != -999:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_cleanup():
@@ -1110,6 +1130,10 @@ def test_gdalwarp_cleanup():
         os.remove('tmp/testgdalwarp37.tif')
     except:
         pass
+    try:
+        os.remove('tmp/testgdalwarp38.tif')
+    except:
+        pass
     return 'success'
 
 gdaltest_list = [
@@ -1151,6 +1175,7 @@ gdaltest_list = [
     test_gdalwarp_35,
     test_gdalwarp_36,
     test_gdalwarp_37,
+    test_gdalwarp_38,
     test_gdalwarp_cleanup
     ]
 
