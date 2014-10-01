@@ -2,6 +2,14 @@
 
 The 1.11.1 release is a bug fix release.
 
+'''Security announcement'''
+
+Robert Coup has noticed a security problem with the OGR WCTS service.
+This code is not part of the standard build process, nor usually packaged by binary distributions,
+so most users should not be affected by this problem unless they have compiled it by themselves.
+This code still lies in the ogr/wcts directory from the source distribution of the 1.11 branch.
+For more details, you can read the "Security Concern" paragraph at http://svn.osgeo.org/gdal/spike/wcts/html/index.html
+
 == Build ==
 
  * Fix compilation errors with json-c 0.12 (#5449)
