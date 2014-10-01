@@ -1160,6 +1160,31 @@ def ogr_openfilegdb_12():
     ds = None
 
     return 'success'
+
+###############################################################################
+# Test opening a FGDB v9 with a non spatial table (#5673)
+
+def ogr_openfilegdb_13():
+
+    ds = ogr.Open('/vsizip/data/ESSENCE_NAIPF_ORI_PROV_sub93.gdb.zip')
+    lyr = ds.GetLayer(0)
+    if lyr.GetName() != 'DDE_ESSEN_NAIPF_ORI_VUE':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetSpatialRef() is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetGeomType() != ogr.wkbNone:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetField('GEOCODE') != '-673985,22+745574,77':
+        f.DumpReadable()
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    return 'success'
     
 ###############################################################################
 # Cleanup
@@ -1200,6 +1225,7 @@ gdaltest_list = [
     ogr_openfilegdb_10,
     ogr_openfilegdb_11,
     ogr_openfilegdb_12,
+    ogr_openfilegdb_13,
     ogr_openfilegdb_cleanup,
     ]
 
