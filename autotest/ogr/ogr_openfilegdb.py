@@ -1142,6 +1142,51 @@ def ogr_openfilegdb_11():
     return 'success'
 
 ###############################################################################
+# Test opening a FGDB with both SRID and LatestSRID set (#5638)
+
+def ogr_openfilegdb_12():
+
+    ds = ogr.Open('/vsizip/data/test3005.gdb.zip/test3005.gdb')
+    lyr = ds.GetLayer(0)
+    got_wkt = lyr.GetSpatialRef().ExportToWkt()
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(3005)
+    expected_wkt = sr.ExportToWkt()
+    if got_wkt != expected_wkt:
+        gdaltest.post_reason('fail')
+        print(got_wkt)
+        print(expected_wkt)
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test opening a FGDB v9 with a non spatial table (#5673)
+
+def ogr_openfilegdb_13():
+
+    ds = ogr.Open('/vsizip/data/ESSENCE_NAIPF_ORI_PROV_sub93.gdb.zip/ESSENCE_NAIPF_ORI_PROV_sub93.gdb')
+    lyr = ds.GetLayer(0)
+    if lyr.GetName() != 'DDE_ESSEN_NAIPF_ORI_VUE':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetSpatialRef() is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetGeomType() != ogr.wkbNone:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetField('GEOCODE') != '-673985,22+745574,77':
+        f.DumpReadable()
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    return 'success'
+    
+###############################################################################
 # Cleanup
 
 def ogr_openfilegdb_cleanup():
@@ -1179,6 +1224,8 @@ gdaltest_list = [
     ogr_openfilegdb_9,
     ogr_openfilegdb_10,
     ogr_openfilegdb_11,
+    ogr_openfilegdb_12,
+    ogr_openfilegdb_13,
     ogr_openfilegdb_cleanup,
     ]
 
