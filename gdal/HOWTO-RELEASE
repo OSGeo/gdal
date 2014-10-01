@@ -108,8 +108,9 @@ release.
 
   % ln -sf X.Y.Z CURRENT
 
-13) Announce release to the gdal-dev@lists.osgeo.org, 
-   gdal-announce@lists.osgeo.org, freegis@freegis.org and news_item@osgeo.org. 
+13) Announce release to :
+    - major release: gdal-dev@lists.osgeo.org, gdal-announce@lists.osgeo.org, news_item@osgeo.org. 
+    - bugfix release: gdal-dev@lists.osgeo.org, gdal-announce@lists.osgeo.org
 
 14) Update the freecode.com (previously freshmeat) entry for GDAL.
 
