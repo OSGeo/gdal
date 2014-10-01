@@ -381,13 +381,57 @@ def transformer_7():
 
     return 'success' 
 
+###############################################################################
+# Test handling of nodata in RPC DEM (#5680)
+
+def transformer_8():
+
+    if not gdaltest.have_ng:
+        return 'skip'
+
+    ds = gdal.Open('data/rpc.vrt')
+
+    # (long,lat)=(125.64828521533849 39.869345204440144) -> (Easting,Northing)=(213324.662167036 4418634.47813677) in EPSG:32652
+    ds_dem = gdal.GetDriverByName('GTiff').Create('/vsimem/dem.tif', 100, 100, 1, gdal.GDT_Int16)
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(32652)
+    ds_dem.SetProjection(sr.ExportToWkt())
+    ds_dem.SetGeoTransform([213300,1,0,4418700,0,-1])
+    ds_dem.GetRasterBand(1).SetNoDataValue(-32768)
+    ds_dem.GetRasterBand(1).Fill(-32768)
+    ds_dem = None
+
+    for method in [ 'near', 'bilinear', 'cubic' ]:
+        tr = gdal.Transformer( ds, None, [ 'METHOD=RPC', 'RPC_DEM=/vsimem/dem.tif', 'RPC_DEMINTERPOLATION=%s' % method ] )
+
+        (success,pnt) = tr.TransformPoint( 0, 20, 10, 0 )
+
+        if success:
+            print(success, pnt)
+            gdaltest.post_reason( 'got wrong forward transform result.' )
+            return 'fail'
+
+        (success,pnt) = tr.TransformPoint( 1, 125.64828521533849, 39.869345204440144, 0 )
+
+        if success:
+            print(success, pnt)
+            gdaltest.post_reason( 'got wrong reverse transform result.' )
+            return 'fail'
+
+   
+    gdal.Unlink('/vsimem/dem.tif')
+
+    return 'success' 
+
 gdaltest_list = [
     transformer_1,
     transformer_2,
     transformer_3,
     transformer_4,
     transformer_5,
-    transformer_6 ]
+    transformer_6,
+    transformer_7,
+    transformer_8 ]
 
 if __name__ == '__main__':
 
