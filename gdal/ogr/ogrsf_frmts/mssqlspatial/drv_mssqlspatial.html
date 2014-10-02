@@ -26,8 +26,8 @@ In addition to the standard parameters of the
 	
 <li> <b>Tables=schema1.table1(geometry column1),schema2.table2(geometry column2)</b>: 
     By using this parameter you can specify the subset of the layers to be used by the driver. If this parameter is not set, the layers are retrieved from the geometry_columns metadata table. You can omit specifying the schema and the geometry column portions of the syntax. </li>
-<li> <b>GeometryFormat=native|wkb|wkt</b>: 
-    The desired format in which the geometries should be retrieved from the server. The default value is 'native' in this case the native SqlGeometry and SqlGeography serialization format is used. When using the 'wkb' or 'wkt' setting the geometry representation is converted to 'Well Known Binary' and 'Well Known Text' at the server. This conversion requires a significant overhead at the server and makes the feature access slower than using the native format.</li>
+<li> <b>GeometryFormat=native|wkb|wkt|wkbzm</b>: 
+    The desired format in which the geometries should be retrieved from the server. The default value is 'native' in this case the native SqlGeometry and SqlGeography serialization format is used. When using the 'wkb' or 'wkt' setting the geometry representation is converted to 'Well Known Binary' and 'Well Known Text' at the server. This conversion requires a significant overhead at the server and makes the feature access slower than using the native format. The wkbzm format can only be used with SQL Server 2012.</li>
 
 </ul>
     <p>The parameter names are not case sensitive in the connection strings.</p> 
@@ -96,6 +96,7 @@ If this parameter is not supported the default schema "<i>dbo"</i> is used.</li>
 <li> <b>SRID</b>: Set the spatial reference id of the new table explicitly.
 The corresponding entry should already be added to the spatial_ref_sys metadata table. If this parameter is not set the SRID is derived from the authority code of source layer SRS.</li>
 <li> <b>SPATIAL_INDEX</b>: (From GDAL 2.0.0) Enable/disable the automatic creation of a spatial index on the newly created layers (enabled by default).</li>
+<li> <b>UPLOAD_GEOM_FORMAT</b>: (From GDAL 2.0.0) Specify the geometry format (wkb or wkt) when creating or modifying features. The default is wkb.</li>
 </ul>
 
 <h3>Spatial Index Creation</h3>

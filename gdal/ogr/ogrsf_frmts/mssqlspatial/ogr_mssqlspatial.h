@@ -192,6 +192,8 @@ class OGRMSSQLSpatialTableLayer : public OGRMSSQLSpatialLayer
     int                 bPreservePrecision;
     int                 bNeedSpatialIndex;
 
+    int                 nUploadGeometryFormat;
+    
     char                *pszQuery;
 
     void		ClearStatement();
@@ -252,6 +254,8 @@ class OGRMSSQLSpatialTableLayer : public OGRMSSQLSpatialLayer
                                 { bPreservePrecision = bFlag; }
     void                SetSpatialIndexFlag( int bFlag )
                                 { bNeedSpatialIndex = bFlag; }
+    void                SetUploadGeometryFormat( int nGeometryFormat )
+                                { nUploadGeometryFormat = nGeometryFormat; }
     void                AppendFieldValue(CPLODBCStatement *poStatement,
                                        OGRFeature* poFeature, int i, int *bind_num, void **bind_buffer);
 
