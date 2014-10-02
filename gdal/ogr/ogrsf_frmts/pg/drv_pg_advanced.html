@@ -156,6 +156,11 @@ tables (layer)<p>
 to write to a layer within a sequential read will likely result in a "BEGIN"
 while already within a transaction type of error message.<p>
 
+<li> The PG driver has currently issues with transactions that prevent
+it being used at the same time as a reader and a writer with the same OGR
+datasource. The workaround is to instantiate two datasource objects,
+one for reading and one for writing.<p>
+
 </ul>
 
 
