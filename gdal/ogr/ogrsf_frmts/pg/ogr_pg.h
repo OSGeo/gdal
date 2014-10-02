@@ -159,6 +159,7 @@ class OGRPGLayer : public OGRLayer
   protected:
     OGRPGFeatureDefn   *poFeatureDefn;
 
+    int                 nCursorPage;
     int                 iNextShapeId;
 
     static char        *GByteArrayToBYTEA( const GByte* pabyData, int nLen);
@@ -192,7 +193,7 @@ class OGRPGLayer : public OGRLayer
 
     virtual CPLString   GetFromClauseForGetExtent() = 0;
     OGRErr              RunGetExtentRequest( OGREnvelope *psExtent, int bForce,
-                                             CPLString osCommand);
+                                             CPLString osCommand, int bErrorAsDebug );
     void                CreateMapFromFieldNameToIndex();
 
     int                 ReadResultDefinition(PGresult *hInitialResultIn);

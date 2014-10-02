@@ -33,7 +33,8 @@
 #include "libpq-fe.h"
 
 PGresult *OGRPG_PQexec(PGconn *conn, const char *query,
-                       int bMultipleCommandAllowed = FALSE);
+                       int bMultipleCommandAllowed = FALSE,
+                       int bErrorAsDebug = FALSE);
 
 /************************************************************************/
 /*                            OGRPGClearResult                          */

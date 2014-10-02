@@ -3286,7 +3286,9 @@ OGRErr OGRPGTableLayer::GetExtent( int iGeomField, OGREnvelope *psExtent, int bF
                         OGRPGEscapeString(hPGConn, pszTableName).c_str(),
                         OGRPGEscapeString(hPGConn, poGeomFieldDefn->GetNameRef()).c_str() );
 
-        if( RunGetExtentRequest(psExtent, bForce, osCommand) == OGRERR_NONE )
+        /* Quiet error: ST_Estimated_Extent may return an error if statistics */
+        /* have not been computed */
+        if( RunGetExtentRequest(psExtent, bForce, osCommand, TRUE) == OGRERR_NONE )
             return OGRERR_NONE;
 
         CPLDebug("PG","Unable to get extimated extent by PostGIS. Trying real extent.");

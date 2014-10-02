@@ -67,8 +67,6 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 CPL_CVSID("$Id$");
 
-#define CURSOR_PAGE     500
-
 // These originally are defined in libpq-fs.h.
 
 #ifndef INV_WRITE
@@ -90,6 +88,7 @@ OGRPGLayer::OGRPGLayer()
 
     pszFIDColumn = NULL;
 
+    nCursorPage = atoi(CPLGetConfigOption("OGR_PG_CURSOR_PAGE", "500"));
     iNextShapeId = 0;
     nResultOffset = 0;
 
@@ -148,7 +147,10 @@ void OGRPGLayer::CloseCursor()
         CPLString    osCommand;
         osCommand.Printf("CLOSE %s", pszCursorName );
 
-        hCursorResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
+        /* In case of interleaving read in different layers we might have */
+        /* close the transaction, and thus implicitely the cursor, so be */
+        /* quiet about errors. This is potentially an issue by the way */
+        hCursorResult = OGRPG_PQexec(hPGConn, osCommand.c_str(), FALSE, TRUE);
         OGRPGClearResult( hCursorResult );
 
         poDS->FlushSoftTransaction();
@@ -1364,7 +1366,7 @@ void OGRPGLayer::SetInitialQueryCursor()
     }
     OGRPGClearResult( hCursorResult );
 
-    osCommand.Printf( "FETCH %d in %s", CURSOR_PAGE, pszCursorName );
+    osCommand.Printf( "FETCH %d in %s", nCursorPage, pszCursorName );
     hCursorResult = OGRPG_PQexec(hPGConn, osCommand );
 
     CreateMapFromFieldNameToIndex();
@@ -1410,12 +1412,12 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
 
     /* We test for PQntuples(hCursorResult) == 1 in the case the previous */
     /* request was a SetNextByIndex() */
-    if( (PQntuples(hCursorResult) == 1 || PQntuples(hCursorResult) == CURSOR_PAGE) &&
+    if( (PQntuples(hCursorResult) == 1 || PQntuples(hCursorResult) == nCursorPage) &&
         nResultOffset == PQntuples(hCursorResult) )
     {
         OGRPGClearResult( hCursorResult );
         
-        osCommand.Printf( "FETCH %d in %s", CURSOR_PAGE, pszCursorName );
+        osCommand.Printf( "FETCH %d in %s", nCursorPage, pszCursorName );
         hCursorResult = OGRPG_PQexec(hPGConn, osCommand );
 
         nResultOffset = 0;
@@ -1803,7 +1805,7 @@ OGRErr OGRPGLayer::GetExtent( int iGeomField, OGREnvelope *psExtent, int bForce 
 
     if( osCommand.size() != 0 )
     {
-        if( RunGetExtentRequest(psExtent, bForce, osCommand) == OGRERR_NONE )
+        if( RunGetExtentRequest(psExtent, bForce, osCommand, FALSE) == OGRERR_NONE )
             return OGRERR_NONE;
     }
     if( iGeomField == 0 )
@@ -1818,7 +1820,8 @@ OGRErr OGRPGLayer::GetExtent( int iGeomField, OGREnvelope *psExtent, int bForce 
 
 OGRErr OGRPGLayer::RunGetExtentRequest( OGREnvelope *psExtent,
                                         CPL_UNUSED int bForce,
-                                        CPLString osCommand)
+                                        CPLString osCommand,
+                                        int bErrorAsDebug )
 {
     if ( psExtent == NULL )
         return OGRERR_FAILURE;
@@ -1826,7 +1829,7 @@ OGRErr OGRPGLayer::RunGetExtentRequest( OGREnvelope *psExtent,
     PGconn      *hPGConn = poDS->GetPGConn();
     PGresult    *hResult = NULL;
 
-    hResult = OGRPG_PQexec( hPGConn, osCommand );
+    hResult = OGRPG_PQexec( hPGConn, osCommand, FALSE, bErrorAsDebug );
     if( ! hResult || PQresultStatus(hResult) != PGRES_TUPLES_OK || PQgetisnull(hResult,0,0) )
     {
         OGRPGClearResult( hResult );
