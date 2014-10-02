@@ -36,7 +36,8 @@ CPL_CVSID("$Id$");
 /*                         OGRPG_PQexec()                               */
 /************************************************************************/
 
-PGresult *OGRPG_PQexec(PGconn *conn, const char *query, int bMultipleCommandAllowed)
+PGresult *OGRPG_PQexec(PGconn *conn, const char *query, int bMultipleCommandAllowed,
+                       int bErrorAsDebug)
 {
     PGresult* hResult;
 #if defined(PG_PRE74)
@@ -77,6 +78,7 @@ PGresult *OGRPG_PQexec(PGconn *conn, const char *query, int bMultipleCommandAllo
         CPLDebug("PG", "PQexec(%s) = %s%s", query, pszRetCode, szNTuples);
     else
         CPLDebug("PG", "PQexecParams(%s) = %s%s", query, pszRetCode, szNTuples);
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Generate an error report if an error occured.                   */
@@ -84,9 +86,11 @@ PGresult *OGRPG_PQexec(PGconn *conn, const char *query, int bMultipleCommandAllo
     if ( !hResult || (PQresultStatus(hResult) == PGRES_NONFATAL_ERROR ||
                       PQresultStatus(hResult) == PGRES_FATAL_ERROR ) )
     {
-        CPLDebug( "PG", "%s", PQerrorMessage( conn ) );
+        if( bErrorAsDebug )
+            CPLDebug("PG", "%s", PQerrorMessage( conn ) );
+        else
+            CPLError( CE_Failure, CPLE_AppDefined, "%s", PQerrorMessage( conn ) );
     }
-#endif
 
     return hResult;
 }
