@@ -410,6 +410,15 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
     int bCreateSpatialIndex = ( pszSI == NULL || CSLTestBoolean(pszSI) );
     poLayer->SetSpatialIndexFlag( bCreateSpatialIndex );
 
+    const char *pszUploadGeometryFormat = CSLFetchNameValue( papszOptions, "UPLOAD_GEOM_FORMAT" );
+    if (pszUploadGeometryFormat)
+    {
+        if (EQUALN(pszUploadGeometryFormat,"wkb",5))
+            poLayer->SetUploadGeometryFormat(MSSQLGEOMETRY_WKB);
+        else if (EQUALN(pszUploadGeometryFormat, "wkt",3))
+            poLayer->SetUploadGeometryFormat(MSSQLGEOMETRY_WKT);
+    }
+
     char *pszWKT = NULL;
     if( poSRS && poSRS->exportToWkt( &pszWKT ) != OGRERR_NONE )
     {
