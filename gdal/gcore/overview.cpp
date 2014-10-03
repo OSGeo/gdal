@@ -39,6 +39,8 @@ typedef CPLErr (*GDALDownsampleFunction)
                         GByte * pabyChunkNodataMask,
                         int nChunkXOff, int nChunkXSize,
                         int nChunkYOff, int nChunkYSize,
+                        int nDstXOff, int nDstXOff2,
+                        int nDstYOff, int nDstYOff2,
                         GDALRasterBand * poOverview,
                         const char * pszResampling,
                         int bHasNoData, float fNoDataValue,
@@ -57,6 +59,8 @@ GDALDownsampleChunk32R_NearT( int nSrcWidth, int nSrcHeight,
                               CPL_UNUSED GByte * pabyChunkNodataMask_unused,
                               int nChunkXOff, int nChunkXSize,
                               int nChunkYOff, int nChunkYSize,
+                              int nDstXOff, int nDstXOff2,
+                              int nDstYOff, int nDstYOff2,
                               GDALRasterBand * poOverview,
                               CPL_UNUSED const char * pszResampling_unused,
                               CPL_UNUSED int bHasNoData_unused,
@@ -67,21 +71,10 @@ GDALDownsampleChunk32R_NearT( int nSrcWidth, int nSrcHeight,
 {
     CPLErr eErr = CE_None;
 
-    int      nDstXOff, nDstXOff2, nDstYOff, nDstYOff2, nOXSize, nOYSize;
+    int nOXSize, nOYSize;
 
     nOXSize = poOverview->GetXSize();
     nOYSize = poOverview->GetYSize();
-
-/* -------------------------------------------------------------------- */
-/*      Figure out the column to start writing to, and the first column */
-/*      to not write to.                                                */
-/* -------------------------------------------------------------------- */
-    nDstXOff = (int) (0.5 + (nChunkXOff/(double)nSrcWidth) * nOXSize);
-    nDstXOff2 = (int)
-        (0.5 + ((nChunkXOff+nChunkXSize)/(double)nSrcWidth) * nOXSize);
-
-    if( nChunkXOff + nChunkXSize == nSrcWidth )
-        nDstXOff2 = nOXSize;
 
     int nDstXWidth = nDstXOff2 - nDstXOff;
 
@@ -100,19 +93,6 @@ GDALDownsampleChunk32R_NearT( int nSrcWidth, int nSrcHeight,
         VSIFree(panSrcXOff);
         return CE_Failure;
     }
-
-/* -------------------------------------------------------------------- */
-/*      Figure out the line to start writing to, and the first line     */
-/*      to not write to.  In theory this approach should ensure that    */
-/*      every output line will be written if all input chunks are       */
-/*      processed.                                                      */
-/* -------------------------------------------------------------------- */
-    nDstYOff = (int) (0.5 + (nChunkYOff/(double)nSrcHeight) * nOYSize);
-    nDstYOff2 = (int)
-        (0.5 + ((nChunkYOff+nChunkYSize)/(double)nSrcHeight) * nOYSize);
-
-    if( nChunkYOff + nChunkYSize == nSrcHeight )
-        nDstYOff2 = nOYSize;
 
 /* ==================================================================== */
 /*      Precompute inner loop constants.                                */
@@ -170,6 +150,8 @@ GDALDownsampleChunk32R_Near( int nSrcWidth, int nSrcHeight,
                         GByte * pabyChunkNodataMask_unused,
                         int nChunkXOff, int nChunkXSize,
                         int nChunkYOff, int nChunkYSize,
+                        int nDstXOff, int nDstXOff2,
+                        int nDstYOff, int nDstYOff2,
                         GDALRasterBand * poOverview,
                         const char * pszResampling_unused,
                         int bHasNoData_unused, float fNoDataValue_unused,
@@ -183,6 +165,8 @@ GDALDownsampleChunk32R_Near( int nSrcWidth, int nSrcHeight,
                         pabyChunkNodataMask_unused,
                         nChunkXOff, nChunkXSize,
                         nChunkYOff, nChunkYSize,
+                        nDstXOff, nDstXOff2,
+                        nDstYOff, nDstYOff2,
                         poOverview,
                         pszResampling_unused,
                         bHasNoData_unused, fNoDataValue_unused,
@@ -195,6 +179,8 @@ GDALDownsampleChunk32R_Near( int nSrcWidth, int nSrcHeight,
                         pabyChunkNodataMask_unused,
                         nChunkXOff, nChunkXSize,
                         nChunkYOff, nChunkYSize,
+                        nDstXOff, nDstXOff2,
+                        nDstYOff, nDstYOff2,
                         poOverview,
                         pszResampling_unused,
                         bHasNoData_unused, fNoDataValue_unused,
@@ -217,6 +203,8 @@ GDALDownsampleChunk32R_AverageT( int nSrcWidth, int nSrcHeight,
                                  GByte * pabyChunkNodataMask,
                                  int nChunkXOff, int nChunkXSize,
                                  int nChunkYOff, int nChunkYSize,
+                                 int nDstXOff, int nDstXOff2,
+                                 int nDstYOff, int nDstYOff2,
                                  GDALRasterBand * poOverview,
                                  const char * pszResampling,
                                  int bHasNoData, float fNoDataValue,
@@ -229,7 +217,7 @@ GDALDownsampleChunk32R_AverageT( int nSrcWidth, int nSrcHeight,
     if (bBit2Grayscale)
         poColorTable = NULL;
 
-    int      nDstXOff, nDstXOff2, nDstYOff, nDstYOff2, nOXSize, nOYSize;
+    int nOXSize, nOYSize;
     T    *pDstScanline;
 
     T      tNoDataValue = (T)fNoDataValue;
@@ -238,17 +226,6 @@ GDALDownsampleChunk32R_AverageT( int nSrcWidth, int nSrcHeight,
 
     nOXSize = poOverview->GetXSize();
     nOYSize = poOverview->GetYSize();
-
-/* -------------------------------------------------------------------- */
-/*      Figure out the column to start writing to, and the first column */
-/*      to not write to.                                                */
-/* -------------------------------------------------------------------- */
-    nDstXOff = (int) (0.5 + (nChunkXOff/(double)nSrcWidth) * nOXSize);
-    nDstXOff2 = (int)
-        (0.5 + ((nChunkXOff+nChunkXSize)/(double)nSrcWidth) * nOXSize);
-
-    if( nChunkXOff + nChunkXSize == nSrcWidth )
-        nDstXOff2 = nOXSize;
 
     int nChunkRightXOff = MIN(nSrcWidth, nChunkXOff + nChunkXSize);
     int nDstXWidth = nDstXOff2 - nDstXOff;
@@ -268,20 +245,6 @@ GDALDownsampleChunk32R_AverageT( int nSrcWidth, int nSrcHeight,
         VSIFree(panSrcXOffShifted);
         return CE_Failure;
     }
-
-/* -------------------------------------------------------------------- */
-/*      Figure out the line to start writing to, and the first line     */
-/*      to not write to.  In theory this approach should ensure that    */
-/*      every output line will be written if all input chunks are       */
-/*      processed.                                                      */
-/* -------------------------------------------------------------------- */
-    nDstYOff = (int) (0.5 + (nChunkYOff/(double)nSrcHeight) * nOYSize);
-    nDstYOff2 = (int)
-        (0.5 + ((nChunkYOff+nChunkYSize)/(double)nSrcHeight) * nOYSize);
-
-    if( nChunkYOff + nChunkYSize == nSrcHeight )
-        nDstYOff2 = nOYSize;
-
 
     int nEntryCount = 0;
     GDALColorEntry* aEntries = NULL;
@@ -476,6 +439,8 @@ GDALDownsampleChunk32R_Average( int nSrcWidth, int nSrcHeight,
                         GByte * pabyChunkNodataMask,
                         int nChunkXOff, int nChunkXSize,
                         int nChunkYOff, int nChunkYSize,
+                        int nDstXOff, int nDstXOff2,
+                        int nDstYOff, int nDstYOff2,
                         GDALRasterBand * poOverview,
                         const char * pszResampling,
                         int bHasNoData, float fNoDataValue,
@@ -489,6 +454,8 @@ GDALDownsampleChunk32R_Average( int nSrcWidth, int nSrcHeight,
                         pabyChunkNodataMask,
                         nChunkXOff, nChunkXSize,
                         nChunkYOff, nChunkYSize,
+                        nDstXOff, nDstXOff2,
+                        nDstYOff, nDstYOff2,
                         poOverview,
                         pszResampling,
                         bHasNoData, fNoDataValue,
@@ -501,6 +468,8 @@ GDALDownsampleChunk32R_Average( int nSrcWidth, int nSrcHeight,
                         pabyChunkNodataMask,
                         nChunkXOff, nChunkXSize,
                         nChunkYOff, nChunkYSize,
+                        nDstXOff, nDstXOff2,
+                        nDstYOff, nDstYOff2,
                         poOverview,
                         pszResampling,
                         bHasNoData, fNoDataValue,
@@ -522,6 +491,8 @@ GDALDownsampleChunk32R_Gauss( int nSrcWidth, int nSrcHeight,
                               GByte * pabyChunkNodataMask,
                               int nChunkXOff, int nChunkXSize,
                               int nChunkYOff, int nChunkYSize,
+                              int nDstXOff, int nDstXOff2,
+                              int nDstYOff, int nDstYOff2,
                               GDALRasterBand * poOverview,
                               CPL_UNUSED const char * pszResampling,
                               int bHasNoData, float fNoDataValue,
@@ -536,7 +507,7 @@ GDALDownsampleChunk32R_Gauss( int nSrcWidth, int nSrcHeight,
 /* -------------------------------------------------------------------- */
 /*      Create the filter kernel and allocate scanline buffer.          */
 /* -------------------------------------------------------------------- */
-    int      nDstXOff, nDstXOff2, nDstYOff, nDstYOff2, nOXSize, nOYSize;
+    int nOXSize, nOYSize;
     float    *pafDstScanline;
     int nGaussMatrixDim = 3;
     const int *panGaussMatrix;
@@ -581,18 +552,6 @@ GDALDownsampleChunk32R_Gauss( int nSrcWidth, int nSrcHeight,
         nGaussMatrixDim=7;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Figure out the column to start writing to, and the first column */
-/*      to not write to.                                                */
-/* -------------------------------------------------------------------- */
-    nDstXOff = (int) (0.5 + (nChunkXOff/(double)nSrcWidth) * nOXSize);
-    nDstXOff2 = (int)
-        (0.5 + ((nChunkXOff+nChunkXSize)/(double)nSrcWidth) * nOXSize);
-
-    if( nChunkXOff + nChunkXSize == nSrcWidth )
-        nDstXOff2 = nOXSize;
-
-
     pafDstScanline = (float *) VSIMalloc((nDstXOff2 - nDstXOff) * sizeof(float));
     if( pafDstScanline == NULL )
     {
@@ -600,20 +559,6 @@ GDALDownsampleChunk32R_Gauss( int nSrcWidth, int nSrcHeight,
                   "GDALDownsampleChunk32R: Out of memory for line buffer." );
         return CE_Failure;
     }
-
-/* -------------------------------------------------------------------- */
-/*      Figure out the line to start writing to, and the first line     */
-/*      to not write to.  In theory this approach should ensure that    */
-/*      every output line will be written if all input chunks are       */
-/*      processed.                                                      */
-/* -------------------------------------------------------------------- */
-    nDstYOff = (int) (0.5 + (nChunkYOff/(double)nSrcHeight) * nOYSize);
-    nDstYOff2 = (int)
-        (0.5 + ((nChunkYOff+nChunkYSize)/(double)nSrcHeight) * nOYSize);
-
-    if( nChunkYOff + nChunkYSize == nSrcHeight )
-        nDstYOff2 = nOYSize;
-
 
     int nEntryCount = 0;
     GDALColorEntry* aEntries = NULL;
@@ -804,6 +749,8 @@ GDALDownsampleChunk32R_Mode( int nSrcWidth, int nSrcHeight,
                              GByte * pabyChunkNodataMask,
                              int nChunkXOff, int nChunkXSize,
                              int nChunkYOff, int nChunkYSize,
+                             int nDstXOff, int nDstXOff2,
+                             int nDstYOff, int nDstYOff2,
                              GDALRasterBand * poOverview,
                              CPL_UNUSED const char * pszResampling,
                              int bHasNoData, float fNoDataValue,
@@ -818,23 +765,11 @@ GDALDownsampleChunk32R_Mode( int nSrcWidth, int nSrcHeight,
 /* -------------------------------------------------------------------- */
 /*      Create the filter kernel and allocate scanline buffer.          */
 /* -------------------------------------------------------------------- */
-    int      nDstXOff, nDstXOff2, nDstYOff, nDstYOff2, nOXSize, nOYSize;
+    int nOXSize, nOYSize;
     float    *pafDstScanline;
 
     nOXSize = poOverview->GetXSize();
     nOYSize = poOverview->GetYSize();
-
-/* -------------------------------------------------------------------- */
-/*      Figure out the column to start writing to, and the first column */
-/*      to not write to.                                                */
-/* -------------------------------------------------------------------- */
-    nDstXOff = (int) (0.5 + (nChunkXOff/(double)nSrcWidth) * nOXSize);
-    nDstXOff2 = (int)
-        (0.5 + ((nChunkXOff+nChunkXSize)/(double)nSrcWidth) * nOXSize);
-
-    if( nChunkXOff + nChunkXSize == nSrcWidth )
-        nDstXOff2 = nOXSize;
-
 
     pafDstScanline = (float *) VSIMalloc((nDstXOff2 - nDstXOff) * sizeof(float));
     if( pafDstScanline == NULL )
@@ -843,20 +778,6 @@ GDALDownsampleChunk32R_Mode( int nSrcWidth, int nSrcHeight,
                   "GDALDownsampleChunk32R: Out of memory for line buffer." );
         return CE_Failure;
     }
-
-/* -------------------------------------------------------------------- */
-/*      Figure out the line to start writing to, and the first line     */
-/*      to not write to.  In theory this approach should ensure that    */
-/*      every output line will be written if all input chunks are       */
-/*      processed.                                                      */
-/* -------------------------------------------------------------------- */
-    nDstYOff = (int) (0.5 + (nChunkYOff/(double)nSrcHeight) * nOYSize);
-    nDstYOff2 = (int)
-        (0.5 + ((nChunkYOff+nChunkYSize)/(double)nSrcHeight) * nOYSize);
-
-    if( nChunkYOff + nChunkYSize == nSrcHeight )
-        nDstYOff2 = nOYSize;
-
 
     int nEntryCount = 0;
     GDALColorEntry* aEntries = NULL;
@@ -1036,6 +957,8 @@ GDALDownsampleChunk32R_Cubic( int nSrcWidth, int nSrcHeight,
                               CPL_UNUSED GByte * pabyChunkNodataMask,
                               int nChunkXOff, int nChunkXSize,
                               int nChunkYOff, int nChunkYSize,
+                              int nDstXOff, int nDstXOff2,
+                              int nDstYOff, int nDstYOff2,
                               GDALRasterBand * poOverview,
                               CPL_UNUSED const char * pszResampling,
                               CPL_UNUSED int bHasNoData,
@@ -1052,23 +975,11 @@ GDALDownsampleChunk32R_Cubic( int nSrcWidth, int nSrcHeight,
 /* -------------------------------------------------------------------- */
 /*      Create the filter kernel and allocate scanline buffer.          */
 /* -------------------------------------------------------------------- */
-    int      nDstXOff, nDstXOff2, nDstYOff, nDstYOff2, nOXSize, nOYSize;
+    int nOXSize, nOYSize;
     float    *pafDstScanline;
 
     nOXSize = poOverview->GetXSize();
     nOYSize = poOverview->GetYSize();
-
-/* -------------------------------------------------------------------- */
-/*      Figure out the column to start writing to, and the first column */
-/*      to not write to.                                                */
-/* -------------------------------------------------------------------- */
-    nDstXOff = (int) (0.5 + (nChunkXOff/(double)nSrcWidth) * nOXSize);
-    nDstXOff2 = (int)
-        (0.5 + ((nChunkXOff+nChunkXSize)/(double)nSrcWidth) * nOXSize);
-
-    if( nChunkXOff + nChunkXSize == nSrcWidth )
-        nDstXOff2 = nOXSize;
-
 
     pafDstScanline = (float *) VSIMalloc((nDstXOff2 - nDstXOff) * sizeof(float));
     if( pafDstScanline == NULL )
@@ -1077,20 +988,6 @@ GDALDownsampleChunk32R_Cubic( int nSrcWidth, int nSrcHeight,
                   "GDALDownsampleChunk32R: Out of memory for line buffer." );
         return CE_Failure;
     }
-
-/* -------------------------------------------------------------------- */
-/*      Figure out the line to start writing to, and the first line     */
-/*      to not write to.  In theory this approach should ensure that    */
-/*      every output line will be written if all input chunks are       */
-/*      processed.                                                      */
-/* -------------------------------------------------------------------- */
-    nDstYOff = (int) (0.5 + (nChunkYOff/(double)nSrcHeight) * nOYSize);
-    nDstYOff2 = (int)
-        (0.5 + ((nChunkYOff+nChunkYSize)/(double)nSrcHeight) * nOYSize);
-
-    if( nChunkYOff + nChunkYSize == nSrcHeight )
-        nDstYOff2 = nOYSize;
-
 
     int nEntryCount = 0;
     GDALColorEntry* aEntries = NULL;
@@ -1229,11 +1126,12 @@ GDALDownsampleChunk32R_Cubic( int nSrcWidth, int nSrcHeight,
 static CPLErr
 GDALDownsampleChunkC32R( int nSrcWidth, int nSrcHeight, 
                          float * pafChunk, int nChunkYOff, int nChunkYSize,
+                         int nDstYOff, int nDstYOff2,
                          GDALRasterBand * poOverview,
                          const char * pszResampling )
     
 {
-    int      nDstYOff, nDstYOff2, nOXSize, nOYSize;
+    int      nOXSize, nOYSize;
     float    *pafDstScanline;
     CPLErr   eErr = CE_None;
 
@@ -1248,19 +1146,6 @@ GDALDownsampleChunkC32R( int nSrcWidth, int nSrcHeight,
         return CE_Failure;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Figure out the line to start writing to, and the first line     */
-/*      to not write to.  In theory this approach should ensure that    */
-/*      every output line will be written if all input chunks are       */
-/*      processed.                                                      */
-/* -------------------------------------------------------------------- */
-    nDstYOff = (int) (0.5 + (nChunkYOff/(double)nSrcHeight) * nOYSize);
-    nDstYOff2 = (int) 
-        (0.5 + ((nChunkYOff+nChunkYSize)/(double)nSrcHeight) * nOYSize);
-
-    if( nChunkYOff + nChunkYSize == nSrcHeight )
-        nDstYOff2 = nOYSize;
-    
 /* ==================================================================== */
 /*      Loop over destination scanlines.                                */
 /* ==================================================================== */
@@ -1556,7 +1441,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
 {
     GDALRasterBand *poSrcBand = (GDALRasterBand *) hSrcBand;
     GDALRasterBand **papoOvrBands = (GDALRasterBand **) pahOvrBands;
-    int    nFullResYChunk, nWidth;
+    int    nFullResYChunk, nWidth, nHeight;
     int    nFRXBlockSize, nFRYBlockSize;
     GDALDataType eType;
     int    bHasNoData;
@@ -1663,6 +1548,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
         eType = GDALGetOvrWorkDataType(pszResampling, poSrcBand->GetRasterDataType());
 
     nWidth = poSrcBand->GetXSize();
+    nHeight = poSrcBand->GetYSize();
     pChunk = 
         VSIMalloc3((GDALGetDataTypeSize(eType)/8), nFullResYChunk, nWidth );
     if (bUseNoDataMask)
@@ -1690,18 +1576,18 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
     CPLErr eErr = CE_None;
 
     for( nChunkYOff = 0; 
-         nChunkYOff < poSrcBand->GetYSize() && eErr == CE_None; 
+         nChunkYOff < nHeight && eErr == CE_None; 
          nChunkYOff += nFullResYChunk )
     {
-        if( !pfnProgress( nChunkYOff / (double) poSrcBand->GetYSize(), 
+        if( !pfnProgress( nChunkYOff / (double) nHeight, 
                           NULL, pProgressData ) )
         {
             CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
             eErr = CE_Failure;
         }
 
-        if( nFullResYChunk + nChunkYOff > poSrcBand->GetYSize() )
-            nFullResYChunk = poSrcBand->GetYSize() - nChunkYOff;
+        if( nFullResYChunk + nChunkYOff > nHeight )
+            nFullResYChunk = nHeight - nChunkYOff;
         
         /* read chunk */
         if (eErr == CE_None)
@@ -1773,19 +1659,38 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
 
         for( int iOverview = 0; iOverview < nOverviewCount && eErr == CE_None; iOverview++ )
         {
+            int nDstWidth = papoOvrBands[iOverview]->GetXSize();
+            int nDstHeight = papoOvrBands[iOverview]->GetYSize();
+
+/* -------------------------------------------------------------------- */
+/*      Figure out the line to start writing to, and the first line     */
+/*      to not write to.  In theory this approach should ensure that    */
+/*      every output line will be written if all input chunks are       */
+/*      processed.                                                      */
+/* -------------------------------------------------------------------- */
+            int nDstYOff = (int) (0.5 + (nChunkYOff/(double)nHeight) * nDstHeight);
+            int nDstYOff2 = (int)
+                (0.5 + ((nChunkYOff+nFullResYChunk)/(double)nHeight) * nDstHeight);
+
+            if( nChunkYOff + nFullResYChunk == nHeight )
+                nDstYOff2 = nDstHeight;
+
             if( eType == GDT_Byte || eType == GDT_Float32 )
-                eErr = pfnDownsampleFn(nWidth, poSrcBand->GetYSize(),
+                eErr = pfnDownsampleFn(nWidth, nHeight,
                                               eType,
                                               pChunk,
                                               pabyChunkNodataMask,
                                               0, nWidth,
                                               nChunkYOff, nFullResYChunk,
+                                              0, nDstWidth,
+                                              nDstYOff, nDstYOff2,
                                               papoOvrBands[iOverview], pszResampling,
                                               bHasNoData, fNoDataValue, poColorTable,
                                               poSrcBand->GetRasterDataType());
             else
-                eErr = GDALDownsampleChunkC32R(nWidth, poSrcBand->GetYSize(), 
+                eErr = GDALDownsampleChunkC32R(nWidth, nHeight, 
                                                (float*)pChunk, nChunkYOff, nFullResYChunk,
+                                               nDstYOff, nDstYOff2,
                                                papoOvrBands[iOverview], pszResampling);
         }
     }
@@ -1994,10 +1899,10 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
             iSrcOverview = iOverview - 1;
         }
 
-        /* Compute the chunck size of the source such as it will match the size of */
+        /* Compute the maximum chunck size of the source such as it will match the size of */
         /* a block of the overview */
-        int nFullResXChunk = (nDstBlockXSize * nSrcWidth) / nDstWidth;
-        int nFullResYChunk = (nDstBlockYSize * nSrcHeight) / nDstHeight;
+        int nFullResXChunk = 1 + (int)(((double)nDstBlockXSize * nSrcWidth) / nDstWidth);
+        int nFullResYChunk = 1 + (int)(((double)nDstBlockYSize * nSrcHeight) / nDstHeight);
 
         void** papaChunk = (void**) CPLMalloc(nBands * sizeof(void*));
         GByte* pabyChunkNoDataMask = NULL;
@@ -2036,15 +1941,22 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
             }
         }
 
-        int nChunkYOff;
+        int nDstYOff;
         /* Iterate on destination overview, block by block */
-        for( nChunkYOff = 0; nChunkYOff < nSrcHeight && eErr == CE_None; nChunkYOff += nFullResYChunk )
+        for( nDstYOff = 0; nDstYOff < nDstHeight && eErr == CE_None; nDstYOff += nDstBlockYSize )
         {
-            int nYCount;
-            if  (nChunkYOff + nFullResYChunk <= nSrcHeight)
-                nYCount = nFullResYChunk;
+            int nDstYCount;
+            if  (nDstYOff + nDstBlockYSize <= nDstHeight)
+                nDstYCount = nDstBlockYSize;
             else
-                nYCount = nSrcHeight - nChunkYOff;
+                nDstYCount = nDstHeight - nDstYOff;
+
+            int nChunkYOff = (int) (0.5 + nDstYOff / (double)nDstHeight * nSrcHeight);
+            int nChunkYOff2 = (int) (0.5 + (nDstYOff + nDstBlockYSize) / (double)nDstHeight * nSrcHeight);
+            if( nChunkYOff2 > nSrcHeight || nDstYOff + nDstBlockYSize == nDstHeight)
+                nChunkYOff2 = nSrcHeight;
+            int nYCount = nChunkYOff2 - nChunkYOff;
+            CPLAssert(nYCount <= nFullResYChunk);
 
             if( !pfnProgress( dfCurPixelCount / dfTotalPixelCount, 
                               NULL, pProgressData ) )
@@ -2053,14 +1965,26 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
                 eErr = CE_Failure;
             }
 
-            int nChunkXOff;
-            for( nChunkXOff = 0; nChunkXOff < nSrcWidth && eErr == CE_None; nChunkXOff += nFullResXChunk )
+            int nDstXOff;
+            /* Iterate on destination overview, block by block */
+            for( nDstXOff = 0; nDstXOff < nDstWidth && eErr == CE_None; nDstXOff += nDstBlockXSize )
             {
-                int nXCount;
-                if  (nChunkXOff + nFullResXChunk <= nSrcWidth)
-                    nXCount = nFullResXChunk;
+                int nDstXCount;
+                if  (nDstXOff + nDstBlockXSize <= nDstWidth)
+                    nDstXCount = nDstBlockXSize;
                 else
-                    nXCount = nSrcWidth - nChunkXOff;
+                    nDstXCount = nDstWidth - nDstXOff;
+
+                int nChunkXOff = (int) (0.5 + nDstXOff / (double)nDstWidth * nSrcWidth);
+                int nChunkXOff2 = (int) (0.5 + (nDstXOff + nDstBlockXSize) / (double)nDstWidth * nSrcWidth);
+                if( nChunkXOff2 > nSrcWidth || nDstXOff + nDstBlockXSize == nDstWidth)
+                    nChunkXOff2 = nSrcWidth;
+                int nXCount = nChunkXOff2 - nChunkXOff;
+                CPLAssert(nXCount <= nFullResXChunk);
+
+                /*CPLDebug("GDAL", "Reading (%dx%d -> %dx%d) for output (%dx%d -> %dx%d)",
+                         nChunkXOff, nChunkYOff, nXCount, nYCount,
+                         nDstXOff, nDstYOff, nDstXCount, nDstYCount);*/
 
                 /* Read the source buffers for all the bands */
                 for(iBand=0;iBand<nBands && eErr == CE_None;iBand++)
@@ -2102,6 +2026,8 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
                                                   pabyChunkNoDataMask,
                                                   nChunkXOff, nXCount,
                                                   nChunkYOff, nYCount,
+                                                  nDstXOff, nDstXOff + nDstXCount,
+                                                  nDstYOff, nDstYOff + nDstYCount,
                                                   papapoOverviewBands[iBand][iOverview],
                                                   pszResampling,
                                                   pabHasNoData[iBand],
