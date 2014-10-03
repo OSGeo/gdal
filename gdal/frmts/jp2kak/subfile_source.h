@@ -32,6 +32,11 @@
 #include "cpl_error.h"
 #include "cpl_vsi_virtual.h"
 
+#if KDU_MAJOR_VERSION > 7 || (KDU_MAJOR_VERSION == 7 && KDU_MINOR_VERSION >= 5)
+    using namespace kdu_core;
+    using namespace kdu_supp;
+#endif
+
 #define IO_CHUNK_SIZE 65536L
 #define IO_BUFFER_SIZE 1048576L
 /************************************************************************/
