@@ -1846,6 +1846,32 @@ def tiff_ovr_48():
     return 'success'
 
 ###############################################################################
+# Test possible stride computation issue in GDALRegenerateOverviewsMultiBand (#5653)
+
+def tiff_ovr_49():
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_ovr_49.tif', 1023, 1023, 1)
+    ds.GetRasterBand(1).Fill(0)
+    c = '\xFF'
+    # Fails on 1.11.1 with col = 255 or col = 1019
+    col = 1019
+    ds.GetRasterBand(1).WriteRaster(col,0,1,1023,c,1,1)
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_ovr_49.tif')
+    gdal.SetConfigOption('COMPRESS_OVERVIEW', 'DEFLATE')
+    ds.BuildOverviews( 'AVERAGE', overviewlist = [2] )
+    gdal.SetConfigOption('COMPRESS_OVERVIEW', None)
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_ovr_49.tif.ovr')
+    if ds.GetRasterBand(1).Checksum() == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/tiff_ovr_49.tif')
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def tiff_ovr_cleanup():
@@ -1938,6 +1964,7 @@ gdaltest_list_internal = [
     tiff_ovr_46,
     tiff_ovr_47,
     tiff_ovr_48,
+    tiff_ovr_49,
     tiff_ovr_cleanup ]
 
 def tiff_ovr_invert_endianness():
