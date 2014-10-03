@@ -39,7 +39,7 @@
 #define HAS_ISNAN_MACRO
 #endif
 #include <algorithm>
-#if defined(HAS_ISNAN_MACRO) and !defined(isnan)
+#if defined(HAS_ISNAN_MACRO) && !defined(isnan)
 #define isnan std::isnan
 #endif
 
