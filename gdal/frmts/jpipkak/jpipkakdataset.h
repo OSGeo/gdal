@@ -42,6 +42,13 @@
 
 #include <time.h>
 
+
+#if KDU_MAJOR_VERSION > 7 || (KDU_MAJOR_VERSION == 7 && KDU_MINOR_VERSION >= 5)
+    using namespace kdu_core;
+    using namespace kdu_supp;
+#endif
+
+
 static void JPIPWorkerFunc(void *);
 
 /************************************************************************/

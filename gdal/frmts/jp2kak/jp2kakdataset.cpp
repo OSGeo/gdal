@@ -67,14 +67,16 @@
 
 CPL_CVSID("$Id$");
 
-// Generally Kakadu does not advertise its version well, so we look for a
-// clue to V6 vs V7, the main difference in api.
-#ifndef KAKADU_VERSION
-#  ifdef KDU_TARGET_CAP_SEQUENTIAL
-#    define KAKADU_VERSION 700
-#  else
-#    define KAKADU_VERSION 600
-#  endif
+// Before v7.5 Kakadu does not advertise its version well
+// After v7.5 Kakadu has KDU_{MAJOR,MINOR,PATCH}_VERSION defines so it's easier
+// For older releases compile with them manually specified
+#ifndef KDU_MAJOR_VERSION
+#  error Compile with eg. -DKDU_MAJOR_VERSION=7 -DKDU_MINOR_VERSION=3 -DKDU_PATCH_VERSION=2 to specify Kakadu library version
+#endif
+
+#if KDU_MAJOR_VERSION > 7 || (KDU_MAJOR_VERSION == 7 && KDU_MINOR_VERSION >= 5)
+    using namespace kdu_core;
+    using namespace kdu_supp;
 #endif
 
 // #define KAKADU_JPX	1
@@ -1887,7 +1889,7 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
             res.get_dims(dims);
             roi_node = poROIImage->acquire_node(c,dims);
         }
-#if KAKADU_VERSION >= 700
+#if KDU_MAJOR_VERSION >= 7
         lines[c].pre_create(&allocator,nXSize,bReversible,bUseShorts,0,0);
 #else
         lines[c].pre_create(&allocator,nXSize,bReversible,bUseShorts);
@@ -1897,12 +1899,11 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
 
     try
     {
-        // Does not compile without the change on >= v7_3_2.
-// #if KAKADU_VERSION >= 732
-        // allocator.finalize(oCodeStream);
-// #else
+#if KDU_MAJOR_VERSION > 7 || (KDU_MAJOR_VERSION == 7 && (KDU_MINOR_VERSION > 3 || KDU_MINOR_VERSION == 3 && KDU_PATCH_VERSION >= 1))
+        allocator.finalize(oCodeStream);
+#else
         allocator.finalize();
-// #endif
+#endif
 
         for (c=0; c < num_components; c++)
             lines[c].create();
@@ -2009,7 +2010,7 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
                         dest->fval = *sp;  /* scale it? */
                 }
 
-#if KAKADU_VERSION >= 700
+#if KDU_MAJOR_VERSION >= 7
                 engines[c].push(lines[c]);
 #else
                 engines[c].push(lines[c],true);
