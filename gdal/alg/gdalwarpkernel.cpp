@@ -36,6 +36,7 @@
 #include "gdalwarpkernel_opencl.h"
 #include "cpl_atomic_ops.h"
 #include "cpl_multiproc.h"
+#include <limits>
 
 CPL_CVSID("$Id$");
 
@@ -1589,15 +1590,16 @@ static int GWKGetPixelRow( GDALWarpKernel *poWK, int iBand,
 }
 
 /************************************************************************/
-/*                          GWKGetPixelByte()                           */
+/*                          GWKGetPixelT()                              */
 /************************************************************************/
 
-static int GWKGetPixelByte( GDALWarpKernel *poWK, int iBand, 
-                            int iSrcOffset, double *pdfDensity, 
-                            GByte *pbValue )
+template<class T>
+static int GWKGetPixelT( GDALWarpKernel *poWK, int iBand, 
+                         int iSrcOffset, double *pdfDensity, 
+                         T *pValue )
 
 {
-    GByte *pabySrc = poWK->papabySrcImage[iBand];
+    T *pSrc = (T *)poWK->papabySrcImage[iBand];
 
     if ( ( poWK->panUnifiedSrcValid != NULL
            && !((poWK->panUnifiedSrcValid[iSrcOffset>>5]
@@ -1611,73 +1613,7 @@ static int GWKGetPixelByte( GDALWarpKernel *poWK, int iBand,
         return FALSE;
     }
 
-    *pbValue = pabySrc[iSrcOffset];
-
-    if ( poWK->pafUnifiedSrcDensity == NULL )
-        *pdfDensity = 1.0;
-    else
-        *pdfDensity = poWK->pafUnifiedSrcDensity[iSrcOffset];
-
-    return *pdfDensity != 0.0;
-}
-
-/************************************************************************/
-/*                          GWKGetPixelShort()                          */
-/************************************************************************/
-
-static int GWKGetPixelShort( GDALWarpKernel *poWK, int iBand, 
-                             int iSrcOffset, double *pdfDensity, 
-                             GInt16 *piValue )
-
-{
-    GInt16 *pabySrc = (GInt16 *)poWK->papabySrcImage[iBand];
-
-    if ( ( poWK->panUnifiedSrcValid != NULL
-           && !((poWK->panUnifiedSrcValid[iSrcOffset>>5]
-                 & (0x01 << (iSrcOffset & 0x1f))) ) )
-         || ( poWK->papanBandSrcValid != NULL
-              && poWK->papanBandSrcValid[iBand] != NULL
-              && !((poWK->papanBandSrcValid[iBand][iSrcOffset>>5]
-                    & (0x01 << (iSrcOffset & 0x1f)))) ) )
-    {
-        *pdfDensity = 0.0;
-        return FALSE;
-    }
-
-    *piValue = pabySrc[iSrcOffset];
-
-    if ( poWK->pafUnifiedSrcDensity == NULL )
-        *pdfDensity = 1.0;
-    else
-        *pdfDensity = poWK->pafUnifiedSrcDensity[iSrcOffset];
-
-    return *pdfDensity != 0.0;
-}
-
-/************************************************************************/
-/*                          GWKGetPixelFloat()                          */
-/************************************************************************/
-
-static int GWKGetPixelFloat( GDALWarpKernel *poWK, int iBand, 
-                             int iSrcOffset, double *pdfDensity, 
-                             float *pfValue )
-
-{
-    float *pabySrc = (float *)poWK->papabySrcImage[iBand];
-
-    if ( ( poWK->panUnifiedSrcValid != NULL
-           && !((poWK->panUnifiedSrcValid[iSrcOffset>>5]
-                 & (0x01 << (iSrcOffset & 0x1f))) ) )
-         || ( poWK->papanBandSrcValid != NULL
-              && poWK->papanBandSrcValid[iBand] != NULL
-              && !((poWK->papanBandSrcValid[iBand][iSrcOffset>>5]
-                    & (0x01 << (iSrcOffset & 0x1f)))) ) )
-    {
-        *pdfDensity = 0.0;
-        return FALSE;
-    }
-
-    *pfValue = pabySrc[iSrcOffset];
+    *pValue = pSrc[iSrcOffset];
 
     if ( poWK->pafUnifiedSrcDensity == NULL )
         *pdfDensity = 1.0;
@@ -1840,9 +1776,10 @@ static int GWKBilinearResample( GDALWarpKernel *poWK, int iBand,
     }
 }
 
-static int GWKBilinearResampleNoMasksByte( GDALWarpKernel *poWK, int iBand, 
-                                           double dfSrcX, double dfSrcY,
-                                           GByte *pbValue )
+template<class T>
+static int GWKBilinearResampleNoMasksT( GDALWarpKernel *poWK, int iBand, 
+                                        double dfSrcX, double dfSrcY,
+                                        T *pValue )
 
 {
     double  dfAccumulator = 0.0;
@@ -1863,7 +1800,8 @@ static int GWKBilinearResampleNoMasksByte( GDALWarpKernel *poWK, int iBand,
         dfAccumulatorDivisor += dfMult;
 
         dfAccumulator +=
-            (double)poWK->papabySrcImage[iBand][iSrcOffset] * dfMult;
+            (double)((T *)poWK->papabySrcImage[iBand])[iSrcOffset]
+            * dfMult;
     }
         
     // Upper Right Pixel
@@ -1875,7 +1813,7 @@ static int GWKBilinearResampleNoMasksByte( GDALWarpKernel *poWK, int iBand,
         dfAccumulatorDivisor += dfMult;
 
         dfAccumulator +=
-            (double)poWK->papabySrcImage[iBand][iSrcOffset+1] * dfMult;
+            (double)((T *)poWK->papabySrcImage[iBand])[iSrcOffset+1] * dfMult;
     }
         
     // Lower Right Pixel
@@ -1887,7 +1825,7 @@ static int GWKBilinearResampleNoMasksByte( GDALWarpKernel *poWK, int iBand,
         dfAccumulatorDivisor += dfMult;
 
         dfAccumulator +=
-            (double)poWK->papabySrcImage[iBand][iSrcOffset+1+poWK->nSrcXSize]
+            (double)((T *)poWK->papabySrcImage[iBand])[iSrcOffset+1+poWK->nSrcXSize]
             * dfMult;
     }
         
@@ -1900,7 +1838,7 @@ static int GWKBilinearResampleNoMasksByte( GDALWarpKernel *poWK, int iBand,
         dfAccumulatorDivisor += dfMult;
 
         dfAccumulator +=
-            (double)poWK->papabySrcImage[iBand][iSrcOffset+poWK->nSrcXSize]
+            (double)((T *)poWK->papabySrcImage[iBand])[iSrcOffset+poWK->nSrcXSize]
             * dfMult;
     }
 
@@ -1911,7 +1849,7 @@ static int GWKBilinearResampleNoMasksByte( GDALWarpKernel *poWK, int iBand,
 
     if( dfAccumulatorDivisor < 0.00001 )
     {
-        *pbValue = 0;
+        *pValue = 0;
         return FALSE;
     }
     else if( dfAccumulatorDivisor == 1.0 )
@@ -1923,99 +1861,14 @@ static int GWKBilinearResampleNoMasksByte( GDALWarpKernel *poWK, int iBand,
         dfValue = dfAccumulator / dfAccumulatorDivisor;
     }
 
-    if ( dfValue < 0.0 )
-        *pbValue = 0;
-    else if ( dfValue > 255.0 )
-        *pbValue = 255;
+    if ( dfValue < std::numeric_limits<T>::min() )
+        *pValue = std::numeric_limits<T>::min();
+    else if ( dfValue > std::numeric_limits<T>::max() )
+        *pValue = std::numeric_limits<T>::max();
     else
-        *pbValue = (GByte)(0.5 + dfValue);
-    
+        *pValue = (T)(0.5 + dfValue);
+
     return TRUE;
-}
-
-static int GWKBilinearResampleNoMasksShort( GDALWarpKernel *poWK, int iBand, 
-                                            double dfSrcX, double dfSrcY,
-                                            GInt16 *piValue )
-
-{
-    double  dfAccumulator = 0.0;
-    double  dfAccumulatorDivisor = 0.0;
-
-    int     iSrcX = (int) floor(dfSrcX - 0.5);
-    int     iSrcY = (int) floor(dfSrcY - 0.5);
-    int     iSrcOffset = iSrcX + iSrcY * poWK->nSrcXSize;
-    double  dfRatioX = 1.5 - (dfSrcX - iSrcX);
-    double  dfRatioY = 1.5 - (dfSrcY - iSrcY);
-
-    // Upper Left Pixel
-    if( iSrcX >= 0 && iSrcX < poWK->nSrcXSize
-        && iSrcY >= 0 && iSrcY < poWK->nSrcYSize )
-    {
-        double dfMult = dfRatioX * dfRatioY;
-
-        dfAccumulatorDivisor += dfMult;
-
-        dfAccumulator +=
-            (double)((GInt16 *)poWK->papabySrcImage[iBand])[iSrcOffset]
-            * dfMult;
-    }
-        
-    // Upper Right Pixel
-    if( iSrcX+1 >= 0 && iSrcX+1 < poWK->nSrcXSize
-        && iSrcY >= 0 && iSrcY < poWK->nSrcYSize )
-    {
-        double dfMult = (1.0-dfRatioX) * dfRatioY;
-
-        dfAccumulatorDivisor += dfMult;
-
-        dfAccumulator +=
-            (double)((GInt16 *)poWK->papabySrcImage[iBand])[iSrcOffset+1] * dfMult;
-    }
-        
-    // Lower Right Pixel
-    if( iSrcX+1 >= 0 && iSrcX+1 < poWK->nSrcXSize
-        && iSrcY+1 >= 0 && iSrcY+1 < poWK->nSrcYSize )
-    {
-        double dfMult = (1.0-dfRatioX) * (1.0-dfRatioY);
-
-        dfAccumulatorDivisor += dfMult;
-
-        dfAccumulator +=
-            (double)((GInt16 *)poWK->papabySrcImage[iBand])[iSrcOffset+1+poWK->nSrcXSize]
-            * dfMult;
-    }
-        
-    // Lower Left Pixel
-    if( iSrcX >= 0 && iSrcX < poWK->nSrcXSize
-        && iSrcY+1 >= 0 && iSrcY+1 < poWK->nSrcYSize )
-    {
-        double dfMult = dfRatioX * (1.0-dfRatioY);
-
-        dfAccumulatorDivisor += dfMult;
-
-        dfAccumulator +=
-            (double)((GInt16 *)poWK->papabySrcImage[iBand])[iSrcOffset+poWK->nSrcXSize]
-            * dfMult;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Return result.                                                  */
-/* -------------------------------------------------------------------- */
-    if( dfAccumulatorDivisor == 1.0 )
-    {
-        *piValue = (GInt16)(0.5 + dfAccumulator);
-        return TRUE;
-    }
-    else if( dfAccumulatorDivisor < 0.00001 )
-    {
-        *piValue = 0;
-        return FALSE;
-    }
-    else
-    {
-        *piValue = (GInt16)(0.5 + dfAccumulator / dfAccumulatorDivisor);
-        return TRUE;
-    }
 }
 
 /************************************************************************/
@@ -2027,6 +1880,20 @@ static int GWKBilinearResampleNoMasksShort( GDALWarpKernel *poWK, int iBand,
       + distance1*0.5*(f2 - f0)                                     \
       + distance2*0.5*(2.0*f0 - 5.0*f1 + 4.0*f2 - f3)               \
       + distance3*0.5*(3.0*(f1 - f2) + f3 - f0))
+
+/* http://en.wikipedia.org/wiki/Bicubic_interpolation with alpha = -0.5 (cubic hermite spline ) */
+/* or http://www.cs.utexas.edu/users/fussell/courses/cs384g/lectures/mitchell/Mitchell.pdf with (B,C)=(0,0.5) the Catmull-Rom spline */
+/*
+W(x) = 1.5|x|^3-2.5|x|^2+1 if |x| <= 1
+       -0.5|x|^3+2.5|x|^2-4|x|+2 if 1 < |x| < 2
+
+V[-1]*W(-1.5)+V[0]*W(-0.5)+V[1]*W(0.5)+V[2]*W(1.5)=
+-0.0625*V[-1]+0.5625*V[0]+0.5625*V[1]-0.0625*V[2]
+
+V[0]+0.25*(V[1]-V[-1])+0.125*(2V[-1]-5V[0]+4V[1]-V[2])+0.0625*(3*(V[0]-V[1])+V[2]-V[-1])=
+0.5625*V[0] +0.5625*V[1]-0.0625*V[-1]-0.0625*V[2]
+
+*/
 
 static int GWKCubicResample( GDALWarpKernel *poWK, int iBand,
                              double dfSrcX, double dfSrcY,
@@ -2094,9 +1961,10 @@ static int GWKCubicResample( GDALWarpKernel *poWK, int iBand,
     return TRUE;
 }
 
-static int GWKCubicResampleNoMasksByte( GDALWarpKernel *poWK, int iBand,
-                                        double dfSrcX, double dfSrcY,
-                                        GByte *pbValue )
+template<class T>
+static int GWKCubicResampleNoMasksT( GDALWarpKernel *poWK, int iBand,
+                                     double dfSrcX, double dfSrcY,
+                                     T *pValue )
 
 {
     int     iSrcX = (int) (dfSrcX - 0.5);
@@ -2114,77 +1982,30 @@ static int GWKCubicResampleNoMasksByte( GDALWarpKernel *poWK, int iBand,
     // Get the bilinear interpolation at the image borders
     if ( iSrcX - 1 < 0 || iSrcX + 2 >= poWK->nSrcXSize
          || iSrcY - 1 < 0 || iSrcY + 2 >= poWK->nSrcYSize )
-        return GWKBilinearResampleNoMasksByte( poWK, iBand, dfSrcX, dfSrcY,
-                                               pbValue);
-
-    for ( i = -1; i < 3; i++ )
-    {
-        int     iOffset = iSrcOffset + i * poWK->nSrcXSize;
-
-        adfValue[i + 1] = CubicConvolution(dfDeltaX, dfDeltaX2, dfDeltaX3,
-                            (double)poWK->papabySrcImage[iBand][iOffset - 1],
-                            (double)poWK->papabySrcImage[iBand][iOffset],
-                            (double)poWK->papabySrcImage[iBand][iOffset + 1],
-                            (double)poWK->papabySrcImage[iBand][iOffset + 2]);
-    }
-
-    double dfValue = CubicConvolution(dfDeltaY, dfDeltaY2, dfDeltaY3,
-                        adfValue[0], adfValue[1], adfValue[2], adfValue[3]);
-
-    if ( dfValue < 0.0 )
-        *pbValue = 0;
-    else if ( dfValue > 255.0 )
-        *pbValue = 255;
-    else
-        *pbValue = (GByte)(0.5 + dfValue);
-    
-    return TRUE;
-}
-
-static int GWKCubicResampleNoMasksShort( GDALWarpKernel *poWK, int iBand,
-                                         double dfSrcX, double dfSrcY,
-                                         GInt16 *piValue )
-
-{
-    int     iSrcX = (int) (dfSrcX - 0.5);
-    int     iSrcY = (int) (dfSrcY - 0.5);
-    int     iSrcOffset = iSrcX + iSrcY * poWK->nSrcXSize;
-    double  dfDeltaX = dfSrcX - 0.5 - iSrcX;
-    double  dfDeltaY = dfSrcY - 0.5 - iSrcY;
-    double  dfDeltaX2 = dfDeltaX * dfDeltaX;
-    double  dfDeltaY2 = dfDeltaY * dfDeltaY;
-    double  dfDeltaX3 = dfDeltaX2 * dfDeltaX;
-    double  dfDeltaY3 = dfDeltaY2 * dfDeltaY;
-    double  adfValue[4];
-    int     i;
-
-    // Get the bilinear interpolation at the image borders
-    if ( iSrcX - 1 < 0 || iSrcX + 2 >= poWK->nSrcXSize
-         || iSrcY - 1 < 0 || iSrcY + 2 >= poWK->nSrcYSize )
-        return GWKBilinearResampleNoMasksShort( poWK, iBand, dfSrcX, dfSrcY,
-                                                piValue);
+        return GWKBilinearResampleNoMasksT ( poWK, iBand, dfSrcX, dfSrcY,
+                                             pValue );
 
     for ( i = -1; i < 3; i++ )
     {
         int     iOffset = iSrcOffset + i * poWK->nSrcXSize;
 
         adfValue[i + 1] =CubicConvolution(dfDeltaX, dfDeltaX2, dfDeltaX3,
-                (double)((GInt16 *)poWK->papabySrcImage[iBand])[iOffset - 1],
-                (double)((GInt16 *)poWK->papabySrcImage[iBand])[iOffset],
-                (double)((GInt16 *)poWK->papabySrcImage[iBand])[iOffset + 1],
-                (double)((GInt16 *)poWK->papabySrcImage[iBand])[iOffset + 2]);
+                (double)((T *)poWK->papabySrcImage[iBand])[iOffset - 1],
+                (double)((T *)poWK->papabySrcImage[iBand])[iOffset],
+                (double)((T *)poWK->papabySrcImage[iBand])[iOffset + 1],
+                (double)((T *)poWK->papabySrcImage[iBand])[iOffset + 2]);
     }
 
     double dfValue = CubicConvolution(
         dfDeltaY, dfDeltaY2, dfDeltaY3,
         adfValue[0], adfValue[1], adfValue[2], adfValue[3]);
     
-    if ( dfValue < -32768.0 )
-        *piValue = -32768;
-    else if ( dfValue > 32767.0 )
-        *piValue = 32767;
+    if ( dfValue < std::numeric_limits<T>::min() )
+        *pValue = std::numeric_limits<T>::min();
+    else if ( dfValue > std::numeric_limits<T>::max() )
+        *pValue = std::numeric_limits<T>::max();
     else
-        *piValue = (GInt16)floor(0.5 + dfValue);
+        *pValue = (T)floor(0.5 + dfValue);
     
     return TRUE;
 }
@@ -2241,7 +2062,13 @@ static double GWKBSpline( double x )
                           -4.0 * xp1*xp1*xp1:0.0) +
              xp2c:0.0) ) * 0.166666666666666666666;
 }
+/* http://www.cs.utexas.edu/users/fussell/courses/cs384g/lectures/mitchell/Mitchell.pdf with (B,C)=(1,0)
+1/6 * ( 3 * |x|^3 -  6 * |x|^2 + 4) |x| < 1
+1/6 * ( -|x|^3 + 6 |x|^2  - 12|x| + 8) |x| > 1
 
+-2<x<-1 1/6*( (x+2)^3) = 1/6*(x^3 + 6x^2+12x+8)
+-1<x<0  1/6*( -4*(x+1)^3 + (x+2)^3 = 1/6*(-4(x^3+3x^2+3x+1)+x^3 + 6x^2+12x+8) = 1/6 * (-3x^3-6*x^2+4)
+*/
 
 /************************************************************************/
 /*                       GWKResampleWrkStruct                           */
@@ -2842,9 +2669,10 @@ static int GWKResampleOptimizedLanczos( GDALWarpKernel *poWK, int iBand,
     return TRUE;
 }
 
-static int GWKCubicSplineResampleNoMasksByte( GDALWarpKernel *poWK, int iBand,
-                                              double dfSrcX, double dfSrcY,
-                                              GByte *pbValue, double *padfBSpline )
+template <class T>
+static int GWKCubicSplineResampleNoMasksT( GDALWarpKernel *poWK, int iBand,
+                                           double dfSrcX, double dfSrcY,
+                                           T *pValue, double *padfBSpline )
 
 {
     // Commonly used; save locally
@@ -2863,12 +2691,12 @@ static int GWKCubicSplineResampleNoMasksByte( GDALWarpKernel *poWK, int iBand,
     int     nXRadius = poWK->nXRadius;
     int     nYRadius = poWK->nYRadius;
 
-    GByte*  pabySrcBand = poWK->papabySrcImage[iBand];
+    T*  pabySrcBand = (T*) poWK->papabySrcImage[iBand];
     
     // Politely refusing to process invalid coordinates or obscenely small image
     if ( iSrcX >= nSrcXSize || iSrcY >= nSrcYSize
          || nXRadius > nSrcXSize || nYRadius > nSrcYSize )
-        return GWKBilinearResampleNoMasksByte( poWK, iBand, dfSrcX, dfSrcY, pbValue);
+        return GWKBilinearResampleNoMasksT( poWK, iBand, dfSrcX, dfSrcY, pValue);
 
     // Loop over all rows in the kernel
     int     j, jC;
@@ -2920,96 +2748,13 @@ static int GWKCubicSplineResampleNoMasksByte( GDALWarpKernel *poWK, int iBand,
         }
     }
 
-    if ( dfAccumulator < 0.0 )
-        *pbValue = 0;
-    else if ( dfAccumulator > 255.0 )
-        *pbValue = 255;
+    if ( dfAccumulator <  std::numeric_limits<T>::min() )
+        *pValue = std::numeric_limits<T>::min();
+    else if ( dfAccumulator >  std::numeric_limits<T>::max() )
+        *pValue = std::numeric_limits<T>::max();
     else
-        *pbValue = (GByte)(0.5 + dfAccumulator);
+        *pValue = (T)(0.5 + dfAccumulator);
      
-    return TRUE;
-}
-
-static int GWKCubicSplineResampleNoMasksShort( GDALWarpKernel *poWK, int iBand,
-                                               double dfSrcX, double dfSrcY,
-                                               GInt16 *piValue, double *padfBSpline )
-
-{
-    //Save src size to local var
-    int     nSrcXSize = poWK->nSrcXSize;
-    int     nSrcYSize = poWK->nSrcYSize;
-    
-    double  dfAccumulator = 0.0;
-    int     iSrcX = (int) floor( dfSrcX - 0.5 );
-    int     iSrcY = (int) floor( dfSrcY - 0.5 );
-    int     iSrcOffset = iSrcX + iSrcY * nSrcXSize;
-    double  dfDeltaX = dfSrcX - 0.5 - iSrcX;
-    double  dfDeltaY = dfSrcY - 0.5 - iSrcY;
-
-    double  dfXScale = poWK->dfXScale;
-    double  dfYScale = poWK->dfYScale;
-    int     nXRadius = poWK->nXRadius;
-    int     nYRadius = poWK->nYRadius;
-
-    // Save band array pointer to local var; cast here instead of later
-    GInt16* pabySrcBand = ((GInt16 *)poWK->papabySrcImage[iBand]);
-
-    // Politely refusing to process invalid coordinates or obscenely small image
-    if ( iSrcX >= nSrcXSize || iSrcY >= nSrcYSize
-         || nXRadius > nSrcXSize || nYRadius > nSrcYSize )
-        return GWKBilinearResampleNoMasksShort( poWK, iBand, dfSrcX, dfSrcY, piValue);
-
-    // Loop over all pixels in the kernel
-    int     j, jC;
-    for ( jC = 0, j = 1 - nYRadius; j <= nYRadius; ++j, ++jC )
-    {
-        int     iSampJ;
-        
-        // Calculate the Y weight
-        double  dfWeight1 = ( dfYScale < 1.0 ) ?
-            GWKBSpline((double)j * dfYScale) * dfYScale :
-            GWKBSpline((double)j - dfDeltaY);
-
-        // Flip sampling over edge of image
-        if ( iSrcY + j < 0 )
-            iSampJ = iSrcOffset - (iSrcY + j) * nSrcXSize;
-        else if ( iSrcY + j >= nSrcYSize )
-            iSampJ = iSrcOffset + (2*nSrcYSize - 2*iSrcY - j - 1) * nSrcXSize;
-        else
-            iSampJ = iSrcOffset + j * nSrcXSize;
-        
-        // Loop over all pixels in row
-        int     i, iC;
-        for ( iC = 0, i = 1 - nXRadius; i <= nXRadius; ++i, ++iC )
-        {
-        int     iSampI;
-            double  dfWeight2;
-            
-            // Flip sampling over edge of image
-            if ( iSrcX + i < 0 )
-                iSampI = -iSrcX - i;
-            else if(iSrcX + i >= nSrcXSize)
-                iSampI = 2*nSrcXSize - 2*iSrcX - i - 1;
-            else
-                iSampI = i;
-            
-            // Make a cached set of GWKBSpline values
-            if ( jC == 0 )
-            {
-                // Calculate & save the X weight
-                dfWeight2 = padfBSpline[iC] = ((dfXScale < 1.0 ) ?
-                    GWKBSpline((double)i * dfXScale) * dfXScale :
-                    GWKBSpline(dfDeltaX - (double)i));
-                dfWeight2 *= dfWeight1;
-            } else
-                dfWeight2 = dfWeight1 * padfBSpline[iC];
-
-            dfAccumulator += (double)pabySrcBand[iSampI + iSampJ] * dfWeight2;
-        }
-    }
-
-    *piValue = (GInt16)(0.5 + dfAccumulator);
-    
     return TRUE;
 }
 
@@ -3564,14 +3309,9 @@ static void GWKGeneralCaseThread( void* pData)
 /*      possible for this particular transformation type.               */
 /************************************************************************/
 
-static void GWKNearestNoMasksByteThread(void* pData);
+template<class T>
+static void GWKNearestNoMasksThread( void* pData )
 
-static CPLErr GWKNearestNoMasksByte( GDALWarpKernel *poWK )
-{
-    return GWKRun( poWK, "GWKNearestNoMasksByte", GWKNearestNoMasksByteThread );
-}
-
-static void GWKNearestNoMasksByteThread(void* pData)
 {
     GWKJobStruct* psJob = (GWKJobStruct*) pData;
     GDALWarpKernel *poWK = psJob->poWK;
@@ -3623,20 +3363,21 @@ static void GWKNearestNoMasksByteThread(void* pData)
 /* ==================================================================== */
         for( iDstX = 0; iDstX < nDstXSize; iDstX++ )
         {
+            int iDstOffset;
+
             COMPUTE_iSrcOffset(pabSuccess, iDstX, padfX, padfY, poWK, nSrcXSize, nSrcYSize);
 
 /* ==================================================================== */
 /*      Loop processing each band.                                      */
 /* ==================================================================== */
             int iBand;
-            int iDstOffset;
-
+            
             iDstOffset = iDstX + iDstY * nDstXSize;
 
             for( iBand = 0; iBand < poWK->nBands; iBand++ )
             {
-                poWK->papabyDstImage[iBand][iDstOffset] = 
-                    poWK->papabySrcImage[iBand][iSrcOffset];
+                ((T *)poWK->papabyDstImage[iBand])[iDstOffset] = 
+                    ((T *)poWK->papabySrcImage[iBand])[iSrcOffset];
             }
         }
 
@@ -3654,6 +3395,11 @@ static void GWKNearestNoMasksByteThread(void* pData)
     CPLFree( padfY );
     CPLFree( padfZ );
     CPLFree( pabSuccess );
+}
+
+static CPLErr GWKNearestNoMasksByte( GDALWarpKernel *poWK )
+{
+    return GWKRun( poWK, "GWKNearestNoMasksByte", GWKNearestNoMasksThread<GByte> );
 }
 
 /************************************************************************/
@@ -3664,14 +3410,9 @@ static void GWKNearestNoMasksByteThread(void* pData)
 /*      for this particular transformation type.                        */
 /************************************************************************/
 
-static void GWKBilinearNoMasksByteThread(void* pData);
+template<class T>
+static void GWKBilinearNoMasksThread( void* pData )
 
-static CPLErr GWKBilinearNoMasksByte( GDALWarpKernel *poWK )
-{
-    return GWKRun( poWK, "GWKBilinearNoMasksByte", GWKBilinearNoMasksByteThread );
-}
-
-static void GWKBilinearNoMasksByteThread(void* pData)
 {
     GWKJobStruct* psJob = (GWKJobStruct*) pData;
     GDALWarpKernel *poWK = psJob->poWK;
@@ -3735,10 +3476,12 @@ static void GWKBilinearNoMasksByteThread(void* pData)
 
             for( iBand = 0; iBand < poWK->nBands; iBand++ )
             {
-                GWKBilinearResampleNoMasksByte( poWK, iBand,
-                                                padfX[iDstX]-poWK->nSrcXOff,
-                                                padfY[iDstX]-poWK->nSrcYOff,
-                                                &poWK->papabyDstImage[iBand][iDstOffset] );
+                T value = 0;
+                GWKBilinearResampleNoMasksT( poWK, iBand,
+                                             padfX[iDstX]-poWK->nSrcXOff,
+                                             padfY[iDstX]-poWK->nSrcYOff,
+                                             &value );
+                ((T *)poWK->papabyDstImage[iBand])[iDstOffset] = value;
             }
         }
 
@@ -3756,6 +3499,11 @@ static void GWKBilinearNoMasksByteThread(void* pData)
     CPLFree( padfY );
     CPLFree( padfZ );
     CPLFree( pabSuccess );
+}
+
+static CPLErr GWKBilinearNoMasksByte( GDALWarpKernel *poWK )
+{
+    return GWKRun( poWK, "GWKBilinearNoMasksByte", GWKBilinearNoMasksThread<GByte> );
 }
 
 /************************************************************************/
@@ -3766,14 +3514,8 @@ static void GWKBilinearNoMasksByteThread(void* pData)
 /*      for this particular transformation type.                        */
 /************************************************************************/
 
-static void GWKCubicNoMasksByteThread(void* pData);
-
-static CPLErr GWKCubicNoMasksByte( GDALWarpKernel *poWK )
-{
-    return GWKRun( poWK, "GWKCubicNoMasksByte", GWKCubicNoMasksByteThread );
-}
-
-static void GWKCubicNoMasksByteThread( void* pData )
+template<class T>
+static void GWKCubicNoMasksThread( void* pData )
 
 {
     GWKJobStruct* psJob = (GWKJobStruct*) pData;
@@ -3838,10 +3580,12 @@ static void GWKCubicNoMasksByteThread( void* pData )
 
             for( iBand = 0; iBand < poWK->nBands; iBand++ )
             {
-                GWKCubicResampleNoMasksByte( poWK, iBand,
-                                             padfX[iDstX]-poWK->nSrcXOff,
-                                             padfY[iDstX]-poWK->nSrcYOff,
-                                             &poWK->papabyDstImage[iBand][iDstOffset] );
+                T  value = 0;
+                GWKCubicResampleNoMasksT( poWK, iBand,
+                                              padfX[iDstX]-poWK->nSrcXOff,
+                                              padfY[iDstX]-poWK->nSrcYOff,
+                                              &value );
+                ((T *)poWK->papabyDstImage[iBand])[iDstOffset] = value;
             }
         }
 
@@ -3861,6 +3605,12 @@ static void GWKCubicNoMasksByteThread( void* pData )
     CPLFree( pabSuccess );
 }
 
+
+static CPLErr GWKCubicNoMasksByte( GDALWarpKernel *poWK )
+{
+    return GWKRun( poWK, "GWKCubicNoMasksByte", GWKCubicNoMasksThread<GByte> );
+}
+
 /************************************************************************/
 /*                   GWKCubicSplineNoMasksByte()                        */
 /*                                                                      */
@@ -3869,14 +3619,8 @@ static void GWKCubicNoMasksByteThread( void* pData )
 /*      for this particular transformation type.                        */
 /************************************************************************/
 
-static void GWKCubicSplineNoMasksByteThread(void* pData);
-
-static CPLErr GWKCubicSplineNoMasksByte( GDALWarpKernel *poWK )
-{
-    return GWKRun( poWK, "GWKCubicSplineNoMasksByte", GWKCubicSplineNoMasksByteThread );
-}
-
-static void GWKCubicSplineNoMasksByteThread( void* pData )
+template<class T>
+static void GWKCubicSplineNoMasksThread( void* pData )
 
 {
     GWKJobStruct* psJob = (GWKJobStruct*) pData;
@@ -3944,10 +3688,10 @@ static void GWKCubicSplineNoMasksByteThread( void* pData )
 
             for( iBand = 0; iBand < poWK->nBands; iBand++ )
             {
-                GWKCubicSplineResampleNoMasksByte( poWK, iBand,
+                GWKCubicSplineResampleNoMasksT( poWK, iBand,
                                                    padfX[iDstX]-poWK->nSrcXOff,
                                                    padfY[iDstX]-poWK->nSrcYOff,
-                                                   &poWK->papabyDstImage[iBand][iDstOffset],
+                                                   &(((T*)(poWK->papabyDstImage[iBand]))[iDstOffset]),
                                                    padfBSpline);
             }
         }
@@ -3969,6 +3713,11 @@ static void GWKCubicSplineNoMasksByteThread( void* pData )
     CPLFree( padfBSpline );
 }
 
+static CPLErr GWKCubicSplineNoMasksByte( GDALWarpKernel *poWK )
+{
+    return GWKRun( poWK, "GWKCubicSplineNoMasksByte", GWKCubicSplineNoMasksThread<GByte> );
+}
+
 /************************************************************************/
 /*                          GWKNearestByte()                            */
 /*                                                                      */
@@ -3977,14 +3726,8 @@ static void GWKCubicSplineNoMasksByteThread( void* pData )
 /*      particular transformation type.                                 */
 /************************************************************************/
 
-static void GWKNearestByteThread(void* pData);
-
-static CPLErr GWKNearestByte( GDALWarpKernel *poWK )
-{
-    return GWKRun( poWK, "GWKNearestByte", GWKNearestByteThread );
-}
-
-static void GWKNearestByteThread( void* pData )
+template<class T>
+static void GWKNearestThread( void* pData )
 
 {
     GWKJobStruct* psJob = (GWKJobStruct*) pData;
@@ -4040,7 +3783,7 @@ static void GWKNearestByteThread( void* pData )
             int iDstOffset;
 
             COMPUTE_iSrcOffset(pabSuccess, iDstX, padfX, padfY, poWK, nSrcXSize, nSrcYSize);
-
+ 
 /* -------------------------------------------------------------------- */
 /*      Do not try to apply invalid source pixels to the dest.          */
 /* -------------------------------------------------------------------- */
@@ -4065,19 +3808,18 @@ static void GWKNearestByteThread( void* pData )
 /*      Loop processing each band.                                      */
 /* ==================================================================== */
             int iBand;
-
+            
             iDstOffset = iDstX + iDstY * nDstXSize;
 
             for( iBand = 0; iBand < poWK->nBands; iBand++ )
             {
-                GByte   bValue = 0;
+                T   value = 0;
                 double dfBandDensity = 0.0;
 
 /* -------------------------------------------------------------------- */
 /*      Collect the source value.                                       */
 /* -------------------------------------------------------------------- */
-                if ( GWKGetPixelByte( poWK, iBand, iSrcOffset, &dfBandDensity,
-                                      &bValue ) )
+                if ( GWKGetPixelT(poWK, iBand, iSrcOffset, &dfBandDensity, &value) )
                 {
                     if( dfBandDensity < 1.0 )
                     {
@@ -4087,17 +3829,17 @@ static void GWKNearestByteThread( void* pData )
                         {
                             /* let the general code take care of mixing */
                             GWKSetPixelValue( poWK, iBand, iDstOffset, 
-                                              dfBandDensity, (double) bValue, 
+                                              dfBandDensity, (double) value, 
                                               0.0 );
                         }
                     }
                     else
                     {
-                        poWK->papabyDstImage[iBand][iDstOffset] = bValue;
+                        ((T *)poWK->papabyDstImage[iBand])[iDstOffset] = value;
                     }
                 }
             }
-
+ 
 /* -------------------------------------------------------------------- */
 /*      Mark this pixel valid/opaque in the output.                     */
 /* -------------------------------------------------------------------- */
@@ -4115,7 +3857,7 @@ static void GWKNearestByteThread( void* pData )
 /* -------------------------------------------------------------------- */
         if (psJob->pfnProgress(psJob))
             break;
-    } /* Next iDstY */
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup and return.                                             */
@@ -4124,6 +3866,11 @@ static void GWKNearestByteThread( void* pData )
     CPLFree( padfY );
     CPLFree( padfZ );
     CPLFree( pabSuccess );
+}
+
+static CPLErr GWKNearestByte( GDALWarpKernel *poWK )
+{
+    return GWKRun( poWK, "GWKNearestByte", GWKNearestThread<GByte> );
 }
 
 /************************************************************************/
@@ -4135,98 +3882,9 @@ static void GWKNearestByteThread( void* pData )
 /*      transformation type.                                            */
 /************************************************************************/
 
-static void GWKNearestNoMasksShortThread(void* pData);
-
 static CPLErr GWKNearestNoMasksShort( GDALWarpKernel *poWK )
 {
-    return GWKRun( poWK, "GWKNearestNoMasksShort", GWKNearestNoMasksShortThread );
-}
-
-static void GWKNearestNoMasksShortThread( void* pData )
-
-{
-    GWKJobStruct* psJob = (GWKJobStruct*) pData;
-    GDALWarpKernel *poWK = psJob->poWK;
-    int iYMin = psJob->iYMin;
-    int iYMax = psJob->iYMax;
-
-    int iDstY;
-    int nDstXSize = poWK->nDstXSize;
-    int nSrcXSize = poWK->nSrcXSize, nSrcYSize = poWK->nSrcYSize;
-
-/* -------------------------------------------------------------------- */
-/*      Allocate x,y,z coordinate arrays for transformation ... one     */
-/*      scanlines worth of positions.                                   */
-/* -------------------------------------------------------------------- */
-    double *padfX, *padfY, *padfZ;
-    int    *pabSuccess;
-
-    padfX = (double *) CPLMalloc(sizeof(double) * nDstXSize);
-    padfY = (double *) CPLMalloc(sizeof(double) * nDstXSize);
-    padfZ = (double *) CPLMalloc(sizeof(double) * nDstXSize);
-    pabSuccess = (int *) CPLMalloc(sizeof(int) * nDstXSize);
-
-/* ==================================================================== */
-/*      Loop over output lines.                                         */
-/* ==================================================================== */
-    for( iDstY = iYMin; iDstY < iYMax; iDstY++ )
-    {
-        int iDstX;
-
-/* -------------------------------------------------------------------- */
-/*      Setup points to transform to source image space.                */
-/* -------------------------------------------------------------------- */
-        for( iDstX = 0; iDstX < nDstXSize; iDstX++ )
-        {
-            padfX[iDstX] = iDstX + 0.5 + poWK->nDstXOff;
-            padfY[iDstX] = iDstY + 0.5 + poWK->nDstYOff;
-            padfZ[iDstX] = 0.0;
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Transform the points from destination pixel/line coordinates    */
-/*      to source pixel/line coordinates.                               */
-/* -------------------------------------------------------------------- */
-        poWK->pfnTransformer( psJob->pTransformerArg, TRUE, nDstXSize,
-                              padfX, padfY, padfZ, pabSuccess );
-
-/* ==================================================================== */
-/*      Loop over pixels in output scanline.                            */
-/* ==================================================================== */
-        for( iDstX = 0; iDstX < nDstXSize; iDstX++ )
-        {
-            int iDstOffset;
-
-            COMPUTE_iSrcOffset(pabSuccess, iDstX, padfX, padfY, poWK, nSrcXSize, nSrcYSize);
-
-/* ==================================================================== */
-/*      Loop processing each band.                                      */
-/* ==================================================================== */
-            int iBand;
-            
-            iDstOffset = iDstX + iDstY * nDstXSize;
-
-            for( iBand = 0; iBand < poWK->nBands; iBand++ )
-            {
-                ((GInt16 *)poWK->papabyDstImage[iBand])[iDstOffset] = 
-                    ((GInt16 *)poWK->papabySrcImage[iBand])[iSrcOffset];
-            }
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Report progress to the user, and optionally cancel out.         */
-/* -------------------------------------------------------------------- */
-        if (psJob->pfnProgress(psJob))
-            break;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Cleanup and return.                                             */
-/* -------------------------------------------------------------------- */
-    CPLFree( padfX );
-    CPLFree( padfY );
-    CPLFree( padfZ );
-    CPLFree( pabSuccess );
+    return GWKRun( poWK, "GWKNearestNoMasksShort", GWKNearestNoMasksThread<GInt16> );
 }
 
 /************************************************************************/
@@ -4237,101 +3895,9 @@ static void GWKNearestNoMasksShortThread( void* pData )
 /*      for this particular transformation type.                        */
 /************************************************************************/
 
-static void GWKBilinearNoMasksShortThread(void* pData);
-
 static CPLErr GWKBilinearNoMasksShort( GDALWarpKernel *poWK )
 {
-    return GWKRun( poWK, "GWKBilinearNoMasksShort", GWKBilinearNoMasksShortThread );
-}
-
-static void GWKBilinearNoMasksShortThread( void* pData )
-
-{
-    GWKJobStruct* psJob = (GWKJobStruct*) pData;
-    GDALWarpKernel *poWK = psJob->poWK;
-    int iYMin = psJob->iYMin;
-    int iYMax = psJob->iYMax;
-
-    int iDstY;
-    int nDstXSize = poWK->nDstXSize;
-    int nSrcXSize = poWK->nSrcXSize, nSrcYSize = poWK->nSrcYSize;
-
-/* -------------------------------------------------------------------- */
-/*      Allocate x,y,z coordinate arrays for transformation ... one     */
-/*      scanlines worth of positions.                                   */
-/* -------------------------------------------------------------------- */
-    double *padfX, *padfY, *padfZ;
-    int    *pabSuccess;
-
-    padfX = (double *) CPLMalloc(sizeof(double) * nDstXSize);
-    padfY = (double *) CPLMalloc(sizeof(double) * nDstXSize);
-    padfZ = (double *) CPLMalloc(sizeof(double) * nDstXSize);
-    pabSuccess = (int *) CPLMalloc(sizeof(int) * nDstXSize);
-
-/* ==================================================================== */
-/*      Loop over output lines.                                         */
-/* ==================================================================== */
-    for( iDstY = iYMin; iDstY < iYMax; iDstY++ )
-    {
-        int iDstX;
-
-/* -------------------------------------------------------------------- */
-/*      Setup points to transform to source image space.                */
-/* -------------------------------------------------------------------- */
-        for( iDstX = 0; iDstX < nDstXSize; iDstX++ )
-        {
-            padfX[iDstX] = iDstX + 0.5 + poWK->nDstXOff;
-            padfY[iDstX] = iDstY + 0.5 + poWK->nDstYOff;
-            padfZ[iDstX] = 0.0;
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Transform the points from destination pixel/line coordinates    */
-/*      to source pixel/line coordinates.                               */
-/* -------------------------------------------------------------------- */
-        poWK->pfnTransformer( psJob->pTransformerArg, TRUE, nDstXSize,
-                              padfX, padfY, padfZ, pabSuccess );
-
-/* ==================================================================== */
-/*      Loop over pixels in output scanline.                            */
-/* ==================================================================== */
-        for( iDstX = 0; iDstX < nDstXSize; iDstX++ )
-        {
-            COMPUTE_iSrcOffset(pabSuccess, iDstX, padfX, padfY, poWK, nSrcXSize, nSrcYSize);
-
-/* ==================================================================== */
-/*      Loop processing each band.                                      */
-/* ==================================================================== */
-            int iBand;
-            int iDstOffset;
-
-            iDstOffset = iDstX + iDstY * nDstXSize;
-
-            for( iBand = 0; iBand < poWK->nBands; iBand++ )
-            {
-                GInt16  iValue = 0;
-                GWKBilinearResampleNoMasksShort( poWK, iBand,
-                                                 padfX[iDstX]-poWK->nSrcXOff,
-                                                 padfY[iDstX]-poWK->nSrcYOff,
-                                                 &iValue );
-                ((GInt16 *)poWK->papabyDstImage[iBand])[iDstOffset] = iValue;
-            }
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Report progress to the user, and optionally cancel out.         */
-/* -------------------------------------------------------------------- */
-        if (psJob->pfnProgress(psJob))
-            break;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Cleanup and return.                                             */
-/* -------------------------------------------------------------------- */
-    CPLFree( padfX );
-    CPLFree( padfY );
-    CPLFree( padfZ );
-    CPLFree( pabSuccess );
+    return GWKRun( poWK, "GWKBilinearNoMasksShort", GWKBilinearNoMasksThread<GInt16> );
 }
 
 /************************************************************************/
@@ -4342,101 +3908,9 @@ static void GWKBilinearNoMasksShortThread( void* pData )
 /*      for this particular transformation type.                        */
 /************************************************************************/
 
-static void GWKCubicNoMasksShortThread(void* pData);
-
 static CPLErr GWKCubicNoMasksShort( GDALWarpKernel *poWK )
 {
-    return GWKRun( poWK, "GWKCubicNoMasksShort", GWKCubicNoMasksShortThread );
-}
-
-static void GWKCubicNoMasksShortThread( void* pData )
-
-{
-    GWKJobStruct* psJob = (GWKJobStruct*) pData;
-    GDALWarpKernel *poWK = psJob->poWK;
-    int iYMin = psJob->iYMin;
-    int iYMax = psJob->iYMax;
-
-    int iDstY;
-    int nDstXSize = poWK->nDstXSize;
-    int nSrcXSize = poWK->nSrcXSize, nSrcYSize = poWK->nSrcYSize;
-
-/* -------------------------------------------------------------------- */
-/*      Allocate x,y,z coordinate arrays for transformation ... one     */
-/*      scanlines worth of positions.                                   */
-/* -------------------------------------------------------------------- */
-    double *padfX, *padfY, *padfZ;
-    int    *pabSuccess;
-
-    padfX = (double *) CPLMalloc(sizeof(double) * nDstXSize);
-    padfY = (double *) CPLMalloc(sizeof(double) * nDstXSize);
-    padfZ = (double *) CPLMalloc(sizeof(double) * nDstXSize);
-    pabSuccess = (int *) CPLMalloc(sizeof(int) * nDstXSize);
-
-/* ==================================================================== */
-/*      Loop over output lines.                                         */
-/* ==================================================================== */
-    for( iDstY = iYMin; iDstY < iYMax; iDstY++ )
-    {
-        int iDstX;
-
-/* -------------------------------------------------------------------- */
-/*      Setup points to transform to source image space.                */
-/* -------------------------------------------------------------------- */
-        for( iDstX = 0; iDstX < nDstXSize; iDstX++ )
-        {
-            padfX[iDstX] = iDstX + 0.5 + poWK->nDstXOff;
-            padfY[iDstX] = iDstY + 0.5 + poWK->nDstYOff;
-            padfZ[iDstX] = 0.0;
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Transform the points from destination pixel/line coordinates    */
-/*      to source pixel/line coordinates.                               */
-/* -------------------------------------------------------------------- */
-        poWK->pfnTransformer( psJob->pTransformerArg, TRUE, nDstXSize,
-                              padfX, padfY, padfZ, pabSuccess );
-
-/* ==================================================================== */
-/*      Loop over pixels in output scanline.                            */
-/* ==================================================================== */
-        for( iDstX = 0; iDstX < nDstXSize; iDstX++ )
-        {
-            COMPUTE_iSrcOffset(pabSuccess, iDstX, padfX, padfY, poWK, nSrcXSize, nSrcYSize);
-
-/* ==================================================================== */
-/*      Loop processing each band.                                      */
-/* ==================================================================== */
-            int iBand;
-            int iDstOffset;
-
-            iDstOffset = iDstX + iDstY * nDstXSize;
-
-            for( iBand = 0; iBand < poWK->nBands; iBand++ )
-            {
-                GInt16  iValue = 0;
-                GWKCubicResampleNoMasksShort( poWK, iBand,
-                                              padfX[iDstX]-poWK->nSrcXOff,
-                                              padfY[iDstX]-poWK->nSrcYOff,
-                                              &iValue );
-                ((GInt16 *)poWK->papabyDstImage[iBand])[iDstOffset] = iValue;
-            }
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Report progress to the user, and optionally cancel out.         */
-/* -------------------------------------------------------------------- */
-        if (psJob->pfnProgress(psJob))
-            break;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Cleanup and return.                                             */
-/* -------------------------------------------------------------------- */
-    CPLFree( padfX );
-    CPLFree( padfY );
-    CPLFree( padfZ );
-    CPLFree( pabSuccess );
+    return GWKRun( poWK, "GWKCubicNoMasksShort", GWKCubicNoMasksThread<GInt16> );
 }
 
 /************************************************************************/
@@ -4447,107 +3921,9 @@ static void GWKCubicNoMasksShortThread( void* pData )
 /*      for this particular transformation type.                        */
 /************************************************************************/
 
-static void GWKCubicSplineNoMasksShortThread(void* pData);
-
 static CPLErr GWKCubicSplineNoMasksShort( GDALWarpKernel *poWK )
 {
-    return GWKRun( poWK, "GWKCubicSplineNoMasksShort", GWKCubicSplineNoMasksShortThread );
-}
-
-static void GWKCubicSplineNoMasksShortThread( void* pData )
-
-{
-    GWKJobStruct* psJob = (GWKJobStruct*) pData;
-    GDALWarpKernel *poWK = psJob->poWK;
-    int iYMin = psJob->iYMin;
-    int iYMax = psJob->iYMax;
-
-    int iDstY;
-    int nDstXSize = poWK->nDstXSize;
-    int nSrcXSize = poWK->nSrcXSize, nSrcYSize = poWK->nSrcYSize;
-
-/* -------------------------------------------------------------------- */
-/*      Allocate x,y,z coordinate arrays for transformation ... one     */
-/*      scanlines worth of positions.                                   */
-/* -------------------------------------------------------------------- */
-    double *padfX, *padfY, *padfZ;
-    int    *pabSuccess;
-
-    padfX = (double *) CPLMalloc(sizeof(double) * nDstXSize);
-    padfY = (double *) CPLMalloc(sizeof(double) * nDstXSize);
-    padfZ = (double *) CPLMalloc(sizeof(double) * nDstXSize);
-    pabSuccess = (int *) CPLMalloc(sizeof(int) * nDstXSize);
-
-    int     nXRadius = poWK->nXRadius;
-    // Make space to save weights
-    double  *padfBSpline = (double *)CPLCalloc( nXRadius * 2, sizeof(double) );
-
-/* ==================================================================== */
-/*      Loop over output lines.                                         */
-/* ==================================================================== */
-    for( iDstY = iYMin; iDstY < iYMax; iDstY++ )
-    {
-        int iDstX;
-
-/* -------------------------------------------------------------------- */
-/*      Setup points to transform to source image space.                */
-/* -------------------------------------------------------------------- */
-        for( iDstX = 0; iDstX < nDstXSize; iDstX++ )
-        {
-            padfX[iDstX] = iDstX + 0.5 + poWK->nDstXOff;
-            padfY[iDstX] = iDstY + 0.5 + poWK->nDstYOff;
-            padfZ[iDstX] = 0.0;
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Transform the points from destination pixel/line coordinates    */
-/*      to source pixel/line coordinates.                               */
-/* -------------------------------------------------------------------- */
-        poWK->pfnTransformer( psJob->pTransformerArg, TRUE, nDstXSize,
-                              padfX, padfY, padfZ, pabSuccess );
-
-/* ==================================================================== */
-/*      Loop over pixels in output scanline.                            */
-/* ==================================================================== */
-        for( iDstX = 0; iDstX < nDstXSize; iDstX++ )
-        {
-            COMPUTE_iSrcOffset(pabSuccess, iDstX, padfX, padfY, poWK, nSrcXSize, nSrcYSize);
-
-/* ==================================================================== */
-/*      Loop processing each band.                                      */
-/* ==================================================================== */
-            int iBand;
-            int iDstOffset;
-
-            iDstOffset = iDstX + iDstY * nDstXSize;
-
-            for( iBand = 0; iBand < poWK->nBands; iBand++ )
-            {
-                GInt16  iValue = 0;
-                GWKCubicSplineResampleNoMasksShort( poWK, iBand,
-                                                    padfX[iDstX]-poWK->nSrcXOff,
-                                                    padfY[iDstX]-poWK->nSrcYOff,
-                                                    &iValue,
-                                                    padfBSpline);
-                ((GInt16 *)poWK->papabyDstImage[iBand])[iDstOffset] = iValue;
-            }
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Report progress to the user, and optionally cancel out.         */
-/* -------------------------------------------------------------------- */
-        if (psJob->pfnProgress(psJob))
-            break;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Cleanup and return.                                             */
-/* -------------------------------------------------------------------- */
-    CPLFree( padfX );
-    CPLFree( padfY );
-    CPLFree( padfZ );
-    CPLFree( pabSuccess );
-    CPLFree( padfBSpline );
+    return GWKRun( poWK, "GWKCubicSplineNoMasksShort", GWKCubicSplineNoMasksThread<GInt16> );
 }
 
 /************************************************************************/
@@ -4558,153 +3934,11 @@ static void GWKCubicSplineNoMasksShortThread( void* pData )
 /*      for this particular transformation type.                        */
 /************************************************************************/
 
-static void GWKNearestShortThread(void* pData);
-
 static CPLErr GWKNearestShort( GDALWarpKernel *poWK )
 {
-    return GWKRun( poWK, "GWKNearestShort", GWKNearestShortThread );
+    return GWKRun( poWK, "GWKNearestShort", GWKNearestThread<GInt16> );
 }
 
-static void GWKNearestShortThread(void* pData)
-{
-    GWKJobStruct* psJob = (GWKJobStruct*) pData;
-    GDALWarpKernel *poWK = psJob->poWK;
-    int iYMin = psJob->iYMin;
-    int iYMax = psJob->iYMax;
-
-    int iDstY;
-    int nDstXSize = poWK->nDstXSize;
-    int nSrcXSize = poWK->nSrcXSize, nSrcYSize = poWK->nSrcYSize;
-
-/* -------------------------------------------------------------------- */
-/*      Allocate x,y,z coordinate arrays for transformation ... one     */
-/*      scanlines worth of positions.                                   */
-/* -------------------------------------------------------------------- */
-    double *padfX, *padfY, *padfZ;
-    int    *pabSuccess;
-
-    padfX = (double *) CPLMalloc(sizeof(double) * nDstXSize);
-    padfY = (double *) CPLMalloc(sizeof(double) * nDstXSize);
-    padfZ = (double *) CPLMalloc(sizeof(double) * nDstXSize);
-    pabSuccess = (int *) CPLMalloc(sizeof(int) * nDstXSize);
-
-/* ==================================================================== */
-/*      Loop over output lines.                                         */
-/* ==================================================================== */
-    for( iDstY = iYMin; iDstY < iYMax; iDstY++ )
-    {
-        int iDstX;
-
-/* -------------------------------------------------------------------- */
-/*      Setup points to transform to source image space.                */
-/* -------------------------------------------------------------------- */
-        for( iDstX = 0; iDstX < nDstXSize; iDstX++ )
-        {
-            padfX[iDstX] = iDstX + 0.5 + poWK->nDstXOff;
-            padfY[iDstX] = iDstY + 0.5 + poWK->nDstYOff;
-            padfZ[iDstX] = 0.0;
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Transform the points from destination pixel/line coordinates    */
-/*      to source pixel/line coordinates.                               */
-/* -------------------------------------------------------------------- */
-        poWK->pfnTransformer( psJob->pTransformerArg, TRUE, nDstXSize,
-                              padfX, padfY, padfZ, pabSuccess );
-
-/* ==================================================================== */
-/*      Loop over pixels in output scanline.                            */
-/* ==================================================================== */
-        for( iDstX = 0; iDstX < nDstXSize; iDstX++ )
-        {
-            int iDstOffset;
-
-            COMPUTE_iSrcOffset(pabSuccess, iDstX, padfX, padfY, poWK, nSrcXSize, nSrcYSize);
-
-/* -------------------------------------------------------------------- */
-/*      Don't generate output pixels for which the source valid         */
-/*      mask exists and is invalid.                                     */
-/* -------------------------------------------------------------------- */
-            if( poWK->panUnifiedSrcValid != NULL
-                && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
-                     & (0x01 << (iSrcOffset & 0x1f))) )
-                continue;
-
-/* -------------------------------------------------------------------- */
-/*      Do not try to apply transparent source pixels to the destination.*/
-/* -------------------------------------------------------------------- */
-            double  dfDensity = 1.0;
-
-            if( poWK->pafUnifiedSrcDensity != NULL )
-            {
-                dfDensity = poWK->pafUnifiedSrcDensity[iSrcOffset];
-                if( dfDensity < 0.00001 )
-                    continue;
-            }
-
-/* ==================================================================== */
-/*      Loop processing each band.                                      */
-/* ==================================================================== */
-            int iBand;
-            iDstOffset = iDstX + iDstY * nDstXSize;
-
-            for( iBand = 0; iBand < poWK->nBands; iBand++ )
-            {
-                GInt16  iValue = 0;
-                double dfBandDensity = 0.0;
-
-/* -------------------------------------------------------------------- */
-/*      Collect the source value.                                       */
-/* -------------------------------------------------------------------- */
-                if ( GWKGetPixelShort( poWK, iBand, iSrcOffset, &dfBandDensity,
-                                       &iValue ) )
-                {
-                    if( dfBandDensity < 1.0 )
-                    {
-                        if( dfBandDensity == 0.0 )
-                            /* do nothing */;
-                        else
-                        {
-                            /* let the general code take care of mixing */
-                            GWKSetPixelValue( poWK, iBand, iDstOffset, 
-                                              dfBandDensity, (double) iValue, 
-                                              0.0 );
-                        }
-                    }
-                    else
-                    {
-                        ((GInt16 *)poWK->papabyDstImage[iBand])[iDstOffset] = iValue;
-                    }
-                }
-            }
-
-/* -------------------------------------------------------------------- */
-/*      Mark this pixel valid/opaque in the output.                     */
-/* -------------------------------------------------------------------- */
-            GWKOverlayDensity( poWK, iDstOffset, dfDensity );
-
-            if( poWK->panDstValid != NULL )
-            {
-                poWK->panDstValid[iDstOffset>>5] |= 
-                    0x01 << (iDstOffset & 0x1f);
-            }
-        } /* Next iDstX */
-
-/* -------------------------------------------------------------------- */
-/*      Report progress to the user, and optionally cancel out.         */
-/* -------------------------------------------------------------------- */
-        if (psJob->pfnProgress(psJob))
-            break;
-    } /* Next iDstY */
-
-/* -------------------------------------------------------------------- */
-/*      Cleanup and return.                                             */
-/* -------------------------------------------------------------------- */
-    CPLFree( padfX );
-    CPLFree( padfY );
-    CPLFree( padfZ );
-    CPLFree( pabSuccess );
-}
 
 /************************************************************************/
 /*                    GWKNearestNoMasksFloat()                          */
@@ -4714,99 +3948,11 @@ static void GWKNearestShortThread(void* pData)
 /*      as possible for this particular transformation type.            */
 /************************************************************************/
 
-static void GWKNearestNoMasksFloatThread(void* pData);
-
 static CPLErr GWKNearestNoMasksFloat( GDALWarpKernel *poWK )
 {
-    return GWKRun( poWK, "GWKNearestNoMasksFloat", GWKNearestNoMasksFloatThread );
+    return GWKRun( poWK, "GWKNearestNoMasksFloat", GWKNearestNoMasksThread<float> );
 }
 
-static void GWKNearestNoMasksFloatThread( void* pData )
-
-{
-    GWKJobStruct* psJob = (GWKJobStruct*) pData;
-    GDALWarpKernel *poWK = psJob->poWK;
-    int iYMin = psJob->iYMin;
-    int iYMax = psJob->iYMax;
-
-    int iDstY;
-    int nDstXSize = poWK->nDstXSize;
-    int nSrcXSize = poWK->nSrcXSize, nSrcYSize = poWK->nSrcYSize;
-
-/* -------------------------------------------------------------------- */
-/*      Allocate x,y,z coordinate arrays for transformation ... one     */
-/*      scanlines worth of positions.                                   */
-/* -------------------------------------------------------------------- */
-    double *padfX, *padfY, *padfZ;
-    int    *pabSuccess;
-
-    padfX = (double *) CPLMalloc(sizeof(double) * nDstXSize);
-    padfY = (double *) CPLMalloc(sizeof(double) * nDstXSize);
-    padfZ = (double *) CPLMalloc(sizeof(double) * nDstXSize);
-    pabSuccess = (int *) CPLMalloc(sizeof(int) * nDstXSize);
-
-/* ==================================================================== */
-/*      Loop over output lines.                                         */
-/* ==================================================================== */
-    for( iDstY = iYMin; iDstY < iYMax; iDstY++ )
-    {
-        int iDstX;
-
-/* -------------------------------------------------------------------- */
-/*      Setup points to transform to source image space.                */
-/* -------------------------------------------------------------------- */
-        for( iDstX = 0; iDstX < nDstXSize; iDstX++ )
-        {
-            padfX[iDstX] = iDstX + 0.5 + poWK->nDstXOff;
-            padfY[iDstX] = iDstY + 0.5 + poWK->nDstYOff;
-            padfZ[iDstX] = 0.0;
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Transform the points from destination pixel/line coordinates    */
-/*      to source pixel/line coordinates.                               */
-/* -------------------------------------------------------------------- */
-        poWK->pfnTransformer( psJob->pTransformerArg, TRUE, nDstXSize,
-                              padfX, padfY, padfZ, pabSuccess );
-
-/* ==================================================================== */
-/*      Loop over pixels in output scanline.                            */
-/* ==================================================================== */
-        for( iDstX = 0; iDstX < nDstXSize; iDstX++ )
-        {
-            int iDstOffset;
-
-            COMPUTE_iSrcOffset(pabSuccess, iDstX, padfX, padfY, poWK, nSrcXSize, nSrcYSize);
-
-/* ==================================================================== */
-/*      Loop processing each band.                                      */
-/* ==================================================================== */
-            int iBand;
-            
-            iDstOffset = iDstX + iDstY * nDstXSize;
-
-            for( iBand = 0; iBand < poWK->nBands; iBand++ )
-            {
-                ((float *)poWK->papabyDstImage[iBand])[iDstOffset] = 
-                    ((float *)poWK->papabySrcImage[iBand])[iSrcOffset];
-            }
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Report progress to the user, and optionally cancel out.         */
-/* -------------------------------------------------------------------- */
-        if (psJob->pfnProgress(psJob))
-            break;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Cleanup and return.                                             */
-/* -------------------------------------------------------------------- */
-    CPLFree( padfX );
-    CPLFree( padfY );
-    CPLFree( padfZ );
-    CPLFree( pabSuccess );
-}
 
 /************************************************************************/
 /*                          GWKNearestFloat()                           */
@@ -4816,155 +3962,11 @@ static void GWKNearestNoMasksFloatThread( void* pData )
 /*      for this particular transformation type.                        */
 /************************************************************************/
 
-static void GWKNearestFloatThread(void* pData);
-
 static CPLErr GWKNearestFloat( GDALWarpKernel *poWK )
 {
-    return GWKRun( poWK, "GWKNearestFloat", GWKNearestFloatThread );
+    return GWKRun( poWK, "GWKNearestFloat", GWKNearestThread<float> );
 }
 
-static void GWKNearestFloatThread( void* pData )
-
-{
-    GWKJobStruct* psJob = (GWKJobStruct*) pData;
-    GDALWarpKernel *poWK = psJob->poWK;
-    int iYMin = psJob->iYMin;
-    int iYMax = psJob->iYMax;
-
-    int iDstY;
-    int nDstXSize = poWK->nDstXSize;
-    int nSrcXSize = poWK->nSrcXSize, nSrcYSize = poWK->nSrcYSize;
-
-/* -------------------------------------------------------------------- */
-/*      Allocate x,y,z coordinate arrays for transformation ... one     */
-/*      scanlines worth of positions.                                   */
-/* -------------------------------------------------------------------- */
-    double *padfX, *padfY, *padfZ;
-    int    *pabSuccess;
-
-    padfX = (double *) CPLMalloc(sizeof(double) * nDstXSize);
-    padfY = (double *) CPLMalloc(sizeof(double) * nDstXSize);
-    padfZ = (double *) CPLMalloc(sizeof(double) * nDstXSize);
-    pabSuccess = (int *) CPLMalloc(sizeof(int) * nDstXSize);
-
-/* ==================================================================== */
-/*      Loop over output lines.                                         */
-/* ==================================================================== */
-    for( iDstY = iYMin; iDstY < iYMax; iDstY++ )
-    {
-        int iDstX;
-
-/* -------------------------------------------------------------------- */
-/*      Setup points to transform to source image space.                */
-/* -------------------------------------------------------------------- */
-        for( iDstX = 0; iDstX < nDstXSize; iDstX++ )
-        {
-            padfX[iDstX] = iDstX + 0.5 + poWK->nDstXOff;
-            padfY[iDstX] = iDstY + 0.5 + poWK->nDstYOff;
-            padfZ[iDstX] = 0.0;
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Transform the points from destination pixel/line coordinates    */
-/*      to source pixel/line coordinates.                               */
-/* -------------------------------------------------------------------- */
-        poWK->pfnTransformer( psJob->pTransformerArg, TRUE, nDstXSize,
-                              padfX, padfY, padfZ, pabSuccess );
-
-/* ==================================================================== */
-/*      Loop over pixels in output scanline.                            */
-/* ==================================================================== */
-        for( iDstX = 0; iDstX < nDstXSize; iDstX++ )
-        {
-            int iDstOffset;
-
-            COMPUTE_iSrcOffset(pabSuccess, iDstX, padfX, padfY, poWK, nSrcXSize, nSrcYSize);
-
-/* -------------------------------------------------------------------- */
-/*      Do not try to apply invalid source pixels to the dest.          */
-/* -------------------------------------------------------------------- */
-            if( poWK->panUnifiedSrcValid != NULL
-                && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
-                     & (0x01 << (iSrcOffset & 0x1f))) )
-                continue;
-
-/* -------------------------------------------------------------------- */
-/*      Do not try to apply transparent source pixels to the destination.*/
-/* -------------------------------------------------------------------- */
-            double  dfDensity = 1.0;
-
-            if( poWK->pafUnifiedSrcDensity != NULL )
-            {
-                dfDensity = poWK->pafUnifiedSrcDensity[iSrcOffset];
-                if( dfDensity < 0.00001 )
-                    continue;
-            }
-
-/* ==================================================================== */
-/*      Loop processing each band.                                      */
-/* ==================================================================== */
-            int iBand;
-
-            iDstOffset = iDstX + iDstY * nDstXSize;
-
-            for( iBand = 0; iBand < poWK->nBands; iBand++ )
-            {
-                float   fValue = 0;
-                double dfBandDensity = 0.0;
-
-/* -------------------------------------------------------------------- */
-/*      Collect the source value.                                       */
-/* -------------------------------------------------------------------- */
-                if ( GWKGetPixelFloat( poWK, iBand, iSrcOffset, &dfBandDensity,
-                                       &fValue ) )
-                {
-                    if( dfBandDensity < 1.0 )
-                    {
-                        if( dfBandDensity == 0.0 )
-                            /* do nothing */;
-                        else
-                        {
-                            /* let the general code take care of mixing */
-                            GWKSetPixelValue( poWK, iBand, iDstOffset, 
-                                              dfBandDensity, (double) fValue, 
-                                              0.0 );
-                        }
-                    }
-                    else
-                    {
-                        ((float *)poWK->papabyDstImage[iBand])[iDstOffset] 
-                            = fValue;
-                    }
-                }
-            }
-
-/* -------------------------------------------------------------------- */
-/*      Mark this pixel valid/opaque in the output.                     */
-/* -------------------------------------------------------------------- */
-            GWKOverlayDensity( poWK, iDstOffset, dfDensity );
-
-            if( poWK->panDstValid != NULL )
-            {
-                poWK->panDstValid[iDstOffset>>5] |= 
-                    0x01 << (iDstOffset & 0x1f);
-            }
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Report progress to the user, and optionally cancel out.         */
-/* -------------------------------------------------------------------- */
-        if (psJob->pfnProgress(psJob))
-            break;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Cleanup and return.                                             */
-/* -------------------------------------------------------------------- */
-    CPLFree( padfX );
-    CPLFree( padfY );
-    CPLFree( padfZ );
-    CPLFree( pabSuccess );
-}
 
 /************************************************************************/
 /*                           GWKAverageOrMode()                         */
@@ -5234,7 +4236,7 @@ static void GWKAverageOrModeThread( void* pData)
                                 {
                                     nCount++;
 
-                                    float fVal = dfValueRealTmp;
+                                    float fVal = (float)dfValueRealTmp;
                                     
                                     //Check array for existing entry
                                     for( i = 0; i < iMaxInd; ++i )
