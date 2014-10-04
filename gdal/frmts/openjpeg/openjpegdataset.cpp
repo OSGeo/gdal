@@ -49,7 +49,7 @@ CPL_CVSID("$Id$");
 /*                  JP2OpenJPEGDataset_ErrorCallback()                  */
 /************************************************************************/
 
-static void JP2OpenJPEGDataset_ErrorCallback(const char *pszMsg, void *unused)
+static void JP2OpenJPEGDataset_ErrorCallback(const char *pszMsg, CPL_UNUSED void *unused)
 {
     CPLError(CE_Failure, CPLE_AppDefined, "%s", pszMsg);
 }
@@ -58,7 +58,7 @@ static void JP2OpenJPEGDataset_ErrorCallback(const char *pszMsg, void *unused)
 /*               JP2OpenJPEGDataset_WarningCallback()                   */
 /************************************************************************/
 
-static void JP2OpenJPEGDataset_WarningCallback(const char *pszMsg, void *unused)
+static void JP2OpenJPEGDataset_WarningCallback(const char *pszMsg, CPL_UNUSED void *unused)
 {
     if( strcmp(pszMsg, "Empty SOT marker detected: Psot=12.\n") == 0 )
     {
@@ -75,7 +75,7 @@ static void JP2OpenJPEGDataset_WarningCallback(const char *pszMsg, void *unused)
 /*                 JP2OpenJPEGDataset_InfoCallback()                    */
 /************************************************************************/
 
-static void JP2OpenJPEGDataset_InfoCallback(const char *pszMsg, void *unused)
+static void JP2OpenJPEGDataset_InfoCallback(const char *pszMsg, CPL_UNUSED void *unused)
 {
     char* pszMsgTmp = CPLStrdup(pszMsg);
     int nLen = (int)strlen(pszMsgTmp);
@@ -1357,7 +1357,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     int  nXSize = poSrcDS->GetRasterXSize();
     int  nYSize = poSrcDS->GetRasterYSize();
 
-    if( nBands != 1 && nBands != 3 )
+    if( nBands != 1 && nBands != 3 /* && nBands != 4 */ )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Unable to export files with %d bands.", nBands );
@@ -1566,7 +1566,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     opj_set_warning_handler(pCodec, JP2OpenJPEGDataset_WarningCallback,NULL);
     opj_set_error_handler(pCodec, JP2OpenJPEGDataset_ErrorCallback,NULL);
 
-    OPJ_COLOR_SPACE eColorSpace = (bResample) ? OPJ_CLRSPC_SYCC : (nBands == 3) ? OPJ_CLRSPC_SRGB : OPJ_CLRSPC_GRAY;
+    OPJ_COLOR_SPACE eColorSpace = (bResample) ? OPJ_CLRSPC_SYCC : (nBands == 3 || nBands == 4) ? OPJ_CLRSPC_SRGB : OPJ_CLRSPC_GRAY;
 
     opj_image_t* psImage = opj_image_tile_create(nBands,pasBandParams,
                                                  eColorSpace);

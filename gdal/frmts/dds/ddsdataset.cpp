@@ -139,7 +139,7 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
     crn_dxt_quality dxt_quality = cCRNDXTQualityNormal;
     bool srgb_colorspace = true;    
     bool dxt1a_transparency = true;
-    bool generate_mipmaps = true;
+    //bool generate_mipmaps = true;
     
     /* Check the texture format */
     const char *pszFormat = CSLFetchNameValue( papszOptions, "FORMAT" );

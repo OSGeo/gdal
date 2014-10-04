@@ -683,7 +683,7 @@ GDALDataset* EpsilonDataset::Open(GDALOpenInfo* poOpenInfo)
 
 GDALDataset *
 EpsilonDatasetCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
-                       int bStrict, char ** papszOptions, 
+                       CPL_UNUSED int bStrict, char ** papszOptions, 
                        GDALProgressFunc pfnProgress, void * pProgressData )
 {
     int nBands = poSrcDS->GetRasterCount();

@@ -267,7 +267,7 @@ void OGROGDIDataSource::IAddLayer( const char *pszLayerName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGROGDIDataSource::TestCapability( const char * pszCap )
+int OGROGDIDataSource::TestCapability( CPL_UNUSED const char * pszCap )
 
 {
     return FALSE;

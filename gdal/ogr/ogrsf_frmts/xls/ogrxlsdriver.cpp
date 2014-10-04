@@ -83,7 +83,7 @@ OGRDataSource *OGRXLSDriver::Open( const char * pszFilename, int bUpdate )
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRXLSDriver::TestCapability( const char * pszCap )
+int OGRXLSDriver::TestCapability( CPL_UNUSED const char * pszCap )
 
 {
     return FALSE;

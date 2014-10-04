@@ -75,7 +75,7 @@ OGRXLSDataSource::~OGRXLSDataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRXLSDataSource::TestCapability( const char * pszCap )
+int OGRXLSDataSource::TestCapability( CPL_UNUSED const char * pszCap )
 
 {
     return FALSE;

@@ -511,7 +511,7 @@ void OGRAPISpy_DS_CreateLayer( OGRDataSourceH hDS,
     OGRAPISpyFileClose();
 }
 
-void OGRAPISpy_DS_DeleteLayer( OGRDataSourceH hDS, int iLayer, OGRErr eErr )
+void OGRAPISpy_DS_DeleteLayer( OGRDataSourceH hDS, int iLayer, CPL_UNUSED OGRErr eErr )
 {
     OGRAPISpyFlushDiffered();
     fprintf(fpSpyFile, "%s.DeleteLayer(%d)\n",

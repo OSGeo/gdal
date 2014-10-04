@@ -311,7 +311,7 @@ class OGRMDBDataSource : public OGRDataSource
                         OGRMDBDataSource();
                         ~OGRMDBDataSource();
 
-    int                 Open( const char *, int bUpdate, int bTestOpen );
+    int                 Open( const char * );
     int                 OpenTable( const char *pszTableName, 
                                    const char *pszGeomCol,
                                    int bUpdate );

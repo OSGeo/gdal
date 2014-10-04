@@ -241,7 +241,7 @@ CPLErr OGDIRasterBand::IReadBlock( int, int nBlockYOff, void * pImage )
 /*                             IRasterIO()                              */
 /************************************************************************/
 
-CPLErr OGDIRasterBand::IRasterIO( GDALRWFlag eRWFlag,
+CPLErr OGDIRasterBand::IRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
                                   int nXOff, int nYOff, int nXSize, int nYSize,
                                   void * pData, int nBufXSize, int nBufYSize,
                                   GDALDataType eBufType,
@@ -495,7 +495,8 @@ GDALColorTable *OGDIRasterBand::GetColorTable()
 CPLErr OGDIRasterBand::AdviseRead( int nXOff, int nYOff, 
                                    int nXSize, int nYSize,
                                    int nBufXSize, int nBufYSize, 
-                                   GDALDataType eDT, char **papszOptions )
+                                   CPL_UNUSED GDALDataType eDT,
+                                   CPL_UNUSED char **papszOptions )
 
 {
     return EstablishAccess( nXOff, nYOff, nXSize, nYSize, 
