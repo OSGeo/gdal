@@ -1154,7 +1154,7 @@ GDALDownsampleChunk32R_Cubic( int nSrcWidth, int nSrcHeight,
                 {
                     dfVal += padfHorizontalFiltered[j] * padfWeights[i];
                 }
-                pafDstScanline[iFilteredPixelOff] = dfVal;
+                pafDstScanline[iFilteredPixelOff] = (float)dfVal;
             }
         }
         else
@@ -1174,7 +1174,7 @@ GDALDownsampleChunk32R_Cubic( int nSrcWidth, int nSrcHeight,
                 }
                 if( dfWeightSum > 0.0 )
                 {
-                    pafDstScanline[iFilteredPixelOff] = dfVal / dfWeightSum;
+                    pafDstScanline[iFilteredPixelOff] = (float)(dfVal / dfWeightSum);
                 }
                 else
                 {
