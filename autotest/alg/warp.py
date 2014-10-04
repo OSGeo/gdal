@@ -254,7 +254,7 @@ def warp_4_float_downsize():
         return 'skip'
     
     ds = gdal.Open( 'data/utmsmall_cubicspline_wt_float32.vrt' )
-    ref_ds = gdal.Open( 'data/utmsmall_cubicspline_wt_float32.tif' )
+    ref_ds = gdal.Open( 'data/utmsmall_cubicspline_2.tif' )
     maxdiff = gdaltest.compare_ds(ds, ref_ds)
     ds = None
     ref_ds = None

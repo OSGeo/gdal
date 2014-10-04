@@ -2095,13 +2095,13 @@ static int GWKCubicResampleNoMasksT( GDALWarpKernel *poWK, int iBand,
 
 #define GWK_PI 3.14159265358979323846
 
-static double GWKLanczosSinc( double dfX, double dfR )
+static double GWKLanczosSinc( double dfX )
 {
     if ( dfX == 0.0 )
         return 1.0;
 
     const double dfPIX = GWK_PI * dfX;
-    const double dfPIXoverR = dfPIX / dfR;
+    const double dfPIXoverR = dfPIX / anGWKFilterRadius[GRA_Lanczos];
     const double dfPIX2overR = dfPIX * dfPIXoverR;
     return sin(dfPIX) * sin(dfPIXoverR) / dfPIX2overR;
 }
@@ -2218,9 +2218,7 @@ static GWKResampleWrkStruct* GWKResampleCreateWrkStruct(GDALWarpKernel *poWK)
     psWrkStruct->padfRowReal = (double *)CPLCalloc( nXDist, sizeof(double) );
     psWrkStruct->padfRowImag = (double *)CPLCalloc( nXDist, sizeof(double) );
 
-    if( poWK->eResample == GRA_Lanczos &&
-        poWK->dfXFilter == 3.0 &&
-        poWK->dfYFilter == 3.0 )
+    if( poWK->eResample == GRA_Lanczos )
     {
         psWrkStruct->pfnGWKResample = GWKResampleOptimizedLanczos;
 
@@ -2236,7 +2234,7 @@ static GWKResampleWrkStruct* GWKResampleCreateWrkStruct(GDALWarpKernel *poWK)
             for(int i = iMin; i <= iMax; ++i)
             {
                 psWrkStruct->padfWeightsX[i-poWK->nFiltInitX] =
-                    GWKLanczosSinc(i * dfXScale, poWK->dfXFilter) * dfXScale;
+                    GWKLanczosSinc(i * dfXScale);
             }
         }
 
@@ -2252,7 +2250,7 @@ static GWKResampleWrkStruct* GWKResampleCreateWrkStruct(GDALWarpKernel *poWK)
             for(int j = jMin; j <= jMax; ++j)
             {
                 psWrkStruct->padfWeightsY[j-poWK->nFiltInitY] =
-                    GWKLanczosSinc(j * dfYScale, poWK->dfYFilter) * dfYScale;
+                    GWKLanczosSinc(j * dfYScale);
             }
         }
     }
@@ -2303,7 +2301,6 @@ static int GWKResample( GDALWarpKernel *poWK, int iBand,
     const int     eResample = poWK->eResample;
 
     const double  dfXScale = poWK->dfXScale, dfYScale = poWK->dfYScale;
-    const double  dfXFilter = poWK->dfXFilter, dfYFilter = poWK->dfYFilter;
 
     int     i, j;
     const int     nXDist = ( poWK->nXRadius + 1 ) * 2;
@@ -2342,6 +2339,11 @@ static int GWKResample( GDALWarpKernel *poWK, int iBand,
 
     int iRowOffset = iSrcOffset + (j - 1) * nSrcXSize + iMin;
 
+    CPLAssert( eResample == GRA_CubicSpline );
+
+    double dfAccumulatorWeightHorizontal = 0.0;
+    double dfAccumulatorWeightVertical = 0.0;
+
     // Loop over pixel rows in the kernel
     for ( ; j <= jMax; ++j )
     {
@@ -2359,20 +2361,19 @@ static int GWKResample( GDALWarpKernel *poWK, int iBand,
             continue;
 
         // Select the resampling algorithm
-        if ( eResample == GRA_CubicSpline )
+        /* if ( eResample == GRA_CubicSpline ) */
             // Calculate the Y weight
             dfWeight1 = ( bYScaleBelow1 ) ?
-                GWKBSpline(((double)j) * dfYScale) * dfYScale :
-                GWKBSpline(((double)j) - dfDeltaY);
-        else /*if ( eResample == GRA_Lanczos )*/
-        {
-            if( bYScaleBelow1 )
-                dfWeight1 = GWKLanczosSinc(j * dfYScale, dfYFilter) * dfYScale;
-            else
-                dfWeight1 = GWKLanczosSinc(j - dfDeltaY, dfYFilter);
-        }
+                GWKBSpline((j - dfDeltaY) * dfYScale):
+                GWKBSpline(j - dfDeltaY);
+        /*else
+            CPLAssert(0);*/
 
         // Iterate over pixels in row
+        double dfAccumulatorRealLocal = 0.0;
+        double dfAccumulatorImagLocal = 0.0;
+        double dfAccumulatorDensityLocal = 0.0;
+
         for (i = iMin; i <= iMax; ++i )
         {
             double dfWeight2;
@@ -2384,39 +2385,39 @@ static int GWKResample( GDALWarpKernel *poWK, int iBand,
 
             // Make or use a cached set of weights for this row
             if ( panCalcX[i-iMin] )
+            {
                 // Use saved weight value instead of recomputing it
-                dfWeight2 = dfWeight1 * padfWeightsX[i-iMin];
+                dfWeight2 = padfWeightsX[i-iMin];
+            }
             else
             {
                 // Choose among possible algorithms
-                if ( eResample == GRA_CubicSpline )
+                /* if ( eResample == GRA_CubicSpline ) */
                     // Calculate & save the X weight
                     padfWeightsX[i-iMin] = dfWeight2 = ( bXScaleBelow1 ) ?
-                        GWKBSpline((double)i * dfXScale) * dfXScale :
-                        GWKBSpline(dfDeltaX - (double)i);
-                else /*if ( eResample == GRA_Lanczos )*/
-                {
-                    // Calculate & save the X weight
-                    if( bXScaleBelow1 )
-                        padfWeightsX[i-iMin] = dfWeight2 =
-                            GWKLanczosSinc(i * dfXScale, dfXFilter) * dfXScale;
-                    else
-                        padfWeightsX[i-iMin] = dfWeight2 = 
-                            GWKLanczosSinc(i - dfDeltaX, dfXFilter);
-                }
+                        GWKBSpline((i - dfDeltaX) * dfXScale):
+                        GWKBSpline(i - dfDeltaX);
+                /*else
+                    CPLAssert(0);*/
 
-                dfWeight2 *= dfWeight1;
+                dfAccumulatorWeightHorizontal += dfWeight2;
                 panCalcX[i-iMin] = TRUE;
             }
 
             // Accumulate!
-            dfAccumulatorReal += padfRowReal[i-iMin] * dfWeight2;
-            dfAccumulatorImag += padfRowImag[i-iMin] * dfWeight2;
+            dfAccumulatorRealLocal += padfRowReal[i-iMin] * dfWeight2;
+            dfAccumulatorImagLocal += padfRowImag[i-iMin] * dfWeight2;
             if( padfRowDensity != NULL )
-                dfAccumulatorDensity += padfRowDensity[i-iMin] * dfWeight2;
-            dfAccumulatorWeight += dfWeight2;
+                dfAccumulatorDensityLocal += padfRowDensity[i-iMin] * dfWeight2;
         }
+        
+        dfAccumulatorReal += dfAccumulatorRealLocal * dfWeight1;
+        dfAccumulatorImag += dfAccumulatorImagLocal * dfWeight1;
+        dfAccumulatorDensity += dfAccumulatorDensityLocal * dfWeight1;
+        dfAccumulatorWeightVertical += dfWeight1;
     }
+    
+    dfAccumulatorWeight = dfAccumulatorWeightHorizontal * dfAccumulatorWeightVertical;
 
     if ( dfAccumulatorWeight < 0.000001 ||
          (padfRowDensity != NULL && dfAccumulatorDensity < 0.000001) )
@@ -2758,64 +2759,72 @@ static int GWKCubicSplineResampleNoMasksT( GDALWarpKernel *poWK, int iBand,
     int     nXRadius = poWK->nXRadius;
     int     nYRadius = poWK->nYRadius;
 
-    T*  pabySrcBand = (T*) poWK->papabySrcImage[iBand];
+    T*  pSrcBand = (T*) poWK->papabySrcImage[iBand];
     
     // Politely refusing to process invalid coordinates or obscenely small image
     if ( iSrcX >= nSrcXSize || iSrcY >= nSrcYSize
          || nXRadius > nSrcXSize || nYRadius > nSrcYSize )
         return GWKBilinearResampleNoMasksT( poWK, iBand, dfSrcX, dfSrcY, pValue);
 
+    const int bXScaleBelow1 = ( dfXScale < 1.0 );
+    const int bYScaleBelow1 = ( dfYScale < 1.0 );
+
     // Loop over all rows in the kernel
-    int     j, jC;
-    for ( jC = 0, j = 1 - nYRadius; j <= nYRadius; ++j, ++jC )
+    double dfAccumulatorWeightHorizontal = 0.0;
+    double dfAccumulatorWeightVertical = 0.0;
+    
+    int iMin = 1 - nXRadius;
+    if( iSrcX + iMin < 0 )
+        iMin = -iSrcX;
+    int iMax = nXRadius;
+    if( iSrcX + iMax >= nSrcXSize-1 )
+        iMax = nSrcXSize-1 - iSrcX;
+    int i, iC;
+    for(iC = 0, i = iMin; i <= iMax; ++i, ++iC )
     {
-        int     iSampJ;
-        // Calculate the Y weight
-        double  dfWeight1 = ( dfYScale < 1.0 ) ?
-            GWKBSpline((double)j * dfYScale) * dfYScale :
-            GWKBSpline((double)j - dfDeltaY);
-
-        // Flip sampling over edge of image
-        if ( iSrcY + j < 0 )
-            iSampJ = iSrcOffset - (iSrcY + j) * nSrcXSize;
-        else if ( iSrcY + j >= nSrcYSize )
-            iSampJ = iSrcOffset + (2*nSrcYSize - 2*iSrcY - j - 1) * nSrcXSize;
-        else
-            iSampJ = iSrcOffset + j * nSrcXSize;
-        
-        // Loop over all pixels in the row
-        int     i, iC;
-        for ( iC = 0, i = 1 - nXRadius; i <= nXRadius; ++i, ++iC )
-        {
-            int     iSampI;
-            double  dfWeight2;
-            
-            // Flip sampling over edge of image
-            if ( iSrcX + i < 0 )
-                iSampI = -iSrcX - i;
-            else if ( iSrcX + i >= nSrcXSize )
-                iSampI = 2*nSrcXSize - 2*iSrcX - i - 1;
-            else
-                iSampI = i;
-            
-            // Make a cached set of GWKBSpline values
-            if( jC == 0 )
-            {
-                // Calculate & save the X weight
-                dfWeight2 = padfBSpline[iC] = ((dfXScale < 1.0 ) ?
-                    GWKBSpline((double)i * dfXScale) * dfXScale :
-                    GWKBSpline(dfDeltaX - (double)i));
-                dfWeight2 *= dfWeight1;
-            }
-            else
-                dfWeight2 = dfWeight1 * padfBSpline[iC];
-
-            // Retrieve the pixel & accumulate
-            dfAccumulator += (double)pabySrcBand[iSampI+iSampJ] * dfWeight2;
-        }
+        double dfWeight2 = (bXScaleBelow1) ?
+                    GWKBSpline((dfDeltaX - i) * dfXScale):
+                    GWKBSpline(dfDeltaX - i);
+        padfBSpline[iC] = dfWeight2;
+        dfAccumulatorWeightHorizontal += dfWeight2;
     }
 
-    *pValue = GWKClampValueT<T>(dfAccumulator);
+    int j = 1 - nYRadius;
+    if(  iSrcY + j < 0 )
+        j = -iSrcY;
+    int jMax = nYRadius;
+    if( iSrcY + jMax >= nSrcYSize-1 )
+        jMax = nSrcYSize-1 - iSrcY;
+
+    for ( ; j <= jMax; ++j )
+    {
+        int     iSampJ = iSrcOffset + j * nSrcXSize;
+
+        // Loop over all pixels in the row
+        double dfAccumulatorLocal = 0.0;
+        for(iC = 0, i = iMin; i <= iMax; ++i, ++iC )
+        {
+            double  dfWeight2 = padfBSpline[iC];
+
+            // Retrieve the pixel & accumulate
+            dfAccumulatorLocal += (double)pSrcBand[i+iSampJ] * dfWeight2;
+        }
+
+        // Calculate the Y weight
+        double  dfWeight1 = (bYScaleBelow1) ?
+            GWKBSpline((j - dfDeltaY) * dfYScale):
+            GWKBSpline(j - dfDeltaY);
+
+        dfAccumulator += dfWeight1 * dfAccumulatorLocal;
+        dfAccumulatorWeightVertical += dfWeight1;
+    }
+    
+    double dfAccumulatorWeight = dfAccumulatorWeightHorizontal * dfAccumulatorWeightVertical;
+    
+    if ( dfAccumulatorWeight >= 0.99999 && dfAccumulatorWeight <= 1.00001 )
+        *pValue = GWKClampValueT<T>(dfAccumulator);
+    else
+        *pValue = GWKClampValueT<T>(dfAccumulator / dfAccumulatorWeight);
 
     return TRUE;
 }
