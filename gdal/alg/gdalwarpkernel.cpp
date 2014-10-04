@@ -1015,6 +1015,83 @@ static void GWKOverlayDensity( GDALWarpKernel *poWK, int iDstOffset,
 /*                          GWKSetPixelValue()                          */
 /************************************************************************/
 
+template<class T>
+static T GWKClampValueT(double dfValue)
+{
+    if (dfValue < std::numeric_limits<T>::min())
+        return std::numeric_limits<T>::min();
+    else if (dfValue > std::numeric_limits<T>::max())
+        return std::numeric_limits<T>::max();
+    else
+        return (std::numeric_limits<T>::min() < 0) ? (T)floor(dfValue + 0.5) : (T)(dfValue + 0.5);
+}
+
+
+template<class T>
+static int GWKSetPixelValueRealT( GDALWarpKernel *poWK, int iBand, 
+                         int iDstOffset, double dfDensity,
+                         T value)
+{
+    T *pDst = (T*)(poWK->papabyDstImage[iBand]);
+
+/* -------------------------------------------------------------------- */
+/*      If the source density is less than 100% we need to fetch the    */
+/*      existing destination value, and mix it with the source to       */
+/*      get the new "to apply" value.  Also compute composite           */
+/*      density.                                                        */
+/*                                                                      */
+/*      We avoid mixing if density is very near one or risk mixing      */
+/*      in very extreme nodata values and causing odd results (#1610)   */
+/* -------------------------------------------------------------------- */
+    if( dfDensity < 0.9999 )
+    {
+        double dfDstReal, dfDstDensity = 1.0;
+
+        if( dfDensity < 0.0001 )
+            return TRUE;
+
+        if( poWK->pafDstDensity != NULL )
+            dfDstDensity = poWK->pafDstDensity[iDstOffset];
+        else if( poWK->panDstValid != NULL 
+                 && !((poWK->panDstValid[iDstOffset>>5]
+                       & (0x01 << (iDstOffset & 0x1f))) ) )
+            dfDstDensity = 0.0;
+
+        // It seems like we also ought to be testing panDstValid[] here!
+
+        dfDstReal = pDst[iDstOffset];
+
+        // the destination density is really only relative to the portion
+        // not occluded by the overlay.
+        double dfDstInfluence = (1.0 - dfDensity) * dfDstDensity;
+
+        double dfReal = (value * dfDensity + dfDstReal * dfDstInfluence) 
+                            / (dfDensity + dfDstInfluence);
+
+/* -------------------------------------------------------------------- */
+/*      Actually apply the destination value.                           */
+/*                                                                      */
+/*      Avoid using the destination nodata value for integer datatypes  */
+/*      if by chance it is equal to the computed pixel value.           */
+/* -------------------------------------------------------------------- */
+        pDst[iDstOffset] = GWKClampValueT<T>(dfReal);
+    }
+    else
+        pDst[iDstOffset] = value;
+
+    if (poWK->padfDstNoDataReal != NULL &&
+        poWK->padfDstNoDataReal[iBand] == (double)pDst[iDstOffset])
+    {
+        if (pDst[iDstOffset] == std::numeric_limits<T>::min())
+            pDst[iDstOffset] = std::numeric_limits<T>::min() + 1;
+        else
+            pDst[iDstOffset] --;
+    }
+
+    return TRUE;
+}
+
+
 static int GWKSetPixelValue( GDALWarpKernel *poWK, int iBand, 
                              int iDstOffset, double dfDensity, 
                              double dfReal, double dfImag )
@@ -1861,12 +1938,7 @@ static int GWKBilinearResampleNoMasksT( GDALWarpKernel *poWK, int iBand,
         dfValue = dfAccumulator / dfAccumulatorDivisor;
     }
 
-    if ( dfValue < std::numeric_limits<T>::min() )
-        *pValue = std::numeric_limits<T>::min();
-    else if ( dfValue > std::numeric_limits<T>::max() )
-        *pValue = std::numeric_limits<T>::max();
-    else
-        *pValue = (T)(0.5 + dfValue);
+    *pValue = GWKClampValueT<T>(dfValue);
 
     return TRUE;
 }
@@ -1999,14 +2071,9 @@ static int GWKCubicResampleNoMasksT( GDALWarpKernel *poWK, int iBand,
     double dfValue = CubicConvolution(
         dfDeltaY, dfDeltaY2, dfDeltaY3,
         adfValue[0], adfValue[1], adfValue[2], adfValue[3]);
-    
-    if ( dfValue < std::numeric_limits<T>::min() )
-        *pValue = std::numeric_limits<T>::min();
-    else if ( dfValue > std::numeric_limits<T>::max() )
-        *pValue = std::numeric_limits<T>::max();
-    else
-        *pValue = (T)floor(0.5 + dfValue);
-    
+
+    *pValue = GWKClampValueT<T>(dfValue);
+
     return TRUE;
 }
 
@@ -2748,13 +2815,8 @@ static int GWKCubicSplineResampleNoMasksT( GDALWarpKernel *poWK, int iBand,
         }
     }
 
-    if ( dfAccumulator <  std::numeric_limits<T>::min() )
-        *pValue = std::numeric_limits<T>::min();
-    else if ( dfAccumulator >  std::numeric_limits<T>::max() )
-        *pValue = std::numeric_limits<T>::max();
-    else
-        *pValue = (T)(0.5 + dfAccumulator);
-     
+    *pValue = GWKClampValueT<T>(dfAccumulator);
+
     return TRUE;
 }
 
@@ -3828,9 +3890,8 @@ static void GWKNearestThread( void* pData )
                         else
                         {
                             /* let the general code take care of mixing */
-                            GWKSetPixelValue( poWK, iBand, iDstOffset, 
-                                              dfBandDensity, (double) value, 
-                                              0.0 );
+                            GWKSetPixelValueRealT( poWK, iBand, iDstOffset, 
+                                          dfBandDensity, value );
                         }
                     }
                     else
