@@ -1203,19 +1203,69 @@ def tiff_ovr_31():
 
 def tiff_ovr_32():
 
+    # 4 regular band
     shutil.copyfile( 'data/stefan_full_rgba_photometric_rgb.tif', 'tmp/ovr32.tif' )
 
     ds = gdal.Open( 'tmp/ovr32.tif', gdal.GA_Update )
     ds.BuildOverviews( 'cubic', overviewlist = [2,5] )
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    expected_cs = 19589
+    expected_cs = 21168
     if cs != expected_cs:
         gdaltest.post_reason('Checksum is %d. Expected checksum is %d for overview 0.' % (cs, expected_cs))
         return 'fail'
 
     cs = ds.GetRasterBand(3).GetOverview(1).Checksum()
-    expected_cs = 1415
+    expected_cs = 1851
+    if cs != expected_cs:
+        gdaltest.post_reason('Checksum is %d. Expected checksum is %d for overview 1.' % (cs, expected_cs))
+        return 'fail'
+
+    ds = None
+
+    gdaltest.tiff_drv.Delete( 'tmp/ovr32.tif' )
+    
+    # Test GDALRegenerateOverviewsMultiBand
+    shutil.copyfile( 'data/stefan_full_rgba_photometric_rgb.tif', 'tmp/ovr32.tif' )
+
+    ds = gdal.Open( 'tmp/ovr32.tif' )
+    gdal.SetConfigOption('COMPRESS_OVERVIEW', 'DEFLATE')
+    gdal.SetConfigOption('INTERLEAVE_OVERVIEW', 'PIXEL')
+    ds.BuildOverviews( 'cubic', overviewlist = [2,5] )
+    gdal.SetConfigOption('COMPRESS_OVERVIEW', None)
+    gdal.SetConfigOption('INTERLEAVE_OVERVIEW', None)
+
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    expected_cs = 21168
+    if cs != expected_cs:
+        gdaltest.post_reason('Checksum is %d. Expected checksum is %d for overview 0.' % (cs, expected_cs))
+        return 'fail'
+
+    cs = ds.GetRasterBand(3).GetOverview(1).Checksum()
+    expected_cs = 1851
+    if cs != expected_cs:
+        gdaltest.post_reason('Checksum is %d. Expected checksum is %d for overview 1.' % (cs, expected_cs))
+        return 'fail'
+
+    ds = None
+
+    gdaltest.tiff_drv.Delete( 'tmp/ovr32.tif' )
+    
+
+    # 3 bands + alpha
+    shutil.copyfile( 'data/stefan_full_rgba.tif', 'tmp/ovr32.tif' )
+
+    ds = gdal.Open( 'tmp/ovr32.tif', gdal.GA_Update )
+    ds.BuildOverviews( 'cubic', overviewlist = [2,5] )
+
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    expected_cs = 21596
+    if cs != expected_cs:
+        gdaltest.post_reason('Checksum is %d. Expected checksum is %d for overview 0.' % (cs, expected_cs))
+        return 'fail'
+
+    cs = ds.GetRasterBand(3).GetOverview(1).Checksum()
+    expected_cs = 2028
     if cs != expected_cs:
         gdaltest.post_reason('Checksum is %d. Expected checksum is %d for overview 1.' % (cs, expected_cs))
         return 'fail'
