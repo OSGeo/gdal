@@ -63,13 +63,13 @@ class CPL_DLL OGREnvelope
     double      MaxY;
 
 /* See http://trac.osgeo.org/gdal/ticket/5299 for details on this pragma */
-#if (__GNUC__ == 4 && __GNUC_MINOR__ >= 6 && !defined(_MSC_VER)) 
-#pragma GCC diagnostic ignored "-Wfloat-equal"
+#if ((__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(_MSC_VER)) 
 #pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
 #endif
     int  IsInit() const { return MinX != 0 || MinY != 0 || MaxX != 0 || MaxY != 0; }
 
-#if (__GNUC__ == 4 && __GNUC_MINOR__ >= 6 && !defined(_MSC_VER))
+#if ((__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(_MSC_VER))
 #pragma GCC diagnostic pop
 #endif
 
