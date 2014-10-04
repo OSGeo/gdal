@@ -1173,11 +1173,18 @@ CPLErr VRTWarpedDataset::ProcessBlock( int iBlockX, int iBlockY )
 /*      Warp into this buffer.                                          */
 /* -------------------------------------------------------------------- */
     CPLErr eErr;
+    
+    int nReqXSize = nBlockXSize;
+    if( iBlockX * nBlockXSize + nReqXSize > nRasterXSize )
+        nReqXSize = nRasterXSize - iBlockX * nBlockXSize;
+    int nReqYSize = nBlockYSize;
+    if( iBlockY * nBlockYSize + nReqYSize > nRasterYSize )
+        nReqYSize = nRasterYSize - iBlockY * nBlockYSize;
 
     eErr = 
         poWarper->WarpRegionToBuffer( 
             iBlockX * nBlockXSize, iBlockY * nBlockYSize, 
-            nBlockXSize, nBlockYSize,
+            nReqXSize, nReqYSize,
             pabyDstBuffer, psWO->eWorkingDataType );
 
     if( eErr != CE_None )
@@ -1201,12 +1208,29 @@ CPLErr VRTWarpedDataset::ProcessBlock( int iBlockX, int iBlockY )
         {
             if ( poBlock->GetDataRef() != NULL )
             {
-                GDALCopyWords( pabyDstBuffer + iBand*nBlockXSize*nBlockYSize*nWordSize,
-                            psWO->eWorkingDataType, nWordSize, 
-                            poBlock->GetDataRef(), 
-                            poBlock->GetDataType(), 
-                            GDALGetDataTypeSize(poBlock->GetDataType())/8,
-                            nBlockXSize * nBlockYSize );
+                if( nReqXSize == nBlockXSize && nReqYSize == nBlockYSize )
+                {
+                    GDALCopyWords( pabyDstBuffer + iBand*nBlockXSize*nBlockYSize*nWordSize,
+                                psWO->eWorkingDataType, nWordSize, 
+                                poBlock->GetDataRef(), 
+                                poBlock->GetDataType(), 
+                                GDALGetDataTypeSize(poBlock->GetDataType())/8,
+                                nBlockXSize * nBlockYSize );
+                }
+                else
+                {
+                    GByte* pabyBlock = (GByte*) poBlock->GetDataRef();
+                    int nDTSize = GDALGetDataTypeSize(poBlock->GetDataType())/8;
+                    for(int iY=0;iY<nReqYSize;iY++)
+                    {
+                        GDALCopyWords( pabyDstBuffer + iBand*nReqXSize*nReqYSize*nWordSize + iY * nReqXSize*nWordSize,
+                                       psWO->eWorkingDataType, nWordSize, 
+                                       pabyBlock + iY * nBlockXSize * nDTSize, 
+                                       poBlock->GetDataType(), 
+                                       nDTSize,
+                                       nReqXSize );
+                    }
+                }
             }
 
             poBlock->DropLock();
