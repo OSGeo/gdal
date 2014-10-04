@@ -65,6 +65,9 @@ OGRDataSource *OGRMDBDriver::Open( const char * pszFilename,
 {
     OGRMDBDataSource     *poDS;
 
+    if( bUpdate )
+        return NULL;
+
     if( EQUALN(pszFilename, "PGEO:", strlen("PGEO:")) )
         return NULL;
 
@@ -84,7 +87,7 @@ OGRDataSource *OGRMDBDriver::Open( const char * pszFilename,
     // Open data source
     poDS = new OGRMDBDataSource();
 
-    if( !poDS->Open( pszFilename, bUpdate, TRUE ) )
+    if( !poDS->Open( pszFilename ) )
     {
         delete poDS;
         return NULL;
@@ -97,7 +100,7 @@ OGRDataSource *OGRMDBDriver::Open( const char * pszFilename,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRMDBDriver::TestCapability( const char * pszCap )
+int OGRMDBDriver::TestCapability( CPL_UNUSED const char * pszCap )
 
 {
     return FALSE;

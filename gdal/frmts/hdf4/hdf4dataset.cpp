@@ -1208,7 +1208,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*                           HDF4UnloadDriver()                         */
 /************************************************************************/
 
-static void HDF4UnloadDriver(GDALDriver* poDriver)
+static void HDF4UnloadDriver(CPL_UNUSED GDALDriver* poDriver)
 {
     if( hHDF4Mutex != NULL )
         CPLDestroyMutex(hHDF4Mutex);

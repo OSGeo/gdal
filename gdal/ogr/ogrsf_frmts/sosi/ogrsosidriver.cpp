@@ -36,7 +36,7 @@ static int bFYBAInit = FALSE;
 /*                        OGRSOSIDriverUnload()                         */
 /************************************************************************/
 
-static void OGRSOSIDriverUnload(GDALDriver* poDriver) {
+static void OGRSOSIDriverUnload(CPL_UNUSED GDALDriver* poDriver) {
 
     if ( bFYBAInit )
     {
@@ -75,8 +75,9 @@ static GDALDataset *OGRSOSIDriverOpen( GDALOpenInfo* poOpenInfo )
 /************************************************************************/
 
 static GDALDataset *OGRSOSIDriverCreate( const char * pszName,
-                                int nBands, int nXSize, int nYSize, GDALDataType eDT,
-                                char **papszOptions )
+                                         CPL_UNUSED int nBands, CPL_UNUSED int nXSize,
+                                         CPL_UNUSED int nYSize, CPL_UNUSED GDALDataType eDT,
+                                         CPL_UNUSED char **papszOptions )
 {
     
     if ( !bFYBAInit )

@@ -1190,9 +1190,10 @@ CPLErr JPIPKAKDataset::IRasterIO( GDALRWFlag eRWFlag,
 /************************************************************************/
 
 int 
-JPIPKAKDataset::TestUseBlockIO( int nXOff, int nYOff, int nXSize, int nYSize,
+JPIPKAKDataset::TestUseBlockIO( CPL_UNUSED int nXOff, CPL_UNUSED int nYOff,
+                                int nXSize, int nYSize,
                                 int nBufXSize, int nBufYSize,
-                                GDALDataType eDataType, 
+                                CPL_UNUSED GDALDataType eDataType, 
                                 int nBandCount, int *panBandList )
 
 {

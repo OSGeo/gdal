@@ -5754,7 +5754,13 @@ netCDFDataset::ProcessCreationOptions( )
 
 }
 
-int netCDFDataset::DefVarDeflate( int nVarId, int bChunkingArg )
+int netCDFDataset::DefVarDeflate(
+#ifdef NETCDF_HAS_NC4
+            int nVarId, int bChunkingArg
+#else
+            CPL_UNUSED int nVarId, CPL_UNUSED int bChunkingArg
+#endif
+            )
 {
 #ifdef NETCDF_HAS_NC4
     if ( nCompress == NCDF_COMPRESS_DEFLATE ) {                         

@@ -2430,7 +2430,7 @@ OGRFeature *FGdbLayer::GetFeature( long oid )
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-int FGdbLayer::GetFeatureCount( int bForce )
+int FGdbLayer::GetFeatureCount( CPL_UNUSED int bForce )
 {
     long           hr;
     int32          rowCount = 0;

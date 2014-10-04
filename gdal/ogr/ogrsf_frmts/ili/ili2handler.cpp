@@ -166,7 +166,7 @@ void ILI2Handler::characters( const XMLCh *const chars,
 /************************************************************************/
 
 void ILI2Handler::characters( const XMLCh *const chars,
-                     const unsigned int length ) {
+                     CPL_UNUSED const unsigned int length ) {
   
   // add the text element
   if (level >= 3) {

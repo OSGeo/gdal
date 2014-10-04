@@ -286,8 +286,7 @@ int OGRMDBDataSource::OpenGeomediaWarehouse(OGRMDBTable* poGAliasTable)
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRMDBDataSource::Open( const char * pszNewName, int bUpdate,
-                              int bTestOpen )
+int OGRMDBDataSource::Open( const char * pszNewName )
 
 {
     CPLAssert( nLayers == 0 );
@@ -349,7 +348,7 @@ int OGRMDBDataSource::Open( const char * pszNewName, int bUpdate,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRMDBDataSource::TestCapability( const char * pszCap )
+int OGRMDBDataSource::TestCapability( CPL_UNUSED const char * pszCap )
 
 {
     return FALSE;
