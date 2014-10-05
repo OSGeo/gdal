@@ -76,7 +76,13 @@ class CPL_DLL MEMDataset : public GDALDataset
 
     virtual CPLErr        AddBand( GDALDataType eType, 
                                    char **papszOptions=NULL );
-
+    virtual CPLErr  IRasterIO( GDALRWFlag eRWFlag,
+                               int nXOff, int nYOff, int nXSize, int nYSize,
+                               void * pData, int nBufXSize, int nBufYSize,
+                               GDALDataType eBufType, 
+                               int nBandCount, int *panBandMap,
+                               int nPixelSpace, int nLineSpace, int nBandSpace);
+    
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
@@ -90,6 +96,7 @@ class CPL_DLL MEMDataset : public GDALDataset
 class CPL_DLL MEMRasterBand : public GDALPamRasterBand
 {
   protected:
+    friend      class MEMDataset;
 
     GByte      *pabyData;
     int         nPixelOffset;
@@ -121,7 +128,11 @@ class CPL_DLL MEMRasterBand : public GDALPamRasterBand
 
     virtual CPLErr IReadBlock( int, int, void * );
     virtual CPLErr IWriteBlock( int, int, void * );
-
+    virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
+                                  int nXOff, int nYOff, int nXSize, int nYSize,
+                                  void * pData, int nBufXSize, int nBufYSize,
+                                  GDALDataType eBufType,
+                                  int nPixelSpace, int nLineSpace );
     virtual double GetNoDataValue( int *pbSuccess = NULL );
     virtual CPLErr SetNoDataValue( double );
 

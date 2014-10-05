@@ -322,6 +322,128 @@ def mem_8():
     return 'success'
 
 ###############################################################################
+# Test RasterIO()
+
+def mem_9():
+
+    # Test IRasterIO(GF_Read,)
+    src_ds = gdal.Open('data/rgbsmall.tif')
+    drv = gdal.GetDriverByName('MEM')
+    
+    for interleave in [ 'BAND', 'PIXEL' ] :
+        out_ds = drv.CreateCopy('', src_ds, options = ['INTERLEAVE=%s' % interleave])
+        ref_data = src_ds.GetRasterBand(2).ReadRaster(20,8,4,5)
+        got_data = out_ds.GetRasterBand(2).ReadRaster(20,8,4,5)
+        if ref_data != got_data:
+            print(interleave)
+            import struct
+            print(struct.unpack('B' * 4 * 5, ref_data))
+            print(struct.unpack('B' * 4 * 5, got_data))
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        ref_data = src_ds.GetRasterBand(2).ReadRaster(20,8,4,5, buf_pixel_space=3, buf_line_space=100)
+        got_data = out_ds.GetRasterBand(2).ReadRaster(20,8,4,5, buf_pixel_space=3, buf_line_space=100)
+        if ref_data != got_data:
+            print(interleave)
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        ref_data = src_ds.ReadRaster(20,8,4,5)
+        got_data = out_ds.ReadRaster(20,8,4,5)
+        if ref_data != got_data:
+            print(interleave)
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        ref_data = src_ds.ReadRaster(20,8,4,5, buf_pixel_space=3, buf_band_space=1)
+        got_data = out_ds.ReadRaster(20,8,4,5, buf_pixel_space=3, buf_band_space=1)
+        if ref_data != got_data:
+            print(interleave)
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        out_ds.WriteRaster(20,8,4,5, got_data, buf_pixel_space=3, buf_band_space=1)
+        got_data = out_ds.ReadRaster(20,8,4,5, buf_pixel_space=3, buf_band_space=1)
+        if ref_data != got_data:
+            print(interleave)
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        ref_data = src_ds.ReadRaster(20,8,4,5, buf_pixel_space=3, buf_line_space=100, buf_band_space=1)
+        got_data = out_ds.ReadRaster(20,8,4,5, buf_pixel_space=3, buf_line_space=100, buf_band_space=1)
+        if ref_data != got_data:
+            print(interleave)
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        ref_data = src_ds.ReadRaster(20,20,4,5, buf_type = gdal.GDT_Int32, buf_pixel_space=12, buf_band_space=4)
+        got_data = out_ds.ReadRaster(20,20,4,5, buf_type = gdal.GDT_Int32, buf_pixel_space=12, buf_band_space=4)
+        if ref_data != got_data:
+            print(interleave)
+            gdaltest.post_reason('fail')
+            return 'fail'
+        out_ds.WriteRaster(20,20,4,5, got_data, buf_type = gdal.GDT_Int32, buf_pixel_space=12, buf_band_space=4)
+        got_data = out_ds.ReadRaster(20,20,4,5, buf_type = gdal.GDT_Int32, buf_pixel_space=12, buf_band_space=4)
+        if ref_data != got_data:
+            print(interleave)
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        # Test IReadBlock
+        ref_data = src_ds.GetRasterBand(1).ReadRaster(0,10,src_ds.RasterXSize,1)
+        # This is a bit nasty to have to do that. We should fix the core
+        # to make that unnecessary
+        out_ds.FlushCache()
+        got_data = out_ds.GetRasterBand(1).ReadBlock(0,10)
+        if ref_data != got_data:
+            print(interleave)
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        # Test IRasterIO(GF_Write,)
+        ref_data = src_ds.GetRasterBand(1).ReadRaster(2,3,4,5)
+        out_ds.GetRasterBand(1).WriteRaster(6,7,4,5,ref_data)
+        got_data = out_ds.GetRasterBand(1).ReadRaster(6,7,4,5)
+        if ref_data != got_data:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        # Test IRasterIO(GF_Write, change data type) + IWriteBlock() + IRasterIO(GF_Read, change data type)
+        ref_data = src_ds.GetRasterBand(1).ReadRaster(10,11,4,5, buf_type = gdal.GDT_Int32)
+        out_ds.GetRasterBand(1).WriteRaster(10,11,4,5,ref_data, buf_type = gdal.GDT_Int32)
+        got_data = out_ds.GetRasterBand(1).ReadRaster(10,11,4,5, buf_type = gdal.GDT_Int32)
+        if ref_data != got_data:
+            print(interleave)
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        ref_data = src_ds.GetRasterBand(1).ReadRaster(10,11,4,5)
+        got_data = out_ds.GetRasterBand(1).ReadRaster(10,11,4,5)
+        if ref_data != got_data:
+            print(interleave)
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        # Test IRasterIO(GF_Write, resampling) + IWriteBlock() + IRasterIO(GF_Read, resampling)
+        ref_data = src_ds.GetRasterBand(1).ReadRaster(10,11,4,5)
+        ref_data_zoomed = src_ds.GetRasterBand(1).ReadRaster(10,11,4,5,8,10)
+        out_ds.GetRasterBand(1).WriteRaster(10,11,8,10,ref_data,4,5)
+        got_data = out_ds.GetRasterBand(1).ReadRaster(10,11,8,10)
+        if ref_data_zoomed != got_data:
+            print(interleave)
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        got_data = out_ds.GetRasterBand(1).ReadRaster(10,11,8,10,4,5)
+        if ref_data != got_data:
+            print(interleave)
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def mem_cleanup():
@@ -338,6 +460,7 @@ gdaltest_list = [
     mem_6,
     mem_7,
     mem_8,
+    mem_9,
     mem_cleanup ]
 
 if __name__ == '__main__':
