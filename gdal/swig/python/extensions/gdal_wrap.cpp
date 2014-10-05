@@ -4413,7 +4413,8 @@ SWIGINTERN CPLErr GDALDatasetShadow_ReadRaster1(GDALDatasetShadow *self,int xoff
     int line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
     int band_space = (buf_band_space == 0) ? 0 : *buf_band_space;
 
-    GIntBig buf_size = ComputeDatasetRasterIOSize (nxsize, nysize, GDALGetDataTypeSize( ntype ) / 8,
+    int ntypesize = GDALGetDataTypeSize( ntype ) / 8;
+    GIntBig buf_size = ComputeDatasetRasterIOSize (nxsize, nysize, ntypesize,
                                                band_list ? band_list : GDALGetRasterCount(self), pband_list, band_list,
                                                pixel_space, line_space, band_space, FALSE);
     if (buf_size == 0)
@@ -4441,6 +4442,20 @@ SWIGINTERN CPLErr GDALDatasetShadow_ReadRaster1(GDALDatasetShadow *self,int xoff
     }
     char *data = PyString_AsString( (PyObject *)*buf ); 
 #endif
+
+    /* Should we clear the buffer in case there are hole in it ? */
+    if( line_space != 0 && pixel_space != 0 && line_space > pixel_space * nxsize )
+    {
+        memset(data, 0, buf_size);
+    }
+    else if( band_list > 1 && band_space != 0 )
+    {
+        if( line_space != 0 && band_space > line_space * nysize )
+            memset(data, 0, buf_size);
+        else if( pixel_space != 0 && band_space < pixel_space &&
+                 pixel_space != GDALGetRasterCount(self) * ntypesize )
+            memset(data, 0, buf_size);
+    }
 
     CPLErr eErr = GDALDatasetRasterIO(self, GF_Read, xoff, yoff, xsize, ysize,
                                (void*) data, nxsize, nysize, ntype,
@@ -4825,6 +4840,13 @@ SWIGINTERN CPLErr GDALRasterBandShadow_ReadRaster1(GDALRasterBandShadow *self,in
     }
     char *data = PyString_AsString( (PyObject *)*buf ); 
 #endif
+
+    /* Should we clear the buffer in case there are hole in it ? */
+    if( line_space != 0 && pixel_space != 0 && line_space > pixel_space * nxsize )
+    {
+        memset(data, 0, buf_size);
+    }
+
     CPLErr eErr = GDALRasterIO( self, GF_Read, xoff, yoff, xsize, ysize, 
                          (void *) data, nxsize, nysize, ntype, 
                          pixel_space, line_space ); 
