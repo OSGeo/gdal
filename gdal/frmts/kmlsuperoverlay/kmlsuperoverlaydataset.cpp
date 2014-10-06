@@ -639,7 +639,7 @@ GDALDataset *KmlSuperOverlayCreateCopy( const char * pszFilename,
     }
 
     //Zoom levels of the pyramid.
-    int maxzoom;
+    int maxzoom = 0;
     int tilexsize;
     int tileysize;
     // Let the longer side determine the max zoom level and x/y tilesizes.
@@ -649,9 +649,8 @@ GDALDataset *KmlSuperOverlayCreateCopy( const char * pszFilename,
         while (dtilexsize > 400) //calculate x tile size
         {
             dtilexsize = dtilexsize/2;
+            maxzoom ++;
         }
-
-        maxzoom   = static_cast<int>(log( (double)xsize / dtilexsize ) / log(2.0));
         tilexsize = (int)dtilexsize;
         tileysize = (int)( (double)(dtilexsize * ysize) / xsize );
     }
@@ -661,9 +660,9 @@ GDALDataset *KmlSuperOverlayCreateCopy( const char * pszFilename,
         while (dtileysize > 400) //calculate y tile size
         {
             dtileysize = dtileysize/2;
+            maxzoom ++;
         }
 
-        maxzoom   = static_cast<int>(log( (double)ysize / dtileysize ) / log(2.0));
         tileysize = (int)dtileysize;
         tilexsize = (int)( (double)(dtileysize * xsize) / ysize );
     }
@@ -749,8 +748,8 @@ GDALDataset *KmlSuperOverlayCreateCopy( const char * pszFilename,
 
     for (zoom = maxzoom; zoom >= 0; --zoom)
     {
-        int rmaxxsize = static_cast<int>(pow(2.0, (maxzoom-zoom)) * tilexsize);
-        int rmaxysize = static_cast<int>(pow(2.0, (maxzoom-zoom)) * tileysize);
+        int rmaxxsize = tilexsize * (1 << (maxzoom-zoom));
+        int rmaxysize = tileysize * (1 << (maxzoom-zoom));
 
         int xloop = (int)xsize/rmaxxsize;
         int yloop = (int)ysize/rmaxysize;
@@ -759,8 +758,8 @@ GDALDataset *KmlSuperOverlayCreateCopy( const char * pszFilename,
 
     for (zoom = maxzoom; zoom >= 0; --zoom)
     {
-        int rmaxxsize = static_cast<int>(pow(2.0, (maxzoom-zoom)) * tilexsize);
-        int rmaxysize = static_cast<int>(pow(2.0, (maxzoom-zoom)) * tileysize);
+        int rmaxxsize = tilexsize * (1 << (maxzoom-zoom));
+        int rmaxysize = tileysize * (1 << (maxzoom-zoom));
 
         int xloop = (int)xsize/rmaxxsize;
         int yloop = (int)ysize/rmaxysize;
