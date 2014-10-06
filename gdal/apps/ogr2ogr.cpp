@@ -76,6 +76,10 @@ typedef struct
     TargetLayerInfo  *psInfo;
 } AssociatedLayers;
 
+static OGRLayer* GetLayerAndOverwriteIfNecessary(GDALDataset *poDstDS,
+                                                 const char* pszNewLayerName,
+                                                 int bOverwrite,
+                                                 int* pbErrorOccured);
 static TargetLayerInfo* SetupTargetLayer( GDALDataset *poSrcDS,
                                                 OGRLayer * poSrcLayer,
                                                 GDALDataset *poDstDS,
@@ -1684,6 +1688,11 @@ int main( int nArgc, char ** papszArgv )
     {
         OGRLayer *poResultSet;
 
+        /* Special case: if output=input, then we must likely destroy the */
+        /* old table before to avoid transaction issues. */
+        if( poDS == poODS && pszNewLayerName != NULL && bOverwrite )
+            GetLayerAndOverwriteIfNecessary(poODS, pszNewLayerName, bOverwrite, NULL);
+
         if( pszWHERE != NULL )
             fprintf( stderr,  "-where clause ignored in combination with -sql.\n" );
         if( CSLCount(papszLayers) > 0 )
@@ -2469,6 +2478,63 @@ static int ForceCoordDimension(int eGType, int nCoordDim)
 }
 
 /************************************************************************/
+/*                   GetLayerAndOverwriteIfNecessary()                  */
+/************************************************************************/
+
+static OGRLayer* GetLayerAndOverwriteIfNecessary(GDALDataset *poDstDS,
+                                                 const char* pszNewLayerName,
+                                                 int bOverwrite,
+                                                 int* pbErrorOccured)
+{
+    if( pbErrorOccured )
+        *pbErrorOccured = FALSE;
+
+    /* GetLayerByName() can instanciate layers that would have been */
+    /* 'hidden' otherwise, for example, non-spatial tables in a */
+    /* Postgis-enabled database, so this apparently useless command is */
+    /* not useless... (#4012) */
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    OGRLayer* poDstLayer = poDstDS->GetLayerByName(pszNewLayerName);
+    CPLPopErrorHandler();
+    CPLErrorReset();
+
+    int iLayer = -1;
+    if (poDstLayer != NULL)
+    {
+        int nLayerCount = poDstDS->GetLayerCount();
+        for( iLayer = 0; iLayer < nLayerCount; iLayer++ )
+        {
+            OGRLayer        *poLayer = poDstDS->GetLayer(iLayer);
+            if (poLayer == poDstLayer)
+                break;
+        }
+
+        if (iLayer == nLayerCount)
+            /* shouldn't happen with an ideal driver */
+            poDstLayer = NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If the user requested overwrite, and we have the layer in       */
+/*      question we need to delete it now so it will get recreated      */
+/*      (overwritten).                                                  */
+/* -------------------------------------------------------------------- */
+    if( poDstLayer != NULL && bOverwrite )
+    {
+        if( poDstDS->DeleteLayer( iLayer ) != OGRERR_NONE )
+        {
+            fprintf( stderr,
+                     "DeleteLayer() failed when overwrite requested.\n" );
+            if( pbErrorOccured )
+                *pbErrorOccured = TRUE;
+        }
+        poDstLayer = NULL;
+    }
+
+    return poDstLayer;
+}
+
+/************************************************************************/
 /*                         SetupTargetLayer()                           */
 /************************************************************************/
 
@@ -2564,46 +2630,13 @@ static TargetLayerInfo* SetupTargetLayer( CPL_UNUSED GDALDataset *poSrcDS,
 /*      Find the layer.                                                 */
 /* -------------------------------------------------------------------- */
 
-    /* GetLayerByName() can instanciate layers that would have been */
-    /* 'hidden' otherwise, for example, non-spatial tables in a */
-    /* Postgis-enabled database, so this apparently useless command is */
-    /* not useless... (#4012) */
-    CPLPushErrorHandler(CPLQuietErrorHandler);
-    poDstLayer = poDstDS->GetLayerByName(pszNewLayerName);
-    CPLPopErrorHandler();
-    CPLErrorReset();
-
-    int iLayer = -1;
-    if (poDstLayer != NULL)
-    {
-        int nLayerCount = poDstDS->GetLayerCount();
-        for( iLayer = 0; iLayer < nLayerCount; iLayer++ )
-        {
-            OGRLayer        *poLayer = poDstDS->GetLayer(iLayer);
-            if (poLayer == poDstLayer)
-                break;
-        }
-
-        if (iLayer == nLayerCount)
-            /* shouldn't happen with an ideal driver */
-            poDstLayer = NULL;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      If the user requested overwrite, and we have the layer in       */
-/*      question we need to delete it now so it will get recreated      */
-/*      (overwritten).                                                  */
-/* -------------------------------------------------------------------- */
-    if( poDstLayer != NULL && bOverwrite )
-    {
-        if( poDstDS->DeleteLayer( iLayer ) != OGRERR_NONE )
-        {
-            fprintf( stderr,
-                     "DeleteLayer() failed when overwrite requested.\n" );
-            return NULL;
-        }
-        poDstLayer = NULL;
-    }
+    int bErrorOccured;
+    poDstLayer = GetLayerAndOverwriteIfNecessary(poDstDS,
+                                                 pszNewLayerName,
+                                                 bOverwrite,
+                                                 &bErrorOccured);
+    if( bErrorOccured )
+        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      If the layer does not exist, then create it.                    */
