@@ -1077,7 +1077,7 @@ static CPLString InsertCenterLong( GDALDatasetH hDS, CPLString osWKT )
  * to georef transformation on the source dataset.
  * <li> DST_METHOD: may have a value which is one of GEOTRANSFORM, 
  * GCP_POLYNOMIAL, GCP_TPS, GEOLOC_ARRAY, RPC to force only one geolocation 
- * method to be considered on the source dataset.  Will be used for pixel/line 
+ * method to be considered on the target dataset.  Will be used for pixel/line 
  * to georef transformation on the destination dataset.
  * <li> RPC_HEIGHT: A fixed height to be used with RPC calculations.
  * <li> RPC_DEM: The name of a DEM file to be used with RPC calculations.
@@ -1148,7 +1148,7 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
 /* -------------------------------------------------------------------- */
 /*      Get forward and inverse geotransform for the source image.      */
 /* -------------------------------------------------------------------- */
-    if( hSrcDS == NULL )
+    if( hSrcDS == NULL || (pszMethod != NULL && EQUAL(pszMethod,"NO_GEOTRANSFORM")) )
     {
         psInfo->adfSrcGeoTransform[0] = 0.0;
         psInfo->adfSrcGeoTransform[1] = 1.0;
@@ -1275,7 +1275,8 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Unable to compute a transformation between pixel/line\n"
                   "and georeferenced coordinates for %s.\n"
-                  "There is no affine transformation and no GCPs.", 
+                  "There is no affine transformation and no GCPs.\n"
+                  "Specify transformation option SRC_METHOD=NO_GEOTRANSFORM to bypass this check.", 
                   GDALGetDescription( hSrcDS ) );
 
         GDALDestroyGenImgProjTransformer( psInfo );
@@ -1288,7 +1289,7 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
 /* -------------------------------------------------------------------- */
     const char *pszDstMethod = CSLFetchNameValue( papszOptions, "DST_METHOD" );
 
-    if( !hDstDS )
+    if( !hDstDS || (pszDstMethod != NULL && EQUAL(pszDstMethod,"NO_GEOTRANSFORM"))  )
     {
         psInfo->adfDstGeoTransform[0] = 0.0;
         psInfo->adfDstGeoTransform[1] = 1.0;
