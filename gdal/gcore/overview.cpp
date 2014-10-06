@@ -971,10 +971,169 @@ static double GDALGetCubicWeight(double dfX)
         return 0.0;
 }
 
-static CPLErr
-GDALDownsampleChunk32R_Cubic( int nSrcWidth, int nSrcHeight,
+/************************************************************************/
+/*                  GDALDownsampleConvolutionHorizontal()               */
+/************************************************************************/
+
+template<class T> static inline double GDALDownsampleConvolutionHorizontal(
+                            const T* pChunk, const double* padfWeights, int nSrcPixelCount)
+{
+    double dfVal1 = 0.0, dfVal2 = 0.0;
+    int i = 0;
+    for(;i+3<nSrcPixelCount;i+=4)
+    {
+        dfVal1 += pChunk[i] * padfWeights[i];
+        dfVal1 += pChunk[i+1] * padfWeights[i+1];
+        dfVal2 += pChunk[i+2] * padfWeights[i+2];
+        dfVal2 += pChunk[i+3] * padfWeights[i+3];
+    }
+    for(;i<nSrcPixelCount;i++)
+    {
+        dfVal1 += pChunk[i] * padfWeights[i];
+    }
+    return dfVal1 + dfVal2;
+}
+
+/************************************************************************/
+/*                  GDALDownsampleConvolutionVertical()                 */
+/************************************************************************/
+
+template<class T> static inline double GDALDownsampleConvolutionVertical(
+                 const T* pChunk, int nStride, const double* padfWeights, int nSrcLineCount)
+{
+    double dfVal1 = 0.0, dfVal2 = 0.0;
+    int i = 0;
+    for(;i+3<nSrcLineCount;i+=4)
+    {
+        dfVal1 += pChunk[i*nStride] * padfWeights[i];
+        dfVal1 += pChunk[(i+1)*nStride] * padfWeights[i+1];
+        dfVal2 += pChunk[(i+2)*nStride] * padfWeights[i+2];
+        dfVal2 += pChunk[(i+3)*nStride] * padfWeights[i+3];
+    }
+    for(;i<nSrcLineCount;i++)
+    {
+        dfVal1 += pChunk[i*nStride] * padfWeights[i];
+    }
+    return dfVal1 + dfVal2;
+}
+
+/* We restrict to 64bit processors because they are guaranteed to have SSE2 */
+/* Could possibly be used too on 32bit, but we would need to check at runtime */
+#if defined(__x86_64) || defined(_M_X64)
+
+/* Requires SSE2 */
+#include <emmintrin.h>
+template<class T> static inline void GDALDownsample_SSE2_Load4Samples(const T* ptr,
+                                                               __m128d& low,
+                                                               __m128d& high);
+
+template<> inline void GDALDownsample_SSE2_Load4Samples(const GByte* ptr,
+                                                 __m128d& low, __m128d& high)
+{
+    __m128i xmm_i = _mm_cvtsi32_si128(*(int*)(ptr));
+    xmm_i = _mm_unpacklo_epi8(xmm_i, _mm_setzero_si128());
+    xmm_i = _mm_unpacklo_epi16(xmm_i, _mm_setzero_si128());
+    low = _mm_cvtepi32_pd(xmm_i);
+    high =  _mm_cvtepi32_pd(_mm_shuffle_epi32(xmm_i,_MM_SHUFFLE(3,2,3,2)));
+}
+
+/************************************************************************/
+/*              GDALDownsampleConvolutionHorizontal<GByte>              */
+/************************************************************************/
+
+template<> inline double GDALDownsampleConvolutionHorizontal<GByte>(
+                         const GByte* pChunk, const double* padfWeights, int nSrcPixelCount)
+{
+    __m128d xmm_acc1_1 = _mm_setzero_pd();
+    __m128d xmm_acc2_1 = _mm_setzero_pd();
+    int i = 0;
+    for(;i+7<nSrcPixelCount;i+=8)
+    {
+        // Retrieve the pixel & accumulate
+        __m128d xmm_pixels1_d, xmm_pixels2_d;
+        GDALDownsample_SSE2_Load4Samples(pChunk+i, xmm_pixels1_d, xmm_pixels2_d);
+        __m128d xmm_pixels3_d, xmm_pixels4_d;
+        GDALDownsample_SSE2_Load4Samples(pChunk+i+4, xmm_pixels3_d, xmm_pixels4_d);
+
+        __m128d xmm_padfWeight1 = _mm_load_pd(padfWeights + i);
+        __m128d xmm_padfWeight2 = _mm_load_pd(padfWeights + i + 2);
+        __m128d xmm_padfWeight3 = _mm_load_pd(padfWeights + i + 4);
+        __m128d xmm_padfWeight4 = _mm_load_pd(padfWeights + i + 6);
+
+        xmm_acc1_1 = _mm_add_pd(xmm_acc1_1, _mm_mul_pd(xmm_pixels1_d,xmm_padfWeight1));
+        xmm_acc2_1 = _mm_add_pd(xmm_acc2_1, _mm_mul_pd(xmm_pixels2_d,xmm_padfWeight2));
+        xmm_acc1_1 = _mm_add_pd(xmm_acc1_1, _mm_mul_pd(xmm_pixels3_d,xmm_padfWeight3));
+        xmm_acc2_1 = _mm_add_pd(xmm_acc2_1, _mm_mul_pd(xmm_pixels4_d,xmm_padfWeight4));
+    }
+
+    xmm_acc1_1 = _mm_add_pd(xmm_acc1_1,xmm_acc2_1);
+    xmm_acc2_1 = _mm_shuffle_pd(xmm_acc1_1,xmm_acc2_1,_MM_SHUFFLE2(0,1)); /* transfer high word of acc1 into low word of acc2 */
+    xmm_acc1_1 = _mm_add_pd(xmm_acc1_1,xmm_acc2_1);
+
+    double dfVal;
+    _mm_storel_pd(&dfVal, xmm_acc1_1);
+
+    for(;i<nSrcPixelCount;i++)
+    {
+        dfVal += pChunk[i] * padfWeights[i];
+    }
+    return dfVal;
+}
+
+#if 0
+/* Doesn't bring speed advantages in practice */
+template<> inline double GDALDownsampleConvolutionVertical(
+                            const double* pChunk, int nStride,
+                            const double* padfWeights, int nSrcLineCount)
+{
+    __m128d xmm_acc1_1 = _mm_setzero_pd();
+    __m128d xmm_acc2_1 = _mm_setzero_pd();
+    int i = 0;
+    for(;i+7<nSrcLineCount;i+=8)
+    {
+        // Retrieve the pixel & accumulate
+        __m128d xmm_pixels1_d, xmm_pixels2_d, xmm_pixels3_d, xmm_pixels4_d;
+        xmm_pixels1_d = _mm_loadl_pd(xmm_pixels1_d, pChunk+i *  nStride);
+        xmm_pixels1_d = _mm_loadh_pd(xmm_pixels1_d, pChunk+(i+1) * nStride);
+        xmm_pixels2_d = _mm_loadl_pd(xmm_pixels2_d, pChunk+(i+2) * nStride);
+        xmm_pixels2_d = _mm_loadh_pd(xmm_pixels2_d, pChunk+(i+3) * nStride);
+        xmm_pixels3_d = _mm_loadl_pd(xmm_pixels3_d, pChunk+(i+4) *  nStride);
+        xmm_pixels3_d = _mm_loadh_pd(xmm_pixels3_d, pChunk+(i+5) * nStride);
+        xmm_pixels4_d = _mm_loadl_pd(xmm_pixels4_d, pChunk+(i+6) * nStride);
+        xmm_pixels4_d = _mm_loadh_pd(xmm_pixels4_d, pChunk+(i+7) * nStride);
+
+        __m128d xmm_padfWeight1 = _mm_loadu_pd(padfWeights + i);
+        __m128d xmm_padfWeight2 = _mm_loadu_pd(padfWeights + i + 2);
+        __m128d xmm_padfWeight3 = _mm_loadu_pd(padfWeights + i + 4);
+        __m128d xmm_padfWeight4 = _mm_loadu_pd(padfWeights + i + 6);
+
+        xmm_acc1_1 = _mm_add_pd(xmm_acc1_1, _mm_mul_pd(xmm_pixels1_d,xmm_padfWeight1));
+        xmm_acc2_1 = _mm_add_pd(xmm_acc2_1, _mm_mul_pd(xmm_pixels2_d,xmm_padfWeight2));
+        xmm_acc1_1 = _mm_add_pd(xmm_acc1_1, _mm_mul_pd(xmm_pixels3_d,xmm_padfWeight3));
+        xmm_acc2_1 = _mm_add_pd(xmm_acc2_1, _mm_mul_pd(xmm_pixels4_d,xmm_padfWeight4));
+    }
+
+    xmm_acc1_1 = _mm_add_pd(xmm_acc1_1,xmm_acc2_1);
+    xmm_acc2_1 = _mm_shuffle_pd(xmm_acc1_1,xmm_acc2_1,_MM_SHUFFLE2(0,1)); /* transfer high word of acc1 into low word of acc2 */
+    xmm_acc1_1 = _mm_add_pd(xmm_acc1_1,xmm_acc2_1);
+
+    double dfVal;
+    _mm_storel_pd(&dfVal, xmm_acc1_1);
+
+    for(;i<nSrcLineCount;i++)
+    {
+        dfVal += pChunk[i*nStride] * padfWeights[i];
+    }
+    return dfVal;
+}
+#endif
+
+#endif /*  defined(__x86_64) || defined(_M_X64) */
+
+template<class T> static CPLErr
+GDALDownsampleChunk32R_CubicT( int nSrcWidth, int nSrcHeight,
                               CPL_UNUSED GDALDataType eWrkDataType,
-                              void * pChunk,
+                              T * pChunk,
                               GByte * pabyChunkNodataMask,
                               int nChunkXOff, int nChunkXSize,
                               int nChunkYOff, int nChunkYSize,
@@ -991,7 +1150,6 @@ GDALDownsampleChunk32R_Cubic( int nSrcWidth, int nSrcHeight,
 
     CPLErr eErr = CE_None;
 
-    float * pafChunk = (float*) pChunk;
     if (!bHasNoData)
         fNoDataValue = 0.0f;
 
@@ -1012,22 +1170,27 @@ GDALDownsampleChunk32R_Cubic( int nSrcWidth, int nSrcHeight,
     double* padfHorizontalFiltered = (double*) VSIMalloc(nChunkYSize * nDstXSize * sizeof(double));
 
     /* To store convolution coefficients */
-    double* padfWeights = (double*) CPLMalloc((int)(2 + 2 * MAX(dfXScaledRadius, dfYScaledRadius) + 0.5) * sizeof(double));
+    double* padfWeightsAlloc = (double*) CPLMalloc((int)(2 + 2 * MAX(dfXScaledRadius, dfYScaledRadius) + 0.5 + 1 /* for alignment*/) * sizeof(double));
 
     GByte* pabyChunkNodataMaskHorizontalFiltered = NULL;
     if( pabyChunkNodataMask )
         pabyChunkNodataMaskHorizontalFiltered = (GByte*) VSIMalloc(nChunkYSize * nDstXSize);
     if( pafDstScanline == NULL || padfHorizontalFiltered == NULL ||
-        padfWeights == NULL || (pabyChunkNodataMask != NULL && pabyChunkNodataMaskHorizontalFiltered == NULL) )
+        padfWeightsAlloc == NULL || (pabyChunkNodataMask != NULL && pabyChunkNodataMaskHorizontalFiltered == NULL) )
     {
         CPLError( CE_Failure, CPLE_OutOfMemory,
                   "GDALDownsampleChunk32R_Cubic: Out of memory for work buffers." );
         VSIFree(pafDstScanline);
         VSIFree(padfHorizontalFiltered);
-        VSIFree(padfWeights);
+        VSIFree(padfWeightsAlloc);
         VSIFree(pabyChunkNodataMaskHorizontalFiltered);
         return CE_Failure;
     }
+
+    /* Make sure we are aligned on 16 bits */
+    double* padfWeights = padfWeightsAlloc;
+    if( (((size_t)padfWeights) % 16) != 0 )
+        padfWeights ++;
 
 /* ==================================================================== */
 /*      Fist pass: horizontal filter                                    */
@@ -1071,12 +1234,9 @@ GDALDownsampleChunk32R_Cubic( int nSrcWidth, int nSrcHeight,
         {
             for( int iSrcLineOff = 0; iSrcLineOff < nChunkYSize; iSrcLineOff ++ )
             {
-                double dfVal = 0.0;
-                for(int i=0, j=iSrcLineOff * nChunkXSize + (nSrcPixelStart - nChunkXOff);
-                    i<nSrcPixelCount;i++, j++)
-                {
-                    dfVal += pafChunk[j] * padfWeights[i];
-                }
+                int j=iSrcLineOff * nChunkXSize + (nSrcPixelStart - nChunkXOff);
+                double dfVal = GDALDownsampleConvolutionHorizontal(pChunk + j,
+                                                padfWeights, nSrcPixelCount);
                 padfHorizontalFiltered[iSrcLineOff * nDstXSize + iDstPixel - nDstXOff] = dfVal;
             }
         }
@@ -1091,7 +1251,7 @@ GDALDownsampleChunk32R_Cubic( int nSrcWidth, int nSrcHeight,
                 {
                     if( pabyChunkNodataMask[j] )
                     {
-                        dfVal += pafChunk[j] * padfWeights[i];
+                        dfVal += pChunk[j] * padfWeights[i];
                         dfWeightSum += padfWeights[i];
                     }
                 }
@@ -1148,12 +1308,9 @@ GDALDownsampleChunk32R_Cubic( int nSrcWidth, int nSrcHeight,
         {
             for( int iFilteredPixelOff = 0; iFilteredPixelOff < nDstXSize; iFilteredPixelOff ++ )
             {
-                double dfVal = 0.0;
-                for(int i=0, j=(nSrcLineStart - nChunkYOff) * nDstXSize + iFilteredPixelOff;
-                    i<nSrcLineCount; i++, j+=nDstXSize)
-                {
-                    dfVal += padfHorizontalFiltered[j] * padfWeights[i];
-                }
+                int j=(nSrcLineStart - nChunkYOff) * nDstXSize + iFilteredPixelOff;
+                double dfVal = GDALDownsampleConvolutionVertical(
+                    padfHorizontalFiltered + j, nDstXSize, padfWeights, nSrcLineCount);
                 pafDstScanline[iFilteredPixelOff] = (float)dfVal;
             }
         }
@@ -1188,12 +1345,60 @@ GDALDownsampleChunk32R_Cubic( int nSrcWidth, int nSrcHeight,
                                      0, 0 );
     }
 
-    VSIFree( padfWeights );
+    VSIFree( padfWeightsAlloc );
     VSIFree( padfHorizontalFiltered );
     VSIFree( pafDstScanline );
     VSIFree(pabyChunkNodataMaskHorizontalFiltered);
 
     return eErr;
+}
+
+static CPLErr
+GDALDownsampleChunk32R_Cubic( int nSrcWidth, int nSrcHeight,
+                        GDALDataType eWrkDataType,
+                        void * pChunk,
+                        GByte * pabyChunkNodataMask_unused,
+                        int nChunkXOff, int nChunkXSize,
+                        int nChunkYOff, int nChunkYSize,
+                        int nDstXOff, int nDstXOff2,
+                        int nDstYOff, int nDstYOff2,
+                        GDALRasterBand * poOverview,
+                        const char * pszResampling_unused,
+                        int bHasNoData, float fNoDataValue,
+                        GDALColorTable* poColorTable_unused,
+                        GDALDataType eSrcDataType)
+{
+    if (eWrkDataType == GDT_Byte)
+        return GDALDownsampleChunk32R_CubicT(nSrcWidth, nSrcHeight,
+                        eWrkDataType,
+                        (GByte *) pChunk,
+                        pabyChunkNodataMask_unused,
+                        nChunkXOff, nChunkXSize,
+                        nChunkYOff, nChunkYSize,
+                        nDstXOff, nDstXOff2,
+                        nDstYOff, nDstYOff2,
+                        poOverview,
+                        pszResampling_unused,
+                        bHasNoData, fNoDataValue,
+                        poColorTable_unused,
+                        eSrcDataType);
+    else if (eWrkDataType == GDT_Float32)
+        return GDALDownsampleChunk32R_CubicT(nSrcWidth, nSrcHeight,
+                        eWrkDataType,
+                        (float *) pChunk,
+                        pabyChunkNodataMask_unused,
+                        nChunkXOff, nChunkXSize,
+                        nChunkYOff, nChunkYSize,
+                        nDstXOff, nDstXOff2,
+                        nDstYOff, nDstYOff2,
+                        poOverview,
+                        pszResampling_unused,
+                        bHasNoData, fNoDataValue,
+                        poColorTable_unused,
+                        eSrcDataType);
+
+    CPLAssert(0);
+    return CE_Failure;
 }
 
 /************************************************************************/
@@ -1472,7 +1677,9 @@ GDALDownsampleFunction GDALGetDownsampleFunction(const char* pszResampling)
 static GDALDataType GDALGetOvrWorkDataType(const char* pszResampling,
                                         GDALDataType eSrcDataType)
 {
-    if( (EQUALN(pszResampling,"NEAR",4) || EQUALN(pszResampling,"AVER",4)) &&
+    if( (EQUALN(pszResampling,"NEAR",4) ||
+         EQUALN(pszResampling,"AVER",4) ||
+         EQUAL(pszResampling,"CUBIC")) &&
         eSrcDataType == GDT_Byte)
         return GDT_Byte;
     else
