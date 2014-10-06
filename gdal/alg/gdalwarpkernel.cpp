@@ -3228,22 +3228,19 @@ static int GWKResampleNoMasks_SSE2_T( GDALWarpKernel *poWK, int iBand,
         iC = 0;
         i = iMin;
         /* Process by chunk of 4 cols */
-        XMMReg2Double v_acc1_1 = XMMReg2Double::Zero();
-        XMMReg2Double v_acc2_1 = XMMReg2Double::Zero();
+        XMMReg4Double v_acc = XMMReg4Double::Zero();
         for(; i+2 < iMax; i+=4, iC+=4 )
         {
             // Retrieve the pixel & accumulate
-            XMMReg2Double v_pixels1_1, v_pixels2_1;
-            XMMReg2Double::Load4Val(pSrcBand+i+iSampJ, v_pixels1_1, v_pixels2_1);
+            XMMReg4Double v_pixels= XMMReg4Double::Load4Val(pSrcBand+i+iSampJ);
+            XMMReg4Double v_padfWeight = XMMReg4Double::Load4Val(padfWeight + iC);
 
-            v_acc1_1 += v_pixels1_1 * XMMReg2Double::Load2Val(padfWeight + iC);
-            v_acc2_1 += v_pixels2_1 * XMMReg2Double::Load2Val(padfWeight + iC + 2);
+            v_acc += v_pixels * v_padfWeight;
         }
 
-        v_acc1_1 += v_acc2_1;
-        v_acc1_1.AddLowAndHigh();
+        v_acc.AddLowAndHigh();
 
-        double dfAccumulatorLocal = (double)v_acc1_1;
+        double dfAccumulatorLocal = (double)v_acc.GetLow();
 
         if( i < iMax )
         {
