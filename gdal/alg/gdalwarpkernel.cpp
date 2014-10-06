@@ -3062,17 +3062,11 @@ static int GWKResampleNoMasksT( GDALWarpKernel *poWK, int iBand,
 /* Could possibly be used too on 32bit, but we would need to check at runtime */
 #if defined(__x86_64) || defined(_M_X64)
 
-/* Requires SSE2 */
-#include <emmintrin.h>
+#include <gdalsse_priv.h>
 
 /************************************************************************/
 /*                    GWKResampleNoMasks_SSE2_T()                       */
 /************************************************************************/
-
-template<class T> static inline __m128d GWK_SSE2_Load2Samples(const T* ptr);
-template<class T> static inline void GWK_SSE2_Load4Samples(const T* ptr,
-                                                               __m128d& low,
-                                                               __m128d& high);
 
 template<class T>
 static int GWKResampleNoMasks_SSE2_T( GDALWarpKernel *poWK, int iBand,
@@ -3154,72 +3148,74 @@ static int GWKResampleNoMasks_SSE2_T( GDALWarpKernel *poWK, int iBand,
         iC = 0;
         i = iMin;
         /* Process by chunk of 4 cols */
-        __m128d xmm_acc1_1 = _mm_setzero_pd();
-        __m128d xmm_acc2_1 = _mm_setzero_pd();
-        __m128d xmm_acc1_2 = _mm_setzero_pd();
-        __m128d xmm_acc2_2 = _mm_setzero_pd();
-        __m128d xmm_acc1_3 = _mm_setzero_pd();
-        __m128d xmm_acc2_3 = _mm_setzero_pd();
-        __m128d xmm_acc1_4 = _mm_setzero_pd();
-        __m128d xmm_acc2_4 = _mm_setzero_pd();
+        XMMReg2Double v_acc1_1 = XMMReg2Double::Zero();
+        XMMReg2Double v_acc2_1 = XMMReg2Double::Zero();
+        XMMReg2Double v_acc1_2 = XMMReg2Double::Zero();
+        XMMReg2Double v_acc2_2 = XMMReg2Double::Zero();
+        XMMReg2Double v_acc1_3 = XMMReg2Double::Zero();
+        XMMReg2Double v_acc2_3 = XMMReg2Double::Zero();
+        XMMReg2Double v_acc1_4 = XMMReg2Double::Zero();
+        XMMReg2Double v_acc2_4 = XMMReg2Double::Zero();
         for(; i+2 < iMax; i+=4, iC+=4 )
         {
             // Retrieve the pixel & accumulate
-            __m128d xmm_pixels1_1_d, xmm_pixels2_1_d;
-            __m128d xmm_pixels1_2_d, xmm_pixels2_2_d;
-            __m128d xmm_pixels1_3_d, xmm_pixels2_3_d;
-            __m128d xmm_pixels1_4_d, xmm_pixels2_4_d;
-            GWK_SSE2_Load4Samples(pSrcBand+i+iSampJ, xmm_pixels1_1_d, xmm_pixels2_1_d);
-            GWK_SSE2_Load4Samples(pSrcBand+i+iSampJ+nSrcXSize, xmm_pixels1_2_d, xmm_pixels2_2_d);
-            GWK_SSE2_Load4Samples(pSrcBand+i+iSampJ+2*nSrcXSize, xmm_pixels1_3_d, xmm_pixels2_3_d);
-            GWK_SSE2_Load4Samples(pSrcBand+i+iSampJ+3*nSrcXSize, xmm_pixels1_4_d, xmm_pixels2_4_d);
+            XMMReg2Double v_pixels1_1, v_pixels2_1;
+            XMMReg2Double v_pixels1_2, v_pixels2_2;
+            XMMReg2Double v_pixels1_3, v_pixels2_3;
+            XMMReg2Double v_pixels1_4, v_pixels2_4;
+            XMMReg2Double::Load4Val(pSrcBand+i+iSampJ, v_pixels1_1, v_pixels2_1);
+            XMMReg2Double::Load4Val(pSrcBand+i+iSampJ+nSrcXSize, v_pixels1_2, v_pixels2_2);
+            XMMReg2Double::Load4Val(pSrcBand+i+iSampJ+2*nSrcXSize, v_pixels1_3, v_pixels2_3);
+            XMMReg2Double::Load4Val(pSrcBand+i+iSampJ+3*nSrcXSize, v_pixels1_4, v_pixels2_4);
 
-            __m128d xmm_padfWeight1 = _mm_loadu_pd(padfWeight + iC);
-            __m128d xmm_padfWeight2 = _mm_loadu_pd(padfWeight + iC + 2);
+            XMMReg2Double v_padfWeight1 = XMMReg2Double::Load2Val(padfWeight + iC);
+            XMMReg2Double v_padfWeight2 = XMMReg2Double::Load2Val(padfWeight + iC + 2);
 
-            xmm_acc1_1 = _mm_add_pd(xmm_acc1_1, _mm_mul_pd(xmm_pixels1_1_d,xmm_padfWeight1));
-            xmm_acc2_1 = _mm_add_pd(xmm_acc2_1, _mm_mul_pd(xmm_pixels2_1_d,xmm_padfWeight2));
-            xmm_acc1_2 = _mm_add_pd(xmm_acc1_2, _mm_mul_pd(xmm_pixels1_2_d,xmm_padfWeight1));
-            xmm_acc2_2 = _mm_add_pd(xmm_acc2_2, _mm_mul_pd(xmm_pixels2_2_d,xmm_padfWeight2));
-            xmm_acc1_3 = _mm_add_pd(xmm_acc1_3, _mm_mul_pd(xmm_pixels1_3_d,xmm_padfWeight1));
-            xmm_acc2_3 = _mm_add_pd(xmm_acc2_3, _mm_mul_pd(xmm_pixels2_3_d,xmm_padfWeight2));
-            xmm_acc1_4 = _mm_add_pd(xmm_acc1_4, _mm_mul_pd(xmm_pixels1_4_d,xmm_padfWeight1));
-            xmm_acc2_4 = _mm_add_pd(xmm_acc2_4, _mm_mul_pd(xmm_pixels2_4_d,xmm_padfWeight2));
+            v_acc1_1 += v_pixels1_1 * v_padfWeight1;
+            v_acc2_1 += v_pixels2_1 * v_padfWeight2;
+            v_acc1_2 += v_pixels1_2 * v_padfWeight1;
+            v_acc2_2 += v_pixels2_2 * v_padfWeight2;
+            v_acc1_3 += v_pixels1_3 * v_padfWeight1;
+            v_acc2_3 += v_pixels2_3 * v_padfWeight2;
+            v_acc1_4 += v_pixels1_4 * v_padfWeight1;
+            v_acc2_4 += v_pixels2_4 * v_padfWeight2;
         }
 
         if( i < iMax )
         {
-            __m128d xmm_pixels_1_d = GWK_SSE2_Load2Samples (pSrcBand+i+iSampJ);
-            __m128d xmm_pixels_2_d = GWK_SSE2_Load2Samples (pSrcBand+i+iSampJ+nSrcXSize);
-            __m128d xmm_pixels_3_d = GWK_SSE2_Load2Samples (pSrcBand+i+iSampJ+2*nSrcXSize);
-            __m128d xmm_pixels_4_d = GWK_SSE2_Load2Samples (pSrcBand+i+iSampJ+3*nSrcXSize);
+            XMMReg2Double v_pixels_1 = XMMReg2Double::Load2Val(pSrcBand+i+iSampJ);
+            XMMReg2Double v_pixels_2 = XMMReg2Double::Load2Val(pSrcBand+i+iSampJ+nSrcXSize);
+            XMMReg2Double v_pixels_3 = XMMReg2Double::Load2Val(pSrcBand+i+iSampJ+2*nSrcXSize);
+            XMMReg2Double v_pixels_4 = XMMReg2Double::Load2Val(pSrcBand+i+iSampJ+3*nSrcXSize);
 
-            __m128d xmm_padfWeight = _mm_loadu_pd(padfWeight + iC);
+            XMMReg2Double v_padfWeight = XMMReg2Double::Load2Val(padfWeight + iC);
 
-            xmm_acc1_1 = _mm_add_pd(xmm_acc1_1, _mm_mul_pd(xmm_pixels_1_d,xmm_padfWeight));
-            xmm_acc1_2 = _mm_add_pd(xmm_acc1_2, _mm_mul_pd(xmm_pixels_2_d,xmm_padfWeight));
-            xmm_acc1_3 = _mm_add_pd(xmm_acc1_3, _mm_mul_pd(xmm_pixels_3_d,xmm_padfWeight));
-            xmm_acc1_4 = _mm_add_pd(xmm_acc1_4, _mm_mul_pd(xmm_pixels_4_d,xmm_padfWeight));
+            v_acc1_1 += v_pixels_1 * v_padfWeight;
+            v_acc1_2 += v_pixels_2 * v_padfWeight;
+            v_acc1_3 += v_pixels_3 * v_padfWeight;
+            v_acc1_4 += v_pixels_4 * v_padfWeight;
 
             i+=2;
             iC+=2;
         }
+        
+        v_acc1_1 += v_acc2_1;
+        v_acc1_1.AddLowAndHigh();
+        
+        v_acc1_2 += v_acc2_2;
+        v_acc1_2.AddLowAndHigh();
+        
+        v_acc1_3 += v_acc2_3;
+        v_acc1_3.AddLowAndHigh();
+        
+        v_acc1_4 += v_acc2_4;
+        v_acc1_4.AddLowAndHigh();
 
-#define ADD_4DOUBLE(acc1,acc2) \
-    do { acc1 = _mm_add_pd(acc1,acc2); \
-         acc2 = _mm_shuffle_pd(acc1,acc1,_MM_SHUFFLE2(0,1)); /* transfer high word of acc1 into low word of acc2 */ \
-         acc1 = _mm_add_pd(acc1,acc2); } while(0)
 
-        ADD_4DOUBLE(xmm_acc1_1,xmm_acc2_1);
-        ADD_4DOUBLE(xmm_acc1_2,xmm_acc2_2);
-        ADD_4DOUBLE(xmm_acc1_3,xmm_acc2_3);
-        ADD_4DOUBLE(xmm_acc1_4,xmm_acc2_4);
-
-        double dfAccumulatorLocal_1,  dfAccumulatorLocal_2,  dfAccumulatorLocal_3,  dfAccumulatorLocal_4;
-        _mm_storel_pd(&dfAccumulatorLocal_1, xmm_acc1_1);
-        _mm_storel_pd(&dfAccumulatorLocal_2, xmm_acc1_2);
-        _mm_storel_pd(&dfAccumulatorLocal_3, xmm_acc1_3);
-        _mm_storel_pd(&dfAccumulatorLocal_4, xmm_acc1_4);
+        double dfAccumulatorLocal_1 = (double)v_acc1_1,
+               dfAccumulatorLocal_2 = (double)v_acc1_2,
+               dfAccumulatorLocal_3 = (double)v_acc1_3,
+               dfAccumulatorLocal_4 = (double)v_acc1_4;
 
         if( i == iMax )
         {
@@ -3253,23 +3249,22 @@ static int GWKResampleNoMasks_SSE2_T( GDALWarpKernel *poWK, int iBand,
         iC = 0;
         i = iMin;
         /* Process by chunk of 4 cols */
-        __m128d xmm_acc1_1 = _mm_setzero_pd();
-        __m128d xmm_acc2_1 = _mm_setzero_pd();
+        XMMReg2Double v_acc1_1 = XMMReg2Double::Zero();
+        XMMReg2Double v_acc2_1 = XMMReg2Double::Zero();
         for(; i+2 < iMax; i+=4, iC+=4 )
         {
             // Retrieve the pixel & accumulate
-            __m128d xmm_pixels1_1_d, xmm_pixels2_1_d;
-            GWK_SSE2_Load4Samples(pSrcBand+i+iSampJ, xmm_pixels1_1_d, xmm_pixels2_1_d);
+            XMMReg2Double v_pixels1_1, v_pixels2_1;
+            XMMReg2Double::Load4Val(pSrcBand+i+iSampJ, v_pixels1_1, v_pixels2_1);
 
-            __m128d xmm_padfWeight1 = _mm_loadu_pd(padfWeight + iC);
-            __m128d xmm_padfWeight2 = _mm_loadu_pd(padfWeight + iC + 2);
-            xmm_acc1_1 = _mm_add_pd(xmm_acc1_1, _mm_mul_pd(xmm_pixels1_1_d,xmm_padfWeight1));
-            xmm_acc2_1 = _mm_add_pd(xmm_acc2_1, _mm_mul_pd(xmm_pixels2_1_d,xmm_padfWeight2));
+            v_acc1_1 += v_pixels1_1 * XMMReg2Double::Load2Val(padfWeight + iC);
+            v_acc2_1 += v_pixels2_1 * XMMReg2Double::Load2Val(padfWeight + iC + 2);
         }
-        ADD_4DOUBLE(xmm_acc1_1,xmm_acc2_1);
 
-        double dfAccumulatorLocal;
-        _mm_storel_pd(&dfAccumulatorLocal, xmm_acc1_1);
+        v_acc1_1 += v_acc2_1;
+        v_acc1_1.AddLowAndHigh();
+
+        double dfAccumulatorLocal = (double)v_acc1_1;
 
         if( i < iMax )
         {
@@ -3300,24 +3295,6 @@ static int GWKResampleNoMasks_SSE2_T( GDALWarpKernel *poWK, int iBand,
 /*                     GWKResampleNoMasksT<GByte>()                     */
 /************************************************************************/
 
-template<> inline __m128d GWK_SSE2_Load2Samples(const GByte* ptr)
-{
-    __m128i xmm_i = _mm_cvtsi32_si128(*(GUInt16*)(ptr));
-    xmm_i = _mm_unpacklo_epi8(xmm_i, _mm_setzero_si128());
-    xmm_i = _mm_unpacklo_epi16(xmm_i, _mm_setzero_si128());
-    return _mm_cvtepi32_pd(xmm_i);
-}
-
-template<> inline void GWK_SSE2_Load4Samples(const GByte* ptr,
-                                                 __m128d& low, __m128d& high)
-{
-    __m128i xmm_i = _mm_cvtsi32_si128(*(int*)(ptr));
-    xmm_i = _mm_unpacklo_epi8(xmm_i, _mm_setzero_si128());
-    xmm_i = _mm_unpacklo_epi16(xmm_i, _mm_setzero_si128());
-    low = _mm_cvtepi32_pd(xmm_i);
-    high =  _mm_cvtepi32_pd(_mm_shuffle_epi32(xmm_i,_MM_SHUFFLE(3,2,3,2)));
-}
-
 template<>
 int GWKResampleNoMasksT<GByte>( GDALWarpKernel *poWK, int iBand,
                                 double dfSrcX, double dfSrcY,
@@ -3329,29 +3306,6 @@ int GWKResampleNoMasksT<GByte>( GDALWarpKernel *poWK, int iBand,
 /************************************************************************/
 /*                     GWKResampleNoMasksT<GInt16>()                    */
 /************************************************************************/
-
-#define LOAD_2_GINT16(xmm, ptr) do { \
-        xmm = _mm_cvtsi32_si128(*(int*)(ptr)); \
-        xmm = _mm_unpacklo_epi16(xmm,xmm); /* 0|0|0|0|0|0|b|a --> 0|0|0|0|b|b|a|a */ \
-        xmm = _mm_srai_epi32(xmm, 16);     /* 0|0|0|0|b|b|a|a --> 0|0|0|0|sign(b)|b|sign(a)|a */ \
-        } while(0)
-
-template<> inline __m128d GWK_SSE2_Load2Samples(const GInt16* ptr)
-{
-    __m128i xmm_i;
-    LOAD_2_GINT16(xmm_i, ptr);
-    return _mm_cvtepi32_pd (xmm_i);
-}
-
-template<> inline void GWK_SSE2_Load4Samples(const GInt16* ptr,
-                                             __m128d& low, __m128d& high)
-{
-    __m128i xmm1_i, xmm2_i;
-    LOAD_2_GINT16(xmm1_i, ptr);
-    LOAD_2_GINT16(xmm2_i, ptr+2);
-    low = _mm_cvtepi32_pd (xmm1_i);
-    high = _mm_cvtepi32_pd (xmm2_i);
-}
 
 template<>
 int GWKResampleNoMasksT<GInt16>( GDALWarpKernel *poWK, int iBand,
@@ -3366,18 +3320,6 @@ int GWKResampleNoMasksT<GInt16>( GDALWarpKernel *poWK, int iBand,
 /************************************************************************/
 /*                     GWKResampleNoMasksT<double>()                    */
 /************************************************************************/
-
-template<> inline __m128d GWK_SSE2_Load2Samples(const double* ptr)
-{
-    return _mm_loadu_pd (ptr);
-}
-
-template<> inline void GWK_SSE2_Load4Samples(const double* ptr,
-                                                 __m128d& low, __m128d& high)
-{
-    low = _mm_loadu_pd (ptr);
-    high = _mm_loadu_pd (ptr+2);
-}
 
 template<>
 int GWKResampleNoMasksT<double>( GDALWarpKernel *poWK, int iBand,
@@ -3697,7 +3639,7 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
         }
     }
 free_warper:
-    if((err = GDALWarpKernelOpenCL_deleteEnv(warper)) != CL_SUCCESS)
+    if((err = GDALWarpKernelOpenCLeleteEnv(warper)) != CL_SUCCESS)
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "OpenCL routines reported failure (%d) on line %d.", (int) err, __LINE__ );

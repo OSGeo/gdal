@@ -1021,112 +1021,42 @@ template<class T> static inline double GDALDownsampleConvolutionVertical(
 /* Could possibly be used too on 32bit, but we would need to check at runtime */
 #if defined(__x86_64) || defined(_M_X64)
 
-/* Requires SSE2 */
-#include <emmintrin.h>
-template<class T> static inline void GDALDownsample_SSE2_Load4Samples(const T* ptr,
-                                                               __m128d& low,
-                                                               __m128d& high);
-
-template<> inline void GDALDownsample_SSE2_Load4Samples(const GByte* ptr,
-                                                 __m128d& low, __m128d& high)
-{
-    __m128i xmm_i = _mm_cvtsi32_si128(*(int*)(ptr));
-    xmm_i = _mm_unpacklo_epi8(xmm_i, _mm_setzero_si128());
-    xmm_i = _mm_unpacklo_epi16(xmm_i, _mm_setzero_si128());
-    low = _mm_cvtepi32_pd(xmm_i);
-    high =  _mm_cvtepi32_pd(_mm_shuffle_epi32(xmm_i,_MM_SHUFFLE(3,2,3,2)));
-}
+#include <gdalsse_priv.h>
 
 /************************************************************************/
 /*              GDALDownsampleConvolutionHorizontal<GByte>              */
 /************************************************************************/
 
 template<> inline double GDALDownsampleConvolutionHorizontal<GByte>(
-                         const GByte* pChunk, const double* padfWeights, int nSrcPixelCount)
+                         const GByte* pChunk, const double* padfWeightsAligned, int nSrcPixelCount)
 {
-    __m128d xmm_acc1_1 = _mm_setzero_pd();
-    __m128d xmm_acc2_1 = _mm_setzero_pd();
+    XMMReg2Double v_acc1 = XMMReg2Double::Zero();
+    XMMReg2Double v_acc2 = XMMReg2Double::Zero();
     int i = 0;
     for(;i+7<nSrcPixelCount;i+=8)
     {
         // Retrieve the pixel & accumulate
-        __m128d xmm_pixels1_d, xmm_pixels2_d;
-        GDALDownsample_SSE2_Load4Samples(pChunk+i, xmm_pixels1_d, xmm_pixels2_d);
-        __m128d xmm_pixels3_d, xmm_pixels4_d;
-        GDALDownsample_SSE2_Load4Samples(pChunk+i+4, xmm_pixels3_d, xmm_pixels4_d);
+        XMMReg2Double v_pixels1, v_pixels2;
+        XMMReg2Double::Load4Val(pChunk+i, v_pixels1, v_pixels2);
+        XMMReg2Double v_pixels3, v_pixels4;
+        XMMReg2Double::Load4Val(pChunk+i+4, v_pixels3, v_pixels4);
 
-        __m128d xmm_padfWeight1 = _mm_load_pd(padfWeights + i);
-        __m128d xmm_padfWeight2 = _mm_load_pd(padfWeights + i + 2);
-        __m128d xmm_padfWeight3 = _mm_load_pd(padfWeights + i + 4);
-        __m128d xmm_padfWeight4 = _mm_load_pd(padfWeights + i + 6);
-
-        xmm_acc1_1 = _mm_add_pd(xmm_acc1_1, _mm_mul_pd(xmm_pixels1_d,xmm_padfWeight1));
-        xmm_acc2_1 = _mm_add_pd(xmm_acc2_1, _mm_mul_pd(xmm_pixels2_d,xmm_padfWeight2));
-        xmm_acc1_1 = _mm_add_pd(xmm_acc1_1, _mm_mul_pd(xmm_pixels3_d,xmm_padfWeight3));
-        xmm_acc2_1 = _mm_add_pd(xmm_acc2_1, _mm_mul_pd(xmm_pixels4_d,xmm_padfWeight4));
+        v_acc1 += v_pixels1 * XMMReg2Double::Load2ValAligned(padfWeightsAligned + i);
+        v_acc2 += v_pixels2 * XMMReg2Double::Load2ValAligned(padfWeightsAligned + i + 2);
+        v_acc1 += v_pixels3 * XMMReg2Double::Load2ValAligned(padfWeightsAligned + i + 4);
+        v_acc2 += v_pixels4 * XMMReg2Double::Load2ValAligned(padfWeightsAligned + i + 6);
     }
 
-    xmm_acc1_1 = _mm_add_pd(xmm_acc1_1,xmm_acc2_1);
-    xmm_acc2_1 = _mm_shuffle_pd(xmm_acc1_1,xmm_acc2_1,_MM_SHUFFLE2(0,1)); /* transfer high word of acc1 into low word of acc2 */
-    xmm_acc1_1 = _mm_add_pd(xmm_acc1_1,xmm_acc2_1);
+    v_acc1 += v_acc2;
+    v_acc1.AddLowAndHigh();
 
-    double dfVal;
-    _mm_storel_pd(&dfVal, xmm_acc1_1);
-
+    double dfVal = (double)v_acc1;
     for(;i<nSrcPixelCount;i++)
     {
-        dfVal += pChunk[i] * padfWeights[i];
+        dfVal += pChunk[i] * padfWeightsAligned[i];
     }
     return dfVal;
 }
-
-#if 0
-/* Doesn't bring speed advantages in practice */
-template<> inline double GDALDownsampleConvolutionVertical(
-                            const double* pChunk, int nStride,
-                            const double* padfWeights, int nSrcLineCount)
-{
-    __m128d xmm_acc1_1 = _mm_setzero_pd();
-    __m128d xmm_acc2_1 = _mm_setzero_pd();
-    int i = 0;
-    for(;i+7<nSrcLineCount;i+=8)
-    {
-        // Retrieve the pixel & accumulate
-        __m128d xmm_pixels1_d, xmm_pixels2_d, xmm_pixels3_d, xmm_pixels4_d;
-        xmm_pixels1_d = _mm_loadl_pd(xmm_pixels1_d, pChunk+i *  nStride);
-        xmm_pixels1_d = _mm_loadh_pd(xmm_pixels1_d, pChunk+(i+1) * nStride);
-        xmm_pixels2_d = _mm_loadl_pd(xmm_pixels2_d, pChunk+(i+2) * nStride);
-        xmm_pixels2_d = _mm_loadh_pd(xmm_pixels2_d, pChunk+(i+3) * nStride);
-        xmm_pixels3_d = _mm_loadl_pd(xmm_pixels3_d, pChunk+(i+4) *  nStride);
-        xmm_pixels3_d = _mm_loadh_pd(xmm_pixels3_d, pChunk+(i+5) * nStride);
-        xmm_pixels4_d = _mm_loadl_pd(xmm_pixels4_d, pChunk+(i+6) * nStride);
-        xmm_pixels4_d = _mm_loadh_pd(xmm_pixels4_d, pChunk+(i+7) * nStride);
-
-        __m128d xmm_padfWeight1 = _mm_loadu_pd(padfWeights + i);
-        __m128d xmm_padfWeight2 = _mm_loadu_pd(padfWeights + i + 2);
-        __m128d xmm_padfWeight3 = _mm_loadu_pd(padfWeights + i + 4);
-        __m128d xmm_padfWeight4 = _mm_loadu_pd(padfWeights + i + 6);
-
-        xmm_acc1_1 = _mm_add_pd(xmm_acc1_1, _mm_mul_pd(xmm_pixels1_d,xmm_padfWeight1));
-        xmm_acc2_1 = _mm_add_pd(xmm_acc2_1, _mm_mul_pd(xmm_pixels2_d,xmm_padfWeight2));
-        xmm_acc1_1 = _mm_add_pd(xmm_acc1_1, _mm_mul_pd(xmm_pixels3_d,xmm_padfWeight3));
-        xmm_acc2_1 = _mm_add_pd(xmm_acc2_1, _mm_mul_pd(xmm_pixels4_d,xmm_padfWeight4));
-    }
-
-    xmm_acc1_1 = _mm_add_pd(xmm_acc1_1,xmm_acc2_1);
-    xmm_acc2_1 = _mm_shuffle_pd(xmm_acc1_1,xmm_acc2_1,_MM_SHUFFLE2(0,1)); /* transfer high word of acc1 into low word of acc2 */
-    xmm_acc1_1 = _mm_add_pd(xmm_acc1_1,xmm_acc2_1);
-
-    double dfVal;
-    _mm_storel_pd(&dfVal, xmm_acc1_1);
-
-    for(;i<nSrcLineCount;i++)
-    {
-        dfVal += pChunk[i*nStride] * padfWeights[i];
-    }
-    return dfVal;
-}
-#endif
 
 #endif /*  defined(__x86_64) || defined(_M_X64) */
 
