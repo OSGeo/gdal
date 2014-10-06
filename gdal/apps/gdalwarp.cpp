@@ -1985,8 +1985,18 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Write out the projection definition.                            */
 /* -------------------------------------------------------------------- */
-    GDALSetProjection( hDstDS, pszThisTargetSRS );
-    GDALSetGeoTransform( hDstDS, adfDstGeoTransform );
+    const char *pszDstMethod = CSLFetchNameValue(papszTO,"DST_METHOD");
+    if( pszDstMethod == NULL || !EQUAL(pszDstMethod, "NO_GEOTRANSFORM") )
+    {
+        GDALSetProjection( hDstDS, pszThisTargetSRS );
+        GDALSetGeoTransform( hDstDS, adfDstGeoTransform );
+    }
+    else
+    {
+        adfDstGeoTransform[0] = 0.0;
+        adfDstGeoTransform[3] = 0.0;
+        adfDstGeoTransform[5] = fabs(adfDstGeoTransform[5]);
+    }
 
     if (*phTransformArg != NULL)
         GDALSetGenImgProjTransformerDstGeoTransform( *phTransformArg, adfDstGeoTransform);
