@@ -1030,27 +1030,25 @@ template<class T> static inline double GDALDownsampleConvolutionVertical(
 template<> inline double GDALDownsampleConvolutionHorizontal<GByte>(
                          const GByte* pChunk, const double* padfWeightsAligned, int nSrcPixelCount)
 {
-    XMMReg2Double v_acc1 = XMMReg2Double::Zero();
-    XMMReg2Double v_acc2 = XMMReg2Double::Zero();
+    XMMReg4Double v_acc1 = XMMReg4Double::Zero();
+    XMMReg4Double v_acc2 = XMMReg4Double::Zero();
     int i = 0;
     for(;i+7<nSrcPixelCount;i+=8)
     {
         // Retrieve the pixel & accumulate
-        XMMReg2Double v_pixels1, v_pixels2;
-        XMMReg2Double::Load4Val(pChunk+i, v_pixels1, v_pixels2);
-        XMMReg2Double v_pixels3, v_pixels4;
-        XMMReg2Double::Load4Val(pChunk+i+4, v_pixels3, v_pixels4);
+        XMMReg4Double v_pixels1 = XMMReg4Double::Load4Val(pChunk+i);
+        XMMReg4Double v_pixels2 = XMMReg4Double::Load4Val(pChunk+i+4);
+        XMMReg4Double v_weight1 = XMMReg4Double::Load4ValAligned(padfWeightsAligned+i);
+        XMMReg4Double v_weight2 = XMMReg4Double::Load4ValAligned(padfWeightsAligned+i+4);
 
-        v_acc1 += v_pixels1 * XMMReg2Double::Load2ValAligned(padfWeightsAligned + i);
-        v_acc2 += v_pixels2 * XMMReg2Double::Load2ValAligned(padfWeightsAligned + i + 2);
-        v_acc1 += v_pixels3 * XMMReg2Double::Load2ValAligned(padfWeightsAligned + i + 4);
-        v_acc2 += v_pixels4 * XMMReg2Double::Load2ValAligned(padfWeightsAligned + i + 6);
+        v_acc1 += v_pixels1 * v_weight1;
+        v_acc2 += v_pixels2 * v_weight2;
     }
 
     v_acc1 += v_acc2;
     v_acc1.AddLowAndHigh();
 
-    double dfVal = (double)v_acc1;
+    double dfVal = (double)v_acc1.GetLow();
     for(;i<nSrcPixelCount;i++)
     {
         dfVal += pChunk[i] * padfWeightsAligned[i];

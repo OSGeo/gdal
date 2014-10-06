@@ -3148,37 +3148,24 @@ static int GWKResampleNoMasks_SSE2_T( GDALWarpKernel *poWK, int iBand,
         iC = 0;
         i = iMin;
         /* Process by chunk of 4 cols */
-        XMMReg2Double v_acc1_1 = XMMReg2Double::Zero();
-        XMMReg2Double v_acc2_1 = XMMReg2Double::Zero();
-        XMMReg2Double v_acc1_2 = XMMReg2Double::Zero();
-        XMMReg2Double v_acc2_2 = XMMReg2Double::Zero();
-        XMMReg2Double v_acc1_3 = XMMReg2Double::Zero();
-        XMMReg2Double v_acc2_3 = XMMReg2Double::Zero();
-        XMMReg2Double v_acc1_4 = XMMReg2Double::Zero();
-        XMMReg2Double v_acc2_4 = XMMReg2Double::Zero();
+        XMMReg4Double v_acc_1 = XMMReg4Double::Zero();
+        XMMReg4Double v_acc_2 = XMMReg4Double::Zero();
+        XMMReg4Double v_acc_3 = XMMReg4Double::Zero();
+        XMMReg4Double v_acc_4 = XMMReg4Double::Zero();
         for(; i+2 < iMax; i+=4, iC+=4 )
         {
             // Retrieve the pixel & accumulate
-            XMMReg2Double v_pixels1_1, v_pixels2_1;
-            XMMReg2Double v_pixels1_2, v_pixels2_2;
-            XMMReg2Double v_pixels1_3, v_pixels2_3;
-            XMMReg2Double v_pixels1_4, v_pixels2_4;
-            XMMReg2Double::Load4Val(pSrcBand+i+iSampJ, v_pixels1_1, v_pixels2_1);
-            XMMReg2Double::Load4Val(pSrcBand+i+iSampJ+nSrcXSize, v_pixels1_2, v_pixels2_2);
-            XMMReg2Double::Load4Val(pSrcBand+i+iSampJ+2*nSrcXSize, v_pixels1_3, v_pixels2_3);
-            XMMReg2Double::Load4Val(pSrcBand+i+iSampJ+3*nSrcXSize, v_pixels1_4, v_pixels2_4);
+            XMMReg4Double v_pixels_1 = XMMReg4Double::Load4Val(pSrcBand+i+iSampJ);
+            XMMReg4Double v_pixels_2 = XMMReg4Double::Load4Val(pSrcBand+i+iSampJ+nSrcXSize);
+            XMMReg4Double v_pixels_3 = XMMReg4Double::Load4Val(pSrcBand+i+iSampJ+2*nSrcXSize);
+            XMMReg4Double v_pixels_4 = XMMReg4Double::Load4Val(pSrcBand+i+iSampJ+3*nSrcXSize);
 
-            XMMReg2Double v_padfWeight1 = XMMReg2Double::Load2Val(padfWeight + iC);
-            XMMReg2Double v_padfWeight2 = XMMReg2Double::Load2Val(padfWeight + iC + 2);
+            XMMReg4Double v_padfWeight = XMMReg4Double::Load4Val(padfWeight + iC);
 
-            v_acc1_1 += v_pixels1_1 * v_padfWeight1;
-            v_acc2_1 += v_pixels2_1 * v_padfWeight2;
-            v_acc1_2 += v_pixels1_2 * v_padfWeight1;
-            v_acc2_2 += v_pixels2_2 * v_padfWeight2;
-            v_acc1_3 += v_pixels1_3 * v_padfWeight1;
-            v_acc2_3 += v_pixels2_3 * v_padfWeight2;
-            v_acc1_4 += v_pixels1_4 * v_padfWeight1;
-            v_acc2_4 += v_pixels2_4 * v_padfWeight2;
+            v_acc_1 += v_pixels_1 * v_padfWeight;
+            v_acc_2 += v_pixels_2 * v_padfWeight;
+            v_acc_3 += v_pixels_3 * v_padfWeight;
+            v_acc_4 += v_pixels_4 * v_padfWeight;
         }
 
         if( i < iMax )
@@ -3190,32 +3177,24 @@ static int GWKResampleNoMasks_SSE2_T( GDALWarpKernel *poWK, int iBand,
 
             XMMReg2Double v_padfWeight = XMMReg2Double::Load2Val(padfWeight + iC);
 
-            v_acc1_1 += v_pixels_1 * v_padfWeight;
-            v_acc1_2 += v_pixels_2 * v_padfWeight;
-            v_acc1_3 += v_pixels_3 * v_padfWeight;
-            v_acc1_4 += v_pixels_4 * v_padfWeight;
+            v_acc_1.GetLow() += v_pixels_1 * v_padfWeight;
+            v_acc_2.GetLow() += v_pixels_2 * v_padfWeight;
+            v_acc_3.GetLow() += v_pixels_3 * v_padfWeight;
+            v_acc_4.GetLow() += v_pixels_4 * v_padfWeight;
 
             i+=2;
             iC+=2;
         }
-        
-        v_acc1_1 += v_acc2_1;
-        v_acc1_1.AddLowAndHigh();
-        
-        v_acc1_2 += v_acc2_2;
-        v_acc1_2.AddLowAndHigh();
-        
-        v_acc1_3 += v_acc2_3;
-        v_acc1_3.AddLowAndHigh();
-        
-        v_acc1_4 += v_acc2_4;
-        v_acc1_4.AddLowAndHigh();
 
+        v_acc_1.AddLowAndHigh();
+        v_acc_2.AddLowAndHigh();
+        v_acc_3.AddLowAndHigh();
+        v_acc_4.AddLowAndHigh();
 
-        double dfAccumulatorLocal_1 = (double)v_acc1_1,
-               dfAccumulatorLocal_2 = (double)v_acc1_2,
-               dfAccumulatorLocal_3 = (double)v_acc1_3,
-               dfAccumulatorLocal_4 = (double)v_acc1_4;
+        double dfAccumulatorLocal_1 = (double)v_acc_1.GetLow(),
+               dfAccumulatorLocal_2 = (double)v_acc_2.GetLow(),
+               dfAccumulatorLocal_3 = (double)v_acc_3.GetLow(),
+               dfAccumulatorLocal_4 = (double)v_acc_4.GetLow();
 
         if( i == iMax )
         {

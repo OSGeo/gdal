@@ -358,4 +358,101 @@ class XMMReg2Double
 
 #endif /*  defined(__x86_64) || defined(_M_X64) */
 
+class XMMReg4Double
+{
+  public:
+    XMMReg2Double low, high;
+
+    XMMReg4Double() {}
+    XMMReg4Double(const XMMReg4Double& other) : low(other.low), high(other.high) {}
+
+    static inline XMMReg4Double Zero()
+    {
+        XMMReg4Double reg;
+        reg.low.Zeroize();
+        reg.high.Zeroize();
+        return reg;
+    }
+    
+    static inline XMMReg4Double Load4Val(const unsigned char* ptr)
+    {
+        XMMReg4Double reg;
+        XMMReg2Double::Load4Val(ptr, reg.low, reg.high);
+        return reg;
+    }
+
+    static inline XMMReg4Double Load4Val(const short* ptr)
+    {
+        XMMReg4Double reg;
+        reg.low.nsLoad2Val(ptr);
+        reg.high.nsLoad2Val(ptr+2);
+        return reg;
+    }
+
+    static inline XMMReg4Double Load4Val(const double* ptr)
+    {
+        XMMReg4Double reg;
+        reg.low.nsLoad2Val(ptr);
+        reg.high.nsLoad2Val(ptr+2);
+        return reg;
+    }
+
+    static inline XMMReg4Double Load4ValAligned(const double* ptr)
+    {
+        XMMReg4Double reg;
+        reg.low.nsLoad2ValAligned(ptr);
+        reg.high.nsLoad2ValAligned(ptr+2);
+        return reg;
+    }
+    
+    inline const XMMReg4Double& operator= (const XMMReg4Double& other)
+    {
+        low = other.low;
+        high = other.high;
+        return *this;
+    }
+
+    inline const XMMReg4Double& operator+= (const XMMReg4Double& other)
+    {
+        low += other.low;
+        high += other.high;
+        return *this;
+    }
+
+    inline XMMReg4Double operator+ (const XMMReg4Double& other)
+    {
+        XMMReg4Double ret;
+        ret.low = low + other.low;
+        ret.high = high + other.high;
+        return ret;
+    }
+
+    inline XMMReg4Double operator- (const XMMReg4Double& other)
+    {
+        XMMReg4Double ret;
+        ret.low = low - other.low;
+        ret.high = high - other.high;
+        return ret;
+    }
+
+    inline XMMReg4Double operator* (const XMMReg4Double& other)
+    {
+        XMMReg4Double ret;
+        ret.low = low * other.low;
+        ret.high = high * other.high;
+        return ret;
+    }
+
+    inline void AddLowAndHigh()
+    {
+        low = low + high;
+        low.AddLowAndHigh();
+    }
+
+    inline XMMReg2Double& GetLow()
+    {
+        return low;
+    }
+};
+
 #endif /* GDALSSE_PRIV_H_INCLUDED */
