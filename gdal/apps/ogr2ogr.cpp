@@ -1449,7 +1449,8 @@ int main( int nArgc, char ** papszArgv )
         /* Restrict to those 2 drivers. For example it is known to break with */
         /* the PG driver due to the way it manages transactions... */
         if (poDS && !(EQUAL(poDriver->GetDescription(), "FileGDB") ||
-                      EQUAL(poDriver->GetDescription(), "SQLite")))
+                      EQUAL(poDriver->GetDescription(), "SQLite") ||
+                      EQUAL(poDriver->GetDescription(), "GPKG")))
         {
             poDS = (GDALDataset*) GDALOpenEx( pszDataSource,
                             GDAL_OF_VECTOR, NULL, papszOpenOptions, NULL );
