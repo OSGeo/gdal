@@ -40,15 +40,51 @@
 
 CPL_CVSID("$Id$");
 
+//#define INSTANCIATE_FLOAT64_SSE2_IMPL
+
 static const int anGWKFilterRadius[] =
 {
     0,      // Nearest neighbour
     1,      // Bilinear
-    2,      // Cubic Convolution
+    2,      // Cubic Convolution (Catmull-Rom)
     2,      // Cubic B-Spline
     3,      // Lanczos windowed sinc
     0,      // Average
     0,      // Mode
+};
+
+static double GWKBilinear(double dfX);
+static double GWKCubic(double dfX);
+static double GWKBSpline(double dfX);
+static double GWKLanczosSinc(double dfX);
+typedef double (*FilterFuncType)(double dfX);
+
+static const FilterFuncType apfGWKFilter[] =
+{
+    NULL,            // Nearest neighbour
+    GWKBilinear,     // Bilinear
+    GWKCubic,        // Cubic Convolution (Catmull-Rom)
+    GWKBSpline,      // Cubic B-Spline
+    GWKLanczosSinc,  // Lanczos windowed sinc
+    NULL,            // Average
+    NULL,            // Mode
+};
+
+static void GWKBilinear4Values(double* padfVals);
+static void GWKCubic4Values(double* padfVals);
+static void GWKBSpline4Values(double* padfVals);
+static void GWKLanczosSinc4Values(double* padfVals);
+typedef void (*FilterFunc4ValuesType)(double* padfVals);
+
+static const FilterFunc4ValuesType apfGWKFilter4Values[] =
+{
+    NULL,            // Nearest neighbour
+    GWKBilinear4Values,     // Bilinear
+    GWKCubic4Values,        // Cubic Convolution (Catmull-Rom)
+    GWKBSpline4Values,      // Cubic B-Spline
+    GWKLanczosSinc4Values,  // Lanczos windowed sinc
+    NULL,            // Average
+    NULL,            // Mode
 };
 
 /* Used in gdalwarpoperation.cpp */
@@ -65,10 +101,16 @@ static CPLErr GWKGeneralCase( GDALWarpKernel * );
 static CPLErr GWKNearestNoMasksByte( GDALWarpKernel *poWK );
 static CPLErr GWKBilinearNoMasksByte( GDALWarpKernel *poWK );
 static CPLErr GWKCubicNoMasksByte( GDALWarpKernel *poWK );
+#ifdef INSTANCIATE_FLOAT64_SSE2_IMPL
+static CPLErr GWKCubicNoMasksDouble( GDALWarpKernel *poWK );
+#endif
 static CPLErr GWKCubicSplineNoMasksByte( GDALWarpKernel *poWK );
 static CPLErr GWKNearestByte( GDALWarpKernel *poWK );
 static CPLErr GWKNearestNoMasksShort( GDALWarpKernel *poWK );
 static CPLErr GWKBilinearNoMasksShort( GDALWarpKernel *poWK );
+#ifdef INSTANCIATE_FLOAT64_SSE2_IMPL
+static CPLErr GWKBilinearNoMasksDouble( GDALWarpKernel *poWK );
+#endif
 static CPLErr GWKCubicNoMasksShort( GDALWarpKernel *poWK );
 static CPLErr GWKCubicSplineNoMasksShort( GDALWarpKernel *poWK );
 static CPLErr GWKNearestShort( GDALWarpKernel *poWK );
@@ -428,6 +470,24 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
  */
 
 /**
+ * \var int GDALWarpKernel::nSrcXExtraSize;
+ * 
+ * Number of pixels included in nSrcXSize that are present on the edges of
+ * the area of interest to take into account the width of the kernel.
+ *
+ * This field is required.
+ */
+
+/**
+ * \var int GDALWarpKernel::nSrcYExtraSize;
+ * 
+ * Number of pixels included in nSrcYExtraSize that are present on the edges of
+ * the area of interest to take into account the height of the kernel.
+ *
+ * This field is required.
+ */
+
+/**
  * \var int GDALWarpKernel::papabySrcImage;
  * 
  * Array of source image band data.
@@ -732,6 +792,8 @@ GDALWarpKernel::GDALWarpKernel()
     nSrcYOff = 0;
     nSrcXSize = 0;
     nSrcYSize = 0;
+    nSrcXExtraSize = 0;
+    nSrcYExtraSize = 0;
     dfXScale = 1.0;
     dfYScale = 1.0;
     dfXFilter = 0.0;
@@ -801,12 +863,42 @@ CPLErr GDALWarpKernel::PerformWarp()
 /*      Pre-calculate resampling scales and window sizes for filtering. */
 /* -------------------------------------------------------------------- */
 
-    dfXScale = (double)nDstXSize / nSrcXSize;
-    dfYScale = (double)nDstYSize / nSrcYSize;
-    if( nSrcXSize >= nDstXSize && nSrcXSize <= nDstXSize + 1 + 2 * anGWKFilterRadius[eResample] )
+    dfXScale = (double)nDstXSize / (nSrcXSize - nSrcXExtraSize);
+    dfYScale = (double)nDstYSize / (nSrcYSize - nSrcYExtraSize);
+    if( nSrcXSize >= nDstXSize && nSrcXSize <= nDstXSize + nSrcXExtraSize )
         dfXScale = 1;
-    if( nSrcYSize >= nDstYSize && nSrcYSize <= nDstYSize + 1 + 2 * anGWKFilterRadius[eResample] )
+    if( nSrcYSize >= nDstYSize && nSrcYSize <= nDstYSize + nSrcYExtraSize )
         dfYScale = 1;
+    if( dfXScale < 1 )
+    {
+        double dfXReciprocalScale =  1. / dfXScale;
+        int nXReciprocalScale = (int)(dfXReciprocalScale + 0.5);
+        if( fabs(dfXReciprocalScale-nXReciprocalScale) < 0.05 )
+            dfXScale = 1.0 / nXReciprocalScale;
+    }
+    if( dfYScale < 1 )
+    {
+        double dfYReciprocalScale =  1. / dfYScale;
+        int nYReciprocalScale = (int)(dfYReciprocalScale + 0.5);
+        if( fabs(dfYReciprocalScale-nYReciprocalScale) < 0.05 )
+            dfYScale = 1.0 / nYReciprocalScale;
+    }
+    /*CPLDebug("WARP", "dfXScale = %f, dfYScale = %f", dfXScale, dfYScale);*/
+    
+    int bUse4SamplesFormula = (dfXScale >= 0.95 && dfYScale >= 0.95);
+    
+    // Safety check for callers that would use GDALWarpKernel without using
+    // GDALWarpOperation.
+    if( (eResample == GRA_CubicSpline || eResample == GRA_Lanczos ||
+         ((eResample == GRA_Cubic || eResample == GRA_Bilinear) && !bUse4SamplesFormula)) &&
+         atoi(CSLFetchNameValueDef(papszWarpOptions, "EXTRA_ELTS", "0") ) != WARP_EXTRA_ELTS )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Source arrays must have WARP_EXTRA_ELTS extra elements at their end. "
+                  "See GDALWarpKernel class definition. If this condition is fulfilled, "
+                  "define a EXTRA_ELTS=%d warp options", WARP_EXTRA_ELTS);
+        return CE_Failure;
+    }
 
     dfXFilter = anGWKFilterRadius[eResample];
     dfYFilter = anGWKFilterRadius[eResample];
@@ -848,40 +940,30 @@ CPLErr GDALWarpKernel::PerformWarp()
     }
 #endif /* defined HAVE_OPENCL */
 
-    if( eWorkingDataType == GDT_Byte
-        && eResample == GRA_NearestNeighbour
-        && papanBandSrcValid == NULL
+    int bNoMasks = (papanBandSrcValid == NULL
         && panUnifiedSrcValid == NULL
         && pafUnifiedSrcDensity == NULL
         && panDstValid == NULL
-        && pafDstDensity == NULL )
+        && pafDstDensity == NULL );
+
+    if( eWorkingDataType == GDT_Byte
+        && eResample == GRA_NearestNeighbour
+        && bNoMasks )
         return GWKNearestNoMasksByte( this );
 
     if( eWorkingDataType == GDT_Byte
         && eResample == GRA_Bilinear
-        && papanBandSrcValid == NULL
-        && panUnifiedSrcValid == NULL
-        && pafUnifiedSrcDensity == NULL
-        && panDstValid == NULL
-        && pafDstDensity == NULL )
+        && bNoMasks )
         return GWKBilinearNoMasksByte( this );
 
     if( eWorkingDataType == GDT_Byte
         && eResample == GRA_Cubic
-        && papanBandSrcValid == NULL
-        && panUnifiedSrcValid == NULL
-        && pafUnifiedSrcDensity == NULL
-        && panDstValid == NULL
-        && pafDstDensity == NULL )
+        && bNoMasks )
         return GWKCubicNoMasksByte( this );
 
     if( eWorkingDataType == GDT_Byte
         && eResample == GRA_CubicSpline
-        && papanBandSrcValid == NULL
-        && panUnifiedSrcValid == NULL
-        && pafUnifiedSrcDensity == NULL
-        && panDstValid == NULL
-        && pafDstDensity == NULL )
+        && bNoMasks )
         return GWKCubicSplineNoMasksByte( this );
 
     if( eWorkingDataType == GDT_Byte
@@ -890,38 +972,22 @@ CPLErr GDALWarpKernel::PerformWarp()
 
     if( (eWorkingDataType == GDT_Int16 || eWorkingDataType == GDT_UInt16)
         && eResample == GRA_NearestNeighbour
-        && papanBandSrcValid == NULL
-        && panUnifiedSrcValid == NULL
-        && pafUnifiedSrcDensity == NULL
-        && panDstValid == NULL
-        && pafDstDensity == NULL )
+        && bNoMasks )
         return GWKNearestNoMasksShort( this );
 
     if( (eWorkingDataType == GDT_Int16 )
         && eResample == GRA_Cubic
-        && papanBandSrcValid == NULL
-        && panUnifiedSrcValid == NULL
-        && pafUnifiedSrcDensity == NULL
-        && panDstValid == NULL
-        && pafDstDensity == NULL )
+        && bNoMasks )
         return GWKCubicNoMasksShort( this );
 
     if( (eWorkingDataType == GDT_Int16 )
         && eResample == GRA_CubicSpline
-        && papanBandSrcValid == NULL
-        && panUnifiedSrcValid == NULL
-        && pafUnifiedSrcDensity == NULL
-        && panDstValid == NULL
-        && pafDstDensity == NULL )
+        && bNoMasks )
         return GWKCubicSplineNoMasksShort( this );
 
     if( (eWorkingDataType == GDT_Int16 )
         && eResample == GRA_Bilinear
-        && papanBandSrcValid == NULL
-        && panUnifiedSrcValid == NULL
-        && pafUnifiedSrcDensity == NULL
-        && panDstValid == NULL
-        && pafDstDensity == NULL )
+        && bNoMasks )
         return GWKBilinearNoMasksShort( this );
 
     if( (eWorkingDataType == GDT_Int16 || eWorkingDataType == GDT_UInt16)
@@ -930,16 +996,24 @@ CPLErr GDALWarpKernel::PerformWarp()
 
     if( eWorkingDataType == GDT_Float32
         && eResample == GRA_NearestNeighbour
-        && papanBandSrcValid == NULL
-        && panUnifiedSrcValid == NULL
-        && pafUnifiedSrcDensity == NULL
-        && panDstValid == NULL
-        && pafDstDensity == NULL )
+        && bNoMasks )
         return GWKNearestNoMasksFloat( this );
 
     if( eWorkingDataType == GDT_Float32
         && eResample == GRA_NearestNeighbour )
         return GWKNearestFloat( this );
+
+#ifdef INSTANCIATE_FLOAT64_SSE2_IMPL
+    if( eWorkingDataType == GDT_Float64
+        && eResample == GRA_Bilinear
+        && bNoMasks )
+        return GWKBilinearNoMasksDouble( this );
+
+    if( eWorkingDataType == GDT_Float64
+        && eResample == GRA_Cubic
+        && bNoMasks )
+        return GWKCubicNoMasksDouble( this );
+#endif
 
     if( eResample == GRA_Average )
         return GWKAverageOrMode( this );
@@ -977,18 +1051,6 @@ CPLErr GDALWarpKernel::Validate()
                   "Unsupported resampling method %d.", (int) eResample );
         return CE_Failure;
     }
-    
-    // Safety check for callers that would use GDALWarpKernel without using
-    // GDALWarpOperation.
-    if( (eResample == GRA_CubicSpline || eResample == GRA_Lanczos) &&
-         atoi(CSLFetchNameValueDef(papszWarpOptions, "EXTRA_ELTS", "0") ) != WARP_EXTRA_ELTS )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Source arrays must have WARP_EXTRA_ELTS extra elements at their end. "
-                  "See GDALWarpKernel class definition. If this condition is fulfilled, "
-                  "define a EXTRA_ELTS=%d warp options", WARP_EXTRA_ELTS);
-        return CE_Failure;
-    }
 
     return CE_None;
 }
@@ -1012,20 +1074,44 @@ static void GWKOverlayDensity( GDALWarpKernel *poWK, int iDstOffset,
 }
 
 /************************************************************************/
-/*                          GWKSetPixelValue()                          */
+/*                          GWKRoundValueT()                           */
 /************************************************************************/
 
 template<class T>
-static T GWKClampValueT(double dfValue)
+static CPL_INLINE T GWKRoundValueT(double dfValue)
+{
+    return (std::numeric_limits<T>::min() < 0) ? (T)floor(dfValue + 0.5) :
+                                                 (T)(dfValue + 0.5);
+}
+
+template<> double GWKRoundValueT<double>(double dfValue)
+{
+    return dfValue;
+}
+
+/************************************************************************/
+/*                            GWKClampValueT()                          */
+/************************************************************************/
+
+template<class T>
+static CPL_INLINE T GWKClampValueT(double dfValue)
 {
     if (dfValue < std::numeric_limits<T>::min())
         return std::numeric_limits<T>::min();
     else if (dfValue > std::numeric_limits<T>::max())
         return std::numeric_limits<T>::max();
     else
-        return (std::numeric_limits<T>::min() < 0) ? (T)floor(dfValue + 0.5) : (T)(dfValue + 0.5);
+        return GWKRoundValueT<T>(dfValue);
 }
 
+template<> double GWKClampValueT<double>(double dfValue)
+{
+    return dfValue;
+}
+
+/************************************************************************/
+/*                         GWKSetPixelValueRealT()                      */
+/************************************************************************/
 
 template<class T>
 static int GWKSetPixelValueRealT( GDALWarpKernel *poWK, int iBand, 
@@ -1091,6 +1177,9 @@ static int GWKSetPixelValueRealT( GDALWarpKernel *poWK, int iBand,
     return TRUE;
 }
 
+/************************************************************************/
+/*                          GWKSetPixelValue()                          */
+/************************************************************************/
 
 static int GWKSetPixelValue( GDALWarpKernel *poWK, int iBand, 
                              int iDstOffset, double dfDensity, 
@@ -1300,20 +1389,14 @@ static int GWKSetPixelValue( GDALWarpKernel *poWK, int iBand,
 /*                          GWKGetPixelValue()                          */
 /************************************************************************/
 
+/* It is assumed that panUnifiedSrcValid has been checked before */
+
 static int GWKGetPixelValue( GDALWarpKernel *poWK, int iBand, 
                              int iSrcOffset, double *pdfDensity, 
                              double *pdfReal, double *pdfImag )
 
 {
     GByte *pabySrc = poWK->papabySrcImage[iBand];
-
-    if( poWK->panUnifiedSrcValid != NULL
-        && !((poWK->panUnifiedSrcValid[iSrcOffset>>5]
-              & (0x01 << (iSrcOffset & 0x1f))) ) )
-    {
-        *pdfDensity = 0.0;
-        return FALSE;
-    }
 
     if( poWK->papanBandSrcValid != NULL
         && poWK->papanBandSrcValid[iBand] != NULL
@@ -1705,7 +1788,7 @@ static int GWKGetPixelT( GDALWarpKernel *poWK, int iBand,
 /*     Set of bilinear interpolators                                    */
 /************************************************************************/
 
-static int GWKBilinearResample( GDALWarpKernel *poWK, int iBand, 
+static int GWKBilinearResample4Sample( GDALWarpKernel *poWK, int iBand, 
                                 double dfSrcX, double dfSrcY,
                                 double *pdfDensity, 
                                 double *pdfReal, double *pdfImag )
@@ -1854,11 +1937,12 @@ static int GWKBilinearResample( GDALWarpKernel *poWK, int iBand,
 }
 
 template<class T>
-static int GWKBilinearResampleNoMasksT( GDALWarpKernel *poWK, int iBand, 
+static int GWKBilinearResampleNoMasks4SampleT( GDALWarpKernel *poWK, int iBand, 
                                         double dfSrcX, double dfSrcY,
                                         T *pValue )
 
 {
+    double dfMult;
     double  dfAccumulator = 0.0;
     double  dfAccumulatorDivisor = 0.0;
 
@@ -1867,56 +1951,64 @@ static int GWKBilinearResampleNoMasksT( GDALWarpKernel *poWK, int iBand,
     int     iSrcOffset = iSrcX + iSrcY * poWK->nSrcXSize;
     double  dfRatioX = 1.5 - (dfSrcX - iSrcX);
     double  dfRatioY = 1.5 - (dfSrcY - iSrcY);
+    
+    T* pSrc = (T *)poWK->papabySrcImage[iBand];
+    
+    if( iSrcX >= 0 && iSrcX+1 < poWK->nSrcXSize
+        && iSrcY >= 0 && iSrcY+1 < poWK->nSrcYSize )
+    {
+        dfAccumulator = ((double)pSrc[iSrcOffset] * dfRatioX +
+                         (double)pSrc[iSrcOffset+1] * (1.0-dfRatioX)) * dfRatioY +
+                        ((double)pSrc[iSrcOffset+poWK->nSrcXSize] * dfRatioX +
+                         (double)pSrc[iSrcOffset+1+poWK->nSrcXSize] * (1.0-dfRatioX)) * (1.0-dfRatioY);
+
+        *pValue = GWKRoundValueT<T>(dfAccumulator);
+
+        return TRUE;
+    }
 
     // Upper Left Pixel
     if( iSrcX >= 0 && iSrcX < poWK->nSrcXSize
         && iSrcY >= 0 && iSrcY < poWK->nSrcYSize )
     {
-        double dfMult = dfRatioX * dfRatioY;
+        dfMult = dfRatioX * dfRatioY;
 
         dfAccumulatorDivisor += dfMult;
 
-        dfAccumulator +=
-            (double)((T *)poWK->papabySrcImage[iBand])[iSrcOffset]
-            * dfMult;
+        dfAccumulator += (double)pSrc[iSrcOffset] * dfMult;
     }
         
     // Upper Right Pixel
     if( iSrcX+1 >= 0 && iSrcX+1 < poWK->nSrcXSize
         && iSrcY >= 0 && iSrcY < poWK->nSrcYSize )
     {
-        double dfMult = (1.0-dfRatioX) * dfRatioY;
+        dfMult = (1.0-dfRatioX) * dfRatioY;
 
         dfAccumulatorDivisor += dfMult;
 
-        dfAccumulator +=
-            (double)((T *)poWK->papabySrcImage[iBand])[iSrcOffset+1] * dfMult;
+        dfAccumulator += (double)pSrc[iSrcOffset+1] * dfMult;
     }
         
     // Lower Right Pixel
     if( iSrcX+1 >= 0 && iSrcX+1 < poWK->nSrcXSize
         && iSrcY+1 >= 0 && iSrcY+1 < poWK->nSrcYSize )
     {
-        double dfMult = (1.0-dfRatioX) * (1.0-dfRatioY);
+        dfMult = (1.0-dfRatioX) * (1.0-dfRatioY);
 
         dfAccumulatorDivisor += dfMult;
 
-        dfAccumulator +=
-            (double)((T *)poWK->papabySrcImage[iBand])[iSrcOffset+1+poWK->nSrcXSize]
-            * dfMult;
+        dfAccumulator += (double)pSrc[iSrcOffset+1+poWK->nSrcXSize] * dfMult;
     }
         
     // Lower Left Pixel
     if( iSrcX >= 0 && iSrcX < poWK->nSrcXSize
         && iSrcY+1 >= 0 && iSrcY+1 < poWK->nSrcYSize )
     {
-        double dfMult = dfRatioX * (1.0-dfRatioY);
+        dfMult = dfRatioX * (1.0-dfRatioY);
 
         dfAccumulatorDivisor += dfMult;
 
-        dfAccumulator +=
-            (double)((T *)poWK->papabySrcImage[iBand])[iSrcOffset+poWK->nSrcXSize]
-            * dfMult;
+        dfAccumulator += (double)pSrc[iSrcOffset+poWK->nSrcXSize] * dfMult;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1938,7 +2030,7 @@ static int GWKBilinearResampleNoMasksT( GDALWarpKernel *poWK, int iBand,
         dfValue = dfAccumulator / dfAccumulatorDivisor;
     }
 
-    *pValue = GWKClampValueT<T>(dfValue);
+    *pValue = GWKRoundValueT<T>(dfValue);
 
     return TRUE;
 }
@@ -1947,27 +2039,18 @@ static int GWKBilinearResampleNoMasksT( GDALWarpKernel *poWK, int iBand,
 /*                        GWKCubicResample()                            */
 /*     Set of bicubic interpolators using cubic convolution.            */
 /************************************************************************/
+
+/* http://verona.fi-p.unam.mx/boris/practicas/CubConvInterp.pdf Formula 18
+or http://en.wikipedia.org/wiki/Cubic_Hermite_spline : CINTx(p_1,p0,p1,p2)
+or http://en.wikipedia.org/wiki/Bicubic_interpolation: matrix notation */
+
 #define CubicConvolution(distance1,distance2,distance3,f0,f1,f2,f3) \
      (             f1                                               \
-      + distance1*0.5*(f2 - f0)                                     \
-      + distance2*0.5*(2.0*f0 - 5.0*f1 + 4.0*f2 - f3)               \
-      + distance3*0.5*(3.0*(f1 - f2) + f3 - f0))
+      + 0.5 * (distance1*(f2 - f0)                                  \
+             + distance2*(2.0*f0 - 5.0*f1 + 4.0*f2 - f3)            \
+             + distance3*(3.0*(f1 - f2) + f3 - f0)))
 
-/* http://en.wikipedia.org/wiki/Bicubic_interpolation with alpha = -0.5 (cubic hermite spline ) */
-/* or http://www.cs.utexas.edu/users/fussell/courses/cs384g/lectures/mitchell/Mitchell.pdf with (B,C)=(0,0.5) the Catmull-Rom spline */
-/*
-W(x) = 1.5|x|^3-2.5|x|^2+1 if |x| <= 1
-       -0.5|x|^3+2.5|x|^2-4|x|+2 if 1 < |x| < 2
-
-V[-1]*W(-1.5)+V[0]*W(-0.5)+V[1]*W(0.5)+V[2]*W(1.5)=
--0.0625*V[-1]+0.5625*V[0]+0.5625*V[1]-0.0625*V[2]
-
-V[0]+0.25*(V[1]-V[-1])+0.125*(2V[-1]-5V[0]+4V[1]-V[2])+0.0625*(3*(V[0]-V[1])+V[2]-V[-1])=
-0.5625*V[0] +0.5625*V[1]-0.0625*V[-1]-0.0625*V[2]
-
-*/
-
-static int GWKCubicResample( GDALWarpKernel *poWK, int iBand,
+static int GWKCubicResample4Sample( GDALWarpKernel *poWK, int iBand,
                              double dfSrcX, double dfSrcY,
                              double *pdfDensity,
                              double *pdfReal, double *pdfImag )
@@ -1989,7 +2072,7 @@ static int GWKCubicResample( GDALWarpKernel *poWK, int iBand,
     // Get the bilinear interpolation at the image borders
     if ( iSrcX - 1 < 0 || iSrcX + 2 >= poWK->nSrcXSize
          || iSrcY - 1 < 0 || iSrcY + 2 >= poWK->nSrcYSize )
-        return GWKBilinearResample( poWK, iBand, dfSrcX, dfSrcY,
+        return GWKBilinearResample4Sample( poWK, iBand, dfSrcX, dfSrcY,
                                     pdfDensity, pdfReal, pdfImag );
 
     for ( i = -1; i < 3; i++ )
@@ -2001,7 +2084,7 @@ static int GWKCubicResample( GDALWarpKernel *poWK, int iBand,
              || adfDensity[2] < 0.000000001
              || adfDensity[3] < 0.000000001 )
         {
-            return GWKBilinearResample( poWK, iBand, dfSrcX, dfSrcY,
+            return GWKBilinearResample4Sample( poWK, iBand, dfSrcX, dfSrcY,
                                        pdfDensity, pdfReal, pdfImag );
         }
 
@@ -2034,7 +2117,7 @@ static int GWKCubicResample( GDALWarpKernel *poWK, int iBand,
 }
 
 template<class T>
-static int GWKCubicResampleNoMasksT( GDALWarpKernel *poWK, int iBand,
+static int GWKCubicResampleNoMasks4SampleT( GDALWarpKernel *poWK, int iBand,
                                      double dfSrcX, double dfSrcY,
                                      T *pValue )
 
@@ -2054,7 +2137,7 @@ static int GWKCubicResampleNoMasksT( GDALWarpKernel *poWK, int iBand,
     // Get the bilinear interpolation at the image borders
     if ( iSrcX - 1 < 0 || iSrcX + 2 >= poWK->nSrcXSize
          || iSrcY - 1 < 0 || iSrcY + 2 >= poWK->nSrcYSize )
-        return GWKBilinearResampleNoMasksT ( poWK, iBand, dfSrcX, dfSrcY,
+        return GWKBilinearResampleNoMasks4SampleT ( poWK, iBand, dfSrcX, dfSrcY,
                                              pValue );
 
     for ( i = -1; i < 3; i++ )
@@ -2106,12 +2189,130 @@ static double GWKLanczosSinc( double dfX )
     return sin(dfPIX) * sin(dfPIXoverR) / dfPIX2overR;
 }
 
+static void GWKLanczosSinc4Values( double* padfValues )
+{
+    for(int i=0;i<4;i++)
+    {
+        if ( padfValues[i] == 0.0 )
+            padfValues[i] = 1.0;
+        else
+        {
+            const double dfPIX = GWK_PI * padfValues[0];
+            const double dfPIXoverR = dfPIX / anGWKFilterRadius[GRA_Lanczos];
+            const double dfPIX2overR = dfPIX * dfPIXoverR;
+            padfValues[i] = sin(dfPIX) * sin(dfPIXoverR) / dfPIX2overR;
+        }
+    }
+}
+
 //#undef GWK_PI
+
+/************************************************************************/
+/*                           GWKBilinear()                              */
+/************************************************************************/
+
+static double GWKBilinear(double dfX)
+{
+    double dfAbsX = fabs(dfX);
+    if( dfAbsX <= 1.0 )
+        return 1 - dfAbsX;
+    else
+        return 0.0;
+}
+
+static void GWKBilinear4Values( double* padfValues )
+{
+    double dfAbsX0 = fabs(padfValues[0]);
+    double dfAbsX1 = fabs(padfValues[1]);
+    double dfAbsX2 = fabs(padfValues[2]);
+    double dfAbsX3 = fabs(padfValues[3]);
+    if( dfAbsX0 <= 1.0 )
+        padfValues[0] = 1 - dfAbsX0;
+    else
+        padfValues[0] = 0.0;
+    if( dfAbsX1 <= 1.0 )
+        padfValues[1] = 1 - dfAbsX1;
+    else
+        padfValues[1] = 0.0;
+    if( dfAbsX2 <= 1.0 )
+        padfValues[2] = 1 - dfAbsX2;
+    else
+        padfValues[2] = 0.0;
+    if( dfAbsX3 <= 1.0 )
+        padfValues[3] = 1 - dfAbsX3;
+    else
+        padfValues[3] = 0.0;
+}
+
+/************************************************************************/
+/*                            GWKCubic()                                */
+/************************************************************************/
+
+static double GWKCubic(double dfX)
+{
+    /* http://en.wikipedia.org/wiki/Bicubic_interpolation#Bicubic_convolution_algorithm */
+    /* W(x) formula with a = -0.5 (cubic hermite spline ) */
+    /* or http://www.cs.utexas.edu/users/fussell/courses/cs384g/lectures/mitchell/Mitchell.pdf */
+    /* k(x) (formula 8) with (B,C)=(0,0.5) the Catmull-Rom spline */
+    double dfAbsX = fabs(dfX);
+    if( dfAbsX <= 1.0 )
+    {
+        double dfX2 = dfX * dfX;
+        return dfX2 * (1.5 * dfAbsX - 2.5) + 1;
+    }
+    else if( dfAbsX <= 2.0 )
+    {
+        double dfX2 = dfX * dfX;
+        return dfX2 * (-0.5 * dfAbsX + 2.5) - 4 * dfAbsX + 2;
+    }
+    else
+        return 0.0;
+}
+
+static void GWKCubic4Values( double* padfValues )
+{
+    double dfAbsX_0 = fabs(padfValues[0]);
+    double dfX2_0 = padfValues[0] * padfValues[0];
+    double dfAbsX_1 = fabs(padfValues[1]);
+    double dfX2_1 = padfValues[1] * padfValues[1];
+    double dfAbsX_2 = fabs(padfValues[2]);
+    double dfX2_2 = padfValues[2] * padfValues[2];
+    double dfAbsX_3 = fabs(padfValues[3]);
+    double dfX2_3 = padfValues[3] * padfValues[3];
+    if( dfAbsX_0 <= 1.0 )
+        padfValues[0] = dfX2_0 * (1.5 * dfAbsX_0 - 2.5) + 1;
+    else if( dfAbsX_0 <= 2.0 )
+        padfValues[0] = dfX2_0 * (-0.5 * dfAbsX_0 + 2.5) - 4 * dfAbsX_0 + 2;
+    else
+        padfValues[0] = 0.0;
+    if( dfAbsX_1 <= 1.0 )
+        padfValues[1] = dfX2_1 * (1.5 * dfAbsX_1 - 2.5) + 1;
+    else if( dfAbsX_1 <= 2.0 )
+        padfValues[1] = dfX2_1 * (-0.5 * dfAbsX_1 + 2.5) - 4 * dfAbsX_1 + 2;
+    else
+        padfValues[1] = 0.0;
+    if( dfAbsX_2 <= 1.0 )
+        padfValues[2] = dfX2_2 * (1.5 * dfAbsX_2 - 2.5) + 1;
+    else if( dfAbsX_2 <= 2.0 )
+        padfValues[2] = dfX2_2 * (-0.5 * dfAbsX_2 + 2.5) - 4 * dfAbsX_2 + 2;
+    else
+        padfValues[3] = 0.0;
+    if( dfAbsX_3 <= 1.0 )
+        padfValues[3] = dfX2_3 * (1.5 * dfAbsX_3 - 2.5) + 1;
+    else if( dfAbsX_3 <= 2.0 )
+        padfValues[3] = dfX2_3 * (-0.5 * dfAbsX_3 + 2.5) - 4 * dfAbsX_3 + 2;
+    else
+        padfValues[3] = 0.0;
+}
 
 /************************************************************************/
 /*                           GWKBSpline()                               */
 /************************************************************************/
 
+/* http://www.cs.utexas.edu/users/fussell/courses/cs384g/lectures/mitchell/Mitchell.pdf with (B,C)=(1,0) */
+/* 1/6 * ( 3 * |x|^3 -  6 * |x|^2 + 4) |x| < 1
+   1/6 * ( -|x|^3 + 6 |x|^2  - 12|x| + 8) |x| > 1
+*/
 static double GWKBSpline( double x )
 {
     double xp2 = x + 2.0;
@@ -2127,16 +2328,30 @@ static double GWKBSpline( double x )
                                                   -4.0 * xm1*xm1*xm1:0.0) +
                                        6.0 * x*x*x:0.0) +
                           -4.0 * xp1*xp1*xp1:0.0) +
-             xp2c:0.0) ) * 0.166666666666666666666;
+             xp2c:0.0) ) /* * 0.166666666666666666666 */;
 }
-/* http://www.cs.utexas.edu/users/fussell/courses/cs384g/lectures/mitchell/Mitchell.pdf with (B,C)=(1,0)
-1/6 * ( 3 * |x|^3 -  6 * |x|^2 + 4) |x| < 1
-1/6 * ( -|x|^3 + 6 |x|^2  - 12|x| + 8) |x| > 1
 
--2<x<-1 1/6*( (x+2)^3) = 1/6*(x^3 + 6x^2+12x+8)
--1<x<0  1/6*( -4*(x+1)^3 + (x+2)^3 = 1/6*(-4(x^3+3x^2+3x+1)+x^3 + 6x^2+12x+8) = 1/6 * (-3x^3-6*x^2+4)
-*/
-
+static void GWKBSpline4Values( double* padfValues )
+{
+    for(int i=0;i<4;i++)
+    {
+        double x = padfValues[i];
+        double xp2 = x + 2.0;
+        double xp1 = x + 1.0;
+        double xm1 = x - 1.0;
+        
+        // This will most likely be used, so we'll compute it ahead of time to
+        // avoid stalling the processor
+        double xp2c = xp2 * xp2 * xp2;
+        
+        // Note that the test is computed only if it is needed
+        padfValues[i] = (((xp2 > 0.0)?((xp1 > 0.0)?((x > 0.0)?((xm1 > 0.0)?
+                                                    -4.0 * xm1*xm1*xm1:0.0) +
+                                        6.0 * x*x*x:0.0) +
+                            -4.0 * xp1*xp1*xp1:0.0) +
+                xp2c:0.0) ) /* * 0.166666666666666666666 */;
+    }
+}
 /************************************************************************/
 /*                       GWKResampleWrkStruct                           */
 /************************************************************************/
@@ -2298,7 +2513,6 @@ static int GWKResample( GDALWarpKernel *poWK, int iBand,
     const int     iSrcOffset = iSrcX + iSrcY * nSrcXSize;
     const double  dfDeltaX = dfSrcX - 0.5 - iSrcX;
     const double  dfDeltaY = dfSrcY - 0.5 - iSrcY;
-    const int     eResample = poWK->eResample;
 
     const double  dfXScale = poWK->dfXScale, dfYScale = poWK->dfYScale;
 
@@ -2318,7 +2532,8 @@ static int GWKResample( GDALWarpKernel *poWK, int iBand,
     // because a mask may render it unnecessary)
     memset( panCalcX, FALSE, nXDist * sizeof(char) );
     
-    CPLAssert( eResample == GRA_CubicSpline || eResample == GRA_Lanczos );
+    FilterFuncType pfnGetWeight = apfGWKFilter[poWK->eResample];
+    CPLAssert(pfnGetWeight);
 
     // Skip sampling over edge of image
     j = poWK->nFiltInitY;
@@ -2339,11 +2554,6 @@ static int GWKResample( GDALWarpKernel *poWK, int iBand,
 
     int iRowOffset = iSrcOffset + (j - 1) * nSrcXSize + iMin;
 
-    CPLAssert( eResample == GRA_CubicSpline );
-
-    double dfAccumulatorWeightHorizontal = 0.0;
-    double dfAccumulatorWeightVertical = 0.0;
-
     // Loop over pixel rows in the kernel
     for ( ; j <= jMax; ++j )
     {
@@ -2360,19 +2570,17 @@ static int GWKResample( GDALWarpKernel *poWK, int iBand,
                               padfRowDensity, padfRowReal, padfRowImag ) )
             continue;
 
-        // Select the resampling algorithm
-        /* if ( eResample == GRA_CubicSpline ) */
-            // Calculate the Y weight
-            dfWeight1 = ( bYScaleBelow1 ) ?
-                GWKBSpline((j - dfDeltaY) * dfYScale):
-                GWKBSpline(j - dfDeltaY);
-        /*else
-            CPLAssert(0);*/
+         // Calculate the Y weight
+        dfWeight1 = ( bYScaleBelow1 ) ?
+                pfnGetWeight((j - dfDeltaY) * dfYScale):
+                pfnGetWeight(j - dfDeltaY);
+
 
         // Iterate over pixels in row
         double dfAccumulatorRealLocal = 0.0;
         double dfAccumulatorImagLocal = 0.0;
         double dfAccumulatorDensityLocal = 0.0;
+        double dfAccumulatorWeightLocal = 0.0;
 
         for (i = iMin; i <= iMax; ++i )
         {
@@ -2391,16 +2599,11 @@ static int GWKResample( GDALWarpKernel *poWK, int iBand,
             }
             else
             {
-                // Choose among possible algorithms
-                /* if ( eResample == GRA_CubicSpline ) */
-                    // Calculate & save the X weight
-                    padfWeightsX[i-iMin] = dfWeight2 = ( bXScaleBelow1 ) ?
-                        GWKBSpline((i - dfDeltaX) * dfXScale):
-                        GWKBSpline(i - dfDeltaX);
-                /*else
-                    CPLAssert(0);*/
+                // Calculate & save the X weight
+                padfWeightsX[i-iMin] = dfWeight2 = ( bXScaleBelow1 ) ?
+                        pfnGetWeight((i - dfDeltaX) * dfXScale):
+                        pfnGetWeight(i - dfDeltaX);
 
-                dfAccumulatorWeightHorizontal += dfWeight2;
                 panCalcX[i-iMin] = TRUE;
             }
 
@@ -2409,15 +2612,14 @@ static int GWKResample( GDALWarpKernel *poWK, int iBand,
             dfAccumulatorImagLocal += padfRowImag[i-iMin] * dfWeight2;
             if( padfRowDensity != NULL )
                 dfAccumulatorDensityLocal += padfRowDensity[i-iMin] * dfWeight2;
+            dfAccumulatorWeightLocal += dfWeight2;
         }
         
         dfAccumulatorReal += dfAccumulatorRealLocal * dfWeight1;
         dfAccumulatorImag += dfAccumulatorImagLocal * dfWeight1;
         dfAccumulatorDensity += dfAccumulatorDensityLocal * dfWeight1;
-        dfAccumulatorWeightVertical += dfWeight1;
+        dfAccumulatorWeight += dfAccumulatorWeightLocal * dfWeight1;
     }
-    
-    dfAccumulatorWeight = dfAccumulatorWeightHorizontal * dfAccumulatorWeightVertical;
 
     if ( dfAccumulatorWeight < 0.000001 ||
          (padfRowDensity != NULL && dfAccumulatorDensity < 0.000001) )
@@ -2737,10 +2939,14 @@ static int GWKResampleOptimizedLanczos( GDALWarpKernel *poWK, int iBand,
     return TRUE;
 }
 
+/************************************************************************/
+/*                        GWKResampleNoMasksT()                         */
+/************************************************************************/
+
 template <class T>
-static int GWKCubicSplineResampleNoMasksT( GDALWarpKernel *poWK, int iBand,
-                                           double dfSrcX, double dfSrcY,
-                                           T *pValue, double *padfBSpline )
+static int GWKResampleNoMasksT( GDALWarpKernel *poWK, int iBand,
+                                double dfSrcX, double dfSrcY,
+                                T *pValue, double *padfWeight )
 
 {
     // Commonly used; save locally
@@ -2764,10 +2970,15 @@ static int GWKCubicSplineResampleNoMasksT( GDALWarpKernel *poWK, int iBand,
     // Politely refusing to process invalid coordinates or obscenely small image
     if ( iSrcX >= nSrcXSize || iSrcY >= nSrcYSize
          || nXRadius > nSrcXSize || nYRadius > nSrcYSize )
-        return GWKBilinearResampleNoMasksT( poWK, iBand, dfSrcX, dfSrcY, pValue);
+        return GWKBilinearResampleNoMasks4SampleT( poWK, iBand, dfSrcX, dfSrcY, pValue);
 
-    const int bXScaleBelow1 = ( dfXScale < 1.0 );
-    const int bYScaleBelow1 = ( dfYScale < 1.0 );
+    FilterFuncType pfnGetWeight = apfGWKFilter[poWK->eResample];
+    CPLAssert(pfnGetWeight);
+    FilterFunc4ValuesType pfnGetWeight4Values = apfGWKFilter4Values[poWK->eResample];
+    CPLAssert(pfnGetWeight4Values);
+
+    if( dfXScale > 1.0 ) dfXScale = 1.0;
+    if( dfYScale > 1.0 ) dfYScale = 1.0;
 
     // Loop over all rows in the kernel
     double dfAccumulatorWeightHorizontal = 0.0;
@@ -2780,13 +2991,21 @@ static int GWKCubicSplineResampleNoMasksT( GDALWarpKernel *poWK, int iBand,
     if( iSrcX + iMax >= nSrcXSize-1 )
         iMax = nSrcXSize-1 - iSrcX;
     int i, iC;
-    for(iC = 0, i = iMin; i <= iMax; ++i, ++iC )
+    for(iC = 0, i = iMin; i+2 < iMax; i+=4, iC+=4 )
     {
-        double dfWeight2 = (bXScaleBelow1) ?
-                    GWKBSpline((dfDeltaX - i) * dfXScale):
-                    GWKBSpline(dfDeltaX - i);
-        padfBSpline[iC] = dfWeight2;
-        dfAccumulatorWeightHorizontal += dfWeight2;
+        padfWeight[iC] = (i - dfDeltaX) * dfXScale;
+        padfWeight[iC+1] = padfWeight[iC] + dfXScale;
+        padfWeight[iC+2] = padfWeight[iC+1] + dfXScale;
+        padfWeight[iC+3] = padfWeight[iC+2] + dfXScale;
+        pfnGetWeight4Values(padfWeight+iC);
+        dfAccumulatorWeightHorizontal += padfWeight[iC] + padfWeight[iC + 1] +
+                                         padfWeight[iC + 2 ] + padfWeight[iC + 3];
+    }
+    for(; i <= iMax; ++i, ++iC )
+    {
+        double dfWeight = pfnGetWeight((i - dfDeltaX) * dfXScale);
+        padfWeight[iC] = dfWeight;
+        dfAccumulatorWeightHorizontal += dfWeight;
     }
 
     int j = 1 - nYRadius;
@@ -2801,33 +3020,376 @@ static int GWKCubicSplineResampleNoMasksT( GDALWarpKernel *poWK, int iBand,
         int     iSampJ = iSrcOffset + j * nSrcXSize;
 
         // Loop over all pixels in the row
-        double dfAccumulatorLocal = 0.0;
-        for(iC = 0, i = iMin; i <= iMax; ++i, ++iC )
+        double dfAccumulatorLocal = 0.0, dfAccumulatorLocal2 = 0.0;
+        iC = 0;
+        i = iMin;
+        /* Process by chunk of 4 cols */
+        for(; i+2 < iMax; i+=4, iC+=4 )
         {
-            double  dfWeight2 = padfBSpline[iC];
-
             // Retrieve the pixel & accumulate
-            dfAccumulatorLocal += (double)pSrcBand[i+iSampJ] * dfWeight2;
+            dfAccumulatorLocal += (double)pSrcBand[i+iSampJ] * padfWeight[iC];
+            dfAccumulatorLocal += (double)pSrcBand[i+1+iSampJ] * padfWeight[iC+1];
+            dfAccumulatorLocal2 += (double)pSrcBand[i+2+iSampJ] * padfWeight[iC+2];
+            dfAccumulatorLocal2 += (double)pSrcBand[i+3+iSampJ] * padfWeight[iC+3];
+        }
+        dfAccumulatorLocal += dfAccumulatorLocal2;
+        if( i < iMax )
+        {
+            dfAccumulatorLocal += (double)pSrcBand[i+iSampJ] * padfWeight[iC];
+            dfAccumulatorLocal += (double)pSrcBand[i+1+iSampJ] * padfWeight[iC+1];
+            i+=2;
+            iC+=2;
+        }
+        if( i == iMax )
+        {
+            dfAccumulatorLocal += (double)pSrcBand[i+iSampJ] * padfWeight[iC];
         }
 
         // Calculate the Y weight
-        double  dfWeight1 = (bYScaleBelow1) ?
-            GWKBSpline((j - dfDeltaY) * dfYScale):
-            GWKBSpline(j - dfDeltaY);
-
-        dfAccumulator += dfWeight1 * dfAccumulatorLocal;
-        dfAccumulatorWeightVertical += dfWeight1;
+        double  dfWeight = pfnGetWeight((j - dfDeltaY) * dfYScale);
+        dfAccumulator += dfWeight * dfAccumulatorLocal;
+        dfAccumulatorWeightVertical += dfWeight;
     }
     
     double dfAccumulatorWeight = dfAccumulatorWeightHorizontal * dfAccumulatorWeightVertical;
     
-    if ( dfAccumulatorWeight >= 0.99999 && dfAccumulatorWeight <= 1.00001 )
-        *pValue = GWKClampValueT<T>(dfAccumulator);
-    else
-        *pValue = GWKClampValueT<T>(dfAccumulator / dfAccumulatorWeight);
+    *pValue = GWKClampValueT<T>(dfAccumulator / dfAccumulatorWeight);
 
     return TRUE;
 }
+
+/* We restrict to 64bit processors because they are guaranteed to have SSE2 */
+/* Could possibly be used too on 32bit, but we would need to check at runtime */
+#if defined(__x86_64) || defined(_M_X64)
+
+/* Requires SSE2 */
+#include <emmintrin.h>
+
+/************************************************************************/
+/*                    GWKResampleNoMasks_SSE2_T()                       */
+/************************************************************************/
+
+template<class T> static inline __m128d GWK_SSE2_Load2Samples(const T* ptr);
+template<class T> static inline void GWK_SSE2_Load4Samples(const T* ptr,
+                                                               __m128d& low,
+                                                               __m128d& high);
+
+template<class T>
+static int GWKResampleNoMasks_SSE2_T( GDALWarpKernel *poWK, int iBand,
+                                      double dfSrcX, double dfSrcY,
+                                      T *pValue, double *padfWeight )
+{
+    // Commonly used; save locally
+    int     nSrcXSize = poWK->nSrcXSize;
+    int     nSrcYSize = poWK->nSrcYSize;
+    
+    double  dfAccumulator = 0.0;
+    int     iSrcX = (int) floor( dfSrcX - 0.5 );
+    int     iSrcY = (int) floor( dfSrcY - 0.5 );
+    int     iSrcOffset = iSrcX + iSrcY * nSrcXSize;
+    double  dfDeltaX = dfSrcX - 0.5 - iSrcX;
+    double  dfDeltaY = dfSrcY - 0.5 - iSrcY;
+
+    double  dfXScale = poWK->dfXScale;
+    double  dfYScale = poWK->dfYScale;
+    int     nXRadius = poWK->nXRadius;
+    int     nYRadius = poWK->nYRadius;
+
+    const T*  pSrcBand = (const T*) poWK->papabySrcImage[iBand];
+    
+    // Politely refusing to process invalid coordinates or obscenely small image
+    if ( iSrcX >= nSrcXSize || iSrcY >= nSrcYSize
+         || nXRadius > nSrcXSize || nYRadius > nSrcYSize )
+        return GWKBilinearResampleNoMasks4SampleT( poWK, iBand, dfSrcX, dfSrcY, pValue);
+
+    FilterFuncType pfnGetWeight = apfGWKFilter[poWK->eResample];
+    CPLAssert(pfnGetWeight);
+    FilterFunc4ValuesType pfnGetWeight4Values = apfGWKFilter4Values[poWK->eResample];
+    CPLAssert(pfnGetWeight4Values);
+
+    if( dfXScale > 1.0 ) dfXScale = 1.0;
+    if( dfYScale > 1.0 ) dfYScale = 1.0;
+
+    // Loop over all rows in the kernel
+    double dfAccumulatorWeightHorizontal = 0.0;
+    double dfAccumulatorWeightVertical = 0.0;
+    
+    int iMin = 1 - nXRadius;
+    if( iSrcX + iMin < 0 )
+        iMin = -iSrcX;
+    int iMax = nXRadius;
+    if( iSrcX + iMax >= nSrcXSize-1 )
+        iMax = nSrcXSize-1 - iSrcX;
+    int i, iC;
+    for(iC = 0, i = iMin; i+2 < iMax; i+=4, iC+=4 )
+    {
+        padfWeight[iC] = (i - dfDeltaX) * dfXScale;
+        padfWeight[iC+1] = padfWeight[iC] + dfXScale;
+        padfWeight[iC+2] = padfWeight[iC+1] + dfXScale;
+        padfWeight[iC+3] = padfWeight[iC+2] + dfXScale;
+        pfnGetWeight4Values(padfWeight+iC);
+        dfAccumulatorWeightHorizontal += padfWeight[iC] + padfWeight[iC + 1] +
+                                         padfWeight[iC + 2 ] + padfWeight[iC + 3];
+    }
+    for(; i <= iMax; ++i, ++iC )
+    {
+        double dfWeight = pfnGetWeight((i - dfDeltaX) * dfXScale);
+        padfWeight[iC] = dfWeight;
+        dfAccumulatorWeightHorizontal += dfWeight;
+    }
+
+    int j = 1 - nYRadius;
+    if(  iSrcY + j < 0 )
+        j = -iSrcY;
+    int jMax = nYRadius;
+    if( iSrcY + jMax >= nSrcYSize-1 )
+        jMax = nSrcYSize-1 - iSrcY;
+
+    /* Process by chunk of 4 rows */
+    for ( ; j+2 < jMax; j+=4 )
+    {
+        int     iSampJ = iSrcOffset + j * nSrcXSize;
+
+        // Loop over all pixels in the row
+        iC = 0;
+        i = iMin;
+        /* Process by chunk of 4 cols */
+        __m128d xmm_acc1_1 = _mm_setzero_pd();
+        __m128d xmm_acc2_1 = _mm_setzero_pd();
+        __m128d xmm_acc1_2 = _mm_setzero_pd();
+        __m128d xmm_acc2_2 = _mm_setzero_pd();
+        __m128d xmm_acc1_3 = _mm_setzero_pd();
+        __m128d xmm_acc2_3 = _mm_setzero_pd();
+        __m128d xmm_acc1_4 = _mm_setzero_pd();
+        __m128d xmm_acc2_4 = _mm_setzero_pd();
+        for(; i+2 < iMax; i+=4, iC+=4 )
+        {
+            // Retrieve the pixel & accumulate
+            __m128d xmm_pixels1_1_d, xmm_pixels2_1_d;
+            __m128d xmm_pixels1_2_d, xmm_pixels2_2_d;
+            __m128d xmm_pixels1_3_d, xmm_pixels2_3_d;
+            __m128d xmm_pixels1_4_d, xmm_pixels2_4_d;
+            GWK_SSE2_Load4Samples(pSrcBand+i+iSampJ, xmm_pixels1_1_d, xmm_pixels2_1_d);
+            GWK_SSE2_Load4Samples(pSrcBand+i+iSampJ+nSrcXSize, xmm_pixels1_2_d, xmm_pixels2_2_d);
+            GWK_SSE2_Load4Samples(pSrcBand+i+iSampJ+2*nSrcXSize, xmm_pixels1_3_d, xmm_pixels2_3_d);
+            GWK_SSE2_Load4Samples(pSrcBand+i+iSampJ+3*nSrcXSize, xmm_pixels1_4_d, xmm_pixels2_4_d);
+
+            __m128d xmm_padfWeight1 = _mm_loadu_pd(padfWeight + iC);
+            __m128d xmm_padfWeight2 = _mm_loadu_pd(padfWeight + iC + 2);
+
+            xmm_acc1_1 = _mm_add_pd(xmm_acc1_1, _mm_mul_pd(xmm_pixels1_1_d,xmm_padfWeight1));
+            xmm_acc2_1 = _mm_add_pd(xmm_acc2_1, _mm_mul_pd(xmm_pixels2_1_d,xmm_padfWeight2));
+            xmm_acc1_2 = _mm_add_pd(xmm_acc1_2, _mm_mul_pd(xmm_pixels1_2_d,xmm_padfWeight1));
+            xmm_acc2_2 = _mm_add_pd(xmm_acc2_2, _mm_mul_pd(xmm_pixels2_2_d,xmm_padfWeight2));
+            xmm_acc1_3 = _mm_add_pd(xmm_acc1_3, _mm_mul_pd(xmm_pixels1_3_d,xmm_padfWeight1));
+            xmm_acc2_3 = _mm_add_pd(xmm_acc2_3, _mm_mul_pd(xmm_pixels2_3_d,xmm_padfWeight2));
+            xmm_acc1_4 = _mm_add_pd(xmm_acc1_4, _mm_mul_pd(xmm_pixels1_4_d,xmm_padfWeight1));
+            xmm_acc2_4 = _mm_add_pd(xmm_acc2_4, _mm_mul_pd(xmm_pixels2_4_d,xmm_padfWeight2));
+        }
+
+        if( i < iMax )
+        {
+            __m128d xmm_pixels_1_d = GWK_SSE2_Load2Samples (pSrcBand+i+iSampJ);
+            __m128d xmm_pixels_2_d = GWK_SSE2_Load2Samples (pSrcBand+i+iSampJ+nSrcXSize);
+            __m128d xmm_pixels_3_d = GWK_SSE2_Load2Samples (pSrcBand+i+iSampJ+2*nSrcXSize);
+            __m128d xmm_pixels_4_d = GWK_SSE2_Load2Samples (pSrcBand+i+iSampJ+3*nSrcXSize);
+
+            __m128d xmm_padfWeight = _mm_loadu_pd(padfWeight + iC);
+
+            xmm_acc1_1 = _mm_add_pd(xmm_acc1_1, _mm_mul_pd(xmm_pixels_1_d,xmm_padfWeight));
+            xmm_acc1_2 = _mm_add_pd(xmm_acc1_2, _mm_mul_pd(xmm_pixels_2_d,xmm_padfWeight));
+            xmm_acc1_3 = _mm_add_pd(xmm_acc1_3, _mm_mul_pd(xmm_pixels_3_d,xmm_padfWeight));
+            xmm_acc1_4 = _mm_add_pd(xmm_acc1_4, _mm_mul_pd(xmm_pixels_4_d,xmm_padfWeight));
+
+            i+=2;
+            iC+=2;
+        }
+
+#define ADD_4DOUBLE(acc1,acc2) \
+    do { acc1 = _mm_add_pd(acc1,acc2); \
+         acc2 = _mm_shuffle_pd(acc1,acc1,_MM_SHUFFLE2(0,1)); /* transfer high word of acc1 into low word of acc2 */ \
+         acc1 = _mm_add_pd(acc1,acc2); } while(0)
+
+        ADD_4DOUBLE(xmm_acc1_1,xmm_acc2_1);
+        ADD_4DOUBLE(xmm_acc1_2,xmm_acc2_2);
+        ADD_4DOUBLE(xmm_acc1_3,xmm_acc2_3);
+        ADD_4DOUBLE(xmm_acc1_4,xmm_acc2_4);
+
+        double dfAccumulatorLocal_1,  dfAccumulatorLocal_2,  dfAccumulatorLocal_3,  dfAccumulatorLocal_4;
+        _mm_storel_pd(&dfAccumulatorLocal_1, xmm_acc1_1);
+        _mm_storel_pd(&dfAccumulatorLocal_2, xmm_acc1_2);
+        _mm_storel_pd(&dfAccumulatorLocal_3, xmm_acc1_3);
+        _mm_storel_pd(&dfAccumulatorLocal_4, xmm_acc1_4);
+
+        if( i == iMax )
+        {
+            dfAccumulatorLocal_1 += (double)pSrcBand[i+iSampJ] * padfWeight[iC];
+            dfAccumulatorLocal_2 += (double)pSrcBand[i+iSampJ + nSrcXSize] * padfWeight[iC];
+            dfAccumulatorLocal_3 += (double)pSrcBand[i+iSampJ + 2 * nSrcXSize] * padfWeight[iC];
+            dfAccumulatorLocal_4 += (double)pSrcBand[i+iSampJ + 3 * nSrcXSize] * padfWeight[iC];
+        }
+
+        // Calculate the Y weight
+        double adfWeight[4];
+        adfWeight[0] = (j - dfDeltaY) * dfYScale;
+        adfWeight[1] = adfWeight[0] + dfYScale;
+        adfWeight[2] = adfWeight[1] + dfYScale;
+        adfWeight[3] = adfWeight[2] + dfYScale;
+        pfnGetWeight4Values(adfWeight);
+        dfAccumulator += adfWeight[0] * dfAccumulatorLocal_1;
+        dfAccumulatorWeightVertical += adfWeight[0];
+        dfAccumulator += adfWeight[1] * dfAccumulatorLocal_2;
+        dfAccumulatorWeightVertical += adfWeight[1];
+        dfAccumulator += adfWeight[2] * dfAccumulatorLocal_3;
+        dfAccumulatorWeightVertical += adfWeight[2];
+        dfAccumulator += adfWeight[3] * dfAccumulatorLocal_4;
+        dfAccumulatorWeightVertical += adfWeight[3];
+    }
+    for ( ; j <= jMax; ++j )
+    {
+        int     iSampJ = iSrcOffset + j * nSrcXSize;
+
+        // Loop over all pixels in the row
+        iC = 0;
+        i = iMin;
+        /* Process by chunk of 4 cols */
+        __m128d xmm_acc1_1 = _mm_setzero_pd();
+        __m128d xmm_acc2_1 = _mm_setzero_pd();
+        for(; i+2 < iMax; i+=4, iC+=4 )
+        {
+            // Retrieve the pixel & accumulate
+            __m128d xmm_pixels1_1_d, xmm_pixels2_1_d;
+            GWK_SSE2_Load4Samples(pSrcBand+i+iSampJ, xmm_pixels1_1_d, xmm_pixels2_1_d);
+
+            __m128d xmm_padfWeight1 = _mm_loadu_pd(padfWeight + iC);
+            __m128d xmm_padfWeight2 = _mm_loadu_pd(padfWeight + iC + 2);
+            xmm_acc1_1 = _mm_add_pd(xmm_acc1_1, _mm_mul_pd(xmm_pixels1_1_d,xmm_padfWeight1));
+            xmm_acc2_1 = _mm_add_pd(xmm_acc2_1, _mm_mul_pd(xmm_pixels2_1_d,xmm_padfWeight2));
+        }
+        ADD_4DOUBLE(xmm_acc1_1,xmm_acc2_1);
+
+        double dfAccumulatorLocal;
+        _mm_storel_pd(&dfAccumulatorLocal, xmm_acc1_1);
+
+        if( i < iMax )
+        {
+            dfAccumulatorLocal += (double)pSrcBand[i+iSampJ] * padfWeight[iC];
+            dfAccumulatorLocal += (double)pSrcBand[i+1+iSampJ] * padfWeight[iC+1];
+            i+=2;
+            iC+=2;
+        }
+        if( i == iMax )
+        {
+            dfAccumulatorLocal += (double)pSrcBand[i+iSampJ] * padfWeight[iC];
+        }
+
+        // Calculate the Y weight
+        double  dfWeight = pfnGetWeight((j - dfDeltaY) * dfYScale);
+        dfAccumulator += dfWeight * dfAccumulatorLocal;
+        dfAccumulatorWeightVertical += dfWeight;
+    }
+
+    double dfAccumulatorWeight = dfAccumulatorWeightHorizontal * dfAccumulatorWeightVertical;
+    
+    *pValue = GWKClampValueT<T>(dfAccumulator / dfAccumulatorWeight);
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                     GWKResampleNoMasksT<GByte>()                     */
+/************************************************************************/
+
+template<> inline __m128d GWK_SSE2_Load2Samples(const GByte* ptr)
+{
+    __m128i xmm_i = _mm_cvtsi32_si128(*(GUInt16*)(ptr));
+    xmm_i = _mm_unpacklo_epi8(xmm_i, _mm_setzero_si128());
+    xmm_i = _mm_unpacklo_epi16(xmm_i, _mm_setzero_si128());
+    return _mm_cvtepi32_pd(xmm_i);
+}
+
+template<> inline void GWK_SSE2_Load4Samples(const GByte* ptr,
+                                                 __m128d& low, __m128d& high)
+{
+    __m128i xmm_i = _mm_cvtsi32_si128(*(int*)(ptr));
+    xmm_i = _mm_unpacklo_epi8(xmm_i, _mm_setzero_si128());
+    xmm_i = _mm_unpacklo_epi16(xmm_i, _mm_setzero_si128());
+    low = _mm_cvtepi32_pd(xmm_i);
+    high =  _mm_cvtepi32_pd(_mm_shuffle_epi32(xmm_i,_MM_SHUFFLE(3,2,3,2)));
+}
+
+template<>
+int GWKResampleNoMasksT<GByte>( GDALWarpKernel *poWK, int iBand,
+                                double dfSrcX, double dfSrcY,
+                                GByte *pValue, double *padfWeight )
+{
+    return GWKResampleNoMasks_SSE2_T(poWK, iBand, dfSrcX, dfSrcY, pValue, padfWeight);
+}
+
+/************************************************************************/
+/*                     GWKResampleNoMasksT<GInt16>()                    */
+/************************************************************************/
+
+#define LOAD_2_GINT16(xmm, ptr) do { \
+        xmm = _mm_cvtsi32_si128(*(int*)(ptr)); \
+        xmm = _mm_unpacklo_epi16(xmm,xmm); /* 0|0|0|0|0|0|b|a --> 0|0|0|0|b|b|a|a */ \
+        xmm = _mm_srai_epi32(xmm, 16);     /* 0|0|0|0|b|b|a|a --> 0|0|0|0|sign(b)|b|sign(a)|a */ \
+        } while(0)
+
+template<> inline __m128d GWK_SSE2_Load2Samples(const GInt16* ptr)
+{
+    __m128i xmm_i;
+    LOAD_2_GINT16(xmm_i, ptr);
+    return _mm_cvtepi32_pd (xmm_i);
+}
+
+template<> inline void GWK_SSE2_Load4Samples(const GInt16* ptr,
+                                             __m128d& low, __m128d& high)
+{
+    __m128i xmm1_i, xmm2_i;
+    LOAD_2_GINT16(xmm1_i, ptr);
+    LOAD_2_GINT16(xmm2_i, ptr+2);
+    low = _mm_cvtepi32_pd (xmm1_i);
+    high = _mm_cvtepi32_pd (xmm2_i);
+}
+
+template<>
+int GWKResampleNoMasksT<GInt16>( GDALWarpKernel *poWK, int iBand,
+                                 double dfSrcX, double dfSrcY,
+                                 GInt16 *pValue, double *padfWeight )
+{
+    return GWKResampleNoMasks_SSE2_T(poWK, iBand, dfSrcX, dfSrcY, pValue, padfWeight);
+}
+
+#ifdef INSTANCIATE_FLOAT64_SSE2_IMPL
+
+/************************************************************************/
+/*                     GWKResampleNoMasksT<double>()                    */
+/************************************************************************/
+
+template<> inline __m128d GWK_SSE2_Load2Samples(const double* ptr)
+{
+    return _mm_loadu_pd (ptr);
+}
+
+template<> inline void GWK_SSE2_Load4Samples(const double* ptr,
+                                                 __m128d& low, __m128d& high)
+{
+    low = _mm_loadu_pd (ptr);
+    high = _mm_loadu_pd (ptr+2);
+}
+
+template<>
+int GWKResampleNoMasksT<double>( GDALWarpKernel *poWK, int iBand,
+                                 double dfSrcX, double dfSrcY,
+                                 double *pValue, double *padfWeight )
+{
+    return GWKResampleNoMasks_SSE2_T(poWK, iBand, dfSrcX, dfSrcY, pValue, padfWeight);
+}
+
+#endif /* INSTANCIATE_FLOAT64_SSE2_IMPL */
+
+#endif /* defined(__x86_64) || defined(_M_X64) */
 
 /************************************************************************/
 /*                           GWKOpenCLCase()                            */
@@ -3146,34 +3708,47 @@ free_warper:
 }
 #endif /* defined(HAVE_OPENCL) */
 
+/************************************************************************/
+/*                     GWKCheckAndComputeSrcOffsets()                   */
+/************************************************************************/
+static CPL_INLINE int GWKCheckAndComputeSrcOffsets(const int* _pabSuccess,
+                                         int _iDstX,
+                                         const double* _padfX,
+                                         const double* _padfY,
+                                         const GDALWarpKernel* _poWK,
+                                         int _nSrcXSize,
+                                         int _nSrcYSize,
+                                         int& iSrcOffset)
+{
+    if( !_pabSuccess[_iDstX] )
+        return FALSE;
 
-#define COMPUTE_iSrcOffset(_pabSuccess, _iDstX, _padfX, _padfY, _poWK, _nSrcXSize, _nSrcYSize) \
-            if( !_pabSuccess[_iDstX] ) \
-                continue; \
-\
-/* -------------------------------------------------------------------- */ \
-/*      Figure out what pixel we want in our source raster, and skip    */ \
-/*      further processing if it is well off the source image.          */ \
-/* -------------------------------------------------------------------- */ \
-            /* We test against the value before casting to avoid the */ \
-            /* problem of asymmetric truncation effects around zero.  That is */ \
-            /* -0.5 will be 0 when cast to an int. */ \
-            if( _padfX[_iDstX] < _poWK->nSrcXOff \
-                || _padfY[_iDstX] < _poWK->nSrcYOff ) \
-                continue; \
-\
-            int iSrcX, iSrcY, CPL_UNUSED iSrcOffset;\
-\
-            iSrcX = ((int) (_padfX[_iDstX] + 1e-10)) - _poWK->nSrcXOff;\
-            iSrcY = ((int) (_padfY[_iDstX] + 1e-10)) - _poWK->nSrcYOff;\
-\
-            /* If operating outside natural projection area, padfX/Y can be */ \
-            /* a very huge positive number, that becomes -2147483648 in the */ \
-            /* int trucation. So it is necessary to test now for non negativeness. */ \
-            if( iSrcX < 0 || iSrcX >= _nSrcXSize || iSrcY < 0 || iSrcY >= _nSrcYSize )\
-                continue;\
-\
-            iSrcOffset = iSrcX + iSrcY * _nSrcXSize;
+/* -------------------------------------------------------------------- */
+/*      Figure out what pixel we want in our source raster, and skip    */
+/*      further processing if it is well off the source image.          */
+/* -------------------------------------------------------------------- */
+    /* We test against the value before casting to avoid the */
+    /* problem of asymmetric truncation effects around zero.  That is */
+    /* -0.5 will be 0 when cast to an int. */
+    if( _padfX[_iDstX] < _poWK->nSrcXOff
+        || _padfY[_iDstX] < _poWK->nSrcYOff )
+        return FALSE;
+
+    int iSrcX, iSrcY;
+
+    iSrcX = ((int) (_padfX[_iDstX] + 1e-10)) - _poWK->nSrcXOff;
+    iSrcY = ((int) (_padfY[_iDstX] + 1e-10)) - _poWK->nSrcYOff;
+
+    /* If operating outside natural projection area, padfX/Y can be */
+    /* a very huge positive number, that becomes -2147483648 in the */
+    /* int trucation. So it is necessary to test now for non negativeness. */
+    if( iSrcX < 0 || iSrcX >= _nSrcXSize || iSrcY < 0 || iSrcY >= _nSrcYSize )
+        return FALSE;
+
+    iSrcOffset = iSrcX + iSrcY * _nSrcXSize;
+
+    return TRUE;
+}
 
 /************************************************************************/
 /*                           GWKGeneralCase()                           */
@@ -3213,10 +3788,11 @@ static void GWKGeneralCaseThread( void* pData)
     padfY = (double *) CPLMalloc(sizeof(double) * nDstXSize);
     padfZ = (double *) CPLMalloc(sizeof(double) * nDstXSize);
     pabSuccess = (int *) CPLMalloc(sizeof(int) * nDstXSize);
+    
+    int bUse4SamplesFormula = (poWK->dfXScale >= 0.95 && poWK->dfYScale >= 0.95);
 
     GWKResampleWrkStruct* psWrkStruct = NULL;
-    if (poWK->eResample == GRA_CubicSpline
-        || poWK->eResample == GRA_Lanczos )
+    if (poWK->eResample != GRA_NearestNeighbour)
     {
         psWrkStruct = GWKResampleCreateWrkStruct(poWK);
     }
@@ -3252,7 +3828,10 @@ static void GWKGeneralCaseThread( void* pData)
         {
             int iDstOffset;
 
-            COMPUTE_iSrcOffset(pabSuccess, iDstX, padfX, padfY, poWK, nSrcXSize, nSrcYSize);
+            int iSrcOffset;
+            if( !GWKCheckAndComputeSrcOffsets(pabSuccess, iDstX, padfX, padfY,
+                                    poWK, nSrcXSize, nSrcYSize, iSrcOffset) )
+                continue;
 
 /* -------------------------------------------------------------------- */
 /*      Do not try to apply transparent/invalid source pixels to the    */
@@ -3295,24 +3874,25 @@ static void GWKGeneralCaseThread( void* pData)
                     GWKGetPixelValue( poWK, iBand, iSrcOffset,
                                       &dfBandDensity, &dfValueReal, &dfValueImag );
                 }
-                else if ( poWK->eResample == GRA_Bilinear )
+                else if ( poWK->eResample == GRA_Bilinear &&
+                          bUse4SamplesFormula )
                 {
-                    GWKBilinearResample( poWK, iBand, 
+                    GWKBilinearResample4Sample( poWK, iBand, 
                                          padfX[iDstX]-poWK->nSrcXOff,
                                          padfY[iDstX]-poWK->nSrcYOff,
                                          &dfBandDensity, 
                                          &dfValueReal, &dfValueImag );
                 }
-                else if ( poWK->eResample == GRA_Cubic )
+                else if ( poWK->eResample == GRA_Cubic &&
+                          bUse4SamplesFormula )
                 {
-                    GWKCubicResample( poWK, iBand, 
-                                      padfX[iDstX]-poWK->nSrcXOff,
-                                      padfY[iDstX]-poWK->nSrcYOff,
-                                      &dfBandDensity, 
-                                      &dfValueReal, &dfValueImag );
+                    GWKCubicResample4Sample( poWK, iBand, 
+                                        padfX[iDstX]-poWK->nSrcXOff,
+                                        padfY[iDstX]-poWK->nSrcYOff,
+                                        &dfBandDensity, 
+                                        &dfValueReal, &dfValueImag );
                 }
-                else if ( poWK->eResample == GRA_CubicSpline
-                          || poWK->eResample == GRA_Lanczos )
+                else
                 {
                     psWrkStruct->pfnGWKResample( poWK, iBand, 
                                  padfX[iDstX]-poWK->nSrcXOff,
@@ -3380,318 +3960,8 @@ static void GWKGeneralCaseThread( void* pData)
 /*      possible for this particular transformation type.               */
 /************************************************************************/
 
-template<class T>
-static void GWKNearestNoMasksThread( void* pData )
-
-{
-    GWKJobStruct* psJob = (GWKJobStruct*) pData;
-    GDALWarpKernel *poWK = psJob->poWK;
-    int iYMin = psJob->iYMin;
-    int iYMax = psJob->iYMax;
-
-    int iDstY;
-    int nDstXSize = poWK->nDstXSize;
-    int nSrcXSize = poWK->nSrcXSize, nSrcYSize = poWK->nSrcYSize;
-
-/* -------------------------------------------------------------------- */
-/*      Allocate x,y,z coordinate arrays for transformation ... one     */
-/*      scanlines worth of positions.                                   */
-/* -------------------------------------------------------------------- */
-    double *padfX, *padfY, *padfZ;
-    int    *pabSuccess;
-
-    padfX = (double *) CPLMalloc(sizeof(double) * nDstXSize);
-    padfY = (double *) CPLMalloc(sizeof(double) * nDstXSize);
-    padfZ = (double *) CPLMalloc(sizeof(double) * nDstXSize);
-    pabSuccess = (int *) CPLMalloc(sizeof(int) * nDstXSize);
-
-/* ==================================================================== */
-/*      Loop over output lines.                                         */
-/* ==================================================================== */
-    for( iDstY = iYMin; iDstY < iYMax; iDstY++ )
-    {
-        int iDstX;
-
-/* -------------------------------------------------------------------- */
-/*      Setup points to transform to source image space.                */
-/* -------------------------------------------------------------------- */
-        for( iDstX = 0; iDstX < nDstXSize; iDstX++ )
-        {
-            padfX[iDstX] = iDstX + 0.5 + poWK->nDstXOff;
-            padfY[iDstX] = iDstY + 0.5 + poWK->nDstYOff;
-            padfZ[iDstX] = 0.0;
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Transform the points from destination pixel/line coordinates    */
-/*      to source pixel/line coordinates.                               */
-/* -------------------------------------------------------------------- */
-        poWK->pfnTransformer( psJob->pTransformerArg, TRUE, nDstXSize,
-                              padfX, padfY, padfZ, pabSuccess );
-
-/* ==================================================================== */
-/*      Loop over pixels in output scanline.                            */
-/* ==================================================================== */
-        for( iDstX = 0; iDstX < nDstXSize; iDstX++ )
-        {
-            int iDstOffset;
-
-            COMPUTE_iSrcOffset(pabSuccess, iDstX, padfX, padfY, poWK, nSrcXSize, nSrcYSize);
-
-/* ==================================================================== */
-/*      Loop processing each band.                                      */
-/* ==================================================================== */
-            int iBand;
-            
-            iDstOffset = iDstX + iDstY * nDstXSize;
-
-            for( iBand = 0; iBand < poWK->nBands; iBand++ )
-            {
-                ((T *)poWK->papabyDstImage[iBand])[iDstOffset] = 
-                    ((T *)poWK->papabySrcImage[iBand])[iSrcOffset];
-            }
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Report progress to the user, and optionally cancel out.         */
-/* -------------------------------------------------------------------- */
-        if (psJob->pfnProgress(psJob))
-            break;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Cleanup and return.                                             */
-/* -------------------------------------------------------------------- */
-    CPLFree( padfX );
-    CPLFree( padfY );
-    CPLFree( padfZ );
-    CPLFree( pabSuccess );
-}
-
-static CPLErr GWKNearestNoMasksByte( GDALWarpKernel *poWK )
-{
-    return GWKRun( poWK, "GWKNearestNoMasksByte", GWKNearestNoMasksThread<GByte> );
-}
-
-/************************************************************************/
-/*                       GWKBilinearNoMasksByte()                       */
-/*                                                                      */
-/*      Case for 8bit input data with bilinear resampling without       */
-/*      concerning about masking. Should be as fast as possible         */
-/*      for this particular transformation type.                        */
-/************************************************************************/
-
-template<class T>
-static void GWKBilinearNoMasksThread( void* pData )
-
-{
-    GWKJobStruct* psJob = (GWKJobStruct*) pData;
-    GDALWarpKernel *poWK = psJob->poWK;
-    int iYMin = psJob->iYMin;
-    int iYMax = psJob->iYMax;
-
-    int iDstY;
-    int nDstXSize = poWK->nDstXSize;
-    int nSrcXSize = poWK->nSrcXSize, nSrcYSize = poWK->nSrcYSize;
-
-/* -------------------------------------------------------------------- */
-/*      Allocate x,y,z coordinate arrays for transformation ... one     */
-/*      scanlines worth of positions.                                   */
-/* -------------------------------------------------------------------- */
-    double *padfX, *padfY, *padfZ;
-    int    *pabSuccess;
-
-    padfX = (double *) CPLMalloc(sizeof(double) * nDstXSize);
-    padfY = (double *) CPLMalloc(sizeof(double) * nDstXSize);
-    padfZ = (double *) CPLMalloc(sizeof(double) * nDstXSize);
-    pabSuccess = (int *) CPLMalloc(sizeof(int) * nDstXSize);
-
-/* ==================================================================== */
-/*      Loop over output lines.                                         */
-/* ==================================================================== */
-    for( iDstY = iYMin; iDstY < iYMax; iDstY++ )
-    {
-        int iDstX;
-
-/* -------------------------------------------------------------------- */
-/*      Setup points to transform to source image space.                */
-/* -------------------------------------------------------------------- */
-        for( iDstX = 0; iDstX < nDstXSize; iDstX++ )
-        {
-            padfX[iDstX] = iDstX + 0.5 + poWK->nDstXOff;
-            padfY[iDstX] = iDstY + 0.5 + poWK->nDstYOff;
-            padfZ[iDstX] = 0.0;
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Transform the points from destination pixel/line coordinates    */
-/*      to source pixel/line coordinates.                               */
-/* -------------------------------------------------------------------- */
-        poWK->pfnTransformer( psJob->pTransformerArg, TRUE, nDstXSize,
-                              padfX, padfY, padfZ, pabSuccess );
-
-/* ==================================================================== */
-/*      Loop over pixels in output scanline.                            */
-/* ==================================================================== */
-        for( iDstX = 0; iDstX < nDstXSize; iDstX++ )
-        {
-            COMPUTE_iSrcOffset(pabSuccess, iDstX, padfX, padfY, poWK, nSrcXSize, nSrcYSize);
-
-/* ==================================================================== */
-/*      Loop processing each band.                                      */
-/* ==================================================================== */
-            int iBand;
-            int iDstOffset;
-
-            iDstOffset = iDstX + iDstY * nDstXSize;
-
-            for( iBand = 0; iBand < poWK->nBands; iBand++ )
-            {
-                T value = 0;
-                GWKBilinearResampleNoMasksT( poWK, iBand,
-                                             padfX[iDstX]-poWK->nSrcXOff,
-                                             padfY[iDstX]-poWK->nSrcYOff,
-                                             &value );
-                ((T *)poWK->papabyDstImage[iBand])[iDstOffset] = value;
-            }
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Report progress to the user, and optionally cancel out.         */
-/* -------------------------------------------------------------------- */
-        if (psJob->pfnProgress(psJob))
-            break;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Cleanup and return.                                             */
-/* -------------------------------------------------------------------- */
-    CPLFree( padfX );
-    CPLFree( padfY );
-    CPLFree( padfZ );
-    CPLFree( pabSuccess );
-}
-
-static CPLErr GWKBilinearNoMasksByte( GDALWarpKernel *poWK )
-{
-    return GWKRun( poWK, "GWKBilinearNoMasksByte", GWKBilinearNoMasksThread<GByte> );
-}
-
-/************************************************************************/
-/*                       GWKCubicNoMasksByte()                          */
-/*                                                                      */
-/*      Case for 8bit input data with cubic resampling without          */
-/*      concerning about masking. Should be as fast as possible         */
-/*      for this particular transformation type.                        */
-/************************************************************************/
-
-template<class T>
-static void GWKCubicNoMasksThread( void* pData )
-
-{
-    GWKJobStruct* psJob = (GWKJobStruct*) pData;
-    GDALWarpKernel *poWK = psJob->poWK;
-    int iYMin = psJob->iYMin;
-    int iYMax = psJob->iYMax;
-
-    int iDstY;
-    int nDstXSize = poWK->nDstXSize;
-    int nSrcXSize = poWK->nSrcXSize, nSrcYSize = poWK->nSrcYSize;
-
-/* -------------------------------------------------------------------- */
-/*      Allocate x,y,z coordinate arrays for transformation ... one     */
-/*      scanlines worth of positions.                                   */
-/* -------------------------------------------------------------------- */
-    double *padfX, *padfY, *padfZ;
-    int    *pabSuccess;
-
-    padfX = (double *) CPLMalloc(sizeof(double) * nDstXSize);
-    padfY = (double *) CPLMalloc(sizeof(double) * nDstXSize);
-    padfZ = (double *) CPLMalloc(sizeof(double) * nDstXSize);
-    pabSuccess = (int *) CPLMalloc(sizeof(int) * nDstXSize);
-
-/* ==================================================================== */
-/*      Loop over output lines.                                         */
-/* ==================================================================== */
-    for( iDstY = iYMin; iDstY < iYMax; iDstY++ )
-    {
-        int iDstX;
-
-/* -------------------------------------------------------------------- */
-/*      Setup points to transform to source image space.                */
-/* -------------------------------------------------------------------- */
-        for( iDstX = 0; iDstX < nDstXSize; iDstX++ )
-        {
-            padfX[iDstX] = iDstX + 0.5 + poWK->nDstXOff;
-            padfY[iDstX] = iDstY + 0.5 + poWK->nDstYOff;
-            padfZ[iDstX] = 0.0;
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Transform the points from destination pixel/line coordinates    */
-/*      to source pixel/line coordinates.                               */
-/* -------------------------------------------------------------------- */
-        poWK->pfnTransformer( psJob->pTransformerArg, TRUE, nDstXSize,
-                              padfX, padfY, padfZ, pabSuccess );
-
-/* ==================================================================== */
-/*      Loop over pixels in output scanline.                            */
-/* ==================================================================== */
-        for( iDstX = 0; iDstX < nDstXSize; iDstX++ )
-        {
-            COMPUTE_iSrcOffset(pabSuccess, iDstX, padfX, padfY, poWK, nSrcXSize, nSrcYSize);
-
-/* ==================================================================== */
-/*      Loop processing each band.                                      */
-/* ==================================================================== */
-            int iBand;
-            int iDstOffset;
-
-            iDstOffset = iDstX + iDstY * nDstXSize;
-
-            for( iBand = 0; iBand < poWK->nBands; iBand++ )
-            {
-                T  value = 0;
-                GWKCubicResampleNoMasksT( poWK, iBand,
-                                              padfX[iDstX]-poWK->nSrcXOff,
-                                              padfY[iDstX]-poWK->nSrcYOff,
-                                              &value );
-                ((T *)poWK->papabyDstImage[iBand])[iDstOffset] = value;
-            }
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Report progress to the user, and optionally cancel out.         */
-/* -------------------------------------------------------------------- */
-        if (psJob->pfnProgress(psJob))
-            break;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Cleanup and return.                                             */
-/* -------------------------------------------------------------------- */
-    CPLFree( padfX );
-    CPLFree( padfY );
-    CPLFree( padfZ );
-    CPLFree( pabSuccess );
-}
-
-
-static CPLErr GWKCubicNoMasksByte( GDALWarpKernel *poWK )
-{
-    return GWKRun( poWK, "GWKCubicNoMasksByte", GWKCubicNoMasksThread<GByte> );
-}
-
-/************************************************************************/
-/*                   GWKCubicSplineNoMasksByte()                        */
-/*                                                                      */
-/*      Case for 8bit input data with cubic spline resampling without   */
-/*      concerning about masking. Should be as fast as possible         */
-/*      for this particular transformation type.                        */
-/************************************************************************/
-
-template<class T>
-static void GWKCubicSplineNoMasksThread( void* pData )
+template<class T,GDALResampleAlg eResample, int bUse4SamplesFormula>
+static void GWKResampleNoMasksThreadInternal( void* pData )
 
 {
     GWKJobStruct* psJob = (GWKJobStruct*) pData;
@@ -3716,7 +3986,7 @@ static void GWKCubicSplineNoMasksThread( void* pData )
     pabSuccess = (int *) CPLMalloc(sizeof(int) * nDstXSize);
 
     int     nXRadius = poWK->nXRadius;
-    double  *padfBSpline = (double *)CPLCalloc( nXRadius * 2, sizeof(double) );
+    double  *padfWeight = (double *)CPLCalloc( 1 + nXRadius * 2, sizeof(double) );
 
 /* ==================================================================== */
 /*      Loop over output lines.                                         */
@@ -3747,7 +4017,10 @@ static void GWKCubicSplineNoMasksThread( void* pData )
 /* ==================================================================== */
         for( iDstX = 0; iDstX < nDstXSize; iDstX++ )
         {
-            COMPUTE_iSrcOffset(pabSuccess, iDstX, padfX, padfY, poWK, nSrcXSize, nSrcYSize);
+            int iSrcOffset;
+            if( !GWKCheckAndComputeSrcOffsets(pabSuccess, iDstX, padfX, padfY,
+                                        poWK, nSrcXSize, nSrcYSize, iSrcOffset) )
+                continue;
 
 /* ==================================================================== */
 /*      Loop processing each band.                                      */
@@ -3759,11 +4032,31 @@ static void GWKCubicSplineNoMasksThread( void* pData )
 
             for( iBand = 0; iBand < poWK->nBands; iBand++ )
             {
-                GWKCubicSplineResampleNoMasksT( poWK, iBand,
-                                                   padfX[iDstX]-poWK->nSrcXOff,
-                                                   padfY[iDstX]-poWK->nSrcYOff,
-                                                   &(((T*)(poWK->papabyDstImage[iBand]))[iDstOffset]),
-                                                   padfBSpline);
+                T value = 0;
+                if( eResample == GRA_NearestNeighbour )
+                {
+                    value = ((T *)poWK->papabySrcImage[iBand])[iSrcOffset];
+                }
+                else if( bUse4SamplesFormula )
+                {
+                    if( eResample == GRA_Bilinear )
+                        GWKBilinearResampleNoMasks4SampleT( poWK, iBand,
+                                                padfX[iDstX]-poWK->nSrcXOff,
+                                                padfY[iDstX]-poWK->nSrcYOff,
+                                                &value );
+                    else
+                        GWKCubicResampleNoMasks4SampleT( poWK, iBand,
+                                              padfX[iDstX]-poWK->nSrcXOff,
+                                              padfY[iDstX]-poWK->nSrcYOff,
+                                              &value );
+                }
+                else
+                    GWKResampleNoMasksT( poWK, iBand,
+                                    padfX[iDstX]-poWK->nSrcXOff,
+                                    padfY[iDstX]-poWK->nSrcYOff,
+                                    &value,
+                                    padfWeight);
+                ((T *)poWK->papabyDstImage[iBand])[iDstOffset] = value;
             }
         }
 
@@ -3781,12 +4074,84 @@ static void GWKCubicSplineNoMasksThread( void* pData )
     CPLFree( padfY );
     CPLFree( padfZ );
     CPLFree( pabSuccess );
-    CPLFree( padfBSpline );
+    CPLFree( padfWeight );
 }
+
+template<class T,GDALResampleAlg eResample>
+static void GWKResampleNoMasksThread( void* pData )
+{
+    GWKResampleNoMasksThreadInternal<T,eResample,FALSE>(pData);
+}
+
+template<class T,GDALResampleAlg eResample> void GWKResampleNoMasksHas4SampleThread( void* pData )
+
+{
+    GWKJobStruct* psJob = (GWKJobStruct*) pData;
+    GDALWarpKernel *poWK = psJob->poWK;
+    int bUse4SamplesFormula = (poWK->dfXScale >= 0.95 && poWK->dfYScale >= 0.95);
+    if( bUse4SamplesFormula )
+        GWKResampleNoMasksThreadInternal<T,eResample,TRUE>(pData);
+    else
+        GWKResampleNoMasksThreadInternal<T,eResample,FALSE>(pData);
+}
+
+static CPLErr GWKNearestNoMasksByte( GDALWarpKernel *poWK )
+{
+    return GWKRun( poWK, "GWKNearestNoMasksByte", GWKResampleNoMasksThread<GByte,GRA_NearestNeighbour> );
+}
+
+/************************************************************************/
+/*                       GWKBilinearNoMasksByte()                       */
+/*                                                                      */
+/*      Case for 8bit input data with bilinear resampling without       */
+/*      concerning about masking. Should be as fast as possible         */
+/*      for this particular transformation type.                        */
+/************************************************************************/
+
+static CPLErr GWKBilinearNoMasksByte( GDALWarpKernel *poWK )
+{
+    return GWKRun( poWK, "GWKBilinearNoMasksByte", GWKResampleNoMasksHas4SampleThread<GByte,GRA_Bilinear> );
+}
+
+/************************************************************************/
+/*                       GWKCubicNoMasksByte()                          */
+/*                                                                      */
+/*      Case for 8bit input data with cubic resampling without          */
+/*      concerning about masking. Should be as fast as possible         */
+/*      for this particular transformation type.                        */
+/************************************************************************/
+
+static CPLErr GWKCubicNoMasksByte( GDALWarpKernel *poWK )
+{
+    return GWKRun( poWK, "GWKCubicNoMasksByte", GWKResampleNoMasksHas4SampleThread<GByte,GRA_Cubic> );
+}
+
+#ifdef INSTANCIATE_FLOAT64_SSE2_IMPL
+/************************************************************************/
+/*                       GWKCubicNoMasksDouble()                        */
+/*                                                                      */
+/*      Case for 64bit input data with cubic resampling without         */
+/*      concerning about masking. Should be as fast as possible         */
+/*      for this particular transformation type.                        */
+/************************************************************************/
+
+static CPLErr GWKCubicNoMasksDouble( GDALWarpKernel *poWK )
+{
+    return GWKRun( poWK, "GWKCubicNoMasksDouble", GWKResampleNoMasksHas4SampleThread<double,GRA_Cubic> );
+}
+#endif
+
+/************************************************************************/
+/*                   GWKCubicSplineNoMasksByte()                        */
+/*                                                                      */
+/*      Case for 8bit input data with cubic spline resampling without   */
+/*      concerning about masking. Should be as fast as possible         */
+/*      for this particular transformation type.                        */
+/************************************************************************/
 
 static CPLErr GWKCubicSplineNoMasksByte( GDALWarpKernel *poWK )
 {
-    return GWKRun( poWK, "GWKCubicSplineNoMasksByte", GWKCubicSplineNoMasksThread<GByte> );
+    return GWKRun( poWK, "GWKCubicSplineNoMasksByte", GWKResampleNoMasksThread<GByte,GRA_CubicSpline> );
 }
 
 /************************************************************************/
@@ -3853,7 +4218,10 @@ static void GWKNearestThread( void* pData )
         {
             int iDstOffset;
 
-            COMPUTE_iSrcOffset(pabSuccess, iDstX, padfX, padfY, poWK, nSrcXSize, nSrcYSize);
+            int iSrcOffset;
+            if( !GWKCheckAndComputeSrcOffsets(pabSuccess, iDstX, padfX, padfY,
+                                    poWK, nSrcXSize, nSrcYSize, iSrcOffset) )
+                continue;
  
 /* -------------------------------------------------------------------- */
 /*      Do not try to apply invalid source pixels to the dest.          */
@@ -3954,21 +4322,36 @@ static CPLErr GWKNearestByte( GDALWarpKernel *poWK )
 
 static CPLErr GWKNearestNoMasksShort( GDALWarpKernel *poWK )
 {
-    return GWKRun( poWK, "GWKNearestNoMasksShort", GWKNearestNoMasksThread<GInt16> );
+    return GWKRun( poWK, "GWKNearestNoMasksShort", GWKResampleNoMasksThread<GInt16,GRA_NearestNeighbour> );
 }
 
 /************************************************************************/
 /*                       GWKBilinearNoMasksShort()                      */
 /*                                                                      */
-/*      Case for 16bit input data with cubic resampling without         */
+/*      Case for 16bit input data with bomo,ear resampling without      */
 /*      concerning about masking. Should be as fast as possible         */
 /*      for this particular transformation type.                        */
 /************************************************************************/
 
 static CPLErr GWKBilinearNoMasksShort( GDALWarpKernel *poWK )
 {
-    return GWKRun( poWK, "GWKBilinearNoMasksShort", GWKBilinearNoMasksThread<GInt16> );
+    return GWKRun( poWK, "GWKBilinearNoMasksShort", GWKResampleNoMasksHas4SampleThread<GInt16,GRA_Bilinear> );
 }
+
+#ifdef INSTANCIATE_FLOAT64_SSE2_IMPL
+/************************************************************************/
+/*                       GWKBilinearNoMasksDouble()                     */
+/*                                                                      */
+/*      Case for 64bit input data with bilinear resampling without      */
+/*      concerning about masking. Should be as fast as possible         */
+/*      for this particular transformation type.                        */
+/************************************************************************/
+
+static CPLErr GWKBilinearNoMasksDouble( GDALWarpKernel *poWK )
+{
+    return GWKRun( poWK, "GWKBilinearNoMasksDouble", GWKResampleNoMasksHas4SampleThread<double,GRA_Bilinear> );
+}
+#endif
 
 /************************************************************************/
 /*                       GWKCubicNoMasksShort()                         */
@@ -3980,7 +4363,7 @@ static CPLErr GWKBilinearNoMasksShort( GDALWarpKernel *poWK )
 
 static CPLErr GWKCubicNoMasksShort( GDALWarpKernel *poWK )
 {
-    return GWKRun( poWK, "GWKCubicNoMasksShort", GWKCubicNoMasksThread<GInt16> );
+    return GWKRun( poWK, "GWKCubicNoMasksShort", GWKResampleNoMasksHas4SampleThread<GInt16,GRA_Cubic> );
 }
 
 /************************************************************************/
@@ -3993,13 +4376,13 @@ static CPLErr GWKCubicNoMasksShort( GDALWarpKernel *poWK )
 
 static CPLErr GWKCubicSplineNoMasksShort( GDALWarpKernel *poWK )
 {
-    return GWKRun( poWK, "GWKCubicSplineNoMasksShort", GWKCubicSplineNoMasksThread<GInt16> );
+    return GWKRun( poWK, "GWKCubicSplineNoMasksShort", GWKResampleNoMasksThread<GInt16,GRA_CubicSpline> );
 }
 
 /************************************************************************/
 /*                          GWKNearestShort()                           */
 /*                                                                      */
-/*      Case for 32bit float input data with nearest neighbour          */
+/*      Case for 16bit input data data with nearest neighbour           */
 /*      resampling using valid flags. Should be as fast as possible     */
 /*      for this particular transformation type.                        */
 /************************************************************************/
@@ -4020,7 +4403,7 @@ static CPLErr GWKNearestShort( GDALWarpKernel *poWK )
 
 static CPLErr GWKNearestNoMasksFloat( GDALWarpKernel *poWK )
 {
-    return GWKRun( poWK, "GWKNearestNoMasksFloat", GWKNearestNoMasksThread<float> );
+    return GWKRun( poWK, "GWKNearestNoMasksFloat", GWKResampleNoMasksThread<float,GRA_NearestNeighbour> );
 }
 
 
