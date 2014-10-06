@@ -940,6 +940,10 @@ OGRLayer * OGRGeoPackageDataSource::ExecuteSQL( const char *pszSQLCommand,
         return OGRDataSource::ExecuteSQL( pszSQLCommand, 
                                           poSpatialFilter, 
                                           pszDialect );
+    else if( pszDialect != NULL && EQUAL(pszDialect,"INDIRECT_SQLITE") )
+        return OGRDataSource::ExecuteSQL( pszSQLCommand, 
+                                          poSpatialFilter, 
+                                          "SQLITE" );
 
 /* -------------------------------------------------------------------- */
 /*      Prepare statement.                                              */

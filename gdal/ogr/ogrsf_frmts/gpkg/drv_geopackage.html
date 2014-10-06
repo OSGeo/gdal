@@ -34,7 +34,11 @@ The GeoPackage standard uses a SQLite database file as a generic container, and 
 </p>
 <p>
   Starting with GDAL 2.0, SQL SELECT statements passed to ExecuteSQL() are
-  also executed directly against the database.
+  also executed directly against the database. If Spatialite is used, a recent
+  version (4.2.0) is needed and use of explicit cast operators AsGPB(), GeomFromGPB()
+  are required. It is also possible to use with any Spatialite version, but in
+  a slower way, by specifying the "INDIRECT_SQLITE" dialect. In which case,
+  GeoPackage geometries appear as Spatialite geometries after translation by OGR.
 </p>
 
 <h3>SQL functions</h3>

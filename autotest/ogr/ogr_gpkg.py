@@ -768,6 +768,25 @@ def ogr_gpkg_16():
     return 'success'
 
 ###############################################################################
+# Run INDIRECT_SQLITE dialect
+
+def ogr_gpkg_17():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+        
+    ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_17.gpkg')
+    sql_lyr = ds.ExecuteSQL("SELECT ogr_version()", dialect = 'INDIRECT_SQLITE')
+    f = sql_lyr.GetNextFeature()
+    if f is None:
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_gpkg_17.gpkg')
+    return 'success'
+
+###############################################################################
 # Run test_ogrsf
 
 def ogr_gpkg_test_ogrsf():
@@ -841,6 +860,7 @@ gdaltest_list = [
     ogr_gpkg_14,
     ogr_gpkg_15,
     ogr_gpkg_16,
+    ogr_gpkg_17,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]
