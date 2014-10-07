@@ -3615,7 +3615,7 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
         }
     }
 free_warper:
-    if((err = GDALWarpKernelOpenCLeleteEnv(warper)) != CL_SUCCESS)
+    if((err = GDALWarpKernelOpenCL_deleteEnv(warper)) != CL_SUCCESS)
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "OpenCL routines reported failure (%d) on line %d.", (int) err, __LINE__ );
