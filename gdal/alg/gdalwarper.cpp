@@ -52,6 +52,9 @@ CPL_CVSID("$Id$");
  * No metadata, projection info, or color tables are transferred
  * to the output file. 
  *
+ * Starting with GDAL 2.0, nodata values set on destination dataset are taken
+ * into account.
+ *
  * @param hSrcDS the source image file. 
  * @param pszSrcWKT the source projection.  If NULL the source projection
  * is read from from hSrcDS.
@@ -152,7 +155,7 @@ GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT,
 
 /* -------------------------------------------------------------------- */
 /*      Set source nodata values if the source dataset seems to have    */
-/*      any.                                                            */
+/*      any. Same for target nodata values                              */
 /* -------------------------------------------------------------------- */
     for( iBand = 0; iBand < psWOptions->nBandCount; iBand++ )
     {
@@ -187,10 +190,33 @@ GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT,
             psWOptions->padfSrcNoDataReal[iBand] = dfNoDataValue;
         }
 
+        // Deal with target band
         hBand = GDALGetRasterBand( hDstDS, iBand+1 );
         if (hBand && GDALGetRasterColorInterpretation(hBand) == GCI_AlphaBand)
         {
             psWOptions->nDstAlphaBand = iBand + 1;
+        }
+
+        dfNoDataValue = GDALGetRasterNoDataValue( hBand, &bGotNoData );
+        if( bGotNoData )
+        {
+            if( psWOptions->padfDstNoDataReal == NULL )
+            {
+                int  ii;
+
+                psWOptions->padfDstNoDataReal = (double *) 
+                    CPLMalloc(sizeof(double) * psWOptions->nBandCount);
+                psWOptions->padfDstNoDataImag = (double *) 
+                    CPLMalloc(sizeof(double) * psWOptions->nBandCount);
+
+                for( ii = 0; ii < psWOptions->nBandCount; ii++ )
+                {
+                    psWOptions->padfDstNoDataReal[ii] = -1.1e20;
+                    psWOptions->padfDstNoDataImag[ii] = 0.0;
+                }
+            }
+
+            psWOptions->padfDstNoDataReal[iBand] = dfNoDataValue;
         }
     }
 
