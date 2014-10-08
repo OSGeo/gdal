@@ -61,7 +61,7 @@ void Usage(const char* pszErrorMsg)
     printf( "Usage: gdalinfo [--help-general] [-mm] [-stats] [-hist] [-nogcp] [-nomd]\n"
             "                [-norat] [-noct] [-nofl] [-checksum] [-proj4]\n"
             "                [-listmdd] [-mdd domain|`all`]*\n"
-            "                [-sd subdataset] datasetname\n" );
+            "                [-sd subdataset] [-oo NAME=VALUE]* datasetname\n" );
 
     if( pszErrorMsg != NULL )
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);

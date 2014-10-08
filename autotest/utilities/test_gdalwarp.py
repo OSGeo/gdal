@@ -1081,6 +1081,23 @@ def test_gdalwarp_38():
     return 'success'
 
 ###############################################################################
+# Test -oo
+
+def test_gdalwarp_39():
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' ../gdrivers/data/float64.asc tmp/test_gdalwarp_39.tif -oo DATATYPE=Float64 -overwrite')
+    
+    ds = gdal.Open('tmp/test_gdalwarp_39.tif')
+    if ds.GetRasterBand(1).DataType != gdal.GDT_Float64:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_cleanup():
@@ -1134,6 +1151,10 @@ def test_gdalwarp_cleanup():
         os.remove('tmp/testgdalwarp38.tif')
     except:
         pass
+    try:
+        os.remove('tmp/testgdalwarp39.tif')
+    except:
+        pass
     return 'success'
 
 gdaltest_list = [
@@ -1176,6 +1197,7 @@ gdaltest_list = [
     test_gdalwarp_36,
     test_gdalwarp_37,
     test_gdalwarp_38,
+    test_gdalwarp_39,
     test_gdalwarp_cleanup
     ]
 

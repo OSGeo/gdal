@@ -52,7 +52,8 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
                       char ***ppapszCreateOptions, GDALDataType eDT,
                       void ** phTransformArg,
                       GDALDatasetH* phSrcDS,
-                      int bSetColorInterpretation );
+                      int bSetColorInterpretation,
+                      char** papszOpenOptions );
 
 static void 
 RemoveConflictingMetadata( GDALMajorObjectH hObj, char **papszMetadata,
@@ -89,7 +90,7 @@ gdalwarp [--help-general] [--formats]
     [-cutline datasource] [-cl layer] [-cwhere expression]
     [-csql statement] [-cblend dist_in_pixels] [-crop_to_cutline]
     [-of format] [-co "NAME=VALUE"]* [-overwrite]
-    [-nomd] [-cvmd meta_conflict_value] [-setci]
+    [-nomd] [-cvmd meta_conflict_value] [-setci] [-oo NAME=VALUE]*
     srcfile* dstfile
 \endverbatim
 
@@ -199,6 +200,7 @@ Items that differ between source datasets will be set to * (see -cvmd option).</
 Value to set metadata items that conflict between source datasets (default is "*"). Use "" to remove conflicting items. </dd>
 <dt> <b>-setci</b>:</dt><dd>(GDAL >= 1.10.0) 
 Set the color interpretation of the bands of the target dataset from the source dataset.</dd>
+<dt> <b>-oo</b> <em>NAME=VALUE</em>:</dt><dd>(starting with GDAL 2.0) Dataset open option (format specific)</dd>
 
 <dt> <em>srcfile</em>:</dt><dd> The source file name(s). </dd>
 <dt> <em>dstfile</em>:</dt><dd> The destination file name. </dd>
@@ -284,7 +286,7 @@ static void Usage(const char* pszErrorMsg = NULL)
         "    [-cutline datasource] [-cl layer] [-cwhere expression]\n"
         "    [-csql statement] [-cblend dist_in_pixels] [-crop_to_cutline]\n"
         "    [-of format] [-co \"NAME=VALUE\"]* [-overwrite]\n"
-        "    [-nomd] [-cvmd meta_conflict_value]\n"
+        "    [-nomd] [-cvmd meta_conflict_value] [-setci] [-oo NAME=VALUE]*\n"
         "    srcfile* dstfile\n"
         "\n"
         "Available resampling methods:\n"
@@ -363,6 +365,7 @@ int main( int argc, char ** argv )
     int                  bCopyBandInfo = TRUE;
     const char           *pszMDConflictValue = "*";
     int                  bSetColorInterpretation = FALSE;
+    char               **papszOpenOptions = NULL;
 
     /* Check that we are running against at least GDAL 1.6 */
     /* Note to developers : if we use newer API, please change the requirement */
@@ -690,7 +693,12 @@ int main( int argc, char ** argv )
         }
         else if( EQUAL(argv[i],"-setci") )
             bSetColorInterpretation = TRUE;
-
+        else if( EQUAL(argv[i], "-oo") )
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            papszOpenOptions = CSLAddString( papszOpenOptions,
+                                                argv[++i] );
+        }
         else if( argv[i][0] == '-' )
             Usage(CPLSPrintf("Unknown option name '%s'", argv[i]));
 
@@ -824,7 +832,8 @@ int main( int argc, char ** argv )
         {
             if (papszSrcFiles[0] != NULL)
             {
-                GDALDatasetH hSrcDS = GDALOpen(papszSrcFiles[0], GA_ReadOnly);
+                GDALDatasetH hSrcDS = GDALOpenEx( papszSrcFiles[0], GDAL_OF_RASTER, NULL,
+                           (const char* const* )papszOpenOptions, NULL );
                 if (hSrcDS == NULL)
                 {
                     fprintf(stderr, "Cannot compute bounding box of cutline.\n");
@@ -905,7 +914,8 @@ int main( int argc, char ** argv )
         hDstDS = GDALWarpCreateOutput( papszSrcFiles, pszDstFilename,pszFormat,
                                        papszTO, &papszCreateOptions, 
                                        eOutputType, &hUniqueTransformArg,
-                                       &hUniqueSrcDS, bSetColorInterpretation);
+                                       &hUniqueSrcDS, bSetColorInterpretation,
+                                       papszOpenOptions);
         bCreateOutput = TRUE;
 
         if( CSLFetchNameValue( papszWarpOptions, "INIT_DEST" ) == NULL 
@@ -944,7 +954,8 @@ int main( int argc, char ** argv )
         if (hUniqueSrcDS)
             hSrcDS = hUniqueSrcDS;
         else
-            hSrcDS = GDALOpen( papszSrcFiles[iSrc], GA_ReadOnly );
+            hSrcDS = GDALOpenEx( papszSrcFiles[iSrc], GDAL_OF_RASTER, NULL,
+                           (const char* const* )papszOpenOptions, NULL );
     
         if( hSrcDS == NULL )
             GDALExit( 2 );
@@ -1462,6 +1473,7 @@ int main( int argc, char ** argv )
             CSLDestroy( papszSrcFiles );
             CSLDestroy( papszWarpOptions );
             CSLDestroy( papszTO );
+            CSLDestroy( papszOpenOptions );
     
             GDALDumpOpenDatasets( stderr );
         
@@ -1518,6 +1530,7 @@ int main( int argc, char ** argv )
     CSLDestroy( papszSrcFiles );
     CSLDestroy( papszWarpOptions );
     CSLDestroy( papszTO );
+    CSLDestroy( papszOpenOptions );
 
     GDALDumpOpenDatasets( stderr );
 
@@ -1549,7 +1562,8 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
                       char ***ppapszCreateOptions, GDALDataType eDT,
                       void ** phTransformArg,
                       GDALDatasetH* phSrcDS,
-                      int bSetColorInterpretation)
+                      int bSetColorInterpretation,
+                      char** papszOpenOptions)
 
 
 {
@@ -1622,7 +1636,8 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
         GDALDatasetH hSrcDS;
         const char *pszThisSourceSRS = CSLFetchNameValue(papszTO,"SRC_SRS");
 
-        hSrcDS = GDALOpen( papszSrcFiles[iSrc], GA_ReadOnly );
+        hSrcDS = GDALOpenEx( papszSrcFiles[iSrc], GDAL_OF_RASTER, NULL,
+                                (const char* const* )papszOpenOptions, NULL );
         if( hSrcDS == NULL )
             GDALExit( 1 );
 
