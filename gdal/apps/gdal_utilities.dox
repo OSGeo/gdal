@@ -189,7 +189,7 @@ lists information about a raster dataset
 gdalinfo [--help-general] [-mm] [-stats] [-hist] [-nogcp] [-nomd]
          [-norat] [-noct] [-nofl] [-checksum] [-proj4]
          [-listmdd] [-mdd domain|`all`]*
-         [-sd subdataset] datasetname
+         [-sd subdataset] [-oo NAME=VALUE]* datasetname
 \endverbatim
 
 \section gdalinfo_description DESCRIPTION
@@ -223,6 +223,7 @@ dataset contains several subdatasets read and display a subdataset with
 specified number (starting from 1). This is an alternative of giving the full
 subdataset name.</dd>
 <dt> <b>-proj4</b></dt><dd> (GDAL >= 1.9.0) Report a PROJ.4 string corresponding to the file's coordinate system.</dd>
+<dt> <b>-oo</b> <em>NAME=VALUE</em>:</dt><dd>(starting with GDAL 2.0) Dataset open option (format specific)</dd>
 </dl>
 
 The gdalinfo will report all of the following (if known):
@@ -305,6 +306,7 @@ gdal_translate [--help-general]
        [-gcp pixel line easting northing [elevation]]*
        [-mo "META-TAG=VALUE"]* [-q] [-sds]
        [-co "NAME=VALUE"]* [-stats] [-norat]
+       [-oo NAME=VALUE]*
        src_dataset dst_dataset
 \endverbatim
 
@@ -406,6 +408,7 @@ output files.  Use with formats like HDF or OGDI that have subdatasets.
 The output file naming scheme has changed in GDAL 1.11 (e.g. ofile_1.tif, ofile_2.tif).</dd>
 <dt> <b>-stats</b>:</dt><dd> (GDAL >= 1.8.0) Force (re)computation of statistics.</dd>
 <dt> <b>-norat</b></dt><dd> (GDAL >= 1.11) Do not copy source RAT into destination dataset.</dd>
+<dt> <b>-oo</b> <em>NAME=VALUE</em>:</dt><dd>(starting with GDAL 2.0) Dataset open option (format specific)</dd>
 <dt> <i>src_dataset</i>:</dt><dd>The source dataset name. It can be either
 file name, URL of data source or subdataset name for multi-dataset files.</dd>
 <dt> <i>dst_dataset</i>:</dt><dd> The destination file name.</dd>

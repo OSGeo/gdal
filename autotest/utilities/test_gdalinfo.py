@@ -501,6 +501,20 @@ def test_gdalinfo_26():
 
     return 'success'
 
+###############################################################################
+# Test -oo
+
+def test_gdalinfo_27():
+    if test_cli_utilities.get_gdalinfo_path() is None:
+        return 'skip'
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/float64.asc -oo datatype=float64', check_memleak = False )
+    if ret.find('Type=Float64') < 0:
+        print(ret)
+        return 'fail'
+
+    return 'success'
+    
 gdaltest_list = [
     test_gdalinfo_1,
     test_gdalinfo_2,
@@ -528,6 +542,7 @@ gdaltest_list = [
     test_gdalinfo_24,
     test_gdalinfo_25,
     test_gdalinfo_26,
+    test_gdalinfo_27,
     ]
 
 

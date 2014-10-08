@@ -64,6 +64,7 @@ static void Usage(const char* pszErrorMsg = NULL, int bShort = TRUE)
             "       [-gcp pixel line easting northing [elevation]]*\n" 
             "       [-mo \"META-TAG=VALUE\"]* [-q] [-sds]\n"
             "       [-co \"NAME=VALUE\"]* [-stats] [-norat]\n"
+            "       [-oo NAME=VALUE]*\n"
             "       src_dataset dst_dataset\n" );
 
     if( !bShort )
@@ -319,7 +320,7 @@ static int ProxyMain( int argc, char ** argv )
     int                 bErrorOnPartiallyOutside = FALSE;
     int                 bErrorOnCompletelyOutside = FALSE;
     int                 bNoRAT = FALSE;
-
+    char              **papszOpenOptions = NULL;
 
     anSrcWin[0] = 0;
     anSrcWin[1] = 0;
@@ -713,6 +714,12 @@ static int ProxyMain( int argc, char ** argv )
         {
             bNoRAT = TRUE;
         }
+        else if( EQUAL(argv[i], "-oo") )
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            papszOpenOptions = CSLAddString( papszOpenOptions,
+                                                argv[++i] );
+        }
         else if( argv[i][0] == '-' )
         {
             Usage(CPLSPrintf("Unknown option name '%s'", argv[i]));
@@ -760,7 +767,8 @@ static int ProxyMain( int argc, char ** argv )
 /*      Attempt to open source file.                                    */
 /* -------------------------------------------------------------------- */
 
-    hDataset = GDALOpenShared( pszSource, GA_ReadOnly );
+    hDataset = GDALOpenEx( pszSource, GDAL_OF_RASTER, NULL,
+                           (const char* const* )papszOpenOptions, NULL );
     
     if( hDataset == NULL )
     {
@@ -1025,6 +1033,7 @@ static int ProxyMain( int argc, char ** argv )
         GDALDestroyDriverManager();
         CSLDestroy( argv );
         CSLDestroy( papszCreateOptions );
+        CSLDestroy( papszOpenOptions );
         exit( 1 );
     }
 
@@ -1071,6 +1080,7 @@ static int ProxyMain( int argc, char ** argv )
 
         CSLDestroy( argv );
         CSLDestroy( papszCreateOptions );
+        CSLDestroy( papszOpenOptions );
 
         return hOutDS == NULL;
     }
@@ -1258,6 +1268,7 @@ static int ProxyMain( int argc, char ** argv )
             GDALDestroyDriverManager();
             CSLDestroy( argv );
             CSLDestroy( papszCreateOptions );
+            CSLDestroy( papszOpenOptions );
             exit( 1 );
         }
         
@@ -1347,8 +1358,8 @@ static int ProxyMain( int argc, char ** argv )
                                       eBandType == GDT_UInt32 );
                 if( bSrcIsInteger && bDstIsInteger )
                 {
-                    GInt32 nDstMin;
-                    GUInt32 nDstMax;
+                    GInt32 nDstMin = 0;
+                    GUInt32 nDstMax = 0;
                     switch( eBandType )
                     {
                         case GDT_Byte:
@@ -1702,6 +1713,7 @@ static int ProxyMain( int argc, char ** argv )
 
     CSLDestroy( argv );
     CSLDestroy( papszCreateOptions );
+    CSLDestroy( papszOpenOptions );
     
     return hOutDS == NULL;
 }

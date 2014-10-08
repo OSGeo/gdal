@@ -769,7 +769,24 @@ cellsize     60.000000000000
     ds = None
 
     return 'success'
-    
+
+###############################################################################
+# Test -oo
+
+def test_gdal_translate_28():
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gdrivers/data/float64.asc tmp/test_gdal_translate_28.tif -oo datatype=float64')
+
+    ds = gdal.Open('tmp/test_gdal_translate_28.tif')
+    if ds.GetRasterBand(1).DataType != gdal.GDT_Float64:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    ds = None
+
+    return 'success'
+
 ###############################################################################
 # Cleanup
 
@@ -853,6 +870,10 @@ def test_gdal_translate_cleanup():
         gdal.GetDriverByName('GTiff').Delete('tmp/test_gdal_translate_27.tif')
     except:
         pass
+    try:
+        gdal.GetDriverByName('GTiff').Delete('tmp/test_gdal_translate_28.tif')
+    except:
+        pass
     return 'success'
 
 gdaltest_list = [
@@ -883,6 +904,7 @@ gdaltest_list = [
     test_gdal_translate_25,
     test_gdal_translate_26,
     test_gdal_translate_27,
+    test_gdal_translate_28,
     test_gdal_translate_cleanup
     ]
 
