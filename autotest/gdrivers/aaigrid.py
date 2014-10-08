@@ -236,40 +236,51 @@ def aaigrid_9():
         return 'fail'
 
 ###############################################################################
-# Test AAIGRID_DATATYPE configuration option
+# Test AAIGRID_DATATYPE configuration option and DATATYPE open options
 
 def aaigrid_10():
 
-    try:
-        os.remove('data/float64.asc.aux.xml')
-    except:
-        pass
-
-    gdal.SetConfigOption('AAIGRID_DATATYPE', 'Float64')
+    # By default detected as 32bit float
     ds = gdal.Open('data/float64.asc')
-    gdal.SetConfigOption('AAIGRID_DATATYPE', None)
-
-    if ds.GetRasterBand(1).DataType != gdal.GDT_Float64:
-        gdaltest.post_reason( 'Data type is not Float64!' )
+    if ds.GetRasterBand(1).DataType != gdal.GDT_Float32:
+        gdaltest.post_reason( 'Data type is not Float32!' )
         return 'fail'
 
-    nv = ds.GetRasterBand(1).GetNoDataValue()
-    if abs(nv - -1.234567890123) > 1e-16:
-        gdaltest.post_reason( 'did not get expected nodata value' )
-        return 'fail'
+    for i in range(2):
 
-    got_minmax = ds.GetRasterBand(1).ComputeRasterMinMax()
-    if abs(got_minmax[0] - 1.234567890123) > 1e-16:
-        gdaltest.post_reason( 'did not get expected min value' )
-        return 'fail'
-    if abs(got_minmax[1] - 1.234567890123) > 1e-16:
-        gdaltest.post_reason( 'did not get expected max value' )
-        return 'fail'
+        try:
+            os.remove('data/float64.asc.aux.xml')
+        except:
+            pass
 
-    try:
-        os.remove('data/float64.asc.aux.xml')
-    except:
-        pass
+        if i == 0:
+            gdal.SetConfigOption('AAIGRID_DATATYPE', 'Float64')
+            ds = gdal.Open('data/float64.asc')
+            gdal.SetConfigOption('AAIGRID_DATATYPE', None)
+        else:
+            ds = gdal.OpenEx('data/float64.asc', open_options = ['DATATYPE=Float64'])
+
+        if ds.GetRasterBand(1).DataType != gdal.GDT_Float64:
+            gdaltest.post_reason( 'Data type is not Float64!' )
+            return 'fail'
+
+        nv = ds.GetRasterBand(1).GetNoDataValue()
+        if abs(nv - -1.234567890123) > 1e-16:
+            gdaltest.post_reason( 'did not get expected nodata value' )
+            return 'fail'
+
+        got_minmax = ds.GetRasterBand(1).ComputeRasterMinMax()
+        if abs(got_minmax[0] - 1.234567890123) > 1e-16:
+            gdaltest.post_reason( 'did not get expected min value' )
+            return 'fail'
+        if abs(got_minmax[1] - 1.234567890123) > 1e-16:
+            gdaltest.post_reason( 'did not get expected max value' )
+            return 'fail'
+
+        try:
+            os.remove('data/float64.asc.aux.xml')
+        except:
+            pass
 
     return 'success'
 
