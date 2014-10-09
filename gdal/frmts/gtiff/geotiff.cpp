@@ -97,107 +97,6 @@ static const GTIFFTags asTIFFTags[] =
 };
 
 /************************************************************************/
-/* ==================================================================== */
-/*                                GDALOverviewDS                        */
-/* ==================================================================== */
-/************************************************************************/
-
-/* GDALOverviewDS is not specific to GTiff and could probably be moved */
-/* in gcore. It is currently used to generate a fake */
-/* dataset from the overview levels of the source dataset that is taken */
-/* by CreateCopy() */
-
-#include "gdal_proxy.h"
-
-class GDALOverviewBand;
-
-class GDALOverviewDS : public GDALDataset
-{
-    private:
-
-        friend class GDALOverviewBand;
-
-        GDALDataset* poDS;
-        GDALDataset* poOvrDS;
-        int          nOvrLevel;
-
-    public:
-                        GDALOverviewDS(GDALDataset* poDS, int nOvrLevel);
-        virtual        ~GDALOverviewDS();
-
-        virtual char  **GetMetadata( const char * pszDomain = "" );
-        virtual const char *GetMetadataItem( const char * pszName,
-                                             const char * pszDomain = "" );
-};
-
-class GDALOverviewBand : public GDALProxyRasterBand
-{
-    protected:
-        GDALRasterBand*         poUnderlyingBand;
-        virtual GDALRasterBand* RefUnderlyingRasterBand();
-
-    public:
-                    GDALOverviewBand(GDALOverviewDS* poDS, int nBand);
-        virtual    ~GDALOverviewBand();
-};
-
-GDALOverviewDS::GDALOverviewDS(GDALDataset* poDS, int nOvrLevel)
-{
-    this->poDS = poDS;
-    this->nOvrLevel = nOvrLevel;
-    eAccess = poDS->GetAccess();
-    nRasterXSize = poDS->GetRasterBand(1)->GetOverview(nOvrLevel)->GetXSize();
-    nRasterYSize = poDS->GetRasterBand(1)->GetOverview(nOvrLevel)->GetYSize();
-    poOvrDS = poDS->GetRasterBand(1)->GetOverview(nOvrLevel)->GetDataset();
-    nBands = poDS->GetRasterCount();
-    int i;
-    for(i=0;i<nBands;i++)
-        SetBand(i+1, new GDALOverviewBand(this, i+1));
-}
-
-GDALOverviewDS::~GDALOverviewDS()
-{
-    FlushCache();
-}
-
-char  **GDALOverviewDS::GetMetadata( const char * pszDomain )
-{
-    if (poOvrDS != NULL)
-        return poOvrDS->GetMetadata(pszDomain);
-
-    return poDS->GetMetadata(pszDomain);
-}
-
-const char *GDALOverviewDS::GetMetadataItem( const char * pszName, const char * pszDomain )
-{
-    if (poOvrDS != NULL)
-        return poOvrDS->GetMetadataItem(pszName, pszDomain);
-
-    return poDS->GetMetadataItem(pszName, pszDomain);
-}
-
-GDALOverviewBand::GDALOverviewBand(GDALOverviewDS* poDS, int nBand)
-{
-    this->poDS = poDS;
-    this->nBand = nBand;
-    poUnderlyingBand = poDS->poDS->GetRasterBand(nBand)->GetOverview(poDS->nOvrLevel);
-    nRasterXSize = poDS->nRasterXSize;
-    nRasterYSize = poDS->nRasterYSize;
-    eDataType = poUnderlyingBand->GetRasterDataType();
-    poUnderlyingBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
-}
-
-GDALOverviewBand::~GDALOverviewBand()
-{
-    FlushCache();
-}
-
-GDALRasterBand* GDALOverviewBand::RefUnderlyingRasterBand()
-{
-    return poUnderlyingBand;
-}
-
-/************************************************************************/
 /*                            IsPowerOfTwo()                            */
 /************************************************************************/
 
@@ -10489,7 +10388,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             
             /* Create a fake dataset with the source overview level so that */
             /* GDALDatasetCopyWholeRaster can cope with it */
-            GDALDataset* poSrcOvrDS = new GDALOverviewDS(poSrcDS, iOvrLevel);
+            GDALDataset* poSrcOvrDS = GDALCreateOverviewDataset(poSrcDS, iOvrLevel, FALSE);
             
             GDALRasterBand* poOvrBand =
                     poSrcDS->GetRasterBand(1)->GetOverview(iOvrLevel);
