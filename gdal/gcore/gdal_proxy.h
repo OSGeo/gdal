@@ -226,6 +226,7 @@ class CPL_DLL GDALProxyPoolDataset : public GDALProxyDataset
                             double * padfGeoTransform = NULL);
         ~GDALProxyPoolDataset();
 
+        void         SetOpenOptions(char** papszOpenOptions);
         void         AddSrcBandDescription( GDALDataType eDataType, int nBlockXSize, int nBlockYSize);
 
         virtual const char *GetProjectionRef(void);

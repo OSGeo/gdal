@@ -176,6 +176,7 @@ GDALDataset::GDALDataset()
     papoBands = NULL;
     nRefCount = 1;
     bShared = FALSE;
+    papszOpenOptions = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Add this dataset to the open dataset list.                      */
@@ -301,6 +302,8 @@ GDALDataset::~GDALDataset()
 
     if( m_hMutex != NULL )
         CPLDestroyMutex( m_hMutex );
+
+    CSLDestroy( papszOpenOptions );
 }
 
 /************************************************************************/
@@ -2327,8 +2330,10 @@ GDALOpen( const char * pszFilename, GDALAccess eAccess )
  * terminated list of strings with the driver short names that must be considered.
  *
  * @param papszOpenOptions NULL, or a NULL terminated list of strings with open
- * options passed to candidate drivers.
-  *
+ * options passed to candidate drivers. An option exists for all drivers,
+ * OVERVIEW_LEVEL=level, to select a particular overview level of a dataset.
+ * The level index starts at 0.
+ *
  * @param papszSiblingFiles  NULL, or a NULL terminated list of strings that are
  * filenames that are auxiliary to the main filename. If NULL is passed, a probing
  * of the file system will be done.
@@ -2437,6 +2442,18 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
             poDriver->GetMetadataItem(GDAL_DCAP_VECTOR) == NULL )
             continue;
 
+        /* Remove general OVERVIEW_LEVEL open options from list before */
+        /* passing it to the driver, if it isn't a driver specific option already */
+        char** papszTmpOpenOptions = NULL;
+        if( CSLFetchNameValue((char**)papszOpenOptions, "OVERVIEW_LEVEL") != NULL &&
+            (poDriver->GetMetadataItem(GDAL_DMD_OPENOPTIONLIST) == NULL ||
+             CPLString(poDriver->GetMetadataItem(GDAL_DMD_OPENOPTIONLIST)).ifind("OVERVIEW_LEVEL") != std::string::npos) )
+        {
+            papszTmpOpenOptions = CSLDuplicate((char**)papszOpenOptions);
+            papszTmpOpenOptions = CSLSetNameValue(papszTmpOpenOptions, "OVERVIEW_LEVEL", NULL);
+            oOpenInfo.papszOpenOptions = papszTmpOpenOptions;
+        }
+
         if( poDriver->pfnIdentify && poDriver->pfnIdentify(&oOpenInfo) > 0 )
             GDALValidateOpenOptions( poDriver, papszOpenOptions );
 
@@ -2449,7 +2466,14 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
             poDS = poDriver->pfnOpenWithDriverArg( poDriver, &oOpenInfo );
         }
         else
+        {
+            CSLDestroy(papszTmpOpenOptions);
+            oOpenInfo.papszOpenOptions = (char**) papszOpenOptions;
             continue;
+        }
+
+        CSLDestroy(papszTmpOpenOptions);
+        oOpenInfo.papszOpenOptions = (char**) papszOpenOptions;
 
         if( poDS != NULL )
         {
@@ -2459,6 +2483,8 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
             if( poDS->poDriver == NULL )
                 poDS->poDriver = poDriver;
 
+            if( poDS->papszOpenOptions == NULL )
+                poDS->papszOpenOptions = CSLDuplicate((char**)papszOpenOptions);
 
             if( CPLGetPID() != GDALGetResponsiblePIDForCurrentThread() )
                 CPLDebug( "GDAL", "GDALOpen(%s, this=%p) succeeds as %s (pid=%d, responsiblePID=%d).",
@@ -2484,6 +2510,25 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
                 else
                 {
                     poDS->MarkAsShared();
+                }
+            }
+
+            /* Deal with generic OVERVIEW_LEVEL open option, unless it is */
+            /* driver specific */
+            if( CSLFetchNameValue((char**) papszOpenOptions, "OVERVIEW_LEVEL") != NULL &&
+                (poDriver->GetMetadataItem(GDAL_DMD_OPENOPTIONLIST) == NULL ||
+                CPLString(poDriver->GetMetadataItem(GDAL_DMD_OPENOPTIONLIST)).ifind("OVERVIEW_LEVEL") != std::string::npos) )
+            {
+                int nOvrLevel = atoi(CSLFetchNameValue((char**) papszOpenOptions, "OVERVIEW_LEVEL"));
+                GDALDataset* poOvrDS = GDALCreateOverviewDataset(poDS, nOvrLevel, TRUE);
+                if( poOvrDS == NULL )
+                {
+                    GDALClose( poDS );
+                    poDS = NULL;
+                }
+                else
+                {
+                    poDS = poOvrDS;
                 }
             }
 

@@ -315,6 +315,8 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     virtual int         CloseDependentDatasets();
     
     int                 ValidateLayerCreationOptions( const char* const* papszLCO );
+    
+    char            **papszOpenOptions;
 
     friend class GDALRasterBand;
     
@@ -376,6 +378,8 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     int           GetShared();
     void          MarkAsShared();
+    
+    char        **GetOpenOptions() { return papszOpenOptions; }
 
     static GDALDataset **GetOpenDatasets( int *pnDatasetCount );
 
@@ -1054,6 +1058,8 @@ int GDALValidateOptions( const char* pszOptionList,
                          const char* const* papszOptionsToValidate,
                          const char* pszErrorMessageOptionType,
                          const char* pszErrorMessageContainerName);
+
+GDALDataset* GDALCreateOverviewDataset(GDALDataset* poDS, int nOvrLevel, int bOwnDS);
 
 #define DIV_ROUND_UP(a, b) ( ((a) % (b)) == 0 ? ((a) / (b)) : (((a) / (b)) + 1) )
 
