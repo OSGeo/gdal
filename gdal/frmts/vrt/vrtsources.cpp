@@ -540,7 +540,7 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
         /*      Open the file (shared).                                         */
         /* -------------------------------------------------------------------- */
         poSrcDS = (GDALDataset *) GDALOpenEx(
-                    pszSrcDSName, GDAL_OF_SHARED | GDAL_OF_RASTER, NULL,
+                    pszSrcDSName, GDAL_OF_SHARED | GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR, NULL,
                     (const char* const* )papszOpenOptions, NULL );
     }
     else
