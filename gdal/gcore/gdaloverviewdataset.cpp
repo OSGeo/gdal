@@ -298,10 +298,10 @@ CPLErr GDALOverviewDataset::GetGeoTransform( double * padfTransform )
     double adfGeoTransform[6];
     if( poMainDS->GetGeoTransform(adfGeoTransform) == CE_None )
     {
-        if( adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.5 )
+        if( adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0 )
         {
             adfGeoTransform[1] *= (double)poMainDS->GetRasterXSize() / nRasterXSize;
-            adfGeoTransform[5] *= (double)poMainDS->GetRasterXSize() / nRasterYSize;
+            adfGeoTransform[5] *= (double)poMainDS->GetRasterYSize() / nRasterYSize;
         }
         else
         {
