@@ -281,6 +281,7 @@ void RegisterOGRCSV()
 "    <Value>STRING_ONLY</Value>"
 "  </Option>"
 "  <Option name='AUTODETECT_SIZE_LIMIT' type='int' description='number of bytes to inspect for auto-detection of data type. Only used if AUTODETECT_TYPE=YES' default='1000000'/>"
+"  <Option name='QUOTED_FIELDS_AS_STRING' type='boolean' description='Only used if AUTODETECT_TYPE=YES. Whether to enforce quoted fields as string fields.' default='NO'/>"
 "</OpenOptionList>");
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
