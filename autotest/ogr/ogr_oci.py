@@ -750,6 +750,7 @@ def ogr_oci_cleanup():
 
     gdaltest.oci_ds.Destroy()
     gdaltest.oci_ds = None
+    gdaltest.shp_ds = None
 
     return 'success'
 
