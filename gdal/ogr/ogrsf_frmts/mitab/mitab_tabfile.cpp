@@ -944,8 +944,6 @@ int TABFile::ParseTABFileFields()
  *
  * Generate the .TAB file using mainly the attribute fields definition.
  *
- * This private method should be used only during the Close() call with
- * write access mode.
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
@@ -953,7 +951,7 @@ int TABFile::WriteTABFile()
 {
     VSILFILE *fp;
 
-    if (m_eAccessMode == TABRead)
+    if (m_poMAPFile == NULL || m_eAccessMode == TABRead)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "WriteTABFile() can be used only with Write access.");
@@ -963,6 +961,10 @@ int TABFile::WriteTABFile()
     {
         return 0;
     }
+
+    // First update file version number...
+    int nMapObjVersion = m_poMAPFile->GetMinTABFileVersion();
+    m_nVersion = MAX(m_nVersion, nMapObjVersion);
 
     if ( (fp = VSIFOpenL(m_pszFname, "wt")) != NULL)
     {
@@ -1055,6 +1057,8 @@ int TABFile::WriteTABFile()
         }
 
         VSIFCloseL(fp);
+
+        m_bNeedTABRewrite = FALSE;
     }
     else
     {
@@ -1080,12 +1084,8 @@ int TABFile::Close()
     // Commit the latest changes to the file...
     
     // In Write access, it's time to write the .TAB file.
-    if (m_eAccessMode != TABRead && m_poMAPFile)
+    if (m_eAccessMode != TABRead)
     {
-        // First update file version number...
-        int nMapObjVersion = m_poMAPFile->GetMinTABFileVersion();
-        m_nVersion = MAX(m_nVersion, nMapObjVersion);
-
         WriteTABFile();
     }
 
@@ -2129,6 +2129,9 @@ int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
     if (nStatus == 0 && bIndexed)
         nStatus = SetFieldIndexed(m_poDefn->GetFieldCount()-1);
 
+    if (nStatus == 0 && m_eAccessMode == TABReadWrite)
+        nStatus = WriteTABFile();
+
     CPLFree(pszCleanName);
     return nStatus;
 }
@@ -2634,8 +2637,13 @@ OGRErr TABFile::DeleteField( int iField )
             memmove(m_panIndexNo + iField, m_panIndexNo + iField + 1,
                     (m_poDefn->GetFieldCount() - 1 - iField) * sizeof(int));
         }
-    
-        return m_poDefn->DeleteFieldDefn( iField );
+
+        m_poDefn->DeleteFieldDefn( iField );
+
+        if (m_eAccessMode == TABReadWrite)
+            WriteTABFile();
+
+        return OGRERR_NONE;
     }
     else
         return OGRERR_FAILURE;
@@ -2673,7 +2681,12 @@ OGRErr TABFile::ReorderFields( int* panMap )
         CPLFree(m_panIndexNo);
         m_panIndexNo = panNewIndexedField;
 
-        return m_poDefn->ReorderFieldDefns( panMap );
+        m_poDefn->ReorderFieldDefns( panMap );
+
+        if (m_eAccessMode == TABReadWrite)
+            WriteTABFile();
+
+        return OGRERR_NONE;
     }
     else
         return OGRERR_FAILURE;
@@ -2719,6 +2732,10 @@ OGRErr TABFile::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nF
         {
             poFieldDefn->SetWidth(m_poDATFile->GetFieldWidth(iField));
         }
+
+        if (m_eAccessMode == TABReadWrite)
+            WriteTABFile();
+
         return OGRERR_NONE;
     }
     else
