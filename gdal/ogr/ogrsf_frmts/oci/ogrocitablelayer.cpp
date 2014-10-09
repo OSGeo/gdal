@@ -50,6 +50,7 @@ OGROCITableLayer::OGROCITableLayer( OGROCIDataSource *poDSIn,
 
 {
     poDS = poDSIn;
+    bExtentUpdated = true;
 
     pszQuery = NULL;
     pszWHERE = CPLStrdup( "" );
