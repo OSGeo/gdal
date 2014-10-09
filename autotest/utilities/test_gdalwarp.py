@@ -1345,7 +1345,7 @@ gdaltest_list = [
     test_gdalwarp_40,
     test_gdalwarp_cleanup
     ]
-gdaltest_list = [ test_gdalwarp_40, test_gdalwarp_cleanup]
+
 if __name__ == '__main__':
 
     gdaltest.setup_run( 'test_gdalwarp' )
