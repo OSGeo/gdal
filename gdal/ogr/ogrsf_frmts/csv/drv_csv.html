@@ -165,6 +165,10 @@ emptied.</li>
 to determine the data type and width/precision. The default will be 100000.
 Setting 0 means inspecting the whole file.  Note : specifying a value over 1 MB
 (or 0 if the file is larger than 1MB) will prevent reading from standard input.</li>
+<li><b>QUOTED_FIELDS_AS_STRING</b>=YES/NO (default NO). Only used if AUTODETECT_TYPE=YES.
+Whether to enforce quoted fields as string fields when set to YES. Otherwise,
+by default, the content of quoted fields will be tested for real, integer, etc...
+data types.</li>
 </ul>
 
 <h2>Creation Issues</h2>
@@ -226,9 +230,10 @@ The CSV driver can also read files whose structure is close to CSV files :
 
 <p>
 <ul>
-<li>Development of the OGR CSV driver was supported by 
+<li>Initial development of the OGR CSV driver was supported by 
 <a href="http://www.dmsolutions.ca/">DM Solutions Group</a> and 
 <a href="http://www.gomoos.org/">GoMOOS</a>.
+<li><a href="https://cartodb.com/">CartoDB</a> funded field type auto-detection.</li>
 </ul>
 </p>
 

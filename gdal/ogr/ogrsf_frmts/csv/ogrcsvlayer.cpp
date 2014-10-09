@@ -691,6 +691,9 @@ char** OGRCSVLayer::AutodetectFieldTypes(char** papszOpenOptions, int nFieldCoun
     else if( EQUAL(pszAutodetectWidth, "STRING_ONLY") )
         bAutodetectWidth = TRUE;
 
+    int bQuotedFieldAsString = CSLTestBoolean(CSLFetchNameValueDef(papszOpenOptions,
+                                                      "QUOTED_FIELDS_AS_STRING", "NO"));
+
     char* pszData = (char*) VSIMalloc( nBytes );
     if( pszData != NULL && (vsi_l_offset)nBytes > VSIFTellL(fpCSV) )
     {
@@ -716,7 +719,8 @@ char** OGRCSVLayer::AutodetectFieldTypes(char** papszOpenOptions, int nFieldCoun
 
         while( !VSIFEofL(fpMem) )
         {
-            char** papszTokens = OGRCSVReadParseLineL( fpMem, chDelimiter, FALSE, TRUE );
+            char** papszTokens = OGRCSVReadParseLineL( fpMem, chDelimiter, FALSE,
+                                                       bQuotedFieldAsString );
 
             /* Ignore last line if it is truncated */
             if( VSIFEofL(fpMem) && nRead == nRequested &&
