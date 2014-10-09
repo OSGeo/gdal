@@ -29215,8 +29215,16 @@ $as_echo "yes" >&6; }
             { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
         else
-            { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+            # clang 3.4 needs linking against libstdc++ (ubuntu 14.04)
+            if test -z "`${CXX} ${CPPFLAGS} testarmadillo.cpp -o testarmadillo -larmadillo -lstdc++ 2>&1`" ; then
+                HAVE_ARMADILLO=yes
+                LIBS="-larmadillo -lstdc++ ${LIBS}"
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+            else
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
+            fi
         fi
     fi
     rm -f testarmadillo.*

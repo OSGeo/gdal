@@ -4250,7 +4250,14 @@ if test "$with_armadillo" = "yes" ; then
             LIBS="-larmadillo -llapack ${LIBS}"
             AC_MSG_RESULT([yes])
         else
-            AC_MSG_RESULT([no])
+            # clang 3.4 needs linking against libstdc++ (ubuntu 14.04)
+            if test -z "`${CXX} ${CPPFLAGS} testarmadillo.cpp -o testarmadillo -larmadillo -lstdc++ 2>&1`" ; then
+                HAVE_ARMADILLO=yes
+                LIBS="-larmadillo -lstdc++ ${LIBS}"
+                AC_MSG_RESULT([yes])
+            else
+                AC_MSG_RESULT([no])
+            fi
         fi
     fi
     rm -f testarmadillo.*
