@@ -124,7 +124,7 @@ def overviewds_2():
 
 def overviewds_3():
 
-    src_ds = gdal.Open('tmp/byte.tif')
+    src_ds = gdal.Open('data/byte.tif')
     ds = gdal.GetDriverByName('GTiff').CreateCopy('tmp/byte.tif', src_ds)
     ds.SetGeoTransform([0,1,0,0,0,1]) # cancel geotransform
     gcp1 = gdal.GCP()
