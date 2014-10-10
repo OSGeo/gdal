@@ -155,14 +155,15 @@ Please, locate Oracle directories using --with-oci or \
 
         dnl Depending on later Oracle version detection,
         dnl -lnnz10 flag might be removed for older Oracle < 10.x
-        saved_LDFLAGS="$LDFLAGS"
-	if test -n "$oracle_include_dir" ; then
+        if test -n "$oracle_include_dir" ; then
           oci_ldflags="-L$oracle_lib_dir -lclntsh"
         else
           oci_ldflags="-L$oracle_lib_dir -L$oracle_lib_dir2 -lclntsh"
         fi
-        LDFLAGS="$LDFLAGS $oci_ldflags"
 
+        saved_LIBS="$LIBS"
+        LIBS="$LIBS $oci_ldflags"
+        
         dnl
         dnl Check OCI headers
         dnl
@@ -244,7 +245,7 @@ if (envh) OCIHandleFree(envh, OCI_HTYPE_ENV);
         fi
 
         CPPFLAGS="$saved_CPPFLAGS"
-        LDFLAGS="$saved_LDFLAGS"
+        LIBS="$saved_LIBS"
     fi
 
     dnl
