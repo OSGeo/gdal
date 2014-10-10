@@ -1163,9 +1163,9 @@ int main( int argc, char ** argv )
                     int iOvr;
                     for( iOvr = -1; iOvr < nOvCount-1; iOvr++ )
                     {
-                        double dfOvrRatio = (iOvr < 0) ? 1.0 : poSrcDS->GetRasterXSize() /
+                        double dfOvrRatio = (iOvr < 0) ? 1.0 : (double)poSrcDS->GetRasterXSize() /
                             poSrcDS->GetRasterBand(1)->GetOverview(iOvr)->GetXSize();
-                        double dfNextOvrRatio = poSrcDS->GetRasterXSize() /
+                        double dfNextOvrRatio = (double)poSrcDS->GetRasterXSize() /
                             poSrcDS->GetRasterBand(1)->GetOverview(iOvr+1)->GetXSize();
                         if( dfOvrRatio < dfTargetRatio && dfNextOvrRatio > dfTargetRatio )
                             break;
