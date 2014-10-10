@@ -23107,13 +23107,14 @@ Please, locate Oracle directories using --with-oci or \
             CPPFLAGS="$CPPFLAGS -I$oracle_include_dir3"
         fi
 
-                        saved_LDFLAGS="$LDFLAGS"
-	if test -n "$oracle_include_dir" ; then
+                        if test -n "$oracle_include_dir" ; then
           oci_ldflags="-L$oracle_lib_dir -lclntsh"
         else
           oci_ldflags="-L$oracle_lib_dir -L$oracle_lib_dir2 -lclntsh"
         fi
-        LDFLAGS="$LDFLAGS $oci_ldflags"
+
+        saved_LIBS="$LIBS"
+        LIBS="$LIBS $oci_ldflags"
 
                                 if test -f "$oracle_include_dir/oci.h"; then
             ACTIVE_INCLUDE_DIR="$oracle_include_dir"
@@ -23243,7 +23244,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
         fi
 
         CPPFLAGS="$saved_CPPFLAGS"
-        LDFLAGS="$saved_LDFLAGS"
+        LIBS="$saved_LIBS"
     fi
 
                 oracle_version_req=$ORACLE_OCI_REQ_VERSION
@@ -24726,13 +24727,14 @@ Please, locate Oracle directories using --with-oci or \
             CPPFLAGS="$CPPFLAGS -I$oracle_include_dir3"
         fi
 
-                        saved_LDFLAGS="$LDFLAGS"
-	if test -n "$oracle_include_dir" ; then
+                        if test -n "$oracle_include_dir" ; then
           oci_ldflags="-L$oracle_lib_dir -lclntsh"
         else
           oci_ldflags="-L$oracle_lib_dir -L$oracle_lib_dir2 -lclntsh"
         fi
-        LDFLAGS="$LDFLAGS $oci_ldflags"
+
+        saved_LIBS="$LIBS"
+        LIBS="$LIBS $oci_ldflags"
 
                                 if test -f "$oracle_include_dir/oci.h"; then
             ACTIVE_INCLUDE_DIR="$oracle_include_dir"
@@ -24862,7 +24864,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
         fi
 
         CPPFLAGS="$saved_CPPFLAGS"
-        LDFLAGS="$saved_LDFLAGS"
+        LIBS="$saved_LIBS"
     fi
 
                 oracle_version_req=$ORACLE_OCI_REQ_VERSION
