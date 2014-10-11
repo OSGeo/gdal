@@ -2523,6 +2523,12 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
                 GDALDataset* poOvrDS = GDALCreateOverviewDataset(poDS, nOvrLevel, TRUE);
                 if( poOvrDS == NULL )
                 {
+                    if( nOpenFlags & GDAL_OF_VERBOSE_ERROR )
+                    {
+                        CPLError( CE_Failure, CPLE_OpenFailed,
+                                  "Cannot open overview level %d of %s",
+                                  nOvrLevel, pszFilename );
+                    }
                     GDALClose( poDS );
                     poDS = NULL;
                 }
