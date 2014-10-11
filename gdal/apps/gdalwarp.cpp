@@ -981,7 +981,7 @@ int main( int argc, char ** argv )
         if (hUniqueSrcDS)
             hSrcDS = hUniqueSrcDS;
         else
-            hSrcDS = GDALOpenEx( papszSrcFiles[iSrc], GDAL_OF_RASTER, NULL,
+            hSrcDS = GDALOpenEx( papszSrcFiles[iSrc], GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR, NULL,
                            (const char* const* )papszOpenOptions, NULL );
     
         if( hSrcDS == NULL )
@@ -1741,7 +1741,7 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
         GDALDatasetH hSrcDS;
         const char *pszThisSourceSRS = CSLFetchNameValue(papszTO,"SRC_SRS");
 
-        hSrcDS = GDALOpenEx( papszSrcFiles[iSrc], GDAL_OF_RASTER, NULL,
+        hSrcDS = GDALOpenEx( papszSrcFiles[iSrc], GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR, NULL,
                                 (const char* const* )papszOpenOptions, NULL );
         if( hSrcDS == NULL )
             GDALExit( 1 );
