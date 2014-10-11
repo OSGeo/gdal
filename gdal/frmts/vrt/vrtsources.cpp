@@ -302,32 +302,7 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
         CXT_Text, bRelativeToVRT ? "1" : "0" );
 
     char** papszOpenOptions = poDS->GetOpenOptions();
-    if( papszOpenOptions != NULL )
-    {
-        CPLXMLNode* psOpenOptions = CPLCreateXMLNode( psSrc, CXT_Element, "OpenOptions" );
-        CPLXMLNode* psLastChild = NULL;
-
-        for(char** papszIter = papszOpenOptions; *papszIter != NULL; papszIter ++ )
-        {
-            const char *pszRawValue;
-            char *pszKey = NULL;
-            CPLXMLNode *psMDI;
-
-            pszRawValue = CPLParseNameValue( *papszIter, &pszKey );
-
-            psMDI = CPLCreateXMLNode( NULL, CXT_Element, "MDI" );
-            if( psLastChild == NULL )
-                psOpenOptions->psChild = psMDI;
-            else
-                psLastChild->psNext = psMDI;
-            psLastChild = psMDI;
-
-            CPLSetXMLValue( psMDI, "#key", pszKey );
-            CPLCreateXMLNode( psMDI, CXT_Text, pszRawValue );
-
-            CPLFree( pszKey );
-        }
-    }
+    GDALSerializeOpenOptionsToXML(psSrc, papszOpenOptions);
 
     if (poMaskBandMainBand)
         CPLSetXMLValue( psSrc, "SourceBand",
@@ -509,28 +484,7 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
         nBlockYSize = atoi(CPLGetXMLValue(psSrcProperties,"BlockYSize","0"));
     }
 
-    char** papszOpenOptions = NULL;
-    CPLXMLNode* psOpenOptions = CPLGetXMLNode(psSrc, "OpenOptions");
-    if( psOpenOptions != NULL )
-    {
-        CPLXMLNode* psMDI;
-        for( psMDI = psOpenOptions->psChild; psMDI != NULL;
-                psMDI = psMDI->psNext )
-        {
-            if( !EQUAL(psMDI->pszValue,"MDI")
-                || psMDI->eType != CXT_Element
-                || psMDI->psChild == NULL
-                || psMDI->psChild->psNext == NULL
-                || psMDI->psChild->eType != CXT_Attribute
-                || psMDI->psChild->psChild == NULL )
-                continue;
-
-            char* pszName = psMDI->psChild->psChild->pszValue;
-            char* pszValue = psMDI->psChild->psNext->pszValue;
-            if( pszName != NULL && pszValue != NULL )
-                papszOpenOptions = CSLSetNameValue( papszOpenOptions, pszName, pszValue );
-        }
-    }
+    char** papszOpenOptions = GDALDeserializeOpenOptionsFromXML(psSrc);
 
     GDALDataset *poSrcDS;
     if (nRasterXSize == 0 || nRasterYSize == 0 || eDataType == (GDALDataType)-1 ||

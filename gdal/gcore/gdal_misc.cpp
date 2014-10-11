@@ -3227,3 +3227,68 @@ void GDALDeserializeGCPListFromXML( CPLXMLNode* psGCPList,
         (*pnGCPCount) ++;
     }
 }
+
+/************************************************************************/
+/*                   GDALSerializeOpenOptionsToXML()                    */
+/************************************************************************/
+
+void GDALSerializeOpenOptionsToXML( CPLXMLNode* psParentNode, char** papszOpenOptions)
+{
+    if( papszOpenOptions != NULL )
+    {
+        CPLXMLNode* psOpenOptions = CPLCreateXMLNode( psParentNode, CXT_Element, "OpenOptions" );
+        CPLXMLNode* psLastChild = NULL;
+
+        for(char** papszIter = papszOpenOptions; *papszIter != NULL; papszIter ++ )
+        {
+            const char *pszRawValue;
+            char *pszKey = NULL;
+            CPLXMLNode *psOOI;
+
+            pszRawValue = CPLParseNameValue( *papszIter, &pszKey );
+
+            psOOI = CPLCreateXMLNode( NULL, CXT_Element, "OOI" );
+            if( psLastChild == NULL )
+                psOpenOptions->psChild = psOOI;
+            else
+                psLastChild->psNext = psOOI;
+            psLastChild = psOOI;
+
+            CPLSetXMLValue( psOOI, "#key", pszKey );
+            CPLCreateXMLNode( psOOI, CXT_Text, pszRawValue );
+
+            CPLFree( pszKey );
+        }
+    }
+}
+
+/************************************************************************/
+/*                  GDALDeserializeOpenOptionsFromXML()                 */
+/************************************************************************/
+
+char** GDALDeserializeOpenOptionsFromXML( CPLXMLNode* psParentNode )
+{
+    char** papszOpenOptions = NULL;
+    CPLXMLNode* psOpenOptions = CPLGetXMLNode(psParentNode, "OpenOptions");
+    if( psOpenOptions != NULL )
+    {
+        CPLXMLNode* psOOI;
+        for( psOOI = psOpenOptions->psChild; psOOI != NULL;
+                psOOI = psOOI->psNext )
+        {
+            if( !EQUAL(psOOI->pszValue,"OOI")
+                || psOOI->eType != CXT_Element
+                || psOOI->psChild == NULL
+                || psOOI->psChild->psNext == NULL
+                || psOOI->psChild->eType != CXT_Attribute
+                || psOOI->psChild->psChild == NULL )
+                continue;
+
+            char* pszName = psOOI->psChild->psChild->pszValue;
+            char* pszValue = psOOI->psChild->psNext->pszValue;
+            if( pszName != NULL && pszValue != NULL )
+                papszOpenOptions = CSLSetNameValue( papszOpenOptions, pszName, pszValue );
+        }
+    }
+    return papszOpenOptions;
+}

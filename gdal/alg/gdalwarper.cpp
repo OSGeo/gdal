@@ -1049,6 +1049,9 @@ GDALSerializeWarpOptions( const GDALWarpOptions *psWO )
         CPLCreateXMLElementAndValue( 
             psTree, "SourceDataset", 
             GDALGetDescription( psWO->hSrcDS ) );
+        
+        char** papszOpenOptions = ((GDALDataset*)psWO->hSrcDS)->GetOpenOptions();
+        GDALSerializeOpenOptionsToXML(psTree, papszOpenOptions);
     }
     
     if( psWO->hDstDS != NULL && strlen(GDALGetDescription(psWO->hDstDS)) != 0 )
@@ -1271,7 +1274,13 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
     pszValue = CPLGetXMLValue(psTree,"SourceDataset",NULL);
 
     if( pszValue != NULL )
-        psWO->hSrcDS = GDALOpenShared( pszValue, GA_ReadOnly );
+    {
+        char** papszOpenOptions = GDALDeserializeOpenOptionsFromXML(psTree);
+        psWO->hSrcDS = GDALOpenEx(
+                    pszValue, GDAL_OF_SHARED | GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR, NULL,
+                    (const char* const* )papszOpenOptions, NULL );
+        CSLDestroy(papszOpenOptions);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Destination Dataset.                                            */
