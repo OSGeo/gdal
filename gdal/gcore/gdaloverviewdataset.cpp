@@ -180,6 +180,9 @@ GDALOverviewDataset::GDALOverviewDataset(GDALDataset* poMainDS, int nOvrLevel, i
                           poMainDS->GetDescription(), this );
 
     papszOpenOptions = CSLDuplicate(poMainDS->GetOpenOptions());
+    /* Add OVERVIEW_LEVEL if not called from GDALOpenEx() but directly */
+    papszOpenOptions = CSLSetNameValue(papszOpenOptions, "OVERVIEW_LEVEL",
+                                       CPLSPrintf("%d", nOvrLevel));
 }
 
 /************************************************************************/
