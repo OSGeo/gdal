@@ -1169,6 +1169,15 @@ def test_gdalwarp_40():
         return 'fail'
     ds = None
 
+    # Should select overview 0 through VRT
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/test_gdalwarp_40_src.tif tmp/test_gdalwarp_40.vrt -overwrite -ts 10 10 -of VRT')
+    
+    ds = gdal.Open('tmp/test_gdalwarp_40.vrt')
+    if ds.GetRasterBand(1).Checksum() != cs_ov0:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    ds = None
+
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/test_gdalwarp_40_src.tif -oo OVERVIEW_LEVEL=0 tmp/test_gdalwarp_40.tif -overwrite -ts 7 7')
     ds = gdal.Open('tmp/test_gdalwarp_40.tif')
     expected_cs = ds.GetRasterBand(1).Checksum()
@@ -1297,6 +1306,7 @@ def test_gdalwarp_cleanup():
     try:
         os.remove('tmp/test_gdalwarp_40_src.tif')
         os.remove('tmp/test_gdalwarp_40.tif')
+        os.remove('tmp/test_gdalwarp_40.vrt')
     except:
         pass
     return 'success'
