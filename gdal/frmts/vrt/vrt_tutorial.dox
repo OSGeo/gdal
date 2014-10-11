@@ -97,7 +97,7 @@ georeferenced coordinates in the same format as the SRS element.<P>
 
 <li> <b>Metadata</b>: This element contains a list of metadata name/value 
 pairs associated with the VRTDataset as a whole, or a VRTRasterBand.   It has
-<MDI> (metadata item) subelements which have a "key" attribute and the value
+&lt;MDI&gt; (metadata item) subelements which have a "key" attribute and the value
 as the data of the element.  
 
 \code
@@ -279,6 +279,25 @@ a mask band. For example mask,1 means the the mask band of the first band of the
       <DstRect xOff="0" yOff="0" xSize="512" ySize="512"/>
     </SimpleSource>
 \endcode
+
+Starting with GDAL 2.0, a OpenOptions subelement can be added to specify
+the open options to apply when opening the source dataset. It has &lt;OOI&gt; (open option item)
+subelements which have a "key" attribute and the value as the data of the element.
+
+\code
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">utm.tif</SourceFilename>
+      <OpenOptions>
+          <OOI key="OVERVIEW_LEVEL">0</OOI>
+      </OpenOptions>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="256" RasterYSize="256" DataType="Byte" BlockXSize="128" BlockYSize="128"/>
+      <SrcRect xOff="0" yOff="0" xSize="256" ySize="256"/>
+      <DstRect xOff="0" yOff="0" xSize="256" ySize="256"/>
+    </SimpleSource>
+\endcode
+
+
 </li>
 
 <li> <b>AveragedSource</b>: The AveragedSource is derived from the

@@ -1081,4 +1081,7 @@ void GDALDeserializeGCPListFromXML( CPLXMLNode* psGCPList,
                                     char** ppszGCPProjection );
 CPL_C_END
 
+void GDALSerializeOpenOptionsToXML( CPLXMLNode* psParentNode, char** papszOpenOptions);
+char** GDALDeserializeOpenOptionsFromXML( CPLXMLNode* psParentNode );
+
 #endif /* ndef GDAL_PRIV_H_INCLUDED */
