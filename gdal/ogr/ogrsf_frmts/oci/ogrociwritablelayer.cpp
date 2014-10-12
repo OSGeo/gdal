@@ -321,7 +321,7 @@ OGRErr OGROCIWritableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK 
                           + strlen(oField.GetNameRef())
                           + strlen(szFieldType) );
 
-    snprintf( szFieldName, sizeof( szFieldName ), oField.GetNameRef());
+    snprintf( szFieldName, sizeof( szFieldName ), "%s", oField.GetNameRef());
     szFieldName[sizeof( szFieldName )-1] = '\0';
     if ( strlen(oField.GetNameRef()) > sizeof ( szFieldName ) )
     {
