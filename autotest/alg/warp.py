@@ -1029,7 +1029,34 @@ def warp_29():
     if cs_monothread != cs_multithread:
         gdaltest.post_reason('failed')
         return 'fail'
+    
+    src_ds = gdal.Open('../gcore/data/byte.tif')
+    
+    ds = gdal.Open('data/byte_gcp.vrt')
+    old_val = gdal.GetConfigOption('GDAL_NUM_THREADS')
+    gdal.SetConfigOption('GDAL_NUM_THREADS', '2')
+    got_cs = ds.GetRasterBand(1).Checksum()
+    gdal.SetConfigOption('GDAL_NUM_THREADS', old_val)
+    ds = None
+    
+    if got_cs != src_ds.GetRasterBand(1).Checksum():
+        gdaltest.post_reason('failed')
+        return 'fail'
+    
+    ds = gdal.Open('data/byte_tps.vrt')
+    old_val = gdal.GetConfigOption('GDAL_NUM_THREADS')
+    gdal.SetConfigOption('GDAL_NUM_THREADS', '2')
+    got_cs = ds.GetRasterBand(1).Checksum()
+    gdal.SetConfigOption('GDAL_NUM_THREADS', old_val)
+    ds = None
+    
+    if got_cs != src_ds.GetRasterBand(1).Checksum():
+        gdaltest.post_reason('failed')
+        return 'fail'
 
+
+    src_ds = None
+    
     return 'success'
 
 ###############################################################################
