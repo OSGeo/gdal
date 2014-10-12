@@ -101,6 +101,10 @@ def stats_signedbyte():
 
 def stats_dont_force():
 
+    try:
+        os.unlink('data/byte.tif.aux.xml')
+    except:
+        pass
     ds = gdal.Open('data/byte.tif')
     stats = ds.GetRasterBand(1).GetStatistics(0, 0)
     if stats != [0, 0, 0, -1]:
