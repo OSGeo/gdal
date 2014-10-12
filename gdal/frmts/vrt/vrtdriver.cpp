@@ -43,9 +43,13 @@ VRTDriver::VRTDriver()
 
 {
     papszSourceParsers = NULL;
+#if 0
     pDeserializerData = GDALRegisterTransformDeserializer("WarpedOverviewTransformer",
                                                           VRTWarpedOverviewTransform,
                                                           VRTDeserializeWarpedOverviewTransformer);
+#else
+    pDeserializerData = NULL;
+#endif
 }
 
 /************************************************************************/
@@ -56,11 +60,12 @@ VRTDriver::~VRTDriver()
 
 {
     CSLDestroy( papszSourceParsers );
-
+#if 0
     if ( pDeserializerData )
     {
         GDALUnregisterTransformDeserializer( pDeserializerData );
     }
+#endif
 }
 
 /************************************************************************/

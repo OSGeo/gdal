@@ -706,6 +706,47 @@ static int FindGeoLocPosition( GDALGeoLocTransformInfo *psTransform,
 #endif /* def notdef */
 
 
+/************************************************************************/
+/*                       GDALGeoLocRescale()                            */
+/************************************************************************/
+
+static void GDALGeoLocRescale(char**& papszMD, const char* pszItem,
+                                  double dfRatio, double dfDefaultVal)
+{
+    double dfVal = CPLAtofM(CSLFetchNameValueDef(papszMD, pszItem,
+                                            CPLSPrintf("%.18g", dfDefaultVal)));
+    dfVal *= dfRatio;
+    papszMD = CSLSetNameValue(papszMD, pszItem, CPLSPrintf("%.18g", dfVal));
+}
+
+/************************************************************************/
+/*                 GDALCreateSimilarGeoLocTransformer()                 */
+/************************************************************************/
+
+static
+void* GDALCreateSimilarGeoLocTransformer( void *hTransformArg, double dfRatioX, double dfRatioY )
+{
+    VALIDATE_POINTER1( hTransformArg, "GDALCreateSimilarGeoLocTransformer", NULL );
+
+    GDALGeoLocTransformInfo *psInfo = (GDALGeoLocTransformInfo *) hTransformArg;
+    
+    char** papszGeolocationInfo = CSLDuplicate(psInfo->papszGeolocationInfo);
+
+    if( dfRatioX != 1.0 || dfRatioY != 1.0 )
+    {
+        GDALGeoLocRescale(papszGeolocationInfo, "PIXEL_OFFSET", dfRatioX, 0.0);
+        GDALGeoLocRescale(papszGeolocationInfo, "LINE_OFFSET", dfRatioY, 0.0);
+        GDALGeoLocRescale(papszGeolocationInfo, "PIXEL_STEP", 1.0 / dfRatioX, 1.0);
+        GDALGeoLocRescale(papszGeolocationInfo, "LINE_STEP", 1.0 / dfRatioY, 1.0);
+    }
+
+    psInfo = (GDALGeoLocTransformInfo*) GDALCreateGeoLocTransformer(
+        NULL, papszGeolocationInfo, psInfo->bReversed );
+    
+    CSLDestroy(papszGeolocationInfo);
+
+    return psInfo;
+}
 
 /************************************************************************/
 /*                    GDALCreateGeoLocTransformer()                     */
@@ -738,11 +779,13 @@ void *GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS,
 
     psTransform->bReversed = bReversed;
 
-    strcpy( psTransform->sTI.szSignature, "GTI" );
+    memcpy( psTransform->sTI.abySignature, GDAL_GTI2_SIGNATURE, strlen(GDAL_GTI2_SIGNATURE) );
     psTransform->sTI.pszClassName = "GDALGeoLocTransformer";
     psTransform->sTI.pfnTransform = GDALGeoLocTransform;
     psTransform->sTI.pfnCleanup = GDALDestroyGeoLocTransformer;
     psTransform->sTI.pfnSerialize = GDALSerializeGeoLocTransformer;
+    psTransform->sTI.pfnCreateSimilar = GDALCreateSimilarGeoLocTransformer;
+    
     psTransform->papszGeolocationInfo = CSLDuplicate( papszGeolocationInfo );
 
 /* -------------------------------------------------------------------- */

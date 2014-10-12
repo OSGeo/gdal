@@ -115,13 +115,15 @@ typedef int
                         int bDstToSrc, int nPointCount, 
                         double *x, double *y, double *z, int *panSuccess );
 
+#define GDAL_GTI2_SIGNATURE     "GTI2"
+
 typedef struct {
-    char szSignature[4];
+    GByte abySignature[4];
     const char *pszClassName;
     GDALTransformerFunc pfnTransform;
-    void (*pfnCleanup)( void * );
-    CPLXMLNode *(*pfnSerialize)( void * );
-    /* TODO GDAL 2.0 : add a void* (*pfnClone) (void *) member */
+    void (*pfnCleanup)( void * pTransformerArg );
+    CPLXMLNode *(*pfnSerialize)( void * pTransformerArg );
+    void* (*pfnCreateSimilar)( void* pTransformerArg, double dfSrcRatioX, double dfSrcRatioY );
 } GDALTransformerInfo;
 
 void CPL_DLL GDALDestroyTransformer( void *pTransformerArg );
@@ -129,6 +131,8 @@ int  CPL_DLL GDALUseTransformer( void *pTranformerArg,
                                  int bDstToSrc, int nPointCount, 
                                  double *x, double *y, double *z, 
                                  int *panSuccess );
+void* GDALCreateSimilarTransformer( void* psTransformerArg, double dfSrcRatioX, double dfSrcRatioY );
+
 
 /* High level transformer for going from image coordinates on one file
    to image coordiantes on another, potentially doing reprojection, 
@@ -153,6 +157,8 @@ void CPL_DLL GDALDestroyGenImgProjTransformer( void * );
 int CPL_DLL GDALGenImgProjTransform( 
     void *pTransformArg, int bDstToSrc, int nPointCount,
     double *x, double *y, double *z, int *panSuccess );
+
+void GDALSetTransformerDstGeoTransform( void *, const double * );
 
 /* Geo to geo reprojection transformer. */
 void CPL_DLL *

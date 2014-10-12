@@ -188,12 +188,12 @@ GDALAutoCreateWarpedVRT( GDALDatasetH hSrcDS,
     if( pszDstWKT != NULL )
         GDALSetProjection( hDstDS, pszDstWKT );
     else if( pszSrcWKT != NULL )
-        GDALSetProjection( hDstDS, pszDstWKT );
+        GDALSetProjection( hDstDS, pszSrcWKT );
     else if( GDALGetGCPCount( hSrcDS ) > 0 )
         GDALSetProjection( hDstDS, GDALGetGCPProjection( hSrcDS ) );
     else 
         GDALSetProjection( hDstDS, GDALGetProjectionRef( hSrcDS ) );
-
+    
     return hDstDS;
 }
 
@@ -285,6 +285,7 @@ VRTWarpedDataset::VRTWarpedDataset( int nXSize, int nYSize )
 
     nOverviewCount = 0;
     papoOverviews = NULL;
+    nSrcOvrLevel = -2;
 }
 
 /************************************************************************/
@@ -376,6 +377,33 @@ int VRTWarpedDataset::CloseDependentDatasets()
 }
 
 /************************************************************************/
+/*                         SetSrcOverviewLevel()                        */
+/************************************************************************/
+
+CPLErr VRTWarpedDataset::SetMetadataItem( const char *pszName, const char *pszValue,
+                                          const char *pszDomain )
+
+{
+
+    if( (pszDomain == NULL || EQUAL(pszDomain, "")) && EQUAL(pszName, "SrcOvrLevel") )
+    {
+        int nOldValue = nSrcOvrLevel;
+        if( EQUAL(pszValue, "AUTO") )
+            nSrcOvrLevel = -2;
+        else if( EQUALN(pszValue,"AUTO-",5) )
+            nSrcOvrLevel = -2-atoi(pszValue + 5);
+        else if( EQUAL(pszValue, "NONE") )
+            nSrcOvrLevel = -1;
+        else if( CPLGetValueType(pszValue) == CPL_VALUE_INTEGER )
+            nSrcOvrLevel = atoi(pszValue); 
+        if( nSrcOvrLevel != nOldValue )
+            SetNeedsFlush();
+        return CE_None;
+    }
+    return VRTDataset::SetMetadataItem(pszName, pszValue, pszDomain);
+}
+
+/************************************************************************/
 /*                             Initialize()                             */
 /*                                                                      */
 /*      Initialize a dataset from passed in warp options.               */
@@ -408,6 +436,139 @@ CPLErr VRTWarpedDataset::Initialize( void *psWO )
     GDALDestroyWarpOptions(psWO_Dup);
 
     return eErr;
+}
+
+/************************************************************************/
+/*                        CreateImplicitOverviews()                     */
+/*                                                                      */
+/*      For each overview of the source dataset, create an overview     */
+/*      in the warped VRT dataset.                                      */
+/************************************************************************/
+
+void VRTWarpedDataset::CreateImplicitOverviews()
+{
+    if( poWarper == NULL || nOverviewCount != 0 )
+        return;
+
+    const GDALWarpOptions *psWO = poWarper->GetOptions();
+
+    if( psWO->hSrcDS == NULL || GDALGetRasterCount(psWO->hSrcDS) == 0 )
+        return;
+
+    GDALDataset* poSrcDS = (GDALDataset*)psWO->hSrcDS;
+    int nOvrCount = poSrcDS->GetRasterBand(1)->GetOverviewCount();
+    for(int iOvr = 0; iOvr < nOvrCount; iOvr++)
+    {
+        int bDeleteSrcOvrDataset = FALSE;
+        GDALDataset* poSrcOvrDS = poSrcDS;
+        if( nSrcOvrLevel < -2 )
+        {
+            if( iOvr + nSrcOvrLevel + 2 >= 0 )
+            {
+                bDeleteSrcOvrDataset = TRUE;
+                poSrcOvrDS = GDALCreateOverviewDataset(poSrcDS,
+                                               iOvr + nSrcOvrLevel + 2, FALSE);
+            }
+        }
+        else if( nSrcOvrLevel == -2 )
+        {
+            bDeleteSrcOvrDataset = TRUE;
+            poSrcOvrDS = GDALCreateOverviewDataset(poSrcDS, iOvr, FALSE);
+        }
+        else if( nSrcOvrLevel >= 0 )
+        {
+            bDeleteSrcOvrDataset = TRUE;
+            poSrcOvrDS = GDALCreateOverviewDataset(poSrcDS, nSrcOvrLevel, FALSE);
+        }
+        if( poSrcOvrDS == NULL )
+            break;
+
+        double dfSrcRatioX = (double)poSrcDS->GetRasterXSize() / poSrcOvrDS->GetRasterXSize();
+        double dfSrcRatioY = (double)poSrcDS->GetRasterYSize() / poSrcOvrDS->GetRasterYSize();
+        double dfTargetRatio = (double)poSrcDS->GetRasterXSize() /
+            poSrcDS->GetRasterBand(1)->GetOverview(iOvr)->GetXSize();
+                
+/* -------------------------------------------------------------------- */
+/*      Figure out the desired output bounds and resolution.            */
+/* -------------------------------------------------------------------- */
+        double adfDstGeoTransform[6];
+        int    nDstPixels, nDstLines;
+        
+        nDstPixels = (int)(nRasterXSize / dfTargetRatio + 0.5);
+        nDstLines = (int)(nRasterYSize / dfTargetRatio + 0.5);
+        GetGeoTransform(adfDstGeoTransform);
+        if( adfDstGeoTransform[2] == 0.0 && adfDstGeoTransform[4] == 0.0 )
+        {
+            adfDstGeoTransform[1] *= (double)nRasterXSize / nDstPixels;
+            adfDstGeoTransform[5] *= (double)nRasterYSize / nDstLines;
+        }
+        else
+        {
+            adfDstGeoTransform[1] *= dfTargetRatio;
+            adfDstGeoTransform[2] *= dfTargetRatio;
+            adfDstGeoTransform[4] *= dfTargetRatio;
+            adfDstGeoTransform[5] *= dfTargetRatio;
+        }
+        
+        if( nDstPixels < 1 || nDstLines < 1 )
+        {
+            if( bDeleteSrcOvrDataset )
+                delete poSrcOvrDS;
+            break;
+        }
+                
+/* -------------------------------------------------------------------- */
+/*      Create transformer and warping options.                         */
+/* -------------------------------------------------------------------- */
+        void *pTransformerArg = GDALCreateSimilarTransformer(psWO->pTransformerArg,
+                                                             dfSrcRatioX,
+                                                             dfSrcRatioY);
+        if( pTransformerArg == NULL )
+        {
+            if( bDeleteSrcOvrDataset )
+                delete poSrcOvrDS;
+            break;
+        }
+
+        GDALWarpOptions* psWOOvr = GDALCloneWarpOptions( psWO );
+        psWOOvr->hSrcDS = (GDALDatasetH)poSrcOvrDS;
+        psWOOvr->pfnTransformer = psWO->pfnTransformer;
+        psWOOvr->pTransformerArg = pTransformerArg;
+
+/* -------------------------------------------------------------------- */
+/*      Update the transformer to include an output geotransform        */
+/*      back to pixel/line coordinates.                                 */
+/*                                                                      */
+/* -------------------------------------------------------------------- */
+        GDALSetTransformerDstGeoTransform( 
+            psWOOvr->pTransformerArg, adfDstGeoTransform );
+
+/* -------------------------------------------------------------------- */
+/*      Create the VRT file.                                            */
+/* -------------------------------------------------------------------- */
+        GDALDatasetH hDstDS;
+
+        hDstDS = GDALCreateWarpedVRT( (GDALDatasetH)poSrcOvrDS,
+                                      nDstPixels, nDstLines, 
+                                      adfDstGeoTransform, psWOOvr );
+        
+        if( bDeleteSrcOvrDataset )
+            GDALDereferenceDataset( (GDALDatasetH)poSrcOvrDS );
+        
+        GDALDestroyWarpOptions(psWOOvr);
+        
+        if( hDstDS == NULL )
+        {
+            GDALDestroyTransformer( pTransformerArg );
+            break;
+        }
+        
+        nOverviewCount++;
+        papoOverviews = (VRTWarpedDataset **)
+            CPLRealloc( papoOverviews, sizeof(void*) * nOverviewCount );
+
+        papoOverviews[nOverviewCount-1] = (VRTWarpedDataset*)hDstDS;
+    }
 }
 
 /************************************************************************/
@@ -466,6 +627,13 @@ void* VRTCreateWarpedOverviewTransformer( GDALTransformerFunc pfnBaseTransformer
 static
 void VRTDestroyWarpedOverviewTransformer(void* pTransformArg);
 
+static
+int VRTWarpedOverviewTransform( void *pTransformArg, int bDstToSrc,
+                                int nPointCount,
+                                double *padfX, double *padfY, double *padfZ,
+                                int *panSuccess );
+                                
+#if 0
 /************************************************************************/
 /*                VRTSerializeWarpedOverviewTransformer()               */
 /************************************************************************/
@@ -555,7 +723,7 @@ void* VRTDeserializeWarpedOverviewTransformer( CPLXMLNode *psTree )
         return pApproxCBData;
     }
 }
-
+#endif
 
 /************************************************************************/
 /*                   VRTCreateWarpedOverviewTransformer()               */
@@ -581,12 +749,13 @@ void* VRTCreateWarpedOverviewTransformer( GDALTransformerFunc pfnBaseTransformer
     psSCTInfo->dfYOverviewFactor = dfYOverviewFactor;
     psSCTInfo->bOwnSubtransformer = FALSE;
 
-    strcpy( psSCTInfo->sTI.szSignature, "GTI" );
+    memcpy( psSCTInfo->sTI.abySignature, GDAL_GTI2_SIGNATURE, strlen(GDAL_GTI2_SIGNATURE) );
     psSCTInfo->sTI.pszClassName = "VRTWarpedOverviewTransformer";
     psSCTInfo->sTI.pfnTransform = VRTWarpedOverviewTransform;
     psSCTInfo->sTI.pfnCleanup = VRTDestroyWarpedOverviewTransformer;
+#if 0
     psSCTInfo->sTI.pfnSerialize = VRTSerializeWarpedOverviewTransformer;
-
+#endif
     return psSCTInfo;
 }
 
@@ -609,6 +778,7 @@ void VRTDestroyWarpedOverviewTransformer(void* pTransformArg)
 /*                     VRTWarpedOverviewTransform()                     */
 /************************************************************************/
 
+static
 int VRTWarpedOverviewTransform( void *pTransformArg, int bDstToSrc,
                                 int nPointCount,
                                 double *padfX, double *padfY, double *padfZ,
@@ -661,6 +831,9 @@ VRTWarpedDataset::IBuildOverviews( CPL_UNUSED const char *pszResampling,
                                    GDALProgressFunc pfnProgress,
                                    void * pProgressData )
 {
+    if( poWarper == NULL )
+        return CE_Failure;
+
 /* -------------------------------------------------------------------- */
 /*      Initial progress result.                                        */
 /* -------------------------------------------------------------------- */
@@ -685,7 +858,7 @@ VRTWarpedDataset::IBuildOverviews( CPL_UNUSED const char *pszResampling,
         for( j = 0; j < nOverviewCount; j++ )
         {
             int    nOvFactor;
-            VRTWarpedDataset *poOverview = papoOverviews[j];
+            GDALDataset *poOverview = papoOverviews[j];
             
             nOvFactor = (int) 
                 (0.5+GetRasterXSize() / (double) poOverview->GetRasterXSize());
@@ -717,6 +890,25 @@ VRTWarpedDataset::IBuildOverviews( CPL_UNUSED const char *pszResampling,
                                  
         nOYSize = (GetRasterYSize() + panNewOverviewList[i] - 1) 
             / panNewOverviewList[i];
+        
+/* -------------------------------------------------------------------- */
+/*      Find the most appropriate base dataset onto which to build the  */
+/*      new one. The preference will be an overview dataset with a ratio*/
+/*      greater than ours, and which is not using                       */
+/*      VRTWarpedOverviewTransform, since those ones are slow. The other*/
+/*      ones are based on overviews of the source dataset.              */
+/* -------------------------------------------------------------------- */
+        VRTWarpedDataset* poBaseDataset = this;
+        for( int j = 0; j < nOverviewCount; j++ )
+        {
+            if( papoOverviews[j]->GetRasterXSize() > nOXSize &&
+                papoOverviews[j]->poWarper->GetOptions()->pfnTransformer !=
+                                                VRTWarpedOverviewTransform &&
+                papoOverviews[j]->GetRasterXSize() < poBaseDataset->GetRasterXSize() )
+            {
+                poBaseDataset = papoOverviews[j];
+            }
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Create the overview dataset.                                    */
@@ -739,12 +931,12 @@ VRTWarpedDataset::IBuildOverviews( CPL_UNUSED const char *pszResampling,
             CPLRealloc( papoOverviews, sizeof(void*) * nOverviewCount );
 
         papoOverviews[nOverviewCount-1] = poOverviewDS;
-        
+
 /* -------------------------------------------------------------------- */
 /*      Prepare update transformation information that will apply       */
 /*      the overview decimation.                                        */
 /* -------------------------------------------------------------------- */
-        GDALWarpOptions *psWO = (GDALWarpOptions *) poWarper->GetOptions();
+        GDALWarpOptions *psWO = (GDALWarpOptions *) poBaseDataset->poWarper->GetOptions();
 
 /* -------------------------------------------------------------------- */
 /*      Initialize the new dataset with adjusted warp options, and      */
@@ -757,8 +949,8 @@ VRTWarpedDataset::IBuildOverviews( CPL_UNUSED const char *pszResampling,
         psWO->pTransformerArg = VRTCreateWarpedOverviewTransformer(
                                         pfnTransformerBase,
                                         pTransformerBaseArg,
-                                        GetRasterXSize() / (double) nOXSize,
-                                        GetRasterYSize() / (double) nOYSize );
+                                        poBaseDataset->GetRasterXSize() / (double) nOXSize,
+                                        poBaseDataset->GetRasterYSize() / (double) nOYSize );
 
         poOverviewDS->Initialize( psWO );
 
@@ -925,8 +1117,22 @@ CPLErr VRTWarpedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Deserialize SrcOvrLevel                                         */
+/* -------------------------------------------------------------------- */
+    const char* pszSrcOvrLevel = CPLGetXMLValue( psTree, "SrcOvrLevel", NULL );
+    if( pszSrcOvrLevel != NULL )
+    {
+        SetMetadataItem("SrcOvrLevel", pszSrcOvrLevel);
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Generate overviews, if appropriate.                             */
 /* -------------------------------------------------------------------- */
+    
+    CreateImplicitOverviews();
+    
+    /* OverviewList is historical, and quite inefficient, since it uses */
+    /* the full resolution source dataset, so only build it afterwards */
     char **papszTokens = CSLTokenizeString( 
         CPLGetXMLValue( psTree, "OverviewList", "" ));
     int iOverview;
@@ -979,30 +1185,55 @@ CPLXMLNode *VRTWarpedDataset::SerializeToXML( const char *pszVRTPath )
                                  CPLSPrintf( "%d", nBlockYSize ) );
 
 /* -------------------------------------------------------------------- */
-/*      Serialize the overview list.                                    */
+/*      Serialize the overview list (only for non implicit overviews)   */
 /* -------------------------------------------------------------------- */
     if( nOverviewCount > 0 )
     {
         char *pszOverviewList;
         int iOverview;
-        
-        pszOverviewList = (char *) CPLMalloc(nOverviewCount*8 + 10);
-        pszOverviewList[0] = '\0';
-        for( iOverview = 0; iOverview < nOverviewCount; iOverview++ )
+                    
+        int nSrcDSOvrCount = 0;
+        if( poWarper != NULL  && poWarper->GetOptions() != NULL &&
+            poWarper->GetOptions()->hSrcDS != NULL &&
+            GDALGetRasterCount(poWarper->GetOptions()->hSrcDS) > 0 )
         {
-            int nOvFactor;
-
-            nOvFactor = (int) 
-                (0.5+GetRasterXSize() 
-                 / (double) papoOverviews[iOverview]->GetRasterXSize());
-
-            sprintf( pszOverviewList + strlen(pszOverviewList), 
-                     "%d ", nOvFactor );
+            nSrcDSOvrCount = ((GDALDataset*)poWarper->GetOptions()->hSrcDS)->
+                                        GetRasterBand(1)->GetOverviewCount();
         }
 
-        CPLCreateXMLElementAndValue( psTree, "OverviewList", pszOverviewList );
+        if( nOverviewCount != nSrcDSOvrCount )
+        {
+            pszOverviewList = (char *) CPLMalloc(nOverviewCount*8 + 10);
+            pszOverviewList[0] = '\0';
+            for( iOverview = 0; iOverview < nOverviewCount; iOverview++ )
+            {
+                int nOvFactor;
 
-        CPLFree( pszOverviewList );
+                nOvFactor = (int) 
+                    (0.5+GetRasterXSize() 
+                     / (double) papoOverviews[iOverview]->GetRasterXSize());
+
+                sprintf( pszOverviewList + strlen(pszOverviewList), 
+                         "%d ", nOvFactor );
+            }
+
+            CPLCreateXMLElementAndValue( psTree, "OverviewList", pszOverviewList );
+
+            CPLFree( pszOverviewList );
+        }
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Serialize source overview level.                                */
+/* -------------------------------------------------------------------- */
+    if( nSrcOvrLevel != -2 )
+    {
+        if( nSrcOvrLevel < -2 )
+            CPLCreateXMLElementAndValue( psTree, "SrcOvrLevel", CPLSPrintf("AUTO%d", nSrcOvrLevel+2) );
+        else if( nSrcOvrLevel == -1 )
+            CPLCreateXMLElementAndValue( psTree, "SrcOvrLevel", "NONE" );
+        else
+            CPLCreateXMLElementAndValue( psTree, "SrcOvrLevel", CPLSPrintf("%d", nSrcOvrLevel) );
     }
 
 /* ==================================================================== */
@@ -1392,6 +1623,8 @@ int VRTWarpedRasterBand::GetOverviewCount()
 
 {
     VRTWarpedDataset *poWDS = (VRTWarpedDataset *) poDS;
+    
+    poWDS->CreateImplicitOverviews();
 
     return poWDS->nOverviewCount;
 }
@@ -1405,7 +1638,7 @@ GDALRasterBand *VRTWarpedRasterBand::GetOverview( int iOverview )
 {
     VRTWarpedDataset *poWDS = (VRTWarpedDataset *) poDS;
 
-    if( iOverview < 0 || iOverview >= poWDS->nOverviewCount )
+    if( iOverview < 0 || iOverview >= GetOverviewCount() )
         return NULL;
     else
         return poWDS->papoOverviews[iOverview]->GetRasterBand( nBand );

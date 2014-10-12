@@ -172,11 +172,6 @@ void GDALCleanupTransformDeserializerMutex();
 
 /* Transformer cloning */
 
-void* GDALCloneTPSTransformer( void *pTransformArg );
-void* GDALCloneGenImgProjTransformer( void *pTransformArg );
-void* GDALCloneApproxTransformer( void *pTransformArg );
-/* TODO : GDALCloneGeoLocTransformer? , GDALCloneRPCTransformer? */ 
-
 void* GDALCreateTPSTransformerInt( int nGCPCount, const GDAL_GCP *pasGCPList, 
                                    int bReversed, char** papszOptions );
 

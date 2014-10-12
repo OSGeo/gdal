@@ -422,7 +422,7 @@ CPLErr GDALWarpOperation::Initialize( const GDALWarpOptions *psNewOptions )
         WipeOptions();
 
     psOptions = GDALCloneWarpOptions( psNewOptions );
-    psOptions->papszWarpOptions = CSLAddNameValue(psOptions->papszWarpOptions,
+    psOptions->papszWarpOptions = CSLSetNameValue(psOptions->papszWarpOptions,
         "EXTRA_ELTS", CPLSPrintf("%d", WARP_EXTRA_ELTS));
 
 /* -------------------------------------------------------------------- */

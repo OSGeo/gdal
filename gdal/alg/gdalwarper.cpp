@@ -1029,14 +1029,19 @@ GDALSerializeWarpOptions( const GDALWarpOptions *psWO )
         char *pszName = NULL;
         const char *pszValue = 
             CPLParseNameValue( psWO->papszWarpOptions[iWO], &pszName );
+            
+        /* EXTRA_ELTS is an internal detail that we will recover */
+        /* no need to serialize it */
+        if( !EQUAL(pszName, "EXTRA_ELTS") )
+        {
+            CPLXMLNode *psOption = 
+                CPLCreateXMLElementAndValue( 
+                    psTree, "Option", pszValue );
 
-        CPLXMLNode *psOption = 
-            CPLCreateXMLElementAndValue( 
-                psTree, "Option", pszValue );
-
-        CPLCreateXMLNode( 
-            CPLCreateXMLNode( psOption, CXT_Attribute, "name" ),
-            CXT_Text, pszName );
+            CPLCreateXMLNode( 
+                CPLCreateXMLNode( psOption, CXT_Attribute, "name" ),
+                CXT_Text, pszName );
+        }
 
         CPLFree(pszName);
     }
