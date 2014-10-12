@@ -39,11 +39,13 @@
 int VRTApplyMetadata( CPLXMLNode *, GDALMajorObject * );
 CPLXMLNode *VRTSerializeMetadata( GDALMajorObject * );
 
+#if 0
 int VRTWarpedOverviewTransform( void *pTransformArg, int bDstToSrc,
                                 int nPointCount,
                                 double *padfX, double *padfY, double *padfZ,
                                 int *panSuccess );
 void* VRTDeserializeWarpedOverviewTransformer( CPLXMLNode *psTree );
+#endif
 
 /************************************************************************/
 /*                          VRTOverviewInfo()                           */
@@ -209,14 +211,16 @@ class CPL_DLL VRTWarpedDataset : public VRTDataset
     int               nBlockYSize;
     GDALWarpOperation *poWarper;
 
+    int               nOverviewCount;
+    VRTWarpedDataset **papoOverviews;
+    int               nSrcOvrLevel;
+    
+    void              CreateImplicitOverviews();
+
     friend class VRTWarpedRasterBand;
 
   protected:
     virtual int         CloseDependentDatasets();
-
-public:
-    int               nOverviewCount;
-    VRTWarpedDataset  **papoOverviews;
 
 public:
                       VRTWarpedDataset( int nXSize, int nYSize );
@@ -227,6 +231,9 @@ public:
     virtual CPLErr IBuildOverviews( const char *, int, int *,
                                     int, int *, GDALProgressFunc, void * );
     
+    virtual CPLErr SetMetadataItem( const char *pszName, const char *pszValue,
+                                    const char *pszDomain = "" );
+
     virtual CPLXMLNode *SerializeToXML( const char *pszVRTPath );
     virtual CPLErr    XMLInit( CPLXMLNode *, const char * );
 

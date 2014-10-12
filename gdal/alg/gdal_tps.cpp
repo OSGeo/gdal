@@ -63,19 +63,36 @@ typedef struct
 } TPSTransformInfo;
 
 /************************************************************************/
-/*                       GDALCloneTPSTransformer()                      */
+/*                   GDALCreateSimilarTPSTransformer()                  */
 /************************************************************************/
 
-void* GDALCloneTPSTransformer( void *hTransformArg )
+static
+void* GDALCreateSimilarTPSTransformer( void *hTransformArg, double dfRatioX, double dfRatioY )
 {
-    VALIDATE_POINTER1( hTransformArg, "GDALCloneTPSTransformer", NULL );
+    VALIDATE_POINTER1( hTransformArg, "GDALCreateSimilarTPSTransformer", NULL );
 
-    TPSTransformInfo *psInfo = 
-        (TPSTransformInfo *) hTransformArg;
-
-    /* We can just use a ref count, since using the source transformation */
-    /* is thread-safe */
-    CPLAtomicInc(&(psInfo->nRefCount));
+    TPSTransformInfo *psInfo = (TPSTransformInfo *) hTransformArg;
+    
+    if( dfRatioX == 1.0 && dfRatioY == 1.0 )
+    {
+        /* We can just use a ref count, since using the source transformation */
+        /* is thread-safe */
+        CPLAtomicInc(&(psInfo->nRefCount));
+    }
+    else
+    {
+        GDAL_GCP *pasGCPList = GDALDuplicateGCPs( psInfo->nGCPCount,
+                                                  psInfo->pasGCPList );
+        for(int i=0;i<psInfo->nGCPCount;i++)
+        {
+            pasGCPList[i].dfGCPPixel /= dfRatioX;
+            pasGCPList[i].dfGCPLine /= dfRatioY;
+        }
+        psInfo = (TPSTransformInfo *) GDALCreateTPSTransformer( psInfo->nGCPCount, pasGCPList,
+                                           psInfo->bReversed );
+        GDALDeinitGCPs( psInfo->nGCPCount, pasGCPList );
+        CPLFree( pasGCPList );
+    }
 
     return psInfo;
 }
@@ -144,11 +161,12 @@ void *GDALCreateTPSTransformerInt( int nGCPCount, const GDAL_GCP *pasGCPList,
     psInfo->poForward = new VizGeorefSpline2D( 2 );
     psInfo->poReverse = new VizGeorefSpline2D( 2 );
 
-    strcpy( psInfo->sTI.szSignature, "GTI" );
+    memcpy( psInfo->sTI.abySignature, GDAL_GTI2_SIGNATURE, strlen(GDAL_GTI2_SIGNATURE) );
     psInfo->sTI.pszClassName = "GDALTPSTransformer";
     psInfo->sTI.pfnTransform = GDALTPSTransform;
     psInfo->sTI.pfnCleanup = GDALDestroyTPSTransformer;
     psInfo->sTI.pfnSerialize = GDALSerializeTPSTransformer;
+    psInfo->sTI.pfnCreateSimilar = GDALCreateSimilarTPSTransformer;
 
 /* -------------------------------------------------------------------- */
 /*      Attach all the points to the transformation.                    */

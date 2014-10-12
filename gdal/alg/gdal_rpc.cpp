@@ -260,6 +260,64 @@ typedef struct {
 } GDALRPCTransformInfo;
 
 /************************************************************************/
+/*                     GDALSerializeRPCDEMResample()                    */
+/************************************************************************/
+
+static const char* GDALSerializeRPCDEMResample(DEMResampleAlg eResampleAlg)
+{
+    switch(eResampleAlg)
+    {
+        case  DRA_NearestNeighbour:
+            return "near";
+        case DRA_Cubic:
+            return "cubic";
+        default:
+        case DRA_Bilinear:
+            return "bilinear";
+    }
+}
+
+/************************************************************************/
+/*                   GDALCreateSimilarRPCTransformer()                  */
+/************************************************************************/
+
+static
+void* GDALCreateSimilarRPCTransformer( void *hTransformArg, double dfRatioX, double dfRatioY )
+{
+    VALIDATE_POINTER1( hTransformArg, "GDALCreateSimilarRPCTransformer", NULL );
+
+    GDALRPCTransformInfo *psInfo = (GDALRPCTransformInfo *) hTransformArg;
+    
+    GDALRPCInfo sRPC;
+    memcpy(&sRPC, &(psInfo->sRPC), sizeof(GDALRPCInfo));
+    
+    if( dfRatioX != 1.0 || dfRatioY != 1.0 )
+    {
+        sRPC.dfLINE_OFF /= dfRatioY;
+        sRPC.dfLINE_SCALE /= dfRatioY;
+        sRPC.dfSAMP_OFF /= dfRatioX;
+        sRPC.dfSAMP_SCALE /= dfRatioX;
+    }
+
+    char** papszOptions = NULL;
+    papszOptions = CSLSetNameValue(papszOptions, "RPC_HEIGHT",
+                                   CPLSPrintf("%.18g", psInfo->dfHeightOffset));
+    papszOptions = CSLSetNameValue(papszOptions, "RPC_HEIGHT_SCALE",
+                                   CPLSPrintf("%.18g", psInfo->dfHeightScale));
+    if( psInfo->pszDEMPath != NULL )
+    {
+        papszOptions = CSLSetNameValue(papszOptions, "RPC_DEM", psInfo->pszDEMPath);
+        papszOptions = CSLSetNameValue(papszOptions, "RPC_DEMINTERPOLATION",
+                                       GDALSerializeRPCDEMResample(psInfo->eResampleAlg));
+    }
+    psInfo = (GDALRPCTransformInfo*) GDALCreateRPCTransformer( &sRPC,
+           psInfo->bReversed, psInfo->dfPixErrThreshold, papszOptions );
+    CSLDestroy(papszOptions);
+
+    return psInfo;
+}
+
+/************************************************************************/
 /*                      GDALCreateRPCTransformer()                      */
 /************************************************************************/
 
@@ -379,11 +437,12 @@ void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed,
     psTransform->dfHeightOffset = 0.0;
     psTransform->dfHeightScale = 1.0;
 
-    strcpy( psTransform->sTI.szSignature, "GTI" );
+    memcpy( psTransform->sTI.abySignature, GDAL_GTI2_SIGNATURE, strlen(GDAL_GTI2_SIGNATURE) );
     psTransform->sTI.pszClassName = "GDALRPCTransformer";
     psTransform->sTI.pfnTransform = GDALRPCTransform;
     psTransform->sTI.pfnCleanup = GDALDestroyRPCTransformer;
     psTransform->sTI.pfnSerialize = GDALSerializeRPCTransformer;
+    psTransform->sTI.pfnCreateSimilar = GDALCreateSimilarRPCTransformer;
    
 /* -------------------------------------------------------------------- */
 /*      Do we have a "average height" that we want to consider all      */
@@ -1048,21 +1107,8 @@ CPLXMLNode *GDALSerializeRPCTransformer( void *pTransformArg )
 /* -------------------------------------------------------------------- */
 /*      Serialize DEM interpolation                                     */
 /* -------------------------------------------------------------------- */
-    CPLString soDEMInterpolation;
-    switch(psInfo->eResampleAlg)
-    {
-    case  DRA_NearestNeighbour:
-        soDEMInterpolation = "near";
-        break;
-    case DRA_Cubic:
-        soDEMInterpolation = "cubic";
-        break;
-    default:
-    case DRA_Bilinear:
-        soDEMInterpolation = "bilinear";
-    }
     CPLCreateXMLElementAndValue( 
-        psTree, "DEMInterpolation", soDEMInterpolation );
+        psTree, "DEMInterpolation", GDALSerializeRPCDEMResample(psInfo->eResampleAlg) );
 
 /* -------------------------------------------------------------------- */
 /*      Serialize pixel error threshold.                                */

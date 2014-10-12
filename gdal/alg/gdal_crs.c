@@ -57,6 +57,7 @@
 #include "cpl_conv.h"
 #include "cpl_minixml.h"
 #include "cpl_string.h"
+#include "cpl_atomic_ops.h"
 
 CPL_CVSID("$Id$");
 
@@ -105,6 +106,8 @@ typedef struct
     int    nMinimumGcps;
     double dfTolerance;
     
+    volatile int nRefCount;
+    
 } GCPTransformInfo;
 
 CPL_C_START
@@ -127,6 +130,42 @@ static char *CRS_error_message[] = {
     "Failed to compute GCP transform: Internal error"
 };
 
+/************************************************************************/
+/*                   GDALCreateSimilarGCPTransformer()                  */
+/************************************************************************/
+
+static
+void* GDALCreateSimilarGCPTransformer( void *hTransformArg, double dfRatioX, double dfRatioY )
+{
+    int i;
+    GDAL_GCP *pasGCPList;
+    GCPTransformInfo *psInfo = (GCPTransformInfo *) hTransformArg;
+
+    VALIDATE_POINTER1( hTransformArg, "GDALCreateSimilarGCPTransformer", NULL );
+    
+    if( dfRatioX == 1.0 && dfRatioY == 1.0 )
+    {
+        /* We can just use a ref count, since using the source transformation */
+        /* is thread-safe */
+        CPLAtomicInc(&(psInfo->nRefCount));
+    }
+    else
+    {
+        pasGCPList = GDALDuplicateGCPs( psInfo->nGCPCount, psInfo->pasGCPList );
+        for(i=0;i<psInfo->nGCPCount;i++)
+        {
+            pasGCPList[i].dfGCPPixel /= dfRatioX;
+            pasGCPList[i].dfGCPLine /= dfRatioY;
+        }
+        /* As remove_outliers modifies the provided GCPs we don't need to reapply it */
+        psInfo = (GCPTransformInfo *) GDALCreateGCPTransformer(
+            psInfo->nGCPCount, pasGCPList, psInfo->nOrder, psInfo->bReversed );
+        GDALDeinitGCPs( psInfo->nGCPCount, pasGCPList );
+        CPLFree( pasGCPList );
+    }
+
+    return psInfo;
+}
 
 /************************************************************************/
 /*                      GDALCreateGCPTransformer()                      */
@@ -185,15 +224,18 @@ void *GDALCreateGCPTransformerEx( int nGCPCount, const GDAL_GCP *pasGCPList,
     psInfo->bRefine = bRefine;
     psInfo->dfTolerance = dfTolerance;
     psInfo->nMinimumGcps = nMinimumGcps;
+    
+    psInfo->nRefCount = 1;
 
     psInfo->pasGCPList = GDALDuplicateGCPs( nGCPCount, pasGCPList );
     psInfo->nGCPCount = nGCPCount;
 
-    strcpy( psInfo->sTI.szSignature, "GTI" );
+    memcpy( psInfo->sTI.abySignature, GDAL_GTI2_SIGNATURE, strlen(GDAL_GTI2_SIGNATURE) );
     psInfo->sTI.pszClassName = "GDALGCPTransformer";
     psInfo->sTI.pfnTransform = GDALGCPTransform;
     psInfo->sTI.pfnCleanup = GDALDestroyGCPTransformer;
     psInfo->sTI.pfnSerialize = GDALSerializeGCPTransformer;
+    psInfo->sTI.pfnCreateSimilar = GDALCreateSimilarGCPTransformer;
     
 /* -------------------------------------------------------------------- */
 /*      Compute the forward and reverse polynomials.                    */
@@ -292,11 +334,14 @@ void GDALDestroyGCPTransformer( void *pTransformArg )
     GCPTransformInfo *psInfo = (GCPTransformInfo *) pTransformArg;
 
     VALIDATE_POINTER0( pTransformArg, "GDALDestroyGCPTransformer" );
+    
+    if( CPLAtomicDec(&(psInfo->nRefCount)) == 0 )
+    {
+        GDALDeinitGCPs( psInfo->nGCPCount, psInfo->pasGCPList );
+        CPLFree( psInfo->pasGCPList );
 
-    GDALDeinitGCPs( psInfo->nGCPCount, psInfo->pasGCPList );
-    CPLFree( psInfo->pasGCPList );
-
-    CPLFree( pTransformArg );
+        CPLFree( pTransformArg );
+    }
 }
 
 /************************************************************************/

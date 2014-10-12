@@ -351,7 +351,7 @@ int main( int argc, char ** argv )
     char              **papszSrcFiles = NULL;
     char               *pszDstFilename = NULL;
     int                 bCreateOutput = FALSE, i;
-    void               *hTransformArg, *hGenImgProjArg=NULL, *hApproxArg=NULL;
+    void               *hTransformArg = NULL;
     char               **papszWarpOptions = NULL;
     double             dfErrorThreshold = 0.125;
     double             dfWarpMemoryLimit = 0.0;
@@ -1129,9 +1129,9 @@ int main( int argc, char ** argv )
 /*      destination coordinate system.                                  */
 /* -------------------------------------------------------------------- */
         if (hUniqueTransformArg)
-            hTransformArg = hGenImgProjArg = hUniqueTransformArg;
+            hTransformArg = hUniqueTransformArg;
         else
-            hTransformArg = hGenImgProjArg =
+            hTransformArg =
                 GDALCreateGenImgProjTransformer2( hSrcDS, hDstDS, papszTO );
         
         if( hTransformArg == NULL )
@@ -1153,7 +1153,7 @@ int main( int argc, char ** argv )
             int    nPixels, nLines;
             /* Compute what the "natural" output resolution (in pixels) would be for this */
             /* input dataset */
-            if( GDALSuggestedWarpOutput2(hSrcDS, pfnTransformer, hGenImgProjArg,
+            if( GDALSuggestedWarpOutput2(hSrcDS, pfnTransformer, hTransformArg,
                                          adfSuggestedGeoTransform, &nPixels, &nLines,
                                          adfExtent, 0) == CE_None)
             {
@@ -1208,8 +1208,8 @@ int main( int argc, char ** argv )
         /* We need to recreate the transform when operating on an overview */
         if( poSrcOvrDS != NULL )
         {
-            GDALDestroyGenImgProjTransformer( hGenImgProjArg );
-            hTransformArg = hGenImgProjArg =
+            GDALDestroyGenImgProjTransformer( hTransformArg );
+            hTransformArg =
                 GDALCreateGenImgProjTransformer2( hWrkSrcDS, hDstDS, papszTO );
         }
 
@@ -1219,10 +1219,11 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
         if( dfErrorThreshold != 0.0 )
         {
-            hTransformArg = hApproxArg = 
+            hTransformArg =
                 GDALCreateApproxTransformer( GDALGenImgProjTransform, 
-                                             hGenImgProjArg, dfErrorThreshold);
+                                             hTransformArg, dfErrorThreshold);
             pfnTransformer = GDALApproxTransform;
+            GDALApproxTransformerOwnsSubtransformer(hTransformArg, TRUE);
         }
 
 /* -------------------------------------------------------------------- */
@@ -1552,6 +1553,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
         if( bVRT )
         {
+            GDALSetMetadataItem(hDstDS, "SrcOvrLevel", CPLSPrintf("%d", nOvLevel), NULL);
             if( GDALInitializeWarpedVRT( hDstDS, psWO ) != CE_None )
                 GDALExit( 1 );
 
@@ -1559,15 +1561,6 @@ int main( int argc, char ** argv )
             if( poSrcOvrDS )
                 delete poSrcOvrDS;
             GDALClose( hSrcDS );
-
-            /* The warped VRT will clean itself the transformer used */
-            /* So we have only to destroy the hGenImgProjArg if we */
-            /* have wrapped it inside the hApproxArg */
-            if (pfnTransformer == GDALApproxTransform)
-            {
-                if( hGenImgProjArg != NULL )
-                    GDALDestroyGenImgProjTransformer( hGenImgProjArg );
-            }
 
             GDALDestroyWarpOptions( psWO );
 
@@ -1608,11 +1601,8 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
-        if( hApproxArg != NULL )
-            GDALDestroyApproxTransformer( hApproxArg );
-        
-        if( hGenImgProjArg != NULL )
-            GDALDestroyGenImgProjTransformer( hGenImgProjArg );
+        if( hTransformArg != NULL )
+            GDALDestroyTransformer( hTransformArg );
         
         GDALDestroyWarpOptions( psWO );
 
