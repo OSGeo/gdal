@@ -53,23 +53,32 @@ by passing <strong>"OGRSQL"</strong> string to the ExecuteSQL() method, as name 
 
 <li> The type recognition logic is currently somewhat impoverished.  No
 effort is made to preserve real width information for integer and real
-fields. <p>
+fields.</li>
 
 <li> Various types such as objects, and BLOBs in Oracle will be completely
-ignored by OGR.<p>
+ignored by OGR.</li>
 
 <li> Currently the OGR transaction semantics are not properly mapped onto
-transaction semantics in Oracle.<p>
+transaction semantics in Oracle.</li>
 
 <li> If an attribute called OGR_FID exists in the schema for tables being 
 read, it will be used as the FID.  Random (FID based) reads on tables without
 an identified (and indexed) FID field can be very slow.  To force use of a
 particular field name the OCI_FID configuration variable (ie. environment
-variable) can be set to the target field name. <p>
+variable) can be set to the target field name.</li>
 
-<li> Curved geometry types are converted to linestrings or linear rings in six degree segments when reading.  The driver has no support for writing curved geometries.
+<li> Curved geometry types are converted to linestrings or linear rings in six degree segments when reading.  The driver has no support for writing curved geometries.</li>
 
-<li> There is no support for point cloud (SDO_PC), TIN (SDO_TIN) and annotation text data types in Oracle Spatial.
+<li> There is no support for point cloud (SDO_PC), TIN (SDO_TIN) and annotation text data types in Oracle Spatial.</li>
+
+<li> It might be necessary to define the environment variable NLS_LANG to
+"American_America.UTF8" to avoid issues with floating point numbers being
+truncated to integer on non-English environments.</li>
+
+<li> For developers: when running the driver under the memory error detection
+tool Valgrind, specifying the database_instance, typically to localhost, or with
+the TWO_TASK environment variable seems to be
+compulsory, otherwise "TNS:permission denied" errors will be reported)</li>
 
 </ul>
 
