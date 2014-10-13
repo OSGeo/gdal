@@ -411,7 +411,6 @@ void OGROCIDataSource::DeleteLayer( const char *pszLayerName )
     {
         if( EQUAL(pszLayerName,papoLayers[iLayer]->GetLayerDefn()->GetName()) )
         {
-            pszLayerName = CPLStrdup(papoLayers[iLayer]->GetLayerDefn()->GetName());
             break;
         }
     }
