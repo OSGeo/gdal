@@ -142,7 +142,7 @@ such that the aligned extent includes the minimum extent.</dd>
 <dt> <b>-ts</b> <em>width height</em>:</dt><dd> set output file size in
 pixels and lines. If width or height is set to 0, the other dimension will be
 guessed from the computed resolution. Note that -ts cannot be used with -tr</dd>
-<dt> <b>-ovr</b> <em>level|AUTO|AUTO-n|NONE>/em>:</dt><dd>(GDAL >= 2.0) To
+<dt> <b>-ovr</b> <em>level|AUTO|AUTO-n|NONE></em>:</dt><dd>(GDAL >= 2.0) To
 specify which overview level of source files must be used. The default choice,
 AUTO, will select the overview level whose resolution is the closest to the
 target resolution. Specify an integer value (0-based, i.e. 0=1st overview level) 
