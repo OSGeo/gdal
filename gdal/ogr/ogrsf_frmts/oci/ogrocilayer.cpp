@@ -313,6 +313,11 @@ OGRGeometry *OGROCILayer::TranslateGeometry()
         return NULL;
 
 /* -------------------------------------------------------------------- */
+/*      Establish the dimension.                                        */
+/* -------------------------------------------------------------------- */
+    int nDimension = MAX(2,(nGType / 1000));
+
+/* -------------------------------------------------------------------- */
 /*      Handle point data directly from built-in point info.            */
 /* -------------------------------------------------------------------- */
     if( ORA_GTYPE_MATCH(nGType,ORA_GTYPE_POINT)
@@ -330,13 +335,11 @@ OGRGeometry *OGROCILayer::TranslateGeometry()
             OCINumberToReal(poSession->hError, &(hLastGeom->sdo_point.z), 
                             (uword)sizeof(double), (dvoid *)&dfZ);
 
-        return new OGRPoint( dfX, dfY, dfZ );
+        if( nDimension == 3 )
+            return new OGRPoint( dfX, dfY, dfZ );
+        else
+            return new OGRPoint( dfX, dfY );
     }
-
-/* -------------------------------------------------------------------- */
-/*      Establish the dimension.                                        */
-/* -------------------------------------------------------------------- */
-    int nDimension = MAX(2,(nGType / 1000));
 
 /* -------------------------------------------------------------------- */
 /*      If this is a sort of container geometry, create the             */
@@ -536,7 +539,8 @@ OGROCILayer::TranslateGeometryElement( int *piElement,
 
         poPoint->setX( dfX );
         poPoint->setY( dfY );
-        poPoint->setZ( dfZ );
+        if( nDimension == 3 )
+            poPoint->setZ( dfZ );
 
         return poPoint;
     }
@@ -557,7 +561,7 @@ OGROCILayer::TranslateGeometryElement( int *piElement,
             GetOrdinalPoint( nStartOrdinal + i*nDimension, nDimension, 
                              &dfX, &dfY, &dfZ );
 
-            OGRPoint *poPoint = new OGRPoint( dfX, dfY, dfZ );
+            OGRPoint *poPoint = (nDimension == 3) ? new OGRPoint( dfX, dfY, dfZ ):  new OGRPoint( dfX, dfY );
             poMP->addGeometryDirectly( poPoint );
         }
         return poMP;
@@ -588,7 +592,10 @@ OGROCILayer::TranslateGeometryElement( int *piElement,
 
             GetOrdinalPoint( i*nDimension + nStartOrdinal, nDimension, 
                              &dfX, &dfY, &dfZ );
-            poLS->setPoint( i, dfX, dfY, dfZ );
+            if (nDimension == 3)
+                poLS->setPoint( i, dfX, dfY, dfZ );
+            else
+                poLS->setPoint( i, dfX, dfY );
         }
 
         return poLS;
@@ -641,7 +648,10 @@ OGROCILayer::TranslateGeometryElement( int *piElement,
 
             GetOrdinalPoint( i*nDimension + nStartOrdinal, nDimension, 
                              &dfX, &dfY, &dfZ );
-            poLS->setPoint( i, dfX, dfY, dfZ );
+            if (nDimension == 3)
+                poLS->setPoint( i, dfX, dfY, dfZ );
+            else
+                poLS->setPoint( i, dfX, dfY );
         }
 
         return poLS;

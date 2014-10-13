@@ -45,7 +45,7 @@ static int nHits = 0;
 /************************************************************************/
 
 OGROCITableLayer::OGROCITableLayer( OGROCIDataSource *poDSIn, 
-                                    const char * pszTableName,
+                                    const char * pszTableName, OGRwkbGeometryType eGType,
                                     int nSRIDIn, int bUpdate, int bNewLayerIn )
 
 {
@@ -69,6 +69,8 @@ OGROCITableLayer::OGROCITableLayer( OGROCIDataSource *poDSIn,
         bHaveSpatialIndex = HSI_UNKNOWN;
 
     poFeatureDefn = ReadTableDefinition( pszTableName );
+    if( eGType != wkbUnknown && poFeatureDefn->GetGeomFieldCount() > 0 )
+        poFeatureDefn->GetGeomFieldDefn(0)->SetType(eGType);
     SetDescription( poFeatureDefn->GetName() );
 
     nSRID = nSRIDIn;
@@ -364,6 +366,57 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition( const char * pszTable )
         {
             CPLDebug( "OCI", "get dim based of existing data or index failed." );
         }
+        
+        {
+            OGROCIStringBuf oDimCmd2;
+            OGROCIStatement oDimStatement2( poSession );
+            char **papszResult2;
+
+            CPLErrorReset();
+            oDimCmd2.Appendf( 1024,
+                "select m.SDO_LAYER_GTYPE "
+                "from all_sdo_index_metadata m, all_sdo_index_info i "
+                "where i.index_name = m.sdo_index_name "
+                "and i.sdo_index_owner = m.sdo_index_owner "
+                "and i.table_name = upper('%s')",
+                osTableName.c_str() );
+
+            oDimStatement2.Execute( oDimCmd2.GetString() );
+
+            papszResult2 = oDimStatement2.SimpleFetchRow();
+
+            if( CSLCount( papszResult2 ) > 0 )
+            {
+                const char* pszLayerGType = papszResult2[0];
+                OGRwkbGeometryType eGeomType = wkbUnknown;
+                if( EQUAL(pszLayerGType, "POINT") )
+                    eGeomType = wkbPoint;
+                else if( EQUAL(pszLayerGType, "LINE") )
+                    eGeomType = wkbLineString;
+                else if( EQUAL(pszLayerGType, "POLYGON") )
+                    eGeomType = wkbPolygon;
+                else if( EQUAL(pszLayerGType, "MULTIPOINT") )
+                    eGeomType = wkbMultiPoint;
+                else if( EQUAL(pszLayerGType, "MULTILINE") )
+                    eGeomType = wkbMultiLineString;
+                else if( EQUAL(pszLayerGType, "MULTIPOLYGON") )
+                    eGeomType = wkbMultiPolygon;
+                else if( !EQUAL(pszLayerGType, "COLLECTION") )
+                    CPLDebug("OCI", "LAYER_GTYPE = %s", pszLayerGType );
+                if( iDim == 3 )
+                    eGeomType = (OGRwkbGeometryType) (eGeomType | wkb25DBit );
+                poDefn->GetGeomFieldDefn(0)->SetType( eGeomType );
+            }
+            else
+            {
+                // we want to clear any errors to avoid confusing the application.
+                CPLErrorReset();
+            }
+        }
+    }
+    else
+    {
+        poDefn->SetGeomType(wkbNone);
     }
 
     bValidTable = TRUE;
@@ -2057,10 +2110,37 @@ void OGROCITableLayer::CreateSpatialIndex()
                            poFeatureDefn->GetName(),
                            pszGeomName );
 
-        if( CSLFetchNameValue( papszOptions, "INDEX_PARAMETERS" ) != NULL )
+        int bAddLayerGType = CSLTestBoolean(
+            CSLFetchNameValueDef( papszOptions, "ADD_LAYER_GTYPE", "YES") ) &&
+            GetGeomType() != wkbUnknown;
+      
+        CPLString osParams(CSLFetchNameValueDef(papszOptions,"INDEX_PARAMETERS", ""));
+        if( bAddLayerGType || osParams.size() != 0 )
         {
             sIndexCmd.Append( " PARAMETERS( '" );
-            sIndexCmd.Append( CSLFetchNameValue(papszOptions,"INDEX_PARAMETERS") );
+            if( osParams.size() != 0 )
+                sIndexCmd.Append( osParams.c_str() );
+            if( bAddLayerGType &&
+                osParams.ifind("LAYER_GTYPE") == std::string::npos )
+            {
+                if( osParams.size() != 0 )
+                    sIndexCmd.Append( ", " );
+                sIndexCmd.Append( "LAYER_GTYPE=" );
+                if( wkbFlatten(GetGeomType()) == wkbPoint )
+                    sIndexCmd.Append( "POINT" );
+                else if( wkbFlatten(GetGeomType()) == wkbLineString )
+                    sIndexCmd.Append( "LINE" );
+                else if( wkbFlatten(GetGeomType()) == wkbPolygon )
+                    sIndexCmd.Append( "POLYGON" );
+                else if( wkbFlatten(GetGeomType()) == wkbMultiPoint )
+                    sIndexCmd.Append( "MULTIPOINT" );
+                else if( wkbFlatten(GetGeomType()) == wkbMultiLineString )
+                    sIndexCmd.Append( "MULTILINE" );
+                else if( wkbFlatten(GetGeomType()) == wkbMultiPolygon )
+                    sIndexCmd.Append( "MULTIPOLYGON" );
+                else
+                    sIndexCmd.Append( "COLLECTION" );
+            }
             sIndexCmd.Append( "' )" );
         }
 
