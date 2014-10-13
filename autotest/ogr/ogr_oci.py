@@ -732,7 +732,75 @@ def ogr_oci_17():
     oci_ds2 = None
     
     return 'success'
-   
+
+###############################################################################
+# Test layer geometry types
+
+def ogr_oci_18():
+
+    if gdaltest.oci_ds is None:
+        return 'skip'
+    
+    wkts = [ 'POINT (0 1)', 'LINESTRING (0 1,2 3)', 'POLYGON ((0 0,1 0,1 1,0 1,0 0))',
+             'MULTIPOINT (0 1)', 'MULTILINESTRING ((0 1,2 3))', 'MULTIPOLYGON (((0 0,1 0,1 1,0 1,0 0)))',
+             'GEOMETRYCOLLECTION (POINT (0 1))',
+             'POINT (0 1 2)', 'LINESTRING (0 1 2,3 4 5)', 'POLYGON ((0 0 10,1 0 10,1 1 10,0 1 10,0 0 10))' ]
+    for wkt in wkts:
+        g = ogr.CreateGeometryFromWkt(wkt)
+        geomtype = g.GetGeometryType()
+        strgeomtype = wkt[0:wkt.find(' ')]
+        if geomtype & ogr.wkb25DBit:
+            dim = 3
+            strgeomtype = strgeomtype + '3'
+        else:
+            dim = 2
+        lyr = gdaltest.oci_ds.CreateLayer('test_%s' % strgeomtype, geom_type = geomtype, options = ['DIM=%d' % dim])
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetGeometry(g)
+        lyr.CreateFeature(feat)
+        lyr.SyncToDisk()
+    lyr = gdaltest.oci_ds.CreateLayer('test_NONE', geom_type = ogr.wkbNone )
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(feat)
+    lyr.SyncToDisk()
+        
+    oci_ds2 = ogr.Open( os.environ['OCI_DSNAME'] )
+    for wkt in wkts:
+        g = ogr.CreateGeometryFromWkt(wkt)
+        strgeomtype = wkt[0:wkt.find(' ')]
+        if strgeomtype == 'GEOMETRYCOLLECTION':
+            geomtype = ogr.wkbUnknown
+        else:
+            geomtype = g.GetGeometryType()
+        if geomtype & ogr.wkb25DBit:
+            strgeomtype = strgeomtype + '3'
+
+        lyr = oci_ds2.GetLayerByName('test_%s' % strgeomtype)
+        if lyr.GetGeomType() != geomtype:
+            gdaltest.post_reason('fail')
+            print(wkt)
+            print(lyr.GetGeomType())
+            return 'fail'
+        feat = lyr.GetNextFeature()
+        if feat.GetGeometryRef().ExportToWkt() != wkt:
+            gdaltest.post_reason('fail')
+            print(wkt)
+            print(feat.GetGeometryRef().ExportToWkt())
+            return 'fail'
+        
+    dsname = os.environ['OCI_DSNAME']
+    if dsname.find('@') < 0:
+        dsname = dsname + '@:test_NONE'
+    else:
+        dsname = dsname + ':test_NONE'
+       
+    oci_ds2 = ogr.Open( dsname )
+    lyr = oci_ds2.GetLayerByName('test_NONE')
+    if lyr.GetGeomType() != ogr.wkbNone:
+        gdaltest.post_reason('fail')
+        return 'fail'    
+    
+    return 'success'
 
 ###############################################################################
 # 
@@ -747,6 +815,17 @@ def ogr_oci_cleanup():
     gdaltest.oci_ds.ExecuteSQL( 'DELLAYER:testsrs' )
     gdaltest.oci_ds.ExecuteSQL( 'DELLAYER:testsrs2' )
     gdaltest.oci_ds.ExecuteSQL( 'drop table geom_test' )
+    gdaltest.oci_ds.ExecuteSQL( 'DELLAYER:test_POINT' )
+    gdaltest.oci_ds.ExecuteSQL( 'DELLAYER:test_POINT3' )
+    gdaltest.oci_ds.ExecuteSQL( 'DELLAYER:test_LINESTRING' )
+    gdaltest.oci_ds.ExecuteSQL( 'DELLAYER:test_LINESTRING3' )
+    gdaltest.oci_ds.ExecuteSQL( 'DELLAYER:test_POLYGON' )
+    gdaltest.oci_ds.ExecuteSQL( 'DELLAYER:test_POLYGON3') 
+    gdaltest.oci_ds.ExecuteSQL( 'DELLAYER:test_MULTIPOINT' )
+    gdaltest.oci_ds.ExecuteSQL( 'DELLAYER:test_MULTILINESTRING' )
+    gdaltest.oci_ds.ExecuteSQL( 'DELLAYER:test_MULTIPOLYGON' )
+    gdaltest.oci_ds.ExecuteSQL( 'DELLAYER:test_GEOMETRYCOLLECTION' )
+    gdaltest.oci_ds.ExecuteSQL( 'DELLAYER:test_NONE' )
 
     gdaltest.oci_ds.Destroy()
     gdaltest.oci_ds = None
@@ -772,6 +851,7 @@ gdaltest_list = [
     ogr_oci_15,
     ogr_oci_16,
     ogr_oci_17,
+    ogr_oci_18,
     ogr_oci_cleanup ]
 
 if __name__ == '__main__':

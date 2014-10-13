@@ -129,6 +129,12 @@ when the spatial index is created.  For instance setting INDEX_PARAMETERS to
 SDO_LEVEL=5 would cause a 5 level tile index to be used.  By default no 
 parameters are passed causing a default R-Tree spatial index to be created.<p>
 
+<li> <b>ADD_LAYER_GTYPE</b>=YES/NO: (starting with GDAL 2.0) This may be
+set to NO to disable the constraints on the geometry type in the spatial index,
+through the layer_gtype keyword in the PARAMETERS clause of the CREATE INDEX.
+Layers of type MultiPoint, MultiLineString or MultiPolygon will also accept
+single geometry type (Point, LineString, Polygon). Defaults to YES.<p>
+
 <li> <b>DIMINFO_X</b>: This may be set to xmin,xmax,xres values to
 control the X dimension info written into the USER_SDO_GEOM_METADATA table.
 By default extents are collected from the actual data written.<p>
