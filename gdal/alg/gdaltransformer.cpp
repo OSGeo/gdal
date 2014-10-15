@@ -400,27 +400,27 @@ retry:
         dfRatio = (iStep == nSteps) ? 1.0 : iStep * dfStep;
 
         // Along top 
-        padfX[nSamplePoints]   = dfRatio * nInXSize;
-        padfY[nSamplePoints]   = 0.0;
-        padfZ[nSamplePoints++] = 0.0;
+        padfX[iStep]   = dfRatio * nInXSize;
+        padfY[iStep]   = 0.0;
+        padfZ[iStep] = 0.0;
 
         // Along bottom 
-        padfX[nSamplePoints]   = dfRatio * nInXSize;
-        padfY[nSamplePoints]   = nInYSize;
-        padfZ[nSamplePoints++] = 0.0;
+        padfX[nSteps + 1 + iStep]   = dfRatio * nInXSize;
+        padfY[nSteps + 1 + iStep]   = nInYSize;
+        padfZ[nSteps + 1 + iStep] = 0.0;
 
         // Along left
-        padfX[nSamplePoints]   = 0.0;
-        padfY[nSamplePoints] = dfRatio * nInYSize;
-        padfZ[nSamplePoints++] = 0.0;
+        padfX[2 * (nSteps + 1) + iStep]   = 0.0;
+        padfY[2 * (nSteps + 1) + iStep] = dfRatio * nInYSize;
+        padfZ[2 * (nSteps + 1) + iStep] = 0.0;
 
         // Along right
-        padfX[nSamplePoints]   = nInXSize;
-        padfY[nSamplePoints] = dfRatio * nInYSize;
-        padfZ[nSamplePoints++] = 0.0;
+        padfX[3 * (nSteps + 1) + iStep]   = nInXSize;
+        padfY[3 * (nSteps + 1) + iStep] = dfRatio * nInYSize;
+        padfZ[3 * (nSteps + 1) + iStep] = 0.0;
     }
 
-    CPLAssert( nSamplePoints == 4 * (nSteps + 1) );
+    nSamplePoints = 4 * (nSteps + 1);
 
     memset( pabSuccess, 1, sizeof(int) * nSampleMax );
 
@@ -466,24 +466,27 @@ retry:
             for( i = 0; nFailedCount == 0 && i < nSamplePoints; i++ )
             {
                 if( !pabSuccess[i] )
+                {
                     nFailedCount++;
+                    break;
+                }
 
                 dfRatio = 0.0 + (i/4) * dfStep;
                 if (dfRatio>0.99)
                     dfRatio = 1.0;
 
                 double dfExpectedX, dfExpectedY;
-                if ((i % 4) == 0)
+                if (i < nSteps + 1)
                 {
                     dfExpectedX   = dfRatio * nInXSize;
                     dfExpectedY   = 0.0;
                 }
-                else if ((i % 4) == 1)
+                else if (i < 2 * (nSteps + 1))
                 {
                     dfExpectedX   = dfRatio * nInXSize;
                     dfExpectedY   = nInYSize;
                 }
-                else if ((i % 4) == 2)
+                else if (i < 3 * (nSteps + 1))
                 {
                     dfExpectedX   = 0.0;
                     dfExpectedY   = dfRatio * nInYSize;
@@ -521,7 +524,7 @@ retry:
             {
                 dfRatio2 = (iStep2 == nSteps) ? 1.0 : iStep2 * dfStep;
 
-                // Along top 
+                // From top to bottom, from left to right
                 padfX[nSamplePoints]   = dfRatio2 * nInXSize;
                 padfY[nSamplePoints]   = dfRatio * nInYSize;
                 padfZ[nSamplePoints++] = 0.0;
@@ -554,9 +557,23 @@ retry:
     nFailedCount = 0;
     for( i = 0; i < nSamplePoints; i++ )
     {
-        
-        int x_i = i % (nSteps + 1);
-        int y_i = i / (nSteps + 1);
+        int x_i, y_i;
+
+        if( nSamplePoints == nSampleMax )
+        {
+            x_i = i % (nSteps + 1);
+            y_i = i / (nSteps + 1);
+        }
+        else
+        {
+            if( i < 2 * (nSteps + 1 ) )
+            {
+                x_i = i % (nSteps + 1);
+                y_i = (i < nSteps + 1) ? 0 : nSteps;
+            }
+            else
+                x_i = y_i = 0;
+        }
 
         if (x_i > 0 && (pabSuccess[i-1] || pabSuccess[i]))
         {
