@@ -1081,7 +1081,8 @@ int GDALValidateOptions( const char* pszOptionList,
                          const char* pszErrorMessageContainerName);
 
 /* CPL_DLL exported, but only for gdalwarp */
-GDALDataset CPL_DLL* GDALCreateOverviewDataset(GDALDataset* poDS, int nOvrLevel, int bOwnDS);
+GDALDataset CPL_DLL* GDALCreateOverviewDataset(GDALDataset* poDS, int nOvrLevel,
+                                               int bThisLevelOnly, int bOwnDS);
 
 #define DIV_ROUND_UP(a, b) ( ((a) % (b)) == 0 ? ((a) / (b)) : (((a) / (b)) + 1) )
 

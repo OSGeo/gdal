@@ -467,18 +467,18 @@ void VRTWarpedDataset::CreateImplicitOverviews()
             {
                 bDeleteSrcOvrDataset = TRUE;
                 poSrcOvrDS = GDALCreateOverviewDataset(poSrcDS,
-                                               iOvr + nSrcOvrLevel + 2, FALSE);
+                                               iOvr + nSrcOvrLevel + 2, FALSE, FALSE);
             }
         }
         else if( nSrcOvrLevel == -2 )
         {
             bDeleteSrcOvrDataset = TRUE;
-            poSrcOvrDS = GDALCreateOverviewDataset(poSrcDS, iOvr, FALSE);
+            poSrcOvrDS = GDALCreateOverviewDataset(poSrcDS, iOvr, FALSE, FALSE);
         }
         else if( nSrcOvrLevel >= 0 )
         {
             bDeleteSrcOvrDataset = TRUE;
-            poSrcOvrDS = GDALCreateOverviewDataset(poSrcDS, nSrcOvrLevel, FALSE);
+            poSrcOvrDS = GDALCreateOverviewDataset(poSrcDS, nSrcOvrLevel, TRUE, FALSE);
         }
         if( poSrcOvrDS == NULL )
             break;

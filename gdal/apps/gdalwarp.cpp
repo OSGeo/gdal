@@ -1177,14 +1177,14 @@ int main( int argc, char ** argv )
                     {
                         CPLDebug("WARP", "Selecting overview level %d for %s",
                                  iOvr, papszSrcFiles[iSrc]);
-                        poSrcOvrDS = GDALCreateOverviewDataset( poSrcDS, iOvr, FALSE );
+                        poSrcOvrDS = GDALCreateOverviewDataset( poSrcDS, iOvr, FALSE, FALSE );
                     }
                 }
             }
         }
         else if( nOvLevel >= 0 )
         {
-            poSrcOvrDS = GDALCreateOverviewDataset( poSrcDS, nOvLevel, FALSE );
+            poSrcOvrDS = GDALCreateOverviewDataset( poSrcDS, nOvLevel, TRUE, FALSE );
             if( poSrcOvrDS == NULL )
             {
                 if( !bQuiet )
@@ -1194,7 +1194,7 @@ int main( int argc, char ** argv )
                             nOvLevel, papszSrcFiles[iSrc], nOvCount - 1);
                 }
                 if( nOvCount > 0 )
-                    poSrcOvrDS = GDALCreateOverviewDataset( poSrcDS, nOvCount - 1, FALSE );
+                    poSrcOvrDS = GDALCreateOverviewDataset( poSrcDS, nOvCount - 1, FALSE, FALSE );
             }
             else
             {
