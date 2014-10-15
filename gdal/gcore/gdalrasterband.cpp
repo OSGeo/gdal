@@ -4565,12 +4565,21 @@ GDALRasterBand *GDALRasterBand::GetMaskBand()
         && (this == poDS->GetRasterBand(1)
             || this == poDS->GetRasterBand(2)
             || this == poDS->GetRasterBand(3))
-        && poDS->GetRasterBand(4)->GetColorInterpretation() == GCI_AlphaBand
-        && poDS->GetRasterBand(4)->GetRasterDataType() == GDT_Byte )
+        && poDS->GetRasterBand(4)->GetColorInterpretation() == GCI_AlphaBand )
     {
-        nMaskFlags = GMF_ALPHA | GMF_PER_DATASET;
-        poMask = poDS->GetRasterBand(4);
-        return poMask;
+        if( poDS->GetRasterBand(4)->GetRasterDataType() == GDT_Byte )
+        {
+            nMaskFlags = GMF_ALPHA | GMF_PER_DATASET;
+            poMask = poDS->GetRasterBand(4);
+            return poMask;
+        }
+        else if( poDS->GetRasterBand(4)->GetRasterDataType() == GDT_UInt16 )
+        {
+            nMaskFlags = GMF_ALPHA | GMF_PER_DATASET;
+            poMask = new GDALRescaledAlphaBand( poDS->GetRasterBand(4) );
+            bOwnMask = true;
+            return poMask;
+        }
     }
 
 /* -------------------------------------------------------------------- */
