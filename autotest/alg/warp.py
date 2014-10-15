@@ -1394,6 +1394,39 @@ def warp_40():
     return 'success'
 
 ###############################################################################
+# test GDALSuggestedWarpOutput (#5693)
+def warp_41():
+
+    src_ds = gdal.Open("""<VRTDataset rasterXSize="67108864" rasterYSize="67108864">
+  <GeoTransform> -2.0037508340000000e+07,  5.9716428339481353e-01,  0.0000000000000000e+00,  2.0037508340000000e+07,  0.0000000000000000e+00, -5.9716428339481353e-01</GeoTransform>
+  <VRTRasterBand dataType="Byte" band="1">
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">dummy</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="67108864" RasterYSize="67108864" DataType="Byte" BlockXSize="256" BlockYSize="256" />
+      <SrcRect xOff="0" yOff="0" xSize="67108864" ySize="67108864" />
+      <DstRect xOff="0" yOff="0" xSize="67108864" ySize="67108864" />
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>""")
+
+    vrt_ds = gdal.AutoCreateWarpedVRT(src_ds, None, None, gdal.GRA_NearestNeighbour, 0.3)
+    if vrt_ds.RasterXSize != src_ds.RasterXSize:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if vrt_ds.RasterYSize != src_ds.RasterYSize:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    src_gt = src_ds.GetGeoTransform()
+    vrt_gt = vrt_ds.GetGeoTransform()
+    for i in range(6):
+        if abs(src_gt[i] - vrt_gt[i]) > 1e-5:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 gdaltest_list = [
     warp_1,
@@ -1449,6 +1482,7 @@ gdaltest_list = [
     warp_39,
     warp_39,
     warp_40,
+    warp_41
     ]
 
 
