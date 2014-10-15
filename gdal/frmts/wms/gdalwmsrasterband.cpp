@@ -37,7 +37,10 @@ GDALWMSRasterBand::GDALWMSRasterBand(GDALWMSDataset *parent_dataset, int band, d
     m_overview = -1;
     m_color_interp = GCI_Undefined;
 
-    poDS = parent_dataset;
+    if( scale == 1.0 )
+        poDS = parent_dataset;
+    else
+        poDS = NULL;
     nRasterXSize = static_cast<int>(m_parent_dataset->m_data_window.m_sx * scale + 0.5);
     nRasterYSize = static_cast<int>(m_parent_dataset->m_data_window.m_sy * scale + 0.5);
     nBand = band;
@@ -426,10 +429,7 @@ const char *GDALWMSRasterBand::GetMetadataItem( const char * pszName,
                     return NULL;
             }
 
-            if( GetDataset() == NULL )
-                return NULL;
-
-            if( GetDataset()->GetGeoTransform( adfGeoTransform ) != CE_None )
+            if( m_parent_dataset->GetGeoTransform( adfGeoTransform ) != CE_None )
                 return NULL;
 
             if( !GDALInvGeoTransform( adfGeoTransform, adfInvGeoTransform ) )
@@ -448,8 +448,8 @@ const char *GDALWMSRasterBand::GetMetadataItem( const char * pszName,
             /* the values if we are an overview */
             if (m_overview >= 0)
             {
-                iPixel = (int) (1.0 * iPixel * GetXSize() / GetDataset()->GetRasterBand(1)->GetXSize());
-                iLine = (int) (1.0 * iLine * GetYSize() / GetDataset()->GetRasterBand(1)->GetYSize());
+                iPixel = (int) (1.0 * iPixel * GetXSize() / m_parent_dataset->GetRasterBand(1)->GetXSize());
+                iLine = (int) (1.0 * iLine * GetYSize() / m_parent_dataset->GetRasterBand(1)->GetYSize());
             }
         }
         else
