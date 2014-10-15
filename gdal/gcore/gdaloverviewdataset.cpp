@@ -56,6 +56,7 @@ class GDALOverviewDataset : public GDALDataset
 
         GDALDataset* poOvrDS; /* will be often NULL */
         int          nOvrLevel;
+        int          bThisLevelOnly;
 
         int          nGCPCount;
         GDAL_GCP    *pasGCPList;
@@ -72,6 +73,7 @@ class GDALOverviewDataset : public GDALDataset
 
     public:
                         GDALOverviewDataset(GDALDataset* poMainDS, int nOvrLevel,
+                                            int bThisLevelOnly,
                                             int bOwnDS);
         virtual        ~GDALOverviewDataset();
 
@@ -115,7 +117,8 @@ class GDALOverviewBand : public GDALProxyRasterBand
 /*                       GDALCreateOverviewDataset()                    */
 /************************************************************************/
 
-GDALDataset* GDALCreateOverviewDataset(GDALDataset* poMainDS, int nOvrLevel, int bOwnDS)
+GDALDataset* GDALCreateOverviewDataset(GDALDataset* poMainDS, int nOvrLevel,
+                                       int bThisLevelOnly, int bOwnDS)
 {
     /* Sanity checks */
     int nBands = poMainDS->GetRasterCount();
@@ -137,18 +140,22 @@ GDALDataset* GDALCreateOverviewDataset(GDALDataset* poMainDS, int nOvrLevel, int
         }
     }
 
-    return new GDALOverviewDataset(poMainDS, nOvrLevel, bOwnDS);
+    return new GDALOverviewDataset(poMainDS, nOvrLevel, bThisLevelOnly, bOwnDS);
 }
 
 /************************************************************************/
 /*                        GDALOverviewDataset()                         */
 /************************************************************************/
 
-GDALOverviewDataset::GDALOverviewDataset(GDALDataset* poMainDS, int nOvrLevel, int bOwnDS)
+GDALOverviewDataset::GDALOverviewDataset(GDALDataset* poMainDS,
+                                         int nOvrLevel,
+                                         int bThisLevelOnly,
+                                         int bOwnDS)
 {
     this->poMainDS = poMainDS;
     this->nOvrLevel = nOvrLevel;
     this->bOwnDS = bOwnDS;
+    this->bThisLevelOnly = bThisLevelOnly;
     eAccess = poMainDS->GetAccess();
     nRasterXSize = poMainDS->GetRasterBand(1)->GetOverview(nOvrLevel)->GetXSize();
     nRasterYSize = poMainDS->GetRasterBand(1)->GetOverview(nOvrLevel)->GetYSize();
@@ -522,6 +529,8 @@ GDALRasterBand* GDALOverviewBand::RefUnderlyingRasterBand()
 int GDALOverviewBand::GetOverviewCount()
 {
     GDALOverviewDataset* poOvrDS = (GDALOverviewDataset*)poDS;
+    if( poOvrDS->bThisLevelOnly )
+        return 0;
     GDALDataset* poMainDS = poOvrDS->poMainDS;
     return poMainDS->GetRasterBand(nBand)->GetOverviewCount() - poOvrDS->nOvrLevel - 1;
 }

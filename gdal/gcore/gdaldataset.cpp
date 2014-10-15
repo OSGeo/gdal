@@ -2332,7 +2332,8 @@ GDALOpen( const char * pszFilename, GDALAccess eAccess )
  * @param papszOpenOptions NULL, or a NULL terminated list of strings with open
  * options passed to candidate drivers. An option exists for all drivers,
  * OVERVIEW_LEVEL=level, to select a particular overview level of a dataset.
- * The level index starts at 0.
+ * The level index starts at 0. The level number can be suffixed by "only" to specify that
+ * only this overview level must be visible, and not sub-levels.
  *
  * @param papszSiblingFiles  NULL, or a NULL terminated list of strings that are
  * filenames that are auxiliary to the main filename. If NULL is passed, a probing
@@ -2519,8 +2520,10 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
                 (poDriver->GetMetadataItem(GDAL_DMD_OPENOPTIONLIST) == NULL ||
                 CPLString(poDriver->GetMetadataItem(GDAL_DMD_OPENOPTIONLIST)).ifind("OVERVIEW_LEVEL") != std::string::npos) )
             {
-                int nOvrLevel = atoi(CSLFetchNameValue((char**) papszOpenOptions, "OVERVIEW_LEVEL"));
-                GDALDataset* poOvrDS = GDALCreateOverviewDataset(poDS, nOvrLevel, TRUE);
+                CPLString osVal(CSLFetchNameValue((char**) papszOpenOptions, "OVERVIEW_LEVEL"));
+                int nOvrLevel = atoi(osVal);
+                int bThisLevelOnly = osVal.ifind("only") != std::string::npos;
+                GDALDataset* poOvrDS = GDALCreateOverviewDataset(poDS, nOvrLevel, bThisLevelOnly, TRUE);
                 if( poOvrDS == NULL )
                 {
                     if( nOpenFlags & GDAL_OF_VERBOSE_ERROR )

@@ -60,6 +60,12 @@ def overviewds_2():
     ds = gdal.Open('tmp/byte.tif')
     ds.BuildOverviews( 'NEAR', overviewlist = [2, 4] )
     ds = None
+    
+    ds = gdal.OpenEx('tmp/byte.tif', open_options = ['OVERVIEW_LEVEL=0only'])
+    if ds.GetRasterBand(1).GetOverviewCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
 
     src_ds = gdal.Open('tmp/byte.tif')
     ds = gdal.OpenEx('tmp/byte.tif', open_options = ['OVERVIEW_LEVEL=0'])
