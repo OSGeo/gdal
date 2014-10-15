@@ -1004,6 +1004,52 @@ def mask_23():
         return 'fail'
 
     return 'success' 
+
+###############################################################################
+# Test on a GDT_UInt16 RGBA (#5692)
+
+def mask_24():
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/mask_24.tif', 100, 100, 4, \
+                gdal.GDT_UInt16, options = ['PHOTOMETRIC=RGB', 'ALPHA=YES'] )
+    ds.GetRasterBand(1).Fill(65565)
+    ds.GetRasterBand(2).Fill(65565)
+    ds.GetRasterBand(3).Fill(65565)
+    ds.GetRasterBand(4).Fill(65565)
+
+    if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_ALPHA + gdal.GMF_PER_DATASET:
+        gdaltest.post_reason( 'Did not get expected mask.' )
+        return 'fail'
+    mask = ds.GetRasterBand(1).GetMaskBand()
+
+    # IRasterIO() optimized case
+    import struct
+    if struct.unpack('B', mask.ReadRaster(0,0,1,1))[0] != 255:
+        gdaltest.post_reason('fail')
+        print(struct.unpack('B', mask.ReadRaster(0,0,1,1))[0])
+        return 'fail'
+
+    # IReadBlock() code path
+    (blockx, blocky) = mask.GetBlockSize()
+    if struct.unpack('B' * blockx * blocky, mask.ReadBlock(0,0))[0] != 255:
+        gdaltest.post_reason('fail')
+        print(struct.unpack('B' * blockx * blocky, mask.ReadBlock(0,0))[0])
+        return 'fail'
+    mask.FlushCache()
+
+    # Test special case where dynamics is only 0-255
+    ds.GetRasterBand(4).Fill(255)
+    if struct.unpack('B', mask.ReadRaster(0,0,1,1))[0] != 1:
+        gdaltest.post_reason('fail')
+        print(struct.unpack('B', mask.ReadRaster(0,0,1,1))[0])
+        return 'fail'
+
+    ds = None
+
+    gdal.Unlink('/vsimem/mask_24.tif')
+
+    return 'success'
+
 ###############################################################################
 # Cleanup.
 
@@ -1035,7 +1081,8 @@ gdaltest_list = [
     mask_20,
     mask_21,
     mask_22,
-    mask_23 ]
+    mask_23,
+    mask_24 ]
 
 if __name__ == '__main__':
 
