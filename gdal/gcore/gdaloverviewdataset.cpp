@@ -153,6 +153,11 @@ GDALOverviewDataset::GDALOverviewDataset(GDALDataset* poMainDS, int nOvrLevel, i
     nRasterXSize = poMainDS->GetRasterBand(1)->GetOverview(nOvrLevel)->GetXSize();
     nRasterYSize = poMainDS->GetRasterBand(1)->GetOverview(nOvrLevel)->GetYSize();
     poOvrDS = poMainDS->GetRasterBand(1)->GetOverview(nOvrLevel)->GetDataset();
+    if( poOvrDS != NULL && poOvrDS == poMainDS )
+    {
+        CPLDebug("GDAL", "Dataset of overview is the same as the main band. This is not expected");
+        poOvrDS = NULL;
+    }
     nBands = poMainDS->GetRasterCount();
     for(int i=0;i<nBands;i++)
     {
