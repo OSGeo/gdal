@@ -474,7 +474,7 @@ retry:
                     break;
                 }
 
-                dfRatio = 0.0 + (i/4) * dfStep;
+                dfRatio = (i % (nSteps + 1)) * dfStep;
                 if (dfRatio>0.99)
                     dfRatio = 1.0;
 
@@ -504,8 +504,12 @@ retry:
                     fabs(padfYRevert[i] - dfExpectedY) > nInYSize / nSteps)
                     nFailedCount ++;
             }
+            if( nFailedCount != 0 )
+                CPLDebug("WARP", "At least one point failed after revert transform");
         }
     }
+    else
+        CPLDebug("WARP", "At least one point failed after direct transform");
 
 /* -------------------------------------------------------------------- */
 /*      If any of the edge points failed to transform, we need to       */
