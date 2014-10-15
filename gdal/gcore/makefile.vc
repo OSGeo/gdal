@@ -11,7 +11,7 @@ OBJ	=	gdalopeninfo.obj gdaldrivermanager.obj gdaldriver.obj \
 		gdalnodatavaluesmaskband.obj gdaldefaultasync.obj \
 		gdaldllmain.obj gdalexif.obj gdalclientserver.obj \
 		gdalgeorefpamdataset.obj  gdaljp2abstractdataset.obj \
-		gdalvirtualmem.obj
+		gdalvirtualmem.obj gdalrescaledalphaband.obj
 
 RES	=	Version.res
 
