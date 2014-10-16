@@ -32,6 +32,7 @@
 from osgeo import gdal
 import sys
 import os
+import time
 
 sys.path.append( '../pymod' )
 
@@ -41,6 +42,8 @@ import gdaltest
 # Generic test
 
 def vsifile_generic(filename):
+
+    start_time = time.time()
 
     fp = gdal.VSIFOpenL(filename, 'wb+')
     gdal.VSIFWriteL('0123456789', 1, 10, fp)
@@ -63,6 +66,11 @@ def vsifile_generic(filename):
     if statBuf.size != 7:
         gdaltest.post_reason('failure')
         print(statBuf.size)
+        return 'fail'
+    if abs(start_time - statBuf.mtime) > 2:
+        gdaltest.post_reason('failure')
+        print(t)
+        print(statBuf.mtime)
         return 'fail'
 
     fp = gdal.VSIFOpenL(filename, 'rb')

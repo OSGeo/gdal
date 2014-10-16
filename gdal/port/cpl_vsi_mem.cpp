@@ -36,6 +36,7 @@
 #include "cpl_vsi_virtual.h"
 #include "cpl_string.h"
 #include "cpl_multiproc.h"
+#include <time.h>
 #include <map>
 
 #if defined(WIN32CE)
@@ -91,7 +92,7 @@ public:
     vsi_l_offset  nLength;
     vsi_l_offset  nAllocLength;
 
-    int           bEOF;
+    time_t        mTime;
 
                   VSIMemFile();
     virtual       ~VSIMemFile();
@@ -168,7 +169,7 @@ VSIMemFile::VSIMemFile()
     pabyData = NULL;
     nLength = 0;
     nAllocLength = 0;
-    bEOF = FALSE;
+    time(&mTime);
 }
 
 /************************************************************************/
@@ -230,6 +231,7 @@ bool VSIMemFile::SetLength( vsi_l_offset nNewLength )
     }
 
     nLength = nNewLength;
+    time(&mTime);
 
     return true;
 }
@@ -363,6 +365,8 @@ size_t VSIMemHandle::Write( const void * pBuffer, size_t nSize, size_t nCount )
 
     memcpy( poFile->pabyData + nOffset, pBuffer, nBytesToWrite );
     nOffset += nBytesToWrite;
+
+    time(&poFile->mTime);
 
     return nCount;
 }
@@ -544,6 +548,7 @@ int VSIMemFilesystemHandler::Stat( const char * pszFilename,
     {
         pStatBuf->st_size = poFile->nLength;
         pStatBuf->st_mode = S_IFREG;
+        pStatBuf->st_mtime = poFile->mTime;
     }
 
     return 0;
