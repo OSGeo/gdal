@@ -761,7 +761,6 @@ class CPL_DLL GDALNoDataValuesMaskBand : public GDALRasterBand
 
 class GDALRescaledAlphaBand : public GDALRasterBand
 {
-    double          dfNoDataValue;
     GDALRasterBand *poParent;
     void           *pTemp;
 
