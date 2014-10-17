@@ -1081,7 +1081,7 @@ const char * GDALDefaultCSVFilename( const char *pszBasename )
 
         if( CPLGetConfigOption("GEOTIFF_CSV",NULL) != NULL )
             CPLPushFinderLocation( CPLGetConfigOption("GEOTIFF_CSV",NULL));
-            
+
         if( CPLGetConfigOption("GDAL_DATA",NULL) != NULL )
             CPLPushFinderLocation( CPLGetConfigOption("GDAL_DATA",NULL) );
 
@@ -1090,33 +1090,25 @@ const char * GDALDefaultCSVFilename( const char *pszBasename )
         if( pszResult != NULL )
             return pszResult;
     }
-            
-    if( (fp = fopen( "csv/horiz_cs.csv", "rt" )) != NULL )
-    {
-        strcpy( pTLSData->szPath, "csv/" );
-        CPLStrlcat( pTLSData->szPath, pszBasename, sizeof(pTLSData->szPath) );
-    }
-    else
-    {
+
 #ifdef GDAL_PREFIX
   #ifdef MACOSX_FRAMEWORK
-        strcpy( pTLSData->szPath, GDAL_PREFIX "/Resources/epsg_csv/" );
-        CPLStrlcat( pTLSData->szPath, pszBasename, sizeof(pTLSData->szPath) );
+    strcpy( pTLSData->szPath, GDAL_PREFIX "/Resources/epsg_csv/" );
+    CPLStrlcat( pTLSData->szPath, pszBasename, sizeof(pTLSData->szPath) );
   #else
-        strcpy( pTLSData->szPath, GDAL_PREFIX "/share/epsg_csv/" );
-        CPLStrlcat( pTLSData->szPath, pszBasename, sizeof(pTLSData->szPath) );
+    strcpy( pTLSData->szPath, GDAL_PREFIX "/share/epsg_csv/" );
+    CPLStrlcat( pTLSData->szPath, pszBasename, sizeof(pTLSData->szPath) );
   #endif
 #else
-        strcpy( pTLSData->szPath, "/usr/local/share/epsg_csv/" );
-        CPLStrlcat( pTLSData->szPath, pszBasename, sizeof(pTLSData->szPath) );
+    strcpy( pTLSData->szPath, "/usr/local/share/epsg_csv/" );
+    CPLStrlcat( pTLSData->szPath, pszBasename, sizeof(pTLSData->szPath) );
 #endif
-        if( (fp = fopen( pTLSData->szPath, "rt" )) == NULL )
-            CPLStrlcpy( pTLSData->szPath, pszBasename, sizeof(pTLSData->szPath) );
-    }
+    if( (fp = fopen( pTLSData->szPath, "rt" )) == NULL )
+        CPLStrlcpy( pTLSData->szPath, pszBasename, sizeof(pTLSData->szPath) );
 
     if( fp != NULL )
         fclose( fp );
-        
+
     return( pTLSData->szPath );
 }
 
