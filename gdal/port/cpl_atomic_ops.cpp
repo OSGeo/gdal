@@ -110,17 +110,3 @@ int CPLAtomicAdd(volatile int* ptr, int increment)
 }
 
 #endif
-
-#ifndef HAS_CPL_INLINE
-
-int CPLAtomicInc(volatile int* ptr)
-{
-    return CPLAtomicAdd(ptr, 1);
-}
-
-int CPLAtomicDec(volatile int* ptr)
-{
-    return CPLAtomicAdd(ptr, -1);
-}
-
-#endif
