@@ -20,7 +20,7 @@ for data translation and processing.  The
 <a href="http://trac.osgeo.org/gdal/wiki/Release/1.11.1-News">NEWS</a>
 page describes the September 2014 GDAL/OGR 1.11.1 release.
 
-Traditionnaly GDAL used to design the raster part of the library, and OGR the
+Traditionally GDAL used to design the raster part of the library, and OGR the
 vector part for Simple Features. Starting with GDAL 2.0, both sides have been
 more tightly integrated. You can still refer to the <a href="http://gdal.org/1.11/index.html">documentation of GDAL 1.X</a>
 if needed.
