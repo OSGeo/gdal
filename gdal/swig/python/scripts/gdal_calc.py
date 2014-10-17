@@ -177,7 +177,7 @@ def doit(opts, args):
             myOutB=None
 
     if opts.debug:
-        print("output file: %s, dimensions: %s, %s, type: %s" %(opts.outF,myOut.RasterXSize,myOut.RasterYSize,gdal.GetDataTypeName(myOutB.DataType)))
+        print("output file: %s, dimensions: %s, %s, type: %s" %(opts.outF,myOut.RasterXSize,myOut.RasterYSize,myOutType))
 
     ################################################################
     # find block size to chop grids into bite-sized chunks 
