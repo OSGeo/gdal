@@ -193,72 +193,72 @@ def ogr_rfc35_mitab_2():
     if lyr.ReorderField(1,3) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
-    ds = None
-    ds = ogr.Open('/vsimem/rfc35_test.tab', update = 1)
-    lyr = ds.GetLayer(0)
+    #ds = None
+    #ds = ogr.Open('/vsimem/rfc35_test.tab', update = 1)
+    #lyr = ds.GetLayer(0)
     ret = Check(lyr, ['foo5', 'baz15', 'baw20', 'bar10'])
     if ret != 'success':
         gdaltest.post_reason(ret)
         return ret
 
     lyr.ReorderField(3,1)
-    ds = None
-    ds = ogr.Open('/vsimem/rfc35_test.tab', update = 1)
-    lyr = ds.GetLayer(0)
+    #ds = None
+    #ds = ogr.Open('/vsimem/rfc35_test.tab', update = 1)
+    #lyr = ds.GetLayer(0)
     ret = Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
     if ret != 'success':
         gdaltest.post_reason(ret)
         return ret
 
     lyr.ReorderField(0,2)
-    ds = None
-    ds = ogr.Open('/vsimem/rfc35_test.tab', update = 1)
-    lyr = ds.GetLayer(0)
+    #ds = None
+    #ds = ogr.Open('/vsimem/rfc35_test.tab', update = 1)
+    #lyr = ds.GetLayer(0)
     ret = Check(lyr, ['bar10', 'baz15', 'foo5', 'baw20'])
     if ret != 'success':
         gdaltest.post_reason(ret)
         return ret
 
     lyr.ReorderField(2,0)
-    ds = None
-    ds = ogr.Open('/vsimem/rfc35_test.tab', update = 1)
-    lyr = ds.GetLayer(0)
+    #ds = None
+    #ds = ogr.Open('/vsimem/rfc35_test.tab', update = 1)
+    #lyr = ds.GetLayer(0)
     ret = Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
     if ret != 'success':
         gdaltest.post_reason(ret)
         return ret
 
     lyr.ReorderField(0,1)
-    ds = None
-    ds = ogr.Open('/vsimem/rfc35_test.tab', update = 1)
-    lyr = ds.GetLayer(0)
+    #ds = None
+    #ds = ogr.Open('/vsimem/rfc35_test.tab', update = 1)
+    #lyr = ds.GetLayer(0)
     ret = Check(lyr, ['bar10', 'foo5', 'baz15', 'baw20'])
     if ret != 'success':
         gdaltest.post_reason(ret)
         return ret
 
     lyr.ReorderField(1,0)
-    ds = None
-    ds = ogr.Open('/vsimem/rfc35_test.tab', update = 1)
-    lyr = ds.GetLayer(0)
+    #ds = None
+    #ds = ogr.Open('/vsimem/rfc35_test.tab', update = 1)
+    #lyr = ds.GetLayer(0)
     ret = Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
     if ret != 'success':
         gdaltest.post_reason(ret)
         return ret
 
     lyr.ReorderFields([3,2,1,0])
-    ds = None
-    ds = ogr.Open('/vsimem/rfc35_test.tab', update = 1)
-    lyr = ds.GetLayer(0)
+    #ds = None
+    #ds = ogr.Open('/vsimem/rfc35_test.tab', update = 1)
+    #lyr = ds.GetLayer(0)
     ret = Check(lyr, ['baw20', 'baz15', 'bar10', 'foo5'])
     if ret != 'success':
         gdaltest.post_reason(ret)
         return ret
 
     lyr.ReorderFields([3,2,1,0])
-    ds = None
-    ds = ogr.Open('/vsimem/rfc35_test.tab', update = 1)
-    lyr = ds.GetLayer(0)
+    #ds = None
+    #ds = ogr.Open('/vsimem/rfc35_test.tab', update = 1)
+    #lyr = ds.GetLayer(0)
     ret = Check(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])
     if ret != 'success':
         gdaltest.post_reason(ret)
@@ -271,9 +271,9 @@ def ogr_rfc35_mitab_2():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    ds = None
+    #ds = None
 
-    ds = ogr.Open('/vsimem/rfc35_test.tab', update = 1)
+    #ds = ogr.Open('/vsimem/rfc35_test.tab', update = 1)
     lyr = ds.GetLayer(0)
 
     ret = CheckColumnOrder(lyr, ['foo5', 'bar10', 'baz15', 'baw20'])

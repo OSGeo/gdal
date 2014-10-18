@@ -260,10 +260,8 @@ int TABIDFile::Close()
     /*----------------------------------------------------------------
      * Write access: commit latest changes to the file.
      *---------------------------------------------------------------*/
-    if (m_eAccessMode != TABRead && m_poIDBlock)
-    {
-        m_poIDBlock->CommitToFile();
-    }
+    if (m_eAccessMode != TABRead)
+        SyncToDisk();
     
     // Delete all structures 
     delete m_poIDBlock;
@@ -279,6 +277,24 @@ int TABIDFile::Close()
     return 0;
 }
 
+/************************************************************************/
+/*                            SyncToDisk()                             */
+/************************************************************************/
+
+int TABIDFile::SyncToDisk()
+{
+    if( m_eAccessMode == TABRead )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "SyncToDisk() can be used only with Write access.");
+        return -1;
+    }
+
+    if( m_poIDBlock == NULL)
+        return 0;
+
+    return m_poIDBlock->CommitToFile();
+}
 
 /**********************************************************************
  *                   TABIDFile::GetObjPtr()

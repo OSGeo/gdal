@@ -339,9 +339,9 @@ int TABDATFile::Close()
      * Write access: Update the header with number of records, etc.
      * and add a CTRL-Z char at the end of the file.
      *---------------------------------------------------------------*/
-    if (m_eAccessMode == TABWrite || (m_eAccessMode == TABReadWrite && m_bUpdated) )
+    if (m_eAccessMode != TABRead )
     {
-        WriteHeader();
+        SyncToDisk();
     }
 
     // Delete all structures 
@@ -380,6 +380,30 @@ int TABDATFile::Close()
     return 0;
 }
 
+/************************************************************************/
+/*                            SyncToDisk()                             */
+/************************************************************************/
+
+int TABDATFile::SyncToDisk()
+{
+    if( m_eAccessMode == TABRead )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "SyncToDisk() can be used only with Write access.");
+        return -1;
+    }
+    
+    if( !m_bUpdated && m_bWriteHeaderInitialized )
+        return 0;
+
+    // No need to call. CommitRecordToFile(). It is normally called by
+    // TABFeature::WriteRecordToDATFile()
+    if( WriteHeader() != 0 )
+        return -1;
+
+    m_bUpdated = FALSE;
+    return 0;
+}
 
 /**********************************************************************
  *                   TABDATFile::InitWriteHeader()

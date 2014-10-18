@@ -352,6 +352,8 @@ int TABMAPFile::Open(const char *pszFname, TABAccess eAccess,
         // Alloc a second 512 bytes of space since oBlockManager deals 
         // with 512 bytes blocks.
         m_oBlockManager.AllocNewBlock("HEADER"); 
+
+        m_bUpdated = TRUE;
     }
     else if (bNoErrorMsg)
     {
@@ -541,56 +543,9 @@ int TABMAPFile::Close()
     /*----------------------------------------------------------------
      * Write access: commit latest changes to the file.
      *---------------------------------------------------------------*/
-    if (m_eAccessMode == TABWrite || (m_eAccessMode == TABReadWrite && m_bUpdated))
+    if (m_eAccessMode != TABRead)
     {
-        // Start by committing current object and coord blocks
-        // Nothing happens if none has been created yet.
-        CommitObjAndCoordBlocks(FALSE);
-
-        // Write the drawing tools definitions now.
-        CommitDrawingTools();
-
-        // Commit spatial index blocks
-        CommitSpatialIndex();
-
-        // Update header fields and commit
-        if (m_poHeader)
-        {
-            // OK, with V450 files, objects are not limited to 32k nodes
-            // any more, and this means that m_nMaxCoordBufSize can become
-            // huge, and actually more huge than can be held in memory.
-            // MapInfo counts m_nMaxCoordBufSize=0 for V450 objects, but 
-            // until this is cleanly implented, we will just prevent 
-            // m_nMaxCoordBufSizefrom going beyond 512k in V450 files.
-            if (m_nMinTABVersion >= 450)
-            {
-                m_poHeader->m_nMaxCoordBufSize = 
-                                 MIN(m_poHeader->m_nMaxCoordBufSize, 512*1024);
-            }
-
-            // Write Ref to beginning of the chain of garbage blocks
-            m_poHeader->m_nFirstGarbageBlock = 
-                m_oBlockManager.GetFirstGarbageBlock();
-
-            m_poHeader->CommitToFile();
-        }
-    }
-    
-    // Check for overflow of internal coordinates and produce a warning
-    // if that happened...
-    if (m_poHeader && m_poHeader->m_bIntBoundsOverflow)
-    {
-        double dBoundsMinX, dBoundsMinY, dBoundsMaxX, dBoundsMaxY;
-        Int2Coordsys(-1000000000, -1000000000, dBoundsMinX, dBoundsMinY);
-        Int2Coordsys(1000000000, 1000000000, dBoundsMaxX, dBoundsMaxY);
-
-        CPLError(CE_Warning, TAB_WarningBoundsOverflow,
-                 "Some objects were written outside of the file's "
-                 "predefined bounds.\n"
-                 "These objects may have invalid coordinates when the file "
-                 "is reopened.\n"
-                 "Predefined bounds: (%.15g,%.15g)-(%.15g,%.15g)\n",
-                 dBoundsMinX, dBoundsMinY, dBoundsMaxX, dBoundsMaxY );
+        SyncToDisk();
     }
 
     // Delete all structures 
@@ -640,6 +595,83 @@ int TABMAPFile::Close()
 
     CPLFree(m_pszFname);
     m_pszFname = NULL;
+
+    return 0;
+}
+
+/************************************************************************/
+/*                            SyncToDisk()                             */
+/************************************************************************/
+
+int TABMAPFile::SyncToDisk()
+{
+    if( m_eAccessMode == TABRead )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "SyncToDisk() can be used only with Write access.");
+        return -1;
+    }
+
+    if( !m_bUpdated) 
+        return 0;
+
+    // Start by committing current object and coord blocks
+    // Nothing happens if none has been created yet.
+    if( CommitObjAndCoordBlocks(FALSE) != 0 )
+        return -1;
+
+    // Write the drawing tools definitions now.
+    if( CommitDrawingTools() != 0 )
+        return -1;
+
+    // Commit spatial index blocks
+    if( CommitSpatialIndex() != 0 )
+        return -1;
+
+    // Update header fields and commit
+    if (m_poHeader)
+    {
+        // OK, with V450 files, objects are not limited to 32k nodes
+        // any more, and this means that m_nMaxCoordBufSize can become
+        // huge, and actually more huge than can be held in memory.
+        // MapInfo counts m_nMaxCoordBufSize=0 for V450 objects, but 
+        // until this is cleanly implented, we will just prevent 
+        // m_nMaxCoordBufSizefrom going beyond 512k in V450 files.
+        if (m_nMinTABVersion >= 450)
+        {
+            m_poHeader->m_nMaxCoordBufSize = 
+                                MIN(m_poHeader->m_nMaxCoordBufSize, 512*1024);
+        }
+
+        // Write Ref to beginning of the chain of garbage blocks
+        m_poHeader->m_nFirstGarbageBlock = 
+            m_oBlockManager.GetFirstGarbageBlock();
+
+        if( m_poHeader->CommitToFile() != 0 )
+            return -1;
+    }
+
+    // Check for overflow of internal coordinates and produce a warning
+    // if that happened...
+    if (m_poHeader && m_poHeader->m_bIntBoundsOverflow)
+    {
+        double dBoundsMinX, dBoundsMinY, dBoundsMaxX, dBoundsMaxY;
+        Int2Coordsys(-1000000000, -1000000000, dBoundsMinX, dBoundsMinY);
+        Int2Coordsys(1000000000, 1000000000, dBoundsMaxX, dBoundsMaxY);
+
+        CPLError(CE_Warning, TAB_WarningBoundsOverflow,
+                 "Some objects were written outside of the file's "
+                 "predefined bounds.\n"
+                 "These objects may have invalid coordinates when the file "
+                 "is reopened.\n"
+                 "Predefined bounds: (%.15g,%.15g)-(%.15g,%.15g)\n",
+                 dBoundsMinX, dBoundsMinY, dBoundsMaxX, dBoundsMaxY );
+    }
+
+    if( m_poIdIndex != NULL && m_poIdIndex->SyncToDisk() != 0 )
+        return -1;
+
+    m_bUpdated = FALSE;
 
     return 0;
 }

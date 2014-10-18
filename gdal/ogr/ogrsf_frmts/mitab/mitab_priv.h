@@ -1378,6 +1378,8 @@ class TABIDFile
     int         Open(const char *pszFname, TABAccess eAccess);
     int         Close();
 
+    int         SyncToDisk();
+
     GInt32      GetObjPtr(GInt32 nObjId);
     int         SetObjPtr(GInt32 nObjId, GInt32 nObjPtr);
     GInt32      GetMaxObjId();
@@ -1473,6 +1475,8 @@ class TABMAPFile
     int         Open(const char *pszFname, TABAccess eAccess,
                      GBool bNoErrorMsg = FALSE );
     int         Close();
+
+    int         SyncToDisk();
 
     int         SetQuickSpatialIndexMode(GBool bQuickSpatialIndexMode = TRUE);
 
@@ -1741,6 +1745,8 @@ class TABDATFile
     int         DeleteField( int iField );
     int         ReorderFields( int* panMap );
     int         AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags );
+
+    int         SyncToDisk();
 
     GInt32      GetNumRecords();
     TABRawBinBlock *GetRecordBlock(int nRecordId);

@@ -366,6 +366,8 @@ int TABFile::Open(const char *pszFname, TABAccess eAccess,
         m_poDefn = new OGRFeatureDefn(pszFeatureClassName);
         m_poDefn->Reference();
         CPLFree(pszFeatureClassName);
+
+        m_bNeedTABRewrite = TRUE;
     }
 
 
@@ -957,7 +959,7 @@ int TABFile::WriteTABFile()
                  "WriteTABFile() can be used only with Write access.");
         return -1;
     }
-    if (m_eAccessMode == TABReadWrite && !m_bNeedTABRewrite )
+    if (!m_bNeedTABRewrite )
     {
         return 0;
     }
@@ -2740,6 +2742,28 @@ OGRErr TABFile::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nF
     }
     else
         return OGRERR_FAILURE;
+}
+
+/************************************************************************/
+/*                            SyncToDisk()                             */
+/************************************************************************/
+
+OGRErr TABFile::SyncToDisk()
+{
+    /* Silently return */
+    if( m_eAccessMode == TABRead )
+        return OGRERR_NONE;
+
+    if( WriteTABFile() != 0 )
+        return OGRERR_FAILURE;
+
+    if( m_poMAPFile->SyncToDisk() != 0 )
+        return OGRERR_FAILURE;
+
+    if( m_poDATFile->SyncToDisk() != 0 )
+        return OGRERR_FAILURE;
+
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
