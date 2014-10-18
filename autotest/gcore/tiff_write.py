@@ -3349,6 +3349,8 @@ def tiff_write_87():
 
     src_ds = gdal.Open('tmp/tiff_write_87_src.tif', gdal.GA_Update)
     src_ds.BuildOverviews( 'NEAR', overviewlist = [2, 4] )
+    expected_cs1 = src_ds.GetRasterBand(1).GetOverview(0).Checksum()
+    expected_cs2 = src_ds.GetRasterBand(1).GetOverview(1).Checksum()
     ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_87_dst.tif', src_ds, options = ['COPY_SRC_OVERVIEWS=YES', 'ENDIANNESS=LITTLE'])
     ds = None
     src_ds = None
@@ -3377,10 +3379,12 @@ def tiff_write_87():
         return 'fail'
 
     # Check checksums
-    if cs1 != 28926 or cs2 != 7332:
+    if cs1 != expected_cs1 or cs2 != expected_cs2:
         gdaltest.post_reason('did not get expected checksums')
         print(cs1)
         print(cs2)
+        print(expected_cs1)
+        print(expected_cs2)
         return 'fail'
 
     return 'success'

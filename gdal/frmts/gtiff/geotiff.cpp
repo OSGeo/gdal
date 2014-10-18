@@ -5146,8 +5146,7 @@ CPLErr GTiffDataset::IBuildOverviews(
 /* -------------------------------------------------------------------- */
 /*      Refresh old overviews that were listed.                         */
 /* -------------------------------------------------------------------- */
-    if (nCompression != COMPRESSION_NONE &&
-        nPlanarConfig == PLANARCONFIG_CONTIG &&
+    if (nPlanarConfig == PLANARCONFIG_CONTIG &&
         GDALDataTypeIsComplex(GetRasterBand( panBandList[0] )->GetRasterDataType()) == FALSE &&
         GetRasterBand( panBandList[0] )->GetColorTable() == NULL &&
         (EQUALN(pszResampling, "NEAR", 4) || EQUAL(pszResampling, "AVERAGE") || EQUAL(pszResampling, "GAUSS")))
@@ -5155,6 +5154,9 @@ CPLErr GTiffDataset::IBuildOverviews(
         /* In the case of pixel interleaved compressed overviews, we want to generate */
         /* the overviews for all the bands block by block, and not band after band, */
         /* in order to write the block once and not loose space in the TIFF file */
+        /* We also use that logic for uncompressed overviews, since GDALRegenerateOverviewsMultiBand() */
+        /* will be able to trigger cascading overview regeneration even in the presence */
+        /* of an alpha band. */
 
         GDALRasterBand ***papapoOverviewBands;
         GDALRasterBand  **papoBandList;
