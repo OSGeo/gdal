@@ -32,6 +32,7 @@ import random
 import sys
 import string
 import shutil
+import time
 
 sys.path.append( '../pymod' )
 
@@ -881,12 +882,16 @@ def ogr_mitab_25():
             lyr.CreateFeature(feat)
         ds = None
 
+        if sys.platform.startswith('linux'):
+            for ext in ('map', 'tab', 'dat', 'id'):
+                os.system('touch -d "1 minute ago" %s' % filename[0:-3]+ext)
+
         mtime_dict = {}
         for ext in ('map', 'tab', 'dat', 'id'):
             mtime_dict[ext] = os.stat(filename[0:-3] + ext).st_mtime
 
-        import time
-        time.sleep(1)
+        if not sys.platform.startswith('linux'):
+            time.sleep(1)
 
         # Try without doing anything
         ds = ogr.Open(filename, update = 1)
@@ -1323,6 +1328,117 @@ def ogr_mitab_29():
     return 'success'
 
 ###############################################################################
+# Test SyncToDisk() in create mode
+
+def ogr_mitab_30(update = 0):
+
+    filename = 'tmp/ogr_mitab_30.tab'
+
+    ds = ogr.GetDriverByName('MapInfo File').CreateDataSource(filename)
+    lyr = ds.CreateLayer('test', options=['BOUNDS=0,0,100,100'])
+    lyr.CreateField(ogr.FieldDefn('ID', ogr.OFTInteger))
+    if lyr.SyncToDisk() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds2 = ogr.Open(filename)
+    lyr2 = ds2.GetLayer(0)
+    if lyr2.GetFeatureCount() != 0 or lyr2.GetLayerDefn().GetFieldCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds2 = None
+
+    # Check that the files are not updated in between
+    if sys.platform.startswith('linux'):
+        for ext in ('map', 'tab', 'dat', 'id'):
+            os.system('touch -d "1 minute ago" %s' % filename[0:-3]+ext)
+
+    stat = {}
+    for ext in ('map', 'tab', 'dat', 'id'):
+        stat[ext] = gdal.VSIStatL(filename[0:-3]+ext)
+
+    if not sys.platform.startswith('linux'):
+        time.sleep(1)
+
+    if lyr.SyncToDisk() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    for ext in ('map', 'tab', 'dat', 'id'):
+        stat2 = gdal.VSIStatL(filename[0:-3]+ext)
+        if stat[ext].size != stat2.size or stat[ext].mtime != stat2.mtime:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    if update == 1:
+        ds = None
+        ds = ogr.Open(filename, update = 1)
+        lyr = ds.GetLayer(0)
+
+    for j in range(100):
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetField('ID', j+1)
+        feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (%d %d)' % (j,j)))
+        lyr.CreateFeature(feat)
+        feat = None
+        
+        if not (j <= 10 or (j % 5) == 0):
+            continue
+        
+        for i in range(2):
+            if lyr.SyncToDisk() != 0:
+                gdaltest.post_reason('fail')
+                return 'fail'
+                
+            if i == 0:
+                for ext in ('map', 'tab', 'dat', 'id'):
+                    stat[ext] = gdal.VSIStatL(filename[0:-3]+ext)
+            else:
+                for ext in ('map', 'tab', 'dat', 'id'):
+                    stat2 = gdal.VSIStatL(filename[0:-3]+ext)
+                    if stat[ext].size != stat2.size:
+                        print(ext)
+                        print(j)
+                        print(i)
+                        gdaltest.post_reason('fail')
+                        return 'fail'
+
+            ds2 = ogr.Open(filename)
+            lyr2 = ds2.GetLayer(0)
+            if lyr2.GetFeatureCount() != j+1:
+                print(j)
+                print(i)
+                gdaltest.post_reason('fail')
+                return 'fail'
+            feat2 = lyr2.GetFeature(j+1)
+            if feat2.GetField('ID') != j+1 or feat2.GetGeometryRef().ExportToWkt() != 'POINT (%d %d)' % (j,j):
+                print(j)
+                print(i)
+                feat2.DumpReadable()
+                gdaltest.post_reason('fail')
+                return 'fail'
+            lyr2.ResetReading()
+            for k in range(j+1):
+                feat2 = lyr2.GetNextFeature()
+            if feat2.GetField('ID') != j+1 or feat2.GetGeometryRef().ExportToWkt() != 'POINT (%d %d)' % (j,j):
+                print(j)
+                print(i)
+                feat2.DumpReadable()
+                gdaltest.post_reason('fail')
+                return 'fail'
+            ds2 = None
+
+    ds = None
+    ogr.GetDriverByName('MapInfo File').DeleteDataSource(filename)
+
+    return 'success'
+
+###############################################################################
+# Test SyncToDisk() in update mode
+
+def ogr_mitab_31():
+    return ogr_mitab_30(update = 1)
+
+###############################################################################
 #
 
 def ogr_mitab_cleanup():
@@ -1366,9 +1482,10 @@ gdaltest_list = [
     ogr_mitab_27,
     ogr_mitab_28,
     ogr_mitab_29,
+    ogr_mitab_30,
+    ogr_mitab_31,
     ogr_mitab_cleanup
     ]
-
 
 if __name__ == '__main__':
 

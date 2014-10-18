@@ -341,6 +341,9 @@ class TABFile: public IMapInfoFile
     virtual OGRErr      DeleteField( int iField );
     virtual OGRErr      ReorderFields( int* panMap );
     virtual OGRErr      AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags );
+    
+    virtual OGRErr      SyncToDisk();
+
     ///////////////
     // Read access specific stuff
     //
