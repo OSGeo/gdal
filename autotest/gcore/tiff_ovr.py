@@ -1265,7 +1265,28 @@ def tiff_ovr_32():
         return 'fail'
 
     cs = ds.GetRasterBand(3).GetOverview(1).Checksum()
-    expected_cs = 2028
+    expected_cs = 2012
+    if cs != expected_cs:
+        gdaltest.post_reason('Checksum is %d. Expected checksum is %d for overview 1.' % (cs, expected_cs))
+        return 'fail'
+
+    ds = None
+
+    gdaltest.tiff_drv.Delete( 'tmp/ovr32.tif' )
+    
+    # Same test with a compressed dataset
+    src_ds = gdal.Open('data/stefan_full_rgba.tif')
+    ds = gdal.GetDriverByName('GTiff').CreateCopy('tmp/ovr32.tif', src_ds, options = ['COMPRESS=DEFLATE'])
+    ds.BuildOverviews( 'cubic', overviewlist = [2,5] )
+
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    expected_cs = 21596
+    if cs != expected_cs:
+        gdaltest.post_reason('Checksum is %d. Expected checksum is %d for overview 0.' % (cs, expected_cs))
+        return 'fail'
+
+    cs = ds.GetRasterBand(3).GetOverview(1).Checksum()
+    expected_cs = 2012
     if cs != expected_cs:
         gdaltest.post_reason('Checksum is %d. Expected checksum is %d for overview 1.' % (cs, expected_cs))
         return 'fail'
