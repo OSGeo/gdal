@@ -1289,6 +1289,26 @@ OGRErr OGRShapeLayer::GetExtent (OGREnvelope *psExtent, int bForce)
     psExtent->MinY = adMin[1];
     psExtent->MaxX = adMax[0];
     psExtent->MaxY = adMax[1];
+    
+    if( CPLIsNan(adMin[0]) || CPLIsNan(adMin[1]) ||
+        CPLIsNan(adMax[0]) || CPLIsNan(adMax[1]) )
+    {
+        CPLDebug("SHAPE", "Invalid extent in shape header");
+        OGRErr eErr;
+
+        /* Disable filters to avoid infinite recursion in GetNextFeature() */
+        /* that calls ScanIndices() that call GetExtent... */
+        OGRFeatureQuery* poAttrQuery = m_poAttrQuery;
+        m_poAttrQuery = NULL;
+        OGRGeometry* poFilterGeom = m_poFilterGeom;
+        m_poFilterGeom = NULL;
+        
+        eErr = OGRLayer::GetExtent(psExtent, bForce);
+        
+        m_poAttrQuery = poAttrQuery;
+        m_poFilterGeom = poFilterGeom;
+        return eErr;
+    }
 
     return OGRERR_NONE;
 }

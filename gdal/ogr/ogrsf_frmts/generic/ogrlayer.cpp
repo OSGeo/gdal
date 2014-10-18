@@ -273,7 +273,11 @@ OGRErr OGRLayer::GetExtentInternal(int iGeomField, OGREnvelope *psExtent, int bF
         else if (!bExtentSet)
         {
             poGeom->getEnvelope(psExtent);
-            bExtentSet = TRUE;
+            if( !(CPLIsNan(psExtent->MinX) || CPLIsNan(psExtent->MinY) ||
+                  CPLIsNan(psExtent->MaxX) || CPLIsNan(psExtent->MaxY)) )
+            {
+                bExtentSet = TRUE;
+            }
         }
         else
         {
