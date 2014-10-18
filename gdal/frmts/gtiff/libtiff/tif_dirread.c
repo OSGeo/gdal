@@ -1,4 +1,4 @@
-/* $Id: tif_dirread.c,v 1.178 2012-08-19 16:56:34 bfriesen Exp $ */
+/* $Id: tif_dirread.c,v 1.179 2014-08-31 20:32:53 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -3374,7 +3374,7 @@ static void TIFFReadDirEntryOutputErr(TIFF* tif, enum TIFFReadDirEntryErr err, c
 	} else {
 		switch (err) {
 			case TIFFReadDirEntryErrCount:
-				TIFFErrorExt(tif->tif_clientdata, module,
+				TIFFWarningExt(tif->tif_clientdata, module,
 				"Incorrect count for \"%s\"; tag ignored",
 					     tagname);
 				break;
