@@ -2734,20 +2734,17 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
 /* -------------------------------------------------------------------- */
 /*      Read actual data and build histogram.                           */
 /* -------------------------------------------------------------------- */
-    double      dfScale;
-
     if( !pfnProgress( 0.0, "Compute Histogram", pProgressData ) )
     {
         ReportError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
         return CE_Failure;
     }
 
-    dfScale = nBuckets / (dfMax - dfMin);
+    const double dfScale = nBuckets / (dfMax - dfMin);
     memset( panHistogram, 0, sizeof(int) * nBuckets );
 
-    double dfNoDataValue;
     int bGotNoDataValue;
-    dfNoDataValue = GetNoDataValue( &bGotNoDataValue );
+    const double dfNoDataValue = GetNoDataValue( &bGotNoDataValue );
     bGotNoDataValue = bGotNoDataValue && !CPLIsNan(dfNoDataValue);
     /* Not advertized. May be removed at any time. Just as a provision if the */
     /* old behaviour made sense somethimes... */
@@ -3510,7 +3507,7 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
     /* the difference of the sum of square values with the square of the sum */
     /* dfMean and dfM2 are updated at each sample */
     /* dfM2 is the sum of square of differences to the current mean */
-    double      dfNoDataValue, dfMean = 0.0, dfM2 = 0.0;
+    double      dfMean = 0.0, dfM2 = 0.0;
     GIntBig     nSampleCount = 0;
 
     if( !pfnProgress( 0.0, "Compute Statistics", pProgressData ) )
@@ -3519,12 +3516,12 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
         return CE_Failure;
     }
 
-    dfNoDataValue = GetNoDataValue( &bGotNoDataValue );
+    const double dfNoDataValue = GetNoDataValue( &bGotNoDataValue );
     bGotNoDataValue = bGotNoDataValue && !CPLIsNan(dfNoDataValue);
 
     const char* pszPixelType = GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
     int bSignedByte = (pszPixelType != NULL && EQUAL(pszPixelType, "SIGNEDBYTE"));
-    
+
     if ( bApproxOK && HasArbitraryOverviews() )
     {
 /* -------------------------------------------------------------------- */
@@ -3980,26 +3977,24 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
 /* -------------------------------------------------------------------- */
     if ( bApproxOK && GetOverviewCount() > 0 && !HasArbitraryOverviews() )
     {
-        GDALRasterBand *poBand;
-
-        poBand = GetRasterSampleOverview( GDALSTAT_APPROX_NUMSAMPLES );
+        GDALRasterBand *poBand =
+          GetRasterSampleOverview( GDALSTAT_APPROX_NUMSAMPLES );
 
         if ( poBand != this )
             return poBand->ComputeRasterMinMax( FALSE, adfMinMax );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Read actual data and compute minimum and maximum.               */
 /* -------------------------------------------------------------------- */
     int     bGotNoDataValue, bFirstValue = TRUE;
-    double  dfNoDataValue;
 
-    dfNoDataValue = GetNoDataValue( &bGotNoDataValue );
+    const double dfNoDataValue = GetNoDataValue( &bGotNoDataValue );
     bGotNoDataValue = bGotNoDataValue && !CPLIsNan(dfNoDataValue);
 
     const char* pszPixelType = GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
     int bSignedByte = (pszPixelType != NULL && EQUAL(pszPixelType, "SIGNEDBYTE"));
-    
+
     if ( bApproxOK && HasArbitraryOverviews() )
     {
 /* -------------------------------------------------------------------- */
