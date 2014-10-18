@@ -3821,6 +3821,21 @@ def ogr_shape_79():
     ds = None
 
     return 'success'
+    
+###############################################################################
+# Test reading a shape with invalid extent (nan values) (#5702)
+
+def ogr_shape_80():
+    
+    ds = ogr.Open('data/extentnan.shp')
+    lyr = ds.GetLayer(0)
+    extent = lyr.GetExtent()
+    if extent is not None and extent[0] != extent[0]:
+        gdaltest.post_reason('fail')
+        print(extent)
+        return 'fail'
+    ds = None
+    return 'success'
 
 ###############################################################################
 # 
@@ -3939,6 +3954,7 @@ gdaltest_list = [
     ogr_shape_77,
     ogr_shape_78,
     ogr_shape_79,
+    ogr_shape_80,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':
