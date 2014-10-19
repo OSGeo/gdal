@@ -167,9 +167,6 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
     char                *pszSchemaName = NULL;
     int                  nDimension = 3;
     int                  bHavePostGIS = TRUE;
-    
-    if( nLayers == 0 )
-         Log("SET standard_conforming_strings = OFF");
 
     const char* pszFIDColumnName = CSLFetchNameValue(papszOptions, "FID");
     CPLString osFIDColumnName;
@@ -548,18 +545,18 @@ OGRLayer *OGRPGDumpDataSource::GetLayer( int iLayer )
 /*                                  Log()                               */
 /************************************************************************/
 
-void  OGRPGDumpDataSource::Log(const char* pszStr, int bAddSemiColumn)
+int  OGRPGDumpDataSource::Log(const char* pszStr, int bAddSemiColumn)
 {
     if (fp == NULL)
     {
         if (bTriedOpen)
-            return;
+            return FALSE;
         bTriedOpen = TRUE;
         fp = VSIFOpenL(pszName, "wb");
         if (fp == NULL)
         {
             CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s", pszName);
-            return;
+            return FALSE;
         }
     }
 
@@ -567,6 +564,7 @@ void  OGRPGDumpDataSource::Log(const char* pszStr, int bAddSemiColumn)
         VSIFPrintfL(fp, "%s;%s", pszStr, pszEOL);
     else
         VSIFPrintfL(fp, "%s%s", pszStr, pszEOL);
+    return TRUE;
 }
 
 /************************************************************************/

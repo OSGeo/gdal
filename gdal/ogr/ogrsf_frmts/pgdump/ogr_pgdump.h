@@ -150,7 +150,7 @@ class OGRPGDumpDataSource : public OGRDataSource
                         ~OGRPGDumpDataSource();
                         
     char               *LaunderName( const char *pszSrcName );
-    void                Log(const char* pszStr, int bAddSemiColumn = TRUE);
+    int                 Log(const char* pszStr, int bAddSemiColumn = TRUE);
 
     virtual const char  *GetName() { return pszName; }
     virtual int         GetLayerCount() { return nLayers; }
