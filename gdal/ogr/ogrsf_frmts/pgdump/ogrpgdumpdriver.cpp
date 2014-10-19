@@ -49,6 +49,11 @@ static GDALDataset* OGRPGDumpDriverCreate( const char * pszName,
         pszName = "/vsistdout/";
 
     poDS = new OGRPGDumpDataSource(pszName, papszOptions);
+    if( !poDS->Log("SET standard_conforming_strings = OFF") )
+    {
+        delete poDS;
+        return NULL;
+    }
 
     return poDS;
 }
