@@ -210,6 +210,8 @@ class OGRGMLDataSource : public OGRDataSource
                                             OGRGeometry *poSpatialFilter,
                                             const char *pszDialect );
     virtual void                ReleaseResultSet( OGRLayer * poResultsSet );
+    
+    static int          CheckHeader(const char* pszStr);
 };
 
 #endif /* _OGR_GML_H_INCLUDED */

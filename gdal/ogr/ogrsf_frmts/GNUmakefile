@@ -6,7 +6,7 @@ SUBDIRS-yes	:= \
 	mitab ntf gpx rec s57 sdts shape tiger vrt \
 	geoconcept xplane georss gtm dxf pgdump gpsbabel \
 	sua openair pds htf aeronavfaa edigeo svg idrisi \
-	arcgen segukooa segy sxf openfilegdb wasp selafin
+	arcgen segukooa segy sxf openfilegdb wasp selafin jml
 
 SUBDIRS-$(HAVE_DODS)	+= dods
 SUBDIRS-$(HAVE_DWGDIRECT) += dxfdwg

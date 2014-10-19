@@ -268,6 +268,9 @@ void OGRRegisterAllInternal()
 #ifdef SELAFIN_ENABLED
     RegisterOGRSelafin();
 #endif
+#ifdef JML_ENABLED
+    RegisterOGRJML();
+#endif
 
 /* Put TIGER and AVCBIN at end since they need poOpenInfo->GetSiblingFiles() */
 #ifdef TIGER_ENABLED

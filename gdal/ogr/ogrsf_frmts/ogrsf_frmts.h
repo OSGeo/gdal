@@ -391,6 +391,7 @@ void CPL_DLL RegisterOGRCartoDB();
 void CPL_DLL RegisterOGRSXF();
 void CPL_DLL RegisterOGROpenFileGDB();
 void CPL_DLL RegisterOGRSelafin();
+void CPL_DLL RegisterOGRJML();
 CPL_C_END
 
 
