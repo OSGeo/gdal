@@ -82,6 +82,10 @@ int OGRGTMLayer::TestCapability( const char * pszCap )
     if (EQUAL(pszCap,OLCFastFeatureCount) &&
         m_poFilterGeom == NULL && m_poAttrQuery == NULL )
         return TRUE;
+    else if( EQUAL(pszCap,OLCCreateField) )
+        return poDS != NULL && poDS->getOutputFP() != NULL;
+    else if( EQUAL(pszCap,OLCSequentialWrite) )
+        return poDS != NULL && poDS->getOutputFP() != NULL;
     else
         return FALSE;
 }
