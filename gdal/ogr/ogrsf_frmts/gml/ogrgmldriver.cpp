@@ -86,34 +86,7 @@ static int OGRGMLDriverIdentify( GDALOpenInfo* poOpenInfo )
         if( !poOpenInfo->TryToIngest(4096) )
             return FALSE;
 
-        szPtr = (const char*)poOpenInfo->pabyHeader;
-
-        if( strstr(szPtr,"opengis.net/gml") == NULL )
-        {
-            return FALSE;
-        }
-
-        /* Ignore .xsd schemas */
-        if( strstr(szPtr, "<schema") != NULL
-            || strstr(szPtr, "<xs:schema") != NULL
-            || strstr(szPtr, "<xsd:schema") != NULL )
-        {
-            return FALSE;
-        }
-
-        /* Ignore GeoRSS documents. They will be recognized by the GeoRSS driver */
-        if( strstr(szPtr, "<rss") != NULL && strstr(szPtr, "xmlns:georss") != NULL )
-        {
-            return FALSE;
-        }
-
-        /* Ignore OGR WFS xml description files */
-        if( strstr(szPtr, "<OGRWFSDataSource>") != NULL )
-        {
-            return FALSE;
-        }
-
-        return TRUE;
+        return OGRGMLDataSource::CheckHeader((const char*)poOpenInfo->pabyHeader);
     }
 }
 

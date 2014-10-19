@@ -245,6 +245,46 @@ OGRGMLDataSource::~OGRGMLDataSource()
 }
 
 /************************************************************************/
+/*                            CheckHeader()                             */
+/************************************************************************/
+
+int OGRGMLDataSource::CheckHeader(const char* pszStr)
+{
+    if( strstr(pszStr,"opengis.net/gml") == NULL )
+    {
+        return FALSE;
+    }
+
+    /* Ignore .xsd schemas */
+    if( strstr(pszStr, "<schema") != NULL
+        || strstr(pszStr, "<xs:schema") != NULL
+        || strstr(pszStr, "<xsd:schema") != NULL )
+    {
+        return FALSE;
+    }
+
+    /* Ignore GeoRSS documents. They will be recognized by the GeoRSS driver */
+    if( strstr(pszStr, "<rss") != NULL && strstr(pszStr, "xmlns:georss") != NULL )
+    {
+        return FALSE;
+    }
+
+    /* Ignore OpenJUMP .jml documents. They will be recognized by the OpenJUMP driver */
+    if( strstr(pszStr, "<JCSDataFile") != NULL )
+    {
+        return FALSE;
+    }
+
+    /* Ignore OGR WFS xml description files */
+    if( strstr(pszStr, "<OGRWFSDataSource>") != NULL )
+    {
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -356,31 +396,7 @@ int OGRGMLDataSource::Open( const char * pszNameIn )
 /* -------------------------------------------------------------------- */
 /*      Here, we expect the opening chevrons of GML tree root element   */
 /* -------------------------------------------------------------------- */
-    if( szPtr[0] != '<' 
-        || strstr(szPtr,"opengis.net/gml") == NULL )
-    {
-        VSIFCloseL( fp );
-        return FALSE;
-    }
-
-    /* Ignore .xsd schemas */
-    if( strstr(szPtr, "<schema") != NULL
-        || strstr(szPtr, "<xs:schema") != NULL
-        || strstr(szPtr, "<xsd:schema") != NULL )
-    {
-        VSIFCloseL( fp );
-        return FALSE;
-    }
-
-    /* Ignore GeoRSS documents. They will be recognized by the GeoRSS driver */
-    if( strstr(szPtr, "<rss") != NULL && strstr(szPtr, "xmlns:georss") != NULL )
-    {
-        VSIFCloseL( fp );
-        return FALSE;
-    }
-
-    /* Ignore OGR WFS xml description files */
-    if( strstr(szPtr, "<OGRWFSDataSource>") != NULL )
+    if( szPtr[0] != '<' || !CheckHeader(szPtr) )
     {
         VSIFCloseL( fp );
         return FALSE;
