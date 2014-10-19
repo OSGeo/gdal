@@ -58,6 +58,10 @@ S57ClassRegistrar::~S57ClassRegistrar()
 
 {
     nClasses = 0;
+    for(size_t i=0;i<aoAttrInfos.size();i++)
+        delete aoAttrInfos[i];
+    aoAttrInfos.resize(0);
+    nAttrCount = 0;
 }
 
 /************************************************************************/
