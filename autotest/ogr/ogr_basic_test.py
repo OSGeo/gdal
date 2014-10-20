@@ -33,6 +33,7 @@ import sys
 sys.path.append( '../pymod' )
 
 import gdaltest
+import ogrtest
 from osgeo import ogr
 
 ###############################################################################
@@ -432,6 +433,24 @@ def ogr_basic_10():
     return 'success'
 
 ###############################################################################
+# Test double call to UseExceptions() (#5704)
+
+def ogr_basic_11():
+
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    used_exceptions_before = ogr.GetUseExceptions()
+    for i in range(2):
+        ogr.UseExceptions()
+        geom = ogr.CreateGeometryFromWkt('POLYGON ((-65 0, -30 -30, -30 0, -65 -30, -65 0))')
+        geom.IsValid()
+    if used_exceptions_before == 0:
+        ogr.DontUseExceptions()
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_basic_cleanup():
@@ -452,6 +471,7 @@ gdaltest_list = [
     ogr_basic_8,
     ogr_basic_9,
     ogr_basic_10,
+    ogr_basic_11,
     ogr_basic_cleanup ]
 
 if __name__ == '__main__':
