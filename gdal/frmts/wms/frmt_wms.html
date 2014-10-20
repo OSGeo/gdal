@@ -57,8 +57,8 @@
             <td class="desc">Set to TRUE to include "transparent=TRUE" in the WMS GetMap request (optional defaults to FALSE).&nbsp; The request format and BandsCount need to support alpha.</td>
         </tr>
 		<tr>
-			<td class="xml">        &lt;Layers&gt;<span class="value">modis,global_mosaic</span>&lt;/Layers&gt;</td>
-			<td class="desc">Comma separated list of layers. (required, except for TiledWMS)</td>
+			<td class="xml">        &lt;Layers&gt;<span class="value">modis%2Cglobal_mosaic</span>&lt;/Layers&gt;</td>
+			<td class="desc">A URL encoded, comma separated string of layers (required, except for TiledWMS)</td>
 		</tr>
         <tr>
             <td class="xml">        &lt;TiledGroupName&gt;<span class="value">Clementine</span>&lt;/TiledGroupName&gt;</td>
@@ -248,7 +248,7 @@
      Starting with GDAL &gt;= 1.10, WMS layers can be queried (through a GetFeatureInfo request) with the gdallocationinfo utility, or
      with a GetMetadataItem("Pixel_iCol_iLine", "LocationInfo") call on a band object.<p>
      <pre>gdallocationinfo "WMS:http://demo.opengeo.org/geoserver/gwc/service/wms?SERVICE=WMS&amp;VERSION=1.1.1&amp;
-                            REQUEST=GetMap&amp;LAYERS=og:bugsites&amp;SRS=EPSG:900913&amp;
+                            REQUEST=GetMap&amp;LAYERS=og%3Abugsites&amp;SRS=EPSG:900913&amp;
                             BBOX=-1.15841845090625E7,5479006.186718751,-1.1505912992109375E7,5557277.703671876&amp;
                             FORMAT=image/png&amp;TILESIZE=256&amp;OVERVIEWCOUNT=25&amp;MINRESOLUTION=0.0046653459640220&amp;TILED=true"
                            -geoloc -11547071.455 5528616 -xml -b 1
@@ -470,7 +470,7 @@ A list of subdatasets will be returned, resulting from the parsing of the GetCap
 
 <li><p>
 (GDAL >= 1.9.0) a pseudo GetMap request, such as the subdataset name returned by the previous syntax :
-<pre>gdalinfo "WMS:http://wms.geobase.ca/wms-bin/cubeserv.cgi?SERVICE=WMS&amp;VERSION=1.1.1&amp;REQUEST=GetMap&amp;LAYERS=DNEC_250K:ELEVATION/ELEVATION&amp;SRS=EPSG:42304&amp;BBOX=-3000000,-1500000,6000000,4500000"</pre>
+<pre>gdalinfo "WMS:http://wms.geobase.ca/wms-bin/cubeserv.cgi?SERVICE=WMS&amp;VERSION=1.1.1&amp;REQUEST=GetMap&amp;LAYERS=DNEC_250K%3AELEVATION%2FELEVATION&amp;SRS=EPSG:42304&amp;BBOX=-3000000,-1500000,6000000,4500000"</pre>
 </p></li>
 
 <li><p>
