@@ -209,8 +209,7 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
     }
 
     char* pszEscapedURL = CPLEscapeString(osBaseURL.c_str(), -1, CPLES_XML);
-    char* pszEscapedLayerURL = CPLEscapeString(osLayer.c_str(), -1, CPLES_URL);
-    char* pszEscapedLayerXML = CPLEscapeString(pszEscapedLayerURL, -1, CPLES_XML);
+    char* pszEscapedLayerXML = CPLEscapeString(osLayer.c_str(), -1, CPLES_XML);
 
     CPLString osXML = CPLSPrintf(
             "<GDAL_WMS>\n"
@@ -252,7 +251,6 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
             nOverviewCount);
 
     CPLFree(pszEscapedURL);
-    CPLFree(pszEscapedLayerURL);
     CPLFree(pszEscapedLayerXML);
 
     CSLDestroy(papszTokens);
