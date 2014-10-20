@@ -163,6 +163,8 @@ OGRFeature *OGRKMLLayer::GetNextFeature()
     /*      Loop till we find a feature matching our criteria.              */
     /* -------------------------------------------------------------------- */
     KML *poKMLFile = poDS_->GetKMLFile();
+    if( poKMLFile == NULL )
+        return NULL;
     poKMLFile->selectLayer(nLayerNumber_);
 
     while(TRUE)
