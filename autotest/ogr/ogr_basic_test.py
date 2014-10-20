@@ -415,6 +415,23 @@ def ogr_basic_9():
     return 'success'
 
 ###############################################################################
+# Run test_ogrsf -all_drivers
+
+def ogr_basic_10():
+
+    import test_cli_utilities
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        return 'skip'
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -all_drivers')
+
+    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+        print(ret)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_basic_cleanup():
@@ -434,6 +451,7 @@ gdaltest_list = [
     ogr_basic_7,
     ogr_basic_8,
     ogr_basic_9,
+    ogr_basic_10,
     ogr_basic_cleanup ]
 
 if __name__ == '__main__':
