@@ -749,6 +749,7 @@ int TABFile::ParseTABFileFields()
                 numTok = CSLCount(papszTok);
                 nStatus = -1;
                 CPLAssert(m_poDefn);
+                poFieldDefn = NULL;
                 if (numTok >= 3 && EQUAL(papszTok[1], "char"))
                 {
                     /*-------------------------------------------------
@@ -891,6 +892,7 @@ int TABFile::ParseTABFileFields()
                      "Failed to parse field definition at line %d in file %s", 
                              iLine+1, m_pszFname);
                     CSLDestroy(papszTok);
+                    delete poFieldDefn;
                     return -1;
                 }
                 /*-----------------------------------------------------
