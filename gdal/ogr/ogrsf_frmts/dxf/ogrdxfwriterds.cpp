@@ -128,7 +128,8 @@ int OGRDXFWriterDS::TestCapability( const char * pszCap )
 
 {
     if( EQUAL(pszCap,ODsCCreateLayer) )
-        return TRUE;
+        // Unable to have more than one OGR entities layer in a DXF file, with one options blocks layer.
+        return poBlocksLayer == NULL || poLayer == NULL;
     else
         return FALSE;
 }

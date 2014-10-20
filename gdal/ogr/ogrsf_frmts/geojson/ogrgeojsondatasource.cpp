@@ -242,7 +242,7 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszName_,
 int OGRGeoJSONDataSource::TestCapability( const char* pszCap )
 {
     if( EQUAL( pszCap, ODsCCreateLayer ) )
-        return fpOut_ != NULL /* && nLayers_ == 0 */;
+        return fpOut_ != NULL && nLayers_ == 0;
     else if( EQUAL( pszCap, ODsCDeleteLayer ) )
         return FALSE;
     else

@@ -64,7 +64,7 @@ OGRWAsPDataSource::~OGRWAsPDataSource()
 int OGRWAsPDataSource::TestCapability( const char * pszCap )
 
 {
-    return EQUAL(pszCap,ODsCCreateLayer) ;
+    return EQUAL(pszCap,ODsCCreateLayer) && oLayer.get() == NULL;
 }
 
 /************************************************************************/
