@@ -2928,14 +2928,20 @@ int GetUseExceptions() {
 }
 
 void UseExceptions() {
-  bUseExceptions = 1;
-  pfnPreviousHandler = 
-    CPLSetErrorHandler( (CPLErrorHandler) PythonBindingErrorHandler );
+  if( !bUseExceptions )
+  {
+    bUseExceptions = 1;
+    pfnPreviousHandler = 
+        CPLSetErrorHandler( (CPLErrorHandler) PythonBindingErrorHandler );
+  }
 }
 
 void DontUseExceptions() {
-  bUseExceptions = 0;
-  CPLSetErrorHandler( pfnPreviousHandler );
+  if( bUseExceptions )
+  {
+    bUseExceptions = 0;
+    CPLSetErrorHandler( pfnPreviousHandler );
+  }
 }
 
 
