@@ -250,7 +250,9 @@ void GDALWMSMetaDataset::AddSubDataset( const char* pszLayerName,
     osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "SERVICE", "WMS");
     osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "VERSION", osVersion);
     osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "REQUEST", "GetMap");
-    osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "LAYERS", pszLayerName);
+    char* pszEscapedLayerName = CPLEscapeString(pszLayerName, -1, CPLES_URL);
+    osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "LAYERS", pszEscapedLayerName);
+    CPLFree(pszEscapedLayerName);
     if(VersionStringToInt(osVersion.c_str())>= VersionStringToInt("1.3.0"))
     {
         osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "CRS", pszSRS);
