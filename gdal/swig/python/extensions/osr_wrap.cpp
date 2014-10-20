@@ -2928,14 +2928,20 @@ int GetUseExceptions() {
 }
 
 void UseExceptions() {
-  bUseExceptions = 1;
-  pfnPreviousHandler = 
-    CPLSetErrorHandler( (CPLErrorHandler) PythonBindingErrorHandler );
+  if( !bUseExceptions )
+  {
+    bUseExceptions = 1;
+    pfnPreviousHandler = 
+        CPLSetErrorHandler( (CPLErrorHandler) PythonBindingErrorHandler );
+  }
 }
 
 void DontUseExceptions() {
-  bUseExceptions = 0;
-  CPLSetErrorHandler( pfnPreviousHandler );
+  if( bUseExceptions )
+  {
+    bUseExceptions = 0;
+    CPLSetErrorHandler( pfnPreviousHandler );
+  }
 }
 
 
@@ -13855,7 +13861,7 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA",SWIG_FromCharPtr("Lambert_Azimuthal_Equal_Area"));
   SWIG_Python_SetConstant(d, "SRS_PT_MERCATOR_1SP",SWIG_FromCharPtr("Mercator_1SP"));
   SWIG_Python_SetConstant(d, "SRS_PT_MERCATOR_2SP",SWIG_FromCharPtr("Mercator_2SP"));
-  SWIG_Python_SetConstant(d, "SRS_PT_MERCATOR_AUXILARY_SPHERE",SWIG_FromCharPtr("Mercator_Auxilary_Sphere"));
+  SWIG_Python_SetConstant(d, "SRS_PT_MERCATOR_AUXILARY_SPHERE",SWIG_FromCharPtr("Mercator_Auxiliary_Sphere"));
   SWIG_Python_SetConstant(d, "SRS_PT_MILLER_CYLINDRICAL",SWIG_FromCharPtr("Miller_Cylindrical"));
   SWIG_Python_SetConstant(d, "SRS_PT_MOLLWEIDE",SWIG_FromCharPtr("Mollweide"));
   SWIG_Python_SetConstant(d, "SRS_PT_NEW_ZEALAND_MAP_GRID",SWIG_FromCharPtr("New_Zealand_Map_Grid"));
