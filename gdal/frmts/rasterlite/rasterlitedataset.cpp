@@ -968,7 +968,7 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
     else
     {
         papszTokens = CSLTokenizeStringComplex( 
-                poOpenInfo->pszFilename + 11, ", ", FALSE, FALSE );
+                poOpenInfo->pszFilename + 11, ",", FALSE, FALSE );
         int nTokens = CSLCount(papszTokens);
         if (nTokens == 0)
         {
