@@ -339,6 +339,11 @@ class GTiffDataset : public GDALPamDataset
 
     CPLVirtualMem *pBaseMapping;
     int            nRefBaseMapping;
+    
+    int            bHasDiscardedLsb;
+    std::vector<int> anMaskLsb, anOffsetLsb;
+    void           DiscardLsb(GByte* pabyBuffer, int nBytes, int iBand);
+    void           GetDiscardLsbOption(char** papszOptions);
 
   protected:
     virtual int         CloseDependentDatasets();
@@ -4030,6 +4035,8 @@ GTiffDataset::GTiffDataset()
 
     pBaseMapping = NULL;
     nRefBaseMapping = 0;
+    
+    bHasDiscardedLsb = FALSE;
 }
 
 /************************************************************************/
@@ -4369,7 +4376,7 @@ int GTiffDataset::WriteEncodedTile(uint32 tile, GByte *pabyData,
     ** working buffer.  If not, we can just do a direct write. 
     */
     if (bPreserveDataBuffer 
-        && (TIFFIsByteSwapped(hTIFF) || bNeedTileFill) )
+        && (TIFFIsByteSwapped(hTIFF) || bNeedTileFill || bHasDiscardedLsb) )
     {
         if (cc != nTempWriteBufferSize)
         {
@@ -4421,6 +4428,12 @@ int GTiffDataset::WriteEncodedTile(uint32 tile, GByte *pabyData,
         }
     }
 
+    if( bHasDiscardedLsb != 0 )
+    {
+        int iBand = (nPlanarConfig == PLANARCONFIG_SEPARATE ) ? tile / nBlocksPerBand : -1;
+        DiscardLsb(pabyData, cc, iBand);
+    }
+
     return TIFFWriteEncodedTile(hTIFF, tile, pabyData, cc);
 }
 
@@ -4453,7 +4466,7 @@ int  GTiffDataset::WriteEncodedStrip(uint32 strip, GByte* pabyData,
 /*      byte-swapping is necessary so we use a temporary buffer         */
 /*      before calling it.                                              */
 /* -------------------------------------------------------------------- */
-    if (bPreserveDataBuffer && TIFFIsByteSwapped(hTIFF))
+    if (bPreserveDataBuffer && (TIFFIsByteSwapped(hTIFF) || bHasDiscardedLsb))
     {
         if (cc != nTempWriteBufferSize)
         {
@@ -4461,10 +4474,94 @@ int  GTiffDataset::WriteEncodedStrip(uint32 strip, GByte* pabyData,
             nTempWriteBufferSize = cc;
         }
         memcpy(pabyTempWriteBuffer, pabyData, cc);
-        return TIFFWriteEncodedStrip(hTIFF, strip, pabyTempWriteBuffer, cc);
+        pabyData = (GByte *) pabyTempWriteBuffer;
     }
-    else
-        return TIFFWriteEncodedStrip(hTIFF, strip, pabyData, cc);
+
+    if( bHasDiscardedLsb != 0 )
+    {
+        int iBand = (nPlanarConfig == PLANARCONFIG_SEPARATE ) ? strip / nBlocksPerBand : -1;
+        DiscardLsb(pabyData, cc, iBand);
+    }
+    return TIFFWriteEncodedStrip(hTIFF, strip, pabyData, cc);
+}
+
+/************************************************************************/
+/*                          DiscardLsb()                               */
+/************************************************************************/
+
+void GTiffDataset::DiscardLsb(GByte* pabyBuffer, int nBytes, int iBand)
+{
+    if( nBitsPerSample == 8 )
+    {
+        if( nPlanarConfig == PLANARCONFIG_SEPARATE )
+        {
+            int nMask = anMaskLsb[iBand];
+            int nOffset = anOffsetLsb[iBand];
+            for( int i = 0; i < nBytes; i ++ )
+            {
+                if( pabyBuffer[i] != 255 ) /* we want to keep 255 in case it is alpha */
+                    pabyBuffer[i] = (pabyBuffer[i] & nMask) | nOffset;
+            }
+        }
+        else
+        {
+            for( int i = 0; i < nBytes; i += nBands )
+            {
+                for( int j = 0; j < nBands; j ++ )
+                {
+                    if( pabyBuffer[i + j] != 255 ) /* we want to keep 255 in case it is alpha */
+                        pabyBuffer[i + j] = (pabyBuffer[i + j] &
+                                    anMaskLsb[j]) | anOffsetLsb[j];
+                }
+            }
+        }
+    }
+    else if( nBitsPerSample == 16 )
+    {
+        if( nPlanarConfig == PLANARCONFIG_SEPARATE )
+        {
+            int nMask = anMaskLsb[iBand];
+            int nOffset = anOffsetLsb[iBand];
+            for( int i = 0; i < nBytes/2; i ++ )
+            {
+                ((GUInt16*)pabyBuffer)[i] = (((GUInt16*)pabyBuffer)[i] & nMask) | nOffset;
+            }
+        }
+        else
+        {
+            for( int i = 0; i < nBytes/2; i += nBands )
+            {
+                for( int j = 0; j < nBands; j ++ )
+                {
+                    ((GUInt16*)pabyBuffer)[i + j] = (((GUInt16*)pabyBuffer)[i + j] &
+                                    anMaskLsb[j]) | anOffsetLsb[j];
+                }
+            }
+        }
+    }
+    else if( nBitsPerSample == 32 )
+    {
+        if( nPlanarConfig == PLANARCONFIG_SEPARATE )
+        {
+            int nMask = anMaskLsb[iBand];
+            int nOffset = anOffsetLsb[iBand];
+            for( int i = 0; i < nBytes/4; i ++ )
+            {
+                ((GUInt32*)pabyBuffer)[i] = (((GUInt32*)pabyBuffer)[i] & nMask) | nOffset;
+            }
+        }
+        else
+        {
+            for( int i = 0; i < nBytes/4; i += nBands )
+            {
+                for( int j = 0; j < nBands; j ++ )
+                {
+                    ((GUInt32*)pabyBuffer)[i + j] = (((GUInt32*)pabyBuffer)[i + j] &
+                                    anMaskLsb[j]) | anOffsetLsb[j];
+                }
+            }
+        }
+    }
 }
 
 /************************************************************************/
@@ -8798,6 +8895,64 @@ static int GTiffGetJpegQuality(char** papszOptions)
 }
 
 /************************************************************************/
+/*                        GetDiscardLsbOption()                         */
+/************************************************************************/
+
+void GTiffDataset::GetDiscardLsbOption(char** papszOptions)
+{
+    const char* pszBits = CSLFetchNameValue( papszOptions, "DISCARD_LSB" );
+    if( pszBits == NULL)
+        return;
+    
+    if( nPhotometric == PHOTOMETRIC_PALETTE )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "DISCARD_LSB ignored on a paletted image");
+        return;
+    }
+    if( !(nBitsPerSample == 8 || nBitsPerSample == 16 || nBitsPerSample == 32) )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "DISCARD_LSB ignored on non 8, 16 or 32 bits integer images");
+        return;
+    }
+
+    char** papszTokens = CSLTokenizeString2( pszBits, ",", 0 );
+    if( CSLCount(papszTokens) == 1 )
+    {
+        bHasDiscardedLsb = TRUE;
+        for(int i=0;i<nBands;i++)
+        {
+            int nBits = atoi(papszTokens[0]);
+            anMaskLsb.push_back(~((1 << nBits)-1));
+            if( nBits > 1 )
+                anOffsetLsb.push_back(1 << (nBits-1));
+            else
+                anOffsetLsb.push_back(0);
+        }
+    }
+    else if( CSLCount(papszTokens) == nBands )
+    {
+        bHasDiscardedLsb = TRUE;
+        for(int i=0;i<nBands;i++)
+        {
+            int nBits = atoi(papszTokens[i]);
+            anMaskLsb.push_back(~((1 << nBits)-1));
+            if( nBits > 1 )
+                anOffsetLsb.push_back(1 << (nBits-1));
+            else
+                anOffsetLsb.push_back(0);
+        }
+    }
+    else
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "DISCARD_LSB ignored: wrong number of components");
+    }
+    CSLDestroy(papszTokens);
+}
+
+/************************************************************************/
 /*                            GTiffCreate()                             */
 /*                                                                      */
 /*      Shared functionality between GTiffDataset::Create() and         */
@@ -9513,6 +9668,7 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     poDS->nZLevel = GTiffGetZLevel(papszParmList);
     poDS->nLZMAPreset = GTiffGetLZMAPreset(papszParmList);
     poDS->nJpegQuality = GTiffGetJpegQuality(papszParmList);
+    poDS->GetDiscardLsbOption(papszParmList);
 
 #if !defined(BIGTIFF_SUPPORT)
 /* -------------------------------------------------------------------- */
@@ -10312,6 +10468,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     poDS->nZLevel = GTiffGetZLevel(papszOptions);
     poDS->nLZMAPreset = GTiffGetLZMAPreset(papszOptions);
     poDS->nJpegQuality = GTiffGetJpegQuality(papszOptions);
+    poDS->GetDiscardLsbOption(papszOptions);
 
     if (nCompression == COMPRESSION_ADOBE_DEFLATE)
     {
@@ -11624,7 +11781,9 @@ void GDALRegister_GTiff()
 "   </Option>");
         if (bHasLZW || bHasDEFLATE)
             strcat( szCreateOptions, ""        
-"   <Option name='PREDICTOR' type='int' description='Predictor Type'/>");
+"   <Option name='PREDICTOR' type='int' description='Predictor Type (1=default, 2=horizontal differencing, 3=floating point prediction)'/>");
+        strcat( szCreateOptions, ""
+"   <Option name='DISCARD_LSB' type='string' description='Number of least-significant bits to set to clear as a single value or comma-separated list of values for per-band values'/>" );
         if (bHasJPEG)
         {
             strcat( szCreateOptions, ""

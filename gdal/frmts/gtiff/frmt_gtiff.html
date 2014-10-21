@@ -199,10 +199,15 @@ Set the compression to use.  JPEG should generally only be used with Byte data (
 But starting with GDAL 1.7.0 and provided that GDAL is built with internal libtiff and libjpeg,
 it is possible to read and write TIFF files with 12bit JPEG compressed TIFF files (seen as UInt16 bands with NBITS=12).
 See the <a href="http://trac.osgeo.org/gdal/wiki/TIFF12BitJPEG">"8 and 12 bit JPEG in TIFF"</a> wiki page for more details.
-The CCITT compression should only be used with 1bit (NBITS=1) data.  None is the 
-default.</p></li>
+The CCITT compression should only be used with 1bit (NBITS=1) data.
+LZW and DEFLATE compressions can be used with the PREDICTOR creation option.
+None is the default.</p></li>
 
 <li><p><b>PREDICTOR=[1/2/3]</b>: Set the predictor for LZW or DEFLATE compression. The default is 1 (no predictor), 2 is horizontal differencing and 3 is floating point prediction.</p></li>
+
+<li><p><b>DISCARD_LSB=nbits or nbits_band1,nbits_band2,...nbits_bandN</b>: (GDAL &gt;= 2.0)
+Set the number of least-significant bits to clear, possibly different per band.
+Lossy compression scheme to be best used with PREDICTOR=2 and LZW/DEFLATE compression.</p></li>
 
 <li><p><b>SPARSE_OK=TRUE/FALSE</b> (From GDAL 1.6.0): Should newly created files be allowed to be sparse?  Sparse files have 0 tile/strip offsets for blocks never written and save space; however, most non-GDAL packages cannot read such files.  The default is FALSE.</p></li>
 
