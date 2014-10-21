@@ -2532,13 +2532,7 @@ def ogr_shape_53():
         return 'fail'
 
     # Test REPACK
-    gdal.ErrorReset()
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ret = ds.ExecuteSQL("REPACK ogr_shape_53")
-    gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('failed')
-        return 'fail'
+    ds.ExecuteSQL("REPACK ogr_shape_53")
 
     lyr = None
     ds = None
@@ -3380,13 +3374,13 @@ def ogr_shape_68():
             if ret == 0:
                 gdaltest.post_reason('expected failure on DeleteFeature()')
                 return 'fail'
-            gdal.ErrorReset()
-            gdal.PushErrorHandler('CPLQuietErrorHandler')
+            #gdal.ErrorReset()
+            #gdal.PushErrorHandler('CPLQuietErrorHandler')
             ds.ExecuteSQL( 'REPACK mixedcase' )
-            gdal.PopErrorHandler()
-            if gdal.GetLastErrorMsg() == '':
-                gdaltest.post_reason('expected failure on REPACK mixedcase')
-                return 'fail'
+            #gdal.PopErrorHandler()
+            #if gdal.GetLastErrorMsg() == '':
+            #    gdaltest.post_reason('expected failure on REPACK mixedcase')
+            #    return 'fail'
 
         ds = None
         
@@ -3836,7 +3830,85 @@ def ogr_shape_80():
         return 'fail'
     ds = None
     return 'success'
+    
+###############################################################################
+# Test REPACK after SetFeature() and geometry change (#XXXX)
 
+def ogr_shape_81():
+    
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_81.shp')
+    lyr = ds.CreateLayer('ogr_shape_81')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(0 0,1 1)'))
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_shape_81.shp', update = 1)
+    lyr = ds.GetLayer(0)
+    
+    # Add junk behind our back
+    f = gdal.VSIFOpenL('/vsimem/ogr_shape_81.shp', 'ab')
+    gdal.VSIFWriteL('foo', 1, 3, f)
+    gdal.VSIFCloseL(f)
+    
+    size_before = gdal.VSIStatL('/vsimem/ogr_shape_81.shp').size
+
+    # Should be a no-op
+    ds.ExecuteSQL('REPACK ogr_shape_81')
+    size_after = gdal.VSIStatL('/vsimem/ogr_shape_81.shp').size
+    if size_after != size_before:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    
+    f = lyr.GetNextFeature()
+    f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(2 2,3 3)'))
+    lyr.SetFeature(f)
+    
+    # Should be a no-op
+    ds.ExecuteSQL('REPACK ogr_shape_81')
+    size_after = gdal.VSIStatL('/vsimem/ogr_shape_81.shp').size
+    if size_after != size_before:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Writes a longer geometry. So .shp will be extended
+    f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(2 2,3 3,4 4)'))
+    lyr.SetFeature(f)
+    size_after = gdal.VSIStatL('/vsimem/ogr_shape_81.shp').size
+    if size_after == size_before:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Should do something
+    size_before = size_after
+    ds.ExecuteSQL('REPACK ogr_shape_81')
+    size_after = gdal.VSIStatL('/vsimem/ogr_shape_81.shp').size
+    if size_after == size_before:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Writes a shorter geometry, so .shp shouldn't change size
+    size_before = size_after
+    f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(3 3,4 4)'))
+    lyr.SetFeature(f)
+    size_after = gdal.VSIStatL('/vsimem/ogr_shape_81.shp').size
+    if size_after != size_before:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    size_before = size_after
+
+    # Should do something
+    ds.ExecuteSQL('REPACK ogr_shape_81')
+    size_after = gdal.VSIStatL('/vsimem/ogr_shape_81.shp').size
+    if size_after == size_before:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+    
 ###############################################################################
 # 
 
@@ -3869,6 +3941,7 @@ def ogr_shape_cleanup():
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_74.shp' )
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_78.dbf' )
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_79.shp' )
+    shape_drv.DeleteDataSource( '/vsimem/ogr_shape_81.shp' )
 
     return 'success'
 
@@ -3955,6 +4028,7 @@ gdaltest_list = [
     ogr_shape_78,
     ogr_shape_79,
     ogr_shape_80,
+    ogr_shape_81,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':

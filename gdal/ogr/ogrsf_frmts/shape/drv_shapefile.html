@@ -153,6 +153,9 @@ as well as deleting shapes.  Deleted shapes are marked for deletion in
 the .dbf file, and then ignored by OGR.  To actually remove them permanently
 (resulting in renumbering of FIDs) invoke the SQL 'REPACK &lt;tablename&gt;' via
 the datasource ExecuteSQL() method.</p>
+<p>Starting with GDAL 2.0, REPACK will also result in .shp being rewritten if
+a feature geometry has been modified with SetFeature() and resulted in a change
+of the size the binary encoding of the geometry in the .shp file.</p>
 
 <h2>Field sizes</h2>
 

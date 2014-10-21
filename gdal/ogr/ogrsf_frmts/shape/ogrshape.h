@@ -122,6 +122,7 @@ class OGRShapeLayer : public OGRAbstractProxiedLayer
     void                ClearSpatialFIDs();
 
     int                 bHeaderDirty;
+    int                 bSHPNeedsRepack;
 
     int                 bCheckedForQIX;
     SHPTreeDiskHandle   hQIX;
