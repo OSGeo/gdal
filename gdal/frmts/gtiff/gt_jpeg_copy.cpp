@@ -265,9 +265,6 @@ int GTIFF_CanCopyFromJPEG(GDALDataset* poSrcDS, char** &papszCreateOptions)
         poSrcDS->GetMetadataItem("SOURCE_COLOR_SPACE", "IMAGE_STRUCTURE");
     if (pszSrcColorSpace != NULL && EQUAL(pszSrcColorSpace, "YCbCr"))
         nMCUSize = 16;
-    else if (pszSrcColorSpace != NULL &&
-        (EQUAL(pszSrcColorSpace, "CMYK") || EQUAL(pszSrcColorSpace, "YCbCrK")))
-        return FALSE;
 
     int     nXSize = poSrcDS->GetRasterXSize();
     int     nYSize = poSrcDS->GetRasterYSize();
@@ -277,14 +274,28 @@ int GTIFF_CanCopyFromJPEG(GDALDataset* poSrcDS, char** &papszCreateOptions)
     int bCompatiblePhotometric = (
             pszPhotometric == NULL ||
             (nMCUSize == 16 && EQUAL(pszPhotometric, "YCbCr")) ||
+            (nMCUSize == 8 && nBands == 4 &&
+             poSrcDS->GetRasterBand(1)->GetColorInterpretation() == GCI_CyanBand &&
+             poSrcDS->GetRasterBand(2)->GetColorInterpretation() == GCI_MagentaBand &&
+             poSrcDS->GetRasterBand(3)->GetColorInterpretation() == GCI_YellowBand &&
+             poSrcDS->GetRasterBand(4)->GetColorInterpretation() == GCI_BlackBand) ||
             (nMCUSize == 8 && EQUAL(pszPhotometric, "RGB") && nBands == 3) ||
             (nMCUSize == 8 && EQUAL(pszPhotometric, "MINISBLACK") && nBands == 1) );
     if (!bCompatiblePhotometric)
         return FALSE;
 
+    if ( nBands == 4 && pszPhotometric == NULL &&
+         poSrcDS->GetRasterBand(1)->GetColorInterpretation() == GCI_CyanBand &&
+         poSrcDS->GetRasterBand(2)->GetColorInterpretation() == GCI_MagentaBand &&
+         poSrcDS->GetRasterBand(3)->GetColorInterpretation() == GCI_YellowBand &&
+         poSrcDS->GetRasterBand(4)->GetColorInterpretation() == GCI_BlackBand )
+    {
+        papszCreateOptions = CSLSetNameValue(papszCreateOptions, "PHOTOMETRIC", "CMYK");
+    }
+
     const char* pszInterleave = CSLFetchNameValue(papszCreateOptions, "INTERLEAVE");
     int bCompatibleInterleave = ( pszInterleave == NULL ||
-                                  (nBands == 3 && EQUAL(pszInterleave, "PIXEL")) ||
+                                  (nBands > 1 && EQUAL(pszInterleave, "PIXEL")) ||
                                   nBands == 1 );
     if( !bCompatibleInterleave )
         return FALSE;
