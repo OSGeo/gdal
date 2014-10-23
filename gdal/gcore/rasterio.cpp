@@ -296,11 +296,11 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                         && nPixelSpace == nBufDataSize )
                     {
                         if( eRWFlag == GF_Read )
-                            memcpy( ((GByte *) pData) + iBufOffset + k * nLineSpace,
+                            memcpy( ((GByte *) pData) + iBufOffset + (size_t)k * nLineSpace,
                                     pabySrcBlock + iSrcOffset, nXSpanSize );
                         else
                             memcpy( pabySrcBlock + iSrcOffset, 
-                                    ((GByte *) pData) + iBufOffset + k * nLineSpace, nXSpanSize );
+                                    ((GByte *) pData) + iBufOffset + (size_t)k * nLineSpace, nXSpanSize );
                     }
                     else
                     {
@@ -309,10 +309,10 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                         if( eRWFlag == GF_Read )
                             GDALCopyWords( pabySrcBlock + iSrcOffset,
                                         eDataType, nBandDataSize,
-                                        ((GByte *) pData) + iBufOffset + k * nLineSpace,
+                                        ((GByte *) pData) + iBufOffset + (size_t)k * nLineSpace,
                                         eBufType, nPixelSpace, nXSpan );
                         else
-                            GDALCopyWords( ((GByte *) pData) + iBufOffset + k * nLineSpace,
+                            GDALCopyWords( ((GByte *) pData) + iBufOffset + (size_t)k * nLineSpace,
                                         eBufType, nPixelSpace,
                                         pabySrcBlock + iSrcOffset,
                                         eDataType, nBandDataSize, nXSpan );
