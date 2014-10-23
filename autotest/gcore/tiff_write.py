@@ -4704,6 +4704,10 @@ def tiff_write_123():
 
 def tiff_write_128():
 
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
+        return 'skip'
+
     gdal.SetConfigOption('GDAL_JPEG_TO_RGB', 'NO')
     src_ds = gdal.Open('../gdrivers/data/rgb_ntf_cmyk.jpg')
     gdal.SetConfigOption('GDAL_JPEG_TO_RGB', None)
