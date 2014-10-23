@@ -4700,6 +4700,78 @@ def tiff_write_123():
     return 'success'
 
 ###############################################################################
+# Test lossless copying of a CMYK JPEG into JPEG-in-TIFF (#5712)
+
+def tiff_write_128():
+
+    gdal.SetConfigOption('GDAL_JPEG_TO_RGB', 'NO')
+    src_ds = gdal.Open('../gdrivers/data/rgb_ntf_cmyk.jpg')
+    gdal.SetConfigOption('GDAL_JPEG_TO_RGB', None)
+
+    # Will received implictely CMYK photometric interpreation
+    old_val = gdal.GetConfigOption('GDAL_PAM_ENABLED')
+    gdal.SetConfigOption('GDAL_PAM_ENABLED', 'NO')
+    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_128.tif', src_ds, options = [ 'COMPRESS=JPEG' ] )
+    ds = None
+    gdal.SetConfigOption('GDAL_PAM_ENABLED', old_val)
+
+    # We need to reopen in raw to avoig automatic CMYK->RGBA to trigger
+    ds = gdal.Open('GTIFF_RAW:/vsimem/tiff_write_128.tif')
+    for i in range(4):
+        if src_ds.GetRasterBand(i+1).GetColorInterpretation() != ds.GetRasterBand(i+1).GetColorInterpretation():
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if src_ds.GetRasterBand(i+1).Checksum() != ds.GetRasterBand(i+1).Checksum():
+            gdaltest.post_reason('fail')
+            return 'fail'
+    ds = None
+
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_128.tif')
+    
+    # Try with explicit CMYK photometric interpreation
+    old_val = gdal.GetConfigOption('GDAL_PAM_ENABLED')
+    gdal.SetConfigOption('GDAL_PAM_ENABLED', 'NO')
+    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_128.tif', src_ds, options = [ 'COMPRESS=JPEG', 'PHOTOMETRIC=CMYK' ] )
+    ds = None
+    gdal.SetConfigOption('GDAL_PAM_ENABLED', old_val)
+
+    # We need to reopen in raw to avoig automatic CMYK->RGBA to trigger
+    ds = gdal.Open('GTIFF_RAW:/vsimem/tiff_write_128.tif')
+    for i in range(4):
+        if src_ds.GetRasterBand(i+1).GetColorInterpretation() != ds.GetRasterBand(i+1).GetColorInterpretation():
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if src_ds.GetRasterBand(i+1).Checksum() != ds.GetRasterBand(i+1).Checksum():
+            gdaltest.post_reason('fail')
+            return 'fail'
+    ds = None
+
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_128.tif')
+    
+    # Try with more neutral colorspace in the case the source JPEG is not really CMYK (yes that happens !)
+    old_val = gdal.GetConfigOption('GDAL_PAM_ENABLED')
+    gdal.SetConfigOption('GDAL_PAM_ENABLED', 'NO')
+    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_128.tif', src_ds, options = [ 'COMPRESS=JPEG', 'PHOTOMETRIC=MINISBLACK' ] )
+    ds = None
+    gdal.SetConfigOption('GDAL_PAM_ENABLED', old_val)
+
+    # Here we can reopen without GTIFF_RAW trick
+    ds = gdal.Open('/vsimem/tiff_write_128.tif')
+    for i in range(4):
+        # The color interpretation will NOT be CMYK
+        if src_ds.GetRasterBand(i+1).GetColorInterpretation() == ds.GetRasterBand(i+1).GetColorInterpretation():
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if src_ds.GetRasterBand(i+1).Checksum() != ds.GetRasterBand(i+1).Checksum():
+            gdaltest.post_reason('fail')
+            return 'fail'
+    ds = None
+
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_128.tif')
+
+    return 'success'
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 def tiff_write_api_proxy():
@@ -4851,6 +4923,7 @@ gdaltest_list = [
     tiff_write_121,
     tiff_write_122,
     tiff_write_123,
+    tiff_write_128,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 
