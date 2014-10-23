@@ -49,10 +49,6 @@ void LC_Error(short feil_nr, const char *logtx, const char *vartx)
       case 4:  sprintf(szErrMsg,"%s","Alvorlig feil avslutt programmet! \n\n");break;
       default: szErrMsg[0]='\0';
    }
-
-   if (strategi > 2) {
-      Beep(100,500);
-   }
 }
 
 
