@@ -62,6 +62,7 @@ OGRJMLLayer::OGRJMLLayer( const char* pszLayerName,
     nFeatureTabLength = 0;
 
     nWithoutEventCounter = 0;
+    nDataHandlerCounter = 0;
     currentDepth = 0;
     bStopParsing = FALSE;
     bHasReadSchema = FALSE;
