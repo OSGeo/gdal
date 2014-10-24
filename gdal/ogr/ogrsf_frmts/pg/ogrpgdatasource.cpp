@@ -2425,7 +2425,10 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
 
     FlushSoftTransaction();
 
-    if( EQUALN(pszSQLCommand,"VACUUM",6) 
+    /* We likely need to start a transaction just for a SELECT since we create */
+    /* a cursor that requires a transaction. Other commands such as VACUUM or */
+    /* CREATE DATABASE are forbidden in transactions. */
+    if( EQUALN(pszSQLCommand, "SELECT", 6) == FALSE
         || SoftStartTransaction() == OGRERR_NONE  )
     {
         if (EQUALN(pszSQLCommand, "SELECT", 6) == FALSE ||
