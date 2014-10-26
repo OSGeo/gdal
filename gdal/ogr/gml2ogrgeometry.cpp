@@ -2051,20 +2051,26 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
                                         "Failed Union for TopoSurface" );
                             return NULL;
                         }
-                        poTS = (OGRMultiPolygon *)poUnion;
+                        if( wkbFlatten( poUnion->getGeometryType()) == wkbPolygon )
+                        {
+                            /* forcing to be a MultiPolygon */
+                            poTS = new OGRMultiPolygon();
+                            poTS->addGeometryDirectly(poUnion);
+                        }
+                        else if( wkbFlatten( poUnion->getGeometryType()) == wkbMultiPolygon )
+                            poTS = (OGRMultiPolygon *)poUnion;
+                        else
+                        {
+                            CPLError( CE_Failure, CPLE_AppDefined,
+                                        "Unexpected geometry type resulting from Union for TopoSurface" );
+                            delete poUnion;
+                            return NULL;
+                        }
                     }
                 }
                 delete poFaceCollectionGeom;
                 delete poCollectedGeom;
               }
-            }
-
-            if( wkbFlatten( poTS->getGeometryType()) == wkbPolygon )
-            {
-                /* forcing to be a MultiPolygon */
-                OGRGeometry *poOldTS = poTS;
-                poTS = new OGRMultiPolygon();
-                poTS->addGeometryDirectly(poOldTS);
             }
 
             return poTS;
