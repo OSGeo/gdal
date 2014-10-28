@@ -391,7 +391,16 @@ void ImdReader::ReadModel(const char *pszFilename) {
             if (psEntry->eType != CXT_Attribute) //ignore BID
             {
                 //CPLDebug( "OGR_ILI", "Node tag: '%s'", psEntry->pszValue);
-                if( EQUAL(psEntry->pszValue, "IlisMeta07.ModelData.TransferElement") && !EQUAL(modelName, "MODEL.INTERLIS"))
+                if( iliVersion == 1 && EQUAL(psEntry->pszValue, "IlisMeta07.ModelData.Ili1TransferElement") && !EQUAL(modelName, "MODEL.INTERLIS"))
+                {
+                    const char* psClassRef = CPLGetXMLValue( psEntry, "Ili1TransferClass.REF", NULL );
+                    const char* psElementRef = CPLGetXMLValue( psEntry, "Ili1RefAttr.REF", NULL );
+                    int iOrderPos = atoi(CPLGetXMLValue( psEntry, "Ili1RefAttr.ORDER_POS", "0" ))-1;
+                    IliClass* psParentClass = oClasses[oTidLookup[psClassRef]];
+                    CPLXMLNode* psElementNode = oTidLookup[psElementRef];
+                    psParentClass->AddFieldNode(psElementNode, iOrderPos);
+                }
+                else if( EQUAL(psEntry->pszValue, "IlisMeta07.ModelData.TransferElement") && !EQUAL(modelName, "MODEL.INTERLIS"))
                 {
                     const char* psClassRef = CPLGetXMLValue( psEntry, "TransferClass.REF", NULL );
                     const char* psElementRef = CPLGetXMLValue( psEntry, "TransferElement.REF", NULL );
