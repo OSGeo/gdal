@@ -541,7 +541,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     // Frank - may need to talk this over
     value = poDS->GetKeyword("IsisCube.Mapping.LatitudeType");
-    if (EQUAL( value, "\"Planetocentric\"" ))
+    if (EQUAL( value, "Planetocentric" ))
         bIsGeographic = FALSE; 
      
     //Set oSRS projection and parameters
