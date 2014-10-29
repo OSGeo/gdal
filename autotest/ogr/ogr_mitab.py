@@ -1439,6 +1439,33 @@ def ogr_mitab_31():
     return ogr_mitab_30(update = 1)
 
 ###############################################################################
+# Check read support of non-spatial .tab/.data without .map or .id (#5718)
+# We only check read-only behaviour though.
+
+def ogr_mitab_32():
+
+    for update in (0,1):
+        ds = ogr.Open('data/aspatial-table.tab', update = update)
+        lyr = ds.GetLayer(0)
+        if lyr.GetFeatureCount() != 2:
+            print(update)
+            gdaltest.post_reason('fail')
+            return 'fail'
+        f = lyr.GetNextFeature()
+        if f.GetField('a') != 1 or f.GetField('b') != 2 or f.GetField('d') != 'hello':
+            print(update)
+            gdaltest.post_reason('fail')
+            return 'fail'
+        f = lyr.GetFeature(2)
+        if f.GetField('a') != 4:
+            print(update)
+            gdaltest.post_reason('fail')
+            return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_mitab_cleanup():
@@ -1484,6 +1511,7 @@ gdaltest_list = [
     ogr_mitab_29,
     ogr_mitab_30,
     ogr_mitab_31,
+    ogr_mitab_32,
     ogr_mitab_cleanup
     ]
 

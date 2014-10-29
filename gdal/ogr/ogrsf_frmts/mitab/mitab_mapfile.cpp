@@ -274,7 +274,7 @@ int TABMAPFile::Open(const char *pszFname, const char* pszAccess, GBool bNoError
  * be used.  They will behave as if the .ID file contained only null
  * references, so all object will look like they have NONE geometries.
  *
- * Returns 0 on success, -1 on error.
+ * Returns 0 on success, 1 when the .map file does not exist, -1 on error.
  **********************************************************************/
 int TABMAPFile::Open(const char *pszFname, TABAccess eAccess,
                      GBool bNoErrorMsg /* = FALSE */)
@@ -1138,11 +1138,11 @@ int   TABMAPFile::MoveToObjId(int nObjId)
     m_bLastOpWasRead = TRUE;
 
     /*-----------------------------------------------------------------
-     * In read access mode, since the .MAP/.ID are optional, if the 
+     * In non creation mode, since the .MAP/.ID are optional, if the 
      * file is not opened then we can still act as if one existed and
      * make any object id look like a TAB_GEOM_NONE
      *----------------------------------------------------------------*/
-    if (m_fp == NULL && m_eAccessMode == TABRead)
+    if (m_fp == NULL && m_eAccessMode != TABWrite)
     {
         CPLAssert(m_poIdIndex == NULL && m_poCurObjBlock == NULL);
         m_nCurObjPtr = 0;
