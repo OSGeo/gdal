@@ -405,7 +405,7 @@ int     TABRawBinBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
     else
         m_nFileOffset = 0;
     
-    if( m_nFileSize < 0 && m_eAccess == TABReadWrite )
+    if( m_fp != NULL && m_nFileSize < 0 && m_eAccess == TABReadWrite )
     {
         int nCurPos = (int)VSIFTellL(m_fp);
         VSIFSeekL(fpSrc, 0, SEEK_END);
