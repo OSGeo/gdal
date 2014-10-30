@@ -405,6 +405,9 @@ void OGRMySQLTableLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 void OGRMySQLTableLayer::BuildWhere()
 
 {
+    // don't mess up decimal separator 
+    CPLLocaleC oLocaleForcer; 
+
     CPLFree( pszWHERE );
     pszWHERE = (char*)CPLMalloc(500 + ((pszQuery) ? strlen(pszQuery) : 0));
     pszWHERE[0] = '\0';
