@@ -2510,20 +2510,17 @@ else
   fi
 
   MYSQL_VERSION="`$MYSQL_CONFIG --version`"
+  MYSQL_MAJOR_VERSION=${MYSQL_VERSION%%'.'*}
 
-  case ${MYSQL_VERSION} in 
-    [[0-3]*]) 
-      HAVE_MYSQL=no
-      AC_MSG_RESULT([no, mysql is pre-4.x])
-	;;
-    *)
+  if test $MYSQL_MAJOR_VERSION -le 3 ; then
+    HAVE_MYSQL=no
+    AC_MSG_RESULT([no, mysql is pre-4.x])
+  else
       HAVE_MYSQL=yes
       MYSQL_LIB="`$MYSQL_CONFIG --libs`"
       MYSQL_INC="`$MYSQL_CONFIG --include`"
-      AC_MSG_RESULT([yes])
-
-	;;
-  esac
+      AC_MSG_RESULT([yes]) 
+  fi
 fi
 
 AC_SUBST(HAVE_MYSQL,$HAVE_MYSQL)
