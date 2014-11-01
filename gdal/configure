@@ -23324,22 +23324,19 @@ $as_echo "no" >&6; }
   fi
 
   MYSQL_VERSION="`$MYSQL_CONFIG --version`"
+  MYSQL_MAJOR_VERSION=${MYSQL_VERSION%%'.'*}
 
-  case ${MYSQL_VERSION} in
-    [0-3]*)
-      HAVE_MYSQL=no
-      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no, mysql is pre-4.x" >&5
+  if test $MYSQL_MAJOR_VERSION -le 3 ; then
+    HAVE_MYSQL=no
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no, mysql is pre-4.x" >&5
 $as_echo "no, mysql is pre-4.x" >&6; }
-	;;
-    *)
+  else
       HAVE_MYSQL=yes
       MYSQL_LIB="`$MYSQL_CONFIG --libs`"
       MYSQL_INC="`$MYSQL_CONFIG --include`"
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-
-	;;
-  esac
+  fi
 fi
 
 HAVE_MYSQL=$HAVE_MYSQL
