@@ -237,6 +237,9 @@ OGRFeature *OGRNASLayer::GetNextFeature()
             }
         }
 
+        poOGRFeature->SetGeometryDirectly( poGeom );
+        poGeom = NULL;
+
 /* -------------------------------------------------------------------- */
 /*      Test against the attribute query.                               */
 /* -------------------------------------------------------------------- */
@@ -250,14 +253,6 @@ OGRFeature *OGRNASLayer::GetNextFeature()
 /* -------------------------------------------------------------------- */
 /*      Wow, we got our desired feature. Return it.                     */
 /* -------------------------------------------------------------------- */
-        if( poGeom && poOGRFeature->SetGeometryDirectly( poGeom ) != OGRERR_NONE )
-        {
-            int iId = poNASFeature->GetClass()->GetPropertyIndex( "gml_id" );
-            const GMLProperty *poIdProp = poNASFeature->GetProperty(iId);
-            CPLError( CE_Warning, CPLE_AppDefined, "NAS: could not set geometry (gml_id:%s)",
-                      poIdProp && poIdProp->nSubProperties>0 && poIdProp->papszSubProperties[0] ? poIdProp->papszSubProperties[0] : "(null)" );
-        }
-
         delete poNASFeature;
 
         return poOGRFeature;
