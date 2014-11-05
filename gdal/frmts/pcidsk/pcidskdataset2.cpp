@@ -1730,11 +1730,11 @@ GDALDataset *PCIDSK2Dataset::LLOpen( const char *pszFilename,
                                      char** papszSiblingFiles )
 
 {
+    PCIDSK2Dataset   *poDS = NULL;
     try {
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-        PCIDSK2Dataset   *poDS = NULL;
 
         poDS = new PCIDSK2Dataset();
 
@@ -1842,6 +1842,11 @@ GDALDataset *PCIDSK2Dataset::LLOpen( const char *pszFilename,
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "PCIDSK SDK Failure in Open(), unexpected exception." );
     }
+
+/* -------------------------------------------------------------------- */
+/*      In case of exception, close dataset                             */
+/* -------------------------------------------------------------------- */
+    delete poDS;
 
     return NULL;
 }
