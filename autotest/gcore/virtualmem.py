@@ -59,6 +59,11 @@ def virtualmem_1():
         ar_flat_bsq = ds.GetVirtualMemArray(gdal.GF_Read,0,0,bufxsize,bufysize,bufxsize,bufysize,gdal.GDT_Int16,[1,2,3],1,1024*1024,0)
     except:
         if not sys.platform.startswith('linux'):
+            # Also try GetTiledVirtualMemArray() robustness (#5728)
+            try:
+                ar_tiled_band1 = ds.GetRasterBand(1).GetTiledVirtualMemArray(gdal.GF_Read,0,0,bufxsize,bufysize,tilexsize,tileysize,gdal.GDT_Int16,1024*1024)
+            except:
+                pass
             return 'skip'
 
     ar_flat_band1 = ds.GetRasterBand(1).GetVirtualMemArray(gdal.GF_Read,0,0,bufxsize,bufysize,bufxsize,bufysize,gdal.GDT_Int16,1024*1024,0)
