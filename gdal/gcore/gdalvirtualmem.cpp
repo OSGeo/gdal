@@ -1245,6 +1245,14 @@ static CPLVirtualMem* GDALGetTiledVirtualMem( GDALDatasetH hDS,
     GDALTiledVirtualMem* psParams;
     (void) papszOptions;
 
+    size_t nPageSize = CPLGetPageSize();
+    if( nPageSize == 0 )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+             "GDALGetTiledVirtualMem() unsupported on this operating system / configuration");
+        return NULL;
+    }
+
     int nRasterXSize = (hDS) ? GDALGetRasterXSize(hDS) : GDALGetRasterBandXSize(hBand);
     int nRasterYSize = (hDS) ? GDALGetRasterYSize(hDS) : GDALGetRasterBandYSize(hBand);
 
@@ -1275,7 +1283,7 @@ static CPLVirtualMem* GDALGetTiledVirtualMem( GDALDatasetH hDS,
     size_t nPageSizeHint = nTileXSize * nTileYSize * nDataTypeSize;
     if( eTileOrganization != GTO_BSQ )
         nPageSizeHint *= nBandCount;
-    if( (nPageSizeHint % CPLGetPageSize()) != 0 )
+    if( (nPageSizeHint % nPageSize) != 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Tile dimensions incompatible with page size");
