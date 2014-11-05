@@ -1466,6 +1466,86 @@ def ogr_mitab_32():
     return 'success'
 
 ###############################################################################
+# Test opening and modifying a file created with MapInfo that consists of
+# a single object block, without index block
+
+def ogr_mitab_33():
+
+    for update in (0,1):
+        ds = ogr.Open('data/single_point_mapinfo.tab', update = update)
+        lyr = ds.GetLayer(0)
+        if lyr.GetFeatureCount() != 1:
+            print(update)
+            gdaltest.post_reason('fail')
+            return 'fail'
+        f = lyr.GetNextFeature()
+        if f.GetField('toto') != '':
+            print(update)
+            gdaltest.post_reason('fail')
+            return 'fail'
+    ds = None
+
+    # Test adding a new object
+    shutil.copy('data/single_point_mapinfo.tab', 'tmp')
+    shutil.copy('data/single_point_mapinfo.dat', 'tmp')
+    shutil.copy('data/single_point_mapinfo.id', 'tmp')
+    shutil.copy('data/single_point_mapinfo.map', 'tmp')
+    
+    ds = ogr.Open('tmp/single_point_mapinfo.tab', update = 1)
+    lyr = ds.GetLayer(0)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(1363180 7509810)'))
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    ds = ogr.Open('tmp/single_point_mapinfo.tab')
+    lyr = ds.GetLayer(0)
+    if lyr.GetFeatureCount() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    # Test replacing the existing object
+    shutil.copy('data/single_point_mapinfo.tab', 'tmp')
+    shutil.copy('data/single_point_mapinfo.dat', 'tmp')
+    shutil.copy('data/single_point_mapinfo.id', 'tmp')
+    shutil.copy('data/single_point_mapinfo.map', 'tmp')
+    
+    ds = ogr.Open('tmp/single_point_mapinfo.tab', update = 1)
+    lyr = ds.GetLayer(0)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(1)
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(1363180 7509810)'))
+    lyr.SetFeature(f)
+    f = None
+    ds = None
+
+    ds = ogr.Open('tmp/single_point_mapinfo.tab')
+    lyr = ds.GetLayer(0)
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    ogr.GetDriverByName('MapInfo File').DeleteDataSource('tmp/single_point_mapinfo.tab')
+
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_mitab_cleanup():
@@ -1512,6 +1592,7 @@ gdaltest_list = [
     ogr_mitab_30,
     ogr_mitab_31,
     ogr_mitab_32,
+    ogr_mitab_33,
     ogr_mitab_cleanup
     ]
 
