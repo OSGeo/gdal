@@ -448,18 +448,25 @@ int TABMAPFile::Open(const char *pszFname, TABAccess eAccess,
         {
             TABRawBinBlock *poBlock;
             poBlock = GetIndexObjectBlock( m_poHeader->m_nFirstIndexBlock );
-            if( poBlock == NULL || poBlock->GetBlockType() != TABMAP_INDEX_BLOCK )
+            if( poBlock == NULL || (poBlock->GetBlockType() != TABMAP_INDEX_BLOCK &&
+                                    poBlock->GetBlockType() != TABMAP_OBJECT_BLOCK) )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Cannot find first index block at offset %d",
                          m_poHeader->m_nFirstIndexBlock );
                 delete poBlock;
             }
-            else
+            else if( poBlock->GetBlockType() == TABMAP_INDEX_BLOCK )
             {
                 m_poSpIndex = (TABMAPIndexBlock *)poBlock;
                 m_poSpIndex->SetMBR(m_poHeader->m_nXMin, m_poHeader->m_nYMin,
                                     m_poHeader->m_nXMax, m_poHeader->m_nYMax);
+            }
+            else /* if( poBlock->GetBlockType() == TABMAP_OBJECT_BLOCK ) */
+            {
+                /* This can happen if the file created by MapInfo contains just */
+                /* a few objects */
+                delete poBlock;
             }
         }
     }
@@ -1504,7 +1511,28 @@ int   TABMAPFile::PrepareNewObjViaSpatialIndex(TABMAPObjHdr *poObjHdr)
                                   m_oBlockManager.AllocNewBlock("INDEX"));
         m_poSpIndex->SetMAPBlockManagerRef(&m_oBlockManager);
 
-        m_poHeader->m_nFirstIndexBlock = m_poSpIndex->GetNodeBlockPtr();
+        if( m_eAccessMode == TABReadWrite && m_poHeader->m_nFirstIndexBlock != 0 )
+        {
+            /* This can happen if the file created by MapInfo contains just */
+            /* a few objects */
+            TABRawBinBlock *poBlock;
+            poBlock = GetIndexObjectBlock( m_poHeader->m_nFirstIndexBlock );
+            CPLAssert( poBlock != NULL && poBlock->GetBlockType() == TABMAP_OBJECT_BLOCK);
+            int nStartAddress = poBlock->GetStartAddress();
+            delete poBlock;
+            if (m_poSpIndex->AddEntry(m_poHeader->m_nXMin, m_poHeader->m_nYMin,
+                                      m_poHeader->m_nXMax, m_poHeader->m_nYMax,
+                                      m_poHeader->m_nFirstIndexBlock) != 0)
+                return -1;
+            m_poHeader->m_nFirstIndexBlock = nStartAddress;
+
+            delete m_poCurObjBlock;
+            m_poCurObjBlock = NULL;
+        }
+        else
+        {
+            m_poHeader->m_nFirstIndexBlock = m_poSpIndex->GetNodeBlockPtr();
+        }
 
         /* We'll also need to create an object data block (later) */
         nObjBlockForInsert = -1;
