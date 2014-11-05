@@ -43,6 +43,9 @@ using namespace PCIDSK;
 extern "C" {
 #include "jpeglib.h"
 }
+#ifndef TRUE
+#define TRUE 1
+#endif
 
 static void _DummyMgrMethod( j_compress_ptr /*pUnused*/ ) {}
 static void _DummySrcMgrMethod( j_decompress_ptr /*pUnused*/ ) {}
