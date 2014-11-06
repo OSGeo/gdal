@@ -1802,7 +1802,9 @@ static void CopyBandInfo( GDALRasterBand * poSrcBand, GDALRasterBand * poDstBand
     }
 
     poDstBand->SetCategoryNames( poSrcBand->GetCategoryNames() );
-    if( !EQUAL(poSrcBand->GetUnitType(),"") )
+
+    // Copy unit only if the range of pixel values is not modified
+    if( bCanCopyStatsMetadata && bCopyScale && !EQUAL(poSrcBand->GetUnitType(),"") )
         poDstBand->SetUnitType( poSrcBand->GetUnitType() );
 }
 
