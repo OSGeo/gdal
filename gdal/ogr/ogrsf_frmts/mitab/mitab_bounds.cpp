@@ -1038,7 +1038,7 @@ static const MapInfoBoundsInfo gasBoundsList[] = {
 };
 
 
-#define TAB_EQUAL(a, b) (((a)<(b) ? ((b)-(a)) : ((a)-(b))) < 1e-6)
+#define TAB_EQUAL(a, b, eps) (fabs((a)-(b)) < eps)
 
 static char szPreviousMitabBoundsFile[2048] = { 0 };
 
@@ -1076,79 +1076,88 @@ GBool MITABLookupCoordSysBounds(TABProjInfo *psCS,
         strcpy(szPreviousMitabBoundsFile, "");
     }
 
-    /*-----------------------------------------------------------------
-     * Lookup table...
-     * Lookup external file if one was loaded, then lookup internal table.
-     *
-     * Note that entries in lookup table with 0xff for projId, UnitsId,
-     * means ignore that param, and 0xff in ellipsoidId means ignore the
-     * whole datum.
-     *----------------------------------------------------------------*/
-    ppsList = gpapsExtBoundsList;
-    for( ; !bFound && ppsList && *ppsList; ppsList++)
+    for(int iLoop=0; !bFound && iLoop < 2; iLoop++)
     {
-        TABProjInfo *p = &((*ppsList)->sProj);
+        /* MapInfo uses a hack to differentiate some SRS that have the same */
+        /* definition, but different bounds, e.g. Lambet 93 France with French */
+        /* Bounds or with European bounds. It alters slightly one of the projection */
+        /* parameters, e.g. std_parallel_1 = 49.00000000001 or 49.00000000002 */
+        double eps = (iLoop == 0) ? 1e-12 : 1e-6;
 
-        if (p->nProjId == psCS->nProjId &&
-            (p->nUnitsId == 0xff || p->nUnitsId == psCS->nUnitsId) &&
-            (p->nEllipsoidId == 0xff ||
-             (p->nEllipsoidId == psCS->nEllipsoidId &&
-              ( (p->nDatumId > 0 && p->nDatumId == psCS->nDatumId) ||
-                ((p->nDatumId <= 0 || psCS->nDatumId <= 0) &&
-                 TAB_EQUAL(p->dDatumShiftX, psCS->dDatumShiftX) &&
-                 TAB_EQUAL(p->dDatumShiftY, psCS->dDatumShiftY) &&
-                 TAB_EQUAL(p->dDatumShiftZ, psCS->dDatumShiftZ) &&
-                 TAB_EQUAL(p->adDatumParams[0], psCS->adDatumParams[0]) &&
-                 TAB_EQUAL(p->adDatumParams[1], psCS->adDatumParams[1]) &&
-                 TAB_EQUAL(p->adDatumParams[2], psCS->adDatumParams[2]) &&
-                 TAB_EQUAL(p->adDatumParams[3], psCS->adDatumParams[3]) &&
-                 TAB_EQUAL(p->adDatumParams[4], psCS->adDatumParams[4]) )))) &&
-            (TAB_EQUAL(p->adProjParams[0], psCS->adProjParams[0]) &&
-             TAB_EQUAL(p->adProjParams[1], psCS->adProjParams[1]) &&
-             TAB_EQUAL(p->adProjParams[2], psCS->adProjParams[2]) &&
-             TAB_EQUAL(p->adProjParams[3], psCS->adProjParams[3]) &&
-             TAB_EQUAL(p->adProjParams[4], psCS->adProjParams[4]) &&
-             TAB_EQUAL(p->adProjParams[5], psCS->adProjParams[5]) )  )
+        /*-----------------------------------------------------------------
+        * Lookup table...
+        * Lookup external file if one was loaded, then lookup internal table.
+        *
+        * Note that entries in lookup table with 0xff for projId, UnitsId,
+        * means ignore that param, and 0xff in ellipsoidId means ignore the
+        * whole datum.
+        *----------------------------------------------------------------*/
+        ppsList = gpapsExtBoundsList;
+        for( ; !bFound && ppsList && *ppsList; ppsList++)
         {
-            dXMin = (*ppsList)->dXMin;
-            dYMin = (*ppsList)->dYMin;
-            dXMax = (*ppsList)->dXMax;
-            dYMax = (*ppsList)->dYMax;
-            bFound = TRUE;
+            TABProjInfo *p = &((*ppsList)->sProj);
+
+            if (p->nProjId == psCS->nProjId &&
+                (p->nUnitsId == 0xff || p->nUnitsId == psCS->nUnitsId) &&
+                (p->nEllipsoidId == 0xff ||
+                (p->nEllipsoidId == psCS->nEllipsoidId &&
+                ( (p->nDatumId > 0 && p->nDatumId == psCS->nDatumId) ||
+                    ((p->nDatumId <= 0 || psCS->nDatumId <= 0) &&
+                    TAB_EQUAL(p->dDatumShiftX, psCS->dDatumShiftX, eps) &&
+                    TAB_EQUAL(p->dDatumShiftY, psCS->dDatumShiftY, eps) &&
+                    TAB_EQUAL(p->dDatumShiftZ, psCS->dDatumShiftZ, eps) &&
+                    TAB_EQUAL(p->adDatumParams[0], psCS->adDatumParams[0], eps) &&
+                    TAB_EQUAL(p->adDatumParams[1], psCS->adDatumParams[1], eps) &&
+                    TAB_EQUAL(p->adDatumParams[2], psCS->adDatumParams[2], eps) &&
+                    TAB_EQUAL(p->adDatumParams[3], psCS->adDatumParams[3], eps) &&
+                    TAB_EQUAL(p->adDatumParams[4], psCS->adDatumParams[4], eps) )))) &&
+                (TAB_EQUAL(p->adProjParams[0], psCS->adProjParams[0], eps) &&
+                TAB_EQUAL(p->adProjParams[1], psCS->adProjParams[1], eps) &&
+                TAB_EQUAL(p->adProjParams[2], psCS->adProjParams[2], eps) &&
+                TAB_EQUAL(p->adProjParams[3], psCS->adProjParams[3], eps) &&
+                TAB_EQUAL(p->adProjParams[4], psCS->adProjParams[4], eps) &&
+                TAB_EQUAL(p->adProjParams[5], psCS->adProjParams[5], eps) )  )
+            {
+                dXMin = (*ppsList)->dXMin;
+                dYMin = (*ppsList)->dYMin;
+                dXMax = (*ppsList)->dXMax;
+                dYMax = (*ppsList)->dYMax;
+                bFound = TRUE;
+            }
         }
-    }
 
-    psList = gasBoundsList;
-    for( ; !bFound && psList->sProj.nProjId!=0xff; psList++)
-    {
-        const TABProjInfo *p = &(psList->sProj);
-
-        if (p->nProjId == psCS->nProjId &&
-            (p->nUnitsId == 0xff || p->nUnitsId == psCS->nUnitsId) &&
-            (p->nEllipsoidId == 0xff ||
-             (p->nEllipsoidId == psCS->nEllipsoidId &&
-              ( (p->nDatumId > 0 && p->nDatumId == psCS->nDatumId) ||
-                ((p->nDatumId <= 0 || psCS->nDatumId <= 0) &&
-                 TAB_EQUAL(p->dDatumShiftX, psCS->dDatumShiftX) &&
-                 TAB_EQUAL(p->dDatumShiftY, psCS->dDatumShiftY) &&
-                 TAB_EQUAL(p->dDatumShiftZ, psCS->dDatumShiftZ) &&
-                 TAB_EQUAL(p->adDatumParams[0], psCS->adDatumParams[0]) &&
-                 TAB_EQUAL(p->adDatumParams[1], psCS->adDatumParams[1]) &&
-                 TAB_EQUAL(p->adDatumParams[2], psCS->adDatumParams[2]) &&
-                 TAB_EQUAL(p->adDatumParams[3], psCS->adDatumParams[3]) &&
-                 TAB_EQUAL(p->adDatumParams[4], psCS->adDatumParams[4]) )))) &&
-            (TAB_EQUAL(p->adProjParams[0], psCS->adProjParams[0]) &&
-             TAB_EQUAL(p->adProjParams[1], psCS->adProjParams[1]) &&
-             TAB_EQUAL(p->adProjParams[2], psCS->adProjParams[2]) &&
-             TAB_EQUAL(p->adProjParams[3], psCS->adProjParams[3]) &&
-             TAB_EQUAL(p->adProjParams[4], psCS->adProjParams[4]) &&
-             TAB_EQUAL(p->adProjParams[5], psCS->adProjParams[5]) )  )
+        psList = gasBoundsList;
+        for( ; !bFound && psList->sProj.nProjId!=0xff; psList++)
         {
-            dXMin = psList->dXMin;
-            dYMin = psList->dYMin;
-            dXMax = psList->dXMax;
-            dYMax = psList->dYMax;
-            bFound = TRUE;
+            const TABProjInfo *p = &(psList->sProj);
+
+            if (p->nProjId == psCS->nProjId &&
+                (p->nUnitsId == 0xff || p->nUnitsId == psCS->nUnitsId) &&
+                (p->nEllipsoidId == 0xff ||
+                (p->nEllipsoidId == psCS->nEllipsoidId &&
+                ( (p->nDatumId > 0 && p->nDatumId == psCS->nDatumId) ||
+                    ((p->nDatumId <= 0 || psCS->nDatumId <= 0) &&
+                    TAB_EQUAL(p->dDatumShiftX, psCS->dDatumShiftX, eps) &&
+                    TAB_EQUAL(p->dDatumShiftY, psCS->dDatumShiftY, eps) &&
+                    TAB_EQUAL(p->dDatumShiftZ, psCS->dDatumShiftZ, eps) &&
+                    TAB_EQUAL(p->adDatumParams[0], psCS->adDatumParams[0], eps) &&
+                    TAB_EQUAL(p->adDatumParams[1], psCS->adDatumParams[1], eps) &&
+                    TAB_EQUAL(p->adDatumParams[2], psCS->adDatumParams[2], eps) &&
+                    TAB_EQUAL(p->adDatumParams[3], psCS->adDatumParams[3], eps) &&
+                    TAB_EQUAL(p->adDatumParams[4], psCS->adDatumParams[4], eps) )))) &&
+                (TAB_EQUAL(p->adProjParams[0], psCS->adProjParams[0], eps) &&
+                TAB_EQUAL(p->adProjParams[1], psCS->adProjParams[1], eps) &&
+                TAB_EQUAL(p->adProjParams[2], psCS->adProjParams[2], eps) &&
+                TAB_EQUAL(p->adProjParams[3], psCS->adProjParams[3], eps) &&
+                TAB_EQUAL(p->adProjParams[4], psCS->adProjParams[4], eps) &&
+                TAB_EQUAL(p->adProjParams[5], psCS->adProjParams[5], eps) )  )
+            {
+                dXMin = psList->dXMin;
+                dYMin = psList->dYMin;
+                dXMax = psList->dXMax;
+                dYMax = psList->dYMax;
+                bFound = TRUE;
+            }
         }
     }
 
