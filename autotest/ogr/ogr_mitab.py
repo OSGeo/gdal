@@ -644,16 +644,52 @@ def ogr_mitab_20():
         return 'skip'
 
     # Pass i==0: without MITAB_BOUNDS_FILE
-    # Pass i==1: with MITAB_BOUNDS_FILE : first load
-    # Pass i==2: with MITAB_BOUNDS_FILE : should use already loaded file
+    # Pass i==1: with MITAB_BOUNDS_FILE and French bounds : first load
+    # Pass i==2: with MITAB_BOUNDS_FILE and French bounds : should use already loaded file
     # Pass i==3: without MITAB_BOUNDS_FILE : should unload the file
     # Pass i==4: use BOUNDS layer creation option
-    for i in range(5):
-        if i == 1 or i == 2:
+    # Pass i==5: with MITAB_BOUNDS_FILE and European bounds
+    for i in range(6):
+        if i == 1 or i == 2 or i == 5:
             gdal.SetConfigOption('MITAB_BOUNDS_FILE', 'data/mitab_bounds.txt')
         ds = ogr.GetDriverByName('MapInfo File').CreateDataSource('/vsimem/ogr_mitab_20.tab')
         sr = osr.SpatialReference()
-        sr.ImportFromEPSG(2154)
+        if i == 1 or i == 2:
+            sr.SetFromUserInput("""PROJCS["RGF93 / Lambert-93",
+    GEOGCS["RGF93",
+        DATUM["Reseau_Geodesique_Francais_1993",
+            SPHEROID["GRS 80",6378137,298.257222101],
+            TOWGS84[0,0,0,0,0,0,0]],
+        PRIMEM["Greenwich",0],
+        UNIT["degree",0.0174532925199433]],
+    PROJECTION["Lambert_Conformal_Conic_2SP"],
+    PARAMETER["standard_parallel_1",49.00000000002],
+    PARAMETER["standard_parallel_2",44],
+    PARAMETER["latitude_of_origin",46.5],
+    PARAMETER["central_meridian",3],
+    PARAMETER["false_easting",700000],
+    PARAMETER["false_northing",6600000],
+    UNIT["Meter",1.0],
+    AUTHORITY["EPSG","2154"]]""")
+        elif i == 5:
+            sr.SetFromUserInput("""PROJCS["RGF93 / Lambert-93",
+    GEOGCS["RGF93",
+        DATUM["Reseau_Geodesique_Francais_1993",
+            SPHEROID["GRS 80",6378137,298.257222101],
+            TOWGS84[0,0,0,0,0,0,0]],
+        PRIMEM["Greenwich",0],
+        UNIT["degree",0.0174532925199433]],
+    PROJECTION["Lambert_Conformal_Conic_2SP"],
+    PARAMETER["standard_parallel_1",49.00000000001],
+    PARAMETER["standard_parallel_2",44],
+    PARAMETER["latitude_of_origin",46.5],
+    PARAMETER["central_meridian",3],
+    PARAMETER["false_easting",700000],
+    PARAMETER["false_northing",6600000],
+    UNIT["Meter",1.0],
+    AUTHORITY["EPSG","2154"]]""")
+        else:
+            sr.ImportFromEPSG(2154)
         if i == 4:
             lyr = ds.CreateLayer('test', srs = sr, options = ['BOUNDS=75000,6000000,1275000,7200000'])
         else:
