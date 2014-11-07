@@ -249,6 +249,9 @@ typedef struct {
     char        *pszDEMPath;
 
     DEMResampleAlg eResampleAlg;
+    
+    int         bHasDEMMissingValue;
+    double      dfDEMMissingValue;
 
     int         bHasTriedOpeningDS;
     GDALDataset *poDS;
@@ -309,6 +312,9 @@ void* GDALCreateSimilarRPCTransformer( void *hTransformArg, double dfRatioX, dou
         papszOptions = CSLSetNameValue(papszOptions, "RPC_DEM", psInfo->pszDEMPath);
         papszOptions = CSLSetNameValue(papszOptions, "RPC_DEMINTERPOLATION",
                                        GDALSerializeRPCDEMResample(psInfo->eResampleAlg));
+        if( psInfo->bHasDEMMissingValue )
+            papszOptions = CSLSetNameValue(papszOptions, "RPC_DEM_MISSING_VALUE",
+                                           CPLSPrintf("%.18g", psInfo->dfDEMMissingValue)) ;
     }
     psInfo = (GDALRPCTransformInfo*) GDALCreateRPCTransformer( &sRPC,
            psInfo->bReversed, psInfo->dfPixErrThreshold, papszOptions );
@@ -403,6 +409,12 @@ void* GDALCreateSimilarRPCTransformer( void *hTransformArg, double dfRatioX, dou
  * a non uniform ground for the target scene (GDAL >= 1.8.0)
  *
  * <li> RPC_DEMINTERPOLATION: the DEM interpolation (near, bilinear or cubic)
+ *
+ * <li> RPC_DEM_MISSING_VALUE: value of DEM height that must be used in case
+ * the DEM has nodata value at the sampling point, or if its extent does not
+ * cover the requested coordinate. When not specified, missing values will cause
+ * a failed transform. (GDAL >= 1.11.2)
+ *
  * </ul>
  *
  * @param psRPCInfo Definition of the RPC parameters.
@@ -480,6 +492,16 @@ void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed,
     {
         CPLDebug("RPC", "Unknown interpolation %s. Defaulting to bilinear", pszDEMInterpolation); 
         psTransform->eResampleAlg = DRA_Bilinear;
+    }
+
+/* -------------------------------------------------------------------- */
+/*                       The DEM missing value                          */
+/* -------------------------------------------------------------------- */
+    const char *pszDEMMissingValue = CSLFetchNameValue( papszOptions, "RPC_DEM_MISSING_VALUE" );
+    if( pszDEMMissingValue != NULL )
+    {
+        psTransform->bHasDEMMissingValue = TRUE;
+        psTransform->dfDEMMissingValue = CPLAtof(pszDEMMissingValue);
     }
 
 /* -------------------------------------------------------------------- */
@@ -652,6 +674,134 @@ double BiCubicKernel(double dfVal)
 }
 
 /************************************************************************/
+/*                        GDALRPCGetDEMHeight()                         */
+/************************************************************************/
+
+static
+int GDALRPCGetDEMHeight( GDALRPCTransformInfo *psTransform,
+                      double dfX, double dfY, double* pdfDEMH )
+{
+    
+    int bGotNoDataValue = FALSE;
+    double dfNoDataValue = 0;
+    int nRasterXSize = psTransform->poDS->GetRasterXSize();
+    int nRasterYSize = psTransform->poDS->GetRasterYSize();
+    dfNoDataValue = psTransform->poDS->GetRasterBand(1)->GetNoDataValue( &bGotNoDataValue );
+
+    int bands[1] = {1};
+
+    int dX = int(dfX);
+    int dY = int(dfY);
+    double dfDEMH(0);
+    double dfDeltaX = dfX - dX;
+    double dfDeltaY = dfY - dY;
+    
+    if(psTransform->eResampleAlg == DRA_Cubic)
+    {
+        int dXNew = dX - 1;
+        int dYNew = dY - 1;
+        if (!(dXNew >= 0 && dYNew >= 0 && dXNew + 4 <= nRasterXSize && dYNew + 4 <= nRasterYSize))
+        {
+            return FALSE;
+        }
+        //cubic interpolation
+        double adfElevData[16] = {0};
+        CPLErr eErr = psTransform->poDS->RasterIO(GF_Read, dXNew, dYNew, 4, 4,
+                                                    &adfElevData, 4, 4,
+                                                    GDT_Float64, 1, bands, 0, 0, 0);
+        if(eErr != CE_None)
+        {
+            return FALSE;
+        }
+
+        double dfSumH(0), dfSumWeight(0);
+        for ( int k_i = 0; k_i < 4; k_i++ )
+        {
+            // Loop across the X axis
+            for ( int k_j = 0; k_j < 4; k_j++ )
+            {
+                // Calculate the weight for the specified pixel according
+                // to the bicubic b-spline kernel we're using for
+                // interpolation
+                int dKernIndX = k_j - 1;
+                int dKernIndY = k_i - 1;
+                double dfPixelWeight = BiCubicKernel(dKernIndX - dfDeltaX) * BiCubicKernel(dKernIndY - dfDeltaY);
+
+                // Create a sum of all values
+                // adjusted for the pixel's calculated weight
+                double dfElev = adfElevData[k_j + k_i * 4];
+                if( bGotNoDataValue && ARE_REAL_EQUAL(dfNoDataValue, dfElev) )
+                    continue;
+
+                dfSumH += dfElev * dfPixelWeight;
+                dfSumWeight += dfPixelWeight;
+            }
+        }
+        if( dfSumWeight == 0.0 )
+        {
+            return FALSE;
+        }
+        dfDEMH = dfSumH / dfSumWeight;
+    }
+    else if(psTransform->eResampleAlg == DRA_Bilinear)
+    {
+        if (!(dX >= 0 && dY >= 0 && dX + 2 <= nRasterXSize && dY + 2 <= nRasterYSize))
+        {
+            return FALSE;
+        }
+        //bilinear interpolation
+        double adfElevData[4] = {0,0,0,0};
+        CPLErr eErr = psTransform->poDS->RasterIO(GF_Read, dX, dY, 2, 2,
+                                                    &adfElevData, 2, 2,
+                                                    GDT_Float64, 1, bands, 0, 0, 0);
+        if(eErr != CE_None)
+        {
+            return FALSE;
+        }
+        if( bGotNoDataValue )
+        {
+            // TODO: we could perhaps use a valid sample if there's one
+            int bFoundNoDataElev = FALSE;
+            for(int k_i=0;k_i<4;k_i++)
+            {
+                if( ARE_REAL_EQUAL(dfNoDataValue, adfElevData[k_i]) )
+                    bFoundNoDataElev = TRUE;
+            }
+            if( bFoundNoDataElev )
+            {
+                return FALSE;
+            }
+        }
+        double dfDeltaX1 = 1.0 - dfDeltaX;                
+        double dfDeltaY1 = 1.0 - dfDeltaY;
+
+        double dfXZ1 = adfElevData[0] * dfDeltaX1 + adfElevData[1] * dfDeltaX;
+        double dfXZ2 = adfElevData[2] * dfDeltaX1 + adfElevData[3] * dfDeltaX;
+        double dfYZ = dfXZ1 * dfDeltaY1 + dfXZ2 * dfDeltaY;
+        dfDEMH = dfYZ;
+    }
+    else
+    {
+        if (!(dX >= 0 && dY >= 0 && dX < nRasterXSize && dY < nRasterYSize))
+        {
+            return FALSE;
+        }
+        CPLErr eErr = psTransform->poDS->RasterIO(GF_Read, dX, dY, 1, 1,
+                                                    &dfDEMH, 1, 1,
+                                                    GDT_Float64, 1, bands, 0, 0, 0);
+        if(eErr != CE_None ||
+            (bGotNoDataValue && ARE_REAL_EQUAL(dfNoDataValue, dfDEMH)) )
+        {
+            return FALSE;
+        }
+    }
+    
+    *pdfDEMH = dfDEMH;
+
+    return TRUE;
+}
+
+/************************************************************************/
 /*                          GDALRPCTransform()                          */
 /************************************************************************/
 
@@ -669,9 +819,6 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
 
     if( psTransform->bReversed )
         bDstToSrc = !bDstToSrc;
-
-    int bands[1] = {1};
-    int nRasterXSize = 0, nRasterYSize = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Lazy opening of the optionnal DEM file.                         */
@@ -714,16 +861,6 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
             psTransform->poDS = NULL;
         }
     }
-    
-    int bGotNoDataValue = FALSE;
-    double dfNoDataValue = 0;
-
-    if (psTransform->poDS)
-    {
-        nRasterXSize = psTransform->poDS->GetRasterXSize();
-        nRasterYSize = psTransform->poDS->GetRasterYSize();
-        dfNoDataValue = psTransform->poDS->GetRasterBand(1)->GetNoDataValue( &bGotNoDataValue );
-    }
 
 /* -------------------------------------------------------------------- */
 /*      The simple case is transforming from lat/long to pixel/line.    */
@@ -754,127 +891,18 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
                 else
                     GDALApplyGeoTransform( psTransform->adfReverseGeoTransform,
                                            padfX[i], padfY[i], &dfX, &dfY );
-                int dX = int(dfX);
-                int dY = int(dfY);
-
-                if (!(dX >= 0 && dY >= 0 &&
-                      dX+2 <= nRasterXSize && dY+2 <= nRasterYSize))
-                {
-                    panSuccess[i] = FALSE;
-                    continue;
-                }
 
                 double dfDEMH(0);
-                double dfDeltaX = dfX - dX;
-                double dfDeltaY = dfY - dY;
-                
-                if(psTransform->eResampleAlg == DRA_Cubic)
+                if( !GDALRPCGetDEMHeight( psTransform, dfX, dfY, &dfDEMH) )
                 {
-                    int dXNew = dX - 1;
-                    int dYNew = dY - 1;
-                    if (!(dXNew >= 0 && dYNew >= 0 && dXNew + 4 <= nRasterXSize && dYNew + 4 <= nRasterYSize))
+                    if( psTransform->bHasDEMMissingValue )
+                        dfDEMH = psTransform->dfDEMMissingValue;
+                    else
                     {
                         panSuccess[i] = FALSE;
                         continue;
                     }
-                    //cubic interpolation
-                    double adfElevData[16] = {0};
-                    CPLErr eErr = psTransform->poDS->RasterIO(GF_Read, dXNew, dYNew, 4, 4,
-                                                              &adfElevData, 4, 4,
-                                                              GDT_Float64, 1, bands, 0, 0, 0);
-                    if(eErr != CE_None)
-                    {
-                        panSuccess[i] = FALSE;
-                        continue;
-                    }
-
-                    double dfSumH(0), dfSumWeight(0);
-                    for ( int k_i = 0; k_i < 4; k_i++ )
-                    {
-                        // Loop across the X axis
-                        for ( int k_j = 0; k_j < 4; k_j++ )
-                        {
-                            // Calculate the weight for the specified pixel according
-                            // to the bicubic b-spline kernel we're using for
-                            // interpolation
-                            int dKernIndX = k_j - 1;
-                            int dKernIndY = k_i - 1;
-                            double dfPixelWeight = BiCubicKernel(dKernIndX - dfDeltaX) * BiCubicKernel(dKernIndY - dfDeltaY);
-
-                            // Create a sum of all values
-                            // adjusted for the pixel's calculated weight
-                            double dfElev = adfElevData[k_j + k_i * 4];
-                            if( bGotNoDataValue && ARE_REAL_EQUAL(dfNoDataValue, dfElev) )
-                                continue;
-
-                            dfSumH += dfElev * dfPixelWeight;
-                            dfSumWeight += dfPixelWeight;
-                        }
-                    }
-                    if( dfSumWeight == 0.0 )
-                    {
-                        panSuccess[i] = FALSE;
-                        continue;
-                    }
-                    dfDEMH = dfSumH / dfSumWeight;
                 }
-                else if(psTransform->eResampleAlg == DRA_Bilinear)
-                {
-                    if (!(dX >= 0 && dY >= 0 && dX + 2 <= nRasterXSize && dY + 2 <= nRasterYSize))
-                    {
-                        panSuccess[i] = FALSE;
-                        continue;
-                    }
-                    //bilinear interpolation
-                    double adfElevData[4] = {0,0,0,0};
-                    CPLErr eErr = psTransform->poDS->RasterIO(GF_Read, dX, dY, 2, 2,
-                                                              &adfElevData, 2, 2,
-                                                              GDT_Float64, 1, bands, 0, 0, 0);
-                    if(eErr != CE_None)
-                    {
-                        panSuccess[i] = FALSE;
-                        continue;
-                    }
-                    if( bGotNoDataValue )
-                    {
-                        // TODO: we could perhaps use a valid sample if there's one
-                        int bFoundNoDataElev = FALSE;
-                        for(int k_i=0;k_i<4;k_i++)
-                        {
-                            if( ARE_REAL_EQUAL(dfNoDataValue, adfElevData[k_i]) )
-                                bFoundNoDataElev = TRUE;
-                        }
-                        if( bFoundNoDataElev )
-                        {
-                            panSuccess[i] = FALSE;
-                            continue;
-                        }
-                    }
-                    double dfDeltaX1 = 1.0 - dfDeltaX;                
-                    double dfDeltaY1 = 1.0 - dfDeltaY;
-
-                    double dfXZ1 = adfElevData[0] * dfDeltaX1 + adfElevData[1] * dfDeltaX;
-                    double dfXZ2 = adfElevData[2] * dfDeltaX1 + adfElevData[3] * dfDeltaX;
-                    double dfYZ = dfXZ1 * dfDeltaY1 + dfXZ2 * dfDeltaY;
-                    dfDEMH = dfYZ;
-                }
-                else
-                {
-                    if (!(dX >= 0 && dY >= 0 && dX < nRasterXSize && dY < nRasterYSize))
-                    {
-                        panSuccess[i] = FALSE;
-                        continue;
-                    }
-                    CPLErr eErr = psTransform->poDS->RasterIO(GF_Read, dX, dY, 1, 1,
-                                                              &dfDEMH, 1, 1,
-                                                              GDT_Float64, 1, bands, 0, 0, 0);
-                    if(eErr != CE_None ||
-                        (bGotNoDataValue && ARE_REAL_EQUAL(dfNoDataValue, dfDEMH)) )
-                    {
-                        panSuccess[i] = FALSE;
-                        continue;
-                    }              
-                }                
 
                 RPCTransformPoint( psRPC, padfX[i], padfY[i], 
                                    padfZ[i] + (psTransform->dfHeightOffset + dfDEMH) *
@@ -922,119 +950,17 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
 
             GDALApplyGeoTransform( psTransform->adfReverseGeoTransform,
                                     dfResultX, dfResultY, &dfX, &dfY );
-            int dX = int(dfX);
-            int dY = int(dfY);
 
             double dfDEMH(0);
-            double dfDeltaX = dfX - dX;
-            double dfDeltaY = dfY - dY;
-
-            if(psTransform->eResampleAlg == DRA_Cubic)
+            if( !GDALRPCGetDEMHeight( psTransform, dfX, dfY, &dfDEMH) )
             {
-                int dXNew = dX - 1;
-                int dYNew = dY - 1;
-                if (!(dXNew >= 0 && dYNew >= 0 && dXNew + 4 <= nRasterXSize && dYNew + 4 <= nRasterYSize))
+                if( psTransform->bHasDEMMissingValue )
+                    dfDEMH = psTransform->dfDEMMissingValue;
+                else
                 {
                     panSuccess[i] = FALSE;
                     continue;
                 }
-                //cubic interpolation
-                double adfElevData[16] = {0};
-                CPLErr eErr = psTransform->poDS->RasterIO(GF_Read, dXNew, dYNew, 4, 4,
-                                                          &adfElevData, 4, 4,
-                                                          GDT_Float64, 1, bands, 0, 0, 0);
-                if(eErr != CE_None)
-                {
-                    panSuccess[i] = FALSE;
-                    continue;
-                }
-
-                double dfSumH(0), dfSumWeight(0);
-                for ( int k_i = 0; k_i < 4; k_i++ )
-                {
-                    // Loop across the X axis
-                    for ( int k_j = 0; k_j < 4; k_j++ )
-                    {
-                        // Calculate the weight for the specified pixel according
-                        // to the bicubic b-spline kernel we're using for
-                        // interpolation
-                        int dKernIndX = k_j - 1;
-                        int dKernIndY = k_i - 1;
-                        double dfPixelWeight = BiCubicKernel(dKernIndX - dfDeltaX) * BiCubicKernel(dKernIndY - dfDeltaY);
-
-                        // Create a sum of all values
-                        // adjusted for the pixel's calculated weight
-                        double dfElev = adfElevData[k_j + k_i * 4];
-                        if( bGotNoDataValue && ARE_REAL_EQUAL(dfNoDataValue, dfElev) )
-                            continue;
-
-                        dfSumH += dfElev * dfPixelWeight;
-                        dfSumWeight += dfPixelWeight;
-                      }
-                }
-                if( dfSumWeight == 0.0 )
-                {
-                    panSuccess[i] = FALSE;
-                    continue;
-                }
-                dfDEMH = dfSumH / dfSumWeight;
-            }
-            else if(psTransform->eResampleAlg == DRA_Bilinear)
-            {
-                if (!(dX >= 0 && dY >= 0 && dX + 2 <= nRasterXSize && dY + 2 <= nRasterYSize))
-                {
-                    panSuccess[i] = FALSE;
-                    continue;
-                }
-                //bilinear interpolation
-                double adfElevData[4] = {0,0,0,0};
-                CPLErr eErr = psTransform->poDS->RasterIO(GF_Read, dX, dY, 2, 2,
-                                                          &adfElevData, 2, 2,
-                                                          GDT_Float64, 1, bands, 0, 0, 0);
-                if(eErr != CE_None)
-                {
-                    panSuccess[i] = FALSE;
-                    continue;
-                }
-                if( bGotNoDataValue )
-                {
-                    // TODO: we could perhaps use a valid sample if there's one
-                    int bFoundNoDataElev = FALSE;
-                    for(int k_i=0;k_i<4;k_i++)
-                    {
-                        if( ARE_REAL_EQUAL(dfNoDataValue, adfElevData[k_i]) )
-                            bFoundNoDataElev = TRUE;
-                    }
-                    if( bFoundNoDataElev )
-                    {
-                        panSuccess[i] = FALSE;
-                        continue;
-                    }
-                }
-                double dfDeltaX1 = 1.0 - dfDeltaX;                
-                double dfDeltaY1 = 1.0 - dfDeltaY;
-
-                double dfXZ1 = adfElevData[0] * dfDeltaX1 + adfElevData[1] * dfDeltaX;
-                double dfXZ2 = adfElevData[2] * dfDeltaX1 + adfElevData[3] * dfDeltaX;
-                double dfYZ = dfXZ1 * dfDeltaY1 + dfXZ2 * dfDeltaY;
-                dfDEMH = dfYZ;
-            }
-            else
-            {
-                if (!(dX >= 0 && dY >= 0 && dX < nRasterXSize && dY < nRasterYSize))
-                {
-                    panSuccess[i] = FALSE;
-                    continue;
-                }
-                CPLErr eErr = psTransform->poDS->RasterIO(GF_Read, dX, dY, 1, 1,
-                                                          &dfDEMH, 1, 1,
-                                                          GDT_Float64, 1, bands, 0, 0, 0);
-                if(eErr != CE_None ||
-                        (bGotNoDataValue && ARE_REAL_EQUAL(dfNoDataValue, dfDEMH)) )
-                {
-                    panSuccess[i] = FALSE;
-                    continue;
-                }           
             }
 
             RPCInverseTransformPoint( psTransform, padfX[i], padfY[i], 
@@ -1100,6 +1026,7 @@ CPLXMLNode *GDALSerializeRPCTransformer( void *pTransformArg )
 /*      Serialize DEM path.                                             */
 /* -------------------------------------------------------------------- */
     if (psInfo->pszDEMPath != NULL)
+    {
         CPLCreateXMLElementAndValue( 
             psTree, "DEMPath", 
             CPLString().Printf( "%s", psInfo->pszDEMPath ) );
@@ -1107,8 +1034,15 @@ CPLXMLNode *GDALSerializeRPCTransformer( void *pTransformArg )
 /* -------------------------------------------------------------------- */
 /*      Serialize DEM interpolation                                     */
 /* -------------------------------------------------------------------- */
-    CPLCreateXMLElementAndValue( 
-        psTree, "DEMInterpolation", GDALSerializeRPCDEMResample(psInfo->eResampleAlg) );
+        CPLCreateXMLElementAndValue( 
+            psTree, "DEMInterpolation", GDALSerializeRPCDEMResample(psInfo->eResampleAlg) );
+
+        if( psInfo->bHasDEMMissingValue )
+        {
+            CPLCreateXMLElementAndValue( 
+                psTree, "DEMMissingValue", CPLSPrintf("%.18g", psInfo->dfDEMMissingValue) );
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Serialize pixel error threshold.                                */
@@ -1219,6 +1153,11 @@ void *GDALDeserializeRPCTransformer( CPLXMLNode *psTree )
     if (pszDEMInterpolation != NULL)
         papszOptions = CSLSetNameValue( papszOptions, "RPC_DEMINTERPOLATION",
                                         pszDEMInterpolation);
+
+    const char* pszDEMMissingValue = CPLGetXMLValue(psTree,"DEMMissingValue", NULL);
+    if (pszDEMMissingValue != NULL)
+        papszOptions = CSLSetNameValue( papszOptions, "RPC_DEM_MISSING_VALUE",
+                                        pszDEMMissingValue);
 
 /* -------------------------------------------------------------------- */
 /*      Generate transformation.                                        */
