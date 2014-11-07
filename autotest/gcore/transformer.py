@@ -330,6 +330,43 @@ def transformer_5():
         return 'fail'
 
     tr = None
+    
+    # Test outside DEM extent : default behaviour --> error
+    tr = gdal.Transformer( ds, None, [ 'METHOD=RPC', 'RPC_HEIGHT_SCALE=2', 'RPC_DEM=/vsimem/dem.tif' ] )
+
+    (success,pnt) = tr.TransformPoint( 0, -100, 0, 0 )
+    if success != 0:
+        gdaltest.post_reason( 'fail' )
+        return 'fail'
+
+    (success,pnt) = tr.TransformPoint( 1, 125, 40, 0 )
+    if success != 0:
+        gdaltest.post_reason( 'fail' )
+        return 'fail'
+
+    tr = None
+
+    # Test outside DEM extent with RPC_DEM_MISSING_VALUE=0
+    tr = gdal.Transformer( ds, None, [ 'METHOD=RPC', 'RPC_HEIGHT_SCALE=2', 'RPC_DEM=/vsimem/dem.tif', 'RPC_DEM_MISSING_VALUE=0' ] )
+
+    (success,pnt) = tr.TransformPoint( 0, -100, 0, 0 )
+    if not success \
+       or abs(pnt[0]-125.64746155942839) > 0.000001 \
+       or abs(pnt[1]-39.869506789921168) > 0.000001 :
+        print(success, pnt)
+        gdaltest.post_reason( 'got wrong forward transform result.' )
+        return 'fail'
+
+    (success,pnt) = tr.TransformPoint( 1, pnt[0], pnt[1], pnt[2] )
+    if not success \
+       or abs(pnt[0]--100) > 0.001 \
+       or abs(pnt[1]-0) > 0.001 :
+        print(success, pnt)
+        gdaltest.post_reason( 'got wrong reverse transform result.' )
+        return 'fail'
+
+    tr = None
+
     gdal.Unlink('/vsimem/dem.tif')
 
     return 'success' 
