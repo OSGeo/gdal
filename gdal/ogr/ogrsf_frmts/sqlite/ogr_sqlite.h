@@ -335,6 +335,7 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
 
     sqlite3_stmt       *hInsertStmt;
     CPLString           osLastInsertStmt;
+    int                 bHasDefaultValue;
 
     OGRSQLiteGeomFormat eGeomFormat;
     char                *pszGeomCol;

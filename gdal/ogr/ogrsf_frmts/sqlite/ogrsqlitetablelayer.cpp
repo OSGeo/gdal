@@ -66,6 +66,7 @@ OGRSQLiteTableLayer::OGRSQLiteTableLayer( OGRSQLiteDataSource *poDSIn )
     bDeferedSpatialIndexCreation = FALSE;
 
     hInsertStmt = NULL;
+    bHasDefaultValue = FALSE;
 
     eGeomType = wkbUnknown;
     bLayerDefnError = FALSE;
@@ -235,6 +236,34 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn()
     int rc;
     const char *pszSQL;
     sqlite3_stmt *hColStmt = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Check if there are default values.                              */
+/* -------------------------------------------------------------------- */
+
+    char **papszResult;
+    int nRowCount, nColCount;
+    char *pszErrMsg = NULL;
+    char* pszSQL3 = sqlite3_mprintf("PRAGMA table_info('%q')", pszTableName);
+    rc = sqlite3_get_table( hDB, pszSQL3, &papszResult, &nRowCount,
+                            &nColCount, &pszErrMsg );
+    sqlite3_free( pszSQL3 );
+    if( rc != SQLITE_OK )
+    {
+        sqlite3_free( pszErrMsg );
+    }
+    else
+    {
+        if( nColCount == 6 )
+        {
+            for(int i=0;i<nRowCount;i++)
+            {
+                if( papszResult[(i+1)*6+4] != NULL )
+                    bHasDefaultValue = TRUE;
+            }
+        }
+        sqlite3_free_table(papszResult);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Get the column definitions for this table.                      */
@@ -1999,7 +2028,6 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
 {
     sqlite3 *hDB = poDS->GetDB();
     CPLString      osCommand;
-    CPLString      osValues;
     int            bNeedComma = FALSE;
 
     if (HasLayerDefnError())
@@ -2015,100 +2043,108 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
 
     ResetReading();
 
+    OGRGeometry *poGeom = poFeature->GetGeometryRef();
+
+    int bReuseStmt = FALSE;
+    if( hInsertStmt == NULL || poFeature->GetFID() != OGRNullFID || bHasDefaultValue )
+    {
+        CPLString      osValues;
+
 /* -------------------------------------------------------------------- */
 /*      Form the INSERT command.                                        */
 /* -------------------------------------------------------------------- */
-    osCommand += CPLSPrintf( "INSERT INTO '%s' (", pszEscapedTableName );
+        osCommand += CPLSPrintf( "INSERT INTO '%s' (", pszEscapedTableName );
 
 /* -------------------------------------------------------------------- */
 /*      Add FID if we have a cleartext FID column.                      */
 /* -------------------------------------------------------------------- */
-    if( pszFIDColumn != NULL // && !EQUAL(pszFIDColumn,"OGC_FID") 
-        && poFeature->GetFID() != OGRNullFID )
-    {
-        osCommand += "\"";
-        osCommand += OGRSQLiteEscapeName(pszFIDColumn);
-        osCommand += "\"";
+        if( pszFIDColumn != NULL // && !EQUAL(pszFIDColumn,"OGC_FID") 
+            && poFeature->GetFID() != OGRNullFID )
+        {
+            osCommand += "\"";
+            osCommand += OGRSQLiteEscapeName(pszFIDColumn);
+            osCommand += "\"";
 
-        osValues += CPLSPrintf( "%ld", poFeature->GetFID() );
-        bNeedComma = TRUE;
-    }
+            osValues += CPLSPrintf( "%ld", poFeature->GetFID() );
+            bNeedComma = TRUE;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Add geometry.                                                   */
 /* -------------------------------------------------------------------- */
-    OGRGeometry *poGeom = poFeature->GetGeometryRef();
-
-    if( poFeatureDefn->GetGeomFieldCount() != 0 &&
-        poGeom != NULL &&
-        eGeomFormat != OSGF_FGF )
-    {
-
-        if( bNeedComma )
+        if( poFeatureDefn->GetGeomFieldCount() != 0 &&
+            (!bHasDefaultValue || poGeom != NULL) &&
+            eGeomFormat != OSGF_FGF )
         {
-            osCommand += ",";
-            osValues += ",";
+
+            if( bNeedComma )
+            {
+                osCommand += ",";
+                osValues += ",";
+            }
+
+            osCommand += "\"";
+            osCommand += OGRSQLiteEscapeName(pszGeomCol);
+            osCommand += "\"";
+
+            osValues += "?";
+
+            bNeedComma = TRUE;
         }
-
-        osCommand += "\"";
-        osCommand += OGRSQLiteEscapeName(pszGeomCol);
-        osCommand += "\"";
-
-        osValues += "?";
-
-        bNeedComma = TRUE;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Add field values.                                               */
 /* -------------------------------------------------------------------- */
-    int iField;
-    int nFieldCount = poFeatureDefn->GetFieldCount();
+        int iField;
+        int nFieldCount = poFeatureDefn->GetFieldCount();
 
-    for( iField = 0; iField < nFieldCount; iField++ )
-    {
-        if( !poFeature->IsFieldSet( iField ) )
-            continue;
-
-        if( bNeedComma )
+        for( iField = 0; iField < nFieldCount; iField++ )
         {
-            osCommand += ",";
-            osValues += ",";
+            if( bHasDefaultValue && !poFeature->IsFieldSet( iField ) )
+                continue;
+
+            if( bNeedComma )
+            {
+                osCommand += ",";
+                osValues += ",";
+            }
+
+            osCommand += "\"";
+            osCommand += OGRSQLiteEscapeName(poFeatureDefn->GetFieldDefn(iField)->GetNameRef());
+            osCommand += "\"";
+
+            osValues += "?";
+
+            bNeedComma = TRUE;
         }
-
-        osCommand += "\"";
-        osCommand += OGRSQLiteEscapeName(poFeatureDefn->GetFieldDefn(iField)->GetNameRef());
-        osCommand += "\"";
-
-        osValues += "?";
-
-        bNeedComma = TRUE;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Merge final command.                                            */
 /* -------------------------------------------------------------------- */
-    osCommand += ") VALUES (";
-    osCommand += osValues;
-    osCommand += ")";
+        osCommand += ") VALUES (";
+        osCommand += osValues;
+        osCommand += ")";
 
-    if (bNeedComma == FALSE)
-        osCommand = CPLSPrintf( "INSERT INTO '%s' DEFAULT VALUES", pszEscapedTableName );
+        if (bNeedComma == FALSE)
+            osCommand = CPLSPrintf( "INSERT INTO '%s' DEFAULT VALUES", pszEscapedTableName );
+    }
+    else
+        bReuseStmt = TRUE;
 
 /* -------------------------------------------------------------------- */
 /*      Prepare the statement.                                          */
 /* -------------------------------------------------------------------- */
     int rc;
 
-    if (hInsertStmt == NULL ||
-        osCommand != osLastInsertStmt)
+    if( !bReuseStmt && (hInsertStmt == NULL || osCommand != osLastInsertStmt) )
     {
     #ifdef DEBUG
         CPLDebug( "OGR_SQLITE", "prepare(%s)", osCommand.c_str() );
     #endif
 
         ClearInsertStmt();
-        osLastInsertStmt = osCommand;
+        if( poFeature->GetFID() == OGRNullFID )
+            osLastInsertStmt = osCommand;
 
 #ifdef HAVE_SQLITE3_PREPARE_V2
         rc = sqlite3_prepare_v2( hDB, osCommand, -1, &hInsertStmt, NULL );
@@ -2129,7 +2165,7 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Bind values.                                                   */
 /* -------------------------------------------------------------------- */
-    OGRErr eErr = BindValues( poFeature, hInsertStmt, FALSE );
+    OGRErr eErr = BindValues( poFeature, hInsertStmt, !bHasDefaultValue );
     if (eErr != OGRERR_NONE)
     {
         sqlite3_reset( hInsertStmt );
