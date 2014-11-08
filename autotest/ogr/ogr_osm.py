@@ -112,6 +112,7 @@ def ogr_osm_1(filename = 'data/test.pbf'):
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString('osm_id') != '1' or \
        feat.GetFieldAsString('highway') != 'motorway' or \
+       feat.GetFieldAsInteger('z_order') != 9 or \
        feat.GetFieldAsString('other_tags') != '"foo"=>"bar"' :
         gdaltest.post_reason('fail')
         feat.DumpReadable()

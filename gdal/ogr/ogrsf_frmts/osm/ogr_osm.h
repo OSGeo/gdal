@@ -53,6 +53,21 @@ class ConstCharComp
         }
 };
 
+class OGROSMComputedAttribute
+{
+    public:
+        CPLString    osName;
+        int          nIndex;
+        OGRFieldType eType;
+        CPLString    osSQL;
+        sqlite3_stmt  *hStmt;
+        std::vector<CPLString> aosAttrToBind;
+        std::vector<int> anIndexToBind;
+
+        OGROSMComputedAttribute() : nIndex(-1), eType(OFTString), hStmt(NULL) {}
+        OGROSMComputedAttribute(const char* pszName) : osName(pszName), nIndex(-1), eType(OFTString), hStmt(NULL) {}
+};
+
 /************************************************************************/
 /*                           OGROSMLayer                                */
 /************************************************************************/
@@ -71,6 +86,8 @@ class OGROSMLayer : public OGRLayer
 
     std::vector<char*>   apszNames;
     std::map<const char*, int, ConstCharComp> oMapFieldNameToIndex;
+    
+    std::vector<OGROSMComputedAttribute> oComputedAttributes;
 
     int                  bResetReadingAllowed;
     
@@ -185,6 +202,10 @@ class OGROSMLayer : public OGRLayer
 
     void                AddIgnoreKey(const char* pszK);
     void                AddWarnKey(const char* pszK);
+
+    void                AddComputedAttribute(const char* pszName,
+                                             OGRFieldType eType,
+                                             const char* pszSQL);
 };
 
 /************************************************************************/
@@ -281,6 +302,8 @@ class OGROSMDataSource : public OGRDataSource
     sqlite3_stmt       *hDeletePolygonsStandaloneStmt;
     sqlite3_stmt       *hSelectPolygonsStandaloneStmt;
     int                 bHasRowInPolygonsStandalone;
+
+    sqlite3            *hDBForComputedAttributes;
 
     int                 nMaxSizeForInMemoryDBInMB;
     int                 bInMemoryTmpDB;
@@ -422,6 +445,9 @@ class OGROSMDataSource : public OGRDataSource
 
     int                 AllocBucket(int iBucket);
     int                 AllocMoreBuckets(int nNewBucketIdx, int bAllocBucket = FALSE);
+
+    void                AddComputedAttributes(int iCurLayer,
+                                             const std::vector<OGROSMComputedAttribute>& oAttributes);
 
   public:
                         OGROSMDataSource();

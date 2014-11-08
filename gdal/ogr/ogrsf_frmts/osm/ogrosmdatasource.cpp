@@ -180,6 +180,7 @@ OGROSMDataSource::OGROSMDataSource()
     nLayers = 0;
     papoLayers = NULL;
     pszName = NULL;
+    bExtentValid = FALSE;
     bInterleavedReading = -1;
     poCurrentLayer = NULL;
     psParser = NULL;
@@ -195,6 +196,9 @@ OGROSMDataSource::OGROSMDataSource()
     hDeletePolygonsStandaloneStmt = NULL;
     hSelectPolygonsStandaloneStmt = NULL;
     bHasRowInPolygonsStandalone = FALSE;
+
+    hDBForComputedAttributes = NULL;
+
     nNodesInTransaction = 0;
     bInTransaction = FALSE;
     pahSelectNodeStmt = NULL;
@@ -287,6 +291,9 @@ OGROSMDataSource::~OGROSMDataSource()
 
     if( hDB != NULL )
         CloseDB();
+
+    if( hDBForComputedAttributes != NULL )
+        sqlite3_close(hDBForComputedAttributes);
 
 #ifdef HAVE_SQLITE_VFS
     if (pMyVFS)
@@ -3219,6 +3226,24 @@ int OGROSMDataSource::CommitTransaction()
 }
 
 /************************************************************************/
+/*                     AddComputedAttributes()                          */
+/************************************************************************/
+
+void OGROSMDataSource::AddComputedAttributes(int iCurLayer,
+                                             const std::vector<OGROSMComputedAttribute>& oAttributes)
+{
+    for(size_t i=0; i<oAttributes.size();i++)
+    {
+        if( oAttributes[i].osSQL.size() )
+        {
+            papoLayers[iCurLayer]->AddComputedAttribute(oAttributes[i].osName,
+                                                        oAttributes[i].eType,
+                                                        oAttributes[i].osSQL);
+        }
+    }
+}
+
+/************************************************************************/
 /*                           ParseConf()                                */
 /************************************************************************/
 
@@ -3239,13 +3264,20 @@ int OGROSMDataSource::ParseConf()
 
     const char* pszLine;
     int iCurLayer = -1;
+    std::vector<OGROSMComputedAttribute> oAttributes;
 
     int i;
 
     while((pszLine = CPLReadLine2L(fpConf, -1, NULL)) != NULL)
     {
+        if(pszLine[0] == '#')
+            continue;
         if(pszLine[0] == '[' && pszLine[strlen(pszLine)-1] == ']' )
         {
+            if( iCurLayer >= 0 )
+                AddComputedAttributes(iCurLayer, oAttributes);
+            oAttributes.resize(0);
+
             iCurLayer = -1;
             pszLine ++;
             ((char*)pszLine)[strlen(pszLine)-1] = '\0'; /* Evil but OK */
@@ -3426,9 +3458,98 @@ int OGROSMDataSource::ParseConf()
                 }
                 CSLDestroy(papszTokens2);
             }
+            else if ( CSLCount(papszTokens) == 2 && strcmp(papszTokens[0], "computed_attributes") == 0 )
+            {
+                char** papszTokens2 = CSLTokenizeString2(papszTokens[1], ",", 0);
+                oAttributes.resize(0);
+                for(int i=0;papszTokens2[i] != NULL;i++)
+                {
+                    oAttributes.push_back(OGROSMComputedAttribute(papszTokens2[i]));
+                }
+                CSLDestroy(papszTokens2);
+            }
+            else if ( CSLCount(papszTokens) == 2 && strlen(papszTokens[0]) >= 5 &&
+                      strcmp(papszTokens[0] + strlen(papszTokens[0]) - 5, "_type") == 0 )
+            {
+                CPLString osName(papszTokens[0]);
+                osName.resize(strlen(papszTokens[0]) - 5);
+                const char* pszType = papszTokens[1];
+                int bFound = FALSE;
+                 OGRFieldType eType = OFTString;
+                if( EQUAL(pszType, "Integer") )
+                    eType = OFTInteger;
+                else if( EQUAL(pszType, "Real") )
+                    eType = OFTReal;
+                else if( EQUAL(pszType, "String") )
+                    eType = OFTString;
+                else if( EQUAL(pszType, "DateTime") )
+                    eType = OFTDateTime;
+                else
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                                "Unhandled type (%s) for attribute %s",
+                                pszType, osName.c_str());
+                for(size_t i = 0; i < oAttributes.size(); i++ )
+                {
+                    if( oAttributes[i].osName == osName )
+                    {
+                        bFound = TRUE;
+                        oAttributes[i].eType = eType;
+                        break;
+                    }
+                }
+                if( !bFound )
+                {
+                    int idx = papoLayers[iCurLayer]->GetLayerDefn()->GetFieldIndex(osName);
+                    if( idx >= 0 )
+                    {
+                        papoLayers[iCurLayer]->GetLayerDefn()->GetFieldDefn(idx)->SetType(eType);
+                        bFound = TRUE;
+                    }
+                }
+                if( !bFound )
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined, "Undeclared attribute : %s",
+                             osName.c_str());
+                }
+            }
+            else if ( CSLCount(papszTokens) >= 2 && strlen(papszTokens[0]) >= 4 &&
+                      strcmp(papszTokens[0] + strlen(papszTokens[0]) - 4, "_sql") == 0 )
+            {
+                CPLString osName(papszTokens[0]);
+                osName.resize(strlen(papszTokens[0]) - 4);
+                size_t i;
+                for(i = 0; i < oAttributes.size(); i++ )
+                {
+                    if( oAttributes[i].osName == osName )
+                    {
+                        const char* pszSQL = strchr(pszLine, '=') + 1;
+                        while( *pszSQL == ' ' )
+                            pszSQL ++;
+                        int bInQuotes = FALSE;
+                        if( *pszSQL == '"' )
+                        {
+                            bInQuotes = TRUE;
+                            pszSQL ++;
+                        }
+                        oAttributes[i].osSQL = pszSQL;
+                        if( bInQuotes && oAttributes[i].osSQL.size() > 1 &&
+                            oAttributes[i].osSQL[oAttributes[i].osSQL.size()-1] == '"' )
+                            oAttributes[i].osSQL.resize(oAttributes[i].osSQL.size()-1);
+                        break;
+                    }
+                }
+                if( i == oAttributes.size() )
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined, "Undeclared attribute : %s",
+                             osName.c_str());
+                }
+            }
             CSLDestroy(papszTokens);
         }
     }
+
+    if( iCurLayer >= 0 )
+        AddComputedAttributes(iCurLayer, oAttributes);
 
     for(i=0;i<nLayers;i++)
     {

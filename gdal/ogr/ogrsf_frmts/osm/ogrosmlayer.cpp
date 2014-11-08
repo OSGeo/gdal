@@ -116,6 +116,11 @@ OGROSMLayer::~OGROSMLayer()
     for(i=0;i<(int)apszIgnoreKeys.size();i++)
         CPLFree(apszIgnoreKeys[i]);
     
+    for(i=0; i<(int)oComputedAttributes.size();i++)
+    {
+        sqlite3_finalize(oComputedAttributes[i].hStmt);
+    }
+    
     CPLFree(pszAllTags);
 
     CPLFree(papoFeatures);
@@ -670,6 +675,76 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature* poFeature,
         else
             poFeature->SetField(nIndexOtherTags, pszAllTags);
     }
+
+    for(size_t i=0; i<oComputedAttributes.size();i++)
+    {
+        const OGROSMComputedAttribute& oAttr = oComputedAttributes[i];
+        for(size_t j=0;j<oAttr.anIndexToBind.size();j++)
+        {
+            if( oAttr.anIndexToBind[j] >= 0 )
+            {
+                if( !poFeature->IsFieldSet(oAttr.anIndexToBind[j]) )
+                {
+                    sqlite3_bind_null( oAttr.hStmt, j + 1 );
+                }
+                else
+                {
+                    OGRFieldType eType = poFeatureDefn->GetFieldDefn(oAttr.anIndexToBind[j])->GetType();
+                    if( eType == OFTInteger )
+                        sqlite3_bind_int( oAttr.hStmt, j + 1,
+                                          poFeature->GetFieldAsInteger(oAttr.anIndexToBind[j]) );
+                    else if( eType == OFTReal )
+                        sqlite3_bind_double( oAttr.hStmt, j + 1,
+                                             poFeature->GetFieldAsDouble(oAttr.anIndexToBind[j]) );
+                    else
+                        sqlite3_bind_text( oAttr.hStmt, j + 1,
+                                        poFeature->GetFieldAsString(oAttr.anIndexToBind[j]),
+                                        -1, SQLITE_TRANSIENT);
+                }
+            }
+            else
+            {
+                int bTagFound = FALSE;
+                for(unsigned int k = 0; k < nTags; k++)
+                {
+                    const char* pszK = pasTags[k].pszK;
+                    const char* pszV = pasTags[k].pszV;
+                    if( strcmp(pszK, oAttr.aosAttrToBind[j]) == 0 )
+                    {
+                        sqlite3_bind_text( oAttr.hStmt, j + 1, pszV, -1, SQLITE_TRANSIENT);
+                        bTagFound = TRUE;
+                        break;
+                    }
+                }
+                if( !bTagFound )
+                    sqlite3_bind_null( oAttr.hStmt, j + 1 );
+            }
+        }
+
+        if( sqlite3_step( oAttr.hStmt ) == SQLITE_ROW &&
+            sqlite3_column_count( oAttr.hStmt ) == 1 )
+        {
+            switch( sqlite3_column_type( oAttr.hStmt, 0 ) )
+            {
+                case SQLITE_INTEGER:
+                    poFeature->SetField( oAttr.nIndex,
+                            (int)sqlite3_column_int64(oAttr.hStmt, 0) );
+                    break;
+                case SQLITE_FLOAT:
+                    poFeature->SetField( oAttr.nIndex,
+                            sqlite3_column_double(oAttr.hStmt, 0) );
+                    break;
+                case SQLITE_TEXT:
+                    poFeature->SetField( oAttr.nIndex,
+                            (const char*)sqlite3_column_text(oAttr.hStmt, 0) );
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        sqlite3_reset( oAttr.hStmt );
+    }
 }
 
 /************************************************************************/
@@ -713,4 +788,92 @@ void OGROSMLayer::AddIgnoreKey(const char* pszK)
 void OGROSMLayer::AddWarnKey(const char* pszK)
 {
     aoSetWarnKeys.insert(pszK);
+}
+
+/************************************************************************/
+/*                           AddWarnKey()                               */
+/************************************************************************/
+
+void OGROSMLayer::AddComputedAttribute(const char* pszName,
+                                       OGRFieldType eType,
+                                       const char* pszSQL)
+{
+    if( poDS->hDBForComputedAttributes == NULL )
+    {
+        int rc;
+#ifdef HAVE_SQLITE_VFS
+        rc = sqlite3_open_v2( ":memory:", &(poDS->hDBForComputedAttributes),
+                              SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX, NULL );
+#else
+        rc = sqlite3_open( ":memory:", &(poDS->hDBForComputedAttributes), NULL );
+#endif
+        if( rc != SQLITE_OK )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Cannot open temporary sqlite DB" );
+            return;
+        }
+    }
+
+    if( poFeatureDefn->GetFieldIndex(pszName) >= 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "A field with same name %s already exists", pszName );
+        return;
+    }
+
+    CPLString osSQL(pszSQL);
+    std::vector<CPLString> aosAttrToBind;
+    std::vector<int> anIndexToBind;
+    size_t nStartSearch = 0;
+    while(TRUE)
+    {
+        size_t nPos = osSQL.find("[", nStartSearch);
+        if( nPos == std::string::npos )
+            break;
+        nStartSearch = nPos + 1;
+        if( nPos > 0 && osSQL[nPos-1] != '\\' )
+        {
+            CPLString osAttr = osSQL.substr(nPos + 1);
+            size_t nPos2 = osAttr.find("]");
+            if( nPos2 == std::string::npos )
+                break;
+            osAttr.resize(nPos2);
+
+            osSQL = osSQL.substr(0, nPos) + "?" + osSQL.substr(nPos + 1 + nPos2+1);
+
+            aosAttrToBind.push_back(osAttr);
+            anIndexToBind.push_back(poFeatureDefn->GetFieldIndex(osAttr));
+        }
+    }
+    while(TRUE)
+    {
+        size_t nPos = osSQL.find("\\");
+        if( nPos == std::string::npos || nPos == osSQL.size() - 1 )
+            break;
+        osSQL = osSQL.substr(0, nPos) + osSQL.substr(nPos + 1);
+    }
+
+    CPLDebug("OSM", "SQL : \"%s\"", osSQL.c_str());
+
+    sqlite3_stmt  *hStmt;
+    int rc = sqlite3_prepare( poDS->hDBForComputedAttributes, osSQL, -1,
+                              &hStmt, NULL );
+    if( rc != SQLITE_OK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "sqlite3_prepare() failed :  %s",
+                  sqlite3_errmsg(poDS->hDBForComputedAttributes) );
+        return;
+    }
+
+    OGRFieldDefn oField(pszName, eType);
+    poFeatureDefn->AddFieldDefn(&oField);
+    oComputedAttributes.push_back(OGROSMComputedAttribute(pszName));
+    oComputedAttributes[oComputedAttributes.size()-1].eType = eType;
+    oComputedAttributes[oComputedAttributes.size()-1].nIndex = poFeatureDefn->GetFieldCount() - 1;
+    oComputedAttributes[oComputedAttributes.size()-1].osSQL = pszSQL;
+    oComputedAttributes[oComputedAttributes.size()-1].hStmt = hStmt;
+    oComputedAttributes[oComputedAttributes.size()-1].aosAttrToBind = aosAttrToBind;
+    oComputedAttributes[oComputedAttributes.size()-1].anIndexToBind = anIndexToBind;
 }
