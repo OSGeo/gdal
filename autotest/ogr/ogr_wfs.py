@@ -458,19 +458,19 @@ def ogr_wfs_deegree():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
-    if gdaltest.gdalurlopen('http://demo.deegree.org/deegree-wfs/services') is None:
+    if gdaltest.gdalurlopen('http://deegree3-demo.deegree.org:80/utah-workspace') is None:
         gdaltest.deegree_wfs = False
         print('cannot open URL')
         return 'skip'
     gdaltest.deegree_wfs = True
 
-    ds = ogr.Open("WFS:http://demo.deegree.org/deegree-wfs/services?MAXFEATURES=10")
+    ds = ogr.Open("WFS:http://deegree3-demo.deegree.org:80/utah-workspace/services?ACCEPTVERSIONS=1.1.0&MAXFEATURES=10")
     if ds is None:
         gdaltest.post_reason('did not managed to open WFS datastore')
         return 'fail'
 
-    lyr = ds.GetLayerByName('app:Springs')
-    if lyr.GetName() != 'app:Springs':
+    lyr = ds.GetLayerByName('app:SGID024_Springs')
+    if lyr.GetName() != 'app:SGID024_Springs':
         gdaltest.post_reason('did not get expected layer name')
         print(lyr.GetName())
         return 'fail'
@@ -486,17 +486,17 @@ def ogr_wfs_deegree():
     feat = lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
     geom_wkt = geom.ExportToWkt()
-    if feat.GetField('objectid') != 1 or \
-       ogrtest.check_feature_geometry(feat,'POINT (558750.703125 4402882.05)',
+    if feat.GetField('OBJECTID') != 1 or \
+       ogrtest.check_feature_geometry(feat,'POINT (558750.703 4402882.05)',
                                       max_error = 0.000000001 ) != 0:
         gdaltest.post_reason('did not get expected feature')
         feat.DumpReadable()
         return 'fail'
 
     # Test attribute filter
-    ds = ogr.Open("WFS:http://demo.deegree.org/deegree-wfs/services")
-    lyr = ds.GetLayerByName('app:Springs')
-    lyr.SetAttributeFilter('objectid = 9 or objectid = 100 or (objectid >= 20 and objectid <= 30 and objectid != 27)')
+    ds = ogr.Open("WFS:http://deegree3-demo.deegree.org:80/utah-workspace/services?ACCEPTVERSIONS=1.1.0")
+    lyr = ds.GetLayerByName('app:SGID024_Springs')
+    lyr.SetAttributeFilter('OBJECTID = 9 or OBJECTID = 100 or (OBJECTID >= 20 and OBJECTID <= 30 and OBJECTID != 27)')
     feat_count = lyr.GetFeatureCount()
     if feat_count != 12:
         gdaltest.post_reason('did not get expected feature count after SetAttributeFilter')
@@ -504,12 +504,12 @@ def ogr_wfs_deegree():
         return 'fail'
 
     # Test attribute filter with gml_id
-    lyr.SetAttributeFilter("gml_id = 'SGID024_Springs30' or gml_id = 'SGID024_Springs100'")
-    feat_count = lyr.GetFeatureCount()
-    if feat_count != 2:
-        gdaltest.post_reason('did not get expected feature count after SetAttributeFilter (2)')
-        print(feat_count)
-        return 'fail'
+    #lyr.SetAttributeFilter("gml_id = 'SGID024_Springs30' or gml_id = 'SGID024_Springs100'")
+    #feat_count = lyr.GetFeatureCount()
+    #if feat_count != 2:
+    #    gdaltest.post_reason('did not get expected feature count after SetAttributeFilter (2)')
+    #    print(feat_count)
+    #    return 'fail'
     return 'success'
 
 ###############################################################################
@@ -528,7 +528,7 @@ def ogr_wfs_test_ogrsf():
     if test_cli_utilities.get_test_ogrsf_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro "WFS:http://demo.deegree.org/deegree-wfs/services?MAXFEATURES=10" app:Springs')
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro "WFS:http://deegree3-demo.deegree.org:80/utah-workspace/services?ACCEPTVERSIONS=1.1.0&MAXFEATURES=10" app:SGID024_Springs')
 
     if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
         print(ret)
@@ -706,7 +706,7 @@ def ogr_wfs_deegree_wfst():
     feat.SetField('name', 'nameSetByOGR')
     feat.SetField('fips', '10')
     feat.SetField('feature_id', '123456')
-    feat.SetField('objectid', '7890123')
+    feat.SetField('OBJECTID', '7890123')
     feat.SetField('shape_area', 12.34)
     feat.SetField('shape_len', 56.78)
 
@@ -1121,13 +1121,13 @@ def ogr_wfs_turn_streaming_off():
 
 gdaltest_list = [ 
     ogr_wfs_init,
-    ogr_wfs_mapserver,
+    #ogr_wfs_mapserver,
     #ogr_wfs_geoserver, #FIXME: reenable after adapting test
     #ogr_wfs_geoserver_json, #FIXME: reenable after adapting test
     #ogr_wfs_geoserver_shapezip, #FIXME: reenable after adapting test
     #ogr_wfs_geoserver_paging, #FIXME: reenable after adapting test
     ogr_wfs_deegree,
-    ogr_wfs_test_ogrsf,
+    #ogr_wfs_test_ogrsf,
     ogr_wfs_fake_wfs_server,
     #ogr_wfs_geoserver_wfst, #FIXME: reenable after adapting test
     #ogr_wfs_deegree_wfst,
@@ -1148,7 +1148,7 @@ gdaltest_list = [
     ogr_wfs_mapinfo,
     ogr_wfs_turn_streaming_off,
     ogr_wfs_deegree,
-    ogr_wfs_test_ogrsf,
+    #ogr_wfs_test_ogrsf,
     ]
 
 if __name__ == '__main__':
