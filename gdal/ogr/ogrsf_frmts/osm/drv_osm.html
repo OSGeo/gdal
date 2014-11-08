@@ -27,11 +27,15 @@ The driver will categorize features into 5 layers :
 
 <h3>Configuration</h3>
 
-In the <i>data</i> folder of the GDAL distribution, you can find a <i>osmconf.ini</i> file that can be
+In the <i>data</i> folder of the GDAL distribution, you can find a
+<i><a href="http://svn.osgeo.org/gdal/trunk/gdal/data/osmconf.ini">osmconf.ini</a></i> file that can be
 customized to fit your needs. You can also define an alternate path with the OSM_CONFIG_FILE configuration
 option.<p>
 
 The customization is essentially which OSM attributes and keys should be translated into OGR layer fields.<p>
+
+Starting with GDAL 2.0, fields can be computed with SQL expressions (evaluated by SQLite engine)
+from other fields/tags. For example to compute the z_order attribute.<p>
 
 <h3>"other_tags" field</h3>
 
