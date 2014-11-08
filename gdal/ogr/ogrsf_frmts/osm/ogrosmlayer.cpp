@@ -803,9 +803,9 @@ void OGROSMLayer::AddComputedAttribute(const char* pszName,
         int rc;
 #ifdef HAVE_SQLITE_VFS
         rc = sqlite3_open_v2( ":memory:", &(poDS->hDBForComputedAttributes),
-                              SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX, NULL );
+                              SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX, NULL );
 #else
-        rc = sqlite3_open( ":memory:", &(poDS->hDBForComputedAttributes), NULL );
+        rc = sqlite3_open( ":memory:", &(poDS->hDBForComputedAttributes) );
 #endif
         if( rc != SQLITE_OK )
         {
