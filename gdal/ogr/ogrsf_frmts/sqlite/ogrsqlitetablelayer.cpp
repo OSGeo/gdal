@@ -79,6 +79,9 @@ OGRSQLiteTableLayer::OGRSQLiteTableLayer( OGRSQLiteDataSource *poDSIn )
     pszGeomCol = NULL;
     nSRSId = UNINITIALIZED_SRID;
     poSRS = NULL;
+
+    bDisableInsertTriggers = CSLTestBoolean(CPLGetConfigOption(
+                            "OGR_SQLITE_DISABLE_INSERT_TRIGGERS", "YES"));
 }
 
 /************************************************************************/
@@ -90,6 +93,31 @@ OGRSQLiteTableLayer::~OGRSQLiteTableLayer()
 {
     ClearStatement();
     ClearInsertStmt();
+
+    // Restore temporarily disabled triggers
+    char* pszErrMsg = NULL;
+    for(size_t i = 0; i < aosDisabledTriggers.size(); i++ )
+    {
+        // This may fail since CreateSpatialIndex() reinstalls triggers, so
+        // don't check result
+        sqlite3_exec( poDS->GetDB(), aosDisabledTriggers[i].c_str(), NULL, NULL, &pszErrMsg );
+        if( pszErrMsg )
+            sqlite3_free( pszErrMsg );
+        pszErrMsg = NULL;
+    }
+ 
+    // Update geometry_columns_time
+    if( aosDisabledTriggers.size() != 0 && pszGeomCol != NULL )
+    {
+        char* pszSQL3 = sqlite3_mprintf(
+            "UPDATE geometry_columns_time SET last_insert = strftime('%%Y-%%m-%%dT%%H:%%M:%%fZ', 'now') "
+            "WHERE Lower(f_table_name) = Lower('%q') AND Lower(f_geometry_column) = Lower('%q')",
+            pszTableName, pszGeomCol);
+        sqlite3_exec( poDS->GetDB(), pszSQL3, NULL, NULL, &pszErrMsg );
+        if( pszErrMsg )
+            sqlite3_free( pszErrMsg );
+        pszErrMsg = NULL;
+    }
 
     CPLFree(pszGeomCol);
     if( poSRS != NULL )
@@ -2041,9 +2069,74 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
     }
 
+    // For speed-up, disable Spatialite triggers that :
+    // * check the geometry type
+    // * update the last_insert columns in geometry_columns_time and the spatial index
+    // We do that only if there's no spatial index currently active
+    // We'll check ourselves the first constraint and update last_insert
+    // at layer closing
+    if( aosDisabledTriggers.size() == 0 &&
+        bDisableInsertTriggers &&
+        (bDeferedSpatialIndexCreation || !bHasSpatialIndex) &&
+        poDS->HasSpatialite4Layout() &&
+        !bHasM )
+    {
+        char* pszErrMsg = NULL;
+
+        // Backup INSERT ON triggers
+        int nRowCount = 0, nColCount = 0;
+        char **papszResult = NULL;
+        char* pszSQL3 = sqlite3_mprintf("SELECT name, sql FROM sqlite_master WHERE "
+            "tbl_name = '%q' AND type = 'trigger' AND (name LIKE 'ggi_%%' OR name LIKE 'gii_%%' OR name LIKE 'tmi_%%')",
+            pszTableName);
+        sqlite3_get_table( poDS->GetDB(),
+                           pszSQL3,
+                           &papszResult,
+                           &nRowCount, &nColCount, &pszErrMsg );
+        sqlite3_free(pszSQL3);
+
+        if( pszErrMsg )
+            sqlite3_free( pszErrMsg );
+        pszErrMsg = NULL;
+
+        for(int i=0;i<nRowCount;i++)
+        {
+            if( papszResult[2*(i+1)+0] != NULL && papszResult[2*(i+1)+1] != NULL )
+            {
+                aosDisabledTriggers.push_back(papszResult[2*(i+1)+1]);
+
+                // And drop them
+                pszSQL3 = sqlite3_mprintf("DROP TRIGGER %s", papszResult[2*(i+1)+0]);
+                int rc = sqlite3_exec( poDS->GetDB(), pszSQL3, NULL, NULL, &pszErrMsg );
+                if( rc != SQLITE_OK )
+                    CPLDebug("SQLITE", "Error %s", pszErrMsg ? pszErrMsg : "");
+                sqlite3_free(pszSQL3);
+                if( pszErrMsg )
+                    sqlite3_free( pszErrMsg );
+                pszErrMsg = NULL;
+            }
+        }
+
+        sqlite3_free_table( papszResult );
+    }
+
     ResetReading();
 
     OGRGeometry *poGeom = poFeature->GetGeometryRef();
+    
+    if( aosDisabledTriggers.size() != 0 && eGeomType != wkbUnknown && poGeom != NULL )
+    {
+        if( poGeom->getGeometryType() != eGeomType )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Cannot insert feature with geometry of type %s%s. Type %s%s expected",
+                      OGRToOGCGeomType(poGeom->getGeometryType()),
+                      (wkbFlatten(poGeom->getGeometryType()) != poGeom->getGeometryType()) ? "Z" :"",
+                      OGRToOGCGeomType(eGeomType),
+                      (wkbFlatten(eGeomType) != eGeomType) ? "Z": "" );
+            return OGRERR_FAILURE;
+        }
+    }
 
     int bReuseStmt = FALSE;
     if( hInsertStmt == NULL || poFeature->GetFID() != OGRNullFID || bHasDefaultValue )

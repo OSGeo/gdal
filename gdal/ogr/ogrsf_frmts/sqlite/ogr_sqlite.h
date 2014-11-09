@@ -342,6 +342,9 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
     int                 nSRSId;
     OGRSpatialReference *poSRS;
 
+    std::vector<CPLString> aosDisabledTriggers;
+    int                 bDisableInsertTriggers;
+
     void                ClearInsertStmt();
 
     void                BuildWhere(void);
