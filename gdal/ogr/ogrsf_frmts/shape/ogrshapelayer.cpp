@@ -54,7 +54,8 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
                               SHPHandle hSHPIn, DBFHandle hDBFIn, 
                               OGRSpatialReference *poSRSIn, int bSRSSetIn,
                               int bUpdate,
-                              OGRwkbGeometryType eReqType ) :
+                              OGRwkbGeometryType eReqType,
+                              char ** papszCreateOptions ) :
                                 OGRAbstractProxiedLayer(poDSIn->GetPool())
 
 {
@@ -119,6 +120,8 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
     
     const char* pszShapeEncoding = NULL;
     pszShapeEncoding = CSLFetchNameValue(poDS->GetOpenOptions(), "ENCODING");
+    if( pszShapeEncoding == NULL )
+        pszShapeEncoding = CSLFetchNameValue( papszCreateOptions, "ENCODING" );
     if( pszShapeEncoding == NULL )
         pszShapeEncoding = CPLGetConfigOption( "SHAPE_ENCODING", NULL );
     if( pszShapeEncoding != NULL )
