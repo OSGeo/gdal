@@ -452,7 +452,9 @@ def osr_proj4_11():
                      '+proj=utm +zone=31 +south +ellps=WGS84 +units=yd +no_defs ',
                      '+proj=utm +zone=31 +south +ellps=WGS84 +units=us-yd +no_defs ',
 
-                     '+proj=etmerc +lat_0=0 +lon_0=9 +k=0.9996 +units=m +x_0=500000 +datum=WGS84 +no_defs'
+                     '+proj=etmerc +lat_0=0 +lon_0=9 +k=0.9996 +units=m +x_0=500000 +datum=WGS84 +no_defs',
+
+                     '+proj=qsc +lat_0=0 +lon_0=0 +ellps=WGS84 +units=m +no_defs ',
                      ]
 
     for proj4str in proj4strlist:
