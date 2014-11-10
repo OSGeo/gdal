@@ -64,7 +64,7 @@ be set by it's GCS code number if the EPSG database is available.
 	oSRS.SetWellKnownGeogCS( "EPSG:4326" );
 \endcode
 
-For serializization, and transmission of projection definitions to other
+For serialization, and transmission of projection definitions to other
 packages, the OpenGIS Well Known Text format for coordinate systems is
 used.  An OGRSpatialReference can be initialized from well known text, or
 converted back into well known text.
