@@ -176,8 +176,9 @@ class OGRShapeLayer : public OGRAbstractProxiedLayer
                                        const char * pszName,
                                        SHPHandle hSHP, DBFHandle hDBF,
                                        OGRSpatialReference *poSRS, int bSRSSet,
-                                       int bUpdate, 
-                                       OGRwkbGeometryType eReqType );
+                                       int bUpdate,
+                                       OGRwkbGeometryType eReqType,
+                                       char ** papszCreateOptions = NULL);
                         ~OGRShapeLayer();
 
     void                ResetReading();

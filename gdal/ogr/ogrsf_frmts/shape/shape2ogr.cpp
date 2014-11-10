@@ -1283,17 +1283,11 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                             poFieldDefn->GetNameRef(),
                             OGR_DBF_MAX_FIELD_WIDTH);
                 }
+
                 nStrLen = OGR_DBF_MAX_FIELD_WIDTH;
 
-                //check not to cut unicode characters
-                    if(NULL == pszEncoded)
-                    {
-                        pszEncoded = (char*)CPLMalloc(nStrLen);
-                        CPLStrlcpy(pszEncoded, pszStr, nStrLen);
-                        pszStr = pszEncoded;
-                    }
-
-                    nStrLen -= 2;
+                if(EQUAL(pszSHPEncoding, CPL_ENC_UTF8))
+                {
                     const char *p = pszStr + nStrLen;
                     int byteCount = nStrLen;
                     while(byteCount > 0)
@@ -1309,6 +1303,7 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                     }
 
                     pszEncoded[nStrLen] = 0;
+                }
               }
 
               if ( nStrLen > poFieldDefn->GetWidth() )

@@ -3908,7 +3908,61 @@ def ogr_shape_81():
     ds = None
 
     return 'success'
-    
+
+###############################################################################
+# Test string length more than 254 bytes in UTF-8 encoding cut to 254 bytes
+
+def ogr_shape_82():
+
+    if gdaltest.shape_ds is None:
+        return 'skip'
+
+    # create ogrlayer to test cut long strings with UTF-8 encoding
+    gdaltest.shape_lyr = gdaltest.shape_ds.CreateLayer('test_utf_cut', geom_type = ogr.wkbPoint, options = ['ENCODING=UTF-8'])
+
+    #create field to put strings to automatic cut (254 is longest field length)
+    field_defn = ogr.FieldDefn('cut_field', ogr.OFTString)
+    field_defn.SetWidth(254)
+
+    result = gdaltest.shape_lyr.CreateField(field_defn)
+
+    field_defn.Destroy()
+
+    if result != 0:
+        gdaltest.post_reason('failed to create new field.')
+        return 'fail'
+
+    #insert feature with long string in Russian
+    feat = ogr.Feature(feature_def = gdaltest.shape_lyr.GetLayerDefn())
+    init_rus = 'работает два мастера, установка набоек, замена подошвы, замена каблуков, растяжка обуви, растяжка голенищ сапог, швейные работы, ушив голенища сапога, чистка обуви, чистка замшевой обуви, замена стелек'
+    result_rus = 'работает два мастера, установка набоек, замена подошвы, замена каблуков, растяжка обуви, растяжка голенищ сапог, швейные работы, ушив голен'
+    feat.SetField('cut_field', init_rus)
+    gdaltest.shape_lyr.CreateFeature(feat)
+
+    #insert feature with long string in English
+    init_en = 'Remont kablukov i ih zamena; zamena naboek; profilaktika i remont podoshvy; remont i zamena supinatorov; zamena stelek; zamena obuvnoj furnitury; remont golenishha; rastjazhka obuvi; chistka i pokraska obuvi.	Smolenskaja oblast, p. Monastyrshhina, ulica Sovetskaja, d. 38.	Rabotaet ponedelnik – chetverg s 9.00 do 18.00, pjatnica s 10.00 do 17.00, vyhodnoj: subbota'
+    result_en = 'Remont kablukov i ih zamena; zamena naboek; profilaktika i remont podoshvy; remont i zamena supinatorov; zamena stelek; zamena obuvnoj furnitury; remont golenishha; rastjazhka obuvi; chistka i pokraska obuvi.	Smolenskaja oblast, p. Monastyrshhina, ul'
+    feat = ogr.Feature(feature_def = gdaltest.shape_lyr.GetLayerDefn())
+    feat.SetField('cut_field',  init_rus)
+    gdaltest.shape_lyr.CreateFeature(feat)
+
+    #TODO: check you language
+
+    #save layer?
+
+    #read strings and compare with correct values
+    feat = gdaltest.shape_lyr.GetFeature(0) #rus
+    if feat.cut_field != result_rus:
+        gdaltest.post_reason('Wrong rus string cut')
+        return 'fail'
+
+    feat = gdaltest.shape_lyr.GetFeature(1) #en
+    if feat.cut_field != result_rus:
+        gdaltest.post_reason('Wrong en string cut')
+        return 'fail'
+
+    return 'success'
+        
 ###############################################################################
 # 
 
@@ -4029,6 +4083,7 @@ gdaltest_list = [
     ogr_shape_79,
     ogr_shape_80,
     ogr_shape_81,
+    ogr_shape_82,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':
