@@ -537,6 +537,9 @@ class CPL_DLL OGRSpatialReference
     OGRErr      SetWagner( int nVariation, double dfCenterLat,
                            double dfFalseEasting, double dfFalseNorthing );
 
+    /** Quadrilateralized Spherical Cube */
+    OGRErr      SetQSC(double dfCenterLat, double dfCenterLong);
+
     /** State Plane */
     OGRErr      SetStatePlane( int nZone, int bNAD83 = TRUE,
                                const char *pszOverrideUnitName = NULL,

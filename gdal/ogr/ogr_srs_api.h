@@ -185,6 +185,7 @@ typedef enum {
 #define SRS_PT_WAGNER_V         "Wagner_V"
 #define SRS_PT_WAGNER_VI        "Wagner_VI"
 #define SRS_PT_WAGNER_VII       "Wagner_VII"
+#define SRS_PT_QSC              "Quadrilateralized_Spherical_Cube"
                                 
 
 #define SRS_PP_CENTRAL_MERIDIAN         "central_meridian"
@@ -704,6 +705,11 @@ OGRErr CPL_DLL OSRSetVDG( OGRSpatialReferenceH hSRS,
 OGRErr CPL_DLL OSRSetWagner( OGRSpatialReferenceH hSRS, int nVariation,
                              double dfFalseEasting,
                              double dfFalseNorthing );
+
+/** Quadrilateralized Spherical Cube */
+OGRErr CPL_DLL OSRSetQSC( OGRSpatialReferenceH hSRS,
+                              double dfCenterLat, double dfCenterLong );
+
 
 void CPL_DLL OSRCleanup( void );
 
