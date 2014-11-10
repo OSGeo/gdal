@@ -935,6 +935,12 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
                    OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
+    else if( EQUAL(pszProj,"qsc") )
+    {
+        SetQSC( OSR_GDV( papszNV, "lat_0", 0.0 ),
+                OSR_GDV( papszNV, "lon_0", 0.0 ) );
+    }
+
     else if( EQUAL(pszProj,"tpeqd") )
     {
         SetTPED( OSR_GDV( papszNV, "lat_1", 0.0 ), 
@@ -2195,6 +2201,14 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                  "+proj=wag7 +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0) );
+    }
+
+    else if( EQUAL(pszProjection,SRS_PT_QSC) )
+    {
+        sprintf( szProj4+strlen(szProj4),
+                 "+proj=qsc +lat_0=%.16g +lon_0=%.16g ",
+                 GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0) );
     }
 
     /* Note: This never really gets used currently.  See bug 423 */

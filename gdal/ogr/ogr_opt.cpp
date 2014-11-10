@@ -468,6 +468,12 @@ static const char *papszProjectionDefinitions[] = {
     SRS_PP_FALSE_EASTING, 
     SRS_PP_FALSE_NORTHING,
 
+    "*",
+    SRS_PT_QSC,
+    "Quadrilateralized Spherical Cube",
+    SRS_PP_LATITUDE_OF_ORIGIN,
+    SRS_PP_CENTRAL_MERIDIAN,
+
     NULL
 };
 

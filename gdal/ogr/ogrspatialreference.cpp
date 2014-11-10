@@ -5696,6 +5696,34 @@ OGRErr OSRSetWagner( OGRSpatialReferenceH hSRS,
 }
 
 /************************************************************************/
+/*                            SetQSC()                     */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetQSC( double dfCenterLat, double dfCenterLong )
+
+{
+    SetProjection( SRS_PT_QSC );
+    SetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, dfCenterLat );
+    SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, dfCenterLong );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                           OSRSetQSC()                   */
+/************************************************************************/
+
+OGRErr OSRSetQSC( OGRSpatialReferenceH hSRS,
+                       double dfCenterLat, double dfCenterLong )
+
+{
+    VALIDATE_POINTER1( hSRS, "OSRSetQSC", CE_Failure );
+
+    return ((OGRSpatialReference *) hSRS)->SetQSC(
+        dfCenterLat, dfCenterLong );
+}
+
+/************************************************************************/
 /*                            SetAuthority()                            */
 /************************************************************************/
 
