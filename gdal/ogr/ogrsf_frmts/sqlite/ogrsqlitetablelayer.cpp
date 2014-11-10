@@ -80,8 +80,9 @@ OGRSQLiteTableLayer::OGRSQLiteTableLayer( OGRSQLiteDataSource *poDSIn )
     nSRSId = UNINITIALIZED_SRID;
     poSRS = NULL;
 
-    bDisableInsertTriggers = CSLTestBoolean(CPLGetConfigOption(
+    int bDisableInsertTriggers = CSLTestBoolean(CPLGetConfigOption(
                             "OGR_SQLITE_DISABLE_INSERT_TRIGGERS", "YES"));
+    bHasCheckedTriggers = !bDisableInsertTriggers;
 }
 
 /************************************************************************/
@@ -98,9 +99,10 @@ OGRSQLiteTableLayer::~OGRSQLiteTableLayer()
     char* pszErrMsg = NULL;
     for(size_t i = 0; i < aosDisabledTriggers.size(); i++ )
     {
+        CPLDebug("SQLite", "Restoring trigger %s", aosDisabledTriggers[i].first.c_str());
         // This may fail since CreateSpatialIndex() reinstalls triggers, so
         // don't check result
-        sqlite3_exec( poDS->GetDB(), aosDisabledTriggers[i].c_str(), NULL, NULL, &pszErrMsg );
+        sqlite3_exec( poDS->GetDB(), aosDisabledTriggers[i].second.c_str(), NULL, NULL, &pszErrMsg );
         if( pszErrMsg )
             sqlite3_free( pszErrMsg );
         pszErrMsg = NULL;
@@ -2048,6 +2050,27 @@ OGRErr OGRSQLiteTableLayer::SetFeature( OGRFeature *poFeature )
 }
 
 /************************************************************************/
+/*                          AreTriggersSimilar                          */
+/************************************************************************/
+
+static int AreTriggersSimilar(const char* pszExpectedTrigger,
+                              const char* pszTriggerSQL)
+{
+    int i;
+    for(i=0; pszTriggerSQL[i] != '\0' && pszExpectedTrigger[i] != '\0'; i++)
+    {
+        if( pszTriggerSQL[i] == pszExpectedTrigger[i] )
+            continue;
+        if( pszTriggerSQL[i] == '\n' && pszExpectedTrigger[i] == ' ' )
+            continue;
+        if( pszTriggerSQL[i] == ' ' && pszExpectedTrigger[i] == '\n' )
+            continue;
+        return FALSE;
+    }
+    return pszTriggerSQL[i] == '\0' && pszExpectedTrigger[i] == '\0';
+}
+
+/************************************************************************/
 /*                           CreateFeature()                            */
 /************************************************************************/
 
@@ -2075,19 +2098,20 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
     // We do that only if there's no spatial index currently active
     // We'll check ourselves the first constraint and update last_insert
     // at layer closing
-    if( aosDisabledTriggers.size() == 0 &&
-        bDisableInsertTriggers &&
+    if( !bHasCheckedTriggers &&
         (bDeferedSpatialIndexCreation || !bHasSpatialIndex) &&
-        poDS->HasSpatialite4Layout() &&
+        poDS->HasSpatialite4Layout() && pszGeomCol &&
         !bHasM )
     {
+        bHasCheckedTriggers = TRUE;
+
         char* pszErrMsg = NULL;
 
         // Backup INSERT ON triggers
         int nRowCount = 0, nColCount = 0;
         char **papszResult = NULL;
         char* pszSQL3 = sqlite3_mprintf("SELECT name, sql FROM sqlite_master WHERE "
-            "tbl_name = '%q' AND type = 'trigger' AND (name LIKE 'ggi_%%' OR name LIKE 'gii_%%' OR name LIKE 'tmi_%%')",
+            "tbl_name = '%q' AND type = 'trigger' AND (name LIKE 'ggi_%%' OR name LIKE 'tmi_%%')",
             pszTableName);
         sqlite3_get_table( poDS->GetDB(),
                            pszSQL3,
@@ -2101,19 +2125,79 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
 
         for(int i=0;i<nRowCount;i++)
         {
-            if( papszResult[2*(i+1)+0] != NULL && papszResult[2*(i+1)+1] != NULL )
+            const char* pszTriggerName = papszResult[2*(i+1)+0];
+            const char* pszTriggerSQL = papszResult[2*(i+1)+1];
+            if( pszTriggerName!= NULL && pszTriggerSQL != NULL )
             {
-                aosDisabledTriggers.push_back(papszResult[2*(i+1)+1]);
+                const char* pszExpectedTrigger;
+                if( strncmp(pszTriggerName, "ggi_", 4) == 0 )
+                {
+                    pszExpectedTrigger = CPLSPrintf(
+                    "CREATE TRIGGER \"ggi_%s_%s\" BEFORE INSERT ON \"%s\" "
+                    "FOR EACH ROW BEGIN "
+                    "SELECT RAISE(ROLLBACK, '%s.%s violates Geometry constraint [geom-type or SRID not allowed]') "
+                    "WHERE (SELECT geometry_type FROM geometry_columns "
+                    "WHERE Lower(f_table_name) = Lower('%s') AND Lower(f_geometry_column) = Lower('%s') "
+                    "AND GeometryConstraints(NEW.\"%s\", geometry_type, srid) = 1) IS NULL; "
+                    "END",
+                    pszTableName, pszGeomCol, pszTableName,
+                    pszTableName, pszGeomCol,
+                    pszTableName, pszGeomCol,
+                    pszGeomCol);
+                }
+                else if( strncmp(pszTriggerName, "tmi_", 4) == 0 )
+                {
+                    pszExpectedTrigger = CPLSPrintf(
+                    "CREATE TRIGGER \"tmi_%s_%s\" AFTER INSERT ON \"%s\" "
+                    "FOR EACH ROW BEGIN "
+                    "UPDATE geometry_columns_time SET last_insert = strftime('%%Y-%%m-%%dT%%H:%%M:%%fZ', 'now') "
+                    "WHERE Lower(f_table_name) = Lower('%s') AND Lower(f_geometry_column) = Lower('%s'); "
+                    "END",
+                    pszTableName, pszGeomCol, pszTableName,
+                    pszTableName, pszGeomCol);
+                }
+                /* Cannot happen due to the tests that lead to that code path */
+                /* that check there's no spatial index active */
+                /* A further potential optimization would be to rebuild the spatial index */
+                /* afterwards... */
+                /*else if( strncmp(pszTriggerName, "gii_", 4) == 0 )
+                {
+                    pszExpectedTrigger = CPLSPrintf(
+                    "CREATE TRIGGER \"gii_%s_%s\" AFTER INSERT ON \"%s\" "
+                    "FOR EACH ROW BEGIN "
+                    "UPDATE geometry_columns_time SET last_insert = strftime('%%Y-%%m-%%dT%%H:%%M:%%fZ', 'now') "
+                    "WHERE Lower(f_table_name) = Lower('%s') AND Lower(f_geometry_column) = Lower('%s'); "
+                    "DELETE FROM \"idx_%s_%s\" WHERE pkid=NEW.ROWID; "
+                    "SELECT RTreeAlign('idx_%s_%s', NEW.ROWID, NEW.\"%s\"); "
+                    "END",
+                    pszTableName, pszGeomCol, pszTableName,
+                    pszTableName, pszGeomCol,
+                    pszTableName, pszGeomCol,
+                    pszTableName, pszGeomCol, pszGeomCol);
+                }*/
 
-                // And drop them
-                pszSQL3 = sqlite3_mprintf("DROP TRIGGER %s", papszResult[2*(i+1)+0]);
-                int rc = sqlite3_exec( poDS->GetDB(), pszSQL3, NULL, NULL, &pszErrMsg );
-                if( rc != SQLITE_OK )
-                    CPLDebug("SQLITE", "Error %s", pszErrMsg ? pszErrMsg : "");
-                sqlite3_free(pszSQL3);
-                if( pszErrMsg )
-                    sqlite3_free( pszErrMsg );
-                pszErrMsg = NULL;
+                if( AreTriggersSimilar(pszExpectedTrigger, pszTriggerSQL) )
+                {
+                    // And drop them
+                    pszSQL3 = sqlite3_mprintf("DROP TRIGGER %s", pszTriggerName);
+                    int rc = sqlite3_exec( poDS->GetDB(), pszSQL3, NULL, NULL, &pszErrMsg );
+                    if( rc != SQLITE_OK )
+                        CPLDebug("SQLITE", "Error %s", pszErrMsg ? pszErrMsg : "");
+                    else
+                    {
+                        CPLDebug("SQLite", "Dropping trigger %s", pszTriggerName);
+                        aosDisabledTriggers.push_back(std::pair<CPLString,CPLString>(pszTriggerName, pszTriggerSQL));
+                    }
+                    sqlite3_free(pszSQL3);
+                    if( pszErrMsg )
+                        sqlite3_free( pszErrMsg );
+                    pszErrMsg = NULL;
+                }
+                else
+                {
+                    CPLDebug("SQLite", "Cannot drop %s trigger. Doesn't match expected definition",
+                             pszTriggerName);
+                }
             }
         }
 

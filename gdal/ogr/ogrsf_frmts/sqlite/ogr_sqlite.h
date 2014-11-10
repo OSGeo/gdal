@@ -342,8 +342,8 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
     int                 nSRSId;
     OGRSpatialReference *poSRS;
 
-    std::vector<CPLString> aosDisabledTriggers;
-    int                 bDisableInsertTriggers;
+    std::vector< std::pair<CPLString,CPLString> > aosDisabledTriggers;
+    int                 bHasCheckedTriggers;
 
     void                ClearInsertStmt();
 
