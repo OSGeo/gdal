@@ -1734,10 +1734,6 @@ OGRErr OGRCSVLayer::CreateFeature( OGRFeature *poNewFeature )
         else if (poFeatureDefn->GetFieldDefn(iField)->GetType() == OFTReal)
         {
             pszEscaped = CPLStrdup(poNewFeature->GetFieldAsString(iField));
-            /* Use point as decimal separator */
-            char* pszComma = strchr(pszEscaped, ',');
-            if (pszComma)
-                *pszComma = '.';
         }
         else
         {

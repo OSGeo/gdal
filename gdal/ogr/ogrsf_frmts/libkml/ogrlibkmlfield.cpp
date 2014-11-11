@@ -820,10 +820,6 @@ void field2kml (
             }
 
             char* pszStr = CPLStrdup( poOgrFeat->GetFieldAsString ( i ) );
-            /* Use point as decimal separator */
-            char* pszComma = strchr(pszStr, ',');
-            if (pszComma)
-                *pszComma = '.';
 
             if( bUseSimpleField )
             {
