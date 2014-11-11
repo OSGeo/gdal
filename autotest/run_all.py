@@ -26,6 +26,13 @@
 ###############################################################################
 
 import sys
+import os
+
+# Make sure we run from the directory of the script
+if os.path.basename(sys.argv[0]) == os.path.basename(__file__):
+    if os.path.dirname(sys.argv[0]) != '':
+        os.chdir(os.path.dirname(sys.argv[0]))
+
 sys.path.append( 'pymod' )
 import gdaltest
 from osgeo import gdal
@@ -51,6 +58,9 @@ for i in range(1,len(gdaltest.argv)):
 
 if len(test_list) == 0:
     test_list = all_test_list
+
+# we set ECW to not resolve projection and datum strings to get 3.x behavior.     
+gdal.SetConfigOption("ECW_DO_NOT_RESOLVE_DATUM_PROJECTION", "YES")
 
 gdaltest.setup_run( 'gdalautotest_all' )
 
