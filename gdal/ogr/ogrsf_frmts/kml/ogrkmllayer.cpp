@@ -511,10 +511,6 @@ OGRErr OGRKMLLayer::CreateFeature( OGRFeature* poFeature )
             if (poFeatureDefn_->GetFieldDefn(iField)->GetType() == OFTReal)
             {
                 pszEscaped = CPLStrdup( pszRaw );
-                /* Use point as decimal separator */
-                char* pszComma = strchr(pszEscaped, ',');
-                if (pszComma)
-                    *pszComma = '.';
             }
             else
             {

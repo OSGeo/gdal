@@ -460,9 +460,6 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
 
         else if( nOGRFieldType == OFTReal )
         {
-            char* pszComma = strchr((char*)pszStrValue, ',');
-            if (pszComma)
-                *pszComma = '.';
             //Check for special values. They need to be quoted.
             double dfVal = poFeature->GetFieldAsDouble(i);
             if( CPLIsNan(dfVal) )
@@ -897,9 +894,6 @@ void OGRPGDumpLayer::AppendFieldValue(CPLString& osCommand,
     }
     else if ( nOGRFieldType == OFTReal )
     {
-        char* pszComma = strchr((char*)pszStrValue, ',');
-        if (pszComma)
-            *pszComma = '.';
         //Check for special values. They need to be quoted.
         double dfVal = poFeature->GetFieldAsDouble(i);
         if( CPLIsNan(dfVal) )
