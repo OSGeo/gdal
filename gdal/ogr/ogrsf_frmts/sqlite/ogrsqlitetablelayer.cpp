@@ -802,13 +802,12 @@ int OGRSQLiteTableLayer::GetFeatureCount( int bForce )
 
         m_poFilterGeom->getEnvelope( &sEnvelope );
         pszSQL = CPLSPrintf("SELECT count(*) FROM 'idx_%s_%s' WHERE "
-                            "xmax >= %s AND xmin <= %s AND ymax >= %s AND ymin <= %s",
+                            "xmax >= %.12f AND xmin <= %.12f AND ymax >= %.12f AND ymin <= %.12f",
                             pszEscapedTableName, OGRSQLiteEscape(pszGeomCol).c_str(),
-                            // Insure that only Decimal.Points are used, never local settings such as Decimal.Comma.
-                            CPLString().FormatC(sEnvelope.MinX - 1e-11,"%.12f").c_str(),
-                            CPLString().FormatC(sEnvelope.MaxX + 1e-11,"%.12f").c_str(),
-                            CPLString().FormatC(sEnvelope.MinY - 1e-11,"%.12f").c_str(),
-                            CPLString().FormatC(sEnvelope.MaxY + 1e-11,"%.12f").c_str());
+                            sEnvelope.MinX - 1e-11,
+                            sEnvelope.MaxX + 1e-11,
+                            sEnvelope.MinY - 1e-11,
+                            sEnvelope.MaxY + 1e-11);
     }
     else
     {
@@ -891,10 +890,10 @@ OGRErr OGRSQLiteTableLayer::GetExtent(OGREnvelope *psExtent, int bForce)
             papszResult[4+2] != NULL &&
             papszResult[4+3] != NULL)
         {
-            psExtent->MinX = atof(papszResult[4+0]);
-            psExtent->MinY = atof(papszResult[4+1]);
-            psExtent->MaxX = atof(papszResult[4+2]);
-            psExtent->MaxY = atof(papszResult[4+3]);
+            psExtent->MinX = CPLAtof(papszResult[4+0]);
+            psExtent->MinY = CPLAtof(papszResult[4+1]);
+            psExtent->MaxX = CPLAtof(papszResult[4+2]);
+            psExtent->MaxY = CPLAtof(papszResult[4+3]);
             eErr = OGRERR_NONE;
 
             if( m_poFilterGeom == NULL && osQuery.size() == 0 )

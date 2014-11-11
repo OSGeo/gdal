@@ -330,7 +330,7 @@ the approach is as above in all these cases.
 
     if( dfAngle != 0.0 )
     {
-        snprintf(szBuffer, sizeof(szBuffer), "%.3g", dfAngle);
+        CPLsnprintf(szBuffer, sizeof(szBuffer), "%.3g", dfAngle);
         pszComma = strchr(szBuffer, ',');
         if (pszComma)
             *pszComma = '.';
@@ -339,7 +339,7 @@ the approach is as above in all these cases.
 
     if( dfHeight != 0.0 )
     {
-        snprintf(szBuffer, sizeof(szBuffer), "%.3g", dfHeight);
+        CPLsnprintf(szBuffer, sizeof(szBuffer), "%.3g", dfHeight);
         pszComma = strchr(szBuffer, ',');
         if (pszComma)
             *pszComma = '.';
@@ -376,7 +376,7 @@ void OGRDXFLayer::FormatDimension( CPLString &osText, double dfValue )
     // for example.  
 
     sprintf(szFormat, "%%.%df", nPrecision );
-    snprintf(szBuffer, sizeof(szBuffer), szFormat, dfValue);
+    CPLsnprintf(szBuffer, sizeof(szBuffer), szFormat, dfValue);
     char* pszComma = strchr(szBuffer, ',');
     if (pszComma)
         *pszComma = '.';

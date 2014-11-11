@@ -191,7 +191,7 @@ OGRErr PDFWritableVectorDataset::SyncToDisk()
     const char* pszGEO_ENCODING =
         CSLFetchNameValueDef(papszOptions, "GEO_ENCODING", "ISO32000");
 
-    double dfDPI = atof(CSLFetchNameValueDef(papszOptions, "DPI", "72"));
+    double dfDPI = CPLAtof(CSLFetchNameValueDef(papszOptions, "DPI", "72"));
     if (dfDPI < 72.0)
         dfDPI = 72.0;
 

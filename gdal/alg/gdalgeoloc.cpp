@@ -791,13 +791,13 @@ void *GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS,
 /* -------------------------------------------------------------------- */
 /*      Pull geolocation info from the options/metadata.                */
 /* -------------------------------------------------------------------- */
-    psTransform->dfPIXEL_OFFSET = atof(CSLFetchNameValue( papszGeolocationInfo,
+    psTransform->dfPIXEL_OFFSET = CPLAtof(CSLFetchNameValue( papszGeolocationInfo,
                                                           "PIXEL_OFFSET" ));
-    psTransform->dfLINE_OFFSET = atof(CSLFetchNameValue( papszGeolocationInfo,
+    psTransform->dfLINE_OFFSET = CPLAtof(CSLFetchNameValue( papszGeolocationInfo,
                                                          "LINE_OFFSET" ));
-    psTransform->dfPIXEL_STEP = atof(CSLFetchNameValue( papszGeolocationInfo,
+    psTransform->dfPIXEL_STEP = CPLAtof(CSLFetchNameValue( papszGeolocationInfo,
                                                         "PIXEL_STEP" ));
-    psTransform->dfLINE_STEP = atof(CSLFetchNameValue( papszGeolocationInfo,
+    psTransform->dfLINE_STEP = CPLAtof(CSLFetchNameValue( papszGeolocationInfo,
                                                        "LINE_STEP" ));
 
 /* -------------------------------------------------------------------- */

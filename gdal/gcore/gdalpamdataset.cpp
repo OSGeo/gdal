@@ -371,7 +371,7 @@ CPLErr GDALPamDataset::XMLInit( CPLXMLNode *psTree, const char *pszUnused )
         else
         {
             for( int iTA = 0; iTA < 6; iTA++ )
-                psPam->adfGeoTransform[iTA] = atof(papszTokens[iTA]);
+                psPam->adfGeoTransform[iTA] = CPLAtof(papszTokens[iTA]);
             psPam->bHaveGeoTransform = TRUE;
         }
 

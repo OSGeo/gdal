@@ -689,8 +689,8 @@ static void VRTWarpedOverviewTransformerOwnsSubtransformer( void *pTransformArg,
 void* VRTDeserializeWarpedOverviewTransformer( CPLXMLNode *psTree )
 
 {
-    double dfXOverviewFactor = atof(CPLGetXMLValue( psTree, "XFactor",  "1" ));
-    double dfYOverviewFactor = atof(CPLGetXMLValue( psTree, "YFactor",  "1" ));
+    double dfXOverviewFactor = CPLAtof(CPLGetXMLValue( psTree, "XFactor",  "1" ));
+    double dfYOverviewFactor = CPLAtof(CPLGetXMLValue( psTree, "YFactor",  "1" ));
     CPLXMLNode *psContainer;
     GDALTransformerFunc pfnBaseTransform = NULL;
     void *pBaseTransformerArg = NULL;

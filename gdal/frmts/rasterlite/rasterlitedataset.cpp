@@ -988,22 +988,22 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
             else if (EQUALN(papszTokens[i], "minx=", 5))
             {
                 bMinXSet = TRUE;
-                minx = atof(papszTokens[i] + 5);
+                minx = CPLAtof(papszTokens[i] + 5);
             }
             else if (EQUALN(papszTokens[i], "miny=", 5))
             {
                 bMinYSet = TRUE;
-                miny = atof(papszTokens[i] + 5);
+                miny = CPLAtof(papszTokens[i] + 5);
             }
             else if (EQUALN(papszTokens[i], "maxx=", 5))
             {
                 bMaxXSet = TRUE;
-                maxx = atof(papszTokens[i] + 5);
+                maxx = CPLAtof(papszTokens[i] + 5);
             }
             else if (EQUALN(papszTokens[i], "maxy=", 5))
             {
                 bMaxYSet = TRUE;
-                maxy = atof(papszTokens[i] + 5);
+                maxy = CPLAtof(papszTokens[i] + 5);
             }
             else if (EQUALN(papszTokens[i], "bands=", 6))
             {

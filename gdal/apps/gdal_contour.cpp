@@ -129,12 +129,12 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-off") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            dfOffset = atof(argv[++i]);
+            dfOffset = CPLAtof(argv[++i]);
         }
         else if( EQUAL(argv[i],"-i") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            dfInterval = atof(argv[++i]);
+            dfInterval = CPLAtof(argv[++i]);
         }
         else if( EQUAL(argv[i],"-fl") )
         {
@@ -144,7 +144,7 @@ int main( int argc, char ** argv )
                    && nFixedLevelCount 
                              < (int)(sizeof(adfFixedLevels)/sizeof(double))
                    && ArgIsNumeric(argv[i+1]) )
-                adfFixedLevels[nFixedLevelCount++] = atof(argv[++i]);
+                adfFixedLevels[nFixedLevelCount++] = CPLAtof(argv[++i]);
         }
         else if( EQUAL(argv[i],"-b") )
         {
@@ -174,7 +174,7 @@ int main( int argc, char ** argv )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             bNoDataSet = TRUE;
-            dfNoData = atof(argv[++i]);
+            dfNoData = CPLAtof(argv[++i]);
         }
         else if( EQUAL(argv[i],"-nln") )
         {

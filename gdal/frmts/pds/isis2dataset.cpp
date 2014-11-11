@@ -422,14 +422,14 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     /***********   Grab Cellsize ************/
     value = poDS->GetKeyword("QUBE.IMAGE_MAP_PROJECTION.MAP_SCALE");
     if (strlen(value) > 0 ) {
-        dfXDim = (float) atof(value) * 1000.0; /* convert from km to m */
-        dfYDim = (float) atof(value) * 1000.0 * -1;
+        dfXDim = (float) CPLAtof(value) * 1000.0; /* convert from km to m */
+        dfYDim = (float) CPLAtof(value) * 1000.0 * -1;
     }
     
     /***********   Grab LINE_PROJECTION_OFFSET ************/
     value = poDS->GetKeyword("QUBE.IMAGE_MAP_PROJECTION.LINE_PROJECTION_OFFSET");
     if (strlen(value) > 0) {
-        yulcenter = (float) atof(value);
+        yulcenter = (float) CPLAtof(value);
         yulcenter = ((yulcenter) * dfYDim);
         dfULYMap = yulcenter - (dfYDim/2);
     }
@@ -437,7 +437,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     /***********   Grab SAMPLE_PROJECTION_OFFSET ************/
     value = poDS->GetKeyword("QUBE.IMAGE_MAP_PROJECTION.SAMPLE_PROJECTION_OFFSET");
     if( strlen(value) > 0 ) {
-        xulcenter = (float) atof(value);
+        xulcenter = (float) CPLAtof(value);
         xulcenter = ((xulcenter) * dfXDim);
         dfULXMap = xulcenter - (dfXDim/2);
     }
@@ -453,27 +453,27 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     /***********   Grab SEMI-MAJOR ************/
     semi_major = 
-        atof(poDS->GetKeyword( "QUBE.IMAGE_MAP_PROJECTION.A_AXIS_RADIUS")) * 1000.0;
+        CPLAtof(poDS->GetKeyword( "QUBE.IMAGE_MAP_PROJECTION.A_AXIS_RADIUS")) * 1000.0;
 
     /***********   Grab semi-minor ************/
     semi_minor = 
-        atof(poDS->GetKeyword( "QUBE.IMAGE_MAP_PROJECTION.C_AXIS_RADIUS")) * 1000.0;
+        CPLAtof(poDS->GetKeyword( "QUBE.IMAGE_MAP_PROJECTION.C_AXIS_RADIUS")) * 1000.0;
 
     /***********   Grab CENTER_LAT ************/
     center_lat = 
-        atof(poDS->GetKeyword( "QUBE.IMAGE_MAP_PROJECTION.CENTER_LATITUDE"));
+        CPLAtof(poDS->GetKeyword( "QUBE.IMAGE_MAP_PROJECTION.CENTER_LATITUDE"));
 
     /***********   Grab CENTER_LON ************/
     center_lon = 
-        atof(poDS->GetKeyword( "QUBE.IMAGE_MAP_PROJECTION.CENTER_LONGITUDE"));
+        CPLAtof(poDS->GetKeyword( "QUBE.IMAGE_MAP_PROJECTION.CENTER_LONGITUDE"));
 
     /***********   Grab 1st std parallel ************/
     first_std_parallel = 
-        atof(poDS->GetKeyword( "QUBE.IMAGE_MAP_PROJECTION.FIRST_STANDARD_PARALLEL"));
+        CPLAtof(poDS->GetKeyword( "QUBE.IMAGE_MAP_PROJECTION.FIRST_STANDARD_PARALLEL"));
 
     /***********   Grab 2nd std parallel ************/
     second_std_parallel = 
-        atof(poDS->GetKeyword( "QUBE.IMAGE_MAP_PROJECTION.SECOND_STANDARD_PARALLEL"));
+        CPLAtof(poDS->GetKeyword( "QUBE.IMAGE_MAP_PROJECTION.SECOND_STANDARD_PARALLEL"));
      
     /*** grab  PROJECTION_LATITUDE_TYPE = "PLANETOCENTRIC" ****/
     // Need to further study how ocentric/ographic will effect the gdal library.

@@ -237,14 +237,14 @@ char *GXFGetMapProjectionAsPROJ4( GXFHandle hGXF )
         strcat( szPROJ4, " +alpha=" );
         strcat( szPROJ4, papszMethods[3] );
 
-        if( atof(papszMethods[4]) < 0.00001 )
+        if( CPLAtof(papszMethods[4]) < 0.00001 )
         {
             strcat( szPROJ4, " +not_rot" );
         }
         else
         {
 #ifdef notdef            
-            if( atof(papszMethods[4]) + atof(papszMethods[3]) < 0.00001 )
+            if( CPLAtof(papszMethods[4]) + CPLAtof(papszMethods[3]) < 0.00001 )
                 /* ok */;
             else
                 /* notdef: no way to specify arbitrary angles! */;

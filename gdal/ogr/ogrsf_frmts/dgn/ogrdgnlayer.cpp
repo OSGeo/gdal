@@ -552,13 +552,13 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
 
           // Add the size info in ground units.
           if( ABS(psText->height_mult) >= 6.0 )
-              sprintf( pszOgrFS+strlen(pszOgrFS), ",s:%dg", 
+              CPLsprintf( pszOgrFS+strlen(pszOgrFS), ",s:%dg", 
                        (int) psText->height_mult );
           else if( ABS(psText->height_mult) > 0.1 )
-              sprintf( pszOgrFS+strlen(pszOgrFS), ",s:%.3fg", 
+              CPLsprintf( pszOgrFS+strlen(pszOgrFS), ",s:%.3fg", 
                        psText->height_mult );
           else
-              sprintf( pszOgrFS+strlen(pszOgrFS), ",s:%.12fg", 
+              CPLsprintf( pszOgrFS+strlen(pszOgrFS), ",s:%.12fg", 
                        psText->height_mult );
 
           // Add the font name. Name it MstnFont<FONTNUMBER> if not available

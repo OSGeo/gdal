@@ -1054,11 +1054,11 @@ OGRErr GetPosition(OGRLayer* const poPkLayer,
     double dfRefDist = dfBeg + dfRealDist / dfScale;
     if (bQuiet == TRUE)
     {
-        fprintf(stdout, "%f\n", dfRefDist);
+        fprintf(stdout, "%s", CPLSPrintf("%f\n", dfRefDist));
     }
     else
     {
-        fprintf(stdout, "The position for coordinates lat:%f, long:%f is %f\n", dfY, dfX, dfRefDist);
+        fprintf(stdout, "%s", CPLSPrintf("The position for coordinates lat:%f, long:%f is %f\n", dfY, dfX, dfRefDist));
     }
 
     return OGRERR_NONE;
@@ -1093,11 +1093,11 @@ OGRErr GetCoordinates(OGRLayer* const poPkLayer,
 
         if (bQuiet == TRUE)
         {
-            fprintf(stdout, "%f,%f,%f\n", pt.getX(), pt.getY(), pt.getZ());
+            fprintf(stdout, "%s", CPLSPrintf("%f,%f,%f\n", pt.getX(), pt.getY(), pt.getZ()));
         }
         else
         {
-            fprintf(stdout, "The position for distance %f is lat:%f, long:%f, height:%f\n", dfPos, pt.getY(), pt.getX(), pt.getZ());
+            fprintf(stdout, "%s", CPLSPrintf("The position for distance %f is lat:%f, long:%f, height:%f\n", dfPos, pt.getY(), pt.getX(), pt.getZ()));
         }
         OGRFeature::DestroyFeature(pFeature);
     }

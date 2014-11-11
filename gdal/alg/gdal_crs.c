@@ -502,7 +502,7 @@ void *GDALDeserializeGCPTransformer( CPLXMLNode *psTree )
     bReversed = atoi(CPLGetXMLValue(psTree,"Reversed","0"));
     bRefine = atoi(CPLGetXMLValue(psTree,"Refine","0"));
     nMinimumGcps = atoi(CPLGetXMLValue(psTree,"MinimumGcps","6"));
-    dfTolerance = atof(CPLGetXMLValue(psTree,"Tolerance","1.0"));
+    dfTolerance = CPLAtof(CPLGetXMLValue(psTree,"Tolerance","1.0"));
 
 /* -------------------------------------------------------------------- */
 /*      Generate transformation.                                        */

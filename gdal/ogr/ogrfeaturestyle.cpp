@@ -2071,10 +2071,10 @@ double OGRStyleTool::GetParamDbl(const OGRStyleParamId &sStyleParam ,
         // if sStyleParam.bGeoref == TRUE , need to convert to output value;
       case OGRSTypeString:
         if (sStyleParam.bGeoref)
-          return ComputeWithUnit(atof(sStyleValue.pszValue),
+          return ComputeWithUnit(CPLAtof(sStyleValue.pszValue),
                                  sStyleValue.eUnit);
         else
-          return atof(sStyleValue.pszValue);
+          return CPLAtof(sStyleValue.pszValue);
       case OGRSTypeDouble:
         if (sStyleParam.bGeoref)
           return ComputeWithUnit(sStyleValue.dfValue,
@@ -2117,7 +2117,7 @@ void OGRStyleTool::SetParamStr(const OGRStyleParamId &sStyleParam ,
         sStyleValue.pszValue = CPLStrdup(pszParamString);
         break;
       case OGRSTypeDouble:
-        sStyleValue.dfValue = atof(pszParamString);
+        sStyleValue.dfValue = CPLAtof(pszParamString);
         break;
       case OGRSTypeInteger:
       case OGRSTypeBoolean:

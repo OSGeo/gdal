@@ -219,10 +219,10 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
                 {
                     if ((ulx[0] != '\0') && (uly[0] != '\0') && (lrx[0] != '\0') && (lry[0] != '\0'))
                     {
-                        m_data_window.m_x0 = atof(ulx);
-                        m_data_window.m_y0 = atof(uly);
-                        m_data_window.m_x1 = atof(lrx);
-                        m_data_window.m_y1 = atof(lry);
+                        m_data_window.m_x0 = CPLAtof(ulx);
+                        m_data_window.m_y0 = CPLAtof(uly);
+                        m_data_window.m_x1 = CPLAtof(lrx);
+                        m_data_window.m_y1 = CPLAtof(lry);
                     }
                     else
                     {

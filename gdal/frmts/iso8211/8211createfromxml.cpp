@@ -245,7 +245,7 @@ int main(int nArgc, char* papszArgv[])
                                 if( strcmp(pszSubfieldType, "float") == 0 )
                                 {
                                     poRec->SetFloatSubfield( pszFieldName, nFieldOcc, pszSubfieldName, nOcc,
-                                                           atof(pszSubfieldValue) );
+                                                           CPLAtof(pszSubfieldValue) );
                                 }
                                 else if( strcmp(pszSubfieldType, "integer") == 0 )
                                 {

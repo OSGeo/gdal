@@ -285,9 +285,9 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
             char** papszTokens = CSLTokenizeString2(pszLine, ",", 0);
             if (bHasCenter && CSLCount(papszTokens) == 3)
             {
-                double dfRadius = atof(papszTokens[0]) * 1852;
-                double dfStartAngle = atof(papszTokens[1]);
-                double dfEndAngle = atof(papszTokens[2]);
+                double dfRadius = CPLAtof(papszTokens[0]) * 1852;
+                double dfStartAngle = CPLAtof(papszTokens[1]);
+                double dfEndAngle = CPLAtof(papszTokens[2]);
 
                 if (bClockWise && dfEndAngle < dfStartAngle)
                     dfEndAngle += 360;
@@ -381,7 +381,7 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
             {
                 pszLine += 3;
 
-                double dfRADIUS = atof(pszLine) * 1852;
+                double dfRADIUS = CPLAtof(pszLine) * 1852;
 
                 double dfAngle;
                 double dfLat, dfLon;

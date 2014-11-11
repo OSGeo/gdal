@@ -3,6 +3,8 @@
 #define GEO_CONFIG_H
 
 #include "cpl_config.h"
+#include "cpl_string.h"
+#define sprintf CPLsprintf
 
 #ifdef RENAME_INTERNAL_LIBTIFF_SYMBOLS
 #include "gdal_libtiff_symbol_rename.h"

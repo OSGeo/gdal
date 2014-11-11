@@ -561,7 +561,7 @@ CPLErr GDALWarpOperation::Initialize( const GDALWarpOptions *psNewOptions )
             const char *pszBD = CSLFetchNameValue( psOptions->papszWarpOptions,
                                                    "CUTLINE_BLEND_DIST" );
             if( pszBD )
-                psOptions->dfCutlineBlendDist = atof(pszBD);
+                psOptions->dfCutlineBlendDist = CPLAtof(pszBD);
         }
     }
 

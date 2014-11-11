@@ -283,7 +283,7 @@ double GDALWMSMiniDriver_TiledWMS::Scale(const char *request) {
     int bbox=FindBbox(request);
     if (bbox<0) return 0;
     double x,y,X,Y;
-    sscanf(request+bbox,"%lf,%lf,%lf,%lf",&x,&y,&X,&Y);
+    CPLsscanf(request+bbox,"%lf,%lf,%lf,%lf",&x,&y,&X,&Y);
     return (m_data_window.m_x1-m_data_window.m_x0)/(X-x)*m_bsx/m_data_window.m_sx;
 }
 
@@ -446,10 +446,10 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config)
             break;
         }
 
-        m_data_window.m_x0=atof(CPLGetXMLValue(bbox,"minx","0"));
-        m_data_window.m_x1=atof(CPLGetXMLValue(bbox,"maxx","-1"));
-        m_data_window.m_y0=atof(CPLGetXMLValue(bbox,"maxy","0"));
-        m_data_window.m_y1=atof(CPLGetXMLValue(bbox,"miny","-1"));
+        m_data_window.m_x0=CPLAtof(CPLGetXMLValue(bbox,"minx","0"));
+        m_data_window.m_x1=CPLAtof(CPLGetXMLValue(bbox,"maxx","-1"));
+        m_data_window.m_y0=CPLAtof(CPLGetXMLValue(bbox,"maxy","0"));
+        m_data_window.m_y1=CPLAtof(CPLGetXMLValue(bbox,"miny","-1"));
 
         if ((m_data_window.m_x1-m_data_window.m_x0)<0) {
             CPLError(ret=CE_Failure,CPLE_AppDefined,"%s%s", SIG,
@@ -580,7 +580,7 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config)
                 }
 
                 double x,y,X,Y;
-                if (sscanf(CSLFetchNameValueDef(papszTokens,"BBOX", ""),"%lf,%lf,%lf,%lf",&x,&y,&X,&Y)!=4)
+                if (CPLsscanf(CSLFetchNameValueDef(papszTokens,"BBOX", ""),"%lf,%lf,%lf,%lf",&x,&y,&X,&Y)!=4)
                 {
                     CPLError(ret=CE_Failure,CPLE_AppDefined,
                         "%s Error parsing BBOX, pattern %d\n",SIG,overview_count+1);

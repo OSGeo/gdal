@@ -451,8 +451,6 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nRequestMaxFeatures, int bRequestHi
         else
             osGeomFilter += "</PropertyName>";
 
-        CPLLocaleC  oLocaleEnforcer;
-
         if ( atoi(poDS->GetVersion()) >= 2 )
         {
             osGeomFilter += "<gml:Envelope";
@@ -1691,8 +1689,6 @@ OGRErr OGRWFSLayer::CreateFeature( OGRFeature *poFeature )
     osPost += "    <feature:"; osPost += pszShortName; osPost += " xmlns:feature=\"";
     osPost += osTargetNamespace; osPost += "\">\n";
 
-    CPLLocaleC  oLocaleEnforcer;
-
     int i;
     for(i=1; i <= poFeature->GetFieldCount(); i++)
     {
@@ -1937,8 +1933,6 @@ OGRErr OGRWFSLayer::SetFeature( OGRFeature *poFeature )
 
     osPost += "  <wfs:Update typeName=\"feature:"; osPost += pszShortName; osPost +=  "\" xmlns:feature=\"";
     osPost += osTargetNamespace; osPost += "\">\n";
-
-    CPLLocaleC  oLocaleEnforcer;
 
     OGRGeometry* poGeom = poFeature->GetGeometryRef();
     if ( osGeometryColumnName.size() != 0 )

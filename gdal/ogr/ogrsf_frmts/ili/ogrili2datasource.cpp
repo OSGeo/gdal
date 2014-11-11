@@ -156,7 +156,7 @@ int OGRILI2DataSource::Open( const char * pszNewName, int bTestOpen )
 
     if( getenv( "ARC_DEGREES" ) != NULL ) {
       //No better way to pass arguments to the reader (it could even be an -lco arg)
-      poReader->SetArcDegrees( atof( getenv("ARC_DEGREES") ) );
+      poReader->SetArcDegrees( CPLAtof( getenv("ARC_DEGREES") ) );
     }
 
     poReader->SetSourceFile( pszName );

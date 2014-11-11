@@ -431,7 +431,7 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
                 else if( CPLIsInf(padfItems[j]) )
                     sprintf( pszNeedToFree+nOff, (padfItems[j] > 0) ? "Infinity" : "-Infinity" );
                 else
-                    sprintf( pszNeedToFree+nOff, "%.16g", padfItems[j] );
+                    CPLsprintf( pszNeedToFree+nOff, "%.16g", padfItems[j] );
 
             }
             strcat( pszNeedToFree+nOff, "}" );
@@ -842,7 +842,7 @@ void OGRPGDumpLayer::AppendFieldValue(CPLString& osCommand,
             else if( CPLIsInf(padfItems[j]) )
                 sprintf( pszNeedToFree+nOff, (padfItems[j] > 0) ? "Infinity" : "-Infinity" );
             else
-                sprintf( pszNeedToFree+nOff, "%.16g", padfItems[j] );
+                CPLsprintf( pszNeedToFree+nOff, "%.16g", padfItems[j] );
 
         }
         strcat( pszNeedToFree+nOff, "}'" );

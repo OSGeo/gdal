@@ -35,7 +35,7 @@
  * add support for reading google mercator (#4115)
  *
  * Revision 1.41  2010-10-07 18:46:26  aboudreault
- * Fixed bad use of atof when locale setting doesn't use . for float (GDAL bug #3775)
+ * Fixed bad use of CPLAtof when locale setting doesn't use . for float (GDAL bug #3775)
  *
  * Revision 1.40  2010-09-07 16:48:08  aboudreault
  * Removed incomplete patch for affine params support in mitab. (bug 1155)
@@ -131,7 +131,7 @@ static double GetMIFParm( char ** papszFields, int iField, double dfDefault )
     if( iField >= CSLCount(papszFields) )
         return dfDefault;
     else
-        return atof(papszFields[iField]);
+        return CPLAtof(papszFields[iField]);
 }
 
 /************************************************************************/
@@ -227,20 +227,20 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
         && CSLCount(papszNextField) >= 4 )
     {
         nEllipsoid = atoi(papszNextField[0]);
-        adfDatumParm[0] = atof(papszNextField[1]);
-        adfDatumParm[1] = atof(papszNextField[2]);
-        adfDatumParm[2] = atof(papszNextField[3]);
+        adfDatumParm[0] = CPLAtof(papszNextField[1]);
+        adfDatumParm[1] = CPLAtof(papszNextField[2]);
+        adfDatumParm[2] = CPLAtof(papszNextField[3]);
         papszNextField += 4;
     }
 
     if( nDatum == 9999
         && CSLCount(papszNextField) >= 5 )
     {
-        adfDatumParm[3] = atof(papszNextField[0]);
-        adfDatumParm[4] = atof(papszNextField[1]);
-        adfDatumParm[5] = atof(papszNextField[2]);
-        adfDatumParm[6] = atof(papszNextField[3]);
-        adfDatumParm[7] = atof(papszNextField[4]);
+        adfDatumParm[3] = CPLAtof(papszNextField[0]);
+        adfDatumParm[4] = CPLAtof(papszNextField[1]);
+        adfDatumParm[5] = CPLAtof(papszNextField[2]);
+        adfDatumParm[6] = CPLAtof(papszNextField[3]);
+        adfDatumParm[7] = CPLAtof(papszNextField[4]);
         papszNextField += 5;
     }
 
@@ -746,7 +746,7 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
 
     if( nDatum == 999 )
     {
-        sprintf( szDatumName,
+        CPLsprintf( szDatumName,
                  "MIF 9999,%d,%.15g,%.15g,%.15g",
                  nEllipsoid,
                  adfDatumParm[0],
@@ -755,7 +755,7 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
     }
     else if( nDatum == 9999 )
     {
-        sprintf( szDatumName,
+        CPLsprintf( szDatumName,
                  "MIF 9999,%d,%.15g,%.15g,%.15g,%.15g,%.15g,%.15g,%.15g,%.15g",
                  nEllipsoid,
                  adfDatumParm[0],
@@ -1229,18 +1229,18 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
         if( CSLCount(papszFields) >= 5 )
         {
             nEllipsoid = atoi(papszFields[1]);
-            adfDatumParm[0] = atof(papszFields[2]);
-            adfDatumParm[1] = atof(papszFields[3]);
-            adfDatumParm[2] = atof(papszFields[4]);
+            adfDatumParm[0] = CPLAtof(papszFields[2]);
+            adfDatumParm[1] = CPLAtof(papszFields[3]);
+            adfDatumParm[2] = CPLAtof(papszFields[4]);
         }
 
         if( CSLCount(papszFields) >= 10 )
         {
-            adfDatumParm[3] = atof(papszFields[5]);
-            adfDatumParm[4] = atof(papszFields[6]);
-            adfDatumParm[5] = atof(papszFields[7]);
-            adfDatumParm[6] = atof(papszFields[8]);
-            adfDatumParm[7] = atof(papszFields[9]);
+            adfDatumParm[3] = CPLAtof(papszFields[5]);
+            adfDatumParm[4] = CPLAtof(papszFields[6]);
+            adfDatumParm[5] = CPLAtof(papszFields[7]);
+            adfDatumParm[6] = CPLAtof(papszFields[8]);
+            adfDatumParm[7] = CPLAtof(papszFields[9]);
         }
 
         if( CSLCount(papszFields) < 5 )
@@ -1342,7 +1342,7 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
 
         if( nDatum == 999 || nDatum == 9999 )
         {
-            sprintf( szCoordSys + strlen(szCoordSys),
+            CPLsprintf( szCoordSys + strlen(szCoordSys),
                      ", %d, %.15g, %.15g, %.15g",
                      nEllipsoid,
                      adfDatumParm[0], adfDatumParm[1], adfDatumParm[2] );
@@ -1350,7 +1350,7 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
         
         if( nDatum == 9999 )
         {
-            sprintf( szCoordSys + strlen(szCoordSys),
+            CPLsprintf( szCoordSys + strlen(szCoordSys),
                      ", %.15g, %.15g, %.15g, %.15g, %.15g",
                      adfDatumParm[3], adfDatumParm[4], adfDatumParm[5],
                      adfDatumParm[6], adfDatumParm[7] );
@@ -1374,7 +1374,7 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
 /*      Append Projection Parms.                                        */
 /* -------------------------------------------------------------------- */
     for( int iParm = 0; iParm < nParmCount; iParm++ )
-        sprintf( szCoordSys + strlen(szCoordSys),
+        CPLsprintf( szCoordSys + strlen(szCoordSys),
                  ", %.15g",
                  parms[iParm] );
 
@@ -1419,10 +1419,10 @@ GBool MITABExtractCoordSysBounds( const char * pszCoordSys,
 
     if (iBounds >= 0 && iBounds + 4 < CSLCount(papszFields))
     {
-        dXMin = atof(papszFields[++iBounds]);
-        dYMin = atof(papszFields[++iBounds]);
-        dXMax = atof(papszFields[++iBounds]);
-        dYMax = atof(papszFields[++iBounds]);
+        dXMin = CPLAtof(papszFields[++iBounds]);
+        dYMin = CPLAtof(papszFields[++iBounds]);
+        dXMax = CPLAtof(papszFields[++iBounds]);
+        dYMax = CPLAtof(papszFields[++iBounds]);
         CSLDestroy( papszFields );
         return TRUE;
     }
@@ -1523,19 +1523,19 @@ int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
         && CSLCount(papszNextField) >= 4 )
     {
         psProj->nEllipsoidId = (GByte)atoi(papszFields[0]);
-        psProj->dDatumShiftX = atof(papszNextField[1]);
-        psProj->dDatumShiftY = atof(papszNextField[2]);
-        psProj->dDatumShiftZ = atof(papszNextField[3]);
+        psProj->dDatumShiftX = CPLAtof(papszNextField[1]);
+        psProj->dDatumShiftY = CPLAtof(papszNextField[2]);
+        psProj->dDatumShiftZ = CPLAtof(papszNextField[3]);
         papszNextField += 4;
 
         if( nDatum == 9999
             && CSLCount(papszNextField) >= 5 )
         {
-            psProj->adDatumParams[0] = atof(papszNextField[0]);
-            psProj->adDatumParams[1] = atof(papszNextField[1]);
-            psProj->adDatumParams[2] = atof(papszNextField[2]);
-            psProj->adDatumParams[3] = atof(papszNextField[3]);
-            psProj->adDatumParams[4] = atof(papszNextField[4]);
+            psProj->adDatumParams[0] = CPLAtof(papszNextField[0]);
+            psProj->adDatumParams[1] = CPLAtof(papszNextField[1]);
+            psProj->adDatumParams[2] = CPLAtof(papszNextField[2]);
+            psProj->adDatumParams[3] = CPLAtof(papszNextField[3]);
+            psProj->adDatumParams[4] = CPLAtof(papszNextField[4]);
             papszNextField += 5;
         }
     }
@@ -1592,7 +1592,7 @@ int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
      *----------------------------------------------------------------*/
     for(int iParam=0; iParam < 6 && CSLCount(papszNextField) > 0; iParam++)
     {
-        psProj->adProjParams[iParam] = atof(papszNextField[0]);
+        psProj->adProjParams[iParam] = CPLAtof(papszNextField[0]);
         papszNextField++;         
     }
     

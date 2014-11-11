@@ -761,7 +761,7 @@ double ADRGDataset::GetLongitudeFromString(const char* str)
     strncpy(mm, str, 2);
     str+=2;
     strncpy(ssdotss, str, 5);
-    return sign * (atof(ddd) + atof(mm) / 60 + atof(ssdotss) / 3600);
+    return sign * (CPLAtof(ddd) + CPLAtof(mm) / 60 + CPLAtof(ssdotss) / 3600);
 }
 
 /************************************************************************/
@@ -780,7 +780,7 @@ double ADRGDataset::GetLatitudeFromString(const char* str)
     strncpy(mm, str, 2);
     str+=2;
     strncpy(ssdotss, str, 5);
-    return sign * (atof(ddd) + atof(mm) / 60 + atof(ssdotss) / 3600);
+    return sign * (CPLAtof(ddd) + CPLAtof(mm) / 60 + CPLAtof(ssdotss) / 3600);
 }
 
 /************************************************************************/

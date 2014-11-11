@@ -339,14 +339,14 @@ int main( int argc, char ** argv )
     {
         if( adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0 )
         {
-            printf( "Origin = (%.15f,%.15f)\n",
+            CPLprintf( "Origin = (%.15f,%.15f)\n",
                     adfGeoTransform[0], adfGeoTransform[3] );
 
-            printf( "Pixel Size = (%.15f,%.15f)\n",
+            CPLprintf( "Pixel Size = (%.15f,%.15f)\n",
                     adfGeoTransform[1], adfGeoTransform[5] );
         }
         else
-            printf( "GeoTransform =\n"
+            CPLprintf( "GeoTransform =\n"
                     "  %.16g, %.16g, %.16g\n"
                     "  %.16g, %.16g, %.16g\n", 
                     adfGeoTransform[0],
@@ -391,7 +391,7 @@ int main( int argc, char ** argv )
             
             psGCP = GDALGetGCPs( hDataset ) + i;
 
-            printf( "GCP[%3d]: Id=%s, Info=%s\n"
+            CPLprintf( "GCP[%3d]: Id=%s, Info=%s\n"
                     "          (%.15g,%.15g) -> (%.15g,%.15g,%.15g)\n", 
                     i, psGCP->pszId, psGCP->pszInfo, 
                     psGCP->dfGCPPixel, psGCP->dfGCPLine, 
@@ -497,9 +497,9 @@ int main( int argc, char ** argv )
         {
             printf( "  " );
             if( bGotMin )
-                printf( "Min=%.3f ", dfMin );
+                CPLprintf( "Min=%.3f ", dfMin );
             if( bGotMax )
-                printf( "Max=%.3f ", dfMax );
+                CPLprintf( "Max=%.3f ", dfMax );
         
             if( bComputeMinMax )
             {
@@ -507,7 +507,7 @@ int main( int argc, char ** argv )
                 GDALComputeRasterMinMax( hBand, FALSE, adfCMinMax );
                 if (CPLGetLastErrorType() == CE_None)
                 {
-                  printf( "  Computed Min/Max=%.3f,%.3f", 
+                  CPLprintf( "  Computed Min/Max=%.3f,%.3f", 
                           adfCMinMax[0], adfCMinMax[1] );
                 }
             }
@@ -519,7 +519,7 @@ int main( int argc, char ** argv )
                                         &dfMin, &dfMax, &dfMean, &dfStdDev );
         if( eErr == CE_None )
         {
-            printf( "  Minimum=%.3f, Maximum=%.3f, Mean=%.3f, StdDev=%.3f\n",
+            CPLprintf( "  Minimum=%.3f, Maximum=%.3f, Mean=%.3f, StdDev=%.3f\n",
                     dfMin, dfMax, dfMean, dfStdDev );
         }
 
@@ -557,7 +557,7 @@ int main( int argc, char ** argv )
             if (CPLIsNan(dfNoData))
                 printf( "  NoData Value=nan\n" );
             else
-                printf( "  NoData Value=%.18g\n", dfNoData );
+                CPLprintf( "  NoData Value=%.18g\n", dfNoData );
         }
 
         if( GDALGetOverviewCount(hBand) > 0 )
@@ -681,7 +681,7 @@ int main( int argc, char ** argv )
 
         if( GDALGetRasterScale( hBand, &bSuccess ) != 1.0 
             || GDALGetRasterOffset( hBand, &bSuccess ) != 0.0 )
-            printf( "  Offset: %.15g,   Scale:%.15g\n",
+            CPLprintf( "  Offset: %.15g,   Scale:%.15g\n",
                     GDALGetRasterOffset( hBand, &bSuccess ),
                     GDALGetRasterScale( hBand, &bSuccess ) );
 
@@ -767,7 +767,7 @@ GDALInfoReportCorner( GDALDatasetH hDataset,
 
     else
     {
-        printf( "(%7.1f,%7.1f)\n", x, y );
+        CPLprintf( "(%7.1f,%7.1f)\n", x, y );
         return FALSE;
     }
 
@@ -776,11 +776,11 @@ GDALInfoReportCorner( GDALDatasetH hDataset,
 /* -------------------------------------------------------------------- */
     if( ABS(dfGeoX) < 181 && ABS(dfGeoY) < 91 )
     {
-        printf( "(%12.7f,%12.7f) ", dfGeoX, dfGeoY );
+        CPLprintf( "(%12.7f,%12.7f) ", dfGeoX, dfGeoY );
     }
     else
     {
-        printf( "(%12.3f,%12.3f) ", dfGeoX, dfGeoY );
+        CPLprintf( "(%12.3f,%12.3f) ", dfGeoX, dfGeoY );
     }
 
 /* -------------------------------------------------------------------- */

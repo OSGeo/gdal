@@ -30,6 +30,7 @@
 
 #include "iso8211.h"
 #include "cpl_conv.h"
+#include "cpl_string.h"
 
 CPL_CVSID("$Id$");
 
@@ -442,7 +443,7 @@ DDFSubfieldDefn::ExtractFloatData( const char * pachSourceData,
       case 'R':
       case 'S':
       case 'C':
-        return atof(ExtractStringData(pachSourceData, nMaxBytes,
+        return CPLAtof(ExtractStringData(pachSourceData, nMaxBytes,
                                       pnConsumedBytes));
 
       case 'B':
@@ -954,7 +955,7 @@ int DDFSubfieldDefn::FormatFloatValue( char *pachData, int nBytesAvailable,
     int nSize;
     char szWork[120];
 
-    sprintf( szWork, "%.16g", dfNewValue );
+    CPLsprintf( szWork, "%.16g", dfNewValue );
 
     if( bIsVariable )
     {

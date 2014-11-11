@@ -54,11 +54,11 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal, char chDeci
     char szFormat[16];
     sprintf(szFormat, "%%.%df", nPrecision);
 
-    int ret = snprintf(pszBuffer, nBufferLen, szFormat, dfVal);
+    int ret = CPLsnprintf(pszBuffer, nBufferLen, szFormat, dfVal);
     /* Windows CRT doesn't conform with C99 and return -1 when buffer is truncated */
     if (ret >= nBufferLen || ret == -1)
     {
-        snprintf(pszBuffer, nBufferLen, "%s", "too_big");
+        CPLsnprintf(pszBuffer, nBufferLen, "%s", "too_big");
         return;
     }
 
@@ -133,7 +133,7 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal, char chDeci
                 nPrecision --;
                 nTruncations ++;
                 sprintf(szFormat, "%%.%df", nPrecision);
-                snprintf(pszBuffer, nBufferLen, szFormat, dfVal);
+                CPLsnprintf(pszBuffer, nBufferLen, szFormat, dfVal);
                 continue;
             }
             else if (i - 9 > iDotPos && /*pszBuffer[i-1] == '9' && */
@@ -149,7 +149,7 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal, char chDeci
                 nPrecision --;
                 nTruncations ++;
                 sprintf(szFormat, "%%.%df", nPrecision);
-                snprintf(pszBuffer, nBufferLen, szFormat, dfVal);
+                CPLsnprintf(pszBuffer, nBufferLen, szFormat, dfVal);
                 continue;
             }
         }
@@ -1056,10 +1056,10 @@ int OGRCompareDate(   OGRField *psFirstTuple,
 /*                        OGRFastAtof()                                 */
 /************************************************************************/
 
-/* On Windows, atof() is very slow if the number */
+/* On Windows, CPLAtof() is very slow if the number */
 /* is followed by other long content. */
 /* So we just extract the number into a short string */
-/* before calling atof() on it */
+/* before calling CPLAtof() on it */
 static
 double OGRCallAtofOnShortString(const char* pszStr)
 {
@@ -1076,16 +1076,16 @@ double OGRCallAtofOnShortString(const char* pszStr)
     {
         szTemp[nCounter++] = *(p++);
         if (nCounter == 127)
-            return atof(pszStr);
+            return CPLAtof(pszStr);
     }
     szTemp[nCounter] = '\0';
-    return atof(szTemp);
+    return CPLAtof(szTemp);
 }
 
 /** Same contract as CPLAtof, except than it doesn't always call the
- *  system atof() that may be slow on some platforms. For simple but
+ *  system CPLAtof() that may be slow on some platforms. For simple but
  *  common strings, it'll use a faster implementation (up to 20x faster
- *  than atof() on MS runtime libraries) that has no garanty to return
+ *  than CPLAtof() on MS runtime libraries) that has no garanty to return
  *  exactly the same floating point number.
  */
  

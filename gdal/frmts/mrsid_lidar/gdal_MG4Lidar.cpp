@@ -214,7 +214,7 @@ default:
       {
          papszParams = CSLTokenizeString(poxmlMethod->psChild->pszValue);
          if (!EQUAL(papszParams[0], "MAX"))
-            nodatavalue = atof(papszParams[0]);
+            nodatavalue = CPLAtof(papszParams[0]);
       }
       // else if .... Add support for other interpolation methods here.
       CSLDestroy(papszParams);
@@ -817,19 +817,19 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
          return NULL;
       }
       if (!EQUAL(papszClipExtent[0], "NOFILTER"))
-         bounds.x.min = atof(papszClipExtent[0]);
+         bounds.x.min = CPLAtof(papszClipExtent[0]);
       if (!EQUAL(papszClipExtent[1], "NOFILTER"))
-         bounds.x.max = atof(papszClipExtent[1]);
+         bounds.x.max = CPLAtof(papszClipExtent[1]);
       if (!EQUAL(papszClipExtent[2], "NOFILTER"))
-         bounds.y.min = atof(papszClipExtent[2]);
+         bounds.y.min = CPLAtof(papszClipExtent[2]);
       if (!EQUAL(papszClipExtent[3], "NOFILTER"))
-         bounds.y.max = atof(papszClipExtent[3]);
+         bounds.y.max = CPLAtof(papszClipExtent[3]);
       if (cslcount == 6)
       {
          if (!EQUAL(papszClipExtent[4], "NOFILTER"))
-            bounds.z.min = atof(papszClipExtent[4]);
+            bounds.z.min = CPLAtof(papszClipExtent[4]);
          if (!EQUAL(papszClipExtent[5], "NOFILTER"))
-            bounds.z.max = atof(papszClipExtent[5]);
+            bounds.z.max = CPLAtof(papszClipExtent[5]);
       }
       CSLDestroy(papszClipExtent);
    }
@@ -854,7 +854,7 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
    double cell_side = average_pt_spacing;
    const char * pszCellSize = CPLGetXMLValue(pxmlPCView, "CellSize", NULL);
    if (pszCellSize)
-      cell_side = atof(pszCellSize);
+      cell_side = CPLAtof(pszCellSize);
    MaxRasterSize = MAX(poDS->reader->getBounds().x.length()/cell_side, poDS->reader->getBounds().y.length()/cell_side);
 
    RELEASE(r);

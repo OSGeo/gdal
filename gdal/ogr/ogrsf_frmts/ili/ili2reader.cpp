@@ -154,11 +154,11 @@ OGRPoint *getPoint(DOMElement *elem) {
     char* pszTagName = XMLString::transcode(coordElem->getTagName());
     char* pszObjValue = getObjValue(coordElem);
     if (cmpStr("C1", pszTagName) == 0)
-      pt->setX(atof(pszObjValue));
+      pt->setX(CPLAtof(pszObjValue));
     else if (cmpStr("C2", pszTagName) == 0)
-      pt->setY(atof(pszObjValue));
+      pt->setY(CPLAtof(pszObjValue));
     else if (cmpStr("C3", pszTagName) == 0)
-      pt->setZ(atof(pszObjValue));
+      pt->setZ(CPLAtof(pszObjValue));
     CPLFree(pszObjValue);
     XMLString::release(&pszTagName);
     coordElem = (DOMElement *)coordElem->getNextSibling();
@@ -183,19 +183,19 @@ OGRLineString *ILI2Reader::getArc(DOMElement *elem) {
     char* pszTagName = XMLString::transcode(arcElem->getTagName());
     char* pszObjValue = getObjValue(arcElem);
     if (cmpStr("C1", pszTagName) == 0)
-      ptEnd->setX(atof(pszObjValue));
+      ptEnd->setX(CPLAtof(pszObjValue));
     else if (cmpStr("C2", pszTagName) == 0)
-      ptEnd->setY(atof(pszObjValue));
+      ptEnd->setY(CPLAtof(pszObjValue));
     else if (cmpStr("C3", pszTagName) == 0)
-      ptEnd->setZ(atof(pszObjValue));
+      ptEnd->setZ(CPLAtof(pszObjValue));
     else if (cmpStr("A1", pszTagName) == 0)
-      ptOnArc->setX(atof(pszObjValue));
+      ptOnArc->setX(CPLAtof(pszObjValue));
     else if (cmpStr("A2", pszTagName) == 0)
-      ptOnArc->setY(atof(pszObjValue));
+      ptOnArc->setY(CPLAtof(pszObjValue));
     else if (cmpStr("A3", pszTagName) == 0)
-      ptOnArc->setZ(atof(pszObjValue));
+      ptOnArc->setZ(CPLAtof(pszObjValue));
     else if (cmpStr("R", pszTagName) == 0) {
-      // radius = atof(pszObjValue);
+      // radius = CPLAtof(pszObjValue);
     }
     CPLFree(pszObjValue);
     XMLString::release(&pszTagName);
@@ -240,19 +240,19 @@ OGRLineString *getLineString(DOMElement *elem, int bAsLinearRing) {
         char* pszTagName = XMLString::transcode(arcElem->getTagName());
         char* pszObjValue = getObjValue(arcElem);
         if (cmpStr("C1", pszTagName) == 0)
-          ptEnd->setX(atof(pszObjValue));
+          ptEnd->setX(CPLAtof(pszObjValue));
         else if (cmpStr("C2", pszTagName) == 0)
-          ptEnd->setY(atof(pszObjValue));
+          ptEnd->setY(CPLAtof(pszObjValue));
         else if (cmpStr("C3", pszTagName) == 0)
-          ptEnd->setZ(atof(pszObjValue));
+          ptEnd->setZ(CPLAtof(pszObjValue));
         else if (cmpStr("A1", pszTagName) == 0)
-          ptOnArc->setX(atof(pszObjValue));
+          ptOnArc->setX(CPLAtof(pszObjValue));
         else if (cmpStr("A2", pszTagName) == 0)
-          ptOnArc->setY(atof(pszObjValue));
+          ptOnArc->setY(CPLAtof(pszObjValue));
         else if (cmpStr("A3", pszTagName) == 0)
-          ptOnArc->setZ(atof(pszObjValue));
+          ptOnArc->setZ(CPLAtof(pszObjValue));
         else if (cmpStr("R", pszTagName) == 0) {
-          // radius = atof(pszObjValue);
+          // radius = CPLAtof(pszObjValue);
         }
         CPLFree(pszObjValue);
         XMLString::release(&pszTagName);

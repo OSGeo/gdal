@@ -157,11 +157,11 @@ CPLErr GDALParseGMLCoverage( CPLXMLNode *psXML,
         && poOriginGeometry != NULL )
     {
         padfGeoTransform[0] = poOriginGeometry->getX();
-        padfGeoTransform[1] = atof(papszOffset1Tokens[0]);
-        padfGeoTransform[2] = atof(papszOffset1Tokens[1]);
+        padfGeoTransform[1] = CPLAtof(papszOffset1Tokens[0]);
+        padfGeoTransform[2] = CPLAtof(papszOffset1Tokens[1]);
         padfGeoTransform[3] = poOriginGeometry->getY();
-        padfGeoTransform[4] = atof(papszOffset2Tokens[0]);
-        padfGeoTransform[5] = atof(papszOffset2Tokens[1]);
+        padfGeoTransform[4] = CPLAtof(papszOffset2Tokens[0]);
+        padfGeoTransform[5] = CPLAtof(papszOffset2Tokens[1]);
 
         // offset from center of pixel.
         padfGeoTransform[0] -= padfGeoTransform[1]*0.5;

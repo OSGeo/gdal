@@ -1004,7 +1004,7 @@ GDALDataset * AAIGDataset::CreateCopy(
     if( ABS(adfGeoTransform[1]+adfGeoTransform[5]) < 0.0000001 
         || ABS(adfGeoTransform[1]-adfGeoTransform[5]) < 0.0000001 
         || (pszForceCellsize && CSLTestBoolean(pszForceCellsize)) )
-        sprintf( szHeader, 
+        CPLsprintf( szHeader, 
                  "ncols        %d\n" 
                  "nrows        %d\n"
                  "xllcorner    %.12f\n"
@@ -1023,7 +1023,7 @@ GDALDataset * AAIGDataset::CreateCopy(
                       "FORCE_CELLSIZE=TRUE creation option to force use of DX for\n"
                       "even though this will be distorted.  Most ASCII Grid readers\n"
                       "(ArcGIS included) do not support the DX and DY parameters.\n" );
-        sprintf( szHeader, 
+        CPLsprintf( szHeader, 
                  "ncols        %d\n" 
                  "nrows        %d\n"
                  "xllcorner    %.12f\n"
@@ -1089,7 +1089,7 @@ GDALDataset * AAIGDataset::CreateCopy(
         if( bReadAsInt )
             sprintf( szHeader+strlen( szHeader ), "%d", (int)dfNoData );
         else
-            sprintf( szHeader+strlen( szHeader ), szFormatFloat, dfNoData );
+            CPLsprintf( szHeader+strlen( szHeader ), szFormatFloat, dfNoData );
         sprintf( szHeader+strlen( szHeader ), "\n" );
     }
 
@@ -1142,7 +1142,7 @@ GDALDataset * AAIGDataset::CreateCopy(
         {
             for ( iPixel = 0; iPixel < nXSize; iPixel++ )
             {
-                sprintf( szHeader, szFormatFloat, padfScanline[iPixel] );
+                CPLsprintf( szHeader, szFormatFloat, padfScanline[iPixel] );
                 osBuf += szHeader;
                 if( (iPixel & 1023) == 0 || iPixel == nXSize - 1 )
                 {

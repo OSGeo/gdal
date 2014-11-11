@@ -74,10 +74,10 @@ int main( int argc, char ** argv )
         }
         else if( strcmp(argv[iArg],"-e") == 0 && iArg < argc-4 )
         {
-            dfSFXMin = atof(argv[iArg+1]);
-            dfSFYMin = atof(argv[iArg+2]);
-            dfSFXMax = atof(argv[iArg+3]);
-            dfSFYMax = atof(argv[iArg+4]);
+            dfSFXMin = CPLAtof(argv[iArg+1]);
+            dfSFYMin = CPLAtof(argv[iArg+2]);
+            dfSFXMax = CPLAtof(argv[iArg+3]);
+            dfSFYMax = CPLAtof(argv[iArg+4]);
             iArg += 4;
         }
         else if( strcmp(argv[iArg],"-r") == 0 && iArg < argc-1 )

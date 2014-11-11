@@ -573,7 +573,7 @@ WEBPDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     const char* pszQUALITY = CSLFetchNameValue(papszOptions, "QUALITY"); 
     if( pszQUALITY != NULL )
     {
-        fQuality = (float) atof(pszQUALITY);
+        fQuality = (float) CPLAtof(pszQUALITY);
         if( fQuality < 0.0f || fQuality > 100.0f )
         {
             CPLError( CE_Failure, CPLE_IllegalArg,
@@ -633,7 +633,7 @@ WEBPDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     const char* pszPSNR = CSLFetchNameValue(papszOptions, "PSNR");
     if (pszPSNR)
     {
-        sConfig.target_PSNR = atof(pszPSNR);
+        sConfig.target_PSNR = CPLAtof(pszPSNR);
         if (sConfig.target_PSNR < 0)
         {
             CPLError( CE_Failure, CPLE_IllegalArg,

@@ -1078,8 +1078,11 @@ const char *VRTSourcedRasterBand::GetMetadataItem( const char * pszName,
             double adfInvGeoTransform[6];
             double dfGeoX, dfGeoY;
 
-            if( sscanf( pszName+9, "%lf_%lf", &dfGeoX, &dfGeoY ) != 2 )
+            dfGeoX = CPLAtof(pszName + 9);
+            const char* pszUnderscore = strchr(pszName + 9, '_');
+            if( !pszUnderscore )
                 return NULL;
+            dfGeoY = CPLAtof(pszUnderscore + 1);
 
             if( GetDataset() == NULL )
                 return NULL;

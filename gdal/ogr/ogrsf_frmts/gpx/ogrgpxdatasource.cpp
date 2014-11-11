@@ -91,7 +91,7 @@ OGRGPXDataSource::~OGRGPXDataSource()
             if (dfMinLon <= dfMaxLon)
             {
                 char szMetadata[SPACE_FOR_METADATA+1];
-                int nRet = snprintf(szMetadata, SPACE_FOR_METADATA,
+                int nRet = CPLsnprintf(szMetadata, SPACE_FOR_METADATA,
                          "<metadata><bounds minlat=\"%.15f\" minlon=\"%.15f\" maxlat=\"%.15f\" maxlon=\"%.15f\"/></metadata>",
                         dfMinLat, dfMinLon, dfMaxLat, dfMaxLon);
                 if (nRet < SPACE_FOR_METADATA)

@@ -192,10 +192,10 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
         if( poLayer->Initialize( papszRecord[0],         // TableName
                                  papszRecord[1],         // FieldName
                                  atoi(papszRecord[2]),   // ShapeType
-                                 atof(papszRecord[3]),   // ExtentLeft
-                                 atof(papszRecord[4]),   // ExtentRight
-                                 atof(papszRecord[5]),   // ExtentBottom
-                                 atof(papszRecord[6]),   // ExtentTop
+                                 CPLAtof(papszRecord[3]),   // ExtentLeft
+                                 CPLAtof(papszRecord[4]),   // ExtentRight
+                                 CPLAtof(papszRecord[5]),   // ExtentBottom
+                                 CPLAtof(papszRecord[6]),   // ExtentTop
                                  atoi(papszRecord[7]),   // SRID
                                  atoi(papszRecord[8]))  // HasZ
             != CE_None )

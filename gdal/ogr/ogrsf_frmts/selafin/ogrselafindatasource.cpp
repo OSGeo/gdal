@@ -495,7 +495,7 @@ OGRLayer *OGRSelafinDataSource::ICreateLayer( const char *pszLayerName, OGRSpati
     // Parse options
     double dfDate;
     const char *pszTemp=CSLFetchNameValue(papszOptions,"DATE");
-    if (pszTemp!=0) dfDate=atof(pszTemp); else dfDate=0.0;
+    if (pszTemp!=0) dfDate=CPLAtof(pszTemp); else dfDate=0.0;
     // Set the SRS of the datasource if this is the first layer
     if (nLayers==0 && poSpatialRefP!=0) {
         poSpatialRef=poSpatialRefP;

@@ -311,8 +311,8 @@ int main( int argc, char ** argv )
 
             // Process scale min/max
 
-            padfScaleMin[iBand] = atof(papszTokens[1]);
-            padfScaleMax[iBand] = atof(papszTokens[2]);
+            padfScaleMin[iBand] = CPLAtof(papszTokens[1]);
+            padfScaleMax[iBand] = CPLAtof(papszTokens[2]);
 
             if( CSLCount(papszTokens) == 3 )
                 continue;

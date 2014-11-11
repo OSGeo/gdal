@@ -395,7 +395,7 @@ std::vector<double> PCIDSK::ProjParmsFromText( std::string geosys,
 
     for( next = sparms.c_str(); *next != '\0'; )
     {
-        dparms.push_back( atof(next) );
+        dparms.push_back( CPLAtof(next) );
 
         // move past this token
         while( *next != '\0' && *next != ' ' )
@@ -454,7 +454,7 @@ std::string PCIDSK::ProjParmsToText( std::vector<double> dparms )
         if( dvalue == floor(dvalue) )
             sprintf( value, "%d", (int) dvalue );
         else
-            sprintf( value, "%.15g", dvalue );
+            CPLsprintf( value, "%.15g", dvalue );
         
         if( i > 0 )
             sparms += " ";

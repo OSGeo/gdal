@@ -368,8 +368,6 @@ void ENVIDataset::FlushCache()
     if ( band == NULL || !bHeaderDirty )
         return;
 
-    CPLLocaleC  oLocaleEnforcer;
-
     // If opening an existing file in Update mode (i.e. "r+") we need to make
     // sure any existing content is cleared, otherwise the file may contain
     // trailing content from the previous write.
@@ -1385,12 +1383,12 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
 /* -------------------------------------------------------------------- */
 /*      Capture geotransform.                                           */
 /* -------------------------------------------------------------------- */
-    adfGeoTransform[1] = atof(papszFields[5]);	    // Pixel width
-    adfGeoTransform[5] = -atof(papszFields[6]);	    // Pixel height
+    adfGeoTransform[1] = CPLAtof(papszFields[5]);	    // Pixel width
+    adfGeoTransform[5] = -CPLAtof(papszFields[6]);	    // Pixel height
     adfGeoTransform[0] =			    // Upper left X coordinate
-	atof(papszFields[3]) - (atof(papszFields[1]) - 1) * adfGeoTransform[1];
+	CPLAtof(papszFields[3]) - (CPLAtof(papszFields[1]) - 1) * adfGeoTransform[1];
     adfGeoTransform[3] =			    // Upper left Y coordinate
-	atof(papszFields[4]) - (atof(papszFields[2]) - 1) * adfGeoTransform[5];
+	CPLAtof(papszFields[4]) - (CPLAtof(papszFields[2]) - 1) * adfGeoTransform[5];
     adfGeoTransform[2] = 0.0;
     adfGeoTransform[4] = 0.0;
 
@@ -1538,7 +1536,7 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
     {
         /* Handle linear units first. */
         if (EQUAL(papszFields[nCount-1],"units=Feet") )
-            oSRS.SetLinearUnitsAndUpdateParameters( SRS_UL_FOOT, atof(SRS_UL_FOOT_CONV) );
+            oSRS.SetLinearUnitsAndUpdateParameters( SRS_UL_FOOT, CPLAtof(SRS_UL_FOOT_CONV) );
         else if (EQUAL(papszFields[nCount-1],"units=Meters") )
             oSRS.SetLinearUnitsAndUpdateParameters( SRS_UL_METER, 1. );
         else if (EQUAL(papszFields[nCount-1],"units=Km") )
@@ -1548,7 +1546,7 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
         else if (EQUAL(papszFields[nCount-1],"units=Miles") )
             oSRS.SetLinearUnitsAndUpdateParameters( "Mile", 1609.344 );
         else if (EQUAL(papszFields[nCount-1],"units=Nautical Miles") )
-            oSRS.SetLinearUnitsAndUpdateParameters( SRS_UL_NAUTICAL_MILE, atof(SRS_UL_NAUTICAL_MILE_CONV) );
+            oSRS.SetLinearUnitsAndUpdateParameters( SRS_UL_NAUTICAL_MILE, CPLAtof(SRS_UL_NAUTICAL_MILE_CONV) );
 	    
         /* Only handle angular units if we know the projection is geographic. */
         if (oSRS.IsGeographic()) 
@@ -1558,7 +1556,7 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
             else 
             {
                 /* Degrees, minutes and seconds will all be represented as degrees. */
-                oSRS.SetAngularUnits( SRS_UA_DEGREE,  atof(SRS_UA_DEGREE_CONV));
+                oSRS.SetAngularUnits( SRS_UA_DEGREE,  CPLAtof(SRS_UA_DEGREE_CONV));
 
                 double conversionFactor = 1.;
                 if (EQUAL(papszFields[nCount-1],"units=Minutes") )
@@ -1616,66 +1614,66 @@ void ENVIDataset::ProcessRPCinfo( const char *pszRPCinfo,
         return;
     }
 	
-    snprintf(sVal, sizeof(sVal),  "%.16g",atof(papszFields[0]));
+    CPLsnprintf(sVal, sizeof(sVal),  "%.16g",CPLAtof(papszFields[0]));
     SetMetadataItem("LINE_OFF",sVal,"RPC");
-    snprintf(sVal, sizeof(sVal),  "%.16g",atof(papszFields[5]));
+    CPLsnprintf(sVal, sizeof(sVal),  "%.16g",CPLAtof(papszFields[5]));
     SetMetadataItem("LINE_SCALE",sVal,"RPC");
-    snprintf(sVal, sizeof(sVal),  "%.16g",atof(papszFields[1]));
+    CPLsnprintf(sVal, sizeof(sVal),  "%.16g",CPLAtof(papszFields[1]));
     SetMetadataItem("SAMP_OFF",sVal,"RPC");
-    snprintf(sVal, sizeof(sVal),  "%.16g",atof(papszFields[6]));
+    CPLsnprintf(sVal, sizeof(sVal),  "%.16g",CPLAtof(papszFields[6]));
     SetMetadataItem("SAMP_SCALE",sVal,"RPC");
-    snprintf(sVal, sizeof(sVal),  "%.16g",atof(papszFields[2]));
+    CPLsnprintf(sVal, sizeof(sVal),  "%.16g",CPLAtof(papszFields[2]));
     SetMetadataItem("LAT_OFF",sVal,"RPC");
-    snprintf(sVal, sizeof(sVal),  "%.16g",atof(papszFields[7]));
+    CPLsnprintf(sVal, sizeof(sVal),  "%.16g",CPLAtof(papszFields[7]));
     SetMetadataItem("LAT_SCALE",sVal,"RPC");
-    snprintf(sVal, sizeof(sVal),  "%.16g",atof(papszFields[3]));
+    CPLsnprintf(sVal, sizeof(sVal),  "%.16g",CPLAtof(papszFields[3]));
     SetMetadataItem("LONG_OFF",sVal,"RPC");
-    snprintf(sVal, sizeof(sVal),  "%.16g",atof(papszFields[8]));
+    CPLsnprintf(sVal, sizeof(sVal),  "%.16g",CPLAtof(papszFields[8]));
     SetMetadataItem("LONG_SCALE",sVal,"RPC");
-    snprintf(sVal, sizeof(sVal),  "%.16g",atof(papszFields[4]));
+    CPLsnprintf(sVal, sizeof(sVal),  "%.16g",CPLAtof(papszFields[4]));
     SetMetadataItem("HEIGHT_OFF",sVal,"RPC");
-    snprintf(sVal, sizeof(sVal),  "%.16g",atof(papszFields[9]));
+    CPLsnprintf(sVal, sizeof(sVal),  "%.16g",CPLAtof(papszFields[9]));
     SetMetadataItem("HEIGHT_SCALE",sVal,"RPC");
 
     sVal[0] = '\0'; 
     int i;
     for(i = 0; i < 20; i++ )
-       snprintf(sVal+strlen(sVal), sizeof(sVal),  "%.16g ", 
-           atof(papszFields[10+i]));
+       CPLsnprintf(sVal+strlen(sVal), sizeof(sVal),  "%.16g ", 
+           CPLAtof(papszFields[10+i]));
     SetMetadataItem("LINE_NUM_COEFF",sVal,"RPC");
 
     sVal[0] = '\0'; 
     for(i = 0; i < 20; i++ )
-       snprintf(sVal+strlen(sVal), sizeof(sVal),  "%.16g ",
-           atof(papszFields[30+i]));
+       CPLsnprintf(sVal+strlen(sVal), sizeof(sVal),  "%.16g ",
+           CPLAtof(papszFields[30+i]));
     SetMetadataItem("LINE_DEN_COEFF",sVal,"RPC");
       
     sVal[0] = '\0'; 
     for(i = 0; i < 20; i++ )
-       snprintf(sVal+strlen(sVal), sizeof(sVal),  "%.16g ",
-           atof(papszFields[50+i]));
+       CPLsnprintf(sVal+strlen(sVal), sizeof(sVal),  "%.16g ",
+           CPLAtof(papszFields[50+i]));
     SetMetadataItem("SAMP_NUM_COEFF",sVal,"RPC");
       
     sVal[0] = '\0'; 
     for(i = 0; i < 20; i++ )
-       snprintf(sVal+strlen(sVal), sizeof(sVal),  "%.16g ",
-           atof(papszFields[70+i]));
+       CPLsnprintf(sVal+strlen(sVal), sizeof(sVal),  "%.16g ",
+           CPLAtof(papszFields[70+i]));
     SetMetadataItem("SAMP_DEN_COEFF",sVal,"RPC");
 	
-    snprintf(sVal, sizeof(sVal), "%.16g", 
-        atof(papszFields[3]) - atof(papszFields[8]));
+    CPLsnprintf(sVal, sizeof(sVal), "%.16g", 
+        CPLAtof(papszFields[3]) - CPLAtof(papszFields[8]));
     SetMetadataItem("MIN_LONG",sVal,"RPC");
 
-    snprintf(sVal, sizeof(sVal), "%.16g", 
-        atof(papszFields[3]) + atof(papszFields[8]) );
+    CPLsnprintf(sVal, sizeof(sVal), "%.16g", 
+        CPLAtof(papszFields[3]) + CPLAtof(papszFields[8]) );
     SetMetadataItem("MAX_LONG",sVal,"RPC");
 
-    snprintf(sVal, sizeof(sVal), "%.16g",
-        atof(papszFields[2]) - atof(papszFields[7]));
+    CPLsnprintf(sVal, sizeof(sVal), "%.16g",
+        CPLAtof(papszFields[2]) - CPLAtof(papszFields[7]));
     SetMetadataItem("MIN_LAT",sVal,"RPC");
 
-    snprintf(sVal, sizeof(sVal), "%.16g",
-        atof(papszFields[2]) + atof(papszFields[7]));
+    CPLsnprintf(sVal, sizeof(sVal), "%.16g",
+        CPLAtof(papszFields[2]) + CPLAtof(papszFields[7]));
     SetMetadataItem("MAX_LAT",sVal,"RPC");
 
     if (nCount == 93)
@@ -1687,8 +1685,8 @@ void ENVIDataset::ProcessRPCinfo( const char *pszRPCinfo,
 
     /*   Handle the chipping case where the image is a subset. */
     double rowOffset, colOffset;
-    rowOffset = (nCount == 93) ? atof(papszFields[90]) : 0;
-    colOffset = (nCount == 93) ? atof(papszFields[91]) : 0;
+    rowOffset = (nCount == 93) ? CPLAtof(papszFields[90]) : 0;
+    colOffset = (nCount == 93) ? CPLAtof(papszFields[91]) : 0;
     if (rowOffset || colOffset)
     {
         SetMetadataItem("ICHIP_SCALE_FACTOR", "1");
@@ -1699,23 +1697,23 @@ void ENVIDataset::ProcessRPCinfo( const char *pszRPCinfo,
         SetMetadataItem("ICHIP_OP_COL_11", "0.5");
         SetMetadataItem("ICHIP_OP_ROW_12", "0.5");
         SetMetadataItem("ICHIP_OP_COL_21", "0.5");
-        snprintf(sVal, sizeof(sVal), "%.16g", numCols - 0.5);
+        CPLsnprintf(sVal, sizeof(sVal), "%.16g", numCols - 0.5);
         SetMetadataItem("ICHIP_OP_COL_12", sVal);
         SetMetadataItem("ICHIP_OP_COL_22", sVal);
-        snprintf(sVal, sizeof(sVal), "%.16g", numRows - 0.5);
+        CPLsnprintf(sVal, sizeof(sVal), "%.16g", numRows - 0.5);
         SetMetadataItem("ICHIP_OP_ROW_21", sVal);
         SetMetadataItem("ICHIP_OP_ROW_22", sVal);
 
-        snprintf(sVal, sizeof(sVal), "%.16g", rowOffset + 0.5);
+        CPLsnprintf(sVal, sizeof(sVal), "%.16g", rowOffset + 0.5);
         SetMetadataItem("ICHIP_FI_ROW_11", sVal);
         SetMetadataItem("ICHIP_FI_ROW_12", sVal);
-        snprintf(sVal, sizeof(sVal), "%.16g", colOffset + 0.5);
+        CPLsnprintf(sVal, sizeof(sVal), "%.16g", colOffset + 0.5);
         SetMetadataItem("ICHIP_FI_COL_11", sVal);
         SetMetadataItem("ICHIP_FI_COL_21", sVal);
-        snprintf(sVal, sizeof(sVal), "%.16g", colOffset + numCols - 0.5);
+        CPLsnprintf(sVal, sizeof(sVal), "%.16g", colOffset + numCols - 0.5);
         SetMetadataItem("ICHIP_FI_COL_12", sVal);
         SetMetadataItem("ICHIP_FI_COL_22", sVal);
-        snprintf(sVal, sizeof(sVal), "%.16g", rowOffset + numRows - 0.5);
+        CPLsnprintf(sVal, sizeof(sVal), "%.16g", rowOffset + numRows - 0.5);
         SetMetadataItem("ICHIP_FI_ROW_21", sVal);
         SetMetadataItem("ICHIP_FI_ROW_22", sVal);
     }
@@ -2453,7 +2451,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     if( CSLFetchNameValue(poDS->papszHeader,"data_ignore_value" ) != NULL )
     {
         for( i = 0; i < poDS->nBands; i++ )
-            ((RawRasterBand*)poDS->GetRasterBand(i+1))->SetNoDataValue(atof(
+            ((RawRasterBand*)poDS->GetRasterBand(i+1))->SetNoDataValue(CPLAtof(
                                                                              CSLFetchNameValue(poDS->papszHeader,"data_ignore_value")));
     }
 

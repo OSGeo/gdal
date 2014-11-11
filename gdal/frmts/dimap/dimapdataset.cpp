@@ -398,7 +398,7 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
 
     /* We check the for the tag Metadata_Identification.METADATA_FORMAT.
     *  The metadata will be set to 2.0 for DIMAP2 */
-    nMetadataFormatVersion = atof( CPLGetXMLValue(CPLGetXMLNode(psDoc, "Metadata_Identification.METADATA_FORMAT"), 
+    nMetadataFormatVersion = CPLAtof( CPLGetXMLValue(CPLGetXMLNode(psDoc, "Metadata_Identification.METADATA_FORMAT"), 
                         "version", "1") );
     if( nMetadataFormatVersion >= 2.0 )
     {
@@ -609,12 +609,12 @@ int DIMAPDataset::ReadImageInformation()
     if( psGeoLoc != NULL )
     {
         bHaveGeoTransform = TRUE;
-        adfGeoTransform[0] = atof(CPLGetXMLValue(psGeoLoc,"ULXMAP","0"));
-        adfGeoTransform[1] = atof(CPLGetXMLValue(psGeoLoc,"XDIM","0"));
+        adfGeoTransform[0] = CPLAtof(CPLGetXMLValue(psGeoLoc,"ULXMAP","0"));
+        adfGeoTransform[1] = CPLAtof(CPLGetXMLValue(psGeoLoc,"XDIM","0"));
         adfGeoTransform[2] = 0.0;
-        adfGeoTransform[3] = atof(CPLGetXMLValue(psGeoLoc,"ULYMAP","0"));
+        adfGeoTransform[3] = CPLAtof(CPLGetXMLValue(psGeoLoc,"ULYMAP","0"));
         adfGeoTransform[4] = 0.0;
-        adfGeoTransform[5] = -atof(CPLGetXMLValue(psGeoLoc,"YDIM","0"));
+        adfGeoTransform[5] = -CPLAtof(CPLGetXMLValue(psGeoLoc,"YDIM","0"));
     }
     else
     {
@@ -661,15 +661,15 @@ int DIMAPDataset::ReadImageInformation()
             psGCP->pszId = CPLStrdup( szID );
             psGCP->pszInfo = CPLStrdup("");
             psGCP->dfGCPPixel = 
-                atof(CPLGetXMLValue(psNode,"TIE_POINT_DATA_X","0"))-0.5;
+                CPLAtof(CPLGetXMLValue(psNode,"TIE_POINT_DATA_X","0"))-0.5;
             psGCP->dfGCPLine = 
-                atof(CPLGetXMLValue(psNode,"TIE_POINT_DATA_Y","0"))-0.5;
+                CPLAtof(CPLGetXMLValue(psNode,"TIE_POINT_DATA_Y","0"))-0.5;
             psGCP->dfGCPX = 
-                atof(CPLGetXMLValue(psNode,"TIE_POINT_CRS_X",""));
+                CPLAtof(CPLGetXMLValue(psNode,"TIE_POINT_CRS_X",""));
             psGCP->dfGCPY = 
-                atof(CPLGetXMLValue(psNode,"TIE_POINT_CRS_Y",""));
+                CPLAtof(CPLGetXMLValue(psNode,"TIE_POINT_CRS_Y",""));
             psGCP->dfGCPZ = 
-                atof(CPLGetXMLValue(psNode,"TIE_POINT_CRS_Z",""));
+                CPLAtof(CPLGetXMLValue(psNode,"TIE_POINT_CRS_Z",""));
         }
     }
 
@@ -869,12 +869,12 @@ int DIMAPDataset::ReadImageInformation2()
     if( psGeoLoc != NULL )
     {
         bHaveGeoTransform = TRUE;
-        adfGeoTransform[0] = atof(CPLGetXMLValue(psGeoLoc,"ULXMAP","0"));
-        adfGeoTransform[1] = atof(CPLGetXMLValue(psGeoLoc,"XDIM","0"));
+        adfGeoTransform[0] = CPLAtof(CPLGetXMLValue(psGeoLoc,"ULXMAP","0"));
+        adfGeoTransform[1] = CPLAtof(CPLGetXMLValue(psGeoLoc,"XDIM","0"));
         adfGeoTransform[2] = 0.0;
-        adfGeoTransform[3] = atof(CPLGetXMLValue(psGeoLoc,"ULYMAP","0"));
+        adfGeoTransform[3] = CPLAtof(CPLGetXMLValue(psGeoLoc,"ULYMAP","0"));
         adfGeoTransform[4] = 0.0;
-        adfGeoTransform[5] = -atof(CPLGetXMLValue(psGeoLoc,"YDIM","0"));
+        adfGeoTransform[5] = -CPLAtof(CPLGetXMLValue(psGeoLoc,"YDIM","0"));
     }
     else
     {

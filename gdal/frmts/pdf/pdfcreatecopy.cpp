@@ -2996,9 +2996,9 @@ int GDALPDFWriter::EndPage(const char* pszExtraImages,
         for(int i=0;i+4<=nCount; /* */)
         {
             const char* pszImageFilename = papszExtraImagesTokens[i+0];
-            double dfX = atof(papszExtraImagesTokens[i+1]);
-            double dfY = atof(papszExtraImagesTokens[i+2]);
-            double dfScale = atof(papszExtraImagesTokens[i+3]);
+            double dfX = CPLAtof(papszExtraImagesTokens[i+1]);
+            double dfY = CPLAtof(papszExtraImagesTokens[i+2]);
+            double dfScale = CPLAtof(papszExtraImagesTokens[i+3]);
             const char* pszLinkVal = NULL;
             i += 4;
             if( i < nCount && EQUALN(papszExtraImagesTokens[i],"link=",5) )

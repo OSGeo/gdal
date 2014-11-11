@@ -1451,11 +1451,11 @@ int TABDATFile::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nF
             }
             else if( m_pasFieldDef[iField].eTABType == TABFFloat )
             {
-                snprintf(pabyNewField, sFieldDef.byLength, "%.18f", ReadFloatField(m_pasFieldDef[iField].byLength));
+                CPLsnprintf(pabyNewField, sFieldDef.byLength, "%.18f", ReadFloatField(m_pasFieldDef[iField].byLength));
             }
             else if( m_pasFieldDef[iField].eTABType == TABFDecimal )
             {
-                snprintf(pabyNewField, sFieldDef.byLength, "%.18f", ReadFloatField(m_pasFieldDef[iField].byLength));
+                CPLsnprintf(pabyNewField, sFieldDef.byLength, "%.18f", ReadFloatField(m_pasFieldDef[iField].byLength));
             }
             else if( m_pasFieldDef[iField].eTABType == TABFLogical )
             {
@@ -1711,7 +1711,7 @@ double TABDATFile::ReadFloatField(int nWidth)
     }
 
     if (m_eTableType == TABTableDBF)
-        return atof(ReadCharField(nWidth));
+        return CPLAtof(ReadCharField(nWidth));
 
     return m_poRecordBlock->ReadDouble();
 }
@@ -1997,7 +1997,7 @@ double TABDATFile::ReadDecimalField(int nWidth)
 
     pszVal = ReadCharField(nWidth);
 
-    return atof(pszVal);
+    return CPLAtof(pszVal);
 }
 
 
@@ -2570,9 +2570,11 @@ int TABDATFile::WriteDateTimeField(int nYear, int nMonth, int nDay,
 int TABDATFile::WriteDecimalField(double dValue, int nWidth, int nPrec,
                                   TABINDFile *poINDFile, int nIndexNo)
 {
+    char szFormat[10];
     const char *pszVal;
 
-    pszVal = CPLSPrintf("%*.*f", nWidth, nPrec, dValue);
+    sprintf(szFormat, "%%%d.%df", nWidth, nPrec);
+    pszVal = CPLSPrintf(szFormat, dValue);
     if ((int)strlen(pszVal) > nWidth)
         pszVal += strlen(pszVal) - nWidth;
 

@@ -103,6 +103,11 @@ static void GDALInitialize(void)
 {
     // nothing to do
     //CPLDebug("GDAL", "Library loaded");
+#ifdef DEBUG
+    const char* pszLocale = CPLGetConfigOption("GDAL_LOCALE", NULL);
+    if( pszLocale )
+        CPLsetlocale( LC_ALL, pszLocale );
+#endif
 }
 
 /************************************************************************/

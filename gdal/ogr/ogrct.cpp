@@ -579,7 +579,7 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
         OGR_SRSNode *poUNITS = poSRSSource->GetAttrNode( "GEOGCS|UNIT" );
         if( poUNITS && poUNITS->GetChildCount() >= 2 )
         {
-            dfSourceToRadians = atof(poUNITS->GetChild(1)->GetValue());
+            dfSourceToRadians = CPLAtof(poUNITS->GetChild(1)->GetValue());
             if( dfSourceToRadians == 0.0 )
                 dfSourceToRadians = DEG_TO_RAD;
         }
@@ -594,7 +594,7 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
         OGR_SRSNode *poUNITS = poSRSTarget->GetAttrNode( "GEOGCS|UNIT" );
         if( poUNITS && poUNITS->GetChildCount() >= 2 )
         {
-            double dfTargetToRadians = atof(poUNITS->GetChild(1)->GetValue());
+            double dfTargetToRadians = CPLAtof(poUNITS->GetChild(1)->GetValue());
             if( dfTargetToRadians != 0.0 )
                 dfTargetFromRadians = 1 / dfTargetToRadians;
         }
@@ -609,14 +609,14 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
     {
         bSourceWrap = bTargetWrap = TRUE;
         dfSourceWrapLong = dfTargetWrapLong = 
-            atof(CPLGetConfigOption( "CENTER_LONG", "" ));
+            CPLAtof(CPLGetConfigOption( "CENTER_LONG", "" ));
         CPLDebug( "OGRCT", "Wrap at %g.", dfSourceWrapLong );
     }
 
     pszCENTER_LONG = poSRSSource->GetExtension( "GEOGCS", "CENTER_LONG" );
     if( pszCENTER_LONG != NULL )
     {
-        dfSourceWrapLong = atof(pszCENTER_LONG);
+        dfSourceWrapLong = CPLAtof(pszCENTER_LONG);
         bSourceWrap = TRUE;
         CPLDebug( "OGRCT", "Wrap source at %g.", dfSourceWrapLong );
     }
@@ -624,7 +624,7 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
     pszCENTER_LONG = poSRSTarget->GetExtension( "GEOGCS", "CENTER_LONG" );
     if( pszCENTER_LONG != NULL )
     {
-        dfTargetWrapLong = atof(pszCENTER_LONG);
+        dfTargetWrapLong = CPLAtof(pszCENTER_LONG);
         bTargetWrap = TRUE;
         CPLDebug( "OGRCT", "Wrap target at %g.", dfTargetWrapLong );
     }
@@ -633,11 +633,11 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
     
     /* The threshold is rather experimental... Works well with the cases of ticket #2305 */
     if (bSourceLatLong)
-        dfThreshold = atof(CPLGetConfigOption( "THRESHOLD", ".1" ));
+        dfThreshold = CPLAtof(CPLGetConfigOption( "THRESHOLD", ".1" ));
     else
         /* 1 works well for most projections, except for +proj=aeqd that requires */
         /* a tolerance of 10000 */
-        dfThreshold = atof(CPLGetConfigOption( "THRESHOLD", "10000" ));
+        dfThreshold = CPLAtof(CPLGetConfigOption( "THRESHOLD", "10000" ));
 
 /* -------------------------------------------------------------------- */
 /*      Establish PROJ.4 handle for source if projection.               */

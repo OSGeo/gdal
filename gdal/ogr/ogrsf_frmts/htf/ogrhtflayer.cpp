@@ -400,8 +400,8 @@ OGRFeature *OGRHTFPolygonLayer::GetNextRawFeature()
             char** papszTokens = CSLTokenizeString(pszLine);
             if (CSLCount(papszTokens) == 4)
             {
-                double dfEasting = atof(papszTokens[2]);
-                double dfNorthing = atof(papszTokens[3]);
+                double dfEasting = CPLAtof(papszTokens[2]);
+                double dfNorthing = CPLAtof(papszTokens[3]);
                 if (!bHastFirstCoord)
                 {
                     bHastFirstCoord = TRUE;

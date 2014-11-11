@@ -85,6 +85,7 @@ Jun  05, 2003 Bruce Beaumont / Abe Taaheri
                                 end of GDll2mm_cea
                              Added return statement to GDll2mm_cea
 ******************************************************************************/
+#include "cpl_string.h"
 #include "stdio.h"
 #include "mfhdf.h"
 #include "hcomp.h"
@@ -494,10 +495,10 @@ GDcreate(int32 fid, char *gridname, int32 xdimsize, int32 ydimsize,
 		}
 		else
 		{
-		    sprintf(refstr1, "%s%f%s%f%s",
+		    CPLsprintf(refstr1, "%s%f%s%f%s",
 			    "(", upleftpt[0], ",", upleftpt[1], ")");
 
-		    sprintf(refstr2, "%s%f%s%f%s",
+		    CPLsprintf(refstr2, "%s%f%s%f%s",
 			    "(", lowrightpt[0], ",", lowrightpt[1], ")");
 		}
 
@@ -1067,7 +1068,7 @@ GDdefproj(int32 gridID, int32 projcode, int32 zonecode, int32 spherecode,
 		    /* else projparm[i] is non-zero floating point ... */
 		    else
 		    {
-			sprintf(utlbuf, "%f%s",	projparm[i], ",");
+			CPLsprintf(utlbuf, "%f%s",	projparm[i], ",");
 		    }
 		}
 		strcat(projparmbuf, utlbuf);

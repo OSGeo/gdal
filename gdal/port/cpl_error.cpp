@@ -30,6 +30,7 @@
  ****************************************************************************/
 
 #include "cpl_error.h"
+#include "cpl_string.h"
 #include "cpl_vsi.h"
 #include "cpl_conv.h"
 #include "cpl_multiproc.h"
@@ -214,7 +215,7 @@ void    CPLErrorV(CPLErr eErrClass, int err_no, const char *fmt, va_list args )
             }
         }
 
-        while( ((nPR = vsnprintf( psCtx->szLastErrMsg+nPreviousSize, 
+        while( ((nPR = CPLvsnprintf( psCtx->szLastErrMsg+nPreviousSize, 
                                  psCtx->nLastErrMsgMax-nPreviousSize, fmt, wrk_args )) == -1
                 || nPR >= psCtx->nLastErrMsgMax-nPreviousSize-1)
                && psCtx->nLastErrMsgMax < 1000000 )
@@ -234,7 +235,7 @@ void    CPLErrorV(CPLErr eErrClass, int err_no, const char *fmt, va_list args )
         va_end( wrk_args );
     }
 #else
-    vsprintf( psCtx->szLastErrMsg, fmt, args);
+    CPLvsprintf( psCtx->szLastErrMsg, fmt, args);
 #endif
 
 /* -------------------------------------------------------------------- */
@@ -454,7 +455,7 @@ void CPLDebug( const char * pszCategory, const char * pszFormat, ... )
 /* -------------------------------------------------------------------- */
 #ifdef MEMORY_DEBUG
     char szVmSize[32];
-    sprintf( szVmSize, "[VmSize: %d] ", CPLGetProcessMemorySize());
+    CPLsprintf( szVmSize, "[VmSize: %d] ", CPLGetProcessMemorySize());
     strcat( pszMessage, szVmSize );
 #endif
 
@@ -470,12 +471,10 @@ void CPLDebug( const char * pszCategory, const char * pszFormat, ... )
 /*      Format the application provided portion of the debug message.   */
 /* -------------------------------------------------------------------- */
     va_start(args, pszFormat);
-#if defined(HAVE_VSNPRINTF)
-    vsnprintf(pszMessage+strlen(pszMessage), ERROR_MAX - strlen(pszMessage), 
+
+    CPLvsnprintf(pszMessage+strlen(pszMessage), ERROR_MAX - strlen(pszMessage), 
               pszFormat, args);
-#else
-    vsprintf(pszMessage+strlen(pszMessage), pszFormat, args);
-#endif
+
     va_end(args);
 
 /* -------------------------------------------------------------------- */
@@ -732,7 +731,7 @@ void CPL_STDCALL CPLLoggingErrorHandler( CPLErr eErrClass, int nError,
                 /* generate sequenced log file names, inserting # before ext.*/
                 if (strrchr(cpl_log, '.') == NULL)
                 {
-                    sprintf( pszPath, "%s_%d%s", cpl_log, i++,
+                    CPLsprintf( pszPath, "%s_%d%s", cpl_log, i++,
                              ".log" );
                 }
                 else
@@ -744,7 +743,7 @@ void CPL_STDCALL CPLLoggingErrorHandler( CPLErr eErrClass, int nError,
                     {
                         cpl_log_base[pos] = '\0';
                     }
-                    sprintf( pszPath, "%s_%d%s", cpl_log_base,
+                    CPLsprintf( pszPath, "%s_%d%s", cpl_log_base,
                              i++, ".log" );
                     free(cpl_log_base);
                 }

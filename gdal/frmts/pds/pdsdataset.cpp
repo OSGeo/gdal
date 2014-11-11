@@ -307,8 +307,8 @@ void PDSDataset::ParseSRS()
 
     value = GetKeyword(osPrefix + "IMAGE_MAP_PROJECTION.MAP_SCALE");
     if (strlen(value) > 0 ) {
-        dfXDim = atof(value);
-        dfYDim = atof(value) * -1;
+        dfXDim = CPLAtof(value);
+        dfYDim = CPLAtof(value) * -1;
 
         CPLString osKey(osPrefix + "IMAGE_MAP_PROJECTION.MAP_SCALE");
         CPLString unit = GetKeywordUnit(osKey,2); //KM
@@ -345,28 +345,28 @@ void PDSDataset::ParseSRS()
     double   dfLineOffset_Mult;
 
     dfSampleOffset_Shift = 
-        atof(CPLGetConfigOption( "PDS_SampleProjOffset_Shift", "-0.5" ));
+        CPLAtof(CPLGetConfigOption( "PDS_SampleProjOffset_Shift", "-0.5" ));
     
     dfLineOffset_Shift = 
-        atof(CPLGetConfigOption( "PDS_LineProjOffset_Shift", "-0.5" ));
+        CPLAtof(CPLGetConfigOption( "PDS_LineProjOffset_Shift", "-0.5" ));
 
     dfSampleOffset_Mult =
-        atof(CPLGetConfigOption( "PDS_SampleProjOffset_Mult", "-1.0") );
+        CPLAtof(CPLGetConfigOption( "PDS_SampleProjOffset_Mult", "-1.0") );
 
     dfLineOffset_Mult = 
-        atof( CPLGetConfigOption( "PDS_LineProjOffset_Mult", "1.0") );
+        CPLAtof( CPLGetConfigOption( "PDS_LineProjOffset_Mult", "1.0") );
 
     /***********   Grab LINE_PROJECTION_OFFSET ************/
     value = GetKeyword(osPrefix + "IMAGE_MAP_PROJECTION.LINE_PROJECTION_OFFSET");
     if (strlen(value) > 0) {
-        yulcenter = atof(value);
+        yulcenter = CPLAtof(value);
         dfULYMap = ((yulcenter + dfLineOffset_Shift) * -dfYDim * dfLineOffset_Mult);
         //notice dfYDim is negative here which is why it is again negated here
     }
     /***********   Grab SAMPLE_PROJECTION_OFFSET ************/
     value = GetKeyword(osPrefix + "IMAGE_MAP_PROJECTION.SAMPLE_PROJECTION_OFFSET");
     if( strlen(value) > 0 ) {
-        xulcenter = atof(value);
+        xulcenter = CPLAtof(value);
         dfULXMap = ((xulcenter + dfSampleOffset_Shift) * dfXDim * dfSampleOffset_Mult);
     }
 
@@ -395,27 +395,27 @@ void PDSDataset::ParseSRS()
      
     /******  Grab semi_major & convert to KM ******/
     semi_major = 
-        atof(GetKeyword( osPrefix + "IMAGE_MAP_PROJECTION.A_AXIS_RADIUS")) * 1000.0;
+        CPLAtof(GetKeyword( osPrefix + "IMAGE_MAP_PROJECTION.A_AXIS_RADIUS")) * 1000.0;
     
     /******  Grab semi-minor & convert to KM ******/
     semi_minor = 
-        atof(GetKeyword( osPrefix + "IMAGE_MAP_PROJECTION.C_AXIS_RADIUS")) * 1000.0;
+        CPLAtof(GetKeyword( osPrefix + "IMAGE_MAP_PROJECTION.C_AXIS_RADIUS")) * 1000.0;
 
     /***********   Grab CENTER_LAT ************/
     center_lat = 
-        atof(GetKeyword( osPrefix + "IMAGE_MAP_PROJECTION.CENTER_LATITUDE"));
+        CPLAtof(GetKeyword( osPrefix + "IMAGE_MAP_PROJECTION.CENTER_LATITUDE"));
 
     /***********   Grab CENTER_LON ************/
     center_lon = 
-        atof(GetKeyword( osPrefix + "IMAGE_MAP_PROJECTION.CENTER_LONGITUDE"));
+        CPLAtof(GetKeyword( osPrefix + "IMAGE_MAP_PROJECTION.CENTER_LONGITUDE"));
 
     /**********   Grab 1st std parallel *******/
     first_std_parallel = 
-        atof(GetKeyword( osPrefix + "IMAGE_MAP_PROJECTION.FIRST_STANDARD_PARALLEL"));
+        CPLAtof(GetKeyword( osPrefix + "IMAGE_MAP_PROJECTION.FIRST_STANDARD_PARALLEL"));
 
     /**********   Grab 2nd std parallel *******/
     second_std_parallel = 
-        atof(GetKeyword( osPrefix + "IMAGE_MAP_PROJECTION.SECOND_STANDARD_PARALLEL"));
+        CPLAtof(GetKeyword( osPrefix + "IMAGE_MAP_PROJECTION.SECOND_STANDARD_PARALLEL"));
      
     /*** grab  PROJECTION_LATITUDE_TYPE = "PLANETOCENTRIC" ****/
     // Need to further study how ocentric/ographic will effect the gdal library.

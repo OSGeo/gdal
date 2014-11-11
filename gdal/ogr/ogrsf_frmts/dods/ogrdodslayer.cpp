@@ -89,10 +89,10 @@ OGRDODSLayer::OGRDODSLayer( OGRDODSDataSource *poDSIn,
         if( poLayerExt != NULL )
         {
             bKnowExtent = TRUE;
-            sExtent.MinX = atof(poLayerExt->get_attr("x_min").c_str());
-            sExtent.MaxX = atof(poLayerExt->get_attr("x_max").c_str());
-            sExtent.MinY = atof(poLayerExt->get_attr("y_min").c_str());
-            sExtent.MaxY = atof(poLayerExt->get_attr("y_max").c_str());
+            sExtent.MinX = CPLAtof(poLayerExt->get_attr("x_min").c_str());
+            sExtent.MaxX = CPLAtof(poLayerExt->get_attr("x_max").c_str());
+            sExtent.MinY = CPLAtof(poLayerExt->get_attr("y_min").c_str());
+            sExtent.MaxY = CPLAtof(poLayerExt->get_attr("y_max").c_str());
         }
 
     }

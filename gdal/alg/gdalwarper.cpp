@@ -1213,7 +1213,7 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
 /*      Warp memory limit.                                              */
 /* -------------------------------------------------------------------- */
     psWO->dfWarpMemoryLimit = 
-        atof(CPLGetXMLValue(psTree,"WarpMemoryLimit","0.0"));
+        CPLAtof(CPLGetXMLValue(psTree,"WarpMemoryLimit","0.0"));
 
 /* -------------------------------------------------------------------- */
 /*      resample algorithm                                              */
@@ -1426,7 +1426,7 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
     }
 
     psWO->dfCutlineBlendDist =
-        atof( CPLGetXMLValue( psTree, "CutlineBlendDist", "0" ) );
+        CPLAtof( CPLGetXMLValue( psTree, "CutlineBlendDist", "0" ) );
 
 /* -------------------------------------------------------------------- */
 /*      Transformation.                                                 */

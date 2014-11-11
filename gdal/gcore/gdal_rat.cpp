@@ -607,8 +607,8 @@ CPLErr GDALRasterAttributeTable::XMLInit( CPLXMLNode *psTree,
     if( CPLGetXMLValue( psTree, "Row0Min", NULL ) 
         && CPLGetXMLValue( psTree, "BinSize", NULL ) )
     {
-        SetLinearBinning( atof(CPLGetXMLValue( psTree, "Row0Min","" )), 
-                          atof(CPLGetXMLValue( psTree, "BinSize","" )) );
+        SetLinearBinning( CPLAtof(CPLGetXMLValue( psTree, "Row0Min","" )), 
+                          CPLAtof(CPLGetXMLValue( psTree, "BinSize","" )) );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1353,7 +1353,7 @@ GDALDefaultRasterAttributeTable::GetValueAsDouble( int iRow, int iField ) const
         return aoFields[iField].adfValues[iRow];
 
       case GFT_String:
-        return atof( aoFields[iField].aosValues[iRow].c_str() );
+        return CPLAtof( aoFields[iField].aosValues[iRow].c_str() );
     }
 
     return 0;
@@ -1443,7 +1443,7 @@ void GDALDefaultRasterAttributeTable::SetValue( int iRow, int iField,
         break;
         
       case GFT_Real:
-        aoFields[iField].adfValues[iRow] = atof(pszValue);
+        aoFields[iField].adfValues[iRow] = CPLAtof(pszValue);
         break;
         
       case GFT_String:

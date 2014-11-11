@@ -139,8 +139,8 @@ static int ParseXY( const char **ppszNext, double *padfXY )
         }
     }
 
-    padfXY[0] = atof(pszNext);
-    padfXY[1] = atof(pszNext + iStartY);
+    padfXY[0] = CPLAtof(pszNext);
+    padfXY[1] = CPLAtof(pszNext + iStartY);
 
     int iEnd;
 

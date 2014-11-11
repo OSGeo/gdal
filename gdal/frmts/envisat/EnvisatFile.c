@@ -28,6 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_string.h"
+
 #ifndef APP_BUILD
 #  define GDAL_BUILD
 #  include "cpl_conv.h"
@@ -1171,7 +1173,7 @@ int EnvisatFile_SetKeyValueAsDouble( EnvisatFile *self,
         }
 
         sprintf( format, "%%+0%d.%df", length, decimals );
-        sprintf( string_value, format, value );
+        CPLsprintf( string_value, format, value );
 
         if( (int)strlen(string_value) > length )
             string_value[length] = '\0';

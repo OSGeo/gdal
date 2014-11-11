@@ -407,9 +407,6 @@ void OGRMySQLTableLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 void OGRMySQLTableLayer::BuildWhere()
 
 {
-    // don't mess up decimal separator 
-    CPLLocaleC oLocaleForcer; 
-
     CPLFree( pszWHERE );
     pszWHERE = (char*)CPLMalloc(500 + ((pszQuery) ? strlen(pszQuery) : 0));
     pszWHERE[0] = '\0';
@@ -423,7 +420,7 @@ void OGRMySQLTableLayer::BuildWhere()
         //POLYGON((MINX MINY, MAXX MINY, MAXX MAXY, MINX MAXY, MINX MINY))
         m_poFilterGeom->getEnvelope( &sEnvelope );
         
-        snprintf(szEnvelope, sizeof(szEnvelope),
+        CPLsnprintf(szEnvelope, sizeof(szEnvelope),
                 "POLYGON((%.18g %.18g, %.18g %.18g, %.18g %.18g, %.18g %.18g, %.18g %.18g))",
                 sEnvelope.MinX, sEnvelope.MinY,
                 sEnvelope.MaxX, sEnvelope.MinY,

@@ -753,14 +753,14 @@ void DODSDataset::HarvestDAS()
 
     if( oNorth != "" && oSouth != "" && oEast != "" && oWest != "" )
     {
-        adfGeoTransform[0] = atof(oWest.c_str());
+        adfGeoTransform[0] = CPLAtof(oWest.c_str());
         adfGeoTransform[1] = 
-            (atof(oEast.c_str()) - atof(oWest.c_str())) / nRasterXSize;
+            (CPLAtof(oEast.c_str()) - CPLAtof(oWest.c_str())) / nRasterXSize;
         adfGeoTransform[2] = 0.0;
-        adfGeoTransform[3] = atof(oNorth.c_str());
+        adfGeoTransform[3] = CPLAtof(oNorth.c_str());
         adfGeoTransform[4] = 0.0;
         adfGeoTransform[5] = 
-            (atof(oSouth.c_str()) - atof(oNorth.c_str())) / nRasterYSize;
+            (CPLAtof(oSouth.c_str()) - CPLAtof(oNorth.c_str())) / nRasterYSize;
 
         bGotGeoTransform = TRUE;
     }
@@ -778,12 +778,12 @@ void DODSDataset::HarvestDAS()
         char **papszItems = CSLTokenizeString( oValue.c_str() );
         if( CSLCount(papszItems) == 6 )
         {
-            adfGeoTransform[0] = atof(papszItems[0]);
-            adfGeoTransform[1] = atof(papszItems[1]);
-            adfGeoTransform[2] = atof(papszItems[2]);
-            adfGeoTransform[3] = atof(papszItems[3]);
-            adfGeoTransform[4] = atof(papszItems[4]);
-            adfGeoTransform[5] = atof(papszItems[5]);
+            adfGeoTransform[0] = CPLAtof(papszItems[0]);
+            adfGeoTransform[1] = CPLAtof(papszItems[1]);
+            adfGeoTransform[2] = CPLAtof(papszItems[2]);
+            adfGeoTransform[3] = CPLAtof(papszItems[3]);
+            adfGeoTransform[4] = CPLAtof(papszItems[4]);
+            adfGeoTransform[5] = CPLAtof(papszItems[5]);
             bGotGeoTransform = TRUE;
         }
         else
@@ -1364,7 +1364,7 @@ void DODSRasterBand::HarvestDAS()
     oValue = poBandInfo->get_attr( "missing_value" );
     bNoDataSet=FALSE;
     if( oValue != "" ) {
-        SetNoDataValue( atof(oValue.c_str()) );
+        SetNoDataValue( CPLAtof(oValue.c_str()) );
     } else {
 
 /* -------------------------------------------------------------------- */
@@ -1372,7 +1372,7 @@ void DODSRasterBand::HarvestDAS()
 /* -------------------------------------------------------------------- */
 	oValue = poBandInfo->get_attr( "_FillValue" );
 	if( oValue != "" ) {
-	    SetNoDataValue( atof(oValue.c_str()) );
+	    SetNoDataValue( CPLAtof(oValue.c_str()) );
 	}
     }
 

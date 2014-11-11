@@ -421,7 +421,7 @@ int NTFFileReader::Open( const char * pszFilenameIn )
 /* -------------------------------------------------------------------- */
 /*      Classify the product type.                                      */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszProduct,"LAND-LINE",9) && atof(pszPVName+5) < 1.3 )
+    if( EQUALN(pszProduct,"LAND-LINE",9) && CPLAtof(pszPVName+5) < 1.3 )
         nProduct = NPC_LANDLINE;
     else if( EQUALN(pszProduct,"LAND-LINE",9) )
         nProduct = NPC_LANDLINE99;

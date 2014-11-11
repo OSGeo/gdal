@@ -956,7 +956,7 @@ int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
     {
         if ( EQUALN(papszLines[iLine], "MSF,", 4) )
         {
-            dfMSF = atof(papszLines[iLine] + 4);
+            dfMSF = CPLAtof(papszLines[iLine] + 4);
             if (dfMSF <= 0.01) /* Suspicious values */
             {
                 CPLDebug("OZI", "Suspicious MSF value : %s", papszLines[iLine]);
@@ -3211,18 +3211,18 @@ void GDALDeserializeGCPListFromXML( CPLXMLNode* psGCPList,
         CPLFree( psGCP->pszInfo );
         psGCP->pszInfo = CPLStrdup(CPLGetXMLValue(psXMLGCP,"Info",""));
 
-        psGCP->dfGCPPixel = atof(CPLGetXMLValue(psXMLGCP,"Pixel","0.0"));
-        psGCP->dfGCPLine = atof(CPLGetXMLValue(psXMLGCP,"Line","0.0"));
+        psGCP->dfGCPPixel = CPLAtof(CPLGetXMLValue(psXMLGCP,"Pixel","0.0"));
+        psGCP->dfGCPLine = CPLAtof(CPLGetXMLValue(psXMLGCP,"Line","0.0"));
 
-        psGCP->dfGCPX = atof(CPLGetXMLValue(psXMLGCP,"X","0.0"));
-        psGCP->dfGCPY = atof(CPLGetXMLValue(psXMLGCP,"Y","0.0"));
+        psGCP->dfGCPX = CPLAtof(CPLGetXMLValue(psXMLGCP,"X","0.0"));
+        psGCP->dfGCPY = CPLAtof(CPLGetXMLValue(psXMLGCP,"Y","0.0"));
         const char* pszZ = CPLGetXMLValue(psXMLGCP,"Z",NULL);
         if( pszZ == NULL )
         {
             /* Note: GDAL 1.10.1 and older generated #GCPZ, but could not read it back */
             pszZ = CPLGetXMLValue(psXMLGCP,"GCPZ","0.0");
         }
-        psGCP->dfGCPZ = atof(pszZ);
+        psGCP->dfGCPZ = CPLAtof(pszZ);
 
         (*pnGCPCount) ++;
     }

@@ -82,4 +82,15 @@ namespace PCIDSK {
 #define PCIDSK_SDK_MAJOR_VERSION    0
 #define PCIDSK_SDK_MINOR_VERSION    1
 
+#ifdef PCIDSK_INTERNAL
+#include <stdlib.h>
+extern "C" double CPLAtof(const char*);
+extern "C" int CPLsprintf(char *str, const char* fmt, ...);
+extern "C" int CPLsnprintf(char *str, size_t size, const char* fmt, ...);
+#else
+#define CPLAtof atof
+#define CPLsprintf sprintf
+#define CPLsnprintf snprintf
+#endif
+
 #endif // PCIDSK_CONFIG_H_INCLUDED

@@ -61,7 +61,7 @@ OGREDIGEODataSource::OGREDIGEODataSource()
 
     iATR = iDI3 = iDI4 = iHEI = iFON = -1;
     iATR_VAL = iANGLE = iSIZE = iOBJ_LNK = iOBJ_LNK_LAYER = -1;
-    dfSizeFactor = atof(CPLGetConfigOption("OGR_EDIGEO_FONT_SIZE_FACTOR", "2"));
+    dfSizeFactor = CPLAtof(CPLGetConfigOption("OGR_EDIGEO_FONT_SIZE_FACTOR", "2"));
     if (dfSizeFactor <= 0 || dfSizeFactor >= 100)
         dfSizeFactor = 2;
 
@@ -316,10 +316,10 @@ int OGREDIGEODataSource::ReadGEN()
     if (CSLCount(papszTokens1) == 2 && CSLCount(papszTokens2) == 2)
     {
         bExtentValid = TRUE;
-        dfMinX = atof(papszTokens1[0]);
-        dfMinY = atof(papszTokens1[1]);
-        dfMaxX = atof(papszTokens2[0]);
-        dfMaxY = atof(papszTokens2[1]);
+        dfMinX = CPLAtof(papszTokens1[0]);
+        dfMinY = CPLAtof(papszTokens1[1]);
+        dfMaxX = CPLAtof(papszTokens2[0]);
+        dfMaxY = CPLAtof(papszTokens2[1]);
     }
     CSLDestroy(papszTokens1);
     CSLDestroy(papszTokens2);
@@ -771,8 +771,8 @@ skip_read_next_line:
             const char* pszY = strchr(pszLine+8, ';');
             if (pszY)
             {
-                double dfX = atof(pszLine + 8);
-                double dfY = atof(pszY + 1);
+                double dfX = CPLAtof(pszLine + 8);
+                double dfY = CPLAtof(pszY + 1);
                 aXY.push_back(xyPairType (dfX, dfY));
             }
         }

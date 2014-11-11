@@ -214,11 +214,11 @@ int main( int nArgc, char ** papszArgv )
         {
             OGRLinearRing  oRing;
 
-            oRing.addPoint( atof(papszArgv[iArg+1]), atof(papszArgv[iArg+2]) );
-            oRing.addPoint( atof(papszArgv[iArg+1]), atof(papszArgv[iArg+4]) );
-            oRing.addPoint( atof(papszArgv[iArg+3]), atof(papszArgv[iArg+4]) );
-            oRing.addPoint( atof(papszArgv[iArg+3]), atof(papszArgv[iArg+2]) );
-            oRing.addPoint( atof(papszArgv[iArg+1]), atof(papszArgv[iArg+2]) );
+            oRing.addPoint( CPLAtof(papszArgv[iArg+1]), CPLAtof(papszArgv[iArg+2]) );
+            oRing.addPoint( CPLAtof(papszArgv[iArg+1]), CPLAtof(papszArgv[iArg+4]) );
+            oRing.addPoint( CPLAtof(papszArgv[iArg+3]), CPLAtof(papszArgv[iArg+4]) );
+            oRing.addPoint( CPLAtof(papszArgv[iArg+3]), CPLAtof(papszArgv[iArg+2]) );
+            oRing.addPoint( CPLAtof(papszArgv[iArg+1]), CPLAtof(papszArgv[iArg+2]) );
 
             poSpatialFilter = new OGRPolygon();
             ((OGRPolygon *) poSpatialFilter)->addRing( &oRing );

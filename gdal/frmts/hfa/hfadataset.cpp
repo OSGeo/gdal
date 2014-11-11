@@ -1072,7 +1072,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
             {
                 // copy them back to doubles
                 for( int i = 0; i < iLength; i++ )
-                    pdfData[i] = atof(papszColData[i]);
+                    pdfData[i] = CPLAtof(papszColData[i]);
             }
 
             // either we allocated them for write, or they were allocated
@@ -1383,7 +1383,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
             {
                 // convert user supplied strings to doubles
                 for( int i = 0; i < iLength; i++ )
-                    padfColData[i] = atof(papszStrList[i]);
+                    padfColData[i] = CPLAtof(papszStrList[i]);
             }
 
             // call value IO to read/write doubles
@@ -2154,7 +2154,7 @@ void HFARasterBand::ReadAuxMetadata()
                       break;
 
                   char szValueAsString[100];
-                  sprintf( szValueAsString, "%.14g", dfValue );
+                  CPLsprintf( szValueAsString, "%.14g", dfValue );
 
                   if( iValue > 0 )
                       osValueList += ",";
@@ -2980,8 +2980,8 @@ HFARasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
         const char *pszBinValues = 
             GetMetadataItem( "STATISTICS_HISTOBINVALUES" );
 
-        *pdfMin = atof(GetMetadataItem("STATISTICS_HISTOMIN"));
-        *pdfMax = atof(GetMetadataItem("STATISTICS_HISTOMAX"));
+        *pdfMin = CPLAtof(GetMetadataItem("STATISTICS_HISTOMIN"));
+        *pdfMax = CPLAtof(GetMetadataItem("STATISTICS_HISTOMAX"));
 
         *pnBuckets = 0;
         for( i = 0; pszBinValues[i] != '\0'; i++ )
@@ -4029,10 +4029,10 @@ CPLErr HFADataset::WriteProjection()
 
         for( iUnit = 0; apszUnitMap[iUnit] != NULL; iUnit += 2 )
         {
-            if( fabs(atof(apszUnitMap[iUnit+1]) - dfActualSize) < dfClosestDiff )
+            if( fabs(CPLAtof(apszUnitMap[iUnit+1]) - dfActualSize) < dfClosestDiff )
             {
                 iClosest = iUnit;
-                dfClosestDiff = fabs(atof(apszUnitMap[iUnit+1])-dfActualSize);
+                dfClosestDiff = fabs(CPLAtof(apszUnitMap[iUnit+1])-dfActualSize);
             }
         }
         
@@ -4347,7 +4347,7 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
                 iUnitIndex = 0;
             
             oSRS.SetLinearUnits( pszUnits, 
-                                 atof(apszUnitMap[iUnitIndex+1]) );
+                                 CPLAtof(apszUnitMap[iUnitIndex+1]) );
         }
         else
             oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );

@@ -461,7 +461,7 @@ CPLErr SaveHKVAttribFile( const char *pszFilenameIn,
 #endif
 
     if ( bNoDataSet )
-        fprintf( fp, "pixel.no_data = %f\n", dfNoDataValue );
+        fprintf( fp, "pixel.no_data = %s\n", CPLSPrintf("%f", dfNoDataValue) );
 
     /* version information- only create the new style */
     fprintf( fp, "version = 1.1");
@@ -600,11 +600,11 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
 
     if (bSuccess)
     {
-        sprintf( szValue, "%.10f", temp_lat );
+        CPLsprintf( szValue, "%.10f", temp_lat );
         papszGeoref = CSLSetNameValue( papszGeoref, "top_left.latitude", 
                                        szValue );
 
-        sprintf( szValue, "%.10f", temp_long );
+        CPLsprintf( szValue, "%.10f", temp_long );
         papszGeoref = CSLSetNameValue( papszGeoref, "top_left.longitude", 
                                        szValue );
     }
@@ -643,11 +643,11 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
 
     if (bSuccess)
     {
-        sprintf( szValue, "%.10f", temp_lat );
+        CPLsprintf( szValue, "%.10f", temp_lat );
         papszGeoref = CSLSetNameValue( papszGeoref, "top_right.latitude", 
                                        szValue );
 
-        sprintf( szValue, "%.10f", temp_long );
+        CPLsprintf( szValue, "%.10f", temp_long );
         papszGeoref = CSLSetNameValue( papszGeoref, "top_right.longitude", 
                                        szValue );
     }
@@ -686,11 +686,11 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
 
     if (bSuccess)
     {
-        sprintf( szValue, "%.10f", temp_lat );
+        CPLsprintf( szValue, "%.10f", temp_lat );
         papszGeoref = CSLSetNameValue( papszGeoref, "bottom_left.latitude", 
                                        szValue );
 
-        sprintf( szValue, "%.10f", temp_long );
+        CPLsprintf( szValue, "%.10f", temp_long );
         papszGeoref = CSLSetNameValue( papszGeoref, "bottom_left.longitude", 
                                        szValue );
     }
@@ -734,11 +734,11 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
 
     if (bSuccess)
     {
-        sprintf( szValue, "%.10f", temp_lat );
+        CPLsprintf( szValue, "%.10f", temp_lat );
         papszGeoref = CSLSetNameValue( papszGeoref, "bottom_right.latitude", 
                                        szValue );
 
-        sprintf( szValue, "%.10f", temp_long );
+        CPLsprintf( szValue, "%.10f", temp_long );
         papszGeoref = CSLSetNameValue( papszGeoref, "bottom_right.longitude", 
                                        szValue );
     }
@@ -781,11 +781,11 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
 
     if (bSuccess)
     {
-        sprintf( szValue, "%.10f", temp_lat );
+        CPLsprintf( szValue, "%.10f", temp_lat );
         papszGeoref = CSLSetNameValue( papszGeoref, "centre.latitude", 
                                        szValue );
 
-        sprintf( szValue, "%.10f", temp_long );
+        CPLsprintf( szValue, "%.10f", temp_long );
         papszGeoref = CSLSetNameValue( papszGeoref, "centre.longitude", 
                                        szValue );
     }
@@ -867,7 +867,7 @@ CPLErr HKVDataset::SetProjection( const char * pszNewProjection )
       char *ol_txt;
         ol_txt=(char *) CPLMalloc(255);
         papszGeoref = CSLSetNameValue( papszGeoref, "projection.name", "utm" );
-        sprintf(ol_txt,"%f",oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0,&ogrerrorOl));
+        CPLsprintf(ol_txt,"%f",oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0,&ogrerrorOl));
         papszGeoref = CSLSetNameValue( papszGeoref, "projection.origin_longitude",
         ol_txt );
         CPLFree(ol_txt);
@@ -964,13 +964,13 @@ void HKVDataset::ProcessGeorefGCP( char **papszGeoref, const char *pszBase,
     if( CSLFetchNameValue(papszGeoref, szFieldName) == NULL )
         return;
     else
-        dfLat = atof(CSLFetchNameValue(papszGeoref, szFieldName));
+        dfLat = CPLAtof(CSLFetchNameValue(papszGeoref, szFieldName));
 
     sprintf( szFieldName, "%s.longitude", pszBase );
     if( CSLFetchNameValue(papszGeoref, szFieldName) == NULL )
         return;
     else
-        dfLong = atof(CSLFetchNameValue(papszGeoref, szFieldName));
+        dfLong = CPLAtof(CSLFetchNameValue(papszGeoref, szFieldName));
 
 /* -------------------------------------------------------------------- */
 /*      Add the gcp to the internal list.                               */
@@ -1098,7 +1098,7 @@ void HKVDataset::ProcessGeoref( const char * pszFilename )
 
     if( (pszProjName != NULL) && EQUAL(pszProjName,"utm") && (nGCPCount == 5) )
     {
-      /*int nZone = (int)((atof(pszOriginLong)+184.5) / 6.0); */
+      /*int nZone = (int)((CPLAtof(pszOriginLong)+184.5) / 6.0); */
         int nZone;
 
         if (pszOriginLong == NULL)
@@ -1109,7 +1109,7 @@ void HKVDataset::ProcessGeoref( const char * pszFilename )
             nZone = 31;
         }
         else
-            nZone = 31 + (int) floor(atof(pszOriginLong)/6.0);
+            nZone = 31 + (int) floor(CPLAtof(pszOriginLong)/6.0);
 
         OGRSpatialReference oUTM;
         OGRSpatialReference oLL;
@@ -1126,8 +1126,8 @@ void HKVDataset::ProcessGeoref( const char * pszFilename )
      
         if (pszOriginLong != NULL)
         {
-            oUTM.SetProjParm(SRS_PP_CENTRAL_MERIDIAN,atof(pszOriginLong));
-            oLL.SetProjParm(SRS_PP_LONGITUDE_OF_ORIGIN,atof(pszOriginLong));
+            oUTM.SetProjParm(SRS_PP_CENTRAL_MERIDIAN,CPLAtof(pszOriginLong));
+            oLL.SetProjParm(SRS_PP_LONGITUDE_OF_ORIGIN,CPLAtof(pszOriginLong));
         }
 
         if ((pszSpheroidName == NULL) || (EQUAL(pszSpheroidName,"wgs-84")) ||
@@ -1220,7 +1220,7 @@ void HKVDataset::ProcessGeoref( const char * pszFilename )
      
         if (pszOriginLong != NULL)
         {
-            oLL.SetProjParm(SRS_PP_LONGITUDE_OF_ORIGIN,atof(pszOriginLong));
+            oLL.SetProjParm(SRS_PP_LONGITUDE_OF_ORIGIN,CPLAtof(pszOriginLong));
         }
 
         if ((pszSpheroidName == NULL) || (EQUAL(pszSpheroidName,"wgs-84")) ||
@@ -1376,7 +1376,7 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
     if( pszValue != NULL )
     {
         bNoDataSet = TRUE;
-        dfNoDataValue = atof(pszValue);
+        dfNoDataValue = CPLAtof(pszValue);
     }
 
     pszValue = CSLFetchNameValue(papszAttrib,"channel.enumeration");
@@ -1402,7 +1402,7 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
   
     if  (CSLFetchNameValue( papszAttrib, "version" ) != NULL)
       poDS->SetVersion((float)
-                       atof(CSLFetchNameValue(papszAttrib, "version")));
+                       CPLAtof(CSLFetchNameValue(papszAttrib, "version")));
     else
       poDS->SetVersion(1.0);
 

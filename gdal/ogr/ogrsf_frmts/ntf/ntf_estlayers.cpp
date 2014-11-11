@@ -1631,7 +1631,7 @@ static OGRFeature *TranslateLandlineName( NTFFileReader *poReader,
     poFeature->SetField( 5, atoi(papoGroup[1]->GetField(10,10)) );
         
     // ORIENT
-    poFeature->SetField( 6, atof(papoGroup[1]->GetField( 11, 14 )) * 0.1 );
+    poFeature->SetField( 6, CPLAtof(papoGroup[1]->GetField( 11, 14 )) * 0.1 );
 
     // TEXT_HT_GROUND
     poFeature->SetField( 7, poFeature->GetFieldAsDouble(4)

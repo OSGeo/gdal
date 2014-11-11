@@ -212,7 +212,7 @@ static char* CPLReplacePointByLocalePoint(const char* pszNumber, char point)
     struct lconv *poLconv = localeconv();
     if ( poLconv
          && poLconv->decimal_point
-         && strlen(poLconv->decimal_point) > 0 )
+         && poLconv->decimal_point[0] != '\0' )
     {
         char    byPoint = poLconv->decimal_point[0];
 

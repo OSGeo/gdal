@@ -421,9 +421,9 @@ void MFFDataset::ScanForGCPs()
             pasGCPList[nGCPCount].pszId = CPLStrdup( pszBase );
                 
             pasGCPList[nGCPCount].dfGCPX = 
-                atof(CSLFetchNameValue(papszHdrLines, szLongName));
+                CPLAtof(CSLFetchNameValue(papszHdrLines, szLongName));
             pasGCPList[nGCPCount].dfGCPY = 
-                atof(CSLFetchNameValue(papszHdrLines, szLatName));
+                CPLAtof(CSLFetchNameValue(papszHdrLines, szLatName));
             pasGCPList[nGCPCount].dfGCPZ = 0.0;
 
             pasGCPList[nGCPCount].dfGCPPixel = dfRasterX;
@@ -461,11 +461,11 @@ void MFFDataset::ScanForGCPs()
             CPLFree( pasGCPList[nGCPCount].pszId );
             pasGCPList[nGCPCount].pszId = CPLStrdup( szName );
 
-            pasGCPList[nGCPCount].dfGCPX = atof(papszTokens[3]);
-            pasGCPList[nGCPCount].dfGCPY = atof(papszTokens[2]);
+            pasGCPList[nGCPCount].dfGCPX = CPLAtof(papszTokens[3]);
+            pasGCPList[nGCPCount].dfGCPY = CPLAtof(papszTokens[2]);
             pasGCPList[nGCPCount].dfGCPZ = 0.0;
-            pasGCPList[nGCPCount].dfGCPPixel = atof(papszTokens[1])+0.5;
-            pasGCPList[nGCPCount].dfGCPLine = atof(papszTokens[0])+0.5;
+            pasGCPList[nGCPCount].dfGCPPixel = CPLAtof(papszTokens[1])+0.5;
+            pasGCPList[nGCPCount].dfGCPLine = CPLAtof(papszTokens[0])+0.5;
 
             nGCPCount++;
         }
@@ -526,7 +526,7 @@ void MFFDataset::ScanForProjectionInfo()
             nZone = 31;
         }
         else
-            nZone = 31 + (int) floor(atof(pszOriginLong)/6.0);
+            nZone = 31 + (int) floor(CPLAtof(pszOriginLong)/6.0);
 
 
         if( nGCPCount >= 5 && pasGCPList[4].dfGCPY < 0 )
@@ -535,12 +535,12 @@ void MFFDataset::ScanForProjectionInfo()
             oProj.SetUTM( nZone, 1 );
      
         if (pszOriginLong != NULL)
-            oProj.SetProjParm(SRS_PP_CENTRAL_MERIDIAN,atof(pszOriginLong));
+            oProj.SetProjParm(SRS_PP_CENTRAL_MERIDIAN,CPLAtof(pszOriginLong));
         
     }
 
     if (pszOriginLong != NULL)
-        oLL.SetProjParm(SRS_PP_LONGITUDE_OF_ORIGIN,atof(pszOriginLong));
+        oLL.SetProjParm(SRS_PP_LONGITUDE_OF_ORIGIN,CPLAtof(pszOriginLong));
 
     if (pszSpheroidName == NULL)
     {
@@ -571,8 +571,8 @@ void MFFDataset::ScanForProjectionInfo()
                                                   "SPHEROID_POLAR_RADIUS");
           if ((pszSpheroidEqRadius != NULL) && (pszSpheroidPolarRadius != NULL))
           {
-            eq_radius = atof( pszSpheroidEqRadius );
-            polar_radius = atof( pszSpheroidPolarRadius );
+            eq_radius = CPLAtof( pszSpheroidEqRadius );
+            polar_radius = CPLAtof( pszSpheroidPolarRadius );
             oProj.SetGeogCS( "unknown","unknown","unknown",
                          eq_radius, eq_radius/(eq_radius - polar_radius));
             oLL.SetGeogCS( "unknown","unknown","unknown",
@@ -1142,12 +1142,12 @@ GDALDataset *MFFDataset::Create( const char * pszFilenameIn,
 /* -------------------------------------------------------------------- */
 /*      Create the header file.                                         */
 /* -------------------------------------------------------------------- */
-    FILE       *fp;
+    VSILFILE       *fp;
     const char *pszFilename;
 
     pszFilename = CPLFormFilename( NULL, pszBaseFilename, "hdr" );
 
-    fp = VSIFOpen( pszFilename, "wt" );
+    fp = VSIFOpenL( pszFilename, "wt" );
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -1156,20 +1156,20 @@ GDALDataset *MFFDataset::Create( const char * pszFilenameIn,
         return NULL;
     }
 
-    fprintf( fp, "IMAGE_FILE_FORMAT = MFF\n" );
-    fprintf( fp, "FILE_TYPE = IMAGE\n" );
-    fprintf( fp, "IMAGE_LINES = %d\n", nYSize );
-    fprintf( fp, "LINE_SAMPLES = %d\n", nXSize );
+    VSIFPrintfL( fp, "IMAGE_FILE_FORMAT = MFF\n" );
+    VSIFPrintfL( fp, "FILE_TYPE = IMAGE\n" );
+    VSIFPrintfL( fp, "IMAGE_LINES = %d\n", nYSize );
+    VSIFPrintfL( fp, "LINE_SAMPLES = %d\n", nXSize );
 #ifdef CPL_MSB     
-    fprintf( fp, "BYTE_ORDER = MSB\n" );
+    VSIFPrintfL( fp, "BYTE_ORDER = MSB\n" );
 #else
-    fprintf( fp, "BYTE_ORDER = LSB\n" );
+    VSIFPrintfL( fp, "BYTE_ORDER = LSB\n" );
 #endif
 
     if (CSLFetchNameValue(papszParmList,"NO_END") == NULL)
-        fprintf( fp, "END\n" );
+        VSIFPrintfL( fp, "END\n" );
     
-    VSIFClose( fp );
+    VSIFCloseL( fp );
    
 /* -------------------------------------------------------------------- */
 /*      Create the data files, but don't bother writing any data to them.*/
@@ -1190,7 +1190,7 @@ GDALDataset *MFFDataset::Create( const char * pszFilenameIn,
             sprintf( szExtension, "x%02d", iBand );
 
         pszFilename = CPLFormFilename( NULL, pszBaseFilename, szExtension );
-        fp = VSIFOpen( pszFilename, "wb" );
+        fp = VSIFOpenL( pszFilename, "wb" );
         if( fp == NULL )
         {
             CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -1199,8 +1199,8 @@ GDALDataset *MFFDataset::Create( const char * pszFilenameIn,
             return NULL;
         }
 
-        VSIFWrite( (void *) "", 1, 1, fp );
-        VSIFClose( fp );
+        VSIFWriteL( (void *) "", 1, 1, fp );
+        VSIFCloseL( fp );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1358,7 +1358,7 @@ MFFDataset::CreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     char	*pszBaseFilename;
     int         i;
-    FILE       *fp;
+    VSILFILE       *fp;
     const char *pszFilenameGEO;
 
     pszBaseFilename = (char *) CPLMalloc(strlen(pszFilename)+5);
@@ -1378,7 +1378,7 @@ MFFDataset::CreateCopy( const char * pszFilename,
 
     pszFilenameGEO = CPLFormFilename( NULL, pszBaseFilename, "hdr" );
 
-    fp = VSIFOpen( pszFilenameGEO, "at" );
+    fp = VSIFOpenL( pszFilenameGEO, "at" );
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -1482,28 +1482,28 @@ MFFDataset::CreateCopy( const char * pszFilename,
     /* -------------------------------------------------------------------- */
     /*      top left                                                        */
     /* -------------------------------------------------------------------- */
-          fprintf( fp, "TOP_LEFT_CORNER_LATITUDE = %.10f\n", padfTiepoints[1] );
-          fprintf( fp, "TOP_LEFT_CORNER_LONGITUDE = %.10f\n", padfTiepoints[0] );
+          VSIFPrintfL( fp, "TOP_LEFT_CORNER_LATITUDE = %.10f\n", padfTiepoints[1] );
+          VSIFPrintfL( fp, "TOP_LEFT_CORNER_LONGITUDE = %.10f\n", padfTiepoints[0] );
     /* -------------------------------------------------------------------- */
     /*      top_right                                                       */
     /* -------------------------------------------------------------------- */
-          fprintf( fp, "TOP_RIGHT_CORNER_LATITUDE = %.10f\n", padfTiepoints[3] );
-          fprintf( fp, "TOP_RIGHT_CORNER_LONGITUDE = %.10f\n", padfTiepoints[2] );
+          VSIFPrintfL( fp, "TOP_RIGHT_CORNER_LATITUDE = %.10f\n", padfTiepoints[3] );
+          VSIFPrintfL( fp, "TOP_RIGHT_CORNER_LONGITUDE = %.10f\n", padfTiepoints[2] );
     /* -------------------------------------------------------------------- */
     /*      bottom_left                                                     */
     /* -------------------------------------------------------------------- */
-          fprintf( fp, "BOTTOM_LEFT_CORNER_LATITUDE = %.10f\n", padfTiepoints[5] );
-          fprintf( fp, "BOTTOM_LEFT_CORNER_LONGITUDE = %.10f\n", padfTiepoints[4] );
+          VSIFPrintfL( fp, "BOTTOM_LEFT_CORNER_LATITUDE = %.10f\n", padfTiepoints[5] );
+          VSIFPrintfL( fp, "BOTTOM_LEFT_CORNER_LONGITUDE = %.10f\n", padfTiepoints[4] );
     /* -------------------------------------------------------------------- */
     /*      bottom_right                                                    */
     /* -------------------------------------------------------------------- */
-          fprintf( fp, "BOTTOM_RIGHT_CORNER_LATITUDE = %.10f\n", padfTiepoints[7] );
-          fprintf( fp, "BOTTOM_RIGHT_CORNER_LONGITUDE = %.10f\n", padfTiepoints[6] );
+          VSIFPrintfL( fp, "BOTTOM_RIGHT_CORNER_LATITUDE = %.10f\n", padfTiepoints[7] );
+          VSIFPrintfL( fp, "BOTTOM_RIGHT_CORNER_LONGITUDE = %.10f\n", padfTiepoints[6] );
     /* -------------------------------------------------------------------- */
     /*      Center                                                          */
     /* -------------------------------------------------------------------- */
-          fprintf( fp, "CENTRE_LATITUDE = %.10f\n", padfTiepoints[9] );
-          fprintf( fp, "CENTRE_LONGITUDE = %.10f\n", padfTiepoints[8] );
+          VSIFPrintfL( fp, "CENTRE_LATITUDE = %.10f\n", padfTiepoints[9] );
+          VSIFPrintfL( fp, "CENTRE_LONGITUDE = %.10f\n", padfTiepoints[8] );
     /* ------------------------------------------------------------------- */
     /*     Ellipsoid/projection                                            */
     /* --------------------------------------------------------------------*/
@@ -1533,19 +1533,19 @@ MFFDataset::CreateCopy( const char * pszFilename,
              if ((oSRS.GetAttrValue("PROJECTION") != NULL) && 
                  (EQUAL(oSRS.GetAttrValue("PROJECTION"),SRS_PT_TRANSVERSE_MERCATOR)))
              {
-                 fprintf(fp,"PROJECTION_NAME = UTM\n");
-                 fprintf(fp,"PROJECTION_ORIGIN_LONGITUDE = %f\n",
+                 VSIFPrintfL(fp,"PROJECTION_NAME = UTM\n");
+                 VSIFPrintfL(fp,"PROJECTION_ORIGIN_LONGITUDE = %f\n",
                          oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0,&ogrerrorOl));
              }
              else if ((oSRS.GetAttrValue("PROJECTION") == NULL) && (oSRS.IsGeographic()))
              {
-                  fprintf(fp,"PROJECTION_NAME = LL\n");
+                  VSIFPrintfL(fp,"PROJECTION_NAME = LL\n");
              }
              else
              {
                   CPLError( CE_Warning, CPLE_AppDefined,
                   "Unrecognized projection- no georeferencing information transferred.");
-                  fprintf(fp,"PROJECTION_NAME = LL\n");
+                  VSIFPrintfL(fp,"PROJECTION_NAME = LL\n");
              }
              eq_radius = oSRS.GetSemiMajor(&ogrerrorEq);
              inv_flattening = oSRS.GetInvFlattening(&ogrerrorInvf);
@@ -1555,11 +1555,11 @@ MFFDataset::CreateCopy( const char * pszFilename,
                  spheroid_name = mffEllipsoids->GetSpheroidNameByEqRadiusAndInvFlattening(eq_radius,inv_flattening);
                  if (spheroid_name != NULL)
                  {
-                     fprintf(fp,"SPHEROID_NAME = %s\n",spheroid_name );
+                     VSIFPrintfL(fp,"SPHEROID_NAME = %s\n",spheroid_name );
                  } 
                  else
                  {
-                     fprintf(fp,
+                     VSIFPrintfL(fp,
        "SPHEROID_NAME = USER_DEFINED\nSPHEROID_EQUATORIAL_RADIUS = %.10f\nSPHEROID_POLAR_RADIUS = %.10f\n",
                      eq_radius,eq_radius*(1-1.0/inv_flattening) );
                  }
@@ -1570,8 +1570,8 @@ MFFDataset::CreateCopy( const char * pszFilename,
     } 
       
     CPLFree( padfTiepoints );
-    fprintf( fp, "END\n" );
-    VSIFClose( fp );
+    VSIFPrintfL( fp, "END\n" );
+    VSIFCloseL( fp );
    
     /* End of georeferencing stuff */
 
@@ -1625,6 +1625,8 @@ void GDALRegister_MFF()
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "hdr" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
                                    "Byte UInt16 Float32 CInt16 CFloat32" );
+
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnOpen = MFFDataset::Open;
         poDriver->pfnCreate = MFFDataset::Create;

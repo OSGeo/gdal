@@ -114,11 +114,11 @@ int main( int nArgc, char ** papszArgv )
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(4);
             OGRLinearRing  oRing;
 
-            oRing.addPoint( atof(papszArgv[iArg+1]), atof(papszArgv[iArg+2]) );
-            oRing.addPoint( atof(papszArgv[iArg+1]), atof(papszArgv[iArg+4]) );
-            oRing.addPoint( atof(papszArgv[iArg+3]), atof(papszArgv[iArg+4]) );
-            oRing.addPoint( atof(papszArgv[iArg+3]), atof(papszArgv[iArg+2]) );
-            oRing.addPoint( atof(papszArgv[iArg+1]), atof(papszArgv[iArg+2]) );
+            oRing.addPoint( CPLAtof(papszArgv[iArg+1]), CPLAtof(papszArgv[iArg+2]) );
+            oRing.addPoint( CPLAtof(papszArgv[iArg+1]), CPLAtof(papszArgv[iArg+4]) );
+            oRing.addPoint( CPLAtof(papszArgv[iArg+3]), CPLAtof(papszArgv[iArg+4]) );
+            oRing.addPoint( CPLAtof(papszArgv[iArg+3]), CPLAtof(papszArgv[iArg+2]) );
+            oRing.addPoint( CPLAtof(papszArgv[iArg+1]), CPLAtof(papszArgv[iArg+2]) );
 
             poSpatialFilter = new OGRPolygon();
             ((OGRPolygon *) poSpatialFilter)->addRing( &oRing );
@@ -488,7 +488,7 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
                 {
                     OGRGeomFieldDefn* poGFldDefn =
                         poLayer->GetLayerDefn()->GetGeomFieldDefn(iGeom);
-                    printf("Extent (%s): (%f, %f) - (%f, %f)\n",
+                    CPLprintf("Extent (%s): (%f, %f) - (%f, %f)\n",
                            poGFldDefn->GetNameRef(),
                            oExt.MinX, oExt.MinY, oExt.MaxX, oExt.MaxY);
                 }
@@ -496,7 +496,7 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
         }
         else if (poLayer->GetExtent(&oExt, TRUE) == OGRERR_NONE)
         {
-            printf("Extent: (%f, %f) - (%f, %f)\n", 
+            CPLprintf("Extent: (%f, %f) - (%f, %f)\n", 
                    oExt.MinX, oExt.MinY, oExt.MaxX, oExt.MaxY);
         }
 

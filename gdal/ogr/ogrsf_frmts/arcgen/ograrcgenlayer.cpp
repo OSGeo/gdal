@@ -139,13 +139,13 @@ OGRFeature *OGRARCGENLayer::GetNextRawFeature()
                 poFeature->SetField(0, papszTokens[0]);
                 if (nTokens == 3)
                     poFeature->SetGeometryDirectly(
-                        new OGRPoint(atof(papszTokens[1]),
-                                     atof(papszTokens[2])));
+                        new OGRPoint(CPLAtof(papszTokens[1]),
+                                     CPLAtof(papszTokens[2])));
                 else
                     poFeature->SetGeometryDirectly(
-                        new OGRPoint(atof(papszTokens[1]),
-                                     atof(papszTokens[2]),
-                                     atof(papszTokens[3])));
+                        new OGRPoint(CPLAtof(papszTokens[1]),
+                                     CPLAtof(papszTokens[2]),
+                                     CPLAtof(papszTokens[3])));
                 CSLDestroy(papszTokens);
                 return poFeature;
             }
@@ -200,14 +200,14 @@ OGRFeature *OGRARCGENLayer::GetNextRawFeature()
         {
             if (nTokens == 2)
             {
-                poLS->addPoint(atof(papszTokens[0]),
-                               atof(papszTokens[1]));
+                poLS->addPoint(CPLAtof(papszTokens[0]),
+                               CPLAtof(papszTokens[1]));
             }
             else if (nTokens == 3)
             {
-                poLS->addPoint(atof(papszTokens[0]),
-                               atof(papszTokens[1]),
-                               atof(papszTokens[2]));
+                poLS->addPoint(CPLAtof(papszTokens[0]),
+                               CPLAtof(papszTokens[1]),
+                               CPLAtof(papszTokens[2]));
             }
             else
             {

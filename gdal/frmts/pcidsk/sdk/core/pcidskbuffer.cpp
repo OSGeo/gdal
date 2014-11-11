@@ -184,7 +184,7 @@ double PCIDSKBuffer::GetDouble( int offset, int size ) const
 
 /* -------------------------------------------------------------------- */
 /*      PCIDSK uses FORTRAN 'D' format for doubles - convert to 'E'     */
-/*      (C style) before calling atof.                                  */
+/*      (C style) before calling CPLAtof.                                  */
 /* -------------------------------------------------------------------- */
     int i;
 
@@ -193,14 +193,16 @@ double PCIDSKBuffer::GetDouble( int offset, int size ) const
         if( value_str[i] == 'D' )
             value_str[i] = 'E';
     }
-
+#ifdef PCIDSK_INTERNAL
+    return CPLAtof(value_str.c_str());
+#else
     std::stringstream oStream;
     oStream << value_str;
     double dValue = 0.0;
     oStream >> dValue;
 
     return dValue;
-//    return atof(value_str.c_str());
+#endif
 }
 
 /************************************************************************/
@@ -266,7 +268,7 @@ void PCIDSKBuffer::Put( double value, int offset, int size,
         fmt = "%g";
 
     char wrk[128];
-    snprintf( wrk, 127, fmt, value );
+    CPLsnprintf( wrk, 127, fmt, value );
 
     char *exponent = strstr(wrk,"E");
     if( exponent != NULL )

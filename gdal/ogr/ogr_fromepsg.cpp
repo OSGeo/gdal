@@ -1284,7 +1284,7 @@ static OGRErr SetEPSGGeogCS( OGRSpatialReference * poSRS, int nGeogCS )
 
         for( int iCoeff = 0; iCoeff < 7; iCoeff++ )
         {
-            sprintf( szValue, "%g", adfBursaTransform[iCoeff] );
+            CPLsprintf( szValue, "%g", adfBursaTransform[iCoeff] );
             poWGS84->AddChild( new OGR_SRSNode( szValue ) );
         }
 
@@ -1989,7 +1989,7 @@ static OGRErr SetEPSGGeocCS( OGRSpatialReference * poSRS, int nGCSCode )
 
         for( int iCoeff = 0; iCoeff < 7; iCoeff++ )
         {
-            sprintf( szValue, "%g", adfBursaTransform[iCoeff] );
+            CPLsprintf( szValue, "%g", adfBursaTransform[iCoeff] );
             poWGS84->AddChild( new OGR_SRSNode( szValue ) );
         }
 
@@ -2157,7 +2157,6 @@ OGRErr OGRSpatialReference::importFromEPSGA( int nCode )
 
 {
     OGRErr  eErr;
-    CPLLocaleC  oLocaleForcer;
 
     bNormInfoSet = FALSE;
 

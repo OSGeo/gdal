@@ -1453,7 +1453,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     const char* pszQuality = CSLFetchNameValueDef(papszOptions, "QUALITY", NULL);
     if (pszQuality)
     {
-        double dfQuality = atof(pszQuality);
+        double dfQuality = CPLAtof(pszQuality);
         if (dfQuality > 0 && dfQuality <= 100)
         {
             dfRate = 100 / dfQuality;

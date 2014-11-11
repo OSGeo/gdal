@@ -267,7 +267,7 @@ void OGRDXFLayer::PrepareLineStyle( OGRFeature *poFeature )
     if( dfWeight > 0.0 )
     {
         char szBuffer[64];
-        snprintf(szBuffer, sizeof(szBuffer), "%.2g", dfWeight);
+        CPLsnprintf(szBuffer, sizeof(szBuffer), "%.2g", dfWeight);
         char* pszComma = strchr(szBuffer, ',');
         if (pszComma)
             *pszComma = '.';
@@ -534,7 +534,7 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
 
     if( dfAngle != 0.0 )
     {
-        snprintf(szBuffer, sizeof(szBuffer), "%.3g", dfAngle);
+        CPLsnprintf(szBuffer, sizeof(szBuffer), "%.3g", dfAngle);
         pszComma = strchr(szBuffer, ',');
         if (pszComma)
             *pszComma = '.';
@@ -543,7 +543,7 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
 
     if( dfHeight != 0.0 )
     {
-        snprintf(szBuffer, sizeof(szBuffer), "%.3g", dfHeight);
+        CPLsnprintf(szBuffer, sizeof(szBuffer), "%.3g", dfHeight);
         pszComma = strchr(szBuffer, ',');
         if (pszComma)
             *pszComma = '.';
@@ -704,7 +704,7 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
 
     if( dfAngle != 0.0 )
     {
-        snprintf(szBuffer, sizeof(szBuffer), "%.3g", dfAngle);
+        CPLsnprintf(szBuffer, sizeof(szBuffer), "%.3g", dfAngle);
         pszComma = strchr(szBuffer, ',');
         if (pszComma)
             *pszComma = '.';
@@ -713,7 +713,7 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
 
     if( dfHeight != 0.0 )
     {
-        snprintf(szBuffer, sizeof(szBuffer), "%.3g", dfHeight);
+        CPLsnprintf(szBuffer, sizeof(szBuffer), "%.3g", dfHeight);
         pszComma = strchr(szBuffer, ',');
         if (pszComma)
             *pszComma = '.';

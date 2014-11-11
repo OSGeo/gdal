@@ -189,7 +189,7 @@ int main( int argc, char ** argv )
 
         else if( EQUAL(argv[i],"-to") && i < argc-1 )
         {
-            dfTimeout = atof(argv[++i] );
+            dfTimeout = CPLAtof(argv[++i] );
         }   
 
         else if( EQUAL(argv[i],"-outsize") && i < argc-2 )
@@ -294,9 +294,9 @@ int main( int argc, char ** argv )
     else
     {
         nOXSize = (int) ((pszOXSize[strlen(pszOXSize)-1]=='%' 
-                          ? atof(pszOXSize)/100*anSrcWin[2] : atoi(pszOXSize)));
+                          ? CPLAtof(pszOXSize)/100*anSrcWin[2] : atoi(pszOXSize)));
         nOYSize = (int) ((pszOYSize[strlen(pszOYSize)-1]=='%' 
-                          ? atof(pszOYSize)/100*anSrcWin[3] : atoi(pszOYSize)));
+                          ? CPLAtof(pszOYSize)/100*anSrcWin[3] : atoi(pszOYSize)));
     }
 
 /* -------------------------------------------------------------------- */

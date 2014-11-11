@@ -463,7 +463,7 @@ OGRBoolean SetCitationToSRS(GTIF* hGTIF, char* szCTString, int nCTStringLen,
             {
                 if( EQUALN(apszUnitMap[i], ctNames[CitLUnitsName], size) )
                 {
-                    unitSize = atof(apszUnitMap[i+1]);
+                    unitSize = CPLAtof(apszUnitMap[i+1]);
                     break;
                 }
             }

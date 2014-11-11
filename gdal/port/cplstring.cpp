@@ -69,7 +69,7 @@ CPLString &CPLString::vPrintf( const char *pszFormat, va_list args )
 
 #if !defined(HAVE_VSNPRINTF)
     char *pszBuffer = (char *) CPLMalloc(30000);
-    if( vsprintf( pszBuffer, pszFormat, args) > 29998 )
+    if( CPLvsprintf( pszBuffer, pszFormat, args) > 29998 )
     {
         CPLError( CE_Fatal, CPLE_AppDefined, 
                   "CPLString::vPrintf() ... buffer overrun." );
@@ -92,7 +92,7 @@ CPLString &CPLString::vPrintf( const char *pszFormat, va_list args )
     wrk_args = args;
 #endif
     
-    nPR = vsnprintf( szModestBuffer, sizeof(szModestBuffer), pszFormat, 
+    nPR = CPLvsnprintf( szModestBuffer, sizeof(szModestBuffer), pszFormat, 
                      wrk_args );
     if( nPR == -1 || nPR >= (int) sizeof(szModestBuffer)-1 )
     {
@@ -105,7 +105,7 @@ CPLString &CPLString::vPrintf( const char *pszFormat, va_list args )
 #else
         wrk_args = args;
 #endif
-        while( (nPR=vsnprintf( pszWorkBuffer, nWorkBufferSize, pszFormat,wrk_args))
+        while( (nPR=CPLvsnprintf( pszWorkBuffer, nWorkBufferSize, pszFormat,wrk_args))
                >= nWorkBufferSize-1 
                || nPR == -1 )
         {
@@ -158,14 +158,8 @@ CPLString &CPLString::FormatC( double dfValue, const char *pszFormat )
 
     char szWork[512]; // presumably long enough for any number?
 
-    sprintf( szWork, pszFormat, dfValue );
+    CPLsprintf( szWork, pszFormat, dfValue );
     CPLAssert( strlen(szWork) < sizeof(szWork) );
-    
-    if( strchr( szWork, ',' ) != NULL )
-    {
-        char *pszDelim = strchr( szWork, ',' );
-        *pszDelim = '.';
-    }
 
     *this += szWork;
     

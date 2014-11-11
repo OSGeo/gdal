@@ -146,7 +146,7 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
 /* -------------------------------------------------------------------- */
     pszOpt = CSLFetchNameValue( papszOptions, "MAXDIST" );
     if( pszOpt )
-        dfMaxDist = atof(pszOpt) / dfDistMult;
+        dfMaxDist = CPLAtof(pszOpt) / dfDistMult;
     else
         dfMaxDist = GDALGetRasterBandXSize(hSrcBand) + GDALGetRasterBandYSize(hSrcBand);
 
@@ -171,7 +171,7 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
     float fNoDataValue;
     pszOpt = CSLFetchNameValue( papszOptions, "NODATA" );
     if( pszOpt != NULL )
-        fNoDataValue = (float) atof(pszOpt);
+        fNoDataValue = (float) CPLAtof(pszOpt);
     else
     {
         int bSuccess;
@@ -187,7 +187,7 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
     pszOpt = CSLFetchNameValue( papszOptions, "FIXED_BUF_VAL" );
     if( pszOpt )
     {
-        dfFixedBufVal = atof(pszOpt);
+        dfFixedBufVal = CPLAtof(pszOpt);
         bFixedBufVal = TRUE;
     }
 

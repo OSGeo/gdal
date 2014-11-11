@@ -686,7 +686,7 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     psResult = cln_GetVersion(nClientID);
     
-    if( (ECSERROR(psResult) || atof(ECSTEXT(psResult)) >= 3.1)
+    if( (ECSERROR(psResult) || CPLAtof(ECSTEXT(psResult)) >= 3.1)
         && CSLCount(papszMatrices) == 0 
         && CSLCount(papszImages) == 0 )
     {

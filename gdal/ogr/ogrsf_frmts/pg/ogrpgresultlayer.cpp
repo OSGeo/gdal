@@ -301,10 +301,10 @@ void OGRPGResultLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn 
                     if( sEnvelope.MaxY > 90.0 )
                         sEnvelope.MaxY = 90.0;
                 }
-                snprintf(szBox3D_1, sizeof(szBox3D_1), "%.18g %.18g", sEnvelope.MinX, sEnvelope.MinY);
+                CPLsnprintf(szBox3D_1, sizeof(szBox3D_1), "%.18g %.18g", sEnvelope.MinX, sEnvelope.MinY);
                 while((pszComma = strchr(szBox3D_1, ',')) != NULL)
                     *pszComma = '.';
-                snprintf(szBox3D_2, sizeof(szBox3D_2), "%.18g %.18g", sEnvelope.MaxX, sEnvelope.MaxY);
+                CPLsnprintf(szBox3D_2, sizeof(szBox3D_2), "%.18g %.18g", sEnvelope.MaxX, sEnvelope.MaxY);
                 while((pszComma = strchr(szBox3D_2, ',')) != NULL)
                     *pszComma = '.';
                 osWHERE.Printf("WHERE %s && %s('BOX3D(%s, %s)'::box3d,%d) ",

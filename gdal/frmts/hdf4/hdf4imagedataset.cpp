@@ -1219,14 +1219,14 @@ void HDF4ImageDataset::CaptureL1GMTLInfo()
     else
         return;
 
-    dfULX = atof(oMTL.GetKeyword((osPrefix+"UL_CORNER_LON").c_str(), "0" ));
-    dfULY = atof(oMTL.GetKeyword((osPrefix+"UL_CORNER_LAT").c_str(), "0" ));
-    dfLRX = atof(oMTL.GetKeyword((osPrefix+"LR_CORNER_LON").c_str(), "0" ));
-    dfLRY = atof(oMTL.GetKeyword((osPrefix+"LR_CORNER_LAT").c_str(), "0" ));
-    dfLLX = atof(oMTL.GetKeyword((osPrefix+"LL_CORNER_LON").c_str(), "0" ));
-    dfLLY = atof(oMTL.GetKeyword((osPrefix+"LL_CORNER_LAT").c_str(), "0" ));
-    dfURX = atof(oMTL.GetKeyword((osPrefix+"UR_CORNER_LON").c_str(), "0" ));
-    dfURY = atof(oMTL.GetKeyword((osPrefix+"UR_CORNER_LAT").c_str(), "0" ));
+    dfULX = CPLAtof(oMTL.GetKeyword((osPrefix+"UL_CORNER_LON").c_str(), "0" ));
+    dfULY = CPLAtof(oMTL.GetKeyword((osPrefix+"UL_CORNER_LAT").c_str(), "0" ));
+    dfLRX = CPLAtof(oMTL.GetKeyword((osPrefix+"LR_CORNER_LON").c_str(), "0" ));
+    dfLRY = CPLAtof(oMTL.GetKeyword((osPrefix+"LR_CORNER_LAT").c_str(), "0" ));
+    dfLLX = CPLAtof(oMTL.GetKeyword((osPrefix+"LL_CORNER_LON").c_str(), "0" ));
+    dfLLY = CPLAtof(oMTL.GetKeyword((osPrefix+"LL_CORNER_LAT").c_str(), "0" ));
+    dfURX = CPLAtof(oMTL.GetKeyword((osPrefix+"UR_CORNER_LON").c_str(), "0" ));
+    dfURY = CPLAtof(oMTL.GetKeyword((osPrefix+"UR_CORNER_LAT").c_str(), "0" ));
 
     CPLFree( pszGCPProjection );
     pszGCPProjection = CPLStrdup( "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",\"4326\"]]" );
@@ -3454,7 +3454,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
               char *pszString = (char *) pszValue;
               while ( *pszValue && i < 6 )
               {
-                  poDS->adfGeoTransform[i++] = strtod(pszString, &pszString);
+                  poDS->adfGeoTransform[i++] = CPLStrtod(pszString, &pszString);
                   pszString++;
               }
               poDS->bHasGeoTransform = TRUE;

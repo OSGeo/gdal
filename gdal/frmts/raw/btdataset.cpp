@@ -482,7 +482,7 @@ CPLErr BTDataset::SetProjection( const char *pszNewProjection )
 
         if( ABS(dfLinear - 0.3048) < 0.0000001 )
             nShortTemp = 2;
-        else if( ABS(dfLinear - atof(SRS_UL_US_FOOT_CONV)) < 0.00000001 )
+        else if( ABS(dfLinear - CPLAtof(SRS_UL_US_FOOT_CONV)) < 0.00000001 )
             nShortTemp = 3;
         else
             nShortTemp = 1;
@@ -570,7 +570,7 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
 
     strncpy( szVersion, (char *) (poDS->abyHeader + 7), 3 );
     szVersion[3] = '\0';
-    poDS->nVersionCode = (int) (atof(szVersion) * 10);
+    poDS->nVersionCode = (int) (CPLAtof(szVersion) * 10);
 
 /* -------------------------------------------------------------------- */
 /*      Extract core header information, being careful about the        */
@@ -678,9 +678,9 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
         if( nHUnits == 1 )
             oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );
         else if( nHUnits == 2 )
-            oSRS.SetLinearUnits( SRS_UL_FOOT, atof(SRS_UL_FOOT_CONV) );
+            oSRS.SetLinearUnits( SRS_UL_FOOT, CPLAtof(SRS_UL_FOOT_CONV) );
         else if( nHUnits == 3 )
-            oSRS.SetLinearUnits( SRS_UL_US_FOOT, atof(SRS_UL_US_FOOT_CONV) );
+            oSRS.SetLinearUnits( SRS_UL_US_FOOT, CPLAtof(SRS_UL_US_FOOT_CONV) );
 
         // Translate some of the more obvious old USGS datum codes 
         if( nDatum == 0 )

@@ -1048,14 +1048,14 @@ ColorAssociation* GDALColorReliefParseColorFile(GDALRasterBandH hSrcBand,
                     (ColorAssociation*)CPLRealloc(pasColorAssociation,
                            (nColorAssociation + 2) * sizeof(ColorAssociation));
 
-            pasColorAssociation[nColorAssociation].dfVal = atof(papszFields[0]);
+            pasColorAssociation[nColorAssociation].dfVal = CPLAtof(papszFields[0]);
             pasColorAssociation[nColorAssociation].nR = atoi(papszFields[1]);
             pasColorAssociation[nColorAssociation].nG = atoi(papszFields[2]);
             pasColorAssociation[nColorAssociation].nB = atoi(papszFields[3]);
             pasColorAssociation[nColorAssociation].nA = 255;
             nColorAssociation++;
 
-            pasColorAssociation[nColorAssociation].dfVal = atof(papszFields[4]);
+            pasColorAssociation[nColorAssociation].dfVal = CPLAtof(papszFields[4]);
             pasColorAssociation[nColorAssociation].nR = atoi(papszFields[5]);
             pasColorAssociation[nColorAssociation].nG = atoi(papszFields[6]);
             pasColorAssociation[nColorAssociation].nB = atoi(papszFields[7]);
@@ -1089,7 +1089,7 @@ ColorAssociation* GDALColorReliefParseColorFile(GDALRasterBandH hSrcBand,
                 pasColorAssociation[nColorAssociation].dfVal = dfSrcNoDataValue;
             else if (strlen(papszFields[0]) > 1 && papszFields[0][strlen(papszFields[0])-1] == '%')
             {
-                double dfPct = atof(papszFields[0]) / 100.;
+                double dfPct = CPLAtof(papszFields[0]) / 100.;
                 if (dfPct < 0.0 || dfPct > 1.0)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
@@ -1104,7 +1104,7 @@ ColorAssociation* GDALColorReliefParseColorFile(GDALRasterBandH hSrcBand,
                         GDALColorReliefGetAbsoluteValFromPct(hSrcBand, dfPct);
             }
             else
-                pasColorAssociation[nColorAssociation].dfVal = atof(papszFields[0]);
+                pasColorAssociation[nColorAssociation].dfVal = CPLAtof(papszFields[0]);
 
             if (nTokens >= 4)
             {
@@ -2319,7 +2319,7 @@ int main( int argc, char ** argv )
             ++i;
             if( !ArgIsNumeric(argv[i]) )
                 Usage();
-            z = atof(argv[i]);
+            z = CPLAtof(argv[i]);
         }
         else if ( eUtilityMode == SLOPE && EQUAL(argv[i], "-p"))
         {
@@ -2364,7 +2364,7 @@ int main( int argc, char ** argv )
             ++i;
             if( !ArgIsNumeric(argv[i]) )
                 Usage();
-            scale = atof(argv[i]);
+            scale = CPLAtof(argv[i]);
         }
         else if( eUtilityMode == HILL_SHADE &&
             (EQUAL(argv[i], "--az") || 
@@ -2377,7 +2377,7 @@ int main( int argc, char ** argv )
             ++i;
             if( !ArgIsNumeric(argv[i]) )
                 Usage();
-            az = atof(argv[i]);
+            az = CPLAtof(argv[i]);
         }
         else if( eUtilityMode == HILL_SHADE &&
             (EQUAL(argv[i], "--alt") || 
@@ -2390,7 +2390,7 @@ int main( int argc, char ** argv )
             ++i;
             if( !ArgIsNumeric(argv[i]) )
                 Usage();
-            alt = atof(argv[i]);
+            alt = CPLAtof(argv[i]);
         }
         else if( eUtilityMode == HILL_SHADE &&
             (EQUAL(argv[i], "-combined") || 

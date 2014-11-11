@@ -638,7 +638,6 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
         } 
         
         else {
-            CPLLocaleC oCLocale; // Force C locale to avoid commas instead of decimal points (for QGIS e.g.)
             bHasWhere = TRUE;
             osCommand.Printf("SELECT %s, ST_Metadata(%s), %s FROM %s.%s WHERE ",
                              osRasterToFetch.c_str(), pszColumn,

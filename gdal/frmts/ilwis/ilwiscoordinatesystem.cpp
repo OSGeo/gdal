@@ -262,7 +262,7 @@ double ReadPrjParms(string section, string entry, string filename)
     string str = ReadElement(section, entry, filename);
     //string str="";
     if (str.length() != 0)
-        return atof(str.c_str());
+        return CPLAtof(str.c_str());
     else
         return 0;
 }

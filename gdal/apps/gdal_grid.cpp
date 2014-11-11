@@ -103,7 +103,7 @@ static void PrintAlgorithmAndOptions( GDALGridAlgorithm eAlgorithm,
     {
         case GGA_InverseDistanceToAPower:
             printf( "Algorithm name: \"%s\".\n", szAlgNameInvDist );
-            printf( "Options are "
+            CPLprintf( "Options are "
                     "\"power=%f:smoothing=%f:radius1=%f:radius2=%f:angle=%f"
                     ":max_points=%lu:min_points=%lu:nodata=%f\"\n",
                 ((GDALGridInverseDistanceToAPowerOptions *)pOptions)->dfPower,
@@ -117,7 +117,7 @@ static void PrintAlgorithmAndOptions( GDALGridAlgorithm eAlgorithm,
             break;
         case GGA_MovingAverage:
             printf( "Algorithm name: \"%s\".\n", szAlgNameAverage );
-            printf( "Options are "
+            CPLprintf( "Options are "
                     "\"radius1=%f:radius2=%f:angle=%f:min_points=%lu"
                     ":nodata=%f\"\n",
                 ((GDALGridMovingAverageOptions *)pOptions)->dfRadius1,
@@ -128,7 +128,7 @@ static void PrintAlgorithmAndOptions( GDALGridAlgorithm eAlgorithm,
             break;
         case GGA_NearestNeighbor:
             printf( "Algorithm name: \"%s\".\n", szAlgNameNearest );
-            printf( "Options are "
+            CPLprintf( "Options are "
                     "\"radius1=%f:radius2=%f:angle=%f:nodata=%f\"\n",
                 ((GDALGridNearestNeighborOptions *)pOptions)->dfRadius1,
                 ((GDALGridNearestNeighborOptions *)pOptions)->dfRadius2,
@@ -137,7 +137,7 @@ static void PrintAlgorithmAndOptions( GDALGridAlgorithm eAlgorithm,
             break;
         case GGA_MetricMinimum:
             printf( "Algorithm name: \"%s\".\n", szAlgNameMinimum );
-            printf( "Options are "
+            CPLprintf( "Options are "
                     "\"radius1=%f:radius2=%f:angle=%f:min_points=%lu"
                     ":nodata=%f\"\n",
                 ((GDALGridDataMetricsOptions *)pOptions)->dfRadius1,
@@ -148,7 +148,7 @@ static void PrintAlgorithmAndOptions( GDALGridAlgorithm eAlgorithm,
             break;
         case GGA_MetricMaximum:
             printf( "Algorithm name: \"%s\".\n", szAlgNameMaximum );
-            printf( "Options are "
+            CPLprintf( "Options are "
                     "\"radius1=%f:radius2=%f:angle=%f:min_points=%lu"
                     ":nodata=%f\"\n",
                 ((GDALGridDataMetricsOptions *)pOptions)->dfRadius1,
@@ -159,7 +159,7 @@ static void PrintAlgorithmAndOptions( GDALGridAlgorithm eAlgorithm,
             break;
         case GGA_MetricRange:
             printf( "Algorithm name: \"%s\".\n", szAlgNameRange );
-            printf( "Options are "
+            CPLprintf( "Options are "
                     "\"radius1=%f:radius2=%f:angle=%f:min_points=%lu"
                     ":nodata=%f\"\n",
                 ((GDALGridDataMetricsOptions *)pOptions)->dfRadius1,
@@ -170,7 +170,7 @@ static void PrintAlgorithmAndOptions( GDALGridAlgorithm eAlgorithm,
             break;
         case GGA_MetricCount:
             printf( "Algorithm name: \"%s\".\n", szAlgNameCount );
-            printf( "Options are "
+            CPLprintf( "Options are "
                     "\"radius1=%f:radius2=%f:angle=%f:min_points=%lu"
                     ":nodata=%f\"\n",
                 ((GDALGridDataMetricsOptions *)pOptions)->dfRadius1,
@@ -181,7 +181,7 @@ static void PrintAlgorithmAndOptions( GDALGridAlgorithm eAlgorithm,
             break;
         case GGA_MetricAverageDistance:
             printf( "Algorithm name: \"%s\".\n", szAlgNameAverageDistance );
-            printf( "Options are "
+            CPLprintf( "Options are "
                     "\"radius1=%f:radius2=%f:angle=%f:min_points=%lu"
                     ":nodata=%f\"\n",
                 ((GDALGridDataMetricsOptions *)pOptions)->dfRadius1,
@@ -192,7 +192,7 @@ static void PrintAlgorithmAndOptions( GDALGridAlgorithm eAlgorithm,
             break;
         case GGA_MetricAverageDistancePts:
             printf( "Algorithm name: \"%s\".\n", szAlgNameAverageDistancePts );
-            printf( "Options are "
+            CPLprintf( "Options are "
                     "\"radius1=%f:radius2=%f:angle=%f:min_points=%lu"
                     ":nodata=%f\"\n",
                 ((GDALGridDataMetricsOptions *)pOptions)->dfRadius1,
@@ -415,10 +415,10 @@ static CPLErr ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
         printf( "Grid data type is \"%s\"\n", GDALGetDataTypeName(eType) );
         printf( "Grid size = (%lu %lu).\n",
                 (unsigned long)nXSize, (unsigned long)nYSize );
-        printf( "Corner coordinates = (%f %f)-(%f %f).\n",
+        CPLprintf( "Corner coordinates = (%f %f)-(%f %f).\n",
                 dfXMin - dfDeltaX / 2, dfYMax + dfDeltaY / 2,
                 dfXMax + dfDeltaX / 2, dfYMin - dfDeltaY / 2 );
-        printf( "Grid cell size = (%f %f).\n", dfDeltaX, dfDeltaY );
+        CPLprintf( "Grid cell size = (%f %f).\n", dfDeltaX, dfDeltaY );
         printf( "Source point count = %lu.\n", (unsigned long)adfX.size() );
         PrintAlgorithmAndOptions( eAlgorithm, pOptions );
         printf("\n");
@@ -700,16 +700,16 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-txe") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(2);
-            dfXMin = atof(argv[++i]);
-            dfXMax = atof(argv[++i]);
+            dfXMin = CPLAtof(argv[++i]);
+            dfXMax = CPLAtof(argv[++i]);
             bIsXExtentSet = TRUE;
         }   
 
         else if( EQUAL(argv[i],"-tye") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(2);
-            dfYMin = atof(argv[++i]);
-            dfYMax = atof(argv[++i]);
+            dfYMin = CPLAtof(argv[++i]);
+            dfYMax = CPLAtof(argv[++i]);
             bIsYExtentSet = TRUE;
         }   
 
@@ -735,13 +735,13 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-z_increase") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            dfIncreaseBurnValue = atof(argv[++i]);
+            dfIncreaseBurnValue = CPLAtof(argv[++i]);
         }
 
         else if( EQUAL(argv[i],"-z_multiply") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            dfMultiplyBurnValue = atof(argv[++i]);
+            dfMultiplyBurnValue = CPLAtof(argv[++i]);
         }
 
         else if( EQUAL(argv[i],"-where") )
@@ -767,11 +767,11 @@ int main( int argc, char ** argv )
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(4);
             OGRLinearRing  oRing;
 
-            oRing.addPoint( atof(argv[i+1]), atof(argv[i+2]) );
-            oRing.addPoint( atof(argv[i+1]), atof(argv[i+4]) );
-            oRing.addPoint( atof(argv[i+3]), atof(argv[i+4]) );
-            oRing.addPoint( atof(argv[i+3]), atof(argv[i+2]) );
-            oRing.addPoint( atof(argv[i+1]), atof(argv[i+2]) );
+            oRing.addPoint( CPLAtof(argv[i+1]), CPLAtof(argv[i+2]) );
+            oRing.addPoint( CPLAtof(argv[i+1]), CPLAtof(argv[i+4]) );
+            oRing.addPoint( CPLAtof(argv[i+3]), CPLAtof(argv[i+4]) );
+            oRing.addPoint( CPLAtof(argv[i+3]), CPLAtof(argv[i+2]) );
+            oRing.addPoint( CPLAtof(argv[i+1]), CPLAtof(argv[i+2]) );
 
             poSpatialFilter = new OGRPolygon();
             ((OGRPolygon *) poSpatialFilter)->addRing( &oRing );
@@ -793,11 +793,11 @@ int main( int argc, char ** argv )
             {
                 OGRLinearRing  oRing;
 
-                oRing.addPoint( atof(argv[i + 1]), atof(argv[i + 2]) );
-                oRing.addPoint( atof(argv[i + 1]), atof(argv[i + 4]) );
-                oRing.addPoint( atof(argv[i + 3]), atof(argv[i + 4]) );
-                oRing.addPoint( atof(argv[i + 3]), atof(argv[i + 2]) );
-                oRing.addPoint( atof(argv[i + 1]), atof(argv[i + 2]) );
+                oRing.addPoint( CPLAtof(argv[i + 1]), CPLAtof(argv[i + 2]) );
+                oRing.addPoint( CPLAtof(argv[i + 1]), CPLAtof(argv[i + 4]) );
+                oRing.addPoint( CPLAtof(argv[i + 3]), CPLAtof(argv[i + 4]) );
+                oRing.addPoint( CPLAtof(argv[i + 3]), CPLAtof(argv[i + 2]) );
+                oRing.addPoint( CPLAtof(argv[i + 1]), CPLAtof(argv[i + 2]) );
 
                 poClipSrc = new OGRPolygon();
                 ((OGRPolygon *) poClipSrc)->addRing( &oRing );

@@ -689,12 +689,12 @@ void ERSDataset::ReadGCPs()
 
         CPLFree( psGCP->pszId );
         psGCP->pszId = CPLStrdup(papszTokens[iGCP*nItemsPerLine+0]);
-        psGCP->dfGCPPixel = atof(papszTokens[iGCP*nItemsPerLine+3]);
-        psGCP->dfGCPLine  = atof(papszTokens[iGCP*nItemsPerLine+4]);
-        psGCP->dfGCPX     = atof(papszTokens[iGCP*nItemsPerLine+5]);
-        psGCP->dfGCPY     = atof(papszTokens[iGCP*nItemsPerLine+6]);
+        psGCP->dfGCPPixel = CPLAtof(papszTokens[iGCP*nItemsPerLine+3]);
+        psGCP->dfGCPLine  = CPLAtof(papszTokens[iGCP*nItemsPerLine+4]);
+        psGCP->dfGCPX     = CPLAtof(papszTokens[iGCP*nItemsPerLine+5]);
+        psGCP->dfGCPY     = CPLAtof(papszTokens[iGCP*nItemsPerLine+6]);
         if( nItemsPerLine == 8 )
-            psGCP->dfGCPZ = atof(papszTokens[iGCP*nItemsPerLine+7]);
+            psGCP->dfGCPZ = CPLAtof(papszTokens[iGCP*nItemsPerLine+7]);
     }
     
     CSLDestroy( papszTokens );

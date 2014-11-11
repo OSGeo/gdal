@@ -562,7 +562,7 @@ CPLErr VRTKernelFilteredSource::XMLInit( CPLXMLNode *psTree,
     padfNewCoefs = (double *) CPLMalloc(sizeof(double) * nCoefs);
 
     for( i = 0; i < nCoefs; i++ )
-        padfNewCoefs[i] = atof(papszCoefItems[i]);
+        padfNewCoefs[i] = CPLAtof(papszCoefItems[i]);
 
     eErr = SetKernel( nNewKernelSize, padfNewCoefs );
 
@@ -610,7 +610,7 @@ CPLXMLNode *VRTKernelFilteredSource::SerializeToXML( const char *pszVRTPath )
 
     strcpy( pszKernelCoefs, "" );
     for( iCoef = 0; iCoef < nCoefCount; iCoef++ )
-        sprintf( pszKernelCoefs + strlen(pszKernelCoefs), 
+        CPLsprintf( pszKernelCoefs + strlen(pszKernelCoefs), 
                  "%.8g ", padfKernelCoefs[iCoef] );
     
     CPLSetXMLValue( psKernel, "Size", CPLSPrintf( "%d", nKernelSize ) );

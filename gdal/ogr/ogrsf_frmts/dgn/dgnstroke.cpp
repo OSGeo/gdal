@@ -312,10 +312,10 @@ int main( int argc, char ** argv )
 
     double      dfX, dfY, dfPrimary, dfSecondary, dfAxisRotation, dfAngle;
 
-    dfPrimary = atof(argv[1]);
-    dfSecondary = atof(argv[2]);
-    dfAxisRotation = atof(argv[3]) / 180 * PI;
-    dfAngle = atof(argv[4]) / 180 * PI;
+    dfPrimary = CPLAtof(argv[1]);
+    dfSecondary = CPLAtof(argv[2]);
+    dfAxisRotation = CPLAtof(argv[3]) / 180 * PI;
+    dfAngle = CPLAtof(argv[4]) / 180 * PI;
 
     ComputePointOnArc2D( dfPrimary, dfSecondary, dfAxisRotation, dfAngle, 
                          &dfX, &dfY );

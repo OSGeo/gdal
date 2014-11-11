@@ -922,7 +922,7 @@ GDALDataset* LevellerDataset::Create
     const char* pszValue = CSLFetchNameValue( 
 		papszOptions,"MINUSERPIXELVALUE");
     if( pszValue != NULL )
-        poDS->m_dLogSpan[0] = atof( pszValue );
+        poDS->m_dLogSpan[0] = CPLAtof( pszValue );
 	else
 	{
 		delete poDS;
@@ -934,7 +934,7 @@ GDALDataset* LevellerDataset::Create
     pszValue = CSLFetchNameValue( 
 		papszOptions,"MAXUSERPIXELVALUE");
     if( pszValue != NULL )
-        poDS->m_dLogSpan[1] = atof( pszValue );
+        poDS->m_dLogSpan[1] = CPLAtof( pszValue );
 
 	if(poDS->m_dLogSpan[1] < poDS->m_dLogSpan[0])
 	{

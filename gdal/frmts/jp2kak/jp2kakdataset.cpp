@@ -2153,7 +2153,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     if( CSLFetchNameValue(papszOptions,"QUALITY") != NULL )
     {
-        dfQuality = atof(CSLFetchNameValue(papszOptions,"QUALITY"));
+        dfQuality = CPLAtof(CSLFetchNameValue(papszOptions,"QUALITY"));
     }
 
     if( dfQuality < 0.01 || dfQuality > 100.0 )

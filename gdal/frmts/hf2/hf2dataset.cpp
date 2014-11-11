@@ -805,7 +805,7 @@ GDALDataset* HF2Dataset::CreateCopy( const char * pszFilename,
 
             if( ABS(dfLinear - 0.3048) < 0.0000001 )
                 nExtentUnits = 2;
-            else if( ABS(dfLinear - atof(SRS_UL_US_FOOT_CONV)) < 0.00000001 )
+            else if( ABS(dfLinear - CPLAtof(SRS_UL_US_FOOT_CONV)) < 0.00000001 )
                 nExtentUnits = 3;
             else
                 nExtentUnits = 1;

@@ -609,7 +609,7 @@ int OPTGetParameterInfo( const char * pszProjectionMethod,
             if( ppszType != NULL )
                 *ppszType = (char *)papszParameterDefinitions[i+2];
             if( pdfDefaultValue != NULL )
-                *pdfDefaultValue = atof(papszParameterDefinitions[i+3]);
+                *pdfDefaultValue = CPLAtof(papszParameterDefinitions[i+3]);
 
             return TRUE;
         }

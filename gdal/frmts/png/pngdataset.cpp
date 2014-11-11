@@ -1501,7 +1501,7 @@ PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
         if (pszGamma != NULL)
         {
-            double dfGamma = atof(pszGamma);
+            double dfGamma = CPLAtof(pszGamma);
             png_set_gAMA(hPNG, psPNGInfo, dfGamma);
         }
 
@@ -1543,7 +1543,7 @@ PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 {
                     for( int j = 0; j < 3; j++ )
                     {
-                        double v = atof(apapszTokenList[i][j]);
+                        double v = CPLAtof(apapszTokenList[i][j]);
 
                         if (j == 2)
                         {

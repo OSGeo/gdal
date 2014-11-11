@@ -270,7 +270,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
              || EQUALN( pszProj, "FOOT", 4 ) )
     {
         SetLocalCS( "FEET" );
-        SetLinearUnits( "FEET", atof(SRS_UL_FOOT_CONV) );
+        SetLinearUnits( "FEET", CPLAtof(SRS_UL_FOOT_CONV) );
     }
 
     else if( EQUALN( pszProj, "ACEA", 4 ) )
@@ -438,7 +438,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 
         SetStatePlane( iZone, !bIsNAD27 );
         SetLinearUnitsAndUpdateParameters( SRS_UL_FOOT,
-                                           atof(SRS_UL_FOOT_CONV) );
+                                           CPLAtof(SRS_UL_FOOT_CONV) );
     }
 
     else if( EQUALN( pszProj, "SPAF", 4 ) )
@@ -449,7 +449,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 
         SetStatePlane( iZone, !bIsNAD27 );
         SetLinearUnitsAndUpdateParameters( SRS_UL_US_FOOT,
-                                           atof(SRS_UL_US_FOOT_CONV) );
+                                           CPLAtof(SRS_UL_US_FOOT_CONV) );
     }
 
     else if( EQUALN( pszProj, "TM", 2 ) )
@@ -732,7 +732,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
         if( EQUAL( pszUnits, "METRE" ) )
             SetLinearUnits( SRS_UL_METER, 1.0 );
         else if( EQUAL( pszUnits, "DEGREE" ) )
-            SetAngularUnits( SRS_UA_DEGREE, atof(SRS_UA_DEGREE_CONV) );
+            SetAngularUnits( SRS_UA_DEGREE, CPLAtof(SRS_UA_DEGREE_CONV) );
         else
             SetLinearUnits( SRS_UL_METER, 1.0 );
     }
@@ -821,9 +821,9 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
     double dfFromGreenwich = 0.0;
 
     if( poPRIMEM != NULL && poPRIMEM->GetChildCount() >= 2
-        && atof(poPRIMEM->GetChild(1)->GetValue()) != 0.0 )
+        && CPLAtof(poPRIMEM->GetChild(1)->GetValue()) != 0.0 )
     {
-        dfFromGreenwich = atof(poPRIMEM->GetChild(1)->GetValue());
+        dfFromGreenwich = CPLAtof(poPRIMEM->GetChild(1)->GetValue());
     }
 #endif
 

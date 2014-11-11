@@ -476,7 +476,7 @@ static int json_gme_double_to_string(json_object *pjo,
   char buf[128], *p, *q;
   int size;
 
-  size = snprintf(buf, 128, "%.8f", json_object_get_double(pjo));
+  size = CPLsnprintf(buf, 128, "%.8f", json_object_get_double(pjo));
   p = strchr(buf, ',');
   if (p) {
     *p = '.';

@@ -49,7 +49,7 @@ CPL_CVSID("$Id$");
 void OGRPrintDouble( char * pszStrBuf, double dfValue )
 
 {
-    sprintf( pszStrBuf, "%.16g", dfValue );
+    CPLsprintf( pszStrBuf, "%.16g", dfValue );
 
     int nLen = strlen(pszStrBuf);
 
@@ -59,7 +59,7 @@ void OGRPrintDouble( char * pszStrBuf, double dfValue )
         && (strcmp(pszStrBuf+nLen-6,"999999") == 0
             || strcmp(pszStrBuf+nLen-6,"000001") == 0) )
     {
-        sprintf( pszStrBuf, "%.15g", dfValue );
+        CPLsprintf( pszStrBuf, "%.15g", dfValue );
     }
 
     // force to user periods regardless of locale.
