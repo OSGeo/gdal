@@ -299,7 +299,7 @@ int main( int argc, char ** argv )
                             &dfX, &dfY, &dfZ, &bSuccess )
             && bSuccess )
         {
-            printf( "%.15g %.15g %.15g\n", dfX, dfY, dfZ );
+            CPLprintf( "%.15g %.15g %.15g\n", dfX, dfY, dfZ );
         }
         else
         {
