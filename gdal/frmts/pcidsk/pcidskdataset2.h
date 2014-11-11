@@ -32,6 +32,8 @@
 #ifndef PCIDSKDATASET2_H_INCLUDED
 #define PCIDSKDATASET2_H_INCLUDED
 
+#define GDAL_PCIDSK_DRIVER
+
 #include "pcidsk.h"
 #include "pcidsk_pct.h"
 #include "ogrsf_frmts.h"
