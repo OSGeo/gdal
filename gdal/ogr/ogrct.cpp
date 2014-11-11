@@ -306,6 +306,8 @@ char *OCTProj4Normalize( const char *pszProj4Src )
     if( !LoadProjLibrary() || pfn_pj_dalloc == NULL || pfn_pj_get_def == NULL )
         return CPLStrdup( pszProj4Src );
 
+    CPLLocaleC  oLocaleEnforcer;
+
     psPJSource = pfn_pj_init_plus( pszProj4Src );
 
     if( psPJSource == NULL )
@@ -540,6 +542,7 @@ int OGRProj4CT::Initialize( OGRSpatialReference * poSourceIn,
                             OGRSpatialReference * poTargetIn )
 
 {
+    CPLLocaleC  oLocaleEnforcer;
     if (pjctx != NULL)
     {
         return InitializeNoLock(poSourceIn, poTargetIn);
