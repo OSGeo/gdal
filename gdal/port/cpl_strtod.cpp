@@ -218,11 +218,15 @@ static char* CPLReplacePointByLocalePoint(const char* pszNumber, char point)
 
         if (point != byPoint)
         {
+            const char* pszLocalePoint = strchr(pszNumber, byPoint);
             const char* pszPoint = strchr(pszNumber, point);
-            if (pszPoint)
+            if (pszPoint || pszLocalePoint)
             {
                 char* pszNew = CPLStrdup(pszNumber);
-                pszNew[pszPoint - pszNumber] = byPoint;
+                if( pszLocalePoint )
+                    pszNew[pszLocalePoint - pszNumber] = ' ';
+                if( pszPoint )
+                    pszNew[pszPoint - pszNumber] = byPoint;
                 return pszNew;
             }
         }
