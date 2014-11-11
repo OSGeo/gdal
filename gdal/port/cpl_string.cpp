@@ -1208,7 +1208,7 @@ int CPLvsnprintf(char *str, size_t size, const char* fmt, va_list args)
                 else if( end_m1 == '4' && ptrend[-2] == '6' && ptrend[-3] == 'I' ) /* Microsoft I64 modifier */
                     call_native_snprintf(GUIntBig);
                 else if( end_m1 == 'z')
-                    call_native_snprintf(unsigned size_t);
+                    call_native_snprintf(size_t);
                 else if( (end_m1 >= 'a' && end_m1 <= 'z') ||
                          (end_m1 >= 'A' && end_m1 <= 'Z') )
                 {
