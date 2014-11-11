@@ -1065,7 +1065,7 @@ GDALDataset * AAIGDataset::CreateCopy(
     {
         nPrecision = atoi( pszDecimalPrecision );
         if ( nPrecision >= 0 )
-            sprintf( szFormatFloat, " %%.%dlf", nPrecision );
+            sprintf( szFormatFloat, " %%.%df", nPrecision );
         CPLDebug( "AAIGrid", "Setting precision format: %s", szFormatFloat );
     }
 
