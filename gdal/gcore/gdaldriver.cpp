@@ -133,7 +133,7 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
                                   GDALDataType eType, char ** papszOptions )
 
 {
-    CPLLocaleC  oLocaleForcer;
+    //CPLLocaleC  oLocaleForcer;
 
 /* -------------------------------------------------------------------- */
 /*      Does this format support creation.                              */
@@ -668,7 +668,7 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
                                      void * pProgressData )
 
 {
-    CPLLocaleC  oLocaleForcer;
+    //CPLLocaleC  oLocaleForcer;
 
     if( pfnProgress == NULL )
         pfnProgress = GDALDummyProgress;
@@ -1663,7 +1663,7 @@ GDALIdentifyDriver( const char * pszFilename,
     int         	iDriver;
     GDALDriverManager  *poDM = GetGDALDriverManager();
     GDALOpenInfo        oOpenInfo( pszFilename, GA_ReadOnly, papszFileList );
-    CPLLocaleC          oLocaleForcer;
+    //CPLLocaleC          oLocaleForcer;
 
     CPLErrorReset();
     CPLAssert( NULL != poDM );
