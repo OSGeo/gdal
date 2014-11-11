@@ -60,7 +60,10 @@ class TestXMPRead:
             if not 'HAVE_POPPLER' in md and not 'HAVE_PODOFO' in md:
                 return 'skip'
 
-        if self.filename == 'data/byte_with_xmp.jp2':
+        # we set ECW to not resolve projection and datum strings to get 3.x behavior.     
+        gdal.SetConfigOption("ECW_DO_NOT_RESOLVE_DATUM_PROJECTION", "YES")
+
+        if self.filename.find('.jp2') >= 0:
             gdaltest.deregister_all_jpeg2000_drivers_but(self.drivername)
 
         ret = 'success'
@@ -89,7 +92,7 @@ class TestXMPRead:
                 ret = 'failure'
         ds = None
 
-        if self.filename == 'data/byte_with_xmp.jp2':
+        if self.filename.find('.jp2') >= 0:
             gdaltest.reregister_all_jpeg2000_drivers()
 
         return ret
