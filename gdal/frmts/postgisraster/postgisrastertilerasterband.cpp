@@ -109,7 +109,6 @@ CPLErr PostGISRasterTileRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
     
     // Get by upperleft
     else {
-        CPLLocaleC oCLocale; // Force C locale to avoid commas instead of decimal points (for QGIS e.g.)
         osCommand.Printf("select st_band(%s, %d) from %s.%s where "
             "abs(ST_UpperLeftX(%s) - %.8f) < 1e-8 and abs(ST_UpperLeftY(%s) - %.8f) < 1e-8", 
             poRTDS->poRDS->pszColumn, nBand, poRTDS->poRDS->pszSchema, poRTDS->poRDS->pszTable, poRTDS->poRDS->pszColumn, 

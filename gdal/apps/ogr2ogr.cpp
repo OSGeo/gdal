@@ -1081,11 +1081,11 @@ int main( int nArgc, char ** papszArgv )
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(4);
             OGRLinearRing  oRing;
 
-            oRing.addPoint( atof(papszArgv[iArg+1]), atof(papszArgv[iArg+2]) );
-            oRing.addPoint( atof(papszArgv[iArg+1]), atof(papszArgv[iArg+4]) );
-            oRing.addPoint( atof(papszArgv[iArg+3]), atof(papszArgv[iArg+4]) );
-            oRing.addPoint( atof(papszArgv[iArg+3]), atof(papszArgv[iArg+2]) );
-            oRing.addPoint( atof(papszArgv[iArg+1]), atof(papszArgv[iArg+2]) );
+            oRing.addPoint( CPLAtof(papszArgv[iArg+1]), CPLAtof(papszArgv[iArg+2]) );
+            oRing.addPoint( CPLAtof(papszArgv[iArg+1]), CPLAtof(papszArgv[iArg+4]) );
+            oRing.addPoint( CPLAtof(papszArgv[iArg+3]), CPLAtof(papszArgv[iArg+4]) );
+            oRing.addPoint( CPLAtof(papszArgv[iArg+3]), CPLAtof(papszArgv[iArg+2]) );
+            oRing.addPoint( CPLAtof(papszArgv[iArg+1]), CPLAtof(papszArgv[iArg+2]) );
 
             poSpatialFilter = OGRGeometryFactory::createGeometry(wkbPolygon);
             ((OGRPolygon *) poSpatialFilter)->addRing( &oRing );
@@ -1112,13 +1112,13 @@ int main( int nArgc, char ** papszArgv )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             eGeomOp = SEGMENTIZE;
-            dfGeomOpParam = atof(papszArgv[++iArg]);
+            dfGeomOpParam = CPLAtof(papszArgv[++iArg]);
         }
         else if( EQUAL(papszArgv[iArg],"-simplify") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             eGeomOp = SIMPLIFY_PRESERVE_TOPOLOGY;
-            dfGeomOpParam = atof(papszArgv[++iArg]);
+            dfGeomOpParam = CPLAtof(papszArgv[++iArg]);
         }
         else if( EQUAL(papszArgv[iArg],"-fieldTypeToString") )
         {
@@ -1187,11 +1187,11 @@ int main( int nArgc, char ** papszArgv )
             {
                 OGRLinearRing  oRing;
 
-                oRing.addPoint( atof(papszArgv[iArg+1]), atof(papszArgv[iArg+2]) );
-                oRing.addPoint( atof(papszArgv[iArg+1]), atof(papszArgv[iArg+4]) );
-                oRing.addPoint( atof(papszArgv[iArg+3]), atof(papszArgv[iArg+4]) );
-                oRing.addPoint( atof(papszArgv[iArg+3]), atof(papszArgv[iArg+2]) );
-                oRing.addPoint( atof(papszArgv[iArg+1]), atof(papszArgv[iArg+2]) );
+                oRing.addPoint( CPLAtof(papszArgv[iArg+1]), CPLAtof(papszArgv[iArg+2]) );
+                oRing.addPoint( CPLAtof(papszArgv[iArg+1]), CPLAtof(papszArgv[iArg+4]) );
+                oRing.addPoint( CPLAtof(papszArgv[iArg+3]), CPLAtof(papszArgv[iArg+4]) );
+                oRing.addPoint( CPLAtof(papszArgv[iArg+3]), CPLAtof(papszArgv[iArg+2]) );
+                oRing.addPoint( CPLAtof(papszArgv[iArg+1]), CPLAtof(papszArgv[iArg+2]) );
 
                 poClipSrc = OGRGeometryFactory::createGeometry(wkbPolygon);
                 ((OGRPolygon *) poClipSrc)->addRing( &oRing );
@@ -1250,11 +1250,11 @@ int main( int nArgc, char ** papszArgv )
             {
                 OGRLinearRing  oRing;
 
-                oRing.addPoint( atof(papszArgv[iArg+1]), atof(papszArgv[iArg+2]) );
-                oRing.addPoint( atof(papszArgv[iArg+1]), atof(papszArgv[iArg+4]) );
-                oRing.addPoint( atof(papszArgv[iArg+3]), atof(papszArgv[iArg+4]) );
-                oRing.addPoint( atof(papszArgv[iArg+3]), atof(papszArgv[iArg+2]) );
-                oRing.addPoint( atof(papszArgv[iArg+1]), atof(papszArgv[iArg+2]) );
+                oRing.addPoint( CPLAtof(papszArgv[iArg+1]), CPLAtof(papszArgv[iArg+2]) );
+                oRing.addPoint( CPLAtof(papszArgv[iArg+1]), CPLAtof(papszArgv[iArg+4]) );
+                oRing.addPoint( CPLAtof(papszArgv[iArg+3]), CPLAtof(papszArgv[iArg+4]) );
+                oRing.addPoint( CPLAtof(papszArgv[iArg+3]), CPLAtof(papszArgv[iArg+2]) );
+                oRing.addPoint( CPLAtof(papszArgv[iArg+1]), CPLAtof(papszArgv[iArg+2]) );
 
                 poClipDst = OGRGeometryFactory::createGeometry(wkbPolygon);
                 ((OGRPolygon *) poClipDst)->addRing( &oRing );
@@ -1334,17 +1334,17 @@ int main( int nArgc, char ** papszArgv )
                 CPLRealloc( pasGCPs, sizeof(GDAL_GCP) * nGCPCount );
             GDALInitGCPs( 1, pasGCPs + nGCPCount - 1 );
 
-            pasGCPs[nGCPCount-1].dfGCPPixel = atof(papszArgv[++iArg]);
-            pasGCPs[nGCPCount-1].dfGCPLine = atof(papszArgv[++iArg]);
-            pasGCPs[nGCPCount-1].dfGCPX = atof(papszArgv[++iArg]);
-            pasGCPs[nGCPCount-1].dfGCPY = atof(papszArgv[++iArg]);
+            pasGCPs[nGCPCount-1].dfGCPPixel = CPLAtof(papszArgv[++iArg]);
+            pasGCPs[nGCPCount-1].dfGCPLine = CPLAtof(papszArgv[++iArg]);
+            pasGCPs[nGCPCount-1].dfGCPX = CPLAtof(papszArgv[++iArg]);
+            pasGCPs[nGCPCount-1].dfGCPY = CPLAtof(papszArgv[++iArg]);
             if( papszArgv[iArg+1] != NULL 
                 && (CPLStrtod(papszArgv[iArg+1], &endptr) != 0.0 || papszArgv[iArg+1][0] == '0') )
             {
                 /* Check that last argument is really a number and not a filename */
                 /* looking like a number (see ticket #863) */
                 if (endptr && *endptr == 0)
-                    pasGCPs[nGCPCount-1].dfGCPZ = atof(papszArgv[++iArg]);
+                    pasGCPs[nGCPCount-1].dfGCPZ = CPLAtof(papszArgv[++iArg]);
             }
 
             /* should set id and info? */

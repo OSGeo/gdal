@@ -1904,7 +1904,7 @@ void PDFDataset::GuessDPI(GDALPDFDictionary* poPageDict, int* pnBands)
     const char* pszDPI = GetOption(papszOpenOptions, "DPI", NULL);
     if (pszDPI != NULL)
     {
-        dfDPI = atof(pszDPI);
+        dfDPI = CPLAtof(pszDPI);
     }
     else
     {
@@ -3002,7 +3002,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         const char* pszDPI = GetOption(poOpenInfo->papszOpenOptions, "DPI", NULL);
         if (pszDPI != NULL)
         {
-            poDS->dfDPI = atof(pszDPI);
+            poDS->dfDPI = CPLAtof(pszDPI);
         }
     }
 
@@ -3454,26 +3454,26 @@ static double Get(GDALPDFObject* poObj, int nIndice)
         char chLast = pszStr[nLen-1];
         if (chLast == 'W' || chLast == 'E' || chLast == 'N' || chLast == 'S')
         {
-            double dfDeg = atof(pszStr);
+            double dfDeg = CPLAtof(pszStr);
             double dfMin = 0, dfSec = 0;
             const char* pszNext = strchr(pszStr, ' ');
             if (pszNext)
                 pszNext ++;
             if (pszNext)
-                dfMin = atof(pszNext);
+                dfMin = CPLAtof(pszNext);
             if (pszNext)
                 pszNext = strchr(pszNext, ' ');
             if (pszNext)
                 pszNext ++;
             if (pszNext)
-                dfSec = atof(pszNext);
+                dfSec = CPLAtof(pszNext);
             double dfVal = dfDeg + dfMin / 60 + dfSec / 3600;
             if (chLast == 'W' || chLast == 'S')
                 return -dfVal;
             else
                 return dfVal;
         }
-        return atof(pszStr);
+        return CPLAtof(pszStr);
     }
     else
     {

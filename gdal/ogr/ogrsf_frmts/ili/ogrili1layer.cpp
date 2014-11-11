@@ -173,11 +173,11 @@ static char* d2str(double val)
     if( val == (int) val )
         sprintf( strbuf, "%d", (int) val );
     else if( fabs(val) < 370 )
-        sprintf( strbuf, "%.16g", val );
+        CPLsprintf( strbuf, "%.16g", val );
     else if( fabs(val) > 100000000.0  )
-        sprintf( strbuf, "%.16g", val );
+        CPLsprintf( strbuf, "%.16g", val );
     else
-        sprintf( strbuf, "%.3f", val );
+        CPLsprintf( strbuf, "%.3f", val );
     return strbuf;
 }
 

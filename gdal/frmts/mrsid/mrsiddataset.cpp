@@ -3259,7 +3259,7 @@ MrSIDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         // check for compression option
         const char* pszValue = CSLFetchNameValue(papszOptions, "COMPRESSION");
         if( pszValue != NULL )
-            poMG2ImageWriter->params().setCompressionRatio( (float)atof(pszValue) );
+            poMG2ImageWriter->params().setCompressionRatio( (float)CPLAtof(pszValue) );
 
         poImageWriter = poMG2ImageWriter;
 
@@ -3497,7 +3497,7 @@ JP2CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     // check for compression option
     const char* pszValue = CSLFetchNameValue(papszOptions, "COMPRESSION");
     if( pszValue != NULL )
-        oImageWriter.params().setCompressionRatio( (float)atof(pszValue) );
+        oImageWriter.params().setCompressionRatio( (float)CPLAtof(pszValue) );
         
     pszValue = CSLFetchNameValue(papszOptions, "XMLPROFILE");
     if( pszValue != NULL )

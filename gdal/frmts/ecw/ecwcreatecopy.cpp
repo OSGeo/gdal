@@ -323,7 +323,7 @@ CPLErr  GDALECWCompressor::PrepareCoverageBox(
 /* -------------------------------------------------------------------- */
     char szDoc[4000];
 
-    sprintf( szDoc, 
+    CPLsprintf( szDoc, 
 "<gml:FeatureCollection\n"
 "   xmlns:gml=\"http://www.opengis.net/gml\"\n"
 "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
@@ -582,7 +582,7 @@ CPLErr GDALECWCompressor::Initialize(
     if( CSLFetchNameValue(papszOptions, "TARGET") != NULL )
     {
         fTargetCompression = (float) 
-            atof(CSLFetchNameValue(papszOptions, "TARGET"));
+            CPLAtof(CSLFetchNameValue(papszOptions, "TARGET"));
 
         /* The max allowed value should be 100 - 100 / 65535 = 99.9984740978 */
         /* so that nCompressionRate fits on a uint16 (see below) */
@@ -843,7 +843,7 @@ CPLErr GDALECWCompressor::Initialize(
         if( pszOption != NULL )
             SetParameter( 
                 CNCSJP2FileView::JPC_DECOMPRESS_RECONSTRUCTION_PARAMETER, 
-                (IEEE4) atof(pszOption) );
+                (IEEE4) CPLAtof(pszOption) );
     }
                                   
 /* -------------------------------------------------------------------- */

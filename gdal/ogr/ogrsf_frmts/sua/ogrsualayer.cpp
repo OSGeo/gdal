@@ -257,7 +257,7 @@ OGRFeature *OGRSUALayer::GetNextRawFeature()
             /*const char* pszRADIUS = strstr(pszLine, "RADIUS=");
             if (pszRADIUS == NULL)
                 continue;
-            double dfRADIUS = atof(pszRADIUS + 7) * 1852;*/
+            double dfRADIUS = CPLAtof(pszRADIUS + 7) * 1852;*/
 
             const char* pszCENTRE = strstr(pszLine, "CENTRE=");
             if (pszCENTRE == NULL)
@@ -308,7 +308,7 @@ OGRFeature *OGRSUALayer::GetNextRawFeature()
             const char* pszRADIUS = strstr(pszLine, "RADIUS=");
             if (pszRADIUS == NULL)
                 continue;
-            double dfRADIUS = atof(pszRADIUS + 7) * 1852;
+            double dfRADIUS = CPLAtof(pszRADIUS + 7) * 1852;
 
             const char* pszCENTRE = strstr(pszLine, "CENTRE=");
             if (pszCENTRE == NULL)

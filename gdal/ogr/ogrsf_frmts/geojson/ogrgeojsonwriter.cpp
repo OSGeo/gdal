@@ -612,7 +612,7 @@ static int OGR_json_double_with_precision_to_string(struct json_object *jso,
                      (nPrecision < 0) ? 15 : nPrecision );
     if( szBuffer[0] == 't' /*oobig */ )
     {
-        snprintf(szBuffer, sizeof(szBuffer), "%.18g", jso->o.c_double);
+        CPLsnprintf(szBuffer, sizeof(szBuffer), "%.18g", jso->o.c_double);
     }
     return printbuf_memappend(pb, szBuffer, strlen(szBuffer)); 
 }

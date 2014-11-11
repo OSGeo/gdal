@@ -482,20 +482,20 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
     /***********   Grab Cellsize ************/
     value = poDS->GetKeyword("IsisCube.Mapping.PixelResolution");
     if (strlen(value) > 0 ) {
-        dfXDim = atof(value); /* values are in meters */
-        dfYDim = -atof(value);
+        dfXDim = CPLAtof(value); /* values are in meters */
+        dfYDim = -CPLAtof(value);
     }
     
     /***********   Grab UpperLeftCornerY ************/
     value = poDS->GetKeyword("IsisCube.Mapping.UpperLeftCornerY");
     if (strlen(value) > 0) {
-        dfULYMap = atof(value);
+        dfULYMap = CPLAtof(value);
     }
      
     /***********   Grab UpperLeftCornerX ************/
     value = poDS->GetKeyword("IsisCube.Mapping.UpperLeftCornerX");
     if( strlen(value) > 0 ) {
-        dfULXMap = atof(value);
+        dfULXMap = CPLAtof(value);
     }
      
     /***********  Grab TARGET_NAME  ************/
@@ -508,31 +508,31 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     /***********   Grab SEMI-MAJOR ************/
     semi_major = 
-        atof(poDS->GetKeyword( "IsisCube.Mapping.EquatorialRadius"));
+        CPLAtof(poDS->GetKeyword( "IsisCube.Mapping.EquatorialRadius"));
 
     /***********   Grab semi-minor ************/
     semi_minor = 
-        atof(poDS->GetKeyword( "IsisCube.Mapping.PolarRadius"));
+        CPLAtof(poDS->GetKeyword( "IsisCube.Mapping.PolarRadius"));
 
     /***********   Grab CENTER_LAT ************/
     center_lat = 
-        atof(poDS->GetKeyword( "IsisCube.Mapping.CenterLatitude"));
+        CPLAtof(poDS->GetKeyword( "IsisCube.Mapping.CenterLatitude"));
 
     /***********   Grab CENTER_LON ************/
     center_lon = 
-        atof(poDS->GetKeyword( "IsisCube.Mapping.CenterLongitude"));
+        CPLAtof(poDS->GetKeyword( "IsisCube.Mapping.CenterLongitude"));
 
     /***********   Grab 1st std parallel ************/
     first_std_parallel = 
-        atof(poDS->GetKeyword( "IsisCube.Mapping.FirstStandardParallel"));
+        CPLAtof(poDS->GetKeyword( "IsisCube.Mapping.FirstStandardParallel"));
 
     /***********   Grab 2nd std parallel ************/
     second_std_parallel = 
-        atof(poDS->GetKeyword( "IsisCube.Mapping.SecondStandardParallel"));
+        CPLAtof(poDS->GetKeyword( "IsisCube.Mapping.SecondStandardParallel"));
      
     /***********   Grab scaleFactor ************/
     scaleFactor = 
-        atof(poDS->GetKeyword( "IsisCube.Mapping.scaleFactor", "1.0"));
+        CPLAtof(poDS->GetKeyword( "IsisCube.Mapping.scaleFactor", "1.0"));
      
     /*** grab      LatitudeType = Planetographic ****/
     // Need to further study how ocentric/ographic will effect the gdal library

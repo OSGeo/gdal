@@ -2536,7 +2536,7 @@ OGRGeometry* OGRGeometryFactory::approximateArcAngles(
     if( dfMaxAngleStepSizeDegrees == 0 )
     {
         dfMaxAngleStepSizeDegrees = 
-            atof(CPLGetConfigOption("OGR_ARC_STEPSIZE","4"));
+            CPLAtof(CPLGetConfigOption("OGR_ARC_STEPSIZE","4"));
     }
 
     // switch direction 

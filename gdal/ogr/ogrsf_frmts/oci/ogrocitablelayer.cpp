@@ -964,12 +964,12 @@ OGRErr OGROCITableLayer::UnboundCreateFeature( OGRFeature *poFeature )
             OGRPoint *poPoint = (OGRPoint *) poGeometry;
 
             if( nDimension == 2 )
-                sprintf( szSDO_GEOMETRY,
+                CPLsprintf( szSDO_GEOMETRY,
                          "%s(%d,%s,MDSYS.SDO_POINT_TYPE(%.16g,%.16g,0),NULL,NULL)",
                          SDO_GEOMETRY, 2001, szSRID, 
                          poPoint->getX(), poPoint->getY() );
             else
-                sprintf( szSDO_GEOMETRY, 
+                CPLsprintf( szSDO_GEOMETRY, 
                          "%s(%d,%s,MDSYS.SDO_POINT_TYPE(%.16g,%.16g,%.16g),NULL,NULL)",
                          SDO_GEOMETRY, 3001, szSRID, 
                          poPoint->getX(), poPoint->getY(), poPoint->getZ() );

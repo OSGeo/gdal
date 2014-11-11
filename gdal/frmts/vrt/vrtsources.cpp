@@ -1515,26 +1515,26 @@ CPLErr VRTComplexSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
         || CPLGetXMLValue(psSrc, "ScaleRatio", NULL) != NULL )
     {
         eScalingType = VRT_SCALING_LINEAR;
-        dfScaleOff = atof(CPLGetXMLValue(psSrc, "ScaleOffset", "0") );
-        dfScaleRatio = atof(CPLGetXMLValue(psSrc, "ScaleRatio", "1") );
+        dfScaleOff = CPLAtof(CPLGetXMLValue(psSrc, "ScaleOffset", "0") );
+        dfScaleRatio = CPLAtof(CPLGetXMLValue(psSrc, "ScaleRatio", "1") );
     }
     else if( CPLGetXMLValue(psSrc, "Exponent", NULL) != NULL &&
              CPLGetXMLValue(psSrc, "DstMin", NULL) != NULL && 
              CPLGetXMLValue(psSrc, "DstMax", NULL) != NULL )
     {
         eScalingType = VRT_SCALING_EXPONENTIAL;
-        dfExponent = atof(CPLGetXMLValue(psSrc, "Exponent", "1.0") );
+        dfExponent = CPLAtof(CPLGetXMLValue(psSrc, "Exponent", "1.0") );
 
         if( CPLGetXMLValue(psSrc, "SrcMin", NULL) != NULL 
          && CPLGetXMLValue(psSrc, "SrcMax", NULL) != NULL )
         {
-            dfSrcMin = atof(CPLGetXMLValue(psSrc, "SrcMin", "0.0") );
-            dfSrcMax = atof(CPLGetXMLValue(psSrc, "SrcMax", "0.0") );
+            dfSrcMin = CPLAtof(CPLGetXMLValue(psSrc, "SrcMin", "0.0") );
+            dfSrcMax = CPLAtof(CPLGetXMLValue(psSrc, "SrcMax", "0.0") );
             bSrcMinMaxDefined = TRUE;
         }
 
-        dfDstMin = atof(CPLGetXMLValue(psSrc, "DstMin", "0.0") );
-        dfDstMax = atof(CPLGetXMLValue(psSrc, "DstMax", "0.0") );
+        dfDstMin = CPLAtof(CPLGetXMLValue(psSrc, "DstMin", "0.0") );
+        dfDstMax = CPLAtof(CPLGetXMLValue(psSrc, "DstMax", "0.0") );
     }
 
     if( CPLGetXMLValue(psSrc, "NODATA", NULL) != NULL )
@@ -1585,8 +1585,8 @@ CPLErr VRTComplexSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
         
         for ( nIndex = 0; nIndex < nLUTItemCount; nIndex++ )
         {
-            padfLUTInputs[nIndex] = atof( papszValues[nIndex * 2] );
-            padfLUTOutputs[nIndex] = atof( papszValues[nIndex * 2 + 1] );
+            padfLUTInputs[nIndex] = CPLAtof( papszValues[nIndex * 2] );
+            padfLUTOutputs[nIndex] = CPLAtof( papszValues[nIndex * 2 + 1] );
 
 	    // Enforce the requirement that the LUT input array is monotonically non-decreasing.
 	    if ( nIndex > 0 && padfLUTInputs[nIndex] < padfLUTInputs[nIndex - 1] )

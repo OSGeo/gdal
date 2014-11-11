@@ -810,11 +810,11 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
         && poOriginGeometry != NULL )
     {
         adfGeoTransform[0] = poOriginGeometry->getX();
-        adfGeoTransform[1] = atof(papszOffset1Tokens[0]);
-        adfGeoTransform[2] = atof(papszOffset2Tokens[0]);
+        adfGeoTransform[1] = CPLAtof(papszOffset1Tokens[0]);
+        adfGeoTransform[2] = CPLAtof(papszOffset2Tokens[0]);
         adfGeoTransform[3] = poOriginGeometry->getY();
-        adfGeoTransform[4] = atof(papszOffset1Tokens[1]);
-        adfGeoTransform[5] = atof(papszOffset2Tokens[1]);
+        adfGeoTransform[4] = CPLAtof(papszOffset1Tokens[1]);
+        adfGeoTransform[5] = CPLAtof(papszOffset2Tokens[1]);
 
         // offset from center of pixel.
         adfGeoTransform[0] -= adfGeoTransform[1]*0.5;

@@ -150,10 +150,10 @@ int OGRWalkDataSource::Open( const char * pszNewName, int bUpdate )
 
         if( poLayer->Initialize( papszRecord[0],        // LayerName
                                  "Geometry",            // Geometry Column Name
-                                 atof(papszRecord[1]),  // Extent MinE
-                                 atof(papszRecord[2]),  // Extent MaxE
-                                 atof(papszRecord[3]),  // Extent MinN
-                                 atof(papszRecord[4]),  // Extent MaxN
+                                 CPLAtof(papszRecord[1]),  // Extent MinE
+                                 CPLAtof(papszRecord[2]),  // Extent MaxE
+                                 CPLAtof(papszRecord[3]),  // Extent MinN
+                                 CPLAtof(papszRecord[4]),  // Extent MaxN
                                  papszRecord[5])        // Memo for SpatialRef
             != CE_None )
         {

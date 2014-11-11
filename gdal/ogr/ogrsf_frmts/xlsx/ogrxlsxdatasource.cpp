@@ -468,7 +468,7 @@ static void SetField(OGRFeature* poFeature,
         strcmp(pszCellType, "datetime") == 0)
     {
         struct tm sTm;
-        double dfNumberOfDaysSince1900 = atof(pszValue);
+        double dfNumberOfDaysSince1900 = CPLAtof(pszValue);
 #define NUMBER_OF_DAYS_BETWEEN_1900_AND_1970        25569
 #define NUMBER_OF_SECONDS_PER_DAY                   86400
         GIntBig nUnixTime = (GIntBig)((dfNumberOfDaysSince1900 -

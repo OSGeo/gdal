@@ -740,12 +740,12 @@ AVCArc   *AVCE00ParseNextArcLine(AVCE00ParseInfo *psInfo, const char *pszLine)
          * Single precision ARCs: 2 pairs of X,Y values per line
          * Except on the last line with an odd number of vertices)
          *------------------------------------------------------------*/
-        psArc->pasVertices[psInfo->iCurItem].x = atof(pszLine);
-        psArc->pasVertices[psInfo->iCurItem++].y = atof(pszLine+14);
+        psArc->pasVertices[psInfo->iCurItem].x = CPLAtof(pszLine);
+        psArc->pasVertices[psInfo->iCurItem++].y = CPLAtof(pszLine+14);
         if (psInfo->iCurItem < psInfo->numItems && nLen >= 56)
         {
-            psArc->pasVertices[psInfo->iCurItem].x = atof(pszLine+28);
-            psArc->pasVertices[psInfo->iCurItem++].y = atof(pszLine+42);
+            psArc->pasVertices[psInfo->iCurItem].x = CPLAtof(pszLine+28);
+            psArc->pasVertices[psInfo->iCurItem++].y = CPLAtof(pszLine+42);
         }
     }
     else if (psInfo->iCurItem < psInfo->numItems && 
@@ -755,8 +755,8 @@ AVCArc   *AVCE00ParseNextArcLine(AVCE00ParseInfo *psInfo, const char *pszLine)
         /*-------------------------------------------------------------
          * Double precision ARCs: 1 pair of X,Y values per line
          *------------------------------------------------------------*/
-        psArc->pasVertices[psInfo->iCurItem].x = atof(pszLine);
-        psArc->pasVertices[psInfo->iCurItem++].y = atof(pszLine+21);
+        psArc->pasVertices[psInfo->iCurItem].x = CPLAtof(pszLine);
+        psArc->pasVertices[psInfo->iCurItem++].y = CPLAtof(pszLine+21);
     }
     else
     {
@@ -854,15 +854,15 @@ AVCPal   *AVCE00ParseNextPalLine(AVCE00ParseInfo *psInfo, const char *pszLine)
 
             if (psInfo->nPrecision == AVC_SINGLE_PREC)
             {
-                psPal->sMin.x = atof(pszLine + 10);
-                psPal->sMin.y = atof(pszLine + 24);
-                psPal->sMax.x = atof(pszLine + 38);
-                psPal->sMax.y = atof(pszLine + 52);
+                psPal->sMin.x = CPLAtof(pszLine + 10);
+                psPal->sMin.y = CPLAtof(pszLine + 24);
+                psPal->sMax.x = CPLAtof(pszLine + 38);
+                psPal->sMax.y = CPLAtof(pszLine + 52);
             }
             else
             {
-                psPal->sMin.x = atof(pszLine + 10);
-                psPal->sMin.y = atof(pszLine + 31);
+                psPal->sMin.x = CPLAtof(pszLine + 10);
+                psPal->sMin.y = CPLAtof(pszLine + 31);
                 /* Set psInfo->iCurItem = -1 since we still have 2 values
                  * from the header to read on the next line.
                  */
@@ -873,8 +873,8 @@ AVCPal   *AVCE00ParseNextPalLine(AVCE00ParseInfo *psInfo, const char *pszLine)
     }
     else if (psInfo->iCurItem == -1 && nLen >= 42)
     {
-        psPal->sMax.x = atof(pszLine);
-        psPal->sMax.y = atof(pszLine + 21);
+        psPal->sMax.x = CPLAtof(pszLine);
+        psPal->sMax.y = CPLAtof(pszLine + 21);
         psInfo->iCurItem++;
     }
     else if (psInfo->iCurItem < psPal->numArcs && 
@@ -985,13 +985,13 @@ AVCCnt   *AVCE00ParseNextCntLine(AVCE00ParseInfo *psInfo, const char *pszLine)
 
             if (psInfo->nPrecision == AVC_SINGLE_PREC)
             {
-                psCnt->sCoord.x = atof(pszLine + 10);
-                psCnt->sCoord.y = atof(pszLine + 24);
+                psCnt->sCoord.x = CPLAtof(pszLine + 10);
+                psCnt->sCoord.y = CPLAtof(pszLine + 24);
             }
             else
             {
-                psCnt->sCoord.x = atof(pszLine + 10);
-                psCnt->sCoord.y = atof(pszLine + 31);
+                psCnt->sCoord.x = CPLAtof(pszLine + 10);
+                psCnt->sCoord.y = CPLAtof(pszLine + 31);
             }
 
             /* psInfo->iCurItem is the index of the last label that was read.
@@ -1085,13 +1085,13 @@ AVCLab   *AVCE00ParseNextLabLine(AVCE00ParseInfo *psInfo, const char *pszLine)
 
             if (psInfo->nPrecision == AVC_SINGLE_PREC)
             {
-                psLab->sCoord1.x = atof(pszLine + 20);
-                psLab->sCoord1.y = atof(pszLine + 34);
+                psLab->sCoord1.x = CPLAtof(pszLine + 20);
+                psLab->sCoord1.y = CPLAtof(pszLine + 34);
             }
             else
             {
-                psLab->sCoord1.x = atof(pszLine + 20);
-                psLab->sCoord1.y = atof(pszLine + 41);
+                psLab->sCoord1.x = CPLAtof(pszLine + 20);
+                psLab->sCoord1.y = CPLAtof(pszLine + 41);
             }
 
             /* psInfo->iCurItem is the index of the last X,Y pair we read.
@@ -1106,24 +1106,24 @@ AVCLab   *AVCE00ParseNextLabLine(AVCE00ParseInfo *psInfo, const char *pszLine)
     else if (psInfo->iCurItem == 1 && psInfo->nPrecision == AVC_SINGLE_PREC &&
              nLen >= 56 )
     {
-        psLab->sCoord2.x = atof(pszLine);
-        psLab->sCoord2.y = atof(pszLine + 14);
-        psLab->sCoord3.x = atof(pszLine + 28);
-        psLab->sCoord3.y = atof(pszLine + 42);
+        psLab->sCoord2.x = CPLAtof(pszLine);
+        psLab->sCoord2.y = CPLAtof(pszLine + 14);
+        psLab->sCoord3.x = CPLAtof(pszLine + 28);
+        psLab->sCoord3.y = CPLAtof(pszLine + 42);
         psInfo->iCurItem += 2;
     }
     else if (psInfo->iCurItem == 1 && psInfo->nPrecision == AVC_DOUBLE_PREC &&
              nLen >= 42 )
     {
-        psLab->sCoord2.x = atof(pszLine);
-        psLab->sCoord2.y = atof(pszLine + 21);
+        psLab->sCoord2.x = CPLAtof(pszLine);
+        psLab->sCoord2.y = CPLAtof(pszLine + 21);
         psInfo->iCurItem++;
     }
     else if (psInfo->iCurItem == 2 && psInfo->nPrecision == AVC_DOUBLE_PREC &&
              nLen >= 42 )
     {
-        psLab->sCoord3.x = atof(pszLine);
-        psLab->sCoord3.y = atof(pszLine + 21);
+        psLab->sCoord3.x = CPLAtof(pszLine);
+        psLab->sCoord3.y = CPLAtof(pszLine + 21);
         psInfo->iCurItem++;
     }
     else
@@ -1187,7 +1187,7 @@ AVCTol   *AVCE00ParseNextTolLine(AVCE00ParseInfo *psInfo, const char *pszLine)
         psTol->nIndex = AVCE00Str2Int(pszLine, 10);
         psTol->nFlag  = AVCE00Str2Int(pszLine + 10, 10);
 
-        psTol->dValue = atof(pszLine + 20);
+        psTol->dValue = CPLAtof(pszLine + 20);
     }
     else
     {
@@ -1426,7 +1426,7 @@ AVCTxt   *AVCE00ParseNextTxtLine(AVCE00ParseInfo *psInfo, const char *pszLine)
             if (iCurCoord < 4 && 
                 (iVertex = iCurCoord % 4) < psTxt->numVerticesLine-1)
             {
-                psTxt->pasVertices[iVertex+1].x = atof(pszLine+i*nItemSize);
+                psTxt->pasVertices[iVertex+1].x = CPLAtof(pszLine+i*nItemSize);
                 /* The first vertex is always duplicated */
                 if (iVertex == 0)
                     psTxt->pasVertices[0].x = psTxt->pasVertices[1].x;
@@ -1434,7 +1434,7 @@ AVCTxt   *AVCE00ParseNextTxtLine(AVCE00ParseInfo *psInfo, const char *pszLine)
             else if (iCurCoord >= 4 && iCurCoord < 8 &&
                      (iVertex = iCurCoord % 4) < psTxt->numVerticesLine-1)
             {
-                psTxt->pasVertices[iVertex+1].y = atof(pszLine+i*nItemSize);
+                psTxt->pasVertices[iVertex+1].y = CPLAtof(pszLine+i*nItemSize);
                 /* The first vertex is always duplicated */
                 if (iVertex == 0)
                     psTxt->pasVertices[0].y = psTxt->pasVertices[1].y;
@@ -1443,17 +1443,17 @@ AVCTxt   *AVCE00ParseNextTxtLine(AVCE00ParseInfo *psInfo, const char *pszLine)
                      (iVertex = (iCurCoord-8) % 3) < psTxt->numVerticesArrow)
             {
                 psTxt->pasVertices[iVertex+psTxt->numVerticesLine].x =
-                                                    atof(pszLine+i*nItemSize);
+                                                    CPLAtof(pszLine+i*nItemSize);
             }
             else if (iCurCoord >= 11 && iCurCoord < 14 &&
                      (iVertex = (iCurCoord-8) % 3) < psTxt->numVerticesArrow)
             {
                 psTxt->pasVertices[iVertex+psTxt->numVerticesLine].y =
-                                                    atof(pszLine+i*nItemSize);
+                                                    CPLAtof(pszLine+i*nItemSize);
             }
             else if (iCurCoord == 14)
             {
-                psTxt->dHeight = atof(pszLine+i*nItemSize);
+                psTxt->dHeight = CPLAtof(pszLine+i*nItemSize);
             }
 
         }
@@ -1466,7 +1466,7 @@ AVCTxt   *AVCE00ParseNextTxtLine(AVCE00ParseInfo *psInfo, const char *pszLine)
         /*-------------------------------------------------------------
          * Line with a -1.000E+02 value, ALWAYS SINGLE PRECISION !!!
          *------------------------------------------------------------*/
-        psTxt->f_1e2 = (float)atof(pszLine);
+        psTxt->f_1e2 = (float)CPLAtof(pszLine);
 
         psInfo->iCurItem++;
     }
@@ -1631,7 +1631,7 @@ AVCTxt   *AVCE00ParseNextTx6Line(AVCE00ParseInfo *psInfo, const char *pszLine)
         /*-------------------------------------------------------------
          * Line with a -1.000E+02 value, ALWAYS SINGLE PRECISION !!!
          *------------------------------------------------------------*/
-        psTxt->f_1e2 = (float)atof(pszLine);
+        psTxt->f_1e2 = (float)CPLAtof(pszLine);
         psInfo->iCurItem++;
     }
     else if (psInfo->iCurItem < psInfo->numItems && 
@@ -1640,16 +1640,16 @@ AVCTxt   *AVCE00ParseNextTx6Line(AVCE00ParseInfo *psInfo, const char *pszLine)
         /*-------------------------------------------------------------
          * Line with 3 values, 1st value is text height.
          *------------------------------------------------------------*/
-        psTxt->dHeight = atof(pszLine);
+        psTxt->dHeight = CPLAtof(pszLine);
         if (psInfo->nPrecision == AVC_SINGLE_PREC)
         {
-            psTxt->dV2     = atof(pszLine+14);
-            psTxt->dV3     = atof(pszLine+28);
+            psTxt->dV2     = CPLAtof(pszLine+14);
+            psTxt->dV3     = CPLAtof(pszLine+28);
         }
         else
         {
-            psTxt->dV2     = atof(pszLine+21);
-            psTxt->dV3     = atof(pszLine+42);
+            psTxt->dV2     = CPLAtof(pszLine+21);
+            psTxt->dV3     = CPLAtof(pszLine+42);
         }
 
         psInfo->iCurItem++;
@@ -1661,11 +1661,11 @@ AVCTxt   *AVCE00ParseNextTx6Line(AVCE00ParseInfo *psInfo, const char *pszLine)
          * One line for each pair of X,Y coordinates
          * (Lines 8 to 8+numVertices-1)
          *------------------------------------------------------------*/
-        psTxt->pasVertices[ psInfo->iCurItem-8 ].x = atof(pszLine);
+        psTxt->pasVertices[ psInfo->iCurItem-8 ].x = CPLAtof(pszLine);
         if (psInfo->nPrecision == AVC_SINGLE_PREC)
-            psTxt->pasVertices[ psInfo->iCurItem-8 ].y = atof(pszLine+14);
+            psTxt->pasVertices[ psInfo->iCurItem-8 ].y = CPLAtof(pszLine+14);
         else
-            psTxt->pasVertices[ psInfo->iCurItem-8 ].y = atof(pszLine+21);
+            psTxt->pasVertices[ psInfo->iCurItem-8 ].y = CPLAtof(pszLine+21);
 
         psInfo->iCurItem++;
     }
@@ -1963,6 +1963,7 @@ static AVCField   *_AVCE00ParseTableRecord(AVCE00ParseInfo *psInfo)
     AVCFieldInfo *pasDef;
     AVCTableDef *psTableDef;
     int         i, nType, nSize;
+    char        szFormat[10];
     char        *pszBuf, szTmp[30];
 
     pasFields =  psInfo->cur.pasFields;
@@ -2016,8 +2017,8 @@ static AVCField   *_AVCE00ParseTableRecord(AVCE00ParseInfo *psInfo)
              * be different from nSize, but nSize has priority since it
              * is the actual size of the field in memory.
              */
-            pszTmpStr = CPLSPrintf("%*.*f", 
-                                   nSize, pasDef[i].nFmtPrec, atof(szTmp));
+            sprintf(szFormat, "%%%d.%df", nSize, pasDef[i].nFmtPrec);
+            pszTmpStr = CPLSPrintf(szFormat, CPLAtof(szTmp));
 
             /* If value is bigger than size, then it's too bad... we 
              * truncate it... but this should never happen in clean datasets.
@@ -2045,7 +2046,7 @@ static AVCField   *_AVCE00ParseTableRecord(AVCE00ParseInfo *psInfo)
              */
             strncpy(szTmp, pszBuf, 14);
             szTmp[14] = '\0';
-            pasFields[i].fFloat = (float)atof(szTmp);
+            pasFields[i].fFloat = (float)CPLAtof(szTmp);
             pszBuf += 14;
         }
         else if (nType == AVC_FT_BINFLOAT && pasDef[i].nSize == 8)
@@ -2056,7 +2057,7 @@ static AVCField   *_AVCE00ParseTableRecord(AVCE00ParseInfo *psInfo)
              */
             strncpy(szTmp, pszBuf, 24);
             szTmp[24] = '\0';
-            pasFields[i].dDouble = atof(szTmp);
+            pasFields[i].dDouble = CPLAtof(szTmp);
             pszBuf += 24;
         }
         else

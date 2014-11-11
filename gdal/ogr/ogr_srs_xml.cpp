@@ -991,7 +991,7 @@ static double getProjectionParm( CPLXMLNode *psRootNode,
                                                    NULL );
 
             if( pszValue != NULL )
-                return atof(pszValue);
+                return CPLAtof(pszValue);
             else
                 return dfDefault;
         }
@@ -1032,7 +1032,7 @@ static double getNormalizedValue( CPLXMLNode *psNode, const char *pszPath,
     
     // Add normalization later.
 
-    return atof(psValueNode->pszValue);
+    return CPLAtof(psValueNode->pszValue);
 }
 
 /************************************************************************/

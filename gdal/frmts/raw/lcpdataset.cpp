@@ -1304,7 +1304,7 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
             pszUnit = oSrcSRS.GetAttrValue( "UNIT", 1 );
             if( pszUnit != NULL )
             {
-                double dfScale = atof( pszUnit );
+                double dfScale = CPLAtof( pszUnit );
                 if( dfScale != 1.0 )
                 {
                     if( bStrict )

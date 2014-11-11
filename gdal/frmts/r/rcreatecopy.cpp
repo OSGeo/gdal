@@ -190,7 +190,7 @@ RCreateCopy( const char * pszFilename,
                 for( iValue = 0; iValue < nXSize; iValue++ )
                 {
                     char szValue[128];
-                    sprintf(szValue,"%.16g\n", padfScanline[iValue] );
+                    CPLsprintf(szValue,"%.16g\n", padfScanline[iValue] );
                     VSIFWriteL( szValue, 1, strlen(szValue), fp );
                 }
             }

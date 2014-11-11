@@ -481,10 +481,10 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
         /* All the extrema have to be non-NULL for this to make sense */
         if ( pszMinX && pszMinY && pszMaxX && pszMaxY )
         {
-            oExtent.MinX = atof(pszMinX);
-            oExtent.MinY = atof(pszMinY);
-            oExtent.MaxX = atof(pszMaxX);
-            oExtent.MaxY = atof(pszMaxY);
+            oExtent.MinX = CPLAtof(pszMinX);
+            oExtent.MinY = CPLAtof(pszMinY);
+            oExtent.MaxX = CPLAtof(pszMaxX);
+            oExtent.MaxY = CPLAtof(pszMaxY);
             bReadExtent = TRUE;
         }
 
@@ -1726,8 +1726,6 @@ CPLString OGRGeoPackageTableLayer::GetSpatialWhere(int iGeomCol,
     if( poFilterGeom != NULL )
     {
         OGREnvelope  sEnvelope;
-
-        CPLLocaleC  oLocaleEnforcer;
 
         poFilterGeom->getEnvelope( &sEnvelope );
         

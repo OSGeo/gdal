@@ -229,7 +229,7 @@ CPLErr E00GRIDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
             }
             if (eDataType == GDT_Float32)
             {
-                pafImage[i] = (float) atof(pszLine + (i%VALS_PER_LINE) * E00_FLOAT_SIZE);
+                pafImage[i] = (float) CPLAtof(pszLine + (i%VALS_PER_LINE) * E00_FLOAT_SIZE);
                 /* Workaround single vs double precision problems */
                 if (fNoData != 0 && fabs((pafImage[i] - fNoData)/fNoData) < 1e-6)
                     pafImage[i] = fNoData;
@@ -258,7 +258,7 @@ CPLErr E00GRIDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
         if (eDataType == GDT_Float32)
         {
-            pafImage[i] = (float) atof(szVal);
+            pafImage[i] = (float) CPLAtof(szVal);
             /* Workaround single vs double precision problems */
             if (fNoData != 0 && fabs((pafImage[i] - fNoData)/fNoData) < 1e-6)
                 pafImage[i] = fNoData;
@@ -601,7 +601,7 @@ GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLDebug("E00GRID", "Unknown data type : %s", pszLine);
     }
 
-    double dfNoData = atof(pszLine + E00_INT_SIZE + E00_INT_SIZE + 2);
+    double dfNoData = CPLAtof(pszLine + E00_INT_SIZE + E00_INT_SIZE + 2);
 
     /* read pixel size */
     if (e00ReadPtr)
@@ -615,8 +615,8 @@ GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 /*
-    double dfPixelX = atof(pszLine);
-    double dfPixelY = atof(pszLine + E00_DOUBLE_SIZE);
+    double dfPixelX = CPLAtof(pszLine);
+    double dfPixelY = CPLAtof(pszLine + E00_DOUBLE_SIZE);
 */
 
     /* read xmin, ymin */
@@ -630,8 +630,8 @@ GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         return NULL;
     }
-    double dfMinX = atof(pszLine);
-    double dfMinY = atof(pszLine + E00_DOUBLE_SIZE);
+    double dfMinX = CPLAtof(pszLine);
+    double dfMinY = CPLAtof(pszLine + E00_DOUBLE_SIZE);
 
     /* read xmax, ymax */
     if (e00ReadPtr)
@@ -644,8 +644,8 @@ GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         return NULL;
     }
-    double dfMaxX = atof(pszLine);
-    double dfMaxY = atof(pszLine + E00_DOUBLE_SIZE);
+    double dfMaxX = CPLAtof(pszLine);
+    double dfMaxY = CPLAtof(pszLine + E00_DOUBLE_SIZE);
 
     poDS->nRasterXSize = nRasterXSize;
     poDS->nRasterYSize = nRasterYSize;
@@ -877,10 +877,10 @@ void E00GRIDDataset::ReadMetadata()
                     char** papszTokens = CSLTokenizeString(osStats);
                     if (CSLCount(papszTokens) == 4)
                     {
-                        dfMin = atof(papszTokens[0]);
-                        dfMax = atof(papszTokens[1]);
-                        dfMean = atof(papszTokens[2]);
-                        dfStddev = atof(papszTokens[3]);
+                        dfMin = CPLAtof(papszTokens[0]);
+                        dfMax = CPLAtof(papszTokens[1]);
+                        dfMean = CPLAtof(papszTokens[2]);
+                        dfStddev = CPLAtof(papszTokens[3]);
                         bHasStats = TRUE;
                     }
                     CSLDestroy(papszTokens);

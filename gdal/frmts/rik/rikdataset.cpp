@@ -778,7 +778,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
             return NULL;
         }
 
-        header.fNorth = atof( tmpStr );
+        header.fNorth = CPLAtof( tmpStr );
 
         // Read map west edge
 
@@ -791,7 +791,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
             return NULL;
         }
 
-        header.fWest = atof( tmpStr );
+        header.fWest = CPLAtof( tmpStr );
 
         // Read binary values
 

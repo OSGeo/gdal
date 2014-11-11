@@ -130,7 +130,7 @@ int OGRSQLiteDataSource::GetSpatialiteVersionNumber()
 #ifdef HAVE_SPATIALITE
     if( IsSpatialiteLoaded() )
     {
-        v = (int)(( atof( spatialite_version() ) + 0.001 )  * 10.0);
+        v = (int)(( CPLAtof( spatialite_version() ) + 0.001 )  * 10.0);
     }
 #endif
     return v;

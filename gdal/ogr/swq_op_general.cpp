@@ -1143,7 +1143,7 @@ swq_expr_node *SWQCastEvaluator( swq_expr_node *node,
                     break;
 
                 default:
-                    poRetNode->float_value = atof(poSrcNode->string_value);
+                    poRetNode->float_value = CPLAtof(poSrcNode->string_value);
                     break;
             }
         }

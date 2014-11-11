@@ -359,7 +359,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
         }
         else if( EQUALN(szLine,"VER/",4) && nCount >= 1 )
         {
-            psInfo->nVersion = (int) (100 * atof(papszTokens[0]) + 0.5);
+            psInfo->nVersion = (int) (100 * CPLAtof(papszTokens[0]) + 0.5);
         }
 
         CSLDestroy( papszTokens );

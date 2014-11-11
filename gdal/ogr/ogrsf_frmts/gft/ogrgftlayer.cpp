@@ -222,10 +222,10 @@ static void ParseLineString(OGRLineString* poLS,
     {
         char** papszTokens = CSLTokenizeString2(papszTuples[iTuple], ",", 0);
         if (CSLCount(papszTokens) == 2)
-            poLS->addPoint(atof(papszTokens[0]), atof(papszTokens[1]));
+            poLS->addPoint(CPLAtof(papszTokens[0]), CPLAtof(papszTokens[1]));
         else if (CSLCount(papszTokens) == 3)
-            poLS->addPoint(atof(papszTokens[0]), atof(papszTokens[1]),
-                            atof(papszTokens[2]));
+            poLS->addPoint(CPLAtof(papszTokens[0]), CPLAtof(papszTokens[1]),
+                            CPLAtof(papszTokens[2]));
         CSLDestroy(papszTokens);
     }
     CSLDestroy(papszTuples);
@@ -244,10 +244,10 @@ static OGRGeometry* ParseKMLGeometry(/* const */ CPLXMLNode* psXML)
         {
             char** papszTokens = CSLTokenizeString2(pszCoordinates, ",", 0);
             if (CSLCount(papszTokens) == 2)
-                poGeom = new OGRPoint(atof(papszTokens[0]), atof(papszTokens[1]));
+                poGeom = new OGRPoint(CPLAtof(papszTokens[0]), CPLAtof(papszTokens[1]));
             else if (CSLCount(papszTokens) == 3)
-                poGeom = new OGRPoint(atof(papszTokens[0]), atof(papszTokens[1]),
-                                      atof(papszTokens[2]));
+                poGeom = new OGRPoint(CPLAtof(papszTokens[0]), CPLAtof(papszTokens[1]),
+                                      CPLAtof(papszTokens[2]));
             CSLDestroy(papszTokens);
         }
     }
@@ -426,8 +426,8 @@ OGRFeature *OGRGFTLayer::BuildFeatureFromSQL(const char* pszLine)
                             CPLGetValueType(papszLatLon[0]) != CPL_VALUE_STRING &&
                             CPLGetValueType(papszLatLon[1]) != CPL_VALUE_STRING)
                         {
-                            OGRPoint* poPoint = new OGRPoint(atof( papszLatLon[1]),
-                                                            atof( papszLatLon[0]));
+                            OGRPoint* poPoint = new OGRPoint(CPLAtof( papszLatLon[1]),
+                                                            CPLAtof( papszLatLon[0]));
                             poPoint->assignSpatialReference(poSRS);
                             poFeature->SetGeometryDirectly(poPoint);
                         }
@@ -460,7 +460,7 @@ OGRFeature *OGRGFTLayer::BuildFeatureFromSQL(const char* pszLine)
                 CPLGetValueType(pszLat) != CPL_VALUE_STRING &&
                 CPLGetValueType(pszLong) != CPL_VALUE_STRING)
             {
-                OGRPoint* poPoint = new OGRPoint(atof(pszLong), atof(pszLat));
+                OGRPoint* poPoint = new OGRPoint(CPLAtof(pszLong), CPLAtof(pszLat));
                 poPoint->assignSpatialReference(poSRS);
                 poFeature->SetGeometryDirectly(poPoint);
             }

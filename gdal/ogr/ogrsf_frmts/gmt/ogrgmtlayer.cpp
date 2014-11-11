@@ -523,7 +523,7 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
         {
             // Parse point line. 
             double dfX, dfY, dfZ = 0.0;
-            int nDim = sscanf( osLine, "%lf %lf %lf", &dfX, &dfY, &dfZ );
+            int nDim = CPLsscanf( osLine, "%lf %lf %lf", &dfX, &dfY, &dfZ );
                 
             if( nDim >= 2 )
             {

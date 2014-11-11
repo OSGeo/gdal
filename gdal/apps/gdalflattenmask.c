@@ -95,7 +95,7 @@ int main(int argc, char* argv[])
         else if( EQUAL(argv[i],"-a_nodata") && i < argc - 1 )
         {
             bSetNoData = TRUE;
-            dfDstNoData = atof(argv[++i]);
+            dfDstNoData = CPLAtof(argv[++i]);
         }
         else if( EQUAL(argv[i], "-set_alpha"))
         {

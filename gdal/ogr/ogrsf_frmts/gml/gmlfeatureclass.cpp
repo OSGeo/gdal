@@ -30,6 +30,7 @@
 
 #include "gmlreader.h"
 #include "cpl_conv.h"
+#include "cpl_string.h"
 #include "ogr_core.h"
 #include "ogr_geometry.h"
 
@@ -726,16 +727,16 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
         {
             char szValue[128];
 
-            snprintf( szValue, sizeof(szValue), "%.5f", m_dfXMin );
+            CPLsnprintf( szValue, sizeof(szValue), "%.5f", m_dfXMin );
             CPLCreateXMLElementAndValue( psDSI, "ExtentXMin", szValue );
 
-            snprintf( szValue, sizeof(szValue), "%.5f", m_dfXMax );
+            CPLsnprintf( szValue, sizeof(szValue), "%.5f", m_dfXMax );
             CPLCreateXMLElementAndValue( psDSI, "ExtentXMax", szValue );
 
-            snprintf( szValue, sizeof(szValue), "%.5f", m_dfYMin );
+            CPLsnprintf( szValue, sizeof(szValue), "%.5f", m_dfYMin );
             CPLCreateXMLElementAndValue( psDSI, "ExtentYMin", szValue );
 
-            snprintf( szValue, sizeof(szValue), "%.5f", m_dfYMax );
+            CPLsnprintf( szValue, sizeof(szValue), "%.5f", m_dfYMax );
             CPLCreateXMLElementAndValue( psDSI, "ExtentYMax", szValue );
         }
 

@@ -277,30 +277,30 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
                 psImage->nZone = 
                     atoi(NITFGetField( szTemp, pszCoordPair, 0, 2 ));
 
-                pdfXY[0] = atof(NITFGetField( szTemp, pszCoordPair, 2, 6 ));
-                pdfXY[1] = atof(NITFGetField( szTemp, pszCoordPair, 8, 7 ));
+                pdfXY[0] = CPLAtof(NITFGetField( szTemp, pszCoordPair, 2, 6 ));
+                pdfXY[1] = CPLAtof(NITFGetField( szTemp, pszCoordPair, 8, 7 ));
             }
             else if( psImage->chICORDS == 'G' || psImage->chICORDS == 'C' )
             {
                 pdfXY[1] =
-                    atof(NITFGetField( szTemp, pszCoordPair, 0, 2 ))
-                  + atof(NITFGetField( szTemp, pszCoordPair, 2, 2 )) / 60.0
-                  + atof(NITFGetField( szTemp, pszCoordPair, 4, 2 )) / 3600.0;
+                    CPLAtof(NITFGetField( szTemp, pszCoordPair, 0, 2 ))
+                  + CPLAtof(NITFGetField( szTemp, pszCoordPair, 2, 2 )) / 60.0
+                  + CPLAtof(NITFGetField( szTemp, pszCoordPair, 4, 2 )) / 3600.0;
                 if( pszCoordPair[6] == 's' || pszCoordPair[6] == 'S' )
                     pdfXY[1] *= -1;
 
                 pdfXY[0] =
-                    atof(NITFGetField( szTemp, pszCoordPair, 7, 3 ))
-                  + atof(NITFGetField( szTemp, pszCoordPair,10, 2 )) / 60.0
-                  + atof(NITFGetField( szTemp, pszCoordPair,12, 2 )) / 3600.0;
+                    CPLAtof(NITFGetField( szTemp, pszCoordPair, 7, 3 ))
+                  + CPLAtof(NITFGetField( szTemp, pszCoordPair,10, 2 )) / 60.0
+                  + CPLAtof(NITFGetField( szTemp, pszCoordPair,12, 2 )) / 3600.0;
 
                 if( pszCoordPair[14] == 'w' || pszCoordPair[14] == 'W' )
                     pdfXY[0] *= -1;
             }
             else if( psImage->chICORDS == 'D' )
             {  /* 'D' is Decimal Degrees */
-                pdfXY[1] = atof(NITFGetField( szTemp, pszCoordPair, 0, 7 ));
-                pdfXY[0] = atof(NITFGetField( szTemp, pszCoordPair, 7, 8 ));
+                pdfXY[1] = CPLAtof(NITFGetField( szTemp, pszCoordPair, 0, 7 ));
+                pdfXY[0] = CPLAtof(NITFGetField( szTemp, pszCoordPair, 7, 8 ));
             }
             else if( psImage->chICORDS == 'U' )
             {
@@ -1982,10 +1982,10 @@ int NITFWriteIGEOLO( NITFImage *psImage, char chICORDS,
             return FALSE;
         }
 
-        sprintf(szIGEOLO + 0, "%+#07.3f%+#08.3f", dfULY, dfULX);
-        sprintf(szIGEOLO + 15, "%+#07.3f%+#08.3f", dfURY, dfURX);
-        sprintf(szIGEOLO + 30, "%+#07.3f%+#08.3f", dfLRY, dfLRX);
-        sprintf(szIGEOLO + 45, "%+#07.3f%+#08.3f", dfLLY, dfLLX);
+        CPLsprintf(szIGEOLO + 0, "%+#07.3f%+#08.3f", dfULY, dfULX);
+        CPLsprintf(szIGEOLO + 15, "%+#07.3f%+#08.3f", dfURY, dfURX);
+        CPLsprintf(szIGEOLO + 30, "%+#07.3f%+#08.3f", dfLRY, dfLRX);
+        CPLsprintf(szIGEOLO + 45, "%+#07.3f%+#08.3f", dfLLY, dfLLX);
     }
 
 /* -------------------------------------------------------------------- */
@@ -2001,13 +2001,13 @@ int NITFWriteIGEOLO( NITFImage *psImage, char chICORDS,
         CHECK_IGEOLO_UTM_Y("dfLRY", dfLRY);
         CHECK_IGEOLO_UTM_X("dfLLX", dfLLX);
         CHECK_IGEOLO_UTM_Y("dfLLY", dfLLY);
-        sprintf( szIGEOLO + 0, "%02d%06d%07d",
+        CPLsprintf( szIGEOLO + 0, "%02d%06d%07d",
                  nZone, (int) floor(dfULX+0.5), (int) floor(dfULY+0.5) );
-        sprintf( szIGEOLO + 15, "%02d%06d%07d",
+        CPLsprintf( szIGEOLO + 15, "%02d%06d%07d",
                  nZone, (int) floor(dfURX+0.5), (int) floor(dfURY+0.5) );
-        sprintf( szIGEOLO + 30, "%02d%06d%07d",
+        CPLsprintf( szIGEOLO + 30, "%02d%06d%07d",
                  nZone, (int) floor(dfLRX+0.5), (int) floor(dfLRY+0.5) );
-        sprintf( szIGEOLO + 45, "%02d%06d%07d",
+        CPLsprintf( szIGEOLO + 45, "%02d%06d%07d",
                  nZone, (int) floor(dfLLX+0.5), (int) floor(dfLLY+0.5) );
     }
 
@@ -2274,20 +2274,20 @@ int NITFReadRPC00B( NITFImage *psImage, NITFRPC00BInfo *psRPC )
     if ( !psRPC->SUCCESS )
 	fprintf( stdout, "RPC Extension not Populated!\n");
 
-    psRPC->ERR_BIAS = atof(NITFGetField(szTemp, pachTRE, 1, 7 ));
-    psRPC->ERR_RAND = atof(NITFGetField(szTemp, pachTRE, 8, 7 ));
+    psRPC->ERR_BIAS = CPLAtof(NITFGetField(szTemp, pachTRE, 1, 7 ));
+    psRPC->ERR_RAND = CPLAtof(NITFGetField(szTemp, pachTRE, 8, 7 ));
 
-    psRPC->LINE_OFF = atof(NITFGetField(szTemp, pachTRE, 15, 6 ));
-    psRPC->SAMP_OFF = atof(NITFGetField(szTemp, pachTRE, 21, 5 ));
-    psRPC->LAT_OFF = atof(NITFGetField(szTemp, pachTRE, 26, 8 ));
-    psRPC->LONG_OFF = atof(NITFGetField(szTemp, pachTRE, 34, 9 ));
-    psRPC->HEIGHT_OFF = atof(NITFGetField(szTemp, pachTRE, 43, 5 ));
+    psRPC->LINE_OFF = CPLAtof(NITFGetField(szTemp, pachTRE, 15, 6 ));
+    psRPC->SAMP_OFF = CPLAtof(NITFGetField(szTemp, pachTRE, 21, 5 ));
+    psRPC->LAT_OFF = CPLAtof(NITFGetField(szTemp, pachTRE, 26, 8 ));
+    psRPC->LONG_OFF = CPLAtof(NITFGetField(szTemp, pachTRE, 34, 9 ));
+    psRPC->HEIGHT_OFF = CPLAtof(NITFGetField(szTemp, pachTRE, 43, 5 ));
 
-    psRPC->LINE_SCALE = atof(NITFGetField(szTemp, pachTRE, 48, 6 ));
-    psRPC->SAMP_SCALE = atof(NITFGetField(szTemp, pachTRE, 54, 5 ));
-    psRPC->LAT_SCALE = atof(NITFGetField(szTemp, pachTRE, 59, 8 ));
-    psRPC->LONG_SCALE = atof(NITFGetField(szTemp, pachTRE, 67, 9 ));
-    psRPC->HEIGHT_SCALE = atof(NITFGetField(szTemp, pachTRE, 76, 5 ));
+    psRPC->LINE_SCALE = CPLAtof(NITFGetField(szTemp, pachTRE, 48, 6 ));
+    psRPC->SAMP_SCALE = CPLAtof(NITFGetField(szTemp, pachTRE, 54, 5 ));
+    psRPC->LAT_SCALE = CPLAtof(NITFGetField(szTemp, pachTRE, 59, 8 ));
+    psRPC->LONG_SCALE = CPLAtof(NITFGetField(szTemp, pachTRE, 67, 9 ));
+    psRPC->HEIGHT_SCALE = CPLAtof(NITFGetField(szTemp, pachTRE, 76, 5 ));
 
 /* -------------------------------------------------------------------- */
 /*      Parse out coefficients.                                         */
@@ -2300,13 +2300,13 @@ int NITFReadRPC00B( NITFImage *psImage, NITFRPC00BInfo *psRPC )
             iSrcCoef = anRPC00AMap[i];
 
         psRPC->LINE_NUM_COEFF[i] = 
-            atof(NITFGetField(szTemp, pachTRE, 81+iSrcCoef*12, 12));
+            CPLAtof(NITFGetField(szTemp, pachTRE, 81+iSrcCoef*12, 12));
         psRPC->LINE_DEN_COEFF[i] = 
-            atof(NITFGetField(szTemp, pachTRE, 321+iSrcCoef*12, 12));
+            CPLAtof(NITFGetField(szTemp, pachTRE, 321+iSrcCoef*12, 12));
         psRPC->SAMP_NUM_COEFF[i] = 
-            atof(NITFGetField(szTemp, pachTRE, 561+iSrcCoef*12, 12));
+            CPLAtof(NITFGetField(szTemp, pachTRE, 561+iSrcCoef*12, 12));
         psRPC->SAMP_DEN_COEFF[i] = 
-            atof(NITFGetField(szTemp, pachTRE, 801+iSrcCoef*12, 12));
+            CPLAtof(NITFGetField(szTemp, pachTRE, 801+iSrcCoef*12, 12));
     }
 
     return TRUE;
@@ -2362,33 +2362,33 @@ int NITFReadICHIPB( NITFImage *psImage, NITFICHIPBInfo *psICHIP )
             return FALSE;
         }
 
-        psICHIP->SCALE_FACTOR = atof(NITFGetField(szTemp, pachTRE, 2, 10 ));
+        psICHIP->SCALE_FACTOR = CPLAtof(NITFGetField(szTemp, pachTRE, 2, 10 ));
         psICHIP->ANAMORPH_CORR = atoi(NITFGetField(szTemp, pachTRE, 12, 2 ));
         psICHIP->SCANBLK_NUM = atoi(NITFGetField(szTemp, pachTRE, 14, 2 ));
 
-        psICHIP->OP_ROW_11 = atof(NITFGetField(szTemp, pachTRE, 16, 12 ));
-        psICHIP->OP_COL_11 = atof(NITFGetField(szTemp, pachTRE, 28, 12 ));
+        psICHIP->OP_ROW_11 = CPLAtof(NITFGetField(szTemp, pachTRE, 16, 12 ));
+        psICHIP->OP_COL_11 = CPLAtof(NITFGetField(szTemp, pachTRE, 28, 12 ));
 
-        psICHIP->OP_ROW_12 = atof(NITFGetField(szTemp, pachTRE, 40, 12 ));
-        psICHIP->OP_COL_12 = atof(NITFGetField(szTemp, pachTRE, 52, 12 ));
+        psICHIP->OP_ROW_12 = CPLAtof(NITFGetField(szTemp, pachTRE, 40, 12 ));
+        psICHIP->OP_COL_12 = CPLAtof(NITFGetField(szTemp, pachTRE, 52, 12 ));
 
-        psICHIP->OP_ROW_21 = atof(NITFGetField(szTemp, pachTRE, 64, 12 ));
-        psICHIP->OP_COL_21 = atof(NITFGetField(szTemp, pachTRE, 76, 12 ));
+        psICHIP->OP_ROW_21 = CPLAtof(NITFGetField(szTemp, pachTRE, 64, 12 ));
+        psICHIP->OP_COL_21 = CPLAtof(NITFGetField(szTemp, pachTRE, 76, 12 ));
 
-        psICHIP->OP_ROW_22 = atof(NITFGetField(szTemp, pachTRE, 88, 12 ));
-        psICHIP->OP_COL_22 = atof(NITFGetField(szTemp, pachTRE, 100, 12 ));
+        psICHIP->OP_ROW_22 = CPLAtof(NITFGetField(szTemp, pachTRE, 88, 12 ));
+        psICHIP->OP_COL_22 = CPLAtof(NITFGetField(szTemp, pachTRE, 100, 12 ));
 
-        psICHIP->FI_ROW_11 = atof(NITFGetField(szTemp, pachTRE, 112, 12 ));
-        psICHIP->FI_COL_11 = atof(NITFGetField(szTemp, pachTRE, 124, 12 ));
+        psICHIP->FI_ROW_11 = CPLAtof(NITFGetField(szTemp, pachTRE, 112, 12 ));
+        psICHIP->FI_COL_11 = CPLAtof(NITFGetField(szTemp, pachTRE, 124, 12 ));
 
-        psICHIP->FI_ROW_12 = atof(NITFGetField(szTemp, pachTRE, 136, 12 ));
-        psICHIP->FI_COL_12 = atof(NITFGetField(szTemp, pachTRE, 148, 12 ));
+        psICHIP->FI_ROW_12 = CPLAtof(NITFGetField(szTemp, pachTRE, 136, 12 ));
+        psICHIP->FI_COL_12 = CPLAtof(NITFGetField(szTemp, pachTRE, 148, 12 ));
 
-        psICHIP->FI_ROW_21 = atof(NITFGetField(szTemp, pachTRE, 160, 12 ));
-        psICHIP->FI_COL_21 = atof(NITFGetField(szTemp, pachTRE, 172, 12 ));
+        psICHIP->FI_ROW_21 = CPLAtof(NITFGetField(szTemp, pachTRE, 160, 12 ));
+        psICHIP->FI_COL_21 = CPLAtof(NITFGetField(szTemp, pachTRE, 172, 12 ));
 
-        psICHIP->FI_ROW_22 = atof(NITFGetField(szTemp, pachTRE, 184, 12 ));
-        psICHIP->FI_COL_22 = atof(NITFGetField(szTemp, pachTRE, 196, 12 ));
+        psICHIP->FI_ROW_22 = CPLAtof(NITFGetField(szTemp, pachTRE, 184, 12 ));
+        psICHIP->FI_COL_22 = CPLAtof(NITFGetField(szTemp, pachTRE, 196, 12 ));
 
         psICHIP->FI_ROW = atoi(NITFGetField(szTemp, pachTRE, 208, 8 ));
         psICHIP->FI_COL = atoi(NITFGetField(szTemp, pachTRE, 216, 8 ));
@@ -2513,17 +2513,17 @@ void NITFGetGCP ( const char* pachCoord, double *pdfXYs, int iCoord )
         /* ------------------------------------------------------------ */
 
         pdfXYs[1] = 
-            atof(NITFGetField( szTemp, pachCoord, 1, 2 )) 
-          + atof(NITFGetField( szTemp, pachCoord, 3, 2 )) / 60.0
-          + atof(NITFGetField( szTemp, pachCoord, 5, 5 )) / 3600.0;
+            CPLAtof(NITFGetField( szTemp, pachCoord, 1, 2 )) 
+          + CPLAtof(NITFGetField( szTemp, pachCoord, 3, 2 )) / 60.0
+          + CPLAtof(NITFGetField( szTemp, pachCoord, 5, 5 )) / 3600.0;
 
         if( pachCoord[0] == 's' || pachCoord[0] == 'S' )
             pdfXYs[1] *= -1;
 
         pdfXYs[0] = 
-            atof(NITFGetField( szTemp, pachCoord,11, 3 )) 
-          + atof(NITFGetField( szTemp, pachCoord,14, 2 )) / 60.0
-          + atof(NITFGetField( szTemp, pachCoord,16, 5 )) / 3600.0;
+            CPLAtof(NITFGetField( szTemp, pachCoord,11, 3 )) 
+          + CPLAtof(NITFGetField( szTemp, pachCoord,14, 2 )) / 60.0
+          + CPLAtof(NITFGetField( szTemp, pachCoord,16, 5 )) / 3600.0;
 
         if( pachCoord[10] == 'w' || pachCoord[10] == 'W' )
             pdfXYs[0] *= -1;
@@ -2538,8 +2538,8 @@ void NITFGetGCP ( const char* pachCoord, double *pdfXYs, int iCoord )
         /* longitude (east is positive).                                */
         /* ------------------------------------------------------------ */
 
-        pdfXYs[1] = atof(NITFGetField( szTemp, pachCoord, 0, 10 ));
-        pdfXYs[0] = atof(NITFGetField( szTemp, pachCoord,10, 11 ));
+        pdfXYs[1] = CPLAtof(NITFGetField( szTemp, pachCoord, 0, 10 ));
+        pdfXYs[0] = CPLAtof(NITFGetField( szTemp, pachCoord,10, 11 ));
     }
 }
 
@@ -2669,8 +2669,8 @@ static int NITFReadGEOLOB( NITFImage *psImage )
         double dfARV = atoi(NITFGetField( szTemp, pachTRE, 0, 9 ));
         double dfBRV = atoi(NITFGetField( szTemp, pachTRE, 9, 9 ));
         
-        double dfLSO = atof(NITFGetField( szTemp, pachTRE, 18, 15 ));
-        double dfPSO = atof(NITFGetField( szTemp, pachTRE, 33, 15 ));
+        double dfLSO = CPLAtof(NITFGetField( szTemp, pachTRE, 18, 15 ));
+        double dfPSO = CPLAtof(NITFGetField( szTemp, pachTRE, 33, 15 ));
         
         double dfPixelWidth  = 360.0 / dfARV;
         double dfPixelHeight = 360.0 / dfBRV;
@@ -3831,16 +3831,16 @@ int NITFReadIMRFCA( NITFImage *psImage, NITFRPC00BInfo *psRPC )
     psRPC->ERR_BIAS = 0.0;
     psRPC->ERR_RAND = 0.0;
     
-    psRPC->LONG_OFF     = atof( NITFGetField(szTemp, pachTreIMASDA, 0,   22) );
-    psRPC->LAT_OFF      = atof( NITFGetField(szTemp, pachTreIMASDA, 22,  22) );
-    psRPC->HEIGHT_OFF   = atof( NITFGetField(szTemp, pachTreIMASDA, 44,  22) );
-    psRPC->LONG_SCALE   = atof( NITFGetField(szTemp, pachTreIMASDA, 66,  22) );
-    psRPC->LAT_SCALE    = atof( NITFGetField(szTemp, pachTreIMASDA, 88,  22) );
-    psRPC->HEIGHT_SCALE = atof( NITFGetField(szTemp, pachTreIMASDA, 110, 22) );
-    psRPC->SAMP_OFF     = atof( NITFGetField(szTemp, pachTreIMASDA, 132, 22) );
-    psRPC->LINE_OFF     = atof( NITFGetField(szTemp, pachTreIMASDA, 154, 22) );
-    psRPC->SAMP_SCALE   = atof( NITFGetField(szTemp, pachTreIMASDA, 176, 22) );
-    psRPC->LINE_SCALE   = atof( NITFGetField(szTemp, pachTreIMASDA, 198, 22) );
+    psRPC->LONG_OFF     = CPLAtof( NITFGetField(szTemp, pachTreIMASDA, 0,   22) );
+    psRPC->LAT_OFF      = CPLAtof( NITFGetField(szTemp, pachTreIMASDA, 22,  22) );
+    psRPC->HEIGHT_OFF   = CPLAtof( NITFGetField(szTemp, pachTreIMASDA, 44,  22) );
+    psRPC->LONG_SCALE   = CPLAtof( NITFGetField(szTemp, pachTreIMASDA, 66,  22) );
+    psRPC->LAT_SCALE    = CPLAtof( NITFGetField(szTemp, pachTreIMASDA, 88,  22) );
+    psRPC->HEIGHT_SCALE = CPLAtof( NITFGetField(szTemp, pachTreIMASDA, 110, 22) );
+    psRPC->SAMP_OFF     = CPLAtof( NITFGetField(szTemp, pachTreIMASDA, 132, 22) );
+    psRPC->LINE_OFF     = CPLAtof( NITFGetField(szTemp, pachTreIMASDA, 154, 22) );
+    psRPC->SAMP_SCALE   = CPLAtof( NITFGetField(szTemp, pachTreIMASDA, 176, 22) );
+    psRPC->LINE_SCALE   = CPLAtof( NITFGetField(szTemp, pachTreIMASDA, 198, 22) );
 
     if (psRPC->HEIGHT_SCALE == 0.0 ) psRPC->HEIGHT_SCALE = dfTolerance;
     if (psRPC->LAT_SCALE    == 0.0 ) psRPC->LAT_SCALE    = dfTolerance;
@@ -3858,11 +3858,11 @@ int NITFReadIMRFCA( NITFImage *psImage, NITFRPC00BInfo *psRPC )
 
     for( count = 0; count < 20; ++count )
     {
-        psRPC->LINE_NUM_COEFF[count] = atof( NITFGetField(szTemp, pachTreIMRFCA, count*22,     22) );
-        psRPC->LINE_DEN_COEFF[count] = atof( NITFGetField(szTemp, pachTreIMRFCA, 440+count*22, 22) );
+        psRPC->LINE_NUM_COEFF[count] = CPLAtof( NITFGetField(szTemp, pachTreIMRFCA, count*22,     22) );
+        psRPC->LINE_DEN_COEFF[count] = CPLAtof( NITFGetField(szTemp, pachTreIMRFCA, 440+count*22, 22) );
 
-        psRPC->SAMP_NUM_COEFF[count] = atof( NITFGetField(szTemp, pachTreIMRFCA, 880+count*22,  22) );
-        psRPC->SAMP_DEN_COEFF[count] = atof( NITFGetField(szTemp, pachTreIMRFCA, 1320+count*22, 22) );
+        psRPC->SAMP_NUM_COEFF[count] = CPLAtof( NITFGetField(szTemp, pachTreIMRFCA, 880+count*22,  22) );
+        psRPC->SAMP_DEN_COEFF[count] = CPLAtof( NITFGetField(szTemp, pachTreIMRFCA, 1320+count*22, 22) );
     }
 
     psRPC->SUCCESS = 1;

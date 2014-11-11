@@ -533,7 +533,7 @@ int PDFDataset::UnstackTokens(const char* pszToken,
     nTokenStackSize -= nRequiredArgs;
     for(int i=0;i<nRequiredArgs;i++)
     {
-        adfCoords[i] = atof(aszTokenStack[nTokenStackSize+i]);
+        adfCoords[i] = CPLAtof(aszTokenStack[nTokenStackSize+i]);
     }
     return TRUE;
 }

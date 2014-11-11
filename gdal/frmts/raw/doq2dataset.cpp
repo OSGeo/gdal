@@ -195,12 +195,12 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
         }
         else if( EQUAL(papszTokens[0],"XY_ORIGIN") && CSLCount(papszTokens) >= 3 )
         {
-            dfULXMap = atof(papszTokens[1]);
-            dfULYMap = atof(papszTokens[2]);
+            dfULXMap = CPLAtof(papszTokens[1]);
+            dfULYMap = CPLAtof(papszTokens[2]);
         }
         else if( EQUAL(papszTokens[0],"HORIZONTAL_RESOLUTION") )
         {
-            dfXDim = dfYDim = atof(papszTokens[1]);
+            dfXDim = dfYDim = CPLAtof(papszTokens[1]);
         }
 	else if( EQUAL(papszTokens[0],"BAND_ORGANIZATION") )
         {

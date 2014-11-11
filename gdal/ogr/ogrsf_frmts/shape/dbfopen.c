@@ -164,6 +164,12 @@
 #include <ctype.h>
 #include <string.h>
 
+#ifdef USE_CPL
+#include "cpl_string.h"
+#else
+#define CPLsprintf sprintf
+#endif
+
 SHP_CVSID("$Id: dbfopen.c,v 1.89 2011-07-24 05:59:25 fwarmerdam Exp $")
 
 #ifndef FALSE
@@ -1332,7 +1338,7 @@ static int DBFWriteAttribute(DBFHandle psDBF, int hEntity, int iField,
 
         sprintf( szFormat, "%%%d.%df", 
                     nWidth, psDBF->panFieldDecimals[iField] );
-        sprintf(szSField, szFormat, *((double *) pValue) );
+        CPLsprintf(szSField, szFormat, *((double *) pValue) );
         if( (int) strlen(szSField) > psDBF->panFieldSize[iField] )
         {
             szSField[psDBF->panFieldSize[iField]] = '\0';

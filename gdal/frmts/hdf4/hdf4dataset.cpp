@@ -164,11 +164,11 @@ char *SPrintArray( GDALDataType eDataType, const void *paDataArray,
                      (i < nValues - 1)?pszDelimiter:"" );
                 break;
             case GDT_Float32:
-                sprintf( pszField, "%.10g%s", ((float *)paDataArray)[i],
+                CPLsprintf( pszField, "%.10g%s", ((float *)paDataArray)[i],
                      (i < nValues - 1)?pszDelimiter:"" );
                 break;
             case GDT_Float64:
-                sprintf( pszField, "%.15g%s", ((double *)paDataArray)[i],
+                CPLsprintf( pszField, "%.15g%s", ((double *)paDataArray)[i],
                      (i < nValues - 1)?pszDelimiter:"" );
                 break;
         }

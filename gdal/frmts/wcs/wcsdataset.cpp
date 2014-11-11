@@ -393,7 +393,6 @@ CPLErr WCSRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 double WCSRasterBand::GetNoDataValue( int *pbSuccess )
 
 {
-    CPLLocaleC  oLocaleEnforcer;
     const char *pszSV = CPLGetXMLValue( poODS->psService, "NoDataValue", NULL);
 
     if( pszSV == NULL )
@@ -402,7 +401,7 @@ double WCSRasterBand::GetNoDataValue( int *pbSuccess )
     {
         if( pbSuccess )
             *pbSuccess = TRUE;
-        return atof(pszSV);
+        return CPLAtof(pszSV);
     }
 }
 
@@ -675,8 +674,6 @@ CPLErr WCSDataset::GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
                                 CPLHTTPResult **ppsResult )
 
 {
-    CPLLocaleC oLocaleEnforcer;
-
 /* -------------------------------------------------------------------- */
 /*      Figure out the georeferenced extents.                           */
 /* -------------------------------------------------------------------- */
@@ -958,7 +955,6 @@ int WCSDataset::DescribeCoverage()
 int WCSDataset::ExtractGridInfo100()
 
 {
-    CPLLocaleC  oLocaleEnforcer; 
     CPLXMLNode * psCO = CPLGetXMLNode( psService, "CoverageOffering" );
 
     if( psCO == NULL )
@@ -1184,7 +1180,7 @@ int WCSDataset::ExtractGridInfo100()
     {
         const char *pszSV = CPLGetXMLValue( psCO, "rangeSet.RangeSet.nullValues.singleValue", NULL );
         
-        if( pszSV != NULL && (atof(pszSV) != 0.0 || *pszSV == '0') )
+        if( pszSV != NULL && (CPLAtof(pszSV) != 0.0 || *pszSV == '0') )
         {
             bServiceDirty = TRUE;
             CPLCreateXMLElementAndValue( psService, "NoDataValue", 
@@ -1288,7 +1284,6 @@ static int ParseBoundingBox( CPLXMLNode *psBoundingBox, CPLString &osCRS,
                              double &dfUpperX, double &dfUpperY )
 
 {
-    CPLLocaleC  oLocaleEnforcer; 
     int nRet = TRUE;
 
     osCRS = CPLGetXMLValue( psBoundingBox, "crs", "" );
@@ -1302,10 +1297,10 @@ static int ParseBoundingBox( CPLXMLNode *psBoundingBox, CPLString &osCRS,
 
     if( CSLCount(papszLC) >= 2 && CSLCount(papszUC) >= 2 )
     {
-        dfLowerX = atof(papszLC[0]);
-        dfLowerY = atof(papszLC[1]);
-        dfUpperX = atof(papszUC[0]);
-        dfUpperY = atof(papszUC[1]);
+        dfLowerX = CPLAtof(papszLC[0]);
+        dfLowerY = CPLAtof(papszLC[1]);
+        dfUpperX = CPLAtof(papszUC[0]);
+        dfUpperY = CPLAtof(papszUC[1]);
     }
     else
         nRet = FALSE;
@@ -1326,8 +1321,6 @@ static int ParseBoundingBox( CPLXMLNode *psBoundingBox, CPLString &osCRS,
 int WCSDataset::ExtractGridInfo()
 
 {
-    CPLLocaleC  oLocaleEnforcer; 
-
     if( nVersion == 100 )
         return ExtractGridInfo100();
 
@@ -1377,12 +1370,12 @@ int WCSDataset::ExtractGridInfo()
         if( CSLCount(papszOffsetTokens) == 4
             && CSLCount(papszOriginTokens) == 2 )
         {
-            adfGeoTransform[0] = atof(papszOriginTokens[0]);
-            adfGeoTransform[1] = atof(papszOffsetTokens[0]);
-            adfGeoTransform[2] = atof(papszOffsetTokens[1]);
-            adfGeoTransform[3] = atof(papszOriginTokens[1]);
-            adfGeoTransform[4] = atof(papszOffsetTokens[2]);
-            adfGeoTransform[5] = atof(papszOffsetTokens[3]);
+            adfGeoTransform[0] = CPLAtof(papszOriginTokens[0]);
+            adfGeoTransform[1] = CPLAtof(papszOffsetTokens[0]);
+            adfGeoTransform[2] = CPLAtof(papszOffsetTokens[1]);
+            adfGeoTransform[3] = CPLAtof(papszOriginTokens[1]);
+            adfGeoTransform[4] = CPLAtof(papszOffsetTokens[2]);
+            adfGeoTransform[5] = CPLAtof(papszOffsetTokens[3]);
         }
         else
         {
@@ -1398,12 +1391,12 @@ int WCSDataset::ExtractGridInfo()
         if( CSLCount(papszOffsetTokens) == 6
             && CSLCount(papszOriginTokens) == 3 )
         {
-            adfGeoTransform[0] = atof(papszOriginTokens[0]);
-            adfGeoTransform[1] = atof(papszOffsetTokens[0]);
-            adfGeoTransform[2] = atof(papszOffsetTokens[1]);
-            adfGeoTransform[3] = atof(papszOriginTokens[1]);
-            adfGeoTransform[4] = atof(papszOffsetTokens[3]);
-            adfGeoTransform[5] = atof(papszOffsetTokens[4]);
+            adfGeoTransform[0] = CPLAtof(papszOriginTokens[0]);
+            adfGeoTransform[1] = CPLAtof(papszOffsetTokens[0]);
+            adfGeoTransform[2] = CPLAtof(papszOffsetTokens[1]);
+            adfGeoTransform[3] = CPLAtof(papszOriginTokens[1]);
+            adfGeoTransform[4] = CPLAtof(papszOffsetTokens[3]);
+            adfGeoTransform[5] = CPLAtof(papszOffsetTokens[4]);
         }
         else
         {
@@ -1419,12 +1412,12 @@ int WCSDataset::ExtractGridInfo()
         if( CSLCount(papszOffsetTokens) == 2
             && CSLCount(papszOriginTokens) == 2 )
         {
-            adfGeoTransform[0] = atof(papszOriginTokens[0]);
-            adfGeoTransform[1] = atof(papszOffsetTokens[0]);
+            adfGeoTransform[0] = CPLAtof(papszOriginTokens[0]);
+            adfGeoTransform[1] = CPLAtof(papszOffsetTokens[0]);
             adfGeoTransform[2] = 0.0;
-            adfGeoTransform[3] = atof(papszOriginTokens[1]);
+            adfGeoTransform[3] = CPLAtof(papszOriginTokens[1]);
             adfGeoTransform[4] = 0.0;
-            adfGeoTransform[5] = atof(papszOffsetTokens[1]);
+            adfGeoTransform[5] = CPLAtof(papszOffsetTokens[1]);
         }
         else
         {
@@ -1608,7 +1601,7 @@ int WCSDataset::ExtractGridInfo()
         const char *pszSV = 
             CPLGetXMLValue( psCO, "Range.Field.NullValue", NULL );
         
-        if( pszSV != NULL && (atof(pszSV) != 0.0 || *pszSV == '0') )
+        if( pszSV != NULL && (CPLAtof(pszSV) != 0.0 || *pszSV == '0') )
         {
             bServiceDirty = TRUE;
             CPLCreateXMLElementAndValue( psService, "NoDataValue", 

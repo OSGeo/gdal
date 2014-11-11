@@ -987,7 +987,7 @@ OGRSpatialReferenceH GCSRSAPI_CALL SysCoord2OGRSpatialReference_GCSRS ( GCSysCoo
                        GetInfoSpheroidID_GCSRS(ell)>=0? (f==0? 0:1/f):298.257223563,
                        "Greenwich",
                        GetSysCoordPrimeMeridian_GCSRS(syscoord),
-                       SRS_UA_DEGREE, atof(SRS_UA_DEGREE_CONV));
+                       SRS_UA_DEGREE, CPLAtof(SRS_UA_DEGREE_CONV));
     /* As Geoconcept uses Molodensky, we've got only 3 out of 7 params for Bursa-Wolf : */
     /* the 4 missing Bursa-Wolf parameters have been added to the gk_asDatumList !      */
     if( GetInfoProjID_GCSRS(syscoord)>0 && GetInfoDatumID_GCSRS(datum)!=-1 )

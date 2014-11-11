@@ -588,7 +588,7 @@ int main( int argc, char ** argv )
                 char** papszIter = papszTokens;
                 while(papszIter && *papszIter)
                 {
-                    adfBurnValues.push_back(atof(*papszIter));
+                    adfBurnValues.push_back(CPLAtof(*papszIter));
                     papszIter ++;
                 }
                 CSLDestroy(papszTokens);
@@ -598,7 +598,7 @@ int main( int argc, char ** argv )
             {
                 while(i < argc-1 && ArgIsNumeric(argv[i+1]))
                 {
-                    adfBurnValues.push_back(atof(argv[i+1]));
+                    adfBurnValues.push_back(CPLAtof(argv[i+1]));
                     i += 1;
                 }
             }
@@ -629,7 +629,7 @@ int main( int argc, char ** argv )
                 char** papszIter = papszTokens;
                 while(papszIter && *papszIter)
                 {
-                    adfInitVals.push_back(atof(*papszIter));
+                    adfInitVals.push_back(CPLAtof(*papszIter));
                     papszIter ++;
                 }
                 CSLDestroy(papszTokens);
@@ -639,7 +639,7 @@ int main( int argc, char ** argv )
             {
                 while(i < argc-1 && ArgIsNumeric(argv[i+1]))
                 {
-                    adfInitVals.push_back(atof(argv[i+1]));
+                    adfInitVals.push_back(CPLAtof(argv[i+1]));
                     i += 1;
                 }
             }
@@ -647,7 +647,7 @@ int main( int argc, char ** argv )
         }
         else if( EQUAL(argv[i],"-a_nodata") && i < argc - 1 )
         {
-            dfNoData = atof(argv[i+1]);
+            dfNoData = CPLAtof(argv[i+1]);
             bNoDataSet = TRUE;
             i += 1;
             bCreateOutput = TRUE;
@@ -669,19 +669,19 @@ int main( int argc, char ** argv )
 
         else if( EQUAL(argv[i],"-te") && i < argc - 4 )
         {
-            sEnvelop.MinX = atof(argv[++i]);
-            sEnvelop.MinY = atof(argv[++i]);
-            sEnvelop.MaxX = atof(argv[++i]);
-            sEnvelop.MaxY = atof(argv[++i]);
+            sEnvelop.MinX = CPLAtof(argv[++i]);
+            sEnvelop.MinY = CPLAtof(argv[++i]);
+            sEnvelop.MaxX = CPLAtof(argv[++i]);
+            sEnvelop.MaxY = CPLAtof(argv[++i]);
             bGotBounds = TRUE;
             bCreateOutput = TRUE;
         }
         else if( EQUAL(argv[i],"-a_ullr") && i < argc - 4 )
         {
-            sEnvelop.MinX = atof(argv[++i]);
-            sEnvelop.MaxY = atof(argv[++i]);
-            sEnvelop.MaxX = atof(argv[++i]);
-            sEnvelop.MinY = atof(argv[++i]);
+            sEnvelop.MinX = CPLAtof(argv[++i]);
+            sEnvelop.MaxY = CPLAtof(argv[++i]);
+            sEnvelop.MaxX = CPLAtof(argv[++i]);
+            sEnvelop.MinY = CPLAtof(argv[++i]);
             bGotBounds = TRUE;
             bCreateOutput = TRUE;
         }
@@ -725,8 +725,8 @@ int main( int argc, char ** argv )
         }
         else if( EQUAL(argv[i],"-tr") && i < argc-2 )
         {
-            dfXRes = atof(argv[++i]);
-            dfYRes = fabs(atof(argv[++i]));
+            dfXRes = CPLAtof(argv[++i]);
+            dfYRes = fabs(CPLAtof(argv[++i]));
             if( dfXRes == 0 || dfYRes == 0 )
             {
                 printf( "Wrong value for -tr parameters\n");

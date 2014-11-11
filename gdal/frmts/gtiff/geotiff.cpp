@@ -6458,10 +6458,10 @@ int  GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF,
         {
             char szValue[128];
 
-            sprintf( szValue, "%.18g", dfOffset );
+            CPLsprintf( szValue, "%.18g", dfOffset );
             AppendMetadataItem( &psRoot, &psTail, "OFFSET", szValue, nBand, 
                                 "offset", "" );
-            sprintf( szValue, "%.18g", dfScale );
+            CPLsprintf( szValue, "%.18g", dfScale );
             AppendMetadataItem( &psRoot, &psTail, "SCALE", szValue, nBand, 
                                 "scale", "" );
         }
@@ -6747,7 +6747,7 @@ void GTiffDataset::WriteNoDataValue( TIFF *hTIFF, double dfNoData )
     if (CPLIsNan(dfNoData))
         strcpy(szVal, "nan");
 	else
-        snprintf(szVal, sizeof(szVal), "%.18g", dfNoData);
+        CPLsnprintf(szVal, sizeof(szVal), "%.18g", dfNoData);
     TIFFSetField( hTIFF, TIFFTAG_GDAL_NODATA, szVal );
 }
 
@@ -7723,7 +7723,7 @@ void GTiffDataset::SaveICCProfile(GTiffDataset *pDS, TIFF *hTIFF, char **papszPa
             int j;
             for( j = 0; j < 3; j++ )
             {
-                float v = (float)atof(papszTokens[j]);
+                float v = (float)CPLAtof(papszTokens[j]);
 
                 if (j == 2)
                 {
@@ -7768,7 +7768,7 @@ void GTiffDataset::SaveICCProfile(GTiffDataset *pDS, TIFF *hTIFF, char **papszPa
                 int j;
                 for( j = 0; j < 3; j++ )
                 {
-                    float v = (float)atof(papszTokens[j]);
+                    float v = (float)CPLAtof(papszTokens[j]);
 
                     if (j == 2)
                     {
@@ -8414,7 +8414,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
             float   fVal;
             if( TIFFGetField( hTIFF, asTIFFTags[iTag].nTagVal, &fVal ) )
             {
-                sprintf( szWorkMDI, "%.8g", fVal );
+                CPLsprintf( szWorkMDI, "%.8g", fVal );
                 SetMetadataItem( asTIFFTags[iTag].pszTagName, szWorkMDI );
             }
         }

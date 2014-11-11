@@ -186,17 +186,17 @@ int main( int argc, char ** argv )
                 CPLRealloc( pasGCPs, sizeof(GDAL_GCP) * nGCPCount );
             GDALInitGCPs( 1, pasGCPs + nGCPCount - 1 );
 
-            pasGCPs[nGCPCount-1].dfGCPPixel = atof(argv[++i]);
-            pasGCPs[nGCPCount-1].dfGCPLine = atof(argv[++i]);
-            pasGCPs[nGCPCount-1].dfGCPX = atof(argv[++i]);
-            pasGCPs[nGCPCount-1].dfGCPY = atof(argv[++i]);
+            pasGCPs[nGCPCount-1].dfGCPPixel = CPLAtof(argv[++i]);
+            pasGCPs[nGCPCount-1].dfGCPLine = CPLAtof(argv[++i]);
+            pasGCPs[nGCPCount-1].dfGCPX = CPLAtof(argv[++i]);
+            pasGCPs[nGCPCount-1].dfGCPY = CPLAtof(argv[++i]);
             if( argv[i+1] != NULL 
                 && (CPLStrtod(argv[i+1], &endptr) != 0.0 || argv[i+1][0] == '0') )
             {
                 /* Check that last argument is really a number and not a filename */
                 /* looking like a number (see ticket #863) */
                 if (endptr && *endptr == 0)
-                    pasGCPs[nGCPCount-1].dfGCPZ = atof(argv[++i]);
+                    pasGCPs[nGCPCount-1].dfGCPZ = CPLAtof(argv[++i]);
             }
 
             /* should set id and info? */
@@ -290,10 +290,10 @@ int main( int argc, char ** argv )
             continue;
         }
 
-        dfX = atof(papszTokens[0]);
-        dfY = atof(papszTokens[1]);
+        dfX = CPLAtof(papszTokens[0]);
+        dfY = CPLAtof(papszTokens[1]);
         if( CSLCount(papszTokens) >= 3 )
-            dfZ = atof(papszTokens[2]);
+            dfZ = CPLAtof(papszTokens[2]);
 
         if( pfnTransformer( hTransformArg, bInverse, 1, 
                             &dfX, &dfY, &dfZ, &bSuccess )

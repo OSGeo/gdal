@@ -94,7 +94,7 @@ CPLXMLNode *GDALPamRasterBand::SerializeToXML( CPL_UNUSED const char *pszUnused 
 
         /* hex encode real floating point values */
         if( psPam->dfNoDataValue != floor(psPam->dfNoDataValue) 
-            || psPam->dfNoDataValue != atof(oFmt) )
+            || psPam->dfNoDataValue != CPLAtof(oFmt) )
         {
             double dfNoDataLittleEndian;
 
@@ -339,21 +339,21 @@ CPLErr GDALPamRasterBand::XMLInit( CPLXMLNode *psTree, CPL_UNUSED const char *ps
             else
             {
                 GDALPamRasterBand::SetNoDataValue( 
-                    atof(CPLGetXMLValue( psTree, "NoDataValue", "0" )) );
+                    CPLAtof(CPLGetXMLValue( psTree, "NoDataValue", "0" )) );
             }
             CPLFree( pabyBin );
         }
         else
         {
             GDALPamRasterBand::SetNoDataValue( 
-                atof(CPLGetXMLValue( psTree, "NoDataValue", "0" )) );
+                CPLAtof(CPLGetXMLValue( psTree, "NoDataValue", "0" )) );
         }
     }
 
     GDALPamRasterBand::SetOffset( 
-        atof(CPLGetXMLValue( psTree, "Offset", "0.0" )) );
+        CPLAtof(CPLGetXMLValue( psTree, "Offset", "0.0" )) );
     GDALPamRasterBand::SetScale( 
-        atof(CPLGetXMLValue( psTree, "Scale", "1.0" )) );
+        CPLAtof(CPLGetXMLValue( psTree, "Scale", "1.0" )) );
 
     GDALPamRasterBand::SetUnitType( CPLGetXMLValue( psTree, "UnitType", NULL));
 
@@ -420,16 +420,16 @@ CPLErr GDALPamRasterBand::XMLInit( CPLXMLNode *psTree, CPL_UNUSED const char *ps
         && CPLGetXMLNode( psTree, "Maximum" ) != NULL )
     {
         psPam->bHaveMinMax = TRUE;
-        psPam->dfMin = atof(CPLGetXMLValue(psTree, "Minimum","0"));
-        psPam->dfMax = atof(CPLGetXMLValue(psTree, "Maximum","0"));
+        psPam->dfMin = CPLAtof(CPLGetXMLValue(psTree, "Minimum","0"));
+        psPam->dfMax = CPLAtof(CPLGetXMLValue(psTree, "Maximum","0"));
     }
 
     if( CPLGetXMLNode( psTree, "Mean" ) != NULL 
         && CPLGetXMLNode( psTree, "StandardDeviation" ) != NULL )
     {
         psPam->bHaveStats = TRUE;
-        psPam->dfMean = atof(CPLGetXMLValue(psTree, "Mean","0"));
-        psPam->dfStdDev = atof(CPLGetXMLValue(psTree,"StandardDeviation","0"));
+        psPam->dfMean = CPLAtof(CPLGetXMLValue(psTree, "Mean","0"));
+        psPam->dfStdDev = CPLAtof(CPLGetXMLValue(psTree,"StandardDeviation","0"));
     }
 
 /* -------------------------------------------------------------------- */
@@ -983,8 +983,8 @@ PamParseHistogram( CPLXMLNode *psHistItem,
     if( psHistItem == NULL )
         return FALSE;
 
-    *pdfMin = atof(CPLGetXMLValue( psHistItem, "HistMin", "0"));
-    *pdfMax = atof(CPLGetXMLValue( psHistItem, "HistMax", "1"));
+    *pdfMin = CPLAtof(CPLGetXMLValue( psHistItem, "HistMin", "0"));
+    *pdfMax = CPLAtof(CPLGetXMLValue( psHistItem, "HistMax", "1"));
     *pnBuckets = atoi(CPLGetXMLValue( psHistItem, "BucketCount","2"));
     if (*pnBuckets <= 0 || *pnBuckets > INT_MAX / 2)
         return FALSE;
@@ -1047,8 +1047,8 @@ PamFindMatchingHistogram( CPLXMLNode *psSavedHistograms,
             || !EQUAL(psXMLHist->pszValue,"HistItem") )
             continue;
 
-        double dfHistMin = atof(CPLGetXMLValue( psXMLHist, "HistMin", "0"));
-        double dfHistMax = atof(CPLGetXMLValue( psXMLHist, "HistMax", "0"));
+        double dfHistMin = CPLAtof(CPLGetXMLValue( psXMLHist, "HistMin", "0"));
+        double dfHistMax = CPLAtof(CPLGetXMLValue( psXMLHist, "HistMax", "0"));
 
         if( !(ARE_REAL_EQUAL(dfHistMin, dfMin))
             || !(ARE_REAL_EQUAL(dfHistMax, dfMax))

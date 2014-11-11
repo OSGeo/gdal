@@ -190,7 +190,7 @@ static int GetLatLon(const char* pszLat,
     memcpy(szSec, pszLat + 6, MAX((int)sizeof(szSec) - 1, nSecLen));
     szSec[MAX((int)sizeof(szSec) - 1, nSecLen)] = 0;
 
-    dfLat = atoi(szDeg) + atoi(szMin) / 60. + atof(szSec) / 3600.;
+    dfLat = atoi(szDeg) + atoi(szMin) / 60. + CPLAtof(szSec) / 3600.;
     if (chLatHemisphere == 'S')
         dfLat = -dfLat;
 
@@ -204,7 +204,7 @@ static int GetLatLon(const char* pszLat,
     memcpy(szSec, pszLon + 7, MAX((int)sizeof(szSec) - 1, nSecLen));
     szSec[MAX((int)sizeof(szSec) - 1, nSecLen)] = 0;
 
-    dfLon = atoi(szDeg) + atoi(szMin) / 60. + atof(szSec) / 3600.;
+    dfLon = atoi(szDeg) + atoi(szMin) / 60. + CPLAtof(szSec) / 3600.;
     if (chLonHemisphere == ' ' || chLonHemisphere == 'W')
         dfLon = -dfLon;
 

@@ -206,25 +206,25 @@ void NTv2Dataset::FlushCache()
         }
         else if( EQUAL(pszKey,"MAJOR_F") )
         {
-            double dfValue = atof(pszValue);
+            double dfValue = CPLAtof(pszValue);
             CPL_LSBPTR64( &dfValue );
             memcpy( achFileHeader + 7*16+8, &dfValue, 8 );
         }
         else if( EQUAL(pszKey,"MINOR_F") )
         {
-            double dfValue = atof(pszValue);
+            double dfValue = CPLAtof(pszValue);
             CPL_LSBPTR64( &dfValue );
             memcpy( achFileHeader + 8*16+8, &dfValue, 8 );
         }
         else if( EQUAL(pszKey,"MAJOR_T") )
         {
-            double dfValue = atof(pszValue);
+            double dfValue = CPLAtof(pszValue);
             CPL_LSBPTR64( &dfValue );
             memcpy( achFileHeader + 9*16+8, &dfValue, 8 );
         }
         else if( EQUAL(pszKey,"MINOR_T") )
         {
-            double dfValue = atof(pszValue);
+            double dfValue = CPLAtof(pszValue);
             CPL_LSBPTR64( &dfValue );
             memcpy( achFileHeader + 10*16+8, &dfValue, 8 );
         }

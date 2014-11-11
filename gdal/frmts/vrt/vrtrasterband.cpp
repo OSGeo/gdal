@@ -332,8 +332,8 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
 
     SetUnitType( CPLGetXMLValue( psTree, "UnitType", NULL ) );
 
-    SetOffset( atof(CPLGetXMLValue( psTree, "Offset", "0.0" )) );
-    SetScale( atof(CPLGetXMLValue( psTree, "Scale", "1.0" )) );
+    SetOffset( CPLAtof(CPLGetXMLValue( psTree, "Offset", "0.0" )) );
+    SetScale( CPLAtof(CPLGetXMLValue( psTree, "Scale", "1.0" )) );
 
     if( CPLGetXMLValue( psTree, "ColorInterp", NULL ) != NULL )
     {

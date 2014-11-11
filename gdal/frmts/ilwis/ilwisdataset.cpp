@@ -301,7 +301,7 @@ bool WriteElement(string sSection, string sEntry,
         return false;
 
     char strdouble[45];
-    sprintf(strdouble, "%.6f", dValue);
+    CPLsprintf(strdouble, "%.6f", dValue);
     string sValue = string(strdouble);
     return WriteElement(sSection, sEntry, fn, sValue) != 0;
 }
@@ -503,21 +503,21 @@ void ILWISDataset::CollectTransformCoef(string &pszRefName)
             string sMaxY = ReadElement("GeoRefCorners", "MaxY", pszRefName);
 				
             //Calculate pixel size in X and Y direction from the extent
-            double deltaX = atof(sMaxX.c_str()) - atof(sMinX.c_str());
-            double deltaY = atof(sMaxY.c_str()) - atof(sMinY.c_str());
+            double deltaX = CPLAtof(sMaxX.c_str()) - CPLAtof(sMinX.c_str());
+            double deltaY = CPLAtof(sMaxY.c_str()) - CPLAtof(sMinY.c_str());
 
             double PixelSizeX = deltaX / (double)nRasterXSize;
             double PixelSizeY = deltaY / (double)nRasterYSize;
 				
             if (EQUAL(IsCorner.c_str(),"Yes"))
             {
-                adfGeoTransform[0] = atof(sMinX.c_str());
-                adfGeoTransform[3] = atof(sMaxY.c_str());
+                adfGeoTransform[0] = CPLAtof(sMinX.c_str());
+                adfGeoTransform[3] = CPLAtof(sMaxY.c_str());
             }
             else
             {
-                adfGeoTransform[0] = atof(sMinX.c_str()) - PixelSizeX/2.0;
-                adfGeoTransform[3] = atof(sMaxY.c_str()) + PixelSizeY/2.0;
+                adfGeoTransform[0] = CPLAtof(sMinX.c_str()) - PixelSizeX/2.0;
+                adfGeoTransform[3] = CPLAtof(sMaxY.c_str()) + PixelSizeY/2.0;
             }
 
             adfGeoTransform[1] = PixelSizeX;
@@ -941,7 +941,7 @@ GDALDataset *ILWISDataset::Create(const char* pszFilename,
         adfMinMax[0] = -9999999.9;
         adfMinMax[1] = 9999999.9;
         char strdouble[45];
-        sprintf(strdouble, "%.3f:%.3f:%3f:offset=0", adfMinMax[0], adfMinMax[1],stepsize);
+        CPLsprintf(strdouble, "%.3f:%.3f:%3f:offset=0", adfMinMax[0], adfMinMax[1],stepsize);
         string range = string(strdouble);
         WriteElement("BaseMap", "Range", pszODFName, range);
 
@@ -1116,7 +1116,7 @@ ILWISDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         {
             // only write a range if we got a correct one from the source dataset (otherwise ILWIS can't show the map properly)
             char strdouble[45];
-            sprintf(strdouble, "%.3f:%.3f:%3f:offset=0", adfMinMax[0], adfMinMax[1],stepsize);
+            CPLsprintf(strdouble, "%.3f:%.3f:%3f:offset=0", adfMinMax[0], adfMinMax[1],stepsize);
             string range = string(strdouble);
             WriteElement("BaseMap", "Range", pszODFName, range);
         }
@@ -1833,7 +1833,7 @@ static double doubleConv(const char* s)
 
     if (strlen(begin) == 0) return rUNDEF;
     errno = 0;
-    double r = strtod(begin, &endptr);
+    double r = CPLStrtod(begin, &endptr);
     if ((0 == *endptr) && (errno==0))
         return r;
     while (*endptr != 0) { // check trailing spaces
@@ -1873,11 +1873,11 @@ ValueRange::ValueRange(string sRng)
     p2 = strchr(sRange, ':');
     if (p2 != 0) {
         *p2 = 0;
-        _rLo = atof(sRange);
-        _rHi = atof(p2+1);
+        _rLo = CPLAtof(sRange);
+        _rHi = CPLAtof(p2+1);
     }
     else {
-        _rLo = atof(sRange);
+        _rLo = CPLAtof(sRange);
         _rHi = _rLo;
     }  
     init(_r0);
@@ -1990,11 +1990,11 @@ string ValueRange::ToString()
 {
     char buffer[200];
     if (fabs(get_rLo()) > 1.0e20 || fabs(get_rHi()) > 1.0e20)
-        sprintf(buffer, "%g:%g:%f:offset=%g", get_rLo(), get_rHi(), get_rStep(), get_rRaw0());
+        CPLsprintf(buffer, "%g:%g:%f:offset=%g", get_rLo(), get_rHi(), get_rStep(), get_rRaw0());
     else if (get_iDec() >= 0)
-        sprintf(buffer, "%.*f:%.*f:%.*f:offset=%.0f", get_iDec(), get_rLo(), get_iDec(), get_rHi(), get_iDec(), get_rStep(), get_rRaw0());
+        CPLsprintf(buffer, "%.*f:%.*f:%.*f:offset=%.0f", get_iDec(), get_rLo(), get_iDec(), get_rHi(), get_iDec(), get_rStep(), get_rRaw0());
     else
-        sprintf(buffer, "%f:%f:%f:offset=%.0f", get_rLo(), get_rHi(), get_rStep(), get_rRaw0());
+        CPLsprintf(buffer, "%f:%f:%f:offset=%.0f", get_rLo(), get_rHi(), get_rStep(), get_rRaw0());
     return string(buffer);
 }
 

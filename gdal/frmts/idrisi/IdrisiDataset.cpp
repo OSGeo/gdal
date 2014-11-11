@@ -56,7 +56,7 @@ CPL_C_END
 
 //----- Safe numeric conversion, NULL as zero
 #define atoi_nz(s) (s == NULL ? (int)      0 : atoi(s))
-#define atof_nz(s) (s == NULL ? (double) 0.0 : atof(s))
+#define CPLAtof_nz(s) (s == NULL ? (double) 0.0 : CPLAtof(s))
 
 //----- file extensions:
 #define extRST          "rst"
@@ -755,11 +755,11 @@ GDALDataset *IdrisiDataset::Open( GDALOpenInfo *poOpenInfo )
     {
         double dfMinX, dfMaxX, dfMinY, dfMaxY, dfUnit, dfXPixSz, dfYPixSz;
 
-        dfMinX = atof_nz( pszMinX );
-        dfMaxX = atof_nz( pszMaxX );
-        dfMinY = atof_nz( pszMinY );
-        dfMaxY = atof_nz( pszMaxY );
-        dfUnit = atof_nz( pszUnit );
+        dfMinX = CPLAtof_nz( pszMinX );
+        dfMaxX = CPLAtof_nz( pszMaxX );
+        dfMinY = CPLAtof_nz( pszMinY );
+        dfMaxY = CPLAtof_nz( pszMaxY );
+        dfUnit = CPLAtof_nz( pszUnit );
 
         dfMinX = dfMinX * dfUnit; 
         dfMaxX = dfMaxX * dfUnit; 
@@ -1712,7 +1712,7 @@ double IdrisiRasterBand::GetMinimum( int *pbSuccess )
         return GDALPamRasterBand::GetMinimum(pbSuccess);
 
     double adfMinValue[3];
-    sscanf( CSLFetchNameValue( poGDS->papszRDC, rdcMIN_VALUE ), "%lf %lf %lf", 
+    CPLsscanf( CSLFetchNameValue( poGDS->papszRDC, rdcMIN_VALUE ), "%lf %lf %lf", 
         &adfMinValue[0], &adfMinValue[1], &adfMinValue[2] );
 
     if( pbSuccess )
@@ -1735,7 +1735,7 @@ double IdrisiRasterBand::GetMaximum( int *pbSuccess )
         return GDALPamRasterBand::GetMaximum(pbSuccess);
 
     double adfMaxValue[3];
-    sscanf( CSLFetchNameValue( poGDS->papszRDC, rdcMAX_VALUE ), "%lf %lf %lf", 
+    CPLsscanf( CSLFetchNameValue( poGDS->papszRDC, rdcMAX_VALUE ), "%lf %lf %lf", 
         &adfMaxValue[0], &adfMaxValue[1], &adfMaxValue[2] );
 
     if( pbSuccess )
@@ -1771,7 +1771,7 @@ double IdrisiRasterBand::GetNoDataValue( int *pbSuccess )
 
     if( ! EQUAL( pszFlagDefn, "none" ) )
     {
-        dfNoData = atof_nz( CSLFetchNameValue( poGDS->papszRDC, rdcFLAG_VALUE ) );
+        dfNoData = CPLAtof_nz( CSLFetchNameValue( poGDS->papszRDC, rdcFLAG_VALUE ) );
         if( pbSuccess )
             *pbSuccess = TRUE;
     }
@@ -2020,9 +2020,9 @@ CPLErr IdrisiRasterBand::SetMinMax( double dfMin, double dfMax )
     double adfMax[3] = {0.0, 0.0, 0.0};
 
     if (CSLFetchNameValue( poGDS->papszRDC, rdcMIN_VALUE ) != NULL)
-        sscanf( CSLFetchNameValue( poGDS->papszRDC, rdcMIN_VALUE ), "%lf %lf %lf", &adfMin[0], &adfMin[1], &adfMin[2] );
+        CPLsscanf( CSLFetchNameValue( poGDS->papszRDC, rdcMIN_VALUE ), "%lf %lf %lf", &adfMin[0], &adfMin[1], &adfMin[2] );
     if (CSLFetchNameValue( poGDS->papszRDC, rdcMAX_VALUE ) != NULL)
-        sscanf( CSLFetchNameValue( poGDS->papszRDC, rdcMAX_VALUE ), "%lf %lf %lf", &adfMax[0], &adfMax[1], &adfMax[2] );
+        CPLsscanf( CSLFetchNameValue( poGDS->papszRDC, rdcMAX_VALUE ), "%lf %lf %lf", &adfMax[0], &adfMax[1], &adfMax[2] );
 
     adfMin[nBand - 1] = dfMin;
     adfMax[nBand - 1] = dfMax;
@@ -2543,27 +2543,27 @@ CPLErr IdrisiGeoReference2Wkt( const char* pszFilename,
     char *pszProjName           = CPLStrdup( CSLFetchNameValue( papszRef, refPROJECTION ) );
     char *pszDatum              = CPLStrdup( CSLFetchNameValue( papszRef, refDATUM ) );
     char *pszEllipsoid          = CPLStrdup( CSLFetchNameValue( papszRef, refELLIPSOID ) );
-    double dfCenterLat          = atof_nz( CSLFetchNameValue( papszRef, refORIGIN_LAT ) );
-    double dfCenterLong         = atof_nz( CSLFetchNameValue( papszRef, refORIGIN_LONG ) );
-    double dfSemiMajor          = atof_nz( CSLFetchNameValue( papszRef, refMAJOR_SAX ) );
-    double dfSemiMinor          = atof_nz( CSLFetchNameValue( papszRef, refMINOR_SAX ) );
-    double dfFalseEasting       = atof_nz( CSLFetchNameValue( papszRef, refORIGIN_X ) );
-    double dfFalseNorthing      = atof_nz( CSLFetchNameValue( papszRef, refORIGIN_Y ) );
-    double dfStdP1              = atof_nz( CSLFetchNameValue( papszRef, refSTANDL_1 ) );
-    double dfStdP2              = atof_nz( CSLFetchNameValue( papszRef, refSTANDL_2 ) );
+    double dfCenterLat          = CPLAtof_nz( CSLFetchNameValue( papszRef, refORIGIN_LAT ) );
+    double dfCenterLong         = CPLAtof_nz( CSLFetchNameValue( papszRef, refORIGIN_LONG ) );
+    double dfSemiMajor          = CPLAtof_nz( CSLFetchNameValue( papszRef, refMAJOR_SAX ) );
+    double dfSemiMinor          = CPLAtof_nz( CSLFetchNameValue( papszRef, refMINOR_SAX ) );
+    double dfFalseEasting       = CPLAtof_nz( CSLFetchNameValue( papszRef, refORIGIN_X ) );
+    double dfFalseNorthing      = CPLAtof_nz( CSLFetchNameValue( papszRef, refORIGIN_Y ) );
+    double dfStdP1              = CPLAtof_nz( CSLFetchNameValue( papszRef, refSTANDL_1 ) );
+    double dfStdP2              = CPLAtof_nz( CSLFetchNameValue( papszRef, refSTANDL_2 ) );
     double dfScale;
     double adfToWGS84[3] = { 0.0, 0.0, 0.0 };
 
     const char* pszToWGS84 = CSLFetchNameValue( papszRef, refDELTA_WGS84 );
     if (pszToWGS84)
-        sscanf( pszToWGS84, "%lf %lf %lf",
+        CPLsscanf( pszToWGS84, "%lf %lf %lf",
             &adfToWGS84[0], &adfToWGS84[1], &adfToWGS84[2] );
 
     const char* pszSCALE_FAC = CSLFetchNameValue( papszRef, refSCALE_FAC );
     if( pszSCALE_FAC == NULL || EQUAL( pszSCALE_FAC, "na" ) )
         dfScale = 1.0;
     else
-        dfScale = atof_nz( pszSCALE_FAC );
+        dfScale = CPLAtof_nz( pszSCALE_FAC );
 
     CSLDestroy( papszRef );
 
@@ -3244,7 +3244,7 @@ int GetUnitIndex( const char *pszUnitName )
 
 int GetToMeterIndex( const char *pszToMeter )
 {
-    double dfToMeter = atof_nz(pszToMeter);
+    double dfToMeter = CPLAtof_nz(pszToMeter);
 
     if( dfToMeter != 0.0 )
     {

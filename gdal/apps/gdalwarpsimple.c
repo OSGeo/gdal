@@ -159,12 +159,12 @@ int main( int argc, char ** argv )
         }
         else if( EQUAL(argv[i],"-et") && i < argc-1 )
         {
-            dfErrorThreshold = atof(argv[++i]);
+            dfErrorThreshold = CPLAtof(argv[++i]);
         }
         else if( EQUAL(argv[i],"-tr") && i < argc-2 )
         {
-            dfXRes = atof(argv[++i]);
-            dfYRes = fabs(atof(argv[++i]));
+            dfXRes = CPLAtof(argv[++i]);
+            dfYRes = fabs(CPLAtof(argv[++i]));
             bCreateOutput = TRUE;
         }
         else if( EQUAL(argv[i],"-ts") && i < argc-2 )
@@ -175,10 +175,10 @@ int main( int argc, char ** argv )
         }
         else if( EQUAL(argv[i],"-te") && i < argc-4 )
         {
-            dfMinX = atof(argv[++i]);
-            dfMinY = atof(argv[++i]);
-            dfMaxX = atof(argv[++i]);
-            dfMaxY = atof(argv[++i]);
+            dfMinX = CPLAtof(argv[++i]);
+            dfMinY = CPLAtof(argv[++i]);
+            dfMaxX = CPLAtof(argv[++i]);
+            dfMaxY = CPLAtof(argv[++i]);
             bCreateOutput = TRUE;
         }
         else if( argv[i][0] == '-' )

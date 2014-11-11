@@ -652,10 +652,10 @@ void BAGDataset::LoadMetadata()
 
         if( CSLCount(papszCornerTokens ) == 4 )
         {
-            double dfLLX = atof( papszCornerTokens[0] );
-            double dfLLY = atof( papszCornerTokens[1] );
-            double dfURX = atof( papszCornerTokens[2] );
-            double dfURY = atof( papszCornerTokens[3] );
+            double dfLLX = CPLAtof( papszCornerTokens[0] );
+            double dfLLY = CPLAtof( papszCornerTokens[1] );
+            double dfURX = CPLAtof( papszCornerTokens[2] );
+            double dfURY = CPLAtof( papszCornerTokens[3] );
 
             adfGeoTransform[0] = dfLLX;
             adfGeoTransform[1] = (dfURX - dfLLX) / (GetRasterXSize()-1);

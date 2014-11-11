@@ -152,7 +152,6 @@ void GDALWMSMiniDriver_WMS::GetCapabilities(GDALWMSMiniDriverCapabilities *caps)
 
 void GDALWMSMiniDriver_WMS::BuildURL(CPLString *url, const GDALWMSImageRequestInfo &iri, const char* pszRequest) {
     // http://onearth.jpl.nasa.gov/wms.cgi?request=GetMap&width=1000&height=500&layers=modis,global_mosaic&styles=&srs=EPSG:4326&format=image/jpeg&bbox=-180.000000,-90.000000,180.000000,090.000000
-    CPLLocaleC oLocaleEnforcer;
     *url = m_base_url;
     if (m_base_url.ifind( "service=") == std::string::npos)
         URLAppend(url, "&service=WMS");

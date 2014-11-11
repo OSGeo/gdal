@@ -181,22 +181,22 @@ int OGRHTFDataSource::Open( const char * pszFilename )
         else if (strncmp(pszLine, "SW GRID COORDINATE - EASTING: ", 30) == 0)
         {
             bHasSWEasting = TRUE;
-            dfSWEasting = atof(pszLine + 30);
+            dfSWEasting = CPLAtof(pszLine + 30);
         }
         else if (strncmp(pszLine, "SW GRID COORDINATE - NORTHING: ", 31) == 0)
         {
             bHasSWNorthing = TRUE;
-            dfSWNorthing = atof(pszLine + 31);
+            dfSWNorthing = CPLAtof(pszLine + 31);
         }
         else if (strncmp(pszLine, "NE GRID COORDINATE - EASTING: ", 30) == 0)
         {
             bHasNEEasting = TRUE;
-            dfNEEasting = atof(pszLine + 30);
+            dfNEEasting = CPLAtof(pszLine + 30);
         }
         else if (strncmp(pszLine, "NE GRID COORDINATE - NORTHING: ", 31) == 0)
         {
             bHasNENorthing = TRUE;
-            dfNENorthing = atof(pszLine + 31);
+            dfNENorthing = CPLAtof(pszLine + 31);
         }
         else if (strncmp(pszLine, "TOTAL SOUNDINGS: ", 17) == 0)
         {

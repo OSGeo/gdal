@@ -777,7 +777,7 @@ EpsilonDatasetCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         eResample = EPS_RESAMPLE_444;
     
     const char* pszTarget = CSLFetchNameValueDef(papszOptions, "TARGET", "96");
-    double dfReductionFactor = 1 - atof(pszTarget) / 100;
+    double dfReductionFactor = 1 - CPLAtof(pszTarget) / 100;
     if (dfReductionFactor > 1)
         dfReductionFactor = 1;
     else if (dfReductionFactor < 0)

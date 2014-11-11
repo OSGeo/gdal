@@ -787,8 +787,11 @@ const char *MBTilesBand::GetMetadataItem( const char * pszName,
             double adfInvGeoTransform[6];
             double dfGeoX, dfGeoY;
 
-            if( sscanf( pszName+9, "%lf_%lf", &dfGeoX, &dfGeoY ) != 2 )
+            dfGeoX = CPLAtof(pszName + 9);
+            const char* pszUnderscore = strchr(pszName + 9, '_');
+            if( !pszUnderscore )
                 return NULL;
+            dfGeoY = CPLAtof(pszUnderscore + 1);
 
             if( GetDataset() == NULL )
                 return NULL;
@@ -1312,12 +1315,12 @@ int MBTilesGetBounds(OGRDataSourceH hDS,
             const char* pszBounds = OGR_F_GetFieldAsString(hFeat, 0);
             char** papszTokens = CSLTokenizeString2(pszBounds, ",", 0);
             if (CSLCount(papszTokens) != 4 ||
-                fabs(atof(papszTokens[0])) > 180 ||
-                fabs(atof(papszTokens[1])) > 86 ||
-                fabs(atof(papszTokens[2])) > 180 ||
-                fabs(atof(papszTokens[3])) > 86 ||
-                atof(papszTokens[0]) > atof(papszTokens[2]) ||
-                atof(papszTokens[1]) > atof(papszTokens[3]))
+                fabs(CPLAtof(papszTokens[0])) > 180 ||
+                fabs(CPLAtof(papszTokens[1])) > 86 ||
+                fabs(CPLAtof(papszTokens[2])) > 180 ||
+                fabs(CPLAtof(papszTokens[3])) > 86 ||
+                CPLAtof(papszTokens[0]) > CPLAtof(papszTokens[2]) ||
+                CPLAtof(papszTokens[1]) > CPLAtof(papszTokens[3]))
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Invalid value for 'bounds' metadata");
                 CSLDestroy(papszTokens);
@@ -1331,10 +1334,10 @@ int MBTilesGetBounds(OGRDataSourceH hDS,
             #define LAT_TO_NORTHING(lat) \
                 6378137 * log(tan(FORTPI + .5 * (lat) / 180 * (4 * FORTPI)))
 
-            nMinTileCol = (int)(((atof(papszTokens[0]) + 180) / 360) * (1 << nMaxLevel));
-            nMaxTileCol = (int)(((atof(papszTokens[2]) + 180) / 360) * (1 << nMaxLevel));
-            nMinTileRow = (int)(0.5 + ((LAT_TO_NORTHING(atof(papszTokens[1])) + MAX_GM) / (2* MAX_GM)) * (1 << nMaxLevel));
-            nMaxTileRow = (int)(0.5 + ((LAT_TO_NORTHING(atof(papszTokens[3])) + MAX_GM) / (2* MAX_GM)) * (1 << nMaxLevel));
+            nMinTileCol = (int)(((CPLAtof(papszTokens[0]) + 180) / 360) * (1 << nMaxLevel));
+            nMaxTileCol = (int)(((CPLAtof(papszTokens[2]) + 180) / 360) * (1 << nMaxLevel));
+            nMinTileRow = (int)(0.5 + ((LAT_TO_NORTHING(CPLAtof(papszTokens[1])) + MAX_GM) / (2* MAX_GM)) * (1 << nMaxLevel));
+            nMaxTileRow = (int)(0.5 + ((LAT_TO_NORTHING(CPLAtof(papszTokens[3])) + MAX_GM) / (2* MAX_GM)) * (1 << nMaxLevel));
 
             bHasBounds = TRUE;
 

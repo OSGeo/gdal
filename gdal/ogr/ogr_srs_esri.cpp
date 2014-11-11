@@ -552,19 +552,19 @@ static double OSR_GDV( char **papszNV, const char * pszField,
             {
                 /* http://agdcftp1.wr.usgs.gov/pub/projects/lcc/akcan_lcc/akcan.tar.gz contains */
                 /* weird values for the second. Ignore it and the result looks correct */
-                double dfSecond = atof(papszTokens[2]);
+                double dfSecond = CPLAtof(papszTokens[2]);
                 if (dfSecond < 0.0 || dfSecond >= 60.0)
                     dfSecond = 0.0;
 
-                dfValue = ABS(atof(papszTokens[0]))
-                    + atof(papszTokens[1]) / 60.0
+                dfValue = ABS(CPLAtof(papszTokens[0]))
+                    + CPLAtof(papszTokens[1]) / 60.0
                     + dfSecond / 3600.0;
 
-                if( atof(papszTokens[0]) < 0.0 )
+                if( CPLAtof(papszTokens[0]) < 0.0 )
                     dfValue *= -1;
             }
             else if( CSLCount(papszTokens) > 0 )
-                dfValue = atof(papszTokens[0]);
+                dfValue = CPLAtof(papszTokens[0]);
             else
                 dfValue = dfDefaultValue;
 
@@ -585,7 +585,7 @@ static double OSR_GDV( char **papszNV, const char * pszField,
         if( papszNV[iLine] == NULL )
             return dfDefaultValue;
         else
-            return atof( papszNV[iLine] + strlen(pszField) );
+            return CPLAtof( papszNV[iLine] + strlen(pszField) );
     }
 }
 
@@ -945,10 +945,10 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
         if( EQUAL(osValue, "" ) )
             SetLinearUnitsAndUpdateParameters( SRS_UL_METER, 1.0 );
         else if( EQUAL(osValue,"FEET") )
-            SetLinearUnitsAndUpdateParameters( SRS_UL_US_FOOT, atof(SRS_UL_US_FOOT_CONV) );
-        else if( atof(osValue) != 0.0 )
+            SetLinearUnitsAndUpdateParameters( SRS_UL_US_FOOT, CPLAtof(SRS_UL_US_FOOT_CONV) );
+        else if( CPLAtof(osValue) != 0.0 )
             SetLinearUnitsAndUpdateParameters( "user-defined", 
-                                               1.0 / atof(osValue) );
+                                               1.0 / CPLAtof(osValue) );
         else
             SetLinearUnitsAndUpdateParameters( osValue, 1.0 );
 
@@ -989,7 +989,6 @@ OGRErr OGRSpatialReference::morphToESRI()
 {
     OGRErr      eErr;
 
-    CPLLocaleC localeC;
 /* -------------------------------------------------------------------- */
 /*      Fixup ordering, missing linear units, etc.                      */
 /* -------------------------------------------------------------------- */

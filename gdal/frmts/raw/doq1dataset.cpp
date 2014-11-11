@@ -379,7 +379,7 @@ static double DOQGetField( unsigned char *pabyData, int nBytes )
             szWork[i] = 'E';
     }
 
-    return atof(szWork);
+    return CPLAtof(szWork);
 }
 
 /************************************************************************/

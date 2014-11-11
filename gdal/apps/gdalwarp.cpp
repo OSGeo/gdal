@@ -484,7 +484,7 @@ int main( int argc, char ** argv )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             papszTO = CSLSetNameValue( papszTO, "REFINE_TOLERANCE", argv[++i] );
-            if(atof(argv[i]) < 0)
+            if(CPLAtof(argv[i]) < 0)
             {
                 Usage("The tolerance for -refine_gcps may not be negative.");
             }

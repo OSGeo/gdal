@@ -395,7 +395,7 @@ double OGRDODSSequenceLayer::BaseTypeToDouble( BaseType *poBT )
           double dfResult;
 
           poBT->buf2val( (void **) &poStrVal );
-          dfResult = atof(poStrVal->c_str());
+          dfResult = CPLAtof(poStrVal->c_str());
           delete poStrVal;
           return dfResult;
       }

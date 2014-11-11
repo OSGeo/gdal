@@ -1293,24 +1293,10 @@ int CPLPrintDouble( char *pszBuffer, const char *pszFormat,
     if ( !pszBuffer )
         return 0;
 
-#if defined(HAVE_LOCALE_H) && defined(HAVE_SETLOCALE)
-    char        *pszCurLocale = NULL;
-
-    if ( pszLocale || EQUAL( pszLocale, "" ) )
-    {
-        // Save the current locale
-        pszCurLocale = CPLsetlocale(LC_ALL, NULL );
-        // Set locale to the specified value
-        CPLsetlocale( LC_ALL, pszLocale );
-    }
-#else
-    (void) pszLocale;
-#endif
-
 #if defined(HAVE_SNPRINTF)
-    snprintf( szTemp, DOUBLE_BUFFER_SIZE, pszFormat, dfValue );
+    CPLsnprintf( szTemp, DOUBLE_BUFFER_SIZE, pszFormat, dfValue );
 #else
-    sprintf( szTemp, pszFormat, dfValue );
+    CPLsprintf( szTemp, pszFormat, dfValue );
 #endif
     szTemp[DOUBLE_BUFFER_SIZE - 1] = '\0';
 
@@ -1319,12 +1305,6 @@ int CPLPrintDouble( char *pszBuffer, const char *pszFormat,
         if( szTemp[i] == 'E' || szTemp[i] == 'e' )
             szTemp[i] = 'D';
     }
-
-#if defined(HAVE_LOCALE_H) && defined(HAVE_SETLOCALE)
-    // Restore stored locale back
-    if ( pszCurLocale )
-        CPLsetlocale( LC_ALL, pszCurLocale );
-#endif
 
     return CPLPrintString( pszBuffer, szTemp, 64 );
 
@@ -1857,8 +1837,8 @@ const char *CPLDecToDMS( double dfAngle, const char * pszAxis,
     else
         pszHemisphere = "N";
 
-    sprintf( szFormat, "%%3dd%%2d\'%%%d.%df\"%s", nPrecision+3, nPrecision, pszHemisphere );
-    sprintf( szBuffer, szFormat, nDegrees, nMinutes, dfSeconds );
+    CPLsprintf( szFormat, "%%3dd%%2d\'%%%d.%df\"%s", nPrecision+3, nPrecision, pszHemisphere );
+    CPLsprintf( szBuffer, szFormat, nDegrees, nMinutes, dfSeconds );
 
     return( szBuffer );
 }

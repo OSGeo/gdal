@@ -350,7 +350,7 @@ retry:
                             memcpy(&dfVal, pachDataIter, 8);
                             CPL_MSBPTR64(&dfVal);
                             pachDataIter += 8;
-                            sprintf(szAttrNameValue, "NITF_ATT_Q%d_%d=%.16g", j+1, i, dfVal);
+                            CPLsprintf(szAttrNameValue, "NITF_ATT_Q%d_%d=%.16g", j+1, i, dfVal);
                             papszMD[nMDSize + i * 4 + j] = CPLStrdup(szAttrNameValue);
                         }
                     }

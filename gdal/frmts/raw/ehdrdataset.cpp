@@ -822,8 +822,8 @@ CPLErr EHdrDataset::ReadSTX()
             if (i > 0 && i <= nBands)
             {
               EHdrRasterBand* poBand = (EHdrRasterBand*)papoBands[i-1];
-              poBand->dfMin = atof(papszTokens[1]);
-              poBand->dfMax = atof(papszTokens[2]);
+              poBand->dfMin = CPLAtof(papszTokens[1]);
+              poBand->dfMax = CPLAtof(papszTokens[2]);
 
               int bNoDataSet = FALSE;
               double dfNoData = poBand->GetNoDataValue(&bNoDataSet);
@@ -842,12 +842,12 @@ CPLErr EHdrDataset::ReadSTX()
               // reads optional mean and stddev
               if ( !EQUAL(papszTokens[3], "#") )
               {
-                poBand->dfMean   = atof(papszTokens[3]);
+                poBand->dfMean   = CPLAtof(papszTokens[3]);
                 poBand->minmaxmeanstddev |= HAS_MEAN_FLAG;
               }
               if ( !EQUAL(papszTokens[4], "#") )
               {
-                poBand->dfStdDev = atof(papszTokens[4]);
+                poBand->dfStdDev = CPLAtof(papszTokens[4]);
                 poBand->minmaxmeanstddev |= HAS_STDDEV_FLAG;
               }
 

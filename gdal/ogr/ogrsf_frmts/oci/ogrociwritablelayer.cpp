@@ -379,9 +379,9 @@ void OGROCIWritableLayer::ParseDIMINFO( const char *pszOptionName,
         return;
     }
 
-    *pdfMin = atof(papszTokens[0]);
-    *pdfMax = atof(papszTokens[1]);
-    *pdfRes = atof(papszTokens[2]);
+    *pdfMin = CPLAtof(papszTokens[0]);
+    *pdfMax = CPLAtof(papszTokens[1]);
+    *pdfRes = CPLAtof(papszTokens[2]);
 
     CSLDestroy( papszTokens );
 }
@@ -410,12 +410,12 @@ OGRErr OGROCIWritableLayer::TranslateToSDOGeometry( OGRGeometry * poGeometry,
         OGRPoint *poPoint = (OGRPoint *) poGeometry;
 
         if( nDimension == 2 )
-            sprintf( szResult, 
+            CPLsprintf( szResult, 
                      "%s(%d,%s,MDSYS.SDO_POINT_TYPE(%.16g,%.16g,0.0),NULL,NULL)",
                      SDO_GEOMETRY, 2001, szSRID, 
                      poPoint->getX(), poPoint->getY() );
         else
-            sprintf( szResult, 
+            CPLsprintf( szResult, 
                      "%s(%d,%s,MDSYS.SDO_POINT_TYPE(%.16g,%.16g,%.16g),NULL,NULL)",
                      SDO_GEOMETRY, 3001, szSRID, 
                      poPoint->getX(), poPoint->getY(), poPoint->getZ() );

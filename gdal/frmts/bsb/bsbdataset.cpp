@@ -616,10 +616,10 @@ void BSBDataset::ScanForGCPsNos( const char *pszFilename )
             if (CSLCount(Tokens) >= 5)
             {
                 GDALInitGCPs( 1, pasGCPList + nGCPCount );
-                pasGCPList[nGCPCount].dfGCPX = atof(Tokens[1]);
-                pasGCPList[nGCPCount].dfGCPY = atof(Tokens[2]);
-                pasGCPList[nGCPCount].dfGCPPixel = atof(Tokens[4]);
-                pasGCPList[nGCPCount].dfGCPLine = atof(Tokens[3]);
+                pasGCPList[nGCPCount].dfGCPX = CPLAtof(Tokens[1]);
+                pasGCPList[nGCPCount].dfGCPY = CPLAtof(Tokens[2]);
+                pasGCPList[nGCPCount].dfGCPPixel = CPLAtof(Tokens[4]);
+                pasGCPList[nGCPCount].dfGCPLine = CPLAtof(Tokens[3]);
 
                 CPLFree( pasGCPList[nGCPCount].pszId );
                 char	szName[50];
@@ -676,10 +676,10 @@ void BSBDataset::ScanForGCPsBSB()
         {
             GDALInitGCPs( 1, pasGCPList + nGCPCount );
 
-            pasGCPList[nGCPCount].dfGCPX = atof(papszTokens[4]);
-            pasGCPList[nGCPCount].dfGCPY = atof(papszTokens[3]);
-            pasGCPList[nGCPCount].dfGCPPixel = atof(papszTokens[1]);
-            pasGCPList[nGCPCount].dfGCPLine = atof(papszTokens[2]);
+            pasGCPList[nGCPCount].dfGCPX = CPLAtof(papszTokens[4]);
+            pasGCPList[nGCPCount].dfGCPY = CPLAtof(papszTokens[3]);
+            pasGCPList[nGCPCount].dfGCPPixel = CPLAtof(papszTokens[1]);
+            pasGCPList[nGCPCount].dfGCPLine = CPLAtof(papszTokens[2]);
 
             CPLFree( pasGCPList[nGCPCount].pszId );
             if( CSLCount(papszTokens) > 5 )

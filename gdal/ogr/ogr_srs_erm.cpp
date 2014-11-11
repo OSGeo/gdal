@@ -111,7 +111,7 @@ OGRErr OGRSpatialReference::importFromERM( const char *pszProj,
             return eErr;
 
         if( EQUAL(pszUnits,"FEET") )
-            SetLinearUnits( SRS_UL_US_FOOT, atof(SRS_UL_US_FOOT_CONV));
+            SetLinearUnits( SRS_UL_US_FOOT, CPLAtof(SRS_UL_US_FOOT_CONV));
         else
             SetLinearUnits( SRS_UL_METER, 1.0 );
     }

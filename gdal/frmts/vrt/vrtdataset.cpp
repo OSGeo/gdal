@@ -326,7 +326,7 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
         else
         {
             for( int iTA = 0; iTA < 6; iTA++ )
-                adfGeoTransform[iTA] = atof(papszTokens[iTA]);
+                adfGeoTransform[iTA] = CPLAtof(papszTokens[iTA]);
             bGeoTransformSet = TRUE;
         }
 
@@ -966,7 +966,7 @@ CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
                 if( CSLCount(papszTokens) > 1 )
                     sscanf( papszTokens[1], "%p", &pCBData );
                 if( CSLCount(papszTokens) > 2 )
-                    dfNoDataValue = atof( papszTokens[2] );
+                    dfNoDataValue = CPLAtof( papszTokens[2] );
 
                 poBand->AddFuncSource( pfnReadFunc, pCBData, dfNoDataValue );
             }

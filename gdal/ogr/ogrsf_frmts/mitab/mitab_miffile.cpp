@@ -598,10 +598,10 @@ int MIFFile::ParseMIFHeader(int* pbIsEmpty)
             int iBounds = CSLFindString( papszFields, "Bounds" );
             if (iBounds >= 0 && iBounds + 4 < CSLCount(papszFields))
             {
-                m_dXMin = atof(papszFields[++iBounds]);
-                m_dYMin = atof(papszFields[++iBounds]);
-                m_dXMax = atof(papszFields[++iBounds]);
-                m_dYMax = atof(papszFields[++iBounds]);
+                m_dXMin = CPLAtof(papszFields[++iBounds]);
+                m_dYMin = CPLAtof(papszFields[++iBounds]);
+                m_dXMax = CPLAtof(papszFields[++iBounds]);
+                m_dYMax = CPLAtof(papszFields[++iBounds]);
                 m_bBoundsSet = TRUE;
             }
             CSLDestroy( papszFields );
@@ -613,10 +613,10 @@ int MIFFile::ParseMIFHeader(int* pbIsEmpty)
           
             if (CSLCount(papszToken) == 5)
             {
-                m_dfXMultiplier   = atof(papszToken[1]);
-                m_dfYMultiplier   = atof(papszToken[2]);
-                m_dfXDisplacement = atof(papszToken[3]);
-                m_dfYDisplacement = atof(papszToken[4]);
+                m_dfXMultiplier   = CPLAtof(papszToken[1]);
+                m_dfYMultiplier   = CPLAtof(papszToken[2]);
+                m_dfXDisplacement = CPLAtof(papszToken[3]);
+                m_dfYDisplacement = CPLAtof(papszToken[4]);
                 
                 if (m_dfXMultiplier == 0.0)
                   m_dfXMultiplier = 1.0;
@@ -931,8 +931,8 @@ void MIFFile::PreParseFile()
             m_nPoints++;
             if (CSLCount(papszToken) == 3)
             {
-                UpdateExtents(m_poMIFFile->GetXTrans(atof(papszToken[1])),
-                             m_poMIFFile->GetYTrans(atof(papszToken[2])));
+                UpdateExtents(m_poMIFFile->GetXTrans(CPLAtof(papszToken[1])),
+                             m_poMIFFile->GetYTrans(CPLAtof(papszToken[2])));
             }
               
         }
@@ -945,10 +945,10 @@ void MIFFile::PreParseFile()
             if (CSLCount(papszToken) == 5)
             {
                 m_nLines++;
-                UpdateExtents(m_poMIFFile->GetXTrans(atof(papszToken[1])), 
-                             m_poMIFFile->GetYTrans(atof(papszToken[2])));
-                UpdateExtents(m_poMIFFile->GetXTrans(atof(papszToken[3])), 
-                             m_poMIFFile->GetYTrans(atof(papszToken[4])));
+                UpdateExtents(m_poMIFFile->GetXTrans(CPLAtof(papszToken[1])), 
+                             m_poMIFFile->GetYTrans(CPLAtof(papszToken[2])));
+                UpdateExtents(m_poMIFFile->GetXTrans(CPLAtof(papszToken[3])), 
+                             m_poMIFFile->GetYTrans(CPLAtof(papszToken[4])));
             }
         }
         else if (EQUALN(pszLine,"REGION",6) )
@@ -971,8 +971,8 @@ void MIFFile::PreParseFile()
             if (CSLCount(papszToken) == 2 &&
                 strchr("-.0123456789", papszToken[0][0]) != NULL)
             {
-                UpdateExtents( m_poMIFFile->GetXTrans(atof(papszToken[0])),
-                              m_poMIFFile->GetYTrans(atof(papszToken[1])));
+                UpdateExtents( m_poMIFFile->GetXTrans(CPLAtof(papszToken[0])),
+                              m_poMIFFile->GetYTrans(CPLAtof(papszToken[1])));
             }
         }
         else if (bText == TRUE)
@@ -980,10 +980,10 @@ void MIFFile::PreParseFile()
            if (CSLCount(papszToken) == 4 &&
                 strchr("-.0123456789", papszToken[0][0]) != NULL)
             {
-                UpdateExtents(m_poMIFFile->GetXTrans(atof(papszToken[0])),
-                             m_poMIFFile->GetYTrans(atof(papszToken[1])));
-                UpdateExtents(m_poMIFFile->GetXTrans(atof(papszToken[2])),
-                             m_poMIFFile->GetYTrans(atof(papszToken[3])));
+                UpdateExtents(m_poMIFFile->GetXTrans(CPLAtof(papszToken[0])),
+                             m_poMIFFile->GetYTrans(CPLAtof(papszToken[1])));
+                UpdateExtents(m_poMIFFile->GetXTrans(CPLAtof(papszToken[2])),
+                             m_poMIFFile->GetYTrans(CPLAtof(papszToken[3])));
             } 
         }
         
@@ -2061,10 +2061,10 @@ int MIFFile::SetMIFCoordSys(const char * pszMIFCoordSys)
     iBounds = CSLFindString( papszFields, "Bounds" );
     if (iBounds >= 0 && iBounds + 4 < CSLCount(papszFields))
     {
-        m_dXMin = atof(papszFields[++iBounds]);
-        m_dYMin = atof(papszFields[++iBounds]);
-        m_dXMax = atof(papszFields[++iBounds]);
-        m_dYMax = atof(papszFields[++iBounds]);
+        m_dXMin = CPLAtof(papszFields[++iBounds]);
+        m_dYMin = CPLAtof(papszFields[++iBounds]);
+        m_dXMax = CPLAtof(papszFields[++iBounds]);
+        m_dYMax = CPLAtof(papszFields[++iBounds]);
         m_bBoundsSet = TRUE;
 
         pszCoordSys[strstr(pszCoordSys, "Bounds") - pszCoordSys] = '\0';

@@ -1530,9 +1530,9 @@ int SAR_CEOSDataset::ScanForMapProjection()
         pasGCPList[i].pszId = CPLStrdup( szId );
     
         GetCeosField( record, 1073+32*i, "A16", szField );
-        pasGCPList[i].dfGCPY = atof(szField);
+        pasGCPList[i].dfGCPY = CPLAtof(szField);
         GetCeosField( record, 1089+32*i, "A16", szField );
-        pasGCPList[i].dfGCPX = atof(szField);
+        pasGCPList[i].dfGCPX = CPLAtof(szField);
         pasGCPList[i].dfGCPZ = 0.0;
     }
     

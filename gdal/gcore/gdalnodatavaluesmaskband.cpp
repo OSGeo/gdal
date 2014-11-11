@@ -48,7 +48,7 @@ GDALNoDataValuesMaskBand::GDALNoDataValuesMaskBand( GDALDataset* poDS )
     padfNodataValues = (double*)CPLMalloc(sizeof(double) * poDS->GetRasterCount());
     for(i=0;i<poDS->GetRasterCount();i++)
     {
-        padfNodataValues[i] = atof(papszNoDataValues[i]);
+        padfNodataValues[i] = CPLAtof(papszNoDataValues[i]);
     }
 
     CSLDestroy(papszNoDataValues);

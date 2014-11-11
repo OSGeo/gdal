@@ -1200,7 +1200,7 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
     pszValue = CSLFetchNameValue( papszOptions, "REFINE_TOLERANCE" );
     if( pszValue )
     {
-        dfTolerance = atof(pszValue);
+        dfTolerance = CPLAtof(pszValue);
         bRefine = TRUE;
     }
 
@@ -1984,7 +1984,7 @@ GDALSerializeGenImgProjTransformer( void *pTransformArg )
 /* -------------------------------------------------------------------- */
     else
     {
-        sprintf( szWork, "%.18g,%.18g,%.18g,%.18g,%.18g,%.18g",
+        CPLsprintf( szWork, "%.18g,%.18g,%.18g,%.18g,%.18g,%.18g",
                  psInfo->adfSrcGeoTransform[0],
                  psInfo->adfSrcGeoTransform[1],
                  psInfo->adfSrcGeoTransform[2],
@@ -1993,7 +1993,7 @@ GDALSerializeGenImgProjTransformer( void *pTransformArg )
                  psInfo->adfSrcGeoTransform[5] );
         CPLCreateXMLElementAndValue( psTree, "SrcGeoTransform", szWork );
         
-        sprintf( szWork, "%.18g,%.18g,%.18g,%.18g,%.18g,%.18g",
+        CPLsprintf( szWork, "%.18g,%.18g,%.18g,%.18g,%.18g,%.18g",
                  psInfo->adfSrcInvGeoTransform[0],
                  psInfo->adfSrcInvGeoTransform[1],
                  psInfo->adfSrcInvGeoTransform[2],
@@ -2059,7 +2059,7 @@ GDALSerializeGenImgProjTransformer( void *pTransformArg )
 /* -------------------------------------------------------------------- */
     else
     {
-        sprintf( szWork, "%.18g,%.18g,%.18g,%.18g,%.18g,%.18g",
+        CPLsprintf( szWork, "%.18g,%.18g,%.18g,%.18g,%.18g,%.18g",
                  psInfo->adfDstGeoTransform[0],
                  psInfo->adfDstGeoTransform[1],
                  psInfo->adfDstGeoTransform[2],
@@ -2068,7 +2068,7 @@ GDALSerializeGenImgProjTransformer( void *pTransformArg )
                  psInfo->adfDstGeoTransform[5] );
         CPLCreateXMLElementAndValue( psTree, "DstGeoTransform", szWork );
         
-        sprintf( szWork, "%.18g,%.18g,%.18g,%.18g,%.18g,%.18g",
+        CPLsprintf( szWork, "%.18g,%.18g,%.18g,%.18g,%.18g,%.18g",
                  psInfo->adfDstInvGeoTransform[0],
                  psInfo->adfDstInvGeoTransform[1],
                  psInfo->adfDstInvGeoTransform[2],
@@ -2801,7 +2801,7 @@ static void *
 GDALDeserializeApproxTransformer( CPLXMLNode *psTree )
 
 {
-    double dfMaxError = atof(CPLGetXMLValue( psTree, "MaxError",  "0.25" ));
+    double dfMaxError = CPLAtof(CPLGetXMLValue( psTree, "MaxError",  "0.25" ));
     CPLXMLNode *psContainer;
     GDALTransformerFunc pfnBaseTransform = NULL;
     void *pBaseCBData = NULL;

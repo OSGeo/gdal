@@ -549,7 +549,7 @@ char *GXFGetMapProjectionAsOGCWKT( GXFHandle hGXF )
         if( strlen(psGXF->pszUnitName) > 80 )
             return CPLStrdup("");
 
-        sprintf( szProjection+strlen(szProjection),
+        CPLsprintf( szProjection+strlen(szProjection),
                  ",UNIT[\"%s\",%.15g]",
                  psGXF->pszUnitName, psGXF->dfUnitToMeter );
     }
@@ -572,8 +572,8 @@ char *GXFGetMapProjectionAsOGCWKT( GXFHandle hGXF )
 
         if( CSLCount(papszTokens) > 2 )
         {
-            double	dfMajor = atof(papszTokens[1]);
-            double	dfEccentricity = atof(papszTokens[2]);
+            double	dfMajor = CPLAtof(papszTokens[1]);
+            double	dfEccentricity = CPLAtof(papszTokens[2]);
             double	dfInvFlattening, dfMinor;
             char	*pszOGCDatum;
 
@@ -589,7 +589,7 @@ char *GXFGetMapProjectionAsOGCWKT( GXFHandle hGXF )
             pszOGCDatum = CPLStrdup(papszTokens[0]);
             WKTMassageDatum( &pszOGCDatum );
             
-            sprintf( szGCS,
+            CPLsprintf( szGCS,
                      "GEOGCS[\"%s\","
                        "DATUM[\"%s\","
                        "SPHEROID[\"%s\",%s,%.15g]],",

@@ -1330,7 +1330,7 @@ const char *AVCE00GenTableRec(AVCE00GenInfo *psInfo, int numFields,
                  */
                 nLen = AVCPrintRealValue(pszBuf2, AVC_DOUBLE_PREC,
                                          AVCFileTABLE,
-                                         atof((char*)pasFields[i].pszStr));
+                                         CPLAtof((char*)pasFields[i].pszStr));
                 pszBuf2 += nLen;
             }
 #endif
@@ -1343,7 +1343,7 @@ const char *AVCE00GenTableRec(AVCE00GenInfo *psInfo, int numFields,
                 pszBuf2[0] = '\0';
                 nLen = AVCPrintRealValue(pszBuf2, AVC_SINGLE_PREC, 
                                        AVCFileTABLE,
-                                         atof((char*)pasFields[i].pszStr));
+                                         CPLAtof((char*)pasFields[i].pszStr));
                 pszBuf2 += nLen;
             }
             else if (nType == AVC_FT_BININT && nSize == 4)

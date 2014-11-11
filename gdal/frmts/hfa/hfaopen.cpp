@@ -2758,7 +2758,7 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
             {
               case 'd':
               {
-                  double dfValue = atof( pszValue );
+                  double dfValue = CPLAtof( pszValue );
                   poEntry->SetDoubleField( pszFieldName, dfValue );
               }
               break;
@@ -2847,7 +2847,7 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
                 {
                     *pszEnd = 0;
                     VSIFSeekL( hHFA->fp, nOffset + 8*nBin, SEEK_SET );
-                    double nValue = atof( pszWork );
+                    double nValue = CPLAtof( pszWork );
                     HFAStandard( 8, &nValue );
 
                     VSIFWriteL( (void *)&nValue, 1, 8, hHFA->fp );
@@ -2898,7 +2898,7 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
                         } else {
                             // Histogram were written as doubles, as is now the default behaviour
                             VSIFSeekL( hHFA->fp, nOffset + 8*nBin, SEEK_SET );
-                            double nValue = atof( pszWork );
+                            double nValue = CPLAtof( pszWork );
                             HFAStandard( 8, &nValue );
                             VSIFWriteL( (void *)&nValue, 1, 8, hHFA->fp );
                         }

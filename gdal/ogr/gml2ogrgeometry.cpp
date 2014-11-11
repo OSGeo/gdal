@@ -957,10 +957,10 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
         int nSign = (det >= 0) ? 1 : -1;
 
         double alpha, dfRemainder;
-        double dfStep = atof(CPLGetConfigOption("OGR_ARC_STEPSIZE","4")) / 180 * PI;
+        double dfStep = CPLAtof(CPLGetConfigOption("OGR_ARC_STEPSIZE","4")) / 180 * PI;
 
         // make sure the segments are not too short
-        double dfMinStepLength = atof( CPLGetConfigOption("OGR_ARC_MINLENGTH","0") );
+        double dfMinStepLength = CPLAtof( CPLGetConfigOption("OGR_ARC_MINLENGTH","0") );
         if ( dfMinStepLength > 0.0 && dfStep * R < dfMinStepLength )
         {
             CPLDebug( "GML", "Increasing arc step to %lf° (was %lf° with segment length %lf at radius %lf; min segment length is %lf)",

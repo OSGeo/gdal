@@ -312,8 +312,8 @@ bool TSXDataset::getGCPsFromGEOREF_XML(char *pszGeorefFilename)
     if (psSphere!=NULL)
     {
         pszEllipsoidName = CPLGetXMLValue( psSphere, "ellipsoidID", "" );
-        minor_axis = atof(CPLGetXMLValue( psSphere, "semiMinorAxis", "0.0" ));
-        major_axis = atof(CPLGetXMLValue( psSphere, "semiMajorAxis", "0.0" ));
+        minor_axis = CPLAtof(CPLGetXMLValue( psSphere, "semiMinorAxis", "0.0" ));
+        major_axis = CPLAtof(CPLGetXMLValue( psSphere, "semiMajorAxis", "0.0" ));
         //save datum parameters to the spatial reference
         if ( EQUAL(pszEllipsoidName, "") || minor_axis==0.0 || major_axis==0.0 )
         {
@@ -399,16 +399,16 @@ bool TSXDataset::getGCPsFromGEOREF_XML(char *pszGeorefFilename)
          psGCP->pszId = CPLStrdup( szID );
          psGCP->pszInfo = CPLStrdup("");
          psGCP->dfGCPPixel =
-             atof(CPLGetXMLValue(psNode,"col","0"));
+             CPLAtof(CPLGetXMLValue(psNode,"col","0"));
          psGCP->dfGCPLine =
-             atof(CPLGetXMLValue(psNode,"row","0"));
+             CPLAtof(CPLGetXMLValue(psNode,"row","0"));
          psGCP->dfGCPX =
-             atof(CPLGetXMLValue(psNode,"lon",""));
+             CPLAtof(CPLGetXMLValue(psNode,"lon",""));
          psGCP->dfGCPY =
-             atof(CPLGetXMLValue(psNode,"lat",""));
+             CPLAtof(CPLGetXMLValue(psNode,"lat",""));
          //looks like height is in meters - should it be converted so xyz are all on the same scale??
          psGCP->dfGCPZ = 0;
-             //atof(CPLGetXMLValue(psNode,"height",""));
+             //CPLAtof(CPLGetXMLValue(psNode,"height",""));
     }
 
     CPLFree(pszGCPProjection);
@@ -658,7 +658,7 @@ GDALDataset *TSXDataset::Open( GDALOpenInfo *poOpenInfo ) {
         {
             CPLXMLNode *psNode;
             int nGCP = 0;
-            double dfAvgHeight = atof(CPLGetXMLValue(psSceneInfo,
+            double dfAvgHeight = CPLAtof(CPLGetXMLValue(psSceneInfo,
                 "sceneAverageHeight", "0.0"));
 
             //count and allocate gcps - there should be five - 4 corners and a centre
@@ -684,11 +684,11 @@ GDALDataset *TSXDataset::Open( GDALOpenInfo *poOpenInfo ) {
                         !EQUAL(psNode->pszValue, "sceneCornerCoord"))
                         continue;
 
-                    psGCP->dfGCPPixel = atof(CPLGetXMLValue(psNode, "refColumn",
+                    psGCP->dfGCPPixel = CPLAtof(CPLGetXMLValue(psNode, "refColumn",
                         "0.0"));
-                    psGCP->dfGCPLine = atof(CPLGetXMLValue(psNode, "refRow", "0.0"));
-                    psGCP->dfGCPX = atof(CPLGetXMLValue(psNode, "lon", "0.0"));
-                    psGCP->dfGCPY = atof(CPLGetXMLValue(psNode, "lat", "0.0"));
+                    psGCP->dfGCPLine = CPLAtof(CPLGetXMLValue(psNode, "refRow", "0.0"));
+                    psGCP->dfGCPX = CPLAtof(CPLGetXMLValue(psNode, "lon", "0.0"));
+                    psGCP->dfGCPY = CPLAtof(CPLGetXMLValue(psNode, "lat", "0.0"));
                     psGCP->dfGCPZ = dfAvgHeight;
                     psGCP->pszId = CPLStrdup( CPLSPrintf( "%d", nGCP ) );
                     psGCP->pszInfo = CPLStrdup("");

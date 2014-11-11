@@ -1157,7 +1157,7 @@ std::string ods_formula_node::TransformToString() const
     }
     else if (field_type == ODS_FIELD_TYPE_FLOAT)
     {
-        snprintf(szTmp, sizeof(szTmp), "%.16g", float_value);
+        CPLsnprintf(szTmp, sizeof(szTmp), "%.16g", float_value);
         return szTmp;
     }
     else if (field_type == ODS_FIELD_TYPE_STRING)

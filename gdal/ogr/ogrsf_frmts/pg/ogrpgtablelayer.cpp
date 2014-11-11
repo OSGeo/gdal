@@ -768,10 +768,10 @@ void OGRPGTableLayer::BuildWhere()
             if( sEnvelope.MaxY > 90.0 )
                 sEnvelope.MaxY = 90.0;
         }
-        snprintf(szBox3D_1, sizeof(szBox3D_1), "%.18g %.18g", sEnvelope.MinX, sEnvelope.MinY);
+        CPLsnprintf(szBox3D_1, sizeof(szBox3D_1), "%.18g %.18g", sEnvelope.MinX, sEnvelope.MinY);
         while((pszComma = strchr(szBox3D_1, ',')) != NULL)
             *pszComma = '.';
-        snprintf(szBox3D_2, sizeof(szBox3D_2), "%.18g %.18g", sEnvelope.MaxX, sEnvelope.MaxY);
+        CPLsnprintf(szBox3D_2, sizeof(szBox3D_2), "%.18g %.18g", sEnvelope.MaxX, sEnvelope.MaxY);
         while((pszComma = strchr(szBox3D_2, ',')) != NULL)
             *pszComma = '.';
         osWHERE.Printf("WHERE %s && %s('BOX3D(%s, %s)'::box3d,%d) ",
@@ -1175,7 +1175,7 @@ void OGRPGTableLayer::AppendFieldValue(PGconn *hPGConn, CPLString& osCommand,
             else if( CPLIsInf(padfItems[j]) )
                 sprintf( pszNeedToFree+nOff, (padfItems[j] > 0) ? "Infinity" : "-Infinity" );
             else
-                sprintf( pszNeedToFree+nOff, "%.16g", padfItems[j] );
+                CPLsprintf( pszNeedToFree+nOff, "%.16g", padfItems[j] );
 
             char* pszComma = strchr(pszNeedToFree+nOff, ',');
             if (pszComma)
@@ -2066,7 +2066,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
                 else if( CPLIsInf(padfItems[j]) )
                     sprintf( pszNeedToFree+nOff, (padfItems[j] > 0) ? "Infinity" : "-Infinity" );
                 else
-                    sprintf( pszNeedToFree+nOff, "%.16g", padfItems[j] );
+                    CPLsprintf( pszNeedToFree+nOff, "%.16g", padfItems[j] );
 
                 char* pszComma = strchr(pszNeedToFree+nOff, ',');
                 if (pszComma)

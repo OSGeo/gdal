@@ -1007,7 +1007,6 @@ GBool PostGISRasterDataset::LoadSources(int nXOff, int nYOff, int nXSize, int nY
     }
     else
     {
-        CPLLocaleC oCLocale;
         double adfProjWin[8];
         PolygonFromCoords(nXOff, nYOff, nXOff + nXSize, nYOff + nYSize, adfProjWin); 
         osSpatialFilter.Printf("%s && "
@@ -1923,7 +1922,6 @@ const char * pszValidConnectionString)
             dfTileUpperLeftX = CPLAtof(papszParams[POS_UPPERLEFTX]);
             dfTileUpperLeftY = CPLAtof(papszParams[POS_UPPERLEFTY]);
         
-            CPLLocaleC oCLocale;
             papszSubdatasets[2 * i] = 
                 CPLStrdup(CPLSPrintf("SUBDATASET_%d_NAME=PG:%s schema=%s table=%s column=%s "
                     "where='abs(ST_UpperLeftX(%s) - %.8f) < 1e-8 AND "

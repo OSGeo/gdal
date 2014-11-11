@@ -35,7 +35,7 @@
  * add support for reading google mercator (#4115)
  *
  * Revision 1.54  2010-10-07 18:46:26  aboudreault
- * Fixed bad use of atof when locale setting doesn't use . for float (GDAL bug #3775)
+ * Fixed bad use of CPLAtof when locale setting doesn't use . for float (GDAL bug #3775)
  *
  * Revision 1.53  2010-09-07 16:48:08  aboudreault
  * Removed incomplete patch for affine params support in mitab. (bug 1155)
@@ -1891,18 +1891,18 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
         if( CSLCount(papszFields) >= 5 )
         {
             sTABProj.nEllipsoidId = (GByte)atoi(papszFields[1]);
-            sTABProj.dDatumShiftX = atof(papszFields[2]);
-            sTABProj.dDatumShiftY = atof(papszFields[3]);
-            sTABProj.dDatumShiftZ = atof(papszFields[4]);
+            sTABProj.dDatumShiftX = CPLAtof(papszFields[2]);
+            sTABProj.dDatumShiftY = CPLAtof(papszFields[3]);
+            sTABProj.dDatumShiftZ = CPLAtof(papszFields[4]);
         }
 
         if( CSLCount(papszFields) >= 10 )
         {
-            sTABProj.adDatumParams[0] = atof(papszFields[5]);
-            sTABProj.adDatumParams[1] = atof(papszFields[6]);
-            sTABProj.adDatumParams[2] = atof(papszFields[7]);
-            sTABProj.adDatumParams[3] = atof(papszFields[8]);
-            sTABProj.adDatumParams[4] = atof(papszFields[9]);
+            sTABProj.adDatumParams[0] = CPLAtof(papszFields[5]);
+            sTABProj.adDatumParams[1] = CPLAtof(papszFields[6]);
+            sTABProj.adDatumParams[2] = CPLAtof(papszFields[7]);
+            sTABProj.adDatumParams[3] = CPLAtof(papszFields[8]);
+            sTABProj.adDatumParams[4] = CPLAtof(papszFields[9]);
         }
 
         if( CSLCount(papszFields) < 5 )

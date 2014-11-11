@@ -224,7 +224,7 @@ double RDataset::ReadFloat()
 {
     if( bASCII )
     {
-        return atof(ASCIIFGets());
+        return CPLAtof(ASCIIFGets());
     }
     else
     {
