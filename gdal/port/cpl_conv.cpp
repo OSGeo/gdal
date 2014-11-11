@@ -1716,7 +1716,7 @@ proj_strtod(char *nptr, char **endptr)
              * then restore it and return
              */
             *cp = '\0';
-            result = strtod(nptr, endptr);
+            result = CPLStrtod(nptr, endptr);
             *cp = c;
             return result;
         }
@@ -1725,7 +1725,7 @@ proj_strtod(char *nptr, char **endptr)
 
     /* no offending characters, just handle normally */
 
-    return strtod(nptr, endptr);
+    return CPLStrtod(nptr, endptr);
 }
 
 /************************************************************************/
