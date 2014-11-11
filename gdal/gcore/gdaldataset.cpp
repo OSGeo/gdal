@@ -2407,7 +2407,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
 
     int         iDriver;
     GDALDriverManager *poDM = GetGDALDriverManager();
-    CPLLocaleC  oLocaleForcer;
+    //CPLLocaleC  oLocaleForcer;
 
     CPLErrorReset();
     CPLAssert( NULL != poDM );
@@ -2651,7 +2651,7 @@ void CPL_STDCALL GDALClose( GDALDatasetH hDS )
 
     GDALDataset *poDS = (GDALDataset *) hDS;
     CPLMutexHolderD( &hDLMutex );
-    CPLLocaleC  oLocaleForcer;
+    //CPLLocaleC  oLocaleForcer;
 
     if (poDS->GetShared())
     {
