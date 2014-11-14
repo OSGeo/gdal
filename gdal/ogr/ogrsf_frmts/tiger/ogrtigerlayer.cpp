@@ -254,10 +254,10 @@ OGRErr OGRTigerLayer::CreateField( CPL_UNUSED OGRFieldDefn *poField,
 }
 
 /************************************************************************/
-/*                           CreateFeature()                            */
+/*                          ICreateFeature()                            */
 /************************************************************************/
 
-OGRErr OGRTigerLayer::CreateFeature( OGRFeature *poFeature )
+OGRErr OGRTigerLayer::ICreateFeature( OGRFeature *poFeature )
 
 {
     return poReader->CreateFeature( poFeature );

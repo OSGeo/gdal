@@ -483,7 +483,7 @@ OGRSpatialReference *OGRIDBTableLayer::GetSpatialRef()
 }
 
 #if 0
-OGRErr OGRIDBTableLayer::SetFeature( OGRFeature *poFeature )
+OGRErr OGRIDBTableLayer::ISetFeature( OGRFeature *poFeature )
 {
     OGRErr eErr(OGRERR_FAILURE);
 
@@ -697,7 +697,7 @@ OGRErr OGRIDBTableLayer::SetFeature( OGRFeature *poFeature )
 
 #endif
 
-OGRErr OGRIDBTableLayer::SetFeature( OGRFeature *poFeature )
+OGRErr OGRIDBTableLayer::ISetFeature( OGRFeature *poFeature )
 {
     OGRErr eErr(OGRERR_FAILURE);
 
@@ -863,7 +863,7 @@ OGRErr OGRIDBTableLayer::SetFeature( OGRFeature *poFeature )
     return OGRERR_NONE;
 }
 
-OGRErr OGRIDBTableLayer::CreateFeature( OGRFeature *poFeature )
+OGRErr OGRIDBTableLayer::ICreateFeature( OGRFeature *poFeature )
 {
     OGRErr eErr(OGRERR_FAILURE);
 

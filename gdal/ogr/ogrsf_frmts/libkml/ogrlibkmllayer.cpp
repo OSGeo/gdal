@@ -512,7 +512,7 @@ OGRFeature *OGRLIBKMLLayer::GetNextRawFeature (
                 
 ******************************************************************************/
 
-OGRErr OGRLIBKMLLayer::CreateFeature (
+OGRErr OGRLIBKMLLayer::ICreateFeature (
     OGRFeature * poOgrFeat )
 {
 
@@ -603,7 +603,7 @@ OGRErr OGRLIBKMLLayer::CreateFeature (
 
 ******************************************************************************/
 
-OGRErr OGRLIBKMLLayer::SetFeature ( OGRFeature * poOgrFeat )
+OGRErr OGRLIBKMLLayer::ISetFeature ( OGRFeature * poOgrFeat )
 {
     if( !bUpdate || m_poKmlUpdate == NULL )
         return OGRERR_UNSUPPORTED_OPERATION;

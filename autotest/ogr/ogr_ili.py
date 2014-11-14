@@ -903,7 +903,7 @@ def ogr_interlis_arc1():
     if abs(length-length_0_1_deg) > 0.7: #72.7016803283
         gdaltest.post_reason( 'Length() result wrong, got %g.' % length )
         return 'fail'
-    if ogrtest.check_feature_geometry(geom, 'LINESTRING (186.38 206.82,186.768623686387684 203.205889815121054,186.742131691546092 200.213311625041456,186.402975223206795 197.239896258915451,185.754870150610031 194.318221077721432,184.804917248555853 191.480296566144432,183.26 188.19,181.620123736225366 185.556121443670179,179.776932597909394 183.198395319379188,177.697389164927273 181.046251002686745,175.404277350303147 179.123267837091674,172.922720966942563 177.45051442856635,170.18 176.0,140.69 156.63)') != 0:
+    if ogrtest.check_feature_geometry(geom, 'COMPOUNDCURVE (CIRCULARSTRING (186.38 206.82,183.26 188.19,170.18 176.0),(170.18 176.0,140.69 156.63))') != 0:
         gdaltest.post_reason( '<gml:Curve> not correctly parsed' )
         print(geom.ExportToWkt())
         return 'fail'
@@ -916,7 +916,7 @@ def ogr_interlis_arc1():
     if abs(length-length_0_1_deg) > 0.7: #72.6745269621
         gdaltest.post_reason( 'Length() result wrong, got %g.' % length )
         return 'fail'
-    if ogrtest.check_feature_geometry(geom, 'LINESTRING (186.38 206.82,186.707260350859286 199.715527332323774,185.884082527359169 194.800205905462519,183.26 188.19,179.446170855918467 182.824761966327173,175.800254672220944 179.426924177391925,170.18 176.0,140.69 156.63)') != 0:
+    if ogrtest.check_feature_geometry(geom, 'COMPOUNDCURVE (CIRCULARSTRING (186.38 206.82,183.26 188.19,170.18 176.0),(170.18 176.0,140.69 156.63))') != 0:
         gdaltest.post_reason( '<gml:Curve> not correctly parsed' )
         print(geom.ExportToWkt())
         return 'fail'

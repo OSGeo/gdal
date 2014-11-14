@@ -322,6 +322,48 @@ def ogr_wkbwkt_test_broken_geom():
                     'GEOMETRYCOLLECTION Z()',
                     'GEOMETRYCOLLECTION Z(EMPTY',
                     'GEOMETRYCOLLECTION Z(POINT(0 1)',
+
+                    'COMPOUNDCURVE',
+                    'COMPOUNDCURVE UNKNOWN',
+                    'COMPOUNDCURVE(',
+                    'COMPOUNDCURVE()',
+                    'COMPOUNDCURVE(,)',
+                    'COMPOUNDCURVE(())',
+                    'COMPOUNDCURVE(EMPTY',
+                    'COMPOUNDCURVE(EMPTY,',
+                    'COMPOUNDCURVE(A)',
+                    'COMPOUNDCURVE((0 1,2 3',
+                    'COMPOUNDCURVE((0 1,2 3)',
+                    'COMPOUNDCURVE((0 1,2 3)',
+                    'COMPOUNDCURVE((0 1,2 3),',
+                    'COMPOUNDCURVE((0 1,2 3),)',
+                    'COMPOUNDCURVE((0 1,2 3),UNKNOWN)',
+                    'COMPOUNDCURVE Z',
+                    'COMPOUNDCURVE Z(',
+                    'COMPOUNDCURVE Z()',
+                    'COMPOUNDCURVE Z(EMPTY',
+                    'COMPOUNDCURVE Z((0 1,2 3)',
+
+                    'CURVEPOLYGON',
+                    'CURVEPOLYGON UNKNOWN',
+                    'CURVEPOLYGON(',
+                    'CURVEPOLYGON()',
+                    'CURVEPOLYGON(,)',
+                    'CURVEPOLYGON(())',
+                    'CURVEPOLYGON(EMPTY',
+                    'CURVEPOLYGON(EMPTY,',
+                    'CURVEPOLYGON(A)',
+                    'CURVEPOLYGON((0 1,2 3',
+                    'CURVEPOLYGON((0 1,2 3)',
+                    'CURVEPOLYGON((0 1,2 3)',
+                    'CURVEPOLYGON((0 1,2 3),',
+                    'CURVEPOLYGON((0 1,2 3),)',
+                    'CURVEPOLYGON((0 1,2 3),UNKNOWN)',
+                    'CURVEPOLYGON Z',
+                    'CURVEPOLYGON Z(',
+                    'CURVEPOLYGON Z()',
+                    'CURVEPOLYGON Z(EMPTY',
+                    'CURVEPOLYGON Z((0 1,2 3)',
                   ]
     for wkt in list_broken:
         gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -436,6 +478,15 @@ def ogr_wkbwkt_test_import_wkt_sf12():
                         # Not SF1.2 compliant but recognized
                         ('GEOMETRYCOLLECTION (POINT(EMPTY),LINESTRING(EMPTY),POLYGON(EMPTY),MULTIPOINT(EMPTY),MULTILINESTRING(EMPTY),MULTIPOLYGON(EMPTY),GEOMETRYCOLLECTION(EMPTY))',
                          'GEOMETRYCOLLECTION (POINT EMPTY,LINESTRING EMPTY,POLYGON EMPTY,MULTIPOINT EMPTY,MULTILINESTRING EMPTY,MULTIPOLYGON EMPTY,GEOMETRYCOLLECTION EMPTY)'),
+
+                        ('CURVEPOLYGON EMPTY', 'CURVEPOLYGON EMPTY'),
+                        ('CURVEPOLYGON (EMPTY)', 'CURVEPOLYGON EMPTY'),
+
+                        ('MULTICURVE EMPTY', 'MULTICURVE EMPTY'),
+                        ('MULTICURVE (EMPTY)', 'MULTICURVE EMPTY'),
+
+                        ('MULTISURFACE EMPTY', 'MULTISURFACE EMPTY'),
+                        ('MULTISURFACE (EMPTY)', 'MULTISURFACE EMPTY'),
                       ]
 
     for wkt_tuple in list_wkt_tuples:
@@ -481,6 +532,11 @@ def ogr_wkbwkt_test_geometrycollection_wktwkb():
                  'GEOMETRYCOLLECTION (MULTILINESTRING ((0 1,2 3)))',
                  'GEOMETRYCOLLECTION (MULTIPOLYGON (((0 0,0 1,1 1,0 0))))',
                  'GEOMETRYCOLLECTION (GEOMETRYCOLLECTION (POINT (0 1)))',
+                 'GEOMETRYCOLLECTION (CIRCULARSTRING (0 0,1 0,0 0))',
+                 'GEOMETRYCOLLECTION (COMPOUNDCURVE ((0 0,1 0,0 0)))',
+                 'GEOMETRYCOLLECTION (CURVEPOLYGON ((0 0,0 1,1 1,0 0)))',
+                 'GEOMETRYCOLLECTION (MULTICURVE ((0 0,0 1,1 1,0 0)))',
+                 'GEOMETRYCOLLECTION (MULTISURFACE (((0 0,0 1,1 1,0 0))))',
                ]
     for wkt in wkt_list:
         g = ogr.CreateGeometryFromWkt(wkt)
@@ -563,6 +619,21 @@ def ogr_wkbwkt_test_geometrycollection_wkb_recursion():
     return 'success'
 
 ###############################################################################
+# Test ISO WKT compliant export of MULTIPOINT
+
+def ogr_wkbwkt_export_wkt_iso_multipoint():
+
+    wkt = 'MULTIPOINT ((0 0),(1 1))'
+    g = ogr.CreateGeometryFromWkt(wkt)
+    out_wkt = g.ExportToIsoWkt()
+    if out_wkt != wkt:
+        gdaltest.post_reason('fail')
+        print(out_wkt)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # When imported build a list of units based on the files available.
 
 #print 'hit enter'
@@ -583,6 +654,7 @@ gdaltest_list.append( ogr_wkbwkt_test_import_bad_multipoint_wkb )
 gdaltest_list.append( ogr_wkbwkt_test_geometrycollection_wktwkb )
 gdaltest_list.append( ogr_wkbwkt_test_geometrycollection_wkt_recursion )
 gdaltest_list.append( ogr_wkbwkt_test_geometrycollection_wkb_recursion )
+gdaltest_list.append( ogr_wkbwkt_export_wkt_iso_multipoint )
 
 if __name__ == '__main__':
 

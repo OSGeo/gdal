@@ -639,7 +639,7 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
             osSQL += "_";
             osSQL += OGRToOGCGeomType(poFieldDefn->GetType());
             osSQL += "_";
-            osSQL += (poFieldDefn->GetType() & wkb25DBit) ? "25D" : "2D";
+            osSQL += wkbHasZ(poFieldDefn->GetType()) ? "25D" : "2D";
             OGRSpatialReference* poSRS = poFieldDefn->GetSpatialRef();
             if( poSRS == NULL && i == 0 )
                 poSRS = poLayer->GetSpatialRef();
@@ -1138,6 +1138,36 @@ static void OGR2SQLITE_GoToWishedIndex(OGR2SQLITE_vtab_cursor* pMyCursor)
 }
 
 /************************************************************************/
+/*                    OGR2SQLITE_ExportGeometry()                       */
+/************************************************************************/
+
+static void OGR2SQLITE_ExportGeometry(OGRGeometry* poGeom, int nSRSId,
+                                      GByte*& pabyGeomBLOB,
+                                      int& nGeomBLOBLen)
+{
+    if( OGRSQLiteLayer::ExportSpatiaLiteGeometry(
+            poGeom, nSRSId, wkbNDR, FALSE, FALSE, FALSE,
+            &pabyGeomBLOB,
+            &nGeomBLOBLen ) != CE_None )
+    {
+        nGeomBLOBLen = 0;
+    }
+    /* This is a hack: we add the original curve geometry after */
+    /* the spatialite blob */
+    else if( poGeom->hasCurveGeometry() )
+    {
+        int nWkbSize = poGeom->WkbSize();
+
+        pabyGeomBLOB = (GByte*) CPLRealloc(pabyGeomBLOB,
+                                nGeomBLOBLen + nWkbSize + 1);
+        poGeom->exportToWkb(wkbNDR, pabyGeomBLOB + nGeomBLOBLen);
+        /* Sheat a bit and add a end-of-blob spatialite marker */
+        pabyGeomBLOB[nGeomBLOBLen + nWkbSize] = 0xFE;
+        nGeomBLOBLen += nWkbSize + 1;
+    }
+}
+
+/************************************************************************/
 /*                         OGR2SQLITE_Column()                          */
 /************************************************************************/
 
@@ -1184,13 +1214,9 @@ int OGR2SQLITE_Column(sqlite3_vtab_cursor* pCursor,
                 OGRSpatialReference* poSRS = poGeom->getSpatialReference();
                 int nSRSId = pMyCursor->pVTab->poModule->FetchSRSId(poSRS);
 
-                if( OGRSQLiteLayer::ExportSpatiaLiteGeometry(
-                        poGeom, nSRSId, wkbNDR, FALSE, FALSE, FALSE,
-                        &pMyCursor->pabyGeomBLOB,
-                        &pMyCursor->nGeomBLOBLen ) != CE_None )
-                {
-                    pMyCursor->nGeomBLOBLen = 0;
-                }
+                OGR2SQLITE_ExportGeometry(poGeom, nSRSId,
+                                          pMyCursor->pabyGeomBLOB,
+                                          pMyCursor->nGeomBLOBLen);
             }
         }
 
@@ -1225,12 +1251,7 @@ int OGR2SQLITE_Column(sqlite3_vtab_cursor* pCursor,
 
             GByte* pabyGeomBLOB = NULL;
             int nGeomBLOBLen = 0;
-            if( OGRSQLiteLayer::ExportSpatiaLiteGeometry(
-                    poGeom, nSRSId, wkbNDR, FALSE, FALSE, FALSE,
-                    &pabyGeomBLOB, &nGeomBLOBLen ) != CE_None )
-            {
-                nGeomBLOBLen = 0;
-            }
+            OGR2SQLITE_ExportGeometry(poGeom, nSRSId, pabyGeomBLOB, nGeomBLOBLen);
 
             if( nGeomBLOBLen == 0 )
             {
@@ -1455,7 +1476,16 @@ static OGRFeature* OGR2SQLITE_FeatureFromArgs(OGRLayer* poLayer,
             if( OGRSQLiteLayer::ImportSpatiaLiteGeometry(
                             pabyBlob, nLen, &poGeom ) == CE_None )
             {
-                poFeature->SetGeomFieldDirectly(i, poGeom);
+/*                OGRwkbGeometryType eGeomFieldType =
+                    poFeature->GetDefnRef()->GetGeomFieldDefn(i)->GetType();
+                if( OGR_GT_IsCurve(eGeomFieldType) && !OGR_GT_IsCurve(poGeom->getGeometryType()) )
+                {
+                    OGRGeometry* poCurveGeom = poGeom->getCurveGeometry();
+                    poFeature->SetGeomFieldDirectly(i, poCurveGeom);
+                    delete poCurveGeom;
+                }
+                else*/
+                    poFeature->SetGeomFieldDirectly(i, poGeom);
             }
         }
     }
@@ -1712,7 +1742,7 @@ void OGR2SQLITE_ogr_layer_GeometryType(sqlite3_context* pContext,
     }
 
     const char* psz2DName = OGRToOGCGeomType(eType);
-    if( eType & wkb25DBit )
+    if( wkbHasZ(eType) )
         sqlite3_result_text( pContext, CPLSPrintf("%s Z", psz2DName), -1, SQLITE_TRANSIENT );
     else
         sqlite3_result_text( pContext, psz2DName, -1, SQLITE_TRANSIENT );

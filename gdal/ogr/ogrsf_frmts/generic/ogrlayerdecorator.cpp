@@ -98,12 +98,12 @@ OGRFeature *OGRLayerDecorator::GetFeature( long nFID )
     return m_poDecoratedLayer->GetFeature(nFID);
 }
 
-OGRErr      OGRLayerDecorator::SetFeature( OGRFeature *poFeature )
+OGRErr      OGRLayerDecorator::ISetFeature( OGRFeature *poFeature )
 {
     return m_poDecoratedLayer->SetFeature(poFeature);
 }
 
-OGRErr      OGRLayerDecorator::CreateFeature( OGRFeature *poFeature )
+OGRErr      OGRLayerDecorator::ICreateFeature( OGRFeature *poFeature )
 {
     return m_poDecoratedLayer->CreateFeature(poFeature);
 }

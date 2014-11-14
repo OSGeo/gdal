@@ -887,6 +887,7 @@ int NASReader::PrescanForSchema( int bGetExtents, CPL_UNUSED int bAnalyzeSRSPerF
             if( papsGeometry[0] != NULL )
             {
                 poGeometry = (OGRGeometry*) OGR_G_CreateFromGMLTree(papsGeometry[0]);
+                poGeometry = ConvertGeometry(poGeometry);
             }
 
             if( poGeometry != NULL )
@@ -911,8 +912,8 @@ int NASReader::PrescanForSchema( int bGetExtents, CPL_UNUSED int bAnalyzeSRSPerF
                     eGType = wkbNone;
 
                 poClass->GetGeometryProperty(0)->SetType(
-                    (int) OGRMergeGeometryTypes(
-                        eGType, poGeometry->getGeometryType() ) );
+                    (int) OGRMergeGeometryTypesEx(
+                        eGType, poGeometry->getGeometryType(), TRUE ) );
 
                 // merge extents.
                 poGeometry->getEnvelope( &sEnvelope );
@@ -1076,4 +1077,21 @@ int NASReader::SetFilteredClassName(const char* pszClassName)
     CPLFree(m_pszFilteredClassName);
     m_pszFilteredClassName = (pszClassName) ? CPLStrdup(pszClassName) : NULL;
     return TRUE;
+}
+
+/************************************************************************/
+/*                         ConvertGeometry()                            */
+/************************************************************************/
+
+OGRGeometry*  NASReader::ConvertGeometry(OGRGeometry* poGeom)
+{
+    //poGeom = OGRGeometryFactory::forceToLineString( poGeom, false );
+    if( poGeom != NULL )
+    {
+        if( wkbFlatten(poGeom->getGeometryType()) == wkbMultiLineString )
+        {
+            poGeom = OGRGeometryFactory::forceTo(poGeom, wkbLineString);
+        }
+    }
+    return poGeom;
 }

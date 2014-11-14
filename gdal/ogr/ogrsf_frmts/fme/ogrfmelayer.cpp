@@ -275,7 +275,7 @@ int OGRFMELayer::Initialize( IFMEFeature * poSchemaFeature,
 /*      Assign the geometry type ... try to apply 3D-ness as well.      */
 /* -------------------------------------------------------------------- */
     if( poSchemaFeature->getDimension() == FME_THREE_D )
-        eGeomType = (OGRwkbGeometryType) (((int)eGeomType) | wkb25DBit);
+        eGeomType = wkbSetZ(eGeomType);
 
     poFeatureDefn->SetGeomType( eGeomType );
 

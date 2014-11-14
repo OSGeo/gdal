@@ -163,9 +163,9 @@ class OGRPGLayer : public OGRLayer
     int                 iNextShapeId;
 
     static char        *GByteArrayToBYTEA( const GByte* pabyData, int nLen);
-    static char        *GeometryToBYTEA( OGRGeometry * );
+    static char        *GeometryToBYTEA( OGRGeometry *, int bIsPostGIS1 );
     static GByte       *BYTEAToGByteArray( const char *pszBytea, int* pnLength );
-    static OGRGeometry *BYTEAToGeometry( const char * );
+    static OGRGeometry *BYTEAToGeometry( const char *, int bIsPostGIS1 );
     Oid                 GeometryToOID( OGRGeometry * );
     OGRGeometry        *OIDToGeometry( Oid );
 
@@ -314,9 +314,9 @@ public:
 
     virtual OGRErr      SetAttributeFilter( const char * );
 
-    virtual OGRErr      SetFeature( OGRFeature *poFeature );
+    virtual OGRErr      ISetFeature( OGRFeature *poFeature );
     virtual OGRErr      DeleteFeature( long nFID );
-    virtual OGRErr      CreateFeature( OGRFeature *poFeature );
+    virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );

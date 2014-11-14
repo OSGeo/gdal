@@ -938,7 +938,7 @@ int OGRGMLDataSource::Open( const char * pszNameIn )
                     if (bHas3D && poClass->GetGeometryPropertyCount() == 1)
                     {
                         poClass->GetGeometryProperty(0)->SetType(
-                            poClass->GetGeometryProperty(0)->GetType() | wkb25DBit);
+                            wkbSetZ((OGRwkbGeometryType)poClass->GetGeometryProperty(0)->GetType()));
                     }
 
                     int bAddClass = TRUE;
@@ -1536,6 +1536,8 @@ int OGRGMLDataSource::TestCapability( const char * pszCap )
         return TRUE;
     else if( EQUAL(pszCap,ODsCCreateGeomFieldAfterCreateLayer) )
         return TRUE;
+    else if( EQUAL(pszCap,ODsCCurveGeometries) )
+        return bIsOutputGML3;
     else
         return FALSE;
 }
@@ -1859,20 +1861,39 @@ void OGRGMLDataSource::InsertHeader()
     /*      Define the geometry attribute.                                  */
     /* -------------------------------------------------------------------- */
             const char* pszGeometryTypeName = "GeometryPropertyType";
-            switch(wkbFlatten(poFieldDefn->GetType()))
+            const char* pszComment = "";
+            OGRwkbGeometryType eGType = wkbFlatten(poFieldDefn->GetType());
+            switch(eGType)
             {
                 case wkbPoint:
                     pszGeometryTypeName = "PointPropertyType";
                     break;
                 case wkbLineString:
+                case wkbCircularString:
+                case wkbCompoundCurve:
                     if (IsGML3Output())
+                    {
+                        if( eGType == wkbLineString )
+                            pszComment = " <!-- restricted to LineString -->";
+                        else if( eGType == wkbCircularString )
+                            pszComment = " <!-- contains CircularString -->";
+                        else if( eGType == wkbCompoundCurve )
+                            pszComment = " <!-- contains CompoundCurve -->";
                         pszGeometryTypeName = "CurvePropertyType";
+                    }
                     else
                         pszGeometryTypeName = "LineStringPropertyType";
                     break;
                 case wkbPolygon:
+                case wkbCurvePolygon:
                     if (IsGML3Output())
+                    {
+                        if( eGType == wkbPolygon )
+                            pszComment = " <!-- restricted to Polygon -->";
+                        else if( eGType == wkbCurvePolygon )
+                            pszComment = " <!-- contains CurvePolygon -->";
                         pszGeometryTypeName = "SurfacePropertyType";
+                    }
                     else
                         pszGeometryTypeName = "PolygonPropertyType";
                     break;
@@ -1880,14 +1901,28 @@ void OGRGMLDataSource::InsertHeader()
                     pszGeometryTypeName = "MultiPointPropertyType";
                     break;
                 case wkbMultiLineString:
+                case wkbMultiCurve:
                     if (IsGML3Output())
+                    {
+                        if( eGType == wkbMultiLineString )
+                            pszComment = " <!-- restricted to MultiLineString -->";
+                        else if( eGType == wkbMultiCurve )
+                            pszComment = " <!-- contains non-linear MultiCurve -->";
                         pszGeometryTypeName = "MultiCurvePropertyType";
+                    }
                     else
                         pszGeometryTypeName = "MultiLineStringPropertyType";
                     break;
                 case wkbMultiPolygon:
+                case wkbMultiSurface:
                     if (IsGML3Output())
+                    {
+                        if( eGType == wkbMultiPolygon )
+                            pszComment = " <!-- restricted to MultiPolygon -->";
+                        else if( eGType == wkbMultiSurface )
+                            pszComment = " <!-- contains non-linear MultiSurface -->";
                         pszGeometryTypeName = "MultiSurfacePropertyType";
+                    }
                     else
                         pszGeometryTypeName = "MultiPolygonPropertyType";
                     break;
@@ -1899,8 +1934,8 @@ void OGRGMLDataSource::InsertHeader()
             }
 
             PrintLine( fpSchema,
-                "        <xs:element name=\"%s\" type=\"gml:%s\" nillable=\"true\" minOccurs=\"0\" maxOccurs=\"1\"/>",
-                       poFieldDefn->GetNameRef(), pszGeometryTypeName );
+                "        <xs:element name=\"%s\" type=\"gml:%s\" nillable=\"true\" minOccurs=\"0\" maxOccurs=\"1\"/>%s",
+                       poFieldDefn->GetNameRef(), pszGeometryTypeName, pszComment );
         }
 
 /* -------------------------------------------------------------------- */

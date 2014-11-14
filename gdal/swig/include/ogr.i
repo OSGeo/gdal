@@ -83,8 +83,25 @@ typedef enum
     wkbMultiLineString = 5,
     wkbMultiPolygon = 6,
     wkbGeometryCollection = 7,
-    wkbNone = 100,              /* non-standard, for pure attribute records */
-    wkbLinearRing = 101,        /* non-standard, just for createGeometry() */
+
+    wkbCircularString = 8,  /**< one or more circular arc segments connected end to end,
+                             *   ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
+    wkbCompoundCurve = 9,   /**< sequence of contiguous curves, ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
+    wkbCurvePolygon = 10,   /**< planar surface, defined by 1 exterior boundary
+                             *   and zero or more interior boundaries, that are curves.
+                             *    ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
+    wkbMultiCurve = 11,     /**< GeometryCollection of Curves, ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
+    wkbMultiSurface = 12,   /**< GeometryCollection of Surfaces, ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
+
+    wkbNone = 100,          /**< non-standard, for pure attribute records */
+    wkbLinearRing = 101,    /**< non-standard, just for createGeometry() */
+
+    wkbCircularStringZ = 1008,  /**< wkbCircularString with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
+    wkbCompoundCurveZ = 1009,   /**< wkbCompoundCurve with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
+    wkbCurvePolygonZ = 1010,    /**< wkbCurvePolygon with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
+    wkbMultiCurveZ = 1011,      /**< wkbMultiCurve with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
+    wkbMultiSurfaceZ = 1012,    /**< wkbMultiSurface with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
+
     wkbPoint25D = -2147483647,   /* 2.5D extensions as per 99-402 */
     wkbLineString25D = -2147483646,
     wkbPolygon25D = -2147483645,
@@ -184,8 +201,22 @@ typedef void retGetPoints;
 %constant wkbMultiLineString = 5;
 %constant wkbMultiPolygon = 6;
 %constant wkbGeometryCollection = 7;
+
+%constant wkbCircularString = 8;
+%constant wkbCompoundCurve = 9;
+%constant wkbCurvePolygon = 10;
+%constant wkbMultiCurve = 11;
+%constant wkbMultiSurface = 12;
+
 %constant wkbNone = 100;
 %constant wkbLinearRing = 101;
+
+%constant wkbCircularStringZ = 1008;
+%constant wkbCompoundCurveZ = 1009;
+%constant wkbCurvePolygonZ = 1010;
+%constant wkbMultiCurveZ = 1011;
+%constant wkbMultiSurfaceZ = 1012;
+
 %constant wkbPoint25D =              wkbPoint              + wkb25DBit;
 %constant wkbLineString25D =         wkbLineString         + wkb25DBit;
 %constant wkbPolygon25D =            wkbPolygon            + wkb25DBit;
@@ -237,10 +268,12 @@ typedef void retGetPoints;
 %constant char *OLCStringsAsUTF8       = "StringsAsUTF8";
 %constant char *OLCIgnoreFields        = "IgnoreFields";
 %constant char *OLCCreateGeomField     = "CreateGeomField";
+%constant char *OLCCurveGeometries     = "CurveGeometries";
 
 %constant char *ODsCCreateLayer        = "CreateLayer";
 %constant char *ODsCDeleteLayer        = "DeleteLayer";
 %constant char *ODsCCreateGeomFieldAfterCreateLayer  = "CreateGeomFieldAfterCreateLayer";
+%constant char *ODsCCurveGeometries    = "CurveGeometries";
 
 %constant char *ODrCCreateDataSource   = "CreateDataSource";
 %constant char *ODrCDeleteDataSource   = "DeleteDataSource";
@@ -268,10 +301,12 @@ typedef int OGRErr;
 #define OLCFastSetNextByIndex  "FastSetNextByIndex"
 #define OLCStringsAsUTF8       "StringsAsUTF8"
 #define OLCCreateGeomField     "CreateGeomField"
+#define OLCCurveGeometries     "CurveGeometries"
 
 #define ODsCCreateLayer        "CreateLayer"
 #define ODsCDeleteLayer        "DeleteLayer"
 #define ODsCCreateGeomFieldAfterCreateLayer   "CreateGeomFieldAfterCreateLayer"
+#define ODsCCurveGeometries    "CurveGeometries"
 
 #define ODrCCreateDataSource   "CreateDataSource"
 #define ODrCDeleteDataSource   "DeleteDataSource"
@@ -1453,8 +1488,18 @@ public:
             case wkbMultiLineString:
             case wkbMultiPolygon:
             case wkbGeometryCollection:
+            case wkbCircularString:
+            case wkbCompoundCurve:
+            case wkbCurvePolygon:
+            case wkbMultiCurve:
+            case wkbMultiSurface:
             case wkbNone:
             /*case wkbLinearRing:*/
+            case wkbCircularStringZ:
+            case wkbCompoundCurveZ:
+            case wkbCurvePolygonZ:
+            case wkbMultiCurveZ:
+            case wkbMultiSurfaceZ:
             case wkbPoint25D:
             case wkbLineString25D:
             case wkbPolygon25D:
@@ -1958,6 +2003,16 @@ OGRGeometryShadow* ForceToMultiLineString( OGRGeometryShadow *geom_in ) {
 }
 %}
 
+%newobject ForceTo;
+/* Contrary to the C/C++ method, the passed geometry is preserved */
+/* This avoids dirty trick for Java */
+%inline %{
+OGRGeometryShadow* ForceTo( OGRGeometryShadow *geom_in, OGRwkbGeometryType eTargetType, char** options = NULL ) {
+ if (geom_in == NULL)
+     return NULL;
+ return (OGRGeometryShadow* )OGR_G_ForceTo( OGR_G_Clone(geom_in), eTargetType, options );
+}
+%}
 
 /************************************************************************/
 /*                             OGRGeometry                              */
@@ -2010,6 +2065,10 @@ public:
     return OGR_G_ExportToWkt(self, argout);
   }
 
+  OGRErr ExportToIsoWkt( char** argout ) {
+    return OGR_G_ExportToIsoWkt(self, argout);
+  }
+
 #ifndef SWIGCSHARP
 #ifdef SWIGJAVA
 %apply (GByte* outBytes) {GByte*};
@@ -2019,6 +2078,13 @@ public:
     OGR_G_ExportToWkb(self, byte_order, (unsigned char*) *pBuf );
     return (GByte*)*pBuf;
   }
+
+  GByte* ExportToIsoWkb( int *nLen, char **pBuf, OGRwkbByteOrder byte_order=wkbXDR ) {
+    *nLen = OGR_G_WkbSize( self );
+    *pBuf = (char *) malloc( *nLen * sizeof(unsigned char) );
+    OGR_G_ExportToIsoWkb(self, byte_order, (unsigned char*) *pBuf );
+    return (GByte*)*pBuf;
+  }
 %clear GByte*;
 #else
   %feature("kwargs") ExportToWkb;
@@ -2026,6 +2092,13 @@ public:
     *nLen = OGR_G_WkbSize( self );
     *pBuf = (char *) malloc( *nLen * sizeof(unsigned char) );
     return OGR_G_ExportToWkb(self, byte_order, (unsigned char*) *pBuf );
+  }
+
+  %feature("kwargs") ExportToIsoWkb;
+  OGRErr ExportToIsoWkb( int *nLen, char **pBuf, OGRwkbByteOrder byte_order=wkbXDR ) {
+    *nLen = OGR_G_WkbSize( self );
+    *pBuf = (char *) malloc( *nLen * sizeof(unsigned char) );
+    return OGR_G_ExportToIsoWkb(self, byte_order, (unsigned char*) *pBuf );
   }
 #endif
 #endif
@@ -2469,6 +2542,32 @@ public:
     return OGR_G_GetDimension(self);
   }
 
+  int HasCurveGeometry(int bLookForCircular = FALSE)
+  {
+        return OGR_G_HasCurveGeometry(self, bLookForCircular);
+  }
+
+  %newobject GetLinearGeometry;
+#ifndef SWIGJAVA
+  %feature("kwargs") GetLinearGeometry;  
+#endif
+  OGRGeometryShadow* GetLinearGeometry(double dfMaxAngleStepSizeDegrees = 0.0,char** options = NULL) {
+    return (OGRGeometryShadow* )OGR_G_GetLinearGeometry(self, dfMaxAngleStepSizeDegrees, options);
+  }
+
+  %newobject GetCurveGeometry;
+#ifndef SWIGJAVA
+  %feature("kwargs") GetCurveGeometry;  
+#endif
+  OGRGeometryShadow* GetCurveGeometry(char** options = NULL) {
+    return (OGRGeometryShadow* )OGR_G_GetCurveGeometry(self, options);
+  }
+
+  %newobject Value;
+  OGRGeometryShadow* Value(double dfDistance) {
+    return OGR_G_Value(self, dfDistance);
+  }
+
 } /* %extend */
 
 }; /* class OGRGeometryShadow */
@@ -2513,6 +2612,46 @@ const char *OGRGeometryTypeToName( OGRwkbGeometryType eType );
 
 %rename (GetFieldTypeName) OGR_GetFieldTypeName;
 const char * OGR_GetFieldTypeName(OGRFieldType type);
+
+%rename (GT_Flatten) OGR_GT_Flatten;
+OGRwkbGeometryType OGR_GT_Flatten( OGRwkbGeometryType eType );
+
+%rename (GT_SetZ) OGR_GT_SetZ;
+OGRwkbGeometryType OGR_GT_SetZ( OGRwkbGeometryType eType );
+
+%rename (GT_SetModifier) OGR_GT_SetModifier;
+OGRwkbGeometryType OGR_GT_SetModifier( OGRwkbGeometryType eType, int bSetZ, int bSetM = FALSE );
+
+%rename (GT_HasZ) OGR_GT_HasZ;
+int                OGR_GT_HasZ( OGRwkbGeometryType eType );
+
+%rename (GT_IsSubClassOf) OGR_GT_IsSubClassOf;
+int                OGR_GT_IsSubClassOf( OGRwkbGeometryType eType,
+                                                OGRwkbGeometryType eSuperType );
+
+%rename (GT_IsCurve) OGR_GT_IsCurve;
+int                OGR_GT_IsCurve( OGRwkbGeometryType );
+
+%rename (GT_IsSurface) OGR_GT_IsSurface;
+int                OGR_GT_IsSurface( OGRwkbGeometryType );
+
+%rename (GT_IsNonLinear) OGR_GT_IsNonLinear;
+int                OGR_GT_IsNonLinear( OGRwkbGeometryType );
+
+%rename (GT_GetCollection) OGR_GT_GetCollection;
+OGRwkbGeometryType OGR_GT_GetCollection( OGRwkbGeometryType eType );
+
+%rename (GT_GetCurve) OGR_GT_GetCurve;
+OGRwkbGeometryType OGR_GT_GetCurve( OGRwkbGeometryType eType );
+
+%rename (GT_GetLinear) OGR_GT_GetLinear;
+OGRwkbGeometryType OGR_GT_GetLinear( OGRwkbGeometryType eType );
+
+%rename (SetNonLinearGeometriesEnabledFlag) OGRSetNonLinearGeometriesEnabledFlag;
+void OGRSetNonLinearGeometriesEnabledFlag( int bFlag );
+
+%rename (GetNonLinearGeometriesEnabledFlag) OGRGetNonLinearGeometriesEnabledFlag;
+int OGRGetNonLinearGeometriesEnabledFlag(void);
 
 %inline %{
   OGRDataSourceShadow* GetOpenDS(int ds_number) {

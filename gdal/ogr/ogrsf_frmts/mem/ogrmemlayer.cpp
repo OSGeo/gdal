@@ -161,10 +161,10 @@ OGRFeature *OGRMemLayer::GetFeature( long nFeatureId )
 }
 
 /************************************************************************/
-/*                             SetFeature()                             */
+/*                             ISetFeature()                             */
 /************************************************************************/
 
-OGRErr OGRMemLayer::SetFeature( OGRFeature *poFeature )
+OGRErr OGRMemLayer::ISetFeature( OGRFeature *poFeature )
 
 {
     if (!bUpdatable)
@@ -229,10 +229,10 @@ OGRErr OGRMemLayer::SetFeature( OGRFeature *poFeature )
 }
 
 /************************************************************************/
-/*                           CreateFeature()                            */
+/*                           ICreateFeature()                            */
 /************************************************************************/
 
-OGRErr OGRMemLayer::CreateFeature( OGRFeature *poFeature )
+OGRErr OGRMemLayer::ICreateFeature( OGRFeature *poFeature )
 
 {
     if (!bUpdatable)
@@ -336,6 +336,8 @@ int OGRMemLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCStringsAsUTF8) )
         return bAdvertizeUTF8;
 
+    else if( EQUAL(pszCap,OLCCurveGeometries) )
+        return TRUE;
     else 
         return FALSE;
 }

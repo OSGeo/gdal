@@ -176,9 +176,9 @@ class OGRVRTLayer : public OGRLayer
     virtual void        SetSpatialFilter( OGRGeometry * poGeomIn );
     virtual void        SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn );
 
-    virtual OGRErr      CreateFeature( OGRFeature* poFeature );
+    virtual OGRErr      ICreateFeature( OGRFeature* poFeature );
 
-    virtual OGRErr      SetFeature( OGRFeature* poFeature );
+    virtual OGRErr      ISetFeature( OGRFeature* poFeature );
 
     virtual OGRErr      DeleteFeature( long nFID );
 

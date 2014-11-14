@@ -111,10 +111,10 @@ void OGRJMLWriterLayer::WriteColumnDeclaration( const char* pszName,
 }
 
 /************************************************************************/
-/*                           CreateFeature()                            */
+/*                           ICreateFeature()                            */
 /************************************************************************/
 
-OGRErr OGRJMLWriterLayer::CreateFeature( OGRFeature *poFeature )
+OGRErr OGRJMLWriterLayer::ICreateFeature( OGRFeature *poFeature )
 
 {
     /* Finish column declaration if we haven't yet created a feature */

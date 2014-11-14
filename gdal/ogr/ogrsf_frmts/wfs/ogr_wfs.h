@@ -161,8 +161,8 @@ class OGRWFSLayer : public OGRLayer
     void                SetExtents(double dfMinX, double dfMinY, double dfMaxX, double dfMaxY);
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
 
-    virtual OGRErr      CreateFeature( OGRFeature *poFeature );
-    virtual OGRErr      SetFeature( OGRFeature *poFeature );
+    virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
+    virtual OGRErr      ISetFeature( OGRFeature *poFeature );
     virtual OGRErr      DeleteFeature( long nFID );
 
     virtual OGRErr      StartTransaction();

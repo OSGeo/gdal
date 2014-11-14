@@ -166,7 +166,7 @@ class OGRJMLWriterLayer : public OGRLayer
     void                ResetReading() {}
     OGRFeature *        GetNextFeature() { return NULL; }
 
-    OGRErr              CreateFeature( OGRFeature *poFeature );
+    OGRErr              ICreateFeature( OGRFeature *poFeature );
     OGRErr              CreateField( OGRFieldDefn *poField, int bApproxOK );
 
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }

@@ -68,8 +68,8 @@ class CPL_DLL OGRMutexedLayer : public OGRLayerDecorator
     virtual OGRFeature *GetNextFeature();
     virtual OGRErr      SetNextByIndex( long nIndex );
     virtual OGRFeature *GetFeature( long nFID );
-    virtual OGRErr      SetFeature( OGRFeature *poFeature );
-    virtual OGRErr      CreateFeature( OGRFeature *poFeature );
+    virtual OGRErr      ISetFeature( OGRFeature *poFeature );
+    virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
     virtual OGRErr      DeleteFeature( long nFID );
 
     virtual const char *GetName();

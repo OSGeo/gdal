@@ -558,7 +558,7 @@ CPLErr OGRMDBLayer::Initialize( CPL_UNUSED const char *pszTableName,
     }
 
     if( eOGRType != wkbUnknown && eOGRType != wkbNone && bHasZ )
-        eOGRType = (OGRwkbGeometryType)(((int) eOGRType) | wkb25DBit);
+        eOGRType = wkbSetZ(eOGRType);
 
     poFeatureDefn->SetGeomType(eOGRType);
 

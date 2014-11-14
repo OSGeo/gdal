@@ -510,7 +510,18 @@ OGRGeometryH OGR_F_GetGeometryRef( OGRFeatureH hFeat )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_GetGeometryRef", NULL );
 
-    return (OGRGeometryH) ((OGRFeature *) hFeat)->GetGeometryRef();
+    OGRFeature* poFeature = (OGRFeature *) hFeat; 
+    OGRGeometry* poGeom = poFeature->GetGeometryRef();
+
+    if( !OGRGetNonLinearGeometriesEnabledFlag() && poGeom != NULL &&
+        OGR_GT_IsNonLinear(poGeom->getGeometryType()) )
+    {
+        OGRwkbGeometryType eTargetType = OGR_GT_GetLinear(poGeom->getGeometryType());
+        poGeom = OGRGeometryFactory::forceTo(poFeature->StealGeometry(), eTargetType);
+        poFeature->SetGeomFieldDirectly(0, poGeom);
+    }
+
+    return (OGRGeometryH)poGeom;
 }
 
 
@@ -585,7 +596,18 @@ OGRGeometryH OGR_F_GetGeomFieldRef( OGRFeatureH hFeat, int iField )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_GetGeomFieldRef", NULL );
 
-    return (OGRGeometryH) ((OGRFeature *) hFeat)->GetGeomFieldRef(iField);
+    OGRFeature* poFeature = (OGRFeature *) hFeat; 
+    OGRGeometry* poGeom = poFeature->GetGeomFieldRef(iField);
+
+    if( !OGRGetNonLinearGeometriesEnabledFlag() && poGeom != NULL &&
+        OGR_GT_IsNonLinear(poGeom->getGeometryType()) )
+    {
+        OGRwkbGeometryType eTargetType = OGR_GT_GetLinear(poGeom->getGeometryType());
+        poGeom = OGRGeometryFactory::forceTo(poFeature->StealGeometry(iField), eTargetType);
+        poFeature->SetGeomFieldDirectly(iField, poGeom);
+    }
+
+    return (OGRGeometryH)poGeom;
 }
 
 /************************************************************************/

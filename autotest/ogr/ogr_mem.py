@@ -541,11 +541,67 @@ def ogr_mem_14():
 
     return 'success'
 
+###############################################################################
+# Test non-linear geometries
+
+def ogr_mem_15():
+
+    lyr = gdaltest.mem_ds.CreateLayer('wkbCircularString', geom_type = ogr.wkbCircularString)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('CIRCULARSTRING(0 0,1 0,0 0)'))
+    lyr.CreateFeature(f)
+    f = None
+
+    if lyr.GetGeomType() != ogr.wkbCircularString:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetGeomType() != ogr.wkbCircularString:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetGeomFieldDefn(0).GetType() != ogr.wkbCircularString:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    g = f.GetGeometryRef()
+    if g.GetGeometryType() != ogr.wkbCircularString:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Test SetNonLinearGeometriesEnabledFlag(False)
+    old_val = ogr.GetNonLinearGeometriesEnabledFlag()
+    ogr.SetNonLinearGeometriesEnabledFlag(False)
+    if lyr.GetGeomType() != ogr.wkbLineString:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetGeomType() != ogr.wkbLineString:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetGeomFieldDefn(0).GetType() != ogr.wkbLineString:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    g = f.GetGeometryRef()
+    if g.GetGeometryType() != ogr.wkbLineString:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    g = f.GetGeomFieldRef(0)
+    if g.GetGeometryType() != ogr.wkbLineString:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ogr.SetNonLinearGeometriesEnabledFlag(True)
+
+    return 'success'
+
 def ogr_mem_cleanup():
 
     if gdaltest.mem_ds is None:
         return 'skip'
 
+    ogr.SetNonLinearGeometriesEnabledFlag(True)
     gdaltest.mem_ds.Destroy()
     gdaltest.mem_ds = None
 
@@ -566,6 +622,7 @@ gdaltest_list = [
     ogr_mem_12,
     ogr_mem_13,
     ogr_mem_14,
+    ogr_mem_15,
     ogr_mem_cleanup ]
 
 if __name__ == '__main__':

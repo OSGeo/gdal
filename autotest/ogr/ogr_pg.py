@@ -3445,6 +3445,9 @@ def ogr_pg_69():
 
 def ogr_pg_70():
 
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
     gdal.SetConfigOption('OGR_PG_DIFFERED_CREATION', 'NO')
     lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_70')
     gdal.SetConfigOption('OGR_PG_DIFFERED_CREATION', None)
@@ -3499,6 +3502,141 @@ def ogr_pg_70():
     return 'success'
 
 ###############################################################################
+# Test interoperability of WKT/WKB with PostGIS
+
+def ogr_pg_71():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    if not gdaltest.pg_has_postgis:
+        return 'skip'
+
+    curve_lyr = gdaltest.pg_ds.CreateLayer('test_curve')
+    curve_lyr2 = gdaltest.pg_ds.CreateLayer('test_curve_3d', geom_type = ogr.wkbUnknown | ogr.wkb25DBit)
+    # FIXME: the ResetReading() should not be necessary
+    curve_lyr.ResetReading()
+    curve_lyr2.ResetReading()
+
+    for wkt in [ 'CIRCULARSTRING EMPTY',
+                 'CIRCULARSTRING Z EMPTY',
+                 'CIRCULARSTRING (0 1,2 3,4 5)',
+                 'CIRCULARSTRING Z (0 1 2,4 5 6,7 8 9)',
+                 'COMPOUNDCURVE EMPTY',
+                 'COMPOUNDCURVE ((0 1,2 3,4 5))',
+                 'COMPOUNDCURVE Z ((0 1 2,4 5 6,7 8 9))',
+                 'COMPOUNDCURVE ((0 1,2 3,4 5),CIRCULARSTRING (4 5,6 7,8 9))',
+                 'COMPOUNDCURVE Z ((0 1 2,4 5 6,7 8 9),CIRCULARSTRING Z (7 8 9,10 11 12,13 14 15))',
+                 'CURVEPOLYGON EMPTY',
+                 'CURVEPOLYGON ((0 0,0 1,1 1,1 0,0 0))',
+                 'CURVEPOLYGON Z ((0 0 2,0 1 3,1 1 4,1 0 5,0 0 2))',
+                 'CURVEPOLYGON (COMPOUNDCURVE (CIRCULARSTRING (0 0,1 0,0 0)))',
+                 'CURVEPOLYGON Z (COMPOUNDCURVE Z (CIRCULARSTRING Z (0 0 2,1 0 3,0 0 2)))',
+                 'MULTICURVE EMPTY',
+                 'MULTICURVE (CIRCULARSTRING (0 0,1 0,0 0),(0 0,1 1))',
+                 'MULTICURVE Z (CIRCULARSTRING Z (0 0 1,1 0 1,0 0 1),(0 0 1,1 1 1))',
+                 'MULTICURVE (CIRCULARSTRING (0 0,1 0,0 0),(0 0,1 1),COMPOUNDCURVE ((0 0,1 1),CIRCULARSTRING (1 1,2 2,3 3)))',
+                 'MULTISURFACE EMPTY',
+                 'MULTISURFACE (((0 0,0 10,10 10,10 0,0 0)),CURVEPOLYGON (CIRCULARSTRING (0 0,1 0,0 0)))',
+                 'MULTISURFACE Z (((0 0 1,0 10 1,10 10 1,10 0 1,0 0 1)),CURVEPOLYGON Z (CIRCULARSTRING Z (0 0 1,1 0 1,0 0 1)))',
+                 'GEOMETRYCOLLECTION (CIRCULARSTRING (0 1,2 3,4 5),COMPOUNDCURVE ((0 1,2 3,4 5)),CURVEPOLYGON ((0 0,0 1,1 1,1 0,0 0)),MULTICURVE ((0 0,1 1)),MULTISURFACE (((0 0,0 10,10 10,10 0,0 0))))',
+               ]:
+
+        # would cause PostGIS 1.X to crash
+        if not gdaltest.pg_has_postgis_2 and wkt == 'CURVEPOLYGON EMPTY':
+            continue
+        # Parsing error of WKT by PostGIS 1.X
+        if not gdaltest.pg_has_postgis_2 and wkt.find('MULTICURVE') >= 0 and wkt.find('CIRCULARSTRING') >= 0:
+            continue
+
+        postgis_in_wkt = wkt
+        while True:
+            z_pos = postgis_in_wkt.find('Z ')
+            # PostGIS 1.X doesn't like Z in WKT
+            if not gdaltest.pg_has_postgis_2 and z_pos >= 0:
+                postgis_in_wkt = postgis_in_wkt[0:z_pos] + postgis_in_wkt[z_pos+2:]
+            else:
+                break
+
+        # Test parsing PostGIS WKB
+        lyr = gdaltest.pg_ds.ExecuteSQL("SELECT ST_GeomFromText('%s')" % postgis_in_wkt)
+        f = lyr.GetNextFeature()
+        g = f.GetGeometryRef()
+        out_wkt = g.ExportToWkt()
+        g = None
+        f = None
+        gdaltest.pg_ds.ReleaseResultSet(lyr)
+
+        expected_wkt = wkt
+        if not gdaltest.pg_has_postgis_2 and wkt.find('EMPTY') >= 0:
+            expected_wkt = 'GEOMETRYCOLLECTION EMPTY'
+        if out_wkt != expected_wkt:
+            gdaltest.post_reason('fail')
+            print(expected_wkt)
+            print(out_wkt)
+            return 'fail'
+
+        # Test parsing PostGIS WKT
+        if gdaltest.pg_has_postgis_2:
+            fct = 'ST_AsText'
+        else:
+            fct = 'AsEWKT'
+
+        lyr = gdaltest.pg_ds.ExecuteSQL("SELECT %s(ST_GeomFromText('%s'))" % (fct,postgis_in_wkt))
+        f = lyr.GetNextFeature()
+        g = f.GetGeometryRef()
+        out_wkt = g.ExportToWkt()
+        g = None
+        f = None
+        gdaltest.pg_ds.ReleaseResultSet(lyr)
+
+        expected_wkt = wkt
+        if not gdaltest.pg_has_postgis_2 and wkt.find('EMPTY') >= 0:
+            expected_wkt = 'GEOMETRYCOLLECTION EMPTY'
+        if out_wkt != expected_wkt:
+            gdaltest.post_reason('fail')
+            print(expected_wkt)
+            print(out_wkt)
+            return 'fail'
+
+        g = ogr.CreateGeometryFromWkt(wkt)
+        if g.GetCoordinateDimension() == 2:
+            active_lyr = curve_lyr
+        else:
+            active_lyr = curve_lyr2
+
+        # Use our WKB export to inject into PostGIS and check that
+        # PostGIS interprets it correctly by checking with ST_AsText
+        f = ogr.Feature(active_lyr.GetLayerDefn())
+        f.SetGeometry(g)
+        ret = active_lyr.CreateFeature(f)
+        if ret != 0:
+            gdaltest.post_reason('fail')
+            print(wkt)
+            return 'fail'
+        fid = f.GetFID()
+
+        # AsEWKT() in PostGIS 1.X does not like CIRCULARSTRING EMPTY
+        if not gdaltest.pg_has_postgis_2 and wkt.find('CIRCULARSTRING') >= 0 and wkt.find('EMPTY') >= 0:
+            continue
+
+        lyr = gdaltest.pg_ds.ExecuteSQL("SELECT %s(wkb_geometry) FROM %s WHERE ogc_fid = %d" % (fct, active_lyr.GetName(), fid))
+        f = lyr.GetNextFeature()
+        g = f.GetGeometryRef()
+        out_wkt = g.ExportToWkt()
+        gdaltest.pg_ds.ReleaseResultSet(lyr)
+        g = None
+        f = None
+        
+        if out_wkt != wkt:
+            gdaltest.post_reason('fail')
+            print(wkt)
+            print(out_wkt)
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_pg_table_cleanup():
@@ -3543,6 +3681,8 @@ def ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_67' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_68' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_70' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:test_curve' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:test_curve_3d' )
     
     # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.tpoly' )
@@ -3645,6 +3785,7 @@ gdaltest_list_internal = [
     ogr_pg_68,
     ogr_pg_69,
     ogr_pg_70,
+    ogr_pg_71,
     ogr_pg_cleanup ]
 
 ###############################################################################
@@ -3655,14 +3796,16 @@ def ogr_pg_with_and_without_postgis():
     gdaltest.run_tests( [ ogr_pg_1 ] )
     if gdaltest.pg_ds is None:
         return 'skip'
-
-    gdaltest.run_tests( gdaltest_list_internal )
-
-    if gdaltest.pg_has_postgis:
-        gdal.SetConfigOption("PG_USE_POSTGIS", "NO")
-        gdaltest.run_tests( [ ogr_pg_1 ] )
+    #gdaltest.run_tests( [ ogr_pg_71 ] )
+    #gdaltest.run_tests( [ ogr_pg_cleanup ] )
+    if True:
         gdaltest.run_tests( gdaltest_list_internal )
-        gdal.SetConfigOption("PG_USE_POSTGIS", "YES")
+
+        if gdaltest.pg_has_postgis:
+            gdal.SetConfigOption("PG_USE_POSTGIS", "NO")
+            gdaltest.run_tests( [ ogr_pg_1 ] )
+            gdaltest.run_tests( gdaltest_list_internal )
+            gdal.SetConfigOption("PG_USE_POSTGIS", "YES")
 
     return 'success'
 

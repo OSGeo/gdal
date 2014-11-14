@@ -519,10 +519,10 @@ OGRErr OGROCILoaderLayer::WriteFeatureBinaryMode( OGRFeature *poFeature )
 }
 
 /************************************************************************/
-/*                           CreateFeature()                            */
+/*                           ICreateFeature()                            */
 /************************************************************************/
 
-OGRErr OGROCILoaderLayer::CreateFeature( OGRFeature *poFeature )
+OGRErr OGROCILoaderLayer::ICreateFeature( OGRFeature *poFeature )
 
 {
     WriteLoaderHeader();

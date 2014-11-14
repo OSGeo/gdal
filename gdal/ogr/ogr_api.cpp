@@ -33,6 +33,8 @@
 #include "ogr_api.h"
 #include "cpl_error.h"
 
+static int bNonLinearGeometriesEnabled = TRUE;
+
 /************************************************************************/
 /*                        OGR_G_GetPointCount()                         */
 /************************************************************************/
@@ -51,18 +53,13 @@ int OGR_G_GetPointCount( OGRGeometryH hGeom )
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_GetPointCount", 0 );
 
-    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
-    {
-      case wkbPoint:
+    OGRwkbGeometryType eGType = wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType());
+    if( eGType == wkbPoint )
         return 1;
-
-      case wkbLineString:
-      {
-          OGRLineString *poLine = (OGRLineString *) hGeom;
-          return poLine->getNumPoints();
-      }
-
-      default:
+    else if( OGR_GT_IsCurve(eGType) )
+        return ((OGRCurve *) hGeom)->getNumPoints();
+    else
+    {
         // autotest/pymod/ogrtest.py calls this method on any geometry. So keep silent
         //CPLError(CE_Failure, CPLE_NotSupported, "Incompatible geometry for operation");
         return 0;
@@ -90,6 +87,7 @@ void OGR_G_SetPointCount( OGRGeometryH hGeom, int nNewPointCount )
     switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
     {
       case wkbLineString:
+      case wkbCircularString:
       {
         OGRLineString *poLine = (OGRLineString *) hGeom;
         poLine->setNumPoints( nNewPointCount );
@@ -131,6 +129,7 @@ double OGR_G_GetX( OGRGeometryH hGeom, int i )
       }
 
       case wkbLineString:
+      case wkbCircularString:
       {
           OGRLineString* poLS = (OGRLineString *) hGeom;
           if (i < 0 || i >= poLS->getNumPoints())
@@ -177,6 +176,7 @@ double OGR_G_GetY( OGRGeometryH hGeom, int i )
       }
 
       case wkbLineString:
+      case wkbCircularString:
       {
           OGRLineString* poLS = (OGRLineString *) hGeom;
           if (i < 0 || i >= poLS->getNumPoints())
@@ -223,6 +223,7 @@ double OGR_G_GetZ( OGRGeometryH hGeom, int i )
       }
 
       case wkbLineString:
+      case wkbCircularString:
       {
           OGRLineString* poLS = (OGRLineString *) hGeom;
           if (i < 0 || i >= poLS->getNumPoints())
@@ -283,6 +284,7 @@ int OGR_G_GetPoints( OGRGeometryH hGeom,
       break;
 
       case wkbLineString:
+      case wkbCircularString:
       {
           OGRLineString* poLS = (OGRLineString *) hGeom;
           poLS->getPoints(pabyX, nXStride, pabyY, nYStride, pabyZ, nZStride);
@@ -337,6 +339,7 @@ void OGR_G_GetPoint( OGRGeometryH hGeom, int i,
       break;
 
       case wkbLineString:
+      case wkbCircularString:
       {
           OGRLineString* poLS = (OGRLineString *) hGeom;
           if (i < 0 || i >= poLS->getNumPoints())
@@ -399,6 +402,7 @@ void CPL_DLL OGR_G_SetPoints( OGRGeometryH hGeom, int nPointsIn,
         break;
       }
       case wkbLineString:
+      case wkbCircularString:
       {
         OGRLineString* poLine = (OGRLineString *) hGeom;
 
@@ -471,6 +475,7 @@ void OGR_G_SetPoint( OGRGeometryH hGeom, int i,
       break;
 
       case wkbLineString:
+      case wkbCircularString:
       {
           if (i < 0)
           {
@@ -527,6 +532,7 @@ void OGR_G_SetPoint_2D( OGRGeometryH hGeom, int i,
       break;
 
       case wkbLineString:
+      case wkbCircularString:
       {
           if (i < 0)
           {
@@ -575,6 +581,7 @@ void OGR_G_AddPoint( OGRGeometryH hGeom,
       break;
 
       case wkbLineString:
+      case wkbCircularString:
         ((OGRLineString *) hGeom)->addPoint( dfX, dfY, dfZ );
         break;
 
@@ -614,6 +621,7 @@ void OGR_G_AddPoint_2D( OGRGeometryH hGeom,
       break;
 
       case wkbLineString:
+      case wkbCircularString:
         ((OGRLineString *) hGeom)->addPoint( dfX, dfY );
         break;
 
@@ -645,21 +653,20 @@ int OGR_G_GetGeometryCount( OGRGeometryH hGeom )
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_GetGeometryCount", 0 );
 
-    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    OGRwkbGeometryType eType = wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType());
+    if( OGR_GT_IsSubClassOf(eType, wkbCurvePolygon) )
     {
-      case wkbPolygon:
-        if( ((OGRPolygon *)hGeom)->getExteriorRing() == NULL )
+        if( ((OGRCurvePolygon *)hGeom)->getExteriorRingCurve() == NULL )
             return 0;
         else
-            return ((OGRPolygon *)hGeom)->getNumInteriorRings() + 1;
-
-      case wkbMultiPoint:
-      case wkbMultiLineString:
-      case wkbMultiPolygon:
-      case wkbGeometryCollection:
+            return ((OGRCurvePolygon *)hGeom)->getNumInteriorRings() + 1;
+    }
+    else if( OGR_GT_IsSubClassOf(eType, wkbCompoundCurve) )
+        return ((OGRCompoundCurve *)hGeom)->getNumCurves();
+    else if( OGR_GT_IsSubClassOf(eType, wkbGeometryCollection) )
         return ((OGRGeometryCollection *)hGeom)->getNumGeometries();
-
-      default:
+    else
+    {
         // autotest/pymod/ogrtest.py calls this method on any geometry. So keep silent
         //CPLError(CE_Failure, CPLE_NotSupported, "Incompatible geometry for operation");
         return 0;
@@ -699,24 +706,22 @@ OGRGeometryH OGR_G_GetGeometryRef( OGRGeometryH hGeom, int iSubGeom )
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_GetGeometryRef", NULL );
 
-    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    OGRwkbGeometryType eType = wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType());
+    if( OGR_GT_IsSubClassOf(eType, wkbCurvePolygon) )
     {
-      case wkbPolygon:
         if( iSubGeom == 0 )
             return (OGRGeometryH) 
-                ((OGRPolygon *)hGeom)->getExteriorRing();
+                ((OGRCurvePolygon *)hGeom)->getExteriorRingCurve();
         else
             return (OGRGeometryH) 
-                ((OGRPolygon *)hGeom)->getInteriorRing(iSubGeom-1);
-
-      case wkbMultiPoint:
-      case wkbMultiLineString:
-      case wkbMultiPolygon:
-      case wkbGeometryCollection:
-        return (OGRGeometryH) 
-            ((OGRGeometryCollection *)hGeom)->getGeometryRef( iSubGeom );
-
-      default:
+                ((OGRCurvePolygon *)hGeom)->getInteriorRingCurve(iSubGeom-1);
+    }
+    else if( OGR_GT_IsSubClassOf(eType, wkbCompoundCurve) )
+        return (OGRGeometryH) ((OGRCompoundCurve *)hGeom)->getCurve(iSubGeom);
+    else if( OGR_GT_IsSubClassOf(eType, wkbGeometryCollection) )
+        return (OGRGeometryH) ((OGRGeometryCollection *)hGeom)->getGeometryRef( iSubGeom );
+    else
+    {
         CPLError(CE_Failure, CPLE_NotSupported, "Incompatible geometry for operation");
         return 0;
     }
@@ -755,31 +760,26 @@ OGRErr OGR_G_AddGeometry( OGRGeometryH hGeom, OGRGeometryH hNewSubGeom )
     VALIDATE_POINTER1( hGeom, "OGR_G_AddGeometry", OGRERR_UNSUPPORTED_OPERATION );
     VALIDATE_POINTER1( hNewSubGeom, "OGR_G_AddGeometry", OGRERR_UNSUPPORTED_OPERATION );
 
-    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    OGRErr eErr = OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+
+    OGRwkbGeometryType eType = wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType());
+    if( OGR_GT_IsSubClassOf(eType, wkbCurvePolygon) )
     {
-      case wkbPolygon:
-      {
-          if( !EQUAL( ((OGRGeometry*) hNewSubGeom)->getGeometryName(), "LINEARRING" ) )
-          {
-              return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
-          }
-          else
-          {
-              ((OGRPolygon *)hGeom)->addRing( (OGRLinearRing *) hNewSubGeom );
-              return OGRERR_NONE;
-          }
-      }
-
-      case wkbMultiPoint:
-      case wkbMultiLineString:
-      case wkbMultiPolygon:
-      case wkbGeometryCollection:
-        return ((OGRGeometryCollection *)hGeom)->addGeometry( 
-            (OGRGeometry *) hNewSubGeom );
-
-      default:
-        return OGRERR_UNSUPPORTED_OPERATION;
+        if( OGR_GT_IsCurve( wkbFlatten(((OGRGeometry *) hNewSubGeom)->getGeometryType()) ) )
+            eErr = ((OGRCurvePolygon *)hGeom)->addRing( (OGRCurve *) hNewSubGeom );
     }
+    else if( OGR_GT_IsSubClassOf(eType, wkbCompoundCurve) )
+    {
+        if( OGR_GT_IsCurve( wkbFlatten(((OGRGeometry *) hNewSubGeom)->getGeometryType()) ) )
+            eErr = ((OGRCompoundCurve *)hGeom)->addCurve( (OGRCurve *) hNewSubGeom );
+    }
+    else if( OGR_GT_IsSubClassOf(eType, wkbGeometryCollection) )
+    {
+        eErr = ((OGRGeometryCollection *)hGeom)->addGeometry( 
+                                                (OGRGeometry *) hNewSubGeom );
+    }
+
+    return eErr;
 }
 
 /************************************************************************/
@@ -816,31 +816,29 @@ OGRErr OGR_G_AddGeometryDirectly( OGRGeometryH hGeom,
     VALIDATE_POINTER1( hGeom, "OGR_G_AddGeometryDirectly", OGRERR_UNSUPPORTED_OPERATION );
     VALIDATE_POINTER1( hNewSubGeom, "OGR_G_AddGeometryDirectly", OGRERR_UNSUPPORTED_OPERATION );
 
-    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    OGRErr eErr = OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+
+    OGRwkbGeometryType eType = wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType());
+    if( OGR_GT_IsSubClassOf(eType, wkbCurvePolygon) )
     {
-      case wkbPolygon:
-      {
-          if( !EQUAL( ((OGRGeometry*) hNewSubGeom)->getGeometryName(), "LINEARRING" ) )
-          {
-              return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
-          }
-          else
-          {
-              ((OGRPolygon *)hGeom)->addRingDirectly( (OGRLinearRing *) hNewSubGeom );
-              return OGRERR_NONE;
-          }
-      }
-
-      case wkbMultiPoint:
-      case wkbMultiLineString:
-      case wkbMultiPolygon:
-      case wkbGeometryCollection:
-        return ((OGRGeometryCollection *)hGeom)->addGeometryDirectly( 
-            (OGRGeometry *) hNewSubGeom );
-
-      default:
-        return OGRERR_UNSUPPORTED_OPERATION;
+        if( OGR_GT_IsCurve( wkbFlatten(((OGRGeometry *) hNewSubGeom)->getGeometryType()) ) )
+            eErr = ((OGRCurvePolygon *)hGeom)->addRingDirectly( (OGRCurve *) hNewSubGeom );
     }
+    else if( OGR_GT_IsSubClassOf(eType, wkbCompoundCurve) )
+    {
+        if( OGR_GT_IsCurve( wkbFlatten(((OGRGeometry *) hNewSubGeom)->getGeometryType()) ) )
+            eErr = ((OGRCompoundCurve *)hGeom)->addCurveDirectly( (OGRCurve *) hNewSubGeom );
+    }
+    else if( OGR_GT_IsSubClassOf(eType, wkbGeometryCollection) )
+    {
+        eErr = ((OGRGeometryCollection *)hGeom)->addGeometryDirectly( 
+                                                (OGRGeometry *) hNewSubGeom );
+    }
+
+    if( eErr != OGRERR_NONE )
+        delete (OGRGeometry*)hNewSubGeom;
+
+    return eErr;
 }
 
 /************************************************************************/
@@ -870,29 +868,24 @@ OGRErr OGR_G_AddGeometryDirectly( OGRGeometryH hGeom,
  * out of range.
  */
 
-
-
 OGRErr OGR_G_RemoveGeometry( OGRGeometryH hGeom, int iGeom, int bDelete )
 
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_RemoveGeometry", 0 );
 
-    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    OGRwkbGeometryType eType = wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType());
+    if( OGR_GT_IsSubClassOf(eType, wkbCurvePolygon) )
     {
-      case wkbPolygon:
-      {
-          CPLError( CE_Failure, CPLE_AppDefined, 
-                    "OGR_G_RemoveGeometry() not supported on polygons yet." );
-          return OGRERR_UNSUPPORTED_OPERATION;
-      }
-
-      case wkbMultiPoint:
-      case wkbMultiLineString:
-      case wkbMultiPolygon:
-      case wkbGeometryCollection:
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                "OGR_G_RemoveGeometry() not supported on polygons yet." );
+        return OGRERR_UNSUPPORTED_OPERATION;
+    }
+    else if( OGR_GT_IsSubClassOf(eType, wkbGeometryCollection) )
+    {
         return ((OGRGeometryCollection *)hGeom)->removeGeometry( iGeom,bDelete);
-
-      default:
+    }
+    else
+    {
         return OGRERR_UNSUPPORTED_OPERATION;
     }
 }
@@ -904,7 +897,7 @@ OGRErr OGR_G_RemoveGeometry( OGRGeometryH hGeom, int iGeom, int bDelete )
 /**
  * \brief Compute length of a geometry.
  *
- * Computes the area for OGRCurve or MultiCurve objects.
+ * Computes the length for OGRCurve or MultiCurve objects.
  * Undefined for all other geometry types (returns zero). 
  *
  * This function utilizes the C++ get_Length() method.
@@ -920,28 +913,26 @@ double OGR_G_Length( OGRGeometryH hGeom )
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_GetLength", 0 );
 
-    double fLength = 0.0;
+    double dfLength;
 
-    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    OGRwkbGeometryType eType = wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType());
+    if( OGR_GT_IsCurve(eType) )
     {
-      case wkbLinearRing:
-      case wkbLineString:
-        fLength = ((OGRCurve *) hGeom)->get_Length();
-        break;
-
-      case wkbMultiLineString:
-      case wkbGeometryCollection:
-        fLength = ((OGRGeometryCollection *) hGeom)->get_Length();
-        break;
-
-      default:
+        dfLength = ((OGRCurve *) hGeom)->get_Length();
+    }
+    else if( OGR_GT_IsSubClassOf(eType, wkbMultiCurve) ||
+             eType == wkbGeometryCollection )
+    {
+        dfLength = ((OGRGeometryCollection *) hGeom)->get_Length();
+    }
+    else
+    {
         CPLError( CE_Warning, CPLE_AppDefined,
                   "OGR_G_Length() called against a non-curve geometry type." );
-
-        fLength = 0.0;
+        dfLength = 0.0;
     }
 
-    return fLength;
+    return dfLength;
 }
 
 /************************************************************************/
@@ -968,41 +959,31 @@ double OGR_G_Area( OGRGeometryH hGeom )
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_Area", 0 );
 
-    double fArea = 0.0;
+    double dfArea;
 
-    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    OGRwkbGeometryType eType = wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType());
+    if( OGR_GT_IsSurface(eType) )
     {
-      case wkbPolygon:
-        fArea = ((OGRPolygon *) hGeom)->get_Area();
-        break;
-
-      case wkbMultiPolygon:
-        fArea = ((OGRMultiPolygon *) hGeom)->get_Area();
-        break;
-
-      case wkbLinearRing:
-      case wkbLineString:
-        /* This test below is required to filter out wkbLineString geometries
-         * not being of type of wkbLinearRing.
-         */
-        if( EQUAL( ((OGRGeometry*) hGeom)->getGeometryName(), "LINEARRING" ) )
-        {
-            fArea = ((OGRLinearRing *) hGeom)->get_Area();
-        }
-        break;
-
-      case wkbGeometryCollection:
-        fArea = ((OGRGeometryCollection *) hGeom)->get_Area();
-        break;
-
-      default:
+        dfArea = ((OGRSurface *) hGeom)->get_Area();
+    }
+    else if( OGR_GT_IsCurve(eType) )
+    {
+        dfArea = ((OGRCurve *) hGeom)->get_Area();
+    }
+    else if( OGR_GT_IsSubClassOf(eType, wkbMultiSurface) ||
+             eType == wkbGeometryCollection )
+    {
+        dfArea = ((OGRGeometryCollection *) hGeom)->get_Area();
+    }
+    else
+    {
         CPLError( CE_Warning, CPLE_AppDefined,
                   "OGR_G_Area() called against non-surface geometry type." );
 
-        fArea = 0.0;
+        dfArea = 0.0;
     }
 
-    return fArea;
+    return dfArea;
 }
 
 /**
@@ -1037,3 +1018,196 @@ char* OGR_G_ExportToJsonEx( OGRGeometryH, char** papszOptions )
     return NULL;
 }
 #endif
+
+/************************************************************************/
+/*                         OGR_G_HasCurveGeometry()                     */
+/************************************************************************/
+
+/**
+ * \brief Returns if this geometry is or has curve geometry.
+ *
+ * Returns if a geometry is or has CIRCULARSTRING, COMPOUNDCURVE, CURVEPOLYGON,
+ * MULTICURVE or MULTISURFACE in it.
+*
+ * If bLookForNonLinear is set to TRUE, it will be actually looked if the
+ * geometry or its subgeometries are or contain a non-linear geometry in them. In which
+ * case, if the method returns TRUE, it means that OGR_G_GetLinearGeometry() would
+ * return an approximate version of the geometry. Otherwise, OGR_G_GetLinearGeometry()
+ * would do a conversion, but with just converting container type, like
+ * COMPOUNDCURVE -> LINESTRING, MULTICURVE -> MULTILINESTRING or MULTISURFACE -> MULTIPOLYGON,
+ * resulting in a "loss-less" conversion.
+ *
+ * This function is the same as C++ method OGRGeometry::hasCurveGeometry().
+ *
+ * @param hGeom the geometry to operate on.
+ * @param bLookForNonLinear set it to TRUE to check if the geometry is or contains
+ * a CIRCULARSTRING.
+ * @return TRUE if this geometry is or has curve geometry.
+ *
+ * @since GDAL 2.0
+ */
+
+int OGR_G_HasCurveGeometry( OGRGeometryH hGeom, int bLookForNonLinear )
+{
+    VALIDATE_POINTER1( hGeom, "OGR_G_HasCurveGeometry", FALSE );
+    return ((OGRGeometry *) hGeom)->hasCurveGeometry(bLookForNonLinear);
+}
+
+/************************************************************************/
+/*                         OGR_G_GetLinearGeometry()                   */
+/************************************************************************/
+
+/**
+ * \brief Return, possibly approximate, linear version of this geometry.
+ *
+ * Returns a geometry that has no CIRCULARSTRING, COMPOUNDCURVE, CURVEPOLYGON,
+ * MULTICURVE or MULTISURFACE in it, by approximating curve geometries.
+ *
+ * The ownership of the returned geometry belongs to the caller.
+ *
+ * The reverse function is OGR_G_GetCurveGeometry().
+ *
+ * This method relates to the ISO SQL/MM Part 3 ICurve::CurveToLine() and 
+ * CurvePolygon::CurvePolyToPoly() methods.
+ *
+ * This function is the same as C++ method OGRGeometry::getLinearGeometry().
+ *
+ * @param hGeom the geometry to operate on. 
+ * @param dfMaxAngleStepSizeDegrees the largest step in degrees along the
+ * arc, zero to use the default setting.
+ * @param papszOptions options as a null-terminated list of strings or NULL.
+ *                     See OGRGeometryFactory::curveToLineString() for valid options.
+ *
+ * @return a new geometry.
+ *
+ * @since GDAL 2.0
+ */
+
+OGRGeometryH CPL_DLL OGR_G_GetLinearGeometry( OGRGeometryH hGeom,
+                                                double dfMaxAngleStepSizeDegrees,
+                                                char** papszOptions )
+{
+    VALIDATE_POINTER1( hGeom, "OGR_G_GetLinearGeometry", NULL );
+    return (OGRGeometryH) ((OGRGeometry *) hGeom)->getLinearGeometry(dfMaxAngleStepSizeDegrees,
+                                                                       (const char* const*)papszOptions );
+}
+
+/************************************************************************/
+/*                         OGR_G_GetCurveGeometry()                     */
+/************************************************************************/
+
+/**
+ * \brief Return curve version of this geometry.
+ *
+ * Returns a geometry that has possibly CIRCULARSTRING, COMPOUNDCURVE, CURVEPOLYGON,
+ * MULTICURVE or MULTISURFACE in it, by de-approximating linear into curve geometries.
+ *
+ * If the geometry has no curve portion, the returned geometry will be a clone
+ * of it.
+ *
+ * The ownership of the returned geometry belongs to the caller.
+ *
+ * The reverse function is OGR_G_GetLinearGeometry().
+ *
+ * This function is the same as C++ method OGRGeometry::getCurveGeometry().
+ *
+ * @param hGeom the geometry to operate on. 
+ * @param papszOptions options as a null-terminated list of strings.
+ *                     Unused for now. Must be set to NULL.
+ *
+ * @return a new geometry.
+ *
+ * @since GDAL 2.0
+ */
+
+OGRGeometryH CPL_DLL OGR_G_GetCurveGeometry( OGRGeometryH hGeom,
+                                             char** papszOptions )
+{
+    VALIDATE_POINTER1( hGeom, "OGR_G_GetCurveGeometry", NULL );
+    return (OGRGeometryH) ((OGRGeometry *) hGeom)->getCurveGeometry((const char* const*)papszOptions);
+}
+
+/************************************************************************/
+/*                          OGR_G_Value()                               */
+/************************************************************************/
+/**
+ * \brief Fetch point at given distance along curve.
+ *
+ * This function relates to the SF COM ICurve::get_Value() method.
+ *
+ * This function is the same as the C++ method OGRCurve::Value().
+ *
+ * @param hGeom curve geometry.
+ * @param dfDistance distance along the curve at which to sample position.
+ *                   This distance should be between zero and get_Length()
+ *                   for this curve.
+ * @return a point or NULL.
+ *
+ * @since GDAL 2.0
+ */
+
+OGRGeometryH OGR_G_Value( OGRGeometryH hGeom, double dfDistance )
+{
+    VALIDATE_POINTER1( hGeom, "OGR_G_Value", NULL );
+
+    if( OGR_GT_IsCurve(((OGRGeometry *) hGeom)->getGeometryType()) )
+    {
+        OGRPoint* p = new OGRPoint();
+        ((OGRCurve *) hGeom)->Value(dfDistance, p);
+        return (OGRGeometryH)p;
+    }
+    else
+    {
+        return NULL;
+    }
+}
+
+/************************************************************************/
+/*                 OGRSetNonLinearGeometriesEnabledFlag()               */
+/************************************************************************/
+
+/**
+ * \brief Set flag to enable/disable returning non-linear geometries in the C API.
+ *
+ * This flag has only an effect on the OGR_F_GetGeometryRef(), OGR_F_GetGeomFieldRef(),
+ * OGR_L_GetGeomType(), OGR_GFld_GetType() and OGR_FD_GetGeomType() C API, and
+ * corresponding methods in the SWIG bindings. It is meant as making it simple
+ * for applications using the OGR C API not to have to deal with non-linear geometries,
+ * even if such geometries might be returned by drivers. In which case, they
+ * will be transformed into their closest linear geometry, by doing linear
+ * approximation, with OGR_G_ForceTo().
+ *
+ * Libraries should generally *not* use that method, since that could interfere
+ * with other libraries or applications.
+ *
+ * Note that it *does* not affect the behaviour of the C++ API.
+ *
+ * @param bFlag TRUE if non-linear geometries might be returned (default value).
+ *              FALSE to ask for non-linear geometries to be approximated as linear geometries.
+ *
+ * @return a point or NULL.
+ *
+ * @since GDAL 2.0
+ */
+
+void OGRSetNonLinearGeometriesEnabledFlag(int bFlag)
+{
+    bNonLinearGeometriesEnabled = bFlag;
+}
+
+/************************************************************************/
+/*                 OGRGetNonLinearGeometriesEnabledFlag()               */
+/************************************************************************/
+
+/**
+ * \brief Get flag to enable/disable returning non-linear geometries in the C API.
+ *
+ * return TRUE if non-linear geometries might be returned (default value is TRUE)
+ *
+ * @since GDAL 2.0
+ * @see OGRSetNonLinearGeometriesEnabledFlag()
+ */
+int OGRGetNonLinearGeometriesEnabledFlag(void)
+{
+    return bNonLinearGeometriesEnabled;
+}

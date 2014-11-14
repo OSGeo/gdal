@@ -3962,7 +3962,30 @@ def ogr_shape_82():
         return 'fail'
 
     return 'success'
-        
+
+###############################################################################
+# Test behaviour with curve geometries
+def ogr_shape_83():
+    
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_82.shp')
+    lyr = ds.CreateLayer('ogr_shape_82', geom_type = ogr.wkbCurvePolygon)
+    if lyr.GetGeomType() != ogr.wkbPolygon:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('CURVEPOLYGON((0 0,0 1,1 1,1 0,0 0))'))
+    lyr.CreateFeature(f)
+    f = None
+    
+    f = lyr.GetFeature(0)
+    if f.GetGeometryRef().GetGeometryType() != ogr.wkbPolygon:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+
 ###############################################################################
 # 
 
@@ -3996,6 +4019,7 @@ def ogr_shape_cleanup():
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_78.dbf' )
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_79.shp' )
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_81.shp' )
+    shape_drv.DeleteDataSource( '/vsimem/ogr_shape_82.shp' )
 
     return 'success'
 
@@ -4084,6 +4108,7 @@ gdaltest_list = [
     ogr_shape_80,
     ogr_shape_81,
     ogr_shape_82,
+    ogr_shape_83,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':

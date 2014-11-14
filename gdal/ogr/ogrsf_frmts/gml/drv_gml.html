@@ -154,6 +154,15 @@ the configuration option <b>GML_GET_SECONDARY_GEOM</b> should be set to the
 value <b>YES</b>.  When this is set only the secondary geometries are
 reported.<p>
 
+Starting with GDAL 2.0, Arc, ArcString, ArcByBulge, ArcByCenterPoint, Circle
+and CircleByCenterPoints will be returned as circular string OGR geometries.
+If they are included in other GML elements such as CurveComposite, MultiCurve, Surface,
+corresponding non-linear OGR geometries will be returned as well. When
+reading GML3 application schemas, declarations of geometry fields such as
+CurvePropertyType, SurfacePropertyType, MultiCurvePropertyType or MultiSurfacePropertyType
+will be also interpreted as being potential non-linear geometries, and corresponding
+OGR geometry type will be used for the layer geometry type.<p>
+
 <h2>gml:xlink resolving</h2>
 
 OGR 1.8.0 adds support for gml:xlink resolving.  When the resolver finds an
@@ -376,7 +385,11 @@ with a few variations with respect to what is recommanded by GML3 SF-0 profile,
 but that will be better accepted by some software (such as Deegree 3).</li>
 <li><i>GML3.2</i>(OGR &gt;= 1.9.0) in order to write GML files that follow GML 3.2.1 SF-0 profile.</li>
 </ul><br>
-If not specified, GML2 will be used.<br><br>
+If not specified, GML2 will be used.<br>
+Starting with GDAL 2.0, non-linear geometries can be written. This is only compatible
+with selecting on of that above GML3 format variant. Otherwise, such geometries will be
+approximating into their closest matching linear geometry.
+<br>
 Note: starting with OGR 1.11, fields of type StringList, RealList or IntegerList can be written. This
 will cause to advertize the SF-1 profile in the .XSD schema (such types are not supported by SF-0).<br>
 

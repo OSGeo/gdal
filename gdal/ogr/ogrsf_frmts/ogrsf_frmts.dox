@@ -470,6 +470,8 @@ can also be used.
   <li> <b>ODsCDeleteLayer</b>: True if this datasource can delete existing layers.<p>
   <li> <b>ODsCCreateGeomFieldAfterCreateLayer</b>: True if the layers of this
         datasource support CreateGeomField() just after layer creation.<p>
+  <li> <b>ODsCCurveGeometries</b>: True if this datasource supports writing curve geometries. (GDAL 2.0).
+                                   In that case, OLCCurveGeometries must also be declared in layers of that dataset.<p>
   <p>
  </ul>
 
@@ -1656,6 +1658,9 @@ otherwise FALSE.<p>
 <li> <b>OLCIgnoreFields</b> / "IgnoreFields": TRUE if fields, geometry and style
 will be omitted when fetching features as set by SetIgnoredFields() method.
 
+<li> <b>OLCCurveGeometries</b> / "CurveGeometries": TRUE if this layer supports
+writing curve geometries or may return such geometries. (GDAL 2.0).
+
 <p>
 
 </ul>
@@ -1746,6 +1751,9 @@ is uncertain, though it might still be UTF-8.<p>
 <li> <b>OLCTransactions</b> / "Transactions": TRUE if the StartTransaction(),
 CommitTransaction() and RollbackTransaction() methods work in a meaningful way,
 otherwise FALSE.<p>
+
+<li> <b>OLCCurveGeometries</b> / "CurveGeometries": TRUE if this layer supports
+writing curve geometries or may return such geometries. (GDAL 2.0).
 
 <p>
 

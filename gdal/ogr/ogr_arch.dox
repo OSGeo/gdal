@@ -63,14 +63,18 @@ The geometry classes are represent various kinds of vector geometry.  All
 the geometry classes derived from OGRGeometry which defines the common 
 services of all geometries.  Types of geometry include OGRPoint, OGRLineString,
 OGRPolygon, OGRGeometryCollection, OGRMultiPolygon, OGRMultiPoint, 
-and OGRMultiLineString.<p>
+and OGRMultiLineString.
+
+GDAL 2.0 extends those geometry type with non-linear geometries with the
+OGRCircularString, OGRCompoundCurve, OGRCurvePolygon, OGRMultiCurve and
+OGRMultiSurface classes.
 
 Additional intermediate abstract base classes contain functionality that
 could eventually be implemented by other geometry types.  These include
 OGRCurve (base class for OGRLineString) and OGRSurface (base class for 
 OGRPolygon).  Some intermediate interfaces modelled in the simple features
 abstract model and SFCOM are not modelled in OGR at this time.  In most 
-cases the methods are aggregated into other classes.  This may change.<p>
+cases the methods are aggregated into other classes.<p>
 
 The OGRGeometryFactory is used to convert well known text, and well known
 binary format data into geometries.  These are predefined ASCII and binary
@@ -91,6 +95,15 @@ aspect that has been well thought out.  In particular, it would be
 possible to create specialized classes using the OGRGeometryFactory without
 modifying it.<p>
 
+\subsection ogr_arch_geometry_compat_curves Compatibility issues with GDAL 2.0 non-linear geometries
+
+Generic mechanisms have been introduced so that creating or modifying a feature
+with a non-linear geometry in a layer of a driver that does not support it will
+transform that geometry in the closest matching linear geometry.
+
+On the other side, when retrieving data from the OGR C API, the OGRSetNonLinearGeometriesEnabledFlag()
+function can be used, so that geometries and layer geometry type returned are
+also converted to their linear approximation if necessary.
 
 \section ogr_arch_srs Spatial Reference
 

@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
- * Purpose:  The OGRLineString geometry class.
+ * Purpose:  The OGRSimpleCurve and OGRLineString geometry classes.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -36,14 +36,10 @@
 CPL_CVSID("$Id$");
 
 /************************************************************************/
-/*                           OGRLineString()                            */
+/*                           OGRSimpleCurve()                           */
 /************************************************************************/
 
-/**
- * \brief Create an empty line string.
- */
-
-OGRLineString::OGRLineString()
+OGRSimpleCurve::OGRSimpleCurve()
 
 {
     nPointCount = 0;
@@ -52,10 +48,10 @@ OGRLineString::OGRLineString()
 }
 
 /************************************************************************/
-/*                           ~OGRLineString()                           */
+/*                          ~OGRSimpleCurve()                           */
 /************************************************************************/
 
-OGRLineString::~OGRLineString()
+OGRSimpleCurve::~OGRSimpleCurve()
 
 {
     if( paoPoints != NULL )
@@ -65,49 +61,26 @@ OGRLineString::~OGRLineString()
 }
 
 /************************************************************************/
-/*                          getGeometryType()                           */
-/************************************************************************/
-
-OGRwkbGeometryType OGRLineString::getGeometryType() const
-
-{
-    if( nCoordDimension == 3 )
-        return wkbLineString25D;
-    else
-        return wkbLineString;
-}
-
-
-/************************************************************************/
 /*                            flattenTo2D()                             */
 /************************************************************************/
 
-void OGRLineString::flattenTo2D()
+void OGRSimpleCurve::flattenTo2D()
 
 {
     Make2D();
 }
 
 /************************************************************************/
-/*                          getGeometryName()                           */
-/************************************************************************/
-
-const char * OGRLineString::getGeometryName() const
-
-{
-    return "LINESTRING";
-}
-
-/************************************************************************/
 /*                               clone()                                */
 /************************************************************************/
 
-OGRGeometry *OGRLineString::clone() const
+OGRGeometry *OGRSimpleCurve::clone() const
 
 {
     OGRLineString       *poNewLineString;
 
-    poNewLineString = new OGRLineString();
+    poNewLineString = (OGRLineString*)
+            OGRGeometryFactory::createGeometry(getGeometryType());
 
     poNewLineString->assignSpatialReference( getSpatialReference() );
     poNewLineString->setPoints( nPointCount, paoPoints, padfZ );
@@ -120,27 +93,17 @@ OGRGeometry *OGRLineString::clone() const
 /*                               empty()                                */
 /************************************************************************/
 
-void OGRLineString::empty()
+void OGRSimpleCurve::empty()
 
 {
     setNumPoints( 0 );
 }
 
 /************************************************************************/
-/*                            getDimension()                            */
-/************************************************************************/
-
-int OGRLineString::getDimension() const
-
-{
-    return 1;
-}
-
-/************************************************************************/
 /*                       setCoordinateDimension()                       */
 /************************************************************************/
 
-void OGRLineString::setCoordinateDimension( int nNewDimension )
+void OGRSimpleCurve::setCoordinateDimension( int nNewDimension )
 
 {
     nCoordDimension = nNewDimension;
@@ -157,7 +120,7 @@ void OGRLineString::setCoordinateDimension( int nNewDimension )
 /*      representation including the byte order, and type information.  */
 /************************************************************************/
 
-int OGRLineString::WkbSize() const
+int OGRSimpleCurve::WkbSize() const
 
 {
     return 5 + 4 + 8 * nPointCount * getCoordinateDimension();
@@ -167,7 +130,7 @@ int OGRLineString::WkbSize() const
 /*                               Make2D()                               */
 /************************************************************************/
 
-void OGRLineString::Make2D()
+void OGRSimpleCurve::Make2D()
 
 {
     if( padfZ != NULL )
@@ -182,7 +145,7 @@ void OGRLineString::Make2D()
 /*                               Make3D()                               */
 /************************************************************************/
 
-void OGRLineString::Make3D()
+void OGRSimpleCurve::Make3D()
 
 {
     if( padfZ == NULL )
@@ -208,7 +171,7 @@ void OGRLineString::Make3D()
  * @param poPoint a point to initialize with the fetched point.
  */
 
-void    OGRLineString::getPoint( int i, OGRPoint * poPoint ) const
+void    OGRSimpleCurve::getPoint( int i, OGRPoint * poPoint ) const
 
 {
     assert( i >= 0 );
@@ -223,7 +186,7 @@ void    OGRLineString::getPoint( int i, OGRPoint * poPoint ) const
 }
 
 /**
- * \fn int OGRLineString::getNumPoints() const;
+ * \fn int OGRSimpleCurve::getNumPoints() const;
  *
  * \brief Fetch vertex count.
  *
@@ -233,7 +196,7 @@ void    OGRLineString::getPoint( int i, OGRPoint * poPoint ) const
  */
 
 /**
- * \fn double OGRLineString::getX( int iVertex ) const;
+ * \fn double OGRSimpleCurve::getX( int iVertex ) const;
  *
  * \brief Get X at vertex.
  *
@@ -246,7 +209,7 @@ void    OGRLineString::getPoint( int i, OGRPoint * poPoint ) const
  */
 
 /**
- * \fn double OGRLineString::getY( int iVertex ) const;
+ * \fn double OGRSimpleCurve::getY( int iVertex ) const;
  *
  * \brief Get Y at vertex.
  *
@@ -274,7 +237,7 @@ void    OGRLineString::getPoint( int i, OGRPoint * poPoint ) const
  * @return Z value.
  */
 
-double OGRLineString::getZ( int iVertex ) const
+double OGRSimpleCurve::getZ( int iVertex ) const
 
 {
     if( padfZ != NULL && iVertex >= 0 && iVertex < nPointCount 
@@ -300,7 +263,7 @@ double OGRLineString::getZ( int iVertex ) const
  * @param nNewPointCount the new number of points for geometry.
  */
 
-void OGRLineString::setNumPoints( int nNewPointCount, int bZeroizeNewContent )
+void OGRSimpleCurve::setNumPoints( int nNewPointCount, int bZeroizeNewContent )
 
 {
     if( nNewPointCount == 0 )
@@ -368,7 +331,7 @@ void OGRLineString::setNumPoints( int nNewPointCount, int bZeroizeNewContent )
  * @param poPoint the value to assign to the vertex.
  */
 
-void OGRLineString::setPoint( int iPoint, OGRPoint * poPoint )
+void OGRSimpleCurve::setPoint( int iPoint, OGRPoint * poPoint )
 
 {
     if (poPoint->getCoordinateDimension() < 3)
@@ -396,7 +359,7 @@ void OGRLineString::setPoint( int iPoint, OGRPoint * poPoint )
  * @param zIn input Z coordinate to assign (defaults to zero).
  */
 
-void OGRLineString::setPoint( int iPoint, double xIn, double yIn, double zIn )
+void OGRSimpleCurve::setPoint( int iPoint, double xIn, double yIn, double zIn )
 
 {
     if( getCoordinateDimension() == 2 )
@@ -423,7 +386,7 @@ void OGRLineString::setPoint( int iPoint, double xIn, double yIn, double zIn )
     }
 }
 
-void OGRLineString::setPoint( int iPoint, double xIn, double yIn )
+void OGRSimpleCurve::setPoint( int iPoint, double xIn, double yIn )
 
 {
     if( iPoint >= nPointCount )
@@ -441,7 +404,7 @@ void OGRLineString::setPoint( int iPoint, double xIn, double yIn )
 /*                                setZ()                                */
 /************************************************************************/
 
-void OGRLineString::setZ( int iPoint, double zIn )
+void OGRSimpleCurve::setZ( int iPoint, double zIn )
 {
     if( getCoordinateDimension() == 2 )
         Make3D();
@@ -472,7 +435,7 @@ void OGRLineString::setZ( int iPoint, double zIn )
  * @param poPoint the point to assign to the new vertex.
  */
 
-void OGRLineString::addPoint( OGRPoint * poPoint )
+void OGRSimpleCurve::addPoint( OGRPoint * poPoint )
 
 {
     if ( poPoint->getCoordinateDimension() < 3 )
@@ -498,13 +461,13 @@ void OGRLineString::addPoint( OGRPoint * poPoint )
  * @param z the Z coordinate to assign to the new point (defaults to zero).
  */
 
-void OGRLineString::addPoint( double x, double y, double z )
+void OGRSimpleCurve::addPoint( double x, double y, double z )
 
 {
     setPoint( nPointCount, x, y, z );
 }
 
-void OGRLineString::addPoint( double x, double y )
+void OGRSimpleCurve::addPoint( double x, double y )
 
 {
     setPoint( nPointCount, x, y );
@@ -528,7 +491,7 @@ void OGRLineString::addPoint( double x, double y )
  * @param padfZ the Z values that go with the points (optional, may be NULL).
  */
 
-void OGRLineString::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn,
+void OGRSimpleCurve::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn,
                                double * padfZ )
 
 {
@@ -571,7 +534,7 @@ void OGRLineString::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn,
  * NULL for 2D objects).
  */
 
-void OGRLineString::setPoints( int nPointsIn, double * padfX, double * padfY,
+void OGRSimpleCurve::setPoints( int nPointsIn, double * padfX, double * padfY,
                                double * padfZ )
 
 {
@@ -619,7 +582,7 @@ void OGRLineString::setPoints( int nPointsIn, double * padfX, double * padfY,
  * @param padfZ the Z values that go with the points (optional, may be NULL).
  */
 
-void OGRLineString::getPoints( OGRRawPoint * paoPointsOut, double * padfZ ) const
+void OGRSimpleCurve::getPoints( OGRRawPoint * paoPointsOut, double * padfZ ) const
 {
     if ( ! paoPointsOut )
         return;
@@ -663,7 +626,7 @@ void OGRLineString::getPoints( OGRRawPoint * paoPointsOut, double * padfZ ) cons
  * @since OGR 1.9.0
  */
 
-void OGRLineString::getPoints( void* pabyX, int nXStride,
+void OGRSimpleCurve::getPoints( void* pabyX, int nXStride,
                                void* pabyY, int nYStride,
                                void* pabyZ, int nZStride)  const
 {
@@ -708,7 +671,7 @@ void OGRLineString::getPoints( void* pabyX, int nXStride,
  * reversing the point ordering (first for last, etc).  
  */
 
-void OGRLineString::reversePoints()
+void OGRSimpleCurve::reversePoints()
 
 {
     int i;
@@ -748,7 +711,7 @@ void OGRLineString::reversePoints()
  * the last vertex of the other line string. 
  */
 
-void OGRLineString::addSubLineString( const OGRLineString *poOtherLine, 
+void OGRSimpleCurve::addSubLineString( const OGRLineString *poOtherLine, 
                                       int nStartVertex, int nEndVertex )
 
 {
@@ -830,54 +793,35 @@ void OGRLineString::addSubLineString( const OGRLineString *poOtherLine,
 /*      format.                                                         */
 /************************************************************************/
 
-OGRErr OGRLineString::importFromWkb( unsigned char * pabyData,
-                                     int nSize )
+OGRErr OGRSimpleCurve::importFromWkb( unsigned char * pabyData,
+                                      int nSize,
+                                      OGRwkbVariant eWkbVariant )
 
 {
     OGRwkbByteOrder     eByteOrder;
-    
-    if( nSize < 9 && nSize != -1 )
-        return OGRERR_NOT_ENOUGH_DATA;
+    int                 nDataOffset = 0;
+    int                 nNewNumPoints = 0;
 
-/* -------------------------------------------------------------------- */
-/*      Get the byte order byte.                                        */
-/* -------------------------------------------------------------------- */
-    eByteOrder = DB2_V72_FIX_BYTE_ORDER((OGRwkbByteOrder) *pabyData);
-    if (!( eByteOrder == wkbXDR || eByteOrder == wkbNDR ))
-        return OGRERR_CORRUPT_DATA;
+    OGRErr eErr = importPreambuleOfCollectionFromWkb( pabyData,
+                                                      nSize,
+                                                      nDataOffset,
+                                                      eByteOrder,
+                                                      16,
+                                                      nNewNumPoints,
+                                                      eWkbVariant );
+    if( eErr >= 0 )
+        return eErr;
 
-/* -------------------------------------------------------------------- */
-/*      Get the geometry feature type.  For now we assume that          */
-/*      geometry type is between 0 and 255 so we only have to fetch     */
-/*      one byte.                                                       */
-/* -------------------------------------------------------------------- */
-    OGRBoolean bIs3D;
-    OGRwkbGeometryType eGeometryType;
-    OGRErr err = OGRReadWKBGeometryType( pabyData, &eGeometryType, &bIs3D );
-
-    if( err != OGRERR_NONE || eGeometryType != wkbLineString )
-        return OGRERR_CORRUPT_DATA;
-
-/* -------------------------------------------------------------------- */
-/*      Get the vertex count.                                           */
-/* -------------------------------------------------------------------- */
-    int         nNewNumPoints;
-    
-    memcpy( &nNewNumPoints, pabyData + 5, 4 );
-    
-    if( OGR_SWAP( eByteOrder ) )
-        nNewNumPoints = CPL_SWAP32(nNewNumPoints);
-    
     /* Check if the wkb stream buffer is big enough to store
      * fetched number of points.
      * 16 or 24 - size of point structure
      */
-    int nPointSize = (bIs3D ? 24 : 16);
+    int nPointSize = (getCoordinateDimension() == 3 ? 24 : 16);
     if (nNewNumPoints < 0 || nNewNumPoints > INT_MAX / nPointSize)
         return OGRERR_CORRUPT_DATA;
     int nBufferMinSize = nPointSize * nNewNumPoints;
 
-    if( nSize != -1 && nBufferMinSize > nSize-9 )
+    if( nSize != -1 && nBufferMinSize > nSize )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Length of input WKB is too small" );
@@ -887,18 +831,13 @@ OGRErr OGRLineString::importFromWkb( unsigned char * pabyData,
     setNumPoints( nNewNumPoints, FALSE );
     if (nPointCount < nNewNumPoints)
         return OGRERR_FAILURE;
-    
-    if( bIs3D )
-        Make3D();
-    else
-        Make2D();
-    
+
 /* -------------------------------------------------------------------- */
 /*      Get the vertex.                                                 */
 /* -------------------------------------------------------------------- */
     int i = 0;
     
-    if( bIs3D )
+    if( getCoordinateDimension() == 3 )
     {
         for( i = 0; i < nPointCount; i++ )
         {
@@ -922,7 +861,7 @@ OGRErr OGRLineString::importFromWkb( unsigned char * pabyData,
             CPL_SWAPDOUBLE( &(paoPoints[i].y) );
         }
 
-        if( bIs3D )
+        if( getCoordinateDimension() == 3 )
         {
             for( i = 0; i < nPointCount; i++ )
             {
@@ -940,7 +879,7 @@ OGRErr OGRLineString::importFromWkb( unsigned char * pabyData,
 /*      Build a well known binary representation of this object.        */
 /************************************************************************/
 
-OGRErr  OGRLineString::exportToWkb( OGRwkbByteOrder eByteOrder,
+OGRErr  OGRSimpleCurve::exportToWkb( OGRwkbByteOrder eByteOrder,
                                     unsigned char * pabyData,
                                     OGRwkbVariant eWkbVariant ) const
 
@@ -957,7 +896,9 @@ OGRErr  OGRLineString::exportToWkb( OGRwkbByteOrder eByteOrder,
 
     if ( eWkbVariant == wkbVariantIso )
         nGType = getIsoGeometryType();
-    
+    else if( eWkbVariant == wkbVariantPostGIS1 && wkbHasZ((OGRwkbGeometryType)nGType) )
+        nGType = (OGRwkbGeometryType)(wkbFlatten(nGType) | wkb25DBitInternalUse); /* yes we explicitely set wkb25DBit */
+
     if( eByteOrder == wkbNDR )
         nGType = CPL_LSBWORD32( nGType );
     else
@@ -1012,97 +953,24 @@ OGRErr  OGRLineString::exportToWkb( OGRwkbByteOrder eByteOrder,
 /*      `LINESTRING ( x y, x y, ...)',                                  */
 /************************************************************************/
 
-OGRErr OGRLineString::importFromWkt( char ** ppszInput )
+OGRErr OGRSimpleCurve::importFromWkt( char ** ppszInput )
 
 {
-    char        szToken[OGR_WKT_TOKEN_MAX];
-    const char  *pszInput = *ppszInput;
-
-    empty();
-
-/* -------------------------------------------------------------------- */
-/*      Read and verify the ``LINESTRING'' keyword token.               */
-/* -------------------------------------------------------------------- */
-    pszInput = OGRWktReadToken( pszInput, szToken );
-
-    if( !EQUAL(szToken,getGeometryName()) )
-        return OGRERR_CORRUPT_DATA;
-
-/* -------------------------------------------------------------------- */
-/*      Check for EMPTY                                                 */
-/* -------------------------------------------------------------------- */
-    const char *pszPreScan;
     int bHasZ = FALSE, bHasM = FALSE;
+    OGRErr      eErr = importPreambuleFromWkt(ppszInput, &bHasZ, &bHasM);
+    if( eErr >= 0 )
+        return eErr;
 
-    pszPreScan = OGRWktReadToken( pszInput, szToken );
-    if( EQUAL(szToken,"EMPTY") )
-    {
-        *ppszInput = (char *) pszPreScan;
-        return OGRERR_NONE;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Check for Z, M or ZM. Will ignore the Measure                   */
-/* -------------------------------------------------------------------- */
-    else if( EQUAL(szToken,"Z") )
-    {
-        bHasZ = TRUE;
-    }
-    else if( EQUAL(szToken,"M") )
-    {
-        bHasM = TRUE;
-    }
-    else if( EQUAL(szToken,"ZM") )
-    {
-        bHasZ = TRUE;
-        bHasM = TRUE;
-    }
-
-    if (bHasZ || bHasM)
-    {
-        pszInput = pszPreScan;
-        pszPreScan = OGRWktReadToken( pszInput, szToken );
-        if( EQUAL(szToken,"EMPTY") )
-        {
-            *ppszInput = (char *) pszPreScan;
-            empty();
-            /* FIXME?: In theory we should store the dimension and M presence */
-            /* if we want to allow round-trip with ExportToWKT v1.2 */
-            return OGRERR_NONE;
-        }
-    }
-
-    if( !EQUAL(szToken,"(") )
-        return OGRERR_CORRUPT_DATA;
-
-    if ( !bHasZ && !bHasM )
-    {
-        /* Test for old-style LINESTRING(EMPTY) */
-        pszPreScan = OGRWktReadToken( pszPreScan, szToken );
-        if( EQUAL(szToken,"EMPTY") )
-        {
-            pszInput = OGRWktReadToken( pszPreScan, szToken );
-
-            if( !EQUAL(szToken,")") )
-                return OGRERR_CORRUPT_DATA;
-            else
-            {
-                *ppszInput = (char *) pszInput;
-                empty();
-                return OGRERR_NONE;
-            }
-        }
-    }
+    const char  *pszInput = *ppszInput;
 
 /* -------------------------------------------------------------------- */
 /*      Read the point list.                                            */
 /* -------------------------------------------------------------------- */
-    int      nMaxPoint = 0;
-
     nPointCount = 0;
 
-    pszInput = OGRWktReadPoints( pszInput, &paoPoints, &padfZ, &nMaxPoint,
-                                 &nPointCount );
+    int nMaxPoints = 0;
+    pszInput = OGRWktReadPoints( pszInput, &paoPoints, &padfZ, &nMaxPoints,
+                                &nPointCount );
     if( pszInput == NULL )
         return OGRERR_CORRUPT_DATA;
 
@@ -1122,7 +990,42 @@ OGRErr OGRLineString::importFromWkt( char ** ppszInput )
         else
             nCoordDimension = 3;
     }
-    
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                        importFromWKTListOnly()                       */
+/*                                                                      */
+/*      Instantiate from "(x y, x y, ...)"                              */
+/************************************************************************/
+
+OGRErr OGRSimpleCurve::importFromWKTListOnly( char ** ppszInput, int bHasZ, int bHasM,
+                                              OGRRawPoint*& paoPointsIn, int& nMaxPointsIn,
+                                              double*& padfZIn )
+
+{
+    const char  *pszInput = *ppszInput;
+
+/* -------------------------------------------------------------------- */
+/*      Read the point list.                                            */
+/* -------------------------------------------------------------------- */
+    int nPointCountRead = 0;
+
+    pszInput = OGRWktReadPoints( pszInput, &paoPointsIn, &padfZIn, &nMaxPointsIn,
+                                 &nPointCountRead );
+
+    if( pszInput == NULL )
+        return OGRERR_CORRUPT_DATA;
+
+    *ppszInput = (char *) pszInput;
+
+    /* Ignore Z array when we have a POLYGON M */
+    if (bHasM && !bHasZ)
+        setPoints( nPointCountRead, paoPointsIn, NULL );
+    else
+        setPoints( nPointCountRead, paoPointsIn, padfZIn );
+
     return OGRERR_NONE;
 }
 
@@ -1133,10 +1036,11 @@ OGRErr OGRLineString::importFromWkt( char ** ppszInput )
 /*      equivelent.  This could be made alot more CPU efficient!        */
 /************************************************************************/
 
-OGRErr OGRLineString::exportToWkt( char ** ppszDstText ) const
+OGRErr OGRSimpleCurve::exportToWkt( char ** ppszDstText,
+                                   OGRwkbVariant eWkbVariant ) const
 
 {
-    int         nMaxString = nPointCount * 40 * 3 + 20;
+    int         nMaxString = nPointCount * 40 * 3 + 25;
     int         nRetLen = 0;
 
 /* -------------------------------------------------------------------- */
@@ -1145,7 +1049,10 @@ OGRErr OGRLineString::exportToWkt( char ** ppszDstText ) const
     if( IsEmpty() )
     {
         CPLString osEmpty;
-        osEmpty.Printf("%s EMPTY",getGeometryName());
+        if( getCoordinateDimension() == 3 && eWkbVariant == wkbVariantIso )
+            osEmpty.Printf("%s Z EMPTY",getGeometryName());
+        else
+            osEmpty.Printf("%s EMPTY",getGeometryName());
         *ppszDstText = CPLStrdup(osEmpty);
         return OGRERR_NONE;
     }
@@ -1157,14 +1064,17 @@ OGRErr OGRLineString::exportToWkt( char ** ppszDstText ) const
     if( *ppszDstText == NULL )
         return OGRERR_NOT_ENOUGH_MEMORY;
 
-    sprintf( *ppszDstText, "%s (", getGeometryName() );
+    if( getCoordinateDimension() == 3 && eWkbVariant == wkbVariantIso )
+        sprintf( *ppszDstText, "%s Z (", getGeometryName() );
+    else
+        sprintf( *ppszDstText, "%s (", getGeometryName() );
 
     for( int i = 0; i < nPointCount; i++ )
     {
         if( nMaxString <= (int) strlen(*ppszDstText+nRetLen) + 32 + nRetLen )
         {
             CPLDebug( "OGR", 
-                      "OGRLineString::exportToWkt() ... buffer overflow.\n"
+                      "OGRSimpleCurve::exportToWkt() ... buffer overflow.\n"
                       "nMaxString=%d, strlen(*ppszDstText) = %d, i=%d\n"
                       "*ppszDstText = %s", 
                       nMaxString, (int) strlen(*ppszDstText), i, *ppszDstText );
@@ -1205,7 +1115,7 @@ OGRErr OGRLineString::exportToWkt( char ** ppszDstText ) const
 /*      For now we return a simple euclidian 2D distance.               */
 /************************************************************************/
 
-double OGRLineString::get_Length() const
+double OGRSimpleCurve::get_Length() const
 
 {
     double      dfLength = 0;
@@ -1227,7 +1137,7 @@ double OGRLineString::get_Length() const
 /*                             StartPoint()                             */
 /************************************************************************/
 
-void OGRLineString::StartPoint( OGRPoint * poPoint ) const
+void OGRSimpleCurve::StartPoint( OGRPoint * poPoint ) const
 
 {
     getPoint( 0, poPoint );
@@ -1237,7 +1147,7 @@ void OGRLineString::StartPoint( OGRPoint * poPoint ) const
 /*                              EndPoint()                              */
 /************************************************************************/
 
-void OGRLineString::EndPoint( OGRPoint * poPoint ) const
+void OGRSimpleCurve::EndPoint( OGRPoint * poPoint ) const
 
 {
     getPoint( nPointCount-1, poPoint );
@@ -1249,7 +1159,7 @@ void OGRLineString::EndPoint( OGRPoint * poPoint ) const
 /*      Get an interpolated point at some distance along the curve.     */
 /************************************************************************/
 
-void OGRLineString::Value( double dfDistance, OGRPoint * poPoint ) const
+void OGRSimpleCurve::Value( double dfDistance, OGRPoint * poPoint ) const
 
 {
     double      dfLength = 0;
@@ -1285,7 +1195,7 @@ void OGRLineString::Value( double dfDistance, OGRPoint * poPoint ) const
 
                 if( getCoordinateDimension() == 3 )
                     poPoint->setZ( padfZ[i] * (1 - dfRatio)
-                                   + padfZ[i] * dfRatio );
+                                   + padfZ[i+1] * dfRatio );
                 
                 return;
             }
@@ -1328,7 +1238,7 @@ void OGRLineString::Value( double dfDistance, OGRPoint * poPoint ) const
 #endif
 
 
-double OGRLineString::Project(const OGRPoint *poPoint) const
+double OGRSimpleCurve::Project(const OGRPoint *poPoint) const
 
 {
     double dfResult = -1;
@@ -1383,7 +1293,7 @@ double OGRLineString::Project(const OGRPoint *poPoint) const
 */
 
 
-OGRLineString* OGRLineString::getSubLine(double dfDistanceFrom, double dfDistanceTo, int bAsRatio) const
+OGRLineString* OGRSimpleCurve::getSubLine(double dfDistanceFrom, double dfDistanceTo, int bAsRatio) const
 
 {
     OGRLineString       *poNewLineString;
@@ -1560,7 +1470,7 @@ OGRLineString* OGRLineString::getSubLine(double dfDistanceFrom, double dfDistanc
 /*                            getEnvelope()                             */
 /************************************************************************/
 
-void OGRLineString::getEnvelope( OGREnvelope * psEnvelope ) const
+void OGRSimpleCurve::getEnvelope( OGREnvelope * psEnvelope ) const
 
 {
     double      dfMinX, dfMinY, dfMaxX, dfMaxY;
@@ -1600,7 +1510,7 @@ void OGRLineString::getEnvelope( OGREnvelope * psEnvelope ) const
 /*                            getEnvelope()                             */
 /************************************************************************/
 
-void OGRLineString::getEnvelope( OGREnvelope3D * psEnvelope ) const
+void OGRSimpleCurve::getEnvelope( OGREnvelope3D * psEnvelope ) const
 
 {
     getEnvelope((OGREnvelope*)psEnvelope);
@@ -1632,7 +1542,7 @@ void OGRLineString::getEnvelope( OGREnvelope3D * psEnvelope ) const
 /*                               Equals()                                */
 /************************************************************************/
 
-OGRBoolean OGRLineString::Equals( OGRGeometry * poOther ) const
+OGRBoolean OGRSimpleCurve::Equals( OGRGeometry * poOther ) const
 
 {
     OGRLineString       *poOLine = (OGRLineString *) poOther;
@@ -1666,7 +1576,7 @@ OGRBoolean OGRLineString::Equals( OGRGeometry * poOther ) const
 /*                             transform()                              */
 /************************************************************************/
 
-OGRErr OGRLineString::transform( OGRCoordinateTransformation *poCT )
+OGRErr OGRSimpleCurve::transform( OGRCoordinateTransformation *poCT )
 
 {
 #ifdef DISABLE_OGRGEOM_TRANSFORM
@@ -1780,22 +1690,35 @@ OGRErr OGRLineString::transform( OGRCoordinateTransformation *poCT )
 /*                               IsEmpty()                              */
 /************************************************************************/
 
-OGRBoolean OGRLineString::IsEmpty(  ) const
+OGRBoolean OGRSimpleCurve::IsEmpty(  ) const
 {
     return (nPointCount == 0);
 }
 
 /************************************************************************/
-/*                     OGRLineString::segmentize()                      */
+/*                     OGRSimpleCurve::segmentize()                      */
 /************************************************************************/
 
-void OGRLineString::segmentize( double dfMaxLength )
+void OGRSimpleCurve::segmentize( double dfMaxLength )
 {
     if (dfMaxLength <= 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "dfMaxLength must be strictly positive");
         return;
+    }
+    if( nPointCount < 2 )
+        return;
+
+    /* So as to make sure that the same line followed in both directions */
+    /* result in the same segmentized line */
+    if ( paoPoints[0].x < paoPoints[nPointCount - 1].x ||
+         (paoPoints[0].x == paoPoints[nPointCount - 1].x &&
+          paoPoints[0].y < paoPoints[nPointCount - 1].y) )
+    {
+        reversePoints();
+        segmentize(dfMaxLength);
+        reversePoints();
     }
 
     int i;
@@ -1869,7 +1792,7 @@ void OGRLineString::segmentize( double dfMaxLength )
 /*                               swapXY()                               */
 /************************************************************************/
 
-void OGRLineString::swapXY()
+void OGRSimpleCurve::swapXY()
 {
     int i;
     for( i = 0; i < nPointCount; i++ )
@@ -1878,4 +1801,220 @@ void OGRLineString::swapXY()
         paoPoints[i].x = paoPoints[i].y;
         paoPoints[i].y = dfTemp;
     }
+}
+
+/************************************************************************/
+/*                       OGRSimpleCurvePointIterator                    */
+/************************************************************************/
+
+class OGRSimpleCurvePointIterator: public OGRPointIterator
+{
+        const OGRSimpleCurve* poSC;
+        int                   iCurPoint;
+    
+    public:
+        OGRSimpleCurvePointIterator(const OGRSimpleCurve* poSC) : poSC(poSC), iCurPoint(0) {}
+
+        virtual OGRBoolean getNextPoint(OGRPoint* p);
+};
+
+/************************************************************************/
+/*                            getNextPoint()                            */
+/************************************************************************/
+
+OGRBoolean OGRSimpleCurvePointIterator::getNextPoint(OGRPoint* p)
+{
+    if( iCurPoint >= poSC->getNumPoints() )
+        return FALSE;
+    poSC->getPoint(iCurPoint, p);
+    iCurPoint ++;
+    return TRUE;
+}
+
+/************************************************************************/
+/*                         getPointIterator()                           */
+/************************************************************************/
+
+OGRPointIterator* OGRSimpleCurve::getPointIterator() const
+{
+    return new OGRSimpleCurvePointIterator(this);
+}
+
+/************************************************************************/
+/*                           OGRLineString()                            */
+/************************************************************************/
+
+/**
+ * \brief Create an empty line string.
+ */
+
+OGRLineString::OGRLineString()
+
+{
+}
+
+/************************************************************************/
+/*                          ~OGRLineString()                            */
+/************************************************************************/
+
+OGRLineString::~OGRLineString()
+
+{
+}
+
+/************************************************************************/
+/*                          getGeometryType()                           */
+/************************************************************************/
+
+OGRwkbGeometryType OGRLineString::getGeometryType() const
+
+{
+    if( nCoordDimension == 3 )
+        return wkbLineString25D;
+    else
+        return wkbLineString;
+}
+
+/************************************************************************/
+/*                          getGeometryName()                           */
+/************************************************************************/
+
+const char * OGRLineString::getGeometryName() const
+
+{
+    return "LINESTRING";
+}
+
+/************************************************************************/
+/*                          curveToLine()                               */
+/************************************************************************/
+
+OGRLineString* OGRLineString::CurveToLine(CPL_UNUSED double dfMaxAngleStepSizeDegrees,
+                                          CPL_UNUSED const char* const* papszOptions) const
+{
+    return (OGRLineString*)clone();
+}
+
+/************************************************************************/
+/*                          get_LinearArea()                          */
+/************************************************************************/
+
+/**
+ * \brief Compute area of ring / closed linestring.
+ *
+ * The area is computed according to Green's Theorem:  
+ *
+ * Area is "Sum(x(i)*(y(i+1) - y(i-1)))/2" for i = 0 to pointCount-1, 
+ * assuming the last point is a duplicate of the first. 
+ *
+ * @return computed area.
+ */
+
+double OGRSimpleCurve::get_LinearArea() const
+
+{
+    double dfAreaSum;
+    int i;
+
+    if( nPointCount < 2 )
+        return 0;
+
+    dfAreaSum = paoPoints[0].x * (paoPoints[1].y - paoPoints[nPointCount-1].y);
+
+    for( i = 1; i < nPointCount-1; i++ )
+    {
+        dfAreaSum += paoPoints[i].x * (paoPoints[i+1].y - paoPoints[i-1].y);
+    }
+
+    dfAreaSum += paoPoints[nPointCount-1].x * (paoPoints[0].y - paoPoints[nPointCount-2].y);
+
+    return 0.5 * fabs(dfAreaSum);
+}
+
+/************************************************************************/
+/*                             getCurveGeometry()                       */
+/************************************************************************/
+
+OGRGeometry* OGRLineString::getCurveGeometry(const char* const* papszOptions) const
+{
+    return OGRGeometryFactory::curveFromLineString(this, papszOptions);
+}
+
+/************************************************************************/
+/*                      TransferMembersAndDestroy()                     */
+/************************************************************************/
+
+OGRLineString* OGRLineString::TransferMembersAndDestroy(
+                                            OGRLineString* poSrc,
+                                            OGRLineString* poDst)
+{
+    poDst->setCoordinateDimension(poSrc->getCoordinateDimension());
+    poDst->assignSpatialReference(poSrc->getSpatialReference());
+    poDst->nPointCount = poSrc->nPointCount;
+    poDst->paoPoints = poSrc->paoPoints;
+    poDst->padfZ = poSrc->padfZ;
+    poSrc->nPointCount = 0;
+    poSrc->paoPoints = NULL;
+    poSrc->padfZ = NULL;
+    delete poSrc;
+    return poDst;
+}
+
+/************************************************************************/
+/*                         CastToLinearRing()                           */
+/************************************************************************/
+
+/**
+ * \brief Cast to linear ring.
+ *
+ * The passed in geometry is consumed and a new one returned (or NULL in case
+ * of failure)
+ * 
+ * @param poLS the input geometry - ownership is passed to the method.
+ * @return new geometry.
+ */
+
+OGRLinearRing* OGRLineString::CastToLinearRing(OGRLineString* poLS)
+{
+    if( poLS->nPointCount < 2 || !poLS->get_IsClosed() )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot convert non-closed linestring to linearring");
+        delete poLS;
+        return NULL;
+    }
+    return (OGRLinearRing*)TransferMembersAndDestroy(poLS, new OGRLinearRing());
+}
+
+/************************************************************************/
+/*                     GetCasterToLineString()                          */
+/************************************************************************/
+
+OGRCurveCasterToLineString OGRLineString::GetCasterToLineString() const {
+    return (OGRCurveCasterToLineString) OGRGeometry::CastToIdentity;
+}
+
+/************************************************************************/
+/*                        GetCasterToLinearRing()                       */
+/************************************************************************/
+
+OGRCurveCasterToLinearRing OGRLineString::GetCasterToLinearRing() const {
+    return (OGRCurveCasterToLinearRing) OGRLineString::CastToLinearRing;
+}
+
+/************************************************************************/
+/*                            get_Area()                                */
+/************************************************************************/
+
+double OGRLineString::get_Area() const
+{
+    return get_LinearArea();
+}
+
+/************************************************************************/
+/*                       get_AreaOfCurveSegments()                      */
+/************************************************************************/
+
+double OGRLineString::get_AreaOfCurveSegments() const
+{
+    return 0;
 }

@@ -1188,7 +1188,8 @@ OGRErr OGRCheckPermutation(int* panPermutation, int nSize)
 }
 
 
-OGRErr OGRReadWKBGeometryType( unsigned char * pabyData, OGRwkbGeometryType *peGeometryType, OGRBoolean *pbIs3D )
+OGRErr OGRReadWKBGeometryType( unsigned char * pabyData, OGRwkbVariant eWkbVariant,
+                               OGRwkbGeometryType *peGeometryType, OGRBoolean *pbIs3D )
 {
     if ( ! (peGeometryType && pbIs3D) )
         return OGRERR_FAILURE;
@@ -1215,33 +1216,116 @@ OGRErr OGRReadWKBGeometryType( unsigned char * pabyData, OGRwkbGeometryType *peG
     }
     
     /* Old-style OGC z-bit is flipped? */
-    if ( wkb25DBit & iRawType )
+    if ( wkb25DBitInternalUse & iRawType )
     {
         /* Clean off top 3 bytes */
         iRawType &= 0x000000FF;
         bIs3D = TRUE;        
     }
     
-    /* ISO SQL/MM style Z types (between 1001 and 1007)? */
-    if ( iRawType >= 1001 && iRawType <= 1007 )
+    /* ISO SQL/MM style Z types (between 1001 and 1012)? */
+    if ( iRawType >= 1001 && iRawType <= (int)wkbMultiSurfaceZ )
     {
         /* Remove the ISO padding */
         iRawType -= 1000;
         bIs3D = TRUE;
     }
     
+    /*  ISO SQL/MM Part3 draft -> Deprecated */
+    /* See http://jtc1sc32.org/doc/N1101-1150/32N1107-WD13249-3--spatial.pdf  */
+    if (iRawType == 1000001)
+        iRawType = wkbCircularString;
+    else if (iRawType == 1000002)
+        iRawType = wkbCompoundCurve;
+    else if (iRawType == 1000003)
+        iRawType = wkbCurvePolygon;
+    else if (iRawType == 1000004)
+        iRawType = wkbMultiCurve;
+    else if (iRawType == 1000005)
+        iRawType = wkbMultiSurface;
+    else if (iRawType == 3000001)
+    {
+        iRawType = wkbPoint;
+        bIs3D = TRUE;
+    }
+    else if (iRawType == 3000002)
+    {
+        iRawType = wkbLineString;
+        bIs3D = TRUE;
+    }
+    else if (iRawType == 3000003)
+    {
+        iRawType = wkbCircularString;
+        bIs3D = TRUE;
+    }
+    else if (iRawType == 3000004)
+    {
+        iRawType = wkbCompoundCurve;
+        bIs3D = TRUE;
+    }
+    else if (iRawType == 3000005)
+    {
+        iRawType = wkbPolygon;
+        bIs3D = TRUE;
+    }
+    else if (iRawType == 3000006)
+    {
+        iRawType = wkbCurvePolygon;
+        bIs3D = TRUE;
+    }
+    else if (iRawType == 3000007)
+    {
+        iRawType = wkbMultiPoint;
+        bIs3D = TRUE;
+    }
+    else if (iRawType == 3000008)
+    {
+        iRawType = wkbMultiCurve;
+        bIs3D = TRUE;
+    }
+    else if (iRawType == 3000009)
+    {
+        iRawType = wkbMultiLineString;
+        bIs3D = TRUE;
+    }
+    else if (iRawType == 3000010)
+    {
+        iRawType = wkbMultiSurface;
+        bIs3D = TRUE;
+    }
+    else if (iRawType == 3000011)
+    {
+        iRawType = wkbMultiPolygon;
+        bIs3D = TRUE;
+    }
+    else if (iRawType == 3000012)
+    {
+        iRawType = wkbGeometryCollection;
+        bIs3D = TRUE;
+    }
+    
     /* Sometimes the Z flag is in the 2nd byte? */
-    if ( iRawType & (wkb25DBit >> 16) )
+    if ( iRawType & (wkb25DBitInternalUse >> 16) )
     {
         /* Clean off top 3 bytes */
         iRawType &= 0x000000FF;
         bIs3D = TRUE;        
     }
+    
+    if( eWkbVariant == wkbVariantPostGIS1 )
+    {
+        if( iRawType == POSTGIS15_CURVEPOLYGON )
+            iRawType = wkbCurvePolygon;
+        else if( iRawType == POSTGIS15_MULTICURVE )
+            iRawType = wkbMultiCurve;
+        else if( iRawType == POSTGIS15_MULTISURFACE )
+            iRawType = wkbMultiSurface;
+    }
 
     /* Nothing left but (hopefully) basic 2D types */
 
     /* What if what we have is still out of range? */
-    if ( iRawType < 1 || iRawType > (int)wkbGeometryCollection )
+    if ( iRawType < 1 || iRawType > (int)wkbMultiSurface )
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Unsupported WKB type %d", iRawType);            
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;

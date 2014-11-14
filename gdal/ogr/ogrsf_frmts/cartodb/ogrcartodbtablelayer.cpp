@@ -282,10 +282,10 @@ OGRErr OGRCARTODBTableLayer::CreateField( OGRFieldDefn *poFieldIn,
 }
 
 /************************************************************************/
-/*                           CreateFeature()                            */
+/*                           ICreateFeature()                            */
 /************************************************************************/
 
-OGRErr OGRCARTODBTableLayer::CreateFeature( OGRFeature *poFeature )
+OGRErr OGRCARTODBTableLayer::ICreateFeature( OGRFeature *poFeature )
 
 {
     int i;
@@ -413,7 +413,7 @@ OGRErr OGRCARTODBTableLayer::CreateFeature( OGRFeature *poFeature )
             int nSRID = poGeomFieldDefn->nSRID;
             if( nSRID == 0 )
                 nSRID = 4326;
-            char* pszEWKB = OGRGeometryToHexEWKB(poGeom, nSRID);
+            char* pszEWKB = OGRGeometryToHexEWKB(poGeom, nSRID, FALSE);
             osSQL += "'";
             osSQL += pszEWKB;
             osSQL += "'";
@@ -507,10 +507,10 @@ OGRErr OGRCARTODBTableLayer::CreateFeature( OGRFeature *poFeature )
 }
 
 /************************************************************************/
-/*                            SetFeature()                              */
+/*                            ISetFeature()                              */
 /************************************************************************/
 
-OGRErr OGRCARTODBTableLayer::SetFeature( OGRFeature *poFeature )
+OGRErr OGRCARTODBTableLayer::ISetFeature( OGRFeature *poFeature )
 
 {
     int i;
@@ -579,7 +579,7 @@ OGRErr OGRCARTODBTableLayer::SetFeature( OGRFeature *poFeature )
             int nSRID = poGeomFieldDefn->nSRID;
             if( nSRID == 0 )
                 nSRID = 4326;
-            char* pszEWKB = OGRGeometryToHexEWKB(poGeom, nSRID);
+            char* pszEWKB = OGRGeometryToHexEWKB(poGeom, nSRID, FALSE);
             osSQL += "'";
             osSQL += pszEWKB;
             osSQL += "'";

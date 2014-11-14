@@ -68,15 +68,15 @@ class OGRODSLayer : public OGRMemLayer
     /* For external usage. Mess with FID */
     virtual OGRFeature *        GetNextFeature();
     virtual OGRFeature         *GetFeature( long nFeatureId );
-    virtual OGRErr              SetFeature( OGRFeature *poFeature );
+    virtual OGRErr              ISetFeature( OGRFeature *poFeature );
     virtual OGRErr              DeleteFeature( long nFID );
 
     /* For internal usage, for cell resolver */
     OGRFeature *        GetNextFeatureWithoutFIDHack() { return OGRMemLayer::GetNextFeature(); }
-    OGRErr              SetFeatureWithoutFIDHack( OGRFeature *poFeature ) { SetUpdated(); return OGRMemLayer::SetFeature(poFeature); }
+    OGRErr              SetFeatureWithoutFIDHack( OGRFeature *poFeature ) { SetUpdated(); return OGRMemLayer::ISetFeature(poFeature); }
 
-    OGRErr              CreateFeature( OGRFeature *poFeature )
-    { SetUpdated(); return OGRMemLayer::CreateFeature(poFeature); }
+    OGRErr              ICreateFeature( OGRFeature *poFeature )
+    { SetUpdated(); return OGRMemLayer::ICreateFeature(poFeature); }
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE )

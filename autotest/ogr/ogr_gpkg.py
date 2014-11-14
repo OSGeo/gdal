@@ -109,15 +109,15 @@ def ogr_gpkg_3():
     #gdal.PushErrorHandler('CPLQuietErrorHandler')
     srs4326 = osr.SpatialReference()
     srs4326.ImportFromEPSG( 4326 )
-    lyr = gdaltest.gpkg_ds.CreateLayer( 'first_layer', geom_type = ogr.wkbPoint, srs = srs4326)
+    lyr = gdaltest.gpkg_ds.CreateLayer( 'first_layer', geom_type = ogr.wkbPoint, srs = srs4326, options = ['SPATIAL_INDEX=NO'])
     #gdal.PopErrorHandler()
     if lyr is None:
         return 'fail'
 
     # Test creating a layer with an existing name
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    lyr = gdaltest.gpkg_ds.CreateLayer( 'a_layer')
-    lyr = gdaltest.gpkg_ds.CreateLayer( 'a_layer' )
+    lyr = gdaltest.gpkg_ds.CreateLayer( 'a_layer', options = ['SPATIAL_INDEX=NO'])
+    lyr = gdaltest.gpkg_ds.CreateLayer( 'a_layer', options = ['SPATIAL_INDEX=NO'])
     gdal.PopErrorHandler()
     if lyr is not None:
         gdaltest.post_reason('layer creation should have failed')
@@ -156,7 +156,13 @@ def ogr_gpkg_4():
     if lyr1.GetName() != 'a_layer':
         gdaltest.post_reason( 'unexpected layer name for layer 1' )
         return 'fail'
-        
+
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT * FROM sqlite_master WHERE name = 'gpkg_extensions'")
+    if sql_lyr.GetFeatureCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
     return 'success'
 
 
@@ -572,6 +578,9 @@ def ogr_gpkg_13():
 
     gdaltest.gpkg_ds = None
     gdaltest.gpkg_ds = ogr.Open('tmp/gpkg_test.gpkg', update = 1)
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail : warning NOT expected')
+        return 'fail'
     if gdaltest.gpkg_ds.GetLayerCount() != 4:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -588,6 +597,12 @@ def ogr_gpkg_13():
         feat.DumpReadable()
         gdaltest.post_reason('fail')
         return 'fail'
+
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT * FROM gpkg_extensions WHERE table_name IS NULL AND extension_name = 'gdal_aspatial'")
+    if sql_lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
 
     return 'success'
 
@@ -734,7 +749,70 @@ def ogr_gpkg_16():
     # No warning since we open as read-only
     ds = ogr.Open('/vsimem/ogr_gpk_16.gpkg')
     ds = None
-    
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail : warning NOT expected')
+        return 'fail'
+
+    # Warning since we open as read-write
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = ogr.Open('/vsimem/ogr_gpk_16.gpkg', update = 1)
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail : warning expected')
+        return 'fail'
+
+    sql_lyr = ds.ExecuteSQL("UPDATE gpkg_extensions SET scope = 'read-write' WHERE extension_name = 'myext'")
+    ds = None
+
+    # Warning since we open as read-only
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = ogr.Open('/vsimem/ogr_gpk_16.gpkg')
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail : warning expected')
+        return 'fail'
+
+    # and also as read-write
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = ogr.Open('/vsimem/ogr_gpk_16.gpkg', update = 1)
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail : warning expected')
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_gpk_16.gpkg')
+
+    # Test with unsupported geometry type
+    ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpk_16.gpkg')
+    lyr = ds.CreateLayer('foo')
+    sql_lyr = ds.ExecuteSQL("INSERT INTO gpkg_extensions ( table_name, column_name, " + \
+        "extension_name, definition, scope ) VALUES ( 'foo', 'geom', 'gpkg_geom_CURVE', 'some ext', 'write-only' ) ")
+    ds = None
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = ogr.Open('/vsimem/ogr_gpk_16.gpkg', update = 1)
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail : warning expected')
+        return 'fail'
+
+    gdal.Unlink('/vsimem/ogr_gpk_16.gpkg')
+
+    # Test with database wide unknown extension
+    ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpk_16.gpkg')
+    lyr = ds.CreateLayer('foo')
+    sql_lyr = ds.ExecuteSQL("INSERT INTO gpkg_extensions ( "+ \
+        "extension_name, definition, scope ) VALUES ( 'myext', 'some ext', 'write-only' ) ")
+    ds = None
+
+    # No warning since we open as read-only
+    ds = ogr.Open('/vsimem/ogr_gpk_16.gpkg')
+    ds = None
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail : warning NOT expected')
+        return 'fail'
+
     # Warning since we open as read-write
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = ogr.Open('/vsimem/ogr_gpk_16.gpkg', update = 1)
@@ -784,6 +862,80 @@ def ogr_gpkg_17():
     ds = None
 
     gdal.Unlink('/vsimem/ogr_gpkg_17.gpkg')
+    return 'success'
+
+###############################################################################
+# Test geometry type extension
+
+def ogr_gpkg_18():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+        
+    ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_18.gpkg')
+    lyr = ds.CreateLayer('wkbCircularString', geom_type = ogr.wkbCircularString)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('CIRCULARSTRING(0 0,1 0,0 0)'))
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+    
+    ds = ogr.Open('/vsimem/ogr_gpkg_18.gpkg')
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail : warning NOT expected')
+        return 'fail'
+
+    lyr = ds.GetLayer(0)
+    if lyr.GetGeomType() != ogr.wkbCircularString:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    g = f.GetGeometryRef()
+    if g.GetGeometryType() != ogr.wkbCircularString:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_extensions WHERE table_name = 'wkbCircularString' AND extension_name = 'gpkg_geom_CIRCULARSTRING'")
+    if sql_lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_gpkg_18.gpkg')
+    
+    # Also test with a wkbUnknown layer and add curve geometries afterwards
+    ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_18.gpkg')
+    lyr = ds.CreateLayer('test')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('CIRCULARSTRING(0 0,1 0,0 0)'))
+    lyr.CreateFeature(f)
+    f = None
+
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_extensions WHERE table_name = 'test' AND extension_name = 'gpkg_geom_CIRCULARSTRING'")
+    if sql_lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
+    ds = None
+    
+    ds = ogr.Open('/vsimem/ogr_gpkg_18.gpkg')
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail : warning NOT expected')
+        return 'fail'
+
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    g = f.GetGeometryRef()
+    if g.GetGeometryType() != ogr.wkbCircularString:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_gpkg_18.gpkg')
+    
     return 'success'
 
 ###############################################################################
@@ -861,6 +1013,7 @@ gdaltest_list = [
     ogr_gpkg_15,
     ogr_gpkg_16,
     ogr_gpkg_17,
+    ogr_gpkg_18,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]

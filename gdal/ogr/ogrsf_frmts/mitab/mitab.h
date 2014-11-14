@@ -205,7 +205,7 @@ class IMapInfoFile : public OGRLayer
     virtual int         GetFeatureCount (int bForce) = 0;
     virtual OGRFeature *GetNextFeature();
     virtual OGRFeature *GetFeature(long nFeatureId);
-    virtual OGRErr      CreateFeature(OGRFeature *poFeature);
+    virtual OGRErr      ICreateFeature(OGRFeature *poFeature);
     virtual int         TestCapability( const char * pszCap ) =0;
     virtual int         GetExtent(OGREnvelope *psExtent, int bForce) =0;
 
@@ -335,7 +335,7 @@ class TABFile: public IMapInfoFile
     virtual int         GetExtent(OGREnvelope *psExtent, int bForce);
 
     /* Implement OGRLayer's SetFeature() for random write, only with TABFile */
-    virtual OGRErr      SetFeature( OGRFeature * );
+    virtual OGRErr      ISetFeature( OGRFeature * );
     virtual OGRErr      DeleteFeature(long nFeatureId);
 
     virtual OGRErr      DeleteField( int iField );

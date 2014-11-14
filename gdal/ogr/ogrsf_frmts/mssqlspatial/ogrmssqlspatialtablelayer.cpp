@@ -861,12 +861,12 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateField( OGRFieldDefn *poFieldIn,
 }
 
 /************************************************************************/
-/*                             SetFeature()                             */
+/*                             ISetFeature()                             */
 /*                                                                      */
 /*      SetFeature() is implemented by an UPDATE SQL command            */
 /************************************************************************/
 
-OGRErr OGRMSSQLSpatialTableLayer::SetFeature( OGRFeature *poFeature )
+OGRErr OGRMSSQLSpatialTableLayer::ISetFeature( OGRFeature *poFeature )
 
 {
     OGRErr              eErr = OGRERR_FAILURE;
@@ -1096,10 +1096,10 @@ OGRErr OGRMSSQLSpatialTableLayer::DeleteFeature( long nFID )
 }
 
 /************************************************************************/
-/*                           CreateFeature()                            */
+/*                           ICreateFeature()                            */
 /************************************************************************/
 
-OGRErr OGRMSSQLSpatialTableLayer::CreateFeature( OGRFeature *poFeature )
+OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
 
 {
     GetLayerDefn();

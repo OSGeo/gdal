@@ -79,6 +79,8 @@ int OGRCSVDataSource::TestCapability( const char * pszCap )
         return bUpdate;
     else if( EQUAL(pszCap,ODsCCreateGeomFieldAfterCreateLayer) )
         return bUpdate && bEnableGeometryFields;
+    else if( EQUAL(pszCap,ODsCCurveGeometries) )
+        return TRUE;
     else
         return FALSE;
 }

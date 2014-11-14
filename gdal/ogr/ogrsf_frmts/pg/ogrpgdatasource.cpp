@@ -1692,6 +1692,8 @@ int OGRPGDataSource::TestCapability( const char * pszCap )
         || EQUAL(pszCap,ODsCDeleteLayer)
         || EQUAL(pszCap,ODsCCreateGeomFieldAfterCreateLayer) )
         return TRUE;
+    else if( EQUAL(pszCap,ODsCCurveGeometries) )
+        return TRUE;
     else
         return FALSE;
 }

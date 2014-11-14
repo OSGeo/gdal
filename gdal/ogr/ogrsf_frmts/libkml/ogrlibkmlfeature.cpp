@@ -382,7 +382,7 @@ FeaturePtr feat2kml (
                     poKmlPhotoOverlay->set_shape(kmldom::SHAPE_SPHERE);
             }
 
-            ElementPtr poKmlElement = geom2kml ( poOgrGeom, -1, 0, poKmlFactory );
+            ElementPtr poKmlElement = geom2kml ( poOgrGeom, -1, poKmlFactory );
 
             poKmlPhotoOverlay->set_point ( AsPoint ( poKmlElement ) );
         }
@@ -681,7 +681,7 @@ FeaturePtr feat2kml (
         PlacemarkPtr poKmlPlacemark = poKmlFactory->CreatePlacemark (  );
         poKmlFeature = poKmlPlacemark;
 
-        ElementPtr poKmlElement = geom2kml ( poOgrGeom, -1, 0, poKmlFactory );
+        ElementPtr poKmlElement = geom2kml ( poOgrGeom, -1, poKmlFactory );
 
         poKmlPlacemark->set_geometry ( AsGeometry ( poKmlElement ) );
     }

@@ -107,16 +107,16 @@ OGRFeature *OGRMutexedLayer::GetFeature( long nFID )
     return OGRLayerDecorator::GetFeature(nFID);
 }
 
-OGRErr      OGRMutexedLayer::SetFeature( OGRFeature *poFeature )
+OGRErr      OGRMutexedLayer::ISetFeature( OGRFeature *poFeature )
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
-    return OGRLayerDecorator::SetFeature(poFeature);
+    return OGRLayerDecorator::ISetFeature(poFeature);
 }
 
-OGRErr      OGRMutexedLayer::CreateFeature( OGRFeature *poFeature )
+OGRErr      OGRMutexedLayer::ICreateFeature( OGRFeature *poFeature )
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
-    return OGRLayerDecorator::CreateFeature(poFeature);
+    return OGRLayerDecorator::ICreateFeature(poFeature);
 }
 
 OGRErr      OGRMutexedLayer::DeleteFeature( long nFID )

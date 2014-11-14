@@ -59,7 +59,7 @@ public:
     void ResetReading();
     OGRFeature * GetNextFeature();
 
-    OGRErr CreateFeature(OGRFeature *poFeature);
+    OGRErr ICreateFeature(OGRFeature *poFeature);
     OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK);
 
     OGRFeatureDefn * GetLayerDefn();

@@ -404,7 +404,7 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition( const char * pszTable )
                 else if( !EQUAL(pszLayerGType, "COLLECTION") )
                     CPLDebug("OCI", "LAYER_GTYPE = %s", pszLayerGType );
                 if( iDim == 3 )
-                    eGeomType = (OGRwkbGeometryType) (eGeomType | wkb25DBit );
+                    eGeomType = wkbSetZ(eGeomType);
                 poDefn->GetGeomFieldDefn(0)->SetType( eGeomType );
             }
             else
@@ -752,7 +752,7 @@ OGRErr OGROCITableLayer::SetAttributeFilter( const char *pszQuery )
 }
 
 /************************************************************************/
-/*                             SetFeature()                             */
+/*                             ISetFeature()                             */
 /*                                                                      */
 /*      We implement SetFeature() by deleting the existing row (if      */
 /*      it exists), and then using CreateFeature() to write it out      */
@@ -760,7 +760,7 @@ OGRErr OGROCITableLayer::SetAttributeFilter( const char *pszQuery )
 /*      existing FID if possible.                                       */
 /************************************************************************/
 
-OGRErr OGROCITableLayer::SetFeature( OGRFeature *poFeature )
+OGRErr OGROCITableLayer::ISetFeature( OGRFeature *poFeature )
 
 {
 /* -------------------------------------------------------------------- */
@@ -769,7 +769,7 @@ OGRErr OGROCITableLayer::SetFeature( OGRFeature *poFeature )
     if( pszFIDName == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "OGROCITableLayer::SetFeature(%ld) failed because there is "
+                  "OGROCITableLayer::ISetFeature(%ld) failed because there is "
                   "no apparent FID column on table %s.",
                   poFeature->GetFID(), 
                   poFeatureDefn->GetName() );
@@ -780,7 +780,7 @@ OGRErr OGROCITableLayer::SetFeature( OGRFeature *poFeature )
     if( poFeature->GetFID() == OGRNullFID )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "OGROCITableLayer::SetFeature(%ld) failed because the feature "
+                  "OGROCITableLayer::ISetFeature(%ld) failed because the feature "
                   "has no FID!", poFeature->GetFID() );
 
         return OGRERR_FAILURE;
@@ -856,10 +856,10 @@ OGRErr OGROCITableLayer::DeleteFeature( long nFID )
 }
 
 /************************************************************************/
-/*                           CreateFeature()                            */
+/*                           ICreateFeature()                            */
 /************************************************************************/
 
-OGRErr OGROCITableLayer::CreateFeature( OGRFeature *poFeature )
+OGRErr OGROCITableLayer::ICreateFeature( OGRFeature *poFeature )
 
 {
 /* -------------------------------------------------------------------- */

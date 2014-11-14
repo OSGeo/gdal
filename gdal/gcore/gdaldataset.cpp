@@ -3254,7 +3254,24 @@ OGRLayer *GDALDataset::CreateLayer( const char * pszName,
 
 {
     ValidateLayerCreationOptions( papszOptions );
-    return ICreateLayer(pszName, poSpatialRef, eGType, papszOptions);
+
+    if( OGR_GT_IsNonLinear(eGType) && !TestCapability(ODsCCurveGeometries) )
+    {
+        eGType = OGR_GT_GetLinear(eGType);
+    }
+
+    OGRLayer* poLayer = ICreateLayer(pszName, poSpatialRef, eGType, papszOptions);
+#ifdef DEBUG
+    if( poLayer != NULL && OGR_GT_IsNonLinear(poLayer->GetGeomType()) &&
+        !poLayer->TestCapability(OLCCurveGeometries) )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Inconsistant driver: Layer geometry type is non-linear, but "
+                  "TestCapability(OLCCurveGeometries) returns FALSE." );
+    }
+#endif
+
+    return poLayer;
 }
 
 /************************************************************************/

@@ -155,7 +155,7 @@ class OGRWAsPLayer : public OGRLayer
     virtual OGRErr      CreateGeomField( OGRGeomFieldDefn *poGeomField,
                                          int bApproxOK = TRUE );
 
-    virtual OGRErr      CreateFeature( OGRFeature * poFeature );
+    virtual OGRErr      ICreateFeature( OGRFeature * poFeature );
 
     virtual OGRFeature *GetNextFeature();
     OGRFeature *GetNextRawFeature();

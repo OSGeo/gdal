@@ -2083,6 +2083,46 @@ def test_ogr2ogr_51():
 
     return 'success'
 
+###############################################################################
+# Test -nlt CONVERT_TO_LINEAR and -nlt CONVERT_TO_CURVE
+
+def test_ogr2ogr_52():
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    f = open('tmp/test_ogr2ogr_52_src.csv', 'wt')
+    f.write('id,WKT\n')
+    f.write('1,"CIRCULARSTRING(0 0,1 0,0 0)"\n')
+    f.close()
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f CSV tmp/test_ogr2ogr_52_dst.csv tmp/test_ogr2ogr_52_src.csv -select id -nln test_ogr2ogr_52_dst -dsco GEOMETRY=AS_WKT -nlt CONVERT_TO_LINEAR')
+    
+    f = open('tmp/test_ogr2ogr_52_dst.csv', 'rt')
+    content = f.read()
+    f.close()
+
+    if content.find('LINESTRING (0 0,') < 0:
+        gdaltest.post_reason('fail')
+        print(content)
+        return 'fail'
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f CSV tmp/test_ogr2ogr_52_dst2.csv tmp/test_ogr2ogr_52_dst.csv -select id -nln test_ogr2ogr_52_dst2 -dsco GEOMETRY=AS_WKT -nlt CONVERT_TO_CURVE')
+    
+    f = open('tmp/test_ogr2ogr_52_dst2.csv', 'rt')
+    content = f.read()
+    f.close()
+
+    if content.find('COMPOUNDCURVE ((0 0,') < 0:
+        gdaltest.post_reason('fail')
+        print(content)
+        return 'fail'
+
+    os.unlink('tmp/test_ogr2ogr_52_src.csv')
+    os.unlink('tmp/test_ogr2ogr_52_dst.csv')
+    os.unlink('tmp/test_ogr2ogr_52_dst2.csv')
+
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_1,
     test_ogr2ogr_2,
@@ -2136,6 +2176,7 @@ gdaltest_list = [
     test_ogr2ogr_49_bis,
     test_ogr2ogr_50,
     test_ogr2ogr_51,
+    test_ogr2ogr_52,
     ]
 
 if __name__ == '__main__':

@@ -36,6 +36,7 @@
 /************************************************************************/
 /*                             OGRMemLayer                              */
 /************************************************************************/
+class OGRMemDataSource;
 
 class OGRMemLayer : public OGRLayer
 {
@@ -64,8 +65,8 @@ class OGRMemLayer : public OGRLayer
     virtual OGRErr      SetNextByIndex( long nIndex );
 
     OGRFeature         *GetFeature( long nFeatureId );
-    OGRErr              SetFeature( OGRFeature *poFeature );
-    OGRErr              CreateFeature( OGRFeature *poFeature );
+    OGRErr              ISetFeature( OGRFeature *poFeature );
+    OGRErr              ICreateFeature( OGRFeature *poFeature );
     virtual OGRErr      DeleteFeature( long nFID );
     
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }

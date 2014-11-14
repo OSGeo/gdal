@@ -2,7 +2,11 @@ MIGRATION GUIDE FROM GDAL 1.11 to GDAL 2.0
 ------------------------------------------
 
 This file documents backwards incompatible changes. You are strongly encouraged
-to read RFC 46 for details and rationale for those changes.
+to read the relevant RFCs for details and rationale for those changes.
+
+A) RFC 46: Unification of GDAL and OGR driver models
+
+Link: http://trac.osgeo.org/gdal/wiki/rfc46_gdal_ogr_unification
 
 C++ API:
 
@@ -39,6 +43,27 @@ Behaviour changes :
     and GDAL_DCAP_VECTOR driver metadata item.
 
   * GetRefCount() starts at 1 for OGRDataSource instead of 0.
+
+B) RFC 49: Curve geometries
+
+Link: http://trac.osgeo.org/gdal/wiki/rfc49_curve_geometries
+
+C/C++ API :
+
+  * Use of wkb25DBit macro is strongly discouraged, as not compatible with new
+    geometry types. Use wkbFlatten(), wkbHasZ(), wkbSetZ() instead
+  * OGRwkbGeometryType enumeration has new values.
+
+Behaviour changes :
+
+  * GML, NAS, WFS, PostGIS, VRT, GeoPackage and CSV drivers can return non-linear geometries.
+    Applications that do not wish to get such geometries can call
+    OGRSetNonLinearGeometriesEnabledFlag(FALSE)
+
+Out-of-tree drivers :
+
+  * Read RFC 49 for the needed changes. CreateFeature() and SetFeature() virtual
+    methods must be renamed ICreateFeature() and ISetFeature().
 
 MIGRATION GUIDE FROM GDAL 1.10 to GDAL 1.11
 -------------------------------------------

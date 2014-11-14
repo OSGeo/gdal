@@ -183,7 +183,7 @@ static char* d2str(double val)
 
 static void AppendCoordinateList( OGRLineString *poLine, OGRILI1DataSource *poDS)
 {
-    int         b3D = (poLine->getGeometryType() & wkb25DBit);
+    int         b3D = wkbHasZ(poLine->getGeometryType());
 
     for( int iPoint = 0; iPoint < poLine->getNumPoints(); iPoint++ )
     {
@@ -287,10 +287,10 @@ int OGRILI1Layer::GeometryAppend( OGRGeometry *poGeometry )
 }
 
 /************************************************************************/
-/*                           CreateFeature()                            */
+/*                           ICreateFeature()                            */
 /************************************************************************/
 
-OGRErr OGRILI1Layer::CreateFeature( OGRFeature *poFeature ) {
+OGRErr OGRILI1Layer::ICreateFeature( OGRFeature *poFeature ) {
     static long tid = -1; //system generated TID (must be unique within table)
     VSIFPrintf( poDS->GetTransferFile(), "OBJE" );
 

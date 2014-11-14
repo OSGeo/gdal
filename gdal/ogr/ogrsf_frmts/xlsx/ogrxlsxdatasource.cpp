@@ -119,20 +119,20 @@ OGRFeature* OGRXLSXLayer::GetFeature( long nFeatureId )
 }
 
 /************************************************************************/
-/*                           SetFeature()                               */
+/*                           ISetFeature()                               */
 /************************************************************************/
 
-OGRErr OGRXLSXLayer::SetFeature( OGRFeature *poFeature )
+OGRErr OGRXLSXLayer::ISetFeature( OGRFeature *poFeature )
 {
     Init();
     if (poFeature == NULL)
-        return OGRMemLayer::SetFeature(poFeature);
+        return OGRMemLayer::ISetFeature(poFeature);
 
     long nFID = poFeature->GetFID();
     if (nFID != OGRNullFID)
         poFeature->SetFID(nFID - (1 + bHasHeaderLine));
     SetUpdated();
-    OGRErr eErr = OGRMemLayer::SetFeature(poFeature);
+    OGRErr eErr = OGRMemLayer::ISetFeature(poFeature);
     poFeature->SetFID(nFID);
     return eErr;
 }

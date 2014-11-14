@@ -320,8 +320,12 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     int nUnknownSRSId = -1;
     const char* pszPostgisVersion = CSLFetchNameValue( papszOptions, "POSTGIS_VERSION" );
+    int bPostGIS2 = FALSE;
     if( pszPostgisVersion != NULL && atoi(pszPostgisVersion) >= 2 )
+    {
+        bPostGIS2 = TRUE;
         nUnknownSRSId = 0;
+    }
 
     int nSRSId = nUnknownSRSId;
     int nForcedSRSId = -2;
@@ -488,6 +492,7 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
     poLayer->SetUnknownSRSId(nUnknownSRSId);
     poLayer->SetForcedSRSId(nForcedSRSId);
     poLayer->SetCreateSpatialIndexFlag(bCreateSpatialIndex);
+    poLayer->SetPostGIS2(bPostGIS2);
 
     if( bHavePostGIS )
     {
@@ -523,6 +528,8 @@ int OGRPGDumpDataSource::TestCapability( const char * pszCap )
     if( EQUAL(pszCap,ODsCCreateLayer) )
         return TRUE;
     else if( EQUAL(pszCap,ODsCCreateGeomFieldAfterCreateLayer) )
+        return TRUE;
+    else if( EQUAL(pszCap,ODsCCurveGeometries) )
         return TRUE;
     else
         return FALSE;

@@ -175,10 +175,10 @@ CPLString OGRElasticLayer::BuildMap() {
 }
 
 /************************************************************************/
-/*                           CreateFeature()                            */
+/*                           ICreateFeature()                            */
 /************************************************************************/
 
-OGRErr OGRElasticLayer::CreateFeature(OGRFeature *poFeature) {
+OGRErr OGRElasticLayer::ICreateFeature(OGRFeature *poFeature) {
 
     // Check to see if the user has elected to only write out the mapping file
     // This method will only write out one layer from the vector file in cases where there are multiple layers

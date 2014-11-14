@@ -1654,11 +1654,11 @@ OGRErr TABFile::CreateFeature(TABFeature *poFeature)
 }
 
 /**********************************************************************
- *                   TABFile::SetFeature()
+ *                   TABFile::ISetFeature()
  *
  * Implementation of OGRLayer's SetFeature()
  **********************************************************************/
-OGRErr TABFile::SetFeature( OGRFeature *poFeature )
+OGRErr TABFile::ISetFeature( OGRFeature *poFeature )
 
 {
     CPLErrorReset();

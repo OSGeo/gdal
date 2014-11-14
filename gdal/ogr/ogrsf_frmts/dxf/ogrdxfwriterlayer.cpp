@@ -1090,10 +1090,10 @@ OGRErr OGRDXFWriterLayer::WriteHATCH( OGRFeature *poFeature,
 }
 
 /************************************************************************/
-/*                           CreateFeature()                            */
+/*                           ICreateFeature()                            */
 /************************************************************************/
 
-OGRErr OGRDXFWriterLayer::CreateFeature( OGRFeature *poFeature )
+OGRErr OGRDXFWriterLayer::ICreateFeature( OGRFeature *poFeature )
 
 {
     OGRGeometry *poGeom = poFeature->GetGeometryRef();

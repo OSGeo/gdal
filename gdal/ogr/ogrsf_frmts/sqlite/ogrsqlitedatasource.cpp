@@ -1083,7 +1083,7 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn )
             eGeomType = (OGRwkbGeometryType) atoi(papszRow[2]);
 
             if( atoi(papszRow[3]) > 2 )
-                eGeomType = (OGRwkbGeometryType) (((int)eGeomType) | wkb25DBit);
+                eGeomType = wkbSetZ(eGeomType);
 
             if( papszRow[5] != NULL )
                 nSRID = atoi(papszRow[5]);
@@ -1242,15 +1242,15 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn )
                 if( nGeomType >= 0 && nGeomType <= 7 ) /* XY */
                     eGeomType = (OGRwkbGeometryType) nGeomType;
                 else if( nGeomType >= 1000 && nGeomType <= 1007 ) /* XYZ */
-                    eGeomType = (OGRwkbGeometryType) ((nGeomType - 1000) | wkb25DBit);
+                    eGeomType = wkbSetZ(eGeomType);
                 else if( nGeomType >= 2000 && nGeomType <= 2007 ) /* XYM */
                 {
-                    eGeomType = (OGRwkbGeometryType) (nGeomType - 2000);
+                    eGeomType = wkbFlatten(nGeomType);
                     bHasM = TRUE;
                 }
                 else if( nGeomType >= 3000 && nGeomType <= 3007 ) /* XYZM */
                 {
-                    eGeomType = (OGRwkbGeometryType) ((nGeomType - 3000) | wkb25DBit);
+                    eGeomType = wkbSetZ(eGeomType);
                     bHasM = TRUE;
                 }
             }
@@ -1261,7 +1261,7 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn )
                 if( strcmp ( papszRow[3], "XYZ" ) == 0 ||
                     strcmp ( papszRow[3], "XYZM" ) == 0 ||
                     strcmp ( papszRow[3], "3" ) == 0) // SpatiaLite's own 3D geometries
-                    eGeomType = (OGRwkbGeometryType) (((int)eGeomType) | wkb25DBit);
+                    eGeomType = wkbSetZ(eGeomType);
 
                 if( strcmp ( papszRow[3], "XYM" ) == 0 ||
                     strcmp ( papszRow[3], "XYZM" ) == 0 ) // M coordinate declared
@@ -1539,6 +1539,8 @@ int OGRSQLiteDataSource::TestCapability( const char * pszCap )
         return bUpdate;
     else if( EQUAL(pszCap,ODsCDeleteLayer) )
         return bUpdate;
+    else if( EQUAL(pszCap,ODsCCurveGeometries) )
+        return !bIsSpatiaLiteDB;
     else
         return FALSE;
 }

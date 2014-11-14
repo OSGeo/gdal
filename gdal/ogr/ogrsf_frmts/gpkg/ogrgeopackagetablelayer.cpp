@@ -166,11 +166,17 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
         GByte *pabyWkb = NULL;
 
         /* Non-NULL geometry */
-        if ( poFeature->GetGeomFieldRef(0) )
+        OGRGeometry* poGeom = poFeature->GetGeomFieldRef(0);
+        if ( poGeom )
         {
             size_t szWkb;
-            pabyWkb = GPkgGeometryFromOGR(poFeature->GetGeomFieldRef(0), m_iSrs, &szWkb);
+            pabyWkb = GPkgGeometryFromOGR(poGeom, m_iSrs, &szWkb);
             err = sqlite3_bind_blob(poStmt, nColCount++, pabyWkb, szWkb, CPLFree);
+
+            // FIXME: in case the geometry is a GeometryCollection, we should
+            // inspect its subgeometries to see if there's non-linear ones.
+            if( OGR_GT_IsNonLinear(poGeom->getGeometryType()) )
+                CreateGeometryExtensionIfNecessary(poGeom->getGeometryType());
         }
         /* NULL geometry */
         else
@@ -681,6 +687,7 @@ OGRGeoPackageTableLayer::OGRGeoPackageTableLayer(
     bDeferedSpatialIndexCreation = FALSE;
     m_bHasSpatialIndex = -1;
     bDropRTreeTable = FALSE;
+    memset(m_anHasGeometryExtension, 0, sizeof(m_anHasGeometryExtension));
 }
 
 
@@ -753,10 +760,10 @@ OGRErr OGRGeoPackageTableLayer::CreateField( OGRFieldDefn *poField,
 
 
 /************************************************************************/
-/*                      CreateFeature()                                 */
+/*                      ICreateFeature()                                 */
 /************************************************************************/
 
-OGRErr OGRGeoPackageTableLayer::CreateFeature( OGRFeature *poFeature )
+OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
 {
     if( !m_poDS->GetUpdate() )
     {
@@ -824,10 +831,10 @@ OGRErr OGRGeoPackageTableLayer::CreateFeature( OGRFeature *poFeature )
 
 
 /************************************************************************/
-/*                          SetFeature()                                */
+/*                          ISetFeature()                                */
 /************************************************************************/
 
-OGRErr OGRGeoPackageTableLayer::SetFeature( OGRFeature *poFeature )
+OGRErr OGRGeoPackageTableLayer::ISetFeature( OGRFeature *poFeature )
 {
     if( !m_poDS->GetUpdate() || m_pszFidColumn == NULL )
     {
@@ -1229,6 +1236,8 @@ int OGRGeoPackageTableLayer::TestCapability ( const char * pszCap )
         else
             return FALSE;
     }
+    else if( EQUAL(pszCap,OLCCurveGeometries) )
+        return TRUE;
     else
     {
         return OGRGeoPackageLayer::TestCapability(pszCap);
@@ -1486,25 +1495,36 @@ int OGRGeoPackageTableLayer::CreateSpatialIndex()
 }
 
 /************************************************************************/
-/*                    CheckUnknownExtensions()                     */
+/*                    CheckUnknownExtensions()                          */
 /************************************************************************/
 
 void OGRGeoPackageTableLayer::CheckUnknownExtensions()
 {
-    if( m_poFeatureDefn->GetGeomFieldCount() == 0 ||
-        !m_poDS->HasExtensionsTable() )
+    if( !m_poDS->HasExtensionsTable() )
         return;
 
     const char* pszT = m_pszTableName;
-    const char* pszC = m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
 
     /* We have only the SQL functions needed by the 3 following extensions */
     /* anything else will likely cause troubles */
-    char* pszSQL = sqlite3_mprintf(
-                 "SELECT extension_name, definition, scope FROM gpkg_extensions WHERE table_name='%q' "
-                 "AND column_name='%q' AND extension_name NOT IN "
-                 "('gpkg_rtree_index', 'gpkg_geometry_type_trigger', 'gpkg_srs_id_trigger')",
-                 pszT, pszC );
+    char* pszSQL;
+
+    if( m_poFeatureDefn->GetGeomFieldCount() == 0 )
+    {
+        pszSQL = sqlite3_mprintf(
+                    "SELECT extension_name, definition, scope FROM gpkg_extensions WHERE table_name='%q'",
+                    pszT );
+    }
+    else
+    {
+        pszSQL = sqlite3_mprintf(
+                    "SELECT extension_name, definition, scope FROM gpkg_extensions WHERE table_name='%q' "
+                    "AND column_name='%q' AND extension_name NOT LIKE 'gpkg_geom_%s' AND extension_name NOT IN "
+                    "('gpkg_rtree_index', 'gpkg_geometry_type_trigger', 'gpkg_srs_id_trigger')",
+                    pszT,
+                    m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef(),
+                    OGRToOGCGeomType(m_poFeatureDefn->GetGeomFieldDefn(0)->GetType()) );
+    }
     SQLResult oResultTable;
     OGRErr err = SQLQuery(m_poDS->GetDB(), pszSQL, &oResultTable);
     sqlite3_free(pszSQL);
@@ -1545,6 +1565,39 @@ void OGRGeoPackageTableLayer::CheckUnknownExtensions()
         }
     }
     SQLResultFree(&oResultTable);
+}
+
+/************************************************************************/
+/*                     CreateGeometryExtensionIfNecessary()             */
+/************************************************************************/
+
+int OGRGeoPackageTableLayer::CreateGeometryExtensionIfNecessary(OGRwkbGeometryType eGType)
+{
+    eGType = wkbFlatten(eGType);
+    CPLAssert(eGType <= wkbMultiSurface);
+    if( m_anHasGeometryExtension[eGType] )
+        return TRUE;
+
+    if( m_poDS->CreateExtensionsTableIfNecessary() != OGRERR_NONE )
+        return FALSE;
+
+    const char* pszT = m_pszTableName;
+    const char* pszC = m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
+    const char *pszGeometryType = OGRToOGCGeomType(eGType);
+
+    /* Register the table in gpkg_extensions */
+    char* pszSQL = sqlite3_mprintf(
+                "INSERT INTO gpkg_extensions "
+                "(table_name,column_name,extension_name,definition,scope) "
+                "VALUES ('%q', '%q', 'gpkg_geom_%s', 'GeoPackage 1.0 Specification Annex J', 'write-only')",
+                pszT, pszC, pszGeometryType);
+    OGRErr err = SQLCommand(m_poDS->GetDB(), pszSQL);
+    sqlite3_free(pszSQL);
+    if ( err != OGRERR_NONE )
+        return FALSE;
+
+    m_anHasGeometryExtension[eGType] = TRUE;
+    return TRUE;
 }
 
 /************************************************************************/

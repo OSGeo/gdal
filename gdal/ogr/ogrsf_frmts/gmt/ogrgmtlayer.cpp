@@ -809,10 +809,10 @@ OGRErr OGRGmtLayer::CompleteHeader( OGRGeometry *poThisGeom )
 }
 
 /************************************************************************/
-/*                           CreateFeature()                            */
+/*                           ICreateFeature()                            */
 /************************************************************************/
 
-OGRErr OGRGmtLayer::CreateFeature( OGRFeature *poFeature )
+OGRErr OGRGmtLayer::ICreateFeature( OGRFeature *poFeature )
 
 {
     if( !bUpdate )

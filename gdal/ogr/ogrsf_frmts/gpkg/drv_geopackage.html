@@ -17,6 +17,8 @@ The GeoPackage standard uses a SQLite database file as a generic container, and 
   <li>Naming and conventions for extensions (extended feature types) and indexes (how to use SQLite r-tree in an interoperable manner)</li>
 </ul>
 <p>This driver reads and writes SQLite files from the file system, so it must be run by a user with read/write access to the files it is working with.</p>
+<p>Starting with GDAL 2.0, the driver also supports reading and writing the
+following non-linear geometry types :CIRCULARSTRING, COMPOUNDCURVE, CURVEPOLYGON, MULTICURVE and MULTISURFACE</p>
 
 <h2>Limitations</h2>
 

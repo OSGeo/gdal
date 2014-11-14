@@ -159,7 +159,7 @@ OGRFeature *OGRCARTODBLayer::BuildFeature(json_object* poRowObj)
                 json_object_get_type(poVal) == json_type_string )
             {
                 OGRGeometry* poGeom = OGRGeometryFromHexEWKB(
-                                        json_object_get_string(poVal), NULL);
+                                        json_object_get_string(poVal), NULL, FALSE);
                 if( poGeom != NULL )
                     poGeom->assignSpatialReference(poGeomFldDefn->GetSpatialRef());
                 poFeature->SetGeomFieldDirectly(i, poGeom);

@@ -81,7 +81,7 @@ class OGRGmtLayer : public OGRLayer
 
     OGRErr              GetExtent(OGREnvelope *psExtent, int bForce);
 
-    OGRErr              CreateFeature( OGRFeature *poFeature );
+    OGRErr              ICreateFeature( OGRFeature *poFeature );
     
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );

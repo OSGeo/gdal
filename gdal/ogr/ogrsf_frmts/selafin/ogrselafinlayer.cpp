@@ -216,9 +216,9 @@ OGRErr OGRSelafinLayer::GetExtent(OGREnvelope *psExtent,
 }
 
 /************************************************************************/
-/*                             SetFeature()                             */
+/*                             ISetFeature()                             */
 /************************************************************************/
-OGRErr OGRSelafinLayer::SetFeature(OGRFeature *poFeature) {
+OGRErr OGRSelafinLayer::ISetFeature(OGRFeature *poFeature) {
     OGRGeometry *poGeom=poFeature->GetGeometryRef();
     if (poGeom==0) return OGRERR_FAILURE;
     if (eType==POINTS) {
@@ -276,9 +276,9 @@ OGRErr OGRSelafinLayer::SetFeature(OGRFeature *poFeature) {
 }
 
 /************************************************************************/
-/*                           CreateFeature()                            */
+/*                           ICreateFeature()                            */
 /************************************************************************/
-OGRErr OGRSelafinLayer::CreateFeature(OGRFeature *poFeature) {
+OGRErr OGRSelafinLayer::ICreateFeature(OGRFeature *poFeature) {
     OGRGeometry *poGeom=poFeature->GetGeometryRef();
     if (poGeom==0) return OGRERR_FAILURE;
     if (VSIFSeekL(poHeader->fp,poHeader->getPosition(0),SEEK_SET)!=0) return OGRERR_FAILURE;

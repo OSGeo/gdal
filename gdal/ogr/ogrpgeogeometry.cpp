@@ -294,7 +294,7 @@ OGRErr OGRWriteToShapeBin( OGRGeometry *poGeom,
     }
 
     OGRwkbGeometryType nOGRType = wkbFlatten(poGeom->getGeometryType());
-    int b3d = (poGeom->getGeometryType() & wkb25DBit);
+    int b3d = wkbHasZ(poGeom->getGeometryType());
     int nCoordDims = b3d ? 3 : 2;
 
 /* -------------------------------------------------------------------- */

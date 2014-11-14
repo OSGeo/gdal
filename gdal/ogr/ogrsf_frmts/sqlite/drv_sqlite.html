@@ -63,6 +63,11 @@ Attributes queries may be fast, especially if indexes are built for
 appropriate attribute columns using the "CREATE INDEX <indexname> 
 ON <tablename> ( <columnname> )" SQL command.</p>
 
+<p>Starting with GDAL 2.0, the driver also supports reading and writing the
+following non-linear geometry types :CIRCULARSTRING, COMPOUNDCURVE, CURVEPOLYGON, MULTICURVE and MULTISURFACE.
+Note: this is not true for Spatialite databases, since those geometry types
+are not supported by current Spatialite versions.</p>
+
 <h2>Tables with multiple geometries</h2>
 
 Starting with OGR 1.10, tables that have multiple geometry columns registered in geometry_columns can be used by OGR.

@@ -457,7 +457,7 @@ def ogr_kml_write_1():
     dst_feat.Destroy()
 
     dst_feat = ogr.Feature( lyr.GetLayerDefn() )
-    dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION (POINT (2 49 1),LINESTRING (0 1,2 3))'))
+    dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION (POINT (2 49 1),LINESTRING (0 1 0,2 3 0))'))
     if lyr.CreateFeature( dst_feat ) != 0:
         gdaltest.post_reason('CreateFeature failed.')
         return 'fail'
@@ -547,7 +547,7 @@ def ogr_kml_check_write_1():
     feat.Destroy()
 
     feat = lyr.GetNextFeature()
-    if feat.GetGeometryRef().ExportToWkt() != 'GEOMETRYCOLLECTION (POINT (2 49 1),LINESTRING (0 1,2 3))':
+    if feat.GetGeometryRef().ExportToWkt() != 'GEOMETRYCOLLECTION (POINT (2 49 1),LINESTRING (0 1 0,2 3 0))':
         print(feat.GetGeometryRef().ExportToWkt())
         gdaltest.post_reason('Unexpected geometry.')
         return 'fail'

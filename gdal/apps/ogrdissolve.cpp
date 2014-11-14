@@ -147,46 +147,36 @@ int main( int nArgc, char ** papszArgv )
         }
         else if( EQUAL(papszArgv[iArg],"-nlt") && iArg < nArgc-1 )
         {
-            if( EQUAL(papszArgv[iArg+1],"NONE") )
+            int bIs3D = FALSE;
+            CPLString osGeomName = papszArgv[iArg+1];
+            if (strlen(papszArgv[iArg+1]) > 3 &&
+                EQUALN(papszArgv[iArg+1] + strlen(papszArgv[iArg+1]) - 3, "25D", 3))
+            {
+                bIs3D = TRUE;
+                osGeomName.resize(osGeomName.size() - 3);
+            }
+            else if (strlen(papszArgv[iArg+1]) > 1 &&
+                EQUALN(papszArgv[iArg+1] + strlen(papszArgv[iArg+1]) - 1, "Z", 1))
+            {
+                bIs3D = TRUE;
+                osGeomName.resize(osGeomName.size() - 1);
+            }
+            if( EQUAL(osGeomName,"NONE") )
                 eGType = wkbNone;
-            else if( EQUAL(papszArgv[iArg+1],"GEOMETRY") )
+            else if( EQUAL(osGeomName,"GEOMETRY") )
                 eGType = wkbUnknown;
-            else if( EQUAL(papszArgv[iArg+1],"POINT") )
-                eGType = wkbPoint;
-            else if( EQUAL(papszArgv[iArg+1],"LINESTRING") )
-                eGType = wkbLineString;
-            else if( EQUAL(papszArgv[iArg+1],"POLYGON") )
-                eGType = wkbPolygon;
-            else if( EQUAL(papszArgv[iArg+1],"GEOMETRYCOLLECTION") )
-                eGType = wkbGeometryCollection;
-            else if( EQUAL(papszArgv[iArg+1],"MULTIPOINT") )
-                eGType = wkbMultiPoint;
-            else if( EQUAL(papszArgv[iArg+1],"MULTILINESTRING") )
-                eGType = wkbMultiLineString;
-            else if( EQUAL(papszArgv[iArg+1],"MULTIPOLYGON") )
-                eGType = wkbMultiPolygon;
-            else if( EQUAL(papszArgv[iArg+1],"GEOMETRY25D") )
-                eGType = wkbUnknown | wkb25DBit;
-            else if( EQUAL(papszArgv[iArg+1],"POINT25D") )
-                eGType = wkbPoint25D;
-            else if( EQUAL(papszArgv[iArg+1],"LINESTRING25D") )
-                eGType = wkbLineString25D;
-            else if( EQUAL(papszArgv[iArg+1],"POLYGON25D") )
-                eGType = wkbPolygon25D;
-            else if( EQUAL(papszArgv[iArg+1],"GEOMETRYCOLLECTION25D") )
-                eGType = wkbGeometryCollection25D;
-            else if( EQUAL(papszArgv[iArg+1],"MULTIPOINT25D") )
-                eGType = wkbMultiPoint25D;
-            else if( EQUAL(papszArgv[iArg+1],"MULTILINESTRING25D") )
-                eGType = wkbMultiLineString25D;
-            else if( EQUAL(papszArgv[iArg+1],"MULTIPOLYGON25D") )
-                eGType = wkbMultiPolygon25D;
             else
             {
-                fprintf( stderr, "-nlt %s: type not recognised.\n", 
-                         papszArgv[iArg+1] );
-                exit( 1 );
+                eGType = OGRFromOGCGeomType(osGeomName);
+                if (eGType == wkbUnknown)
+                {
+                    fprintf( stderr, "-nlt %s: type not recognised.\n",
+                            papszArgv[iArg+1] );
+                    exit( 1 );
+                }
             }
+            if (eGType != wkbNone && bIs3D)
+                eGType = wkbSetZ((OGRwkbGeometryType)eGType);
             iArg++;
         }
         else if( EQUAL(papszArgv[iArg],"-tg") && iArg < nArgc-1 )

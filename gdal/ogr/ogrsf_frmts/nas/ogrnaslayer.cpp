@@ -151,16 +151,8 @@ OGRFeature *OGRNASLayer::GetNextFeature()
         if (papsGeometry[0] != NULL)
         {
             poGeom = (OGRGeometry*) OGR_G_CreateFromGMLTree(papsGeometry[0]);
-
-            if( EQUAL( papsGeometry[0]->pszValue, "CompositeCurve" ) ||
-                EQUAL( papsGeometry[0]->pszValue, "MultiCurve" ) ||
-                EQUAL( papsGeometry[0]->pszValue, "LineString" ) ||
-                EQUAL( papsGeometry[0]->pszValue, "MultiLineString" ) ||
-                EQUAL( papsGeometry[0]->pszValue, "Curve" ) )
-            {
-                poGeom = OGRGeometryFactory::forceToLineString( poGeom, false );
-            }
-
+            poGeom = NASReader::ConvertGeometry(poGeom);
+            poGeom = OGRGeometryFactory::forceTo(poGeom, GetGeomType());
             // poGeom->dumpReadable( 0, "NAS: " );
 
             // We assume the OGR_G_CreateFromGMLTree() function would have already

@@ -122,8 +122,8 @@ class OGRGMELayer : public OGRLayer
 
     virtual OGRErr      SyncToDisk();
 
-    virtual OGRErr      SetFeature( OGRFeature *poFeature );
-    virtual OGRErr      CreateFeature( OGRFeature *poFeature );
+    virtual OGRErr      ISetFeature( OGRFeature *poFeature );
+    virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
     virtual OGRErr      DeleteFeature(long int);
     virtual OGRErr      CreateField( OGRFieldDefn *poField, int bApproxOK = TRUE );
 

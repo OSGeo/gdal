@@ -76,14 +76,14 @@ class OGRXLSXLayer : public OGRMemLayer
     /* For external usage. Mess with FID */
     virtual OGRFeature *        GetNextFeature();
     virtual OGRFeature         *GetFeature( long nFeatureId );
-    virtual OGRErr              SetFeature( OGRFeature *poFeature );
+    virtual OGRErr              ISetFeature( OGRFeature *poFeature );
     virtual OGRErr              DeleteFeature( long nFID );
 
     virtual OGRErr      SetNextByIndex( long nIndex )
     { Init(); return OGRMemLayer::SetNextByIndex(nIndex); }
 
-    OGRErr              CreateFeature( OGRFeature *poFeature )
-    { Init(); SetUpdated(); return OGRMemLayer::CreateFeature(poFeature); }
+    OGRErr              ICreateFeature( OGRFeature *poFeature )
+    { Init(); SetUpdated(); return OGRMemLayer::ICreateFeature(poFeature); }
 
     OGRFeatureDefn *    GetLayerDefn()
     { Init(); return OGRMemLayer::GetLayerDefn(); }

@@ -118,13 +118,13 @@ OGRErr OGRDXFBlocksWriterLayer::CreateField( OGRFieldDefn *poField,
 }
 
 /************************************************************************/
-/*                           CreateFeature()                            */
+/*                           ICreateFeature()                            */
 /*                                                                      */
 /*      We just stash a copy of the features for later writing to       */
 /*      the blocks section of the header.                               */
 /************************************************************************/
 
-OGRErr OGRDXFBlocksWriterLayer::CreateFeature( OGRFeature *poFeature )
+OGRErr OGRDXFBlocksWriterLayer::ICreateFeature( OGRFeature *poFeature )
 
 {
     apoBlocks.push_back( poFeature->Clone() );

@@ -76,6 +76,13 @@ typedef struct
     TargetLayerInfo  *psInfo;
 } AssociatedLayers;
 
+typedef struct
+{
+    int bPromoteToMulti;
+    int bConvertToLinear;
+    int bConvertToCurve;
+} GeometryConversion;
+
 static OGRLayer* GetLayerAndOverwriteIfNecessary(GDALDataset *poDstDS,
                                                  const char* pszNewLayerName,
                                                  int bOverwrite,
@@ -89,7 +96,7 @@ static TargetLayerInfo* SetupTargetLayer( GDALDataset *poSrcDS,
                                                 int bNullifyOutputSRS,
                                                 char **papszSelFields,
                                                 int bAppend, int bAddMissingFields, int eGType,
-                                                int bPromoteToMulti,
+                                                GeometryConversion sGeomConversion,
                                                 int nCoordDim, int bOverwrite,
                                                 char** papszFieldTypesToString,
                                                 int bUnsetFieldWidth,
@@ -113,7 +120,7 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
                            OGRSpatialReference *poUserSourceSRS,
                            OGRCoordinateTransformation *poGCPCoordTrans,
                            int eGType,
-                           int bPromoteToMulti,
+                           GeometryConversion sGeomConversion,
                            int nCoordDim,
                            GeomOperation eGeomOp,
                            double dfGeomOpParam,
@@ -847,7 +854,10 @@ int main( int nArgc, char ** papszArgv )
     const char  *pszSQLStatement = NULL;
     const char  *pszDialect = NULL;
     int         eGType = -2;
-    int          bPromoteToMulti = FALSE;
+    GeometryConversion sGeomConversion;
+    sGeomConversion.bPromoteToMulti = FALSE;
+    sGeomConversion.bConvertToLinear = FALSE;
+    sGeomConversion.bConvertToCurve = FALSE;
     GeomOperation eGeomOp = NONE;
     double       dfGeomOpParam = 0;
     char        **papszFieldTypesToString = NULL;
@@ -1010,12 +1020,22 @@ int main( int nArgc, char ** papszArgv )
                 bIs3D = TRUE;
                 osGeomName.resize(osGeomName.size() - 3);
             }
+            else if (strlen(papszArgv[iArg+1]) > 1 &&
+                EQUALN(papszArgv[iArg+1] + strlen(papszArgv[iArg+1]) - 1, "Z", 1))
+            {
+                bIs3D = TRUE;
+                osGeomName.resize(osGeomName.size() - 1);
+            }
             if( EQUAL(osGeomName,"NONE") )
                 eGType = wkbNone;
             else if( EQUAL(osGeomName,"GEOMETRY") )
                 eGType = wkbUnknown;
             else if( EQUAL(osGeomName,"PROMOTE_TO_MULTI") )
-                bPromoteToMulti = TRUE;
+                sGeomConversion.bPromoteToMulti = TRUE;
+            else if( EQUAL(osGeomName,"CONVERT_TO_LINEAR") )
+                sGeomConversion.bConvertToLinear = TRUE;
+            else if( EQUAL(osGeomName,"CONVERT_TO_CURVE") )
+                sGeomConversion.bConvertToCurve = TRUE;
             else
             {
                 eGType = OGRFromOGCGeomType(osGeomName);
@@ -1027,7 +1047,7 @@ int main( int nArgc, char ** papszArgv )
                 }
             }
             if (eGType != -2 && eGType != wkbNone && bIs3D)
-                eGType |= wkb25DBit;
+                eGType = wkbSetZ((OGRwkbGeometryType)eGType);
 
             iArg++;
         }
@@ -1767,7 +1787,7 @@ int main( int nArgc, char ** papszArgv )
                                                 bNullifyOutputSRS,
                                                 papszSelFields,
                                                 bAppend, bAddMissingFields, eGType,
-                                                bPromoteToMulti,
+                                                sGeomConversion,
                                                 nCoordDim, bOverwrite,
                                                 papszFieldTypesToString,
                                                 bUnsetFieldWidth,
@@ -1785,7 +1805,7 @@ int main( int nArgc, char ** papszArgv )
                                  poOutputSRS, bNullifyOutputSRS,
                                  poSourceSRS,
                                  poGCPCoordTrans,
-                                 eGType, bPromoteToMulti, nCoordDim,
+                                 eGType, sGeomConversion, nCoordDim,
                                  eGeomOp, dfGeomOpParam,
                                  nCountLayerFeatures,
                                  poClipSrc, poClipDst,
@@ -1923,7 +1943,7 @@ int main( int nArgc, char ** papszArgv )
                                                     bNullifyOutputSRS,
                                                     papszSelFields,
                                                     bAppend, bAddMissingFields, eGType,
-                                                    bPromoteToMulti,
+                                                    sGeomConversion,
                                                     nCoordDim, bOverwrite,
                                                     papszFieldTypesToString,
                                                     bUnsetFieldWidth,
@@ -1965,7 +1985,7 @@ int main( int nArgc, char ** papszArgv )
                                         poOutputSRS, bNullifyOutputSRS,
                                         poSourceSRS,
                                         poGCPCoordTrans,
-                                        eGType, bPromoteToMulti, nCoordDim,
+                                        eGType, sGeomConversion, nCoordDim,
                                         eGeomOp, dfGeomOpParam,
                                         0,
                                         poClipSrc, poClipDst,
@@ -2199,7 +2219,7 @@ int main( int nArgc, char ** papszArgv )
                                                 bNullifyOutputSRS,
                                                 papszSelFields,
                                                 bAppend, bAddMissingFields, eGType,
-                                                bPromoteToMulti,
+                                                sGeomConversion,
                                                 nCoordDim, bOverwrite,
                                                 papszFieldTypesToString,
                                                 bUnsetFieldWidth,
@@ -2217,7 +2237,7 @@ int main( int nArgc, char ** papszArgv )
                                   poOutputSRS, bNullifyOutputSRS,
                                   poSourceSRS,
                                   poGCPCoordTrans,
-                                  eGType, bPromoteToMulti, nCoordDim,
+                                  eGType, sGeomConversion, nCoordDim,
                                   eGeomOp, dfGeomOpParam,
                                   panLayerCountFeatures[iLayer],
                                   poClipSrc, poClipDst,
@@ -2316,7 +2336,9 @@ static void Usage(const char* pszAdditionalMsg, int bShort)
             "               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]\n"
             "               [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]\n"
             "               dst_datasource_name src_datasource_name\n"
-            "               [-lco NAME=VALUE] [-nln name] [-nlt type] [-dim 2|3|layer_dim] [layer [layer ...]]\n"
+            "               [-lco NAME=VALUE] [-nln name] \n"
+            "               [-nlt type|PROMOTE_TO_MULTI|CONVERT_TO_LINEAR]\n"
+            "               [-dim 2|3|layer_dim] [layer [layer ...]]\n"
             "\n"
             "Advanced options :\n"
             "               [-gt n]\n"
@@ -2470,9 +2492,9 @@ static void SetZ (OGRGeometry* poGeom, double dfZ )
 static int ForceCoordDimension(int eGType, int nCoordDim)
 {
     if( nCoordDim == 2 && eGType != wkbNone )
-        return eGType & ~wkb25DBit;
+        return wkbFlatten(eGType);
     else if( nCoordDim == 3 && eGType != wkbNone )
-        return eGType | wkb25DBit;
+        return wkbSetZ((OGRwkbGeometryType)eGType);
     else
         return eGType;
 }
@@ -2547,7 +2569,7 @@ static TargetLayerInfo* SetupTargetLayer( CPL_UNUSED GDALDataset *poSrcDS,
                                           int bNullifyOutputSRS,
                                           char **papszSelFields,
                                           int bAppend, int bAddMissingFields, int eGType,
-                                          int bPromoteToMulti,
+                                          GeometryConversion sGeomConversion,
                                           int nCoordDim, int bOverwrite,
                                           char** papszFieldTypesToString,
                                           int bUnsetFieldWidth,
@@ -2652,7 +2674,7 @@ static TargetLayerInfo* SetupTargetLayer( CPL_UNUSED GDALDataset *poSrcDS,
         }
 
         int bForceGType = ( eGType != -2 );
-        if( eGType == -2 )
+        if( !bForceGType )
         {
             if( anRequestedGeomFields.size() == 0 )
             {
@@ -2666,37 +2688,39 @@ static TargetLayerInfo* SetupTargetLayer( CPL_UNUSED GDALDataset *poSrcDS,
             else
                 eGType = wkbNone;
 
-            int n25DBit = eGType & wkb25DBit;
-            if ( bPromoteToMulti )
-            {
-                if (wkbFlatten(eGType) == wkbLineString)
-                    eGType = wkbMultiLineString | n25DBit;
-                else if (wkbFlatten(eGType) == wkbPolygon)
-                    eGType = wkbMultiPolygon | n25DBit;
-            }
+            int bHasZ = wkbHasZ((OGRwkbGeometryType)eGType);
+            if ( sGeomConversion.bPromoteToMulti )
+                eGType = OGR_GT_GetCollection((OGRwkbGeometryType)eGType);
+            else if ( sGeomConversion.bConvertToLinear )
+                eGType = OGR_GT_GetLinear((OGRwkbGeometryType)eGType);
+            if ( sGeomConversion.bConvertToCurve )
+                eGType = OGR_GT_GetCurve((OGRwkbGeometryType)eGType);
 
             if ( bExplodeCollections )
             {
-                if (wkbFlatten(eGType) == wkbMultiPoint)
+                OGRwkbGeometryType eFGType = wkbFlatten(eGType);
+                if (eFGType == wkbMultiPoint)
                 {
-                    eGType = wkbPoint | n25DBit;
+                    eGType = wkbPoint;
                 }
-                else if (wkbFlatten(eGType) == wkbMultiLineString)
+                else if (eFGType == wkbMultiLineString)
                 {
-                    eGType = wkbLineString | n25DBit;
+                    eGType = wkbLineString;
                 }
-                else if (wkbFlatten(eGType) == wkbMultiPolygon)
+                else if (eFGType == wkbMultiPolygon)
                 {
-                    eGType = wkbPolygon | n25DBit;
+                    eGType = wkbPolygon;
                 }
-                else if (wkbFlatten(eGType) == wkbGeometryCollection)
+                else if (eFGType == wkbGeometryCollection ||
+                         eFGType == wkbMultiCurve ||
+                         eFGType == wkbMultiSurface)
                 {
-                    eGType = wkbUnknown | n25DBit;
+                    eGType = wkbUnknown;
                 }
             }
 
-            if ( pszZField && eGType != wkbNone )
-                eGType |= wkb25DBit;
+            if ( bHasZ || (pszZField && eGType != wkbNone) )
+                eGType = wkbSetZ((OGRwkbGeometryType)eGType);
         }
 
         eGType = ForceCoordDimension(eGType, nCoordDim);
@@ -2749,14 +2773,12 @@ static TargetLayerInfo* SetupTargetLayer( CPL_UNUSED GDALDataset *poSrcDS,
                 else
                 {
                     eGType = oGFldDefn.GetType();
-                    int n25DBit = eGType & wkb25DBit;
-                    if ( bPromoteToMulti )
-                    {
-                        if (wkbFlatten(eGType) == wkbLineString)
-                            eGType = wkbMultiLineString | n25DBit;
-                        else if (wkbFlatten(eGType) == wkbPolygon)
-                            eGType = wkbMultiPolygon | n25DBit;
-                    }
+                    if ( sGeomConversion.bPromoteToMulti )
+                        eGType = OGR_GT_GetCollection((OGRwkbGeometryType)eGType);
+                    else if ( sGeomConversion.bConvertToLinear )
+                        eGType = OGR_GT_GetLinear((OGRwkbGeometryType)eGType);
+                    if ( sGeomConversion.bConvertToCurve )
+                        eGType = OGR_GT_GetCurve((OGRwkbGeometryType)eGType);
                     eGType = ForceCoordDimension(eGType, nCoordDim);
                     oGFldDefn.SetType((OGRwkbGeometryType) eGType);
                 }
@@ -3287,7 +3309,7 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
                            OGRSpatialReference *poUserSourceSRS,
                            OGRCoordinateTransformation *poGCPCoordTrans,
                            int eGType,
-                           int bPromoteToMulti,
+                           GeometryConversion sGeomConversion,
                            int nCoordDim,
                            GeomOperation eGeomOp,
                            double dfGeomOpParam,
@@ -3301,9 +3323,6 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
                            void *pProgressArg )
 {
     OGRLayer    *poDstLayer;
-    int         bForceToPolygon = FALSE;
-    int         bForceToMultiPolygon = FALSE;
-    int         bForceToMultiLineString = FALSE;
     int         *panMap = NULL;
     int         iSrcZField;
 
@@ -3326,14 +3345,7 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
         }
 
     }
-    
-    if( wkbFlatten(eGType) == wkbPolygon )
-        bForceToPolygon = TRUE;
-    else if( wkbFlatten(eGType) == wkbMultiPolygon )
-        bForceToMultiPolygon = TRUE;
-    else if( wkbFlatten(eGType) == wkbMultiLineString )
-        bForceToMultiLineString = TRUE;
-    
+
     if( bExplodeCollections && nDstGeomFieldCount > 1 )
     {
         bExplodeCollections = FALSE;
@@ -3488,7 +3500,7 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
                     poDstGeometry->setCoordinateDimension( nCoordDim );
                 else if ( nCoordDim == COORD_DIM_LAYER_DIM )
                     poDstGeometry->setCoordinateDimension(
-                        (poDstLayer->GetLayerDefn()->GetGeomFieldDefn(iGeom)->GetType() & wkb25DBit) ? 3 : 2 );
+                        wkbHasZ(poDstLayer->GetLayerDefn()->GetGeomFieldDefn(iGeom)->GetType()) ? 3 : 2 );
 
                 if (eGeomOp == SEGMENTIZE)
                 {
@@ -3565,25 +3577,29 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
                     poDstGeometry = poClipped;
                 }
 
-                if( bForceToPolygon )
+                if( eGType != -2 )
                 {
                     poDstFeature->SetGeomFieldDirectly(iGeom, 
-                        OGRGeometryFactory::forceToPolygon(
-                            poDstFeature->StealGeometry(iGeom) ) );
+                        OGRGeometryFactory::forceTo(
+                            poDstFeature->StealGeometry(iGeom), (OGRwkbGeometryType)eGType) );
                 }
-                else if( bForceToMultiPolygon ||
-                        (bPromoteToMulti && wkbFlatten(poDstGeometry->getGeometryType()) == wkbPolygon) )
+                else if( sGeomConversion.bPromoteToMulti ||
+                         sGeomConversion.bConvertToLinear ||
+                         sGeomConversion.bConvertToCurve )
                 {
-                    poDstFeature->SetGeomFieldDirectly(iGeom, 
-                        OGRGeometryFactory::forceToMultiPolygon(
-                            poDstFeature->StealGeometry(iGeom) ) );
-                }
-                else if ( bForceToMultiLineString ||
-                        (bPromoteToMulti && wkbFlatten(poDstGeometry->getGeometryType()) == wkbLineString) )
-                {
-                    poDstFeature->SetGeomFieldDirectly(iGeom, 
-                        OGRGeometryFactory::forceToMultiLineString(
-                            poDstFeature->StealGeometry(iGeom) ) );
+                    poDstGeometry = poDstFeature->StealGeometry(iGeom);
+                    if( poDstGeometry != NULL )
+                    {
+                        OGRwkbGeometryType eTargetType = poDstGeometry->getGeometryType();
+                        if( sGeomConversion.bPromoteToMulti )
+                            eTargetType = OGR_GT_GetCollection(eTargetType);
+                        if( sGeomConversion.bConvertToLinear )
+                            eTargetType = OGR_GT_GetLinear(eTargetType);
+                        else if( sGeomConversion.bConvertToCurve )
+                            eTargetType = OGR_GT_GetCurve(eTargetType);
+                        poDstGeometry = OGRGeometryFactory::forceTo(poDstGeometry, eTargetType);
+                        poDstFeature->SetGeomFieldDirectly(iGeom, poDstGeometry);
+                    }
                 }
             }
 

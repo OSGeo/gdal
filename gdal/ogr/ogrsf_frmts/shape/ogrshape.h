@@ -186,9 +186,9 @@ class OGRShapeLayer : public OGRAbstractProxiedLayer
     virtual OGRErr      SetNextByIndex( long nIndex );
 
     OGRFeature         *GetFeature( long nFeatureId );
-    OGRErr              SetFeature( OGRFeature *poFeature );
+    OGRErr              ISetFeature( OGRFeature *poFeature );
     OGRErr              DeleteFeature( long nFID );
-    OGRErr              CreateFeature( OGRFeature *poFeature );
+    OGRErr              ICreateFeature( OGRFeature *poFeature );
     OGRErr              SyncToDisk();
     
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }

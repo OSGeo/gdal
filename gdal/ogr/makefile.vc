@@ -23,7 +23,9 @@ OBJ_OGR	=	ogrgeometryfactory.obj ogrpoint.obj ogrcurve.obj ogr_api.obj \
 		ogrlinestring.obj ogrpolygon.obj ogrlinearring.obj \
 		ogrutils.obj ogrgeometry.obj ogrgeometrycollection.obj \
 		ogrmultipolygon.obj ogrmultilinestring.obj ogr_opt.obj \
-                ogrmultipoint.obj ogrfeature.obj ogrfeaturedefn.obj \
+		ogrmultipoint.obj ogrcircularstring.obj ogrcompoundcurve.obj \
+		ogrcurvepolygon.obj ogrcurvecollection.obj ogrmultisurface.obj \
+		ogrmulticurve.obj ogrfeature.obj ogrfeaturedefn.obj \
 		ogrfielddefn.obj ogr_srsnode.obj ogrspatialreference.obj \
 		ogr_srs_proj4.obj ogr_fromepsg.obj ogrct.obj \
 		ogrfeaturestyle.obj ogr_srs_esri.obj ogrfeaturequery.obj \

@@ -1232,10 +1232,10 @@ int OGRCouchDBTableLayer::GetMaximumId()
 }
 
 /************************************************************************/
-/*                           CreateFeature()                            */
+/*                           ICreateFeature()                            */
 /************************************************************************/
 
-OGRErr OGRCouchDBTableLayer::CreateFeature( OGRFeature *poFeature )
+OGRErr OGRCouchDBTableLayer::ICreateFeature( OGRFeature *poFeature )
 
 {
     GetLayerDefn();
@@ -1371,10 +1371,10 @@ OGRErr OGRCouchDBTableLayer::CreateFeature( OGRFeature *poFeature )
 }
 
 /************************************************************************/
-/*                           SetFeature()                               */
+/*                           ISetFeature()                               */
 /************************************************************************/
 
-OGRErr      OGRCouchDBTableLayer::SetFeature( OGRFeature *poFeature )
+OGRErr      OGRCouchDBTableLayer::ISetFeature( OGRFeature *poFeature )
 {
     GetLayerDefn();
 
@@ -1818,7 +1818,7 @@ void OGRCouchDBTableLayer::LoadMetadata()
 
             json_object* poIs25D = json_object_object_get(poAnswerObj, "is_25D");
             if (poIs25D && json_object_get_boolean(poIs25D))
-                eGeomType = (OGRwkbGeometryType) (eGeomType | wkb25DBit);
+                eGeomType = wkbSetZ(eGeomType);
 
             json_object* poExtent = json_object_object_get(poAnswerObj, "extent");
             if (poExtent && json_object_get_type(poExtent) == json_type_object)
@@ -1965,7 +1965,7 @@ void OGRCouchDBTableLayer::WriteMetadata()
     {
         json_object_object_add(poDoc, "geomtype",
                     json_object_new_string(OGRToOGCGeomType(eGeomType)));
-        if (poFeatureDefn->GetGeomType() & wkb25DBit)
+        if (wkbHasZ(poFeatureDefn->GetGeomType()))
         {
             json_object_object_add(poDoc, "is_25D",
                                json_object_new_boolean(TRUE));

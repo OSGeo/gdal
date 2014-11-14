@@ -87,8 +87,8 @@ class OGRSelafinLayer : public OGRLayer {
         int TestCapability(const char *pszCap);
         int GetFeatureCount(int bForce=TRUE);
         OGRErr GetExtent(OGREnvelope *psExtent,int bForce=TRUE);
-        OGRErr SetFeature(OGRFeature *poFeature);
-        OGRErr CreateFeature(OGRFeature *poFeature);
+        OGRErr ISetFeature(OGRFeature *poFeature);
+        OGRErr ICreateFeature(OGRFeature *poFeature);
         OGRErr CreateField(OGRFieldDefn *poField,int bApproxOK=TRUE);
         OGRErr DeleteField(int iField);
         OGRErr ReorderFields(int *panMap);

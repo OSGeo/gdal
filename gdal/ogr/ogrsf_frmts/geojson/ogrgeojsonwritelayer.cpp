@@ -108,10 +108,10 @@ OGRGeoJSONWriteLayer::~OGRGeoJSONWriteLayer()
 }
 
 /************************************************************************/
-/*                           CreateFeature()                            */
+/*                           ICreateFeature()                            */
 /************************************************************************/
 
-OGRErr OGRGeoJSONWriteLayer::CreateFeature( OGRFeature* poFeature )
+OGRErr OGRGeoJSONWriteLayer::ICreateFeature( OGRFeature* poFeature )
 {
     VSILFILE* fp = poDS_->GetOutputFile();
 

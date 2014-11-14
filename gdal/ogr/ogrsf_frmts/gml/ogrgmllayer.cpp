@@ -138,40 +138,6 @@ void OGRGMLLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                     ConvertGeomToMultiIfNecessary()                  */
-/************************************************************************/
-
-OGRGeometry* OGRGMLLayer::ConvertGeomToMultiIfNecessary(OGRGeometry* poGeom)
-{
-    OGRwkbGeometryType eType = poGeom->getGeometryType();
-    OGRwkbGeometryType eLayerType = GetGeomType();
-    OGRGeometryCollection* poNewGeom = NULL;
-    if (eType == wkbPoint && eLayerType == wkbMultiPoint)
-    {
-        poNewGeom = new OGRMultiPoint();
-    }
-    else if (eType == wkbLineString && eLayerType == wkbMultiLineString)
-    {
-        poNewGeom = new OGRMultiLineString();
-    }
-    else if (eType == wkbPolygon && eLayerType == wkbMultiPolygon)
-    {
-        poNewGeom = new OGRMultiPolygon();
-    }
-
-    if( poNewGeom != NULL )
-    {
-        OGRSpatialReference* poGeomSRS = poGeom->getSpatialReference();
-        poNewGeom->addGeometryDirectly(poGeom);
-        if( poGeomSRS != NULL )
-            poNewGeom->assignSpatialReference(poGeomSRS);
-        poGeom = poNewGeom;
-    }
-
-    return poGeom;
-}
-
-/************************************************************************/
 /*                           GetNextFeature()                           */
 /************************************************************************/
 
@@ -331,10 +297,10 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
                                                   hCacheSRS,
                                                   bFaceHoleNegative );
 
-                    /* Force single geometry to multigeometry if needed to match layer geometry type */
+                    /* Do geometry type changes if needed to match layer geometry type */
                     if (poGeom != NULL)
                     {
-                        papoGeometries[i] = ConvertGeomToMultiIfNecessary(poGeom);
+                        papoGeometries[i] = OGRGeometryFactory::forceTo(poGeom, GetGeomType());
                         poGeom = NULL;
                     }
                     else
@@ -378,10 +344,10 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
                                                   hCacheSRS,
                                                   bFaceHoleNegative );
 
-            /* Force single geometry to multigeometry if needed to match layer geometry type */
+            /* Do geometry type changes if needed to match layer geometry type */
             if (poGeom != NULL)
             {
-                poGeom = ConvertGeomToMultiIfNecessary(poGeom);
+                poGeom = OGRGeometryFactory::forceTo(poGeom, GetGeomType());
             }
             else
             // We assume the createFromGML() function would have already
@@ -606,10 +572,10 @@ static void GMLWriteField(OGRGMLDataSource* poDS,
 }
 
 /************************************************************************/
-/*                           CreateFeature()                            */
+/*                           ICreateFeature()                            */
 /************************************************************************/
 
-OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
+OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
 
 {
     int bIsGML3Output = poDS->IsGML3Output();
@@ -764,7 +730,15 @@ OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
                         CPLSPrintf("GMLID=%s.geom.%ld",
                                    poFeatureDefn->GetName(), poFeature->GetFID()));
             }
-            pszGeometry = poGeom->exportToGML(papszOptions);
+            if( !bIsGML3Output && OGR_GT_IsNonLinear(poGeom->getGeometryType()) )
+            {
+                OGRGeometry* poGeomTmp = OGRGeometryFactory::forceTo(
+                    poGeom->clone(),OGR_GT_GetLinear(poGeom->getGeometryType()));
+                pszGeometry = poGeomTmp->exportToGML(papszOptions);
+                delete poGeomTmp;
+            }
+            else
+                pszGeometry = poGeom->exportToGML(papszOptions);
             CSLDestroy(papszOptions);
             if (bWriteSpaceIndentation)
                 VSIFPrintfL(fp, "      ");
@@ -909,6 +883,9 @@ int OGRGMLLayer::TestCapability( const char * pszCap )
 
     else if( EQUAL(pszCap,OLCStringsAsUTF8) )
         return TRUE;
+
+    else if( EQUAL(pszCap,OLCCurveGeometries) )
+        return poDS->IsGML3Output();
 
     else 
         return FALSE;

@@ -69,7 +69,7 @@ public:
     OGRFeature *        GetNextFeature();
     OGRFeatureDefn *    GetLayerDefn();
     OGRErr              CreateField(OGRFieldDefn *poField, int bApproxOK=TRUE);
-    OGRErr              CreateFeature(OGRFeature *poFeature);
+    OGRErr              ICreateFeature(OGRFeature *poFeature);
     int                 TestCapability( const char * );
 };
 

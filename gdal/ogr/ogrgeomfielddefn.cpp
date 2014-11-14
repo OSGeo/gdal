@@ -255,7 +255,13 @@ OGRwkbGeometryType OGR_GFld_GetType( OGRGeomFieldDefnH hDefn )
 
 {
     VALIDATE_POINTER1( hDefn, "OGR_GFld_GetType", wkbUnknown );
-    return ((OGRGeomFieldDefn *) hDefn)->GetType();
+
+    OGRwkbGeometryType eType = ((OGRGeomFieldDefn *) hDefn)->GetType();
+    if( OGR_GT_IsNonLinear(eType) && !OGRGetNonLinearGeometriesEnabledFlag() )
+    {
+        eType = OGR_GT_GetLinear(eType);
+    }
+    return eType;
 }
 
 /************************************************************************/
