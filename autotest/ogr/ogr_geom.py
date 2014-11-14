@@ -2035,11 +2035,12 @@ def ogr_geom_curvepolygon():
         print(out_wkt)
         return 'fail'
 
-    p1 = g1.PointOnSurface()
-    if (p1.GetX()-0.5)*(p1.GetX()-0.5)+p1.GetY()*p1.GetY() > 0.5 * 0.5:
-        gdaltest.post_reason('fail')
-        print(p1)
-        return 'fail'
+    if ogrtest.have_geos():
+        p1 = g1.PointOnSurface()
+        if (p1.GetX()-0.5)*(p1.GetX()-0.5)+p1.GetY()*p1.GetY() > 0.5 * 0.5:
+            gdaltest.post_reason('fail')
+            print(p1)
+            return 'fail'
 
     env = g1.GetEnvelope()
     expected_env = (0.0, 1.0, -0.5, 0.5)
@@ -2634,13 +2635,14 @@ def ogr_geom_multisurface():
         return 'fail'
 
     # PointOnSurface
-    in_wkt = 'MULTISURFACE (((0 0,0 10,10 10,10 0,0 0),(1 1,1 9,9 9,9 1,1 1)),((10 0,10 10,20 10,20 0,10 0),(11 1,11 9,19 9,19 1,11 1)))'
-    g1 = ogr.CreateGeometryFromWkt(in_wkt)
-    p1 = g1.PointOnSurface()
-    if p1.ExportToWkt() != 'POINT (0.5 5.0)':
-        gdaltest.post_reason('fail')
-        print(p1)
-        return 'fail'
+    if ogrtest.have_geos():
+        in_wkt = 'MULTISURFACE (((0 0,0 10,10 10,10 0,0 0),(1 1,1 9,9 9,9 1,1 1)),((10 0,10 10,20 10,20 0,10 0),(11 1,11 9,19 9,19 1,11 1)))'
+        g1 = ogr.CreateGeometryFromWkt(in_wkt)
+        p1 = g1.PointOnSurface()
+        if p1.ExportToWkt() != 'POINT (0.5 5.0)':
+            gdaltest.post_reason('fail')
+            print(p1)
+            return 'fail'
 
     # Error case : wrong sub-geometry type
     in_wkt = 'MULTIPOLYGON (POINT EMPTY)'
