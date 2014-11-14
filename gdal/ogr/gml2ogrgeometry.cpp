@@ -2811,7 +2811,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
                             poMS = new OGRMultiPolygon();
                         else
                             poMS = new OGRMultiSurface();
-                        CPLAssert(poMS->addGeometryDirectly( poResult ) == OGRERR_NONE);
+                        OGRErr eErr = poMS->addGeometryDirectly( poResult );
+                        CPLAssert(eErr == OGRERR_NONE);
                         poResult = poMS;
                     }
                     else if( eGeomType != wkbPolygon &&
@@ -2820,7 +2821,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
                         poMS = OGRMultiPolygon::CastToMultiSurface((OGRMultiPolygon*)poMS);
                         poResult = poMS;
                     }
-                    CPLAssert(poMS->addGeometryDirectly( poGeom ) == OGRERR_NONE);
+                    OGRErr eErr = poMS->addGeometryDirectly( poGeom );
+                    CPLAssert(eErr == OGRERR_NONE);
                 }
             }
         }
