@@ -389,7 +389,9 @@ void OGRCircularString::segmentize( double dfMaxLength )
 
     CPLAssert(aoRawPoint.size() == 0 || (aoRawPoint.size() >= 3 && (aoRawPoint.size() % 2) == 1));
     if( padfZ )
+    {
         CPLAssert(adfZ.size() == aoRawPoint.size());
+    }
 
     /* Is there actually something to modify ? */
     if( nPointCount < (int)aoRawPoint.size() )
@@ -397,11 +399,11 @@ void OGRCircularString::segmentize( double dfMaxLength )
         nPointCount = (int)aoRawPoint.size();
         paoPoints = (OGRRawPoint *)
                 OGRRealloc(paoPoints, sizeof(OGRRawPoint) * nPointCount);
-        memcpy(paoPoints, aoRawPoint.data(), sizeof(OGRRawPoint) * nPointCount);
+        memcpy(paoPoints, &aoRawPoint[0], sizeof(OGRRawPoint) * nPointCount);
         if( padfZ )
         {
             padfZ = (double*) OGRRealloc(padfZ, sizeof(double) * aoRawPoint.size());
-            memcpy(padfZ, adfZ.data(), sizeof(double) * nPointCount);
+            memcpy(padfZ, &adfZ[0], sizeof(double) * nPointCount);
         }
     }
 }
