@@ -4589,6 +4589,12 @@ char const *OGRDataSourceShadow_name_get( OGRDataSourceShadow *h ) {
 }
 
 
+OGRwkbGeometryType GT_SetModifier( OGRwkbGeometryType eType, int bSetZ, int bSetM = FALSE)
+{
+    return OGR_GT_SetModifier(eType, bSetZ, bSetM);
+}
+
+
   OGRDataSourceShadow* GetOpenDS(int ds_number) {
     OGRDataSourceShadow* layer = (OGRDataSourceShadow*) OGRGetOpenDS(ds_number);
     return layer;
@@ -20707,7 +20713,7 @@ SWIGINTERN PyObject *_wrap_GT_SetModifier(PyObject *SWIGUNUSEDPARM(self), PyObje
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRwkbGeometryType)OGR_GT_SetModifier(arg1,arg2,arg3);
+    result = (OGRwkbGeometryType)GT_SetModifier(arg1,arg2,arg3);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {

@@ -2619,8 +2619,12 @@ OGRwkbGeometryType OGR_GT_Flatten( OGRwkbGeometryType eType );
 %rename (GT_SetZ) OGR_GT_SetZ;
 OGRwkbGeometryType OGR_GT_SetZ( OGRwkbGeometryType eType );
 
-%rename (GT_SetModifier) OGR_GT_SetModifier;
-OGRwkbGeometryType OGR_GT_SetModifier( OGRwkbGeometryType eType, int bSetZ, int bSetM = FALSE );
+%inline  %{
+OGRwkbGeometryType GT_SetModifier( OGRwkbGeometryType eType, int bSetZ, int bSetM = FALSE)
+{
+    return OGR_GT_SetModifier(eType, bSetZ, bSetM);
+}
+%}
 
 %rename (GT_HasZ) OGR_GT_HasZ;
 int                OGR_GT_HasZ( OGRwkbGeometryType eType );
