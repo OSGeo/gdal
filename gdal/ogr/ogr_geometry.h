@@ -639,7 +639,7 @@ class OGRCurveCollection
 
   public:
                 OGRCurveCollection();
-    virtual     ~OGRCurveCollection();
+               ~OGRCurveCollection();
 
     void            empty(OGRGeometry* poGeom);
     OGRBoolean      IsEmpty() const;
