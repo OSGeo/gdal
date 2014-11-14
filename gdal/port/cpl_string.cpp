@@ -1278,9 +1278,9 @@ int CPLvsnprintf(char *str, size_t size, const char* fmt, va_list args)
         wrk_args = args;
 #endif
 #if defined(HAVE_VSNPRINTF)
-        offset_out = vsnprintf(str, size, fmt_ori, args);
+        offset_out = vsnprintf(str, size, fmt_ori, wrk_args);
 #else
-        offset_out = vsprintf(str, fmt_ori, args);
+        offset_out = vsprintf(str, fmt_ori, wrk_args);
 #endif
     }
 
