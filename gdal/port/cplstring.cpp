@@ -126,8 +126,11 @@ CPLString &CPLString::vPrintf( const char *pszFormat, va_list args )
     {
         *this = szModestBuffer;
     }
+#ifdef va_copy
     va_end( wrk_args );
 #endif
+
+#endif /* !defined(HAVE_VSNPRINTF) */
 
     return *this;
 }
