@@ -61,7 +61,7 @@ class OGRNULLLayer : public OGRLayer
 
     virtual OGRFeature *GetNextFeature() { return NULL; }
 
-    virtual OGRErr      CreateFeature( OGRFeature *poFeature ) { return OGRERR_NONE; }
+    virtual OGRErr      ICreateFeature( OGRFeature *poFeature ) { return OGRERR_NONE; }
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
