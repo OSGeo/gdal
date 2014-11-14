@@ -179,7 +179,9 @@ Usage: ogr2ogr [--help-general] [-skipfailures] [-append] [-update]
                [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]
                [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]
                dst_datasource_name src_datasource_name
-               [-lco NAME=VALUE] [-nln name] [-nlt type] [-dim 2|3|layer_dim] [layer [layer ...]]
+               [-lco NAME=VALUE] [-nln name]
+               [-nlt type|PROMOTE_TO_MULTI|CONVERT_TO_LINEAR]
+               [-dim 2|3|layer_dim] [layer [layer ...]]
 
 Advanced options :
                [-gt n]
@@ -244,12 +246,16 @@ on which the spatial filter operates on.</dd>
 <dt> <b>-nln</b><em> name</em>:</dt><dd> Assign an alternate name to the new layer</dd>
 <dt> <b>-nlt</b><em> type</em>:</dt><dd> Define the geometry type for the 
 created layer.  One of NONE, GEOMETRY, POINT, LINESTRING, POLYGON, 
-GEOMETRYCOLLECTION, MULTIPOINT, MULTIPOLYGON or MULTILINESTRING. 
+GEOMETRYCOLLECTION, MULTIPOINT, MULTIPOLYGON or MULTILINESTRING. And CIRCULARSTRING,
+COMPOUNDCURVE, CURVEPOLYGON, MULTICURVE and MULTISURFACE for GDAL 2.0 non-linear geometry
+types. 
 Add "25D" to the name to get 2.5D versions.
 Starting with GDAL 1.10, PROMOTE_TO_MULTI can be used to automatically promote layers
 that mix polygon or multipolygons to multipolygons, and layers that mix linestrings or
 multilinestrings to multilinestrings. Can be usefull when converting shapefiles to PostGIS
-(and other target drivers) that implements strict checks for geometry type.</dd>
+(and other target drivers) that implements strict checks for geometry type.
+Starting with GDAL 2.0, CONVERT_TO_LINEAR can be used to to convert non-linear geometries
+types into linear geometries by approximating them.</dd>
 <dt> <b>-dim</b><em> val</em>:</dt><dd>(starting with GDAL 1.10) Force the coordinate dimension to val (valid values are 2 or 3).
 This affects both the layer geometry type, and feature geometries.
 Starting with GDAL 1.11, the value can be set to "layer_dim" to instruct feature geometries to be promoted

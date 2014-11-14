@@ -205,10 +205,10 @@ static char* OGRGeoconceptLayer_GetCompatibleFieldName(const char* pszName)
 }
 
 /************************************************************************/
-/*                           CreateFeature()                            */
+/*                           ICreateFeature()                            */
 /************************************************************************/
 
-OGRErr OGRGeoconceptLayer::CreateFeature( OGRFeature* poFeature )
+OGRErr OGRGeoconceptLayer::ICreateFeature( OGRFeature* poFeature )
 
 {
     OGRwkbGeometryType eGt;

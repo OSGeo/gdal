@@ -55,6 +55,11 @@ static const OGRGeomTypeName asGeomTypeNames[] = { /* 25D versions are implicit 
     { wkbMultiLineString, "wkbMultiLineString" },
     { wkbMultiPolygon, "wkbMultiPolygon" },
     { wkbGeometryCollection, "wkbGeometryCollection" },
+    { wkbCircularString, "wkbCircularString" },
+    { wkbCompoundCurve, "wkbCompoundCurve" },
+    { wkbCurvePolygon, "wkbCurvePolygon" },
+    { wkbGeometryCollection, "wkbMultiCurve" },
+    { wkbMultiSurface, "wkbMultiSurface" },
     { wkbNone, "wkbNone" },
     { wkbNone, NULL }
 };
@@ -74,8 +79,8 @@ OGRwkbGeometryType OGRVRTGetGeometryType(const char* pszGType, int* pbError)
         {
             eGeomType = asGeomTypeNames[iType].eType;
 
-            if( strstr(pszGType,"25D") != NULL )
-                eGeomType = (OGRwkbGeometryType) (eGeomType | wkb25DBit);
+            if( strstr(pszGType,"25D") != NULL || strstr(pszGType,"Z") != NULL )
+                eGeomType = wkbSetZ(eGeomType);
             break;
         }
     }
@@ -889,8 +894,10 @@ int OGRVRTDataSource::Initialize( CPLXMLNode *psTree, const char *pszNewName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRVRTDataSource::TestCapability( CPL_UNUSED const char * pszCap )
+int OGRVRTDataSource::TestCapability( const char * pszCap )
 {
+    if( EQUAL(pszCap,ODsCCurveGeometries) )
+        return TRUE;
     return FALSE;
 }
 

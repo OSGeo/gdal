@@ -353,7 +353,6 @@ OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
 
                 if (poColl->addGeometryDirectly(poSubGeom) != OGRERR_NONE)
                 {
-                    //printf("%d %d\n", poColl->getGeometryType() & ~wkb25DBit, poSubGeom->getGeometryType() & ~wkb25DBit);
                     delete poSubGeom;
                 }
             }

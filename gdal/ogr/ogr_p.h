@@ -52,6 +52,16 @@
 #  define OGR_SWAP(x)   (x == wkbXDR)
 #endif
 
+/* PostGIS 1.X has non standard codes for the following geometry types */
+#define POSTGIS15_CURVEPOLYGON  13  /* instead of 10 */
+#define POSTGIS15_MULTICURVE    14  /* instead of 11 */
+#define POSTGIS15_MULTISURFACE  15  /* instead of 12 */
+
+/* Has been deprecated. Can only be used in very specific circumstances */
+#ifdef GDAL_COMPILATION
+#define wkb25DBitInternalUse 0x80000000
+#endif
+
 /* -------------------------------------------------------------------- */
 /*      helper function for parsing well known text format vector objects.*/
 /* -------------------------------------------------------------------- */
@@ -139,14 +149,19 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
 /*                        PostGIS EWKB encoding                         */
 /************************************************************************/
 
-OGRGeometry CPL_DLL *OGRGeometryFromEWKB( GByte *pabyWKB, int nLength, int* pnSRID );
-OGRGeometry CPL_DLL *OGRGeometryFromHexEWKB( const char *pszBytea, int* pnSRID );
-char CPL_DLL * OGRGeometryToHexEWKB( OGRGeometry * poGeometry, int nSRSId );
+OGRGeometry CPL_DLL *OGRGeometryFromEWKB( GByte *pabyWKB, int nLength, int* pnSRID,
+                                          int bIsPostGIS1_EWKB  );
+OGRGeometry CPL_DLL *OGRGeometryFromHexEWKB( const char *pszBytea, int* pnSRID,
+                                             int bIsPostGIS1_EWKB );
+char CPL_DLL * OGRGeometryToHexEWKB( OGRGeometry * poGeometry, int nSRSId,
+                                     int bIsPostGIS1_EWKB );
 
 /************************************************************************/
 /*                        WKB Type Handling encoding                    */
 /************************************************************************/
 
-OGRErr OGRReadWKBGeometryType( unsigned char * pabyData, OGRwkbGeometryType *eGeometryType, OGRBoolean *b3D );
+OGRErr OGRReadWKBGeometryType( unsigned char * pabyData,
+                               OGRwkbVariant wkbVariant,
+                               OGRwkbGeometryType *eGeometryType, OGRBoolean *b3D );
 
 #endif /* ndef OGR_P_H_INCLUDED */

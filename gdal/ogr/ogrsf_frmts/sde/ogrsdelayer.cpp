@@ -1078,7 +1078,7 @@ OGRErr OGRSDELayer::TranslateOGRGeometry( OGRGeometry *poGeom,
 /* -------------------------------------------------------------------- */    
     int                 b3D = FALSE;
     
-    b3D = poGeom->getGeometryType() & wkb25DBit;
+    b3D = wkbHasZ(poGeom->getGeometryType());
     
 /* -------------------------------------------------------------------- */
 /*      Translate POINT/MULTIPOINT type.                                */
@@ -2406,9 +2406,9 @@ OGRErr OGRSDELayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
 
 
 /************************************************************************/
-/*                           SetFeature()                               */
+/*                           ISetFeature()                               */
 /************************************************************************/
-OGRErr OGRSDELayer::SetFeature( OGRFeature *poFeature )
+OGRErr OGRSDELayer::ISetFeature( OGRFeature *poFeature )
 
 {
     LONG                nSDEErr;
@@ -2444,9 +2444,9 @@ OGRErr OGRSDELayer::SetFeature( OGRFeature *poFeature )
 }
 
 /************************************************************************/
-/*                           CreateFeature()                            */
+/*                           ICreateFeature()                            */
 /************************************************************************/
-OGRErr OGRSDELayer::CreateFeature( OGRFeature *poFeature )
+OGRErr OGRSDELayer::ICreateFeature( OGRFeature *poFeature )
 
 {
     LONG                nSDEErr;

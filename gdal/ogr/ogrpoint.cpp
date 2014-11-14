@@ -36,6 +36,10 @@
 
 CPL_CVSID("$Id$");
 
+/* CAUTION: we use nCoordDimension == -2 to mean POINT EMPTY (2D) and
+                   nCoordDimension == -3 to mean POINT Z EMPTY
+*/
+
 /************************************************************************/
 /*                              OGRPoint()                              */
 /************************************************************************/
@@ -113,7 +117,7 @@ void OGRPoint::empty()
 
 {
     x = y = z = 0.0;
-    nCoordDimension = 0;
+    nCoordDimension = -2;
 }
 
 /************************************************************************/
@@ -133,7 +137,7 @@ int OGRPoint::getDimension() const
 OGRwkbGeometryType OGRPoint::getGeometryType() const
 
 {
-    if( nCoordDimension == 3 )
+    if( getCoordinateDimension() == 3 )
         return wkbPoint25D;
     else
         return wkbPoint;
@@ -162,6 +166,16 @@ void OGRPoint::flattenTo2D()
 }
 
 /************************************************************************/
+/*                       getCoordinateDimension()                       */
+/************************************************************************/
+
+int OGRPoint::getCoordinateDimension() const
+
+{
+    return nCoordDimension < 0 ? -nCoordDimension : nCoordDimension;
+}
+
+/************************************************************************/
 /*                       setCoordinateDimension()                       */
 /************************************************************************/
 
@@ -184,7 +198,7 @@ void OGRPoint::setCoordinateDimension( int nNewDimension )
 int OGRPoint::WkbSize() const
 
 {
-    if( nCoordDimension != 3 )
+    if( getCoordinateDimension() != 3 )
         return 21;
     else
         return 29;
@@ -198,32 +212,19 @@ int OGRPoint::WkbSize() const
 /************************************************************************/
 
 OGRErr OGRPoint::importFromWkb( unsigned char * pabyData,
-                                int nSize )
+                                int nSize,
+                                OGRwkbVariant eWkbVariant )
 
 {
     OGRwkbByteOrder     eByteOrder;
-    
-    if( nSize < 21 && nSize != -1 )
+    OGRBoolean          bIs3D = FALSE;
+
+    OGRErr eErr = importPreambuleFromWkb( pabyData, nSize, eByteOrder, bIs3D, eWkbVariant );
+    if( eErr >= 0 )
+        return eErr;
+
+    if ( nSize < ((bIs3D) ? 29 : 21) && nSize != -1 )
         return OGRERR_NOT_ENOUGH_DATA;
-
-/* -------------------------------------------------------------------- */
-/*      Get the byte order byte.                                        */
-/* -------------------------------------------------------------------- */
-    eByteOrder = DB2_V72_FIX_BYTE_ORDER((OGRwkbByteOrder) *pabyData);
-    if (!( eByteOrder == wkbXDR || eByteOrder == wkbNDR ))
-        return OGRERR_CORRUPT_DATA;
-
-/* -------------------------------------------------------------------- */
-/*      Get the geometry feature type.  For now we assume that          */
-/*      geometry type is between 0 and 255 so we only have to fetch     */
-/*      one byte.                                                       */
-/* -------------------------------------------------------------------- */
-    OGRBoolean bIs3D;
-    OGRwkbGeometryType eGeometryType;
-    OGRErr err = OGRReadWKBGeometryType( pabyData, &eGeometryType, &bIs3D );
-
-    if( err != OGRERR_NONE || eGeometryType != wkbPoint )
-        return OGRERR_CORRUPT_DATA;
 
 /* -------------------------------------------------------------------- */
 /*      Get the vertex.                                                 */
@@ -239,9 +240,6 @@ OGRErr OGRPoint::importFromWkb( unsigned char * pabyData,
 
     if( bIs3D )
     {
-        if ( nSize < 29 && nSize != -1 )
-            return OGRERR_NOT_ENOUGH_DATA;
-
         memcpy( &z, pabyData + 5 + 16, 8 );
         if( OGR_SWAP( eByteOrder ) )
         {
@@ -254,6 +252,10 @@ OGRErr OGRPoint::importFromWkb( unsigned char * pabyData,
         z = 0;
         nCoordDimension = 2;
     }
+
+    /* Detect NaN coordinates --> EMPTY */
+    if( x != x && y != y )
+        nCoordDimension = -nCoordDimension;
 
     return OGRERR_NONE;
 }
@@ -298,13 +300,13 @@ OGRErr  OGRPoint::exportToWkb( OGRwkbByteOrder eByteOrder,
         double dNan = std::numeric_limits<double>::quiet_NaN();
         memcpy( pabyData+5, &dNan, 8 );
         memcpy( pabyData+5+8, &dNan, 8 );
-        if( nCoordDimension == 3 )
+        if( getCoordinateDimension() == 3 )
             memcpy( pabyData+5+16, &dNan, 8 );
     }
     else
     {
         memcpy( pabyData+5, &x, 16 );
-        if( nCoordDimension == 3 )
+        if( getCoordinateDimension() == 3 )
         {
             memcpy( pabyData + 5 + 16, &z, 8 );
         }
@@ -318,7 +320,7 @@ OGRErr  OGRPoint::exportToWkb( OGRwkbByteOrder eByteOrder,
         CPL_SWAPDOUBLE( pabyData + 5 );
         CPL_SWAPDOUBLE( pabyData + 5 + 8 );
 
-        if( nCoordDimension == 3 )
+        if( getCoordinateDimension() == 3 )
             CPL_SWAPDOUBLE( pabyData + 5 + 16 );
     }
 
@@ -335,83 +337,17 @@ OGRErr  OGRPoint::exportToWkb( OGRwkbByteOrder eByteOrder,
 OGRErr OGRPoint::importFromWkt( char ** ppszInput )
 
 {
-    char        szToken[OGR_WKT_TOKEN_MAX];
-    const char  *pszInput = *ppszInput;
-
-/* -------------------------------------------------------------------- */
-/*      Read and verify the ``POINT'' keyword token.                    */
-/* -------------------------------------------------------------------- */
-    pszInput = OGRWktReadToken( pszInput, szToken );
-
-    if( !EQUAL(szToken,"POINT") )
-        return OGRERR_CORRUPT_DATA;
-
-/* -------------------------------------------------------------------- */
-/*      Check for EMPTY ... but treat like a point at 0,0.              */
-/* -------------------------------------------------------------------- */
-    const char *pszPreScan;
     int bHasZ = FALSE, bHasM = FALSE;
-
-    pszPreScan = OGRWktReadToken( pszInput, szToken );
-    if( EQUAL(szToken,"EMPTY") )
+    OGRErr      eErr = importPreambuleFromWkt(ppszInput, &bHasZ, &bHasM);
+    if( eErr >= 0 )
     {
-        *ppszInput = (char *) pszPreScan;
-        empty();
-        return OGRERR_NONE;
+        if( eErr == OGRERR_NONE ) /* only the case for an EMPTY case */
+            nCoordDimension = (bHasZ) ? -3 : -2;
+
+        return eErr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Check for Z, M or ZM. Will ignore the Measure                   */
-/* -------------------------------------------------------------------- */
-    else if( EQUAL(szToken,"Z") )
-    {
-        bHasZ = TRUE;
-    }
-    else if( EQUAL(szToken,"M") )
-    {
-        bHasM = TRUE;
-    }
-    else if( EQUAL(szToken,"ZM") )
-    {
-        bHasZ = TRUE;
-        bHasM = TRUE;
-    }
-
-    if (bHasZ || bHasM)
-    {
-        pszInput = pszPreScan;
-        pszPreScan = OGRWktReadToken( pszInput, szToken );
-        if( EQUAL(szToken,"EMPTY") )
-        {
-            *ppszInput = (char *) pszPreScan;
-            empty();
-            /* FIXME?: In theory we should store the dimension and M presence */
-            /* if we want to allow round-trip with ExportToWKT v1.2 */
-            return OGRERR_NONE;
-        }
-    }
-
-    if( !EQUAL(szToken,"(") )
-        return OGRERR_CORRUPT_DATA;
-
-    if ( !bHasZ && !bHasM )
-    {
-        /* Test for old-style POINT(EMPTY) */
-        pszPreScan = OGRWktReadToken( pszPreScan, szToken );
-        if( EQUAL(szToken,"EMPTY") )
-        {
-            pszInput = OGRWktReadToken( pszPreScan, szToken );
-
-            if( !EQUAL(szToken,")") )
-                return OGRERR_CORRUPT_DATA;
-            else
-            {
-                *ppszInput = (char *) pszInput;
-                empty();
-                return OGRERR_NONE;
-            }
-        }
-    }
+    const char  *pszInput = *ppszInput;
 
 /* -------------------------------------------------------------------- */
 /*      Read the point list which should consist of exactly one point.  */
@@ -468,18 +404,27 @@ OGRErr OGRPoint::importFromWkt( char ** ppszInput )
 /*      equivelent.                                                     */
 /************************************************************************/
 
-OGRErr OGRPoint::exportToWkt( char ** ppszDstText ) const
+OGRErr OGRPoint::exportToWkt( char ** ppszDstText,
+                              OGRwkbVariant eWkbVariant ) const
 
 {
     char        szTextEquiv[140];
     char        szCoordinate[80];
 
     if ( IsEmpty() )
-        *ppszDstText = CPLStrdup( "POINT EMPTY" );
+    {
+        if( getCoordinateDimension() == 3 && eWkbVariant == wkbVariantIso )
+            *ppszDstText = CPLStrdup("POINT Z EMPTY");
+        else
+            *ppszDstText = CPLStrdup("POINT EMPTY");
+    }
     else
     {
-        OGRMakeWktCoordinate(szCoordinate, x, y, z, nCoordDimension );
-        sprintf( szTextEquiv, "POINT (%s)", szCoordinate );
+        OGRMakeWktCoordinate(szCoordinate, x, y, z, getCoordinateDimension() );
+        if( getCoordinateDimension() == 3 && eWkbVariant == wkbVariantIso )
+            sprintf( szTextEquiv, "POINT Z (%s)", szCoordinate );
+        else
+            sprintf( szTextEquiv, "POINT (%s)", szCoordinate );
         *ppszDstText = CPLStrdup( szTextEquiv );
     }
     
@@ -620,7 +565,7 @@ OGRErr OGRPoint::transform( OGRCoordinateTransformation *poCT )
 
 OGRBoolean OGRPoint::IsEmpty(  ) const
 {
-    return nCoordDimension == 0;
+    return nCoordDimension < 0;
 }
 
 /************************************************************************/
@@ -632,4 +577,36 @@ void OGRPoint::swapXY()
     double dfTemp = x;
     x = y;
     y = dfTemp;
+}
+
+/************************************************************************/
+/*                               Within()                               */
+/************************************************************************/
+
+OGRBoolean OGRPoint::Within( const OGRGeometry *poOtherGeom ) const
+
+{
+    if( !IsEmpty() && poOtherGeom != NULL &&
+        wkbFlatten(poOtherGeom->getGeometryType()) == wkbCurvePolygon )
+    {
+        return ((OGRCurvePolygon*)poOtherGeom)->Contains(this);
+    }
+    else
+        return OGRGeometry::Within(poOtherGeom);
+}
+
+/************************************************************************/
+/*                              Intersects()                            */
+/************************************************************************/
+
+OGRBoolean OGRPoint::Intersects( const OGRGeometry *poOtherGeom ) const
+
+{
+    if( !IsEmpty() && poOtherGeom != NULL &&
+        wkbFlatten(poOtherGeom->getGeometryType()) == wkbCurvePolygon )
+    {
+        return ((OGRCurvePolygon*)poOtherGeom)->Intersects(this);
+    }
+    else
+        return OGRGeometry::Intersects(poOtherGeom);
 }

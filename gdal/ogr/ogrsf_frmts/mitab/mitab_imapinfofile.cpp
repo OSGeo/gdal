@@ -400,7 +400,7 @@ TABFeature* IMapInfoFile::CreateTABFeature(OGRFeature *poFeature)
           {
               poTmpFeature->SetFID(OGRNullFID);
               poTmpFeature->SetGeometry(poColl->getGeometryRef(i));
-              eStatus = CreateFeature(poTmpFeature);
+              eStatus = ICreateFeature(poTmpFeature);
           }
           delete poTmpFeature;
           return NULL;
@@ -429,12 +429,12 @@ TABFeature* IMapInfoFile::CreateTABFeature(OGRFeature *poFeature)
 }
 
 /**********************************************************************
- *                   IMapInfoFile::CreateFeature()
+ *                   IMapInfoFile::ICreateFeature()
  *
  * Standard OGR CreateFeature implementation.  This method is used
  * to create a new feature in current dataset 
  **********************************************************************/
-OGRErr     IMapInfoFile::CreateFeature(OGRFeature *poFeature)
+OGRErr     IMapInfoFile::ICreateFeature(OGRFeature *poFeature)
 {
     TABFeature *poTABFeature;
     OGRErr  eErr;

@@ -287,10 +287,10 @@ void OGRBNALayer::WriteCoord(VSILFILE* fp, double dfX, double dfY)
 }
 
 /************************************************************************/
-/*                           CreateFeature()                            */
+/*                           ICreateFeature()                            */
 /************************************************************************/
 
-OGRErr OGRBNALayer::CreateFeature( OGRFeature *poFeature )
+OGRErr OGRBNALayer::ICreateFeature( OGRFeature *poFeature )
 
 {
     int i,j,k,n;

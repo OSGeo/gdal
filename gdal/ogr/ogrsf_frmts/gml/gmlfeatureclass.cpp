@@ -33,6 +33,7 @@
 #include "cpl_string.h"
 #include "ogr_core.h"
 #include "ogr_geometry.h"
+#include "cpl_string.h"
 
 /************************************************************************/
 /*                          GMLFeatureClass()                           */
@@ -450,8 +451,8 @@ int GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
             if( pszType != NULL && !EQUAL(pszType, "0") )
             {
                 nGeomType = atoi(pszType);
-                int nFlattenGeomType = nGeomType & (~wkb25DBit);
-                if( nGeomType != 0 && !(nFlattenGeomType >= 0 && nFlattenGeomType <= 7) )
+                OGRwkbGeometryType nFlattenGeomType = wkbFlatten(nGeomType);
+                if( nGeomType != 0 && !(nFlattenGeomType >= wkbPoint && nFlattenGeomType <= wkbMultiSurface) )
                 {
                     nGeomType = wkbUnknown;
                     CPLError(CE_Warning, CPLE_AppDefined, "Unrecognised geometry type : %s",
@@ -522,14 +523,14 @@ int GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
             if( pszGeometryType != NULL && !EQUAL(pszGeometryType, "0") )
             {
                 nGeomType = atoi(pszGeometryType);
-                int nFlattenGeomType = nGeomType & (~wkb25DBit);
+                OGRwkbGeometryType nFlattenGeomType = wkbFlatten(nGeomType);
                 if( nGeomType == 100 || EQUAL(pszGeometryType, "NONE") )
                 {
                     bHasValidGeometryElementPath = FALSE;
                     bHasFoundGeomType = FALSE;
                     break;
                 }
-                else if( nGeomType != 0 && !(nFlattenGeomType >= 0 && nFlattenGeomType <= 7) )
+                else if( nGeomType != 0 && !(nFlattenGeomType >= wkbPoint && nFlattenGeomType <= wkbMultiSurface) )
                 {
                     nGeomType = wkbUnknown;
                     CPLError(CE_Warning, CPLE_AppDefined, "Unrecognised geometry type : %s",
@@ -687,7 +688,13 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
         {
             char szValue[128];
 
-            sprintf( szValue, "%d", poGeomFDefn->GetType() );
+            OGRwkbGeometryType eType = (OGRwkbGeometryType)poGeomFDefn->GetType();
+
+            CPLString osStr(OGRToOGCGeomType(eType));
+            if( wkbHasZ(eType) ) osStr += "Z";
+            CPLCreateXMLNode( psRoot, CXT_Comment, osStr.c_str() );
+
+            sprintf( szValue, "%d", eType );
             CPLCreateXMLElementAndValue( psRoot, "GeometryType", szValue );
         }
     }

@@ -115,8 +115,8 @@ class OGRIDBTableLayer : public OGRIDBLayer
     virtual int         GetFeatureCount( int );
 
     virtual OGRErr      SetAttributeFilter( const char * );
-    virtual OGRErr      SetFeature( OGRFeature *poFeature );
-    virtual OGRErr      CreateFeature( OGRFeature *poFeature );
+    virtual OGRErr      ISetFeature( OGRFeature *poFeature );
+    virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
 
 #if 0
     virtual OGRErr      CreateField( OGRFieldDefn *poField,

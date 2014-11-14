@@ -710,10 +710,10 @@ unsigned int OGRGMELayer::GetBatchPatchSize()
 }
 
 /************************************************************************/
-/*                           CreateFeature()                            */
+/*                           ICreateFeature()                            */
 /************************************************************************/
 
-OGRErr OGRGMELayer::CreateFeature( OGRFeature *poFeature )
+OGRErr OGRGMELayer::ICreateFeature( OGRFeature *poFeature )
 
 {
     if (!poFeature)
@@ -765,10 +765,10 @@ OGRErr OGRGMELayer::CreateFeature( OGRFeature *poFeature )
 }
 
 /************************************************************************/
-/*                           SetFeature()                               */
+/*                           ISetFeature()                               */
 /************************************************************************/
 
-OGRErr OGRGMELayer::SetFeature( OGRFeature *poFeature )
+OGRErr OGRGMELayer::ISetFeature( OGRFeature *poFeature )
 
 {
     if (!poFeature)

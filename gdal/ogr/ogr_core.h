@@ -308,6 +308,7 @@ typedef int     OGRBoolean;
 typedef enum 
 {
     wkbUnknown = 0,         /**< unknown type, non-standard */
+
     wkbPoint = 1,           /**< 0-dimensional geometric object, standard WKB */
     wkbLineString = 2,      /**< 1-dimensional geometric object with linear
                              *   interpolation between Points, standard WKB */
@@ -319,8 +320,25 @@ typedef enum
     wkbMultiPolygon = 6,    /**< GeometryCollection of Polygons, standard WKB */
     wkbGeometryCollection = 7, /**< geometric object that is a collection of 1
                                     or more geometric objects, standard WKB */
+
+    wkbCircularString = 8,  /**< one or more circular arc segments connected end to end,
+                             *   ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
+    wkbCompoundCurve = 9,   /**< sequence of contiguous curves, ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
+    wkbCurvePolygon = 10,   /**< planar surface, defined by 1 exterior boundary
+                             *   and zero or more interior boundaries, that are curves.
+                             *    ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
+    wkbMultiCurve = 11,     /**< GeometryCollection of Curves, ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
+    wkbMultiSurface = 12,   /**< GeometryCollection of Surfaces, ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
+
     wkbNone = 100,          /**< non-standard, for pure attribute records */
     wkbLinearRing = 101,    /**< non-standard, just for createGeometry() */
+
+    wkbCircularStringZ = 1008,  /**< wkbCircularString with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
+    wkbCompoundCurveZ = 1009,   /**< wkbCompoundCurve with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
+    wkbCurvePolygonZ = 1010,    /**< wkbCurvePolygon with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
+    wkbMultiCurveZ = 1011,      /**< wkbMultiCurve with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
+    wkbMultiSurfaceZ = 1012,    /**< wkbMultiSurface with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
+
     wkbPoint25D = 0x80000001, /**< 2.5D extension as per 99-402 */
     wkbLineString25D = 0x80000002, /**< 2.5D extension as per 99-402 */
     wkbPolygon25D = 0x80000003, /**< 2.5D extension as per 99-402 */
@@ -328,29 +346,73 @@ typedef enum
     wkbMultiLineString25D = 0x80000005, /**< 2.5D extension as per 99-402 */
     wkbMultiPolygon25D = 0x80000006, /**< 2.5D extension as per 99-402 */
     wkbGeometryCollection25D = 0x80000007 /**< 2.5D extension as per 99-402 */
+
 } OGRwkbGeometryType;
+
+/* Outside of OGRwkbGeometryType since they are abstract types */
+#define wkbCurve            ((OGRwkbGeometryType)13)      /**< Curve (abstract type). SF-SQL 1.2 */
+#define wkbSurface          ((OGRwkbGeometryType)14)      /**< Surface (abstract type). SF-SQL 1.2 */
 
 /**
  * Output variants of WKB we support. 
+ *
  * 99-402 was a short-lived extension to SFSQL 1.1 that used a high-bit flag
  * to indicate the presence of Z coordiantes in a WKB geometry.
+ *
  * SQL/MM Part 3 and SFSQL 1.2 use offsets of 1000 (Z), 2000 (M) and 3000 (ZM)
  * to indicate the present of higher dimensional coordinates in a WKB geometry.
+ * Reference: <a href="https://portal.opengeospatial.org/files/?artifact_id=320243">
+ * 09-009_Committee_Draft_ISOIEC_CD_13249-3_SQLMM_Spatial.pdf</a>,
+ * ISO/IEC JTC 1/SC 32 N 1820, ISO/IEC CD 13249-3:201x(E), Date: 2009-01-16.
+ * The codes are also found in §8.2.3 of <a href="http://portal.opengeospatial.org/files/?artifact_id=25355">
+ * OGC 06-103r4 "OpenGIS® Implementation Standard for Geographic information - Simple feature access - Part 1: Common architecture", v1.2.1</a>
  */
 typedef enum 
 {
-    wkbVariantOgc, /**< Old-style 99-402 extended dimension (Z) WKB types */
-    wkbVariantIso  /**< SFSQL 1.2 and ISO SQL/MM Part 3 extended dimension (Z&M) WKB types */
+    wkbVariantOldOgc, /**< Old-style 99-402 extended dimension (Z) WKB types */
+    wkbVariantIso,  /**< SFSQL 1.2 and ISO SQL/MM Part 3 extended dimension (Z&M) WKB types */
+    wkbVariantPostGIS1 /**< PostGIS 1.X has different codes for CurvePolygon, MultiCurve and MultiSurface */
 } OGRwkbVariant;
 
+
+/** @deprecated in GDAL 2.0. Use wkbHasZ() or wkbToZ() instead */
+#ifndef GDAL_COMPILATION
 #define wkb25DBit 0x80000000
-#define wkbFlatten(x)  ((OGRwkbGeometryType) ((x) & (~wkb25DBit)))
+#endif
+
+/** Return the 2D geometry type corresponding to the specified geometry type */
+#define wkbFlatten(x)  OGR_GT_Flatten((OGRwkbGeometryType)(x))
+
+/** Return if the geometry type is a 3D geometry type
+  * @since GDAL 2.0
+  */
+#define wkbHasZ(x)     OGR_GT_HasZ(x)
+
+/** Return the 3D geometry type corresponding to the specified geometry type.
+  * @since GDAL 2.0
+  */
+#define wkbSetZ(x)     OGR_GT_SetZ(x)
 
 #define ogrZMarker 0x21125711
 
 const char CPL_DLL * OGRGeometryTypeToName( OGRwkbGeometryType eType );
 OGRwkbGeometryType CPL_DLL OGRMergeGeometryTypes( OGRwkbGeometryType eMain,
                                                   OGRwkbGeometryType eExtra );
+OGRwkbGeometryType CPL_DLL OGRMergeGeometryTypesEx( OGRwkbGeometryType eMain,
+                                                    OGRwkbGeometryType eExtra,
+                                                    int bAllowPromotingToCurves );
+OGRwkbGeometryType CPL_DLL OGR_GT_Flatten( OGRwkbGeometryType eType );
+OGRwkbGeometryType CPL_DLL OGR_GT_SetZ( OGRwkbGeometryType eType );
+OGRwkbGeometryType CPL_DLL OGR_GT_SetModifier( OGRwkbGeometryType eType, int bSetZ, int bSetM );
+int                CPL_DLL OGR_GT_HasZ( OGRwkbGeometryType eType );
+int                CPL_DLL OGR_GT_IsSubClassOf( OGRwkbGeometryType eType,
+                                                OGRwkbGeometryType eSuperType );
+int                CPL_DLL OGR_GT_IsCurve( OGRwkbGeometryType );
+int                CPL_DLL OGR_GT_IsSurface( OGRwkbGeometryType );
+int                CPL_DLL OGR_GT_IsNonLinear( OGRwkbGeometryType );
+OGRwkbGeometryType CPL_DLL OGR_GT_GetCollection( OGRwkbGeometryType eType );
+OGRwkbGeometryType CPL_DLL OGR_GT_GetCurve( OGRwkbGeometryType eType );
+OGRwkbGeometryType CPL_DLL OGR_GT_GetLinear( OGRwkbGeometryType eType );
 
 typedef enum 
 {
@@ -488,10 +550,12 @@ int CPL_DLL OGRParseDate( const char *pszInput, OGRField *psOutput,
 #define OLCStringsAsUTF8       "StringsAsUTF8"
 #define OLCIgnoreFields        "IgnoreFields"
 #define OLCCreateGeomField     "CreateGeomField"
+#define OLCCurveGeometries     "CurveGeometries"
 
 #define ODsCCreateLayer        "CreateLayer"
 #define ODsCDeleteLayer        "DeleteLayer"
 #define ODsCCreateGeomFieldAfterCreateLayer   "CreateGeomFieldAfterCreateLayer"
+#define ODsCCurveGeometries    "CurveGeometries"
 
 #define ODrCCreateDataSource   "CreateDataSource"
 #define ODrCDeleteDataSource   "DeleteDataSource"

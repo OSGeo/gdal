@@ -46,6 +46,7 @@ class OGRGeoPackageDataSource : public OGRSQLiteBaseDataSource
     OGRGeoPackageTableLayer** m_papoLayers;
     int                 m_nLayers;
     int                 m_bUtf8;
+    void                CheckUnknownExtensions();
 
     public:
                             OGRGeoPackageDataSource();
@@ -154,6 +155,7 @@ class OGRGeoPackageTableLayer : public OGRGeoPackageLayer
     int                         bDeferedSpatialIndexCreation;
     int                         m_bHasSpatialIndex;
     int                         bDropRTreeTable;
+    int                         m_anHasGeometryExtension[wkbMultiSurface+1];
 
     virtual OGRErr      ResetStatement();
     
@@ -171,8 +173,8 @@ class OGRGeoPackageTableLayer : public OGRGeoPackageLayer
     int                 TestCapability( const char * );
     OGRErr              CreateField( OGRFieldDefn *poField, int bApproxOK = TRUE );
     void                ResetReading();
-	OGRErr				CreateFeature( OGRFeature *poFeater );
-    OGRErr              SetFeature( OGRFeature *poFeature );
+	OGRErr              ICreateFeature( OGRFeature *poFeater );
+    OGRErr              ISetFeature( OGRFeature *poFeature );
     OGRErr              DeleteFeature(long nFID);
     virtual void        SetSpatialFilter( OGRGeometry * );
     OGRErr              SetAttributeFilter( const char *pszQuery );
@@ -201,6 +203,9 @@ class OGRGeoPackageTableLayer : public OGRGeoPackageLayer
     virtual CPLString    GetSpatialWhere(int iGeomCol,
                                          OGRGeometry* poFilterGeom);
 
+    int                 HasSpatialIndex();
+    int                 CreateGeometryExtensionIfNecessary(OGRwkbGeometryType eGType);
+
     /************************************************************************/
     /* GPKG methods */
     
@@ -216,7 +221,6 @@ class OGRGeoPackageTableLayer : public OGRGeoPackageLayer
     OGRErr              FeatureBindInsertParameters( OGRFeature *poFeature, sqlite3_stmt *poStmt, int bAddFID );
     OGRErr              FeatureBindParameters( OGRFeature *poFeature, sqlite3_stmt *poStmt, int *pnColCount, int bAddFID );
 
-    int                 HasSpatialIndex();
     void                CheckUnknownExtensions();
 };
 

@@ -131,8 +131,8 @@ class OGRSDELayer : public OGRLayer
     virtual OGRErr      CreateField( OGRFieldDefn *poFieldIn,
                                      int bApproxOK );
 
-    virtual OGRErr      SetFeature( OGRFeature *poFeature );
-    virtual OGRErr      CreateFeature( OGRFeature *poFeature );
+    virtual OGRErr      ISetFeature( OGRFeature *poFeature );
+    virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
     virtual OGRErr      DeleteFeature( long nFID );
     
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }

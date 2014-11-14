@@ -553,6 +553,16 @@ def gml_MultiSurface():
                                 <gml:Curve>
                                     <gml:segments>
                                         <gml:LineStringSegment>
+                                            <gml:pos>6 7</gml:pos>
+                                            <gml:pos>8 9</gml:pos>
+                                        </gml:LineStringSegment>
+                                    </gml:segments>
+                                </gml:Curve>
+                            </gml:curveMember>
+                            <gml:curveMember>
+                                <gml:Curve>
+                                    <gml:segments>
+                                        <gml:LineStringSegment>
                                             <gml:pos>8 9</gml:pos>
                                             <gml:pos>4 5</gml:pos>
                                         </gml:LineStringSegment>
@@ -648,6 +658,31 @@ def gml_MultiCurve_curveMembers():
 
     if geom.ExportToWkt() != 'MULTILINESTRING ((0 0,1 1))':
         gdaltest.post_reason( '<gml:MultiCurve> not correctly parsed' )
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test GML CompositeCurve with curveMembers
+
+def gml_CompositeCurve_curveMembers():
+
+    gml = """<gml:CompositeCurve xmlns:foo="http://bar">
+          <gml:curveMembers xmlns:foo="http://bar">
+            <gml:LineString xmlns:foo="http://bar">
+                <gml:posList xmlns:foo="http://bar" srsDimension="2">0 0 1 1</gml:posList>
+            </gml:LineString>
+            <gml:LineString xmlns:foo="http://bar">
+                <gml:posList xmlns:foo="http://bar" srsDimension="2">1 1 2 2</gml:posList>
+            </gml:LineString>
+          </gml:curveMembers>
+        </gml:CompositeCurve>"""
+
+    geom = ogr.CreateGeometryFromGML( gml )
+
+    if geom.ExportToWkt() != 'LINESTRING (0 0,1 1,2 2)':
+        gdaltest.post_reason( '<gml:CompositeCurve> not correctly parsed' )
         print(geom.ExportToWkt())
         return 'fail'
 
@@ -806,69 +841,6 @@ def gml_Tin():
     return 'success'
 
 ###############################################################################
-# Test GML Arc
-
-def gml_Arc():
-
-    poslist_list = [
-("1 0 0 1 -1 0", 'LINESTRING (1 0,0.707106781186548 0.707106781186547,0.0 1.0,-0.707106781186547 0.707106781186548,-1.0 0.0)' ),
-("1 0 0 -1 -1 0", 'LINESTRING (1 0,0.707106781186548 -0.707106781186547,0.0 -1.0,-0.707106781186547 -0.707106781186548,-1.0 -0.0)' ),
-("1 0 -1 0 0 -1 ", 'LINESTRING (1 0,0.707106781186548 0.707106781186547,0.0 1.0,-0.707106781186547 0.707106781186548,-1.0 0.0,-0.707106781186548 -0.707106781186547,-0.0 -1.0)' ),
-("1 0 -1 0 0 1 ", 'LINESTRING (1 0,0.707106781186548 -0.707106781186547,0.0 -1.0,-0.707106781186547 -0.707106781186548,-1.0 -0.0,-0.707106781186548 0.707106781186547,-0.0 1.0)' ),
-("1 0  0 0 -1 0 ", 'LINESTRING (1 0,0 0,-1 0)' ),
-("0 1 1 0 0 -1", 'LINESTRING (0.0 1.0,0.707106781186548 0.707106781186547,1 0,0.707106781186548 -0.707106781186547,0.0 -1.0)' ),
-("0 1 -1 0 0 -1", 'LINESTRING (0.0 1.0,-0.707106781186547 0.707106781186548,-1.0 0.0,-0.707106781186548 -0.707106781186547,-0.0 -1.0)' ),
-("-1 0 0 1 1 0", 'LINESTRING (-1.0 0.0,-0.707106781186547 0.707106781186548,0.0 1.0,0.707106781186548 0.707106781186547,1 0)' ),
-("-1 0 0 1 -0.707106781186547 -0.707106781186548", 'LINESTRING (-1 0,-0.707106781186547 0.707106781186548,0 1,0.923879532511287 0.38268343236509,0.923879532511287 -0.38268343236509,0.38268343236509 -0.923879532511287,-0.707106781186547 -0.707106781186548)' )
-    ]
-
-    for (poslist, expected_wkt) in poslist_list:
-
-        gml = "<gml:Arc><gml:posList>%s</gml:posList></gml:Arc>" % poslist
-        gdal.SetConfigOption('OGR_ARC_STEPSIZE','45')
-        geom = ogr.CreateGeometryFromGML( gml )
-        gdal.SetConfigOption('OGR_ARC_STEPSIZE',None)
-
-        if ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt(expected_wkt)) != 0:
-            print(gml)
-            print(geom)
-            return 'fail'
-
-    return 'success'
-
-###############################################################################
-# Test GML Circle
-
-def gml_Circle():
-
-    gml = """<gml:PolygonPatch>
-                <gml:exterior>
-                    <gml:Ring>
-                        <gml:curveMember>
-                            <gml:Curve>
-                                <gml:segments>
-                                    <gml:Circle>
-                                        <gml:posList>-1 0 0 1 -0.707106781186547 -0.707106781186548</gml:posList>
-                                    </gml:Circle>
-                                </gml:segments>
-                            </gml:Curve>
-                        </gml:curveMember>
-                    </gml:Ring>
-                </gml:exterior>
-            </gml:PolygonPatch>"""
-
-    gdal.SetConfigOption('OGR_ARC_STEPSIZE','45')
-    geom = ogr.CreateGeometryFromGML( gml )
-    gdal.SetConfigOption('OGR_ARC_STEPSIZE',None)
-
-    expected_wkt = 'POLYGON ((-1 0,-0.707106781186547 0.707106781186548,0 1,0.923879532511287 0.38268343236509,0.923879532511287 -0.38268343236509,0.38268343236509 -0.923879532511287,-0.707106781186547 -0.707106781186548,-1.0 -0.0,-1 0))'
-    if ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt(expected_wkt)) != 0:
-        print(geom)
-        return 'fail'
-
-    return 'success'
-
-###############################################################################
 # Test concatenated sections (#4451)
 
 def gml_ConcatenatedDeduplication():
@@ -898,11 +870,9 @@ def gml_ConcatenatedDeduplication():
         </gml:patches>
        </gml:Surface>"""
 
-    gdal.SetConfigOption('OGR_ARC_STEPSIZE','45')
     geom = ogr.CreateGeometryFromGML( gml )
-    gdal.SetConfigOption('OGR_ARC_STEPSIZE',None)
 
-    expected_wkt = 'POLYGON ((0 -1,0 1,0.707106781186548 0.707106781186547,1 0,0.707106781186548 -0.707106781186547,0.0 -1.0))'
+    expected_wkt = 'CURVEPOLYGON (COMPOUNDCURVE ((0 -1,0 1),CIRCULARSTRING (0 1,1 0,0 -1)))'
     if ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt(expected_wkt)) != 0:
         print(geom)
         return 'fail'
@@ -971,8 +941,8 @@ def gml_invalid_geoms():
         ('<gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:posList>0 1 2 3 4 5 0 1</gml:posList></gml:LinearRing></gml:outerBoundaryIs><gml:innerBoundaryIs/></gml:Polygon>', None),
         ('<gml:Polygon><gml:outerBoundaryIs><gml:LinearRing/></gml:outerBoundaryIs><gml:innerBoundaryIs/></gml:Polygon>', None),
         ('<gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:posList>0 1 2 3 4 5 0 1</gml:posList></gml:LinearRing></gml:outerBoundaryIs><gml:innerBoundaryIs><gml:Point><gml:pos>31 29 16</gml:pos></gml:Point></gml:innerBoundaryIs></gml:Polygon>', None),
-        ('<gml:Ring/>', 'LINEARRING EMPTY'), # Probably illegal GML
-        ('<gml:Ring><foo/></gml:Ring>', 'LINEARRING EMPTY'), # Probably illegal GML
+        ('<gml:Ring/>', None),
+        ('<gml:Ring><foo/></gml:Ring>', None),
         ('<gml:Ring><gml:curveMember/></gml:Ring>', None),
         ('<gml:Ring><gml:curveMember><foo/></gml:curveMember></gml:Ring>', None),
         ('<gml:Ring><gml:curveMember><gml:Point><gml:pos>31 29 16</gml:pos></gml:Point></gml:curveMember></gml:Ring>', None),
@@ -1005,20 +975,26 @@ def gml_invalid_geoms():
         ('<gml:MultiCurve><gml:curveMember><gml:Curve><foo/></gml:Curve></gml:curveMember></gml:MultiCurve>', None),
         ('<gml:MultiCurve><gml:curveMember><gml:Curve><gml:Point><gml:pos>31 29 16</gml:pos></gml:Point></gml:Curve></gml:curveMember></gml:MultiCurve>', None),
         ('<gml:MultiCurve><gml:curveMembers></gml:curveMembers></gml:MultiCurve>', 'MULTILINESTRING EMPTY'),
-        ('<gml:MultiCurve><gml:curveMembers><foo/></gml:curveMembers></gml:MultiCurve>', 'MULTILINESTRING EMPTY'),
+        ('<gml:MultiCurve><gml:curveMembers><foo/></gml:curveMembers></gml:MultiCurve>', None),
         ('<gml:MultiCurve><gml:curveMembers><gml:LineString/></gml:curveMembers></gml:MultiCurve>', None),
         ('<gml:Curve/>', None),
         ('<gml:Curve><foo/></gml:Curve>', None),
-        ('<gml:Curve><gml:segments/></gml:Curve>', 'LINESTRING EMPTY'),
-        ('<gml:Curve><gml:segments><foo/></gml:segments></gml:Curve>', 'LINESTRING EMPTY'),
-        ('<gml:Curve><gml:segments><gml:Point><gml:pos>31 29 16</gml:pos></gml:Point></gml:segments></gml:Curve>', 'LINESTRING EMPTY'),
+        ('<gml:Curve><gml:segments/></gml:Curve>', None),
+        ('<gml:Curve><gml:segments><foo/></gml:segments></gml:Curve>', None),
+        ('<gml:Curve><gml:segments><gml:Point><gml:pos>31 29 16</gml:pos></gml:Point></gml:segments></gml:Curve>', None),
         ('<gml:Arc/>', None),
         ('<gml:Arc><gml:posList>0 0 0 1</gml:posList></gml:Arc>', None),
-        ('<gml:segments/>', 'LINESTRING EMPTY'),
-        ('<gml:segments><foo/></gml:segments>', 'LINESTRING EMPTY'),
-        ('<gml:segments><gml:LineStringSegment/></gml:segments>', 'LINESTRING EMPTY'),
-        ('<gml:segments><gml:LineStringSegment><foo/></gml:LineStringSegment></gml:segments>', 'LINESTRING EMPTY'),
-        ('<gml:segments><gml:LineStringSegment><gml:Point><gml:pos>31 29 16</gml:pos></gml:Point></gml:LineStringSegment></gml:segments>', 'LINESTRING EMPTY'),
+        ('<gml:Arc><gml:posList>0 0 0 1 1 0 2 0</gml:posList></gml:Arc>', None),
+        ('<gml:ArcString/>', None),
+        ('<gml:ArcString><gml:posList>0 0 0 1</gml:posList></gml:ArcString>', None),
+        ('<gml:ArcString><gml:posList>0 0 0 1 1 0 2 0</gml:posList></gml:ArcString>', None),
+        ('<gml:Circle/>', None),
+        ('<gml:Circle><gml:posList>0 0 0 1</gml:posList></gml:Circle>', None),
+        ('<gml:segments/>', None),
+        ('<gml:segments><foo/></gml:segments>', None),
+        ('<gml:segments><gml:LineStringSegment/></gml:segments>', None),
+        ('<gml:segments><gml:LineStringSegment><foo/></gml:LineStringSegment></gml:segments>', None),
+        ('<gml:segments><gml:LineStringSegment><gml:Point><gml:pos>31 29 16</gml:pos></gml:Point></gml:LineStringSegment></gml:segments>', None),
         ('<gml:MultiGeometry/>', 'GEOMETRYCOLLECTION EMPTY'),
         ('<gml:MultiGeometry><foo/></gml:MultiGeometry>', 'GEOMETRYCOLLECTION EMPTY'),
         ('<gml:MultiGeometry><gml:geometryMember/></gml:MultiGeometry>', 'GEOMETRYCOLLECTION EMPTY'), # valid in GML3 (accepted by PostGIS too)
@@ -1055,6 +1031,29 @@ def gml_invalid_geoms():
         ('<gml:Point><gml:coordinates decimal="bla">1,2</gml:coordinates></gml:Point>',None),
         ('<gml:Point><gml:coordinates decimal="">1,2</gml:coordinates></gml:Point>',None),
         ('<gml:Point><gml:coordinates decimal="0">1,2</gml:coordinates></gml:Point>',None),
+        ("""<gml:Curve><gml:segments>
+            <gml:Arc><gml:posList>0 0 1 0 0 0</gml:posList></gml:Arc>
+            <gml:LineStringSegment><gml:posList>-10 0 -1 0 0 0</gml:posList></gml:LineStringSegment>
+            </gml:segments></gml:Curve>""", None), # non contiguous segments
+        ("""<gml:CompositeCurve>
+            <gml:curveMember><gml:Curve><gml:segments><gml:LineString><gml:posList>0 0 1 0 0 0</gml:posList></gml:LineString></gml:segments></gml:Curve></gml:curveMember>
+            <gml:curveMember>
+                    <gml:Curve><gml:segments>
+                        <gml:Arc><gml:posList>-10 0 1 0 0 0</gml:posList></gml:Arc>
+                        <gml:LineStringSegment><gml:posList>0 0 -1 0 0 0</gml:posList></gml:LineStringSegment>
+                    </gml:segments></gml:Curve>
+            </gml:curveMember>
+            </gml:CompositeCurve>""", None), # non contiguous segments
+        ("<gml:ArcByBulge><gml:bulge>2</gml:bulge><gml:normal>-1</gml:normal></gml:ArcByBulge>", None),
+        ("<gml:ArcByBulge><gml:posList>2 0</gml:posList><gml:bulge>2</gml:bulge><gml:normal>-1</gml:normal></gml:ArcByBulge>", None),
+        ("<gml:ArcByBulge><gml:posList>2 0 -2 0</gml:posList><gml:normal>-1</gml:normal></gml:ArcByBulge>", None),
+        ("<gml:ArcByBulge><gml:posList>2 0 -2 0</gml:posList><gml:normal>-1</gml:normal></gml:ArcByBulge>", None),
+        ("<gml:ArcByCenterPoint><gml:radius>2</gml:radius><gml:startAngle>90</gml:startAngle><gml:endAngle>270</gml:endAngle></gml:ArcByCenterPoint>", None),
+        ("<gml:ArcByCenterPoint><gml:pos>1 2</gml:pos><gml:startAngle>90</gml:startAngle><gml:endAngle>270</gml:endAngle></gml:ArcByCenterPoint>", None),
+        ("<gml:ArcByCenterPoint><gml:pos>1 2</gml:pos><gml:radius>2</gml:radius<gml:endAngle>270</gml:endAngle></gml:ArcByCenterPoint>", None),
+        ("<gml:ArcByCenterPoint><gml:pos>1 2</gml:pos><gml:radius>2</gml:radius><gml:startAngle>90</gml:startAngle></gml:ArcByCenterPoint>", None),
+        ("<gml:CircleByCenterPoint><gml:radius>2</gml:radius></gml:CircleByCenterPoint>", None),
+        ("<gml:CircleByCenterPoint><gml:pos>1 2</gml:pos></gml:CircleByCenterPoint>", None),
     ]
 
     for (gml, expected_wkt) in gml_expected_wkt_list:
@@ -1508,10 +1507,479 @@ def gml_srsDimension_topgeometry():
     geom = ogr.CreateGeometryFromGML( gml )
 
     if geom.ExportToWkt() != 'POLYGON ((0 0 10,0 1 10,1 1 10,1 0 10,0 0 10))':
+        gdaltest.post_reason('fail')
         print(geom.ExportToWkt())
         return 'fail'
 
     return 'success'
+
+###############################################################################
+# Test GML Arc
+
+def gml_Arc():
+
+    gml = "<gml:Arc><gml:posList>1 0 0 1 -1 0</gml:posList></gml:Arc>"
+    geom = ogr.CreateGeometryFromGML( gml )
+
+    if ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt('CIRCULARSTRING (1 0,0 1,-1 0)')) != 0:
+        gdaltest.post_reason('fail')
+        print(geom)
+        return 'fail'
+
+    gml2 = geom.ExportToGML( ['FORMAT=GML3'] )
+    expected_gml2 = '<gml:Curve><gml:segments><gml:ArcString><gml:posList>1 0 0 1 -1 0</gml:posList></gml:ArcString></gml:segments></gml:Curve>'
+    if gml2 != expected_gml2:
+        gdaltest.post_reason('fail')
+        print(gml2)
+        return 'fail'
+
+    geom2 = ogr.CreateGeometryFromGML( gml2 )
+    if not geom.Equals(geom2):
+        gdaltest.post_reason('fail')
+        print(geom2)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test GML ArcByBulge
+
+def gml_ArcByBulge():
+
+    gml = "<gml:ArcByBulge><gml:posList>2 0 -2 0</gml:posList><gml:bulge>2</gml:bulge><gml:normal>-1</gml:normal></gml:ArcByBulge>"
+    geom = ogr.CreateGeometryFromGML( gml )
+
+    if ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt('CIRCULARSTRING (2 0,0 2,-2 0)')) != 0:
+        gdaltest.post_reason('fail')
+        print(geom)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test GML ArcByCenterPoint
+
+def gml_ArcByCenterPoint():
+
+    gml = "<gml:ArcByCenterPoint><gml:pos>1 2</gml:pos><gml:radius>2</gml:radius><gml:startAngle>90</gml:startAngle><gml:endAngle>270</gml:endAngle></gml:ArcByCenterPoint>"
+    geom = ogr.CreateGeometryFromGML( gml )
+
+    if ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt('CIRCULARSTRING (1 4,-1 2,1 0)')) != 0:
+        gdaltest.post_reason('fail')
+        print(geom)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test GML CircleByCenterPoint
+
+def gml_CircleByCenterPoint():
+
+    gml = "<gml:CircleByCenterPoint><gml:pos>1 2</gml:pos><gml:radius>2</gml:radius></gml:CircleByCenterPoint>"
+    geom = ogr.CreateGeometryFromGML( gml )
+
+    if ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt('CIRCULARSTRING (-1 2,3 2,-1 2)')) != 0:
+        gdaltest.post_reason('fail')
+        print(geom)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test GML Circle
+
+def gml_Circle():
+
+    gml = """<gml:Curve><gml:segments><gml:Circle>
+             <gml:posList>-1 0 0 1 -0.707106781186547 -0.707106781186548</gml:posList>
+             </gml:Circle></gml:segments></gml:Curve>"""
+
+    geom = ogr.CreateGeometryFromGML( gml )
+
+    expected_wkt = 'CIRCULARSTRING (-1 0,0 1,-0.707106781186547 -0.707106781186548,-0.923879532511287 -0.38268343236509,-1 0)'
+    if ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt(expected_wkt)) != 0:
+        print(geom)
+        return 'fail'
+
+    geom = ogr.CreateGeometryFromWkt( 'CIRCULARSTRING (0 0,2 0,0 0)' )
+    gml2 = geom.ExportToGML( ['FORMAT=GML3'] )
+    expected_gml2 = '<gml:Curve><gml:segments><gml:Circle><gml:posList>0 0 1 1 2 0</gml:posList></gml:Circle></gml:segments></gml:Curve>'
+    if gml2 != expected_gml2:
+        gdaltest.post_reason('fail')
+        print(gml2)
+        return 'fail'
+
+    geom2 = ogr.CreateGeometryFromGML( gml2 )
+    if geom2.ExportToWkt() != 'CIRCULARSTRING (0 0,1 1,2 0,1 -1,0 0)':
+        gdaltest.post_reason('fail')
+        print(geom2)
+        return 'fail'
+
+    geom = ogr.CreateGeometryFromWkt( 'CIRCULARSTRING (0 0 10,2 0 10,0 0 10)' )
+    gml2 = geom.ExportToGML( ['FORMAT=GML3'] )
+    expected_gml2 = '<gml:Curve><gml:segments><gml:Circle><gml:posList srsDimension="3">0 0 10 1 1 10 2 0 10</gml:posList></gml:Circle></gml:segments></gml:Curve>'
+    if gml2 != expected_gml2:
+        gdaltest.post_reason('fail')
+        print(gml2)
+        return 'fail'
+
+    gml = """<gml:PolygonPatch>
+                <gml:exterior>
+                    <gml:Ring>
+                        <gml:curveMember>
+                            <gml:Curve>
+                                <gml:segments>
+                                    <gml:Circle>
+                                        <gml:posList>-1 0 0 1 -0.707106781186547 -0.707106781186548</gml:posList>
+                                    </gml:Circle>
+                                </gml:segments>
+                            </gml:Curve>
+                        </gml:curveMember>
+                    </gml:Ring>
+                </gml:exterior>
+            </gml:PolygonPatch>"""
+
+    geom = ogr.CreateGeometryFromGML( gml )
+
+    expected_wkt = 'CURVEPOLYGON ( CIRCULARSTRING (-1 0,0 1,-0.707106781186547 -0.707106781186548,-0.923879532511287 -0.38268343236509,-1 0))'
+    if ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt(expected_wkt)) != 0:
+        print(geom)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test ArcString
+
+def gml_ArcString():
+
+    gml = """<gml:ArcString><gml:posList srsDimension="2">-2 0 -1 -1 0 0</gml:posList></gml:ArcString>"""
+    geom = ogr.CreateGeometryFromGML( gml )
+    if geom.ExportToWkt() != 'CIRCULARSTRING (-2 0,-1 -1,0 0)':
+        print(geom.ExportToWkt())
+        return 'fail'
+        
+    gml = """<gml:ArcString><gml:posList srsDimension="2">-2 0 -1 -1 0 0 1 -1 2 0 0 2 -2 0</gml:posList></gml:ArcString>"""
+    geom = ogr.CreateGeometryFromGML( gml )
+    if geom.ExportToWkt() != 'CIRCULARSTRING (-2 0,-1 -1,0 0,1 -1,2 0,0 2,-2 0)':
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    gml2 = geom.ExportToGML( ['FORMAT=GML3'] )
+    expected_gml2 = '<gml:Curve><gml:segments><gml:ArcString><gml:posList>-2 0 -1 -1 0 0 1 -1 2 0 0 2 -2 0</gml:posList></gml:ArcString></gml:segments></gml:Curve>'
+    if gml2 != expected_gml2:
+        gdaltest.post_reason('fail')
+        print(gml2)
+        return 'fail'
+
+    geom2 = ogr.CreateGeometryFromGML( gml2 )
+    if geom2.ExportToWkt() != 'CIRCULARSTRING (-2 0,-1 -1,0 0,1 -1,2 0,0 2,-2 0)':
+        gdaltest.post_reason('fail')
+        print(geom2)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test OGRCompoundCurve
+
+def gml_OGRCompoundCurve():
+
+    wkt = 'COMPOUNDCURVE ((0 0,1 1,2 0))'
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    gml = geom.ExportToGML( ['FORMAT=GML3'] )
+    expected_gml = '<gml:CompositeCurve><gml:curveMember><gml:LineString><gml:posList>0 0 1 1 2 0</gml:posList></gml:LineString></gml:curveMember></gml:CompositeCurve>'
+    if gml != expected_gml:
+        gdaltest.post_reason('fail')
+        print(gml)
+        return 'fail'
+
+    # CompositeCurve of LineStringSegment
+    gml = expected_gml
+    geom = ogr.CreateGeometryFromGML( gml )
+    # We simplify it in LINESTRING
+    if geom.ExportToWkt() != 'LINESTRING (0 0,1 1,2 0)':
+    #if geom.ExportToWkt() != wkt
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    # CompositeCurve of Arc
+    gml = """<gml:CompositeCurve><gml:curveMember><gml:Curve><gml:segments><gml:ArcString><gml:posList>0 0 1 1 2 0</gml:posList></gml:ArcString></gml:segments></gml:Curve></gml:curveMember></gml:CompositeCurve>"""
+    geom = ogr.CreateGeometryFromGML( gml )
+    if geom.ExportToWkt() != 'COMPOUNDCURVE (CIRCULARSTRING (0 0,1 1,2 0))':
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    gml2 = geom.ExportToGML( ['FORMAT=GML3'] )
+    if gml2 != gml:
+        gdaltest.post_reason('fail')
+        print(gml2)
+        return 'fail'
+
+    # CompositeCurve of 3 arcs
+    gml = """<gml:CompositeCurve>
+    <gml:curveMember><gml:Curve><gml:segments><gml:Arc><gml:posList>0 0 1 1 2 0</gml:posList></gml:Arc></gml:segments></gml:Curve></gml:curveMember>
+    <gml:curveMember><gml:Curve><gml:segments><gml:Arc><gml:posList>2 0 3 1 4 0</gml:posList></gml:Arc></gml:segments></gml:Curve></gml:curveMember>
+    <gml:curveMember><gml:Curve><gml:segments><gml:Arc><gml:posList>4 0 5 1 6 0</gml:posList></gml:Arc></gml:segments></gml:Curve></gml:curveMember>
+    </gml:CompositeCurve>"""
+    geom = ogr.CreateGeometryFromGML( gml )
+    if geom.ExportToWkt() != 'COMPOUNDCURVE (CIRCULARSTRING (0 0,1 1,2 0),CIRCULARSTRING (2 0,3 1,4 0),CIRCULARSTRING (4 0,5 1,6 0))':
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    # Alternative syntax : Curve with 3 Arc segments
+    gml = """<gml:Curve><gml:segments>
+            <gml:Arc><gml:posList>0 0 1 1 2 0</gml:posList></gml:Arc>
+            <gml:Arc><gml:posList>2 0 3 1 4 0</gml:posList></gml:Arc>
+            <gml:Arc><gml:posList>4 0 5 1 6 0</gml:posList></gml:Arc>
+            </gml:segments></gml:Curve>"""
+    geom = ogr.CreateGeometryFromGML( gml )
+    if geom.ExportToWkt() != 'COMPOUNDCURVE (CIRCULARSTRING (0 0,1 1,2 0),CIRCULARSTRING (2 0,3 1,4 0),CIRCULARSTRING (4 0,5 1,6 0))':
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    # Curve with LineStringSegment and Arc segments 
+    gml = """<gml:Curve><gml:segments>
+            <gml:Arc><gml:posList>0 0 1 0 0 0</gml:posList></gml:Arc>
+            <gml:LineStringSegment><gml:posList>0 0 -1 0 0 0</gml:posList></gml:LineStringSegment>
+            </gml:segments></gml:Curve>"""
+    geom = ogr.CreateGeometryFromGML( gml )
+    if geom.ExportToWkt() != 'COMPOUNDCURVE (CIRCULARSTRING (0 0,1 0,0 0),(0 0,-1 0,0 0))':
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    # Composite curve of a LineString and a (Composite) Curve with an Arc and a LineString
+    gml = """<gml:CompositeCurve>
+    <gml:curveMember><gml:Curve><gml:segments><gml:LineString><gml:posList>0 0 1 0 0 0</gml:posList></gml:LineString></gml:segments></gml:Curve></gml:curveMember>
+    <gml:curveMember>
+            <gml:Curve><gml:segments>
+                <gml:Arc><gml:posList>0 0 1 0 0 0</gml:posList></gml:Arc>
+                <gml:LineStringSegment><gml:posList>0 0 -1 0 0 0</gml:posList></gml:LineStringSegment>
+            </gml:segments></gml:Curve>
+    </gml:curveMember>
+    </gml:CompositeCurve>"""
+    geom = ogr.CreateGeometryFromGML( gml )
+    if geom.ExportToWkt() != 'COMPOUNDCURVE ((0 0,1 0,0 0),CIRCULARSTRING (0 0,1 0,0 0),(0 0,-1 0,0 0))':
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test OGRCurvePolygon
+
+def gml_OGRCurvePolygon():
+
+    # Test one CircularString 
+    gml = """<gml:Polygon><gml:exterior><gml:Ring><gml:curveMember><gml:Arc><gml:posList>0 0 1 0 0 0</gml:posList></gml:Arc></gml:curveMember></gml:Ring></gml:exterior></gml:Polygon>"""
+    geom = ogr.CreateGeometryFromGML( gml )
+    if geom.ExportToWkt() != 'CURVEPOLYGON (CIRCULARSTRING (0 0,1 0,0 0))':
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    gml2 = geom.ExportToGML( ['FORMAT=GML3'] )
+    expected_gml2 = '<gml:Polygon><gml:exterior><gml:Curve><gml:segments><gml:Circle><gml:posList>0 0 0.5 0.5 1 0</gml:posList></gml:Circle></gml:segments></gml:Curve></gml:exterior></gml:Polygon>'
+    if gml2 != expected_gml2:
+        gdaltest.post_reason('fail')
+        print(gml2)
+        return 'fail'
+
+    # Test two CircularString 
+    gml = """<gml:Polygon><gml:exterior><gml:Ring><gml:curveMember><gml:Arc><gml:posList>0 0 1 0 0 0</gml:posList></gml:Arc></gml:curveMember></gml:Ring></gml:exterior><gml:interior><gml:Ring><gml:curveMember><gml:Arc><gml:posList>0.25 0 0.75 0 0.25 0</gml:posList></gml:Arc></gml:curveMember></gml:Ring></gml:interior></gml:Polygon>"""
+    geom = ogr.CreateGeometryFromGML( gml )
+    if geom.ExportToWkt() != 'CURVEPOLYGON (CIRCULARSTRING (0 0,1 0,0 0),CIRCULARSTRING (0.25 0.0,0.75 0.0,0.25 0.0))':
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    # Test a LinearRing followed by a CircularString
+    gml = """<gml:Polygon><gml:exterior><gml:LinearRing><gml:posList>-2 -2 -2 2 2 2 2 -2 -2 -2</gml:posList></gml:LinearRing></gml:exterior><gml:interior><gml:Ring><gml:curveMember><gml:Arc><gml:posList>0.25 0 0.75 0 0.25 0</gml:posList></gml:Arc></gml:curveMember></gml:Ring></gml:interior></gml:Polygon>"""
+    geom = ogr.CreateGeometryFromGML( gml )
+    if geom.ExportToWkt() != 'CURVEPOLYGON ((-2 -2,-2 2,2 2,2 -2,-2 -2),CIRCULARSTRING (0.25 0.0,0.75 0.0,0.25 0.0))':
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    # Test a CircularString followed by a LinearRing
+    gml = """<gml:Polygon><gml:exterior><gml:Ring><gml:curveMember><gml:Circle><gml:posList>-1 0 1 2 3 0</gml:posList></gml:Circle></gml:curveMember></gml:Ring></gml:exterior><gml:interior><gml:LinearRing><gml:posList>-2 -2 -2 2 2 2 2 -2 -2 -2</gml:posList></gml:LinearRing></gml:interior></gml:Polygon>"""
+    geom = ogr.CreateGeometryFromGML( gml )
+    if ogrtest.check_feature_geometry(geom, 'CURVEPOLYGON (CIRCULARSTRING (-1 0,1 2,3 0,1.0 -2.0,-1 0),(-2 -2,-2 2,2 2,2 -2,-2 -2))') != 0:
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    gml2 = geom.ExportToGML( ['FORMAT=GML3'] )
+    geom2 = ogr.CreateGeometryFromGML( gml )
+    expected_gml2 = '<gml:Polygon><gml:exterior><gml:Curve><gml:segments><gml:ArcString><gml:posList>-1 0 1 2 3 0 1 -2 -1 0</gml:posList></gml:ArcString></gml:segments></gml:Curve></gml:exterior><gml:interior><gml:LineString><gml:posList>-2 -2 -2 2 2 2 2 -2 -2 -2</gml:posList></gml:LineString></gml:interior></gml:Polygon>'
+    expected_geom2 = ogr.CreateGeometryFromGML(expected_gml2)
+    if ogrtest.check_feature_geometry(geom2, expected_geom2) != 0:
+        print(gml2)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test OGRMultiSurface
+
+def gml_OGRMultiSurface():
+
+    # MultiSurface of CurvePolygon
+    gml = """<gml:MultiSurface>
+    <gml:surfaceMember>
+        <gml:Surface>
+            <gml:patches>
+                <gml:PolygonPatch>
+                    <gml:exterior>
+                        <gml:Ring><gml:curveMember><gml:Curve><gml:segments><gml:Circle><gml:posList>0 0 1 1 1 -1</gml:posList></gml:Circle></gml:segments></gml:Curve></gml:curveMember></gml:Ring>
+                    </gml:exterior>
+                </gml:PolygonPatch>
+            </gml:patches>
+        </gml:Surface>
+    </gml:surfaceMember>
+</gml:MultiSurface>"""
+
+    geom = ogr.CreateGeometryFromGML( gml )
+    if geom.ExportToWkt() != 'MULTISURFACE (CURVEPOLYGON (CIRCULARSTRING (0 0,1 1,1 -1,0.292893218813453 -0.707106781186548,0 0)))':
+        gdaltest.post_reason( '<gml:MultiSurface> not correctly parsed' )
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    # MultiSurface of Polygon and CurvePolygon
+    gml = """<gml:MultiSurface>
+    <gml:surfaceMember>
+        <gml:Polygon>
+            <gml:exterior>
+                <gml:LinearRing><gml:posList>0 0 0 1 1 1 0 0</gml:posList></gml:LinearRing>
+            </gml:exterior>
+        </gml:Polygon>
+    </gml:surfaceMember>
+    <gml:surfaceMember>
+        <gml:Polygon>
+            <gml:exterior>
+                <gml:Ring><gml:curveMember><gml:Curve><gml:segments><gml:Circle><gml:posList>0 0 1 1 1 -1</gml:posList></gml:Circle></gml:segments></gml:Curve></gml:curveMember></gml:Ring>
+            </gml:exterior>
+        </gml:Polygon>
+    </gml:surfaceMember>
+</gml:MultiSurface>"""
+
+    geom = ogr.CreateGeometryFromGML( gml )
+    if geom.ExportToWkt() != 'MULTISURFACE (((0 0,0 1,1 1,0 0)),CURVEPOLYGON (CIRCULARSTRING (0 0,1 1,1 -1,0.292893218813453 -0.707106781186548,0 0)))':
+        gdaltest.post_reason( '<gml:MultiSurface> not correctly parsed' )
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    # MultiSurface of CurvePolygon and Polygon
+    gml = """<gml:MultiSurface>
+    <gml:surfaceMember>
+        <gml:Polygon>
+            <gml:exterior>
+                <gml:Ring><gml:curveMember><gml:Curve><gml:segments><gml:Circle><gml:posList>0 0 1 1 1 -1</gml:posList></gml:Circle></gml:segments></gml:Curve></gml:curveMember></gml:Ring>
+            </gml:exterior>
+        </gml:Polygon>
+    </gml:surfaceMember>
+    <gml:surfaceMember>
+        <gml:Polygon>
+            <gml:exterior>
+                <gml:LinearRing><gml:posList>0 0 0 1 1 1 0 0</gml:posList></gml:LinearRing>
+            </gml:exterior>
+        </gml:Polygon>
+    </gml:surfaceMember>
+</gml:MultiSurface>"""
+
+    geom = ogr.CreateGeometryFromGML( gml )
+    if geom.ExportToWkt() != 'MULTISURFACE (CURVEPOLYGON (CIRCULARSTRING (0 0,1 1,1 -1,0.292893218813453 -0.707106781186548,0 0)),((0 0,0 1,1 1,0 0)))':
+        gdaltest.post_reason( '<gml:MultiSurface> not correctly parsed' )
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    geom = ogr.CreateGeometryFromWkt('MULTISURFACE (CURVEPOLYGON((0 0,0 1,1 1,1 0,0 0)))')
+    gml2 = geom.ExportToGML( ['FORMAT=GML3'] )
+    expected_gml2 = '<gml:MultiSurface><gml:surfaceMember><gml:Polygon><gml:exterior><gml:LinearRing><gml:posList>0 0 0 1 1 1 1 0 0 0</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon></gml:surfaceMember></gml:MultiSurface>'
+    if gml2 != expected_gml2:
+        gdaltest.post_reason('fail')
+        print(gml2)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test OGRMultiCurve
+
+def gml_OGRMultiCurve():
+
+    # MultiCurve of Arc
+    gml = """<gml:MultiCurve><gml:curveMember><gml:Curve><gml:segments><gml:ArcString><gml:posList>0 0 1 1 1 -1</gml:posList></gml:ArcString></gml:segments></gml:Curve></gml:curveMember></gml:MultiCurve>"""
+
+    geom = ogr.CreateGeometryFromGML( gml )
+    if geom.ExportToWkt() != 'MULTICURVE (CIRCULARSTRING (0 0,1 1,1 -1))':
+        gdaltest.post_reason( '<gml:MultiCurve> not correctly parsed' )
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    gml2 = geom.ExportToGML( ['FORMAT=GML3'] )
+    if gml2 != gml:
+        gdaltest.post_reason('fail')
+        print(gml2)
+        return 'fail'
+
+    # MultiCurve of LineString and Arc
+    gml = """<gml:MultiCurve>
+    <gml:curveMember>
+        <gml:LineString><gml:posList>0 0 1 1 1 -1</gml:posList></gml:LineString>
+    </gml:curveMember>
+    <gml:curveMember>
+        <gml:Curve>
+            <gml:segments><gml:Arc><gml:posList>0 0 1 1 1 -1</gml:posList></gml:Arc></gml:segments>
+        </gml:Curve>
+    </gml:curveMember>
+</gml:MultiCurve>"""
+
+    geom = ogr.CreateGeometryFromGML( gml )
+    if geom.ExportToWkt() != 'MULTICURVE ((0 0,1 1,1 -1),CIRCULARSTRING (0 0,1 1,1 -1))':
+        gdaltest.post_reason( '<gml:MultiCurve> not correctly parsed' )
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    # MultiCurve of Arc and LineString
+    gml = """<gml:MultiCurve>
+    <gml:curveMember>
+        <gml:Curve>
+            <gml:segments><gml:Arc><gml:posList>0 0 1 1 1 -1</gml:posList></gml:Arc></gml:segments>
+        </gml:Curve>
+    </gml:curveMember>
+    <gml:curveMember>
+        <gml:LineString><gml:posList>0 0 1 1 1 -1</gml:posList></gml:LineString>
+    </gml:curveMember>
+</gml:MultiCurve>"""
+
+    geom = ogr.CreateGeometryFromGML( gml )
+    if geom.ExportToWkt() != 'MULTICURVE (CIRCULARSTRING (0 0,1 1,1 -1),(0 0,1 1,1 -1))':
+        gdaltest.post_reason( '<gml:MultiCurve> not correctly parsed' )
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    # MultiCurve of CompositeCurve
+    gml = """<gml:MultiCurve>
+    <gml:curveMember>
+        <gml:CompositeCurve>
+            <gml:curveMember>
+                <gml:Curve>
+                    <gml:segments><gml:Arc><gml:posList>0 0 1 1 1 -1</gml:posList></gml:Arc></gml:segments>
+                </gml:Curve>
+            </gml:curveMember>
+            <gml:curveMember>
+                <gml:LineString><gml:posList>1 -1 1 1 1 -1</gml:posList></gml:LineString>
+            </gml:curveMember>
+        </gml:CompositeCurve>
+    </gml:curveMember>
+</gml:MultiCurve>"""
+
+    geom = ogr.CreateGeometryFromGML( gml )
+    if geom.ExportToWkt() != 'MULTICURVE (COMPOUNDCURVE (CIRCULARSTRING (0 0,1 1,1 -1),(1 -1,1 1,1 -1)))':
+        gdaltest.post_reason( '<gml:MultiCurve> not correctly parsed' )
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    return 'success'
+
 
 ###############################################################################
 # When imported build a list of units based on the files available.
@@ -1550,14 +2018,13 @@ gdaltest_list.append( gml_MultiCurve )
 gdaltest_list.append( gml_MultiSurface )
 gdaltest_list.append( gml_MultiSurface_surfaceMembers )
 gdaltest_list.append( gml_MultiCurve_curveMembers )
+gdaltest_list.append( gml_CompositeCurve_curveMembers )
 gdaltest_list.append( gml_MultiCurve_pointMembers )
 gdaltest_list.append( gml_Solid )
 gdaltest_list.append( gml_OrientableSurface )
 gdaltest_list.append( gml_Triangle )
 gdaltest_list.append( gml_Rectangle )
 gdaltest_list.append( gml_Tin )
-gdaltest_list.append( gml_Arc )
-gdaltest_list.append( gml_Circle )
 gdaltest_list.append( gml_ConcatenatedDeduplication )
 #gdaltest_list.append( gml_out_precision )
 gdaltest_list.append( gml_invalid_geoms )
@@ -1574,6 +2041,16 @@ gdaltest_list.append( gml_MultiSurfaceOfSurfaceOfPolygonPatchWithInteriorRing )
 gdaltest_list.append( gml_Coordinates_ts_cs_decimal )
 gdaltest_list.append( gml_with_xml_header_and_comments )
 gdaltest_list.append( gml_srsDimension_topgeometry )
+gdaltest_list.append( gml_Arc )
+gdaltest_list.append( gml_ArcByBulge )
+gdaltest_list.append( gml_ArcByCenterPoint )
+gdaltest_list.append( gml_CircleByCenterPoint )
+gdaltest_list.append( gml_Circle )
+gdaltest_list.append( gml_ArcString )
+gdaltest_list.append( gml_OGRCompoundCurve )
+gdaltest_list.append( gml_OGRCurvePolygon )
+gdaltest_list.append( gml_OGRMultiSurface )
+gdaltest_list.append( gml_OGRMultiCurve )
 
 if __name__ == '__main__':
 

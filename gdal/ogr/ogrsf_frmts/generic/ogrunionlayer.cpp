@@ -749,10 +749,10 @@ OGRFeature *OGRUnionLayer::GetFeature( long nFeatureId )
 }
 
 /************************************************************************/
-/*                          CreateFeature()                             */
+/*                          ICreateFeature()                             */
 /************************************************************************/
 
-OGRErr OGRUnionLayer::CreateFeature( OGRFeature* poFeature )
+OGRErr OGRUnionLayer::ICreateFeature( OGRFeature* poFeature )
 {
     if( osSourceLayerFieldName.size() == 0 )
     {
@@ -801,10 +801,10 @@ OGRErr OGRUnionLayer::CreateFeature( OGRFeature* poFeature )
 }
 
 /************************************************************************/
-/*                             SetFeature()                             */
+/*                             ISetFeature()                             */
 /************************************************************************/
 
-OGRErr OGRUnionLayer::SetFeature( OGRFeature* poFeature )
+OGRErr OGRUnionLayer::ISetFeature( OGRFeature* poFeature )
 {
     if( !bPreserveSrcFID )
     {
@@ -1101,6 +1101,9 @@ int  OGRUnionLayer::TestCapability( const char * pszCap )
     }
 
     if( EQUAL(pszCap, OLCIgnoreFields) )
+        return TRUE;
+
+    if( EQUAL(pszCap,OLCCurveGeometries) )
         return TRUE;
 
     return FALSE;

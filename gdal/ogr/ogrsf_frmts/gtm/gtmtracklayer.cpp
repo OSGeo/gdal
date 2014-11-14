@@ -217,9 +217,9 @@ inline void GTMTrackLayer::WriteTrackpoint( double lat, double lon, float altitu
 
 
 /************************************************************************/
-/*                           CreateFeature()                            */
+/*                           ICreateFeature()                            */
 /************************************************************************/
-OGRErr GTMTrackLayer::CreateFeature (OGRFeature *poFeature)
+OGRErr GTMTrackLayer::ICreateFeature (OGRFeature *poFeature)
 {
     VSILFILE* fpTmpTrackpoints = poDS->getTmpTrackpointsFP();
     if (fpTmpTrackpoints == NULL)

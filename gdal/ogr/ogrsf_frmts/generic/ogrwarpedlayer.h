@@ -74,8 +74,8 @@ class OGRWarpedLayer : public OGRLayerDecorator
 
     virtual OGRFeature *GetNextFeature();
     virtual OGRFeature *GetFeature( long nFID );
-    virtual OGRErr      SetFeature( OGRFeature *poFeature );
-    virtual OGRErr      CreateFeature( OGRFeature *poFeature );
+    virtual OGRErr      ISetFeature( OGRFeature *poFeature );
+    virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
 
     virtual OGRFeatureDefn *GetLayerDefn();
 

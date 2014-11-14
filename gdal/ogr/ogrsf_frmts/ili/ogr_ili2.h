@@ -60,14 +60,14 @@ private:
 
                        ~OGRILI2Layer();
 
-    OGRErr              SetFeature(OGRFeature *poFeature);
+    OGRErr              ISetFeature(OGRFeature *poFeature);
     
     void                ResetReading();
     OGRFeature *        GetNextFeature();
 
     int                 GetFeatureCount( int bForce = TRUE );
 
-    OGRErr              CreateFeature( OGRFeature *poFeature );
+    OGRErr              ICreateFeature( OGRFeature *poFeature );
     
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 

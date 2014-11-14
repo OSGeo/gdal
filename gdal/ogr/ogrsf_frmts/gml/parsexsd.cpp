@@ -226,14 +226,14 @@ static const AssocNameType apsPropertyTypes [] =
     {"GeometryPropertyType", wkbUnknown},
     {"PointPropertyType", wkbPoint},
     {"LineStringPropertyType", wkbLineString},
-    {"CurvePropertyType", wkbLineString},
+    {"CurvePropertyType", wkbCompoundCurve},
     {"PolygonPropertyType", wkbPolygon},
-    {"SurfacePropertyType", wkbPolygon},
+    {"SurfacePropertyType", wkbCurvePolygon},
     {"MultiPointPropertyType", wkbMultiPoint},
     {"MultiLineStringPropertyType", wkbMultiLineString},
-    {"MultiCurvePropertyType", wkbMultiLineString},
+    {"MultiCurvePropertyType", wkbMultiCurve},
     {"MultiPolygonPropertyType", wkbMultiPolygon},
-    {"MultiSurfacePropertyType", wkbMultiPolygon},
+    {"MultiSurfacePropertyType", wkbMultiSurface},
     {"MultiGeometryPropertyType", wkbGeometryCollection},
     {"GeometryAssociationType", wkbUnknown},
     {NULL, wkbUnknown},
@@ -243,11 +243,11 @@ static const AssocNameType apsPropertyTypes [] =
 static const AssocNameType apsRefTypes [] =
 {
     {"pointProperty", wkbPoint},
-    {"curveProperty", wkbLineString},
-    {"surfaceProperty", wkbPolygon},
+    {"curveProperty", wkbLineString}, /* should we promote to wkbCompoundCurve ? */
+    {"surfaceProperty", wkbPolygon},  /* should we promote to wkbCurvePolygon ? */
     {"multiPointProperty", wkbMultiPoint},
     {"multiCurveProperty", wkbMultiLineString},
-    {"multiSurfaceProperty", wkbMultiPolygon},
+    {"multiSurfaceProperty", wkbMultiPolygon}, /* should we promote to wkbMultiSurface ? */
     {NULL, wkbUnknown},
 };
 
@@ -366,8 +366,23 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                 {
                     if (strncmp(pszType + 4, psIter->pszName, strlen(psIter->pszName)) == 0)
                     {
+                        OGRwkbGeometryType eType = psIter->eType;
+
+                        /* Look if there's a comment restricting to subclasses */
+                        if( psAttrDef->psNext != NULL && psAttrDef->psNext->eType == CXT_Comment )
+                        {
+                            if( strstr(psAttrDef->psNext->pszValue, "restricted to Polygon") )
+                                eType = wkbPolygon;
+                            else if( strstr(psAttrDef->psNext->pszValue, "restricted to LineString") )
+                                eType = wkbLineString;
+                            else if( strstr(psAttrDef->psNext->pszValue, "restricted to MultiPolygon") )
+                                eType = wkbMultiPolygon;
+                            else if( strstr(psAttrDef->psNext->pszValue, "restricted to MultiLineString") )
+                                eType = wkbMultiLineString;
+                        }
+
                         poClass->AddGeometryProperty( new GMLGeometryPropertyDefn(
-                            pszElementName, pszElementName, psIter->eType, nAttributeIndex ) );
+                            pszElementName, pszElementName, eType, nAttributeIndex ) );
 
                         nAttributeIndex ++;
 

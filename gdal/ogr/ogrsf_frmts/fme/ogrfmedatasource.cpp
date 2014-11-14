@@ -1008,7 +1008,7 @@ void OGRFMEDataSource::ClarifyGeometryClass(
 
     // Is this 3D?
     if( poFeature->getDimension() == FME_THREE_D )
-        eThisType = (OGRwkbGeometryType) (eThisType | wkb25DBit);
+        eThisType = wkbSetZ(eThisType);
     
 /* -------------------------------------------------------------------- */
 /*      Now adjust the working type.                                    */
@@ -1034,10 +1034,10 @@ void OGRFMEDataSource::ClarifyGeometryClass(
     else
         eNewBestGeomType = wkbUnknown;
 
-    if( ((eBestGeomType & wkb25DBit) || (eThisType & wkb25DBit)) 
+    if( (wkbHasZ(eBestGeomType) || wkbHasZ(eThisType)) 
         && (int) eNewBestGeomType != 500 )
     {
-        eNewBestGeomType = (OGRwkbGeometryType)(((int) eBestGeomType) | wkb25DBit);
+        eNewBestGeomType = wkbSetZ(eNewBestGeomType);
     } 
 
     eBestGeomType = eNewBestGeomType;

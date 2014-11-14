@@ -606,10 +606,10 @@ OGRErr OGRWAsPLayer::WriteRoughness( OGRGeometry * poGeom, const double & dfZlef
 }
 
 /************************************************************************/
-/*                            CreateFeature()                            */
+/*                            ICreateFeature()                            */
 /************************************************************************/
 
-OGRErr OGRWAsPLayer::CreateFeature( OGRFeature * poFeature )
+OGRErr OGRWAsPLayer::ICreateFeature( OGRFeature * poFeature )
 
 {
     if ( WRITE_ONLY != eMode)

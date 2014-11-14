@@ -94,7 +94,7 @@ public:
     virtual void ResetReading() = 0;
     virtual OGRFeature* GetNextFeature() = 0;
     virtual int GetFeatureCount(int bForce = TRUE) = 0;
-    virtual OGRErr CreateFeature (OGRFeature *poFeature) = 0;
+    virtual OGRErr ICreateFeature(OGRFeature *poFeature) = 0;
 
     int TestCapability( const char* pszCap );
     
@@ -128,7 +128,7 @@ public:
                       int bWriterIn,
                       OGRGTMDataSource* poDSIn );
     ~GTMWaypointLayer();
-    OGRErr CreateFeature (OGRFeature *poFeature);
+    OGRErr ICreateFeature(OGRFeature *poFeature);
     void ResetReading();
     OGRFeature* GetNextFeature();
     int GetFeatureCount(int bForce = TRUE);
@@ -149,7 +149,7 @@ public:
                    int bWriterIn,
                    OGRGTMDataSource* poDSIn );
     ~GTMTrackLayer();
-    OGRErr CreateFeature (OGRFeature *poFeature);
+    OGRErr ICreateFeature(OGRFeature *poFeature);
     void ResetReading();
     OGRFeature* GetNextFeature();
     int GetFeatureCount(int bForce = TRUE);

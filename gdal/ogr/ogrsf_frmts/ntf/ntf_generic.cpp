@@ -861,7 +861,7 @@ void OGRNTFDataSource::EstablishGenericLayers()
     for( int iFile = 0; iFile < nNTFFileCount; iFile++ )
     {
         NTFFileReader   *poPReader = NULL;
-        int             n3DFlag = 0;
+        int              bHasZ = FALSE;
         
         poPReader = papoNTFFileReader[iFile];
         if( poPReader->GetProductId() != NPC_UNKNOWN )
@@ -876,7 +876,7 @@ void OGRNTFDataSource::EstablishGenericLayers()
             NTFGenericClass     *poClass = aoGenericClass + iType;
         
             if( poClass->nFeatureCount > 0 && poClass->b3D )
-                n3DFlag = wkb25DBit;
+                bHasZ = TRUE;
         }
         
 /* -------------------------------------------------------------------- */
@@ -893,7 +893,7 @@ void OGRNTFDataSource::EstablishGenericLayers()
             {
                 poPReader->
                     EstablishLayer( "GENERIC_POINT", 
-                                    (OGRwkbGeometryType) (wkbPoint | n3DFlag),
+                                    OGR_GT_SetModifier(wkbPoint, bHasZ, FALSE),
                                     TranslateGenericPoint,
                                     NRT_POINTREC, poClass,
                                     "POINT_ID", OFTInteger, 6, 0,
@@ -903,8 +903,7 @@ void OGRNTFDataSource::EstablishGenericLayers()
             {
                 poPReader->
                     EstablishLayer( "GENERIC_LINE", 
-                                    (OGRwkbGeometryType) 
-                                    (wkbLineString | n3DFlag),
+                                    OGR_GT_SetModifier(wkbLineString, bHasZ, FALSE),
                                     TranslateGenericLine,
                                     NRT_LINEREC, poClass,
                                     "LINE_ID", OFTInteger, 6, 0,
@@ -914,8 +913,7 @@ void OGRNTFDataSource::EstablishGenericLayers()
             {
                 poPReader->
                     EstablishLayer( "GENERIC_TEXT", 
-                                    (OGRwkbGeometryType) 
-                                    (wkbPoint | n3DFlag),
+                                    OGR_GT_SetModifier(wkbPoint, bHasZ, FALSE),
                                     TranslateGenericText,
                                     NRT_TEXTREC, poClass,
                                     "TEXT_ID", OFTInteger, 6, 0,
@@ -925,8 +923,7 @@ void OGRNTFDataSource::EstablishGenericLayers()
             {
                 poPReader->
                     EstablishLayer( "GENERIC_NAME", 
-                                    (OGRwkbGeometryType) 
-                                    (wkbPoint | n3DFlag),
+                                    OGR_GT_SetModifier(wkbPoint, bHasZ, FALSE),
                                     TranslateGenericName,
                                     NRT_NAMEREC, poClass,
                                     "NAME_ID", OFTInteger, 6, 0,
@@ -936,8 +933,7 @@ void OGRNTFDataSource::EstablishGenericLayers()
             {
                 poPReader->
                     EstablishLayer( "GENERIC_NODE",
-                                    (OGRwkbGeometryType) 
-                                    (wkbPoint | n3DFlag),
+                                    OGR_GT_SetModifier(wkbPoint, bHasZ, FALSE),
                                     TranslateGenericNode,
                                     NRT_NODEREC, poClass,
                                     "NODE_ID", OFTInteger, 6, 0,
@@ -962,7 +958,7 @@ void OGRNTFDataSource::EstablishGenericLayers()
             {
                 poPReader->
                     EstablishLayer( "GENERIC_POLY", 
-                                    (OGRwkbGeometryType) (wkbPoint | n3DFlag),
+                                    OGR_GT_SetModifier(wkbPoint, bHasZ, FALSE),
                                     TranslateGenericPoly,
                                     NRT_POLYGON, poClass,
                                     "POLY_ID", OFTInteger, 6, 0,
@@ -976,7 +972,7 @@ void OGRNTFDataSource::EstablishGenericLayers()
             {
                 poPReader->
                     EstablishLayer( "GENERIC_CPOLY", 
-                                    (OGRwkbGeometryType) (wkbPoint | n3DFlag),
+                                    OGR_GT_SetModifier(wkbPoint, bHasZ, FALSE),
                                     TranslateGenericCPoly,
                                     NRT_CPOLY, poClass,
                                     "CPOLY_ID", OFTInteger, 6, 0,

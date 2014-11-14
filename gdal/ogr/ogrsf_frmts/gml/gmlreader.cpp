@@ -1387,8 +1387,8 @@ int GMLReader::PrescanForSchema( int bGetExtents, int bAnalyzeSRSPerFeature )
                     eGType = wkbNone;
 
                 poClass->GetGeometryProperty(0)->SetType( 
-                    (int) OGRMergeGeometryTypes(
-                        eGType, poGeometry->getGeometryType() ) );
+                    (int) OGRMergeGeometryTypesEx(
+                        eGType, poGeometry->getGeometryType(), TRUE ) );
 
                 // merge extents.
                 if (!poGeometry->IsEmpty())

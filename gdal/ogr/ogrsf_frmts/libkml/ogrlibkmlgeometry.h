@@ -40,7 +40,6 @@ using kmldom::GxLatLonQuadPtr;
 args:
 						poOgrGeom		the ogr geometry
 						extra		used in recursion, just pass -1
-						wkb25D	used in recursion, just pass 0
 						poKmlFactory	pointer to the libkml dom factory
 
 returns:
@@ -51,7 +50,6 @@ returns:
 ElementPtr geom2kml (
     OGRGeometry * poOgrGeom,
     int extra,
-    int wkb25D,
     KmlFactory * poKmlFactory );
 
 

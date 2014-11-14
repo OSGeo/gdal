@@ -323,7 +323,7 @@ OGRLayer   *OGRCARTODBDataSource::ICreateLayer( const char *pszName,
     if( eGType != wkbNone )
     {
         osGeomType = OGRToOGCGeomType(eGType);
-        if( eGType & wkb25DBit )
+        if( wkbHasZ(eGType) )
             osGeomType += "Z";
     }
 

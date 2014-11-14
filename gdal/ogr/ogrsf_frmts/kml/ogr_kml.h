@@ -60,7 +60,7 @@ public:
     // OGRLayer Interface
     //
     OGRFeatureDefn* GetLayerDefn();
-    OGRErr CreateFeature( OGRFeature* poFeature );
+    OGRErr ICreateFeature( OGRFeature* poFeature );
     OGRErr CreateField( OGRFieldDefn* poField, int bApproxOK = TRUE );
     void ResetReading();
     OGRFeature* GetNextFeature();

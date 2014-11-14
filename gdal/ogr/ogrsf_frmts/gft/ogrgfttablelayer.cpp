@@ -51,8 +51,16 @@ OGRGFTTableLayer::OGRGFTTableLayer(OGRGFTDataSource* poDS,
 
     bFirstTokenIsFID = TRUE;
     eGTypeForCreation = wkbUnknown;
-    
+
     SetDescription( osTableName );
+
+    if (osTableId.size() == 0)
+    {
+        poFeatureDefn = new OGRFeatureDefn( osTableName );
+        poFeatureDefn->Reference();
+        poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
+        poFeatureDefn->GetGeomFieldDefn(0)->SetName(GetDefaultGeometryColumnName());
+    }
 }
 
 /************************************************************************/
@@ -547,14 +555,6 @@ OGRErr OGRGFTTableLayer::CreateField( OGRFieldDefn *poField,
         return OGRERR_FAILURE;
     }
 
-    if (poFeatureDefn == NULL)
-    {
-        poFeatureDefn = new OGRFeatureDefn( osTableName );
-        poFeatureDefn->Reference();
-        poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
-        poFeatureDefn->GetGeomFieldDefn(0)->SetName(GetDefaultGeometryColumnName());
-    }
-
     poFeatureDefn->AddFieldDefn(poField);
 
     return OGRERR_NONE;
@@ -576,15 +576,6 @@ void OGRGFTTableLayer::CreateTableIfNecessary()
     osSQL += "' (";
 
     int i;
-
-    if (poFeatureDefn == NULL)
-    {
-        /* In case CreateField() hasn't yet been called */
-        poFeatureDefn = new OGRFeatureDefn( osTableName );
-        poFeatureDefn->Reference();
-        poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
-        poFeatureDefn->GetGeomFieldDefn(0)->SetName(GetDefaultGeometryColumnName());
-    }
 
     /* If there are longitude and latitude fields, use the latitude */
     /* field as the LOCATION field */
@@ -700,10 +691,10 @@ void OGRGFTTableLayer::CreateTableIfNecessary()
 }
 
 /************************************************************************/
-/*                           CreateFeature()                            */
+/*                           ICreateFeature()                            */
 /************************************************************************/
 
-OGRErr OGRGFTTableLayer::CreateFeature( OGRFeature *poFeature )
+OGRErr OGRGFTTableLayer::ICreateFeature( OGRFeature *poFeature )
 
 {
     if (!poDS->IsReadWrite())
@@ -885,10 +876,10 @@ OGRErr OGRGFTTableLayer::CreateFeature( OGRFeature *poFeature )
 }
 
 /************************************************************************/
-/*                           SetFeature()                               */
+/*                           ISetFeature()                               */
 /************************************************************************/
 
-OGRErr      OGRGFTTableLayer::SetFeature( OGRFeature *poFeature )
+OGRErr      OGRGFTTableLayer::ISetFeature( OGRFeature *poFeature )
 {
     GetLayerDefn();
 

@@ -1349,10 +1349,10 @@ OGRErr OGRGPXLayer::CheckAndFixCoordinatesValidity( double* pdfLatitude, double*
 }
 
 /************************************************************************/
-/*                           CreateFeature()                            */
+/*                           ICreateFeature()                            */
 /************************************************************************/
 
-OGRErr OGRGPXLayer::CreateFeature( OGRFeature *poFeature )
+OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeature )
 
 {
     VSILFILE* fp = poDS->GetOutputFP();

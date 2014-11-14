@@ -258,10 +258,10 @@ OGRFeature *OGRWarpedLayer::GetFeature( long nFID )
 }
 
 /************************************************************************/
-/*                             SetFeature()                             */
+/*                             ISetFeature()                             */
 /************************************************************************/
 
-OGRErr      OGRWarpedLayer::SetFeature( OGRFeature *poFeature )
+OGRErr      OGRWarpedLayer::ISetFeature( OGRFeature *poFeature )
 {
     OGRErr eErr;
 
@@ -277,10 +277,10 @@ OGRErr      OGRWarpedLayer::SetFeature( OGRFeature *poFeature )
 }
 
 /************************************************************************/
-/*                            CreateFeature()                           */
+/*                            ICreateFeature()                           */
 /************************************************************************/
 
-OGRErr      OGRWarpedLayer::CreateFeature( OGRFeature *poFeature )
+OGRErr      OGRWarpedLayer::ICreateFeature( OGRFeature *poFeature )
 {
     OGRErr eErr;
 

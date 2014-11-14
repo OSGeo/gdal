@@ -79,6 +79,7 @@ class OGRPGDumpLayer : public OGRLayer
     int                 nUnknownSRSId;
     int                 nForcedSRSId;
     int                 bCreateSpatialIndexFlag;
+    int                 bPostGIS2;
 
     char              **papszOverrideColumnTypes;
 
@@ -103,7 +104,7 @@ class OGRPGDumpLayer : public OGRLayer
     virtual void        ResetReading()  { }
     virtual int         TestCapability( const char * );
     
-    virtual OGRErr      CreateFeature( OGRFeature *poFeature );
+    virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
     virtual OGRErr      CreateFeatureViaInsert( OGRFeature *poFeature );
     virtual OGRErr      CreateFeatureViaCopy( OGRFeature *poFeature );
 
@@ -127,6 +128,8 @@ class OGRPGDumpLayer : public OGRLayer
                                 { nForcedSRSId = nForcedSRSIdIn; }
     void                SetCreateSpatialIndexFlag( int bFlag )
                                 { bCreateSpatialIndexFlag = bFlag; }
+    void                SetPostGIS2( int bFlag )
+                                { bPostGIS2 = bFlag; }
     OGRErr              EndCopy();
 };
 

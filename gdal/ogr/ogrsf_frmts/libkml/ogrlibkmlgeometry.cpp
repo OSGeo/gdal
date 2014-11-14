@@ -57,7 +57,6 @@ using kmlbase::Vec3;
 args:
           poOgrGeom     the ogr geometry
           extra         used in recursion, just pass -1
-          wkb25D        used in recursion, just pass 0
           poKmlFactory  pointer to the libkml dom factory
 
 returns:
@@ -68,7 +67,6 @@ returns:
 ElementPtr geom2kml (
     OGRGeometry * poOgrGeom,
     int extra,
-    int wkb25D,
     KmlFactory * poKmlFactory )
 {
     int i;
@@ -107,8 +105,6 @@ ElementPtr geom2kml (
     int numpoints = 0;
     int nGeom;
     OGRwkbGeometryType type = poOgrGeom->getGeometryType (  );
-
-    wkb25D = type & wkb25DBit;
 
     switch ( type ) {
 
@@ -317,14 +313,14 @@ ElementPtr geom2kml (
         poKmlGeometry = poKmlPolygon = poKmlFactory->CreatePolygon (  );
 
         poKmlTmpGeometry = geom2kml ( poOgrPolygon->getExteriorRing (  ),
-                                      0, wkb25D, poKmlFactory );
+                                      0, poKmlFactory );
         poKmlPolygon->
             set_outerboundaryis ( AsOuterBoundaryIs ( poKmlTmpGeometry ) );
 
         nGeom = poOgrPolygon->getNumInteriorRings (  );
         for ( i = 0; i < nGeom; i++ ) {
             poKmlTmpGeometry = geom2kml ( poOgrPolygon->getInteriorRing ( i ),
-                                          i + 1, wkb25D, poKmlFactory );
+                                          i + 1, poKmlFactory );
             poKmlPolygon->
                 add_innerboundaryis ( AsInnerBoundaryIs ( poKmlTmpGeometry ) );
         }
@@ -346,14 +342,14 @@ ElementPtr geom2kml (
         poKmlGeometry = poKmlPolygon = poKmlFactory->CreatePolygon (  );
 
         poKmlTmpGeometry = geom2kml ( poOgrPolygon->getExteriorRing (  ),
-                                      0, wkb25D, poKmlFactory );
+                                      0, poKmlFactory );
         poKmlPolygon->
             set_outerboundaryis ( AsOuterBoundaryIs ( poKmlTmpGeometry ) );
 
         nGeom = poOgrPolygon->getNumInteriorRings (  );
         for ( i = 0; i < nGeom; i++ ) {
             poKmlTmpGeometry = geom2kml ( poOgrPolygon->getInteriorRing ( i ),
-                                          i + 1, wkb25D, poKmlFactory );
+                                          i + 1, poKmlFactory );
             poKmlPolygon->
                 add_innerboundaryis ( AsInnerBoundaryIs ( poKmlTmpGeometry ) );
         }
@@ -378,7 +374,7 @@ ElementPtr geom2kml (
         {
             CPLDebug("LIBKML", "Turning multiple geometry into single geometry");
             poKmlGeometry = geom2kml( poOgrMultiGeom->getGeometryRef ( 0 ),
-                                      -1, wkb25D, poKmlFactory );
+                                      -1, poKmlFactory );
         }
         else
         {
@@ -391,7 +387,7 @@ ElementPtr geom2kml (
                 poKmlFactory->CreateMultiGeometry (  );
             for ( i = 0; i < nGeom; i++ ) {
                 poKmlTmpGeometry = geom2kml ( poOgrMultiGeom->getGeometryRef ( i ),
-                                            -1, wkb25D, poKmlFactory );
+                                            -1, poKmlFactory );
                 poKmlMultiGeometry->
                     add_geometry ( AsGeometry ( poKmlTmpGeometry ) );
             }

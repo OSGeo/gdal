@@ -45,6 +45,7 @@ OGRLinearRing::OGRLinearRing()
 /************************************************************************/
 /*                          ~OGRLinearRing()                            */
 /************************************************************************/
+
 OGRLinearRing::~OGRLinearRing()
 
 {
@@ -103,12 +104,11 @@ int OGRLinearRing::WkbSize() const
 /*      Disable method for this class.                                  */
 /************************************************************************/
 
-OGRErr OGRLinearRing::importFromWkb( unsigned char *pabyData, int nSize ) 
+OGRErr OGRLinearRing::importFromWkb( CPL_UNUSED unsigned char *pabyData,
+                                     CPL_UNUSED  int nSize,
+                                     CPL_UNUSED OGRwkbVariant eWkbVariant ) 
 
 {
-    (void) pabyData;
-    (void) nSize;
-
     return OGRERR_UNSUPPORTED_OPERATION;
 }
 
@@ -118,15 +118,11 @@ OGRErr OGRLinearRing::importFromWkb( unsigned char *pabyData, int nSize )
 /*      Disable method for this class.                                  */
 /************************************************************************/
 
-OGRErr OGRLinearRing::exportToWkb( OGRwkbByteOrder eByteOrder, 
-                                   unsigned char * pabyData,
-                                   OGRwkbVariant eWkbVariant ) const
+OGRErr OGRLinearRing::exportToWkb( CPL_UNUSED OGRwkbByteOrder eByteOrder, 
+                                   CPL_UNUSED unsigned char * pabyData,
+                                   CPL_UNUSED OGRwkbVariant eWkbVariant ) const
 
 {
-    (void) eByteOrder;
-    (void) pabyData;
-    (void) eWkbVariant;
-
     return OGRERR_UNSUPPORTED_OPERATION;
 }
 
@@ -469,42 +465,6 @@ void OGRLinearRing::closeRings()
 }
 
 /************************************************************************/
-/*                              get_Area()                              */
-/************************************************************************/
-
-/**
- * \brief Compute area of ring.
- *
- * The area is computed according to Green's Theorem:  
- *
- * Area is "Sum(x(i)*(y(i+1) - y(i-1)))/2" for i = 0 to pointCount-1, 
- * assuming the last point is a duplicate of the first. 
- *
- * @return computed area.
- */
-
-double OGRLinearRing::get_Area() const
-
-{
-    double dfAreaSum = 0.0;
-    int i;
-
-    if( nPointCount < 2 )
-        return 0;
-
-    dfAreaSum = paoPoints[0].x * (paoPoints[1].y - paoPoints[nPointCount-1].y);
-
-    for( i = 1; i < nPointCount-1; i++ )
-    {
-        dfAreaSum += paoPoints[i].x * (paoPoints[i+1].y - paoPoints[i-1].y);
-    }
-
-    dfAreaSum += paoPoints[nPointCount-1].x * (paoPoints[0].y - paoPoints[nPointCount-2].y);
-
-    return 0.5 * fabs(dfAreaSum);
-}
-
-/************************************************************************/
 /*                              isPointInRing()                         */
 /************************************************************************/
 
@@ -635,4 +595,38 @@ OGRBoolean OGRLinearRing::isPointOnRingBoundary(const OGRPoint* poPoint, int bTe
     }
 
     return 0;
+}
+
+/************************************************************************/
+/*                          CastToLineString()                          */
+/************************************************************************/
+
+/**
+ * \brief Cast to line string.
+ *
+ * The passed in geometry is consumed and a new one returned .
+ * 
+ * @param poLR the input geometry - ownership is passed to the method.
+ * @return new geometry.
+ */
+
+OGRLineString* OGRLinearRing::CastToLineString(OGRLinearRing* poLR)
+{
+    return TransferMembersAndDestroy(poLR, new OGRLineString());
+}
+
+/************************************************************************/
+/*                     GetCasterToLineString()                          */
+/************************************************************************/
+
+OGRCurveCasterToLineString OGRLinearRing::GetCasterToLineString() const {
+    return (OGRCurveCasterToLineString) OGRLinearRing::CastToLineString;
+}
+
+/************************************************************************/
+/*                        GetCasterToLinearRing()                       */
+/************************************************************************/
+
+OGRCurveCasterToLinearRing OGRLinearRing::GetCasterToLinearRing() const {
+    return (OGRCurveCasterToLinearRing) OGRGeometry::CastToIdentity;
 }

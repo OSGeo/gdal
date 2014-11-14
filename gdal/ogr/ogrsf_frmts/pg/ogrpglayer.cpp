@@ -645,7 +645,8 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
 
                 nLength = CPLBase64DecodeInPlace(pabyData);
                 OGRGeometry * poGeom = NULL;
-                OGRGeometryFactory::createFromWkb( pabyData, NULL, &poGeom, nLength );
+                OGRGeometryFactory::createFromWkb( pabyData, NULL, &poGeom, nLength,
+                                                   (poDS->sPostGISVersion.nMajor < 2) ? wkbVariantPostGIS1 : wkbVariantOldOgc );
 
                 if( poGeom != NULL )
                 {
@@ -675,10 +676,11 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
                     /* hex bytea data (PostgreSQL >= 9.0) */
                      strncmp(pszVal, "\\x00",4) == 0 || strncmp(pszVal, "\\x01",4) == 0) )
                 {
-                    poGeom = BYTEAToGeometry(pszVal);
+                    poGeom = BYTEAToGeometry(pszVal, (poDS->sPostGISVersion.nMajor < 2));
                 }
                 else
-                    OGRGeometryFactory::createFromWkb( pabyVal, NULL, &poGeom, nLength );
+                    OGRGeometryFactory::createFromWkb( pabyVal, NULL, &poGeom, nLength,
+                                                       (poDS->sPostGISVersion.nMajor < 2) ? wkbVariantPostGIS1 : wkbVariantOldOgc );
                 
                 if( poGeom != NULL )
                 {
@@ -701,7 +703,8 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
                     continue;
 
                 nLength = CPLBase64DecodeInPlace(pabyData);
-                OGRGeometry * poGeom = OGRGeometryFromEWKB(pabyData, nLength, NULL);
+                OGRGeometry * poGeom = OGRGeometryFromEWKB(pabyData, nLength, NULL,
+                                                           poDS->sPostGISVersion.nMajor < 2);
 
                 if( poGeom != NULL )
                 {
@@ -732,16 +735,19 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
                      strncmp(pabyData, "\\000",4) == 0 || strncmp(pabyData, "\\001",4) == 0) )
                 {
                     GByte* pabyEWKB = BYTEAToGByteArray(pabyData, &nLength);
-                    poGeom = OGRGeometryFromEWKB(pabyEWKB, nLength, NULL);
+                    poGeom = OGRGeometryFromEWKB(pabyEWKB, nLength, NULL,
+                                                 poDS->sPostGISVersion.nMajor < 2);
                     CPLFree(pabyEWKB);
                 }
                 else if( nLength >= 2 && (EQUALN(pabyData,"00",2) || EQUALN(pabyData,"01",2)) )
                 {
-                    poGeom = OGRGeometryFromHexEWKB(pabyData, NULL);
+                    poGeom = OGRGeometryFromHexEWKB(pabyData, NULL,
+                                                    poDS->sPostGISVersion.nMajor < 2);
                 }
                 else
                 {
-                    poGeom = OGRGeometryFromEWKB((GByte*)pabyData, nLength, NULL);
+                    poGeom = OGRGeometryFromEWKB((GByte*)pabyData, nLength, NULL,
+                                                 poDS->sPostGISVersion.nMajor < 2);
                 }
 
                 if( poGeom != NULL )
@@ -777,7 +783,8 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
 
                 if( EQUALN(pszPostSRID,"00",2) || EQUALN(pszPostSRID,"01",2) )
                 {
-                    poGeometry = OGRGeometryFromHexEWKB( pszWKT, NULL );
+                    poGeometry = OGRGeometryFromHexEWKB( pszWKT, NULL,
+                                                         poDS->sPostGISVersion.nMajor < 2 );
                 }
                 else
                     OGRGeometryFactory::createFromWkt( &pszPostSRID, NULL,
@@ -815,11 +822,13 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
                    )
                 {
                     int nLength = PQgetlength(hCursorResult, iRecord, iField);
-                    poGeometry = OGRGeometryFromEWKB(pabyData, nLength, NULL);
+                    poGeometry = OGRGeometryFromEWKB(pabyData, nLength, NULL,
+                                                     poDS->sPostGISVersion.nMajor < 2 );
                 }
                 if (poGeometry == NULL)
                 {
-                    poGeometry = BYTEAToGeometry( (const char*)pabyData );
+                    poGeometry = BYTEAToGeometry( (const char*)pabyData,
+                                                  (poDS->sPostGISVersion.nMajor < 2) );
                 }
             }
 
@@ -1570,7 +1579,7 @@ GByte* OGRPGLayer::BYTEAToGByteArray( const char *pszBytea, int* pnLength )
 /*                          BYTEAToGeometry()                           */
 /************************************************************************/
 
-OGRGeometry *OGRPGLayer::BYTEAToGeometry( const char *pszBytea )
+OGRGeometry *OGRPGLayer::BYTEAToGeometry( const char *pszBytea, int bIsPostGIS1 )
 
 {
     GByte       *pabyWKB;
@@ -1583,7 +1592,8 @@ OGRGeometry *OGRPGLayer::BYTEAToGeometry( const char *pszBytea )
     pabyWKB = BYTEAToGByteArray(pszBytea, &nLen);
 
     poGeometry = NULL;
-    OGRGeometryFactory::createFromWkb( pabyWKB, NULL, &poGeometry, nLen );
+    OGRGeometryFactory::createFromWkb( pabyWKB, NULL, &poGeometry, nLen,
+                                       (bIsPostGIS1) ? wkbVariantPostGIS1 : wkbVariantOldOgc );
 
     CPLFree( pabyWKB );
     return poGeometry;
@@ -1622,7 +1632,7 @@ char* OGRPGLayer::GByteArrayToBYTEA( const GByte* pabyData, int nLen)
 /*                          GeometryToBYTEA()                           */
 /************************************************************************/
 
-char *OGRPGLayer::GeometryToBYTEA( OGRGeometry * poGeometry )
+char *OGRPGLayer::GeometryToBYTEA( OGRGeometry * poGeometry, int bIsPostGIS1 )
 
 {
     int         nWkbSize = poGeometry->WkbSize();
@@ -1630,7 +1640,8 @@ char *OGRPGLayer::GeometryToBYTEA( OGRGeometry * poGeometry )
     char        *pszTextBuf;
 
     pabyWKB = (GByte *) CPLMalloc(nWkbSize);
-    if( poGeometry->exportToWkb( wkbNDR, pabyWKB ) != OGRERR_NONE )
+    if( poGeometry->exportToWkb( wkbNDR, pabyWKB,
+                                 (bIsPostGIS1) ? wkbVariantPostGIS1 : wkbVariantOldOgc ) != OGRERR_NONE )
     {
         CPLFree(pabyWKB);
         return CPLStrdup("");
@@ -1668,7 +1679,8 @@ OGRGeometry *OGRPGLayer::OIDToGeometry( Oid oid )
     lo_close( hPGConn, fd );
 
     poGeometry = NULL;
-    OGRGeometryFactory::createFromWkb( pabyWKB, NULL, &poGeometry, nBytes );
+    OGRGeometryFactory::createFromWkb( pabyWKB, NULL, &poGeometry, nBytes,
+                                       (poDS->sPostGISVersion.nMajor < 2) ? wkbVariantPostGIS1 : wkbVariantOldOgc );
 
     CPLFree( pabyWKB );
 
@@ -1689,7 +1701,8 @@ Oid OGRPGLayer::GeometryToOID( OGRGeometry * poGeometry )
     int         fd, nBytesWritten;
 
     pabyWKB = (GByte *) CPLMalloc(nWkbSize);
-    if( poGeometry->exportToWkb( wkbNDR, pabyWKB ) != OGRERR_NONE )
+    if( poGeometry->exportToWkb( wkbNDR, pabyWKB,
+                                 (poDS->sPostGISVersion.nMajor < 2) ? wkbVariantPostGIS1 : wkbVariantOldOgc ) != OGRERR_NONE )
         return 0;
 
     oid = lo_creat( hPGConn, INV_READ|INV_WRITE );

@@ -121,7 +121,7 @@ class OGRCSVLayer : public OGRLayer
     virtual OGRErr      CreateGeomField( OGRGeomFieldDefn *poGeomField,
                                          int bApproxOK = TRUE );
 
-    virtual OGRErr      CreateFeature( OGRFeature *poFeature );
+    virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
 
     void                SetCRLF(int);
     void                SetWriteGeometry(OGRwkbGeometryType eGType,

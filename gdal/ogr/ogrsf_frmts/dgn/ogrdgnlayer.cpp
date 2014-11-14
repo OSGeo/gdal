@@ -976,12 +976,12 @@ DGNElemCore **OGRDGNLayer::TranslateLabel( OGRFeature *poFeature )
 }
 
 /************************************************************************/
-/*                           CreateFeature()                            */
+/*                           ICreateFeature()                            */
 /*                                                                      */
 /*      Create a new feature and write to file.                         */
 /************************************************************************/
 
-OGRErr OGRDGNLayer::CreateFeature( OGRFeature *poFeature )
+OGRErr OGRDGNLayer::ICreateFeature( OGRFeature *poFeature )
 
 {
     if( !bUpdate )

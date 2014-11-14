@@ -323,10 +323,10 @@ CPLString OGRKMLLayer::WriteSchema()
 }
 
 /************************************************************************/
-/*                           CreateFeature()                            */
+/*                           ICreateFeature()                            */
 /************************************************************************/
 
-OGRErr OGRKMLLayer::CreateFeature( OGRFeature* poFeature )
+OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
 {
     CPLAssert( NULL != poFeature );
     CPLAssert( NULL != poDS_ );

@@ -73,9 +73,9 @@ OGRErr OGRSOSILayer::CreateField (OGRFieldDefn *poField, CPL_UNUSED int bApproxO
 }
 
 /************************************************************************/
-/*                           CreateFeature()                            */
+/*                           ICreateFeature()                            */
 /************************************************************************/
-OGRErr OGRSOSILayer::CreateFeature(OGRFeature *poFeature) {
+OGRErr OGRSOSILayer::ICreateFeature(OGRFeature *poFeature) {
     short nNavn;
     long nSerial;
     

@@ -307,20 +307,20 @@ OGRFeature *OGRProxiedLayer::GetFeature( long nFID )
 }
 
 /************************************************************************/
-/*                             SetFeature()                             */
+/*                             ISetFeature()                             */
 /************************************************************************/
 
-OGRErr      OGRProxiedLayer::SetFeature( OGRFeature *poFeature )
+OGRErr      OGRProxiedLayer::ISetFeature( OGRFeature *poFeature )
 {
     if( poUnderlyingLayer == NULL && !OpenUnderlyingLayer() ) return OGRERR_FAILURE;
     return poUnderlyingLayer->SetFeature(poFeature);
 }
 
 /************************************************************************/
-/*                            CreateFeature()                           */
+/*                            ICreateFeature()                           */
 /************************************************************************/
 
-OGRErr      OGRProxiedLayer::CreateFeature( OGRFeature *poFeature )
+OGRErr      OGRProxiedLayer::ICreateFeature( OGRFeature *poFeature )
 {
     if( poUnderlyingLayer == NULL && !OpenUnderlyingLayer() ) return OGRERR_FAILURE;
     return poUnderlyingLayer->CreateFeature(poFeature);

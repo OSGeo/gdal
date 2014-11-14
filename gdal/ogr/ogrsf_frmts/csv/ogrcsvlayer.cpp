@@ -1309,6 +1309,8 @@ int OGRCSVLayer::TestCapability( const char * pszCap )
         return bNew && !bHasFieldNames && eGeometryFormat == OGR_CSV_GEOM_AS_WKT;
     else if( EQUAL(pszCap,OLCIgnoreFields) )
         return TRUE;
+    else if( EQUAL(pszCap,OLCCurveGeometries) )
+        return TRUE;
     else
         return FALSE;
 }
@@ -1581,10 +1583,10 @@ OGRErr OGRCSVLayer::WriteHeader()
 }
 
 /************************************************************************/
-/*                           CreateFeature()                            */
+/*                           ICreateFeature()                            */
 /************************************************************************/
 
-OGRErr OGRCSVLayer::CreateFeature( OGRFeature *poNewFeature )
+OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
 
 {
     int iField;

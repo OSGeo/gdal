@@ -373,7 +373,7 @@ class OGROCILoaderLayer : public OGROCIWritableLayer
 
     virtual OGRFeature *GetNextFeature();
 
-    virtual OGRErr      CreateFeature( OGRFeature *poFeature );
+    virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
     
     virtual OGRSpatialReference *GetSpatialRef() { return poSRS; }
 
@@ -453,8 +453,8 @@ class OGROCITableLayer : public OGROCIWritableLayer
     virtual OGRFeature *GetNextFeature();
     virtual OGRFeature *GetFeature( long nFeatureId );
 
-    virtual OGRErr      SetFeature( OGRFeature *poFeature );
-    virtual OGRErr      CreateFeature( OGRFeature *poFeature );
+    virtual OGRErr      ISetFeature( OGRFeature *poFeature );
+    virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
     virtual OGRErr      DeleteFeature( long nFID );
     
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);

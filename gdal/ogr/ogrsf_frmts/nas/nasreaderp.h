@@ -34,6 +34,7 @@
 #include "gmlreader.h"
 #include "gmlreaderp.h"
 #include "ogr_api.h"
+#include "ogr_geometry.h"
 #include "cpl_string.h"
 
 IGMLReader *CreateNASReader();
@@ -232,6 +233,8 @@ public:
     const char* GetFilteredClassName() { return m_pszFilteredClassName; }
 
     static void* hMutex;
+    
+    static      OGRGeometry* ConvertGeometry(OGRGeometry*);
 };
 
 #endif /* _CPL_NASREADERP_H_INCLUDED */

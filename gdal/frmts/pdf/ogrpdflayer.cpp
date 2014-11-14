@@ -151,7 +151,7 @@ void OGRPDFLayer::Fill( GDALPDFArray* poArray )
                 GetLayerDefn()->SetGeomType(wkbUnknown);
             }
         }
-        CreateFeature(poFeature);
+        ICreateFeature(poFeature);
 
         delete poFeature;
     }
@@ -186,13 +186,13 @@ OGRPDFWritableLayer::OGRPDFWritableLayer( PDFWritableVectorDataset* poDS,
 }
 
 /************************************************************************/
-/*                            CreateFeature()                           */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 
-OGRErr OGRPDFWritableLayer::CreateFeature( OGRFeature *poFeature )
+OGRErr OGRPDFWritableLayer::ICreateFeature( OGRFeature *poFeature )
 {
     poDS->SetModified();
-    return OGRMemLayer::CreateFeature(poFeature);
+    return OGRMemLayer::ICreateFeature(poFeature);
 }
 
 /************************************************************************/

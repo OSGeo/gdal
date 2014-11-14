@@ -767,6 +767,9 @@ int OGRSQLiteTableLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCReorderFields) )
         return poDS->GetUpdate();
 
+    else if( EQUAL(pszCap,OLCCurveGeometries) )
+        return poDS->TestCapability(ODsCCurveGeometries);
+
     else 
         return OGRSQLiteLayer::TestCapability( pszCap );
 }
@@ -1905,10 +1908,10 @@ OGRErr OGRSQLiteTableLayer::BindValues( OGRFeature *poFeature,
 }
 
 /************************************************************************/
-/*                             SetFeature()                             */
+/*                             ISetFeature()                             */
 /************************************************************************/
 
-OGRErr OGRSQLiteTableLayer::SetFeature( OGRFeature *poFeature )
+OGRErr OGRSQLiteTableLayer::ISetFeature( OGRFeature *poFeature )
 
 {
     if (HasLayerDefnError())
@@ -2070,10 +2073,10 @@ static int AreTriggersSimilar(const char* pszExpectedTrigger,
 }
 
 /************************************************************************/
-/*                           CreateFeature()                            */
+/*                          ICreateFeature()                            */
 /************************************************************************/
 
-OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
+OGRErr OGRSQLiteTableLayer::ICreateFeature( OGRFeature *poFeature )
 
 {
     sqlite3 *hDB = poDS->GetDB();

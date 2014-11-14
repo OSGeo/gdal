@@ -462,14 +462,14 @@ int OGRIngresTableLayer::TestCapability( const char * pszCap )
 }
 
 /************************************************************************/
-/*                             SetFeature()                             */
+/*                             ISetFeature()                             */
 /*                                                                      */
 /*      SetFeature() is implemented by dropping the old copy of the     */
 /*      feature in question (if there is one) and then creating a       */
 /*      new one with the provided feature id.                           */
 /************************************************************************/
 
-OGRErr OGRIngresTableLayer::SetFeature( OGRFeature *poFeature )
+OGRErr OGRIngresTableLayer::ISetFeature( OGRFeature *poFeature )
 
 {
     OGRErr eErr;
@@ -810,10 +810,10 @@ OGRErr OGRIngresTableLayer::PrepareNewStyleGeometry(
 }
 
 /************************************************************************/
-/*                           CreateFeature()                            */
+/*                           ICreateFeature()                            */
 /************************************************************************/
 
-OGRErr OGRIngresTableLayer::CreateFeature( OGRFeature *poFeature )
+OGRErr OGRIngresTableLayer::ICreateFeature( OGRFeature *poFeature )
 
 {
     CPLString           osCommand;

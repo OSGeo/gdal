@@ -115,8 +115,8 @@ class OGRLIBKMLLayer:public OGRLayer
     OGRFeature               *GetNextRawFeature (  );
     OGRFeatureDefn           *GetLayerDefn (  ) { return m_poOgrFeatureDefn; };
     //OGRErr                    SetAttributeFilter (const char * );
-    OGRErr                    CreateFeature ( OGRFeature * poOgrFeat );
-    OGRErr                    SetFeature ( OGRFeature * poOgrFeat );
+    OGRErr                    ICreateFeature( OGRFeature * poOgrFeat );
+    OGRErr                    ISetFeature( OGRFeature * poOgrFeat );
     OGRErr                    DeleteFeature( long nFID );
 
     int                       GetFeatureCount ( int bForce = TRUE );

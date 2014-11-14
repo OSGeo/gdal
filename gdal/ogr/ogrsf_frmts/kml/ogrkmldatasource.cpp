@@ -232,7 +232,7 @@ int OGRKMLDataSource::Open( const char * pszNewName, int bTestOpen )
             poGeotype = wkbUnknown;
         
         if (poGeotype != wkbUnknown && poKMLFile_->is25D())
-            poGeotype = (OGRwkbGeometryType) (poGeotype | wkb25DBit);
+            poGeotype = wkbSetZ(poGeotype);
 
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */

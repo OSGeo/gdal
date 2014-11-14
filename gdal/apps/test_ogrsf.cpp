@@ -689,7 +689,7 @@ static int TestCreateLayer( GDALDriver* poDriver, OGRwkbGeometryType eGeomType )
         else if( wkbFlatten(eGeomType) == eGeomType )
             eOtherGeomType = (OGRwkbGeometryType) ( ((int)eGeomType % 7) + 1 );
         else
-            eOtherGeomType = (OGRwkbGeometryType) ( (((int)wkbFlatten(eGeomType) % 7) + 1 ) | wkb25DBit );
+            eOtherGeomType = wkbSetZ((OGRwkbGeometryType) ( (((int)wkbFlatten(eGeomType) % 7) + 1 )));
         pszWKT = GetWKT(eOtherGeomType);
         if( pszWKT != NULL )
         {

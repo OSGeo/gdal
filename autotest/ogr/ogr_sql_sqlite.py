@@ -1662,6 +1662,39 @@ def ogr_sql_sqlite_28():
 
     return 'success'
 
+###############################################################################
+# Test compat with curve geometries
+
+def ogr_sql_sqlite_29():
+
+    if not ogrtest.has_sqlite_dialect:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    lyr = ds.CreateLayer('test', geom_type = ogr.wkbCircularString)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('CIRCULARSTRING(0 0,1 0,0 0)'))
+    lyr.CreateFeature(f)
+    f = None
+    sql_lyr = ds.ExecuteSQL('select * from test', dialect = 'SQLite')
+    geom_type = sql_lyr.GetGeomType()
+    f = sql_lyr.GetNextFeature()
+    got_wkt = f.GetGeometryRef().ExportToWkt()
+    ds.ReleaseResultSet(sql_lyr)
+    ds = None
+    
+    if geom_type != ogr.wkbCircularString:
+        gdaltest.post_reason('fail')
+        print(geom_type)
+        return 'fail'
+    
+    if got_wkt != 'CIRCULARSTRING (0 0,1 0,0 0)':
+        gdaltest.post_reason('fail')
+        print(got_wkt)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     ogr_sql_sqlite_1,
     ogr_sql_sqlite_2,
@@ -1692,7 +1725,8 @@ gdaltest_list = [
     ogr_sql_sqlite_25,
     ogr_sql_sqlite_26,
     ogr_sql_sqlite_27,
-    ogr_sql_sqlite_28
+    ogr_sql_sqlite_28,
+    ogr_sql_sqlite_29
 ]
 
 if __name__ == '__main__':

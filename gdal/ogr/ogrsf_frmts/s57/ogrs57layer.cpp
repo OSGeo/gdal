@@ -274,10 +274,10 @@ OGRFeature *OGRS57Layer::GetFeature( long nFeatureId )
 }
 
 /************************************************************************/
-/*                           CreateFeature()                            */
+/*                           ICreateFeature()                            */
 /************************************************************************/
 
-OGRErr OGRS57Layer::CreateFeature( OGRFeature *poFeature )
+OGRErr OGRS57Layer::ICreateFeature( OGRFeature *poFeature )
 
 {
 /* -------------------------------------------------------------------- */

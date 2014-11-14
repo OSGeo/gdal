@@ -1105,10 +1105,10 @@ static void OGRGeoRSSLayerWriteSimpleElement(VSILFILE* fp,
 }
 
 /************************************************************************/
-/*                           CreateFeature()                            */
+/*                           ICreateFeature()                            */
 /************************************************************************/
 
-OGRErr OGRGeoRSSLayer::CreateFeature( OGRFeature *poFeature )
+OGRErr OGRGeoRSSLayer::ICreateFeature( OGRFeature *poFeature )
 
 {
     VSILFILE* fp = poDS->GetOutputFP();
@@ -2059,7 +2059,7 @@ void OGRGeoRSSLayer::startElementLoadSchemaCbk(const char *pszName, const char *
                 eGeomType = wkbUnknown;
 
             if (nDimension == 3)
-                eGeomType = (OGRwkbGeometryType) (eGeomType | wkb25DBit);
+                eGeomType = wkbSetZ(eGeomType);
         }
     }
 

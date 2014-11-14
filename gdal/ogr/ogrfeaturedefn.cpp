@@ -879,7 +879,12 @@ OGRwkbGeometryType OGRFeatureDefn::GetGeomType()
 OGRwkbGeometryType OGR_FD_GetGeomType( OGRFeatureDefnH hDefn )
 
 {
-    return ((OGRFeatureDefn *) hDefn)->GetGeomType();
+    OGRwkbGeometryType eType = ((OGRFeatureDefn *) hDefn)->GetGeomType();
+    if( OGR_GT_IsNonLinear(eType) && !OGRGetNonLinearGeometriesEnabledFlag() )
+    {
+        eType = OGR_GT_GetLinear(eType);
+    }
+    return eType;
 }
 
 /************************************************************************/

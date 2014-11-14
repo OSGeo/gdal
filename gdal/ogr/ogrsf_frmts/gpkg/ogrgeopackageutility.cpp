@@ -195,33 +195,23 @@ int SQLGetInteger(sqlite3 * poDb, const char * pszSQL, OGRErr *err)
 OGRwkbGeometryType GPkgGeometryTypeToWKB(const char *pszGpkgType, int bHasZ)
 {
     OGRwkbGeometryType oType;
-    
+
     if ( EQUAL("Geometry", pszGpkgType) )
         oType = wkbUnknown;
-    else if ( EQUAL("Point", pszGpkgType) )
-        oType =  wkbPoint;
-    else if ( EQUAL("LineString", pszGpkgType) )
-        oType =  wkbLineString;
-    else if ( EQUAL("Polygon", pszGpkgType) )
-        oType =  wkbPolygon;
-    else if ( EQUAL("MultiPoint", pszGpkgType) )
-        oType =  wkbMultiPoint;
-    else if ( EQUAL("MultiLineString", pszGpkgType) )
-        oType =  wkbMultiLineString;
-    else if ( EQUAL("MultiPolygon", pszGpkgType) )
-        oType =  wkbMultiPolygon;
     /* The 1.0 spec is not completely clear on what should be used... */
     else if ( EQUAL("GeomCollection", pszGpkgType) ||
               EQUAL("GeometryCollection", pszGpkgType) )
         oType =  wkbGeometryCollection;
     else
-        oType =  wkbNone;
+    {
+        oType = OGRFromOGCGeomType(pszGpkgType);
+        if( oType == wkbUnknown )
+            oType = wkbNone;
+    }
 
     if ( (oType != wkbNone) && bHasZ )
     {
-        unsigned int oi = oType;
-        oi |= wkb25DBit;
-        oType = (OGRwkbGeometryType)oi;
+        oType = wkbSetZ(oType);
     }
 
     return oType;

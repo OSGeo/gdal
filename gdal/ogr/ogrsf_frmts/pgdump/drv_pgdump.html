@@ -78,8 +78,8 @@ as the separator between the schema and the table name. Defaults to YES.<p>
 <li> <b>COLUMN_TYPES</b>: (From GDAL 1.10) A list of strings of format field_name=pg_field_type (separated by comma)
 that should be use when CreateField() is invoked on them. This will override the default choice that OGR would have made.
 This can for example be used to create a column of type <a href="http://www.postgresql.org/docs/9.0/static/hstore.html">HSTORE</a>.<p>
-<li> <b>POSTGIS_VERSION</b>: (From GDAL 1.9.0) Can be set to 2.0 for PostGIS 2.0 compatibility. For now, it is not
-critical to set it. Its effect is just to avoid a few warnings.<p>
+<li> <b>POSTGIS_VERSION</b>: (From GDAL 1.9.0) Can be set to 2.0 for PostGIS 2.0 compatibility. Starting with GDAL 2.0,
+it is important to set it correctly when dealing with non-linear geometry types.<p>
 </ul>
 
 <h3>Environment variables</h3>

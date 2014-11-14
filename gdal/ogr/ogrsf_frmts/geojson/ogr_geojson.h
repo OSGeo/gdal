@@ -110,7 +110,7 @@ public:
 
     void ResetReading() { }
     OGRFeature* GetNextFeature() { return NULL; }
-    OGRErr CreateFeature( OGRFeature* poFeature );
+    OGRErr ICreateFeature( OGRFeature* poFeature );
     OGRErr CreateField(OGRFieldDefn* poField, int bApproxOK);
     int TestCapability( const char* pszCap );
 

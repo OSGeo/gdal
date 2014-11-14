@@ -343,12 +343,12 @@ void FGdbLayer::WorkAroundExtentProblem()
 #endif // EXTENT_WORKAROUND
 
 /************************************************************************/
-/*                            CreateFeature()                           */
+/*                            ICreateFeature()                           */
 /* Create an FGDB Row and populate it from an OGRFeature.               */
 /*                                                                      */
 /************************************************************************/
 
-OGRErr FGdbLayer::CreateFeature( OGRFeature *poFeature )
+OGRErr FGdbLayer::ICreateFeature( OGRFeature *poFeature )
 {
     Table *fgdb_table = m_pTable;
     Row fgdb_row;
@@ -682,10 +682,10 @@ OGRErr FGdbLayer::DeleteFeature( long nFID )
 }
 
 /************************************************************************/
-/*                            SetFeature()                              */
+/*                            ISetFeature()                              */
 /************************************************************************/
 
-OGRErr FGdbLayer::SetFeature( OGRFeature* poFeature )
+OGRErr FGdbLayer::ISetFeature( OGRFeature* poFeature )
 
 {
     long           hr;
@@ -2659,7 +2659,7 @@ int FGdbLayer::TestCapability( const char* pszCap )
     else if (EQUAL(pszCap,OLCCreateField)) /* CreateField() */
         return m_pDS->GetUpdate();
 
-    else if (EQUAL(pszCap,OLCSequentialWrite)) /* CreateFeature() */
+    else if (EQUAL(pszCap,OLCSequentialWrite)) /* ICreateFeature() */
         return m_pDS->GetUpdate();
 
     else if (EQUAL(pszCap,OLCStringsAsUTF8)) /* Native UTF16, converted to UTF8 */
@@ -2671,7 +2671,7 @@ int FGdbLayer::TestCapability( const char* pszCap )
     else if (EQUAL(pszCap,OLCDeleteFeature)) /* DeleteFeature() */
         return m_pDS->GetUpdate();
 
-    else if (EQUAL(pszCap,OLCRandomWrite)) /* SetFeature() */
+    else if (EQUAL(pszCap,OLCRandomWrite)) /* ISetFeature() */
         return m_pDS->GetUpdate();
 
     else if (EQUAL(pszCap,OLCDeleteField)) /* DeleteField() */

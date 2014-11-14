@@ -1787,10 +1787,10 @@ OGRFeature* OGRVRTLayer::TranslateVRTFeatureToSrcFeature( OGRFeature* poVRTFeatu
 }
 
 /************************************************************************/
-/*                           CreateFeature()                            */
+/*                           ICreateFeature()                            */
 /************************************************************************/
 
-OGRErr OGRVRTLayer::CreateFeature( OGRFeature* poVRTFeature )
+OGRErr OGRVRTLayer::ICreateFeature( OGRFeature* poVRTFeature )
 {
     if (!bHasFullInitialized) FullInitialize();
     if (!poSrcLayer || poDS->GetRecursionDetected()) return OGRERR_FAILURE;
@@ -1825,10 +1825,10 @@ OGRErr OGRVRTLayer::CreateFeature( OGRFeature* poVRTFeature )
 }
 
 /************************************************************************/
-/*                             SetFeature()                             */
+/*                             ISetFeature()                             */
 /************************************************************************/
 
-OGRErr OGRVRTLayer::SetFeature( OGRFeature* poVRTFeature )
+OGRErr OGRVRTLayer::ISetFeature( OGRFeature* poVRTFeature )
 {
     if (!bHasFullInitialized) FullInitialize();
     if (!poSrcLayer || poDS->GetRecursionDetected()) return OGRERR_FAILURE;
@@ -1986,6 +1986,9 @@ int OGRVRTLayer::TestCapability( const char * pszCap )
 
     else if( EQUAL(pszCap,OLCIgnoreFields) )
         return poSrcLayer->TestCapability(pszCap);
+
+    else if( EQUAL(pszCap,OLCCurveGeometries) )
+        return TRUE;
 
     return FALSE;
 }

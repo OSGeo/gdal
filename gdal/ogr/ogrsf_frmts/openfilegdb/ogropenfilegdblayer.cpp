@@ -201,7 +201,7 @@ int OGROpenFileGDBLayer::BuildGeometryColumnGDBv10()
         m_eGeomType =
             FileGDBOGRGeometryConverter::GetGeometryTypeFromESRI(pszShapeType);
         if( bHasZ )
-            m_eGeomType = (OGRwkbGeometryType)( m_eGeomType | wkb25DBit );
+            m_eGeomType = wkbSetZ( m_eGeomType );
 
         const char* pszWKT = CPLGetXMLValue( psInfo, "SpatialReference.WKT", NULL );
         int nWKID = atoi(CPLGetXMLValue( psInfo, "SpatialReference.WKID", "0" ));

@@ -72,6 +72,7 @@ OGRPGDumpLayer::OGRPGDumpLayer(OGRPGDumpDataSource* poDS,
     nUnknownSRSId = -1;
     nForcedSRSId = -2;
     bCreateSpatialIndexFlag = TRUE;
+    bPostGIS2 = FALSE;
 }
 
 /************************************************************************/
@@ -107,7 +108,8 @@ int OGRPGDumpLayer::TestCapability( const char * pszCap )
 {
     if( EQUAL(pszCap,OLCSequentialWrite) ||
         EQUAL(pszCap,OLCCreateField) ||
-        EQUAL(pszCap,OLCCreateGeomField) )
+        EQUAL(pszCap,OLCCreateGeomField) ||
+        EQUAL(pszCap,OLCCurveGeometries) )
         return TRUE;
     else
         return FALSE;
@@ -117,7 +119,7 @@ int OGRPGDumpLayer::TestCapability( const char * pszCap )
 /*                           GetNextFeature()                           */
 /************************************************************************/
 
-OGRErr OGRPGDumpLayer::CreateFeature( OGRFeature *poFeature )
+OGRErr OGRPGDumpLayer::ICreateFeature( OGRFeature *poFeature )
 {
     if( NULL == poFeature )
     {
@@ -238,7 +240,8 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
 
             if( bWriteAsHex )
             {
-                char* pszHex = OGRGeometryToHexEWKB( poGeom, poGFldDefn->nSRSId );
+                char* pszHex = OGRGeometryToHexEWKB( poGeom, poGFldDefn->nSRSId,
+                                                     bPostGIS2 );
                 osCommand += "'";
                 if (pszHex)
                     osCommand += pszHex;
@@ -328,7 +331,8 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
             /*if (bHasWkb)
                 pszGeom = GeometryToBYTEA( poGeometry );
             else*/
-                pszGeom = OGRGeometryToHexEWKB( poGeometry, poGFldDefn->nSRSId );
+                pszGeom = OGRGeometryToHexEWKB( poGeometry, poGFldDefn->nSRSId,
+                                                bPostGIS2 );
         }
     
         if (osCommand.size() > 0)

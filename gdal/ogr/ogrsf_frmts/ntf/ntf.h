@@ -397,8 +397,8 @@ class OGRNTFLayer : public OGRLayer
 
 #ifdef notdef    
     OGRFeature         *GetFeature( long nFeatureId );
-    OGRErr              SetFeature( OGRFeature *poFeature );
-    OGRErr              CreateFeature( OGRFeature *poFeature );
+    OGRErr              ISetFeature( OGRFeature *poFeature );
+    OGRErr              ICreateFeature( OGRFeature *poFeature );
 #endif
     
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }

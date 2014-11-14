@@ -76,8 +76,18 @@ wkbMultiPoint = _ogr.wkbMultiPoint
 wkbMultiLineString = _ogr.wkbMultiLineString
 wkbMultiPolygon = _ogr.wkbMultiPolygon
 wkbGeometryCollection = _ogr.wkbGeometryCollection
+wkbCircularString = _ogr.wkbCircularString
+wkbCompoundCurve = _ogr.wkbCompoundCurve
+wkbCurvePolygon = _ogr.wkbCurvePolygon
+wkbMultiCurve = _ogr.wkbMultiCurve
+wkbMultiSurface = _ogr.wkbMultiSurface
 wkbNone = _ogr.wkbNone
 wkbLinearRing = _ogr.wkbLinearRing
+wkbCircularStringZ = _ogr.wkbCircularStringZ
+wkbCompoundCurveZ = _ogr.wkbCompoundCurveZ
+wkbCurvePolygonZ = _ogr.wkbCurvePolygonZ
+wkbMultiCurveZ = _ogr.wkbMultiCurveZ
+wkbMultiSurfaceZ = _ogr.wkbMultiSurfaceZ
 wkbPoint25D = _ogr.wkbPoint25D
 wkbLineString25D = _ogr.wkbLineString25D
 wkbPolygon25D = _ogr.wkbPolygon25D
@@ -123,9 +133,11 @@ OLCFastSetNextByIndex = _ogr.OLCFastSetNextByIndex
 OLCStringsAsUTF8 = _ogr.OLCStringsAsUTF8
 OLCIgnoreFields = _ogr.OLCIgnoreFields
 OLCCreateGeomField = _ogr.OLCCreateGeomField
+OLCCurveGeometries = _ogr.OLCCurveGeometries
 ODsCCreateLayer = _ogr.ODsCCreateLayer
 ODsCDeleteLayer = _ogr.ODsCDeleteLayer
 ODsCCreateGeomFieldAfterCreateLayer = _ogr.ODsCCreateGeomFieldAfterCreateLayer
+ODsCCurveGeometries = _ogr.ODsCCurveGeometries
 ODrCCreateDataSource = _ogr.ODrCCreateDataSource
 ODrCDeleteDataSource = _ogr.ODrCDeleteDataSource
 
@@ -140,6 +152,81 @@ def UseExceptions(*args):
 def DontUseExceptions(*args):
   """DontUseExceptions()"""
   return _ogr.DontUseExceptions(*args)
+# Backup original dictionnary before doing anything else
+_initial_dict = globals().copy()
+
+@property
+def wkb25Bit(module):
+    import warnings
+    warnings.warn("ogr.wkb25DBit deprecated: use ogr.GT_Flatten(), ogr.GT_HasZ() or ogr.GT_SetZ() instead", DeprecationWarning)
+    return module._initial_dict['wkb25DBit']
+
+@property
+def wkb25DBit(module):
+    import warnings
+    warnings.warn("ogr.wkb25DBit deprecated: use ogr.GT_Flatten(), ogr.GT_HasZ() or ogr.GT_SetZ() instead", DeprecationWarning)
+    return module._initial_dict['wkb25DBit']
+
+# Inspired from http://www.dr-josiah.com/2013/12/properties-on-python-modules.html
+class _Module(object):
+    def __init__(self):
+        self.__dict__ = globals()
+        self._initial_dict = _initial_dict
+
+        # Transfer properties from the object to the Class
+        for k, v in list(self.__dict__.items()):
+            if isinstance(v, property):
+                setattr(self.__class__, k, v)
+                #del self.__dict__[k]
+
+        # Replace original module by our object
+        import sys
+        self._original_module = sys.modules[self.__name__]
+        sys.modules[self.__name__] = self
+
+# Custom help() replacement to display the help of the original module
+# instead of the one of our instance object
+class _MyHelper(object):
+
+    def __init__(self, module):
+        self.module = module
+        self.original_help = help
+
+        # Replace builtin help by ours
+        try:
+            import __builtin__ as builtins # Python 2
+        except ImportError:
+            import builtins # Python 3
+        builtins.help = self
+
+    def __repr__(self):
+        return self.original_help.__repr__()
+
+    def __call__(self, *args, **kwds):
+
+        if args == (self.module,):
+            import sys
+
+            # Restore original module before calling help() otherwise
+            # we don't get methods or classes mentionned
+            sys.modules[self.module.__name__] = self.module._original_module
+
+            ret = self.original_help(self.module._original_module, **kwds)
+
+            # Reinstall our module
+            sys.modules[self.module.__name__] = self.module
+
+            return ret
+        elif args == (self,):
+            return self.original_help(self.original_help, **kwds)
+        else:
+            return self.original_help(*args, **kwds)
+
+_MyHelper(_Module())
+del _MyHelper
+del _Module
+
+
 import osr
 import gdal
 class StyleTable(_object):
@@ -3861,6 +3948,10 @@ def ForceToMultiPoint(*args):
 def ForceToMultiLineString(*args):
   """ForceToMultiLineString(Geometry geom_in) -> Geometry"""
   return _ogr.ForceToMultiLineString(*args)
+
+def ForceTo(*args):
+  """ForceTo(Geometry geom_in, OGRwkbGeometryType eTargetType, char options = None) -> Geometry"""
+  return _ogr.ForceTo(*args)
 class Geometry(_object):
     """Proxy of C++ OGRGeometryShadow class"""
     __swig_setmethods__ = {}
@@ -3904,6 +3995,10 @@ class Geometry(_object):
         """
         return _ogr.Geometry_ExportToWkt(self, *args)
 
+    def ExportToIsoWkt(self, *args):
+        """ExportToIsoWkt(self) -> OGRErr"""
+        return _ogr.Geometry_ExportToIsoWkt(self, *args)
+
     def ExportToWkb(self, *args, **kwargs):
         """
         ExportToWkb(self, OGRwkbByteOrder byte_order = wkbXDR) -> OGRErr
@@ -3934,6 +4029,10 @@ class Geometry(_object):
         Currently OGRERR_NONE is always returned. 
         """
         return _ogr.Geometry_ExportToWkb(self, *args, **kwargs)
+
+    def ExportToIsoWkb(self, *args, **kwargs):
+        """ExportToIsoWkb(self, OGRwkbByteOrder byte_order = wkbXDR) -> OGRErr"""
+        return _ogr.Geometry_ExportToIsoWkb(self, *args, **kwargs)
 
     def ExportToGML(self, *args, **kwargs):
         """ExportToGML(self, char options = None) -> retStringAndCPLFree"""
@@ -5189,6 +5288,22 @@ class Geometry(_object):
         """
         return _ogr.Geometry_GetDimension(self, *args)
 
+    def HasCurveGeometry(self, *args):
+        """HasCurveGeometry(self, int bLookForCircular = True) -> int"""
+        return _ogr.Geometry_HasCurveGeometry(self, *args)
+
+    def GetLinearGeometry(self, *args, **kwargs):
+        """GetLinearGeometry(self, double dfMaxAngleStepSizeDegrees = 0.0, char options = None) -> Geometry"""
+        return _ogr.Geometry_GetLinearGeometry(self, *args, **kwargs)
+
+    def GetCurveGeometry(self, *args, **kwargs):
+        """GetCurveGeometry(self, char options = None) -> Geometry"""
+        return _ogr.Geometry_GetCurveGeometry(self, *args, **kwargs)
+
+    def Value(self, *args):
+        """Value(self, double dfDistance) -> Geometry"""
+        return _ogr.Geometry_Value(self, *args)
+
     def Destroy(self):
       self.__swig_destroy__(self) 
       self.__del__()
@@ -5244,6 +5359,58 @@ def GeometryTypeToName(*args):
 def GetFieldTypeName(*args):
   """GetFieldTypeName(OGRFieldType type) -> char"""
   return _ogr.GetFieldTypeName(*args)
+
+def GT_Flatten(*args):
+  """GT_Flatten(OGRwkbGeometryType eType) -> OGRwkbGeometryType"""
+  return _ogr.GT_Flatten(*args)
+
+def GT_SetZ(*args):
+  """GT_SetZ(OGRwkbGeometryType eType) -> OGRwkbGeometryType"""
+  return _ogr.GT_SetZ(*args)
+
+def GT_SetModifier(*args):
+  """GT_SetModifier(OGRwkbGeometryType eType, int bSetZ, int bSetM = True) -> OGRwkbGeometryType"""
+  return _ogr.GT_SetModifier(*args)
+
+def GT_HasZ(*args):
+  """GT_HasZ(OGRwkbGeometryType eType) -> int"""
+  return _ogr.GT_HasZ(*args)
+
+def GT_IsSubClassOf(*args):
+  """GT_IsSubClassOf(OGRwkbGeometryType eType, OGRwkbGeometryType eSuperType) -> int"""
+  return _ogr.GT_IsSubClassOf(*args)
+
+def GT_IsCurve(*args):
+  """GT_IsCurve(OGRwkbGeometryType arg0) -> int"""
+  return _ogr.GT_IsCurve(*args)
+
+def GT_IsSurface(*args):
+  """GT_IsSurface(OGRwkbGeometryType arg0) -> int"""
+  return _ogr.GT_IsSurface(*args)
+
+def GT_IsNonLinear(*args):
+  """GT_IsNonLinear(OGRwkbGeometryType arg0) -> int"""
+  return _ogr.GT_IsNonLinear(*args)
+
+def GT_GetCollection(*args):
+  """GT_GetCollection(OGRwkbGeometryType eType) -> OGRwkbGeometryType"""
+  return _ogr.GT_GetCollection(*args)
+
+def GT_GetCurve(*args):
+  """GT_GetCurve(OGRwkbGeometryType eType) -> OGRwkbGeometryType"""
+  return _ogr.GT_GetCurve(*args)
+
+def GT_GetLinear(*args):
+  """GT_GetLinear(OGRwkbGeometryType eType) -> OGRwkbGeometryType"""
+  return _ogr.GT_GetLinear(*args)
+
+def SetNonLinearGeometriesEnabledFlag(*args):
+  """SetNonLinearGeometriesEnabledFlag(int bFlag)"""
+  return _ogr.SetNonLinearGeometriesEnabledFlag(*args)
+
+def GetNonLinearGeometriesEnabledFlag(*args):
+  """GetNonLinearGeometriesEnabledFlag() -> int"""
+  return _ogr.GetNonLinearGeometriesEnabledFlag(*args)
 
 def GetOpenDS(*args):
   """GetOpenDS(int ds_number) -> DataSource"""

@@ -243,7 +243,7 @@ void  OGRPGTableLayer::SetGeometryInformation(PGGeomColumnDesc* pasDesc,
         {
             OGRwkbGeometryType eGeomType = OGRFromOGCGeomType(pasDesc[i].pszGeomType);
             if( poGeomFieldDefn->nCoordDimension == 3 && eGeomType != wkbUnknown )
-                eGeomType = (OGRwkbGeometryType) (eGeomType | wkb25DBit);
+                eGeomType = wkbSetZ(eGeomType);
             poGeomFieldDefn->SetType(eGeomType);
         }
         poFeatureDefn->AddGeomFieldDefn(poGeomFieldDefn, FALSE);
@@ -621,7 +621,7 @@ int OGRPGTableLayer::ReadTableDefinition()
                 poGeomFieldDefn->nSRSId = nSRSId;
             OGRwkbGeometryType eGeomType = OGRFromOGCGeomType(pszType);
             if( poGeomFieldDefn->nCoordDimension == 3 && eGeomType != wkbUnknown )
-                eGeomType = (OGRwkbGeometryType) (eGeomType | wkb25DBit);
+                eGeomType = wkbSetZ(eGeomType);
             poGeomFieldDefn->SetType(eGeomType);
 
             bGoOn = FALSE;
@@ -1250,12 +1250,12 @@ void OGRPGTableLayer::AppendFieldValue(PGconn *hPGConn, CPLString& osCommand,
 }
 
 /************************************************************************/
-/*                             SetFeature()                             */
+/*                             ISetFeature()                             */
 /*                                                                      */
 /*      SetFeature() is implemented by an UPDATE SQL command            */
 /************************************************************************/
 
-OGRErr OGRPGTableLayer::SetFeature( OGRFeature *poFeature )
+OGRErr OGRPGTableLayer::ISetFeature( OGRFeature *poFeature )
 
 {
     PGconn              *hPGConn = poDS->GetPGConn();
@@ -1332,7 +1332,7 @@ OGRErr OGRPGTableLayer::SetFeature( OGRFeature *poFeature )
             {
                 if( !bWkbAsOid  )
                 {
-                    char    *pszBytea = GeometryToBYTEA( poGeom );
+                    char    *pszBytea = GeometryToBYTEA( poGeom, poDS->sPostGISVersion.nMajor < 2 );
 
                     if( pszBytea != NULL )
                     {
@@ -1379,7 +1379,8 @@ OGRErr OGRPGTableLayer::SetFeature( OGRFeature *poFeature )
             {
                 if ( poGeom != NULL )
                 {
-                    char* pszHexEWKB = OGRGeometryToHexEWKB( poGeom, poGeomFieldDefn->nSRSId );
+                    char* pszHexEWKB = OGRGeometryToHexEWKB( poGeom, poGeomFieldDefn->nSRSId,
+                                                             poDS->sPostGISVersion.nMajor < 2 );
                     if ( poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOGRAPHY )
                         osCommand += CPLString().Printf("'%s'::GEOGRAPHY", pszHexEWKB);
                     else
@@ -1468,10 +1469,10 @@ OGRErr OGRPGTableLayer::SetFeature( OGRFeature *poFeature )
 }
 
 /************************************************************************/
-/*                           CreateFeature()                            */
+/*                           ICreateFeature()                            */
 /************************************************************************/
 
-OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
+OGRErr OGRPGTableLayer::ICreateFeature( OGRFeature *poFeature )
 {
     GetLayerDefn()->GetFieldCount();
 
@@ -1781,7 +1782,8 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
 
             if ( !CSLTestBoolean(CPLGetConfigOption("PG_USE_TEXT", "NO")) )
             {
-                char    *pszHexEWKB = OGRGeometryToHexEWKB( poGeom, nSRSId );
+                char    *pszHexEWKB = OGRGeometryToHexEWKB( poGeom, nSRSId,
+                                                            poDS->sPostGISVersion.nMajor < 2 );
                 if ( poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOGRAPHY )
                     osCommand += CPLString().Printf("'%s'::GEOGRAPHY", pszHexEWKB);
                 else
@@ -1816,7 +1818,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
         }
         else if( !bWkbAsOid )
         {
-            char    *pszBytea = GeometryToBYTEA( poGeom );
+            char    *pszBytea = GeometryToBYTEA( poGeom, poDS->sPostGISVersion.nMajor < 2 );
 
             if( pszBytea != NULL )
             {
@@ -1948,9 +1950,10 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
             poGeom->setCoordinateDimension( poGeomFieldDefn->nCoordDimension );
 
             if( poGeomFieldDefn->ePostgisType == GEOM_TYPE_WKB )
-                pszGeom = GeometryToBYTEA( poGeom );
+                pszGeom = GeometryToBYTEA( poGeom, poDS->sPostGISVersion.nMajor < 2 );
             else
-                pszGeom = OGRGeometryToHexEWKB( poGeom, poGeomFieldDefn->nSRSId );
+                pszGeom = OGRGeometryToHexEWKB( poGeom, poGeomFieldDefn->nSRSId,
+                                                poDS->sPostGISVersion.nMajor < 2 );
         }
 
         if (osCommand.size() > 0)
@@ -2247,6 +2250,9 @@ int OGRPGTableLayer::TestCapability( const char * pszCap )
     }
 
     else if( EQUAL(pszCap,OLCStringsAsUTF8) )
+        return TRUE;
+
+    else if( EQUAL(pszCap,OLCCurveGeometries) )
         return TRUE;
 
     else
@@ -2551,10 +2557,7 @@ OGRErr OGRPGTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
     if( nForcedDimension > 0 )
     {
         nDimension = nForcedDimension;
-        if( nDimension == 2 )
-            eType = (OGRwkbGeometryType)( eType & ~wkb25DBit );
-        else
-            eType = (OGRwkbGeometryType)( eType | wkb25DBit );
+        eType = OGR_GT_SetModifier(eType, nDimension == 3, FALSE);
     }
     poGeomField->SetType(eType);
     poGeomField->nSRSId = nSRSId;

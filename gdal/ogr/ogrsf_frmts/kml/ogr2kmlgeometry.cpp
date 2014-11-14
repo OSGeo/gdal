@@ -171,7 +171,7 @@ static void AppendCoordinateList( OGRLineString *poLine,
 
 {
     char szCoordinate[256]= { 0 };
-    int b3D = (poLine->getGeometryType() & wkb25DBit);
+    int b3D = wkbHasZ(poLine->getGeometryType());
 
     *pnLength += strlen(*ppszText + *pnLength);
     _GrowBuffer( *pnLength + 20, ppszText, pnMaxLength );

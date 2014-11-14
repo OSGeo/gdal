@@ -72,8 +72,8 @@ class OGRGRASSLayer : public OGRLayer
 
     // Write access, not supported:
     virtual OGRErr      CreateField( OGRFieldDefn *poField, int bApproxOK = TRUE );
-    OGRErr              SetFeature( OGRFeature *poFeature );
-    OGRErr              CreateFeature( OGRFeature *poFeature );
+    OGRErr              ISetFeature( OGRFeature *poFeature );
+    OGRErr              ICreateFeature( OGRFeature *poFeature );
     
   private:
     char		*pszName;

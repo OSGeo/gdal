@@ -59,9 +59,9 @@ class OGRGeoconceptLayer : public OGRLayer
 //    OGRErr               SetNextByIndex( long nIndex );
 
 //    OGRFeature*          GetFeature( long nFID );
-//    OGRErr               SetFeature( OGRFeature* poFeature );
+//    OGRErr               ISetFeature( OGRFeature* poFeature );
 //    OGRErr               DeleteFeature( long nFID );
-    OGRErr               CreateFeature( OGRFeature* poFeature );
+    OGRErr               ICreateFeature( OGRFeature* poFeature );
     OGRFeatureDefn*      GetLayerDefn( ) { return _poFeatureDefn; } // FIXME
     OGRSpatialReference* GetSpatialRef( );
     int                  GetFeatureCount( int bForce = TRUE );

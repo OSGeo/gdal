@@ -588,10 +588,10 @@ OGRErr OGRPCIDSKLayer::DeleteFeature( long nFID )
 }
 
 /************************************************************************/
-/*                           CreateFeature()                            */
+/*                          ICreateFeature()                            */
 /************************************************************************/
 
-OGRErr OGRPCIDSKLayer::CreateFeature( OGRFeature *poFeature )
+OGRErr OGRPCIDSKLayer::ICreateFeature( OGRFeature *poFeature )
 
 {
     try {
@@ -622,10 +622,10 @@ OGRErr OGRPCIDSKLayer::CreateFeature( OGRFeature *poFeature )
 }
 
 /************************************************************************/
-/*                             SetFeature()                             */
+/*                            ISetFeature()                             */
 /************************************************************************/
 
-OGRErr OGRPCIDSKLayer::SetFeature( OGRFeature *poFeature )
+OGRErr OGRPCIDSKLayer::ISetFeature( OGRFeature *poFeature )
 
 {
     PCIDSK::ShapeId id = (PCIDSK::ShapeId) poFeature->GetFID();

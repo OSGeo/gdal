@@ -74,7 +74,7 @@ private:
 
     int                 GetFeatureCount( int bForce = TRUE );
 
-    OGRErr              CreateFeature( OGRFeature *poFeature );
+    OGRErr              ICreateFeature( OGRFeature *poFeature );
     int                 GeometryAppend( OGRGeometry *poGeometry );
 
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }

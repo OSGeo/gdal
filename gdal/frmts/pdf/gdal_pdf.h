@@ -93,7 +93,7 @@ public:
                     OGRwkbGeometryType eGeomType);
 
     virtual int                 TestCapability( const char * );
-    virtual OGRErr              CreateFeature( OGRFeature *poFeature );
+    virtual OGRErr              ICreateFeature( OGRFeature *poFeature );
 };
 
 /************************************************************************/

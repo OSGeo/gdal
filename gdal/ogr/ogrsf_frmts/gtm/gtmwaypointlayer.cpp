@@ -228,9 +228,9 @@ void GTMWaypointLayer::WriteFeatureAttributes( OGRFeature *poFeature, float alti
 }
 
 /************************************************************************/
-/*                           CreateFeature()                            */
+/*                           ICreateFeature()                            */
 /************************************************************************/
-OGRErr GTMWaypointLayer::CreateFeature (OGRFeature *poFeature)
+OGRErr GTMWaypointLayer::ICreateFeature (OGRFeature *poFeature)
 {
     VSILFILE* fp = poDS->getOutputFP();
     if (fp == NULL)

@@ -11,6 +11,12 @@ OBJ =	ogrgeometryfactory.o \
 	ogrsurface.o \
 	ogrmultipoint.o \
 	ogrmultilinestring.o \
+    ogrcircularstring.o \
+    ogrcompoundcurve.o \
+    ogrcurvepolygon.o \
+    ogrcurvecollection.o \
+    ogrmulticurve.o \
+    ogrmultisurface.o \
 	ogr_api.o \
 	ogrfeature.o \
 	ogrfeaturedefn.o \

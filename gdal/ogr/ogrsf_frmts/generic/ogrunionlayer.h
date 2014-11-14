@@ -125,9 +125,9 @@ class OGRUnionLayer : public OGRLayer
 
     virtual OGRFeature *GetFeature( long nFeatureId );
 
-    virtual OGRErr      CreateFeature( OGRFeature* poFeature );
+    virtual OGRErr      ICreateFeature( OGRFeature* poFeature );
 
-    virtual OGRErr      SetFeature( OGRFeature* poFeature );
+    virtual OGRErr      ISetFeature( OGRFeature* poFeature );
 
     virtual OGRFeatureDefn *GetLayerDefn();
 
