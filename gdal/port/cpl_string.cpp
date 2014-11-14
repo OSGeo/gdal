@@ -1227,7 +1227,8 @@ int CPLvsnprintf(char *str, size_t size, const char* fmt, va_list args)
                     call_native_snprintf(long double);
                 else
                     call_native_snprintf(double);
-                if( offset_out + local_ret >= size )
+                /* MSVC vsnprintf() returns -1... */
+                if( local_ret <  0 || offset_out + local_ret >= size )
                     break;
                 for( int j = 0; j < local_ret; j ++ )
                 {
@@ -1251,7 +1252,8 @@ int CPLvsnprintf(char *str, size_t size, const char* fmt, va_list args)
                 bFormatUnknown = TRUE;
                 break;
             }
-            if( offset_out + local_ret >= size )
+            /* MSVC vsnprintf() returns -1... */
+            if( local_ret <  0 || offset_out + local_ret >= size )
                 break;
             offset_out += local_ret;
             fmt = ptrend;
@@ -1284,7 +1286,9 @@ int CPLvsnprintf(char *str, size_t size, const char* fmt, va_list args)
 #endif
     }
 
+#ifdef va_copy
     va_end( wrk_args );
+#endif
 
     return (int)offset_out;
 }
