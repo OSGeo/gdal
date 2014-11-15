@@ -24,7 +24,7 @@ clean:
 plugin: $(PLUGIN_DLL)
 
 $(PLUGIN_DLL):	$(OBJ)
-	link /dll $(LDEBUG) /out:$(PLUGIN_DLL) $(OBJ) $(GDAL_ROOT)/gdal_i.lib $(FGDB_LIB) ..\ogrsf_frmts.lib 
+	link /dll $(LDEBUG) /out:$(PLUGIN_DLL) $(OBJ) $(GDAL_ROOT)/gdal_i.lib $(FGDB_LIB)
 	if exist $(PLUGIN_DLL).manifest mt -manifest $(PLUGIN_DLL).manifest -outputresource:$(PLUGIN_DLL);2
 
 

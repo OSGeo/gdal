@@ -32,7 +32,7 @@
 
 #include "ogrsf_frmts.h"
 
-class OGRLayerDecorator : public OGRLayer
+class CPL_DLL OGRLayerDecorator : public OGRLayer
 {
   protected:
     OGRLayer *m_poDecoratedLayer;
