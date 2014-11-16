@@ -257,3 +257,14 @@ OGRErr      OGRMutexedLayer::SetIgnoredFields( const char **papszFields )
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::SetIgnoredFields(papszFields);
 }
+
+#if defined(WIN32) && defined(_MSC_VER)
+// Horrible hack: for some reason MSVC doesn't export the class
+// if it is not referenced from the DLL itself
+void OGRRegisterMutexedLayer();
+void OGRRegisterMutexedLayer()
+{
+    CPLAssert(FALSE); // Never call this function: it will segfault
+    delete new OGRMutexedLayer(NULL, FALSE, NULL);
+}
+#endif
