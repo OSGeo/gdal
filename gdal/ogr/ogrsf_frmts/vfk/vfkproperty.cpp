@@ -104,3 +104,27 @@ VFKProperty& VFKProperty::operator=(VFKProperty const& other)
     }
     return *this;
 }
+
+/*!
+  \brief Get string property
+  
+  \param escape TRUE to escape characters for SQL
+  
+  \return string buffer
+*/
+const char *VFKProperty::GetValueS(bool escape) const
+{
+    size_t ipos;
+    CPLString strValue(m_strValue);
+
+    if (!escape)
+        return strValue.c_str();
+
+    ipos = 0;
+    while (std::string::npos != (ipos = strValue.find("'", ipos))) {
+        strValue.replace(ipos, 1, "\'\'", 2);
+        ipos += 2;
+    }
+
+    return strValue.c_str();
+}
