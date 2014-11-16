@@ -260,7 +260,7 @@ bool VFKFeature::SetProperties(const char *pszLine)
             inString = inString ? FALSE : TRUE;
             if (inString) {
                 poProp = poChar;
-                if (*poChar == '"') { 
+                if (*poChar == '"' && (*(poChar+1) == ';' || *(poChar+1) == '\0')) { 
                     poChar++;
                     inString = FALSE;
                 }
@@ -296,7 +296,8 @@ bool VFKFeature::SetProperties(const char *pszLine)
     /* set properties from the list */
     if (oPropList.size() != (size_t) m_poDataBlock->GetPropertyCount()) {
         /* try to read also invalid records */
-        CPLDebug("OGR-VFK", "%s: invalid number of properties %d should be %d",
+        CPLError(CE_Warning, CPLE_AppDefined, 
+                 "%s: invalid number of properties %d should be %d",
                  m_poDataBlock->GetName(),
 		 (int) oPropList.size(), m_poDataBlock->GetPropertyCount());
         return FALSE;

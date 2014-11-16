@@ -86,7 +86,7 @@ public:
     bool                    IsNull()    const { return m_bIsNull; }
     int                     GetValueI() const { return m_nValue; }
     double                  GetValueD() const { return m_dValue; }
-    const char             *GetValueS() const { return m_strValue.c_str(); }
+    const char             *GetValueS(bool = FALSE) const;
 };
 
 /************************************************************************/
