@@ -12,10 +12,11 @@
 Driver is <b>WRITE Only</b>
 <p>
 
-<a href="http://elasticsearch.org/">ElasticSearch</a> is an Enterprise-level search engine for a variety of data sources. It supports full-text indexing and geospatial querying of those data in a fast and effecient manor using a predefined REST API. This driver serializes all of the supported OGR file formats in to an ElasticSearch index.
-<h2>Field definitions</h2>
+<a href="http://elasticsearch.org/">ElasticSearch</a> is an Enterprise-level search engine for a variety of data sources. It supports full-text indexing and geospatial querying of those data in a fast and efficient manor using a predefined REST API. This driver serializes all of the supported OGR file formats in to an ElasticSearch index.
+<br> However, the driver is limited in the geometry it handles: even if polygons are provided as input, they are stored as <a href="http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-geo-point-type.html">geo point</a> and the "center" of the polygon is used as value of the point.
+</p><h2>Field definitions</h2>
 
-Fields are dyamically mapped from the input OGR data source. However, the driver will take advatage of advanced options within ElasticSearch as defined in a <a href="http://code.google.com/p/ogr2elasticsearch/wiki/ModifyingtheIndex">field mapping file</a>.
+Fields are dynamically mapped from the input OGR data source. However, the driver will take advantage of advanced options within ElasticSearch as defined in a <a href="http://code.google.com/p/ogr2elasticsearch/wiki/ModifyingtheIndex">field mapping file</a>.
 
 <p>
 The mapping file allows you to modify the mapping according to the <a href="http://www.elasticsearch.org/guide/reference/mapping/core-types.html">ElasticSearch field-specific types</a>. There are many options to choose from, however, most of the functionality is based on all the different things you are able to do with text fields within ElasticSearch.
