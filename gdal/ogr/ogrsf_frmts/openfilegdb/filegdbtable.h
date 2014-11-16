@@ -213,6 +213,8 @@ class FileGDBTable
 {
         VSILFILE                   *fpTable;
         VSILFILE                   *fpTableX;
+        vsi_l_offset                nFileSize; /* only read when needed */
+
         std::string                 osFilename;
         std::vector<FileGDBField*>  apoFields;
         std::string                 osObjectIdColName;
@@ -257,7 +259,7 @@ class FileGDBTable
         GUInt32                     nOffsetHeaderEnd;
 
         int                         ReadTableXHeader();
-        int                         IsLikelyFeatureAtOffset(vsi_l_offset nFileSize,
+        int                         IsLikelyFeatureAtOffset(
                                                 vsi_l_offset nOffset, GUInt32* pnSize,
                                                 int* pbDeletedRecord);
         int                         GuessFeatureLocations();

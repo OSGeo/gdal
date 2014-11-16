@@ -87,6 +87,7 @@ void FileGDBTable::Init()
     osFilename = "";
     fpTable = NULL;
     fpTableX = NULL;
+    nFileSize = 0;
     memset(&sCurField, 0, sizeof(sCurField));
     bError = FALSE;
     nCurRow = -1;
@@ -266,8 +267,7 @@ static void ReadVarUInt64NoCheck(GByte*& pabyIter, GUIntBig& nOutVal)
 /*                      IsLikelyFeatureAtOffset()                       */
 /************************************************************************/
 
-int FileGDBTable::IsLikelyFeatureAtOffset(vsi_l_offset nFileSize,
-                                          vsi_l_offset nOffset,
+int FileGDBTable::IsLikelyFeatureAtOffset(vsi_l_offset nOffset,
                                           GUInt32* pnSize,
                                           int* pbDeletedRecord)
 {
@@ -447,7 +447,6 @@ int FileGDBTable::IsLikelyFeatureAtOffset(vsi_l_offset nFileSize,
 
 int FileGDBTable::GuessFeatureLocations()
 {
-    vsi_l_offset nFileSize;
     VSIFSeekL(fpTable, 0, SEEK_END);
     nFileSize = VSIFTellL(fpTable);
 
@@ -480,7 +479,7 @@ int FileGDBTable::GuessFeatureLocations()
     {
         GUInt32 nSize;
         int bDeletedRecord;
-        if( !IsLikelyFeatureAtOffset(nFileSize, nOffset, &nSize, &bDeletedRecord) )
+        if( !IsLikelyFeatureAtOffset(nOffset, &nSize, &bDeletedRecord) )
         {
             nOffset ++;
         }
@@ -1083,6 +1082,18 @@ int FileGDBTable::SelectRow(int iRow)
 
             if( nRowBlobLength > nBufferMaxSize )
             {
+                /* For suspicious row blob length, check if we don't go beyond file size */
+                if( nRowBlobLength > 100 * 1024 * 1024 )
+                {
+                    if( nFileSize == 0 )
+                    {
+                        VSIFSeekL(fpTable, 0, SEEK_END);
+                        nFileSize = VSIFTellL(fpTable);
+                        VSIFSeekL(fpTable, nOffsetTable + 4, SEEK_SET);
+                    }
+                    returnErrorAndCleanupIf( nOffsetTable + 4 + nRowBlobLength > nFileSize, nCurRow = -1 );
+                }
+
                 GByte* pabyNewBuffer = (GByte*) VSIRealloc( pabyBuffer,
                                 nRowBlobLength + ZEROES_AFTER_END_OF_BUFFER );
                 returnErrorAndCleanupIf(pabyNewBuffer == NULL, nCurRow = -1 );
