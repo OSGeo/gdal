@@ -75,6 +75,12 @@ OGRSFDriverRegistrar *OGRSFDriverRegistrar::GetRegistrar()
 /*                           OGRCleanupAll()                            */
 /************************************************************************/
 
+#if defined(WIN32) && defined(_MSC_VER)
+void OGRRegisterMutexedDataSource();
+void OGRRegisterMutexedLayer();
+int OGRwillNeverBeTrue = FALSE;
+#endif
+
 /**
  * \brief Cleanup all OGR related resources. 
  *
@@ -84,6 +90,15 @@ void OGRCleanupAll()
 
 {
     GDALDestroyDriverManager();
+#if defined(WIN32) && defined(_MSC_VER)
+// Horrible hack: for some reason MSVC doesn't export those classes
+// if they are not referenced from the DLL itself
+    if(OGRwillNeverBeTrue)
+    {
+        OGRRegisterMutexedDataSource();
+        OGRRegisterMutexedLayer();
+    }
+#endif
 }
 
 /************************************************************************/

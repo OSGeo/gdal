@@ -138,3 +138,13 @@ void      OGRMutexedDataSource::FlushCache()
     CPLMutexHolderOptionalLockD(m_hGlobalMutex);
     return m_poBaseDataSource->FlushCache();
 }
+
+#if defined(WIN32) && defined(_MSC_VER)
+// Horrible hack: for some reason MSVC doesn't export the class
+// if it is not referenced from the DLL itself
+void OGRRegisterMutexedDataSource();
+void OGRRegisterMutexedDataSource()
+{
+    delete new OGRMutexedDataSource(NULL, FALSE, NULL);
+}
+#endif
