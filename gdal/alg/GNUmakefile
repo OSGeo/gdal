@@ -29,7 +29,7 @@ CPPFLAGS	:=	$(CPPFLAGS) $(OPENCL_FLAGS)
 default:	$(OBJ:.o=.$(OBJ_EXT)) gdalgridavx.$(OBJ_EXT)
 
 gdalgridavx.$(OBJ_EXT):   gdalgridavx.cpp
-	$(CXX) $(CXXFLAGS) $(AVXFLAGS) $(CPPFLAGS) -c -o $@ $<
+	$(CXX) $(GDAL_INCLUDE) $(CXXFLAGS) $(AVXFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 clean:
 	$(RM) *.o $(O_OBJ)
