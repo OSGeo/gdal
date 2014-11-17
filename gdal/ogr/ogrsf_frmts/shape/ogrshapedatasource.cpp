@@ -696,6 +696,7 @@ OGRShapeDataSource::ICreateLayer( const char * pszLayerName,
     CPLFree( pszFilename );
 
     poLayer->SetResizeAtClose( CSLFetchBoolean( papszOptions, "RESIZE", FALSE ) );
+    poLayer->CreateSpatialIndexAtClose( CSLFetchBoolean( papszOptions, "SPATIAL_INDEX", FALSE ) );
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
