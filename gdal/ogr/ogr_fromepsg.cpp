@@ -1698,13 +1698,6 @@ static OGRErr SetEPSGVertCS( OGRSpatialReference * poSRS, int nVertCSCode )
         CSLGetField( papszRecord,
                      CSVGetFileFieldId(pszFilename,
                                        "DATUM_NAME")) );
-/* -------------------------------------------------------------------- */
-/*      Setup the VERT_DATUM node.                                      */
-/* -------------------------------------------------------------------- */
-    poSRS->SetAuthority( "VERT_CS|VERT_DATUM", "EPSG",
-                         atoi(CSLGetField( papszRecord,
-                                           CSVGetFileFieldId(pszFilename,
-                                                             "DATUM_CODE"))) );
 
 /* -------------------------------------------------------------------- */
 /*      Should we add a geoidgrids extension node?                      */
@@ -1720,7 +1713,15 @@ static OGRErr SetEPSGVertCS( OGRSpatialReference * poSRS, int nVertCSCode )
 
         poSRS->SetExtension( "VERT_CS|VERT_DATUM", "PROJ4_GRIDS", pszParm11 );
     }
-    
+
+/* -------------------------------------------------------------------- */
+/*      Setup the VERT_DATUM node.                                      */
+/* -------------------------------------------------------------------- */
+    poSRS->SetAuthority( "VERT_CS|VERT_DATUM", "EPSG",
+                         atoi(CSLGetField( papszRecord,
+                                           CSVGetFileFieldId(pszFilename,
+                                                             "DATUM_CODE"))) );
+
 /* -------------------------------------------------------------------- */
 /*      Set linear units.                                               */
 /* -------------------------------------------------------------------- */

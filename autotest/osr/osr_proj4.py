@@ -111,10 +111,15 @@ def osr_proj4_1():
 def osr_proj4_2():
     
     srs = osr.SpatialReference()
-    srs.ImportFromProj4( "+proj=lcc +x_0=0.6096012192024384e+06 +y_0=0 +lon_0=90dw +lat_0=42dn +lat_1=44d4'n +lat_2=42d44'n +a=6378206.400000 +rf=294.978698 +nadgrids=conus,ntv1_can.dat" )
+    srs.ImportFromProj4( "+proj=lcc +x_0=0.6096012192024384e+06 +y_0=0 +lon_0=90dw +lat_0=42dn +lat_1=44d4'n +lat_2=42d44'n +a=6378206.400000 +rf=294.978698 +nadgrids=conus,ntv1_can.dat +units=m" )
 
     if abs(srs.GetProjParm( osr.SRS_PP_FALSE_EASTING )-609601.219) > 0.0005:
         gdaltest.post_reason( 'Parsing exponents not supported?' )
+        return 'fail'
+
+    if srs.Validate() != 0:
+        gdaltest.post_reason( 'does not validate' )
+        print(srs.ExportToPrettyWkt())
         return 'fail'
 
     return 'success'
@@ -723,6 +728,46 @@ def osr_proj4_18():
 
     return 'success'
 
+###############################################################################
+# Test EXTENSION and AUTHORITY in DATUM
+
+def osr_proj4_19():
+
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4( "+proj=longlat +datum=WGS84 +nadgrids=@null" )
+
+    if srs.ExportToWkt() != 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],EXTENSION["PROJ4_GRIDS","@null"],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AUTHORITY["EPSG","4326"]]':
+        gdaltest.post_reason( 'fail' )
+        print(srs.ExportToWkt())
+        return 'fail'
+
+    if srs.Validate() != 0:
+        gdaltest.post_reason( 'does not validate' )
+        print(srs.ExportToPrettyWkt())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test EXTENSION in GOGCS
+
+def osr_proj4_20():
+
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4( "+proj=longlat +foo=bar +wktext" )
+
+    if srs.ExportToWkt() != 'GEOGCS["WGS 84",DATUM["unknown",SPHEROID["WGS84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],EXTENSION["PROJ4","+proj=longlat +foo=bar +wktext"]]':
+        gdaltest.post_reason( 'fail' )
+        print(srs.ExportToWkt())
+        return 'fail'
+
+    if srs.Validate() != 0:
+        gdaltest.post_reason( 'does not validate' )
+        print(srs.ExportToPrettyWkt())
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ 
     osr_proj4_1,
     osr_proj4_2,
@@ -741,7 +786,10 @@ gdaltest_list = [
     osr_proj4_15,
     osr_proj4_16,
     osr_proj4_17,
-    osr_proj4_18 ]
+    osr_proj4_18,
+    osr_proj4_19,
+    osr_proj4_20 ]
+    
 
 if __name__ == '__main__':
 
