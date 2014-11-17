@@ -5,7 +5,7 @@ include ../../GDALmake.opt
 
 XTRA_OPT =	-I../raw
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(XTRA_OPT) $(CPPFLAGS)
+CPPFLAGS	:=	 $(XTRA_OPT) $(CPPFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

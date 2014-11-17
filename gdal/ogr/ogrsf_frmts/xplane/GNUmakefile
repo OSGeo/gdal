@@ -6,7 +6,7 @@ OBJ	=	ogrxplanedriver.o ogrxplanedatasource.o ogrxplanelayer.o ogr_xplane_geo_ut
 		ogr_xplane_reader.o ogr_xplane_apt_reader.o ogr_xplane_nav_reader.o \
  		ogr_xplane_fix_reader.o ogr_xplane_awy_reader.o
 
-CPPFLAGS	:=	-I.. -I../.. $(GDAL_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:=	-I.. -I../..  $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 

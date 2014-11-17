@@ -12,7 +12,7 @@ AVC_OBJ	=	avc_bin.o avc_binwr.o avc_e00gen.o avc_e00parse.o \
 
 OBJ =	$(AVC_OBJ) $(OGR_OBJ)
 
-CPPFLAGS	:=	-I../shape -I.. -I../.. $(GDAL_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:=	-I../shape -I.. -I../..  $(CPPFLAGS)
 
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))

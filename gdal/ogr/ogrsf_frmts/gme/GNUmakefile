@@ -6,7 +6,7 @@ OBJ	=	\
 	ogrgmedriver.o ogrgmedatasource.o ogrgmelayer.o ogrgmejson.o
 
 CPPFLAGS	:=	$(JSON_INCLUDE) -I../geojson -I.. -I../.. \
-	$(GDAL_INCLUDE) $(CPPFLAGS)
+	 $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 

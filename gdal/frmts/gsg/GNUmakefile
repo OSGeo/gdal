@@ -3,7 +3,7 @@ include ../../GDALmake.opt
 
 OBJ	=	gsagdataset.o gsbgdataset.o gs7bgdataset.o
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS)
+
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

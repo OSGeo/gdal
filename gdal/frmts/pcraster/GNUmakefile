@@ -1,7 +1,7 @@
 
 include ../../GDALmake.opt
 
-CPPFLAGS := $(XTRA_OPT) $(GDAL_INCLUDE) $(CPPFLAGS)
+CPPFLAGS := $(XTRA_OPT)  $(CPPFLAGS)
 
 ifeq ($(PCRASTER_SETTING),internal)
 CPPFLAGS += -DUSE_IN_GDAL -Ilibcsf

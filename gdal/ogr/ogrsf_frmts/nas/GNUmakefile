@@ -5,7 +5,7 @@ OBJ =	ogrnasdriver.o ogrnasdatasource.o ogrnaslayer.o \
 	nashandler.o nasreader.o ogrnasrelationlayer.o
 
 CPPFLAGS :=	-I../gml -I.. -I../.. -DHAVE_XERCES=1 \
-		$(GDAL_INCLUDE) $(XERCES_INCLUDE) $(CPPFLAGS)
+		 $(XERCES_INCLUDE) $(CPPFLAGS)
 
 # By default, XML validation is disabled.  Uncomment the following line to
 # enable XML schema validation in the parser.

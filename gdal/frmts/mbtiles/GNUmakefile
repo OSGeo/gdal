@@ -7,7 +7,7 @@ ifeq ($(LIBZ_SETTING),internal)
   XTRA_OPT :=   $(XTRA_OPT) -I../zlib
 endif
 
-CPPFLAGS	:=	$(JSON_INCLUDE) $(XTRA_OPT) $(GDAL_INCLUDE) $(CPPFLAGS) -I../../ogr
+CPPFLAGS	:=	$(JSON_INCLUDE) $(XTRA_OPT)  $(CPPFLAGS) -I../../ogr
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

@@ -556,16 +556,16 @@ endif # HAVE_LIBTOOL
 O_OBJ =	$(foreach file,$(OBJ),../o/$(file))
 
 ../o/%.$(OBJ_EXT):	%.c
-	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
+	$(CC) $(GDAL_INCLUDE) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 ../o/%.$(OBJ_EXT):	%.cpp
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
+	$(CXX) $(GDAL_INCLUDE) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 %.$(OBJ_EXT):	%.c
-	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
+	$(CC) $(GDAL_INCLUDE) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 %.$(OBJ_EXT):	%.cpp
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
+	$(CXX) $(GDAL_INCLUDE) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 #
 # default rules for handling subdirectories

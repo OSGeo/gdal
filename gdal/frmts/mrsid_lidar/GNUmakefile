@@ -2,7 +2,7 @@ include ../../GDALmake.opt
 
 OBJ		=	gdal_MG4Lidar.o
 
-CPPFLAGS	:=	$(XTRA_OPT) $(GDAL_INCLUDE) $(MRSID_LIDAR_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:=	$(XTRA_OPT)  $(MRSID_LIDAR_INCLUDE) $(CPPFLAGS)
 
 PLUGIN_SO	=	gdal_MG4Lidar.so
 

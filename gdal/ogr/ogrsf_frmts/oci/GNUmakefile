@@ -7,7 +7,7 @@ OBJ	=	oci_utils.o ogrocisession.o ogrocistatement.o \
 		ogrocitablelayer.o ogrociselectlayer.o ogrocistringbuf.o \
 		ogrociwritablelayer.o ogrociloaderlayer.o ogrocistroke.o
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(OCI_INCLUDE) $(CPPFLAGS) -fPIC
+CPPFLAGS	:=	 $(OCI_INCLUDE) $(CPPFLAGS) -fPIC
 
 PLUGIN_SO	=	ogr_OCI.so
 

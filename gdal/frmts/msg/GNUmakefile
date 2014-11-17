@@ -10,7 +10,7 @@ WTOBJ=$(subst PublicDecompWT/COMP/WT/Src/, ,$(OBJ1)) $(subst PublicDecompWT/COMP
 
 OBJ	=	msgdataset.o xritheaderparser.o prologue.o msgcommand.o reflectancecalculator.o $(WTOBJ)
 
-CPPFLAGS	=	$(GDAL_INCLUDE) -I PublicDecompWT/DISE -I PublicDecompWT/COMP/WT/Inc -I PublicDecompWT/COMP/Inc -I.
+CPPFLAGS	=	 -I PublicDecompWT/DISE -I PublicDecompWT/COMP/WT/Inc -I PublicDecompWT/COMP/Inc -I.
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

@@ -7,7 +7,7 @@ OBJ	=	ntffilereader.o ntfrecord.o ogrntfdatasource.o \
 		ogrntffeatureclasslayer.o ntf_generic.o ntf_raster.o \
 		ntf_codelist.o ntfstroke.o
 
-CPPFLAGS	:=	-I.. -I../.. $(GDAL_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:=	-I.. -I../..  $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 

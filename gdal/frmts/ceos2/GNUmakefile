@@ -6,7 +6,7 @@ OBJ	=	sar_ceosdataset.o \
 include ../../GDALmake.opt
 
 
-CPPFLAGS	:=	-I../raw $(GDAL_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:=	-I../raw  $(CPPFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

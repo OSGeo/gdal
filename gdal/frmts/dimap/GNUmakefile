@@ -2,7 +2,7 @@ include ../../GDALmake.opt
 
 OBJ	=	dimapdataset.o
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS)
+
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

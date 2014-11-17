@@ -7,7 +7,7 @@ GDAL_OBJ =	nitfdataset.o rpftocdataset.o nitfwritejpeg.o \
 NITFLIB_OBJ =	nitffile.o nitfimage.o mgrs.o nitfaridpcm.o \
 		nitfbilevel.o rpftocfile.o nitfdes.o nitf_gcprpc.o
 
-CPPFLAGS	:=	-I../vrt -I../gtiff $(GDAL_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:=	-I../vrt -I../gtiff  $(CPPFLAGS)
 
 ifeq ($(TIFF_SETTING),internal)
 ifeq ($(RENAME_INTERNAL_LIBTIFF_SYMBOLS),yes)

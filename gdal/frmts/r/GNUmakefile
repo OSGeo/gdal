@@ -3,7 +3,7 @@ include ../../GDALmake.opt
 
 OBJ	=	rdataset.o rcreatecopy.o
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS)
+
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

@@ -10,7 +10,7 @@ else
 OBJ	=	gifdataset.o biggifdataset.o gifabstractdataset.o
 endif
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) $(XTRA_OPT)
+CPPFLAGS	:=	 $(CPPFLAGS) $(XTRA_OPT)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 

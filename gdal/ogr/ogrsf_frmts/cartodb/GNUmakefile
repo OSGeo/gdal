@@ -4,7 +4,7 @@ include ../../../GDALmake.opt
 
 OBJ	=	ogrcartodbdriver.o ogrcartodbdatasource.o ogrcartodblayer.o ogrcartodbtablelayer.o ogrcartodbresultlayer.o
 
-CPPFLAGS	:=	$(JSON_INCLUDE) -I.. -I../..$(GDAL_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:=	$(JSON_INCLUDE) -I.. -I../.. $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 

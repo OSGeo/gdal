@@ -11,7 +11,7 @@ OGR_OBJ = ogrvfkdriver.o ogrvfkdatasource.o ogrvfklayer.o
 
 OBJ = $(CORE_OBJ) $(OGR_OBJ)
 
-CPPFLAGS := -I.. -I../.. $(GDAL_INCLUDE) $(SQLITE_INC) $(CPPFLAGS)
+CPPFLAGS := -I.. -I../..  $(SQLITE_INC) $(CPPFLAGS)
 
 default: $(O_OBJ:.o=.$(OBJ_EXT))
 

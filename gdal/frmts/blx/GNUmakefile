@@ -5,7 +5,7 @@ XTRA_OPT =	-I. -DGDALDRIVER
 
 OBJ	=	blxdataset.o blx.o
 
-CPPFLAGS	:=	$(XTRA_OPT) $(GDAL_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:=	$(XTRA_OPT)  $(CPPFLAGS)
 
 default:        $(OBJ:.o=.$(OBJ_EXT))
 

@@ -3,7 +3,7 @@ include ../../GDALmake.opt
 
 OBJ	= srtmhgtdataset.o
 
-CPPFLAGS	:=	$(XTRA_OPT) $(GDAL_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:=	$(XTRA_OPT)  $(CPPFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

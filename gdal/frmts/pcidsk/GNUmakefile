@@ -11,13 +11,13 @@ endif
 
 ifeq ($(PCIDSK_SETTING),old)
 OBJ	=	pcidskdataset.o pcidsktiledrasterband.o
-CPPFLAGS	:=	$(GDAL_INCLUDE) -I../raw $(CPPFLAGS)
+CPPFLAGS	:=	 -I../raw $(CPPFLAGS)
 $(O_OBJ):	../raw/rawdataset.h gdal_pcidsk.h
 else
 OBJ	=	pcidskdataset2.o ogrpcidsklayer.o vsi_pcidsk_io.o gdal_edb.o $(SDKOBJ)
 ifeq ($(PCIDSK_SETTING),internal)
 CPPFLAGS	:=	$(JPEG_FLAGS) $(JPEG_INCLUDE) -DPCIDSK_INTERNAL \
-	-Isdk $(GDAL_INCLUDE) $(CPPFLAGS)
+	-Isdk  $(CPPFLAGS)
 
 SDKOBJ 	=	\
 	cbandinterleavedchannel.o \
@@ -59,7 +59,7 @@ SDKOBJ 	=	\
 	cpcidskads40model.o 
 
 else
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(PCIDSK_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:=	 $(PCIDSK_INCLUDE) $(CPPFLAGS)
 endif
 endif
 

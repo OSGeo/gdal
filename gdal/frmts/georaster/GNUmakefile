@@ -11,7 +11,7 @@ OBJ		=	georaster_dataset.o \
 			oci_wrapper.o \
 			georaster_wrapper.o
 
-CPPFLAGS	:=	$(XTRA_OPT) $(GDAL_INCLUDE) $(OCI_INCLUDE) $(CPPFLAGS) -fPIC
+CPPFLAGS	:=	$(XTRA_OPT)  $(OCI_INCLUDE) $(CPPFLAGS) -fPIC
 
 PLUGIN_SO	= gdal_GEOR.so
 
