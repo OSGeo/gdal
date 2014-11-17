@@ -3,7 +3,7 @@ include ../../GDALmake.opt
 
 OBJ	=	usgsdemdataset.o usgsdem_create.o
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) -I../../alg $(CPPFLAGS)
+CPPFLAGS	:=	 -I../../alg $(CPPFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

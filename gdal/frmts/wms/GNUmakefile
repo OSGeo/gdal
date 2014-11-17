@@ -8,7 +8,7 @@ OBJ =	gdalwmscache.o gdalwmsdataset.o gdalwmsrasterband.o \
 	minidriver_tms.o minidriver_tiled_wms.o wmsmetadataset.o \
 	minidriver_virtualearth.o
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) $(CURL_INC)
+CPPFLAGS	:=	 $(CPPFLAGS) $(CURL_INC)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

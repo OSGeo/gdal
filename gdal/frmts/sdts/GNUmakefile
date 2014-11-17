@@ -12,7 +12,7 @@ OBJ	=	sdtsiref.o sdtscatd.o sdtslinereader.o sdtslib.o \
 		sdtspolygonreader.o sdtsxref.o sdtsrasterreader.o \
 		sdtsindexedreader.o
 
-CPPFLAGS :=	-I$(ISO8211DIR) $(GDAL_INCLUDE) $(CPPFLAGS)
+CPPFLAGS :=	-I$(ISO8211DIR)  $(CPPFLAGS)
 
 SDTSLIB	=	libsdts_al.a
 LIBS	:=	$(SDTSLIB) $(ISO8211DIR)/libiso8211.a $(GDAL_LIB) $(LIBS)

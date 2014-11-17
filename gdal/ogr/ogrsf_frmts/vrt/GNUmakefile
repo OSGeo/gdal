@@ -4,7 +4,7 @@ include ../../../GDALmake.opt
 
 OBJ	=	ogrvrtdatasource.o ogrvrtlayer.o ogrvrtdriver.o
 
-CPPFLAGS	:=	-I.. -I../.. -I../generic $(GDAL_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:=	-I.. -I../.. -I../generic  $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 

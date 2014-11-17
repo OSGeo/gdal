@@ -4,7 +4,7 @@ include ../../../GDALmake.opt
 
 OBJ	=	ogrmemdriver.o ogrmemdatasource.o ogrmemlayer.o
 
-CPPFLAGS	:=	-I.. -I../.. $(GDAL_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:=	-I.. -I../..  $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 

@@ -3,7 +3,7 @@ include ../../GDALmake.opt
 
 OBJ	=	ogdidataset.o
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(OGDI_INCLUDE) $(PROJ_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:=	 $(OGDI_INCLUDE) $(PROJ_INCLUDE) $(CPPFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

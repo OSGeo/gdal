@@ -3,7 +3,7 @@ include ../../GDALmake.opt
 
 OBJ	=	rasdamandataset.o
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) $(RASDAMAN_INC)
+CPPFLAGS	:=	 $(CPPFLAGS) $(RASDAMAN_INC)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

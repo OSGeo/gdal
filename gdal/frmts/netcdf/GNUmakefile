@@ -17,7 +17,7 @@ ifeq ($(HAVE_HDF5),yes)
 XTRA_OPT := -DHAVE_HDF5 $(XTRA_OPT)
 endif
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) $(XTRA_OPT) 
+CPPFLAGS	:=	 $(CPPFLAGS) $(XTRA_OPT) 
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

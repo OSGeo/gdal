@@ -3,7 +3,7 @@ include ../../GDALmake.opt
 
 OBJ	=	ctgdataset.o
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) $(XTRA_OPT)
+CPPFLAGS	:=	 $(CPPFLAGS) $(XTRA_OPT)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

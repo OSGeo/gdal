@@ -10,7 +10,7 @@ OBJ	=	ogrs57driver.o ogrs57datasource.o ogrs57layer.o \
 		s57classregistrar.o s57filecollector.o \
 	        s57featuredefns.o
 
-CPPFLAGS	:=	-I.. -I../.. -I$(ISODIR) $(GDAL_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:=	-I.. -I../.. -I$(ISODIR)  $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 

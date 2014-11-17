@@ -3,7 +3,7 @@ include ../../GDALmake.opt
 
 OBJ	=	terragendataset.o
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS)
+
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

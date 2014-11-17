@@ -35,7 +35,7 @@ OBJ	=	ogrdwgdriver.o ogrdwgdatasource.o ogrdwglayer.o \
 		ogrdwg_dimension.o ogrdwg_hatch.o ogrdwgblockslayer.o \
 		ogrdwg_blockmap.o
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) -I../dxf $(TDXXFLAGS) $(CPPFLAGS)
+CPPFLAGS	:=	 -I../dxf $(TDXXFLAGS) $(CPPFLAGS)
 
 PLUGIN_SO	=	ogr_DWG.so
 

@@ -4,7 +4,7 @@ include ../../../GDALmake.opt
 
 OBJ	=	ogrpdsdriver.o ogrpdsdatasource.o ogrpdslayer.o
 
-CPPFLAGS	:=	-I.. -I../.. -I../../../frmts/pds $(GDAL_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:=	-I.. -I../.. -I../../../frmts/pds  $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 

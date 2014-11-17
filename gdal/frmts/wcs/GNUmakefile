@@ -3,7 +3,7 @@ include ../../GDALmake.opt
 
 OBJ	=	wcsdataset.o httpdriver.o
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) 
+CPPFLAGS	:=	 $(CPPFLAGS) 
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

@@ -3,7 +3,7 @@ include ../../GDALmake.opt
 
 OBJ	=	levellerdataset.o
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS)
+
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

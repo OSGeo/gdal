@@ -6,9 +6,9 @@ HFAOBJ  =	hfaopen.o hfaentry.o hfadictionary.o hfafield.o hfatype.o \
 		hfaband.o hfacompress.o
 OBJ	=	$(HFAOBJ) hfadataset.o hfa_overviews.o
 
-ALL_C_FLAGS	=	$(GDAL_INCLUDE) $(CFLAGS)
+ALL_C_FLAGS	=	 $(CFLAGS)
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS)
+
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

@@ -9,7 +9,7 @@ else
 XTRA_OPT =
 endif
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) $(XTRA_OPT)
+CPPFLAGS	:=	 $(CPPFLAGS) $(XTRA_OPT)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

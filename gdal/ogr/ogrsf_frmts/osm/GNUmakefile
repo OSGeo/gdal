@@ -4,7 +4,7 @@ include ../../../GDALmake.opt
 
 OBJ =	ogrosmdriver.o ogrosmdatasource.o ogrosmlayer.o osm_parser.o
 
-CPPFLAGS :=	-I.. -I../.. -I../sqlite -I../generic $(GDAL_INCLUDE) $(EXPAT_INCLUDE) $(SQLITE_INC) $(CPPFLAGS)
+CPPFLAGS :=	-I.. -I../.. -I../sqlite -I../generic  $(EXPAT_INCLUDE) $(SQLITE_INC) $(CPPFLAGS)
 
 ifeq ($(HAVE_EXPAT),yes)
 CPPFLAGS +=  -DHAVE_EXPAT

@@ -19,7 +19,7 @@ INSTOBJ = $(foreach d,$(APPOBJ),../o/$(notdir $(d)))
 
 #CXXFLAGS :=	$(CXXFLAGS) -DFILEIO_DEBUG
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(KAKINC) -I. $(CPPFLAGS)
+CPPFLAGS	:=	 $(KAKINC) -I. $(CPPFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

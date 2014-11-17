@@ -3,7 +3,7 @@ include ../../GDALmake.opt
 
 OBJ	=	rs2dataset.o
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS)
+
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

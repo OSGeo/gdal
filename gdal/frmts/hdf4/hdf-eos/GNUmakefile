@@ -9,7 +9,7 @@ OBJ	= \
 
 O_OBJ	=	$(foreach file,$(OBJ),../../o/$(file))
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(HDF4_INCLUDE) -I. -I.. $(CPPFLAGS) 
+CPPFLAGS	:=	 $(HDF4_INCLUDE) -I. -I.. $(CPPFLAGS) 
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
@@ -19,4 +19,4 @@ clean:
 install-obj:    $(SUBLIBS) $(O_OBJ:.o=.$(OBJ_EXT))
 
 ../../o/%.$(OBJ_EXT):	%.c
-	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
+	$(CC) $(GDAL_INCLUDE) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<

@@ -3,7 +3,7 @@ include ../../../GDALmake.opt
 
 OBJ	=	ogrgpsbabeldriver.o ogrgpsbabeldatasource.o ogrgpsbabelwritedatasource.o
 
-CPPFLAGS	:=	-I.. -I../.. $(GDAL_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:=	-I.. -I../..  $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 

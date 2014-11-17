@@ -6,7 +6,7 @@ OBJ	=	ogringresdriver.o ogringresstatement.o ogringresdatasource.o \
 
 #	ogringresresultlayer.o
 
-CPPFLAGS	:=	-I.. -I../.. $(GDAL_INCLUDE) $(INGRES_INC) $(CPPFLAGS)
+CPPFLAGS	:=	-I.. -I../..  $(INGRES_INC) $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 

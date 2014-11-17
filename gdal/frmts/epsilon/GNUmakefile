@@ -3,7 +3,7 @@ include ../../GDALmake.opt
 
 OBJ	=	epsilondataset.o
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(EPSILON_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:=	 $(EPSILON_INCLUDE) $(CPPFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

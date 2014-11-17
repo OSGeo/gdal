@@ -4,7 +4,7 @@ include ../../GDALmake.opt
 
 OBJ	=	memdataset.o
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS)
+
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

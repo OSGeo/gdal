@@ -9,7 +9,7 @@ OBJ	=	ddsdataset.o
 
 CRUNCHINC = -I$(CRUNCHDIR)/include/crunch
 
-CPPFLAGS	:=	$(XTRA_OPT) $(GDAL_INCLUDE) $(CRUNCHINC) $(CPPFLAGS)
+CPPFLAGS	:=	$(XTRA_OPT)  $(CRUNCHINC) $(CPPFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

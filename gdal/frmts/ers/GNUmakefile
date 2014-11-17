@@ -4,7 +4,7 @@ include ../../GDALmake.opt
 
 OBJ	=	ersdataset.o ershdrnode.o
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) -I../raw $(CPPFLAGS)
+CPPFLAGS	:=	 -I../raw $(CPPFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

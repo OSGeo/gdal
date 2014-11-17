@@ -3,7 +3,7 @@ include ../../GDALmake.opt
 
 OBJ	=	tildataset.o
 
-CPPFLAGS	:=	-I../vrt $(GDAL_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:=	-I../vrt  $(CPPFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
