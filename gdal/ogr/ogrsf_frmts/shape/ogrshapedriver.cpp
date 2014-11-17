@@ -271,6 +271,7 @@ void RegisterOGRShape()
 "  <Option name='2GB_LIMIT' type='boolean' description='Restrict .shp and .dbf to 2GB' default='NO'/>"
 "  <Option name='ENCODING' type='string' description='DBF encoding' default='LDID/87'/>"
 "  <Option name='RESIZE' type='boolean' description='To resize fields to their optimal size.' default='NO'/>"
+"  <Option name='SPATIAL_INDEX' type='boolean' description='To create a spatial index.' default='NO'/>"
 "</LayerCreationOptionList>");
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );

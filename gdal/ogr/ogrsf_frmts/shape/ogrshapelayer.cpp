@@ -108,6 +108,7 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
     TouchLayer();
 
     bResizeAtClose = FALSE;
+    bCreateSpatialIndexAtClose = FALSE;
 
     if( hDBF != NULL && hDBF->pszCodePage != NULL )
     {
@@ -165,6 +166,10 @@ OGRShapeLayer::~OGRShapeLayer()
     if( bResizeAtClose && hDBF != NULL )
     {
         ResizeDBF();
+    }
+    if( bCreateSpatialIndexAtClose && hSHP != NULL )
+    {
+        CreateSpatialIndex(0);
     }
 
     if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )

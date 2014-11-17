@@ -148,6 +148,8 @@ class OGRShapeLayer : public OGRAbstractProxiedLayer
     int                 bResizeAtClose;
 
     void                TruncateDBF();
+    
+    int                 bCreateSpatialIndexAtClose;
 
   protected:
 
@@ -207,6 +209,7 @@ class OGRShapeLayer : public OGRAbstractProxiedLayer
     virtual OGRErr      SetAttributeFilter( const char * );
     
     void                AddToFileList( CPLStringList& oFileList );
+    void                CreateSpatialIndexAtClose( int bFlag ) { bCreateSpatialIndexAtClose = bFlag; }
 };
 
 /************************************************************************/
