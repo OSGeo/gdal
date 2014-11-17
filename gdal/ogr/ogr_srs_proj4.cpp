@@ -1133,6 +1133,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     if( pszValue != NULL )
     {
         SetExtension( "DATUM", "PROJ4_GRIDS", pszValue );
+        FixupOrdering();
     }
 
 /* -------------------------------------------------------------------- */

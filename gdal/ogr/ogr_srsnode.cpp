@@ -854,16 +854,16 @@ static const char * const apszPROJCSRule[] =
   NULL };
 
 static const char * const apszDATUMRule[] = 
-{ "DATUM", "SPHEROID", "TOWGS84", "AUTHORITY", NULL };
+{ "DATUM", "SPHEROID", "TOWGS84", "EXTENSION", "AUTHORITY", NULL };
 
 static const char * const apszGEOGCSRule[] = 
-{ "GEOGCS", "DATUM", "PRIMEM", "UNIT", "AXIS", "AUTHORITY", NULL };
+{ "GEOGCS", "DATUM", "PRIMEM", "UNIT", "AXIS", "EXTENSION", "AUTHORITY", NULL };
 
 static const char * const apszGEOCCSRule[] = 
 { "GEOCCS", "DATUM", "PRIMEM", "UNIT", "AXIS", "AUTHORITY", NULL };
 
 static const char * const apszVERTCSRule[] = 
-{ "VERT_CS", "VERT_DATUM", "UNIT", "AXIS", "AUTHORITY", NULL };
+{ "VERT_CS", "VERT_DATUM", "UNIT", "AXIS", "EXTENSION", "AUTHORITY", NULL };
 
 static const char * const *apszOrderingRules[] = {
     apszPROJCSRule, apszGEOGCSRule, apszDATUMRule, apszGEOCCSRule, apszVERTCSRule, NULL };

@@ -135,7 +135,7 @@ horz_cs:
 /* opt_extension is an extension of the CT spec */
 projected_cs:
     T_PROJCS begin_node_name ',' geographic_cs ',' projection ','
-                    opt_parameter_list_linear_unit opt_twin_axis_authority_extension end_node
+                    opt_parameter_list_linear_unit opt_twin_axis_extension_authority end_node
 
 opt_parameter_list_linear_unit:
     linear_unit
@@ -145,13 +145,13 @@ parameter_list_linear_unit:
     parameter ',' parameter_list_linear_unit
   | parameter ',' linear_unit
 
-opt_twin_axis_authority_extension:
-    | ',' twin_axis opt_authority_extension
-    | ',' authority opt_extension
-    | ',' extension
+opt_twin_axis_extension_authority:
+    | ',' twin_axis opt_extension_authority
+    | ',' extension opt_authority
+    | ',' authority
 
-opt_extension:
-    | ',' extension
+opt_authority:
+    | ',' authority
 
 extension:
     T_EXTENSION begin_node_name ',' T_STRING end_node
@@ -159,20 +159,17 @@ extension:
 projection:
     T_PROJECTION begin_node_name opt_authority end_node
 
-opt_authority:
-    | ',' authority
-
 geographic_cs:
     T_GEOGCS begin_node_name',' datum ',' prime_meridian ','
-                    angular_unit opt_twin_axis_authority_extension end_node
+                    angular_unit opt_twin_axis_extension_authority end_node
 
 datum:
     T_DATUM begin_node_name ',' spheroid opt_towgs84_authority_extension end_node
 
 opt_towgs84_authority_extension:
-    | ',' towgs84 opt_authority_extension
-    | ',' authority opt_extension
-    | ',' extension
+    | ',' towgs84 opt_extension_authority
+    | ',' extension opt_authority
+    | ',' authority
 
 spheroid:
     T_SPHEROID begin_node_name ',' semi_major_axis ','
@@ -224,17 +221,17 @@ opt_axis_authority:
     | ',' authority
 
 vert_datum:
-    T_VERT_DATUM begin_node_name ',' datum_type opt_authority_extension end_node
+    T_VERT_DATUM begin_node_name ',' datum_type opt_extension_authority end_node
 
-opt_authority_extension:
-    | ',' authority opt_extension
-    | ',' extension
+opt_extension_authority:
+    | ',' extension opt_authority
+    | ',' authority
 
 datum_type:
     T_NUMBER
 
 compd_cs:
-    T_COMPD_CS begin_node_name ',' head_cs ',' tail_cs opt_authority_extension end_node
+    T_COMPD_CS begin_node_name ',' head_cs ',' tail_cs opt_extension_authority end_node
 
 head_cs:
     coordinate_system

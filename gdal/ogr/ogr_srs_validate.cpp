@@ -1011,6 +1011,11 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
                 if (eErr != OGRERR_NONE)
                     return eErr;
             }
+            else if( EQUAL(poNode->GetValue(),"EXTENSION") )
+            {
+                // We do not try to control the sub-organization of 
+                // EXTENSION nodes.
+            }
             else if( EQUAL(poNode->GetValue(),"AUTHORITY") )
             {
                 OGRErr eErr = ValidateAuthority(poNode);
