@@ -756,7 +756,8 @@ def osr_proj4_20():
     srs = osr.SpatialReference()
     srs.ImportFromProj4( "+proj=longlat +foo=bar +wktext" )
 
-    if srs.ExportToWkt() != 'GEOGCS["WGS 84",DATUM["unknown",SPHEROID["WGS84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],EXTENSION["PROJ4","+proj=longlat +foo=bar +wktext"]]':
+    if srs.ExportToWkt() != 'GEOGCS["WGS 84",DATUM["unknown",SPHEROID["WGS84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],EXTENSION["PROJ4","+proj=longlat +foo=bar +wktext"]]' and \
+       srs.ExportToWkt() != 'GEOGCS["unnamed ellipse",DATUM["unknown",SPHEROID["unnamed",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],EXTENSION["PROJ4","+proj=longlat +foo=bar +wktext"]]':
         gdaltest.post_reason( 'fail' )
         print(srs.ExportToWkt())
         return 'fail'
