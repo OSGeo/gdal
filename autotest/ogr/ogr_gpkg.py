@@ -576,12 +576,15 @@ def ogr_gpkg_13():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    # Test second aspatial layer
+    lyr = gdaltest.gpkg_ds.CreateLayer('non_spatial2', geom_type = ogr.wkbNone )
+
     gdaltest.gpkg_ds = None
     gdaltest.gpkg_ds = ogr.Open('tmp/gpkg_test.gpkg', update = 1)
     if gdal.GetLastErrorMsg() != '':
         gdaltest.post_reason('fail : warning NOT expected')
         return 'fail'
-    if gdaltest.gpkg_ds.GetLayerCount() != 4:
+    if gdaltest.gpkg_ds.GetLayerCount() != 5:
         gdaltest.post_reason('fail')
         return 'fail'
     lyr = gdaltest.gpkg_ds.GetLayer('non_spatial')

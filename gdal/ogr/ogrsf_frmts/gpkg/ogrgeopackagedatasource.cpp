@@ -1222,8 +1222,11 @@ OGRErr OGRGeoPackageDataSource::CreateGDALAspatialExtension()
 {
     CreateExtensionsTableIfNecessary();
 
+    if( HasGDALAspatialExtension() )
+        return OGRERR_NONE;
+
     const char* pszCreateAspatialExtension =
-        "INSERT OR REPLACE INTO gpkg_extensions "
+        "INSERT INTO gpkg_extensions "
         "(table_name, column_name, extension_name, definition, scope) "
         "VALUES "
         "(NULL, NULL, 'gdal_aspatial', 'http://gdal.org/geopackage_aspatial.html', 'read-write')";
