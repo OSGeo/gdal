@@ -13892,6 +13892,7 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "SRS_PT_WAGNER_V",SWIG_FromCharPtr("Wagner_V"));
   SWIG_Python_SetConstant(d, "SRS_PT_WAGNER_VI",SWIG_FromCharPtr("Wagner_VI"));
   SWIG_Python_SetConstant(d, "SRS_PT_WAGNER_VII",SWIG_FromCharPtr("Wagner_VII"));
+  SWIG_Python_SetConstant(d, "SRS_PT_QSC",SWIG_FromCharPtr("Quadrilateralized_Spherical_Cube"));
   SWIG_Python_SetConstant(d, "SRS_PP_CENTRAL_MERIDIAN",SWIG_FromCharPtr("central_meridian"));
   SWIG_Python_SetConstant(d, "SRS_PP_SCALE_FACTOR",SWIG_FromCharPtr("scale_factor"));
   SWIG_Python_SetConstant(d, "SRS_PP_STANDARD_PARALLEL_1",SWIG_FromCharPtr("standard_parallel_1"));
