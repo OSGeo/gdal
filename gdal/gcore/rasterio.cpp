@@ -201,7 +201,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         nLineSpace == nPixelSpace * nBufXSize &&
         CSLTestBoolean(CPLGetConfigOption("GDAL_NO_COSTLY_OVERVIEW", "NO")) )
     {
-        memset(pData, 0, nLineSpace * nBufYSize);
+        memset(pData, 0, (size_t)nLineSpace * nBufYSize);
         return CE_None;
     }
 
@@ -2459,7 +2459,7 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
 
                 pabyChunkData = ((GByte *) pData) 
                     + iBufXOff * nPixelSpace 
-                    + iBufYOff * nLineSpace;
+                    + (size_t)iBufYOff * nLineSpace;
 
                 for( iBand = 0; iBand < nBandCount; iBand++ )
                 {
@@ -2469,7 +2469,7 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
                         poBand->GDALRasterBand::IRasterIO( 
                             eRWFlag, nChunkXOff, nChunkYOff, 
                             nChunkXSize, nChunkYSize, 
-                            pabyChunkData + iBand * nBandSpace, 
+                            pabyChunkData + iBand * (size_t)nBandSpace, 
                             nChunkXSize, nChunkYSize, eBufType, 
                             nPixelSpace, nLineSpace );
                     if( eErr != CE_None )
@@ -2530,12 +2530,12 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
     for( iBufYOff = 0; iBufYOff < nBufYSize; iBufYOff++ )
     {
-        int     iBufOffset, iSrcOffset;
+        size_t  iBufOffset, iSrcOffset;
         
         dfSrcY = (iBufYOff+0.5) * dfSrcYInc + nYOff;
         iSrcY = (int) dfSrcY;
 
-        iBufOffset = iBufYOff * nLineSpace;
+        iBufOffset = iBufYOff * (size_t)nLineSpace;
         
         for( iBufXOff = 0; iBufXOff < nBufXSize; iBufXOff++ )
         {
@@ -2596,13 +2596,13 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      Copy over this pixel of data.                                   */
 /* -------------------------------------------------------------------- */
-            iSrcOffset = (iSrcX - nLBlockX*nBlockXSize
-                + (iSrcY - nLBlockY*nBlockYSize) * nBlockXSize)*nBandDataSize;
+            iSrcOffset = ((size_t)iSrcX - (size_t)nLBlockX*nBlockXSize
+                + ((size_t)iSrcY - (size_t)nLBlockY*nBlockYSize) * nBlockXSize)*nBandDataSize;
 
             for( iBand = 0; iBand < nBandCount; iBand++ )
             {
                 GByte *pabySrcBlock = papabySrcBlock[iBand];
-                int iBandBufOffset = iBufOffset + iBand * nBandSpace;
+                size_t iBandBufOffset = iBufOffset + iBand * (size_t)nBandSpace;
                 
                 if( eDataType == eBufType )
                 {
