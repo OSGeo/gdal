@@ -505,7 +505,7 @@ void OGRFree( void * pMemory )
  *
  *  int main( int argc, char ** argv )
  *  { 
- *    OGRAllRegister();
+ *    OGRRegisterAll();
  *
  *    argc = OGRGeneralCmdLineProcessor( argc, &argv, 0 );
  *    if( argc < 1 )
