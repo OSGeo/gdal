@@ -29,7 +29,7 @@ endif
 
 $(O_OBJ):       pdfobject.h pdfio.h pdfcreatecopy.h
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) $(POPPLER_INC) $(PODOFO_INC) -I..
+CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) -I../vrt $(POPPLER_INC) $(PODOFO_INC)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
