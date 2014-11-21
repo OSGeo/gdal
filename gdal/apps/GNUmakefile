@@ -4,7 +4,7 @@
 
 include ../GDALmake.opt
 
-CPPFLAGS :=	-I$(GDAL_ROOT)/frmts $(CPPFLAGS)
+CPPFLAGS :=	-I$(GDAL_ROOT)/frmts/vrt $(CPPFLAGS)
 LNK_FLAGS :=	$(LDFLAGS)
 DEP_LIBS =	$(EXE_DEP_LIBS) $(XTRAOBJ)
 

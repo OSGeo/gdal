@@ -33,7 +33,7 @@
 #include "cpl_string.h"
 #include "gdal_priv.h"
 #include "ogr_spatialref.h"
-#include "vrt/vrtdataset.h"
+#include "vrtdataset.h"
 #include "commonutils.h"
 
 CPL_CVSID("$Id$");
