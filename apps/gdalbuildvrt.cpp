@@ -29,8 +29,8 @@
 
 #include "gdal_proxy.h"
 #include "cpl_string.h"
-#include "vrt/gdal_vrt.h"
-#include "vrt/vrtdataset.h"
+#include "gdal_vrt.h"
+#include "vrtdataset.h"
 
 #ifdef OGR_ENABLED
 #include "ogr_api.h"
