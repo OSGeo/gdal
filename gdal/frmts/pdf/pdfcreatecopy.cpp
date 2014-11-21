@@ -35,7 +35,7 @@
 #include "cpl_error.h"
 #include "ogr_spatialref.h"
 #include "ogr_geometry.h"
-#include "vrt/vrtdataset.h"
+#include "vrtdataset.h"
 
 #include "pdfobject.h"
 

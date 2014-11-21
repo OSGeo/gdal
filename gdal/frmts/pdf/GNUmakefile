@@ -28,7 +28,7 @@ endif
 
 $(O_OBJ):       pdfobject.h pdfio.h pdfcreatecopy.h gdal_pdf.h
 
-CPPFLAGS	:=	 $(CPPFLAGS) $(POPPLER_INC) $(PODOFO_INC) -I.. -I../mem -I../../ogr/ogrsf_frmts/mem
+CPPFLAGS	:=	 $(CPPFLAGS) $(POPPLER_INC) $(PODOFO_INC) -I../vrt -I../mem -I../../ogr/ogrsf_frmts/mem
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
