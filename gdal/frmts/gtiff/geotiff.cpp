@@ -8122,6 +8122,16 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     int bMinIsWhite = nPhotometric == PHOTOMETRIC_MINISWHITE;
 
 /* -------------------------------------------------------------------- */
+/*      Check for NODATA                                                */
+/* -------------------------------------------------------------------- */
+    char    *pszText;
+    if( TIFFGetField( hTIFF, TIFFTAG_GDAL_NODATA, &pszText ) )
+    {
+        bNoDataSet = TRUE;
+        dfNoDataValue = CPLAtofM( pszText );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Capture the color table if there is one.                        */
 /* -------------------------------------------------------------------- */
     unsigned short	*panRed, *panGreen, *panBlue;
@@ -8130,29 +8140,29 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         || TIFFGetField( hTIFF, TIFFTAG_COLORMAP, 
                          &panRed, &panGreen, &panBlue) == 0 )
     {
-	// Build inverted palette if we have inverted photometric.
-	// Pixel values remains unchanged.  Avoid doing this for *deep*
-        // data types (per #1882)
-	if( nBitsPerSample <= 16 && nPhotometric == PHOTOMETRIC_MINISWHITE )
-	{
-	    GDALColorEntry  oEntry;
-	    int		    iColor, nColorCount;
-	    
-	    poColorTable = new GDALColorTable();
-	    nColorCount = 1 << nBitsPerSample;
+        // Build inverted palette if we have inverted photometric.
+        // Pixel values remains unchanged.  Avoid doing this for *deep*
+            // data types (per #1882)
+        if( nBitsPerSample <= 16 && nPhotometric == PHOTOMETRIC_MINISWHITE )
+        {
+            GDALColorEntry  oEntry;
+            int		    iColor, nColorCount;
+            
+            poColorTable = new GDALColorTable();
+            nColorCount = 1 << nBitsPerSample;
 
-	    for ( iColor = 0; iColor < nColorCount; iColor++ )
-	    {
-		oEntry.c1 = oEntry.c2 = oEntry.c3 = (short) 
-                    ((255 * (nColorCount - 1 - iColor)) / (nColorCount-1));
-		oEntry.c4 = 255;
-		poColorTable->SetColorEntry( iColor, &oEntry );
-	    }
+            for ( iColor = 0; iColor < nColorCount; iColor++ )
+            {
+            oEntry.c1 = oEntry.c2 = oEntry.c3 = (short) 
+                        ((255 * (nColorCount - 1 - iColor)) / (nColorCount-1));
+            oEntry.c4 = 255;
+            poColorTable->SetColorEntry( iColor, &oEntry );
+            }
 
-	    nPhotometric = PHOTOMETRIC_PALETTE;
-	}
-	else
-	    poColorTable = NULL;
+            nPhotometric = PHOTOMETRIC_PALETTE;
+        }
+        else
+            poColorTable = NULL;
     }
     else
     {
@@ -8168,7 +8178,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
             oEntry.c1 = panRed[iColor] / 256;
             oEntry.c2 = panGreen[iColor] / 256;
             oEntry.c3 = panBlue[iColor] / 256;
-            oEntry.c4 = 255;
+            oEntry.c4 = (bNoDataSet && (int)dfNoDataValue == iColor) ? 0 : 255;
 
             poColorTable->SetColorEntry( iColor, &oEntry );
 
@@ -8189,7 +8199,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
                 oEntry.c1 = panRed[iColor];
                 oEntry.c2 = panGreen[iColor];
                 oEntry.c3 = panBlue[iColor];
-                oEntry.c4 = 255;
+                oEntry.c4 = (bNoDataSet && (int)dfNoDataValue == iColor) ? 0 : 255;
                 
                 poColorTable->SetColorEntry( iColor, &oEntry );
             }
@@ -8398,7 +8408,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 /* -------------------------------------------------------------------- */
 /*      Capture some other potentially interesting information.         */
 /* -------------------------------------------------------------------- */
-    char	*pszText, szWorkMDI[200];
+    char	szWorkMDI[200];
     uint16  nShort;
 
     size_t iTag;
@@ -8610,15 +8620,6 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     }
 
     bMetadataChanged = FALSE;
-
-/* -------------------------------------------------------------------- */
-/*      Check for NODATA                                                */
-/* -------------------------------------------------------------------- */
-    if( TIFFGetField( hTIFF, TIFFTAG_GDAL_NODATA, &pszText ) )
-    {
-        bNoDataSet = TRUE;
-        dfNoDataValue = CPLAtofM( pszText );
-    }
 
 /* -------------------------------------------------------------------- */
 /*      If this is a "base" raster, we should scan for any              */
