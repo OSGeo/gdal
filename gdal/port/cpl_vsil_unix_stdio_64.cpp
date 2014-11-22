@@ -203,10 +203,7 @@ int VSIUnixStdioHandle::Close()
 /************************************************************************/
 
 int VSIUnixStdioHandle::Seek( vsi_l_offset nOffset, int nWhence )
-
 {
-    GByte abyTemp[4096];
-
     bAtEOF = FALSE;
 
     // seeks that do nothing are still surprisingly expensive with MSVCRT.
@@ -221,6 +218,7 @@ int VSIUnixStdioHandle::Seek( vsi_l_offset nOffset, int nWhence )
         GIntBig nDiff = (GIntBig)nOffset - (GIntBig)this->nOffset;
         if( nDiff > 0 && nDiff < 4096 )
         {
+            GByte abyTemp[4096];
             int nRead = (int)fread(abyTemp, 1, (int)nDiff, fp);
             if( nRead == (int)nDiff )
             {
@@ -232,8 +230,8 @@ int VSIUnixStdioHandle::Seek( vsi_l_offset nOffset, int nWhence )
         }
     }
 
-    int     nResult = VSI_FSEEK64( fp, nOffset, nWhence );
-    int     nError = errno;
+    const int nResult = VSI_FSEEK64( fp, nOffset, nWhence );
+    int nError = errno;
 
 #ifdef VSI_DEBUG
 
@@ -258,7 +256,7 @@ int VSIUnixStdioHandle::Seek( vsi_l_offset nOffset, int nWhence )
                    fp, nOffset, nWhence, nResult );
     }
 
-#endif 
+#endif
 
     if( nResult != -1 )
     {
@@ -275,7 +273,7 @@ int VSIUnixStdioHandle::Seek( vsi_l_offset nOffset, int nWhence )
             this->nOffset += nOffset;
         }
     }
-        
+
     bLastOpWrite = FALSE;
     bLastOpRead = FALSE;
 
