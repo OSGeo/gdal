@@ -2440,6 +2440,9 @@ CPLLocaleC::~CPLLocaleC()
  * potential data race. A mutex is used to provide a critical region so
  * that only one thread at a time can be executing setlocale().
  *
+ * The return should not be freed, and copied quickly as it may be invalidated
+ * by a following next call to CPLsetlocale().
+ *
  * @param category See your compiler's documentation on setlocale.
  * @param locale See your compiler's documentation on setlocale.
  *
@@ -2448,7 +2451,10 @@ CPLLocaleC::~CPLLocaleC()
 char* CPLsetlocale (int category, const char* locale)
 {
     CPLMutexHolder oHolder(&hSetLocaleMutex);
-    return setlocale(category, locale);
+    char* pszRet = setlocale(category, locale);
+    if( pszRet == NULL )
+        return pszRet;
+    return (char*)CPLSPrintf("%s", pszRet); /* to make it thread-locale storage */
 }
 
 
