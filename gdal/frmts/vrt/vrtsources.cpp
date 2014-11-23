@@ -920,7 +920,7 @@ VRTSimpleSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                                 nReqXOff, nReqYOff, nReqXSize, nReqYSize,
                                 ((unsigned char *) pData) 
                                 + nOutXOff * nPixelSpace
-                                + (size_t)nOutYOff * nLineSpace, 
+                                + (GPtrDiff_t)nOutYOff * nLineSpace, 
                                 nOutXSize, nOutYSize, 
                                 eBufType, nPixelSpace, nLineSpace );
 
@@ -1112,7 +1112,7 @@ CPLErr VRTSimpleSource::DatasetRasterIO(
                            nReqXOff, nReqYOff, nReqXSize, nReqYSize,
                            ((unsigned char *) pData)
                            + nOutXOff * nPixelSpace
-                           + (size_t)nOutYOff * nLineSpace,
+                           + (GPtrDiff_t)nOutYOff * nLineSpace,
                            nOutXSize, nOutYSize,
                            eBufType, nBandCount, panBandMap,
                            nPixelSpace, nLineSpace, nBandSpace );
@@ -1293,7 +1293,7 @@ VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 
             pDstLocation = ((GByte *)pData) 
                 + nPixelSpace * iBufPixel
-                + (size_t)nLineSpace * iBufLine;
+                + (GPtrDiff_t)nLineSpace * iBufLine;
 
             if( eBufType == GDT_Byte )
                 *pDstLocation = (GByte) MIN(255,MAX(0,dfOutputValue + 0.5));
@@ -1703,7 +1703,7 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
     return RasterIOInternal(nReqXOff, nReqYOff, nReqXSize, nReqYSize,
                        ((GByte *)pData)
                             + nPixelSpace * nOutXOff
-                            + (size_t)nLineSpace * nOutYOff,
+                            + (GPtrDiff_t)nLineSpace * nOutYOff,
                        nOutXSize, nOutYSize,
                        eBufType,
                        nPixelSpace, nLineSpace );
@@ -1785,7 +1785,7 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
 
             pDstLocation = ((GByte *)pData)
                 + nPixelSpace * iX
-                + (size_t)nLineSpace * iY;
+                + (GPtrDiff_t)nLineSpace * iY;
 
             if (pafData && !bIsComplex)
             {

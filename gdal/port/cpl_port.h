@@ -231,6 +231,12 @@ typedef unsigned long    GUIntBig;
 
 #endif
 
+#if SIZEOF_VOIDP == 8
+typedef GIntBig          GPtrDiff_t;
+#else
+typedef int              GPtrDiff_t;
+#endif
+
 #if defined(__MSVCRT__) || (defined(WIN32) && defined(_MSC_VER))
   #define CPL_FRMT_GB_WITHOUT_PREFIX     "I64"
 #elif HAVE_LONG_LONG
