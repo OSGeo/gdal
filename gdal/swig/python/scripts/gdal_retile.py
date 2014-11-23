@@ -45,6 +45,11 @@ import sys
 import os
 import math
 
+try:
+    progress = gdal.TermProgress_nocb
+except:
+    progress = gdal.TermProgress
+
 class AffineTransformDecorator:
     """ A class providing some useful methods for affine Transformations """
     def __init__(self, transform ):
@@ -348,6 +353,11 @@ def tileImage(minfo, ti ):
     yRange = list(range(1,ti.countTilesY+1))
     xRange = list(range(1,ti.countTilesX+1))
 
+    if not Quiet and not Verbose:
+        progress(0.0)
+        processed = 0
+        total = len(xRange) * len(yRange)
+
     for yIndex in yRange:
         for xIndex in xRange:
             offsetY=(yIndex-1)* ti.tileHeight
@@ -367,6 +377,9 @@ def tileImage(minfo, ti ):
                 tilename=getTileName(minfo,ti, xIndex, yIndex)
             createTile(minfo, offsetX, offsetY, width, height,tilename,OGRDS)
 
+            if not Quiet and not Verbose:
+                processed += 1
+                progress(processed / float(total))
 
     if TileIndexName is not None:
         if UseDirForEachRow and PyramidOnly == False:
@@ -708,7 +721,7 @@ def UsageFormat():
 # =============================================================================
 def Usage():
      print('Usage: gdal_retile.py ')
-     print('        [-v] [-co NAME=VALUE]* [-of out_format]')
+     print('        [-v] [-q] [-co NAME=VALUE]* [-of out_format]')
      print('        [-ps pixelWidth pixelHeight]')
      print('        [-ot  {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/')
      print('               CInt16/CInt32/CFloat32/CFloat64}]')
@@ -730,6 +743,7 @@ def Usage():
 def main(args = None):
 
     global Verbose
+    global Quiet
     global CreateOptions
     global Names
     global TileWidth
@@ -781,6 +795,8 @@ def main(args = None):
 
         elif arg == '-v':
             Verbose = True
+        elif arg == '-q':
+            Quiet = True
 
         elif arg == '-targetDir':
             i+=1
@@ -993,6 +1009,7 @@ def initGlobals():
 
 #global vars
 Verbose=False
+Quiet=False
 CreateOptions = []
 Names=[]
 TileWidth=256
