@@ -46,7 +46,7 @@ import os
 import math
 
 class AffineTransformDecorator:
-    """ A class providing some usefull methods for affine Transformations """
+    """ A class providing some useful methods for affine Transformations """
     def __init__(self, transform ):
         self.geotransform=transform
         self.scaleX=self.geotransform[1]
@@ -85,7 +85,7 @@ class DataSetCache:
             return self.dict[name]
         result = gdal.Open(name)
         if result is None:
-            print("Error openenig:%s" % NameError)
+            print("Error opening: %s" % NameError)
             sys.exit(1)
         if len(self.queue)==self.cacheSize:
             toRemove = self.queue.pop(0)
@@ -206,7 +206,7 @@ class mosaic_info:
         if envelope is None:
             return None
 
-        #enlarge to query rect if necessairy
+        #enlarge to query rect if necessary
         envelope= ( min(minx,envelope[0]),max(maxx,envelope[1]),
                     min(miny,envelope[2]),max(maxy,envelope[3]))
 
@@ -227,35 +227,53 @@ class mosaic_info:
             featureName =  feature.GetField(0)
             sourceDS=self.cache.get(featureName)
             dec = AffineTransformDecorator(sourceDS.GetGeoTransform())
-            #calculate read and write offsets
-            readOffsetX =int(round((minx-dec.ulx) / self.scaleX))
-            readOffsetY =int(round((maxy-dec.uly) / self.scaleY))
-            writeOffsetX=0
-            if readOffsetX<0:
-                writeOffsetX=readOffsetX*-1;
-                readOffsetX=0
-            writeOffsetY=0
-            if readOffsetY<0:
-                writeOffsetY=readOffsetY*-1;
-                readOffsetY=0
-            #calculate read and write dimensions
-            readX=min(resultSizeX,sourceDS.RasterXSize-readOffsetX,resultSizeX-writeOffsetX)
-            if readX<=0:
-                continue
-            readY=min(resultSizeY,sourceDS.RasterYSize-readOffsetY,resultSizeY-writeOffsetY)
-            if readY<=0:
+
+            dec.lrx = dec.ulx + sourceDS.RasterXSize * dec.scaleX
+            dec.lry = dec.uly + sourceDS.RasterYSize * dec.scaleY
+
+            # Find the intersection region
+            tgw_ulx = max(dec.ulx, minx)
+            tgw_lrx = min(dec.lrx, maxx)
+            if self.scaleY < 0:
+                tgw_uly = min(dec.uly, maxy)
+                tgw_lry = max(dec.lry, miny)
+            else:
+                tgw_uly = max(dec.uly, maxy)
+                tgw_lry = min(dec.lry, miny)
+
+            # Compute source window in pixel coordinates.
+            sw_xoff = int((tgw_ulx - dec.ulx) / dec.scaleX)
+            sw_yoff = int((tgw_uly - dec.uly) / dec.scaleY)
+            sw_xsize = int((tgw_lrx - dec.ulx) / dec.scaleX + 0.5) - sw_xoff
+            sw_ysize = int((tgw_lry - dec.uly) / dec.scaleY + 0.5) - sw_yoff
+            if sw_xsize <= 0 or sw_ysize <= 0:
                 continue
 
-#            print "READ",readOffsetX,readOffsetY,readX,readY
+            # Compute target window in pixel coordinates
+            tw_xoff = int((tgw_ulx - minx) / self.scaleX)
+            tw_yoff = int((tgw_uly - maxy) / self.scaleY)
+            tw_xsize = int((tgw_lrx - minx) / self.scaleX + 0.5) - tw_xoff
+            tw_ysize = int((tgw_lry - maxy) / self.scaleY + 0.5) - tw_yoff
+            if tw_xsize <= 0 or tw_ysize <= 0:
+                continue
 
-            for bandNr in range(1,self.bands+1):
+            assert tw_xoff >= 0
+            assert tw_yoff >= 0
+            assert sw_xoff >= 0
+            assert sw_yoff >= 0
+            
+            for bandNr in range(1, self.bands + 1):
                 s_band = sourceDS.GetRasterBand( bandNr )
                 t_band = resultDS.GetRasterBand( bandNr )
                 if self.ct is not None:
                     t_band.SetRasterColorTable(self.ct)
                 t_band.SetRasterColorInterpretation(self.ci[bandNr-1])
-                data = s_band.ReadRaster( readOffsetX,readOffsetY,readX,readY, readX,readY, self.band_type )
-                t_band.WriteRaster(writeOffsetX,writeOffsetY,readX,readY,data )
+                
+                data = s_band.ReadRaster( sw_xoff, sw_yoff, sw_xsize, sw_ysize, tw_xsize, tw_ysize, self.band_type )
+                if data is None:                    
+                    print(gdal.GetLastErrorMsg())
+
+                t_band.WriteRaster(tw_xoff, tw_yoff, tw_xsize, tw_ysize, data )
 
         return resultDS
 

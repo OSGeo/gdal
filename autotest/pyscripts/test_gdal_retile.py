@@ -35,6 +35,7 @@ import os
 sys.path.append( '../pymod' )
 
 from osgeo import gdal
+from osgeo import osr
 import gdaltest
 import test_py_scripts
 
@@ -110,6 +111,89 @@ def test_gdal_retile_2():
     return 'success'
 
 ###############################################################################
+# Test gdal_retile.py with input images of different pixel sizes
+
+def test_gdal_retile_3():
+
+    script_path = test_py_scripts.get_py_script('gdal_retile')
+    if script_path is None:
+        return 'skip'
+
+    drv = gdal.GetDriverByName('GTiff')
+    srs = osr.SpatialReference()
+    srs.SetWellKnownGeogCS( 'WGS84' )
+    wkt = srs.ExportToWkt()
+
+    # Create two images to tile together. The images will cover the geographic
+    # range 0E-30E and 0-60N, split horizontally at 30N. The pixel size in the
+    # second image will be twice that of the first time. If the make the first
+    # image black and the second gray, then the result of tiling these two
+    # together should be gray square stacked on top of a black square.
+    #
+    # 60 N ---------------  
+    #      |             | \
+    #      |    50x50    |  \ Image 2
+    #      |             |  /
+    #      |             | /
+    # 30 N ---------------
+    #      |             | \
+    #      |  100x100    |  \ Image 1
+    #      |             |  /
+    #      |             | /
+    #  0 N ---------------
+    #      0 E           30 E
+    
+    ds = drv.Create('tmp/in1.tif', 100, 100, 1)
+    px1_x = 30.0 / ds.RasterXSize
+    px1_y = 30.0 / ds.RasterYSize
+    ds.SetProjection( wkt )
+    ds.SetGeoTransform( [ 0, px1_x, 0, 30, 0, -px1_y ] )
+    ds.GetRasterBand(1).Fill(0)
+    ds = None
+
+    ds = drv.Create('tmp/in2.tif', 50, 50, 1)
+    px2_x = 30.0 / ds.RasterXSize
+    px2_y = 30.0 / ds.RasterYSize
+    ds.SetProjection( wkt )
+    ds.SetGeoTransform( [ 0, px2_x, 0, 60, 0, -px2_y ] )
+    ds.GetRasterBand(1).Fill(42)
+    ds = None
+
+    try:
+        os.mkdir('tmp/outretile3')
+    except:
+        pass
+
+    test_py_scripts.run_py_script(script_path, 'gdal_retile', '-v -levels 2 -r bilinear -targetDir tmp/outretile3 tmp/in1.tif tmp/in2.tif' )
+
+    ds = gdal.Open('tmp/outretile3/in1_1_1.tif')
+    if ds.GetProjectionRef().find('WGS 84') == -1:
+        gdaltest.post_reason('Expected WGS 84\nGot : %s' % (ds.GetProjectionRef()) )
+        return 'fail'
+
+    gt = ds.GetGeoTransform()
+    expected_gt = [ 0, px1_x, 0, 60, 0, -px1_y ]
+    for i in range(6):
+        if abs(gt[i] - expected_gt[i] > 1e-5):
+            gdaltest.post_reason('Expected : %s\nGot : %s' % (expected_gt, gt) )
+            return 'fail'
+
+    if ds.RasterXSize != 100 or ds.RasterYSize != 200:
+        gdaltest.post_reason('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize) )
+        return 'fail'
+
+    if ds.RasterCount != 1:
+        gdaltest.post_reason('Wrong raster count : %d ' % (ds.RasterCount) )
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 38999:
+        gdaltest.post_reason('Wrong checksum')
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
 # Cleanup
 
 def test_gdal_retile_cleanup():
@@ -125,7 +209,15 @@ def test_gdal_retile_cleanup():
             'tmp/outretile2/1',
             'tmp/outretile2/2',
             'tmp/outretile2/rgba_1_1.tif',
-            'tmp/outretile2' ]
+            'tmp/outretile2',
+            'tmp/in1.tif',
+            'tmp/in2.tif',
+            'tmp/outretile3/1/in1_1_1.tif',
+            'tmp/outretile3/2/in1_1_1.tif',
+            'tmp/outretile3/1',
+            'tmp/outretile3/2',
+            'tmp/outretile3/in1_1_1.tif',
+            'tmp/outretile3' ]
     for filename in lst:
         try:
             os.remove(filename)
@@ -140,6 +232,7 @@ def test_gdal_retile_cleanup():
 gdaltest_list = [
     test_gdal_retile_1,
     test_gdal_retile_2,
+    test_gdal_retile_3,
     test_gdal_retile_cleanup
     ]
 
