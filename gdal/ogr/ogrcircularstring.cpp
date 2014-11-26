@@ -221,9 +221,9 @@ void OGRCircularString::ExtendEnvelopeWithCircular( OGREnvelope * psEnvelope ) c
                 quadrantEnd = tmp;
             }
             /* Transition trough quadrants in counter-clock wise direction */
-            for( i=quadrantStart+1; i<=quadrantEnd; i++)
+            for( int j=quadrantStart+1; j<=quadrantEnd; j++)
             {
-                switch( ((i+8)%4) )
+                switch( ((j+8)%4) )
                 {
                     case 0:
                         psEnvelope->MaxX = MAX(psEnvelope->MaxX, cx + R);
