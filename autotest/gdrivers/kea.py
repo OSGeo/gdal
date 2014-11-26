@@ -598,8 +598,17 @@ def kea_12():
     rat.CreateColumn('col_integer_blue', gdal.GFT_Integer, gdal.GFU_Blue)
     rat.CreateColumn('col_integer_alpha', gdal.GFT_Integer, gdal.GFU_Alpha)
     rat.SetRowCount(1)
+
+    rat.SetValueAsString(0,0,"1.23")
+    rat.SetValueAsInt(0,0,1)
     rat.SetValueAsDouble(0,0,1.23)
+
+    rat.SetValueAsString(0,1,"123")
+    rat.SetValueAsDouble(0,1,123)
     rat.SetValueAsInt(0,1,123)
+    
+    rat.SetValueAsInt(0,2,0)
+    rat.SetValueAsDouble(0,2,0)
     rat.SetValueAsString(0,2,'foo')
     cloned_rat = rat.Clone()
     if ds.GetRasterBand(1).SetDefaultRAT( rat ) != 0:
@@ -651,13 +660,62 @@ def kea_12():
             print(cloned_rat.GetUsageOfCol(i))
             return 'fail'
 
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+
+    rat.GetNameOfCol(-1)
+    rat.GetTypeOfCol(-1)
+    rat.GetUsageOfCol(-1)
+
+    rat.GetNameOfCol(rat.GetColumnCount())
+    rat.GetTypeOfCol(rat.GetColumnCount())
+    rat.GetUsageOfCol(rat.GetColumnCount())
+
+    rat.GetValueAsDouble( -1, 0 )
+    rat.GetValueAsInt( -1, 0 ) 
+    rat.GetValueAsString( -1, 0 )
+    
+    rat.GetValueAsDouble( rat.GetColumnCount(), 0 )
+    rat.GetValueAsInt( rat.GetColumnCount(), 0 ) 
+    rat.GetValueAsString( rat.GetColumnCount(), 0 ) 
+
+    rat.GetValueAsDouble( 0, -1 )
+    rat.GetValueAsInt( 0, -1 ) 
+    rat.GetValueAsString( 0, -1 ) 
+
+    rat.GetValueAsDouble( 0, rat.GetRowCount() )
+    rat.GetValueAsInt( 0, rat.GetRowCount() ) 
+    rat.GetValueAsString( 0, rat.GetRowCount() ) 
+
+    gdal.PopErrorHandler()
+
     if rat.GetValueAsDouble( 0, 0 ) != 1.23:
         gdaltest.post_reason('fail')
         return 'fail'
+    if rat.GetValueAsInt( 0, 0 ) != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if rat.GetValueAsString( 0, 0 ) != '1.23':
+        gdaltest.post_reason('fail')
+        print(rat.GetValueAsString( 0, 0 ))
+        return 'fail'
+
     if rat.GetValueAsInt( 0, 1 ) != 123:
         gdaltest.post_reason('fail')
         return 'fail'
+    if rat.GetValueAsDouble( 0, 1 ) != 123:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if rat.GetValueAsString( 0, 1 ) != '123':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     if rat.GetValueAsString( 0, 2 ) != 'foo':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if rat.GetValueAsInt( 0, 2 ) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if rat.GetValueAsDouble( 0, 2 ) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
 
