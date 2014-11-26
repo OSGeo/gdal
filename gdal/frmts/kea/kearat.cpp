@@ -478,7 +478,7 @@ CPLErr KEARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
             {
                 // copy them back to doubles
                 for( int i = 0; i < iLength; i++ )
-                    pdfData[i] = atof(papszColData[i]);
+                    pdfData[i] = CPLAtof(papszColData[i]);
             }
 
             // either we allocated them for write, or they were allocated
@@ -777,7 +777,7 @@ CPLErr KEARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
             {
                 // convert user supplied strings to doubles
                 for( int i = 0; i < iLength; i++ )
-                    padfColData[i] = atof(papszStrList[i]);
+                    padfColData[i] = CPLAtof(papszStrList[i]);
             }
 
             // call value IO to read/write doubles
