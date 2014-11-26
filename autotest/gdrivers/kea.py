@@ -591,7 +591,7 @@ def kea_12():
         gdaltest.post_reason('fail')
         return 'fail'
     rat = ds.GetRasterBand(1).GetDefaultRAT()
-    rat.CreateColumn('col_integer_pixelcount', gdal.GFT_Integer, gdal.GFU_PixelCount)
+    rat.CreateColumn('col_integer_pixelcount', gdal.GFT_Real, gdal.GFU_PixelCount)
     rat.CreateColumn('col_string_name', gdal.GFT_String, gdal.GFU_Name)
     rat.CreateColumn('col_integer_red', gdal.GFT_Integer, gdal.GFU_Red)
     rat.CreateColumn('col_integer_green', gdal.GFT_Integer, gdal.GFU_Green)
@@ -603,13 +603,14 @@ def kea_12():
     rat.SetValueAsInt(0,0,1)
     rat.SetValueAsDouble(0,0,1.23)
 
-    rat.SetValueAsString(0,1,"123")
-    rat.SetValueAsDouble(0,1,123)
-    rat.SetValueAsInt(0,1,123)
-    
     rat.SetValueAsInt(0,2,0)
     rat.SetValueAsDouble(0,2,0)
     rat.SetValueAsString(0,2,'foo')
+
+    rat.SetValueAsString(0,3,"123")
+    rat.SetValueAsDouble(0,3,123)
+    rat.SetValueAsInt(0,3,123)
+
     cloned_rat = rat.Clone()
     if ds.GetRasterBand(1).SetDefaultRAT( rat ) != 0:
         gdaltest.post_reason('fail')
@@ -637,6 +638,12 @@ def kea_12():
         gdaltest.post_reason('fail')
         return 'fail'
     if cloned_rat.GetUsageOfCol(1) != gdal.GFU_PixelCount:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if cloned_rat.GetTypeOfCol(2) != gdal.GFT_String:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if cloned_rat.GetTypeOfCol(3) != gdal.GFT_Integer:
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -699,13 +706,13 @@ def kea_12():
         print(rat.GetValueAsString( 0, 0 ))
         return 'fail'
 
-    if rat.GetValueAsInt( 0, 1 ) != 123:
+    if rat.GetValueAsInt( 0, 3 ) != 123:
         gdaltest.post_reason('fail')
         return 'fail'
-    if rat.GetValueAsDouble( 0, 1 ) != 123:
+    if rat.GetValueAsDouble( 0, 3 ) != 123:
         gdaltest.post_reason('fail')
         return 'fail'
-    if rat.GetValueAsString( 0, 1 ) != '123':
+    if rat.GetValueAsString( 0, 3 ) != '123':
         gdaltest.post_reason('fail')
         return 'fail'
 
