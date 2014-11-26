@@ -254,8 +254,7 @@ OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject,
 OGRFieldType GeoJSONStringPropertyToFieldType( json_object* poObject )
 {
     if (poObject == NULL) { return OFTString; }
-    json_type type = json_object_get_type( poObject );
-    CPLAssert( type == json_type_string );
+    CPLAssert( json_object_get_type( poObject ) == json_type_string );
     const char* pszStr = json_object_get_string( poObject );
 
     OGRField sWrkField;
