@@ -3886,16 +3886,16 @@ CPLErr GDALRasterBand::SetStatistics( double dfMin, double dfMax,
 {
     char szValue[128] = { 0 };
 
-    sprintf( szValue, "%.14g", dfMin );
+    CPLsprintf( szValue, "%.14g", dfMin );
     SetMetadataItem( "STATISTICS_MINIMUM", szValue );
 
-    sprintf( szValue, "%.14g", dfMax );
+    CPLsprintf( szValue, "%.14g", dfMax );
     SetMetadataItem( "STATISTICS_MAXIMUM", szValue );
 
-    sprintf( szValue, "%.14g", dfMean );
+    CPLsprintf( szValue, "%.14g", dfMean );
     SetMetadataItem( "STATISTICS_MEAN", szValue );
 
-    sprintf( szValue, "%.14g", dfStdDev );
+    CPLsprintf( szValue, "%.14g", dfStdDev );
     SetMetadataItem( "STATISTICS_STDDEV", szValue );
 
     return CE_None;

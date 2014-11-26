@@ -514,12 +514,12 @@ CPLXMLNode *GDALRasterAttributeTable::Serialize() const
 
     if( GetLinearBinning(&dfRow0Min, &dfBinSize) )
     {
-        sprintf( szValue, "%.16g", dfRow0Min );
+        CPLsprintf( szValue, "%.16g", dfRow0Min );
         CPLCreateXMLNode( 
             CPLCreateXMLNode( psTree, CXT_Attribute, "Row0Min" ), 
             CXT_Text, szValue );
 
-        sprintf( szValue, "%.16g", dfBinSize );
+        CPLsprintf( szValue, "%.16g", dfBinSize );
         CPLCreateXMLNode( 
             CPLCreateXMLNode( psTree, CXT_Attribute, "BinSize" ), 
             CXT_Text, szValue );
@@ -580,7 +580,7 @@ CPLXMLNode *GDALRasterAttributeTable::Serialize() const
             if( GetTypeOfCol(iCol) == GFT_Integer )
                 sprintf( szValue, "%d", GetValueAsInt(iRow, iCol) );
             else if( GetTypeOfCol(iCol) == GFT_Real )
-                sprintf( szValue, "%.16g", GetValueAsDouble(iRow, iCol) );
+                CPLsprintf( szValue, "%.16g", GetValueAsDouble(iRow, iCol) );
             else
                 pszValue = GetValueAsString(iRow, iCol);
 
@@ -1579,7 +1579,7 @@ void GDALDefaultRasterAttributeTable::SetValue( int iRow, int iField,
       {
           char szValue[100];
 
-          sprintf( szValue, "%.15g", dfValue );
+          CPLsprintf( szValue, "%.15g", dfValue );
           aoFields[iField].aosValues[iRow] = szValue;
       }
       break;
