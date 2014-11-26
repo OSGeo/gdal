@@ -1732,7 +1732,7 @@ def ogr_geojson_36():
 
     return 'success'
 
-###############################################################################
+#########################################################################
 # Test boolean type support
 
 def ogr_geojson_37():
@@ -1789,6 +1789,54 @@ def ogr_geojson_37():
 
     return 'success'
 
+###############################################################################
+# Test datetime/date/time type support
+
+def ogr_geojson_38():
+
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    # Test read support
+    ds = ogr.Open("""{"type": "FeatureCollection", "features": [
+{ "type": "Feature", "properties": { "dt": "2014-11-20 12:34:56+0100", "dt2": "2014\/11\/20", "date":"2014\/11\/20", "time":"12:34:56", "no_dt": "2014-11-20 12:34:56+0100", "no_dt2": "2014-11-20 12:34:56+0100" }, "geometry": null },
+{ "type": "Feature", "properties": { "dt": "2014\/11\/20", "dt2": "2014\/11\/20T12:34:56Z", "date":"2014-11-20", "time":"12:34:56", "no_dt": "foo", "no_dt2": 1 }, "geometry": null }
+] }""")
+    lyr = ds.GetLayer(0)
+    feat_defn = lyr.GetLayerDefn()
+    if feat_defn.GetFieldDefn(feat_defn.GetFieldIndex('dt')).GetType() != ogr.OFTDateTime:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    if feat_defn.GetFieldDefn(feat_defn.GetFieldIndex('dt2')).GetType() != ogr.OFTDateTime:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    if feat_defn.GetFieldDefn(feat_defn.GetFieldIndex('date')).GetType() != ogr.OFTDate:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    if feat_defn.GetFieldDefn(feat_defn.GetFieldIndex('time')).GetType() != ogr.OFTTime:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    if feat_defn.GetFieldDefn(feat_defn.GetFieldIndex('no_dt')).GetType() != ogr.OFTString:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    if feat_defn.GetFieldDefn(feat_defn.GetFieldIndex('no_dt2')).GetType() != ogr.OFTString:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetField('dt') != '2014/11/20 12:34:56+01' or f.GetField('dt2') != '2014/11/20 00:00:00' or \
+       f.GetField('date') != '2014/11/20' or f.GetField('time') != '12:34:56' :
+        gdaltest.post_reason('failure')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetField('dt') != '2014/11/20 00:00:00' or f.GetField('dt2') != '2014/11/20 12:34:56+00' or \
+       f.GetField('date') != '2014/11/20' or f.GetField('time') != '12:34:56' :
+        gdaltest.post_reason('failure')
+        f.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ 
     ogr_geojson_1,
     ogr_geojson_2,
@@ -1827,6 +1875,7 @@ gdaltest_list = [
     ogr_geojson_35,
     ogr_geojson_36,
     ogr_geojson_37,
+    ogr_geojson_38,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':

@@ -65,6 +65,9 @@ have the same schema of properties. If <em>Feature</em> objects in a set defined
 object have different schema of properties, then resulting schema of fields in OGRFeatureDefn is generated as 
 <a href="http://en.wikipedia.org/wiki/Union_(set_theory)">union</a> of all <em>Feature</em> properties.</p>
 
+<p>Schema detection will recognized fields of type String, Integer, Real, StringList, IntegerList and RealList.
+Starting with GDAL 2.0, Integer(Boolean), Date, Time and DateTime fields are also recognized.</p>
+
 <p>It is possible to tell the driver to not to process attributes by setting environment variable 
 <strong>ATTRIBUTES_SKIP=YES</strong>. Default behavior is to preserve all attributes (as an union, see previous paragraph), 
 what is equal to setting <strong>ATTRIBUTES_SKIP=NO</strong>.</p>

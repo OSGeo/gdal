@@ -77,6 +77,13 @@ int GeoJSONIsObject( const char* pszText );
 OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject,
                                          OGRFieldSubType& eSubType );
 
+
+/************************************************************************/
+/*                      GeoJSONStringPropertyToFieldType                */
+/************************************************************************/
+
+OGRFieldType GeoJSONStringPropertyToFieldType( json_object* poObject );
+
 /************************************************************************/
 /*                           OGRGeoJSONGetGeometryName                  */
 /************************************************************************/
