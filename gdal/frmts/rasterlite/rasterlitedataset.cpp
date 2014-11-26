@@ -927,6 +927,7 @@ end:
 int RasterliteDataset::Identify(GDALOpenInfo* poOpenInfo)
 {
     if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MBTILES") &&
+        !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "GPKG") &&
         poOpenInfo->nHeaderBytes >= 1024 &&
         EQUALN((const char*)poOpenInfo->pabyHeader, "SQLite Format 3", 15))
     {
