@@ -416,6 +416,11 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_DODS();
 #endif
 
+/* Register KEA before HDF5 */
+#ifdef FRMT_kea
+    GDALRegister_KEA();
+#endif
+
 #ifdef FRMT_hdf5
     GDALRegister_BAG();
     GDALRegister_HDF5();
@@ -511,7 +516,7 @@ void CPL_STDCALL GDALAllRegister()
 #ifdef FRMT_iris
     GDALRegister_IRIS();
 #endif
-    
+
     OGRRegisterAllInternal();
 
 #ifdef FRMT_wcs
