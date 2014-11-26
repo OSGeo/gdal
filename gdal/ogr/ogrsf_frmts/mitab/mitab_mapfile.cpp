@@ -1580,6 +1580,9 @@ int   TABMAPFile::PrepareNewObjViaSpatialIndex(TABMAPObjHdr *poObjHdr)
                                   m_poCurObjBlock->GetStartAddress()) != 0)
             return -1;
 
+        m_poCurObjBlock->SetMBR(poObjHdr->m_nMinX, poObjHdr->m_nMinY,
+                                poObjHdr->m_nMaxX, poObjHdr->m_nMaxY);
+
         m_poHeader->m_nMaxSpIndexDepth = MAX(m_poHeader->m_nMaxSpIndexDepth,
                                       (GByte)m_poSpIndex->GetCurMaxDepth()+1);
     }
@@ -1695,7 +1698,7 @@ int   TABMAPFile::PrepareNewObjViaSpatialIndex(TABMAPObjHdr *poObjHdr)
         CPLFree(papoSrcObjHdrs);
         papoSrcObjHdrs = NULL;
     }
-    
+
     if (m_poCurObjBlock->GetNumUnusedBytes() >= nObjSize )
     {
         /*-------------------------------------------------------------
@@ -1709,6 +1712,8 @@ int   TABMAPFile::PrepareNewObjViaSpatialIndex(TABMAPObjHdr *poObjHdr)
         nMinY = MIN(nMinY, poObjHdr->m_nMinY);
         nMaxX = MAX(nMaxX, poObjHdr->m_nMaxX);
         nMaxY = MAX(nMaxY, poObjHdr->m_nMaxY);
+        
+        m_poCurObjBlock->SetMBR(nMinX, nMinY, nMaxX, nMaxY);
 
         if (m_poSpIndex->UpdateLeafEntry(m_poCurObjBlock->GetStartAddress(),
                                          nMinX, nMinY, nMaxX, nMaxY) != 0)
@@ -1737,12 +1742,15 @@ int   TABMAPFile::PrepareNewObjViaSpatialIndex(TABMAPObjHdr *poObjHdr)
          *------------------------------------------------------------*/
         GInt32 nMinX, nMinY, nMaxX, nMaxY;
         m_poCurObjBlock->GetMBR(nMinX, nMinY, nMaxX, nMaxY);
+        CPLAssert(nMinX <= nMaxX);
 
         /* Need to calculate the enlarged MBR that includes new object */
         nMinX = MIN(nMinX, poObjHdr->m_nMinX);
         nMinY = MIN(nMinY, poObjHdr->m_nMinY);
         nMaxX = MAX(nMaxX, poObjHdr->m_nMaxX);
         nMaxY = MAX(nMaxY, poObjHdr->m_nMaxY);
+        
+        m_poCurObjBlock->SetMBR(nMinX, nMinY, nMaxX, nMaxY);
 
         if (m_poSpIndex->UpdateLeafEntry(m_poCurObjBlock->GetStartAddress(),
                                          nMinX, nMinY, nMaxX, nMaxY) != 0)
@@ -1752,6 +1760,7 @@ int   TABMAPFile::PrepareNewObjViaSpatialIndex(TABMAPObjHdr *poObjHdr)
          * Add new obj block to index
          *------------------------------------------------------------*/
         poNewObjBlock->GetMBR(nMinX, nMinY, nMaxX, nMaxY);
+        CPLAssert(nMinX <= nMaxX);
 
         if (m_poSpIndex->AddEntry(nMinX, nMinY, nMaxX, nMaxY,
                                   poNewObjBlock->GetStartAddress()) != 0)
@@ -2196,10 +2205,10 @@ TABMAPObjectBlock *TABMAPFile::SplitObjBlock(TABMAPObjHdr *poObjHdrToAdd,
             continue;
         }
 
-
         // Decide which of the two blocks to put this entry in
         GInt32 nXMin, nYMin, nXMax, nYMax;
         m_poCurObjBlock->GetMBR(nXMin, nYMin, nXMax, nYMax);
+        CPLAssert( nXMin <= nXMax );
         double dAreaDiff1 = 
             TABMAPIndexBlock::ComputeAreaDiff(nXMin, nYMin, 
                                               nXMax, nYMax,
@@ -2209,6 +2218,7 @@ TABMAPObjectBlock *TABMAPFile::SplitObjBlock(TABMAPObjHdr *poObjHdrToAdd,
                                               poObjHdr->m_nMaxY);
 
         poNewObjBlock->GetMBR(nXMin, nYMin, nXMax, nYMax);
+        CPLAssert( nXMin <= nXMax );
         double dAreaDiff2 = 
             TABMAPIndexBlock::ComputeAreaDiff(nXMin, nYMin, nXMax, nYMax,
                                               poObjHdr->m_nMinX, 
