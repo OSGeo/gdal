@@ -53,7 +53,7 @@ def kea_1():
     if gdaltest.kea_driver is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'KEA', 'byte.tif', 1, 4672, options = ['IMAGEBLOCKSIZE=15'] )
+    tst = gdaltest.GDALTest( 'KEA', 'byte.tif', 1, 4672, options = ['IMAGEBLOCKSIZE=15', 'THEMATIC=YES'] )
     return tst.testCreateCopy( check_srs = True, check_gt = 1 )
 
 ###############################################################################
@@ -258,15 +258,41 @@ def kea_6():
 
     ds = gdaltest.kea_driver.Create("tmp/out.kea", 1, 1, 5)
     ds.SetMetadata( { 'foo':'bar' } )
+    ds.SetMetadataItem( 'bar', 'baw' )
     ds.GetRasterBand(1).SetMetadata( { 'bar':'baz' } )
     ds.GetRasterBand(1).SetDescription('desc')
     ds.GetRasterBand(2).SetMetadata( { 'LAYER_TYPE' : 'any_string_that_is_not_athematic_is_thematic' } )
     ds.GetRasterBand(3).SetMetadata( { 'LAYER_TYPE' : 'athematic' } )
     ds.GetRasterBand(4).SetMetadataItem( 'LAYER_TYPE', 'thematic' )
-    ds.GetRasterBand(5).SetMetadata( 'LAYER_TYPE', 'athematic' )
+    ds.GetRasterBand(5).SetMetadataItem( 'LAYER_TYPE', 'athematic' )
+    if ds.SetMetadata( { 'foo':'bar' }, 'other_domain' ) == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.SetMetadataItem( 'foo', 'bar', 'other_domain' ) == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).SetMetadata( { 'foo':'bar' }, 'other_domain' ) == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).SetMetadataItem( 'foo', 'bar', 'other_domain' ) == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
     ds = None
     
     ds = gdal.Open('tmp/out.kea')
+    if ds.GetMetadata('other_domain') != {}:
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadata('other_domain'))
+        return 'fail'
+    if ds.GetMetadataItem('item', 'other_domain') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetMetadata('other_domain') != {}:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetMetadataItem('item', 'other_domain') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
     md = ds.GetMetadata()
     if md['foo'] != 'bar':
         gdaltest.post_reason('fail')
@@ -275,6 +301,10 @@ def kea_6():
     if ds.GetMetadataItem('foo') != 'bar':
         gdaltest.post_reason('fail')
         print(ds.GetMetadataItem('foo'))
+        return 'failure'
+    if ds.GetMetadataItem('bar') != 'baw':
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadataItem('bar'))
         return 'failure'
     if ds.GetRasterBand(1).GetDescription() != 'desc':
         gdaltest.post_reason('fail')
