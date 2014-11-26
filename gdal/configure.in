@@ -1727,7 +1727,7 @@ KEA_CONFIG=no
 AC_ARG_WITH(kea,[  --with-kea[=ARG]      Include kealib (ARG=path to kea-config) [[default=yes]]],,)
 
 if test "$with_kea" = "yes" -o "x$with_kea" = "x" ; then
-  AC_PATH_PROG(KEA_CONFIG, kea_config, no)
+  AC_PATH_PROG(KEA_CONFIG, kea-config, no)
 else
    KEA_CONFIG=$with_kea
 fi
