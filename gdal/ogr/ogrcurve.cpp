@@ -350,7 +350,7 @@ OGRLinearRing* OGRCurve::CastToLinearRing(OGRCurve* poCurve)
  * @since GDAL 2.0
  */
 
-int OGRCurve::ContainsPoint( const OGRPoint* p ) const
+int OGRCurve::ContainsPoint( CPL_UNUSED const OGRPoint* p ) const
 {
     return -1;
 }
