@@ -248,6 +248,37 @@ OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject,
 }
 
 /************************************************************************/
+/*                        GeoJSONStringPropertyToFieldType()            */
+/************************************************************************/
+
+OGRFieldType GeoJSONStringPropertyToFieldType( json_object* poObject )
+{
+    if (poObject == NULL) { return OFTString; }
+    json_type type = json_object_get_type( poObject );
+    CPLAssert( type == json_type_string );
+    const char* pszStr = json_object_get_string( poObject );
+
+    OGRField sWrkField;
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    int bSuccess = OGRParseDate( pszStr, &sWrkField, 0 );
+    CPLPopErrorHandler();
+    CPLErrorReset();
+    if( bSuccess )
+    {
+        int bHasDate = strchr( pszStr, '/' ) != NULL ||
+                        strchr( pszStr, '-' ) != NULL;
+        int bHasTime = strchr( pszStr, ':' ) != NULL;
+        if( bHasDate && bHasTime )
+            return OFTDateTime;
+        else if( bHasDate )
+            return OFTDate;
+        else
+            return OFTTime;
+    }
+    return OFTString;
+}
+
+/************************************************************************/
 /*                           OGRGeoJSONGetGeometryName()                */
 /************************************************************************/
 

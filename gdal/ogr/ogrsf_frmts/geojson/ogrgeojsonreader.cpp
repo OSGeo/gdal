@@ -518,6 +518,10 @@ bool OGRGeoJSONReader::GenerateFeatureDefn( OGRGeoJSONLayer* poLayer, json_objec
                 fldDefn.SetSubType(eSubType);
                 if( eSubType == OFSTBoolean )
                     fldDefn.SetWidth(1);
+                if( fldDefn.GetType() == OFTString )
+                {
+                    fldDefn.SetType(GeoJSONStringPropertyToFieldType( it.val ));
+                }
                 poDefn->AddFieldDefn( &fldDefn );
             }
             else
@@ -537,6 +541,24 @@ bool OGRGeoJSONReader::GenerateFeatureDefn( OGRGeoJSONLayer* poLayer, json_objec
                     {
                         poFDefn->SetType(eNewType);
                         poFDefn->SetSubType(OFSTNone);
+                    }
+                }
+                else if( eType == OFTDate || eType == OFTTime || eType == OFTDateTime )
+                {
+                    OGRFieldSubType eSubType;
+                    OGRFieldType eNewType = GeoJSONPropertyToFieldType( it.val, eSubType );
+                    if( eNewType == OFTString )
+                        eNewType = GeoJSONStringPropertyToFieldType( it.val );
+                    if( eType != eNewType )
+                    {
+                        if( eType == OFTDate && eNewType == OFTDateTime )
+                        {
+                            poFDefn->SetType(OFTDateTime);
+                        }
+                        else if( !(eType == OFTDateTime && eNewType == OFTDate) )
+                        {
+                            poFDefn->SetType(OFTString);
+                        }
                     }
                 }
             }
