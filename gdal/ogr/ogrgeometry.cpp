@@ -2382,7 +2382,7 @@ GEOSGeom OGRGeometry::exportToGEOS(GEOSContextHandle_t hGEOSCtxt) const
  * @since GDAL 2.0
  */
 
-OGRBoolean OGRGeometry::hasCurveGeometry(int bLookForNonLinear) const
+OGRBoolean OGRGeometry::hasCurveGeometry(CPL_UNUSED int bLookForNonLinear) const
 {
     return FALSE;
 }
@@ -2413,8 +2413,8 @@ OGRBoolean OGRGeometry::hasCurveGeometry(int bLookForNonLinear) const
  * @since GDAL 2.0
  */
 
-OGRGeometry* OGRGeometry::getLinearGeometry(double dfMaxAngleStepSizeDegrees,
-                                              const char* const* papszOptions) const
+OGRGeometry* OGRGeometry::getLinearGeometry(CPL_UNUSED double dfMaxAngleStepSizeDegrees,
+                                            CPL_UNUSED const char* const* papszOptions) const
 {
     return clone();
 }
@@ -2446,7 +2446,7 @@ OGRGeometry* OGRGeometry::getLinearGeometry(double dfMaxAngleStepSizeDegrees,
  * @since GDAL 2.0
  */
 
-OGRGeometry* OGRGeometry::getCurveGeometry(const char* const* papszOptions) const
+OGRGeometry* OGRGeometry::getCurveGeometry(CPL_UNUSED const char* const* papszOptions) const
 {
     return clone();
 }
@@ -5104,7 +5104,8 @@ OGRwkbGeometryType OGR_GT_SetZ( OGRwkbGeometryType eType )
  * @since GDAL 2.0
  */
 
-OGRwkbGeometryType OGR_GT_SetModifier( OGRwkbGeometryType eType, int bHasZ, int bHasM )
+OGRwkbGeometryType OGR_GT_SetModifier( OGRwkbGeometryType eType, int bHasZ,
+                                       CPL_UNUSED int bHasM )
 {
     if( bHasZ )
         return OGR_GT_SetZ(eType);
