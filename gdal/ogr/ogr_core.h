@@ -465,6 +465,27 @@ typedef enum
 } OGRFieldType;
 
 /**
+ * List of field subtypes. A subtype represents a hint, a restriction of the
+ * main type, that is not strictly necessary to consult.
+ * This list is likely to be extended in the
+ * future ... avoid coding applications based on the assumption that all
+ * field types can be known.
+ * Most subtypes only make sense for a restricted set of main types.
+ * @since GDAL 2.0
+ */
+typedef enum
+{
+    /** No subtype. This is the default value */        OFSTNone = 0,
+    /** Boolean integer. Only valid for OFTInteger and OFTIntegerList.*/
+                                                        OFSTBoolean = 1,
+    /** Signed 16-bit integer. Only valid for OFTInteger and OFTIntegerList. */
+                                                        OFSTInt16 = 2,
+    /** Single precision (32 bit) floatint point. Only valid for OFTReal and OFTRealList. */
+                                                        OFSTFloat32 = 3,
+                                                        OFSTMaxSubType = 3
+} OGRFieldSubType;
+
+/**
  * Display justification for field values.
  */
 

@@ -5047,7 +5047,12 @@ OGRLayer* GDALDataset::BuildLayerFromSelectInfo(void* psSelectInfoIn,
             int iOutField = sFieldList.count++;
             sFieldList.names[iOutField] = (char *) poFDefn->GetNameRef();
             if( poFDefn->GetType() == OFTInteger )
-                sFieldList.types[iOutField] = SWQ_INTEGER;
+            {
+                if( poFDefn->GetSubType() == OFSTBoolean )
+                    sFieldList.types[iOutField] = SWQ_BOOLEAN;
+                else
+                    sFieldList.types[iOutField] = SWQ_INTEGER;
+            }
             else if( poFDefn->GetType() == OFTReal )
                 sFieldList.types[iOutField] = SWQ_FLOAT;
             else if( poFDefn->GetType() == OFTString )

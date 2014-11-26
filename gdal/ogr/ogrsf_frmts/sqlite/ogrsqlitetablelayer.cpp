@@ -927,12 +927,25 @@ OGRErr OGRSQLiteTableLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 /*                  OGRSQLiteFieldDefnToSQliteFieldDefn()               */
 /************************************************************************/
 
-CPLString OGRSQLiteFieldDefnToSQliteFieldDefn( OGRFieldDefn* poFieldDefn )
+CPLString OGRSQLiteFieldDefnToSQliteFieldDefn( OGRFieldDefn* poFieldDefn,
+                                               int bSQLiteDialectInternalUse )
 {
     switch( poFieldDefn->GetType() )
     {
-        case OFTInteger: return "INTEGER"; break;
-        case OFTReal   : return "FLOAT"; break;
+        case OFTInteger:
+            if (poFieldDefn->GetSubType() == OFSTBoolean) 
+                return "INTEGER_BOOLEAN";
+            else if (poFieldDefn->GetSubType() == OFSTInt16 ) 
+                return "INTEGER_INT16";
+            else
+                return "INTEGER";
+            break;
+        case OFTReal:
+            if (bSQLiteDialectInternalUse && poFieldDefn->GetSubType() == OFSTFloat32) 
+                return "FLOAT_FLOAT32";
+            else
+                return "FLOAT";
+            break;
         case OFTBinary : return "BLOB"; break;
         case OFTString :
         {
@@ -945,6 +958,24 @@ CPLString OGRSQLiteFieldDefnToSQliteFieldDefn( OGRFieldDefn* poFieldDefn )
         case OFTDateTime: return "TIMESTAMP"; break;
         case OFTDate    : return "DATE"; break;
         case OFTTime    : return "TIME"; break;
+        case OFTIntegerList:
+            if (bSQLiteDialectInternalUse )
+                return "INTEGERLIST";
+            else
+                return "VARCHAR";
+            break;
+        case OFTRealList:
+            if (bSQLiteDialectInternalUse )
+                return "REALLIST";
+            else
+                return "VARCHAR";
+            break;
+        case OFTStringList:
+            if (bSQLiteDialectInternalUse )
+                return "STRINGLIST";
+            else
+                return "VARCHAR";
+            break;
         default         : return "VARCHAR"; break;
     }
 }
@@ -955,7 +986,7 @@ CPLString OGRSQLiteFieldDefnToSQliteFieldDefn( OGRFieldDefn* poFieldDefn )
 
 CPLString OGRSQLiteTableLayer::FieldDefnToSQliteFieldDefn( OGRFieldDefn* poFieldDefn )
 {
-    CPLString osRet = OGRSQLiteFieldDefnToSQliteFieldDefn(poFieldDefn);
+    CPLString osRet = OGRSQLiteFieldDefnToSQliteFieldDefn(poFieldDefn, FALSE);
     if( poFieldDefn->GetType() == OFTString &&
         CSLFindString(papszCompressedColumns, poFieldDefn->GetNameRef()) >= 0 )
         osRet += "_deflate";

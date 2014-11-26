@@ -107,6 +107,10 @@ OFTBinary = _ogr.OFTBinary
 OFTDate = _ogr.OFTDate
 OFTTime = _ogr.OFTTime
 OFTDateTime = _ogr.OFTDateTime
+OFSTNone = _ogr.OFSTNone
+OFSTBoolean = _ogr.OFSTBoolean
+OFSTInt16 = _ogr.OFSTInt16
+OFSTFloat32 = _ogr.OFSTFloat32
 OJUndefined = _ogr.OJUndefined
 OJLeft = _ogr.OJLeft
 OJRight = _ogr.OJRight
@@ -3650,6 +3654,14 @@ class FieldDefn(_object):
         """
         return _ogr.FieldDefn_SetType(self, *args)
 
+    def GetSubType(self, *args):
+        """GetSubType(self) -> OGRFieldSubType"""
+        return _ogr.FieldDefn_GetSubType(self, *args)
+
+    def SetSubType(self, *args):
+        """SetSubType(self, OGRFieldSubType type)"""
+        return _ogr.FieldDefn_SetSubType(self, *args)
+
     def GetJustify(self, *args):
         """
         GetJustify(self) -> OGRJustification
@@ -5359,6 +5371,10 @@ def GeometryTypeToName(*args):
 def GetFieldTypeName(*args):
   """GetFieldTypeName(OGRFieldType type) -> char"""
   return _ogr.GetFieldTypeName(*args)
+
+def GetFieldSubTypeName(*args):
+  """GetFieldSubTypeName(OGRFieldSubType type) -> char"""
+  return _ogr.GetFieldSubTypeName(*args)
 
 def GT_Flatten(*args):
   """GT_Flatten(OGRwkbGeometryType eType) -> OGRwkbGeometryType"""

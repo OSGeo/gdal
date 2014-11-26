@@ -81,9 +81,14 @@ int GetSimpleTypeProperties(CPLXMLNode *psTypeNode,
         *pnPrecision = atoi(pszPrecision);
         return TRUE;
     }
+    
+     else if( EQUAL(pszBase,"float") )
+    {
+        *pGMLType = GMLPT_Float;
+        return TRUE;
+    }
 
-    else if( EQUAL(pszBase,"float")
-                || EQUAL(pszBase,"double") )
+    else if( EQUAL(pszBase,"double") )
     {
         *pGMLType = GMLPT_Real;
         return TRUE;
@@ -116,6 +121,19 @@ int GetSimpleTypeProperties(CPLXMLNode *psTypeNode,
         *pGMLType = GMLPT_String;
         return TRUE;
     }
+
+    else if( EQUAL(pszBase,"boolean") )
+    {
+        *pGMLType = GMLPT_Boolean;
+        return TRUE;
+    }
+
+    else if( EQUAL(pszBase,"short") )
+    {
+        *pGMLType = GMLPT_Short;
+        return TRUE;
+    }
+
     return FALSE;
 }
 
@@ -202,10 +220,12 @@ static GMLPropertyType GetListTypeFromSingleType(GMLPropertyType eType)
 {
     if( eType == GMLPT_String )
         return GMLPT_StringList;
-    if( eType == GMLPT_Integer )
+    if( eType == GMLPT_Integer || eType == GMLPT_Short )
         return GMLPT_IntegerList;
-    if( eType == GMLPT_Real )
+    if( eType == GMLPT_Real || eType == GMLPT_Float )
         return GMLPT_RealList;
+    if( eType == GMLPT_Boolean )
+        return GMLPT_BooleanList;
     if( eType == GMLPT_FeatureProperty )
         return GMLPT_FeaturePropertyList;
     return eType;
@@ -338,8 +358,7 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
 
             GMLPropertyType gmlType = GMLPT_Untyped;
             if (EQUAL(pszStrippedNSType, "string") ||
-                EQUAL(pszStrippedNSType, "Character") ||
-                EQUAL(pszStrippedNSType, "boolean"))
+                EQUAL(pszStrippedNSType, "Character"))
                 gmlType = GMLPT_String;
             /* TODO: Would be nice to have a proper date type */
             else if (EQUAL(pszStrippedNSType, "date") ||
@@ -347,14 +366,18 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                 gmlType = GMLPT_String;
             else if (EQUAL(pszStrippedNSType, "real") ||
                      EQUAL(pszStrippedNSType, "double") ||
-                     EQUAL(pszStrippedNSType, "float") ||
                      EQUAL(pszStrippedNSType, "decimal"))
                 gmlType = GMLPT_Real;
-            else if (EQUAL(pszStrippedNSType, "short") ||
-                     EQUAL(pszStrippedNSType, "int") ||
+            else if (EQUAL(pszStrippedNSType, "float") )
+                gmlType = GMLPT_Float;
+            else if (EQUAL(pszStrippedNSType, "int") ||
                      EQUAL(pszStrippedNSType, "integer") ||
                      EQUAL(pszStrippedNSType, "long"))
                 gmlType = GMLPT_Integer;
+            else if (EQUAL(pszStrippedNSType, "short") )
+                gmlType = GMLPT_Short;
+            else if (EQUAL(pszStrippedNSType, "boolean") )
+                gmlType = GMLPT_Boolean;
             else if (strcmp(pszType, "gml:FeaturePropertyType") == 0 )
             {
                 gmlType = GMLPT_FeatureProperty;
@@ -468,7 +491,7 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
             GMLPropertyDefn *poProp = new GMLPropertyDefn(
                 pszPropertyName, pszElementName );
 
-            if( pszMaxOccurs != NULL && strcmp(pszMaxOccurs, "unbounded") == 0 )
+            if( pszMaxOccurs != NULL && strcmp(pszMaxOccurs, "1") != 0 )
                 gmlType = GetListTypeFromSingleType(gmlType);
 
             poProp->SetType( gmlType );
@@ -583,7 +606,7 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
         int nWidth = 0, nPrecision = 0;
         GetSimpleTypeProperties(psSimpleType, &eType, &nWidth, &nPrecision);
 
-        if( pszMaxOccurs != NULL && strcmp(pszMaxOccurs, "unbounded") == 0 )
+        if( pszMaxOccurs != NULL && strcmp(pszMaxOccurs, "1") != 0 )
             eType = GetListTypeFromSingleType(eType);
 
         poProp->SetType( eType );

@@ -4062,6 +4062,22 @@ SWIGINTERN int OGRFeatureDefnShadow_IsSame(OGRFeatureDefnShadow *self,OGRFeature
         }
     }
 
+
+    static int ValidateOGRFieldSubType(OGRFieldSubType field_subtype)
+    {
+        switch(field_subtype)
+        {
+            case OFSTNone:
+            case OFSTBoolean:
+            case OFSTInt16:
+            case OFSTFloat32:
+                return TRUE;
+            default:
+                CPLError(CE_Failure, CPLE_IllegalArg, "Illegal field subtype value");
+                return FALSE;
+        }
+    }
+
 SWIGINTERN void delete_OGRFieldDefnShadow(OGRFieldDefnShadow *self){
     OGR_Fld_Destroy(self);
   }
@@ -4086,6 +4102,13 @@ SWIGINTERN OGRFieldType OGRFieldDefnShadow_GetType(OGRFieldDefnShadow *self){
 SWIGINTERN void OGRFieldDefnShadow_SetType(OGRFieldDefnShadow *self,OGRFieldType type){
     if (ValidateOGRFieldType(type))
         OGR_Fld_SetType(self, type);
+  }
+SWIGINTERN OGRFieldSubType OGRFieldDefnShadow_GetSubType(OGRFieldDefnShadow *self){
+    return OGR_Fld_GetSubType(self);
+  }
+SWIGINTERN void OGRFieldDefnShadow_SetSubType(OGRFieldDefnShadow *self,OGRFieldSubType type){
+    if (ValidateOGRFieldSubType(type))
+        OGR_Fld_SetSubType(self, type);
   }
 SWIGINTERN OGRJustification OGRFieldDefnShadow_GetJustify(OGRFieldDefnShadow *self){
     return OGR_Fld_GetJustify(self);
@@ -15124,6 +15147,80 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_FieldDefn_GetSubType(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRFieldDefnShadow *arg1 = (OGRFieldDefnShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  OGRFieldSubType result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:FieldDefn_GetSubType",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRFieldDefnShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "FieldDefn_GetSubType" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRFieldDefnShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (OGRFieldSubType)OGRFieldDefnShadow_GetSubType(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_FieldDefn_SetSubType(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRFieldDefnShadow *arg1 = (OGRFieldDefnShadow *) 0 ;
+  OGRFieldSubType arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:FieldDefn_SetSubType",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRFieldDefnShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "FieldDefn_SetSubType" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRFieldDefnShadow * >(argp1);
+  ecode2 = SWIG_AsVal_int(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "FieldDefn_SetSubType" "', argument " "2"" of type '" "OGRFieldSubType""'");
+  } 
+  arg2 = static_cast< OGRFieldSubType >(val2);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    OGRFieldDefnShadow_SetSubType(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_FieldDefn_GetJustify(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   OGRFieldDefnShadow *arg1 = (OGRFieldDefnShadow *) 0 ;
@@ -20609,6 +20706,39 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_GetFieldSubTypeName(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRFieldSubType arg1 ;
+  int val1 ;
+  int ecode1 = 0 ;
+  PyObject * obj0 = 0 ;
+  char *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:GetFieldSubTypeName",&obj0)) SWIG_fail;
+  ecode1 = SWIG_AsVal_int(obj0, &val1);
+  if (!SWIG_IsOK(ecode1)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "GetFieldSubTypeName" "', argument " "1"" of type '" "OGRFieldSubType""'");
+  } 
+  arg1 = static_cast< OGRFieldSubType >(val1);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (char *)OGR_GetFieldSubTypeName(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_FromCharPtr((const char *)result);
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_GT_Flatten(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   OGRwkbGeometryType arg1 ;
@@ -24046,6 +24176,8 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"eType:  the new field type. \n"
 		""},
+	 { (char *)"FieldDefn_GetSubType", _wrap_FieldDefn_GetSubType, METH_VARARGS, (char *)"FieldDefn_GetSubType(FieldDefn self) -> OGRFieldSubType"},
+	 { (char *)"FieldDefn_SetSubType", _wrap_FieldDefn_SetSubType, METH_VARARGS, (char *)"FieldDefn_SetSubType(FieldDefn self, OGRFieldSubType type)"},
 	 { (char *)"FieldDefn_GetJustify", _wrap_FieldDefn_GetJustify, METH_VARARGS, (char *)"\n"
 		"FieldDefn_GetJustify(FieldDefn self) -> OGRJustification\n"
 		"\n"
@@ -25349,6 +25481,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"RegisterAll", _wrap_RegisterAll, METH_VARARGS, (char *)"RegisterAll()"},
 	 { (char *)"GeometryTypeToName", _wrap_GeometryTypeToName, METH_VARARGS, (char *)"GeometryTypeToName(OGRwkbGeometryType eType) -> char"},
 	 { (char *)"GetFieldTypeName", _wrap_GetFieldTypeName, METH_VARARGS, (char *)"GetFieldTypeName(OGRFieldType type) -> char"},
+	 { (char *)"GetFieldSubTypeName", _wrap_GetFieldSubTypeName, METH_VARARGS, (char *)"GetFieldSubTypeName(OGRFieldSubType type) -> char"},
 	 { (char *)"GT_Flatten", _wrap_GT_Flatten, METH_VARARGS, (char *)"GT_Flatten(OGRwkbGeometryType eType) -> OGRwkbGeometryType"},
 	 { (char *)"GT_SetZ", _wrap_GT_SetZ, METH_VARARGS, (char *)"GT_SetZ(OGRwkbGeometryType eType) -> OGRwkbGeometryType"},
 	 { (char *)"GT_SetModifier", _wrap_GT_SetModifier, METH_VARARGS, (char *)"GT_SetModifier(OGRwkbGeometryType eType, int bSetZ, int bSetM = True) -> OGRwkbGeometryType"},
@@ -25401,7 +25534,7 @@ static swig_type_info _swigt__p_OSRSpatialReferenceShadow = {"_p_OSRSpatialRefer
 static swig_type_info _swigt__p_char = {"_p_char", "char *|retStringAndCPLFree *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_double = {"_p_double", "double *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_f_double_p_q_const__char_p_void__int = {"_p_f_double_p_q_const__char_p_void__int", "int (*)(double,char const *,void *)", 0, 0, (void*)0, 0};
-static swig_type_info _swigt__p_int = {"_p_int", "OGRFieldType *|int *|OGRwkbGeometryType *|OGRJustification *|OGRwkbByteOrder *|OGRErr *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_int = {"_p_int", "OGRFieldSubType *|OGRFieldType *|int *|OGRwkbGeometryType *|OGRJustification *|OGRwkbByteOrder *|OGRErr *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_char = {"_p_p_char", "char **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_double = {"_p_p_double", "double **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_int = {"_p_p_int", "int **", 0, 0, (void*)0, 0};
@@ -26109,6 +26242,10 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "OFTDate",SWIG_From_int(static_cast< int >(9)));
   SWIG_Python_SetConstant(d, "OFTTime",SWIG_From_int(static_cast< int >(10)));
   SWIG_Python_SetConstant(d, "OFTDateTime",SWIG_From_int(static_cast< int >(11)));
+  SWIG_Python_SetConstant(d, "OFSTNone",SWIG_From_int(static_cast< int >(0)));
+  SWIG_Python_SetConstant(d, "OFSTBoolean",SWIG_From_int(static_cast< int >(1)));
+  SWIG_Python_SetConstant(d, "OFSTInt16",SWIG_From_int(static_cast< int >(2)));
+  SWIG_Python_SetConstant(d, "OFSTFloat32",SWIG_From_int(static_cast< int >(3)));
   SWIG_Python_SetConstant(d, "OJUndefined",SWIG_From_int(static_cast< int >(0)));
   SWIG_Python_SetConstant(d, "OJLeft",SWIG_From_int(static_cast< int >(1)));
   SWIG_Python_SetConstant(d, "OJRight",SWIG_From_int(static_cast< int >(2)));

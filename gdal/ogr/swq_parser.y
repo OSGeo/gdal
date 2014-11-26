@@ -80,7 +80,6 @@
 %token SWQT_UNION               "UNION"
 %token SWQT_ALL                 "ALL"
 
-%token SWQT_LOGICAL_START
 %token SWQT_VALUE_START
 %token SWQT_SELECT_START
 
@@ -90,9 +89,12 @@
 %token SWQT_OR                  "OR"
 %token SWQT_AND                 "AND"
 
-%left SWQT_NOT
 %left SWQT_OR
 %left SWQT_AND
+%left SWQT_NOT
+
+%left '=' '<' '>' '!'  SWQT_BETWEEN SWQT_IN SWQT_LIKE SWQT_IS
+%left SWQT_ESCAPE
 
 %left '+' '-'
 %left '*' '/' '%'
@@ -103,16 +105,11 @@
 /* Any grammar rule that does $$ =  must be listed afterwards */
 /* as well as SWQT_INTEGER_NUMBER SWQT_FLOAT_NUMBER SWQT_STRING SWQT_IDENTIFIER that are allocated by swqlex() */
 %destructor { delete $$; } SWQT_INTEGER_NUMBER SWQT_FLOAT_NUMBER SWQT_STRING SWQT_IDENTIFIER
-%destructor { delete $$; } logical_expr value_expr_list field_value value_expr type_def string_or_identifier table_def
+%destructor { delete $$; } value_expr_list field_value value_expr type_def string_or_identifier table_def
 
 %%
 
 input:  
-    SWQT_LOGICAL_START logical_expr
-        {
-            context->poRoot = $2;
-        }
-
     | SWQT_VALUE_START value_expr
         {
             context->poRoot = $2;
@@ -123,8 +120,13 @@ input:
             context->poRoot = $2;
         }
 
-logical_expr:
-    logical_expr SWQT_AND logical_expr 
+value_expr:
+    value_expr_non_logical 
+        {
+            $$ = $1;
+        }
+
+    | value_expr SWQT_AND value_expr 
         {
             $$ = new swq_expr_node( SWQ_AND );
             $$->field_type = SWQ_BOOLEAN;
@@ -132,7 +134,7 @@ logical_expr:
             $$->PushSubExpression( $3 );
         }
 
-    | logical_expr SWQT_OR logical_expr
+    | value_expr SWQT_OR value_expr
         {
             $$ = new swq_expr_node( SWQ_OR );
             $$->field_type = SWQ_BOOLEAN;
@@ -140,16 +142,11 @@ logical_expr:
             $$->PushSubExpression( $3 );
         }
 
-    | SWQT_NOT logical_expr
+    | SWQT_NOT value_expr
         {
             $$ = new swq_expr_node( SWQ_NOT );
             $$->field_type = SWQ_BOOLEAN;
             $$->PushSubExpression( $2 );
-        }
-
-    | '(' logical_expr ')'
-        {
-            $$ = $2;
         }
 
     | value_expr '=' value_expr
@@ -292,7 +289,7 @@ logical_expr:
             $$->PushSubExpression( in );
         }
 
-    | value_expr SWQT_BETWEEN value_expr SWQT_AND value_expr
+    | value_expr SWQT_BETWEEN value_expr_non_logical SWQT_AND value_expr_non_logical
         {
             $$ = new swq_expr_node( SWQ_BETWEEN );
             $$->field_type = SWQ_BOOLEAN;
@@ -301,7 +298,7 @@ logical_expr:
             $$->PushSubExpression( $5 );
         }
 
-    | value_expr SWQT_NOT SWQT_BETWEEN value_expr SWQT_AND value_expr
+    | value_expr SWQT_NOT SWQT_BETWEEN value_expr_non_logical SWQT_AND value_expr_non_logical
         {
             swq_expr_node *between;
             between = new swq_expr_node( SWQ_BETWEEN );
@@ -371,7 +368,7 @@ field_value:
             $3 = NULL;
         }
 
-value_expr:
+value_expr_non_logical:
     SWQT_INTEGER_NUMBER 
         {
             $$ = $1;
@@ -401,7 +398,7 @@ value_expr:
             $$ = new swq_expr_node((const char*)NULL);
         }
 
-    | '-' value_expr %prec SWQT_UMINUS
+    | '-' value_expr_non_logical %prec SWQT_UMINUS
         {
             if ($2->eNodeType == SNT_CONSTANT)
             {
@@ -417,35 +414,35 @@ value_expr:
             }
         }
 
-    | value_expr '+' value_expr
+    | value_expr_non_logical '+' value_expr_non_logical
         {
             $$ = new swq_expr_node( SWQ_ADD );
             $$->PushSubExpression( $1 );
             $$->PushSubExpression( $3 );
         }
 
-    | value_expr '-' value_expr
+    | value_expr_non_logical '-' value_expr_non_logical
         {
             $$ = new swq_expr_node( SWQ_SUBTRACT );
             $$->PushSubExpression( $1 );
             $$->PushSubExpression( $3 );
         }
 
-    | value_expr '*' value_expr
+    | value_expr_non_logical '*' value_expr_non_logical
         {
             $$ = new swq_expr_node( SWQ_MULTIPLY );
             $$->PushSubExpression( $1 );
             $$->PushSubExpression( $3 );
         }
 
-    | value_expr '/' value_expr
+    | value_expr_non_logical '/' value_expr_non_logical
         {
             $$ = new swq_expr_node( SWQ_DIVIDE );
             $$->PushSubExpression( $1 );
             $$->PushSubExpression( $3 );
         }
 
-    | value_expr '%' value_expr
+    | value_expr_non_logical '%' value_expr_non_logical
         {
             $$ = new swq_expr_node( SWQ_MODULUS );
             $$->PushSubExpression( $1 );
@@ -781,7 +778,7 @@ as_clause:
 
 
 opt_where:  
-    | SWQT_WHERE logical_expr
+    | SWQT_WHERE value_expr
         {
             context->poCurSelect->where_expr = $2;
         }

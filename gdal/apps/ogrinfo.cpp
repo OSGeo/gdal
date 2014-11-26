@@ -555,10 +555,14 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
         for( int iAttr = 0; iAttr < poDefn->GetFieldCount(); iAttr++ )
         {
             OGRFieldDefn    *poField = poDefn->GetFieldDefn( iAttr );
-            
+            const char* pszType = (poField->GetSubType() != OFSTNone) ?
+                CPLSPrintf("%s(%s)",
+                           poField->GetFieldTypeName( poField->GetType() ),
+                           poField->GetFieldSubTypeName(poField->GetSubType())) :
+                poField->GetFieldTypeName( poField->GetType() );
             printf( "%s: %s (%d.%d)\n",
                     poField->GetNameRef(),
-                    poField->GetFieldTypeName( poField->GetType() ),
+                    pszType,
                     poField->GetWidth(),
                     poField->GetPrecision() );
         }

@@ -122,6 +122,12 @@ def ogr_fgdb_1():
         lyr.CreateField(ogr.FieldDefn("xml", ogr.OFTString))
         lyr.CreateField(ogr.FieldDefn("binary", ogr.OFTBinary))
         lyr.CreateField(ogr.FieldDefn("binary2", ogr.OFTBinary))
+        fld_defn = ogr.FieldDefn("smallint2", ogr.OFTInteger)
+        fld_defn.SetSubType(ogr.OFSTInt16)
+        lyr.CreateField(fld_defn)
+        fld_defn = ogr.FieldDefn("float2", ogr.OFTReal)
+        fld_defn.SetSubType(ogr.OFSTFloat32)
+        lyr.CreateField(fld_defn)
 
         # We need at least 5 features so that test_ogrsf can test SetFeature()
         for i in range(5):
@@ -139,6 +145,8 @@ def ogr_fgdb_1():
             feat.SetField("xml", "<foo></foo>")
             feat.SetFieldBinaryFromHexString("binary", "00FF7F")
             feat.SetFieldBinaryFromHexString("binary2", "123456")
+            feat.SetField("smallint2", -32768)
+            feat.SetField("float2", 1.5)
             lyr.CreateFeature(feat)
 
     for data in datalist:
@@ -169,7 +177,8 @@ def ogr_fgdb_1():
            feat.GetField('guid') != "{12345678-9ABC-DEF0-1234-567890ABCDEF}" or \
            feat.GetField('xml') != "<foo></foo>" or \
            feat.GetField('binary') != "00FF7F" or \
-           feat.GetField('binary2') != "123456":
+           feat.GetField('binary2') != "123456" or \
+           feat.GetField('smallint2') != -32768:
             feat.DumpReadable()
             return 'fail'
 
@@ -222,6 +231,20 @@ def ogr_fgdb_DeleteField():
 
     ds = ogr.Open("tmp/test.gdb", update = 1)
     lyr = ds.GetLayerByIndex(0)
+
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('smallint')).GetSubType() != ogr.OFSTInt16:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('smallint2')).GetSubType() != ogr.OFSTInt16:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('float')).GetSubType() != ogr.OFSTFloat32:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('float2')).GetSubType() != ogr.OFSTFloat32:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     if lyr.DeleteField(lyr.GetLayerDefn().GetFieldIndex('str')) != 0:
         gdaltest.post_reason('failure')
         return 'fail'

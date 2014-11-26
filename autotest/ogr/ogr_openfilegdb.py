@@ -254,6 +254,12 @@ def ogr_openfilegdb_1():
             print(lyr.GetName())
             print(lyr.GetGeomType())
             return 'fail'
+        if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('smallint')).GetSubType() != ogr.OFSTInt16:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('float')).GetSubType() != ogr.OFSTFloat32:
+            gdaltest.post_reason('fail')
+            return 'fail'
         if data[1] != ogr.wkbNone:
             if lyr.GetSpatialRef().IsSame(srs) != 1:
                 print(lyr.GetSpatialRef())

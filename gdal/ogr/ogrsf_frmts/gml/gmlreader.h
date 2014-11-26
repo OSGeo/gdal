@@ -47,7 +47,11 @@ typedef enum {
     GMLPT_IntegerList = 6, 
     GMLPT_RealList = 7,
     GMLPT_FeatureProperty = 8,
-    GMLPT_FeaturePropertyList = 9
+    GMLPT_FeaturePropertyList = 9,
+    GMLPT_Boolean = 10,
+    GMLPT_BooleanList = 11,
+    GMLPT_Short = 12,
+    GMLPT_Float = 13
 } GMLPropertyType;
 
 /************************************************************************/

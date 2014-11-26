@@ -442,6 +442,7 @@ int OGRPGTableLayer::ReadTableDefinition()
             continue;
         }
 
+        //CPLDebug("PG", "name=%s, type=%s", oField.GetNameRef(), pszType);
         if( EQUAL(pszType,"text") )
         {
             oField.SetType( OFTString );
@@ -472,6 +473,7 @@ int OGRPGTableLayer::ReadTableDefinition()
         else if( EQUAL(pszType,"bool") )
         {
             oField.SetType( OFTInteger );
+            oField.SetSubType( OFSTBoolean );
             oField.SetWidth( 1 );
         }
         else if( EQUAL(pszType,"numeric") )
@@ -504,15 +506,25 @@ int OGRPGTableLayer::ReadTableDefinition()
         {
             oField.SetType( OFTIntegerList );
         }
+        else if( EQUAL(pszFormatType,"boolean[]") )
+        {
+            oField.SetType( OFTIntegerList );
+            oField.SetSubType( OFSTBoolean );
+        }
         else if( EQUAL(pszFormatType, "float[]") ||
-                 EQUAL(pszFormatType, "real[]") ||
-                 EQUAL(pszFormatType, "double precision[]") )
+                 EQUAL(pszFormatType, "real[]") )
+        {
+            oField.SetType( OFTRealList );
+            oField.SetSubType( OFSTFloat32 );
+        }
+        else if( EQUAL(pszFormatType, "double precision[]") )
         {
             oField.SetType( OFTRealList );
         }
         else if( EQUAL(pszType,"int2") )
         {
             oField.SetType( OFTInteger );
+            oField.SetSubType( OFSTInt16 );
             oField.SetWidth( 5 );
         }
         else if( EQUAL(pszType,"int8") )
@@ -523,6 +535,11 @@ int OGRPGTableLayer::ReadTableDefinition()
         else if( EQUALN(pszType,"int",3) )
         {
             oField.SetType( OFTInteger );
+        }
+        else if( EQUAL(pszType,"float4")  )
+        {
+            oField.SetType( OFTReal );
+            oField.SetSubType( OFSTFloat32 );
         }
         else if( EQUALN(pszType,"float",5) ||
                  EQUALN(pszType,"double",6) ||
@@ -1122,7 +1139,8 @@ OGRErr OGRPGTableLayer::DeleteFeature( long nFID )
 void OGRPGTableLayer::AppendFieldValue(PGconn *hPGConn, CPLString& osCommand,
                                        OGRFeature* poFeature, int i)
 {
-    int nOGRFieldType = poFeatureDefn->GetFieldDefn(i)->GetType();
+    OGRFieldType nOGRFieldType = poFeatureDefn->GetFieldDefn(i)->GetType();
+    OGRFieldSubType eSubType = poFeatureDefn->GetFieldDefn(i)->GetSubType();
 
     // We need special formatting for integer list values.
     if(  nOGRFieldType == OFTIntegerList )
@@ -1234,6 +1252,8 @@ void OGRPGTableLayer::AppendFieldValue(PGconn *hPGConn, CPLString& osCommand,
         else if( CPLIsInf(dfVal) )
             pszStrValue = (dfVal > 0) ? "'Infinity'" : "'-Infinity'";
     }
+    else if ( nOGRFieldType == OFTInteger && eSubType == OFSTBoolean )
+        pszStrValue = poFeature->GetFieldAsInteger(i) ? "'t'" : "'f'";
 
     if( nOGRFieldType != OFTInteger && nOGRFieldType != OFTReal
         && !bIsDateNull )
@@ -2260,90 +2280,6 @@ int OGRPGTableLayer::TestCapability( const char * pszCap )
 }
 
 /************************************************************************/
-/*                        OGRPGTableLayerGetType()                      */
-/************************************************************************/
-
-static CPLString OGRPGTableLayerGetType(OGRFieldDefn& oField,
-                                        int bPreservePrecision,
-                                        int bApproxOK)
-{
-    char                szFieldType[256];
-
-/* -------------------------------------------------------------------- */
-/*      Work out the PostgreSQL type.                                   */
-/* -------------------------------------------------------------------- */
-    if( oField.GetType() == OFTInteger )
-    {
-        if( oField.GetWidth() > 0 && bPreservePrecision )
-            sprintf( szFieldType, "NUMERIC(%d,0)", oField.GetWidth() );
-        else
-            strcpy( szFieldType, "INTEGER" );
-    }
-    else if( oField.GetType() == OFTReal )
-    {
-        if( oField.GetWidth() > 0 && oField.GetPrecision() > 0
-            && bPreservePrecision )
-            sprintf( szFieldType, "NUMERIC(%d,%d)",
-                     oField.GetWidth(), oField.GetPrecision() );
-        else
-            strcpy( szFieldType, "FLOAT8" );
-    }
-    else if( oField.GetType() == OFTString )
-    {
-        if (oField.GetWidth() > 0 &&  bPreservePrecision )
-            sprintf( szFieldType, "VARCHAR(%d)",  oField.GetWidth() );
-        else
-            strcpy( szFieldType, "VARCHAR");
-    }
-    else if( oField.GetType() == OFTIntegerList )
-    {
-        strcpy( szFieldType, "INTEGER[]" );
-    }
-    else if( oField.GetType() == OFTRealList )
-    {
-        strcpy( szFieldType, "FLOAT8[]" );
-    }
-    else if( oField.GetType() == OFTStringList )
-    {
-        strcpy( szFieldType, "varchar[]" );
-    }
-    else if( oField.GetType() == OFTDate )
-    {
-        strcpy( szFieldType, "date" );
-    }
-    else if( oField.GetType() == OFTTime )
-    {
-        strcpy( szFieldType, "time" );
-    }
-    else if( oField.GetType() == OFTDateTime )
-    {
-        strcpy( szFieldType, "timestamp with time zone" );
-    }
-    else if( oField.GetType() == OFTBinary )
-    {
-        strcpy( szFieldType, "bytea" );
-    }
-    else if( bApproxOK )
-    {
-        CPLError( CE_Warning, CPLE_NotSupported,
-                  "Can't create field %s with type %s on PostgreSQL layers.  Creating as VARCHAR.",
-                  oField.GetNameRef(),
-                  OGRFieldDefn::GetFieldTypeName(oField.GetType()) );
-        strcpy( szFieldType, "VARCHAR" );
-    }
-    else
-    {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "Can't create field %s with type %s on PostgreSQL layers.",
-                  oField.GetNameRef(),
-                  OGRFieldDefn::GetFieldTypeName(oField.GetType()) );
-        strcpy( szFieldType, "");
-    }
-
-    return szFieldType;
-}
-
-/************************************************************************/
 /*                            CreateField()                             */
 /************************************************************************/
 
@@ -2391,7 +2327,7 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
         osFieldType = pszOverrideType;
     else
     {
-        osFieldType = OGRPGTableLayerGetType(oField, bPreservePrecision, bApproxOK);
+        osFieldType = OGRPGCommonLayerGetType(oField, bPreservePrecision, bApproxOK);
         if (osFieldType.size() == 0)
             return OGRERR_FAILURE;
     }
@@ -2706,7 +2642,7 @@ OGRErr OGRPGTableLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn
     if ((nFlags & ALTER_TYPE_FLAG) ||
         (nFlags & ALTER_WIDTH_PRECISION_FLAG))
     {
-        CPLString osFieldType = OGRPGTableLayerGetType(oField,
+        CPLString osFieldType = OGRPGCommonLayerGetType(oField,
                                                        bPreservePrecision,
                                                        TRUE);
         if (osFieldType.size() == 0)

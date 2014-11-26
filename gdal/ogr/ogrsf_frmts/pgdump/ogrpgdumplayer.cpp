@@ -795,7 +795,8 @@ static CPLString OGRPGDumpEscapeStringList(
 void OGRPGDumpLayer::AppendFieldValue(CPLString& osCommand,
                                        OGRFeature* poFeature, int i)
 {
-    int nOGRFieldType = poFeatureDefn->GetFieldDefn(i)->GetType();
+    OGRFieldType nOGRFieldType = poFeatureDefn->GetFieldDefn(i)->GetType();
+    OGRFieldSubType eSubType = poFeatureDefn->GetFieldDefn(i)->GetSubType();
 
     // We need special formatting for integer list values.
     if(  nOGRFieldType == OFTIntegerList )
@@ -905,6 +906,8 @@ void OGRPGDumpLayer::AppendFieldValue(CPLString& osCommand,
         else if( CPLIsInf(dfVal) )
             pszStrValue = (dfVal > 0) ? "'Infinity'" : "'-Infinity'";
     }
+    else if ( nOGRFieldType == OFTInteger && eSubType == OFSTBoolean )
+        pszStrValue = poFeature->GetFieldAsInteger(i) ? "'t'" : "'f'";
 
     if( nOGRFieldType != OFTInteger && nOGRFieldType != OFTReal
         && !bIsDateNull )
@@ -949,12 +952,12 @@ char* OGRPGDumpLayer::GByteArrayToBYTEA( const GByte* pabyData, int nLen)
 }
 
 /************************************************************************/
-/*                        OGRPGTableLayerGetType()                      */
+/*                       OGRPGCommonLayerGetType()                      */
 /************************************************************************/
 
-static CPLString OGRPGTableLayerGetType(OGRFieldDefn& oField,
-                                        int bPreservePrecision,
-                                        int bApproxOK)
+CPLString OGRPGCommonLayerGetType(OGRFieldDefn& oField,
+                                  int bPreservePrecision,
+                                  int bApproxOK)
 {
     char                szFieldType[256];
 
@@ -963,14 +966,20 @@ static CPLString OGRPGTableLayerGetType(OGRFieldDefn& oField,
 /* -------------------------------------------------------------------- */
     if( oField.GetType() == OFTInteger )
     {
-        if( oField.GetWidth() > 0 && bPreservePrecision )
+        if( oField.GetSubType() == OFSTBoolean )
+            strcpy( szFieldType, "BOOLEAN" );
+        else if( oField.GetSubType() == OFSTInt16 )
+            strcpy( szFieldType, "SMALLINT" );
+        else if( oField.GetWidth() > 0 && bPreservePrecision )
             sprintf( szFieldType, "NUMERIC(%d,0)", oField.GetWidth() );
         else
             strcpy( szFieldType, "INTEGER" );
     }
     else if( oField.GetType() == OFTReal )
     {
-        if( oField.GetWidth() > 0 && oField.GetPrecision() > 0
+        if( oField.GetSubType() == OFSTFloat32 )
+            strcpy( szFieldType, "REAL" );
+        else if( oField.GetWidth() > 0 && oField.GetPrecision() > 0
             && bPreservePrecision )
             sprintf( szFieldType, "NUMERIC(%d,%d)",
                      oField.GetWidth(), oField.GetPrecision() );
@@ -986,7 +995,10 @@ static CPLString OGRPGTableLayerGetType(OGRFieldDefn& oField,
     }
     else if( oField.GetType() == OFTIntegerList )
     {
-        strcpy( szFieldType, "INTEGER[]" );
+        if( oField.GetSubType() == OFSTBoolean )
+            strcpy( szFieldType, "BOOLEAN[]" );
+        else
+            strcpy( szFieldType, "INTEGER[]" );
     }
     else if( oField.GetType() == OFTRealList )
     {
@@ -1067,7 +1079,7 @@ OGRErr OGRPGDumpLayer::CreateField( OGRFieldDefn *poFieldIn,
         osFieldType = pszOverrideType;
     else
     {
-        osFieldType = OGRPGTableLayerGetType(oField, bPreservePrecision, bApproxOK);
+        osFieldType = OGRPGCommonLayerGetType(oField, bPreservePrecision, bApproxOK);
         if (osFieldType.size() == 0)
             return OGRERR_FAILURE;
     }

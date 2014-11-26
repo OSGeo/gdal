@@ -592,6 +592,7 @@ int GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
         {
             const char *pszName = CPLGetXMLValue( psThis, "Name", NULL );
             const char *pszType = CPLGetXMLValue( psThis, "Type", "Untyped" );
+            const char *pszSubType = CPLGetXMLValue( psThis, "Subtype", "" );
             const char *pszCondition = CPLGetXMLValue( psThis, "Condition", NULL );
             GMLPropertyDefn *poPDefn;
 
@@ -610,22 +611,49 @@ int GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
                 poPDefn->SetType( GMLPT_Untyped );
             else if( EQUAL(pszType,"String") ) 
             {
-                poPDefn->SetType( GMLPT_String );
-                poPDefn->SetWidth( atoi( CPLGetXMLValue( psThis, "Width", "0" ) ) );
+                if( EQUAL(pszSubType, "Boolean") )
+                {
+                    poPDefn->SetType( GMLPT_Boolean );
+                    poPDefn->SetWidth( 1 );
+                }
+                else
+                {
+                    poPDefn->SetType( GMLPT_String );
+                    poPDefn->SetWidth( atoi( CPLGetXMLValue( psThis, "Width", "0" ) ) );
+                }
             }
             else if( EQUAL(pszType,"Integer") )
             {
-                poPDefn->SetType( GMLPT_Integer );
+                if( EQUAL(pszSubType, "Short") )
+                {
+                    poPDefn->SetType( GMLPT_Short );
+                }
+                else
+                {
+                    poPDefn->SetType( GMLPT_Integer );
+                }
                 poPDefn->SetWidth( atoi( CPLGetXMLValue( psThis, "Width", "0" ) ) );
             }
             else if( EQUAL(pszType,"Real") )
             {
-                poPDefn->SetType( GMLPT_Real );
+                if( EQUAL(pszSubType, "Float") )
+                {
+                    poPDefn->SetType( GMLPT_Float );
+                }
+                else
+                {
+                    poPDefn->SetType( GMLPT_Real );
+                }
                 poPDefn->SetWidth( atoi( CPLGetXMLValue( psThis, "Width", "0" ) ) );
                 poPDefn->SetPrecision( atoi( CPLGetXMLValue( psThis, "Precision", "0" ) ) );
             }
             else if( EQUAL(pszType,"StringList") ) 
-                poPDefn->SetType( GMLPT_StringList );
+            {
+                if( EQUAL(pszSubType, "Boolean") )
+                    poPDefn->SetType( GMLPT_BooleanList );
+                else
+                    poPDefn->SetType( GMLPT_StringList );
+            }
             else if( EQUAL(pszType,"IntegerList") )
                 poPDefn->SetType( GMLPT_IntegerList );
             else if( EQUAL(pszType,"RealList") )
@@ -772,14 +800,17 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
             break;
             
           case GMLPT_String:
+          case GMLPT_Boolean:
             pszTypeName = "String";
             break;
             
           case GMLPT_Integer:
+          case GMLPT_Short:
             pszTypeName = "Integer";
             break;
             
           case GMLPT_Real:
+          case GMLPT_Float:
             pszTypeName = "Real";
             break;
             
@@ -796,6 +827,7 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
             break;
 
           case GMLPT_StringList:
+          case GMLPT_BooleanList:
             pszTypeName = "StringList";
             break;
 
@@ -812,6 +844,12 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
             break;
         }
         CPLCreateXMLElementAndValue( psPDefnNode, "Type", pszTypeName );
+        if( poPDefn->GetType() == GMLPT_Boolean || poPDefn->GetType() == GMLPT_BooleanList )
+            CPLCreateXMLElementAndValue( psPDefnNode, "Subtype", "Boolean" );
+        else if( poPDefn->GetType() == GMLPT_Short )
+            CPLCreateXMLElementAndValue( psPDefnNode, "Subtype", "Short" );
+        else if( poPDefn->GetType() == GMLPT_Float )
+            CPLCreateXMLElementAndValue( psPDefnNode, "Subtype", "Float" );
 
         if( EQUAL(pszTypeName,"String") )
         {

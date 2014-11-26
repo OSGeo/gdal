@@ -1102,11 +1102,20 @@ def ogr_pg_23():
     # add some custom date fields.
     gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_numeric5 numeric(5)' )
     gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_numeric5_3 numeric(5,3)' )
-    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_bool bool' )
-    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_int2 int2' )
+    #gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_bool bool' )
+    fld = ogr.FieldDefn('my_bool', ogr.OFTInteger)
+    fld.SetSubType(ogr.OFSTBoolean)
+    lyr.CreateField(fld)
+    #gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_int2 int2' )
+    fld = ogr.FieldDefn('my_int2', ogr.OFTInteger)
+    fld.SetSubType(ogr.OFSTInt16)
+    lyr.CreateField(fld)
     gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_int4 int4' )
     gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_int8 int8' )
-    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_float4 float4' )
+    #gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_float4 float4' )
+    fld = ogr.FieldDefn('my_float4', ogr.OFTReal)
+    fld.SetSubType(ogr.OFSTFloat32)
+    lyr.CreateField(fld)
     gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_float8 float8' )
     gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_real real' )
     gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_char char' )
@@ -1124,7 +1133,9 @@ def ogr_pg_23():
     gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_int4array int4[]' )
     gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_float4array float4[]' )
     gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_float8array float8[]' )
-
+    fld = ogr.FieldDefn('my_boolarray', ogr.OFTIntegerList)
+    fld.SetSubType(ogr.OFSTBoolean)
+    lyr.CreateField(fld)
     ######################################################
     # Create a populated records.
 
@@ -1134,8 +1145,7 @@ def ogr_pg_23():
         geom_str = "'\\\\001\\\\001\\\\000\\\\000\\\\000\\\\000\\\\000\\\\000\\\\000\\\\000\\\\000$@\\\\000\\\\000\\\\000\\\\000\\\\000\\\\0004@'"
         if gdaltest.pg_quote_with_E:
             geom_str = "E" + geom_str
-    gdaltest.pg_ds.ExecuteSQL( "INSERT INTO datatypetest ( my_numeric5, my_numeric5_3, my_bool, my_int2, my_int4, my_int8, my_float4, my_float8, my_real, my_char, my_varchar, my_varchar10, my_text, my_bytea, my_time, my_date, my_timestamp, my_timestamptz, my_chararray, my_textarray, my_varchararray, my_int4array, my_float4array, my_float8array, wkb_geometry) VALUES ( 12345, 0.123, 'T', 12345, 12345678, 1234567901234, 0.123, 0.12345678, 0.876, 'a', 'ab', 'varchar10 ', 'abc', 'xyz', '12:34:56', '2000-01-01', '2000-01-01 00:00:00', '2000-01-01 00:00:00+00', '{a,b}', '{aa,bb}', '{cc,dd}', '{100,200}', '{100.1,200.1}', '{100.12,200.12}', " + geom_str + " )" )
-
+    gdaltest.pg_ds.ExecuteSQL( "INSERT INTO datatypetest ( my_numeric5, my_numeric5_3, my_bool, my_int2, my_int4, my_int8, my_float4, my_float8, my_real, my_char, my_varchar, my_varchar10, my_text, my_bytea, my_time, my_date, my_timestamp, my_timestamptz, my_chararray, my_textarray, my_varchararray, my_int4array, my_float4array, my_float8array, my_boolarray, wkb_geometry) VALUES ( 12345, 0.123, 'T', 12345, 12345678, 1234567901234, 0.123, 0.12345678, 0.876, 'a', 'ab', 'varchar10 ', 'abc', 'xyz', '12:34:56', '2000-01-01', '2000-01-01 00:00:00', '2000-01-01 00:00:00+00', '{a,b}', '{aa,bb}', '{cc,dd}', '{100,200}', '{100.1,200.1}', '{100.12,200.12}', '{1,0}', " + geom_str + " )" )
 
     return 'success'
 
@@ -1158,6 +1168,26 @@ def test_val_test_23(layer_defn, feat):
         gdaltest.post_reason('Wrong field defn for my_varchar10 : %d, %d, %d' % (field_defn.GetWidth(), field_defn.GetPrecision(), field_defn.GetType()))
         return 'fail'
 
+    field_defn = layer_defn.GetFieldDefn(layer_defn.GetFieldIndex("my_bool"))
+    if field_defn.GetWidth() != 1 or field_defn.GetType() != ogr.OFTInteger or field_defn.GetSubType() != ogr.OFSTBoolean:
+        gdaltest.post_reason('Wrong field defn for my_bool : %d, %d, %d, %d' % (field_defn.GetWidth(), field_defn.GetPrecision(), field_defn.GetType(), field_defn.GetSubType()))
+        return 'fail'
+
+    field_defn = layer_defn.GetFieldDefn(layer_defn.GetFieldIndex("my_boolarray"))
+    if field_defn.GetType() != ogr.OFTIntegerList or field_defn.GetSubType() != ogr.OFSTBoolean:
+        gdaltest.post_reason('Wrong field defn for my_boolarray : %d, %d, %d, %d' % (field_defn.GetWidth(), field_defn.GetPrecision(), field_defn.GetType(), field_defn.GetSubType()))
+        return 'fail'
+
+    field_defn = layer_defn.GetFieldDefn(layer_defn.GetFieldIndex("my_int2"))
+    if field_defn.GetType() != ogr.OFTInteger or field_defn.GetSubType() != ogr.OFSTInt16:
+        gdaltest.post_reason('Wrong field defn for my_bool : %d, %d, %d, %d' % (field_defn.GetWidth(), field_defn.GetPrecision(), field_defn.GetType(), field_defn.GetSubType()))
+        return 'fail'
+
+    field_defn = layer_defn.GetFieldDefn(layer_defn.GetFieldIndex("my_float4"))
+    if field_defn.GetType() != ogr.OFTReal or field_defn.GetSubType() != ogr.OFSTFloat32:
+        gdaltest.post_reason('Wrong field defn for my_bool : %d, %d, %d, %d' % (field_defn.GetWidth(), field_defn.GetPrecision(), field_defn.GetType(), field_defn.GetSubType()))
+        return 'fail'
+
     if feat.my_numeric5 != 12345 or \
     feat.my_numeric5_3 != 0.123 or \
     feat.my_bool != 1 or \
@@ -1178,7 +1208,8 @@ def test_val_test_23(layer_defn, feat):
     feat.GetFieldAsString('my_chararray') != '(2:a,b)' or \
     feat.GetFieldAsString('my_textarray') != '(2:aa,bb)' or \
     feat.GetFieldAsString('my_varchararray') != '(2:cc,dd)' or \
-    feat.GetFieldAsString('my_int4array') != '(2:100,200)' :
+    feat.GetFieldAsString('my_int4array') != '(2:100,200)' or \
+    feat.GetFieldAsString('my_boolarray') != '(2:1,0)' :
 #    feat.my_float4array != '(2:100.1,200.1)'
 #    feat.my_float4array != '(2:100.12,200.12)'
 #    feat.my_int8 != 1234567901234

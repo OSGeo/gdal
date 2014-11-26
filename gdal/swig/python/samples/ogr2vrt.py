@@ -227,6 +227,8 @@ for name in layer_list:
 
         vrt += '    <Field name="%s" type="%s"' \
                % (Esc(src_fd.GetName()), type)
+        if src_fd.GetSubType() != ogr.OFSTNone:
+            vrt += ' subtype="%s"' % ogr.GetFieldSubTypeName(src_fd.GetSubType())
         if not schema:
             vrt += ' src="%s"' % Esc(src_fd.GetName())
         if src_fd.GetWidth() > 0:

@@ -231,8 +231,41 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
         OGRFieldType eFieldType = OFTString;
         if (pszDeclType != NULL)
         {
-            if (EQUAL(pszDeclType, "INTEGER"))
+            if (EQUAL(pszDeclType, "INTEGER_BOOLEAN"))
+            {
                 nColType = SQLITE_INTEGER;
+                oField.SetType(OFTInteger);
+                oField.SetSubType(OFSTBoolean);
+            }
+            else if (EQUAL(pszDeclType, "INTEGER_INT16"))
+            {
+                nColType = SQLITE_INTEGER;
+                oField.SetType(OFTInteger);
+                oField.SetSubType(OFSTInt16);
+            }
+            else if (EQUAL(pszDeclType, "INTEGERLIST"))
+            {
+                nColType = SQLITE_TEXT;
+                oField.SetType(OFTIntegerList);
+            }
+            else if (EQUAL(pszDeclType, "REALLIST"))
+            {
+                nColType = SQLITE_TEXT;
+                oField.SetType(OFTRealList);
+            }
+            else if (EQUAL(pszDeclType, "STRINGLIST"))
+            {
+                nColType = SQLITE_TEXT;
+                oField.SetType(OFTStringList);
+            }
+            else if (EQUALN(pszDeclType, "INTEGER", strlen("INTEGER")))
+                nColType = SQLITE_INTEGER;
+            else if (EQUAL(pszDeclType, "FLOAT_FLOAT32"))
+            {
+                nColType = SQLITE_FLOAT;
+                oField.SetType(OFTReal);
+                oField.SetSubType(OFSTFloat32);
+            }
             else if (EQUAL(pszDeclType, "FLOAT") ||
                      EQUAL(pszDeclType, "DECIMAL"))
                 nColType = SQLITE_FLOAT;
@@ -688,6 +721,9 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
             break;
 
         case OFTString:
+        case OFTIntegerList:
+        case OFTRealList:
+        case OFTStringList:
         {
             if( CSLFindString(papszCompressedColumns,
                               poFeatureDefn->GetFieldDefn(iField)->GetNameRef()) >= 0 )

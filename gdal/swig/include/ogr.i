@@ -63,6 +63,7 @@ typedef char retStringAndCPLFree;
 typedef int OGRwkbByteOrder;
 typedef int OGRwkbGeometryType;
 typedef int OGRFieldType;
+typedef int OGRFieldSubType;
 typedef int OGRJustification;
 #else
 %rename (wkbByteOrder) OGRwkbByteOrder;
@@ -127,6 +128,19 @@ typedef enum
   /** Time */                                   OFTTime = 10,
   /** Date and Time */                          OFTDateTime = 11
 } OGRFieldType;
+
+%rename (FieldSubType) OGRFieldSubType;
+typedef enum
+{
+    /** No subtype. This is the default value */        OFSTNone = 0,
+    /** Boolean integer. Only valid for OFTInteger
+        and OFTIntegerList.*/                           OFSTBoolean = 1,
+    /** Signed 16-bit integer. Only valid for OFTInteger and OFTIntegerList. */
+                                                        OFSTInt16 = 2,
+    /** Single precision (32 bit) floatint point. Only valid for OFTReal and OFTRealList. */
+                                                        OFSTFloat32 = 3
+} OGRFieldSubType;
+
 
 %rename (Justification) OGRJustification;
 typedef enum 
@@ -237,6 +251,11 @@ typedef void retGetPoints;
 %constant OFTDate = 9;
 %constant OFTTime = 10;
 %constant OFTDateTime = 11;
+
+%constant OFSTNone = 0;
+%constant OFSTBoolean = 1;
+%constant OFSTInt16 = 2;
+%constant OFSTFloat32 = 3;
 
 %constant OJUndefined = 0;
 %constant OJLeft = 1;
@@ -1650,6 +1669,22 @@ public:
     }
 %}
 
+%{
+    static int ValidateOGRFieldSubType(OGRFieldSubType field_subtype)
+    {
+        switch(field_subtype)
+        {
+            case OFSTNone:
+            case OFSTBoolean:
+            case OFSTInt16:
+            case OFSTFloat32:
+                return TRUE;
+            default:
+                CPLError(CE_Failure, CPLE_IllegalArg, "Illegal field subtype value");
+                return FALSE;
+        }
+    }
+%}
 
 class OGRFieldDefnShadow {
   OGRFieldDefnShadow();
@@ -1691,7 +1726,16 @@ public:
     if (ValidateOGRFieldType(type))
         OGR_Fld_SetType(self, type);
   }
-  
+
+  OGRFieldSubType GetSubType() {
+    return OGR_Fld_GetSubType(self);
+  }
+
+  void SetSubType(OGRFieldSubType type) {
+    if (ValidateOGRFieldSubType(type))
+        OGR_Fld_SetSubType(self, type);
+  }
+
   OGRJustification GetJustify() {
     return OGR_Fld_GetJustify(self);
   }
@@ -2612,6 +2656,9 @@ const char *OGRGeometryTypeToName( OGRwkbGeometryType eType );
 
 %rename (GetFieldTypeName) OGR_GetFieldTypeName;
 const char * OGR_GetFieldTypeName(OGRFieldType type);
+
+%rename (GetFieldSubTypeName) OGR_GetFieldSubTypeName;
+const char * OGR_GetFieldSubTypeName(OGRFieldSubType type);
 
 %rename (GT_Flatten) OGR_GT_Flatten;
 OGRwkbGeometryType OGR_GT_Flatten( OGRwkbGeometryType eType );

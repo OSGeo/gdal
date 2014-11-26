@@ -123,6 +123,8 @@ the JOIN section.
 Field definitions can also be complex expressions using arithmetic, and 
 functional operators.   However, the DISTINCT keyword, and summarization 
 operators like MIN, MAX, AVG and SUM may not be applied to expression fields.
+Starting with GDAL 2.0, boolean resulting expressions (comparisons, logical
+operators) can also be used.
 
 \code
 SELECT cost+tax from invoice
@@ -190,9 +192,11 @@ SELECT *, CAST(OGR_STYLE AS character(255)) FROM rivers
 Currently casting to the following target types are supported:
 
 <ol>
+<li> boolean (GDAL &gt;= 2.0)
 <li> character(field_length). By default, field_length=1.
 <li> float(field_length)
 <li> numeric(field_length, field_precision)
+<li> smallint(field_length) : 16 bit signed integer (GDAL &gt;= 2.0)
 <li> integer(field_length)
 <li> date(field_length)
 <li> time(field_length)

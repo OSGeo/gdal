@@ -2874,6 +2874,7 @@ static TargetLayerInfo* SetupTargetLayer( CPL_UNUSED GDALDataset *poSrcDS,
                      CSLFindString(papszFieldTypesToString,
                                    OGRFieldDefn::GetFieldTypeName(poSrcFieldDefn->GetType())) != -1))
                 {
+                    oFieldDefn.SetSubType(OFSTNone);
                     oFieldDefn.SetType(OFTString);
                 }
                 if( bUnsetFieldWidth )
@@ -2995,6 +2996,7 @@ static TargetLayerInfo* SetupTargetLayer( CPL_UNUSED GDALDataset *poSrcDS,
                  CSLFindString(papszFieldTypesToString,
                                OGRFieldDefn::GetFieldTypeName(poSrcFieldDefn->GetType())) != -1))
             {
+                oFieldDefn.SetSubType(OFSTNone);
                 oFieldDefn.SetType(OFTString);
             }
             if( bUnsetFieldWidth )

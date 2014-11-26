@@ -175,6 +175,7 @@
     <xs:complexType name="FieldTypeWithoutSrc">
         <xs:attribute name="name" type="nonEmptyStringType" use="required"/>
         <xs:attribute name="type" type="OGRFieldTypeType" default="String"/>
+        <xs:attribute name="subtype" type="OGRFieldSubTypeType" default="None"/>  <!-- new in GDAL 2.0 -->
         <xs:attribute name="width" type="xs:nonNegativeInteger"/>
         <xs:attribute name="precision" type="xs:nonNegativeInteger"/>
     </xs:complexType>
@@ -213,6 +214,15 @@
             <xs:enumeration value="time"/>
             <xs:enumeration value="DateTime"/>
             <xs:enumeration value="datetime"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="OGRFieldSubTypeType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="None"/>
+            <xs:enumeration value="Boolean"/>
+            <xs:enumeration value="Int16"/>
+            <xs:enumeration value="Float32"/>
         </xs:restriction>
     </xs:simpleType>
 

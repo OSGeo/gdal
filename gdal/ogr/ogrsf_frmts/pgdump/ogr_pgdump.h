@@ -36,7 +36,9 @@
 CPLString OGRPGDumpEscapeColumnName(const char* pszColumnName);
 CPLString OGRPGDumpEscapeString(   const char* pszStrValue, int nMaxLength = -1,
                                    const char* pszFieldName = "");
-
+CPLString CPL_DLL OGRPGCommonLayerGetType(OGRFieldDefn& oField,
+                                          int bPreservePrecision,
+                                          int bApproxOK);
 
 /************************************************************************/
 /*                        OGRPGDumpGeomFieldDefn                        */

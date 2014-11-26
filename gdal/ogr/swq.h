@@ -240,6 +240,7 @@ typedef struct {
     int          field_index;
     swq_field_type field_type;
     swq_field_type target_type;
+    OGRFieldSubType target_subtype;
     int          field_length;
     int          field_precision;
     int          distinct_flag;

@@ -338,6 +338,15 @@ def ogr_gpkg_8():
     ret = lyr.CreateField(ogr.FieldDefn('fld_date', ogr.OFTDate))
     ret = lyr.CreateField(ogr.FieldDefn('fld_datetime', ogr.OFTDateTime))
     ret = lyr.CreateField(ogr.FieldDefn('fld_binary', ogr.OFTBinary))
+    fld_defn = ogr.FieldDefn('fld_boolean', ogr.OFTInteger)
+    fld_defn.SetSubType(ogr.OFSTBoolean)
+    ret = lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn('fld_smallint', ogr.OFTInteger)
+    fld_defn.SetSubType(ogr.OFSTInt16)
+    ret = lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn('fld_float', ogr.OFTReal)
+    fld_defn.SetSubType(ogr.OFSTFloat32)
+    ret = lyr.CreateField(fld_defn)
     
     geom = ogr.CreateGeometryFromWkt('LINESTRING(5 5,10 5,10 10,5 10)')
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -350,6 +359,9 @@ def ogr_gpkg_8():
         feat.SetField('fld_date', '2014/05/17 ' )
         feat.SetField('fld_datetime', '2014/05/17  12:34:56' )
         feat.SetFieldBinaryFromHexString('fld_binary', 'fffe' )
+        feat.SetField('fld_boolean', 1 )
+        feat.SetField('fld_smallint', -32768 )
+        feat.SetField('fld_float', 1.23 )
     
         if lyr.CreateFeature(feat) != 0:
             gdaltest.post_reason('cannot create feature %d' % i)
@@ -369,10 +381,20 @@ def ogr_gpkg_8():
     gdaltest.gpkg_ds = None
     gdaltest.gpkg_ds = gdaltest.gpkg_dr.Open( 'tmp/gpkg_test.gpkg', update = 1 )
     lyr = gdaltest.gpkg_ds.GetLayerByName('tbl_linestring')
+    if lyr.GetLayerDefn().GetFieldDefn(6).GetSubType() != ogr.OFSTBoolean:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(7).GetSubType() != ogr.OFSTInt16:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(8).GetSubType() != ogr.OFSTFloat32:
+        gdaltest.post_reason('fail')
+        return 'fail'
     feat = lyr.GetNextFeature()
     if feat.GetField(0) != 10 or feat.GetField(1) != 'test string 0 test' or \
        feat.GetField(2) != 3.14159  or feat.GetField(3) != '2014/05/17' or \
-       feat.GetField(4) != '2014/05/17 12:34:56' or feat.GetField(5) != 'FFFE':
+       feat.GetField(4) != '2014/05/17 12:34:56' or feat.GetField(5) != 'FFFE' or \
+       feat.GetField(6) != 1 or feat.GetField(7) != -32768 or feat.GetField(8) != 1.23:
         gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
@@ -502,7 +524,16 @@ def ogr_gpkg_12():
     if sql_lyr.GetFeatureCount() != 11:
         gdaltest.post_reason('fail')
         return 'fail'
-    if sql_lyr.GetLayerDefn().GetFieldCount() != 6:
+    if sql_lyr.GetLayerDefn().GetFieldCount() != 9:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if sql_lyr.GetLayerDefn().GetFieldDefn(6).GetSubType() != ogr.OFSTBoolean:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if sql_lyr.GetLayerDefn().GetFieldDefn(7).GetSubType() != ogr.OFSTInt16:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if sql_lyr.GetLayerDefn().GetFieldDefn(8).GetSubType() != ogr.OFSTFloat32:
         gdaltest.post_reason('fail')
         return 'fail'
     gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)

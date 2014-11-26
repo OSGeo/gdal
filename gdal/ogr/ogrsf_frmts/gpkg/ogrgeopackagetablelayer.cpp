@@ -563,7 +563,8 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
         const char *pszName = SQLResultGetValue(&oResultTable, 1, iRecord);
         const char *pszType = SQLResultGetValue(&oResultTable, 2, iRecord);
         OGRBoolean bFid = SQLResultGetValueAsInteger(&oResultTable, 5, iRecord);
-        OGRFieldType oType = GPkgFieldToOGR(pszType);
+        OGRFieldSubType eSubType;
+        OGRFieldType oType = GPkgFieldToOGR(pszType, eSubType);
 
         /* Not a standard field type... */
         if ( (oType > OFTMaxType && osGeomColsType.size()) || EQUAL(osGeomColumnName, pszName) )
@@ -639,6 +640,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
             else
             {
                 OGRFieldDefn oField(pszName, oType);
+                oField.SetSubType(eSubType);
                 m_poFeatureDefn->AddFieldDefn(&oField);
             }
         }
@@ -743,7 +745,7 @@ OGRErr OGRGeoPackageTableLayer::CreateField( OGRFieldDefn *poField,
 
     OGRErr err = m_poDS->AddColumn(m_pszTableName,
                                    poField->GetNameRef(),
-                                   GPkgFieldFromOGR(poField->GetType()));
+                                   GPkgFieldFromOGR(poField->GetType(), poField->GetSubType()));
 
     if ( err != OGRERR_NONE )
         return err;

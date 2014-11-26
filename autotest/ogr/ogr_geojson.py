@@ -1732,6 +1732,63 @@ def ogr_geojson_36():
 
     return 'success'
 
+###############################################################################
+# Test boolean type support
+
+def ogr_geojson_37():
+
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    # Test read support
+    ds = ogr.Open("""{"type": "FeatureCollection","features": [
+{ "type": "Feature", "properties": { "bool" : false, "not_bool": false, "bool_list" : [false, true], "notbool_list" : [false, 3]}, "geometry": null  },
+{ "type": "Feature", "properties": { "bool" : true, "not_bool": 2, "bool_list" : [true] }, "geometry": null },
+] }""")
+    lyr = ds.GetLayer(0)
+    feat_defn = lyr.GetLayerDefn()
+    if feat_defn.GetFieldDefn(feat_defn.GetFieldIndex('bool')).GetType() != ogr.OFTInteger or \
+       feat_defn.GetFieldDefn(feat_defn.GetFieldIndex('bool')).GetSubType() != ogr.OFSTBoolean:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    if feat_defn.GetFieldDefn(feat_defn.GetFieldIndex('not_bool')).GetSubType() != ogr.OFSTNone:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    if feat_defn.GetFieldDefn(feat_defn.GetFieldIndex('bool_list')).GetType() != ogr.OFTIntegerList or \
+       feat_defn.GetFieldDefn(feat_defn.GetFieldIndex('bool_list')).GetSubType() != ogr.OFSTBoolean:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    if feat_defn.GetFieldDefn(feat_defn.GetFieldIndex('notbool_list')).GetSubType() != ogr.OFSTNone:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetField('bool') != 0 or f.GetField('bool_list') != [0, 1]:
+        gdaltest.post_reason('failure')
+        f.DumpReadable()
+        return 'fail'
+
+    out_ds = ogr.GetDriverByName('GeoJSON').CreateDataSource('/vsimem/ogr_geojson_37.json')
+    out_lyr = out_ds.CreateLayer('test')
+    for i in range(feat_defn.GetFieldCount()):
+        out_lyr.CreateField(feat_defn.GetFieldDefn(i))
+    out_f = ogr.Feature(out_lyr.GetLayerDefn())
+    out_f.SetFrom(f)
+    out_lyr.CreateFeature(out_f)
+    out_ds = None
+
+    fp = gdal.VSIFOpenL('/vsimem/ogr_geojson_37.json', 'rb')
+    data = gdal.VSIFReadL(1, 10000, fp).decode('ascii')
+    gdal.VSIFCloseL(fp)
+
+    gdal.Unlink('/vsimem/ogr_geojson_37.json')
+    
+    if data.find('"bool": false, "not_bool": 0, "bool_list": [ false, true ], "notbool_list": [ 0, 3 ]') < 0:
+        gdaltest.post_reason('failure')
+        print(data)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ 
     ogr_geojson_1,
     ogr_geojson_2,
@@ -1769,6 +1826,7 @@ gdaltest_list = [
     ogr_geojson_34,
     ogr_geojson_35,
     ogr_geojson_36,
+    ogr_geojson_37,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':

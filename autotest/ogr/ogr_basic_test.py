@@ -34,6 +34,7 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 import ogrtest
+from osgeo import gdal
 from osgeo import ogr
 
 ###############################################################################
@@ -451,6 +452,178 @@ def ogr_basic_11():
     return 'success'
 
 ###############################################################################
+# Test OFSTBoolean, OFSTInt16 and OFSTFloat32
+
+def ogr_basic_12():
+
+    # boolean integer
+    feat_def = ogr.FeatureDefn()
+    if ogr.GetFieldSubTypeName(ogr.OFSTBoolean) != 'Boolean':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    field_def = ogr.FieldDefn( 'fld', ogr.OFTInteger )
+    field_def.SetSubType( ogr.OFSTBoolean )
+    if field_def.GetSubType() != ogr.OFSTBoolean:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat_def.AddFieldDefn( field_def )
+
+    f = ogr.Feature(feat_def)
+    f.SetField('fld', 0)
+    f.SetField('fld', 1)
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    f.SetField('fld', 2)
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if f.GetField('fld') != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    f.SetField('fld', '0')
+    f.SetField('fld', '1')
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    f.SetField('fld', '2')
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if f.GetField('fld') != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    field_def = ogr.FieldDefn( 'fld', ogr.OFTString )
+    field_def.SetSubType( ogr.OFSTBoolean )
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if field_def.GetSubType() != ogr.OFSTNone:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # boolean list
+    feat_def = ogr.FeatureDefn()
+    field_def = ogr.FieldDefn( 'fld', ogr.OFTIntegerList )
+    field_def.SetSubType( ogr.OFSTBoolean )
+    if field_def.GetSubType() != ogr.OFSTBoolean:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat_def.AddFieldDefn( field_def )
+
+    f = ogr.Feature(feat_def)
+    f.SetFieldIntegerList(0, [0,1])
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    f.SetFieldIntegerList(0, [0,1,2,1])
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if f.GetField('fld') != [0,1,1,1]:
+        print(f.GetField('fld'))
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # int16 integer
+    feat_def = ogr.FeatureDefn()
+    if ogr.GetFieldSubTypeName(ogr.OFSTInt16) != 'Int16':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    field_def = ogr.FieldDefn( 'fld', ogr.OFTInteger )
+    field_def.SetSubType( ogr.OFSTInt16 )
+    if field_def.GetSubType() != ogr.OFSTInt16:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat_def.AddFieldDefn( field_def )
+
+    f = ogr.Feature(feat_def)
+    f.SetField('fld', -32768)
+    f.SetField('fld', 32767)
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    f.SetField('fld', -32769)
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if f.GetField('fld') != -32768:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    f.SetField('fld', 32768)
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if f.GetField('fld') != 32767:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    field_def = ogr.FieldDefn( 'fld', ogr.OFTString )
+    field_def.SetSubType( ogr.OFSTInt16 )
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if field_def.GetSubType() != ogr.OFSTNone:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # float32
+    feat_def = ogr.FeatureDefn()
+    if ogr.GetFieldSubTypeName(ogr.OFSTFloat32) != 'Float32':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    field_def = ogr.FieldDefn( 'fld', ogr.OFTReal )
+    field_def.SetSubType( ogr.OFSTFloat32 )
+    if field_def.GetSubType() != ogr.OFSTFloat32:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat_def.AddFieldDefn( field_def )
+
+    if False:
+        f = ogr.Feature(feat_def)
+        gdal.ErrorReset()
+        f.SetField('fld', '1.23')
+        if gdal.GetLastErrorMsg() != '':
+            gdaltest.post_reason('fail')
+            return 'fail'
+        gdal.ErrorReset()
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
+        f.SetField('fld', 1.230000000001)
+        gdal.PopErrorHandler()
+        if gdal.GetLastErrorMsg() == '':
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if abs(f.GetField('fld') - 1.23) < 1e-8:
+            gdaltest.post_reason('fail')
+            f.DumpReadable()
+            return 'fail'
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    field_def = ogr.FieldDefn( 'fld', ogr.OFSTFloat32 )
+    field_def.SetSubType( ogr.OFSTInt16 )
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if field_def.GetSubType() != ogr.OFSTNone:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_basic_cleanup():
@@ -472,6 +645,7 @@ gdaltest_list = [
     ogr_basic_9,
     ogr_basic_10,
     ogr_basic_11,
+    ogr_basic_12,
     ogr_basic_cleanup ]
 
 if __name__ == '__main__':

@@ -71,6 +71,7 @@ OGRFieldDefn::OGRFieldDefn( OGRFieldDefn *poPrototype )
     SetJustify( poPrototype->GetJustify() );
     SetWidth( poPrototype->GetWidth() );
     SetPrecision( poPrototype->GetPrecision() );
+    SetSubType( poPrototype->GetSubType() );
 //    SetDefault( poPrototype->GetDefaultRef() );
 }
 
@@ -109,6 +110,7 @@ void OGRFieldDefn::Initialize( const char * pszNameIn, OGRFieldType eTypeIn )
 
     memset( &uDefault, 0, sizeof(OGRField) );
     bIgnore = FALSE;
+    eSubType = OFSTNone;
 }
 
 /************************************************************************/
@@ -244,8 +246,6 @@ OGRFieldType OGR_Fld_GetType( OGRFieldDefnH hDefn )
 /************************************************************************/
 
 /**
- * \fn void OGRFieldDefn::SetType( OGRFieldType eType );
- *
  * \brief Set the type of this field.
  * This should never be done to an OGRFieldDefn
  * that is already part of an OGRFeatureDefn.
@@ -254,6 +254,18 @@ OGRFieldType OGR_Fld_GetType( OGRFieldDefnH hDefn )
  *
  * @param eType the new field type.
  */
+
+void OGRFieldDefn::SetType( OGRFieldType eTypeIn )
+{
+    if( !OGR_AreTypeSubTypeCompatible(eTypeIn, eSubType) )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Type and subtype of field definition are not compatible. Reseting to OFSTNone");
+        eSubType = OFSTNone;
+    }
+    eType = eTypeIn;
+}
+
 
 /************************************************************************/
 /*                          OGR_Fld_SetType()                           */
@@ -273,6 +285,89 @@ void OGR_Fld_SetType( OGRFieldDefnH hDefn, OGRFieldType eType )
 
 {
     ((OGRFieldDefn *) hDefn)->SetType( eType );
+}
+
+/************************************************************************/
+/*                             GetSubType()                             */
+/************************************************************************/
+
+/**
+ * \fn OGRFieldSubType OGRFieldDefn::GetSubType();
+ *
+ * \brief Fetch subtype of this field.
+ *
+ * This method is the same as the C function OGR_Fld_GetSubType().
+ *
+ * @return field subtype.
+ * @since GDAL 2.0
+ */
+
+/************************************************************************/
+/*                         OGR_Fld_GetSubType()                         */
+/************************************************************************/
+/**
+ * \brief Fetch subtype of this field.
+ *
+ * This function is the same as the CPP method OGRFieldDefn::GetSubType().
+ *
+ * @param hDefn handle to the field definition to get subtype from.
+ * @return field subtype.
+ * @since GDAL 2.0
+ */
+
+OGRFieldSubType OGR_Fld_GetSubType( OGRFieldDefnH hDefn )
+
+{
+    return ((OGRFieldDefn *) hDefn)->GetSubType();
+}
+
+/************************************************************************/
+/*                             SetSubType()                             */
+/************************************************************************/
+
+/**
+ * \brief Set the subtype of this field.
+ * This should never be done to an OGRFieldDefn
+ * that is already part of an OGRFeatureDefn.
+ *
+ * This method is the same as the C function OGR_Fld_SetSubType().
+ *
+ * @param eSubType the new field subtype.
+ * @since GDAL 2.0
+ */
+void OGRFieldDefn::SetSubType( OGRFieldSubType eSubTypeIn )
+{
+    if( !OGR_AreTypeSubTypeCompatible(eType, eSubTypeIn) )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Type and subtype of field definition are not compatible. Reseting to OFSTNone");
+        eSubType = OFSTNone;
+    }
+    else
+    {
+        eSubType = eSubTypeIn;
+    }
+}
+
+/************************************************************************/
+/*                         OGR_Fld_SetSubType()                         */
+/************************************************************************/
+/**
+ * \brief Set the subtype of this field.
+ * This should never be done to an OGRFieldDefn
+ * that is already part of an OGRFeatureDefn.
+ *
+ * This function is the same as the CPP method OGRFieldDefn::SetSubType().
+ *
+ * @param hDefn handle to the field definition to set type to.
+ * @param eSubType the new field subtype.
+ * @since GDAL 2.0
+ */
+
+void OGR_Fld_SetSubType( OGRFieldDefnH hDefn, OGRFieldSubType eSubType )
+
+{
+    ((OGRFieldDefn *) hDefn)->SetSubType( eSubType );
 }
 
 /************************************************************************/
@@ -381,6 +476,90 @@ const char *OGR_GetFieldTypeName( OGRFieldType eType )
 
 {
     return OGRFieldDefn::GetFieldTypeName( eType );
+}
+
+/************************************************************************/
+/*                        GetFieldSubTypeName()                         */
+/************************************************************************/
+
+/**
+ * \brief Fetch human readable name for a field subtype.
+ *
+ * This static method is the same as the C function OGR_GetFieldSubTypeName().
+ *
+ * @param eSubType the field subtype to get name for.
+ *
+ * @return pointer to an internal static name string. It should not be
+ * modified or freed.
+ *
+ * @since GDAL 2.0
+ */
+
+const char * OGRFieldDefn::GetFieldSubTypeName( OGRFieldSubType eSubType )
+
+{
+    switch( eSubType )
+    {
+      case OFSTNone:
+        return "None";
+
+      case OFSTBoolean:
+        return "Boolean";
+
+      case OFSTInt16:
+        return "Int16";
+
+      case OFSTFloat32:
+        return "Float32";
+
+      default:
+        return "(unknown)";
+    }
+}
+
+/************************************************************************/
+/*                       OGR_GetFieldSubTypeName()                      */
+/************************************************************************/
+/**
+ * \brief Fetch human readable name for a field subtype.
+ *
+ * This function is the same as the CPP method 
+ * OGRFieldDefn::GetFieldSubTypeName().
+ *
+ * @param eSubType the field subtype to get name for.
+ * @return the name.
+ *
+ * @since GDAL 2.0
+ */
+
+const char *OGR_GetFieldSubTypeName( OGRFieldSubType eSubType )
+
+{
+    return OGRFieldDefn::GetFieldSubTypeName( eSubType );
+}
+
+/************************************************************************/
+/*                       OGR_IsValidTypeAndSubType()                    */
+/************************************************************************/
+/**
+ * \brief Return if type and subtype are compatible
+ *
+ * @param eType the field type.
+ * @param eSubType the field subtype.
+ * @return TRUE if type and subtype are compatible
+ *
+ * @since GDAL 2.0
+ */
+
+int OGR_AreTypeSubTypeCompatible( OGRFieldType eType, OGRFieldSubType eSubType )
+{
+    if( eSubType == OFSTNone )
+        return TRUE;
+    if( eSubType == OFSTBoolean || eSubType == OFSTInt16 )
+        return eType == OFTInteger || eType == OFTIntegerList;
+    if( eSubType == OFSTFloat32 )
+        return eType == OFTReal || eType == OFTRealList;
+    return FALSE;
 }
 
 /************************************************************************/
@@ -722,6 +901,7 @@ int OGRFieldDefn::IsSame( const OGRFieldDefn * poOtherFieldDefn ) const
 {
     return (strcmp(pszName, poOtherFieldDefn->pszName) == 0 &&
             eType == poOtherFieldDefn->eType &&
+            eSubType == poOtherFieldDefn->eSubType &&
             nWidth == poOtherFieldDefn->nWidth &&
             nPrecision == poOtherFieldDefn->nPrecision);
 }

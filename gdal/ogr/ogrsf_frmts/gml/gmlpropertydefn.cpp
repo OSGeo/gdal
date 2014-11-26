@@ -129,6 +129,8 @@ void GMLPropertyDefn::AnalysePropertyValue( const GMLProperty* psGMLProperty,
                 m_eType = GMLPT_StringList;
                 m_nWidth = 0;
             }
+            else if( m_eType == GMLPT_Boolean )
+                m_eType = GMLPT_BooleanList;
         }
         const char* pszValue = psGMLProperty->papszSubProperties[j];
 /* -------------------------------------------------------------------- */
@@ -159,8 +161,17 @@ void GMLPropertyDefn::AnalysePropertyValue( const GMLProperty* psGMLProperty,
             && m_eType != GMLPT_String 
             && m_eType != GMLPT_StringList )
         {
-            if( m_eType == GMLPT_IntegerList
-                || m_eType == GMLPT_RealList )
+            if( (m_eType == GMLPT_Untyped || m_eType == GMLPT_Boolean) &&
+                (strcmp(pszValue, "true") == 0 ||
+                 strcmp(pszValue, "false") == 0) )
+                m_eType = GMLPT_Boolean;
+            else if( m_eType == GMLPT_BooleanList )
+            {
+                if( !(strcmp(pszValue, "true") == 0 ||
+                      strcmp(pszValue, "false") == 0) )
+                    m_eType = GMLPT_StringList;
+            }
+            else if( m_eType == GMLPT_IntegerList || m_eType == GMLPT_RealList )
                 m_eType = GMLPT_StringList;
             else
                 m_eType = GMLPT_String;

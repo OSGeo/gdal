@@ -817,7 +817,8 @@ CPLString OGRSQLiteEscapeName( const char* pszName );
 
 CPLString OGRSQLiteParamsUnquote(const char* pszVal);
 
-CPLString OGRSQLiteFieldDefnToSQliteFieldDefn( OGRFieldDefn* poFieldDefn );
+CPLString OGRSQLiteFieldDefnToSQliteFieldDefn( OGRFieldDefn* poFieldDefn,
+                                               int bSQLiteDialectInternalUse );
 
 int OGRSQLITEStringToDateTimeField( OGRFeature* poFeature, int iField,
                                     const char* pszValue );
