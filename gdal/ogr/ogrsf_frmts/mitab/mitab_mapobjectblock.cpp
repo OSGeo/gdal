@@ -201,6 +201,12 @@ int     TABMAPObjectBlock::InitBlockFromData(GByte *pabyBuf,
     m_nCurObjectId = -1;
     m_nCurObjectType = TAB_GEOM_UNSET;
 
+    m_nMinX = 1000000000;
+    m_nMinY = 1000000000;
+    m_nMaxX = -1000000000;
+    m_nMaxY = -1000000000;
+    m_bLockCenter = FALSE;
+
     /*-----------------------------------------------------------------
      * Set real value for m_nSizeUsed to allow random update
      * (By default TABRawBinBlock thinks all 512 bytes are used)
@@ -222,10 +228,6 @@ void TABMAPObjectBlock::ClearObjects()
     WriteZeros(m_nBlockSize - MAP_OBJECT_HEADER_SIZE);
     GotoByteInBlock(MAP_OBJECT_HEADER_SIZE);
     m_nSizeUsed = MAP_OBJECT_HEADER_SIZE;
-    m_nMinX = 1000000000;
-    m_nMaxX = -1000000000;
-    m_nMinY = 1000000000;
-    m_nMaxY = -1000000000;
     m_bModified = TRUE;
 }
 
@@ -653,7 +655,15 @@ int     TABMAPObjectBlock::PrepareNewObject(TABMAPObjHdr *poObjHdr)
      * CommitNewObject()
      *----------------------------------------------------------------*/
     nStartAddress = GetFirstUnusedByteOffset();
+    
+    // Backup MBR and bLockCenter as they will be reset by GotoByteInFile()
+    // that will call InitBlockFromData()
+    GInt32 nXMin, nYMin, nXMax, nYMax;
+    GetMBR(nXMin, nYMin, nXMax, nYMax);
+    int bLockCenter = m_bLockCenter;
     GotoByteInFile(nStartAddress);
+    m_bLockCenter = bLockCenter;
+    SetMBR(nXMin, nYMin, nXMax, nYMax);
     m_nCurObjectOffset = nStartAddress - GetStartAddress();
 
     m_nCurObjectType = poObjHdr->m_nType;

@@ -1355,6 +1355,9 @@ def ogr_mitab_29():
         y = n % N2
         lyr.SetSpatialFilterRect(x-0.01,y-0.01,x+0.01,y+0.01)
         if lyr.GetFeatureCount() != 1:
+            print(n)
+            print(lyr.GetFeatureCount())
+            print(x-0.01,y-0.01,x+0.01,y+0.01)
             gdaltest.post_reason('fail')
             return 'fail'
     ds = None
