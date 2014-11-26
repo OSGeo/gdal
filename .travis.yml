@@ -12,7 +12,7 @@ before_install:
   - sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
   - sudo add-apt-repository -y ppa:marlam/gta
   - sudo apt-get update -qq
-  - sudo apt-get install -qq python-numpy postgis postgresql-9.1-postgis-2.0-scripts libpq-dev libpng12-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libspatialite-dev gpsbabel swig libhdf4-alt-dev libhdf5-serial-dev libpodofo-dev poppler-utils libfreexl-dev unixodbc-dev libwebp-dev openjdk-7-jdk libepsilon-dev libgta-dev liblcms2-2 libpcre3-dev
+  - sudo apt-get install -qq python-numpy postgis postgresql-9.1-postgis-2.0-scripts libpq-dev libpng12-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libspatialite-dev gpsbabel swig libhdf4-alt-dev libhdf5-serial-dev libpodofo-dev poppler-utils libfreexl-dev unixodbc-dev libwebp-dev openjdk-7-jdk libepsilon-dev libgta-dev liblcms2-2 libpcre3-dev mercurial cmake
   - psql -c "drop database if exists autotest" -U postgres
   - psql -c "create database autotest" -U postgres
   - psql -c "create extension postgis" -d autotest -U postgres
@@ -41,6 +41,13 @@ before_install:
   - tar xzf install-openjpeg-2.0.0-ubuntu12.04-64bit.tar.gz
   - sudo cp -r install-openjpeg/include/* /usr/local/include
   - sudo cp -r install-openjpeg/lib/* /usr/local/lib
+  - wget https://bitbucket.org/chchrsc/kealib/get/c6d36f3db5e4.zip
+  - unzip c6d36f3db5e4.zip
+  - cd chchrsc-kealib-c6d36f3db5e4/trunk
+  - cmake . -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DHDF5_INCLUDE_DIR=/usr/include -DHDF5_LIB_PATH=/usr/lib -DLIBKEA_WITH_GDAL=OFF
+  - make -j4
+  - sudo make install
+  - cd ../..
   - sudo ldconfig
 
 # installing PostGIS 2 from Ubuntu PPA draws libgdal1.9 dependency. We must install ourselves
