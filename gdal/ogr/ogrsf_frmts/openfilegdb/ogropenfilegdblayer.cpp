@@ -381,14 +381,21 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
 
         const FileGDBField* poGDBField = m_poLyrTable->GetField(i);
         OGRFieldType eType = OFTString;
+        OGRFieldSubType eSubType = OFSTNone;
         /* int nWidth = 0; */
         switch( poGDBField->GetType() )
         {
             case FGFT_INT16:
+                eType = OFTInteger;
+                eSubType = OFSTInt16;
+                break;
             case FGFT_INT32:
                 eType = OFTInteger;
                 break;
             case FGFT_FLOAT32:
+                eType = OFTReal;
+                eSubType = OFSTFloat32;
+                break;
             case FGFT_FLOAT64:
                 eType = OFTReal;
                 break;
@@ -426,6 +433,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
             }
         }
         OGRFieldDefn oFieldDefn(poGDBField->GetName().c_str(), eType);
+        oFieldDefn.SetSubType(eSubType);
         /* oFieldDefn.SetWidth(nWidth); */
         m_poFeatureDefn->AddFieldDefn(&oFieldDefn);
     }

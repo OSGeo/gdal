@@ -366,8 +366,9 @@ void OGRCouchDBLayer::BuildFeatureDefnFromDoc(json_object* poDoc)
         {
             if( -1 == poFeatureDefn->GetFieldIndex( it.key ) )
             {
+                OGRFieldSubType eSubType;
                 OGRFieldDefn fldDefn( it.key,
-                    GeoJSONPropertyToFieldType( it.val ) );
+                    GeoJSONPropertyToFieldType( it.val, eSubType ) );
                 poFeatureDefn->AddFieldDefn( &fldDefn );
             }
         }
@@ -383,8 +384,9 @@ void OGRCouchDBLayer::BuildFeatureDefnFromDoc(json_object* poDoc)
                 strcmp(it.key, "geometry") != 0 &&
                 -1 == poFeatureDefn->GetFieldIndex( it.key ) )
             {
+                OGRFieldSubType eSubType;
                 OGRFieldDefn fldDefn( it.key,
-                    GeoJSONPropertyToFieldType( it.val ) );
+                    GeoJSONPropertyToFieldType( it.val, eSubType ) );
                 poFeatureDefn->AddFieldDefn( &fldDefn );
             }
         }

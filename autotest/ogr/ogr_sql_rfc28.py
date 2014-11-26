@@ -922,6 +922,91 @@ def ogr_rfc28_41():
     return 'success'
 
 ###############################################################################
+# Test boolean and int16 support
+
+def ogr_rfc28_42():
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    lyr = ds.CreateLayer('test')
+    fld_defn = ogr.FieldDefn('b', ogr.OFTInteger)
+    fld_defn.SetSubType(ogr.OFSTBoolean)
+    lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn('short', ogr.OFTInteger)
+    fld_defn.SetSubType(ogr.OFSTInt16)
+    lyr.CreateField(fld_defn)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, 0)
+    feat.SetField(1, 32000)
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, 1)
+    lyr.CreateFeature(feat)
+
+    # To b OR NOT to b... that's the question
+    lyr = ds.ExecuteSQL( "SELECT b, NOT b, 1 + b, CAST(1 AS BOOLEAN), b IS NOT NULL, short, 1 + short, CAST(1 + short as SMALLINT) FROM test WHERE b OR NOT b" )
+    if lyr.GetLayerDefn().GetFieldDefn(0).GetSubType() != ogr.OFSTBoolean:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(1).GetSubType() != ogr.OFSTBoolean:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(2).GetSubType() != ogr.OFSTNone:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(3).GetSubType() != ogr.OFSTBoolean:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(4).GetSubType() != ogr.OFSTBoolean:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(5).GetSubType() != ogr.OFSTInt16:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(6).GetSubType() != ogr.OFSTNone:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(7).GetSubType() != ogr.OFSTInt16:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetField('b') != 0 or f.GetField(1) != 1 or f.GetField(2) != 1 or \
+       f.GetField(3) != 1 or f.GetField(4) != 1 or \
+       f.GetField(5) != 32000 or f.GetField(6) != 32001 or f.GetField(7) != 32001:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetField('b') != 1 or f.GetField(1) != 0 or f.GetField(2) != 2 or f.GetField(3) != 1 or f.GetField(4) != 1:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    gdaltest.ds.ReleaseResultSet( lyr )
+
+    lyr = ds.ExecuteSQL( "SELECT MIN(b), MAX(b), SUM(b) FROM test" )
+    if lyr.GetLayerDefn().GetFieldDefn(0).GetSubType() != ogr.OFSTBoolean:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(1).GetSubType() != ogr.OFSTBoolean:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(2).GetSubType() != ogr.OFSTNone:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetField('MIN_b') != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if f.GetField('MAX_b') != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if f.GetField('SUM_b') != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdaltest.ds.ReleaseResultSet( lyr )
+
+    return 'success'
+
+###############################################################################
 def ogr_rfc28_cleanup():
     gdaltest.lyr = None
     gdaltest.ds.Destroy()
@@ -972,6 +1057,7 @@ gdaltest_list = [
     ogr_rfc28_39,
     ogr_rfc28_40,
     ogr_rfc28_41,
+    ogr_rfc28_42,
     ogr_rfc28_cleanup ]
 
 if __name__ == '__main__':

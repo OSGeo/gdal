@@ -74,7 +74,8 @@ int GeoJSONIsObject( const char* pszText );
 /*                           GeoJSONPropertyToFieldType                 */
 /************************************************************************/
 
-OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject );
+OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject,
+                                         OGRFieldSubType& eSubType );
 
 /************************************************************************/
 /*                           OGRGeoJSONGetGeometryName                  */

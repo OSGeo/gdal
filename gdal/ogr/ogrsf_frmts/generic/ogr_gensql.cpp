@@ -263,7 +263,15 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( GDALDataset *poSrcDS,
                 psColDef->field_type == SWQ_DATE ||
                 psColDef->field_type == SWQ_TIME ||
                 psColDef->field_type == SWQ_TIMESTAMP )
+            {
                 oFDefn.SetType( poSrcFDefn->GetType() );
+                if( psColDef->col_func == SWQCF_NONE ||
+                    psColDef->col_func == SWQCF_MIN ||
+                    psColDef->col_func == SWQCF_MAX )
+                {
+                    oFDefn.SetSubType( poSrcFDefn->GetSubType() );
+                }
+            }
             else
                 oFDefn.SetType( OFTReal );
             if( psColDef->col_func != SWQCF_AVG &&
@@ -298,10 +306,14 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( GDALDataset *poSrcDS,
             switch( psColDef->field_type )
             {
               case SWQ_INTEGER:
-              case SWQ_BOOLEAN:
                 oFDefn.SetType( OFTInteger );
                 break;
-                
+
+              case SWQ_BOOLEAN:
+                oFDefn.SetType( OFTInteger );
+                oFDefn.SetSubType( OFSTBoolean );
+                break;
+
               case SWQ_FLOAT:
                 oFDefn.SetType( OFTReal );
                 break;
@@ -318,8 +330,11 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( GDALDataset *poSrcDS,
           case SWQ_OTHER:
             break;
           case SWQ_INTEGER:
+            oFDefn.SetType( OFTInteger );
+            break;
           case SWQ_BOOLEAN:
             oFDefn.SetType( OFTInteger );
+            oFDefn.SetSubType( OFSTBoolean );
             break;
           case SWQ_FLOAT:
             oFDefn.SetType( OFTReal );
@@ -344,6 +359,8 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( GDALDataset *poSrcDS,
             oFDefn.SetType( OFTString );
             break;
         }
+        if( psColDef->target_subtype != OFSTNone )
+            oFDefn.SetSubType( psColDef->target_subtype );
 
         if (psColDef->field_length > 0)
         {
@@ -1215,6 +1232,7 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
 
         switch( poResult->field_type )
         {
+          case SWQ_BOOLEAN:
           case SWQ_INTEGER:
             poDstFeat->SetField( iRegularField++, poResult->int_value );
             break;

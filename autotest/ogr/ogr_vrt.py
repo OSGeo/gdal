@@ -847,13 +847,14 @@ def ogr_vrt_17():
         <Field name="pm_code" src="PRIME_MERIDIAN_CODE" type="integer" width="4" />
         <Field name="prime_meridian_name" width="24" />
         <Field name="new_col" type="Real" width="12" precision="3" />
+        <Field name="DEPRECATED" type="Integer" subtype="Boolean" />
     </OGRVRTLayer>
 </OGRVRTDataSource>"""
         
     vrt_ds = ogr.Open( vrt_xml )
     vrt_lyr = vrt_ds.GetLayerByName( 'test' )
 
-    if vrt_lyr.GetLayerDefn().GetFieldCount() != 3:
+    if vrt_lyr.GetLayerDefn().GetFieldCount() != 4:
         gdaltest.post_reason( 'unexpected field count.' )
         return 'fail'
 
@@ -879,6 +880,13 @@ def ogr_vrt_17():
        or flddef.GetWidth() != 12 \
        or flddef.GetPrecision() != 3:
         gdaltest.post_reason( 'new_col field definition wrong.' )
+        return 'fail'
+
+    flddef = vrt_lyr.GetLayerDefn().GetFieldDefn(3)
+    if flddef.GetName() != 'DEPRECATED' \
+       or flddef.GetType() != ogr.OFTInteger \
+       or flddef.GetSubType() != ogr.OFSTBoolean:
+        gdaltest.post_reason( 'DEPRECATED field definition wrong.' )
         return 'fail'
 
     feat = vrt_lyr.GetNextFeature()

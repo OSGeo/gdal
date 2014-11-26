@@ -1224,13 +1224,17 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
             eFType = OFTString;
         else if( poProperty->GetType() == GMLPT_String )
             eFType = OFTString;
-        else if( poProperty->GetType() == GMLPT_Integer )
+        else if( poProperty->GetType() == GMLPT_Integer ||
+                 poProperty->GetType() == GMLPT_Boolean ||
+                 poProperty->GetType() == GMLPT_Short )
             eFType = OFTInteger;
-        else if( poProperty->GetType() == GMLPT_Real )
+        else if( poProperty->GetType() == GMLPT_Real ||
+                 poProperty->GetType() == GMLPT_Float )
             eFType = OFTReal;
         else if( poProperty->GetType() == GMLPT_StringList )
             eFType = OFTStringList;
-        else if( poProperty->GetType() == GMLPT_IntegerList )
+        else if( poProperty->GetType() == GMLPT_IntegerList ||
+                 poProperty->GetType() == GMLPT_BooleanList )
             eFType = OFTIntegerList;
         else if( poProperty->GetType() == GMLPT_RealList )
             eFType = OFTRealList;
@@ -1246,6 +1250,13 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
             oField.SetWidth( poProperty->GetWidth() );
         if( poProperty->GetPrecision() > 0 )
             oField.SetPrecision( poProperty->GetPrecision() );
+        if( poProperty->GetType() == GMLPT_Boolean ||
+            poProperty->GetType() == GMLPT_BooleanList )
+            oField.SetSubType(OFSTBoolean);
+        else if( poProperty->GetType() == GMLPT_Short) 
+            oField.SetSubType(OFSTInt16);
+        else if( poProperty->GetType() == GMLPT_Float) 
+            oField.SetSubType(OFSTFloat32);
 
         poLayer->GetLayerDefn()->AddFieldDefn( &oField );
     }
@@ -1963,8 +1974,19 @@ void OGRGMLDataSource::InsertHeader()
                 PrintLine( fpSchema, "        <xs:element name=\"%s\" nillable=\"true\" minOccurs=\"0\" maxOccurs=\"%s\">",
                            poFieldDefn->GetNameRef(), poFieldDefn->GetType() == OFTIntegerList ? "unbounded": "1" );
                 PrintLine( fpSchema, "          <xs:simpleType>");
-                PrintLine( fpSchema, "            <xs:restriction base=\"xs:integer\">");
-                PrintLine( fpSchema, "              <xs:totalDigits value=\"%d\"/>", nWidth);
+                if( poFieldDefn->GetSubType() == OFSTBoolean )
+                {
+                    PrintLine( fpSchema, "            <xs:restriction base=\"xs:boolean\">");
+                }
+                else if( poFieldDefn->GetSubType() == OFSTInt16 )
+                {
+                    PrintLine( fpSchema, "            <xs:restriction base=\"xs:short\">");
+                }
+                else
+                {
+                    PrintLine( fpSchema, "            <xs:restriction base=\"xs:integer\">");
+                    PrintLine( fpSchema, "              <xs:totalDigits value=\"%d\"/>", nWidth);
+                }
                 PrintLine( fpSchema, "            </xs:restriction>");
                 PrintLine( fpSchema, "          </xs:simpleType>");
                 PrintLine( fpSchema, "        </xs:element>");
@@ -1980,7 +2002,10 @@ void OGRGMLDataSource::InsertHeader()
                 PrintLine( fpSchema, "        <xs:element name=\"%s\" nillable=\"true\" minOccurs=\"0\" maxOccurs=\"%s\">",
                            poFieldDefn->GetNameRef(), poFieldDefn->GetType() == OFTRealList ? "unbounded": "1" );
                 PrintLine( fpSchema, "          <xs:simpleType>");
-                PrintLine( fpSchema, "            <xs:restriction base=\"xs:decimal\">");
+                if( poFieldDefn->GetSubType() == OFSTFloat32 )
+                    PrintLine( fpSchema, "            <xs:restriction base=\"xs:float\">");
+                else
+                    PrintLine( fpSchema, "            <xs:restriction base=\"xs:decimal\">");
                 if (nWidth > 0)
                 {
                     PrintLine( fpSchema, "              <xs:totalDigits value=\"%d\"/>", nWidth);

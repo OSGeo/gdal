@@ -776,7 +776,7 @@ CPLErr swq_expr_compile2( const char *where_clause,
     context.pszInput = where_clause;
     context.pszNext = where_clause;
     context.pszLastValid = where_clause;
-    context.nStartToken = SWQT_LOGICAL_START;
+    context.nStartToken = SWQT_VALUE_START;
     
     if( swqparse( &context ) == 0 
         && context.poRoot->Check( field_list, FALSE ) != SWQ_ERROR )

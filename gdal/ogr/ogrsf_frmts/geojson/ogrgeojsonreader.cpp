@@ -512,8 +512,12 @@ bool OGRGeoJSONReader::GenerateFeatureDefn( OGRGeoJSONLayer* poLayer, json_objec
                     }
                 }
 
+                OGRFieldSubType eSubType;
                 OGRFieldDefn fldDefn( it.key,
-                                      GeoJSONPropertyToFieldType( it.val ) );
+                                      GeoJSONPropertyToFieldType( it.val, eSubType ) );
+                fldDefn.SetSubType(eSubType);
+                if( eSubType == OFSTBoolean )
+                    fldDefn.SetWidth(1);
                 poDefn->AddFieldDefn( &fldDefn );
             }
             else
@@ -522,9 +526,18 @@ bool OGRGeoJSONReader::GenerateFeatureDefn( OGRGeoJSONLayer* poLayer, json_objec
                 OGRFieldType eType = poFDefn->GetType();
                 if( eType == OFTInteger )
                 {
-                    OGRFieldType eNewType = GeoJSONPropertyToFieldType( it.val );
-                    if( eNewType == OFTReal || eNewType == OFTString )
+                    OGRFieldSubType eSubType;
+                    OGRFieldType eNewType = GeoJSONPropertyToFieldType( it.val, eSubType );
+                    if( eNewType == OFTInteger &&
+                        poFDefn->GetSubType() == OFSTBoolean && eSubType != OFSTBoolean )
+                    {
+                        poFDefn->SetSubType(OFSTNone);
+                    }
+                    else if( eNewType == OFTReal || eNewType == OFTString )
+                    {
                         poFDefn->SetType(eNewType);
+                        poFDefn->SetSubType(OFSTNone);
+                    }
                 }
             }
         }
@@ -785,10 +798,11 @@ OGRFeature* OGRGeoJSONReader::ReadFeature( OGRGeoJSONLayer* poLayer, json_object
     if( -1 == poFeature->GetFID() )
     {
         json_object* poObjId = NULL;
+        OGRFieldSubType eSubType;
         poObjId = OGRGeoJSONFindMemberByName( poObj, OGRGeoJSONLayer::DefaultFIDColumn );
         if( NULL != poObjId
             && EQUAL( OGRGeoJSONLayer::DefaultFIDColumn, poLayer->GetFIDColumn() )
-            && OFTInteger == GeoJSONPropertyToFieldType( poObjId ) )
+            && OFTInteger == GeoJSONPropertyToFieldType( poObjId, eSubType ) )
         {
             poFeature->SetFID( json_object_get_int( poObjId ) );
             int nField = poFeature->GetFieldIndex( poLayer->GetFIDColumn() );

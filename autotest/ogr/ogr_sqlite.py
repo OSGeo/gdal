@@ -129,7 +129,10 @@ def ogr_sqlite_2():
     
     ogrtest.quick_create_layer_def( gdaltest.sl_lyr,
                                     fields )
-                                      
+    fld_defn = ogr.FieldDefn('fld_boolean', ogr.OFTInteger)
+    fld_defn.SetSubType(ogr.OFSTBoolean)
+    gdaltest.sl_lyr.CreateField(fld_defn)
+
     ######################################################
     # Reopen database to be sure that the data types are properly read
     # even if no record are written
@@ -145,7 +148,11 @@ def ogr_sqlite_2():
             print('Expected type for %s is %s, not %s' % \
                 (field_desc[0], field_defn.GetFieldTypeName(field_defn.GetType()), \
                  field_defn.GetFieldTypeName(field_desc[1])))
-
+    field_defn = feature_def.GetFieldDefn(feature_def.GetFieldIndex('fld_boolean'))
+    if field_defn.GetType() != ogr.OFTInteger or field_defn.GetSubType() != ogr.OFSTBoolean:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    
     ######################################################
     # Copy in poly.shp
 

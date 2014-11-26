@@ -735,7 +735,7 @@ char* FGdbLayer::CreateFieldDefn(OGRFieldDefn& oField,
 
     /* Try to map the OGR type to an ESRI type */
     OGRFieldType fldtype = oField.GetType();
-    if ( ! OGRToGDBFieldType(fldtype, &gdbFieldType) )
+    if ( ! OGRToGDBFieldType(fldtype, oField.GetSubType(), &gdbFieldType) )
     {
         GDBErr(-1, "Failed converting field type.");
         return NULL;
@@ -749,7 +749,8 @@ char* FGdbLayer::CreateFieldDefn(OGRFieldDefn& oField,
         if( pszFieldType != NULL )
         {
             OGRFieldType fldtypeCheck;
-            if( GDBToOGRFieldType(pszFieldType, &fldtypeCheck) )
+            OGRFieldSubType eSubType;
+            if( GDBToOGRFieldType(pszFieldType, &fldtypeCheck, &eSubType) )
             {
                 if( fldtypeCheck != fldtype )
                 {
@@ -1992,8 +1993,9 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode* psRoot)
             }
 
             OGRFieldType ogrType;
+            OGRFieldSubType eSubType;
             //CPLDebug("FGDB", "name = %s, type = %s", fieldName.c_str(), fieldType.c_str() );
-            if (!GDBToOGRFieldType(fieldType, &ogrType))
+            if (!GDBToOGRFieldType(fieldType, &ogrType, &eSubType))
             {
                 // field cannot be mapped, skipping further processing
                 CPLError( CE_Warning, CPLE_AppDefined, "Skipping field: [%s] type: [%s] ",
@@ -2005,6 +2007,7 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode* psRoot)
             //TODO: Optimization - modify m_wstrSubFields so it only fetches fields that are mapped
 
             OGRFieldDefn fieldTemplate( fieldName.c_str(), ogrType);
+            fieldTemplate.SetSubType(eSubType);
             //fieldTemplate.SetWidth(nLength);
             //fieldTemplate.SetPrecision(nPrecision);
             m_pFeatureDefn->AddFieldDefn( &fieldTemplate );

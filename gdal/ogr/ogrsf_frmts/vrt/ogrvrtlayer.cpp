@@ -888,6 +888,44 @@ try_again:
              }
 
 /* -------------------------------------------------------------------- */
+/*      Subtype                                                         */
+/* -------------------------------------------------------------------- */
+             pszArg = CPLGetXMLValue( psChild, "subtype", NULL );
+             if( pszArg != NULL )
+             {
+                 int iType;
+                 OGRFieldSubType eSubType = OFSTNone;
+
+                 for( iType = 0; iType <= (int) OFSTMaxSubType; iType++ )
+                 {
+                     if( EQUAL(pszArg,OGRFieldDefn::GetFieldSubTypeName(
+                                   (OGRFieldSubType)iType)) )
+                     {
+                         eSubType = (OGRFieldSubType) iType;
+                         break;
+                     }
+                 }
+
+                 if( iType > (int) OFSTMaxSubType )
+                 {
+                     CPLError( CE_Failure, CPLE_AppDefined, 
+                               "Unable to identify Field subtype '%s'.",
+                               pszArg );
+                     goto error;
+                 }
+
+                 if( !OGR_AreTypeSubTypeCompatible(oFieldDefn.GetType(), eSubType) )
+                 {
+                     CPLError( CE_Failure, CPLE_AppDefined, 
+                               "Invalid subtype '%s' for type '%s'.",
+                               pszArg, OGRFieldDefn::GetFieldTypeName(oFieldDefn.GetType()) );
+                     goto error;
+                 }
+
+                 oFieldDefn.SetSubType( eSubType );
+             }
+
+/* -------------------------------------------------------------------- */
 /*      Width and precision.                                            */
 /* -------------------------------------------------------------------- */
              int nWidth = atoi(CPLGetXMLValue( psChild, "width", "0" ));

@@ -1048,13 +1048,13 @@ swq_field_type SWQGeneralChecker( swq_expr_node *poNode )
     {
         int i;
 
-        if( eArgType == SWQ_INTEGER )
+        if( eArgType == SWQ_INTEGER || eArgType == SWQ_BOOLEAN )
             eArgType = SWQ_FLOAT;
 
         for( i = 0; i < poNode->nSubExprCount; i++ )
         {
             swq_field_type eThisArgType = poNode->papoSubExpr[i]->field_type;
-            if( eThisArgType == SWQ_INTEGER )
+            if( eThisArgType == SWQ_INTEGER ||  eThisArgType == SWQ_BOOLEAN )
                 eThisArgType = SWQ_FLOAT;
 
             if( eArgType != eThisArgType )
@@ -1251,9 +1251,13 @@ swq_field_type SWQCastChecker( swq_expr_node *poNode )
                   pszTypeName );
     }
 
+    else if( EQUAL(pszTypeName,"boolean") )
+        eType = SWQ_BOOLEAN;
     else if( EQUAL(pszTypeName,"character") )
         eType = SWQ_STRING;
     else if( EQUAL(pszTypeName,"integer") )
+        eType = SWQ_INTEGER;
+    else if( EQUAL(pszTypeName,"smallint") )
         eType = SWQ_INTEGER;
     else if( EQUAL(pszTypeName,"float") )
         eType = SWQ_FLOAT;

@@ -8,7 +8,7 @@ GDAL_ROOT	=	..\..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
-EXTRAFLAGS = -I.. -I..\.. -I$(PG_INC_DIR)
+EXTRAFLAGS = -I.. -I..\.. -I..\pgdump -I$(PG_INC_DIR)
 
 default:	$(OBJ)
 

@@ -909,8 +909,16 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
                 nCount = CSLCount(papszTokens);
                 panList = (int *) CPLCalloc(sizeof(int),nCount);
 
-                for( i = 0; i < nCount; i++ )
-                    panList[i] = atoi(papszTokens[i]);
+                if( poFeatureDefn->GetFieldDefn(iOGRField)->GetSubType() == OFSTBoolean )
+                {
+                    for( i = 0; i < nCount; i++ )
+                        panList[i] = EQUAL(papszTokens[i], "t");
+                }
+                else
+                {
+                    for( i = 0; i < nCount; i++ )
+                        panList[i] = atoi(papszTokens[i]);
+                }
                 CSLDestroy( papszTokens );
             }
             poFeature->SetField( iOGRField, nCount, panList );
@@ -2007,11 +2015,13 @@ int OGRPGLayer::ReadResultDefinition(PGresult *hInitialResultIn)
         else if( nTypeOID == BOOLOID )
         {
             oField.SetType( OFTInteger );
+            oField.SetSubType( OFSTBoolean );
             oField.SetWidth( 1 );
         }
         else if (nTypeOID == INT2OID )
         {
             oField.SetType( OFTInteger );
+            oField.SetSubType( OFSTInt16 );
             oField.SetWidth( 5 );
         }
         else if (nTypeOID == INT4OID )
@@ -2023,8 +2033,12 @@ int OGRPGLayer::ReadResultDefinition(PGresult *hInitialResultIn)
             /* FIXME: OFTInteger can not handle 64bit integers */
             oField.SetType( OFTInteger );
         }
-        else if( nTypeOID == FLOAT4OID ||
-                 nTypeOID == FLOAT8OID )
+        else if( nTypeOID == FLOAT4OID )
+        {
+            oField.SetType( OFTReal );
+            oField.SetSubType( OFSTFloat32 );
+        }
+        else if( nTypeOID == FLOAT8OID )
         {
             oField.SetType( OFTReal );
         }
@@ -2051,6 +2065,12 @@ int OGRPGLayer::ReadResultDefinition(PGresult *hInitialResultIn)
             }
             else
                 oField.SetType( OFTReal );
+        }
+        else if ( nTypeOID == BOOLARRAYOID )
+        {
+            oField.SetType ( OFTIntegerList );
+            oField.SetSubType( OFSTBoolean );
+            oField.SetWidth( 1 );
         }
         else if ( nTypeOID == INT4ARRAYOID )
         {

@@ -430,6 +430,39 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
               }
               break;
 
+              case GMLPT_Boolean:
+              {
+                  if( strcmp(psGMLProperty->papszSubProperties[0], "true") == 0 ||
+                      strcmp(psGMLProperty->papszSubProperties[0], "1") == 0 )
+                  {
+                      poOGRFeature->SetField( iDstField, 1);
+                  }
+                  else if( strcmp(psGMLProperty->papszSubProperties[0], "false") == 0 ||
+                           strcmp(psGMLProperty->papszSubProperties[0], "0") == 0 )
+                  {
+                      poOGRFeature->SetField( iDstField, 0);
+                  }
+                  else
+                      poOGRFeature->SetField( iDstField, psGMLProperty->papszSubProperties[0] );
+                  break;
+              }
+
+              case GMLPT_BooleanList:
+              {
+                  int nCount = psGMLProperty->nSubProperties;
+                  int *panIntList = (int *) CPLMalloc(sizeof(int) * nCount );
+
+                  for( i = 0; i < nCount; i++ )
+                  {
+                      panIntList[i] = ( strcmp(psGMLProperty->papszSubProperties[i], "true") == 0 ||
+                                        strcmp(psGMLProperty->papszSubProperties[i], "1") == 0 );
+                  }
+
+                  poOGRFeature->SetField( iDstField, nCount, panIntList );
+                  CPLFree( panIntList );
+                  break;
+              }
+
               default:
                 poOGRFeature->SetField( iDstField, psGMLProperty->papszSubProperties[0] );
                 break;
@@ -765,7 +798,8 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
 
         if( poFeature->IsFieldSet( iField ) && iField != nGMLIdIndex )
         {
-            if (poFieldDefn->GetType() == OFTStringList )
+            OGRFieldType eType = poFieldDefn->GetType();
+            if (eType == OFTStringList )
             {
                 char ** papszIter =  poFeature->GetFieldAsStringList( iField );
                 while( papszIter != NULL && *papszIter != NULL )
@@ -778,17 +812,31 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
                     papszIter ++;
                 }
             }
-            else if (poFieldDefn->GetType() == OFTIntegerList )
+            else if (eType == OFTIntegerList )
             {
                 int nCount = 0;
                 const int* panVals = poFeature->GetFieldAsIntegerList( iField, &nCount );
-                for(int i = 0; i < nCount; i++)
+                if(  poFieldDefn->GetSubType() == OFSTBoolean )
                 {
-                    GMLWriteField(poDS, fp, bWriteSpaceIndentation, pszPrefix,
-                                  bRemoveAppPrefix, poFieldDefn, CPLSPrintf("%d", panVals[i]));
+                    for(int i = 0; i < nCount; i++)
+                    {
+                        /* 0 and 1 are OK, but the canonical representation is false and true */
+                        GMLWriteField(poDS, fp, bWriteSpaceIndentation, pszPrefix,
+                                      bRemoveAppPrefix, poFieldDefn,
+                                      panVals[i] ? "true" : "false");
+                    }
+                }
+                else
+                {
+                    for(int i = 0; i < nCount; i++)
+                    {
+                        GMLWriteField(poDS, fp, bWriteSpaceIndentation, pszPrefix,
+                                      bRemoveAppPrefix, poFieldDefn,
+                                      CPLSPrintf("%d", panVals[i]));
+                    }
                 }
             }
-            else if (poFieldDefn->GetType() == OFTRealList )
+            else if (eType == OFTRealList )
             {
                 int nCount = 0;
                 const double* padfVals = poFeature->GetFieldAsDoubleList( iField, &nCount );
@@ -799,6 +847,13 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
                     GMLWriteField(poDS, fp, bWriteSpaceIndentation, pszPrefix,
                                   bRemoveAppPrefix, poFieldDefn, szBuffer);
                 }
+            }
+            else if (eType == OFTInteger && poFieldDefn->GetSubType() == OFSTBoolean )
+            {
+                /* 0 and 1 are OK, but the canonical representation is false and true */
+                GMLWriteField(poDS, fp, bWriteSpaceIndentation, pszPrefix,
+                              bRemoveAppPrefix, poFieldDefn,
+                              (poFeature->GetFieldAsInteger(iField)) ? "true" : "false");
             }
             else
             {

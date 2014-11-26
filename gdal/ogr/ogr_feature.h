@@ -60,6 +60,7 @@ class CPL_DLL OGRFieldDefn
     OGRField            uDefault;
     
     int                 bIgnore;
+    OGRFieldSubType     eSubType;
 
     void                Initialize( const char *, OGRFieldType );
     
@@ -72,8 +73,12 @@ class CPL_DLL OGRFieldDefn
     const char         *GetNameRef() { return pszName; }
 
     OGRFieldType        GetType() { return eType; }
-    void                SetType( OGRFieldType eTypeIn ) { eType = eTypeIn;}
+    void                SetType( OGRFieldType eTypeIn );
     static const char  *GetFieldTypeName( OGRFieldType );
+
+    OGRFieldSubType     GetSubType() { return eSubType; }
+    void                SetSubType( OGRFieldSubType eSubTypeIn );
+    static const char  *GetFieldSubTypeName( OGRFieldSubType );
 
     OGRJustification    GetJustify() { return eJustify; }
     void                SetJustify( OGRJustification eJustifyIn )

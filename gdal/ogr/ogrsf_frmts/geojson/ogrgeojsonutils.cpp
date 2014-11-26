@@ -165,14 +165,20 @@ GeoJSONProtocolType GeoJSONGetProtocolType( const char* pszSource )
 #define MY_INT64_MAX ((((GIntBig)0x7FFFFFFF) << 32) | 0xFFFFFFFF)
 #define MY_INT64_MIN ((((GIntBig)0x80000000) << 32))
 
-OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject )
+OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject,
+                                         OGRFieldSubType& eSubType )
 {
+    eSubType = OFSTNone;
+
     if (poObject == NULL) { return OFTString; }
 
     json_type type = json_object_get_type( poObject );
 
     if( json_type_boolean == type )
+    {
+        eSubType = OFSTBoolean;
         return OFTInteger;
+    }
     else if( json_type_double == type )
         return OFTReal;
     else if( json_type_int == type )
@@ -216,12 +222,14 @@ OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject )
         if (nSize == 0)
             return OFTStringList; /* we don't know, so let's assume it's a string list */
         OGRFieldType eType = OFTIntegerList;
+        int bOnlyBoolean = TRUE;
         for(int i=0;i<nSize;i++)
         {
             json_object* poRow = json_object_array_get_idx(poObject, i);
             if (poRow != NULL)
             {
                 type = json_object_get_type( poRow );
+                bOnlyBoolean &= (type == json_type_boolean);
                 if (type == json_type_string)
                     return OFTStringList;
                 else if (type == json_type_double)
@@ -231,6 +239,8 @@ OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject )
                     return OFTString;
             }
         }
+        if( bOnlyBoolean )
+            eSubType = OFSTBoolean;
         return eType;
     }
     else

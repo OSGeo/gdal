@@ -262,6 +262,8 @@ void   CPL_DLL OGR_Fld_SetName( OGRFieldDefnH, const char * );
 const char CPL_DLL *OGR_Fld_GetNameRef( OGRFieldDefnH );
 OGRFieldType CPL_DLL OGR_Fld_GetType( OGRFieldDefnH );
 void   CPL_DLL OGR_Fld_SetType( OGRFieldDefnH, OGRFieldType );
+OGRFieldSubType CPL_DLL OGR_Fld_GetSubType( OGRFieldDefnH );
+void   CPL_DLL OGR_Fld_SetSubType( OGRFieldDefnH, OGRFieldSubType );
 OGRJustification CPL_DLL OGR_Fld_GetJustify( OGRFieldDefnH );
 void   CPL_DLL OGR_Fld_SetJustify( OGRFieldDefnH, OGRJustification );
 int    CPL_DLL OGR_Fld_GetWidth( OGRFieldDefnH );
@@ -274,6 +276,9 @@ int    CPL_DLL OGR_Fld_IsIgnored( OGRFieldDefnH hDefn );
 void   CPL_DLL OGR_Fld_SetIgnored( OGRFieldDefnH hDefn, int );
 
 const char CPL_DLL *OGR_GetFieldTypeName( OGRFieldType );
+const char CPL_DLL *OGR_GetFieldSubTypeName( OGRFieldSubType );
+int CPL_DLL OGR_AreTypeSubTypeCompatible( OGRFieldType eType,
+                                          OGRFieldSubType eSubType );
 
 /* OGRGeomFieldDefnH */
 

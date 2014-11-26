@@ -48,6 +48,14 @@
     </OGRVRTLayer>
     <OGRVRTLayer name="poly">
         <SrcDataSource relativeToVRT="1">poly.shp</SrcDataSource>
+        <Field name="AREA" subtype="foo"/>
+    </OGRVRTLayer>
+    <OGRVRTLayer name="poly">
+        <SrcDataSource relativeToVRT="1">poly.shp</SrcDataSource>
+        <Field name="AREA" type="Real" subtype="Boolean"/>
+    </OGRVRTLayer>
+    <OGRVRTLayer name="poly">
+        <SrcDataSource relativeToVRT="1">poly.shp</SrcDataSource>
         <Field name="AREA" width="-1"/>
     </OGRVRTLayer>
     <OGRVRTLayer name="poly">

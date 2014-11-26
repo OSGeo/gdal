@@ -3374,6 +3374,85 @@ def ogr_gml_66():
     return 'success'
 
 ###############################################################################
+# Test boolean and int16 type
+
+def ogr_gml_67():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    filename = '/vsimem/ogr_gml_67.gml'
+    ds = ogr.GetDriverByName('GML').CreateDataSource(filename)
+    lyr = ds.CreateLayer('test')
+    fld_defn = ogr.FieldDefn('b1', ogr.OFTInteger)
+    fld_defn.SetSubType(ogr.OFSTBoolean)
+    lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn('b2', ogr.OFTInteger)
+    fld_defn.SetSubType(ogr.OFSTBoolean)
+    lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn('bool_list', ogr.OFTIntegerList)
+    fld_defn.SetSubType(ogr.OFSTBoolean)
+    lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn('short', ogr.OFTInteger)
+    fld_defn.SetSubType(ogr.OFSTInt16)
+    lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn('float', ogr.OFTReal)
+    fld_defn.SetSubType(ogr.OFSTFloat32)
+    lyr.CreateField(fld_defn)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField(0, 1)
+    f.SetField(1, 0)
+    f.SetFieldIntegerList(2, [1,0])
+    f.SetField(3, -32768)
+    f.SetField(4, 1.23)
+    lyr.CreateFeature(f)
+    f = None
+
+    ds = None
+
+    # Test first with .xsd and then without
+    for i in range(3):
+
+        ds = ogr.Open(filename)
+        lyr = ds.GetLayer(0)
+        if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('b1')).GetType() != ogr.OFTInteger or \
+           lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('b1')).GetSubType() != ogr.OFSTBoolean:
+            print(i)
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('bool_list')).GetType() != ogr.OFTIntegerList or \
+           lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('bool_list')).GetSubType() != ogr.OFSTBoolean:
+            print(i)
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if i == 0:
+            if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('short')).GetType() != ogr.OFTInteger or \
+            lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('short')).GetSubType() != ogr.OFSTInt16:
+                print(i)
+                gdaltest.post_reason('fail')
+                return 'fail'
+        if i == 0:
+            if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('float')).GetType() != ogr.OFTReal or \
+            lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('float')).GetSubType() != ogr.OFSTFloat32:
+                print(i)
+                gdaltest.post_reason('fail')
+                return 'fail'
+        f = lyr.GetNextFeature()
+        if f.GetField('b1') != 1 or f.GetField('b2') != 0 or f.GetFieldAsString('bool_list') != '(2:1,0)' or f.GetField('short') != -32768 or f.GetField('float') != 1.23:
+            print(i)
+            gdaltest.post_reason('fail')
+            f.DumpReadable()
+            return 'fail'
+        ds = None
+
+        gdal.Unlink(filename[0:-3]+"xsd")
+
+    gdal.Unlink(filename)
+    gdal.Unlink(filename[0:-3]+"gfs")
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -3571,6 +3650,7 @@ gdaltest_list = [
     ogr_gml_64,
     ogr_gml_65,
     ogr_gml_66,
+    ogr_gml_67,
     ogr_gml_cleanup ]
 
 #gdaltest_list = [ 

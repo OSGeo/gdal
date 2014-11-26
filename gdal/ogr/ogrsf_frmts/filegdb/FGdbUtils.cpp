@@ -239,7 +239,7 @@ bool OGRGeometryToGDB(OGRwkbGeometryType ogrType, std::string *gdbType, bool *ha
 
 // We could make this function far more robust by doing automatic coertion of types,
 // and/or skipping fields we do not know. But our purposes this works fine
-bool GDBToOGRFieldType(std::string gdbType, OGRFieldType* pOut)
+bool GDBToOGRFieldType(std::string gdbType, OGRFieldType* pOut, OGRFieldSubType* pSubType)
 {
     /*
     ESRI types
@@ -274,14 +274,25 @@ bool GDBToOGRFieldType(std::string gdbType, OGRFieldType* pOut)
     /** Time *///                                   OFTTime = 10,               NO
     /** Date and Time *///                          OFTDateTime = 11            YES
 
-    if (gdbType == "esriFieldTypeSmallInteger" ||
-        gdbType == "esriFieldTypeInteger")
+    *pSubType = OFSTNone;
+    if (gdbType == "esriFieldTypeSmallInteger" )
+    {
+        *pSubType = OFSTInt16;
+        *pOut = OFTInteger;
+        return true;
+    }
+    else if (gdbType == "esriFieldTypeInteger")
     {
         *pOut = OFTInteger;
         return true;
     }
-    else if (gdbType == "esriFieldTypeSingle" ||
-        gdbType == "esriFieldTypeDouble")
+    else if (gdbType == "esriFieldTypeSingle" )
+    {
+        *pSubType = OFSTFloat32;
+        *pOut = OFTReal;
+        return true;
+    }
+    else if (gdbType == "esriFieldTypeDouble")
     {
         *pOut = OFTReal;
         return true;
@@ -321,18 +332,24 @@ bool GDBToOGRFieldType(std::string gdbType, OGRFieldType* pOut)
 /*                            OGRToGDBFieldType()                        */
 /*************************************************************************/
 
-bool OGRToGDBFieldType(OGRFieldType ogrType, std::string* gdbType)
+bool OGRToGDBFieldType(OGRFieldType ogrType, OGRFieldSubType eSubType, std::string* gdbType)
 {
     switch(ogrType)
     {
         case OFTInteger:
         {
-            *gdbType = "esriFieldTypeInteger";
+            if( eSubType == OFSTInt16 )
+                *gdbType = "esriFieldTypeSmallInteger";
+            else
+                *gdbType = "esriFieldTypeInteger";
             break;
         }
         case OFTReal:
         {
-            *gdbType = "esriFieldTypeDouble";
+             if( eSubType == OFSTFloat32 )
+                *gdbType = "esriFieldTypeSingle";
+            else
+                *gdbType = "esriFieldTypeDouble";
             break;
         }
         case OFTString:

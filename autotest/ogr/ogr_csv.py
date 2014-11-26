@@ -1463,6 +1463,75 @@ def ogr_csv_32():
     return 'success'
 
 ###############################################################################
+# Test Boolean, Int16 and Float32 support
+
+def ogr_csv_33():
+
+    ds = gdal.OpenEx('data/testtypeautodetectboolean.csv', gdal.OF_VECTOR, \
+        open_options = ['AUTODETECT_TYPE=YES'])
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    col_values = [ 1,1,1,1,1,0,0,0,0,0,0,1,'y' ]
+    for i in range(lyr.GetLayerDefn().GetFieldCount()):
+        if (i < 10 and lyr.GetLayerDefn().GetFieldDefn(i).GetSubType() != ogr.OFSTBoolean) or \
+           (i >= 10 and lyr.GetLayerDefn().GetFieldDefn(i).GetSubType() == ogr.OFSTBoolean):
+            gdaltest.post_reason('fail')
+            print(i)
+            print(lyr.GetLayerDefn().GetFieldDefn(i).GetSubType())
+            return 'fail'
+        if f.GetField(i) != col_values[i]:
+            gdaltest.post_reason('fail')
+            print(i)
+            f.DumpReadable()
+            return 'fail'
+    ds = None
+    
+    ds = ogr.GetDriverByName('CSV').CreateDataSource('/vsimem/subtypes.csv')
+    lyr = ds.CreateLayer('test', options = ['CREATE_CSVT=YES'])
+    fld = ogr.FieldDefn('b', ogr.OFTInteger)
+    fld.SetSubType(ogr.OFSTBoolean)
+    lyr.CreateField(fld)
+    fld = ogr.FieldDefn('int16', ogr.OFTInteger)
+    fld.SetSubType(ogr.OFSTInt16)
+    lyr.CreateField(fld)
+    fld = ogr.FieldDefn('float32', ogr.OFTReal)
+    fld.SetSubType(ogr.OFSTFloat32)
+    lyr.CreateField(fld)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField(0, 1)
+    f.SetField(1, -32768)
+    f.SetField(2, 1.23)
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+    
+    ds = ogr.Open('/vsimem/subtypes.csv')
+    lyr = ds.GetLayer(0)
+    if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTInteger or \
+       lyr.GetLayerDefn().GetFieldDefn(0).GetSubType() != ogr.OFSTBoolean:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(1).GetType() != ogr.OFTInteger or \
+       lyr.GetLayerDefn().GetFieldDefn(1).GetSubType() != ogr.OFSTInt16:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(2).GetType() != ogr.OFTReal or \
+       lyr.GetLayerDefn().GetFieldDefn(2).GetSubType() != ogr.OFSTFloat32:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetField(0) != 1 or f.GetField(1) != -32768 or f.GetField(2) != 1.23:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/subtypes.csv')
+    gdal.Unlink('/vsimem/subtypes.csvt')
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_csv_cleanup():
@@ -1531,6 +1600,7 @@ gdaltest_list = [
     ogr_csv_30,
     ogr_csv_31,
     ogr_csv_32,
+    ogr_csv_33,
     ogr_csv_cleanup ]
 
 if __name__ == '__main__':

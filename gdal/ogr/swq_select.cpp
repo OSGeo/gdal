@@ -247,6 +247,7 @@ void swq_select::Dump( FILE *fp )
 
         fprintf( fp, "    Field Type: %d\n", def->field_type );
         fprintf( fp, "    Target Type: %d\n", def->target_type );
+        fprintf( fp, "    Target SubType: %d\n", def->target_subtype );
         fprintf( fp, "    Length: %d, Precision: %d\n",
                  def->field_length, def->field_precision );
 
@@ -380,6 +381,7 @@ int swq_select::PushField( swq_expr_node *poExpr, const char *pszAlias,
     col_def->field_type = SWQ_OTHER;
     col_def->field_precision = -1;
     col_def->target_type = SWQ_OTHER;
+    col_def->target_subtype = OFSTNone;
     col_def->col_func = SWQCF_NONE;
     col_def->distinct_flag = distinct_flag;
 
@@ -397,9 +399,18 @@ int swq_select::PushField( swq_expr_node *poExpr, const char *pszAlias,
             col_def->target_type = SWQ_STRING;
             col_def->field_length = 1;
         }
+        else if( strcasecmp(pszTypeName,"boolean") == 0 )
+        {
+            col_def->target_type = SWQ_BOOLEAN;
+        }
         else if( strcasecmp(pszTypeName,"integer") == 0 )
         {
             col_def->target_type = SWQ_INTEGER;
+        }
+        else if( strcasecmp(pszTypeName,"smallint") == 0 )
+        {
+            col_def->target_type = SWQ_INTEGER;
+            col_def->target_subtype = OFSTInt16;
         }
         else if( strcasecmp(pszTypeName,"float") == 0 )
         {
@@ -771,6 +782,7 @@ CPLErr swq_select::expand_wildcard( swq_field_list *field_list )
             def = column_defs + iout;
             def->field_precision = -1; 
             def->target_type = SWQ_OTHER;
+            def->target_subtype = OFSTNone;
 
             /* does this field duplicate an earlier one? */
             if( field_list->table_ids[i] != 0 

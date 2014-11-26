@@ -221,23 +221,34 @@ OGRwkbGeometryType GPkgGeometryTypeToWKB(const char *pszGpkgType, int bHasZ)
 /* declared using one of the data types specified in table GeoPackage */
 /* Data Types. */
 /* http://opengis.github.io/geopackage/#table_column_data_types */
-OGRFieldType GPkgFieldToOGR(const char *pszGpkgType)
+OGRFieldType GPkgFieldToOGR(const char *pszGpkgType, OGRFieldSubType& eSubType)
 {
+    eSubType = OFSTNone;
+
     /* Integer types */
     if ( STRNCASECMP("INT", pszGpkgType, 3) == 0 )
         return OFTInteger;
     else if ( EQUAL("MEDIUMINT", pszGpkgType) )
         return OFTInteger;
     else if ( EQUAL("SMALLINT", pszGpkgType) )
+    {
+        eSubType = OFSTInt16;
         return OFTInteger;
+    }
     else if ( EQUAL("TINYINT", pszGpkgType) )
         return OFTInteger;
     else if ( EQUAL("BOOLEAN", pszGpkgType) )
+    {
+        eSubType = OFSTBoolean;
         return OFTInteger;
+    }
 
     /* Real types */
     else if ( EQUAL("FLOAT", pszGpkgType) )
+    {
+        eSubType = OFSTFloat32;
         return OFTReal;
+    }
     else if ( EQUAL("DOUBLE", pszGpkgType) )
         return OFTReal;
     else if ( EQUAL("REAL", pszGpkgType) )
@@ -264,14 +275,26 @@ OGRFieldType GPkgFieldToOGR(const char *pszGpkgType)
 /* declared using one of the data types specified in table GeoPackage */
 /* Data Types. */
 /* http://opengis.github.io/geopackage/#table_column_data_types */
-const char* GPkgFieldFromOGR(OGRFieldType nType)
+const char* GPkgFieldFromOGR(OGRFieldType nType, OGRFieldSubType eSubType)
 {
     switch(nType)
     {
         case OFTInteger:
-            return "INTEGER";
+        {
+            if( eSubType == OFSTBoolean )
+                return "BOOLEAN";
+            else if( eSubType == OFSTInt16 )
+                return "SMALLINT";
+            else
+                return "INTEGER";
+        }
         case OFTReal:
-            return "REAL";
+        {
+            if( eSubType == OFSTFloat32 )
+                return "FLOAT";
+            else
+                return "REAL";
+        }
         case OFTString:
             return "TEXT";
         case OFTBinary:

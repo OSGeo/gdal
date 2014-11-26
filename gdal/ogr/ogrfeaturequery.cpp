@@ -107,8 +107,13 @@ OGRErr OGRFeatureQuery::Compile( OGRFeatureDefn *poDefn,
         switch( poField->GetType() )
         {
           case OFTInteger:
-            paeFieldTypes[iField] = SWQ_INTEGER;
-            break;
+          {
+              if( poField->GetSubType() == OFSTBoolean )
+                  paeFieldTypes[iField] = SWQ_BOOLEAN;
+              else
+                  paeFieldTypes[iField] = SWQ_INTEGER;
+              break;
+          }
 
           case OFTReal:
             paeFieldTypes[iField] = SWQ_FLOAT;
@@ -231,9 +236,10 @@ int OGRFeatureQuery::Evaluate( OGRFeature *poFeature )
     if( poResult == NULL )
         return FALSE;
 
-    CPLAssert( poResult->field_type == SWQ_BOOLEAN );
-
-    int bLogicalResult = poResult->int_value;
+    int bLogicalResult = FALSE;
+    if( poResult->field_type == SWQ_INTEGER ||
+        poResult->field_type == SWQ_BOOLEAN )
+        bLogicalResult = poResult->int_value;
 
     delete poResult;
 
