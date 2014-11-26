@@ -300,7 +300,8 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
                     /* Do geometry type changes if needed to match layer geometry type */
                     if (poGeom != NULL)
                     {
-                        papoGeometries[i] = OGRGeometryFactory::forceTo(poGeom, GetGeomType());
+                        papoGeometries[i] = OGRGeometryFactory::forceTo(poGeom,
+                                    poFeatureDefn->GetGeomFieldDefn(i)->GetType());
                         poGeom = NULL;
                     }
                     else
@@ -795,10 +796,6 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
                 {
                     char szBuffer[80];
                     CPLsnprintf( szBuffer, sizeof(szBuffer), "%.15g", padfVals[i]);
-                    /* Use point as decimal separator */
-                    char* pszComma = strchr(szBuffer, ',');
-                    if (pszComma)
-                        *pszComma = '.';
                     GMLWriteField(poDS, fp, bWriteSpaceIndentation, pszPrefix,
                                   bRemoveAppPrefix, poFieldDefn, szBuffer);
                 }
@@ -808,14 +805,6 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
                 const char *pszRaw = poFeature->GetFieldAsString( iField );
 
                 char *pszEscaped = OGRGetXML_UTF8_EscapedString( pszRaw );
-
-                if (poFieldDefn->GetType() == OFTReal)
-                {
-                    /* Use point as decimal separator */
-                    char* pszComma = strchr(pszEscaped, ',');
-                    if (pszComma)
-                        *pszComma = '.';
-                }
 
                 GMLWriteField(poDS, fp, bWriteSpaceIndentation, pszPrefix,
                               bRemoveAppPrefix, poFieldDefn, pszEscaped);
