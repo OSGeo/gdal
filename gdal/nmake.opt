@@ -356,6 +356,11 @@ JPEG12_SUPPORTED = 1
 #HDF5_DIR =	c:\warmerda\supportlibs\hdf5\5-164-win
 #HDF5_LIB =	$(HDF5_DIR)\dll\hdf5dll.lib 
 
+# Uncomment the following and update to enable KEA support.
+#KEA_PLUGIN = NO
+#KEA_CFLAGS = -Ic:\kea\include
+#KEA_LIB = c:\kea\libkea.lib 
+
 # Uncomment the following for MrSID support.  Only MRSID_DIR is required,
 # which may point to a MrSID Raster SDK, Lidar SDK, or the combined SDK, and
 # will auto-configure the mrsid and/or mrsid_lidar drivers as appropriate.
@@ -679,6 +684,14 @@ HDF5_LIB_LINK =
 !ENDIF
 !ENDIF
 
+!IFDEF KEA_LIB
+!IF "$(KEA_PLUGIN)" != "YES"
+KEA_LIB_LINK = $(KEA_LIB)
+!ELSE
+KEA_LIB_LINK =
+!ENDIF
+!ENDIF
+
 !IFDEF FGDB_LIB
 !IF "$(FGDB_PLUGIN)" != "YES"
 FGDB_LIB_LINK = $(FGDB_LIB)
@@ -703,7 +716,7 @@ EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) \
 	$(ECW_LIB_LINK) $(HDF4_LIB_LINK) $(FME_LIB) $(MRSID_LIB_LINK) \
 	$(FITS_LIB_LINK) $(JPEG_LIB) $(NETCDF_LIB_LINK) $(PROJ4_LIB) \
 	$(GEOTIFF_LIB) $(TIFF_LIB) $(PROJ_LIBRARY) $(SQLITE_LIB) \
-	$(MYSQL_LIB) $(GEOS_LIB) $(HDF5_LIB_LINK) $(SDE_LIB) $(ARCOBJECTS_LIB) $(DWG_LIB) \
+	$(MYSQL_LIB) $(GEOS_LIB) $(HDF5_LIB_LINK) $(KEA_LIB_LINK) $(SDE_LIB) $(ARCOBJECTS_LIB) $(DWG_LIB) \
 	$(IDB_LIB) $(CURL_LIB) $(DODS_LIB) $(KAKLIB) $(PCIDSK_LIB) \
 	$(ODBCLIB) $(JASPER_LIB) $(PNG_LIB) $(ADD_LIBS) $(OPENJPEG_LIB) \
 	$(MRSID_LIDAR_LIB) $(LIBKML_LIBS) $(SOSI_LIBS) $(POPPLER_LIBS) $(PODOFO_LIBS) $(LZMA_LIBS) \

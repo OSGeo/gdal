@@ -1719,6 +1719,55 @@ if test "$HAVE_HDF5" != "no" ; then
 fi
 
 dnl ---------------------------------------------------------------------------
+dnl Check if kealib library is available.
+dnl ---------------------------------------------------------------------------
+
+KEA_CONFIG=no
+
+AC_ARG_WITH(kea,[  --with-kea[=ARG]      Include kealib (ARG=path to kea-config) [[default=yes]]],,)
+
+if test "$with_kea" = "yes" -o "x$with_kea" = "x" ; then
+  AC_PATH_PROG(KEA_CONFIG, kea_config, no)
+else
+   KEA_CONFIG=$with_kea
+fi
+
+AC_MSG_CHECKING([for kea])
+
+if test "$KEA_CONFIG" = "no" ; then
+
+  HAVE_KEA=no
+  KEA_LIB=
+  KEA_INC=
+
+  AC_MSG_RESULT([no])
+
+else
+  if test -d $KEA_CONFIG ; then
+      AC_MSG_RESULT([no])
+      AC_MSG_ERROR([--with-kea argument is a directory.  It should be the path to the kea_config script, often somewhere like /usr/local/bin/kea_config.])
+  fi
+
+  if test \! -x $KEA_CONFIG ; then
+      AC_MSG_RESULT([no])
+      AC_MSG_ERROR([--with-kea argument is a not an executable file.  It should be the path to the kea_config script, often somewhere like /usr/local/bin/kea_config.])
+  fi
+
+  HAVE_KEA=yes
+  KEA_LIB="`$KEA_CONFIG --libs`"
+  KEA_INC="`$KEA_CONFIG --cflags`"
+  AC_MSG_RESULT([yes]) 
+fi
+
+AC_SUBST(HAVE_KEA,$HAVE_KEA)
+AC_SUBST(KEA_INC,$KEA_INC)
+AC_SUBST(KEA_LIB,$KEA_LIB)
+
+if test "$HAVE_KEA" != "no" ; then
+  OPT_GDAL_FORMATS="kea $OPT_GDAL_FORMATS"
+fi
+
+dnl ---------------------------------------------------------------------------
 dnl Check if netcdf library is available.
 dnl ---------------------------------------------------------------------------
 
@@ -4324,6 +4373,7 @@ LOC_MSG([  LIBGIF support:            ${GIF_SETTING}])
 LOC_MSG([  OGDI support:              ${HAVE_OGDI}])
 LOC_MSG([  HDF4 support:              ${HAVE_HDF4}])
 LOC_MSG([  HDF5 support:              ${HAVE_HDF5}])
+LOC_MSG([  Kea support:               ${HAVE_KEA}])
 LOC_MSG([  NetCDF support:            ${NETCDF_SETTING}])
 LOC_MSG([  Kakadu support:            ${HAVE_KAKADU}])
 if test "x$HAVE_JASPER_UUID" != "x" ; then

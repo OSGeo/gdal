@@ -754,6 +754,10 @@ NETCDF_HAS_NC4
 NETCDF_ROOT
 NETCDF_SETTING
 NETCDF_NCCONFIG
+KEA_LIB
+KEA_INC
+HAVE_KEA
+KEA_CONFIG
 HDF5_INCLUDE
 HAVE_HDF5
 HDF4_INCLUDE
@@ -930,6 +934,7 @@ with_fme
 with_sosi
 with_hdf4
 with_hdf5
+with_kea
 with_netcdf
 with_jasper
 with_openjpeg
@@ -1670,6 +1675,7 @@ Optional Packages:
   --with-sosi=ARG        Include SOSI support (ARG=SOSI lib Path, yes or no)
   --with-hdf4=ARG       Include HDF4 support (ARG=path)
   --with-hdf5=ARG       Include HDF5 support (ARG=path)
+  --with-kea=ARG      Include kealib (ARG=path to kea-config) [default=yes]
   --with-netcdf=ARG     Include netCDF support (ARG=no or netCDF tree prefix)
   --with-jasper=ARG     Include JPEG-2000 support via JasPer library (ARG=path)
   --with-openjpeg=ARG     Include JPEG-2000 support via OpenJPEG 2.0 library (ARG=path)
@@ -3836,7 +3842,7 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
  ac_save_CFLAGS="$CFLAGS"
-for ac_arg in "-pedantic -Wdeclaration-after-statement %        -Wall -Wdeclaration-after-statement"    "-pedantic  % -Wall"          "-xstrconst % -v"             "-std1      % -verbose -w0 -warnprotos"    "-qlanglvl=ansi % -qsrcmsg -qinfo=all:noppt:noppc:noobs:nocnd"    "-ansi -ansiE % -fullwarn"    "+ESlit     % +w1"            "-Xc        % -pvctl,fullmsg"    "-h conform % -h msglevel 2"    #
+for ac_arg in "-pedantic -Wdeclaration-after-statement -Wunused-parameter %        -Wall -Wdeclaration-after-statement -Wunused-parameter"    "-pedantic -Wdeclaration-after-statement %        -Wall -Wdeclaration-after-statement"    "-pedantic  % -Wall"          "-xstrconst % -v"             "-std1      % -verbose -w0 -warnprotos"    "-qlanglvl=ansi % -qsrcmsg -qinfo=all:noppt:noppc:noobs:nocnd"    "-ansi -ansiE % -fullwarn"    "+ESlit     % +w1"            "-Xc        % -pvctl,fullmsg"    "-h conform % -h msglevel 2"    #
 do CFLAGS="$ac_save_CFLAGS "`echo $ac_arg | sed -e 's,%%.*,,' -e 's,%,,'`
    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -4158,7 +4164,7 @@ ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ex
 ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
  ac_save_CXXFLAGS="$CXXFLAGS"
-for ac_arg in "-pedantic  % -Wall"          "-xstrconst % -v"             "-std1      % -verbose -w0 -warnprotos"    "-qlanglvl=ansi % -qsrcmsg -qinfo=all:noppt:noppc:noobs:nocnd"    "-ansi -ansiE % -fullwarn"    "+ESlit     % +w1"            "-Xc        % -pvctl,fullmsg"    "-h conform % -h msglevel 2"    #
+for ac_arg in "-pedantic  % -Wall -Wunused-parameter"          "-pedantic  % -Wall"          "-xstrconst % -v"             "-std1      % -verbose -w0 -warnprotos"    "-qlanglvl=ansi % -qsrcmsg -qinfo=all:noppt:noppc:noobs:nocnd"    "-ansi -ansiE % -fullwarn"    "+ESlit     % +w1"            "-Xc        % -pvctl,fullmsg"    "-h conform % -h msglevel 2"    #
 do CXXFLAGS="$ac_save_CXXFLAGS "`echo $ac_arg | sed -e 's,%%.*,,' -e 's,%,,'`
    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -21609,6 +21615,105 @@ if test "$HAVE_HDF5" != "no" ; then
 fi
 
 
+KEA_CONFIG=no
+
+
+# Check whether --with-kea was given.
+if test "${with_kea+set}" = set; then :
+  withval=$with_kea;
+fi
+
+
+if test "$with_kea" = "yes" -o "x$with_kea" = "x" ; then
+  # Extract the first word of "kea_config", so it can be a program name with args.
+set dummy kea_config; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_KEA_CONFIG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $KEA_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_KEA_CONFIG="$KEA_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_KEA_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_path_KEA_CONFIG" && ac_cv_path_KEA_CONFIG="no"
+  ;;
+esac
+fi
+KEA_CONFIG=$ac_cv_path_KEA_CONFIG
+if test -n "$KEA_CONFIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $KEA_CONFIG" >&5
+$as_echo "$KEA_CONFIG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+else
+   KEA_CONFIG=$with_kea
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for kea" >&5
+$as_echo_n "checking for kea... " >&6; }
+
+if test "$KEA_CONFIG" = "no" ; then
+
+  HAVE_KEA=no
+  KEA_LIB=
+  KEA_INC=
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+else
+  if test -d $KEA_CONFIG ; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+      as_fn_error $? "--with-kea argument is a directory.  It should be the path to the kea_config script, often somewhere like /usr/local/bin/kea_config." "$LINENO" 5
+  fi
+
+  if test \! -x $KEA_CONFIG ; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+      as_fn_error $? "--with-kea argument is a not an executable file.  It should be the path to the kea_config script, often somewhere like /usr/local/bin/kea_config." "$LINENO" 5
+  fi
+
+  HAVE_KEA=yes
+  KEA_LIB="`$KEA_CONFIG --libs`"
+  KEA_INC="`$KEA_CONFIG --cflags`"
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+fi
+
+HAVE_KEA=$HAVE_KEA
+
+KEA_INC=$KEA_INC
+
+KEA_LIB=$KEA_LIB
+
+
+if test "$HAVE_KEA" != "no" ; then
+  OPT_GDAL_FORMATS="kea $OPT_GDAL_FORMATS"
+fi
+
+
 NETCDF_SETTING=
 NETCDF_ROOT=
 NETCDF_HAS_NC4=
@@ -31736,6 +31841,9 @@ echo "  HDF4 support:              ${HAVE_HDF4}"
 
 
 echo "  HDF5 support:              ${HAVE_HDF5}"
+
+
+echo "  Kea support:               ${HAVE_KEA}"
 
 
 echo "  NetCDF support:            ${NETCDF_SETTING}"

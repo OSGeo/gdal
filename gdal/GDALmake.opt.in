@@ -141,6 +141,14 @@ HAVE_HDF5     = @HAVE_HDF5@
 HDF5_INCLUDE  = @HDF5_INCLUDE@ 
 
 #
+# KEA Support.
+#
+HAVE_KEA     = @HAVE_KEA@
+KEA_INC      = @KEA_INC@ 
+KEA_LIB      = @KEA_LIB@
+LIBS       +=   $(KEA_LIB)
+
+#
 # NetCDF Support.
 #
 NETCDF_ROOT = @NETCDF_ROOT@
