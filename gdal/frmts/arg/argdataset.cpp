@@ -139,7 +139,7 @@ json_object * GetJsonObject(CPLString pszFilename)
     CPLString osJSONFilename = GetJsonFilename(pszFilename);
 
     pJSONObject = json_object_from_file((char *)osJSONFilename.c_str());
-    if (pJSONObject == (struct json_object*)error_ptr(-1) || pJSONObject == NULL) {
+    if (pJSONObject == NULL) {
         CPLDebug("ARGDataset", "GetJsonObject(): "
             "Could not parse JSON file.");
         return NULL;
