@@ -35,7 +35,7 @@
 /*                      OGRGeoPackageLayer()                            */
 /************************************************************************/
 
-OGRGeoPackageLayer::OGRGeoPackageLayer(OGRGeoPackageDataSource *poDS) : m_poDS(poDS)
+OGRGeoPackageLayer::OGRGeoPackageLayer(GDALGeoPackageDataset *poDS) : m_poDS(poDS)
 {
     m_poFeatureDefn = NULL;
     iNextShapeId = 0;

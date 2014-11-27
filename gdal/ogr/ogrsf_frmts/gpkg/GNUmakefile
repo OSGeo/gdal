@@ -2,7 +2,8 @@
 include ../../../GDALmake.opt
 
 OBJ	= ogrgeopackagedriver.o ogrgeopackagedatasource.o ogrgeopackagelayer.o \
-	ogrgeopackagetablelayer.o ogrgeopackageselectlayer.o ogrgeopackageutility.o
+	ogrgeopackagetablelayer.o ogrgeopackageselectlayer.o ogrgeopackageutility.o \
+	gdalgeopackagerasterband.o
 
 ifeq ($(SPATIALITE_412_OR_LATER),yes)
 CPPFLAGS +=  -DSPATIALITE_412_OR_LATER

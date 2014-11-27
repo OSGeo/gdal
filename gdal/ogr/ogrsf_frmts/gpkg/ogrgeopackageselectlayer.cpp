@@ -33,7 +33,7 @@
 /*                        OGRGeoPackageSelectLayer()                    */
 /************************************************************************/
 
-OGRGeoPackageSelectLayer::OGRGeoPackageSelectLayer( OGRGeoPackageDataSource *poDS,
+OGRGeoPackageSelectLayer::OGRGeoPackageSelectLayer( GDALGeoPackageDataset *poDS,
                                             CPLString osSQLIn,
                                             sqlite3_stmt *hStmtIn,
                                             int bUseStatementForGetNextFeature,

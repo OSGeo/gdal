@@ -36,24 +36,67 @@
 #define UNDEFINED_SRID 0
 
 /************************************************************************/
-/*                           OGRGeoPackageDataSource                    */
+/*                          GDALGeoPackageDataset                       */
 /************************************************************************/
 
 class OGRGeoPackageTableLayer;
 
-class OGRGeoPackageDataSource : public OGRSQLiteBaseDataSource
+typedef struct
 {
+    int     nRow;
+    int     nCol;
+    int     nIdxWithinTileData;
+} CachedTileDesc;
+
+class GDALGeoPackageDataset : public OGRSQLiteBaseDataSource
+{
+    friend class GDALGeoPackageRasterBand;
+
     OGRGeoPackageTableLayer** m_papoLayers;
     int                 m_nLayers;
     int                 m_bUtf8;
     void                CheckUnknownExtensions();
 
+    CPLString           m_osRasterTable;
+    char              **m_papszSubDatasets;
+    char               *m_pszProjection;
+    int                 m_bGeoTransformValid;
+    double              m_adfGeoTransform[6];
+    double              m_dfTMSMinX;
+    double              m_dfTMSMaxY;
+    int                 m_nZoomLevel;
+    GByte              *m_pabyCachedTiles;
+    CachedTileDesc      m_asCachedTilesDesc[4];
+    int                 m_nShiftXTiles;
+    int                 m_nShiftXPixelsMod;
+    int                 m_nShiftYTiles;
+    int                 m_nShiftYPixelsMod;
+
+        int     OpenRaster( const char* pszTableName,
+                            const char* pszIdentifier,
+                            const char* pszDescription,
+                            int nSRSId,
+                            double dfMinX,
+                            double dfMinY,
+                            double dfMaxX,
+                            double dfMaxY,
+                            const char* pszContentsMinX,
+                            const char* pszContentsMinY,
+                            const char* pszContentsMaxX,
+                            const char* pszContentsMaxY,
+                            char** papszOptions );
+
     public:
-                            OGRGeoPackageDataSource();
-                            ~OGRGeoPackageDataSource();
+                            GDALGeoPackageDataset();
+                            ~GDALGeoPackageDataset();
+
+        virtual char **     GetMetadata( const char *pszDomain = NULL );
+        virtual char **     GetMetadataDomainList();
+        virtual const char* GetProjectionRef();
+        virtual CPLErr      GetGeoTransform( double* padfGeoTransform );
 
         virtual int         GetLayerCount() { return m_nLayers; }
-        int                 Open( const char * pszFilename, int bUpdate );
+        int                 Open( GDALOpenInfo* poOpenInfo );
         int                 Create( const char * pszFilename, char **papszOptions );
         OGRLayer*           GetLayer( int iLayer );
         int                 DeleteLayer( int iLayer );
@@ -90,13 +133,33 @@ class OGRGeoPackageDataSource : public OGRSQLiteBaseDataSource
 };
 
 /************************************************************************/
+/*                        GDALGeoPackageRasterBand                      */
+/************************************************************************/
+
+class GDALGeoPackageRasterBand: public GDALPamRasterBand
+{
+        CPLErr                  ReadTile(const CPLString& osMemFileName,
+                                         GByte* pabyTileData);
+        GByte*                  ReadTile(int nRow, int nCol);
+
+    public:
+
+                                GDALGeoPackageRasterBand(GDALGeoPackageDataset* poDS,
+                                                         int nBand,
+                                                         int nTileWidth, int nTileHeight);
+        
+        virtual CPLErr          IReadBlock(int nBlockXOff, int nBlockYOff,
+                                           void* pData);
+};
+
+/************************************************************************/
 /*                           OGRGeoPackageLayer                         */
 /************************************************************************/
 
 class OGRGeoPackageLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
 {
   protected:
-    OGRGeoPackageDataSource *m_poDS;
+    GDALGeoPackageDataset *m_poDS;
 
     OGRFeatureDefn*      m_poFeatureDefn;
     int                  iNextShapeId;
@@ -120,7 +183,7 @@ class OGRGeoPackageLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
 
   public:
 
-                        OGRGeoPackageLayer(OGRGeoPackageDataSource* poDS);
+                        OGRGeoPackageLayer(GDALGeoPackageDataset* poDS);
                         ~OGRGeoPackageLayer();
     /************************************************************************/
     /* OGR API methods */
@@ -163,7 +226,7 @@ class OGRGeoPackageTableLayer : public OGRGeoPackageLayer
     
     public:
     
-                        OGRGeoPackageTableLayer( OGRGeoPackageDataSource *poDS,
+                        OGRGeoPackageTableLayer( GDALGeoPackageDataset *poDS,
                                             const char * pszTableName );
                         ~OGRGeoPackageTableLayer();
 
@@ -235,7 +298,7 @@ class OGRGeoPackageSelectLayer : public OGRGeoPackageLayer, public IOGRSQLiteSel
     virtual OGRErr      ResetStatement();
 
   public:
-                        OGRGeoPackageSelectLayer( OGRGeoPackageDataSource *, 
+                        OGRGeoPackageSelectLayer( GDALGeoPackageDataset *, 
                                               CPLString osSQL,
                                               sqlite3_stmt *,
                                               int bUseStatementForGetNextFeature,

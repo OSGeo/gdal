@@ -32,6 +32,7 @@
 #define _OGR_SQLITE_H_INCLUDED
 
 #include "ogrsf_frmts.h"
+#include "gdal_pam.h"
 #include "cpl_error.h"
 #include <map>
 #include <set>
@@ -652,10 +653,10 @@ class OGRSQLiteSingleFeatureLayer : public OGRLayer
 /************************************************************************/
 
 /* Used by both OGRSQLiteDataSource and OGRGeoPackageDataSource */
-class OGRSQLiteBaseDataSource : public OGRDataSource
+class OGRSQLiteBaseDataSource : public GDALPamDataset
 {
   protected:
-    char               *pszName;
+    char               *m_pszFilename;
 
     sqlite3             *hDB;
     int                 bUpdate;
@@ -684,8 +685,6 @@ class OGRSQLiteBaseDataSource : public OGRDataSource
   public:
                         OGRSQLiteBaseDataSource();
                         ~OGRSQLiteBaseDataSource();
-
-    virtual const char *GetName() { return pszName; }
 
     sqlite3            *GetDB() { return hDB; }
     int                 GetUpdate() const { return bUpdate; }

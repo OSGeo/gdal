@@ -1,6 +1,7 @@
 
 OBJ	=	ogrgeopackagedriver.obj ogrgeopackagedatasource.obj \
-        ogrgeopackagelayer.obj ogrgeopackagetablelayer.obj ogrgeopackageselectlayer.obj ogrgeopackageutility.obj
+        ogrgeopackagelayer.obj ogrgeopackagetablelayer.obj ogrgeopackageselectlayer.obj ogrgeopackageutility.obj \
+        gdalgeopackagerasterband.obj
 
 GDAL_ROOT	=	..\..\..
 
