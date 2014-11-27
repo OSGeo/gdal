@@ -419,7 +419,7 @@ OGRTABDataSource::ICreateLayer( const char * pszLayerName,
     }
 
     // Pull out the bounds if supplied
-    if( !m_bCreateMIF && (pszOpt=CSLFetchNameValue(papszOptions, "BOUNDS")) != NULL ) {
+    if( (pszOpt=CSLFetchNameValue(papszOptions, "BOUNDS")) != NULL ) {
         double dfBounds[4];
         if( CPLsscanf(pszOpt, "%lf,%lf,%lf,%lf", &dfBounds[0], 
                                           &dfBounds[1], 

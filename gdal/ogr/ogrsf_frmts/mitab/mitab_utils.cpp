@@ -700,6 +700,8 @@ static MapInfoUnitsInfo gasUnitsList[] =
     {6, "cm"},
     {7, "m"},
     {8, "survey ft"},
+    {8, "survey foot"}, // alternate
+    {13, NULL},
     {9, "nmi"},
     {30, "li"},
     {31, "ch"},
@@ -744,10 +746,14 @@ int TABUnitIdFromString(const char *pszName)
     MapInfoUnitsInfo *psList;
 
     psList = gasUnitsList;
+    
+    if( pszName == NULL )
+        return 13;
 
     while(psList->nUnitId != -1)
     {
-        if (EQUAL(psList->pszAbbrev, pszName)) 
+        if (psList->pszAbbrev != NULL &&
+            EQUAL(psList->pszAbbrev, pszName)) 
             return psList->nUnitId;
         psList++;
     }
