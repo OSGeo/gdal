@@ -143,7 +143,7 @@ int OGRSQLiteDataSource::GetSpatialiteVersionNumber()
 OGRSQLiteBaseDataSource::OGRSQLiteBaseDataSource()
 
 {
-    pszName = NULL;
+    m_pszFilename = NULL;
     hDB = NULL;
 
 #ifdef HAVE_SQLITE_VFS
@@ -169,7 +169,7 @@ OGRSQLiteBaseDataSource::~OGRSQLiteBaseDataSource()
 #endif
 
     CloseDB();
-    CPLFree(pszName);
+    CPLFree(m_pszFilename);
 }
 
 /************************************************************************/
@@ -466,7 +466,7 @@ void OGRSQLiteBaseDataSourceNotifyFileOpened (void* pfnUserData,
 void OGRSQLiteBaseDataSource::NotifyFileOpened(const char* pszFilename,
                                            VSILFILE* fp)
 {
-    if (strcmp(pszFilename, pszName) == 0)
+    if (strcmp(pszFilename, m_pszFilename) == 0)
     {
         fpMainFile = fp;
     }
@@ -485,22 +485,22 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flags, int bRegisterOGR2SQLiteEx
         OGR2SQLITE_Register();
 
     int bUseOGRVFS = CSLTestBoolean(CPLGetConfigOption("SQLITE_USE_OGR_VFS", "NO"));
-    if (bUseOGRVFS || strncmp(pszName, "/vsi", 4) == 0)
+    if (bUseOGRVFS || strncmp(m_pszFilename, "/vsi", 4) == 0)
     {
         pMyVFS = OGRSQLiteCreateVFS(OGRSQLiteBaseDataSourceNotifyFileOpened, this);
         sqlite3_vfs_register(pMyVFS, 0);
-        rc = sqlite3_open_v2( pszName, &hDB, flags, pMyVFS->zName );
+        rc = sqlite3_open_v2( m_pszFilename, &hDB, flags, pMyVFS->zName );
     }
     else
-        rc = sqlite3_open_v2( pszName, &hDB, flags, NULL );
+        rc = sqlite3_open_v2( m_pszFilename, &hDB, flags, NULL );
 #else
-    rc = sqlite3_open( pszName, &hDB );
+    rc = sqlite3_open( m_pszFilename, &hDB );
 #endif
     if( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "sqlite3_open(%s) failed: %s",
-                  pszName, sqlite3_errmsg( hDB ) );
+                  m_pszFilename, sqlite3_errmsg( hDB ) );
         return FALSE;
     }
 
@@ -601,7 +601,7 @@ int OGRSQLiteDataSource::Create( const char * pszNameIn, char **papszOptions )
     CPLString osCommand;
     char *pszErrMsg = NULL;
 
-    pszName = CPLStrdup( pszNameIn );
+    m_pszFilename = CPLStrdup( pszNameIn );
 
 /* -------------------------------------------------------------------- */
 /*      Check that spatialite extensions are loaded if required to      */
@@ -743,7 +743,7 @@ int OGRSQLiteDataSource::Create( const char * pszNameIn, char **papszOptions )
             return FALSE;
     }
 
-    return Open(pszName, TRUE);
+    return Open(m_pszFilename, TRUE);
 }
 
 /************************************************************************/
@@ -981,7 +981,7 @@ void OGRSQLiteDataSource::ReloadLayers()
     papoLayers = NULL;
     nLayers = 0;
 
-    Open(pszName, bUpdate);
+    Open(m_pszFilename, bUpdate);
 }
 
 /************************************************************************/
@@ -993,12 +993,13 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn )
 {
     CPLAssert( nLayers == 0 );
 
-    if (pszName == NULL)
-        pszName = CPLStrdup( pszNewName );
+    if (m_pszFilename == NULL)
+        m_pszFilename = CPLStrdup( pszNewName );
+    SetDescription(m_pszFilename);
     bUpdate = bUpdateIn;
 
     VSIStatBufL sStat;
-    if( VSIStatL( pszName, &sStat ) == 0 )
+    if( VSIStatL( m_pszFilename, &sStat ) == 0 )
     {
         nFileTimestamp = sStat.st_mtime;
     }
@@ -1565,7 +1566,7 @@ OGRLayer *OGRSQLiteDataSource::GetLayer( int iLayer )
 OGRLayer *OGRSQLiteDataSource::GetLayerByName( const char* pszLayerName )
 
 {
-    OGRLayer* poLayer = OGRDataSource::GetLayerByName(pszLayerName);
+    OGRLayer* poLayer = GDALDataset::GetLayerByName(pszLayerName);
     if( poLayer != NULL )
         return poLayer;
 
@@ -1623,7 +1624,7 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
 
 {
     if( pszDialect != NULL && EQUAL(pszDialect,"OGRSQL") )
-        return OGRDataSource::ExecuteSQL( pszSQLCommand, 
+        return GDALDataset::ExecuteSQL( pszSQLCommand, 
                                           poSpatialFilter, 
                                           pszDialect );
 
@@ -1874,7 +1875,7 @@ OGRSQLiteDataSource::ICreateLayer( const char * pszLayerNameIn,
         CPLError( CE_Failure, CPLE_NoWriteAccess,
                   "Data source %s opened read-only.\n"
                   "New layer %s cannot be created.\n",
-                  pszName, pszLayerNameIn );
+                  m_pszFilename, pszLayerNameIn );
 
         return NULL;
     }
@@ -2330,7 +2331,7 @@ void OGRSQLiteDataSource::DeleteLayer( const char *pszLayerName )
         CPLError( CE_Failure, CPLE_NoWriteAccess,
                   "Data source %s opened read-only.\n"
                   "Layer %s cannot be deleted.\n",
-                  pszName, pszLayerName );
+                  m_pszFilename, pszLayerName );
 
         return;
     }
@@ -3248,8 +3249,8 @@ OGRSpatialReference *OGRSQLiteDataSource::FetchSRS( int nId )
 
 void OGRSQLiteDataSource::SetName(const char* pszNameIn)
 {
-    CPLFree(pszName);
-    pszName = CPLStrdup(pszNameIn);
+    CPLFree(m_pszFilename);
+    m_pszFilename = CPLStrdup(pszNameIn);
 }
 
 /************************************************************************/

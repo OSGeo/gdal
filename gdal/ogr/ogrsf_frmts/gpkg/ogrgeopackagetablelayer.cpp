@@ -674,7 +674,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
 /************************************************************************/
 
 OGRGeoPackageTableLayer::OGRGeoPackageTableLayer(
-                    OGRGeoPackageDataSource *poDS,
+                    GDALGeoPackageDataset *poDS,
                     const char * pszTableName) : OGRGeoPackageLayer(poDS)
 {
     m_pszTableName = CPLStrdup(pszTableName);
