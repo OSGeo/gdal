@@ -1051,7 +1051,8 @@ static char szPreviousMitabBoundsFile[2048] = { 0 };
  **********************************************************************/
 GBool MITABLookupCoordSysBounds(TABProjInfo *psCS,
                                 double &dXMin, double &dYMin,
-                                double &dXMax, double &dYMax)
+                                double &dXMax, double &dYMax,
+                                int bOnlyUserTable)
 {
     GBool bFound = FALSE;
     const MapInfoBoundsInfo *psList;
@@ -1127,7 +1128,7 @@ GBool MITABLookupCoordSysBounds(TABProjInfo *psCS,
         }
 
         psList = gasBoundsList;
-        for( ; !bFound && psList->sProj.nProjId!=0xff; psList++)
+        for( ; !bOnlyUserTable && !bFound && psList->sProj.nProjId!=0xff; psList++)
         {
             const TABProjInfo *p = &(psList->sProj);
 

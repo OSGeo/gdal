@@ -361,6 +361,10 @@ class TABFile: public IMapInfoFile
                           GBool bForce = TRUE );
     
     virtual OGRSpatialReference *GetSpatialRef();
+    
+    static OGRSpatialReference* GetSpatialRefFromTABProj(const TABProjInfo& sTABProj);
+    static int                  GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
+                                                         TABProjInfo& sTABProj, int& nParmCount);
 
     virtual int GetFeatureCountByType(int &numPoints, int &numLines,
                                       int &numRegions, int &numTexts,
@@ -1905,7 +1909,8 @@ typedef struct
 
 GBool   MITABLookupCoordSysBounds(TABProjInfo *psCS,
                                   double &dXMin, double &dYMin,
-                                  double &dXMax, double &dYMax);
+                                  double &dXMax, double &dYMax,
+                                  int bOnlyUserTable = FALSE);
 int     MITABLoadCoordSysTable(const char *pszFname);
 void    MITABFreeCoordSysTable();
 GBool   MITABCoordSysTableLoaded();

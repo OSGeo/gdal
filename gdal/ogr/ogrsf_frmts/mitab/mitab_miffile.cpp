@@ -2029,7 +2029,12 @@ int MIFFile::SetSpatialRef( OGRSpatialReference * poSpatialRef )
 {
     CPLFree( m_pszCoordSys );
 
-    m_pszCoordSys = MITABSpatialRef2CoordSys( poSpatialRef );
+    char* pszCoordSys = MITABSpatialRef2CoordSys( poSpatialRef );
+    if( pszCoordSys )
+    {
+        SetMIFCoordSys(pszCoordSys);
+        CPLFree(pszCoordSys);
+    }
 
     return( m_pszCoordSys != NULL );
 }
@@ -2067,7 +2072,10 @@ int MIFFile::SetMIFCoordSys(const char * pszMIFCoordSys)
         m_dYMax = CPLAtof(papszFields[++iBounds]);
         m_bBoundsSet = TRUE;
 
-        pszCoordSys[strstr(pszCoordSys, "Bounds") - pszCoordSys] = '\0';
+        char* pszBounds = strstr(pszCoordSys, " Bounds");
+        if( pszBounds == NULL )
+            pszBounds = strstr(pszCoordSys, "Bounds");
+        pszCoordSys[pszBounds - pszCoordSys] = '\0';
     }
     CSLDestroy( papszFields );
 

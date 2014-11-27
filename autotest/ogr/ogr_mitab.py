@@ -1635,6 +1635,279 @@ def ogr_mitab_34():
     return 'success'
 
 ###############################################################################
+# Test SRS support
+
+def get_srs_from_coordsys(coordsys):
+    mif_filename = '/vsimem/foo.mif'
+    f = gdal.VSIFOpenL(mif_filename, "wb")
+    content = """Version 300
+Charset "Neutral"
+Delimiter ","
+%s
+Columns 1
+  foo Char(254)
+Data
+
+NONE
+""" % coordsys
+    gdal.VSIFWriteL(content, 1, len(content),f)
+    gdal.VSIFCloseL(f)
+
+    f = gdal.VSIFOpenL(mif_filename[0:-3]+"mid", "wb")
+    content = '""\n'
+    gdal.VSIFWriteL(content, 1, len(content),f)
+    gdal.VSIFCloseL(f)
+
+    ds = ogr.Open(mif_filename)
+    srs = ds.GetLayer(0).GetSpatialRef()
+    if srs is not None:
+        srs = srs.Clone()
+
+    gdal.Unlink(mif_filename)
+    gdal.Unlink(mif_filename[0:-3]+"mid")
+
+    return srs
+
+def get_coordsys_from_srs(srs):
+    mif_filename = '/vsimem/foo.mif'
+    ds = ogr.GetDriverByName('MapInfo File').CreateDataSource(mif_filename)
+    lyr = ds.CreateLayer('foo', srs = srs)
+    lyr.CreateField(ogr.FieldDefn('foo'))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+    ds = None
+    f = gdal.VSIFOpenL(mif_filename, "rb")
+    data = gdal.VSIFReadL(1, 10000, f)
+    gdal.VSIFCloseL(f)
+    gdal.Unlink(mif_filename)
+    gdal.Unlink(mif_filename[0:-3]+"mid")
+    data = data[data.find('CoordSys'):]
+    data = data[0:data.find('\n')]
+    return data
+
+def ogr_mitab_35():
+
+    # Local/non-earth
+    srs = osr.SpatialReference()
+    coordsys = get_coordsys_from_srs(srs)
+    if coordsys != 'CoordSys NonEarth Units "m"':
+        gdaltest.post_reason('fail')
+        print(coordsys)
+        return 'fail'
+
+    srs = osr.SpatialReference('LOCAL_CS["foo"]')
+    coordsys = get_coordsys_from_srs(srs)
+    if coordsys != 'CoordSys NonEarth Units "m"':
+        gdaltest.post_reason('fail')
+        print(coordsys)
+        return 'fail'
+    srs = get_srs_from_coordsys(coordsys)
+    wkt = srs.ExportToWkt()
+    if wkt != 'LOCAL_CS["Nonearth",UNIT["Meter",1.0]]':
+        gdaltest.post_reason('fail')
+        print(wkt)
+        return 'fail'
+
+    # Test units
+    for mif_unit in [ 'mi', 'km', 'in', 'ft', 'yd', 'mm', 'cm', 'm', 'survey ft', 'nmi', 'li', 'ch', 'rd' ]:
+        coordsys = 'CoordSys NonEarth Units "%s"' % mif_unit
+        srs = get_srs_from_coordsys( coordsys )
+        #print(srs)
+        got_coordsys = get_coordsys_from_srs(srs)
+        if coordsys != got_coordsys:
+            gdaltest.post_reason('fail')
+            print(coordsys)
+            print(srs)
+            print(got_coordsys)
+            return 'fail'
+
+    # Geographic
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    coordsys = get_coordsys_from_srs(srs)
+    if coordsys != 'CoordSys Earth Projection 1, 104':
+        gdaltest.post_reason('fail')
+        print(coordsys)
+        return 'fail'
+    srs = get_srs_from_coordsys(coordsys)
+    wkt = srs.ExportToWkt()
+    if wkt != 'GEOGCS["unnamed",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563],TOWGS84[0,0,0,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]':
+        gdaltest.post_reason('fail')
+        print(wkt)
+        return 'fail'
+    coordsys = get_coordsys_from_srs(srs)
+    if coordsys != 'CoordSys Earth Projection 1, 104':
+        gdaltest.post_reason('fail')
+        print(coordsys)
+        return 'fail'
+
+    # Projected
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32631)
+    coordsys = get_coordsys_from_srs(srs)
+    if coordsys != 'CoordSys Earth Projection 8, 104, "m", 3, 0, 0.9996, 500000, 0':
+        gdaltest.post_reason('fail')
+        print(coordsys)
+        return 'fail'
+    srs = get_srs_from_coordsys(coordsys)
+    wkt = srs.ExportToWkt()
+    if wkt != 'PROJCS["unnamed",GEOGCS["unnamed",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563],TOWGS84[0,0,0,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",3],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1.0]]':
+        gdaltest.post_reason('fail')
+        print(wkt)
+        return 'fail'
+    coordsys = get_coordsys_from_srs(srs)
+    if coordsys != 'CoordSys Earth Projection 8, 104, "m", 3, 0, 0.9996, 500000, 0':
+        gdaltest.post_reason('fail')
+        print(coordsys)
+        return 'fail'
+
+    # Test round-tripping of projection methods
+    for coordsys in [ 'CoordSys Earth Projection 1, 104',
+                      'CoordSys Earth Projection 2, 104, "m", 1, 2',
+                      'CoordSys Earth Projection 3, 104, "m", 1, 2, 3, 4, 5, 6',
+                      'CoordSys Earth Projection 4, 104, "m", 1, 90, 90',
+                      'CoordSys Earth Projection 5, 104, "m", 1, 90, 90',
+                      'CoordSys Earth Projection 6, 104, "m", 1, 2, 3, 4, 5, 6',
+                      'CoordSys Earth Projection 7, 104, "m", 1, 2, 3, 4, 5, 6',
+                      'CoordSys Earth Projection 8, 104, "m", 1, 2, 3, 4, 5',
+                      'CoordSys Earth Projection 9, 104, "m", 1, 2, 3, 4, 5, 6',
+                      'CoordSys Earth Projection 10, 104, "m", 1',
+                      'CoordSys Earth Projection 11, 104, "m", 1',
+                      'CoordSys Earth Projection 12, 104, "m", 1',
+                      'CoordSys Earth Projection 13, 104, "m", 1',
+                      'CoordSys Earth Projection 14, 104, "m", 1',
+                      'CoordSys Earth Projection 15, 104, "m", 1',
+                      'CoordSys Earth Projection 16, 104, "m", 1',
+                      'CoordSys Earth Projection 17, 104, "m", 1',
+                      'CoordSys Earth Projection 18, 104, "m", 1, 2, 3, 4',
+                      'CoordSys Earth Projection 19, 104, "m", 1, 2, 3, 4, 5, 6',
+                      'CoordSys Earth Projection 20, 104, "m", 1, 2, 3, 4, 5',
+                      'CoordSys Earth Projection 21, 104, "m", 1, 2, 3, 4, 5',
+                      'CoordSys Earth Projection 22, 104, "m", 1, 2, 3, 4, 5',
+                      'CoordSys Earth Projection 23, 104, "m", 1, 2, 3, 4, 5',
+                      'CoordSys Earth Projection 24, 104, "m", 1, 2, 3, 4, 5',
+                      'CoordSys Earth Projection 25, 104, "m", 1, 2, 3, 4',
+                      'CoordSys Earth Projection 26, 104, "m", 1, 2',
+                      'CoordSys Earth Projection 27, 104, "m", 1, 2, 3, 4',
+                      'CoordSys Earth Projection 28, 104, "m", 1, 2, 90',
+                      #'CoordSys Earth Projection 29, 104, "m", 1, 90, 90', # alias of 4
+                      'CoordSys Earth Projection 30, 104, "m", 1, 2, 3, 4',
+                      #'CoordSys Earth Projection 31, 104, "m", 1, 2, 3, 4, 5', # alias of 20
+                      'CoordSys Earth Projection 32, 104, "m", 1, 2, 3, 4, 5, 6',
+                      'CoordSys Earth Projection 33, 104, "m", 1, 2, 3, 4',
+                      ]:
+        srs = get_srs_from_coordsys( coordsys )
+        #print(srs)
+        got_coordsys = get_coordsys_from_srs(srs)
+        #if got_coordsys.find(' Bounds') >= 0:
+        #    got_coordsys = got_coordsys[0:got_coordsys.find(' Bounds')]
+        if coordsys != got_coordsys:
+            gdaltest.post_reason('fail')
+            print(coordsys)
+            print(srs)
+            print(got_coordsys)
+            return 'fail'
+
+    # Test TOWGS84
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4322)
+    coordsys = get_coordsys_from_srs(srs)
+    if coordsys != 'CoordSys Earth Projection 1, 103':
+        gdaltest.post_reason('fail')
+        print(coordsys)
+        return 'fail'
+    srs = get_srs_from_coordsys(coordsys)
+    wkt = srs.ExportToWkt()
+    if wkt != 'GEOGCS["unnamed",DATUM["WGS_1972",SPHEROID["WGS 72",6378135,298.26],TOWGS84[0,8,10,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]':
+        gdaltest.post_reason('fail')
+        print(wkt)
+        return 'fail'
+    coordsys = get_coordsys_from_srs(srs)
+    if coordsys != 'CoordSys Earth Projection 1, 103':
+        gdaltest.post_reason('fail')
+        print(coordsys)
+        return 'fail'
+
+    # Test Lambert 93
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(2154)
+    coordsys = get_coordsys_from_srs(srs)
+    if coordsys != 'CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49, 700000, 6600000':
+        gdaltest.post_reason('fail')
+        print(coordsys)
+        return 'fail'
+    srs = get_srs_from_coordsys(coordsys)
+    wkt = srs.ExportToWkt()
+    if wkt != 'PROJCS["RGF93 / Lambert-93",GEOGCS["RGF93",DATUM["Reseau_Geodesique_Francais_1993",SPHEROID["GRS 80",6378137,298.257222101],TOWGS84[0,0,0,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["standard_parallel_1",49],PARAMETER["standard_parallel_2",44],PARAMETER["latitude_of_origin",46.5],PARAMETER["central_meridian",3],PARAMETER["false_easting",700000],PARAMETER["false_northing",6600000],UNIT["Meter",1.0],AUTHORITY["EPSG","2154"]]':
+        gdaltest.post_reason('fail')
+        print(wkt)
+        return 'fail'
+    coordsys = get_coordsys_from_srs(srs)
+    if coordsys != 'CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49, 700000, 6600000':
+        gdaltest.post_reason('fail')
+        print(coordsys)
+        return 'fail'
+
+    srs = osr.SpatialReference('PROJCS["RGF93 / Lambert-93",GEOGCS["RGF93",DATUM["Reseau_Geodesique_Francais_1993",SPHEROID["GRS 80",6378137,298.257222101],TOWGS84[0,0,0,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["standard_parallel_1",49.00000000002],PARAMETER["standard_parallel_2",44],PARAMETER["latitude_of_origin",46.5],PARAMETER["central_meridian",3],PARAMETER["false_easting",700000],PARAMETER["false_northing",6600000],UNIT["Meter",1.0],AUTHORITY["EPSG","2154"]]')
+    coordsys = get_coordsys_from_srs(srs)
+    if coordsys != 'CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49.00000000002, 700000, 6600000':
+        gdaltest.post_reason('fail')
+        print(coordsys)
+        return 'fail'
+    gdal.SetConfigOption('MITAB_BOUNDS_FILE', 'data/mitab_bounds.txt')
+    coordsys = get_coordsys_from_srs(srs)
+    gdal.SetConfigOption('MITAB_BOUNDS_FILE', None)
+    if coordsys != 'CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49.00000000002, 700000, 6600000 Bounds (75000, 6000000) (1275000, 7200000)':
+        gdaltest.post_reason('fail')
+        print(coordsys)
+        return 'fail'
+
+    # http://trac.osgeo.org/gdal/ticket/4115
+    srs = get_srs_from_coordsys('CoordSys Earth Projection 10, 157, "m", 0')
+    wkt = srs.ExportToWkt()
+    if wkt != 'PROJCS["WGS 84 / Pseudo-Mercator",GEOGCS["unnamed",DATUM["WGS_1984",SPHEROID["WGS 84 (MAPINFO Datum 157)",6378137.01,298.257223563],TOWGS84[0,0,0,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Meter",1.0],EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs"]]':
+        gdaltest.post_reason('fail')
+        print(wkt)
+        return 'fail'
+    # We don't round-trip currently
+
+    # MIF 999
+    srs = osr.SpatialReference("""GEOGCS["unnamed",
+        DATUM["MIF 999,1,1,2,3",
+            SPHEROID["WGS 72",6378135,298.26]],
+        UNIT["degree",0.0174532925199433]]""")
+    coordsys = get_coordsys_from_srs(srs)
+    if coordsys != 'CoordSys Earth Projection 1, 999, 1, 1, 2, 3':
+        gdaltest.post_reason('fail')
+        print(coordsys)
+        return 'fail'
+    srs = get_srs_from_coordsys(coordsys)
+    wkt = srs.ExportToWkt()
+    if wkt != 'GEOGCS["unnamed",DATUM["MIF 999,1,1,2,3",SPHEROID["WGS 72",6378135,298.26],TOWGS84[1,2,3,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]':
+        gdaltest.post_reason('fail')
+        print(wkt)
+        return 'fail'
+
+    # MIF 9999
+    srs = osr.SpatialReference("""GEOGCS["unnamed",
+        DATUM["MIF 9999,1,1,2,3,4,5,6,7,3",
+            SPHEROID["WGS 72",6378135,298.26]],
+        UNIT["degree",0.0174532925199433]]""")
+    coordsys = get_coordsys_from_srs(srs)
+    if coordsys != 'CoordSys Earth Projection 1, 9999, 1, 1, 2, 3, 4, 5, 6, 7, 3':
+        gdaltest.post_reason('fail')
+        print(coordsys)
+        return 'fail'
+    srs = get_srs_from_coordsys(coordsys)
+    wkt = srs.ExportToWkt()
+    if wkt != 'GEOGCS["unnamed",DATUM["MIF 9999,1,1,2,3,4,5,6,7,3",SPHEROID["WGS 72",6378135,298.26],TOWGS84[1,2,3,-4,-5,-6,7]],PRIMEM["non-Greenwich",3],UNIT["degree",0.0174532925199433]]':
+        gdaltest.post_reason('fail')
+        print(wkt)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_mitab_cleanup():
@@ -1683,6 +1956,7 @@ gdaltest_list = [
     ogr_mitab_32,
     ogr_mitab_33,
     ogr_mitab_34,
+    ogr_mitab_35,
     ogr_mitab_cleanup
     ]
 
