@@ -31,6 +31,7 @@
 # Check version of Visual C++ compiler:
 # nmake -f makefile.vc MSVC_VER=xxxx
 # where xxxx is one of following:
+# 1900 = 14.0(2015)
 # 1800 = 12.0(2013)
 # 1700 = 11.0(2012)
 # 1600 = 10.0(2010)
