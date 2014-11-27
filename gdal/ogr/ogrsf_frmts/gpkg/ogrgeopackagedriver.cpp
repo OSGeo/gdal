@@ -93,7 +93,7 @@ static GDALDataset *OGRGeoPackageDriverOpen( GDALOpenInfo* poOpenInfo )
 /************************************************************************/
 
 static GDALDataset *OGRGeoPackageDriverCreate( const char * pszFilename,
-                                               CPL_UNUSED int nBands,
+                                               int nBands,
                                                CPL_UNUSED int nXSize,
                                                CPL_UNUSED int nYSize,
                                                CPL_UNUSED GDALDataType eDT,
@@ -101,6 +101,10 @@ static GDALDataset *OGRGeoPackageDriverCreate( const char * pszFilename,
 {
 	/* First, ensure there isn't any such file yet. */
     VSIStatBufL sStatBuf;
+    
+    /* Not supported for now */
+    if( nBands != 0 )
+        return NULL;
 
     if( VSIStatL( pszFilename, &sStatBuf ) == 0 )
     {
