@@ -122,7 +122,7 @@ class CPL_DLL GDALMajorObject
     virtual            ~GDALMajorObject();
 
     int                 GetMOFlags();
-    void                SetMOFlags(int nFlags);
+    void                SetMOFlags(int nFlagsIn);
                         
     virtual const char *GetDescription() const;
     virtual void        SetDescription( const char * );
@@ -172,7 +172,7 @@ class CPL_DLL GDALDefaultOverviews
                GDALDefaultOverviews();
                ~GDALDefaultOverviews();
 
-    void       Initialize( GDALDataset *poDS, const char *pszName = NULL, 
+    void       Initialize( GDALDataset *poDSIn, const char *pszName = NULL, 
                            char **papszSiblingFiles = NULL,
                            int bNameIsOVR = FALSE );
 
@@ -357,7 +357,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
                                int nBandCount, int *panBandList,
                                char **papszOptions );
 
-    virtual CPLErr          CreateMaskBand( int nFlags );
+    virtual CPLErr          CreateMaskBand( int nFlagsIn );
 
     virtual GDALAsyncReader* 
         BeginAsyncReader(int nXOff, int nYOff, int nXSize, int nYSize,
@@ -692,7 +692,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     virtual GDALRasterBand *GetMaskBand();
     virtual int             GetMaskFlags();
-    virtual CPLErr          CreateMaskBand( int nFlags );
+    virtual CPLErr          CreateMaskBand( int nFlagsIn );
 
     virtual CPLVirtualMem  *GetVirtualMemAuto( GDALRWFlag eRWFlag,
                                                int *pnPixelSpace,

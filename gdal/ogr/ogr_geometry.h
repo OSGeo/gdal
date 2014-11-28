@@ -380,8 +380,8 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
     void        Make2D();
 
     OGRErr      importFromWKTListOnly( char ** ppszInput, int bHasZ, int bHasM,
-                                       OGRRawPoint*& paoPoints, int& nMaxPoints,
-                                       double*& padfZ );
+                                       OGRRawPoint*& paoPointsIn, int& nMaxPoints,
+                                       double*& padfZIn );
 
     virtual double get_LinearArea() const;
 
@@ -431,7 +431,7 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
     void        setPoint( int, double, double, double );
     void        setPoints( int, OGRRawPoint *, double * = NULL );
     void        setPoints( int, double * padfX, double * padfY,
-                           double *padfZ = NULL );
+                           double *padfZIn = NULL );
     void        addPoint( OGRPoint * );
     void        addPoint( double, double );
     void        addPoint( double, double, double );

@@ -353,7 +353,7 @@ class CPL_DLL CPLStringList
     CPLStringList &AddNameValue( const char *pszKey, const char *pszValue );
     CPLStringList &SetNameValue( const char *pszKey, const char *pszValue );
 
-    CPLStringList &Assign( char **papszList, int bTakeOwnership=TRUE );
+    CPLStringList &Assign( char **papszListIn, int bTakeOwnership=TRUE );
     CPLStringList &operator=(char **papszListIn) { return Assign( papszListIn, TRUE ); }
     CPLStringList &operator=(const CPLStringList& oOther);
 
