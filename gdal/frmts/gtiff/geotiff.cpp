@@ -710,7 +710,7 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff, void *
         {
             const char* apszDrivers[] = { "JPEG", NULL };
             poGDS->poJPEGDS = (GDALDataset*) GDALOpenEx(osFileToOpen,
-                                                                GDAL_OF_RASTER,
+                                                        GDAL_OF_RASTER | GDAL_OF_INTERNAL,
                                                                 apszDrivers,
                                                                 NULL, NULL);
             if( poGDS->poJPEGDS != NULL )

@@ -197,7 +197,8 @@ CPLErr MBTilesBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage)
                                             nDataSize, FALSE);
         VSIFCloseL(fp);
 
-        GDALDatasetH hDSTile = GDALOpenEx(osMemFileName.c_str(), GDAL_OF_RASTER,
+        GDALDatasetH hDSTile = GDALOpenEx(osMemFileName.c_str(),
+                                          GDAL_OF_RASTER | GDAL_OF_INTERNAL,
                                           apszAllowedDrivers, NULL, NULL);
         if (hDSTile != NULL)
         {

@@ -251,7 +251,9 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
                                               nDataSize, FALSE);
             VSIFCloseL(fp);
             
-            GDALDatasetH hDSTile = GDALOpen(osMemFileName.c_str(), GA_ReadOnly);
+            GDALDatasetH hDSTile = GDALOpenEx(osMemFileName.c_str(),
+                                              GDAL_OF_RASTER | GDAL_OF_INTERNAL,
+                                              NULL, NULL, NULL);
             int nTileBands = 0;
             if (hDSTile && (nTileBands = GDALGetRasterCount(hDSTile)) == 0)
             {
