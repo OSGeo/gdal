@@ -27,7 +27,7 @@ is projected (such as UTM - positions are measured in meters or feet).
 
 A Geographic coordinate system contains information on the datum (which implies
 an spheroid described by a semi-major axis, and inverse flattening), prime 
-meridian(normally Greenwich), and an angular units type which is normally 
+meridian (normally Greenwich), and an angular units type which is normally 
 degrees.  The following code initializes a geographic coordinate system 
 on supplying all this information along with a user visible name for the
 geographic coordinate system. 
@@ -112,7 +112,7 @@ A projected coordinate system (such as UTM, Lambert Conformal Conic, etc)
 requires and underlying geographic coordinate system as well as a definition
 for the projection transform used to translate between linear positions
 (in meters or feet) and angular long/lat positions.  The following code
-defines a UTM zone 17 projected coordinate system with and underlying 
+defines a UTM zone 17 projected coordinate system with an underlying 
 geographic coordinate system (datum) of WGS84.
 
 \code
