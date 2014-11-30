@@ -77,7 +77,7 @@ GDALDataset* JPEGDataset12Open(const char* pszFilename,
                                VSILFILE* fpLin,
                                char** papszSiblingFiles,
                                int nScaleFactor,
-                               int bIsInternal);
+                               int bDoPAMInitialize);
 GDALDataset* JPEGDataset12CreateCopy( const char * pszFilename,
                                     GDALDataset *poSrcDS,
                                     int bStrict, char ** papszOptions,
@@ -287,7 +287,8 @@ class JPGDataset : public JPGDatasetCommon
     static GDALDataset *Open( const char* pszFilename,
                               VSILFILE* fpLin,
                               char** papszSiblingFiles,
-                              int nScaleFactor, int bIsInternal );
+                              int nScaleFactor,
+                              int bDoPAMInitialize );
     static GDALDataset* CreateCopy( const char * pszFilename,
                                     GDALDataset *poSrcDS,
                                     int bStrict, char ** papszOptions,
@@ -1354,7 +1355,7 @@ GDALDataset* JPGDatasetCommon::InitEXIFOverview()
 
     const char* pszSubfile = CPLSPrintf("JPEG_SUBFILE:%u,%d,%s",
                             nTIFFHEADER + nJpegIFOffset, nJpegIFByteCount, GetDescription());
-    return JPGDataset::Open(pszSubfile, NULL, NULL, 1, TRUE);
+    return JPGDataset::Open(pszSubfile, NULL, NULL, 1, FALSE);
 }
 
 /************************************************************************/
@@ -1430,7 +1431,7 @@ void JPGDatasetCommon::InitInternalOverviews()
                     break;
                 }
                 GDALDataset* poImplicitOverview =
-                    JPGDataset::Open(GetDescription(), NULL, NULL, 1 << (i + 1), TRUE);
+                    JPGDataset::Open(GetDescription(), NULL, NULL, 1 << (i + 1), FALSE);
                 if( poImplicitOverview == NULL )
                     break;
                 papoInternalOverviews[nInternalOverviewsCurrent] = poImplicitOverview;
@@ -1936,7 +1937,7 @@ const GDAL_GCP *JPGDatasetCommon::GetGCPs()
 /*                             IRasterIO()                              */
 /*                                                                      */
 /*      Checks for what might be the most common read case              */
-/*      (reading an entire interleaved, 8bit, RGB JPEG), and            */
+/*      (reading an entire 8bit, RGB JPEG), and                         */
 /*      optimizes for that case                                         */
 /************************************************************************/
 
@@ -1955,9 +1956,6 @@ CPLErr JPGDatasetCommon::IRasterIO( GDALRWFlag eRWFlag,
        (nXSize == nBufXSize) && (nXSize == nRasterXSize) &&
        (nYSize == nBufYSize) && (nYSize == nRasterYSize) &&
        (eBufType == GDT_Byte) && (GetDataPrecision() != 12) &&
-       /*(nPixelSpace >= 3)*/(nPixelSpace > 3) &&
-       (nLineSpace == (nPixelSpace*nXSize)) &&
-       (nBandSpace == 1) &&
        (pData != NULL) &&
        (panBandMap != NULL) &&
        (panBandMap[0] == 1) && (panBandMap[1] == 2) && (panBandMap[2] == 3))
@@ -1967,18 +1965,41 @@ CPLErr JPGDatasetCommon::IRasterIO( GDALRWFlag eRWFlag,
         CPLErr tmpError;
         int x;
 
-        // handles copy with padding case
-        for(y = 0; y < nYSize; ++y)
+        // Pixel interleaved case
+        if( nBandSpace == 1 )
         {
-            tmpError = LoadScanline(y);
-            if(tmpError != CE_None) return tmpError;
-
-            for(x = 0; x < nXSize; ++x)
+            for(y = 0; y < nYSize; ++y)
             {
                 tmpError = LoadScanline(y);
                 if(tmpError != CE_None) return tmpError;
-                memcpy(&(((GByte*)pData)[(y*nLineSpace) + (x*nPixelSpace)]), 
-                       (const GByte*)&(pabyScanline[x*3]), 3);
+
+                if( nPixelSpace == 3 )
+                {
+                    memcpy(&(((GByte*)pData)[(y*nLineSpace)]),
+                           pabyScanline, 3 * nXSize);
+                }
+                else
+                {
+                    for(x = 0; x < nXSize; ++x)
+                    {
+                        memcpy(&(((GByte*)pData)[(y*nLineSpace) + (x*nPixelSpace)]), 
+                               (const GByte*)&(pabyScanline[x*3]), 3);
+                    }
+                }
+            }
+        }
+        else
+        {
+            for(y = 0; y < nYSize; ++y)
+            {
+                tmpError = LoadScanline(y);
+                if(tmpError != CE_None) return tmpError;
+                for(x = 0; x < nXSize; ++x)
+                {
+                    ((GByte*)pData)[(y*nLineSpace) + (x*nPixelSpace)] = pabyScanline[x*3];
+                    ((GByte*)pData)[(y*nLineSpace) + (x*nPixelSpace) + nBandSpace] = pabyScanline[x*3+1];
+                    ((GByte*)pData)[(y*nLineSpace) + (x*nPixelSpace) + 2 * nBandSpace] = pabyScanline[x*3+2];
+                }
             }
         }
 
@@ -2100,7 +2121,7 @@ GDALDataset *JPGDatasetCommon::Open( GDALOpenInfo * poOpenInfo )
     return JPGDataset::Open(poOpenInfo->pszFilename,
                             fpL,
                             poOpenInfo->GetSiblingFiles(),
-                            1, FALSE);
+                            1, TRUE);
 }
 
 #endif // !defined(JPGDataset)
@@ -2112,7 +2133,8 @@ GDALDataset *JPGDatasetCommon::Open( GDALOpenInfo * poOpenInfo )
 GDALDataset *JPGDataset::Open( const char* pszFilename,
                                VSILFILE* fpLin,
                                char** papszSiblingFiles,
-                               int nScaleFactor, int bIsInternal )
+                               int nScaleFactor,
+                               int bDoPAMInitialize )
 
 {
 /* -------------------------------------------------------------------- */
@@ -2264,7 +2286,7 @@ GDALDataset *JPGDataset::Open( const char* pszFilename,
             poDS->fpImage = NULL;
             delete poDS;
             return JPEGDataset12Open(pszFilename, fpImage, papszSiblingFiles,
-                                     nScaleFactor, bIsInternal);
+                                     nScaleFactor, bDoPAMInitialize);
         }
 #endif
         delete poDS;
@@ -2378,7 +2400,7 @@ GDALDataset *JPGDataset::Open( const char* pszFilename,
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( pszFilename );
 
-    if( nScaleFactor == 1 && !bIsInternal )
+    if( nScaleFactor == 1 && bDoPAMInitialize )
     {
         if( !bIsSubfile )
             poDS->TryLoadXML( papszSiblingFiles );
@@ -3475,7 +3497,7 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if( CSLTestBoolean(CPLGetConfigOption("GDAL_OPEN_AFTER_COPY", "YES")) )
     {
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        JPGDataset *poDS = (JPGDataset*) Open( pszFilename, NULL, NULL, 1, FALSE );
+        JPGDataset *poDS = (JPGDataset*) Open( pszFilename, NULL, NULL, 1, TRUE );
         CPLPopErrorHandler();
         if( poDS )
         {

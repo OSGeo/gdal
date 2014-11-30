@@ -36,10 +36,10 @@ GDALDataset* JPEGDataset12Open(const char* pszFilename,
                                VSILFILE* fpLin,
                                char** papszSiblingFiles,
                                int nScaleFactor,
-                               int bIsInternal)
+                               int bDoPAMInitialize)
 {
     return JPGDataset12::Open(pszFilename, fpLin, papszSiblingFiles, nScaleFactor,
-                              bIsInternal);
+                              bDoPAMInitialize);
 }
 
 GDALDataset* JPEGDataset12CreateCopy( const char * pszFilename,
