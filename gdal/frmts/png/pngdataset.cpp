@@ -495,7 +495,7 @@ CPLErr PNGDataset::IRasterIO( GDALRWFlag eRWFlag,
 {
     if((eRWFlag == GF_Read) &&
        (nBandCount == nBands) &&
-       (nXOff == 0) && (nXOff == 0) &&
+       (nXOff == 0) && (nYOff == 0) &&
        (nXSize == nBufXSize) && (nXSize == nRasterXSize) &&
        (nYSize == nBufYSize) && (nYSize == nRasterYSize) &&
        (eBufType == GDT_Byte) &&
