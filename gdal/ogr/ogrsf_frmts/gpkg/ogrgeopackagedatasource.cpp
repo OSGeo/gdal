@@ -754,6 +754,36 @@ int GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
         return FALSE;
     }
     
+    CPLString osContentsMinX, osContentsMinY, osContentsMaxX, osContentsMaxY;
+    if( CSLTestBoolean(CSLFetchNameValueDef(papszOpenOptions, "USE_TILE_EXTENT", "NO")) )
+    {
+        pszSQL = sqlite3_mprintf(
+            "SELECT MIN(tile_column), MIN(tile_row), MAX(tile_column), MAX(tile_row) FROM '%q' WHERE zoom_level = %d",
+            pszTableName, atoi(SQLResultGetValue(&oResult, 0, 0)));
+        SQLResult oResult2;
+        err = SQLQuery(hDB, pszSQL, &oResult2);
+        sqlite3_free(pszSQL);
+        if  ( err != OGRERR_NONE || oResult2.nRowCount == 0 )
+        {
+            SQLResultFree(&oResult);
+            SQLResultFree(&oResult2);
+            return FALSE;
+        }
+        double dfPixelXSize = CPLAtof(SQLResultGetValue(&oResult, 1, 0));
+        double dfPixelYSize = CPLAtof(SQLResultGetValue(&oResult, 2, 0));
+        int nTileWidth = atoi(SQLResultGetValue(&oResult, 3, 0));
+        int nTileHeight = atoi(SQLResultGetValue(&oResult, 4, 0));
+        osContentsMinX = CPLSPrintf("%.18g", dfMinX + dfPixelXSize * nTileWidth * atoi(SQLResultGetValue(&oResult2, 0, 0)));
+        osContentsMaxY = CPLSPrintf("%.18g", dfMaxY - dfPixelYSize * nTileHeight * atoi(SQLResultGetValue(&oResult2, 1, 0)));
+        osContentsMaxX = CPLSPrintf("%.18g", dfMinX + dfPixelXSize * nTileWidth * (1 + atoi(SQLResultGetValue(&oResult2, 2, 0))));
+        osContentsMinY = CPLSPrintf("%.18g", dfMaxY - dfPixelYSize * nTileHeight * (1 + atoi(SQLResultGetValue(&oResult2, 3, 0))));
+        pszContentsMinX = osContentsMinX.c_str();
+        pszContentsMinY = osContentsMinY.c_str();
+        pszContentsMaxX = osContentsMaxX.c_str();
+        pszContentsMaxY = osContentsMaxY.c_str();
+        SQLResultFree(&oResult2);
+    }
+    
     if(! InitRaster ( pszTableName, dfMinX, dfMinY, dfMaxX, dfMaxY,
                  pszContentsMinX, pszContentsMinY, pszContentsMaxX, pszContentsMaxY,
                  papszOpenOptions, oResult, 0) )
@@ -774,13 +804,21 @@ int GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
     for( int i = 1; i < oResult.nRowCount; i++ )
     {
         GDALGeoPackageDataset* poOvrDS = new GDALGeoPackageDataset();
-        m_papoOverviewDS = (GDALGeoPackageDataset**) CPLRealloc(m_papoOverviewDS, sizeof(GDALGeoPackageDataset*) * (m_nOverviewCount+1));
-        m_papoOverviewDS[m_nOverviewCount ++] = poOvrDS;
         poOvrDS->InitRaster ( pszTableName, dfMinX, dfMinY, dfMaxX, dfMaxY,
                  pszContentsMinX, pszContentsMinY, pszContentsMaxX, pszContentsMaxY,
                  papszOpenOptions, oResult, i);
         poOvrDS->m_bIsMain = FALSE;
         poOvrDS->hDB = hDB;
+        if( poOvrDS->GetRasterXSize() < 64 && poOvrDS->GetRasterYSize() < 64 )
+        {
+            delete poOvrDS;
+            break;
+        }
+        else
+        {
+            m_papoOverviewDS = (GDALGeoPackageDataset**) CPLRealloc(m_papoOverviewDS, sizeof(GDALGeoPackageDataset*) * (m_nOverviewCount+1));
+            m_papoOverviewDS[m_nOverviewCount ++] = poOvrDS;
+        }
     }
 
     SQLResultFree(&oResult);
