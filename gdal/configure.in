@@ -240,12 +240,12 @@ if test "$with_sse" = "yes" -o "$with_sse" = ""; then
     echo '#endif' >> detectsse.cpp
     if test -z "`${CXX} ${CXXFLAGS} -o detectsse detectsse.cpp 2>&1`" ; then
         AC_MSG_RESULT([yes])
-        SSEFLAGS="-DHAVE_SSE_AT_COMPILE_TIME"
+        SSEFLAGS=""
         HAVE_SSE_AT_COMPILE_TIME=yes
     else
         if test -z "`${CXX} ${CXXFLAGS} -msse -o detectsse detectsse.cpp 2>&1`" ; then
             AC_MSG_RESULT([yes])
-            SSEFLAGS="-msse -DHAVE_SSE_AT_COMPILE_TIME"
+            SSEFLAGS="-msse"
             HAVE_SSE_AT_COMPILE_TIME=yes
         else
             AC_MSG_RESULT([no])
@@ -279,15 +279,13 @@ if test "$with_sse" = "yes" -o "$with_sse" = ""; then
        esac
     fi
 
-    if test "$HAVE_SSE_AT_COMPILE_TIME" = "yes"; then
-      CFLAGS="$CFLAGS $SSEFLAGS"
-      CXXFLAGS="$CXXFLAGS $SSEFLAGS"
-    fi
-
     rm -f detectsse*
 else
     AC_MSG_RESULT([no])
 fi
+
+AC_SUBST(SSEFLAGS,$SSEFLAGS)
+AC_SUBST(HAVE_SSE_AT_COMPILE_TIME,$HAVE_SSE_AT_COMPILE_TIME)
 
 dnl ---------------------------------------------------------------------------
 dnl Check AVX availability
