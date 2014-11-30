@@ -919,6 +919,43 @@ def jpeg_22():
     gdal.Unlink('/vsimem/jpeg_22.jpg')
 
     return 'success'
+
+###############################################################################
+# Test optimized JPEG IRasterIO
+
+def jpeg_23():
+    ds = gdal.Open( 'data/albania.jpg' )
+    cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    
+    # Band interleaved
+    data = ds.ReadRaster(0,0,ds.RasterXSize, ds.RasterYSize)
+    tmp_ds = gdal.GetDriverByName('Mem').Create('', ds.RasterXSize, ds.RasterYSize, 3)
+    tmp_ds.WriteRaster(0,0,ds.RasterXSize, ds.RasterYSize,data)
+    got_cs = [ tmp_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    if cs != got_cs:
+        gdaltest.post_reason('failure')
+        return 'fail'    
+        
+    # Pixel interleaved
+    data = ds.ReadRaster(0,0,ds.RasterXSize, ds.RasterYSize, buf_pixel_space = 3, buf_band_space = 1)
+    tmp_ds = gdal.GetDriverByName('Mem').Create('', ds.RasterXSize, ds.RasterYSize, 3)
+    tmp_ds.WriteRaster(0,0,ds.RasterXSize, ds.RasterYSize,data, buf_pixel_space = 3, buf_band_space = 1)
+    got_cs = [ tmp_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    if cs != got_cs:
+        gdaltest.post_reason('failure')
+        return 'fail'    
+
+    # Pixel interleaved with padding
+    data = ds.ReadRaster(0,0,ds.RasterXSize, ds.RasterYSize, buf_pixel_space = 4, buf_band_space = 1)
+    tmp_ds = gdal.GetDriverByName('Mem').Create('', ds.RasterXSize, ds.RasterYSize, 3)
+    tmp_ds.WriteRaster(0,0,ds.RasterXSize, ds.RasterYSize,data, buf_pixel_space = 4, buf_band_space = 1)
+    got_cs = [ tmp_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    if cs != got_cs:
+        gdaltest.post_reason('failure')
+        return 'fail'    
+    
+    return 'success'
+
 ###############################################################################
 # Cleanup
 
@@ -958,6 +995,7 @@ gdaltest_list = [
     jpeg_20,
     jpeg_21,
     jpeg_22,
+    jpeg_23,
     jpeg_cleanup ]
 
 if __name__ == '__main__':
