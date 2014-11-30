@@ -216,7 +216,7 @@ CPLVirtualMem CPL_DLL *CPLVirtualMemFileMapNew( VSILFILE* fp,
 /** Create a new virtual memory mapping derived from an other virtual memory
  *  mapping.
  *
- * This may be usefull in case of creating mapping for pixel interleaved data.
+ * This may be useful in case of creating mapping for pixel interleaved data.
  *
  * The new mapping takes a reference on the base mapping.
  *
@@ -356,7 +356,7 @@ void CPL_DLL CPLVirtualMemUnDeclareThread(CPLVirtualMem* ctxt);
 
 /** Make sure that a region of virtual memory will be realized.
  *
- * Calling this function is not required, but might be usefull when debugging
+ * Calling this function is not required, but might be useful when debugging
  * a process with tools like gdb or valgrind that do not naturally like
  * segmentation fault signals.
  *

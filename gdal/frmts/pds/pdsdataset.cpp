@@ -331,7 +331,7 @@ void PDSDataset::ParseSRS()
 /*      Calculate upper left corner of pixel in meters from the         */
 /*      upper  left center pixel sample/line offsets.  It doesn't       */
 /*      mean the defaults will work for every PDS image, as these       */
-/*      values are used inconsistantly.  Thus we have included          */
+/*      values are used inconsistently.  Thus we have included          */
 /*      conversion options to allow the user to override the            */
 /*      documented PDS3 default. Jan. 2011, for known mapping issues    */
 /*      see GDAL PDS page or mapping within ISIS3 source (USGS)         */

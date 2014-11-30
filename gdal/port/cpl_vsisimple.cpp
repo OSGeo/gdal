@@ -512,7 +512,7 @@ void VSICheckMarkerBegin(char* ptr)
     if (memcmp(ptr, "VSIM", 4) != 0)
     {
         CPLError(CE_Fatal, CPLE_AppDefined,
-                 "Inconsistant use of VSI memory allocation primitives for %p : %c%c%c%c",
+                 "Inconsistent use of VSI memory allocation primitives for %p : %c%c%c%c",
                  ptr, ptr[0], ptr[1], ptr[2], ptr[3]);
     }
 }

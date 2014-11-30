@@ -91,7 +91,7 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
         nTotalShapeCount = hSHP->nRecords;
         if( hDBF != NULL && hDBF->nRecords != nTotalShapeCount )
         {
-            CPLDebug("Shape", "Inconsistant record number in .shp (%d) and in .dbf (%d)",
+            CPLDebug("Shape", "Inconsistent record number in .shp (%d) and in .dbf (%d)",
                      hSHP->nRecords, hDBF->nRecords);
         }
     }
@@ -578,7 +578,7 @@ void OGRShapeLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
     {
         /* We clear the spatialFIDs only if we have a new non-NULL */
         /* spatial filter, otherwise we keep the previous result */
-        /* cached. This can be usefull when several SQL layers */
+        /* cached. This can be useful when several SQL layers */
         /* rely on the same table layer, and use the same spatial */
         /* filters. But as there is in the destructor of OGRGenSQLResultsLayer */
         /* a clearing of the spatial filter of the table layer, we */

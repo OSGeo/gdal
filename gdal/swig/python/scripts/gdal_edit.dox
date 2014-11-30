@@ -14,7 +14,7 @@ gdal_edit [--help-general] [-ro] [-a_srs srs_def] [-a_ullr ulx uly lrx lry]
 
 \section gdal_edit_description DESCRIPTION
 
-The gdal_edit.py script can be used to allows to edit in place various information
+The gdal_edit.py script can be used to edit in place various information
 of an existing GDAL dataset (projection, geotransform, nodata, metadata).
 
 It works only with raster formats that support update access to
@@ -27,7 +27,7 @@ and exit.
 </dd>
 
 <dt> <b>-ro</b></dt>:<dd> (GDAL >= 1.11)
-Open the dataset in read-only. Might be usefull for drivers refusing to
+Open the dataset in read-only. Might be useful for drivers refusing to
 use the dataset in update-mode. In which case, updated information will go
 into PAM .aux.xml files.</dd>
 

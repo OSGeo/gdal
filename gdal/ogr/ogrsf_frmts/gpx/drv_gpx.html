@@ -275,7 +275,7 @@ ogr2ogr -f GPX output.gpx input.shp -sql "SELECT field1 AS name, field2 AS desc 
 <li>How to solve "ERROR 6: Cannot create GPX layer XXXXXX with unknown geometry type" ?<p>
 This error happens when the layer to create does not expose a precise geometry type, but just a generic
 wkbUnknown type. This is for example the case when using ogr2ogr with a SQL request to a PostgreSQL datasource.
-You must then explicitely specify -nlt POINT (or LINESTRING or MULTILINESTRING).
+You must then explicitly specify -nlt POINT (or LINESTRING or MULTILINESTRING).
 </li>
 
 

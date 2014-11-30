@@ -93,7 +93,7 @@ Created by Klokan Petr Pridal on 2008-07-03.
 Google Summer of Code 2008, project GDAL2Tiles for OSGEO.
 
 In case you use this class in your product, translate it to another language
-or find it usefull for your project please let me know.
+or find it useful for your project please let me know.
 My email: klokan at klokan dot cz.
 I would like to know where it was used.
 

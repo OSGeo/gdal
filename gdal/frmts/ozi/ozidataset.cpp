@@ -597,7 +597,7 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
         short nTileY = ReadShort(fp, bOzi3, nKeyInit);
         if (i == 0 && (nW != poDS->nRasterXSize || nH != poDS->nRasterYSize))
         {
-            CPLDebug("OZI", "zoom[%d] inconsistant dimensions for zoom level 0 : nW=%d, nH=%d, nTileX=%d, nTileY=%d, nRasterXSize=%d, nRasterYSize=%d",
+            CPLDebug("OZI", "zoom[%d] inconsistent dimensions for zoom level 0 : nW=%d, nH=%d, nTileX=%d, nTileY=%d, nRasterXSize=%d, nRasterYSize=%d",
                      i, nW, nH, nTileX, nTileY, poDS->nRasterXSize, poDS->nRasterYSize);
             delete poDS;
             return NULL;

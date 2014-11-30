@@ -162,7 +162,7 @@ int OGRIdrisiLayer::Detect_AVL_ADC(const char* pszFilename)
     if( pszRecords == NULL || atoi(pszRecords) != (int)nTotalFeatures )
     {
         CPLDebug("IDRISI", ".adc file found, but 'records' not found or not "
-                 "consistant with feature number declared in .vdc");
+                 "consistent with feature number declared in .vdc");
         CSLDestroy( papszADC );
         return FALSE;
     }

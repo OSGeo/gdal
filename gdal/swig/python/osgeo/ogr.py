@@ -833,7 +833,7 @@ class DataSource(gdal.MajorObject):
 
         pszDialect:  allows control of the statement dialect. If set to NULL,
         the OGR SQL engine will be used, except for RDBMS drivers that will
-        use their dedicated SQL engine, unless OGRSQL is explicitely passed as
+        use their dedicated SQL engine, unless OGRSQL is explicitly passed as
         the dialect.
 
         an handle to a OGRLayer containing the results of the query.

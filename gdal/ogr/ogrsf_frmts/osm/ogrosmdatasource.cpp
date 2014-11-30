@@ -2677,7 +2677,7 @@ int OGROSMDataSource::Open( const char * pszFilename )
     if( psParser == NULL )
         return FALSE;
 
-    /* The following 4 config options are only usefull for debugging */
+    /* The following 4 config options are only useful for debugging */
     bIndexPoints = CSLTestBoolean(CPLGetConfigOption("OSM_INDEX_POINTS", "YES"));
     bUsePointsIndex = CSLTestBoolean(CPLGetConfigOption("OSM_USE_POINTS_INDEX", "YES"));
     bIndexWays = CSLTestBoolean(CPLGetConfigOption("OSM_INDEX_WAYS", "YES"));
@@ -3760,7 +3760,7 @@ int OGROSMDataSource::TransferToDiskIfNecesserary()
             CPLString osNewTmpDBName;
             osNewTmpDBName = CPLGenerateTempFilename("osm_tmp_nodes");
 
-            CPLDebug("OSM", "%s too big for RAM. Transfering it onto disk in %s",
+            CPLDebug("OSM", "%s too big for RAM. Transferring it onto disk in %s",
                      osNodesFilename.c_str(), osNewTmpDBName.c_str());
 
             if( CPLCopyFile( osNewTmpDBName, osNodesFilename ) != 0 )
@@ -3839,7 +3839,7 @@ int OGROSMDataSource::TransferToDiskIfNecesserary()
 
             osNewTmpDBName = CPLGenerateTempFilename("osm_tmp");
 
-            CPLDebug("OSM", "%s too big for RAM. Transfering it onto disk in %s",
+            CPLDebug("OSM", "%s too big for RAM. Transferring it onto disk in %s",
                      osTmpDBName.c_str(), osNewTmpDBName.c_str());
 
             if( CPLCopyFile( osNewTmpDBName, osTmpDBName ) != 0 )
@@ -4223,7 +4223,7 @@ OGRLayer * OGROSMDataSource::ExecuteSQL( const char *pszSQLCommand,
                                                             poSpatialFilter,
                                                             pszDialect );
 
-            /* If the user explicitely run a COUNT() request, then do it ! */
+            /* If the user explicitly run a COUNT() request, then do it ! */
             if( poResultSetLayer )
             {
                 if( pszDialect != NULL && EQUAL(pszDialect, "SQLITE") )

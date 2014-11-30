@@ -73,7 +73,7 @@ SDTSRawLine::~SDTSRawLine()
 int SDTSRawLine::Read( SDTS_IREF * poIREF, DDFRecord * poRecord )
 
 {
-    // E.Rouault: Not sure if this test is really usefull
+    // E.Rouault: Not sure if this test is really useful
     if( poRecord->GetStringSubfield( "LINE", 0, "MODN", 0 ) == NULL )
         return FALSE;
     

@@ -859,7 +859,7 @@ CPLErr GDALPamDataset::CloneInfo( GDALDataset *poSrcDS, int nCloneFlags )
     PamInitialize();
 
 /* -------------------------------------------------------------------- */
-/*      Supress NotImplemented error messages - mainly needed if PAM    */
+/*      Suppress NotImplemented error messages - mainly needed if PAM   */
 /*      disabled.                                                       */
 /* -------------------------------------------------------------------- */
     SetMOFlags( nSavedMOFlags | GMO_IGNORE_UNIMPLEMENTED );

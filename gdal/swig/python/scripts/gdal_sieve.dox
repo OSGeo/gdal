@@ -23,7 +23,7 @@ docs.
 <dl>
 
 <dt> <b>-q</b>:</dt><dd>
-The script runs in quiet mode.  The progress monitor is supressed and routine
+The script runs in quiet mode.  The progress monitor is suppressed and routine
 messages are not displayed.
 
 <dt> <b>-st</b> <i>threshold</i>:</dt><dd>

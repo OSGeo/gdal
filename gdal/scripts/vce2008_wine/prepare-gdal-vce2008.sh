@@ -43,7 +43,7 @@ unzip /tmp/release-1500-dev.zip release-1500/* -d ~/.wine/drive_c
 svn checkout https://svn.osgeo.org/gdal/trunk $HOME/gdal_vce2008
 ln -s $HOME/gdal_vce2008 ~/.wine/drive_c/gdal
 
-# Install usefull scripts
+# Install useful scripts
 cp build_vce2008.patch /tmp
 cp build_vce2008.bat $HOME/gdal_vce2008/gdal
 cp build_vce2008.sh $HOME/gdal_vce2008/gdal

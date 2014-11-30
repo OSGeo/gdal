@@ -120,7 +120,7 @@ If set to FALSE, the source geometry fields will only be used to build the geome
 <p>
 Starting with OGR 1.11, the GeometryField element can be repeated as many times
 as necessary to create multiple geometry fields. It accepts a <b>name</b>
-attribute (recommanded) that will be used to define the VRT geometry field name. When <b>encoding</b> is
+attribute (recommended) that will be used to define the VRT geometry field name. When <b>encoding</b> is
 not specified, the <b>field</b> attribute will be used to determine the corresponding
 geometry field name in the source layer. If neither <b>encoding</b> nor <b>field</b>
 are specified, it is assumed that the name of source geometry field is the value
@@ -146,7 +146,7 @@ element to wkbNone.
 
 <li> <b>SrcRegion</b> (optionnal, from GDAL 1.7.0) : This element is used
 to define an initial spatial filter for the source features. This spatial
-filter will be combined with any spatial filter explicitely set on the VRT
+filter will be combined with any spatial filter explicitly set on the VRT
 layer with the SetSpatialFilter() method. The value of the element must be
 a valid WKT string defining a polygon. An optional <b>clip</b> attribute
 can be set to "TRUE" to clip the geometries to the source region, otherwise
@@ -176,12 +176,12 @@ Defaults to the value of "name".
 
 <li> <b>FeatureCount</b> (optional, from GDAL 1.10.0) : This element is used
 to define the feature count of the layer (when no spatial or attribute filter is set).
-This can be usefull on static data, when getting the feature count from the source layer is slow.</li>
+This can be useful on static data, when getting the feature count from the source layer is slow.</li>
 
 <br>
 
 <li> <b>ExtentXMin</b>, <b>ExtentYMin</b>, <b>ExtentXMax</b> and <b>ExtentXMax</b> (optional, from GDAL 1.10.0) :
-Those elements are used to define the extent of the layer. This can be usefull on static data, when
+Those elements are used to define the extent of the layer. This can be useful on static data, when
 getting the extent from the source layer is slow.</li>
 
 <br>
@@ -209,7 +209,7 @@ reference to use for the layer after reprojection. </li>
 <br>
 
 <li> <b>ExtentXMin</b>, <b>ExtentYMin</b>, <b>ExtentXMax</b> and <b>ExtentXMax</b> (optional, from GDAL 1.10.0) :
-Those elements are used to define the extent of the layer. This can be usefull on static data, when
+Those elements are used to define the extent of the layer. This can be useful on static data, when
 getting the extent from the source layer is slow.</li>
 <br>
 
@@ -294,7 +294,7 @@ the layer as a point layer, and as being in the WGS84 coordinate system.<p>
 
 <h2>Example: Renaming attributes</h2>
 
-It can be usefull in some circumstances to be able to rename the field names 
+It can be useful in some circumstances to be able to rename the field names
 from a source layer to other names. This is particularly true when you want 
 to transcode to a format whose schema is fixed, such as GPX 
 (&lt;name&gt;, &lt;desc&gt, etc.).  This can be accomplished using

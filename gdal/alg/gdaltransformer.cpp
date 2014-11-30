@@ -800,7 +800,7 @@ retry:
     
     
 /* -------------------------------------------------------------------- */
-/*      Recompute some bounds so that all return values are consistant  */
+/*      Recompute some bounds so that all return values are consistent  */
 /* -------------------------------------------------------------------- */
     dfMaxXOut = dfMinXOut + (*pnPixels) * dfPixelSizeX;
     dfMinYOut = dfMaxYOut - (*pnLines) * dfPixelSizeY;

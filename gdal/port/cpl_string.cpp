@@ -2610,7 +2610,7 @@ size_t CPLStrlcat(char* pszDest, const char* pszSrc, size_t nDestSize)
  * the specified number of bytes.
  *
  * The CPLStrnlen() function returns MIN(strlen(pszStr), nMaxLen).
- * Only the first nMaxLen bytes of the string will be read. Usefull to
+ * Only the first nMaxLen bytes of the string will be read. Useful to
  * test if a string contains at least nMaxLen characters without reading
  * the full string up to the NUL terminating character.
  *

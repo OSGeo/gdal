@@ -73,7 +73,7 @@ int OGRAVCE00DataSource::Open( const char * pszNewName, int bTestOpen )
 
 {
 /* -------------------------------------------------------------------- */
-/*      Open the source file.  Supress error reporting if we are in     */
+/*      Open the source file.  Suppress error reporting if we are in    */
 /*      TestOpen mode.                                                  */
 /* -------------------------------------------------------------------- */
     int bCompressed = FALSE;

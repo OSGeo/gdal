@@ -126,7 +126,7 @@ fields will be reported by the GML driver according to
 <a href="http://trac.osgeo.org/gdal/wiki/rfc41_multiple_geometry_fields">RFC 41</a>.<p>
 
 Starting with OGR 1.10, in case of multiple geometry occurences, if a geometry is in a &lt;geometry&gt; element,
-this will be the one selected. This will make default behaviour consistant with Inspire objects.<p>
+this will be the one selected. This will make default behaviour consistent with Inspire objects.<p>
 
 
 Starting with OGR 1.8.0, the user can change the .gfs file to select the appropriate
@@ -140,7 +140,7 @@ description of the .gfs syntax below.<p>
 OGR 1.8.0 adds support to "merge" the multiple geometries found in a feature by
 setting the configuration option <b>GML_FETCH_ALL_GEOMETRIES</b> to <b>YES</b>. The geometries
 will be collected into a GeometryCollection (or Multipolygon if individual geometries
-are polygons or multipolygons). This can be usefull when reading some GML application profiles.
+are polygons or multipolygons). This can be useful when reading some GML application profiles.
 If a &lt;GeometryElementPath&gt; element is specified in the .gfs, the fetching will be limited
 to paths that match the value of &lt;GeometryElementPath&gt;.<p>
 -->
@@ -321,7 +321,7 @@ the layers must be read in the order they appear in the file.<p>
 If no .xsd and .gfs files are found, the parser will detect the layout of layers when
 building the .gfs file. If the layers are found to be sequential, a <i>&lt;SequentialLayers&gt;true&lt;/SequentialLayers&gt;</i>
 element will be written in the .gfs file, so that the GML_READ_MODE will be automatically
-initialized to MONOBLOCK_LAYERS if not explicitely set by the user.<p>
+initialized to MONOBLOCK_LAYERS if not explicitly set by the user.<p>
 
 Starting with OGR 1.9.0, the GML_READ_MODE configuration option can be set to INTERLEAVED_LAYERS to be able
 to read a GML file whose features from different layers are interleaved. In the case, the semantics of the
@@ -381,7 +381,7 @@ the prefix of the application target namespace in the GML file.</p>
 <ul>
 <li><i>GML3</i> in order to write GML files that follow GML 3.1.1 SF-0 profile.</li>
 <li><i>GML3Deegree</i> (OGR &gt;= 1.9.0) in order to produce a GML 3.1.1 .XSD schema,
-with a few variations with respect to what is recommanded by GML3 SF-0 profile,
+with a few variations with respect to what is recommended by GML3 SF-0 profile,
 but that will be better accepted by some software (such as Deegree 3).</li>
 <li><i>GML3.2</i>(OGR &gt;= 1.9.0) in order to write GML files that follow GML 3.2.1 SF-0 profile.</li>
 </ul><br>

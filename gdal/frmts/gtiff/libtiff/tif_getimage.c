@@ -2541,7 +2541,7 @@ PickContigCase(TIFFRGBAImage* img)
 					 * must always be <= horizontal subsampling; so
 					 * there are only a few possibilities and we just
 					 * enumerate the cases.
-					 * Joris: added support for the [1,2] case, nonetheless, to accomodate
+					 * Joris: added support for the [1,2] case, nonetheless, to accommodate
 					 * some OJPEG files
 					 */
 					uint16 SubsamplingHor;

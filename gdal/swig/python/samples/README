@@ -28,7 +28,7 @@ gdalfilter.py		Example script for applying kernel based filters to
 			files as an intermediate representation.
 
 gdal_retile.py          Script for restructuring data in a tree of regular tiles.
-                        (transfered in swig/python/scripts)
+                        (transferred in swig/python/scripts)
 
 get_soundg.py		Script to copy the SOUNDG layer from an S-57 file to
 			a Shapefile, splitting up features with MULTIPOINT

@@ -142,7 +142,7 @@ OPTFLAGS= $(CXX_PDB_FLAGS) /nologo /MD /EHsc /GR /DDEBUG
 !ENDIF  # OPTFLAGS
 
 # 
-# Set flags controlling warnings level, and supression of some warnings.
+# Set flags controlling warnings level, and suppression of some warnings.
 # 
 !IFNDEF WARNFLAGS
 WARNFLAGS =	/W4 /wd4127 /wd4251 /wd4275 /wd4786 /wd4100 /wd4245 /wd4206 /wd4018 /wd4389

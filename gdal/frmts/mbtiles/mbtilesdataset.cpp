@@ -1769,7 +1769,7 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
         if (bHasMinMaxLevel && (nMinLevel < 0 || nMinLevel > nMaxLevel))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Inconsistant values : min(zoom_level) = %d, max(zoom_level) = %d",
+                     "Inconsistent values : min(zoom_level) = %d, max(zoom_level) = %d",
                      nMinLevel, nMaxLevel);
             goto end;
         }

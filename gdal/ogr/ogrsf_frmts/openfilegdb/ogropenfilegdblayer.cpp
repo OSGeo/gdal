@@ -827,7 +827,7 @@ FileGDBIterator* OGROpenFileGDBLayer::BuildIteratorFromExprNode(swq_expr_node* p
         poNode->nOperation == SWQ_AND && poNode->nSubExprCount == 2 )
     {
         /* Even if there's only one branch of the 2 that results to an iterator, */
-        /* it is usefull. Of course, the iterator will not be sufficient to evaluate */
+        /* it is useful. Of course, the iterator will not be sufficient to evaluate */
         /* the filter, but it will be a super-set of the features */
         FileGDBIterator* poIter1 = BuildIteratorFromExprNode(poNode->papoSubExpr[0]);
 

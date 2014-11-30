@@ -11,7 +11,7 @@ void CPL_STDCALL
 PythonBindingErrorHandler(CPLErr eclass, int code, const char *msg ) 
 {
   /* 
-  ** Generally we want to supress error reporting if we have exceptions
+  ** Generally we want to suppress error reporting if we have exceptions
   ** enabled as the error message will be in the exception thrown in 
   ** Python.  
   */

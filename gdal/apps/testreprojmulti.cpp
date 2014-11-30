@@ -65,7 +65,7 @@ void ReprojFunc(void* unused)
         memcpy(padfResultY, padfRefY, 1024 * sizeof(double));
         poCT->TransformEx( 1024, padfResultX, padfResultY, NULL, NULL );
 
-        /* Check that the results are consistant with the reference results */
+        /* Check that the results are consistent with the reference results */
         assert(memcmp(padfResultX, padfRefResultX, 1024 * sizeof(double)) == 0);
         assert(memcmp(padfResultY, padfRefResultY, 1024 * sizeof(double)) == 0);
 

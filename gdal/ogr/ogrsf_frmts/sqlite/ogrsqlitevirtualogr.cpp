@@ -545,7 +545,7 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
 
             if( poDS->GetLayerCount() > 1 )
             {
-                *pzErr = sqlite3_mprintf( "Datasource '%s' has more than one layers, and none was explicitely selected.",
+                *pzErr = sqlite3_mprintf( "Datasource '%s' has more than one layers, and none was explicitly selected.",
                                           osDSName.c_str() );
                 poDS->Release();
                 return SQLITE_ERROR;

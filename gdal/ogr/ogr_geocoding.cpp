@@ -202,7 +202,7 @@ int OGRGeocodeHasStringValidFormat(const char* pszQueryTemplate)
  *      <a href="http://msdn.microsoft.com/en-us/library/ff701714.aspx">"BING"</a> or
  *       other value.
  *      Note: "YAHOO" is no longer available as a free service.
- * <li> "EMAIL": used by OSM_NOMINATIM. Optional, but recommanded.
+ * <li> "EMAIL": used by OSM_NOMINATIM. Optional, but recommended.
  * <li> "USERNAME": used by GEONAMES. Compulsory in that case.
  * <li> "KEY": used by BING. Compulsory in that case.
  * <li> "APPLICATION": used to set the User-Agent MIME header. Defaults

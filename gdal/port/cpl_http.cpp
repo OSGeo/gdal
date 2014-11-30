@@ -522,7 +522,7 @@ void CPLHTTPSetOptions(CURL *http_handle, char** papszOptions)
 /************************************************************************/
 
 /**
- * \brief Return if CPLHTTP services can be usefull
+ * \brief Return if CPLHTTP services can be useful
  *
  * Those services depend on GDAL being build with libcurl support.
  *

@@ -36,7 +36,7 @@
  * of the library: this code assumes the 1.0 API and also depends on
  * the ability to write the zlib header multiple times (one per strip)
  * which was not possible with versions prior to 0.95.  Note also that
- * older versions of this codec avoided this bug by supressing the header
+ * older versions of this codec avoided this bug by suppressing the header
  * entirely.  This means that files written with the old library cannot
  * be read; they should be converted to a different compression scheme
  * and then reconverted.

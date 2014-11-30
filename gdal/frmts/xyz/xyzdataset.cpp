@@ -482,7 +482,7 @@ int XYZDataset::IdentifyEx( GDALOpenInfo * poOpenInfo,
 
     GDALOpenInfo* poOpenInfoToDelete = NULL;
     /*  GZipped .xyz files are common, so automagically open them */
-    /*  if the /vsigzip/ has not been explicitely passed */
+    /*  if the /vsigzip/ has not been explicitly passed */
     if (strlen(poOpenInfo->pszFilename) > 6 &&
         EQUAL(poOpenInfo->pszFilename + strlen(poOpenInfo->pszFilename) - 6, "xyz.gz") &&
         !EQUALN(poOpenInfo->pszFilename, "/vsigzip/", 9))
@@ -614,7 +614,7 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLString osFilename(poOpenInfo->pszFilename);
 
     /*  GZipped .xyz files are common, so automagically open them */
-    /*  if the /vsigzip/ has not been explicitely passed */
+    /*  if the /vsigzip/ has not been explicitly passed */
     if (strlen(poOpenInfo->pszFilename) > 6 &&
         EQUAL(poOpenInfo->pszFilename + strlen(poOpenInfo->pszFilename) - 6, "xyz.gz") &&
         !EQUALN(poOpenInfo->pszFilename, "/vsigzip/", 9))

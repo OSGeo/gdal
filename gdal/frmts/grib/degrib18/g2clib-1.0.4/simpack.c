@@ -112,7 +112,7 @@ void simpack(g2float *fld,g2int ndpts,g2int *idrstmpl,unsigned char *cpack,g2int
         else if (nbits!=0 && idrstmpl[1]==0) {
            //
            //  Use minimum number of bits specified by user and
-           //  adjust binary scaling factor to accomodate data.
+           //  adjust binary scaling factor to accommodate data.
            //
            rmin=rmin*dscale;
            rmax=rmax*dscale;

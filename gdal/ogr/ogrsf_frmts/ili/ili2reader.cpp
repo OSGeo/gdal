@@ -511,7 +511,7 @@ int ILI2Reader::SetupParser() {
         {
             char* msg = tr_strdup(toCatch.getMessage());
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "Unable to initalize Xerces C++ based ILI2 reader. "
+                      "Unable to initialize Xerces C++ based ILI2 reader. "
                       "Error message:\n%s\n", msg );
             CPLFree(msg);
 

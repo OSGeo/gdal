@@ -817,7 +817,7 @@ CPLErr GDALECWCompressor::Initialize(
 
         pszOption = CSLFetchNameValue(papszOptions, "GEODATA_USAGE");
         if( pszOption == NULL )
-            // Default to supressing ECW SDK geodata, just use our own stuff.
+            // Default to suppressing ECW SDK geodata, just use our own stuff.
             SetGeodataUsage( JP2_GEODATA_USE_NONE );
         else if( EQUAL(pszOption,"NONE") )
             SetGeodataUsage( JP2_GEODATA_USE_NONE );

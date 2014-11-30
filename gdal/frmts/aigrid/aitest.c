@@ -115,7 +115,7 @@ int main( int argc, char ** argv )
     AIGInfo_t	*psInfo;
     GInt32 	*panRaster;
     int		i, j;
-    int		bMagic = FALSE, bSupressMagic = FALSE;
+    int		bMagic = FALSE, bSuppressMagic = FALSE;
     int         iTestTileX = 0, iTestTileY = 0;
 
 /* -------------------------------------------------------------------- */
@@ -127,7 +127,7 @@ int main( int argc, char ** argv )
             bMagic = TRUE;
 
         else if( EQUAL(argv[1],"-nomagic") )
-            bSupressMagic = TRUE;
+            bSuppressMagic = TRUE;
 
         else if( EQUAL(argv[1],"-t") && argc > 2 )
         {
@@ -184,7 +184,7 @@ int main( int argc, char ** argv )
 /*      Do we want a dump of all the ``magic'' numbers for              */
 /*      instantated blocks?                                             */
 /* -------------------------------------------------------------------- */
-    if( !bSupressMagic )
+    if( !bSuppressMagic )
         DumpMagic( psInfo, bMagic );
     
 /* -------------------------------------------------------------------- */

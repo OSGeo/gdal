@@ -1442,9 +1442,9 @@ int VSICurlStreamingFSHandler::Stat( const char *pszFilename,
  * be efficient. If you need efficient random access and that the server supports range
  * dowloading, you should use the /vsicurl/ file system handler instead.
  *
- * Recognized filenames are of the form /vsicurl_streaming/http://path/to/remote/ressource or
- * /vsicurl_streaming/ftp://path/to/remote/ressource where path/to/remote/ressource is the
- * URL of a remote ressource.
+ * Recognized filenames are of the form /vsicurl_streaming/http://path/to/remote/resource or
+ * /vsicurl_streaming/ftp://path/to/remote/resource where path/to/remote/resource is the
+ * URL of a remote resource.
  *
  * The GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD and GDAL_PROXY_AUTH configuration options can be
  * used to define a proxy server. The syntax to use is the one of Curl CURLOPT_PROXY,

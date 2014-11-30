@@ -140,7 +140,7 @@ void* CPL_STDCALL CPLGetErrorHandlerUserData(void)
  *
  * The default behaviour of CPLError() is to report errors to stderr,
  * and to abort() after reporting a CE_Fatal error.  It is expected that
- * some applications will want to supress error reporting, and will want to
+ * some applications will want to suppress error reporting, and will want to
  * install a C++ exception, or longjmp() approach to no local fatal error
  * recovery.
  *

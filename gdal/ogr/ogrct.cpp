@@ -944,7 +944,7 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
 /* -------------------------------------------------------------------- */
 /*      Try to report an error through CPL.  Get proj.4 error string    */
 /*      if possible.  Try to avoid reporting thousands of error         */
-/*      ... supress further error reporting on this OGRProj4CT if we    */
+/*      ... suppress further error reporting on this OGRProj4CT if we   */
 /*      have already reported 20 errors.                                */
 /* -------------------------------------------------------------------- */
     if( err != 0 )
@@ -976,7 +976,7 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
         else if( nErrorCount == 20 )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Reprojection failed, err = %d, further errors will be supressed on the transform object.", 
+                      "Reprojection failed, err = %d, further errors will be suppressed on the transform object.", 
                       err );
         }
 

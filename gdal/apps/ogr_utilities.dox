@@ -40,7 +40,7 @@ source to stdout (the terminal).
 <dt> <b>-ro</b>:</dt><dd> Open the data source in read-only mode.  </dd>
 <dt> <b>-al</b>:</dt><dd> List all features of all layers (used instead of having to
 give layer names as arguments).</dd>
-<dt> <b>-so</b>:</dt><dd> Summary Only: supress listing of features, show only the 
+<dt> <b>-so</b>:</dt><dd> Summary Only: suppress listing of features, show only the 
 summary information like projection, schema, feature count and
 extents.</dd>
 <dt> <b>-q</b>:</dt><dd> Quiet verbose reporting of various information, including
@@ -329,7 +329,7 @@ We can use the 'identity' setting to specify that the fields should be transferr
 This setting should be used along with the -append setting.</dd>
 <dt> <b>-addfields</b>:</dt><dd>(starting with GDAL 1.11) This is a specialized version of
 -append. Contrary to -append, -addfields has the effect of adding, to existing target layers,
-the new fields found in source layers. This option is usefull when merging files that have non-strictly
+the new fields found in source layers. This option is useful when merging files that have non-strictly
 identical structures.
 This might not work for output formats that don't support adding fields to existing non-empty layers.</dd>
 </dl>
@@ -483,7 +483,7 @@ format. Also some information writed to the stdout.
 <dl>
 <dt><b>--help-general</b>:</dt><dd> Show the usage.</dd>
 <dt><b>-progress</b>:</dt><dd> Show progress.</dd>
-<dt><b>-quiet</b>:</dt><dd> Supress all messages except errors and results.</dd>
+<dt><b>-quiet</b>:</dt><dd> Suppress all messages except errors and results.</dd>
 <dt><b>-f</b> <em>format_name</em>:</dt><dd> Select an output format name.
     The default is to create a shapefile.</dd>
 <dt> <b>-dsco</b> <em>NAME=VALUE</em>:</dt><dd> Dataset creation option 

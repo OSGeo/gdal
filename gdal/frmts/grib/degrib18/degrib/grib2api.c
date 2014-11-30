@@ -1083,7 +1083,7 @@ void unpk_g2ncep (CPL_UNUSED sInt4 * kfildo, float * ain, sInt4 * iain, sInt4 * 
       *ibitmap = 0;
    }
 
-   /* Check type of original field, before transfering the memory. */
+   /* Check type of original field, before transferring the memory. */
    myAssert (*ns5 > 20);
    /* Check if NCEP had problems expanding the data.  If so we currently
     * abort.  May need to revisit this behavior. */

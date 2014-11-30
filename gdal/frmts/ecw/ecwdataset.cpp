@@ -981,7 +981,7 @@ ECWDataset::~ECWDataset()
 
     // bInGDALGlobalDestructor is set to TRUE by gdaldllmain.cpp/GDALDestroy() so as
     // to avoid an issue with the ECW SDK 3.3 where the destructor of CNCSJP2File::CNCSJP2FileVector CNCSJP2File::sm_Files;
-    // static ressource allocated in NCJP2File.cpp can be called before GDALDestroy(), causing
+    // static resource allocated in NCJP2File.cpp can be called before GDALDestroy(), causing
     // ECW SDK resources ( CNCSJP2File files ) to be closed before we get here.
     //
     // We also have an issue with ECW SDK 5.0 and ECW files on Linux when

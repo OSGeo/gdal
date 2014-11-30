@@ -1915,7 +1915,7 @@ static void XMLCALL OSM_XML_startElementCbk(void *pUserData, const char *pszName
     else if( psCtxt->bInRelation &&
              strcmp(pszName, "member") == 0 )
     {
-        /* 300 is the recommanded value, but there are files with more than 2000 so we should be able */
+        /* 300 is the recommended value, but there are files with more than 2000 so we should be able */
         /* to realloc over that value */
         if (psCtxt->sRelation.nMembers >= psCtxt->nMembersAllocated)
         {
@@ -2256,7 +2256,7 @@ OSMContext* OSM_Open( const char* pszFilename,
         psCtxt->nTagsAllocated = 256;
         psCtxt->pasTags = (OSMTag*) VSIMalloc(sizeof(OSMTag) * psCtxt->nTagsAllocated);
 
-        /* 300 is the recommanded value, but there are files with more than 2000 so we should be able */
+        /* 300 is the recommended value, but there are files with more than 2000 so we should be able */
         /* to realloc over that value */
         psCtxt->nMembersAllocated = 2000;
         psCtxt->pasMembers = (OSMMember*) VSIMalloc(sizeof(OSMMember) * psCtxt->nMembersAllocated);

@@ -1887,7 +1887,7 @@ void CPL_STDCALL GDALGetOpenDatasets( GDALDatasetH **ppahDSList, int *pnCount )
 /*                        GDALCleanOpenDatasetsList()                   */
 /************************************************************************/
 
-/* Usefull when called from the child of a fork(), to avoid closing */
+/* Useful when called from the child of a fork(), to avoid closing */
 /* the datasets of the parent at the child termination */
 void GDALNullifyOpenDatasetsList()
 {
@@ -2614,7 +2614,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
  * Starting with GDAL 1.6.0, if GDALOpenShared() is called on the same pszFilename
  * from two different threads, a different GDALDataset object will be returned as
  * it is not safe to use the same dataset from different threads, unless the user
- * does explicitely use mutexes in its code.
+ * does explicitly use mutexes in its code.
  *
  * For drivers supporting the VSI virtual file API, it is possible to open
  * a file in a .zip archive (see VSIInstallZipFileHandler()), in a .tar/.tar.gz/.tgz archive

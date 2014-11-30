@@ -175,7 +175,7 @@ static int ReadTDLPSect1 (uChar *pds, sInt4 tdlpLen, sInt4 *curLoc,
    t_hour = li_temp - t_day * 100;
    if ((t_year != year) || (t_month != month) || (t_day != day) ||
        (t_hour != hour)) {
-      errSprintf ("Error Inconsistant Times in ReadTDLPSect1.\n");
+      errSprintf ("Error Inconsistent Times in ReadTDLPSect1.\n");
       return -1;
    }
    if (ParseTime (&(pdsMeta->refTime), year, month, day, hour, min, 0) != 0) {
@@ -232,10 +232,10 @@ static int ReadTDLPSect1 (uChar *pds, sInt4 tdlpLen, sInt4 *curLoc,
    project_hr = GRIB_UNSIGN_INT2 (*pds, pds[1]);
    tau = pdsMeta->ID3 - ((pdsMeta->ID3 / 1000) * 1000);
    if (tau != project_hr) {
-      printf ("Warning: Inconsistant Projections in hours in "
+      printf ("Warning: Inconsistent Projections in hours in "
               "ReadTDLPSect1 (%d vs %d)\n", tau, project_hr);
 /*
-      errSprintf ("Warning: Inconsistant Projections in hours in "
+      errSprintf ("Warning: Inconsistent Projections in hours in "
                   "ReadTDLPSect1 (%ld vs %d)\n", tau, project_hr);
 */
       project_hr = tau;
@@ -634,7 +634,7 @@ int TDLP_RefTime (DataSource &fp, sInt4 tdlpLen, double *refTime)
 
    if ((t_year != year) || (t_month != month) || (t_day != day) ||
        (t_hour != hour)) {
-      errSprintf ("Error Inconsistant Times in TDLP_RefTime.\n");
+      errSprintf ("Error Inconsistent Times in TDLP_RefTime.\n");
       return -1;
    }
    if (ParseTime (refTime, year, month, day, hour, min, 0) != 0) {

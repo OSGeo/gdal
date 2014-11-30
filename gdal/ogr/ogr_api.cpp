@@ -441,7 +441,7 @@ void CPL_DLL OGR_G_SetPoints( OGRGeometryH hGeom, int nPointsIn,
  *
  * If iPoint is larger than the number of existing
  * points in the linestring, the point count will be increased to
- * accomodate the request.
+ * accommodate the request.
  *
  * @param hGeom handle to the geometry to add a vertex to.
  * @param i the index of the vertex to assign (zero based) or
@@ -500,7 +500,7 @@ void OGR_G_SetPoint( OGRGeometryH hGeom, int i,
  *
  * If iPoint is larger than the number of existing
  * points in the linestring, the point count will be increased to
- * accomodate the request.
+ * accommodate the request.
  *
  * @param hGeom handle to the geometry to add a vertex to.
  * @param i the index of the vertex to assign (zero based) or

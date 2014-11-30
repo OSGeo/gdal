@@ -1077,7 +1077,7 @@ OGRFeature *OGRGPXLayer::GetNextFeature()
 static char* OGRGPX_GetXMLCompatibleTagName(const char* pszExtensionsNS,
                                             const char* pszName)
 {
-    /* Skip "ogr_" for example if NS is "ogr". Usefull for GPX -> GPX roundtrip */
+    /* Skip "ogr_" for example if NS is "ogr". Useful for GPX -> GPX roundtrip */
     if (strncmp(pszName, pszExtensionsNS, strlen(pszExtensionsNS)) == 0 &&
         pszName[strlen(pszExtensionsNS)] == '_')
     {

@@ -31,7 +31,7 @@
 #include "gt_jpeg_copy.h"
 
 /* Note: JPEG_DIRECT_COPY is not defined by default, because it is mainly */
-/* usefull for debugging purposes */
+/* useful for debugging purposes */
 
 CPL_CVSID("$Id$");
 
