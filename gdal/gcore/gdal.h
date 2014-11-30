@@ -245,6 +245,10 @@ GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenShared( const char *, GDALAccess ) CPL_
 /** Emit error message in case of failed open. */
 #define     GDAL_OF_VERBOSE_ERROR   0x40
 
+/** Open as internal dataset. Such dataset isn't registered in the global list
+ *  of opened dataset. Cannot be used with GDAL_OF_SHARED */
+#define     GDAL_OF_INTERNAL        0x80
+
 GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenEx( const char* pszFilename,
                                              unsigned int nOpenFlags,
                                              const char* const* papszAllowedDrivers,

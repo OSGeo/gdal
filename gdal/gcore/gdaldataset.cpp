@@ -176,18 +176,8 @@ GDALDataset::GDALDataset()
     papoBands = NULL;
     nRefCount = 1;
     bShared = FALSE;
+    bIsInternal = TRUE;
     papszOpenOptions = NULL;
-
-/* -------------------------------------------------------------------- */
-/*      Add this dataset to the open dataset list.                      */
-/* -------------------------------------------------------------------- */
-    {
-        CPLMutexHolderD( &hDLMutex );
-
-        if (poAllDatasetMap == NULL)
-            poAllDatasetMap = new std::map<GDALDataset*, GIntBig>;
-        (*poAllDatasetMap)[this] = -1;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Set forced caching flag.                                        */
@@ -225,8 +215,8 @@ GDALDataset::~GDALDataset()
     int         i;
 
     // we don't want to report destruction of datasets that 
-    // were never really open.
-    if( nBands != 0 || !EQUAL(GetDescription(),"") )
+    // were never really open or meant as internal
+    if( !bIsInternal && ( nBands != 0 || !EQUAL(GetDescription(),"") ) )
     {
         if( CPLGetPID() != GDALGetResponsiblePIDForCurrentThread() )
             CPLDebug( "GDAL", 
@@ -241,6 +231,7 @@ GDALDataset::~GDALDataset()
 /* -------------------------------------------------------------------- */
 /*      Remove dataset from the "open" dataset list.                    */
 /* -------------------------------------------------------------------- */
+    if( !bIsInternal )
     {
         CPLMutexHolderD( &hDLMutex );
         if( poAllDatasetMap )
@@ -304,6 +295,24 @@ GDALDataset::~GDALDataset()
         CPLDestroyMutex( m_hMutex );
 
     CSLDestroy( papszOpenOptions );
+}
+
+/************************************************************************/
+/*                      AddToDatasetOpenList()                          */
+/************************************************************************/
+
+void GDALDataset::AddToDatasetOpenList()
+{
+/* -------------------------------------------------------------------- */
+/*      Add this dataset to the open dataset list.                      */
+/* -------------------------------------------------------------------- */
+    bIsInternal = FALSE;
+
+    CPLMutexHolderD( &hDLMutex );
+
+    if (poAllDatasetMap == NULL)
+        poAllDatasetMap = new std::map<GDALDataset*, GIntBig>;
+    (*poAllDatasetMap)[this] = -1;
 }
 
 /************************************************************************/
@@ -1128,6 +1137,8 @@ void GDALDataset::MarkAsShared()
     CPLAssert( !bShared );
 
     bShared = TRUE;
+    if( bIsInternal )
+        return;
 
     GIntBig nPID = GDALGetResponsiblePIDForCurrentThread();
     SharedDatasetCtxt* psStruct;
@@ -2359,6 +2370,12 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
 /* -------------------------------------------------------------------- */
     if( nOpenFlags & GDAL_OF_SHARED )
     {
+        if( nOpenFlags & GDAL_OF_INTERNAL )
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg, "GDAL_OF_SHARED and GDAL_OF_INTERNAL are exclusive");
+            return NULL;
+        }
+        
         CPLMutexHolderD( &hDLMutex );
 
         if (phSharedDatasetSet != NULL)
@@ -2487,13 +2504,18 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
             if( poDS->papszOpenOptions == NULL )
                 poDS->papszOpenOptions = CSLDuplicate((char**)papszOpenOptions);
 
-            if( CPLGetPID() != GDALGetResponsiblePIDForCurrentThread() )
-                CPLDebug( "GDAL", "GDALOpen(%s, this=%p) succeeds as %s (pid=%d, responsiblePID=%d).",
-                          pszFilename, poDS, poDriver->GetDescription(),
-                          (int)CPLGetPID(), (int)GDALGetResponsiblePIDForCurrentThread() );
-            else
-                CPLDebug( "GDAL", "GDALOpen(%s, this=%p) succeeds as %s.",
-                          pszFilename, poDS, poDriver->GetDescription() );
+            if( !(nOpenFlags & GDAL_OF_INTERNAL) )
+            {
+                if( CPLGetPID() != GDALGetResponsiblePIDForCurrentThread() )
+                    CPLDebug( "GDAL", "GDALOpen(%s, this=%p) succeeds as %s (pid=%d, responsiblePID=%d).",
+                              pszFilename, poDS, poDriver->GetDescription(),
+                              (int)CPLGetPID(), (int)GDALGetResponsiblePIDForCurrentThread() );
+                else
+                    CPLDebug( "GDAL", "GDALOpen(%s, this=%p) succeeds as %s.",
+                              pszFilename, poDS, poDriver->GetDescription() );
+
+                poDS->AddToDatasetOpenList();
+            }
 
             int* pnRecCount = (int*)CPLGetTLS( CTLS_GDALDATASET_REC_PROTECT_MAP );
             if( pnRecCount )
@@ -2650,6 +2672,17 @@ void CPL_STDCALL GDALClose( GDALDatasetH hDS )
         return;
 
     GDALDataset *poDS = (GDALDataset *) hDS;
+    if( poDS->bIsInternal )
+    {
+        if (poDS->GetShared())
+        {
+            if( poDS->Dereference() > 0 )
+                return;
+        }
+        delete poDS;
+        return;
+    }
+        
     CPLMutexHolderD( &hDLMutex );
     //CPLLocaleC  oLocaleForcer;
 
