@@ -102,7 +102,7 @@ class OGRUnionLayer : public OGRLayer
   public:
                         OGRUnionLayer( const char* pszName,
                                        int nSrcLayers, /* must be >= 1 */
-                                       OGRLayer** papoSrcLayers, /* array itself ownership always transfered, layer ownership depending on bTakeLayerOwnership */
+                                       OGRLayer** papoSrcLayers, /* array itself ownership always transferred, layer ownership depending on bTakeLayerOwnership */
                                        int bTakeLayerOwnership);
 
     virtual             ~OGRUnionLayer();

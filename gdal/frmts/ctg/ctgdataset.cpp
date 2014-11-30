@@ -361,7 +361,7 @@ int CTGDataset::Identify( GDALOpenInfo * poOpenInfo )
 
     GDALOpenInfo* poOpenInfoToDelete = NULL;
     /*  GZipped grid_cell.gz files are common, so automagically open them */
-    /*  if the /vsigzip/ has not been explicitely passed */
+    /*  if the /vsigzip/ has not been explicitly passed */
     const char* pszFilename = CPLGetFilename(poOpenInfo->pszFilename);
     if ((EQUAL(pszFilename, "grid_cell.gz") ||
          EQUAL(pszFilename, "grid_cell1.gz") ||
@@ -432,7 +432,7 @@ GDALDataset *CTGDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLString osFilename(poOpenInfo->pszFilename);
 
     /*  GZipped grid_cell.gz files are common, so automagically open them */
-    /*  if the /vsigzip/ has not been explicitely passed */
+    /*  if the /vsigzip/ has not been explicitly passed */
     const char* pszFilename = CPLGetFilename(poOpenInfo->pszFilename);
     if ((EQUAL(pszFilename, "grid_cell.gz") ||
          EQUAL(pszFilename, "grid_cell1.gz") ||

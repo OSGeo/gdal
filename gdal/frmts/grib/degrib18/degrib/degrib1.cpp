@@ -285,7 +285,7 @@ static void GRIB1_Table2LookUp (pdsG1Type *pdsMeta, const char **name,
                                 unsigned short int center,
                                 unsigned short int subcenter)
 {
-   GRIB1ParmTable *table; /* The paramter table choosen by the pdsMeta data */
+   GRIB1ParmTable *table; /* The parameter table choosen by the pdsMeta data */
 
    table = Choose_ParmTable (pdsMeta, center, subcenter);
    if ((center == NMC) && (pdsMeta->mstrVersion == 129)

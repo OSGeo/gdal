@@ -57,7 +57,7 @@ GMLFeatureClass::GMLFeatureClass( const char *pszName )
     m_nFeatureCount = -1; // unknown
 
     m_pszSRSName = NULL;
-    m_bSRSNameConsistant = TRUE;
+    m_bSRSNameConsistent = TRUE;
 }
 
 /************************************************************************/
@@ -357,7 +357,7 @@ int GMLFeatureClass::GetExtents( double *pdfXMin, double *pdfXMax,
 void GMLFeatureClass::SetSRSName( const char* pszSRSName )
 
 {
-    m_bSRSNameConsistant = TRUE;
+    m_bSRSNameConsistent = TRUE;
     CPLFree(m_pszSRSName);
     m_pszSRSName = (pszSRSName) ? CPLStrdup(pszSRSName) : NULL;
 }
@@ -369,7 +369,7 @@ void GMLFeatureClass::SetSRSName( const char* pszSRSName )
 void GMLFeatureClass::MergeSRSName( const char* pszSRSName )
 
 {
-    if(!m_bSRSNameConsistant)
+    if(!m_bSRSNameConsistent)
         return;
 
     if( m_pszSRSName == NULL )
@@ -379,9 +379,9 @@ void GMLFeatureClass::MergeSRSName( const char* pszSRSName )
     }
     else
     {
-        m_bSRSNameConsistant = pszSRSName != NULL &&
+        m_bSRSNameConsistent = pszSRSName != NULL &&
                                   strcmp(m_pszSRSName, pszSRSName) == 0;
-        if (!m_bSRSNameConsistant)
+        if (!m_bSRSNameConsistent)
         {
             CPLFree(m_pszSRSName);
             m_pszSRSName = NULL;

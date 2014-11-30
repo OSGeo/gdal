@@ -78,7 +78,7 @@
  * Accept '-' cahracter in new coverage name
  *
  * Revision 1.6  2000/01/10 02:57:44  daniel
- * Little changes to accomodate read support for "weird" coverages
+ * Little changes to accommodate read support for "weird" coverages
  *
  * Revision 1.5  1999/12/24 07:18:34  daniel
  * Added PC Arc/Info coverages support

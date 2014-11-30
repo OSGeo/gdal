@@ -328,7 +328,7 @@ SBNSearchHandle SBNOpenDiskTree( const char* pszSBNFilename,
         if ((nBinStart > 0 && nNodeShapeCount == 0) ||
             nNodeShapeCount < 0 || nNodeShapeCount > nShapeCount)
         {
-            hSBN->sHooks.Error( "Inconsistant shape count in bin" );
+            hSBN->sHooks.Error( "Inconsistent shape count in bin" );
             SBNCloseDiskTree(hSBN);
             return NULL;
         }
@@ -637,7 +637,7 @@ static int SBNSearchDiskInternal( SearchStruct* psSearch,
             {
                 free(psNode->pabyShapeDesc);
                 psNode->pabyShapeDesc = NULL;
-                hSBN->sHooks.Error( "Inconsistant shape count for bin" );
+                hSBN->sHooks.Error( "Inconsistent shape count for bin" );
                 return FALSE;
             }
 
@@ -684,7 +684,7 @@ static int SBNSearchDiskInternal( SearchStruct* psSearch,
 #ifdef sanity_checks
 /* -------------------------------------------------------------------- */
 /*      Those tests only check that the shape bounding box in the bin   */
-/*      are consistant (self-consistant and consistant with the node    */
+/*      are consistent (self-consistent and consistent with the node    */
 /*      they are attached to). They are optional however (as far as     */
 /*      the safety of runtime is concerned at least).                   */
 /* -------------------------------------------------------------------- */
@@ -737,7 +737,7 @@ static int SBNSearchDiskInternal( SearchStruct* psSearch,
         {
             free(psNode->pabyShapeDesc);
             psNode->pabyShapeDesc = NULL;
-            hSBN->sHooks.Error( "Inconsistant shape count for bin" );
+            hSBN->sHooks.Error( "Inconsistent shape count for bin" );
             return FALSE;
         }
 

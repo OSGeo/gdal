@@ -195,7 +195,7 @@ public class gdal:public static int SetErrorHandler()
  * <p>
  * The default behaviour of Error() is to report errors to stderr,
  * and to abort() after reporting a gdalconst.CE_Fatal error.  It is expected that
- * some applications will want to supress error reporting, and will want to
+ * some applications will want to suppress error reporting, and will want to
  * install a C++ exception, or longjmp() approach to no local fatal error
  * recovery.
  * <p>
@@ -1336,7 +1336,7 @@ public class gdal:public static Driver GetDriver(int iDriver)
  * The first successful open will result in a returned dataset.  If all
  * drivers fail then null is returned.
  * <p>
- * It is required that you explicitely close a dataset opened in update
+ * It is required that you explicitly close a dataset opened in update
  * mode with the Dataset.delete() method. Otherwise the data might not be
  * flushed to the disk. Don't rely only on Java garbage collection.
  *
@@ -2235,7 +2235,7 @@ public class Dataset:public int ReadRaster_Direct(int xoff, int yoff, int xsize,
  * <a href="../gdalconst/gdalconstConstants.html#GDT_Byte">gdalconstConstants.GDT_Byte</a>,
  * <a href="../gdalconst/gdalconstConstants.html#GDT_Int16">gdalconstConstants.GDT_Int16</a>, ...
  * The pixel values will automatically be translated to/from the Band
- * data type as needed. The GDAL type must be consistant with the type of the Java array.
+ * data type as needed. The GDAL type must be consistent with the type of the Java array.
  *
  * @param array The array into which the data will be written. This buffer must contain at least
  * buf_xsize * buf_ysize elements * nBandCount .  It is organized
@@ -2496,7 +2496,7 @@ public class Dataset:public int WriteRaster_Direct(int xoff, int yoff, int xsize
  * <a href="../gdalconst/gdalconstConstants.html#GDT_Byte">gdalconstConstants.GDT_Byte</a>,
  * <a href="../gdalconst/gdalconstConstants.html#GDT_Int16">gdalconstConstants.GDT_Int16</a>, ...
  * The pixel values will automatically be translated to/from the Band
- * data type as needed. The GDAL type must be consistant with the type of the Java array.
+ * data type as needed. The GDAL type must be consistent with the type of the Java array.
  *
  * @param array The array from which the data will be read. This buffer must contain at least
  * buf_xsize * buf_ysize elements * nBandCount .  It is organized
@@ -3639,7 +3639,7 @@ public class Band:public java.nio.ByteBuffer ReadRaster_Direct(int xoff, int yof
  * <a href="../gdalconst/gdalconstConstants.html#GDT_Byte">gdalconstConstants.GDT_Byte</a>,
  * <a href="../gdalconst/gdalconstConstants.html#GDT_Int16">gdalconstConstants.GDT_Int16</a>, ...
  * The pixel values will automatically be translated to/from the Band
- * data type as needed. The GDAL type must be consistant with the type of the Java array.
+ * data type as needed. The GDAL type must be consistent with the type of the Java array.
  *
  * @param array The buffer into which the data should be read.
  * This buffer must contain at least buf_xsize *
@@ -4045,7 +4045,7 @@ public class Band:public int WriteRaster_Direct(int xoff, int yoff, int xsize, i
  * <a href="../gdalconst/gdalconstConstants.html#GDT_Byte">gdalconstConstants.GDT_Byte</a>,
  * <a href="../gdalconst/gdalconstConstants.html#GDT_Int16">gdalconstConstants.GDT_Int16</a>, ...
  * The pixel values will automatically be translated to/from the Band
- * data type as needed. The GDAL type must be consistant with the type of the Java array.
+ * data type as needed. The GDAL type must be consistent with the type of the Java array.
  *
  * @param array The buffer into which the data should be read.
  * This buffer must contain at least buf_xsize *
@@ -5062,7 +5062,7 @@ public class org.gdal.gdal.Driver:public String getHelpTopic()
   * Class used to report progression of long operations.
   * <p>
   * This class will not do anything by itself, but it can be subclassed, like <a href="TermProgressCallback.html">TermProgressCallback</a> class.
-  * to do more usefull things.
+  * to do more useful things.
   *
   * @since Java bindings 1.7.0
   */
@@ -6738,7 +6738,7 @@ public class Layer:public int DeleteFeature(int fid)
  Sequential reads are generally considered interrupted by a GetFeature() call.
  <p>
  The returned feature will be properly handled by the Java garbage collector,
- but you can help it by explicitely calling the
+ but you can help it by explicitly calling the
  Feature.<a href="Feature.html#delete()">delete()</a> method.
 
  @param fid the feature id of the feature to read. 
@@ -6870,7 +6870,7 @@ public class Layer:public int GetGeomType()
  ResetReading() method can be used to start at the beginning again.  
  <p>
  The returned feature will be properly handled by the Java garbage collector,
- but you can help it by explicitely calling the
+ but you can help it by explicitly calling the
  Feature.<a href="Feature.html#delete()">delete()</a> method.
 
  @return a feature, or null if no more features are available. 
@@ -7595,7 +7595,7 @@ public class Feature:public Feature Clone()
  * <p>
  * Calling this method is not required as normal garbage collection will
  * reclaim associated resources when the object goes out of scope.
- * Otherwise calling delete() explicitely will help release resources sooner.
+ * Otherwise calling delete() explicitly will help release resources sooner.
  * Don't call any method on a deleted object !
  */
 public class Feature:public void delete()
@@ -8475,7 +8475,7 @@ public class Geometry:public boolean Crosses(Geometry other)
  * <p>
  * Calling this method is not required as normal garbage collection will
  * reclaim associated resources when the object goes out of scope.
- * Otherwise calling delete() explicitely will help release resources sooner.
+ * Otherwise calling delete() explicitly will help release resources sooner.
  * Don't call any method on a deleted object !
  */
 public class Geometry:public void delete()
@@ -9103,7 +9103,7 @@ public class Geometry:public void SetCoordinateDimension(int dimension)
  * <p>
  * If ipoint is larger than the number of existing
  * points in the linestring, the point count will be increased to
- * accomodate the request.
+ * accommodate the request.
  *
  * @param ipoint the index of the vertex to assign (zero based) or
  *  zero for a point.
@@ -9117,7 +9117,7 @@ public class Geometry:public void SetPoint_2D(int ipoint, double x, double y)
  * <p>
  * If ipoint is larger than the number of existing
  * points in the linestring, the point count will be increased to
- * accomodate the request.
+ * accommodate the request.
  *
  * @param ipoint the index of the vertex to assign (zero based) or
  *  zero for a point.
@@ -9132,7 +9132,7 @@ public class Geometry:public void SetPoint(int ipoint, double x, double y, doubl
  * <p>
  * If ipoint is larger than the number of existing
  * points in the linestring, the point count will be increased to
- * accomodate the request.
+ * accommodate the request.
  *
  * @param ipoint the index of the vertex to assign (zero based) or
  *  zero for a point.
@@ -11773,7 +11773,7 @@ public class CoordinateTransformation
  * Caution: the coordinate transformation object returned can be in a non
  * working state if no coordinate transformation can be established between
  * src and dst, and calling other methods on it can result in the process
- * termination. If using GDAL 1.10 or above, it is recommanded to use the
+ * termination. If using GDAL 1.10 or above, it is recommended to use the
  * <a href="#CreateCoordinateTransformation(org.gdal.osr.SpatialReference,%20org.gdal.osr.SpatialReference)">
  * CreateCoordinateTransformation(org.gdal.osr.SpatialReference, org.gdal.osr.SpatialReference)</a> method instead.
  * <p>

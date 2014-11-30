@@ -60,7 +60,7 @@ file to be created.  Default is GML.
 </dd>
 
 <dt> <b>-q</b>:</dt><dd>
-The script runs in quiet mode.  The progress monitor is supressed and routine
+The script runs in quiet mode.  The progress monitor is suppressed and routine
 messages are not displayed.
 </dd>
 

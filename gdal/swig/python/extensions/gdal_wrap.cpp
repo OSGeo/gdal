@@ -2899,7 +2899,7 @@ void CPL_STDCALL
 PythonBindingErrorHandler(CPLErr eclass, int code, const char *msg ) 
 {
   /* 
-  ** Generally we want to supress error reporting if we have exceptions
+  ** Generally we want to suppress error reporting if we have exceptions
   ** enabled as the error message will be in the exception thrown in 
   ** Python.  
   */
@@ -3523,7 +3523,7 @@ int wrapper_VSIFWriteL( int nLen, char *pBuf, int size, int memb, VSILFILE * f)
 {
     if (nLen < size * memb)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Inconsistant buffer size with 'size' and 'memb' values");
+        CPLError(CE_Failure, CPLE_AppDefined, "Inconsistent buffer size with 'size' and 'memb' values");
         return 0;
     }
     return VSIFWriteL(pBuf, size, memb, f);
@@ -8162,7 +8162,7 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata(PyObject *self, PyObject *arg
     if (_v) {
       {
         /* %typecheck(SWIG_TYPECHECK_POINTER) (char **dict) */
-        /* Note: we exclude explicitely strings, because they can be considered as a sequence of characters, */
+        /* Note: we exclude explicitly strings, because they can be considered as a sequence of characters, */
         /* which is not desirable since it makes it impossible to define bindings such as SetMetadata(string) and SetMetadata(array_of_string) */
         /* (see #4816) */
         _v = ((PyMapping_Check(argv[1]) || PySequence_Check(argv[1]) ) && !SWIG_CheckState(SWIG_AsCharPtrAndSize(argv[1], 0, NULL, 0)) ) ? 1 : 0;

@@ -644,7 +644,7 @@ static int BSBReadHeaderLine( BSBInfo *psInfo, char* pszLine, int nLineMaxLen, i
 /*                  BSBSeekAndCheckScanlineNumber()                     */
 /*                                                                      */
 /*       Seek to the beginning of the scanline and check that the       */
-/*       scanline number in file is consistant with what we expect      */
+/*       scanline number in file is consistent with what we expect      */
 /*                                                                      */
 /* @param nScanline zero based line number                              */
 /************************************************************************/
@@ -769,7 +769,7 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
 
 /* -------------------------------------------------------------------- */
 /*       Seek to the beginning of the scanline and check that the       */
-/*       scanline number in file is consistant with what we expect      */
+/*       scanline number in file is consistent with what we expect      */
 /* -------------------------------------------------------------------- */
     if ( !BSBSeekAndCheckScanlineNumber(psInfo, nScanline, TRUE) )
     {

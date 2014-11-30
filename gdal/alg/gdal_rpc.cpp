@@ -400,7 +400,7 @@ void* GDALCreateSimilarRPCTransformer( void *hTransformArg, double dfRatioX, dou
  * an average height above sea level for ground in the target scene. 
  *
  * <li> RPC_HEIGHT_SCALE: a factor used to multiply heights above ground.
- * Usefull when elevation offsets of the DEM are not expressed in meters. (GDAL >= 1.8.0)
+ * Useful when elevation offsets of the DEM are not expressed in meters. (GDAL >= 1.8.0)
  *
  * <li> RPC_DEM: the name of a GDAL dataset (a DEM file typically) used to
  * extract elevation offsets from. In this situation the Z passed into the

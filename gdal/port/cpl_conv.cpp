@@ -1511,7 +1511,7 @@ static void CPLAccessConfigOption(const char* pszKey, int bGet)
   *     char* pszOldVal = pszOldValTmp ? CPLStrdup(pszOldValTmp) : NULL;
   *     // override with new value
   *     CPLSetConfigOption(pszKey, pszNewVal);
-  *     // do something usefull
+  *     // do something useful
   *     // restore old value
   *     CPLSetConfigOption(pszKey, pszOldVal);
   *     CPLFree(pszOldVal);

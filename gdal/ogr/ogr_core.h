@@ -158,7 +158,7 @@ typedef struct
  * Simple container for a bounding region in 3D.
  */
 
-#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
+#if defined(__cplusplus) && !defined(CPL_SURESS_CPLUSPLUS)
 class CPL_DLL OGREnvelope3D : public OGREnvelope
 {
   public:

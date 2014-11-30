@@ -483,7 +483,7 @@ CPLErr GDALPamRasterBand::CloneInfo( GDALRasterBand *poSrcBand,
     PamInitialize();
 
 /* -------------------------------------------------------------------- */
-/*      Supress NotImplemented error messages - mainly needed if PAM    */
+/*      Suppress NotImplemented error messages - mainly needed if PAM   */
 /*      disabled.                                                       */
 /* -------------------------------------------------------------------- */
     SetMOFlags( nSavedMOFlags | GMO_IGNORE_UNIMPLEMENTED );
@@ -1001,7 +1001,7 @@ PamParseHistogram( CPLXMLNode *psHistItem,
     if( strlen(pszHistCounts) < 2 * (size_t)(*pnBuckets) -1 )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "HistCounts content isn't consistant with BucketCount value");
+                 "HistCounts content isn't consistent with BucketCount value");
         return FALSE;
     }
 

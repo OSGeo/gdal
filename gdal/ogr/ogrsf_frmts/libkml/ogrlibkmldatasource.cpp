@@ -174,7 +174,7 @@ static void OGRLIBKMLPostProcessOutput(std::string& oKml)
     size_t nPos = 0;
 
     /* Manually add <?xml> node since libkml does not produce it currently */
-    /* and this is usefull in some circumstances (#5407) */
+    /* and this is useful in some circumstances (#5407) */
     if( !(oKml[0] == '<' && oKml[1] == '?') )
         oKml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + oKml;
 

@@ -271,7 +271,7 @@ int FindSRS( const char *pszInput, OGRSpatialReference &oSRS )
     OGRErr eErr = CE_None;
     int bDebug  = FALSE;
 
-    /* temporarily supress error messages we may get from xOpen() */
+    /* temporarily suppress error messages we may get from xOpen() */
     bDebug = CSLTestBoolean(CPLGetConfigOption("CPL_DEBUG", "OFF"));
     if ( ! bDebug )
         oErrorHandler = CPLSetErrorHandler ( CPLQuietErrorHandler );

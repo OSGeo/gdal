@@ -433,7 +433,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
                     && psDefn->UOMLengthInMeters != 1.0 )
                 {
                     psDefn->ProjParm[iParm] /= psDefn->UOMLengthInMeters;
-                    CPLDebug( "GTIFF", "converting geokey to accomodate old broken file due to GTIFF_LINEAR_UNITS=BROKEN setting." );
+                    CPLDebug( "GTIFF", "converting geokey to accommodate old broken file due to GTIFF_LINEAR_UNITS=BROKEN setting." );
                 }
                 break;
 

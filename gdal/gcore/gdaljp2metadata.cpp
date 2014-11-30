@@ -900,7 +900,7 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
                                                "FALSE" ) ) )
     {
         bNeedAxisFlip = FALSE;
-        CPLDebug( "GMLJP2", "Supressed axis flipping based on GDAL_IGNORE_AXIS_ORIENTATION." );
+        CPLDebug( "GMLJP2", "Suppressed axis flipping based on GDAL_IGNORE_AXIS_ORIENTATION." );
     }
 
     if( bNeedAxisFlip )
@@ -1128,7 +1128,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
                                                "FALSE" ) ) )
     {
         bNeedAxisFlip = FALSE;
-        CPLDebug( "GMLJP2", "Supressed axis flipping on write based on GDAL_IGNORE_AXIS_ORIENTATION." );
+        CPLDebug( "GMLJP2", "Suppressed axis flipping on write based on GDAL_IGNORE_AXIS_ORIENTATION." );
     }
 
     if( bNeedAxisFlip )

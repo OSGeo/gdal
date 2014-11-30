@@ -613,7 +613,7 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
         }
         else
         {
-            /* We explicitely list the allowed drivers to avoid hostile content */
+            /* We explicitly list the allowed drivers to avoid hostile content */
             /* to be opened by a random driver, and also to make sure that */
             /* a future new JPEG2000 compatible driver derives from GDALPamDataset */
             static const char * const apszDrivers[] = { "JP2KAK", "JP2ECW", "JP2MRSID",
@@ -3594,7 +3594,7 @@ CPLErr NITFDataset::ReadJPEGBlock( int iBlockX, int iBlockY )
     if( poDS->GetRasterBand(1)->GetRasterDataType() != GetRasterBand(1)->GetRasterDataType())
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "JPEG block %d data type (%s) not consistant with band data type (%s).", 
+                  "JPEG block %d data type (%s) not consistent with band data type (%s).",
                   iBlock, GDALGetDataTypeName(poDS->GetRasterBand(1)->GetRasterDataType()),
                   GDALGetDataTypeName(GetRasterBand(1)->GetRasterDataType()) );
         delete poDS;
@@ -4258,7 +4258,7 @@ NITFDataset::NITFCreateCopy(
 
                 if (CSLPartialFindString(papszFullOptions, "TRE=GEOLOB=") != - 1)
                 {
-                    CPLDebug("NITF", "GEOLOB TRE was explicitely defined before. "
+                    CPLDebug("NITF", "GEOLOB TRE was explicitly defined before. "
                              "Overriding it with current georefencing info.");
                 }
 
@@ -4285,7 +4285,7 @@ NITFDataset::NITFCreateCopy(
                 papszFullOptions = CSLAddString( papszFullOptions, osGEOLOB ) ;
 
 /* -------------------------------------------------------------------- */
-/*      Write GEOPSB TRE if not already explicitely provided            */
+/*      Write GEOPSB TRE if not already explicitly provided            */
 /* -------------------------------------------------------------------- */
                 if (CSLPartialFindString(papszFullOptions, "FILE_TRE=GEOPSB=") == -1 &&
                     CSLPartialFindString(papszFullOptions, "TRE=GEOPSB=") == -1)
@@ -4317,7 +4317,7 @@ NITFDataset::NITFCreateCopy(
                 }
                 else
                 {
-                    CPLDebug("NITF", "GEOPSB TRE was explicitely defined before. Keeping it.");
+                    CPLDebug("NITF", "GEOPSB TRE was explicitly defined before. Keeping it.");
                 }
 
             }
@@ -4350,7 +4350,7 @@ NITFDataset::NITFCreateCopy(
             else
             {
                 CPLError((bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
-                    "Inconsistant ICORDS value with SRS : %s%s.\n", pszICORDS,
+                    "Inconsistent ICORDS value with SRS : %s%s.\n", pszICORDS,
                     (!bStrict) ? ". Setting it to G instead" : "");
                 if (bStrict)
                 {

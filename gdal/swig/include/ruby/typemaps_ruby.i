@@ -39,7 +39,7 @@
  * Significantly updated typemaps for Ruby - resynced with the Python typemaps file.
  *
  * Revision 1.5  2005/09/02 16:19:23  kruland
- * Major reorganization to accomodate multiple language bindings.
+ * Major reorganization to accommodate multiple language bindings.
  * Each language binding can define renames and supplemental code without
  * having to have a lot of conditionals in the main interface definition files.
  *

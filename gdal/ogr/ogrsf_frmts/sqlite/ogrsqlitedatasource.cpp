@@ -525,7 +525,7 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flags, int bRegisterOGR2SQLiteEx
         {
             CPLError( CE_Failure, CPLE_OpenFailed, "%s", 
                 "A trigger and/or view calls a OGR extension SQL function that could be used to "
-                "steal data, or use network bandwith, without your consent.\n"
+                "steal data, or use network bandwidth, without your consent.\n"
                 "The database will not be opened unless the ALLOW_OGR_SQL_FUNCTIONS_FROM_TRIGGER_AND_VIEW "
                 "configuration option to YES.");
             return FALSE;

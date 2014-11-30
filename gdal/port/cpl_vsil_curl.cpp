@@ -2635,9 +2635,9 @@ char** VSICurlFilesystemHandler::ReadDir( const char *pszDirname )
  * A special file handler is installed that allows reading on-the-fly of files
  * available through HTTP/FTP web protocols, without downloading the entire file.
  *
- * Recognized filenames are of the form /vsicurl/http://path/to/remote/ressource or
- * /vsicurl/ftp://path/to/remote/ressource where path/to/remote/ressource is the
- * URL of a remote ressource.
+ * Recognized filenames are of the form /vsicurl/http://path/to/remote/resource or
+ * /vsicurl/ftp://path/to/remote/resource where path/to/remote/resource is the
+ * URL of a remote resource.
  *
  * Partial downloads (requires the HTTP server to support random reading) are done
  * with a 16 KB granularity by default. If the driver detects sequential reading

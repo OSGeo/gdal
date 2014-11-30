@@ -1092,7 +1092,7 @@ OGRFeature *OGRWFSLayer::GetNextFeature()
             poBaseLayer = poBaseDS->GetLayer(0);
             poBaseLayer->ResetReading();
 
-            /* Check that the layer field definition is consistant with the one */
+            /* Check that the layer field definition is consistent with the one */
             /* we got in BuildLayerDefn() */
             if (poFeatureDefn->GetFieldCount() != poBaseLayer->GetLayerDefn()->GetFieldCount())
                 bGotApproximateLayerDefn = TRUE;
@@ -2454,7 +2454,7 @@ OGRErr OGRWFSLayer::CommitTransaction()
             if ((int)aosFIDList.size() != nGotInserted)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                        "Inconsistant InsertResults: did not get expected FID count");
+                        "Inconsistent InsertResults: did not get expected FID count");
                 CPLDestroyXMLNode( psXML );
                 CPLHTTPDestroyResult(psResult);
                 return OGRERR_FAILURE;

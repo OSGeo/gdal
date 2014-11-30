@@ -317,7 +317,7 @@ void CPCIDSKGeoref::WriteParameters( std::vector<double> const& parms )
     Load();
 
     if( parms.size() < 17 )
-        ThrowPCIDSKException( "Did not get expected number of paramters in WriteParameters()" );
+        ThrowPCIDSKException( "Did not get expected number of parameters in WriteParameters()" );
 
     unsigned int i;
 

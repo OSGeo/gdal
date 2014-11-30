@@ -226,7 +226,7 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
     if ( strstr(poDS->GetDescription(), "/vsicurl/http") != NULL ||
          strstr(poDS->GetDescription(), "/vsicurl/ftp") != NULL )
     {
-        /* Testing the existence of remote ressources can be excruciating */
+        /* Testing the existence of remote resources can be excruciating */
         /* slow, so let's just suppose they exist */
         pszRelativePath = poDS->GetDescription();
         bRelativeToVRT = FALSE;
@@ -456,7 +456,7 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
     /* Newly generated VRT will have RasterXSize, RasterYSize, DataType, */
     /* BlockXSize, BlockYSize tags, so that we don't have actually to */
     /* open the real dataset immediately, but we can use a proxy dataset */
-    /* instead. This is particularly usefull when dealing with huge VRT */
+    /* instead. This is particularly useful when dealing with huge VRT */
     /* For example, a VRT with the world coverage of DTED0 (25594 files) */
     CPLXMLNode* psSrcProperties = CPLGetXMLNode(psSrc,"SourceProperties");
     int nRasterXSize = 0, nRasterYSize =0;
@@ -590,7 +590,7 @@ void VRTSimpleSource::GetFileList(char*** ppapszFileList, int *pnSize,
         if ( strstr(pszFilename, "/vsicurl/http") != NULL ||
              strstr(pszFilename, "/vsicurl/ftp") != NULL )
         {
-            /* Testing the existence of remote ressources can be excruciating */
+            /* Testing the existence of remote resources can be excruciating */
             /* slow, so let's just suppose they exist */
         }
         else

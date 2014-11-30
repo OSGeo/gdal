@@ -524,7 +524,7 @@ void CPL_STDCALL GDALAllRegister()
 #endif
     
 /* -------------------------------------------------------------------- */
-/*      Deregister any drivers explicitly marked as supressed by the    */
+/*      Deregister any drivers explicitly marked as suppressed by the   */
 /*      GDAL_SKIP environment variable.                                 */
 /* -------------------------------------------------------------------- */
     GetGDALDriverManager()->AutoSkipDrivers();

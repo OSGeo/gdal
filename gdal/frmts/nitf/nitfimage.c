@@ -3298,7 +3298,7 @@ static void NITFLoadLocationTable( NITFImage *psImage )
                     }
                     else
                     {
-                        CPLDebug("NITF", "The CoverageSectionSubheader content isn't consistant");
+                        CPLDebug("NITF", "The CoverageSectionSubheader content isn't consistent");
                         bFoundValidLocation = FALSE;
                         break;
                     }
@@ -3311,7 +3311,7 @@ static void NITFLoadLocationTable( NITFImage *psImage )
                     }
                     else
                     {
-                        CPLDebug("NITF", "The VQ tables content aren't consistant");
+                        CPLDebug("NITF", "The VQ tables content aren't consistent");
                         bFoundValidLocation = FALSE;
                         break;
                     }

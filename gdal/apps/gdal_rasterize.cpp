@@ -341,7 +341,7 @@ GDALDatasetH CreateOutputDataset(std::vector<OGRLayerH> ahLayers,
             }
 
             /* When rasterizing point layers and that the bounds have */
-            /* not been explicitely set, voluntary increase the extent by */
+            /* not been explicitly set, voluntary increase the extent by */
             /* a half-pixel size to avoid missing points on the border */
             if (wkbFlatten(OGR_L_GetGeomType(hLayer)) == wkbPoint &&
                 !bTargetAlignedPixels && dfXRes != 0 && dfYRes != 0)
@@ -479,7 +479,7 @@ int main( int argc, char ** argv )
     double dfXRes = 0, dfYRes = 0;
     int bCreateOutput = FALSE;
     const char* pszFormat = "GTiff";
-    int bFormatExplicitelySet = FALSE;
+    int bFormatExplicitlySet = FALSE;
     char **papszCreateOptions = NULL;
     GDALDriverH hDriver = NULL;
     GDALDataType eOutputType = GDT_Float64;
@@ -618,7 +618,7 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-of") && i < argc-1 )
         {
             pszFormat = argv[++i];
-            bFormatExplicitelySet = TRUE;
+            bFormatExplicitlySet = TRUE;
             bCreateOutput = TRUE;
         }
         else if( EQUAL(argv[i],"-init") && i < argc - 1 )
@@ -870,7 +870,7 @@ int main( int argc, char ** argv )
             exit( 1 );
         }
 
-        if (!bQuiet && !bFormatExplicitelySet)
+        if (!bQuiet && !bFormatExplicitlySet)
             CheckExtensionConsistency(pszDstFilename, pszFormat);
     }
     else

@@ -52,7 +52,7 @@ static void Usage(const char* pszErrorMsg = NULL)
             "  filename: The file to build overviews for (or whose overviews must be removed).\n"
             "  levels: A list of integral overview levels to build. Ignored with -clean option.\n"
             "\n"
-            "Usefull configuration variables :\n"
+            "Useful configuration variables :\n"
             "  --config USE_RRD YES : Use Erdas Imagine format (.aux) as overview format.\n"
             "Below, only for external overviews in GeoTIFF format:\n"
             "  --config COMPRESS_OVERVIEW {JPEG,LZW,PACKBITS,DEFLATE} : TIFF compression\n"

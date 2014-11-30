@@ -1206,7 +1206,7 @@ typedef enum
  * with care.
  *
  * If the OGR_ORGANIZE_POLYGONS configuration option is defined, its value will override
- * the value of the METHOD option of papszOptions (usefull to modify the behaviour of the
+ * the value of the METHOD option of papszOptions (useful to modify the behaviour of the
  * shapefile driver)
  *
  * @param papoPolygons array of geometry pointers - should all be OGRPolygons.

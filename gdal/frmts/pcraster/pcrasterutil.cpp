@@ -314,8 +314,8 @@ CSF_VS GDALType2ValueScale(
              complex.
 
   If exact is false, conversion to CSF2.0 types will take place. This is
-  usefull for in file cell representations. If exact is true, and exact match
-  is made. This is usefull for in app cell representations.
+  useful for in file cell representations. If exact is true, and exact match
+  is made. This is useful for in app cell representations.
 
   If exact is false, this function always returns one of CR_UINT1, CR_INT4
   or CR_REAL4.

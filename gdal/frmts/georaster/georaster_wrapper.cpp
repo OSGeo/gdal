@@ -718,7 +718,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
     nBandBlockSize   = nBandBlockSize   == 0 ? 1 : nBandBlockSize;
 
     //  -----------------------------------------------------------
-    //  Blocking storage paramters
+    //  Blocking storage parameters
     //  -----------------------------------------------------------
 
     CPLString sBlocking;
@@ -789,7 +789,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
     }
 
     //  -----------------------------------------------------------
-    //  Complete format paramters
+    //  Complete format parameters
     //  -----------------------------------------------------------
 
     if( poConnection->GetVersion() > 10 )

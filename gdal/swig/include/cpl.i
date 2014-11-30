@@ -363,7 +363,7 @@ int VSIUnlink(const char * utf8_path );
 
 /* Added in GDAL 1.7.0 */
 /* Thread support is necessary for binding languages with threaded GC */
-/* even if the user doesn't explicitely use threads */
+/* even if the user doesn't explicitly use threads */
 %inline {
 int wrapper_HasThreadSupport()
 {
@@ -479,7 +479,7 @@ int wrapper_VSIFWriteL( int nLen, char *pBuf, int size, int memb, VSILFILE * f)
 {
     if (nLen < size * memb)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Inconsistant buffer size with 'size' and 'memb' values");
+        CPLError(CE_Failure, CPLE_AppDefined, "Inconsistent buffer size with 'size' and 'memb' values");
         return 0;
     }
     return VSIFWriteL(pBuf, size, memb, f);

@@ -447,7 +447,7 @@ int wrapper_GridCreate( char* algorithmOptions,
     
     if ( eErr != CE_None )
     {
-        CPLError( eErr, CPLE_AppDefined, "Failed to process algoritm name and parameters.\n" );
+        CPLError( eErr, CPLE_AppDefined, "Failed to process algorithm name and parameters.\n" );
         return eErr;
     }
 

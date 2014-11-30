@@ -2940,7 +2940,7 @@ void CPL_STDCALL
 PythonBindingErrorHandler(CPLErr eclass, int code, const char *msg ) 
 {
   /* 
-  ** Generally we want to supress error reporting if we have exceptions
+  ** Generally we want to suppress error reporting if we have exceptions
   ** enabled as the error message will be in the exception thrown in 
   ** Python.  
   */
@@ -22060,7 +22060,7 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"pszDialect:  allows control of the statement dialect. If set to NULL,\n"
 		"the OGR SQL engine will be used, except for RDBMS drivers that will\n"
-		"use their dedicated SQL engine, unless OGRSQL is explicitely passed as\n"
+		"use their dedicated SQL engine, unless OGRSQL is explicitly passed as\n"
 		"the dialect.\n"
 		"\n"
 		"an handle to a OGRLayer containing the results of the query.\n"

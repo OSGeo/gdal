@@ -4772,7 +4772,7 @@ CPLErr CPL_STDCALL GDALCreateMaskBand( GDALRasterBandH hBand, int nFlags )
 /**
  * \brief Compute translation table for color tables.
  *
- * When the raster band has a palette index, it may be usefull to compute
+ * When the raster band has a palette index, it may be useful to compute
  * the "translation" of this palette to the palette of another band.
  * The translation tries to do exact matching first, and then approximate
  * matching if no exact matching is possible.

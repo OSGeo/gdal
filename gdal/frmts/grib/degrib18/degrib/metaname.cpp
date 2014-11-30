@@ -840,7 +840,7 @@ GRIB2ParmTable MeteoAtmos[] = {
 /* 18 */    {"SNFALB", "Snow free albedo", "%", UC_NONE},
 };
 
-/* GRIB2 Code table 4.2 : 0.253 or 0.190 (Document is inconsistant.) */
+/* GRIB2 Code table 4.2 : 0.253 or 0.190 (Document is inconsistent.) */
 GRIB2ParmTable MeteoText[] = {
    /* 0 */ {"", "Arbitrary text string", "CCITTIA5", UC_NONE},
 };

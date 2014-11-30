@@ -206,7 +206,7 @@ bool VSIMemFile::SetLength( vsi_l_offset nNewLength )
         if( !bOwnData )
         {
             CPLError(CE_Failure, CPLE_NotSupported,
-                     "Cannot extended in-memory file whose ownership was not transfered");
+                     "Cannot extended in-memory file whose ownership was not transferred");
             return false;
         }
         

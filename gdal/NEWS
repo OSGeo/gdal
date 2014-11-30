@@ -783,7 +783,7 @@ Build(Unix):
  * New optional dependencies : libpcre (for regular expressions support in SQLite), libxml2 (validation of GML files)
  * --with-python: make it work with python3, and also accept path to python binary as argument of --with-python (#4725)
  * Use nc-config to detect netcdf compilation and linking parameters (#4424)
- * Add frmts/vrt to CONFIG_CFLAGS for developement version of gdal-config (needed for postgis 2.0 compilation)
+ * Add frmts/vrt to CONFIG_CFLAGS for development version of gdal-config (needed for postgis 2.0 compilation)
  * Fix compilation failure with iconv on FreeBSD (#4525)
  * Make FileGDBAPI detection work with FileGDBAPI v1.1 and v1.2 (#4570)
  * Fix build on Gentoo with its custom zlib 1.2.6 with the OF macro removed
@@ -1311,7 +1311,7 @@ GML driver:
  * Allow reading srsDimension attribute when set on LineString element, and not on posList (#4663)
  * Partial support for reading GML 3.3 compat encoding profile, limited to <gmlce:SimplePolygon>, <gmlce:SimpleRectangle>, <gmlce:SimpleTriangle>, <gmlce:SimpleMultiPoint> elements
  * Support WFS GetFeature response document to be piped and opened with /vsistdin/
- * Support specifying connection string as 'filename.gml,xsd=some_filename.xsd' to explicitely provide a XSD
+ * Support specifying connection string as 'filename.gml,xsd=some_filename.xsd' to explicitly provide a XSD
  * Improve detection of extent and srs for WFS 2.0
  * Allow ISO-8859-15 encoded files to be used by Expat parser (#4829)
  * Handle CompositeCurve like MultiCurve (for NAS)
@@ -1694,7 +1694,7 @@ Utilities:
  * gdalwarp: speed-up when using -tps with large number of GCPs
  * gdalwarp: add support for optional use of libarmadillo to speed-up matrix inversion in -tps mode
  * gdalwarp: detect situations where the user will override the source file
- * gdallocationinfo: do not let one off-db pixel cause all the rest to be supressed (#4181)
+ * gdallocationinfo: do not let one off-db pixel cause all the rest to be suppressed (#4181)
  * gdal_rasterize: fix half pixel shift when rasterizing points; make gdal_rasterize utility increase the computed raster extent by a half-pixel for point layers (#3774)
  * gdal_rasterize: when source datasource has a single layer, use it implicitely if none of -l or -sql is specified
  * nearblack: add -color option (#4085)
@@ -1708,7 +1708,7 @@ Utilities:
  * Add gdal_ls.py and gdal_cp.py as Python samples
  * Add new sample utility, gdal_edit.py, to edit in place various information of an existing GDAL dataset (projection, geotransform, nodata, metadata) (#4220)
  * gdalcopyproj.py: make it copy GCPs too
- * Add warning if a target filename extension isn't consistant with the output driver
+ * Add warning if a target filename extension isn't consistent with the output driver
  * Add --pause for convenient debugging, document it and --locale
 
 Multi-driver topics:
@@ -2057,7 +2057,7 @@ USGSDEM driver:
 VRT driver:
  * Implement VRTDataset::IRasterIO() that can delegate to source Dataset::RasterIO() in particular cases
  * Implement GetMinimum() and GetMaximum()
- * GetFileList(): for /vsicurl/ ressources, don't actually test their existence as it can be excruciating slow
+ * GetFileList(): for /vsicurl/ resources, don't actually test their existence as it can be excruciating slow
  * VRTComplexSource: correctly deal with complex data type (#3977)
  * Fix 2 segfaults related to using '<VRTDataset', but with invalid XML, as the target filename of VRTDataset::Create()
  * Fix 'VRTDerivedRasterBand with ComplexSource and nodata value yields potentially uninitialized buffer' (#4045)
@@ -2112,7 +2112,7 @@ Core:
  * OGR SQL: recognize optional ESCAPE escape_char clause
  * OGR SQL: allow NULL to be used as a value, so that 'SELECT *, NULL FROM foo works'
  * OGR SQL: Accept doublequoting of column_name in 'SELECT DISTINCT "column_name" FROM table_name' (#3966)
- * OGR SQL: OGRGenSQLResultsLayer: if the dialect is explicitely set to OGRSQL, don't propagate the WHERE clause of the SELECT to the source layer, but evaluate it instead at the OGRGenSQLResultsLayer level (#4022)
+ * OGR SQL: OGRGenSQLResultsLayer: if the dialect is explicitly set to OGRSQL, don't propagate the WHERE clause of the SELECT to the source layer, but evaluate it instead at the OGRGenSQLResultsLayer level (#4022)
  * OGR SQL: Avoid error emission on requests such as 'SELECT MIN(EAS_ID), COUNT(*) FROM POLY'
  * OGR SQL: Avoid setting width/precision for AVG column
  * OGR SQL: Add a mechanism to delete a layer (DROP TABLE x)
@@ -2166,7 +2166,7 @@ Utilities:
  * ogr2ogr: take into account fields specified in the -where clause in combinations with -select to create the correct list of fields to pass to SetIgnoredFields() (#4015)
  * ogr2ogr: fix -zfield option so that the modified geometry properly reports coordinate dimension = 3. Also avoids it to be in the list of ignored field names
  * ogr2ogr: add -simplify option to simplify geometries
- * ogr2ogr: add a warning if the target filename has an extension or a prefix that isn't consistant with the default output format (i.e. Shapefile), but which matches another driver. Can be made quiet with -q option
+ * ogr2ogr: add a warning if the target filename has an extension or a prefix that isn't consistent with the default output format (i.e. Shapefile), but which matches another driver. Can be made quiet with -q option
  * ogrinfo/ogr2ogr: exit when SetAttributeFilter() fails, instead of silently going on (#4261)
 
 Multi driver topics:
@@ -2561,7 +2561,7 @@ Port:
     - /vsitar/ : to read in .tar or .tgz/.tar.gz files
  * Add C API to create ZIP files
  * Add support for writable /vsizip/
- * Add VSIBufferedReaderHandle class that is usefull to improve performance when
+ * Add VSIBufferedReaderHandle class that is useful to improve performance when
    doing backward seeks by a few bytes on underlying file handles for which
    backwardseeks are very slow, such as GZip handle
  * Add service for base64 decoding
@@ -2579,7 +2579,7 @@ Port:
 Core:
  * RFC 24: progressive/async raster reading
  * On Unix, add capability of opening the target of a symlink through GDALOpen()
-   even if it not a real filename. Usefull for opening ressources expressed as
+   even if it not a real filename. Usefull for opening resources expressed as
    GDAL virtual filenames in software offering only file explorers (#3902)
  * Assume anything less than 100000 for GDAL_CACHEMAX is measured in metabytes.
  * Read cartesian coordinates if applicable in GDALLoadOziMapFile().
@@ -2672,7 +2672,7 @@ Utilities :
    to align on a standard grid (#3772)
 
 AAIGRID driver:
- * Cast nodata value to float to be consistant with precision of pixel data in
+ * Cast nodata value to float to be consistent with precision of pixel data in
    GDT_Float32 case; small optimization to avoid reading the first 100K when
    we know that the datatype is already Float32
  * Allow reading files where decimal separator is comma (#3668)
@@ -2779,7 +2779,7 @@ GTX driver:
  * Read NOAA .gtx vertical datum shift files.
 
 GXF driver:
- * Cast nodata value to float to be consistant with precision of pixel data in
+ * Cast nodata value to float to be consistent with precision of pixel data in
    GDT_Float32 case
  * Introduce a GXF_DATATYPE configuration option that can be set to Float64
  * Use GDALGetScanline() instead of GDALGetRawScanline() so that #SENS
@@ -2999,7 +2999,7 @@ Core:
  * Add OGRLayer::GetName() and OGRLayer::GetGeomType() virtual methods,
    and their C and SWIG mappings (#3719)
  * On Unix, add capability of opening the target of a symlink through OGROpen()
-   even if it not a real filename. Usefull for opening ressources expressed as
+   even if it not a real filename. Usefull for opening resources expressed as
    GDAL virtual filenames in software offering only file explorers (#3902)
  * Expat based XML readers : add support for reading files with Windows-1252
    encoding
@@ -3012,7 +3012,7 @@ Core:
                      OGR_G_SymDifference() and OGR_G_UnionCascaded()
  * Add C function: OGR_F_StealGeometry()
  * Move Centroid() method from OGRPolygon to OGRGeometry base class to be able
-   to operate on various geometry types, and to be consistant with PostGIS
+   to operate on various geometry types, and to be consistent with PostGIS
    ST_Centroid() capabilities and the underlying GEOS method
  * Make the GetStyleTable() SetStyleTable() SetStyleTableDirectly() methods on
    datasources and layers virtual (#2978)
@@ -3269,7 +3269,7 @@ PostgreSQL driver:
    is set to YES
  * If the PG_USE_BASE64 configuration option is set to YES, geometries will be
    requested as BASE64 encoded EWKB instead of canonical HEX encoded EWKB.
-   (usefull when bandwidth is the limiting factor)
+   (useful when bandwidth is the limiting factor)
  * Don't instanciate layer defn at layer creation. This can speed up
    significantly database opening when they are many tables and the user just
    needs to fetch one with GetLayerByName().
@@ -3388,7 +3388,7 @@ Python bindings:
    when used and set to True, None is returned when GDALGetGeoTransform()
    returns CE_Failure (instead of the fake (0,1,0,0,0,1)); backward
    compatibility preserved when the parameter isn't specified
- * Avoid supressing warnings and errors when exceptions are used (#3632)
+ * Avoid suppressing warnings and errors when exceptions are used (#3632)
  * Add gdalinfo.py, ogrinfo.py and ogr2ogr.py as sample scripts, direct ports
    of corresponding C/C++ utilities
  * Allow manipulating buffer > 2 GB on 64bit builds for ReadRaster() and WriteRaster()
@@ -3665,7 +3665,7 @@ GeoTIFF driver :
  * Use official value for inverse flattening of the WGS84 ellipsoid (#2787)
  * Add metadata domain for XML documents (#2786)
  * Make GTiff driver friendly with files with huge number of bands and pixel interleaving (#2838)
- * Avoid precaching other bands if block cache size is not big enough to accomodate them (#2838)
+ * Avoid precaching other bands if block cache size is not big enough to accommodate them (#2838)
  * Internal libtiff (4.0.0beta5) and libgeotiff (1.3.0beta) upgraded
  * use the SetCitationToSRS call for the PCSCitationGeoKey in a similar fashion to the GTCitationGeoKey (#2933)
  * NBITS set for GTiffOddBits.  YCbCr JPEG added as a compression type.
@@ -4103,7 +4103,7 @@ General:
         osr.ImportFromMICoordSys(), osr.ExportToMICoordSys(), SpatialReference.Clone()
         osr.EPSGTreatsAsLatLong(), osr.ImportFromEPSGA()
  * Make resampling an optionnal parameter for gdal.RegenerateOverview(),
-   to be consistant with gdal.RegenerateOverviews()
+   to be consistent with gdal.RegenerateOverviews()
  * NONNULL checks have been added to check various arguments of methods
  * add missing constants : DCAP_VIRTUALIO, color interpretations, OGR constants
 
@@ -4282,7 +4282,7 @@ Utilities:
  * gdalinfo: Display checksums on overviews when -checksum is specified
  * gdalinfo: Display whether the mask band has overviews
  * ogr2ogr: reset -gt to 1 with -skipfailures, document -gt (#2409)
- * ogr2ogr: Output error messages on stderr to be consistant; Make error message about failed reprojection more clearer (hopefully); Advertize the use of -skipfailures in error message (#2588)
+ * ogr2ogr: Output error messages on stderr to be consistent; Make error message about failed reprojection more clearer (hopefully); Advertize the use of -skipfailures in error message (#2588)
  * nearblack: Add support for scanning from top and bottom as well as from the sides.
  * Prevent crash in gdalwarpsimple utility and in GDALSimpleImageWarp() when source dataset has no raster band
  * gdal_rasterize: check that coordinates systems match (Ticket #1937)

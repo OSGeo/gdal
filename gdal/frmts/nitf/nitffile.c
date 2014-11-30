@@ -2217,7 +2217,7 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
             {
                 *pbError = TRUE;
                 CPLError( CE_Warning, CPLE_AppDefined,
-                          "Invalid item construct in %s TRE in XML ressource",
+                          "Invalid item construct in %s TRE in XML resource",
                           pszTREName );
                 break;
             }
@@ -2241,7 +2241,7 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                 if (nIterations < 0)
                 {
                     CPLError( CE_Warning, CPLE_AppDefined,
-                            "Invalid loop construct in %s TRE in XML ressource : "
+                            "Invalid loop construct in %s TRE in XML resource : "
                             "invalid 'counter' %s",
                             pszTREName, pszCounter );
                     *pbError = TRUE;
@@ -2262,7 +2262,7 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                 if (NPART < 0)
                 {
                     CPLError( CE_Warning, CPLE_AppDefined,
-                            "Invalid loop construct in %s TRE in XML ressource : "
+                            "Invalid loop construct in %s TRE in XML resource : "
                             "invalid 'counter' %s",
                             pszTREName, "NPART" );
                     *pbError = TRUE;
@@ -2280,7 +2280,7 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                 if (NUMOPG < 0)
                 {
                     CPLError( CE_Warning, CPLE_AppDefined,
-                            "Invalid loop construct in %s TRE in XML ressource : "
+                            "Invalid loop construct in %s TRE in XML resource : "
                             "invalid 'counter' %s",
                             pszTREName, "NUMOPG" );
                     *pbError = TRUE;
@@ -2302,7 +2302,7 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                 if (NPAR < 0)
                 {
                     CPLError( CE_Warning, CPLE_AppDefined,
-                            "Invalid loop construct in %s TRE in XML ressource : "
+                            "Invalid loop construct in %s TRE in XML resource : "
                             "invalid 'counter' %s",
                             pszTREName, "NPAR" );
                     *pbError = TRUE;
@@ -2311,7 +2311,7 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                 if (NPARO < 0)
                 {
                     CPLError( CE_Warning, CPLE_AppDefined,
-                            "Invalid loop construct in %s TRE in XML ressource : "
+                            "Invalid loop construct in %s TRE in XML resource : "
                             "invalid 'counter' %s",
                             pszTREName, "NPAR0" );
                     *pbError = TRUE;
@@ -2329,7 +2329,7 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                 if (NPLN < 0)
                 {
                     CPLError( CE_Warning, CPLE_AppDefined,
-                            "Invalid loop construct in %s TRE in XML ressource : "
+                            "Invalid loop construct in %s TRE in XML resource : "
                             "invalid 'counter' %s",
                             pszTREName, "NPLN" );
                     *pbError = TRUE;
@@ -2351,7 +2351,7 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                 if (NXPTS < 0)
                 {
                     CPLError( CE_Warning, CPLE_AppDefined,
-                            "Invalid loop construct in %s TRE in XML ressource : "
+                            "Invalid loop construct in %s TRE in XML resource : "
                             "invalid 'counter' %s",
                             pszTREName, "NXPTS" );
                     *pbError = TRUE;
@@ -2360,7 +2360,7 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                 if (NYPTS < 0)
                 {
                     CPLError( CE_Warning, CPLE_AppDefined,
-                            "Invalid loop construct in %s TRE in XML ressource : "
+                            "Invalid loop construct in %s TRE in XML resource : "
                             "invalid 'counter' %s",
                             pszTREName, "NYPTS" );
                     *pbError = TRUE;
@@ -2371,7 +2371,7 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
             else
             {
                 CPLError( CE_Warning, CPLE_AppDefined,
-                          "Invalid loop construct in %s TRE in XML ressource : "
+                          "Invalid loop construct in %s TRE in XML resource : "
                           "missing or invalid 'counter' or 'iterations' or 'formula'",
                           pszTREName );
                 *pbError = TRUE;
@@ -2556,7 +2556,7 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
             else
             {
                 CPLError( CE_Warning, CPLE_AppDefined,
-                          "Invalid if construct in %s TRE in XML ressource : "
+                          "Invalid if construct in %s TRE in XML resource : "
                           "missing or invalid 'cond' attribute",
                           pszTREName );
                 *pbError = TRUE;
@@ -2638,7 +2638,7 @@ char **NITFGenericMetadataReadTRE(char **papszMD,
     if (bError == FALSE && nTreLength > 0 && nTreOffset != nTreLength)
     {
         CPLError( CE_Warning, CPLE_AppDefined,
-                  "Inconsistant declaration of %s TRE",
+                  "Inconsistent declaration of %s TRE",
                   pszTREName );
     }
     if (nTreOffset < nTRESize)
@@ -2774,7 +2774,7 @@ CPLXMLNode* NITFCreateXMLTre(NITFFile* psFile,
     if (bError == FALSE && nTreLength > 0 && nTreOffset != nTreLength)
     {
         CPLError( CE_Warning, CPLE_AppDefined,
-                  "Inconsistant declaration of %s TRE",
+                  "Inconsistent declaration of %s TRE",
                   pszTREName );
     }
     if (nTreOffset < nTRESize)

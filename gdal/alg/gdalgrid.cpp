@@ -1831,17 +1831,17 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
 /*      defaults.                                                       */
 /************************************************************************/
 
-CPLErr ParseAlgorithmAndOptions( const char *pszAlgoritm,
+CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
                                  GDALGridAlgorithm *peAlgorithm,
                                  void **ppOptions )
 {
-    CPLAssert( pszAlgoritm );
+    CPLAssert( pszAlgorithm );
     CPLAssert( peAlgorithm );
     CPLAssert( ppOptions );
 
     *ppOptions = NULL;
 
-    char **papszParms = CSLTokenizeString2( pszAlgoritm, ":", FALSE );
+    char **papszParms = CSLTokenizeString2( pszAlgorithm, ":", FALSE );
 
     if ( CSLCount(papszParms) < 1 )
         return CE_Failure;
