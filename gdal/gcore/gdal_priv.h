@@ -266,11 +266,14 @@ class CPL_DLL GDALDataset : public GDALMajorObject
                                  const char* const* papszAllowedDrivers,
                                  const char* const* papszOpenOptions,
                                  const char* const* papszSiblingFiles );
+    friend void CPL_STDCALL GDALClose( GDALDatasetH hDS );
 
     friend class GDALDriver;
     friend class GDALDefaultOverviews;
     friend class GDALProxyDataset;
     friend class GDALDriverManager;
+    
+    void AddToDatasetOpenList();
 
   protected:
     GDALDriver  *poDriver;
@@ -286,8 +289,10 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     int         nRefCount;
     int         bShared;
+    int         bIsInternal;
 
                 GDALDataset(void);
+
     void        RasterInitialize( int, int );
     void        SetBand( int, GDALRasterBand * );
 

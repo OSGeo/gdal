@@ -247,6 +247,8 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
         
         if( poDS->poDriver == NULL )
             poDS->poDriver = this;
+
+        poDS->AddToDatasetOpenList();
     }
 
     return poDS;
@@ -746,12 +748,14 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
 
             if( poDstDS->poDriver == NULL )
                 poDstDS->poDriver = this;
+
+            poDstDS->AddToDatasetOpenList();
         }
     }
     else
         poDstDS = DefaultCreateCopy( pszFilename, poSrcDS, bStrict, 
                                   papszOptions, pfnProgress, pProgressData );
-
+        
     CSLDestroy(papszOptionsToDelete);
     return poDstDS;
 }
