@@ -32,6 +32,7 @@
 
 #include "ogrsf_frmts.h"
 #include "ogr_sqlite.h"
+#include "ogrgeopackageutility.h"
 
 #define UNDEFINED_SRID 0
 
@@ -72,6 +73,22 @@ class GDALGeoPackageDataset : public OGRSQLiteBaseDataSource
     int                 m_nShiftYTiles;
     int                 m_nShiftYPixelsMod;
 
+    int                 m_bIsMain;
+    int                 m_nOverviewCount;
+    GDALGeoPackageDataset** m_papoOverviewDS;
+    
+        int             InitRaster ( const char* pszTableName,
+                                        double dfMinX,
+                                        double dfMinY,
+                                        double dfMaxX,
+                                        double dfMaxY,
+                                        const char* pszContentsMinX,
+                                        const char* pszContentsMinY,
+                                        const char* pszContentsMaxX,
+                                        const char* pszContentsMaxY,
+                                        char** papszOpenOptions,
+                                        const SQLResult& oResult,
+                                        int nIdxInResult );
         int     OpenRaster( const char* pszTableName,
                             const char* pszIdentifier,
                             const char* pszDescription,
@@ -150,6 +167,8 @@ class GDALGeoPackageRasterBand: public GDALPamRasterBand
         
         virtual CPLErr          IReadBlock(int nBlockXOff, int nBlockYOff,
                                            void* pData);
+        virtual int             GetOverviewCount();
+        virtual GDALRasterBand* GetOverview(int nIdx);
 };
 
 /************************************************************************/

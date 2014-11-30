@@ -52,7 +52,10 @@ GDALGeoPackageRasterBand::GDALGeoPackageRasterBand(GDALGeoPackageDataset* poDS,
 CPLErr GDALGeoPackageRasterBand::ReadTile(const CPLString& osMemFileName,
                                           GByte* pabyTileData)
 {
-    GDALDataset* poDSTile = (GDALDataset*)GDALOpen(osMemFileName.c_str(), GA_ReadOnly);
+    const char* apszDrivers[] = { "JPEG", "PNG", "WEBP", NULL };
+    GDALDataset* poDSTile = (GDALDataset*)GDALOpenEx(osMemFileName.c_str(),
+                                                     GDAL_OF_RASTER | GDAL_OF_INTERNAL,
+                                                     apszDrivers, NULL, NULL);
     if( poDSTile == NULL )
     {
         memset(pabyTileData, 0, 4 * nBlockXSize * nBlockYSize );
@@ -141,7 +144,6 @@ CPLErr GDALGeoPackageRasterBand::ReadTile(const CPLString& osMemFileName,
 
 GByte* GDALGeoPackageRasterBand::ReadTile(int nRow, int nCol)
 {
-    CPLErr eErr = CE_None;
     int rc;
     GDALGeoPackageDataset* poGDS = (GDALGeoPackageDataset* )poDS;
     
@@ -208,7 +210,7 @@ GByte* GDALGeoPackageRasterBand::ReadTile(int nRow, int nCol)
                                                 nBytes, FALSE);
         VSIFCloseL(fp);
 
-        eErr = ReadTile(osMemFileName, pabyData);
+        ReadTile(osMemFileName, pabyData);
     }
     else
     {
@@ -359,3 +361,26 @@ CPLErr GDALGeoPackageRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 
     return CE_None;
 }
+
+/************************************************************************/
+/*                         GetOverviewCount()                           */
+/************************************************************************/
+
+int GDALGeoPackageRasterBand::GetOverviewCount()
+{
+    GDALGeoPackageDataset* poGDS = (GDALGeoPackageDataset* )poDS;
+    return poGDS->m_nOverviewCount;
+}
+
+/************************************************************************/
+/*                         GetOverviewCount()                           */
+/************************************************************************/
+
+GDALRasterBand* GDALGeoPackageRasterBand::GetOverview(int nIdx)
+{
+    GDALGeoPackageDataset* poGDS = (GDALGeoPackageDataset* )poDS;
+    if( nIdx < 0 || nIdx >= poGDS->m_nOverviewCount )
+        return NULL;
+    return poGDS->m_papoOverviewDS[nIdx]->GetRasterBand(nBand);
+}
+       

@@ -29,7 +29,6 @@
  ****************************************************************************/
 
 #include "ogr_geopackage.h"
-#include "ogrgeopackageutility.h"
 #include "ogr_p.h"
 #include "swq.h"
 
@@ -354,6 +353,9 @@ GDALGeoPackageDataset::GDALGeoPackageDataset()
     m_nShiftXPixelsMod = 0;
     m_nShiftYTiles = 0;
     m_nShiftYPixelsMod = 0;
+    m_bIsMain = TRUE;
+    m_nOverviewCount = 0;
+    m_papoOverviewDS = NULL;
 }
 
 /************************************************************************/
@@ -362,10 +364,17 @@ GDALGeoPackageDataset::GDALGeoPackageDataset()
 
 GDALGeoPackageDataset::~GDALGeoPackageDataset()
 {
-    for( int i = 0; i < m_nLayers; i++ )
+    int i;
+    if( !m_bIsMain )
+        hDB = NULL;
+    
+    for( i = 0; i < m_nLayers; i++ )
         delete m_papoLayers[i];
+    for( i = 0; i < m_nOverviewCount; i++ )
+        delete m_papoOverviewDS[i];
 
     CPLFree( m_papoLayers );
+    CPLFree( m_papoOverviewDS );
     CSLDestroy( m_papszSubDatasets );
     CPLFree(m_pszProjection);
     CPLFree(m_pabyCachedTiles);
@@ -608,6 +617,86 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
 }
 
 /************************************************************************/
+/*                         InitRaster()                                 */
+/************************************************************************/
+
+int GDALGeoPackageDataset::InitRaster ( const char* pszTableName,
+                                        double dfMinX,
+                                        double dfMinY,
+                                        double dfMaxX,
+                                        double dfMaxY,
+                                        const char* pszContentsMinX,
+                                        const char* pszContentsMinY,
+                                        const char* pszContentsMaxX,
+                                        const char* pszContentsMaxY,
+                                        char** papszOpenOptions,
+                                        const SQLResult& oResult,
+                                        int nIdxInResult )
+{
+    m_osRasterTable = pszTableName;
+    m_dfTMSMinX = dfMinX;
+    m_dfTMSMaxY = dfMaxY;
+
+    m_nZoomLevel = atoi(SQLResultGetValue(&oResult, 0, nIdxInResult));
+    double dfPixelXSize = CPLAtof(SQLResultGetValue(&oResult, 1, nIdxInResult));
+    double dfPixelYSize = CPLAtof(SQLResultGetValue(&oResult, 2, nIdxInResult));
+    int nTileWidth = atoi(SQLResultGetValue(&oResult, 3, nIdxInResult));
+    int nTileHeight = atoi(SQLResultGetValue(&oResult, 4, nIdxInResult));
+
+    /* Use content bounds in priority over tile_matrix_set bounds */
+    double dfGDALMinX = dfMinX;
+    double dfGDALMinY = dfMinY;
+    double dfGDALMaxX = dfMaxX;
+    double dfGDALMaxY = dfMaxY;
+    pszContentsMinX = CSLFetchNameValueDef(papszOpenOptions, "MINX", pszContentsMinX);
+    pszContentsMinY = CSLFetchNameValueDef(papszOpenOptions, "MINY", pszContentsMinY);
+    pszContentsMaxX = CSLFetchNameValueDef(papszOpenOptions, "MAXX", pszContentsMaxX);
+    pszContentsMaxY = CSLFetchNameValueDef(papszOpenOptions, "MAXY", pszContentsMaxY);
+    if( pszContentsMinX != NULL && pszContentsMinY != NULL &&
+        pszContentsMaxX != NULL && pszContentsMaxY != NULL )
+    {
+        dfGDALMinX = CPLAtof(pszContentsMinX);
+        dfGDALMinY = CPLAtof(pszContentsMinY);
+        dfGDALMaxX = CPLAtof(pszContentsMaxX);
+        dfGDALMaxY = CPLAtof(pszContentsMaxY);
+    }
+    if( dfGDALMinX >= dfGDALMaxX || dfGDALMinY >= dfGDALMaxY )
+    {
+        return FALSE;
+    }
+
+    m_bGeoTransformValid = TRUE;
+    m_adfGeoTransform[0] = dfGDALMinX;
+    m_adfGeoTransform[1] = dfPixelXSize;
+    m_adfGeoTransform[3] = dfGDALMaxY;
+    m_adfGeoTransform[5] = -dfPixelYSize;
+    nRasterXSize = (int)(0.5 + (dfGDALMaxX - dfGDALMinX) / dfPixelXSize);
+    nRasterYSize = (int)(0.5 + (dfGDALMaxY - dfGDALMinY) / dfPixelYSize);
+
+    // Compute shift between GDAL origin and TileMatrixSet origin
+    int nShiftXPixels = (int)floor(0.5 + (m_adfGeoTransform[0] - m_dfTMSMinX) /  m_adfGeoTransform[1]);
+    m_nShiftXTiles = (int)floor(1.0 * nShiftXPixels / nTileWidth);
+    m_nShiftXPixelsMod = ((nShiftXPixels % nTileWidth) + nTileWidth) % nTileWidth;
+    int nShiftYPixels = (int)floor(0.5 + (m_adfGeoTransform[3] - m_dfTMSMaxY) /  m_adfGeoTransform[5]);
+    m_nShiftYTiles = (int)floor(1.0 * nShiftYPixels / nTileHeight);
+    m_nShiftYPixelsMod = ((nShiftYPixels % nTileHeight) + nTileHeight) % nTileHeight;
+    
+    int nTilesToCache = ( m_nShiftXPixelsMod ) ? 4 : 1;
+    m_pabyCachedTiles = (GByte*) VSIMalloc3(4 * nTilesToCache, nTileWidth, nTileHeight);
+    if( m_pabyCachedTiles == NULL )
+    {
+        return FALSE;
+    }
+    
+    for(int i = 1; i <= 4; i ++)
+        SetBand( i, new GDALGeoPackageRasterBand(this, i,
+                                                 nTileWidth, nTileHeight) );
+    SetPamFlags(0);
+    
+    return TRUE;
+}
+
+/************************************************************************/
 /*                         OpenRaster()                                 */
 /************************************************************************/
 
@@ -641,9 +730,6 @@ int GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
         }
     }
 
-    m_osRasterTable = pszTableName;
-    m_dfTMSMinX = dfMinX;
-    m_dfTMSMaxY = dfMaxY;
 
     /* The NOT NULL are just in case the tables would have been built without */
     /* the mandatory constraints */
@@ -667,63 +753,14 @@ int GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
         SQLResultFree(&oResult);
         return FALSE;
     }
-
-    m_nZoomLevel = atoi(SQLResultGetValue(&oResult, 0, 0));
-    double dfPixelXSize = CPLAtof(SQLResultGetValue(&oResult, 1, 0));
-    double dfPixelYSize = CPLAtof(SQLResultGetValue(&oResult, 2, 0));
-    int nTileWidth = atoi(SQLResultGetValue(&oResult, 3, 0));
-    int nTileHeight = atoi(SQLResultGetValue(&oResult, 4, 0));
-
-    /* Use content bounds in priority over tile_matrix_set bounds */
-    double dfGDALMinX = dfMinX;
-    double dfGDALMinY = dfMinY;
-    double dfGDALMaxX = dfMaxX;
-    double dfGDALMaxY = dfMaxY;
-    pszContentsMinX = CSLFetchNameValueDef(papszOpenOptions, "MINX", pszContentsMinX);
-    pszContentsMinY = CSLFetchNameValueDef(papszOpenOptions, "MINY", pszContentsMinY);
-    pszContentsMaxX = CSLFetchNameValueDef(papszOpenOptions, "MAXX", pszContentsMaxX);
-    pszContentsMaxY = CSLFetchNameValueDef(papszOpenOptions, "MAXY", pszContentsMaxY);
-    if( pszContentsMinX != NULL && pszContentsMinY != NULL &&
-        pszContentsMaxX != NULL && pszContentsMaxY != NULL )
-    {
-        dfGDALMinX = CPLAtof(pszContentsMinX);
-        dfGDALMinY = CPLAtof(pszContentsMinY);
-        dfGDALMaxX = CPLAtof(pszContentsMaxX);
-        dfGDALMaxY = CPLAtof(pszContentsMaxY);
-    }
-    if( dfGDALMinX >= dfGDALMaxX || dfGDALMinY >= dfGDALMaxY )
+    
+    if(! InitRaster ( pszTableName, dfMinX, dfMinY, dfMaxX, dfMaxY,
+                 pszContentsMinX, pszContentsMinY, pszContentsMaxX, pszContentsMaxY,
+                 papszOpenOptions, oResult, 0) )
     {
         SQLResultFree(&oResult);
         return FALSE;
     }
-
-    m_bGeoTransformValid = TRUE;
-    m_adfGeoTransform[0] = dfGDALMinX;
-    m_adfGeoTransform[1] = dfPixelXSize;
-    m_adfGeoTransform[3] = dfGDALMaxY;
-    m_adfGeoTransform[5] = -dfPixelYSize;
-    nRasterXSize = (int)(0.5 + (dfGDALMaxX - dfGDALMinX) / dfPixelXSize);
-    nRasterYSize = (int)(0.5 + (dfGDALMaxY - dfGDALMinY) / dfPixelYSize);
-
-    // Compute shift between GDAL origin and TileMatrixSet origin
-    int nShiftXPixels = (int)floor(0.5 + (m_adfGeoTransform[0] - m_dfTMSMinX) /  m_adfGeoTransform[1]);
-    m_nShiftXTiles = (int)floor(1.0 * nShiftXPixels / nTileWidth);
-    m_nShiftXPixelsMod = ((nShiftXPixels % nTileWidth) + nTileWidth) % nTileWidth;
-    int nShiftYPixels = (int)floor(0.5 + (m_adfGeoTransform[3] - m_dfTMSMaxY) /  m_adfGeoTransform[5]);
-    m_nShiftYTiles = (int)floor(1.0 * nShiftYPixels / nTileHeight);
-    m_nShiftYPixelsMod = ((nShiftYPixels % nTileHeight) + nTileHeight) % nTileHeight;
-    
-    int nTilesToCache = ( m_nShiftXPixelsMod ) ? 4 : 1;
-    m_pabyCachedTiles = (GByte*) VSIMalloc3(4 * nTilesToCache, nTileWidth, nTileHeight);
-    if( m_pabyCachedTiles == NULL )
-    {
-        SQLResultFree(&oResult);
-        return FALSE;
-    }
-    
-    for(int i = 1; i <= 4; i ++)
-        SetBand( i, new GDALGeoPackageRasterBand(this, i,
-                                                 nTileWidth, nTileHeight) );
 
     // Set metadata
     SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
@@ -733,6 +770,18 @@ int GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
         SetMetadataItem("DESCRIPTION", pszDescription);
     SetMetadataItem("ZOOM_LEVEL", CPLSPrintf("%d", m_nZoomLevel));
     SetPamFlags(0);
+    
+    for( int i = 1; i < oResult.nRowCount; i++ )
+    {
+        GDALGeoPackageDataset* poOvrDS = new GDALGeoPackageDataset();
+        m_papoOverviewDS = (GDALGeoPackageDataset**) CPLRealloc(m_papoOverviewDS, sizeof(GDALGeoPackageDataset*) * (m_nOverviewCount+1));
+        m_papoOverviewDS[m_nOverviewCount ++] = poOvrDS;
+        poOvrDS->InitRaster ( pszTableName, dfMinX, dfMinY, dfMaxX, dfMaxY,
+                 pszContentsMinX, pszContentsMinY, pszContentsMaxX, pszContentsMaxY,
+                 papszOpenOptions, oResult, i);
+        poOvrDS->m_bIsMain = FALSE;
+        poOvrDS->hDB = hDB;
+    }
 
     SQLResultFree(&oResult);
 
