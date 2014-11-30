@@ -236,6 +236,42 @@ def png_11():
 
     return tst.testCreateCopy( vsimem = 1, interrupt_during_copy = True )
 
+###############################################################################
+# Test optimized IRasterIO
+
+def png_12():
+    ds = gdal.Open( '../gcore/data/stefan_full_rgba.png' )
+    cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)]
+    
+    # Band interleaved
+    data = ds.ReadRaster(0,0,ds.RasterXSize, ds.RasterYSize)
+    tmp_ds = gdal.GetDriverByName('Mem').Create('', ds.RasterXSize, ds.RasterYSize, ds.RasterCount)
+    tmp_ds.WriteRaster(0,0,ds.RasterXSize, ds.RasterYSize,data)
+    got_cs = [ tmp_ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)]
+    if cs != got_cs:
+        gdaltest.post_reason('failure')
+        return 'fail'    
+        
+    # Pixel interleaved
+    data = ds.ReadRaster(0,0,ds.RasterXSize, ds.RasterYSize, buf_pixel_space = ds.RasterCount, buf_band_space = 1)
+    tmp_ds = gdal.GetDriverByName('Mem').Create('', ds.RasterXSize, ds.RasterYSize, ds.RasterCount)
+    tmp_ds.WriteRaster(0,0,ds.RasterXSize, ds.RasterYSize,data, buf_pixel_space = ds.RasterCount, buf_band_space = 1)
+    got_cs = [ tmp_ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)]
+    if cs != got_cs:
+        gdaltest.post_reason('failure')
+        return 'fail'    
+
+    # Pixel interleaved with padding
+    data = ds.ReadRaster(0,0,ds.RasterXSize, ds.RasterYSize, buf_pixel_space = 5, buf_band_space = 1)
+    tmp_ds = gdal.GetDriverByName('Mem').Create('', ds.RasterXSize, ds.RasterYSize, ds.RasterCount)
+    tmp_ds.WriteRaster(0,0,ds.RasterXSize, ds.RasterYSize,data, buf_pixel_space = 5, buf_band_space = 1)
+    got_cs = [ tmp_ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)]
+    if cs != got_cs:
+        gdaltest.post_reason('failure')
+        return 'fail'    
+    
+    return 'success'
+
 gdaltest_list = [
     png_1,
     png_2,
