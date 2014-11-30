@@ -283,7 +283,8 @@ gdaltest_list = [
     png_8,
     png_9,
     png_10,
-    png_11 ]
+    png_11,
+    png_12 ]
 
 if __name__ == '__main__':
 
