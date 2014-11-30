@@ -17,7 +17,7 @@ OBJ =	gdaldither.obj gdalmediancut.obj gdal_crs.obj gdaltransformer.obj \
 	gdalsimplewarp.obj gdalwarper.obj gdalwarpkernel.obj \
 	thinplatespline.obj gdal_tps.obj gdalrasterize.obj llrasterize.obj \
 	gdalwarpoperation.obj gdalchecksum.obj gdal_rpc.obj gdalgeoloc.obj \
-	gdalgrid.obj gdalcutline.obj gdalproximity.obj rasterfill.obj \
+	gdalgrid.obj gdalgridsse.obj gdalcutline.obj gdalproximity.obj rasterfill.obj \
 	gdalsievefilter.obj gdalrasterpolygonenumerator.obj polygonize.obj \
 	gdalrasterfpolygonenumerator.obj fpolygonize.obj contour.obj \
 	gdal_octave.obj gdal_simplesurf.obj gdalmatching.obj \
