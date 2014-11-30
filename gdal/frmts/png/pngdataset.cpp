@@ -150,6 +150,10 @@ class PNGDataset : public GDALPamDataset
     virtual const char *GetMetadataItem( const char * pszName,
                                          const char * pszDomain = NULL );
 
+    virtual CPLErr      IRasterIO( GDALRWFlag, int, int, int, int,
+                                   void *, int, int, GDALDataType,
+                                   int, int *, int, int, int );
+
     // semi-private.
     jmp_buf     sSetJmpContext;
 
@@ -461,6 +465,95 @@ PNGDataset::~PNGDataset()
 
     if( poColorTable != NULL )
         delete poColorTable;
+}
+
+/************************************************************************/
+/*                            IsFullBandMap()                           */
+/************************************************************************/
+
+static int IsFullBandMap(int *panBandMap, int nBands)
+{
+    for(int i=0;i<nBands;i++)
+    {
+        if( panBandMap[i] != i + 1 )
+            return FALSE;
+    }
+    return TRUE;
+}
+
+/************************************************************************/
+/*                             IRasterIO()                              */
+/************************************************************************/
+
+CPLErr PNGDataset::IRasterIO( GDALRWFlag eRWFlag,
+                              int nXOff, int nYOff, int nXSize, int nYSize,
+                              void *pData, int nBufXSize, int nBufYSize, 
+                              GDALDataType eBufType,
+                              int nBandCount, int *panBandMap, 
+                              int nPixelSpace, int nLineSpace, int nBandSpace )
+
+{
+    if((eRWFlag == GF_Read) &&
+       (nBandCount == nBands) &&
+       (nXOff == 0) && (nXOff == 0) &&
+       (nXSize == nBufXSize) && (nXSize == nRasterXSize) &&
+       (nYSize == nBufYSize) && (nYSize == nRasterYSize) &&
+       (eBufType == GDT_Byte) &&
+       (eBufType == GetRasterBand(1)->GetRasterDataType()) &&
+       (pData != NULL) &&
+       (panBandMap != NULL) && IsFullBandMap(panBandMap, nBands))
+    {
+        int y;
+        CPLErr tmpError;
+        int x;
+
+        // Pixel interleaved case
+        if( nBandSpace == 1 )
+        {
+            for(y = 0; y < nYSize; ++y)
+            {
+                tmpError = LoadScanline(y);
+                if(tmpError != CE_None) return tmpError;
+                GByte* pabyScanline = pabyBuffer 
+                    + (y - nBufferStartLine) * nBands * nXSize;
+                if( nPixelSpace == nBandSpace * nBandCount )
+                {
+                    memcpy(&(((GByte*)pData)[(y*nLineSpace)]),
+                           pabyScanline, nBandCount * nXSize);
+                }
+                else
+                {
+                    for(x = 0; x < nXSize; ++x)
+                    {
+                        memcpy(&(((GByte*)pData)[(y*nLineSpace) + (x*nPixelSpace)]), 
+                               (const GByte*)&(pabyScanline[x* nBandCount]), nBandCount);
+                    }
+                }
+            }
+        }
+        else
+        {
+            for(y = 0; y < nYSize; ++y)
+            {
+                tmpError = LoadScanline(y);
+                if(tmpError != CE_None) return tmpError;
+                GByte* pabyScanline = pabyBuffer 
+                    + (y - nBufferStartLine) * nBands * nXSize;
+                for(x = 0; x < nXSize; ++x)
+                {
+                    for(int iBand=0;iBand<nBands;iBand++)
+                        ((GByte*)pData)[(y*nLineSpace) + (x*nPixelSpace) + iBand * nBandSpace] = pabyScanline[x*nBands+iBand];
+                }
+            }
+        }
+
+        return CE_None;
+    }
+
+    return GDALPamDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                     pData, nBufXSize, nBufYSize, eBufType, 
+                                     nBandCount, panBandMap, 
+                                     nPixelSpace, nLineSpace, nBandSpace);
 }
 
 /************************************************************************/
