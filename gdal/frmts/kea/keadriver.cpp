@@ -51,6 +51,8 @@ void GDALRegister_KEA()
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "KEA Image Format (.kea)" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "kea" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                                   "frmt_kea.html" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
                             "Byte Int16 UInt16 Int32 UInt32 Float32 Float64" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
