@@ -606,6 +606,22 @@ def jp2openjpeg_18():
     return 'success'
 
 ###############################################################################
+# Test reading file where GMLJP2 has nul character instead of \n (#5760)
+
+def jp2openjpeg_19():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    ds = gdal.Open('data/byte_gmljp2_with_nul_car.jp2')
+    if ds.GetProjectionRef() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
 def jp2openjpeg_online_1():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -795,6 +811,7 @@ gdaltest_list = [
     jp2openjpeg_16,
     jp2openjpeg_17,
     jp2openjpeg_18,
+    jp2openjpeg_19,
     jp2openjpeg_online_1,
     jp2openjpeg_online_2,
     jp2openjpeg_online_3,
