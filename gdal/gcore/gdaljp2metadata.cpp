@@ -208,7 +208,12 @@ void GDALJP2Metadata::CollectGMLData( GDALJP2Box *poGMLData )
                         int nXMLLength = (int)oSubChildBox.GetDataLength();
                         int i;
                         for(i=nXMLLength-1; i >= 0; i--)
-                            nXMLLength --;
+                        {
+                            if( pszXML[i] == '\0' )
+                                nXMLLength --;
+                            else
+                                break;
+                        }
                         for(i=0;i<nXMLLength;i++)
                         {
                             if( pszXML[i] == '\0' )
