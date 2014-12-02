@@ -198,7 +198,41 @@ void GDALJP2Metadata::CollectGMLData( GDALJP2Box *poGMLData )
                 if( EQUAL(oSubChildBox.GetType(),"lbl ") )
                     pszLabel = (char *)oSubChildBox.ReadBoxData();
                 else if( EQUAL(oSubChildBox.GetType(),"xml ") )
+                {
                     pszXML = (char *) oSubChildBox.ReadBoxData();
+
+                    // Some GML data contains \0 instead of \n !
+                    // See http://trac.osgeo.org/gdal/ticket/5760
+                    if( pszXML )
+                    {
+                        int nXMLLength = (int)oSubChildBox.GetDataLength();
+                        int i;
+                        for(i=nXMLLength-1; i >= 0; i--)
+                            nXMLLength --;
+                        for(i=0;i<nXMLLength;i++)
+                        {
+                            if( pszXML[i] == '\0' )
+                                break;
+                        }
+                        if( i < nXMLLength )
+                        {
+                            CPLPushErrorHandler(CPLQuietErrorHandler);
+                            CPLXMLNode* psNode = CPLParseXMLString(pszXML);
+                            CPLPopErrorHandler();
+                            if( psNode == NULL )
+                            {
+                                CPLDebug("GMLJP2", "GMLJP2 data contains nul characters inside content. Replacing them by \\n");
+                                for(int i=0;i<nXMLLength;i++)
+                                {
+                                    if( pszXML[i] == '\0' )
+                                        pszXML[i] = '\n';
+                                }
+                            }
+                            else
+                                CPLDestroyXMLNode(psNode);
+                        }
+                    }
+                }
 
                 oSubChildBox.ReadNextChild( &oChildBox );
             }
