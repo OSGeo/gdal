@@ -226,7 +226,7 @@ OGRSelafinDataSource::OGRSelafinDataSource() {
 /************************************************************************/
 
 OGRSelafinDataSource::~OGRSelafinDataSource() {
-    CPLDebug("Selafin","~OGRSelafinDataSource(%s)",pszName);
+    //CPLDebug("Selafin","~OGRSelafinDataSource(%s)",pszName);
     for( int i = 0; i < nLayers; i++ ) delete papoLayers[i];
     CPLFree( papoLayers );
     CPLFree( pszName );
