@@ -742,6 +742,7 @@ CPLXMLNode *VRTSourcedRasterBand::SerializeToXML( const char *pszVRTPath )
     CPLXMLNode *psTree;
 
     psTree = VRTRasterBand::SerializeToXML( pszVRTPath );
+    CPLXMLNode* psLastChild = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Process Sources.                                                */
@@ -753,7 +754,13 @@ CPLXMLNode *VRTSourcedRasterBand::SerializeToXML( const char *pszVRTPath )
         psXMLSrc = papoSources[iSource]->SerializeToXML( pszVRTPath );
         
         if( psXMLSrc != NULL )
-            CPLAddXMLChild( psTree, psXMLSrc );
+        {
+            if( psLastChild == NULL )
+                psTree->psChild = psXMLSrc;
+            else
+                psLastChild->psNext = psXMLSrc;
+            psLastChild = psXMLSrc;
+        }
     }
 
     return psTree;
