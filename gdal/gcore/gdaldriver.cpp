@@ -723,7 +723,23 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
         papszOptions = CSLRemoveStrings(CSLDuplicate(papszOptions), iIdxQuietDeleteOnCreateCopy, 1, NULL);
         papszOptionsToDelete = papszOptions;
     }
-    
+
+/* -------------------------------------------------------------------- */
+/*      If _INTERNAL_DATASET=YES, the returned dataset will not be      */
+/*      registered in the global list of open datasets.                 */
+/* -------------------------------------------------------------------- */
+    int iIdxInternalDataset =
+        CSLPartialFindString(papszOptions, "_INTERNAL_DATASET=");
+    int bInternalDataset = FALSE;
+    if( iIdxInternalDataset >= 0 )
+    {
+        bInternalDataset = CSLFetchBoolean(papszOptions, "_INTERNAL_DATASET", FALSE);
+        if( papszOptionsToDelete == NULL )
+            papszOptionsToDelete = CSLDuplicate(papszOptions);
+        papszOptions = CSLRemoveStrings(papszOptionsToDelete, iIdxInternalDataset, 1, NULL);
+        papszOptionsToDelete = papszOptions;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Validate creation options.                                      */
 /* -------------------------------------------------------------------- */
@@ -749,7 +765,8 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
             if( poDstDS->poDriver == NULL )
                 poDstDS->poDriver = this;
 
-            poDstDS->AddToDatasetOpenList();
+            if( !bInternalDataset )
+                poDstDS->AddToDatasetOpenList();
         }
     }
     else
