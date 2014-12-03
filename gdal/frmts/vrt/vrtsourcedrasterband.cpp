@@ -742,7 +742,9 @@ CPLXMLNode *VRTSourcedRasterBand::SerializeToXML( const char *pszVRTPath )
     CPLXMLNode *psTree;
 
     psTree = VRTRasterBand::SerializeToXML( pszVRTPath );
-    CPLXMLNode* psLastChild = NULL;
+    CPLXMLNode* psLastChild = psTree->psChild;
+    while( psLastChild != NULL && psLastChild->psNext != NULL )
+        psLastChild = psLastChild->psNext;
 
 /* -------------------------------------------------------------------- */
 /*      Process Sources.                                                */
