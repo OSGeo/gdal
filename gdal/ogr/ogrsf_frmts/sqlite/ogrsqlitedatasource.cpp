@@ -472,6 +472,77 @@ void OGRSQLiteBaseDataSource::NotifyFileOpened(const char* pszFilename,
     }
 }
 
+#ifdef USE_SQLITE_DEBUG_MEMALLOC
+
+/* DMA9 */
+#define DMA_SIGNATURE 0x444D4139
+
+static void* OGRSQLiteDMA_Malloc(int size)
+{
+    int* ret = (int*) CPLMalloc(size + 8);
+    ret[0] = size;
+    ret[1] = DMA_SIGNATURE;
+    return ret + 2;
+}
+
+static void* OGRSQLiteDMA_Realloc(void* old_ptr, int size)
+{
+    CPLAssert(((int*)old_ptr)[-1] == DMA_SIGNATURE);
+    int* ret = (int*) CPLRealloc(old_ptr ? (int*)old_ptr - 2 : NULL, size + 8);
+    ret[0] = size;
+    ret[1] = DMA_SIGNATURE;
+    return ret + 2;
+}
+
+static void OGRSQLiteDMA_Free(void* ptr)
+{
+    if( ptr )
+    {
+        CPLAssert(((int*)ptr)[-1] == DMA_SIGNATURE);
+        ((int*)ptr)[-1] = 0;
+        CPLFree((int*)ptr - 2);
+    }
+}
+
+static int OGRSQLiteDMA_Size (void* ptr)
+{
+    if( ptr )
+    {
+        CPLAssert(((int*)ptr)[-1] == DMA_SIGNATURE);
+        return ((int*)ptr)[-2];
+    }
+    else
+        return 0;
+}
+
+static int OGRSQLiteDMA_Roundup( int size )
+{
+    return (size + 7) & (~7);
+}
+
+static int OGRSQLiteDMA_Init(void *)
+{
+    return SQLITE_OK;
+}
+
+static void OGRSQLiteDMA_Shutdown(void *)
+{
+}
+
+const struct sqlite3_mem_methods sDebugMemAlloc =
+{
+    OGRSQLiteDMA_Malloc,
+    OGRSQLiteDMA_Free,
+    OGRSQLiteDMA_Realloc,
+    OGRSQLiteDMA_Size,
+    OGRSQLiteDMA_Roundup,
+    OGRSQLiteDMA_Init,
+    OGRSQLiteDMA_Shutdown,
+    NULL
+};
+
+#endif // USE_SQLITE_DEBUG_MEMALLOC
+
 /************************************************************************/
 /*                            OpenOrCreateDB()                          */
 /************************************************************************/
@@ -479,7 +550,12 @@ void OGRSQLiteBaseDataSource::NotifyFileOpened(const char* pszFilename,
 int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flags, int bRegisterOGR2SQLiteExtensions)
 {
     int rc;
-    
+
+#ifdef USE_SQLITE_DEBUG_MEMALLOC
+    if( CSLTestBoolean(CPLGetConfigOption("USE_SQLITE_DEBUG_MEMALLOC", "NO")) )
+        sqlite3_config(SQLITE_CONFIG_MALLOC, &sDebugMemAlloc);
+#endif
+
 #ifdef HAVE_SQLITE_VFS
     if( bRegisterOGR2SQLiteExtensions )
         OGR2SQLITE_Register();
