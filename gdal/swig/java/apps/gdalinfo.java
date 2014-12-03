@@ -74,7 +74,7 @@ public class gdalinfo {
 			double[] adfGeoTransform = new double[6];
 			Driver hDriver;
 			Vector papszMetadata;
-			boolean bComputeMinMax = false, bSample = false;
+			boolean bComputeMinMax = false /* , bSample = false */;
 			boolean bShowGCPs = true, bShowMetadata = true;
 			boolean bStats = false, bApproxStats = true;
                         boolean bShowColorTable = true, bComputeChecksum = false;
