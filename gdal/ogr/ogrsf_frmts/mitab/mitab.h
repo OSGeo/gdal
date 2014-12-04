@@ -1898,14 +1898,6 @@ typedef struct
 /*---------------------------------------------------------------------
  * The following are used for coordsys bounds lookup
  *--------------------------------------------------------------------*/
-typedef struct
-{
-    TABProjInfo sProj;          /* Projection/datum definition */
-    double      dXMin;          /* Default bounds for that coordsys */
-    double      dYMin;
-    double      dXMax;
-    double      dYMax;
-} MapInfoBoundsInfo;
 
 GBool   MITABLookupCoordSysBounds(TABProjInfo *psCS,
                                   double &dXMin, double &dYMin,

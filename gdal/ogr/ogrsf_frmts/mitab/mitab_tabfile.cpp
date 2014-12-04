@@ -2580,6 +2580,17 @@ int TABFile::SetProjInfo(TABProjInfo *poPI)
     }
 
     /*-----------------------------------------------------------------
+     * Lookup default bounds and reset m_bBoundsSet flag
+     *----------------------------------------------------------------*/
+    double dXMin, dYMin, dXMax, dYMax;
+
+    m_bBoundsSet = FALSE;
+    if (MITABLookupCoordSysBounds(poPI, dXMin, dYMin, dXMax, dYMax) == TRUE)
+    {
+        SetBounds(dXMin, dYMin, dXMax, dYMax);
+    }
+
+    /*-----------------------------------------------------------------
      * Check that dataset has been created but no feature set yet.
      *----------------------------------------------------------------*/
     if (m_poMAPFile && m_nLastFeatureId < 1)
@@ -2593,17 +2604,6 @@ int TABFile::SetProjInfo(TABProjInfo *poPI)
                  "SetProjInfo() can be called only after dataset has been "
                  "created and before any feature is set.");
         return -1;
-    }
-
-    /*-----------------------------------------------------------------
-     * Lookup default bounds and reset m_bBoundsSet flag
-     *----------------------------------------------------------------*/
-    double dXMin, dYMin, dXMax, dYMax;
-
-    m_bBoundsSet = FALSE;
-    if (MITABLookupCoordSysBounds(poPI, dXMin, dYMin, dXMax, dYMax) == TRUE)
-    {
-        SetBounds(dXMin, dYMin, dXMax, dYMax);
     }
 
     return 0;

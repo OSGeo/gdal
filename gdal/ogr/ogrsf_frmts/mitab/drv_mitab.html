@@ -76,6 +76,18 @@ include the optional Bounds definition at the end of the line, e.g.
 # Lambert 93 French bounds
 CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49.00000000002, 700000, 6600000 Bounds (75000, 6000000) (1275000, 7200000)
 </pre>
+
+It is also possible to establish a mapping between a source CoordSys and a
+target CoordSys with bounds. Such a mapping is specified by adding a line starting
+with "Source = " followed by a CoordSys (spaces before or after the equal sign
+do not matter). The following line should start with "Destination = "
+followed by a CoordSys with bounds, e.g.
+<pre>
+# Map generic Lambert 93 to French Lambert 93, Europe bounds
+Source      = CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49, 700000, 6600000
+Destination = CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49.00000000001, 700000, 6600000 Bounds (-792421, 5278231) (3520778, 9741029)
+</pre>
+
 </li>
 <li>use the BOUNDS layer creation option (see below)</li>
 </ul>

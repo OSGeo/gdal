@@ -173,9 +173,20 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
     int             nParmCount;
     TABFile::GetTABProjFromSpatialRef(poSR, sTABProj, nParmCount);
 
-    /*-----------------------------------------------------------------
-     * Translate the units
-     *----------------------------------------------------------------*/
+/* -------------------------------------------------------------------- */
+/*      Do coordsys lookup                                              */
+/* -------------------------------------------------------------------- */
+    double dXMin, dYMin, dXMax, dYMax;
+    int bHasBounds = FALSE;
+    if (sTABProj.nProjId > 1 &&
+        MITABLookupCoordSysBounds(&sTABProj, dXMin, dYMin, dXMax, dYMax, TRUE) == TRUE)
+    {
+        bHasBounds = TRUE;
+    }
+
+/*-----------------------------------------------------------------
+ * Translate the units
+ *----------------------------------------------------------------*/
     const char  *pszMIFUnits = TABUnitIdToString(sTABProj.nUnitsId);
     
 /* -------------------------------------------------------------------- */
@@ -244,9 +255,7 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
 /* -------------------------------------------------------------------- */
 /*      Append user bounds                                              */
 /* -------------------------------------------------------------------- */
-    double dXMin, dYMin, dXMax, dYMax;
-    if (sTABProj.nProjId > 1 &&
-        MITABLookupCoordSysBounds(&sTABProj, dXMin, dYMin, dXMax, dYMax, TRUE) == TRUE)
+    if (bHasBounds)
     {
         if( fabs(dXMin - (int)floor(dXMin+0.5)) < 1e-8 &&
             fabs(dYMin - (int)floor(dYMin+0.5)) < 1e-8 &&

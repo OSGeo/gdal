@@ -59,6 +59,20 @@
 
 #include "mitab.h"
 
+typedef struct
+{
+    TABProjInfo sProj;          /* Projection/datum definition */
+    double      dXMin;          /* Default bounds for that coordsys */
+    double      dYMin;
+    double      dXMax;
+    double      dYMax;
+} MapInfoBoundsInfo;
+
+typedef struct
+{
+    TABProjInfo       sProjIn;
+    MapInfoBoundsInfo sBoundsInfo;
+} MapInfoRemapProjInfo;
 
 /*-----------------------------------------------------------------
  * List of known coordsys bounds.
@@ -68,7 +82,8 @@
  * reprocess the whole list to properly set all datum ids and accelerate
  * bounds lookups
  *----------------------------------------------------------------*/
-static MapInfoBoundsInfo **gpapsExtBoundsList = NULL;
+static MapInfoRemapProjInfo *gpasExtBoundsList = NULL;
+static int nExtBoundsListCount = -1;
 static const MapInfoBoundsInfo gasBoundsList[] = {
 {{1, 0xff, 0xff, {0,0,0,0,0,0}, 0,0,0,0, {0,0,0,0,0}, 0,0,0,0,0,0,0,0}, -1000, -1000, 1000, 1000},  /* Lat/Lon */
 
@@ -1041,11 +1056,15 @@ static const MapInfoBoundsInfo gasBoundsList[] = {
 #define TAB_EQUAL(a, b, eps) (fabs((a)-(b)) < eps)
 
 static char szPreviousMitabBoundsFile[2048] = { 0 };
+static VSIStatBufL sStatBoundsFile;
 
 /**********************************************************************
  *                     MITABLookupCoordSysBounds()
  *
  * Lookup bounds for specified TABProjInfo struct.
+ *
+ * This can modify that passed TABProjInfo struct if a match is found
+ * in an external bound file with proj remapping.
  *
  * Returns TRUE if valid bounds were found, FALSE otherwise.
  **********************************************************************/
@@ -1056,7 +1075,6 @@ GBool MITABLookupCoordSysBounds(TABProjInfo *psCS,
 {
     GBool bFound = FALSE;
     const MapInfoBoundsInfo *psList;
-    MapInfoBoundsInfo **ppsList;
 
     /*-----------------------------------------------------------------
     * Try to load the user defined table if not loaded yet .
@@ -1069,6 +1087,23 @@ GBool MITABLookupCoordSysBounds(TABProjInfo *psCS,
             CPLStrlcpy(szPreviousMitabBoundsFile, pszMitabBoundsFile,
                        sizeof(szPreviousMitabBoundsFile));
             MITABLoadCoordSysTable(pszMitabBoundsFile);
+            if( VSIStatL(pszMitabBoundsFile, &sStatBoundsFile) != 0 )
+            {
+                sStatBoundsFile.st_mtime = 0;
+            }
+        }
+        else
+        {
+            /* Reload file if its modification file has changed */
+            VSIStatBufL sStat;
+            if( VSIStatL(pszMitabBoundsFile, &sStat) == 0 )
+            {
+                if( sStat.st_mtime != sStatBoundsFile.st_mtime )
+                {
+                    MITABLoadCoordSysTable(pszMitabBoundsFile);
+                    memcpy(&sStatBoundsFile, &sStat, sizeof(sStat));
+                }
+            }
         }
     }
     else if ( szPreviousMitabBoundsFile[0] != '\0' )
@@ -1093,10 +1128,9 @@ GBool MITABLookupCoordSysBounds(TABProjInfo *psCS,
         * means ignore that param, and 0xff in ellipsoidId means ignore the
         * whole datum.
         *----------------------------------------------------------------*/
-        ppsList = gpapsExtBoundsList;
-        for( ; !bFound && ppsList && *ppsList; ppsList++)
+        for( int i = 0 ; !bFound && i < nExtBoundsListCount; i++)
         {
-            TABProjInfo *p = &((*ppsList)->sProj);
+            TABProjInfo *p = &(gpasExtBoundsList[i].sProjIn);
 
             if (p->nProjId == psCS->nProjId &&
                 (p->nUnitsId == 0xff || p->nUnitsId == psCS->nUnitsId) &&
@@ -1119,10 +1153,12 @@ GBool MITABLookupCoordSysBounds(TABProjInfo *psCS,
                 TAB_EQUAL(p->adProjParams[4], psCS->adProjParams[4], eps) &&
                 TAB_EQUAL(p->adProjParams[5], psCS->adProjParams[5], eps) )  )
             {
-                dXMin = (*ppsList)->dXMin;
-                dYMin = (*ppsList)->dYMin;
-                dXMax = (*ppsList)->dXMax;
-                dYMax = (*ppsList)->dYMax;
+                memcpy(psCS, &gpasExtBoundsList[i].sBoundsInfo.sProj,
+                       sizeof(TABProjInfo));
+                dXMin = gpasExtBoundsList[i].sBoundsInfo.dXMin;
+                dYMin = gpasExtBoundsList[i].sBoundsInfo.dYMin;
+                dXMax = gpasExtBoundsList[i].sBoundsInfo.dXMax;
+                dYMax = gpasExtBoundsList[i].sBoundsInfo.dYMax;
                 bFound = TRUE;
             }
         }
@@ -1199,19 +1235,52 @@ int MITABLoadCoordSysTable(const char *pszFname)
         const char *pszLine;
         int         iEntry=0, numEntries=100;
 
-        gpapsExtBoundsList = (MapInfoBoundsInfo **)CPLMalloc(numEntries*
-                                                  sizeof(MapInfoBoundsInfo *));
-        gpapsExtBoundsList[0] = NULL;
+        gpasExtBoundsList = (MapInfoRemapProjInfo *)CPLMalloc(numEntries*
+                                                  sizeof(MapInfoRemapProjInfo));
 
         while( (pszLine = CPLReadLineL(fp)) != NULL)
         {
             double dXMin, dYMin, dXMax, dYMax;
+            int bHasProjIn = FALSE;
+            TABProjInfo sProjIn;
             TABProjInfo sProj;
 
             iLine++;
 
             if (strlen(pszLine) < 10 || EQUALN(pszLine, "#", 1))
                 continue;  // Skip empty lines/comments
+
+            if( EQUALN(pszLine, "Source", strlen("Source")) )
+            {
+                const char* pszEqual = strchr(pszLine, '=');
+                if( !pszEqual )
+                {
+                    CPLError(CE_Warning, CPLE_IllegalArg, "Invalid format at line %d", iLine);
+                    break;
+                }
+                pszLine = pszEqual + 1;
+                if ((nStatus = MITABCoordSys2TABProjInfo(pszLine, &sProjIn)) != 0)
+                {
+                    break;  // Abort and return
+                }
+                if( strstr(pszLine, "Bounds") != NULL )
+                {
+                    CPLError(CE_Warning, CPLE_IllegalArg, "Unexpected Bounds paramater at line %d",
+                             iLine);
+                }
+                bHasProjIn = TRUE;
+
+                iLine++;
+                pszLine = CPLReadLineL(fp);
+                if( pszLine == NULL ||
+                    !EQUALN(pszLine, "Destination", strlen("Destination")) ||
+                    (pszEqual = strchr(pszLine, '=')) == NULL )
+                {
+                    CPLError(CE_Warning, CPLE_IllegalArg, "Invalid format at line %d", iLine);
+                        break;
+                }
+                pszLine = pszEqual + 1;
+            }
 
             if ((nStatus = MITABCoordSys2TABProjInfo(pszLine, &sProj)) != 0)
             {
@@ -1229,25 +1298,26 @@ int MITABLoadCoordSysTable(const char *pszFname)
             if (iEntry >= numEntries-1)
             {
                 numEntries+= 100;
-                gpapsExtBoundsList =
-                    (MapInfoBoundsInfo **)CPLRealloc(gpapsExtBoundsList,
-                                                     numEntries*
-                                                  sizeof(MapInfoBoundsInfo *));
+                gpasExtBoundsList =
+                    (MapInfoRemapProjInfo *)CPLRealloc(gpasExtBoundsList,
+                                        numEntries* sizeof(MapInfoRemapProjInfo));
             }
 
-            gpapsExtBoundsList[iEntry] =
-                    (MapInfoBoundsInfo*)CPLMalloc(sizeof(MapInfoBoundsInfo));
-
-            gpapsExtBoundsList[iEntry]->sProj = sProj;
-            gpapsExtBoundsList[iEntry]->dXMin = dXMin;
-            gpapsExtBoundsList[iEntry]->dYMin = dYMin;
-            gpapsExtBoundsList[iEntry]->dXMax = dXMax;
-            gpapsExtBoundsList[iEntry]->dYMax = dYMax;
-
-            gpapsExtBoundsList[++iEntry] = NULL;
+            gpasExtBoundsList[iEntry].sProjIn = (bHasProjIn) ? sProjIn : sProj;
+            gpasExtBoundsList[iEntry].sBoundsInfo.sProj = sProj;
+            gpasExtBoundsList[iEntry].sBoundsInfo.dXMin = dXMin;
+            gpasExtBoundsList[iEntry].sBoundsInfo.dYMin = dYMin;
+            gpasExtBoundsList[iEntry].sBoundsInfo.dXMax = dXMax;
+            gpasExtBoundsList[iEntry].sBoundsInfo.dYMax = dYMax;
+            iEntry ++;
         }
+        nExtBoundsListCount = iEntry;
 
         VSIFCloseL(fp);
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "Cannot open %s", pszFname);
     }
 
     return nStatus;
@@ -1261,19 +1331,9 @@ int MITABLoadCoordSysTable(const char *pszFname)
  **********************************************************************/
 void MITABFreeCoordSysTable()
 {
-    if (gpapsExtBoundsList)
-    {
-        MapInfoBoundsInfo **ppsEntry = gpapsExtBoundsList;
-
-        while(*ppsEntry != NULL)
-        {
-            CPLFree(*ppsEntry);
-            ppsEntry++;
-        }
-
-        CPLFree(gpapsExtBoundsList);
-        gpapsExtBoundsList = NULL;
-    }
+    CPLFree(gpasExtBoundsList);
+    gpasExtBoundsList = NULL;
+    nExtBoundsListCount = -1;
 }
 
 /**********************************************************************
@@ -1283,5 +1343,5 @@ void MITABFreeCoordSysTable()
  **********************************************************************/
 GBool MITABCoordSysTableLoaded()
 {
-    return (gpapsExtBoundsList != NULL);
+    return (nExtBoundsListCount >= 0);
 }
