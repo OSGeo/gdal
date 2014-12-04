@@ -342,6 +342,54 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
             delete poClass;
             return NULL;
         }
+        
+        /* Parse stuff like :
+        <xs:choice>
+            <xs:element ref="gml:polygonProperty"/>
+            <xs:element ref="gml:multiPolygonProperty"/>
+        </xs:choice>
+        as found in https://downloadagiv.blob.core.windows.net/overstromingsgebieden-en-oeverzones/2014_01/Overstromingsgebieden_en_oeverzones_2014_01_GML.zip
+        */
+        if( strcmp(psAttrDef->pszValue,"choice") == 0 )
+        {
+            CPLXMLNode* psChild = psAttrDef->psChild;
+            int bPolygon = FALSE;
+            int bMultiPolygon = FALSE;
+            for( ; psChild; psChild = psChild->psNext )
+            {
+                if( psChild->eType != CXT_Element )
+                    continue;
+                if( strcmp(psChild->pszValue,"element") == 0 )
+                {
+                    const char* pszRef = CPLGetXMLValue( psChild, "ref", NULL );
+                    if( pszRef != NULL )
+                    {
+                        if( strcmp(pszRef, "gml:polygonProperty") == 0 )
+                            bPolygon = TRUE;
+                        else if( strcmp(pszRef, "gml:multiPolygonProperty") == 0 )
+                            bMultiPolygon = TRUE;
+                        else
+                        {
+                            delete poClass;
+                            return NULL;
+                        }
+                    }
+                    else
+                    {
+                        delete poClass;
+                        return NULL;
+                    }
+                }
+            }
+            if( bPolygon && bMultiPolygon )
+            {
+                poClass->AddGeometryProperty( new GMLGeometryPropertyDefn(
+                    "", "", wkbMultiPolygon, nAttributeIndex ) );
+
+                nAttributeIndex ++;
+            }
+            continue;
+        }
 
         if( !EQUAL(psAttrDef->pszValue,"element") )
             continue;
