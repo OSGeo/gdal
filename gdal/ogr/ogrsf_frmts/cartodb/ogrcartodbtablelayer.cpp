@@ -99,17 +99,17 @@ OGRCARTODBTableLayer::~OGRCARTODBTableLayer()
 }
 
 /************************************************************************/
-/*                           GetLayerDefn()                             */
+/*                          GetLayerDefnInternal()                      */
 /************************************************************************/
 
-OGRFeatureDefn * OGRCARTODBTableLayer::GetLayerDefn()
+OGRFeatureDefn * OGRCARTODBTableLayer::GetLayerDefnInternal(json_object* poObjIn)
 {
     if( poFeatureDefn != NULL )
         return poFeatureDefn;
 
     osBaseSQL.Printf("SELECT * FROM %s",
                      OGRCARTODBEscapeIdentifier(osName).c_str());
-    EstablishLayerDefn(osName);
+    EstablishLayerDefn(osName, NULL);
     if( osFIDColName.size() > 0 )
     {
         osBaseSQL.Printf("SELECT * FROM %s ORDER BY %s ASC",
@@ -681,7 +681,8 @@ CPLString OGRCARTODBTableLayer::GetSRS_SQL(const char* pszGeomCol)
         /* Find_SRID needs access to geometry_columns table, whhose access */
         /* is restricted to authenticated connections. */
         osSQL.Printf("SELECT srid, srtext FROM spatial_ref_sys WHERE srid IN "
-                    "(SELECT Find_SRID('public', '%s', '%s'))",
+                    "(SELECT Find_SRID('%s', '%s', '%s'))",
+                    OGRCARTODBEscapeLiteral(poDS->GetCurrentSchema()).c_str(),
                     OGRCARTODBEscapeLiteral(osName).c_str(),
                     OGRCARTODBEscapeLiteral(pszGeomCol).c_str());
     }

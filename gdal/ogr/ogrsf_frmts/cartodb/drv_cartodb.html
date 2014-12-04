@@ -17,7 +17,10 @@ The driver supports read and write operations.<p>
 
 <h2>Dataset name syntax</h2>
 
-The minimal syntax to open a CartoDB datasource is : <pre>CartoDB:[account_name]</pre><p>
+The minimal syntax to open a CartoDB datasource is : <pre>CartoDB:[connection_name]</pre><p>
+
+For single-user accounts, connection name is the account name.
+For multi-user accounts, connection_name must be the user name, not the account name.
 
 Additionnal optional parameters can be specified after the ':' sign.
 Currently the following one is supported :<p>

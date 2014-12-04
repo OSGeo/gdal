@@ -48,6 +48,7 @@ OGRCARTODBDataSource::OGRCARTODBDataSource()
     bUseHTTPS = FALSE;
 
     bMustCleanPersistant = FALSE;
+    osCurrentSchema = "public";
 }
 
 /************************************************************************/
@@ -148,8 +149,30 @@ int OGRCARTODBDataSource::Open( const char * pszFilename, int bUpdateIn)
     osAPIKey = CPLGetConfigOption("CARTODB_API_KEY", "");
 
     CPLString osTables = OGRCARTODBGetOptionValue(pszFilename, "tables");
+    
+    if( osTables.size() == 0 && osAPIKey.size() == 0 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "When not specifying tables option, CARTODB_API_KEY must be defined");
+        return FALSE;
+    }
 
     bUseHTTPS = CSLTestBoolean(CPLGetConfigOption("CARTODB_HTTPS", "YES"));
+
+    OGRLayer* poSchemaLayer = ExecuteSQL("SELECT current_schema()", NULL, NULL);
+    if( poSchemaLayer )
+    {
+        OGRFeature* poFeat = poSchemaLayer->GetNextFeature();
+        if( poFeat )
+        {
+            if( poFeat->GetFieldCount() == 1 )
+            {
+                osCurrentSchema = poFeat->GetFieldAsString(0);
+            }
+            delete poFeat;
+        }
+        ReleaseResultSet(poSchemaLayer);
+    }
 
     if (osTables.size() != 0)
     {
@@ -163,41 +186,48 @@ int OGRCARTODBDataSource::Open( const char * pszFilename, int bUpdateIn)
         CSLDestroy(papszTables);
         return TRUE;
     }
-    
-    if( osAPIKey.size() == 0 )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "When not specifying tables option, CARTODB_API_KEY must be defined");
-        return FALSE;
-    }
 
-    json_object* poObj = RunSQL("SELECT CDB_UserTables()");
-    if( poObj == NULL )
-        return FALSE;
-    json_object* poRows = json_object_object_get(poObj, "rows");
-    if( poRows == NULL || json_object_get_type(poRows) != json_type_array)
+    OGRLayer* poTableListLayer = ExecuteSQL("SELECT CDB_UserTables()", NULL, NULL);
+    if( poTableListLayer )
     {
-        json_object_put(poObj);
-        return FALSE;
-    }
-    for(int i=0; i < json_object_array_length(poRows); i++)
-    {
-        json_object* poTableNameObj = json_object_array_get_idx(poRows, i);
-        if( poTableNameObj != NULL &&
-            json_object_get_type(poTableNameObj) == json_type_object )
+        OGRFeature* poFeat;
+        while( (poFeat = poTableListLayer->GetNextFeature()) != NULL )
         {
-            json_object* poVal = json_object_object_get(poTableNameObj, "cdb_usertables");
-            if( poVal != NULL &&
-                json_object_get_type(poVal) == json_type_string )
+            if( poFeat->GetFieldCount() == 1 )
             {
                 papoLayers = (OGRLayer**) CPLRealloc(
                     papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
                 papoLayers[nLayers ++] = new OGRCARTODBTableLayer(
-                            this, json_object_get_string(poVal));
+                            this, poFeat->GetFieldAsString(0));
             }
+            delete poFeat;
+        }
+        ReleaseResultSet(poTableListLayer);
+    }
+    /* There's currently a bug with CDB_UserTables() on multi-user accounts */
+    if( nLayers == 0 && osCurrentSchema != "public" )
+    {
+        CPLString osSQL;
+        osSQL.Printf("SELECT DISTINCT f_table_name FROM geometry_columns WHERE f_table_schema='%s'",
+                     OGRCARTODBEscapeLiteral(osCurrentSchema).c_str());
+        poTableListLayer = ExecuteSQL(osSQL, NULL, NULL);
+        if( poTableListLayer )
+        {
+            OGRFeature* poFeat;
+            while( (poFeat = poTableListLayer->GetNextFeature()) != NULL )
+            {
+                if( poFeat->GetFieldCount() == 1 )
+                {
+                    papoLayers = (OGRLayer**) CPLRealloc(
+                        papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
+                    papoLayers[nLayers ++] = new OGRCARTODBTableLayer(
+                                this, poFeat->GetFieldAsString(0));
+                }
+                delete poFeat;
+            }
+            ReleaseResultSet(poTableListLayer);
         }
     }
-    json_object_put(poObj);
 
     return TRUE;
 }
@@ -344,7 +374,7 @@ OGRLayer   *OGRCARTODBDataSource::ICreateLayer( const char *pszName,
     osSQL += CPLSPrintf("PRIMARY KEY (%s) )", "cartodb_id");
 
     osSQL += ";";
-    osSQL += CPLSPrintf("DROP SEQUENCE IF EXISTS %s",
+    osSQL += CPLSPrintf("DROP SEQUENCE IF EXISTS %s CASCADE",
                         OGRCARTODBEscapeIdentifier(CPLSPrintf("%s_%s_seq", pszName, "cartodb_id")).c_str());
     osSQL += ";";
     osSQL += CPLSPrintf("CREATE SEQUENCE %s START 1",
@@ -616,9 +646,7 @@ OGRLayer * OGRCARTODBDataSource::ExecuteSQL( const char *pszSQLCommand,
     if( poSpatialFilter != NULL )
         poLayer->SetSpatialFilter( poSpatialFilter );
 
-    CPLErrorReset();
-    poLayer->GetLayerDefn();
-    if( CPLGetLastErrorNo() != 0 )
+    if( !poLayer->IsOK() )
     {
         delete poLayer;
         return NULL;
