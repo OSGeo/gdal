@@ -2645,6 +2645,35 @@ class Feature(_object):
         """
         return _ogr.Feature_GetFieldAsStringList(self, *args)
 
+    def GetFieldAsBinary(self, *args):
+        """
+        GetFieldAsBinary(self, int id) -> OGRErr
+        GetFieldAsBinary(self, char name) -> OGRErr
+
+        GByte*
+        OGR_F_GetFieldAsBinary(OGRFeatureH hFeat, int iField, int *pnBytes)
+
+        Fetch field value as binary.
+
+        Currently this method only works for OFTBinary fields.
+
+        This function is the same as the C++ method
+        OGRFeature::GetFieldAsBinary().
+
+        Parameters:
+        -----------
+
+        hFeat:  handle to the feature that owned the field.
+
+        iField:  the field to fetch, from 0 to GetFieldCount()-1.
+
+        pnBytes:  location to place count of bytes returned.
+
+        the field value. This list is internal, and should not be modified, or
+        freed. Its lifetime may be very brief. 
+        """
+        return _ogr.Feature_GetFieldAsBinary(self, *args)
+
     def IsFieldSet(self, *args):
         """
         IsFieldSet(self, int id) -> bool

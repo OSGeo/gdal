@@ -268,6 +268,14 @@ def ogr_feature_cp_4():
     if not check( dst_feature, 'field_binary', '0123465789ABCDEF' ):
         return 'failure'
 
+    expected = '\x01\x23\x46\x57\x89\xAB\xCD\xEF'
+    if sys.version_info >= (3,0,0):
+        expected = expected.encode('LATIN1')
+    if dst_feature.GetFieldAsBinary('field_binary') != expected:
+        return 'failure'
+    if dst_feature.GetFieldAsBinary(dst_feature.GetDefnRef().GetFieldIndex('field_binary')) != expected:
+        return 'failure'
+
     if not check( dst_feature, 'field_date', None ):
         return 'failure'
 
