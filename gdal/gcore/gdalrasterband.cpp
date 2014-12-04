@@ -1366,15 +1366,10 @@ CPLErr GDALRasterBand::Fill(double dfRealValue, double dfImaginaryValue) {
         return CE_Failure;
     }
     
-    // Initialize the first element of the block, doing type conversion
+    // Initialize the source block
     double complexSrc[2] = { dfRealValue, dfImaginaryValue };
-    GDALCopyWords(complexSrc, GDT_CFloat64, 0, srcBlock, eDataType, 0, 1);
-
-    // Copy first element to the rest of the block
-    for (unsigned char* blockPtr = srcBlock + elementSize; 
-	 blockPtr < srcBlock + blockByteSize; blockPtr += elementSize) {
-	memcpy(blockPtr, srcBlock, elementSize);
-    }
+    GDALCopyWords(complexSrc, GDT_CFloat64, 0,
+                  srcBlock, eDataType, elementSize, blockSize);
 
     // Write block to block cache
     for (int j = 0; j < nBlocksPerColumn; ++j) {
