@@ -93,6 +93,8 @@ protected:
 
     virtual OGRFeatureDefn *    GetLayerDefn();
     virtual OGRFeatureDefn *    GetLayerDefnInternal(json_object* poObjIn) = 0;
+    
+    virtual const char*         GetFIDColumn() { return osFIDColName.c_str(); }
 
     virtual int                 TestCapability( const char * );
 
@@ -113,6 +115,8 @@ class OGRCARTODBTableLayer : public OGRCARTODBLayer
     int                 bInTransaction;
     CPLString           osTransactionSQL;
     long                nNextFID;
+    
+    int                 bDifferedCreation;
 
     void                BuildWhere();
 
@@ -133,6 +137,8 @@ class OGRCARTODBTableLayer : public OGRCARTODBLayer
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
 
+    virtual OGRFeature  *GetNextRawFeature();
+
     virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
     virtual OGRErr      ISetFeature( OGRFeature *poFeature );
     virtual OGRErr      DeleteFeature( long nFID );
@@ -147,6 +153,12 @@ class OGRCARTODBTableLayer : public OGRCARTODBLayer
     virtual OGRErr      StartTransaction();
     virtual OGRErr      CommitTransaction();
     virtual OGRErr      RollbackTransaction();
+    
+    void                SetDifferedCreation(OGRwkbGeometryType eGType,
+                                            OGRSpatialReference* poSRS);
+    OGRErr              RunDifferedCreationIfNecessary();
+    int                 GetDifferedCreation() const { return bDifferedCreation; }
+    void                CancelDifferedCreation() { bDifferedCreation = FALSE; }
 };
 
 /************************************************************************/
@@ -179,7 +191,7 @@ class OGRCARTODBDataSource : public OGRDataSource
     char*               pszName;
     char*               pszAccount;
 
-    OGRLayer**          papoLayers;
+    OGRCARTODBTableLayer**  papoLayers;
     int                 nLayers;
 
     int                 bReadWrite;
@@ -191,8 +203,6 @@ class OGRCARTODBDataSource : public OGRDataSource
     int                 bMustCleanPersistant;
     
     CPLString           osCurrentSchema;
-
-    int                 FetchSRSId( OGRSpatialReference * poSRS );
 
   public:
                         OGRCARTODBDataSource();
@@ -225,6 +235,7 @@ class OGRCARTODBDataSource : public OGRDataSource
     char**                      AddHTTPOptions(char** papszOptions = NULL);
     json_object*                RunSQL(const char* pszUnescapedSQL);
     const CPLString&            GetCurrentSchema() { return osCurrentSchema; }
+    int                         FetchSRSId( OGRSpatialReference * poSRS );
 
     int                         IsAuthenticatedConnection() { return osAPIKey.size() != 0; }
 };

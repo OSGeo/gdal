@@ -29,9 +29,8 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
-import string
+import uuid
 
 sys.path.append( '../pymod' )
 
@@ -39,6 +38,7 @@ import gdaltest
 import ogrtest
 from osgeo import gdal
 from osgeo import ogr
+from osgeo import osr
 
 ###############################################################################
 # Test if driver is available
@@ -88,10 +88,142 @@ gdaltest_list = [
     ogr_cartodb_test_ogrsf
     ]
 
+
+
+
+###############################################################################
+# Test if driver is available
+
+def ogr_cartodb_rw_init():
+
+    ogrtest.cartodb_drv = None
+    
+    ogrtest.cartodb_connection = gdal.GetConfigOption('CARTODB_CONNECTION')
+    if ogrtest.cartodb_connection is None:
+        print('CARTODB_CONNECTION missing')
+        return 'skip'
+    if gdal.GetConfigOption('CARTODB_API_KEY') is None:
+        print('CARTODB_API_KEY missing')
+        return 'skip'
+
+    try:
+        ogrtest.cartodb_drv = ogr.GetDriverByName('CartoDB')
+    except:
+        pass
+
+    if ogrtest.cartodb_drv is None:
+        return 'skip'
+
+    return 'success'
+
+###############################################################################
+# Read/write/update test
+
+def ogr_cartodb_rw_1():
+
+    if ogrtest.cartodb_drv is None:
+        return 'skip'
+
+    ds = ogr.Open(ogrtest.cartodb_connection, update = 1)
+    if ds is None:
+        return 'fail'
+
+    lyr_name = "layer_" + str(uuid.uuid1())
+
+    # No-op
+    lyr = ds.CreateLayer(lyr_name)
+    ds.DeleteLayer(ds.GetLayerCount()-1)
+
+    # Differed table creation
+    lyr = ds.CreateLayer(lyr_name)
+    lyr.CreateField(ogr.FieldDefn("strfield", ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn("doublefield", ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn("dt", ogr.OFTDateTime))
+    fd = ogr.FieldDefn("bool", ogr.OFTInteger)
+    fd.SetSubType(ogr.OFSTBoolean)
+    lyr.CreateField(fd)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.StartTransaction()
+    lyr.CreateFeature(f)
+    f.SetField('strfield', "fo'o")
+    f.SetField('intfield', 123)
+    f.SetField('doublefield', 1.23)
+    f.SetField('dt', '2014/12/04 12:34:56')
+    f.SetField('bool', 0)
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (1 2)'))
+    lyr.CreateFeature(f)
+    lyr.CommitTransaction()
+    f.SetField('intfield', 456)
+    f.SetField('bool', 1)
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (3 4)'))
+    lyr.SetFeature(f)
+    fid = f.GetFID()
+    ds = None
+
+    ds = ogr.Open(ogrtest.cartodb_connection, update = 1)
+    lyr = ds.GetLayerByName(lyr_name)
+    f = lyr.GetFeature(fid)
+    if f.GetField('strfield') != "fo'o" or \
+       f.GetField('intfield') != 456 or \
+       f.GetField('doublefield') != 1.23 or \
+       f.GetField('dt') != '2014/12/04 12:34:56+00' or \
+       f.GetField('bool') != 1 or \
+       f.GetGeometryRef().ExportToWkt() != 'POINT (3 4)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        ds.ExecuteSQL("DELLAYER:" + lyr_name)
+        return 'fail'
+
+    lyr.DeleteFeature(fid)
+    f = lyr.GetFeature(fid)
+    if f is not None:
+        gdaltest.post_reason('fail')
+        ds.ExecuteSQL("DELLAYER:" + lyr_name)
+        return 'fail'
+
+    # Non-differed field creation
+    lyr.CreateField(ogr.FieldDefn("otherstrfield", ogr.OFTString))
+
+    ds.ExecuteSQL("DELLAYER:" + lyr_name)
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    lyr = ds.CreateLayer(lyr_name, geom_type = ogr.wkbMultiPolygon, srs = srs)
+    lyr.GetNextFeature()
+    ds.ExecuteSQL("DELLAYER:" + lyr_name)
+    
+    # Layer without geometry
+    lyr = ds.CreateLayer(lyr_name, geom_type = ogr.wkbNone)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    ds = ogr.Open(ogrtest.cartodb_connection, update = 1)
+    lyr = ds.GetLayerByName(lyr_name)
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        ds.ExecuteSQL("DELLAYER:" + lyr_name)
+        return 'fail'
+    ds.ExecuteSQL("DELLAYER:" + lyr_name)
+
+    return 'success'
+
+gdaltest_rw_list = [
+    ogr_cartodb_rw_init,
+    ogr_cartodb_rw_1,
+]
+
 if __name__ == '__main__':
 
     gdaltest.setup_run( 'ogr_cartodb' )
 
-    gdaltest.run_tests( gdaltest_list )
+    if gdal.GetConfigOption('CARTODB_CONNECTION') is None:
+        print('CARTODB_CONNECTION missing: running read-only tests')
+        gdaltest.run_tests( gdaltest_list )
+    else:
+        gdaltest.run_tests( gdaltest_rw_list )
 
     gdaltest.summarize()
