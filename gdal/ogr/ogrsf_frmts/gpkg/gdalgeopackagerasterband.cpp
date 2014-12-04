@@ -537,6 +537,32 @@ CPLErr GDALGeoPackageRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
+/*                       WEBPSupports4Bands()                           */
+/************************************************************************/
+
+static int WEBPSupports4Bands()
+{
+    static int bRes = -1;
+    if( bRes < 0 )
+    {
+        GDALDriver* poDrv = (GDALDriver*) GDALGetDriverByName("WEBP");
+        if( poDrv == NULL || CSLTestBoolean(CPLGetConfigOption("GPKG_SIMUL_WEBP_3BAND", "FALSE")) )
+            bRes = FALSE;
+        else
+        {
+            // LOSSLESS and RGBA support appeared in the same version
+            bRes = strstr(poDrv->GetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST), "LOSSLESS") != NULL;
+        }
+        if( poDrv != NULL && !bRes )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                        "The version of WEBP available does not support 4-band RGBA");
+        }
+    }
+    return bRes;
+}
+
+/************************************************************************/
 /*                         WriteTile()                                  */
 /************************************************************************/
 
@@ -681,16 +707,25 @@ CPLErr GDALGeoPackageDataset::WriteTile()
     CPLString osMemFileName;
     osMemFileName.Printf("/vsimem/%p", this);
     const char* pszDriverName = "PNG";
+    int bTileDriverSupports4Bands = FALSE;
+    int bTileDriverSupports1Band = TRUE;
+    int bTileDriverSupportsCT = FALSE;
     if( m_eTF == GPKG_TF_PNG_JPEG )
     {
         if( bPartialTile || (nBands == 4 && !bAllOpaque) || m_poCT != NULL )
+        {
             pszDriverName = "PNG";
+            bTileDriverSupports4Bands = TRUE;
+            bTileDriverSupportsCT = TRUE;
+        }
         else
             pszDriverName = "JPEG";
     }
     else if( m_eTF == GPKG_TF_PNG )
     {
         pszDriverName = "PNG";
+        bTileDriverSupports4Bands = TRUE;
+        bTileDriverSupportsCT = TRUE;
     }
     else if( m_eTF == GPKG_TF_JPEG )
     {
@@ -699,6 +734,8 @@ CPLErr GDALGeoPackageDataset::WriteTile()
     else if( m_eTF == GPKG_TF_WEBP )
     {
         pszDriverName = "WEBP";
+        bTileDriverSupports4Bands = WEBPSupports4Bands();
+        bTileDriverSupports1Band = FALSE;
     }
     else
         CPLAssert(0);
@@ -709,14 +746,14 @@ CPLErr GDALGeoPackageDataset::WriteTile()
         GDALDataset* poMEMDS = MEMDataset::Create("", nBlockXSize, nBlockYSize,
                                                   0, GDT_Byte, NULL);
         int nTileBands = nBands;
-        if( bPartialTile && !EQUAL(pszDriverName, "JPEG") )
+        if( bPartialTile && bTileDriverSupports4Bands )
             nTileBands = 4;
-        else if( nBands == 4 && (bAllOpaque || EQUAL(pszDriverName, "JPEG")) )
+        else if( nBands == 4 && (bAllOpaque || !bTileDriverSupports4Bands) )
             nTileBands = 3;
-        else if( nBands == 1 && m_poCT != NULL && !EQUAL(pszDriverName, "PNG") )
+        else if( nBands == 1 && m_poCT != NULL && !bTileDriverSupportsCT )
         {
             nTileBands = 3;
-            if( !EQUAL(pszDriverName, "JPEG") )
+            if( bTileDriverSupports4Bands )
             {
                 for(i=0;i<m_poCT->GetColorEntryCount();i++)
                 {
@@ -729,7 +766,7 @@ CPLErr GDALGeoPackageDataset::WriteTile()
                 }
             }
         }
-        else if( nBands == 1 && m_poCT == NULL && EQUAL(pszDriverName, "WEBP") )
+        else if( nBands == 1 && m_poCT == NULL && !bTileDriverSupports1Band )
             nTileBands = 3;
 
         for(i=0;i<nTileBands;i++)

@@ -72,6 +72,11 @@ def gpkg_init():
         gdaltest.webp_dr = gdal.GetDriverByName( 'WEBP' )
     except:
         gdaltest.webp_dr = None
+    gdaltest.webp_supports_rgba = False
+    if gdaltest.webp_dr is not None and gdal.GetConfigOption("GPKG_SIMUL_WEBP_3BAND") is None:
+        md = gdaltest.webp_dr.GetMetadata()
+        if md['DMD_CREATIONOPTIONLIST'].find('LOSSLESS') >= 0:
+            gdaltest.webp_supports_rgba = True
 
     # This is to speed-up the runtime of tests on EXT4 filesystems
     # Do not use this for production environment if you care about data safety
@@ -350,7 +355,10 @@ def gpkg_3():
     ds = gdal.Open('data/byte.tif')
     expected_cs = get_expected_checksums(ds, gdaltest.webp_dr, 3)
     clamped_expected_cs = get_expected_checksums(ds, gdaltest.webp_dr, 3, clamp_output = False)
-    clamped_expected_cs.append(4898)
+    if gdaltest.webp_supports_rgba:
+        clamped_expected_cs.append(4898)
+    else:
+        clamped_expected_cs.append(17849)
 
     out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['DRIVER=WEBP'] )
     out_ds = None
@@ -369,7 +377,11 @@ def gpkg_3():
         return 'fail'
     out_ds.ReleaseResultSet(sql_lyr)
 
-    if check_tile_format(out_ds, 'WEBP', 4) != 'success':
+    if gdaltest.webp_supports_rgba:
+        expected_band_count = 4
+    else:
+        expected_band_count = 3
+    if check_tile_format(out_ds, 'WEBP', expected_band_count) != 'success':
         return 'fail'
 
     out_ds = None
@@ -441,8 +453,13 @@ def gpkg_4(tile_drv_name = 'PNG'):
         working_bands = 4
     elif tile_drv_name == 'JPEG':
         tile_drv = gdaltest.jpeg_dr
+        working_bands = 3
     elif tile_drv_name == 'WEBP':
         tile_drv = gdaltest.webp_dr
+        if gdaltest.webp_supports_rgba:
+            working_bands = 4
+        else:
+            working_bands = 3
     if tile_drv is None: 
         return 'skip'
 
@@ -454,7 +471,7 @@ def gpkg_4(tile_drv_name = 'PNG'):
     ds = gdal.Open('data/rgbsmall.tif')
     expected_cs = get_expected_checksums(ds, tile_drv, 3)
     clamped_expected_cs = get_expected_checksums(ds, tile_drv, 3, clamp_output = False)
-    if tile_drv_name == 'JPEG':
+    if working_bands == 3:
         clamped_expected_cs.append(17849)
     else:
         clamped_expected_cs.append(30638)
@@ -470,12 +487,8 @@ def gpkg_4(tile_drv_name = 'PNG'):
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
         return 'fail'
-    if tile_drv_name == 'JPEG':
-        if check_tile_format(out_ds, tile_drv_name, 3) != 'success':
-            return 'fail'
-    else:
-        if check_tile_format(out_ds, tile_drv_name, 4) != 'success':
-            return 'fail'
+    if check_tile_format(out_ds, tile_drv_name, working_bands) != 'success':
+        return 'fail'
     out_ds = None
 
     ds = gdal.OpenEx('tmp/tmp.gpkg', open_options = ['USE_TILE_EXTENT=YES'])
@@ -553,7 +566,10 @@ def gpkg_7(tile_drv_name = 'PNG'):
         working_bands = 3
     elif tile_drv_name == 'WEBP':
         tile_drv = gdaltest.webp_dr
-        working_bands = 4
+        if gdaltest.webp_supports_rgba:
+            working_bands = 4
+        else:
+            working_bands = 3
     if tile_drv is None: 
         return 'skip'
     try:
@@ -785,7 +801,10 @@ def gpkg_11(tile_drv_name = 'JPEG'):
         working_bands = 3
     elif tile_drv_name == 'WEBP':
         tile_drv = gdaltest.webp_dr
-        working_bands = 4
+        if gdaltest.webp_supports_rgba:
+            working_bands = 4
+        else:
+            working_bands = 3
     if tile_drv is None: 
         return 'skip'
 
