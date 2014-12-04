@@ -149,7 +149,7 @@ def misc_5_internal(drv, datatype, nBands):
     elif drv.ShortName == 'KMLSUPEROVERLAY':
         filename = filename + '.kmz'
     ds = drv.Create(filename, 100, 100, nBands, datatype)
-    if ds is not None:
+    if ds is not None and not (drv.ShortName == 'GPKG' and nBands == 0):
         set_gt = (2,1.0/10,0,49,0,-1.0/10)
         ds.SetGeoTransform(set_gt)
         ds.SetProjection('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.01745329251994328]]')
@@ -243,11 +243,15 @@ def misc_5():
 
 
 ###############################################################################
-def misc_6_interrupt_callback(pct, message, user_data):
-    if pct > 0.5:
-        return 0 # to stop
-    else:
-        return 1 # to continue
+class misc_6_interrupt_callback_class:
+    def __init__(self):
+        pass
+
+    def cbk(self, pct, message, user_data):
+        if pct > 0.5:
+            return 0 # to stop
+        else:
+            return 1 # to continue
 
 ###############################################################################
 # Test CreateCopy() with a source dataset with various band numbers (including 0) and datatype
@@ -318,7 +322,7 @@ def misc_6_internal(datatype, nBands):
                         return 'fail'
 
                     if has_succeeded and not drv.ShortName in ['ECW', 'JP2ECW', 'VRT', 'XPM', 'JPEG2000', 'FIT', 'RST', 'INGR', 'USGSDEM', 'KMLSUPEROVERLAY', 'GMT']:
-                        dst_ds = drv.CreateCopy(filename, ds, callback = misc_6_interrupt_callback)
+                        dst_ds = drv.CreateCopy(filename, ds, callback = misc_6_interrupt_callback_class().cbk)
                         if dst_ds is not None:
                             gdaltest.post_reason('interruption did not work with drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype)))
                             dst_ds = None
