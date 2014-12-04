@@ -49,6 +49,14 @@ def mem_1():
     drv = gdal.GetDriverByName('MEM')
     gdaltest.mem_ds = drv.Create( 'mem_1.mem', 50, 3 )
     ds = gdaltest.mem_ds
+    
+    if ds.GetProjection() != '':
+        gdaltest.post_reason( 'projection wrong' )
+        return 'fail'
+
+    if ds.GetGeoTransform(can_return_null = True) is not None:
+        gdaltest.post_reason( 'geotransform wrong' )
+        return 'fail'
 
     raw_data = array.array('f',list(range(150))).tostring()
     ds.WriteRaster( 0, 0, 50, 3, raw_data,
