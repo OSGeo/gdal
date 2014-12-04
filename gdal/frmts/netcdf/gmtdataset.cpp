@@ -557,7 +557,7 @@ GMTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         start[0] = iLine * nXSize;
         poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
-                          padfData, nXSize, 1, GDT_Float64, 0, 0 );
+                          padfData, nXSize, 1, GDT_Float64, 0, 0, NULL );
         err = nc_put_vara_double( cdfid, z_id, start, edge, padfData );
         if( err != NC_NOERR )
         {

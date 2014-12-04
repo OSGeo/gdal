@@ -44,6 +44,7 @@
 
 CPL_C_START
 
+/* Note: values are selected to be consistant with GDALRIOResampleAlg of gcore/gdal.h */ 
 /*! Warp Resampling Algorithm */
 typedef enum {
   /*! Nearest neighbour (select on one input pixel) */ GRA_NearestNeighbour=0,
@@ -53,6 +54,7 @@ typedef enum {
   /*! Lanczos windowed sinc interpolation (6x6 kernel) */ GRA_Lanczos=4,
   /*! Average (computes the average of all non-NODATA contributing pixels) */ GRA_Average=5, 
   /*! Mode (selects the value which appears most often of all the sampled points) */ GRA_Mode=6
+  // GRA_Gauss=7 reserved.
 } GDALResampleAlg;
 
 typedef int 
@@ -413,6 +415,18 @@ CPLErr CPL_DLL GDALWarpRegion( GDALWarpOperationH,
 CPLErr CPL_DLL GDALWarpRegionToBuffer( GDALWarpOperationH, int, int, int, int,
                                        void *, GDALDataType,
                                        int, int, int, int );
+
+/************************************************************************/
+/*      Warping kernel functions                                        */
+/************************************************************************/
+
+int GWKGetFilterRadius(GDALResampleAlg eResampleAlg);
+
+typedef double (*FilterFuncType)(double dfX);
+FilterFuncType GWKGetFilterFunc(GDALResampleAlg eResampleAlg);
+
+typedef double (*FilterFunc4ValuesType)(double* padfVals);
+FilterFunc4ValuesType GWKGetFilterFunc4Values(GDALResampleAlg eResampleAlg);
 
 CPL_C_END
 

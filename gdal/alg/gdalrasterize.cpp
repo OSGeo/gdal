@@ -679,7 +679,7 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
                            0, iY, poDS->GetRasterXSize(), nThisYChunkSize, 
                            pabyChunkBuf,poDS->GetRasterXSize(),nThisYChunkSize,
                            eType, nBandCount, panBandList,
-                           0, 0, 0 );
+                           0, 0, 0, NULL );
         if( eErr != CE_None )
             break;
 
@@ -699,7 +699,7 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
                             poDS->GetRasterXSize(), nThisYChunkSize, 
                             pabyChunkBuf,
                             poDS->GetRasterXSize(), nThisYChunkSize, 
-                            eType, nBandCount, panBandList, 0, 0, 0 );
+                            eType, nBandCount, panBandList, 0, 0, 0, NULL);
 
         if( !pfnProgress((iY+nThisYChunkSize)/((double)poDS->GetRasterYSize()),
                          "", pProgressArg ) )
@@ -878,7 +878,7 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
         if ( poDS->RasterIO( GF_Read, 0, 0, poDS->GetRasterXSize(),
                              nYChunkSize, pabyChunkBuf,
                              poDS->GetRasterXSize(), nYChunkSize,
-                             eType, nBandCount, panBandList, 0, 0, 0 )
+                             eType, nBandCount, panBandList, 0, 0, 0, NULL )
              != CE_None )
         {
             CPLError( CE_Failure, CPLE_OutOfMemory, 
@@ -993,7 +993,7 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
                                     poDS->GetRasterXSize(), nThisYChunkSize, 
                                     pabyChunkBuf,
                                     poDS->GetRasterXSize(), nThisYChunkSize,
-                                    eType, nBandCount, panBandList, 0, 0, 0 );
+                                    eType, nBandCount, panBandList, 0, 0, 0, NULL );
                 if( eErr != CE_None )
                     break;
             }
@@ -1035,7 +1035,7 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
                                     poDS->GetRasterXSize(), nThisYChunkSize, 
                                     pabyChunkBuf,
                                     poDS->GetRasterXSize(), nThisYChunkSize, 
-                                    eType, nBandCount, panBandList, 0, 0, 0 );
+                                    eType, nBandCount, panBandList, 0, 0, 0, NULL );
             }
 
             poLayer->ResetReading();
@@ -1066,7 +1066,7 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
                                 poDS->GetRasterXSize(), nYChunkSize, 
                                 pabyChunkBuf,
                                 poDS->GetRasterXSize(), nYChunkSize, 
-                                eType, nBandCount, panBandList, 0, 0, 0 );
+                                eType, nBandCount, panBandList, 0, 0, 0, NULL );
     }
 
 /* -------------------------------------------------------------------- */

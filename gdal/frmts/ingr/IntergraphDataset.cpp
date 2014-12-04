@@ -804,7 +804,7 @@ GDALDataset *IntergraphDataset::CreateCopy( const char *pszFilename,
                     iXOffset, iYOffset, 
                     nBlockXSize, nBlockYSize,
                     pData, nBlockXSize, nBlockYSize,
-                    eType, 0, 0 );
+                    eType, 0, 0, NULL );
                 if( eErr != CE_None )
                 {
                     return NULL;
@@ -813,7 +813,7 @@ GDALDataset *IntergraphDataset::CreateCopy( const char *pszFilename,
                     iXOffset, iYOffset, 
                     nBlockXSize, nBlockYSize,
                     pData, nBlockXSize, nBlockYSize,
-                    eType, 0, 0 );
+                    eType, 0, 0, NULL );
                 if( eErr != CE_None )
                 {
                     return NULL;

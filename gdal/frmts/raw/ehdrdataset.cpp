@@ -125,7 +125,9 @@ class EHdrRasterBand : public RawRasterBand
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int );
+                              GSpacing nPixelSpace,
+                              GSpacing nLineSpace,
+                              GDALRasterIOExtraArg* psExtraArg );
 
   public:
     EHdrRasterBand( GDALDataset *poDS, int nBand, VSILFILE * fpRaw,
@@ -357,7 +359,9 @@ CPLErr EHdrRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                   int nXOff, int nYOff, int nXSize, int nYSize,
                                   void * pData, int nBufXSize, int nBufYSize,
                                   GDALDataType eBufType,
-                                  int nPixelSpace, int nLineSpace )
+                                  GSpacing nPixelSpace,
+                                  GSpacing nLineSpace,
+                                  GDALRasterIOExtraArg* psExtraArg )
 
 {
     // Defer to RawRasterBand
@@ -365,14 +369,14 @@ CPLErr EHdrRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         return RawRasterBand::IRasterIO( eRWFlag, 
                                          nXOff, nYOff, nXSize, nYSize,
                                          pData, nBufXSize, nBufYSize, 
-                                         eBufType, nPixelSpace, nLineSpace );
+                                         eBufType, nPixelSpace, nLineSpace, psExtraArg );
 
     // Force use of IReadBlock() and IWriteBlock()
     else
         return GDALRasterBand::IRasterIO( eRWFlag, 
                                           nXOff, nYOff, nXSize, nYSize,
                                           pData, nBufXSize, nBufYSize, 
-                                          eBufType, nPixelSpace, nLineSpace );
+                                          eBufType, nPixelSpace, nLineSpace, psExtraArg );
 }
 
 /************************************************************************/

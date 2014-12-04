@@ -261,7 +261,9 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
 				       int nXOff, int nYOff, int nXSize, 
 				       int nYSize, void * pData, int nBufXSize,
 				       int nBufYSize, GDALDataType eBufType,
-				       int nPixelSpace, int nLineSpace )
+				       GSpacing nPixelSpace,
+                       GSpacing nLineSpace,
+                       GDALRasterIOExtraArg* psExtraArg )
 {
     GDALDerivedPixelFunc pfnPixelFunc;
     void **pBuffers;
@@ -317,7 +319,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
     {
         if( OverviewRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
                               pData, nBufXSize, nBufYSize, 
-                              eBufType, nPixelSpace, nLineSpace ) == CE_None )
+                              eBufType, nPixelSpace, nLineSpace, psExtraArg ) == CE_None )
             return CE_None;
     }
 
@@ -350,8 +352,8 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
             }
             CPLError( CE_Failure, CPLE_OutOfMemory,
                 "VRTDerivedRasterBand::IRasterIO:" \
-                "Out of memory allocating %d bytes.\n",
-                nPixelSpace * nBufXSize * nBufYSize);
+                "Out of memory allocating " CPL_FRMT_GIB " bytes.\n",
+                (GIntBig)nPixelSpace * nBufXSize * nBufYSize);
             return CE_Failure;
         }
 
@@ -373,13 +375,16 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
         }
     }
 
+    GDALRasterIOExtraArg sExtraArg;
+    INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+
     /* ---- Load values for sources into packed buffers ---- */
     for(iSource = 0; iSource < nSources; iSource++) {
         eErr = ((VRTSource *)papoSources[iSource])->RasterIO
 	    (nXOff, nYOff, nXSize, nYSize, 
 	     pBuffers[iSource], nBufXSize, nBufYSize, 
 	     eSrcType, GDALGetDataTypeSize( eSrcType ) / 8,
-             (GDALGetDataTypeSize( eSrcType ) / 8) * nBufXSize);
+             (GDALGetDataTypeSize( eSrcType ) / 8) * nBufXSize, &sExtraArg);
     }
 
     /* ---- Apply pixel function ---- */

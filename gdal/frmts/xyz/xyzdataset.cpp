@@ -1109,7 +1109,7 @@ GDALDataset* XYZDataset::CreateCopy( const char * pszFilename,
         eErr = poSrcDS->GetRasterBand(1)->RasterIO(
                                             GF_Read, 0, j, nXSize, 1,
                                             pLineBuffer, nXSize, 1,
-                                            eReqDT, 0, 0);
+                                            eReqDT, 0, 0, NULL);
         if (eErr != CE_None)
             break;
         double dfY = adfGeoTransform[3] + (j + 0.5) * adfGeoTransform[5];

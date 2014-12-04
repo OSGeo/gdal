@@ -236,7 +236,7 @@ int GDAL_EDBFile::ReadBlock( int channel,
                                     win_xsize, win_ysize, 
                                     buffer, win_xsize, win_ysize, 
                                     poBand->GetRasterDataType(),
-                                    nPixelOffset, nLineOffset );
+                                    nPixelOffset, nLineOffset, NULL );
 
     if( eErr != CE_None )
     {
@@ -291,7 +291,7 @@ int GDAL_EDBFile::WriteBlock( int channel, int block_index, void *buffer)
                                     nBlockY * nBlockYSize,
                                     nWinXSize, nWinYSize,
                                     buffer, nWinXSize, nWinYSize,
-                                    poBand->GetRasterDataType(), 0, 0 );
+                                    poBand->GetRasterDataType(), 0, 0, NULL );
 
     if( eErr != CE_None )
     {

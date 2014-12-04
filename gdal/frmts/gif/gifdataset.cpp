@@ -689,7 +689,7 @@ GIFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         {
             eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
                                      pabyScanline, nXSize, 1, GDT_Byte,
-                                     nBands, nBands * nXSize );
+                                     nBands, nBands * nXSize, NULL );
 
             if( eErr != CE_None || EGifPutLine( hGifFile, pabyScanline, nXSize ) == GIF_ERROR )
             {
@@ -725,7 +725,7 @@ GIFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             {
                 eErr= poBand->RasterIO( GF_Read, 0, j, nXSize, 1, 
                                         pabyScanline, nXSize, 1, GDT_Byte,
-                                        1, nXSize );
+                                        1, nXSize, NULL );
 
                 if (eErr != CE_None || EGifPutLine(hGifFile, pabyScanline, nXSize) == GIF_ERROR)
                 {

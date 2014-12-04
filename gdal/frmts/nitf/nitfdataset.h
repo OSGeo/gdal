@@ -135,7 +135,10 @@ class NITFDataset : public GDALPamDataset
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int *, int, int, int );
+                              int, int *,
+                              GSpacing nPixelSpace, GSpacing nLineSpace,
+                              GSpacing nBandSpace,
+                              GDALRasterIOExtraArg* psExtraArg );
 
     virtual const char *GetProjectionRef(void);
     virtual CPLErr SetProjection( const char * );
@@ -230,7 +233,8 @@ class NITFProxyPamRasterBand : public GDALPamRasterBand
         virtual CPLErr IWriteBlock( int, int, void * );
         virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                                 void *, int, int, GDALDataType,
-                                int, int );
+                                GSpacing nPixelSpace, GSpacing nLineSpace,
+                                GDALRasterIOExtraArg* psExtraArg);
 
     public:
                          ~NITFProxyPamRasterBand();

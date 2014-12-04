@@ -386,7 +386,7 @@ XPMCreateCopy( const char * pszFilename,
     for( iLine = 0; iLine < nYSize; iLine++ )
     {
         poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
-                          (void *) pabyScanline, nXSize, 1, GDT_Byte, 0, 0 );
+                          (void *) pabyScanline, nXSize, 1, GDT_Byte, 0, 0, NULL );
         
         VSIFPutcL( '"', fpPBM );
         for( int iPixel = 0; iPixel < nXSize; iPixel++ )

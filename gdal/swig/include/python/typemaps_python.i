@@ -910,6 +910,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 %enddef
 
 OPTIONAL_POD(int,i);
+OPTIONAL_POD(GIntBig,L);
 
 /*
  * Typedef const char * <- Any object.

@@ -387,7 +387,7 @@ BLXCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 	    eErr = poBand->RasterIO( GF_Read, j*ctx->cell_xsize, i*ctx->cell_ysize, 
 				     ctx->cell_xsize, ctx->cell_ysize, 
 				     pabyTile, ctx->cell_xsize, ctx->cell_ysize, GDT_Int16,
-				     0, 0 );
+				     0, 0, NULL );
 	    if(eErr >= CE_Failure) 
 	       break;
 	    celldata = pabyTile;

@@ -183,7 +183,7 @@ RCreateCopy( const char * pszFilename,
 
             eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
                                      padfScanline, nXSize, 1, GDT_Float64,
-                                     sizeof(double), 0 );
+                                     sizeof(double), 0, NULL );
 
             if( bASCII )
             {

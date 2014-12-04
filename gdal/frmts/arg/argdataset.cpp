@@ -785,7 +785,7 @@ GDALDataset * ARGDataset::CreateCopy( const char * pszFilename,
 
                 eErr = poSrcBand->RasterIO(GF_Read, nXBlock * nXBlockSize, 
                     nYBlock * nYBlockSize + nYScanline, nXValid, 1, pabyData, nXBlockSize, 
-                    1, eType, 0, 0);
+                    1, eType, 0, 0, NULL);
 
                 if (eErr != CE_None) {
                     CPLError(CE_Failure, CPLE_AppDefined, "Error reading.");
@@ -799,7 +799,7 @@ GDALDataset * ARGDataset::CreateCopy( const char * pszFilename,
 
                 eErr = poDstBand->RasterIO(GF_Write, nXBlock * nXBlockSize, 
                     nYBlock * nYBlockSize + nYScanline, nXValid, 1, pabyData, nXBlockSize, 
-                    1, eType, 0, 0);
+                    1, eType, 0, 0, NULL);
 
                 if (eErr != CE_None) {
                     CPLError(CE_Failure, CPLE_AppDefined, "Error writing.");

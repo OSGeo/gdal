@@ -489,7 +489,10 @@ class CPL_DLL ECWDataset : public GDALJP2AbstractDataset
     void        CleanupWindow();
     int         TryWinRasterIO( GDALRWFlag, int, int, int, int,
                                 GByte *, int, int, GDALDataType,
-                                int, int *, int, int, int );
+                                int, int *,
+                                GSpacing nPixelSpace, GSpacing nLineSpace,
+                                GSpacing nBandSpace,
+                                GDALRasterIOExtraArg* psExtraArg );
     CPLErr      LoadNextLine();
 
 #if ECWSDK_VERSION>=50
@@ -533,11 +536,13 @@ class CPL_DLL ECWDataset : public GDALJP2AbstractDataset
     CPLErr ReadBands(void * pData, int nBufXSize, int nBufYSize,
                     GDALDataType eBufType, 
                     int nBandCount,
-                    int nPixelSpace, int nLineSpace, int nBandSpace);
+                    GSpacing nPixelSpace, GSpacing nLineSpace, GSpacing nBandSpace,
+                    GDALRasterIOExtraArg* psExtraArg);
     CPLErr ReadBandsDirectly(void * pData, int nBufXSize, int nBufYSize,
                     GDALDataType eBufType, 
                     int nBandCount,
-                    int nPixelSpace, int nLineSpace, int nBandSpace);
+                    GSpacing nPixelSpace, GSpacing nLineSpace, GSpacing nBandSpace,
+                    GDALRasterIOExtraArg* psExtraArg);
   public:
         ECWDataset(int bIsJPEG2000);
         ~ECWDataset();
@@ -552,7 +557,10 @@ class CPL_DLL ECWDataset : public GDALJP2AbstractDataset
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int *, int, int, int );
+                              int, int *,
+                              GSpacing nPixelSpace, GSpacing nLineSpace,
+                              GSpacing nBandSpace,
+                              GDALRasterIOExtraArg* psExtraArg);
 
     virtual char      **GetMetadataDomainList();
     virtual const char *GetMetadataItem( const char * pszName,
@@ -625,12 +633,14 @@ class ECWRasterBand : public GDALPamRasterBand
 //#if !defined(SDK_CAN_DO_SUPERSAMPLING)
     CPLErr OldIRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int );
+                              GSpacing nPixelSpace, GSpacing nLineSpace,
+                              GDALRasterIOExtraArg* psExtraArg );
 //#endif
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int );
+                              GSpacing nPixelSpace, GSpacing nLineSpace,
+                              GDALRasterIOExtraArg* psExtraArg);
 
   public:
 

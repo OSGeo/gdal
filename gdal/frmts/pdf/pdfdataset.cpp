@@ -882,7 +882,8 @@ const char* PDFDataset::GetOption(char** papszOpenOptions,
 
 CPLErr PDFDataset::ReadPixels( int nReqXOff, int nReqYOff,
                                int nReqXSize, int nReqYSize,
-                               int nPixelSpace, int nLineSpace, int nBandSpace,
+                               GSpacing nPixelSpace, GSpacing nLineSpace,
+                               GSpacing nBandSpace,
                                GByte* pabyData )
 {
     CPLErr eErr = CE_None;
@@ -1102,7 +1103,7 @@ CPLErr PDFDataset::ReadPixels( int nReqXOff, int nReqYOff,
                                           pabyData,
                                           nReqXSize, nReqYSize,
                                           GDT_Byte, 3, NULL,
-                                          nPixelSpace, nLineSpace, nBandSpace);
+                                          nPixelSpace, nLineSpace, nBandSpace, NULL);
                 }
                 delete poDS;
             }
@@ -1439,7 +1440,9 @@ CPLErr PDFDataset::IRasterIO( GDALRWFlag eRWFlag,
                               void * pData, int nBufXSize, int nBufYSize,
                               GDALDataType eBufType, 
                               int nBandCount, int *panBandMap,
-                              int nPixelSpace, int nLineSpace, int nBandSpace )
+                              GSpacing nPixelSpace, GSpacing nLineSpace,
+                              GSpacing nBandSpace,
+                              GDALRasterIOExtraArg* psExtraArg)
 {
     int nBandBlockXSize, nBandBlockYSize;
     GetRasterBand(1)->GetBlockSize(&nBandBlockXSize, &nBandBlockYSize);
@@ -1467,7 +1470,7 @@ CPLErr PDFDataset::IRasterIO( GDALRWFlag eRWFlag,
                                         pData, nBufXSize, nBufYSize,
                                         eBufType, 
                                         nBandCount, panBandMap,
-                                        nPixelSpace, nLineSpace, nBandSpace );
+                                        nPixelSpace, nLineSpace, nBandSpace, psExtraArg );
 }
 
 /************************************************************************/

@@ -1266,7 +1266,7 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
                                       firstBand->GetRasterDataType(),
                                       // eBufType
                                       bytesPerPixel, // nPixelSpace
-                                      bytesPerPixel * blockX); // nLineSpace
+                                      bytesPerPixel * blockX, NULL); // nLineSpace
                 if (eErr != CE_None)
                     CPLError(CE_Failure, CPLE_FileIO, 
                              "FIT write - CreateCopy got read error %i", eErr);

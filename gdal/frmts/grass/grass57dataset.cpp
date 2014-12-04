@@ -181,7 +181,10 @@ class GRASSRasterBand : public GDALRasterBand
     virtual        ~GRASSRasterBand();
 
     virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IRasterIO ( GDALRWFlag, int, int, int, int, void *, int, int, GDALDataType, int, int );
+    virtual CPLErr IRasterIO ( GDALRWFlag, int, int, int, int, void *, int, int, GDALDataType,
+                               GSpacing nPixelSpace,
+                               GSpacing nLineSpace,
+                               GDALRasterIOExtraArg* psExtraArg);
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
     virtual double GetMinimum( int *pbSuccess = NULL );
@@ -527,7 +530,9 @@ CPLErr GRASSRasterBand::IRasterIO ( GDALRWFlag eRWFlag,
 	                           int nXOff, int nYOff, int nXSize, int nYSize,
 				   void * pData, int nBufXSize, int nBufYSize,
 				   GDALDataType eBufType,
-				   int nPixelSpace, int nLineSpace )
+				   GSpacing nPixelSpace,
+                   GSpacing nLineSpace,
+                   GDALRasterIOExtraArg* psExtraArg )
 {
     /* GRASS library does that, we have only calculate and reset the region in map units
      * and if the region has changed, reopen the raster */

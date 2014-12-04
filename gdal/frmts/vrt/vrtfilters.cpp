@@ -117,7 +117,9 @@ CPLErr
 VRTFilteredSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize, 
                              void *pData, int nBufXSize, int nBufYSize, 
                              GDALDataType eBufType, 
-                             int nPixelSpace, int nLineSpace )
+                             GSpacing nPixelSpace,
+                             GSpacing nLineSpace,
+                             GDALRasterIOExtraArg* psExtraArg )
 
 {
 /* -------------------------------------------------------------------- */
@@ -129,16 +131,18 @@ VRTFilteredSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
     {
         return VRTComplexSource::RasterIO( nXOff, nYOff, nXSize, nYSize, 
                                            pData, nBufXSize, nBufYSize, 
-                                           eBufType, nPixelSpace, nLineSpace );
+                                           eBufType, nPixelSpace, nLineSpace, psExtraArg );
     }
 
     // The window we will actually request from the source raster band.
+    double dfReqXOff, dfReqYOff, dfReqXSize, dfReqYSize;
     int nReqXOff, nReqYOff, nReqXSize, nReqYSize;
 
     // The window we will actual set _within_ the pData buffer.
     int nOutXOff, nOutYOff, nOutXSize, nOutYSize;
 
     if( !GetSrcDstWindow( nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
+                        &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize,
                         &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
                         &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize ) )
         return CE_None;
@@ -287,7 +291,7 @@ VRTFilteredSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                                               + nLineOffset * nTopFill
                                               + nPixelOffset * nLeftFill,
                                             nFileXSize, nFileYSize, eOperDataType,
-                                            nPixelOffset, nLineOffset );
+                                            nPixelOffset, nLineOffset, psExtraArg );
 
     if( eErr != CE_None )
     {

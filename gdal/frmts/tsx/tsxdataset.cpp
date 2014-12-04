@@ -199,13 +199,13 @@ CPLErr TSXRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return poBand->RasterIO( GF_Read, nBlockXOff * nBlockXSize,
             nBlockYOff * nBlockYSize, nBlockXSize, nRequestYSize,
             pImage, nBlockXSize, nRequestYSize, GDT_CInt16, 1, NULL, 4,
-            nBlockXSize * 4, 0 );
+            nBlockXSize * 4, 0, NULL );
     }
     else { /* Detected Product */
         return poBand->RasterIO( GF_Read, nBlockXOff * nBlockXSize,
             nBlockYOff * nBlockYSize, nBlockXSize, nRequestYSize,
             pImage, nBlockXSize, nRequestYSize, GDT_UInt16, 1, NULL, 2,
-            nBlockXSize * 2, 0 );
+            nBlockXSize * 2, 0, NULL );
     }
 }
 

@@ -102,6 +102,68 @@ typedef enum {
     /*! Write data */  GF_Write = 1
 } GDALRWFlag;
 
+/* NOTE: values are selected to be consistant with GDALResampleAlg of alg/gdalwarper.h */ 
+/** RasterIO() resampling method.
+  * @since GDAL 2.0
+  */
+typedef enum
+{
+    /*! Nearest neighbour */                            GRIORA_NearestNeighbour = 0,
+    /*! Bilinear (2x2 kernel) */                        GRIORA_Bilinear = 1,
+    /*! Cubic Convolution Approximation (4x4 kernel) */ GRIORA_Cubic = 2,
+    /*! Cubic B-Spline Approximation (4x4 kernel) */    GRIORA_CubicSpline = 3,
+    /*! Lanczos windowed sinc interpolation (6x6 kernel) */ GRIORA_Lanczos = 4,
+    /*! Average */                                      GRIORA_Average = 5,
+    /*! Mode (selects the value which appears most often of all the sampled points) */
+                                                        GRIORA_Mode = 6,
+    /*! Gauss blurring */                               GRIORA_Gauss = 7
+} GDALRIOResampleAlg;
+
+/* NOTE to developers: only add members, and if so edit INIT_RASTERIO_EXTRA_ARG */
+/* and INIT_RASTERIO_EXTRA_ARG */
+/** Structure to pass extra arguments to RasterIO() method
+  * @since GDAL 2.0
+  */
+typedef struct
+{
+    /*! Version of structure (to allow future extensions of the structure) */ 
+    int                    nVersion;
+
+    /*! Resampling algorithm */ 
+    GDALRIOResampleAlg     eResampleAlg;
+
+    /*! Progress callback */ 
+    GDALProgressFunc       pfnProgress;
+    /*! Progress callback user data */ 
+    void                  *pProgressData;
+
+    /*! Indicate if dfXOff, dfYOff, dfXSize and dfYSize are set.
+        Mostly reserved from the VRT driver to communicate a more precise
+        source window. Must be such that dfXOff - nXOff < 1.0 and
+        dfYOff - nYOff < 1.0 and nXSize - dfXSize < 1.0 and nYSize - dfYSize < 1.0 */
+    int                    bFloatingPointWindowValidity;
+    /*! Pixel offset to the top left corner. Only valid if bFloatingPointWindowValidity = TRUE */
+    double                 dfXOff;
+    /*! Line offset to the top left corner. Only valid if bFloatingPointWindowValidity = TRUE */
+    double                 dfYOff;
+    /*! Width in pixels of the area of interest. Only valid if bFloatingPointWindowValidity = TRUE */
+    double                 dfXSize;
+    /*! Height in pixels of the area of interest. Only valid if bFloatingPointWindowValidity = TRUE */
+    double                 dfYSize;
+} GDALRasterIOExtraArg;
+
+#define RASTERIO_EXTRA_ARG_CURRENT_VERSION  1
+
+/** Macro to initialize an instance of GDALRasterIOExtraArg structure.
+  * @since GDAL 2.0
+  */
+#define INIT_RASTERIO_EXTRA_ARG(s)  \
+    do { (s).nVersion = RASTERIO_EXTRA_ARG_CURRENT_VERSION; \
+         (s).eResampleAlg = GRIORA_NearestNeighbour; \
+         (s).pfnProgress = NULL; \
+         (s).pProgressData = NULL; \
+         (s).bFloatingPointWindowValidity = FALSE; } while(0)
+
 /*! Types of color interpretation for raster bands. */
 typedef enum
 {
@@ -176,6 +238,9 @@ typedef void *GDALRasterAttributeTableH;
 
 /** Opaque type used for the C bindings of the C++ GDALAsyncReader class */
 typedef void *GDALAsyncReaderH;
+
+/** Type to express pixel, line or band spacing. Signed 64 bit integer. */
+typedef GIntBig GSpacing;
 
 /* ==================================================================== */
 /*      Registration/driver related.                                    */
@@ -376,6 +441,14 @@ CPLErr CPL_DLL CPL_STDCALL GDALDatasetRasterIO(
     int nBandCount, int *panBandCount, 
     int nPixelSpace, int nLineSpace, int nBandSpace);
 
+CPLErr CPL_DLL CPL_STDCALL GDALDatasetRasterIOEx( 
+    GDALDatasetH hDS, GDALRWFlag eRWFlag,
+    int nDSXOff, int nDSYOff, int nDSXSize, int nDSYSize,
+    void * pBuffer, int nBXSize, int nBYSize, GDALDataType eBDataType,
+    int nBandCount, int *panBandCount, 
+    GSpacing nPixelSpace, GSpacing nLineSpace, GSpacing nBandSpace,
+    GDALRasterIOExtraArg* psExtraArg);
+
 CPLErr CPL_DLL CPL_STDCALL GDALDatasetAdviseRead( GDALDatasetH hDS, 
     int nDSXOff, int nDSYOff, int nDSXSize, int nDSYSize,
     int nBXSize, int nBYSize, GDALDataType eBDataType,
@@ -489,6 +562,12 @@ GDALRasterIO( GDALRasterBandH hRBand, GDALRWFlag eRWFlag,
               int nDSXOff, int nDSYOff, int nDSXSize, int nDSYSize,
               void * pBuffer, int nBXSize, int nBYSize,GDALDataType eBDataType,
               int nPixelSpace, int nLineSpace );
+CPLErr CPL_DLL CPL_STDCALL 
+GDALRasterIOEx( GDALRasterBandH hRBand, GDALRWFlag eRWFlag,
+              int nDSXOff, int nDSYOff, int nDSXSize, int nDSYSize,
+              void * pBuffer, int nBXSize, int nBYSize,GDALDataType eBDataType,
+              GSpacing nPixelSpace, GSpacing nLineSpace,
+              GDALRasterIOExtraArg* psExtraArg );
 CPLErr CPL_DLL CPL_STDCALL GDALReadBlock( GDALRasterBandH, int, int, void * );
 CPLErr CPL_DLL CPL_STDCALL GDALWriteBlock( GDALRasterBandH, int, int, void * );
 int CPL_DLL CPL_STDCALL GDALGetRasterBandXSize( GDALRasterBandH );

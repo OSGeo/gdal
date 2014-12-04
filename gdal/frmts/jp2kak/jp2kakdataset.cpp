@@ -124,11 +124,17 @@ class JP2KAKDataset : public GDALJP2AbstractDataset
                                 GDALDataType, int, int * );
     CPLErr      DirectRasterIO( GDALRWFlag, int, int, int, int,
                                 void *, int, int, GDALDataType,
-                                int, int *, int, int, int );
+                                int, int *,
+                                GSpacing nPixelSpace, GSpacing nLineSpace,
+                                GSpacing nBandSpace,
+                                GDALRasterIOExtraArg* psExtraArg);
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int *, int, int, int );
+                              int, int *,
+                              GSpacing nPixelSpace, GSpacing nLineSpace,
+                              GSpacing nBandSpace,
+                              GDALRasterIOExtraArg* psExtraArg);
 
 
   public:
@@ -174,7 +180,8 @@ class JP2KAKRasterBand : public GDALPamRasterBand
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int );
+                              GSpacing nPixelSpace, GSpacing nLineSpace,
+                              GDALRasterIOExtraArg* psExtraArg);
 
     int            HasExternalOverviews() 
                    { return GDALPamRasterBand::GetOverviewCount() != 0; }
@@ -540,12 +547,17 @@ CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*      By default we invoke just for the requested band, directly      */
 /*      into the target buffer.                                         */
 /* -------------------------------------------------------------------- */
+    GDALRasterIOExtraArg sExtraArg;
+    INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+
     if( !poBaseDS->bUseYCC )
+    {
         return poBaseDS->DirectRasterIO( GF_Read, 
                                          nWXOff, nWYOff, nWXSize, nWYSize,
                                          pImage, nXSize, nYSize,
                                          eDataType, 1, &nBand, 
-                                         nWordSize, nWordSize*nBlockXSize, 0 );
+                                         nWordSize, nWordSize*nBlockXSize, 0, &sExtraArg );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      But for YCC or possible other effectively pixel interleaved     */
@@ -574,7 +586,8 @@ CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                      pabyWrkBuffer, nXSize, nYSize,
                                      eDataType, anBands.size(), &anBands[0],
                                      nWordSize, nWordSize*nBlockXSize, 
-                                     nWordSize*nBlockXSize*nBlockYSize );
+                                     nWordSize*nBlockXSize*nBlockYSize,
+                                     &sExtraArg );
 
     if( eErr == CE_None )
     {
@@ -643,7 +656,8 @@ JP2KAKRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                              int nXOff, int nYOff, int nXSize, int nYSize,
                              void * pData, int nBufXSize, int nBufYSize,
                              GDALDataType eBufType, 
-                             int nPixelSpace,int nLineSpace )
+                             GSpacing nPixelSpace, GSpacing nLineSpace,
+                             GDALRasterIOExtraArg* psExtraArg)
 
 {
 /* -------------------------------------------------------------------- */
@@ -655,7 +669,7 @@ JP2KAKRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         return GDALPamRasterBand::IRasterIO( 
             eRWFlag, nXOff, nYOff, nXSize, nYSize,
             pData, nBufXSize, nBufYSize, eBufType, 
-            nPixelSpace, nLineSpace );
+            nPixelSpace, nLineSpace, psExtraArg );
     else
     {
         int nOverviewDiscard = nDiscardLevels;
@@ -673,7 +687,7 @@ JP2KAKRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         return poBaseDS->DirectRasterIO( 
             eRWFlag, nXOff, nYOff, nXSize, nYSize,
             pData, nBufXSize, nBufYSize, eBufType, 
-            1, &nBand, nPixelSpace, nLineSpace, 0 );
+            1, &nBand, nPixelSpace, nLineSpace, 0, psExtraArg );
     }
 }
 
@@ -1427,7 +1441,9 @@ JP2KAKDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
                                void * pData, int nBufXSize, int nBufYSize,
                                GDALDataType eBufType, 
                                int nBandCount, int *panBandMap,
-                               int nPixelSpace,int nLineSpace,int nBandSpace)
+                               GSpacing nPixelSpace, GSpacing nLineSpace,
+                               GSpacing nBandSpace,
+                               GDALRasterIOExtraArg* psExtraArg)
     
 {
     kdu_codestream *poCodeStream = &oCodeStream;
@@ -1798,7 +1814,9 @@ CPLErr JP2KAKDataset::IRasterIO( GDALRWFlag eRWFlag,
                                  void * pData, int nBufXSize, int nBufYSize,
                                  GDALDataType eBufType, 
                                  int nBandCount, int *panBandMap,
-                                 int nPixelSpace,int nLineSpace,int nBandSpace)
+                                 GSpacing nPixelSpace, GSpacing nLineSpace,
+                                 GSpacing nBandSpace,
+                                 GDALRasterIOExtraArg* psExtraArg)
 
 {
 /* -------------------------------------------------------------------- */
@@ -1809,12 +1827,12 @@ CPLErr JP2KAKDataset::IRasterIO( GDALRWFlag eRWFlag,
         return GDALPamDataset::IRasterIO( 
             eRWFlag, nXOff, nYOff, nXSize, nYSize,
             pData, nBufXSize, nBufYSize, eBufType, 
-            nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace );
+            nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace, psExtraArg );
     else
         return DirectRasterIO( 
             eRWFlag, nXOff, nYOff, nXSize, nYSize,
             pData, nBufXSize, nBufYSize, eBufType, 
-            nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace );
+            nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace, psExtraArg );
 }
 
 /************************************************************************/
@@ -1941,7 +1959,7 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
                 if( poBand->RasterIO( GF_Read, 
                                       nXOff, nYOff+iSubline, nXSize, 1, 
                                       (void *) pabyBuffer, nXSize, 1, eType,
-                                      0, 0 ) == CE_Failure )
+                                      0, 0, NULL ) == CE_Failure )
                     return FALSE;
 
                 if( bReversible && eType == GDT_Byte )

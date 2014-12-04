@@ -240,7 +240,10 @@ protected:
 
     virtual CPLErr      IRasterIO( GDALRWFlag, int, int, int, int,
                                    void *, int, int, GDALDataType,
-                                   int, int *, int, int, int );
+                                   int, int *,
+                                   GSpacing nPixelSpace, GSpacing nLineSpace,
+                                   GSpacing nBandSpace,
+                                   GDALRasterIOExtraArg* psExtraArg );
 
     virtual CPLErr GetGeoTransform( double * );
 
@@ -1946,7 +1949,9 @@ CPLErr JPGDatasetCommon::IRasterIO( GDALRWFlag eRWFlag,
                               void *pData, int nBufXSize, int nBufYSize, 
                               GDALDataType eBufType,
                               int nBandCount, int *panBandMap, 
-                              int nPixelSpace, int nLineSpace, int nBandSpace )
+                              GSpacing nPixelSpace, GSpacing nLineSpace,
+                              GSpacing nBandSpace,
+                              GDALRasterIOExtraArg* psExtraArg )
 
 {
     if((eRWFlag == GF_Read) &&
@@ -2009,7 +2014,8 @@ CPLErr JPGDatasetCommon::IRasterIO( GDALRWFlag eRWFlag,
     return GDALPamDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                      pData, nBufXSize, nBufYSize, eBufType, 
                                      nBandCount, panBandMap, 
-                                     nPixelSpace, nLineSpace, nBandSpace);
+                                     nPixelSpace, nLineSpace, nBandSpace,
+                                     psExtraArg);
 }
 
 #if JPEG_LIB_VERSION_MAJOR < 9
@@ -2827,7 +2833,7 @@ CPLErr JPGAppendMask( const char *pszJPGFilename, GDALRasterBand *poMask,
     for( iY = 0; eErr == CE_None && iY < nYSize; iY++ )
     {
         eErr = poMask->RasterIO( GF_Read, 0, iY, nXSize, 1,
-                                 pabyMaskLine, nXSize, 1, GDT_Byte, 0, 0 );
+                                 pabyMaskLine, nXSize, 1, GDT_Byte, 0, 0, NULL );
         if( eErr != CE_None )
             break;
 
@@ -3402,7 +3408,7 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                   pabyScanline, nXSize, 1, eWorkDT,
                                   nBands, NULL,
                                   nBands*nWorkDTSize, 
-                                  nBands * nXSize * nWorkDTSize, nWorkDTSize );
+                                  nBands * nXSize * nWorkDTSize, nWorkDTSize, NULL );
 
         // clamp 16bit values to 12bit.
         if( nWorkDTSize == 2 )

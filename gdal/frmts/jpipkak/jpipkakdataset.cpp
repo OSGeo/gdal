@@ -322,7 +322,8 @@ JPIPKAKRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                               int nXOff, int nYOff, int nXSize, int nYSize,
                               void * pData, int nBufXSize, int nBufYSize,
                               GDALDataType eBufType, 
-                              int nPixelSpace,int nLineSpace )
+                              GSpacing nPixelSpace, GSpacing nLineSpace,
+                              GDALRasterIOExtraArg* psExtraArg)
     
 {
 /* -------------------------------------------------------------------- */
@@ -334,7 +335,7 @@ JPIPKAKRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         return GDALPamRasterBand::IRasterIO( 
             eRWFlag, nXOff, nYOff, nXSize, nYSize,
             pData, nBufXSize, nBufYSize, eBufType, 
-            nPixelSpace, nLineSpace );
+            nPixelSpace, nLineSpace, psExtraArg );
 
 /* -------------------------------------------------------------------- */
 /*      Otherwise do this as a single uncached async rasterio.          */
@@ -1141,7 +1142,9 @@ CPLErr JPIPKAKDataset::IRasterIO( GDALRWFlag eRWFlag,
                                   void * pData, int nBufXSize, int nBufYSize,
                                   GDALDataType eBufType, 
                                   int nBandCount, int *panBandMap,
-                                  int nPixelSpace,int nLineSpace,int nBandSpace)
+                                  GSpacing nPixelSpace, GSpacing nLineSpace,
+                                  GSpacing nBandSpace,
+                                  GDALRasterIOExtraArg* psExtraArg)
 
 {
 /* -------------------------------------------------------------------- */
@@ -1152,7 +1155,7 @@ CPLErr JPIPKAKDataset::IRasterIO( GDALRWFlag eRWFlag,
         return GDALPamDataset::IRasterIO( 
             eRWFlag, nXOff, nYOff, nXSize, nYSize,
             pData, nBufXSize, nBufYSize, eBufType, 
-            nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace );
+            nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace, psExtraArg );
 
 /* -------------------------------------------------------------------- */
 /*      Otherwise do this as a single uncached async rasterio.          */

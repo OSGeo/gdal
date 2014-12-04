@@ -3412,7 +3412,7 @@ int GDALPDFWriter::WriteMask(GDALDataset* poSrcDS,
             nXOff, nYOff,
             nReqXSize, nReqYSize,
             pabyMask, nReqXSize, nReqYSize, GDT_Byte,
-            0, 0);
+            0, 0, NULL);
     if (eErr != CE_None)
     {
         VSIFree(pabyMask);
@@ -3669,7 +3669,7 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
                                 nReqXSize, nReqYSize,
                                 pabyMEMDSBuffer, nReqXSize, nReqYSize,
                                 GDT_Byte, nBands, NULL,
-                                0, 0, 0);
+                                0, 0, 0, NULL);
 
         if( eErr != CE_None )
         {
@@ -3853,7 +3853,7 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
             eErr = poBlockSrcDS->RasterIO(GF_Read,
                                           0, iLine, nReqXSize, 1,
                                           pabyLine, nReqXSize, 1, GDT_Byte,
-                                          nBands, NULL, nBands, 0, 1);
+                                          nBands, NULL, nBands, 0, 1, NULL);
             if( eErr != CE_None )
                 break;
 

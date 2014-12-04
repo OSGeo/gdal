@@ -109,13 +109,13 @@ GDALTransformGeolocations( GDALRasterBandH hXBand,
     for( iLine = 0; eErr == CE_None && iLine < nYSize; iLine++ )
     {
         eErr = poXBand->RasterIO( GF_Read, 0, iLine, nXSize, 1,
-                                  padfX, nXSize, 1, GDT_Float64, 0, 0 );
+                                  padfX, nXSize, 1, GDT_Float64, 0, 0, NULL );
         if( eErr == CE_None )
             eErr = poYBand->RasterIO( GF_Read, 0, iLine, nXSize, 1,
-                                      padfY, nXSize, 1, GDT_Float64, 0, 0 );
+                                      padfY, nXSize, 1, GDT_Float64, 0, 0, NULL );
         if( eErr == CE_None && poZBand != NULL )
             eErr = poZBand->RasterIO( GF_Read, 0, iLine, nXSize, 1,
-                                      padfZ, nXSize, 1, GDT_Float64, 0, 0 );
+                                      padfZ, nXSize, 1, GDT_Float64, 0, 0, NULL );
         else
             memset( padfZ, 0, sizeof(double) * nXSize);
         
@@ -127,13 +127,13 @@ GDALTransformGeolocations( GDALRasterBandH hXBand,
 
         if( eErr == CE_None )
             eErr = poXBand->RasterIO( GF_Write, 0, iLine, nXSize, 1,
-                                      padfX, nXSize, 1, GDT_Float64, 0, 0 );
+                                      padfX, nXSize, 1, GDT_Float64, 0, 0, NULL );
         if( eErr == CE_None )
             eErr = poYBand->RasterIO( GF_Write, 0, iLine, nXSize, 1,
-                                      padfY, nXSize, 1, GDT_Float64, 0, 0 );
+                                      padfY, nXSize, 1, GDT_Float64, 0, 0, NULL );
         if( eErr == CE_None && poZBand != NULL )
             eErr = poZBand->RasterIO( GF_Write, 0, iLine, nXSize, 1,
-                                      padfZ, nXSize, 1, GDT_Float64, 0, 0 );
+                                      padfZ, nXSize, 1, GDT_Float64, 0, 0, NULL );
 
         if( eErr == CE_None )
             pfnProgress( (iLine+1) / (double) nYSize, "", pProgressArg );

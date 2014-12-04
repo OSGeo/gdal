@@ -178,9 +178,9 @@ CPLErr GDALSimpleSURF::ConvertRGBToLuminosity(
     void *paGreenLayer = CPLMalloc(dataGreenSize * nWidth * nHeight);
     void *paBlueLayer = CPLMalloc(dataBlueSize * nWidth * nHeight);
 
-    red->RasterIO(GF_Read, 0, 0, nXSize, nYSize, paRedLayer, nWidth, nHeight, eRedType, 0, 0);
-    green->RasterIO(GF_Read, 0, 0, nXSize, nYSize, paGreenLayer, nWidth, nHeight, eGreenType, 0, 0);
-    blue->RasterIO(GF_Read, 0, 0, nXSize, nYSize, paBlueLayer, nWidth, nHeight, eBlueType, 0, 0);
+    red->RasterIO(GF_Read, 0, 0, nXSize, nYSize, paRedLayer, nWidth, nHeight, eRedType, 0, 0, NULL);
+    green->RasterIO(GF_Read, 0, 0, nXSize, nYSize, paGreenLayer, nWidth, nHeight, eGreenType, 0, 0, NULL);
+    blue->RasterIO(GF_Read, 0, 0, nXSize, nYSize, paBlueLayer, nWidth, nHeight, eBlueType, 0, 0, NULL);
 
     double maxValue = 255.0;
     for (int row = 0; row < nHeight; row++)

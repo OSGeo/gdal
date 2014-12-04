@@ -65,6 +65,18 @@ Out-of-tree drivers :
   * Read RFC 49 for the needed changes. CreateFeature() and SetFeature() virtual
     methods must be renamed ICreateFeature() and ISetFeature().
 
+C) RFC 51: RasterIO() improvements : resampling and progress callback
+
+Link: http://trac.osgeo.org/gdal/wiki/rfc51_rasterio_resampling_progress
+
+Out-of-tree drivers :
+
+  * Read RFC 51 for the needed changes. GDALRasterBand and GDALDataset::IRasterIO()
+    take a new GDALRasterIOExtraArg* psExtraArg argument.
+    GDALRasterBand and GDALDataset::RasterIO() take a new
+    GDALRasterIOExtraArg* psExtraArg argument
+
+
 MIGRATION GUIDE FROM GDAL 1.10 to GDAL 1.11
 -------------------------------------------
 

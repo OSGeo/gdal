@@ -299,7 +299,8 @@ gdal_translate [--help-general]
        [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/
              CInt16/CInt32/CFloat32/CFloat64}] [-strict]
        [-of format] [-b band] [-mask band] [-expand {gray|rgb|rgba}]
-       [-outsize xsize[%] ysize[%]]
+       [-outsize xsize[%] ysize[%]] [-tr xres yres]
+       [-r {nearest,bilinear,cubic,cubicspline,lanczos,average,mode}]
        [-unscale] [-scale[_bn] [src_min src_max [dst_min dst_max]]]* [-exponent[_bn] exp_val]*
        [-srcwin xoff yoff xsize ysize] [-projwin ulx uly lrx lry] [-epo] [-eco]
        [-a_srs srs_def] [-a_ullr ulx uly lrx lry] [-a_nodata value]
@@ -344,6 +345,13 @@ dataset.</dd>
 <dt> <b>-outsize</b> <i>xsize[%] ysize[%]</i>:</dt><dd> Set the size of the output
 file.  Outsize is in pixels and lines unless '\%' is attached in which case it
 is as a fraction of the input image size.</dd>
+<dt> <b>-tr</b> xres yres :</dt><dd>  (starting with GDAL 2.0)
+set target resolution. The values must be expressed in georeferenced units.
+Both must be positive values. This is exclusive with -outsize and -a_ullr.
+</dd>
+<dt> <b>-r</b>
+<i>{nearest (default),bilinear,cubic,cubicspline,lanczos,average,mode}</i>:</dt><dd>
+(GDAL &gt;= 2.0) Select a resampling algorithm.</dd>
 <dt> <b>-scale</b> <i>[src_min src_max [dst_min dst_max]]</i>:</dt><dd> Rescale the
 input pixels values from the range <i>src_min</i> to <i>src_max</i> to
 the range <i>dst_min</i> to <i>dst_max</i>.  If omitted the output range is
@@ -444,7 +452,7 @@ builds or rebuilds overview images
 \section gdaladdo_synopsis SYNOPSIS
 
 \verbatim
-gdaladdo [-r {nearest,average,gauss,cubic,average_mp,average_magphase,mode}]
+gdaladdo [-r {nearest,average,gauss,cubic,cubicspline,lanczos,average_mp,average_magphase,mode}]
          [-b band]
          [-ro] [-clean] [--help-general] filename levels
 \endverbatim
@@ -456,7 +464,7 @@ most supported file formats with one of several downsampling algorithms.
 
 <dl>
 <dt> <b>-r</b>
-<i>{nearest (default),average,gauss,cubic,average_mp,average_magphase,mode}</i>:</dt><dd>
+<i>{nearest (default),average,gauss,cubic,cubicspline,lanczos,average_mp,average_magphase,mode}</i>:</dt><dd>
 Select a resampling algorithm.</dd>
 <dt> <b>-b</b> <i>band</i>:</dt><dd> (available from GDAL 1.10) Select an input band <i>band</i> for
 overview generation. Band numbering starts from 1. Multiple <b>-b</b> switches may be used
@@ -474,11 +482,13 @@ external overview (for GeoTIFF especially). </dd>
 <i>Nearest</i> and <i>average</i> are applicable to normal image data.  
 <i>Nearest</i> applies a nearest neighbour (simple sampling) resampler, while
 <i>average</i> computes the average of all non-NODATA contributing pixels.
-<i>Cubic</i> resampling (available from GDAL 1.7.0) applies a 4x4 approximate cubic convolution kernel.
+<i>Cubic</i> resampling (available from GDAL 1.7.0) applies a cubic convolution kernel.
 <i>Gauss</i> resampling (available from GDAL 1.6.0) applies a Gaussian kernel before computing the overview, 
 which can lead to better results than simple averaging in e.g case of sharp edges
 with high contrast or noisy patterns. The advised level values should be 2, 4, 8, ...
 so that a 3x3 resampling Gaussian kernel is selected.
+<i>CubicSpline</i> resampling (available from GDAL 2.0) applies a B-Spline convolution kernel.
+<i>Lanczos</i> resampling (available from GDAL 2.0) applies a Lanczos windowed sinc convolution kernel.
 
 gdaladdo will honour properly NODATA_VALUES tuples (special dataset metadata) so
 that only a given RGB triplet (in case of a RGB image) will be considered as the

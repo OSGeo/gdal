@@ -209,7 +209,7 @@ CPLErr BIGGifRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         return poGDS->poWorkDS->
             RasterIO( GF_Read, 0, nBlockYOff, nBlockXSize, 1, 
                       pImage, nBlockXSize, 1, GDT_Byte, 
-                      1, NULL, 0, 0, 0 );
+                      1, NULL, 0, 0, 0, NULL );
     }
 
 /* -------------------------------------------------------------------- */
@@ -241,7 +241,7 @@ CPLErr BIGGifRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
             poGDS->poWorkDS->RasterIO( GF_Write, 
                                        0, poGDS->nLastLineRead, nBlockXSize, 1, 
                                        pImage, nBlockXSize, 1, GDT_Byte, 
-                                       1, NULL, 0, 0, 0 );
+                                       1, NULL, 0, 0, 0, NULL );
         }
     }
 

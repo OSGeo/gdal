@@ -886,7 +886,7 @@ EpsilonDatasetCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                               GDT_Byte, nBands, NULL,
                               1,
                               nBlockXSize,
-                              nBlockXSize * nBlockYSize);
+                              nBlockXSize * nBlockYSize, NULL);
             
             int nOutBufSize = nTargetBlockSize;
             if (eErr == CE_None && nBands == 1)

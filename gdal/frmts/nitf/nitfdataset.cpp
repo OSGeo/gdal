@@ -1945,24 +1945,26 @@ CPLErr NITFDataset::IRasterIO( GDALRWFlag eRWFlag,
                                void * pData, int nBufXSize, int nBufYSize,
                                GDALDataType eBufType, 
                                int nBandCount, int *panBandMap,
-                               int nPixelSpace, int nLineSpace, int nBandSpace)
+                               GSpacing nPixelSpace, GSpacing nLineSpace,
+                               GSpacing nBandSpace,
+                               GDALRasterIOExtraArg* psExtraArg)
     
 {
     if( poJ2KDataset != NULL )
         return poJ2KDataset->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                        pData, nBufXSize, nBufYSize, eBufType,
                                        nBandCount, panBandMap, 
-                                       nPixelSpace, nLineSpace, nBandSpace );
+                                       nPixelSpace, nLineSpace, nBandSpace, psExtraArg );
     else if( poJPEGDataset != NULL )
         return poJPEGDataset->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                         pData, nBufXSize, nBufYSize, eBufType,
                                         nBandCount, panBandMap, 
-                                        nPixelSpace, nLineSpace, nBandSpace );
+                                        nPixelSpace, nLineSpace, nBandSpace, psExtraArg );
     else 
         return GDALDataset::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                        pData, nBufXSize, nBufYSize, eBufType,
                                        nBandCount, panBandMap, 
-                                       nPixelSpace, nLineSpace, nBandSpace );
+                                       nPixelSpace, nLineSpace, nBandSpace, psExtraArg );
 }
 
 
@@ -3606,7 +3608,8 @@ CPLErr NITFDataset::ReadJPEGBlock( int iBlockX, int iBlockY )
                            psImage->nBlockWidth, psImage->nBlockHeight,
                            pabyJPEGBlock, 
                            psImage->nBlockWidth, psImage->nBlockHeight,
-                           GetRasterBand(1)->GetRasterDataType(), psImage->nBands, anBands, 0, 0, 0 );
+                           GetRasterBand(1)->GetRasterDataType(), psImage->nBands, anBands,
+                           0, 0, 0, NULL );
 
     delete poDS;
 
@@ -4598,12 +4601,12 @@ NITFDataset::NITFCreateCopy(
             for( int iLine = 0; iLine < nYSize; iLine++ )
             {
                 eErr = poSrcBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
-                                            pData, nXSize, 1, eType, 0, 0 );
+                                            pData, nXSize, 1, eType, 0, 0, NULL );
                 if( eErr != CE_None )
                     break;   
                     
                 eErr = poDstBand->RasterIO( GF_Write, 0, iLine, nXSize, 1, 
-                                            pData, nXSize, 1, eType, 0, 0 );
+                                            pData, nXSize, 1, eType, 0, 0, NULL );
 
                 if( eErr != CE_None )
                     break;   

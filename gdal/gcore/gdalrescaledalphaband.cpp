@@ -79,10 +79,13 @@ CPLErr GDALRescaledAlphaBand::IReadBlock( int nXBlockOff, int nYBlockOff,
     if (nYBlockOff * nBlockYSize + nBlockYSize > nRasterYSize)
         nYSizeRequest = nRasterYSize - nYBlockOff * nBlockYSize;
 
+    GDALRasterIOExtraArg sExtraArg;
+    INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+
     return IRasterIO(GF_Read, nXBlockOff * nBlockXSize, nYBlockOff * nBlockYSize,
                      nXSizeRequest, nYSizeRequest, pImage,
                      nXSizeRequest, nYSizeRequest, GDT_Byte,
-                     1, nBlockXSize);
+                     1, nBlockXSize, &sExtraArg);
 }
 
 /************************************************************************/
@@ -93,7 +96,9 @@ CPLErr GDALRescaledAlphaBand::IRasterIO( GDALRWFlag eRWFlag,
                                       int nXOff, int nYOff, int nXSize, int nYSize,
                                       void * pData, int nBufXSize, int nBufYSize,
                                       GDALDataType eBufType,
-                                      int nPixelSpace, int nLineSpace )
+                                      GSpacing nPixelSpace,
+                                      GSpacing nLineSpace,
+                                      GDALRasterIOExtraArg* psExtraArg )
 {
     /* Optimization in common use case */
     /* This avoids triggering the block cache on this band, which helps */
@@ -117,7 +122,7 @@ CPLErr GDALRescaledAlphaBand::IRasterIO( GDALRWFlag eRWFlag,
             CPLErr eErr = poParent->RasterIO( GF_Read, nXOff, nYOff + j, nXSize, 1,
                                               pTemp, nBufXSize, 1,
                                               GDT_UInt16,
-                                              0, 0 );
+                                              0, 0, NULL );
             if (eErr != CE_None)
                 return eErr;
 
@@ -140,5 +145,5 @@ CPLErr GDALRescaledAlphaBand::IRasterIO( GDALRWFlag eRWFlag,
     return GDALRasterBand::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                       pData, nBufXSize, nBufYSize,
                                       eBufType,
-                                      nPixelSpace, nLineSpace );
+                                      nPixelSpace, nLineSpace, psExtraArg );
 }

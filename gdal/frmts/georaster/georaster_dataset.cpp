@@ -1064,7 +1064,7 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
                         nBlockCols, nBlockRows, pData,
                         nBlockCols, nBlockRows, eType,
                         nPixelSize,
-                        nPixelSize * nBlockXSize );
+                        nPixelSize * nBlockXSize, NULL );
 
                     if( eErr != CE_None )
                     {
@@ -1122,7 +1122,7 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
                         nBlockCols, nBlockRows, pData,
                         nBlockCols, nBlockRows, eType,
                         nPixelSize,
-                        nPixelSize * nBlockXSize );
+                        nPixelSize * nBlockXSize, NULL );
 
                     if( eErr != CE_None )
                     {
@@ -1183,7 +1183,9 @@ CPLErr GeoRasterDataset::IRasterIO( GDALRWFlag eRWFlag,
                                     void *pData, int nBufXSize, int nBufYSize,
                                     GDALDataType eBufType,
                                     int nBandCount, int *panBandMap,
-                                    int nPixelSpace, int nLineSpace, int nBandSpace )
+                                    GSpacing nPixelSpace, GSpacing nLineSpace,
+                                    GSpacing nBandSpace,
+                                    GDALRasterIOExtraArg* psExtraArg )
 
 {
     if( poGeoRaster->nBandBlockSize > 1 )
@@ -1192,7 +1194,7 @@ CPLErr GeoRasterDataset::IRasterIO( GDALRWFlag eRWFlag,
             nXOff, nYOff, nXSize, nYSize,
             pData, nBufXSize, nBufYSize, eBufType,
             nBandCount, panBandMap, nPixelSpace,
-            nLineSpace, nBandSpace );
+            nLineSpace, nBandSpace, psExtraArg );
     }
     else
     {
@@ -1200,7 +1202,7 @@ CPLErr GeoRasterDataset::IRasterIO( GDALRWFlag eRWFlag,
             nXOff, nYOff, nXSize, nYSize,
             pData, nBufXSize, nBufYSize, eBufType,
             nBandCount, panBandMap,
-            nPixelSpace, nLineSpace, nBandSpace );
+            nPixelSpace, nLineSpace, nBandSpace, psExtraArg );
     }
 }
 

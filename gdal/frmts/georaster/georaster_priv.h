@@ -177,7 +177,9 @@ public:
                             void *pData, int nBufXSize, int nBufYSize, 
                             GDALDataType eBufType,
                             int nBandCount, int *panBandMap, 
-                            int nPixelSpace, int nLineSpace, int nBandSpace );
+                            GSpacing nPixelSpace, GSpacing nLineSpace,
+                            GSpacing nBandSpace,
+                            GDALRasterIOExtraArg* psExtraArg );
     virtual int         GetGCPCount() { return nGCPCount; }
     virtual const char* GetGCPProjection();
     virtual const GDAL_GCP*

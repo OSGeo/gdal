@@ -69,7 +69,9 @@ class GDALOverviewDataset : public GDALDataset
     protected:
         virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                                 void *, int, int, GDALDataType,
-                                int, int *, int, int, int );
+                                int, int *,
+                                GSpacing, GSpacing, GSpacing,
+                                GDALRasterIOExtraArg* psExtraArg );
 
     public:
                         GDALOverviewDataset(GDALDataset* poMainDS, int nOvrLevel,
@@ -255,7 +257,9 @@ CPLErr GDALOverviewDataset::IRasterIO( GDALRWFlag eRWFlag,
                                void * pData, int nBufXSize, int nBufYSize,
                                GDALDataType eBufType, 
                                int nBandCount, int *panBandMap,
-                               int nPixelSpace, int nLineSpace, int nBandSpace)
+                               GSpacing nPixelSpace, GSpacing nLineSpace,
+                               GSpacing nBandSpace,
+                               GDALRasterIOExtraArg* psExtraArg)
     
 {
     int iBandIndex; 
@@ -267,8 +271,12 @@ CPLErr GDALOverviewDataset::IRasterIO( GDALRWFlag eRWFlag,
     {
         return poOvrDS->RasterIO(
             eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
-            eBufType, nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace);
+            eBufType, nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace,
+            psExtraArg);
     }
+
+    GDALProgressFunc  pfnProgressGlobal = psExtraArg->pfnProgress;
+    void             *pProgressDataGlobal = psExtraArg->pProgressData;
 
     for( iBandIndex = 0; 
          iBandIndex < nBandCount && eErr == CE_None; 
@@ -284,11 +292,23 @@ CPLErr GDALOverviewDataset::IRasterIO( GDALRWFlag eRWFlag,
         }
 
         pabyBandData = ((GByte *) pData) + iBandIndex * nBandSpace;
-        
+
+        psExtraArg->pfnProgress = GDALScaledProgress;
+        psExtraArg->pProgressData = 
+            GDALCreateScaledProgress( 1.0 * iBandIndex / nBandCount,
+                                      1.0 * (iBandIndex + 1) / nBandCount,
+                                      pfnProgressGlobal,
+                                      pProgressDataGlobal );
+
         eErr = poBand->IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
                                   (void *) pabyBandData, nBufXSize, nBufYSize,
-                                  eBufType, nPixelSpace, nLineSpace );
+                                  eBufType, nPixelSpace, nLineSpace, psExtraArg );
+
+        GDALDestroyScaledProgress( psExtraArg->pProgressData );
     }
+    
+    psExtraArg->pfnProgress = pfnProgressGlobal;
+    psExtraArg->pProgressData = pProgressDataGlobal;
 
     return eErr;
 }

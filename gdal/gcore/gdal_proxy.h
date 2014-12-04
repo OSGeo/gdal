@@ -51,7 +51,8 @@ class CPL_DLL GDALProxyDataset : public GDALDataset
                                     int, int *, GDALProgressFunc, void * );
         virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                                 void *, int, int, GDALDataType,
-                                int, int *, int, int, int );
+                                int, int *, GSpacing, GSpacing, GSpacing,
+                                GDALRasterIOExtraArg* psExtraArg );
     public:
 
         virtual char      **GetMetadataDomainList();
@@ -106,7 +107,7 @@ class CPL_DLL GDALProxyRasterBand : public GDALRasterBand
         virtual CPLErr IWriteBlock( int, int, void * );
         virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                                 void *, int, int, GDALDataType,
-                                int, int );
+                                GSpacing, GSpacing, GDALRasterIOExtraArg* psExtraArg );
 
     public:
 

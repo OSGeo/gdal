@@ -204,7 +204,7 @@ NITFWriteJPEGBlock( GDALDataset *poSrcDS, VSILFILE *fp,
             eErr = poSrcDS->RasterIO( GF_Read, nBlockXSize * nBlockXOff, iLine + nBlockYSize * nBlockYOff, nBlockXSizeToRead, 1, 
                                     pabyScanline, nBlockXSizeToRead, 1, eWorkDT,
                                     nBands, anBandList, 
-                                    nBands*nWorkDTSize, nBands * nBlockXSize * nWorkDTSize, nWorkDTSize );
+                                    nBands*nWorkDTSize, nBands * nBlockXSize * nWorkDTSize, nWorkDTSize, NULL );
 
 #if !defined(JPEG_LIB_MK1_OR_12BIT)
             /* Repeat the last pixel till the end of the line */

@@ -82,7 +82,8 @@ public:
     virtual CPLErr  RasterIO( int nXOff, int nYOff, int nXSize, int nYSize, 
                               void *pData, int nBufXSize, int nBufYSize, 
                               GDALDataType eBufType, 
-                              int nPixelSpace, int nLineSpace ) = 0;
+                              GSpacing nPixelSpace, GSpacing nLineSpace,
+                              GDALRasterIOExtraArg* psExtraArg ) = 0;
 
     virtual double GetMinimum( int nXSize, int nYSize, int *pbSuccess ) = 0;
     virtual double GetMaximum( int nXSize, int nYSize, int *pbSuccess ) = 0;
@@ -181,7 +182,9 @@ class CPL_DLL VRTDataset : public GDALDataset
                                void * pData, int nBufXSize, int nBufYSize,
                                GDALDataType eBufType,
                                int nBandCount, int *panBandMap,
-                               int nPixelSpace, int nLineSpace, int nBandSpace);
+                               GSpacing nPixelSpace, GSpacing nLineSpace,
+                               GSpacing nBandSpace,
+                               GDALRasterIOExtraArg* psExtraArg);
 
     virtual CPLXMLNode *SerializeToXML( const char *pszVRTPath);
     virtual CPLErr      XMLInit( CPLXMLNode *, const char * );
@@ -384,7 +387,8 @@ class CPL_DLL VRTSourcedRasterBand : public VRTRasterBand
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int );
+                              GSpacing nPixelSpace, GSpacing nLineSpace,
+                              GDALRasterIOExtraArg* psExtraArg);
 
     virtual char      **GetMetadataDomainList();
     virtual const char *GetMetadataItem( const char * pszName,
@@ -495,7 +499,8 @@ class CPL_DLL VRTDerivedRasterBand : public VRTSourcedRasterBand
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int );
+                              GSpacing nPixelSpace, GSpacing nLineSpace,
+                              GDALRasterIOExtraArg* psExtraArg );
 
     static CPLErr AddPixelFunction
         (const char *pszFuncName, GDALDerivedPixelFunc pfnPixelFunc);
@@ -532,7 +537,8 @@ class CPL_DLL VRTRawRasterBand : public VRTRasterBand
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int );
+                              GSpacing nPixelSpace, GSpacing nLineSpace,
+                              GDALRasterIOExtraArg* psExtraArg );
 
     virtual CPLErr IReadBlock( int, int, void * );
     virtual CPLErr IWriteBlock( int, int, void * );
@@ -599,6 +605,7 @@ protected:
 
     int                 bNoDataSet;
     double              dfNoDataValue;
+    CPLString           osResampling;
 
 public:
             VRTSimpleSource();
@@ -612,15 +619,20 @@ public:
     void           SetSrcWindow( int, int, int, int );
     void           SetDstWindow( int, int, int, int );
     void           SetNoDataValue( double dfNoDataValue );
+    const CPLString& GetResampling() const { return osResampling; }
+    void           SetResampling( const char* pszResampling );
 
     int            GetSrcDstWindow( int, int, int, int, int, int, 
+                                    double *pdfReqXOff, double *pdfReqYOff,
+                                    double *pdfReqXSize, double *pdfReqYSize,
                                     int *, int *, int *, int *,
                                     int *, int *, int *, int * );
 
     virtual CPLErr  RasterIO( int nXOff, int nYOff, int nXSize, int nYSize, 
                               void *pData, int nBufXSize, int nBufYSize, 
                               GDALDataType eBufType, 
-                              int nPixelSpace, int nLineSpace );
+                              GSpacing nPixelSpace, GSpacing nLineSpace,
+                              GDALRasterIOExtraArg* psExtraArg );
 
     virtual double GetMinimum( int nXSize, int nYSize, int *pbSuccess );
     virtual double GetMaximum( int nXSize, int nYSize, int *pbSuccess );
@@ -654,7 +666,9 @@ public:
                                void * pData, int nBufXSize, int nBufYSize,
                                GDALDataType eBufType,
                                int nBandCount, int *panBandMap,
-                               int nPixelSpace, int nLineSpace, int nBandSpace);
+                               GSpacing nPixelSpace, GSpacing nLineSpace,
+                               GSpacing nBandSpace,
+                               GDALRasterIOExtraArg* psExtraArg);
 };
 
 /************************************************************************/
@@ -668,7 +682,8 @@ public:
     virtual CPLErr  RasterIO( int nXOff, int nYOff, int nXSize, int nYSize, 
                               void *pData, int nBufXSize, int nBufYSize, 
                               GDALDataType eBufType, 
-                              int nPixelSpace, int nLineSpace );
+                              GSpacing nPixelSpace, GSpacing nLineSpace,
+                              GDALRasterIOExtraArg* psExtraArg );
 
     virtual double GetMinimum( int nXSize, int nYSize, int *pbSuccess );
     virtual double GetMaximum( int nXSize, int nYSize, int *pbSuccess );
@@ -720,7 +735,8 @@ protected:
                                       int nReqXSize, int nReqYSize,
                                       void *pData, int nOutXSize, int nOutYSize,
                                       GDALDataType eBufType,
-                                      int nPixelSpace, int nLineSpace );
+                                      GSpacing nPixelSpace, GSpacing nLineSpace,
+                                      GDALRasterIOExtraArg* psExtraArg );
 
 public:
                    VRTComplexSource();
@@ -729,7 +745,8 @@ public:
     virtual CPLErr RasterIO( int nXOff, int nYOff, int nXSize, int nYSize, 
                              void *pData, int nBufXSize, int nBufYSize, 
                              GDALDataType eBufType, 
-                             int nPixelSpace, int nLineSpace );
+                             GSpacing nPixelSpace, GSpacing nLineSpace,
+                             GDALRasterIOExtraArg* psExtraArg );
 
     virtual double GetMinimum( int nXSize, int nYSize, int *pbSuccess );
     virtual double GetMaximum( int nXSize, int nYSize, int *pbSuccess );
@@ -793,7 +810,8 @@ public:
     virtual CPLErr  RasterIO( int nXOff, int nYOff, int nXSize, int nYSize, 
                               void *pData, int nBufXSize, int nBufYSize, 
                               GDALDataType eBufType, 
-                              int nPixelSpace, int nLineSpace );
+                              GSpacing nPixelSpace, GSpacing nLineSpace,
+                              GDALRasterIOExtraArg* psExtraArg );
 };
 
 /************************************************************************/
@@ -852,7 +870,8 @@ public:
     virtual CPLErr  RasterIO( int nXOff, int nYOff, int nXSize, int nYSize, 
                               void *pData, int nBufXSize, int nBufYSize, 
                               GDALDataType eBufType, 
-                              int nPixelSpace, int nLineSpace );
+                              GSpacing nPixelSpace, GSpacing nLineSpace,
+                              GDALRasterIOExtraArg* psExtraArg );
 
     virtual double GetMinimum( int nXSize, int nYSize, int *pbSuccess );
     virtual double GetMaximum( int nXSize, int nYSize, int *pbSuccess );

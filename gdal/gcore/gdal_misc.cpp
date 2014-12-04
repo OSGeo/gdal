@@ -3292,3 +3292,51 @@ char** GDALDeserializeOpenOptionsFromXML( CPLXMLNode* psParentNode )
     }
     return papszOpenOptions;
 }
+
+/************************************************************************/
+/*                    GDALRasterIOGetResampleAlg()                      */
+/************************************************************************/
+
+GDALRIOResampleAlg GDALRasterIOGetResampleAlg(const char* pszResampling)
+{
+    GDALRIOResampleAlg eResampleAlg = GRIORA_NearestNeighbour;
+    if( EQUALN(pszResampling, "NEAR", 4) )
+        eResampleAlg = GRIORA_NearestNeighbour;
+    else if( EQUAL(pszResampling, "BILINEAR") )
+        eResampleAlg = GRIORA_Bilinear;
+    else if( EQUAL(pszResampling, "CUBIC") )
+        eResampleAlg = GRIORA_Cubic;
+    else if( EQUAL(pszResampling, "CUBICSPLINE") )
+        eResampleAlg = GRIORA_CubicSpline;
+    else if( EQUAL(pszResampling, "LANCZOS") )
+        eResampleAlg = GRIORA_Lanczos;
+    else if( EQUAL(pszResampling, "AVERAGE") )
+        eResampleAlg = GRIORA_Average;
+    else if( EQUAL(pszResampling, "MODE") )
+        eResampleAlg = GRIORA_Mode;
+    else if( EQUAL(pszResampling, "GAUSS") )
+        eResampleAlg = GRIORA_Gauss;
+    else
+        CPLError(CE_Warning, CPLE_NotSupported,
+                "GDAL_RASTERIO_RESAMPLING = %s not supported", pszResampling);
+    return eResampleAlg;
+}
+
+/************************************************************************/
+/*                   GDALRasterIOExtraArgSetResampleAlg()               */
+/************************************************************************/
+
+void GDALRasterIOExtraArgSetResampleAlg(GDALRasterIOExtraArg* psExtraArg,
+                                        int nXSize, int nYSize,
+                                        int nBufXSize, int nBufYSize)
+{
+    if( (nBufXSize != nXSize || nBufYSize != nYSize) &&
+        psExtraArg->eResampleAlg == GRIORA_NearestNeighbour  )
+    {
+        const char* pszResampling = CPLGetConfigOption("GDAL_RASTERIO_RESAMPLING", NULL);
+        if( pszResampling != NULL )
+        {
+            psExtraArg->eResampleAlg = GDALRasterIOGetResampleAlg(pszResampling);
+        }
+    }
+}

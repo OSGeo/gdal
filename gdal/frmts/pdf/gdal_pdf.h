@@ -279,7 +279,10 @@ class PDFDataset : public GDALPamDataset
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int *, int, int, int );
+                              int, int *,
+                              GSpacing nPixelSpace, GSpacing nLineSpace,
+                              GSpacing nBandSpace,
+                              GDALRasterIOExtraArg* psExtraArg);
 
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();
@@ -289,9 +292,9 @@ class PDFDataset : public GDALPamDataset
 
     CPLErr ReadPixels( int nReqXOff, int nReqYOff,
                        int nReqXSize, int nReqYSize,
-                       int nPixelSpace,
-                       int nLineSpace,
-                       int nBandSpace,
+                       GSpacing nPixelSpace,
+                       GSpacing nLineSpace,
+                       GSpacing nBandSpace,
                        GByte* pabyData );
 
     virtual int                 GetLayerCount();

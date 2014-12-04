@@ -623,7 +623,8 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                  int nXOff, int nYOff, int nXSize, int nYSize,
                                  void * pData, int nBufXSize, int nBufYSize,
                                  GDALDataType eBufType,
-                                 int nPixelSpace, int nLineSpace )
+                                 GSpacing nPixelSpace, GSpacing nLineSpace,
+                                 GDALRasterIOExtraArg* psExtraArg )
 
 {
     int         nBandDataSize = GDALGetDataTypeSize(eDataType) / 8;
@@ -636,7 +637,7 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                           nXSize, nYSize,
                                           pData, nBufXSize, nBufYSize,
                                           eBufType,
-                                          nPixelSpace, nLineSpace );
+                                          nPixelSpace, nLineSpace, psExtraArg );
     }
 
     CPLDebug("RAW", "Using direct IO implementation");
@@ -655,7 +656,7 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         {
             if( OverviewRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
                                   pData, nBufXSize, nBufYSize, 
-                                  eBufType, nPixelSpace, nLineSpace ) == CE_None )
+                                  eBufType, nPixelSpace, nLineSpace, psExtraArg ) == CE_None )
                 return CE_None;
         }
 
@@ -734,6 +735,14 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                        (vsi_l_offset)iPixel * nPixelSpace,
                                        eBufType, nPixelSpace, 1 );
                     }
+                }
+
+                if( psExtraArg->pfnProgress != NULL &&
+                    !psExtraArg->pfnProgress(1.0 * (iLine + 1) / nBufYSize, "",
+                                            psExtraArg->pProgressData) )
+                {
+                    CPLFree( pabyData );
+                    return CE_Failure;
                 }
             }
 
@@ -1158,7 +1167,9 @@ CPLErr RawDataset::IRasterIO( GDALRWFlag eRWFlag,
                               void *pData, int nBufXSize, int nBufYSize, 
                               GDALDataType eBufType,
                               int nBandCount, int *panBandMap, 
-                              int nPixelSpace, int nLineSpace, int nBandSpace )
+                              GSpacing nPixelSpace, GSpacing nLineSpace,
+                              GSpacing nBandSpace,
+                              GDALRasterIOExtraArg* psExtraArg )
 
 {
     const char* pszInterleave;
@@ -1182,6 +1193,10 @@ CPLErr RawDataset::IRasterIO( GDALRWFlag eRWFlag,
         }
         if( iBandIndex == nBandCount )
         {
+
+            GDALProgressFunc  pfnProgressGlobal = psExtraArg->pfnProgress;
+            void             *pProgressDataGlobal = psExtraArg->pProgressData;
+
             CPLErr eErr = CE_None;
             for( iBandIndex = 0; 
                 iBandIndex < nBandCount && eErr == CE_None; 
@@ -1197,11 +1212,23 @@ CPLErr RawDataset::IRasterIO( GDALRWFlag eRWFlag,
                 }
 
                 pabyBandData = ((GByte *) pData) + iBandIndex * nBandSpace;
-                
+
+                psExtraArg->pfnProgress = GDALScaledProgress;
+                psExtraArg->pProgressData = 
+                    GDALCreateScaledProgress( 1.0 * iBandIndex / nBandCount,
+                                            1.0 * (iBandIndex + 1) / nBandCount,
+                                            pfnProgressGlobal,
+                                            pProgressDataGlobal );
+
                 eErr = poBand->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
                                         (void *) pabyBandData, nBufXSize, nBufYSize,
-                                        eBufType, nPixelSpace, nLineSpace );
+                                        eBufType, nPixelSpace, nLineSpace, psExtraArg );
+
+                GDALDestroyScaledProgress( psExtraArg->pProgressData );
             }
+
+            psExtraArg->pfnProgress = pfnProgressGlobal;
+            psExtraArg->pProgressData = pProgressDataGlobal;
 
             return eErr;
         }
@@ -1210,5 +1237,6 @@ CPLErr RawDataset::IRasterIO( GDALRWFlag eRWFlag,
     return  GDALDataset::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                     pData, nBufXSize, nBufYSize, eBufType, 
                                     nBandCount, panBandMap, 
-                                    nPixelSpace, nLineSpace, nBandSpace );
+                                    nPixelSpace, nLineSpace, nBandSpace,
+                                    psExtraArg);
 }

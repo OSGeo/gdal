@@ -40,7 +40,7 @@ CPL_CVSID("$Id$");
 static void Usage(const char* pszErrorMsg = NULL)
 
 {
-    printf( "Usage: gdaladdo [-r {nearest,average,gauss,cubic,average_mp,average_magphase,mode}]\n"
+    printf( "Usage: gdaladdo [-r {nearest,average,gauss,cubic,cubicspline,lanczos,average_mp,average_magphase,mode}]\n"
             "                [-ro] [-clean] [-q] [--help-general] filename levels\n"
             "\n"
             "  -r : choice of resampling method (default: nearest)\n"

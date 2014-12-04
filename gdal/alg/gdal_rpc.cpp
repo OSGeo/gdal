@@ -708,7 +708,8 @@ int GDALRPCGetDEMHeight( GDALRPCTransformInfo *psTransform,
         double adfElevData[16] = {0};
         CPLErr eErr = psTransform->poDS->RasterIO(GF_Read, dXNew, dYNew, 4, 4,
                                                     &adfElevData, 4, 4,
-                                                    GDT_Float64, 1, bands, 0, 0, 0);
+                                                    GDT_Float64, 1, bands, 0, 0, 0,
+                                                    NULL);
         if(eErr != CE_None)
         {
             return FALSE;
@@ -753,7 +754,8 @@ int GDALRPCGetDEMHeight( GDALRPCTransformInfo *psTransform,
         double adfElevData[4] = {0,0,0,0};
         CPLErr eErr = psTransform->poDS->RasterIO(GF_Read, dX, dY, 2, 2,
                                                     &adfElevData, 2, 2,
-                                                    GDT_Float64, 1, bands, 0, 0, 0);
+                                                    GDT_Float64, 1, bands, 0, 0, 0,
+                                                  NULL);
         if(eErr != CE_None)
         {
             return FALSE;
@@ -788,7 +790,8 @@ int GDALRPCGetDEMHeight( GDALRPCTransformInfo *psTransform,
         }
         CPLErr eErr = psTransform->poDS->RasterIO(GF_Read, dX, dY, 1, 1,
                                                     &dfDEMH, 1, 1,
-                                                    GDT_Float64, 1, bands, 0, 0, 0);
+                                                    GDT_Float64, 1, bands, 0, 0, 0,
+                                                  NULL);
         if(eErr != CE_None ||
             (bGotNoDataValue && ARE_REAL_EQUAL(dfNoDataValue, dfDEMH)) )
         {

@@ -865,15 +865,24 @@ class Dataset(MajorObject):
         """
         ReadRaster1(self, int xoff, int yoff, int xsize, int ysize, int buf_xsize = None, 
             int buf_ysize = None, GDALDataType buf_type = None, 
-            int band_list = 0, int buf_pixel_space = None, 
-            int buf_line_space = None, 
-            int buf_band_space = None) -> CPLErr
+            int band_list = 0, GIntBig buf_pixel_space = None, 
+            GIntBig buf_line_space = None, 
+            GIntBig buf_band_space = None, GDALRIOResampleAlg resample_alg = GRIORA_NearestNeighbour, 
+            GDALProgressFunc callback = None, 
+            void callback_data = None) -> CPLErr
         """
         return _gdal.Dataset_ReadRaster1(self, *args, **kwargs)
 
-    def ReadAsArray(self, xoff=0, yoff=0, xsize=None, ysize=None, buf_obj=None ):
+    def ReadAsArray(self, xoff=0, yoff=0, xsize=None, ysize=None, buf_obj=None,
+                    resample_alg = GRIORA_NearestNeighbour,
+                    callback = None,
+                    callback_data = None):
         import gdalnumeric
-        return gdalnumeric.DatasetReadAsArray( self, xoff, yoff, xsize, ysize, buf_obj )
+        return gdalnumeric.DatasetReadAsArray( self, xoff, yoff, xsize, ysize, buf_obj,
+                                               resample_alg = resample_alg,
+                                               callback = callback,
+                                               callback_data = callback_data )
+
     def WriteRaster(self, xoff, yoff, xsize, ysize,
                     buf_string,
                     buf_xsize = None, buf_ysize = None, buf_type = None,
@@ -897,7 +906,10 @@ class Dataset(MajorObject):
     def ReadRaster(self, xoff = 0, yoff = 0, xsize = None, ysize = None,
                    buf_xsize = None, buf_ysize = None, buf_type = None,
                    band_list = None,
-                   buf_pixel_space = None, buf_line_space = None, buf_band_space = None ):
+                   buf_pixel_space = None, buf_line_space = None, buf_band_space = None,
+                   resample_alg = GRIORA_NearestNeighbour,
+                   callback = None,
+                   callback_data = None):
 
         if xsize is None:
             xsize = self.RasterXSize
@@ -915,7 +927,8 @@ class Dataset(MajorObject):
 
         return _gdal.Dataset_ReadRaster1(self, xoff, yoff, xsize, ysize,
                                             buf_xsize, buf_ysize, buf_type,
-                                            band_list, buf_pixel_space, buf_line_space, buf_band_space )
+                                            band_list, buf_pixel_space, buf_line_space, buf_band_space,
+                                          resample_alg, callback, callback_data )
 
     def GetVirtualMemArray(self, eAccess = gdalconst.GF_Read, xoff=0, yoff=0,
                            xsize=None, ysize=None, bufxsize=None, bufysize=None,
@@ -1282,7 +1295,10 @@ class Band(MajorObject):
         """
         ReadRaster1(self, int xoff, int yoff, int xsize, int ysize, int buf_xsize = None, 
             int buf_ysize = None, int buf_type = None, 
-            int buf_pixel_space = None, int buf_line_space = None) -> CPLErr
+            GIntBig buf_pixel_space = None, GIntBig buf_line_space = None, 
+            GDALRIOResampleAlg resample_alg = GRIORA_NearestNeighbour, 
+            GDALProgressFunc callback = None, 
+            void callback_data = None) -> CPLErr
         """
         return _gdal.Band_ReadRaster1(self, *args, **kwargs)
 
@@ -1292,7 +1308,10 @@ class Band(MajorObject):
 
     def ReadRaster(self, xoff = 0, yoff = 0, xsize = None, ysize = None,
                      buf_xsize = None, buf_ysize = None, buf_type = None,
-                     buf_pixel_space = None, buf_line_space = None ):
+                     buf_pixel_space = None, buf_line_space = None,
+                     resample_alg = GRIORA_NearestNeighbour,
+                     callback = None,
+                     callback_data = None):
 
         if xsize is None:
             xsize = self.XSize
@@ -1301,20 +1320,33 @@ class Band(MajorObject):
 
         return _gdal.Band_ReadRaster1(self, xoff, yoff, xsize, ysize,
                                       buf_xsize, buf_ysize, buf_type,
-                                      buf_pixel_space, buf_line_space)
+                                      buf_pixel_space, buf_line_space,
+                                      resample_alg, callback, callback_data)
 
     def ReadAsArray(self, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
-                    buf_xsize=None, buf_ysize=None, buf_obj=None):
+                    buf_xsize=None, buf_ysize=None, buf_obj=None,
+                    resample_alg = GRIORA_NearestNeighbour,
+                    callback = None,
+                    callback_data = None):
         import gdalnumeric
 
         return gdalnumeric.BandReadAsArray( self, xoff, yoff,
                                             win_xsize, win_ysize,
-                                            buf_xsize, buf_ysize, buf_obj )
+                                            buf_xsize, buf_ysize, buf_obj,
+                                            resample_alg = resample_alg,
+                                            callback = callback,
+                                            callback_data = callback_data)
       
-    def WriteArray(self, array, xoff=0, yoff=0):
+    def WriteArray(self, array, xoff=0, yoff=0,
+                   resample_alg = GRIORA_NearestNeighbour,
+                   callback = None,
+                   callback_data = None):
         import gdalnumeric
 
-        return gdalnumeric.BandWriteArray( self, array, xoff, yoff )
+        return gdalnumeric.BandWriteArray( self, array, xoff, yoff,
+                                           resample_alg = resample_alg,
+                                           callback = callback,
+                                           callback_data = callback_data )
 
     def GetVirtualMemArray(self, eAccess = gdalconst.GF_Read, xoff=0, yoff=0,
                            xsize=None, ysize=None, bufxsize=None, bufysize=None,

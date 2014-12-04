@@ -1322,7 +1322,7 @@ MFFDataset::CreateCopy( const char * pszFilename,
                                             iXOffset, iYOffset, 
                                             nTBXSize, nTBYSize,
                                             pData, nTBXSize, nTBYSize,
-                                            eType, 0, 0 );
+                                            eType, 0, 0, NULL );
                 if( eErr != CE_None )
                 {
                     delete poDS;
@@ -1334,7 +1334,7 @@ MFFDataset::CreateCopy( const char * pszFilename,
                                             iXOffset, iYOffset, 
                                             nTBXSize, nTBYSize,
                                             pData, nTBXSize, nTBYSize,
-                                            eType, 0, 0 );
+                                            eType, 0, 0, NULL );
 
                 if( eErr != CE_None )
                 {

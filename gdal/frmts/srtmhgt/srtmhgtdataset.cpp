@@ -506,7 +506,7 @@ GDALDataset * SRTMHGTDataset::CreateCopy( const char * pszFilename,
     {
         poSrcBand->RasterIO( GF_Read, 0, iY, nXSize, 1,
                             (void *) panData, nXSize, 1,
-                            GDT_Int16, 0, 0 );
+                            GDT_Int16, 0, 0, NULL );
 
         /* Translate nodata values */
         if (bSrcBandHasNoData && srcBandNoData != SRTMHG_NODATA_VALUE)

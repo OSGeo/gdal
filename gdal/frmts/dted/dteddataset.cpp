@@ -740,7 +740,7 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         poSrcBand->RasterIO( GF_Read, 0, iY, psDTED->nXSize, 1, 
                             (void *) (panData + iY * psDTED->nXSize), psDTED->nXSize, 1, 
-                            GDT_Int16, 0, 0 );
+                            GDT_Int16, 0, 0, NULL );
 
         if( pfnProgress && !pfnProgress(0.5 * (iY+1) / (double) psDTED->nYSize, NULL, pProgressData ) )
         {

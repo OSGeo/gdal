@@ -223,7 +223,7 @@ CPLErr RS2RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   nRequestXSize, nRequestYSize,
                                   pImage, nRequestXSize, nRequestYSize, 
                                   GDT_Int16,
-                                  2, NULL, 4, nBlockXSize * 4, 2 );
+                                  2, NULL, 4, nBlockXSize * 4, 2, NULL );
 
 /* -------------------------------------------------------------------- */
 /*      File has one sample marked as sample format void, a 32bits.     */
@@ -239,7 +239,7 @@ CPLErr RS2RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   nRequestXSize, nRequestYSize, 
                                   pImage, nRequestXSize, nRequestYSize, 
                                   GDT_UInt32,
-                                  1, NULL, 4, nBlockXSize * 4, 0 );
+                                  1, NULL, 4, nBlockXSize * 4, 0, NULL );
 
 #ifdef CPL_LSB
         /* First, undo the 32bit swap. */
@@ -264,7 +264,7 @@ CPLErr RS2RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   nRequestXSize, nRequestYSize, 
                                   pImage, nRequestXSize, nRequestYSize,
                                   GDT_UInt16,
-                                  1, NULL, 2, nBlockXSize * 2, 0 );
+                                  1, NULL, 2, nBlockXSize * 2, 0, NULL );
     else if ( eDataType == GDT_Byte ) 
         /* Ticket #2104: Support for ScanSAR products */
         return
@@ -274,7 +274,7 @@ CPLErr RS2RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   nRequestXSize, nRequestYSize,
                                   pImage, nRequestXSize, nRequestYSize,
                                   GDT_Byte,
-                                  1, NULL, 1, nBlockXSize, 0 );
+                                  1, NULL, 1, nBlockXSize, 0, NULL );
     else
     {
         CPLAssert( FALSE );
@@ -428,7 +428,7 @@ CPLErr RS2CalibRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   nBlockXSize, nRequestYSize,
                                   pnImageTmp, nBlockXSize, nRequestYSize, 
                                   GDT_Int16,
-                                  2, NULL, 4, nBlockXSize * 4, 2 );
+                                  2, NULL, 4, nBlockXSize * 4, 2, NULL );
 
         }
         else {
@@ -439,7 +439,7 @@ CPLErr RS2CalibRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                       nBlockXSize, nRequestYSize, 
                                       pnImageTmp, nBlockXSize, nRequestYSize, 
                                       GDT_UInt32,
-                                      1, NULL, 4, nBlockXSize * 4, 0 );
+                                      1, NULL, 4, nBlockXSize * 4, 0, NULL );
 
 #ifdef CPL_LSB
             /* First, undo the 32bit swap. */ 
@@ -475,7 +475,7 @@ CPLErr RS2CalibRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                               nBlockXSize, nRequestYSize, 
                               pnImageTmp, nBlockXSize, nRequestYSize,
                               GDT_UInt16,
-                              1, NULL, 2, nBlockXSize * 2, 0 );
+                              1, NULL, 2, nBlockXSize * 2, 0, NULL );
 
         /* iterate over detected values */
         for (int i = 0; i < nBlockYSize; i++) {
@@ -499,7 +499,7 @@ CPLErr RS2CalibRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                             nBlockXSize, nRequestYSize,
                             pnImageTmp, nBlockXSize, nRequestYSize,
                             GDT_Byte,
-                            1, NULL, 1, 1, 0);
+                            1, NULL, 1, 1, 0, NULL);
 
         /* iterate over detected values */
         for (int i = 0; i < nBlockYSize; i++) {
