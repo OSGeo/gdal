@@ -735,7 +735,7 @@ def ogr_mitab_20():
 
     gdal.SetConfigOption('MITAB_BOUNDS_FILE', 'tmp/mitab_bounds.txt')
     for i in range(2):
-        if i == 0 and not sys.platform.startswith('linux'):
+        if i == 1 and not sys.platform.startswith('linux'):
             time.sleep(1)
 
         f = open('tmp/mitab_bounds.txt', 'wb')
