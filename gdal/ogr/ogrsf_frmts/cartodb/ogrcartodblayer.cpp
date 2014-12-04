@@ -57,6 +57,9 @@ OGRCARTODBLayer::OGRCARTODBLayer(OGRCARTODBDataSource* poDS)
 OGRCARTODBLayer::~OGRCARTODBLayer()
 
 {
+    if( poCachedObj != NULL )
+        json_object_put(poCachedObj);
+
     if( poSRS != NULL )
         poSRS->Release();
 
@@ -138,7 +141,8 @@ OGRFeature *OGRCARTODBLayer::BuildFeature(json_object* poRowObj)
                 }
             }
             else if( poVal != NULL &&
-                json_object_get_type(poVal) == json_type_int )
+                (json_object_get_type(poVal) == json_type_int ||
+                 json_object_get_type(poVal) == json_type_boolean) )
             {
                 poFeature->SetField(i, (int)json_object_get_int64(poVal));
             }
@@ -191,7 +195,8 @@ OGRFeature *OGRCARTODBLayer::GetNextRawFeature()
         }
 
         CPLString osSQL = osBaseSQL;
-        if( osSQL.ifind(" LIMIT ") == std::string::npos )
+        if( osSQL.ifind("SELECT") != std::string::npos &&
+            osSQL.ifind(" LIMIT ") == std::string::npos )
         {
             osSQL += " LIMIT ";
             osSQL += CPLSPrintf("%d", GetFeaturesToFetch());
@@ -377,6 +382,12 @@ void OGRCARTODBLayer::EstablishLayerDefn(const char* pszLayerName,
                             poSRS->Release();
                         }
                     }
+                }
+                else if( EQUAL(pszType, "boolean") )
+                {
+                    OGRFieldDefn oFieldDefn(pszColName, OFTInteger);
+                    oFieldDefn.SetSubType(OFSTBoolean);
+                    poFeatureDefn->AddFieldDefn(&oFieldDefn);
                 }
                 else
                 {

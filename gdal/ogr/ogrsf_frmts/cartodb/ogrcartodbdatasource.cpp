@@ -179,8 +179,8 @@ int OGRCARTODBDataSource::Open( const char * pszFilename, int bUpdateIn)
         char** papszTables = CSLTokenizeString2(osTables, ",", 0);
         for(int i=0;papszTables && papszTables[i];i++)
         {
-            papoLayers = (OGRLayer**) CPLRealloc(
-                papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
+            papoLayers = (OGRCARTODBTableLayer**) CPLRealloc(
+                papoLayers, (nLayers + 1) * sizeof(OGRCARTODBTableLayer*));
             papoLayers[nLayers ++] = new OGRCARTODBTableLayer(this, papszTables[i]);
         }
         CSLDestroy(papszTables);
@@ -195,8 +195,8 @@ int OGRCARTODBDataSource::Open( const char * pszFilename, int bUpdateIn)
         {
             if( poFeat->GetFieldCount() == 1 )
             {
-                papoLayers = (OGRLayer**) CPLRealloc(
-                    papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
+                papoLayers = (OGRCARTODBTableLayer**) CPLRealloc(
+                    papoLayers, (nLayers + 1) * sizeof(OGRCARTODBTableLayer*));
                 papoLayers[nLayers ++] = new OGRCARTODBTableLayer(
                             this, poFeat->GetFieldAsString(0));
             }
@@ -218,8 +218,8 @@ int OGRCARTODBDataSource::Open( const char * pszFilename, int bUpdateIn)
             {
                 if( poFeat->GetFieldCount() == 1 )
                 {
-                    papoLayers = (OGRLayer**) CPLRealloc(
-                        papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
+                    papoLayers = (OGRCARTODBTableLayer**) CPLRealloc(
+                        papoLayers, (nLayers + 1) * sizeof(OGRCARTODBTableLayer*));
                     papoLayers[nLayers ++] = new OGRCARTODBTableLayer(
                                 this, poFeat->GetFieldAsString(0));
                 }
@@ -345,54 +345,10 @@ OGRLayer   *OGRCARTODBDataSource::ICreateLayer( const char *pszName,
         }
     }
 
-    int nSRID = 0;
-    if( poSpatialRef != NULL )
-        nSRID = FetchSRSId( poSpatialRef );
-
-    CPLString osGeomType;
-    if( eGType != wkbNone )
-    {
-        osGeomType = OGRToOGCGeomType(eGType);
-        if( wkbHasZ(eGType) )
-            osGeomType += "Z";
-    }
-
-    CPLString osSQL;
-    osSQL.Printf("CREATE TABLE %s ( %s SERIAL, ",
-                 OGRCARTODBEscapeIdentifier(pszName).c_str(),
-                 "cartodb_id");
-    if( osGeomType.size() > 0 )
-    {
-        osSQL += CPLSPrintf("%s GEOMETRY(%s, %d), %s GEOMETRY(%s, %d),",
-                 "the_geom",
-                 osGeomType.c_str(),
-                 nSRID,
-                 "the_geom_webmercator",
-                 osGeomType.c_str(),
-                 3857);
-    }
-    osSQL += CPLSPrintf("PRIMARY KEY (%s) )", "cartodb_id");
-
-    osSQL += ";";
-    osSQL += CPLSPrintf("DROP SEQUENCE IF EXISTS %s CASCADE",
-                        OGRCARTODBEscapeIdentifier(CPLSPrintf("%s_%s_seq", pszName, "cartodb_id")).c_str());
-    osSQL += ";";
-    osSQL += CPLSPrintf("CREATE SEQUENCE %s START 1",
-                        OGRCARTODBEscapeIdentifier(CPLSPrintf("%s_%s_seq", pszName, "cartodb_id")).c_str());
-    osSQL += ";";
-    osSQL += CPLSPrintf("ALTER TABLE %s ALTER COLUMN %s SET DEFAULT nextval('%s')",
-                        pszName,
-                        "cartodb_id",
-                        OGRCARTODBEscapeLiteral(CPLSPrintf("%s_%s_seq", pszName, "cartodb_id")).c_str());
-
-    json_object* poObj = RunSQL(osSQL);
-    if( poObj == NULL )
-        return NULL;
-    json_object_put(poObj);
-
     OGRCARTODBTableLayer* poLayer = new OGRCARTODBTableLayer(this, pszName);
-    papoLayers = (OGRLayer**) CPLRealloc(
-                    papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
+    poLayer->SetDifferedCreation(eGType, poSpatialRef);
+    papoLayers = (OGRCARTODBTableLayer**) CPLRealloc(
+                    papoLayers, (nLayers + 1) * sizeof(OGRCARTODBTableLayer*));
     papoLayers[nLayers ++] = poLayer;
 
     return poLayer;
@@ -427,6 +383,8 @@ OGRErr OGRCARTODBDataSource::DeleteLayer(int iLayer)
 
     CPLDebug( "CARTODB", "DeleteLayer(%s)", osLayerName.c_str() );
 
+    int bDifferedCreation = papoLayers[iLayer]->GetDifferedCreation();
+    papoLayers[iLayer]->CancelDifferedCreation();
     delete papoLayers[iLayer];
     memmove( papoLayers + iLayer, papoLayers + iLayer + 1,
              sizeof(void *) * (nLayers - iLayer - 1) );
@@ -435,14 +393,17 @@ OGRErr OGRCARTODBDataSource::DeleteLayer(int iLayer)
     if (osLayerName.size() == 0)
         return OGRERR_NONE;
 
-    CPLString osSQL;
-    osSQL.Printf("DROP TABLE %s",
-                 OGRCARTODBEscapeIdentifier(osLayerName).c_str());
+    if( !bDifferedCreation )
+    {
+        CPLString osSQL;
+        osSQL.Printf("DROP TABLE %s",
+                    OGRCARTODBEscapeIdentifier(osLayerName).c_str());
 
-    json_object* poObj = RunSQL(osSQL);
-    if( poObj == NULL )
-        return OGRERR_FAILURE;
-    json_object_put(poObj);
+        json_object* poObj = RunSQL(osSQL);
+        if( poObj == NULL )
+            return OGRERR_FAILURE;
+        json_object_put(poObj);
+    }
 
     return OGRERR_NONE;
 }
@@ -584,14 +545,12 @@ json_object* OGRCARTODBGetSingleRow(json_object* poObj)
         json_object_get_type(poRows) != json_type_array ||
         json_object_array_length(poRows) != 1 )
     {
-        json_object_put(poObj);
         return NULL;
     }
 
     json_object* poRowObj = json_object_array_get_idx(poRows, 0);
     if( poRowObj == NULL || json_object_get_type(poRowObj) != json_type_object )
     {
-        json_object_put(poObj);
         return NULL;
     }
 
@@ -607,6 +566,11 @@ OGRLayer * OGRCARTODBDataSource::ExecuteSQL( const char *pszSQLCommand,
                                         const char *pszDialect )
 
 {
+    for( int iLayer = 0; iLayer < nLayers; iLayer++ )
+    {
+        papoLayers[iLayer]->RunDifferedCreationIfNecessary();
+    }
+
     /* Skip leading spaces */
     while(*pszSQLCommand == ' ')
         pszSQLCommand ++;
