@@ -93,31 +93,57 @@ static GDALDataset *OGRGeoPackageDriverOpen( GDALOpenInfo* poOpenInfo )
 /************************************************************************/
 
 static GDALDataset *OGRGeoPackageDriverCreate( const char * pszFilename,
+                                               int nXSize,
+                                               int nYSize,
                                                int nBands,
-                                               CPL_UNUSED int nXSize,
-                                               CPL_UNUSED int nYSize,
-                                               CPL_UNUSED GDALDataType eDT,
+                                               GDALDataType eDT,
                                                char **papszOptions )
 {
 	/* First, ensure there isn't any such file yet. */
     VSIStatBufL sStatBuf;
-    
-    /* Not supported for now */
-    if( nBands != 0 )
-        return NULL;
 
+    if( nBands != 0 )
+    {
+        if( eDT != GDT_Byte )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported, "Only Byte supported");
+            return NULL;
+        }
+        if( nBands != 1 && nBands != 3 && nBands != 4 )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported, "Only 1, 3 or 4 band dataset supported");
+            return NULL;
+        }
+    }
+
+    int bFileExists = FALSE;
     if( VSIStatL( pszFilename, &sStatBuf ) == 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "A file system object called '%s' already exists.",
-                  pszFilename );
+        bFileExists = TRUE;
+        if( nBands != 0 )
+        {
+            if( CSLFetchNameValue(papszOptions, "RASTER_TABLE") == NULL )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                    "A file system object called '%s' already exists. "
+                    "TABLE creation option must be explicitely provided",
+                    pszFilename );
+                return NULL;
+            }
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "A file system object called '%s' already exists.",
+                    pszFilename );
 
-        return NULL;
+            return NULL;
+        }
     }
 	
     GDALGeoPackageDataset   *poDS = new GDALGeoPackageDataset();
 
-    if( !poDS->Create( pszFilename, papszOptions ) )
+    if( !poDS->Create( pszFilename, bFileExists, nXSize, nYSize, nBands, papszOptions ) )
     {
         delete poDS;
         poDS = NULL;
@@ -133,10 +159,7 @@ static GDALDataset *OGRGeoPackageDriverCreate( const char * pszFilename,
 static CPLErr OGRGeoPackageDriverDelete( const char *pszFilename )
 
 {
-    if( VSIUnlink( pszFilename ) == 0 )
-        return CE_None;
-    else
-        return CE_Failure;
+    return CE_None;
 }
 
 /************************************************************************/
@@ -161,8 +184,35 @@ void RegisterOGRGeoPackage()
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gpkg" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                    "drv_geopackage.html" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "<CreationOptionList/>");
+        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, "<OpenOptionList>"
+"  <Option name='TABLE' type='string' description='Name of tile user-table'/>"
+"  <Option name='ZOOM_LEVEL' type='integer' description='Zoom level of full resolution. If not specified, maximum non-empty zoom level'/>"
+"  <Option name='BAND_COUNT' type='int' min='1' max='4' description='Number of raster bands' default='4'/>"
+"  <Option name='MINX' type='float' description='Minimum X of area of interest'/>"
+"  <Option name='MINY' type='float' description='Minimum Y of area of interest'/>"
+"  <Option name='MAXX' type='float' description='Maximum X of area of interest'/>"
+"  <Option name='MAXY' type='float' description='Maximum Y of area of interest'/>"
+"  <Option name='USE_TILE_EXTENT' type='boolean' description='Use tile extent of content to determine area of interest' default='NO'/>"
+"</OpenOptionList>");
+
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "<CreationOptionList>"
+"  <Option name='RASTER_TABLE' type='string' description='Name of tile user table'/>"
+"  <Option name='RASTER_IDENTIFIER' type='string' description='Human-readable identifier (e.g. short name)'/>"
+"  <Option name='RASTER_DESCRIPTION' type='string' description='Human-readable description'/>"
+"  <Option name='BLOCKSIZE' type='int' description='Block size in pixels' default='256' max='4096'/>"
+"  <Option name='BLOCKXSIZE' type='int' description='Block width in pixels' default='256' max='4096'/>"
+"  <Option name='BLOCKYSIZE' type='int' description='Block height in pixels' default='256' max='4096'/>"
+"  <Option name='DRIVER' type='string-select' description='Format to use to create tiles' default='PNG_JPEG'>"
+"    <Value>PNG_JPEG</Value>"
+"    <Value>PNG</Value>"
+"    <Value>JPEG</Value>"
+"    <Value>WEBP</Value>"
+"  </Option>"
+"  <Option name='QUALITY' type='int' min='1' max='100' description='Quality for JPEG and WEBP tiles' default='75'/>"
+"  <Option name='ZLEVEL' type='int' min='1' max='9' description='DEFLATE compression level for PNG tiles' default='6'/>"
+"</CreationOptionList>");
 
         poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
 "<LayerCreationOptionList>"
