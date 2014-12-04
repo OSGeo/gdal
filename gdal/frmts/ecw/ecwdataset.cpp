@@ -750,7 +750,7 @@ CPLErr ECWRasterBand::OldIRasterIO( GDALRWFlag eRWFlag,
     for( iSrcLine = 0, iDstLine = 0; iDstLine < nBufYSize; iDstLine++ )
     {
         NCSEcwReadStatus eRStatus;
-        int         iDstLineOff = iDstLine * nLineSpace;
+        GPtrDiff_t       iDstLineOff = iDstLine * (GPtrDiff_t)nLineSpace;
         unsigned char   *pabySrcBuf;
 
         if( bDirect )
@@ -787,7 +787,7 @@ CPLErr ECWRasterBand::OldIRasterIO( GDALRWFlag eRWFlag,
                     GDALCopyWords( pabyWorkBuffer, poGDS->eRasterDataType, 
                                 nRawPixelSize, 
                                 ((GByte *)pData) + iDstLine * nLineSpace, 
-                                eBufType, nPixelSpace, nBufXSize );
+                                eBufType, (int)nPixelSpace, nBufXSize );
                 }
                 else
                 {
@@ -800,7 +800,7 @@ CPLErr ECWRasterBand::OldIRasterIO( GDALRWFlag eRWFlag,
                                     poGDS->eRasterDataType, nRawPixelSize,
                                     (GByte *)pData + iDstLineOff
                                     + iPixel * nPixelSpace,
-                                                    eBufType, nPixelSpace, 1 );
+                                                    eBufType, (int)nPixelSpace, 1 );
                     }
                 }
             }
@@ -811,9 +811,9 @@ CPLErr ECWRasterBand::OldIRasterIO( GDALRWFlag eRWFlag,
         {
             // Just copy the previous line in this case
             GDALCopyWords( (GByte *)pData + (iDstLineOff - nLineSpace),
-                            eBufType, nPixelSpace,
+                            eBufType, (int)nPixelSpace,
                             (GByte *)pData + iDstLineOff,
-                            eBufType, nPixelSpace, nBufXSize );
+                            eBufType, (int)nPixelSpace, nBufXSize );
         }
 
         if( psExtraArg->pfnProgress != NULL &&
@@ -1705,7 +1705,7 @@ int ECWDataset::TryWinRasterIO( CPL_UNUSED GDALRWFlag eFlag,
             GDALCopyWords( papCurLineBuf[iWinBand], eRasterDataType,
                            GDALGetDataTypeSize( eRasterDataType ) / 8, 
                            pabyData + nBandSpace * iBand 
-                           + iBufLine * nLineSpace, eDT, nPixelSpace,
+                           + iBufLine * nLineSpace, eDT, (int)nPixelSpace,
                            nBufXSize );
         }
 
@@ -1866,7 +1866,7 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
                                     (*panBandMap - 1) * nBufXSize * nBufYSize * nDataTypeSize +
                                     j * nBufXSize * nDataTypeSize,
                             eBufType, nDataTypeSize,
-                            ((GByte*)pData) + j * nLineSpace, eBufType, nPixelSpace,
+                            ((GByte*)pData) + j * nLineSpace, eBufType, (int)nPixelSpace,
                             nBufXSize);
             }
             return CE_None;
@@ -2034,7 +2034,7 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
                 GDALCopyWords(sCachedMultiBandIO.pabyData +
                                     j * nBufXSize * nDataTypeSize,
                               eBufType, nDataTypeSize,
-                              ((GByte*)pData) + j * nLineSpace, eBufType, nPixelSpace,
+                              ((GByte*)pData) + j * nLineSpace, eBufType, (int)nPixelSpace,
                               nBufXSize);
             }
             return CE_None;
@@ -2190,7 +2190,7 @@ CPLErr ECWDataset::ReadBands(void * pData, int nBufXSize, int nBufYSize,
                 pabyBILScanline + i * nDataTypeSize * nBufXSize,
                 eRasterDataType, nDataTypeSize, 
                 ((GByte *) pData) + nLineSpace * iScanline + nBandSpace * i, 
-                eBufType, nPixelSpace, 
+                eBufType, (int)nPixelSpace, 
                 nBufXSize );
         }
 
