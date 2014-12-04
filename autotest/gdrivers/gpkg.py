@@ -231,6 +231,7 @@ def gpkg_1():
         return 'fail'
     if check_tile_format(out_ds, 'PNG', 1) != 'success':
         return 'fail'
+    out_ds = None
 
     os.remove('tmp/tmp.gpkg')
 
@@ -309,6 +310,7 @@ def gpkg_2():
     if gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail')
         return 'fail'
+    out_ds = None
 
     os.remove('tmp/tmp.gpkg')
     
@@ -418,6 +420,7 @@ def gpkg_3():
     if gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail')
         return 'fail'
+    out_ds = None
 
     # Re-register driver
     gdaltest.webp_dr.Register()
@@ -500,6 +503,7 @@ def gpkg_4(tile_drv_name = 'PNG'):
         return 'fail'
     if check_tile_format(out_ds, tile_drv_name, 3) != 'success':
         return 'fail'
+    out_ds = None
 
     os.remove('tmp/tmp.gpkg')
 
