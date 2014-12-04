@@ -3453,6 +3453,36 @@ def ogr_gml_67():
     return 'success'
 
 ###############################################################################
+# Test reading GML with xsd with a choice of geometry properites
+
+def ogr_gml_68():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    ds = ogr.Open('data/choicepolygonmultipolygon.gml')
+
+    expected_results = [ 'MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)))',
+                         'MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)),((10 0,10 1,11 1,11 0,10 0)))' ]
+
+    lyr = ds.GetLayer(0)
+    if lyr.GetGeomType() != ogr.wkbMultiPolygon:
+        gdaltest.post_reason(' did not get expected layer geometry type' )
+        return 'fail'
+    for i in range(2):
+        feat = lyr.GetNextFeature()
+        geom = feat.GetGeometryRef()
+        got_wkt = geom.ExportToWkt()
+        if got_wkt != expected_results[i]:
+            gdaltest.post_reason('did not get expected geometry' )
+            print(got_wkt)
+            return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -3651,6 +3681,7 @@ gdaltest_list = [
     ogr_gml_65,
     ogr_gml_66,
     ogr_gml_67,
+    ogr_gml_68,
     ogr_gml_cleanup ]
 
 #gdaltest_list = [ 
