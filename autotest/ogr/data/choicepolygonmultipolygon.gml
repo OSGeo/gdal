@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ogr:FeatureCollection xmlns:gml="http://www.opengis.net/gml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ogr="http://www.gdal.org/ogr" xsi:schemaLocation="http://www.gdal.org/ogr choicepolygonmultipolygon.xsd">
+  <gml:boundedBy>
+    <gml:null>missing</gml:null>
+  </gml:boundedBy>
   <gml:featureMember>
     <ogr:test>
       <ogr:attr>1</ogr:attr>
       <gml:polygonProperty>
-        <gml:Polygon xmlns:gml="http://www.opengis.net/gml">
+        <gml:Polygon srsName="EPSG:32632" xmlns:gml="http://www.opengis.net/gml">
           <gml:outerBoundaryIs>
             <gml:LinearRing>
               <gml:coordinates>0,0 0,1 1,1 1,0 0,0</gml:coordinates>
@@ -18,7 +21,7 @@
     <ogr:test>
       <ogr:attr>2</ogr:attr>
       <gml:multiPolygonProperty>
-        <gml:MultiPolygon xmlns:gml="http://www.opengis.net/gml">
+        <gml:MultiPolygon srsName="EPSG:32632" xmlns:gml="http://www.opengis.net/gml">
           <gml:polygonMember>
             <gml:Polygon>
               <gml:outerBoundaryIs>
