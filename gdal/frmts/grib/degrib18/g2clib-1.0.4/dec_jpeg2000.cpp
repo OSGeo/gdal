@@ -120,7 +120,7 @@ int dec_jpeg2000(char *injpc,g2int bufsize,g2int *outfld)
     poJ2KDataset->RasterIO( GF_Read, nXOff, nYOff, nXSize, nYSize,
                             outfld, nBufXSize, nBufYSize, eBufType,
                             nBandCount, panBandMap, 
-                            nPixelSpace, nLineSpace, nBandSpace );
+                            nPixelSpace, nLineSpace, nBandSpace, NULL );
 
     // close source file, and "unlink" it.
     GDALClose( poJ2KDataset );
