@@ -86,8 +86,7 @@ void OGRCARTODBLayer::ResetReading()
 
 OGRFeatureDefn * OGRCARTODBLayer::GetLayerDefn()
 {
-    CPLAssert(poFeatureDefn);
-    return poFeatureDefn;
+    return GetLayerDefnInternal(NULL);
 }
 
 /************************************************************************/
@@ -186,6 +185,11 @@ OGRFeature *OGRCARTODBLayer::GetNextRawFeature()
             return NULL;
         }
 
+        if( poFeatureDefn == NULL && osBaseSQL.size() == 0 )
+        {
+            GetLayerDefn();
+        }
+
         CPLString osSQL = osBaseSQL;
         if( osSQL.ifind(" LIMIT ") == std::string::npos )
         {
@@ -200,6 +204,12 @@ OGRFeature *OGRCARTODBLayer::GetNextRawFeature()
             bEOF = TRUE;
             return NULL;
         }
+
+        if( poFeatureDefn == NULL )
+        {
+            GetLayerDefnInternal(poObj);
+        }
+
         json_object* poRows = json_object_object_get(poObj, "rows");
         if( poRows == NULL ||
             json_object_get_type(poRows) != json_type_array ||
@@ -237,8 +247,6 @@ OGRFeature *OGRCARTODBLayer::GetNextFeature()
 {
     OGRFeature  *poFeature;
 
-    GetLayerDefn();
-
     while(TRUE)
     {
         poFeature = GetNextRawFeature();
@@ -273,7 +281,8 @@ int OGRCARTODBLayer::TestCapability( const char * pszCap )
 /*                          EstablishLayerDefn()                        */
 /************************************************************************/
 
-void OGRCARTODBLayer::EstablishLayerDefn(const char* pszLayerName)
+void OGRCARTODBLayer::EstablishLayerDefn(const char* pszLayerName,
+                                         json_object* poObjIn)
 {
     poFeatureDefn = new OGRFeatureDefn(pszLayerName);
     poFeatureDefn->Reference();
@@ -294,16 +303,23 @@ void OGRCARTODBLayer::EstablishLayerDefn(const char* pszLayerName)
     }
     else
         osSQL.Printf("%s LIMIT 0", osBaseSQL.c_str());
-    json_object* poObj = poDS->RunSQL(osSQL);
-    if( poObj == NULL )
+    json_object* poObj;
+    if( poObjIn != NULL )
+        poObj = poObjIn;
+    else
     {
-        return;
+        poObj = poDS->RunSQL(osSQL);
+        if( poObj == NULL )
+        {
+            return;
+        }
     }
 
     json_object* poFields = json_object_object_get(poObj, "fields");
     if( poFields == NULL || json_object_get_type(poFields) != json_type_object)
     {
-        json_object_put(poObj);
+        if( poObjIn == NULL )
+            json_object_put(poObj);
         return;
     }
 
@@ -321,7 +337,8 @@ void OGRCARTODBLayer::EstablishLayerDefn(const char* pszLayerName)
             {
                 const char* pszType = json_object_get_string(poType);
                 CPLDebug("CARTODB", "%s : %s", pszColName, pszType);
-                if( EQUAL(pszType, "string") )
+                if( EQUAL(pszType, "string") ||
+                    EQUAL(pszType, "unknown(19)") /* name */ )
                 {
                     OGRFieldDefn oFieldDefn(pszColName, OFTString);
                     poFeatureDefn->AddFieldDefn(&oFieldDefn);
@@ -363,7 +380,9 @@ void OGRCARTODBLayer::EstablishLayerDefn(const char* pszLayerName)
                 }
                 else
                 {
-                    CPLDebug("CARTODB", "Unhandled type: %s", pszType);
+                    CPLDebug("CARTODB", "Unhandled type: %s. Defaulting to string", pszType);
+                    OGRFieldDefn oFieldDefn(pszColName, OFTString);
+                    poFeatureDefn->AddFieldDefn(&oFieldDefn);
                 }
             }
             else if( poType != NULL && json_object_get_type(poType) == json_type_int )
@@ -382,7 +401,8 @@ void OGRCARTODBLayer::EstablishLayerDefn(const char* pszLayerName)
             }
         }
     }
-    json_object_put(poObj);
+    if( poObjIn == NULL )
+        json_object_put(poObj);
 }
 
 /************************************************************************/

@@ -41,6 +41,7 @@ OGRCARTODBResultLayer::OGRCARTODBResultLayer( OGRCARTODBDataSource* poDS,
 {
     osBaseSQL = pszRawQueryIn;
     SetDescription( "result" );
+    poFirstFeature = NULL;
 }
 
 /************************************************************************/
@@ -50,20 +51,48 @@ OGRCARTODBResultLayer::OGRCARTODBResultLayer( OGRCARTODBDataSource* poDS,
 OGRCARTODBResultLayer::~OGRCARTODBResultLayer()
 
 {
+    delete poFirstFeature;
 }
 
 /************************************************************************/
-/*                           GetLayerDefn()                             */
+/*                          GetLayerDefnInternal()                      */
 /************************************************************************/
 
-OGRFeatureDefn * OGRCARTODBResultLayer::GetLayerDefn()
+OGRFeatureDefn * OGRCARTODBResultLayer::GetLayerDefnInternal(json_object* poObjIn)
 {
     if( poFeatureDefn != NULL )
         return poFeatureDefn;
 
-    EstablishLayerDefn("result");
+    EstablishLayerDefn("result", poObjIn);
 
     return poFeatureDefn;
+}
+
+/************************************************************************/
+/*                           GetNextRawFeature()                        */
+/************************************************************************/
+
+OGRFeature  *OGRCARTODBResultLayer::GetNextRawFeature()
+{
+    if( poFirstFeature )
+    {
+        OGRFeature* poRet = poFirstFeature;
+        poFirstFeature = NULL;
+        return poRet;
+    }
+    else
+        return OGRCARTODBLayer::GetNextRawFeature();
+}
+
+/************************************************************************/
+/*                                IsOK()                                */
+/************************************************************************/
+
+int  OGRCARTODBResultLayer::IsOK()
+{
+    CPLErrorReset();
+    poFirstFeature = GetNextFeature();
+    return CPLGetLastErrorType() == 0;
 }
 
 /************************************************************************/
