@@ -1278,6 +1278,62 @@ public:
   }
 #endif
 
+#ifndef SWIGCSHARP
+#ifdef SWIGJAVA
+%apply (GByte* outBytes) {GByte*};
+  GByte* GetFieldAsBinary(int id, int *nLen, char **pBuf) {
+    GByte* pabyBlob = OGR_F_GetFieldAsBinary(self, id, nLen);
+    *pBuf = (char*)malloc(*nLen);
+    memcpy(*pBuf, pabyBlob, *nLen);
+    return (GByte*)*pBuf;
+  }
+
+  GByte* GetFieldAsBinary(const char* name, int *nLen, char **pBuf) {
+      int id = OGR_F_GetFieldIndex(self, name);
+      if (id == -1)
+      {
+        CPLError(CE_Failure, 1, "No such field: '%s'", name);
+        return NULL;
+      }
+      else
+      {
+        GByte* pabyBlob = OGR_F_GetFieldAsBinary(self, id, nLen);
+        *pBuf = (char*)malloc(*nLen);
+        memcpy(*pBuf, pabyBlob, *nLen);
+        return (GByte*)*pBuf;
+      }
+  }
+%clear GByte*;
+#else
+  OGRErr GetFieldAsBinary( int id, int *nLen, char **pBuf) {
+    GByte* pabyBlob = OGR_F_GetFieldAsBinary(self, id, nLen);
+    *pBuf = (char*)malloc(*nLen);
+    memcpy(*pBuf, pabyBlob, *nLen);
+    return OGRERR_NONE;
+  }
+
+#ifndef SWIGPERL
+  OGRErr GetFieldAsBinary(const char* name, int *nLen, char **pBuf) {
+      int id = OGR_F_GetFieldIndex(self, name);
+      if (id == -1)
+      {
+        CPLError(CE_Failure, 1, "No such field: '%s'", name);
+        return OGRERR_FAILURE;
+      }
+      else
+      {
+        GByte* pabyBlob = OGR_F_GetFieldAsBinary(self, id, nLen);
+        *pBuf = (char*)malloc(*nLen);
+        memcpy(*pBuf, pabyBlob, *nLen);
+        return OGRERR_NONE;
+      }
+  }
+#endif /* SWIGPERL */ 
+
+#endif /* SWIGJAVA */
+
+#endif /* SWIGCSHARP */
+
   /* ---- IsFieldSet --------------------------- */
   bool IsFieldSet(int id) {
     return (OGR_F_IsFieldSet(self, id) > 0);
