@@ -649,76 +649,135 @@ def ogr_mitab_20():
     # Pass i==3: without MITAB_BOUNDS_FILE : should unload the file
     # Pass i==4: use BOUNDS layer creation option
     # Pass i==5: with MITAB_BOUNDS_FILE and European bounds
-    for i in range(6):
-        if i == 1 or i == 2 or i == 5:
-            gdal.SetConfigOption('MITAB_BOUNDS_FILE', 'data/mitab_bounds.txt')
+    # Pass i==6: with MITAB_BOUNDS_FILE and generic EPSG:2154 (Europe bounds expected)
+    for fmt in [ 'tab', 'mif']:
+        for i in range(7):
+            if i == 1 or i == 2 or i == 5 or i == 6:
+                gdal.SetConfigOption('MITAB_BOUNDS_FILE', 'data/mitab_bounds.txt')
+            ds = ogr.GetDriverByName('MapInfo File').CreateDataSource('/vsimem/ogr_mitab_20.' + fmt)
+            sr = osr.SpatialReference()
+            if i == 1 or i == 2: # French bounds
+                sr.SetFromUserInput("""PROJCS["RGF93 / Lambert-93",
+        GEOGCS["RGF93",
+            DATUM["Reseau_Geodesique_Francais_1993",
+                SPHEROID["GRS 80",6378137,298.257222101],
+                TOWGS84[0,0,0,0,0,0,0]],
+            PRIMEM["Greenwich",0],
+            UNIT["degree",0.0174532925199433]],
+        PROJECTION["Lambert_Conformal_Conic_2SP"],
+        PARAMETER["standard_parallel_1",49.00000000002],
+        PARAMETER["standard_parallel_2",44],
+        PARAMETER["latitude_of_origin",46.5],
+        PARAMETER["central_meridian",3],
+        PARAMETER["false_easting",700000],
+        PARAMETER["false_northing",6600000],
+        UNIT["Meter",1.0],
+        AUTHORITY["EPSG","2154"]]""")
+            elif i == 5: # European bounds
+                sr.SetFromUserInput("""PROJCS["RGF93 / Lambert-93",
+        GEOGCS["RGF93",
+            DATUM["Reseau_Geodesique_Francais_1993",
+                SPHEROID["GRS 80",6378137,298.257222101],
+                TOWGS84[0,0,0,0,0,0,0]],
+            PRIMEM["Greenwich",0],
+            UNIT["degree",0.0174532925199433]],
+        PROJECTION["Lambert_Conformal_Conic_2SP"],
+        PARAMETER["standard_parallel_1",49.00000000001],
+        PARAMETER["standard_parallel_2",44],
+        PARAMETER["latitude_of_origin",46.5],
+        PARAMETER["central_meridian",3],
+        PARAMETER["false_easting",700000],
+        PARAMETER["false_northing",6600000],
+        UNIT["Meter",1.0],
+        AUTHORITY["EPSG","2154"]]""")
+            else:
+                sr.ImportFromEPSG(2154)
+            if i == 4:
+                lyr = ds.CreateLayer('test', srs = sr, options = ['BOUNDS=75000,6000000,1275000,7200000'])
+            else:
+                lyr = ds.CreateLayer('test', srs = sr)
+            lyr.CreateField(ogr.FieldDefn('ID', ogr.OFTInteger))
+            feat = ogr.Feature(lyr.GetLayerDefn())
+            feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (700000.001 6600000.001)"))
+            lyr.CreateFeature(feat)
+            ds = None
+            gdal.SetConfigOption('MITAB_BOUNDS_FILE', None)
+            
+            ds = ogr.Open('/vsimem/ogr_mitab_20.' + fmt)
+            lyr = ds.GetLayer(0)
+            feat = lyr.GetNextFeature()
+            if i == 6 and lyr.GetSpatialRef().ExportToWkt().find('49.00000000001') < 0:
+                gdaltest.post_reason('fail')
+                print(fmt)
+                print(i)
+                print(lyr.GetSpatialRef().ExportToWkt())
+                return 'fail'
+            # Strict text comparison to check precision
+            if fmt == 'tab':
+                if i == 1 or i == 2 or i == 4:
+                    if feat.GetGeometryRef().ExportToWkt() != 'POINT (700000.001 6600000.001)':
+                        gdaltest.post_reason('fail')
+                        print(fmt)
+                        print(i)
+                        feat.DumpReadable()
+                        return 'fail'
+                else:
+                    if feat.GetGeometryRef().ExportToWkt() == 'POINT (700000.001 6600000.001)':
+                        gdaltest.post_reason('fail')
+                        print(fmt)
+                        print(i)
+                        feat.DumpReadable()
+                        return 'fail'
+
+            ds = None
+
+            ogr.GetDriverByName('MapInfo File').DeleteDataSource('/vsimem/ogr_mitab_20.' + fmt)
+
+    gdal.SetConfigOption('MITAB_BOUNDS_FILE', 'tmp/mitab_bounds.txt')
+    for i in range(2):
+        if i == 0 and not sys.platform.startswith('linux'):
+            time.sleep(1)
+
+        f = open('tmp/mitab_bounds.txt', 'wb')
+        if i == 0:
+            f.write(
+"""Source = CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49, 700000, 6600000
+Destination=CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49.00000000001, 700000, 6600000 Bounds (-792421, 5278231) (3520778, 9741029)""")
+        else:
+            f.write(
+"""Source = CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49, 700000, 6600000
+Destination=CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49.00000000002, 700000, 6600000 Bounds (75000, 6000000) (1275000, 7200000)""")
+        f.close()
+
+        if i == 1 and sys.platform.startswith('linux'):
+            os.system('touch -d "1 minute ago" tmp/mitab_bounds.txt')
+
         ds = ogr.GetDriverByName('MapInfo File').CreateDataSource('/vsimem/ogr_mitab_20.tab')
         sr = osr.SpatialReference()
-        if i == 1 or i == 2:
-            sr.SetFromUserInput("""PROJCS["RGF93 / Lambert-93",
-    GEOGCS["RGF93",
-        DATUM["Reseau_Geodesique_Francais_1993",
-            SPHEROID["GRS 80",6378137,298.257222101],
-            TOWGS84[0,0,0,0,0,0,0]],
-        PRIMEM["Greenwich",0],
-        UNIT["degree",0.0174532925199433]],
-    PROJECTION["Lambert_Conformal_Conic_2SP"],
-    PARAMETER["standard_parallel_1",49.00000000002],
-    PARAMETER["standard_parallel_2",44],
-    PARAMETER["latitude_of_origin",46.5],
-    PARAMETER["central_meridian",3],
-    PARAMETER["false_easting",700000],
-    PARAMETER["false_northing",6600000],
-    UNIT["Meter",1.0],
-    AUTHORITY["EPSG","2154"]]""")
-        elif i == 5:
-            sr.SetFromUserInput("""PROJCS["RGF93 / Lambert-93",
-    GEOGCS["RGF93",
-        DATUM["Reseau_Geodesique_Francais_1993",
-            SPHEROID["GRS 80",6378137,298.257222101],
-            TOWGS84[0,0,0,0,0,0,0]],
-        PRIMEM["Greenwich",0],
-        UNIT["degree",0.0174532925199433]],
-    PROJECTION["Lambert_Conformal_Conic_2SP"],
-    PARAMETER["standard_parallel_1",49.00000000001],
-    PARAMETER["standard_parallel_2",44],
-    PARAMETER["latitude_of_origin",46.5],
-    PARAMETER["central_meridian",3],
-    PARAMETER["false_easting",700000],
-    PARAMETER["false_northing",6600000],
-    UNIT["Meter",1.0],
-    AUTHORITY["EPSG","2154"]]""")
-        else:
-            sr.ImportFromEPSG(2154)
-        if i == 4:
-            lyr = ds.CreateLayer('test', srs = sr, options = ['BOUNDS=75000,6000000,1275000,7200000'])
-        else:
-            lyr = ds.CreateLayer('test', srs = sr)
+        sr.ImportFromEPSG(2154)
+        lyr = ds.CreateLayer('test', srs = sr)
         lyr.CreateField(ogr.FieldDefn('ID', ogr.OFTInteger))
-        feat = ogr.Feature(lyr.GetLayerDefn())
-        feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (700000.001 6600000.001)"))
-        lyr.CreateFeature(feat)
         ds = None
-        gdal.SetConfigOption('MITAB_BOUNDS_FILE', None)
-        
         ds = ogr.Open('/vsimem/ogr_mitab_20.tab')
         lyr = ds.GetLayer(0)
         feat = lyr.GetNextFeature()
-        # Strict text comparison to check precision
-        if i == 1 or i == 2 or i == 4:
-            if feat.GetGeometryRef().ExportToWkt() != 'POINT (700000.001 6600000.001)':
-                print(i)
-                feat.DumpReadable()
-                return 'fail'
+        if i == 0:
+            expected = '49.00000000001'
         else:
-            if feat.GetGeometryRef().ExportToWkt() == 'POINT (700000.001 6600000.001)':
-                print(i)
-                feat.DumpReadable()
-                return 'fail'
-
+            expected = '49.00000000002'
+        if lyr.GetSpatialRef().ExportToWkt().find(expected) < 0:
+            gdaltest.post_reason('fail')
+            print(lyr.GetSpatialRef().ExportToWkt())
+            print(i)
+            gdal.SetConfigOption('MITAB_BOUNDS_FILE', None)
+            os.unlink('tmp/mitab_bounds.txt')
+            return 'fail'
         ds = None
-
         ogr.GetDriverByName('MapInfo File').DeleteDataSource('/vsimem/ogr_mitab_20.tab')
+
+
+    gdal.SetConfigOption('MITAB_BOUNDS_FILE', None)
+    os.unlink('tmp/mitab_bounds.txt')
 
     return 'success'
 
