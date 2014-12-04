@@ -831,6 +831,28 @@ def ogr_libkml_gxtrack():
     return 'success'
 
 ###############################################################################
+# Test reading KML with <gx:MultiTrack> element
+
+def ogr_libkml_gxmultitrack():
+
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+
+    ds = ogr.Open('data/gxmultitrack.kml')
+    lyr = ds.GetLayer(0)
+
+    feat = lyr.GetNextFeature()
+    if feat.GetField('begin') != '2013/05/28 12:00:00' or \
+       feat.GetField('end') != '2013/05/28 13:00:00' or \
+       feat.GetGeometryRef().ExportToWkt() != 'MULTILINESTRING ((2 49,3 50))':
+        feat.DumpReadable()
+        gdaltest.post_reason('failure')
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Test generating and reading KML with <Camera> element
 
 def ogr_libkml_camera():
@@ -2044,6 +2066,7 @@ gdaltest_list = [
     ogr_libkml_read_schema,
     ogr_libkml_extended_data_without_schema_data,
     ogr_libkml_gxtrack,
+    ogr_libkml_gxmultitrack,
     ogr_libkml_camera,
     ogr_libkml_write_layer_lookat,
     ogr_libkml_write_layer_camera,

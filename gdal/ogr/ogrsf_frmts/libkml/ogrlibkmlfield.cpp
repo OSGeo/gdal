@@ -57,6 +57,7 @@ using kmldom::IconPtr;
 using kmldom::CameraPtr;
 
 using kmldom::GxTrackPtr;
+using kmldom::GxMultiTrackPtr;
 
 #include "ogr_libkml.h"
 
@@ -1331,6 +1332,32 @@ void kml2field (
                             poKmlGxTrack->get_when_array_at ( 0 ).c_str() );
                 kmldatetime2ogr(poOgrFeat, oFC.endfield,
                             poKmlGxTrack->get_when_array_at ( nCoords - 1 ).c_str() );
+            }
+        }
+
+        /***** special case for gx:MultiTrack ******/
+        /* we set the first timestamp as begin and the last one as end */
+        else if ( poKmlGeometry->Type (  )  == kmldom::Type_GxMultiTrack && 
+             !poKmlFeature->has_timeprimitive (  ) ) {
+            GxMultiTrackPtr poKmlGxMultiTrack = AsGxMultiTrack ( poKmlGeometry );
+            size_t nGeom = poKmlGxMultiTrack->get_gx_track_array_size (  );
+            if( nGeom >= 1 )
+            {
+                GxTrackPtr poKmlGxTrack = poKmlGxMultiTrack->get_gx_track_array_at ( 0 );
+                size_t nCoords = poKmlGxTrack->get_gx_coord_array_size();
+                if( nCoords > 0 )
+                {
+                    kmldatetime2ogr(poOgrFeat, oFC.beginfield,
+                                poKmlGxTrack->get_when_array_at ( 0 ).c_str() );
+                }
+
+                poKmlGxTrack = poKmlGxMultiTrack->get_gx_track_array_at (nGeom -1);
+                nCoords = poKmlGxTrack->get_gx_coord_array_size();
+                if( nCoords > 0 )
+                {
+                    kmldatetime2ogr(poOgrFeat, oFC.endfield,
+                                poKmlGxTrack->get_when_array_at ( nCoords - 1 ).c_str() );
+                }
             }
         }
     }
