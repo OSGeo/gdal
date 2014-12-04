@@ -35,9 +35,6 @@
 
 CPL_CVSID("$Id$");
 
-/* Defined in gdalwarpkernel.cpp */
-int GWKGetFilterRadius(GDALResampleAlg eResampleAlg);
-
 struct _GDALWarpChunk { 
     int dx, dy, dsx, dsy; 
     int sx, sy, ssx, ssy; 

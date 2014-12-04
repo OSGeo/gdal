@@ -35,6 +35,8 @@
 
 CPL_C_START
 void	GDALRegister_MEM(void);
+/* Caution: if changing this prototype, also change in swig/include/gdal_python.i
+   where it is redefined */
 GDALRasterBandH CPL_DLL MEMCreateRasterBand( GDALDataset *, int, GByte *,
                                              GDALDataType, int, int, int );
 CPL_C_END
@@ -81,7 +83,10 @@ class CPL_DLL MEMDataset : public GDALDataset
                                void * pData, int nBufXSize, int nBufYSize,
                                GDALDataType eBufType, 
                                int nBandCount, int *panBandMap,
-                               int nPixelSpace, int nLineSpace, int nBandSpace);
+                               GSpacing nPixelSpaceBuf,
+                               GSpacing nLineSpaceBuf,
+                               GSpacing nBandSpaceBuf,
+                               GDALRasterIOExtraArg* psExtraArg);
     
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -99,8 +104,8 @@ class CPL_DLL MEMRasterBand : public GDALPamRasterBand
     friend      class MEMDataset;
 
     GByte      *pabyData;
-    int         nPixelOffset;
-    int         nLineOffset;
+    GSpacing    nPixelOffset;
+    GSpacing    nLineOffset;
     int         bOwnData;
 
     int         bNoDataSet;
@@ -120,11 +125,9 @@ class CPL_DLL MEMRasterBand : public GDALPamRasterBand
 
                    MEMRasterBand( GDALDataset *poDS, int nBand,
                                   GByte *pabyData, GDALDataType eType,
-                                  int nPixelOffset, int nLineOffset,
+                                  GSpacing nPixelOffset, GSpacing nLineOffset,
                                   int bAssumeOwnership,  const char * pszPixelType = NULL);
     virtual        ~MEMRasterBand();
-
-    // should override RasterIO eventually.
 
     virtual CPLErr IReadBlock( int, int, void * );
     virtual CPLErr IWriteBlock( int, int, void * );
@@ -132,7 +135,9 @@ class CPL_DLL MEMRasterBand : public GDALPamRasterBand
                                   int nXOff, int nYOff, int nXSize, int nYSize,
                                   void * pData, int nBufXSize, int nBufYSize,
                                   GDALDataType eBufType,
-                                  int nPixelSpace, int nLineSpace );
+                                  GSpacing nPixelSpaceBuf,
+                                  GSpacing nLineSpaceBuf,
+                                  GDALRasterIOExtraArg* psExtraArg );
     virtual double GetNoDataValue( int *pbSuccess = NULL );
     virtual CPLErr SetNoDataValue( double );
 

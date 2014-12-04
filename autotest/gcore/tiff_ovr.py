@@ -1259,13 +1259,13 @@ def tiff_ovr_32():
     ds.BuildOverviews( 'cubic', overviewlist = [2,5] )
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    expected_cs = 21596
+    expected_cs = 21656
     if cs != expected_cs:
         gdaltest.post_reason('Checksum is %d. Expected checksum is %d for overview 0.' % (cs, expected_cs))
         return 'fail'
 
     cs = ds.GetRasterBand(3).GetOverview(1).Checksum()
-    expected_cs = 2012
+    expected_cs = 2132
     if cs != expected_cs:
         gdaltest.post_reason('Checksum is %d. Expected checksum is %d for overview 1.' % (cs, expected_cs))
         return 'fail'
@@ -1280,13 +1280,13 @@ def tiff_ovr_32():
     ds.BuildOverviews( 'cubic', overviewlist = [2,5] )
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    expected_cs = 21596
+    expected_cs = 21656
     if cs != expected_cs:
         gdaltest.post_reason('Checksum is %d. Expected checksum is %d for overview 0.' % (cs, expected_cs))
         return 'fail'
 
     cs = ds.GetRasterBand(3).GetOverview(1).Checksum()
-    expected_cs = 2012
+    expected_cs = 2132
     if cs != expected_cs:
         gdaltest.post_reason('Checksum is %d. Expected checksum is %d for overview 1.' % (cs, expected_cs))
         return 'fail'

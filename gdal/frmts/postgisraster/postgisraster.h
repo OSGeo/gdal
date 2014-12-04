@@ -334,7 +334,9 @@ public:
     virtual double GetNoDataValue(int *pbSuccess = NULL);
     virtual CPLErr SetNoDataValue(double);
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, 
-		int, int, GDALDataType, int, int);
+		int, int, GDALDataType,
+        GSpacing nPixelSpace, GSpacing nLineSpace,
+        GDALRasterIOExtraArg* psExtraArg);
 #ifdef notdef
     virtual CPLErr IReadBlock(int, int, void *);
 #endif

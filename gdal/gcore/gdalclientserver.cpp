@@ -121,7 +121,7 @@ from multiple threads. However, it is safe to use several client datasets from m
 
 /* REMINDER: upgrade this number when the on-wire protocol changes */
 /* Note: please at least keep the version exchange protocol unchanged ! */
-#define GDAL_CLIENT_SERVER_PROTOCOL_MAJOR 1
+#define GDAL_CLIENT_SERVER_PROTOCOL_MAJOR 2
 #define GDAL_CLIENT_SERVER_PROTOCOL_MINOR 0
 
 #include <map>
@@ -434,7 +434,8 @@ class GDALClientDataset: public GDALPamDataset
                                void * pData, int nBufXSize, int nBufYSize,
                                GDALDataType eBufType, 
                                int nBandCount, int *panBandMap,
-                               int nPixelSpace, int nLineSpace, int nBandSpace);
+                               GSpacing nPixelSpace, GSpacing nLineSpace, GSpacing nBandSpace,
+                               GDALRasterIOExtraArg* psExtraArg);
     public:
                             GDALClientDataset(GDALPipe* p);
                             ~GDALClientDataset();
@@ -538,7 +539,7 @@ class GDALClientRasterBand : public GDALPamRasterBand
                                 int nXOff, int nYOff, int nXSize, int nYSize,
                                 void * pData, int nBufXSize, int nBufYSize,
                                 GDALDataType eBufType,
-                                int nPixelSpace, int nLineSpace );
+                                GSpacing nPixelSpace, GSpacing nLineSpace );
     protected:
 
         virtual CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void* pImage);
@@ -547,7 +548,8 @@ class GDALClientRasterBand : public GDALPamRasterBand
                                   int nXOff, int nYOff, int nXSize, int nYSize,
                                   void * pData, int nBufXSize, int nBufYSize,
                                   GDALDataType eBufType,
-                                  int nPixelSpace, int nLineSpace );
+                                  GSpacing nPixelSpace, GSpacing nLineSpace,
+                                  GDALRasterIOExtraArg* psExtraArg);
 
     public:
         GDALClientRasterBand(GDALPipe* p, int iSrvBand,
@@ -843,6 +845,11 @@ static int GDALPipeRead(GDALPipe* p, int* pnInt)
     return GDALPipeRead(p, pnInt, 4);
 }
 
+static int GDALPipeRead(GDALPipe* p, GIntBig* pnInt)
+{
+    return GDALPipeRead(p, pnInt, 8);
+}
+
 static int GDALPipeRead(GDALPipe* p, CPLErr* peErr)
 {
     return GDALPipeRead(p, peErr, 4);
@@ -1119,6 +1126,11 @@ static int GDALSkipUntilEndOfJunkMarker(GDALPipe* p)
 static int GDALPipeWrite(GDALPipe* p, int nInt)
 {
     return GDALPipeWrite(p, &nInt, 4);
+}
+
+static int GDALPipeWrite(GDALPipe* p, GIntBig nInt)
+{
+    return GDALPipeWrite(p, &nInt, 8);
 }
 
 static int GDALPipeWrite(GDALPipe* p, double dfDouble)
@@ -2532,7 +2544,7 @@ static int GDALServerLoop(GDALPipe* p,
             GDALDataType eBufType;
             int nBufType;
             int nBandCount;
-            int nPixelSpace, nLineSpace, nBandSpace;
+            GSpacing nPixelSpace, nLineSpace, nBandSpace;
             int* panBandMap = NULL;
             if( !GDALPipeRead(p, &nXOff) ||
                 !GDALPipeRead(p, &nYOff) ||
@@ -2567,7 +2579,8 @@ static int GDALServerLoop(GDALPipe* p,
                                          pBuffer, nBufXSize, nBufYSize,
                                          eBufType,
                                          nBandCount, panBandMap,
-                                         nPixelSpace, nLineSpace, nBandSpace);
+                                         nPixelSpace, nLineSpace, nBandSpace,
+                                         NULL);
             CPLFree(panBandMap);
             GDALEmitEndOfJunkMarker(p);
             GDALPipeWrite(p, eErr);
@@ -2583,7 +2596,7 @@ static int GDALServerLoop(GDALPipe* p,
             GDALDataType eBufType;
             int nBufType;
             int nBandCount;
-            int nPixelSpace, nLineSpace, nBandSpace;
+            GSpacing nPixelSpace, nLineSpace, nBandSpace;
             int* panBandMap = NULL;
             if( !GDALPipeRead(p, &nXOff) ||
                 !GDALPipeRead(p, &nYOff) ||
@@ -2625,7 +2638,8 @@ static int GDALServerLoop(GDALPipe* p,
                                          pBuffer, nBufXSize, nBufYSize,
                                          eBufType,
                                          nBandCount, panBandMap,
-                                         nPixelSpace, nLineSpace, nBandSpace);
+                                         nPixelSpace, nLineSpace, nBandSpace,
+                                         NULL);
             CPLFree(panBandMap);
             GDALEmitEndOfJunkMarker(p);
             GDALPipeWrite(p, eErr);
@@ -2902,7 +2916,7 @@ static int GDALServerLoop(GDALPipe* p,
             CPLErr eErr = poBand->RasterIO(GF_Read,
                                            nXOff, nYOff, nXSize, nYSize,
                                            pBuffer, nBufXSize, nBufYSize,
-                                           eBufType, 0, 0);
+                                           eBufType, 0, 0, NULL);
             GDALEmitEndOfJunkMarker(p);
             GDALPipeWrite(p, eErr);
             GDALPipeWrite(p, nSize, pBuffer);
@@ -2940,7 +2954,7 @@ static int GDALServerLoop(GDALPipe* p,
             CPLErr eErr = poBand->RasterIO(GF_Write,
                                            nXOff, nYOff, nXSize, nYSize,
                                            pBuffer, nBufXSize, nBufYSize,
-                                           eBufType, 0, 0);
+                                           eBufType, 0, 0, NULL);
             GDALEmitEndOfJunkMarker(p);
             GDALPipeWrite(p, eErr);
         }
@@ -3437,7 +3451,8 @@ CPLErr GDALClientDataset::IRasterIO( GDALRWFlag eRWFlag,
                                  void * pData, int nBufXSize, int nBufYSize,
                                  GDALDataType eBufType, 
                                  int nBandCount, int *panBandMap,
-                                 int nPixelSpace, int nLineSpace, int nBandSpace)
+                                 GSpacing nPixelSpace, GSpacing nLineSpace, GSpacing nBandSpace,
+                                 GDALRasterIOExtraArg* psExtraArg)
 {
     if( !SupportsInstr(( eRWFlag == GF_Read ) ? INSTR_IRasterIO_Read : INSTR_IRasterIO_Write ) )
         return GDALPamDataset::IRasterIO( eRWFlag,
@@ -3445,7 +3460,8 @@ CPLErr GDALClientDataset::IRasterIO( GDALRWFlag eRWFlag,
                                           pData, nBufXSize, nBufYSize,
                                           eBufType, 
                                           nBandCount, panBandMap,
-                                          nPixelSpace, nLineSpace, nBandSpace );
+                                          nPixelSpace, nLineSpace, nBandSpace,
+                                          psExtraArg );
 
     CLIENT_ENTER();
     CPLErr eRet = CE_Failure;
@@ -3498,9 +3514,9 @@ CPLErr GDALClientDataset::IRasterIO( GDALRWFlag eRWFlag,
     }
     else
     {
-        if( !GDALPipeWrite(p, 0) ||
-            !GDALPipeWrite(p, 0) ||
-            !GDALPipeWrite(p, 0) )
+        if( !GDALPipeWrite(p, nPixelSpace * 0) ||
+            !GDALPipeWrite(p, nLineSpace * 0) ||
+            !GDALPipeWrite(p, nBandSpace * 0) )
             return CE_Failure;
     }
 
@@ -4704,7 +4720,7 @@ CPLErr GDALClientRasterBand::IRasterIO_read_internal(
                                     int nXOff, int nYOff, int nXSize, int nYSize,
                                     void * pData, int nBufXSize, int nBufYSize,
                                     GDALDataType eBufType,
-                                    int nPixelSpace, int nLineSpace )
+                                    GSpacing nPixelSpace, GSpacing nLineSpace)
 {
     CPLErr eRet = CE_Failure;
 
@@ -4779,14 +4795,15 @@ CPLErr GDALClientRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                     int nXOff, int nYOff, int nXSize, int nYSize,
                                     void * pData, int nBufXSize, int nBufYSize,
                                     GDALDataType eBufType,
-                                    int nPixelSpace, int nLineSpace )
+                                    GSpacing nPixelSpace, GSpacing nLineSpace,
+                                    GDALRasterIOExtraArg* psExtraArg )
 {
     if( !SupportsInstr( (eRWFlag == GF_Read) ? INSTR_Band_IRasterIO_Read : INSTR_Band_IRasterIO_Write) )
         return GDALPamRasterBand::IRasterIO( eRWFlag,
                                              nXOff, nYOff, nXSize, nYSize,
                                              pData, nBufXSize, nBufYSize,
                                              eBufType, 
-                                             nPixelSpace, nLineSpace );
+                                             nPixelSpace, nLineSpace, psExtraArg );
 
     CLIENT_ENTER();
     CPLErr eRet = CE_Failure;

@@ -24,7 +24,7 @@ XTRA_OPT 	:=	$(XTRA_OPT) -DRENAME_INTERNAL_LIBTIFF_SYMBOLS
 endif
 endif
 
-CPPFLAGS	:=	$(CPPFLAGS) $(PAM_SETTING) $(XTRA_OPT) -I../frmts/gtiff -I../ogr -I../ogr/ogrsf_frmts/generic
+CPPFLAGS	:=	 -I../frmts/gtiff -I../frmts/mem -I../frmts/vrt -I../ogr -I../ogr/ogrsf_frmts/generic $(CPPFLAGS) $(PAM_SETTING) $(XTRA_OPT)
 
 ifeq ($(HAVE_SQLITE),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DSQLITE_ENABLED

@@ -111,6 +111,7 @@ typedef int CPLErr;
 typedef int GDALResampleAlg;
 typedef int GDALAsyncStatusType;
 typedef int GDALRWFlag;
+typedef int GDALRIOResampleAlg;
 #else
 /*! Pixel data types */
 %rename (DataType) GDALDataType;
@@ -177,6 +178,20 @@ typedef enum {
     /*! Read data */   GF_Read = 0,
     /*! Write data */  GF_Write = 1
 } GDALRWFlag;
+
+%rename (RIOResampleAlg) GDALRIOResampleAlg;
+typedef enum
+{
+    /*! Nearest neighbour */                GRIORA_NearestNeighbour = 0,
+    /*! Bilinear (2x2 kernel) */            GRIORA_Bilinear = 1,
+    /*! Cubic Convolution Approximation  */ GRIORA_Cubic = 2,
+    /*! Cubic B-Spline Approximation */     GRIORA_CubicSpline = 3,
+    /*! Lanczos windowed sinc interpolation (6x6 kernel) */ GRIORA_Lanczos = 4,
+    /*! Average */                          GRIORA_Average = 5,
+    /*! Mode (selects the value which appears most often of all the sampled points) */
+                                            GRIORA_Mode = 6,
+    /*! Gauss bluring */                    GRIORA_Gauss = 7
+} GDALRIOResampleAlg;
 
 /*! Warp Resampling Algorithm */
 %rename (ResampleAlg) GDALResampleAlg;

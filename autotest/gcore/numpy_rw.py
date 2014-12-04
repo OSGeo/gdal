@@ -451,6 +451,105 @@ def numpy_rw_13():
 
     return 'success'
 
+###############################################################################
+# Test callback of ReadAsArray()
+
+def numpy_rw_14_progress_callback(pct, message, user_data):
+    if abs(pct - user_data[0]) > 1e-5:
+        print('Expected %f, got %f' % (user_data[0], pct))
+        user_data[1] = False
+    user_data[0] = user_data[0] + 0.05
+    return 1 # 1 to continue, 0 to stop
+
+def numpy_rw_14_progress_interrupt_callback(pct, message, user_data):
+    user_data[0] = pct
+    if pct >= 0.5:
+        return 0
+    return 1 # 1 to continue, 0 to stop
+
+def numpy_rw_14_progress_callback_2(pct, message, user_data):
+    if pct < user_data[0]:
+        print('Got %f, last pct was %f' % (pct, user_data[0]))
+        return 0
+    user_data[0] = pct
+    return 1 # 1 to continue, 0 to stop
+
+def numpy_rw_14():
+
+    if gdaltest.numpy_drv is None:
+        return 'skip'
+
+    import numpy
+    from osgeo import gdalnumeric
+
+    ds = gdal.Open('data/byte.tif')
+    
+    # Test RasterBand.ReadAsArray
+    tab = [ 0.05, True ]
+    data = ds.GetRasterBand(1).ReadAsArray(resample_alg = gdal.GRIORA_NearestNeighbour,
+                                          callback = numpy_rw_14_progress_callback,
+                                          callback_data = tab)
+    if data is None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    if abs(tab[0] - 1.05) > 1e-5 or not tab[1]:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    # Test interruption
+    tab = [ 0 ]
+    data = ds.GetRasterBand(1).ReadAsArray(callback = numpy_rw_14_progress_interrupt_callback,
+                                           callback_data = tab)
+    if data is not None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    if tab[0] < 0.50:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    # Test Dataset.ReadAsArray
+    tab = [ 0.05, True ]
+    data = ds.ReadAsArray(resample_alg = gdal.GRIORA_NearestNeighbour,
+                         callback = numpy_rw_14_progress_callback,
+                         callback_data = tab)
+    if data is None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    if abs(tab[0] - 1.05) > 1e-5 or not tab[1]:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    # Same with interruption
+    tab = [ 0 ]
+    data = ds.ReadAsArray(callback = numpy_rw_14_progress_interrupt_callback,
+                         callback_data = tab)
+    if data is not None or tab[0] < 0.50:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    # Test Dataset.ReadAsArray on a multi band file
+    ds = None
+    ds = gdal.Open('data/rgbsmall.tif')
+    last_pct = [ 0 ]
+    data = ds.ReadAsArray(callback = numpy_rw_14_progress_callback_2,
+                          callback_data = last_pct)
+    if data is None or abs(last_pct[0] - 1.0) > 1e-5:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    last_pct = [ 0 ]
+
+    # Same but with a provided array
+    array = numpy.empty( [ds.RasterCount, ds.RasterYSize, ds.RasterXSize], numpy.uint8 )
+    data = ds.ReadAsArray(buf_obj = data,
+                          callback = numpy_rw_14_progress_callback_2,
+                          callback_data = last_pct)
+    if data is None or abs(last_pct[0] - 1.0) > 1e-5:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    return 'success'
+
 def numpy_rw_cleanup():
     gdaltest.numpy_drv = None
 
@@ -470,6 +569,7 @@ gdaltest_list = [
     numpy_rw_11,
     numpy_rw_12,
     numpy_rw_13,
+    numpy_rw_14,
     numpy_rw_cleanup ]
 
 if __name__ == '__main__':

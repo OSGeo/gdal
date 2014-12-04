@@ -78,7 +78,7 @@ CPLErr GDALGeoPackageRasterBand::ReadTile(const CPLString& osMemFileName,
                         nBlockXSize, nBlockYSize,
                         GDT_Byte,
                         poDSTile->GetRasterCount(), NULL,
-                        0, 0, 0) != CE_None )
+                        0, 0, 0, NULL) != CE_None )
     {
         GDALClose(poDSTile);
         memset(pabyTileData, 0, 4 * nBlockXSize * nBlockYSize );

@@ -593,7 +593,7 @@ static CPLErr EnhancerCallback( void *hCBData,
 
     eErr = psEInfo->poSrcBand->
         RasterIO( GF_Read, nXOff, nYOff, nXSize, nYSize,
-                  pafSrcImage, nXSize, nYSize, GDT_Float32, 0, 0 );
+                  pafSrcImage, nXSize, nYSize, GDT_Float32, 0, 0, NULL );
 
     if( eErr != CE_None )
     {

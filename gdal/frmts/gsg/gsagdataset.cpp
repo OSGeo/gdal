@@ -1616,7 +1616,7 @@ GDALDataset *GSAGDataset::CreateCopy( const char *pszFilename,
     {
 	CPLErr eErr = poSrcBand->RasterIO( GF_Read, 0, nYSize-iRow-1,
 					   nXSize, 1, pdfData,
-					   nXSize, 1, GDT_Float64, 0, 0 );
+					   nXSize, 1, GDT_Float64, 0, 0, NULL );
 
 	if( eErr != CE_None )
 	{

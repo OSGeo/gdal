@@ -521,7 +521,7 @@ int main( int argc, char ** argv )
                                + nUpYOff * nLineSpace, 
                                nUpXSize, nUpYSize, eOutputType,
                                nBandCount, NULL, 
-                               nPixelSpace, nLineSpace, nBandSpace );
+                               nPixelSpace, nLineSpace, nBandSpace, NULL );
         poAsyncReq->UnlockBuffer();
 
 /* -------------------------------------------------------------------- */

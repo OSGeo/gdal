@@ -118,7 +118,9 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                  int nXOff, int nYOff, int nXSize, int nYSize,
                                  void * pData, int nBufXSize, int nBufYSize,
                                  GDALDataType eBufType,
-                                 int nPixelSpace, int nLineSpace )
+                                 GSpacing nPixelSpace,
+                                 GSpacing nLineSpace,
+                                 GDALRasterIOExtraArg* psExtraArg )
 
 {
     int         iSource;
@@ -153,7 +155,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     {
         if( OverviewRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
                               pData, nBufXSize, nBufYSize, 
-                              eBufType, nPixelSpace, nLineSpace ) == CE_None )
+                              eBufType, nPixelSpace, nLineSpace, psExtraArg ) == CE_None )
             return CE_None;
     }
 
@@ -195,17 +197,33 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     
     nRecursionCounter ++;
 
+    GDALProgressFunc  pfnProgressGlobal = psExtraArg->pfnProgress;
+    void             *pProgressDataGlobal = psExtraArg->pProgressData;
+
 /* -------------------------------------------------------------------- */
 /*      Overlay each source in turn over top this.                      */
 /* -------------------------------------------------------------------- */
     for( iSource = 0; eErr == CE_None && iSource < nSources; iSource++ )
     {
+        psExtraArg->pfnProgress = GDALScaledProgress;
+            psExtraArg->pProgressData = 
+                GDALCreateScaledProgress( 1.0 * iSource / nSources,
+                                        1.0 * (iSource + 1) / nSources,
+                                        pfnProgressGlobal,
+                                        pProgressDataGlobal );
+
         eErr = 
             papoSources[iSource]->RasterIO( nXOff, nYOff, nXSize, nYSize, 
                                             pData, nBufXSize, nBufYSize, 
-                                            eBufType, nPixelSpace, nLineSpace);
+                                            eBufType, nPixelSpace, nLineSpace,
+                                            psExtraArg);
+
+        GDALDestroyScaledProgress( psExtraArg->pProgressData );
     }
-    
+
+    psExtraArg->pfnProgress = pfnProgressGlobal;
+    psExtraArg->pProgressData = pProgressDataGlobal;
+
     nRecursionCounter --;
     
     return eErr;
@@ -232,11 +250,14 @@ CPLErr VRTSourcedRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     else
         nReadYSize = nBlockYSize;
 
+    GDALRasterIOExtraArg sExtraArg;
+    INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+
     return IRasterIO( GF_Read, 
                       nBlockXOff * nBlockXSize, nBlockYOff * nBlockYSize, 
                       nReadXSize, nReadYSize, 
                       pImage, nReadXSize, nReadYSize, eDataType, 
-                      nPixelSize, nPixelSize * nBlockXSize );
+                      nPixelSize, nPixelSize * nBlockXSize, &sExtraArg );
 }
 
 
@@ -1130,6 +1151,7 @@ const char *VRTSourcedRasterBand::GetMetadataItem( const char * pszName,
         
         for( int iSource = 0; iSource < nSources; iSource++ )
         {
+            double dfReqXOff, dfReqYOff, dfReqXSize, dfReqYSize;
             int nReqXOff, nReqYOff, nReqXSize, nReqYSize;
             int nOutXOff, nOutYOff, nOutXSize, nOutYSize;
 
@@ -1139,6 +1161,7 @@ const char *VRTSourcedRasterBand::GetMetadataItem( const char * pszName,
             VRTSimpleSource *poSrc = (VRTSimpleSource *) papoSources[iSource];
 
             if( !poSrc->GetSrcDstWindow( iPixel, iLine, 1, 1, 1, 1,
+                                         &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize,
                                          &nReqXOff, &nReqYOff, 
                                          &nReqXSize, &nReqYSize,
                                          &nOutXOff, &nOutYOff, 

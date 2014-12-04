@@ -5224,7 +5224,7 @@ CPLErr  NCDFCopyBand( GDALRasterBand *poSrcBand, GDALRasterBand *poDstBand,
     for( int iLine = 0; iLine < nYSize && eErr == CE_None; iLine++ )  {                
         eErr = poSrcBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
                                     patScanline, nXSize, 1, eDT,
-                                    0,0);
+                                    0,0, NULL);
         if ( eErr != CE_None )
             CPLDebug( "GDAL_netCDF", 
                       "NCDFCopyBand(), poSrcBand->RasterIO() returned error code %d",
@@ -5232,7 +5232,7 @@ CPLErr  NCDFCopyBand( GDALRasterBand *poSrcBand, GDALRasterBand *poDstBand,
         else { 
             eErr = poDstBand->RasterIO( GF_Write, 0, iLine, nXSize, 1, 
                                         patScanline, nXSize, 1, eDT,
-                                        0,0);
+                                        0,0, NULL);
             if ( eErr != CE_None )
                 CPLDebug( "GDAL_netCDF", 
                           "NCDFCopyBand(), poDstBand->RasterIO() returned error code %d",

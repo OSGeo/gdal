@@ -894,7 +894,7 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         {
             eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
                               paiScanline, nXSize, 1, GDT_UInt32,
-                              sizeof(GUInt32), sizeof(GUInt32) * nXSize );
+                              sizeof(GUInt32), sizeof(GUInt32) * nXSize, NULL );
             for ( iPixel = 0; iPixel < nXSize; iPixel++ )
                 jas_matrix_setv( psMatrix, iPixel, paiScanline[iPixel] );
             

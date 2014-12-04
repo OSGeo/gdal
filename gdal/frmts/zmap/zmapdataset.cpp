@@ -649,7 +649,7 @@ GDALDataset* ZMapDataset::CreateCopy( const char * pszFilename,
         eErr = poSrcDS->GetRasterBand(1)->RasterIO(
                                             GF_Read, i, 0, 1, nYSize,
                                             padfLineBuffer, 1, nYSize,
-                                            GDT_Float64, 0, 0);
+                                            GDT_Float64, 0, 0, NULL);
         if (eErr != CE_None)
             break;
         int bEOLPrinted = FALSE;

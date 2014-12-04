@@ -74,6 +74,10 @@ int CPL_STDCALL GDALScaledProgress( double dfComplete, const char *pszMessage,
 
 {
     GDALScaledProgressInfo *psInfo = (GDALScaledProgressInfo *) pData;
+    
+    /* optimization if GDALCreateScaledProgress() provided with GDALDummyProgress */
+    if( psInfo == NULL )
+        return TRUE;
 
     return psInfo->pfnProgress( dfComplete * (psInfo->dfMax - psInfo->dfMin)
                                 + psInfo->dfMin,
@@ -134,6 +138,9 @@ void * CPL_STDCALL GDALCreateScaledProgress( double dfMin, double dfMax,
 
 {
     GDALScaledProgressInfo *psInfo;
+    
+    if( pfnProgress == NULL || pfnProgress == GDALDummyProgress )
+        return NULL;
 
     psInfo = (GDALScaledProgressInfo *)
         CPLCalloc(sizeof(GDALScaledProgressInfo),1);

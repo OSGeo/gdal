@@ -39,15 +39,15 @@
 /* Returned size is in bytes or 0 if an error occured */
 static
 GIntBig ComputeBandRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize,
-                             int nPixelSpace, int nLineSpace,
-                             int bSpacingShouldBeMultipleOfPixelSize )
+                                 GIntBig nPixelSpace, GIntBig nLineSpace,
+                                 int bSpacingShouldBeMultipleOfPixelSize )
 {
 #if SIZEOF_VOIDP == 8
     const GIntBig MAX_INT = (((GIntBig)0x7fffffff) << 32) | 0xffffffff;
 #else
     const GIntBig MAX_INT = 0x7fffffff;
 #endif
-    const GIntBig MAX_INT32 = 0x7fffffff;
+
     if (buf_xsize <= 0 || buf_ysize <= 0)
     {
         CPLError(CE_Failure, CPLE_IllegalArg, "Illegal values for buffer size");
@@ -76,11 +76,6 @@ GIntBig ComputeBandRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize,
 
     if( nLineSpace == 0 )
     {
-        if (nPixelSpace > MAX_INT32 / buf_xsize)
-        {
-            CPLError(CE_Failure, CPLE_IllegalArg, "Integer overflow for nLineSpace");
-            return 0;
-        }
         nLineSpace = nPixelSpace * buf_xsize;
     }
     else if ( bSpacingShouldBeMultipleOfPixelSize && (nLineSpace % nPixelSize) != 0 )
@@ -108,7 +103,8 @@ CPLErr ReadRaster_internal( GDALRasterBandShadow *obj,
                             int buf_xsize, int buf_ysize,
                             GDALDataType buf_type,
                             int *buf_size, char **buf,
-                            int pixel_space, int line_space )
+                            GIntBig pixel_space, GIntBig line_space,
+                            GDALRasterIOExtraArg* psExtraArg )
 {
   CPLErr result;
 
@@ -130,9 +126,9 @@ CPLErr ReadRaster_internal( GDALRasterBandShadow *obj,
   *buf = (char*) malloc( *buf_size );
   if ( *buf )
   {
-    result =  GDALRasterIO( obj, GF_Read, xoff, yoff, xsize, ysize,
+    result =  GDALRasterIOEx( obj, GF_Read, xoff, yoff, xsize, ysize,
                                     (void *) *buf, buf_xsize, buf_ysize,
-                                    buf_type, pixel_space, line_space );
+                                    buf_type, pixel_space, line_space, psExtraArg );
     if ( result != CE_None )
     {
         free( *buf );
@@ -363,15 +359,26 @@ public:
                      int *buf_ysize = 0,
                      int *buf_type = 0,
                      int *buf_pixel_space = 0,
-                     int *buf_line_space = 0) {
+                     int *buf_line_space = 0,
+                     GDALRIOResampleAlg resample_alg = GRIORA_NearestNeighbour,
+                     GDALProgressFunc callback = NULL,
+                     void* callback_data=NULL ) {
     int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
     int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
     GDALDataType ntype  = (buf_type==0) ? GDALGetRasterDataType(self)
                                         : (GDALDataType)*buf_type;
-    int pixel_space = (buf_pixel_space == 0) ? 0 : *buf_pixel_space;
-    int line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
+    GIntBig pixel_space = (buf_pixel_space == 0) ? 0 : *buf_pixel_space;
+    GIntBig line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
+
+    GDALRasterIOExtraArg sExtraArg;
+    INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+    sExtraArg.eResampleAlg = resample_alg;
+    sExtraArg.pfnProgress = callback;
+    sExtraArg.pProgressData = callback_data;
+
     return ReadRaster_internal( self, xoff, yoff, xsize, ysize,
-                                nxsize, nysize, ntype, buf_len, buf, pixel_space, line_space );
+                                nxsize, nysize, ntype, buf_len, buf, pixel_space, line_space,
+                                &sExtraArg );
   }
 %clear (int *buf_len, char **buf );
 %clear (int*);

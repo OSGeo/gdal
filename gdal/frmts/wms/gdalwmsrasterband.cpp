@@ -287,7 +287,10 @@ CPLErr GDALWMSRasterBand::IReadBlock(int x, int y, void *buffer) {
     return eErr;
 }
 
-CPLErr GDALWMSRasterBand::IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy, void *buffer, int bsx, int bsy, GDALDataType bdt, int pixel_space, int line_space) {
+CPLErr GDALWMSRasterBand::IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy,
+                                    void *buffer, int bsx, int bsy, GDALDataType bdt,
+                                    GSpacing nPixelSpace, GSpacing nLineSpace,
+                                    GDALRasterIOExtraArg* psExtraArg) {
     CPLErr ret;
 
     if (rw != GF_Read) return CE_Failure;
@@ -300,7 +303,7 @@ CPLErr GDALWMSRasterBand::IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int s
     m_parent_dataset->m_hint.m_sy = sy;
     m_parent_dataset->m_hint.m_overview = m_overview;
     m_parent_dataset->m_hint.m_valid = true;
-    ret = GDALRasterBand::IRasterIO(rw, x0, y0, sx, sy, buffer, bsx, bsy, bdt, pixel_space, line_space);
+    ret = GDALRasterBand::IRasterIO(rw, x0, y0, sx, sy, buffer, bsx, bsy, bdt, nPixelSpace, nLineSpace, psExtraArg);
     m_parent_dataset->m_hint.m_valid = false;
 
     return ret;
@@ -656,7 +659,7 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
                                 // TODO: This hack is from #3493 - not sure it really belongs here.
 				if ((GDT_Int16==dt)&&(GDT_UInt16==ds->GetRasterBand(ib)->GetRasterDataType()))
 				    dt=GDT_UInt16;
-				if (ds->RasterIO(GF_Read, 0, 0, sx, sy, p, sx, sy, dt, 1, &ib, pixel_space, line_space, 0) != CE_None) {
+				if (ds->RasterIO(GF_Read, 0, 0, sx, sy, p, sx, sy, dt, 1, &ib, pixel_space, line_space, 0, NULL) != CE_None) {
 				    CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: RasterIO failed on downloaded block.");
 				    ret = CE_Failure;
 				}
@@ -682,7 +685,7 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
                                }     
                             }
                         } else if (ib <= 4) {
-                            if (ds->RasterIO(GF_Read, 0, 0, sx, sy, p, sx, sy, eDataType, 1, NULL, pixel_space, line_space, 0) != CE_None) {
+                            if (ds->RasterIO(GF_Read, 0, 0, sx, sy, p, sx, sy, eDataType, 1, NULL, pixel_space, line_space, 0, NULL) != CE_None) {
                                 CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: RasterIO failed on downloaded block.");
                                 ret = CE_Failure;
                             }

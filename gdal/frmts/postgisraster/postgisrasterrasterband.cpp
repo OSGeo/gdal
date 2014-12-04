@@ -325,8 +325,8 @@ static int SortTilesByPKID(const void* a, const void* b)
 
 CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, 
     int nYOff, int nXSize, int nYSize, void * pData, int nBufXSize, 
-    int nBufYSize, GDALDataType eBufType, int nPixelSpace, 
-    int nLineSpace)
+    int nBufYSize, GDALDataType eBufType,
+    GSpacing nPixelSpace, GSpacing nLineSpace, GDALRasterIOExtraArg* psExtraArg)
 {
     /**
      * TODO: Write support not implemented yet
@@ -347,7 +347,7 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
     {
         if(OverviewRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize, 
             pData, nBufXSize, nBufYSize, eBufType, nPixelSpace, 
-            nLineSpace) == CE_None)
+            nLineSpace, psExtraArg) == CE_None)
                 
         return CE_None;
     }
@@ -416,7 +416,7 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
         
         return GDALRasterBand::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, 
             nYSize, pData, nBufXSize, nBufYSize, eBufType, nPixelSpace, 
-            nLineSpace);
+            nLineSpace, psExtraArg);
     }
 #endif    
     
@@ -744,7 +744,7 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
         eErr = 
             poTileBand->poSource->RasterIO( nXOff, nYOff, nXSize, nYSize, 
                                             pData, nBufXSize, nBufYSize, 
-                                            eBufType, nPixelSpace, nLineSpace);
+                                            eBufType, nPixelSpace, nLineSpace, NULL);
     }
     
     // Free the object that holds pointers to matching tiles

@@ -57,7 +57,6 @@ static double GWKBilinear(double dfX);
 static double GWKCubic(double dfX);
 static double GWKBSpline(double dfX);
 static double GWKLanczosSinc(double dfX);
-typedef double (*FilterFuncType)(double dfX);
 
 static const FilterFuncType apfGWKFilter[] =
 {
@@ -70,11 +69,10 @@ static const FilterFuncType apfGWKFilter[] =
     NULL,            // Mode
 };
 
-static void GWKBilinear4Values(double* padfVals);
-static void GWKCubic4Values(double* padfVals);
-static void GWKBSpline4Values(double* padfVals);
-static void GWKLanczosSinc4Values(double* padfVals);
-typedef void (*FilterFunc4ValuesType)(double* padfVals);
+static double GWKBilinear4Values(double* padfVals);
+static double GWKCubic4Values(double* padfVals);
+static double GWKBSpline4Values(double* padfVals);
+static double GWKLanczosSinc4Values(double* padfVals);
 
 static const FilterFunc4ValuesType apfGWKFilter4Values[] =
 {
@@ -87,10 +85,19 @@ static const FilterFunc4ValuesType apfGWKFilter4Values[] =
     NULL,            // Mode
 };
 
-/* Used in gdalwarpoperation.cpp */
 int GWKGetFilterRadius(GDALResampleAlg eResampleAlg)
 {
     return anGWKFilterRadius[eResampleAlg];
+}
+
+FilterFuncType GWKGetFilterFunc(GDALResampleAlg eResampleAlg)
+{
+    return apfGWKFilter[eResampleAlg];
+}
+
+FilterFunc4ValuesType GWKGetFilterFunc4Values(GDALResampleAlg eResampleAlg)
+{
+    return apfGWKFilter4Values[eResampleAlg];
 }
 
 #ifdef HAVE_OPENCL
@@ -2180,16 +2187,21 @@ static int GWKCubicResampleNoMasks4SampleT( GDALWarpKernel *poWK, int iBand,
 
 static double GWKLanczosSinc( double dfX )
 {
+    /*if( fabs(dfX) > 3.0 )
+    {
+        printf("%f\n", dfX);
+        return 0;
+    }*/
     if ( dfX == 0.0 )
         return 1.0;
 
     const double dfPIX = GWK_PI * dfX;
-    const double dfPIXoverR = dfPIX / anGWKFilterRadius[GRA_Lanczos];
+    const double dfPIXoverR = dfPIX / 3;
     const double dfPIX2overR = dfPIX * dfPIXoverR;
     return sin(dfPIX) * sin(dfPIXoverR) / dfPIX2overR;
 }
 
-static void GWKLanczosSinc4Values( double* padfValues )
+static double GWKLanczosSinc4Values( double* padfValues )
 {
     for(int i=0;i<4;i++)
     {
@@ -2198,11 +2210,12 @@ static void GWKLanczosSinc4Values( double* padfValues )
         else
         {
             const double dfPIX = GWK_PI * padfValues[0];
-            const double dfPIXoverR = dfPIX / anGWKFilterRadius[GRA_Lanczos];
+            const double dfPIXoverR = dfPIX / 3;
             const double dfPIX2overR = dfPIX * dfPIXoverR;
             padfValues[i] = sin(dfPIX) * sin(dfPIXoverR) / dfPIX2overR;
         }
     }
+    return padfValues[0] + padfValues[1] + padfValues[2] + padfValues[3];
 }
 
 //#undef GWK_PI
@@ -2220,7 +2233,7 @@ static double GWKBilinear(double dfX)
         return 0.0;
 }
 
-static void GWKBilinear4Values( double* padfValues )
+static double GWKBilinear4Values( double* padfValues )
 {
     double dfAbsX0 = fabs(padfValues[0]);
     double dfAbsX1 = fabs(padfValues[1]);
@@ -2242,6 +2255,7 @@ static void GWKBilinear4Values( double* padfValues )
         padfValues[3] = 1 - dfAbsX3;
     else
         padfValues[3] = 0.0;
+    return  padfValues[0] +  padfValues[1] + padfValues[2] + padfValues[3];
 }
 
 /************************************************************************/
@@ -2269,7 +2283,7 @@ static double GWKCubic(double dfX)
         return 0.0;
 }
 
-static void GWKCubic4Values( double* padfValues )
+static double GWKCubic4Values( double* padfValues )
 {
     double dfAbsX_0 = fabs(padfValues[0]);
     double dfX2_0 = padfValues[0] * padfValues[0];
@@ -2279,30 +2293,37 @@ static void GWKCubic4Values( double* padfValues )
     double dfX2_2 = padfValues[2] * padfValues[2];
     double dfAbsX_3 = fabs(padfValues[3]);
     double dfX2_3 = padfValues[3] * padfValues[3];
+    double dfVal0, dfVal1, dfVal2, dfVal3;
     if( dfAbsX_0 <= 1.0 )
-        padfValues[0] = dfX2_0 * (1.5 * dfAbsX_0 - 2.5) + 1;
+        dfVal0 = dfX2_0 * (1.5 * dfAbsX_0 - 2.5) + 1;
     else if( dfAbsX_0 <= 2.0 )
-        padfValues[0] = dfX2_0 * (-0.5 * dfAbsX_0 + 2.5) - 4 * dfAbsX_0 + 2;
+        dfVal0 = dfX2_0 * (-0.5 * dfAbsX_0 + 2.5) - 4 * dfAbsX_0 + 2;
     else
-        padfValues[0] = 0.0;
+        dfVal0 = 0.0;
     if( dfAbsX_1 <= 1.0 )
-        padfValues[1] = dfX2_1 * (1.5 * dfAbsX_1 - 2.5) + 1;
+        dfVal1 = dfX2_1 * (1.5 * dfAbsX_1 - 2.5) + 1;
     else if( dfAbsX_1 <= 2.0 )
-        padfValues[1] = dfX2_1 * (-0.5 * dfAbsX_1 + 2.5) - 4 * dfAbsX_1 + 2;
+        dfVal1 = dfX2_1 * (-0.5 * dfAbsX_1 + 2.5) - 4 * dfAbsX_1 + 2;
     else
-        padfValues[1] = 0.0;
+        dfVal1 = 0.0;
     if( dfAbsX_2 <= 1.0 )
-        padfValues[2] = dfX2_2 * (1.5 * dfAbsX_2 - 2.5) + 1;
+        dfVal2 = dfX2_2 * (1.5 * dfAbsX_2 - 2.5) + 1;
     else if( dfAbsX_2 <= 2.0 )
-        padfValues[2] = dfX2_2 * (-0.5 * dfAbsX_2 + 2.5) - 4 * dfAbsX_2 + 2;
+        dfVal2 = dfX2_2 * (-0.5 * dfAbsX_2 + 2.5) - 4 * dfAbsX_2 + 2;
     else
-        padfValues[3] = 0.0;
+        dfVal2 = 0.0;
     if( dfAbsX_3 <= 1.0 )
-        padfValues[3] = dfX2_3 * (1.5 * dfAbsX_3 - 2.5) + 1;
+        dfVal3 = dfX2_3 * (1.5 * dfAbsX_3 - 2.5) + 1;
     else if( dfAbsX_3 <= 2.0 )
-        padfValues[3] = dfX2_3 * (-0.5 * dfAbsX_3 + 2.5) - 4 * dfAbsX_3 + 2;
+        dfVal3 = dfX2_3 * (-0.5 * dfAbsX_3 + 2.5) - 4 * dfAbsX_3 + 2;
     else
-        padfValues[3] = 0.0;
+        dfVal3 = 0.0;
+
+    padfValues[0] = dfVal0;
+    padfValues[1] = dfVal1;
+    padfValues[2] = dfVal2;
+    padfValues[3] = dfVal3;
+    return dfVal0 + dfVal1 + dfVal2 + dfVal3;
 }
 
 /************************************************************************/
@@ -2331,7 +2352,7 @@ static double GWKBSpline( double x )
              xp2c:0.0) ) /* * 0.166666666666666666666 */;
 }
 
-static void GWKBSpline4Values( double* padfValues )
+static double GWKBSpline4Values( double* padfValues )
 {
     for(int i=0;i<4;i++)
     {
@@ -2351,6 +2372,7 @@ static void GWKBSpline4Values( double* padfValues )
                             -4.0 * xp1*xp1*xp1:0.0) +
                 xp2c:0.0) ) /* * 0.166666666666666666666 */;
     }
+    return padfValues[0] + padfValues[1] + padfValues[2] + padfValues[3];
 }
 /************************************************************************/
 /*                       GWKResampleWrkStruct                           */
@@ -2997,9 +3019,7 @@ static int GWKResampleNoMasksT( GDALWarpKernel *poWK, int iBand,
         padfWeight[iC+1] = padfWeight[iC] + dfXScale;
         padfWeight[iC+2] = padfWeight[iC+1] + dfXScale;
         padfWeight[iC+3] = padfWeight[iC+2] + dfXScale;
-        pfnGetWeight4Values(padfWeight+iC);
-        dfAccumulatorWeightHorizontal += padfWeight[iC] + padfWeight[iC + 1] +
-                                         padfWeight[iC + 2 ] + padfWeight[iC + 3];
+        dfAccumulatorWeightHorizontal += pfnGetWeight4Values(padfWeight+iC);
     }
     for(; i <= iMax; ++i, ++iC )
     {
@@ -3121,9 +3141,7 @@ static int GWKResampleNoMasks_SSE2_T( GDALWarpKernel *poWK, int iBand,
         padfWeight[iC+1] = padfWeight[iC] + dfXScale;
         padfWeight[iC+2] = padfWeight[iC+1] + dfXScale;
         padfWeight[iC+3] = padfWeight[iC+2] + dfXScale;
-        pfnGetWeight4Values(padfWeight+iC);
-        dfAccumulatorWeightHorizontal += padfWeight[iC] + padfWeight[iC + 1] +
-                                         padfWeight[iC + 2 ] + padfWeight[iC + 3];
+        dfAccumulatorWeightHorizontal += pfnGetWeight4Values(padfWeight+iC);
     }
     for(; i <= iMax; ++i, ++iC )
     {
@@ -3210,15 +3228,11 @@ static int GWKResampleNoMasks_SSE2_T( GDALWarpKernel *poWK, int iBand,
         adfWeight[1] = adfWeight[0] + dfYScale;
         adfWeight[2] = adfWeight[1] + dfYScale;
         adfWeight[3] = adfWeight[2] + dfYScale;
-        pfnGetWeight4Values(adfWeight);
+        dfAccumulatorWeightVertical += pfnGetWeight4Values(adfWeight);
         dfAccumulator += adfWeight[0] * dfAccumulatorLocal_1;
-        dfAccumulatorWeightVertical += adfWeight[0];
         dfAccumulator += adfWeight[1] * dfAccumulatorLocal_2;
-        dfAccumulatorWeightVertical += adfWeight[1];
         dfAccumulator += adfWeight[2] * dfAccumulatorLocal_3;
-        dfAccumulatorWeightVertical += adfWeight[2];
         dfAccumulator += adfWeight[3] * dfAccumulatorLocal_4;
-        dfAccumulatorWeightVertical += adfWeight[3];
     }
     for ( ; j <= jMax; ++j )
     {

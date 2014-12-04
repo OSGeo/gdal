@@ -952,7 +952,7 @@ CPLErr IntergraphBitmapBand::IReadBlock( int nBlockXOff,
 
     poGDS->hVirtual.poBand->RasterIO( GF_Read, 0, 0, 
         nVirtualXSize, nVirtualYSize, pImage, 
-        nVirtualXSize, nVirtualYSize, GDT_Byte, 0, 0 );
+        nVirtualXSize, nVirtualYSize, GDT_Byte, 0, 0, NULL );
 
     // --------------------------------------------------------------------
     // Reshape blocks if needed

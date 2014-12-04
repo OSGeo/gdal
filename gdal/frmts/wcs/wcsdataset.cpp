@@ -70,7 +70,10 @@ class CPL_DLL WCSDataset : public GDALPamDataset
     int         TestUseBlockIO( int, int, int, int, int, int );
     CPLErr      DirectRasterIO( GDALRWFlag, int, int, int, int,
                                 void *, int, int, GDALDataType,
-                                int, int *, int, int, int );
+                                int, int *,
+                                GSpacing nPixelSpace, GSpacing nLineSpace,
+                                GSpacing nBandSpace,
+                                GDALRasterIOExtraArg* psExtraArg);
     CPLErr      GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
                              int nBufXSize, int nBufYSize, 
                              int nBandCount, int *panBandList,
@@ -78,7 +81,10 @@ class CPL_DLL WCSDataset : public GDALPamDataset
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int *, int, int, int );
+                              int, int *,
+                              GSpacing nPixelSpace, GSpacing nLineSpace,
+                              GSpacing nBandSpace,
+                              GDALRasterIOExtraArg* psExtraArg);
 
     int		DescribeCoverage();
     int         ExtractGridInfo100();
@@ -131,7 +137,8 @@ class WCSRasterBand : public GDALPamRasterBand
     
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int );
+                              GSpacing nPixelSpace, GSpacing nLineSpace,
+                              GDALRasterIOExtraArg* psExtraArg );
 
   public:
 
@@ -320,7 +327,7 @@ CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             eErr = poTileBand->RasterIO( GF_Read, 
                                          0, 0, nBlockXSize, nBlockYSize, 
                                          pImage, nBlockXSize, nBlockYSize, 
-                                         eDataType, 0, 0 );
+                                         eDataType, 0, 0, NULL );
         }
         else
         {
@@ -338,7 +345,7 @@ CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                             0, 0, nBlockXSize, nBlockYSize,
                                             poBlock->GetDataRef(),
                                             nBlockXSize, nBlockYSize,
-                                            eDataType, 0, 0 );
+                                            eDataType, 0, 0, NULL );
                 poBlock->DropLock();
             }
             else
@@ -364,7 +371,8 @@ CPLErr WCSRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                  int nXOff, int nYOff, int nXSize, int nYSize,
                                  void * pData, int nBufXSize, int nBufYSize,
                                  GDALDataType eBufType,
-                                 int nPixelSpace, int nLineSpace )
+                                 GSpacing nPixelSpace, GSpacing nLineSpace,
+                                 GDALRasterIOExtraArg* psExtraArg)
     
 {
     if( (poODS->nMaxCols > 0 && poODS->nMaxCols < nBufXSize)
@@ -376,14 +384,14 @@ CPLErr WCSRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         return GDALPamRasterBand::IRasterIO( 
             eRWFlag, nXOff, nYOff, nXSize, nYSize,
             pData, nBufXSize, nBufYSize, eBufType, 
-            nPixelSpace, nLineSpace );
+            nPixelSpace, nLineSpace, psExtraArg );
     else
         return poODS->DirectRasterIO( 
             eRWFlag, 
             nXOff * nResFactor, nYOff * nResFactor, 
             nXSize * nResFactor, nYSize * nResFactor,
             pData, nBufXSize, nBufYSize, eBufType, 
-            1, &nBand, nPixelSpace, nLineSpace, 0 );
+            1, &nBand, nPixelSpace, nLineSpace, 0, psExtraArg );
 }
 
 /************************************************************************/
@@ -530,7 +538,9 @@ CPLErr WCSDataset::IRasterIO( GDALRWFlag eRWFlag,
                               void * pData, int nBufXSize, int nBufYSize,
                               GDALDataType eBufType, 
                               int nBandCount, int *panBandMap,
-                              int nPixelSpace, int nLineSpace, int nBandSpace)
+                              GSpacing nPixelSpace, GSpacing nLineSpace,
+                              GSpacing nBandSpace,
+                              GDALRasterIOExtraArg* psExtraArg)
 
 {
     if( (nMaxCols > 0 && nMaxCols < nBufXSize)
@@ -544,12 +554,12 @@ CPLErr WCSDataset::IRasterIO( GDALRWFlag eRWFlag,
         return GDALPamDataset::IRasterIO( 
             eRWFlag, nXOff, nYOff, nXSize, nYSize,
             pData, nBufXSize, nBufYSize, eBufType, 
-            nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace );
+            nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace, psExtraArg );
     else
         return DirectRasterIO( 
             eRWFlag, nXOff, nYOff, nXSize, nYSize,
             pData, nBufXSize, nBufYSize, eBufType, 
-            nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace );
+            nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace, psExtraArg );
 }
 
 /************************************************************************/
@@ -570,9 +580,9 @@ WCSDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
                             GDALDataType eBufType,
                             int nBandCount,
                             int *panBandMap,
-                            int nPixelSpace,
-                            int nLineSpace,
-                            int nBandSpace)
+                            GSpacing nPixelSpace, GSpacing nLineSpace,
+                            GSpacing nBandSpace,
+                            GDALRasterIOExtraArg* psExtraArg)
 {
     CPLDebug( "WCS", "DirectRasterIO(%d,%d,%d,%d) -> (%d,%d) (%d bands)\n",
               nXOff, nYOff, nXSize, nYSize,
@@ -648,7 +658,7 @@ WCSDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
                                      0, 0, nBufXSize, nBufYSize,
                                      ((GByte *) pData) + 
                                      iBand * nBandSpace, nBufXSize, nBufYSize, 
-                                     eBufType, nPixelSpace, nLineSpace );
+                                     eBufType, nPixelSpace, nLineSpace, NULL );
     }
     
 /* -------------------------------------------------------------------- */

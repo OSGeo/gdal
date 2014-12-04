@@ -230,7 +230,10 @@ class BMPDataset : public GDALPamDataset
   protected:
     virtual CPLErr      IRasterIO( GDALRWFlag, int, int, int, int,
                                    void *, int, int, GDALDataType,
-                                   int, int *, int, int, int );
+                                   int, int *,
+                                   GSpacing nPixelSpace, GSpacing nLineSpace,
+                                   GSpacing nBandSpace,
+                                   GDALRasterIOExtraArg* psExtraArg );
 
   public:
                 BMPDataset();
@@ -976,20 +979,22 @@ CPLErr BMPDataset::IRasterIO( GDALRWFlag eRWFlag,
                               void *pData, int nBufXSize, int nBufYSize, 
                               GDALDataType eBufType,
                               int nBandCount, int *panBandMap, 
-                              int nPixelSpace, int nLineSpace, int nBandSpace )
+                              GSpacing nPixelSpace, GSpacing nLineSpace,
+                              GSpacing nBandSpace,
+                              GDALRasterIOExtraArg* psExtraArg )
 
 {
     if( nBandCount > 1 )
         return GDALDataset::BlockBasedRasterIO( 
             eRWFlag, nXOff, nYOff, nXSize, nYSize,
             pData, nBufXSize, nBufYSize, eBufType, 
-            nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace );
+            nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace, psExtraArg );
     else
         return 
             GDALDataset::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                     pData, nBufXSize, nBufYSize, eBufType, 
                                     nBandCount, panBandMap, 
-                                    nPixelSpace, nLineSpace, nBandSpace );
+                                    nPixelSpace, nLineSpace, nBandSpace, psExtraArg );
 }
 
 /************************************************************************/

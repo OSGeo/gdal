@@ -716,7 +716,9 @@ GTIFFBuildOverviews( const char * pszFilename,
         GDALDataTypeIsComplex(papoBandList[0]->GetRasterDataType()) == FALSE &&
         papoBandList[0]->GetColorTable() == NULL &&
         (EQUALN(pszResampling, "NEAR", 4) || EQUAL(pszResampling, "AVERAGE") ||
-         EQUAL(pszResampling, "GAUSS") || EQUAL(pszResampling, "CUBIC")))
+         EQUAL(pszResampling, "GAUSS") || EQUAL(pszResampling, "CUBIC") ||
+         EQUAL(pszResampling, "CUBICSPLINE") || EQUAL(pszResampling, "LANCZOS") ||
+         EQUAL(pszResampling, "BILINEAR")))
     {
         /* In the case of pixel interleaved compressed overviews, we want to generate */
         /* the overviews for all the bands block by block, and not band after band, */

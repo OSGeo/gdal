@@ -1117,7 +1117,7 @@ GDALDataset * AAIGDataset::CreateCopy(
         eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
                                  (bReadAsInt) ? (void*)panScanline : (void*)padfScanline,
                                  nXSize, 1, (bReadAsInt) ? GDT_Int32 : GDT_Float64,
-                                 0, 0 );
+                                 0, 0, NULL );
 
         if( bReadAsInt )
         {

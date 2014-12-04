@@ -814,7 +814,7 @@ CPLErr LCPDataset::ClassifyBandData( GDALRasterBand *poBand,
     {
         eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1,
                                  panValues, nXSize, 1, 
-                                 GDT_Int16, 0, 0 );
+                                 GDT_Int16, 0, 0, NULL );
         for( int iPixel = 0; iPixel < nXSize; iPixel++ )
         {
             if( panValues[iPixel] == -9999 )
@@ -1607,7 +1607,7 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
             GDALRasterBand * poBand = poSrcDS->GetRasterBand( iBand+1 );
             eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1,
                                      panScanline + iBand, nXSize, 1, GDT_Int16,
-                                     nBands * 2, nBands * nXSize * 2 );
+                                     nBands * 2, nBands * nXSize * 2, NULL );
             /* Not sure what to do here */
             if( eErr != CE_None )
             {

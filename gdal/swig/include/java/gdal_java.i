@@ -235,7 +235,7 @@ import org.gdal.gdalconst.gdalconstConstants;
 static
 GIntBig ComputeDatasetRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize,
                                 int nBands, int* bandMap, int nBandMapArrayLength,
-                                int nPixelSpace, int nLineSpace, int nBandSpace,
+                                GIntBig nPixelSpace, GIntBig nLineSpace, GIntBig nBandSpace,
                                 int bSpacingShouldBeMultipleOfPixelSize );
 
 static CPLErr DatasetRasterIO( GDALDatasetH hDS, GDALRWFlag eRWFlag,
@@ -402,8 +402,8 @@ CPLErr ReadRaster( int xoff, int yoff, int xsize, int ysize,
 %{
 static
 GIntBig ComputeBandRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize,
-                             int nPixelSpace, int nLineSpace,
-                             int bSpacingShouldBeMultipleOfPixelSize );
+                                 GIntBig nPixelSpace, GIntBig nLineSpace,
+                                 int bSpacingShouldBeMultipleOfPixelSize );
 
 static CPLErr BandRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
                             int xoff, int yoff, int xsize, int ysize,

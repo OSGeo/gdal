@@ -297,6 +297,21 @@ subelements which have a "key" attribute and the value as the data of the elemen
     </SimpleSource>
 \endcode
 
+Starting with GDAL 2.0, a resampling attribute can be specified on a SimpleSource
+or ComplexSource element to specified the resampling algorithm used when the
+size of the destination rectangle is not the same as the size of the source
+rectangle. The values allowed for that attribute are : nearest,bilinear,cubic,
+cubicspline,lanczos,average,mode.
+
+\code
+    <SimpleSource resampling="cubic">
+      <SourceFilename relativeToVRT="1">utm.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="256" RasterYSize="256" DataType="Byte" BlockXSize="128" BlockYSize="128"/>
+      <SrcRect xOff="0" yOff="0" xSize="256" ySize="256"/>
+      <DstRect xOff="0" yOff="0" xSize="128" ySize="128"/>
+    </SimpleSource>
+\endcode
 
 </li>
 
@@ -304,7 +319,8 @@ subelements which have a "key" attribute and the value as the data of the elemen
 SimpleSource and shares the same properties except that it uses an averaging
 resampling instead of a nearest neighbour algorithm as in SimpleSource, when
 the size of the destination rectangle is not the same as the size of the source
-rectangle
+rectangle. Note: starting with GDAL 2.0, a more general mechanism to specify
+resampling algorithms can be used. See above paragraph about the 'resampling' attribute.
 
 <li> <b>ComplexSource</b>: The ComplexSource is derived from the
 SimpleSource (so it shares the SourceFilename, SourceBand, SrcRect and 

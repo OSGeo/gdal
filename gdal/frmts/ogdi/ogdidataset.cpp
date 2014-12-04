@@ -106,7 +106,9 @@ class OGDIRasterBand : public GDALRasterBand
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int );
+                              GSpacing nPixelSpace,
+                              GSpacing nLineSpace,
+                              GDALRasterIOExtraArg* psExtraArg );
 
     CPLErr         EstablishAccess( int nXOff, int nYOff, 
                                     int nXSize, int nYSize,
@@ -232,9 +234,12 @@ OGDIRasterBand::~OGDIRasterBand()
 CPLErr OGDIRasterBand::IReadBlock( int, int nBlockYOff, void * pImage )
 
 {
+    GDALRasterIOExtraArg sExtraArg;
+    INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+
     return IRasterIO( GF_Read, 0, nBlockYOff, nBlockXSize, 1, 
                       pImage, nBlockXSize, 1, eDataType, 
-                      GDALGetDataTypeSize(eDataType)/8, 0 );
+                      GDALGetDataTypeSize(eDataType)/8, 0, &sExtraArg );
 }
 
 /************************************************************************/
@@ -245,7 +250,9 @@ CPLErr OGDIRasterBand::IRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
                                   int nXOff, int nYOff, int nXSize, int nYSize,
                                   void * pData, int nBufXSize, int nBufYSize,
                                   GDALDataType eBufType,
-                                  int nPixelSpace, int nLineSpace )
+                                  GSpacing nPixelSpace,
+                                  GSpacing nLineSpace,
+                                  GDALRasterIOExtraArg* psExtraArg )
 
 {
     OGDIDataset	*poODS = (OGDIDataset *) poDS;

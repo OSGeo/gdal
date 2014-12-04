@@ -70,6 +70,16 @@
 %constant GF_Read  = GF_Read;
 %constant GF_Write = GF_Write;
 
+// GDALRIOResampleAlg
+%constant GRIORA_NearestNeighbour = GRIORA_NearestNeighbour;
+%constant GRIORA_Bilinear = GRIORA_Bilinear;
+%constant GRIORA_Cubic = GRIORA_Cubic;
+%constant GRIORA_CubicSpline = GRIORA_CubicSpline;
+%constant GRIORA_Lanczos = GRIORA_Lanczos;
+%constant GRIORA_Average = GRIORA_Average;
+%constant GRIORA_Mode = GRIORA_Mode;
+%constant GRIORA_Gauss = GRIORA_Gauss;
+
 // GDALColorInterp
 %constant GCI_Undefined     = GCI_Undefined;
 %constant GCI_GrayIndex     = GCI_GrayIndex;

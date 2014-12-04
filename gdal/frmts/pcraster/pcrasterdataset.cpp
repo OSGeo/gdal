@@ -244,7 +244,7 @@ GDALDataset* PCRasterDataset::createCopy(
 
     // Get row from source.
     if(raster->RasterIO(GF_Read, 0, row, nrCols, 1, buffer, nrCols, 1,
-         raster->GetRasterDataType(), 0, 0) != CE_None) {
+         raster->GetRasterDataType(), 0, 0, NULL) != CE_None) {
       CPLError(CE_Failure, CPLE_FileIO,
          "PCRaster driver: Error reading from source raster");
       errorCode = CE_Failure;

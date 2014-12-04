@@ -1641,7 +1641,7 @@ GTACreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 CPLErr eErr = poSrcBand->RasterIO( GF_Read, 0, iLine,
                         poSrcDS->GetRasterXSize(), 1,
                         pDst, poSrcDS->GetRasterXSize(), 1, eDT,
-                        oHeader.element_size(), 0 );
+                        oHeader.element_size(), 0, NULL );
                 if( eErr != CE_None )
                 {
                     CPLError( CE_Failure, CPLE_FileIO, "Cannot read source data set.\n" );

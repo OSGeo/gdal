@@ -1143,7 +1143,7 @@ ILWISDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         {
             eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
                                      pData, nXSize, 1, eType, 
-                                     0, 0 );
+                                     0, 0, NULL );
 
             if( eErr == CE_None )
             {

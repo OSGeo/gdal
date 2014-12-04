@@ -541,7 +541,12 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
 /************************************************************************/
 /*                             IRasterIO()                              */
 /************************************************************************/
-CPLErr GDALWMSDataset::IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy, void *buffer, int bsx, int bsy, GDALDataType bdt, int band_count, int *band_map, int pixel_space, int line_space, int band_space) {
+CPLErr GDALWMSDataset::IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy,
+                                 void *buffer, int bsx, int bsy, GDALDataType bdt,
+                                 int band_count, int *band_map,
+                                 GSpacing nPixelSpace, GSpacing nLineSpace,
+                                 GSpacing nBandSpace,
+                                 GDALRasterIOExtraArg* psExtraArg) {
     CPLErr ret;
 
     if (rw != GF_Read) return CE_Failure;
@@ -555,7 +560,8 @@ CPLErr GDALWMSDataset::IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy, 
     m_hint.m_overview = -1;
     m_hint.m_valid = true;
     //	printf("[%p] GDALWMSDataset::IRasterIO(x0: %d, y0: %d, sx: %d, sy: %d, bsx: %d, bsy: %d, band_count: %d, band_map: %p)\n", this, x0, y0, sx, sy, bsx, bsy, band_count, band_map);
-    ret = GDALDataset::IRasterIO(rw, x0, y0, sx, sy, buffer, bsx, bsy, bdt, band_count, band_map, pixel_space, line_space, band_space);
+    ret = GDALDataset::IRasterIO(rw, x0, y0, sx, sy, buffer, bsx, bsy, bdt, band_count, band_map,
+                                 nPixelSpace, nLineSpace, nBandSpace, psExtraArg);
     m_hint.m_valid = false;
 
     return ret;

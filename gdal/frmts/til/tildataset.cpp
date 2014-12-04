@@ -84,7 +84,8 @@ class TILRasterBand : public GDALPamRasterBand
     virtual CPLErr IReadBlock( int, int, void * );
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int );
+                              GSpacing nPixelSpace, GSpacing nLineSpace,
+                              GDALRasterIOExtraArg* psExtraArg );
 };
 
 /************************************************************************/
@@ -121,20 +122,21 @@ CPLErr TILRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                  int nXOff, int nYOff, int nXSize, int nYSize,
                                  void * pData, int nBufXSize, int nBufYSize,
                                  GDALDataType eBufType,
-                                 int nPixelSpace, int nLineSpace )
+                                 GSpacing nPixelSpace, GSpacing nLineSpace,
+                                GDALRasterIOExtraArg* psExtraArg )
 
 {
     if(GetOverviewCount() > 0)
     {
         return GDALPamRasterBand::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                  pData, nBufXSize, nBufYSize, eBufType,
-                                 nPixelSpace, nLineSpace );
+                                 nPixelSpace, nLineSpace, psExtraArg );
     }
     else //if not exist TIL overviews, try to use band source overviews
     {
         return poVRTBand->IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                  pData, nBufXSize, nBufYSize, eBufType,
-                                 nPixelSpace, nLineSpace );
+                                 nPixelSpace, nLineSpace, psExtraArg );
     }
 }
 

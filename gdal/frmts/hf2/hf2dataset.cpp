@@ -924,7 +924,7 @@ GDALDataset* HF2Dataset::CreateCopy( const char * pszFilename,
                                                 i * nTileSize, MAX(0, nYSize - (j + 1) * nTileSize),
                                                 nReqXSize, nReqYSize,
                                                 pTileBuffer, nReqXSize, nReqYSize,
-                                                eReqDT, 0, 0);
+                                                eReqDT, 0, 0, NULL);
             if (eErr != CE_None)
                 break;
 

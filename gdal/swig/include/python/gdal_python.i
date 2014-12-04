@@ -178,20 +178,24 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
 %extend GDALRasterBandShadow {
 %apply ( void **outPythonObject ) { (void **buf ) };
 %apply ( int *optional_int ) {(int*)};
+%apply ( GIntBig *optional_GIntBig ) {(GIntBig*)};
 %feature( "kwargs" ) ReadRaster1;
   CPLErr ReadRaster1( int xoff, int yoff, int xsize, int ysize,
                      void **buf,
                      int *buf_xsize = 0,
                      int *buf_ysize = 0,
                      int *buf_type = 0,
-                     int *buf_pixel_space = 0,
-                     int *buf_line_space = 0) {
+                     GIntBig *buf_pixel_space = 0,
+                     GIntBig *buf_line_space = 0,
+                     GDALRIOResampleAlg resample_alg = GRIORA_NearestNeighbour,
+                     GDALProgressFunc callback = NULL,
+                     void* callback_data=NULL) {
     int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
     int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
     GDALDataType ntype  = (buf_type==0) ? GDALGetRasterDataType(self)
                                         : (GDALDataType)*buf_type;
-    int pixel_space = (buf_pixel_space == 0) ? 0 : *buf_pixel_space;
-    int line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
+    GIntBig pixel_space = (buf_pixel_space == 0) ? 0 : *buf_pixel_space;
+    GIntBig line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
 
     GIntBig buf_size = ComputeBandRasterIOSize( nxsize, nysize, GDALGetDataTypeSize( ntype ) / 8,
                                             pixel_space, line_space, FALSE ); 
@@ -227,9 +231,15 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
         memset(data, 0, buf_size);
     }
 
-    CPLErr eErr = GDALRasterIO( self, GF_Read, xoff, yoff, xsize, ysize, 
+    GDALRasterIOExtraArg sExtraArg;
+    INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+    sExtraArg.eResampleAlg = resample_alg;
+    sExtraArg.pfnProgress = callback;
+    sExtraArg.pProgressData = callback_data;
+
+    CPLErr eErr = GDALRasterIOEx( self, GF_Read, xoff, yoff, xsize, ysize, 
                          (void *) data, nxsize, nysize, ntype, 
-                         pixel_space, line_space ); 
+                         pixel_space, line_space, &sExtraArg ); 
     if (eErr == CE_Failure)
     {
         Py_DECREF((PyObject*)*buf);
@@ -239,6 +249,7 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
   }
 %clear (void **buf );
 %clear (int*);
+%clear (GIntBig*);
 
 %apply ( void **outPythonObject ) { (void **buf ) };
 %feature( "kwargs" ) ReadBlock;
@@ -284,7 +295,10 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
 
   def ReadRaster(self, xoff = 0, yoff = 0, xsize = None, ysize = None,
                    buf_xsize = None, buf_ysize = None, buf_type = None,
-                   buf_pixel_space = None, buf_line_space = None ):
+                   buf_pixel_space = None, buf_line_space = None,
+                   resample_alg = GRIORA_NearestNeighbour,
+                   callback = None,
+                   callback_data = None):
 
       if xsize is None:
           xsize = self.XSize
@@ -293,20 +307,33 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
 
       return _gdal.Band_ReadRaster1(self, xoff, yoff, xsize, ysize,
                                     buf_xsize, buf_ysize, buf_type,
-                                    buf_pixel_space, buf_line_space)
+                                    buf_pixel_space, buf_line_space,
+                                    resample_alg, callback, callback_data)
 
   def ReadAsArray(self, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
-                  buf_xsize=None, buf_ysize=None, buf_obj=None):
+                  buf_xsize=None, buf_ysize=None, buf_obj=None,
+                  resample_alg = GRIORA_NearestNeighbour,
+                  callback = None,
+                  callback_data = None):
       import gdalnumeric
 
       return gdalnumeric.BandReadAsArray( self, xoff, yoff,
                                           win_xsize, win_ysize,
-                                          buf_xsize, buf_ysize, buf_obj )
+                                          buf_xsize, buf_ysize, buf_obj,
+                                          resample_alg = resample_alg,
+                                          callback = callback,
+                                          callback_data = callback_data)
     
-  def WriteArray(self, array, xoff=0, yoff=0):
+  def WriteArray(self, array, xoff=0, yoff=0,
+                 resample_alg = GRIORA_NearestNeighbour,
+                 callback = None,
+                 callback_data = None):
       import gdalnumeric
 
-      return gdalnumeric.BandWriteArray( self, array, xoff, yoff )
+      return gdalnumeric.BandWriteArray( self, array, xoff, yoff,
+                                         resample_alg = resample_alg,
+                                         callback = callback,
+                                         callback_data = callback_data )
 
   def GetVirtualMemArray(self, eAccess = gdalconst.GF_Read, xoff=0, yoff=0,
                          xsize=None, ysize=None, bufxsize=None, bufysize=None,
@@ -383,12 +410,16 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
 %apply (int nList, int *pList ) { (int band_list, int *pband_list ) };
 %apply ( void **outPythonObject ) { (void **buf ) };
 %apply ( int *optional_int ) {(int*)};
+%apply ( GIntBig *optional_GIntBig ) {(GIntBig*)};
 CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
                     void **buf,
                     int *buf_xsize = 0, int *buf_ysize = 0,
                     GDALDataType *buf_type = 0,
                     int band_list = 0, int *pband_list = 0,
-                    int* buf_pixel_space = 0, int* buf_line_space = 0, int* buf_band_space = 0 )
+                    GIntBig* buf_pixel_space = 0, GIntBig* buf_line_space = 0, GIntBig* buf_band_space = 0,
+                    GDALRIOResampleAlg resample_alg = GRIORA_NearestNeighbour,
+                    GDALProgressFunc callback = NULL,
+                    void* callback_data=NULL )
 {
     int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
     int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
@@ -405,9 +436,9 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
       ntype = GDALGetRasterDataType( GDALGetRasterBand( self, lastband ) );
     }
 
-    int pixel_space = (buf_pixel_space == 0) ? 0 : *buf_pixel_space;
-    int line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
-    int band_space = (buf_band_space == 0) ? 0 : *buf_band_space;
+    GIntBig pixel_space = (buf_pixel_space == 0) ? 0 : *buf_pixel_space;
+    GIntBig line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
+    GIntBig band_space = (buf_band_space == 0) ? 0 : *buf_band_space;
 
     int ntypesize = GDALGetDataTypeSize( ntype ) / 8;
     GIntBig buf_size = ComputeDatasetRasterIOSize (nxsize, nysize, ntypesize,
@@ -453,9 +484,15 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
             memset(data, 0, buf_size);
     }
 
-    CPLErr eErr = GDALDatasetRasterIO(self, GF_Read, xoff, yoff, xsize, ysize,
+    GDALRasterIOExtraArg sExtraArg;
+    INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+    sExtraArg.eResampleAlg = resample_alg;
+    sExtraArg.pfnProgress = callback;
+    sExtraArg.pProgressData = callback_data;
+    CPLErr eErr = GDALDatasetRasterIOEx(self, GF_Read, xoff, yoff, xsize, ysize,
                                (void*) data, nxsize, nysize, ntype,
-                               band_list, pband_list, pixel_space, line_space, band_space );
+                               band_list, pband_list, pixel_space, line_space, band_space,
+                               &sExtraArg );
     if (eErr == CE_Failure)
     {
         Py_DECREF((PyObject*)*buf);
@@ -468,11 +505,20 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
 %clear (int band_list, int *pband_list );
 %clear (void **buf );
 %clear (int*);
+%clear (GIntBig*);
 
 %pythoncode {
-    def ReadAsArray(self, xoff=0, yoff=0, xsize=None, ysize=None, buf_obj=None ):
+
+    def ReadAsArray(self, xoff=0, yoff=0, xsize=None, ysize=None, buf_obj=None,
+                    resample_alg = GRIORA_NearestNeighbour,
+                    callback = None,
+                    callback_data = None):
         import gdalnumeric
-        return gdalnumeric.DatasetReadAsArray( self, xoff, yoff, xsize, ysize, buf_obj )
+        return gdalnumeric.DatasetReadAsArray( self, xoff, yoff, xsize, ysize, buf_obj,
+                                               resample_alg = resample_alg,
+                                               callback = callback,
+                                               callback_data = callback_data )
+
     def WriteRaster(self, xoff, yoff, xsize, ysize,
                     buf_string,
                     buf_xsize = None, buf_ysize = None, buf_type = None,
@@ -496,7 +542,10 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
     def ReadRaster(self, xoff = 0, yoff = 0, xsize = None, ysize = None,
                    buf_xsize = None, buf_ysize = None, buf_type = None,
                    band_list = None,
-                   buf_pixel_space = None, buf_line_space = None, buf_band_space = None ):
+                   buf_pixel_space = None, buf_line_space = None, buf_band_space = None,
+                   resample_alg = GRIORA_NearestNeighbour,
+                   callback = None,
+                   callback_data = None):
 
         if xsize is None:
             xsize = self.RasterXSize
@@ -514,7 +563,8 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
 
         return _gdal.Dataset_ReadRaster1(self, xoff, yoff, xsize, ysize,
                                             buf_xsize, buf_ysize, buf_type,
-                                            band_list, buf_pixel_space, buf_line_space, buf_band_space )
+                                            band_list, buf_pixel_space, buf_line_space, buf_band_space,
+                                          resample_alg, callback, callback_data )
 
     def GetVirtualMemArray(self, eAccess = gdalconst.GF_Read, xoff=0, yoff=0,
                            xsize=None, ysize=None, bufxsize=None, bufysize=None,

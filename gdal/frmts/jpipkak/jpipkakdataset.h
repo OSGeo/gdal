@@ -189,7 +189,9 @@ public:
                               void * pData, int nBufXSize, int nBufYSize,
                               GDALDataType eBufType, 
                               int nBandCount, int *panBandMap,
-                              int nPixelSpace,int nLineSpace,int nBandSpace);
+                              GSpacing nPixelSpace, GSpacing nLineSpace,
+                              GSpacing nBandSpace,
+                              GDALRasterIOExtraArg* psExtraArg);
 
     static GDALDataset *Open(GDALOpenInfo *);
     static const GByte JPIP_EOR_IMAGE_DONE = 1;
@@ -238,7 +240,8 @@ public:
     virtual CPLErr IReadBlock( int, int, void * );
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              int, int );
+                              GSpacing nPixelSpace, GSpacing nLineSpace,
+                              GDALRasterIOExtraArg* psExtraArg );
 
     virtual int    GetOverviewCount();
     virtual GDALRasterBand *GetOverview( int );

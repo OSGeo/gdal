@@ -458,7 +458,7 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
                                 nReqXSize * nOvrFactor, nReqYSize * nOvrFactor,
                                 pabyPrevOvrMEMDSBuffer, nPrevOvrReqXSize, nPrevOvrReqYSize,
                                 eDataType, nBands, NULL,
-                                0, 0, 0);
+                                0, 0, 0, NULL);
 
                 if (eErr != CE_None)
                 {
@@ -497,7 +497,7 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
                                 nReqXSize * nOvrFactor, nReqYSize * nOvrFactor,
                                 pabyMEMDSBuffer, nReqXSize, nReqYSize,
                                 eDataType, nBands, NULL,
-                                0, 0, 0);
+                                0, 0, 0, NULL);
                 if (eErr != CE_None)
                 {
                     break;

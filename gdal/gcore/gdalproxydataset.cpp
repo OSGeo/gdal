@@ -60,11 +60,12 @@ D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, IRasterIO,
                         void * pData, int nBufXSize, int nBufYSize,
                         GDALDataType eBufType, 
                         int nBandCount, int *panBandMap,
-                        int nPixelSpace, int nLineSpace, int nBandSpace),
+                        GSpacing nPixelSpace, GSpacing nLineSpace, GSpacing nBandSpace,
+                        GDALRasterIOExtraArg* psExtraArg),
                         ( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
                         pData, nBufXSize, nBufYSize,
                         eBufType, nBandCount, panBandMap,
-                        nPixelSpace, nLineSpace, nBandSpace ))
+                        nPixelSpace, nLineSpace, nBandSpace, psExtraArg ))
 
 
 D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, IBuildOverviews,
@@ -184,11 +185,12 @@ RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, IRasterIO,
                                 int nXOff, int nYOff, int nXSize, int nYSize,
                                 void * pData, int nBufXSize, int nBufYSize,
                                 GDALDataType eBufType,
-                                int nPixelSpace,
-                                int nLineSpace ), 
+                                GSpacing nPixelSpace,
+                                GSpacing nLineSpace,
+                                GDALRasterIOExtraArg* psExtraArg ), 
                         (eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                 pData, nBufXSize, nBufYSize, eBufType,
-                                nPixelSpace, nLineSpace ) )
+                                nPixelSpace, nLineSpace, psExtraArg ) )
 
 RB_PROXY_METHOD_WITH_RET(char**, NULL, GetMetadataDomainList, (), ())
 RB_PROXY_METHOD_WITH_RET(char**, NULL, GetMetadata, (const char * pszDomain), (pszDomain))

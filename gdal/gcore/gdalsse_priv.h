@@ -169,6 +169,12 @@ class XMMReg2Double
         return ret;
     }
 
+    inline const XMMReg2Double& operator*= (const XMMReg2Double& other)
+    {
+        xmm = _mm_mul_pd(xmm, other.xmm);
+        return *this;
+    }
+
     inline void AddLowAndHigh()
     {
         __m128d xmm2;
@@ -331,6 +337,13 @@ class XMMReg2Double
         return ret;
     }
 
+    inline const XMMReg2Double& operator*= (const XMMReg2Double& other)
+    {
+        low *= other.low;
+        high *= other.high;
+        return *this;
+    }
+
     inline void AddLowAndHigh()
     {
         double add = low + high;
@@ -441,6 +454,13 @@ class XMMReg4Double
         ret.low = low * other.low;
         ret.high = high * other.high;
         return ret;
+    }
+
+    inline const XMMReg4Double& operator*= (const XMMReg4Double& other)
+    {
+        low *= other.low;
+        high *= other.high;
+        return *this;
     }
 
     inline void AddLowAndHigh()

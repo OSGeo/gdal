@@ -3416,6 +3416,14 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "GA_Update",SWIG_From_int((int)(GA_Update)));
   SWIG_Python_SetConstant(d, "GF_Read",SWIG_From_int((int)(GF_Read)));
   SWIG_Python_SetConstant(d, "GF_Write",SWIG_From_int((int)(GF_Write)));
+  SWIG_Python_SetConstant(d, "GRIORA_NearestNeighbour",SWIG_From_int((int)(GRIORA_NearestNeighbour)));
+  SWIG_Python_SetConstant(d, "GRIORA_Bilinear",SWIG_From_int((int)(GRIORA_Bilinear)));
+  SWIG_Python_SetConstant(d, "GRIORA_Cubic",SWIG_From_int((int)(GRIORA_Cubic)));
+  SWIG_Python_SetConstant(d, "GRIORA_CubicSpline",SWIG_From_int((int)(GRIORA_CubicSpline)));
+  SWIG_Python_SetConstant(d, "GRIORA_Lanczos",SWIG_From_int((int)(GRIORA_Lanczos)));
+  SWIG_Python_SetConstant(d, "GRIORA_Average",SWIG_From_int((int)(GRIORA_Average)));
+  SWIG_Python_SetConstant(d, "GRIORA_Mode",SWIG_From_int((int)(GRIORA_Mode)));
+  SWIG_Python_SetConstant(d, "GRIORA_Gauss",SWIG_From_int((int)(GRIORA_Gauss)));
   SWIG_Python_SetConstant(d, "GCI_Undefined",SWIG_From_int((int)(GCI_Undefined)));
   SWIG_Python_SetConstant(d, "GCI_GrayIndex",SWIG_From_int((int)(GCI_GrayIndex)));
   SWIG_Python_SetConstant(d, "GCI_PaletteIndex",SWIG_From_int((int)(GCI_PaletteIndex)));

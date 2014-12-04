@@ -303,7 +303,8 @@ GDALDefaultAsyncReader::GetNextUpdatedRegion(CPL_UNUSED double dfTimeout,
     eErr = poDS->RasterIO( GF_Read, nXOff, nYOff, nXSize, nYSize,
                            pBuf, nBufXSize, nBufYSize, eBufType,
                            nBandCount, panBandMap,
-                           nPixelSpace, nLineSpace, nBandSpace );
+                           nPixelSpace, nLineSpace, nBandSpace,
+                           NULL );
 
     *pnBufXOff = 0;
     *pnBufYOff = 0;
