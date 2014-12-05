@@ -71,6 +71,14 @@ GDALColorTable* GDALGeoPackageRasterBand::GetColorTable()
         if( !poGDS->m_bTriedEstablishingCT )
         {
             poGDS->m_bTriedEstablishingCT = TRUE;
+            if( poGDS->m_poParentDS != NULL )
+            {
+                poGDS->m_poCT = poGDS->m_poParentDS->GetRasterBand(1)->GetColorTable();
+                if( poGDS->m_poCT )
+                    poGDS->m_poCT = poGDS->m_poCT->Clone();
+                return poGDS->m_poCT;
+            }
+
             char* pszSQL = sqlite3_mprintf("SELECT tile_data FROM '%q' "
                 "WHERE zoom_level = %d LIMIT 1",
                 poGDS->m_osRasterTable.c_str(), poGDS->m_nZoomLevel);
@@ -179,6 +187,34 @@ CPLErr GDALGeoPackageRasterBand::SetColorInterpretation( GDALColorInterp eInterp
 }
 
 /************************************************************************/
+/*                        GPKGFindBestEntry()                           */
+/************************************************************************/
+
+static int GPKGFindBestEntry(GDALColorTable* poCT,
+                             GByte c1, GByte c2, GByte c3, GByte c4,
+                             int nTileBandCount)
+{
+    int nEntries = MIN(256, poCT->GetColorEntryCount());
+    int iBestIdx = 0;
+    int nBestDistance = 4 * 256 * 256;
+    for(int i=0;i<nEntries;i++)
+    {
+        const GDALColorEntry* psEntry = poCT->GetColorEntry(i);
+        int nDistance = (psEntry->c1 - c1) * (psEntry->c1 - c1) +
+                        (psEntry->c2 - c2) * (psEntry->c2 - c2) +
+                        (psEntry->c3 - c3) * (psEntry->c3 - c3);
+        if( nTileBandCount == 4 )
+            nDistance += (psEntry->c4 - c4) * (psEntry->c4 - c4);
+        if( nDistance < nBestDistance )
+        {
+            iBestIdx = i;
+            nBestDistance = nDistance;
+        }
+    }
+    return iBestIdx;
+}
+
+/************************************************************************/
 /*                           ReadTile()                                 */
 /************************************************************************/
 
@@ -228,13 +264,58 @@ CPLErr GDALGeoPackageDataset::ReadTile(const CPLString& osMemFileName,
     }
 
     GDALColorTable* poCT = NULL;
-    if( nTileBandCount == 1 )
+    if( nBands == 1 || nTileBandCount == 1 )
     {
         poCT = poDSTile->GetRasterBand(1)->GetColorTable();
         GetRasterBand(1)->GetColorTable();
     }
 
-    if( (nBands == 1 && nTileBandCount != 1) ||
+    /* Map RGB(A) tile to single-band color indexed */
+    if( nBands == 1 && m_poCT != NULL && nTileBandCount != 1 )
+    {
+        std::map< GUInt32, int > oMapEntryToIndex;
+        int nEntries = MIN(256, m_poCT->GetColorEntryCount());
+        for(int i=0;i<nEntries;i++)
+        {
+            const GDALColorEntry* psEntry = m_poCT->GetColorEntry(i);
+            GByte c1 = (GByte)psEntry->c1;
+            GByte c2 = (GByte)psEntry->c2;
+            GByte c3 = (GByte)psEntry->c3;
+            GUInt32 nVal = c1 + (c2 << 8) + (c3 << 16);
+            if( nTileBandCount == 4 ) nVal += ((GByte)psEntry->c4 << 24);
+            oMapEntryToIndex[nVal] = i;
+        }
+        int iBestEntryFor0 = GPKGFindBestEntry(m_poCT, 0, 0, 0, 0, nTileBandCount);
+        for(int i=0;i<nBlockXSize*nBlockYSize;i++)
+        {
+            GByte c1 = pabyTileData[i];
+            GByte c2 = pabyTileData[i + nBlockXSize * nBlockYSize];
+            GByte c3 = pabyTileData[i + 2 * nBlockXSize * nBlockYSize];
+            GByte c4 = pabyTileData[i + 3 * nBlockXSize * nBlockYSize];
+            GUInt32 nVal = c1 + (c2 << 8) + (c3 << 16);
+            if( nTileBandCount == 4 ) nVal += (c4 << 24);
+            if( nVal == 0 ) /* In most cases we will reach that point at partial tiles */
+                pabyTileData[i] = iBestEntryFor0;
+            else
+            {
+                std::map< GUInt32, int >::iterator oMapEntryToIndexIter = oMapEntryToIndex.find(nVal);
+                if( oMapEntryToIndexIter == oMapEntryToIndex.end() )
+                    /* Could happen with JPEG tiles */
+                    pabyTileData[i] = GPKGFindBestEntry(m_poCT, c1, c2, c3, c4, nTileBandCount);
+                else
+                    pabyTileData[i] = oMapEntryToIndexIter->second;
+            }
+        }
+        GDALClose( poDSTile );
+        return CE_None;
+    }
+    
+    if( nBands == 1 && nTileBandCount == 1 && poCT != NULL && m_poCT != NULL &&
+             !poCT->IsSame(m_poCT) )
+    {
+        CPLError(CE_Warning, CPLE_NotSupported, "Different color tables. Unhandled for now");
+    }
+    else if( (nBands == 1 && nTileBandCount != 1) ||
         (nBands == 1 && nTileBandCount == 1 && m_poCT != NULL && poCT == NULL) ||
         (nBands == 1 && nTileBandCount == 1 && m_poCT == NULL && poCT != NULL) )
     {
@@ -244,6 +325,7 @@ CPLErr GDALGeoPackageDataset::ReadTile(const CPLString& osMemFileName,
 
     if( nTileBandCount == 1 && !(nBands == 1 && m_poCT != NULL) )
     {
+        /* Expand color indexed to RGB(A) */
         if( poCT != NULL )
         {
             int i;
@@ -285,6 +367,7 @@ CPLErr GDALGeoPackageDataset::ReadTile(const CPLString& osMemFileName,
     }
     else if( nTileBandCount == 3 )
     {
+        /* Create fully opaque alpha */
         memset(pabyTileData + 3 * nBlockXSize * nBlockYSize,
                 255, nBlockXSize * nBlockYSize);
     }
@@ -360,8 +443,9 @@ GByte* GDALGeoPackageDataset::ReadTile(int nRow, int nCol, GByte* pabyData,
     //CPLDebug("GPKG", "For block (blocky=%d, blockx=%d) request tile (row=%d, col=%d)",
     //         nBlockYOff, nBlockXOff, nRow, nCol);
     char* pszSQL = sqlite3_mprintf("SELECT tile_data FROM '%q' "
-        "WHERE zoom_level = %d AND tile_row = %d AND tile_column = %d",
-        m_osRasterTable.c_str(), m_nZoomLevel, nRow, nCol);
+        "WHERE zoom_level = %d AND tile_row = %d AND tile_column = %d%s",
+        m_osRasterTable.c_str(), m_nZoomLevel, nRow, nCol,
+        m_osWHERE.size() ? CPLSPrintf(" AND (%s)", m_osWHERE.c_str()): "");
 #ifdef DEBUG_VERBOSE
     CPLDebug("GPKG", "%s", pszSQL);
 #endif
@@ -714,6 +798,10 @@ CPLErr GDALGeoPackageDataset::WriteTile()
     int bTileDriverSupports4Bands = FALSE;
     int bTileDriverSupports1Band = TRUE;
     int bTileDriverSupportsCT = FALSE;
+    
+    if( nBands == 1 )
+        GetRasterBand(1)->GetColorTable();
+    
     if( m_eTF == GPKG_TF_PNG_JPEG )
     {
         if( bPartialTile || (nBands == 4 && !bAllOpaque) || m_poCT != NULL )

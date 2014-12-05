@@ -93,11 +93,13 @@ class GDALGeoPackageDataset : public OGRSQLiteBaseDataSource
     GDALColorTable*     m_poCT;
     int                 m_bTriedEstablishingCT;
 
-    int                 m_bIsMain;
+    GDALGeoPackageDataset* m_poParentDS;
     int                 m_nOverviewCount;
     GDALGeoPackageDataset** m_papoOverviewDS;
+    CPLString           m_osWHERE;
     
-        int             InitRaster ( const char* pszTableName,
+        int             InitRaster ( GDALGeoPackageDataset* poParentDS,
+                                     const char* pszTableName,
                                         double dfMinX,
                                         double dfMinY,
                                         double dfMaxX,
@@ -109,6 +111,21 @@ class GDALGeoPackageDataset : public OGRSQLiteBaseDataSource
                                         char** papszOpenOptions,
                                         const SQLResult& oResult,
                                         int nIdxInResult );
+        int             InitRaster ( GDALGeoPackageDataset* poParentDS,
+                                     const char* pszTableName,
+                                        int nZoomLevel,
+                                        int nBandCount,
+                                        double dfTMSMinX,
+                                        double dfTMSMaxY,
+                                        double dfPixelXSize,
+                                        double dfPixelYSize,
+                                        int nTileWidth,
+                                        int nTileHeight,
+                                        double dfGDALMinX,
+                                        double dfGDALMinY,
+                                        double dfGDALMaxX,
+                                        double dfGDALMaxY );
+
         int     OpenRaster( const char* pszTableName,
                             const char* pszIdentifier,
                             const char* pszDescription,
@@ -132,6 +149,8 @@ class GDALGeoPackageDataset : public OGRSQLiteBaseDataSource
                                          int* pbIsLossyFormat = NULL);
         CPLErr                  WriteTile();
 
+        int                     RegisterWebPExtension();
+
     public:
                             GDALGeoPackageDataset();
                             ~GDALGeoPackageDataset();
@@ -144,6 +163,10 @@ class GDALGeoPackageDataset : public OGRSQLiteBaseDataSource
 
         virtual CPLErr      GetGeoTransform( double* padfGeoTransform );
         virtual CPLErr      SetGeoTransform( double* padfGeoTransform );
+
+        virtual void        FlushCache();
+        virtual CPLErr      IBuildOverviews( const char *, int, int *,
+                                             int, int *, GDALProgressFunc, void * );
 
         virtual int         GetLayerCount() { return m_nLayers; }
         int                 Open( GDALOpenInfo* poOpenInfo );
