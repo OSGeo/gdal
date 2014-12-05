@@ -551,6 +551,7 @@ public:
                 ~GDALColorTable();
 
     GDALColorTable *Clone() const;
+    int             IsSame(const GDALColorTable* poOtherCT) const;
 
     GDALPaletteInterp GetPaletteInterpretation() const;
 
