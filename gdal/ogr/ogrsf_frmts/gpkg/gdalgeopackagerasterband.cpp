@@ -30,6 +30,8 @@
 #include "ogr_geopackage.h"
 #include "memdataset.h"
 
+//#define DEBUG_VERBOSE
+
 /************************************************************************/
 /*                      GDALGeoPackageRasterBand()                      */
 /************************************************************************/
@@ -82,7 +84,7 @@ GDALColorTable* GDALGeoPackageRasterBand::GetColorTable()
                     const int nBytes = sqlite3_column_bytes( hStmt, 0 );
                     GByte* pabyRawData = (GByte*)sqlite3_column_blob( hStmt, 0 );
                     CPLString osMemFileName;
-                    osMemFileName.Printf("/vsimem/%p", this);
+                    osMemFileName.Printf("/vsimem/gpkg_read_tile_%p", this);
                     VSILFILE * fp = VSIFileFromMemBuffer( osMemFileName.c_str(), pabyRawData,
                                                             nBytes, FALSE);
                     VSIFCloseL(fp);
@@ -360,6 +362,9 @@ GByte* GDALGeoPackageDataset::ReadTile(int nRow, int nCol, GByte* pabyData,
     char* pszSQL = sqlite3_mprintf("SELECT tile_data FROM '%q' "
         "WHERE zoom_level = %d AND tile_row = %d AND tile_column = %d",
         m_osRasterTable.c_str(), m_nZoomLevel, nRow, nCol);
+#ifdef DEBUG_VERBOSE
+    CPLDebug("GPKG", "%s", pszSQL);
+#endif
     sqlite3_stmt* hStmt = NULL;
     rc = sqlite3_prepare(GetDB(), pszSQL, -1, &hStmt, NULL);
     if ( rc != SQLITE_OK )
@@ -376,7 +381,7 @@ GByte* GDALGeoPackageDataset::ReadTile(int nRow, int nCol, GByte* pabyData,
         const int nBytes = sqlite3_column_bytes( hStmt, 0 );
         GByte* pabyRawData = (GByte*)sqlite3_column_blob( hStmt, 0 );
         CPLString osMemFileName;
-        osMemFileName.Printf("/vsimem/%p", this);
+        osMemFileName.Printf("/vsimem/gpkg_read_tile_%p", this);
         VSILFILE * fp = VSIFileFromMemBuffer( osMemFileName.c_str(), pabyRawData,
                                                 nBytes, FALSE);
         VSIFCloseL(fp);
@@ -675,25 +680,19 @@ CPLErr GDALGeoPackageDataset::WriteTile()
                 char* pszSQL = sqlite3_mprintf("DELETE FROM '%q' "
                     "WHERE zoom_level = %d AND tile_row = %d AND tile_column = %d",
                     m_osRasterTable.c_str(), m_nZoomLevel, nRow, nCol);
-                sqlite3_stmt* hStmt = NULL;
-                int rc = sqlite3_prepare(GetDB(), pszSQL, -1, &hStmt, NULL);
-                if ( rc != SQLITE_OK )
-                {
-                    CPLError( CE_Failure, CPLE_AppDefined, "failed to prepare SQL: %s", pszSQL);
-                }
+#ifdef DEBUG_VERBOSE
+                CPLDebug("GPKG", "%s", pszSQL);
+#endif
+                char* pszErrMsg = NULL;
+                int rc = sqlite3_exec(GetDB(), pszSQL, NULL, NULL, &pszErrMsg);
+                if( rc == SQLITE_OK )
+                    eErr = CE_None;
                 else
-                {
-                    rc = sqlite3_step( hStmt );
-                    if( rc == SQLITE_DONE )
-                        eErr = CE_None;
-                    else
-                        CPLError(CE_Failure, CPLE_AppDefined,
-                                "Failure when deleting tile (row=%d,col=%d) at zoom_level=%d : %s",
-                                nRow, nCol, m_nZoomLevel, sqlite3_errmsg(GetDB()));
-
-                }
-                sqlite3_finalize(hStmt);
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                            "Failure when deleting tile (row=%d,col=%d) at zoom_level=%d : %s",
+                            nRow, nCol, m_nZoomLevel, pszErrMsg ? pszErrMsg : "");
                 sqlite3_free(pszSQL);
+                sqlite3_free(pszErrMsg);
                 return CE_None;
             }
             bAllOpaque = (byFirstAlphaVal == 255);
@@ -710,7 +709,7 @@ CPLErr GDALGeoPackageDataset::WriteTile()
     }
 
     CPLString osMemFileName;
-    osMemFileName.Printf("/vsimem/%p", this);
+    osMemFileName.Printf("/vsimem/gpkg_write_tile_%p", this);
     const char* pszDriverName = "PNG";
     int bTileDriverSupports4Bands = FALSE;
     int bTileDriverSupports1Band = TRUE;
@@ -823,6 +822,22 @@ CPLErr GDALGeoPackageDataset::WriteTile()
                     m_pabyCachedTiles[i + 2 * nBlockXSize * nBlockYSize] = abyCT[4*byVal+2];
                     m_pabyCachedTiles[i + 3 * nBlockXSize * nBlockYSize] = abyCT[4*byVal+3];
                 }
+                if( iXCount < nBlockXSize )
+                {
+                    i = iY * nBlockXSize + iXCount;
+                    memset(m_pabyCachedTiles + 0 * nBlockXSize * nBlockYSize + i, 0, nBlockXSize - iXCount);
+                    memset(m_pabyCachedTiles + 1 * nBlockXSize * nBlockYSize + i, 0, nBlockXSize - iXCount);
+                    memset(m_pabyCachedTiles + 2 * nBlockXSize * nBlockYSize + i, 0, nBlockXSize - iXCount);
+                    memset(m_pabyCachedTiles + 3 * nBlockXSize * nBlockYSize + i, 0, nBlockXSize - iXCount);
+                }
+            }
+            if( iYCount < nBlockYSize )
+            {
+                i = iYCount * nBlockXSize;
+                memset(m_pabyCachedTiles + 0 * nBlockXSize * nBlockYSize + i, 0, nBlockXSize * (nBlockYSize - iYCount));
+                memset(m_pabyCachedTiles + 1 * nBlockXSize * nBlockYSize + i, 0, nBlockXSize * (nBlockYSize - iYCount));
+                memset(m_pabyCachedTiles + 2 * nBlockXSize * nBlockYSize + i, 0, nBlockXSize * (nBlockYSize - iYCount));
+                memset(m_pabyCachedTiles + 3 * nBlockXSize * nBlockYSize + i, 0, nBlockXSize * (nBlockYSize - iYCount));
             }
         }
 
@@ -838,6 +853,8 @@ CPLErr GDALGeoPackageDataset::WriteTile()
                 papszDriverOptions, "ZLEVEL", CPLSPrintf("%d", m_nZLevel));
         }
 
+        VSIStatBufL sStat;
+        CPLAssert(VSIStatL(osMemFileName, &sStat) != 0);
         GDALDataset* poOutDS = poDriver->CreateCopy(osMemFileName, poMEMDS,
                                                     FALSE, papszDriverOptions, NULL, NULL);
         CSLDestroy( papszDriverOptions );
@@ -850,6 +867,9 @@ CPLErr GDALGeoPackageDataset::WriteTile()
             char* pszSQL = sqlite3_mprintf("INSERT OR REPLACE INTO '%q' "
                 "(zoom_level, tile_row, tile_column, tile_data) VALUES (%d, %d, %d, ?)",
                 m_osRasterTable.c_str(), m_nZoomLevel, nRow, nCol);
+#ifdef DEBUG_VERBOSE
+            CPLDebug("GPKG", "%s", pszSQL);
+#endif
             sqlite3_stmt* hStmt = NULL;
             int rc = sqlite3_prepare(GetDB(), pszSQL, -1, &hStmt, NULL);
             if ( rc != SQLITE_OK )
@@ -864,16 +884,17 @@ CPLErr GDALGeoPackageDataset::WriteTile()
                 if( rc == SQLITE_DONE )
                     eErr = CE_None;
                 else
+                {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Failure when inserting tile (row=%d,col=%d) at zoom_level=%d : %s",
                              nRow, nCol, m_nZoomLevel, sqlite3_errmsg(GetDB()));
-
+                }
             }
             sqlite3_finalize(hStmt);
-            VSIUnlink(osMemFileName);
             sqlite3_free(pszSQL);
         }
-        else
+
+        VSIUnlink(osMemFileName);
         delete poMEMDS;
     }
     else
@@ -994,4 +1015,3 @@ GDALRasterBand* GDALGeoPackageRasterBand::GetOverview(int nIdx)
         return NULL;
     return poGDS->m_papoOverviewDS[nIdx]->GetRasterBand(nBand);
 }
-       

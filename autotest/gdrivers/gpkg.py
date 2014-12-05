@@ -915,7 +915,7 @@ def gpkg_13():
     if ds.RasterXSize != 512 or ds.RasterYSize != 256:
         gdaltest.post_reason('fail')
         return 'fail'
-    expected_cs = [62358,631,60319,64301]
+    expected_cs = [62358, 45823, 12238, 64301]
     got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
