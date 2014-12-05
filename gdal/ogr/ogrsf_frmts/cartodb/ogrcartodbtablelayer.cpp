@@ -459,7 +459,17 @@ OGRErr OGRCARTODBTableLayer::ICreateFeature( OGRFeature *poFeature )
             int nSRID = poGeomFieldDefn->nSRID;
             if( nSRID == 0 )
                 nSRID = 4326;
-            char* pszEWKB = OGRGeometryToHexEWKB(poGeom, nSRID, FALSE);
+            char* pszEWKB;
+            if( wkbFlatten(poGeom->getGeometryType()) == wkbPolygon &&
+                wkbFlatten(GetGeomType()) == wkbMultiPolygon )
+            {
+                OGRMultiPolygon* poNewGeom = new OGRMultiPolygon();
+                poNewGeom->addGeometry(poGeom);
+                pszEWKB = OGRGeometryToHexEWKB(poNewGeom, nSRID, FALSE);
+                delete poNewGeom;
+            }
+            else
+                pszEWKB = OGRGeometryToHexEWKB(poGeom, nSRID, FALSE);
             osSQL += "'";
             osSQL += pszEWKB;
             osSQL += "'";
@@ -1047,6 +1057,10 @@ void OGRCARTODBTableLayer::SetDifferedCreation(OGRwkbGeometryType eGType,
     poFeatureDefn = new OGRFeatureDefn(osName);
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType(wkbNone);
+    if( eGType == wkbPolygon )
+        eGType = wkbMultiPolygon;
+    else if( eGType == wkbPolygon25D )
+        eGType = wkbMultiPolygon25D;
     if( eGType != wkbNone )
     {
         OGRCartoDBGeomFieldDefn *poFieldDefn =
