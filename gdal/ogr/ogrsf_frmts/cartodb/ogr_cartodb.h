@@ -254,7 +254,7 @@ class OGRCARTODBDriver : public OGRSFDriver
     virtual OGRDataSource*      CreateDataSource( const char * pszName,
                                                   char ** /* papszOptions */ );
 
-    virtual int                 TestCapability( const char * ) { return FALSE; }
+    virtual int                 TestCapability( const char * );
 };
 
 #endif /* ndef _OGR_CARTODB_H_INCLUDED */

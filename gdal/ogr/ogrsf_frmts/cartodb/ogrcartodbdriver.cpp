@@ -97,6 +97,19 @@ OGRDataSource *OGRCARTODBDriver::CreateDataSource( const char * pszName,
 }
 
 /************************************************************************/
+/*                           TestCapability()                           */
+/************************************************************************/
+
+int OGRCARTODBDriver::TestCapability( const char * pszCap )
+
+{
+    if( EQUAL(pszCap,ODrCCreateDataSource) )
+        return TRUE;
+    else
+        return FALSE;
+}
+
+/************************************************************************/
 /*                         RegisterOGRCARTODB()                         */
 /************************************************************************/
 
