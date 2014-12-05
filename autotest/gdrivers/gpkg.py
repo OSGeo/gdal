@@ -1178,6 +1178,99 @@ def gpkg_15():
 
     os.remove('tmp/tmp.gpkg')
 
+    # Test SetColorInterpretation()
+    out_ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg',1,1)
+    out_ds.SetGeoTransform([0,1,0,0,0,-1])
+    out_ds.SetProjection(srs.ExportToWkt())
+    ret = out_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_Undefined)
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ret = out_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_GrayIndex)
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ret = out_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_PaletteIndex)
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.PushErrorHandler()
+    ret = out_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_RedBand)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_ds = None
+
+    os.remove('tmp/tmp.gpkg')
+    
+    out_ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg',1,1,3)
+    out_ds.SetGeoTransform([0,1,0,0,0,-1])
+    out_ds.SetProjection(srs.ExportToWkt())
+    ret = out_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_RedBand)
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.PushErrorHandler()
+    ret = out_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_RedBand)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_ds = None
+
+    os.remove('tmp/tmp.gpkg')
+
+    return 'success'
+
+###############################################################################
+# Test block/tile caching
+
+def gpkg_16():
+
+    if gdaltest.gpkg_dr is None: 
+        return 'skip'
+    if gdaltest.jpeg_dr is None: 
+        return 'skip'
+    try:
+        os.remove('tmp/tmp.gpkg')
+    except:
+        pass
+
+    out_ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg',1,1,3, options = ['DRIVER=JPEG'])
+    out_ds.SetGeoTransform([0,1,0,0,0,-1])
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    out_ds.SetProjection(srs.ExportToWkt())
+    out_ds.GetRasterBand(1).Fill(255)
+    out_ds.GetRasterBand(1).FlushCache()
+    # Rewrite same tile after re-reading it
+    # Will cause a debug message to be emitted
+    out_ds.GetRasterBand(2).Fill(127)
+    out_ds.GetRasterBand(3).Checksum()
+    out_ds.GetRasterBand(2).FlushCache()
+    out_ds = None
+    
+    out_ds = gdal.Open('tmp/tmp.gpkg')
+    val1 = ord(out_ds.GetRasterBand(1).ReadRaster(0,0,1,1))
+    val2 = ord(out_ds.GetRasterBand(2).ReadRaster(0,0,1,1))
+    val3 = ord(out_ds.GetRasterBand(3).ReadRaster(0,0,1,1))
+    out_ds = None
+    
+    if abs(val1-255)>1:
+        gdaltest.post_reason('fail')
+        print(val1)
+        return 'fail'
+    if abs(val2-127)>1:
+        gdaltest.post_reason('fail')
+        print(val2)
+        return 'fail'
+    if abs(val3-0)>1:
+        gdaltest.post_reason('fail')
+        print(val3)
+        return 'fail'
+    os.remove('tmp/tmp.gpkg')
+
     return 'success'
 
 ###############################################################################
@@ -1215,9 +1308,10 @@ gdaltest_list = [
     gpkg_13,
     gpkg_14,
     gpkg_15,
+    gpkg_16,
     gpkg_cleanup,
 ]
-
+#gdaltest_list = [ gpkg_init, gpkg_16, gpkg_cleanup ]
 if __name__ == '__main__':
 
     gdaltest.setup_run( 'gpkg' )
