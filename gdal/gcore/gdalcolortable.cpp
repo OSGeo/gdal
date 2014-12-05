@@ -460,3 +460,22 @@ GDALCreateColorRamp( GDALColorTableH hTable,
     ((GDALColorTable *) hTable)->CreateColorRamp( nStartIndex, psStartColor, 
                                                   nEndIndex, psEndColor );
 }
+
+/************************************************************************/
+/*                           IsSame()                                   */
+/************************************************************************/
+
+/**
+ * \brief Returns if the current color table is the same as another one.
+ *
+ * @param poOtherCT other color table to be compared to.
+ * @return TRUE if both color tables are identical.
+ * @since GDAL 2.0
+ */
+
+int GDALColorTable::IsSame(const GDALColorTable* poOtherCT) const
+{
+    return aoEntries.size() == poOtherCT->aoEntries.size() &&
+           (aoEntries.size() == 0 ||
+            memcmp(&aoEntries[0], &poOtherCT->aoEntries[0], aoEntries.size() * sizeof(GDALColorEntry)) == 0);
+}
