@@ -41,7 +41,7 @@ static void Usage(const char* pszErrorMsg = NULL)
 
 {
     printf( "Usage: gdaladdo [-r {nearest,average,gauss,cubic,cubicspline,lanczos,average_mp,average_magphase,mode}]\n"
-            "                [-ro] [-clean] [-q] [--help-general] filename levels\n"
+            "                [-ro] [-clean] [-q] [-oo NAME=VALUE]* [--help-general] filename levels\n"
             "\n"
             "  -r : choice of resampling method (default: nearest)\n"
             "  -ro : open the dataset in read-only mode, in order to generate\n"
@@ -94,6 +94,7 @@ int main( int nArgc, char ** papszArgv )
     GDALProgressFunc pfnProgress = GDALTermProgress; 
     int             *panBandList = NULL;
     int              nBandCount = 0;
+    char           **papszOpenOptions = NULL;
 
     /* Check that we are running against at least GDAL 1.7 */
     /* Note to developers : if we use newer API, please change the requirement */
@@ -153,6 +154,12 @@ int main( int nArgc, char ** papszArgv )
                 CPLRealloc(panBandList, sizeof(int) * nBandCount);
             panBandList[nBandCount-1] = nBand;
         }
+        else if( EQUAL(papszArgv[iArg], "-oo") )
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            papszOpenOptions = CSLAddString( papszOpenOptions,
+                                             papszArgv[++iArg] );
+        }
         else if( papszArgv[iArg][0] == '-' )
             Usage(CPLSPrintf("Unknown option name '%s'", papszArgv[iArg]));
         else if( pszFilename == NULL )
@@ -183,12 +190,15 @@ int main( int nArgc, char ** papszArgv )
     else
     {
         CPLPushErrorHandler( CPLQuietErrorHandler );
-        hDataset = GDALOpen( pszFilename, GA_Update );
+        hDataset = GDALOpenEx( pszFilename, GDAL_OF_RASTER | GDAL_OF_UPDATE, NULL, papszOpenOptions, NULL );
         CPLPopErrorHandler();
     }
 
     if( hDataset == NULL )
-        hDataset = GDALOpen( pszFilename, GA_ReadOnly );
+        hDataset = GDALOpenEx( pszFilename, GDAL_OF_RASTER, NULL, papszOpenOptions, NULL );
+
+    CSLDestroy(papszOpenOptions);
+    papszOpenOptions = NULL;
 
     if( hDataset == NULL )
         exit( 2 );
