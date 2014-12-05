@@ -328,6 +328,9 @@ OGRErr OGRCARTODBTableLayer::ICreateFeature( OGRFeature *poFeature )
     }
 
     GetLayerDefn();
+    int bHasUserFieldMatchingFID = FALSE;
+    if( osFIDColName.size() )
+        bHasUserFieldMatchingFID = poFeatureDefn->GetFieldIndex(osFIDColName) >= 0;
 
     if (!poDS->IsReadWrite())
     {
@@ -339,7 +342,7 @@ OGRErr OGRCARTODBTableLayer::ICreateFeature( OGRFeature *poFeature )
     CPLString osSQL;
 
     int bHasJustGotNextFID = FALSE;
-    if( bInTransaction && nNextFID < 0 && osFIDColName.size() )
+    if( !bHasUserFieldMatchingFID && bInTransaction && nNextFID < 0 && osFIDColName.size() )
     {
         osSQL.Printf("SELECT nextval('%s') AS nextid",
                      OGRCARTODBEscapeLiteral(CPLSPrintf("%s_%s_seq", osName.c_str(), osFIDColName.c_str())).c_str());
@@ -394,7 +397,8 @@ OGRErr OGRCARTODBTableLayer::ICreateFeature( OGRFeature *poFeature )
         osSQL += OGRCARTODBEscapeIdentifier(poFeatureDefn->GetGeomFieldDefn(i)->GetNameRef());
     }
     
-    if( osFIDColName.size() && (poFeature->GetFID() != OGRNullFID || nNextFID >= 0) )
+    if( !bHasUserFieldMatchingFID &&
+        osFIDColName.size() && (poFeature->GetFID() != OGRNullFID || nNextFID >= 0) )
     {
         if( bMustComma )
             osSQL += ", ";
@@ -462,33 +466,36 @@ OGRErr OGRCARTODBTableLayer::ICreateFeature( OGRFeature *poFeature )
             CPLFree(pszEWKB);
         }
 
-        if( osFIDColName.size() && nNextFID >= 0 )
+        if( !bHasUserFieldMatchingFID )
         {
-            if( bMustComma )
-                osSQL += ", ";
-            else
-                bMustComma = TRUE;
-
-            if( bHasJustGotNextFID )
+            if( osFIDColName.size() && nNextFID >= 0 )
             {
-                osSQL += CPLSPrintf("%ld", nNextFID);
-            }
-            else
-            {
-                osSQL += CPLSPrintf("nextval('%s')",
-                        OGRCARTODBEscapeLiteral(CPLSPrintf("%s_%s_seq", osName.c_str(), osFIDColName.c_str())).c_str());
-            }
-            poFeature->SetFID(nNextFID);
-            nNextFID ++;
-        }
-        else if( osFIDColName.size() && poFeature->GetFID() != OGRNullFID )
-        {
-            if( bMustComma )
-                osSQL += ", ";
-            else
-                bMustComma = TRUE;
+                if( bMustComma )
+                    osSQL += ", ";
+                else
+                    bMustComma = TRUE;
 
-            osSQL += CPLSPrintf("%ld", poFeature->GetFID());
+                if( bHasJustGotNextFID )
+                {
+                    osSQL += CPLSPrintf("%ld", nNextFID);
+                }
+                else
+                {
+                    osSQL += CPLSPrintf("nextval('%s')",
+                            OGRCARTODBEscapeLiteral(CPLSPrintf("%s_%s_seq", osName.c_str(), osFIDColName.c_str())).c_str());
+                }
+                poFeature->SetFID(nNextFID);
+                nNextFID ++;
+            }
+            else if( osFIDColName.size() && poFeature->GetFID() != OGRNullFID )
+            {
+                if( bMustComma )
+                    osSQL += ", ";
+                else
+                    bMustComma = TRUE;
+
+                osSQL += CPLSPrintf("%ld", poFeature->GetFID());
+            }
         }
 
         osSQL += ")";
@@ -1097,10 +1104,13 @@ OGRErr OGRCARTODBTableLayer::RunDifferedCreationIfNecessary()
     for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
         OGRFieldDefn* poFieldDefn = poFeatureDefn->GetFieldDefn(i);
-        osSQL += OGRCARTODBEscapeIdentifier(poFieldDefn->GetNameRef());
-        osSQL += " ";
-        osSQL += OGRCARTODBGetPGFieldType(poFieldDefn);
-        osSQL += ",";
+        if( strcmp(poFieldDefn->GetNameRef(), osFIDColName) != 0 )
+        {
+            osSQL += OGRCARTODBEscapeIdentifier(poFieldDefn->GetNameRef());
+            osSQL += " ";
+            osSQL += OGRCARTODBGetPGFieldType(poFieldDefn);
+            osSQL += ",";
+        }
     }
 
     osSQL += CPLSPrintf("PRIMARY KEY (%s) )", osFIDColName.c_str());
