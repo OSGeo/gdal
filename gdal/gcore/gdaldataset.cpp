@@ -2525,7 +2525,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
         char** papszTmpOpenOptions = NULL;
         if( CSLFetchNameValue((char**)papszOpenOptions, "OVERVIEW_LEVEL") != NULL &&
             (poDriver->GetMetadataItem(GDAL_DMD_OPENOPTIONLIST) == NULL ||
-             CPLString(poDriver->GetMetadataItem(GDAL_DMD_OPENOPTIONLIST)).ifind("OVERVIEW_LEVEL") != std::string::npos) )
+             CPLString(poDriver->GetMetadataItem(GDAL_DMD_OPENOPTIONLIST)).ifind("OVERVIEW_LEVEL") == std::string::npos) )
         {
             papszTmpOpenOptions = CSLDuplicate((char**)papszOpenOptions);
             papszTmpOpenOptions = CSLSetNameValue(papszTmpOpenOptions, "OVERVIEW_LEVEL", NULL);
@@ -2533,7 +2533,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
         }
 
         if( poDriver->pfnIdentify && poDriver->pfnIdentify(&oOpenInfo) > 0 )
-            GDALValidateOpenOptions( poDriver, papszOpenOptions );
+            GDALValidateOpenOptions( poDriver, oOpenInfo.papszOpenOptions );
 
         if ( poDriver->pfnOpen != NULL )
         {
@@ -2600,7 +2600,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
             /* driver specific */
             if( CSLFetchNameValue((char**) papszOpenOptions, "OVERVIEW_LEVEL") != NULL &&
                 (poDriver->GetMetadataItem(GDAL_DMD_OPENOPTIONLIST) == NULL ||
-                CPLString(poDriver->GetMetadataItem(GDAL_DMD_OPENOPTIONLIST)).ifind("OVERVIEW_LEVEL") != std::string::npos) )
+                CPLString(poDriver->GetMetadataItem(GDAL_DMD_OPENOPTIONLIST)).ifind("OVERVIEW_LEVEL") == std::string::npos) )
             {
                 CPLString osVal(CSLFetchNameValue((char**) papszOpenOptions, "OVERVIEW_LEVEL"));
                 int nOvrLevel = atoi(osVal);
