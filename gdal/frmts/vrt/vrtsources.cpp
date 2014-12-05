@@ -916,6 +916,13 @@ VRTSimpleSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                            GDALRasterIOExtraArg* psExtraArg )
 
 {
+    GDALRasterIOExtraArg sExtraArg;
+    if( psExtraArg == NULL )
+    {
+        INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+        psExtraArg = &sExtraArg;
+    }
+
     // The window we will actually request from the source raster band.
     double dfReqXOff, dfReqYOff, dfReqXSize, dfReqYSize;
     int nReqXOff, nReqYOff, nReqXSize, nReqYSize;
@@ -1239,6 +1246,13 @@ VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                            GDALRasterIOExtraArg* psExtraArg )
 
 {
+    GDALRasterIOExtraArg sExtraArg;
+    if( psExtraArg == NULL )
+    {
+        INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+        psExtraArg = &sExtraArg;
+    }
+
     // The window we will actually request from the source raster band.
     double dfReqXOff, dfReqYOff, dfReqXSize, dfReqYSize;
     int nReqXOff, nReqYOff, nReqXSize, nReqYSize;
@@ -1771,6 +1785,13 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                             GDALRasterIOExtraArg* psExtraArg)
     
 {
+    GDALRasterIOExtraArg sExtraArg;
+    if( psExtraArg == NULL )
+    {
+        INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+        psExtraArg = &sExtraArg;
+    }
+
     // The window we will actually request from the source raster band.
     double dfReqXOff, dfReqYOff, dfReqXSize, dfReqYSize;
     int nReqXOff, nReqYOff, nReqXSize, nReqYSize;
