@@ -835,7 +835,8 @@ CPLErr GDALDriver::QuietDelete( const char *pszName )
         return CE_None;
 
     VSIStatBufL sStat;
-    if( VSIStatExL(pszName, &sStat, VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG) == 0 &&
+    int bExists = VSIStatExL(pszName, &sStat, VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG) == 0;
+    if( bExists &&
         VSI_ISDIR(sStat.st_mode) )
     {
         /* It is not desirable to remove directories quietly */
@@ -845,7 +846,18 @@ CPLErr GDALDriver::QuietDelete( const char *pszName )
 
     CPLDebug( "GDAL", "QuietDelete(%s) invoking Delete()", pszName );
 
-    return poDriver->Delete( pszName );
+    CPLErr eErr;
+    int bQuiet = ( !bExists && poDriver->pfnDelete == NULL && poDriver->pfnDeleteDataSource == NULL );
+    if( bQuiet )
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+    eErr  = poDriver->Delete( pszName );
+    if( bQuiet )
+    {
+        CPLPopErrorHandler();
+        CPLErrorReset();
+        eErr = CE_None;
+    }
+    return eErr;
 }
 
 /************************************************************************/
