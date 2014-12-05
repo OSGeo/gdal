@@ -31,8 +31,6 @@
 
 import os
 import sys
-import string
-import shutil
 
 # Make sure we run from the directory of the script
 if os.path.basename(sys.argv[0]) == os.path.basename(__file__):
@@ -82,6 +80,8 @@ def gpkg_init():
     # Do not use this for production environment if you care about data safety
     # w.r.t system/OS crashes, unless you know what you are doing.
     gdal.SetConfigOption('OGR_SQLITE_SYNCHRONOUS', 'OFF')
+    
+    gdal.SetConfigOption('GPKG_DEBUG', 'ON')
 
     return 'success'
 
@@ -119,38 +119,52 @@ def get_expected_checksums(src_ds, tile_drv, working_bands, extend_src = True, c
 
 ###############################################################################
 #
-def check_tile_format(out_ds, expected_format, expected_band_count):
-    sql_lyr = out_ds.ExecuteSQL('SELECT tile_data FROM tmp WHERE zoom_level = 0 AND tile_column = 0 AND tile_row = 0')
+def check_tile_format(out_ds, expected_format, expected_band_count, expected_ct, row = 0, col = 0, zoom_level = None):
+    if zoom_level is None:
+        zoom_level_str = "(SELECT MAX(zoom_level) FROM tmp)"
+    else:
+        zoom_level_str = str(zoom_level)
+    sql_lyr = out_ds.ExecuteSQL('SELECT GDAL_GetMimeType(tile_data), ' +
+                                'GDAL_GetBandCount(tile_data), ' +
+                                'GDAL_HasColorTable(tile_data) FROM tmp ' + 
+                                'WHERE zoom_level = %s AND tile_column = %d AND tile_row = %d' % (zoom_level_str, col, row))
     feat = sql_lyr.GetNextFeature()
     if feat is not None:
-        blob = feat.GetFieldAsBinary(0)
+        mime_type = feat.GetField(0)
+        band_count = feat.GetField(1)
+        has_ct = feat.GetField(2)
     else:
-        blob = None
+        mime_type = None
+        band_count = None
+        has_ct = None
     out_ds.ReleaseResultSet(sql_lyr)
     out_ds = None
 
     if expected_format is None:
-        if blob is None:
+        if mime_type is None:
             return 'success'
         else:
             return 'fail'
 
-    gdal.FileFromMemBuffer('/vsimem/tmp', blob)
-    tile_ds = gdal.Open('/vsimem/tmp')
-    if tile_ds.GetDriver().ShortName != expected_format:
+    if expected_format == 'PNG':
+        expected_mime_type = 'image/png'
+    elif expected_format == 'JPEG':
+        expected_mime_type = 'image/jpeg'
+    elif expected_format == 'WEBP':
+        expected_mime_type = 'image/x-webp'
+
+    if mime_type != expected_mime_type:
         gdaltest.post_reason('fail')
-        print(tile_ds.GetDriver().ShortName)
-        tile_ds = None
-        gdal.Unlink('/vsimem/tmp')
+        print(mime_type)
         return 'fail'
-    if tile_ds.RasterCount != expected_band_count:
+    if band_count != expected_band_count:
         gdaltest.post_reason('fail')
-        print(tile_ds.RasterCount)
-        tile_ds = None
-        gdal.Unlink('/vsimem/tmp')
+        print(band_count)
         return 'fail'
-    tile_ds = None
-    gdal.Unlink('/vsimem/tmp')
+    if expected_ct != has_ct:
+        gdaltest.post_reason('fail')
+        print(has_ct)
+        return 'fail'
     return 'success'
 
 ###############################################################################
@@ -194,8 +208,17 @@ def gpkg_1():
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
         return 'fail'
-    if check_tile_format(out_ds, 'PNG', 4) != 'success':
+    if check_tile_format(out_ds, 'PNG', 4, False) != 'success':
         return 'fail'
+
+    # Check that there's no extensions
+    out_ds = gdal.Open('tmp/tmp.gpkg')
+    sql_lyr = out_ds.ExecuteSQL("SELECT * FROM sqlite_master WHERE type = 'table' AND name = 'gpkg_extensions'")
+    if sql_lyr.GetFeatureCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_ds.ReleaseResultSet(sql_lyr)
+
     out_ds = None
 
     out_ds = gdal.OpenEx('tmp/tmp.gpkg', open_options= ['BAND_COUNT=3'])
@@ -234,7 +257,7 @@ def gpkg_1():
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
         return 'fail'
-    if check_tile_format(out_ds, 'PNG', 1) != 'success':
+    if check_tile_format(out_ds, 'PNG', 1, False) != 'success':
         return 'fail'
     out_ds = None
 
@@ -273,8 +296,17 @@ def gpkg_2():
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
         return 'fail'
-    if check_tile_format(out_ds, 'JPEG', 1) != 'success':
+    if check_tile_format(out_ds, 'JPEG', 1, False) != 'success':
         return 'fail'
+
+    # Check that there's no extensions
+    out_ds = gdal.Open('tmp/tmp.gpkg')
+    sql_lyr = out_ds.ExecuteSQL("SELECT * FROM sqlite_master WHERE type = 'table' AND name = 'gpkg_extensions'")
+    if sql_lyr.GetFeatureCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_ds.ReleaseResultSet(sql_lyr)
+
     out_ds = None
 
     ds = gdal.OpenEx('tmp/tmp.gpkg', open_options = ['USE_TILE_EXTENT=YES'])
@@ -300,7 +332,7 @@ def gpkg_2():
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
         return 'fail'
-    if check_tile_format(out_ds, 'JPEG', 1) != 'success':
+    if check_tile_format(out_ds, 'JPEG', 1, False) != 'success':
         return 'fail'
 
     # Try deregistering JPEG driver
@@ -381,7 +413,7 @@ def gpkg_3():
         expected_band_count = 4
     else:
         expected_band_count = 3
-    if check_tile_format(out_ds, 'WEBP', expected_band_count) != 'success':
+    if check_tile_format(out_ds, 'WEBP', expected_band_count, False) != 'success':
         return 'fail'
 
     out_ds = None
@@ -409,7 +441,7 @@ def gpkg_3():
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
         return 'fail'
-    if check_tile_format(out_ds, 'WEBP', 3) != 'success':
+    if check_tile_format(out_ds, 'WEBP', 3, False) != 'success':
         return 'fail'
 
     # Try deregistering WEBP driver
@@ -436,6 +468,24 @@ def gpkg_3():
 
     # Re-register driver
     gdaltest.webp_dr.Register()
+
+    os.remove('tmp/tmp.gpkg')
+
+    # Check updating a non-WEBP dataset with DRIVER=WEBP
+    out_ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg', 1, 1 )
+    out_ds.SetGeoTransform([0,1,0,0,0,-1])
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    out_ds.SetProjection(srs.ExportToWkt())
+    out_ds = None
+
+    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE, open_options=['DRIVER=WEBP'])
+    sql_lyr = out_ds.ExecuteSQL("SELECT * FROM gpkg_extensions WHERE table_name = 'tmp' AND column_name = 'tile_data' AND extension_name = 'gpkg_webp'")
+    if sql_lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_ds.ReleaseResultSet(sql_lyr)
+    out_ds = None
 
     os.remove('tmp/tmp.gpkg')
 
@@ -487,7 +537,7 @@ def gpkg_4(tile_drv_name = 'PNG'):
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
         return 'fail'
-    if check_tile_format(out_ds, tile_drv_name, working_bands) != 'success':
+    if check_tile_format(out_ds, tile_drv_name, working_bands, False) != 'success':
         return 'fail'
     out_ds = None
 
@@ -514,7 +564,7 @@ def gpkg_4(tile_drv_name = 'PNG'):
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
         return 'fail'
-    if check_tile_format(out_ds, tile_drv_name, 3) != 'success':
+    if check_tile_format(out_ds, tile_drv_name, 3, False) != 'success':
         return 'fail'
     out_ds = None
 
@@ -593,7 +643,7 @@ def gpkg_7(tile_drv_name = 'PNG'):
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
         return 'fail'
-    if check_tile_format(out_ds, tile_drv_name, working_bands) != 'success':
+    if check_tile_format(out_ds, tile_drv_name, working_bands, False) != 'success':
         return 'fail'
     out_ds = None
 
@@ -614,7 +664,7 @@ def gpkg_7(tile_drv_name = 'PNG'):
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
         return 'fail'
-    if check_tile_format(out_ds, tile_drv_name, 3) != 'success':
+    if check_tile_format(out_ds, tile_drv_name, 3, False) != 'success':
         return 'fail'
     out_ds = None
 
@@ -635,7 +685,7 @@ def gpkg_7(tile_drv_name = 'PNG'):
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
         return 'fail'
-    if check_tile_format(out_ds, None, 0) != 'success':
+    if check_tile_format(out_ds, None, None, None) != 'success':
         return 'fail'
     out_ds = None
 
@@ -705,6 +755,8 @@ def gpkg_10():
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
+        return 'fail'
+    if check_tile_format(out_ds, 'PNG', 1, True) != 'success':
         return 'fail'
     got_ct = out_ds.GetRasterBand(1).GetColorTable()
     if got_ct is not None:
@@ -781,6 +833,8 @@ def gpkg_10():
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
+        return 'fail'
+    if check_tile_format(out_ds, 'PNG', 4, False) != 'success':
         return 'fail'
     got_ct = out_ds.GetRasterBand(1).GetColorTable()
     if got_ct is not None:
@@ -1274,6 +1328,231 @@ def gpkg_16():
     return 'success'
 
 ###############################################################################
+# Test overviews with single band dataset
+
+def gpkg_17():
+
+    if gdaltest.gpkg_dr is None: 
+        return 'skip'
+    if gdaltest.png_dr is None: 
+        return 'skip'
+    try:
+        os.remove('tmp/tmp.gpkg')
+    except:
+        pass
+
+    # Without padding, immediately after create copy
+    ds = gdal.Open('data/byte.tif')
+    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['DRIVER=PNG', 'BLOCKSIZE=10'] )
+    out_ds.BuildOverviews('NEAR', [2])
+    out_ds = None
+    ds = None
+    
+    out_ds = gdal.Open('tmp/tmp.gpkg')
+    got_cs = out_ds.GetRasterBand(1).GetOverview(0).Checksum()
+    if got_cs != 1087:
+        gdaltest.post_reason('fail')
+        print(got_cs)
+        return 'fail'
+    if check_tile_format(out_ds, 'PNG', 1, False, zoom_level = 0) != 'success':
+        return 'fail'
+    if out_ds.GetRasterBand(1).GetOverview(0).GetColorTable() is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_ds = None
+    os.remove('tmp/tmp.gpkg')
+
+    # Without padding, after reopening, and BAND_COUNT = 1
+    ds = gdal.Open('data/byte.tif')
+    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['DRIVER=PNG', 'BLOCKSIZE=10'] )
+    out_ds = None
+    # FIXME? Should we eventually write the driver somewhere in metadata ?
+    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE, open_options = ['DRIVER=PNG', 'BAND_COUNT=1'])
+    out_ds.BuildOverviews('NEAR', [2])
+    out_ds = None
+    ds = None
+    
+    out_ds = gdal.Open('tmp/tmp.gpkg')
+    got_cs = out_ds.GetRasterBand(1).GetOverview(0).Checksum()
+    if got_cs != 1087:
+        gdaltest.post_reason('fail')
+        print(got_cs)
+        return 'fail'
+    if check_tile_format(out_ds, 'PNG', 1, False, zoom_level = 0) != 'success':
+        return 'fail'
+    out_ds = None
+    os.remove('tmp/tmp.gpkg')
+
+    # Without padding, after reopening
+    ds = gdal.Open('data/byte.tif')
+    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['DRIVER=PNG', 'BLOCKSIZE=10'] )
+    out_ds = None
+    # FIXME? Should we eventually write the driver somewhere in metadata ?
+    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE, open_options = ['DRIVER=PNG'])
+    out_ds.BuildOverviews('NEAR', [2])
+    out_ds = None
+    ds = None
+    
+    out_ds = gdal.Open('tmp/tmp.gpkg')
+    got_cs = out_ds.GetRasterBand(1).GetOverview(0).Checksum()
+    if got_cs != 1087:
+        gdaltest.post_reason('fail')
+        print(got_cs)
+        return 'fail'
+    if check_tile_format(out_ds, 'PNG', 3, False, zoom_level = 0) != 'success':
+        return 'fail'
+    out_ds = None
+    
+    # Test clearing overviews
+    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE)
+    out_ds.BuildOverviews('NONE', [])
+    out_ds = None
+    out_ds = gdal.Open('tmp/tmp.gpkg')
+    if out_ds.GetRasterBand(1).GetOverviewCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_ds = None
+
+    # Test building non-support overview levels
+    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE)
+    gdal.PushErrorHandler()
+    ret = out_ds.BuildOverviews('NEAR', [3])
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_ds = None
+
+    # Test building non-support overview levels
+    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE)
+    gdal.PushErrorHandler()
+    ret = out_ds.BuildOverviews('NEAR', [2, 4])
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_ds = None
+
+    # Test building overviews on read-only dataset
+    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER)
+    gdal.PushErrorHandler()
+    ret = out_ds.BuildOverviews('NEAR', [2])
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_ds = None
+
+    os.remove('tmp/tmp.gpkg')
+
+    return 'success'
+
+###############################################################################
+# Test overviews with 3 band dataset
+
+def gpkg_18():
+
+    if gdaltest.gpkg_dr is None: 
+        return 'skip'
+    if gdaltest.png_dr is None: 
+        return 'skip'
+    try:
+        os.remove('tmp/tmp.gpkg')
+    except:
+        pass
+
+    # Without padding, immediately after create copy
+    ds = gdal.Open('data/small_world.tif')
+    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['DRIVER=PNG', 'BLOCKXSIZE=100', 'BLOCKYSIZE=100'] )
+    out_ds.BuildOverviews('CUBIC', [2, 4])
+    out_ds = None
+    
+    tmp_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/tmp.tif', ds)
+    tmp_ds.BuildOverviews('CUBIC', [2, 4])
+    expected_cs_ov0 = [tmp_ds.GetRasterBand(i+1).GetOverview(0).Checksum() for i in range(3)]
+    expected_cs_ov1 = [tmp_ds.GetRasterBand(i+1).GetOverview(1).Checksum() for i in range(3)]
+    tmp_ds = None
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/tmp.tif')
+    
+    ds = None
+
+    out_ds = gdal.Open('tmp/tmp.gpkg')
+    got_cs = [out_ds.GetRasterBand(i+1).GetOverview(0).Checksum() for i in range(3)]
+    if got_cs != expected_cs_ov0:
+        gdaltest.post_reason('fail')
+        print(got_cs)
+        print(expected_cs_ov0)
+        return 'fail'
+    got_cs = [out_ds.GetRasterBand(i+1).GetOverview(1).Checksum() for i in range(3)]
+    if got_cs != expected_cs_ov1:
+        gdaltest.post_reason('fail')
+        print(got_cs)
+        print(expected_cs_ov1)
+        return 'fail'
+    if check_tile_format(out_ds, 'PNG', 3, False, zoom_level = 1) != 'success':
+        return 'fail'
+    if check_tile_format(out_ds, 'PNG', 4, False, zoom_level = 0) != 'success':
+        return 'fail'
+    out_ds = None
+    os.remove('tmp/tmp.gpkg')
+
+    return 'success'
+
+###############################################################################
+# Test overviews with 24-bit color palette single band dataset
+
+def gpkg_19():
+
+    if gdaltest.gpkg_dr is None: 
+        return 'skip'
+    if gdaltest.png_dr is None: 
+        return 'skip'
+    try:
+        os.remove('tmp/tmp.gpkg')
+    except:
+        pass
+
+    # Without padding, immediately after create copy
+    ds = gdal.Open('data/small_world_pct.tif')
+    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['DRIVER=PNG', 'BLOCKXSIZE=100', 'BLOCKYSIZE=100'] )
+    out_ds.BuildOverviews('NEAR', [2, 4])
+    out_ds = None
+    
+    tmp_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/tmp.tif', ds)
+    tmp_ds.BuildOverviews('NEAR', [2, 4])
+    expected_cs_ov0 = [tmp_ds.GetRasterBand(i+1).GetOverview(0).Checksum() for i in range(1)]
+    expected_cs_ov1 = [tmp_ds.GetRasterBand(i+1).GetOverview(1).Checksum() for i in range(1)]
+    tmp_ds = None
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/tmp.tif')
+    
+    ds = None
+
+    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER, open_options=['BAND_COUNT=1'])
+    if out_ds.GetRasterBand(1).GetOverview(0).GetColorTable() is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    got_cs = [out_ds.GetRasterBand(i+1).GetOverview(0).Checksum() for i in range(1)]
+    if got_cs != expected_cs_ov0:
+        gdaltest.post_reason('fail')
+        print(got_cs)
+        print(expected_cs_ov0)
+        return 'fail'
+    got_cs = [out_ds.GetRasterBand(i+1).GetOverview(1).Checksum() for i in range(1)]
+    if got_cs != expected_cs_ov1:
+        gdaltest.post_reason('fail')
+        print(got_cs)
+        print(expected_cs_ov1)
+        return 'fail'
+    if check_tile_format(out_ds, 'PNG', 1, True, zoom_level = 1) != 'success':
+        return 'fail'
+    if check_tile_format(out_ds, 'PNG', 4, False, zoom_level = 0) != 'success':
+        return 'fail'
+    out_ds = None
+    os.remove('tmp/tmp.gpkg')
+
+    return 'success'
+
+###############################################################################
 #
 
 def gpkg_cleanup():
@@ -1285,6 +1564,8 @@ def gpkg_cleanup():
         os.remove('tmp/tmp.gpkg')
     except:
         pass
+
+    gdal.SetConfigOption('GPKG_DEBUG', None)
 
     return 'success'
 
@@ -1309,9 +1590,12 @@ gdaltest_list = [
     gpkg_14,
     gpkg_15,
     gpkg_16,
+    gpkg_17,
+    gpkg_18,
+    gpkg_19,
     gpkg_cleanup,
 ]
-#gdaltest_list = [ gpkg_init, gpkg_16, gpkg_cleanup ]
+#gdaltest_list = [ gpkg_init, gpkg_17, gpkg_18, gpkg_19, gpkg_cleanup ]
 if __name__ == '__main__':
 
     gdaltest.setup_run( 'gpkg' )

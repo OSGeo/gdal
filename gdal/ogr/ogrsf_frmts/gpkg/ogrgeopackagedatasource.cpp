@@ -362,7 +362,7 @@ GDALGeoPackageDataset::GDALGeoPackageDataset()
     m_eTF = GPKG_TF_PNG_JPEG;
     m_nZLevel = 6;
     m_nQuality = 75;
-    m_bIsMain = TRUE;
+    m_poParentDS = NULL;
     m_nOverviewCount = 0;
     m_papoOverviewDS = NULL;
     m_bTriedEstablishingCT = FALSE;
@@ -379,7 +379,7 @@ GDALGeoPackageDataset::~GDALGeoPackageDataset()
     
     SetPamFlags(0);
 
-    if( m_bIsMain && m_osRasterTable.size() &&
+    if( m_poParentDS == NULL && m_osRasterTable.size() &&
         (!m_bGeoTransformValid || m_nSRID == UNKNOWN_SRID) )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -390,7 +390,7 @@ GDALGeoPackageDataset::~GDALGeoPackageDataset()
     
     FlushCache();
 
-    if( !m_bIsMain )
+    if( m_poParentDS != NULL )
         hDB = NULL;
     
     for( i = 0; i < m_nLayers; i++ )
@@ -649,7 +649,8 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
 /*                         InitRaster()                                 */
 /************************************************************************/
 
-int GDALGeoPackageDataset::InitRaster ( const char* pszTableName,
+int GDALGeoPackageDataset::InitRaster ( GDALGeoPackageDataset* poParentDS,
+                                        const char* pszTableName,
                                         double dfMinX,
                                         double dfMinY,
                                         double dfMaxX,
@@ -666,7 +667,7 @@ int GDALGeoPackageDataset::InitRaster ( const char* pszTableName,
     m_dfTMSMinX = dfMinX;
     m_dfTMSMaxY = dfMaxY;
 
-    m_nZoomLevel = atoi(SQLResultGetValue(&oResult, 0, nIdxInResult));
+    int nZoomLevel = atoi(SQLResultGetValue(&oResult, 0, nIdxInResult));
     double dfPixelXSize = CPLAtof(SQLResultGetValue(&oResult, 1, nIdxInResult));
     double dfPixelYSize = CPLAtof(SQLResultGetValue(&oResult, 2, nIdxInResult));
     int nTileWidth = atoi(SQLResultGetValue(&oResult, 3, nIdxInResult));
@@ -694,6 +695,39 @@ int GDALGeoPackageDataset::InitRaster ( const char* pszTableName,
         return FALSE;
     }
 
+    int nBandCount = atoi(CSLFetchNameValueDef(papszOpenOptions, "BAND_COUNT", "4"));
+    if( nBandCount != 1 && nBandCount != 3 && nBandCount != 4 )
+        nBandCount = 4;
+
+    return InitRaster(poParentDS, pszTableName, nZoomLevel, nBandCount, dfMinX, dfMaxY,
+                      dfPixelXSize, dfPixelYSize, nTileWidth, nTileHeight,
+                      dfGDALMinX, dfGDALMinY, dfGDALMaxX, dfGDALMaxY );
+}
+
+/************************************************************************/
+/*                         InitRaster()                                 */
+/************************************************************************/
+
+int GDALGeoPackageDataset::InitRaster ( GDALGeoPackageDataset* poParentDS,
+                                        const char* pszTableName,
+                                        int nZoomLevel,
+                                        int nBandCount,
+                                        double dfTMSMinX,
+                                        double dfTMSMaxY,
+                                        double dfPixelXSize,
+                                        double dfPixelYSize,
+                                        int nTileWidth,
+                                        int nTileHeight,
+                                        double dfGDALMinX,
+                                        double dfGDALMinY,
+                                        double dfGDALMaxX,
+                                        double dfGDALMaxY )
+{
+    m_osRasterTable = pszTableName;
+    m_dfTMSMinX = dfTMSMinX;
+    m_dfTMSMaxY = dfTMSMaxY;
+    m_nZoomLevel = nZoomLevel;
+
     m_bGeoTransformValid = TRUE;
     m_adfGeoTransform[0] = dfGDALMinX;
     m_adfGeoTransform[1] = dfPixelXSize;
@@ -719,15 +753,48 @@ int GDALGeoPackageDataset::InitRaster ( const char* pszTableName,
     {
         return FALSE;
     }
-    
-    int nBandCount = atoi(CSLFetchNameValueDef(papszOpenOptions, "BAND_COUNT", "4"));
-    if( nBandCount != 1 && nBandCount != 3 && nBandCount != 4 )
-        nBandCount = 4;
+
     for(int i = 1; i <= nBandCount; i ++)
         SetBand( i, new GDALGeoPackageRasterBand(this, i, nTileWidth, nTileHeight) );
-    SetPamFlags(0);
-    
+
+    SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+    SetMetadataItem("ZOOM_LEVEL", CPLSPrintf("%d", m_nZoomLevel));
+
+    if( poParentDS )
+    {
+        m_poParentDS = poParentDS;
+        bUpdate = poParentDS->bUpdate;
+        eAccess = poParentDS->eAccess;
+        hDB = poParentDS->hDB;
+        m_eTF = poParentDS->m_eTF;
+        m_nSRID = poParentDS->m_nSRID;
+        m_osWHERE = poParentDS->m_osWHERE;
+        SetDescription(CPLSPrintf("%s - zoom_level=%d",
+                                  poParentDS->GetDescription(), m_nZoomLevel));
+    }
+
     return TRUE;
+}
+
+/************************************************************************/
+/*                         GetTileFormat()                              */
+/************************************************************************/
+
+static GPKGTileFormat GetTileFormat(const char* pszTF )
+{
+    GPKGTileFormat eTF = GPKG_TF_PNG_JPEG;
+    if( pszTF )
+    {
+        if( EQUAL(pszTF, "PNG_JPEG") )
+            eTF = GPKG_TF_PNG_JPEG;
+        else if( EQUAL(pszTF, "PNG") )
+            eTF = GPKG_TF_PNG;
+        else if( EQUAL(pszTF, "JPEG") )
+            eTF = GPKG_TF_JPEG;
+        else if( EQUAL(pszTF, "WEBP") )
+            eTF = GPKG_TF_WEBP;
+    }
+    return eTF;
 }
 
 /************************************************************************/
@@ -764,7 +831,6 @@ int GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
             delete poSRS;
         }
     }
-
 
     /* The NOT NULL are just in case the tables would have been built without */
     /* the mandatory constraints */
@@ -854,7 +920,7 @@ int GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
         SQLResultFree(&oResult2);
     }
     
-    if(! InitRaster ( pszTableName, dfMinX, dfMinY, dfMaxX, dfMaxY,
+    if(! InitRaster ( NULL, pszTableName, dfMinX, dfMinY, dfMaxX, dfMaxY,
                  pszContentsMinX, pszContentsMinY, pszContentsMaxX, pszContentsMaxY,
                  papszOpenOptions, oResult, 0) )
     {
@@ -864,34 +930,54 @@ int GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
 
     CheckUnknownExtensions(TRUE);
 
+    // Do this after CheckUnknownExtensions() so that m_eTF is set to GPKG_TF_WEBP
+    // if the table already registers the gpkg_webp extension
+    const char* pszTF = CSLFetchNameValue(papszOpenOptions, "DRIVER");
+    if( pszTF )
+    {
+        if( !bUpdate )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "DRIVER open option ignored in read-only mode");
+        }
+        else
+        {
+            GPKGTileFormat eTF = GetTileFormat(pszTF);
+            if( eTF == GPKG_TF_WEBP && m_eTF != eTF )
+            {
+                if( !RegisterWebPExtension() )
+                    return FALSE;
+            }
+            m_eTF = eTF;
+        }
+    }
+
+    m_osWHERE = CSLFetchNameValueDef(papszOpenOptions, "WHERE", "");
+
     // Set metadata
-    SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
     if( pszIdentifier && pszIdentifier[0] )
         SetMetadataItem("IDENTIFIER", pszIdentifier);
     if( pszDescription && pszDescription[0] )
         SetMetadataItem("DESCRIPTION", pszDescription);
-    SetMetadataItem("ZOOM_LEVEL", CPLSPrintf("%d", m_nZoomLevel));
 
     // Add overviews
     for( int i = 1; i < oResult.nRowCount; i++ )
     {
         GDALGeoPackageDataset* poOvrDS = new GDALGeoPackageDataset();
-        poOvrDS->InitRaster ( pszTableName, dfMinX, dfMinY, dfMaxX, dfMaxY,
+        poOvrDS->InitRaster ( this, pszTableName, dfMinX, dfMinY, dfMaxX, dfMaxY,
                  pszContentsMinX, pszContentsMinY, pszContentsMaxX, pszContentsMaxY,
                  papszOpenOptions, oResult, i);
-        poOvrDS->m_bIsMain = FALSE;
-        poOvrDS->hDB = hDB;
-        poOvrDS->m_eTF = m_eTF;
-        if( poOvrDS->GetRasterXSize() < 64 && poOvrDS->GetRasterYSize() < 64 )
+
+        m_papoOverviewDS = (GDALGeoPackageDataset**) CPLRealloc(m_papoOverviewDS,
+                        sizeof(GDALGeoPackageDataset*) * (m_nOverviewCount+1));
+        m_papoOverviewDS[m_nOverviewCount ++] = poOvrDS;
+
+        int nTileWidth, nTileHeight;
+        poOvrDS->GetRasterBand(1)->GetBlockSize(&nTileWidth, &nTileHeight);
+        if( poOvrDS->GetRasterXSize() < nTileWidth &&
+            poOvrDS->GetRasterYSize() < nTileHeight )
         {
-            delete poOvrDS;
             break;
-        }
-        else
-        {
-            m_papoOverviewDS = (GDALGeoPackageDataset**) CPLRealloc(m_papoOverviewDS,
-                            sizeof(GDALGeoPackageDataset*) * (m_nOverviewCount+1));
-            m_papoOverviewDS[m_nOverviewCount ++] = poOvrDS;
         }
     }
 
@@ -996,16 +1082,18 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
     m_dfTMSMinX = m_adfGeoTransform[0];
     m_dfTMSMaxY = m_adfGeoTransform[3];
 
+    double dfGDALMinX = m_adfGeoTransform[0];
+    double dfGDALMinY = m_adfGeoTransform[3] + nRasterYSize * m_adfGeoTransform[5];
+    double dfGDALMaxX = m_adfGeoTransform[0] + nRasterXSize * m_adfGeoTransform[1];
+    double dfGDALMaxY = m_adfGeoTransform[3];
+
     pszSQL = sqlite3_mprintf("INSERT INTO gpkg_contents "
         "(table_name,data_type,identifier,description,min_x,min_y,max_x,max_y,srs_id) VALUES "
         "('%q','tiles','%q','%q',%.18g,%.18g,%.18g,%.18g,%d)",
         m_osRasterTable.c_str(),
         m_osIdentifier.c_str(),
         m_osDescription.c_str(),
-        m_adfGeoTransform[0],
-        m_adfGeoTransform[3] + nRasterYSize * m_adfGeoTransform[5],
-        m_adfGeoTransform[0] + nRasterXSize * m_adfGeoTransform[1],
-        m_adfGeoTransform[3],
+        dfGDALMinX, dfGDALMinY, dfGDALMaxX, dfGDALMaxY,
         m_nSRID);
     eErr = SQLCommand(hDB, pszSQL);
     sqlite3_free(pszSQL);
@@ -1037,7 +1125,10 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
     sqlite3_free(pszSQL);
     if ( eErr != OGRERR_NONE )
         return CE_Failure;
-    
+
+    m_papoOverviewDS = (GDALGeoPackageDataset**) CPLCalloc(sizeof(GDALGeoPackageDataset*),
+                                                           m_nZoomLevel);
+
     for(int i=0; i<=m_nZoomLevel; i++)
     {
         double dfPixelXSizeZoomLevel = m_adfGeoTransform[1] * (1 << (m_nZoomLevel-i));
@@ -1053,9 +1144,199 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
         sqlite3_free(pszSQL);
         if ( eErr != OGRERR_NONE )
             return CE_Failure;
+
+        if( i < m_nZoomLevel )
+        {
+            GDALGeoPackageDataset* poOvrDS = new GDALGeoPackageDataset();
+            poOvrDS->InitRaster ( this, m_osRasterTable, i, nBands,
+                                  m_dfTMSMinX, m_dfTMSMaxY,
+                                  dfPixelXSizeZoomLevel, dfPixelYSizeZoomLevel,
+                                  nTileWidth, nTileHeight,
+                                  dfGDALMinX, dfGDALMinY,
+                                  dfGDALMaxX, dfGDALMaxY );
+
+            m_papoOverviewDS[m_nZoomLevel-1-i] = poOvrDS;
+        }
     }
+    m_nOverviewCount = m_nZoomLevel;
 
     return CE_None;
+}
+
+/************************************************************************/
+/*                             FlushCache()                             */
+/************************************************************************/
+
+void GDALGeoPackageDataset::FlushCache()
+
+{
+    // Short circuit GDALPamDataset to avoid serialization to .aux.xml
+    GDALDataset::FlushCache();
+}
+
+/************************************************************************/
+/*                          IBuildOverviews()                           */
+/************************************************************************/
+
+/* See TIFF_OvLevelAdjust */
+static int GPKG_OvLevelAdjust( int nOvLevel, int nXSize )
+
+{
+    int nOXSize = (nXSize + nOvLevel - 1) / nOvLevel;
+    
+    return (int) (0.5 + nXSize / (double) nOXSize);
+}
+
+static int GetFloorPowerOfTwo(int n)
+{
+    int p2 = 1;
+    while( (n = n >> 1) > 0 )
+    {
+        p2 <<= 1;
+    }
+    return p2;
+}
+
+CPLErr GDALGeoPackageDataset::IBuildOverviews( 
+                        const char * pszResampling, 
+                        int nOverviews, int * panOverviewList,
+                        int nBandsIn, int * panBandList,
+                        GDALProgressFunc pfnProgress, void * pProgressData )
+{
+    if( GetAccess() != GA_Update )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Overview building not supported on a database opened in read-only mode");
+        return CE_Failure;
+    }
+    
+    if( nOverviews == 0 )
+    {
+        for(int i=0;i<m_nOverviewCount;i++)
+            m_papoOverviewDS[i]->FlushCache();
+        char* pszSQL = sqlite3_mprintf("DELETE FROM '%q' WHERE zoom_level < %d",
+                                       m_osRasterTable.c_str(),
+                                       m_nZoomLevel);
+        char* pszErrMsg = NULL;
+        int ret = sqlite3_exec(hDB, pszSQL, NULL, NULL, &pszErrMsg);
+        sqlite3_free(pszSQL);
+        if( ret != SQLITE_OK )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Failure: %s",
+                     pszErrMsg ? pszErrMsg : "");
+            sqlite3_free(pszErrMsg);
+            return CE_Failure;
+        }
+        return CE_None;
+    }
+    
+    if( nBandsIn != nBands )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Generation of overviews in GPKG only"
+                  "supported when operating on all bands." );
+        return CE_Failure;
+    }
+
+    FlushCache();
+    for(int i=0;i<nOverviews;i++)
+    {
+        int bFound = FALSE;
+        for(int j=0;j<m_nOverviewCount;j++)
+        {
+            int    nOvFactor;
+
+            GDALDataset* poODS = m_papoOverviewDS[j];
+
+            nOvFactor = (int) 
+                (0.5 + GetRasterXSize() / (double) poODS->GetRasterXSize());
+
+            if( nOvFactor == panOverviewList[i] 
+                || nOvFactor == GPKG_OvLevelAdjust( panOverviewList[i],
+                                                    GetRasterXSize() ) )
+            {
+                bFound = TRUE;
+                break;
+            }
+        }
+        if( !bFound )
+        {
+            CPLString osOvrList;
+            for(int j=0;j<m_nOverviewCount;j++)
+            {
+                int    nOvFactor;
+
+                GDALDataset* poODS = m_papoOverviewDS[j];
+
+                /* Compute overview factor */
+                nOvFactor = (int) 
+                    (0.5 + GetRasterXSize() / (double) poODS->GetRasterXSize());
+                int nODSXSize = (int)(0.5 + GetRasterXSize() / (double) nOvFactor);
+                if( nODSXSize != poODS->GetRasterXSize() )
+                {
+                    int nOvFactorPowerOfTwo = GetFloorPowerOfTwo(nOvFactor);
+                    nODSXSize = (int)(0.5 + GetRasterXSize() / (double) nOvFactorPowerOfTwo);
+                    if( nODSXSize == poODS->GetRasterXSize() )
+                        nOvFactor = nOvFactorPowerOfTwo;
+                    else
+                    {
+                        nOvFactorPowerOfTwo <<= 1;
+                        nODSXSize = (int)(0.5 + GetRasterXSize() / (double) nOvFactorPowerOfTwo);
+                        if( nODSXSize == poODS->GetRasterXSize() )
+                            nOvFactor = nOvFactorPowerOfTwo;
+                    }
+                }
+                if( j != 0 )
+                    osOvrList += " ";
+                osOvrList += CPLSPrintf("%d", nOvFactor);
+            }
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Only overviews %s can be computed", osOvrList.c_str());
+            return CE_Failure;
+        }
+    }
+    
+    GDALRasterBand*** papapoOverviewBands = (GDALRasterBand ***) CPLCalloc(sizeof(void*),nBands);
+    for( int iBand = 0; iBand < nBands; iBand++ )
+    {
+        papapoOverviewBands[iBand] = (GDALRasterBand **) CPLCalloc(sizeof(void*),nOverviews);
+        int iCurOverview = 0;
+        for(int i=0;i<nOverviews;i++)
+        {
+            int   j;
+            for( j = 0; j < m_nOverviewCount; j++ )
+            {
+                int    nOvFactor;
+                GDALDataset* poODS = m_papoOverviewDS[j];
+
+                nOvFactor = (int) 
+                    (0.5 + GetRasterXSize() / (double) poODS->GetRasterXSize());
+
+                if( nOvFactor == panOverviewList[i] 
+                    || nOvFactor == GPKG_OvLevelAdjust( panOverviewList[i],
+                                                        GetRasterXSize() ) )
+                {
+                    papapoOverviewBands[iBand][iCurOverview] = poODS->GetRasterBand(iBand+1);
+                    iCurOverview++ ;
+                    break;
+                }
+            }
+            CPLAssert(j < m_nOverviewCount);
+        }
+        CPLAssert(iCurOverview == nOverviews);
+    }
+
+    CPLErr eErr = GDALRegenerateOverviewsMultiBand(nBands, papoBands,
+                                     nOverviews, papapoOverviewBands,
+                                     pszResampling, pfnProgress, pProgressData );
+
+    for( int iBand = 0; iBand < nBands; iBand++ )
+    {
+        CPLFree(papapoOverviewBands[iBand]);
+    }
+    CPLFree(papapoOverviewBands);
+
+    return eErr;
 }
 
 /************************************************************************/
@@ -1280,7 +1561,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
         const char* pszTileHeight = CSLFetchNameValueDef(papszOptions, "BLOCKYSIZE", pszTileSize);
         int nTileWidth = atoi(pszTileWidth);
         int nTileHeight = atoi(pszTileHeight);
-        if( nTileWidth < 16 || nTileWidth > 4096 || nTileHeight < 16 || nTileHeight > 4096 )
+        if( nTileWidth < 8 || nTileWidth > 4096 || nTileHeight < 8 || nTileHeight > 4096 )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid block dimensions: %dx%d",
                      nTileWidth, nTileHeight);
@@ -1303,16 +1584,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
 
         const char* pszTF = CSLFetchNameValue(papszOptions, "DRIVER");
         if( pszTF )
-        {
-            if( EQUAL(pszTF, "PNG_JPEG") )
-                m_eTF = GPKG_TF_PNG_JPEG;
-            else if( EQUAL(pszTF, "PNG") )
-                m_eTF = GPKG_TF_PNG;
-            else if( EQUAL(pszTF, "JPEG") )
-                m_eTF = GPKG_TF_JPEG;
-            else if( EQUAL(pszTF, "WEBP") )
-                m_eTF = GPKG_TF_WEBP;
-        }
+            m_eTF = GetTileFormat(pszTF);
 
         const char* pszZLevel = CSLFetchNameValue(papszOptions, "ZLEVEL");
         if( pszZLevel )
@@ -1324,17 +1596,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
 
         if( m_eTF == GPKG_TF_WEBP )
         {
-            CreateExtensionsTableIfNecessary();
-
-            pszSQL = sqlite3_mprintf(
-                "INSERT INTO gpkg_extensions "
-                "(table_name, column_name, extension_name, definition, scope) "
-                "VALUES "
-                "('%q', 'tile_data', 'gpkg_webp', 'GeoPackage 1.0 Specification Annex P', 'read-write')",
-                m_osRasterTable.c_str());
-            eErr = SQLCommand(hDB, pszSQL);
-            sqlite3_free(pszSQL);
-            if ( OGRERR_NONE != eErr )
+            if( !RegisterWebPExtension() )
                 return FALSE;
         }
     }
@@ -1349,6 +1611,26 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
     return TRUE;
 }
 
+/************************************************************************/
+/*                          RegisterWebPExtension()                     */
+/************************************************************************/
+
+int GDALGeoPackageDataset::RegisterWebPExtension()
+{
+    CreateExtensionsTableIfNecessary();
+
+    char* pszSQL = sqlite3_mprintf(
+        "INSERT INTO gpkg_extensions "
+        "(table_name, column_name, extension_name, definition, scope) "
+        "VALUES "
+        "('%q', 'tile_data', 'gpkg_webp', 'GeoPackage 1.0 Specification Annex P', 'read-write')",
+        m_osRasterTable.c_str());
+    OGRErr eErr = SQLCommand(hDB, pszSQL);
+    sqlite3_free(pszSQL);
+    if ( OGRERR_NONE != eErr )
+        return FALSE;
+    return TRUE;
+}
 
 /************************************************************************/
 /*                              AddColumn()                             */
@@ -2285,6 +2567,117 @@ void GPKG_hstore_get_value(sqlite3_context* pContext,
 }
 
 /************************************************************************/
+/*                      GPKG_GDAL_GetMemFileFromBlob()                  */
+/************************************************************************/
+
+static CPLString GPKG_GDAL_GetMemFileFromBlob(sqlite3_value** argv)
+{
+    int nBytes = sqlite3_value_bytes (argv[0]);
+    const GByte* pabyBLOB = (const GByte *) sqlite3_value_blob (argv[0]);
+    CPLString osMemFileName;
+    osMemFileName.Printf("/vsimem/GPKG_GDAL_GetMemFileFromBlob_%p", argv);
+    VSILFILE * fp = VSIFileFromMemBuffer( osMemFileName.c_str(), (GByte*)pabyBLOB,
+                                          nBytes, FALSE);
+    VSIFCloseL(fp);
+    return osMemFileName;
+}
+
+/************************************************************************/
+/*                       GPKG_GDAL_GetMimeType()                        */
+/************************************************************************/
+
+static
+void GPKG_GDAL_GetMimeType(sqlite3_context* pContext,
+                           CPL_UNUSED int argc,
+                           sqlite3_value** argv)
+{
+    if( sqlite3_value_type (argv[0]) != SQLITE_BLOB )
+    {
+        sqlite3_result_null (pContext);
+        return;
+    }
+
+    CPLString osMemFileName(GPKG_GDAL_GetMemFileFromBlob(argv));
+    GDALDriver* poDriver = (GDALDriver*)GDALIdentifyDriver(osMemFileName, NULL);
+    if( poDriver != NULL )
+    {
+        const char* pszRes;
+        if( EQUAL(poDriver->GetDescription(), "PNG") )
+            pszRes = "image/png";
+        else if( EQUAL(poDriver->GetDescription(), "JPEG") )
+            pszRes = "image/jpeg";
+        else if( EQUAL(poDriver->GetDescription(), "WEBP") )
+            pszRes = "image/x-webp";
+        else
+            pszRes = CPLSPrintf("gdal/%s", poDriver->GetDescription());
+        sqlite3_result_text( pContext, pszRes, -1, SQLITE_TRANSIENT );
+    }
+    else
+        sqlite3_result_null (pContext);
+    VSIUnlink(osMemFileName);
+}
+
+/************************************************************************/
+/*                       GPKG_GDAL_GetBandCount()                       */
+/************************************************************************/
+
+static
+void GPKG_GDAL_GetBandCount(sqlite3_context* pContext,
+                           CPL_UNUSED int argc,
+                           sqlite3_value** argv)
+{
+    if( sqlite3_value_type (argv[0]) != SQLITE_BLOB )
+    {
+        sqlite3_result_null (pContext);
+        return;
+    }
+
+    CPLString osMemFileName(GPKG_GDAL_GetMemFileFromBlob(argv));
+    GDALDataset* poDS = (GDALDataset*) GDALOpenEx(osMemFileName,
+                                                  GDAL_OF_RASTER | GDAL_OF_INTERNAL,
+                                                  NULL, NULL, NULL);
+    if( poDS != NULL )
+    {
+        sqlite3_result_int( pContext, poDS->GetRasterCount() );
+        GDALClose( poDS );
+    }
+    else
+        sqlite3_result_null (pContext);
+    VSIUnlink(osMemFileName);
+}
+
+/************************************************************************/
+/*                       GPKG_GDAL_HasColorTable()                      */
+/************************************************************************/
+
+static
+void GPKG_GDAL_HasColorTable(sqlite3_context* pContext,
+                             CPL_UNUSED int argc,
+                             sqlite3_value** argv)
+{
+    if( sqlite3_value_type (argv[0]) != SQLITE_BLOB )
+    {
+        sqlite3_result_null (pContext);
+        return;
+    }
+
+    CPLString osMemFileName(GPKG_GDAL_GetMemFileFromBlob(argv));
+    GDALDataset* poDS = (GDALDataset*) GDALOpenEx(osMemFileName,
+                                                  GDAL_OF_RASTER | GDAL_OF_INTERNAL,
+                                                  NULL, NULL, NULL);
+    if( poDS != NULL )
+    {
+        sqlite3_result_int( pContext,
+                            poDS->GetRasterCount() == 1 &&
+                            poDS->GetRasterBand(1)->GetColorTable() != NULL );
+        GDALClose( poDS );
+    }
+    else
+        sqlite3_result_null (pContext);
+    VSIUnlink(osMemFileName);
+}
+
+/************************************************************************/
 /*                         OpenOrCreateDB()                             */
 /************************************************************************/
 
@@ -2329,6 +2722,17 @@ int GDALGeoPackageDataset::OpenOrCreateDB(int flags)
     // HSTORE functions
     sqlite3_create_function(hDB, "hstore_get_value", 2, SQLITE_ANY, NULL,
                             GPKG_hstore_get_value, NULL, NULL);
+    
+    // Debug functions
+    if( CSLTestBoolean(CPLGetConfigOption("GPKG_DEBUG", "FALSE")) )
+    {
+        sqlite3_create_function(hDB, "GDAL_GetMimeType", 1, SQLITE_ANY, NULL,
+                                GPKG_GDAL_GetMimeType, NULL, NULL);
+        sqlite3_create_function(hDB, "GDAL_GetBandCount", 1, SQLITE_ANY, NULL,
+                                GPKG_GDAL_GetBandCount, NULL, NULL);
+        sqlite3_create_function(hDB, "GDAL_HasColorTable", 1, SQLITE_ANY, NULL,
+                                GPKG_GDAL_HasColorTable, NULL, NULL);
+    }
 
     return TRUE;
 }

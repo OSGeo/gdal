@@ -195,6 +195,13 @@ void RegisterOGRGeoPackage()
 "  <Option name='MAXX' type='float' description='Maximum X of area of interest'/>"
 "  <Option name='MAXY' type='float' description='Maximum Y of area of interest'/>"
 "  <Option name='USE_TILE_EXTENT' type='boolean' description='Use tile extent of content to determine area of interest' default='NO'/>"
+"  <Option name='DRIVER' type='string-select' description='Format to use to create tiles' default='PNG_JPEG'>"
+"    <Value>PNG_JPEG</Value>"
+"    <Value>PNG</Value>"
+"    <Value>JPEG</Value>"
+"    <Value>WEBP</Value>"
+"  </Option>"
+"  <Option name='WHERE' type='string' description='SQL WHERE clause to be appended to tile requests'/>"
 "</OpenOptionList>");
 
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "<CreationOptionList>"
