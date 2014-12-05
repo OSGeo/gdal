@@ -437,6 +437,7 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
     }
 
     bUpdate = poOpenInfo->eAccess == GA_Update;
+    eAccess = poOpenInfo->eAccess; /* hum annoying duplication */
     m_pszFilename = CPLStrdup( osFilename );
 
     /* See if we can open the SQLite database */
@@ -1098,6 +1099,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
     m_pszFilename = CPLStrdup(pszFilename);
     m_bNew = TRUE;
     bUpdate = TRUE;
+    eAccess = GA_Update; /* hum annoying duplication */
 
 #ifdef HAVE_SQLITE_VFS
     if (!OpenOrCreateDB(bFileExists ? SQLITE_OPEN_READWRITE : SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE))

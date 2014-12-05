@@ -404,7 +404,7 @@ CPLErr GDALGeoPackageRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     GDALGeoPackageDataset* poGDS = (GDALGeoPackageDataset* )poDS;
     //CPLDebug("GPKG", "IReadBlock(nBand=%d,nBlockXOff=%d,nBlockYOff=%d",
     //         nBand,nBlockXOff,nBlockYOff);
-    
+
     int nRowMin = nBlockYOff + poGDS->m_nShiftYTiles;
     int nRowMax = nRowMin;
     if( poGDS->m_nShiftYPixelsMod )
@@ -475,6 +475,11 @@ CPLErr GDALGeoPackageRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                         poGDS->GetRasterBand(iBand)->GetLockedBlockRef(nBlockXOff, nBlockYOff, TRUE);
                     if( poBlock == NULL )
                         continue;
+                    if( poBlock->GetDirty() )
+                    {
+                        poBlock->DropLock();
+                        continue;
+                    }
                     pabyDest = (GByte*) poBlock->GetDataRef();
                 }
 
