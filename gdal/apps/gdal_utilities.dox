@@ -454,7 +454,7 @@ builds or rebuilds overview images
 \verbatim
 gdaladdo [-r {nearest,average,gauss,cubic,cubicspline,lanczos,average_mp,average_magphase,mode}]
          [-b band]
-         [-ro] [-clean] [--help-general] filename levels
+         [-ro] [-clean] [-oo NAME=VALUE]* [--help-general] filename levels
 \endverbatim
 
 \section gdaladdo_description DESCRIPTION
@@ -472,6 +472,7 @@ to select a set of input bands to generate overviews.</dd>
 <dt> <b>-ro</b></dt>:<dd> (available from GDAL 1.6.0) open the dataset in read-only mode, in order to generate
 external overview (for GeoTIFF especially). </dd>
 <dt> <b>-clean</b></dt>:<dd> (available from GDAL 1.7.0) remove all overviews. </dd>
+<dt> <b>-oo</b> <em>NAME=VALUE</em>:</dt><dd>(starting with GDAL 2.0) Dataset open option (format specific)</dd>
 <dt> <i>filename</i>:</dt><dd> The file to build overviews for (or whose overviews must be removed). </dd>
 <dt> <i>levels</i>:</dt><dd> A list of integral overview levels to build. Ignored with -clean option.</dd>
 </dl>
