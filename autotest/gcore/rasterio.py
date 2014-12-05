@@ -170,6 +170,9 @@ def rasterio_4():
                             data2 = ds.ReadRaster(i, j, k + 1, l + 1, xsize + 1, ysize + 1, gdal.GDT_Byte)
                             if data2 != data[(xsize + 1) * (ysize + 1) - 1]:
                                 gdaltest.post_reason( 'Didnt get expected buffer ')
+                                print(i,j,k,l,xsize,ysize)
+                                print(data2)
+                                print(data[(xsize + 1) * (ysize + 1) - 1])
                                 return 'fail'
                     l = l + 1
                 k = k + 1
