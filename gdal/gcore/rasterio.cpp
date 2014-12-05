@@ -116,6 +116,21 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     && nYOff <= nLBlockY * nBlockYSize
                     && nYOff + nYSize >= (nLBlockY+1) * nBlockYSize;
 
+                /* Is this a partial tile at right and/or bottom edges of */
+                /* the raster, and that is going to be completely written ? */
+                /* If so, don't load it from storage, but zeroized it so that */
+                /* the content outsize of the validity area is initialized */
+                int bMemZeroBuffer = FALSE;
+                if( eRWFlag == GF_Write && !bJustInitialize &&
+                    nXOff == 0 && nXSize == nBlockXSize &&
+                    nYOff <= nLBlockY * nBlockYSize &&
+                    nYOff + nYSize == GetYSize() &&
+                    (nLBlockY+1) * nBlockYSize > GetYSize() )
+                {
+                    bJustInitialize = TRUE;
+                    bMemZeroBuffer = TRUE;
+                }
+
                 if( poBlock )
                     poBlock->DropLock();
 
@@ -138,6 +153,11 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     poBlock->DropLock();
                     eErr = CE_Failure;
                     break;
+                }
+                if( bMemZeroBuffer )
+                {
+                    memset(pabySrcBlock, 0,
+                           nBandDataSize * nBlockXSize * nBlockYSize);
                 }
             }
 
@@ -271,6 +291,22 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     && nXOff <= nLBlockX * nBlockXSize
                     && nXOff + nXSize >= (nLBlockX+1) * nBlockXSize;
 
+                /* Is this a partial tile at right and/or bottom edges of */
+                /* the raster, and that is going to be completely written ? */
+                /* If so, don't load it from storage, but zeroized it so that */
+                /* the content outsize of the validity area is initialized */
+                int bMemZeroBuffer = FALSE;
+                if( eRWFlag == GF_Write && !bJustInitialize &&
+                    nXOff <= nLBlockX * nBlockXSize &&
+                    nYOff <= nLBlockY * nBlockYSize &&
+                    (nXOff + nXSize >= (nLBlockX+1) * nBlockXSize ||
+                     (nXOff + nXSize == GetXSize() && (nLBlockX+1) * nBlockXSize > GetXSize())) &&
+                    (nYOff + nYSize >= (nLBlockY+1) * nBlockYSize ||
+                     (nYOff + nYSize == GetYSize() && (nLBlockY+1) * nBlockYSize > GetYSize())) )
+                {
+                    bJustInitialize = TRUE;
+                    bMemZeroBuffer = TRUE;
+                }
 //                printf( "bJustInitialize = %d (%d,%d,%d,%d)\n", 
 //                        bJustInitialize,
 //                        nYOff, nYSize, 
@@ -299,7 +335,11 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     poBlock->DropLock();
                     return CE_Failure;
                 }
-
+                if( bMemZeroBuffer )
+                {
+                    memset(pabySrcBlock, 0,
+                           nBandDataSize * nBlockXSize * nBlockYSize);
+                }
 /* -------------------------------------------------------------------- */
 /*      Copy over this chunk of data.                                   */
 /* -------------------------------------------------------------------- */
@@ -414,6 +454,11 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 iBufXOff = (int)((iDstX - nXOff) / dfSrcXInc);
                 iBufOffset = (GPtrDiff_t)iBufYOff * (GPtrDiff_t)nLineSpace + iBufXOff * (GPtrDiff_t)nPixelSpace;
 
+                // FIXME: this code likely doesn't work if the dirty block gets flushed
+                // to disk before being completely written.
+                // In the meantime, bJustInitalize should probably be set to FALSE
+                // even if it is not ideal performance wise, and for lossy compression
+
     /* -------------------------------------------------------------------- */
     /*      Ensure we have the appropriate block loaded.                    */
     /* -------------------------------------------------------------------- */
@@ -430,7 +475,18 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                         && nYOff + nYSize >= (nLBlockY+1) * nBlockYSize
                         && nXOff <= nLBlockX * nBlockXSize
                         && nXOff + nXSize >= (nLBlockX+1) * nBlockXSize;
-
+                    /*int bMemZeroBuffer = FALSE;
+                    if( !bJustInitialize &&
+                        nXOff <= nLBlockX * nBlockXSize &&
+                        nYOff <= nLBlockY * nBlockYSize &&
+                        (nXOff + nXSize >= (nLBlockX+1) * nBlockXSize ||
+                         (nXOff + nXSize == GetXSize() && (nLBlockX+1) * nBlockXSize > GetXSize())) &&
+                        (nYOff + nYSize >= (nLBlockY+1) * nBlockYSize ||
+                         (nYOff + nYSize == GetYSize() && (nLBlockY+1) * nBlockYSize > GetYSize())) )
+                    {
+                        bJustInitialize = TRUE;
+                        bMemZeroBuffer = TRUE;
+                    }*/
                     if( poBlock != NULL )
                         poBlock->DropLock();
 
@@ -449,6 +505,11 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                         poBlock->DropLock();
                         return CE_Failure;
                     }
+                    /*if( bMemZeroBuffer )
+                    {
+                        memset(pabyDstBlock, 0,
+                            nBandDataSize * nBlockXSize * nBlockYSize);
+                    }*/
                 }
 
     /* -------------------------------------------------------------------- */
@@ -3069,6 +3130,11 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
             
             iSrcX = (int) dfSrcX;
 
+            // FIXME: this code likely doesn't work if the dirty block gets flushed
+            // to disk before being completely written.
+            // In the meantime, bJustInitalize should probably be set to FALSE
+            // even if it is not ideal performance wise, and for lossy compression
+
 /* -------------------------------------------------------------------- */
 /*      Ensure we have the appropriate block loaded.                    */
 /* -------------------------------------------------------------------- */
@@ -3086,7 +3152,18 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
                     && nYOff + nYSize >= (nLBlockY+1) * nBlockYSize
                     && nXOff <= nLBlockX * nBlockXSize
                     && nXOff + nXSize >= (nLBlockX+1) * nBlockXSize;
-
+                /*int bMemZeroBuffer = FALSE;
+                if( eRWFlag == GF_Write && !bJustInitialize &&
+                    nXOff <= nLBlockX * nBlockXSize &&
+                    nYOff <= nLBlockY * nBlockYSize &&
+                    (nXOff + nXSize >= (nLBlockX+1) * nBlockXSize ||
+                     (nXOff + nXSize == GetRasterXSize() && (nLBlockX+1) * nBlockXSize > GetRasterXSize())) &&
+                    (nYOff + nYSize >= (nLBlockY+1) * nBlockYSize ||
+                     (nYOff + nYSize == GetRasterYSize() && (nLBlockY+1) * nBlockYSize > GetRasterYSize())) )
+                {
+                    bJustInitialize = TRUE;
+                    bMemZeroBuffer = TRUE;
+                }*/
                 for( iBand = 0; iBand < nBandCount; iBand++ )
                 {
                     GDALRasterBand *poBand = GetRasterBand( panBandMap[iBand]);
@@ -3114,6 +3191,11 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
                         eErr = CE_Failure; 
                         goto CleanupAndReturn;
                     }
+                    /*if( bMemZeroBuffer )
+                    {
+                        memset(papabySrcBlock[iBand], 0,
+                            nBandDataSize * nBlockXSize * nBlockYSize);
+                    }*/
                 }
             }
 
