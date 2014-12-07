@@ -3612,6 +3612,8 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
                                             eDT, 1, &nBand, 
                                             0, 0, 0, &sExtraArg );
 
+                    GDALDestroyScaledProgress( sExtraArg.pProgressData );
+
                     if( eErr == CE_None )
                         eErr = poDstDS->RasterIO( GF_Write, 
                                                 iX, iY, nThisCols, nThisLines,
