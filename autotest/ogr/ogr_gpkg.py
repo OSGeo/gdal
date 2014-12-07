@@ -1001,12 +1001,73 @@ def ogr_gpkg_19():
         gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetMetadataItem('foo') != 'bar':
-        print(ds.GetMetadata())
         gdaltest.post_reason('fail')
+        print(ds.GetMetadata())
         return 'fail'
     ds = None
 
     gdal.Unlink('/vsimem/ogr_gpkg_19.gpkg')
+
+    return 'success'
+
+###############################################################################
+# Test spatial reference system
+
+def ogr_gpkg_20():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_20.gpkg')
+
+    # "Conflict" with EPSG:4326
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("""GEOGCS["my geogcs",
+    DATUM["my datum",
+        SPHEROID["my spheroid",1000,0]],
+    AUTHORITY["my_org","4326"]]""")
+    lyr = ds.CreateLayer('my_org_4326', srs = srs)
+
+    # No authority node
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("""GEOGCS["another geogcs",
+    DATUM["another datum",
+        SPHEROID["another spheroid",1000,0]]]""")
+    lyr = ds.CreateLayer('without_org', srs = srs)
+
+    ds = None
+    
+    ds = ogr.Open('/vsimem/ogr_gpkg_20.gpkg')
+    
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_spatial_ref_sys WHERE srs_name='my geogcs' AND srs_id = 4327 AND organization='MY_ORG' AND organization_coordsys_id=4326 AND description is NULL")
+    fc = sql_lyr.GetFeatureCount()
+    ds.ReleaseResultSet(sql_lyr)
+    if fc != 1:
+        gdaltest.post_reason('fail')
+        print(fc)
+        return 'fail'
+
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_spatial_ref_sys WHERE srs_name='another geogcs' AND srs_id = 4328 AND organization='NONE' AND organization_coordsys_id=4328 AND description is NULL")
+    fc = sql_lyr.GetFeatureCount()
+    ds.ReleaseResultSet(sql_lyr)
+    if fc != 1:
+        gdaltest.post_reason('fail')
+        print(fc)
+        return 'fail'
+
+    lyr = ds.GetLayer('my_org_4326')
+    if lyr.GetSpatialRef().ExportToWkt().find('my geogcs') < 0:
+        gdaltest.post_reason('fail')
+        print(lyr.GetSpatialRef().ExportToWkt())
+        return 'fail'
+    lyr = ds.GetLayer('without_org')
+    if lyr.GetSpatialRef().ExportToWkt().find('another geogcs') < 0:
+        gdaltest.post_reason('fail')
+        print(lyr.GetSpatialRef().ExportToWkt())
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_gpkg_20.gpkg')
 
     return 'success'
 
@@ -1087,6 +1148,7 @@ gdaltest_list = [
     ogr_gpkg_17,
     ogr_gpkg_18,
     ogr_gpkg_19,
+    ogr_gpkg_20,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]
