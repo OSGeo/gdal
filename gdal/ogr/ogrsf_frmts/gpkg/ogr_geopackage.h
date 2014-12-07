@@ -101,6 +101,8 @@ class GDALGeoPackageDataset : public OGRSQLiteBaseDataSource
     GDALGeoPackageDataset* m_poParentDS;
     int                 m_nOverviewCount;
     GDALGeoPackageDataset** m_papoOverviewDS;
+    int                 m_bZoomOther;
+
     CPLString           m_osWHERE;
     
         int             InitRaster ( GDALGeoPackageDataset* poParentDS,
@@ -159,6 +161,7 @@ class GDALGeoPackageDataset : public OGRSQLiteBaseDataSource
         CPLErr                  WriteTileInternal(); /* should only be called by WriteTile() */
 
         int                     RegisterWebPExtension();
+        int                     RegisterZoomOtherExtension();
         void                    ParseCompressionOptions(char** papszOptions);
 
     public:
