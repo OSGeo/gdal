@@ -1553,6 +1553,113 @@ def gpkg_19():
     return 'success'
 
 ###############################################################################
+# Test PNG8
+
+def gpkg_20():
+
+    if gdaltest.gpkg_dr is None: 
+        return 'skip'
+    if gdaltest.png_dr is None: 
+        return 'skip'
+    try:
+        os.remove('tmp/tmp.gpkg')
+    except:
+        pass
+
+    # Without padding, with small tiles (<=256x256)
+    ds = gdal.Open('data/small_world.tif')
+    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['DRIVER=PNG8', 'BLOCKSIZE=200'] )
+    out_ds = None
+    ds = None
+
+    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER)
+    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    expected_cs = [30875,31451,38110,64269]
+    if got_cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print(got_cs)
+        print(expected_cs)
+        return 'fail'
+    if check_tile_format(out_ds, 'PNG', 1, True) != 'success':
+        return 'fail'
+    out_ds = None
+    os.remove('tmp/tmp.gpkg')
+
+    # Without padding, with big tiles (>256x256)
+    ds = gdal.Open('data/small_world.tif')
+    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['DRIVER=PNG8', 'BLOCKXSIZE=400', 'BLOCKYSIZE=200'] )
+    out_ds = None
+    ds = None
+
+    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER)
+    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    expected_cs = [27001,30168,34800,64269]
+    if got_cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print(got_cs)
+        print(expected_cs)
+        return 'fail'
+    if check_tile_format(out_ds, 'PNG', 1, True) != 'success':
+        return 'fail'
+    out_ds = None
+    os.remove('tmp/tmp.gpkg')
+
+    # With and without padding, with small tiles
+    ds = gdal.Open('data/small_world.tif')
+    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['DRIVER=PNG8', 'BLOCKSIZE=150'] )
+    out_ds = None
+    ds = None
+
+    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER)
+    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    expected_cs = [27718,31528,42062,64269]
+    if got_cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print(got_cs)
+        print(expected_cs)
+        return 'fail'
+    if check_tile_format(out_ds, 'PNG', 1, True) != 'success':
+        return 'fail'
+    if check_tile_format(out_ds, 'PNG', 4, False, row = 0, col = 2) != 'success':
+        return 'fail'
+    out_ds = None
+    os.remove('tmp/tmp.gpkg')
+    
+    # Without padding, with small tiles (<=256x256), but espcially less than 256 colors
+    ds = gdal.GetDriverByName('MEM').Create('',50,50,3)
+    ds.SetGeoTransform
+    ds.GetRasterBand(1).Fill(1)
+    ds.GetRasterBand(2).Fill(2)
+    ds.GetRasterBand(3).Fill(3)
+    ds.SetGeoTransform([0,1,0,0,0,-1])
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    ds.SetProjection(srs.ExportToWkt())
+    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['DRIVER=PNG8', 'BLOCKSIZE=50'] )
+    out_ds = None
+    ds = None
+
+    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER)
+    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    expected_cs = [2500, 5000, 7500, 30658]
+    if got_cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print(got_cs)
+        print(expected_cs)
+        return 'fail'
+    if check_tile_format(out_ds, 'PNG', 1, True) != 'success':
+        return 'fail'
+    out_ds = None
+    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER, open_options = ['BAND_COUNT=1'])
+    if out_ds.GetRasterBand(1).GetColorTable().GetCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_ds = None
+    os.remove('tmp/tmp.gpkg')
+
+    return 'success'
+
+###############################################################################
 #
 
 def gpkg_cleanup():
@@ -1593,9 +1700,10 @@ gdaltest_list = [
     gpkg_17,
     gpkg_18,
     gpkg_19,
+    gpkg_20,
     gpkg_cleanup,
 ]
-#gdaltest_list = [ gpkg_init, gpkg_17, gpkg_18, gpkg_19, gpkg_cleanup ]
+#gdaltest_list = [ gpkg_init, gpkg_20, gpkg_cleanup ]
 if __name__ == '__main__':
 
     gdaltest.setup_run( 'gpkg' )

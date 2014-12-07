@@ -29,6 +29,7 @@
 
 #include "ogr_geopackage.h"
 #include "memdataset.h"
+#include "gdal_alg_priv.h"
 
 //#define DEBUG_VERBOSE
 
@@ -662,6 +663,16 @@ static int WEBPSupports4Bands()
 
 CPLErr GDALGeoPackageDataset::WriteTile()
 {
+    CPLAssert(!m_bInWriteTile);
+    m_bInWriteTile = TRUE;
+    CPLErr eErr = WriteTileInternal();
+    m_bInWriteTile = FALSE;
+    return eErr;
+}
+
+/* should only be called by WriteTile() */
+CPLErr GDALGeoPackageDataset::WriteTileInternal()
+{
     if( !(bUpdate && m_asCachedTilesDesc[0].nRow >= 0 &&
           m_asCachedTilesDesc[0].nCol >= 0 &&
           m_asCachedTilesDesc[0].nIdxWithinTileData == 0) )
@@ -813,7 +824,8 @@ CPLErr GDALGeoPackageDataset::WriteTile()
         else
             pszDriverName = "JPEG";
     }
-    else if( m_eTF == GPKG_TF_PNG )
+    else if( m_eTF == GPKG_TF_PNG ||
+             m_eTF == GPKG_TF_PNG8 )
     {
         pszDriverName = "PNG";
         bTileDriverSupports4Bands = TRUE;
@@ -840,6 +852,8 @@ CPLErr GDALGeoPackageDataset::WriteTile()
         int nTileBands = nBands;
         if( bPartialTile && bTileDriverSupports4Bands )
             nTileBands = 4;
+        else if( m_eTF == GPKG_TF_PNG8 && nBands >= 3 && bAllOpaque && !bPartialTile )
+            nTileBands = 1;
         else if( nBands == 4 && (bAllOpaque || !bTileDriverSupports4Bands) )
             nTileBands = 3;
         else if( nBands == 1 && m_poCT != NULL && !bTileDriverSupportsCT )
@@ -880,7 +894,61 @@ CPLErr GDALGeoPackageDataset::WriteTile()
                 poMEMDS->GetRasterBand(1)->SetColorTable(m_poCT);
             CSLDestroy(papszOptions);
         }
-        if( nBands == 1 && m_poCT != NULL && nTileBands > 1 )
+
+        if( m_eTF == GPKG_TF_PNG8 && nTileBands == 1 && nBands >= 3 )
+        {
+            GDALDataset* poMEM_RGB_DS = MEMDataset::Create("", nBlockXSize, nBlockYSize,
+                                                  0, GDT_Byte, NULL);
+            for(i=0;i<3;i++)
+            {
+                char** papszOptions = NULL;
+                char szDataPointer[32];
+                int nRet = CPLPrintPointer(szDataPointer,
+                                        m_pabyCachedTiles + i * nBlockXSize * nBlockYSize,
+                                        sizeof(szDataPointer));
+                szDataPointer[nRet] = '\0';
+                papszOptions = CSLSetNameValue(papszOptions, "DATAPOINTER", szDataPointer);
+                poMEM_RGB_DS->AddBand(GDT_Byte, papszOptions);
+                CSLDestroy(papszOptions);
+            }
+            
+            if( m_pabyHugeColorArray == NULL )
+            {
+                if( nBlockXSize * nBlockYSize <= 65536 )
+                    m_pabyHugeColorArray = (GByte*) VSIMalloc(MEDIAN_CUT_AND_DITHER_BUFFER_SIZE_65536);
+                else
+                    m_pabyHugeColorArray = (GByte*) VSIMalloc2(256 * 256 * 256, sizeof(int));
+            }
+
+            GDALColorTable* poCT = new GDALColorTable();
+            GDALComputeMedianCutPCTInternal( poMEM_RGB_DS->GetRasterBand(1),
+                                       poMEM_RGB_DS->GetRasterBand(2),
+                                       poMEM_RGB_DS->GetRasterBand(3),
+                                       /*NULL, NULL, NULL,*/
+                                       m_pabyCachedTiles,
+                                       m_pabyCachedTiles + nBlockXSize * nBlockYSize,
+                                       m_pabyCachedTiles + 2 * nBlockXSize * nBlockYSize,
+                                       NULL,
+                                       256, /* max colors */
+                                       8, /* bit depth */
+                                       (int*)m_pabyHugeColorArray, /* preallocated histogram */
+                                       poCT,
+                                       NULL, NULL );
+
+            GDALDitherRGB2PCTInternal( poMEM_RGB_DS->GetRasterBand(1),
+                               poMEM_RGB_DS->GetRasterBand(2),
+                               poMEM_RGB_DS->GetRasterBand(3),
+                               poMEMDS->GetRasterBand(1), 
+                               poCT,
+                               8, /* bit depth */
+                               (GInt16*)m_pabyHugeColorArray, /* pasDynamicColorMap */
+                               m_bDither,
+                               NULL, NULL );
+            poMEMDS->GetRasterBand(1)->SetColorTable(poCT);
+            delete poCT;
+            GDALClose( poMEM_RGB_DS );
+        }
+        else if( nBands == 1 && m_poCT != NULL && nTileBands > 1 )
         {
             GByte abyCT[4*256];
             int nEntries = MIN(256, m_poCT->GetColorEntryCount());

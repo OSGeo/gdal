@@ -55,6 +55,7 @@ typedef enum
 {
     GPKG_TF_PNG_JPEG,
     GPKG_TF_PNG,
+    GPKG_TF_PNG8,
     GPKG_TF_JPEG,
     GPKG_TF_WEBP
 } GPKGTileFormat;
@@ -87,11 +88,15 @@ class GDALGeoPackageDataset : public OGRSQLiteBaseDataSource
     int                 m_nShiftXPixelsMod;
     int                 m_nShiftYTiles;
     int                 m_nShiftYPixelsMod;
+
     GPKGTileFormat      m_eTF;
     int                 m_nZLevel;
     int                 m_nQuality;
+    int                 m_bDither;
+
     GDALColorTable*     m_poCT;
     int                 m_bTriedEstablishingCT;
+    GByte*              m_pabyHugeColorArray;
 
     GDALGeoPackageDataset* m_poParentDS;
     int                 m_nOverviewCount;
@@ -147,9 +152,14 @@ class GDALGeoPackageDataset : public OGRSQLiteBaseDataSource
         GByte*                  ReadTile(int nRow, int nCol);
         GByte*                  ReadTile(int nRow, int nCol, GByte* pabyData,
                                          int* pbIsLossyFormat = NULL);
+
+        int                     m_bInWriteTile;
         CPLErr                  WriteTile();
 
+        CPLErr                  WriteTileInternal(); /* should only be called by WriteTile() */
+
         int                     RegisterWebPExtension();
+        void                    ParseCompressionOptions(char** papszOptions);
 
     public:
                             GDALGeoPackageDataset();
