@@ -1401,6 +1401,15 @@ def gpkg_17():
         return 'fail'
     if check_tile_format(out_ds, 'PNG', 3, False, zoom_level = 0) != 'success':
         return 'fail'
+
+    # Check that there's no extensions
+    out_ds = gdal.Open('tmp/tmp.gpkg')
+    sql_lyr = out_ds.ExecuteSQL("SELECT * FROM sqlite_master WHERE type = 'table' AND name = 'gpkg_extensions'")
+    if sql_lyr.GetFeatureCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_ds.ReleaseResultSet(sql_lyr)
+
     out_ds = None
     
     # Test clearing overviews
@@ -1413,8 +1422,30 @@ def gpkg_17():
         return 'fail'
     out_ds = None
 
-    # Test building non-support overview levels
+    # Test building on an overview dataset --> error
     out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE)
+    gdal.PushErrorHandler()
+    ret = out_ds.GetRasterBand(1).GetOverview(0).GetDataset().BuildOverviews('NONE', [])
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_ds = None
+
+    # Test building overview factor 1 --> error
+    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE)
+    gdal.PushErrorHandler()
+    ret = out_ds.BuildOverviews('NEAR', [1])
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_ds = None
+
+    # Test building non-supported overview levels
+    gdal.SetConfigOption('ALLOW_GPKG_ZOOM_OTHER_EXTENSION', 'NO')
+    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE)
+    gdal.SetConfigOption('ALLOW_GPKG_ZOOM_OTHER_EXTENSION', None)
     gdal.PushErrorHandler()
     ret = out_ds.BuildOverviews('NEAR', [3])
     gdal.PopErrorHandler()
@@ -1423,10 +1454,23 @@ def gpkg_17():
         return 'fail'
     out_ds = None
 
-    # Test building non-support overview levels
+    # Test building non-supported overview levels
+    gdal.SetConfigOption('ALLOW_GPKG_ZOOM_OTHER_EXTENSION', 'NO')
     out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE)
+    gdal.SetConfigOption('ALLOW_GPKG_ZOOM_OTHER_EXTENSION', None)
     gdal.PushErrorHandler()
     ret = out_ds.BuildOverviews('NEAR', [2, 4])
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_ds = None
+
+    # Test gpkg_zoom_other extension
+    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE)
+    # Will fail because results in a 6x6 overview
+    gdal.PushErrorHandler()
+    ret = out_ds.BuildOverviews('NEAR', [3])
     gdal.PopErrorHandler()
     if ret == 0:
         gdaltest.post_reason('fail')
@@ -1471,6 +1515,8 @@ def gpkg_18():
     tmp_ds.BuildOverviews('CUBIC', [2, 4])
     expected_cs_ov0 = [tmp_ds.GetRasterBand(i+1).GetOverview(0).Checksum() for i in range(3)]
     expected_cs_ov1 = [tmp_ds.GetRasterBand(i+1).GetOverview(1).Checksum() for i in range(3)]
+    #tmp_ds.BuildOverviews('NEAR', [3])
+    #expected_cs_ov_factor3 = [tmp_ds.GetRasterBand(i+1).GetOverview(2).Checksum() for i in range(3)]
     tmp_ds = None
     gdal.GetDriverByName('GTiff').Delete('/vsimem/tmp.tif')
     
@@ -1494,6 +1540,107 @@ def gpkg_18():
     if check_tile_format(out_ds, 'PNG', 4, False, zoom_level = 0) != 'success':
         return 'fail'
     out_ds = None
+
+    # Test gpkg_zoom_other extension
+    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE)
+    # We expect a warning 
+    gdal.PushErrorHandler()
+    ret = out_ds.BuildOverviews('NEAR', [3])
+    gdal.PopErrorHandler()
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if out_ds.GetRasterBand(1).GetOverviewCount() != 3:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    got_cs = [out_ds.GetRasterBand(i+1).GetOverview(0).Checksum() for i in range(3)]
+    if got_cs != expected_cs_ov0:
+        gdaltest.post_reason('fail')
+        print(got_cs)
+        print(expected_cs_ov0)
+        return 'fail'
+    expected_cs = [24807, 25544, 34002]
+    got_cs = [out_ds.GetRasterBand(i+1).GetOverview(1).Checksum() for i in range(3)]
+    if got_cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print(got_cs)
+        print(expected_cs)
+        return 'fail'
+    got_cs = [out_ds.GetRasterBand(i+1).GetOverview(2).Checksum() for i in range(3)]
+    if got_cs != expected_cs_ov1:
+        gdaltest.post_reason('fail')
+        print(got_cs)
+        print(expected_cs_ov1)
+        return 'fail'
+
+    # Check that extension is declared
+    sql_lyr = out_ds.ExecuteSQL("SELECT * FROM gpkg_extensions WHERE table_name = 'tmp' AND extension_name = 'gpkg_zoom_other'")
+    if sql_lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_ds.ReleaseResultSet(sql_lyr)
+
+    out_ds = None
+    
+    out_ds = gdal.Open('tmp/tmp.gpkg')
+    if out_ds.GetRasterBand(1).GetOverviewCount() != 3:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    got_cs = [out_ds.GetRasterBand(i+1).GetOverview(0).Checksum() for i in range(3)]
+    if got_cs != expected_cs_ov0:
+        gdaltest.post_reason('fail')
+        print(got_cs)
+        print(expected_cs_ov0)
+        return 'fail'
+    expected_cs = [24807, 25544, 34002]
+    got_cs = [out_ds.GetRasterBand(i+1).GetOverview(1).Checksum() for i in range(3)]
+    if got_cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print(got_cs)
+        print(expected_cs)
+        return 'fail'
+    got_cs = [out_ds.GetRasterBand(i+1).GetOverview(2).Checksum() for i in range(3)]
+    if got_cs != expected_cs_ov1:
+        gdaltest.post_reason('fail')
+        print(got_cs)
+        print(expected_cs_ov1)
+        return 'fail'
+    out_ds = None
+
+    # Add terminating overview
+    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE)
+    ret = out_ds.BuildOverviews('NEAR', [8])
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    expected_cs = [12725, 12539, 13553]
+    got_cs = [out_ds.GetRasterBand(i+1).GetOverview(3).Checksum() for i in range(3)]
+    if got_cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print(got_cs)
+        print(expected_cs)
+        return 'fail'
+    out_ds = None
+
+    os.remove('tmp/tmp.gpkg')
+
+    # Without padding, immediately after create copy
+    ds = gdal.Open('data/small_world.tif')
+    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['DRIVER=PNG', 'BLOCKXSIZE=100', 'BLOCKYSIZE=100'] )
+    # Should not result in gpkg_zoom_other
+    ret = out_ds.BuildOverviews('NEAR', [8])
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    # Check that there's no extensions
+    out_ds = gdal.Open('tmp/tmp.gpkg')
+    sql_lyr = out_ds.ExecuteSQL("SELECT * FROM sqlite_master WHERE type = 'table' AND name = 'gpkg_extensions'")
+    if sql_lyr.GetFeatureCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_ds.ReleaseResultSet(sql_lyr)
+    out_ds = None
+
     os.remove('tmp/tmp.gpkg')
 
     return 'success'

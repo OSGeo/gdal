@@ -296,15 +296,15 @@ CPLErr GDALGeoPackageDataset::ReadTile(const CPLString& osMemFileName,
             GUInt32 nVal = c1 + (c2 << 8) + (c3 << 16);
             if( nTileBandCount == 4 ) nVal += (c4 << 24);
             if( nVal == 0 ) /* In most cases we will reach that point at partial tiles */
-                pabyTileData[i] = iBestEntryFor0;
+                pabyTileData[i] = (GByte) iBestEntryFor0;
             else
             {
                 std::map< GUInt32, int >::iterator oMapEntryToIndexIter = oMapEntryToIndex.find(nVal);
                 if( oMapEntryToIndexIter == oMapEntryToIndex.end() )
                     /* Could happen with JPEG tiles */
-                    pabyTileData[i] = GPKGFindBestEntry(m_poCT, c1, c2, c3, c4, nTileBandCount);
+                    pabyTileData[i] = (GByte) GPKGFindBestEntry(m_poCT, c1, c2, c3, c4, nTileBandCount);
                 else
-                    pabyTileData[i] = oMapEntryToIndexIter->second;
+                    pabyTileData[i] = (GByte) oMapEntryToIndexIter->second;
             }
         }
         GDALClose( poDSTile );
