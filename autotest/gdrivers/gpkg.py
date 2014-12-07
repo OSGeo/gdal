@@ -1807,6 +1807,306 @@ def gpkg_20():
     return 'success'
 
 ###############################################################################
+# Test metadata
+
+def gpkg_21():
+
+    if gdaltest.gpkg_dr is None: 
+        return 'skip'
+    if gdaltest.png_dr is None: 
+        return 'skip'
+    try:
+        os.remove('tmp/tmp.gpkg')
+    except:
+        pass
+
+    out_ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg', 1, 1)
+    out_ds.SetGeoTransform([0,1,0,0,0,-1])
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    out_ds.SetProjection(srs.ExportToWkt())
+    mddlist = out_ds.GetMetadataDomainList()
+    if len(mddlist) != 2:
+        gdaltest.post_reason('fail')
+        print(mddlist)
+        return 'fail'
+    out_ds = None
+    
+    out_ds = gdal.Open('tmp/tmp.gpkg', gdal.GA_Update)
+
+    # No metadata for now
+    sql_lyr = out_ds.ExecuteSQL('SELECT count(*) FROM gpkg_metadata')
+    feat = sql_lyr.GetNextFeature()
+    v = feat.GetField(0)
+    out_ds.ReleaseResultSet(sql_lyr)
+    if v != 0:
+        gdaltest.post_reason('fail')
+        print(v)
+        return 'fail'
+    sql_lyr = out_ds.ExecuteSQL('SELECT count(*) FROM gpkg_metadata_reference')
+    feat = sql_lyr.GetNextFeature()
+    v = feat.GetField(0)
+    out_ds.ReleaseResultSet(sql_lyr)
+    if v != 0:
+        gdaltest.post_reason('fail')
+        print(v)
+        return 'fail'
+ 
+    # Set a metadata item now
+    out_ds.SetMetadataItem('foo', 'bar')
+    out_ds = None
+    
+    foo_value = 'bar'
+    for i in range(4):
+
+        out_ds = gdal.Open('tmp/tmp.gpkg', gdal.GA_Update)
+
+        if len(out_ds.GetMetadata('GEOPACKAGE')) != 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if out_ds.GetMetadataItem('foo') != foo_value:
+            gdaltest.post_reason('fail')
+            print(out_ds.GetMetadataItem('foo'))
+            feat.DumpReadable()
+            return 'fail'
+        md = out_ds.GetMetadata()
+        if len(md) != 3 or md['foo'] != foo_value or \
+            md['IDENTIFIER'] != 'tmp' or md['ZOOM_LEVEL'] != '0':
+            gdaltest.post_reason('fail')
+            print(md)
+            feat.DumpReadable()
+            return 'fail'
+
+        sql_lyr = out_ds.ExecuteSQL('SELECT * FROM gpkg_metadata')
+        feat = sql_lyr.GetNextFeature()
+        if feat.GetField('id') != 1 or feat.GetField('md_scope') != 'dataset' or \
+        feat.GetField('md_standard_uri') != 'http://gdal.org' or \
+        feat.GetField('mime_type') != 'text/xml' or \
+        feat.GetField('metadata') != """<GDALMultiDomainMetadata>
+  <Metadata>
+    <MDI key="foo">%s</MDI>
+  </Metadata>
+</GDALMultiDomainMetadata>
+""" % foo_value:
+            gdaltest.post_reason('fail')
+            print(i)
+            feat.DumpReadable()
+            return 'fail'
+        out_ds.ReleaseResultSet(sql_lyr)
+        
+        sql_lyr = out_ds.ExecuteSQL('SELECT * FROM gpkg_metadata_reference')
+        feat = sql_lyr.GetNextFeature()
+        if feat.GetField('reference_scope') != 'table' or \
+        feat.GetField('table_name') != 'tmp' or \
+        feat.IsFieldSet('column_name') or \
+        feat.IsFieldSet('row_id_value') or \
+        not feat.IsFieldSet('timestamp') or \
+        feat.GetField('md_file_id') != 1 or \
+        feat.IsFieldSet('md_parent_id'):
+            gdaltest.post_reason('fail')
+            print(i)
+            feat.DumpReadable()
+            return 'fail'
+        out_ds.ReleaseResultSet(sql_lyr)
+        
+        if i == 1:
+            out_ds.SetMetadataItem('foo', 'bar')
+        elif i == 2:
+            out_ds.SetMetadataItem('foo', 'baz')
+            foo_value = 'baz'
+
+        out_ds = None
+
+    # Clear metadata
+    out_ds = gdal.Open('tmp/tmp.gpkg', gdal.GA_Update)
+    out_ds.SetMetadata(None)
+    out_ds = None
+    
+    # No more metadata
+    out_ds = gdal.Open('tmp/tmp.gpkg', gdal.GA_Update)
+    sql_lyr = out_ds.ExecuteSQL('SELECT * FROM gpkg_metadata')
+    feat = sql_lyr.GetNextFeature()
+    if feat is not None:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        out_ds.ReleaseResultSet(sql_lyr)
+        return 'fail'
+    out_ds.ReleaseResultSet(sql_lyr)
+    sql_lyr = out_ds.ExecuteSQL('SELECT * FROM gpkg_metadata_reference')
+    feat = sql_lyr.GetNextFeature()
+    if feat is not None:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        out_ds.ReleaseResultSet(sql_lyr)
+        return 'fail'
+    out_ds.ReleaseResultSet(sql_lyr)
+
+    out_ds.SetMetadataItem('IDENTIFIER', 'my_identifier')
+    out_ds.SetMetadataItem('DESCRIPTION', 'my_description')
+    out_ds = None
+    
+    # Still no metadata
+    out_ds = gdal.Open('tmp/tmp.gpkg', gdal.GA_Update)
+    if out_ds.GetMetadataItem('IDENTIFIER') != 'my_identifier':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if out_ds.GetMetadataItem('DESCRIPTION') != 'my_description':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    sql_lyr = out_ds.ExecuteSQL('SELECT * FROM gpkg_metadata')
+    feat = sql_lyr.GetNextFeature()
+    if feat is not None:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        out_ds.ReleaseResultSet(sql_lyr)
+        return 'fail'
+    out_ds.ReleaseResultSet(sql_lyr)
+    sql_lyr = out_ds.ExecuteSQL('SELECT * FROM gpkg_metadata_reference')
+    feat = sql_lyr.GetNextFeature()
+    if feat is not None:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        out_ds.ReleaseResultSet(sql_lyr)
+        return 'fail'
+    out_ds.ReleaseResultSet(sql_lyr)
+
+    # Write metadata in global scope
+    out_ds.SetMetadata({'bar':'foo'}, 'GEOPACKAGE')
+
+    out_ds = None
+
+    out_ds = gdal.Open('tmp/tmp.gpkg', gdal.GA_Update)
+    
+    if out_ds.GetMetadataItem('bar', 'GEOPACKAGE') != 'foo':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    
+    sql_lyr = out_ds.ExecuteSQL('SELECT * FROM gpkg_metadata')
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetField('id') != 1 or feat.GetField('md_scope') != 'dataset' or \
+        feat.GetField('md_standard_uri') != 'http://gdal.org' or \
+        feat.GetField('mime_type') != 'text/xml' or \
+        feat.GetField('metadata') != """<GDALMultiDomainMetadata>
+  <Metadata>
+    <MDI key="bar">foo</MDI>
+  </Metadata>
+</GDALMultiDomainMetadata>
+""":
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        out_ds.ReleaseResultSet(sql_lyr)
+        return 'fail'
+    out_ds.ReleaseResultSet(sql_lyr)
+    
+    sql_lyr = out_ds.ExecuteSQL('SELECT * FROM gpkg_metadata_reference')
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetField('reference_scope') != 'geopackage' or \
+        feat.IsFieldSet('table_name') or \
+        feat.IsFieldSet('column_name') or \
+        feat.IsFieldSet('row_id_value') or \
+        not feat.IsFieldSet('timestamp') or \
+        feat.GetField('md_file_id') != 1 or \
+        feat.IsFieldSet('md_parent_id'):
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        out_ds.ReleaseResultSet(sql_lyr)
+        return 'fail'
+    out_ds.ReleaseResultSet(sql_lyr)
+    
+    out_ds.SetMetadataItem('bar', 'baz', 'GEOPACKAGE')
+    out_ds = None
+    
+    out_ds = gdal.Open('tmp/tmp.gpkg', gdal.GA_Update)
+    if out_ds.GetMetadataItem('bar', 'GEOPACKAGE') != 'baz':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_ds.SetMetadata(None, 'GEOPACKAGE')
+    out_ds = None
+    
+    out_ds = gdal.Open('tmp/tmp.gpkg', gdal.GA_Update)
+    if len(out_ds.GetMetadata('GEOPACKAGE')) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+        
+    out_ds.SetMetadataItem('1','2')
+    out_ds.SetMetadataItem('3','4','CUSTOM_DOMAIN')
+    out_ds.SetMetadataItem('6','7', 'GEOPACKAGE')
+    # Non GDAL metdata
+    out_ds.ExecuteSQL("INSERT INTO gpkg_metadata VALUES (10, 'dataset', 'uri', 'text/plain', 'my_metadata')")
+    out_ds.ExecuteSQL("INSERT INTO gpkg_metadata_reference VALUES ('geopackage',NULL,NULL,NULL,'2012-08-17T14:49:32.932Z',10,NULL)")
+    out_ds.ExecuteSQL("INSERT INTO gpkg_metadata VALUES (11, 'dataset', 'uri', 'text/plain', 'other_metadata')")
+    out_ds.ExecuteSQL("INSERT INTO gpkg_metadata_reference VALUES ('geopackage',NULL,NULL,NULL,'2012-08-17T14:49:32.932Z',11,NULL)")
+    out_ds.ExecuteSQL("INSERT INTO gpkg_metadata VALUES (12, 'dataset', 'uri', 'text/plain', 'my_metadata_local')")
+    out_ds.ExecuteSQL("INSERT INTO gpkg_metadata_reference VALUES ('table','tmp',NULL,NULL,'2012-08-17T14:49:32.932Z',12,NULL)")
+    out_ds.ExecuteSQL("INSERT INTO gpkg_metadata VALUES (13, 'dataset', 'uri', 'text/plain', 'other_metadata_local')")
+    out_ds.ExecuteSQL("INSERT INTO gpkg_metadata_reference VALUES ('table','tmp',NULL,NULL,'2012-08-17T14:49:32.932Z',13,NULL)")
+    out_ds = None
+
+    for i in range(2):
+        out_ds = gdal.Open('tmp/tmp.gpkg', gdal.GA_Update)
+        if out_ds.GetMetadataItem('1') != '2':
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if out_ds.GetMetadataItem('GPKG_METADATA_ITEM_1') != 'my_metadata_local':
+            gdaltest.post_reason('fail')
+            print(out_ds.GetMetadata())
+            return 'fail'
+        if out_ds.GetMetadataItem('GPKG_METADATA_ITEM_2') != 'other_metadata_local':
+            gdaltest.post_reason('fail')
+            print(out_ds.GetMetadata())
+            return 'fail'
+        if out_ds.GetMetadataItem('GPKG_METADATA_ITEM_1', 'GEOPACKAGE') != 'my_metadata':
+            gdaltest.post_reason('fail')
+            print(out_ds.GetMetadata('GEOPACKAGE'))
+            return 'fail'
+        if out_ds.GetMetadataItem('GPKG_METADATA_ITEM_2', 'GEOPACKAGE') != 'other_metadata':
+            gdaltest.post_reason('fail')
+            print(out_ds.GetMetadata('GEOPACKAGE'))
+            return 'fail'
+        if out_ds.GetMetadataItem('3', 'CUSTOM_DOMAIN') != '4':
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if out_ds.GetMetadataItem('6', 'GEOPACKAGE') != '7':
+            gdaltest.post_reason('fail')
+            return 'fail'
+        out_ds.SetMetadata(out_ds.GetMetadata())
+        out_ds.SetMetadata(out_ds.GetMetadata('GEOPACKAGE'),'GEOPACKAGE')
+        out_ds = None
+
+    out_ds = gdal.Open('tmp/tmp.gpkg', gdal.GA_Update)
+    out_ds.SetMetadata(None)
+    out_ds.SetMetadata(None, 'CUSTOM_DOMAIN')
+    out_ds.SetMetadata(None, 'GEOPACKAGE')
+    out_ds = None
+
+    out_ds = gdal.Open('tmp/tmp.gpkg', gdal.GA_Update)
+    if out_ds.GetMetadataItem('GPKG_METADATA_ITEM_1', 'GEOPACKAGE') != 'my_metadata':
+        gdaltest.post_reason('fail')
+        print(out_ds.GetMetadata())
+        return 'fail'
+    sql_lyr = out_ds.ExecuteSQL('SELECT * FROM gpkg_metadata WHERE id < 10')
+    feat = sql_lyr.GetNextFeature()
+    if feat is not None:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        out_ds.ReleaseResultSet(sql_lyr)
+        return 'fail'
+    out_ds.ReleaseResultSet(sql_lyr)
+    sql_lyr = out_ds.ExecuteSQL('SELECT * FROM gpkg_metadata_reference WHERE md_file_id < 10')
+    feat = sql_lyr.GetNextFeature()
+    if feat is not None:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        out_ds.ReleaseResultSet(sql_lyr)
+        return 'fail'
+    out_ds.ReleaseResultSet(sql_lyr)
+    out_ds = None
+
+    os.remove('tmp/tmp.gpkg')
+
+    return 'success'
+
+###############################################################################
 #
 
 def gpkg_cleanup():
@@ -1848,9 +2148,10 @@ gdaltest_list = [
     gpkg_18,
     gpkg_19,
     gpkg_20,
+    gpkg_21,
     gpkg_cleanup,
 ]
-#gdaltest_list = [ gpkg_init, gpkg_20, gpkg_cleanup ]
+#gdaltest_list = [ gpkg_init, gpkg_21, gpkg_cleanup ]
 if __name__ == '__main__':
 
     gdaltest.setup_run( 'gpkg' )

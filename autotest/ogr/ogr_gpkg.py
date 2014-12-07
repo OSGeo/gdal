@@ -973,6 +973,44 @@ def ogr_gpkg_18():
     return 'success'
 
 ###############################################################################
+# Test metadata
+
+def ogr_gpkg_19():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_19.gpkg')
+    if len(ds.GetMetadata()) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds.SetMetadataItem('foo', 'bar')
+
+    # GEOPACKAGE metadata domain is not allowed in a non-raster context
+    gdal.PushErrorHandler()
+    ds.SetMetadata(ds.GetMetadata('GEOPACKAGE'), 'GEOPACKAGE')
+    ds.SetMetadataItem('foo', ds.GetMetadataItem('foo', 'GEOPACKAGE'), 'GEOPACKAGE')
+    gdal.PopErrorHandler()
+
+    ds = None
+    
+    ds = ogr.Open('/vsimem/ogr_gpkg_19.gpkg')
+    if len(ds.GetMetadata()) != 1:
+        print(ds.GetMetadata())
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetMetadataItem('foo') != 'bar':
+        print(ds.GetMetadata())
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_gpkg_19.gpkg')
+
+    return 'success'
+
+###############################################################################
 # Run test_ogrsf
 
 def ogr_gpkg_test_ogrsf():
@@ -1048,6 +1086,7 @@ gdaltest_list = [
     ogr_gpkg_16,
     ogr_gpkg_17,
     ogr_gpkg_18,
+    ogr_gpkg_19,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]

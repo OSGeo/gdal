@@ -333,6 +333,10 @@ GDALGeoPackageDataset::GDALGeoPackageDataset()
     m_papoLayers = NULL;
     m_nLayers = 0;
     m_bUtf8 = FALSE;
+    m_bIdentifierAsCO = FALSE;
+    m_bDescriptionAsCO = FALSE;
+    m_bHasReadMetadataFromStorage = FALSE;
+    m_bMetadataDirty = FALSE;
     m_papszSubDatasets = NULL;
     m_pszProjection = NULL;
     m_bGeoTransformValid = FALSE;
@@ -393,6 +397,7 @@ GDALGeoPackageDataset::~GDALGeoPackageDataset()
     }
     
     FlushCache();
+    FlushMetadata();
 
     if( m_poParentDS != NULL )
         hDB = NULL;
@@ -762,8 +767,8 @@ int GDALGeoPackageDataset::InitRaster ( GDALGeoPackageDataset* poParentDS,
     for(int i = 1; i <= nBandCount; i ++)
         SetBand( i, new GDALGeoPackageRasterBand(this, i, nTileWidth, nTileHeight) );
 
-    SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
-    SetMetadataItem("ZOOM_LEVEL", CPLSPrintf("%d", m_nZoomLevel));
+    GDALPamDataset::SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+    GDALPamDataset::SetMetadataItem("ZOOM_LEVEL", CPLSPrintf("%d", m_nZoomLevel));
 
     if( poParentDS )
     {
@@ -968,9 +973,9 @@ int GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
 
     // Set metadata
     if( pszIdentifier && pszIdentifier[0] )
-        SetMetadataItem("IDENTIFIER", pszIdentifier);
+        GDALPamDataset::SetMetadataItem("IDENTIFIER", pszIdentifier);
     if( pszDescription && pszDescription[0] )
-        SetMetadataItem("DESCRIPTION", pszDescription);
+        GDALPamDataset::SetMetadataItem("DESCRIPTION", pszDescription);
 
     // Add overviews
     for( int i = 1; i < oResult.nRowCount; i++ )
@@ -1487,9 +1492,26 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
 
 char **GDALGeoPackageDataset::GetMetadataDomainList()
 {
-    return BuildMetadataDomainList(GDALDataset::GetMetadataDomainList(),
+    return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
                                    TRUE,
-                                   "IMAGE_STRUCTURE", "SUBDATASETS", NULL);
+                                   "SUBDATASETS", NULL);
+}
+
+/************************************************************************/
+/*                        CheckMetadataDomain()                         */
+/************************************************************************/
+
+const char* GDALGeoPackageDataset::CheckMetadataDomain( const char* pszDomain )
+{
+    if( pszDomain != NULL && EQUAL(pszDomain, "GEOPACKAGE") &&
+        m_osRasterTable.size() == 0 )
+    {
+        CPLError(CE_Warning, CPLE_IllegalArg,
+                 "Using GEOPACKAGE for a non-raster geopackage is not supported. "
+                 "Using default domain instead");
+        return NULL;
+    }
+    return pszDomain;
 }
 
 /************************************************************************/
@@ -1499,16 +1521,367 @@ char **GDALGeoPackageDataset::GetMetadataDomainList()
 char **GDALGeoPackageDataset::GetMetadata( const char *pszDomain )
 
 {
+    pszDomain = CheckMetadataDomain(pszDomain);
     if( pszDomain != NULL && EQUAL(pszDomain,"SUBDATASETS") )
         return m_papszSubDatasets;
 
-    if( pszDomain != NULL && EQUAL(pszDomain,"IMAGE_STRUCTURE") )
+    if( m_bHasReadMetadataFromStorage )
         return GDALPamDataset::GetMetadata( pszDomain );
 
-    if( pszDomain != NULL && pszDomain[0] != '\0' )
-        return NULL;
+    m_bHasReadMetadataFromStorage = TRUE;
 
-    return GDALPamDataset::GetMetadata( pszDomain );
+    OGRErr err;
+    int nCount = SQLGetInteger(hDB,
+                  "SELECT COUNT(*) FROM sqlite_master WHERE name IN "
+                  "('gpkg_metadata', 'gpkg_metadata_reference') "
+                  "AND type IN ('table', 'view')", &err);
+    if ( err != OGRERR_NONE || nCount != 2 )
+        return GDALPamDataset::GetMetadata( pszDomain );
+
+    char* pszSQL;
+    if( m_osRasterTable.size() )
+    {
+        pszSQL = sqlite3_mprintf(
+            "SELECT md.metadata, md.md_standard_uri, md.mime_type, mdr.reference_scope FROM gpkg_metadata md "
+            "JOIN gpkg_metadata_reference mdr ON (md.id = mdr.md_file_id ) "
+            "WHERE mdr.reference_scope = 'geopackage' OR "
+            "(mdr.reference_scope = 'table' AND mdr.table_name = '%q') ORDER BY md.id",
+            m_osRasterTable.c_str());
+    }
+    else
+    {
+        pszSQL = sqlite3_mprintf(
+            "SELECT md.metadata, md.md_standard_uri, md.mime_type, mdr.reference_scope FROM gpkg_metadata md "
+            "JOIN gpkg_metadata_reference mdr ON (md.id = mdr.md_file_id ) "
+            "WHERE mdr.reference_scope = 'geopackage' ORDER BY md.id");
+    }
+
+    SQLResult oResult;
+    err = SQLQuery(hDB, pszSQL, &oResult);
+    sqlite3_free(pszSQL);
+    if  ( err != OGRERR_NONE )
+    {
+        SQLResultFree(&oResult);
+        return GDALPamDataset::GetMetadata( pszDomain );
+    }
+
+    char** papszMetadata = CSLDuplicate(GDALPamDataset::GetMetadata());
+
+    /* GDAL metadata */
+    for(int i=0;i<oResult.nRowCount;i++)
+    {
+        const char *pszMetadata = SQLResultGetValue(&oResult, 0, i);
+        const char* pszMDStandardURI = SQLResultGetValue(&oResult, 1, i);
+        const char* pszMimeType = SQLResultGetValue(&oResult, 2, i);
+        const char* pszReferenceScope = SQLResultGetValue(&oResult, 3, i);
+        int bIsGPKGScope = EQUAL(pszReferenceScope, "geopackage");
+        if( pszMetadata == NULL )
+            continue;
+        if( pszMDStandardURI != NULL && EQUAL(pszMDStandardURI, "http://gdal.org") &&
+            pszMimeType != NULL && EQUAL(pszMimeType, "text/xml") )
+        {
+            CPLXMLNode* psXMLNode = CPLParseXMLString(pszMetadata);
+            if( psXMLNode )
+            {
+                GDALMultiDomainMetadata oLocalMDMD;
+                oLocalMDMD.XMLInit(psXMLNode, FALSE);
+                if( m_osRasterTable.size() && bIsGPKGScope )
+                {
+                    oMDMD.SetMetadata( oLocalMDMD.GetMetadata(), "GEOPACKAGE" );
+                }
+                else
+                {
+                    papszMetadata = CSLMerge(papszMetadata, oLocalMDMD.GetMetadata());
+                    char** papszDomainList = oLocalMDMD.GetDomainList();
+                    char** papszIter = papszDomainList;
+                    while( papszIter && *papszIter )
+                    {
+                        if( !EQUAL(*papszIter, "") && !EQUAL(*papszIter, "IMAGE_STRUCTURE") )
+                            oMDMD.SetMetadata(oLocalMDMD.GetMetadata(*papszIter), *papszIter);
+                        papszIter ++;
+                    }
+                }
+                CPLDestroyXMLNode(psXMLNode);
+            }
+        }
+    }
+
+    GDALPamDataset::SetMetadata(papszMetadata);
+    CSLDestroy(papszMetadata);
+    papszMetadata = NULL;
+
+    /* Add non-GDAL metadata now */
+    int nNonGDALMDILocal = 1;
+    int nNonGDALMDIGeopackage = 1;
+    for(int i=0;i<oResult.nRowCount;i++)
+    {
+        const char *pszMetadata = SQLResultGetValue(&oResult, 0, i);
+        const char* pszMDStandardURI = SQLResultGetValue(&oResult, 1, i);
+        const char* pszMimeType = SQLResultGetValue(&oResult, 2, i);
+        const char* pszReferenceScope = SQLResultGetValue(&oResult, 3, i);
+        int bIsGPKGScope = EQUAL(pszReferenceScope, "geopackage");
+        if( pszMetadata == NULL )
+            continue;
+        if( pszMDStandardURI != NULL && EQUAL(pszMDStandardURI, "http://gdal.org") &&
+            pszMimeType != NULL && EQUAL(pszMimeType, "text/xml") )
+            continue;
+
+        if( m_osRasterTable.size() && bIsGPKGScope )
+        {
+            oMDMD.SetMetadataItem( CPLSPrintf("GPKG_METADATA_ITEM_%d", nNonGDALMDIGeopackage),
+                                   pszMetadata,
+                                   "GEOPACKAGE" );
+            nNonGDALMDIGeopackage ++;
+        }
+        else
+        {
+            oMDMD.SetMetadataItem( CPLSPrintf("GPKG_METADATA_ITEM_%d", nNonGDALMDILocal),
+                                   pszMetadata );
+            nNonGDALMDILocal ++;
+        }
+    }
+
+    SQLResultFree(&oResult);
+
+    return GDALPamDataset::GetMetadata(pszDomain);
+}
+
+/************************************************************************/
+/*                            WriteMetadata()                           */
+/************************************************************************/
+
+void GDALGeoPackageDataset::WriteMetadata(CPLXMLNode* psXMLNode, /* will be destroyed by the method /*/
+                                          const char* pszTableName)
+{
+    int bIsEmpty = (psXMLNode->psChild == NULL);
+    char *pszXML = NULL;
+    if( bIsEmpty )
+        CPLDestroyXMLNode(psXMLNode);
+    else
+    {
+        CPLXMLNode* psMasterXMLNode = CPLCreateXMLNode( NULL, CXT_Element,
+                                                        "GDALMultiDomainMetadata" );
+        psMasterXMLNode->psChild = psXMLNode;
+        pszXML = CPLSerializeXMLTree(psMasterXMLNode);
+        CPLDestroyXMLNode(psMasterXMLNode);
+    }
+    psXMLNode = NULL;
+
+    char* pszSQL;
+    if( pszTableName && pszTableName[0] != '\0' )
+    {
+        pszSQL = sqlite3_mprintf(
+            "SELECT md.id FROM gpkg_metadata md "
+            "JOIN gpkg_metadata_reference mdr ON (md.id = mdr.md_file_id ) "
+            "WHERE md.md_scope = 'dataset' AND md.md_standard_uri='http://gdal.org' "
+            "AND md.mime_type='text/xml' AND mdr.reference_scope = 'table' AND mdr.table_name = '%q'",
+            pszTableName);
+    }
+    else
+    {
+        pszSQL = sqlite3_mprintf(
+            "SELECT md.id FROM gpkg_metadata md "
+            "JOIN gpkg_metadata_reference mdr ON (md.id = mdr.md_file_id ) "
+            "WHERE md.md_scope = 'dataset' AND md.md_standard_uri='http://gdal.org' "
+            "AND md.mime_type='text/xml' AND mdr.reference_scope = 'geopackage'");
+    }
+    OGRErr err;
+    int mdId = SQLGetInteger(hDB, pszSQL, &err);
+    if( err != OGRERR_NONE )
+        mdId = -1;
+    sqlite3_free(pszSQL);
+
+    if( bIsEmpty )
+    {
+        if( mdId >= 0 )
+        {
+            SQLCommand(hDB,
+                       CPLSPrintf("DELETE FROM gpkg_metadata_reference WHERE md_file_id = %d", mdId));
+            SQLCommand(hDB,
+                       CPLSPrintf("DELETE FROM gpkg_metadata WHERE id = %d", mdId));
+        }
+    }
+    else
+    {
+        if( mdId >= 0 )
+        {
+            pszSQL = sqlite3_mprintf(
+                "UPDATE gpkg_metadata SET metadata = '%q' WHERE id = %d",
+                pszXML, mdId);
+        }
+        else
+        {
+            pszSQL = sqlite3_mprintf(
+                "INSERT INTO gpkg_metadata (md_scope, md_standard_uri, mime_type, metadata) VALUES "
+                "('dataset','http://gdal.org','text/xml','%q')",
+                pszXML);
+        }
+        SQLCommand(hDB, pszSQL);
+        sqlite3_free(pszSQL);
+
+        CPLFree(pszXML);
+
+        if( mdId < 0 )
+        {
+            const sqlite_int64 nFID = sqlite3_last_insert_rowid( hDB );
+            if( pszTableName != NULL && pszTableName[0] != '\0' )
+            {
+                pszSQL = sqlite3_mprintf(
+                    "INSERT INTO gpkg_metadata_reference (reference_scope, table_name, timestamp, md_file_id) VALUES "
+                    "('table', '%q', strftime('%%Y-%%m-%%dT%%H:%%M:%%fZ','now'), %d)",
+                    pszTableName, (int)nFID);
+            }
+            else
+            {
+                pszSQL = sqlite3_mprintf(
+                    "INSERT INTO gpkg_metadata_reference (reference_scope, timestamp, md_file_id) VALUES "
+                    "('geopackage', strftime('%%Y-%%m-%%dT%%H:%%M:%%fZ','now'), %d)",
+                    (int)nFID);
+            }
+        }
+        else
+        {
+            pszSQL = sqlite3_mprintf(
+                "UPDATE gpkg_metadata_reference SET timestamp = strftime('%%Y-%%m-%%dT%%H:%%M:%%fZ','now') WHERE md_file_id = %d",
+                mdId);
+        }
+        SQLCommand(hDB, pszSQL);
+        sqlite3_free(pszSQL);
+    }
+}
+
+/************************************************************************/
+/*                            FlushMetadata()                           */
+/************************************************************************/
+
+CPLErr GDALGeoPackageDataset::FlushMetadata()
+{
+    if( !m_bMetadataDirty || m_poParentDS != NULL )
+        return CE_None;
+    m_bMetadataDirty = FALSE;
+
+    if( m_osRasterTable.size() )
+    {
+        const char* pszIdentifier = GetMetadataItem("IDENTIFIER");
+        const char* pszDescription = GetMetadataItem("DESCRIPTION");
+        if( !m_bIdentifierAsCO && pszIdentifier != NULL &&
+            pszIdentifier != m_osIdentifier )
+        {
+            m_osIdentifier = pszIdentifier;
+            char* pszSQL = sqlite3_mprintf(
+                "UPDATE gpkg_contents SET identifier = '%q' WHERE table_name = '%q'",
+                pszIdentifier, m_osRasterTable.c_str());
+            SQLCommand(hDB, pszSQL);
+            sqlite3_free(pszSQL);
+        }
+        if( !m_bDescriptionAsCO && pszDescription != NULL &&
+            pszDescription != m_osDescription )
+        {
+            m_osDescription = pszDescription;
+            char* pszSQL = sqlite3_mprintf(
+                "UPDATE gpkg_contents SET description = '%q' WHERE table_name = '%q'",
+                pszDescription, m_osRasterTable.c_str());
+            SQLCommand(hDB, pszSQL);
+            sqlite3_free(pszSQL);
+        }
+    }
+
+    char** papszMDDup = NULL;
+    for( char** papszIter = GetMetadata(); papszIter && *papszIter; ++papszIter )
+    {
+        if( EQUALN(*papszIter, "IDENTIFIER=", strlen("IDENTIFIER=")) )
+            continue;
+        if( EQUALN(*papszIter, "DESCRIPTION=", strlen("DESCRIPTION=")) )
+            continue;
+        if( EQUALN(*papszIter, "ZOOM_LEVEL=", strlen("ZOOM_LEVEL=")) )
+            continue;
+        if( EQUALN(*papszIter, "GPKG_METADATA_ITEM_", strlen("GPKG_METADATA_ITEM_")) )
+            continue;
+        papszMDDup = CSLInsertString(papszMDDup, -1, *papszIter);
+    }
+
+    CPLXMLNode* psXMLNode;
+    {
+        GDALMultiDomainMetadata oLocalMDMD;
+        char** papszDomainList = oMDMD.GetDomainList();
+        char** papszIter = papszDomainList;
+        oLocalMDMD.SetMetadata(papszMDDup);
+        while( papszIter && *papszIter )
+        {
+            if( !EQUAL(*papszIter, "") &&  !EQUAL(*papszIter, "IMAGE_STRUCTURE") )
+                oLocalMDMD.SetMetadata(oMDMD.GetMetadata(*papszIter), *papszIter);
+            papszIter ++;
+        }
+        psXMLNode = oLocalMDMD.Serialize();
+    }
+
+    CSLDestroy(papszMDDup);
+    papszMDDup = NULL;
+
+    if( psXMLNode != NULL )
+    {
+        WriteMetadata(psXMLNode, m_osRasterTable.c_str() );
+    }
+
+    if( m_osRasterTable.size() )
+    {
+        char** papszGeopackageMD = GetMetadata("GEOPACKAGE");
+
+        char** papszMDDup = NULL;
+        for( char** papszIter = papszGeopackageMD; papszIter && *papszIter; ++papszIter )
+        {
+            papszMDDup = CSLInsertString(papszMDDup, -1, *papszIter);
+        }
+
+        GDALMultiDomainMetadata oLocalMDMD;
+        oLocalMDMD.SetMetadata(papszMDDup);
+        CSLDestroy(papszMDDup);
+        papszMDDup = NULL;
+        psXMLNode = oLocalMDMD.Serialize();
+        if( psXMLNode != NULL )
+        {
+            WriteMetadata(psXMLNode, NULL);
+        }
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                          GetMetadataItem()                           */
+/************************************************************************/
+
+const char *GDALGeoPackageDataset::GetMetadataItem( const char * pszName,
+                                                    const char * pszDomain )
+{
+    pszDomain = CheckMetadataDomain(pszDomain);
+    return CSLFetchNameValue( GetMetadata(pszDomain), pszName );
+}
+
+/************************************************************************/
+/*                            SetMetadata()                             */
+/************************************************************************/
+
+CPLErr GDALGeoPackageDataset::SetMetadata( char ** papszMetadata, const char * pszDomain )
+{
+    pszDomain = CheckMetadataDomain(pszDomain);
+    m_bMetadataDirty = TRUE;
+    GetMetadata(); /* force loading from storage if needed */
+    return GDALPamDataset::SetMetadata(papszMetadata, pszDomain);
+}
+
+/************************************************************************/
+/*                          SetMetadataItem()                           */
+/************************************************************************/
+
+CPLErr GDALGeoPackageDataset::SetMetadataItem( const char * pszName,
+                                               const char * pszValue,
+                                               const char * pszDomain )
+{
+    pszDomain = CheckMetadataDomain(pszDomain);
+    m_bMetadataDirty = TRUE;
+    GetMetadata(); /* force loading from storage if needed */
+    return GDALPamDataset::SetMetadataItem(pszName, pszValue, pszDomain);
 }
 
 /************************************************************************/
@@ -1903,9 +2276,9 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
             "FOR EACH ROW BEGIN "
             "SELECT RAISE(ABORT, 'insert on table gpkg_metadata_reference "
             "violates constraint: timestamp must be a valid time in ISO 8601 "
-            "\"yyyy-mm-ddThh-mm-ss.cccZ\" form') "
+            "\"yyyy-mm-ddThh:mm:ss.cccZ\" form') "
             "WHERE NOT (NEW.timestamp GLOB "
-            "'[1-2][0-9][0-9][0-9]-[0-1][0-9]-[1-3][0-9]T[0-2][0-9]:[0-5][0-9]:[0-5][0-9].[0-9][0-9][0-9]Z' "
+            "'[1-2][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9]:[0-5][0-9].[0-9][0-9][0-9]Z' "
             "AND strftime('%s',NEW.timestamp) NOT NULL); "
             "END; "
             "CREATE TRIGGER 'gpkg_metadata_reference_timestamp_update' "
@@ -1913,9 +2286,9 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
             "FOR EACH ROW BEGIN "
             "SELECT RAISE(ABORT, 'update on table gpkg_metadata_reference "
             "violates constraint: timestamp must be a valid time in ISO 8601 "
-            "\"yyyy-mm-ddThh-mm-ss.cccZ\" form') "
+            "\"yyyy-mm-ddThh:mm:ss.cccZ\" form') "
             "WHERE NOT (NEW.timestamp GLOB "
-            "'[1-2][0-9][0-9][0-9]-[0-1][0-9]-[1-3][0-9]T[0-2][0-9]:[0-5][0-9]:[0-5][0-9].[0-9][0-9][0-9]Z' "
+            "'[1-2][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9]:[0-5][0-9].[0-9][0-9][0-9]Z' "
             "AND strftime('%s',NEW.timestamp) NOT NULL); "
             "END";
         if ( OGRERR_NONE != SQLCommand(hDB, pszMetadataReferenceTriggers) )
@@ -1927,7 +2300,9 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
     {
         const char* pszTableName = CPLGetBasename(m_pszFilename);
         m_osRasterTable = CSLFetchNameValueDef(papszOptions, "RASTER_TABLE", pszTableName);
+        m_bIdentifierAsCO = CSLFetchNameValue(papszOptions, "RASTER_IDENTIFIER" ) != NULL;
         m_osIdentifier = CSLFetchNameValueDef(papszOptions, "RASTER_IDENTIFIER", m_osRasterTable);
+        m_bDescriptionAsCO = CSLFetchNameValue(papszOptions, "RASTER_DESCRIPTION" ) != NULL;
         m_osDescription = CSLFetchNameValueDef(papszOptions, "RASTER_DESCRIPTION", "");
 
         /* From C.7. sample_tile_pyramid (Informative) Table 31. EXAMPLE: tiles table Create Table SQL (Informative) */
@@ -2047,10 +2422,10 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
         for(int i = 1; i <= nBands; i ++)
             SetBand( i, new GDALGeoPackageRasterBand(this, i, nTileWidth, nTileHeight) );
 
-        SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
-        SetMetadataItem("IDENTIFIER", m_osIdentifier);
+        GDALPamDataset::SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        GDALPamDataset::SetMetadataItem("IDENTIFIER", m_osIdentifier);
         if( m_osDescription.size() )
-            SetMetadataItem("DESCRIPTION", m_osDescription);
+            GDALPamDataset::SetMetadataItem("DESCRIPTION", m_osDescription);
 
         const char* pszTF = CSLFetchNameValue(papszOptions, "DRIVER");
         if( pszTF )
@@ -2449,6 +2824,8 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
                                           const char *pszDialect )
 
 {
+    m_bHasReadMetadataFromStorage = FALSE;
+    FlushMetadata();
     for( int i = 0; i < m_nLayers; i++ )
     {
         m_papoLayers[i]->CreateSpatialIndexIfNecessary();
@@ -2782,7 +3159,7 @@ OGRErr GDALGeoPackageDataset::CreateExtensionsTableIfNecessary()
 
     /* Requirement 79 : Every extension of a GeoPackage SHALL be registered */
     /* in a corresponding row in the gpkg_extensions table. The absence of a */
-    /* gpkg_extensions table or the absence of rows in gpkg_extnsions table */
+    /* gpkg_extensions table or the absence of rows in gpkg_extensions table */
     /* SHALL both indicate the absence of extensions to a GeoPackage. */
     const char* pszCreateGpkgExtensions = 
         "CREATE TABLE gpkg_extensions ("
