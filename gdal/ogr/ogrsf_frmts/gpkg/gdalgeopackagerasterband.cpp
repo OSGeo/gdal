@@ -1030,7 +1030,8 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
             int rc = sqlite3_prepare(GetDB(), pszSQL, -1, &hStmt, NULL);
             if ( rc != SQLITE_OK )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, "failed to prepare SQL: %s", pszSQL);
+                CPLError( CE_Failure, CPLE_AppDefined, "failed to prepare SQL %s: %s",
+                          pszSQL, sqlite3_errmsg(hDB) );
                 CPLFree(pabyBlob);
             }
             else

@@ -25,7 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFpszFileNameTWARE.
+ * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
 #include "ogr_geopackage.h"
@@ -1368,20 +1368,20 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
                 OGRErr eErr;
                 for(int k=0;k<=jCandidate;k++)
                 {
-                    pszSQL = sqlite3_mprintf("UPDATE '%q' SET zoom_level = %d "
-                        "WHERE zoom_level = %d",
-                        m_osRasterTable.c_str(),
+                    pszSQL = sqlite3_mprintf("UPDATE gpkg_tile_matrix SET zoom_level = %d "
+                        "WHERE table_name = '%q' AND zoom_level = %d",
                         m_nZoomLevel - k + 1,
+                        m_osRasterTable.c_str(),
                         m_nZoomLevel - k);
                     eErr = SQLCommand(hDB, pszSQL);
                     sqlite3_free(pszSQL);
                     if ( eErr != OGRERR_NONE )
                         return CE_Failure;
 
-                    pszSQL = sqlite3_mprintf("UPDATE gpkg_tile_matrix SET zoom_level = %d "
-                        "WHERE table_name = '%q' AND zoom_level = %d",
-                        m_nZoomLevel - k + 1,
+                    pszSQL = sqlite3_mprintf("UPDATE '%q' SET zoom_level = %d "
+                        "WHERE zoom_level = %d",
                         m_osRasterTable.c_str(),
+                        m_nZoomLevel - k + 1,
                         m_nZoomLevel - k);
                     eErr = SQLCommand(hDB, pszSQL);
                     sqlite3_free(pszSQL);
@@ -1502,7 +1502,13 @@ char **GDALGeoPackageDataset::GetMetadata( const char *pszDomain )
     if( pszDomain != NULL && EQUAL(pszDomain,"SUBDATASETS") )
         return m_papszSubDatasets;
 
-    return GDALDataset::GetMetadata( pszDomain );
+    if( pszDomain != NULL && EQUAL(pszDomain,"IMAGE_STRUCTURE") )
+        return GDALPamDataset::GetMetadata( pszDomain );
+
+    if( pszDomain != NULL && pszDomain[0] != '\0' )
+        return NULL;
+
+    return GDALPamDataset::GetMetadata( pszDomain );
 }
 
 /************************************************************************/
@@ -1642,6 +1648,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
         if ( OGRERR_NONE != SQLCommand(hDB, pszGeometryColumns) )
             return FALSE;
 
+        /* From C.5. gpkg_tile_matrix_set Table 28. gpkg_tile_matrix_set Table Creation SQL  */
         const char *pszTileMatrixSet =
             "CREATE TABLE gpkg_tile_matrix_set ("
             "table_name TEXT NOT NULL PRIMARY KEY,"
@@ -1657,6 +1664,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
         if ( OGRERR_NONE != SQLCommand(hDB, pszTileMatrixSet) )
             return FALSE;
         
+        /* From C.6. gpkg_tile_matrix Table 29. gpkg_tile_matrix Table Creation SQL */
         const char *pszTileMatrix =
             "CREATE TABLE gpkg_tile_matrix ("
             "table_name TEXT NOT NULL,"
@@ -1673,7 +1681,73 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
             
         if ( OGRERR_NONE != SQLCommand(hDB, pszTileMatrix) )
             return FALSE;
+
+        /* From D.1. gpkg_tile_matrix Table 39. gpkg_tile_matrix Trigger Definition SQL */
+        const char* pszTileMatrixTrigger =
+        "CREATE TRIGGER 'gpkg_tile_matrix_zoom_level_insert' "
+        "BEFORE INSERT ON 'gpkg_tile_matrix' "
+        "FOR EACH ROW BEGIN "
+        "SELECT RAISE(ABORT, 'insert on table ''gpkg_tile_matrix'' violates constraint: zoom_level cannot be less than 0') "
+        "WHERE (NEW.zoom_level < 0); "
+        "END; "
+        "CREATE TRIGGER 'gpkg_tile_matrix_zoom_level_update' "
+        "BEFORE UPDATE of zoom_level ON 'gpkg_tile_matrix' "
+        "FOR EACH ROW BEGIN "
+        "SELECT RAISE(ABORT, 'update on table ''gpkg_tile_matrix'' violates constraint: zoom_level cannot be less than 0') "
+        "WHERE (NEW.zoom_level < 0); "
+        "END; "
+        "CREATE TRIGGER 'gpkg_tile_matrix_matrix_width_insert' "
+        "BEFORE INSERT ON 'gpkg_tile_matrix' "
+        "FOR EACH ROW BEGIN "
+        "SELECT RAISE(ABORT, 'insert on table ''gpkg_tile_matrix'' violates constraint: matrix_width cannot be less than 1') "
+        "WHERE (NEW.matrix_width < 1); "
+        "END; "
+        "CREATE TRIGGER 'gpkg_tile_matrix_matrix_width_update' "
+        "BEFORE UPDATE OF matrix_width ON 'gpkg_tile_matrix' "
+        "FOR EACH ROW BEGIN "
+        "SELECT RAISE(ABORT, 'update on table ''gpkg_tile_matrix'' violates constraint: matrix_width cannot be less than 1') "
+        "WHERE (NEW.matrix_width < 1); "
+        "END; "
+        "CREATE TRIGGER 'gpkg_tile_matrix_matrix_height_insert' "
+        "BEFORE INSERT ON 'gpkg_tile_matrix' "
+        "FOR EACH ROW BEGIN "
+        "SELECT RAISE(ABORT, 'insert on table ''gpkg_tile_matrix'' violates constraint: matrix_height cannot be less than 1') "
+        "WHERE (NEW.matrix_height < 1); "
+        "END; "
+        "CREATE TRIGGER 'gpkg_tile_matrix_matrix_height_update' "
+        "BEFORE UPDATE OF matrix_height ON 'gpkg_tile_matrix' "
+        "FOR EACH ROW BEGIN "
+        "SELECT RAISE(ABORT, 'update on table ''gpkg_tile_matrix'' violates constraint: matrix_height cannot be less than 1') "
+        "WHERE (NEW.matrix_height < 1); "
+        "END; "
+        "CREATE TRIGGER 'gpkg_tile_matrix_pixel_x_size_insert' "
+        "BEFORE INSERT ON 'gpkg_tile_matrix' "
+        "FOR EACH ROW BEGIN "
+        "SELECT RAISE(ABORT, 'insert on table ''gpkg_tile_matrix'' violates constraint: pixel_x_size must be greater than 0') "
+        "WHERE NOT (NEW.pixel_x_size > 0); "
+        "END; "
+        "CREATE TRIGGER 'gpkg_tile_matrix_pixel_x_size_update' "
+        "BEFORE UPDATE OF pixel_x_size ON 'gpkg_tile_matrix' "
+        "FOR EACH ROW BEGIN "
+        "SELECT RAISE(ABORT, 'update on table ''gpkg_tile_matrix'' violates constraint: pixel_x_size must be greater than 0') "
+        "WHERE NOT (NEW.pixel_x_size > 0); "
+        "END; "
+        "CREATE TRIGGER 'gpkg_tile_matrix_pixel_y_size_insert' "
+        "BEFORE INSERT ON 'gpkg_tile_matrix' "
+        "FOR EACH ROW BEGIN "
+        "SELECT RAISE(ABORT, 'insert on table ''gpkg_tile_matrix'' violates constraint: pixel_y_size must be greater than 0') "
+        "WHERE NOT (NEW.pixel_y_size > 0); "
+        "END; "
+        "CREATE TRIGGER 'gpkg_tile_matrix_pixel_y_size_update' "
+        "BEFORE UPDATE OF pixel_y_size ON 'gpkg_tile_matrix' "
+        "FOR EACH ROW BEGIN "
+        "SELECT RAISE(ABORT, 'update on table ''gpkg_tile_matrix'' violates constraint: pixel_y_size must be greater than 0') "
+        "WHERE NOT (NEW.pixel_y_size > 0); "
+        "END;";
+        if ( OGRERR_NONE != SQLCommand(hDB, pszTileMatrixTrigger) )
+            return FALSE;
         
+        /* From C.10. gpkg_metadata Table 35. gpkg_metadata Table Definition SQL  */
         const char* pszMetadata =
             "CREATE TABLE gpkg_metadata ("
             "id INTEGER CONSTRAINT m_pk PRIMARY KEY ASC NOT NULL UNIQUE,"
@@ -1685,7 +1759,43 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
             
         if ( OGRERR_NONE != SQLCommand(hDB, pszMetadata) )
             return FALSE;
-        
+
+        /* From D.2. metadata Table 40. metadata Trigger Definition SQL  */
+        const char* pszMetadataTriggers =
+        "CREATE TRIGGER 'gpkg_metadata_md_scope_insert' "
+        "BEFORE INSERT ON 'gpkg_metadata' "
+        "FOR EACH ROW BEGIN "
+        "SELECT RAISE(ABORT, 'insert on table gpkg_metadata violates "
+        "constraint: md_scope must be one of undefined | fieldSession | "
+        "collectionSession | series | dataset | featureType | feature | "
+        "attributeType | attribute | tile | model | catalogue | schema | "
+        "taxonomy software | service | collectionHardware | "
+        "nonGeographicDataset | dimensionGroup') "
+        "WHERE NOT(NEW.md_scope IN "
+        "('undefined','fieldSession','collectionSession','series','dataset', "
+        "'featureType','feature','attributeType','attribute','tile','model', "
+        "'catalogue','schema','taxonomy','software','service', "
+        "'collectionHardware','nonGeographicDataset','dimensionGroup')); "
+        "END; "
+        "CREATE TRIGGER 'gpkg_metadata_md_scope_update' "
+        "BEFORE UPDATE OF 'md_scope' ON 'gpkg_metadata' "
+        "FOR EACH ROW BEGIN "
+        "SELECT RAISE(ABORT, 'update on table gpkg_metadata violates "
+        "constraint: md_scope must be one of undefined | fieldSession | "
+        "collectionSession | series | dataset | featureType | feature | "
+        "attributeType | attribute | tile | model | catalogue | schema | "
+        "taxonomy software | service | collectionHardware | "
+        "nonGeographicDataset | dimensionGroup') "
+        "WHERE NOT(NEW.md_scope IN "
+        "('undefined','fieldSession','collectionSession','series','dataset', "
+        "'featureType','feature','attributeType','attribute','tile','model', "
+        "'catalogue','schema','taxonomy','software','service', "
+        "'collectionHardware','nonGeographicDataset','dimensionGroup')); "
+        "END";
+        if ( OGRERR_NONE != SQLCommand(hDB, pszMetadataTriggers) )
+            return FALSE;
+
+        /* From C.11. gpkg_metadata_reference Table 36. gpkg_metadata_reference Table Definition SQL */
         const char* pszMetadataReference =
             "CREATE TABLE gpkg_metadata_reference ("
             "reference_scope TEXT NOT NULL,"
@@ -1701,6 +1811,116 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
             
         if ( OGRERR_NONE != SQLCommand(hDB, pszMetadataReference) )
             return FALSE;
+
+        /* From D.3. metadata_reference Table 41. gpkg_metadata_reference Trigger Definition SQL   */
+        const char* pszMetadataReferenceTriggers =
+            "CREATE TRIGGER 'gpkg_metadata_reference_reference_scope_insert' "
+            "BEFORE INSERT ON 'gpkg_metadata_reference' "
+            "FOR EACH ROW BEGIN "
+            "SELECT RAISE(ABORT, 'insert on table gpkg_metadata_reference "
+            "violates constraint: reference_scope must be one of \"geopackage\", "
+            "table\", \"column\", \"row\", \"row/col\"') "
+            "WHERE NOT NEW.reference_scope IN "
+            "('geopackage','table','column','row','row/col'); "
+            "END; "
+            "CREATE TRIGGER 'gpkg_metadata_reference_reference_scope_update' "
+            "BEFORE UPDATE OF 'reference_scope' ON 'gpkg_metadata_reference' "
+            "FOR EACH ROW BEGIN "
+            "SELECT RAISE(ABORT, 'update on table gpkg_metadata_reference "
+            "violates constraint: referrence_scope must be one of \"geopackage\", "
+            "\"table\", \"column\", \"row\", \"row/col\"') "
+            "WHERE NOT NEW.reference_scope IN "
+            "('geopackage','table','column','row','row/col'); "
+            "END; "
+            "CREATE TRIGGER 'gpkg_metadata_reference_column_name_insert' "
+            "BEFORE INSERT ON 'gpkg_metadata_reference' "
+            "FOR EACH ROW BEGIN "
+            "SELECT RAISE(ABORT, 'insert on table gpkg_metadata_reference "
+            "violates constraint: column name must be NULL when reference_scope "
+            "is \"geopackage\", \"table\" or \"row\"') "
+            "WHERE (NEW.reference_scope IN ('geopackage','table','row') "
+            "AND NEW.column_name IS NOT NULL); "
+            "SELECT RAISE(ABORT, 'insert on table gpkg_metadata_reference "
+            "violates constraint: column name must be defined for the specified "
+            "table when reference_scope is \"column\" or \"row/col\"') "
+            "WHERE (NEW.reference_scope IN ('column','row/col') "
+            "AND NOT NEW.table_name IN ( "
+            "SELECT name FROM SQLITE_MASTER WHERE type = 'table' "
+            "AND name = NEW.table_name "
+            "AND sql LIKE ('%' || NEW.column_name || '%'))); "
+            "END; "
+            "CREATE TRIGGER 'gpkg_metadata_reference_column_name_update' "
+            "BEFORE UPDATE OF column_name ON 'gpkg_metadata_reference' "
+            "FOR EACH ROW BEGIN "
+            "SELECT RAISE(ABORT, 'update on table gpkg_metadata_reference "
+            "violates constraint: column name must be NULL when reference_scope "
+            "is \"geopackage\", \"table\" or \"row\"') "
+            "WHERE (NEW.reference_scope IN ('geopackage','table','row') "
+            "AND NEW.column_nameIS NOT NULL); "
+            "SELECT RAISE(ABORT, 'update on table gpkg_metadata_reference "
+            "violates constraint: column name must be defined for the specified "
+            "table when reference_scope is \"column\" or \"row/col\"') "
+            "WHERE (NEW.reference_scope IN ('column','row/col') "
+            "AND NOT NEW.table_name IN ( "
+            "SELECT name FROM SQLITE_MASTER WHERE type = 'table' "
+            "AND name = NEW.table_name "
+            "AND sql LIKE ('%' || NEW.column_name || '%'))); "
+            "END; "
+            "CREATE TRIGGER 'gpkg_metadata_reference_row_id_value_insert' "
+            "BEFORE INSERT ON 'gpkg_metadata_reference' "
+            "FOR EACH ROW BEGIN "
+            "SELECT RAISE(ABORT, 'insert on table gpkg_metadata_reference "
+            "violates constraint: row_id_value must be NULL when reference_scope "
+            "is \"geopackage\", \"table\" or \"column\"') "
+            "WHERE NEW.reference_scope IN ('geopackage','table','column') "
+            "AND NEW.row_id_value IS NOT NULL; "
+            "SELECT RAISE(ABORT, 'insert on table gpkg_metadata_reference "
+            "violates constraint: row_id_value must exist in specified table when "
+            "reference_scope is \"row\" or \"row/col\"') "
+            "WHERE NEW.reference_scope IN ('row','row/col') "
+            "AND NOT EXISTS (SELECT rowid "
+            "FROM (SELECT NEW.table_name AS table_name) WHERE rowid = "
+            "NEW.row_id_value); "
+            "END; "
+            "CREATE TRIGGER 'gpkg_metadata_reference_row_id_value_update' "
+            "BEFORE UPDATE OF 'row_id_value' ON 'gpkg_metadata_reference' "
+            "FOR EACH ROW BEGIN "
+            "SELECT RAISE(ABORT, 'update on table gpkg_metadata_reference "
+            "violates constraint: row_id_value must be NULL when reference_scope "
+            "is \"geopackage\", \"table\" or \"column\"') "
+            "WHERE NEW.reference_scope IN ('geopackage','table','column') "
+            "AND NEW.row_id_value IS NOT NULL; "
+            "SELECT RAISE(ABORT, 'update on table gpkg_metadata_reference "
+            "violates constraint: row_id_value must exist in specified table when "
+            "reference_scope is \"row\" or \"row/col\"') "
+            "WHERE NEW.reference_scope IN ('row','row/col') "
+            "AND NOT EXISTS (SELECT rowid "
+            "FROM (SELECT NEW.table_name AS table_name) WHERE rowid = "
+            "NEW.row_id_value); "
+            "END; "
+            "CREATE TRIGGER 'gpkg_metadata_reference_timestamp_insert' "
+            "BEFORE INSERT ON 'gpkg_metadata_reference' "
+            "FOR EACH ROW BEGIN "
+            "SELECT RAISE(ABORT, 'insert on table gpkg_metadata_reference "
+            "violates constraint: timestamp must be a valid time in ISO 8601 "
+            "\"yyyy-mm-ddThh-mm-ss.cccZ\" form') "
+            "WHERE NOT (NEW.timestamp GLOB "
+            "'[1-2][0-9][0-9][0-9]-[0-1][0-9]-[1-3][0-9]T[0-2][0-9]:[0-5][0-9]:[0-5][0-9].[0-9][0-9][0-9]Z' "
+            "AND strftime('%s',NEW.timestamp) NOT NULL); "
+            "END; "
+            "CREATE TRIGGER 'gpkg_metadata_reference_timestamp_update' "
+            "BEFORE UPDATE OF 'timestamp' ON 'gpkg_metadata_reference' "
+            "FOR EACH ROW BEGIN "
+            "SELECT RAISE(ABORT, 'update on table gpkg_metadata_reference "
+            "violates constraint: timestamp must be a valid time in ISO 8601 "
+            "\"yyyy-mm-ddThh-mm-ss.cccZ\" form') "
+            "WHERE NOT (NEW.timestamp GLOB "
+            "'[1-2][0-9][0-9][0-9]-[0-1][0-9]-[1-3][0-9]T[0-2][0-9]:[0-5][0-9]:[0-5][0-9].[0-9][0-9][0-9]Z' "
+            "AND strftime('%s',NEW.timestamp) NOT NULL); "
+            "END";
+        if ( OGRERR_NONE != SQLCommand(hDB, pszMetadataReferenceTriggers) )
+            return FALSE;
+
     }
     
     if( nBands != 0 )
@@ -1710,6 +1930,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
         m_osIdentifier = CSLFetchNameValueDef(papszOptions, "RASTER_IDENTIFIER", m_osRasterTable);
         m_osDescription = CSLFetchNameValueDef(papszOptions, "RASTER_DESCRIPTION", "");
 
+        /* From C.7. sample_tile_pyramid (Informative) Table 31. EXAMPLE: tiles table Create Table SQL (Informative) */
         char* pszSQL = sqlite3_mprintf("CREATE TABLE '%q' ("
           "id INTEGER PRIMARY KEY AUTOINCREMENT,"
           "zoom_level INTEGER NOT NULL,"
@@ -1720,6 +1941,85 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
         ")", m_osRasterTable.c_str());
         OGRErr eErr = SQLCommand(hDB, pszSQL);
         sqlite3_free(pszSQL);
+        if ( OGRERR_NONE != eErr )
+            return FALSE;
+
+        /* From D.5. sample_tile_pyramid Table 43. tiles table Trigger Definition SQL  */
+        char* pszSQLTriggers = sqlite3_mprintf("CREATE TRIGGER '%q_zoom_insert' "
+        "BEFORE INSERT ON '%q' "
+        "FOR EACH ROW BEGIN "
+        "SELECT RAISE(ABORT, 'insert on table ''%q'' violates constraint: zoom_level not specified for table in gpkg_tile_matrix') "
+        "WHERE NOT (NEW.zoom_level IN (SELECT zoom_level FROM gpkg_tile_matrix WHERE table_name = '%q')) ; "
+        "END; "
+        "CREATE TRIGGER '%q_zoom_update' "
+        "BEFORE UPDATE OF zoom_level ON '%q' "
+        "FOR EACH ROW BEGIN "
+        "SELECT RAISE(ABORT, 'update on table ''%q'' violates constraint: zoom_level not specified for table in gpkg_tile_matrix') "
+        "WHERE NOT (NEW.zoom_level IN (SELECT zoom_level FROM gpkg_tile_matrix WHERE table_name = '%q')) ; "
+        "END; "
+        "CREATE TRIGGER '%q_tile_column_insert' "
+        "BEFORE INSERT ON '%q' "
+        "FOR EACH ROW BEGIN "
+        "SELECT RAISE(ABORT, 'insert on table ''%q'' violates constraint: tile_column cannot be < 0') "
+        "WHERE (NEW.tile_column < 0) ; "
+        "SELECT RAISE(ABORT, 'insert on table ''%q'' violates constraint: tile_column must by < matrix_width specified for table and zoom level in gpkg_tile_matrix') "
+        "WHERE NOT (NEW.tile_column < (SELECT matrix_width FROM gpkg_tile_matrix WHERE table_name = '%q' AND zoom_level = NEW.zoom_level)); "
+        "END; "
+        "CREATE TRIGGER '%q_tile_column_update' "
+        "BEFORE UPDATE OF tile_column ON '%q' "
+        "FOR EACH ROW BEGIN "
+        "SELECT RAISE(ABORT, 'update on table ''%q'' violates constraint: tile_column cannot be < 0') "
+        "WHERE (NEW.tile_column < 0) ; "
+        "SELECT RAISE(ABORT, 'update on table ''%q'' violates constraint: tile_column must by < matrix_width specified for table and zoom level in gpkg_tile_matrix') "
+        "WHERE NOT (NEW.tile_column < (SELECT matrix_width FROM gpkg_tile_matrix WHERE table_name = '%q' AND zoom_level = NEW.zoom_level)); "
+        "END; "
+        "CREATE TRIGGER '%q_tile_row_insert' "
+        "BEFORE INSERT ON '%q' "
+        "FOR EACH ROW BEGIN "
+        "SELECT RAISE(ABORT, 'insert on table ''%q'' violates constraint: tile_row cannot be < 0') "
+        "WHERE (NEW.tile_row < 0) ; "
+        "SELECT RAISE(ABORT, 'insert on table ''%q'' violates constraint: tile_row must by < matrix_height specified for table and zoom level in gpkg_tile_matrix') "
+        "WHERE NOT (NEW.tile_row < (SELECT matrix_height FROM gpkg_tile_matrix WHERE table_name = '%q' AND zoom_level = NEW.zoom_level)); "
+        "END; "
+        "CREATE TRIGGER '%q_tile_row_update' "
+        "BEFORE UPDATE OF tile_row ON '%q' "
+        "FOR EACH ROW BEGIN "
+        "SELECT RAISE(ABORT, 'update on table ''%q'' violates constraint: tile_row cannot be < 0') "
+        "WHERE (NEW.tile_row < 0) ; "
+        "SELECT RAISE(ABORT, 'update on table ''%q'' violates constraint: tile_row must by < matrix_height specified for table and zoom level in gpkg_tile_matrix') "
+        "WHERE NOT (NEW.tile_row < (SELECT matrix_height FROM gpkg_tile_matrix WHERE table_name = '%q' AND zoom_level = NEW.zoom_level)); "
+        "END; ",
+        m_osRasterTable.c_str(),
+        m_osRasterTable.c_str(),
+        m_osRasterTable.c_str(),
+        m_osRasterTable.c_str(),
+        m_osRasterTable.c_str(),
+        m_osRasterTable.c_str(),
+        m_osRasterTable.c_str(),
+        m_osRasterTable.c_str(),
+        m_osRasterTable.c_str(),
+        m_osRasterTable.c_str(),
+        m_osRasterTable.c_str(),
+        m_osRasterTable.c_str(),
+        m_osRasterTable.c_str(),
+        m_osRasterTable.c_str(),
+        m_osRasterTable.c_str(),
+        m_osRasterTable.c_str(),
+        m_osRasterTable.c_str(),
+        m_osRasterTable.c_str(),
+        m_osRasterTable.c_str(),
+        m_osRasterTable.c_str(),
+        m_osRasterTable.c_str(),
+        m_osRasterTable.c_str(),
+        m_osRasterTable.c_str(),
+        m_osRasterTable.c_str(),
+        m_osRasterTable.c_str(),
+        m_osRasterTable.c_str(),
+        m_osRasterTable.c_str(),
+        m_osRasterTable.c_str()
+        );
+        eErr = SQLCommand(hDB, pszSQLTriggers);
+        sqlite3_free(pszSQLTriggers);
         if ( OGRERR_NONE != eErr )
             return FALSE;
 
