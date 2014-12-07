@@ -73,7 +73,11 @@ class GDALGeoPackageDataset : public OGRSQLiteBaseDataSource
 
     CPLString           m_osRasterTable;
     CPLString           m_osIdentifier;
+    int                 m_bIdentifierAsCO;
     CPLString           m_osDescription;
+    int                 m_bDescriptionAsCO;
+    int                 m_bHasReadMetadataFromStorage;
+    int                 m_bMetadataDirty;
     char              **m_papszSubDatasets;
     char               *m_pszProjection;
     int                 m_bGeoTransformValid;
@@ -164,12 +168,24 @@ class GDALGeoPackageDataset : public OGRSQLiteBaseDataSource
         int                     RegisterZoomOtherExtension();
         void                    ParseCompressionOptions(char** papszOptions);
 
+        const char*             CheckMetadataDomain( const char* pszDomain );
+        void                    WriteMetadata(CPLXMLNode* psXMLNode, /* will be destroyed by the method /*/
+                                              const char* pszTableName);
+        CPLErr                  FlushMetadata();
+
     public:
                             GDALGeoPackageDataset();
                             ~GDALGeoPackageDataset();
 
         virtual char **     GetMetadata( const char *pszDomain = NULL );
+        virtual const char *GetMetadataItem( const char * pszName,
+                                             const char * pszDomain = "" );
         virtual char **     GetMetadataDomainList();
+        virtual CPLErr      SetMetadata( char ** papszMetadata,
+                                         const char * pszDomain = "" );
+        virtual CPLErr      SetMetadataItem( const char * pszName,
+                                             const char * pszValue,
+                                             const char * pszDomain = "" );
 
         virtual const char* GetProjectionRef();
         virtual CPLErr      SetProjection( const char* pszProjection );
