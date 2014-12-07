@@ -362,11 +362,14 @@ GDALGeoPackageDataset::GDALGeoPackageDataset()
     m_eTF = GPKG_TF_PNG_JPEG;
     m_nZLevel = 6;
     m_nQuality = 75;
+    m_bDither = FALSE;
     m_poParentDS = NULL;
     m_nOverviewCount = 0;
     m_papoOverviewDS = NULL;
     m_bTriedEstablishingCT = FALSE;
+    m_pabyHugeColorArray = NULL;
     m_poCT = NULL;
+    m_bInWriteTile = FALSE;
 }
 
 /************************************************************************/
@@ -404,6 +407,7 @@ GDALGeoPackageDataset::~GDALGeoPackageDataset()
     CPLFree(m_pszProjection);
     CPLFree(m_pabyCachedTiles);
     delete m_poCT;
+    CPLFree(m_pabyHugeColorArray);
 }
 
 /************************************************************************/
@@ -767,6 +771,9 @@ int GDALGeoPackageDataset::InitRaster ( GDALGeoPackageDataset* poParentDS,
         eAccess = poParentDS->eAccess;
         hDB = poParentDS->hDB;
         m_eTF = poParentDS->m_eTF;
+        m_nQuality = poParentDS->m_nQuality;
+        m_nZLevel = poParentDS->m_nZLevel;
+        m_bDither = poParentDS->m_bDither;
         m_nSRID = poParentDS->m_nSRID;
         m_osWHERE = poParentDS->m_osWHERE;
         SetDescription(CPLSPrintf("%s - zoom_level=%d",
@@ -789,6 +796,8 @@ static GPKGTileFormat GetTileFormat(const char* pszTF )
             eTF = GPKG_TF_PNG_JPEG;
         else if( EQUAL(pszTF, "PNG") )
             eTF = GPKG_TF_PNG;
+        else if( EQUAL(pszTF, "PNG8") )
+            eTF = GPKG_TF_PNG8;
         else if( EQUAL(pszTF, "JPEG") )
             eTF = GPKG_TF_JPEG;
         else if( EQUAL(pszTF, "WEBP") )
@@ -951,6 +960,8 @@ int GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
             m_eTF = eTF;
         }
     }
+
+    ParseCompressionOptions(papszOpenOptions);
 
     m_osWHERE = CSLFetchNameValueDef(papszOpenOptions, "WHERE", "");
 
@@ -1586,13 +1597,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
         if( pszTF )
             m_eTF = GetTileFormat(pszTF);
 
-        const char* pszZLevel = CSLFetchNameValue(papszOptions, "ZLEVEL");
-        if( pszZLevel )
-            m_nZLevel = atoi(pszZLevel);
-
-        const char* pszQuality = CSLFetchNameValue(papszOptions, "QUALITY");
-        if( pszQuality )
-            m_nQuality = atoi(pszQuality);
+        ParseCompressionOptions(papszOptions);
 
         if( m_eTF == GPKG_TF_WEBP )
         {
@@ -1609,6 +1614,25 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
 
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                        ParseCompressionOptions()                     */
+/************************************************************************/
+
+void GDALGeoPackageDataset::ParseCompressionOptions(char** papszOptions)
+{
+    const char* pszZLevel = CSLFetchNameValue(papszOptions, "ZLEVEL");
+    if( pszZLevel )
+        m_nZLevel = atoi(pszZLevel);
+
+    const char* pszQuality = CSLFetchNameValue(papszOptions, "QUALITY");
+    if( pszQuality )
+        m_nQuality = atoi(pszQuality);
+
+    const char* pszDither = CSLFetchNameValue(papszOptions, "DITHER");
+    if( pszDither )
+        m_bDither = CSLTestBoolean(pszDither);
 }
 
 /************************************************************************/

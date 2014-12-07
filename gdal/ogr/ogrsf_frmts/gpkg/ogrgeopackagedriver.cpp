@@ -186,6 +186,18 @@ void RegisterOGRGeoPackage()
                                    "drv_geopackage.html" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
 
+#define COMPRESSION_OPTIONS \
+"  <Option name='DRIVER' type='string-select' description='Format to use to create tiles' default='PNG_JPEG'>" \
+"    <Value>PNG_JPEG</Value>" \
+"    <Value>PNG</Value>" \
+"    <Value>PNG8</Value>" \
+"    <Value>JPEG</Value>" \
+"    <Value>WEBP</Value>" \
+"  </Option>" \
+"  <Option name='QUALITY' type='int' min='1' max='100' description='Quality for JPEG and WEBP tiles' default='75'/>" \
+"  <Option name='ZLEVEL' type='int' min='1' max='9' description='DEFLATE compression level for PNG tiles' default='6'/>" \
+"  <Option name='DITHER' type='boolean' description='Whether to apply Floyd-Steinberg dithering (for DRIVER=PNG8)' default='NO'/>"
+
         poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, "<OpenOptionList>"
 "  <Option name='TABLE' type='string' description='Name of tile user-table'/>"
 "  <Option name='ZOOM_LEVEL' type='integer' description='Zoom level of full resolution. If not specified, maximum non-empty zoom level'/>"
@@ -195,13 +207,8 @@ void RegisterOGRGeoPackage()
 "  <Option name='MAXX' type='float' description='Maximum X of area of interest'/>"
 "  <Option name='MAXY' type='float' description='Maximum Y of area of interest'/>"
 "  <Option name='USE_TILE_EXTENT' type='boolean' description='Use tile extent of content to determine area of interest' default='NO'/>"
-"  <Option name='DRIVER' type='string-select' description='Format to use to create tiles' default='PNG_JPEG'>"
-"    <Value>PNG_JPEG</Value>"
-"    <Value>PNG</Value>"
-"    <Value>JPEG</Value>"
-"    <Value>WEBP</Value>"
-"  </Option>"
 "  <Option name='WHERE' type='string' description='SQL WHERE clause to be appended to tile requests'/>"
+COMPRESSION_OPTIONS
 "</OpenOptionList>");
 
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "<CreationOptionList>"
@@ -211,14 +218,7 @@ void RegisterOGRGeoPackage()
 "  <Option name='BLOCKSIZE' type='int' description='Block size in pixels' default='256' max='4096'/>"
 "  <Option name='BLOCKXSIZE' type='int' description='Block width in pixels' default='256' max='4096'/>"
 "  <Option name='BLOCKYSIZE' type='int' description='Block height in pixels' default='256' max='4096'/>"
-"  <Option name='DRIVER' type='string-select' description='Format to use to create tiles' default='PNG_JPEG'>"
-"    <Value>PNG_JPEG</Value>"
-"    <Value>PNG</Value>"
-"    <Value>JPEG</Value>"
-"    <Value>WEBP</Value>"
-"  </Option>"
-"  <Option name='QUALITY' type='int' min='1' max='100' description='Quality for JPEG and WEBP tiles' default='75'/>"
-"  <Option name='ZLEVEL' type='int' min='1' max='9' description='DEFLATE compression level for PNG tiles' default='6'/>"
+COMPRESSION_OPTIONS
 "</CreationOptionList>");
 
         poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
