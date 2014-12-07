@@ -1443,11 +1443,11 @@ def gpkg_17():
     out_ds = None
 
     # Test building non-supported overview levels
-    gdal.SetConfigOption('ALLOW_GPKG_ZOOM_OTHER_EXTENSION', 'NO')
     out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE)
-    gdal.SetConfigOption('ALLOW_GPKG_ZOOM_OTHER_EXTENSION', None)
     gdal.PushErrorHandler()
+    gdal.SetConfigOption('ALLOW_GPKG_ZOOM_OTHER_EXTENSION', 'NO')
     ret = out_ds.BuildOverviews('NEAR', [3])
+    gdal.SetConfigOption('ALLOW_GPKG_ZOOM_OTHER_EXTENSION', None)
     gdal.PopErrorHandler()
     if ret == 0:
         gdaltest.post_reason('fail')
@@ -1455,11 +1455,11 @@ def gpkg_17():
     out_ds = None
 
     # Test building non-supported overview levels
-    gdal.SetConfigOption('ALLOW_GPKG_ZOOM_OTHER_EXTENSION', 'NO')
     out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE)
-    gdal.SetConfigOption('ALLOW_GPKG_ZOOM_OTHER_EXTENSION', None)
     gdal.PushErrorHandler()
+    gdal.SetConfigOption('ALLOW_GPKG_ZOOM_OTHER_EXTENSION', 'NO')
     ret = out_ds.BuildOverviews('NEAR', [2, 4])
+    gdal.SetConfigOption('ALLOW_GPKG_ZOOM_OTHER_EXTENSION', None)
     gdal.PopErrorHandler()
     if ret == 0:
         gdaltest.post_reason('fail')
