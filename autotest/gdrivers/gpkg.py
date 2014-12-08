@@ -453,6 +453,7 @@ def gpkg_3():
     out_ds = gdal.Open('tmp/tmp.gpkg')
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
+        gdaltest.webp_dr.Register()
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -462,6 +463,7 @@ def gpkg_3():
     out_ds.GetRasterBand(1).Checksum()
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
+        gdaltest.webp_dr.Register()
         gdaltest.post_reason('fail')
         return 'fail'
     out_ds = None
@@ -1110,6 +1112,73 @@ def gpkg_14():
     if fc != 0:
         gdaltest.post_reason('fail')
         return 'fail'
+    ds.WriteRaster(0,0,ds.RasterXSize,ds.RasterYSize, data)
+    ds = None
+
+    # Partial tile shift (enclosing tiles)
+    ds = gdal.OpenEx('GPKG:tmp/tmp.gpkg:foo', gdal.OF_UPDATE, open_options = ['MINX=-270','MAXY=180','MINY=-180','MAXX=270'])
+    if ds.RasterXSize != 600 or ds.RasterYSize != 400:
+        print(ds.RasterXSize)
+        print(ds.RasterYSize)
+        gdaltest.post_reason('fail')
+        return 'fail'
+    expected_cs = [28940, 32454, 40526, 64323]
+    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    if got_cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
+        return 'fail'
+
+    # Force full rewrite
+    data = ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
+    # Do a clean just to be sure
+    for i in range(ds.RasterCount):
+        ds.GetRasterBand(i+1).Fill(0)
+    ds.FlushCache()
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM foo')
+    fc = sql_lyr.GetFeatureCount()
+    ds.ReleaseResultSet(sql_lyr)
+    if fc != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.WriteRaster(0,0,ds.RasterXSize,ds.RasterYSize, data)
+    ds = None
+
+    ds = gdal.OpenEx('GPKG:tmp/tmp.gpkg:foo', gdal.OF_UPDATE, open_options = ['MINX=-270','MAXY=180','MINY=-180','MAXX=270'])
+    expected_cs = [28940, 32454, 40526, 64323]
+    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    if got_cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
+        return 'fail'
+    # Partial rewrite
+    data = ds.GetRasterBand(1).ReadRaster(0,0,256,256)
+    ds.GetRasterBand(1).WriteRaster(0,0,256,256, data)
+    ds = None
+
+    ds = gdal.OpenEx('GPKG:tmp/tmp.gpkg:foo', open_options = ['MINX=-270','MAXY=180','MINY=-180','MAXX=270'])
+    expected_cs = [28940, 32454, 40526, 64323]
+    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    if got_cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
+        return 'fail'
+    ds = None
+
+    # Partial tile shift (included in tiles)
+    ds = gdal.OpenEx('GPKG:tmp/tmp.gpkg:foo', gdal.OF_UPDATE, open_options = ['MINX=-90','MAXY=45','MINY=-45','MAXX=90'])
+    if ds.RasterXSize != 200 or ds.RasterYSize != 100:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    expected_cs = [9586,9360,26758,48827]
+    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    if got_cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
+        return 'fail'
+
+    # Force full rewrite
+    data = ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
     ds.WriteRaster(0,0,ds.RasterXSize,ds.RasterYSize, data)
     ds = None
 

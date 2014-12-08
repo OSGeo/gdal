@@ -73,11 +73,7 @@ OGRErr GDALGeoPackageDataset::SetApplicationId()
     }
 
     /* And re-open the file */
-#ifdef HAVE_SQLITE_VFS
     if (!OpenOrCreateDB(SQLITE_OPEN_READWRITE) )
-#else
-    if (!OpenOrCreateDB(0))
-#endif
         return OGRERR_FAILURE;
 
     return OGRERR_NONE;
@@ -377,6 +373,8 @@ GDALGeoPackageDataset::GDALGeoPackageDataset()
     m_pabyHugeColorArray = NULL;
     m_poCT = NULL;
     m_bInWriteTile = FALSE;
+    m_hTempDB = NULL;
+    m_bInFlushCache = FALSE;
 }
 
 /************************************************************************/
@@ -402,8 +400,16 @@ GDALGeoPackageDataset::~GDALGeoPackageDataset()
     FlushMetadata();
 
     if( m_poParentDS != NULL )
+    {
         hDB = NULL;
-    
+    }
+    else if( m_hTempDB != NULL )
+    {
+        sqlite3_close(m_hTempDB);
+        m_hTempDB = NULL;
+        VSIUnlink(m_osTempDBFilename);
+    }
+
     for( i = 0; i < m_nLayers; i++ )
         delete m_papoLayers[i];
     for( i = 0; i < m_nOverviewCount; i++ )
@@ -453,11 +459,7 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
     m_pszFilename = CPLStrdup( osFilename );
 
     /* See if we can open the SQLite database */
-#ifdef HAVE_SQLITE_VFS
     if (!OpenOrCreateDB((bUpdate) ? SQLITE_OPEN_READWRITE : SQLITE_OPEN_READONLY) )
-#else
-    if (!OpenOrCreateDB(0))
-#endif
         return FALSE;
 
     /* Requirement 6: The SQLite PRAGMA integrity_check SQL command SHALL return “ok” */
@@ -1198,10 +1200,34 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
 /************************************************************************/
 
 void GDALGeoPackageDataset::FlushCache()
+{
+    FlushCacheWithErrCode();
+}
+
+CPLErr GDALGeoPackageDataset::FlushCacheWithErrCode()
 
 {
+    if( m_bInFlushCache )
+        return CE_None;
+    m_bInFlushCache = TRUE;
     // Short circuit GDALPamDataset to avoid serialization to .aux.xml
     GDALDataset::FlushCache();
+
+    CPLErr eErr = CE_None;
+    if( bUpdate )
+    {
+        if( m_nShiftXPixelsMod || m_nShiftYPixelsMod )
+        {
+            eErr = FlushRemainingShiftedTiles();
+        }
+        else
+        {
+            eErr = WriteTile();
+        }
+    }
+
+    m_bInFlushCache = FALSE;
+    return eErr;
 }
 
 /************************************************************************/
@@ -1917,11 +1943,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
     bUpdate = TRUE;
     eAccess = GA_Update; /* hum annoying duplication */
 
-#ifdef HAVE_SQLITE_VFS
     if (!OpenOrCreateDB(bFileExists ? SQLITE_OPEN_READWRITE : SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE))
-#else
-    if (!OpenOrCreateDB(0))
-#endif
         return FALSE;
 
     /* OGR UTF-8 support. If we set the UTF-8 Pragma early on, it */

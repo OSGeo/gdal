@@ -110,7 +110,12 @@ class GDALGeoPackageDataset : public OGRSQLiteBaseDataSource
     int                 m_bZoomOther;
 
     CPLString           m_osWHERE;
+
+    sqlite3            *m_hTempDB;
+    CPLString           m_osTempDBFilename;
     
+    int                 m_bInFlushCache;
+
         int             InitRaster ( GDALGeoPackageDataset* poParentDS,
                                      const char* pszTableName,
                                         double dfMinX,
@@ -167,6 +172,10 @@ class GDALGeoPackageDataset : public OGRSQLiteBaseDataSource
         CPLErr                  WriteTile();
 
         CPLErr                  WriteTileInternal(); /* should only be called by WriteTile() */
+        CPLErr                  FlushRemainingShiftedTiles();
+        CPLErr                  WriteShiftedTile(int nRow, int nCol, int iBand,
+                                                 int nDstXOffset, int nDstYOffset,
+                                                 int nDstXSize, int nDstYSize);
 
         int                     RegisterWebPExtension();
         int                     RegisterZoomOtherExtension();
@@ -198,6 +207,7 @@ class GDALGeoPackageDataset : public OGRSQLiteBaseDataSource
         virtual CPLErr      SetGeoTransform( double* padfGeoTransform );
 
         virtual void        FlushCache();
+        CPLErr              FlushCacheWithErrCode();
         virtual CPLErr      IBuildOverviews( const char *, int, int *,
                                              int, int *, GDALProgressFunc, void * );
 
