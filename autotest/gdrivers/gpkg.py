@@ -1242,6 +1242,78 @@ def gpkg_14():
 
     os.remove('tmp/tmp.gpkg')
 
+    # Open and fill with an area of interest larger/containing the natural extent
+    ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg', 20, 20, 1, options = ['BLOCKSIZE=20'])
+    ds.SetGeoTransform([0,1,0,0,0,-1])
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+    ds.SetProjection(sr.ExportToWkt())
+    ds = None
+
+    ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_UPDATE, open_options = ['MINX=-5', 'MAXY=5', 'MAXX=25', 'MINY=-25', 'BAND_COUNT=1'])
+    ds.GetRasterBand(1).Fill(255)
+    ds = None
+
+    ds = gdal.OpenEx('tmp/tmp.gpkg', open_options = ['MINX=-10','MAXY=10','MINY=-30','MAXX=30'])
+    expected_cs = [4934,4934,4934,4934]
+    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    if got_cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
+        return 'fail'
+    ds = None
+    
+    os.remove('tmp/tmp.gpkg')
+
+    # Open and fill with an area of interest smaller/inside the natural extent
+    # (and smaller than the block size actually)
+    ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg', 20, 20, 1, options = ['BLOCKSIZE=20'])
+    ds.SetGeoTransform([0,1,0,0,0,-1])
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+    ds.SetProjection(sr.ExportToWkt())
+    ds = None
+
+    ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_UPDATE, open_options = ['MINX=5', 'MAXY=-5', 'MAXX=15', 'MINY=-15', 'BAND_COUNT=1'])
+    ds.GetRasterBand(1).Fill(255)
+    ds = None
+
+    ds = gdal.OpenEx('tmp/tmp.gpkg', open_options = ['MINX=-10','MAXY=10','MINY=-30','MAXX=30'])
+    ## There's some non null data in R,G,B bands that is masked by the alpha. Oh well...
+    expected_cs = [2762,2762,2762,1223]
+    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    if got_cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
+        return 'fail'
+    ds = None
+
+    os.remove('tmp/tmp.gpkg')
+
+    # Other corner case : the block intersects a tile at the right of the raster
+    # size (because the raster size is smaller than the block size)
+    ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg', 400, 200, 1)
+    ds.SetGeoTransform([-180,0.9,0,90,0,-0.9])
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+    ds.SetProjection(sr.ExportToWkt())
+    ds = None
+
+    ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_UPDATE, open_options = ['MINX=-5', 'MAXY=5', 'MAXX=25', 'MINY=-25', 'BAND_COUNT=1'])
+    ds.GetRasterBand(1).Fill(255)
+    ds = None
+
+    ds = gdal.OpenEx('tmp/tmp.gpkg')
+    expected_cs = [15080,15080,15080,13365]
+    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    if got_cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
+        return 'fail'
+    ds = None
+
+    os.remove('tmp/tmp.gpkg')
+
     return 'success'
 
 ###############################################################################

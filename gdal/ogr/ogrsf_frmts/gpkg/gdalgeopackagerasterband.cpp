@@ -774,8 +774,9 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
     /* Assert that the tile at least intersects some of the GDAL raster space */
     CPLAssert(nXOff + nBlockXSize > 0);
     CPLAssert(nYOff + nBlockYSize > 0);
-    CPLAssert(nXOff < nRasterXSize);
-    CPLAssert(nYOff < nRasterYSize);
+    /* Can happen if the tile of the raster is less than the block size */
+    if( nXOff >= nRasterXSize || nYOff >= nRasterYSize )
+        return CE_None;
 
     /* Validity area of tile data in intra-tile coordinate space */
     int iXOff = 0;
@@ -792,10 +793,10 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
             iXOff = -nXOff;
             iXCount += nXOff;
         }
-        else if( nXOff + nBlockXSize > nRasterXSize )
+        if( nXOff + nBlockXSize > nRasterXSize )
         {
             bPartialTile = TRUE;
-            iXCount = nRasterXSize - nXOff;
+            iXCount -= nXOff + nBlockXSize - nRasterXSize;
         }
         if( nYOff < 0 )
         {
@@ -803,15 +804,15 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
             iYOff = -nYOff;
             iYCount += nYOff;
         }
-        else if( nYOff + nBlockYSize > nRasterYSize )
+        if( nYOff + nBlockYSize > nRasterYSize )
         {
             bPartialTile = TRUE;
-            iYCount = nRasterYSize - nYOff;
+            iYCount -= nYOff + nBlockYSize - nRasterYSize;
         }
         CPLAssert(iXOff >= 0);
         CPLAssert(iYOff >= 0);
-        CPLAssert(iXCount > 0); /* could be removed, but shouldn't happen normally */
-        CPLAssert(iYCount > 0); /* could be removed, but shouldn't happen normally */
+        CPLAssert(iXCount > 0);
+        CPLAssert(iYCount > 0);
         CPLAssert(iXOff + iXCount <= nBlockXSize);
         CPLAssert(iYOff + iYCount <= nBlockYSize);
 
