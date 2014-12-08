@@ -57,7 +57,7 @@ CPLErr GDALGeoPackageRasterBand::FlushCache()
     GDALGeoPackageDataset* poGDS = (GDALGeoPackageDataset* )poDS;
     if( GDALPamRasterBand::FlushCache() != CE_None )
         return CE_Failure;
-    return poGDS->WriteTile();
+    return poGDS->FlushCacheWithErrCode();
 }
 
 /************************************************************************/
@@ -387,6 +387,7 @@ CPLErr GDALGeoPackageDataset::ReadTile(const CPLString& osMemFileName,
 GByte* GDALGeoPackageDataset::ReadTile(int nRow, int nCol)
 {
     GByte* pabyData = NULL;
+
     int nBlockXSize, nBlockYSize;
     GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
     if( m_nShiftXPixelsMod )
@@ -443,6 +444,13 @@ GByte* GDALGeoPackageDataset::ReadTile(int nRow, int nCol, GByte* pabyData,
     
     if( pbIsLossyFormat ) *pbIsLossyFormat = FALSE;
 
+    if( nRow < 0 || nCol < 0 || nRow >= m_nTileMatrixHeight ||
+        nCol >= m_nTileMatrixWidth )
+    {
+        memset(pabyData, 0, 4 * nBlockXSize * nBlockYSize );
+        return pabyData;
+    }
+
     //CPLDebug("GPKG", "For block (blocky=%d, blockx=%d) request tile (row=%d, col=%d)",
     //         nBlockYOff, nBlockXOff, nRow, nCol);
     char* pszSQL = sqlite3_mprintf("SELECT tile_data FROM '%q' "
@@ -475,14 +483,50 @@ GByte* GDALGeoPackageDataset::ReadTile(int nRow, int nCol, GByte* pabyData,
 
         ReadTile(osMemFileName, pabyData, pbIsLossyFormat);
         VSIUnlink(osMemFileName);
+        sqlite3_finalize(hStmt);
     }
     else
     {
-        memset(pabyData, 0, 4 * nBlockXSize * nBlockYSize );
+        sqlite3_finalize(hStmt);
+        hStmt = NULL;
+
+        if( m_hTempDB && (m_nShiftXPixelsMod || m_nShiftYPixelsMod) )
+        {
+            const char* pszSQLNew = CPLSPrintf("SELECT tile_data FROM partial_tiles WHERE "
+                                            "zoom_level = %d AND tile_row = %d AND tile_column = %d",
+                                            m_nZoomLevel, nRow, nCol);
+#ifdef DEBUG_VERBOSE
+            CPLDebug("GPKG", "%s", pszSQLNew);
+#endif
+            rc = sqlite3_prepare_v2(m_hTempDB, pszSQLNew, strlen(pszSQLNew), &hStmt, NULL);
+            if ( rc != SQLITE_OK )
+            {
+                memset(pabyData, 0, 4 * nBlockXSize * nBlockYSize );
+                CPLError( CE_Failure, CPLE_AppDefined, "sqlite3_prepare(%s) failed: %s",
+                        pszSQLNew, sqlite3_errmsg( m_hTempDB ) );
+                return pabyData;
+            }
+
+            rc = sqlite3_step(hStmt);
+            if ( rc == SQLITE_ROW )
+            {
+                CPLAssert( sqlite3_column_bytes(hStmt, 0) == nBands * nBlockXSize * nBlockYSize );
+                memcpy( pabyData,
+                        sqlite3_column_blob(hStmt, 0),
+                        nBands * nBlockXSize * nBlockYSize );
+            }
+            else
+            {
+                memset(pabyData, 0, 4 * nBlockXSize * nBlockYSize );
+            }
+            sqlite3_finalize(hStmt);
+        }
+        else
+        {
+            memset(pabyData, 0, 4 * nBlockXSize * nBlockYSize );
+        }
     }
 
-    sqlite3_finalize(hStmt);
-    
     return pabyData;
 }
 
@@ -1114,6 +1158,487 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
 }
 
 /************************************************************************/
+/*                     FlushRemainingShiftedTiles()                     */
+/************************************************************************/
+
+CPLErr GDALGeoPackageDataset::FlushRemainingShiftedTiles()
+{
+    if( m_hTempDB == NULL )
+        return CE_None;
+
+    for(int i=0;i<=3;i++)
+    {
+        m_asCachedTilesDesc[i].nRow = -1;
+        m_asCachedTilesDesc[i].nCol = -1;
+        m_asCachedTilesDesc[i].nIdxWithinTileData = -1;
+    }
+
+    int nBlockXSize, nBlockYSize;
+    GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
+
+    CPLString osSQL = "SELECT tile_row, tile_column, partial_flag";
+    for(int nBand = 1; nBand <= nBands; nBand++ )
+    {
+        osSQL += CPLSPrintf(", tile_data_band_%d", nBand);
+    }
+    osSQL += CPLSPrintf(" FROM partial_tiles WHERE "
+                        "zoom_level = %d AND partial_flag != 0",
+                        m_nZoomLevel);
+    const char* pszSQL = osSQL.c_str();
+
+#ifdef DEBUG_VERBOSE
+    CPLDebug("GPKG", "%s", pszSQL);
+#endif
+    sqlite3_stmt* hStmt = NULL;
+    int rc = sqlite3_prepare_v2(m_hTempDB, pszSQL, strlen(pszSQL), &hStmt, NULL);
+    if ( rc != SQLITE_OK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "sqlite3_prepare(%s) failed: %s",
+                  pszSQL, sqlite3_errmsg( m_hTempDB ) );
+        return CE_Failure;
+    }
+
+    CPLErr eErr = CE_None;
+    int bGotPartialTiles = FALSE;
+    do
+    {
+        int rc = sqlite3_step(hStmt);
+        if ( rc == SQLITE_ROW )
+        {
+            bGotPartialTiles = TRUE;
+
+            int nRow = sqlite3_column_int(hStmt, 0);
+            int nCol = sqlite3_column_int(hStmt, 1);
+            int nPartialFlags = sqlite3_column_int(hStmt, 2);
+            for( int nBand = 1; nBand <= nBands; nBand++ )
+            {
+                if( nPartialFlags & (((1 << 4)-1) << (4*(nBand - 1))) )
+                {
+                    CPLAssert( sqlite3_column_bytes(hStmt, 2 + nBand) == nBlockXSize * nBlockYSize );
+                    memcpy( m_pabyCachedTiles + (nBand-1) * nBlockXSize * nBlockYSize,
+                            sqlite3_column_blob(hStmt, 2 + nBand),
+                            nBlockXSize * nBlockYSize );
+                }
+                else
+                {
+                    memset( m_pabyCachedTiles + (nBand-1) * nBlockXSize * nBlockYSize,
+                            0,
+                            nBlockXSize * nBlockYSize );
+                }
+            }
+
+            int nFullFlags = (1 << (4 * nBands)) - 1;
+
+            // In case the partial flags indicate that there's some quadrant
+            // missing, check in the main database if there is already a tile
+            // In which case, use the parts of that tile that aren't in the
+            // temporary database
+            if( nPartialFlags != nFullFlags )
+            {
+                char* pszNewSQL = sqlite3_mprintf("SELECT tile_data FROM '%q' "
+                        "WHERE zoom_level = %d AND tile_row = %d AND tile_column = %d%s",
+                        m_osRasterTable.c_str(), m_nZoomLevel, nRow, nCol,
+                        m_osWHERE.size() ? CPLSPrintf(" AND (%s)", m_osWHERE.c_str()): "");
+#ifdef DEBUG_VERBOSE
+                CPLDebug("GPKG", "%s", pszNewSQL);
+#endif
+                sqlite3_stmt* hNewStmt = NULL;
+                rc = sqlite3_prepare(GetDB(), pszNewSQL, -1, &hNewStmt, NULL);
+                if ( rc == SQLITE_OK )
+                {
+                    rc = sqlite3_step( hNewStmt );
+                    if( rc == SQLITE_ROW && sqlite3_column_type( hNewStmt, 0 ) == SQLITE_BLOB )
+                    {
+                        const int nBytes = sqlite3_column_bytes( hNewStmt, 0 );
+                        GByte* pabyRawData = (GByte*)sqlite3_column_blob( hNewStmt, 0 );
+                        CPLString osMemFileName;
+                        osMemFileName.Printf("/vsimem/gpkg_read_tile_%p", this);
+                        VSILFILE * fp = VSIFileFromMemBuffer( osMemFileName.c_str(), pabyRawData,
+                                                              nBytes, FALSE);
+                        VSIFCloseL(fp);
+
+                        int bIsLossyFormat;
+                        ReadTile(osMemFileName,
+                                 m_pabyCachedTiles + 4 * nBlockXSize * nBlockYSize,
+                                 &bIsLossyFormat);
+                        VSIUnlink(osMemFileName);
+
+                        int iYQuadrantMax = ( m_nShiftYPixelsMod ) ? 1 : 0;
+                        int iXQuadrantMax = ( m_nShiftXPixelsMod ) ? 1 : 0;
+                        for( int iYQuadrant = 0; iYQuadrant <= iYQuadrantMax; iYQuadrant ++ )
+                        {
+                            for( int iXQuadrant = 0; iXQuadrant <= iXQuadrantMax; iXQuadrant ++ )
+                            {
+                                for( int nBand = 1; nBand <= nBands; nBand ++ )
+                                {
+                                    int iQuadrantFlag = 0;
+                                    if( iXQuadrant == 0 && iYQuadrant == 0 )
+                                        iQuadrantFlag |= (1 << 0);
+                                    if( iXQuadrant == iXQuadrantMax && iYQuadrant == 0  )
+                                        iQuadrantFlag |= (1 << 1);
+                                    if( iXQuadrant == 0 && iYQuadrant == iYQuadrantMax )
+                                        iQuadrantFlag |= (1 << 2);
+                                    if( iXQuadrant == iXQuadrantMax && iYQuadrant == iYQuadrantMax )
+                                        iQuadrantFlag |= (1 << 3);
+                                    int nLocalFlag = iQuadrantFlag << (4 * (nBand - 1));
+                                    if( !(nPartialFlags & nLocalFlag) )
+                                    {
+                                        int nXOff, nYOff, nXSize, nYSize;
+                                        if( iXQuadrant == 0 && m_nShiftXPixelsMod != 0 )
+                                        {
+                                            nXOff = 0;
+                                            nXSize = m_nShiftXPixelsMod;
+                                        }
+                                        else
+                                        {
+                                            nXOff = m_nShiftXPixelsMod;
+                                            nXSize = nBlockXSize - m_nShiftXPixelsMod;
+                                        }
+                                        if( iYQuadrant == 0 && m_nShiftYPixelsMod != 0 )
+                                        {
+                                            nYOff = 0;
+                                            nYSize = m_nShiftYPixelsMod;
+                                        }
+                                        else
+                                        {
+                                            nYOff = m_nShiftYPixelsMod;
+                                            nYSize = nBlockYSize - m_nShiftYPixelsMod;
+                                        }
+                                        for( int iY = nYOff; iY < nYOff + nYSize; iY ++ )
+                                        {
+                                            memcpy( m_pabyCachedTiles + ((nBand - 1) * nBlockYSize + iY) * nBlockXSize + nXOff,
+                                                    m_pabyCachedTiles + ((4 + nBand - 1) * nBlockYSize + iY) * nBlockXSize + nXOff,
+                                                    nXSize );
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    sqlite3_finalize(hNewStmt);
+                }
+                sqlite3_free(pszNewSQL);
+            }
+
+            m_asCachedTilesDesc[0].nRow = nRow;
+            m_asCachedTilesDesc[0].nCol = nCol;
+            m_asCachedTilesDesc[0].nIdxWithinTileData = 0;
+            m_asCachedTilesDesc[0].abBandDirty[0] = TRUE;
+            m_asCachedTilesDesc[0].abBandDirty[1] = TRUE;
+            m_asCachedTilesDesc[0].abBandDirty[2] = TRUE;
+            m_asCachedTilesDesc[0].abBandDirty[3] = TRUE;
+
+            eErr = WriteTile();
+        }
+        else
+            break;
+    }
+    while( eErr == CE_None);
+
+    sqlite3_finalize(hStmt);
+
+    if( bGotPartialTiles )
+    {
+        pszSQL = CPLSPrintf("UPDATE partial_tiles SET zoom_level = %d, "
+                            "partial_flag = 0 WHERE zoom_level = %d AND partial_flag != 0",
+                            -1-m_nZoomLevel, m_nZoomLevel);
+#ifdef DEBUG_VERBOSE
+        CPLDebug("GPKG", "%s", pszSQL);
+#endif
+        SQLCommand(m_hTempDB, pszSQL);
+    }
+
+    return eErr;
+}
+
+/************************************************************************/
+/*                         WriteShiftedTile()                           */
+/************************************************************************/
+
+CPLErr GDALGeoPackageDataset::WriteShiftedTile(int nRow, int nCol, int nBand,
+                                               int nDstXOffset, int nDstYOffset,
+                                               int nDstXSize, int nDstYSize)
+{
+    CPLAssert( m_nShiftXPixelsMod || m_nShiftYPixelsMod );
+    CPLAssert( nRow >= 0 );
+    CPLAssert( nCol >= 0 );
+    CPLAssert( nRow < m_nTileMatrixHeight );
+    CPLAssert( nCol < m_nTileMatrixWidth );
+
+    if( m_hTempDB == NULL &&
+        (m_poParentDS == NULL || m_poParentDS->m_hTempDB == NULL) )
+    {
+        const char* pszBaseFilename = m_poParentDS ?
+                m_poParentDS->m_pszFilename : m_pszFilename;
+        m_osTempDBFilename = CPLResetExtension(pszBaseFilename, "gpkg.tmp");
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        VSIUnlink(m_osTempDBFilename);
+        CPLPopErrorHandler();
+        m_hTempDB = NULL;
+        sqlite3_open(m_osTempDBFilename, &m_hTempDB);
+        if( m_hTempDB == NULL )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                        "Cannot create temporary database %s",
+                        m_osTempDBFilename.c_str());
+            return CE_Failure;
+        }
+        SQLCommand(m_hTempDB, "PRAGMA synchronous = OFF");
+        SQLCommand(m_hTempDB, "PRAGMA journal_mode = OFF");
+        SQLCommand(m_hTempDB, "CREATE TABLE partial_tiles("
+                                    "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                                    "zoom_level INTEGER NOT NULL,"
+                                    "tile_column INTEGER NOT NULL,"
+                                    "tile_row INTEGER NOT NULL,"
+                                    "tile_data_band_1 BLOB,"
+                                    "tile_data_band_2 BLOB,"
+                                    "tile_data_band_3 BLOB,"
+                                    "tile_data_band_4 BLOB,"
+                                    "partial_flag INTEGER NOT NULL,"
+                                    "UNIQUE (zoom_level, tile_column, tile_row))" );
+        SQLCommand(m_hTempDB, "CREATE INDEX partial_tiles_partial_flag_idx "
+                                "ON partial_tiles(partial_flag)");
+
+        if( m_poParentDS != NULL )
+        {
+            m_poParentDS->m_osTempDBFilename = m_osTempDBFilename;
+            m_poParentDS->m_hTempDB = m_hTempDB;
+        }
+    }
+    if( m_poParentDS != NULL )
+        m_hTempDB = m_poParentDS->m_hTempDB;
+
+    int nBlockXSize, nBlockYSize;
+    GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
+
+    int iQuadrantFlag = 0;
+    if( nDstXOffset == 0 && nDstYOffset == 0 )
+        iQuadrantFlag |= (1 << 0);
+    if( nDstXOffset + nDstXSize == nBlockXSize && nDstYOffset == 0  )
+        iQuadrantFlag |= (1 << 1);
+    if( nDstXOffset == 0 && nDstYOffset + nDstYSize == nBlockYSize )
+        iQuadrantFlag |= (1 << 2);
+    if( nDstXOffset + nDstXSize == nBlockXSize && nDstYOffset + nDstYSize == nBlockYSize )
+        iQuadrantFlag |= (1 << 3);
+    int nFlags = iQuadrantFlag << (4 * (nBand - 1));
+    int nFullFlags = (1 << (4 * nBands)) - 1;
+    int nOldFlags = 0;
+
+    for(int i=1;i<=3;i++)
+    {
+        m_asCachedTilesDesc[i].nRow = -1;
+        m_asCachedTilesDesc[i].nCol = -1;
+        m_asCachedTilesDesc[i].nIdxWithinTileData = -1;
+    }
+
+    int nExistingId = 0;
+    const char* pszSQL = CPLSPrintf("SELECT id, partial_flag, tile_data_band_%d FROM partial_tiles WHERE "
+                                    "zoom_level = %d AND tile_row = %d AND tile_column = %d",
+                                    nBand, m_nZoomLevel, nRow, nCol);
+#ifdef DEBUG_VERBOSE
+    CPLDebug("GPKG", "%s", pszSQL);
+#endif
+    sqlite3_stmt* hStmt = NULL;
+    int rc = sqlite3_prepare_v2(m_hTempDB, pszSQL, strlen(pszSQL), &hStmt, NULL);
+    if ( rc != SQLITE_OK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "sqlite3_prepare(%s) failed: %s",
+                  pszSQL, sqlite3_errmsg( m_hTempDB ) );
+        return CE_Failure;
+    }
+
+    rc = sqlite3_step(hStmt);
+    if ( rc == SQLITE_ROW )
+    {
+        nExistingId = sqlite3_column_int(hStmt, 0);
+#ifdef DEBUG_VERBOSE
+        CPLDebug("GPKG", "Using partial_tile id=%d", nExistingId);
+#endif
+        nOldFlags = sqlite3_column_int(hStmt, 1);
+        CPLAssert(nOldFlags != 0);
+        if( (nOldFlags & (((1 << 4)-1) << (4*(nBand - 1)))) == 0 )
+        {
+            memset( m_pabyCachedTiles + (4 + nBand - 1) * nBlockXSize * nBlockYSize,
+                    0,
+                    nBlockXSize * nBlockYSize );
+        }
+        else
+        {
+            CPLAssert( sqlite3_column_bytes(hStmt, 2) == nBlockXSize * nBlockYSize );
+            memcpy( m_pabyCachedTiles + (4 + nBand - 1) * nBlockXSize * nBlockYSize,
+                    sqlite3_column_blob(hStmt, 2),
+                    nBlockXSize * nBlockYSize );
+        }
+    }
+    else
+    {
+        memset( m_pabyCachedTiles + (4 + nBand - 1) * nBlockXSize * nBlockYSize,
+                0,
+                nBlockXSize * nBlockYSize );
+    }
+    sqlite3_finalize(hStmt);
+    hStmt = NULL;
+
+    /* Copy the updated rectangle into the full tile */
+    for(int iY = nDstYOffset; iY < nDstYOffset + nDstYSize; iY ++ )
+    {
+        memcpy( m_pabyCachedTiles + (4 + nBand - 1) * nBlockXSize * nBlockYSize +
+                    iY * nBlockXSize + nDstXOffset,
+                m_pabyCachedTiles + (nBand - 1) * nBlockXSize * nBlockYSize +
+                    iY * nBlockXSize + nDstXOffset,
+                nDstXSize );
+    }
+
+#ifdef notdef
+    static int nCounter = 1;
+    GDALDataset* poLogDS = ((GDALDriver*)GDALGetDriverByName("GTiff"))->Create(
+                CPLSPrintf("/tmp/partial_band_%d_%d.tif", 1, nCounter++),
+                nBlockXSize, nBlockYSize, nBands, GDT_Byte, NULL);
+    poLogDS->RasterIO(GF_Write, 0, 0, nBlockXSize, nBlockYSize,
+                      m_pabyCachedTiles + (4 + nBand - 1) * nBlockXSize * nBlockYSize,
+                      nBlockXSize, nBlockYSize,
+                      GDT_Byte,
+                      1, NULL,
+                      0, 0, 0, NULL);
+    GDALClose(poLogDS);
+#endif
+
+    if( (nOldFlags & nFlags) != 0 )
+    {
+        CPLDebug("GPKG",
+                 "Rewriting quadrant %d of band %d of tile (row=%d,col=%d)",
+                 iQuadrantFlag, nBand, nRow, nCol);
+    }
+
+    nFlags |= nOldFlags;
+    if( nFlags == nFullFlags )
+    {
+#ifdef DEBUG_VERBOSE
+        CPLDebug("GPKG", "Got all quadrants for that tile");
+#endif
+        for( int iBand = 1; iBand <= nBands; iBand ++ )
+        {
+            if( iBand != nBand && nExistingId )
+            {
+                pszSQL = CPLSPrintf("SELECT tile_data_band_%d FROM partial_tiles WHERE "
+                                    "id = %d", iBand, nExistingId);
+#ifdef DEBUG_VERBOSE
+                CPLDebug("GPKG", "%s", pszSQL);
+#endif
+                hStmt = NULL;
+                rc = sqlite3_prepare_v2(m_hTempDB, pszSQL, strlen(pszSQL), &hStmt, NULL);
+                if ( rc != SQLITE_OK )
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined, "sqlite3_prepare(%s) failed: %s",
+                            pszSQL, sqlite3_errmsg( m_hTempDB ) );
+                    return CE_Failure;
+                }
+
+                rc = sqlite3_step(hStmt);
+                if ( rc == SQLITE_ROW )
+                {
+                    CPLAssert( sqlite3_column_bytes(hStmt, 0) == nBlockXSize * nBlockYSize );
+                    memcpy( m_pabyCachedTiles + (iBand - 1) * nBlockXSize * nBlockYSize,
+                            sqlite3_column_blob(hStmt, 0),
+                            nBlockXSize * nBlockYSize );
+                }
+                sqlite3_finalize(hStmt);
+                hStmt = NULL;
+            }
+            else
+            {
+                memcpy( m_pabyCachedTiles + (iBand - 1) * nBlockXSize * nBlockYSize,
+                        m_pabyCachedTiles + (4 + iBand - 1) * nBlockXSize * nBlockYSize,
+                        nBlockXSize * nBlockYSize );
+            }
+        }
+
+        m_asCachedTilesDesc[0].nRow = nRow;
+        m_asCachedTilesDesc[0].nCol = nCol;
+        m_asCachedTilesDesc[0].nIdxWithinTileData = 0;
+        m_asCachedTilesDesc[0].abBandDirty[0] = TRUE;
+        m_asCachedTilesDesc[0].abBandDirty[1] = TRUE;
+        m_asCachedTilesDesc[0].abBandDirty[2] = TRUE;
+        m_asCachedTilesDesc[0].abBandDirty[3] = TRUE;
+
+        pszSQL = CPLSPrintf("UPDATE partial_tiles SET zoom_level = %d, "
+                            "partial_flag = 0 WHERE id = %d",
+                            -1-m_nZoomLevel, nExistingId);
+        SQLCommand(m_hTempDB, pszSQL);
+#ifdef DEBUG_VERBOSE
+        CPLDebug("GPKG", "%s", pszSQL);
+#endif
+        return WriteTile();
+    }
+
+    if( nExistingId == 0 )
+    {
+        OGRErr err;
+        pszSQL = CPLSPrintf("SELECT id FROM partial_tiles WHERE "
+                            "partial_flag = 0 AND zoom_level = %d "
+                            "AND tile_column = %d AND tile_row = %d",
+                            -1-m_nZoomLevel, nRow, nCol);
+#ifdef DEBUG_VERBOSE
+        CPLDebug("GPKG", "%s", pszSQL);
+#endif
+        nExistingId = SQLGetInteger(m_hTempDB, pszSQL, &err);
+        if( nExistingId == 0 )
+        {
+            pszSQL = "SELECT id FROM partial_tiles WHERE partial_flag = 0 LIMIT 1";
+#ifdef DEBUG_VERBOSE
+            CPLDebug("GPKG", "%s", pszSQL);
+#endif
+            nExistingId = SQLGetInteger(m_hTempDB, pszSQL, &err);
+        }
+    }
+
+    if( nExistingId == 0 )
+    {
+        pszSQL = CPLSPrintf("INSERT INTO partial_tiles "
+                "(zoom_level, tile_row, tile_column, tile_data_band_%d, partial_flag) VALUES (%d, %d, %d, ?, %d)",
+                nBand, m_nZoomLevel, nRow, nCol, nFlags);
+    }
+    else
+    {
+        pszSQL = CPLSPrintf("UPDATE partial_tiles SET zoom_level = %d, "
+                            "tile_row = %d, tile_column = %d, "
+                            "tile_data_band_%d = ?, partial_flag = %d WHERE id = %d",
+                            m_nZoomLevel, nRow, nCol, nBand, nFlags, nExistingId);
+    }
+#ifdef DEBUG_VERBOSE
+    CPLDebug("GPKG", "%s", pszSQL);
+#endif
+
+    hStmt = NULL;
+    rc = sqlite3_prepare_v2(m_hTempDB, pszSQL, -1, &hStmt, NULL);
+    if ( rc != SQLITE_OK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "failed to prepare SQL %s: %s",
+                    pszSQL, sqlite3_errmsg(m_hTempDB) );
+        return CE_Failure;
+    }
+
+    sqlite3_bind_blob( hStmt, 1,
+                       m_pabyCachedTiles + (4 + nBand - 1) * nBlockXSize * nBlockYSize,
+                       nBlockXSize * nBlockYSize,
+                       SQLITE_TRANSIENT );
+    rc = sqlite3_step( hStmt );
+    CPLErr eErr = CE_Failure;
+    if( rc == SQLITE_DONE )
+        eErr = CE_None;
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                    "Failure when inserting partial tile (row=%d,col=%d) at zoom_level=%d : %s",
+                    nRow, nCol, m_nZoomLevel, sqlite3_errmsg(m_hTempDB));
+    }
+
+    sqlite3_finalize(hStmt);
+
+    return eErr;
+}
+
+/************************************************************************/
 /*                         IWriteBlock()                                */
 /************************************************************************/
 
@@ -1131,12 +1656,6 @@ CPLErr GDALGeoPackageRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
         return CE_Failure;
     }
 
-    if( poGDS->m_nShiftXPixelsMod || poGDS->m_nShiftYPixelsMod )
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "IWriteBlock() not supported when A.O.I is shifted w.r.t. tile matrix set origin");
-        return CE_Failure;
-    }
     if( !poGDS->m_bGeoTransformValid || poGDS->m_nSRID == UNKNOWN_SRID )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -1146,64 +1665,155 @@ CPLErr GDALGeoPackageRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
 
     int nRow = nBlockYOff + poGDS->m_nShiftYTiles;
     int nCol = nBlockXOff + poGDS->m_nShiftXTiles;
-    if( nRow < 0 || nCol < 0 ||
-        nRow >= poGDS->m_nTileMatrixHeight || nCol >= poGDS->m_nTileMatrixWidth )
-    {
-        /* Can happen if opening with custom extents */
-        CPLDebug("GPKG", "Skip writing out-of-tile-matrix tile (row=%d, col=%d)",
-                 nRow, nCol);
-        return CE_None;
-    }
+
+    int nRowMin = nRow;
+    int nRowMax = nRowMin;
+    if( poGDS->m_nShiftYPixelsMod )
+        nRowMax ++;
+
+    int nColMin = nCol;
+    int nColMax = nColMin;
+    if( poGDS->m_nShiftXPixelsMod )
+        nColMax ++;
 
     CPLErr eErr = CE_None;
-    if( !(nRow == poGDS->m_asCachedTilesDesc[0].nRow &&
-          nCol == poGDS->m_asCachedTilesDesc[0].nCol &&
-          poGDS->m_asCachedTilesDesc[0].nIdxWithinTileData == 0) )
+
+    for(nRow = nRowMin; eErr == CE_None && nRow <= nRowMax; nRow ++)
     {
-        eErr = poGDS->WriteTile();
-
-        poGDS->m_asCachedTilesDesc[0].nRow = nRow;
-        poGDS->m_asCachedTilesDesc[0].nCol = nCol;
-        poGDS->m_asCachedTilesDesc[0].nIdxWithinTileData = 0;
-    }
-
-    memcpy( poGDS->m_pabyCachedTiles + (nBand - 1) * nBlockXSize * nBlockYSize,
-            pData, nBlockXSize * nBlockYSize );
-    poGDS->m_asCachedTilesDesc[0].abBandDirty[nBand - 1] = TRUE;
-
-    // Check if all bands for this block are dirty, and if so write the tile
-    int bAllDirty = TRUE;
-    for(int i=0;i<poGDS->nBands;i++)
-    {
-        // If the block for this band is not dirty, it might be dirty in cache
-        if( !poGDS->m_asCachedTilesDesc[0].abBandDirty[i] )
+        for(nCol = nColMin; eErr == CE_None && nCol <= nColMax; nCol++ )
         {
-            GDALRasterBlock* poBlock =
-                ((GDALGeoPackageRasterBand*)poGDS->GetRasterBand(i+1))->
-                            TryGetLockedBlockRef(nBlockXOff, nBlockYOff);
-            if( poBlock && poBlock->GetDirty() )
+            if( nRow < 0 || nCol < 0 || nRow >= poGDS->m_nTileMatrixHeight ||
+                nCol >= poGDS->m_nTileMatrixWidth )
             {
-                memcpy(poGDS->m_pabyCachedTiles + i * nBlockXSize * nBlockYSize,
-                       poBlock->GetDataRef(),
-                       nBlockXSize * nBlockYSize);
-                poBlock->MarkClean();
-                poBlock->DropLock();
-                poGDS->m_asCachedTilesDesc[0].abBandDirty[i] = TRUE;
+                continue;
             }
-            else
+
+            if( poGDS->m_nShiftXPixelsMod == 0 && poGDS->m_nShiftYPixelsMod == 0 )
             {
+                if( !(nRow == poGDS->m_asCachedTilesDesc[0].nRow &&
+                    nCol == poGDS->m_asCachedTilesDesc[0].nCol &&
+                    poGDS->m_asCachedTilesDesc[0].nIdxWithinTileData == 0) )
+                {
+                    eErr = poGDS->WriteTile();
+
+                    poGDS->m_asCachedTilesDesc[0].nRow = nRow;
+                    poGDS->m_asCachedTilesDesc[0].nCol = nCol;
+                    poGDS->m_asCachedTilesDesc[0].nIdxWithinTileData = 0;
+                }
+            }
+
+            // Composite block data into tile, and check if all bands for this block
+            // are dirty, and if so write the tile
+            int bAllDirty = TRUE;
+            for(int iBand=1;iBand<=poGDS->nBands;iBand++)
+            {
+                GDALRasterBlock* poBlock = NULL;
+                GByte* pabySrc;
+                if( iBand == nBand )
+                {
+                    pabySrc = (GByte*)pData;
+                }
+                else
+                {
+                    if( !(poGDS->m_nShiftXPixelsMod == 0 && poGDS->m_nShiftYPixelsMod == 0) )
+                        continue;
+
+                    // If the block for this band is not dirty, it might be dirty in cache
+                    if( poGDS->m_asCachedTilesDesc[0].abBandDirty[iBand-1] )
+                        continue;
+                    else
+                    {
+                        poBlock =
+                            ((GDALGeoPackageRasterBand*)poGDS->GetRasterBand(iBand))->
+                                        TryGetLockedBlockRef(nBlockXOff, nBlockYOff);
+                        if( poBlock && poBlock->GetDirty() )
+                        {
+                            pabySrc = (GByte*)poBlock->GetDataRef(),
+                            poBlock->MarkClean();
+                        }
+                        else
+                        {
+                            if( poBlock )
+                                poBlock->DropLock();
+                            bAllDirty = FALSE;
+                            continue;
+                        }
+                    }
+                }
+
+                if( poGDS->m_nShiftXPixelsMod == 0 && poGDS->m_nShiftYPixelsMod == 0 )
+                    poGDS->m_asCachedTilesDesc[0].abBandDirty[iBand - 1] = TRUE;
+
+                int nDstXOffset = 0, nDstXSize = nBlockXSize,
+                    nDstYOffset = 0, nDstYSize = nBlockYSize;
+                int nSrcXOffset = 0, nSrcYOffset = 0;
+                // Composite block data into tile data
+                if( poGDS->m_nShiftXPixelsMod == 0 && poGDS->m_nShiftYPixelsMod == 0 )
+                {
+                    memcpy( poGDS->m_pabyCachedTiles + (iBand - 1) * nBlockXSize * nBlockYSize,
+                            pabySrc, nBlockXSize * nBlockYSize );
+                }
+                else
+                {
+                    if( nCol == nColMin )
+                    {
+                        nDstXOffset = poGDS->m_nShiftXPixelsMod;
+                        nDstXSize = nBlockXSize - poGDS->m_nShiftXPixelsMod;
+                        nSrcXOffset = 0;
+                    }
+                    else
+                    {
+                        nDstXOffset = 0;
+                        nDstXSize = poGDS->m_nShiftXPixelsMod;
+                        nSrcXOffset = nBlockXSize - poGDS->m_nShiftXPixelsMod;
+                    }
+                    if( nRow == nRowMin )
+                    {
+                        nDstYOffset = poGDS->m_nShiftYPixelsMod;
+                        nDstYSize = nBlockYSize - poGDS->m_nShiftYPixelsMod;
+                        nSrcYOffset = 0;
+                    }
+                    else
+                    {
+                        nDstYOffset = 0;
+                        nDstYSize = poGDS->m_nShiftYPixelsMod;
+                        nSrcYOffset = nBlockYSize - poGDS->m_nShiftYPixelsMod;
+                    }
+                    //CPLDebug("GPKG", "Copy source tile x=%d,w=%d,y=%d,h=%d into buffet at x=%d,y=%d",
+                    //         nDstXOffset, nDstXSize, nDstYOffset, nDstYSize, nSrcXOffset, nSrcYOffset);
+                    for( int y=0; y<nDstYSize; y++ )
+                    {
+                        GByte* pDst = poGDS->m_pabyCachedTiles + (iBand - 1) * nBlockXSize * nBlockYSize +
+                                        (y + nDstYOffset) * nBlockXSize + nDstXOffset;
+                        GByte* pSrc = pabySrc + (y + nSrcYOffset) * nBlockXSize + nSrcXOffset;
+                        GDALCopyWords(pSrc, GDT_Byte, 1,
+                                    pDst, GDT_Byte, 1,
+                                    nDstXSize);
+                    }
+                }
+
                 if( poBlock )
                     poBlock->DropLock();
-                bAllDirty = FALSE;
-                break;
+
+                if( !(poGDS->m_nShiftXPixelsMod == 0 && poGDS->m_nShiftYPixelsMod == 0) )
+                {
+                    poGDS->m_asCachedTilesDesc[0].nRow = -1;
+                    poGDS->m_asCachedTilesDesc[0].nCol = -1;
+                    poGDS->m_asCachedTilesDesc[0].nIdxWithinTileData = -1;
+                    eErr = poGDS->WriteShiftedTile(nRow, nCol, iBand,
+                                                   nDstXOffset, nDstYOffset,
+                                                   nDstXSize, nDstYSize);
+                }
+            }
+
+            if( poGDS->m_nShiftXPixelsMod == 0 && poGDS->m_nShiftYPixelsMod == 0 )
+            {
+                if( bAllDirty ) 
+                {
+                    eErr = poGDS->WriteTile();
+                }
             }
         }
-    }
-    if( bAllDirty ) 
-    {
-        CPLErr eErr2 = poGDS->WriteTile();
-        if( eErr == CE_None )
-            eErr = eErr2;
     }
 
     return eErr;
