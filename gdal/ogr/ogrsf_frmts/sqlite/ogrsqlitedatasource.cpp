@@ -712,11 +712,7 @@ int OGRSQLiteDataSource::Create( const char * pszNameIn, char **papszOptions )
 /* -------------------------------------------------------------------- */
 /*      Create the database file.                                       */
 /* -------------------------------------------------------------------- */
-#ifdef HAVE_SQLITE_VFS
     if (!OpenOrCreateDB(SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, TRUE))
-#else
-    if (!OpenOrCreateDB(0, TRUE))
-#endif
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -1096,11 +1092,7 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn )
         OGRSQLiteInitOldSpatialite();
 #endif
 
-#ifdef HAVE_SQLITE_VFS
         if (!OpenOrCreateDB((bUpdateIn) ? SQLITE_OPEN_READWRITE : SQLITE_OPEN_READONLY, TRUE) )
-#else
-        if (!OpenOrCreateDB(0, TRUE))
-#endif
             return FALSE;
 
 #ifdef SPATIALITE_412_OR_LATER
