@@ -769,7 +769,9 @@ int OGRGMLDataSource::Open( const char * pszNameIn )
                                 CPLSPrintf("xmlns:%s", oNamespace.osPrefix.c_str());
                     const char* pszURIToFind =
                                 CPLSPrintf("\"%s\"", oNamespace.osURI.c_str());
-                    if( osHeader.ifind(pszNSToFind) != std::string::npos &&
+                    /* Case sensitive comparison since below test that also */
+                    /* uses the namespace prefix is case sensitive */
+                    if( osHeader.find(pszNSToFind) != std::string::npos &&
                         strstr(szHeader, pszURIToFind) != NULL )
                     {
                         if( oNamespace.bUseGlobalSRSName )
