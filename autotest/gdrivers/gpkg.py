@@ -996,7 +996,7 @@ def gpkg_14():
         pass
 
     src_ds = gdal.Open('data/small_world.tif')
-    ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', src_ds, options = ['RASTER_TABLE=foo', 'RASTER_IDENTIFIER=bar', 'RASTER_DESCRIPTION=baz'])
+    ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', src_ds, options = ['DRIVER=PNG', 'RASTER_TABLE=foo', 'RASTER_IDENTIFIER=bar', 'RASTER_DESCRIPTION=baz'])
     ds = None
 
     ds = gdal.Open('tmp/tmp.gpkg')
@@ -1089,7 +1089,8 @@ def gpkg_14():
         return 'fail'
     ds = None
 
-    ds = gdal.OpenEx('tmp/tmp.gpkg', open_options = ['MINX=-410.4','MAXY=320.4'])
+    # Open with exactly one tile shift
+    ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_UPDATE, open_options = ['DRIVER=PNG', 'MINX=-410.4','MAXY=320.4'])
     if ds.RasterXSize != 400+256 or ds.RasterYSize != 200+256:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1099,6 +1100,17 @@ def gpkg_14():
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
         return 'fail'
+    data = ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
+    for i in range(ds.RasterCount):
+        ds.GetRasterBand(i+1).Fill(0)
+    ds.FlushCache()
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM foo')
+    fc = sql_lyr.GetFeatureCount()
+    ds.ReleaseResultSet(sql_lyr)
+    if fc != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.WriteRaster(0,0,ds.RasterXSize,ds.RasterYSize, data)
     ds = None
 
     ds = gdal.OpenEx('GPKG:tmp/tmp.gpkg:foo', open_options = ['MINX=-90','MAXY=45','MINY=-45','MAXX=90'])
@@ -2151,7 +2163,7 @@ gdaltest_list = [
     gpkg_21,
     gpkg_cleanup,
 ]
-#gdaltest_list = [ gpkg_init, gpkg_21, gpkg_cleanup ]
+#gdaltest_list = [ gpkg_init, gpkg_14, gpkg_cleanup ]
 if __name__ == '__main__':
 
     gdaltest.setup_run( 'gpkg' )

@@ -92,6 +92,8 @@ class GDALGeoPackageDataset : public OGRSQLiteBaseDataSource
     int                 m_nShiftXPixelsMod;
     int                 m_nShiftYTiles;
     int                 m_nShiftYPixelsMod;
+    int                 m_nTileMatrixWidth;
+    int                 m_nTileMatrixHeight;
 
     GPKGTileFormat      m_eTF;
     int                 m_nZLevel;
@@ -132,6 +134,8 @@ class GDALGeoPackageDataset : public OGRSQLiteBaseDataSource
                                         double dfPixelYSize,
                                         int nTileWidth,
                                         int nTileHeight,
+                                        int nTileMatrixWidth,
+                                        int nTileMatrixHeight,
                                         double dfGDALMinX,
                                         double dfGDALMinY,
                                         double dfGDALMaxX,
