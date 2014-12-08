@@ -364,6 +364,8 @@ GDALGeoPackageDataset::GDALGeoPackageDataset()
     m_nShiftYTiles = 0;
     m_nShiftYPixelsMod = 0;
     m_eTF = GPKG_TF_PNG_JPEG;
+    m_nTileMatrixWidth = 0;
+    m_nTileMatrixHeight = 0;
     m_nZLevel = 6;
     m_nQuality = 75;
     m_bDither = FALSE;
@@ -682,6 +684,8 @@ int GDALGeoPackageDataset::InitRaster ( GDALGeoPackageDataset* poParentDS,
     double dfPixelYSize = CPLAtof(SQLResultGetValue(&oResult, 2, nIdxInResult));
     int nTileWidth = atoi(SQLResultGetValue(&oResult, 3, nIdxInResult));
     int nTileHeight = atoi(SQLResultGetValue(&oResult, 4, nIdxInResult));
+    int nTileMatrixWidth = atoi(SQLResultGetValue(&oResult, 5, nIdxInResult));
+    int nTileMatrixHeight = atoi(SQLResultGetValue(&oResult, 6, nIdxInResult));
 
     /* Use content bounds in priority over tile_matrix_set bounds */
     double dfGDALMinX = dfMinX;
@@ -711,6 +715,7 @@ int GDALGeoPackageDataset::InitRaster ( GDALGeoPackageDataset* poParentDS,
 
     return InitRaster(poParentDS, pszTableName, nZoomLevel, nBandCount, dfMinX, dfMaxY,
                       dfPixelXSize, dfPixelYSize, nTileWidth, nTileHeight,
+                      nTileMatrixWidth, nTileMatrixHeight,
                       dfGDALMinX, dfGDALMinY, dfGDALMaxX, dfGDALMaxY );
 }
 
@@ -728,6 +733,8 @@ int GDALGeoPackageDataset::InitRaster ( GDALGeoPackageDataset* poParentDS,
                                         double dfPixelYSize,
                                         int nTileWidth,
                                         int nTileHeight,
+                                        int nTileMatrixWidth,
+                                        int nTileMatrixHeight,
                                         double dfGDALMinX,
                                         double dfGDALMinY,
                                         double dfGDALMaxX,
@@ -737,6 +744,8 @@ int GDALGeoPackageDataset::InitRaster ( GDALGeoPackageDataset* poParentDS,
     m_dfTMSMinX = dfTMSMinX;
     m_dfTMSMaxY = dfTMSMaxY;
     m_nZoomLevel = nZoomLevel;
+    m_nTileMatrixWidth = nTileMatrixWidth;
+    m_nTileMatrixHeight = nTileMatrixHeight;
 
     m_bGeoTransformValid = TRUE;
     m_adfGeoTransform[0] = dfGDALMinX;
@@ -853,9 +862,9 @@ int GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
     CPLString osQuotedTableName(pszQuotedTableName);
     sqlite3_free(pszQuotedTableName);
     char* pszSQL = sqlite3_mprintf(
-            "SELECT zoom_level, pixel_x_size, pixel_y_size, tile_width, tile_height FROM gpkg_tile_matrix tm "
+            "SELECT zoom_level, pixel_x_size, pixel_y_size, tile_width, tile_height, matrix_width, matrix_height FROM gpkg_tile_matrix tm "
             "WHERE table_name = %s AND pixel_x_size > 0 "
-            "AND pixel_y_size > 0 AND tile_width > 0 AND tile_height > 0",
+            "AND pixel_y_size > 0 AND tile_width > 0 AND tile_height > 0 AND matrix_width > 0 AND matrix_height > 0",
             osQuotedTableName.c_str());
     CPLString osSQL(pszSQL);
     const char* pszZoomLevel =  CSLFetchNameValue(papszOpenOptions, "ZOOM_LEVEL");
@@ -1120,6 +1129,9 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
     m_nZoomLevel = 0;
     int nTileWidth, nTileHeight;
     GetRasterBand(1)->GetBlockSize(&nTileWidth, &nTileHeight);
+    m_nTileMatrixWidth = (nRasterXSize + nTileWidth - 1) / nTileWidth;
+    m_nTileMatrixHeight = (nRasterYSize + nTileHeight - 1) / nTileHeight;
+
     while( (nRasterXSize >> m_nZoomLevel) > nTileWidth ||
            (nRasterYSize >> m_nZoomLevel) > nTileHeight )
         m_nZoomLevel ++;
@@ -1150,12 +1162,12 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
     {
         double dfPixelXSizeZoomLevel = m_adfGeoTransform[1] * (1 << (m_nZoomLevel-i));
         double dfPixelYSizeZoomLevel = fabs(m_adfGeoTransform[5]) * (1 << (m_nZoomLevel-i));
-        int nTileXCountZoomLevel = ((nRasterXSize >> (m_nZoomLevel-i)) + nTileWidth - 1) / nTileWidth;
-        int nTileYCountZoomLevel = ((nRasterYSize >> (m_nZoomLevel-i)) + nTileHeight - 1) / nTileHeight;
+        int nTileMatrixWidth = ((nRasterXSize >> (m_nZoomLevel-i)) + nTileWidth - 1) / nTileWidth;
+        int nTileMatrixHeight = ((nRasterYSize >> (m_nZoomLevel-i)) + nTileHeight - 1) / nTileHeight;
         pszSQL = sqlite3_mprintf("INSERT INTO gpkg_tile_matrix "
                 "(table_name,zoom_level,matrix_width,matrix_height,tile_width,tile_height,pixel_x_size,pixel_y_size) VALUES "
                 "('%q',%d,%d,%d,%d,%d,%.18g,%.18g)",
-                m_osRasterTable.c_str(),i,nTileXCountZoomLevel,nTileYCountZoomLevel,
+                m_osRasterTable.c_str(),i,nTileMatrixWidth,nTileMatrixHeight,
                 nTileWidth,nTileHeight,dfPixelXSizeZoomLevel,dfPixelYSizeZoomLevel);
         eErr = SQLCommand(hDB, pszSQL);
         sqlite3_free(pszSQL);
@@ -1169,6 +1181,7 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
                                   m_dfTMSMinX, m_dfTMSMaxY,
                                   dfPixelXSizeZoomLevel, dfPixelYSizeZoomLevel,
                                   nTileWidth, nTileHeight,
+                                  nTileMatrixWidth,nTileMatrixHeight,
                                   dfGDALMinX, dfGDALMinY,
                                   dfGDALMaxX, dfGDALMaxY );
 
@@ -1402,12 +1415,12 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
                 double dfPixelYSizeZoomLevel = fabs(m_adfGeoTransform[5]) * nOvFactor;
                 int nTileWidth, nTileHeight;
                 GetRasterBand(1)->GetBlockSize(&nTileWidth, &nTileHeight);
-                int nTileXCountZoomLevel = (nOvXSize + nTileWidth - 1) / nTileWidth;
-                int nTileYCountZoomLevel = (nOvYSize + nTileHeight - 1) / nTileHeight;
+                int nTileMatrixWidth = (nOvXSize + nTileWidth - 1) / nTileWidth;
+                int nTileMatrixHeight = (nOvYSize + nTileHeight - 1) / nTileHeight;
                 pszSQL = sqlite3_mprintf("INSERT INTO gpkg_tile_matrix "
                         "(table_name,zoom_level,matrix_width,matrix_height,tile_width,tile_height,pixel_x_size,pixel_y_size) VALUES "
                         "('%q',%d,%d,%d,%d,%d,%.18g,%.18g)",
-                        m_osRasterTable.c_str(),nNewZoomLevel,nTileXCountZoomLevel,nTileYCountZoomLevel,
+                        m_osRasterTable.c_str(),nNewZoomLevel,nTileMatrixWidth,nTileMatrixHeight,
                         nTileWidth,nTileHeight,dfPixelXSizeZoomLevel,dfPixelYSizeZoomLevel);
                 eErr = SQLCommand(hDB, pszSQL);
                 sqlite3_free(pszSQL);
@@ -1426,6 +1439,7 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
                                       m_dfTMSMinX, m_dfTMSMaxY,
                                       dfPixelXSizeZoomLevel, dfPixelYSizeZoomLevel,
                                       nTileWidth, nTileHeight,
+                                      nTileMatrixWidth,nTileMatrixHeight,
                                       dfGDALMinX, dfGDALMinY,
                                       dfGDALMaxX, dfGDALMaxY );
                 m_papoOverviewDS = (GDALGeoPackageDataset**) CPLRealloc(

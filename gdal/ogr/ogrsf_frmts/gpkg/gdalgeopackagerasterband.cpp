@@ -237,8 +237,6 @@ CPLErr GDALGeoPackageDataset::ReadTile(const CPLString& osMemFileName,
         return CE_Failure;
     }
 
-    if( pbIsLossyFormat )
-        *pbIsLossyFormat = !EQUAL(poDSTile->GetDriver()->GetDescription(), "PNG");
     int nTileBandCount = poDSTile->GetRasterCount();
 
     if( !(poDSTile->GetRasterXSize() == nBlockXSize &&
@@ -270,6 +268,10 @@ CPLErr GDALGeoPackageDataset::ReadTile(const CPLString& osMemFileName,
         poCT = poDSTile->GetRasterBand(1)->GetColorTable();
         GetRasterBand(1)->GetColorTable();
     }
+
+    if( pbIsLossyFormat )
+        *pbIsLossyFormat = !EQUAL(poDSTile->GetDriver()->GetDescription(), "PNG") ||
+                           (poCT != NULL && poCT->GetColorEntryCount() == 256) /* PNG8 */;
 
     /* Map RGB(A) tile to single-band color indexed */
     if( nBands == 1 && m_poCT != NULL && nTileBandCount != 1 )
@@ -697,15 +699,6 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
     int nBlockXSize, nBlockYSize;
     GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
 
-    int bPartialTile = FALSE;
-    if( nBands != 4 )
-    {
-        if( (nCol + 1) * nBlockXSize > nRasterXSize )
-            bPartialTile = TRUE;
-        if( (nRow + 1) * nBlockYSize > nRasterYSize )
-            bPartialTile = TRUE;
-    }
-    
     /* If all bands for that block are not dirty/written, we need to */
     /* fetch the missing ones if the tile exists */
     int bIsLossyFormat = FALSE;
@@ -730,21 +723,63 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
         }
     }
 
-    int iYCount = nBlockYSize;
-    int iXCount = nBlockXSize;
+    /* Compute origin of tile in GDAL raster space */
+    int nXOff = (nCol - m_nShiftXTiles) * nBlockXSize - m_nShiftXPixelsMod; 
+    int nYOff = (nRow - m_nShiftYTiles) * nBlockYSize - m_nShiftYPixelsMod;
 
-    if( bPartialTile )
+    /* Assert that the tile at least intersects some of the GDAL raster space */
+    CPLAssert(nXOff + nBlockXSize > 0);
+    CPLAssert(nYOff + nBlockYSize > 0);
+    CPLAssert(nXOff < nRasterXSize);
+    CPLAssert(nYOff < nRasterYSize);
+
+    /* Validity area of tile data in intra-tile coordinate space */
+    int iXOff = 0;
+    int iYOff = 0;
+    int iXCount = nBlockXSize;
+    int iYCount = nBlockYSize;
+
+    int bPartialTile = FALSE;
+    if( nBands != 4 )
     {
-        memset(m_pabyCachedTiles + 3 * nBlockXSize * nBlockYSize, 0,
-               nBlockXSize * nBlockYSize);
-        if( (nRow + 1) * nBlockYSize > nRasterYSize )
-            iYCount = nRasterYSize - nRow * nBlockYSize;
-        if( (nCol + 1) * nBlockXSize > nRasterXSize )
-            iXCount = nRasterXSize - nCol * nBlockXSize;
-        for(int iY = 0; iY < iYCount; iY ++)
+        if( nXOff < 0 )
         {
-            memset(m_pabyCachedTiles + (3 * nBlockYSize + iY) * nBlockXSize,
-                   255, iXCount);
+            bPartialTile = TRUE;
+            iXOff = -nXOff;
+            iXCount += nXOff;
+        }
+        else if( nXOff + nBlockXSize > nRasterXSize )
+        {
+            bPartialTile = TRUE;
+            iXCount = nRasterXSize - nXOff;
+        }
+        if( nYOff < 0 )
+        {
+            bPartialTile = TRUE;
+            iYOff = -nYOff;
+            iYCount += nYOff;
+        }
+        else if( nYOff + nBlockYSize > nRasterYSize )
+        {
+            bPartialTile = TRUE;
+            iYCount = nRasterYSize - nYOff;
+        }
+        CPLAssert(iXOff >= 0);
+        CPLAssert(iYOff >= 0);
+        CPLAssert(iXCount > 0); /* could be removed, but shouldn't happen normally */
+        CPLAssert(iYCount > 0); /* could be removed, but shouldn't happen normally */
+        CPLAssert(iXOff + iXCount <= nBlockXSize);
+        CPLAssert(iYOff + iYCount <= nBlockYSize);
+
+        if( bPartialTile )
+        {
+            memset(m_pabyCachedTiles + 3 * nBlockXSize * nBlockYSize, 0,
+                  nBlockXSize * nBlockYSize);
+            for(int iY = iYOff; iY < iYOff + iYCount; iY ++)
+            {
+                memset(m_pabyCachedTiles + (3 * nBlockYSize + iY) * nBlockXSize + iXOff,
+                       255, iXCount);
+            }
         }
     }
 
@@ -967,9 +1002,24 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
                 abyCT[4*i+2] = 0;
                 abyCT[4*i+3] = 0;
             }
-            for(int iY = 0; iY < iYCount; iY ++)
+            if( iYOff > 0 )
             {
-                for(int iX = 0; iX < iXCount; iX ++)
+                memset(m_pabyCachedTiles + 0 * nBlockXSize * nBlockYSize, 0, nBlockXSize * iYOff);
+                memset(m_pabyCachedTiles + 1 * nBlockXSize * nBlockYSize, 0, nBlockXSize * iYOff);
+                memset(m_pabyCachedTiles + 2 * nBlockXSize * nBlockYSize, 0, nBlockXSize * iYOff);
+                memset(m_pabyCachedTiles + 3 * nBlockXSize * nBlockYSize, 0, nBlockXSize * iYOff);
+            }
+            for(int iY = iYOff; iY < iYOff + iYCount; iY ++)
+            {
+                if( iXOff > 0 )
+                {
+                    i = iY * nBlockXSize;
+                    memset(m_pabyCachedTiles + 0 * nBlockXSize * nBlockYSize + i, 0, iXOff);
+                    memset(m_pabyCachedTiles + 1 * nBlockXSize * nBlockYSize + i, 0, iXOff);
+                    memset(m_pabyCachedTiles + 2 * nBlockXSize * nBlockYSize + i, 0, iXOff);
+                    memset(m_pabyCachedTiles + 3 * nBlockXSize * nBlockYSize + i, 0, iXOff);
+                }
+                for(int iX = iXOff; iX < iXOff + iXCount; iX ++)
                 {
                     i = iY * nBlockXSize + iX;
                     GByte byVal = m_pabyCachedTiles[i];
@@ -978,22 +1028,22 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
                     m_pabyCachedTiles[i + 2 * nBlockXSize * nBlockYSize] = abyCT[4*byVal+2];
                     m_pabyCachedTiles[i + 3 * nBlockXSize * nBlockYSize] = abyCT[4*byVal+3];
                 }
-                if( iXCount < nBlockXSize )
+                if( iXOff + iXCount < nBlockXSize )
                 {
-                    i = iY * nBlockXSize + iXCount;
-                    memset(m_pabyCachedTiles + 0 * nBlockXSize * nBlockYSize + i, 0, nBlockXSize - iXCount);
-                    memset(m_pabyCachedTiles + 1 * nBlockXSize * nBlockYSize + i, 0, nBlockXSize - iXCount);
-                    memset(m_pabyCachedTiles + 2 * nBlockXSize * nBlockYSize + i, 0, nBlockXSize - iXCount);
-                    memset(m_pabyCachedTiles + 3 * nBlockXSize * nBlockYSize + i, 0, nBlockXSize - iXCount);
+                    i = iY * nBlockXSize + iXOff + iXCount;
+                    memset(m_pabyCachedTiles + 0 * nBlockXSize * nBlockYSize + i, 0, nBlockXSize - (iXOff + iXCount));
+                    memset(m_pabyCachedTiles + 1 * nBlockXSize * nBlockYSize + i, 0, nBlockXSize - (iXOff + iXCount));
+                    memset(m_pabyCachedTiles + 2 * nBlockXSize * nBlockYSize + i, 0, nBlockXSize - (iXOff + iXCount));
+                    memset(m_pabyCachedTiles + 3 * nBlockXSize * nBlockYSize + i, 0, nBlockXSize - (iXOff + iXCount));
                 }
             }
-            if( iYCount < nBlockYSize )
+            if( iYOff + iYCount < nBlockYSize )
             {
-                i = iYCount * nBlockXSize;
-                memset(m_pabyCachedTiles + 0 * nBlockXSize * nBlockYSize + i, 0, nBlockXSize * (nBlockYSize - iYCount));
-                memset(m_pabyCachedTiles + 1 * nBlockXSize * nBlockYSize + i, 0, nBlockXSize * (nBlockYSize - iYCount));
-                memset(m_pabyCachedTiles + 2 * nBlockXSize * nBlockYSize + i, 0, nBlockXSize * (nBlockYSize - iYCount));
-                memset(m_pabyCachedTiles + 3 * nBlockXSize * nBlockYSize + i, 0, nBlockXSize * (nBlockYSize - iYCount));
+                i = (iYOff + iYCount) * nBlockXSize;
+                memset(m_pabyCachedTiles + 0 * nBlockXSize * nBlockYSize + i, 0, nBlockXSize * (nBlockYSize - (iYOff + iYCount)));
+                memset(m_pabyCachedTiles + 1 * nBlockXSize * nBlockYSize + i, 0, nBlockXSize * (nBlockYSize - (iYOff + iYCount)));
+                memset(m_pabyCachedTiles + 2 * nBlockXSize * nBlockYSize + i, 0, nBlockXSize * (nBlockYSize - (iYOff + iYCount)));
+                memset(m_pabyCachedTiles + 3 * nBlockXSize * nBlockYSize + i, 0, nBlockXSize * (nBlockYSize - (iYOff + iYCount)));
             }
         }
 
@@ -1093,9 +1143,17 @@ CPLErr GDALGeoPackageRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
                  "IWriteBlock() not supported if georeferencing not set");
         return CE_Failure;
     }
-    
+
     int nRow = nBlockYOff + poGDS->m_nShiftYTiles;
     int nCol = nBlockXOff + poGDS->m_nShiftXTiles;
+    if( nRow < 0 || nCol < 0 ||
+        nRow >= poGDS->m_nTileMatrixHeight || nCol >= poGDS->m_nTileMatrixWidth )
+    {
+        /* Can happen if opening with custom extents */
+        CPLDebug("GPKG", "Skip writing out-of-tile-matrix tile (row=%d, col=%d)",
+                 nRow, nCol);
+        return CE_None;
+    }
 
     CPLErr eErr = CE_None;
     if( !(nRow == poGDS->m_asCachedTilesDesc[0].nRow &&
