@@ -116,15 +116,10 @@ truncated</li>
 
 <ul>
 <li><b>FORMAT=MIF</b>: To create MIF/MID instead of TAB files (TAB is the default).</li>
-<li><b>SPATIAL_INDEX_MODE=QUICK</b>: Use this to turn on "quick spatial index
-mode". The default behavior of MITAB since GDAL v1.5.0 is to generate an
-optimized spatial index, but this results in slower write speed than what we
-used to get with GDAL 1.4.x and older. Applications that want faster write
-speed and do not care about the performance of spatial queries on the resulting
-file can use this option to require the creation of a non-optimal spatial index
-(actually emulating the type of spatial index produced by OGR's TAB driver
-before GDAL 1.5.0). In this mode writing files can be about 5 times faster, but
-spatial queries can be up to 30 times slower.</li>
+<li><b>SPATIAL_INDEX_MODE=QUICK/OPTIMIZED</b>: The default is QUICK force
+"quick spatial index mode". In this mode writing files can be about 5 times faster, but
+spatial queries can be up to 30 times slower. This can be set to OPTIMIZED in
+GDAL 2.0 to generate optimized spatial index.</li>
 </ul>
 
 <h3>Layer Creation Options</h3>
