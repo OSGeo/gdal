@@ -22,6 +22,17 @@
         <featureType elementName="CadastralZoning"
                      gfsSchemaLocation="inspire_cp_CadastralZoning.gfs"/>
     </namespace>
+    <!-- sometimes with upper case namespace prefix -->
+    <namespace prefix="CP" uri="urn:x-inspire:specification:gmlas:CadastralParcels:3.0" useGlobalSRSName="true">
+        <featureType elementName="BasicPropertyUnit"
+                     gfsSchemaLocation="inspire_cp_BasicPropertyUnit.gfs"/>
+        <featureType elementName="CadastralBoundary"
+                     gfsSchemaLocation="inspire_cp_CadastralBoundary.gfs"/>
+        <featureType elementName="CadastralParcel"
+                     gfsSchemaLocation="inspire_cp_CadastralParcel.gfs"/>
+        <featureType elementName="CadastralZoning"
+                     gfsSchemaLocation="inspire_cp_CadastralZoning.gfs"/>
+    </namespace>
 
     <!-- Czech RUIAN (VFR) schema -->
     <namespace prefix="vf"
