@@ -1105,7 +1105,10 @@ template<class T> static inline void GDALResampleConvolutionVertical_2cols(
 /* We restrict to 64bit processors because they are guaranteed to have SSE2 */
 /* Could possibly be used too on 32bit, but we would need to check at runtime */
 #if defined(__x86_64) || defined(_M_X64)
+#define USE_SSE2
+#endif
 
+#ifdef USE_SSE2
 #include <gdalsse_priv.h>
 
 /************************************************************************/
@@ -1254,7 +1257,7 @@ template<> inline void GDALResampleConvolutionHorizontalPixelCountLess8_3rows<GB
     }
 }
 
-#endif /*  defined(__x86_64) || defined(_M_X64) */
+#endif /*  USE_SSE2 */
 
 /************************************************************************/
 /*                   GDALResampleChunk32R_Convolution()                 */
@@ -1329,7 +1332,9 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc, double dfYRatioDstTo
 /*      Fist pass: horizontal filter                                    */
 /* ==================================================================== */
     int nChunkRightXOff = nChunkXOff + nChunkXSize;
+#ifdef USE_SSE2
     int bSrcPixelCountLess8 = dfXScaledRadius < 4;
+#endif
     for( int iDstPixel = nDstXOff; iDstPixel < nDstXOff2; iDstPixel++ )
     {
         double dfSrcPixel = (iDstPixel+0.5)*dfXRatioDstToSrc + dfSrcXDelta;
@@ -1384,7 +1389,7 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc, double dfYRatioDstTo
             }
 
             int iSrcLineOff = 0;
-#if defined(__x86_64) || defined(_M_X64)
+#ifdef USE_SSE2
             if( bSrcPixelCountLess8 )
             {
                 for( ; iSrcLineOff+2 < nChunkYSize; iSrcLineOff +=3 )
