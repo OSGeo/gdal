@@ -2539,6 +2539,33 @@ def gpkg_26():
     gdal.PopErrorHandler()
 
     os.remove('tmp/tmp.gpkg')
+    
+    # Invalid TILING_SCHEME
+    src_ds = gdal.Open('data/byte.tif')
+    gdal.PushErrorHandler()
+    ds = gdaltest.gpkg_dr.CreateCopy('/foo/tmp.gpkg', src_ds, options = ['TILING_SCHEME=invalid'])
+    gdal.PopErrorHandler()
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+        
+    # Invalid target filename
+    src_ds = gdal.Open('data/byte.tif')
+    gdal.PushErrorHandler()
+    ds = gdaltest.gpkg_dr.CreateCopy('/foo/tmp.gpkg', src_ds, options = ['TILING_SCHEME=GoogleCRS84Quad'])
+    gdal.PopErrorHandler()
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Source is not georeferenced
+    src_ds = gdal.Open('../gcore/data/stefan_full_rgba.tif')
+    gdal.PushErrorHandler()
+    ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', src_ds, options = ['TILING_SCHEME=GoogleCRS84Quad'])
+    gdal.PopErrorHandler()
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     return 'success'
 
