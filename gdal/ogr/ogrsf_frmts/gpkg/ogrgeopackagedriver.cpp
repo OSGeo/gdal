@@ -160,7 +160,10 @@ static GDALDataset *OGRGeoPackageDriverCreate( const char * pszFilename,
 static CPLErr OGRGeoPackageDriverDelete( const char *pszFilename )
 
 {
-    return CE_None;
+    if( VSIUnlink(pszFilename) == 0 )
+        return CE_None;
+    else
+        return CE_Failure;
 }
 
 /************************************************************************/

@@ -1201,7 +1201,7 @@ def gpkg_14():
         return 'fail'
     ds = None
 
-    ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', src_ds, options = ['RASTER_TABLE=other', 'BLOCKSIZE=64', 'DRIVER=PNG'])
+    ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', src_ds, options = ['APPEND_SUBDATASET=YES', 'RASTER_TABLE=other', 'BLOCKSIZE=64', 'DRIVER=PNG'])
     ds = None
 
     ds = gdal.Open('tmp/tmp.gpkg')
