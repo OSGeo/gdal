@@ -797,12 +797,14 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
     {
       CPLError( CE_Warning, CPLE_NotSupported,
       "SXF. Geometry type Vector do not support." );
+      CPLFree(recordCertifBuf);
       return NULL;
     }
     else if (eGeomType == SXF_GT_TextTemplate ) // TODO realise this
     {
       CPLError( CE_Warning, CPLE_NotSupported,
       "SXF. Geometry type Text Template do not support." );
+      CPLFree(recordCertifBuf);
       return NULL;
     }
     else
@@ -1049,9 +1051,9 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
                     return NULL;
                 }
             }
-            CPLFree(psSemanticsdBufOrig);
         }
-    }
+        CPLFree(psSemanticsdBufOrig);
+     }
 
     poFeature->SetFID(nFID);
 
