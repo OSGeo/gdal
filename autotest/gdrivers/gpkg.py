@@ -1322,15 +1322,21 @@ def gpkg_14():
     os.remove('tmp/tmp.gpkg')
 
     # Test reading block from partial tile database
-    ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg', 256, 256, 4)
+    ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg', 512, 256, 4)
     ds.SetGeoTransform([0,1,0,0,0,-1])
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
     ds.SetProjection(sr.ExportToWkt())
     ds = None
 
-    ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_UPDATE, open_options = ['MINX=-5', 'MAXY=5'])
-    ds.GetRasterBand(2).Fill(255)
+    ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_UPDATE, open_options = ['MINX=-5', 'MAXY=5', 'DRIVER=PNG'])
+    mem_ds = gdal.GetDriverByName('MEM').Create('', 256, 256)
+    mem_ds.GetRasterBand(1).Fill(255)
+    mem_ds.FlushCache()
+    data = mem_ds.GetRasterBand(1).ReadRaster()
+    mem_ds = None
+    # Only write one of the tile
+    ds.GetRasterBand(2).WriteRaster(0,0,256,256,data)
 
     # "Flush" into partial tile database, but not in definitive database
     oldSize = gdal.GetCacheMax()
@@ -1344,11 +1350,13 @@ def gpkg_14():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    expected_cs = [0,17888,0,0]
+    expected_cs = [0,56451,0,0]
     got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
+        ds.GetRasterBand(4).Fill(255)
+        #sys.exit(0)
         return 'fail'
     ds = None
 
