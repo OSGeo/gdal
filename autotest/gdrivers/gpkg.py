@@ -93,7 +93,14 @@ def get_expected_checksums(src_ds, tile_drv, working_bands, extend_src = True, c
     else:
         mem_ds = gdal.GetDriverByName('MEM').Create('', src_ds.RasterXSize, src_ds.RasterYSize, working_bands)
     for i in range(working_bands):
-        if src_ds.RasterCount == 1:
+        if src_ds.RasterCount == 2 and working_bands == 3:
+            src_band = 1
+        elif src_ds.RasterCount == 2 and working_bands == 4:
+            if i < 3:
+                src_band = 1
+            else:
+                src_band = 2
+        elif src_ds.RasterCount == 1:
             src_band = 1
         else:
             src_band = i + 1
@@ -208,7 +215,7 @@ def gpkg_1():
         gdaltest.post_reason('fail')
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
         return 'fail'
-    if check_tile_format(out_ds, 'PNG', 4, False) != 'success':
+    if check_tile_format(out_ds, 'PNG', 2, False) != 'success':
         return 'fail'
 
     # Check that there's no extensions
@@ -586,6 +593,9 @@ def gpkg_5():
 def gpkg_6():
     return gpkg_4(tile_drv_name = 'WEBP')
 
+###############################################################################
+# 4 band, PNG
+
 def get_georeferenced_rgba_ds(alpha_fully_transparent = False, alpha_fully_opaque = False):
     assert(not (alpha_fully_transparent and alpha_fully_opaque))
     src_ds = gdal.Open('../gcore/data/stefan_full_rgba.tif')
@@ -602,9 +612,6 @@ def get_georeferenced_rgba_ds(alpha_fully_transparent = False, alpha_fully_opaqu
     elif alpha_fully_transparent:
         tmp_ds.GetRasterBand(4).Fill(0)
     return tmp_ds
-
-###############################################################################
-# 4 band, PNG
 
 def gpkg_7(tile_drv_name = 'PNG'):
 
@@ -1415,6 +1422,33 @@ def gpkg_15():
     out_ds.SetGeoTransform([0,1,0,0,0,-1])
     out_ds.SetProjection(srs.ExportToWkt())
     ret = out_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_RedBand)
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.PushErrorHandler()
+    ret = out_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_RedBand)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_ds = None
+
+    os.remove('tmp/tmp.gpkg')
+    
+    out_ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg',1,1,2)
+    out_ds.SetGeoTransform([0,1,0,0,0,-1])
+    out_ds.SetProjection(srs.ExportToWkt())
+    ret = out_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_GrayIndex)
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.PushErrorHandler()
+    ret = out_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_RedBand)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ret = out_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
     if ret != 0:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -2260,6 +2294,113 @@ def gpkg_21():
     return 'success'
 
 ###############################################################################
+# Two band, PNG
+
+def get_georeferenced_greyalpha_ds():
+    src_ds = gdal.Open('../gcore/data/stefan_full_greyalpha.tif')
+    tmp_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tmp.tif',
+                                    src_ds.RasterXSize, src_ds.RasterYSize, 2)
+    tmp_ds.SetGeoTransform([0,10,0,0,0,-10])
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    tmp_ds.SetProjection(srs.ExportToWkt())
+    tmp_ds.WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize,
+                       src_ds.ReadRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize))
+    return tmp_ds
+
+def gpkg_22(tile_drv_name = 'PNG'):
+
+    if gdaltest.gpkg_dr is None: 
+        return 'skip'
+    if tile_drv_name is None:
+        tile_drv = gdaltest.png_dr
+        if gdaltest.jpeg_dr is None:
+            return 'skip'
+        expected_cs = [ 2466, 10807 ]
+        clamped_expected_cs = [ 1989, 1989, 1989, 11580 ]
+    if tile_drv_name == 'PNG':
+        tile_drv = gdaltest.png_dr
+        expected_cs = [ 1970, 10807 ]
+        clamped_expected_cs = [ 2100, 2100, 2100, 11580 ]
+    elif tile_drv_name == 'JPEG':
+        tile_drv = gdaltest.jpeg_dr
+        expected_cs = [ 6782, 32706 ]
+        clamped_expected_cs = [ 6538, 6538, 6538, 32744 ]
+    elif tile_drv_name == 'WEBP':
+        tile_drv = gdaltest.webp_dr
+        if gdaltest.webp_supports_rgba:
+            expected_cs = [ 13112, 10807 ]
+            clamped_expected_cs = [ 13380, 13380, 13380, 11580 ]
+        else:
+            expected_cs = [ 13112, 32706 ]
+            clamped_expected_cs = [ 13380, 13380, 13380, 32744 ]
+    if tile_drv is None: 
+        return 'skip'
+
+    try:
+        os.remove('tmp/tmp.gpkg')
+    except:
+        pass
+
+    tmp_ds = get_georeferenced_greyalpha_ds()
+    if tile_drv_name:
+        options = ['DRIVER=' + tile_drv_name, 'BLOCKSIZE=16']
+    else:
+        options = ['BLOCKSIZE=16'] 
+    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', tmp_ds, options = options)
+    tmp_ds_filename = tmp_ds.GetDescription()
+    ds = None
+    gdal.Unlink(tmp_ds_filename)
+    out_ds = None
+
+    out_ds = gdal.OpenEx('tmp/tmp.gpkg', open_options = ['BAND_COUNT=2'])
+    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(2)]
+    if got_cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
+        return 'fail'
+    out_ds = None
+
+    out_ds = gdal.Open('tmp/tmp.gpkg')
+    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    expected_cs = [ expected_cs[0], expected_cs[0], expected_cs[0], expected_cs[1] ]
+    if got_cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
+        return 'fail'
+    out_ds = None
+
+    ds = gdal.OpenEx('tmp/tmp.gpkg', open_options = ['USE_TILE_EXTENT=YES'])
+    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    if got_cs != clamped_expected_cs:
+        gdaltest.post_reason('fail')
+        print('Got %s, expected %s' % (str(got_cs), str(clamped_expected_cs)))
+        return 'fail'
+    ds = None
+
+    os.remove('tmp/tmp.gpkg')
+
+    return 'success'
+
+###############################################################################
+# Two band, JPEG
+
+def gpkg_23():
+    return gpkg_22(tile_drv_name = 'JPEG')
+
+###############################################################################
+# Two band, WEBP
+
+def gpkg_24():
+    return gpkg_22(tile_drv_name = 'WEBP')
+
+###############################################################################
+# Two band, mixed
+
+def gpkg_25():
+    return gpkg_22(tile_drv_name = None)
+
+###############################################################################
 #
 
 def gpkg_cleanup():
@@ -2302,9 +2443,13 @@ gdaltest_list = [
     gpkg_19,
     gpkg_20,
     gpkg_21,
+    gpkg_22,
+    gpkg_23,
+    gpkg_24,
+    gpkg_25,
     gpkg_cleanup,
 ]
-#gdaltest_list = [ gpkg_init, gpkg_14, gpkg_cleanup ]
+#gdaltest_list = [ gpkg_init, gpkg_22, gpkg_23, gpkg_24, gpkg_25, gpkg_cleanup ]
 if __name__ == '__main__':
 
     gdaltest.setup_run( 'gpkg' )
