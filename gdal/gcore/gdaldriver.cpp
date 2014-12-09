@@ -212,17 +212,6 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
     if( !CSLFetchBoolean(papszOptions, "APPEND_SUBDATASET", FALSE) )
         QuietDelete( pszFilename );
 
-    char** papszOptionsToDelete = NULL;
-    int iIdxAppendSubdataset = 
-        CSLPartialFindString(papszOptions, "APPEND_SUBDATASET=");
-    if( iIdxAppendSubdataset >= 0 )
-    {
-       if( papszOptionsToDelete == NULL )
-            papszOptionsToDelete = CSLDuplicate(papszOptions);
-        papszOptions = CSLRemoveStrings(papszOptionsToDelete, iIdxAppendSubdataset, 1, NULL);
-        papszOptionsToDelete = papszOptions;
-    }
-
 /* -------------------------------------------------------------------- */
 /*      Validate creation options.                                      */
 /* -------------------------------------------------------------------- */
@@ -263,8 +252,6 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
 
         poDS->AddToDatasetOpenList();
     }
-
-    CSLDestroy(papszOptionsToDelete);
 
     return poDS;
 }
@@ -733,15 +720,6 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
         QuietDelete( pszFilename );
 
     char** papszOptionsToDelete = NULL;
-    int iIdxAppendSubdataset = 
-        CSLPartialFindString(papszOptions, "APPEND_SUBDATASET=");
-    if( iIdxAppendSubdataset >= 0 )
-    {
-        if( papszOptionsToDelete == NULL )
-            papszOptionsToDelete = CSLDuplicate(papszOptions);
-        papszOptions = CSLRemoveStrings(papszOptionsToDelete, iIdxAppendSubdataset, 1, NULL);
-        papszOptionsToDelete = papszOptions;
-    }
     int iIdxQuietDeleteOnCreateCopy = 
         CSLPartialFindString(papszOptions, "QUIET_DELETE_ON_CREATE_COPY=");
     if( iIdxQuietDeleteOnCreateCopy >= 0 )
@@ -799,11 +777,6 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
     }
     else
     {
-        if( bAppendSubdataset )
-        {
-            papszOptionsToDelete = papszOptions =
-                CSLSetNameValue(papszOptions, "APPEND_SUBDATASET", "YES");
-        }
         poDstDS = DefaultCreateCopy( pszFilename, poSrcDS, bStrict, 
                                   papszOptions, pfnProgress, pProgressData );
     }
@@ -1394,10 +1367,19 @@ int CPL_STDCALL GDALValidateCreationOptions( GDALDriverH hDriver,
         ((GDALDriver *) hDriver)->GetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST );
     CPLString osDriver;
     osDriver.Printf("driver %s", ((GDALDriver *) hDriver)->GetDescription());
-    return GDALValidateOptions( pszOptionList,
-                                (const char* const* )papszCreationOptions,
+    char** papszOptionsToValidate = papszCreationOptions;
+    char** papszOptionsToFree = NULL;
+    if( CSLFetchNameValue( papszCreationOptions, "APPEND_SUBDATASET") )
+    {
+        papszOptionsToValidate = papszOptionsToFree =
+            CSLSetNameValue(CSLDuplicate(papszCreationOptions), "APPEND_SUBDATASET", NULL);
+    }
+    int bRet = GDALValidateOptions( pszOptionList,
+                                (const char* const* )papszOptionsToValidate,
                                 "creation option",
                                 osDriver);
+    CSLDestroy(papszOptionsToFree);
+    return bRet;
 }
 
 /************************************************************************/
