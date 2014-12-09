@@ -1321,6 +1321,38 @@ def gpkg_14():
 
     os.remove('tmp/tmp.gpkg')
 
+    # Test reading block from partial tile database
+    ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg', 256, 256, 4)
+    ds.SetGeoTransform([0,1,0,0,0,-1])
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+    ds.SetProjection(sr.ExportToWkt())
+    ds = None
+
+    ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_UPDATE, open_options = ['MINX=-5', 'MAXY=5'])
+    ds.GetRasterBand(2).Fill(255)
+
+    # "Flush" into partial tile database, but not in definitive database
+    oldSize = gdal.GetCacheMax()
+    gdal.SetCacheMax(0)
+    gdal.SetCacheMax(oldSize)
+
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM tmp')
+    fc = sql_lyr.GetFeatureCount()
+    ds.ReleaseResultSet(sql_lyr)
+    if fc != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    expected_cs = [0,17888,0,0]
+    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    if got_cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
+        return 'fail'
+    ds = None
+
+    os.remove('tmp/tmp.gpkg')
     return 'success'
 
 ###############################################################################
