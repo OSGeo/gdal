@@ -10005,6 +10005,23 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Are we really producing a Grey+Alpha image?  If so, set the     */
+/*      associated alpha information.                                   */
+/* -------------------------------------------------------------------- */
+    else if( nBands == 2 && !bForcePhotometric &&
+             nCompression != COMPRESSION_JPEG &&
+             poSrcDS->GetRasterBand(1)->GetColorInterpretation()==GCI_GrayIndex &&
+             poSrcDS->GetRasterBand(2)->GetColorInterpretation()==GCI_AlphaBand)
+    {
+        uint16 v[1];
+
+        v[0] = GTiffGetAlphaValue(CSLFetchNameValue(papszOptions, "ALPHA"),
+                                  DEFAULT_ALPHA_TYPE);
+
+        TIFFSetField(hTIFF, TIFFTAG_EXTRASAMPLES, 1, v);
+        TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK );
+    }
+/* -------------------------------------------------------------------- */
 /*      Are we really producing an RGBA image?  If so, set the          */
 /*      associated alpha information.                                   */
 /* -------------------------------------------------------------------- */
