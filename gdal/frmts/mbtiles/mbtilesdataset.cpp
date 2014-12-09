@@ -1842,6 +1842,10 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
         nMinTileRow = (int)(1.0 * nMinTileRow / (1 << nResolutions)) * (1 << nResolutions);
         nMaxTileCol = (int)ceil(1.0 * nMaxTileCol / (1 << nResolutions)) * (1 << nResolutions);
         nMaxTileRow = (int)ceil(1.0 * nMaxTileRow / (1 << nResolutions)) * (1 << nResolutions);
+        if( nMaxTileCol == nMinTileCol )
+            nMaxTileCol ++;
+        if( nMaxTileRow == nMinTileRow )
+            nMaxTileRow ++;
 
 /* -------------------------------------------------------------------- */
 /*      Compute raster size, geotransform and projection                */
