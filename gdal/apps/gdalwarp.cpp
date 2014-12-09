@@ -2098,8 +2098,12 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
     const char *pszDstMethod = CSLFetchNameValue(papszTO,"DST_METHOD");
     if( pszDstMethod == NULL || !EQUAL(pszDstMethod, "NO_GEOTRANSFORM") )
     {
-        GDALSetProjection( hDstDS, pszThisTargetSRS );
-        GDALSetGeoTransform( hDstDS, adfDstGeoTransform );
+        if( GDALSetProjection( hDstDS, pszThisTargetSRS ) == CE_Failure ||
+            GDALSetGeoTransform( hDstDS, adfDstGeoTransform ) == CE_Failure )
+        {
+            CPLFree( pszThisTargetSRS );
+            return NULL;
+        }
     }
     else
     {
