@@ -2507,6 +2507,36 @@ def gpkg_26():
 
         os.remove('tmp/tmp.gpkg')
 
+    # Test a few error cases
+    gdal.PushErrorHandler()
+    ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg', 1, 1, 1, options = ['TILING_SCHEME=GoogleCRS84Quad', 'BLOCKSIZE=128'])
+    gdal.PopErrorHandler()
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    os.remove('tmp/tmp.gpkg')
+
+    ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg', 1, 1, 1, options = ['TILING_SCHEME=GoogleCRS84Quad'])
+    gdal.PushErrorHandler()
+    ret = ds.SetGeoTransform([0,10,0,0,0,-10])
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32630)
+    gdal.PushErrorHandler()
+    ret = ds.SetProjection(srs.ExportToWkt())
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.PushErrorHandler()
+    ds = None
+    gdal.PopErrorHandler()
+
+    os.remove('tmp/tmp.gpkg')
+
     return 'success'
 
 ###############################################################################
