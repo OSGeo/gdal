@@ -92,59 +92,17 @@ static GDALDataset *OGRGeoPackageDriverOpen( GDALOpenInfo* poOpenInfo )
 /*                               Create()                               */
 /************************************************************************/
 
-static GDALDataset *OGRGeoPackageDriverCreate( const char * pszFilename,
-                                               int nXSize,
-                                               int nYSize,
-                                               int nBands,
-                                               GDALDataType eDT,
-                                               char **papszOptions )
+static GDALDataset* OGRGeoPackageDriverCreate( const char * pszFilename,
+                                            int nXSize,
+                                            int nYSize,
+                                            int nBands,
+                                            GDALDataType eDT,
+                                            char **papszOptions )
 {
-	/* First, ensure there isn't any such file yet. */
-    VSIStatBufL sStatBuf;
-
-    if( nBands != 0 )
-    {
-        if( eDT != GDT_Byte )
-        {
-            CPLError(CE_Failure, CPLE_NotSupported, "Only Byte supported");
-            return NULL;
-        }
-        if( nBands != 1 && nBands != 2 && nBands != 3 && nBands != 4 )
-        {
-            CPLError(CE_Failure, CPLE_NotSupported,
-                     "Only 1 (Grey/ColorTable), 2 (Grey+Alpha), 3 (RGB) or 4 (RGBA) band dataset supported");
-            return NULL;
-        }
-    }
-
-    int bFileExists = FALSE;
-    if( VSIStatL( pszFilename, &sStatBuf ) == 0 )
-    {
-        bFileExists = TRUE;
-        if( nBands != 0 )
-        {
-            if( CSLFetchNameValue(papszOptions, "RASTER_TABLE") == NULL )
-            {
-                CPLError( CE_Failure, CPLE_AppDefined,
-                    "A file system object called '%s' already exists. "
-                    "TABLE creation option must be explicitely provided",
-                    pszFilename );
-                return NULL;
-            }
-        }
-        else
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                    "A file system object called '%s' already exists.",
-                    pszFilename );
-
-            return NULL;
-        }
-    }
-	
     GDALGeoPackageDataset   *poDS = new GDALGeoPackageDataset();
 
-    if( !poDS->Create( pszFilename, bFileExists, nXSize, nYSize, nBands, papszOptions ) )
+    if( !poDS->Create( pszFilename, nXSize, nYSize,
+                       nBands, eDT, papszOptions ) )
     {
         delete poDS;
         poDS = NULL;
@@ -223,6 +181,27 @@ COMPRESSION_OPTIONS
 "  <Option name='BLOCKXSIZE' type='int' description='Block width in pixels' default='256' max='4096'/>"
 "  <Option name='BLOCKYSIZE' type='int' description='Block height in pixels' default='256' max='4096'/>"
 COMPRESSION_OPTIONS
+"  <Option name='TILING_SCHEME' type='string-select' description='Which tiling scheme to use' default='CUSTOM'>"
+"    <Value>CUSTOM</Value>"
+"    <Value>GoogleCRS84Quad</Value>"
+"    <Value>GoogleMapsCompatible</Value>"
+"    <Value>PseudoTMS_GlobalGeodetic</Value>"
+"    <Value>PseudoTMS_GlobalMercator</Value>"
+"  </Option>"
+"  <Option name='ZOOM_LEVEL_STRATEGY' type='string-select' description='Strategy to determine zoom level. Only used for TILING_SCHEME != CUSTOM' default='AUTO'>"
+"    <Value>AUTO</Value>"
+"    <Value>LOWER</Value>"
+"    <Value>UPPER</Value>"
+"  </Option>"
+"  <Option name='RESAMPLING' type='string-select' description='Resampling algorithm. Only used for TILING_SCHEME != CUSTOM' default='BILINEAR'>"
+"    <Value>NEAREST</Value>"
+"    <Value>BILINEAR</Value>"
+"    <Value>CUBIC</Value>"
+"    <Value>CUBICSPLINE</Value>"
+"    <Value>LANCZOS</Value>"
+"    <Value>MODE</Value>"
+"    <Value>AVERAGE</Value>"
+"  </Option>"
 "</CreationOptionList>");
 
         poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
@@ -236,6 +215,7 @@ COMPRESSION_OPTIONS
         poDriver->pfnOpen = OGRGeoPackageDriverOpen;
         poDriver->pfnIdentify = OGRGeoPackageDriverIdentify;
         poDriver->pfnCreate = OGRGeoPackageDriverCreate;
+        poDriver->pfnCreateCopy = GDALGeoPackageDataset::CreateCopy;
         poDriver->pfnDelete = OGRGeoPackageDriverDelete;
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );

@@ -116,6 +116,9 @@ class GDALGeoPackageDataset : public OGRSQLiteBaseDataSource
     
     int                 m_bInFlushCache;
 
+    CPLString           m_osTilingScheme;
+
+        void            ComputeTileAndPixelShifts();
         int             InitRaster ( GDALGeoPackageDataset* poParentDS,
                                      const char* pszTableName,
                                         double dfMinX,
@@ -214,10 +217,10 @@ class GDALGeoPackageDataset : public OGRSQLiteBaseDataSource
         virtual int         GetLayerCount() { return m_nLayers; }
         int                 Open( GDALOpenInfo* poOpenInfo );
         int                 Create( const char * pszFilename,
-                                    int bFileExists,
                                     int nXSize,
                                     int nYSize,
                                     int nBands,
+                                    GDALDataType eDT,
                                     char **papszOptions );
         OGRLayer*           GetLayer( int iLayer );
         int                 DeleteLayer( int iLayer );
@@ -244,6 +247,12 @@ class GDALGeoPackageDataset : public OGRSQLiteBaseDataSource
         OGRErr              CreateExtensionsTableIfNecessary();
         int                 HasExtensionsTable();
 
+        static GDALDataset* CreateCopy( const char *pszFilename,
+                                                   GDALDataset *poSrcDS, 
+                                                   int bStrict,
+                                                   char ** papszOptions,
+                                                   GDALProgressFunc pfnProgress, 
+                                                   void * pProgressData );
     private:
     
         OGRErr              PragmaCheck(const char * pszPragma, const char * pszExpected, int nRowsExpected);
