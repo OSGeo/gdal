@@ -2396,26 +2396,29 @@ def gpkg_22(tile_drv_name = 'PNG'):
     out_ds = gdal.OpenEx('tmp/tmp.gpkg', open_options = ['BAND_COUNT=2'])
     got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(2)]
     if got_cs != expected_cs:
-        gdaltest.post_reason('fail')
-        print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
-        return 'fail'
+        if tile_drv_name != 'WEBP' or got_cs != [4899, 10807]:
+            gdaltest.post_reason('fail')
+            print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
+            return 'fail'
     out_ds = None
 
     out_ds = gdal.Open('tmp/tmp.gpkg')
     got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(4)]
     expected_cs = [ expected_cs[0], expected_cs[0], expected_cs[0], expected_cs[1] ]
     if got_cs != expected_cs:
-        gdaltest.post_reason('fail')
-        print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
-        return 'fail'
+        if tile_drv_name != 'WEBP' or got_cs != [4899, 4899, 4899, 10807]:
+            gdaltest.post_reason('fail')
+            print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
+            return 'fail'
     out_ds = None
 
     ds = gdal.OpenEx('tmp/tmp.gpkg', open_options = ['USE_TILE_EXTENT=YES'])
     got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
     if got_cs != clamped_expected_cs:
-        gdaltest.post_reason('fail')
-        print('Got %s, expected %s' % (str(got_cs), str(clamped_expected_cs)))
-        return 'fail'
+        if tile_drv_name != 'WEBP' or got_cs != [5266, 5266, 5266, 11580]:
+            gdaltest.post_reason('fail')
+            print('Got %s, expected %s' % (str(got_cs), str(clamped_expected_cs)))
+            return 'fail'
     ds = None
 
     os.remove('tmp/tmp.gpkg')
