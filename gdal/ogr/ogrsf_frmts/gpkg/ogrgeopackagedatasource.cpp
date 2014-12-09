@@ -2973,13 +2973,14 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
 /* -------------------------------------------------------------------- */
     GDALWarpOperation oWO;
 
-    CPLAssert( oWO.Initialize( psWO ) == CE_None );
-
-    CPLErr eErr;
-    /*if( bMulti )
-        eErr = oWO.ChunkAndWarpMulti( 0, 0, nXSize, nYSize );
-    else*/
-    eErr = oWO.ChunkAndWarpImage( 0, 0, nXSize, nYSize );
+    CPLErr eErr = oWO.Initialize( psWO );
+    if( eErr == CE_None )
+    {
+        /*if( bMulti )
+            eErr = oWO.ChunkAndWarpMulti( 0, 0, nXSize, nYSize );
+        else*/
+        eErr = oWO.ChunkAndWarpImage( 0, 0, nXSize, nYSize );
+    }
     if (eErr != CE_None)
     {
         delete poDS;
