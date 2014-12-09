@@ -725,7 +725,8 @@ def wms_16():
         return 'skip'
 
     if val is None or val.find('<og:cat>86</og:cat>') == -1:
-        if gdal.GetLastErrorMsg('Gateway Time-out') >= 0:
+        if gdal.GetLastErrorMsg().find('Gateway Time-out') >= 0 or \
+           gdal.GetLastErrorMsg().find('HTTP error code : 5') >= 0:
             return 'skip'
         gdaltest.post_reason('expected a value')
         print(val)
